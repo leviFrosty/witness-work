@@ -6,6 +6,8 @@ const mocks = vi.hoisted(() => ({
   androidEnabled: false,
   status: vi.fn(),
   deviceUnverified: vi.fn(),
+  suspended: vi.fn(),
+  statusListeners: [] as (() => void)[],
   platform: 'ios',
   online: true as boolean | null,
   foreground: [] as { listener: () => void; minIntervalMs: number }[],
@@ -27,6 +29,17 @@ vi.mock('@/features/notes-import/lib/notesImportClient', () => ({
   notesImportDeviceUnverified: mocks.deviceUnverified,
 }))
 vi.mock('@/lib/perf', () => ({ perf: { count: vi.fn() } }))
+vi.mock('@/lib/serverAccount', () => ({
+  accountSuspended: mocks.suspended,
+  onAccountStatus: (listener: () => void) => {
+    mocks.statusListeners.push(listener)
+    return () => {
+      mocks.statusListeners = mocks.statusListeners.filter(
+        (l) => l !== listener
+      )
+    }
+  },
+}))
 vi.mock('@/lib/http/online', () => ({
   getOnline: () => mocks.online,
   addReconnectListener: (listener: () => void) => {
@@ -68,6 +81,8 @@ beforeEach(() => {
   vi.resetModules()
   vi.resetAllMocks()
   mocks.deviceUnverified.mockResolvedValue(false)
+  mocks.suspended.mockResolvedValue(false)
+  mocks.statusListeners = []
   mocks.enabled = false
   mocks.androidEnabled = false
   mocks.platform = 'ios'
@@ -199,6 +214,31 @@ describe('Notes Import availability', () => {
       loading: false,
     })
     await close()
+  })
+  it('says a suspended account is suspended before the User writes anything', async () => {
+    mocks.enabled = true
+    mocks.status.mockResolvedValue({ available: true, limits: schedule })
+    mocks.suspended.mockResolvedValue(true)
+    const { snapshots, close } = await mount()
+    expect(snapshots.at(-1)).toMatchObject({
+      available: false,
+      status: 'unavailable',
+      reason: 'suspended',
+      loading: false,
+    })
+
+    // Reinstated: a call that read the account again says so.
+    mocks.suspended.mockResolvedValue(false)
+    const { act } = await import('react-test-renderer')
+    await act(async () => {
+      for (const listener of mocks.statusListeners) listener()
+    })
+    expect(snapshots.at(-1)).toMatchObject({
+      available: true,
+      status: 'available',
+    })
+    await close()
+    expect(mocks.statusListeners).toHaveLength(0)
   })
   it('lets the version floor and an outage win over an unverified device', async () => {
     mocks.enabled = true

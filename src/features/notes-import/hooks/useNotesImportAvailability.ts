@@ -7,6 +7,7 @@ import { addForegroundListener } from '@/lib/appLifecycle'
 import { classifyNetworkError } from '@/lib/http/networkError'
 import { addReconnectListener, getOnline } from '@/lib/http/online'
 import { perf } from '@/lib/perf'
+import { accountSuspended, onAccountStatus } from '@/lib/serverAccount'
 import {
   fetchNotesImportStatus,
   notesImportDeviceUnverified,
@@ -21,9 +22,9 @@ import {
  * - `disabled`: the feature flag is closed; nothing is checked.
  * - `checking`: the first check of this session is running.
  * - `available` / `unavailable`: the server answered (unavailable covers its kill
- *   switch, the version floor, Android without Play Integrity, and a device
- *   that can't be verified, so it can't have the account session Notes Import
- *   needs).
+ *   switch, the version floor, Android without Play Integrity, a device that
+ *   can't be verified, so it can't have the account session Notes Import needs,
+ *   and a suspended account, reason `suspended`).
  * - `offline`: the check couldn't run because the device has no connection.
  * - `failed`: the device is online but the check didn't get an answer.
  */
@@ -109,6 +110,8 @@ const fromStatus = async (): Promise<ProbeResult> => {
   // Asked alongside the status: it never opens a session or contacts the
   // server for the account, and a failure means it isn't known.
   const deviceUnverified = notesImportDeviceUnverified().catch(() => false)
+  // Only an account this device saw suspended is read again, here.
+  const suspended = accountSuspended().catch(() => false)
   let status
   try {
     status = await fetchNotesImportStatus()
@@ -141,6 +144,10 @@ const fromStatus = async (): Promise<ProbeResult> => {
   // Every import goes through the attested account session (ADR 0027).
   if (await deviceUnverified) {
     return { ...closed, status: 'unavailable', reason: 'device_unverified' }
+  }
+  // Said before the User writes anything, not after they submit.
+  if (await suspended) {
+    return { ...closed, status: 'unavailable', reason: 'suspended' }
   }
   return {
     status: 'available',
@@ -215,9 +222,12 @@ export const useNotesImportAvailability = (): NotesImportAvailability => {
         force: isFailure(useAvailabilityStore.getState().result),
       })
     })
+    // A call found the account suspended (an import refused) or reinstated.
+    const status = onAccountStatus(() => void probe({ force: true }))
     return () => {
       foreground.remove()
       reconnect.remove()
+      status()
     }
   }, [probe, enabled])
 

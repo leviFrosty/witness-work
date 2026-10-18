@@ -59,6 +59,7 @@ const MACHINE_UNAVAILABLE_REASONS = new Set([
   'version_below_min',
   'android_unavailable',
   'device_unverified',
+  'suspended',
 ])
 
 /**

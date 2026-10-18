@@ -9,6 +9,7 @@ import {
 } from '@/lib/accountKey/accountKey'
 import { serverAccount } from '@/lib/serverAccount'
 import { buddiesEngine } from '@/features/buddies/lib/buddiesService'
+import { buddyDisplayName } from '@/features/buddies/lib/buddyProfile'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 
 /**
@@ -29,6 +30,7 @@ export const accountKey = createAccountKeyService({
         useBuddies.getState()
       return {
         buddies: buddies.length,
+        buddyNames: buddies.map(buddyDisplayName),
         // Removals still owed to former buddies need the old key too.
         inboxRegistered:
           registeredInboxId !== null || pendingRemovals.length > 0,

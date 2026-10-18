@@ -21,11 +21,17 @@ export type AccountKeyStore = {
 export type AccountKeyLoss = {
   /** Buddies on this device, who are removed (and leave this User's inbox). */
   buddies: number
+  /** Their names as this User sees them, for the warning to name them. */
+  buddyNames: string[]
   /** The Buddies inbox registered for the current key, which is deleted. */
   inboxRegistered: boolean
 }
 
-export const NO_LOSS: AccountKeyLoss = { buddies: 0, inboxRegistered: false }
+export const NO_LOSS: AccountKeyLoss = {
+  buddies: 0,
+  buddyNames: [],
+  inboxRegistered: false,
+}
 
 export const losesSomething = (loss: AccountKeyLoss) =>
   loss.buddies > 0 || loss.inboxRegistered

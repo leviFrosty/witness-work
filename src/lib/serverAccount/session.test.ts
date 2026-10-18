@@ -11,6 +11,7 @@ import { openDeviceLabel } from '@/lib/serverAccount/deviceLabel'
 import { deriveAccountSigningKey } from '@/lib/serverAccount/keys'
 import {
   ACCESS_LIFETIME_MS,
+  type AccountSessionDeps,
   AccountSessionError,
   type AccountSessionEvent,
   createAccountSessions,
@@ -239,6 +240,7 @@ function setup(
     attestation?: ReturnType<typeof fakeAttestation>
     /** This device's account key, which a test may replace. */
     device?: { key: Uint8Array }
+    deps?: Partial<AccountSessionDeps>
   } = {}
 ) {
   const clock = options.clock ?? { now: 1_800_000_000_000 }
@@ -266,6 +268,7 @@ function setup(
     onUpgradeRequired,
     onEvent: (event) => events.push(event),
     onStoreFailure,
+    ...options.deps,
   })
   const info = (accountKey?: Uint8Array) =>
     sessions.request<{ accountId: string }>(
@@ -425,6 +428,83 @@ describe('account sessions', () => {
       reason: 'ended',
       outcome: 'ok',
     })
+  })
+
+  it('renews the access token first when asked, signing a signed-out device back in', async () => {
+    const onThisDeviceSession = vi.fn()
+    const { worker, sessions, attestation } = setup({
+      deps: { onThisDeviceSession },
+    })
+    const renewed = () =>
+      sessions.request(
+        { url: `${BASE}/accounts/v1/account`, method: 'GET', timeoutMs: 5_000 },
+        { renew: true }
+      )
+    await renewed()
+    // Nothing to renew yet: the session was just opened.
+    expect(worker.opsCalled('session/refresh')).toHaveLength(0)
+
+    await renewed()
+    expect(worker.opsCalled('session/refresh')).toHaveLength(1)
+
+    // Signed out from another device, with the access token still working.
+    worker.sessions[0].ended = true
+    worker.override.set('account/info', () =>
+      json(200, { ok: true, accountId: worker.sessions[0].accountId })
+    )
+    await renewed()
+    expect(attestation.assert).toHaveBeenCalledTimes(2)
+    expect(sessions.snapshot()?.sessionId).toBe('sid-2')
+    expect(onThisDeviceSession.mock.calls).toEqual([['sid-1'], ['sid-2']])
+  })
+
+  it('reports the stored session as this device’s after a relaunch', async () => {
+    const first = setup()
+    await first.info()
+    const onThisDeviceSession = vi.fn()
+    const relaunched = setup({
+      store: memoryStore(first.store.value),
+      clock: first.clock,
+      worker: first.worker,
+      deps: { onThisDeviceSession },
+    })
+    await relaunched.info()
+    expect(onThisDeviceSession.mock.calls).toEqual([['sid-1']])
+  })
+
+  it('notes a suspended account from a refusal, and asks again once a call works', async () => {
+    const onStatusChange = vi.fn()
+    const onSucceededWhileSuspended = vi.fn()
+    const { worker, sessions, info } = setup({
+      deps: { onStatusChange, onSucceededWhileSuspended },
+    })
+    await info()
+    expect(onSucceededWhileSuspended).not.toHaveBeenCalled()
+
+    worker.override.set('account/info', () => failure(403, 'suspended'))
+    await expect(info()).rejects.toBeInstanceOf(HttpError)
+    expect(onStatusChange).toHaveBeenCalledWith(PUB_A, 'suspended')
+    expect(sessions.snapshot()?.status).toBe('suspended')
+
+    // A Buddies relay error says it with `code`.
+    worker.override.delete('account/info')
+    await expect(
+      sessions.withSession(async () => {
+        throw Object.assign(new Error('relay'), {
+          status: 403,
+          code: 'suspended',
+        })
+      })
+    ).rejects.toThrow('relay')
+    expect(onStatusChange).toHaveBeenCalledTimes(1)
+
+    await info()
+    expect(onSucceededWhileSuspended).toHaveBeenCalledWith(KEY_A)
+
+    sessions.noteStatus(PUB_A, 'active')
+    expect(onStatusChange).toHaveBeenLastCalledWith(PUB_A, 'active')
+    await info()
+    expect(onSucceededWhileSuspended).toHaveBeenCalledTimes(1)
   })
 
   it('opens a new session after 90 days without trying to refresh', async () => {

@@ -225,6 +225,20 @@ export function toAccountSessionError(error: unknown): AccountSessionError {
   return new AccountSessionError('server')
 }
 
+/**
+ * A call refused because the account is suspended: Notes Import's and the
+ * accounts routes' `HttpError`, or a Buddies `RelayError` (`code`).
+ */
+export const refusedAsSuspended = (error: unknown) => {
+  if (typeof error !== 'object' || error === null) return false
+  const { status, serverCode, code } = error as {
+    status?: unknown
+    serverCode?: unknown
+    code?: unknown
+  }
+  return status === 403 && (serverCode === 'suspended' || code === 'suspended')
+}
+
 /** A bearer request the server refused for its token: refresh and retry. */
 export const isUnauthorized = (error: unknown) =>
   error instanceof HttpError &&
@@ -299,6 +313,19 @@ export type AccountSessionDeps = {
    * The error is the store's; it never holds a token.
    */
   onStoreFailure?: (op: 'save' | 'delete', error: unknown) => void
+  /**
+   * A session became this device's: read from the keystore, opened, or adopted
+   * in a handoff. Account Activity names every session this install had as
+   * "this device".
+   */
+  onThisDeviceSession?: (sessionId: string) => void
+  /** The account's status as this device knows it changed (`noteStatus`). */
+  onStatusChange?: (accountPub: string, status: AccountStatus) => void
+  /**
+   * A call worked while this device thinks the account is suspended: it may
+   * have been reinstated, so the account is worth reading again.
+   */
+  onSucceededWhileSuspended?: (accountKey: Uint8Array) => void
 }
 
 /** The account a session belongs to. */
@@ -548,6 +575,7 @@ export function createAccountSessions(deps: AccountSessionDeps) {
         return
       }
       live = { ...saved, accessToken: null, accessExpiresAt: 0 }
+      deps.onThisDeviceSession?.(saved.sessionId)
     })
     return loading
   }
@@ -849,6 +877,7 @@ export function createAccountSessions(deps: AccountSessionDeps) {
       lastFailure = null
       discardedStale = false
       live = next
+      deps.onThisDeviceSession?.(next.sessionId)
       return next
     }
     const previous = flight?.promise
@@ -903,14 +932,25 @@ export function createAccountSessions(deps: AccountSessionDeps) {
    * Runs `run` with `Authorization: Bearer …`. A 401 for the token refreshes
    * once and runs it again; a 426 calls `onUpgradeRequired`. Both throw
    * `AccountSessionError`, as does failing to get a session; `run`'s own
-   * failures are thrown as they are.
+   * failures are thrown as they are. `renew` refreshes the access token first,
+   * which opens a new session when the server ended this one. A 403 `suspended`
+   * notes the account as suspended; a call that works while it's noted so calls
+   * `onSucceededWhileSuspended`.
    */
   async function withSession<T>(
     run: (authorization: string, session: AccountSessionInfo) => Promise<T>,
-    call: { accountKey?: Uint8Array; signal?: AbortSignal } = {}
+    call: {
+      accountKey?: Uint8Array
+      signal?: AbortSignal
+      renew?: boolean
+    } = {}
   ): Promise<T> {
     const { bytes, key } = await keyFor(call.accountKey)
-    let rejected: string | undefined
+    if (call.renew) await load()
+    let rejected: string | undefined =
+      call.renew && live?.accountPub === key.publicKey
+        ? (live.accessToken ?? undefined)
+        : undefined
     for (let attempt = 0; ; attempt++) {
       const current = await acquire(bytes, key, {
         rejected,
@@ -918,7 +958,10 @@ export function createAccountSessions(deps: AccountSessionDeps) {
       })
       const token = current.accessToken!
       try {
-        return await run(`Bearer ${token}`, info(current))
+        const result = await run(`Bearer ${token}`, info(current))
+        if (live?.accountPub === key.publicKey && live.status === 'suspended')
+          deps.onSucceededWhileSuspended?.(bytes)
+        return result
       } catch (error) {
         if (
           error instanceof HttpError &&
@@ -927,6 +970,7 @@ export function createAccountSessions(deps: AccountSessionDeps) {
           upgradeRequired()
           throw toAccountSessionError(error)
         }
+        if (refusedAsSuspended(error)) noteStatus(key.publicKey, 'suspended')
         if (attempt === 0 && isUnauthorized(error)) {
           rejected = token
           continue
@@ -939,7 +983,7 @@ export function createAccountSessions(deps: AccountSessionDeps) {
   /** `request()` with the session's bearer token; see `withSession`. */
   function authorizedRequest<T = unknown>(
     options: RequestOptions,
-    call: { accountKey?: Uint8Array } = {}
+    call: { accountKey?: Uint8Array; renew?: boolean } = {}
   ): Promise<HttpResponse<T>> {
     return withSession(
       (authorization) =>
@@ -948,7 +992,7 @@ export function createAccountSessions(deps: AccountSessionDeps) {
           headers: { ...options.headers, authorization },
           fetchImpl: options.fetchImpl ?? deps.fetchImpl,
         }),
-      { accountKey: call.accountKey, signal: options.signal }
+      { accountKey: call.accountKey, signal: options.signal, renew: call.renew }
     )
   }
 
@@ -978,6 +1022,7 @@ export function createAccountSessions(deps: AccountSessionDeps) {
         flight = null
         lastFailure = null
         live = toLive(key.publicKey, opened)
+        deps.onThisDeviceSession?.(opened.sessionId)
         // Kept for this launch even when the keystore fails.
         await save(stored(live), () => generation === adoptedAt)
       },
@@ -1061,12 +1106,16 @@ export function createAccountSessions(deps: AccountSessionDeps) {
     }
   }
 
-  /** Reading the account (`GET /accounts/v1/account`) found a newer status. */
+  /**
+   * The server said the account's status: reading the account (`GET
+   * /accounts/v1/account`), or refusing a call as `suspended`.
+   */
   function noteStatus(accountPub: string, status: AccountStatus) {
     if (live?.accountPub !== accountPub || live.status === status) return
     const next = { ...live, status }
     live = next
     void save(stored(next), () => live === next)
+    deps.onStatusChange?.(accountPub, status)
   }
 
   function snapshot(): AccountSessionSnapshot | null {

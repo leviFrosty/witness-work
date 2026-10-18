@@ -1,6 +1,6 @@
 # Server account protocol
 
-The wire contract for the server account between the WitnessWork app (`src/lib/serverAccount`) and ww-api (`ww-api/src/accounts`). Why it exists is in [ADR 0024](./adr/0024-anonymous-server-accounts.md); moving it, recovering it, and backing up to it are in [ADR 0026](./adr/0026-move-and-recover-the-server-account.md); attested sessions and bearer tokens are in [ADR 0027](./adr/0027-account-sessions-attest-once-then-bearer-tokens.md).
+The wire contract for the server account between the WitnessWork app (`src/lib/serverAccount`) and ww-api (`ww-api/src/accounts`). Why it exists is in [ADR 0024](./adr/0024-anonymous-server-accounts.md); moving it, recovering it, and backing up to it are in [ADR 0026](./adr/0026-move-and-recover-the-server-account.md); attested sessions and bearer tokens are in [ADR 0027](./adr/0027-account-sessions-attest-once-then-bearer-tokens.md); the activity log and device list are in [ADR 0028](./adr/0028-account-activity-log.md).
 
 The server account is not ADR 0011's account id. That one is the RevenueCat identity, shared through a file in iCloud Drive. This one is a row ww-api owns, so it can suspend someone for abuse.
 
@@ -105,6 +105,68 @@ A JWT (`HS256`, with `kid`) the app treats as opaque. Claims: `sub` (`accountId`
 - Before sessions it was `POST /accounts/v1/account/info`, self-signed like `account/register` (payload `accountPub`, `ts`, `nonce`) under op `account/info`. That route stays only for older app versions while the legacy switch is on; there an unregistered key is `unknown_account` (404).
 - `createdAt` and each `statusChanges[].createdAt` are epoch milliseconds. Status changes carry `status` only; their reason codes stay with moderation.
 - Settings → Account reads the account's status with it each time the screen opens, and the developer Tools show the whole record. Counts against the Buddies read edge limit.
+
+## Activity and devices
+
+The account's security history and its signed-in devices ([ADR 0028](./adr/0028-account-activity-log.md)). All three routes are **Bearer** only (no envelope form), count against the Buddies read edge limit, and work for a suspended account.
+
+### Listing devices: `GET /accounts/v1/sessions`
+
+→ `{ ok, sessions: [Session] }`, the account's live sessions, newest first:
+
+| Field          | What                                                                      |
+| -------------- | ------------------------------------------------------------------------- |
+| `sessionId`    | The session's id (the access token's `sid`)                               |
+| `platform`     | `ios`, `android`, or `dev`                                                |
+| `device`?      | The sealed device label from `POST /accounts/v1/sessions`, as sent        |
+| `current`      | `true` for the session the token belongs to                               |
+| `createdAt`    | When it opened, epoch ms                                                  |
+| `lastActiveAt` | Its last refresh (or `createdAt`), epoch ms; accurate to about 15 minutes |
+| `expiresAt`    | 90 days after it opened, epoch ms                                         |
+
+### Signing a device out: `POST /accounts/v1/sessions/revoke`
+
+`{ sessionId }` → `{ ok }`. Ends one of the account's sessions and logs `session.revoked` naming the calling session. Ending an ended session is `ok`; the token's own session is ended like `DELETE /sessions/current` (`session.signed_out`). A session of another account, or none, is 404 `not_found`. It's a `POST` so the session id stays out of the URL.
+
+Revoking ends the session, not the device's account key: a device that still has the key opens a new session when it next needs one, logged as a new `session.opened`.
+
+### Reading activity: `GET /accounts/v1/activity`
+
+Query: `limit` (1–100, default 50) and `before` (the previous page's `nextCursor`). → `{ ok, activity: [Entry], nextCursor }`, newest first; `nextCursor` is `null` on the last page. A malformed `limit` or `before` is 400 `bad_request`.
+
+| Field       | What                                                                                 |
+| ----------- | ------------------------------------------------------------------------------------ |
+| `id`        | Opaque, unique within the account; also a cursor                                     |
+| `kind`      | Below                                                                                |
+| `createdAt` | Epoch ms                                                                             |
+| `session`?  | The session the entry is about, or that did it: `{ sessionId, platform, device? }`   |
+| `actor`?    | For `session.revoked` and `session.replaced`, the session that ended it (same shape) |
+| `slotId`?   | `backup.deleted` (absent when every slot was deleted) and `backup.downloaded`        |
+
+| `kind`                   | `session`                                                                                     | `actor`             |
+| ------------------------ | --------------------------------------------------------------------------------------------- | ------------------- |
+| `account.created`        | —                                                                                             | —                   |
+| `session.opened`         | The new session                                                                               | —                   |
+| `session.signed_out`     | The session that ended itself                                                                 | —                   |
+| `session.revoked`        | The session signed out                                                                        | The one that did it |
+| `session.replaced`       | The oldest session, ended by the cap                                                          | The new session     |
+| `session.refresh_reused` | The session ended: a refresh token was reused after its grace minute                          | —                   |
+| `handoff.sent`           | The old phone's session (absent before sessions)                                              | —                   |
+| `backup.deleted`         | The session that deleted (absent before sessions)                                             | —                   |
+| `backup.downloaded`      | The session that downloaded (absent before sessions); at most once per slot, session, and day | —                   |
+| `account.suspended`      | —                                                                                             | —                   |
+| `account.reinstated`     | —                                                                                             | —                   |
+| `buddies.inbox_linked`   | The session that linked the account's inbox (absent before sessions)                          | —                   |
+| `buddies.deleted`        | The session that deleted the account's Buddies inbox (absent before sessions)                 | —                   |
+
+- `device` is the label as the session sent it, copied onto the entry, so it outlives the session. Open it with the device label key (see [Opening a session](#opening-a-session-post-accountsv1sessions)). A label that's absent or won't open shows the platform instead.
+- Buddies entries name only the account's own inbox being linked or deleted; writer ops are never logged.
+- The server adds kinds over time. Clients skip a `kind` they don't know.
+- Entries are kept 400 days.
+
+### The app
+
+Settings → Account → **Devices** lists the sessions, marks the one whose `sessionId` is this device's as "This device", and offers Sign Out on the others. Settings → Account → **Activity** pages through the log 50 at a time and flags `session.refresh_reused`. Both decrypt labels on the device.
 
 ## Linking a Buddies inbox
 
@@ -269,5 +331,7 @@ Moderation is maintainer-only: `POST /admin/accounts/lookup` and `/admin/account
 The accounts database holds the account id, `accountPub`, the status and its history (reason codes only), and which inboxes each account owns. No name, email, phone number, or private key, and nothing the User shares in Buddies. The inbox links mean the server knows which inbox belongs to which account, but not who that is or who their buddies are.
 
 Sessions hold the account id, the platform, the SHA-256 of the current and previous refresh tokens, and their times; not the install, its App Attest key, or `accountPub`. Access tokens carry the account id and session id and are never logged.
+
+The activity log holds, for 400 days, each entry's kind and time, the session ids and platforms it names, their sealed device labels, and backup slot ids. No IP address, location, user agent, or content, and nothing about buddies.
 
 Handoff channels hold two temporary public keys and two sealed blobs for at most ten minutes. Backups are ciphertext under a key only the User's devices can derive; the server keeps each slot's size, upload time, and random slot id, and can't read a device name or any data. Losing every device and the recovery key loses the backup.

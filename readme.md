@@ -121,7 +121,10 @@ coordinates only`"]
 HERE proxy, key stays server-side`"]
       R_ACC["`**/accounts/v1/...**
 attested sessions, bearer ops,
-handoff relay, encrypted backups`"]
+handoff relay, encrypted backups,
+RevenueCat link + Supporter status`"]
+      R_RCHOOK["`**POST /revenuecat/v1/webhook**
+keeps Supporter status current`"]
       R_ATTEST["`**/attestation/v1/...**
 challenges, App Attest key setup`"]
       R_APPCFG["`**GET /app/v1/config**
@@ -131,7 +134,7 @@ link pages, Universal + App Links`"]
       R_RATINGS["`**GET /app-store/ratings**
 paywall social proof`"]
       CRON["`**Hourly cron**
-App Store ratings sweep`"]
+App Store ratings sweep, pruning`"]
     end
     subgraph BUD_STATE["Buddies relay state"]
       DO_REGQ[("`**BuddyRegistrationQuota DO**
@@ -158,7 +161,7 @@ one per import, about 1 hour`")]
     subgraph ACC_STATE["Account state"]
       D_ACC[("`**D1: accounts**
 account ids, public keys, inbox links,
-sessions`")]
+sessions, linked RevenueCat customers`")]
       DO_HANDOFF[("`**AccountHandoff DO**
 one per handoff, 10 minutes`")]
       R2_BACKUP[("`**R2: ww-account-backups**
@@ -204,12 +207,13 @@ analytics, flags, surveys, errors`"]
 
   A_BUDDIES -->|"signed ops, WebSocket"| R_BUD
   A_ACCOUNT -->|"account key"| P_SEED
-  A_ACCOUNT -->|"open session, sealed handoff, sealed backup"| R_ACC
+  A_ACCOUNT -->|"open session, sealed handoff, sealed backup, RevenueCat id"| R_ACC
   A_ACCOUNT -->|"key setup, session challenge"| R_ATTEST
   A_SHELL -->|"minimum version"| R_APPCFG
   A_NOTES -->|"account session"| A_ACCOUNT
   A_NOTES -->|"bearer: notes text, SSE stream"| R_NOTES
-  A_ROUTE -->|"today's stops"| R_ROUTE
+  A_ROUTE -->|"account session"| A_ACCOUNT
+  A_ROUTE -->|"bearer: today's stops"| R_ROUTE
   A_CONTACTS -->|"address lookup"| R_PLACES
   A_LINKS -->|"/c, /b and /h links"| R_LINKS
   A_SUPPORTER -->|"paywall ratings"| R_RATINGS
@@ -235,6 +239,9 @@ analytics, flags, surveys, errors`"]
   R_NOTES -->|"credits"| DO_IDX
   R_NOTES -->|"run, SSE"| DO_RUN
   R_ROUTE -->|"daily quota"| DO_RPQ
+  R_ROUTE -->|"Supporter status"| D_ACC
+  R_NOTES -->|"Supporter status"| D_ACC
+  R_RCHOOK -->|"customer records"| D_ACC
   R_RATINGS -->|"cached ratings"| KV
   CRON -->|"writes ratings"| KV
   WORKER -.->|"flags, limits, tokens"| KV
@@ -249,7 +256,8 @@ analytics, flags, surveys, errors`"]
   R_PLACES -->|"geocode, autocomplete"| S_HERE
   CRON -->|"ratings lookup"| P_STORE
   S_RC -->|"store receipts"| P_STORE
-  WORKER -->|"Supporter checks"| S_RC
+  WORKER -->|"reads customers (REST)"| S_RC
+  S_RC -.->|"webhook events"| R_RCHOOK
   WORKER -->|"usage events"| S_PH
   WORKER -->|"errors + traces"| S_SENTRY
 
@@ -264,7 +272,7 @@ analytics, flags, surveys, errors`"]
   class A_CORE,A_BUDDIES,A_ACCOUNT,A_SYNC,A_NOTES,A_ROUTE,A_CONTACTS,A_LINKS,A_SUPPORTER,A_SHELL app
   class A_LOCAL local
   class P_CAL,P_SEED,P_SYNC,P_ATTEST,P_MAPS,P_PUSH,P_STORE,S_GPI platform
-  class R_BUD,R_ACC,R_ATTEST,R_APPCFG,R_NOTES,R_ROUTE,R_PLACES,R_LINKS,R_RATINGS,CRON worker
+  class R_BUD,R_ACC,R_RCHOOK,R_ATTEST,R_APPCFG,R_NOTES,R_ROUTE,R_PLACES,R_LINKS,R_RATINGS,CRON worker
   class DO_REGQ,DO_INV,DO_INBOX,R2,D_ACC,DO_HANDOFF,R2_BACKUP,DO_AA,DO_PI,DO_IDX,DO_RUN,DO_RPQ,KV state
   class S_OR,S_LLM,S_HERE,S_SENTRY,S_RC,S_PH,S_EAS external
 ```
@@ -273,6 +281,7 @@ analytics, flags, surveys, errors`"]
 - Buddies cards, events, and photos are sealed on the device before they reach the relay. [docs/buddies-protocol.md](./docs/buddies-protocol.md) lists what the relay can see.
 - Account backups are sealed on the device with a key only the User's devices can derive; the server keeps each device's ciphertext, its size and upload time ([docs/accounts-protocol.md](./docs/accounts-protocol.md#backup)).
 - Notes Import reaches its model through OpenRouter, pinned to zero-data-retention hosts ([ADR 0008](./docs/adr/0008-notes-import-third-party-llm-zero-retention.md)). It calls ww-api with the account's attested session, which stands in for attesting each import ([ADR 0027](./docs/adr/0027-account-sessions-attest-once-then-bearer-tokens.md)); the legacy edges serve app versions from before sessions.
+- Supporter status lives on the server account ([ADR 0029](./docs/adr/0029-supporter-status-on-the-server-account.md)): the app names the RevenueCat customer it's logged in as, ww-api reads that customer from RevenueCat itself, and RevenueCat's webhook keeps the record current. Legacy route planning and Notes Import still ask RevenueCat about the id they send.
 - Left out: `GET /health` (the app checks its clock against it), the admin reset route, the private CloudKit record that picks which iPhone publishes Follow-ups to the calendar, link previews the device fetches for URLs in notes, and the build and release pipeline.
 
 When a change adds, removes, or reroutes one of these connections, update the diagram in the same pull request.

@@ -20,8 +20,9 @@ vi.mock('@/lib/http/online', () => ({ isKnownOffline: () => false }))
 vi.mock('@/lib/perf', () => ({ perf: { count: vi.fn() } }))
 // Node's fetch reads a streaming body as expo/fetch does.
 vi.mock('expo/fetch', () => ({ fetch: globalThis.fetch }))
-vi.mock('@/lib/account', () => ({
-  getOrCreateAccountId: () => 'interop-revenuecat-user',
+// Linking RevenueCat (ADR 0029) has its own interop test; no SDK here.
+vi.mock('@/lib/serverAccount/revenueCatLinkRuntime', () => ({
+  linkBeforePaidCall: async () => {},
 }))
 vi.mock('@/lib/attestation', () => ({
   deviceAttestation: { checkSupport: async () => 'supported' },
@@ -115,37 +116,22 @@ describe.skipIf(!interopEnabled)('Notes Import against a real worker', () => {
     expect(codeOf(error)).toBe('too_large')
   })
 
-  it('accepts only revenueCatAppUserId values the app would send', async () => {
-    const kickoff = (body: Record<string, unknown>) =>
-      accountSessions
-        .request({
-          url: apis.notesImportKickoff,
-          method: 'POST',
-          json: body,
-          timeoutMs: 15_000,
-        })
-        .catch((e: unknown) => e)
-    // The id is checked before the size, so a refused one never gets there.
-    for (const id of ['$RCAnonymousID:0123456789abcdef', 'short'])
-      expect(
-        codeOf(
-          await kickoff({
-            notesText: 'x'.repeat(100_001),
-            context,
-            revenueCatAppUserId: id,
-          })
-        )
-      ).toBe('bad_request')
-    // A valid id passes the check and meets the size limit instead.
-    expect(
-      codeOf(
-        await kickoff({
+  it('ignores the revenueCatAppUserId builds before ADR 0029 sent', async () => {
+    // Supporter status is the account's now; even a malformed id is ignored,
+    // so the request meets the size limit instead of a bad_request.
+    const error = await accountSessions
+      .request({
+        url: apis.notesImportKickoff,
+        method: 'POST',
+        json: {
           notesText: 'x'.repeat(100_001),
           context,
-          revenueCatAppUserId: 'interop-revenuecat-user',
-        })
-      )
-    ).toBe('too_large')
+          revenueCatAppUserId: '$RCAnonymousID:0123456789abcdef',
+        },
+        timeoutMs: 15_000,
+      })
+      .catch((e: unknown) => e)
+    expect(codeOf(error)).toBe('too_large')
   })
 
   it('answers run routes for an import that does not exist with 404 not_found', async () => {

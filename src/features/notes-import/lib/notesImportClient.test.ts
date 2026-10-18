@@ -16,7 +16,7 @@ const harness = vi.hoisted(() => ({
     request.submit({ kind: 'devBypass', token: 'dev-token' })) as <T>(
     request: AttestedRequest<T>
   ) => Promise<T>,
-  revenueCatId: 'install-uuid-1234' as string,
+  links: 0,
   support: 'supported' as 'supported' | 'unsupported' | 'unknown',
   checkSupport: { calls: 0 },
   upgradeRequired: { calls: 0 },
@@ -26,8 +26,10 @@ vi.mock('expo/fetch', () => ({ fetch: vi.fn() }))
 vi.mock('@/lib/http/online', () => ({ isKnownOffline: () => false }))
 vi.mock('@/lib/perf', () => ({ perf: { count: vi.fn() } }))
 vi.mock('@/lib/logger', () => import('@/__tests__/mocks/logger'))
-vi.mock('@/lib/account', () => ({
-  getOrCreateAccountId: () => harness.revenueCatId,
+vi.mock('@/lib/serverAccount/revenueCatLinkRuntime', () => ({
+  linkBeforePaidCall: async () => {
+    harness.links++
+  },
 }))
 vi.mock('@/lib/attestation', () => ({
   deviceAttestation: {
@@ -242,7 +244,7 @@ beforeEach(() => {
   harness.fetch = worker.handle
   harness.assert = async (request) =>
     request.submit({ kind: 'devBypass', token: 'dev-token' })
-  harness.revenueCatId = 'install-uuid-1234'
+  harness.links = 0
   harness.support = 'supported'
   harness.checkSupport.calls = 0
   harness.upgradeRequired.calls = 0
@@ -289,10 +291,12 @@ describe('Notes Import on the account session: request shapes', () => {
     expect(kickoff.body).toEqual({
       notesText: 'private notes',
       context,
-      revenueCatAppUserId: 'install-uuid-1234',
     })
     for (const field of LEGACY_FIELDS)
       expect(kickoff.body).not.toHaveProperty(field)
+    expect(kickoff.body).not.toHaveProperty('revenueCatAppUserId')
+    // Linked the RevenueCat customer first (ADR 0029).
+    expect(harness.links).toBe(1)
 
     const [events] = worker.callsTo(eventsRoute())
     expect(events.query).toBe('')
@@ -312,21 +316,6 @@ describe('Notes Import on the account session: request shapes', () => {
       notesText: 'private notes',
       context,
       refinement,
-      revenueCatAppUserId: 'install-uuid-1234',
-    })
-  })
-
-  it.each([
-    ['a RevenueCat anonymous id', '$RCAnonymousID:0123456789abcdef'],
-    ['a short id', 'abc'],
-    ['an empty id', ''],
-  ])('leaves out revenueCatAppUserId for %s', async (_label, id) => {
-    harness.revenueCatId = id
-    worker.on(eventsRoute(), () => sse(doneFrame('parsed')))
-    await runNotesImportStreaming(request)
-    expect(worker.callsTo('POST /notes-import/kickoff')[0].body).toEqual({
-      notesText: 'private notes',
-      context,
     })
   })
 
@@ -349,8 +338,8 @@ describe('Notes Import on the account session: request shapes', () => {
     expect(call.body).toEqual({
       image: 'base64-page',
       mimeType: 'image/jpeg',
-      revenueCatAppUserId: 'install-uuid-1234',
     })
+    expect(harness.links).toBe(1)
     for (const field of LEGACY_FIELDS)
       expect(call.body).not.toHaveProperty(field)
   })
@@ -391,8 +380,8 @@ describe('Notes Import on the account session: request shapes', () => {
     expect(call.body).toEqual({
       notesText: 'private notes',
       context,
-      revenueCatAppUserId: 'install-uuid-1234',
     })
+    expect(harness.links).toBe(1)
   })
 
   it('reads a result snapshot by bearer token, with no token in the URL', async () => {

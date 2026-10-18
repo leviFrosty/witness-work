@@ -15,6 +15,7 @@ import {
   runNotesImportStreaming,
   resumeNotesImport,
   destroyNotesImport,
+  fetchNotesImportAccountUsage,
   NotesImportClientError,
   type NotesImportCredits,
   type ImportStreamEvent,
@@ -25,6 +26,7 @@ import {
   persistCredits,
 } from '@/features/notes-import/lib/notesImportCreditsStore'
 import {
+  accountUsageCredits,
   notesImportCreditsForHash,
   type NotesImportRefinementsByHash,
 } from '@/features/notes-import/lib/notesImportUsage'
@@ -167,6 +169,12 @@ interface NotesImportManagerState {
    * unknown.
    */
   creditsForImport: (hash: string) => NotesImportCredits | null
+  /**
+   * Reads the account's allowance from the server (`GET /notes-import/usage`),
+   * so the balance counts imports on the account's other devices. Keeps what's
+   * shown when it can't be read. Concurrent calls share one read.
+   */
+  refreshAccountUsage: () => Promise<void>
   /** AppState lifecycle seam: normalize rollover, re-arm stale denials, tick. */
   appBecameActive: () => void
   /** Reload the list from the ledger, dropping runtimes for vanished rows. */
@@ -362,6 +370,36 @@ export const useNotesImportManager = create<NotesImportManagerState>(
       return decision.refreshed
     }
 
+    let accountUsageRead: Promise<void> | null = null
+
+    /** Apply the account's allowance as authority (never per-hash state). */
+    const readAccountUsage = async () => {
+      const usage = await fetchNotesImportAccountUsage()
+      const incoming = usage && accountUsageCredits(usage)
+      if (!incoming) return
+      const state = get()
+      const decision = decideCreditsUpdate({
+        current: state.credits,
+        currentProvenance: state.creditsProvenance,
+        authoritative: state.authoritativeCredits,
+        incoming,
+        source: 'account',
+        now: Date.now(),
+      })
+      if (!decision.authoritative || !decision.persist) return
+      set({
+        credits: decision.credits,
+        creditsProvenance: decision.provenance,
+        creditsKickoffHash:
+          decision.provenance === 'kickoff' ? state.creditsKickoffHash : null,
+        authoritativeCredits: decision.authoritative,
+      })
+      persistAuthority(
+        decision.authoritative,
+        state.authoritativeRefinementCredits
+      )
+    }
+
     /** Roll back only the kickoff projection owned by this failed hash. */
     const restoreKickoffProjection = (hash: string) => {
       const state = get()
@@ -515,6 +553,7 @@ export const useNotesImportManager = create<NotesImportManagerState>(
           // Terminal success is authoritative after the server commits usage.
           // A malformed/missing snapshot leaves the last valid state untouched.
           applyCredits(hash, res.credits, 'terminal')
+          void get().refreshAccountUsage()
           analytics.capture('import_preview_ready', {
             import_type: 'notes',
             source,
@@ -633,6 +672,11 @@ export const useNotesImportManager = create<NotesImportManagerState>(
 
       creditsForImport: (hash) =>
         notesImportCreditsForHash(get().credits, get().refinementCredits, hash),
+
+      refreshAccountUsage: () =>
+        (accountUsageRead ??= readAccountUsage().finally(() => {
+          accountUsageRead = null
+        })),
 
       appBecameActive: () => {
         const refreshed = refreshCreditsForLifecycle('app-active')

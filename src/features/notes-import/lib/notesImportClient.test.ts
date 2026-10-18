@@ -20,6 +20,8 @@ const harness = vi.hoisted(() => ({
   support: 'supported' as 'supported' | 'unsupported' | 'unknown',
   checkSupport: { calls: 0 },
   upgradeRequired: { calls: 0 },
+  /** This device already has the account key (without a session). */
+  hasAccountKey: false,
 }))
 
 vi.mock('expo/fetch', () => ({ fetch: vi.fn() }))
@@ -59,6 +61,7 @@ vi.mock('@/lib/serverAccount', async () => {
         harness.upgradeRequired.calls++
       },
     }),
+    hasAccountKey: async () => harness.hasAccountKey,
   }
 })
 
@@ -66,6 +69,7 @@ import { accountSessions } from '@/lib/serverAccount'
 import {
   consumeStream,
   destroyNotesImport,
+  fetchNotesImportAccountUsage,
   fetchNotesImportResult,
   notesImportDeviceUnverified,
   requestNotesImport,
@@ -248,6 +252,7 @@ beforeEach(() => {
   harness.support = 'supported'
   harness.checkSupport.calls = 0
   harness.upgradeRequired.calls = 0
+  harness.hasAccountKey = false
   accountSessions.forget()
   vi.mocked(expoFetch).mockReset()
   // The stream reads the same worker, as a fetch Response.
@@ -411,6 +416,65 @@ describe('Notes Import on the account session: request shapes', () => {
     await expect(
       destroyNotesImport({ importId: IMPORT_ID })
     ).resolves.toBeUndefined()
+  })
+})
+
+describe('the account’s allowance', () => {
+  const usage = {
+    ok: true,
+    accountStatus: 'active',
+    supporter: false,
+    supporterCheckFailed: false,
+    imports: {
+      limit: 3,
+      used: 1,
+      remaining: 2,
+      resetsAt: '2026-11-17T12:00:00.000Z',
+    },
+    refinements: { limitPerImport: 5 },
+    windowDays: 30,
+  }
+
+  it('reads it as the session this device already has', async () => {
+    await accountSessions.ensure()
+    worker.on('GET /notes-import/usage', () => json(200, usage))
+
+    await expect(fetchNotesImportAccountUsage()).resolves.toMatchObject({
+      imports: usage.imports,
+      refinementsPerImport: 5,
+    })
+    const [read] = worker.callsTo('GET /notes-import/usage')
+    expect(read.headers.authorization).toBe('Bearer at-1')
+  })
+
+  it('never creates an account key or attests on a device without one', async () => {
+    worker.on('GET /notes-import/usage', () => json(200, usage))
+
+    await expect(fetchNotesImportAccountUsage()).resolves.toBeNull()
+    expect(worker.calls).toEqual([])
+  })
+
+  it('opens a session on a device that already has the account key', async () => {
+    harness.hasAccountKey = true
+    worker.on('GET /notes-import/usage', () => json(200, usage))
+
+    await expect(fetchNotesImportAccountUsage()).resolves.toMatchObject({
+      imports: usage.imports,
+    })
+    expect(worker.callsTo('POST /accounts/v1/sessions')).toHaveLength(1)
+  })
+
+  it('is unavailable from a server before the route, or a malformed answer', async () => {
+    await accountSessions.ensure()
+    worker.on('GET /notes-import/usage', () =>
+      json(404, { ok: false, error: 'not_found', code: 'not_found' })
+    )
+    await expect(fetchNotesImportAccountUsage()).resolves.toBeNull()
+
+    worker.on('GET /notes-import/usage', () =>
+      json(200, { ...usage, imports: { limit: 3 } })
+    )
+    await expect(fetchNotesImportAccountUsage()).resolves.toBeNull()
   })
 })
 

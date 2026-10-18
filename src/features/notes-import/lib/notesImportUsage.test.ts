@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
+  accountUsageCredits,
+  normalizeNotesImportAccountUsage,
   notesImportCreditsForHash,
   normalizeNotesImportCredits,
   normalizeNotesImportStatus,
@@ -333,5 +335,94 @@ describe('notesImportCreditsForHash', () => {
         'a'
       )
     ).toBeNull()
+  })
+})
+
+describe('the account usage answer (GET /notes-import/usage)', () => {
+  const answer = {
+    ok: true,
+    accountStatus: 'active',
+    supporter: false,
+    supporterCheckFailed: false,
+    imports: {
+      limit: 3,
+      used: 1,
+      remaining: 2,
+      resetsAt: '2026-11-17T12:00:00.000Z',
+    },
+    refinements: { limitPerImport: 5 },
+    windowDays: 30,
+  }
+  const now = Date.parse('2026-10-18T12:00:00.000Z')
+
+  it('reads the account’s allowance', () => {
+    expect(normalizeNotesImportAccountUsage(answer)).toEqual({
+      supporter: false,
+      supporterCheckFailed: false,
+      accountStatus: 'active',
+      imports: answer.imports,
+      refinementsPerImport: 5,
+      windowDays: 30,
+    })
+  })
+
+  it('refuses a malformed answer instead of inventing usage', () => {
+    for (const bad of [
+      null,
+      { ...answer, ok: false },
+      { ...answer, supporter: 'yes' },
+      { ...answer, accountStatus: 'closed' },
+      { ...answer, imports: { ...answer.imports, remaining: 4 } },
+      { ...answer, imports: { ...answer.imports, remaining: null } },
+      { ...answer, imports: { ...answer.imports, used: -1 } },
+      { ...answer, imports: { ...answer.imports, resetsAt: 'tomorrow' } },
+      { ...answer, refinements: {} },
+      { ...answer, windowDays: 0 },
+    ]) {
+      expect(normalizeNotesImportAccountUsage(bad)).toBeNull()
+    }
+  })
+
+  it('becomes the composer’s balance, with each import’s fresh refinements', () => {
+    expect(
+      accountUsageCredits(normalizeNotesImportAccountUsage(answer)!, { now })
+    ).toEqual({
+      remaining: 2,
+      limit: 3,
+      resetsAt: '2026-11-17T12:00:00.000Z',
+      isSupporter: false,
+      refinements: { remaining: 5, limit: 5 },
+    })
+  })
+
+  it('shows a Supporter as unlimited', () => {
+    const supporter = normalizeNotesImportAccountUsage({
+      ...answer,
+      supporter: true,
+      imports: { limit: null, used: 0, remaining: null, resetsAt: null },
+      refinements: { limitPerImport: null },
+    })!
+    expect(accountUsageCredits(supporter, { now })).toMatchObject({
+      remaining: null,
+      limit: null,
+      isSupporter: true,
+    })
+  })
+
+  it('isn’t a balance when the server couldn’t check Supporter status', () => {
+    const unchecked = normalizeNotesImportAccountUsage({
+      ...answer,
+      supporterCheckFailed: true,
+    })!
+    expect(accountUsageCredits(unchecked, { now })).toBeNull()
+  })
+
+  it('frees a window that ended since the answer', () => {
+    const usage = normalizeNotesImportAccountUsage(answer)!
+    expect(
+      accountUsageCredits(usage, {
+        now: Date.parse('2026-11-17T12:00:00.000Z'),
+      })
+    ).toMatchObject({ remaining: 3, resetsAt: null })
   })
 })

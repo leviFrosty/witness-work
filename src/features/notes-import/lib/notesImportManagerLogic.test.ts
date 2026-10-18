@@ -355,6 +355,103 @@ describe('decideCreditsUpdate', () => {
   }
   const now = Date.parse('2026-08-01T00:00:00.000Z')
 
+  it('takes the account’s allowance as authority, persisted', () => {
+    const account = { ...authoritative, remaining: 2 }
+    expect(
+      decideCreditsUpdate({
+        current: authoritative,
+        currentProvenance: 'authoritative',
+        authoritative,
+        incoming: account,
+        source: 'account',
+        now,
+      })
+    ).toEqual({
+      credits: account,
+      provenance: 'authoritative',
+      authoritative: account,
+      persist: true,
+      refreshed: false,
+    })
+    // Before any import on this device.
+    expect(
+      decideCreditsUpdate({
+        current: null,
+        currentProvenance: null,
+        authoritative: null,
+        incoming: account,
+        source: 'account',
+        now,
+      })
+    ).toMatchObject({ credits: account, provenance: 'authoritative' })
+  })
+
+  it('never puts back a credit a newer import spent', () => {
+    const settled = { ...authoritative, remaining: 2 }
+    // A read that started before the import settled.
+    expect(
+      decideCreditsUpdate({
+        current: settled,
+        currentProvenance: 'authoritative',
+        authoritative: settled,
+        incoming: { ...authoritative, remaining: 3 },
+        source: 'account',
+        now,
+      }).credits
+    ).toEqual(settled)
+    // A new window or a Supporter replaces it.
+    const supporter = {
+      ...authoritative,
+      remaining: null,
+      limit: null,
+      resetsAt: null,
+      isSupporter: true,
+    }
+    expect(
+      decideCreditsUpdate({
+        current: settled,
+        currentProvenance: 'authoritative',
+        authoritative: settled,
+        incoming: supporter,
+        source: 'account',
+        now,
+      }).credits
+    ).toEqual(supporter)
+  })
+
+  it('leaves a running import’s projection on screen', () => {
+    const account = { ...authoritative, remaining: 4 }
+    expect(
+      decideCreditsUpdate({
+        current: kickoff,
+        currentProvenance: 'kickoff',
+        authoritative,
+        incoming: account,
+        source: 'account',
+        now,
+      })
+    ).toEqual({
+      credits: kickoff,
+      provenance: 'kickoff',
+      authoritative: account,
+      persist: true,
+      refreshed: false,
+    })
+  })
+
+  it('ignores a malformed account answer', () => {
+    expect(
+      decideCreditsUpdate({
+        current: authoritative,
+        currentProvenance: 'authoritative',
+        authoritative,
+        incoming: { remaining: 9, limit: 5 },
+        source: 'account',
+        now,
+      })
+    ).toMatchObject({ credits: authoritative, persist: false })
+  })
+
   it('keeps kickoff display separate from persisted authority', () => {
     expect(
       decideCreditsUpdate({

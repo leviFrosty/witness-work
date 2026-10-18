@@ -30,6 +30,8 @@ interface Props {
   supporter: boolean
   onRequestUpgrade?: () => void
   renderSupporterCta?: RenderNotesImportSupporterCta
+  /** Opening the breakdown; the composer reads the account's balance again. */
+  onOpen?: () => void
 }
 
 const usagePercentage = (
@@ -89,6 +91,7 @@ const NotesImportUsage = ({
   supporter,
   onRequestUpgrade,
   renderSupporterCta,
+  onOpen,
 }: Props) => {
   const theme = useTheme()
   const { width: windowWidth } = useWindowDimensions()
@@ -116,7 +119,10 @@ const NotesImportUsage = ({
       renderTrigger={({ onPress }) => (
         <Button
           noTransform
-          onPress={onPress}
+          onPress={() => {
+            onOpen?.()
+            onPress()
+          }}
           accessibilityRole='button'
           accessibilityLabel={i18n.t(
             'notesImport_importUsageAccessibilityLabel',

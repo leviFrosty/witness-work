@@ -281,6 +281,14 @@ export const cachedServerAccount = (): CachedServerAccount | null =>
   storage.get()
 
 /**
+ * Whether this device already has the account key (iCloud Keychain brings it to
+ * the User's other Apple devices; a handoff or recovery key to any phone).
+ * Never creates one.
+ */
+export const hasAccountKey = async (): Promise<boolean> =>
+  (await BuddiesKeychain.peekRootSeed().catch(() => null)) != null
+
+/**
  * Whether this device's account is suspended, so a feature can say so before
  * the User starts: false without a session. A suspension noted earlier is
  * checked with the server first, since the account may have been reinstated;

@@ -181,6 +181,9 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
   const stop = useNotesImportManager((s) => s.stop)
   const retry = useNotesImportManager((s) => s.retry)
   const focus = useNotesImportManager((s) => s.focus)
+  const refreshAccountUsage = useNotesImportManager(
+    (s) => s.refreshAccountUsage
+  )
 
   // Status probe on screen load: when the proxy reports the feature is down
   // (kill-switch or no healthy provider), surface a banner instead of letting a
@@ -215,8 +218,8 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
   // back stack — see NotesImportHeaderActions.
   const activeHash = routeHash ?? null
   const credits = activeHash ? creditsForImport(activeHash) : globalCredits
-  // Until an import brings the server's answer, the usage copy goes by this
-  // device's own entitlement.
+  // Until the server's answer (the account's balance, or an import's), the
+  // usage copy goes by this device's own entitlement.
   const { isSupporter: deviceSupporter } = useIsSupporter()
   const [helpOpen, setHelpOpen] = useState(false)
   const [submitting, setSubmitting] = useState(false)
@@ -300,11 +303,14 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
     return () => sub.remove()
   }, [])
 
-  // Hydrates the header's History action and resumes any in-flight imports.
+  // Hydrates the header's History action and resumes any in-flight imports,
+  // and reads the account's balance, which the account's other devices may
+  // have spent.
   useFocusEffect(
     useCallback(() => {
       focus()
-    }, [focus])
+      void refreshAccountUsage()
+    }, [focus, refreshAccountUsage])
   )
 
   // Pop the keyboard as soon as a fresh composer settles so the user can paste
@@ -1608,6 +1614,7 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
                   supporter={deviceSupporter}
                   onRequestUpgrade={onRequestUpgrade}
                   renderSupporterCta={renderSupporterCta}
+                  onOpen={() => void refreshAccountUsage()}
                 />
               )
             }

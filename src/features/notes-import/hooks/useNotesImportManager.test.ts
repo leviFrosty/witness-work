@@ -33,6 +33,8 @@ const harness = vi.hoisted(() => ({
   persisted: null as unknown,
   persistedWrites: [] as unknown[],
   ClientError: null as ClientErrorConstructor | null,
+  /** What `GET /notes-import/usage` answers; null when it can't be read. */
+  accountUsage: null as unknown,
 }))
 
 vi.mock('react-native-mmkv', () => {
@@ -135,6 +137,7 @@ vi.mock('@/features/notes-import/lib/notesImportClient', () => {
     runNotesImportStreaming: vi.fn(start),
     resumeNotesImport: vi.fn(start),
     destroyNotesImport: vi.fn(async () => undefined),
+    fetchNotesImportAccountUsage: vi.fn(async () => harness.accountUsage),
   }
 })
 
@@ -182,6 +185,7 @@ beforeEach(async () => {
   harness.pending.length = 0
   harness.persisted = null
   harness.persistedWrites.length = 0
+  harness.accountUsage = null
   ;({ useNotesImportManager } = await import(
     '@/features/notes-import/hooks/useNotesImportManager'
   ))
@@ -422,6 +426,79 @@ describe('useNotesImportManager credit lifecycle', () => {
       [hashA]: { remaining: 4, limit: 5 },
       [hashB]: { remaining: 1, limit: 5 },
     })
+  })
+})
+
+describe('useNotesImportManager account usage', () => {
+  const usage = (over: Record<string, unknown> = {}) => ({
+    supporter: false,
+    supporterCheckFailed: false,
+    accountStatus: 'active',
+    imports: {
+      limit: 5,
+      used: 2,
+      remaining: 3,
+      resetsAt: '2099-09-01T00:00:00.000Z',
+    },
+    refinementsPerImport: 5,
+    windowDays: 30,
+    ...over,
+  })
+
+  it('shows the account’s balance before this device imports, and persists it', async () => {
+    harness.accountUsage = usage()
+    await useNotesImportManager.getState().refreshAccountUsage()
+
+    const state = useNotesImportManager.getState()
+    expect(state.credits).toEqual(
+      snapshot({ remaining: 3, refinements: { remaining: 5, limit: 5 } })
+    )
+    expect(state.creditsProvenance).toBe('authoritative')
+    expect(harness.persisted).toMatchObject({ credits: { remaining: 3 } })
+  })
+
+  it('keeps what it shows when the balance can’t be read or checked', async () => {
+    await useNotesImportManager.getState().refreshAccountUsage()
+    expect(useNotesImportManager.getState().credits).toBeNull()
+
+    harness.accountUsage = usage({ supporterCheckFailed: true })
+    await useNotesImportManager.getState().refreshAccountUsage()
+    expect(useNotesImportManager.getState().credits).toBeNull()
+    expect(harness.persistedWrites).toEqual([])
+  })
+
+  it('shares one read between callers', async () => {
+    harness.accountUsage = usage()
+    const { fetchNotesImportAccountUsage } = await import(
+      '@/features/notes-import/lib/notesImportClient'
+    )
+    vi.mocked(fetchNotesImportAccountUsage).mockClear()
+    const { refreshAccountUsage } = useNotesImportManager.getState()
+    await Promise.all([refreshAccountUsage(), refreshAccountUsage()])
+    expect(fetchNotesImportAccountUsage).toHaveBeenCalledTimes(1)
+  })
+
+  it('reads the account again after each import, without undoing its charge', async () => {
+    const { fetchNotesImportAccountUsage } = await import(
+      '@/features/notes-import/lib/notesImportClient'
+    )
+    vi.mocked(fetchNotesImportAccountUsage).mockClear()
+    // The account read lags the import that just settled.
+    harness.accountUsage = usage({
+      imports: {
+        limit: 5,
+        used: 0,
+        remaining: 5 - 0,
+        resetsAt: '2099-09-01T00:00:00.000Z',
+      },
+    })
+    await useNotesImportManager.getState().submit('notes')
+    harness.pending[0].resolve(terminal(snapshot({ remaining: 3 })))
+    await settle()
+    await settle()
+
+    expect(fetchNotesImportAccountUsage).toHaveBeenCalledTimes(1)
+    expect(useNotesImportManager.getState().credits?.remaining).toBe(3)
   })
 })
 

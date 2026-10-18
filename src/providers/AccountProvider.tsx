@@ -22,6 +22,7 @@ import {
   writeAccountFile,
 } from '@/lib/account'
 import { logger } from '@/lib/logger'
+import { ensureRevenueCatLinked } from '@/lib/serverAccount/revenueCatLinkRuntime'
 import { isOfflineError } from '@/lib/offlineError'
 import { checkICloudIdentity } from '@/lib/iCloudIdentity'
 
@@ -113,6 +114,7 @@ const AccountProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
           const { customerInfo } = await Purchases.logIn(current)
           setAccountId(current)
           setCustomer(customerInfo)
+          void ensureRevenueCatLinked({ force: true, reason: 'adopted' })
           logger.log('[Account] re-identified after account id reset', {
             reason,
           })
@@ -181,6 +183,8 @@ const AccountProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
             adoptAccountId(action.accountId)
             setAccountId(action.accountId)
             setCustomer(customerInfo)
+            // Another RevenueCat customer: link it to the server account.
+            void ensureRevenueCatLinked({ force: true, reason: 'adopted' })
             logger.log('[Account] adopted shared account id', { reason })
             errorTracking.addBreadcrumb({
               category: 'account',

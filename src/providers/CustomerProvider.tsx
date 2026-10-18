@@ -14,6 +14,8 @@ import { logger } from '@/lib/logger'
 import { isOfflineError } from '@/lib/offlineError'
 import { getOrCreateAccountId } from '@/lib/account'
 import { Platform } from 'react-native'
+import { addForegroundListener } from '@/lib/appLifecycle'
+import { ensureRevenueCatLinked } from '@/lib/serverAccount/revenueCatLinkRuntime'
 
 interface Props {}
 
@@ -114,10 +116,12 @@ const CustomerProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
 
     const seedCustomer = (info: CustomerInfo) => {
       logger.log('[CustomerProvider] initial customer info', {
-        originalAppUserId: info.originalAppUserId,
         activeEntitlements: Object.keys(info.entitlements.active),
       })
       setCustomer(info)
+      // Tell ww-api which RevenueCat customer this device is (ADR 0029), when
+      // a session already exists and the last link is a day old.
+      void ensureRevenueCatLinked({ reason: 'launch' })
     }
 
     // Identify (migrating any anonymous purchases onto accountId) and seed
@@ -149,6 +153,28 @@ const CustomerProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
           .catch(() => {})
       }
     })
+  }, [])
+
+  // A purchase, a restore, a lapse, or an adopted id changed what RevenueCat
+  // says: link again so ww-api reads the customer now (ADR 0029).
+  const entitlements = customer
+    ? Object.keys(customer.entitlements.active).sort().join('\n')
+    : null
+  const lastEntitlements = useRef<string | null>(null)
+  useEffect(() => {
+    if (entitlements === null) return
+    const previous = lastEntitlements.current
+    lastEntitlements.current = entitlements
+    if (previous !== null && previous !== entitlements)
+      void ensureRevenueCatLinked({ force: true, reason: 'entitlements' })
+  }, [entitlements])
+
+  // At most daily (the link remembers when it last ran).
+  useEffect(() => {
+    const subscription = addForegroundListener(
+      () => void ensureRevenueCatLinked({ reason: 'foreground' })
+    )
+    return () => subscription.remove()
   }, [])
 
   const hasPurchasedBefore = useMemo(

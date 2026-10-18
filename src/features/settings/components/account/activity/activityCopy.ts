@@ -80,10 +80,48 @@ function deviceInSentence(
 export const isSuspiciousActivity = (entry: ActivityEntry) =>
   entry.kind === 'session.refresh_reused'
 
-/** One entry's title, naming its devices from this device's point of view. */
+/** One row of Account Activity: an entry, standing for `count` like it. */
+export type ActivityRow = { entry: ActivityEntry; count: number }
+
+/** Downloads this close together are one restore. */
+export const RESTORE_WINDOW_MS = 5 * 60_000
+
+/**
+ * The entries as rows. A restore downloads every slot, and the server logs each
+ * (`backup.downloaded`, one per slot) with nothing this device can tell apart:
+ * slot ids mean nothing to the User and device names are inside the backups. So
+ * a session's downloads within `RESTORE_WINDOW_MS` of each other are one row,
+ * "2 backups downloaded on this device". The row keeps the newest entry's id.
+ */
+export function activityRows(entries: readonly ActivityEntry[]): ActivityRow[] {
+  const rows: ActivityRow[] = []
+  let previous: ActivityEntry | null = null
+  for (const entry of entries) {
+    const row = rows[rows.length - 1]
+    if (
+      row &&
+      previous &&
+      entry.kind === 'backup.downloaded' &&
+      row.entry.kind === 'backup.downloaded' &&
+      (entry.session?.sessionId ?? null) ===
+        (row.entry.session?.sessionId ?? null) &&
+      Math.abs(previous.createdAt - entry.createdAt) <= RESTORE_WINDOW_MS
+    )
+      row.count++
+    else rows.push({ entry, count: 1 })
+    previous = entry
+  }
+  return rows
+}
+
+/**
+ * One entry's title, naming its devices from this device's point of view;
+ * `count` entries like it for a merged row (`activityRows`).
+ */
 export function activityTitle(
   entry: ActivityEntry,
-  context: AccountActivityContext
+  context: AccountActivityContext,
+  count = 1
 ): string {
   const device = entry.session ? deviceInSentence(entry.session, context) : null
   const actor = entry.actor ? deviceInSentence(entry.actor, context) : null
@@ -137,6 +175,10 @@ export function activityTitle(
         ? i18n.t('accountActivity_buddiesDeleted', { device })
         : i18n.t('accountActivity_buddiesDeletedUnknown')
     case 'backup.downloaded':
+      if (count > 1)
+        return device
+          ? i18n.t('accountActivity_backupsDownloaded', { device, count })
+          : i18n.t('accountActivity_backupsDownloadedUnknown', { count })
       return device
         ? i18n.t('accountActivity_backupDownloaded', { device })
         : i18n.t('accountActivity_backupDownloadedUnknown')

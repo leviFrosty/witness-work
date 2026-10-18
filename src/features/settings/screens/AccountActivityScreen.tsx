@@ -23,6 +23,7 @@ import SettingsInputLayout from '@/features/settings/components/shared/SettingsI
 import LoadStatus from '@/features/settings/components/account/activity/LoadStatus'
 import {
   activityDetail,
+  activityRows,
   activityTitle,
   isSuspiciousActivity,
 } from '@/features/settings/components/account/activity/activityCopy'
@@ -160,6 +161,7 @@ const AccountActivityScreen = () => {
     )
 
   const { entries, context } = loaded
+  const rows = activityRows(entries)
   return (
     <SettingsInputLayout>
       <Wrapper insets='bottom'>
@@ -179,20 +181,20 @@ const AccountActivityScreen = () => {
             style={{ flex: 1, marginTop: 30, marginBottom: 16 }}
           >
             <FlashList
-              data={entries}
-              keyExtractor={(entry) => entry.id}
+              data={rows}
+              keyExtractor={(row) => row.entry.id}
               onEndReached={() => loadMore()}
               onEndReachedThreshold={0.5}
-              renderItem={({ item, index }) => {
-                const suspicious = isSuspiciousActivity(item)
+              renderItem={({ item: { entry, count }, index }) => {
+                const suspicious = isSuspiciousActivity(entry)
                 return (
                   <InputRowButton
-                    leftIcon={ICONS[item.kind]}
+                    leftIcon={ICONS[entry.kind]}
                     leftIconColor={suspicious ? theme.colors.error : undefined}
-                    label={activityTitle(item, context)}
-                    sublabel={sublabel(item)}
+                    label={activityTitle(entry, context, count)}
+                    sublabel={sublabel(entry)}
                     lastInSection={
-                      index === entries.length - 1 && !loaded.nextCursor
+                      index === rows.length - 1 && !loaded.nextCursor
                     }
                   />
                 )

@@ -79,3 +79,9 @@ export const persistCredits = (
   store().set(KEY, JSON.stringify(credits))
   return credits
 }
+
+/**
+ * Forgets the persisted balance (the verify harness: "before the first
+ * import").
+ */
+export const forgetPersistedCredits = () => store().delete(KEY)

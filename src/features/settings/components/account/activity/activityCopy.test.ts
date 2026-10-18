@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import {
   activityDetail,
+  activityRows,
   activityTitle,
   deviceKind,
   deviceTitle,
@@ -184,5 +185,70 @@ describe('deviceKind', () => {
   it('is a computer for a development build without a label', () => {
     expect(kind(null, 'dev')).toBe('computer')
     expect(kind('bad', 'dev')).toBe('computer')
+  })
+})
+
+describe('activityRows', () => {
+  const me = { sessionId: 'me', platform: 'ios' as const, device: null }
+  const pixel = {
+    sessionId: 'pixel',
+    platform: 'android' as const,
+    device: 'pixel',
+  }
+  const downloaded = (
+    id: string,
+    createdAt: number,
+    session: ActivityEntry['session'] = me
+  ) =>
+    entry({
+      id,
+      kind: 'backup.downloaded',
+      createdAt,
+      session,
+      slotId: `slot-${id}`,
+    })
+
+  it('makes one restore’s downloads one row, keeping the newest entry', () => {
+    const rows = activityRows([
+      entry({
+        id: 'later',
+        kind: 'session.opened',
+        createdAt: 100_000,
+        session: me,
+      }),
+      downloaded('b', 60_500),
+      downloaded('a', 60_000),
+      entry({ id: 'earlier', createdAt: 0 }),
+    ])
+    expect(rows.map((row) => [row.entry.id, row.count])).toEqual([
+      ['later', 1],
+      ['b', 2],
+      ['earlier', 1],
+    ])
+    expect(activityTitle(rows[1].entry, context, rows[1].count)).toBe(
+      '2 backups downloaded on this device'
+    )
+    expect(activityTitle(rows[1].entry, context)).toBe(
+      'Backup downloaded on this device'
+    )
+  })
+
+  it('keeps downloads apart across devices, other entries, or a later restore', () => {
+    const rows = activityRows([
+      downloaded('d', 3_000_000),
+      downloaded('c', 60_000 + 60_000, pixel),
+      downloaded('b', 60_000),
+      entry({
+        id: 'x',
+        kind: 'session.opened',
+        createdAt: 50_000,
+        session: me,
+      }),
+      downloaded('a', 40_000),
+    ])
+    expect(rows.map((row) => row.count)).toEqual([1, 1, 1, 1, 1])
+    expect(activityTitle(downloaded('n', 0, null), context, 3)).toBe(
+      '3 backups were downloaded'
+    )
   })
 })

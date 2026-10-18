@@ -245,7 +245,21 @@ const InputRowButton: React.FC<PropsWithChildren<Props>> = ({
   if (hasMenu) return withMenu(<View style={rowStyle}>{content}</View>)
 
   return (
-    <Button noTransform disabled={disabled} style={rowStyle} onPress={onPress}>
+    <Button
+      noTransform
+      accessibilityRole={onPress ? 'button' : undefined}
+      accessibilityState={onPress ? { disabled: !!disabled } : undefined}
+      // A row that only says something (Account Activity's entries) is read as
+      // one element, its label then its sublabel, like a pressable row is.
+      accessibilityLabel={
+        !onPress && children == null && label
+          ? [label, sublabel].filter(Boolean).join(', ')
+          : undefined
+      }
+      disabled={disabled}
+      style={rowStyle}
+      onPress={onPress}
+    >
       {content}
     </Button>
   )

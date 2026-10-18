@@ -14,6 +14,10 @@ import { BACKUP_LIMITS } from '@/lib/serverAccount/backupClient'
  *   unchanged snapshot (same hash) isn't uploaded again within the day.
  * - Failures back off by reason; coming back to the app or the connection
  *   returning retries the passing ones (offline, server, rate limited) sooner.
+ * - Another device can delete this one's server copy (Delete Backup), which the
+ *   hash skip can't see. Coming back to the app, and the long waits' re-
+ *   checks, list the slots at most every `SERVER_CHECK_MS`; a missing slot
+ *   uploads again soon.
  */
 
 export const BACKUP_DEBOUNCE_MS = 30_000
@@ -25,6 +29,8 @@ export const BACKUP_MIN_INTERVAL_MS = BACKUP_LIMITS.putIntervalMs + 1_000
 export const BACKUP_FOREGROUND_DELAY_MS = 5_000
 /** Long waits re-check at this interval rather than holding one long timer. */
 const MAX_TIMER_MS = 10 * 60_000
+/** Whether the server still has this device's slot, asked at most this often. */
+export const BACKUP_SERVER_CHECK_MS = 15 * 60_000
 
 /** Why an upload failed, as Settings, Tools and analytics name it. */
 export type BackupFailure =
@@ -161,6 +167,11 @@ export type BackupSchedulerDeps = {
     get: () => BackupSchedule
     set: (patch: Partial<BackupSchedule>) => void
   }
+  /**
+   * Whether the server still lists this device's slot; null when it can't tell.
+   * Throws when the list fails.
+   */
+  hasServerCopy?: () => Promise<boolean | null>
   log?: (level: 'info' | 'warn', message: string) => void
   /** A failed attempt, for analytics. */
   onFailure?: (code: BackupFailure) => void
@@ -182,6 +193,9 @@ export function createBackupScheduler(deps: BackupSchedulerDeps) {
   let generation = 0
   /** When the oldest change not yet covered was made, for `MAX_PENDING_MS`. */
   let pendingSince: number | null = null
+  /** The last look at the server's slots, for `SERVER_CHECK_MS`. */
+  let serverCheckedAt: number | null = null
+  let checkingServer = false
 
   const state = () => deps.state.get()
   const log = (level: 'info' | 'warn', message: string) =>
@@ -214,8 +228,10 @@ export function createBackupScheduler(deps: BackupSchedulerDeps) {
     timer = deps.setTimer(
       () => {
         timer = null
-        if (deps.now() < at) arm(at)
-        else void run('scheduled')
+        if (deps.now() < at) {
+          arm(at)
+          void checkServerCopy()
+        } else void run('scheduled')
       },
       Math.min(wait, MAX_TIMER_MS)
     )
@@ -235,6 +251,43 @@ export function createBackupScheduler(deps: BackupSchedulerDeps) {
     }
     // Nothing pending: the daily upload.
     arm(Math.max(notBefore(), (lastPutAt ?? deps.now()) + BACKUP_DAILY_MS))
+  }
+
+  /**
+   * The server had no slot for this device in a list that started at
+   * `listedAt`: deleted from another device. Uploads again soon, unless an
+   * upload since then (or running now) put it back.
+   */
+  function serverCopyMissing(listedAt: number) {
+    if (!deps.isEnabled() || inFlight) return
+    const { lastPutAt } = state()
+    if (lastPutAt === null || lastPutAt >= listedAt) return
+    const now = deps.now()
+    pendingSince ??= now
+    deps.state.set({ lastHash: null, pending: true })
+    log('info', 'server copy missing, uploading again')
+    arm(Math.max(now + BACKUP_FOREGROUND_DELAY_MS, notBefore()))
+  }
+
+  /** Lists the server's slots when that's due; never throws. */
+  async function checkServerCopy() {
+    if (!deps.hasServerCopy || checkingServer || !deps.isEnabled()) return
+    const now = deps.now()
+    if (state().lastPutAt === null) return
+    if (
+      serverCheckedAt !== null &&
+      now - serverCheckedAt < BACKUP_SERVER_CHECK_MS
+    )
+      return
+    checkingServer = true
+    serverCheckedAt = now
+    try {
+      if ((await deps.hasServerCopy()) === false) serverCopyMissing(now)
+    } catch {
+      // The next check asks again.
+    } finally {
+      checkingServer = false
+    }
   }
 
   async function attempt(
@@ -369,12 +422,21 @@ export function createBackupScheduler(deps: BackupSchedulerDeps) {
         deps.state.set({ retryAt: null, failures: 0 })
       if (state().pending || due()) plan(BACKUP_FOREGROUND_DELAY_MS)
       else plan(0)
+      void checkServerCopy()
     },
     /** The connection came back. */
     onReconnect() {
       if (!deps.isEnabled() || state().lastError !== 'offline') return
       deps.state.set({ retryAt: null })
       plan(BACKUP_FOREGROUND_DELAY_MS)
+    },
+    /**
+     * A slot list that started at `listedAt` (Settings) showed whether this
+     * device's slot is there; counts as the next server check.
+     */
+    serverCopyListed(present: boolean, listedAt: number) {
+      serverCheckedAt = deps.now()
+      if (!present) serverCopyMissing(listedAt)
     },
     /** Backup was turned off, or this device's backup state was reset. */
     stop() {

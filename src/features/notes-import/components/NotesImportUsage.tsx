@@ -7,9 +7,15 @@ import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import { formatDate } from '@/lib/dates'
 import {
-  shouldShowNotesImportSupporterCta,
+  isUnlimitedUsage,
+  notesImportUsageView,
   type NotesImportCredits,
+  type NotesImportPublicSchedule,
 } from '@/features/notes-import/lib/notesImportUsage'
+import {
+  notesImportUsageBody,
+  notesImportUsageLabels,
+} from '@/features/notes-import/lib/notesImportUsageCopy'
 import { alignText } from '@/lib/direction'
 
 export type RenderNotesImportSupporterCta = (props: {
@@ -18,6 +24,10 @@ export type RenderNotesImportSupporterCta = (props: {
 
 interface Props {
   credits: NotesImportCredits | null
+  /** The public allowance schedule, for the copy before the first import. */
+  schedule: NotesImportPublicSchedule | null
+  /** This device's own Supporter entitlement, until the server's answer. */
+  supporter: boolean
   onRequestUpgrade?: () => void
   renderSupporterCta?: RenderNotesImportSupporterCta
 }
@@ -75,34 +85,29 @@ const UsageBar = ({
  */
 const NotesImportUsage = ({
   credits,
+  schedule,
+  supporter,
   onRequestUpgrade,
   renderSupporterCta,
 }: Props) => {
   const theme = useTheme()
   const { width: windowWidth } = useWindowDimensions()
   const contentWidth = Math.min(300, windowWidth - 24)
-  const importsUnlimited =
-    !!credits && credits.remaining === null && credits.limit === null
-  const importBalance = !credits
-    ? i18n.t('notesImport_usageUnavailable')
-    : importsUnlimited
-      ? i18n.t('notesImport_usageUnlimitedImports')
-      : i18n.t('notesImport_usageImportsLeft', {
-          remaining: credits.remaining ?? 0,
-          limit: credits.limit ?? 0,
+  const { view, isSupporter } = notesImportUsageView({
+    credits,
+    schedule,
+    supporter,
+  })
+  const { balance: importBalance, trigger: triggerLabel } =
+    notesImportUsageLabels(view)
+  const resetCaption =
+    view.kind === 'balance' && view.credits.resetsAt
+      ? i18n.t('notesImport_usageRefreshes', {
+          date: formatDate(view.credits.resetsAt),
         })
-  const triggerLabel = !credits
-    ? i18n.t('notesImport_usageUnavailableShort')
-    : importsUnlimited
-      ? i18n.t('notesImport_usageUnlimitedShort')
-      : i18n.t('notesImport_usageRemainingShort', {
-          remaining: credits.remaining ?? 0,
-        })
-  const resetCaption = credits?.resetsAt
-    ? i18n.t('notesImport_usageRefreshes', {
-        date: formatDate(credits.resetsAt),
-      })
-    : undefined
+      : view.kind === 'allowance' && view.limit !== null && view.limit > 0
+        ? i18n.t('notesImport_usageBalanceAfterImport')
+        : undefined
 
   return (
     <Popover
@@ -174,10 +179,12 @@ const NotesImportUsage = ({
                 {importBalance}
               </Text>
             </View>
-            {credits && (
+            {(view.kind === 'balance' || isUnlimitedUsage(view)) && (
               <UsageBar
-                remaining={credits.remaining}
-                limit={credits.limit}
+                remaining={
+                  view.kind === 'balance' ? view.credits.remaining : null
+                }
+                limit={view.kind === 'balance' ? view.credits.limit : null}
                 color={theme.colors.accent}
               />
             )}
@@ -198,25 +205,22 @@ const NotesImportUsage = ({
                 lineHeight: 18,
               }}
             >
-              {i18n.t('notesImport_usageImportsBody')}
+              {notesImportUsageBody(view, isSupporter)}
             </Text>
           </View>
-          {credits &&
-            shouldShowNotesImportSupporterCta(credits) &&
-            onRequestUpgrade &&
-            renderSupporterCta && (
-              <View
-                style={{
-                  paddingTop: 12,
-                  borderTopWidth: 1,
-                  borderColor: theme.colors.border,
-                }}
-              >
-                {renderSupporterCta({
-                  onPress: () => closeThen(onRequestUpgrade),
-                })}
-              </View>
-            )}
+          {!isSupporter && onRequestUpgrade && renderSupporterCta && (
+            <View
+              style={{
+                paddingTop: 12,
+                borderTopWidth: 1,
+                borderColor: theme.colors.border,
+              }}
+            >
+              {renderSupporterCta({
+                onPress: () => closeThen(onRequestUpgrade),
+              })}
+            </View>
+          )}
         </>
       )}
     </Popover>

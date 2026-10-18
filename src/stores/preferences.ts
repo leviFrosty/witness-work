@@ -12,6 +12,7 @@ import type { SyncDeviceFiles } from '@/lib/syncDevices'
 import { roleHistoryEntries } from '@/lib/syncPreferencePolicy'
 import { DEFAULT_SCHEDULE_SCREEN_ELEMENTS_ORDER } from '@/lib/scheduleScreenPreferences'
 import { DEFAULT_TAB_ORDER } from '@/lib/tabOrderPreferences'
+import type { ProgressCardLayoutItem } from '@/lib/progressCards'
 import { create } from 'zustand'
 import { persist, combine } from 'zustand/middleware'
 import { Publisher, PublisherHours } from '@/types/publisher'
@@ -578,6 +579,12 @@ export const PREFERENCE_DEFAULTS = {
    */
   homeScreenElementsOrder:
     DEFAULT_HOME_SCREEN_ELEMENTS_ORDER as HomeScreenElementKey[],
+  /**
+   * The cards under the month's report on Progress → Month, in order with their
+   * sizes. `null` until the User customizes them, so they keep the default for
+   * their role; always read through `getEffectiveProgressCards`.
+   */
+  progressCards: null as ProgressCardLayoutItem[] | null,
   /**
    * User-defined order of the navigation tabs. Resolved through
    * `getEffectiveTabOrder` at read time.

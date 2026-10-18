@@ -3117,7 +3117,9 @@
   "faq_remainingHours_q": "How do I see how many hours I have left this month or year?",
   "faq_remainingHours_a": "Open the Progress tab from the bottom bar. The Month sub-screen shows time so far and hours left for the current month. Pioneers can switch to the Year sub-screen to see annual goal progress, time so far, remaining hours, and a per-month breakdown comparing actual hours to plan.",
   "faq_goalPacing_q": "How can I tell if I'm ahead or behind on my hour goal?",
-  "faq_goalPacing_a": "Open the Progress tab from the bottom bar. The Month sub-screen shows your daily target so you can see if you're on track for the current month. Pioneers can switch to the Year sub-screen, where the Service Year Pace chart shows how far ahead or behind your Annual Goal you are today, and each month's bar shows how that month did against its goal.",
+  "faq_goalPacing_a": "Open the Progress tab from the bottom bar. On the Month view, the report shows how much is left and how many days are left, and the line under it shows whether you're ahead or behind your plans. The Daily Pace card shows how much a day it takes to reach your goal; add it with Edit Cards if it isn't there. Pioneers can switch to the Year view, where the Service Year Pace chart shows how far ahead or behind your Annual Goal you are today, and each month's bar shows how that month did against its goal. The Year Pace card shows how much a month you need for the rest of the service year.",
+  "faq_dailyPace_q": "How much do I need each day to reach my goal?",
+  "faq_dailyPace_a": "Add the Daily Pace card on the Progress tab's Month view (tap Edit Cards, then Add Cards); it's there by default for roles with a monthly goal. It takes what's left of your monthly goal and divides it by the days left in the month after today, the same count the month's report shows as days left. For example, with 25 of 50 hours done and 20 days left, it shows 1.3 hours a day (the figure rounds up slightly, so keeping to it is always enough). On the last day of the month, it shows everything that's left as today's amount. Make the card wide to also see about how much that is a week. Credit time counts up to its monthly limit, as on your report, and your plans aren't counted; the Projected Month card shows where your plans put you. Once you reach your goal, the card says so. For a past month it shows what you averaged a day, and for a future month what each day would need. It doesn't appear when the month has no goal. For the year, the Year Pace card does the same with your annual goal, spread over the months left in the service year.",
   "faq_serviceYearPace_q": "How do I read the Service Year Pace chart?",
   "faq_serviceYearPace_a": "Open the Progress tab and switch to Year. If your status has an Annual Goal, such as regular pioneer, the Service Year Pace card appears below your milestones. The dashed gray line is where your Annual Goal puts you by the end of each month. It is built from each month's own goal, so a mid-year appointment or an auxiliary pioneer month changes it, but a Monthly Goal you changed yourself does not. The green line is your time so far, counted the same way as your Service Report, including each month's credit limit. The dashed green line adds the time you have planned. The faint line is last service year, shown when you logged time in it, and the number at its end is last year's total. If a line runs well past your Annual Goal, the space above the goal is drawn on a compressed (logarithmic) scale so the months below stay readable. Press and hold the chart, then slide your finger, to see any month's totals. \"Ahead of pace\" compares your time with where the goal line is today. Below the card, each month has a bar: solid for logged time, lighter for credit time, and striped for plans, with a tick at that month's goal. The key above the months explains these marks, and the Hours and vs Goal columns give the numbers. Every bar uses the same scale, so you can compare months. Without an Annual Goal you see the month bars but not the chart. If a month looks wrong, press and hold it to change its status or goal. The chart is drawn on your device from your own entries and isn't shared.",
   "faq_timeFormat_q": "Can I display time as \"1h 30m\" instead of \"1.5\"?",
@@ -3128,10 +3130,12 @@
   "faq_darkMode_a": "Yes. Open Settings → Personalization → Color Scheme and pick Device, Dark, or Light. The app will stop following your phone's setting and use the one you choose.",
   "faq_appIcon_q": "Can I change the app's icon?",
   "faq_appIcon_a": "Alternate app icons are a Supporter perk on iOS. Open Settings → Personalization → App Icon and choose an alternate. Alternate app icons are unavailable on Android.",
-  "faq_reorderHome_q": "Can I reorder the cards on my home screen?",
-  "faq_reorderHome_a": "Yes. Open Preferences → Home Screen to show, hide, and reorder cards. The home screen will keep your custom layout going forward.",
+  "faq_reorderHome_q": "How do I rearrange or hide the sections on Home?",
+  "faq_reorderHome_a": "Press and hold a section, then choose Edit Home Screen, or press and hold an empty space on Home. The sections start to jiggle. Hold a section and drag it to move it; on iPad, sections can move between the two columns. Tap the gray minus at a section's top corner to hide it (tap Undo if you didn't mean to). To show a hidden section again, tap Add Sections at the top; it comes back first on Home. Tap Done, or tap an empty space, when you're finished; on Android, the back button works too. A section with nothing to show right now, like Approaching Conversations when you have no follow-ups today, appears as an outline while you edit, so you can still move or hide it. Getting Started stays at the top until you finish or close it. Some sections depend on your role or device: Timer appears for roles that log time, Mileage when mileage tracking is on, and Service Year Summary on iPad with an annual goal. With Reduce Motion on, sections stay still while you edit. You can also show, hide, and reorder sections in Settings → Preferences → Home Screen. Hiding a section never deletes your data. Your layout is a preference, so it's included in backups and syncs with your other devices when sync is on.",
   "faq_reorderTabs_q": "Can I change the order of the tabs?",
   "faq_reorderTabs_a": "Yes. Open Settings → Preferences → Tab Order and use the up and down arrows beside each tab, or long-press a tab's name to move it to the top or bottom. The new order applies right away to the bottom bar on phones and the sidebar on tablets, on iOS and Android. Tabs can be reordered but not hidden. WitnessWork still opens on Home, and Progress only appears for roles that log hours; it keeps its place in your order if you change roles. On iPad, Command-number keyboard shortcuts follow your order too. The order is a preference, so it's included in backups and syncs with iCloud when sync is on; it doesn't change any of your records. To go back, move the tabs back to Home, Contacts, Progress, Schedule. If the order doesn't update, restart the app and use Still need help? below.",
+  "faq_progressCards_q": "How do I choose what's on my Progress screen?",
+  "faq_progressCards_a": "Open the Progress tab and stay on Month. Below the month's report are cards you choose. To change them, press and hold any card; it lifts and the cards start to jiggle, and you can drag it straight away. You can also tap Edit Cards under your cards, or the grid button at the top. While the cards jiggle, drag a card to move it, tap the gray minus at its top corner to remove it (tap Undo if you didn't mean to), and drag the curved handle at its bottom corner to make it small or wide; tapping the handle switches sizes too. Cards that come in only one size have no handle. Tap Add Cards at the top to see every card you can add, such as Daily Pace, Studies, Days Out, Visits, Credit, Weeks, Projected Month, Service Year, Year Pace, Streak, and Lifetime. The Days list can show every day of the month or, when compact, only the latest few in a short list that scrolls on its own; drag its handle down or up to switch. To lift the Days list, hold its title rather than a day, since each day has its own menu. Tap Done, or tap the month's report, when you're finished. The month's report, with your status, goal, and total, always stays at the top. Some cards only appear when they apply: Daily Pace and Projected Month need a monthly goal, Year Pace needs an annual goal, Credit needs a role whose report counts hours, Streak needs streaks turned on, and Mileage needs mileage tracking. With Reduce Motion on, the cards stay still while you edit. Removing a card never deletes your time or reports. Your cards are a preference, so they're included in backups and sync with your other devices when sync is on. To start over, tap Edit Cards, then Reset Cards.",
   "faq_timerRounding_q": "Why was my timer rounded to the nearest 5 minutes?",
   "faq_timerRounding_a": "That was old behavior. Recent versions save the exact stopwatch time when you stop the timer, with no rounding. If you're still seeing 5-minute rounding, update the app to the latest version.",
   "faq_addNotesToTime_q": "Can I add notes to a time entry?",
@@ -3568,9 +3572,6 @@
   "notifications": "Notifications",
   "purchasesUnavailable": "Purchases are unavailable right now. Please try again later.",
   "hideThisSection": "Hide This Section",
-  "customizeHome": "Customize Home…",
-  "sectionHidden": "Section hidden",
-  "sectionHidden_description": "Turn it back on in Preferences → Home Screen.",
   "addToFavorites": "Add to Favorites",
   "removeFromFavorites": "Remove from Favorites",
   "dismissFor": "Dismiss For",
@@ -4654,5 +4655,157 @@
   "backup_restoreFailedUnavailable": "Backups aren't available right now, and nothing on this phone changed. Try again later from Settings → Account.",
   "backup_restoreFailedNewer": "Your backup is from a newer version of WitnessWork. Update WitnessWork, then choose Restore from Backup in Settings → Account.",
   "backup_restoreFailedUnreadable": "Your backup couldn't be read. Nothing on this phone changed.",
-  "backup_restoreFailedServer": "Something went wrong, and nothing on this phone changed. Try again from Settings → Account."
+  "backup_restoreFailedServer": "Something went wrong, and nothing on this phone changed. Try again from Settings → Account.",
+  "homeEdit": {
+    "editHomeScreen": "Edit Home Screen",
+    "hint": "Hold a section and drag it to move it.",
+    "addSections": "Add Sections",
+    "added": "On your Home screen",
+    "remove": "Hide Section",
+    "removeA11y": "Hide {{section}}",
+    "removed": "{{section}} hidden",
+    "emptySection": "Shows up when there's something to show",
+    "description": {
+      "approachingConversations": "Today's follow-ups, to log as you go",
+      "tabletServiceYearSummary": "Your service year against your goal",
+      "serviceReport": "This month's time and studies",
+      "mileage": "This month's trips and distance",
+      "thisWeek": "Your week at a glance, a tap from each day",
+      "timer": "Time your service as you go",
+      "didYouKnow": "A tip about something WitnessWork can do"
+    }
+  },
+  "progressCards": {
+    "editCards": "Edit Cards",
+    "editHint": "Hold a card and drag it to move it. Drag a corner to resize it.",
+    "addCards": "Add Cards",
+    "added": "On your Progress screen",
+    "removeCard": "Remove Card",
+    "removeA11y": "Remove {{card}}",
+    "removed": "{{card}} removed",
+    "resizeA11y": "Resize {{card}}",
+    "reset": "Reset Cards",
+    "resetTitle": "Reset your cards?",
+    "resetDescription": "Your Progress cards go back to how they started. Your time and reports don't change.",
+    "size": {
+      "small": "small",
+      "wide": "wide",
+      "compact": "compact",
+      "full": "full length"
+    },
+    "sizeName": {
+      "small": "Small",
+      "wide": "Wide",
+      "compact": "Compact",
+      "full": "Full Length"
+    },
+    "group": {
+      "month": "This Month",
+      "serviceYear": "Service Year",
+      "more": "More"
+    },
+    "ofGoal": "of {{goal}}",
+    "perMonth": "per month",
+    "dailyPace": {
+      "title": "Daily Pace",
+      "description": "Time a day to reach your goal",
+      "info": "What's left of your monthly goal, divided by the days left after today. Credit time counts up to its limit, as on your report.",
+      "current": {
+        "one": "for {{count}} day to reach {{goal}}",
+        "other": "for {{count}} days to reach {{goal}}"
+      },
+      "lastDay": "today, to reach {{goal}}",
+      "perWeek": "About {{value}} a week",
+      "nothingLeft": "Nothing left this month",
+      "future": "to reach {{goal}} in {{month}}",
+      "past": "a day on average · {{value}} short of {{goal}}"
+    },
+    "studies": {
+      "description": "Studies to report this month",
+      "caption": "For your report",
+      "info": "Each contact you marked a Bible study with this month counts once.",
+      "namesMore": "{{names}} and {{more}} more"
+    },
+    "serviceDays": {
+      "title": "Days Out",
+      "description": "Days with time and your average day",
+      "unit": {
+        "one": "day",
+        "other": "days"
+      },
+      "average": "{{value}} a day on average",
+      "none": "No time logged yet",
+      "best": "Longest: {{value}} on {{date}}"
+    },
+    "visits": {
+      "title": "Visits",
+      "description": "Visits where someone was home",
+      "info": "Visits where you talked with someone this month. Not-at-homes are counted separately.",
+      "notAtHome": {
+        "zero": "This month",
+        "one": "Plus {{count}} not at home",
+        "other": "Plus {{count}} not at home"
+      },
+      "newContacts": {
+        "zero": "No new contacts",
+        "one": "{{count}} new contact",
+        "other": "{{count}} new contacts"
+      }
+    },
+    "credit": {
+      "title": "Credit",
+      "description": "Credit time counted this month",
+      "info": "Credit time, like LDC, counts toward your total until the month reaches its limit. Standard time always counts.",
+      "limit": "Counts until your total reaches {{value}}",
+      "noLimit": "No limit for your role",
+      "over": "{{value}} not counted",
+      "logged": "{{value}} logged"
+    },
+    "weeks": {
+      "title": "Weeks",
+      "description": "The month week by week",
+      "thisWeek": "this week",
+      "bestWeek": "best week",
+      "a11yWeek": "Week of {{start}}: {{value}}"
+    },
+    "projected": {
+      "description": "Where your plans put the month"
+    },
+    "days": {
+      "title": "Days",
+      "description": "Every day of the month, or just the latest few",
+      "fullCaption": "Every day of the month",
+      "compactCaption": "The latest days, in a short list that scrolls"
+    },
+    "serviceYear": {
+      "description": "The service year's total so far"
+    },
+    "yearPace": {
+      "title": "Year Pace",
+      "description": "Time a month to reach your annual goal",
+      "info": "What's left of your annual goal, divided by the months left in the service year, this one included.",
+      "current": {
+        "one": "for {{count}} month to reach {{goal}}",
+        "other": "for {{count}} months to reach {{goal}}"
+      },
+      "soFar": "{{value}} of {{goal}} so far",
+      "future": "to reach {{goal}} this service year"
+    },
+    "streak": {
+      "description": "Your service streak",
+      "plans": "planned days kept in a row",
+      "months": "months in a row",
+      "none": "Keep a few planned days to start one",
+      "noneMonths": "Spend time in the ministry this month to start one"
+    },
+    "lifetime": {
+      "title": "Lifetime",
+      "description": "Every hour you've logged",
+      "since": "Since {{date}}"
+    },
+    "mileage": {
+      "description": "Distance driven this month",
+      "cost": "About {{value}} in fuel"
+    }
+  }
 }

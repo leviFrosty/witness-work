@@ -14,6 +14,8 @@ interface SwipeMonthNavigatorProps {
   onSwipeBack: () => void
   children: ReactNode
   style?: ViewStyle
+  /** Off while the content needs horizontal drags, e.g. moving a card. */
+  enabled?: boolean
 }
 
 /**
@@ -27,9 +29,11 @@ const SwipeMonthNavigator = ({
   onSwipeBack,
   children,
   style,
+  enabled = true,
 }: SwipeMonthNavigatorProps) => {
   const rtl = isRtlLayout()
   const flingForward = Gesture.Fling()
+    .enabled(enabled)
     .direction(rtl ? Directions.RIGHT : Directions.LEFT)
     .runOnJS(true)
     .onEnd(() => {
@@ -38,6 +42,7 @@ const SwipeMonthNavigator = ({
     })
 
   const flingBack = Gesture.Fling()
+    .enabled(enabled)
     .direction(rtl ? Directions.LEFT : Directions.RIGHT)
     .runOnJS(true)
     .onEnd(() => {

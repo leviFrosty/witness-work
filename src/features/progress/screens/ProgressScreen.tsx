@@ -1,4 +1,9 @@
-import { FileText as FileTextIcon } from 'lucide-react-native'
+import {
+  Check as CheckIcon,
+  FileText as FileTextIcon,
+  LayoutGrid as LayoutGridIcon,
+  Plus as PlusIcon,
+} from 'lucide-react-native'
 import {
   ArrowBackwardIcon,
   ArrowForwardIcon,
@@ -32,6 +37,8 @@ import ProgressYearTab from '@/features/progress/components/ProgressYearTab'
 import ProgressAllTimeTab from '@/features/progress/components/ProgressAllTimeTab'
 import OnboardingBackfillBanner from '@/features/service-reports/components/OnboardingBackfillBanner'
 import useRolloverPrompt from '@/features/service-reports/hooks/useRolloverPrompt'
+import useProgressCardEditing from '@/features/progress/hooks/useProgressCardEditing'
+import type { ProgressCardDestination } from '@/features/progress/components/cards/progressCardRegistry'
 import { formatDisplay } from '@/lib/dates'
 
 type Props = NativeStackScreenProps<HomeTabStackParamList, 'Progress'>
@@ -57,6 +64,17 @@ const ProgressScreen = ({ route, navigation }: Props) => {
   )
 
   const [milestoneSheetOpen, setMilestoneSheetOpen] = useState(false)
+  const cardEditing = useProgressCardEditing()
+  const { finish: finishEditing } = cardEditing
+  // Leaving the Month tab ends editing.
+  const changeTab = (tab: ProgressTab) => {
+    finishEditing()
+    setActiveTab(tab)
+  }
+  const openCardDestination = (destination: ProgressCardDestination) => {
+    if (destination === 'mileage') rootNavigation.navigate('Mileage')
+    else changeTab(destination)
+  }
 
   // Sync route params → local state when navigation updates them.
   useEffect(() => {
@@ -139,13 +157,45 @@ const ProgressScreen = ({ route, navigation }: Props) => {
             paddingHorizontal: isWide ? 24 : 15,
           }}
           actions={
-            <HeaderPillButton
-              icon={FileTextIcon}
-              label={i18n.t('viewReport')}
-              onPress={() => {
-                rootNavigation.navigate('ServiceReportView', { month, year })
-              }}
-            />
+            cardEditing.editing ? (
+              // As on the Home Screen: add on one side of the header, Done on
+              // the other.
+              <>
+                <HeaderPillButton
+                  icon={PlusIcon}
+                  label={i18n.t('progressCards.addCards')}
+                  onPress={() => cardEditing.setAdding(true)}
+                  compact='auto'
+                />
+                <HeaderPillButton
+                  icon={CheckIcon}
+                  label={i18n.t('done')}
+                  onPress={finishEditing}
+                />
+              </>
+            ) : (
+              <>
+                {activeTab === 'month' ? (
+                  <HeaderPillButton
+                    icon={LayoutGridIcon}
+                    label={i18n.t('progressCards.editCards')}
+                    onPress={() => cardEditing.start('header')}
+                    compact
+                  />
+                ) : null}
+                <HeaderPillButton
+                  icon={FileTextIcon}
+                  label={i18n.t('viewReport')}
+                  onPress={() => {
+                    rootNavigation.navigate('ServiceReportView', {
+                      month,
+                      year,
+                    })
+                  }}
+                  compact={isWide ? false : 'auto'}
+                />
+              </>
+            )
           }
         />
         <View
@@ -161,7 +211,7 @@ const ProgressScreen = ({ route, navigation }: Props) => {
         >
           <SegmentedControl<ProgressTab>
             value={activeTab}
-            onChange={setActiveTab}
+            onChange={changeTab}
             options={[
               { key: 'month', label: i18n.t('month') },
               { key: 'year', label: i18n.t('year') },
@@ -224,6 +274,12 @@ const ProgressScreen = ({ route, navigation }: Props) => {
             year={year}
             onSwipeForward={() => handleMonthNav('forward')}
             onSwipeBack={() => handleMonthNav('back')}
+            editing={cardEditing.editing}
+            onStartEditing={cardEditing.start}
+            onFinishEditing={finishEditing}
+            adding={cardEditing.adding}
+            onAddingChange={cardEditing.setAdding}
+            onNavigate={openCardDestination}
           />
         ) : null}
         {activeTab === 'year' ? (
@@ -233,7 +289,7 @@ const ProgressScreen = ({ route, navigation }: Props) => {
             onMonthPress={(m, y) => {
               setMonth(m)
               setYear(y)
-              setActiveTab('month')
+              changeTab('month')
             }}
           />
         ) : null}
@@ -241,7 +297,7 @@ const ProgressScreen = ({ route, navigation }: Props) => {
           <ProgressAllTimeTab
             onYearPress={(endYear) => {
               setYear(endYear)
-              setActiveTab('year')
+              changeTab('year')
             }}
           />
         ) : null}

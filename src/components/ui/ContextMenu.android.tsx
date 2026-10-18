@@ -12,6 +12,7 @@ import type {
   ContextMenuProps,
   ContextMenuSubmenu,
 } from '@/components/ui/ContextMenu.types'
+import { useInReorderableGhost } from '@/components/ui/reorderable/context'
 
 /**
  * Material dropdown menu anchored to the content, opened by long press. Android
@@ -38,7 +39,9 @@ export default function ContextMenu({
   // surrounding layout gives us down to it explicitly, unless the content is
   // meant to keep its own width.
   const [width, setWidth] = useState<number>()
-  const groups = menuGroups(actions)
+  // The dragged copy of a rearranged section draws without the native host.
+  const ghost = useInReorderableGhost()
+  const groups = ghost ? [] : menuGroups(actions)
   // Android has no system pointer effects, so mouse hover always tints.
   const [hovered, setHovered] = useState(false)
   const onHoverChange =

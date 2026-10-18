@@ -4,7 +4,7 @@ import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
 import useRevealAboveSheet from '@/hooks/useRevealAboveSheet'
 import { useState } from 'react'
 import ApproachingConversations from '@/features/visits/components/ApproachingConversations'
-import { RefreshControl, View } from 'react-native'
+import { Pressable, RefreshControl, View } from 'react-native'
 import { iCloudSync } from '@/app/sync/iCloudSync'
 import ServiceReportSection from '@/features/service-reports/components/ServiceReportSection'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
@@ -46,6 +46,23 @@ import { useServiceReport } from '@/stores/serviceReport'
 import useLocalDay from '@/hooks/useLocalDay'
 import { useShallow } from 'zustand/react/shallow'
 import { HomeTabStackNavigation } from '@/types/homeStack'
+import { TAB_BAR_HEIGHT } from '@/components/ui/TabBar'
+import ReorderableContainer from '@/components/ui/reorderable/ReorderableContainer'
+import ReorderableItem from '@/components/ui/reorderable/ReorderableItem'
+import ReorderableItemBox from '@/components/ui/reorderable/ReorderableItemBox'
+import useReorderScroller from '@/components/ui/reorderable/useReorderScroller'
+import HomeAddSectionsSheet from '@/components/HomeAddSectionsSheet'
+import HomeEmptySectionPlaceholder from '@/components/HomeEmptySectionPlaceholder'
+import useHomeEditing from '@/hooks/useHomeEditing'
+import {
+  hideHomeSection,
+  homeSectionTitle,
+  moveHomeSectionTo,
+  showHomeSection,
+} from '@/lib/homeSections'
+import useAvailableHomeSections from '@/hooks/useAvailableHomeSections'
+
+const SECTION_GAP = 20
 
 // Pull first so any remote-side changes land before we push ours — avoids a
 // fight between two devices that both just pulled to refresh.
@@ -127,11 +144,33 @@ export const HomeScreen = () => {
   // component entirely is deferred to a follow-up.
   const [upgradeReportsSheet, setUpgradeReportSheet] = useState(false)
   const weekStrip = useRevealAboveSheet()
+  // Home's jiggle mode: sections move, hide and come back.
+  const homeEditing = useHomeEditing({ lifecycle: true })
+  const { editing } = homeEditing
+  const [dragging, setDragging] = useState(false)
+  const scroll = useReorderScroller(weekStrip.scrollRef, {
+    obscuredBottom: hasSidebar ? 0 : insets.bottom + TAB_BAR_HEIGHT,
+  })
+  const sections = useAvailableHomeSections()
+  const shownSections = sections.available.filter(
+    (key) => !sections.hidden.includes(key)
+  )
+
   return (
-    <View style={{ flexGrow: 1, backgroundColor: theme.colors.background }}>
+    <View
+      ref={scroll.frameRef}
+      collapsable={false}
+      style={{ flexGrow: 1, backgroundColor: theme.colors.background }}
+    >
       <KeyboardAwareScrollView
         ref={weekStrip.scrollRef}
-        onScroll={weekStrip.onScroll}
+        onScroll={(e) => {
+          scroll.props.onScroll(e)
+          weekStrip.onScroll(e)
+        }}
+        onLayout={scroll.props.onLayout}
+        onContentSizeChange={scroll.props.onContentSizeChange}
+        scrollEnabled={!dragging}
         scrollEventThrottle={16}
         contentContainerStyle={{
           paddingBottom:
@@ -152,7 +191,7 @@ export const HomeScreen = () => {
           paddingBottom: hasSidebar ? 0 : insets.bottom + 50,
         }}
         refreshControl={
-          iCloudSyncEnabled ? (
+          iCloudSyncEnabled && !editing ? (
             <RefreshControl
               refreshing={refreshing}
               onRefresh={handleRefresh}
@@ -163,90 +202,125 @@ export const HomeScreen = () => {
           ) : undefined
         }
       >
-        <HomeGreeting />
-        {/* Full width above the columns, which alternate their children. */}
-        <HomeNewBadgeCard style={{ marginBottom: 20 }} />
-        <AdaptiveColumns wide={isWide} style={{ paddingBottom: insets.bottom }}>
-          {!homeChecklistDismissed && <HomeChecklist />}
-          {effectiveOrder.map((key: HomeScreenElementKey) => {
-            const section = (() => {
-              switch (key) {
-                case 'approachingConversations':
-                  // Missed Follow-ups live in the notifications tray.
-                  if (!homeScreenElements.approachingConversations) return null
-                  return (
-                    <ApproachingConversations
-                      key={key}
-                      headerAction={<TodayRouteAction />}
-                    />
-                  )
-                case 'tabletServiceYearSummary':
-                  if (
-                    !isTablet ||
-                    !hasAnnualGoal ||
-                    !homeScreenElements.tabletServiceYearSummary
-                  ) {
-                    return null
-                  }
-                  return (
-                    <View key={key} style={{ gap: 10 }}>
-                      <Text
-                        style={{
-                          fontSize: 14,
-                          fontFamily: theme.fonts.semiBold,
-                          marginLeft: 5,
-                        }}
-                      >
-                        {i18n.t('serviceYearSummary')}
-                      </Text>
-                      <HomeSectionMenu
-                        section='tabletServiceYearSummary'
-                        onPress={viewServiceYear}
-                        accessibilityLabel={i18n.t('viewYear')}
-                        hoverRadius={theme.numbers.borderRadiusLg}
-                        actions={[
-                          {
-                            id: 'view_year',
-                            title: i18n.t('viewYear'),
-                            systemImage: 'chart.line.uptrend.xyaxis',
-                            onPress: viewServiceYear,
-                          },
-                          {
-                            id: 'adjust_milestones',
-                            title: i18n.t('adjustMilestonesEllipsis'),
-                            systemImage: 'flag',
-                            onPress: () => setMilestoneSheetOpen(true),
-                          },
-                        ]}
-                      >
-                        <YearMilestoneCard year={serviceYear + 1} />
-                      </HomeSectionMenu>
-                    </View>
-                  )
-                case 'serviceReport':
-                  if (!homeScreenElements.serviceReport) return null
-                  return <ServiceReportSection key={key} />
-                case 'mileage':
-                  // Until answered, the opt-in prompt holds Mileage's slot.
-                  if (mileageTrackingEnabled === undefined)
-                    return <MileagePromptCard key={key} />
-                  if (
-                    mileageTrackingEnabled !== true ||
-                    homeScreenElements.mileage === false
-                  )
-                    return null
-                  return <MileageHomeSection key={key} />
+        {/* Like empty space, tapping these while editing ends it. */}
+        <Pressable disabled={!editing} onPress={homeEditing.finish}>
+          <View pointerEvents={editing ? 'none' : 'auto'}>
+            <HomeGreeting />
+            {/* Full width above the columns, which alternate their children. */}
+            <HomeNewBadgeCard style={{ marginBottom: 20 }} />
+          </View>
+        </Pressable>
+        {editing ? (
+          <Text
+            style={{
+              textAlign: 'center',
+              fontSize: theme.fontSize('sm'),
+              color: theme.colors.textAlt,
+              marginBottom: 14,
+            }}
+          >
+            {i18n.t('homeEdit.hint')}
+          </Text>
+        ) : null}
+        <ReorderableContainer
+          editing={editing}
+          onMove={moveHomeSectionTo}
+          onBackgroundLongPress={() => homeEditing.start('background')}
+          onBackgroundPress={homeEditing.finish}
+          onDragChange={setDragging}
+          scroller={scroll.scroller}
+          style={{ flex: 1 }}
+        >
+          <AdaptiveColumns
+            wide={isWide}
+            style={{ paddingBottom: insets.bottom }}
+          >
+            {!homeChecklistDismissed && (
+              // Getting started stays put; holding it doesn't edit Home.
+              <ReorderableItem id='checklist' locked gap={SECTION_GAP}>
+                <HomeChecklist />
+              </ReorderableItem>
+            )}
+            {effectiveOrder.map((key: HomeScreenElementKey) => {
+              const section = (() => {
+                switch (key) {
+                  case 'approachingConversations':
+                    // Missed Follow-ups live in the notifications tray.
+                    if (!homeScreenElements.approachingConversations)
+                      return null
+                    return (
+                      <ApproachingConversations
+                        key={key}
+                        headerAction={<TodayRouteAction />}
+                      />
+                    )
+                  case 'tabletServiceYearSummary':
+                    if (
+                      !isTablet ||
+                      !hasAnnualGoal ||
+                      !homeScreenElements.tabletServiceYearSummary
+                    ) {
+                      return null
+                    }
+                    return (
+                      <View key={key} style={{ gap: 10 }}>
+                        <Text
+                          style={{
+                            fontSize: 14,
+                            fontFamily: theme.fonts.semiBold,
+                            marginLeft: 5,
+                          }}
+                        >
+                          {i18n.t('serviceYearSummary')}
+                        </Text>
+                        {/* The badge goes on the card, not the heading. */}
+                        <ReorderableItemBox>
+                          <HomeSectionMenu
+                            section='tabletServiceYearSummary'
+                            onPress={viewServiceYear}
+                            accessibilityLabel={i18n.t('viewYear')}
+                            hoverRadius={theme.numbers.borderRadiusLg}
+                            actions={[
+                              {
+                                id: 'view_year',
+                                title: i18n.t('viewYear'),
+                                systemImage: 'chart.line.uptrend.xyaxis',
+                                onPress: viewServiceYear,
+                              },
+                              {
+                                id: 'adjust_milestones',
+                                title: i18n.t('adjustMilestonesEllipsis'),
+                                systemImage: 'flag',
+                                onPress: () => setMilestoneSheetOpen(true),
+                              },
+                            ]}
+                          >
+                            <YearMilestoneCard year={serviceYear + 1} />
+                          </HomeSectionMenu>
+                        </ReorderableItemBox>
+                      </View>
+                    )
+                  case 'serviceReport':
+                    if (!homeScreenElements.serviceReport) return null
+                    return <ServiceReportSection key={key} />
+                  case 'mileage':
+                    // Until answered, the opt-in prompt holds Mileage's slot.
+                    if (mileageTrackingEnabled === undefined)
+                      return <MileagePromptCard key={key} />
+                    if (
+                      mileageTrackingEnabled !== true ||
+                      homeScreenElements.mileage === false
+                    )
+                      return null
+                    return <MileageHomeSection key={key} />
 
-                case 'thisWeek':
-                  if (!homeScreenElements.thisWeek) return null
-                  return (
-                    // Measured to keep the week above the day's sheet.
-                    <View
-                      key={key}
-                      ref={weekStrip.targetRef}
-                      collapsable={false}
-                    >
+                  case 'thisWeek':
+                    if (!homeScreenElements.thisWeek) return null
+                    // Its item is measured to keep the week above the day's
+                    // sheet (see `viewRef` below).
+                    return (
                       <WeekStripTeaser
+                        key={key}
                         month={currentMonth}
                         year={currentYear}
                         monthsReports={currentMonthsReports}
@@ -254,31 +328,85 @@ export const HomeScreen = () => {
                           setSelectedDateSheet({ open: true, date })
                         }
                       />
-                    </View>
-                  )
-                case 'timer':
-                  if (!showsTimer || !homeScreenElements.timer) return null
-                  return <TimerSection key={key} />
-                case 'didYouKnow':
-                  if (homeScreenElements.didYouKnow === false) return null
-                  return (
-                    <DidYouKnowTipCard
-                      key={key}
-                      style={
-                        !isWide && isDidYouKnowLast
-                          ? { marginTop: 'auto' }
-                          : undefined
-                      }
-                    />
-                  )
-                default:
-                  return null
-              }
-            })()
-            return section
-          })}
-        </AdaptiveColumns>
+                    )
+                  case 'timer':
+                    if (!showsTimer || !homeScreenElements.timer) return null
+                    return <TimerSection key={key} />
+                  case 'didYouKnow':
+                    if (homeScreenElements.didYouKnow === false) return null
+                    return (
+                      // Its item takes the bottom anchor (see `style` below).
+                      <DidYouKnowTipCard key={key} />
+                    )
+                  default:
+                    return null
+                }
+              })()
+              if (!section) return null
+              const isPrompt =
+                key === 'mileage' && mileageTrackingEnabled === undefined
+              const title = homeSectionTitle(key)
+              // Screen readers can't drag: they move a section past the next
+              // shown one instead.
+              const at = shownSections.indexOf(key)
+              const before = shownSections[at - 1]
+              const after = shownSections[at + 1]
+              return (
+                <ReorderableItem
+                  key={key}
+                  id={key}
+                  // Holding a section opens its menu, which has Edit Home Screen.
+                  liftOutsideEditing={false}
+                  // The mileage question stays until it's answered.
+                  onRemove={isPrompt ? undefined : () => hideHomeSection(key)}
+                  removeLabel={i18n.t('homeEdit.removeA11y', {
+                    section: title,
+                  })}
+                  accessibilityLabel={title}
+                  accessibilityActions={[
+                    ...(before
+                      ? [{ name: 'earlier', label: i18n.t('moveUp') }]
+                      : []),
+                    ...(after
+                      ? [{ name: 'later', label: i18n.t('moveDown') }]
+                      : []),
+                    ...(isPrompt
+                      ? []
+                      : [{ name: 'remove', label: i18n.t('homeEdit.remove') }]),
+                  ]}
+                  onAccessibilityAction={(name) => {
+                    if (name === 'remove') hideHomeSection(key)
+                    else if (name === 'earlier' && before)
+                      moveHomeSectionTo(key, before)
+                    else if (name === 'later' && after)
+                      moveHomeSectionTo(key, after)
+                  }}
+                  viewRef={key === 'thisWeek' ? weekStrip.targetRef : undefined}
+                  // Sections with nothing to show today leave no gap.
+                  gap={SECTION_GAP}
+                  emptyPlaceholder={
+                    <HomeEmptySectionPlaceholder title={title} />
+                  }
+                  style={
+                    key === 'didYouKnow' && !isWide && isDidYouKnowLast
+                      ? { marginTop: 'auto' }
+                      : undefined
+                  }
+                >
+                  {section}
+                </ReorderableItem>
+              )
+            })}
+          </AdaptiveColumns>
+        </ReorderableContainer>
       </KeyboardAwareScrollView>
+      <HomeAddSectionsSheet
+        open={homeEditing.adding}
+        onClose={() => homeEditing.setAdding(false)}
+        sections={sections.available}
+        hidden={sections.hidden}
+        onAdd={showHomeSection}
+      />
       {isTablet && hasAnnualGoal && (
         <MilestoneAdjustSheet
           visible={milestoneSheetOpen}

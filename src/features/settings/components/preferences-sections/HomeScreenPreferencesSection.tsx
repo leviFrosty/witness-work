@@ -19,6 +19,7 @@ import ReorderControls from '@/components/ui/ReorderControls'
 import { reorderMenuActions } from '@/features/settings/components/shared/reorderMenuActions'
 import ContextMenu from '@/components/ui/ContextMenu'
 import { useMemo } from 'react'
+import { homeSectionTitle, isHomeSectionAvailable } from '@/lib/homeSections'
 
 const HideDonateHeart = () => {
   const { hideDonateHeart, set } = usePreferences()
@@ -77,12 +78,14 @@ const HomeElements = () => {
   // user's saved position for that row.
   const visibleKeys = useMemo(
     () =>
-      effectiveOrder.filter((k) => {
-        if (k === 'tabletServiceYearSummary') return isTablet && hasAnnualGoal
-        if (k === 'timer') return showsTimer
-        if (k === 'mileage') return mileageTrackingEnabled === true
-        return true
-      }),
+      effectiveOrder.filter((k) =>
+        isHomeSectionAvailable(k, {
+          isTablet,
+          hasAnnualGoal,
+          showsTimer,
+          mileageTrackingEnabled,
+        })
+      ),
     [
       effectiveOrder,
       isTablet,
@@ -92,24 +95,7 @@ const HomeElements = () => {
     ]
   )
 
-  const labelFor = (key: HomeScreenElementKey): string => {
-    switch (key) {
-      case 'approachingConversations':
-        return i18n.t('approachingConversations')
-      case 'tabletServiceYearSummary':
-        return i18n.t('serviceYearSummary')
-      case 'serviceReport':
-        return i18n.t('serviceReport')
-      case 'mileage':
-        return i18n.t('mileage.title')
-      case 'thisWeek':
-        return i18n.t('thisWeek')
-      case 'timer':
-        return i18n.t('timer')
-      case 'didYouKnow':
-        return i18n.t('didYouKnow_kicker')
-    }
-  }
+  const labelFor = homeSectionTitle
 
   const descriptionFor = (key: HomeScreenElementKey): string | null => {
     if (key === 'approachingConversations')

@@ -1,8 +1,15 @@
 import { useNotesImportEnabled } from '@/hooks/useNotesImportEnabled'
-import { RefreshCw as RefreshCwIcon } from 'lucide-react-native'
+import {
+  Check as CheckIcon,
+  Plus as PlusIcon,
+  RefreshCw as RefreshCwIcon,
+} from 'lucide-react-native'
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import { HomeScreen } from '@/features/home/screens/HomeScreen'
 import IconButton from '@/components/ui/IconButton'
+import HeaderPillButton from '@/components/ui/HeaderPillButton'
+import useHomeEditing from '@/hooks/useHomeEditing'
+import useAvailableHomeSections from '@/hooks/useAvailableHomeSections'
 import RootHeader from '@/components/RootHeader'
 import { useEffect } from 'react'
 import useTheme from '@/contexts/theme'
@@ -27,6 +34,8 @@ const HomeNavigator = () => {
   const { isWide, contentMaxWidth } = useAdaptiveLayout()
   const focusNotesImports = useNotesImportManager((s) => s.focus)
   const requestUpdateReveal = useUpdateRevealStore((s) => s.request)
+  const homeEditing = useHomeEditing()
+  const { hidden } = useAvailableHomeSections()
 
   // Populate settings-level status immediately and resume persisted work.
   useEffect(() => {
@@ -61,20 +70,39 @@ const HomeNavigator = () => {
               onLongPressTitle={onLongPressTitle}
               contentStyle={{ maxWidth: isWide ? contentMaxWidth : 720 }}
               actions={
-                <>
-                  {__DEV__ && (
-                    <IconButton
-                      icon={RefreshCwIcon}
-                      size='xl'
-                      hitSlop={12}
-                      accessibilityLabel='DEV: remount all screens (hold to reload JS)'
-                      onPress={triggerDevRemount}
-                      onLongPress={() => DevSettings.reload()}
+                homeEditing.editing ? (
+                  // As on the Home Screen: add on one side, Done on the other.
+                  <>
+                    {hidden.length ? (
+                      <HeaderPillButton
+                        icon={PlusIcon}
+                        label={i18n.t('homeEdit.addSections')}
+                        onPress={() => homeEditing.setAdding(true)}
+                        compact='auto'
+                      />
+                    ) : null}
+                    <HeaderPillButton
+                      icon={CheckIcon}
+                      label={i18n.t('done')}
+                      onPress={homeEditing.finish}
                     />
-                  )}
-                  <HomeStreakChip />
-                  <NotificationsBell />
-                </>
+                  </>
+                ) : (
+                  <>
+                    {__DEV__ && (
+                      <IconButton
+                        icon={RefreshCwIcon}
+                        size='xl'
+                        hitSlop={12}
+                        accessibilityLabel='DEV: remount all screens (hold to reload JS)'
+                        onPress={triggerDevRemount}
+                        onLongPress={() => DevSettings.reload()}
+                      />
+                    )}
+                    <HomeStreakChip />
+                    <NotificationsBell />
+                  </>
+                )
               }
             />
           </View>

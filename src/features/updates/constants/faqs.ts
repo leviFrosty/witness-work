@@ -148,6 +148,11 @@ export const FAQS: FAQEntry[] = [
     related: [113, 250],
   },
   {
+    id: 'dailyPace',
+    category: 'time',
+    related: [775, 90, 184],
+  },
+  {
     id: 'serviceYearPace',
     category: 'time',
     related: [250, 196],
@@ -176,6 +181,11 @@ export const FAQS: FAQEntry[] = [
     id: 'reorderHome',
     category: 'customization',
     related: [119, 259],
+  },
+  {
+    id: 'progressCards',
+    category: 'customization',
+    related: [775, 119, 259],
   },
   { id: 'reorderTabs', category: 'customization' },
   {

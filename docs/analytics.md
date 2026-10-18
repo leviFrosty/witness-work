@@ -568,6 +568,40 @@ of this preference with `order` (comma-separated bounded route names, including
 Progress even when hidden) and `source` (`arrows` or `menu`). Generic menu and
 navigation interactions remain removed.
 
+## Progress cards
+
+Progress → Month shows the month's report, then cards the User picks: Daily
+Pace, Studies, Days Out, Visits, Credit, Weeks, Projected Month, Days, Service
+Year, Year Pace, Streak, Lifetime, and Mileage. They're edited in place, like
+Home Screen widgets (Edit Cards, or holding a card, which lifts it): remove,
+resize by the corner handle, drag to move, Add Cards, Reset Cards. Edits save as they're made. The product questions are
+which cards people want and whether they find the editor; one event per
+editing session answers both:
+
+| Event                       | When / properties                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `progress_cards_customized` | Editing finished (Done, leaving the screen or the Month tab, or Android's Back) with a different layout than it started with. `source`: how editing started, `header` (Edit Cards in the header), `footer` (Edit Cards under the cards), `card` (holding a card, which lifts it), or `add` (Add Cards with no cards left). `cards`: the layout afterwards as comma-separated `card:size` pairs. `card_count`, `added`, `removed`, `resized` (counts), `moved` (two cards changed order), `reset` (the layout ended at the defaults, by Reset Cards or by hand). |
+
+Opening the editor without changing anything sends nothing. No hours, goals,
+names, or dates are sent; card ids and sizes are a fixed list.
+
+## Home sections
+
+Home's sections (Approaching Conversations, Service Report, Mileage, This Week,
+Timer, Did You Know, and Service Year Summary on iPad) are rearranged in place
+the same way: Edit Home Screen in a section's long-press menu, or holding empty
+space, starts editing; sections jiggle, drag to move, the minus hides one (with
+Undo), and Add Sections shows hidden ones again. Preferences → Home Screen still
+does the same with switches and arrows. Whether people find and use the in-place
+editor is the question; one event per editing session answers it:
+
+| Event                    | When / properties                                                                                                                                                                                                                                                                                                                                                     |
+| ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `home_screen_customized` | Editing finished (Done, tapping empty space, leaving Home, or Android's Back) with a different layout than it started with. `source`: `menu` (Edit Home Screen) or `background` (holding empty space). `sections`: the shown sections afterwards, comma-separated, in order. `hidden`, `shown` (counts hidden and shown again), `moved` (two sections changed order). |
+
+Opening the editor without changing anything sends nothing. Section keys are a
+fixed list; nothing in the sections is sent.
+
 ## Plan details
 
 Tapping a Plan opens Plan Details: the Plan read-only, with Edit and a More menu

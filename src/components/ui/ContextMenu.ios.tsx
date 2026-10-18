@@ -11,6 +11,7 @@ import PointerHover, { HoverTint } from '@/components/ui/PointerHover'
 import MenuItems from '@/components/ui/MenuItems.ios'
 import { menuAccessibilityProps, menuGroups } from '@/components/ui/menuEntries'
 import type { ContextMenuProps } from '@/components/ui/ContextMenu.types'
+import { useInReorderableGhost } from '@/components/ui/reorderable/context'
 
 /** Native SwiftUI context menu: long-press lifts the preview above the menu. */
 export default function ContextMenu({
@@ -38,7 +39,9 @@ export default function ContextMenu({
   const [armed, setArmed] = useState(false)
   const [hovered, setHovered] = useState(false)
   const tint = onPress && pointerEffect === 'tint'
-  const allGroups = menuGroups(actions)
+  // The dragged copy of a rearranged section draws without the native host.
+  const ghost = useInReorderableGhost()
+  const allGroups = ghost ? [] : menuGroups(actions)
   // Disabled keeps the Host mounted (see below) but offers no items, so the
   // native menu doesn't open.
   const groups = disabled ? [] : allGroups

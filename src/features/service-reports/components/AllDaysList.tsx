@@ -1,6 +1,6 @@
 import { ChevronForwardIcon } from '@/components/ui/DirectionalIcon'
-import { ReactNode, useMemo, useState } from 'react'
-import { View } from 'react-native'
+import { ReactElement, ReactNode, useMemo, useState } from 'react'
+import { ScrollView, useWindowDimensions, View } from 'react-native'
 import moment from 'moment'
 import { isStoredDateOnLocalDay } from '@/lib/normalizeDate'
 
@@ -28,7 +28,7 @@ import SelectedDateSheet, {
   SelectedDateSheetState,
 } from '@/features/service-reports/components/SelectedDateSheet'
 import Badge from '@/components/ui/Badge'
-import { useCardStyle } from '@/components/ui/Card'
+import Card, { useCardStyle } from '@/components/ui/Card'
 import Circle from '@/components/ui/Circle'
 import { getDateStatusColor } from '@/components/CalendarDay'
 import ContextMenu from '@/components/ui/ContextMenu'
@@ -45,7 +45,19 @@ interface AllDaysListProps {
   dayReveal?: RevealAboveSheet
   /** The Plan form, for planning a day in its sheet. */
   renderPlanForm?: (slot: PlanFormSlot) => ReactNode
+  /**
+   * `compact` keeps the list to a few days in one card that scrolls on its own,
+   * for a Progress layout that wants the room for other cards.
+   */
+  variant?: 'full' | 'compact'
+  /** Space on each side of the full list's rows. */
+  inset?: number
+  /** Wraps the column headings, e.g. to long-press them. */
+  wrapHeader?: (header: ReactElement) => ReactElement
 }
+
+/** About four and a half compact rows, so the cut-off one says it scrolls. */
+const COMPACT_LIST_HEIGHT = 200
 
 type DayRow = {
   date: Date
@@ -65,7 +77,18 @@ type DayRow = {
  * One day in the list: tap opens the day's sheet; long-press offers Add Time /
  * Plan This Day with a preview of the day's entries and plans.
  */
-const DayRowItem = ({ row, onPress }: { row: DayRow; onPress: () => void }) => {
+const DayRowItem = ({
+  row,
+  onPress,
+  inset,
+  plain,
+}: {
+  row: DayRow
+  onPress: () => void
+  inset: number
+  /** A divided row inside the compact card rather than a card of its own. */
+  plain?: boolean
+}) => {
   const theme = useTheme()
   const cardStyle = useCardStyle()
   const menu = useDayMenuActions(row.date)
@@ -79,18 +102,24 @@ const DayRowItem = ({ row, onPress }: { row: DayRow; onPress: () => void }) => {
     <ContextMenu
       actions={menu}
       onPress={onPress}
-      hoverRadius={cardStyle.borderRadius}
+      hoverRadius={plain ? 0 : cardStyle.borderRadius}
       preview={
         dayHasPreview(previewData) ? (
           <DayPreview date={row.date} {...previewData} />
         ) : undefined
       }
-      style={{ marginHorizontal: 15 }}
+      style={{ marginHorizontal: plain ? 0 : inset }}
     >
       <View
         style={{
-          ...cardStyle,
-          paddingVertical: 12,
+          ...(plain
+            ? {
+                borderBottomWidth: 1,
+                borderBottomColor: theme.colors.border,
+                backgroundColor: theme.colors.card,
+              }
+            : cardStyle),
+          paddingVertical: plain ? 10 : 12,
           paddingHorizontal: 15,
           flexDirection: 'row',
           alignItems: 'center',
@@ -190,8 +219,12 @@ const AllDaysList = ({
   year,
   dayReveal,
   renderPlanForm,
+  variant = 'full',
+  inset = 15,
+  wrapHeader = (header) => header,
 }: AllDaysListProps) => {
   const theme = useTheme()
+  const { fontScale } = useWindowDimensions()
   const { serviceReports, dayPlans, recurringPlans } = useServiceReport()
   const { categories } = useCategories()
   const { timeDisplayFormat } = usePreferences()
@@ -340,104 +373,124 @@ const AllDaysList = ({
     showAllDays,
   ])
 
+  const compact = variant === 'compact'
+  const headingStyle = {
+    fontFamily: theme.fonts.semiBold,
+    color: theme.colors.textAlt,
+    fontSize: theme.fontSize('xs'),
+    textTransform: 'uppercase',
+    letterSpacing: tracking(0.5),
+  } as const
+
+  const header = wrapHeader(
+    <View
+      style={{
+        marginHorizontal: compact ? 0 : inset,
+        paddingHorizontal: 15,
+        paddingTop: compact ? 12 : 0,
+        paddingBottom: compact ? 8 : 2,
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 10,
+        ...(compact
+          ? { borderBottomWidth: 1, borderBottomColor: theme.colors.border }
+          : {}),
+      }}
+    >
+      <Text style={{ ...headingStyle, flex: 1 }} numberOfLines={1}>
+        {i18n.t('date')}
+      </Text>
+      <Text style={headingStyle} numberOfLines={1}>
+        {i18n.t('category')}
+      </Text>
+      <Text
+        style={{ ...headingStyle, minWidth: 44, textAlign: alignText('end') }}
+        numberOfLines={1}
+      >
+        {i18n.t('hours')}
+      </Text>
+      <View style={{ width: 12 }} />
+    </View>
+  )
+
+  const rowItems = rows.map((row) => (
+    <View
+      key={row.date.toISOString()}
+      ref={
+        !compact && row.date.getTime() === sheet.date.getTime()
+          ? dayReveal?.targetRef
+          : undefined
+      }
+      collapsable={false}
+    >
+      <DayRowItem
+        row={row}
+        inset={inset}
+        plain={compact}
+        onPress={() => setSheet({ open: true, date: row.date })}
+      />
+    </View>
+  ))
+
+  const futureToggle = hasFutureDays ? (
+    <Button
+      onPress={() => setShowAllDays((v) => !v)}
+      style={{
+        alignSelf: 'center',
+        paddingVertical: 8,
+        paddingHorizontal: 12,
+      }}
+    >
+      <Text
+        style={{
+          color: theme.colors.textAlt,
+          fontSize: theme.fontSize('sm'),
+          fontFamily: theme.fonts.semiBold,
+          textDecorationLine: 'underline',
+        }}
+      >
+        {showAllDays ? i18n.t('hideFutureDays') : i18n.t('showAllDays')}
+      </Text>
+    </Button>
+  ) : null
+
   return (
     <View style={{ gap: 8 }}>
-      <View style={{ gap: 6 }}>
-        <View
+      {compact ? (
+        <Card
           style={{
-            marginHorizontal: 15,
-            paddingHorizontal: 15,
-            paddingBottom: 2,
-            flexDirection: 'row',
-            alignItems: 'center',
-            gap: 10,
+            paddingVertical: 0,
+            paddingHorizontal: 0,
+            gap: 0,
+            overflow: 'hidden',
           }}
         >
-          <Text
-            style={{
-              flex: 1,
-              fontFamily: theme.fonts.semiBold,
-              color: theme.colors.textAlt,
-              fontSize: theme.fontSize('xs'),
-              textTransform: 'uppercase',
-              letterSpacing: tracking(0.5),
-            }}
-            numberOfLines={1}
+          {header}
+          <ScrollView
+            // Each month starts at its latest day.
+            key={`${year}-${month}`}
+            nestedScrollEnabled
+            // Grows with larger text so it still shows about four days.
+            style={{ maxHeight: COMPACT_LIST_HEIGHT * Math.max(1, fontScale) }}
+            contentContainerStyle={{ paddingBottom: futureToggle ? 0 : 4 }}
           >
-            {i18n.t('date')}
-          </Text>
-          <Text
-            style={{
-              fontFamily: theme.fonts.semiBold,
-              color: theme.colors.textAlt,
-              fontSize: theme.fontSize('xs'),
-              textTransform: 'uppercase',
-              letterSpacing: tracking(0.5),
-            }}
-            numberOfLines={1}
-          >
-            {i18n.t('category')}
-          </Text>
-          <Text
-            style={{
-              fontFamily: theme.fonts.semiBold,
-              color: theme.colors.textAlt,
-              fontSize: theme.fontSize('xs'),
-              textTransform: 'uppercase',
-              letterSpacing: tracking(0.5),
-              minWidth: 44,
-              textAlign: alignText('end'),
-            }}
-            numberOfLines={1}
-          >
-            {i18n.t('hours')}
-          </Text>
-          <View style={{ width: 12 }} />
+            {rowItems}
+            {futureToggle}
+          </ScrollView>
+        </Card>
+      ) : (
+        <View style={{ gap: 6 }}>
+          {header}
+          {rowItems}
+          {futureToggle}
         </View>
-        {rows.map((row) => (
-          <View
-            key={row.date.toISOString()}
-            ref={
-              row.date.getTime() === sheet.date.getTime()
-                ? dayReveal?.targetRef
-                : undefined
-            }
-            collapsable={false}
-          >
-            <DayRowItem
-              row={row}
-              onPress={() => setSheet({ open: true, date: row.date })}
-            />
-          </View>
-        ))}
-        {hasFutureDays && (
-          <Button
-            onPress={() => setShowAllDays((v) => !v)}
-            style={{
-              alignSelf: 'center',
-              paddingVertical: 8,
-              paddingHorizontal: 12,
-            }}
-          >
-            <Text
-              style={{
-                color: theme.colors.textAlt,
-                fontSize: theme.fontSize('sm'),
-                fontFamily: theme.fonts.semiBold,
-                textDecorationLine: 'underline',
-              }}
-            >
-              {showAllDays ? i18n.t('hideFutureDays') : i18n.t('showAllDays')}
-            </Text>
-          </Button>
-        )}
-      </View>
+      )}
 
       <SelectedDateSheet
         sheet={sheet}
         setSheet={setSheet}
         thisMonthsReports={thisMonthsReports}
-        onHeightChange={dayReveal?.onSheetHeightChange}
+        onHeightChange={compact ? undefined : dayReveal?.onSheetHeightChange}
         renderPlanForm={renderPlanForm}
       />
     </View>

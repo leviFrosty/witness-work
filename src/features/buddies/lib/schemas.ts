@@ -433,5 +433,14 @@ export const rosterSchema = z.object({
   read: lenientRecord(notificationId, z.number()),
   /** Queue entries dismissed on any device, the same way. */
   dismissed: lenientRecord(notificationId, z.number()),
+  /**
+   * The name every device puts on this User's Buddy Card, and when it last
+   * changed (0: never changed on a device running Buddies). Absent from older
+   * builds' rosters.
+   */
+  card: z
+    .object({ name: z.string().max(120), updatedAt: z.number() })
+    .optional()
+    .catch(undefined),
 })
 export type Roster = z.infer<typeof rosterSchema>

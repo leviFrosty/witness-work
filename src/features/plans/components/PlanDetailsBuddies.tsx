@@ -1,4 +1,5 @@
 import moment from 'moment'
+import { View } from 'react-native'
 import { useNavigation } from '@react-navigation/native'
 import { UserPlus as UserPlusIcon } from 'lucide-react-native'
 import type { PlanListItem } from '@/types/timeEntry'
@@ -27,15 +28,20 @@ import {
 } from '@/features/buddies/lib/joinRequests'
 import sendJoinRequestInvite from '@/features/buddies/lib/sendJoinRequestInvite'
 import { planEndsAt, planShareKey } from '@/features/buddies/lib/shares'
-import type { IncomingJoinRequest } from '@/features/buddies/lib/state'
+import type {
+  IncomingJoinRequest,
+  UnsentShare,
+} from '@/features/buddies/lib/state'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 import ShareBuddyRow from '@/features/buddies/components/ShareBuddyRow'
+import BuddyAvatar from '@/features/buddies/components/BuddyAvatar'
 
 /**
- * Who's invited to the User's own Plan and how each answered, buddies asking to
- * join it (with Invite), and Invite Buddies while the Plan is still ahead.
- * Inviting adds the buddy right away; the invitation goes out like saving the
- * Plan would. Taking someone off stays in Edit.
+ * Who's invited to the User's own Plan and how each answered (or that it never
+ * reached them, and why), buddies asking to join it (with Invite), and Invite
+ * Buddies while the Plan is still ahead. Inviting adds the buddy right away;
+ * the invitation goes out like saving the Plan would. Taking someone off stays
+ * in Edit.
  */
 export default function PlanDetailsBuddies({
   item,
@@ -59,11 +65,21 @@ export default function PlanDetailsBuddies({
   const replies = useShareReplies(
     dayPlan?.buddies?.length ? planShareKey(dayPlan.id) : undefined
   )
+  const unsent = useBuddies((state) =>
+    dayPlan ? state.unsentShares[planShareKey(dayPlan.id)] : undefined
+  )
   // Only its organizer invites people to a Plan that follows an invitation.
   if (!enabled || dayPlan?.buddyShare) return null
 
   const invitedIds = dayPlan?.buddies ?? []
   const invited = buddies.filter((buddy) => invitedIds.includes(buddy.inboxId))
+  // Invited, but no longer a buddy, so the invitation never reached them.
+  const former = invitedIds.flatMap((inboxId) => {
+    const entry = unsent?.[inboxId]
+    return entry && !buddies.some((buddy) => buddy.inboxId === inboxId)
+      ? [{ inboxId, entry }]
+      : []
+  })
   const asking = openJoinRequestsForPlan(
     item.plan,
     dayPlan
@@ -87,7 +103,8 @@ export default function PlanDetailsBuddies({
             !askingIds.includes(buddy.inboxId)
         )
       : []
-  if (invited.length + asking.length + uninvited.length === 0) return null
+  if (invited.length + former.length + asking.length + uninvited.length === 0)
+    return null
 
   const invite = (inboxId: string) => {
     if (!dayPlan) return
@@ -104,7 +121,7 @@ export default function PlanDetailsBuddies({
       navigation.replace('Plan Details', { dayPlanId: planId })
   }
 
-  const rowCount = invited.length + asking.length
+  const rowCount = invited.length + former.length + asking.length
   const isLast = (index: number) =>
     index === rowCount - 1 && uninvited.length === 0
   const statusText = {
@@ -116,6 +133,17 @@ export default function PlanDetailsBuddies({
     <BuddiesSection title={i18n.t('buddies_title')}>
       {invited.map((buddy, index) => {
         const reply = replies?.[buddy.inboxId]?.status
+        const notSent = unsent?.[buddy.inboxId]
+        if (notSent)
+          return (
+            <ShareBuddyRow
+              key={buddy.inboxId}
+              buddy={buddy}
+              subtitle={notSentReason(notSent)}
+              status={<NotSentLabel />}
+              last={isLast(index)}
+            />
+          )
         return (
           <ShareBuddyRow
             key={buddy.inboxId}
@@ -138,6 +166,13 @@ export default function PlanDetailsBuddies({
           />
         )
       })}
+      {former.map(({ inboxId, entry }, index) => (
+        <FormerBuddyRow
+          key={inboxId}
+          entry={entry}
+          last={isLast(invited.length + index)}
+        />
+      ))}
       {asking.map(({ buddy, request }, index) => (
         <ShareBuddyRow
           key={buddy.inboxId}
@@ -166,7 +201,7 @@ export default function PlanDetailsBuddies({
               </Text>
             </Button>
           }
-          last={isLast(invited.length + index)}
+          last={isLast(invited.length + former.length + index)}
         />
       ))}
       {uninvited.length > 0 ? (
@@ -203,5 +238,58 @@ export default function PlanDetailsBuddies({
         </XView>
       ) : null}
     </BuddiesSection>
+  )
+}
+
+const notSentReason = (entry: UnsentShare) =>
+  i18n.t(
+    entry.reason === 'suspended'
+      ? 'buddies_notSentSuspendedRow'
+      : 'buddies_notSentGoneRow'
+  )
+
+function NotSentLabel() {
+  const theme = useTheme()
+  return (
+    <Text style={{ color: theme.colors.error, fontSize: theme.fontSize('sm') }}>
+      {i18n.t('buddies_notSent')}
+    </Text>
+  )
+}
+
+/** Someone invited who's no longer a buddy: no page to open. */
+function FormerBuddyRow({
+  entry,
+  last,
+}: {
+  entry: UnsentShare
+  last: boolean
+}) {
+  const theme = useTheme()
+  return (
+    <XView
+      accessible
+      style={{
+        gap: 12,
+        paddingVertical: 10,
+        paddingHorizontal: 15,
+        borderBottomWidth: last ? 0 : 1,
+        borderColor: theme.colors.border,
+      }}
+    >
+      <BuddyAvatar name={entry.name} size={32} />
+      <View style={{ flex: 1 }}>
+        <Text numberOfLines={1}>{entry.name}</Text>
+        <Text
+          style={{
+            color: theme.colors.textAlt,
+            fontSize: theme.fontSize('sm'),
+          }}
+        >
+          {notSentReason(entry)}
+        </Text>
+      </View>
+      <NotSentLabel />
+    </XView>
   )
 }

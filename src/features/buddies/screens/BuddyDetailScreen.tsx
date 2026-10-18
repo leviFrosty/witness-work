@@ -36,9 +36,12 @@ export default function BuddyDetailScreen({ route, navigation }: Props) {
   const card = useBuddies((state) => state.cards[inboxId])
   const { needsAnswer, together } = useBuddyTogether(inboxId)
 
-  // Removed here, from the other side, or by delete-all.
+  // Removed here, from the other side, or by delete-all. Opened with nothing
+  // to go back to, it shows Buddies instead of an empty page.
   useEffect(() => {
-    if (!buddy) navigation.goBack()
+    if (buddy) return
+    if (navigation.canGoBack()) navigation.goBack()
+    else navigation.replace('Buddies')
   }, [buddy, navigation])
   if (!buddy) return null
 

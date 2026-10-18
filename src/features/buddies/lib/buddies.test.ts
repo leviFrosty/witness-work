@@ -82,6 +82,7 @@ import {
   setup,
 } from '@/features/buddies/lib/testing/engineHarness'
 import { normalizeDateForStorage } from '@/lib/normalizeDate'
+import { deriveAccountSigningKey } from '@/lib/serverAccount/keys'
 import { RecurringPlanFrequencies } from '@/lib/recurrence'
 import type { DayPlan, RecurringPlan } from '@/types/timeEntry'
 
@@ -903,6 +904,230 @@ describe('buddies pairing', () => {
   })
 })
 
+describe('leaving an account other devices keep', () => {
+  const push = {
+    apnsToken: 'ab',
+    apnsEnvironment: 'sandbox' as const,
+    templates: {},
+  }
+
+  it("signs this device out, keeping the inbox and buddies for the account's other devices", async () => {
+    const { fake, user } = setup()
+    const mom = user('Mom')
+    const anna = user('Anna')
+    await pair(mom, anna)
+    const momsTablet = user(
+      'Mom',
+      { dayPlans: [], recurringPlans: [] },
+      mom.seed
+    )
+    await momsTablet.engine.sync()
+    await mom.engine.registerPush(push)
+    await momsTablet.engine.registerPush(push)
+    const devices = fake.inboxes.get(mom.inboxId)!.devices
+    expect(devices.size).toBe(2)
+
+    await mom.engine.leaveThisDevice()
+    expect(fake.inboxes.has(mom.inboxId)).toBe(true)
+    expect([...devices.keys()]).toEqual([momsTablet.store.getState().deviceId])
+    expect(fake.inboxes.get(anna.inboxId)!.slots.size).toBe(1)
+    expect(mom.store.getState()).toMatchObject({
+      buddies: [],
+      registeredInboxId: null,
+      pendingRemovals: [],
+    })
+
+    // Nobody was told: the account's other device, and Anna, carry on.
+    await momsTablet.engine.sync()
+    await anna.engine.sync()
+    expect(momsTablet.store.getState().buddies).toMatchObject([
+      { inboxId: anna.inboxId, status: 'active' },
+    ])
+    expect(anna.store.getState().buddies).toMatchObject([
+      { inboxId: mom.inboxId, status: 'active' },
+    ])
+  })
+
+  it('starts nothing with the old seed until it is replaced', async () => {
+    const { fake, user } = setup()
+    const mom = user('Mom')
+    const anna = user('Anna')
+    await pair(mom, anna)
+    await mom.engine.leaveThisDevice()
+
+    // A sync before the new key is stored registers nothing again.
+    await expect(mom.engine.sync()).rejects.toEqual(
+      new RelayError('cancelled', 0)
+    )
+    expect(mom.store.getState().registeredInboxId).toBeNull()
+
+    const sue = user('Sue')
+    mom.setRootSeed(sue.seed)
+    mom.engine.dropIdentity()
+    await mom.engine.sync()
+    expect(mom.store.getState().registeredInboxId).toBe(sue.inboxId)
+    expect(fake.inboxes.get(mom.inboxId)!.slots.size).toBe(1)
+  })
+
+  it('finishes removals this device still owes before it leaves', async () => {
+    const { fake, offlineOps, user } = setup()
+    const mom = user('Mom')
+    const anna = user('Anna')
+    await pair(mom, anna)
+    offlineOps.add('slot/leave')
+    await expect(mom.engine.removeBuddy(anna.inboxId)).rejects.toEqual(
+      new BuddyRemovalPendingError('buddy')
+    )
+    await expect(mom.engine.leaveThisDevice()).rejects.toEqual(
+      new BuddyRemovalPendingError('everything')
+    )
+    expect(mom.store.getState().pendingRemovals).toHaveLength(1)
+
+    offlineOps.clear()
+    await mom.engine.leaveThisDevice()
+    expect(fake.inboxes.get(anna.inboxId)!.slots.size).toBe(0)
+    expect(fake.inboxes.has(mom.inboxId)).toBe(true)
+  })
+
+  it('stays when its push registration can’t be taken off', async () => {
+    const { offlineOps, user } = setup()
+    const mom = user('Mom')
+    const anna = user('Anna')
+    await pair(mom, anna)
+    await mom.engine.registerPush(push)
+    offlineOps.add('device/unregister')
+    await expect(mom.engine.leaveThisDevice()).rejects.toThrow()
+    expect(mom.store.getState().buddies).toHaveLength(1)
+
+    // Still running here.
+    offlineOps.clear()
+    await mom.engine.sync()
+    expect(mom.store.getState().registeredInboxId).toBe(mom.inboxId)
+  })
+
+  it("starts over, telling no one, when another device's seed replaces this one's", async () => {
+    const { fake, user } = setup()
+    const anna = user('Anna')
+    const sue = user('Sue')
+    await pair(sue, anna)
+    const mom = user('Mom')
+    await pair(mom, anna)
+    const momsTablet = user(
+      'Mom',
+      { dayPlans: [], recurringPlans: [] },
+      mom.seed
+    )
+    await momsTablet.engine.sync()
+    expect(momsTablet.store.getState().buddies).toHaveLength(1)
+
+    // Mom's phone signed in to Sue's account; iCloud Keychain brings the
+    // tablet the same key.
+    momsTablet.setRootSeed(sue.seed)
+    await momsTablet.engine.sync()
+    expect(momsTablet.store.getState()).toMatchObject({
+      registeredInboxId: sue.inboxId,
+      removedBuddies: {},
+    })
+    expect(momsTablet.store.getState().buddies).toMatchObject([
+      { inboxId: anna.inboxId, status: 'active' },
+    ])
+
+    // Sue's own pairing with Anna, and Mom's, are untouched.
+    await sue.engine.sync()
+    expect(sue.store.getState().buddies).toMatchObject([
+      { inboxId: anna.inboxId, status: 'active' },
+    ])
+    await mom.engine.sync()
+    expect(mom.store.getState().buddies).toHaveLength(1)
+    expect(fake.inboxes.get(anna.inboxId)!.slots.size).toBe(2)
+  })
+})
+
+describe('the name on Buddy Cards', () => {
+  const nameAt = (viewer: User, inboxId: string) =>
+    viewer.store.getState().buddies.find((b) => b.inboxId === inboxId)?.name
+
+  it("is the account's, whichever device publishes, for a device joining it", async () => {
+    const { user, advance } = setup()
+    const mom = user('Maya Torres')
+    const anna = user('Anna')
+    await pair(mom, anna)
+    await mom.engine.sync()
+
+    advance(60_000)
+    const momsTablet = user(
+      'Verify',
+      { dayPlans: [], recurringPlans: [] },
+      mom.seed
+    )
+    await momsTablet.engine.sync()
+    expect(momsTablet.store.getState().cardName?.name).toBe('Maya Torres')
+    // The tablet's Plans change its card; the name stays the account's.
+    await momsTablet.engine.publishCards({ edited: true })
+    await anna.engine.sync()
+    expect(nameAt(anna, mom.inboxId)).toBe('Maya Torres')
+  })
+
+  it('follows a change the User makes on any device', async () => {
+    const { fake, user, advance } = setup()
+    const mom = user('Maya Torres')
+    const anna = user('Anna')
+    await pair(mom, anna)
+    await mom.engine.sync()
+    const momsTablet = user(
+      'Verify',
+      { dayPlans: [], recurringPlans: [] },
+      mom.seed
+    )
+    await momsTablet.engine.sync()
+
+    advance(60_000)
+    momsTablet.profile.name = 'Maya T.'
+    momsTablet.engine.setCardName('Maya T.')
+    // The roster goes shortly after (`saveRosterSoon`).
+    const roster = () => fake.inboxes.get(mom.inboxId)!.roster!.seq
+    const before = roster()
+    expect(momsTablet.timers).toHaveLength(1)
+    momsTablet.timers.splice(0)[0].run()
+    await vi.waitFor(() => expect(roster()).toBeGreaterThan(before))
+    await momsTablet.engine.publishCards({ edited: true })
+    await anna.engine.sync()
+    expect(nameAt(anna, mom.inboxId)).toBe('Maya T.')
+
+    // The phone's next card says the same, though its Profile wasn't changed.
+    advance(60_000)
+    await mom.engine.sync()
+    expect(mom.store.getState().cardName?.name).toBe('Maya T.')
+    mom.setShares([])
+    await mom.engine.publishCards({ edited: true })
+    await anna.engine.sync()
+    expect(nameAt(anna, mom.inboxId)).toBe('Maya T.')
+  })
+
+  it('settles on one name for devices that both ran Buddies before it was kept', async () => {
+    const { user } = setup()
+    const mom = user('Maya Torres')
+    const anna = user('Anna')
+    await pair(mom, anna)
+    // Two devices from before card names, each with its own Profile name.
+    const momsTablet = user(
+      'Theo',
+      { dayPlans: [], recurringPlans: [] },
+      mom.seed
+    )
+    await momsTablet.engine.sync()
+    mom.store.setState({ cardName: null, startedAt: null })
+    momsTablet.store.setState({ cardName: null, startedAt: null })
+
+    await mom.engine.sync()
+    await momsTablet.engine.sync()
+    await mom.engine.sync()
+    expect(mom.store.getState().cardName?.name).toBe(
+      momsTablet.store.getState().cardName?.name
+    )
+  })
+})
+
 type User = ReturnType<ReturnType<typeof setup>['user']>
 
 /**
@@ -1364,6 +1589,91 @@ describe('shared Plans and Follow-ups', () => {
     await pair(levi, mom)
     return { ...env, levi, anna, mom }
   }
+
+  describe('invitations that never reach a buddy', () => {
+    /** Levi, paired with Anna, telling the test what wasn't sent. */
+    async function leviAndAnna() {
+      const env = setup()
+      const notSent: { reason: string; names: string[] }[] = []
+      const levi = env.user('Levi', undefined, undefined, {
+        onSharesNotSent: (report) => notSent.push(report),
+      })
+      const anna = env.user('Anna')
+      await pair(levi, anna)
+      const account = () =>
+        [...env.fake.accounts.values()].find(
+          (candidate) =>
+            candidate.accountPub ===
+            deriveAccountSigningKey(levi.seed).publicKey
+        )!
+      return { ...env, levi, anna, notSent, account }
+    }
+    const key = planShareKey('sat')
+
+    it("drops one refused while suspended, says so, and doesn't send it after reinstatement", async () => {
+      const { levi, anna, notSent, account, advance } = await leviAndAnna()
+      account().status = 'suspended'
+      levi.setShares([planSpec([anna.inboxId])])
+      await expect(levi.engine.publishShares()).rejects.toMatchObject({
+        code: 'suspended',
+      })
+      expect(notSent).toEqual([{ reason: 'suspended', names: ['Anna'] }])
+      expect(levi.store.getState().unsentShares[key]).toMatchObject({
+        [anna.inboxId]: { reason: 'suspended', name: 'Anna' },
+      })
+      expect(levi.store.getState().outgoingShares[key].sent).toEqual({})
+
+      account().status = 'active'
+      advance(60_000)
+      await levi.engine.publishShares()
+      await anna.engine.sync()
+      expect(Object.keys(anna.store.getState().incomingShares)).toEqual([])
+      expect(notSent).toHaveLength(1)
+
+      // Changed after reinstatement: sent as a new invitation.
+      levi.setShares([
+        planSpec([anna.inboxId], { ...saturday, title: 'Moved' }),
+      ])
+      await levi.engine.publishShares()
+      await anna.engine.sync()
+      expect(Object.values(anna.store.getState().incomingShares)).toMatchObject(
+        [{ details: { title: 'Moved' } }]
+      )
+      expect(levi.store.getState().unsentShares).toEqual({})
+    })
+
+    it('says so when the pairing ended before the invitation went', async () => {
+      const { levi, anna, notSent } = await leviAndAnna()
+      // Anna ended it; Levi's phone hasn't synced since.
+      await anna.engine.removeBuddy(levi.inboxId)
+      levi.setShares([planSpec([anna.inboxId])])
+      await levi.engine.publishShares()
+      expect(notSent).toEqual([{ reason: 'gone', names: ['Anna'] }])
+      expect(levi.store.getState().buddies).toEqual([])
+      expect(levi.store.getState().unsentShares[key]).toMatchObject({
+        [anna.inboxId]: { reason: 'gone', name: 'Anna' },
+      })
+      expect(levi.store.getState().outgoingShares[key]?.sent ?? {}).toEqual({})
+    })
+
+    it("notes a coming Plan's buddy who left before it was sent, quietly", async () => {
+      const { levi, anna, notSent } = await leviAndAnna()
+      levi.setShares([planSpec([anna.inboxId])])
+      await anna.engine.removeBuddy(levi.inboxId)
+      // The sync finds Anna gone before anything was published.
+      levi.setEnabled(false)
+      await levi.engine.sync().catch(() => undefined)
+      expect(levi.store.getState().unsentShares[key]).toMatchObject({
+        [anna.inboxId]: { reason: 'gone', name: 'Anna' },
+      })
+      expect(notSent).toEqual([])
+
+      // Taken off the Plan: nothing more to say.
+      levi.setShares([planSpec([])])
+      await levi.engine.publishShares()
+      expect(levi.store.getState().unsentShares).toEqual({})
+    })
+  })
 
   it('invites buddies, and replies come back to the sender', async () => {
     const { fake, levi, anna, mom } = await trio()

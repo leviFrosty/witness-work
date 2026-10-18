@@ -13,8 +13,10 @@ const random = () => new Uint8Array(randomBytes(32))
 /** The native store, the server account, and Buddies, all in memory. */
 function setup({
   key = null as Uint8Array | null,
-  loss = NO_LOSS as AccountKeyLoss,
+  loss = NO_LOSS as Omit<AccountKeyLoss, 'keptElsewhere'>,
   accountId = 'account-id' as string | null,
+  /** Another device signed in to the account, or the error reading it. */
+  elsewhere = false as boolean | Error,
 } = {}) {
   const log: string[] = []
   let stored = key ? toB64u(key) : null
@@ -46,13 +48,17 @@ function setup({
         log.push('account.unblock')
       }
     ),
+    signedInElsewhere: vi.fn(async () => {
+      if (elsewhere instanceof Error) throw elsewhere
+      return elsewhere
+    }),
   }
   const buddies = {
     loss: vi.fn(() => buddiesLoss),
-    release: vi.fn(async () => {
-      log.push('buddies.release')
-      // Delete Buddies deletes the seed, and resets Buddies.
-      stored = null
+    release: vi.fn(async (scope: 'device' | 'account') => {
+      log.push(`buddies.release:${scope}`)
+      // Delete Buddies deletes the seed; either way Buddies resets.
+      if (scope === 'account') stored = null
       buddiesLoss = NO_LOSS
     }),
     forget: vi.fn(() => {
@@ -139,10 +145,11 @@ describe('account key service', () => {
       inboxRegistered: true,
     }
     const { service, stored, store, buddies, account } = setup({ key, loss })
-    expect(await service.lossIfReplaced(random())).toEqual(loss)
+    const shown = { ...loss, keptElsewhere: false }
+    expect(await service.lossIfReplaced(random())).toEqual(shown)
     const error = await service.replace(random()).catch((e) => e)
     expect(error).toBeInstanceOf(AccountKeyLossError)
-    expect((error as AccountKeyLossError).loss).toEqual(loss)
+    expect((error as AccountKeyLossError).loss).toEqual(shown)
     expect(stored()).toBe(toB64u(key))
     expect(store.replace).not.toHaveBeenCalled()
     expect(buddies.release).not.toHaveBeenCalled()
@@ -155,18 +162,74 @@ describe('account key service', () => {
     const { service, log, stored } = setup({ key: random(), loss })
     expect(await service.replace(newKey, { confirmedLoss: true })).toEqual({
       outcome: 'replaced',
-      loss,
+      loss: { ...loss, keptElsewhere: false },
       accountId: 'account-id',
     })
     expect(stored()).toBe(toB64u(newKey))
     expect(log).toEqual([
-      'buddies.release',
+      'buddies.release:account',
       'account.close',
       'store.replace',
       'buddies.forget',
       'account.unblock',
       `account.ensure:${toB64u(newKey)}`,
     ])
+  })
+
+  it('only signs this device out of Buddies while the account has other devices', async () => {
+    const newKey = random()
+    const loss = { buddies: 1, buddyNames: ['Ana'], inboxRegistered: true }
+    const { service, log, stored } = setup({
+      key: random(),
+      loss,
+      elsewhere: true,
+    })
+    const kept = { ...loss, keptElsewhere: true }
+    expect(await service.lossIfReplaced(newKey)).toEqual(kept)
+    expect(await service.replace(newKey, { confirmedLoss: true })).toEqual({
+      outcome: 'replaced',
+      loss: kept,
+      accountId: 'account-id',
+    })
+    expect(stored()).toBe(toB64u(newKey))
+    expect(log[0]).toBe('buddies.release:device')
+  })
+
+  it('changes nothing while the account’s other devices can’t be checked', async () => {
+    const key = random()
+    const { service, buddies, store, stored } = setup({
+      key,
+      loss: { buddies: 1, buddyNames: ['Ana'], inboxRegistered: true },
+      elsewhere: new Error('offline'),
+    })
+    await expect(service.lossIfReplaced(random())).rejects.toThrow('offline')
+    await expect(
+      service.replace(random(), { confirmedLoss: true })
+    ).rejects.toThrow('offline')
+    expect(buddies.release).not.toHaveBeenCalled()
+    expect(store.replace).not.toHaveBeenCalled()
+    expect(stored()).toBe(toB64u(key))
+  })
+
+  it('checks the other devices again before deleting anything', async () => {
+    const { service, account, log } = setup({
+      key: random(),
+      loss: { buddies: 1, buddyNames: ['Ana'], inboxRegistered: true },
+    })
+    expect(await service.lossIfReplaced(random())).toMatchObject({
+      keptElsewhere: false,
+    })
+    // Another device signed in after the warning was shown.
+    account.signedInElsewhere.mockResolvedValueOnce(true)
+    await service.replace(random(), { confirmedLoss: true })
+    expect(log[0]).toBe('buddies.release:device')
+  })
+
+  it('doesn’t ask about other devices when nothing would be lost', async () => {
+    const { service, account } = setup({ key: random() })
+    expect(await service.lossIfReplaced(random())).toEqual(NO_LOSS)
+    await service.replace(random())
+    expect(account.signedInElsewhere).not.toHaveBeenCalled()
   })
 
   it('keeps the old key when Delete Buddies fails', async () => {

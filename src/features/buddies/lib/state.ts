@@ -55,6 +55,15 @@ export type BuddySharing = {
 }
 
 /**
+ * The Buddy Card name to keep: the roster's when it changed later than this
+ * device's (or as late: devices then settle on whichever roster was written
+ * last), else this device's own.
+ */
+export function mergeCardName(local: CardName, remote: CardName | undefined) {
+  return remote && remote.updatedAt >= local.updatedAt ? remote : local
+}
+
+/**
  * Folds another device's sharing choices into this one's. Photo, Tenure, and
  * the streak go to the later `updatedAt`. Badges go to the later
  * `badgesUpdatedAt`, apart: a roster from an older app leaves them out (keep
@@ -292,6 +301,33 @@ export type OutgoingShare = {
 
 /** `OutgoingShare.sent` for a recipient another device sent the share to. */
 export const ADOPTED_SHARE_HASH = 'adopted'
+
+/**
+ * Why an invitation never reached a buddy: the relay refused it while this
+ * User's account was suspended, or the pairing had ended.
+ */
+export type UnsentShareReason = 'suspended' | 'gone'
+
+/** An invitation this device didn't send, and won't retry as it stands. */
+export type UnsentShare = {
+  reason: UnsentShareReason
+  /** The buddy's name as this User saw it, for when they're no longer listed. */
+  name: string
+  /**
+   * `suspended`: the content refused. The same content is never sent later; a
+   * change to the Plan or Follow-up is sent as usual.
+   */
+  hash?: string
+  /** When it was recorded. */
+  at: number
+}
+
+/** The name buddies see on this User's Buddy Card, the same on every device. */
+export type CardName = {
+  name: string
+  /** When the User last changed it on a device running Buddies; 0 if never. */
+  updatedAt: number
+}
 
 export type IncomingShareStatus = 'pending' | ShareReply | 'cancelled'
 
@@ -704,6 +740,24 @@ export type BuddiesState = {
   publishedCardHashes: Record<string, string>
   /** Shares this device has sent, by spec key. */
   outgoingShares: Record<string, OutgoingShare>
+  /**
+   * Invitations that didn't reach a buddy, by spec key → recipient inboxId, so
+   * the Plan or Follow-up can say so. Dropped once sent, uninvited, or over.
+   */
+  unsentShares: Record<string, Record<string, UnsentShare>>
+  /**
+   * The account's card name from the roster (or a change made here), which
+   * every device's Buddy Card carries; null until one is known, when the
+   * Profile name stands in.
+   */
+  cardName: CardName | null
+  /**
+   * When Buddies started on this device (its inbox registered here); null on
+   * devices that started before this was kept, the earliest of all. Until the
+   * User changes their name, the device that has run Buddies longest names the
+   * card.
+   */
+  startedAt: number | null
   /** This User's note photos uploaded for shares, by note photo id. */
   sharedPhotos: Record<string, UploadedSharedPhoto>
   /** The relay takes shared photos (its last sync said so). */
@@ -796,6 +850,9 @@ export const initialBuddiesState: BuddiesState = {
   cards: {},
   publishedCardHashes: {},
   outgoingShares: {},
+  unsentShares: {},
+  cardName: null,
+  startedAt: null,
   sharedPhotos: {},
   photosAvailable: false,
   profilePhoto: null,

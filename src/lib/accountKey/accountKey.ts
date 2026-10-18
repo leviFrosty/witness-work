@@ -19,18 +19,30 @@ export type AccountKeyStore = {
 
 /** What replacing the key takes from this device. */
 export type AccountKeyLoss = {
-  /** Buddies on this device, who are removed (and leave this User's inbox). */
+  /**
+   * Buddies on this device, who are removed from it. Unless `keptElsewhere`,
+   * they're removed for good (and leave this User's inbox).
+   */
   buddies: number
   /** Their names as this User sees them, for the warning to name them. */
   buddyNames: string[]
-  /** The Buddies inbox registered for the current key, which is deleted. */
+  /**
+   * The Buddies inbox registered for the current key: deleted, unless
+   * `keptElsewhere`.
+   */
   inboxRegistered: boolean
+  /**
+   * Other devices are still signed in to the current account, so its buddies
+   * and inbox stay for them: only this device signs out of Buddies.
+   */
+  keptElsewhere: boolean
 }
 
 export const NO_LOSS: AccountKeyLoss = {
   buddies: 0,
   buddyNames: [],
   inboxRegistered: false,
+  keptElsewhere: false,
 }
 
 export const losesSomething = (loss: AccountKeyLoss) =>
@@ -49,16 +61,24 @@ export type AccountKeyServiceDeps = {
       swap: () => Promise<void>,
       keys: { from: Uint8Array | null; to: Uint8Array }
     ) => Promise<void>
+    /**
+     * Whether another device holds a live session for the current account (`GET
+     * /accounts/v1/sessions`). Throws when that can't be read: nothing is
+     * deleted on a guess.
+     */
+    signedInElsewhere: () => Promise<boolean>
   }
   /**
    * Buddies, whose identity derives from the key. Before the key changes,
-   * `release` (Delete Buddies) leaves every buddy and deletes the inbox, so no
-   * one is left with a buddy whose key is gone; afterwards `forget` drops the
-   * identity it cached from the old key.
+   * `release` lets go of it: `device` signs this device out of Buddies and
+   * leaves the inbox and buddies to the account's other devices; `account`
+   * (Delete Buddies, for its last device) leaves every buddy and deletes the
+   * inbox, so no one is left with a buddy whose key is gone. Afterwards
+   * `forget` drops the identity it cached from the old key.
    */
   buddies: {
-    loss: () => AccountKeyLoss
-    release: () => Promise<void>
+    loss: () => Omit<AccountKeyLoss, 'keptElsewhere'>
+    release: (scope: 'device' | 'account') => Promise<void>
     forget: () => void
   }
 }
@@ -116,7 +136,14 @@ export function createAccountKeyService(deps: AccountKeyServiceDeps) {
   async function lossIfReplaced(newKey?: Uint8Array): Promise<AccountKeyLoss> {
     const current = await peek()
     if (!current || (newKey && sameBytes(current, newKey))) return NO_LOSS
-    return deps.buddies.loss()
+    return currentLoss()
+  }
+
+  /** Throws while the account's other devices can't be checked. */
+  async function currentLoss(): Promise<AccountKeyLoss> {
+    const loss = { ...deps.buddies.loss(), keptElsewhere: false }
+    if (!losesSomething(loss)) return loss
+    return { ...loss, keptElsewhere: await deps.account.signedInElsewhere() }
   }
 
   async function run(
@@ -126,11 +153,13 @@ export function createAccountKeyService(deps: AccountKeyServiceDeps) {
   ): Promise<ReplaceAccountKeyResult> {
     const current = await peek()
     if (current && sameBytes(current, newKey)) return { outcome: 'unchanged' }
-    const loss = current ? deps.buddies.loss() : NO_LOSS
+    // Read again: Buddies is deleted for good only when this is still the
+    // account's last device.
+    const loss = current ? await currentLoss() : NO_LOSS
     if (losesSomething(loss)) {
       if (!confirmedLoss) throw new AccountKeyLossError(loss)
       // Throws, changing nothing more, while a buddy can't be left yet.
-      await deps.buddies.release()
+      await deps.buddies.release(loss.keptElsewhere ? 'device' : 'account')
     }
     // The old key's session ends before the new key is stored, and the new
     // one (or `session`) is the next to open.
@@ -149,11 +178,13 @@ export function createAccountKeyService(deps: AccountKeyServiceDeps) {
   /**
    * Makes `newKey` this device's account key. The same key changes nothing.
    * Otherwise, when this device's Buddies has buddies or an inbox, it needs
-   * `confirmedLoss` (else `AccountKeyLossError`) and runs Delete Buddies first,
-   * which tells the buddies. Then it ends the old key's session, stores the
-   * key, forgets the old Buddies identity, and adopts `session` (with no
-   * session opened for either key in between), and opens the new account's
-   * session if it has none. One at a time.
+   * `confirmedLoss` (else `AccountKeyLossError`) and lets go of Buddies first:
+   * on the account's last device it runs Delete Buddies, which tells the
+   * buddies; while other devices are signed in, only this one signs out. Then
+   * it ends the old key's session, stores the key, forgets the old Buddies
+   * identity, and adopts `session` (with no session opened for either key in
+   * between), and opens the new account's session if it has none. One at a
+   * time.
    */
   function replace(
     newKey: Uint8Array,

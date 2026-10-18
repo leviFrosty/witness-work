@@ -148,6 +148,7 @@ export function setup() {
       | 'keepBuddyPhotos'
       | 'withdrawnAt'
       | 'account'
+      | 'onSharesNotSent'
     > = {}
   ) {
     const store = memoryStore({})

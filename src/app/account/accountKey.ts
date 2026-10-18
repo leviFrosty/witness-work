@@ -8,14 +8,16 @@ import {
   type ReplaceAccountKeyResult,
 } from '@/lib/accountKey/accountKey'
 import { serverAccount } from '@/lib/serverAccount'
+import { signedInElsewhere } from '@/lib/serverAccount/accountDevices'
 import { buddiesEngine } from '@/features/buddies/lib/buddiesService'
 import { buddyDisplayName } from '@/features/buddies/lib/buddyProfile'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 
 /**
  * This device's account key (ADR 0026), wired to the native store, the server
- * account and Buddies. In the app tier because replacing the key has to run
- * Delete Buddies first.
+ * account and Buddies. In the app tier because replacing the key has to let go
+ * of Buddies first: Delete Buddies on the account's last device, else signing
+ * this one out of it.
  */
 export const accountKey = createAccountKeyService({
   store: {
@@ -23,9 +25,17 @@ export const accountKey = createAccountKeyService({
     getOrCreate: BuddiesKeychain.getOrCreateRootSeed,
     replace: BuddiesKeychain.replaceRootSeed,
   },
-  account: serverAccount,
+  account: {
+    ensure: serverAccount.ensure,
+    changeKey: serverAccount.changeKey,
+    signedInElsewhere: async () => {
+      const key = await accountKey.peek()
+      if (!key) throw new Error('No account key on this device')
+      return signedInElsewhere(key)
+    },
+  },
   buddies: {
-    loss: (): AccountKeyLoss => {
+    loss: (): Omit<AccountKeyLoss, 'keptElsewhere'> => {
       const { buddies, registeredInboxId, pendingRemovals } =
         useBuddies.getState()
       return {
@@ -36,7 +46,10 @@ export const accountKey = createAccountKeyService({
           registeredInboxId !== null || pendingRemovals.length > 0,
       }
     },
-    release: () => buddiesEngine.deleteEverything(),
+    release: (scope) =>
+      scope === 'device'
+        ? buddiesEngine.leaveThisDevice()
+        : buddiesEngine.deleteEverything(),
     forget: () => buddiesEngine.dropIdentity(),
   },
 })
@@ -70,6 +83,7 @@ export async function replaceAccountKey(
       source,
       buddies_removed: result.loss.buddies,
       had_inbox: result.loss.inboxRegistered,
+      buddies_kept_elsewhere: result.loss.keptElsewhere,
       registered: result.accountId !== null,
     })
     if (source !== 'handoff') void joinBuddiesHere().catch(() => undefined)

@@ -28,6 +28,8 @@ import {
   serverAccount,
 } from '@/lib/serverAccount'
 import type { ServerAccountInfo } from '@/lib/serverAccount/client'
+import type { SupporterStatus } from '@/lib/serverAccount/revenueCatLink'
+import { revenueCatLink } from '@/lib/serverAccount/revenueCatLinkRuntime'
 import { deriveAccountSigningKey } from '@/lib/serverAccount/keys'
 import HandoffTools from '@/app/navigation/tools/HandoffTools'
 import BackupTools from '@/app/navigation/tools/BackupTools'
@@ -72,6 +74,10 @@ export default function AccountTools() {
   const [revision, setRevision] = useState(0)
   const [lookup, setLookup] = useState<Lookup>({ state: 'idle' })
   const [busy, setBusy] = useState<string | null>(null)
+  const [supporter, setSupporter] = useState<
+    (SupporterStatus & { at: number }) | null
+  >(null)
+  const [lastLink, setLastLink] = useState<string | null>(null)
   const registeredInboxId = useBuddies((state) => state.registeredInboxId)
   const linkedInboxId = useBuddies((state) => state.accountLinkedInboxId)
 
@@ -141,6 +147,23 @@ export default function AccountTools() {
         account ? 'Registered' : 'Not registered',
         account ? shortId(account.accountId) : 'Offline, or accounts off'
       )
+    })
+
+  // Reads open a session when there's none, as any bearer call does.
+  const fetchSupporter = () =>
+    run('Read Supporter status', async () => {
+      setSupporter({ ...(await revenueCatLink.fetchStatus()), at: Date.now() })
+    })
+
+  const linkRevenueCat = () =>
+    run('Link RevenueCat', async () => {
+      const outcome = await revenueCatLink.ensure({
+        force: true,
+        open: true,
+        reason: 'tools',
+      })
+      setLastLink(`${outcome.result} · ${when(Date.now())}`)
+      say('Link RevenueCat', outcome.result)
     })
 
   const copyRecoveryKey = () =>
@@ -352,6 +375,50 @@ export default function AccountTools() {
         <ToolRow
           label='Linked to account'
           value={inboxId && linkedInboxId === inboxId ? 'yes' : 'no'}
+        />
+      </ToolList>
+
+      <ToolSubheading
+        title='Supporter on the server'
+        info='ADR 0029: ww-api answers Supporter status from the RevenueCat customers this account linked (POST /accounts/v1/revenuecat-customers), kept current by RevenueCat’s webhook. Linking sends the id RevenueCat is logged in as; the server reads the customer itself.'
+      />
+      <ToolList>
+        <ToolRow
+          label='Server Supporter'
+          value={
+            supporter
+              ? `${String(supporter.supporter)} · ${supporter.customers} linked · ${when(supporter.at)}`
+              : '—'
+          }
+        />
+        <ToolRow
+          label='Server ends'
+          value={
+            supporter?.supporter
+              ? supporter.expiresAt
+                ? when(supporter.expiresAt)
+                : 'never'
+              : '—'
+          }
+        />
+        <ToolRow label='Last link here' value={lastLink ?? '—'} />
+        <ToolRow
+          label={
+            busy === 'Read Supporter status'
+              ? 'Reading…'
+              : 'Read Supporter status'
+          }
+          info='GET /accounts/v1/supporter.'
+          disabled={busy !== null}
+          onPress={fetchSupporter}
+        />
+        <ToolRow
+          label={
+            busy === 'Link RevenueCat' ? 'Linking…' : 'Link RevenueCat now'
+          }
+          info='Links now, skipping the daily wait and any 503 backoff.'
+          disabled={busy !== null}
+          onPress={linkRevenueCat}
         />
       </ToolList>
 

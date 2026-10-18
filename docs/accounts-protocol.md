@@ -1,8 +1,8 @@
 # Server account protocol
 
-The wire contract for the server account between the WitnessWork app (`src/lib/serverAccount`) and ww-api (`ww-api/src/accounts`). Why it exists is in [ADR 0024](./adr/0024-anonymous-server-accounts.md); moving it, recovering it, and backing up to it are in [ADR 0026](./adr/0026-move-and-recover-the-server-account.md); attested sessions and bearer tokens are in [ADR 0027](./adr/0027-account-sessions-attest-once-then-bearer-tokens.md); the activity log and device list are in [ADR 0028](./adr/0028-account-activity-log.md).
+The wire contract for the server account between the WitnessWork app (`src/lib/serverAccount`) and ww-api (`ww-api/src/accounts`). Why it exists is in [ADR 0024](./adr/0024-anonymous-server-accounts.md); moving it, recovering it, and backing up to it are in [ADR 0026](./adr/0026-move-and-recover-the-server-account.md); attested sessions and bearer tokens are in [ADR 0027](./adr/0027-account-sessions-attest-once-then-bearer-tokens.md); the activity log and device list are in [ADR 0028](./adr/0028-account-activity-log.md); Supporter status on the account is in [ADR 0029](./adr/0029-supporter-status-on-the-server-account.md).
 
-The server account is not ADR 0011's account id. That one is the RevenueCat identity, shared through a file in iCloud Drive. This one is a row ww-api owns, so it can suspend someone for abuse.
+The server account is not ADR 0011's account id. That one is the RevenueCat identity, shared through a file in iCloud Drive. This one is a row ww-api owns, so it can suspend someone for abuse. The account links the RevenueCat customers its devices use (see [Supporter status](#supporter-status)).
 
 ## Keys
 
@@ -292,20 +292,61 @@ Each device keeps its own encrypted slot in R2, at `v1/<accountId>/<slotId>`. A 
 - **Delete.** Settings → Account lists the account's slots as "This phone" or "Another device" with their date and size (names are inside the ciphertext). Deleting one, or Delete Backup for all, deletes from R2 at once; either also turns backup off on this device. Turning backup off asks whether to delete this device's slot.
 - **Delete Buddies** deletes the account key, so it first deletes every slot of the account, with the key's session and signature, then closes the session. If deleting the slots fails, nothing else happens and the User is told. With backup on, the next upload creates the new key's account, and the app says the recovery key changed. Replacing the key with another (a handoff or a recovery key) leaves the old account's slots to expire.
 
+## Supporter status
+
+ww-api answers whether an account is a Supporter from its own record, which RevenueCat's webhook keeps current ([ADR 0029](./adr/0029-supporter-status-on-the-server-account.md)). Who counts is still [ADR 0014](./adr/0014-supporter-status-rule.md)'s rule. The app keeps logging in to RevenueCat with ADR 0011's shared id and links that customer to its account.
+
+### Linking a customer: `POST /accounts/v1/revenuecat-customers`
+
+**Bearer** only. `{ appUserId }` → `{ ok, supporter, expiresAt }`.
+
+- `appUserId` is the id the app is logged in to RevenueCat as (`Purchases.getAppUserID()`): 8 to 64 of `A-Z a-z 0-9 _ -`. RevenueCat's anonymous ids (`$RCAnonymousID:…`) never match, and the app doesn't send them. Anything else is 400 `bad_request`.
+- The server reads the customer from RevenueCat's REST API, stores what it says, and links it to the token's account. `supporter` and `expiresAt` (epoch ms, or `null` for no end) are the **account's** status afterwards, over every customer it links. A customer RevenueCat has never seen isn't linked, and the answer is the account's status without it.
+- Idempotent. Repeating a link refreshes it and reads RevenueCat again, so it doubles as "check my status now".
+- An account keeps at most 5 customers, and a customer at most 5 accounts. A new link past either replaces the least recently linked.
+- RevenueCat unreachable is 503 `unavailable` with `Retry-After`; nothing changes. A suspended account can still link.
+- Counts against the Buddies read edge limit.
+
+### Reading the status: `GET /accounts/v1/supporter`
+
+**Bearer**, no body → `{ ok, supporter, expiresAt, customers }`. The account's status from the stored record (read again from RevenueCat first when it's more than a day old), and how many customers it links. Settings shows nothing new; the developer Tools show it. RevenueCat unreachable while the record is stale is 503 `unavailable`. Counts against the Buddies read edge limit.
+
+### When the app links
+
+`src/lib/serverAccount/revenueCatLink.ts`, after the account's session is open, with the id RevenueCat is logged in as:
+
+- when a session opens, the account key changes, or the RevenueCat id changes (ADR 0011 adopting another device's id);
+- after a purchase or a restore, and whenever RevenueCat reports a change in entitlements;
+- before Notes Import's kickoff and route planning, when this launch hasn't linked yet;
+- when route planning is refused as not a Supporter (`supporter_required`), even if it linked today: the server can have dropped the link (the 5-account cap) or never got it. If the link answers Supporter, the app retries the call once; the refusal didn't count toward the route limits;
+- otherwise at most once a day, when the app comes to the foreground.
+
+It remembers the last link (a hash of the account id and RevenueCat id, and the time) in device-local MMKV. Offline or a refused session waits for the next trigger; 503 waits out its `Retry-After`. A link failure never blocks Notes Import or route planning: the server answers from what it already has.
+
+### What the server does with it
+
+- The webhook (`POST /revenuecat/v1/webhook`, RevenueCat's servers only, authenticated by the integration's Authorization header) reads every linked customer an event names again from RevenueCat; customers nobody linked are ignored.
+- A record read within the last day is the answer until its expiry; an older one is read again first. RevenueCat unreachable: route planning answers 503 `supporter_check_failed`, Notes Import counts the User as free.
+- Supporter start and end aren't in the activity log.
+
+### Route planning: `POST /route-planning/optimize`
+
+**Bearer**, `{ start, stops }` → `{ order, distanceMeters, durationSeconds, remainingToday }`. Supporter only, from the account's status (403 `supporter_required`); refuses a suspended account (403 `suspended`). Limits are per account. Before sessions the body carried `accountId`, the RevenueCat app user id; while the legacy switch is on that still works, and once it's off it's 426 `upgrade_required`. ww-api's README has the full contract.
+
 ## Notes Import
 
 Notes Import calls ww-api only through the session (ADR 0027 §4; `src/features/notes-import/lib/notesImportClient.ts`). Every route but the public `GET /notes-import/status` is **Bearer**, and the session's attestation stands in for attesting each import: the bodies carry no install id, hashes or attestation fields, and the token's account is the meter (allowances, the concurrency cap, Import from Paper's page limit). Usage under an install or shared account id doesn't carry over; each account starts a fresh window. ww-api's README has the full contract.
 
-| Route                                       | Body                                                        | 200                                                          |
-| ------------------------------------------- | ----------------------------------------------------------- | ------------------------------------------------------------ |
-| `POST /notes-import/kickoff`                | `{ notesText, context, refinement?, revenueCatAppUserId? }` | `{ importId, refinement, credits }`                          |
-| `POST /notes-import` (synchronous fallback) | the same                                                    | `{ result, contentHash, refinement, emptyCharged, credits }` |
-| `POST /notes-import/transcribe`             | `{ image, mimeType, revenueCatAppUserId? }`                 | `{ ok, text, truncated, pagesRemaining }`                    |
-| `GET /notes-import/{importId}/events`       | none; `Last-Event-ID` to resume                             | the SSE stream                                               |
-| `GET /notes-import/{importId}/result`       | none                                                        | `{ status, payload?, error? }`                               |
-| `POST /notes-import/{importId}/destroy`     | none                                                        | `{ ok: true }`                                               |
+| Route                                       | Body                                  | 200                                                          |
+| ------------------------------------------- | ------------------------------------- | ------------------------------------------------------------ |
+| `POST /notes-import/kickoff`                | `{ notesText, context, refinement? }` | `{ importId, refinement, credits }`                          |
+| `POST /notes-import` (synchronous fallback) | the same                              | `{ result, contentHash, refinement, emptyCharged, credits }` |
+| `POST /notes-import/transcribe`             | `{ image, mimeType }`                 | `{ ok, text, truncated, pagesRemaining }`                    |
+| `GET /notes-import/{importId}/events`       | none; `Last-Event-ID` to resume       | the SSE stream                                               |
+| `GET /notes-import/{importId}/result`       | none                                  | `{ status, payload?, error? }`                               |
+| `POST /notes-import/{importId}/destroy`     | none                                  | `{ ok: true }`                                               |
 
-- **Supporter.** `revenueCatAppUserId` is the id `CustomerProvider` logs in to RevenueCat with (ADR 0011's shared account id, else the install id), sent only when it's 8 to 64 of `A-Z a-z 0-9 _ -`, never a RevenueCat anonymous id. Absent means not a Supporter. `notesImportRevenueCatAppUserId` produces it, and goes away once RevenueCat is linked to the account.
+- **Supporter.** The account's [Supporter status](#supporter-status). The app links its RevenueCat customer before the first kickoff of a launch. Builds from the sessions change until ADR 0029 sent `revenueCatAppUserId`; ww-api now ignores it.
 - **Runs.** The run handle the ledger keeps is the import id alone. A handle from an app version before sessions (it has a `subscribeToken`) is dropped when read, so that import kicks off again from its saved notes. Run routes serve only the account's own imports, and anything else is 404 `not_found`: resuming then kicks off again too, and a destroy treats it as already deleted. Each SSE connection takes the session's current token in `Authorization` (a fresh one once the old is within a minute of expiry), so a run outlives its token; a 401 refreshes once and reconnects with `Last-Event-ID`.
 - **Refusals.** A session that can't be opened stops the import before any Notes Import route: `device_ineligible` when this device or app can never be verified (the copy is `account_unverifiedBody`, which names Notes Import), `attestation_unavailable` when verifying has to wait, `attestation_failed` otherwise. 403 `suspended` on kickoff, the synchronous fallback or transcribe shows `notesImport_suspended`; reading and deleting runs still work. 426 shows Update Required.
 - **Availability.** Notes Import counts as unavailable on a device that can never attest (`checkSupport`, once per launch) or whose last session open was refused for the device and is still waiting (`lastOpenFailure`), so the composer says so before the User writes anything. Neither opens a session.
@@ -331,6 +372,8 @@ Moderation is maintainer-only: `POST /admin/accounts/lookup` and `/admin/account
 The accounts database holds the account id, `accountPub`, the status and its history (reason codes only), and which inboxes each account owns. No name, email, phone number, or private key, and nothing the User shares in Buddies. The inbox links mean the server knows which inbox belongs to which account, but not who that is or who their buddies are.
 
 Sessions hold the account id, the platform, the SHA-256 of the current and previous refresh tokens, and their times; not the install, its App Attest key, or `accountPub`. Access tokens carry the account id and session id and are never logged.
+
+The RevenueCat app user ids an account's devices link, each with its Supporter status, expiry, and when RevenueCat was last read, and which accounts link which ids. Ids nobody linked aren't stored, and webhook bodies aren't kept: only event ids, for 30 days.
 
 The activity log holds, for 400 days, each entry's kind and time, the session ids and platforms it names, their sealed device labels, and backup slot ids. No IP address, location, user agent, or content, and nothing about buddies.
 

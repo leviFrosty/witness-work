@@ -15,6 +15,7 @@ const runtime = vi.hoisted(() => ({
   setCustomer: () => {},
   /** Runs once as the next identity check's detected Apple Account change. */
   appleAccountChange: null as (() => void) | null,
+  links: [] as unknown[],
 }))
 
 vi.mock('react-native', () => ({
@@ -82,6 +83,11 @@ vi.mock('@/lib/logger', () => import('@/__tests__/mocks/logger'))
 vi.mock('@/lib/errorTracking', () => ({
   errorTracking: { captureException: vi.fn(), addBreadcrumb: vi.fn() },
 }))
+vi.mock('@/lib/serverAccount/revenueCatLinkRuntime', () => ({
+  ensureRevenueCatLinked: async (options: unknown) => {
+    runtime.links.push(options)
+  },
+}))
 
 const ACCOUNT_FILE = 'witness-work-account.json'
 const phoneClaim: SyncFile = {
@@ -115,6 +121,7 @@ beforeEach(() => {
   vi.resetModules()
   vi.clearAllMocks()
   runtime.files = []
+  runtime.links = []
   runtime.pending = []
   runtime.remoteChangeListeners = []
   runtime.appleAccountChange = null
@@ -181,5 +188,7 @@ describe('account reconcile while iCloud is downloading', () => {
       expect.stringContaining('"accountId":"phone"')
     )
     expect(account.getOrCreateAccountId()).toBe('ipad')
+    // Another RevenueCat customer: linked to the server account (ADR 0029).
+    expect(runtime.links).toContainEqual({ force: true, reason: 'adopted' })
   })
 })

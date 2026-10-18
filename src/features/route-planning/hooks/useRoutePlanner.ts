@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
 import { Platform } from 'react-native'
-import useAccount from '@/hooks/useAccount'
 import { analytics } from '@/lib/analytics'
 import { openURL } from '@/lib/links'
 import i18n from '@/lib/locales'
@@ -44,7 +43,6 @@ export type PlannedRoute = {
  * removed; the User can swap them in.
  */
 export default function useRoutePlanner(stops: RouteStop[]) {
-  const { accountId } = useAccount()
   const provider = usePreferences((s) => s.defaultNavigationMapProvider)
   const [removedKeys, setRemovedKeys] = useState(() =>
     stops.slice(MAX_ROUTE_STOPS).map((stop) => stop.key)
@@ -109,9 +107,7 @@ export default function useRoutePlanner(stops: RouteStop[]) {
           }
           start = here.coordinate
         }
-        if (!accountId) return fail('failed')
         const result = await optimizeRoute({
-          accountId,
           start,
           stops: destinations.map((stop) => stop.coordinate),
           signal: controller.signal,

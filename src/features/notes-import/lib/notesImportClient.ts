@@ -10,7 +10,7 @@ import {
   AccountSessionError,
   type AttestationProblem,
 } from '@/lib/serverAccount/session'
-import { notesImportRevenueCatAppUserId } from '@/features/notes-import/lib/revenueCatAppUserId'
+import { linkBeforePaidCall } from '@/lib/serverAccount/revenueCatLinkRuntime'
 import type {
   NotesImportContext,
   NotesImportResult,
@@ -392,20 +392,26 @@ const sessionRequest = async <T>(options: RequestOptions): Promise<T> => {
 /**
  * Kickoff's and the synchronous fallback's body. No identity, hashes or
  * attestation: the session's account is the meter, and the session attested
- * when it opened.
+ * when it opened. Supporter status is the account's (ADR 0029).
  */
 const modelRequestBody = ({
   notesText,
   context,
   refinement,
-}: RequestNotesImportArgs) => {
-  const revenueCatAppUserId = notesImportRevenueCatAppUserId()
-  return {
-    notesText,
-    context,
-    ...(refinement && { refinement }),
-    ...(revenueCatAppUserId && { revenueCatAppUserId }),
-  }
+}: RequestNotesImportArgs) => ({
+  notesText,
+  context,
+  ...(refinement && { refinement }),
+})
+
+/**
+ * A metered call as the session: links this device's RevenueCat customer to the
+ * account first when this launch hasn't (ADR 0029), so a Supporter is metered
+ * as one. A link that fails or takes too long never holds it up.
+ */
+const meteredRequest = async <T>(options: RequestOptions): Promise<T> => {
+  await linkBeforePaidCall()
+  return sessionRequest<T>(options)
 }
 
 /**
@@ -417,7 +423,7 @@ export const requestNotesImport = async (
   args: RequestNotesImportArgs
 ): Promise<NotesImportResponse> =>
   normalizeNotesImportResponse(
-    await sessionRequest<NotesImportWireResponse>({
+    await meteredRequest<NotesImportWireResponse>({
       url: apis.notesImport,
       method: 'POST',
       json: modelRequestBody(args),
@@ -450,15 +456,10 @@ export const transcribeNotesPage = async ({
   mimeType,
   signal,
 }: TranscribeNotesPageArgs): Promise<TranscribedNotesPage> => {
-  const revenueCatAppUserId = notesImportRevenueCatAppUserId()
-  const response = await sessionRequest<unknown>({
+  const response = await meteredRequest<unknown>({
     url: apis.notesImportTranscribe,
     method: 'POST',
-    json: {
-      image,
-      mimeType,
-      ...(revenueCatAppUserId && { revenueCatAppUserId }),
-    },
+    json: { image, mimeType },
     timeoutMs: TRANSCRIBE_TIMEOUT_MS,
     signal,
   })
@@ -536,7 +537,7 @@ const kickoffNotesImport = async ({
 }: RequestNotesImportArgs & {
   signal?: AbortSignal
 }): Promise<NotesImportKickoffResponse> => {
-  const response = await sessionRequest<unknown>({
+  const response = await meteredRequest<unknown>({
     url: apis.notesImportKickoff,
     method: 'POST',
     json: modelRequestBody(args),

@@ -69,6 +69,8 @@ export type ServerAccountDeps = {
   info?: (accountKey: Uint8Array) => Promise<ServerAccountInfo>
   storage: ServerAccountStorage
   now: () => number
+  /** The account key was replaced or deleted (`changeKey` resolved). */
+  onKeyChanged?: () => void
 }
 
 /**
@@ -209,10 +211,15 @@ export function createServerAccount(deps: ServerAccountDeps) {
     swap: () => Promise<T>,
     keys?: { from?: Uint8Array | null; to?: Uint8Array | null }
   ): Promise<T> {
-    return deps.sessions.changeKey(async () => {
-      deps.storage.set(null)
-      return swap()
-    }, keys)
+    return deps.sessions
+      .changeKey(async () => {
+        deps.storage.set(null)
+        return swap()
+      }, keys)
+      .then((result) => {
+        deps.onKeyChanged?.()
+        return result
+      })
   }
 
   function failedCheck(

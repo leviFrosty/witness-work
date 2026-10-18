@@ -33,4 +33,16 @@ describe('routePlanErrorMessage', () => {
       routePlanErrorMessage({ code: 'rate_limited', retryAfterMs: 61_000 })
     ).toBe('routePlan_error_rateLimitedMinutes:2')
   })
+
+  it('explains an account or device the server can’t serve', () => {
+    expect(routePlanErrorMessage({ code: 'suspended' })).toBe(
+      'routePlan_error_suspended'
+    )
+    expect(routePlanErrorMessage({ code: 'device_unverified' })).toBe(
+      'routePlan_error_unverified'
+    )
+    expect(routePlanErrorMessage({ code: 'verify_later' })).toBe(
+      'account_verifyLaterBody'
+    )
+  })
 })

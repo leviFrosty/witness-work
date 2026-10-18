@@ -79,6 +79,33 @@ const sessionStore: SessionStore = {
   },
 }
 
+/** A session opened for this device, or its account key changed. */
+export type AccountChange = 'session_opened' | 'key_changed'
+
+const accountChangeListeners = new Set<(change: AccountChange) => void>()
+
+/**
+ * Calls `listener` whenever this device's account may have changed: a session
+ * opened, or the account key was replaced or deleted. RevenueCat's link to the
+ * account (`revenueCatLinkRuntime`) re-checks then. Returns an unsubscribe.
+ */
+export const onAccountChange = (
+  listener: (change: AccountChange) => void
+): (() => void) => {
+  accountChangeListeners.add(listener)
+  return () => accountChangeListeners.delete(listener)
+}
+
+const notifyAccountChange = (change: AccountChange) => {
+  for (const listener of accountChangeListeners) {
+    try {
+      listener(change)
+    } catch (error) {
+      errorTracking.captureException(error)
+    }
+  }
+}
+
 /** Opens are rare (one per device every 90 days), so each is worth a look. */
 function reportSessionEvent(event: AccountSessionEvent) {
   if (event.outcome !== 'ok')
@@ -86,6 +113,9 @@ function reportSessionEvent(event: AccountSessionEvent) {
   if (event.op !== 'session/open') return
   if (event.outcome === 'ok') {
     analytics.capture('account_session_opened', { reason: event.reason })
+    // A handoff's session isn't this device's until it's adopted, which
+    // changes the key and notifies then.
+    if (event.reason !== 'handoff') notifyAccountChange('session_opened')
     return
   }
   // Nothing to learn from a dropped connection or a cancelled call.
@@ -155,6 +185,7 @@ export const serverAccount = createServerAccount({
   info: fetchServerAccountInfo,
   storage,
   now: Date.now,
+  onKeyChanged: () => notifyAccountChange('key_changed'),
 })
 
 /** What this device remembers about its server account, for the tools. */

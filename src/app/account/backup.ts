@@ -124,6 +124,12 @@ const scheduler = createBackupScheduler({
     }
   },
   state: backupSchedule,
+  hasServerCopy: async () => {
+    const slotId = useBackupState.getState().slotId
+    if (!slotId) return null
+    const slots = await refreshBackupSlots({ report: false })
+    return slots ? slots.some((slot) => slot.slotId === slotId) : null
+  },
   log: logBackup,
   onFailure: reportFailure,
   onRunningChange: (uploading) => useBackupState.setState({ uploading }),
@@ -214,8 +220,15 @@ function forgetUploads() {
   })
 }
 
-/** The account's slots, listed again; null without an account key. */
-export async function refreshBackupSlots(): Promise<BackupSlot[] | null> {
+/**
+ * The account's slots, listed again; null without an account key. Tells the
+ * scheduler whether this device's slot is still there unless `report` is false
+ * (its own check).
+ */
+export async function refreshBackupSlots({
+  report = true,
+}: { report?: boolean } = {}): Promise<BackupSlot[] | null> {
+  const listedAt = Date.now()
   const listed = await asAccount(async (access) => ({
     accountId: access.accountId,
     slots: await listBackups(access.options),
@@ -229,6 +242,12 @@ export async function refreshBackupSlots(): Promise<BackupSlot[] | null> {
     slotsAccountId: listed.accountId,
     slotsListedAt: Date.now(),
   })
+  const slotId = useBackupState.getState().slotId
+  if (report && slotId)
+    scheduler.serverCopyListed(
+      listed.slots.some((slot) => slot.slotId === slotId),
+      listedAt
+    )
   return listed.slots
 }
 

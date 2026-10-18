@@ -506,7 +506,14 @@ const PaywallScreen = ({
           source,
           ...gateAttribution,
         })
-        Alert.alert(i18n.t('noPurchasesFound'))
+        Alert.alert(
+          i18n.t('noPurchasesFound'),
+          i18n.t(
+            storePlatform === 'android'
+              ? 'noPurchasesFound_bodyAndroid'
+              : 'noPurchasesFound_body'
+          )
+        )
       } else {
         analytics.capture('supporter_purchases_restored', {
           source,

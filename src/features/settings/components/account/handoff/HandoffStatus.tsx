@@ -104,6 +104,7 @@ export function HandoffTextButton({
   const theme = useTheme()
   return (
     <Button
+      accessibilityRole='button'
       onPress={onPress}
       testID={testID}
       style={{ paddingVertical: 10, paddingHorizontal: 16 }}

@@ -20,6 +20,7 @@ import HandoffApproval from '@/features/settings/components/account/handoff/Hand
 import HandoffStatus from '@/features/settings/components/account/handoff/HandoffStatus'
 import { handoffFailureMessage } from '@/features/settings/components/account/handoff/handoffCopy'
 import useOfferHandoff from '@/features/settings/hooks/useOfferHandoff'
+import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 
 const PROBLEM: Record<OfferStartProblem, TranslationKey> = {
   unsupported: 'account_updateRequired',
@@ -58,6 +59,8 @@ const SetUpAnotherDeviceScreen = () => {
   const { start, session, state, newCode } = useOfferHandoff(
     route.params?.entry ?? 'settings'
   )
+  // The other phone gets the account's buddies only when there are any.
+  const hasBuddies = useBuddies((state) => state.buddies.length > 0)
 
   const newCodeAction = {
     label: i18n.t('handoff_newCode'),
@@ -126,7 +129,11 @@ const SetUpAnotherDeviceScreen = () => {
             title={i18n.t('handoff_oldDoneTitle', {
               device: state.hello.deviceName,
             })}
-            body={i18n.t('handoff_oldDoneBody')}
+            body={i18n.t(
+              hasBuddies
+                ? 'handoff_oldDoneBody'
+                : 'handoff_oldDoneBodyNoBuddies'
+            )}
             primary={{
               label: i18n.t('done'),
               onPress: () => navigation.goBack(),

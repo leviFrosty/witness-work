@@ -10,6 +10,7 @@ const runtime = vi.hoisted(() => {
     capture: vi.fn(),
     purchase: vi.fn(),
     getOfferings: vi.fn(),
+    restore: vi.fn(),
     revalidate: vi.fn(),
     replace: vi.fn(),
     alert: vi.fn(),
@@ -58,6 +59,7 @@ vi.mock('react-native-purchases', () => ({
   default: {
     getOfferings: runtime.getOfferings,
     purchasePackage: runtime.purchase,
+    restorePurchases: runtime.restore,
   },
 }))
 vi.mock('@/hooks/useCustomer', () => ({
@@ -131,7 +133,9 @@ vi.mock('@/features/supporter/components/PaywallPurchaseFooter', () => ({
 }))
 
 import PaywallScreen from '@/features/supporter/screens/PaywallScreen'
-import PaywallPurchaseFooter from '@/features/supporter/components/PaywallPurchaseFooter'
+import PaywallPurchaseFooter, {
+  PaywallLegalFooter,
+} from '@/features/supporter/components/PaywallPurchaseFooter'
 import { TierSwitchCard } from '@/features/supporter/components/PaywallOptions'
 
 const attribution = {
@@ -359,5 +363,20 @@ describe('purchase in flight', () => {
       undefined
     )
     expect(runtime.captureException).not.toHaveBeenCalled()
+  })
+})
+
+describe('restore', () => {
+  it('says what to check when there is nothing to restore', async () => {
+    runtime.restore.mockResolvedValue({ allPurchaseDates: {} })
+    await render()
+    await act(async () => {
+      await renderer!.root.findByType(PaywallLegalFooter).props.onRestore()
+    })
+    expect(runtime.alert).toHaveBeenCalledWith(
+      'noPurchasesFound',
+      'noPurchasesFound_body'
+    )
+    expect(events('supporter_restore_empty')).toHaveLength(1)
   })
 })

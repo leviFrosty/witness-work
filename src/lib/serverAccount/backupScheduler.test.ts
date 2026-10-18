@@ -4,6 +4,7 @@ import {
   BACKUP_DEBOUNCE_MS,
   BACKUP_MAX_PENDING_MS,
   BACKUP_MIN_INTERVAL_MS,
+  BACKUP_SERVER_CHECK_MS,
   BackupError,
   type BackupFailure,
   type BackupSchedule,
@@ -34,6 +35,9 @@ function setup({
     uploads: [] as { at: number; data: string }[],
     prepares: 0,
     failures: [] as BackupFailure[],
+    /** What the server's slot list says about this device's slot. */
+    serverHas: true as boolean | null | 'throws',
+    serverChecks: [] as number[],
   }
   const scheduler = createBackupScheduler({
     now: () => now,
@@ -62,6 +66,11 @@ function setup({
       set: (patch) => {
         state = { ...state, ...patch }
       },
+    },
+    hasServerCopy: async () => {
+      world.serverChecks.push(now)
+      if (world.serverHas === 'throws') throw new Error('offline')
+      return world.serverHas
     },
     onFailure: (code) => world.failures.push(code),
   })
@@ -337,5 +346,99 @@ describe('backup scheduler', () => {
     await t.advance(BACKUP_DAILY_MS)
     expect(t.world.prepares).toBe(0)
     expect(t.state().nextAttemptAt).toBeNull()
+  })
+
+  describe('when another device deletes this one’s server copy', () => {
+    const uploadedHourAgo = {
+      lastPutAt: START - 60 * 60_000,
+      lastHash: 'hash:v1',
+    }
+
+    it('uploads unchanged data again soon after coming back to the app', async () => {
+      const t = setup({ schedule: uploadedHourAgo })
+      t.world.serverHas = false
+      t.scheduler.onForeground()
+      await t.flush()
+      await t.advance(10_000)
+      expect(t.world.serverChecks).toEqual([START])
+      expect(t.world.uploads).toEqual([{ at: START + 5_000, data: 'v1' }])
+      expect(t.state()).toMatchObject({
+        pending: false,
+        lastResult: 'uploaded',
+        lastHash: 'hash:v1',
+      })
+    })
+
+    it('notices while the app stays open, through the long waits’ re-checks', async () => {
+      const t = setup({ schedule: uploadedHourAgo })
+      t.scheduler.onForeground()
+      await t.advance(30 * 60_000)
+      expect(t.world.uploads).toEqual([])
+      const checks = t.world.serverChecks.length
+      t.world.serverHas = false
+      await t.advance(2 * BACKUP_SERVER_CHECK_MS)
+      expect(t.world.serverChecks.length).toBeGreaterThan(checks)
+      expect(t.world.uploads).toHaveLength(1)
+    })
+
+    it('lists the slots at most every 15 minutes', async () => {
+      const t = setup({ schedule: uploadedHourAgo })
+      t.scheduler.onForeground()
+      await t.advance(60_000)
+      t.scheduler.onForeground()
+      await t.advance(60_000)
+      expect(t.world.serverChecks).toEqual([START])
+      await t.advance(BACKUP_SERVER_CHECK_MS)
+      t.scheduler.onForeground()
+      await t.flush()
+      expect(t.world.serverChecks).toHaveLength(2)
+      // Failed lists wait as long, and change nothing.
+      const failing = setup({ schedule: uploadedHourAgo })
+      failing.world.serverHas = 'throws'
+      failing.scheduler.onForeground()
+      failing.scheduler.onForeground()
+      await failing.advance(60_000)
+      expect(failing.world.serverChecks).toEqual([START])
+      expect(failing.state()).toMatchObject({ pending: false })
+    })
+
+    it('doesn’t list before the first upload, or while off', async () => {
+      const fresh = setup()
+      fresh.scheduler.onForeground()
+      await fresh.flush()
+      expect(fresh.world.serverChecks).toEqual([])
+      const off = setup({ enabled: false, schedule: uploadedHourAgo })
+      off.scheduler.onForeground()
+      await off.advance(BACKUP_SERVER_CHECK_MS * 2)
+      expect(off.world.serverChecks).toEqual([])
+    })
+
+    it('takes the Account screen’s list, but not one older than the last upload', async () => {
+      const t = setup({ schedule: uploadedHourAgo })
+      t.scheduler.serverCopyListed(true, START)
+      await t.advance(60_000)
+      expect(t.world.uploads).toEqual([])
+      // A list that started before an upload can't see that upload's slot.
+      t.scheduler.serverCopyListed(false, START - 2 * 60 * 60_000)
+      await t.advance(60_000)
+      expect(t.world.uploads).toEqual([])
+      t.scheduler.serverCopyListed(false, t.now())
+      await t.advance(10_000)
+      expect(t.world.uploads).toHaveLength(1)
+      // It counted as the next check.
+      t.scheduler.onForeground()
+      await t.flush()
+      expect(t.world.serverChecks).toEqual([])
+    })
+
+    it('still keeps to the server’s minute', async () => {
+      const t = setup()
+      await t.scheduler.run('enabled', { force: true })
+      t.scheduler.serverCopyListed(false, t.now() + 1)
+      await t.advance(BACKUP_MIN_INTERVAL_MS - 1)
+      expect(t.world.uploads).toHaveLength(1)
+      await t.advance(1)
+      expect(t.world.uploads).toHaveLength(2)
+    })
   })
 })

@@ -18,6 +18,7 @@ const mocks = vi.hoisted(() => ({
   offer: null as unknown as Offer,
   goBack: vi.fn(),
   newCode: vi.fn(),
+  buddies: 0,
 }))
 vi.mock('react-native', () => ({ ScrollView: 'ScrollView' }))
 vi.mock('@react-navigation/native', () => ({
@@ -51,6 +52,10 @@ vi.mock('@/features/settings/components/account/handoff/handoffCopy', () => ({
 }))
 vi.mock('@/features/settings/hooks/useOfferHandoff', () => ({
   default: () => mocks.offer,
+}))
+vi.mock('@/features/buddies/stores/buddiesStore', () => ({
+  useBuddies: (select: (state: { buddies: unknown[] }) => unknown) =>
+    select({ buddies: Array.from({ length: mocks.buddies }) }),
 }))
 
 import SetUpAnotherDeviceScreen from './SetUpAnotherDeviceScreen'
@@ -156,5 +161,32 @@ it.each<OfferStartProblem>(['unavailable', 'verifyLater', 'offline'])(
     })
     primary!.onPress()
     expect(mocks.newCode).toHaveBeenCalledTimes(1)
+  }
+)
+
+it.each([
+  [0, 'handoff_oldDoneBodyNoBuddies'],
+  [2, 'handoff_oldDoneBody'],
+])(
+  'with %i buddies, says %s once the other phone is in',
+  async (buddies, body) => {
+    mocks.buddies = buddies
+    mocks.offer = {
+      start: { phase: 'ready', session: {} },
+      session: {},
+      state: {
+        step: 'done',
+        hello: { deviceName: 'Pixel 9' },
+      } as Offer['state'],
+      newCode: mocks.newCode,
+    }
+    let root!: ReturnType<typeof create>
+    await act(async () => {
+      root = create(<SetUpAnotherDeviceScreen />)
+    })
+    const done = root.root
+      .findAllByType(HandoffStatus)
+      .find((node) => node.props.testID === 'handoff-old-done')!
+    expect(done.props.body).toBe(body)
   }
 )

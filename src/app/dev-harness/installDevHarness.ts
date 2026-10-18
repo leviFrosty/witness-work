@@ -20,6 +20,8 @@ import { navigationRef } from '@/features/contacts/lib/linking'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 import { useBuddiesDiagnostics } from '@/features/buddies/stores/buddiesDiagnostics'
 import { useNotesImportManager } from '@/features/notes-import/hooks/useNotesImportManager'
+import { useUpdateRequired } from '@/lib/appUpdate'
+import { forgetPersistedCredits } from '@/features/notes-import/lib/notesImportCreditsStore'
 import { useNotificationsTray } from '@/features/notifications/stores/notificationsTray'
 import { useStreakCelebration } from '@/features/profile/stores/streakCelebration'
 import { useUpdateRevealStore } from '@/features/updates/stores/updateReveal'
@@ -332,6 +334,23 @@ export function installDevHarness() {
       navigationRef.dispatch(CommonActions.navigate({ name, params }))
       return summary().route
     },
+    /**
+     * Forgets this device's Import Credits balance, in memory and in MMKV, so
+     * the composer shows what it does before the first import.
+     */
+    forgetNotesImportCredits: () => {
+      forgetPersistedCredits()
+      useNotesImportManager.setState({
+        credits: null,
+        creditsProvenance: null,
+        creditsKickoffHash: null,
+        authoritativeCredits: null,
+        refinementCredits: {},
+        refinementCreditsProvenance: {},
+        authoritativeRefinementCredits: {},
+      })
+      return 'forgotten'
+    },
     stores: {
       preferences: usePreferences,
       profile: useProfile,
@@ -358,6 +377,9 @@ export function installDevHarness() {
       splitSheet: useSplitSheetPreferences,
       // `enabled`/`requireAfter`, and the session's `locked`.
       appLock: useAppLockSettings,
+      // `setState({ required: { source: 'server', currentVersion, minVersion:
+      // null } })` shows Update Required without a floor on the shared API.
+      updateRequired: useUpdateRequired,
       appLockSession: useAppLockSession,
       // `getState().request('dev')` plays the update reveal and its tour.
       updateReveal: useUpdateRevealStore,

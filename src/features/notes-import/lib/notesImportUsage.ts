@@ -263,3 +263,54 @@ export const notesImportCreditsForHash = (
 export const shouldShowNotesImportSupporterCta = (
   credits: Pick<NotesImportCredits, 'isSupporter'>
 ): boolean => !credits.isSupporter
+
+/** What the composer's Import Credits control shows. */
+export type NotesImportUsageView =
+  /** The server's balance, from this device's last import. */
+  | { kind: 'balance'; credits: NotesImportCredits }
+  /**
+   * No balance yet (before the first import on this device): the allowance from
+   * the public schedule, `null` when unlimited. Not a balance: imports on the
+   * account's other devices may have used some of it.
+   */
+  | { kind: 'allowance'; limit: number | null; windowDays: number }
+  /** Neither a balance nor the schedule (offline, or the status failed). */
+  | { kind: 'unavailable' }
+
+/**
+ * Picks the composer's usage view and whose copy it takes. The server's last
+ * answer wins (`credits.isSupporter`, ADR 0029); before it, `supporter` is the
+ * device's own entitlement, and the public schedule says what that allowance
+ * is.
+ */
+export const notesImportUsageView = ({
+  credits,
+  schedule,
+  supporter,
+}: {
+  credits: NotesImportCredits | null
+  schedule: NotesImportPublicSchedule | null
+  supporter: boolean
+}): { view: NotesImportUsageView; isSupporter: boolean } => {
+  if (credits)
+    return {
+      view: { kind: 'balance', credits },
+      isSupporter: credits.isSupporter,
+    }
+  if (!schedule)
+    return { view: { kind: 'unavailable' }, isSupporter: supporter }
+  return {
+    view: {
+      kind: 'allowance',
+      limit: supporter ? schedule.imports.supporter : schedule.imports.free,
+      windowDays: schedule.windowDays,
+    },
+    isSupporter: supporter,
+  }
+}
+
+/** True when the view's imports are unlimited. */
+export const isUnlimitedUsage = (view: NotesImportUsageView): boolean =>
+  view.kind === 'balance'
+    ? view.credits.remaining === null && view.credits.limit === null
+    : view.kind === 'allowance' && view.limit === null

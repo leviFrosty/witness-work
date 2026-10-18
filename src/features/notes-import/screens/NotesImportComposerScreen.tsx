@@ -77,6 +77,7 @@ import {
   NotesImportRefinementMeta,
   notesImportUserBubbleStyle,
 } from '@/features/notes-import/components/NotesImportRefinementBubble'
+import useIsSupporter from '@/hooks/useIsSupporter'
 import NotesImportUsage, {
   type RenderNotesImportSupporterCta,
 } from '@/features/notes-import/components/NotesImportUsage'
@@ -214,6 +215,9 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
   // back stack — see NotesImportHeaderActions.
   const activeHash = routeHash ?? null
   const credits = activeHash ? creditsForImport(activeHash) : globalCredits
+  // Until an import brings the server's answer, the usage copy goes by this
+  // device's own entitlement.
+  const { isSupporter: deviceSupporter } = useIsSupporter()
   const [helpOpen, setHelpOpen] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [committing, setCommitting] = useState(false)
@@ -787,6 +791,9 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
               color='#fff'
             />
             <Text
+              // Read out when it appears, before the User starts writing.
+              accessibilityRole='alert'
+              accessibilityLiveRegion='polite'
               style={{
                 flex: 1,
                 color: '#fff',
@@ -811,6 +818,7 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
           </View>
           {updateRequired && (
             <Button
+              accessibilityRole='button'
               onPress={() => openURL(links.appStore)}
               style={{
                 alignSelf: 'flex-start',
@@ -1596,6 +1604,8 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
               capture.busy ? undefined : (
                 <NotesImportUsage
                   credits={credits}
+                  schedule={availability.schedule}
+                  supporter={deviceSupporter}
                   onRequestUpgrade={onRequestUpgrade}
                   renderSupporterCta={renderSupporterCta}
                 />

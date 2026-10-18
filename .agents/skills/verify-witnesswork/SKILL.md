@@ -96,7 +96,11 @@ wwv link 'witnesswork://add-time'   # real deep-link path; accepts the iOS "Open
 wwv eval '__WW_DEV__.state()'       # route, counts, role, badges, captured error count
 wwv eval '__WW_DEV__.remount()'     # every screen mounts fresh on Home, dropping open sheets
 wwv eval '__WW_DEV__.stores.preferences.getState().timeDisplayFormat'
+wwv eval '__WW_DEV__.forgetNotesImportCredits()'   # Notes Import as before the first import
+wwv eval '__WW_DEV__.stores.updateRequired.setState({ required: { source: "config", currentVersion: "1.44.1", minVersion: "9.0.0" } })'
 ```
+
+`seed` keeps Notes Import's persisted Import Credits; `forgetNotesImportCredits()` drops them. Setting `updateRequired` shows Update Required on this device only (`required: null` lifts it); never put an `app:min-version` floor on the shared local API for that, since every worktree uses it.
 
 Scenarios are built relative to today (`src/app/dev-harness/scenarios.ts`).
 

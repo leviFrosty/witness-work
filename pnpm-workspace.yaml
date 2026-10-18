@@ -49,6 +49,7 @@ overrides:
 patchedDependencies:
   '@expo/dom-webview@57.0.1': patches/@expo__dom-webview@57.0.1.patch
   '@expo/fingerprint@0.20.13': patches/@expo__fingerprint.patch
+  '@expo/ui@57.0.21': patches/@expo__ui@57.0.21.patch
   expo-alternate-app-icons: patches/expo-alternate-app-icons.patch
   expo@57.0.26: patches/expo@57.0.26.patch
   hot-updater@1.0.2: patches/hot-updater@1.0.2.patch

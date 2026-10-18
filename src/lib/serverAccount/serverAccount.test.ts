@@ -273,6 +273,26 @@ describe('createServerAccount', () => {
     expect(storage.get()).toBeNull()
   })
 
+  it('keeps a status a call reported, for this account key only', async () => {
+    const { sessions } = fakeSessions()
+    const storage = memoryStorage()
+    const account = createServerAccount({ sessions, storage, now: () => 0 })
+    const accountKey = random(32)
+    const pub = deriveAccountSigningKey(accountKey).publicKey
+    await account.ensure(accountKey)
+
+    account.noteStatus(pub, 'suspended')
+    expect(account.cached(accountKey)?.status).toBe('suspended')
+    account.noteStatus(deriveAccountSigningKey(random(32)).publicKey, 'active')
+    expect(account.cached(accountKey)?.status).toBe('suspended')
+    account.noteStatus(pub, 'active')
+    expect(account.cached(accountKey)).toEqual({
+      accountPub: pub,
+      accountId: ACCOUNT_ID,
+      status: 'active',
+    })
+  })
+
   it('waits a day after the server says accounts are off, unless retried', async () => {
     let now = 0
     const { sessions, opens } = failing(

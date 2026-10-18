@@ -4494,8 +4494,8 @@
   "account_statusUnverified": "Can't verify this device",
   "account_statusVerifyLater": "Not verified yet",
   "account_statusUpdate": "Update required",
-  "account_footerNotSetUp": "Your account is set up the first time you use Buddies or view your recovery key.",
-  "account_footerSuspended": "Buddies and Notes Import are turned off for this account after a report of abuse. Contact support from the Help Center if you think this is a mistake.",
+  "account_footerNotSetUp": "Your account is set up the first time you use Buddies, Notes Import, or Backup, or view your recovery key.",
+  "account_footerSuspended": "Buddies and Notes Import have been turned off for this account. If you think this is a mistake, contact support from the Help Center.",
   "account_footerUnavailable": "Accounts aren't available right now. Everything else works as usual.",
   "account_footerOffline": "Connect to the internet to check your account.",
   "account_footerUnverified": "Buddies, Backup, Set Up Another Device, and Notes Import need WitnessWork from the App Store on a genuine iPhone or iPad. This device can't be verified, so they aren't available here. Everything else works as usual.",
@@ -4535,8 +4535,12 @@
   "account_sameKeyBody": "This phone already uses the account for this recovery key. Nothing changed.",
   "account_replaceTitle": "Use this recovery key?",
   "account_replaceBuddies": {
-    "one": "Your %{count} buddy on this phone will be removed, and you'll be removed from their app. Your Buddies data on this phone is deleted, and this can't be undone.",
-    "other": "Your %{count} buddies on this phone will be removed, and you'll be removed from their apps. Your Buddies data on this phone is deleted, and this can't be undone."
+    "one": "Your buddy %{name} will be removed from this phone, and you'll be removed from their app. Your Buddies data on this phone is deleted, and this can't be undone.",
+    "other": "Your %{count} buddies on this phone will be removed, and you'll be removed from their apps:\n\n%{names}\n\nYour Buddies data on this phone is deleted, and this can't be undone."
+  },
+  "account_replaceBuddiesMore": {
+    "one": "and %{count} more",
+    "other": "and %{count} more"
   },
   "account_replaceInbox": "Your Buddies data on this phone is deleted, and this can't be undone.",
   "account_replaceAppleDevices": "This also replaces the account on your other Apple devices that use the same iCloud Keychain.",
@@ -4592,6 +4596,8 @@
   "accountDevices_section": "Using Your Account",
   "accountDevices_thisDevice": "This device",
   "accountDevices_lastActive": "Last active %{when}",
+  "accountDevices_signedIn": "Signed in %{date}",
+  "accountDevices_signedInAt": "Signed in %{date} at %{time}",
   "accountDevices_info": "Signing out ends a device's connection to your account. If WitnessWork on that device still has your account, it signs back in the next time it's used, and Account Activity shows it. If someone else might have your account, delete your Buddies data to get a new account and recovery key.",
   "accountDevices_footer": "Tap another device to sign it out.",
   "accountDevices_signOutTitle": "Sign out %{device}?",
@@ -4640,6 +4646,7 @@
   "handoff_signingIn": "Signing in…",
   "handoff_newDoneTitle": "Signed in",
   "handoff_newDoneBody": "Your account and buddies are on this phone.",
+  "handoff_newDoneBodyNoBuddies": "Your account is on this phone.",
   "handoff_newDoneData": "To bring your service records, contacts, and notes too, turn on Backup in Settings → Account on your other phone, then choose Restore from Backup here.",
   "handoff_newDoneRestored": "Your records from your backup are here too.",
   "handoff_newDoneRestoreLater": "You can restore your records anytime from Settings → Account → Restore from Backup.",
@@ -4730,7 +4737,7 @@
   "backup_slotDetail": "{{when}} · {{size}}",
   "backup_deleteSlotTitle": "Delete this backup?",
   "backup_deleteSlotMineBody": "This phone's backup is deleted from WitnessWork, and backup turns off on this phone. This can't be undone.",
-  "backup_deleteSlotOtherBody": "This device's backup is deleted from WitnessWork. If backup is still on there, it backs up again. This can't be undone.",
+  "backup_deleteSlotOtherBody": "That device's backup is deleted from WitnessWork. If backup is still on there, it backs up again. This can't be undone.",
   "backup_restore": "Restore from Backup",
   "backup_deleteAll": "Delete Backup",
   "backup_deleteAllTitle": "Delete your backup?",

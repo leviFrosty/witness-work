@@ -28,6 +28,7 @@ import UseRecoveryKeySheet from '@/features/settings/components/account/UseRecov
 import useAttestationSupport from '@/features/settings/hooks/useAttestationSupport'
 import useClaimHandoff from '@/features/settings/hooks/useClaimHandoff'
 import { completeOnboardingFromRestore } from '@/features/settings/lib/completeOnboardingFromRestore'
+import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 
 const LINK_PROBLEM = {
   notHandoff: 'handoff_scanNotHandoff',
@@ -58,6 +59,8 @@ const SignInWithQrScreen = () => {
     useRoute<RouteProp<RootStackParamList, 'Sign In With QR Code'>>()
   const entry = route.params?.entry ?? 'settings'
   const support = useAttestationSupport()
+  // The account's buddies, once Buddies started here and synced them.
+  const hasBuddies = useBuddies((state) => state.buddies.length > 0)
   const unverifiable = support === 'unsupported'
   // An opened link waits until it's known this device can sign in.
   const { session, state, linkProblem, completion, scanned, reset } =
@@ -124,7 +127,11 @@ const SignInWithQrScreen = () => {
             icon={CircleCheckIcon}
             tone='success'
             title={i18n.t('handoff_newDoneTitle')}
-            body={i18n.t('handoff_newDoneBody')}
+            body={i18n.t(
+              hasBuddies
+                ? 'handoff_newDoneBody'
+                : 'handoff_newDoneBodyNoBuddies'
+            )}
             detail={i18n.t(
               restored
                 ? 'handoff_newDoneRestored'

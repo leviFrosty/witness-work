@@ -187,6 +187,21 @@ export function createServerAccount(deps: ServerAccountDeps) {
     }
   }
 
+  /**
+   * The server said the account's status outside `check` (a call refused as
+   * `suspended`, or a session's own reading): kept.
+   */
+  function noteStatus(accountPub: string, status: AccountStatus) {
+    const known = deps.storage.get()
+    if (
+      known?.accountPub !== accountPub ||
+      !known.accountId ||
+      known.status === status
+    )
+      return
+    deps.storage.set({ ...known, status })
+  }
+
   /** Forgets the account and its session here, without telling the server. */
   function forget() {
     deps.storage.set(null)
@@ -275,7 +290,16 @@ export function createServerAccount(deps: ServerAccountDeps) {
     }
   }
 
-  return { connect, ensure, forget, close, changeKey, cached, check }
+  return {
+    connect,
+    ensure,
+    forget,
+    close,
+    changeKey,
+    cached,
+    check,
+    noteStatus,
+  }
 }
 
 export type ServerAccount = ReturnType<typeof createServerAccount>

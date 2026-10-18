@@ -13,6 +13,7 @@ import { fromB64u } from '@/lib/bytes'
 import { logger } from '@/lib/logger'
 import { syncNow } from '@/lib/syncClock'
 import {
+  type AccountStatus,
   type BearerAccountOptions,
   fetchAccountInfo,
   type ServerAccountInfo,
@@ -106,6 +107,80 @@ const notifyAccountChange = (change: AccountChange) => {
   }
 }
 
+const THIS_DEVICE_SESSIONS_KEY = 'this-device-sessions'
+/**
+ * Session ids kept: about one a sign-in, so years of them. Not secret; the
+ * server's activity log names them too.
+ */
+export const THIS_DEVICE_SESSIONS_MAX = 20
+
+/** The sessions this install has had, newest last. */
+function thisDeviceSessions(): string[] {
+  const raw = store().getString(THIS_DEVICE_SESSIONS_KEY)
+  if (!raw) return []
+  try {
+    const value: unknown = JSON.parse(raw)
+    return Array.isArray(value)
+      ? value.filter((id): id is string => typeof id === 'string')
+      : []
+  } catch {
+    return []
+  }
+}
+
+function rememberThisDeviceSession(sessionId: string) {
+  const ids = thisDeviceSessions()
+  if (ids.at(-1) === sessionId) return
+  const next = [...ids.filter((id) => id !== sessionId), sessionId].slice(
+    -THIS_DEVICE_SESSIONS_MAX
+  )
+  store().set(THIS_DEVICE_SESSIONS_KEY, JSON.stringify(next))
+}
+
+/**
+ * Whether a session was this install's, now or before it signed in again
+ * (signed out, or a session that ended): Account Activity calls it "this
+ * device".
+ */
+export const isThisDeviceSession = (sessionId: string): boolean =>
+  accountSessions.snapshot()?.sessionId === sessionId ||
+  thisDeviceSessions().includes(sessionId)
+
+const statusListeners = new Set<(status: AccountStatus) => void>()
+
+/**
+ * Calls `listener` when a call shows this device's account has a new status:
+ * refused as suspended, or read again after it worked while suspended. Returns
+ * an unsubscribe.
+ */
+export const onAccountStatus = (
+  listener: (status: AccountStatus) => void
+): (() => void) => {
+  statusListeners.add(listener)
+  return () => statusListeners.delete(listener)
+}
+
+/**
+ * A suspended account's calls that work read it again at most this often; one
+ * that works sooner reads it once the time is up.
+ */
+export const STATUS_RECHECK_MS = 60_000
+let statusRecheckedAt = -Infinity
+let statusRecheck: ReturnType<typeof setTimeout> | null = null
+
+function recheckStatus(key: Uint8Array) {
+  if (statusRecheck) return
+  const wait = statusRecheckedAt + STATUS_RECHECK_MS - Date.now()
+  statusRecheck = setTimeout(
+    () => {
+      statusRecheck = null
+      statusRecheckedAt = Date.now()
+      void serverAccount.check(key).catch(() => undefined)
+    },
+    Math.max(0, wait)
+  )
+}
+
 /** Opens are rare (one per device every 90 days), so each is worth a look. */
 function reportSessionEvent(event: AccountSessionEvent) {
   if (event.outcome !== 'ok')
@@ -164,6 +239,19 @@ export const accountSessions = createAccountSessions({
     logger.warn(`[account] session ${op} failed`, error)
     errorTracking.captureException(error, { accountSession: op })
   },
+  onThisDeviceSession: rememberThisDeviceSession,
+  onStatusChange: (accountPub, status) => {
+    serverAccount.noteStatus(accountPub, status)
+    for (const listener of statusListeners) {
+      try {
+        listener(status)
+      } catch (error) {
+        errorTracking.captureException(error)
+      }
+    }
+  },
+  // Reinstated, maybe: the account's own record says.
+  onSucceededWhileSuspended: recheckStatus,
 })
 
 /** Bearer ops as one account key's session. */
@@ -191,3 +279,18 @@ export const serverAccount = createServerAccount({
 /** What this device remembers about its server account, for the tools. */
 export const cachedServerAccount = (): CachedServerAccount | null =>
   storage.get()
+
+/**
+ * Whether this device's account is suspended, so a feature can say so before
+ * the User starts: false without a session. A suspension noted earlier is
+ * checked with the server first, since the account may have been reinstated;
+ * when that can't be read, the note stands. Never opens a session or creates an
+ * account key.
+ */
+export async function accountSuspended(): Promise<boolean> {
+  await accountSessions.ready()
+  if (accountSessions.snapshot()?.status !== 'suspended') return false
+  const seed = await BuddiesKeychain.peekRootSeed().catch(() => null)
+  if (seed) await serverAccount.check(fromB64u(seed))
+  return accountSessions.snapshot()?.status === 'suspended'
+}

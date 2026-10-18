@@ -78,7 +78,11 @@ describe('account key service', () => {
     const key = random()
     const { service, store, account, buddies } = setup({
       key,
-      loss: { buddies: 3, inboxRegistered: true },
+      loss: {
+        buddies: 3,
+        buddyNames: ['Ana', 'Ben', 'Cy'],
+        inboxRegistered: true,
+      },
     })
     expect(await service.replace(new Uint8Array(key))).toEqual({
       outcome: 'unchanged',
@@ -117,7 +121,7 @@ describe('account key service', () => {
   it('stores a key on a device that had none, without asking', async () => {
     const newKey = random()
     const { service, stored, buddies } = setup({
-      loss: { buddies: 2, inboxRegistered: true },
+      loss: { buddies: 2, buddyNames: ['Ana', 'Ben'], inboxRegistered: true },
     })
     expect(await service.lossIfReplaced(newKey)).toEqual(NO_LOSS)
     await expect(service.replace(newKey)).resolves.toMatchObject({
@@ -129,7 +133,11 @@ describe('account key service', () => {
 
   it('refuses to lose Buddies data unconfirmed, changing nothing', async () => {
     const key = random()
-    const loss = { buddies: 2, inboxRegistered: true }
+    const loss = {
+      buddies: 2,
+      buddyNames: ['Ana', 'Ben'],
+      inboxRegistered: true,
+    }
     const { service, stored, store, buddies, account } = setup({ key, loss })
     expect(await service.lossIfReplaced(random())).toEqual(loss)
     const error = await service.replace(random()).catch((e) => e)
@@ -143,7 +151,7 @@ describe('account key service', () => {
 
   it('runs Delete Buddies first when confirmed, even for an inbox alone', async () => {
     const newKey = random()
-    const loss = { buddies: 0, inboxRegistered: true }
+    const loss = { buddies: 0, buddyNames: [], inboxRegistered: true }
     const { service, log, stored } = setup({ key: random(), loss })
     expect(await service.replace(newKey, { confirmedLoss: true })).toEqual({
       outcome: 'replaced',
@@ -165,7 +173,7 @@ describe('account key service', () => {
     const key = random()
     const { service, buddies, store, stored } = setup({
       key,
-      loss: { buddies: 1, inboxRegistered: true },
+      loss: { buddies: 1, buddyNames: ['Ana'], inboxRegistered: true },
     })
     buddies.release.mockRejectedValueOnce(new Error('offline'))
     await expect(

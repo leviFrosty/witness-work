@@ -60,7 +60,7 @@ function deviceInSentence(
   session: ActivitySession,
   context: AccountActivityContext
 ): string {
-  if (session.sessionId === context.currentSessionId)
+  if (context.isThisDevice(session.sessionId))
     return i18n.t('accountActivity_thisDevice')
   const name = context.readLabel(session.device)?.name.trim()
   if (name) return name

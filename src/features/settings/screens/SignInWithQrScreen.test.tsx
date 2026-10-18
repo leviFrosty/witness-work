@@ -17,6 +17,7 @@ const mocks = vi.hoisted(() => ({
   claim: null as unknown as Claim,
   goBack: vi.fn(),
   reset: vi.fn(),
+  buddies: 0,
 }))
 vi.mock('react-native', () => ({ ScrollView: 'ScrollView', View: 'View' }))
 vi.mock('@react-navigation/native', () => ({
@@ -61,6 +62,10 @@ vi.mock('@/features/settings/hooks/useClaimHandoff', () => ({
 }))
 vi.mock('@/features/settings/lib/completeOnboardingFromRestore', () => ({
   completeOnboardingFromRestore: vi.fn(),
+}))
+vi.mock('@/features/buddies/stores/buddiesStore', () => ({
+  useBuddies: (select: (state: { buddies: unknown[] }) => unknown) =>
+    select({ buddies: Array.from({ length: mocks.buddies }) }),
 }))
 
 import SignInWithQrScreen from './SignInWithQrScreen'
@@ -122,6 +127,34 @@ const RETRYABLE: HandoffFailure[] = [
 
 beforeEach(() => {
   vi.clearAllMocks()
+  mocks.buddies = 0
+})
+
+it.each([
+  [0, 'handoff_newDoneBodyNoBuddies'],
+  [2, 'handoff_newDoneBody'],
+])('with %i buddies here, says %s once signed in', async (buddies, body) => {
+  mocks.buddies = buddies
+  mocks.claim = {
+    session: {},
+    state: { step: 'done' },
+    linkProblem: null,
+    completion: {
+      outcome: 'done',
+      buddiesStarted: buddies > 0,
+      restore: { outcome: 'none' },
+    } as ClaimCompletion,
+    scanned: vi.fn(),
+    reset: mocks.reset,
+  }
+  let root!: ReturnType<typeof create>
+  await act(async () => {
+    root = create(<SignInWithQrScreen />)
+  })
+  const done = root.root
+    .findAllByType(HandoffStatus)
+    .find((node) => node.props.testID === 'handoff-new-done')!
+  expect(done.props.body).toBe(body)
 })
 
 it.each(FINAL)(

@@ -800,9 +800,13 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
                   })
                 : availability.reason === 'device_unverified'
                   ? i18n.t(unverifiedDeviceKey())
-                  : detail
-                    ? i18n.t('notesImport_unavailableBannerDetail', { detail })
-                    : i18n.t('notesImport_unavailableBanner')}
+                  : availability.reason === 'suspended'
+                    ? i18n.t('notesImport_suspended')
+                    : detail
+                      ? i18n.t('notesImport_unavailableBannerDetail', {
+                          detail,
+                        })
+                      : i18n.t('notesImport_unavailableBanner')}
             </Text>
           </View>
           {updateRequired && (

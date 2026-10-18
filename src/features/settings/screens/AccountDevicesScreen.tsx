@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Alert, ScrollView, View } from 'react-native'
 import { useIsFocused } from '@react-navigation/native'
+import moment from 'moment'
 import {
   Monitor as MonitorIcon,
   Smartphone as SmartphoneIcon,
@@ -30,7 +31,12 @@ import {
 } from '@/app/account/accountActivity'
 import type { AccountDevice } from '@/lib/serverAccount/activityClient'
 import { analytics } from '@/lib/analytics'
-import { formatRelative } from '@/lib/dates'
+import {
+  formatDate,
+  formatMonthDayCompact,
+  formatRelative,
+  formatTime,
+} from '@/lib/dates'
 import i18n from '@/lib/locales'
 import { logger } from '@/lib/logger'
 
@@ -40,6 +46,37 @@ const ICONS: Record<DeviceKind, AppIcon> = {
   phone: SmartphoneIcon,
   tablet: TabletIcon,
   computer: MonitorIcon,
+}
+
+/** "Oct 18", with the year when it isn't this one. */
+const signInDay = (at: number) =>
+  moment(at).isSame(moment(), 'year')
+    ? formatMonthDayCompact(moment(at))
+    : formatDate(at, { style: 'medium' })
+
+/**
+ * When a device signed in: its day, and the time too when another row with the
+ * same name signed in that day (a phone wiped or reinstalled), so the two can
+ * be told apart.
+ */
+function signedIn(
+  device: AccountDevice,
+  devices: { device: AccountDevice; name: string }[],
+  name: string
+): string {
+  const day = signInDay(device.createdAt)
+  const sameDay = devices.some(
+    (other) =>
+      other.device.sessionId !== device.sessionId &&
+      other.name === name &&
+      signInDay(other.device.createdAt) === day
+  )
+  return sameDay
+    ? i18n.t('accountDevices_signedInAt', {
+        date: day,
+        time: formatTime(device.createdAt),
+      })
+    : i18n.t('accountDevices_signedIn', { date: day })
 }
 
 /**
@@ -120,7 +157,12 @@ const AccountDevicesScreen = () => {
     )
 
   const devices = loaded
-    ? [...loaded.devices].sort((a, b) => Number(b.current) - Number(a.current))
+    ? [...loaded.devices]
+        .sort((a, b) => Number(b.current) - Number(a.current))
+        .map((device) => ({
+          device,
+          name: deviceTitle(device, loaded.context),
+        }))
     : []
   const showList = loaded != null && failure == null
 
@@ -138,20 +180,20 @@ const AccountDevicesScreen = () => {
                 alignWithIcons
               />
               <Section>
-                {devices.map((device, index) => {
-                  const name = deviceTitle(device, loaded.context)
+                {devices.map(({ device, name }, index) => {
                   return (
                     <InputRowButton
                       key={device.sessionId}
                       leftIcon={ICONS[deviceKind(device, loaded.context)]}
                       label={name}
-                      sublabel={
+                      sublabel={[
                         device.current
                           ? i18n.t('accountDevices_thisDevice')
                           : i18n.t('accountDevices_lastActive', {
                               when: formatRelative(device.lastActiveAt),
-                            })
-                      }
+                            }),
+                        signedIn(device, devices, name),
+                      ].join(' · ')}
                       onPress={
                         device.current ? undefined : () => signOut(device, name)
                       }
@@ -160,7 +202,7 @@ const AccountDevicesScreen = () => {
                   )
                 })}
               </Section>
-              {devices.some((device) => !device.current) && (
+              {devices.some(({ device }) => !device.current) && (
                 <SectionFooter text={i18n.t('accountDevices_footer')} />
               )}
             </View>

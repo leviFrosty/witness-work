@@ -45,8 +45,12 @@ const AppSection = ({
           icon={FileTextIcon}
           label={i18n.t('notesImport_settingsLabel')}
           // Only a real answer closes it. While checking, offline or after a
-          // failed check, the composer explains and offers Try Again.
-          disabled={notesImport.status === 'unavailable'}
+          // failed check, the composer explains and offers Try Again. A
+          // suspended account can still review imports it already ran.
+          disabled={
+            notesImport.status === 'unavailable' &&
+            notesImport.reason !== 'suspended'
+          }
           sublabel={
             notesImport.status !== 'unavailable'
               ? undefined
@@ -54,7 +58,9 @@ const AppSection = ({
                 ? i18n.t('notesImport_updateRequired')
                 : notesImport.reason === 'device_unverified'
                   ? i18n.t('account_statusUnverified')
-                  : i18n.t('notesImport_unavailable')
+                  : notesImport.reason === 'suspended'
+                    ? i18n.t('account_statusSuspended')
+                    : i18n.t('notesImport_unavailable')
           }
           onPress={() => handleNavigate('NotesImportComposer')}
           selected={selectedDestination === 'NotesImportComposer'}

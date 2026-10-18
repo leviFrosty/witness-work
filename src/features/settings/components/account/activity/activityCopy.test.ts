@@ -36,7 +36,8 @@ const labels: Record<string, DeviceLabel> = {
   iphoneNamedIpad: { name: 'iPad', platform: 'ios', model: 'iPhone 17' },
 }
 const context = {
-  currentSessionId: 'me',
+  isThisDevice: (sessionId: string) =>
+    sessionId === 'me' || sessionId === 'me-before',
   readLabel: (sealed: string | null) =>
     sealed ? (labels[sealed] ?? null) : null,
 }
@@ -66,6 +67,10 @@ describe('activityTitle', () => {
         context
       )
     expect(opened('me', 'iphone', 'ios')).toBe('Signed in on this device')
+    // This device's session before it signed in again.
+    expect(opened('me-before', 'iphone', 'ios')).toBe(
+      'Signed in on this device'
+    )
     expect(opened('x', 'pixel', 'android')).toBe('Signed in on Pixel 9')
     expect(opened('x', 'unreadable', 'ios')).toBe(
       'Signed in on an iPhone or iPad'

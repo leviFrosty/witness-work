@@ -87,6 +87,7 @@ import {
   BuddyProfile,
   BuddySharing,
   BuddiesState,
+  type CardName,
   BuddyNotification,
   cappedQueue,
   IncomingShare,
@@ -101,6 +102,7 @@ import {
   INVITE_TTL_MS,
   MAX_BUDDIES,
   mergeAnswerMarks,
+  mergeCardName,
   mergeNotificationMarks,
   mergeRemovedBuddies,
   mergeSharing,
@@ -112,6 +114,8 @@ import {
   pairingEnded,
   PendingRemoval,
   SentBadgeReaction,
+  type UnsentShare,
+  type UnsentShareReason,
   type UploadedProfilePhoto,
   type UploadedSharedPhoto,
 } from '@/features/buddies/lib/state'
@@ -251,6 +255,15 @@ export type BuddiesEngineDeps = {
   keepBuddyPhotos?: (blobIds: string[]) => Promise<void>
   /** Takes back this device's system alerts for these inbox seqs. */
   dismissAlerts?: (seqs: number[]) => void
+  /**
+   * Invitations this publish couldn't send and won't retry as they stand:
+   * refused while the account is suspended, or to a buddy whose pairing just
+   * ended. Their names, as this User sees them, to tell them.
+   */
+  onSharesNotSent?: (notSent: {
+    reason: UnsentShareReason
+    names: string[]
+  }) => void
 }
 
 /** See `sync`. */
@@ -469,6 +482,8 @@ function rosterSignature(roster: Omit<Roster, 'v' | 'version'>) {
       .sort(),
     Object.keys(roster.read).sort(),
     Object.keys(roster.dismissed).sort(),
+    // An older app's roster has none, so a device with one writes it back.
+    roster.card ? [roster.card.name, roster.card.updatedAt] : null,
   ])
 }
 
@@ -565,6 +580,11 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
    * recovery key) derives a new identity, which may.
    */
   const deletedIdentities = new WeakSet<BuddyIdentity>()
+  /**
+   * Inboxes this device signed out of (`leaveThisDevice`) while their seed is
+   * still here: nothing starts with one again until the seed is replaced.
+   */
+  const leftInboxes = new Set<string>()
   const pairCache = new Map<string, PairKeys>()
   let syncInFlight: Promise<SyncOutcome> | null = null
   /** The one sync queued behind the running one; see `sync`. */
@@ -619,6 +639,8 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
           accountKeys.set(cachedIdentity.identity, seed)
           pairCache.clear()
         }
+        if (leftInboxes.has(cachedIdentity.identity.inboxId))
+          throw new RelayError('cancelled', 0)
         return cachedIdentity.identity
       } finally {
         identityLoad = null
@@ -635,6 +657,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
   function dropIdentity() {
     cachedIdentity = null
     pairCache.clear()
+    leftInboxes.clear()
   }
 
   /** The inbox id, without waiting on the seed: render paths read this. */
@@ -699,12 +722,50 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     return keys
   }
 
+  /**
+   * The name every device of this User puts on their Buddy Card (see
+   * `cardName`): the roster's, else this device's Profile name, which this
+   * device has run Buddies longest stands for.
+   */
+  function cardName(): CardName {
+    const { cardName: known, startedAt } = store.getState()
+    return (
+      known ?? {
+        name: deps.getProfile().name.trim(),
+        // Earlier starts rank higher; any change the User makes ranks above.
+        updatedAt: -(startedAt ?? 0),
+      }
+    )
+  }
+
+  /**
+   * The card name a roster brings: another device's newer one, or the account's
+   * for a device joining it. While none is kept here and the roster has this
+   * device's own Profile name, none is kept still, so a change to the Profile
+   * name goes on reaching buddies however it's made.
+   */
+  function adoptCardName(state: BuddiesState, remote: CardName | undefined) {
+    if (!remote) return state.cardName
+    const local = cardName()
+    if (mergeCardName(local, remote) !== remote) return state.cardName
+    return state.cardName === null && remote.name === local.name ? null : remote
+  }
+
+  /**
+   * The User changed their Profile name on this device: buddies see it on every
+   * device's card from now on, once the roster reaches them.
+   */
+  function setCardName(name: string) {
+    store.setState({ cardName: { name: name.trim(), updatedAt: deps.now() } })
+    saveRosterSoon()
+  }
+
   /** The Profile minus whatever the User chose not to share. */
   function profile(): BuddyProfile {
     const current = deps.getProfile()
     const { sharing } = store.getState()
     return {
-      name: current.name.trim(),
+      name: cardName().name,
       avatar: sharing.photo ? current.avatar : undefined,
       tenure: sharing.tenure ? current.tenure : undefined,
       badges: sharesBadges() ? (current.badges ?? []) : [],
@@ -767,11 +828,12 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     if (store.getState().registeredInboxId === me.inboxId) return me
     registering ??= registerInbox(me, call)
       .then(() => {
-        store.setState({
+        store.setState((state) => ({
           registeredInboxId: me.inboxId,
           syncSeq: 0,
           pushRegistrationKey: null,
-        })
+          startedAt: state.startedAt ?? deps.now(),
+        }))
         return me
       })
       .finally(() => {
@@ -839,6 +901,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       answers: mergeAnswerMarks(state.answerMarks, {}, now),
       read: marks.read,
       dismissed: marks.dismissed,
+      ...(cardName().name ? { card: cardName() } : {}),
     }
   }
 
@@ -890,6 +953,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
    * older pairing than one made since on another device.
    */
   function forgetBuddy(inboxId: string, removedAt?: number) {
+    noteUnsentTo(inboxId)
     store.setState((state) => ({
       buddies: state.buddies.filter((b) => b.inboxId !== inboxId),
       removedBuddies: endedPairing(state, inboxId, removedAt),
@@ -949,6 +1013,48 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
         inboxId
       ),
     }))
+  }
+
+  /**
+   * A buddy is going: the User's coming Plans and Follow-ups that invite them
+   * but never reached them say so (a `gone` entry in `unsentShares`).
+   */
+  function noteUnsentTo(inboxId: string) {
+    const state = store.getState()
+    const buddy = state.buddies.find((b) => b.inboxId === inboxId)
+    if (!buddy || !deps.getShares) return
+    const now = deps.now()
+    const entry: UnsentShare = {
+      reason: 'gone',
+      name: buddy.nickname ?? buddy.name,
+      at: now,
+    }
+    const keys = deps
+      .getShares()
+      .filter(
+        (spec) =>
+          spec.endsAt > now &&
+          spec.recipients.includes(inboxId) &&
+          state.outgoingShares[spec.key]?.sent[inboxId] === undefined &&
+          state.unsentShares[spec.key]?.[inboxId] === undefined
+      )
+      .map((spec) => spec.key)
+    if (keys.length > 0) setUnsent(keys.map((key) => [key, inboxId, entry]))
+  }
+
+  /** Records (an entry) or clears (null) invitations that didn't go out. */
+  function setUnsent(changes: [string, string, UnsentShare | null][]) {
+    store.setState((state) => {
+      const unsentShares = { ...state.unsentShares }
+      for (const [key, inboxId, entry] of changes) {
+        const recipients = entry
+          ? { ...unsentShares[key], [inboxId]: entry }
+          : omitKey(unsentShares[key] ?? {}, inboxId)
+        if (Object.keys(recipients).length > 0) unsentShares[key] = recipients
+        else delete unsentShares[key]
+      }
+      return { unsentShares }
+    })
   }
 
   /** Queues a tray entry, stamped now unless it says when it happened. */
@@ -2201,17 +2307,29 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
         .getState()
         .buddies.find((b) => b.inboxId === inboxId && b.status === 'active')
     let failure: unknown = null
+    /** Invitations this publish found it can't send, to tell the User. */
+    const notSent: Record<UnsentShareReason, Set<string>> = {
+      suspended: new Set(),
+      gone: new Set(),
+    }
 
-    /** Sends one event; false when it should be retried on the next publish. */
+    /**
+     * Sends one event: `sent`, `retry` on the next publish, or `dropped`, when
+     * it never will be (the pairing ended, or an invitation the relay refused
+     * while the account is suspended: it isn't held for later). A refused
+     * invitation is recorded with `refused`; cancels are retried, since they
+     * only take back what buddies already have.
+     */
     const deliver = async (
       inboxId: string,
       kind: string,
       body: { id: string; rev: number },
-      push = true
-    ) => {
+      push = true,
+      refused?: (name: string) => void
+    ): Promise<'sent' | 'retry' | 'dropped'> => {
       const buddy = activeBuddy(inboxId)
-      if (!buddy) return true
-      if (!hasShareBudget(inboxId)) return false
+      if (!buddy) return 'dropped'
+      if (!hasShareBudget(inboxId)) return 'retry'
       const eventId = eventIdFor(
         'share',
         me.inboxId,
@@ -2223,14 +2341,21 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       try {
         await sendEvent(me, buddy, kind, body, push, eventId)
         spendShareBudget(inboxId)
-        return true
+        return 'sent'
       } catch (error) {
         if (isRelayError(error, 'gone')) {
+          if (refused && kind.endsWith('.invite'))
+            notSent.gone.add(buddy.nickname ?? buddy.name)
           forgetBuddy(inboxId)
-          return true
+          return 'dropped'
         }
         failure ??= error
-        return false
+        if (refused && isRelayError(error, 'suspended')) {
+          refused(buddy.nickname ?? buddy.name)
+          notSent.suspended.add(buddy.nickname ?? buddy.name)
+          return 'dropped'
+        }
+        return 'retry'
       }
     }
 
@@ -2275,6 +2400,8 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       const recipients = new Set(spec.recipients.filter(activeBuddy))
       const sent = { ...previous?.sent }
       const sentTiming = { ...previous?.sentTiming }
+      const unsent = store.getState().unsentShares[spec.key] ?? {}
+      const unsentChanges: [string, string, UnsentShare | null][] = []
       const body = fitEvent({
         v: 1,
         id: shareId,
@@ -2285,16 +2412,35 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       })
       for (const inboxId of recipients) {
         if (sent[inboxId] === hash) continue
+        // Refused while suspended: never sent later as it stands.
+        if (unsent[inboxId]?.hash === hash) continue
         const update = sent[inboxId] !== undefined
         if (ended && !update) continue
         const kind = `${prefix}.${update ? 'update' : 'invite'}`
         const push = !ended && (!update || sentTiming[inboxId] !== timing)
         const rev = revs.take(inboxId, kind, push)
-        if (await deliver(inboxId, kind, { ...body, rev }, push)) {
+        const outcome = await deliver(
+          inboxId,
+          kind,
+          { ...body, rev },
+          push,
+          (name) =>
+            unsentChanges.push([
+              spec.key,
+              inboxId,
+              { reason: 'suspended', name, hash, at: now },
+            ])
+        )
+        if (outcome === 'sent') {
           sent[inboxId] = hash
           sentTiming[inboxId] = timing
-        } else revs.leave(inboxId, kind, rev)
+          if (unsent[inboxId]) unsentChanges.push([spec.key, inboxId, null])
+        } else if (outcome === 'retry') revs.leave(inboxId, kind, rev)
       }
+      // No longer invited: nothing more to say about them.
+      for (const inboxId of Object.keys(unsent))
+        if (!spec.recipients.includes(inboxId))
+          unsentChanges.push([spec.key, inboxId, null])
       for (const inboxId of Object.keys(sent)) {
         if (recipients.has(inboxId)) continue
         const kind = `${prefix}.cancel`
@@ -2303,11 +2449,14 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
         // Taking someone off who hadn't said they're going is no news to them.
         const going =
           store.getState().shareReplies[shareId]?.[inboxId]?.status === 'going'
-        if (await deliver(inboxId, kind, cancel, going && !ended)) {
+        if (
+          (await deliver(inboxId, kind, cancel, going && !ended)) !== 'retry'
+        ) {
           delete sent[inboxId]
           delete sentTiming[inboxId]
         } else revs.leave(inboxId, kind, rev)
       }
+      setUnsent(unsentChanges)
       saveSent(spec.key, {
         shareId,
         type: spec.type,
@@ -2334,7 +2483,8 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
         for (const inboxId of Object.keys(sent)) {
           const rev = revs.take(inboxId, kind, !ended)
           const cancel = { v: 1, id: share.shareId, rev }
-          if (await deliver(inboxId, kind, cancel, !ended)) delete sent[inboxId]
+          if ((await deliver(inboxId, kind, cancel, !ended)) !== 'retry')
+            delete sent[inboxId]
           else revs.leave(inboxId, kind, rev)
         }
       }
@@ -2346,6 +2496,22 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
           : null
       )
     }
+    // A Plan or Follow-up that's gone, or over, has nothing left to tell.
+    const unsentKeys = Object.keys(store.getState().unsentShares)
+    const over = unsentKeys.filter(
+      (key) => !specs.some((spec) => spec.key === key && spec.endsAt > now)
+    )
+    if (over.length > 0)
+      store.setState((current) => ({
+        unsentShares: Object.fromEntries(
+          Object.entries(current.unsentShares).filter(
+            ([key]) => !over.includes(key)
+          )
+        ),
+      }))
+    for (const reason of ['suspended', 'gone'] as const)
+      if (notSent[reason].size > 0)
+        deps.onSharesNotSent?.({ reason, names: [...notSent[reason]] })
     await pruneSharedPhotos(me, specs)
     if (failure) throw failure
   }
@@ -3751,6 +3917,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       ),
       rosterVersion: Math.max(state.rosterVersion, remote.version ?? 0),
       sharing: mergeSharing(state.sharing, remote.sharing),
+      cardName: adoptCardName(state, remote.card),
       answerMarks: mergeAnswerMarks(state.answerMarks, remote.answers, now),
       notificationMarks: mergeNotificationMarks(
         state.notificationMarks,
@@ -3961,7 +4128,13 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     expireLocal()
     const firstSync = store.getState().lastSyncAt === 0
     // Read again each sync: another device's seed may have synced in.
-    await identity({ fresh: true })
+    const current = await identity({ fresh: true })
+    const registered = store.getState().registeredInboxId
+    // It replaced this one (iCloud Keychain): what's here is the old
+    // account's, whose devices keep it. This device can't sign for that inbox
+    // any more, so it leaves it as it is and starts over with the new one.
+    if (registered !== null && registered !== current.inboxId)
+      await resetLocalState()
     const me = await ensureInbox(call)
     slotsAddedDuringSync.clear()
     if (store.getState().slotsNeedRestore) await restoreInbox(me, call)
@@ -4331,10 +4504,59 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     }
     cachedIdentity = null
     pairCache.clear()
+    await resetLocalState()
+  }
+
+  /**
+   * Signs this device out of Buddies and leaves the rest to this User's other
+   * devices on the account: the inbox, its slots, and every buddy stay, and
+   * only this device's push registration and Buddies data go. For a device
+   * leaving an account that's still signed in elsewhere; `deleteEverything` is
+   * for the last one. Removals this device still owes are finished first, as
+   * there.
+   */
+  async function leaveThisDevice() {
+    const me = await identity()
+    if (store.getState().pendingRemovals.length > 0) {
+      await flushRemovals(me, { force: true })
+      if (store.getState().pendingRemovals.length > 0)
+        throw new BuddyRemovalPendingError('everything')
+    }
+    // Nothing starts again with this seed (a push registration included), and
+    // what a sync under way read lands before the reset clears it.
+    leftInboxes.add(me.inboxId)
+    const { deviceId, registeredInboxId } = store.getState()
+    if (deviceId && registeredInboxId === me.inboxId) {
+      try {
+        await relay.unregisterDevice(ownerAuth(me), deviceId)
+      } catch (error) {
+        // Its pushes would keep coming to whoever uses this device next, so
+        // only a refusal that won't change by trying again is let through: a
+        // suspended account's inbox refuses owner ops, and the kill switch
+        // this one (nothing is pushed while it's on).
+        if (
+          !isRelayError(error, 'not_found') &&
+          !isRelayError(error, 'suspended') &&
+          !isRelayError(error, 'disabled')
+        ) {
+          leftInboxes.delete(me.inboxId)
+          throw error
+        }
+      }
+    }
+    await syncInFlight?.catch(() => undefined)
+    cachedIdentity = null
+    pairCache.clear()
+    await resetLocalState()
+  }
+
+  /** Forgets everything Buddies kept on this device, but its choices. */
+  async function resetLocalState() {
     shareSends.clear()
     lastAlertSentAt.clear()
     removalRetries.clear()
     recentEvents.clear()
+    slotsAddedDuringSync.clear()
     coolDownUntil = 0
     // Choices about this device and what to share outlive the data; shared
     // Plans, invitations, replies, and the notification queue don't.
@@ -4381,6 +4603,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     replyToShare,
     deliverReplies,
     sendHeldReplies,
+    setCardName,
     askToJoin,
     withdrawJoinRequest,
     dismissJoinRequest,
@@ -4407,6 +4630,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     alertContext,
     describePush,
     deleteEverything,
+    leaveThisDevice,
   }
 }
 

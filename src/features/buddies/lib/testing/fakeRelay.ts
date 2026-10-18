@@ -326,6 +326,13 @@ export function createFakeRelay(now: () => number) {
         fromB64u(publicKey)
       )
 
+    // A suspended account's writes into others' inboxes (ww-api #53).
+    if (
+      ['card/put', 'event/put', 'invite/claim'].includes(op) &&
+      accounts.get(accountId)?.status === 'suspended'
+    )
+      return fail(403, 'suspended')
+
     if (op === 'invite/fetch' || op === 'invite/claim') {
       const invite = invites.get(payload.inviteId)
       if (!invite || invite.expiresAt <= now()) return fail(404, 'not_found')

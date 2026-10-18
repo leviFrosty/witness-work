@@ -30,7 +30,10 @@ import {
   currentBuddyStreak,
 } from '@/features/buddies/lib/buddiesService'
 import { startFallbackPoll, syncSoon } from '@/features/buddies/lib/autoSync'
-import { refreshBuddyAvatarThumbnail } from '@/features/buddies/lib/buddyProfile'
+import {
+  currentBuddyProfile,
+  refreshBuddyAvatarThumbnail,
+} from '@/features/buddies/lib/buddyProfile'
 import {
   forgetBuddiesInData,
   reconcileLinkedPlans,
@@ -421,6 +424,9 @@ export default function BuddiesRuntime() {
     const profile = useProfile.subscribe((state, previous) => {
       if (state.name !== previous.name || state.avatar !== previous.avatar)
         noteEdit()
+      // Renamed here: every device of this account's cards take the new name.
+      if (state.name !== previous.name && isLocalEdit())
+        buddiesEngine.setCardName(currentBuddyProfile().name)
       if (state.name !== previous.name) schedulePublish()
       if (state.avatar !== previous.avatar)
         void refreshAvatar().then(schedulePublish)

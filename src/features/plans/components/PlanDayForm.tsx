@@ -988,8 +988,18 @@ const PlanDayForm = ({
     const { planDate, startTimeInMinutes } = splitPickedDate()
     const plannedMinutes = hours * 60 + minutes
     const plannedTitle = title.trim() || undefined
+    // A buddy whose pairing ended while the form was open left its summary;
+    // they leave the Plan too, rather than stay invited to nothing.
+    const { buddies: knownBuddies, removedBuddies } = useBuddies.getState()
+    const stillInvited = invitedBuddies.filter(
+      (inboxId) =>
+        !(inboxId in removedBuddies) ||
+        knownBuddies.some(
+          (buddy) => buddy.inboxId === inboxId && buddy.status === 'active'
+        )
+    )
     const plannedBuddies =
-      !linkedShare && invitedBuddies.length > 0 ? invitedBuddies : undefined
+      !linkedShare && stillInvited.length > 0 ? stillInvited : undefined
 
     // Where Plan Details shows the saved Plan: an edit can move it, and one
     // created from Plan Details (Duplicate, Invite) opens next.

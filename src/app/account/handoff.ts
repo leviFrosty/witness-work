@@ -299,7 +299,17 @@ export async function completeClaimHandoff(
     current !== null &&
     (current.length !== newKey.length ||
       current.some((byte, i) => byte !== newKey[i]))
-  const loss = await accountKey.lossIfReplaced(newKey)
+  let loss: AccountKeyLoss
+  try {
+    loss = await accountKey.lossIfReplaced(newKey)
+  } catch (error) {
+    // Whether the account's other devices keep its buddies decides what this
+    // phone deletes; nothing is, without knowing.
+    logger.warn("[handoff] couldn't check the account's other devices", error)
+    await opened.close()
+    await endHandoff(session, 'replace_failed')
+    return { outcome: 'failed', reason: 'replace_failed' }
+  }
   // On iOS the key reaches every Apple device on the same iCloud Keychain,
   // so replacing one there always asks, as with a recovery key.
   if (

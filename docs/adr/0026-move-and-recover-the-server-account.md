@@ -30,16 +30,20 @@ Buddies keeps deriving its keys from it, so every existing identity carries
 over.
 
 A device can now **replace** its account key with one it received
-(`replaceRootSeed`). Before it does, it runs Delete Buddies for the old key
-when that key has buddies, so they're told, and warns first. On iOS the item
-is synchronizable, so the replacement reaches the User's other Apple devices,
-which is what they want.
+(`replaceRootSeed`). Before it does, it warns first and lets go of the old
+key's Buddies. On the old account's last signed-in device that's Delete
+Buddies, so the buddies are told. While other devices are still signed in to
+it, this device only signs out of Buddies and the inbox and buddies stay for
+them; when that can't be checked, nothing changes. On iOS the item is
+synchronizable, so the replacement reaches the User's other Apple devices,
+which is what they want; each drops its own Buddies data for the old key the
+same way when it notices.
 
 ### 2. Set Up Another Device: a QR handoff, like 1Password
 
 The phone that already has the account shows a QR code. The new phone scans
 it, from onboarding ("Already use WitnessWork?") or Settings → Account. Both
-show the same six-digit code. The old phone asks "Allow *Pixel 9* to sign
+show the same six-digit code. The old phone asks "Allow _Pixel 9_ to sign
 in?" and, once allowed, sends the account key sealed to the new phone. The
 old phone stays signed in.
 

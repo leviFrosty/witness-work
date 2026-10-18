@@ -16,10 +16,15 @@ vi.mock('expo-localization', () => ({
 
 import { buddiesLossMessage } from './confirmAccountReplace'
 
-const loss = (names: string[], inboxRegistered = true) => ({
+const loss = (
+  names: string[],
+  inboxRegistered = true,
+  keptElsewhere = false
+) => ({
   buddies: names.length,
   buddyNames: names,
   inboxRegistered,
+  keptElsewhere,
 })
 
 it('names one buddy in the sentence', () => {
@@ -46,4 +51,16 @@ it('mentions only the Buddies data without buddies', () => {
     "Your Buddies data on this phone is deleted, and this can't be undone."
   )
   expect(buddiesLossMessage(loss([], false))).toBeNull()
+})
+
+it("says the buddies stay when the account's other devices keep them", () => {
+  expect(buddiesLossMessage(loss(['Ana Ruiz'], true, true))).toBe(
+    'Your buddy Ana Ruiz will be removed from this phone, along with your Buddies data on it. Your buddies stay on your other devices signed in to this account.'
+  )
+  expect(buddiesLossMessage(loss(['Ana Ruiz', 'Ben Cole'], true, true))).toBe(
+    'Your 2 buddies will be removed from this phone, along with your Buddies data on it:\n\n• Ana Ruiz\n• Ben Cole\n\nYour buddies stay on your other devices signed in to this account.'
+  )
+  expect(buddiesLossMessage(loss([], true, true))).toBe(
+    'Your Buddies data on this phone is deleted. Your buddies stay on your other devices signed in to this account.'
+  )
 })

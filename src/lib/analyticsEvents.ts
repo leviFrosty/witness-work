@@ -94,6 +94,7 @@ export const analyticsEventNames = [
   'buddies_feedback_unavailable',
   'buddies_opened',
   'buddies_push_registration',
+  'buddies_share_not_sent',
   'buddies_tray_sync_failed',
   'buddy_badges_opened',
   'buddy_customized',

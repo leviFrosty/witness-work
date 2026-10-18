@@ -404,7 +404,8 @@ Roster plaintext (JSON):
     "<from>|<shareId>": { "s": "going", "v": 0, "r": 0, "x": 0 }
   },
   "read": { "<entry id>": 0 },
-  "dismissed": { "<entry id>": 0 }
+  "dismissed": { "<entry id>": 0 },
+  "card": { "name": "Levi", "updatedAt": 0 }
 }
 ```
 
@@ -413,6 +414,7 @@ Roster plaintext (JSON):
 - `version` counts roster writes across the User's devices: each write is the newest version the device has read or written, plus one, and only a write the relay accepted counts. Rosters from builds before it have none.
 - `closedInviteIds`: invites cancelled, rejected, or confirmed (`inviteId → expiresAt`), pruned once they expire. A rejected claim goes with its invite: the claim expires at the same moment.
 - `removedBuddies`: ended pairings (`inboxId → removedAt`). A pairing with that buddy whose `pairedAt ≤ removedAt` is over. A removal the User makes records the time. When the relay shows the buddy left (their slot is gone, or a write returns `gone`) or an unconfirmed request lapses, the device records that pairing's own `pairedAt` instead, so a device that missed a newer pairing made on another device can't end it. Pairing again on purpose (accepting an invite, or confirming a claim) drops the local entry and starts the new pairing after any `removedAt` this device knows. Entries never expire. Past 200, the smallest `removedAt` is dropped first; only the User's own pairings add entries, so one is dropped only after 200 later removals. 200 entries take about 8 KB of the 32 KB roster cap.
+- `card`: the name every device of this User puts on their Buddy Card, so buddies see one name however many devices publish (see [Another of the User's devices](#another-of-the-users-devices)). Optional; older builds' rosters have none, and a device that has one writes it back.
 - Readers drop fields they don't know rather than reject them, and the AAD has no version, so older builds still open and parse rosters that carry fields added since.
 
 `roster/put` is last-writer-wins, so clients merge rather than replace. On every sync that returns a roster:
@@ -442,11 +444,15 @@ Every device on the Apple Account derives the same inbox from the root seed, so 
 - **Bell entries read or dismissed** (`read`, `dismissed`: entry id → when the mark lapses, 31 days after it's made, by when the relay has dropped the event): an entry another device read arrives read; one it dismissed is removed, unless it's still waiting on an answer here. Dismissing a request to join passes it over on every device. Entry ids are event ids (or `pending|` plus an `incomingShareKey`), the same on every device. At most 100, dismissals first on a tie.
 - **When:** a device writes its roster a couple of seconds after a burst of marks, so the others catch up on their next sync (the live signal starts one at once).
 
+**Leaving the account.** A device that replaces its account key (Set Up Another Device or a recovery key for another account) lets go of the old account's Buddies first. While another device holds a live session for that account (`GET /accounts/v1/sessions`), the device only signs out: it finishes removals it owes, sends `device/unregister`, and deletes its local Buddies data. The inbox, its slots, the roster, and every buddy stay for the account's other devices, and no buddy is told. On the account's last device it runs delete-all instead (every buddy is left, then `inbox/delete`). When the session list can't be read, it changes nothing and the User tries again; it never deletes on a guess. On iOS the replaced key reaches the User's other Apple devices on the same iCloud Keychain: when a device's next sync finds the seed changed under it, it deletes its local Buddies data without sending anything (it can't sign for the old inbox any more) and starts with the new account's inbox. Their sessions still count as staying when the check runs, so if every other device follows the key, the old inbox is left (the relay wipes it after its inactivity window) rather than deleted, and its buddies aren't told.
+
 A device whose seed came from another device starts Buddies by itself only while iCloud Sync (Google Drive on Android) is on there and has pulled once, since its Buddy Card and shares come from its own Plans. It registers the inbox (idempotent for the same key), restores the roster, skips the first-visit intro, and registers for pushes. Without iCloud Sync it waits until the User opens Buddies there.
 
 Sending stays idempotent across devices:
 
+- **Card name:** every device's card carries the roster's `card.name`, never just its own Profile name. Changing the Profile name on a device running Buddies stamps it (`updatedAt` is that device's clock) and writes the roster within seconds. Until the User changes it, a device offers its own Profile name stamped `-startedAt`, when Buddies started there (0 on devices from before this was kept), so the device that has run Buddies longest names the card and one joining the account takes the account's name. The merge keeps the later `updatedAt`, the roster's on a tie, so devices settle on one name. A device keeps no name of its own while the roster's is its Profile name, so that name goes on following the Profile.
 - **Cards:** every device publishes the same card from the same data. A device without the Profile photo file (photo transfer off) publishes cards only for changes made on it, and to a buddy paired there, so its card doesn't take the photo off buddies' screens after every change another device makes.
+- **Not sent:** an invitation (`*.invite`, or an update) the relay refuses with `suspended` isn't retried: the device records it as not sent for that content and tells the User, so a suspension never queues invitations for after reinstatement. A change to the Plan or Follow-up afterwards is sent as usual. Cancels are retried, since they only take back what buddies have. An invitation to a buddy whose pairing ended before it went (`gone`, or the slot vanished first) is recorded the same way. These records are per device.
 - **Shares:** a device takes the shares already in its data at its first sync, and shares that arrive later through iCloud Sync, as sent by the device that made them, without sending. A send that alerts, and every cancel, uses as its `rev` the Plan's or Follow-up's sync `updatedAt` (for a deleted one, its deletion; or one more than the share's last `rev`, if higher), so every device reaches the same event id for the same change and the relay keeps one event and one alert. Quiet updates keep the device's clock.
 
 ### Buddy Card plaintext

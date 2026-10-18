@@ -1,12 +1,13 @@
-import apis from '@/constants/apis'
 import { accountKey } from '@/app/account/accountKey'
-import { accountSessions, isThisDeviceSession } from '@/lib/serverAccount'
+import { isThisDeviceSession } from '@/lib/serverAccount'
+import {
+  activityOptions,
+  readAccountDevices,
+} from '@/lib/serverAccount/accountDevices'
 import {
   type AccountDevice,
-  type ActivityClientOptions,
   type ActivityPage,
   fetchAccountActivity,
-  fetchAccountDevices,
   revokeAccountDevice,
 } from '@/lib/serverAccount/activityClient'
 import {
@@ -41,32 +42,20 @@ async function connect(signal?: AbortSignal) {
   const key = await accountKey.peek()
   if (!key) throw new AccountNotSetUpError()
   const readLabel = createDeviceLabelReader(key)
-  const options = (renew = false): ActivityClientOptions => ({
-    baseUrl: apis.accounts,
-    request: (request) =>
-      accountSessions.request(request, { accountKey: key, renew }),
-    signal,
-  })
+  const options = activityOptions(key, signal)
   const context = (): AccountActivityContext => ({
     isThisDevice: isThisDeviceSession,
     readLabel,
   })
-  return { options, context }
+  return { key, options, context }
 }
 
-/**
- * The account's signed-in devices. A list without this device's session means
- * another device signed this one out while its access token still worked
- * (servers before ww-api #52 answered then): a new token signs it back in, as
- * the sign-out promises, and the list is read again with it.
- */
+/** The account's signed-in devices (`readAccountDevices`), and how to read them. */
 export async function loadAccountDevices(
   signal?: AbortSignal
 ): Promise<{ devices: AccountDevice[]; context: AccountActivityContext }> {
-  const { options, context } = await connect(signal)
-  let devices = await fetchAccountDevices(options())
-  if (!devices.some((device) => device.current))
-    devices = await fetchAccountDevices(options(true))
+  const { key, context } = await connect(signal)
+  const devices = await readAccountDevices(key, signal)
   return { devices, context: context() }
 }
 

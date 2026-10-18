@@ -773,6 +773,18 @@ or from the key a handoff just brought (`via: handoff`).
 | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------- |
 | `buddies_device_joined` | Buddies started by itself on a device with iCloud Sync (or Drive) on, or right after Set Up Another Device brought the account here. | `buddies`: how many buddies it restored (0–5); `via: sync \| handoff`. No names, relay ids, or dates. |
 
+### Invitations not sent
+
+`buddies_share_not_sent` answers how often a Plan or Follow-up invitation
+never reaches a buddy, and why: refused while the User's account is suspended
+(it isn't held for later), or the pairing had ended before it went. Sent once
+per publish that found any, from the device that tried; the User sees an alert
+and a "Not sent" row on the Plan.
+
+| Event                    | When                                                          | Properties                                                                                         |
+| ------------------------ | ------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| `buddies_share_not_sent` | A publish found invitations it couldn't send and won't retry. | `reason: suspended \| gone`, `buddies` (how many, 1–5). No names, relay ids, Plan dates, or times. |
+
 ### Buddies alerts
 
 `buddies_alerts_shown` answers whether named Buddies alerts work in the field,
@@ -827,12 +839,12 @@ recovery keys bring accounts to new phones, and how often using one costs
 someone their Buddies data. They're rare by nature: once a session at most for
 viewing, and once per action otherwise.
 
-| Event                   | When                                                                                           | Properties                                                                                                                                                                                                                              |
-| ----------------------- | ---------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `recovery_key_viewed`   | Settings → Account showed the recovery key. Once per session.                                  | `auth: device \| none` (the device's own authentication ran, or no screen lock is set), `created` (viewing it created the account key).                                                                                                 |
-| `recovery_key_exported` | The User copied the key, or the share sheet reported it shared.                                | `method: copy \| share`.                                                                                                                                                                                                                |
-| `recovery_key_used`     | Use a Recovery Key finished, or showed that this device can't be verified.                     | `outcome: replaced \| unchanged \| declined \| failed \| unverified` (`unchanged`: the key was already this device's; `declined`: the User cancelled the warning; `unverified`: this device can never attest, so the form didn't show). |
-| `account_key_replaced`  | This device's account key was replaced, from a recovery key, a handoff, or (dev builds) Tools. | `source: recovery_key \| handoff \| tools`, `buddies_removed` (count), `had_inbox`, `registered` (the new account's session opened right away).                                                                                         |
+| Event                   | When                                                                                           | Properties                                                                                                                                                                                                                                                              |
+| ----------------------- | ---------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `recovery_key_viewed`   | Settings → Account showed the recovery key. Once per session.                                  | `auth: device \| none` (the device's own authentication ran, or no screen lock is set), `created` (viewing it created the account key).                                                                                                                                 |
+| `recovery_key_exported` | The User copied the key, or the share sheet reported it shared.                                | `method: copy \| share`.                                                                                                                                                                                                                                                |
+| `recovery_key_used`     | Use a Recovery Key finished, or showed that this device can't be verified.                     | `outcome: replaced \| unchanged \| declined \| failed \| unverified` (`unchanged`: the key was already this device's; `declined`: the User cancelled the warning; `unverified`: this device can never attest, so the form didn't show).                                 |
+| `account_key_replaced`  | This device's account key was replaced, from a recovery key, a handoff, or (dev builds) Tools. | `source: recovery_key \| handoff \| tools`, `buddies_removed` (count), `had_inbox`, `buddies_kept_elsewhere` (the old account's other devices keep its buddies, so only this device signed out of Buddies), `registered` (the new account's session opened right away). |
 
 Never the key, the recovery key, `accountPub`, the account id, or inbox ids.
 Mistyped keys send nothing: the form refuses them before they can be used.

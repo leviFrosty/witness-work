@@ -10,6 +10,7 @@ import { usePreferences } from '@/stores/preferences'
 import useServiceReport from '@/stores/serviceReport'
 import { currentServiceStreak } from '@/lib/currentServiceStreak'
 import { shownStreak, streakLastsThrough } from '@/lib/serviceStreak'
+import { alertSharesNotSent } from '@/features/buddies/lib/buddiesErrorAlert'
 import { buddiesFailureReason } from '@/features/buddies/lib/buddiesErrors'
 import { currentBuddyProfile } from '@/features/buddies/lib/buddyProfile'
 import { fromB64u } from '@/features/buddies/lib/bytes'
@@ -135,6 +136,13 @@ const engine = createBuddiesEngine({
   readProfilePhoto,
   keepBuddyPhotos,
   dismissAlerts: (seqs) => void dismissBuddyAlerts(seqs),
+  onSharesNotSent: (notSent) => {
+    analytics.capture('buddies_share_not_sent', {
+      reason: notSent.reason,
+      buddies: notSent.names.length,
+    })
+    alertSharesNotSent(notSent)
+  },
 })
 
 /**

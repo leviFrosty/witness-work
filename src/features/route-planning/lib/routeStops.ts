@@ -26,6 +26,8 @@ export type RouteStop = {
   /** Unique within the day: `followUp:<visitId>` or `plan:<planId>`. */
   key: string
   kind: 'followUp' | 'plan'
+  /** A Follow-up's Contact. */
+  contactId?: string
   /** The Contact's name, or the Plan's title or place. */
   title: string
   /** The address or place line under the title, when there is one. */
@@ -34,6 +36,8 @@ export type RouteStop = {
   startTimeInMinutes: number
   /** A Plan with no set time; `startTimeInMinutes` only orders it. */
   anytime?: boolean
+  /** A Plan's planned minutes, the default time spent there. */
+  minutes?: number
   coordinate: Coordinate
   /**
    * What navigation apps receive: the address, as single-stop navigation does,
@@ -67,6 +71,7 @@ const followUpStop = (visit: Visit, contact: Contact): RouteStop | null => {
   return {
     key: `followUp:${visit.id}`,
     kind: 'followUp',
+    contactId: contact.id,
     title: contact.name,
     subtitle: address || undefined,
     startTimeInMinutes: minutesOfDay(new Date(visit.followUp!.date)),
@@ -79,7 +84,12 @@ const followUpStop = (visit: Visit, contact: Contact): RouteStop | null => {
 }
 
 const planStop = (
-  plan: { id: string; title?: string; location?: PlanLocation },
+  plan: {
+    id: string
+    title?: string
+    minutes: number
+    location?: PlanLocation
+  },
   startTimeInMinutes: number,
   anytime: boolean
 ): RouteStop | null => {
@@ -99,10 +109,46 @@ const planStop = (
     subtitle: title ? place.primary : place.secondary,
     startTimeInMinutes,
     ...(anytime ? { anytime } : {}),
+    minutes: plan.minutes,
     coordinate,
     destination: address || coordinateText(coordinate),
   }
 }
+
+export type PlanOnDay = {
+  plan: DayPlan | RecurringPlan
+  /** A Recurring Plan's date, rather than a one-time Plan. */
+  recurring: boolean
+  /** Local minutes since midnight. */
+  time: number
+  anytime: boolean
+}
+
+/** The day's Day Plans and Recurring Plan instances, with their start times. */
+export const plansOnDay = ({
+  day,
+  dayPlans,
+  recurringPlans,
+}: {
+  day: Date
+  dayPlans: DayPlan[]
+  recurringPlans: RecurringPlan[]
+}): PlanOnDay[] => [
+  ...dayPlans
+    .filter((plan) => isStoredDateOnLocalDay(plan.date, day))
+    .map((plan) => ({
+      plan,
+      recurring: false,
+      time: getStartTimeInMinutes(plan),
+      anytime: !!plan.anytime,
+    })),
+  ...getPlansIntersectingDay(day, recurringPlans).map((plan) => ({
+    plan,
+    recurring: true,
+    time: getEffectiveStartTimeInMinutesForRecurringPlan(plan, day),
+    anytime: isRecurringPlanAnytimeOnDate(plan, day),
+  })),
+]
 
 /**
  * Today's stops: open Follow-ups for active Contacts (one per Contact) and the
@@ -151,21 +197,11 @@ export const dayRouteStops = ({
     else missingLocationCount++
   }
 
-  const plans = [
-    ...dayPlans
-      .filter((plan) => isStoredDateOnLocalDay(plan.date, day))
-      .map((plan) => ({
-        plan,
-        time: getStartTimeInMinutes(plan),
-        anytime: !!plan.anytime,
-      })),
-    ...getPlansIntersectingDay(day, recurringPlans).map((plan) => ({
-      plan,
-      time: getEffectiveStartTimeInMinutesForRecurringPlan(plan, day),
-      anytime: isRecurringPlanAnytimeOnDate(plan, day),
-    })),
-  ]
-  for (const { plan, time, anytime } of plans) {
+  for (const { plan, time, anytime } of plansOnDay({
+    day,
+    dayPlans,
+    recurringPlans,
+  })) {
     const stop = planStop(plan, time, anytime)
     if (stop) stops.push(stop)
     // A Plan without a place isn't a stop the User forgot to locate.

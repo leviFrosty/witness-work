@@ -17,16 +17,23 @@ export const formatRouteSummary = (
   summary: { distanceMeters: number; durationSeconds: number },
   prefs: { timeDisplayFormat: MinuteDisplayFormat; distanceUnit?: DistanceUnit }
 ): string => {
-  const unit =
-    prefs.distanceUnit ?? autoDistanceUnit(getLocales()[0]?.regionCode)
-  const miles = summary.distanceMeters / METERS_PER_MILE
   return i18n.t('routePlan_summary', {
     duration: formatMinutes(
       Math.max(1, Math.round(summary.durationSeconds / 60)),
       prefs.timeDisplayFormat
     ).formatted,
-    distance: i18n.t(`mileage.unitValues.${unit}`, {
-      value: formatNumber(milesToDistance(miles, unit)),
-    }),
+    distance: formatRouteDistance(summary.distanceMeters, prefs.distanceUnit),
+  })
+}
+
+/** "18.2 mi" in the User's distance unit, or the region's. */
+export const formatRouteDistance = (
+  meters: number,
+  distanceUnit?: DistanceUnit
+): string => {
+  const unit = distanceUnit ?? autoDistanceUnit(getLocales()[0]?.regionCode)
+  const miles = meters / METERS_PER_MILE
+  return i18n.t(`mileage.unitValues.${unit}`, {
+    value: formatNumber(milesToDistance(miles, unit)),
   })
 }

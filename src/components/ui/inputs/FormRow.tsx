@@ -10,6 +10,7 @@ import Button from '@/components/ui/Button'
 import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
+import { alignText } from '@/lib/direction'
 
 export const FORM_ROW_MIN_HEIGHT = 52
 export const FORM_ROW_ICON_SIZE = 20
@@ -138,14 +139,22 @@ export const FormRowLabel = (props: { children: string }) => {
   )
 }
 
-/** Muted value shown at the end of a collapsed row. */
+/**
+ * Muted value at the end of a collapsed row's content, beside its label; it
+ * takes the room the label leaves.
+ */
 export const FormRowValue = (props: { children?: string }) => {
   const theme = useTheme()
   if (!props.children) return null
   return (
     <Text
       numberOfLines={1}
-      style={{ color: theme.colors.textAlt, maxWidth: '55%' }}
+      style={{
+        flex: 1,
+        minWidth: 0,
+        textAlign: alignText('end'),
+        color: theme.colors.textAlt,
+      }}
     >
       {props.children}
     </Text>

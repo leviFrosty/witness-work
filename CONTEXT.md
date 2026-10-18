@@ -169,8 +169,14 @@ A per-instance modification to a Recurring Plan for a specific date — adjusts 
 _Avoid_: "exception" (sounds error-related; an override is intentional).
 
 **Route Planning**:
-The Supporter feature behind "Plan today's route": today's open **Follow-ups** and **Day Plan** / **Recurring Plan** locations that have map coordinates become stops, which ww-api puts in the shortest driving order before the route opens in the User's default navigation app. A route is a one-off answer, never saved, and it doesn't change the Follow-ups or Plans it came from.
-_Avoid_: "trip" (that's a mileage record), "itinerary".
+The Supporter feature behind "Plan Route": a day's open **Follow-ups** and **Day Plan** / **Recurring Plan** locations that have map coordinates become stops, which the User orders by hand or has ww-api put in the shortest driving order ("Shortest Order") before the route opens in their default navigation app. It never changes the Follow-ups or Plans it came from.
+
+**Route**:
+One day's plan of where to go, built in the route builder: a start (a place and a time), the stops in visiting order (the day's stops plus any the User added: a Contact, a searched place, coordinates, or a pin put on a map), how long they'll stay at each, a finish (the last stop, back to the start, or another place; not a stop, so no time is spent there), and details — notes and the Plan it belongs to. A Plan with a place that starts before the day's first Follow-up (a meeting for field service) is where the Route starts. Buddies are invited to a Route through its Plan: Invitations travel with Plans, so a Route without one makes one to invite them. Arrival times are on-device estimates. One Route per day, saved on the device only (not synced).
+
+**Saved Place**:
+Home or the User's Kingdom Hall, saved once in the route builder so a Route can start, stop, or finish there in one tap. On the device only, like Routes.
+_Avoid_: "trip" (that's a mileage record), "itinerary", "journey" in UI copy.
 
 ### Buddies
 

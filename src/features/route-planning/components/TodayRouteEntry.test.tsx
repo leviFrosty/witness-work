@@ -1,12 +1,14 @@
 import { createElement } from 'react'
 import { act, create, type ReactTestRenderer } from 'react-test-renderer'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import moment from 'moment'
 
 const mocks = vi.hoisted(() => ({
   navigate: vi.fn(),
   capture: vi.fn(),
   hasAccess: true,
   stopCount: 2,
+  routes: {} as Record<string, unknown>,
 }))
 
 vi.mock('react-native', () => ({ View: 'View' }))
@@ -36,6 +38,11 @@ vi.mock('@/features/route-planning/hooks/useDayRouteStops', () => ({
   }),
 }))
 
+vi.mock('@/features/route-planning/stores/savedRoutes', () => ({
+  useSavedRoutes: (select: (state: { routes: unknown }) => unknown) =>
+    select({ routes: mocks.routes }),
+}))
+
 import TodayRouteEntry from '@/features/route-planning/components/TodayRouteEntry'
 
 const render = async (props: Parameters<typeof TodayRouteEntry>[0]) => {
@@ -50,7 +57,11 @@ beforeEach(() => {
   vi.clearAllMocks()
   mocks.stopCount = 2
   mocks.hasAccess = true
+  mocks.routes = {}
 })
+
+const subtitle = (root: ReactTestRenderer) =>
+  root.root.findAllByType('Text' as never)[1]!.props.children
 
 describe('TodayRouteEntry', () => {
   it('opens for non-Supporters too, marked as a Supporter feature', async () => {
@@ -60,22 +71,73 @@ describe('TodayRouteEntry', () => {
     await act(async () => {
       root.root.findByType('Button' as never).props.onPress()
     })
-    expect(mocks.navigate).toHaveBeenCalledWith('TodayRoute')
+    expect(mocks.navigate).toHaveBeenCalledWith('TodayRoute', undefined)
     expect(mocks.capture).toHaveBeenCalledWith('route_plan_entry_opened', {
       surface: 'schedule_day',
       supporter: false,
+      future_day: false,
     })
   })
 
-  it('stays hidden on other days and with fewer than two stops', async () => {
-    const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000)
+  it('opens a day ahead on that day', async () => {
+    const tomorrow = moment().add(1, 'day')
+    const root = await render({
+      date: tomorrow.toDate(),
+      surface: 'schedule_day',
+    })
+    await act(async () => {
+      root.root.findByType('Button' as never).props.onPress()
+    })
+    expect(mocks.navigate).toHaveBeenCalledWith('TodayRoute', {
+      date: tomorrow.format('YYYY-MM-DD'),
+    })
+    expect(mocks.capture).toHaveBeenCalledWith(
+      'route_plan_entry_opened',
+      expect.objectContaining({ future_day: true })
+    )
+  })
+
+  it('stays hidden on past days', async () => {
+    const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000)
     expect(
-      (await render({ date: tomorrow, surface: 'schedule_day' })).toJSON()
+      (await render({ date: yesterday, surface: 'schedule_day' })).toJSON()
     ).toBeNull()
+  })
+
+  it('offers a day with no stops, to plan from scratch', async () => {
+    mocks.stopCount = 0
+    const root = await render({ date: new Date(), surface: 'schedule_day' })
+    expect(subtitle(root)).toBe('routeBuilder_entryEmpty')
+  })
+
+  it('counts the day stops ready to plan', async () => {
     mocks.stopCount = 1
-    expect(
-      (await render({ date: new Date(), surface: 'schedule_day' })).toJSON()
-    ).toBeNull()
+    const root = await render({ date: new Date(), surface: 'schedule_day' })
+    expect(subtitle(root)).toBe('routePlan_entrySubtitle')
+  })
+
+  it('says how many stops a route built for the day has', async () => {
+    mocks.stopCount = 0
+    mocks.routes = {
+      [moment().format('YYYY-MM-DD')]: {
+        day: moment().format('YYYY-MM-DD'),
+        order: ['place:a'],
+        removed: [],
+        added: [
+          {
+            key: 'place:a',
+            kind: 'place',
+            title: 'Corner of Elm and 5th',
+            coordinate: { latitude: 37.75, longitude: -122.42 },
+            destination: '37.75,-122.42',
+          },
+        ],
+        stay: {},
+        updatedAt: 1,
+      },
+    }
+    const root = await render({ date: new Date(), surface: 'schedule_day' })
+    expect(subtitle(root)).toBe('routeBuilder_entryPlanned')
   })
 
   it('opens the route screen through the host, e.g. after its sheet closes', async () => {
@@ -89,6 +151,6 @@ describe('TodayRouteEntry', () => {
       root.root.findByType('Button' as never).props.onPress()
     })
     expect(onNavigate).toHaveBeenCalledOnce()
-    expect(mocks.navigate).toHaveBeenCalledWith('TodayRoute')
+    expect(mocks.navigate).toHaveBeenCalledWith('TodayRoute', undefined)
   })
 })

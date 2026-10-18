@@ -29,12 +29,17 @@ const NoteFormRow = (props: {
   /** Most characters of text the note may hold. */
   maxLength?: number
   allowImages?: boolean
+  /** Names the row and its editor; "Note" by default. */
+  label?: string
+  /** Shown in the empty editor; "Optional" by default. */
+  placeholder?: string
   /** Prefixes the row's testIDs, e.g. `plan-note-row`. */
   testID: string
 }) => {
   const theme = useTheme()
   const openEditor = useOpenNoteEditor()
   const filled = hasNote(props.note)
+  const label = props.label ?? i18n.t('note')
 
   return (
     <FormRow
@@ -44,14 +49,14 @@ const NoteFormRow = (props: {
         openEditor({
           surface: props.surface,
           doc: getNoteDoc(props.note),
-          title: i18n.t('note'),
-          placeholder: i18n.t('optional'),
+          title: label,
+          placeholder: props.placeholder ?? i18n.t('optional'),
           characterLimit: props.maxLength,
           allowImages: props.allowImages ?? true,
           onChange: (doc) => props.onChange(noteFields(doc)),
         })
       }
-      accessibilityLabel={i18n.t('note')}
+      accessibilityLabel={label}
       testID={`${props.testID}-row`}
       trailing={filled ? <FormRowDisclosure /> : <FormRowAddBadge />}
     >
@@ -65,7 +70,7 @@ const NoteFormRow = (props: {
           style={{ paddingVertical: 8, color: theme.colors.text }}
         />
       ) : (
-        <FormRowLabel>{i18n.t('note')}</FormRowLabel>
+        <FormRowLabel>{label}</FormRowLabel>
       )}
     </FormRow>
   )

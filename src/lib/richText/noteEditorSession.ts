@@ -1,7 +1,7 @@
 import type { RichTextDoc } from '@/types/richText'
 
 /** Which form opened the editor; for analytics and per-form limits. */
-export type NoteSurface = 'visit' | 'time_entry' | 'plan' | 'trip'
+export type NoteSurface = 'visit' | 'time_entry' | 'plan' | 'trip' | 'route'
 
 export type NoteEditorOptions = {
   surface: NoteSurface

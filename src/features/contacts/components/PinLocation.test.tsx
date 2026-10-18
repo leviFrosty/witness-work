@@ -23,17 +23,15 @@ vi.mock('@/stores/contactsStore', () => ({ default: () => ({ contacts: [] }) }))
 vi.mock('@/stores/preferences', () => ({ usePreferences: () => ({}) }))
 vi.mock('@/lib/locales', () => ({ default: { t: (key: string) => key } }))
 vi.mock('@/components/ui/Card', () => ({ default: 'Card' }))
+vi.mock('@/components/ui/Spinner', () => ({ default: 'Spinner' }))
 vi.mock('@/components/ui/MyText', () => ({ default: 'Text' }))
 vi.mock('@/components/ui/Button', () => ({ default: 'Button' }))
 vi.mock('@/components/ui/IconButton', () => ({ default: 'IconButton' }))
 vi.mock('@/components/ui/InfoPopover', () => ({ default: 'InfoPopover' }))
 vi.mock('@/components/ui/layout/XView', () => ({ default: 'XView' }))
-vi.mock(
-  '@/features/contacts/components/MapWarningLocationSharingDisabled',
-  () => ({
-    default: 'MapWarningLocationSharingDisabled',
-  })
-)
+vi.mock('@/components/MapWarningLocationSharingDisabled', () => ({
+  default: 'MapWarningLocationSharingDisabled',
+}))
 
 import PinLocation from '@/features/contacts/components/PinLocation'
 import Button from '@/components/ui/Button'
@@ -70,6 +68,8 @@ describe('manual pin without location permission', () => {
           .props.onPress()
       })
     await press('edit')
+    // The map shows once it's known there's no location to open on.
+    await act(async () => {})
     expect(root.root.findByType(Marker).props.coordinate).toEqual(coordinate)
 
     await press('clear')

@@ -36,11 +36,22 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
         source='plan_form'
         onSaved={(detailsTarget) => {
           // An edit can move the Plan, and one created from Plan Details
-          // (Duplicate, Invite) opens there next.
+          // (Duplicate, Invite) opens there next. One made from a route
+          // (to invite buddies) goes back to belong to it.
           const { routes } = navigation.getState()
-          const opener = routes[routes.length - 2]?.name
-          if (detailsTarget && opener === 'Plan Details') {
+          const opener = routes[routes.length - 2]
+          if (detailsTarget && opener?.name === 'Plan Details') {
             navigation.popTo('Plan Details', detailsTarget)
+          } else if (
+            !isEditMode &&
+            detailsTarget?.dayPlanId &&
+            opener?.name === 'TodayRoute'
+          ) {
+            navigation.popTo('TodayRoute', {
+              ...(opener.params as RootStackParamList['TodayRoute']),
+              planId: detailsTarget.dayPlanId,
+              newPlan: true,
+            })
           } else {
             navigation.goBack()
           }

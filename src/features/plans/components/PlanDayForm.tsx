@@ -1158,19 +1158,15 @@ const PlanDayForm = ({
       : activeBuddies.length && buddiesAvailability !== 'hidden'
         ? {
             summary: invitedBuddyNames || undefined,
+            description: i18n.t('buddies_invitePlanDescription'),
             picker: (
-              <View style={{ gap: 8 }}>
-                <BuddyPicker
-                  chipsOnly
-                  value={invitedBuddies}
-                  onChange={setInvitedBuddies}
-                  description={i18n.t('buddies_invitePlanDescription')}
-                  replies={shareReplies}
-                />
-                <Text style={{ color: theme.colors.textAlt, fontSize: 12 }}>
-                  {i18n.t('buddies_invitePlanDescription')}
-                </Text>
-              </View>
+              <BuddyPicker
+                chipsOnly
+                value={invitedBuddies}
+                onChange={setInvitedBuddies}
+                description={i18n.t('buddies_invitePlanDescription')}
+                replies={shareReplies}
+              />
             ),
           }
         : buddiesAvailability === 'enabled'

@@ -10,6 +10,10 @@ vi.mock('@react-navigation/native', () => ({
 }))
 vi.mock('@/hooks/usePublisher', () => ({ default: () => publisher }))
 vi.mock('@/lib/locales', () => ({ default: { t: (key: string) => key } }))
+vi.mock('@/hooks/useFeatureAccess', () => ({
+  default: () => ({ hasAccess: true }),
+}))
+vi.mock('@/lib/analytics', () => ({ analytics: { capture: vi.fn() } }))
 
 import useDayMenuActions from '@/hooks/useDayMenuActions'
 
@@ -43,12 +47,42 @@ const dayOffset = (days: number) => {
   return date
 }
 
-it.each([-400, -1, 0, 1, 30, 800])(
+it.each([-400, -1])(
   'offers Add Time and Plan This Day for a day %i days from today',
   (days) => {
     expect(ids(menuFor(dayOffset(days)))).toEqual(['add_time', 'plan_day'])
   }
 )
+
+it.each([0, 1, 30, 800])(
+  'also offers Plan Route for a day %i days from today',
+  (days) => {
+    expect(ids(menuFor(dayOffset(days)))).toEqual([
+      'add_time',
+      'plan_day',
+      'plan_route',
+    ])
+  }
+)
+
+it('opens the route builder on the day', () => {
+  const tomorrow = dayOffset(1)
+  const planRoute = menuFor(tomorrow).find(
+    (entry) =>
+      entry &&
+      typeof entry === 'object' &&
+      'id' in entry &&
+      entry.id === 'plan_route'
+  )
+  if (planRoute && 'onPress' in planRoute) planRoute.onPress?.()
+  expect(navigate).toHaveBeenCalledWith('TodayRoute', {
+    date: [
+      tomorrow.getFullYear(),
+      String(tomorrow.getMonth() + 1).padStart(2, '0'),
+      String(tomorrow.getDate()).padStart(2, '0'),
+    ].join('-'),
+  })
+})
 
 it('opens Add Time on a future day', () => {
   const future = dayOffset(90)
@@ -65,5 +99,5 @@ it('opens Add Time on a future day', () => {
 
 it('leaves Add Time out for publishers who do not log hours', () => {
   publisher.showsTimeEntry = false
-  expect(ids(menuFor(dayOffset(1)))).toEqual(['plan_day'])
+  expect(ids(menuFor(dayOffset(1)))).toEqual(['plan_day', 'plan_route'])
 })

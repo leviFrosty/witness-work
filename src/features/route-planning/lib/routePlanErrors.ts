@@ -1,6 +1,17 @@
 import i18n from '@/lib/locales'
-import type { RoutePlannerFailure } from '@/features/route-planning/hooks/useRoutePlanner'
 import { MAX_DAILY_ROUTES } from '@/features/route-planning/lib/routeLimits'
+import type { RoutePlanningError } from '@/features/route-planning/lib/routePlanningClient'
+
+export type RoutePlannerError =
+  | Exclude<RoutePlanningError, 'cancelled'>
+  | 'location'
+  | 'location_denied'
+
+export type RoutePlannerFailure = {
+  code: RoutePlannerError
+  /** How long the server asked to wait, when it said. */
+  retryAfterMs?: number
+}
 
 /** The rate-limit message with the server's Retry-After, in seconds or minutes. */
 const rateLimitedFor = (retryAfterMs: number): string => {

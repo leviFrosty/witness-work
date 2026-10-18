@@ -1,13 +1,11 @@
 import { X as XIcon } from 'lucide-react-native'
+import PinPickerMap from '@/components/PinPickerMap'
 import Card from '@/components/ui/Card'
-import Spinner from '@/components/ui/Spinner'
 import Sheet from '@/components/ui/Sheet'
-import MapView, { Marker, Region } from 'react-native-maps'
+import { Region } from 'react-native-maps'
 import { useToastController } from '@tamagui/toast'
-import MapWarningLocationSharingDisabled from '@/features/contacts/components/MapWarningLocationSharingDisabled'
-import * as Location from 'expo-location'
 import { Contact, Coordinate } from '@/types/contact'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useMemo, useState } from 'react'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import XView from '@/components/ui/layout/XView'
@@ -17,7 +15,6 @@ import { View } from 'react-native'
 import IconButton from '@/components/ui/IconButton'
 import InfoPopover from '@/components/ui/InfoPopover'
 import useContacts from '@/stores/contactsStore'
-import { usePreferences } from '@/stores/preferences'
 import { ltrIsolate } from '@/lib/direction'
 
 export default function PinLocation(props: {
@@ -27,10 +24,6 @@ export default function PinLocation(props: {
   const { contact, setContact } = props
   const { contacts } = useContacts()
   const [open, setOpen] = useState(false)
-  const [hasLocationPermission, setHasLocationPermission] = useState(false)
-  const { colorScheme } = usePreferences()
-  const [userLocation, setUserLocation] = useState<Region | null>()
-  const mapRef = useRef<MapView>(null)
   const initialRegion: Region | undefined = contact.coordinate
     ? {
         latitude: contact.coordinate.latitude,
@@ -60,33 +53,13 @@ export default function PinLocation(props: {
     }
   }
 
-  useEffect(() => {
-    const getLocation = async () => {
-      const { granted } = await Location.getForegroundPermissionsAsync()
-      if (granted) {
-        const location = await Location.getLastKnownPositionAsync()
-        if (location) {
-          setUserLocation({
-            latitude: location?.coords.latitude,
-            longitude: location?.coords.longitude,
-            latitudeDelta: 0.005,
-            longitudeDelta: 0.005,
-          })
-        } else {
-          setUserLocation(null)
-        }
-        setHasLocationPermission(true)
-        return
-      }
-      setHasLocationPermission(false)
-      setUserLocation(null)
-    }
-
-    getLocation()
-  }, [])
-
   const otherContacts = useMemo(
-    () => contacts.filter((c) => c.id !== contact.id && c.coordinate != null),
+    () =>
+      contacts.flatMap((c) =>
+        c.id !== contact.id && c.coordinate != null
+          ? [{ id: c.id, coordinate: c.coordinate }]
+          : []
+      ),
     [contact.id, contacts]
   )
 
@@ -156,10 +129,6 @@ export default function PinLocation(props: {
                     coordinate: undefined,
                     userDraggedCoordinate: undefined,
                   })
-                  if (userLocation) {
-                    setRegion(userLocation)
-                    mapRef.current?.animateToRegion(userLocation)
-                  }
                 }}
               >
                 <Text style={{ fontSize: theme.fontSize('sm') }}>
@@ -212,74 +181,12 @@ export default function PinLocation(props: {
             flex: 1,
           }}
         >
-          {userLocation === undefined ? (
-            <View
-              style={{
-                flex: 1,
-                justifyContent: 'center',
-                alignItems: 'center',
-              }}
-            >
-              <Spinner />
-            </View>
-          ) : (
-            <MapView
-              userInterfaceStyle={colorScheme ? colorScheme : undefined}
-              ref={mapRef}
-              showsUserLocation={hasLocationPermission}
-              style={{ height: '100%', width: '100%' }}
-              onPress={(e) => {
-                setCoordinate({
-                  latitude: e.nativeEvent.coordinate.latitude,
-                  longitude: e.nativeEvent.coordinate.longitude,
-                })
-              }}
-              onLongPress={(e) => {
-                setCoordinate({
-                  latitude: e.nativeEvent.coordinate.latitude,
-                  longitude: e.nativeEvent.coordinate.longitude,
-                })
-              }}
-              initialRegion={
-                initialRegion
-                  ? initialRegion
-                  : userLocation
-                    ? userLocation
-                    : undefined
-              }
-              onRegionChange={(newRegion) => setRegion(newRegion)}
-            >
-              {coordinate && (
-                <Marker
-                  draggable
-                  identifier={contact.id}
-                  pinColor={theme.colors.accent}
-                  onDragEnd={(e) =>
-                    setCoordinate({
-                      latitude: e.nativeEvent.coordinate.latitude,
-                      longitude: e.nativeEvent.coordinate.longitude,
-                    })
-                  }
-                  coordinate={{
-                    latitude: coordinate.latitude,
-                    longitude: coordinate.longitude,
-                  }}
-                  key={coordinate.latitude % 1337}
-                />
-              )}
-              {otherContacts.map((c) => (
-                <Marker
-                  identifier={c.id}
-                  key={c.id}
-                  coordinate={c.coordinate!}
-                  pinColor={theme.colors.textAlt}
-                />
-              ))}
-            </MapView>
-          )}
-
-          <MapWarningLocationSharingDisabled
-            hasLocationPermission={hasLocationPermission}
+          <PinPickerMap
+            coordinate={coordinate}
+            onChange={setCoordinate}
+            onRegionChange={setRegion}
+            otherPins={otherContacts}
+            pinId={contact.id}
           />
           <View
             style={{

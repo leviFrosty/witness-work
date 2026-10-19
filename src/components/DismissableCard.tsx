@@ -4,6 +4,7 @@ import { ReactNode, useState } from 'react'
 import useTheme from '@/contexts/theme'
 import CardWithTitle from '@/components/CardWithTitle'
 import IconButton from '@/components/ui/IconButton'
+import i18n from '@/lib/locales'
 
 interface Props {
   title: ReactNode
@@ -41,6 +42,7 @@ const DismissableCard = ({
         icon={XIcon}
         color={dismissIconColor ?? theme.colors.textAlt}
         onPress={handleDismiss}
+        accessibilityLabel={i18n.t('dismiss')}
       />
     </View>
   )

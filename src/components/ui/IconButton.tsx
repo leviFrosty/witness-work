@@ -1,5 +1,7 @@
 import Button from '@/components/ui/Button'
 import type { LucideProps } from 'lucide-react-native'
+import { X as XIcon } from 'lucide-react-native'
+import i18n from '@/lib/locales'
 import {
   Insets,
   StyleProp,
@@ -24,6 +26,11 @@ type Props = {
   color?: string
   fill?: string
   noTransform?: boolean
+  /**
+   * Read by screen readers. A pressable X icon defaults to "Close"; pass a
+   * label for an X that means something else (remove, dismiss) and for every
+   * other icon. A decorative X (no `onPress`) gets no default.
+   */
   accessibilityLabel?: string
   /**
    * Override the underlying Button's default 10px hitSlop. Set this when two
@@ -69,7 +76,10 @@ const IconButton = ({
       onPress={onPress}
       onLongPress={onLongPress}
       hitSlop={hitSlop}
-      accessibilityLabel={accessibilityLabel}
+      accessibilityLabel={
+        accessibilityLabel ??
+        (icon === XIcon && onPress ? i18n.t('close') : undefined)
+      }
       loading={loading}
       loadingColor={typeof iconColor === 'string' ? iconColor : undefined}
       testID={testID}

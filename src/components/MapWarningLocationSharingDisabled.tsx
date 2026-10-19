@@ -32,6 +32,7 @@ export default function MapWarningLocationSharingDisabled(props: {
           icon={XIcon}
           color={theme.colors.text}
           onPress={() => setShow(false)}
+          accessibilityLabel={i18n.t('dismiss')}
           size={'lg'}
         />
       </XView>

@@ -114,7 +114,12 @@ const AvailabilityOnboardingSheet = ({
           >
             {i18n.t('availability.onboarding.title')}
           </Text>
-          <IconButton noTransform icon={XIcon} onPress={handleSkip} />
+          <IconButton
+            noTransform
+            icon={XIcon}
+            onPress={handleSkip}
+            accessibilityLabel={i18n.t('skip')}
+          />
         </View>
         <Text
           style={{

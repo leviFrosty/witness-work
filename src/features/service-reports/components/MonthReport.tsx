@@ -8,6 +8,8 @@ import Text from '@/components/ui/MyText'
 import i18n from '@/lib/locales'
 import MonthServiceReportProgressBar from '@/features/service-reports/components/MonthServiceReportProgressBar'
 import ViewReportButton from '@/features/service-reports/components/ViewReportButton'
+import ReportSentLabel from '@/features/service-reports/components/ReportSentLabel'
+import useReportSentState from '@/features/service-reports/hooks/useReportSentState'
 import {
   AdjustedMinutes,
   adjustedMinutesForSpecificMonth,
@@ -133,6 +135,7 @@ const MonthReport = ({
   const monthStatus = useMonthStatus({ month, year })
   const [editing, setEditing] = useState<MonthEditTarget | null>(null)
   const { reportMenuItems } = useMonthReportExport()
+  const { label: sentLabel } = useReportSentState(month, year)
   const { categories } = useCategories()
   const navigation = useNavigation<RootStackNavigation>()
   const tabNavigation = useNavigation<HomeTabStackNavigation>()
@@ -491,6 +494,15 @@ const MonthReport = ({
     ],
   ]
 
+  // The month's Sent marker rides beside the report button; Mark as Not Sent
+  // is in the card's long-press menu.
+  const reportButton = (
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+      {sentLabel !== null && <ReportSentLabel label={sentLabel} />}
+      <ViewReportButton month={month} year={year} />
+    </View>
+  )
+
   // Hero ("8 of 30 Hrs") → bar → one meta line: what's left on the leading
   // edge, pace against the plan on the trailing edge.
   const hero = noDetails ? (
@@ -650,9 +662,7 @@ const MonthReport = ({
                 {title ??
                   formatDisplay(moment().month(month).year(year), 'MMMM YYYY')}
               </Text>
-              {showReportButton && (
-                <ViewReportButton month={month} year={year} />
-              )}
+              {showReportButton && reportButton}
             </View>
           )}
 
@@ -669,9 +679,7 @@ const MonthReport = ({
               }}
             >
               {allowGoalEditing ? statusGoalButton : <View />}
-              {hideTitle && showReportButton ? (
-                <ViewReportButton month={month} year={year} />
-              ) : null}
+              {hideTitle && showReportButton ? reportButton : null}
             </View>
           ) : null}
 

@@ -4,10 +4,12 @@ const mocks = vi.hoisted(() => ({
   capture: vi.fn(),
   setString: vi.fn(async () => true),
   share: vi.fn(async () => ({ action: 'sharedAction' })),
-  openURL: vi.fn(async () => undefined),
+  openURL: vi.fn(async () => true),
+  platform: { OS: 'ios' },
 }))
 
 vi.mock('react-native', () => ({
+  Platform: mocks.platform,
   Share: {
     share: mocks.share,
     sharedAction: 'sharedAction',
@@ -56,6 +58,8 @@ const august = { month: 7, year: 2026 }
 beforeEach(() => {
   vi.clearAllMocks()
   mocks.share.mockResolvedValue({ action: 'sharedAction' })
+  mocks.openURL.mockResolvedValue(true)
+  mocks.platform.OS = 'ios'
 })
 
 describe('availableExportMethods', () => {
@@ -100,6 +104,42 @@ describe('exportMonthReport', () => {
       'service_report_export_dismissed',
       { method: 'share', source: 'report_screen' }
     )
+  })
+
+  it('counts a share as sent on iOS', async () => {
+    const sent = await exportMonthReport(
+      'share',
+      report(),
+      august,
+      'report_screen'
+    )
+    expect(sent).toBe(true)
+  })
+
+  it("doesn't count an Android share, which can't tell a dismissal", async () => {
+    mocks.platform.OS = 'android'
+    const sent = await exportMonthReport(
+      'share',
+      report(),
+      august,
+      'report_screen'
+    )
+    expect(sent).toBe(false)
+    expect(mocks.capture).toHaveBeenCalledWith('service_report_exported', {
+      method: 'share',
+      source: 'report_screen',
+    })
+  })
+
+  it("doesn't count Hourglass or NW Publisher when the link fails to open", async () => {
+    mocks.openURL.mockResolvedValue(false)
+    expect(
+      await exportMonthReport('hourglass', report(), august, 'context_menu')
+    ).toBe(false)
+    expect(
+      await exportMonthReport('nwpublisher', report(), august, 'context_menu')
+    ).toBe(false)
+    expect(mocks.openURL).toHaveBeenCalledTimes(2)
   })
 
   it('refuses NW Publisher outside the previous month', async () => {

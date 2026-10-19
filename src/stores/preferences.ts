@@ -2175,6 +2175,21 @@ export const usePreferences = create(
                   ].slice(-24),
                 }
           ),
+        /**
+         * Undoes `markReportSubmitted` (Mark as Not Sent). `set` stamps the
+         * removed month, so sync carries the removal instead of a peer's older
+         * mark bringing it back.
+         */
+        unmarkReportSubmitted: (monthKey: string) =>
+          set(({ submittedReportMonths }) =>
+            submittedReportMonths.includes(monthKey)
+              ? {
+                  submittedReportMonths: submittedReportMonths.filter(
+                    (key) => key !== monthKey
+                  ),
+                }
+              : {}
+          ),
         setReportCommentOverride: (monthKey: string, text: string) =>
           set(({ reportCommentOverrides }) => ({
             reportCommentOverrides: {

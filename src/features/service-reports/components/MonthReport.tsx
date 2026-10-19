@@ -26,6 +26,7 @@ import { TimeEntry } from '@/types/timeEntry'
 import { CategorySegment } from '@/features/service-reports/components/CategorySegmentBar'
 import CategoriesSection from '@/features/service-reports/components/CategoriesSection'
 import { usePreferences } from '@/stores/preferences'
+import { useShallow } from 'zustand/react/shallow'
 import { formatMinutes } from '@/lib/minutes'
 import Card from '@/components/ui/Card'
 import ActionButton from '@/components/ui/ActionButton'
@@ -113,7 +114,15 @@ const MonthReport = ({
     celebratedTiers,
     markTierCelebrated,
     timeDisplayFormat,
-  } = usePreferences()
+  } = usePreferences(
+    useShallow((s) => ({
+      overrideCreditLimit: s.overrideCreditLimit,
+      customCreditLimitHours: s.customCreditLimitHours,
+      celebratedTiers: s.celebratedTiers,
+      markTierCelebrated: s.markTierCelebrated,
+      timeDisplayFormat: s.timeDisplayFormat,
+    }))
+  )
   const {
     baseGoalHours,
     effectiveGoalHours: goalHours,

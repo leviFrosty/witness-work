@@ -1,6 +1,7 @@
 import { perf } from '@/lib/perf'
 import { AppState, Platform } from 'react-native'
 import debounce from 'lodash/debounce'
+import { shallow } from 'zustand/shallow'
 import * as WatchBridge from '../../../modules/watch-bridge'
 import { useServiceReport } from '@/stores/serviceReport'
 import { usePreferences } from '@/stores/preferences'
@@ -54,6 +55,32 @@ let lastPushedContent: string | null = null
 let draining = false
 
 /**
+ * The preferences the snapshot reads, so other preference writes (sync
+ * bookkeeping, UI state) don't rebuild it. Language and date conventions reach
+ * it through `i18n` and `moment` instead of as arguments.
+ */
+const watchPreferences = (
+  prefs: ReturnType<typeof usePreferences.getState>
+) => ({
+  role: prefs.role,
+  roleHistory: prefs.roleHistory,
+  publisherHours: prefs.publisherHours,
+  monthlyGoalOverrides: prefs.monthlyGoalOverrides,
+  overrideCreditLimit: prefs.overrideCreditLimit,
+  customCreditLimitHours: prefs.customCreditLimitHours,
+  timeDisplayFormat: prefs.timeDisplayFormat,
+  logsHours: prefs.logsHours,
+  mileageTrackingEnabled: prefs.mileageTrackingEnabled,
+  distanceUnit: prefs.distanceUnit,
+  fuelEconomyUnit: prefs.fuelEconomyUnit,
+  locale: prefs.locale,
+  formatRegion: prefs.formatRegion,
+  startOfWeek: prefs.startOfWeek,
+  timeFormat: prefs.timeFormat,
+  dateOrder: prefs.dateOrder,
+})
+
+/**
  * Builds the watch snapshot from the stores and hands it to the native layer,
  * which keeps it for Siri on this device and sends it to a paired Apple Watch,
  * or on Android to a Wear OS watch. Skipped when nothing in it changed since
@@ -74,7 +101,7 @@ export function pushWatchSnapshot(
 
   try {
     const sr = useServiceReport.getState()
-    const prefs = usePreferences.getState()
+    const prefs = watchPreferences(usePreferences.getState())
     const mileage = useMileage.getState()
     // The watch shows this month, so it uses this month's role (Role History).
     const month = calendarMonthOf()
@@ -260,7 +287,10 @@ export function installWatchSync(): () => void {
 
   const unsubscribes = [
     useServiceReport.subscribe(() => debouncedPush()),
-    usePreferences.subscribe(() => debouncedPush()),
+    usePreferences.subscribe((state, prev) => {
+      if (!shallow(watchPreferences(state), watchPreferences(prev)))
+        debouncedPush()
+    }),
     useCategories.subscribe(() => debouncedPush()),
     useMileage.subscribe(() => debouncedPush()),
     // Up Next shows Follow-ups and their Contacts.

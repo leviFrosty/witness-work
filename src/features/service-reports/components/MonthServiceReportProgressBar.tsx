@@ -1,6 +1,7 @@
 import { View, ViewProps, Animated, StyleProp, ViewStyle } from 'react-native'
 import { useCallback, useMemo, useEffect, useRef, useState } from 'react'
 import { usePreferences } from '@/stores/preferences'
+import { useShallow } from 'zustand/react/shallow'
 import { useServiceReport } from '@/stores/serviceReport'
 import { getCategorySegmentColors } from '@/features/service-reports/lib/categorySegmentColors'
 import useTheme from '@/contexts/theme'
@@ -122,7 +123,12 @@ const MonthServiceReportProgressBar = ({
 }: ProgressBarProps) => {
   const theme = useTheme()
   const { serviceReports } = useServiceReport()
-  const { overrideCreditLimit, customCreditLimitHours } = usePreferences()
+  const { overrideCreditLimit, customCreditLimitHours } = usePreferences(
+    useShallow((s) => ({
+      overrideCreditLimit: s.overrideCreditLimit,
+      customCreditLimitHours: s.customCreditLimitHours,
+    }))
+  )
   const { type: role } = usePublisher({ month, year })
   const { effectiveGoalHours: goalHours } = useMonthlyGoal({ month, year })
 

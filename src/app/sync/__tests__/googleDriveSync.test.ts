@@ -245,6 +245,38 @@ describe('Google Drive sync between Android devices', () => {
     expect(tablet.usePreferences.getState().lastiCloudUploadedAt).not.toBeNull()
   })
 
+  it('records a push in one preferences write', async () => {
+    const phone = await device('phone')
+    expect(await phone.iCloudSync.push('manual')).toBe(true)
+    const { PersistStorage } = await import('@/stores/mmkv')
+    const setItem = vi.spyOn(PersistStorage, 'setItem')
+    // A minute later: a push in the same millisecond as the last one has
+    // nothing new to record, so it rightly writes nothing.
+    const later = Date.now() + 60_000
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(later)
+    try {
+      phone.useContacts.setState({
+        contacts: [contact('c1', 'Ada Reyes', NOW)] as never,
+      })
+      expect(await phone.iCloudSync.push('manual')).toBe(true)
+      // Pending flag, last push and confirmed upload together; each write
+      // persists the whole store.
+      expect(
+        setItem.mock.calls.filter(([name]) => name === 'preferences')
+      ).toHaveLength(1)
+      expect(phone.usePreferences.getState()).toMatchObject({
+        iCloudSyncPendingPush: false,
+        iCloudUploadPendingSince: null,
+        lastiCloudPushedAt: later,
+        lastiCloudUploadedAt: later,
+      })
+    } finally {
+      vi.useRealTimers()
+      setItem.mockRestore()
+    }
+  })
+
   it('merges concurrent edits on both devices', async () => {
     const phone = await device('phone')
     phone.useContacts.setState({

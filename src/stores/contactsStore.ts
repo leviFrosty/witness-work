@@ -108,6 +108,62 @@ function withContactsUndismissed(contacts: Contact[], ids: string[]) {
   })
 }
 
+/**
+ * The store changes that add `incoming` in order, applying `addContact`'s rules
+ * to each one (see there). Pure: never mutates `state`.
+ */
+const withAddedContacts = (
+  {
+    contacts,
+    deletedContacts,
+    deletedCustomFieldDefs,
+  }: Pick<
+    typeof initialState,
+    'contacts' | 'deletedContacts' | 'deletedCustomFieldDefs'
+  >,
+  incoming: Contact[]
+): Partial<typeof initialState> => {
+  const takenIds = new Set(contacts.map((c) => c.id))
+  const deletedById = new Map<string, Contact>()
+  for (const c of deletedContacts) {
+    if (!deletedById.has(c.id)) deletedById.set(c.id, c)
+  }
+  const added: Contact[] = []
+  const replacedTombstoneIds = new Set<string>()
+  for (const contact of incoming) {
+    if (takenIds.has(contact.id)) continue
+    const foundDeleteContact = deletedById.get(contact.id)
+    if (foundDeleteContact && !isRedactedContactTombstone(foundDeleteContact)) {
+      continue
+    }
+
+    const { readdedAt: _incoming, ...fields } = contact
+    const updatedAt = syncTimestamp(foundDeleteContact?.updatedAt)
+    added.push(
+      stripTombstonedCustomFields(
+        {
+          ...fields,
+          updatedAt,
+          // Only this store marks a re-add; an imported file's marker
+          // describes another device's history.
+          ...(foundDeleteContact ? { readdedAt: updatedAt } : {}),
+        },
+        deletedCustomFieldDefs
+      )
+    )
+    takenIds.add(contact.id)
+    if (foundDeleteContact) replacedTombstoneIds.add(contact.id)
+  }
+  if (!added.length) return {}
+  if (!replacedTombstoneIds.size) return { contacts: [...contacts, ...added] }
+  return {
+    contacts: [...contacts, ...added],
+    deletedContacts: deletedContacts.filter(
+      (delC) => !replacedTombstoneIds.has(delC.id)
+    ),
+  }
+}
+
 export const useContacts = create(
   persist(
     combine(initialState, (set) => ({
@@ -127,40 +183,13 @@ export const useContacts = create(
        * (`mergeDeletedContacts`).
        */
       addContact: (contact: Contact) =>
-        set(({ contacts, deletedContacts, deletedCustomFieldDefs }) => {
-          const foundCurrentContact = contacts.find((c) => c.id === contact.id)
-          const foundDeleteContact = deletedContacts.find(
-            (delC) => delC.id === contact.id
-          )
-
-          if (
-            foundCurrentContact ||
-            (foundDeleteContact &&
-              !isRedactedContactTombstone(foundDeleteContact))
-          ) {
-            return { contacts, deletedContacts }
-          }
-
-          const { readdedAt: _incoming, ...fields } = contact
-          const updatedAt = syncTimestamp(foundDeleteContact?.updatedAt)
-          const added = stripTombstonedCustomFields(
-            {
-              ...fields,
-              updatedAt,
-              // Only this store marks a re-add; an imported file's marker
-              // describes another device's history.
-              ...(foundDeleteContact ? { readdedAt: updatedAt } : {}),
-            },
-            deletedCustomFieldDefs
-          )
-          if (!foundDeleteContact) return { contacts: [...contacts, added] }
-          return {
-            contacts: [...contacts, added],
-            deletedContacts: deletedContacts.filter(
-              (delC) => delC.id !== contact.id
-            ),
-          }
-        }),
+        set((state) => withAddedContacts(state, [contact])),
+      /**
+       * `addContact` for many contacts in one write, so an import persists and
+       * notifies subscribers once instead of once per contact.
+       */
+      addContacts: (contacts: Contact[]) =>
+        set((state) => withAddedContacts(state, contacts)),
       /**
        * Archives a contact.
        *

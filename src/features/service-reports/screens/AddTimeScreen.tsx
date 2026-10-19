@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import moment from 'moment'
 import useServiceReport from '@/stores/serviceReport'
 import { TimeEntry } from '@/types/timeEntry'
@@ -11,6 +11,7 @@ import { getReport } from '@/lib/serviceReport'
 import { RootStackNavigation, RootStackParamList } from '@/types/rootStack'
 import TimeEntryForm from '@/features/service-reports/components/TimeEntryForm'
 import { resetStopwatchSession } from '@/features/service-reports/hooks/useStopWatch'
+import useDiscardChangesGuard from '@/hooks/useDiscardChangesGuard'
 
 type AddTimeScreenProps = NativeStackScreenProps<RootStackParamList, 'Add Time'>
 
@@ -21,6 +22,8 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
     ? JSON.parse(route.params.existingReport)
     : undefined
   const editing = !!getReport(serviceReports, existingReport)
+  const [changed, setChanged] = useState(false)
+  const allowLeave = useDiscardChangesGuard(changed)
 
   useEffect(() => {
     navigation.setOptions({
@@ -46,6 +49,7 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
         minutes={route.params?.minutes}
         categoryId={route.params?.categoryId}
         source='time_entry_form'
+        onChangedChange={setChanged}
         onDone={() => {
           // A timer session has no existing entry, so done means submitted.
           // Deep links pass params as strings, so only the timer's own values
@@ -58,6 +62,7 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
           ) {
             void resetStopwatchSession(sessionStart)
           }
+          allowLeave()
           navigation.goBack()
         }}
       />

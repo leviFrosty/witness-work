@@ -8,7 +8,7 @@ import {
   noteFields,
   type NoteUpdate,
 } from '@/lib/richText/notes'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import useTheme from '@/contexts/theme'
 import Text from '@/components/ui/MyText'
 import ActionButton from '@/components/ui/ActionButton'
@@ -50,6 +50,7 @@ import { resolveMonthlyGoalHours } from '@/lib/monthlyGoals'
 import { inputLayout } from '@/components/ui/inputs/InputLayout'
 import { analytics } from '@/lib/analytics'
 import { roleForMonth } from '@/lib/roleHistory'
+import useDraftChanged from '@/hooks/useDraftChanged'
 
 /** What a new entry starts with, e.g. a Plan's length and Type to log. */
 export type TimeEntryPrefill = {
@@ -70,6 +71,8 @@ type Props = TimeEntryPrefill & {
   source: 'time_entry_form' | 'day_sheet'
   /** The entry was submitted, saved, or deleted. */
   onDone: () => void
+  /** Whether the entry now differs from what the form opened with. */
+  onChangedChange?: (changed: boolean) => void
   /**
    * `inline` sits within a page, e.g. a day's list with no time logged yet: the
    * Time pill, then Note and Type, then Submit, for that day only.
@@ -193,6 +196,11 @@ const TimeEntryForm = (props: Props) => {
     ...serviceReport,
     ...noteFields(getNoteDoc(serviceReport)),
   })
+  const changed = useDraftChanged({ entry: savedEntry(), selectedValue })
+  const { onChangedChange } = props
+  useEffect(() => {
+    onChangedChange?.(changed)
+  }, [changed, onChangedChange])
   const noteAnalytics = (entry: TimeEntry) => ({
     has_note: hasNote(entry),
     has_formatting: !!entry.noteDoc,

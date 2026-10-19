@@ -49,6 +49,8 @@ import {
 } from '@/lib/reminderSchedule'
 import { analytics } from '@/lib/analytics'
 import confirmDestructive from '@/lib/confirmDestructive'
+import useDiscardChangesGuard from '@/hooks/useDiscardChangesGuard'
+import useDraftChanged from '@/hooks/useDraftChanged'
 
 /** Inputs for the Follow-up's buddy invitations, supplied by the app tier. */
 export type FollowUpBuddiesSlot = (props: {
@@ -322,6 +324,17 @@ const VisitFormScreen = ({
       : !params.notAtHome
   )
 
+  const allowLeave = useDiscardChangesGuard(
+    useDraftChanged({
+      conversation: {
+        ...conversation,
+        ...noteFields(getNoteDoc(conversation)),
+      },
+      followUpEnabled,
+      notifyMeOffset,
+    })
+  )
+
   const handleFollowUpEnabledChange = (enabled: boolean) => {
     setFollowUpEnabled(enabled)
     if (enabled && conversation.followUp?.dismissed) {
@@ -496,6 +509,8 @@ const VisitFormScreen = ({
                     updateLastTimeRequestedStoreReview,
                   })
 
+                  allowLeave()
+
                   if (params.returnToContacts || params.returnOnSave) {
                     navigation.goBack()
                   } else if (isEditing) {
@@ -525,6 +540,7 @@ const VisitFormScreen = ({
       ),
     })
   }, [
+    allowLeave,
     calledGoecodeApiTimes,
     conversation.id,
     conversation.followUp,
@@ -555,6 +571,7 @@ const VisitFormScreen = ({
           message: i18n.t('deleted'),
           native: true,
         })
+        allowLeave()
         navigation.goBack()
       },
     })

@@ -59,6 +59,7 @@ vi.mock('@/stores/geocodeRetry', () => ({
   },
 }))
 vi.mock('@/lib/analytics', () => ({ analytics: { capture: vi.fn() } }))
+vi.mock('@/hooks/useDiscardChangesGuard', () => ({ default: () => () => {} }))
 vi.mock('@/lib/http/online', () => ({
   isDeviceOffline: (kind: string) => kind === 'offline',
 }))

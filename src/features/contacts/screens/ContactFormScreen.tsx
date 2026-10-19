@@ -36,6 +36,8 @@ import {
 } from '@/lib/contactInformationFields'
 import { isRetryableGeocodeFailure } from '@/lib/geocodeRetry'
 import { useGeocodeRetry } from '@/stores/geocodeRetry'
+import useDiscardChangesGuard from '@/hooks/useDiscardChangesGuard'
+import useDraftChanged from '@/hooks/useDraftChanged'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Contact Form'>
 
@@ -133,6 +135,8 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
       customFields: {},
     }
   )
+
+  const allowLeave = useDiscardChangesGuard(useDraftChanged(contact))
 
   /**
    * Consent gate (`docs/gdpr-mode-research.md` §9.5). In data protection mode a
@@ -574,6 +578,7 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
                     return false
                   }
                   await submit()
+                  allowLeave()
                   if (!editMode)
                     analytics.capture('contact_created', {
                       custom_field_count: Object.keys(
@@ -616,6 +621,7 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
       ),
     })
   }, [
+    allowLeave,
     contact.address,
     contact.coordinate,
     contact.customFields,

@@ -1,3 +1,4 @@
+import moment from 'moment'
 import { navigationRef } from '@/features/contacts/lib/linking'
 import type { ReminderData } from '@/lib/notificationData'
 import { currentServiceStreak } from '@/lib/currentServiceStreak'
@@ -10,9 +11,9 @@ import useServiceReport from '@/stores/serviceReport'
 /**
  * Opens what a local reminder is about: the Follow-up's Visit (its Contact when
  * only the Visit is gone), the Plan or Recurring Plan instance, the returning
- * Contact, Add Time for a planned day, or where a streak about to end is kept.
- * False when the record is gone (deleted on this or another device), the day
- * has time logged, or navigation isn't ready.
+ * Contact, Add Time for a planned day, where a streak about to end is kept, or
+ * the month's Service Report. False when the record is gone (deleted on this or
+ * another device), the day has time logged, or navigation isn't ready.
  */
 export function openReminderTarget(target: ReminderData): boolean {
   if (!navigationRef.isReady()) return false
@@ -81,6 +82,15 @@ export function openReminderTarget(target: ReminderData): boolean {
           timeEntries: serviceReports,
         })
       )
+      return true
+    }
+    case 'monthReport': {
+      const month = moment(target.id, 'YYYY-MM', true)
+      if (!month.isValid()) return false
+      navigationRef.navigate('ServiceReportView', {
+        month: month.month(),
+        year: month.year(),
+      })
       return true
     }
   }

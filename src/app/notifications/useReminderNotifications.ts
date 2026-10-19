@@ -38,8 +38,16 @@ const RETURNED_CONTACT_DAYS = 7
 export const reminderTrayId = (reminder: LocalReminder) =>
   `reminder:${reminder.kind}:${reminder.targetId}:${reminder.date.getTime()}`
 
+/**
+ * A reminder the tray lists. Not the report reminder: last month's report item
+ * already stands in for it.
+ */
+type TrayReminder = LocalReminder & {
+  kind: Exclude<LocalReminder['kind'], 'monthReport'>
+}
+
 /** When a fired reminder stops being useful in the tray. */
-function listedUntil(reminder: LocalReminder): number {
+function listedUntil(reminder: TrayReminder): number {
   const anchor = reminder.anchor.getTime()
   switch (reminder.kind) {
     case 'visit':
@@ -71,13 +79,17 @@ function visitedSince(reminder: LocalReminder, visits: Visit[]) {
 /** Local reminders that have fired, from the same intent the OS schedule uses. */
 export function firedReminders(
   args: Parameters<typeof reminderOccurrences>[0] & { now: number }
-): LocalReminder[] {
-  return reminderOccurrences(args).filter(
-    (reminder) =>
-      reminder.date.getTime() <= args.now &&
-      args.now < listedUntil(reminder) &&
-      !(reminder.kind === 'visit' && visitedSince(reminder, args.visits))
-  )
+): TrayReminder[] {
+  return reminderOccurrences(args)
+    .filter(
+      (reminder): reminder is TrayReminder => reminder.kind !== 'monthReport'
+    )
+    .filter(
+      (reminder) =>
+        reminder.date.getTime() <= args.now &&
+        args.now < listedUntil(reminder) &&
+        !(reminder.kind === 'visit' && visitedSince(reminder, args.visits))
+    )
 }
 
 /**

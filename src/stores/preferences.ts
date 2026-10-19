@@ -51,6 +51,7 @@ import type {
 import { DEFAULT_STALENESS_BREAKPOINTS } from '@/constants/staleness'
 import { STALENESS_DISPLAY_ORDER } from '@/lib/contactStaleness'
 import { DEFAULT_UNLOGGED_DAY_REMINDER_TIME } from '@/lib/unloggedDayReminders'
+import { DEFAULT_MONTH_REPORT_REMINDER_TIME } from '@/lib/monthReportReminders'
 import {
   isValidMonthlyGoalHours,
   monthlyGoalOverridesFromLegacy,
@@ -421,6 +422,19 @@ export const PREFERENCE_DEFAULTS = {
    * before then aren't listed in the tray.
    */
   unloggedDayRemindersEnabledAt: null as number | null,
+  /**
+   * Remind the User on the 1st, at `monthReportReminderTime`, that last month's
+   * Service Report is ready, unless nothing was logged in it or it's already
+   * submitted. Off by default.
+   */
+  monthReportReminders: false,
+  /** Local minutes after midnight the report reminder goes out on the 1st. */
+  monthReportReminderTime: DEFAULT_MONTH_REPORT_REMINDER_TIME,
+  /**
+   * The report screen's one-time "Remind me next month?" offer was answered,
+   * either way, so it doesn't show again.
+   */
+  monthReportReminderOfferAnswered: false,
   /**
    * Remind the User when their Service Streak is about to end: 6 PM on the last
    * day to log a planned day, or three days before the month is out. On by

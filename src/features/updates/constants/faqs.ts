@@ -114,6 +114,7 @@ export const FAQS: FAQEntry[] = [
     pinned: true,
     related: [243, 238, 41],
   },
+  { id: 'monthReportReminders', category: 'time' },
   {
     id: 'buddiesOverview',
     category: 'buddies',

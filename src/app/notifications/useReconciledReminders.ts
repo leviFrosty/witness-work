@@ -18,6 +18,7 @@ import {
 import { reminderContent } from '@/lib/reminderContent'
 import { reminderData } from '@/lib/notificationData'
 import { unloggedDay, unloggedDaySources } from '@/lib/unloggedDayReminders'
+import { monthReportDue, monthReportSources } from '@/lib/monthReportReminders'
 import { currentServiceStreak } from '@/lib/currentServiceStreak'
 import { streakRemindersOn } from '@/lib/serviceStreak'
 import { ensureReminderChannel, REMINDER_CHANNEL_ID } from '@/lib/notifications'
@@ -37,7 +38,7 @@ import type { DayPlan } from '@/types/timeEntry'
  * Contact's name doesn't stay in Notification Center. A Recurring Plan's goes
  * once that date is deleted from it. A reminder to log time goes once the day
  * has time, its Plans are gone, or the setting is off; a streak's once it's
- * kept or the setting is off.
+ * kept or the setting is off; a report's once it's sent or the setting is off.
  */
 async function retractErasedReminders() {
   const presented = await Notifications.getPresentedNotificationsAsync()
@@ -58,6 +59,7 @@ async function retractErasedReminders() {
     const plan = recurringPlans.get(id)
     return !!plan && recurringPlanOnDay(plan, day)
   }
+  const monthReport = monthReportSources(records, prefs)
   for (const notification of presented) {
     const reminder = reminderData(notification)
     if (!reminder) continue
@@ -70,9 +72,11 @@ async function retractErasedReminders() {
             ? !!unloggedDays && !!unloggedDay(reminder.id, unloggedDays)
             : reminder.kind === 'streak'
               ? streakDue === reminder.id
-              : reminder.day
-                ? recurringPlanExists(reminder.id, reminder.day)
-                : plans.has(reminder.id)
+              : reminder.kind === 'monthReport'
+                ? !!monthReport && monthReportDue(reminder.id, monthReport)
+                : reminder.day
+                  ? recurringPlanExists(reminder.id, reminder.day)
+                  : plans.has(reminder.id)
     if (!exists)
       await Notifications.dismissNotificationAsync(
         notification.request.identifier
@@ -214,6 +218,7 @@ export function useReconciledReminders(ready: boolean | undefined) {
             streak: streakRemindersOn(prefs)
               ? currentServiceStreak()
               : undefined,
+            monthReport: monthReportSources(records, prefs),
             visitOffset: {
               ...DEFAULT_RETURN_VISIT_NOTIFICATION_OFFSET,
               ...prefs.returnVisitNotificationOffset,
@@ -351,8 +356,8 @@ export function useReconciledReminders(ready: boolean | undefined) {
       )
       request()
     })
-    // Logging time, removing a Plan, or turning reminders to log time off
-    // clears a delivered one, even when nothing ahead changes.
+    // Logging time, removing a Plan, sending a report, or turning reminders
+    // off clears a delivered one, even when nothing ahead changes.
     const retract = () => {
       clearTimeout(retractTimer)
       retractTimer = setTimeout(
@@ -390,7 +395,9 @@ export function useReconciledReminders(ready: boolean | undefined) {
       if (
         state.unloggedDayReminders !== previous.unloggedDayReminders ||
         state.streakReminders !== previous.streakReminders ||
-        state.showStreaks !== previous.showStreaks
+        state.showStreaks !== previous.showStreaks ||
+        state.monthReportReminders !== previous.monthReportReminders ||
+        state.submittedReportMonths !== previous.submittedReportMonths
       )
         retract()
       if (
@@ -403,6 +410,9 @@ export function useReconciledReminders(ready: boolean | undefined) {
           previous.unloggedDayRemindersEnabledAt ||
         state.streakReminders !== previous.streakReminders ||
         state.showStreaks !== previous.showStreaks ||
+        state.monthReportReminders !== previous.monthReportReminders ||
+        state.monthReportReminderTime !== previous.monthReportReminderTime ||
+        state.submittedReportMonths !== previous.submittedReportMonths ||
         state.role !== previous.role ||
         state.roleHistory !== previous.roleHistory ||
         state.logsHours !== previous.logsHours ||

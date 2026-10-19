@@ -48,6 +48,42 @@ import {
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 import { useBuddiesDiagnostics } from '@/features/buddies/stores/buddiesDiagnostics'
 import { useBuddiesSession } from '@/features/buddies/stores/buddiesSession'
+import type { UnsentShareReason } from '@/features/buddies/lib/state'
+
+/** How long reports of invitations not sent gather before the User is told. */
+const NOT_SENT_ALERT_DELAY_MS = 500
+
+/**
+ * Invitations not sent, told once a burst: a sync that finds several buddies
+ * gone reports each, and the User gets one alert per reason naming them all.
+ */
+const sharesNotSent = (() => {
+  const pending = new Map<UnsentShareReason, Set<string>>()
+  const flush = () => {
+    for (const [reason, names] of pending) {
+      analytics.capture('buddies_share_not_sent', {
+        reason,
+        buddies: names.size,
+      })
+      alertSharesNotSent({ reason, names: [...names] })
+    }
+    pending.clear()
+  }
+  return {
+    add: ({
+      reason,
+      names,
+    }: {
+      reason: UnsentShareReason
+      names: string[]
+    }) => {
+      if (pending.size === 0) setTimeout(flush, NOT_SENT_ALERT_DELAY_MS)
+      const gathered = pending.get(reason) ?? new Set<string>()
+      for (const name of names) gathered.add(name)
+      pending.set(reason, gathered)
+    },
+  }
+})()
 
 /**
  * The Service Streak buddies see, once it's long enough to show, with the last
@@ -136,13 +172,7 @@ const engine = createBuddiesEngine({
   readProfilePhoto,
   keepBuddyPhotos,
   dismissAlerts: (seqs) => void dismissBuddyAlerts(seqs),
-  onSharesNotSent: (notSent) => {
-    analytics.capture('buddies_share_not_sent', {
-      reason: notSent.reason,
-      buddies: notSent.names.length,
-    })
-    alertSharesNotSent(notSent)
-  },
+  onSharesNotSent: (notSent) => sharesNotSent.add(notSent),
 })
 
 /**

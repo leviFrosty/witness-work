@@ -17,6 +17,7 @@ import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import { useProfile } from '@/stores/profile'
+import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 
 const STEPS = ['intro', 'profile'] as const
 
@@ -66,7 +67,10 @@ export default function BuddiesOnboarding({
 }) {
   const theme = useTheme()
   const insets = useSafeAreaInsets()
-  const hasName = useProfile((state) => state.name.trim().length > 0)
+  const profileName = useProfile((state) => state.name.trim())
+  // The account's card name, when another device already set it.
+  const accountName = useBuddies((state) => state.cardName?.name)
+  const hasName = profileName.length > 0 || !!accountName
   const [step, setStep] = useState(0)
   const validation = useFormValidation({ name: !hasName }, 'buddies_profile')
   const current = STEPS[step]
@@ -179,6 +183,13 @@ export default function BuddiesOnboarding({
               />
             </View>
             {profileEditor(validation.invalid('name'))}
+            {accountName && accountName !== profileName ? (
+              <Text style={lead}>
+                {i18n.t('buddies_onboardingAccountName', {
+                  name: accountName,
+                })}
+              </Text>
+            ) : null}
           </>
         )}
       </ScrollView>

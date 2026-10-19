@@ -74,12 +74,12 @@ export default function PlanDetailsBuddies({
   const invitedIds = dayPlan?.buddies ?? []
   const invited = buddies.filter((buddy) => invitedIds.includes(buddy.inboxId))
   // Invited, but no longer a buddy, so the invitation never reached them.
-  const former = invitedIds.flatMap((inboxId) => {
-    const entry = unsent?.[inboxId]
-    return entry && !buddies.some((buddy) => buddy.inboxId === inboxId)
+  // Going takes them off the Plan, so it's the record that says they were.
+  const former = Object.entries(unsent ?? {}).flatMap(([inboxId, entry]) =>
+    !buddies.some((buddy) => buddy.inboxId === inboxId)
       ? [{ inboxId, entry }]
       : []
-  })
+  )
   const asking = openJoinRequestsForPlan(
     item.plan,
     dayPlan

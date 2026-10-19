@@ -21,17 +21,21 @@ import {
 } from '@/features/buddies/lib/buddyProfile'
 import type { BuddySharing } from '@/features/buddies/lib/state'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
+import useBuddiesCardName from '@/features/buddies/hooks/useBuddiesCardName'
 
 /**
  * How buddies see me: the Profile (edited on its own screen) and switches for
- * the parts I can withhold. Name and Plans are the point, so they always go.
- * The streak switch shows before there's a streak, so it can be off from the
- * start. Streak and Badges are offered only while each shows at all.
+ * the parts I can withhold. Name and Plans are the point, so they always go;
+ * the name is the account's, which every device's card carries (it can differ
+ * from this device's Profile name until the User renames here). The streak
+ * switch shows before there's a streak, so it can be off from the start. Streak
+ * and Badges are offered only while each shows at all.
  */
 export default function BuddiesSharingSection() {
   const theme = useTheme()
   const navigation = useNavigation<RootStackNavigation>()
-  const { name, avatar, customAvatarBackground } = useProfile()
+  const { avatar, customAvatarBackground } = useProfile()
+  const name = useBuddiesCardName()
   const role = usePreferences((state) => state.role)
   const tenureStartDate = usePreferences((state) => state.tenureStartDate)
   const tenure = buddyTenureFor(role, tenureStartDate)

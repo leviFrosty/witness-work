@@ -256,9 +256,11 @@ export type BuddiesEngineDeps = {
   /** Takes back this device's system alerts for these inbox seqs. */
   dismissAlerts?: (seqs: number[]) => void
   /**
-   * Invitations this publish couldn't send and won't retry as they stand:
-   * refused while the account is suspended, or to a buddy whose pairing just
-   * ended. Their names, as this User sees them, to tell them.
+   * Invitations that couldn't be sent and won't be retried as they stand:
+   * refused while the account is suspended, to a buddy whose inbox is gone, or
+   * to one whose pairing ended before they went (found by a send or a sync; not
+   * when the User, or another of their devices, ended it). Their names, as this
+   * User sees them, to tell them.
    */
   onSharesNotSent?: (notSent: {
     reason: UnsentShareReason
@@ -950,10 +952,18 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
    * Also purges everything they shared with this User, and records the pairing
    * as ended so no roster brings it back. `removedAt` defaults to the pairing's
    * own `pairedAt`: when the relay says they left, this device may hold an
-   * older pairing than one made since on another device.
+   * older pairing than one made since on another device. Unless `quiet` (the
+   * User or another of their devices ended it), invitations that never reached
+   * them are reported to the User.
    */
-  function forgetBuddy(inboxId: string, removedAt?: number) {
-    noteUnsentTo(inboxId)
+  function forgetBuddy(
+    inboxId: string,
+    removedAt?: number,
+    { quiet = false } = {}
+  ) {
+    const unsentTo = noteUnsentTo(inboxId)
+    if (unsentTo && !quiet)
+      deps.onSharesNotSent?.({ reason: 'gone', names: [unsentTo] })
     store.setState((state) => ({
       buddies: state.buddies.filter((b) => b.inboxId !== inboxId),
       removedBuddies: endedPairing(state, inboxId, removedAt),
@@ -1017,12 +1027,13 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
 
   /**
    * A buddy is going: the User's coming Plans and Follow-ups that invite them
-   * but never reached them say so (a `gone` entry in `unsentShares`).
+   * but never reached them say so (a `gone` entry in `unsentShares`). Their
+   * name when there were any.
    */
-  function noteUnsentTo(inboxId: string) {
+  function noteUnsentTo(inboxId: string): string | null {
     const state = store.getState()
     const buddy = state.buddies.find((b) => b.inboxId === inboxId)
-    if (!buddy || !deps.getShares) return
+    if (!buddy || !deps.getShares) return null
     const now = deps.now()
     const entry: UnsentShare = {
       reason: 'gone',
@@ -1039,7 +1050,9 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
           state.unsentShares[spec.key]?.[inboxId] === undefined
       )
       .map((spec) => spec.key)
-    if (keys.length > 0) setUnsent(keys.map((key) => [key, inboxId, entry]))
+    if (keys.length === 0) return null
+    setUnsent(keys.map((key) => [key, inboxId, entry]))
+    return entry.name
   }
 
   /** Records (an entry) or clears (null) invitations that didn't go out. */
@@ -1376,7 +1389,8 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
   /** Forgets buddies locally and queues withdrawing their relay slots. */
   function queueRemoval(parties: PendingRemoval[], removedAt?: number) {
     const inboxIds = new Set(parties.map((party) => party.inboxId))
-    for (const inboxId of inboxIds) forgetBuddy(inboxId, removedAt)
+    for (const inboxId of inboxIds)
+      forgetBuddy(inboxId, removedAt, { quiet: true })
     store.setState((state) => ({
       pendingRemovals: [
         ...state.pendingRemovals.filter((p) => !inboxIds.has(p.inboxId)),
@@ -2315,17 +2329,18 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
 
     /**
      * Sends one event: `sent`, `retry` on the next publish, or `dropped`, when
-     * it never will be (the pairing ended, or an invitation the relay refused
-     * while the account is suspended: it isn't held for later). A refused
-     * invitation is recorded with `refused`; cancels are retried, since they
-     * only take back what buddies already have.
+     * it never will be (the pairing ended, the buddy's inbox is gone, or an
+     * invitation the relay refused while the account is suspended: it isn't
+     * held for later). A refused invitation is recorded with `refused`; while
+     * suspended, cancels are retried, since they only take back what buddies
+     * already have.
      */
     const deliver = async (
       inboxId: string,
       kind: string,
       body: { id: string; rev: number },
       push = true,
-      refused?: (name: string) => void
+      refused?: (reason: UnsentShareReason, name: string) => void
     ): Promise<'sent' | 'retry' | 'dropped'> => {
       const buddy = activeBuddy(inboxId)
       if (!buddy) return 'dropped'
@@ -2343,16 +2358,26 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
         spendShareBudget(inboxId)
         return 'sent'
       } catch (error) {
+        // Says so itself when an invitation never reached them.
         if (isRelayError(error, 'gone')) {
-          if (refused && kind.endsWith('.invite'))
-            notSent.gone.add(buddy.nickname ?? buddy.name)
           forgetBuddy(inboxId)
+          return 'dropped'
+        }
+        const name = buddy.nickname ?? buddy.name
+        // Their inbox is gone (they deleted their Buddies data, or the relay
+        // wiped it), so nothing sent there arrives; the pairing ends here
+        // once their slot leaves this inbox.
+        if (isRelayError(error, 'not_found')) {
+          if (refused) {
+            refused('gone', name)
+            notSent.gone.add(name)
+          }
           return 'dropped'
         }
         failure ??= error
         if (refused && isRelayError(error, 'suspended')) {
-          refused(buddy.nickname ?? buddy.name)
-          notSent.suspended.add(buddy.nickname ?? buddy.name)
+          refused('suspended', name)
+          notSent.suspended.add(name)
           return 'dropped'
         }
         return 'retry'
@@ -2412,7 +2437,8 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       })
       for (const inboxId of recipients) {
         if (sent[inboxId] === hash) continue
-        // Refused while suspended: never sent later as it stands.
+        // Refused (suspended, or their inbox gone): never sent later as it
+        // stands.
         if (unsent[inboxId]?.hash === hash) continue
         const update = sent[inboxId] !== undefined
         if (ended && !update) continue
@@ -2424,11 +2450,11 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
           kind,
           { ...body, rev },
           push,
-          (name) =>
+          (reason, name) =>
             unsentChanges.push([
               spec.key,
               inboxId,
-              { reason: 'suspended', name, hash, at: now },
+              { reason, name, hash, at: now },
             ])
         )
         if (outcome === 'sent') {
@@ -2437,9 +2463,15 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
           if (unsent[inboxId]) unsentChanges.push([spec.key, inboxId, null])
         } else if (outcome === 'retry') revs.leave(inboxId, kind, rev)
       }
-      // No longer invited: nothing more to say about them.
-      for (const inboxId of Object.keys(unsent))
-        if (!spec.recipients.includes(inboxId))
+      // No longer invited: nothing more to say about them. A buddy who's gone
+      // is taken off the Plan or Follow-up for them (`forgetBuddiesInData`),
+      // so that one stays, to say it never reached them, until it's over or
+      // they're a buddy again.
+      for (const [inboxId, entry] of Object.entries(unsent))
+        if (
+          !spec.recipients.includes(inboxId) &&
+          (entry.reason !== 'gone' || activeBuddy(inboxId))
+        )
           unsentChanges.push([spec.key, inboxId, null])
       for (const inboxId of Object.keys(sent)) {
         if (recipients.has(inboxId)) continue
@@ -4478,12 +4510,29 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
   }
 
   /**
+   * The current key's identity, after letting go of Buddies data from a key
+   * this phone no longer has (it went missing, say, and a new one was made):
+   * nothing can be signed for that inbox or its buddies any more, so it's left
+   * as it is on the relay, as a sync does when another seed replaced the one
+   * here.
+   */
+  async function currentIdentity(): Promise<BuddyIdentity> {
+    const me = await identity({ fresh: true })
+    const registered = store.getState().registeredInboxId
+    if (registered !== null && registered !== me.inboxId) {
+      await syncInFlight?.catch(() => undefined)
+      await resetLocalState()
+    }
+    return me
+  }
+
+  /**
    * Removes this User from every buddy, then wipes the relay and the seed. The
    * seed is the only way to retry a removal, so nothing is wiped until every
    * buddy has been left.
    */
   async function deleteEverything() {
-    const me = await identity()
+    const me = await currentIdentity()
     queueRemoval(store.getState().buddies)
     await flushRemovals(me, { force: true })
     if (store.getState().pendingRemovals.length > 0)
@@ -4495,7 +4544,12 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       try {
         await relay.deleteInbox(ownerAuth(me))
       } catch (error) {
-        if (!isRelayError(error, 'not_found')) throw error
+        // None, or another account's, which isn't this device's to delete.
+        if (
+          !isRelayError(error, 'not_found') &&
+          !isRelayError(error, 'forbidden')
+        )
+          throw error
       }
       await deps.deleteRootSeed()
     } catch (error) {
@@ -4516,7 +4570,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
    * there.
    */
   async function leaveThisDevice() {
-    const me = await identity()
+    const me = await currentIdentity()
     if (store.getState().pendingRemovals.length > 0) {
       await flushRemovals(me, { force: true })
       if (store.getState().pendingRemovals.length > 0)
@@ -4531,11 +4585,13 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
         await relay.unregisterDevice(ownerAuth(me), deviceId)
       } catch (error) {
         // Its pushes would keep coming to whoever uses this device next, so
-        // only a refusal that won't change by trying again is let through: a
-        // suspended account's inbox refuses owner ops, and the kill switch
-        // this one (nothing is pushed while it's on).
+        // only a refusal that won't change by trying again is let through: an
+        // inbox that's gone or another account's, a suspended account's
+        // inbox, which refuses owner ops, and the kill switch this one
+        // (nothing is pushed while it's on).
         if (
           !isRelayError(error, 'not_found') &&
+          !isRelayError(error, 'forbidden') &&
           !isRelayError(error, 'suspended') &&
           !isRelayError(error, 'disabled')
         ) {

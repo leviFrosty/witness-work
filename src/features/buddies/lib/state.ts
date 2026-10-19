@@ -314,8 +314,9 @@ export type UnsentShare = {
   /** The buddy's name as this User saw it, for when they're no longer listed. */
   name: string
   /**
-   * `suspended`: the content refused. The same content is never sent later; a
-   * change to the Plan or Follow-up is sent as usual.
+   * The content refused (while suspended, or by a buddy's inbox that's gone).
+   * The same content is never sent later; a change to the Plan or Follow-up is
+   * sent as usual.
    */
   hash?: string
   /** When it was recorded. */
@@ -742,7 +743,9 @@ export type BuddiesState = {
   outgoingShares: Record<string, OutgoingShare>
   /**
    * Invitations that didn't reach a buddy, by spec key → recipient inboxId, so
-   * the Plan or Follow-up can say so. Dropped once sent, uninvited, or over.
+   * the Plan or Follow-up can say so. Dropped once sent, uninvited, or over; a
+   * `gone` one stays when its buddy is taken off for having gone, until they're
+   * a buddy again.
    */
   unsentShares: Record<string, Record<string, UnsentShare>>
   /**

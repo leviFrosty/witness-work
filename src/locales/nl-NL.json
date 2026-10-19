@@ -555,8 +555,6 @@
   "pleaseDescribeYourIssue": "Beschrijf uw probleem gedetailleerd",
   "invalidPhone": "Ongeldig telefoonnummer",
   "invalidPhone_message": "“{{number}}” is geen geldig nummer voor de regiocode: {{region}}.",
-  "appleAppStoreReviewErrorTitle": "App Store-fout",
-  "appleAppStoreReviewErrorMessage": "Update uw WitnessWork-app naar de nieuwste versie, indien beschikbaar, en probeer het opnieuw.",
   "notAtHome": "Niet thuis",
   "editNotAtHome": "Bewerken Niet thuis",
   "addNotAtHome": "Niet thuis",

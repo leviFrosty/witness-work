@@ -647,8 +647,6 @@
   "phoneIssue_invalidCountryCode": "رمز البلد في «{{number}}» غير صالح.",
   "phoneIssue_invalid": "«{{number}}» ليس رقم هاتف صالحًا.",
   "phoneIssue_unknown": "«{{number}}» ليس رقم هاتف معروفًا.",
-  "appleAppStoreReviewErrorTitle": "خطأ في App Store",
-  "appleAppStoreReviewErrorMessage": "يُرجى تحديث تطبيق WitnessWork إلى أحدث إصدار إن توفّر، ثم المحاولة مرة أخرى.",
   "notAtHome": "ليس في البيت",
   "editNotAtHome": "تعديل «ليس في البيت»",
   "addNotAtHome": "ليس في البيت",

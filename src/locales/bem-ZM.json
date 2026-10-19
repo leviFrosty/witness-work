@@ -538,8 +538,6 @@
   "pleaseDescribeYourIssue": "Please describe your issue in detail",
   "invalidPhone": "Invalid Phone Number",
   "invalidPhone_message": "\"{{number}}\" te nambala iyalungama iya kodi ya calo: {{region}}.",
-  "appleAppStoreReviewErrorTitle": "App Store Error",
-  "appleAppStoreReviewErrorMessage": "Please update your WitnessWork app to the latest version if available and try again.",
   "notAtHome": "Not at Home",
   "editNotAtHome": "Edit Not At Home",
   "addNotAtHome": "Not At Home",

@@ -54,7 +54,11 @@ const PersonalizationPreferencesSection = () => {
         </InputRowContainer>
         <InputRowContainer
           label={i18n.t('fontSizeOffset')}
-          info={i18n.t('thisGloballyOffsetsTextSize')}
+          info={i18n.t(
+            Platform.OS === 'android'
+              ? 'thisGloballyOffsetsTextSizeAndroid'
+              : 'thisGloballyOffsetsTextSize'
+          )}
           style={{ justifyContent: 'space-between' }}
           lastInSection
         >

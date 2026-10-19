@@ -1043,6 +1043,51 @@ describe('leaving an account other devices keep', () => {
   })
 })
 
+describe('Buddies data from a key this phone no longer has', () => {
+  /**
+   * Mom's phone used Buddies, then lost its account key (restored without
+   * iCloud Keychain, say) and made a new one while the app kept its data.
+   */
+  async function momWithLostKey() {
+    const { fake, user } = setup()
+    const mom = user('Mom')
+    const anna = user('Anna')
+    await pair(mom, anna)
+    await mom.engine.registerPush({
+      apnsToken: 'ab',
+      apnsEnvironment: 'sandbox',
+      templates: {},
+    })
+    mom.setRootSeed(random(32))
+    return { fake, mom, anna }
+  }
+
+  it('Delete My Buddies Data lets go of it here and goes through', async () => {
+    const { fake, mom, anna } = await momWithLostKey()
+    await mom.engine.deleteEverything()
+    expect(mom.store.getState()).toMatchObject({
+      buddies: [],
+      registeredInboxId: null,
+      pendingRemovals: [],
+    })
+    // Nothing here can sign for the old inbox or its buddies: left as it is.
+    expect(fake.inboxes.has(mom.inboxId)).toBe(true)
+    await anna.engine.sync()
+    expect(anna.store.getState().buddies).toMatchObject([
+      { inboxId: mom.inboxId },
+    ])
+  })
+
+  it('signing this device out of Buddies lets go of it too', async () => {
+    const { mom } = await momWithLostKey()
+    await mom.engine.leaveThisDevice()
+    expect(mom.store.getState()).toMatchObject({
+      buddies: [],
+      registeredInboxId: null,
+    })
+  })
+})
+
 describe('the name on Buddy Cards', () => {
   const nameAt = (viewer: User, inboxId: string) =>
     viewer.store.getState().buddies.find((b) => b.inboxId === inboxId)?.name
@@ -1656,7 +1701,7 @@ describe('shared Plans and Follow-ups', () => {
       expect(levi.store.getState().outgoingShares[key]?.sent ?? {}).toEqual({})
     })
 
-    it("notes a coming Plan's buddy who left before it was sent, quietly", async () => {
+    it("says so when a sync finds a coming Plan's buddy left before it was sent", async () => {
       const { levi, anna, notSent } = await leviAndAnna()
       levi.setShares([planSpec([anna.inboxId])])
       await anna.engine.removeBuddy(levi.inboxId)
@@ -1666,12 +1711,51 @@ describe('shared Plans and Follow-ups', () => {
       expect(levi.store.getState().unsentShares[key]).toMatchObject({
         [anna.inboxId]: { reason: 'gone', name: 'Anna' },
       })
-      expect(notSent).toEqual([])
+      expect(notSent).toEqual([{ reason: 'gone', names: ['Anna'] }])
 
-      // Taken off the Plan: nothing more to say.
+      // The app takes her off the Plan for having gone; the Plan still says
+      // she never got it, until it's over.
+      levi.setEnabled(true)
       levi.setShares([planSpec([])])
       await levi.engine.publishShares()
+      expect(levi.store.getState().unsentShares[key]).toMatchObject({
+        [anna.inboxId]: { reason: 'gone', name: 'Anna' },
+      })
+      levi.setShares([])
+      await levi.engine.publishShares()
       expect(levi.store.getState().unsentShares).toEqual({})
+    })
+
+    it('notes a buddy the User removed before it was sent, without an alert', async () => {
+      const { levi, anna, notSent } = await leviAndAnna()
+      levi.setShares([planSpec([anna.inboxId])])
+      levi.setEnabled(false)
+      await levi.engine.removeBuddy(anna.inboxId).catch(() => undefined)
+      expect(levi.store.getState().unsentShares[key]).toMatchObject({
+        [anna.inboxId]: { reason: 'gone', name: 'Anna' },
+      })
+      expect(notSent).toEqual([])
+    })
+
+    it("doesn't retry an invitation to a buddy whose inbox is gone, and says so", async () => {
+      const { levi, anna, notSent, fake } = await leviAndAnna()
+      // Anna's inbox is gone before Levi's phone noticed her leaving.
+      fake.inboxes.delete(anna.inboxId)
+      levi.setShares([planSpec([anna.inboxId])])
+      await levi.engine.publishShares()
+      expect(notSent).toEqual([{ reason: 'gone', names: ['Anna'] }])
+      expect(levi.store.getState().unsentShares[key]).toMatchObject({
+        [anna.inboxId]: { reason: 'gone', name: 'Anna' },
+      })
+      expect(levi.store.getState().outgoingShares[key].sent).toEqual({})
+
+      // Not sent again as it stands.
+      const putEvents = () =>
+        fake.requests.filter((request) => request.op === 'event/put').length
+      const before = putEvents()
+      await levi.engine.publishShares()
+      expect(putEvents()).toBe(before)
+      expect(notSent).toHaveLength(1)
     })
   })
 

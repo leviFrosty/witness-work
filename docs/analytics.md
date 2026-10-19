@@ -811,13 +811,14 @@ or from the key a handoff just brought (`via: handoff`).
 
 `buddies_share_not_sent` answers how often a Plan or Follow-up invitation
 never reaches a buddy, and why: refused while the User's account is suspended
-(it isn't held for later), or the pairing had ended before it went. Sent once
-per publish that found any, from the device that tried; the User sees an alert
-and a "Not sent" row on the Plan.
+(it isn't held for later), or the pairing had ended before it went (found by a
+send or a sync, or the buddy's inbox was gone). Sent once per reason for a burst
+of them (half a second), from the device that tried; the User sees an alert and
+a "Not sent" row on the Plan.
 
-| Event                    | When                                                          | Properties                                                                                         |
-| ------------------------ | ------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
-| `buddies_share_not_sent` | A publish found invitations it couldn't send and won't retry. | `reason: suspended \| gone`, `buddies` (how many, 1–5). No names, relay ids, Plan dates, or times. |
+| Event                    | When                                                            | Properties                                                                                         |
+| ------------------------ | --------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| `buddies_share_not_sent` | Invitations were found that can't be sent and won't be retried. | `reason: suspended \| gone`, `buddies` (how many, 1–5). No names, relay ids, Plan dates, or times. |
 
 ### Buddies alerts
 

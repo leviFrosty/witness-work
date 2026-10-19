@@ -29,6 +29,9 @@ export default function PlanBuddiesLine({ plan }: { plan: DayPlan }) {
   const replies = useShareReplies(
     plan.buddies?.length ? planShareKey(plan.id) : undefined
   )
+  const unsent = useBuddies((state) =>
+    plan.buddies?.length ? state.unsentShares[planShareKey(plan.id)] : undefined
+  )
   if (!enabled) return null
 
   const people: {
@@ -54,7 +57,12 @@ export default function PlanBuddiesLine({ plan }: { plan: DayPlan }) {
     ? i18n.t('buddies_withName', { name: names })
     : people
         .map(({ buddy, reply }) =>
-          [buddyDisplayName(buddy), shareReplyLabel(reply)].join(', ')
+          [
+            buddyDisplayName(buddy),
+            unsent?.[buddy.inboxId]
+              ? i18n.t('buddies_notSent')
+              : shareReplyLabel(reply),
+          ].join(', ')
         )
         .join('; ')
 

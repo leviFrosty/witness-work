@@ -6,6 +6,7 @@ import useContacts from '@/stores/contactsStore'
 import useConversations from '@/stores/conversationStore'
 import useServiceReport from '@/stores/serviceReport'
 import useMileage from '@/stores/mileage'
+import usePet from '@/stores/pet'
 import useCategories from '@/stores/categories'
 import { usePreferences } from '@/stores/preferences'
 import { useProfile } from '@/stores/profile'
@@ -31,6 +32,7 @@ import { checkCryptoVectors } from '@/features/buddies/lib/testing/cryptoVectors
 import apis from '@/constants/apis'
 import { SCENARIO_NAMES } from '@/app/dev-harness/scenarios'
 import { seedScenario } from '@/app/dev-harness/seedScenario'
+import { petHarness } from '@/app/dev-harness/pet'
 import { mmkvStorage } from '@/stores/mmkv'
 import {
   accountHarness,
@@ -303,6 +305,13 @@ export function installDevHarness() {
      */
     backup: backupHarness,
     /**
+     * The Pet Companion (see `dev-harness/pet.ts`): `adopt(species, coat?,
+     * name?)`, `setAppearance`, `setRoom`, `release()`, `override({ hearts,
+     * dead, gold, … })` / `clearOverride()`, `play('entrance' | 'trick' |
+     * 'wake')`, `pat(n)` and `state()`.
+     */
+    pet: petHarness,
+    /**
      * The Tools "Force Right to Left" switch, without the reload: relaunch
      * (`wwv up`) to apply it. Returns the direction the app runs in now.
      */
@@ -358,6 +367,8 @@ export function installDevHarness() {
       conversations: useConversations,
       serviceReports: useServiceReport,
       mileage: useMileage,
+      // The companion and room records (`pet`, `room`) and their tombstones.
+      pet: usePet,
       categories: useCategories,
       buddies: useBuddies,
       buddiesDiagnostics: useBuddiesDiagnostics,

@@ -497,6 +497,62 @@ const RootStackComponent = () => {
           }
         />
         <RootStack.Screen
+          // A sheet sized to the picker on iOS (a centered form sheet on iPad);
+          // full screen on Android. Pulling it down cancels.
+          options={
+            Platform.OS === 'ios'
+              ? {
+                  presentation: 'formSheet',
+                  sheetAllowedDetents: 'fitToContents',
+                  sheetGrabberVisible: true,
+                  sheetCornerRadius: 18,
+                  headerShown: false,
+                }
+              : { presentation: 'modal', headerShown: false }
+          }
+          name='PetPicker'
+          getComponent={() =>
+            require('@/features/pet/screens/PetPickerScreen').default
+          }
+        />
+        <RootStack.Screen
+          // A large sheet: the room on top, its parts scrolling below. Full
+          // screen on Android. Choices save as they're made; pull it down.
+          options={
+            Platform.OS === 'ios'
+              ? {
+                  presentation: 'formSheet',
+                  sheetAllowedDetents: [1],
+                  sheetGrabberVisible: true,
+                  sheetCornerRadius: 18,
+                  headerShown: false,
+                }
+              : { presentation: 'modal', headerShown: false }
+          }
+          name='PetRoom'
+          getComponent={() =>
+            require('@/features/pet/screens/PetRoomScreen').default
+          }
+        />
+        <RootStack.Screen
+          // Sized to its one field on iOS, like the picker.
+          options={
+            Platform.OS === 'ios'
+              ? {
+                  presentation: 'formSheet',
+                  sheetAllowedDetents: 'fitToContents',
+                  sheetGrabberVisible: true,
+                  sheetCornerRadius: 18,
+                  headerShown: false,
+                }
+              : { presentation: 'modal', headerShown: false }
+          }
+          name='PetRename'
+          getComponent={() =>
+            require('@/features/pet/screens/PetRenameScreen').default
+          }
+        />
+        <RootStack.Screen
           options={{
             header: () => (
               <Header buttonType='back' title={i18n.t('badges_title')} />

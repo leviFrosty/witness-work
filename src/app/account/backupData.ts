@@ -164,6 +164,7 @@ export type BackupCounts = {
   categories: number
   trips: number
   vehicles: number
+  pets: number
 }
 
 const countEntries = (
@@ -190,6 +191,7 @@ export function payloadCounts(payload: SyncPayload): BackupCounts {
     categories: payload.categoryStore?.categories.length ?? 0,
     trips: payload.mileageStore?.trips.length ?? 0,
     vehicles: payload.mileageStore?.vehicles.length ?? 0,
+    pets: payload.petStore?.pets.length ?? 0,
   }
 }
 
@@ -203,6 +205,7 @@ const stateCounts = (state: LocalMergeState): BackupCounts => ({
   categories: state.categories.length,
   trips: state.trips.length,
   vehicles: state.vehicles.length,
+  pets: state.pets.length,
 })
 
 /**

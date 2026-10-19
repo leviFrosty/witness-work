@@ -53,6 +53,14 @@ describe('Home screen preferences', () => {
     expect(result.filter((k) => k !== 'mileage')).toEqual(stored)
   })
 
+  it('places the Pet section right after Mileage for an existing order', () => {
+    const stored = DEFAULT_HOME_SCREEN_ELEMENTS_ORDER.filter((k) => k !== 'pet')
+    const result = getEffectiveHomeScreenOrder(stored)
+
+    expect(result[result.indexOf('mileage') + 1]).toBe('pet')
+    expect(result).toEqual(DEFAULT_HOME_SCREEN_ELEMENTS_ORDER)
+  })
+
   it('appends missing sections in default order', () => {
     const result = getEffectiveHomeScreenOrder(['thisWeek'])
 

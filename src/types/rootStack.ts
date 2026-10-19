@@ -207,6 +207,12 @@ export type RootStackParamList = {
     | { vehicleId?: string; thenLogTrip?: boolean; source?: MileageSource }
     | undefined
   MileageFuelForm: { fuelId?: string } | undefined
+  /** Adopt a Pet Companion, or Change Pet (species and coat). */
+  PetPicker: { mode: 'adopt' | 'change' }
+  /** Decorate Room: the companion's room parts, applied as they're picked. */
+  PetRoom: undefined
+  /** Rename the companion (an empty name shows the species name). */
+  PetRename: undefined
   /** The User's badge collection, with progress toward each next level. */
   Badges: { source?: BadgesSource } | undefined
   /**

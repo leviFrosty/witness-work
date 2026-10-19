@@ -5,7 +5,7 @@ import {
 } from '@/features/buddies/lib/engine'
 import { deriveIdentity } from '@/features/buddies/lib/keys'
 import { createRelayClient, type OwnerAuth } from '@/features/buddies/lib/relay'
-import type { BuddyStreak } from '@/features/buddies/lib/schemas'
+import type { BuddyPet, BuddyStreak } from '@/features/buddies/lib/schemas'
 import {
   type BuddiesState,
   type BuddyProfile,
@@ -172,6 +172,7 @@ export function setup() {
     })
     let shares: OutgoingShareSpec[] = []
     let streak: BuddyStreak | undefined
+    let pet: BuddyPet | undefined
     let showBadges = true
     let enabled = true
     /** Work the engine scheduled for later (`later`), run by the test. */
@@ -192,6 +193,7 @@ export function setup() {
       getPlans: () => plans,
       getProfile: () => profile,
       getStreak: () => streak,
+      getPet: () => pet,
       getShares: () => shares,
       showBadges: () => showBadges,
       isEnabled: () => enabled,
@@ -225,6 +227,9 @@ export function setup() {
       },
       setStreak: (next: BuddyStreak | undefined) => {
         streak = next
+      },
+      setPet: (next: BuddyPet | undefined) => {
+        pet = next
       },
       setShowBadges: (next: boolean) => {
         showBadges = next

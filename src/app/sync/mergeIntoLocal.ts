@@ -4,6 +4,7 @@ import {
   applyMileageSnapshot,
   localMileageSnapshot,
 } from '@/app/sync/mileageStoreSync'
+import { applyPetSnapshot, localPetSnapshot } from '@/app/sync/petStoreSync'
 import { migrateNormalizeDates } from '@/lib/normalizeDate'
 import { withRemoteDataMutation } from '@/lib/remoteDataMutation'
 import useContacts from '@/stores/contactsStore'
@@ -57,6 +58,7 @@ export function localMergeState(): LocalMergeState {
     categories: categoriesState.categories,
     deletedCategories: categoriesState.deletedCategories,
     ...localMileageSnapshot(),
+    ...localPetSnapshot(),
     preferencesValues: localPrefValues,
     preferenceUpdatedAt: preferencesState.preferenceUpdatedAt ?? {},
     profileValues: localProfileValues,
@@ -119,6 +121,7 @@ export function applyMergedState(acc: LocalMergeState): void {
     deletedCategories: acc.deletedCategories,
   })
   applyMileageSnapshot(acc)
+  applyPetSnapshot(acc)
   usePreferences.setState({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ...(acc.preferencesValues as any),

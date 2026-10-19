@@ -9,6 +9,7 @@ import { analytics } from '@/lib/analytics'
 import i18n from '@/lib/locales'
 import { shownStreak } from '@/lib/serviceStreak'
 import { logger } from '@/lib/logger'
+import { usePet } from '@/stores/pet'
 import { usePreferences } from '@/stores/preferences'
 import { useProfile } from '@/stores/profile'
 import { RootStackNavigation } from '@/types/rootStack'
@@ -26,7 +27,8 @@ import { useBuddies } from '@/features/buddies/stores/buddiesStore'
  * How buddies see me: the Profile (edited on its own screen) and switches for
  * the parts I can withhold. Name and Plans are the point, so they always go.
  * The streak switch shows before there's a streak, so it can be off from the
- * start. Streak and Badges are offered only while each shows at all.
+ * start. Streak and Badges are offered only while each shows at all, and the
+ * Pet only once there's a companion.
  */
 export default function BuddiesSharingSection() {
   const theme = useTheme()
@@ -39,19 +41,26 @@ export default function BuddiesSharingSection() {
   const streak = shownStreak(useServiceStreak())
   const showBadges = usePreferences((state) => state.showBadges)
   const showStreaks = usePreferences((state) => state.showStreaks)
+  const pet = usePet((state) => state.pet)
   const hasPhoto = avatar.type !== 'none'
-  const last = showBadges
-    ? 'badges'
-    : showStreaks
-      ? 'streak'
-      : tenure
-        ? 'tenure'
-        : hasPhoto
-          ? 'photo'
-          : 'profile'
+  const last = pet
+    ? 'pet'
+    : showBadges
+      ? 'badges'
+      : showStreaks
+        ? 'streak'
+        : tenure
+          ? 'tenure'
+          : hasPhoto
+            ? 'photo'
+            : 'profile'
 
   // Saved at once; a failed republish is retried by the next sync.
-  const share = (change: Partial<Omit<BuddySharing, 'updatedAt'>>) =>
+  const share = (
+    change: Partial<
+      Omit<BuddySharing, 'updatedAt' | 'badgesUpdatedAt' | 'petUpdatedAt'>
+    >
+  ) =>
     buddiesEngine
       .setSharing(change)
       .catch((error) => logger.warn('[buddies] sharing', error))
@@ -118,6 +127,18 @@ export default function BuddiesSharingSection() {
               enabled: badges,
             })
             void share({ badges })
+          }}
+          lastInSection={last === 'badges'}
+        />
+      )}
+      {pet && (
+        <InputRowSwitch
+          label={i18n.t('buddies_sharePet')}
+          description={pet.name}
+          value={sharing.pet}
+          onValueChange={(value) => {
+            analytics.capture('pet_sharing_changed', { enabled: value })
+            void share({ pet: value })
           }}
           lastInSection
         />

@@ -7,6 +7,7 @@ export type FAQCategory =
   | 'buddies'
   | 'badges'
   | 'mileage'
+  | 'pet'
   | 'map'
   | 'customization'
   | 'backups'
@@ -136,6 +137,13 @@ export const FAQS: FAQEntry[] = [
   { id: 'mileageChart', category: 'mileage' },
   { id: 'mileageSync', category: 'mileage' },
   { id: 'mileageTurnOff', category: 'mileage' },
+  { id: 'petStart', category: 'pet' },
+  { id: 'petHearts', category: 'pet' },
+  { id: 'petLamp', category: 'pet' },
+  { id: 'petRoom', category: 'pet' },
+  { id: 'petChange', category: 'pet' },
+  { id: 'petWidget', category: 'pet' },
+  { id: 'petSync', category: 'pet' },
   { id: 'buddiesRestore', category: 'buddies' },
   {
     id: 'remainingHours',
@@ -361,6 +369,7 @@ export const FAQ_CATEGORIES: FAQCategory[] = [
   'buddies',
   'badges',
   'mileage',
+  'pet',
   'map',
   'customization',
   'backups',

@@ -5,6 +5,7 @@ import {
   Flag as FlagIcon,
   Lightbulb as LightbulbIcon,
   MessagesSquare as MessagesSquareIcon,
+  PawPrint as PawPrintIcon,
   Timer as TimerIcon,
 } from 'lucide-react-native'
 import type { AppIcon } from '@/components/ui/LucideIcon'
@@ -18,6 +19,7 @@ const ICONS: Record<HomeScreenElementKey, AppIcon> = {
   tabletServiceYearSummary: FlagIcon,
   serviceReport: FileTextIcon,
   mileage: CarIcon,
+  pet: PawPrintIcon,
   thisWeek: CalendarDaysIcon,
   timer: TimerIcon,
   didYouKnow: LightbulbIcon,

@@ -1391,7 +1391,7 @@
   "buddies_onboardingControlTitle": "You're in control",
   "buddies_onboardingControlBody": "Nothing is shared until you both agree. Hide a buddy from your calendar or remove them anytime — they won't be notified.",
   "buddies_onboardingProfileTitle": "How buddies see you",
-  "buddies_onboardingProfileInfo": "Buddies see your name, optional photo, pioneer status, streak, and badges, and the days and times you plan to go out. Calendar sharing keeps your recorded hours, reports, goals, contacts, visits, and notes private. Explicit Plan and Follow-up invitations share the extra details shown in the form.",
+  "buddies_onboardingProfileInfo": "Buddies see your name, optional photo, pioneer status, streak, badges, and pet, and the days and times you plan to go out. Calendar sharing keeps your recorded hours, reports, goals, contacts, visits, and notes private. Explicit Plan and Follow-up invitations share the extra details shown in the form.",
   "buddies_onboardingSharedTitle": "What you share",
   "buddies_invite": "Invite a Buddy",
   "buddies_inviteShareMessage": "Let's plan our ministry together with WitnessWork Buddies. Tap this link to be buddies — it works once and expires in 7 days: {{link}}",
@@ -1426,7 +1426,7 @@
   "buddies_deleteAllPending": "We couldn't finish deleting your Buddies data. Your buddies may still see your plans until it's done. Try again when you're connected.",
   "buddies_inviteTitle": "{{name}} invited you to be buddies",
   "buddies_inviteLoading": "Loading invite",
-  "buddies_invitePlansLine": "Your name, photo, pioneer status, streak, badges, and the days and times you plan to go out over the next 8 weeks",
+  "buddies_invitePlansLine": "Your name, photo, pioneer status, streak, badges, pet, and the days and times you plan to go out over the next 8 weeks",
   "buddies_invitePlansTitle": "You'll see each other's plans",
   "buddies_invitePlansHorizon": "Planned days and times, 8 weeks ahead",
   "buddies_inviteYouAlsoShare": "You also share",
@@ -3315,7 +3315,7 @@
   "faq_buddiesInviteTrouble_q": "Why is my Buddies Invite waiting, expired, or saying all spots are in use?",
   "faq_buddiesInviteTrouble_a": "An accepted request waits until the inviter confirms it in Buddies → Requests. Each Buddies Invite works once and expires after seven days; ask for a new link if it was used, cancelled, or expired. Your five spots include buddies and pending invites or requests. Cancel an unused invite or remove a buddy to make room. Only a limited number of unused invite links can be open at once. If tapping an invite link opens a web page instead of WitnessWork, install WitnessWork from the App Store or Google Play and tap the link again, or copy the link and paste it in Buddies → Enter Invite Link. If scanning is unavailable, allow camera access in your device's settings or share and paste the invite link instead.",
   "faq_buddiesPrivacy_q": "What can my buddies see, and is sharing private?",
-  "faq_buddiesPrivacy_a": "Automatic calendar sharing includes your name and planned days, start times, and durations for the next eight weeks. Your photo (which buddies can tap to see full size), pioneer status, and your streak are optional; change them in Buddies Settings. Your badges are shared too, without progress, counts, or dates; turn off Badges in Buddies Settings to stop. This calendar sharing does not include your recorded service time, reports, goals, categories, contact list, visit history, or notes. Shared content is end-to-end encrypted so only you and the buddies you choose can read it. WitnessWork's server knows you only by an anonymous account number your device made, never your name, email, or phone number. Explicit Plan and Follow-up invitations share extra details, including a Plan's note (and its photos) or a Follow-up's address; check those details before inviting someone. Find the Privacy Policy under Still need help?, using the support button in this screen's header.",
+  "faq_buddiesPrivacy_a": "Automatic calendar sharing includes your name and planned days, start times, and durations for the next eight weeks. Your photo (which buddies can tap to see full size), pioneer status, streak, and pet (its kind, coat, and name) are optional; change them in Buddies Settings. Your badges are shared too, without progress, counts, or dates; turn off Badges in Buddies Settings to stop. This calendar sharing does not include your recorded service time, reports, goals, categories, contact list, visit history, or notes. Shared content is end-to-end encrypted so only you and the buddies you choose can read it. WitnessWork's server knows you only by an anonymous account number your device made, never your name, email, or phone number. Explicit Plan and Follow-up invitations share extra details, including a Plan's note (and its photos) or a Follow-up's address; check those details before inviting someone. Find the Privacy Policy under Still need help?, using the support button in this screen's header.",
   "faq_buddiesAskToJoin_q": "How do I ask to join a buddy's Plan?",
   "faq_buddiesAskToJoin_a": "Tap a day on your Schedule calendar, then tap Ask to Join next to a buddy who plans to go out that day. You can also tap one of their days under Next two weeks on their details screen. Your request shares only what you already see: the day, time, and length of their Plan. It shows as Asked until your buddy invites you, you withdraw it, or the Plan starts; tap Asked to withdraw it. Asking closes two hours before the Plan starts, and you can have up to three requests waiting with each buddy. Your buddy is alerted only the first time you ask for a Plan, and for at most three requests a day. If they move or remove that Plan, your request is withdrawn for you. Asked shows only on the device you asked from. When your buddy invites you, answer in the notification bell on Home. If you choose Going while you already have your own Plan at that time, one-time or recurring, you can replace it for that day so your time isn't counted twice. A recurring plan keeps going on your other days.",
   "faq_buddiesJoinRequests_q": "How do I answer or turn off requests to join my Plans?",
@@ -3337,6 +3337,7 @@
   "faq_buddiesRestore_q": "Can I recover my buddies on another device or from a backup?",
   "faq_buddiesRestore_a": "On iPhone and iPad, your Buddies encryption key is kept in iCloud Keychain, so your buddies follow you to your other devices signed in to the same Apple Account with iCloud Keychain on (Passwords, in iCloud settings), and come back after you reinstall WitnessWork. With iCloud Sync on, Buddies starts by itself on your other devices once they sync: your buddies, your answers to invitations, the notifications you've read or cleared, and the nicknames and colors you chose show on each one, and each device gets Buddies notifications (choose which in Buddies Settings on that device). Without iCloud Sync, open Buddies on the other device and pull down to refresh. Each device then shares the plans it has, so turn on iCloud Sync to keep what your buddies see the same. Your buddies see one name for you from all your devices: the one you last changed in Profile on a device using Buddies. On Android, Google Play services keeps the key: it comes back when you reinstall WitnessWork on the same phone while Google backup is on (Settings → Google → Backup), and with a screen lock set it's also saved, end-to-end encrypted, in your Google backup, so it can return when you set up a new phone from that backup. Without a screen lock, the key stays on that phone. Android devices don't share one key the way iCloud Keychain does, so each Android device, and an iPhone and an Android phone, have their own Buddies connections. Regular WitnessWork backup files do not contain the encryption key. If the key is unavailable, or you used Delete My Buddies Data, reconnect with new invites. Keep your personal records backed up separately.",
   "faq_category_mileage": "Mileage",
+  "faq_category_pet": "Pet Companion",
   "faq_mileageStart_q": "How do I track mileage?",
   "faq_mileageStart_a": "Mileage Tracking is optional and available for every publisher type. Answer Yes on the \"Track mileage?\" card on Home, or turn on Track Mileage in Settings → Profile. Then add your first car; only a name is required. Log a trip with Log Trip on Home's Mileage card, from the Add button, or on the Mileage screen. Enter the distance (turn on Round Trip to double it) or switch to Odometer and enter start and end readings. Odometer Start fills in from that car's last reading. Tap a trip to see its details, or long-press it to edit, log it again today, share, or delete it.",
   "faq_mileageCost_q": "How is the estimated fuel cost calculated, and what happens when fuel prices change?",
@@ -3353,6 +3354,20 @@
   "faq_mileageChart_q": "What does the chart on the Mileage screen show?",
   "faq_mileageChart_a": "Open the Mileage screen and choose Week, Month, or Year. The chart shows how far you drove each day, or each month of the service year (September through August). When more than one car has trips in that period, each bar is split by car, using the colors next to each car's total. Tap a bar to open that day or month and see its trips. The Day view has no chart, and a period without trips shows none. Bars show distance, not estimated cost.",
   "faq_mileageTurnOff_a": "Use the Track Mileage switch in Settings → Profile. Turning it off hides the Home card, the Log Trip action, and the Mileage screen, but keeps your trips; turn it back on and everything returns. If you chose No Thanks on the Home card, this switch turns it on anytime. To erase your mileage, open Mileage → Settings → Delete All Mileage Data. This deletes it on every device that syncs with this one and can't be undone. You can also hide only the Home card with Settings → Preferences → Home Screen.",
+  "faq_petStart_q": "How do I get a pet, and how do I turn it off?",
+  "faq_petStart_a": "The Pet Companion is optional and works on iOS and Android. On Home, the Meet your companion card offers one: tap Choose a pet, pick a lion cub, golden pup, kitten, donkey, or lamb (the pup and the kitten come in several coats), give it a name if you like, and tap Adopt. If you chose Not now, bring the offer back with Add Sections while editing Home (press and hold an empty space on Home), or turn on Pet in Settings → Preferences → Home Screen. To hide the pet, long-press its card and choose Hide This Section, tap the gray minus on it while editing Home, or turn off Pet in Settings → Preferences → Home Screen. Hiding keeps your pet, its room, and its keepsakes; turn Pet back on and everything returns. You have one companion at a time.",
+  "faq_petHearts_q": "How do my pet’s hearts work?",
+  "faq_petHearts_a": "A new pet starts with 3 of 5 hearts. Each day you're active in the ministry adds one heart, up to 5. A day counts when you log time (including marking that you shared in the ministry, even with 0 minutes), save a visit (a conversation, return visit, or not-at-home), or save a plan. One heart a day, however much you did; hours don't matter. When 10 days pass without an active day, your pet loses half a heart every 3 days. At half a heart it falls asleep, and after 60 days without an active day it dies (it's shown greyed and lying down). Tap a sleeping pet (or, if it died, Tap to wake) to wake it with 1 heart; the next active day adds hearts again. Patting it (tap it, or drag across it to rub) is just for fun and never adds hearts. Hearts are worked out from your records each time, so they're the same on every device and come back if you restore a backup.",
+  "faq_petLamp_q": "What does the lamp in the room mean?",
+  "faq_petLamp_a": "The lamp is your Service Streak. It burns brighter as your streak grows, from unlit at 0 to its brightest once your streak reaches 30. For Kingdom Publishers the streak counts months, so it is brightest at 12. If you turned off Show streak in Settings → Preferences → Streaks & Badges, the lamp keeps a steady medium glow and no streak number shows anywhere.",
+  "faq_petRoom_q": "How do I decorate my pet’s room?",
+  "faq_petRoom_a": "Long-press your pet's card on Home and choose Decorate Room…. Pick a tab (Window, Wall, Floor, Bed, Shelf, Light, or Sign) and tap a picture; the room at the top changes right away and the change is saved. Live window follows your clock and the season where you are (from your region; seasons are reversed south of the equator); turn it off to choose a time of day and a season, each of which can also stay Live. The sign on the wall can show your hours this month, your hours this service year, the months you shared in the ministry, your next plan, or this month's conversations and return visits, or nothing. Some items are open from the start. One more opens up for each month you're active (any day with logged time, a visit, or a saved plan) since you adopted your pet, in a set order; a locked item shows when it opens up.",
+  "faq_petWidget_q": "Can I see my pet on my home screen?",
+  "faq_petWidget_a": "On iPhone and iPad, yes. Long-press your home screen, tap the + button, search for WitnessWork, and choose Pet Companion. Small shows your pet; medium adds its name, hearts, your streak, and what its wall sign shows; large shows its whole room with its name and hearts. The widget moves through the day on its own, and opening WitnessWork refreshes it. Until you adopt a pet, it asks you to choose one in the app. Android doesn’t have WitnessWork home screen widgets.",
+  "faq_petSync_q": "Does my pet sync, and what do my buddies see?",
+  "faq_petSync_a": "Your pet, its name, room, and keepsakes sync between your devices with iCloud Sync (Google Drive Sync on Android), both Supporter features, and they're included in backups from Settings → Backup & Restore. Its hearts aren't stored: each device works them out from your records. With Buddies, your pet's kind, coat, and name are shared with your buddies, end-to-end encrypted. To stop sharing them, turn off Pet in Buddies Settings; the switch shows once you have a pet. Nothing else about your pet, and none of your records, is shared.",
+  "faq_petChange_q": "Can I change or rename my pet?",
+  "faq_petChange_a": "Yes. Long-press your pet's card on Home. Rename… lets you type a name of up to 20 characters; clear it and save to use the animal's name instead. Change Pet… picks another animal or coat for the same companion: it keeps its name, hearts, room, and keepsakes. Names are yours and are never translated.",
   "availability": {
     "settingsRow": "Availability",
     "settingsRowDescription": "Tell the Assistant which days are your off days and which are Kingdom Hall meeting days. It uses both to shape its recommendations.",
@@ -4432,6 +4447,7 @@
   "streaks_showSetting_info": "Shows your streak on Home and your profile, celebrates it, and reminds you before it ends. Turning this off hides your streak and your buddies' streaks, and stops sharing yours.",
   "badges_settingsRow": "Your badges",
   "buddies_shareBadges": "Badges",
+  "buddies_sharePet": "Pet",
   "buddies_badgeAlerts": "Badge Alerts",
   "buddies_badgeAlertsInfo": "Alerts when a buddy has a new badge or reacts to one of yours. Both still appear in your notifications.",
   "buddies_pushBadgeTitle": "A buddy has a new badge",
@@ -4796,6 +4812,7 @@
       "tabletServiceYearSummary": "Your service year against your goal",
       "serviceReport": "This month's time and studies",
       "mileage": "This month's trips and distance",
+      "pet": "Your companion, happy when you go out in the ministry",
       "thisWeek": "Your week at a glance, a tap from each day",
       "timer": "Time your service as you go",
       "didYouKnow": "A tip about something WitnessWork can do"
@@ -4932,6 +4949,232 @@
     "mileage": {
       "description": "Distance driven this month",
       "cost": "About {{value}} in fuel"
+    }
+  },
+  "pet": {
+    "homeSectionLabel": "Pet",
+    "widgetName": "Pet Companion",
+    "widgetDescription": "Your companion and its room, with its hearts.",
+    "widgetPlaceholder": "Choose a pet in WitnessWork",
+    "widget": {
+      "accessibilityLabel": "{{name}}, {{species}}, {{hearts}} of {{max}} hearts",
+      "accessibilityLabelUnnamed": "{{species}}, {{hearts}} of {{max}} hearts",
+      "lampDays": {
+        "one": "{{count}} day kept",
+        "other": "{{count}} days kept"
+      },
+      "lampMonths": {
+        "one": "{{count}} month kept",
+        "other": "{{count}} months kept"
+      },
+      "signMonth": "{{value}} of {{goal}}",
+      "signMonthNoGoal": "{{value}} this month",
+      "signYear": "{{value}} this service year",
+      "signShared": {
+        "one": "Shared in {{count}} of {{total}} months",
+        "other": "Shared in {{count}} of {{total}} months"
+      },
+      "signPlan": "Next plan: {{date}}, {{duration}}",
+      "signPlanNone": "No plans ahead",
+      "signConvos": "{{conversations}} · {{returnVisits}}",
+      "conversations": {
+        "one": "{{count}} conversation",
+        "other": "{{count}} conversations"
+      },
+      "returnVisits": {
+        "one": "{{count}} return visit",
+        "other": "{{count}} return visits"
+      }
+    },
+    "species": {
+      "lion": "Lion cub",
+      "dog": "Golden pup",
+      "cat": "Kitten",
+      "donkey": "Donkey",
+      "lamb": "Lamb"
+    },
+    "coat": {
+      "dog": {
+        "gold": "Gold",
+        "white": "Cream",
+        "liver": "Liver",
+        "black": "Black"
+      },
+      "cat": {
+        "orange": "Orange",
+        "grey": "Grey",
+        "black": "Black",
+        "white": "White",
+        "tuxedo": "Tuxedo",
+        "calico": "Calico",
+        "siamese": "Siamese"
+      }
+    },
+    "sound": {
+      "lion": {
+        "hi": "RAWR!",
+        "pat": "Rrrrr…",
+        "happy": "Rawr!",
+        "ok": "Mrr?",
+        "low": "mew…",
+        "nap": "Zzz"
+      },
+      "dog": {
+        "hi": "Woof!",
+        "pat": "Hff hff!",
+        "happy": "Arf!",
+        "ok": "Ruff?",
+        "low": "Hrrnn…",
+        "nap": "Zzz"
+      },
+      "cat": {
+        "hi": "Mrrp!",
+        "pat": "Prrrrr…",
+        "happy": "Meow!",
+        "ok": "Mew?",
+        "low": "mew…",
+        "nap": "Zzz"
+      },
+      "donkey": {
+        "hi": "Hee-haw!",
+        "pat": "Brrrr!",
+        "happy": "Hee!",
+        "ok": "Hmf?",
+        "low": "haw…",
+        "nap": "Zzz"
+      },
+      "lamb": {
+        "hi": "Baa!",
+        "pat": "Mehehe!",
+        "happy": "Baa-aa!",
+        "ok": "Meh?",
+        "low": "baa…",
+        "nap": "Zzz"
+      }
+    },
+    "promptTitle": "Meet your companion",
+    "promptDescription": "A little friend on Home who's happy when you go out in the ministry.",
+    "promptChoose": "Choose a pet",
+    "promptNotNow": "Not now",
+    "died": "{{name}} died",
+    "asleep": "{{name}} is asleep. Tap to wake.",
+    "goldNote": "A whole year of full hearts.",
+    "wakeButton": "Tap to wake {{name}}",
+    "menu": {
+      "rename": "Rename…",
+      "change": "Change Pet…",
+      "decorate": "Decorate Room…",
+      "share": "Share…"
+    },
+    "picker": {
+      "adoptTitle": "Choose a pet",
+      "changeTitle": "Change pet",
+      "nameLabel": "Name (optional)",
+      "adopt": "Adopt",
+      "save": "Save"
+    },
+    "a11y": {
+      "hearts": "{{count}} of 5 hearts",
+      "scene": "{{name}}'s room",
+      "patHint": "Tap to pat. Drag across to rub.",
+      "wakeHint": "Tap to wake.",
+      "promptAnimals": "A lion cub, golden pup, kitten, donkey and lamb"
+    },
+    "rename": {
+      "title": "Rename pet"
+    },
+    "share": {
+      "dialogTitle": "Share {{name}}",
+      "failed": "Couldn't share the picture. Try again."
+    },
+    "room": {
+      "title": "{{name}}'s room",
+      "tabs": "Room parts",
+      "tab": {
+        "window": "Window",
+        "wall": "Wall",
+        "floor": "Floor",
+        "bed": "Bed",
+        "shelf": "Shelf",
+        "lamp": "Light",
+        "sign": "Sign"
+      },
+      "liveWindow": "Live window",
+      "liveWindowInfo": "The window follows your clock and the season where you are. Turn it off to pick a time of day and a season yourself.",
+      "section": {
+        "windowTime": "Time of day",
+        "windowSeason": "Season",
+        "wallColor": "Color",
+        "wallPattern": "Pattern"
+      },
+      "option": {
+        "windowTime": {
+          "live": "Live",
+          "dawn": "Dawn",
+          "day": "Day",
+          "dusk": "Dusk",
+          "night": "Night"
+        },
+        "windowSeason": {
+          "live": "Live",
+          "spring": "Spring",
+          "summer": "Summer",
+          "autumn": "Autumn",
+          "winter": "Winter"
+        },
+        "wallColor": {
+          "sand": "Sand",
+          "sage": "Sage",
+          "sky": "Sky",
+          "rose": "Rose",
+          "cream": "Cream"
+        },
+        "wallPattern": {
+          "plain": "Plaster",
+          "dots": "Dots",
+          "stripes": "Stripes",
+          "trellis": "Trellis"
+        },
+        "floor": {
+          "wood": "Wood",
+          "stone": "Stone",
+          "brick": "Brick",
+          "tile": "Clay tile"
+        },
+        "bed": {
+          "rug": "Rug",
+          "cushion": "Cushion",
+          "basket": "Basket",
+          "hay": "Hay"
+        },
+        "shelf": {
+          "scrolls": "Scrolls",
+          "books": "Books",
+          "pottery": "Pottery",
+          "fruit": "Fruit bowl"
+        },
+        "lamp": {
+          "clay": "Clay lamp",
+          "lantern": "Brass lantern",
+          "candle": "Candle",
+          "stand": "Lampstand"
+        },
+        "sign": {
+          "none": "Nothing",
+          "month": "Hours this month",
+          "year": "Hours this year",
+          "shared": "Shared in ministry",
+          "plan": "Next plan",
+          "convos": "Conversations"
+        }
+      },
+      "unlockThisMonth": "This month",
+      "unlockIn": {
+        "one": "Next month",
+        "other": "In {{count}} months"
+      },
+      "lockedA11y": "{{option}}, opens up: {{when}}",
+      "unlockNote": "A new item opens up each month you're active."
     }
   }
 }

@@ -6,6 +6,7 @@ import { refreshSyncClock, syncNow } from '@/lib/syncClock'
 import { accountSessions, serverAccount } from '@/lib/serverAccount'
 import useContacts from '@/stores/contactsStore'
 import useConversations from '@/stores/conversationStore'
+import { usePet } from '@/stores/pet'
 import { usePreferences } from '@/stores/preferences'
 import useServiceReport from '@/stores/serviceReport'
 import { currentServiceStreak } from '@/lib/currentServiceStreak'
@@ -19,7 +20,11 @@ import {
   type BuddiesSyncOptions,
   createBuddiesEngine,
 } from '@/features/buddies/lib/engine'
-import type { BuddyStreak, ProfilePhoto } from '@/features/buddies/lib/schemas'
+import type {
+  BuddyPet,
+  BuddyStreak,
+  ProfilePhoto,
+} from '@/features/buddies/lib/schemas'
 import { randomBytes } from '@/features/buddies/lib/random'
 import { createRelayClient, isRelayError } from '@/features/buddies/lib/relay'
 import { runRelayCheck } from '@/features/buddies/lib/relayCheck'
@@ -62,6 +67,20 @@ export function currentBuddyStreak(
   return n > 0 ? { n, until: streakLastsThrough(streak, now) } : undefined
 }
 
+/**
+ * The Pet Companion buddies can see (species, coat, and name), before the
+ * engine drops it while the User doesn't share it. None until one is adopted.
+ */
+export function currentBuddyPet(): BuddyPet | undefined {
+  const pet = usePet.getState().pet
+  if (!pet) return undefined
+  return {
+    species: pet.species,
+    coat: pet.coat,
+    ...(pet.name ? { name: pet.name } : {}),
+  }
+}
+
 const engine = createBuddiesEngine({
   relay: createRelayClient({
     baseUrl: apis.buddies,
@@ -100,6 +119,7 @@ const engine = createBuddiesEngine({
   },
   getProfile: currentBuddyProfile,
   getStreak: () => currentBuddyStreak(),
+  getPet: currentBuddyPet,
   getShares: () =>
     buildOutgoingShares({
       dayPlans: useServiceReport.getState().dayPlans,

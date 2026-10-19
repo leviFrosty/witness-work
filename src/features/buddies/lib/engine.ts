@@ -39,6 +39,7 @@ import {
   BuddyPlatform,
   buddyCardSchema,
   BuddyStreak,
+  type BuddyPet,
   joinRequestSchema,
   MAX_SHARED_PHOTOS,
   pairConfirmedSchema,
@@ -201,6 +202,11 @@ export type BuddiesEngineDeps = {
    * it, never invites: a link can reach someone who isn't a buddy yet.
    */
   getStreak?: () => BuddyStreak | undefined
+  /**
+   * The User's Pet Companion as buddies see it, or none. Only Buddy Cards carry
+   * it, and only while `sharing.pet` is on.
+   */
+  getPet?: () => BuddyPet | undefined
   /** The Plans and Follow-ups this User has invited buddies to. */
   getShares?: () => OutgoingShareSpec[]
   /**
@@ -460,8 +466,16 @@ function unionBy<T>(local: T[], remote: T[], key: (item: T) => string) {
  * marks.
  */
 function rosterSignature(roster: Omit<Roster, 'v' | 'version'>) {
-  const { photo, tenure, streak, updatedAt, badges, badgesUpdatedAt } =
-    roster.sharing
+  const {
+    photo,
+    tenure,
+    streak,
+    updatedAt,
+    badges,
+    badgesUpdatedAt,
+    pet,
+    petUpdatedAt,
+  } = roster.sharing
   return JSON.stringify([
     roster.buddies
       .map((b) => `${b.inboxId}:${b.status}:${b.prefsAt ?? 0}`)
@@ -477,6 +491,8 @@ function rosterSignature(roster: Omit<Roster, 'v' | 'version'>) {
     // differs only from a choice this device actually made, which is then
     // written back once for devices restoring from the roster.
     [badges ?? true, badgesUpdatedAt ?? 0],
+    // The pet choice came later still, and reads the same way.
+    [pet ?? true, petUpdatedAt ?? 0],
     Object.entries(roster.answers)
       .map(([key, { s, v, r }]) => `${key}:${s}:${v}:${r}`)
       .sort(),
@@ -889,8 +905,8 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     )
     return {
       // Photos would overflow the roster cap; each device gets them, and
-      // streaks, from cards.
-      buddies: state.buddies.map(({ streak, ...buddy }) =>
+      // streaks and pets, from cards.
+      buddies: state.buddies.map(({ streak, pet, ...buddy }) =>
         compactProfile(buddy)
       ),
       outgoingInvites: state.outgoingInvites,
@@ -1493,7 +1509,9 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
    * the choice.
    */
   async function setSharing(
-    change: Partial<Omit<BuddySharing, 'updatedAt' | 'badgesUpdatedAt'>>
+    change: Partial<
+      Omit<BuddySharing, 'updatedAt' | 'badgesUpdatedAt' | 'petUpdatedAt'>
+    >
   ) {
     const now = deps.now()
     store.setState((state) => ({
@@ -1505,6 +1523,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
           ? { updatedAt: now }
           : {}),
         ...('badges' in change ? { badgesUpdatedAt: now } : {}),
+        ...('pet' in change ? { petUpdatedAt: now } : {}),
       },
     }))
     // Badge news not yet sent stays home too.
@@ -1547,9 +1566,9 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       badges: shared = [],
       photoUnavailable,
     } = profile()
-    const streak = store.getState().sharing.streak
-      ? deps.getStreak?.()
-      : undefined
+    const { sharing } = store.getState()
+    const streak = sharing.streak ? deps.getStreak?.() : undefined
+    const pet = sharing.pet ? deps.getPet?.() : undefined
     const edits = cardEdits
     cardEdits = new Set()
     const active = store.getState().buddies.filter((b) => b.status === 'active')
@@ -1562,7 +1581,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       : active
     if (targets.length === 0) return
     try {
-      await sendCardsTo(targets, { name, shown, tenure, shared, streak })
+      await sendCardsTo(targets, { name, shown, tenure, shared, streak, pet })
     } catch (error) {
       addCardEdits(edits)
       throw error
@@ -1577,12 +1596,14 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       tenure,
       shared,
       streak,
+      pet,
     }: {
       name: string
       shown: BuddyAvatar | undefined
       tenure: BuddyProfile['tenure']
       shared: SharedBadge[]
       streak: BuddyStreak | undefined
+      pet: BuddyPet | undefined
     }
   ) {
     const me = await identity()
@@ -1593,10 +1614,11 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       recurringPlans,
       new Date(deps.now())
     )
-    // Left out when there are none, so cards (and their hash) stay as before.
+    // Left out when there are none, so cards (and their hash) stay as before;
+    // so is a pet that isn't there or isn't shared.
     const badges = shared.length > 0 ? shared : undefined
     const contentHash = toB64u(
-      sha256(json({ name, avatar, tenure, streak, days, badges }))
+      sha256(json({ name, avatar, tenure, streak, days, badges, pet }))
     )
     for (const buddy of targets) {
       if (store.getState().publishedCardHashes[buddy.inboxId] === contentHash)
@@ -1612,6 +1634,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
         level: 'daysTimes',
         days,
         badges,
+        pet,
       }
       try {
         await relay.putCard(
@@ -1934,6 +1957,8 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
                 streak: parsed.streak,
                 // The card is the source of truth: none listed clears them.
                 badges: knownBadges(parsed.badges),
+                // None on the card: no pet, or not shared any more.
+                pet: parsed.pet,
               }
             : b
         ),

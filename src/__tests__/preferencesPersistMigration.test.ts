@@ -23,6 +23,7 @@ vi.mock('@/lib/locales', () => ({
 
 import {
   migratePreferencesPersistedState,
+  migrateShowPetHomeSection,
   migrateUnchosenContactSortToSuggested,
 } from '@/stores/preferences'
 import { mergePreferences } from '@/app/sync/preferencesMerge'
@@ -798,5 +799,43 @@ describe('preferences persist migrate v10 → v11 (unchosen Recent Visit sort �
         NON_SYNCABLE_PREFERENCE_KEYS
       ).values.contactSort
     ).toBe('recentConversation')
+  })
+})
+
+describe('preferences persist migrate v11 → v12 (Pet Home section starts visible)', () => {
+  it('adds pet to a saved visibility map that lacks it', () => {
+    const migrated = migratePreferencesPersistedState(
+      {
+        homeScreenElements: { mileage: false, timer: true },
+        preferenceUpdatedAt: { homeScreenElements: 1700000000000 },
+      },
+      11
+    )
+    expect(migrated.homeScreenElements).toEqual({
+      mileage: false,
+      timer: true,
+      pet: true,
+    })
+    // Nobody chose it, so the stamp stays and a real choice still wins.
+    expect(migrated.preferenceUpdatedAt).toEqual({
+      homeScreenElements: 1700000000000,
+    })
+  })
+
+  it('keeps an explicit choice and is idempotent', () => {
+    const hidden = { homeScreenElements: { pet: false } }
+    expect(migratePreferencesPersistedState(hidden, 11)).toEqual(hidden)
+    const once = migrateShowPetHomeSection({ homeScreenElements: {} })
+    expect(migrateShowPetHomeSection(once)).toEqual(once)
+  })
+
+  it('leaves a blob without a visibility map to the defaults', () => {
+    expect(migratePreferencesPersistedState({}, 11)).toEqual({})
+    expect(migrateShowPetHomeSection(null)).toBeNull()
+  })
+
+  it('does not run for a v12 blob', () => {
+    const v12 = { homeScreenElements: { timer: true } }
+    expect(migratePreferencesPersistedState(v12, 12)).toEqual(v12)
   })
 })

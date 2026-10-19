@@ -19,6 +19,7 @@ import {
   isRetryableBuddiesError,
 } from '@/features/buddies/lib/buddiesErrors'
 import { buddyTenureLabel } from '@/features/buddies/lib/buddyProfile'
+import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 import type {
   BuddyAvatar as SharedAvatar,
   BuddyTenure,
@@ -41,13 +42,16 @@ type Preview =
   | { state: 'error'; message: string; retryable: boolean }
 
 /**
- * The pre-accept screen: who is inviting, what each side sees, and what is
- * never shared. Leaving (the header back arrow) sends nothing to the inviter.
+ * The pre-accept screen: who is inviting, and, the first time (accepting is how
+ * an invitee starts Buddies), what each side sees and what is never shared.
+ * Leaving (the header back arrow) sends nothing to the inviter.
  */
 export default function BuddyInviteScreen({ route }: Props) {
   const theme = useTheme()
   const navigation = useNavigation<RootStackNavigation>()
   const hasName = useProfile((state) => state.name.trim().length > 0)
+  // As the screen opened: accepting starts Buddies, which mustn't hide it.
+  const [started] = useState(() => useBuddies.getState().onboardingComplete)
   const [preview, setPreview] = useState<Preview>({ state: 'loading' })
   const [accepting, setAccepting] = useState(false)
   const [nameInvalid, setNameInvalid] = useState(false)
@@ -148,7 +152,7 @@ export default function BuddyInviteScreen({ route }: Props) {
             </Text>
           )}
         </View>
-        <InviteShareSummary />
+        {!started && <InviteShareSummary />}
         {!hasName && (
           <Card
             style={{

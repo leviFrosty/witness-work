@@ -190,7 +190,8 @@ export type RootStackParamList = {
   /** Pre-accept screen for an incoming Buddies invite link. */
   'Buddy Invite': { link: string }
   /** What buddies see, Buddies notifications, and delete-all. */
-  'Buddies Settings': undefined
+  /** All buddies' settings, or one buddy's (`inboxId`) over them. */
+  'Buddies Settings': { inboxId?: string } | undefined
   /** Alpha explainer, opt-in diagnostics, and the Buddies feedback survey. */
   'Buddies Feedback': { source: 'badge' | 'menu' | 'settings' } | undefined
   /** Mileage trip history and report. */

@@ -4,28 +4,71 @@ import InputRowSwitch from '@/components/ui/inputs/InputRowSwitch'
 import Section from '@/components/ui/inputs/Section'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
-import { analytics } from '@/lib/analytics'
 import i18n from '@/lib/locales'
 import { logger } from '@/lib/logger'
 import { usePreferences } from '@/stores/preferences'
+import BuddiesSection from '@/features/buddies/components/BuddiesSection'
+import { ScopedSwitchRow } from '@/features/buddies/components/ScopedSettingRows'
+import {
+  useBuddySettingsScope,
+  useScopedAlert,
+} from '@/features/buddies/hooks/useBuddySettingsScope'
 import useNotificationPermission from '@/features/buddies/hooks/useNotificationPermission'
+import { buddyDisplayName } from '@/features/buddies/lib/buddyProfile'
 import { registerBuddiesPush } from '@/features/buddies/lib/pushRegistration'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 
 /**
  * Buddies pushes on this device: a switch once iOS allows notifications,
  * otherwise a way to allow them, then one for buddies asking to join and one
- * for buddies' new badges (while badges are on).
+ * for buddies' new badges (while badges are on). In a buddy's settings, just
+ * those two for them, while notifications are on here.
  */
 export default function BuddiesNotificationsSection() {
   const theme = useTheme()
+  const { buddy } = useBuddySettingsScope()
   const { granted, needsSettings, turnOn } = useNotificationPermission()
   const enabled = useBuddies((state) => state.notificationsEnabled)
-  const joinRequests = useBuddies((state) => state.joinRequestNotifications)
-  const badgeAlerts = useBuddies((state) => state.badgeNotifications)
+  const joinRequests = useScopedAlert('joinRequests')
+  const badgeAlerts = useScopedAlert('badges')
   const showBadges = usePreferences((state) => state.showBadges)
 
   if (granted === null) return null
+
+  const alertRows = (
+    <>
+      <ScopedSwitchRow
+        setting={joinRequests}
+        label={i18n.t('buddies_askToJoinAlerts')}
+        info={
+          buddy
+            ? i18n.t('buddies_buddyAskToJoinAlertsInfo', {
+                name: buddyDisplayName(buddy),
+              })
+            : i18n.t('buddies_askToJoinAlertsInfo')
+        }
+        lastInSection={!showBadges}
+      />
+      {showBadges ? (
+        <ScopedSwitchRow
+          setting={badgeAlerts}
+          label={i18n.t('buddies_badgeAlerts')}
+          info={i18n.t('buddies_badgeAlertsInfo')}
+          lastInSection
+        />
+      ) : null}
+    </>
+  )
+
+  if (buddy)
+    return granted && enabled ? (
+      <BuddiesSection
+        title={i18n.t('buddies_notifications')}
+        footer={i18n.t('buddies_alertsThisDevice')}
+      >
+        {alertRows}
+      </BuddiesSection>
+    ) : null
 
   if (!granted) {
     return (
@@ -68,38 +111,7 @@ export default function BuddiesNotificationsSection() {
         }}
         lastInSection={!enabled}
       />
-      {enabled ? (
-        <InputRowSwitch
-          label={i18n.t('buddies_askToJoinAlerts')}
-          info={i18n.t('buddies_askToJoinAlertsInfo')}
-          value={joinRequests}
-          onValueChange={(joinRequestNotifications) => {
-            analytics.capture('buddy_join_request_notifications_changed', {
-              scope: 'all',
-              enabled: joinRequestNotifications,
-            })
-            // The Buddies runtime re-registers this device's push templates.
-            useBuddies.setState({ joinRequestNotifications })
-          }}
-          lastInSection={!showBadges}
-        />
-      ) : null}
-      {enabled && showBadges ? (
-        <InputRowSwitch
-          label={i18n.t('buddies_badgeAlerts')}
-          info={i18n.t('buddies_badgeAlertsInfo')}
-          value={badgeAlerts}
-          onValueChange={(badgeNotifications) => {
-            analytics.capture('badges_setting_changed', {
-              setting: 'alerts',
-              enabled: badgeNotifications,
-            })
-            // The Buddies runtime re-registers this device's push templates.
-            useBuddies.setState({ badgeNotifications })
-          }}
-          lastInSection
-        />
-      ) : null}
+      {enabled ? alertRows : null}
     </Section>
   )
 }

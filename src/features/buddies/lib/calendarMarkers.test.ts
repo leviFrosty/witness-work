@@ -5,10 +5,11 @@ import {
   buildBuddyDayMarkers,
   stackedBuddies,
 } from '@/features/buddies/lib/calendarMarkers'
-import type {
-  Buddy,
-  IncomingShare,
-  ReceivedCard,
+import {
+  type Buddy,
+  type IncomingShare,
+  initialBuddiesState,
+  type ReceivedCard,
 } from '@/features/buddies/lib/state'
 
 const today = '2026-10-04'
@@ -22,7 +23,6 @@ const buddy = (inboxId: string, overrides: Partial<Buddy> = {}): Buddy => ({
   status: 'active',
   pairedAt: 0,
   colorIndex: 0,
-  showOnCalendar: true,
   ...overrides,
 })
 
@@ -61,6 +61,7 @@ const build = (
 ): ReturnType<typeof buildBuddyDayMarkers> =>
   buildBuddyDayMarkers({
     buddies: [],
+    sharing: initialBuddiesState.sharing,
     cards: {},
     dayPlans: [],
     repliesFor: () => undefined,
@@ -107,7 +108,7 @@ describe('buildBuddyDayMarkers', () => {
   })
 
   it('puts the inviter on a Plan that follows their invitation, even when hidden', () => {
-    const grace = buddy('grace', { showOnCalendar: false })
+    const grace = buddy('grace', { overrides: { showOnCalendar: false } })
     const markers = build({
       buddies: [grace],
       dayPlans: [
@@ -161,7 +162,7 @@ describe('buildBuddyDayMarkers', () => {
     const markers = build({
       buddies: [
         sarah,
-        buddy('tom', { showOnCalendar: false }),
+        buddy('tom', { overrides: { showOnCalendar: false } }),
         buddy('ann', { status: 'awaitingConfirm' }),
       ],
       cards: {
@@ -175,6 +176,19 @@ describe('buildBuddyDayMarkers', () => {
       dayPlans: [plan('p', '2026-10-01', { buddies: ['sarah'] })],
     })
     expect(markers).toEqual({ [today]: { withBuddies: [], goingOut: [sarah] } })
+  })
+
+  it('follows All Buddies on the calendar, unless a buddy has their own setting', () => {
+    const sarah = buddy('sarah')
+    const tom = buddy('tom', { overrides: { showOnCalendar: true } })
+    const markers = build({
+      buddies: [sarah, tom],
+      sharing: { ...initialBuddiesState.sharing, showOnCalendar: false },
+      cards: { sarah: card('2026-10-06'), tom: card('2026-10-06') },
+    })
+    expect(markers).toEqual({
+      '2026-10-06': { withBuddies: [], goingOut: [tom] },
+    })
   })
 })
 

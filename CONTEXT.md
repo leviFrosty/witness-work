@@ -175,7 +175,7 @@ _Avoid_: "trip" (that's a mileage record), "itinerary".
 ### Buddies
 
 **Buddies**:
-The product name for WitnessWork's end-to-end encrypted feature that pairs a User with up to five people they go out in service with, so each sees the others' planned days and times (plus name, photo, and pioneer status if shared) on their calendar. Always capitalized and plural, like a product: "WitnessWork Buddies" in full, "Buddies" once the context is clear (the tab, "Buddies Settings", "Delete My Buddies Data"). Artifacts the product owns take the product name — **Buddies Code**, **Buddies Invite**, **Buddies Settings** — never "Buddy code" or "buddy settings". Grammatically singular when naming the product ("Buddies is unavailable").
+The product name for WitnessWork's end-to-end encrypted feature that pairs a User with up to five people they go out in service with, so each sees the others' planned days and times (plus name, photo, and pioneer status if shared) on their calendar. What the User shares is spelled out once, when they start Buddies, and changed in Buddies Settings: for **All Buddies**, or for one buddy over them. Always capitalized and plural, like a product: "WitnessWork Buddies" in full, "Buddies" once the context is clear (the tab, "Buddies Settings", "Delete My Buddies Data"). Artifacts the product owns take the product name — **Buddies Code**, **Buddies Invite**, **Buddies Settings** — never "Buddy code" or "buddy settings". Grammatically singular when naming the product ("Buddies is unavailable").
 _Avoid_: "friends", "partners", "buddy system"; lowercase "buddies" when the product is meant.
 
 **buddy**:
@@ -194,8 +194,12 @@ _Avoid_: "buddy request" for the link itself (the request is what the invitee se
 A User's request to be invited to a buddy's Plan they saw on that buddy's calendar. The buddy answers by inviting them through an ordinary Plan invitation, or chooses Not Now, which the asker is never told about; the request lapses when the Plan starts. "Ask to Join Alerts" is the per-device setting (all buddies, or one) for whether these requests alert.
 _Avoid_: "join request" in UI copy (internal term), "Buddy request" (that's pairing).
 
+**All Buddies**:
+The settings every buddy follows unless they have their own: what they see (photo, pioneer status, **Service Streak**, **Badges**, Plans and how precisely start times show), whether their Plans show on the User's calendar, and Ask to Join and Badge alerts on this device. **Buddies Settings** opens on it; breadcrumbs at the top ("All Buddies / Grace") switch to a buddy's settings. A buddy's own setting has a highlighted layers icon (which shows each level's value) and an undo arrow that has them follow All Buddies again. The pause is for All Buddies only.
+_Avoid_: "defaults", "global settings", "inherit" in UI copy; "custom" or "override" for a buddy's own setting; "Reset" wording (the undo arrow says it).
+
 **Buddy Card**:
-Internal term for the encrypted payload one User publishes to each buddy: their shared name, photo, pioneer status, **Service Streak**, earned **Badges**, and planned days and times for the next 8 weeks. Never shown by name in the UI.
+Internal term for the encrypted payload one User publishes to each buddy: their shared name, photo, pioneer status, **Service Streak**, earned **Badges**, and planned days and times for the next 8 weeks. Only the name is always on it. Start times can go exactly, as the time of day (Morning, Afternoon, Evening), or not at all; what it carries follows that buddy's settings (their own, else All buddies'), and while the User pauses sharing it carries only who they are, without Plans, streak, or Badges, for every buddy. The buddy isn't told. Never shown by name in the UI.
 _Avoid_: "profile" (the **Profile** is the User's own identity data; a Buddy Card is the shared, filtered copy).
 
 **Buddies Alert**:

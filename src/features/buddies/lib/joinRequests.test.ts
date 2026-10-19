@@ -90,6 +90,14 @@ describe('joinRequestStatus', () => {
     expect(
       joinRequestStatus(empty, 'anna', thursday, { m: 60 }, at('09:30')).kind
     ).toBe('canAsk')
+    // Only the time of day reads as that part's start: evening is 5:00 PM.
+    const evening = { m: 60, t: 'e' as const }
+    expect(
+      joinRequestStatus(empty, 'anna', thursday, evening, at('14:59')).kind
+    ).toBe('canAsk')
+    expect(
+      joinRequestStatus(empty, 'anna', thursday, evening, at('15:01')).kind
+    ).toBe('none')
   })
 
   it('stops counting a request once its Plan has started', () => {
@@ -206,6 +214,24 @@ describe('joinRequestInvite', () => {
       organizer: 'mom',
     })
     expect(findJoinRequestPlan(request, [linked], [])?.plan.id).toBe('linked')
+  })
+
+  it('finds the Plan by its length when the owner shares no start times', () => {
+    const plans = [
+      dayPlan('morning', { minutes: 60 }),
+      dayPlan('evening', { startTimeInMinutes: 1080 }),
+    ]
+    expect(
+      findJoinRequestPlan({ d: thursday, m: 120 }, plans, [])?.plan.id
+    ).toBe('evening')
+    // Two the same length: no telling which.
+    expect(
+      findJoinRequestPlan(
+        { d: thursday, m: 120 },
+        [...plans, dayPlan('noon', { startTimeInMinutes: 720 })],
+        []
+      )
+    ).toBeUndefined()
   })
 
   it("offers no Invite when the owner's Plans that day changed and none match", () => {

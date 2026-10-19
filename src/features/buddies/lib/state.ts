@@ -2,6 +2,7 @@ import type { RichTextDoc } from '@/types/richText'
 import type {
   BuddyAvatar,
   BuddyCardDay,
+  BuddyPlanTimes,
   BuddyPlatform,
   BuddyStreak,
   BuddyTenure,
@@ -36,8 +37,10 @@ export type BuddyProfile = {
 }
 
 /**
- * What this User withholds from buddies. Synced across their devices through
- * the roster (last change wins) so two devices never publish different cards.
+ * This User's settings for All Buddies: what buddies see, and how they show up
+ * here. Every buddy follows them unless they have their own (`BuddyOverrides`).
+ * Synced across this User's devices through the roster (last change wins) so
+ * two devices never publish different cards.
  */
 export type BuddySharing = {
   photo: boolean
@@ -52,6 +55,192 @@ export type BuddySharing = {
    * older apps rewrite the roster without it.
    */
   badgesUpdatedAt: number
+  /** Plans on the Buddy Card. */
+  plans: boolean
+  /** How precisely cards show when Plans start. */
+  planTimes: BuddyPlanTimes
+  /**
+   * Until when Plans, streak, and badges are withheld from every buddy, their
+   * own settings or not: 0 when never paused, `PAUSED_INDEFINITELY` until the
+   * User resumes.
+   */
+  pausedUntil: number
+  /**
+   * When `plans`, `planTimes`, or `pausedUntil` last changed, 0 while all are
+   * the default. Its own stamp, like `badgesUpdatedAt`.
+   */
+  plansUpdatedAt: number
+  /** Buddies' Plans show on this User's calendar. */
+  showOnCalendar: boolean
+  /** When `showOnCalendar` last changed, 0 while it's the default. */
+  calendarUpdatedAt: number
+}
+
+/** Settings a buddy can have their own value for; the rest are for everyone. */
+export type BuddySettings = Pick<
+  BuddySharing,
+  | 'photo'
+  | 'tenure'
+  | 'streak'
+  | 'badges'
+  | 'plans'
+  | 'planTimes'
+  | 'showOnCalendar'
+>
+export type BuddySettingKey = keyof BuddySettings
+
+/** A buddy's own settings; a key left out follows All Buddies. */
+export type BuddyOverrides = Partial<BuddySettings>
+
+export const BUDDY_SETTING_KEYS = [
+  'photo',
+  'tenure',
+  'streak',
+  'badges',
+  'plans',
+  'planTimes',
+  'showOnCalendar',
+] as const satisfies readonly BuddySettingKey[]
+
+/** Per-device alerts a buddy can have their own value for. */
+export type BuddyAlertSettings = {
+  /** Their requests to join this User's Plans. */
+  joinRequests: boolean
+  /** Their new badges and reactions to this User's. */
+  badges: boolean
+}
+export type BuddyAlertKey = keyof BuddyAlertSettings
+export type BuddyAlertOverrides = Partial<BuddyAlertSettings>
+
+/** Where a setting's value comes from: the buddy's own, or All Buddies'. */
+export type BuddySettingSource = 'buddy' | 'all'
+
+export type ResolvedSettings<T> = {
+  settings: T
+  sources: Record<keyof T, BuddySettingSource>
+}
+
+/**
+ * Each value with where it comes from: the buddy's own where they have one,
+ * else All Buddies'. The source is told by the override being there, not by
+ * comparing values, so an override equal to All Buddies' still reads as one.
+ */
+export function resolveSettings<T extends object>(
+  defaults: T,
+  overrides: Partial<T> | undefined
+): ResolvedSettings<T> {
+  const settings = { ...defaults }
+  const sources = {} as Record<keyof T, BuddySettingSource>
+  for (const key of Object.keys(defaults) as (keyof T)[]) {
+    const own = overrides?.[key]
+    if (own !== undefined) settings[key] = own as T[keyof T]
+    sources[key] = own !== undefined ? 'buddy' : 'all'
+  }
+  return { settings, sources }
+}
+
+/** All Buddies' values for the settings a buddy can override. */
+export function allBuddiesSettings(sharing: BuddySharing): BuddySettings {
+  return {
+    photo: sharing.photo,
+    tenure: sharing.tenure,
+    streak: sharing.streak,
+    badges: sharing.badges,
+    plans: sharing.plans,
+    planTimes: sharing.planTimes,
+    showOnCalendar: sharing.showOnCalendar,
+  }
+}
+
+/** One buddy's settings, their own over All Buddies'. */
+export function buddySettings(
+  sharing: BuddySharing,
+  buddy: Pick<Buddy, 'overrides'>
+): ResolvedSettings<BuddySettings> {
+  return resolveSettings(allBuddiesSettings(sharing), buddy.overrides)
+}
+
+/** One buddy's alerts on this device, their own over All Buddies'. */
+export function buddyAlertSettings(
+  state: Pick<
+    BuddiesState,
+    'joinRequestNotifications' | 'badgeNotifications' | 'alertOverrides'
+  >,
+  inboxId: string
+): ResolvedSettings<BuddyAlertSettings> {
+  return resolveSettings(
+    {
+      joinRequests: state.joinRequestNotifications,
+      badges: state.badgeNotifications,
+    },
+    state.alertOverrides[inboxId]
+  )
+}
+
+/** How many settings a buddy has of their own, synced and on this device. */
+export function ownSettingsCount(
+  buddy: Pick<Buddy, 'inboxId' | 'overrides'>,
+  alertOverrides: BuddiesState['alertOverrides']
+): number {
+  return (
+    Object.keys(buddy.overrides ?? {}).length +
+    Object.keys(alertOverrides[buddy.inboxId] ?? {}).length
+  )
+}
+
+/**
+ * `overrides` with `key` set to `value`, or dropped for `undefined` (follow All
+ * buddies again); undefined once none are left.
+ */
+export function withOverride<T extends object, K extends keyof T>(
+  overrides: Partial<T> | undefined,
+  key: K,
+  value: T[K] | undefined
+): Partial<T> | undefined {
+  const next: Partial<T> = { ...overrides }
+  if (value === undefined) delete next[key]
+  else next[key] = value
+  return Object.keys(next).length > 0 ? next : undefined
+}
+
+/**
+ * A roster entry's own settings. Newer apps write `overrides`. An older app
+ * writes only `showOnCalendar`, as the value it shows: where that differs from
+ * the buddy's current one it's a choice made there, kept as an override; the
+ * rest of `previous` stays.
+ */
+export function rosterOverrides(
+  entry: { showOnCalendar: boolean; overrides?: BuddyOverrides },
+  sharing: BuddySharing,
+  previous: BuddyOverrides | undefined
+): BuddyOverrides | undefined {
+  if (entry.overrides) {
+    const own = Object.fromEntries(
+      Object.entries(entry.overrides).filter(([, value]) => value !== undefined)
+    )
+    return Object.keys(own).length > 0 ? own : undefined
+  }
+  const shown = previous?.showOnCalendar ?? sharing.showOnCalendar
+  return entry.showOnCalendar === shown
+    ? previous
+    : withOverride(previous, 'showOnCalendar', entry.showOnCalendar)
+}
+
+/** `pausedUntil` for a pause that lasts until the User resumes sharing. */
+export const PAUSED_INDEFINITELY = Number.MAX_SAFE_INTEGER
+
+/** Sharing is paused for every buddy at `now`. */
+export function isSharingPaused(
+  sharing: Pick<BuddySharing, 'pausedUntil'>,
+  now: number
+): boolean {
+  return sharing.pausedUntil > now
+}
+
+const PLAN_TIMES_PRIVACY: Record<BuddyPlanTimes, number> = {
+  exact: 0,
+  timeOfDay: 1,
+  daysOnly: 2,
 }
 
 /**
@@ -68,7 +257,8 @@ export function mergeCardName(local: CardName, remote: CardName | undefined) {
  * the streak go to the later `updatedAt`. Badges go to the later
  * `badgesUpdatedAt`, apart: a roster from an older app leaves them out (keep
  * this device's), and on a tie withholding wins, so every device settles on the
- * same answer.
+ * same answer. Plan times and the pause go to the later `plansUpdatedAt` the
+ * same way, the more private choice winning a tie.
  */
 export function mergeSharing(
   local: BuddySharing,
@@ -80,6 +270,8 @@ export function mergeSharing(
     tenure: later ? remote.tenure : local.tenure,
     streak: later ? remote.streak : local.streak,
     updatedAt: later ? remote.updatedAt : local.updatedAt,
+    ...mergePlanSharing(local, remote),
+    ...mergeCalendarSharing(local, remote),
   }
   if (remote.badges === undefined)
     return {
@@ -97,6 +289,91 @@ export function mergeSharing(
           ? remote.badges
           : local.badges,
     badgesUpdatedAt: Math.max(remoteAt, local.badgesUpdatedAt),
+  }
+}
+
+function mergePlanSharing(
+  local: BuddySharing,
+  remote: Roster['sharing']
+): Pick<
+  BuddySharing,
+  'plans' | 'planTimes' | 'pausedUntil' | 'plansUpdatedAt'
+> {
+  const mine = {
+    plans: local.plans,
+    planTimes: local.planTimes,
+    pausedUntil: local.pausedUntil,
+    plansUpdatedAt: local.plansUpdatedAt,
+  }
+  const remoteAt = remote.plansUpdatedAt
+  if (remoteAt === undefined || remoteAt < local.plansUpdatedAt) return mine
+  const plans = remote.plans ?? true
+  const planTimes = remote.planTimes ?? 'exact'
+  const pausedUntil = remote.pausedUntil ?? 0
+  if (remoteAt > local.plansUpdatedAt)
+    return { plans, planTimes, pausedUntil, plansUpdatedAt: remoteAt }
+  return {
+    plans: plans && local.plans,
+    planTimes:
+      PLAN_TIMES_PRIVACY[planTimes] > PLAN_TIMES_PRIVACY[local.planTimes]
+        ? planTimes
+        : local.planTimes,
+    pausedUntil: Math.max(pausedUntil, local.pausedUntil),
+    plansUpdatedAt: remoteAt,
+  }
+}
+
+/**
+ * Persisted state from before buddies followed All Buddies: a buddy hidden from
+ * the calendar keeps that as their own setting, and a buddy whose requests to
+ * join were muted keeps that as their own alert setting.
+ */
+export function migrateLegacySettings(
+  restored: Partial<BuddiesState> & { mutedJoinRequests?: string[] }
+): Partial<BuddiesState> {
+  const { mutedJoinRequests, ...rest } = restored
+  return {
+    ...rest,
+    ...(rest.buddies && {
+      buddies: rest.buddies.map((stored) => {
+        const { showOnCalendar, ...buddy } = stored as Buddy & {
+          showOnCalendar?: boolean
+        }
+        return showOnCalendar === false &&
+          buddy.overrides?.showOnCalendar === undefined
+          ? { ...buddy, overrides: { ...buddy.overrides, showOnCalendar } }
+          : buddy
+      }),
+    }),
+    ...(mutedJoinRequests && {
+      alertOverrides: {
+        ...Object.fromEntries(
+          mutedJoinRequests.map((inboxId) => [inboxId, { joinRequests: false }])
+        ),
+        ...rest.alertOverrides,
+      },
+    }),
+  }
+}
+
+/** Calendar like the plan choices: a later stamp wins, hiding wins a tie. */
+function mergeCalendarSharing(
+  local: BuddySharing,
+  remote: Roster['sharing']
+): Pick<BuddySharing, 'showOnCalendar' | 'calendarUpdatedAt'> {
+  const remoteAt = remote.calendarUpdatedAt
+  if (remoteAt === undefined || remoteAt < local.calendarUpdatedAt)
+    return {
+      showOnCalendar: local.showOnCalendar,
+      calendarUpdatedAt: local.calendarUpdatedAt,
+    }
+  const shown = remote.showOnCalendar ?? true
+  return {
+    showOnCalendar:
+      remoteAt > local.calendarUpdatedAt
+        ? shown
+        : shown && local.showOnCalendar,
+    calendarUpdatedAt: remoteAt,
   }
 }
 
@@ -125,9 +402,13 @@ export type Buddy = {
   colorIndex: number
   /** A hex this User picked (Supporter), shown in place of the slot's color. */
   color?: string
-  showOnCalendar: boolean
   /**
-   * When the nickname, color, or `showOnCalendar` last changed, on any of this
+   * Their own settings over All Buddies' (`buddySettings`); absent while they
+   * follow All Buddies in everything.
+   */
+  overrides?: BuddyOverrides
+  /**
+   * When the nickname, color, or `overrides` last changed, on any of this
    * User's devices; the later change wins (`mergeRoster`). Absent until one
    * does.
    */
@@ -796,10 +1077,13 @@ export type BuddiesState = {
   notificationsEnabled: boolean
   /** Per-device: pushes for buddies asking to join this User's Plans. */
   joinRequestNotifications: boolean
-  /** Per-device: buddies whose requests to join don't push here. */
-  mutedJoinRequests: string[]
   /** Per-device: pushes for buddies' new badges. */
   badgeNotifications: boolean
+  /**
+   * Per-device: buddies' own alert settings over the two above, by inboxId
+   * (`buddyAlertSettings`).
+   */
+  alertOverrides: Record<string, BuddyAlertOverrides>
   /** News of this User's new badges still to deliver. */
   badgeAnnouncements: BadgeAnnouncement[]
   /** When each buddy was last alerted to this User's new badges, by inboxId. */
@@ -875,11 +1159,17 @@ export const initialBuddiesState: BuddiesState = {
     updatedAt: 0,
     badges: true,
     badgesUpdatedAt: 0,
+    plans: true,
+    planTimes: 'exact',
+    pausedUntil: 0,
+    plansUpdatedAt: 0,
+    showOnCalendar: true,
+    calendarUpdatedAt: 0,
   },
   notificationsEnabled: true,
   joinRequestNotifications: true,
-  mutedJoinRequests: [],
   badgeNotifications: true,
+  alertOverrides: {},
   badgeAnnouncements: [],
   lastBadgeAlertAt: {},
   seenBadgeEvents: {},

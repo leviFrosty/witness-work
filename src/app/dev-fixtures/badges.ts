@@ -1,4 +1,5 @@
 import moment from 'moment'
+import { getServiceYearFromDate, serviceYearBounds } from '@/lib/serviceYear'
 import {
   BADGE_COLLECTIONS,
   BadgeCollectionSpec,
@@ -46,10 +47,8 @@ export type BadgeHistoryFixture = {
 const MAX_SHARED_MONTHS_AGO = 22
 
 /** Start of the September-to-August Service Year containing `now`. */
-const serviceYearStart = (now: moment.Moment) => {
-  const start = now.clone().startOf('month').month(8)
-  return now.month() >= 8 ? start : start.subtract(1, 'year')
-}
+const serviceYearStart = (now: moment.Moment) =>
+  serviceYearBounds(getServiceYearFromDate(now)).start
 
 /**
  * Just enough history to earn a spread of badges on any day:

@@ -37,7 +37,8 @@ import {
   type MonthStatus,
 } from '@/lib/monthStatus'
 import { getEntryMode } from '@/lib/publisherCapabilities'
-import { serviceYearMonths, serviceYearOfMonth } from '@/lib/roleHistory'
+import { serviceYearMonths } from '@/lib/roleHistory'
+import { serviceYearOf } from '@/lib/serviceYear'
 import { getMonthsReports } from '@/lib/serviceReport'
 import { usePreferences } from '@/stores/preferences'
 import useServiceReport from '@/stores/serviceReport'
@@ -73,7 +74,7 @@ type Row = ServiceHistoryRow
 /** The latest Service Year that has at least one finished month. */
 const latestServiceYear = (): number => {
   const previousMonth = moment().subtract(1, 'month')
-  return serviceYearOfMonth({
+  return serviceYearOf({
     year: previousMonth.year(),
     month: previousMonth.month(),
   })

@@ -1,4 +1,5 @@
 import moment from 'moment'
+import { getServiceYearFromDate, serviceYearBounds } from '@/lib/serviceYear'
 import type {
   FuelPrice,
   MileagePeriodKind,
@@ -173,13 +174,8 @@ export function periodContaining(
         end: day.clone().endOf('month'),
       }
     case 'year': {
-      const startYear = day.month() < 8 ? day.year() - 1 : day.year()
-      const start = moment({ year: startYear, month: 8, day: 1 })
-      return {
-        kind,
-        start,
-        end: start.clone().add(1, 'year').subtract(1, 'day').endOf('day'),
-      }
+      const { start, end } = serviceYearBounds(getServiceYearFromDate(day))
+      return { kind, start, end }
     }
   }
 }

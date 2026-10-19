@@ -7,7 +7,8 @@ import useStartOfWeek from '@/hooks/useStartOfWeek'
 import { analytics } from '@/lib/analytics'
 import Haptics from '@/lib/haptics'
 import type { CalendarMonth } from '@/lib/monthlyGoals'
-import { serviceYearMonths, serviceYearOfMonth } from '@/lib/roleHistory'
+import { serviceYearMonths } from '@/lib/roleHistory'
+import { serviceYearOf } from '@/lib/serviceYear'
 import type { ScheduleView } from '@/features/plans/components/ScheduleViewToggle'
 import { MONTH_GRID_PADDING } from '@/features/plans/components/ScheduleMonthView'
 import type { ScheduleYearViewHandle } from '@/features/plans/components/ScheduleYearView'
@@ -84,7 +85,7 @@ export default function useScheduleCalendar({
   const thisYear = now.year()
   const thisMonthIndex = now.month()
   const start = initial ?? { year: thisYear, month: thisMonthIndex }
-  const currentServiceYear = serviceYearOfMonth({
+  const currentServiceYear = serviceYearOf({
     year: thisYear,
     month: thisMonthIndex,
   })
@@ -105,12 +106,12 @@ export default function useScheduleCalendar({
   // following every month scrolled past while the view is hidden.
   const [yearFocusedMonth, setYearFocusedMonth] = useState<CalendarMonth>(start)
   const [yearServiceYear, setYearServiceYear] = useState(() =>
-    serviceYearOfMonth(start)
+    serviceYearOf(start)
   )
   // A Service Year either side of this one and of the month opened on.
   const [range, setRange] = useState(() => ({
-    first: Math.min(currentServiceYear, serviceYearOfMonth(start)) - 1,
-    last: Math.max(currentServiceYear, serviceYearOfMonth(start)) + 1,
+    first: Math.min(currentServiceYear, serviceYearOf(start)) - 1,
+    last: Math.max(currentServiceYear, serviceYearOf(start)) + 1,
   }))
   const [todayDirection, setTodayDirection] = useState<
     'visible' | 'up' | 'down'
@@ -186,8 +187,7 @@ export default function useScheduleCalendar({
     if (now - lastTick.current < MIN_TICK_INTERVAL_MS) return
     lastTick.current = now
     // A Service Year border lands harder than a month border.
-    if (serviceYearOfMonth(previous) !== serviceYearOfMonth(month))
-      Haptics.light()
+    if (serviceYearOf(previous) !== serviceYearOf(month)) Haptics.light()
     else Haptics.selection()
   }
 
@@ -289,11 +289,11 @@ export default function useScheduleCalendar({
     month: CalendarMonth,
     animated: boolean
   ): Promise<void> => {
-    const next = rangeAround(range, serviceYearOfMonth(month))
+    const next = rangeAround(range, serviceYearOf(month))
     if (next.first === range.first && next.last === range.last)
       return scrollToMonth(month, animated)
     // Always a new range, so a render follows to run the jump.
-    setRange((current) => rangeAround(current, serviceYearOfMonth(month)))
+    setRange((current) => rangeAround(current, serviceYearOf(month)))
     return new Promise((landed) => {
       pendingJump.current = {
         month,
@@ -390,7 +390,7 @@ export default function useScheduleCalendar({
     if (viewRef.current === 'year') return
     const target =
       serviceYear === undefined ||
-      serviceYear === serviceYearOfMonth(focusedRef.current)
+      serviceYear === serviceYearOf(focusedRef.current)
         ? focusedRef.current
         : { year: serviceYear, month: 8 }
     if (source !== 'toggle') Haptics.light()
@@ -400,10 +400,10 @@ export default function useScheduleCalendar({
     const tile = yearRef.current?.monthRect(target)
     // Cut short before the list lands, the zoom goes back the way it came.
     const month = monthLanding ? landingRect(target) : monthRectInStage(target)
-    if (serviceYearOfMonth(target) !== yearServiceYear) zoom.hold('year')
+    if (serviceYearOf(target) !== yearServiceYear) zoom.hold('year')
     zoom.zoomTo('year', tile && month ? { month, tile } : null)
     setYearFocusedMonth(focusedRef.current)
-    setYearServiceYear(serviceYearOfMonth(target))
+    setYearServiceYear(serviceYearOf(target))
     setView('year')
     analytics.capture('schedule_year_view_opened', { source })
   }
@@ -459,7 +459,7 @@ export default function useScheduleCalendar({
 
   /** The Year view's month for a toggle back to Month. */
   const monthForYearView = (): CalendarMonth => {
-    if (serviceYearOfMonth(focusedRef.current) === yearServiceYear)
+    if (serviceYearOf(focusedRef.current) === yearServiceYear)
       return focusedRef.current
     if (yearServiceYear === currentServiceYear)
       return { year: thisYear, month: thisMonthIndex }

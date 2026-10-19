@@ -19,7 +19,7 @@ import { serviceYearFocusMonth } from '@/lib/roleHistory'
 import useServiceReport from '@/stores/serviceReport'
 import { usePreferences } from '@/stores/preferences'
 import { getTotalMinutesForServiceYear } from '@/lib/serviceReport'
-import { getServiceYearReports } from '@/lib/serviceYear'
+import { getServiceYearReports, serviceYearBounds } from '@/lib/serviceYear'
 import {
   getEffectiveMilestones,
   getMilestoneHitState,
@@ -230,16 +230,8 @@ const YearMilestoneCard = ({
   }))
 
   // Service-year span: Sep 1 of `serviceYear` → Aug 31 of `serviceYear + 1`.
-  const serviceYearStart = useMemo(
-    () => moment().month(8).year(serviceYear).startOf('month'),
-    [serviceYear]
-  )
-  const serviceYearEnd = useMemo(
-    () =>
-      moment()
-        .month(7)
-        .year(serviceYear + 1)
-        .endOf('month'),
+  const { start: serviceYearStart, end: serviceYearEnd } = useMemo(
+    () => serviceYearBounds(serviceYear),
     [serviceYear]
   )
 

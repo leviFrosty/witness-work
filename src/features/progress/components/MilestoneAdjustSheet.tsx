@@ -20,7 +20,10 @@ import { formatPlainNumber, localizeAppDigits } from '@/lib/numbers'
 import { usePreferences } from '@/stores/preferences'
 import useServiceReport from '@/stores/serviceReport'
 import { getTotalMinutesForServiceYear } from '@/lib/serviceReport'
-import { getServiceYearReports } from '@/lib/serviceYear'
+import {
+  getServiceYearFromDate,
+  getServiceYearReports,
+} from '@/lib/serviceYear'
 import {
   DEFAULT_MILESTONES_BY_PUBLISHER,
   getMilestoneHitState,
@@ -64,17 +67,6 @@ const sanitizeDraft = (values: number[], annualGoalHours: number): number[] => {
   }
   cleaned.sort((a, b) => a - b)
   return Array.from(new Set(cleaned))
-}
-
-/**
- * Determines the service-year end year that matches the rest of the app's
- * convention: months Sep–Dec belong to `year + 1`, Jan–Aug to `year`.
- */
-const currentServiceYearEnd = (): number => {
-  const now = new Date()
-  const month = now.getMonth()
-  const year = now.getFullYear()
-  return month < 8 ? year : year + 1
 }
 
 const MilestoneAdjustSheet = ({ visible, onClose }: Props) => {
@@ -135,7 +127,7 @@ const MilestoneAdjustSheet = ({ visible, onClose }: Props) => {
   // store sums every year ever logged.
   const completedMinutes = useMemo(() => {
     if (annualGoalHours <= 0) return 0
-    const serviceYearStart = currentServiceYearEnd() - 1
+    const serviceYearStart = getServiceYearFromDate(new Date())
     const serviceYearReports = getServiceYearReports(
       serviceReports,
       serviceYearStart

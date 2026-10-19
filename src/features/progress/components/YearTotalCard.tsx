@@ -7,7 +7,11 @@ import useRoleForMonth from '@/hooks/useRoleForMonth'
 import useServiceReport from '@/stores/serviceReport'
 import { usePreferences } from '@/stores/preferences'
 import { getTotalMinutesForServiceYear } from '@/lib/serviceReport'
-import { getServiceYearReports } from '@/lib/serviceYear'
+import {
+  getServiceYearReports,
+  isInServiceYear,
+  serviceYearBounds,
+} from '@/lib/serviceYear'
 import { useFormattedMinutes } from '@/lib/minutes'
 import i18n from '@/lib/locales'
 import { formatPlainNumber } from '@/lib/numbers'
@@ -61,18 +65,9 @@ const YearTotalCard = ({ year, categoriesSlot }: YearTotalCardProps) => {
   const totalDisplay = useFormattedMinutes(totalMinutes)
   const isDecimal = timeDisplayFormat === 'decimal'
 
-  const serviceYearStart = moment().month(8).year(serviceYear).startOf('month')
-  const serviceYearEnd = moment()
-    .month(7)
-    .year(serviceYear + 1)
-    .endOf('month')
+  const { end: serviceYearEnd } = serviceYearBounds(serviceYear)
   const now = moment()
-  const isCurrentServiceYear = now.isBetween(
-    serviceYearStart,
-    serviceYearEnd,
-    'day',
-    '[]'
-  )
+  const isCurrentServiceYear = isInServiceYear(now, serviceYear)
   const daysRemaining = isCurrentServiceYear
     ? Math.max(0, serviceYearEnd.diff(now, 'days'))
     : 0

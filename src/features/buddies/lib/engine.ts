@@ -209,6 +209,12 @@ export type BuddiesEngineDeps = {
    * The same on every device, so their cancels are one event and one alert.
    */
   withdrawnAt?: (key: string) => number | undefined
+  /**
+   * When the Plan or Follow-up behind a spec key ends, while the User still has
+   * it, shared or not (undefined once it's deleted). One whose only invitees
+   * are gone leaves `getShares`, but still says they never got it.
+   */
+  shareEndsAt?: (key: string) => number | undefined
   /** This device's platform, told to new buddies for pairing analytics. */
   platform?: BuddyPlatform
   /**
@@ -2313,7 +2319,11 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     const specs = deps.getShares().filter((spec) => spec.expiresAt > now)
     resolveJoinRequests(specs)
     const state = store.getState()
-    if (specs.length === 0 && Object.keys(state.outgoingShares).length === 0)
+    if (
+      specs.length === 0 &&
+      Object.keys(state.outgoingShares).length === 0 &&
+      Object.keys(state.unsentShares).length === 0
+    )
       return
     const me = await identity()
     const activeBuddy = (inboxId: string) =>
@@ -2528,19 +2538,25 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
           : null
       )
     }
-    // A Plan or Follow-up that's gone, or over, has nothing left to tell.
-    const unsentKeys = Object.keys(store.getState().unsentShares)
-    const over = unsentKeys.filter(
-      (key) => !specs.some((spec) => spec.key === key && spec.endsAt > now)
-    )
-    if (over.length > 0)
-      store.setState((current) => ({
-        unsentShares: Object.fromEntries(
-          Object.entries(current.unsentShares).filter(
-            ([key]) => !over.includes(key)
-          )
-        ),
-      }))
+    // A Plan or Follow-up that's gone, or over, has nothing left to tell. One
+    // that no longer invites anyone, because the buddies it invited are gone
+    // (`forgetBuddiesInData`), isn't shared any more, but still says it never
+    // reached them, until it's over or they're a buddy again.
+    const unsentChanges: [string, string, UnsentShare | null][] = []
+    for (const [key, recipients] of Object.entries(
+      store.getState().unsentShares
+    )) {
+      const spec = specs.find((candidate) => candidate.key === key)
+      const endsAt = spec ? spec.endsAt : deps.shareEndsAt?.(key)
+      for (const [inboxId, entry] of Object.entries(recipients))
+        if (
+          endsAt === undefined ||
+          endsAt <= now ||
+          (!spec && (entry.reason !== 'gone' || activeBuddy(inboxId)))
+        )
+          unsentChanges.push([key, inboxId, null])
+    }
+    if (unsentChanges.length > 0) setUnsent(unsentChanges)
     for (const reason of ['suspended', 'gone'] as const)
       if (notSent[reason].size > 0)
         deps.onSharesNotSent?.({ reason, names: [...notSent[reason]] })
@@ -3886,6 +3902,9 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     }
     // Another of this User's devices ended these pairings.
     const endedHere = state.buddies.filter(ended)
+    // Invitations of this device's that never reached them say so, while
+    // they're still listed to name. Quietly: the User may have ended it there.
+    for (const buddy of endedHere) noteUnsentTo(buddy.inboxId)
     const buddies = [
       ...state.buddies
         .filter((local) => !ended(local))

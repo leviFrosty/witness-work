@@ -47,6 +47,7 @@ import {
   buildOutgoingShares,
   followUpShareDetails,
   planShareKey,
+  shareEndsAt,
   shareRecipientsKey,
 } from '@/features/buddies/lib/shares'
 import {
@@ -1756,6 +1757,267 @@ describe('shared Plans and Follow-ups', () => {
       await levi.engine.publishShares()
       expect(putEvents()).toBe(before)
       expect(notSent).toHaveLength(1)
+    })
+
+    describe('once the app takes the gone buddy off the Plan', () => {
+      /**
+       * Levi, paired with Anna and Mom, wired the way the app wires him: his
+       * shares come from his Plans (`buildOutgoingShares`), and a buddy who's
+       * gone is taken off them (`forgetBuddiesInData`, as `BuddiesRuntime` does
+       * when the roster drops them).
+       */
+      async function wiredLevi(invited: ('anna' | 'mom')[]) {
+        const env = setup()
+        const notSent: { reason: string; names: string[] }[] = []
+        // Saturday 10:00 for two hours, local time.
+        let dayPlans: DayPlan[] = [
+          {
+            ...dayPlan('2026-09-26', 120, 600),
+            id: 'sat',
+            title: 'Cart witnessing',
+          },
+        ]
+        const extra = {
+          getShares: () =>
+            buildOutgoingShares({
+              dayPlans,
+              visits: [],
+              contacts: [],
+              now: env.now(),
+            }),
+          shareEndsAt: (shareKey: string) =>
+            shareEndsAt(shareKey, { dayPlans, visits: [] }),
+          onSharesNotSent: (report: { reason: string; names: string[] }) =>
+            notSent.push(report),
+        }
+        const levi = env.user('Levi', undefined, undefined, extra)
+        const anna = env.user('Anna')
+        const mom = env.user('Mom')
+        await pair(levi, anna)
+        await pair(levi, mom)
+        const ids = { anna: anna.inboxId, mom: mom.inboxId }
+        dayPlans = [{ ...dayPlans[0], buddies: invited.map((who) => ids[who]) }]
+        let roster = new Set(
+          levi.store.getState().buddies.map((b) => b.inboxId)
+        )
+        /** What `BuddiesRuntime` does after the roster changes. */
+        const forgetGone = (device = levi) => {
+          const current = new Set(
+            device.store.getState().buddies.map((b) => b.inboxId)
+          )
+          const removed = new Set([...roster].filter((id) => !current.has(id)))
+          roster = current
+          const changes = forgetBuddiesInData(dayPlans, [], removed)
+          dayPlans = dayPlans.map((plan) => ({
+            ...plan,
+            ...changes.dayPlans.find((change) => change.id === plan.id),
+          }))
+        }
+        /** A new engine on what Levi's phone saved, as after a relaunch. */
+        const relaunch = () => {
+          const saved = JSON.parse(JSON.stringify(levi.store.getState()))
+          const next = env.user('Levi', undefined, levi.seed, extra)
+          next.store.setState(saved)
+          return next
+        }
+        const planInvites = () => dayPlans[0].buddies ?? []
+        return {
+          ...env,
+          /** Another of Levi's devices, on his account. */
+          levisIpad: () => env.user('Levi', undefined, levi.seed),
+          levi,
+          anna,
+          mom,
+          notSent,
+          forgetGone,
+          relaunch,
+          planInvites,
+          deletePlan: () => {
+            dayPlans = []
+          },
+        }
+      }
+      const goneRow = {
+        reason: 'gone',
+        name: 'Anna',
+      }
+
+      it.each([
+        ['her alone', ['anna'] as const],
+        ['her and another buddy', ['anna', 'mom'] as const],
+      ])(
+        'keeps "Not sent" when a sync finds she left before it went (offline save), inviting %s',
+        async (_label, invited) => {
+          const {
+            levi,
+            anna,
+            mom,
+            notSent,
+            forgetGone,
+            relaunch,
+            planInvites,
+          } = await wiredLevi([...invited])
+          // Saved offline: nothing went out before Anna left.
+          levi.setEnabled(false)
+          await anna.engine.removeBuddy(levi.inboxId)
+          await levi.engine.sync().catch(() => undefined)
+          expect(notSent).toEqual([{ reason: 'gone', names: ['Anna'] }])
+          forgetGone()
+          expect(planInvites()).not.toContain(anna.inboxId)
+
+          // Back online: the publish that follows, and later syncs.
+          levi.setEnabled(true)
+          await levi.engine.sync()
+          await levi.engine.publishShares()
+          await levi.engine.sync()
+          expect(levi.store.getState().unsentShares[key]).toMatchObject({
+            [anna.inboxId]: goneRow,
+          })
+          if (invited.length > 1) {
+            await mom.engine.sync()
+            expect(
+              Object.keys(mom.store.getState().incomingShares)
+            ).toHaveLength(1)
+          }
+
+          // And after a relaunch.
+          const relaunched = relaunch()
+          await relaunched.engine.sync()
+          await relaunched.engine.publishShares()
+          expect(relaunched.store.getState().unsentShares[key]).toMatchObject({
+            [anna.inboxId]: goneRow,
+          })
+          expect(notSent).toHaveLength(1)
+        }
+      )
+
+      it.each([
+        ['her alone', ['anna'] as const],
+        ['her and another buddy', ['anna', 'mom'] as const],
+      ])(
+        'keeps "Not sent" when the relay says she left as it went (gone), inviting %s',
+        async (_label, invited) => {
+          const { levi, anna, notSent, forgetGone, planInvites } =
+            await wiredLevi([...invited])
+          // Anna ended it; Levi's phone hasn't synced since.
+          await anna.engine.removeBuddy(levi.inboxId)
+          await levi.engine.publishShares()
+          expect(notSent).toEqual([{ reason: 'gone', names: ['Anna'] }])
+          forgetGone()
+          expect(planInvites()).not.toContain(anna.inboxId)
+
+          await levi.engine.publishShares()
+          await levi.engine.sync()
+          await levi.engine.publishShares()
+          expect(levi.store.getState().unsentShares[key]).toMatchObject({
+            [anna.inboxId]: goneRow,
+          })
+          expect(notSent).toHaveLength(1)
+        }
+      )
+
+      it.each([
+        ['her alone', ['anna'] as const],
+        ['her and another buddy', ['anna', 'mom'] as const],
+      ])(
+        'keeps "Not sent" when her inbox was gone (not_found) and a sync later drops her, inviting %s',
+        async (_label, invited) => {
+          const { levi, anna, fake, notSent, forgetGone, relaunch } =
+            await wiredLevi([...invited])
+          // Anna deleted her Buddies data: she left Levi's inbox, then hers
+          // went. Levi's phone sends before a sync tells it.
+          await anna.engine.removeBuddy(levi.inboxId)
+          fake.inboxes.delete(anna.inboxId)
+          await levi.engine.publishShares()
+          expect(notSent).toEqual([{ reason: 'gone', names: ['Anna'] }])
+          expect(levi.store.getState().unsentShares[key]).toMatchObject({
+            [anna.inboxId]: goneRow,
+          })
+
+          // The roster sync drops her, and the app takes her off the Plan.
+          await levi.engine.sync()
+          forgetGone()
+          await levi.engine.publishShares()
+          await levi.engine.sync()
+          expect(levi.store.getState().unsentShares[key]).toMatchObject({
+            [anna.inboxId]: goneRow,
+          })
+          const relaunched = relaunch()
+          await relaunched.engine.publishShares()
+          expect(relaunched.store.getState().unsentShares[key]).toMatchObject({
+            [anna.inboxId]: goneRow,
+          })
+          expect(notSent).toHaveLength(1)
+        }
+      )
+
+      it("keeps it when Levi's other phone saw her leave first (offline save)", async () => {
+        const {
+          levi,
+          anna,
+          notSent,
+          forgetGone,
+          levisIpad: ipad,
+        } = await wiredLevi(['anna'])
+        const levisIpad = ipad()
+        await levisIpad.engine.sync()
+        // Levi's phone saved the Plan offline. Anna leaves, and Levi's iPad
+        // syncs first: the roster it saves says the pairing ended.
+        levi.setEnabled(false)
+        await anna.engine.removeBuddy(levi.inboxId)
+        await levisIpad.engine.sync()
+        const listsAnna = (device: typeof levi) =>
+          device.store
+            .getState()
+            .buddies.some((buddy) => buddy.inboxId === anna.inboxId)
+        expect(listsAnna(levisIpad)).toBe(false)
+        await levi.engine.sync().catch(() => undefined)
+        expect(listsAnna(levi)).toBe(false)
+        expect(levi.store.getState().unsentShares[key]).toMatchObject({
+          [anna.inboxId]: goneRow,
+        })
+        expect(notSent.length).toBeLessThanOrEqual(1)
+
+        forgetGone()
+        levi.setEnabled(true)
+        await levi.engine.sync()
+        expect(levi.store.getState().unsentShares[key]).toMatchObject({
+          [anna.inboxId]: goneRow,
+        })
+      })
+
+      it.each(['over', 'deleted'])(
+        'lets it go once the Plan is %s',
+        async (end) => {
+          const { levi, anna, advance, forgetGone, deletePlan } =
+            await wiredLevi(['anna'])
+          await anna.engine.removeBuddy(levi.inboxId)
+          await levi.engine.publishShares()
+          forgetGone()
+          await levi.engine.publishShares()
+          expect(levi.store.getState().unsentShares[key]).toBeDefined()
+
+          // Saturday's Plan has ended, or Levi deleted it.
+          if (end === 'over') advance(4 * 24 * HOUR)
+          else deletePlan()
+          await levi.engine.publishShares()
+          expect(levi.store.getState().unsentShares).toEqual({})
+        }
+      )
+
+      it("lets it go once they're buddies again", async () => {
+        const { levi, anna, forgetGone } = await wiredLevi(['anna'])
+        await anna.engine.removeBuddy(levi.inboxId)
+        await levi.engine.publishShares()
+        forgetGone()
+        await levi.engine.publishShares()
+        expect(levi.store.getState().unsentShares[key]).toBeDefined()
+
+        await pair(levi, anna)
+        forgetGone()
+        await levi.engine.publishShares()
+        expect(levi.store.getState().unsentShares).toEqual({})
+      })
     })
   })
 

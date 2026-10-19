@@ -25,6 +25,7 @@ import { createRelayClient, isRelayError } from '@/features/buddies/lib/relay'
 import { runRelayCheck } from '@/features/buddies/lib/relayCheck'
 import {
   buildOutgoingShares,
+  shareEndsAt,
   shareWithdrawnAt,
 } from '@/features/buddies/lib/shares'
 import {
@@ -153,6 +154,11 @@ const engine = createBuddiesEngine({
       deletedVisits: deletedConversations,
     })
   },
+  shareEndsAt: (key) =>
+    shareEndsAt(key, {
+      dayPlans: useServiceReport.getState().dayPlans,
+      visits: useConversations.getState().conversations,
+    }),
   platform: Platform.OS === 'android' ? 'android' : 'ios',
   // One per completed pairing on each side; `role: inviter` counts pairings.
   onPaired: ({ role, buddyPlatform }) =>

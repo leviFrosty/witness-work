@@ -26,6 +26,7 @@ import {
   CONTACT_SHARE_LINK,
 } from '@/features/contacts/lib/contactShareLink'
 import { validateContactImport } from '@/features/contacts/lib/contactImport'
+import { logger } from '@/lib/logger'
 import { Contact } from '@/types/contact'
 import { Visit } from '@/types/visit'
 
@@ -125,6 +126,23 @@ describe('isContactShareLink / parseContactShareLink URL matching', () => {
     expect(url.pathname).toBe(PATH)
     expect(url.search).toBe('')
     expect(samplePayload).toMatch(/^[A-Za-z0-9_-]+$/)
+  })
+
+  it("never logs a link's fragment or payload", () => {
+    vi.mocked(logger.log).mockClear()
+    const secret = '1AbCdEfGhIjKlMnOpQrStUvWxYz0123456789'
+    const links = [
+      `${ORIGIN_PROD}/b#${secret}`,
+      `${ORIGIN_PROD}/accounts/handoff#${secret}`,
+      `${ORIGIN_PROD}/h#${secret}`,
+      `witnesswork://import-contact/${secret}`,
+      `not a url ${secret}`,
+    ]
+    for (const link of links) isContactShareLink(link)
+    const logged = JSON.stringify(vi.mocked(logger.log).mock.calls)
+    expect(vi.mocked(logger.log)).toHaveBeenCalled()
+    expect(logged).not.toContain(secret)
+    expect(logged).not.toContain('#1')
   })
 
   it('recognizes the https universal-link form', () => {

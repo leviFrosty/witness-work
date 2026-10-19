@@ -9,6 +9,7 @@ import {
   newestFirst,
 } from '@/features/contacts/lib/contactShareFormat'
 import { logger } from '@/lib/logger'
+import { redactLink } from '@/lib/redactLink'
 
 /**
  * Contact-share universal link encoding.
@@ -305,7 +306,7 @@ function extractPayload(url: string): string | null {
     return null
   } catch (error) {
     logger.log('[contactShareLink.extract] URL parse failed:', {
-      input: url,
+      input: redactLink(url),
       error: String(error),
     })
     return null
@@ -335,7 +336,9 @@ export function parseContactShareLink(url: string): unknown | null {
 export function isContactShareLink(url: string): boolean {
   const payload = extractPayload(url)
   if (!payload) {
-    logger.log('[contactShareLink.isShareLink] no match:', { input: url })
+    logger.log('[contactShareLink.isShareLink] no match:', {
+      input: redactLink(url),
+    })
     return false
   }
   return true

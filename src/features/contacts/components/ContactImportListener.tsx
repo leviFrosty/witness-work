@@ -12,6 +12,7 @@ import useConversations from '@/stores/conversationStore'
 import { navigationRef } from '@/features/contacts/lib/linking'
 import i18n from '@/lib/locales'
 import { logger } from '@/lib/logger'
+import { redactLink } from '@/lib/redactLink'
 import { useIsTakingOver, useTakeoverHold } from '@/hooks/useTakeoverTurn'
 import { usePreferences } from '@/stores/preferences'
 
@@ -51,7 +52,7 @@ export default function ContactImportListener() {
         .then((initial) => {
           logger.log(
             '[ContactImportListener] getInitialURL resolved =',
-            initial
+            redactLink(initial)
           )
           queue(initial)
         })
@@ -60,7 +61,10 @@ export default function ContactImportListener() {
         })
     }
     const sub = Linking.addEventListener('url', ({ url }) => {
-      logger.log('[ContactImportListener] url event fired, url =', url)
+      logger.log(
+        '[ContactImportListener] url event fired, url =',
+        redactLink(url)
+      )
       queue(url)
     })
     return () => sub.remove()

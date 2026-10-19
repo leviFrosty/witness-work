@@ -20,6 +20,8 @@ import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
 import i18n from '@/lib/locales'
 
 import RootHeader from '@/components/RootHeader'
+import ScrollAwayHeader from '@/components/ui/ScrollAwayHeader'
+import useHideBarsOnScroll from '@/hooks/useHideBarsOnScroll'
 import HeaderPillButton from '@/components/ui/HeaderPillButton'
 import { RootStackNavigation } from '@/types/rootStack'
 
@@ -75,6 +77,14 @@ const ProgressScreen = ({ route, navigation }: Props) => {
     if (destination === 'mileage') rootNavigation.navigate('Mileage')
     else changeTab(destination)
   }
+  // The title and its report button tuck away as a tab scrolls; the tab and
+  // month pickers stay, since they say what's showing.
+  // A tab that opens at its top can't be scrolled up to bring them back.
+  // Editing the cards keeps them, since the header holds Done.
+  const bars = useHideBarsOnScroll({
+    enabled: !cardEditing.editing,
+    resetKey: activeTab,
+  })
 
   // Sync route params → local state when navigation updates them.
   useEffect(() => {
@@ -150,54 +160,56 @@ const ProgressScreen = ({ route, navigation }: Props) => {
             },
           ]}
         />
-        <RootHeader
-          title={i18n.t('Progress')}
-          contentStyle={{
-            maxWidth: isWide ? contentMaxWidth : 720,
-            paddingHorizontal: isWide ? 24 : 15,
-          }}
-          actions={
-            cardEditing.editing ? (
-              // As on the Home Screen: add on one side of the header, Done on
-              // the other.
-              <>
-                <HeaderPillButton
-                  icon={PlusIcon}
-                  label={i18n.t('progressCards.addCards')}
-                  onPress={() => cardEditing.setAdding(true)}
-                  compact='auto'
-                />
-                <HeaderPillButton
-                  icon={CheckIcon}
-                  label={i18n.t('done')}
-                  onPress={finishEditing}
-                />
-              </>
-            ) : (
-              <>
-                {activeTab === 'month' ? (
+        <ScrollAwayHeader hidden={bars.hidden}>
+          <RootHeader
+            title={i18n.t('Progress')}
+            contentStyle={{
+              maxWidth: isWide ? contentMaxWidth : 720,
+              paddingHorizontal: isWide ? 24 : 15,
+            }}
+            actions={
+              cardEditing.editing ? (
+                // As on the Home Screen: add on one side of the header, Done on
+                // the other.
+                <>
                   <HeaderPillButton
-                    icon={LayoutGridIcon}
-                    label={i18n.t('progressCards.editCards')}
-                    onPress={() => cardEditing.start('header')}
-                    compact
+                    icon={PlusIcon}
+                    label={i18n.t('progressCards.addCards')}
+                    onPress={() => cardEditing.setAdding(true)}
+                    compact='auto'
                   />
-                ) : null}
-                <HeaderPillButton
-                  icon={FileTextIcon}
-                  label={i18n.t('viewReport')}
-                  onPress={() => {
-                    rootNavigation.navigate('ServiceReportView', {
-                      month,
-                      year,
-                    })
-                  }}
-                  compact={isWide ? false : 'auto'}
-                />
-              </>
-            )
-          }
-        />
+                  <HeaderPillButton
+                    icon={CheckIcon}
+                    label={i18n.t('done')}
+                    onPress={finishEditing}
+                  />
+                </>
+              ) : (
+                <>
+                  {activeTab === 'month' ? (
+                    <HeaderPillButton
+                      icon={LayoutGridIcon}
+                      label={i18n.t('progressCards.editCards')}
+                      onPress={() => cardEditing.start('header')}
+                      compact
+                    />
+                  ) : null}
+                  <HeaderPillButton
+                    icon={FileTextIcon}
+                    label={i18n.t('viewReport')}
+                    onPress={() => {
+                      rootNavigation.navigate('ServiceReportView', {
+                        month,
+                        year,
+                      })
+                    }}
+                    compact={isWide ? false : 'auto'}
+                  />
+                </>
+              )
+            }
+          />
+        </ScrollAwayHeader>
         <View
           style={{
             paddingTop: isWide ? 9 : 0,
@@ -280,12 +292,14 @@ const ProgressScreen = ({ route, navigation }: Props) => {
             adding={cardEditing.adding}
             onAddingChange={cardEditing.setAdding}
             onNavigate={openCardDestination}
+            scrollBars={bars.scrollProps}
           />
         ) : null}
         {activeTab === 'year' ? (
           <ProgressYearTab
             year={serviceYear}
             onAdjustMilestones={() => setMilestoneSheetOpen(true)}
+            scrollBars={bars.scrollProps}
             onMonthPress={(m, y) => {
               setMonth(m)
               setYear(y)
@@ -295,6 +309,7 @@ const ProgressScreen = ({ route, navigation }: Props) => {
         ) : null}
         {activeTab === 'allTime' ? (
           <ProgressAllTimeTab
+            scrollBars={bars.scrollProps}
             onYearPress={(endYear) => {
               setYear(endYear)
               changeTab('year')

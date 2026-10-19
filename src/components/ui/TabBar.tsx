@@ -16,6 +16,7 @@ import { GlassView, isLiquidGlassAvailable } from 'expo-glass-effect'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Animated, {
   useAnimatedStyle,
+  useReducedMotion,
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated'
@@ -36,6 +37,8 @@ import SidebarToggle from '@/components/ui/SidebarToggle'
 import SidebarResizeHandle from '@/components/ui/SidebarResizeHandle'
 import PointerTooltip from '@/components/ui/PointerTooltip'
 import { refreshCurrentLocation } from '@/lib/currentLocation'
+import { useTabBarHidden } from '@/stores/tabBarVisibility'
+import { BARS_TRANSITION_MS } from '@/components/ui/ScrollAwayHeader'
 
 const CAPSULE_HEIGHT = 52
 const HORIZONTAL_MARGIN = 12
@@ -45,6 +48,8 @@ const SIDEBAR_INSET = 12
 const SIDEBAR_RADIUS = 28
 const SIDEBAR_PADDING = 12
 const SIDEBAR_CONTROL_RADIUS = SIDEBAR_RADIUS - SIDEBAR_PADDING
+/** Clears the bar's shadow too as it slides away. */
+const HIDDEN_OVERSHOOT = 24
 
 /**
  * Vertical space reserved above the safe-area bottom inset for the floating tab
@@ -70,6 +75,10 @@ const TabBar = ({ state, descriptors, shortcutHints, ...props }: Props) => {
   const isDark = theme.colors.background === '#121212'
   const { hasSidebar, sidebarVisible, sidebarCompact, sidebarWidth } =
     useAdaptiveLayout({ liveResize: true })
+  // Scrolling down or exploring the map slides the floating bar away; the
+  // sidebar always stays.
+  const hidden = useTabBarHidden()
+  const reduceMotion = useReducedMotion()
   // Drags write this on the UI thread; React only sets it from saved changes.
   const liveSidebarWidth = useSharedValue(sidebarWidth)
   const sidebarWidthStyle = useAnimatedStyle(() => ({
@@ -553,8 +562,10 @@ const TabBar = ({ state, descriptors, shortcutHints, ...props }: Props) => {
 
   return (
     <>
-      <View
-        pointerEvents='box-none'
+      <Animated.View
+        pointerEvents={hidden ? 'none' : 'box-none'}
+        accessibilityElementsHidden={hidden}
+        importantForAccessibility={hidden ? 'no-hide-descendants' : 'auto'}
         style={{
           position: 'absolute',
           left: HORIZONTAL_MARGIN,
@@ -564,11 +575,21 @@ const TabBar = ({ state, descriptors, shortcutHints, ...props }: Props) => {
           flexDirection: 'row',
           alignItems: 'center',
           gap: PILL_GAP,
+          transform: [
+            {
+              translateY: hidden
+                ? CAPSULE_HEIGHT + insets.bottom + HIDDEN_OVERSHOOT
+                : 0,
+            },
+          ],
+          transitionProperty: 'transform',
+          transitionDuration: reduceMotion ? 0 : BARS_TRANSITION_MS,
+          transitionTimingFunction: 'ease-in-out',
         }}
       >
         {mainPill}
         {accessoryPill}
-      </View>
+      </Animated.View>
       <QuickActionSheet
         navigation={
           props.navigation as unknown as RootStackNavigation &

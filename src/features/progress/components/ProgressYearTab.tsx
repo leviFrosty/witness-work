@@ -2,6 +2,7 @@ import { CalendarCheck as TodayIcon } from 'lucide-react-native'
 import { useMemo, useState } from 'react'
 import { StyleSheet, View } from 'react-native'
 import AdaptiveSplitScrollView from '@/components/ui/layout/AdaptiveSplitScrollView'
+import type { HideBarsScrollProps } from '@/hooks/useHideBarsOnScroll'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import moment from 'moment'
 
@@ -52,6 +53,8 @@ interface ProgressYearTabProps {
   onAdjustMilestones: () => void
   /** Invoked when the user taps a month row — parent switches to Month tab. */
   onMonthPress: (month: number, year: number) => void
+  /** Tucks the screen's header and tab bar away; see `useHideBarsOnScroll`. */
+  scrollBars?: HideBarsScrollProps
 }
 
 const CurrentMonthIcon = () => {
@@ -353,6 +356,7 @@ const ProgressYearTab = ({
   year,
   onAdjustMilestones,
   onMonthPress,
+  scrollBars,
 }: ProgressYearTabProps) => {
   const theme = useTheme()
   const insets = useSafeAreaInsets()
@@ -391,6 +395,7 @@ const ProgressYearTab = ({
 
   return (
     <AdaptiveSplitScrollView
+      scrollBars={scrollBars}
       paddingTop={0}
       paddingBottom={insets.bottom + (hasSidebar ? 30 : 100)}
       leading={

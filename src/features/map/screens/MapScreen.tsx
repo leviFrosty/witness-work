@@ -45,6 +45,7 @@ import MapCarouselCard from '@/features/map/components/MapCarouselCard'
 import * as Location from 'expo-location'
 import * as Crypto from 'expo-crypto'
 import { usePreferences } from '@/stores/preferences'
+import { useTabBarHidden } from '@/stores/tabBarVisibility'
 import Button from '@/components/ui/Button'
 import Empty from '@/components/ui/Empty'
 import MapEmptyState from '@/features/map/components/MapEmptyState'
@@ -92,8 +93,9 @@ import { alignInput, forwardSign, isRtlLayout } from '@/lib/direction'
 
 const liquidGlass = isLiquidGlassAvailable()
 
-// Reserved vertical space above the tab bar for Apple Maps' legal/logo
-// attribution, which `mapPadding` lifts up out from behind the carousel.
+// Reserved vertical space above the tab bar (or the safe area, while it's
+// away) for the map's legal/logo attribution, which `mapPadding` lifts up out
+// from behind the carousel.
 const LEGAL_LABEL_HEIGHT = 20
 
 // v4 used the same ease-out curve for gesture settling and ref commands. Its
@@ -145,7 +147,10 @@ const FullMapView = ({
   // Map runs under the floating Contacts header (`topInset`), so size overlays
   // to its own frame.
   const [height, setHeight] = useState(windowHeight)
-  const bottomBarHeight = hasSidebar ? 0 : TAB_BAR_HEIGHT
+  // Exploring slides the tab bar away (see Contacts), and the cards and
+  // controls drop into its room.
+  const tabBarHidden = useTabBarHidden()
+  const bottomBarHeight = hasSidebar || tabBarHidden ? 0 : TAB_BAR_HEIGHT
   const inspectorWidth = 360
   const [inspectorRevealRequest, setInspectorRevealRequest] = useState(0)
   const { colorScheme, mapLayer, set: setPreferences } = usePreferences()
@@ -569,10 +574,10 @@ const FullMapView = ({
   // The parallax layout scales the focused card around its centre, so its top
   // edge sits this far below the carousel's frame.
   const cardTopGap = (CARD_HEIGHT * (1 - parallaxScrollingScale)) / 2
-  // Stowed cards slide off the bottom of the screen, behind the tab bar,
-  // rather than leaving a clipped sliver above it. They never fade: iOS can
-  // stop drawing glass for good under a view that sat at opacity 0 while the
-  // app was backgrounded or the tab left, so the cards came back see-through.
+  // Stowed cards slide off the bottom of the screen rather than leaving a
+  // clipped sliver above it. They never fade: iOS can stop drawing glass for
+  // good under a view that sat at opacity 0 while the app was backgrounded or
+  // the tab left, so the cards came back see-through.
   const stowDistance = mapCardBottom + CARD_HEIGHT - cardTopGap
   /** How far a drag down has to go to stow the cards, short of a flick. */
   const stowSwipeDistance = (CARD_HEIGHT - cardTopGap) / 6
@@ -736,13 +741,15 @@ const FullMapView = ({
   }
 
   const renderEmptyState = () => (
-    <View
+    <Animated.View
       pointerEvents='box-none'
       onLayout={(e) => setEmptyStateHeight(e.nativeEvent.layout.height)}
       style={{
         position: 'absolute',
         ...emptyCardPlacement,
         alignItems: 'center',
+        transitionProperty: 'bottom',
+        ...STOW_TRANSITION,
       }}
     >
       <View
@@ -785,7 +792,7 @@ const FullMapView = ({
           />
         </ScrollView>
       </View>
-    </View>
+    </Animated.View>
   )
 
   return (
@@ -837,10 +844,13 @@ const FullMapView = ({
                       right: inspectorRight,
                       left: inspectorLeft,
                       bottom:
-                        insets.bottom +
-                        (Platform.OS === 'android'
-                          ? bottomBarHeight
-                          : bottomBarHeight / 4),
+                        Platform.OS === 'android'
+                          ? insets.bottom + bottomBarHeight
+                          : // Apple Maps adds the safe area itself, so with
+                            // the tab bar gone its label sits right on it.
+                            tabBarHidden
+                            ? 0
+                            : insets.bottom + bottomBarHeight / 4,
                     }
               }
               style={{ height: '100%', width: '100%' }}
@@ -990,10 +1000,12 @@ const FullMapView = ({
           )}
 
           {mapContactCreation.coordinate ? (
-            <View
+            <Animated.View
               style={{
                 position: 'absolute',
                 bottom: isWide ? bottomOverlayInset + 28 : mapCardBottom,
+                transitionProperty: 'bottom',
+                ...STOW_TRANSITION,
                 left: isWide ? undefined : 0,
                 right: isWide ? 16 : undefined,
                 width: isWide ? inspectorWidth : width,
@@ -1011,15 +1023,17 @@ const FullMapView = ({
                 onCreate={mapContactCreation.createContact}
                 onCancel={mapContactCreation.cancel}
               />
-            </View>
+            </Animated.View>
           ) : !hasMappedContacts ? (
             renderEmptyState()
           ) : visibleContactMarkers.length === 0 ? (
-            <View
+            <Animated.View
               onLayout={(e) => setNoResultsHeight(e.nativeEvent.layout.height)}
               style={{
                 position: 'absolute',
                 bottom: bottomOverlayInset + 4,
+                transitionProperty: 'bottom',
+                ...STOW_TRANSITION,
                 width: isWide ? inspectorWidth : width,
                 right: isWide ? 16 : undefined,
                 padding: 10,
@@ -1069,7 +1083,7 @@ const FullMapView = ({
                   )}
                 />
               </View>
-            </View>
+            </Animated.View>
           ) : isWide ? (
             <Animated.View
               pointerEvents={cardsStowed ? 'none' : 'box-none'}
@@ -1088,7 +1102,7 @@ const FullMapView = ({
                       : 0,
                   },
                 ],
-                transitionProperty: ['transform', 'opacity'],
+                transitionProperty: ['transform', 'opacity', 'bottom'],
                 ...STOW_TRANSITION,
               }}
             >
@@ -1103,13 +1117,15 @@ const FullMapView = ({
               />
             </Animated.View>
           ) : (
-            <View
+            <Animated.View
               pointerEvents='box-none'
               style={{
                 position: 'absolute',
                 bottom: mapCardBottom,
                 width,
                 height: CARD_HEIGHT,
+                transitionProperty: 'bottom',
+                ...STOW_TRANSITION,
               }}
             >
               <GestureDetector gesture={cardsStowGesture}>
@@ -1215,7 +1231,7 @@ const FullMapView = ({
                   </Animated.View>
                 </GestureDetector>
               )}
-            </View>
+            </Animated.View>
           )}
           <View
             style={{

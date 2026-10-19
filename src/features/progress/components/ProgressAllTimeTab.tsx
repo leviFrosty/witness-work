@@ -3,6 +3,7 @@ import { View } from 'react-native'
 import { Clock as ClockIcon } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import AdaptiveSplitScrollView from '@/components/ui/layout/AdaptiveSplitScrollView'
+import type { HideBarsScrollProps } from '@/hooks/useHideBarsOnScroll'
 
 import useServiceReport from '@/stores/serviceReport'
 import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
@@ -29,9 +30,14 @@ import YearByYearList from '@/features/progress/components/YearByYearList'
 interface ProgressAllTimeTabProps {
   /** Invoked when the user taps a year row — parent switches to Year tab. */
   onYearPress: (endYear: number) => void
+  /** Tucks the screen's header and tab bar away; see `useHideBarsOnScroll`. */
+  scrollBars?: HideBarsScrollProps
 }
 
-const ProgressAllTimeTab = ({ onYearPress }: ProgressAllTimeTabProps) => {
+const ProgressAllTimeTab = ({
+  onYearPress,
+  scrollBars,
+}: ProgressAllTimeTabProps) => {
   const theme = useTheme()
   const insets = useSafeAreaInsets()
   const { isWide, hasSidebar } = useAdaptiveLayout()
@@ -79,6 +85,7 @@ const ProgressAllTimeTab = ({ onYearPress }: ProgressAllTimeTabProps) => {
 
   return (
     <AdaptiveSplitScrollView
+      scrollBars={scrollBars}
       leadingFraction={0.42}
       paddingBottom={insets.bottom + (hasSidebar ? 30 : 100)}
       compactPaddingHorizontal={0}

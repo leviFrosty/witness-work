@@ -3,6 +3,7 @@ import { View } from 'react-native'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
 import type { RevealAboveSheet } from '@/hooks/useRevealAboveSheet'
+import type { HideBarsScrollProps } from '@/hooks/useHideBarsOnScroll'
 
 type Props = {
   leading: ReactNode
@@ -15,6 +16,11 @@ type Props = {
   gap?: number
   /** Keeps a view in `trailing` above a day's sheet; see `useRevealAboveSheet`. */
   trailingReveal?: RevealAboveSheet
+  /**
+   * Tucks the screen's header and tab bar away as the single column scrolls;
+   * see `useHideBarsOnScroll`. Wide layouts keep them.
+   */
+  scrollBars?: HideBarsScrollProps
 }
 
 /** Keep reference content visible while browsing records in a wide window. */
@@ -28,6 +34,7 @@ export default function AdaptiveSplitScrollView({
   compactPaddingHorizontal = 15,
   gap = 24,
   trailingReveal,
+  scrollBars,
 }: Props) {
   const { isWide, contentMaxWidth } = useAdaptiveLayout()
 
@@ -35,8 +42,12 @@ export default function AdaptiveSplitScrollView({
     return (
       <KeyboardAwareScrollView
         ref={trailingReveal?.scrollRef}
-        onScroll={trailingReveal?.onScroll}
-        scrollEventThrottle={trailingReveal ? 16 : undefined}
+        {...scrollBars}
+        onScroll={(e) => {
+          trailingReveal?.onScroll(e)
+          scrollBars?.onScroll(e)
+        }}
+        scrollEventThrottle={trailingReveal || scrollBars ? 16 : undefined}
         style={{ flex: 1 }}
         keyboardShouldPersistTaps='handled'
         contentContainerStyle={{

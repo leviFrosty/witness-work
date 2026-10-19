@@ -28,6 +28,7 @@ import useServiceReport from '@/stores/serviceReport'
 import useServiceYearPace from '@/features/progress/hooks/useServiceYearPace'
 import GoalMeterCard from '@/features/plans/components/GoalMeterCard'
 import YearMonthTile from '@/features/plans/components/YearMonthTile'
+import type { HideBarsScrollProps } from '@/hooks/useHideBarsOnScroll'
 import {
   serviceYearDayStatuses,
   type ScheduleDayIndex,
@@ -52,6 +53,8 @@ type Props = {
   index: ScheduleDayIndex
   bottomInset: number
   zoomStyle: AnimatedStyle<ViewStyle>
+  /** Tucks the screen's header and tab bar away; see `useHideBarsOnScroll`. */
+  scrollBars?: HideBarsScrollProps
   onChangeServiceYear: (serviceYear: number) => void
   onPressMonth: (month: CalendarMonth) => void
   editableGoal: (month: CalendarMonth) => boolean
@@ -73,6 +76,7 @@ export default function ScheduleYearView({
   index,
   bottomInset,
   zoomStyle,
+  scrollBars,
   onChangeServiceYear,
   onPressMonth,
   editableGoal,
@@ -199,8 +203,11 @@ export default function ScheduleYearView({
       >
         <ScrollView
           ref={scrollRef}
+          {...scrollBars}
+          scrollsToTop={!!scrollBars}
           onScroll={(e) => {
             scrollY.current = e.nativeEvent.contentOffset.y
+            scrollBars?.onScroll(e)
           }}
           scrollEventThrottle={16}
           contentContainerStyle={{

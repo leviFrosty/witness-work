@@ -18,6 +18,7 @@ import { logger } from '@/lib/logger'
 import { buddiesPushData } from '@/lib/notificationData'
 import useContacts from '@/stores/contactsStore'
 import useConversations from '@/stores/conversationStore'
+import { usePet } from '@/stores/pet'
 import { usePreferences } from '@/stores/preferences'
 import { useProfile } from '@/stores/profile'
 import useServiceReport from '@/stores/serviceReport'
@@ -27,6 +28,7 @@ import { syncBuddyNotifications } from '@/features/buddies/hooks/useBuddyNotific
 
 import {
   buddiesEngine,
+  currentBuddyPet,
   currentBuddyStreak,
 } from '@/features/buddies/lib/buddiesService'
 import { startFallbackPoll, syncSoon } from '@/features/buddies/lib/autoSync'
@@ -44,7 +46,7 @@ import { createLiveInbox } from '@/features/buddies/lib/liveInbox'
 import { registerBuddiesPush } from '@/features/buddies/lib/pushRegistration'
 import { shareRecipientsKey, sharedKeys } from '@/features/buddies/lib/shares'
 import { hasSharedEventEnded } from '@/features/buddies/lib/shareTiming'
-import { Buddy } from '@/features/buddies/lib/state'
+import { Buddy, incomingShareKey } from '@/features/buddies/lib/state'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 import {
   recordLiveEvent,
@@ -95,8 +97,17 @@ function syncLinkedPlans(answered?: ReadonlySet<string>) {
   )
   reconcilingLinkedPlans = true
   try {
-    for (const plan of add) report.addDayPlan(plan)
-    for (const plan of update) report.updateDayPlan(plan)
+    // Only a Plan added for "Going" answered here is the User's own save.
+    for (const plan of add)
+      report.addDayPlan(plan, {
+        automatic: !(
+          plan.buddyShare &&
+          answered?.has(
+            incomingShareKey(plan.buddyShare.from, plan.buddyShare.shareId)
+          )
+        ),
+      })
+    for (const plan of update) report.updateDayPlan(plan, { automatic: true })
     for (const id of remove) report.deleteDayPlan(id)
   } finally {
     reconcilingLinkedPlans = false
@@ -157,7 +168,8 @@ function forgetRemovedBuddies(previous: Buddy[], current: Buddy[]) {
     visits.conversations,
     removed
   )
-  for (const plan of changes.dayPlans) report.updateDayPlan(plan)
+  for (const plan of changes.dayPlans)
+    report.updateDayPlan(plan, { automatic: true })
   for (const visit of changes.visits) visits.updateConversation(visit)
 }
 
@@ -431,6 +443,17 @@ export default function BuddiesRuntime() {
       if (state.avatar !== previous.avatar)
         void refreshAvatar().then(schedulePublish)
     })
+    // The Pet Companion too: adopting, Change Pet, renaming, or releasing it.
+    // Wakes and keepsakes restamp the record without changing the card.
+    let pet = JSON.stringify(currentBuddyPet() ?? null)
+    const petStore = usePet.subscribe((state, previous) => {
+      if (state.pet === previous.pet) return
+      const next = JSON.stringify(currentBuddyPet() ?? null)
+      if (next === pet) return
+      pet = next
+      noteEdit()
+      schedulePublish()
+    })
     // So do Tenure, the streak (counted by the role), and earned badges;
     // streaks or badges switched off withdraws them, and badges off this
     // device's badge alerts too.
@@ -536,6 +559,7 @@ export default function BuddiesRuntime() {
       plans()
       timeEntries()
       profile()
+      petStore()
       preferences()
       visits()
       contacts()

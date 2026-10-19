@@ -96,6 +96,7 @@ const SETTING_NAMES: Record<BuddySettingKey, string> = {
   tenure: 'tenure',
   streak: 'streak',
   badges: 'badges',
+  pet: 'pet',
   plans: 'plans',
   planTimes: 'plan_times',
   showOnCalendar: 'calendar',
@@ -113,6 +114,9 @@ function captureChange(
       enabled: value,
       scope,
     })
+  // The Pet has its own too.
+  if (setting === 'pet' && typeof value === 'boolean')
+    return analytics.capture('pet_sharing_changed', { enabled: value, scope })
   analytics.capture(
     value === undefined ? 'buddies_setting_reset' : 'buddies_sharing_changed',
     {

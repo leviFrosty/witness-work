@@ -58,6 +58,26 @@ enum WidgetColor {
       ? UIColor(red: 0x14 / 255, green: 0x14 / 255, blue: 0x14 / 255, alpha: 1)
       : .white
   })
+
+  // MARK: Pet
+  //
+  // Copied from the pet art (`src/features/pet/art`), so the widget's hearts
+  // and background match the room the app draws.
+
+  /// Behind the Pet widget's images: the room's warm parchment, or a dark
+  /// variant.
+  static let petRoom = Color(UIColor { traits in
+    traits.userInterfaceStyle == .dark
+      ? UIColor(red: 0x2A / 255, green: 0x24 / 255, blue: 0x1D / 255, alpha: 1)
+      : UIColor(red: 0xF6 / 255, green: 0xEF / 255, blue: 0xE2 / 255, alpha: 1)
+  })
+  static let petHeart = Color(red: 0xFF / 255, green: 0x4F / 255, blue: 0x6D / 255)
+  static let petHeartHighlight = Color(red: 0xFF / 255, green: 0x9A / 255, blue: 0xAA / 255)
+  static let petHeartEmpty = Color(red: 0xCF / 255, green: 0xCF / 255, blue: 0xCF / 255)
+  static let petHeartGold = Color(red: 0xF2 / 255, green: 0xB6 / 255, blue: 0x32 / 255)
+  static let petHeartGoldHighlight = Color(red: 0xFF / 255, green: 0xF0 / 255, blue: 0xB0 / 255)
+  /// The lamp's flame beside the streak days.
+  static let petLamp = Color(red: 0xF2 / 255, green: 0xA1 / 255, blue: 0x3A / 255)
 }
 
 extension WidgetSnapshot.ContactStaleness {

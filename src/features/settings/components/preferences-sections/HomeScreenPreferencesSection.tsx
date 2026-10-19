@@ -11,6 +11,7 @@ import {
   usePreferences,
 } from '@/stores/preferences'
 import usePublisher from '@/hooks/usePublisher'
+import usePet from '@/stores/pet'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 import XView from '@/components/ui/layout/XView'
@@ -19,7 +20,12 @@ import ReorderControls from '@/components/ui/ReorderControls'
 import { reorderMenuActions } from '@/features/settings/components/shared/reorderMenuActions'
 import ContextMenu from '@/components/ui/ContextMenu'
 import { useMemo } from 'react'
-import { homeSectionTitle, isHomeSectionAvailable } from '@/lib/homeSections'
+import {
+  homeSectionTitle,
+  isHomeSectionAvailable,
+  isHomeSectionShown,
+  setHomeSectionShown,
+} from '@/lib/homeSections'
 
 const HideDonateHeart = () => {
   const { hideDonateHeart, set } = usePreferences()
@@ -62,9 +68,13 @@ const HomeElements = () => {
     homeScreenElements,
     homeScreenElementsOrder,
     mileageTrackingEnabled,
+    petPromptDismissed,
     set,
   } = usePreferences()
   const { showsTimer, hasAnnualGoal } = usePublisher()
+  // Before a companion exists, Pet is the offer on Home (see
+  // `isHomeSectionShown`).
+  const hasPet = usePet((s) => s.pet !== null)
   const { isTablet } = useDevice()
   const theme = useTheme()
 
@@ -103,14 +113,7 @@ const HomeElements = () => {
     return null
   }
 
-  const setVisibility = (key: HomeScreenElementKey, value: boolean) => {
-    set({
-      homeScreenElements: {
-        ...homeScreenElements,
-        [key]: value,
-      },
-    })
-  }
+  const setVisibility = setHomeSectionShown
 
   const move = (visibleIdx: number, direction: -1 | 1) => {
     const target = visibleIdx + direction
@@ -167,8 +170,11 @@ const HomeElements = () => {
         {visibleKeys.map((key, idx) => {
           const isFirst = idx === 0
           const isLast = idx === visibleKeys.length - 1
-          const isOn =
-            (homeScreenElements as Record<string, boolean>)[key] ?? true
+          const isOn = isHomeSectionShown(key, {
+            homeScreenElements,
+            petPromptDismissed,
+            hasPet,
+          })
           const description = descriptionFor(key)
           return (
             <View

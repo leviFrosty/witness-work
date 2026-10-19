@@ -3,6 +3,7 @@ import { mergePayload } from '@/app/sync/merge'
 import { SyncPayload } from '@/app/sync/payload'
 import { Category, CategoryTombstone } from '@/types/category'
 import type { MileageSnapshot } from '@/types/mileage'
+import type { PetSnapshot } from '@/types/pet'
 
 type LocalState = {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -33,6 +34,9 @@ type LocalState = {
   vehicleSetups: MileageSnapshot['vehicleSetups']
   trips: MileageSnapshot['trips']
   deletedMileageRecords: MileageSnapshot['deletedMileageRecords']
+  pets: PetSnapshot['pets']
+  petRooms: PetSnapshot['petRooms']
+  deletedPetRecords: PetSnapshot['deletedPetRecords']
   preferencesValues: Record<string, unknown>
   preferenceUpdatedAt: Record<string, number>
   profileValues: Record<string, unknown>
@@ -58,6 +62,9 @@ const emptyLocal = (): LocalState => ({
   vehicleSetups: [],
   trips: [],
   deletedMileageRecords: [],
+  pets: [],
+  petRooms: [],
+  deletedPetRecords: [],
   preferencesValues: {},
   preferenceUpdatedAt: {},
   profileValues: {},

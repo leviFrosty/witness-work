@@ -6,6 +6,7 @@ import useTheme from '@/contexts/theme'
 import useServiceStreak from '@/hooks/useServiceStreak'
 import i18n from '@/lib/locales'
 import { shownStreak } from '@/lib/serviceStreak'
+import { usePet } from '@/stores/pet'
 import { usePreferences } from '@/stores/preferences'
 import { useProfile } from '@/stores/profile'
 import { RootStackNavigation } from '@/types/rootStack'
@@ -30,9 +31,10 @@ import useBuddiesCardName from '@/features/buddies/hooks/useBuddiesCardName'
  * which every device's card carries (it can differ from this device's Profile
  * name until the User renames here). Plans have their own section. The streak
  * switch shows before there's a streak, so it can be off from the start. Streak
- * and Badges are offered only while each shows at all. `withoutProfile` leaves
- * out the Profile row, for the Buddies intro that shows the Profile editor
- * above it; a buddy's settings leave it out too.
+ * and Badges are offered only while each shows at all, and the Pet only once
+ * there's a companion. `withoutProfile` leaves out the Profile row, for the
+ * Buddies intro that shows the Profile editor above it; a buddy's settings
+ * leave it out too.
  */
 export default function BuddiesSharingSection({
   withoutProfile = false,
@@ -51,20 +53,24 @@ export default function BuddiesSharingSection({
   const tenureSetting = useScopedSetting('tenure')
   const streakSetting = useScopedSetting('streak')
   const badges = useScopedSetting('badges')
+  const petSetting = useScopedSetting('pet')
   const streak = shownStreak(useServiceStreak())
   const showBadges = usePreferences((state) => state.showBadges)
   const showStreaks = usePreferences((state) => state.showStreaks)
+  const pet = usePet((state) => state.pet)
   const hasPhoto = avatar.type !== 'none'
   const profileRow = !withoutProfile && !buddy
-  const last = showBadges
-    ? 'badges'
-    : showStreaks
-      ? 'streak'
-      : tenure
-        ? 'tenure'
-        : hasPhoto
-          ? 'photo'
-          : 'profile'
+  const last = pet
+    ? 'pet'
+    : showBadges
+      ? 'badges'
+      : showStreaks
+        ? 'streak'
+        : tenure
+          ? 'tenure'
+          : hasPhoto
+            ? 'photo'
+            : 'profile'
 
   // Nothing to withhold beyond the Profile.
   if (!profileRow && last === 'profile') return null
@@ -135,6 +141,14 @@ export default function BuddiesSharingSection({
         <ScopedSwitchRow
           setting={badges}
           label={i18n.t('buddies_shareBadges')}
+          lastInSection={last === 'badges'}
+        />
+      )}
+      {pet && (
+        <ScopedSwitchRow
+          setting={petSetting}
+          label={i18n.t('buddies_sharePet')}
+          description={pet.name}
           lastInSection
         />
       )}

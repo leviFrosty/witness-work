@@ -1,0 +1,65 @@
+# Pet Companion
+
+An opt-in Home section with a small pixel-art pet (lion cub, golden pup, kitten, donkey or lamb) that lives in a room and stays happy while the User keeps going out in the ministry. Until there's a pet, the pet's Home slot offers one ("Meet your companion", with the five animals idling): "Choose a pet" opens the picker, "Not now" hides the offer (Settings → Preferences → Home Screen → "Pet" brings it back). The picker shows the five animals in a grid, the chosen one's coats as round swatches (the pup and the kitten), and, when adopting, an optional name; "Adopt" or "Save" closes it, and the pet plays its species' entrance on Home. The card shows the name (or the species name) and five pixel hearts above the room. Tapping the pet pats it (a heart floats up and it makes its pat sound in a small bubble), dragging sideways across it rubs it, and 15 quick pats play its trick. Half a heart means it's asleep ("<Name> is asleep. Tap to wake."); 60 quiet days and it died (greyed, lying down, "<Name> died" and a green "Tap to wake <Name>" button). Waking it brings it to one heart. Hearts are worked out from the User's records, never stored (ADR 0030). Hidden moments (a rainbow, the lion and lamb in the window, a shooting star, a gift on the rug, a visiting buddy's pet, gold hearts) are listed in `docs/pet-companion.md` and never in the app.
+
+## Sub-features
+
+- `pet-prompt`: the Home card "Meet your companion" with "A little friend on Home who's happy when you go out in the ministry.", the five animals ("A lion cub, golden pup, kitten, donkey and lamb" to VoiceOver), "Not now" and "Choose a pet". It holds the pet's place in the Home order.
+- `pet-picker`: route `PetPicker` (`{ mode: 'adopt' | 'change' }`), a sheet sized to its content on iOS and full screen on Android. Title "Choose a pet" or "Change pet"; the animals are radio buttons labelled "Lion cub", "Golden pup", "Kitten", "Donkey", "Lamb"; coats are radio buttons labelled by coat ("Gold", "Cream", "Liver", "Black"; "Orange", "Grey", "Black", "White", "Tuxedo", "Calico", "Siamese"); "Name (optional)" with the species name as placeholder, adopting only, up to 20 characters. "Adopt" or "Save" (disabled while nothing changed). No Cancel: pull the sheet down.
+- `pet-card`: the Home card. Header: the name, the hearts ("N of 5 hearts" to VoiceOver), a gold note "A whole year of full hearts." on the day the hearts turn gold, and the asleep or died line. The room: "<Name>'s room" with the hint "Tap to pat. Drag across to rub." (or "Tap to wake."). Long-press the header for "Rename…", "Change Pet…", "Decorate Room…", "Share…", "Edit Home Screen" and "Hide This Section" (the shared Home section menu). In Home's edit mode the card (or the offer) jiggles, moves and hides like any section; Add Sections lists Pet while it's hidden or the offer was answered "Not now", and adding it brings the offer back. The room's frame clock stops while the card is scrolled fully off screen (checked every 0.5 s with `measureInWindow`).
+- `pet-motion`: entrances (adopting, Change Pet), the trick (15 pats in 5 s), the wake of a pet that died (colour washes back up, hearts burst), and the greeting bubble with the pet's mood sound each time Home shows.
+- `pet-room`: route `PetRoom`, "Decorate Room": a large sheet on iOS (full screen on Android) titled "<Name>'s room" with the room live at the top, tab chips "Window", "Wall", "Floor", "Bed", "Shelf", "Light", "Sign", and a two-column grid of pictures drawn from the room (radio buttons labelled by option, e.g. "Clay tile", "Hours this month"). The Window tab has a "Live window" switch (info: follows your clock and the season); off, it shows "Time of day" and "Season" grids, each with its own "Live". Wall has "Color" and "Pattern". Locked items are dimmed with a badge "This month", "Next month" or "In N months" (VoiceOver: "<Option>, opens up: <when>") and do nothing when pressed; "A new item opens up each month you're active." shows under a tab with a locked item. A pick saves at once (`pet_room_changed`); no Save, no Cancel.
+- `pet-rename`: route `PetRename`, a content-sized sheet "Rename pet" with "Name (optional)" (the species name as placeholder, 20 characters, focused) and "Save" (disabled until the name changes). Saving an empty name removes it.
+- `pet-share`: "Share…" opens the share sheet with `<Name>-YYYY-MM-DD.png` in the app's cache folder: the card's view (146 × 90 scene pixels) at 4×, 584 × 360, the pet at rest (`pet_shared`).
+- `pet-setting`: Settings → Preferences → Home Screen lists "Pet". With a companion it shows or hides the card; before one, it's on while the offer shows, and turning it on brings back an offer answered with "Not now" (`isHomeSectionShown` / `setHomeSectionShown` in `src/lib/homeSections.ts`, shared with Add Sections).
+
+## How to get to it (user POV)
+
+- Home → "Choose a pet" → the picker → an animal → a coat → a name → "Adopt" → Home plays the entrance.
+- Home → long-press the pet card's header → "Change Pet…" → the picker → "Save".
+- Home → long-press the pet card's header → "Decorate Room…" → a tab → a picture.
+- Home → long-press the pet card's header → "Rename…" → type → "Save".
+- Home → long-press the pet card's header → "Share…" → the share sheet.
+- Home → tap the pet (pat), drag across it (rub), tap the gift on the rug (keep it), or "Tap to wake <Name>".
+- Account menu → "Settings" → "Preferences" → "Home Screen" → "Pet".
+
+## Driving it with ww-verify
+
+Preconditions:
+
+- `wwv seed pioneer` (no pet yet: the prompt shows) or any onboarded seed. A seed doesn't release a pet made earlier on the device; run `wwv eval '__WW_DEV__.pet.release()'` and `wwv eval '__WW_DEV__.pet.resetPrompt()'` for the prompt.
+- `__WW_DEV__.pet` is for setup, recording and read-back, never the proof of a user path:
+  - `adopt(species, coat?, name?)` replaces any pet with a new one adopted today and plays its entrance when Home shows the card; `setAppearance(species, coat?)` is Change Pet; `rename(name?)`; `setRoom({ floor: 'stone', lamp: 'lantern', window: { time: 'night', season: 'winter' } })`; `release()`; `resetPrompt()`.
+  - `override({ hearts, dead, gold, goldStartedToday, rainbow, lampLevel, window: { time, season }, paradise, star, gift, sill, visitor })` fakes a life state or hidden moment on top of the real one (merged with earlier overrides); `clearOverride()` drops it. Waking a faked asleep or died pet updates the override, so the whole wake can be recorded. Keeping a faked gift moves it to the sill.
+  - `play('entrance' | 'trick' | 'wake')` and `pat(count)` (120 ms apart; 15 plays the trick) act on the mounted Home card.
+  - `state()` reads back `pet`, `room`, `promptDismissed`, `override`, `pendingEntrance` and `card` (what the Home card last drew: `life`, `window`, `input`, `sign`, `shown`, `roll`; null while the card isn't mounted).
+  - `forgetSecrets()` lets `pet_secret_found` send again.
+
+Steps:
+
+- **Prompt.** After `wwv seed pioneer`, the card "Meet your companion" is on Home (scroll down past the Service Report: `wwv ad scroll down --settle`). Capture with `wwv shot pet-prompt`. Press "Not now": the card is gone and `__WW_DEV__.stores.preferences.getState().petPromptDismissed` is `true`. Bring it back with `__WW_DEV__.pet.resetPrompt()`.
+- **Adopt.** Press "Choose a pet". The route is `PetPicker` (`wwv eval '__WW_DEV__.state().route'`). Press "Golden pup", then "Liver", type a name in "Name (optional)", and capture `wwv shot pet-picker`. Press "Adopt". Back on Home, the pup runs in and says "Woof!". Read back `wwv eval '__WW_DEV__.pet.state().pet'`: `species: 'dog'`, `coat: 'liver'`, the name, `adoptedOn` today. Presses inside the sheet may miss on iOS; use `wwv ad snapshot --raw` and press the element's center by coordinates.
+- **Decorate Room.** Long-press the card header, press "Decorate Room…". The route is `PetRoom`. Press a tab chip, then a picture; read back `wwv eval '__WW_DEV__.pet.state().room'`. Locked badges: a pet adopted today on a seed with no activity this month shows "This month" on the first locked item; `adopt` again with older `adoptedOn` isn't possible from the harness, so fake progress with real records or check the badge strings in `roomLabels.test.ts`. Capture each tab with `wwv shot pet-room-<tab>`.
+- **Rename.** Long-press the card header, press "Rename…", type, "Save"; `pet.state().pet.name` changes. Clear the field and save: the name is gone and the card shows the species name.
+- **Share.** Long-press, "Share…". The PNG is in the app's `Library/Caches` (iOS: `xcrun simctl get_app_container <udid> <bundle id> data`); read it back to check it.
+- **Change Pet.** Long-press the card header, press "Change Pet…", pick "Kitten" and "Calico", "Save". The kitten drops in. `pet.state().pet` keeps the name and `adoptedOn`.
+- **Pat and trick.** Tap the pet: a heart floats up, the bubble shows the pat sound ("Prrrrr…" for the kitten). `wwv eval '__WW_DEV__.pet.pat(15)'` plays the trick (kitten zoomies).
+- **States.** `override({ hearts: 0.5 })` (asleep, Zzz), `override({ dead: true })` (greyed, "Tap to wake <Name>"), `override({ hearts: 5, gold: true, goldStartedToday: true })` (gold hearts, sparkles and the gold note). Capture each with `wwv shot pet-asleep`, `pet-died`, `pet-gold`. Pressing "Tap to wake <Name>" plays the wake and records it: `pet.state().pet.wakes` ends with today.
+- **Moments.** `override({ window: { time: 'day', season: 'spring' }, rainbow: true })`, `override({ paradise: true })`, `override({ window: { time: 'night', season: 'summer' }, star: true })`, `override({ gift: 'lily' })` (tap the gift on the rug; it moves to the sill), `override({ visitor: { species: 'lamb', coat: 'default' } })`.
+- **Record.** `wwv ad record start`, then `pet.play('entrance')`, `pet.play('trick')` or `pet.override({ dead: true })` plus the wake button, then `wwv ad record stop`.
+- **Dark mode.** `wwv ad settings appearance dark`, then capture the card and the picker again.
+- **Android.** Run the same recipes with `--platform android`; the picker opens full screen there.
+- **Proof.** Capture `wwv shot` at each surface you drove, then run `wwv errors`.
+
+## Gotchas
+
+- The room and the idling sprites redraw ten times a second, so `--settle` never settles while the prompt, the card or the picker is on screen. Drop `--settle` and wait with `wwv ad wait text` instead, or press by coordinates. Scene reads (`pet.state().card`) update just after the render, so read them on the next command.
+- Motions only play on the mounted Home card, while Home is focused and the app is in the foreground. `play`/`pat` with Home in the background do nothing.
+- With Reduce Motion on, entrances and tricks are skipped (the pet just makes its sound), there's no idle bob, and the frame clock stops two seconds after the last touch.
+- The paradise walkers and the shooting star are rolled once per Home visit (1 in 20 and 1 in 15, Live window only); use the override to see them.
+- The rainbow never shows in a night sky, even when overridden.
+- Overrides live in memory only: a relaunch (`wwv up`) clears them; store changes (`adopt`, `setRoom`, wakes) persist.
+- Hearts come from the seed's records: a seeded pioneer adopting today starts at 3 hearts and gains one for each later active day.
+- Fast Refresh keeps the mounted card's scene player (it lives in component state), so after editing `art/`, `motion/` or `render/` the card can keep drawing with the old code. Relaunch the app (`xcrun simctl terminate`/`launch` with the dev bundle id) before recording or judging art.
+- `override({ window })` must use real values (`dawn | day | dusk | night`, `spring | summer | autumn | winter`); the harness throws on anything else.
+- If `wwv ad record` hangs on the machine, record with `xcrun simctl io <udid> recordVideo --codec h264 --force <file>.mov` (stop it with SIGINT) and check frames with an ffmpeg tile sheet (`-vf "fps=4,crop=…,scale=200:-2,tile=8x3"`).

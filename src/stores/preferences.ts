@@ -237,6 +237,7 @@ export type HomeScreenElementKey =
   | 'tabletServiceYearSummary'
   | 'serviceReport'
   | 'mileage'
+  | 'pet'
   | 'thisWeek'
   | 'timer'
   | 'didYouKnow'
@@ -246,6 +247,7 @@ export const DEFAULT_HOME_SCREEN_ELEMENTS_ORDER: HomeScreenElementKey[] = [
   'tabletServiceYearSummary',
   'serviceReport',
   'mileage',
+  'pet',
   'thisWeek',
   'timer',
   'didYouKnow',
@@ -568,6 +570,7 @@ export const PREFERENCE_DEFAULTS = {
     thisWeek: true,
     serviceReport: true,
     mileage: true,
+    pet: true,
     timer: true,
     contacts: true,
     didYouKnow: true,
@@ -1160,6 +1163,12 @@ export const PREFERENCE_DEFAULTS = {
   fuelEconomyUnit: undefined as FuelEconomyUnit | undefined,
   /** The trip form's last-used Distance / Odometer mode. Syncable. */
   mileageEntryMode: 'distance' as MileageEntryMode,
+  /**
+   * The User closed the Home prompt that offers a Pet Companion. The pet
+   * section shows the prompt while no companion exists and this is false.
+   * Syncable.
+   */
+  petPromptDismissed: false,
 }
 
 /**
@@ -1230,6 +1239,8 @@ export { NON_SYNCABLE_PREFERENCE_KEYS } from '@/lib/syncPreferencePolicy'
  *   timestamp.
  * - V10 → v11: Contacts sort `recentConversation` that was never chosen becomes
  *   `suggested` (see {@link migrateUnchosenContactSortToSuggested}).
+ * - V11 → v12: the new Pet Home section starts visible (see
+ *   {@link migrateShowPetHomeSection}).
  *
  * Exported for unit testing. Idempotent — re-running on an already-migrated
  * blob is a no-op.
@@ -1274,7 +1285,32 @@ export const migratePreferencesPersistedState = (
   if (version < 11) {
     next = migrateUnchosenContactSortToSuggested(next)
   }
+  if (version < 12) {
+    next = migrateShowPetHomeSection(next)
+  }
   return next
+}
+
+/**
+ * V11 → v12: adds `pet: true` to a persisted `homeScreenElements` that lacks
+ * it. Hydration merges shallowly, so an install's saved visibility map replaces
+ * the default one whole and a new section would otherwise read as hidden. An
+ * explicit choice is kept. The stamp is left alone: nobody chose this, so a
+ * real choice synced from another device still wins. Readers should still treat
+ * a missing key as visible (`!== false`), since a device on an older build can
+ * sync its map without the key.
+ */
+export const migrateShowPetHomeSection = (state: unknown): unknown => {
+  if (!state || typeof state !== 'object') return state
+  const elements = (state as { homeScreenElements?: unknown })
+    .homeScreenElements
+  if (!elements || typeof elements !== 'object' || Array.isArray(elements))
+    return state
+  if (Object.hasOwn(elements, 'pet')) return state
+  return {
+    ...state,
+    homeScreenElements: { ...elements, pet: true },
+  }
 }
 
 /**
@@ -2123,7 +2159,7 @@ export const usePreferences = create(
     {
       name: 'preferences',
       storage: createPreferencesStorage(),
-      version: 11,
+      version: 12,
       migrate: (persistedState, version) =>
         migratePreferencesPersistedState(persistedState, version),
     }

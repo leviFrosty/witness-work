@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { BADGE_REACTION_IDS } from '@/features/buddies/lib/badgeReactions'
 import { RELAY_ID_PATTERN } from '@/features/buddies/lib/bytes'
+import { PET_NAME_MAX_LENGTH, PET_SPECIES_IDS } from '@/types/pet'
 
 /** Base64 of a ~96 px JPEG; keeps a Buddy Card well under the 16 KB cap. */
 export const MAX_AVATAR_IMAGE_CHARS = 10_000
@@ -79,6 +80,29 @@ export const buddyStreakSchema = z.object({
   until: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
 })
 export type BuddyStreak = z.infer<typeof buddyStreakSchema>
+
+/** The longest coat id a Buddy Card's pet may carry. */
+export const MAX_SHARED_PET_COAT_LENGTH = 24
+
+/**
+ * The sender's Pet Companion as buddies see it: species, coat, and name. A
+ * species this build doesn't know fails the pet, which the card then drops. The
+ * coat is kept as sent (the receiver draws an unknown one in the species'
+ * default coat), and a name it can't read costs only the name. The name's limit
+ * counts characters, as the pet's own name field does.
+ */
+export const buddyPetSchema = z.object({
+  species: z.enum(PET_SPECIES_IDS),
+  coat: z.string().min(1).max(MAX_SHARED_PET_COAT_LENGTH),
+  name: z
+    .string()
+    .trim()
+    .min(1)
+    .refine((name) => [...name].length <= PET_NAME_MAX_LENGTH)
+    .optional()
+    .catch(undefined),
+})
+export type BuddyPet = z.infer<typeof buddyPetSchema>
 
 /** Identity fields every Buddies payload may carry next to `name`. */
 const profileFields = {
@@ -174,6 +198,11 @@ export const buddyCardSchema = z.object({
    * only the badges, never the Plans.
    */
   badges: sharedBadgesSchema.optional().catch(undefined),
+  /**
+   * Added after v1 shipped, like `badges`: older apps ignore it, and a pet this
+   * build can't read (a newer species, say) is dropped, never the card.
+   */
+  pet: buddyPetSchema.optional().catch(undefined),
 })
 export type BuddyCard = z.infer<typeof buddyCardSchema>
 
@@ -360,6 +389,7 @@ const buddyOverridesSchema = z.object({
   tenure: z.boolean().optional().catch(undefined),
   streak: z.boolean().optional().catch(undefined),
   badges: z.boolean().optional().catch(undefined),
+  pet: z.boolean().optional().catch(undefined),
   plans: z.boolean().optional().catch(undefined),
   planTimes: z.enum(BUDDY_PLAN_TIMES).optional().catch(undefined),
   showOnCalendar: z.boolean().optional().catch(undefined),
@@ -457,6 +487,13 @@ export const rosterSchema = z.object({
       badges: z.boolean().optional(),
       /** When `badges` last changed; merged apart from `updatedAt`. */
       badgesUpdatedAt: z.number().optional(),
+      /**
+       * The Pet Companion on Buddy Cards. Absent from rosters written before
+       * pets, or by an older app; merged like `badges`, on its own stamp.
+       */
+      pet: z.boolean().optional().catch(undefined),
+      /** When `pet` last changed. */
+      petUpdatedAt: z.number().optional().catch(undefined),
       /**
        * Added after badges, the same way: absent from older apps' rosters,
        * whose merge keeps this device's choices (`mergeSharing`).

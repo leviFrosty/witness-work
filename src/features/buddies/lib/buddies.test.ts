@@ -3733,6 +3733,8 @@ describe('badges', () => {
       updatedAt: 10,
       badges: true,
       badgesUpdatedAt: 0,
+      pet: true,
+      petUpdatedAt: 0,
       plans: true,
       planTimes: 'timeOfDay',
       pausedUntil: 100,
@@ -3808,6 +3810,8 @@ describe('badges', () => {
       plansUpdatedAt: 0,
       showOnCalendar: true,
       calendarUpdatedAt: 0,
+      pet: true,
+      petUpdatedAt: 0,
     }
     // An older app's later photo choice, with no badges fields.
     expect(

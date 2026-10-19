@@ -197,6 +197,13 @@ export type DayPlan = {
    * unset, including for all plans that predate this field.
    */
   source?: 'manual' | 'recommendation'
+  /**
+   * Local day key (`YYYY-MM-DD`) of the User's last save of this Plan. Code
+   * that changes a Plan on its own (Buddies) leaves it alone. The Pet Companion
+   * counts it as an active day (ADR 0030). Absent on Plans not saved since it
+   * was added.
+   */
+  savedOn?: string
   /** Epoch ms of the most recent change. Used for iCloud merge. */
   updatedAt?: number
 }
@@ -263,6 +270,8 @@ export type RecurringPlan = {
   noteDoc?: RichText
   deletedDates?: Date[]
   overrides?: RecurringPlanOverride[]
+  /** Local day key of the User's last save; see `DayPlan.savedOn`. */
+  savedOn?: string
   /** Epoch ms of the most recent change. Used for iCloud merge. */
   updatedAt?: number
 }

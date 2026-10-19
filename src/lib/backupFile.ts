@@ -4,6 +4,8 @@ import { usePreferences } from '@/stores/preferences'
 import useServiceReport from '@/stores/serviceReport'
 import useCategories from '@/stores/categories'
 import useMileage from '@/stores/mileage'
+import usePet from '@/stores/pet'
+import { petSliceFromBackup } from '@/lib/petBackup'
 import { useProfile } from '@/stores/profile'
 import {
   syncableValues,
@@ -24,6 +26,7 @@ export type BackupFile = {
   categoryStore?: unknown
   profileStore?: unknown
   mileageStore?: unknown
+  petStore?: unknown
 }
 
 /** The same backup Settings exports, from the stores' current state. */
@@ -35,6 +38,7 @@ export function createBackupFile(): BackupFile {
     preferencesStore: syncableValues(usePreferences.getState()),
     categoryStore: useCategories.getState(),
     mileageStore: useMileage.getState(),
+    petStore: usePet.getState(),
     profileStore: syncableValues(
       useProfile.getState(),
       NON_SYNCABLE_PROFILE_KEYS
@@ -77,6 +81,8 @@ export function restoreBackupFile(data: BackupFile): void {
       useMileage
         .getState()
         .set(knownSlice(data.mileageStore, useMileage.getState()))
+    // Checked, so a pet without its wake list can't break the replay.
+    if (data.petStore) usePet.getState().set(petSliceFromBackup(data.petStore))
     const preferences = extractProfileFromPreferences(
       knownSlice(data.preferencesStore, {
         ...usePreferences.getState(),

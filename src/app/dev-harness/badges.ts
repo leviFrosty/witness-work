@@ -196,7 +196,7 @@ export const applyBadgeHistoryFixture = (now = new Date()) => {
   fixture.timeEntries
     .filter((entry) => !existing.has(entry.id))
     .forEach(reports.addServiceReport)
-  fixture.recurringPlans.forEach(reports.addRecurringPlan)
+  fixture.recurringPlans.forEach((plan) => reports.addRecurringPlan(plan))
   const { submittedReportMonths, set } = usePreferences.getState()
   set({
     // The same 24-month cap `markReportSubmitted` keeps.

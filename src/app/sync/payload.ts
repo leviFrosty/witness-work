@@ -19,6 +19,7 @@ import useConversations from '@/stores/conversationStore'
 import useServiceReport from '@/stores/serviceReport'
 import useCategories from '@/stores/categories'
 import useMileage from '@/stores/mileage'
+import { localPetSnapshot } from '@/app/sync/petStoreSync'
 import { usePreferences, PREFERENCE_DEFAULTS } from '@/stores/preferences'
 import { NON_SYNCABLE_PREFERENCE_KEYS } from '@/stores/preferences'
 import {
@@ -147,6 +148,19 @@ export type SyncPayload = {
     trips: any[]
     deletedMileageRecords?: { id: string; deletedAt: number }[]
   }
+  /**
+   * The Pet Companion and its room (one record each, as lists so they merge by
+   * id) plus their tombstones. Optional because older app versions don't write
+   * it; consumers default every list to `[]`. Hearts aren't here: they're
+   * replayed from the records above (ADR 0030).
+   */
+  petStore?: {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    pets: any[]
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    petRooms: any[]
+    deletedPetRecords?: { id: string; deletedAt: number }[]
+  }
   preferencesStore: {
     // Partial because we only sync the allow-listed, cross-device-safe keys.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -268,6 +282,7 @@ export function buildPayload(args: {
       trips: mileage.trips,
       deletedMileageRecords: mileage.deletedMileageRecords,
     },
+    petStore: localPetSnapshot(),
     preferencesStore: {
       values: syncablePrefs,
       updatedAt: prefs.preferenceUpdatedAt ?? {},

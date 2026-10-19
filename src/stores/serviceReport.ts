@@ -85,6 +85,21 @@ const withoutPlanTombstone = (
 const addedPlanStamp = (tombstones: PlanTombstone[], id: string) =>
   syncTimestamp(tombstones.find((tombstone) => tombstone.id === id)?.deletedAt)
 
+/** How a Plan change came about. */
+export type PlanSaveOptions = {
+  /**
+   * Made by code following someone else, not the User's own save (Buddies
+   * keeping a linked Plan in step, or taking a removed buddy off a Plan). It
+   * leaves `savedOn` alone, so it doesn't count as a day of ministry for the
+   * Pet Companion.
+   */
+  automatic?: boolean
+}
+
+/** `savedOn` for a save the User made today, unless it's `automatic`. */
+const savedOnStamp = (options?: PlanSaveOptions): { savedOn?: string } =>
+  options?.automatic ? {} : { savedOn: moment().format('YYYY-MM-DD') }
+
 /** Migrates legacy service report data: `TimeEntry[]` -> `TimeEntriesByYear` */
 export const migrateServiceReports = (
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -219,7 +234,7 @@ export const useServiceReport = create(
             serviceReports: reports,
           }
         }),
-      addDayPlan: (dayPlan: DayPlan) =>
+      addDayPlan: (dayPlan: DayPlan, options?: PlanSaveOptions) =>
         set(({ dayPlans, deletedDayPlans }) => {
           const normalized: DayPlan = {
             ...dayPlan,
@@ -237,6 +252,7 @@ export const useServiceReport = create(
               ...dayPlans,
               {
                 ...normalized,
+                ...savedOnStamp(options),
                 updatedAt: addedPlanStamp(deletedDayPlans, normalized.id),
               },
             ],
@@ -248,7 +264,7 @@ export const useServiceReport = create(
             ),
           }
         }),
-      updateDayPlan: (dayPlan: Partial<DayPlan>) => {
+      updateDayPlan: (dayPlan: Partial<DayPlan>, options?: PlanSaveOptions) => {
         set(({ dayPlans, deletedDayPlans }) => {
           const normalized: Partial<DayPlan> = dayPlan.date
             ? { ...dayPlan, date: normalizeDateForStorage(dayPlan.date) }
@@ -262,6 +278,7 @@ export const useServiceReport = create(
               return {
                 ...c,
                 ...normalized,
+                ...savedOnStamp(options),
                 updatedAt: syncTimestamp(c.updatedAt),
               }
             }),
@@ -291,7 +308,10 @@ export const useServiceReport = create(
             deletedDayPlans: withPlanTombstone(deletedDayPlans, foundDayPlan),
           }
         }),
-      addRecurringPlan: (recurringPlan: RecurringPlan) =>
+      addRecurringPlan: (
+        recurringPlan: RecurringPlan,
+        options?: PlanSaveOptions
+      ) =>
         set(({ recurringPlans, deletedRecurringPlans }) => {
           const normalized = normalizeRecurringPlan(recurringPlan)
           const existing = recurringPlans.find(
@@ -304,6 +324,7 @@ export const useServiceReport = create(
               ...recurringPlans,
               {
                 ...normalized,
+                ...savedOnStamp(options),
                 updatedAt: addedPlanStamp(deletedRecurringPlans, normalized.id),
               },
             ],
@@ -314,7 +335,10 @@ export const useServiceReport = create(
             ),
           }
         }),
-      updateRecurringPlan: (recurringPlan: Partial<RecurringPlan>) => {
+      updateRecurringPlan: (
+        recurringPlan: Partial<RecurringPlan>,
+        options?: PlanSaveOptions
+      ) => {
         set(({ recurringPlans, deletedRecurringPlans }) => {
           const normalized = normalizePartialRecurringPlan(recurringPlan)
           const found = recurringPlans.some((c) => c.id === normalized.id)
@@ -329,6 +353,7 @@ export const useServiceReport = create(
               return {
                 ...c,
                 ...normalized,
+                ...savedOnStamp(options),
                 updatedAt: syncTimestamp(c.updatedAt),
               }
             }),
@@ -373,6 +398,7 @@ export const useServiceReport = create(
               return {
                 ...c,
                 overrides: [...updatedOverrides, normalized],
+                ...savedOnStamp(),
                 updatedAt: syncTimestamp(c.updatedAt),
               }
             }),
@@ -408,6 +434,7 @@ export const useServiceReport = create(
               return {
                 ...c,
                 overrides: updatedOverrides,
+                ...savedOnStamp(),
                 updatedAt: syncTimestamp(c.updatedAt),
               }
             }),

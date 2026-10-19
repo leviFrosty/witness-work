@@ -1,0 +1,50 @@
+import { describe, expect, it } from 'vitest'
+import { keptKeepsakes, keptWakes } from '@/lib/petHistory'
+import { PET_KEEPSAKES_KEPT, PET_WAKES_KEPT } from '@/types/pet'
+
+const day = (n: number) =>
+  new Date(Date.UTC(2020, 0, 1) + n * 86_400_000).toISOString().slice(0, 10)
+
+describe('keptWakes', () => {
+  it('sorts, dedupes and drops unreadable days', () => {
+    expect(
+      keptWakes(['2026-02-01', 'soon', '2026-01-01', '2026-02-01'])
+    ).toEqual(['2026-01-01', '2026-02-01'])
+  })
+
+  it('keeps every wake within 400 days of the newest, even past the cap', () => {
+    const wakes = Array.from({ length: PET_WAKES_KEPT + 30 }, (_, n) =>
+      day(n * 2)
+    )
+    // 150 wakes two days apart span under 400 days: all stay.
+    expect(keptWakes(wakes)).toHaveLength(wakes.length)
+  })
+
+  it('drops the oldest past the cap once they are over 400 days old', () => {
+    const wakes = Array.from({ length: PET_WAKES_KEPT + 10 }, (_, n) =>
+      day(n * 10)
+    )
+    const kept = keptWakes(wakes)
+    expect(kept).toHaveLength(PET_WAKES_KEPT)
+    expect(kept[0]).toBe(day(100))
+  })
+})
+
+describe('keptKeepsakes', () => {
+  it('keeps one per day, the first seen, the newest 20', () => {
+    const keepsakes = [
+      { kind: 'fig' as const, on: day(1) },
+      { kind: 'olive' as const, on: day(1) },
+      ...Array.from({ length: 25 }, (_, n) => ({
+        kind: 'lily' as const,
+        on: day(n + 2),
+      })),
+    ]
+    const kept = keptKeepsakes(keepsakes)
+    expect(kept).toHaveLength(PET_KEEPSAKES_KEPT)
+    expect(kept[0].on).toBe(day(7))
+    expect(keptKeepsakes(keepsakes.slice(0, 2))).toEqual([
+      { kind: 'fig', on: day(1) },
+    ])
+  })
+})

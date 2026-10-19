@@ -18,6 +18,10 @@ import undoIcon from '@/assets/android-menu-icons/ww_menu_undo.xml'
 import targetIcon from '@/assets/android-menu-icons/ww_menu_target.xml'
 import cameraIcon from '@/assets/android-menu-icons/ww_menu_camera.xml'
 import photoLibraryIcon from '@/assets/android-menu-icons/ww_menu_photo_library.xml'
+import petsIcon from '@/assets/android-menu-icons/ww_menu_pets.xml'
+import brushIcon from '@/assets/android-menu-icons/ww_menu_brush.xml'
+import customizeIcon from '@/assets/android-menu-icons/ww_menu_customize.xml'
+import hideIcon from '@/assets/android-menu-icons/ww_menu_hide.xml'
 
 /**
  * Material icons for the SF Symbols menus use, so Android menus show the same
@@ -45,6 +49,10 @@ const androidMenuIcons: Partial<Record<string, ImageSourcePropType>> = {
   target: targetIcon,
   camera: cameraIcon,
   'photo.on.rectangle': photoLibraryIcon,
+  pawprint: petsIcon,
+  paintbrush: brushIcon,
+  'square.grid.2x2': customizeIcon,
+  'eye.slash': hideIcon,
 }
 
 export default androidMenuIcons

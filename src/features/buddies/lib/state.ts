@@ -3,6 +3,7 @@ import type {
   BuddyAvatar,
   BuddyCardDay,
   BuddyPlanTimes,
+  BuddyPet,
   BuddyPlatform,
   BuddyStreak,
   BuddyTenure,
@@ -55,14 +56,18 @@ export type BuddySharing = {
    * older apps rewrite the roster without it.
    */
   badgesUpdatedAt: number
+  /** The Pet Companion on the Buddy Card (species, coat, and name). */
+  pet: boolean
+  /** When `pet` last changed, 0 while it's the default; like `badgesUpdatedAt`. */
+  petUpdatedAt: number
   /** Plans on the Buddy Card. */
   plans: boolean
   /** How precisely cards show when Plans start. */
   planTimes: BuddyPlanTimes
   /**
-   * Until when Plans, streak, and badges are withheld from every buddy, their
-   * own settings or not: 0 when never paused, `PAUSED_INDEFINITELY` until the
-   * User resumes.
+   * Until when Plans, streak, badges, and the pet are withheld from every
+   * buddy, their own settings or not: 0 when never paused,
+   * `PAUSED_INDEFINITELY` until the User resumes.
    */
   pausedUntil: number
   /**
@@ -83,6 +88,7 @@ export type BuddySettings = Pick<
   | 'tenure'
   | 'streak'
   | 'badges'
+  | 'pet'
   | 'plans'
   | 'planTimes'
   | 'showOnCalendar'
@@ -97,6 +103,7 @@ export const BUDDY_SETTING_KEYS = [
   'tenure',
   'streak',
   'badges',
+  'pet',
   'plans',
   'planTimes',
   'showOnCalendar',
@@ -146,6 +153,7 @@ export function allBuddiesSettings(sharing: BuddySharing): BuddySettings {
     tenure: sharing.tenure,
     streak: sharing.streak,
     badges: sharing.badges,
+    pet: sharing.pet,
     plans: sharing.plans,
     planTimes: sharing.planTimes,
     showOnCalendar: sharing.showOnCalendar,
@@ -253,42 +261,58 @@ export function mergeCardName(local: CardName, remote: CardName | undefined) {
 }
 
 /**
+ * One sharing choice with its own stamp: a roster without it (an older app's)
+ * keeps this device's, the later stamp wins, and on a tie withholding wins.
+ */
+function mergeStampedChoice(
+  local: { on: boolean; at: number },
+  remote: { on: boolean | undefined; at: number | undefined }
+): { on: boolean; at: number } {
+  if (remote.on === undefined) return local
+  const remoteAt = remote.at ?? 0
+  return {
+    on:
+      remoteAt === local.at
+        ? local.on && remote.on
+        : remoteAt > local.at
+          ? remote.on
+          : local.on,
+    at: Math.max(remoteAt, local.at),
+  }
+}
+
+/**
  * Folds another device's sharing choices into this one's. Photo, Tenure, and
- * the streak go to the later `updatedAt`. Badges go to the later
- * `badgesUpdatedAt`, apart: a roster from an older app leaves them out (keep
- * this device's), and on a tie withholding wins, so every device settles on the
- * same answer. Plan times and the pause go to the later `plansUpdatedAt` the
- * same way, the more private choice winning a tie.
+ * the streak go to the later `updatedAt`. Badges and the pet each go to their
+ * own later stamp, apart: a roster from an older app leaves them out (keep this
+ * device's), and on a tie withholding wins, so every device settles on the same
+ * answer. Plan times and the pause go to the later `plansUpdatedAt` the same
+ * way, the more private choice winning a tie.
  */
 export function mergeSharing(
   local: BuddySharing,
   remote: Roster['sharing']
 ): BuddySharing {
   const later = remote.updatedAt > local.updatedAt
-  const merged = {
+  const badges = mergeStampedChoice(
+    { on: local.badges, at: local.badgesUpdatedAt },
+    { on: remote.badges, at: remote.badgesUpdatedAt }
+  )
+  const pet = mergeStampedChoice(
+    { on: local.pet, at: local.petUpdatedAt },
+    { on: remote.pet, at: remote.petUpdatedAt }
+  )
+  return {
     photo: later ? remote.photo : local.photo,
     tenure: later ? remote.tenure : local.tenure,
     streak: later ? remote.streak : local.streak,
     updatedAt: later ? remote.updatedAt : local.updatedAt,
+    badges: badges.on,
+    badgesUpdatedAt: badges.at,
+    pet: pet.on,
+    petUpdatedAt: pet.at,
     ...mergePlanSharing(local, remote),
     ...mergeCalendarSharing(local, remote),
-  }
-  if (remote.badges === undefined)
-    return {
-      ...merged,
-      badges: local.badges,
-      badgesUpdatedAt: local.badgesUpdatedAt,
-    }
-  const remoteAt = remote.badgesUpdatedAt ?? 0
-  return {
-    ...merged,
-    badges:
-      remoteAt === local.badgesUpdatedAt
-        ? local.badges && remote.badges
-        : remoteAt > local.badgesUpdatedAt
-          ? remote.badges
-          : local.badges,
-    badgesUpdatedAt: Math.max(remoteAt, local.badgesUpdatedAt),
   }
 }
 
@@ -420,6 +444,11 @@ export type Buddy = {
    * until the next card). Earned badges only; never progress or counts.
    */
   badges?: SharedBadge[]
+  /**
+   * Their Pet Companion, from their latest Buddy Card; never in the roster.
+   * Absent when they have none or don't share it.
+   */
+  pet?: BuddyPet
 }
 
 export type OutgoingInvite = {
@@ -1165,6 +1194,8 @@ export const initialBuddiesState: BuddiesState = {
     plansUpdatedAt: 0,
     showOnCalendar: true,
     calendarUpdatedAt: 0,
+    pet: true,
+    petUpdatedAt: 0,
   },
   notificationsEnabled: true,
   joinRequestNotifications: true,

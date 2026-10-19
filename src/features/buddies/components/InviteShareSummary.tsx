@@ -6,6 +6,7 @@ import {
   Image as ImageIcon,
   Lock as LockIcon,
   Medal as MedalIcon,
+  PawPrint as PawPrintIcon,
   UserRound as UserRoundIcon,
 } from 'lucide-react-native'
 import Card from '@/components/ui/Card'
@@ -14,6 +15,7 @@ import LucideIcon, { AppIcon } from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
+import { usePet } from '@/stores/pet'
 import { usePreferences } from '@/stores/preferences'
 import { useProfile } from '@/stores/profile'
 import { buddyTenureFor } from '@/features/buddies/lib/buddyProfile'
@@ -59,6 +61,7 @@ export default function InviteShareSummary() {
   const showBadges = usePreferences((state) => state.showBadges)
   const sharesStreak = sharing.streak && showStreaks
   const sharesBadges = sharing.badges && showBadges
+  const sharesPet = usePet((state) => !!state.pet) && sharing.pet
 
   return (
     <Card style={{ gap: 16 }}>
@@ -119,6 +122,9 @@ export default function InviteShareSummary() {
           )}
           {sharesBadges && (
             <Chip icon={MedalIcon} label={i18n.t('buddies_shareBadges')} />
+          )}
+          {sharesPet && (
+            <Chip icon={PawPrintIcon} label={i18n.t('buddies_sharePet')} />
           )}
         </View>
       </View>

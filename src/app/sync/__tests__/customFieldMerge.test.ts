@@ -15,6 +15,7 @@ import type {
 } from '@/types/timeEntry'
 import type { RecurringPlan } from '@/lib/serviceReport'
 import type { MileageSnapshot } from '@/types/mileage'
+import type { PetSnapshot } from '@/types/pet'
 
 type LocalState = {
   contacts: Contact[]
@@ -35,6 +36,9 @@ type LocalState = {
   vehicleSetups: MileageSnapshot['vehicleSetups']
   trips: MileageSnapshot['trips']
   deletedMileageRecords: MileageSnapshot['deletedMileageRecords']
+  pets: PetSnapshot['pets']
+  petRooms: PetSnapshot['petRooms']
+  deletedPetRecords: PetSnapshot['deletedPetRecords']
   preferencesValues: Record<string, unknown>
   preferenceUpdatedAt: Record<string, number>
   profileValues: Record<string, unknown>
@@ -60,6 +64,9 @@ const baseLocal = (): LocalState => ({
   vehicleSetups: [],
   trips: [],
   deletedMileageRecords: [],
+  pets: [],
+  petRooms: [],
+  deletedPetRecords: [],
   preferencesValues: {},
   preferenceUpdatedAt: {},
   profileValues: {},

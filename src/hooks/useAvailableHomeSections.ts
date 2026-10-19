@@ -1,7 +1,8 @@
 import { useShallow } from 'zustand/react/shallow'
 import useDevice from '@/hooks/useDevice'
 import usePublisher from '@/hooks/usePublisher'
-import { isHomeSectionAvailable } from '@/lib/homeSections'
+import { isHomeSectionAvailable, isHomeSectionShown } from '@/lib/homeSections'
+import usePet from '@/stores/pet'
 import {
   getEffectiveHomeScreenOrder,
   usePreferences,
@@ -18,13 +19,16 @@ export default function useAvailableHomeSections() {
     homeScreenElements,
     homeScreenElementsOrder,
     mileageTrackingEnabled,
+    petPromptDismissed,
   } = usePreferences(
     useShallow((s) => ({
       homeScreenElements: s.homeScreenElements,
       homeScreenElementsOrder: s.homeScreenElementsOrder,
       mileageTrackingEnabled: s.mileageTrackingEnabled,
+      petPromptDismissed: s.petPromptDismissed,
     }))
   )
+  const hasPet = usePet((s) => s.pet !== null)
   const available = getEffectiveHomeScreenOrder(homeScreenElementsOrder).filter(
     (key) =>
       isHomeSectionAvailable(key, {
@@ -37,7 +41,12 @@ export default function useAvailableHomeSections() {
   return {
     available,
     hidden: available.filter(
-      (key) => (homeScreenElements as Record<string, boolean>)[key] === false
+      (key) =>
+        !isHomeSectionShown(key, {
+          homeScreenElements,
+          petPromptDismissed,
+          hasPet,
+        })
     ),
   }
 }

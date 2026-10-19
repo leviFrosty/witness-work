@@ -39,6 +39,7 @@ import {
   BuddyPlatform,
   buddyCardSchema,
   BuddyStreak,
+  type BuddyPet,
   joinRequestSchema,
   MAX_SHARED_PHOTOS,
   pairConfirmedSchema,
@@ -210,6 +211,11 @@ export type BuddiesEngineDeps = {
    * it, never invites: a link can reach someone who isn't a buddy yet.
    */
   getStreak?: () => BuddyStreak | undefined
+  /**
+   * The User's Pet Companion as buddies see it, or none. Only Buddy Cards carry
+   * it, and only while `sharing.pet` is on.
+   */
+  getPet?: () => BuddyPet | undefined
   /** The Plans and Follow-ups this User has invited buddies to. */
   getShares?: () => OutgoingShareSpec[]
   /**
@@ -490,6 +496,8 @@ function rosterSignature(roster: Omit<Roster, 'v' | 'version'>) {
     plansUpdatedAt,
     showOnCalendar,
     calendarUpdatedAt,
+    pet,
+    petUpdatedAt,
   } = roster.sharing
   return JSON.stringify([
     roster.buddies
@@ -506,6 +514,8 @@ function rosterSignature(roster: Omit<Roster, 'v' | 'version'>) {
     // differs only from a choice this device actually made, which is then
     // written back once for devices restoring from the roster.
     [badges ?? true, badgesUpdatedAt ?? 0],
+    // The pet choice came later still, and reads the same way.
+    [pet ?? true, petUpdatedAt ?? 0],
     // Plans, Plan times, the pause, and the calendar, the same way.
     [
       plans ?? true,
@@ -953,9 +963,9 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     )
     return {
       // Photos would overflow the roster cap; each device gets them, and
-      // streaks, from cards. `showOnCalendar` is for older apps, which read
-      // and write that alone.
-      buddies: state.buddies.map(({ streak, overrides, ...buddy }) =>
+      // streaks and pets, from cards. `showOnCalendar` is for older apps, which
+      // read and write that alone.
+      buddies: state.buddies.map(({ streak, pet, overrides, ...buddy }) =>
         compactProfile({
           ...buddy,
           showOnCalendar: buddySettings(state.sharing, { overrides }).settings
@@ -1650,14 +1660,18 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
 
   /**
    * Changes All Buddies' settings and republishes, so a withheld photo, Tenure,
-   * streak, badges, or Plans clear from the cards of buddies who follow All
-   * buddies. Before Buddies has started it only records the choice.
+   * streak, badges, pet, or Plans clear from the cards of buddies who follow
+   * All buddies. Before Buddies has started it only records the choice.
    */
   async function setSharing(
     change: Partial<
       Omit<
         BuddySharing,
-        'updatedAt' | 'badgesUpdatedAt' | 'plansUpdatedAt' | 'calendarUpdatedAt'
+        | 'updatedAt'
+        | 'badgesUpdatedAt'
+        | 'petUpdatedAt'
+        | 'plansUpdatedAt'
+        | 'calendarUpdatedAt'
       >
     >
   ) {
@@ -1671,6 +1685,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
           ? { updatedAt: now }
           : {}),
         ...('badges' in change ? { badgesUpdatedAt: now } : {}),
+        ...('pet' in change ? { petUpdatedAt: now } : {}),
         ...('plans' in change ||
         'planTimes' in change ||
         'pausedUntil' in change
@@ -1760,11 +1775,15 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     const streak = each.some(({ settings }) => settings.streak)
       ? deps.getStreak?.()
       : undefined
+    const pet = each.some(({ settings }) => settings.pet)
+      ? deps.getPet?.()
+      : undefined
     const shared = (deps.showBadges?.() ?? true) ? (current.badges ?? []) : []
-    // Left out when there are none, so cards (and their hash) stay as before.
+    // Left out when there are none, so cards (and their hash) stay as before;
+    // so is a pet that isn't there or isn't shared.
     const badges = shared.length > 0 ? shared : undefined
     // While sharing is paused for everyone, the card keeps who this User is
-    // and drops their Plans and progress.
+    // and drops their Plans, progress, and pet.
     const paused = sharingPaused()
     const content = (settings: BuddySettings) => ({
       name,
@@ -1776,6 +1795,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
           ? withPlanTimes(cardDays, settings.planTimes)
           : [],
       badges: settings.badges && !paused ? badges : undefined,
+      pet: settings.pet && !paused ? pet : undefined,
     })
     for (const { buddy, settings } of each) {
       const payload = content(settings)
@@ -1793,6 +1813,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
         level: 'daysTimes',
         days: payload.days,
         badges: payload.badges,
+        pet: payload.pet,
       }
       try {
         await relay.putCard(
@@ -2115,6 +2136,8 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
                 streak: parsed.streak,
                 // The card is the source of truth: none listed clears them.
                 badges: knownBadges(parsed.badges),
+                // None on the card: no pet, or not shared any more.
+                pet: parsed.pet,
               }
             : b
         ),

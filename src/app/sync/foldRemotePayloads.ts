@@ -12,6 +12,7 @@ import type {
 import type { Category } from '@/types/category'
 import { atNewestResetEpoch } from '@/lib/syncResetEpoch'
 import { mileageFromPayload } from '@/app/sync/mileagePayload'
+import { petFromPayload } from '@/app/sync/petPayload'
 
 type LocalMergeState = Omit<MergeResult, 'changed'>
 
@@ -57,6 +58,7 @@ export function foldRemotePayloads(
     categories: (first.categoryStore?.categories ?? []) as Category[],
     deletedCategories: first.categoryStore?.deletedCategories ?? [],
     ...mileageFromPayload(first),
+    ...petFromPayload(first),
     preferencesValues: first.preferencesStore?.values ?? {},
     preferenceUpdatedAt: first.preferencesStore?.updatedAt ?? {},
     profileValues: first.profileStore?.values ?? {},
@@ -114,6 +116,18 @@ export function foldRemotePayloads(
       trips: acc.trips,
       deletedMileageRecords: acc.deletedMileageRecords,
     },
+    // Only when a device wrote one: a payload without it predates the Pet
+    // Companion, which isn't the same as having no pet (a restore keeps the
+    // local one).
+    ...(payloads.some((payload) => payload.petStore)
+      ? {
+          petStore: {
+            pets: acc.pets,
+            petRooms: acc.petRooms,
+            deletedPetRecords: acc.deletedPetRecords,
+          },
+        }
+      : {}),
     preferencesStore: {
       values: acc.preferencesValues,
       updatedAt: acc.preferenceUpdatedAt,

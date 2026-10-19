@@ -18,6 +18,7 @@ import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import { useProfile } from '@/stores/profile'
 import BuddiesAccountNameHint from '@/features/buddies/components/BuddiesAccountNameHint'
+import BuddiesSharingSection from '@/features/buddies/components/BuddiesSharingSection'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 
 const STEPS = ['intro', 'profile'] as const
@@ -56,7 +57,9 @@ function Feature({
 
 /**
  * First visit to Buddies: what it is and how it's protected, then the profile
- * buddies will see. The list that follows offers the first invite.
+ * buddies will see and what of it to share. The one place that spells out what
+ * buddies see; Buddies Settings changes it later. The list that follows offers
+ * the first invite.
  */
 export default function BuddiesOnboarding({
   onDone,
@@ -185,6 +188,7 @@ export default function BuddiesOnboarding({
             </View>
             {profileEditor(validation.invalid('name'))}
             <BuddiesAccountNameHint style={lead} />
+            <BuddiesSharingSection withoutProfile />
           </>
         )}
       </ScrollView>

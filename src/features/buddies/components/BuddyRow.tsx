@@ -20,7 +20,8 @@ import {
   buddyStreakCount,
   buddyTenureLabel,
 } from '@/features/buddies/lib/buddyProfile'
-import type { Buddy } from '@/features/buddies/lib/state'
+import { type Buddy, buddySettings } from '@/features/buddies/lib/state'
+import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 import { usePreferences } from '@/stores/preferences'
 
 /**
@@ -41,6 +42,9 @@ export default function BuddyRow({
   const showStreaks = usePreferences((state) => state.showStreaks)
   const streak = showStreaks ? buddyStreakCount(buddy.streak) : 0
   const open = () => navigation.navigate('Buddy', { inboxId: buddy.inboxId })
+  const shownOnCalendar = useBuddies(
+    (state) => buddySettings(state.sharing, buddy).settings.showOnCalendar
+  )
 
   const withdraw: ContextMenuEntries = [
     {
@@ -61,7 +65,7 @@ export default function BuddyRow({
         systemImage: 'person.crop.circle',
         onPress: open,
       },
-      buddy.showOnCalendar
+      shownOnCalendar
         ? {
             id: 'hide_from_calendar',
             title: i18n.t('buddies_hideFromCalendarAction'),

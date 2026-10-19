@@ -161,6 +161,30 @@ describe('the pet on a Buddy Card', () => {
     await annasIpad.engine.sync()
     expect(annasIpad.store.getState().buddies[0].pet).toEqual(kitten)
   })
+
+  it('follows a buddy’s own setting, and stays home while sharing is paused', async () => {
+    const { advance, user } = setup()
+    const mom = user('Mom')
+    const anna = user('Anna')
+    const joe = user('Joe')
+    mom.setPet(kitten)
+    await pair(mom, anna)
+    await pair(mom, joe)
+
+    // Off for Anna alone; Joe follows All Buddies and keeps seeing it.
+    advance(1000)
+    await mom.engine.setBuddySetting(anna.inboxId, 'pet', false)
+    await anna.engine.sync()
+    await joe.engine.sync()
+    expect(anna.store.getState().buddies[0].pet).toBeUndefined()
+    expect(joe.store.getState().buddies[0].pet).toEqual(kitten)
+
+    // A pause holds it back from everyone.
+    advance(1000)
+    await mom.engine.setSharing({ pausedUntil: Number.MAX_SAFE_INTEGER })
+    await joe.engine.sync()
+    expect(joe.store.getState().buddies[0].pet).toBeUndefined()
+  })
 })
 
 describe('the pet sharing choice', () => {
@@ -211,6 +235,12 @@ describe('the pet sharing choice', () => {
       badgesUpdatedAt: 0,
       pet: false,
       petUpdatedAt: 5,
+      plans: true,
+      planTimes: 'exact',
+      pausedUntil: 0,
+      plansUpdatedAt: 0,
+      showOnCalendar: true,
+      calendarUpdatedAt: 0,
     }
     const remote = { photo: true, tenure: true, streak: true, updatedAt: 30 }
     // An older app's later roster, without the pet fields.

@@ -7,6 +7,7 @@ import {
   badgeReactionsFrom,
   BuddiesState,
   initialBuddiesState,
+  migrateLegacySettings,
   withoutExpired,
   withPendingInvitesQueued,
 } from '@/features/buddies/lib/state'
@@ -26,11 +27,13 @@ export const useBuddies = create<BuddiesState>()(
     merge: (persisted, current) => {
       const now = Date.now()
       // Undefined on a fresh install.
-      const restored = (persisted ?? {}) as Partial<BuddiesState>
+      const restored = migrateLegacySettings(
+        (persisted ?? {}) as Partial<BuddiesState>
+      )
       const merged = {
         ...current,
         ...restored,
-        // Sharing choices added since (the streak, badges) start at their
+        // Settings added since (the streak, badges, Plans) start at their
         // default.
         sharing: { ...current.sharing, ...restored.sharing },
       }

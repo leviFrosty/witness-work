@@ -6,9 +6,8 @@ import type { ContextMenuEntries } from '@/components/ui/ContextMenu.types'
 import PullDownMenu from '@/components/ui/PullDownMenu'
 import XView from '@/components/ui/layout/XView'
 import useTheme from '@/contexts/theme'
-import { formatStartTime, formatDisplay, formatRelative } from '@/lib/dates'
+import { formatDisplay, formatRelative } from '@/lib/dates'
 import i18n from '@/lib/locales'
-import { formatMinutes } from '@/lib/minutes'
 import { analytics } from '@/lib/analytics'
 import { usePreferences } from '@/stores/preferences'
 import type { RootStackNavigation } from '@/types/rootStack'
@@ -19,6 +18,7 @@ import usePlanSameTime from '@/features/buddies/hooks/usePlanSameTime'
 import { buddyColor } from '@/features/buddies/lib/buddyColors'
 import { buddyDisplayName } from '@/features/buddies/lib/buddyProfile'
 import { buildBuddyCardDays } from '@/features/buddies/lib/card'
+import { cardPlanLabel } from '@/features/buddies/lib/cardPlanLabel'
 import type { BuddyCardDay } from '@/features/buddies/lib/schemas'
 import type { Buddy, ReceivedCard } from '@/features/buddies/lib/state'
 
@@ -86,15 +86,8 @@ export default function BuddyTwoWeekStrip({
   )
   const anyTheirs = days.some((day) => theirs.has(day.format('YYYY-MM-DD')))
 
-  const planLabel = (plan: BuddyCardDay['p'][number]) => {
-    const duration = formatMinutes(plan.m, timeDisplayFormat).formatted
-    return plan.s === undefined
-      ? i18n.t('buddies_dayPlanAnyTime', { duration })
-      : i18n.t('buddies_dayPlanAtTime', {
-          time: formatStartTime(plan.s),
-          duration,
-        })
-  }
+  const planLabel = (plan: BuddyCardDay['p'][number]) =>
+    cardPlanLabel(plan, timeDisplayFormat)
 
   const cell = (day: moment.Moment) => {
     const key = day.format('YYYY-MM-DD')

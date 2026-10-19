@@ -19,6 +19,11 @@ export interface InputRowContainerProps {
   noHorizontalPadding?: boolean
   label?: string
   description?: ReactNode
+  /**
+   * Right after the label (and its info), e.g. where a setting's value comes
+   * from.
+   */
+  labelTrailing?: ReactNode
   info?: string
   justifyContent?:
     | 'flex-start'
@@ -47,6 +52,7 @@ const InputRowContainer: React.FC<
   noHorizontalPadding,
   label,
   description,
+  labelTrailing,
   info,
   justifyContent,
   gap,
@@ -58,7 +64,7 @@ const InputRowContainer: React.FC<
 }: InputRowContainerProps) => {
   const theme = useTheme()
   const layout = useInputLayout()
-  const hasInfo = Boolean(label && info)
+  const hasInfo = Boolean(label && (info || labelTrailing))
   const hasLabelContent = Boolean(label || leftIcon || description)
 
   const labelCluster = (leftIcon || label) && (
@@ -123,16 +129,20 @@ const InputRowContainer: React.FC<
 
   const labelContent = (
     <>
-      {label && info ? (
+      {label && (info || labelTrailing) ? (
         <View
           style={{ flexDirection: 'row', alignItems: 'center', flexShrink: 1 }}
         >
           {labelTitle}
-          <InfoPopover
-            title={label}
-            description={info}
-            inline={layout === 'settings'}
-          />
+          {/* Before the info icon, whose tap target reaches past it. */}
+          {labelTrailing}
+          {info && (
+            <InfoPopover
+              title={label}
+              description={info}
+              inline={layout === 'settings'}
+            />
+          )}
         </View>
       ) : (
         labelTitle

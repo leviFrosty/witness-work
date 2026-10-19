@@ -49,6 +49,10 @@ export type RootStackParamList = {
         categoryId?: string
         /** Entering an existing service report ID will enter 'edit' mode. */
         existingReport?: string
+        /** Opened by the Home timer's Save: submitting clears the timer. */
+        fromTimer?: boolean
+        /** The saved session's start, so a newer session isn't cleared. */
+        timerSessionStart?: number
       }
     | undefined
   'Recover Contacts': undefined

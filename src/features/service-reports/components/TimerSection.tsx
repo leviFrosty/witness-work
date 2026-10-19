@@ -10,31 +10,54 @@ import Card from '@/components/ui/Card'
 import IconButton from '@/components/ui/IconButton'
 import i18n from '@/lib/locales'
 import XView from '@/components/ui/layout/XView'
-import { useStopWatch } from '@/features/service-reports/hooks/useStopWatch'
+import {
+  MIN_MS_TO_SAVE,
+  RESET_CONFIRM_MIN_MS,
+  splitElapsed,
+  useStopWatch,
+} from '@/features/service-reports/hooks/useStopWatch'
 import useTheme from '@/contexts/theme'
 import Button from '@/components/ui/Button'
 import { useNavigation } from '@react-navigation/native'
 import { RootStackNavigation } from '@/types/rootStack'
 import HomeSectionMenu from '@/components/HomeSectionMenu'
 import { tracking } from '@/lib/tracking'
+import confirmDestructive from '@/lib/confirmDestructive'
 
 export const TimerSection = () => {
-  const { start, stop, reset, isRunning, time, ms } = useStopWatch()
+  const { start, stop, reset, isRunning, time, ms, sessionStartedAt } =
+    useStopWatch()
   const navigation = useNavigation<RootStackNavigation>()
   const theme = useTheme()
-  const minutes = Math.floor(ms / 60000) % 60
-  const hours = Math.floor(ms / 3600000)
-  const notEnoughTimeToSave = minutes < 5
+  const hasTime = ms >= MIN_MS_TO_SAVE
 
+  // The timer keeps its session until Add Time saves it, so backing out of
+  // Add Time loses nothing. The entry lands on the day the session began,
+  // not the day it's saved.
   const handleSave = () => {
-    reset()
     navigation.navigate('Add Time', {
-      minutes,
-      hours,
+      ...splitElapsed(ms),
+      date:
+        sessionStartedAt != null
+          ? new Date(sessionStartedAt).toISOString()
+          : undefined,
+      fromTimer: true,
+      timerSessionStart: sessionStartedAt ?? undefined,
     })
   }
 
-  const hasTime = ms >= 60000
+  const handleReset = () => {
+    if (ms < RESET_CONFIRM_MIN_MS) {
+      reset()
+      return
+    }
+    confirmDestructive({
+      title: i18n.t('resetTimer'),
+      description: i18n.t('resetTimer_description'),
+      confirmLabel: i18n.t('reset'),
+      onConfirm: reset,
+    })
+  }
 
   // The whole card long-presses for the section menu (hiding also lives in
   // Preferences → Home Screen); the buttons keep their own taps, which win for
@@ -62,7 +85,7 @@ export const TimerSection = () => {
             id: 'reset',
             title: i18n.t('timerResetAction'),
             systemImage: 'arrow.counterclockwise',
-            onPress: reset,
+            onPress: handleReset,
           },
         ],
       ]}
@@ -123,13 +146,14 @@ export const TimerSection = () => {
               flex: 1,
               justifyContent: 'center',
             }}
-            onPress={reset}
+            onPress={handleReset}
           >
             <IconButton icon={RotateCcwIcon} size={theme.fontSize('lg')} />
           </Button>
 
           <Button
             onPress={handleSave}
+            disabled={!hasTime}
             variant='outline'
             style={{
               paddingVertical: 12,
@@ -141,9 +165,7 @@ export const TimerSection = () => {
             <Text
               style={{
                 textDecorationLine: 'underline',
-                color: notEnoughTimeToSave
-                  ? theme.colors.textAlt
-                  : theme.colors.text,
+                color: hasTime ? theme.colors.text : theme.colors.textAlt,
               }}
             >
               {i18n.t('save')}

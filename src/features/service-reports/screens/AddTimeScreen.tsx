@@ -10,6 +10,7 @@ import Header from '@/components/ui/layout/Header'
 import { getReport } from '@/lib/serviceReport'
 import { RootStackNavigation, RootStackParamList } from '@/types/rootStack'
 import TimeEntryForm from '@/features/service-reports/components/TimeEntryForm'
+import { resetStopwatchSession } from '@/features/service-reports/hooks/useStopWatch'
 
 type AddTimeScreenProps = NativeStackScreenProps<RootStackParamList, 'Add Time'>
 
@@ -45,7 +46,20 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
         minutes={route.params?.minutes}
         categoryId={route.params?.categoryId}
         source='time_entry_form'
-        onDone={() => navigation.goBack()}
+        onDone={() => {
+          // A timer session has no existing entry, so done means submitted.
+          // Deep links pass params as strings, so only the timer's own values
+          // clear it.
+          const sessionStart = route.params?.timerSessionStart
+          if (
+            route.params?.fromTimer === true &&
+            typeof sessionStart === 'number' &&
+            !existingReport
+          ) {
+            void resetStopwatchSession(sessionStart)
+          }
+          navigation.goBack()
+        }}
       />
     </Wrapper>
   )

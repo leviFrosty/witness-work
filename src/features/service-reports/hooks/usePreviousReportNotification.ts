@@ -3,13 +3,10 @@ import { noteUserAction } from '@/lib/userAction'
 import { Send as SendIcon } from 'lucide-react-native'
 import { useNavigation } from '@react-navigation/native'
 import i18n from '@/lib/locales'
-import { getMonthsReports, isCountableEntry } from '@/lib/serviceReport'
 import { usePreferences } from '@/stores/preferences'
-import useServiceReport from '@/stores/serviceReport'
 import type { NotificationItem } from '@/types/notifications'
 import type { RootStackNavigation } from '@/types/rootStack'
-import { shouldShowPreviousReportReminder } from '@/features/service-reports/lib/previousReportReminder'
-import { useShallow } from 'zustand/react/shallow'
+import useDueReportMonth from '@/features/service-reports/hooks/useDueReportMonth'
 
 /**
  * Tray reminder to submit last month's Service Report. Clears once it's sent
@@ -20,33 +17,11 @@ export default function usePreviousReportNotification(
   now: number
 ): NotificationItem | null {
   const navigation = useNavigation<RootStackNavigation>()
-  const { submittedReportMonths, installedOn, markReportSubmitted } =
-    usePreferences(
-      useShallow((s) => ({
-        submittedReportMonths: s.submittedReportMonths,
-        installedOn: s.installedOn,
-        markReportSubmitted: s.markReportSubmitted,
-      }))
-    )
-  const serviceReports = useServiceReport((state) => state.serviceReports)
+  const markReportSubmitted = usePreferences((s) => s.markReportSubmitted)
+  const { month, year, isPreviousMonth } = useDueReportMonth(now)
+  if (!isPreviousMonth) return null
 
-  const previousMonth = moment(now).subtract(1, 'month')
-  const previousMonthHasEntries = getMonthsReports(
-    serviceReports,
-    previousMonth.month(),
-    previousMonth.year()
-  ).some(isCountableEntry)
-  if (
-    !shouldShowPreviousReportReminder({
-      installedOn,
-      now: new Date(now),
-      previousMonthHasEntries,
-      submittedReportMonths,
-    })
-  ) {
-    return null
-  }
-
+  const previousMonth = moment({ year, month })
   const monthKey = previousMonth.format('YYYY-MM')
   return {
     id: `previous_report:${monthKey}`,

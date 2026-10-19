@@ -21,6 +21,8 @@ import HomeSectionMenu from '@/components/HomeSectionMenu'
 import useMonthReportExport from '@/features/service-reports/hooks/useMonthReportExport'
 import useReportSentState from '@/features/service-reports/hooks/useReportSentState'
 import ReportSentLabel from '@/features/service-reports/components/ReportSentLabel'
+import useDueReportMonth from '@/features/service-reports/hooks/useDueReportMonth'
+import DueReportRow from '@/features/service-reports/components/DueReportRow'
 
 const ServiceReportSection = () => {
   const theme = useTheme()
@@ -31,9 +33,17 @@ const ServiceReportSection = () => {
 
   const { reportMenuItems } = useMonthReportExport()
   const { label: sentLabel } = useReportSentState(month, year)
+  // Send items target last month while its report is unsent, never this
+  // month's partial one.
+  const due = useDueReportMonth()
 
   const viewReport = () =>
     navigation.navigate('ServiceReportView', { month, year })
+  const viewDueReport = () =>
+    navigation.navigate('ServiceReportView', {
+      month: due.month,
+      year: due.year,
+    })
   const addTime = () => navigation.navigate('Add Time')
 
   return (
@@ -58,7 +68,20 @@ const ServiceReportSection = () => {
               systemImage: 'doc.text',
               onPress: viewReport,
             },
-            ...reportMenuItems(month, year),
+            ...(due.isPreviousMonth ? [] : reportMenuItems(month, year)),
+          ],
+          due.isPreviousMonth && [
+            {
+              id: 'view_due_report',
+              title: i18n.t('submitMonthsReport', {
+                month: moment({ year: due.year, month: due.month }).format(
+                  'MMMM'
+                ),
+              }),
+              systemImage: 'paperplane',
+              onPress: viewDueReport,
+            },
+            ...reportMenuItems(due.month, due.year),
           ],
           showsTimeEntry && [
             {
@@ -108,6 +131,9 @@ const ServiceReportSection = () => {
           borderTopColor: theme.colors.border,
         }}
       >
+        {due.isPreviousMonth ? (
+          <DueReportRow month={due.month} year={due.year} />
+        ) : null}
         <View
           style={{
             flexDirection: 'row',

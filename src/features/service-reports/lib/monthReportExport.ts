@@ -27,6 +27,19 @@ export const reportMonthKey = (month: number, year: number) =>
   moment().month(month).year(year).format('YYYY-MM')
 
 /**
+ * Which month an export sends, relative to today, for analytics: `current` is a
+ * report sent before its month is over.
+ */
+const reportMonthAge = ({ month, year }: { month: number; year: number }) => {
+  const sent = moment({ year, month })
+  const thisMonth = moment().startOf('month')
+  if (sent.isSame(thisMonth, 'month')) return 'current'
+  if (sent.isSame(thisMonth.clone().subtract(1, 'month'), 'month'))
+    return 'previous'
+  return 'other'
+}
+
+/**
  * A month's report built from the stores' current state — for exports started
  * outside the report screen (menus), so a list of months doesn't build every
  * report up front.
@@ -78,9 +91,14 @@ export const exportMonthReport = async (
   { month, year }: { month: number; year: number },
   source: ReportExportSource
 ): Promise<boolean> => {
+  const report_month = reportMonthAge({ month, year })
   if (method === 'copy') {
     await Clipboard.setStringAsync(data.reportAsString())
-    analytics.capture('service_report_exported', { method: 'copy', source })
+    analytics.capture('service_report_exported', {
+      method: 'copy',
+      source,
+      report_month,
+    })
     return true
   }
   if (method === 'share') {
@@ -88,7 +106,7 @@ export const exportMonthReport = async (
     const shared = result.action === Share.sharedAction
     analytics.capture(
       shared ? 'service_report_exported' : 'service_report_export_dismissed',
-      { method: 'share', source }
+      { method: 'share', source, report_month }
     )
     // Android resolves `sharedAction` even when the sheet is dismissed, so a
     // share there leaves the month unmarked; Mark as Sent records it.
@@ -109,6 +127,7 @@ export const exportMonthReport = async (
     analytics.capture('service_report_export_requested', {
       method: 'hourglass',
       source,
+      report_month,
     })
     return openURL(
       buildHourglassLink({
@@ -122,6 +141,7 @@ export const exportMonthReport = async (
     analytics.capture('service_report_export_requested', {
       method: 'nwpublisher',
       source,
+      report_month,
     })
     return openURL(
       buildNwPublisherLink({

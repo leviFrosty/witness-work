@@ -1,7 +1,7 @@
 import * as Location from 'expo-location'
 import type { Coordinate } from '@/types/contact'
 import { errorTracking } from '@/lib/errorTracking'
-import { isLocationTemporarilyUnavailableError } from '@/lib/locationError'
+import { isExpectedLocationError } from '@/lib/locationError'
 
 /** A recent fix is close enough to start a driving route from. */
 const RECENT_FIX_MAX_AGE_MS = 2 * 60_000
@@ -53,7 +53,7 @@ export const currentCoordinate = async (): Promise<CurrentCoordinate> => {
       },
     }
   } catch (error) {
-    if (!isLocationTemporarilyUnavailableError(error)) {
+    if (!isExpectedLocationError(error)) {
       errorTracking.captureException(error)
     }
     return { ok: false, reason: 'unavailable' }

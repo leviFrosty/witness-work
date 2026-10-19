@@ -1,7 +1,9 @@
 import { posthogClient as client } from '@/lib/posthogClient'
+import { analytics } from '@/lib/analytics'
 import {
   diagnosticProperties,
   errorTrackingEnabled,
+  isStorageFullError,
   mergeErrorContext,
   shouldIgnoreError,
 } from '@/lib/errorTrackingPolicy'
@@ -24,6 +26,14 @@ function safely(send: () => unknown): void {
   }
 }
 
+function report(error: unknown, properties?: ErrorProperties): void {
+  if (!errorTrackingEnabled) return
+  // A full device isn't a bug, but how often it happens is still worth knowing.
+  if (isStorageFullError(error)) analytics.capture('device_storage_full')
+  else if (!shouldIgnoreError(error))
+    client?.captureException(error, exceptionProperties(properties))
+}
+
 function exceptionProperties(properties?: ErrorProperties) {
   const serialized = diagnosticProperties(properties)
   if (!serialized) return undefined
@@ -42,21 +52,10 @@ function exceptionProperties(properties?: ErrorProperties) {
  */
 export const errorTracking = {
   captureException(error: unknown, properties?: ErrorProperties): void {
-    safely(() => {
-      if (errorTrackingEnabled && !shouldIgnoreError(error)) {
-        client?.captureException(error, exceptionProperties(properties))
-      }
-    })
+    safely(() => report(error, properties))
   },
   captureMessage(message: string, properties?: ErrorProperties): void {
-    safely(() => {
-      if (errorTrackingEnabled && !shouldIgnoreError(message)) {
-        client?.captureException(
-          new Error(message),
-          exceptionProperties(properties)
-        )
-      }
-    })
+    safely(() => report(new Error(message), properties))
   },
   addBreadcrumb({ category, message, level, data }: Breadcrumb): void {
     safely(() => {

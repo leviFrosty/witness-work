@@ -53,6 +53,7 @@ automatic events are discarded. Touch/text autocapture and session replay stay o
 | `recovery_key_viewed`                                                             | Once per session; reach of the recovery key, not repeat views.                                                                                                                                                                     |
 | `account_backup_failed`                                                           | Once per UTC day and reason; which failures affect people, not how often a phone retries.                                                                                                                                          |
 | `account_session_failed`                                                          | Once per UTC day and reason; which devices can't open an account session, not how often one retries.                                                                                                                               |
+| `device_storage_full`                                                             | Once per UTC day; how many devices run out of storage, not how often writes fail.                                                                                                                                                  |
 | `update_required_shown`                                                           | Once per session and source; reach of Update Required, not every return to the foreground.                                                                                                                                         |
 | Supporter gate, purchase, and core outcome events                                 | Every meaningful occurrence; placement visits and `gate_flow_id` attribution remain intact.                                                                                                                                        |
 | `$feature_flag_called`                                                            | Once per UTC day and flag/value, with SDK experiment metadata.                                                                                                                                                                     |
@@ -981,6 +982,16 @@ error filtering and failure isolation; diagnostic calls must never interrupt a
 user action. Breadcrumbs provide bounded context for errors rather than creating
 separate product-analytics events. Keep their data structural: no contact names,
 addresses, notes, credentials, file contents, or share links.
+
+Expected device states are filtered out, both from these calls and from
+automatically captured exceptions (`shouldIgnoreError` in
+`src/lib/errorTrackingPolicy.ts`): connection failures (including RevenueCat's
+`NETWORK_ERROR`), location that's off, denied or can't get a fix, and a full
+device (the OS's own out-of-space errors only; MMKV's `Failed to set` is still
+reported, since any failed write throws it). A full device sends
+`device_storage_full` instead, with no properties, once per UTC day, so it
+stays visible without flooding error tracking.
+Automatically captured storage-full exceptions are dropped without it.
 
 PostHog is the current implementation. Provider configuration, automatic capture,
 and source-map/native-symbol uploads belong to the shared implementation and

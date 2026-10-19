@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import * as Location from 'expo-location'
 import { errorTracking } from '@/lib/errorTracking'
-import { isLocationTemporarilyUnavailableError } from '@/lib/locationError'
+import { isExpectedLocationError } from '@/lib/locationError'
 
 export default function useLocation() {
   const [status, setStatus] = useState<Location.PermissionStatus | null>(null)
@@ -12,9 +12,9 @@ export default function useLocation() {
       const result = await Location.getCurrentPositionAsync()
       setLocation(result)
     } catch (error) {
-      // Location can be temporarily unavailable; don't report the expected
-      // transient failure, just leave the previous location in place.
-      if (!isLocationTemporarilyUnavailableError(error)) {
+      // Location can be off or temporarily unavailable; don't report those
+      // device states, just leave the previous location in place.
+      if (!isExpectedLocationError(error)) {
         errorTracking.captureException(error)
       }
     }

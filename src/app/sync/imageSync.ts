@@ -1,5 +1,6 @@
 import { filenameForContact, filenameForProfile } from '@/app/sync/imageNames'
 import { syncTransportErrorCode } from '@/lib/syncTransport/types'
+import { isStorageFullError } from '@/lib/errorTrackingPolicy'
 
 /**
  * Dependencies injected by the caller (`iCloudSync.ts`). Keeping the module
@@ -96,8 +97,10 @@ export function filenameForSource(source: AvatarSource): string {
  */
 function isQuotaFailure(entry: { lastError?: string; errorCode?: string }) {
   if (entry.errorCode) return entry.errorCode === 'storage-full'
-  return /quota|out of space|not enough space|storage/i.test(
-    entry.lastError ?? ''
+  const message = entry.lastError ?? ''
+  return (
+    isStorageFullError(message) ||
+    /quota|not enough space|storage/i.test(message)
   )
 }
 

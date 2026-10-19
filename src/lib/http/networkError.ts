@@ -39,6 +39,8 @@ const OFFLINE_PATTERNS = [
   'software caused connection abort',
   'econnrefused',
   'enotfound',
+  // RevenueCat's NETWORK_ERROR message.
+  'error performing request',
 ]
 
 const TIMEOUT_PATTERNS = [
@@ -75,6 +77,7 @@ type ErrorLike = {
   kind?: unknown
   status?: unknown
   readableErrorCode?: unknown
+  userInfo?: { readableErrorCode?: unknown } | null
   isAxiosError?: unknown
   response?: { status?: unknown } | null
 }
@@ -110,11 +113,12 @@ export function classifyNetworkError(error: unknown): NetworkErrorKind {
   if (e.name === 'AbortError' || e.name === 'CanceledError') return 'cancelled'
 
   if (typeof e.code === 'string') {
-    if (
-      e.readableErrorCode !== undefined &&
-      REVENUECAT_OFFLINE_CODES.has(e.code)
-    )
-      return 'offline'
+    // Android's bridge only sets `userInfo.readableErrorCode`; the top-level
+    // copy is deprecated.
+    const isRevenueCat =
+      e.readableErrorCode !== undefined ||
+      e.userInfo?.readableErrorCode !== undefined
+    if (isRevenueCat && REVENUECAT_OFFLINE_CODES.has(e.code)) return 'offline'
     if (Object.prototype.hasOwnProperty.call(CODE_KINDS, e.code))
       return CODE_KINDS[e.code]
   }

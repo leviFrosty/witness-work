@@ -13,6 +13,7 @@ const dailyEvents = new Set([
   'pointer_hover_detected',
   'account_backup_failed',
   'account_session_failed',
+  'device_storage_full',
 ])
 const sessionEvents = new Set([
   'timer_action_completed',

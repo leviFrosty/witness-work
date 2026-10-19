@@ -328,7 +328,7 @@ export function installAccountBackup(): () => void {
   const background = addBackgroundListener(() => scheduler.onBackground())
   // `inactive` counts too: the iOS app switcher can end the app from there.
   const appState = AppState.addEventListener('change', (state) => {
-    if (state === 'inactive') scheduler.onBackground()
+    if (state === 'inactive') scheduler.onInactive()
   })
   const reconnect = addReconnectListener(() => scheduler.onReconnect())
   const nudged = useBackupState.subscribe((state, previous) => {

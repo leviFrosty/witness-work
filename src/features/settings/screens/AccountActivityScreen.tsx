@@ -1,5 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
-import { ActivityIndicator, View } from 'react-native'
+import {
+  ActivityIndicator,
+  RefreshControl,
+  ScrollView,
+  View,
+} from 'react-native'
+import { useIsFocused } from '@react-navigation/native'
 import { FlashList } from '@shopify/flash-list'
 import {
   Ban as BanIcon,
@@ -40,6 +46,7 @@ import type {
   ActivityKind,
 } from '@/lib/serverAccount/activityClient'
 import { analytics } from '@/lib/analytics'
+import { addForegroundListener } from '@/lib/appLifecycle'
 import { formatDateTime } from '@/lib/dates'
 import i18n from '@/lib/locales'
 import { logger } from '@/lib/logger'
@@ -70,7 +77,8 @@ type Loaded = {
  * Settings → Account → Account Activity (ADR 0028): the account's security
  * history, newest first, 50 entries a page, with device names opened from their
  * sealed labels and "this device" named as such. A reused refresh token is
- * flagged.
+ * flagged. Reads the first page again on focus, on returning to the app, and on
+ * pull to refresh.
  */
 const AccountActivityScreen = () => {
   const theme = useTheme()
@@ -79,12 +87,17 @@ const AccountActivityScreen = () => {
   const [failure, setFailure] = useState<LoadFailure | null>(null)
   const [loadingMore, setLoadingMore] = useState(false)
   const [moreFailed, setMoreFailed] = useState(false)
-  // Bumped by Try Again to read the first page again.
+  // Pull to refresh, until its first page is in.
+  const [refreshing, setRefreshing] = useState(false)
+  // Bumped to read the first page again: Try Again, pull to refresh, or a
+  // return to the app.
   const [reloads, setReloads] = useState(0)
+  const focused = useIsFocused()
   const latest = useRef(0)
   const reported = useRef(false)
 
   useEffect(() => {
+    if (!focused) return
     const run = ++latest.current
     setLoading(true)
     loadAccountActivity(null)
@@ -107,9 +120,30 @@ const AccountActivityScreen = () => {
         setFailure(loadFailure(error))
       })
       .finally(() => {
-        if (run === latest.current) setLoading(false)
+        if (run !== latest.current) return
+        setLoading(false)
+        setRefreshing(false)
       })
-  }, [reloads])
+  }, [focused, reloads])
+
+  useEffect(() => {
+    if (!focused) return
+    const foreground = addForegroundListener(() =>
+      setReloads((count) => count + 1)
+    )
+    return () => foreground.remove()
+  }, [focused])
+
+  const refreshControl = (
+    <RefreshControl
+      refreshing={refreshing}
+      onRefresh={() => {
+        setRefreshing(true)
+        setReloads((count) => count + 1)
+      }}
+      tintColor={theme.colors.accent}
+    />
+  )
 
   // Promise chains, not try/finally, which React Compiler can't compile yet.
   const loadMore = ({ retry = false } = {}) => {
@@ -166,15 +200,17 @@ const AccountActivityScreen = () => {
     <SettingsInputLayout>
       <Wrapper insets='bottom'>
         {entries.length === 0 ? (
-          <Text
-            style={{
-              color: theme.colors.textAlt,
-              textAlign: 'center',
-              paddingTop: 30,
-            }}
-          >
-            {i18n.t('accountActivity_empty')}
-          </Text>
+          <ScrollView refreshControl={refreshControl}>
+            <Text
+              style={{
+                color: theme.colors.textAlt,
+                textAlign: 'center',
+                paddingTop: 30,
+              }}
+            >
+              {i18n.t('accountActivity_empty')}
+            </Text>
+          </ScrollView>
         ) : (
           <Section
             animateRows={false}
@@ -185,6 +221,7 @@ const AccountActivityScreen = () => {
               keyExtractor={(row) => row.entry.id}
               onEndReached={() => loadMore()}
               onEndReachedThreshold={0.5}
+              refreshControl={refreshControl}
               renderItem={({ item: { entry, count }, index }) => {
                 const suspicious = isSuspiciousActivity(entry)
                 return (

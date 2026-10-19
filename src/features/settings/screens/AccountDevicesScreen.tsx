@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Alert, ScrollView, View } from 'react-native'
+import { Alert, RefreshControl, ScrollView, View } from 'react-native'
 import { useIsFocused } from '@react-navigation/native'
 import moment from 'moment'
 import {
@@ -8,6 +8,7 @@ import {
   Tablet as TabletIcon,
 } from 'lucide-react-native'
 import type { AppIcon } from '@/components/ui/LucideIcon'
+import useTheme from '@/contexts/theme'
 import Wrapper from '@/components/ui/layout/Wrapper'
 import Section from '@/components/ui/inputs/Section'
 import InputRowButton from '@/components/ui/inputs/InputRowButton'
@@ -31,6 +32,7 @@ import {
 } from '@/app/account/accountActivity'
 import type { AccountDevice } from '@/lib/serverAccount/activityClient'
 import { analytics } from '@/lib/analytics'
+import { addForegroundListener } from '@/lib/appLifecycle'
 import {
   formatDate,
   formatMonthDayCompact,
@@ -82,13 +84,18 @@ function signedIn(
 /**
  * Settings → Account → Signed-In Devices (ADR 0028): the account's live
  * sessions, this device first, each other one signable out. Names come from the
- * sealed labels, opened here.
+ * sealed labels, opened here. Lists again on focus, on returning to the app,
+ * and on pull to refresh, so a device signed out elsewhere drops off.
  */
 const AccountDevicesScreen = () => {
+  const theme = useTheme()
   const [loaded, setLoaded] = useState<Loaded | null>(null)
   const [loading, setLoading] = useState(true)
   const [failure, setFailure] = useState<LoadFailure | null>(null)
-  // Bumped to list again: after a sign-out, or Try Again.
+  // Pull to refresh, until its listing is in.
+  const [refreshing, setRefreshing] = useState(false)
+  // Bumped to list again: after a sign-out, Try Again, pull to refresh, or a
+  // return to the app.
   const [reloads, setReloads] = useState(0)
   const focused = useIsFocused()
   const latest = useRef(0)
@@ -117,9 +124,20 @@ const AccountDevicesScreen = () => {
         setFailure(loadFailure(error))
       })
       .finally(() => {
-        if (run === latest.current) setLoading(false)
+        if (run !== latest.current) return
+        setLoading(false)
+        setRefreshing(false)
       })
   }, [focused, reloads])
+
+  // Signing out happens on other devices too, while this one was away.
+  useEffect(() => {
+    if (!focused) return
+    const foreground = addForegroundListener(() =>
+      setReloads((count) => count + 1)
+    )
+    return () => foreground.remove()
+  }, [focused])
 
   const refresh = () => setReloads((count) => count + 1)
 
@@ -171,6 +189,16 @@ const AccountDevicesScreen = () => {
       <Wrapper insets='bottom'>
         <ScrollView
           contentContainerStyle={{ gap: 30, paddingTop: 30, paddingBottom: 30 }}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={() => {
+                setRefreshing(true)
+                refresh()
+              }}
+              tintColor={theme.colors.accent}
+            />
+          }
         >
           {showList ? (
             <View style={{ gap: 5 }}>

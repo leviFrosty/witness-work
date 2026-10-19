@@ -231,6 +231,7 @@ const SpanWheels = (props: {
             data={startItems}
             value={props.start}
             onValueChange={(start) => props.onChange(start, props.minutes)}
+            accessibilityLabel={i18n.t('planForm_start')}
             testID={`${props.testID}-span-start`}
           />
         </View>
@@ -240,6 +241,7 @@ const SpanWheels = (props: {
             data={endItems}
             value={props.minutes}
             onValueChange={(minutes) => props.onChange(props.start, minutes)}
+            accessibilityLabel={i18n.t('planForm_end')}
             testID={`${props.testID}-span-end`}
           />
         </View>
@@ -334,6 +336,7 @@ const WhenDock = (props: Props) => {
           data={hourItems}
           value={hours}
           onValueChange={setHours}
+          accessibilityLabel={i18n.t('hours')}
           testID={`${props.testID}-duration-hours`}
         />
       </View>
@@ -345,6 +348,7 @@ const WhenDock = (props: Props) => {
           data={minuteItems}
           value={minutes}
           onValueChange={setMinutes}
+          accessibilityLabel={i18n.t('minutes')}
           testID={`${props.testID}-duration-minutes`}
         />
       </View>

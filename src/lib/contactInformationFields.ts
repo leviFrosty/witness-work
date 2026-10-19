@@ -48,3 +48,15 @@ export function hasContactInformationValue(
       : contact[field.kind]
   )
 }
+
+/**
+ * The field the keyboard's Next key moves to after `fields[index]` (pass -1 for
+ * the first). Skips phone: the phone-number library's input can't be focused
+ * from outside while the form controls its value.
+ */
+export function nextKeyboardField(
+  fields: readonly ContactInformationField[],
+  index: number
+): ContactInformationField | undefined {
+  return fields.slice(index + 1).find((field) => field.kind !== 'phone')
+}

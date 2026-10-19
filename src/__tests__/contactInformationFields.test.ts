@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   getContactInformationFields,
   hasContactInformationValue,
+  nextKeyboardField,
 } from '@/lib/contactInformationFields'
 import type { CustomFieldDefinition } from '@/types/customField'
 import type { Contact } from '@/types/contact'
@@ -97,5 +98,22 @@ describe('contact information presentation', () => {
     expect(
       getContactInformationFields([], [], { phone: false, email: false })
     ).toEqual([])
+  })
+
+  it('moves the keyboard to the next field it can focus, skipping phone', () => {
+    const fields = getContactInformationFields(
+      [spouse],
+      ['email', 'phone', 'custom:spouse']
+    )
+    expect(nextKeyboardField(fields, -1)?.id).toBe('email')
+    expect(nextKeyboardField(fields, 0)?.id).toBe('custom:spouse')
+    expect(nextKeyboardField(fields, 1)?.id).toBe('custom:spouse')
+    expect(nextKeyboardField(fields, 2)).toBeUndefined()
+    expect(
+      nextKeyboardField(
+        getContactInformationFields([], [], { phone: true, email: false }),
+        -1
+      )
+    ).toBeUndefined()
   })
 })

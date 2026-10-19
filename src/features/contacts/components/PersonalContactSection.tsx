@@ -1,5 +1,8 @@
 import CustomFieldPrivacyWarning from '@/components/CustomFieldPrivacyWarning'
-import { getContactInformationFields } from '@/lib/contactInformationFields'
+import {
+  type ContactInformationField,
+  nextKeyboardField,
+} from '@/lib/contactInformationFields'
 import { ChevronDown as ChevronDownIcon } from 'lucide-react-native'
 import PhoneInput, {
   ICountry,
@@ -13,8 +16,7 @@ import Button from '@/components/ui/Button'
 import { Contact } from '@/types/contact'
 import { TextInput, useColorScheme, View } from 'react-native'
 import TextInputRow from '@/components/ui/inputs/TextInputRow'
-import useContacts from '@/stores/contactsStore'
-import { useMemo, useRef } from 'react'
+import { type Ref, useImperativeHandle, useMemo, useRef } from 'react'
 import * as Localization from 'expo-localization'
 import { useNavigation } from '@react-navigation/native'
 import useTheme from '@/contexts/theme'
@@ -37,9 +39,15 @@ const phoneIssueKeys = {
   unknown: 'phoneIssue_unknown',
 } as const satisfies Record<PhoneNumberPossibility, TranslationKey>
 
+export type PersonalContactSectionHandle = {
+  /** Moves the keyboard to the first field it can focus. */
+  focusFirst: () => void
+}
+
 export default function PersonalContactSection({
   contact,
-  emailInput,
+  fields,
+  ref,
   setPhone,
   setRegionCode,
   setEmail,
@@ -47,35 +55,46 @@ export default function PersonalContactSection({
   setCustomField,
 }: {
   contact: Contact
-  emailInput: React.RefObject<TextInput | null>
+  /** Phone, email and custom fields, in the order and visibility to show. */
+  fields: ContactInformationField[]
+  ref?: Ref<PersonalContactSectionHandle>
   setPhone: (phone: string) => void
   setRegionCode: (regionCode: string) => void
   setEmail: (email: string) => void
   customFields?: Record<string, string>
   setCustomField: (key: string, value: string) => void
 }) {
-  const { customFieldDefs } = useContacts()
   const navigation = useNavigation<RootStackNavigation>()
   const placeholder = useRef(contact.phone || '')
   const locales = Localization.getLocales()
   const colorScheme = useColorScheme()
-  const {
-    colorScheme: preferredColorScheme,
-    contactInformationOrder,
-    showContactPhone,
-    showContactEmail,
-  } = usePreferences()
+  const { colorScheme: preferredColorScheme } = usePreferences()
   const theme = useTheme()
+  /** Each field's text input by field id, for the keyboard's Next key. */
+  const inputs = useRef<Record<string, TextInput | null>>({})
   const phoneTheme = (preferredColorScheme ?? colorScheme ?? 'light') as ITheme
 
-  const allFields = getContactInformationFields(
-    customFieldDefs,
-    contactInformationOrder,
-    {
-      phone: showContactPhone,
-      email: showContactEmail,
-    }
-  )
+  const focusAfter = (index: number) => {
+    const next = nextKeyboardField(fields, index)
+    if (next) inputs.current[next.id]?.focus()
+  }
+
+  useImperativeHandle(ref, () => ({ focusFirst: () => focusAfter(-1) }))
+
+  /**
+   * Return-key props that move the keyboard to the next field, or close it with
+   * Done after the last one.
+   */
+  const keyboardProps = (index: number) => {
+    const next = nextKeyboardField(fields, index)
+    return next
+      ? {
+          enterKeyHint: 'next' as const,
+          submitBehavior: 'submit' as const,
+          onSubmitEditing: () => focusAfter(index),
+        }
+      : { enterKeyHint: 'done' as const }
+  }
 
   const handleCountryChange = (country: ICountry) => {
     if (!country) {
@@ -140,10 +159,10 @@ export default function PersonalContactSection({
           </Text>
         </Button>
       </XView>
-      {allFields.length > 0 && (
+      {fields.length > 0 && (
         <Section>
-          {allFields.map((field, index) => {
-            const last = index === allFields.length - 1
+          {fields.map((field, index) => {
+            const last = index === fields.length - 1
             if (field.kind === 'phone')
               return (
                 <InputRowContainer key={field.id} lastInSection={last}>
@@ -162,6 +181,7 @@ export default function PersonalContactSection({
                       theme={phoneTheme}
                       inputMode='numeric'
                       clearButtonMode='while-editing'
+                      {...keyboardProps(index)}
                       customCaret={<IconButton icon={ChevronDownIcon} />}
                       phoneInputStyles={{
                         container: {
@@ -237,7 +257,9 @@ export default function PersonalContactSection({
                 <TextInputRow
                   key={field.id}
                   label={i18n.t('email')}
-                  ref={emailInput}
+                  ref={(input) => {
+                    inputs.current[field.id] = input
+                  }}
                   controlWidth='auto'
                   controlStyle={{ width: '76%', minWidth: 0 }}
                   textInputProps={{
@@ -247,6 +269,7 @@ export default function PersonalContactSection({
                     value: contact.email,
                     autoCapitalize: 'none',
                     textAlign: 'start',
+                    ...keyboardProps(index),
                   }}
                   lastInSection={last}
                 />
@@ -257,6 +280,9 @@ export default function PersonalContactSection({
               <View key={field.id}>
                 <TextInputRow
                   label={def.label}
+                  ref={(input) => {
+                    inputs.current[field.id] = input
+                  }}
                   controlWidth='full'
                   textInputProps={{
                     placeholder: i18n.t('goesHere'),
@@ -266,6 +292,7 @@ export default function PersonalContactSection({
                     value: customFields?.[def.id] ?? '',
                     autoCapitalize: 'words',
                     textAlign: 'start',
+                    ...keyboardProps(index),
                   }}
                   lastInSection={last}
                 />

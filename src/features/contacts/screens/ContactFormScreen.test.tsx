@@ -19,6 +19,7 @@ const mocks = vi.hoisted(() => ({
   replace: vi.fn(),
   goBack: vi.fn(),
   contacts: [] as Contact[],
+  customFieldDefs: [],
   address: { line1: 'Previous contact street', city: 'Previous city' },
 }))
 vi.mock('react-native', () => ({

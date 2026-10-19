@@ -2,13 +2,16 @@ import moment from 'moment'
 import { createFakeContact } from '@/__tests__/__data__/contacts'
 import {
   contactHasAtLeastOneStudy,
+  contactLastConversation,
   contactMostRecentStudy,
   contactStudiedForGivenMonth,
   followUpAnswer,
   followUpCardItems,
   isAppointment,
   isPlaceholderFollowUp,
+  newVisitIsBibleStudy,
   overdueFollowUpConversations,
+  plannedFollowUpTopic,
   stripPlaceholderFollowUp,
 } from '@/lib/conversations'
 import { Visit } from '@/types/visit'
@@ -442,6 +445,100 @@ describe('lib/conversations', () => {
         conversations: [dismissed],
       })
       expect(items).toEqual([])
+    })
+  })
+
+  describe('new visit defaults', () => {
+    const now = new Date('2026-10-19T12:00:00')
+    const daysAgo = (days: number) =>
+      moment(now).subtract(days, 'days').toDate()
+
+    it('picks the latest real conversation, skipping Not at Home', () => {
+      const conversations = [
+        baseVisit({ id: 'old', date: daysAgo(14) }),
+        baseVisit({ id: 'recent', date: daysAgo(7) }),
+        baseVisit({ id: 'nah', date: daysAgo(1), notAtHome: true }),
+        baseVisit({ id: 'other', date: daysAgo(1), contact: { id: 'x' } }),
+        baseVisit({ id: 'future', date: moment(now).add(1, 'day').toDate() }),
+      ]
+      expect(
+        contactLastConversation({
+          conversations,
+          contactId: contact.id,
+          before: now,
+        })?.id
+      ).toBe('recent')
+    })
+
+    it('starts on when the last real conversation was a Bible Study', () => {
+      const conversations = [
+        baseVisit({ id: 'study', date: daysAgo(7), isBibleStudy: true }),
+        baseVisit({ id: 'nah', date: daysAgo(1), notAtHome: true }),
+      ]
+      expect(
+        newVisitIsBibleStudy({
+          conversations,
+          contactId: contact.id,
+          date: now,
+        })
+      ).toBe(true)
+    })
+
+    it('starts off when the last real conversation was not a study', () => {
+      const conversations = [
+        baseVisit({ id: 'study', date: daysAgo(14), isBibleStudy: true }),
+        baseVisit({ id: 'talk', date: daysAgo(7), isBibleStudy: false }),
+      ]
+      expect(
+        newVisitIsBibleStudy({
+          conversations,
+          contactId: contact.id,
+          date: now,
+        })
+      ).toBe(false)
+    })
+
+    it('starts off for Not at Home, a new contact, or no contact', () => {
+      const conversations = [
+        baseVisit({ id: 'study', date: daysAgo(7), isBibleStudy: true }),
+      ]
+      expect(
+        newVisitIsBibleStudy({
+          conversations,
+          contactId: contact.id,
+          date: now,
+          notAtHome: true,
+        })
+      ).toBe(false)
+      expect(
+        newVisitIsBibleStudy({ conversations, contactId: 'new', date: now })
+      ).toBe(false)
+      expect(
+        newVisitIsBibleStudy({ conversations, contactId: '', date: now })
+      ).toBe(false)
+    })
+
+    it("shows the answered Follow-up's planned topic", () => {
+      const conversations = [
+        baseVisit({
+          id: 'planned',
+          followUp: { date: now, notifyMe: false, topic: '  Lesson 3 ' },
+        }),
+        baseVisit({
+          id: 'blank',
+          followUp: { date: now, notifyMe: false, topic: '   ' },
+        }),
+      ]
+      expect(
+        plannedFollowUpTopic({ conversations, followUpVisitId: 'planned' })
+      ).toBe('Lesson 3')
+      expect(
+        plannedFollowUpTopic({ conversations, followUpVisitId: 'blank' })
+      ).toBeUndefined()
+      expect(
+        plannedFollowUpTopic({ conversations, followUpVisitId: 'missing' })
+      ).toBeUndefined()
+      expect(plannedFollowUpTopic({ conversations })).toBeUndefined()
     })
   })
 })

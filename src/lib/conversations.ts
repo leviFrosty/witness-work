@@ -65,6 +65,67 @@ export const contactMostRecentStudy = ({
 }
 
 /**
+ * The Contact's latest real conversation on or before `before`. Not at Home
+ * Visits don't count: no one answered, so they say nothing about a study.
+ */
+export const contactLastConversation = ({
+  conversations,
+  contactId,
+  before,
+}: {
+  conversations: Visit[]
+  contactId: string
+  before: Date
+}): Visit | undefined => {
+  const cutoff = before.getTime()
+  let last: Visit | undefined
+  for (const visit of conversations) {
+    if (visit.contact.id !== contactId || visit.notAtHome) continue
+    const ts = new Date(visit.date).getTime()
+    if (ts > cutoff) continue
+    if (!last || ts > new Date(last.date).getTime()) last = visit
+  }
+  return last
+}
+
+/**
+ * A new Visit's Bible Study switch starts as the Contact's last real
+ * conversation left it, so one missed toggle doesn't drop a study from the
+ * Service Report. Not at Home is never a Bible Study.
+ */
+export const newVisitIsBibleStudy = ({
+  conversations,
+  contactId,
+  date,
+  notAtHome,
+}: {
+  conversations: Visit[]
+  contactId: string
+  date: Date
+  notAtHome?: boolean
+}): boolean =>
+  !notAtHome &&
+  !!contactId &&
+  !!contactLastConversation({ conversations, contactId, before: date })
+    ?.isBibleStudy
+
+/**
+ * The topic planned for the Follow-up a new Visit answers, when it was opened
+ * from one (e.g. Home's Follow-up card). Undefined when there's none to show.
+ */
+export const plannedFollowUpTopic = ({
+  conversations,
+  followUpVisitId,
+}: {
+  conversations: Visit[]
+  followUpVisitId?: string
+}): string | undefined => {
+  if (!followUpVisitId) return undefined
+  const followUp = conversations.find((c) => c.id === followUpVisitId)?.followUp
+  return followUp?.topic?.trim() || undefined
+}
+
+/**
  * A follow-up is a "legacy placeholder" when it was auto-filled by the visit
  * form before the Follow Up switch existed: the form always attached a
  * `followUp` with a default date, and the user's intent was inferred from

@@ -401,8 +401,9 @@ const RescheduleVisitScreen = ({ route, navigation }: Props) => {
     dismiss()
     ;(navigation as unknown as RootStackNavigation).navigate('Visit Form', {
       contactId: contact.id,
+      followUpVisitId: conversation?.id,
     })
-  }, [contact, dismiss, navigation])
+  }, [contact, conversation?.id, dismiss, navigation])
 
   const openContactDetails = useCallback(() => {
     if (!contact) return

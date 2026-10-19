@@ -51,6 +51,7 @@ import { analytics } from '@/lib/analytics'
 import confirmDestructive from '@/lib/confirmDestructive'
 import useDiscardChangesGuard from '@/hooks/useDiscardChangesGuard'
 import useDraftChanged from '@/hooks/useDraftChanged'
+import { newVisitIsBibleStudy, plannedFollowUpTopic } from '@/lib/conversations'
 
 /** Inputs for the Follow-up's buddy invitations, supplied by the app tier. */
 export type FollowUpBuddiesSlot = (props: {
@@ -256,6 +257,26 @@ const VisitFormScreen = ({
       )
       .toDate()
 
+  // Starts on when the Contact's last real conversation was a Bible Study.
+  const [bibleStudyPrefilled] = useState(
+    () =>
+      !conversationToUpdate &&
+      newVisitIsBibleStudy({
+        conversations,
+        contactId,
+        date: new Date(),
+        notAtHome,
+      })
+  )
+
+  // Opened from a Follow-up: show what the user planned to talk about.
+  const plannedTopic = conversationToUpdate
+    ? undefined
+    : plannedFollowUpTopic({
+        conversations,
+        followUpVisitId: params.followUpVisitId,
+      })
+
   const getConversationDefaultValue = (): Visit => {
     if (conversationToUpdate) {
       return {
@@ -305,7 +326,7 @@ const VisitFormScreen = ({
         topic: '',
         notifyMe: returnVisitAlwaysNotify,
       },
-      isBibleStudy: false,
+      isBibleStudy: bibleStudyPrefilled,
       notAtHome,
     }
   }
@@ -488,6 +509,7 @@ const VisitFormScreen = ({
                     analytics.capture('visit_created', {
                       not_at_home: !!conversation.notAtHome,
                       bible_study: !!conversation.isBibleStudy,
+                      bible_study_prefilled: bibleStudyPrefilled,
                       has_follow_up: followUpEnabled,
                       reminder_enabled:
                         followUpEnabled && !!conversation.followUp?.notifyMe,
@@ -541,6 +563,7 @@ const VisitFormScreen = ({
     })
   }, [
     allowLeave,
+    bibleStudyPrefilled,
     calledGoecodeApiTimes,
     conversation.id,
     conversation.followUp,
@@ -640,6 +663,11 @@ const VisitFormScreen = ({
           </InputRowContainer>
           <NoteInputRow
             label={i18n.t('note')}
+            description={
+              plannedTopic
+                ? i18n.t('plannedTopic', { topic: plannedTopic })
+                : undefined
+            }
             info={
               dataProtectionMode ? i18n.t('dataProtectionNoteHint') : undefined
             }

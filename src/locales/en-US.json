@@ -280,6 +280,7 @@
   "upcoming": "upcoming",
   "past": "past",
   "topic": "Topic",
+  "plannedTopic": "Planned topic: {{topic}}",
   "monthlyRoutine": "Monthly Routine",
   "searchForContact": "Search for contact...",
   "phrasesFar": {

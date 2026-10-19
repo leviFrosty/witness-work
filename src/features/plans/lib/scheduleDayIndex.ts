@@ -1,3 +1,4 @@
+import { dayPlansByDayKey } from '@/lib/dayPlansByDay'
 import { storedDayKey } from '@/lib/normalizeDate'
 import {
   getPlansIntersectingDay,
@@ -17,7 +18,7 @@ import { dayKeyOf } from '@/features/plans/lib/scheduleRows'
  */
 export type ScheduleDayIndex = {
   reportsByDay: Map<string, TimeEntry[]>
-  dayPlansByDay: Map<string, DayPlan[]>
+  dayPlansByDay: ReadonlyMap<string, DayPlan[]>
 }
 
 const push = <T>(map: Map<string, T[]>, key: string, value: T) => {
@@ -38,10 +39,7 @@ export function buildScheduleDayIndex(
       }
     }
   }
-  const dayPlansByDay = new Map<string, DayPlan[]>()
-  for (const plan of dayPlans)
-    push(dayPlansByDay, storedDayKey(plan.date), plan)
-  return { reportsByDay, dayPlansByDay }
+  return { reportsByDay, dayPlansByDay: dayPlansByDayKey(dayPlans) }
 }
 
 /** Every day of a Service Year (September → August), keyed `YYYY-MM-DD`. */

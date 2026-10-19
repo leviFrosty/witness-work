@@ -126,8 +126,25 @@ export const localDayFromUtcCursor = (cursor: moment.Moment): Date =>
   new Date(cursor.year(), cursor.month(), cursor.date(), 12)
 
 /** The `YYYY-MM-DD` calendar day carried by a stored noon-UTC anchor. */
-export const storedDayKey = (date: Date | string): string =>
-  momentStoredDate(date).format('YYYY-MM-DD')
+export const storedDayKey = (date: Date | string): string => {
+  // Rehydrated state is JSON, so most stored days arrive as anchored ISO
+  // strings, which already start with their key.
+  if (
+    typeof date === 'string' &&
+    date.length === 24 &&
+    date.endsWith('T12:00:00.000Z')
+  )
+    return date.slice(0, 10)
+  return momentStoredDate(date).format('YYYY-MM-DD')
+}
+
+/**
+ * The `YYYY-MM-DD` key of a local calendar day, comparable with `storedDayKey`.
+ * Takes the same `localDay` forms as `isStoredDateOnLocalDay`; compute it once
+ * when comparing many stored days against one day.
+ */
+export const localDayKey = (localDay: Date | string | moment.Moment): string =>
+  moment(localDay).format('YYYY-MM-DD')
 
 /**
  * True when a stored calendar-day anchor falls on the given local calendar day.
@@ -139,7 +156,7 @@ export const storedDayKey = (date: Date | string): string =>
 export const isStoredDateOnLocalDay = (
   stored: Date | string,
   localDay: Date | string | moment.Moment
-): boolean => storedDayKey(stored) === moment(localDay).format('YYYY-MM-DD')
+): boolean => storedDayKey(stored) === localDayKey(localDay)
 
 /**
  * Converts a stored calendar-day anchor into a local-mode Date carrying the

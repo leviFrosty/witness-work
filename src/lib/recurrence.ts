@@ -6,6 +6,7 @@ import {
   RecurringPlanFrequencies,
   RecurringPlanOverride,
 } from '@/types/timeEntry'
+import { dayPlansOnLocalDay } from '@/lib/dayPlansByDay'
 import { logger } from '@/lib/logger'
 import { hasNote } from '@/lib/richText/notes'
 import type { NoteFields } from '@/types/richText'
@@ -307,13 +308,11 @@ const plannedMinutesOnMonthDay = (
   recurringPlans: RecurringPlan[]
 ): number => {
   const dayDate = selectedMonth.clone().date(date).toDate()
-  const dayPlansForDay = dayPlans.filter((plan) =>
-    momentStoredDate(plan.date).isSame(
-      momentStoredDate(normalizeDateForStorage(dayDate)),
-      'day'
-    )
+  return plannedMinutesForDay(
+    dayDate,
+    dayPlansOnLocalDay(dayPlans, dayDate),
+    recurringPlans
   )
-  return plannedMinutesForDay(dayDate, dayPlansForDay, recurringPlans)
 }
 
 /**

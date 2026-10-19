@@ -2,12 +2,7 @@ import { View } from 'react-native'
 import Text from '@/components/ui/MyText'
 import InfoPopover from '@/components/ui/InfoPopover'
 import useTheme from '@/contexts/theme'
-import { tracking } from '@/lib/tracking'
-import {
-  drawerLayout,
-  inputLayout,
-  useInputLayout,
-} from '@/components/ui/inputs/InputLayout'
+import { inputLayout } from '@/components/ui/inputs/InputLayout'
 
 export const SectionTitle = ({
   text,
@@ -19,28 +14,21 @@ export const SectionTitle = ({
   alignWithIcons?: boolean
 }) => {
   const theme = useTheme()
-  const layout = useInputLayout()
-  const isDrawer = layout === 'drawer'
 
   return (
     <View
       style={{
         flexDirection: 'row',
         alignItems: 'center',
-        marginStart: isDrawer
-          ? drawerLayout.horizontalPadding +
-            drawerLayout.iconSize +
-            drawerLayout.labelGap
-          : inputLayout.horizontalPadding +
-            (alignWithIcons
-              ? inputLayout.iconSize +
-                inputLayout.labelGap +
-                inputLayout.sectionBorderWidth
-              : 0),
-        marginEnd: isDrawer
-          ? drawerLayout.horizontalPadding
-          : inputLayout.horizontalPadding,
-        marginBottom: isDrawer ? 4 : 8,
+        marginStart:
+          inputLayout.horizontalPadding +
+          (alignWithIcons
+            ? inputLayout.iconSize +
+              inputLayout.labelGap +
+              inputLayout.sectionBorderWidth
+            : 0),
+        marginEnd: inputLayout.horizontalPadding,
+        marginBottom: 8,
       }}
     >
       <Text
@@ -49,10 +37,7 @@ export const SectionTitle = ({
           flexShrink: 1,
           fontFamily: theme.fonts.semiBold,
           fontSize: theme.fontSize('sm'),
-          color: isDrawer ? theme.colors.text : theme.colors.textAlt,
-          opacity: isDrawer ? 0.75 : 1,
-          letterSpacing: tracking(isDrawer ? 0.8 : 0),
-          textTransform: isDrawer ? 'uppercase' : 'none',
+          color: theme.colors.textAlt,
         }}
       >
         {text}

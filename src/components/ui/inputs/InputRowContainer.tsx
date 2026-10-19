@@ -5,11 +5,7 @@ import useTheme from '@/contexts/theme'
 import Text from '@/components/ui/MyText'
 import InfoPopover from '@/components/ui/InfoPopover'
 import LucideIcon from '@/components/ui/LucideIcon'
-import {
-  drawerLayout,
-  inputLayout,
-  useInputLayout,
-} from '@/components/ui/inputs/InputLayout'
+import { inputLayout } from '@/components/ui/inputs/InputLayout'
 
 export interface InputRowContainerProps {
   invalid?: boolean
@@ -63,7 +59,6 @@ const InputRowContainer: React.FC<
   controlWidth = 'compact',
 }: InputRowContainerProps) => {
   const theme = useTheme()
-  const layout = useInputLayout()
   const hasInfo = Boolean(label && (info || labelTrailing))
   const hasLabelContent = Boolean(label || leftIcon || description)
 
@@ -71,17 +66,15 @@ const InputRowContainer: React.FC<
     <View
       style={{
         alignItems: 'center',
-        gap: layout === 'drawer' ? drawerLayout.labelGap : inputLayout.labelGap,
+        gap: inputLayout.labelGap,
         flexDirection: 'row',
-        flexShrink: layout || hasInfo ? 1 : undefined,
+        flexShrink: 1,
       }}
     >
       {leftIcon && (
         <LucideIcon
           icon={leftIcon}
-          size={
-            layout === 'drawer' ? drawerLayout.iconSize : inputLayout.iconSize
-          }
+          size={inputLayout.iconSize}
           color={theme.colors.textAlt}
         />
       )}
@@ -90,7 +83,7 @@ const InputRowContainer: React.FC<
           style={{
             flexDirection: 'column',
             gap: 10,
-            flexShrink: layout || hasInfo ? 1 : undefined,
+            flexShrink: 1,
             fontFamily: theme.fonts.medium,
             fontSize: theme.fontSize('md'),
           }}
@@ -136,13 +129,7 @@ const InputRowContainer: React.FC<
           {labelTitle}
           {/* Before the info icon, whose tap target reaches past it. */}
           {labelTrailing}
-          {info && (
-            <InfoPopover
-              title={label}
-              description={info}
-              inline={layout === 'settings'}
-            />
-          )}
+          {info && <InfoPopover title={label} description={info} inline />}
         </View>
       ) : (
         labelTitle
@@ -152,7 +139,6 @@ const InputRowContainer: React.FC<
           style={{
             fontSize: theme.fontSize('sm'),
             color: theme.colors.textAlt,
-            lineHeight: layout === 'settings' ? undefined : 20,
           }}
         >
           {description}
@@ -167,35 +153,16 @@ const InputRowContainer: React.FC<
         {
           flexDirection: 'row',
           borderColor: theme.colors.border,
-          borderBottomWidth: layout === 'drawer' || lastInSection ? 0 : 1,
-          minHeight:
-            layout === 'drawer'
-              ? drawerLayout.rowMinHeight
-              : inputLayout.rowMinHeight,
-          paddingTop:
-            layout === 'drawer'
-              ? drawerLayout.rowPaddingVertical
-              : inputLayout.rowPadding,
-          paddingBottom:
-            layout === 'drawer'
-              ? drawerLayout.rowPaddingVertical
-              : inputLayout.rowPadding,
-          paddingLeft:
-            layout === 'drawer'
-              ? drawerLayout.horizontalPadding
-              : noHorizontalPadding
-                ? 0
-                : inputLayout.horizontalPadding,
-          paddingRight:
-            layout === 'drawer'
-              ? drawerLayout.horizontalPadding
-              : noHorizontalPadding
-                ? 0
-                : inputLayout.horizontalPadding,
+          borderBottomWidth: lastInSection ? 0 : 1,
+          minHeight: inputLayout.rowMinHeight,
+          paddingTop: inputLayout.rowPadding,
+          paddingBottom: inputLayout.rowPadding,
+          paddingLeft: noHorizontalPadding ? 0 : inputLayout.horizontalPadding,
+          paddingRight: noHorizontalPadding ? 0 : inputLayout.horizontalPadding,
           alignItems: 'center',
           flexGrow: 0,
           justifyContent: justifyContent ?? 'space-between',
-          gap: gap ?? (layout === 'drawer' ? 15 : inputLayout.controlGap),
+          gap: gap ?? inputLayout.controlGap,
           ...(controlWidth === 'full' && {
             flexDirection: 'column',
             alignItems: 'stretch',
@@ -208,7 +175,7 @@ const InputRowContainer: React.FC<
         <View
           style={{
             flex: 1,
-            gap: layout === 'settings' ? inputLayout.descriptionGap : 6,
+            gap: inputLayout.descriptionGap,
             minWidth: 0,
           }}
         >

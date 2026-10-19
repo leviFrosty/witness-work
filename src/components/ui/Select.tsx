@@ -4,7 +4,7 @@ import { StyleProp, View, ViewStyle } from 'react-native'
 import SelectMenu from '@/components/ui/SelectMenu'
 import useTheme from '@/contexts/theme'
 import Text from '@/components/ui/MyText'
-import { inputLayout, useInputLayout } from '@/components/ui/inputs/InputLayout'
+import { inputLayout } from '@/components/ui/inputs/InputLayout'
 
 export type SelectDataItem<T> = { label: string; value: T }
 export type SelectData<T> = SelectDataItem<T>[]
@@ -32,7 +32,6 @@ const Select = <T,>({
   accessibilityLabel,
 }: SelectProps<T>) => {
   const theme = useTheme()
-  const layout = useInputLayout()
 
   // Native menus key options by string id. Stringify both sides and map back to
   // the original item on selection so callers receive the untouched object.
@@ -67,7 +66,7 @@ const Select = <T,>({
             backgroundColor: theme.colors.background,
             borderColor: theme.colors.border,
             borderWidth: 1,
-            paddingHorizontal: layout === 'drawer' ? 16 : 12,
+            paddingHorizontal: 12,
             borderRadius: theme.numbers.borderRadiusMd,
             minHeight: inputLayout.controlMinHeight,
             gap: 8,

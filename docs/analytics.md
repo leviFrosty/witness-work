@@ -170,16 +170,18 @@ optional field. `elapsed_ms` includes background time and time on other screens.
 
 Stable step IDs, in order: `hero`, `featureTour`, `pickUpWhereLeftOff`,
 `publisherType`, `pioneerDate`, `planMonth`, `dataProtection`, `buddies`,
-`notifications`, `calendarSync`, `defaultNav`, `defaultExportMethod`,
-`onboardingBackfill`, `profileSetup`, `founderNote`. The flow introduces the app
-before it asks for anything, asks for the name last, and ends on the founder
-note.
+`notifications`, `calendarSync`, `onboardingBackfill`, `profileSetup`,
+`founderNote`. The flow introduces the app before it asks for anything, asks for
+the name last, and ends on the founder note.
 `intentPicker` and `yourPlanPreview` were retired in October 2026 when `planMonth`
 replaced them. `privacyFirst` and `badges` were retired in October 2026 when
 their content moved into `featureTour`; `profileSetup` moved from after
 `publisherType` to the end, and `founderNote` from after `hero` to the very
-end. Compare funnels across these changes by step, not
-position.
+end. `defaultNav` and `defaultExportMethod` were retired in October 2026: the
+maps app defaults by platform and is set in Settings → Preferences → Navigation,
+and the report method is chosen above Submit on the report screen. Their
+`onboarding_step_completed` events carried `selected_option`. Compare funnels
+across these changes by step, not position.
 
 `featureTour` is a paged tour of the app, shown right after `hero`. Its question
 is whether showing the features first keeps people in setup, and how much of it

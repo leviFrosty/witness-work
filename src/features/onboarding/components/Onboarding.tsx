@@ -13,8 +13,6 @@ import StepOne from '@/features/onboarding/components/steps/One'
 import StepTwo from '@/features/onboarding/components/steps/Two'
 import StepThree from '@/features/onboarding/components/steps/Three'
 import CalendarSync from '@/features/onboarding/components/steps/CalendarSync'
-import StepDefaultNav from '@/features/onboarding/components/steps/DefaultNav'
-import StepDefaultExportMethod from '@/features/onboarding/components/steps/DefaultExportMethod'
 import DataProtection from '@/features/onboarding/components/steps/DataProtection'
 import ProfileSetup from '@/features/onboarding/components/steps/ProfileSetup'
 import ProfileSetupPioneerDate from '@/features/onboarding/components/steps/ProfileSetupPioneerDate'
@@ -29,14 +27,17 @@ import OnboardingBackfill from '@/features/onboarding/components/steps/Onboardin
 import { hasReportsInCatchUpWindow } from '@/features/service-reports/components/OnboardingBackfillForm'
 import { usePreferences } from '@/stores/preferences'
 import useServiceReport from '@/stores/serviceReport'
-import { TimeEntriesByYear } from '@/types/timeEntry'
 import {
   effectiveHasAnnualGoal,
-  tracksHours,
   tracksTenure,
 } from '@/lib/publisherCapabilities'
-import { Publisher, PublisherHours } from '@/types/publisher'
-import moment from 'moment'
+import {
+  reachedStep,
+  resumeStepIndex,
+  type StepId,
+  type StepShowIfContext,
+  visibleOnboardingSteps,
+} from '@/features/onboarding/lib/onboardingSteps'
 import {
   OnboardingProgress,
   OnboardingProgressContext,
@@ -45,23 +46,6 @@ import { useOnboardingHandoff } from '@/stores/onboardingHandoff'
 import { useProfile } from '@/stores/profile'
 import { analytics } from '@/lib/analytics'
 
-type StepId =
-  | 'hero'
-  | 'featureTour'
-  | 'pickUpWhereLeftOff'
-  | 'publisherType'
-  | 'pioneerDate'
-  | 'planMonth'
-  | 'dataProtection'
-  | 'buddies'
-  | 'notifications'
-  | 'calendarSync'
-  | 'defaultNav'
-  | 'defaultExportMethod'
-  | 'onboardingBackfill'
-  | 'profileSetup'
-  | 'founderNote'
-
 interface StepProps {
   goBack: () => void
   goNext: () => void
@@ -69,117 +53,20 @@ interface StepProps {
   buddiesAvailable: boolean
 }
 
-/**
- * Context passed to `showIf`. Widened beyond `publisher` so steps can gate on
- * other onboarding state (e.g. the backfill step needs `installedOn` and the
- * user's annual-goal override).
- */
-interface StepShowIfContext {
-  publisher: Publisher
-  publisherHours: PublisherHours
-  logsHours: boolean
-  installedOn: Date
-  userSpecifiedHasAnnualGoal: boolean | 'default'
-  serviceReports: TimeEntriesByYear
-  /** Buddies shows on this device; see `useOnboardingBuddiesAvailable`. */
-  buddiesAvailable: boolean
-}
-
-interface StepDef {
-  id: StepId
-  Component: ComponentType<StepProps>
-  /**
-   * Whether this step contributes to the visible progress bar. The introduction
-   * (welcome, tour, restore) and the closing founder note opt out, so the bar
-   * covers personalizing only.
-   */
-  countsTowardProgress: boolean
-  /** If present and returns false, the step is skipped entirely. */
-  showIf?: (ctx: StepShowIfContext) => boolean
-}
-
-/**
- * Introduce first, then personalize: the welcome and a tour of the app come
- * before any question, the name, the most personal ask, comes last, and a note
- * from the developer sees them into the app.
- */
-const allSteps: StepDef[] = [
-  { id: 'hero', Component: StepOne, countsTowardProgress: false },
-  { id: 'featureTour', Component: FeatureTour, countsTowardProgress: false },
-  {
-    id: 'pickUpWhereLeftOff',
-    Component: PickUpWhereLeftOff,
-    countsTowardProgress: false,
-  },
-  { id: 'publisherType', Component: StepTwo, countsTowardProgress: true },
-  {
-    id: 'pioneerDate',
-    Component: ProfileSetupPioneerDate,
-    countsTowardProgress: true,
-    showIf: ({ publisher }) => tracksTenure(publisher),
-  },
-  {
-    id: 'planMonth',
-    Component: PlanMonth,
-    countsTowardProgress: true,
-    // Planning toward a goal needs hours and a goal to plan toward.
-    showIf: ({ publisher, publisherHours, logsHours }) =>
-      tracksHours(publisher, logsHours) && publisherHours[publisher] > 0,
-  },
-  {
-    id: 'dataProtection',
-    Component: DataProtection,
-    countsTowardProgress: true,
-  },
-  {
-    id: 'buddies',
-    Component: Buddies,
-    countsTowardProgress: true,
-    // Needs the Buddies key module and the rollout flag (iOS and Android).
-    showIf: ({ buddiesAvailable }) => buddiesAvailable,
-  },
-  { id: 'notifications', Component: StepThree, countsTowardProgress: true },
-  {
-    id: 'calendarSync',
-    Component: CalendarSync,
-    countsTowardProgress: true,
-    // Needs a binary with the native calendar module.
-    showIf: () => calendarBridgeAvailable,
-  },
-  { id: 'defaultNav', Component: StepDefaultNav, countsTowardProgress: true },
-  {
-    id: 'defaultExportMethod',
-    Component: StepDefaultExportMethod,
-    countsTowardProgress: true,
-  },
-  {
-    id: 'onboardingBackfill',
-    Component: OnboardingBackfill,
-    countsTowardProgress: true,
-    // Only annual-goal publishers who installed mid-service-year (any month
-    // other than September) need to backdate. September installs have no
-    // missed months, and monthly-goal publishers don't track an annual total.
-    // Also skip when a restore already populated the catch-up window — the
-    // user has nothing left to backdate.
-    showIf: ({
-      publisher,
-      installedOn,
-      userSpecifiedHasAnnualGoal,
-      serviceReports,
-    }) =>
-      effectiveHasAnnualGoal(publisher, userSpecifiedHasAnnualGoal) &&
-      moment(installedOn).month() !== 8 &&
-      !hasReportsInCatchUpWindow(serviceReports, installedOn),
-  },
-  { id: 'profileSetup', Component: ProfileSetup, countsTowardProgress: true },
-  // A thank-you from the developer, the last thing before the app opens.
-  { id: 'founderNote', Component: FounderNote, countsTowardProgress: false },
-]
-
-/** `current` (a persisted step id) is at or past `id`'s place in the flow. */
-const reachedStep = (current: string | null, id: StepId) => {
-  const index = allSteps.findIndex((step) => step.id === current)
-  return index >= 0 && index >= allSteps.findIndex((step) => step.id === id)
+const STEP_COMPONENTS: Record<StepId, ComponentType<StepProps>> = {
+  hero: StepOne,
+  featureTour: FeatureTour,
+  pickUpWhereLeftOff: PickUpWhereLeftOff,
+  publisherType: StepTwo,
+  pioneerDate: ProfileSetupPioneerDate,
+  planMonth: PlanMonth,
+  dataProtection: DataProtection,
+  buddies: Buddies,
+  notifications: StepThree,
+  calendarSync: CalendarSync,
+  onboardingBackfill: OnboardingBackfill,
+  profileSetup: ProfileSetup,
+  founderNote: FounderNote,
 }
 
 const OnBoarding = () => {
@@ -193,9 +80,10 @@ const OnBoarding = () => {
     userSpecifiedHasAnnualGoal,
   } = usePreferences()
   const { serviceReports } = useServiceReport()
+  const hasCompletedProfileSetup = useProfile((s) => s.hasCompletedProfileSetup)
   // The persisted id tracks the current step (and survives a relaunch).
   const buddiesAvailable = useOnboardingBuddiesAvailable(
-    reachedStep(onboardingStepId, 'buddies')
+    reachedStep(onboardingStepId, 'buddies', hasCompletedProfileSetup)
   )
 
   const showIfCtx: StepShowIfContext = useMemo(
@@ -205,8 +93,9 @@ const OnBoarding = () => {
       logsHours,
       installedOn,
       userSpecifiedHasAnnualGoal,
-      serviceReports,
+      hasCatchUpReports: hasReportsInCatchUpWindow(serviceReports, installedOn),
       buddiesAvailable,
+      calendarAvailable: calendarBridgeAvailable,
     }),
     [
       role,
@@ -220,7 +109,7 @@ const OnBoarding = () => {
   )
 
   const visibleSteps = useMemo(
-    () => allSteps.filter((s) => !s.showIf || s.showIf(showIfCtx)),
+    () => visibleOnboardingSteps(showIfCtx),
     [showIfCtx]
   )
 
@@ -228,46 +117,13 @@ const OnBoarding = () => {
   // user left off. OnBoarding is only mounted while `onboardingComplete` is
   // false (see RootStack), and unmounts on completion/reset, so this runs
   // exactly once per onboarding session.
-  const [stepIndex, setStepIndex] = useState(() => {
-    if (!onboardingStepId) return 0
-    const initialVisible = allSteps.filter(
-      (s) => !s.showIf || s.showIf(showIfCtx)
+  const [stepIndex, setStepIndex] = useState(() =>
+    resumeStepIndex(
+      onboardingStepId,
+      visibleOnboardingSteps(showIfCtx),
+      hasCompletedProfileSetup
     )
-    // 'supporter' was the final step before it was removed; resume on the
-    // new final step rather than restarting from the hero.
-    if (onboardingStepId === 'supporter') return initialVisible.length - 1
-    // The intent picker and plan preview were removed; resume on the step
-    // that now sits where each one was.
-    // The privacy and badges screens moved into the tour; resume on the step
-    // that followed each one. The founder note moved from the start to the
-    // end: one saved before the name step was the old, early one.
-    const hasPlanMonth = initialVisible.some((s) => s.id === 'planMonth')
-    const earlyFounderNote =
-      onboardingStepId === 'founderNote' &&
-      !useProfile.getState().hasCompletedProfileSetup
-    const resumeId =
-      onboardingStepId === 'privacyFirst' || earlyFounderNote
-        ? 'pickUpWhereLeftOff'
-        : onboardingStepId === 'intentPicker'
-          ? 'pioneerDate'
-          : onboardingStepId === 'yourPlanPreview'
-            ? hasPlanMonth
-              ? 'planMonth'
-              : 'notifications'
-            : onboardingStepId === 'badges'
-              ? 'notifications'
-              : onboardingStepId
-    const idx = initialVisible.findIndex((s) => s.id === resumeId)
-    if (idx >= 0) return idx
-    // A conditional step that no longer shows (e.g. Buddies after its flag
-    // turned off): resume on the next step that does.
-    const order = allSteps.findIndex((s) => s.id === resumeId)
-    const next =
-      order >= 0
-        ? initialVisible.findIndex((s) => allSteps.indexOf(s) > order)
-        : -1
-    return next >= 0 ? next : 0
-  })
+  )
 
   // Clamp the index if the visible-step list shrinks (e.g. user switches
   // publisher type from pioneer to non-pioneer mid-flow and the pioneer-date
@@ -333,12 +189,6 @@ const OnBoarding = () => {
       elapsed_ms: Date.now() - stepViewedAt.current,
       next_step_id: visibleSteps[stepIndex + 1]?.id ?? 'complete',
       publisher_role: preferences.role,
-      ...(visibleSteps[stepIndex]?.id === 'defaultNav'
-        ? { selected_option: preferences.defaultNavigationMapProvider }
-        : {}),
-      ...(visibleSteps[stepIndex]?.id === 'defaultExportMethod'
-        ? { selected_option: preferences.defaultExportMethod }
-        : {}),
       ...(visibleSteps[stepIndex]?.id === 'buddies'
         ? {
             selected_option: useBuddies
@@ -397,6 +247,7 @@ const OnBoarding = () => {
   }, [visibleSteps, stepIndex, current])
 
   if (!current) return null
+  const StepComponent = STEP_COMPONENTS[current.id]
 
   return (
     <OnboardingProgressContext.Provider value={progress}>
@@ -404,7 +255,7 @@ const OnBoarding = () => {
         {current.id === 'hero' ? (
           <StepOne goBack={goBack} goNext={goNext} goToStep={goToStep} />
         ) : (
-          <current.Component
+          <StepComponent
             goBack={goBack}
             goNext={goNext}
             buddiesAvailable={buddiesAvailable}

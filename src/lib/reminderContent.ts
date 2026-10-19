@@ -1,5 +1,8 @@
 import moment from 'moment'
-import { formatWeekdayMonthDayCompact } from '@/lib/dates'
+import {
+  formatMonthDayCompact,
+  formatWeekdayMonthDayCompact,
+} from '@/lib/dates'
 import i18n from '@/lib/locales'
 import { deriveOffsetFromDates } from '@/lib/notificationOffset'
 import { formatMinutes } from '@/lib/minutes'
@@ -125,6 +128,14 @@ export function reminderContent(
           month: moment(reminder.targetId, 'YYYY-MM').format('MMMM'),
         }),
         body: i18n.t('monthReportReminder_body'),
+        data,
+      }
+    case 'weekPlan':
+      return {
+        title: i18n.t('weekPlanReminder_title'),
+        body: i18n.t('weekPlanReminderBody', {
+          date: formatMonthDayCompact(moment(reminder.targetId, 'YYYY-MM-DD')),
+        }),
         data,
       }
     case 'contact':

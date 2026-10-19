@@ -15,12 +15,14 @@ vi.mock('@/app/notifications/reminderTargets', () => ({
 vi.mock('@/lib/locales', () => ({ default: { t: (key: string) => key } }))
 vi.mock('@/lib/minutes', () => ({ formatMinutes: () => ({ formatted: '' }) }))
 vi.mock('@/lib/dates', () => ({
+  formatMonthDayCompact: () => 'May 3',
   formatTime: () => '3:00 PM',
   formatWeekdayMonthDayCompact: () => 'Fri, May 1',
 }))
 vi.mock('lucide-react-native', () => ({
   BellRing: 'BellRing',
   CalendarClock: 'CalendarClock',
+  CalendarPlus: 'CalendarPlus',
   ClockAlert: 'ClockAlert',
   UserCheck: 'UserCheck',
 }))
@@ -32,6 +34,7 @@ import {
 } from '@/app/notifications/useReminderNotifications'
 import { normalizeDateForStorage } from '@/lib/normalizeDate'
 import type { UnloggedDaySources } from '@/lib/unloggedDayReminders'
+import type { WeekPlanSources } from '@/lib/weekPlanReminders'
 
 const HOUR = 60 * 60_000
 const start = Date.UTC(2026, 4, 1, 15)
@@ -127,6 +130,51 @@ describe('reminders to log time', () => {
             [date.getUTCMonth()]: [{ id: 'e', hours: 1, minutes: 0, date }],
           },
         },
+      })
+    ).toEqual([])
+  })
+})
+
+describe('invitations to plan next week', () => {
+  const DAY = 24 * HOUR
+  // Saturday, May 2 at 6 PM asks about the week of Sunday, May 3.
+  const remindsAt = new Date(2026, 4, 2, 18).getTime()
+  const weekPlan = (
+    overrides: Partial<WeekPlanSources> = {}
+  ): WeekPlanSources => ({
+    dayPlans: [],
+    recurringPlans: [],
+    offDays: [],
+    weekday: 6,
+    remindAt: 18 * 60,
+    enabledAt: remindsAt - DAY,
+    ...overrides,
+  })
+  const fired = (now: number, overrides?: Partial<WeekPlanSources>) =>
+    firedReminders({ ...args(now, []), weekPlan: weekPlan(overrides) })
+
+  it('lists the week from its reminder until the week ends', () => {
+    expect(fired(remindsAt - 1)).toEqual([])
+    const [reminder] = fired(remindsAt)
+    expect(reminderTrayId(reminder)).toBe(
+      `reminder:weekPlan:2026-05-03:${remindsAt}`
+    )
+    const weekEnds = new Date(2026, 4, 10).getTime()
+    expect(fired(weekEnds - 1).map((r) => r.targetId)).toContain('2026-05-03')
+    expect(fired(weekEnds).map((r) => r.targetId)).not.toContain('2026-05-03')
+  })
+
+  it('leaves the tray once the week has a Plan', () => {
+    expect(
+      fired(remindsAt + HOUR, {
+        dayPlans: [
+          {
+            id: 'p',
+            date: normalizeDateForStorage(new Date(2026, 4, 6, 12)),
+            minutes: 60,
+            startTimeInMinutes: 9 * 60,
+          },
+        ],
       })
     ).toEqual([])
   })

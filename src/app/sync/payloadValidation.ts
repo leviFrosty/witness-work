@@ -541,6 +541,9 @@ const preferenceShapes = z
     unloggedDayReminderTime: z.number().int().min(0).max(1439).optional(),
     unloggedDayRemindersEnabledAt: timestamp.nullable().optional(),
     monthReportReminderTime: z.number().int().min(0).max(1439).optional(),
+    weekPlanReminderDay: z.number().int().min(0).max(6).optional(),
+    weekPlanReminderTime: z.number().int().min(0).max(1439).optional(),
+    weekPlanReminderEnabledAt: timestamp.nullable().optional(),
     serviceYearCatchUpStatus: z
       .enum(['pending', 'skipped', 'completed', 'dismissed'])
       .nullable()

@@ -53,6 +53,10 @@ import { STALENESS_DISPLAY_ORDER } from '@/lib/contactStaleness'
 import { DEFAULT_UNLOGGED_DAY_REMINDER_TIME } from '@/lib/unloggedDayReminders'
 import { DEFAULT_MONTH_REPORT_REMINDER_TIME } from '@/lib/monthReportReminders'
 import {
+  DEFAULT_WEEK_PLAN_REMINDER_DAY,
+  DEFAULT_WEEK_PLAN_REMINDER_TIME,
+} from '@/lib/weekPlanReminders'
+import {
   isValidMonthlyGoalHours,
   monthlyGoalOverridesFromLegacy,
   monthlyGoalKey,
@@ -435,6 +439,20 @@ export const PREFERENCE_DEFAULTS = {
    * either way, so it doesn't show again.
    */
   monthReportReminderOfferAnswered: false,
+  /**
+   * Invite the User to plan next week when it has no Plans yet, on
+   * `weekPlanReminderDay` at `weekPlanReminderTime`. Off by default.
+   */
+  weekPlanReminder: false,
+  /** The weekday (0 = Sunday) the invitation to plan next week goes out. */
+  weekPlanReminderDay: DEFAULT_WEEK_PLAN_REMINDER_DAY,
+  /** Local minutes after midnight the invitation to plan next week goes out. */
+  weekPlanReminderTime: DEFAULT_WEEK_PLAN_REMINDER_TIME,
+  /**
+   * Epoch ms the invitation to plan next week was last turned on, so weeks
+   * asked about before then aren't listed in the tray.
+   */
+  weekPlanReminderEnabledAt: null as number | null,
   /**
    * Remind the User when their Service Streak is about to end: 6 PM on the last
    * day to log a planned day, or three days before the month is out. On by

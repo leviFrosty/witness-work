@@ -3,6 +3,7 @@ import Wrapper from '@/components/ui/layout/Wrapper'
 import PlansPreferencesSection from '@/features/settings/components/preferences-sections/PlansPreferencesSection'
 import UnloggedDayRemindersSection from '@/features/settings/components/preferences-sections/UnloggedDayRemindersSection'
 import MonthReportReminderSection from '@/features/settings/components/preferences-sections/MonthReportReminderSection'
+import WeekPlanReminderSection from '@/features/settings/components/preferences-sections/WeekPlanReminderSection'
 import SettingsInputLayout from '@/features/settings/components/shared/SettingsInputLayout'
 
 const PreferencesPlansScreen = () => {
@@ -15,6 +16,7 @@ const PreferencesPlansScreen = () => {
           <PlansPreferencesSection />
           <UnloggedDayRemindersSection />
           <MonthReportReminderSection />
+          <WeekPlanReminderSection />
         </KeyboardAwareScrollView>
       </Wrapper>
     </SettingsInputLayout>

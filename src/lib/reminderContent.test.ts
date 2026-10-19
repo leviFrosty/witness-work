@@ -201,4 +201,23 @@ describe('reminderContent', () => {
       )
     })
   })
+
+  describe('an invitation to plan next week', () => {
+    const weekPlan: LocalReminder = {
+      id: 'witness-work-weekPlan-2026-05-03',
+      kind: 'weekPlan',
+      targetId: '2026-05-03',
+      anchor: new Date(2026, 4, 3),
+      date: new Date(2026, 4, 2, 18),
+    }
+
+    it('invites the User to plan the week and opens it', () => {
+      const content = reminderContent(weekPlan, options)
+      expect(content.title).toBe('weekPlanReminder_title')
+      expect(content.body).toBe('weekPlanReminderBody {"date":"May 3"}')
+      expect(content.data).toEqual({
+        reminder: { kind: 'weekPlan', id: '2026-05-03' },
+      })
+    })
+  })
 })

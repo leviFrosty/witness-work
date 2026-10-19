@@ -9,7 +9,7 @@ import Switch from '@/components/ui/Switch'
 import Text from '@/components/ui/MyText'
 import * as Crypto from 'expo-crypto'
 import { NativeStackScreenProps } from '@react-navigation/native-stack'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Header from '@/components/ui/layout/Header'
 import useTheme from '@/contexts/theme'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
@@ -220,6 +220,7 @@ const VisitFormScreen = ({
     : undefined
 
   const contactId = params.contactId || conversationToUpdate?.contact.id || ''
+  const scrollRef = useRef<KeyboardAwareScrollView>(null)
 
   // The entry points that pass `notAtHome` are hidden in data protection mode
   // (see `useContactMenuActions`); refusing it here too means a stale deep link
@@ -617,7 +618,9 @@ const VisitFormScreen = ({
 
   return (
     <KeyboardAwareScrollView
+      ref={scrollRef}
       automaticallyAdjustKeyboardInsets
+      keyboardShouldPersistTaps='handled'
       contentContainerStyle={{ paddingBottom: insets.bottom + 50 }}
       style={{
         backgroundColor: theme.colors.background,
@@ -700,6 +703,12 @@ const VisitFormScreen = ({
         <VisitCustomFieldsSection
           customFields={conversation.customFields}
           setCustomField={setCustomField}
+          contactId={contactId}
+          visitId={conversation.id}
+          visitDate={conversation.date}
+          scrollBy={(dy) =>
+            scrollRef.current?.scrollForExtraHeightOnAndroid(dy)
+          }
         />
         <Section>
           <InputRowSwitch

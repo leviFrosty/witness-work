@@ -15,6 +15,8 @@ export type FAQCategory =
   | 'supporter'
   | 'general'
 
+export type FAQPlatform = 'ios' | 'android'
+
 export interface FAQEntry {
   /** Stable identifier; also forms the i18n key suffix. */
   id: string
@@ -23,6 +25,8 @@ export interface FAQEntry {
   pinned?: boolean
   /** GitHub issue numbers this FAQ was derived from. */
   related?: number[]
+  /** Shown only on this platform; omit when the answer applies to both. */
+  platform?: FAQPlatform
 }
 
 /**
@@ -31,7 +35,8 @@ export interface FAQEntry {
  * Each entry resolves its question/answer text via i18n keys `faq_<id>_q` and
  * `faq_<id>_a`. Add new entries by:
  *
- * 1. Appending an entry here (set `pinned: true` if it should appear at top).
+ * 1. Appending an entry here (set `pinned: true` if it should appear at top, and
+ *    `platform` if it only applies to iOS or Android).
  * 2. Adding the matching `faq_<id>_q` and `faq_<id>_a` keys to `en-US.json`.
  *
  * The screen is search-friendly, so write the answer to be self-contained.
@@ -41,10 +46,10 @@ export const FAQS: FAQEntry[] = [
   { id: 'notesPhotos', category: 'notes' },
   { id: 'notesSync', category: 'notes' },
   { id: 'tabletSidebar', category: 'customization' },
-  { id: 'menuBar', category: 'general' },
+  { id: 'menuBar', category: 'general', platform: 'ios' },
   { id: 'appLock', category: 'general' },
   { id: 'updateRequired', category: 'general' },
-  { id: 'navigationShortcuts', category: 'general' },
+  { id: 'navigationShortcuts', category: 'general', platform: 'ios' },
   { id: 'pointerHover', category: 'general' },
   { id: 'logTimeForDay', category: 'time' },
   {
@@ -64,28 +69,39 @@ export const FAQS: FAQEntry[] = [
     category: 'backups',
     pinned: true,
     related: [118],
+    platform: 'ios',
   },
-  { id: 'googleDriveSync', category: 'backups' },
-  { id: 'googleDriveSyncPrivacy', category: 'backups' },
-  { id: 'googleDriveSyncTroubleshooting', category: 'backups' },
-  { id: 'calendarSetup', category: 'backups', related: [265] },
+  {
+    id: 'googleDriveSync',
+    category: 'backups',
+    pinned: true,
+    platform: 'android',
+  },
+  { id: 'googleDriveSyncPrivacy', category: 'backups', platform: 'android' },
+  {
+    id: 'googleDriveSyncTroubleshooting',
+    category: 'backups',
+    platform: 'android',
+  },
+  { id: 'calendarSetup', category: 'backups', related: [265], platform: 'ios' },
   { id: 'calendarPrivacy', category: 'backups' },
-  { id: 'calendarPrimary', category: 'backups' },
-  { id: 'calendarTroubleshooting', category: 'backups' },
+  { id: 'calendarPrimary', category: 'backups', platform: 'ios' },
+  { id: 'calendarTroubleshooting', category: 'backups', platform: 'ios' },
   { id: 'calendarDisconnect', category: 'backups' },
-  { id: 'calendarAndroid', category: 'backups' },
+  { id: 'calendarAndroid', category: 'backups', platform: 'android' },
   {
     id: 'widgets',
     category: 'general',
     pinned: true,
     related: [273, 247, 222, 229, 214],
+    platform: 'ios',
   },
-  { id: 'appleWatch', category: 'time' },
-  { id: 'appleWatchSync', category: 'time' },
-  { id: 'appleWatchUpNext', category: 'time' },
-  { id: 'wearOs', category: 'time' },
-  { id: 'wearOsSync', category: 'time' },
-  { id: 'siri', category: 'time' },
+  { id: 'appleWatch', category: 'time', platform: 'ios' },
+  { id: 'appleWatchSync', category: 'time', platform: 'ios' },
+  { id: 'appleWatchUpNext', category: 'time', platform: 'ios' },
+  { id: 'wearOs', category: 'time', platform: 'android' },
+  { id: 'wearOsSync', category: 'time', platform: 'android' },
+  { id: 'siri', category: 'time', platform: 'ios' },
   {
     id: 'switchingPioneer',
     category: 'time',
@@ -186,6 +202,7 @@ export const FAQS: FAQEntry[] = [
     id: 'appIcon',
     category: 'customization',
     related: [119],
+    platform: 'ios',
   },
   {
     id: 'reorderHome',
@@ -279,7 +296,7 @@ export const FAQS: FAQEntry[] = [
   { id: 'notesImportPaper', category: 'backups' },
   { id: 'notesImportVoicePhoto', category: 'backups' },
   { id: 'notesImportRetry', category: 'backups' },
-  { id: 'notesImportAndroid', category: 'backups' },
+  { id: 'notesImportAndroid', category: 'backups', platform: 'android' },
   { id: 'mytimeTrouble', category: 'backups', related: [360] },
   {
     id: 'hourglassSetup',
@@ -384,3 +401,13 @@ export const FAQ_CATEGORIES: FAQCategory[] = [
   'supporter',
   'general',
 ]
+
+/** The entries shown on `platform`, in list order. */
+export const faqsForPlatform = (platform: string): FAQEntry[] =>
+  FAQS.filter((entry) => !entry.platform || entry.platform === platform)
+
+/** The categories that have at least one of `entries`, in display order. */
+export const faqCategoriesFor = (entries: FAQEntry[]): FAQCategory[] =>
+  FAQ_CATEGORIES.filter((category) =>
+    entries.some((entry) => entry.category === category)
+  )

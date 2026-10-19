@@ -369,7 +369,7 @@ describe('backup scheduler', () => {
       })
     })
 
-    it('notices while the app stays open, through the long waits’ re-checks', async () => {
+    it('notices while the app stays open', async () => {
       const t = setup({ schedule: uploadedHourAgo })
       t.scheduler.onForeground()
       await t.advance(30 * 60_000)
@@ -379,6 +379,76 @@ describe('backup scheduler', () => {
       await t.advance(2 * BACKUP_SERVER_CHECK_MS)
       expect(t.world.serverChecks.length).toBeGreaterThan(checks)
       expect(t.world.uploads).toHaveLength(1)
+    })
+
+    it('notices within 15 minutes while open, even while edits keep re-planning', async () => {
+      const t = setup({ schedule: uploadedHourAgo })
+      t.scheduler.onForeground()
+      await t.advance(60_000)
+      t.world.serverHas = false
+      // Edits that come out unchanged (bookkeeping) every few minutes re-plan
+      // the upload timer each time; the check doesn't ride on it.
+      for (let minute = 1; minute < 16; minute += 3) {
+        t.scheduler.noteChange()
+        await t.advance(3 * 60_000)
+      }
+      expect(t.world.serverChecks).toEqual([
+        START,
+        START + BACKUP_SERVER_CHECK_MS,
+      ])
+      expect(t.world.uploads).toEqual([
+        { at: START + BACKUP_SERVER_CHECK_MS + 5_000, data: 'v1' },
+      ])
+    })
+
+    it('checks every 15 minutes while open, and never more often', async () => {
+      const t = setup({ schedule: uploadedHourAgo })
+      t.scheduler.onForeground()
+      await t.advance(2 * 60 * 60_000)
+      expect(t.world.serverChecks).toEqual(
+        Array.from(
+          { length: 9 },
+          (_, index) => START + index * BACKUP_SERVER_CHECK_MS
+        )
+      )
+      // The Account screen's list counts, and moves the next check.
+      const u = setup({ schedule: uploadedHourAgo })
+      u.scheduler.onForeground()
+      await u.advance(10 * 60_000)
+      u.scheduler.serverCopyListed(true, u.now())
+      await u.advance(BACKUP_SERVER_CHECK_MS)
+      expect(u.world.serverChecks).toEqual([
+        START,
+        START + 10 * 60_000 + BACKUP_SERVER_CHECK_MS,
+      ])
+    })
+
+    it('pauses checks in the background, and an inactive blip doesn’t', async () => {
+      const t = setup({ schedule: uploadedHourAgo })
+      t.scheduler.onForeground()
+      await t.flush()
+      t.scheduler.onBackground()
+      await t.advance(60 * 60_000)
+      expect(t.world.serverChecks).toEqual([START])
+      t.scheduler.onForeground()
+      await t.flush()
+      expect(t.world.serverChecks).toEqual([START, START + 60 * 60_000])
+      // Control Center, Face ID or a system sheet: `inactive`, then back.
+      t.scheduler.onInactive()
+      await t.advance(BACKUP_SERVER_CHECK_MS)
+      expect(t.world.serverChecks).toHaveLength(3)
+    })
+
+    it('starts checking after the first upload', async () => {
+      const t = setup()
+      t.scheduler.onForeground()
+      await t.scheduler.run('enabled', { force: true })
+      t.world.serverHas = false
+      await t.advance(BACKUP_SERVER_CHECK_MS)
+      expect(t.world.serverChecks).toEqual([START + BACKUP_SERVER_CHECK_MS])
+      expect(t.world.uploads).toHaveLength(1)
+      await t.advance(5_000)
+      expect(t.world.uploads).toHaveLength(2)
     })
 
     it('lists the slots at most every 15 minutes', async () => {

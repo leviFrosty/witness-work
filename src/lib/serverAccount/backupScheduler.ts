@@ -15,9 +15,11 @@ import { BACKUP_LIMITS } from '@/lib/serverAccount/backupClient'
  * - Failures back off by reason; coming back to the app or the connection
  *   returning retries the passing ones (offline, server, rate limited) sooner.
  * - Another device can delete this one's server copy (Delete Backup), which the
- *   hash skip can't see. Coming back to the app, and the long waits' re-
- *   checks, list the slots at most every `SERVER_CHECK_MS`; a missing slot
- *   uploads again soon.
+ *   hash skip can't see. Coming back to the app lists the slots, and so does a
+ *   timer of its own every `SERVER_CHECK_MS` while the app is in the foreground
+ *   (never more often, Settings' listings included); a missing slot uploads
+ *   again soon. The timer is its own so that uploads, which re-plan the upload
+ *   timer on every change, can't keep putting it off.
  */
 
 export const BACKUP_DEBOUNCE_MS = 30_000
@@ -27,7 +29,7 @@ export const BACKUP_DAILY_MS = 24 * 60 * 60_000
 export const BACKUP_MIN_INTERVAL_MS = BACKUP_LIMITS.putIntervalMs + 1_000
 /** Coming back to the app waits this long, so launch work goes first. */
 export const BACKUP_FOREGROUND_DELAY_MS = 5_000
-/** Long waits re-check at this interval rather than holding one long timer. */
+/** Long waits wake at this interval rather than holding one long timer. */
 const MAX_TIMER_MS = 10 * 60_000
 /** Whether the server still has this device's slot, asked at most this often. */
 export const BACKUP_SERVER_CHECK_MS = 15 * 60_000
@@ -196,6 +198,9 @@ export function createBackupScheduler(deps: BackupSchedulerDeps) {
   /** The last look at the server's slots, for `SERVER_CHECK_MS`. */
   let serverCheckedAt: number | null = null
   let checkingServer = false
+  /** Wakes the next server check; only while in the foreground. */
+  let checkTimer: unknown = null
+  let foreground = false
 
   const state = () => deps.state.get()
   const log = (level: 'info' | 'warn', message: string) =>
@@ -228,10 +233,8 @@ export function createBackupScheduler(deps: BackupSchedulerDeps) {
     timer = deps.setTimer(
       () => {
         timer = null
-        if (deps.now() < at) {
-          arm(at)
-          void checkServerCopy()
-        } else void run('scheduled')
+        if (deps.now() < at) arm(at)
+        else void run('scheduled')
       },
       Math.min(wait, MAX_TIMER_MS)
     )
@@ -269,24 +272,55 @@ export function createBackupScheduler(deps: BackupSchedulerDeps) {
     arm(Math.max(now + BACKUP_FOREGROUND_DELAY_MS, notBefore()))
   }
 
-  /** Lists the server's slots when that's due; never throws. */
+  /** Whether there's a server copy worth checking on. */
+  const checking = () =>
+    deps.hasServerCopy !== undefined &&
+    deps.isEnabled() &&
+    state().lastPutAt !== null
+
+  function cancelCheck() {
+    if (checkTimer !== null) deps.clearTimer(checkTimer)
+    checkTimer = null
+  }
+
+  /** Plans the next server check, unless one is planned already. */
+  function armCheck() {
+    if (checkTimer !== null) return
+    if (!foreground || !checking()) return
+    const at = (serverCheckedAt ?? deps.now()) + BACKUP_SERVER_CHECK_MS
+    const wait = Math.max(0, at - deps.now())
+    checkTimer = deps.setTimer(
+      () => {
+        checkTimer = null
+        void checkServerCopy()
+      },
+      Math.min(wait, MAX_TIMER_MS)
+    )
+  }
+
+  /**
+   * Lists the server's slots when that's due, then plans the next; never
+   * throws.
+   */
   async function checkServerCopy() {
-    if (!deps.hasServerCopy || checkingServer || !deps.isEnabled()) return
+    if (checkingServer || !checking()) return
     const now = deps.now()
-    if (state().lastPutAt === null) return
     if (
       serverCheckedAt !== null &&
       now - serverCheckedAt < BACKUP_SERVER_CHECK_MS
-    )
+    ) {
+      armCheck()
       return
+    }
     checkingServer = true
     serverCheckedAt = now
     try {
-      if ((await deps.hasServerCopy()) === false) serverCopyMissing(now)
+      if ((await deps.hasServerCopy!()) === false) serverCopyMissing(now)
     } catch {
       // The next check asks again.
     } finally {
       checkingServer = false
+      armCheck()
     }
   }
 
@@ -358,6 +392,9 @@ export function createBackupScheduler(deps: BackupSchedulerDeps) {
       })
       log('info', `${reason}: uploaded ${size} bytes`)
       plan(BACKUP_DEBOUNCE_MS)
+      // The slot is there now: the next check can wait its full interval.
+      serverCheckedAt = done
+      armCheck()
       return { outcome: 'uploaded', size }
     } catch (error) {
       const failure =
@@ -396,6 +433,12 @@ export function createBackupScheduler(deps: BackupSchedulerDeps) {
     return inFlight
   }
 
+  /** Leaving the app: what's pending goes now. */
+  function uploadPending() {
+    if (!deps.isEnabled() || !state().pending) return
+    if (deps.now() >= notBefore()) void run('background')
+  }
+
   return {
     run,
     /** Local data changed: upload once it settles. */
@@ -409,13 +452,21 @@ export function createBackupScheduler(deps: BackupSchedulerDeps) {
       const latest = pendingSince + BACKUP_MAX_PENDING_MS
       arm(Math.max(Math.min(now + BACKUP_DEBOUNCE_MS, latest), notBefore()))
     },
-    /** The app is leaving the foreground: what's pending goes now. */
+    /**
+     * The app is leaving the foreground, or may be (`inactive`, which iOS also
+     * passes through for Control Center and system sheets): what's pending goes
+     * now.
+     */
+    onInactive: uploadPending,
+    /** The app went to the background: as `onInactive`, and checks pause. */
     onBackground() {
-      if (!deps.isEnabled() || !state().pending) return
-      if (deps.now() >= notBefore()) void run('background')
+      foreground = false
+      cancelCheck()
+      uploadPending()
     },
     /** A real return to the app, or the launch. */
     onForeground() {
+      foreground = true
       if (!deps.isEnabled()) return
       const { lastError } = state()
       if (lastError && PASSING.has(lastError))
@@ -437,10 +488,12 @@ export function createBackupScheduler(deps: BackupSchedulerDeps) {
     serverCopyListed(present: boolean, listedAt: number) {
       serverCheckedAt = deps.now()
       if (!present) serverCopyMissing(listedAt)
+      armCheck()
     },
     /** Backup was turned off, or this device's backup state was reset. */
     stop() {
       cancel()
+      cancelCheck()
       pendingSince = null
       deps.state.set({ nextAttemptAt: null, retryAt: null })
     },

@@ -13,12 +13,15 @@ import Wrapper from '@/components/ui/layout/Wrapper'
 import { platformKey } from '@/app/account/attestationCopy'
 import { approveHandoff, type OfferStartProblem } from '@/app/account/handoff'
 import i18n, { type TranslationKey } from '@/lib/locales'
-import type { HandoffFailure } from '@/lib/serverAccount/handoffSession'
 import type { RootStackNavigation, RootStackParamList } from '@/types/rootStack'
 import HandoffQrPanel from '@/features/settings/components/account/handoff/HandoffQrPanel'
 import HandoffApproval from '@/features/settings/components/account/handoff/HandoffApproval'
 import HandoffStatus from '@/features/settings/components/account/handoff/HandoffStatus'
 import { handoffFailureMessage } from '@/features/settings/components/account/handoff/handoffCopy'
+import {
+  FINAL_FAILURES,
+  RETRYABLE_PROBLEMS,
+} from '@/features/settings/components/account/handoff/handoffEnding'
 import useOfferHandoff from '@/features/settings/hooks/useOfferHandoff'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 
@@ -34,30 +37,18 @@ const PROBLEM: Record<OfferStartProblem, TranslationKey> = {
   offline: 'handoff_problemOffline',
 }
 
-/** Problems that can pass by themselves. */
-const RETRYABLE = new Set<OfferStartProblem>([
-  'unavailable',
-  'verifyLater',
-  'offline',
-])
-
-/**
- * Failures a new code can't fix: the device can't be verified, or the app needs
- * an update.
- */
-const FINAL = new Set<HandoffFailure>(['unverified', 'updateRequired'])
-
 /**
  * Set Up Another Device, on the phone that has the account: a QR code for the
  * new phone, then "Allow … to sign in?" with the code both show. Leaving the
- * screen cancels the code.
+ * screen cancels the code; coming back after it ended shows a new one.
  */
 const SetUpAnotherDeviceScreen = () => {
   const navigation = useNavigation<RootStackNavigation>()
   const route =
     useRoute<RouteProp<RootStackParamList, 'Set Up Another Device'>>()
   const { start, session, state, newCode } = useOfferHandoff(
-    route.params?.entry ?? 'settings'
+    route.params?.entry ?? 'settings',
+    route.params
   )
   // The other phone gets the account's buddies only when there are any.
   const hasBuddies = useBuddies((state) => state.buddies.length > 0)
@@ -76,7 +67,7 @@ const SetUpAnotherDeviceScreen = () => {
           tone='error'
           body={i18n.t(PROBLEM[start.problem])}
           primary={
-            RETRYABLE.has(start.problem)
+            RETRYABLE_PROBLEMS.has(start.problem)
               ? {
                   label: i18n.t('handoff_tryAgain'),
                   onPress: newCode,
@@ -167,7 +158,7 @@ const SetUpAnotherDeviceScreen = () => {
             title={i18n.t('handoff_oldFailedTitle')}
             body={handoffFailureMessage('old', state.reason)}
             primary={
-              FINAL.has(state.reason)
+              FINAL_FAILURES.has(state.reason)
                 ? {
                     label: i18n.t('done'),
                     onPress: () => navigation.goBack(),

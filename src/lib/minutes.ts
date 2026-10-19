@@ -37,30 +37,36 @@ export const formatMinutes = (
   // fraction like 59.6 carries into the hour ("1h 0m", not "0h 60m") and both
   // formats describe the same duration.
   const wholeMinutes = round(totalMinutes, 0)
-  const hours = Math.floor(wholeMinutes / 60)
-  const minutes = wholeMinutes % 60
-  const decimalHours = round(wholeMinutes / 60, 1)
+  // A negative duration (a Time Rollover's taken-back entry) splits its
+  // magnitude, so -90 is "−1h 30m" rather than floor's "-2h -30m"; every part
+  // carries the sign.
+  const sign = wholeMinutes < 0 ? -1 : 1
+  const magnitude = Math.abs(wholeMinutes)
+  const absHours = Math.floor(magnitude / 60)
+  const absMinutes = magnitude % 60
+  const absDecimalHours = round(magnitude / 60, 1)
 
   switch (format) {
     case 'decimal': {
       // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
-      formatted = `${i18n.t('hoursShort', { count: decimalHours })}`
+      formatted = `${i18n.t('hoursShort', { count: absDecimalHours })}`
       break
     }
     case 'short':
       formatted = i18n.t('hoursAndMinutesShort', {
         // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
-        hours: i18n.t('hoursShort', { count: hours }),
+        hours: i18n.t('hoursShort', { count: absHours }),
         // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
-        minutes: i18n.t('minutesShort', { count: minutes }),
+        minutes: i18n.t('minutesShort', { count: absMinutes }),
       })
   }
 
   return {
-    formatted,
-    minutes,
-    hours,
-    decimalHours,
+    formatted: sign < 0 ? `−${formatted}` : formatted,
+    // `+ 0` folds -0 into 0 for whole-hour or sub-hour negatives.
+    minutes: sign * absMinutes + 0,
+    hours: sign * absHours + 0,
+    decimalHours: sign * absDecimalHours + 0,
   }
 }
 

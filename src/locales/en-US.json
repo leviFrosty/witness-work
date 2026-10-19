@@ -240,6 +240,22 @@
   "profileActivityTitle": "Service activity",
   "contributionLess": "Less",
   "contributionMore": "More",
+  "contribution_a11ySummary": {
+    "one": "Last {{count}} week: {{days}}, longest run {{run}}",
+    "other": "Last {{count}} weeks: {{days}}, longest run {{run}}"
+  },
+  "contribution_a11yEmpty": {
+    "one": "Last {{count}} week: no service logged",
+    "other": "Last {{count}} weeks: no service logged"
+  },
+  "contribution_a11yDays": {
+    "one": "{{count}} day with service",
+    "other": "{{count}} days with service"
+  },
+  "contribution_a11yRun": {
+    "one": "{{count}} day",
+    "other": "{{count}} days"
+  },
   "whatTypePublisherAreYou": "What is your current publisher status?",
   "noHourRequirement": "No Hour Requirement",
   "hourMonthlyRequirement": "Regular monthly goal: {{count}} hours",
@@ -263,6 +279,9 @@
   "completeSetup": "Complete Setup",
   "noRecentConversation": "No Recent Conversation",
   "noRecentConversation_plural": "No Recent Conversations",
+  "contactRow_a11yStudyActive": "Bible study this month",
+  "contactRow_a11yStudyPast": "Past Bible study",
+  "contactRow_a11yFavorite": "Favorite",
   "returnVisitContacts": "Return Visit Contacts",
   "noContactsSaved": "No contacts saved. Tap the plus button to add a contact.",
   "deleteConversation": "Delete Conversation?",

@@ -20,8 +20,9 @@ import { formatMinutesCompact } from '@/lib/minutes'
 import {
   ContributionCell,
   contributionGrid,
+  contributionSummary,
 } from '@/features/profile/lib/profileStats'
-import i18n from '@/lib/locales'
+import i18n, { type TranslationKey } from '@/lib/locales'
 
 interface Props {
   daily: Map<string, number>
@@ -121,6 +122,26 @@ const CellGrid = memo(({ grid, cell, colorByLevel }: CellGridProps) => {
   )
 })
 CellGrid.displayName = 'CellGrid'
+
+/**
+ * The whole graph as one sentence for screen readers, which can't scrub the
+ * cells: days with service and the longest run in the window.
+ */
+const accessibilityLabelFor = (grid: ContributionCell[][], weeks: number) => {
+  const { daysWithService, longestRun } = contributionSummary(grid)
+  if (!daysWithService) {
+    return i18n.t('contribution_a11yEmpty' as TranslationKey, { count: weeks })
+  }
+  return i18n.t('contribution_a11ySummary' as TranslationKey, {
+    count: weeks,
+    days: i18n.t('contribution_a11yDays' as TranslationKey, {
+      count: daysWithService,
+    }),
+    run: i18n.t('contribution_a11yRun' as TranslationKey, {
+      count: longestRun,
+    }),
+  })
+}
 
 const ContributionGraph = ({ daily, weeks = 26 }: Props) => {
   const theme = useTheme()
@@ -289,108 +310,120 @@ const ContributionGraph = ({ daily, weeks = 26 }: Props) => {
   )
 
   return (
-    <View style={{ gap: 8 }} onLayout={onLayout}>
-      <View style={{ flexDirection: 'row', gap: LABEL_GAP }}>
-        <View style={{ width: LABEL_WIDTH }} />
-        <View style={{ height: 14, position: 'relative', flex: 1 }}>
-          {monthStarts.map((label, i) =>
-            label ? (
-              <Text
-                key={`m-${i}`}
-                style={{
-                  position: 'absolute',
-                  left: i * stride,
-                  fontSize: 10,
-                  color: theme.colors.textAlt,
-                }}
-              >
-                {label}
-              </Text>
-            ) : null
-          )}
+    <View
+      onLayout={onLayout}
+      accessible
+      accessibilityRole='image'
+      accessibilityLabel={accessibilityLabelFor(grid, weeks)}
+    >
+      {/* The label above stands in for the labels, cells, and legend. */}
+      <View
+        style={{ gap: 8 }}
+        accessibilityElementsHidden
+        importantForAccessibility='no-hide-descendants'
+      >
+        <View style={{ flexDirection: 'row', gap: LABEL_GAP }}>
+          <View style={{ width: LABEL_WIDTH }} />
+          <View style={{ height: 14, position: 'relative', flex: 1 }}>
+            {monthStarts.map((label, i) =>
+              label ? (
+                <Text
+                  key={`m-${i}`}
+                  style={{
+                    position: 'absolute',
+                    left: i * stride,
+                    fontSize: 10,
+                    color: theme.colors.textAlt,
+                  }}
+                >
+                  {label}
+                </Text>
+              ) : null
+            )}
+          </View>
         </View>
-      </View>
-      <View style={{ flexDirection: 'row', gap: LABEL_GAP }}>
+        <View style={{ flexDirection: 'row', gap: LABEL_GAP }}>
+          <View
+            style={{
+              width: LABEL_WIDTH,
+              height: cell * 7 + GAP * 6,
+            }}
+          >
+            {dayLabels.map((label, i) =>
+              label ? (
+                <Text
+                  key={`lbl-${i}`}
+                  style={{
+                    position: 'absolute',
+                    left: 0,
+                    top: i * stride + cell / 2 - 6,
+                    fontSize: 10,
+                    lineHeight: 12,
+                    color: theme.colors.textAlt,
+                  }}
+                >
+                  {label}
+                </Text>
+              ) : null
+            )}
+          </View>
+          <GestureDetector gesture={gesture}>
+            <View style={{ position: 'relative' }}>
+              <CellGrid grid={grid} cell={cell} colorByLevel={colorByLevel} />
+              <Animated.View
+                pointerEvents='none'
+                style={[
+                  {
+                    position: 'absolute',
+                    left: 0,
+                    top: 0,
+                    width: cell,
+                    height: cell,
+                    borderRadius: 2,
+                    borderWidth: 1.5,
+                    borderColor: theme.colors.text,
+                  },
+                  ringStyle,
+                ]}
+              />
+              <ScrubPopover
+                hovered={hovered}
+                grid={grid}
+                cell={cell}
+                stride={stride}
+                gridPixelWidth={gridPixelWidth}
+                theme={theme}
+              />
+            </View>
+          </GestureDetector>
+        </View>
         <View
           style={{
-            width: LABEL_WIDTH,
-            height: cell * 7 + GAP * 6,
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 6,
+            marginTop: 2,
+            marginLeft: LABEL_WIDTH + LABEL_GAP,
           }}
         >
-          {dayLabels.map((label, i) =>
-            label ? (
-              <Text
-                key={`lbl-${i}`}
-                style={{
-                  position: 'absolute',
-                  left: 0,
-                  top: i * stride + cell / 2 - 6,
-                  fontSize: 10,
-                  lineHeight: 12,
-                  color: theme.colors.textAlt,
-                }}
-              >
-                {label}
-              </Text>
-            ) : null
-          )}
+          <Text style={{ fontSize: 10, color: theme.colors.textAlt }}>
+            {i18n.t('contributionLess')}
+          </Text>
+          {([0, 1, 2, 3, 4] as const).map((lv) => (
+            <View
+              key={`lg-${lv}`}
+              style={{
+                width: cell,
+                height: cell,
+                borderRadius: 2,
+                backgroundColor: colorByLevel[lv],
+              }}
+            />
+          ))}
+          <Text style={{ fontSize: 10, color: theme.colors.textAlt }}>
+            {i18n.t('contributionMore')}
+          </Text>
         </View>
-        <GestureDetector gesture={gesture}>
-          <View style={{ position: 'relative' }}>
-            <CellGrid grid={grid} cell={cell} colorByLevel={colorByLevel} />
-            <Animated.View
-              pointerEvents='none'
-              style={[
-                {
-                  position: 'absolute',
-                  left: 0,
-                  top: 0,
-                  width: cell,
-                  height: cell,
-                  borderRadius: 2,
-                  borderWidth: 1.5,
-                  borderColor: theme.colors.text,
-                },
-                ringStyle,
-              ]}
-            />
-            <ScrubPopover
-              hovered={hovered}
-              grid={grid}
-              cell={cell}
-              stride={stride}
-              gridPixelWidth={gridPixelWidth}
-              theme={theme}
-            />
-          </View>
-        </GestureDetector>
-      </View>
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          gap: 6,
-          marginTop: 2,
-          marginLeft: LABEL_WIDTH + LABEL_GAP,
-        }}
-      >
-        <Text style={{ fontSize: 10, color: theme.colors.textAlt }}>
-          {i18n.t('contributionLess')}
-        </Text>
-        {([0, 1, 2, 3, 4] as const).map((lv) => (
-          <View
-            key={`lg-${lv}`}
-            style={{
-              width: cell,
-              height: cell,
-              borderRadius: 2,
-              backgroundColor: colorByLevel[lv],
-            }}
-          />
-        ))}
-        <Text style={{ fontSize: 10, color: theme.colors.textAlt }}>
-          {i18n.t('contributionMore')}
-        </Text>
       </View>
     </View>
   )

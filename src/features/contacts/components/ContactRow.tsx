@@ -47,6 +47,10 @@ import HighlightedText from '@/features/contacts/components/HighlightedText'
 import { SelectionCheck } from '@/features/contacts/components/ListSelection'
 import useShareContact from '@/features/contacts/hooks/useShareContact'
 import { usePreferences } from '@/stores/preferences'
+import {
+  contactRowAccessibilityLabel,
+  previewText,
+} from '@/features/contacts/lib/contactRowLabel'
 
 const SNIPPET_CONTEXT_CHARS = 24
 
@@ -134,6 +138,26 @@ const ContactRow = ({
   const hasStudiedPreviously = index.studyContactIds.has(contact.id)
   const mostRecentConversation =
     index.mostRecentConvByContact.get(contact.id) ?? null
+  const lastVisitText = mostRecentConversation
+    ? formatRelative(mostRecentConversation.date)
+    : i18n.t('noRecentConversation_plural')
+  const cityText = contact.address?.city ? ` · ${contact.address.city}` : ''
+  // Screen readers get the row as one element, so the label carries what the
+  // row shows: its second line and the study and favorite icons.
+  const accessibilityLabel = contactRowAccessibilityLabel({
+    name: contact.name,
+    subtitle: previewMatch
+      ? previewText(previewMatch.match, SNIPPET_CONTEXT_CHARS)
+      : detail
+        ? detail.text
+        : `${lastVisitText}${cityText}`,
+    study: hasStudiedPreviously
+      ? isActiveBibleStudy
+        ? 'active'
+        : 'past'
+      : null,
+    favorite: !!contact.isFavorite,
+  })
 
   // Reset the row before confirming: the confirm Alert can be cancelled, and a
   // half-open row behind a dismissed Alert reads as stuck.
@@ -155,7 +179,7 @@ const ContactRow = ({
       accessible={selectionMode}
       accessibilityRole={selectionMode ? 'checkbox' : undefined}
       accessibilityState={selectionMode ? { checked } : undefined}
-      accessibilityLabel={selectionMode ? contact.name : undefined}
+      accessibilityLabel={selectionMode ? accessibilityLabel : undefined}
       accessibilityActions={selectionMode ? [{ name: 'activate' }] : undefined}
       onAccessibilityAction={
         selectionMode
@@ -213,15 +237,18 @@ const ContactRow = ({
             </ContactCardSubtitle>
           ) : (
             <ContactCardSubtitle>
-              {mostRecentConversation
-                ? formatRelative(mostRecentConversation.date)
-                : i18n.t('noRecentConversation_plural')}
-              {contact.address?.city ? ` · ${contact.address.city}` : ''}
+              {lastVisitText}
+              {cityText}
             </ContactCardSubtitle>
           )
         }
         trailing={
-          <View style={{ flexDirection: 'row', gap: 10 }}>
+          // The row's label already says what these icons mean.
+          <View
+            style={{ flexDirection: 'row', gap: 10 }}
+            accessibilityElementsHidden
+            importantForAccessibility='no-hide-descendants'
+          >
             {hasStudiedPreviously && (
               <IconButton
                 iconStyle={{
@@ -275,7 +302,7 @@ const ContactRow = ({
         <ContextMenu
           actions={menu}
           onPress={onPress}
-          accessibilityLabel={contact.name}
+          accessibilityLabel={accessibilityLabel}
           accessible={!selectionMode}
           disabled={selectionMode}
           hoverRadius={theme.numbers.borderRadiusSm}

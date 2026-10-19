@@ -147,6 +147,8 @@ export function setup() {
       | 'readProfilePhoto'
       | 'keepBuddyPhotos'
       | 'withdrawnAt'
+      | 'getShares'
+      | 'shareEndsAt'
       | 'account'
       | 'onSharesNotSent'
     > = {}

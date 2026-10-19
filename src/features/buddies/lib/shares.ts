@@ -202,9 +202,7 @@ export function shareWithdrawnAt(
     deletedVisits: VisitTombstone[]
   }
 ): number | undefined {
-  const separator = key.indexOf(':')
-  const kind = key.slice(0, separator)
-  const id = key.slice(separator + 1)
+  const { kind, id } = parseShareKey(key)
   const [records, tombstones] =
     kind === 'plan'
       ? [data.dayPlans, data.deletedDayPlans]
@@ -216,6 +214,37 @@ export function shareWithdrawnAt(
     tombstones.find((tombstone) => tombstone.id === id)?.deletedAt,
   ].filter((stamp): stamp is number => stamp !== undefined)
   return stamps.length > 0 ? Math.max(...stamps) : undefined
+}
+
+/**
+ * When the Plan or Follow-up behind a share key ends, while the User still has
+ * it, invited buddies or not: a Plan that no longer invites anyone (the only
+ * buddy it invited is gone) still says who it never reached until then.
+ * Undefined once it's deleted or dismissed, or for a Plan that follows a
+ * buddy's invitation.
+ */
+export function shareEndsAt(
+  key: string,
+  data: { dayPlans: DayPlan[]; visits: Visit[] }
+): number | undefined {
+  const { kind, id } = parseShareKey(key)
+  if (kind === 'plan') {
+    const plan = data.dayPlans.find((record) => record.id === id)
+    return plan && !plan.buddyShare ? planEndsAt(plan) : undefined
+  }
+  if (kind === 'followUp') {
+    const followUp = data.visits.find((record) => record.id === id)?.followUp
+    return followUp && !followUp.dismissed
+      ? new Date(followUp.date).getTime()
+      : undefined
+  }
+  return undefined
+}
+
+/** A share key's kind (`plan`, `followUp`) and the id of its record. */
+function parseShareKey(key: string) {
+  const separator = key.indexOf(':')
+  return { kind: key.slice(0, separator), id: key.slice(separator + 1) }
 }
 
 /** The share keys of this User's Plans and Follow-ups that invite buddies. */

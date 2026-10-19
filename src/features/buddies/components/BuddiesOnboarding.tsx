@@ -17,6 +17,7 @@ import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import { useProfile } from '@/stores/profile'
+import BuddiesAccountNameHint from '@/features/buddies/components/BuddiesAccountNameHint'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 
 const STEPS = ['intro', 'profile'] as const
@@ -183,13 +184,7 @@ export default function BuddiesOnboarding({
               />
             </View>
             {profileEditor(validation.invalid('name'))}
-            {accountName && accountName !== profileName ? (
-              <Text style={lead}>
-                {i18n.t('buddies_onboardingAccountName', {
-                  name: accountName,
-                })}
-              </Text>
-            ) : null}
+            <BuddiesAccountNameHint style={lead} />
           </>
         )}
       </ScrollView>

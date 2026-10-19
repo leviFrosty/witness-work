@@ -6,6 +6,7 @@ import {
 import type { AppIcon } from '@/components/ui/LucideIcon'
 import { InputProps } from 'tamagui'
 import moment from 'moment'
+import { useState } from 'react'
 import useTheme from '@/contexts/theme'
 import { usePreferences } from '@/stores/preferences'
 import { useProfile } from '@/stores/profile'
@@ -68,6 +69,12 @@ interface Props {
   readOnly?: boolean
   /** Leaves out the badge row, e.g. where badges have their own section. */
   hideBadges?: boolean
+  /**
+   * Shown in place of this device's Profile name until the User edits it:
+   * Buddies setup shows the name on the account's Buddy Card. Editing sets the
+   * Profile name, as always, which the card name follows.
+   */
+  shownName?: string
 }
 
 /**
@@ -76,8 +83,14 @@ interface Props {
  * `readOnly` renders the same card as a plain display. Earned badges show
  * underneath unless the User turned badges off.
  */
-const ProfileCard = ({ readOnly, hideBadges, nameInvalid }: Props) => {
+const ProfileCard = ({
+  readOnly,
+  hideBadges,
+  nameInvalid,
+  shownName,
+}: Props) => {
   const theme = useTheme()
+  const [nameEdited, setNameEdited] = useState(false)
   const {
     installedOn,
     tenureStartDate,
@@ -98,7 +111,10 @@ const ProfileCard = ({ readOnly, hideBadges, nameInvalid }: Props) => {
   // ProfileCard reads + writes both stores because the card is the editing
   // surface for Profile while tenure remains a Preference.
   const { name, avatar, customAvatarBackground, set: setProfile } = useProfile()
-  const { name: trimmedName } = useUser()
+  const { name: profileName } = useUser()
+  const showsOtherName = shownName !== undefined && !nameEdited
+  const fieldName = showsOtherName ? shownName : name
+  const trimmedName = showsOtherName ? shownName.trim() : profileName
   const { type: publisher, isInFullTimeService } = usePublisher()
   const { since: supporterSince } = useIsSupporter()
   const serviceStreak = shownStreak(useServiceStreak())
@@ -173,16 +189,19 @@ const ProfileCard = ({ readOnly, hideBadges, nameInvalid }: Props) => {
         ) : (
           <MyTextInput
             invalid={nameInvalid}
-            value={name}
-            onChangeText={(val) => setProfile({ name: val })}
+            value={fieldName}
+            onChangeText={(val) => {
+              setNameEdited(true)
+              setProfile({ name: val })
+            }}
             placeholder={i18n.t('firstNamePlaceholder')}
             placeholderTextColor={
               theme.colors.textAlt as InputProps['placeholderTextColor']
             }
             autoCapitalize='words'
             autoCorrect={false}
-            autoFocus={!name}
-            autoFocusNative={!name}
+            autoFocus={!fieldName}
+            autoFocusNative={!fieldName}
             maxLength={40}
             enterKeyHint='done'
             textAlign='start'

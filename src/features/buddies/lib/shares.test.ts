@@ -8,6 +8,7 @@ import {
   planEndsAt,
   planShareDetails,
   sharedKeys,
+  shareEndsAt,
   shareWithdrawnAt,
 } from '@/features/buddies/lib/shares'
 
@@ -87,5 +88,30 @@ describe('a share on every device of the User', () => {
     expect(shareWithdrawnAt('followUp:v1', data)).toBe(now - 9)
     expect(shareWithdrawnAt('followUp:v9', data)).toBe(now - 4)
     expect(shareWithdrawnAt('plan:unknown', data)).toBeUndefined()
+  })
+
+  it('ends with its Plan or Follow-up while the User has it, invitees or not', () => {
+    const data = {
+      dayPlans: [
+        { ...plan, buddies: undefined },
+        { ...shared, id: 'linked', buddyShare: { from: 'x', shareId: 'y' } },
+      ],
+      visits: [
+        { ...visit, followUp: { ...visit.followUp!, buddies: undefined } },
+        {
+          ...visit,
+          id: 'v2',
+          followUp: { ...visit.followUp!, dismissed: true },
+        },
+      ],
+    }
+    expect(shareEndsAt('plan:anytime', data)).toBe(planEndsAt(plan))
+    expect(shareEndsAt('followUp:v1', data)).toBe(
+      new Date(2026, 2, 3).getTime()
+    )
+    // Deleted, dismissed, or someone else's Plan: nothing of the User's to tell.
+    expect(shareEndsAt('plan:deleted', data)).toBeUndefined()
+    expect(shareEndsAt('plan:linked', data)).toBeUndefined()
+    expect(shareEndsAt('followUp:v2', data)).toBeUndefined()
   })
 })

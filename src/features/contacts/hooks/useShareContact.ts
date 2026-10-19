@@ -11,6 +11,7 @@ import {
 import { buildContactShareFile } from '@/features/contacts/lib/contactShareFormat'
 import i18n from '@/lib/locales'
 import { logger } from '@/lib/logger'
+import { redactLink } from '@/lib/redactLink'
 import { shareUrl } from '@/lib/share'
 import useContacts from '@/stores/contactsStore'
 import useConversations from '@/stores/conversationStore'
@@ -89,7 +90,7 @@ export default function useShareContact(contact: Contact | undefined) {
         visits,
         customFieldDefs
       )
-      logger.log('[ContactShareLink] generated url =', url)
+      logger.log('[ContactShareLink] generated url =', redactLink(url))
       logger.log('[ContactShareLink] length =', url.length, 'bytes')
       // Pass the URL as `url` (not embedded in `message`) so iOS fetches
       // Open Graph metadata from the ww-proxy fallback page and renders a

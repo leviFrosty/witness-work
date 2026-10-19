@@ -8,7 +8,6 @@ import { analytics } from '@/lib/analytics'
 import { errorTracking } from '@/lib/errorTracking'
 import { BackupFile, restoreBackupFile } from '@/lib/backupFile'
 import { migrateServiceReports } from '@/stores/serviceReport'
-import { useTimeCache } from '@/stores/timeCache'
 
 interface Options {
   source: 'settings' | 'onboarding'
@@ -84,7 +83,6 @@ export function useBackupImport({ source, entryPoint }: Options) {
       stage = 'restore'
 
       restoreBackupFile(data)
-      useTimeCache.getState().invalidateAllCache()
       analytics.capture('backup_imported', {
         ...properties,
         elapsed_ms: Date.now() - startedAt,

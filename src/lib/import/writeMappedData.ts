@@ -3,7 +3,6 @@ import useConversations from '@/stores/conversationStore'
 import useServiceReport from '@/stores/serviceReport'
 import useCategories from '@/stores/categories'
 import { usePreferences, PREFERENCE_DEFAULTS } from '@/stores/preferences'
-import { useTimeCache } from '@/stores/timeCache'
 import { tracksTenure } from '@/lib/publisherCapabilities'
 import { calendarMonthOf, type RoleHistory } from '@/lib/roleHistory'
 import { normalizeDateForStorage } from '@/lib/normalizeDate'
@@ -195,9 +194,6 @@ export const writeMappedDataToStores = (
 
   const publisherChange = applyPublisher(mapped.publisher, opts.publisherMode)
 
-  // Time totals are cached per month/year; drop it all so the imported entries
-  // recompute.
-  useTimeCache.getState().invalidateAllCache()
   // Badges the imported history reaches are filed quietly with one summary,
   // not celebrated one by one or announced to buddies.
   usePreferences.getState().set({ badgesBackfilledAt: null })
@@ -300,6 +296,4 @@ export const undoImport = (commit: ImportCommitResult): void => {
       tenureStartDate: commit.publisherChange.prevTenure,
     })
   }
-
-  useTimeCache.getState().invalidateAllCache()
 }

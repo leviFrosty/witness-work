@@ -203,7 +203,7 @@ export default function ToolsScreen() {
     archiveCustomFieldDef,
     removeDeletedContact,
   } = useContacts()
-  const { cache, invalidateAllCache } = useTimeCache()
+  const { dailyMinutes, invalidateDailyMinutesCache } = useTimeCache()
   const { conversations, addConversation, _WARNING_forceDeleteConversations } =
     useConversations()
   const preferences = usePreferences()
@@ -995,7 +995,7 @@ export default function ToolsScreen() {
       ]
     )
 
-  const cacheSize = Object.keys(cache ?? {}).length
+  const cacheSize = Object.keys(dailyMinutes?.daily ?? {}).length
 
   // Month-goal celebrations key off the calendar month.
   const now = moment()
@@ -1103,10 +1103,10 @@ export default function ToolsScreen() {
             <QuickTile
               icon={RefreshCcwIcon}
               label='Invalidate time cache'
-              caption={`${cacheSize} entries`}
+              caption={`${cacheSize} days`}
               tone='default'
               onPress={() => {
-                invalidateAllCache()
+                invalidateDailyMinutesCache()
                 showDone('Cache invalidated')
               }}
             />
@@ -2296,7 +2296,7 @@ export default function ToolsScreen() {
             />
             <JsonViewer
               label={i18n.t('timeCache')}
-              value={cache}
+              value={dailyMinutes?.daily}
               count={cacheSize}
             />
           </View>

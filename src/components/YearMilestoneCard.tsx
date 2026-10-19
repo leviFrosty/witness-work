@@ -3,7 +3,6 @@ import LucideIcon from '@/components/ui/LucideIcon'
 import { useEffect, useMemo, type ReactNode } from 'react'
 import { Pressable, View } from 'react-native'
 import moment from 'moment'
-import round from 'lodash/round'
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -26,14 +25,8 @@ import {
   milestoneCelebrationKey,
 } from '@/lib/milestones'
 import { useFormattedMinutes } from '@/lib/minutes'
-import {
-  generateServiceReportsHash,
-  getAnnualServiceReportCacheKey,
-  useTimeCache,
-} from '@/stores/timeCache'
 import i18n from '@/lib/locales'
 import { formatPlainNumber } from '@/lib/numbers'
-import { logger } from '@/lib/logger'
 import Haptics from '@/lib/haptics'
 import useFireworks from '@/hooks/useFireworks'
 
@@ -86,14 +79,11 @@ const YearMilestoneCard = ({
 }: YearMilestoneCardProps) => {
   const theme = useTheme()
   const serviceYear = year - 1
-  const {
-    type: publisher,
-    annualGoalHours,
-    creditCapMinutes,
-  } = usePublisher(serviceYearFocusMonth(serviceYear))
+  const { type: publisher, annualGoalHours } = usePublisher(
+    serviceYearFocusMonth(serviceYear)
+  )
   const roleFor = useRoleForMonth()
   const {
-    roleHistory,
     milestoneOverrides,
     timeDisplayFormat,
     celebratedMilestones,
@@ -102,7 +92,6 @@ const YearMilestoneCard = ({
     customCreditLimitHours,
   } = usePreferences(
     useShallow((s) => ({
-      roleHistory: s.roleHistory,
       milestoneOverrides: s.milestoneOverrides,
       timeDisplayFormat: s.timeDisplayFormat,
       celebratedMilestones: s.celebratedMilestones,
@@ -112,82 +101,27 @@ const YearMilestoneCard = ({
     }))
   )
   const { serviceReports } = useServiceReport()
-  const { getCachedPlannedMinutes, setCachedPlannedMinutes } = useTimeCache()
   const fireworks = useFireworks()
   const isFocused = useIsFocused()
 
-  const { totalMinutesForServiceYear, cacheKey, reportsHash, needsCache } =
-    useMemo(() => {
-      const cacheKey = getAnnualServiceReportCacheKey(serviceYear)
-      // The total is cap-dependent, so the cache key folds the resolved
-      // credit cap in — otherwise a role/override change would keep serving
-      // the stale total until the next report edit. Role History folds in too:
-      // each month is capped by the role that applied then.
-      const reportsHash = `${generateServiceReportsHash(
-        serviceReports,
-        year - 1
-      )}:cap=${creditCapMinutes ?? 'unlimited'}:roles=${JSON.stringify(
-        roleHistory
-      )}`
-
-      const cached = getCachedPlannedMinutes(cacheKey)
-      if (cached && cached.planHash === reportsHash) {
-        return {
-          totalMinutesForServiceYear: cached.plannedMinutes,
-          cacheKey,
-          reportsHash,
-          needsCache: false,
-        }
-      }
-
-      const serviceYearsReports = getServiceYearReports(
-        serviceReports,
-        year - 1
-      )
-      const total = getTotalMinutesForServiceYear(
-        serviceYearsReports,
+  const totalMinutesForServiceYear = useMemo(
+    () =>
+      getTotalMinutesForServiceYear(
+        getServiceYearReports(serviceReports, serviceYear),
         serviceYear,
         roleFor,
         {
           enabled: overrideCreditLimit,
           customLimitHours: customCreditLimitHours,
         }
-      )
-
-      return {
-        totalMinutesForServiceYear: total,
-        cacheKey,
-        reportsHash,
-        needsCache: true,
-      }
-      // eslint-disable-next-line react-compiler/react-compiler
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [
+      ),
+    [
       serviceReports,
       serviceYear,
-      year,
-      roleHistory,
-      creditCapMinutes,
+      roleFor,
       overrideCreditLimit,
       customCreditLimitHours,
-    ])
-
-  useEffect(() => {
-    if (needsCache) {
-      setCachedPlannedMinutes(cacheKey, totalMinutesForServiceYear, reportsHash)
-      logger.log('[YearMilestoneCard] Cached result for future use')
-    }
-  }, [
-    needsCache,
-    cacheKey,
-    totalMinutesForServiceYear,
-    reportsHash,
-    setCachedPlannedMinutes,
-  ])
-
-  const hoursCompleted = useMemo(
-    () => round(totalMinutesForServiceYear / 60, 1),
-    [totalMinutesForServiceYear]
+    ]
   )
 
   const milestones = useMemo(
@@ -196,8 +130,8 @@ const YearMilestoneCard = ({
     [publisher, milestoneOverrides, annualGoalHours]
   )
   const hitState = useMemo(
-    () => getMilestoneHitState(milestones, hoursCompleted),
-    [milestones, hoursCompleted]
+    () => getMilestoneHitState(milestones, totalMinutesForServiceYear),
+    [milestones, totalMinutesForServiceYear]
   )
 
   // One-time crossing celebration. Mirrors MonthReport: pulse a seal, fire a
@@ -220,7 +154,7 @@ const YearMilestoneCard = ({
   const justHitTop =
     justHitMilestones.length > 0 ? Math.max(...justHitMilestones) : null
   const isGoalComplete =
-    annualGoalHours > 0 && hoursCompleted >= annualGoalHours
+    annualGoalHours > 0 && totalMinutesForServiceYear >= annualGoalHours * 60
   const isJustHitAnnualGoal =
     justHitTop !== null && justHitTop === annualGoalHours
 

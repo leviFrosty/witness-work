@@ -48,13 +48,15 @@ export const getEffectiveMilestones = (
 }
 
 /**
- * Compute which milestones have been hit. A milestone counts as hit when
- * `hoursCompleted >= milestoneValue`. `next` is the smallest unhit value, or
- * `null` when every rung is already cleared.
+ * Compute which milestones have been hit. A milestone counts as hit once
+ * `minutesCompleted` reaches its full value in minutes — compared exactly, so a
+ * total that only rounds up to the milestone (599h 57m → "600.0") doesn't count
+ * as 600. `next` is the smallest unhit value, or `null` when every rung is
+ * already cleared.
  */
 export const getMilestoneHitState = (
   milestones: number[],
-  hoursCompleted: number
+  minutesCompleted: number
 ): {
   hit: number[]
   next: number | null
@@ -64,7 +66,7 @@ export const getMilestoneHitState = (
   const hit: number[] = []
   let next: number | null = null
   for (const m of milestones) {
-    if (hoursCompleted >= m) {
+    if (minutesCompleted >= m * 60) {
       hit.push(m)
     } else if (next === null) {
       next = m

@@ -32,7 +32,6 @@ import useConversations from '@/stores/conversationStore'
 import useServiceReport from '@/stores/serviceReport'
 import useCategories from '@/stores/categories'
 import { usePreferences, PREFERENCE_DEFAULTS } from '@/stores/preferences'
-import { useTimeCache } from '@/stores/timeCache'
 import { writeMappedDataToStores } from '@/features/mytime-import/lib/importMytime'
 import type { MappedImport } from '@/features/mytime-import/lib/mapMytimeData'
 import type { Contact } from '@/types/contact'
@@ -61,7 +60,6 @@ beforeEach(() => {
   useServiceReport.getState()._WARNING_forceDeleteServiceReports()
   useCategories.getState()._WARNING_forceDeleteCategories()
   usePreferences.setState({ ...PREFERENCE_DEFAULTS, preferenceUpdatedAt: {} })
-  useTimeCache.getState().invalidateAllCache()
 })
 
 describe('writeMappedDataToStores', () => {
@@ -235,20 +233,5 @@ describe('writeMappedDataToStores — publisher (decision 4)', () => {
     importPublisher(null, 'overwrite')
     expect(usePreferences.getState().role).toBe('publisher')
     expect(usePreferences.getState().tenureStartDate).toBeNull()
-  })
-})
-
-describe('writeMappedDataToStores — cache', () => {
-  it('invalidates the time cache so imported time recomputes', () => {
-    useTimeCache.getState().setCachedPlannedMinutes('2025-8', 100, 'hash')
-    expect(
-      useTimeCache.getState().getCachedPlannedMinutes('2025-8')
-    ).toBeDefined()
-
-    writeMappedDataToStores(emptyMapped(), { publisherMode: 'overwrite' })
-
-    expect(
-      useTimeCache.getState().getCachedPlannedMinutes('2025-8')
-    ).toBeUndefined()
   })
 })

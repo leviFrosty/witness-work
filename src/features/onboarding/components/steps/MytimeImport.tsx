@@ -18,6 +18,7 @@ import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import { useMytimeImport } from '@/features/mytime-import/hooks/useMytimeImport'
 import MytimeImportPreview from '@/features/mytime-import/components/MytimeImportPreview'
+import MytimeFileHint from '@/features/mytime-import/components/MytimeFileHint'
 import SupporterNote from '@/features/supporter/components/SupporterNote'
 
 interface Props {
@@ -95,6 +96,12 @@ const MytimeImport = ({ goBack, goNext }: Props) => {
         >
           {i18n.t('mytimeImport_description')}
         </Text>
+
+        {(status === 'idle' || status === 'parsing' || status === 'error') && (
+          <View style={{ marginBottom: 16 }}>
+            <MytimeFileHint />
+          </View>
+        )}
 
         {status === 'preview' && preview && (
           <MytimeImportPreview

@@ -11,7 +11,7 @@ import { usePreferences } from '@/stores/preferences'
 import * as FileSystem from 'expo-file-system/legacy'
 import { errorTracking } from '@/lib/errorTracking'
 import * as Sharing from 'expo-sharing'
-import { Alert, View } from 'react-native'
+import { Alert, Platform, View } from 'react-native'
 import useTheme from '@/contexts/theme'
 import Card from '@/components/ui/Card'
 import Divider from '@/components/ui/Divider'
@@ -152,6 +152,13 @@ const ImportAndExportScreen = () => {
                 </Badge>
               </XView>
             )}
+            <Text style={{ color: theme.colors.textAlt }}>
+              {i18n.t(
+                Platform.OS === 'android'
+                  ? 'restoreFromBackup_hintAndroid'
+                  : 'restoreFromBackup_hint'
+              )}
+            </Text>
             <ActionButton
               disabled={loading}
               loading={importing}

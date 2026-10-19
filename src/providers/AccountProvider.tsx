@@ -25,6 +25,7 @@ import { logger } from '@/lib/logger'
 import { ensureRevenueCatLinked } from '@/lib/serverAccount/revenueCatLinkRuntime'
 import { isOfflineError } from '@/lib/offlineError'
 import { checkICloudIdentity } from '@/lib/iCloudIdentity'
+import { InstallIdUnavailableError } from '@/lib/installId'
 
 interface Props {}
 
@@ -55,12 +56,14 @@ const FOREGROUND_RECONCILE_INTERVAL_MS = 15 * 60_000
  */
 const AccountProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
   const { customer, ready, setCustomer } = useCustomer()
-  const [accountId, setAccountId] = useState<string | null>(() => {
+  const [accountId, setAccountIdState] = useState<string | null>(() => {
     try {
       return getOrCreateAccountId()
     } catch (error) {
       logger.error('[Account] account id resolution failed', error)
-      errorTracking.captureException(error)
+      // `installId` already reported it.
+      if (!(error instanceof InstallIdUnavailableError))
+        errorTracking.captureException(error)
       return null
     }
   })
@@ -80,18 +83,24 @@ const AccountProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
     readyRef.current = ready
   }, [customer, ready])
 
+  // What RevenueCat is identified as, read by reconcile: a follow-up queued
+  // behind the pass that changed it still runs with the old render's state.
+  const accountIdRef = useRef(accountId)
+  const setAccountId = useCallback((id: string) => {
+    accountIdRef.current = id
+    setAccountIdState(id)
+  }, [])
+
   const inFlightRef = useRef(false)
   const queuedReasonRef = useRef<string | null>(null)
 
   const reconcile = useCallback(
     async (reason: string): Promise<void> => {
       perf.count('account:reconcile')
-      if (!hasSyncTransport()) return
       if (!readyRef.current) return
       // Entitlement truth isn't known until the initial CustomerInfo lands;
       // acting on the transient "no customer" state could mis-claim.
       if (customerRef.current === null) return
-      if (accountId === null) return
 
       if (inFlightRef.current) {
         // Coalesce: one queued follow-up is enough — it re-reads everything.
@@ -100,6 +109,26 @@ const AccountProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
       }
       inFlightRef.current = true
       try {
+        if (accountIdRef.current === null) {
+          // The Keychain refused the id at launch (before the first unlock),
+          // so RevenueCat stayed anonymous. This is the only place that
+          // identifies it once the id reads; until then this throws, and the
+          // next return to the app tries again.
+          const id = getOrCreateAccountId()
+          const { customerInfo } = await Purchases.logIn(id)
+          setAccountId(id)
+          setCustomer(customerInfo)
+          void ensureRevenueCatLinked({ force: true, reason: 'adopted' })
+          logger.log('[Account] identified once the account id read', {
+            reason,
+          })
+          // A follow-up queued meanwhile would still see the anonymous
+          // customer. The new id re-runs reconcile with matching state.
+          queuedReasonRef.current = null
+          return
+        }
+
+        if (!hasSyncTransport()) return
         if (!syncTransport().isAvailable()) {
           setICloudSharingAvailable(false)
           return
@@ -110,7 +139,7 @@ const AccountProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
         // its entitlement) must not claim the new account's file.
         checkICloudIdentity('account_reconcile')
         const current = getOrCreateAccountId()
-        if (current !== accountId) {
+        if (current !== accountIdRef.current) {
           const { customerInfo } = await Purchases.logIn(current)
           setAccountId(current)
           setCustomer(customerInfo)
@@ -218,6 +247,8 @@ const AccountProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
         // trigger; anything else is worth a report.
         if (isOfflineError(error)) {
           logger.warn('[Account] reconcile offline', { reason })
+        } else if (error instanceof InstallIdUnavailableError) {
+          logger.warn('[Account] account id still unavailable', { reason })
         } else {
           logger.error('[Account] reconcile failed', error)
           errorTracking.captureException(error)
@@ -229,8 +260,17 @@ const AccountProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
         if (queued) void reconcile(queued)
       }
     },
-    [accountId, setCustomer]
+    [setAccountId, setCustomer]
   )
+
+  // A new id (identified, adopted, or reset) re-runs reconcile once customer
+  // state matches it.
+  const reconciledIdRef = useRef(accountId)
+  useEffect(() => {
+    if (reconciledIdRef.current === accountId) return
+    reconciledIdRef.current = accountId
+    void reconcile('account-id')
+  }, [accountId, reconcile])
 
   // Boot + entitlement transitions (purchase, restore, lapse, adoption).
   const customerKnown = customer !== null
@@ -238,6 +278,16 @@ const AccountProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
   useEffect(() => {
     void reconcile('customer-state')
   }, [reconcile, ready, customerKnown, entitled])
+
+  // Every return to the app until the id reads; the throttled foreground
+  // pass below may not run for 15 minutes.
+  useEffect(() => {
+    if (accountId !== null) return
+    const subscription = addForegroundListener(
+      () => void reconcile('foreground')
+    )
+    return () => subscription.remove()
+  }, [accountId, reconcile])
 
   useEffect(() => {
     if (!hasSyncTransport()) return

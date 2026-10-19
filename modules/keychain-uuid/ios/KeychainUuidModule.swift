@@ -73,7 +73,8 @@ public class KeychainUuidModule: Module {
       guard status == errSecSuccess else {
         throw self.exception(
           code: "KEYCHAIN_RANDOM_FAILED",
-          description: "Could not create recovery token"
+          description: "Could not create recovery token",
+          status: status
         )
       }
       // Base64url without padding: 32 random bytes retain all 256 bits while the
@@ -122,7 +123,8 @@ public class KeychainUuidModule: Module {
       guard status == errSecSuccess else {
         throw self.exception(
           code: "KEYCHAIN_RANDOM_FAILED",
-          description: "Could not create lifecycle journal key"
+          description: "Could not create lifecycle journal key",
+          status: status
         )
       }
       let created = Data(bytes).base64EncodedString()
@@ -155,7 +157,8 @@ public class KeychainUuidModule: Module {
     guard status == errSecSuccess else {
       throw exception(
         code: "KEYCHAIN_READ_FAILED",
-        description: "Keychain read failed (status \(status))"
+        description: "Keychain read failed",
+        status: status
       )
     }
     guard let data = item as? Data,
@@ -199,21 +202,36 @@ public class KeychainUuidModule: Module {
       guard updateStatus == errSecSuccess else {
         throw exception(
           code: "KEYCHAIN_WRITE_FAILED",
-          description: "Keychain update failed (status \(updateStatus))"
+          description: "Keychain update failed",
+          status: updateStatus
         )
       }
       return
     }
     throw exception(
       code: "KEYCHAIN_WRITE_FAILED",
-      description: "Keychain add failed (status \(addStatus))"
+      description: "Keychain add failed",
+      status: addStatus
     )
   }
 
-  private func exception(code: String, description: String) -> Exception {
+  /**
+   `status` goes into the message as `OSStatus <n>: <text>` (JS parses the
+   number), e.g. -25308 errSecInteractionNotAllowed before the first unlock.
+   */
+  private func exception(
+    code: String,
+    description: String,
+    status: OSStatus? = nil
+  ) -> Exception {
+    var message = description
+    if let status {
+      let text = SecCopyErrorMessageString(status, nil) as String? ?? "unknown"
+      message += " (OSStatus \(status): \(text))"
+    }
     return Exception(
       name: "KeychainUuidError",
-      description: description,
+      description: message,
       code: code
     )
   }

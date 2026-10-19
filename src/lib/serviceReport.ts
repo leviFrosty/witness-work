@@ -102,6 +102,20 @@ export const applyMonthCreditCap = (
       ? standardMinutes
       : Math.min(standardMinutes + creditMinutes, creditCapMinutes)
 
+/**
+ * A month's credit cap in minutes (`null` = unlimited). Role defaults
+ * (specialPioneer/circuitOverseer = unlimited) and the user's override live
+ * behind `creditCapMinutesFor`; callers that don't know the publisher keep the
+ * legacy 55h default.
+ */
+export const monthCreditCapMinutes = (
+  publisher?: Publisher,
+  creditLimitOverride?: { enabled: boolean; customLimitHours: number }
+): number | null =>
+  publisher
+    ? creditCapMinutesFor(publisher, creditLimitOverride)
+    : monthCreditMaxMinutes
+
 export type AdjustedMinutes = {
   /**
    * Total adjusted hours possible to submit to report, including all possible
@@ -142,17 +156,10 @@ export const adjustedMinutesForSpecificMonth = (
     targetYear
   )
 
-  // Effective credit cap is derived once, in publisherCapabilities — both
-  // role defaults (specialPioneer/circuitOverseer = unlimited) and the
-  // user's override live behind that single seam.
-  const effectiveCreditLimitMinutes = publisher
-    ? creditCapMinutesFor(publisher, creditLimitOverride)
-    : monthCreditMaxMinutes
-
   const value = applyMonthCreditCap(
     standard,
     credit,
-    effectiveCreditLimitMinutes
+    monthCreditCapMinutes(publisher, creditLimitOverride)
   )
 
   return {
@@ -374,14 +381,11 @@ export const getTotalMinutesForServiceYear = (
   publisher?: Publisher | ((target: CalendarMonth) => Publisher),
   creditLimitOverride?: { enabled: boolean; customLimitHours: number }
 ) => {
-  // Same effective-cap resolution as `adjustedMinutesForSpecificMonth`: role
-  // defaults and the user's override live behind `creditCapMinutesFor`;
-  // callers that don't know the publisher keep the legacy 55h default.
-  const capFor = (target: CalendarMonth): number | null => {
-    if (!publisher) return monthCreditMaxMinutes
-    const role = typeof publisher === 'function' ? publisher(target) : publisher
-    return creditCapMinutesFor(role, creditLimitOverride)
-  }
+  const capFor = (target: CalendarMonth): number | null =>
+    monthCreditCapMinutes(
+      typeof publisher === 'function' ? publisher(target) : publisher,
+      creditLimitOverride
+    )
 
   return getServiceYearMonthlyBreakdowns(serviceYearReports).reduce(
     (minutes, m) =>

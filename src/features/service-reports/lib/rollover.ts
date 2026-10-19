@@ -6,9 +6,13 @@ import {
   TimeEntryTombstone,
 } from '@/types/timeEntry'
 import {
+  AdjustedMinutes,
   adjustedMinutesForSpecificMonth,
   getMonthsReports,
+  monthCreditCapMinutes,
 } from '@/lib/serviceReport'
+import type { CalendarMonth } from '@/lib/monthlyGoals'
+import type { PublisherCapabilities } from '@/lib/publisherCapabilities'
 import { getServiceYearFromDate } from '@/lib/serviceYear'
 import { syncTimestamp } from '@/lib/syncClock'
 
@@ -70,13 +74,78 @@ const resolveSourceMonth = ({
   return { month, year, adjusted }
 }
 
+/**
+ * Minutes that can move out of a month without changing its adjusted value by
+ * anything other than those minutes. The cap is whole hours, so a month the cap
+ * holds at its limit is already whole; rolling standard time out of it would
+ * only let squeezed-out credit refill the gap, and the Service Year would gain
+ * minutes nobody logged. Without credit, that's the standard fraction, or less
+ * when credit already completes the hour.
+ */
+const rolloverMinutes = (
+  adjusted: AdjustedMinutes,
+  includeCredit: boolean
+): number =>
+  includeCredit
+    ? adjusted.value % 60
+    : Math.min(adjusted.standard % 60, adjusted.value % 60)
+
+/**
+ * How many of `minutes` the destination month would count in full. Added
+ * standard time pushes counted credit out once standard plus credit reaches the
+ * cap, so a month the cap already holds with credit can't take the rollover
+ * without the Service Year losing those minutes.
+ */
+const destinationRoom = (
+  minutes: number,
+  adjusted: AdjustedMinutes,
+  capMinutes: number | null
+): number => {
+  const credit = adjusted.credit + adjusted.creditOverage
+  if (capMinutes === null || credit === 0 || adjusted.standard >= capMinutes)
+    return minutes
+  return Math.min(minutes, Math.max(0, capMinutes - adjusted.standard - credit))
+}
+
+/**
+ * The role inputs for rolling `today`'s previous month forward. Each month is
+ * capped by its own role: the source's numbers are the ones being floored, and
+ * the destination's cap limits what it can take. The Service Year guard holds
+ * when either side has an annual goal, so neither year's annual total takes
+ * minutes logged in the other.
+ */
+export const rolloverRole = ({
+  source,
+  destination,
+}: {
+  source: Pick<PublisherCapabilities, 'type' | 'hasAnnualGoal'>
+  destination: Pick<PublisherCapabilities, 'type' | 'hasAnnualGoal'>
+}): {
+  publisher: Publisher
+  destinationPublisher: Publisher
+  hasAnnualGoal: boolean
+} => ({
+  publisher: source.type,
+  destinationPublisher: destination.type,
+  hasAnnualGoal: source.hasAnnualGoal || destination.hasAnnualGoal,
+})
+
+/** The calendar month a rollover on `today` floors. */
+export const rolloverSourceMonth = (today: moment.Moment): CalendarMonth => {
+  const prev = today.clone().subtract(1, 'month')
+  return { year: prev.year(), month: prev.month() }
+}
+
 export const computePendingRollovers = ({
   lastRolloverYearMonth,
   includeCredit = false,
   ignoreMarker = false,
+  destinationPublisher,
   ...source
 }: RolloverSourceOptions & {
   lastRolloverYearMonth: string | null
+  /** This month's role, whose cap limits what it can take. Default: `publisher`. */
+  destinationPublisher?: Publisher
   /**
    * When true, fractional credit minutes count toward the rollover amount
    * (legacy behavior, opt-in via preferences). Default is standard-time only —
@@ -99,11 +168,24 @@ export const computePendingRollovers = ({
   const resolved = resolveSourceMonth(source)
   if (!resolved) return []
 
-  const { month, year, adjusted } = resolved
-  const fractional = (includeCredit ? adjusted.value : adjusted.standard) % 60
-  if (fractional === 0) return []
+  const { today, serviceReports, creditLimitOverride } = source
+  const destination = destinationPublisher ?? source.publisher
+  const minutes = destinationRoom(
+    rolloverMinutes(resolved.adjusted, includeCredit),
+    adjustedMinutesForSpecificMonth(
+      getMonthsReports(serviceReports, today.month(), today.year()),
+      today.month(),
+      today.year(),
+      destination,
+      creditLimitOverride
+    ),
+    monthCreditCapMinutes(destination, creditLimitOverride)
+  )
+  if (minutes === 0) return []
 
-  return [{ sourceYear: year, sourceMonth: month, minutes: fractional }]
+  const { month, year } = resolved
+
+  return [{ sourceYear: year, sourceMonth: month, minutes }]
 }
 
 /**
@@ -120,7 +202,8 @@ export const computeExcludedCreditMinutes = ({
   if (includeCredit) return 0
   const resolved = resolveSourceMonth(source)
   if (!resolved) return 0
-  return resolved.adjusted.credit % 60
+  const { adjusted } = resolved
+  return Math.max(0, (adjusted.value % 60) - rolloverMinutes(adjusted, false))
 }
 
 /** `YYYY-MM` for a 0-indexed month. */
@@ -304,6 +387,7 @@ export const applyRollover = ({
   hasAnnualGoal,
   lastRolloverYearMonth,
   publisher,
+  destinationPublisher,
   creditLimitOverride,
   includeCredit,
 }: {
@@ -312,6 +396,7 @@ export const applyRollover = ({
   hasAnnualGoal: boolean
   lastRolloverYearMonth: string | null
   publisher?: Publisher
+  destinationPublisher?: Publisher
   creditLimitOverride?: { enabled: boolean; customLimitHours: number }
   includeCredit?: boolean
 }): RolloverApplication | null => {
@@ -325,6 +410,7 @@ export const applyRollover = ({
     hasAnnualGoal,
     lastRolloverYearMonth,
     publisher,
+    destinationPublisher,
     creditLimitOverride,
     includeCredit,
     ignoreMarker: true,

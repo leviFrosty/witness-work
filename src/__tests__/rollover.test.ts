@@ -1,6 +1,9 @@
 import moment from 'moment'
+import fc from 'fast-check'
 import { describe, expect, it, vi } from 'vitest'
 import { TimeEntry, TimeEntriesByYear } from '@/types/timeEntry'
+import type { Publisher } from '@/types/publisher'
+import { LDC_BUILTIN_CATEGORY_ID } from '@/constants/categories'
 import {
   applyRollover,
   buildRolloverEntries,
@@ -8,7 +11,18 @@ import {
   computePendingRollovers,
   restampOverTombstones,
   rolloverIds,
+  rolloverRole,
+  rolloverSourceMonth,
 } from '@/features/service-reports/lib/rollover'
+import {
+  adjustedMinutesForSpecificMonth,
+  getMonthsReports,
+  getTotalMinutesForServiceYear,
+} from '@/lib/serviceReport'
+import {
+  publisherCapabilitiesForMonth,
+  type RolePreferences,
+} from '@/lib/roleHistory'
 
 vi.mock('@/lib/logger', () => import('@/__tests__/mocks/logger'))
 
@@ -274,6 +288,307 @@ describe('computePendingRollovers', () => {
 
     // (84 + 30) % 60 = 54
     expect(result).toEqual([{ sourceYear: 2026, sourceMonth: 2, minutes: 54 }])
+  })
+})
+
+describe('rollover at the credit cap', () => {
+  // A Regular Pioneer's March: 54h30m standard + 1h LDC, capped at 55h. The
+  // month is already whole, so rolling 30m out would let squeezed-out credit
+  // refill it and April would gain 30m nobody logged.
+  const capped = reports(2026, 2, [
+    { hours: 54, minutes: 30 },
+    { hours: 1, minutes: 0, ldc: true } as Partial<TimeEntry>,
+  ])
+  const source = {
+    serviceReports: capped,
+    today: moment('2026-04-15'),
+    hasAnnualGoal: true,
+    publisher: 'regularPioneer' as const,
+  }
+
+  it('offers nothing when the cap already makes the month whole', () => {
+    expect(
+      computePendingRollovers({ ...source, lastRolloverYearMonth: null })
+    ).toEqual([])
+  })
+
+  it('reports no partial credit hour when the month is whole', () => {
+    expect(computeExcludedCreditMinutes(source)).toBe(0)
+  })
+
+  it('rolls only what credit leaves short of the hour', () => {
+    // 1h50m standard + 20m credit = 2h10m: rolling 10m of standard leaves a
+    // whole 2h, with no partial credit hour left behind.
+    const serviceReports = reports(2026, 2, [
+      { hours: 1, minutes: 50 },
+      { hours: 0, minutes: 20, ldc: true } as Partial<TimeEntry>,
+    ])
+    const input = { ...source, serviceReports }
+
+    expect(
+      computePendingRollovers({ ...input, lastRolloverYearMonth: null })
+    ).toEqual([{ sourceYear: 2026, sourceMonth: 2, minutes: 10 }])
+    expect(computeExcludedCreditMinutes(input)).toBe(0)
+  })
+
+  it('rolls the standard fraction when standard alone is over the cap', () => {
+    const serviceReports = reports(2026, 2, [
+      { hours: 56, minutes: 20 },
+      { hours: 3, minutes: 0, ldc: true } as Partial<TimeEntry>,
+    ])
+
+    expect(
+      computePendingRollovers({
+        ...source,
+        serviceReports,
+        lastRolloverYearMonth: null,
+      })
+    ).toEqual([{ sourceYear: 2026, sourceMonth: 2, minutes: 20 }])
+  })
+
+  it('rolls nothing into a month the cap already holds with credit', () => {
+    // April: 54h standard + 5h LDC, held at 55h. Another 30m of standard would
+    // only push 30m of credit out, and March would lose it for nothing.
+    const serviceReports = merge(
+      reports(2026, 2, [{ hours: 10, minutes: 30 }]),
+      reports(2026, 3, [
+        { hours: 54, minutes: 0 },
+        { hours: 5, minutes: 0, ldc: true } as Partial<TimeEntry>,
+      ])
+    )
+
+    expect(
+      computePendingRollovers({
+        ...source,
+        serviceReports,
+        lastRolloverYearMonth: null,
+      })
+    ).toEqual([])
+  })
+
+  it('rolls only what fits under the cap in this month', () => {
+    // April: 54h standard + 50m LDC leaves 10m before credit gets squeezed.
+    const serviceReports = merge(
+      reports(2026, 2, [{ hours: 10, minutes: 30 }]),
+      reports(2026, 3, [
+        { hours: 54, minutes: 0 },
+        { hours: 0, minutes: 50, ldc: true } as Partial<TimeEntry>,
+      ])
+    )
+
+    expect(
+      computePendingRollovers({
+        ...source,
+        serviceReports,
+        lastRolloverYearMonth: null,
+      })
+    ).toEqual([{ sourceYear: 2026, sourceMonth: 2, minutes: 10 }])
+  })
+
+  it("caps this month by this month's role", () => {
+    // Regular Pioneer in March, Special Pioneer (no cap) in April: April's
+    // credit can't be squeezed, so the whole 30m rolls.
+    const serviceReports = merge(
+      reports(2026, 2, [{ hours: 10, minutes: 30 }]),
+      reports(2026, 3, [
+        { hours: 54, minutes: 0 },
+        { hours: 5, minutes: 0, ldc: true } as Partial<TimeEntry>,
+      ])
+    )
+
+    expect(
+      computePendingRollovers({
+        ...source,
+        serviceReports,
+        destinationPublisher: 'specialPioneer',
+        lastRolloverYearMonth: null,
+      })
+    ).toEqual([{ sourceYear: 2026, sourceMonth: 2, minutes: 30 }])
+  })
+
+  it("never changes the Service Year total or the month's partial credit hour", () => {
+    const today = moment('2026-04-15')
+    const entry = (
+      month: number,
+      minutes: number,
+      ldc: boolean
+    ): Partial<TimeEntry> => ({
+      hours: Math.floor(minutes / 60),
+      minutes: minutes % 60,
+      categoryId: ldc ? LDC_BUILTIN_CATEGORY_ID : undefined,
+      date: new Date(2026, month, 10, 12),
+    })
+    const role = fc.constantFrom<Publisher>(
+      'publisher',
+      'regularAuxiliary',
+      'regularPioneer',
+      'circuitOverseer',
+      'specialPioneer',
+      'custom'
+    )
+
+    fc.assert(
+      fc.property(
+        // March's role and April's, which may differ (Role History).
+        role,
+        role,
+        fc.boolean(),
+        fc.record({
+          enabled: fc.boolean(),
+          customLimitHours: fc.integer({ min: 0, max: 80 }),
+        }),
+        // Feb, March and April so far: standard and credit, each up to 80h.
+        fc.array(fc.integer({ min: 0, max: 80 * 60 }), {
+          minLength: 6,
+          maxLength: 6,
+        }),
+        (
+          publisher,
+          destinationPublisher,
+          includeCredit,
+          override,
+          [febStd, febCr, marStd, marCr, aprStd, aprCr]
+        ) => {
+          const serviceReports = merge(
+            reports(2026, 1, [entry(1, febStd, false), entry(1, febCr, true)]),
+            reports(2026, 2, [entry(2, marStd, false), entry(2, marCr, true)]),
+            reports(2026, 3, [entry(3, aprStd, false), entry(3, aprCr, true)])
+          )
+          const roleFor = ({ month }: { month: number }) =>
+            month === 3 ? destinationPublisher : publisher
+          const input = {
+            serviceReports,
+            today,
+            hasAnnualGoal: true,
+            publisher,
+            creditLimitOverride: override,
+            includeCredit,
+          }
+          const excluded = computeExcludedCreditMinutes(input)
+          const result = applyRollover({
+            ...input,
+            destinationPublisher,
+            lastRolloverYearMonth: null,
+          })
+          if (!result) return
+
+          const after = merge(serviceReports)
+          for (const rolled of result.entries) {
+            const month = rolled.date.getMonth()
+            after[2026] = {
+              ...after[2026],
+              [month]: [...(after[2026][month] ?? []), rolled],
+            }
+          }
+          const march = (reports: TimeEntriesByYear) =>
+            adjustedMinutesForSpecificMonth(
+              getMonthsReports(reports, 2, 2026),
+              2,
+              2026,
+              publisher,
+              override
+            ).value
+          const rolledMinutes =
+            result.entries[result.entries.length - 1].minutes
+
+          expect(
+            getTotalMinutesForServiceYear(after, 2025, roleFor, override)
+          ).toBe(
+            getTotalMinutesForServiceYear(
+              serviceReports,
+              2025,
+              roleFor,
+              override
+            )
+          )
+          expect(march(serviceReports) - march(after)).toBe(rolledMinutes)
+          // With room in April, March keeps exactly the partial credit hour.
+          if (aprCr === 0) expect(march(after) % 60).toBe(excluded)
+        }
+      )
+    )
+  })
+})
+
+describe('rolloverRole', () => {
+  const prefs: RolePreferences = {
+    role: 'regularPioneer',
+    roleHistory: {
+      initial: 'specialPioneer',
+      changes: { '2026-03': 'regularPioneer' },
+    },
+    publisherHours: {
+      publisher: 0,
+      regularAuxiliary: 30,
+      regularPioneer: 50,
+      circuitOverseer: 50,
+      specialPioneer: 100,
+      custom: 50,
+    },
+    userSpecifiedHasAnnualGoal: 'default',
+    milestoneOverrides: null,
+    overrideCreditLimit: false,
+    customCreditLimitHours: 0,
+    logsHours: false,
+  }
+  const roleOn = (today: moment.Moment) =>
+    rolloverRole({
+      source: publisherCapabilitiesForMonth(prefs, rolloverSourceMonth(today)),
+      destination: publisherCapabilitiesForMonth(prefs, {
+        year: today.year(),
+        month: today.month(),
+      }),
+    })
+
+  it("caps last month by last month's role", () => {
+    // Special Pioneer in February (no cap), Regular Pioneer from March:
+    // 50h30m standard + 20h credit = 70h30m, so 30m rolls.
+    const today = moment('2026-03-05')
+    const serviceReports = reports(2026, 1, [
+      { hours: 50, minutes: 30 },
+      { hours: 20, minutes: 0, ldc: true } as Partial<TimeEntry>,
+    ])
+
+    expect(roleOn(today).publisher).toBe('specialPioneer')
+    expect(
+      computePendingRollovers({
+        serviceReports,
+        today,
+        lastRolloverYearMonth: null,
+        includeCredit: true,
+        ...roleOn(today),
+      })
+    ).toEqual([{ sourceYear: 2026, sourceMonth: 1, minutes: 30 }])
+  })
+
+  it('holds the Service Year guard when either month has an annual goal', () => {
+    const intoPioneering: RolePreferences = {
+      ...prefs,
+      roleHistory: {
+        initial: 'regularAuxiliary',
+        changes: { '2026-09': 'regularPioneer' },
+      },
+    }
+    const backToPublisher: RolePreferences = {
+      ...prefs,
+      role: 'publisher',
+      roleHistory: {
+        initial: 'regularPioneer',
+        changes: { '2026-09': 'publisher' },
+      },
+    }
+    const today = moment('2026-09-05')
+    for (const p of [intoPioneering, backToPublisher]) {
+      expect(
+        rolloverRole({
+          source: publisherCapabilitiesForMonth(p, rolloverSourceMonth(today)),
+          destination: publisherCapabilitiesForMonth(p, {
+            year: 2026,
+            month: 8,
+          }),
+        }).hasAnnualGoal
+      ).toBe(true)
+    }
   })
 })
 

@@ -7,9 +7,12 @@ import {
   computeExcludedCreditMinutes,
   computePendingRollovers,
   PendingRollover,
+  rolloverRole,
+  rolloverSourceMonth,
 } from '@/features/service-reports/lib/rollover'
 import { addRolloverEntries } from '@/features/service-reports/lib/addRolloverEntries'
 import usePublisher from '@/hooks/usePublisher'
+import { publisherCapabilitiesForMonth } from '@/lib/roleHistory'
 import { useShallow } from 'zustand/react/shallow'
 
 type RolloverContext = {
@@ -42,7 +45,6 @@ type RolloverContext = {
 }
 
 export const useRollover = (): RolloverContext => {
-  const { hasAnnualGoal, type: publisher } = usePublisher()
   const {
     lastRolloverYearMonth,
     autoRolloverEnabled,
@@ -72,6 +74,11 @@ export const useRollover = (): RolloverContext => {
     [overrideMs]
   )
   const markerKey = today.format('YYYY-MM')
+  // Each month is capped by its own role (Role History).
+  const { hasAnnualGoal, publisher, destinationPublisher } = rolloverRole({
+    source: usePublisher(rolloverSourceMonth(today)),
+    destination: usePublisher({ year: today.year(), month: today.month() }),
+  })
 
   const pending = useMemo(
     () =>
@@ -81,6 +88,7 @@ export const useRollover = (): RolloverContext => {
         hasAnnualGoal,
         lastRolloverYearMonth,
         publisher,
+        destinationPublisher,
         creditLimitOverride: {
           enabled: overrideCreditLimit,
           customLimitHours: customCreditLimitHours,
@@ -93,6 +101,7 @@ export const useRollover = (): RolloverContext => {
       hasAnnualGoal,
       lastRolloverYearMonth,
       publisher,
+      destinationPublisher,
       overrideCreditLimit,
       customCreditLimitHours,
       rolloverIncludesCredit,
@@ -107,6 +116,7 @@ export const useRollover = (): RolloverContext => {
         hasAnnualGoal,
         lastRolloverYearMonth,
         publisher,
+        destinationPublisher,
         creditLimitOverride: {
           enabled: overrideCreditLimit,
           customLimitHours: customCreditLimitHours,
@@ -120,6 +130,7 @@ export const useRollover = (): RolloverContext => {
       hasAnnualGoal,
       lastRolloverYearMonth,
       publisher,
+      destinationPublisher,
       overrideCreditLimit,
       customCreditLimitHours,
       rolloverIncludesCredit,
@@ -161,9 +172,17 @@ export const useRollover = (): RolloverContext => {
     const result = applyRollover({
       serviceReports: useServiceReport.getState().serviceReports,
       today: liveToday,
-      hasAnnualGoal,
       lastRolloverYearMonth: prefs.lastRolloverYearMonth,
-      publisher,
+      ...rolloverRole({
+        source: publisherCapabilitiesForMonth(
+          prefs,
+          rolloverSourceMonth(liveToday)
+        ),
+        destination: publisherCapabilitiesForMonth(prefs, {
+          year: liveToday.year(),
+          month: liveToday.month(),
+        }),
+      }),
       creditLimitOverride: {
         enabled: overrideCreditLimit,
         customLimitHours: customCreditLimitHours,
@@ -176,14 +195,7 @@ export const useRollover = (): RolloverContext => {
     }
     addRolloverEntries(result.entries)
     set({ lastRolloverYearMonth: result.markerKey })
-  }, [
-    customCreditLimitHours,
-    hasAnnualGoal,
-    markerKey,
-    overrideCreditLimit,
-    publisher,
-    set,
-  ])
+  }, [customCreditLimitHours, markerKey, overrideCreditLimit, set])
 
   const dismiss = useCallback(() => {
     set({ lastRolloverYearMonth: markerKey })

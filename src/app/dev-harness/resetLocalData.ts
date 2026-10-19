@@ -3,6 +3,7 @@ import useContacts from '@/stores/contactsStore'
 import useConversations from '@/stores/conversationStore'
 import useServiceReport from '@/stores/serviceReport'
 import useMileage from '@/stores/mileage'
+import usePet from '@/stores/pet'
 import { useTimeCache } from '@/stores/timeCache'
 import { PREFERENCE_DEFAULTS, usePreferences } from '@/stores/preferences'
 import { useProfile, PROFILE_DEFAULTS } from '@/stores/profile'
@@ -34,6 +35,7 @@ export function resetLocalData() {
   })
   useConversations.getState()._WARNING_forceDeleteConversations()
   useMileage.getState()._WARNING_forceDeleteMileage()
+  usePet.getState()._WARNING_forceDeletePet()
   useTimeCache.getState().invalidateAllCache()
   // The defaults also clear earned badges, the ledger and the first-pass
   // marker; drop any queued celebration or summary with them.

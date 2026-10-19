@@ -2,7 +2,7 @@ import Foundation
 
 // MARK: - Snapshot model
 //
-// Mirror of `WidgetSnapshot` defined in `src/lib/widgets/snapshot.ts`. Bump
+// Mirror of `WidgetSnapshot` defined in `src/app/widgets/snapshot.ts`. Bump
 // `SUPPORTED_VERSION` whenever the JS schema's `version` field changes in a
 // way Swift cares about. The widget refuses to render snapshots whose version
 // doesn't match — the placeholder UI is shown instead.
@@ -54,6 +54,8 @@ struct WidgetSnapshot: Decodable {
     let reportLabel: String?
     /// The Live Activity's label.
     let timerLabel: String?
+    /// The Pet widget's text while there's no pet.
+    let petPlaceholderLabel: String?
   }
 
   // MARK: Config (Settings > Widgets — source of truth)
@@ -217,6 +219,74 @@ struct WidgetSnapshot: Decodable {
     let buddies: [CalendarBuddy]
   }
 
+  // MARK: Pet
+  //
+  // Mirrors `PetWidgetSnapshot` in `src/app/widgets/petWidget.ts`. The images
+  // are PNGs the app writes into the App Group's `pet/` folder.
+
+  /// What the widget's text says during one entry.
+  struct PetEntryStatus: Decodable {
+    /// Lamp brightness, 0 to 5.
+    let lampLevel: Int
+    /// Pre-translated, e.g. "12 days kept". `nil` when streaks are hidden.
+    let lampDaysLabel: String?
+    /// Pre-translated one-liner of the wall sign.
+    let signLine: String?
+    /// Pre-translated VoiceOver label for the pet and its hearts.
+    let accessibilityLabel: String
+  }
+
+  /// One future state of the pet, shown from `date` on.
+  struct PetEntry: Decodable {
+    /// Epoch ms.
+    let date: Double
+    /// File names in `pet/`: square crops of the pet for small and medium,
+    /// the 123:100 room for large.
+    let small: String
+    let medium: String
+    let large: String
+    /// 0 to 5 in steps of 0.5.
+    let hearts: Double
+    let dead: Bool
+    let gold: Bool
+    /// The lamp and sign as of `date`. `nil` from an older app; the pet's
+    /// own fields stand in.
+    let status: PetEntryStatus?
+
+    var dateAsDate: Date {
+      Date(timeIntervalSince1970: date / 1000)
+    }
+  }
+
+  struct Pet: Decodable {
+    /// The pet's name, or its localized species name.
+    let name: String
+    /// The current entry's text, for an entry without `status`. Pre-translated
+    /// VoiceOver label for the pet and its hearts.
+    let accessibilityLabel: String
+    let hearts: Double
+    let dead: Bool
+    let gold: Bool
+    /// Lamp brightness, 0 to 5.
+    let lampLevel: Int
+    /// Pre-translated, e.g. "12 days kept". `nil` when streaks are hidden.
+    let lampDaysLabel: String?
+    /// Pre-translated one-liner of the wall sign, e.g. "14.5 of 30 hours".
+    let signLine: String?
+    /// Oldest first; the first may be in the past.
+    let entries: [PetEntry]
+  }
+
+  /// The `pet` slice, or `nil` inside when it can't be read, so a malformed
+  /// one never fails the snapshot every other widget decodes.
+  struct LenientPet: Decodable {
+    let value: Pet?
+
+    init(from decoder: Decoder) throws {
+      value = try? Pet(from: decoder)
+    }
+  }
+
   let version: Int
   let updatedAt: Double
   let locale: String
@@ -235,6 +305,9 @@ struct WidgetSnapshot: Decodable {
   let contacts: [Contact]
   let appointments: [Appointment]
   let calendar: Calendar
+  /// Added after version 6: `nil` from an older app and when there's no pet.
+  /// Read leniently (`pet?.value`).
+  let pet: LenientPet?
 }
 
 extension WidgetSnapshot {

@@ -23,6 +23,7 @@ import {
   WidgetAppointment,
 } from '@/app/widgets/buildAppointments'
 import { buildCalendar, WidgetCalendar } from '@/app/widgets/buildCalendar'
+import type { PetWidgetSnapshot } from '@/app/widgets/petWidget'
 import type { BuddyDayMarker } from '@/features/buddies/lib/calendarMarkers'
 import type { NativeLocale } from '@/lib/nativeLocale'
 
@@ -44,7 +45,8 @@ import type { NativeLocale } from '@/lib/nativeLocale'
  * pre-build the grid with the user's preferred first column. 6 — Adds Buddies
  * to the calendar: per-day `buddies` badges and the `calendar.buddies` avatars
  * they reference. Since 6, without a bump (Swift decodes them as optional):
- * `rtl`, `numberLocale`, and the `reportLabel`/`timerLabel` strings.
+ * `rtl`, `numberLocale`, the `reportLabel`/`timerLabel` strings, and the Pet
+ * widget's `pet` slice and `petPlaceholderLabel` string.
  */
 export const SNAPSHOT_VERSION = 6
 
@@ -94,6 +96,9 @@ export type WidgetStrings = {
   reportLabel: string
   /** The timer Live Activity's label. */
   timerLabel: string
+
+  /** The Pet widget's text while there's no pet. */
+  petPlaceholderLabel: string
 }
 
 export type WidgetConfig = {
@@ -157,6 +162,11 @@ export type WidgetSnapshot = {
    * `days` is empty.
    */
   calendar: WidgetCalendar
+  /**
+   * The Pet widget's pet and its timeline of images in the App Group's `pet/`
+   * folder. `null` when there's no pet; the widget shows a placeholder.
+   */
+  pet: PetWidgetSnapshot | null
 }
 
 export type BuildSnapshotArgs = {
@@ -202,6 +212,12 @@ export type BuildSnapshotArgs = {
    * active supporter — this builder treats whatever it receives as final.
    */
   accentColor: string | null
+
+  /**
+   * The Pet widget's slice, built and its images written beforehand
+   * (`buildPetWidgetSnapshot`); `null` without a pet.
+   */
+  pet: PetWidgetSnapshot | null
 }
 
 export function buildWidgetSnapshot(args: BuildSnapshotArgs): WidgetSnapshot {
@@ -284,6 +300,8 @@ export function buildWidgetSnapshot(args: BuildSnapshotArgs): WidgetSnapshot {
 
       reportLabel: i18n.t('widgetReportLabel'),
       timerLabel: i18n.t('timer'),
+
+      petPlaceholderLabel: i18n.t('pet.widgetPlaceholder'),
     },
     config: {
       contactSort: args.widgetContactSort,
@@ -294,5 +312,6 @@ export function buildWidgetSnapshot(args: BuildSnapshotArgs): WidgetSnapshot {
     contacts,
     appointments,
     calendar,
+    pet: args.pet,
   }
 }

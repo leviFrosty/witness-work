@@ -42,6 +42,11 @@ import TodayRouteAction from '@/features/route-planning/components/TodayRouteAct
 import TodayRouteEntry from '@/features/route-planning/components/TodayRouteEntry'
 import MileagePromptCard from '@/features/mileage/components/MileagePromptCard'
 import MileageHomeSection from '@/features/mileage/components/MileageHomeSection'
+import PetPromptCard from '@/features/pet/components/PetPromptCard'
+import PetHomeSection from '@/features/pet/components/PetHomeSection'
+import { petHomeSlot } from '@/features/pet/lib/homeSlot'
+import usePet from '@/stores/pet'
+import usePetVisitor from '@/app/pet/usePetVisitor'
 import DidYouKnowTipCard from '@/features/updates/components/DidYouKnowTipCard'
 import NotificationHosts from '@/app/notifications/NotificationHosts'
 import { useServiceReport } from '@/stores/serviceReport'
@@ -84,6 +89,7 @@ export const HomeScreen = ({ header }: { header: ReactNode }) => {
     homeScreenElements,
     homeScreenElementsOrder,
     mileageTrackingEnabled,
+    petPromptDismissed,
   } = usePreferences(
     useShallow((s) => ({
       homeChecklistDismissed: s.homeChecklistDismissed,
@@ -91,8 +97,12 @@ export const HomeScreen = ({ header }: { header: ReactNode }) => {
       homeScreenElements: s.homeScreenElements,
       homeScreenElementsOrder: s.homeScreenElementsOrder,
       mileageTrackingEnabled: s.mileageTrackingEnabled,
+      petPromptDismissed: s.petPromptDismissed,
     }))
   )
+  const hasPet = usePet((s) => s.pet !== null)
+  // A buddy's pet visiting today, from Buddies and today's Plans.
+  const petVisitor = usePetVisitor()
   const serviceReports = useServiceReport((s) => s.serviceReports)
   const [refreshing, setRefreshing] = useState(false)
   const [selectedDateSheet, setSelectedDateSheet] =
@@ -330,6 +340,17 @@ export const HomeScreen = ({ header }: { header: ReactNode }) => {
                     )
                       return null
                     return <MileageHomeSection key={key} />
+                  case 'pet': {
+                    const slot = petHomeSlot({
+                      hasPet,
+                      promptDismissed: petPromptDismissed,
+                      visible: homeScreenElements.pet !== false,
+                    })
+                    if (slot === 'prompt') return <PetPromptCard key={key} />
+                    if (slot === 'section')
+                      return <PetHomeSection key={key} visitor={petVisitor} />
+                    return null
+                  }
 
                   case 'thisWeek':
                     if (!homeScreenElements.thisWeek) return null

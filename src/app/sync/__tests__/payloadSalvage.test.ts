@@ -165,6 +165,36 @@ describe('parsePayload salvage', () => {
     expect(dropped).toEqual(['profileStore.avatar'])
   })
 
+  it('round-trips the pet slice and drops only an unreadable pet record', async () => {
+    const { default: usePet } = await import('@/stores/pet')
+    usePet
+      .getState()
+      .adopt({ species: 'cat', coat: 'calico', today: '2026-09-01' })
+    usePet.getState().updateRoom({ floor: 'brick' })
+    const { pet, room } = usePet.getState()
+    try {
+      const parsed = parsePayload(payloadWith(() => {}))
+      expect(parsed?.petStore).toEqual({
+        pets: [pet],
+        petRooms: [room],
+        deletedPetRecords: [],
+      })
+
+      const dropped: string[] = []
+      const salvaged = parsePayload(
+        payloadWith((p) => {
+          p.petStore.pets[0].adoptedOn = 'yesterday'
+        }),
+        (paths) => dropped.push(...paths)
+      )
+      expect(salvaged?.petStore?.pets).toEqual([])
+      expect(salvaged?.petStore?.petRooms).toEqual([room])
+      expect(dropped).toEqual(['petStore.pets.adoptedOn:invalid_string'])
+    } finally {
+      usePet.getState()._WARNING_forceDeletePet()
+    }
+  })
+
   it('still rejects a file without the payload frame', () => {
     expect(parsePayload(payloadWith((p) => delete p.deviceId))).toBeNull()
     expect(

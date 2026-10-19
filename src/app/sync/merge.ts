@@ -29,6 +29,8 @@ import type {
   Vehicle,
   VehicleSetup,
 } from '@/types/mileage'
+import type { PetRecord, PetRoomRecord, PetTombstone } from '@/types/pet'
+import { keptKeepsakes, keptRoomItems, keptWakes } from '@/lib/petHistory'
 import { RecurringPlan } from '@/lib/serviceReport'
 import { momentStoredDate } from '@/lib/normalizeDate'
 import { mergePreferences } from '@/app/sync/preferencesMerge'
@@ -66,6 +68,9 @@ export type MergeResult = {
   vehicleSetups: VehicleSetup[]
   trips: Trip[]
   deletedMileageRecords: MileageTombstone[]
+  pets: PetRecord[]
+  petRooms: PetRoomRecord[]
+  deletedPetRecords: PetTombstone[]
   preferencesValues: Record<string, unknown>
   preferenceUpdatedAt: Record<string, number>
   profileValues: Record<string, unknown>
@@ -101,6 +106,9 @@ type LocalState = {
   vehicleSetups: VehicleSetup[]
   trips: Trip[]
   deletedMileageRecords: MileageTombstone[]
+  pets: PetRecord[]
+  petRooms: PetRoomRecord[]
+  deletedPetRecords: PetTombstone[]
   preferencesValues: Record<string, unknown>
   preferenceUpdatedAt: Record<string, number>
   profileValues: Record<string, unknown>
@@ -120,10 +128,10 @@ type LocalState = {
  * - **Tombstones**: a tombstone removes the record unless the record's
  *   `updatedAt` is strictly newer than its `deletedAt` (deletion wins a tie).
  *   Tombstones from either side propagate, newest `deletedAt` per id.
- *   Conversations, time entries, Day Plans, Recurring Plans, Categories, and
- *   contact and conversation field definitions carry them. Deleted contacts are
- *   records instead, and their redaction is one-way (see
- *   `mergeDeletedContacts`).
+ *   Conversations, time entries, Day Plans, Recurring Plans, Categories,
+ *   mileage and pet records, and contact and conversation field definitions
+ *   carry them. Deleted contacts are records instead, and their redaction is
+ *   one-way (see `mergeDeletedContacts`).
  * - **Preferences**: per-key last-writer-wins using `preferenceUpdatedAt`.
  */
 export function mergePayload(
@@ -339,6 +347,29 @@ export function mergePayload(
     remoteMileage?.trips as Trip[] | undefined
   )
 
+  // --- Pet Companion (the pet and room records + their tombstones) ---
+  const remotePet = remote.petStore
+  const mergedPetTombstones = mergeTombstones(
+    local.deletedPetRecords,
+    remotePet?.deletedPetRecords ?? [],
+    now
+  )
+  const mergePet = <T extends WithId>(localRecords: T[], remote?: T[]) =>
+    applyTombstones(
+      mergeById(localRecords, remote ?? []).merged,
+      mergedPetTombstones
+    )
+  const remotePets = (remotePet?.pets ?? []) as PetRecord[]
+  const mergedPets = mergePetHistory(
+    mergePet(local.pets, remotePets),
+    [...local.pets, ...remotePets],
+    mergedPetTombstones
+  )
+  const mergedPetRooms = mergePet(
+    local.petRooms,
+    remotePet?.petRooms as PetRoomRecord[] | undefined
+  )
+
   // --- Preferences ---
   const { values: mergedPrefValues, updatedAt: mergedPrefTimestamps } =
     mergePreferences(
@@ -393,6 +424,9 @@ export function mergePayload(
     vehicleSetups: mergedVehicleSetups,
     trips: mergedTrips,
     deletedMileageRecords: mergedMileageTombstones,
+    pets: mergedPets,
+    petRooms: mergedPetRooms,
+    deletedPetRecords: mergedPetTombstones,
     preferencesValues: mergedPrefValues,
     preferenceUpdatedAt: mergedPrefTimestamps,
     profileValues: mergedProfileValues,
@@ -597,6 +631,67 @@ function mergeTombstones<T extends { id: string; deletedAt: number }>(
   // Deletion ids have no householder details. Keep evidence even when a
   // writer's clock is wrong or an old device reconnects much later.
   return Array.from(byId.values())
+}
+
+/**
+ * Copies of one companion: the same adoption, and the same seed when both have
+ * one.
+ */
+const sameCompanion = (a: PetRecord, b: PetRecord): boolean =>
+  a.id === b.id &&
+  a.adoptedOn === b.adoptedOn &&
+  (a.seed === undefined || b.seed === undefined || a.seed === b.seed)
+
+/**
+ * Wakes, keepsakes and earned room items are taps or keeps, so an edit on
+ * another device (a rename, a new coat) mustn't drop the ones it hadn't seen.
+ * Each merged pet takes the union of every copy of the same companion still
+ * newer than its tombstone, kept as the store keeps them
+ * (`src/lib/petHistory.ts`). Every other field stays last writer wins. A copy
+ * from before a release, or from a separate adoption, adds nothing.
+ */
+function mergePetHistory(
+  merged: PetRecord[],
+  copies: PetRecord[],
+  tombstones: PetTombstone[]
+): PetRecord[] {
+  return merged.map((pet) => {
+    const deletedAt = Math.max(
+      0,
+      ...tombstones.filter((t) => t.id === pet.id).map((t) => t.deletedAt)
+    )
+    const same = copies.filter(
+      (copy) => (copy.updatedAt ?? 0) > deletedAt && sameCompanion(copy, pet)
+    )
+    const wakes = keptWakes([
+      ...(pet.wakes ?? []),
+      ...same.flatMap((copy) => copy.wakes ?? []),
+    ])
+    const keepsakes = keptKeepsakes([
+      ...(pet.keepsakes ?? []),
+      ...same.flatMap((copy) => copy.keepsakes ?? []),
+    ])
+    const earnedRoomItems = keptRoomItems([
+      ...(pet.earnedRoomItems ?? []),
+      ...same.flatMap((copy) => copy.earnedRoomItems ?? []),
+    ])
+    // A pet that never earned one keeps no list.
+    const earnedUnchanged =
+      earnedRoomItems.length === 0 ||
+      canonicalJson(earnedRoomItems) === canonicalJson(pet.earnedRoomItems)
+    if (
+      canonicalJson(wakes) === canonicalJson(pet.wakes) &&
+      canonicalJson(keepsakes) === canonicalJson(pet.keepsakes) &&
+      earnedUnchanged
+    )
+      return pet
+    return {
+      ...pet,
+      wakes,
+      keepsakes,
+      ...(earnedUnchanged ? {} : { earnedRoomItems }),
+    }
+  })
 }
 
 function applyTombstones<T extends WithId>(

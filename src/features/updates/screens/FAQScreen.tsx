@@ -43,6 +43,9 @@ import FAQTopics, {
 import { RootStackParamList } from '@/types/rootStack'
 import useFAQSearch from '@/features/updates/hooks/useFAQSearch'
 
+/** Quiet time after the last layout change before scrolling to a category. */
+const LAYOUT_SETTLE_MS = 150
+
 const FAQScreen = () => {
   const theme = useTheme()
   const insets = useSafeAreaInsets()
@@ -64,7 +67,10 @@ const FAQScreen = () => {
   const scrollRef = useRef<ScrollView>(null)
   const answersRef = useRef<ScrollView>(null)
   const categoryOffsets = useRef<Partial<Record<FAQCategory, number>>>({})
-  const didScrollRef = useRef(false)
+  // Set once the User scrolls: the screen stops following the category.
+  const userScrolledRef = useRef(false)
+  // Where the screen last scrolled the requested category to.
+  const placedYRef = useRef<number | null>(null)
   const toast = useToastController()
 
   const handleCopyAccountId = useCallback(async () => {
@@ -82,13 +88,32 @@ const FAQScreen = () => {
     }
   }, [toast])
 
-  const scrollToTargetCategory = () => {
-    if (isWide || didScrollRef.current || !targetCategory) return
+  const placeTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const placeTargetCategory = () => {
+    if (isWide || userScrolledRef.current || !targetCategory) return
     const y = categoryOffsets.current[targetCategory]
-    if (y === undefined || !scrollRef.current) return
-    didScrollRef.current = true
+    if (y === undefined || y === placedYRef.current || !scrollRef.current)
+      return
+    placedYRef.current = y
     scrollRef.current.scrollTo({ y: Math.max(0, y + 8), animated: true })
   }
+  // Sections measure in several passes after opening, and on Android their
+  // offsets jump around before they settle. So the screen follows the
+  // category, a moment after its offset last changed, until the User scrolls.
+  const scrollToTargetCategory = () => {
+    if (placeTimer.current) clearTimeout(placeTimer.current)
+    placeTimer.current = setTimeout(() => {
+      placeTimer.current = null
+      placeTargetCategory()
+    }, LAYOUT_SETTLE_MS)
+  }
+
+  useEffect(
+    () => () => {
+      if (placeTimer.current) clearTimeout(placeTimer.current)
+    },
+    []
+  )
 
   useEffect(() => {
     if (targetCategory) {
@@ -98,15 +123,17 @@ const FAQScreen = () => {
   }, [targetCategory])
 
   useEffect(() => {
-    didScrollRef.current = false
+    userScrolledRef.current = false
+    placedYRef.current = null
     if (isWide || !targetCategory) return
     // A new route target can have unchanged geometry, so native onLayout and
     // content-size callbacks may not run. Try cached offsets after commit;
     // those callbacks still handle first mount and subsequent measurement.
     const frame = requestAnimationFrame(() => {
       const y = categoryOffsets.current[targetCategory]
-      if (didScrollRef.current || y === undefined || !scrollRef.current) return
-      didScrollRef.current = true
+      if (y === undefined || placedYRef.current !== null || !scrollRef.current)
+        return
+      placedYRef.current = y
       scrollRef.current.scrollTo({ y: Math.max(0, y + 8), animated: true })
     })
     return () => cancelAnimationFrame(frame)
@@ -133,7 +160,10 @@ const FAQScreen = () => {
                 if (isWide) {
                   setSelectedTopic('support')
                   setSearch('')
-                } else scrollRef.current?.scrollToEnd({ animated: true })
+                } else {
+                  userScrolledRef.current = true
+                  scrollRef.current?.scrollToEnd({ animated: true })
+                }
               }}
             />
           }
@@ -257,6 +287,10 @@ const FAQScreen = () => {
           }}
           keyboardShouldPersistTaps='handled'
           onContentSizeChange={scrollToTargetCategory}
+          // Once the User scrolls, the screen stops placing the category.
+          onScrollBeginDrag={() => {
+            userScrolledRef.current = true
+          }}
           contentContainerStyle={{
             paddingTop: 20,
             paddingBottom: insets.bottom + 32,

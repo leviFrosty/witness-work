@@ -3,6 +3,7 @@ import useConversations from '@/stores/conversationStore'
 import useServiceReport from '@/stores/serviceReport'
 import useCategories from '@/stores/categories'
 import useMileage from '@/stores/mileage'
+import usePet from '@/stores/pet'
 import { usePreferences } from '@/stores/preferences'
 import { useProfile } from '@/stores/profile'
 
@@ -13,6 +14,7 @@ export type LocalDataStore =
   | 'serviceReports'
   | 'categories'
   | 'mileage'
+  | 'pet'
   | 'preferences'
   | 'profile'
 
@@ -33,6 +35,7 @@ export function subscribeToLocalDataChanges(
     useServiceReport.subscribe(() => onChange('serviceReports')),
     useCategories.subscribe(() => onChange('categories')),
     useMileage.subscribe(() => onChange('mileage')),
+    usePet.subscribe(() => onChange('pet')),
     usePreferences.subscribe((state, prev) => {
       if (state.preferenceUpdatedAt !== prev.preferenceUpdatedAt)
         onChange('preferences')

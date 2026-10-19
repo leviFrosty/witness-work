@@ -345,4 +345,28 @@ describe('Plan deletions over iCloud', () => {
     // A deletion is user data: enabling again asks before replacing it.
     expect(hasMeaningfulLocalData()).toBe(true)
   })
+
+  it('a restore from devices that predate the pet keeps the local pet', async () => {
+    const { peekRemotePayload, replaceLocalWithRemote } = await load()
+    const { default: usePet } = await import('@/stores/pet')
+    usePet.getState()._WARNING_forceDeletePet()
+    usePet
+      .getState()
+      .adopt({ species: 'lamb', coat: 'default', today: '2026-10-01' })
+    const pet = usePet.getState().pet
+    runtime.files = [peerFile('phone', { dayPlans: [dayPlan('d1', OLD)] })]
+
+    const peek = await peekRemotePayload()
+    if (peek.status !== 'found') throw new Error(peek.status)
+    expect(peek.remote.petStore).toBeUndefined()
+    replaceLocalWithRemote(peek.remote)
+    expect(usePet.getState().pet).toEqual(pet)
+
+    // A device that knows the pet and has none replaces it.
+    replaceLocalWithRemote({
+      ...peek.remote,
+      petStore: { pets: [], petRooms: [], deletedPetRecords: [] },
+    })
+    expect(usePet.getState().pet).toBeNull()
+  })
 })

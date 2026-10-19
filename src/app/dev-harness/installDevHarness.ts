@@ -25,6 +25,7 @@ import { forgetPersistedCredits } from '@/features/notes-import/lib/notesImportC
 import { useNotificationsTray } from '@/features/notifications/stores/notificationsTray'
 import { useStreakCelebration } from '@/features/profile/stores/streakCelebration'
 import { useUpdateRevealStore } from '@/features/updates/stores/updateReveal'
+import { useMilestoneRevealStore } from '@/features/milestones/stores/milestoneReveal'
 import { useCalendarPublishing, useCalendarSync } from '@/stores/calendarSync'
 import { checkBuddiesRelay } from '@/features/buddies/lib/buddiesService'
 import { checkCryptoVectors } from '@/features/buddies/lib/testing/cryptoVectors'
@@ -383,6 +384,8 @@ export function installDevHarness() {
       appLockSession: useAppLockSession,
       // `getState().request('dev')` plays the update reveal and its tour.
       updateReveal: useUpdateRevealStore,
+      // `getState().request()` replays The Milestone Update's grand reveal.
+      milestoneReveal: useMilestoneRevealStore,
     },
   }
   ;(globalThis as { __WW_DEV__?: typeof harness }).__WW_DEV__ = harness

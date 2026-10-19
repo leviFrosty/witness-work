@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useRef } from 'react'
-import { Pressable, StyleSheet, View } from 'react-native'
+import { Fragment, useCallback, useEffect, useRef } from 'react'
+import { Platform, Pressable, StyleSheet, View } from 'react-native'
 import Animated, {
   Easing,
   useAnimatedStyle,
@@ -17,17 +17,25 @@ import Haptics from '@/lib/haptics'
 import useFireworks from '@/hooks/useFireworks'
 import ActionButton from '@/components/ui/ActionButton'
 import Button from '@/components/ui/Button'
+import FullWindowOverlay from '@/components/ui/FullWindowOverlay'
+import ConfettiProvider from '@/providers/ConfettiProvider'
 import { MILESTONE_UPDATE_VERSION } from '@/features/milestones/constants/milestoneUpdate'
 import { tracking } from '@/lib/tracking'
 
 interface Props {
   /** Whether the reveal is currently presented. */
   show: boolean
-  /** Called whenever the overlay should be dismissed (skip OR CTA). */
+  /** Called whenever the overlay should be dismissed (skip, Back, OR CTA). */
   onDismiss: () => void
   /** Called when the user taps the "See what's new" CTA. */
   onSeeWhatsNew: () => void
 }
+
+/**
+ * On Android the reveal is a Modal, which sits above the app's own confetti
+ * layer, so it brings its own to keep the fireworks in front of the backdrop.
+ */
+const Fireworks = Platform.OS === 'android' ? ConfettiProvider : Fragment
 
 /**
  * Choreographed timings for the grand-reveal sequence. Adjust here rather than
@@ -112,10 +120,22 @@ const AMBIENT_INTERVAL_MS = 1100
  * anywhere skips straight to dismiss; the primary CTA hands off to the showcase
  * screen via `onSeeWhatsNew`.
  *
- * Mount this above the rest of the app (e.g. in HomeTabStack) and gate
- * presentation on the version + preference flags.
+ * Hosted full-window so it covers the whole app and screen readers stay inside
+ * it; Android's back button skips like a tap does.
  */
 const MilestoneRevealOverlay = ({ show, onDismiss, onSeeWhatsNew }: Props) => {
+  if (!show) return null
+
+  return (
+    <FullWindowOverlay open onClose={onDismiss}>
+      <Fireworks>
+        <MilestoneReveal onDismiss={onDismiss} onSeeWhatsNew={onSeeWhatsNew} />
+      </Fireworks>
+    </FullWindowOverlay>
+  )
+}
+
+const MilestoneReveal = ({ onDismiss, onSeeWhatsNew }: Omit<Props, 'show'>) => {
   const theme = useTheme()
   const insets = useSafeAreaInsets()
   const fireworks = useFireworks()
@@ -140,22 +160,8 @@ const MilestoneRevealOverlay = ({ show, onDismiss, onSeeWhatsNew }: Props) => {
   }, [])
 
   useEffect(() => {
-    if (!show) {
-      // Reset state for the next play (e.g. user re-opens via shaking present).
-      playedRef.current = false
-      clearTimers()
-      backdropOpacity.value = 0
-      welcomeOpacity.value = 0
-      welcomeTranslateY.value = 12
-      titleOpacity.value = 0
-      titleScale.value = 0.78
-      titleTranslateY.value = 28
-      taglineOpacity.value = 0
-      taglineTranslateY.value = 14
-      ctaOpacity.value = 0
-      ctaTranslateY.value = 28
-      return
-    }
+    // Mounted fresh for each play; the guard keeps a new fireworks context
+    // from restarting the sequence.
     if (playedRef.current) return
     playedRef.current = true
 
@@ -254,7 +260,6 @@ const MilestoneRevealOverlay = ({ show, onDismiss, onSeeWhatsNew }: Props) => {
 
     return clearTimers
   }, [
-    show,
     backdropOpacity,
     welcomeOpacity,
     welcomeTranslateY,
@@ -302,16 +307,20 @@ const MilestoneRevealOverlay = ({ show, onDismiss, onSeeWhatsNew }: Props) => {
     transform: [{ translateY: ctaTranslateY.value }],
   }))
 
-  if (!show) return null
-
   return (
     <Animated.View
+      accessibilityViewIsModal
       pointerEvents='auto'
       style={[StyleSheet.absoluteFill, styles.backdrop, backdropStyle]}
     >
       {/* Tap-anywhere skip target. Sits behind the content so the CTAs catch
           their own presses without colliding with the dismiss handler. */}
-      <Pressable style={StyleSheet.absoluteFill} onPress={handleSkip} />
+      <Pressable
+        style={StyleSheet.absoluteFill}
+        onPress={handleSkip}
+        accessibilityRole='button'
+        accessibilityLabel={i18n.t('skip')}
+      />
 
       <View style={[styles.content, { paddingTop: insets.top + 80 }]}>
         <Animated.View style={welcomeStyle} pointerEvents='none'>

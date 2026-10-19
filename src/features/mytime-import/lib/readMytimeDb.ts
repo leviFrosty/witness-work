@@ -20,7 +20,8 @@ import type {
  *
  * - `notMytime` — the file is a valid SQLite database but lacks MyTime's tables.
  * - `openFailed` — the file could not be opened as a SQLite database at all
- *   (wrong file type, truncated, encrypted, …).
+ *   (wrong file type, truncated, encrypted, an iCloud placeholder that was
+ *   never downloaded, …).
  */
 export type MytimeImportErrorReason = 'notMytime' | 'openFailed'
 
@@ -32,6 +33,16 @@ export class MytimeImportError extends Error {
     this.reason = reason
   }
 }
+
+/** SQLite's result code 26 (`SQLITE_NOTADB`), as `expo-sqlite` reports it. */
+const isNotADatabaseError = (e: unknown): boolean =>
+  /file is not a database|error code 26\b/i.test(String(e))
+
+const notADatabase = (e: unknown) =>
+  new MytimeImportError(
+    'openFailed',
+    `Could not read the file as a database: ${String(e)}`
+  )
 
 /**
  * The narrow slice of a SQLite database the reader needs, expressed as
@@ -92,7 +103,14 @@ const TABLE_COLUMNS = {
 export async function readMytimeTables(
   source: MytimeTableSource
 ): Promise<MytimeRawTables> {
-  const tables = await source.listTables()
+  // SQLite opens a file lazily, so one that isn't a database opens "fine" and
+  // only fails here, on the first query. Any other failure is a real fault.
+  let tables: Set<string>
+  try {
+    tables = await source.listTables()
+  } catch (e) {
+    throw isNotADatabaseError(e) ? notADatabase(e) : e
+  }
   if (!tables.has('ZCALL') || !tables.has('ZRETURNVISIT')) {
     throw new MytimeImportError(
       'notMytime',
@@ -140,7 +158,9 @@ export async function readMytimeTables(
       TABLE_COLUMNS.ZSTATISTICSADJUSTMENT
     ),
     read<MytimeUserRow>('ZUSER', TABLE_COLUMNS.ZUSER),
-  ])
+  ]).catch((e: unknown) => {
+    throw isNotADatabaseError(e) ? notADatabase(e) : e
+  })
 
   return {
     calls,
@@ -195,6 +215,23 @@ const copyIntoSqliteDir = async (uri: string): Promise<void> => {
   await FileSystem.copyAsync({ from: uri, to: IMPORT_DB_PATH })
 }
 
+/** Every SQLite database starts with these 16 bytes: `SQLite format 3\0`. */
+const SQLITE_HEADER_BASE64 = 'U1FMaXRlIGZvcm1hdCAzAA=='
+
+/**
+ * Cheap check that the copy is a SQLite database before we hand it to SQLite,
+ * so a wrong file type (a PDF, a text export, an undownloaded iCloud
+ * placeholder) is turned away without opening it.
+ */
+const hasSqliteHeader = async (path: string): Promise<boolean> => {
+  const head = await FileSystem.readAsStringAsync(path, {
+    encoding: FileSystem.EncodingType.Base64,
+    position: 0,
+    length: 16,
+  }).catch(() => '')
+  return head === SQLITE_HEADER_BASE64
+}
+
 /**
  * Opens a picked `.mytimedb` backup and reads it into raw MyTime rows. The
  * source file is copied to a throwaway location, opened, read, then closed and
@@ -214,6 +251,12 @@ export async function readMytimeDb(uri: string): Promise<MytimeRawTables> {
 
   let db: SQLite.SQLiteDatabase | undefined
   try {
+    if (!(await hasSqliteHeader(IMPORT_DB_PATH))) {
+      throw new MytimeImportError(
+        'openFailed',
+        'File does not start with the SQLite header.'
+      )
+    }
     try {
       db = await SQLite.openDatabaseAsync(IMPORT_DB_FILENAME)
       await db.execAsync('PRAGMA query_only = ON')

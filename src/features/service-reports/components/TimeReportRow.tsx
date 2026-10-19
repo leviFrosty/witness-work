@@ -372,7 +372,11 @@ const TimeReportRow = ({ report, onPress, onNavigate }: TimeReportRowProps) => {
                     lineHeight: 18,
                   }}
                   onChange={(fields) =>
-                    updateServiceReport({ ...report, ...fields })
+                    updateServiceReport({
+                      ...report,
+                      date: storedDateToLocalDate(report.date),
+                      ...fields,
+                    })
                   }
                 />
               )}

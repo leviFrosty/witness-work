@@ -10,8 +10,10 @@ export const sharedEventEndsAt = (share: {
   type: ShareType
   details: ShareDetails
 }) =>
+  // A stored anchor: local midnight at UTC+12 is noon UTC of the prior day,
+  // which `combineDateAndStartTime` would read as that day.
   combineDateAndStartTime(
-    moment(share.details.d, 'YYYY-MM-DD').toDate(),
+    moment.utc(share.details.d, 'YYYY-MM-DD').hour(12).toDate(),
     share.details.s
   ).getTime() + (share.type === 'plan' ? (share.details.m ?? 0) * 60 * 1000 : 0)
 

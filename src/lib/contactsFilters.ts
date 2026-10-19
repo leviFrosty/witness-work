@@ -8,6 +8,7 @@ import {
 } from '@/lib/conversations'
 import { ContactStaleness, getContactStaleness } from '@/lib/contactStaleness'
 import { StalenessBreakpoints } from '@/types/staleness'
+import { ConversationIndex } from '@/lib/conversationIndex'
 import { compareText } from '@/lib/collation'
 import { normalizeNumericInput } from '@/lib/digits'
 
@@ -41,6 +42,12 @@ export type FilterContext = {
   customFieldDefs: CustomFieldDefinition[]
   /** User thresholds for the `pinStaleness` filter (see `usePreferences`). */
   stalenessBreakpoints: StalenessBreakpoints
+  /**
+   * Per-contact aggregates built from the same `conversations` and
+   * `stalenessBreakpoints`. When given, the staleness and study filters read it
+   * in O(1) instead of scanning every conversation once per contact.
+   */
+  conversationIndex?: ConversationIndex
 }
 
 const norm = (v: unknown): string =>
@@ -142,6 +149,9 @@ const passesFilter = (
       return matchesText(raw, filter.op, filter.value)
     }
     case 'pinStaleness':
+      if (ctx.conversationIndex) {
+        return ctx.conversationIndex.stalenessFor(contact.id) === filter.value
+      }
       return (
         getContactStaleness(
           contact,
@@ -152,11 +162,17 @@ const passesFilter = (
     case 'isFavorite':
       return !!contact.isFavorite
     case 'hasStudy':
+      if (ctx.conversationIndex) {
+        return ctx.conversationIndex.studyContactIds.has(contact.id)
+      }
       return contactHasAtLeastOneStudy({
         conversations: ctx.conversations,
         contact,
       })
     case 'isActiveStudy':
+      if (ctx.conversationIndex) {
+        return ctx.conversationIndex.studiedThisMonthIds.has(contact.id)
+      }
       return contactStudiedForGivenMonth({
         conversations: ctx.conversations,
         contact,

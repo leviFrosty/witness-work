@@ -140,6 +140,36 @@ describe('lib/conversationIndex', () => {
     expect(index.studiedThisMonthIds.has('studiedBefore')).toBe(false)
   })
 
+  it('measures "this month" from the given local day', () => {
+    // The clock is frozen on 2026-06-12.
+    const conversations: Visit[] = [
+      visit({
+        contactId: 'june',
+        date: new Date(2026, 5, 2, 10),
+        isBibleStudy: true,
+      }),
+      visit({
+        contactId: 'may',
+        date: new Date(2026, 4, 30, 10),
+        isBibleStudy: true,
+      }),
+    ]
+
+    const june = buildConversationIndex(
+      conversations,
+      DEFAULT_STALENESS_BREAKPOINTS,
+      '2026-06-12'
+    )
+    const may = buildConversationIndex(
+      conversations,
+      DEFAULT_STALENESS_BREAKPOINTS,
+      '2026-05-31'
+    )
+
+    expect([...june.studiedThisMonthIds]).toEqual(['june'])
+    expect([...may.studiedThisMonthIds]).toEqual(['may'])
+  })
+
   it('skips conversations with unparseable dates without throwing', () => {
     const conversations: Visit[] = [
       visit({ contactId: 'bad', date: 'not-a-date' as unknown as Date }),

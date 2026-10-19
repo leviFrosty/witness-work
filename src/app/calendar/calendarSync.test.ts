@@ -107,6 +107,7 @@ import {
   setSharedOptions,
   finishDisconnect,
   noteCalendarChanged,
+  retryCalendarAction,
 } from '@/app/calendar/calendarSync'
 import { analytics } from '@/lib/analytics'
 import { useCalendarSync, useCalendarPublishing } from '@/stores/calendarSync'
@@ -701,5 +702,77 @@ describe('calendar publishing orchestration', () => {
     expect(useCalendarSync.getState().registered).toBe(true)
     await finishDisconnect()
     expect(useCalendarSync.getState().registered).toBe(false)
+  })
+
+  describe('retrying a failure', () => {
+    it('repeats the failed setup and reports how it recovered', async () => {
+      useCalendarSync.setState({ enabled: false, destination: null })
+      bridge.requestAccess.mockResolvedValueOnce(false)
+      await calendarAction(quickConnectCalendar).catch(() => undefined)
+      expect(useCalendarPublishing.getState().error).toBe(
+        'calendarPermissionError'
+      )
+      vi.mocked(analytics.capture).mockClear()
+      bridge.requestAccess.mockResolvedValueOnce(true)
+      await retryCalendarAction('open_settings')
+      expect(useCalendarSync.getState().enabled).toBe(true)
+      expect(useCalendarPublishing.getState().error).toBeNull()
+      expect(analytics.capture).toHaveBeenCalledWith('calendar_connected', {
+        created: false,
+        recovery: 'open_settings',
+      })
+      // Done: nothing is left to repeat.
+      await retryCalendarAction('try_again')
+      expect(bridge.setDestination).toHaveBeenCalledTimes(1)
+    })
+    it('reports a retry that failed again', async () => {
+      const action = vi.fn(async () => {
+        throw new Error('CALENDAR_CREATE_FAILED')
+      })
+      await calendarAction(action).catch(() => undefined)
+      vi.mocked(analytics.capture).mockClear()
+      await expect(retryCalendarAction('try_again')).rejects.toThrow()
+      expect(action).toHaveBeenCalledTimes(2)
+      expect(analytics.capture).toHaveBeenCalledWith('calendar_sync_failed', {
+        error_key: 'calendarCreateError',
+        background: false,
+        recovery: 'try_again',
+      })
+      // First attempts carry no recovery.
+      await calendarAction(action).catch(() => undefined)
+      expect(analytics.capture).toHaveBeenLastCalledWith(
+        'calendar_sync_failed',
+        { error_key: 'calendarCreateError', background: false }
+      )
+    })
+    it('keeps the failed action through an unrelated success', async () => {
+      const action = vi
+        .fn(async () => undefined)
+        .mockRejectedValueOnce(new Error('CALENDAR_STATE_CHANGED'))
+      await calendarAction(action).catch(() => undefined)
+      // Opening Calendar Sync checks iCloud, which leaves the error showing.
+      await calendarAction(refreshPublishing)
+      await retryCalendarAction('try_again')
+      expect(action).toHaveBeenCalledTimes(2)
+    })
+    it('updates the connected calendar after a background failure', async () => {
+      await calendarAction(
+        async () => {
+          throw new Error('CALENDAR_STATE_CHANGED')
+        },
+        { background: true }
+      ).catch(() => undefined)
+      expect(useCalendarSync.getState().enabled).toBe(true)
+      await retryCalendarAction('try_again')
+      expect(bridge.publish).toHaveBeenCalledTimes(1)
+      expect(useCalendarPublishing.getState().error).toBeNull()
+    })
+    it('only clears the error when access was all that was missing', async () => {
+      useCalendarSync.setState({ enabled: false, destination: null })
+      useCalendarPublishing.setState({ error: 'calendarPermissionError' })
+      await retryCalendarAction('open_settings')
+      expect(useCalendarPublishing.getState().error).toBeNull()
+      expect(bridge.publish).not.toHaveBeenCalled()
+    })
   })
 })

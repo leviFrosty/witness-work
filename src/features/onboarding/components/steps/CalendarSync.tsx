@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { Platform, View } from 'react-native'
+import { useEffect, useEffectEvent, useState } from 'react'
+import { Linking, Platform, View } from 'react-native'
 import { styles } from '@/features/onboarding/components/Onboarding.styles'
 import OnboardingNav from '@/features/onboarding/components/OnboardingNav'
 import CalendarPreview from '@/features/onboarding/components/CalendarPreview'
@@ -15,6 +15,11 @@ import {
   disconnectCalendar,
   quickConnectCalendar,
 } from '@/app/calendar/calendarSync'
+import {
+  type CalendarRecovery,
+  calendarRecovery,
+} from '@/app/calendar/calendarRecovery'
+import { resumeWhenCalendarAllowed } from '@/app/calendar/resumeWhenCalendarAllowed'
 import { useCalendarPublishing, useCalendarSync } from '@/stores/calendarSync'
 import { analytics } from '@/lib/analytics'
 import i18n, { type TranslationKey } from '@/lib/locales'
@@ -45,12 +50,12 @@ const CalendarSync = ({ goBack, goNext }: Props) => {
     useCalendarPublishing.setState({ error: null })
   }
 
-  const connect = async () => {
+  const connect = async (recovery?: CalendarRecovery) => {
     answer()
     setWorking(true)
     setError(null)
     try {
-      const status = await calendarAction(quickConnectCalendar)
+      const status = await calendarAction(quickConnectCalendar, { recovery })
       analytics.capture('onboarding_calendar_setup_result', { status })
       goNext()
     } catch (cause) {
@@ -64,6 +69,14 @@ const CalendarSync = ({ goBack, goNext }: Props) => {
       setWorking(false)
     }
   }
+
+  // Back from Settings with access allowed: finish setting up.
+  const resume = useEffectEvent(() => void connect('open_settings'))
+  useEffect(() => {
+    const subscription = resumeWhenCalendarAllowed(resume)
+    return () => subscription.remove()
+  }, [])
+  const recovery = calendarRecovery(error)
 
   return (
     <Wrapper
@@ -106,10 +119,35 @@ const CalendarSync = ({ goBack, goNext }: Props) => {
             {i18n.t(error as TranslationKey)}
           </Text>
         )}
+        {recovery === 'open_settings' && (
+          <Button
+            style={{ marginTop: 8, alignSelf: 'flex-start' }}
+            onPress={() => {
+              void Linking.openSettings()
+            }}
+          >
+            <Text style={{ color: theme.colors.accent, fontWeight: '600' }}>
+              {i18n.t(
+                Platform.OS === 'android'
+                  ? 'calendarOpenSettingsAndroid'
+                  : 'calendarOpenSettings'
+              )}
+            </Text>
+          </Button>
+        )}
       </View>
       <View>
-        <ActionButton disabled={working} onPress={connect}>
-          {i18n.t('calendarOnboardingConnect')}
+        <ActionButton
+          disabled={working}
+          onPress={() =>
+            connect(recovery === 'try_again' ? recovery : undefined)
+          }
+        >
+          {i18n.t(
+            recovery === 'try_again'
+              ? 'calendarTryAgain'
+              : 'calendarOnboardingConnect'
+          )}
         </ActionButton>
         <View style={{ alignItems: 'center', marginTop: 15 }}>
           <Button

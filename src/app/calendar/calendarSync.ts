@@ -13,6 +13,11 @@ import { useCalendarPublishing, useCalendarSync } from '@/stores/calendarSync'
 import { iCloudSync } from '@/app/sync/iCloudSync'
 import { currentCalendarSnapshot } from '@/app/calendar/currentSnapshot'
 import * as android from '@/app/calendar/calendarSyncAndroid'
+import {
+  type CalendarRecovery,
+  recoveryProperties,
+  setRecoveryAttempt,
+} from '@/app/calendar/calendarRecovery'
 import i18n from '@/lib/locales'
 import { analytics } from '@/lib/analytics'
 import { perf } from '@/lib/perf'
@@ -76,11 +81,15 @@ const REPUBLISH_UNCHANGED_AFTER_MS = 6 * 60 * 60_000
 /** What the last successful publish wrote; null to publish regardless. */
 let lastPublished: { key: string; at: number } | null = null
 
+/** The user's action behind the error shown, so Try Again can repeat it. */
+let retryable: (() => Promise<unknown>) | null = null
+
 /**
  * Serialize UI actions and auto-publishing; native serialization is the final
  * gate. Background runs don't disable the UI, and an error stays visible until
  * publishing succeeds or the user disconnects. `report: false` keeps checks on
  * a device that doesn't publish silent: its user never asked for updates.
+ * `recovery`: the action retries a failure (see `retryCalendarAction`).
  */
 let queue: Promise<unknown> = Promise.resolve()
 export function calendarAction<T>(
@@ -88,18 +97,28 @@ export function calendarAction<T>(
   {
     background = false,
     report = true,
-  }: { background?: boolean; report?: boolean } = {}
+    recovery,
+  }: {
+    background?: boolean
+    report?: boolean
+    recovery?: CalendarRecovery
+  } = {}
 ): Promise<T> {
   const next = queue
     .catch(() => undefined)
     .then(async () => {
       if (!background) useCalendarPublishing.setState({ working: true })
+      setRecoveryAttempt(recovery ?? null)
       try {
-        return await action()
+        const result = await action()
+        if (!useCalendarPublishing.getState().error) retryable = null
+        return result
       } catch (error) {
         // The next publish goes through, so success clears the error shown.
         lastPublished = null
         if (!report) throw error
+        // A background failure is retried by publishing again.
+        retryable = background ? null : action
         const errorKey = calendarErrorKey(error)
         // Background retries repeat the same failure; count it once until it
         // changes or publishing works again.
@@ -113,14 +132,32 @@ export function calendarAction<T>(
           analytics.capture('calendar_sync_failed', {
             error_key: errorKey,
             background,
+            ...recoveryProperties(),
           })
         throw error
       } finally {
+        setRecoveryAttempt(null)
         if (!background) useCalendarPublishing.setState({ working: false })
       }
     })
   queue = next
   return next
+}
+
+/**
+ * Repeats what failed: the user's last action, otherwise an update of the
+ * connected calendar. With nothing to repeat, an allowed permission is all that
+ * was missing.
+ */
+export function retryCalendarAction(recovery: CalendarRecovery) {
+  const action =
+    retryable ??
+    (useCalendarSync.getState().enabled ? () => publishCalendar() : null)
+  if (!action) {
+    useCalendarPublishing.setState({ error: null })
+    return Promise.resolve()
+  }
+  return calendarAction(action, { recovery })
 }
 
 function applyState(state: PublishingState) {
@@ -186,7 +223,11 @@ export async function calendarDestinations() {
   if (Platform.OS === 'android') return android.calendarDestinations()
   if (!(await calendarBridge().requestAccess()))
     throw new Error('CALENDAR_PERMISSION')
-  return calendarBridge().destinations()
+  const calendars = await calendarBridge().destinations()
+  // Access was just allowed: an earlier permission error no longer applies.
+  if (useCalendarPublishing.getState().error === 'calendarPermissionError')
+    useCalendarPublishing.setState({ error: null })
+  return calendars
 }
 
 /**
@@ -227,7 +268,10 @@ export async function connectCalendar(
     lastSyncedAt: null,
   })
   await publishCalendar()
-  analytics.capture('calendar_connected', { created: fresh })
+  analytics.capture('calendar_connected', {
+    created: fresh,
+    ...recoveryProperties(),
+  })
 }
 
 export async function calendarSources() {

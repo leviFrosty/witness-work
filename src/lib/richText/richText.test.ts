@@ -8,14 +8,13 @@ vi.mock('@/stores/mmkv', () => ({
 import { contentHash } from '@/lib/contentHash'
 import {
   compactRichText,
-  hasRichFormatting,
   isRichTextEmpty,
   richTextImages,
   richTextLinks,
   toggleRichTextTask,
   withoutRichTextImages,
 } from '@/lib/richText/inspect'
-import { getNoteDoc, hasNote, noteFields, sameNote } from '@/lib/richText/notes'
+import { getNoteDoc, hasNote, noteFields } from '@/lib/richText/notes'
 import { snapImageScale } from '@/lib/richText/imageScale'
 import { parseRichText, parseRichTextDoc } from '@/lib/richText/parse'
 import {
@@ -335,13 +334,6 @@ describe('notes', () => {
       doc(p(text('Plain')))
     )
   })
-
-  it('compares notes by what they say', () => {
-    expect(sameNote({ note: 'a' }, noteFields(doc(p(text('a')), p())))).toBe(
-      true
-    )
-    expect(sameNote({ note: 'a' }, { note: 'b' })).toBe(false)
-  })
 })
 
 describe('inspect', () => {
@@ -352,14 +344,10 @@ describe('inspect', () => {
     expect(richTextLinks(formatted)).toEqual(['https://jw.org'])
   })
 
-  it('knows empty and formatted notes', () => {
+  it('knows empty notes', () => {
     expect(isRichTextEmpty(doc(p(), { type: 'bulletList', content: [] }))).toBe(
       true
     )
-    expect(hasRichFormatting(plainTextToRichText('a https://x.com'))).toBe(
-      false
-    )
-    expect(hasRichFormatting(formatted)).toBe(true)
   })
 
   it('removes photos', () => {

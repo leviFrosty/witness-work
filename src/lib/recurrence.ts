@@ -368,32 +368,6 @@ export const plannedMinutesThroughDayForMonth = (
   return count
 }
 
-export const plannedMinutesToCurrentDayForMonth = (
-  month: number,
-  year: number,
-  dayPlans: DayPlan[],
-  recurringPlans: RecurringPlan[]
-) => {
-  const currentDay = moment()
-  const selectedMonth = moment({ year, month, date: 1 }).startOf('month')
-
-  if (selectedMonth.isAfter(currentDay, 'month')) {
-    return 0
-  }
-
-  const dayOfMonth = selectedMonth.isBefore(currentDay, 'month')
-    ? selectedMonth.daysInMonth()
-    : currentDay.date()
-
-  return plannedMinutesThroughDayForMonth(
-    month,
-    year,
-    dayOfMonth,
-    dayPlans,
-    recurringPlans
-  )
-}
-
 /**
  * Pre-computes all recurring plan occurrences for a given date range. Returns a
  * Map where key is date string (YYYY-MM-DD) and value is array of plans with

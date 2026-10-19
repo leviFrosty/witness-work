@@ -78,11 +78,3 @@ export function RichTextSpans(props: {
     )
   })
 }
-
-/** Whether any span needs the italic faces. */
-export function usesItalics(content: RichTextInline[] | undefined): boolean {
-  return (content ?? []).some(
-    (node) =>
-      node.type === 'text' && node.marks?.some((mark) => mark.type === 'italic')
-  )
-}

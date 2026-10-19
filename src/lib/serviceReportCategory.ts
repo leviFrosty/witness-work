@@ -52,28 +52,6 @@ export const getCategoryLabel = (
 }
 
 /**
- * Resolves the credit attribution for a TimeEntry. Prefers the Category's
- * `isCredit` (the post-migration source of truth); falls back to the per-entry
- * `credit` boolean for unmigrated entries or entries whose `categoryId` no
- * longer resolves (e.g. category deleted across devices before sync caught
- * up).
- */
-export const isReportCreditTime = (
-  report: TimeEntry,
-  categories: Category[]
-): boolean => {
-  // Legacy `ldc: true` is still readable from pre-collapse persisted state
-  // and incoming sync payloads from older peers (see
-  // `payloadFieldRenames.ts`).
-  if ((report as LegacyTimeEntry).ldc) return true
-  if (report.categoryId) {
-    const found = categories.find((c) => c.id === report.categoryId)
-    if (found) return found.isCredit
-  }
-  return report.credit === true
-}
-
-/**
  * Resolves the credit attribution for a Plan (Day Plan or Recurring Plan).
  * Unlike Time Entries, Plans carry no stamped `credit` boolean — the referenced
  * Category is the single source of truth, derived at read time, so flipping a

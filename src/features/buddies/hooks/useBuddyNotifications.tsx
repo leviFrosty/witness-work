@@ -32,7 +32,6 @@ import {
   awaitsAnswer,
   type BuddyNotification,
   listedNotifications,
-  notificationIdForSeq,
 } from '@/features/buddies/lib/state'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 import { buddyDisplayName } from '@/features/buddies/lib/buddyProfile'
@@ -104,15 +103,6 @@ export function useBuddyTraySyncStatus() {
       ? ('failed' as const)
       : ('idle' as const)
   return { state, retry }
-}
-
-/**
- * The tray item id for the queue entry a Buddies push's relay event (`ww.seq`)
- * produced, or null when that event made no entry or a later one replaced it.
- * Tray item ids are the queue entry ids.
- */
-export function buddyNotificationIdForSeq(seq: number): string | null {
-  return notificationIdForSeq(useBuddies.getState().notifications, seq)
 }
 
 /**

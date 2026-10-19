@@ -45,16 +45,6 @@ export const STANDARD_CATEGORY_NAME = 'Standard'
 export const LDC_BUILTIN_CATEGORY_NAME = 'LDC'
 
 /**
- * Returns true when the Category record represents the LDC builtin. Prefer the
- * `builtin` flag (post-seed) but fall back to id match so a record that
- * pre-dates the `builtin` field still resolves correctly.
- */
-export const isLdcBuiltinCategory = (category: {
-  id: string
-  builtin?: boolean
-}) => category.builtin === true || category.id === LDC_BUILTIN_CATEGORY_ID
-
-/**
  * Produces the canonical LDC builtin Category record. Callers must stamp
  * `updatedAt` themselves (typically Date.now()) so the record participates in
  * iCloud last-writer-wins merge alongside user-created Categories.

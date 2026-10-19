@@ -7,7 +7,6 @@ import {
   parseContactMarker,
   isProfileMarker,
   isValidImageFilename,
-  isAvatarImageFilename,
   filenameForNoteImage,
   noteImageIdFromFilename,
 } from '@/app/sync/imageNames'
@@ -121,8 +120,6 @@ describe('imageNames', () => {
       expect(filenameForNoteImage(id)).toBe(`witness-work-note-${id}.jpg`)
       expect(noteImageIdFromFilename(filenameForNoteImage(id))).toBe(id)
       expect(isValidImageFilename(filenameForNoteImage(id))).toBe(true)
-      expect(isAvatarImageFilename(filenameForNoteImage(id))).toBe(false)
-      expect(isAvatarImageFilename(filenameForContact('c'))).toBe(true)
     })
 
     it('reads ids only from well-formed note photo names', () => {

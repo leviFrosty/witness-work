@@ -167,9 +167,6 @@ export function ensureBackupSlotId(): string {
   return next
 }
 
-/** This install's slot id without making one. */
-export const currentBackupSlotId = () => useBackupState.getState().slotId
-
 /**
  * Asks the app's backup to upload soon, as a data change would: for changes
  * outside the synced stores, such as a new account key after Delete Buddies.

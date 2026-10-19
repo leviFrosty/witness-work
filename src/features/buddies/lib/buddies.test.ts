@@ -39,7 +39,6 @@ import {
   mergeAnswerMarks,
   mergeNotificationMarks,
   mergeRemovedBuddies,
-  notificationIdForSeq,
   OutgoingShareSpec,
   REPLY_HOLD_MS,
   replyHoldMs,
@@ -2651,8 +2650,9 @@ describe('shared Plans and Follow-ups', () => {
       .get(anna.inboxId)!
       .events.find((e) => e.kind === 'plan.invite')!
     const { notifications } = anna.store.getState()
-    expect(notificationIdForSeq(notifications, event.seq)).toBe(event.eventId)
-    expect(notificationIdForSeq(notifications, 9999)).toBeNull()
+    expect(notifications.find((n) => n.seq === event.seq)?.id).toBe(
+      event.eventId
+    )
   })
 
   it('re-sends an unchanged push registration once a day', async () => {

@@ -12,7 +12,11 @@ const mocks = vi.hoisted(() => ({
   heavy: vi.fn(),
   capture: vi.fn(),
 }))
-vi.mock('react-native', () => ({ Alert: { alert: vi.fn() }, View: 'View' }))
+vi.mock('react-native', () => ({
+  Alert: { alert: vi.fn() },
+  Platform: { OS: 'ios' },
+  View: 'View',
+}))
 vi.mock('expo-crypto', () => ({ randomUUID: () => 'new-entry' }))
 vi.mock('@/contexts/theme', () => ({
   default: () => ({ colors: {}, fonts: {}, fontSize: () => 16 }),
@@ -36,7 +40,16 @@ vi.mock('@/lib/serviceReport', () => ({
   adjustedMinutesForSpecificMonth: () => ({ value: 0 }),
 }))
 vi.mock('@/lib/monthlyGoals', () => ({ resolveMonthlyGoalHours: () => 0 }))
-vi.mock('@/lib/roleHistory', () => ({ roleForMonth: () => 'pioneer' }))
+vi.mock('@/lib/roleHistory', () => ({
+  roleForMonth: () => 'pioneer',
+  calendarMonthOf: () => ({ year: 2026, month: 9 }),
+}))
+vi.mock('@/hooks/usePublisher', () => ({
+  default: () => ({ hasAnnualGoal: false, annualGoalHours: 0 }),
+}))
+vi.mock('@/features/service-reports/lib/timeSavedProgress', () => ({
+  timeSavedProgress: () => ({ added: 'added', progress: 'progress' }),
+}))
 vi.mock('@/hooks/useAnimation', () => ({
   default: () => ({ playConfetti: mocks.confetti }),
 }))
@@ -136,6 +149,10 @@ describe('Time Entry submission', () => {
       expect(mocks.add).toHaveBeenCalledExactlyOnceWith(
         expect.objectContaining({ hours: 1, minutes: 0 })
       )
+      expect(mocks.toast).toHaveBeenCalledExactlyOnceWith('added', {
+        message: 'progress',
+        native: true,
+      })
       expect(mocks.done).toHaveBeenCalledOnce()
     }
   )

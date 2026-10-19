@@ -2054,6 +2054,16 @@
   "deletePlan_title": "Delete Plan?",
   "deletePlan_description": "Deleting this plan will permanently remove it.",
   "timeAdded": "Added Time",
+  "timeSavedProgress": {
+    "added": "{{value}} added",
+    "line": "{{added}} · {{progress}}",
+    "ofGoal": "{{value}} of {{goal}}",
+    "ofGoalIn": "{{value}} of {{goal}} in {{period}}",
+    "totalThisMonth": "{{value}} this month",
+    "totalIn": "{{value}} in {{period}}",
+    "monthlyGoalReached": "Monthly goal reached",
+    "annualGoalReached": "Annual goal reached"
+  },
   "unknown": "Unknown",
   "existingPlansForDay_description": "You already have these plans for this day. Swipe to delete them.",
   "optional": "Note (Optional)",

@@ -1,5 +1,5 @@
 import useFormValidation from '@/hooks/useFormValidation'
-import { Alert, View } from 'react-native'
+import { Alert, Platform, View } from 'react-native'
 import { noteUserAction } from '@/lib/userAction'
 import { richTextImages } from '@/lib/richText/inspect'
 import {
@@ -40,7 +40,9 @@ import {
   adjustedMinutesForSpecificMonth,
   getMonthsReports,
   getReport,
+  getTotalMinutesForServiceYear,
 } from '@/lib/serviceReport'
+import { getServiceYearReports } from '@/lib/serviceYear'
 import useAnimation from '@/hooks/useAnimation'
 import Haptics from '@/lib/haptics'
 import { CONFETTI_DELAY_MS } from '@/providers/AnimationViewProvider'
@@ -49,8 +51,11 @@ import { didCrossMonthlyGoal } from '@/features/service-reports/lib/monthlyGoalC
 import { resolveMonthlyGoalHours } from '@/lib/monthlyGoals'
 import { inputLayout } from '@/components/ui/inputs/InputLayout'
 import { analytics } from '@/lib/analytics'
-import { roleForMonth } from '@/lib/roleHistory'
+import { calendarMonthOf, roleForMonth } from '@/lib/roleHistory'
+import { serviceYearOf } from '@/lib/serviceYear'
 import useDraftChanged from '@/hooks/useDraftChanged'
+import usePublisher from '@/hooks/usePublisher'
+import { timeSavedProgress } from '@/features/service-reports/lib/timeSavedProgress'
 
 /** What a new entry starts with, e.g. a Plan's length and Type to log. */
 export type TimeEntryPrefill = {
@@ -95,6 +100,7 @@ const TimeEntryForm = (props: Props) => {
     monthlyGoalOverrides,
     overrideCreditLimit,
     customCreditLimitHours,
+    timeDisplayFormat,
   } = usePreferences()
   const { playConfetti } = useAnimation()
   const { categories } = useCategories()
@@ -159,6 +165,10 @@ const TimeEntryForm = (props: Props) => {
     'time_entry'
   )
   const toast = useToastController()
+  // The entry's month decides whose goal its confirmation counts toward.
+  const { hasAnnualGoal, annualGoalHours } = usePublisher(
+    calendarMonthOf(serviceReport.date)
+  )
 
   // Maps the Type row's report back onto the in-progress entry. The row owns
   // the Category-store side (create/delete/credit-flip + global re-stamp);
@@ -233,49 +243,71 @@ const TimeEntryForm = (props: Props) => {
       monthlyGoalOverrides,
       goalTarget
     )
-    if (effectiveGoalHours > 0) {
-      const creditOverride = {
-        enabled: overrideCreditLimit,
-        customLimitHours: customCreditLimitHours,
-      }
-      const beforeReports = getMonthsReports(
-        serviceReports,
-        reportMonth,
-        reportYear
-      )
-      const beforeMinutes = adjustedMinutesForSpecificMonth(
-        beforeReports,
-        reportMonth,
-        reportYear,
-        role,
-        creditOverride
-      ).value
-      // Month math reads stored anchors; the form holds a local day, which at
-      // UTC+12 (local midnight == noon UTC) would read as the prior day.
-      const afterMinutes = adjustedMinutesForSpecificMonth(
-        [
-          ...beforeReports,
-          {
-            ...serviceReport,
-            date: normalizeDateForStorage(serviceReport.date),
-          },
-        ],
-        reportMonth,
-        reportYear,
-        role,
-        creditOverride
-      ).value
-      const crossedGoal = didCrossMonthlyGoal({
-        beforeMinutes,
-        afterMinutes,
-        baseGoalHours: publisherHours[role],
-        monthlyGoalOverrides,
-        target: goalTarget,
-      })
-      if (crossedGoal) {
-        useCelebrationQueue.getState().queue(reportMonth, reportYear)
-      }
+    const creditOverride = {
+      enabled: overrideCreditLimit,
+      customLimitHours: customCreditLimitHours,
     }
+    const beforeReports = getMonthsReports(
+      serviceReports,
+      reportMonth,
+      reportYear
+    )
+    const beforeMinutes = adjustedMinutesForSpecificMonth(
+      beforeReports,
+      reportMonth,
+      reportYear,
+      role,
+      creditOverride
+    ).value
+    // Month math reads stored anchors; the form holds a local day, which at
+    // UTC+12 (local midnight == noon UTC) would read as the prior day.
+    const afterMinutes = adjustedMinutesForSpecificMonth(
+      [
+        ...beforeReports,
+        {
+          ...serviceReport,
+          date: normalizeDateForStorage(serviceReport.date),
+        },
+      ],
+      reportMonth,
+      reportYear,
+      role,
+      creditOverride
+    ).value
+    const crossedGoal = didCrossMonthlyGoal({
+      beforeMinutes,
+      afterMinutes,
+      baseGoalHours: publisherHours[role],
+      monthlyGoalOverrides,
+      target: goalTarget,
+    })
+    if (crossedGoal) {
+      useCelebrationQueue.getState().queue(reportMonth, reportYear)
+    }
+
+    // The confirmation counts toward the Annual Goal when the User has one,
+    // else the month's goal. Only the entry's month changes, so the Service
+    // Year moves by the month's capped difference.
+    const yearly = hasAnnualGoal && annualGoalHours > 0
+    const yearBeforeMinutes = yearly
+      ? getTotalMinutesForServiceYear(
+          getServiceYearReports(serviceReports, serviceYearOf(goalTarget)),
+          serviceYearOf(goalTarget),
+          (target) => roleForMonth(roleHistory, currentRole, target),
+          creditOverride
+        )
+      : 0
+    const progress = timeSavedProgress({
+      addedMinutes: serviceReport.hours * 60 + serviceReport.minutes,
+      beforeMinutes: yearly ? yearBeforeMinutes : beforeMinutes,
+      afterMinutes: yearly
+        ? yearBeforeMinutes + afterMinutes - beforeMinutes
+        : afterMinutes,
+      goalMinutes: (yearly ? annualGoalHours : effectiveGoalHours) * 60,
+      period: yearly ? 'serviceYear' : 'month',
+      entryMonth: goalTarget,
+      format: timeDisplayFormat,
+    })
 
     noteUserAction('time')
     const entry = savedEntry()
@@ -285,10 +317,12 @@ const TimeEntryForm = (props: Props) => {
       has_category: !!entry.categoryId,
       ...noteAnalytics(entry),
     })
-    toast.show(i18n.t('success'), {
-      message: i18n.t('timeAdded'),
-      native: true,
-    })
+    // Android's native toast shows only its title, so it carries both lines.
+    if (Platform.OS === 'android') {
+      toast.show(i18n.t('timeSavedProgress.line', progress), { native: true })
+    } else {
+      toast.show(progress.added, { message: progress.progress, native: true })
+    }
     props.onDone()
   }
 

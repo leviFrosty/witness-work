@@ -103,11 +103,7 @@ function introPages(
       icon: UsersIcon,
       color: colors.info,
       title: i18n.t('scheduleIntro_together_title'),
-      caption: i18n.t(
-        kind
-          ? 'scheduleIntro_together_caption'
-          : 'scheduleIntro_together_captionNoStreak'
-      ),
+      caption: i18n.t('scheduleIntro_together_caption'),
     })
   return pages.filter((page) => !covered.includes(page.id))
 }

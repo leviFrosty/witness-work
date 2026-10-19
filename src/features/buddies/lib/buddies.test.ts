@@ -30,6 +30,7 @@ import {
   incomingShareKey,
   listedNotifications,
   mergeSharing,
+  migrateLegacySettings,
   INVITE_TTL_MS,
   MAX_ANSWER_MARKS,
   MAX_NOTIFICATION_MARKS,
@@ -626,6 +627,125 @@ describe('buddies pairing', () => {
     expect(anna.store.getState().buddies[0].streak?.n).toBe(7)
     await annasIpad.engine.sync()
     expect(annasIpad.store.getState().buddies[0].streak?.n).toBe(7)
+  })
+
+  it('shares Plan times as precisely as chosen, on every device', async () => {
+    const { advance, user } = setup()
+    const plans: Plans = {
+      dayPlans: [
+        dayPlan('2026-09-26', 120, 540),
+        dayPlan('2026-09-27', 60, 1110),
+        dayPlan('2026-09-28', 90),
+      ],
+      recurringPlans: [],
+    }
+    const mom = user('Mom', plans)
+    const anna = user('Anna')
+    await pair(mom, anna)
+    const days = () => anna.store.getState().cards[mom.inboxId].days
+
+    advance(1000)
+    await mom.engine.setSharing({ planTimes: 'timeOfDay' })
+    await anna.engine.sync()
+    expect(days()).toEqual([
+      { d: '2026-09-26', p: [{ m: 120, t: 'm' }] },
+      { d: '2026-09-27', p: [{ m: 60, t: 'e' }] },
+      { d: '2026-09-28', p: [{ m: 90 }] },
+    ])
+
+    advance(1000)
+    await mom.engine.setSharing({ planTimes: 'daysOnly' })
+    await anna.engine.sync()
+    expect(days()).toEqual([
+      { d: '2026-09-26', p: [{ m: 120 }] },
+      { d: '2026-09-27', p: [{ m: 60 }] },
+      { d: '2026-09-28', p: [{ m: 90 }] },
+    ])
+
+    // Another of Mom's devices publishes the same card.
+    const momsIpad = user('Mom', plans, mom.seed)
+    await momsIpad.engine.sync()
+    expect(momsIpad.store.getState().sharing.planTimes).toBe('daysOnly')
+    plans.dayPlans = [dayPlan('2026-09-29', 30, 800)]
+    await momsIpad.engine.publishCards()
+    await anna.engine.sync()
+    expect(days()).toEqual([{ d: '2026-09-29', p: [{ m: 30 }] }])
+  })
+
+  it('gives a buddy their own settings over All Buddies’, on every device, and pauses everyone', async () => {
+    const { advance, now, user } = setup()
+    const plans: Plans = {
+      dayPlans: [dayPlan('2026-10-20', 120, 540)],
+      recurringPlans: [],
+    }
+    const mom = user('Mom', plans)
+    const anna = user('Anna')
+    const joe = user('Joe')
+    mom.setStreak({ n: 5, until: '2026-10-25' })
+    await pair(mom, anna)
+    await pair(mom, joe)
+    const sees = (buddy: typeof anna) => ({
+      days: buddy.store.getState().cards[mom.inboxId].days.length,
+      streak: buddy.store.getState().buddies[0].streak?.n,
+      name: buddy.store.getState().buddies[0].name,
+    })
+    expect(sees(anna)).toEqual({ days: 1, streak: 5, name: 'Mom' })
+
+    // Anna alone: her card drops Plans, then the streak; Joe's stays.
+    advance(1000)
+    await mom.engine.setBuddySetting(anna.inboxId, 'plans', false)
+    await anna.engine.sync()
+    expect(sees(anna)).toEqual({ days: 0, streak: 5, name: 'Mom' })
+    advance(1000)
+    await mom.engine.setBuddySetting(anna.inboxId, 'streak', false)
+    await anna.engine.sync()
+    await joe.engine.sync()
+    expect(sees(anna)).toEqual({ days: 0, streak: undefined, name: 'Mom' })
+    expect(sees(joe)).toEqual({ days: 1, streak: 5, name: 'Mom' })
+
+    // Mom's iPad keeps them, so its cards don't bring them back.
+    const momsIpad = user('Mom', plans, mom.seed)
+    momsIpad.setStreak({ n: 5, until: '2026-10-25' })
+    await momsIpad.engine.sync()
+    expect(
+      momsIpad.store.getState().buddies.find((b) => b.inboxId === anna.inboxId)
+        ?.overrides
+    ).toEqual({ plans: false, streak: false })
+    await momsIpad.engine.publishCards({ edited: true })
+    await anna.engine.sync()
+    expect(sees(anna).days).toBe(0)
+
+    // Badge news skips a buddy who doesn't see badges.
+    advance(1000)
+    await mom.engine.setBuddySetting(anna.inboxId, 'badges', false)
+    await mom.engine.announceBadges(['monthsShared.1'])
+    expect(mom.store.getState().badgeAnnouncements[0].recipients).toEqual([
+      joe.inboxId,
+    ])
+
+    // Back to All Buddies, which stop sharing Plans, except with Joe.
+    advance(1000)
+    await mom.engine.setBuddyOverrides(anna.inboxId, () => undefined)
+    await mom.engine.setSharing({ plans: false })
+    await mom.engine.setBuddySetting(joe.inboxId, 'plans', true)
+    await anna.engine.sync()
+    await joe.engine.sync()
+    expect(sees(anna)).toEqual({ days: 0, streak: 5, name: 'Mom' })
+    expect(sees(joe)).toEqual({ days: 1, streak: 5, name: 'Mom' })
+
+    // A pause holds back everyone's, their own settings or not, for a week.
+    advance(1000)
+    await mom.engine.setSharing({ pausedUntil: now() + 7 * 86_400_000 })
+    await joe.engine.sync()
+    expect(sees(joe)).toEqual({ days: 0, streak: undefined, name: 'Mom' })
+
+    // It ends on its own with the next publish.
+    advance(8 * 86_400_000)
+    mom.setStreak({ n: 6, until: '2026-11-01' })
+    plans.dayPlans = [dayPlan('2026-10-31', 60, 600)]
+    await mom.engine.publishCards()
+    await joe.engine.sync()
+    expect(sees(joe)).toEqual({ days: 1, streak: 6, name: 'Mom' })
   })
 
   it('reads a card whose streak it doesn’t understand', async () => {
@@ -1327,7 +1447,7 @@ describe('removed buddies stay removed', () => {
       mom.inboxId,
       sealLegacyRoster(mom, {
         ...before,
-        buddies: [...before.buddies, joeOnIpad],
+        buddies: [...before.buddies, { ...joeOnIpad, showOnCalendar: true }],
       })
     )
     relay.listSlot(anna.inboxId, slots.intoHolder)
@@ -3117,7 +3237,7 @@ describe('asking to join', () => {
 
   it('stops alerting for a muted buddy or with Ask to Join alerts off, and lists theirs as read', async () => {
     const { fake, levi, anna, registerAnna, advance } = await duo()
-    anna.store.setState({ mutedJoinRequests: [levi.inboxId] })
+    anna.engine.setBuddyAlert(levi.inboxId, 'joinRequests', false)
     expect(await anna.engine.joinRequestPushKinds()).toEqual([])
     advance(PUSH_REGISTRATION_REFRESH_MS)
     await registerAnna()
@@ -3127,11 +3247,12 @@ describe('asking to join', () => {
     expect(requestsOf(anna)).toHaveLength(1)
     expect(joinEntries(anna)).toMatchObject([{ read: true }])
 
-    anna.store.setState({
-      mutedJoinRequests: [],
-      joinRequestNotifications: false,
-    })
+    anna.engine.setBuddyAlert(levi.inboxId, 'joinRequests', undefined)
+    anna.store.setState({ joinRequestNotifications: false })
     expect(await anna.engine.joinRequestPushKinds()).toEqual([])
+    // Their own setting over this device's.
+    anna.engine.setBuddyAlert(levi.inboxId, 'joinRequests', true)
+    expect(await anna.engine.joinRequestPushKinds()).toHaveLength(1)
   })
 
   it('closes asking two hours before the start and caps open requests per buddy', async () => {
@@ -3604,6 +3725,75 @@ describe('badges', () => {
     expect(badgeEntries(anna)).toEqual([])
   })
 
+  it('merges Plan times and the pause on their own stamp, keeping them through an older app and the more private on a tie', () => {
+    const local: BuddySharing = {
+      photo: true,
+      tenure: true,
+      streak: true,
+      updatedAt: 10,
+      badges: true,
+      badgesUpdatedAt: 0,
+      plans: true,
+      planTimes: 'timeOfDay',
+      pausedUntil: 100,
+      plansUpdatedAt: 5,
+      showOnCalendar: true,
+      calendarUpdatedAt: 0,
+    }
+    const older = { photo: true, tenure: true, streak: true, updatedAt: 20 }
+    // An older app's roster leaves them out.
+    expect(mergeSharing(local, older)).toMatchObject({
+      planTimes: 'timeOfDay',
+      pausedUntil: 100,
+      plansUpdatedAt: 5,
+    })
+    // A later choice wins, even back to sharing.
+    expect(
+      mergeSharing(local, {
+        ...older,
+        planTimes: 'exact',
+        pausedUntil: 0,
+        plansUpdatedAt: 6,
+      })
+    ).toMatchObject({ planTimes: 'exact', pausedUntil: 0, plansUpdatedAt: 6 })
+    // An earlier one doesn't.
+    expect(
+      mergeSharing(local, {
+        ...older,
+        planTimes: 'daysOnly',
+        pausedUntil: 0,
+        plansUpdatedAt: 4,
+      })
+    ).toMatchObject({ planTimes: 'timeOfDay', pausedUntil: 100 })
+    // On a tie, the more private of each.
+    expect(
+      mergeSharing(local, {
+        ...older,
+        planTimes: 'daysOnly',
+        pausedUntil: 50,
+        plansUpdatedAt: 5,
+      })
+    ).toMatchObject({ planTimes: 'daysOnly', pausedUntil: 100 })
+    // Plans the same way; not sharing them is the more private.
+    expect(
+      mergeSharing(local, { ...older, plans: false, plansUpdatedAt: 5 })
+    ).toMatchObject({ plans: false })
+    expect(mergeSharing(local, { ...older, plans: false })).toMatchObject({
+      plans: true,
+    })
+    // The calendar on its own stamp, hiding on a tie.
+    expect(
+      mergeSharing(local, {
+        ...older,
+        showOnCalendar: false,
+        calendarUpdatedAt: 0,
+      })
+    ).toMatchObject({ showOnCalendar: false })
+    expect(
+      mergeSharing(local, { ...older, showOnCalendar: false })
+    ).toMatchObject({ showOnCalendar: true })
+  })
+
   it('merges the badges choice on its own stamp, keeping it through an older app and withholding on a tie', () => {
     const local: BuddySharing = {
       photo: true,
@@ -3612,6 +3802,12 @@ describe('badges', () => {
       updatedAt: 10,
       badges: false,
       badgesUpdatedAt: 5,
+      plans: true,
+      planTimes: 'exact',
+      pausedUntil: 0,
+      plansUpdatedAt: 0,
+      showOnCalendar: true,
+      calendarUpdatedAt: 0,
     }
     // An older app's later photo choice, with no badges fields.
     expect(
@@ -4613,7 +4809,7 @@ describe('a User’s devices stay in step', () => {
     expect(momsIpad.store.getState().buddies[0]).toMatchObject({
       nickname: 'Annie',
       color: '#A855F7',
-      showOnCalendar: false,
+      overrides: { showOnCalendar: false },
     })
 
     // The later change wins, wherever it was made.
@@ -4621,7 +4817,70 @@ describe('a User’s devices stay in step', () => {
     await momsIpad.engine.setNickname(anna.inboxId, 'Anna B')
     await mom.engine.sync()
     expect(mom.store.getState().buddies[0].nickname).toBe('Anna B')
-    expect(mom.store.getState().buddies[0].showOnCalendar).toBe(false)
+    expect(mom.store.getState().buddies[0].overrides).toEqual({
+      showOnCalendar: false,
+    })
+
+    // Showing her again, as All Buddies do, follows All Buddies again.
+    advance(1000)
+    mom.engine.setShowOnCalendar(anna.inboxId, true)
+    await flushRoster(mom)
+    expect(mom.store.getState().buddies[0].overrides).toBeUndefined()
+  })
+
+  it('keeps a buddy’s own settings through an older app’s roster, and takes its calendar choice', async () => {
+    const { fake, advance, user } = setup()
+    const relay = relayPowers(fake)
+    const mom = user('Mom')
+    const anna = user('Anna')
+    await pair(mom, anna)
+    advance(1000)
+    await mom.engine.setBuddySetting(anna.inboxId, 'plans', false)
+    const written = openRoster(mom, relay.rosterBlob(mom.inboxId))
+    // Older apps read and write `showOnCalendar` alone.
+    expect(written.buddies[0]).toMatchObject({
+      showOnCalendar: true,
+      overrides: { plans: false },
+    })
+
+    // An older build hides her from the calendar, knowing nothing else.
+    const { overrides, ...older } = written.buddies[0]
+    expect(overrides).toEqual({ plans: false })
+    relay.serveRoster(
+      mom.inboxId,
+      sealLegacyRoster(mom, {
+        ...written,
+        buddies: [
+          {
+            ...older,
+            showOnCalendar: false,
+            prefsAt: (older.prefsAt ?? 0) + 1000,
+          },
+        ],
+      })
+    )
+    advance(2000)
+    await mom.engine.sync()
+    expect(mom.store.getState().buddies[0].overrides).toEqual({
+      plans: false,
+      showOnCalendar: false,
+    })
+  })
+
+  it('moves a hidden calendar and muted requests from older saved state into their own settings', () => {
+    const migrated = migrateLegacySettings({
+      buddies: [
+        { inboxId: 'a', showOnCalendar: false },
+        { inboxId: 'b', showOnCalendar: true },
+      ] as unknown as Buddy[],
+      mutedJoinRequests: ['b'],
+    })
+    expect(migrated.buddies).toEqual([
+      { inboxId: 'a', overrides: { showOnCalendar: false } },
+      { inboxId: 'b' },
+    ])
+    expect(migrated.alertOverrides).toEqual({ b: { joinRequests: false } })
+    expect(migrated).not.toHaveProperty('mutedJoinRequests')
   })
 
   it('sends a shared Plan from one device only, and a change to it as one alert', async () => {

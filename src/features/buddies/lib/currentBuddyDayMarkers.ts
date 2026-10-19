@@ -14,6 +14,7 @@ import type { BuddiesState } from '@/features/buddies/lib/state'
  */
 export function currentBuddyDayMarkers({
   buddies,
+  sharing,
   cards,
   shareReplies,
   incomingShares,
@@ -21,10 +22,16 @@ export function currentBuddyDayMarkers({
   dayPlans,
 }: Pick<
   BuddiesState,
-  'buddies' | 'cards' | 'shareReplies' | 'incomingShares' | 'registeredInboxId'
+  | 'buddies'
+  | 'sharing'
+  | 'cards'
+  | 'shareReplies'
+  | 'incomingShares'
+  | 'registeredInboxId'
 > & { dayPlans: DayPlan[] }): Record<string, BuddyDayMarker> {
   return buildBuddyDayMarkers({
     buddies,
+    sharing,
     cards,
     dayPlans,
     // Deriving a share id reads the identity seed, so only once Buddies is in use.

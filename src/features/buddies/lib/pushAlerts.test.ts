@@ -203,13 +203,16 @@ describe('named Buddies alerts', () => {
       body: 'Your Plan · Sat, Sep 26 · 9:00 AM',
     })
 
-    anna.store.setState({ mutedJoinRequests: [levi.inboxId] })
+    anna.engine.setBuddyAlert(levi.inboxId, 'joinRequests', false)
     expect(await alertFor(env, anna)).toEqual({ quiet: true })
-    anna.store.setState({
-      mutedJoinRequests: [],
-      joinRequestNotifications: false,
+    anna.engine.setBuddyAlert(levi.inboxId, 'joinRequests', undefined)
+    anna.store.setState({ joinRequestNotifications: false })
+    expect(await alertFor(env, anna)).toEqual({ quiet: true })
+    // Their own setting over this device's.
+    anna.engine.setBuddyAlert(levi.inboxId, 'joinRequests', true)
+    expect(await alertFor(env, anna)).toMatchObject({
+      title: 'Levi would like to join you',
     })
-    expect(await alertFor(env, anna)).toEqual({ quiet: true })
   })
 
   it('names the badges a buddy earned, and stays quiet with Badge Alerts off', async () => {
@@ -229,6 +232,13 @@ describe('named Buddies alerts', () => {
     })
 
     anna.store.setState({ badgeNotifications: false })
+    expect(await alertFor(env, anna)).toEqual({ quiet: true })
+    anna.engine.setBuddyAlert(levi.inboxId, 'badges', true)
+    expect(await alertFor(env, anna)).toMatchObject({
+      title: 'Levi earned new badges',
+    })
+    anna.store.setState({ badgeNotifications: true })
+    anna.engine.setBuddyAlert(levi.inboxId, 'badges', false)
     expect(await alertFor(env, anna)).toEqual({ quiet: true })
   })
 

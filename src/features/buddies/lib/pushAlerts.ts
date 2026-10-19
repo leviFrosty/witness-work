@@ -122,6 +122,8 @@ export type AlertBuddy = {
   name: string
   /** Their requests to join don't alert this device. */
   joinMuted?: true
+  /** Their new badges and reactions don't alert this device. */
+  badgeMuted?: true
   /** Their invitations to this User, by share id. */
   shares?: Record<string, ShareWhen>
 }
@@ -142,9 +144,9 @@ export type BuddyAlertContext = {
   invites: { id: string; key: string }[]
   /** This User's own shared Plans and Follow-ups, by share id, for replies. */
   myShares: Record<string, ShareWhen>
-  /** Badge Alerts on here (and Badges shown). */
+  /** Badge Alerts on here for any buddy (and Badges shown). */
   badgeAlerts: boolean
-  /** Ask to Join alerts on here. */
+  /** Ask to Join alerts on here for any buddy. */
   joinAlerts: boolean
   /**
    * The badges this build knows, in the order several are named: collections
@@ -381,7 +383,7 @@ export function describeBuddyEvent(
     case 'badge': {
       const news = parsed(badgeNewSchema, body)
       if (!news) return failed('unreadable')
-      if (!context.badgeAlerts) return { quiet: true }
+      if (!context.badgeAlerts || buddy.badgeMuted) return { quiet: true }
       return {
         alert: {
           type: 'badge',
@@ -393,7 +395,7 @@ export function describeBuddyEvent(
     case 'badgeReaction': {
       const reaction = parsed(badgeReactionSchema, body)
       if (!reaction) return failed('unreadable')
-      if (!context.badgeAlerts) return { quiet: true }
+      if (!context.badgeAlerts || buddy.badgeMuted) return { quiet: true }
       const [badge] = knownBadges([reaction.badge])
       if (!badge) return failed('unreadable')
       return {

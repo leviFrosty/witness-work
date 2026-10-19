@@ -79,6 +79,7 @@ struct AlertContext: Decodable {
     let key: String
     let name: String
     let joinMuted: Bool?
+    let badgeMuted: Bool?
     let shares: [String: ShareWhen]?
   }
 
@@ -378,7 +379,7 @@ func describe(context: AlertContext, event: SealedEvent) -> AlertOutcome {
     guard let items = body["badges"] as? [Any], items.count <= 40 else {
       return .failed("unreadable")
     }
-    if !context.badgeAlerts { return .quiet }
+    if !context.badgeAlerts || buddy.badgeMuted == true { return .quiet }
     // An item this build can't read is dropped on its own.
     let badges = knownBadges(items.compactMap(wireBadge), catalog: context.catalog)
     return .alert(.badge(name: name, badges: badges))
@@ -389,7 +390,7 @@ func describe(context: AlertContext, event: SealedEvent) -> AlertOutcome {
       let reaction = body["e"] as? String, reactionIds.contains(reaction),
       number(body["rev"]) != nil
     else { return .failed("unreadable") }
-    if !context.badgeAlerts { return .quiet }
+    if !context.badgeAlerts || buddy.badgeMuted == true { return .quiet }
     guard let known = knownBadges([badge], catalog: context.catalog).first else {
       return .failed("unreadable")
     }

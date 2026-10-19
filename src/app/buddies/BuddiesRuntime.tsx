@@ -475,7 +475,7 @@ export default function BuddiesRuntime() {
     const pushAlerts = (state: ReturnType<typeof useBuddies.getState>) =>
       JSON.stringify([
         state.joinRequestNotifications,
-        state.mutedJoinRequests,
+        state.alertOverrides,
         state.buddies
           .filter((buddy) => buddy.status === 'active')
           .map((buddy) => buddy.inboxId),
@@ -485,7 +485,8 @@ export default function BuddiesRuntime() {
       if (state.buddies !== previous.buddies)
         forgetRemovedBuddies(previous.buddies, state.buddies)
       // A new buddy's requests need their own push template, and a muted
-      // buddy's template is dropped; so is the badge one with alerts off.
+      // buddy's template is dropped; so is the badge one with alerts off for
+      // every buddy.
       if (pushAlerts(state) !== pushAlerts(previous))
         void registerBuddiesPush().catch(logFailure)
       // Entries that arrive already read (alerts off for them here), or that

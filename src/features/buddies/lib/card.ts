@@ -10,7 +10,11 @@ import {
   RecurringPlan,
 } from '@/lib/recurrence'
 import type { DayPlan } from '@/types/timeEntry'
-import type { BuddyCardDay } from '@/features/buddies/lib/schemas'
+import type {
+  BuddyCardDay,
+  BuddyPlanTimes,
+  BuddyTimeOfDay,
+} from '@/features/buddies/lib/schemas'
 
 /** Buddies see today through this many days ahead — never the past. */
 export const BUDDY_CARD_HORIZON_DAYS = 56
@@ -74,4 +78,41 @@ function recurringStartTime(
   const effective = getEffectiveStartTimeInMinutesForRecurringPlan(plan, date)
   if (plan.startTimeInMinutes !== undefined) return effective
   return effective === DEFAULT_START_TIME_IN_MINUTES ? undefined : effective
+}
+
+/**
+ * Where each part of the day starts, in minutes after midnight: the earliest a
+ * Plan shown that way is taken to start (morning from 6:00, though earlier
+ * Plans count as morning too).
+ */
+export const TIME_OF_DAY_START: Record<BuddyTimeOfDay, number> = {
+  m: 6 * 60,
+  a: 12 * 60,
+  e: 17 * 60,
+}
+
+export function timeOfDayFor(startTime: number): BuddyTimeOfDay {
+  if (startTime >= TIME_OF_DAY_START.e) return 'e'
+  if (startTime >= TIME_OF_DAY_START.a) return 'a'
+  return 'm'
+}
+
+/**
+ * The card's days as precisely as the User shares Plan times: exact start
+ * times, the part of the day in their place, or neither. Without a start time
+ * older apps show a Plan as anytime.
+ */
+export function withPlanTimes(
+  days: BuddyCardDay[],
+  times: BuddyPlanTimes
+): BuddyCardDay[] {
+  if (times === 'exact') return days
+  return days.map((day) => ({
+    d: day.d,
+    p: day.p.map(({ s, m }) =>
+      times === 'timeOfDay' && s !== undefined
+        ? { m, t: timeOfDayFor(s) }
+        : { m }
+    ),
+  }))
 }

@@ -1164,7 +1164,6 @@ const PlanDayForm = ({
                 chipsOnly
                 value={invitedBuddies}
                 onChange={setInvitedBuddies}
-                description={i18n.t('buddies_invitePlanDescription')}
                 replies={shareReplies}
               />
             ),

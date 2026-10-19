@@ -89,6 +89,7 @@ export function computeAlertVectors(): AlertVectors {
         key: toB64u(fromSam.contentKey),
         name: 'Sam',
         joinMuted: true,
+        badgeMuted: true,
       },
       {
         slot: fromZoe.slotId,
@@ -319,6 +320,15 @@ export function computeAlertVectors(): AlertVectors {
         badges: [{ c: 'yearRound', l: 2 }],
       }),
       context: { badgeAlerts: false },
+    },
+    {
+      name: 'new badge, muted here',
+      event: event(
+        31,
+        'badge.new',
+        { v: 1, badges: [{ c: 'yearRound', l: 2 }] },
+        fromSam
+      ),
     },
     {
       name: 'reaction',

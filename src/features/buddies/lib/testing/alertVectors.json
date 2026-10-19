@@ -8,7 +8,8 @@
         "slot": "D2MkFyqqS08nGwssVGHycg",
         "key": "cUsgbqIBN12QMyACOgwbFDhx3ahxvk6uegebvF3AY6o",
         "name": "Sam",
-        "joinMuted": true
+        "joinMuted": true,
+        "badgeMuted": true
       },
       {
         "slot": "meduitHQ0wAiWmWSNF4N6Q",
@@ -441,11 +442,22 @@
       }
     },
     {
+      "name": "new badge, muted here",
+      "event": {
+        "eventId": "n6ChoqOkpaanqKmqq6ytrg",
+        "kind": "badge.new",
+        "blob": "ARITFBUWFxgZGhscHRnqPl52ydf6dDEjmPe9T2UhsMRm1IHiN61t8vFmazezo2yqcptoei05NhhQrg8MTAuc8hlrYqS3fY4"
+      },
+      "outcome": {
+        "quiet": true
+      }
+    },
+    {
       "name": "reaction",
       "event": {
         "eventId": "kpOUlZaXmJmam5ydnp-goQ",
         "kind": "badge.reaction",
-        "blob": "ARITFBUWFxgZGhscHT_ksBkVKd4dyigFtnasJW8_drbWZU_eQaszoKjF45RDLHW3ZlZcraz0jB5j6jE824lqw6TzamDKSv7p-zu9dKX0DuR0sftZ-vz9kWg"
+        "blob": "ARMUFRYXGBkaGxwdHiAPxyeXI2oyj4eZIk9sQGvdVbknHgdpSPjzlTU50AODa9ox8C50bU5OMVf7R6QTULDkkdCqG4_PobInswZxFDt4p6uhC51N0FXjGlg"
       },
       "outcome": {
         "alert": {
@@ -467,7 +479,7 @@
       "event": {
         "eventId": "k5SVlpeYmZqbnJ2en6Chog",
         "kind": "plan.invite",
-        "blob": "ARMUFRYXGBkaGxwdHlGwMWjWljScRJBW7b84Oiw-UsSvpn_YW_m5FcuQsgMekQ8FP-vYYaJ8rmxtyAFXZA6EhYEWsEKWhM74IDmRE8Va2Vw2ebtQGjeiivVpOJs-G94tJVrO0gejbjobL2WutLbjF_qSBWF4cBsBbvcDvJSp_ZY8gMnA55466ik9d7DZOmrAxbDBxvyzNWnP68VS5pimCVk4PSRWX-o39OsQJ7PDgvQ_3C-cFrb9HPwzqeE3B2dVaW1v9kIRimtNc_G2xbQaE2uu_nJm3VUh6WjXqIXicgPmIiL99nPNXYAEt0oAxttA6uUQokr4Thix29sGTdBAc7WlC6BBpqxN",
+        "blob": "ARQVFhcYGRobHB0eH_HrUT2Zxht7Dnaf9pWPl_TJwvOdoQpmSbccfN5prKd_cNQMfE1Z-IxxZwtgBtETvO_hm2_78AODbQtw0UADoUk-Oix5UFEa0xe09j3pQB2nO881B2LYxbczvG8_KySu3VTeWTdI6Kxqq3UGc-xIefgkW3PI0CXNFRlBlAzVCXvZtY929pCS2I52UTXdx4NZWV5v7fwdnec8JZKIYz7gyuVoZxV1SySjePIIyw-BuCfxZQBWjypG7dXGNElE7t7hsuQPU08ph_nc_GiF-bcGHZef_W36uTNm_Sk1JUV36O_Uxf0J3l1bVie1-jcEacoO3nQIJD-7-LZn28sE",
         "slotId": "D2MkFyqqS08nGwssVGHycg"
       },
       "outcome": {
@@ -492,7 +504,7 @@
       "event": {
         "eventId": "lJWWl5iZmpucnZ6foKGiow",
         "kind": "plan.invite",
-        "blob": "ARQVFhcYGRobHB0eH6EYmse_es6UfyKxW4WzEHz7tqZY5CX7Q2p_L85wCdWQpBl8nqUtPOzbxb0oX_vf9b4z3wzzJknC2EFjXH7Li39yx_DjeRNepiJG1hPICljgDe7Cx3nlLXckdTjvtBhnNqk3n1Fay1mpTpZWYCIjyOGvs5bVubjFKIloE6ovZIExNnaOvHx8c2FLtE2_kbBI6xxJpI46pWduBBg_zZ4H2n4s5yOihEDf1UFTypVUFRRlK9JMVTh8OAwFSbxfwGRi0HkYvpKnTtGnc75xAFZw7iQkBHECRO4Ui1_7UuxdwAJON9q4oW9XKNA14wBs3zKRdQMlOMi1w5Krux1L",
+        "blob": "ARUWFxgZGhscHR4fIJhznf2HiPap2vSQ4MZ1tDuhsGHPJ0MVeWEgsMgdl0Aa-Fy8IIt2IX0ozOL81NRHVkz21WyFR-Tf3ku0U7zsy4RVZz4IoXseFKcn2gJ8FXuPwhZyTmLvZt7cMy_HOlJu-yvUOc4rt5Ab7fOqIJdf9SIB3SEUev97MKG23gos1zGDrNg6fOLMEcjzk7U7INA0Za-Obu4X86qYAzuYxUIEYacMPA0XZ0Kwo7WVEoDvxOaBNeKGDoJHEqbHeGRKxLGK7DVfU6s2h61ey5expS0r95_vrsqs2v4CUloC7bx3YDH5_3W3R0IHxyp7PUJKRrWA9uuCljVZfq3neu7c",
         "slotId": "D2MkFyqqS08nGwssVGHycg"
       },
       "outcome": {
@@ -515,7 +527,7 @@
       "event": {
         "eventId": "lZaXmJmam5ydnp-goaKjpA",
         "kind": "plan.joined",
-        "blob": "ARUWFxgZGhscHR4fIJhznf2HiKcpxANkCn0ugoGWRNjr1xWF"
+        "blob": "ARYXGBkaGxwdHh8gIXHhcJuDJNYi2WUYFLQ-caaUYP2nBvi7"
       },
       "outcome": {
         "failed": "unknownKind"
@@ -526,7 +538,7 @@
       "event": {
         "eventId": "lpeYmZqbnJ2en6ChoqOkpQ",
         "kind": "plan.invite",
-        "blob": "ARYXGBkaGxwdHh8gIXHhcJuDJ4d4TXQ1Vo5UMJ80_M8beUa9CxrOzKzUGRS8Z1NDmElAsE7uZjhpam6I9WEtJpnO"
+        "blob": "ARcYGRobHB0eHyAhIkQkmuWd3-vBDlPc3L3t3LHKXqE4bSIYrhs3WIHCy2rq1kwDJ47dPlX2QevX85r5Lz4AusuT"
       },
       "outcome": {
         "failed": "unreadable"
@@ -537,7 +549,7 @@
       "event": {
         "eventId": "l5iZmpucnZ6foKGio6Slpg",
         "kind": "badge.new",
-        "blob": "ARcYGRobHB0eHyAhIlFpmOfNnqiNvshP89LGe8_v7kh3kYpSnQ"
+        "blob": "ARgZGhscHR4fICEiI-SiHoRmUe9pkanMqkywbA4Ycwj2eGWXaQ"
       },
       "outcome": {
         "failed": "unreadable"

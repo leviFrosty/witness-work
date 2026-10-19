@@ -12,6 +12,7 @@ import {
   type RecurringPlan,
 } from '@/lib/recurrence'
 import type { DayPlan } from '@/types/timeEntry'
+import { TIME_OF_DAY_START } from '@/features/buddies/lib/card'
 import type { BuddyCardDay, ShareDetails } from '@/features/buddies/lib/schemas'
 import {
   JOIN_REQUEST_LEAD_MS,
@@ -78,7 +79,10 @@ export function joinRequestStatus(
   )
   if (request)
     return { kind: 'asked', request, unsent: joinRequestUnsent(request) }
-  const expiresAt = joinRequestExpiry(d, plan.s)
+  const expiresAt = joinRequestExpiry(
+    d,
+    plan.s ?? (plan.t ? TIME_OF_DAY_START[plan.t] : undefined)
+  )
   if (expiresAt - now < JOIN_REQUEST_LEAD_MS) return { kind: 'none' }
   const open = live.filter((candidate) => candidate.to === to)
   if (open.length >= MAX_OPEN_JOIN_REQUESTS) return { kind: 'none' }
@@ -87,20 +91,31 @@ export function joinRequestStatus(
 
 /**
  * The owner's Plan a request is about: what counts that day at the requested
- * start, else the day's only Plan. Plans that follow someone else's invitation
- * count too, since they're on the Buddy Card the buddy saw.
+ * start, else the day's only Plan, else its only Plan of the requested length.
+ * Plans that follow someone else's invitation count too, since they're on the
+ * Buddy Card the buddy saw.
  */
 export function findJoinRequestPlan(
-  request: Pick<IncomingJoinRequest, 'd' | 's'>,
+  request: Pick<IncomingJoinRequest, 'd' | 's' | 'm'>,
   dayPlans: DayPlan[],
   recurringPlans: RecurringPlan[]
 ): PlannedDayContribution | undefined {
   const day = moment(request.d, 'YYYY-MM-DD').toDate()
   const contributions = plansOnDay(request.d, dayPlans, recurringPlans)
+  const sameLength =
+    request.s === undefined
+      ? contributions.filter(
+          (contribution) => Math.round(contribution.minutes) === request.m
+        )
+      : []
   return (
     contributions.find(
       (contribution) => contributionStart(contribution, day) === request.s
-    ) ?? (contributions.length === 1 ? contributions[0] : undefined)
+    ) ??
+    (contributions.length === 1 ? contributions[0] : undefined) ??
+    // Asked without a start time (this User shares days or the time of day
+    // only): the day's only Plan of that length.
+    (sameLength.length === 1 ? sameLength[0] : undefined)
   )
 }
 

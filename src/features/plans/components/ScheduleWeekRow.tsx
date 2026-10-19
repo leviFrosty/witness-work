@@ -9,7 +9,9 @@ import CalendarDay from '@/components/CalendarDay'
 import useTheme from '@/contexts/theme'
 import type { RecurringPlan } from '@/lib/recurrence'
 import type { DayPlan, TimeEntry } from '@/types/timeEntry'
-import BuddyDayBadge from '@/features/buddies/components/BuddyDayBadge'
+import BuddyDayBadge, {
+  buddyDayMarkerLabel,
+} from '@/features/buddies/components/BuddyDayBadge'
 import type { BuddyDayMarker } from '@/features/buddies/lib/calendarMarkers'
 import type { ScheduleDayIndex } from '@/features/plans/lib/scheduleDayIndex'
 import {
@@ -180,6 +182,9 @@ function DayCell({
           viewMode='auto'
           onPress={() => onPressDay(date)}
           overlay={marker ? <BuddyDayBadge marker={marker} /> : undefined}
+          overlayAccessibilityLabel={
+            marker ? buddyDayMarkerLabel(marker) : undefined
+          }
         />
       </View>
       {rule ? (

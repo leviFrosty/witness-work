@@ -1,4 +1,4 @@
-import { parsePhoneNumber } from 'awesome-phonenumber'
+import { parsePhoneNumber } from '@/lib/parsePhoneNumber'
 import { formatRelative } from '@/lib/dates'
 import { compareText } from '@/lib/collation'
 import { Contact } from '@/types/contact'

@@ -8,7 +8,7 @@ import {
 } from 'lucide-react-native'
 import moment from 'moment'
 import { View } from 'react-native'
-import { parsePhoneNumber } from 'awesome-phonenumber'
+import { parsePhoneNumber } from '@/lib/parsePhoneNumber'
 import { getLocales } from 'expo-localization'
 import { useNavigation } from '@react-navigation/native'
 import useTheme from '@/contexts/theme'

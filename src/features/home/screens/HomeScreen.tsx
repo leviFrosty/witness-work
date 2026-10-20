@@ -4,7 +4,7 @@ import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
 import useRevealAboveSheet from '@/hooks/useRevealAboveSheet'
 import useHideBarsOnScroll from '@/hooks/useHideBarsOnScroll'
 import ScrollAwayHeader from '@/components/ui/ScrollAwayHeader'
-import { ReactNode, useState } from 'react'
+import { ComponentProps, ReactNode, useState } from 'react'
 import ApproachingConversations from '@/features/visits/components/ApproachingConversations'
 import { Pressable, RefreshControl, View } from 'react-native'
 import { iCloudSync } from '@/app/sync/iCloudSync'
@@ -42,8 +42,8 @@ import TodayRouteAction from '@/features/route-planning/components/TodayRouteAct
 import TodayRouteEntry from '@/features/route-planning/components/TodayRouteEntry'
 import MileagePromptCard from '@/features/mileage/components/MileagePromptCard'
 import MileageHomeSection from '@/features/mileage/components/MileageHomeSection'
-import PetPromptCard from '@/features/pet/components/PetPromptCard'
-import PetHomeSection from '@/features/pet/components/PetHomeSection'
+import type PetPromptCardComponent from '@/features/pet/components/PetPromptCard'
+import type PetHomeSectionComponent from '@/features/pet/components/PetHomeSection'
 import { petHomeSlot } from '@/features/pet/lib/homeSlot'
 import usePet from '@/stores/pet'
 import usePetVisitor from '@/app/pet/usePetVisitor'
@@ -476,4 +476,20 @@ export const HomeScreen = ({ header }: { header: ReactNode }) => {
       />
     </View>
   )
+}
+
+/**
+ * The pet's slot draws with Skia. Its cards are required the first time the
+ * slot shows one, so a Home without the pet doesn't set Skia up at launch.
+ */
+function PetPromptCard() {
+  const Card: typeof PetPromptCardComponent =
+    require('@/features/pet/components/PetPromptCard').default
+  return <Card />
+}
+
+function PetHomeSection(props: ComponentProps<typeof PetHomeSectionComponent>) {
+  const Section: typeof PetHomeSectionComponent =
+    require('@/features/pet/components/PetHomeSection').default
+  return <Section {...props} />
 }

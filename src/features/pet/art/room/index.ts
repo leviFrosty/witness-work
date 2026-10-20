@@ -11,9 +11,11 @@
 import { createBuffer, createLru, type PixelBuffer } from '@/lib/pixelArt'
 import {
   DEFAULT_ROOM,
+  HAT_IDS,
   roomItemId,
   STARTER_ROOM_ITEMS,
   UNLOCK_ORDER,
+  type HatId,
   type PetRoomSettings,
   type RoomItemId,
 } from '@/types/pet'
@@ -110,6 +112,7 @@ export const ROOM_PARTS = {
   shelf: unlockable<ShelfId>('shelf', SHELF_IDS),
   lamp: unlockable<LampId>('lamp', LAMP_IDS),
   sign: free<SignId>(SIGN_IDS),
+  hat: unlockable<HatId>('hat', HAT_IDS),
 } as const
 
 export type RoomPartId = keyof typeof ROOM_PARTS
@@ -140,6 +143,8 @@ export interface ResolvedRoom {
   readonly shelf: ShelfId
   readonly lamp: LampId
   readonly sign: SignId
+  /** Worn by the pet, not part of the room base; absent is none. */
+  readonly hat?: HatId
 }
 
 /** Resolves `live` window settings with the caller's current time and season. */
@@ -158,6 +163,7 @@ export function resolveRoom(
     shelf: config.shelf,
     lamp: config.lamp,
     sign: config.sign,
+    hat: config.hat,
   }
 }
 

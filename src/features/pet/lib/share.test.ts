@@ -1,10 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import { pixelAt } from '@/lib/pixelArt'
 import { DEMO_SIGN_DATA, VIEW_CARD, type PlayerInput } from '@/features/pet/art'
+import type { ServiceStreak } from '@/lib/serviceStreak'
 import {
   PET_SHARE_SCALE,
   petShareFileName,
   petShareImage,
+  petShareStats,
 } from '@/features/pet/lib/share'
 
 const INPUT: PlayerInput = {
@@ -54,5 +56,36 @@ describe('sharing the pet', () => {
           expect(pixelAt(image, x + i, y + j)).toEqual(pixelAt(image, x, y))
     // A still: the same input draws the same picture.
     expect(petShareImage(INPUT).data).toEqual(image.data)
+  })
+
+  it('draws bigger on request, still with square pixels', () => {
+    const image = petShareImage(INPUT, 8)
+    expect(image.width).toBe(VIEW_CARD[2] * 8)
+    expect(pixelAt(image, 7, 7)).toEqual(pixelAt(image, 0, 0))
+  })
+
+  it('lists the streak, the days together and the hats on the card', () => {
+    const streak = { kind: 'plans', count: 12 } as ServiceStreak
+    const base = {
+      adoptedOn: '2026-10-01',
+      today: '2026-10-20',
+      streak,
+      showStreaks: true,
+      unlocked: new Set(['hat:none', 'hat:bow', 'hat:cap', 'bed:hay']),
+    }
+    expect(petShareStats(base)).toEqual({
+      streak: { kind: 'plans', count: 12 },
+      daysTogether: 20,
+      hats: 2,
+    })
+    // Adopted today: the first day together.
+    expect(
+      petShareStats({ ...base, adoptedOn: '2026-10-20' }).daysTogether
+    ).toBe(1)
+    // A hidden or too-short streak isn't shown.
+    expect(petShareStats({ ...base, showStreaks: false }).streak).toBeNull()
+    expect(
+      petShareStats({ ...base, streak: { ...streak, count: 2 } }).streak
+    ).toBeNull()
   })
 })

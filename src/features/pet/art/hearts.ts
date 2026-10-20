@@ -3,6 +3,7 @@
  * muted middle column) or empty, in red or gold.
  */
 import {
+  blit,
   createBuffer,
   mix,
   rgb,
@@ -57,4 +58,18 @@ export function heartIcon(fill: number, gold = false): PixelBuffer {
 /** Fill of each of five hearts for a hearts value 0–5 (halves allowed). */
 export function heartFills(hearts: number): number[] {
   return [0, 1, 2, 3, 4].map((i) => Math.max(0, Math.min(1, hearts - i)))
+}
+
+/** Pixels between hearts in a row. */
+const ROW_GAP = 1
+/** Width of a row of five hearts. */
+export const HEARTS_ROW_W = HEART_ICON_W * 5 + ROW_GAP * 4
+
+/** Five hearts for `hearts` (halves allowed) in one picture, red or gold. */
+export function heartsRow(hearts: number, gold = false): PixelBuffer {
+  const row = createBuffer(HEARTS_ROW_W, HEART_ICON_H)
+  heartFills(hearts).forEach((fill, i) =>
+    blit(row, heartIcon(fill, gold), i * (HEART_ICON_W + ROW_GAP), 0)
+  )
+  return row
 }

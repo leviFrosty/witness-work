@@ -36,6 +36,14 @@ export const addDays = (key: string, days: number): string =>
 export const daysBetween = (from: string, to: string): number =>
   dayNumber(to) - dayNumber(from)
 
+/** The day number of the last day of the month after `key`'s month. */
+export function lastDayOfNextMonth(key: string): number {
+  const match = DAY_KEY.exec(key)
+  if (!match) return NaN
+  // Day 0 of the month after next is the last day of the next month.
+  return Date.UTC(Number(match[1]), Number(match[2]) + 1, 0) / MS_PER_DAY
+}
+
 const pad2 = (n: number) => (n < 10 ? `0${n}` : String(n))
 
 /**

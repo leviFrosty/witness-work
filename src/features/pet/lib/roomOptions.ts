@@ -22,6 +22,7 @@ import {
 
 /** The sheet's tabs, in order. `lamp` is labelled "Light". */
 export const ROOM_TABS = [
+  'hat',
   'window',
   'wall',
   'floor',
@@ -43,6 +44,7 @@ export type RoomChoicePart =
   | 'shelf'
   | 'lamp'
   | 'sign'
+  | 'hat'
 
 export type RoomChoiceSection = {
   part: RoomChoicePart
@@ -141,10 +143,12 @@ export const ROOM_THUMB_VIEWS: Readonly<Record<RoomChoicePart, Viewport>> = {
   shelf: [67, 10, 48, 30],
   lamp: [92, 47, 80, 50],
   sign: [115, 2, 64, 40],
+  hat: [44, 44, 48, 30],
 }
 
-/** Whether the pet sits in `part`'s thumbnails (only the bed's frame it). */
-export const thumbShowsPet = (part: RoomChoicePart): boolean => part === 'bed'
+/** Whether the pet sits in `part`'s thumbnails (the bed's and the hat's). */
+export const thumbShowsPet = (part: RoomChoicePart): boolean =>
+  part === 'bed' || part === 'hat'
 
 /** Whether `option` of `part` can be picked now. */
 export function isRoomChoiceUnlocked(

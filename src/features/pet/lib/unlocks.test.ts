@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  HAT_THRESHOLDS,
   isRoomOptionUnlocked,
   nextUnlockIn,
   roomItemsEarnedBy,
@@ -11,12 +12,20 @@ import {
   unlockStreakFor,
 } from '@/features/pet/lib/unlocks'
 import {
+  HAT_UNLOCK_ORDER,
   ROOM_PART_OPTIONS,
   STARTER_ROOM_ITEMS,
   UNLOCK_ORDER,
   type PetRecord,
   type UnlockableRoomPart,
 } from '@/types/pet'
+
+/** The room items of a list, without hats. */
+const roomOnly = (items: readonly string[]) =>
+  items.filter((item) => !item.startsWith('hat:'))
+/** The hats of a list. */
+const hatsOnly = (items: readonly string[]) =>
+  items.filter((item) => item.startsWith('hat:'))
 
 describe('room unlocks', () => {
   it('lists every unlockable option once, starters or in the order', () => {
@@ -26,7 +35,7 @@ describe('room unlocks', () => {
     const every = parts.flatMap((part) =>
       ROOM_PART_OPTIONS[part].map((option) => `${part}:${option}`)
     )
-    const listed = [...STARTER_ROOM_ITEMS, ...UNLOCK_ORDER]
+    const listed = [...STARTER_ROOM_ITEMS, ...UNLOCK_ORDER, ...HAT_UNLOCK_ORDER]
     expect(new Set(listed).size).toBe(listed.length)
     expect([...listed].sort()).toEqual([...every].sort())
   })
@@ -49,6 +58,23 @@ describe('room unlocks', () => {
     }
   )
 
+  it('has at least twelve hats: three quick ones, then slower', () => {
+    expect(HAT_UNLOCK_ORDER.length).toBeGreaterThanOrEqual(12)
+    for (const item of HAT_UNLOCK_ORDER) expect(item).toMatch(/^hat:/)
+    expect(HAT_THRESHOLDS.plans.slice(0, 3)).toEqual([3, 5, 9])
+    for (const counts of Object.values(HAT_THRESHOLDS)) {
+      expect(counts).toHaveLength(HAT_UNLOCK_ORDER.length)
+      for (let i = 1; i < counts.length; i++)
+        expect(counts[i]).toBeGreaterThanOrEqual(counts[i - 1])
+    }
+    // After the three gimmes, each step is longer than the one before it.
+    const plans = HAT_THRESHOLDS.plans
+    for (let i = 4; i < plans.length; i++)
+      expect(plans[i] - plans[i - 1]).toBeGreaterThanOrEqual(
+        plans[i - 1] - plans[i - 2]
+      )
+  })
+
   it('grows by streak only while there is a streak to grow', () => {
     expect(
       unlockMode({ showStreaks: true, kind: 'plans', hasPlans: true })
@@ -70,7 +96,7 @@ describe('room unlocks', () => {
 
   it('earns the items whose threshold the streak reaches, by kind', () => {
     const plans = (count: number) =>
-      roomItemsEarnedBy({ mode: 'streak', kind: 'plans', count })
+      roomOnly(roomItemsEarnedBy({ mode: 'streak', kind: 'plans', count }))
     expect(plans(0)).toEqual([])
     expect(plans(1)).toEqual([UNLOCK_ORDER[0]])
     expect(plans(6)).toEqual(UNLOCK_ORDER.slice(0, 4))
@@ -79,20 +105,45 @@ describe('room unlocks', () => {
     expect(plans(120)).toEqual(UNLOCK_ORDER)
 
     const months = (count: number) =>
-      roomItemsEarnedBy({ mode: 'streak', kind: 'months', count })
+      roomOnly(roomItemsEarnedBy({ mode: 'streak', kind: 'months', count }))
     expect(months(1)).toEqual(UNLOCK_ORDER.slice(0, 1))
     expect(months(2)).toEqual(UNLOCK_ORDER.slice(0, 3))
     expect(months(6)).toEqual(UNLOCK_ORDER.slice(0, 10))
     expect(months(12)).toEqual(UNLOCK_ORDER)
   })
 
+  it('earns hats on their own counts, after the room items', () => {
+    const plans = (count: number) =>
+      roomItemsEarnedBy({ mode: 'streak', kind: 'plans', count })
+    expect(hatsOnly(plans(2))).toEqual([])
+    expect(hatsOnly(plans(3))).toEqual(['hat:bow'])
+    expect(hatsOnly(plans(9))).toEqual(HAT_UNLOCK_ORDER.slice(0, 3))
+    expect(hatsOnly(plans(120))).toEqual(HAT_UNLOCK_ORDER)
+    expect(plans(9)).toEqual([
+      ...UNLOCK_ORDER.slice(0, 5),
+      ...HAT_UNLOCK_ORDER.slice(0, 3),
+    ])
+    const months = (count: number) =>
+      hatsOnly(roomItemsEarnedBy({ mode: 'streak', kind: 'months', count }))
+    expect(months(1)).toEqual(HAT_UNLOCK_ORDER.slice(0, 3))
+    expect(months(12)).toEqual(HAT_UNLOCK_ORDER)
+  })
+
   it('earns one item per active month in months mode', () => {
     const byMonths = (activeMonths: number) =>
       roomItemsEarnedBy({ mode: 'months', activeMonths })
     expect(byMonths(0)).toEqual([])
-    expect(byMonths(3)).toEqual(UNLOCK_ORDER.slice(0, 3))
-    expect(byMonths(100)).toEqual(UNLOCK_ORDER)
+    expect(roomOnly(byMonths(3))).toEqual(UNLOCK_ORDER.slice(0, 3))
+    expect(roomOnly(byMonths(100))).toEqual(UNLOCK_ORDER)
     expect(byMonths(-2)).toEqual([])
+    // The first three hats come with the first active month.
+    expect(hatsOnly(byMonths(1))).toEqual(HAT_UNLOCK_ORDER.slice(0, 3))
+    // Then one more each active month.
+    for (let month = 2; month <= 10; month++)
+      expect(hatsOnly(byMonths(month))).toEqual(
+        HAT_UNLOCK_ORDER.slice(0, month + 2)
+      )
+    expect(hatsOnly(byMonths(100))).toEqual(HAT_UNLOCK_ORDER)
   })
 
   it('reads the stored items, none for an older or damaged record', () => {
@@ -146,6 +197,11 @@ describe('room unlocks', () => {
     expect(unlockStreakFor(UNLOCK_ORDER.at(-1)!, 'plans')).toBe(120)
     expect(unlockStreakFor(UNLOCK_ORDER.at(-1)!, 'months')).toBe(12)
     expect(unlockStreakFor('floor:marble', 'plans')).toBeNull()
+    expect(unlockStreakFor('hat:none', 'plans')).toBe(0)
+    expect(unlockStreakFor('hat:cap', 'plans')).toBe(5)
+    expect(unlockStreakFor('hat:tophat', 'plans')).toBe(120)
+    expect(unlockStreakFor('hat:cap', 'months')).toBe(1)
+    expect(unlockStreakFor('hat:crown', 'plans')).toBeNull()
   })
 
   it('says how many active months until an item unlocks', () => {
@@ -155,6 +211,9 @@ describe('room unlocks', () => {
     expect(nextUnlockIn(UNLOCK_ORDER[4], 2)).toBe(3)
     expect(nextUnlockIn(UNLOCK_ORDER.at(-1)!, 0)).toBe(UNLOCK_ORDER.length)
     expect(nextUnlockIn('floor:marble', 0)).toBeNull()
+    expect(nextUnlockIn('hat:bow', 0)).toBe(1)
+    expect(nextUnlockIn('hat:beanie', 1)).toBe(0)
+    expect(nextUnlockIn('hat:tophat', 2)).toBe(8)
   })
 
   it('keeps the window and sign free', () => {
@@ -163,5 +222,7 @@ describe('room unlocks', () => {
     expect(isRoomOptionUnlocked('window', 'night', unlocked)).toBe(true)
     expect(isRoomOptionUnlocked('floor', 'wood', unlocked)).toBe(true)
     expect(isRoomOptionUnlocked('floor', 'tile', unlocked)).toBe(false)
+    expect(isRoomOptionUnlocked('hat', 'none', unlocked)).toBe(true)
+    expect(isRoomOptionUnlocked('hat', 'bow', unlocked)).toBe(false)
   })
 })

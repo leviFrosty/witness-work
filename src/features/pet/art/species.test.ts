@@ -41,6 +41,7 @@ describe('species registry', () => {
       'tuxedo',
       'calico',
       'siamese',
+      'tortoiseshell',
     ])
     for (const id of ['lion', 'donkey', 'lamb'] as const)
       expect(coatIdsFor(id)).toEqual(['default'])

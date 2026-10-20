@@ -1,7 +1,8 @@
 /**
- * Kitten: pointed ears, curled tail of five segments, seven coats. Patterned
- * coats (tuxedo bib, calico patches, siamese mask) are paint layers clipped to
- * the shapes' kinds (`head`, `ear`, `body`, `muzzle`).
+ * Kitten: pointed ears, curled tail of five segments, eight coats. Patterned
+ * coats (tuxedo bib, calico patches, siamese mask, tortoiseshell mottling and
+ * blaze) are paint layers clipped to the shapes' kinds (`head`, `ear`, `body`,
+ * `muzzle`).
  */
 import {
   dim,
@@ -52,6 +53,11 @@ const PATCH_BLACK = rgb('#3a353d')
 const PATCH_BLACK_SHADE = rgb('#27232a')
 const MASK = rgb('#73553f')
 const MASK_SHADE = rgb('#5d4335')
+const TORTIE_RUST = rgb('#8a4f2e')
+const TORTIE_RUST_SHADE = rgb('#6c3b22')
+const TORTIE_RUST_LIGHT = rgb('#a8673e')
+const TORTIE_GINGER = rgb('#c7864a')
+const TORTIE_GINGER_SHADE = rgb('#a56a36')
 
 export const cat = defineSpecies<'cat', CatCoat>({
   id: 'cat',
@@ -222,6 +228,78 @@ export const cat = defineSpecies<'cat', CatCoat>({
         },
       ],
       swatch: ['#efe3cf', '#5d4335'],
+    },
+    tortoiseshell: {
+      ...rgbPalette({
+        f: '#3a2f2c',
+        fs: '#28201f',
+        fh: '#52423b',
+        l: '#5a4134',
+        in: '#b07a74',
+        n: '#4e3a36',
+        wh: '#c9b8a8',
+        tl: '#3a2f2c',
+        tt: '#8a4f2e',
+        iris: '#c9b04a',
+        ec: '#cfc6d6',
+        mc: '#a69dae',
+      }),
+      paints: (b) => [
+        {
+          t: 'p',
+          pts: [
+            [15.5, 6 + b],
+            [16.5, 6 + b],
+            [16.6, 12.5 + b],
+            [15.4, 12.5 + b],
+          ],
+          c: TORTIE_RUST_LIGHT,
+          s: TORTIE_RUST,
+          on: ['head'],
+        },
+        {
+          t: 'e',
+          x: 9.6,
+          y: 10 + b,
+          rx: 2.6,
+          ry: 2.2,
+          c: TORTIE_RUST,
+          s: TORTIE_RUST_SHADE,
+          on: ['head', 'ear'],
+        },
+        {
+          t: 'e',
+          x: 22.8,
+          y: 17 + b,
+          rx: 2.2,
+          ry: 1.8,
+          c: TORTIE_GINGER,
+          s: TORTIE_GINGER_SHADE,
+          on: ['head'],
+        },
+        {
+          t: 'e',
+          x: 12.5,
+          y: 22.5,
+          rx: 4,
+          ry: 2.6,
+          c: TORTIE_RUST,
+          s: TORTIE_RUST_SHADE,
+          h: TORTIE_RUST_LIGHT,
+          on: ['body'],
+        },
+        {
+          t: 'e',
+          x: 21,
+          y: 26,
+          rx: 2.4,
+          ry: 2,
+          c: TORTIE_GINGER,
+          s: TORTIE_GINGER_SHADE,
+          on: ['body'],
+        },
+      ],
+      swatch: ['#3a2f2c', '#8a4f2e', '#c7864a'],
     },
   },
   build(st, C) {

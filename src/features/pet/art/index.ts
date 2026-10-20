@@ -5,6 +5,7 @@
  * Coordinates: a 180 × 100 scene (see `layout.ts`) with 32 × 32 pet sprites
  * resting at (52, 52).
  */
+export * from './hats'
 export * from './hearts'
 export * from './layout'
 export * as particles from './particles'

@@ -33,7 +33,7 @@ import useTheme from '@/contexts/theme'
 import BadgeViewCoin from '@/features/badges/components/badge-view/BadgeViewCoin'
 import BadgeViewDetails from '@/features/badges/components/badge-view/BadgeViewDetails'
 import BadgeViewStatus from '@/features/badges/components/badge-view/BadgeViewStatus'
-import BadgeWordmark from '@/features/badges/components/badge-view/BadgeWordmark'
+import AppWordmark from '@/components/AppWordmark'
 import useBadgeSurface from '@/features/badges/hooks/useBadgeSurface'
 import { nextLevel } from '@/features/badges/lib/badgeText'
 import useUser from '@/hooks/useUser'
@@ -534,7 +534,7 @@ function BadgeViewContent({
                   {footer}
                 </View>
               ) : null}
-              <BadgeWordmark />
+              <AppWordmark />
             </Animated.View>
             {geometry ? (
               <Animated.View

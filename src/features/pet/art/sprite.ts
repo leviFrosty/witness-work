@@ -98,6 +98,13 @@ const GREY_T: Record<Exclude<GreyMode, 'none'>, number> = {
   full: 0.88,
 }
 
+/** `px` greyed as `grey` asks (itself for `none`). */
+export function greyed(px: PixelBuffer, grey: GreyMode): PixelBuffer {
+  if (grey === 'none') return px
+  const t = GREY_T[grey]
+  return mapColors(px, (c) => greyOf(c, t))
+}
+
 /** Grey mode for a mood: full for a pet that died, partial when weak. */
 export function greyModeFor(mood: PetMood): GreyMode {
   return mood === 'dead' ? 'full' : mood === 'weak' ? 'weak' : 'none'
@@ -144,12 +151,7 @@ export function petSprite(
     )
     if (pose.lie) px = lieDown(px)
     if (pose.flip) px = flipH(px)
-    const grey = pose.grey ?? 'none'
-    if (grey !== 'none') {
-      const t = GREY_T[grey]
-      px = mapColors(px, (c) => greyOf(c, t))
-    }
-    return px
+    return greyed(px, pose.grey ?? 'none')
   })
 }
 

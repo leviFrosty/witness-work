@@ -16,7 +16,16 @@ export type PetSpeciesId = PetSpecies
 export const PET_COAT_IDS = {
   lion: ['default'],
   dog: ['gold', 'white', 'liver', 'black'],
-  cat: ['orange', 'grey', 'black', 'white', 'tuxedo', 'calico', 'siamese'],
+  cat: [
+    'orange',
+    'grey',
+    'black',
+    'white',
+    'tuxedo',
+    'calico',
+    'siamese',
+    'tortoiseshell',
+  ],
   donkey: ['default'],
   lamb: ['default'],
 } as const satisfies Record<PetSpecies, readonly string[]>
@@ -99,12 +108,32 @@ export const WALL_PATTERNS = ['plain', 'dots', 'stripes', 'trellis'] as const
 export type WallPattern = (typeof WALL_PATTERNS)[number]
 export const FLOOR_IDS = ['wood', 'stone', 'brick', 'tile'] as const
 export type FloorId = (typeof FLOOR_IDS)[number]
-export const BED_IDS = ['rug', 'cushion', 'basket', 'hay'] as const
+export const BED_IDS = ['rug', 'hay', 'basket', 'cushion'] as const
 export type BedId = (typeof BED_IDS)[number]
 export const SHELF_IDS = ['scrolls', 'books', 'pottery', 'fruit'] as const
 export type ShelfId = (typeof SHELF_IDS)[number]
 export const LAMP_IDS = ['clay', 'lantern', 'candle', 'stand'] as const
 export type LampId = (typeof LAMP_IDS)[number]
+/**
+ * The pet's hats, `none` first. Worn by the pet, stored with the room's other
+ * choices (`PetRoomRecord.hat`) so Decorate Room's model covers them too.
+ */
+export const HAT_IDS = [
+  'none',
+  'bow',
+  'cap',
+  'beanie',
+  'flowers',
+  'bucket',
+  'beret',
+  'sunhat',
+  'hardhat',
+  'fedora',
+  'cowboy',
+  'safari',
+  'tophat',
+] as const
+export type HatId = (typeof HAT_IDS)[number]
 export const SIGN_IDS = [
   'none',
   'month',
@@ -129,6 +158,7 @@ export const ROOM_PART_OPTIONS = {
   shelf: SHELF_IDS,
   lamp: LAMP_IDS,
   sign: SIGN_IDS,
+  hat: HAT_IDS,
 } as const
 
 export type RoomPart = keyof typeof ROOM_PART_OPTIONS
@@ -157,16 +187,18 @@ export const STARTER_ROOM_ITEMS: readonly RoomItemId[] = [
   'bed:rug',
   'shelf:scrolls',
   'lamp:clay',
+  'hat:none',
 ]
 
 /**
  * Every non-starter item, in the order they unlock: at rising Service Streak
  * counts (`STREAK_THRESHOLDS` in `src/features/pet/lib/unlocks.ts`), or one per
  * active month since adoption while the User has no streak to grow. Parts take
- * turns so each unlock changes something different.
+ * turns so each unlock changes something different. Hats have their own order,
+ * {@link HAT_UNLOCK_ORDER}.
  */
 export const UNLOCK_ORDER: readonly RoomItemId[] = [
-  'bed:cushion',
+  'bed:hay',
   'wallColor:sage',
   'shelf:books',
   'lamp:lantern',
@@ -178,11 +210,31 @@ export const UNLOCK_ORDER: readonly RoomItemId[] = [
   'lamp:candle',
   'floor:brick',
   'wallPattern:trellis',
-  'bed:hay',
+  'bed:cushion',
   'wallColor:rose',
   'shelf:fruit',
   'lamp:stand',
   'floor:tile',
+]
+
+/**
+ * Every hat but `none`, in the order they unlock, on their own counts
+ * (`HAT_THRESHOLDS` in `src/features/pet/lib/unlocks.ts`): three come quickly,
+ * the rest take longer.
+ */
+export const HAT_UNLOCK_ORDER: readonly RoomItemId[] = [
+  'hat:bow',
+  'hat:cap',
+  'hat:beanie',
+  'hat:flowers',
+  'hat:bucket',
+  'hat:beret',
+  'hat:sunhat',
+  'hat:hardhat',
+  'hat:fedora',
+  'hat:cowboy',
+  'hat:safari',
+  'hat:tophat',
 ]
 
 // --- Records ---------------------------------------------------------------
@@ -215,9 +267,10 @@ export interface PetRecord {
    */
   seed?: string
   /**
-   * Non-starter room items earned so far, once each, in `UNLOCK_ORDER` order
-   * (`keptRoomItems`), so an item never locks again. Ids from a newer build are
-   * kept, after the known ones. Absent on pets from before it existed: none.
+   * Non-starter room items and hats earned so far, once each: room items in
+   * `UNLOCK_ORDER` order, then hats and ids from a newer build, sorted
+   * (`keptRoomItems`), so an item never locks again. Absent on pets from before
+   * it existed: none.
    */
   earnedRoomItems?: string[]
   updatedAt: number
@@ -235,11 +288,21 @@ export interface PetRoomRecord {
   shelf: ShelfId
   lamp: LampId
   sign: SignId
+  /**
+   * The pet's hat. Absent on rooms from before hats (and from older builds,
+   * which keep the field without knowing it): none.
+   */
+  hat?: HatId
   updatedAt: number
 }
 
-/** The room's choices without its record id and stamp. */
-export type PetRoomSettings = Omit<PetRoomRecord, 'id' | 'updatedAt'>
+/** The room's choices without its record id and stamp, the hat always set. */
+export type PetRoomSettings = Omit<
+  PetRoomRecord,
+  'id' | 'updatedAt' | 'hat'
+> & {
+  hat: HatId
+}
 
 export const DEFAULT_ROOM: PetRoomSettings = {
   window: { time: 'live', season: 'live' },
@@ -250,6 +313,7 @@ export const DEFAULT_ROOM: PetRoomSettings = {
   shelf: 'scrolls',
   lamp: 'clay',
   sign: 'month',
+  hat: 'none',
 }
 
 /** The sign a Kingdom Publisher's room starts with (checkbox entry mode). */

@@ -110,6 +110,7 @@ import AccountTools from '@/app/navigation/tools/AccountTools'
 import BuddiesTools from '@/app/navigation/tools/BuddiesTools'
 import BadgesTools from '@/app/navigation/tools/BadgesTools'
 import LayoutDirectionTools from '@/app/navigation/tools/LayoutDirectionTools'
+import StreakTools from '@/app/navigation/tools/StreakTools'
 import {
   applyBadgeHistoryFixture,
   earnRandomBadges,
@@ -1396,6 +1397,8 @@ export default function ToolsScreen() {
             />
           </ToolList>
         </ToolSection>
+
+        <StreakTools />
 
         <ToolSection
           title='Pet'

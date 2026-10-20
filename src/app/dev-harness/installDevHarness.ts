@@ -369,7 +369,7 @@ export function installDevHarness() {
      * The Pet Companion (see `dev-harness/pet.ts`): `adopt(species, coat?,
      * name?)`, `setAppearance`, `setRoom`, `release()`, `override({ hearts,
      * dead, gold, … })` / `clearOverride()`, `play('entrance' | 'trick' |
-     * 'wake')`, `pat(n)` and `state()`.
+     * 'twirl' | 'wake' | 'cheer')`, `pat(n)`, `scrub(ms)` and `state()`.
      */
     pet: petHarness,
     /**

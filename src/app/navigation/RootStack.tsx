@@ -510,8 +510,9 @@ const RootStackComponent = () => {
           }
         />
         <RootStack.Screen
-          // A large sheet: the room on top, its parts scrolling below. Full
-          // screen on Android. Choices save as they're made; pull it down.
+          // The pet's details: a large sheet with its name, the room on top
+          // and its hat and parts scrolling below. Full screen on Android.
+          // Choices save as they're made; pull it down.
           options={
             Platform.OS === 'ios'
               ? {
@@ -544,6 +545,25 @@ const RootStackComponent = () => {
           name='PetRename'
           getComponent={() =>
             require('@/features/pet/screens/PetRenameScreen').default
+          }
+        />
+        <RootStack.Screen
+          // The share card, sized to it on iOS like the picker; full screen
+          // on Android. Pulling it down closes it.
+          options={
+            Platform.OS === 'ios'
+              ? {
+                  presentation: 'formSheet',
+                  sheetAllowedDetents: 'fitToContents',
+                  sheetGrabberVisible: true,
+                  sheetCornerRadius: 18,
+                  headerShown: false,
+                }
+              : { presentation: 'modal', headerShown: false }
+          }
+          name='PetShare'
+          getComponent={() =>
+            require('@/features/pet/screens/PetShareScreen').default
           }
         />
         <RootStack.Screen

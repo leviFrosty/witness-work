@@ -230,6 +230,8 @@ const petRoom = record.extend({
   shelf: z.string(),
   lamp: z.string(),
   sign: z.string(),
+  // Absent on rooms from before hats.
+  hat: z.string().optional(),
   updatedAt: timestamp,
 })
 const values = z.object({

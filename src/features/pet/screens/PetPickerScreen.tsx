@@ -9,6 +9,7 @@ import { PET_NAME_MAX_LENGTH } from '@/types/pet'
 import type { RootStackParamList } from '@/types/rootStack'
 import usePet from '@/stores/pet'
 import PetCoatSwatches from '@/features/pet/components/PetCoatSwatches'
+import PetIntro from '@/features/pet/components/PetIntro'
 import PetNameField from '@/features/pet/components/PetNameField'
 import PetSpeciesGrid from '@/features/pet/components/PetSpeciesGrid'
 import {
@@ -25,7 +26,7 @@ type Props = NativeStackScreenProps<RootStackParamList, 'PetPicker'>
 /**
  * Adopt a companion or change its look: the five animals, the chosen one's
  * coats, and (adopting) an optional name. One primary action; the sheet's own
- * dismissal cancels.
+ * dismissal cancels. Adopting then shows a short intro in the same sheet.
  */
 export default function PetPickerScreen({ route, navigation }: Props) {
   const theme = useTheme()
@@ -34,6 +35,8 @@ export default function PetPickerScreen({ route, navigation }: Props) {
   const [choice, setChoice] = useState(() => initialPetChoice(current))
   const [name, setName] = useState('')
   const save = useSavePetChoice()
+  // Set once Adopt is pressed, so the intro stays up with the new pet.
+  const [showIntro, setShowIntro] = useState(false)
   const adopting = route.params?.mode !== 'change' || !current
   const action = petPickerSave({ ...choice, name }, current)
   // The sheet's bottom inset (below this content on iOS) in the same colour.
@@ -42,18 +45,25 @@ export default function PetPickerScreen({ route, navigation }: Props) {
     navigation.setOptions({ contentStyle: { backgroundColor: sheetColor } })
   }, [navigation, sheetColor])
 
+  const sheetStyle = {
+    paddingHorizontal: 20,
+    paddingTop: sheetInsets.top,
+    paddingBottom: sheetInsets.bottom,
+    gap: 18,
+    backgroundColor: theme.colors.sheet,
+    // iOS sizes the sheet to this content; Android shows it full screen.
+    flex: Platform.OS === 'android' ? 1 : undefined,
+  }
+
+  if (showIntro && current)
+    return (
+      <View style={sheetStyle}>
+        <PetIntro pet={current} onDone={() => navigation.goBack()} />
+      </View>
+    )
+
   return (
-    <View
-      style={{
-        paddingHorizontal: 20,
-        paddingTop: sheetInsets.top,
-        paddingBottom: sheetInsets.bottom,
-        gap: 18,
-        backgroundColor: theme.colors.sheet,
-        // iOS sizes the sheet to this content; Android shows it full screen.
-        flex: Platform.OS === 'android' ? 1 : undefined,
-      }}
-    >
+    <View style={sheetStyle}>
       <Text
         accessibilityRole='header'
         style={{
@@ -86,7 +96,8 @@ export default function PetPickerScreen({ route, navigation }: Props) {
         disabled={action.kind === 'none'}
         onPress={() => {
           save(action)
-          navigation.goBack()
+          if (action.kind === 'adopt') setShowIntro(true)
+          else navigation.goBack()
         }}
       >
         {i18n.t(adopting ? 'pet.picker.adopt' : 'pet.picker.save')}

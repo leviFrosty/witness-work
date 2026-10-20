@@ -1,11 +1,14 @@
 import { View, ViewProps } from 'react-native'
 import useTheme from '@/contexts/theme'
 import Button from '@/components/ui/Button'
+import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
 
 export interface ChoiceChip<T extends string = string> {
   key: T
   label: string
+  /** Drawn before the label, in the label's colour. */
+  icon?: AppIcon
   testID?: string
 }
 
@@ -47,6 +50,9 @@ export default function ChoiceChips<T extends string = string>({
             accessibilityState={{ checked: active }}
             testID={opt.testID}
             style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 6,
               paddingHorizontal: 12,
               paddingVertical: 8,
               borderRadius: theme.numbers.borderRadiusSm,
@@ -57,6 +63,13 @@ export default function ChoiceChips<T extends string = string>({
                 : theme.colors.backgroundLighter,
             }}
           >
+            {opt.icon && (
+              <LucideIcon
+                icon={opt.icon}
+                size={16}
+                color={active ? theme.colors.accent : theme.colors.textAlt}
+              />
+            )}
             <Text
               style={{
                 fontSize: theme.fontSize('sm'),

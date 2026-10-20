@@ -13,8 +13,8 @@ ported from) lives outside the repo. The TypeScript port in `src/features/pet/ar
 
 ### Pets
 
-- Five species at launch: `lion` (Lion cub), `dog` (Golden pup), `cat` (Kitten), `donkey`, `lamb`.
-- Coats: dog `gold | white | liver | black`; cat `orange | grey | black | white | tuxedo | calico | siamese`.
+- Five species at launch: `lion` (Lion cub), `dog` (Pup), `cat` (Kitten), `donkey`, `lamb`.
+- Coats: dog `gold | white | liver | black`; cat `orange | grey | black | white | tuxedo | calico | siamese | tortoiseshell`.
   The other species have one coat (`default`).
 - One companion per user. "Change Pet" changes the species and coat of the same companion and keeps
   its name, hearts, history, room and keepsakes. Changing the species plays that species' entrance.
@@ -40,6 +40,12 @@ hearts is stored, so every device computes the same answer (ADR 0030).
 - **Waking**: tapping a sleeping pet or one that died records a wake on that day. A wake sets hearts
   to **1** if they were below 1, and restarts the quiet-day count. Nothing else is lost.
 - An active day on a pet that died revives it at 1 heart (0 + 1).
+- **Monthly pace** (ADR 0031): in a month whose role reports only whether it shared (a Kingdom
+  Publisher; its Service Streak counts months, `selectHeartsPace` from Role History), an active day
+  fills **all 5 hearts** (a pet that died too) and holds them through the end of the next month;
+  quiet days count from then (fading from day 10, dying on day 60). Each month uses its own role, so
+  switching roles never rewrites the months before. The widget's timeline reaches
+  `MONTHLY_HOLD_MAX_DAYS` further for it.
 - Head pats and rubs are just for fun. They never add hearts.
 - Gold: **365 days in a row at 5 hearts** turns the hearts gold. Gold ends the day hearts drop below 5,
   and the count starts over.
@@ -70,15 +76,16 @@ When `showStreaks` is off the lamp still burns at level 3 and nothing shows a st
 
 Swappable parts, each a registry of options (`src/features/pet/art/room/`):
 
-| Part   | Options                                                                     | Starter (free)           |
-| ------ | --------------------------------------------------------------------------- | ------------------------ |
-| window | time `live dawn day dusk night` × season `live spring summer autumn winter` | all                      |
-| wall   | color `sand sage sky rose cream` × pattern `plain dots stripes trellis`     | sand, cream; plain, dots |
-| floor  | `wood stone brick tile`                                                     | wood                     |
-| bed    | `rug cushion basket hay`                                                    | rug                      |
-| shelf  | `scrolls books pottery fruit`                                               | scrolls                  |
-| lamp   | `clay lantern candle stand`                                                 | clay                     |
-| sign   | `none month year shared plan convos`                                        | all                      |
+| Part   | Options                                                                               | Starter (free)           |
+| ------ | ------------------------------------------------------------------------------------- | ------------------------ |
+| window | time `live dawn day dusk night` × season `live spring summer autumn winter`           | all                      |
+| wall   | color `sand sage sky rose cream` × pattern `plain dots stripes trellis`               | sand, cream; plain, dots |
+| floor  | `wood stone brick tile`                                                               | wood                     |
+| bed    | `rug hay basket cushion`                                                              | rug                      |
+| shelf  | `scrolls books pottery fruit`                                                         | scrolls                  |
+| lamp   | `clay lantern candle stand`                                                           | clay                     |
+| sign   | `none month year shared plan convos`                                                  | all                      |
+| hat    | `none bow cap beanie flowers bucket beret sunhat hardhat fedora cowboy safari tophat` | none                     |
 
 - "Live" window: time of day from the device clock (night < 6, dawn < 9, day < 17, dusk < 20, night),
   season from the date and hemisphere (southern-hemisphere region codes flip the season).
@@ -96,14 +103,30 @@ Swappable parts, each a registry of options (`src/features/pet/art/room/`):
   adoption (a calendar month with at least one active day), as before. Months, not hours, so every
   role unlocks at the same pace (same reasoning as ADR 0019 for badges). `unlockMode` picks the mode.
 
+- Hats: the pet wears one (or none). Every hat but `none` has a place in `HAT_UNLOCK_ORDER` and opens
+  up the same two ways on its own numbers (`HAT_THRESHOLDS`): three quick ones, then slower (one a
+  month in months mode). Earned hats are stored with the room items (`hat:bow`, …).
+
+  | Kind                          | Numbers, in `HAT_UNLOCK_ORDER` (bow, cap, beanie, flowers, bucket, beret, sunhat, hardhat, fedora, cowboy, safari, tophat) |
+  | ----------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+  | `plans` (planned days kept)   | 3, 5, 9, 14, 21, 30, 40, 50, 65, 80, 100, 120                                                                              |
+  | `months` (Kingdom Publishers) | 1, 1, 1, 2, 3, 4, 5, 6, 7, 8, 10, 12                                                                                       |
+  | months mode (active months)   | 1, 1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10                                                                                        |
+
+  A hat sits on the head (`art/hats.ts`: a 24 × 14 picture whose brim row lands on the species'
+  `HAT_ANCHOR_Y`, following the head's bob, mirrored and greyed with the pet). A pet lying down
+  (rolling over, or one that died) has no hat. No party, holiday, halo or wizard hats (JW
+  sensitivities below).
+
 - Earned items are stored on the pet (`earnedRoomItems`, written by `earnRoomItems` from an effect in
   `usePetLife` when the current mode earns one that isn't stored), so nothing locks again when the
   mode changes or a streak ends. Unlocked = starters ∪ stored ∪ earned now. A pet adopted on a long
   streak gets its items at once.
-- Decorate Room dims a locked item and can't pick it. Its badge says what opens it: in streak mode a
+- The pet's details (route `PetRoom`) dims a locked item and can't pick it. Its badge says what opens it: in streak mode a
   flame and the number ("At a streak of 7" to VoiceOver); in months mode the earliest month ("This
-  month" while this month has no active day yet and it's next, "Next month", "In N months"). The note
-  under a tab with locked items says how they open up, by mode and streak kind.
+  month" while this month has no active day yet and it's next, "Next month", "In N months"). A note
+  above a tab's options, while any are locked, says how they open up, by mode and streak kind (hats have their own
+  months-mode note).
 - Wall sign: a small square sign on the right of the back wall in muted colors. Digits and icons only
   (no words), drawn with the pixel digit font, which also has Eastern Arabic digits for `ar`. Kingdom
   Publishers default to `shared`. Values: hours this month with goal progress, hours this service
@@ -121,7 +144,8 @@ None of these are listed or explained in the app or the FAQ.
 | `rainbow`  | The day hearts reach 5 after the pet was asleep or died. Rainbow in the window (not at night) until midnight.                                                                                                                                                                                                                                                          |
 | `paradise` | Live window in daytime, 1 in 20 Home visits: a tiny lion and lamb stroll across the hills (Isaiah 11:6).                                                                                                                                                                                                                                                               |
 | `star`     | Live window at night, 1 in 15 Home visits: a shooting star crosses the window.                                                                                                                                                                                                                                                                                         |
-| `trick`    | 15 pats within 5 seconds. Species tricks: lion rolls, pup chases its tail, kitten zoomies, donkey dances, lamb bounces.                                                                                                                                                                                                                                                |
+| `trick`    | 15 taps within 5 seconds (rubs don't count). Species tricks: lion rolls, pup chases its tail, kitten zoomies, donkey dances, lamb bounces.                                                                                                                                                                                                                             |
+| `twirl`    | A scratch: one drag that keeps rubbing the pet for 2 s, rub steps no more than 0.6 s apart (`SCRUB_TWIRL_MS`, `SCRUB_PAUSE_MS` in `lib/patTricks.ts`). A success haptic, then it crouches, hops with three quick turns in place, lands with a burst of hearts and says its happy sound (`motion/twirl.ts`, every species). Once per drag.                              |
 | `visitor`  | A plan today with a buddy who shares a pet: their pet sits beside yours.                                                                                                                                                                                                                                                                                               |
 | `gift`     | After 30 days in a row at five hearts, on deterministic gift days (hash of the pet's `seed` — or its adoption day when it has none — + day, about 1 in 10, at least 7 days apart) the pet leaves a keepsake (`olive fig pebble feather lily`, cycling) on the rug. Tap it (or use the screen reader's Pick up action) to keep it; the newest 5 sit on the window sill. |
 
@@ -142,13 +166,19 @@ changes, and when it wakes from having died. Choreography tables live in `src/fe
 | donkey  | trots in from the left, kicks its heels, "Hee-haw!"                    |
 | lamb    | three big hops in from the right, wiggles, "Baa!"                      |
 
-- Tap the pet: head pat (squish, heart particle, pat sound, light haptic).
-- Drag back and forth across it: rub (a heart every ~28 px of travel).
+- Tap the pet: head pat (squish, heart particle, pat sound, light haptic). Only a tap on the pet's
+  drawn box (padded 3 scene pixels, its hat included; `lib/sceneTouch.ts`) pats it.
+- Drag back and forth across it: rub (a heart every ~28 px of travel). The drag has to start on the
+  pet (padded 6 scene pixels). Keep scrubbing for 2 s and it twirls (hidden moment `twirl`).
+- Hearts that went up since Home last showed them (the "shared" check, a visit, time logged): a
+  second after the greeting the pet cheers, happy with a burst of hearts and its happy sound.
+- Tap anywhere else on the Home card (its header, the room away from the pet, the card's padding):
+  opens the pet's details. The long-press menu stays on the header.
 - Asleep: "Zzz" particles. Died: lying flat, eyes closed, greyscale, no particles.
 - Wake from died: colour washes back from the feet up, the pet pops up, hearts burst, then the entrance
   is not replayed (the wake is its own animation).
-- Reduce Motion: no idle bobbing, entrances and tricks are skipped (the pet is shown in place), and
-  particles are static.
+- Reduce Motion: no idle bobbing, entrances, tricks and the twirl are skipped (the pet is shown in
+  place; the twirl still bursts hearts), and particles are static.
 
 ## Data model
 
@@ -169,7 +199,7 @@ interface PetRecord {
   seed?: number // random at adoption; picks the gift days
   wakes: string[] // day keys of wake taps; old ones trimmed only past 120 and 400 days (ADR 0030)
   keepsakes: { kind: GiftKind; on: string }[] // collected gifts, newest 20 kept
-  earnedRoomItems?: string[] // room items earned, in UNLOCK_ORDER order (newer ids kept); absent = none
+  earnedRoomItems?: string[] // room items in UNLOCK_ORDER order, then hats and newer ids sorted; absent = none
   updatedAt: number
 }
 interface PetRoomRecord {
@@ -182,6 +212,7 @@ interface PetRoomRecord {
   shelf: ShelfId
   lamp: LampId
   sign: SignId
+  hat?: HatId // absent on rooms from before hats: none
   updatedAt: number
 }
 ```
@@ -207,9 +238,10 @@ Feature tier `src/features/pet/`:
 
 - `art/species/` — one file per species (rig + coats + sounds keys), `art/species/index.ts` registry.
 - `art/room/` — window, wall, floor, bed, shelf, lamps, sign, keepsakes; `art/room/index.ts`
-  registry + `UNLOCK_ORDER`; `art/scene.ts` composes a frame from a `SceneState`.
+  registry + `UNLOCK_ORDER`; `art/hats.ts` — the hats and where each species wears them;
+  `art/scene.ts` composes a frame from a `SceneState`.
 - `art/particles.ts` — hearts, Zzz, sparkles, dust.
-- `motion/` — `Pose` type, entrance/trick/wake tables, `evaluateMotion(table, elapsedMs)`.
+- `motion/` — `Pose` type, entrance/trick/twirl/wake tables, `evaluateMotion(table, elapsedMs)`.
 - `lib/life.ts` — `simulateLife`, `moodOf`, gold, rainbow day, gift days; `lib/activity.ts` — active
   day keys from stores; `lib/unlocks.ts` (unlock mode, streak numbers, earned items); `lib/lamp.ts`;
   `lib/liveWindow.ts`; `lib/eggs.ts`.
@@ -217,10 +249,12 @@ Feature tier `src/features/pet/`:
   with the frame clock: 10 fps on the JS thread, paused when unfocused, backgrounded, at rest with
   Reduce Motion, or (Home card) scrolled fully off screen; frames reach the canvas through a shared value with nearest sampling; tap, rub and
   gift gestures; the sound bubble), `PetSpriteTile` (one idling sprite for the prompt and picker).
-- `components/`, `hooks/`, `screens/` — Home section, prompt card, picker (`PetPicker`), Decorate Room
-  (`PetRoom`: `lib/roomOptions.ts` holds its tabs, choices, thumbnail crops and unlock badges;
-  `RoomOptionThumb` draws one crop of a still room), Rename (`PetRename`), and Share… on the card's
-  menu (`lib/share.ts`: the card's view at 4×, nearest scaling, written as a PNG to the cache folder
+- `components/`, `hooks/`, `screens/` — Home section, prompt card, picker (`PetPicker`, which shows
+  the adoption intro `PetIntro` after Adopt: hearts, the streak with a fully unlocked room from
+  `lib/intro.ts`, and tapping the card to decorate), the pet's details (`PetRoom`: name, hearts,
+  Rename / Change pet / Share, the room, and icon tabs for its hat and parts; `lib/roomOptions.ts`
+  holds its tabs, choices, thumbnail crops and unlock badges; `RoomOptionThumb` draws one crop of a
+  still room), Rename (`PetRename`), and Share… on the card's menu and in the details (`lib/share.ts`: the card's view at 4×, nearest scaling, written as a PNG to the cache folder
   for the share sheet).
 
 App tier: `src/app/pet/` for cross-feature glue (visitor from buddies + plans, widget images),

@@ -2,7 +2,9 @@ import type { GiftKind, PetMood } from '@/types/pet'
 import {
   dayKeyFromNumber,
   dayNumber,
+  lastDayOfNextMonth,
   localDayKey,
+  monthOfDayKey,
 } from '@/features/pet/lib/dayKeys'
 import {
   GIFT_AFTER_FULL_DAYS,
@@ -32,6 +34,18 @@ export const QUIET_DAYS_UNTIL_DEATH = 60
 /** Days in a row at five hearts until the hearts turn gold. */
 export const GOLD_AFTER_FULL_DAYS = 365
 
+/**
+ * How a month's active days fill hearts (ADR 0031). `daily`: each adds a heart.
+ * `monthly`, for a role that reports only whether it shared: each fills all
+ * five, and they hold through the next month before quiet days count.
+ */
+export type HeartsPace = 'daily' | 'monthly'
+/**
+ * The most days monthly hearts hold after an active day: from the 1st of a
+ * 31-day month through the end of a 31-day next month.
+ */
+export const MONTHLY_HOLD_MAX_DAYS = 61
+
 export type PetLifeInput = {
   /** Day key of the adoption. */
   adoptedOn: string
@@ -41,6 +55,12 @@ export type PetLifeInput = {
   wakes: readonly string[]
   /** Today's local day key. */
   today: string
+  /**
+   * The hearts' pace in each month (`YYYY-MM`), from that month's role; absent,
+   * every month is `daily`. Keep the same function while the roles don't
+   * change, for the cache.
+   */
+  paceOf?: (month: string) => HeartsPace
   /**
    * The pet's `petGiftSeed`; gifts are only worked out when it (or `petId`) is
    * given.
@@ -60,7 +80,10 @@ export type PetLife = {
   mood: PetMood
   /** At ½ heart (and not dead): shows Zzz, a tap wakes it. */
   asleep: boolean
-  /** Days since the last active day or wake (0 on one). */
+  /**
+   * Quiet days so far: since the last active day or wake (0 on one), or, after
+   * a `monthly` active day, since the end of the next month (0 until then).
+   */
   quietDays: number
   /** Days in a row at five hearts, today included; 0 below five. */
   fullRunDays: number
@@ -101,6 +124,7 @@ const sameInput = (a: PetLifeInput, b: PetLifeInput): boolean =>
   a.activeDays === b.activeDays &&
   a.wakes === b.wakes &&
   a.today === b.today &&
+  a.paceOf === b.paceOf &&
   a.giftSeed === b.giftSeed &&
   a.petId === b.petId
 
@@ -111,7 +135,9 @@ const sameInput = (a: PetLifeInput, b: PetLifeInput): boolean =>
  * - A wake sets hearts to at least 1 (reviving a pet that died) and restarts the
  *   quiet count. Applied before the day's activity.
  * - An active day adds a heart, up to 5; a pet that died comes back at 1. It also
- *   restarts the quiet count.
+ *   restarts the quiet count. In a `monthly` month (`paceOf`) it fills all five
+ *   hearts, a pet that died included, and the quiet count starts after the end
+ *   of the next month.
  * - Otherwise, on quiet day 10, 13, 16, … half a heart fades, never below ½
  *   (asleep). On quiet day 60 the pet dies (0 hearts).
  * - 365 days in a row at 5 turns the hearts gold, until they drop below 5.
@@ -163,7 +189,15 @@ export function simulateLifeAhead(
 
 /** Lives for `today` through `extraDays` after it, in order. */
 function replay(
-  { adoptedOn, activeDays, wakes, today, giftSeed, petId }: PetLifeInput,
+  {
+    adoptedOn,
+    activeDays,
+    wakes,
+    today,
+    paceOf,
+    giftSeed,
+    petId,
+  }: PetLifeInput,
   extraDays: number
 ): PetLife[] {
   let first = dayNumber(today)
@@ -178,7 +212,10 @@ function replay(
 
   let hearts = START_HEARTS
   let dead = false
-  let lastReset = start
+  // The day quiet days count from; later than today while monthly hearts hold.
+  let quietFrom = start
+  let month = ''
+  let pace: HeartsPace = 'daily'
   let lowSinceFull = false
   let fullRun = 0
   let rainbowDay = -1
@@ -189,20 +226,29 @@ function replay(
 
   for (let day = start; day <= end; day++) {
     const key = dayKeyFromNumber(day)
+    if (monthOfDayKey(key) !== month) {
+      month = monthOfDayKey(key)
+      pace = paceOf?.(month) ?? 'daily'
+    }
     const woke = wakeDays.has(key)
     const active = activeDays.has(key)
     if (woke) {
       if (dead || hearts < 1) hearts = 1
       dead = false
-      lastReset = day
+      quietFrom = Math.max(quietFrom, day)
     }
     if (active) {
-      hearts = dead ? 1 : Math.min(MAX_HEARTS, hearts + 1)
+      if (pace === 'monthly') {
+        hearts = MAX_HEARTS
+        quietFrom = Math.max(quietFrom, lastDayOfNextMonth(key))
+      } else {
+        hearts = dead ? 1 : Math.min(MAX_HEARTS, hearts + 1)
+        quietFrom = Math.max(quietFrom, day)
+      }
       dead = false
-      lastReset = day
     }
     if (!woke && !active && !dead) {
-      const quiet = day - lastReset
+      const quiet = day - quietFrom
       if (quiet >= QUIET_DAYS_UNTIL_DEATH) {
         dead = true
         hearts = 0
@@ -241,7 +287,7 @@ function replay(
       dead,
       mood: moodOf(hearts, dead),
       asleep: !dead && hearts <= ASLEEP_HEARTS,
-      quietDays: day - lastReset,
+      quietDays: Math.max(0, day - quietFrom),
       fullRunDays: fullRun,
       goldRunDays: gold ? fullRun - GOLD_AFTER_FULL_DAYS + 1 : 0,
       gold,

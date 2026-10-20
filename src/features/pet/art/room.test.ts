@@ -75,7 +75,7 @@ describe('room registry', () => {
       'trellis',
     ])
     expect(ROOM_PARTS.floor.options).toEqual(['wood', 'stone', 'brick', 'tile'])
-    expect(ROOM_PARTS.bed.options).toEqual(['rug', 'cushion', 'basket', 'hay'])
+    expect(ROOM_PARTS.bed.options).toEqual(['rug', 'hay', 'basket', 'cushion'])
     expect(ROOM_PARTS.shelf.options).toEqual([
       'scrolls',
       'books',

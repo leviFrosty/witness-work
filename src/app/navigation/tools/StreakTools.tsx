@@ -1,0 +1,93 @@
+import { useState } from 'react'
+import { Flame as FlameIcon } from 'lucide-react-native'
+import ChoiceChips from '@/components/ui/ChoiceChips'
+import TextInput from '@/components/ui/TextInput'
+import useTheme from '@/contexts/theme'
+import { useRecordedServiceStreak } from '@/hooks/useServiceStreak'
+import { toAsciiDigits } from '@/lib/digits'
+import { usePreferences } from '@/stores/preferences'
+import { ToolList, ToolRow, ToolSection } from '@/app/navigation/tools/ToolsUI'
+
+/** Counts worth a tap (one row): the first hats, the lamp's top, all open. */
+const PRESETS = ['off', '0', '3', '5', '9', '30', '120'] as const
+/** Longer than any streak the tools need to fake. */
+const MAX_DIGITS = 4
+
+/**
+ * Developer Tools: sets the Service Streak count the app shows, for testing the
+ * streak chip and card, the pet's lamp and which hats and room items are open,
+ * without logging real days.
+ */
+export default function StreakTools() {
+  const theme = useTheme()
+  const recorded = useRecordedServiceStreak()
+  const override = usePreferences((state) => state.devStreakOverride)
+  const set = (value: number | null) =>
+    usePreferences.getState().set({ devStreakOverride: value })
+  const [input, setInput] = useState('')
+  const kind = recorded.kind === 'plans' ? 'planned days' : 'months'
+
+  const apply = () => {
+    const value = Number.parseInt(input, 10)
+    if (Number.isFinite(value)) set(value)
+    setInput('')
+  }
+
+  return (
+    <ToolSection
+      title='Streak'
+      icon={FlameIcon}
+      info='Replaces the Service Streak count on Home, Progress, the profile and the pet: its lamp, and which hats and room items are open (none are stored as earned while it is on). Reminders, Buddy Cards and widgets keep the recorded streak. A hat or item picked while it is on stays picked after you turn it off. This device only.'
+      summary={
+        override === null
+          ? `${recorded.count} ${kind}`
+          : `Override ${override} (recorded ${recorded.count})`
+      }
+    >
+      <ToolList>
+        <ToolRow label='Recorded' value={`${recorded.count} ${kind}`} />
+        <ToolRow
+          label='Override'
+          value={override === null ? 'off' : `${override}`}
+        />
+        <ToolRow
+          label='Set count'
+          info='A whole number; applies when you press Done.'
+          trailing={
+            <TextInput
+              value={input}
+              placeholder={override === null ? '–' : `${override}`}
+              onChangeText={(value) =>
+                setInput(toAsciiDigits(value).replace(/[^0-9]/g, ''))
+              }
+              onSubmitEditing={apply}
+              inputMode='numeric'
+              enterKeyHint='done'
+              selectTextOnFocus
+              textAlign='center'
+              maxLength={MAX_DIGITS}
+              accessibilityLabel='Streak count'
+              style={{
+                width: 80,
+                minHeight: 36,
+                borderColor: theme.colors.border,
+                borderWidth: 1,
+                borderRadius: theme.numbers.borderRadiusSm,
+                paddingVertical: 6,
+                paddingHorizontal: 10,
+                color: theme.colors.text,
+              }}
+            />
+          }
+        />
+      </ToolList>
+      <ChoiceChips
+        accessibilityLabel='Streak override presets'
+        options={PRESETS.map((key) => ({ key, label: key }))}
+        value={override === null ? 'off' : `${override}`}
+        onChange={(key) => set(key === 'off' ? null : Number(key))}
+        style={{ paddingTop: 8 }}
+      />
+    </ToolSection>
+  )
+}

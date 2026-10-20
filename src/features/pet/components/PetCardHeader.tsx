@@ -12,9 +12,12 @@ import type { PetCardLife } from '@/features/pet/lib/sceneInput'
 export default function PetCardHeader({
   name,
   life,
+  size = 'lg',
 }: {
   name: string
   life: PetCardLife
+  /** The name's size: `lg` on the card, `xl` as a sheet's title. */
+  size?: 'lg' | 'xl'
 }) {
   const theme = useTheme()
   const status = life.dead
@@ -28,8 +31,8 @@ export default function PetCardHeader({
       <Text
         numberOfLines={1}
         style={{
-          fontSize: theme.fontSize('lg'),
-          fontFamily: theme.fonts.semiBold,
+          fontSize: theme.fontSize(size),
+          fontFamily: size === 'xl' ? theme.fonts.bold : theme.fonts.semiBold,
         }}
       >
         {name}

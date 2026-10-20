@@ -47,10 +47,21 @@ export const unlockRequirementText = (
       })
     : unlockBadgeText(requirement.monthsFromNow)
 
-/** The note under a tab with locked options: how they open up. */
-export const unlockNoteText = (mode: UnlockMode, kind: StreakKind): string =>
+/**
+ * The note under a tab with locked options: how they open up. Hats keep their
+ * own pace in months mode.
+ */
+export const unlockNoteText = (
+  mode: UnlockMode,
+  kind: StreakKind,
+  tab?: RoomTab
+): string =>
   mode === 'months'
-    ? i18n.t('pet.room.unlockNote.months')
+    ? i18n.t(
+        tab === 'hat'
+          ? 'pet.room.unlockNote.monthsHats'
+          : 'pet.room.unlockNote.months'
+      )
     : kind === 'plans'
       ? i18n.t('pet.room.unlockNote.streakPlans')
       : i18n.t('pet.room.unlockNote.streakMonths')

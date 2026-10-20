@@ -3268,19 +3268,23 @@
   "faq_mileageChart_a": "Open the Mileage screen and choose Week, Month, or Year. The chart shows how far you drove each day, or each month of the service year (September through August). When more than one car has trips in that period, each bar is split by car, using the colors next to each car's total. Tap a bar to open that day or month and see its trips. The Day view has no chart, and a period without trips shows none. Bars show distance, not estimated cost.",
   "faq_mileageTurnOff_a": "Use the Track Mileage switch in Settings → Profile. Turning it off hides the Home card, the Log Trip action, and the Mileage screen, but keeps your trips; turn it back on and everything returns. If you chose No Thanks on the Home card, this switch turns it on anytime. To erase your mileage, open Mileage → Settings → Delete All Mileage Data. This deletes it on every device that syncs with this one and can't be undone. You can also hide only the Home card with Settings → Preferences → Home Screen.",
   "faq_petStart_q": "How do I get a pet, and how do I turn it off?",
-  "faq_petStart_a": "The Pet Companion is optional and works on iOS and Android. On Home, the Meet your companion card offers one: tap Choose a pet, pick a lion cub, golden pup, kitten, donkey, or lamb (the pup and the kitten come in several coats), give it a name if you like, and tap Adopt. If you chose Not now, bring the offer back with Add Sections while editing Home (press and hold an empty space on Home), or turn on Pet in Settings → Preferences → Home Screen. To hide the pet, long-press its card, choose Edit Home Screen, and tap the gray minus on it, or turn off Pet in Settings → Preferences → Home Screen. Hiding keeps your pet, its room, and its keepsakes; turn Pet back on and everything returns. You have one companion at a time.",
+  "faq_petStart_a": "The Pet Companion is optional and works on iOS and Android. On Home, the Meet your companion card offers one: tap Choose a pet, pick a lion cub, pup, kitten, donkey, or lamb (the pup and the kitten come in several coats), give it a name if you like, and tap Adopt. A short intro then shows how its hearts fill, how your streak opens up hats and room items, and how to decorate; tap Next through it, or close it to skip it. If you chose Not now, bring the offer back with Add Sections while editing Home (press and hold an empty space on Home), or turn on Pet in Settings → Preferences → Home Screen. To hide the pet, long-press its card, choose Edit Home Screen, and tap the gray minus on it, or turn off Pet in Settings → Preferences → Home Screen. Hiding keeps your pet, its room, and its keepsakes; turn Pet back on and everything returns. You have one companion at a time.",
   "faq_petHearts_q": "How do my pet’s hearts work?",
-  "faq_petHearts_a": "A new pet starts with 3 of 5 hearts. Each day you're active in the ministry adds one heart, up to 5. A day counts when you log time (including marking that you shared in the ministry, even with 0 minutes), save a visit (a conversation, return visit, or not-at-home), or save a plan. One heart a day, however much you did; hours don't matter. When 10 days pass without an active day, your pet loses half a heart every 3 days. At half a heart it falls asleep, and after 60 days without an active day it dies (it's shown greyed and lying down). Tap a sleeping pet (or, if it died, Tap to wake) to wake it with 1 heart; the next active day adds hearts again. Patting it (tap it, or drag across it to rub) is just for fun and never adds hearts. Hearts are worked out from your records each time, so they're the same on every device and come back if you restore a backup.",
+  "faq_petHearts_a": "A new pet starts with 3 of 5 hearts. Each day you're active in the ministry adds one heart, up to 5. A day counts when you log time (including marking that you shared in the ministry, even with 0 minutes), save a visit (a conversation, return visit, or not-at-home), or save a plan. One heart a day, however much you did; hours don't matter. When 10 days pass without an active day, your pet loses half a heart every 3 days. At half a heart it falls asleep, and after 60 days without an active day it dies (it's shown greyed and lying down). Kingdom Publishers go by the month instead, as they report: an active day fills all 5 hearts, and they stay full through the next month, so marking once a month that you shared keeps your pet happy. If a whole month passes without an active day, its hearts start fading 10 days into the month after, as above, and an active day fills them right back up. Tap a sleeping pet (or, if it died, Tap to wake) to wake it with 1 heart; the next active day adds hearts again. Patting it (tap it, or drag across it to rub) is just for fun and never adds hearts. Hearts are worked out from your records each time, so they're the same on every device and come back if you restore a backup.",
   "faq_petLamp_q": "What does the lamp in the room mean?",
   "faq_petLamp_a": "The lamp is your Service Streak. It burns brighter as your streak grows, from unlit at 0 to its brightest once your streak reaches 30. For Kingdom Publishers the streak counts months, so it is brightest at 12. If you turned off Show streak in Settings → Preferences → Streaks & Badges, the lamp keeps a steady medium glow and no streak number shows anywhere.",
   "faq_petRoom_q": "How do I decorate my pet’s room?",
-  "faq_petRoom_a": "Long-press your pet's card on Home and choose Decorate Room…. Pick a tab (Window, Wall, Floor, Bed, Shelf, Light, or Sign) and tap a picture; the room at the top changes right away and the change is saved. Live window follows your clock and the season where you are (from your region; seasons are reversed south of the equator); turn it off to choose a time of day and a season, each of which can also stay Live. The sign on the wall can show your hours this month, your hours this service year, the months you shared in the ministry, your next plan, or this month's conversations and return visits, or nothing. Some items are open from the start. Each of the others opens up the first time your streak reaches the number on its flame: from 1 to 120 kept planned days for pioneers and other roles that log hours, or from 1 to 12 months in a row for publishers. Once an item opens up, it stays open, even if your streak ends later. If you turned off Show streak in Settings → Preferences → Streaks & Badges, or you log hours but haven't made any plans, one more item opens up instead for each month you're active (any day with logged time, a visit, or a saved plan) since you adopted your pet, in a set order, and a locked item shows the month it opens up. Items that are already open stay open either way.",
+  "faq_petRoom_a": "Tap your pet's card on Home anywhere except on your pet (tapping your pet pats it), or long-press the card's name and choose Hat & Room…. Pick a tab (Hat, Window, Wall, Floor, Bed, Shelf, Light, or Sign) and tap a picture; the room at the top changes right away and the change is saved. Live window follows your clock and the season where you are (from your region; seasons are reversed south of the equator); turn it off to choose a time of day and a season, each of which can also stay Live. The sign on the wall can show your hours this month, your hours this service year, the months you shared in the ministry, your next plan, or this month's conversations and return visits, or nothing. Some items are open from the start. Each of the others opens up the first time your streak reaches the number on its flame: from 1 to 120 kept planned days for pioneers and other roles that log hours, or from 1 to 12 months in a row for publishers. Hats follow their own numbers (see the question about hats). Once an item opens up, it stays open, even if your streak ends later. If you turned off Show streak in Settings → Preferences → Streaks & Badges, or you log hours but haven't made any plans, one more item opens up instead for each month you're active (any day with logged time, a visit, or a saved plan) since you adopted your pet, in a set order, and a locked item shows the month it opens up. Items that are already open stay open either way.",
+  "faq_petHats_q": "How do I get hats for my pet?",
+  "faq_petHats_a": "Your pet can wear one of 12 hats, or none. Tap your pet's card on Home anywhere except on your pet, pick the Hat tab, and tap a hat; it's saved right away, and your pet wears it on Home, in its details, in shared pictures, and in the Home Screen widget (iPhone and iPad). Hats open up with your streak like room items, on their own numbers: the first three come quickly, at 3, 5, and 9 kept planned days (or in your first month for publishers), and the rest take longer, up to 120 days (or 12 months). If you turned off Show streak, or you log hours but haven't made any plans, the first three open up in your first active month and the rest one month at a time. A locked hat shows the number or month it opens up at, and once a hat opens up it stays open. Your pet takes its hat off while it rolls over or lies down. Your buddies see your pet without its hat.",
   "faq_petWidget_q": "Can I see my pet on my home screen?",
   "faq_petWidget_a": "On iPhone and iPad, yes. Long-press your home screen, tap the + button, search for WitnessWork, and choose Pet Companion. Small shows your pet; medium adds its name, hearts, your streak, and what its wall sign shows; large shows its whole room with its name and hearts. The widget moves through the day on its own, and opening WitnessWork refreshes it. Until you adopt a pet, it asks you to choose one in the app. Android doesn’t have WitnessWork home screen widgets.",
   "faq_petSync_q": "Does my pet sync, and what do my buddies see?",
-  "faq_petSync_a": "Your pet, its name, room, the room items it has opened up, and keepsakes sync between your devices with Device Sync, a Supporter feature, using the option you choose in Settings → Sync: Cloud Sync, which also syncs between iPhone and Android, or iCloud (Google Drive on Android). They're included in WitnessWork Backup (Settings → Account) and in backups from Settings → Backup & Restore too. Its hearts aren't stored: each device works them out from your records. With Buddies, your pet's kind, coat, and name are shared with your buddies, end-to-end encrypted. To stop sharing them, turn off Pet in Buddies Settings; the switch shows once you have a pet. Nothing else about your pet, and none of your records, is shared.",
+  "faq_petSync_a": "Your pet, its name, hat, room, the hats and room items it has opened up, and keepsakes sync between your devices with Device Sync, a Supporter feature, using the option you choose in Settings → Sync: Cloud Sync, which also syncs between iPhone and Android, or iCloud (Google Drive on Android). They're included in WitnessWork Backup (Settings → Account) and in backups from Settings → Backup & Restore too. Its hearts aren't stored: each device works them out from your records. With Buddies, your pet's kind, coat, and name are shared (not its hat) with your buddies, end-to-end encrypted. To stop sharing them, turn off Pet in Buddies Settings; the switch shows once you have a pet. Nothing else about your pet, and none of your records, is shared.",
   "faq_petChange_q": "Can I change or rename my pet?",
-  "faq_petChange_a": "Yes. Long-press your pet's card on Home. Rename… lets you type a name of up to 20 characters; clear it and save to use the animal's name instead. Change Pet… picks another animal or coat for the same companion: it keeps its name, hearts, room, and keepsakes. Names are yours and are never translated.",
+  "faq_petChange_a": "Yes. Tap your pet's card on Home (anywhere except on your pet) to open its details, then tap Rename or Change pet; or long-press the card's name for Rename… and Change Pet…. Rename lets you type a name of up to 20 characters; clear it and save to use the animal's name instead. Change pet picks another animal or coat for the same companion: it keeps its name, hearts, hat, room, and keepsakes. Names are yours and are never translated.",
+  "faq_petShare_q": "How do I share a picture of my pet?",
+  "faq_petShare_a": "Tap your pet's card on Home (anywhere except on your pet) and tap Share, or long-press the card's name and choose Share…. Its share card shows your pet in its room with its name and hearts, a few facts (your Service Streak once it reaches 3, unless you turned off Show streak in Settings → Preferences → Streaks & Badges; how many days you've been together; and how many hats it has opened up), and the WitnessWork name at the bottom. Tap Share to send the card as a picture with any app in the share sheet. Nothing is sent until you choose where it goes, and the picture holds nothing else about you or your records. If sharing fails, a message says so; try again, and if it keeps failing, close and reopen WitnessWork.",
   "availability": {
     "settingsRow": "Availability",
     "settingsValueAllAvailable": "All days available",
@@ -4790,7 +4794,7 @@
       "tabletServiceYearSummary": "Your service year against your goal",
       "serviceReport": "This month's time and studies",
       "mileage": "This month's trips and distance",
-      "pet": "Your companion, happy when you go out in the ministry",
+      "pet": "Your companion, growing with you in your ministry",
       "thisWeek": "Your week at a glance, a tap from each day",
       "timer": "Time your service as you go",
       "didYouKnow": "A tip about something WitnessWork can do"
@@ -5100,7 +5104,7 @@
     },
     "species": {
       "lion": "Lion cub",
-      "dog": "Golden pup",
+      "dog": "Pup",
       "cat": "Kitten",
       "donkey": "Donkey",
       "lamb": "Lamb"
@@ -5119,7 +5123,8 @@
         "white": "White",
         "tuxedo": "Tuxedo",
         "calico": "Calico",
-        "siamese": "Siamese"
+        "siamese": "Siamese",
+        "tortoiseshell": "Tortoiseshell"
       }
     },
     "sound": {
@@ -5165,17 +5170,17 @@
       }
     },
     "promptTitle": "Meet your companion",
-    "promptDescription": "A little friend on Home who's happy when you go out in the ministry.",
+    "promptDescription": "A little friend who grows with you in your ministry.",
     "promptChoose": "Choose a pet",
     "promptNotNow": "Not now",
     "died": "{{name}} died",
-    "asleep": "{{name}} is asleep. Tap to wake.",
+    "asleep": "{{name}} is asleep. Tap it to wake it.",
     "goldNote": "A whole year of full hearts.",
     "wakeButton": "Tap to wake {{name}}",
     "menu": {
       "rename": "Rename…",
       "change": "Change Pet…",
-      "decorate": "Decorate Room…",
+      "decorate": "Hat & Room…",
       "share": "Share…"
     },
     "picker": {
@@ -5197,7 +5202,7 @@
         "feather": "Pick up the feather",
         "lily": "Pick up the lily"
       },
-      "promptAnimals": "A lion cub, golden pup, kitten, donkey and lamb"
+      "promptAnimals": "A lion cub, pup, kitten, donkey and lamb"
     },
     "rename": {
       "title": "Rename pet"
@@ -5206,10 +5211,29 @@
       "dialogTitle": "Share {{name}}",
       "failed": "Couldn't share the picture. Try again."
     },
+    "shareCard": {
+      "share": "Share",
+      "streakPlans": {
+        "one": "planned day in a row",
+        "other": "planned days in a row"
+      },
+      "streakMonths": {
+        "one": "month in a row",
+        "other": "months in a row"
+      },
+      "together": {
+        "one": "day together",
+        "other": "days together"
+      },
+      "hats": {
+        "one": "hat",
+        "other": "hats"
+      }
+    },
     "room": {
-      "title": "{{name}}'s room",
-      "tabs": "Room parts",
+      "tabs": "Room and hat",
       "tab": {
+        "hat": "Hat",
         "window": "Window",
         "wall": "Wall",
         "floor": "Floor",
@@ -5285,6 +5309,21 @@
           "shared": "Shared in ministry",
           "plan": "Next plan",
           "convos": "Conversations"
+        },
+        "hat": {
+          "none": "No hat",
+          "bow": "Bow",
+          "cap": "Cap",
+          "beanie": "Beanie",
+          "flowers": "Flower crown",
+          "bucket": "Bucket hat",
+          "beret": "Beret",
+          "sunhat": "Sun hat",
+          "hardhat": "Hard hat",
+          "fedora": "Fedora",
+          "cowboy": "Cowboy hat",
+          "safari": "Safari hat",
+          "tophat": "Top hat"
         }
       },
       "unlockThisMonth": "This month",
@@ -5300,8 +5339,35 @@
       "unlockNote": {
         "streakPlans": "Each item opens up when your streak reaches its number. Keep your plans to grow it.",
         "streakMonths": "Each item opens up when your streak reaches its number. Share in the ministry each month to grow it.",
-        "months": "One more opens up each month you log time or save a visit or plan."
+        "months": "One more opens up each month you log time or save a visit or plan.",
+        "monthsHats": "Three open up the first month you log time or save a visit or plan, then one more each month you do."
       }
+    },
+    "details": {
+      "rename": "Rename",
+      "change": "Change pet",
+      "share": "Share"
+    },
+    "intro": {
+      "hearts": {
+        "title": "Go out, fill its hearts",
+        "body": "Each day you log service activity adds a heart. If you stop logging, hearts slowly drain.",
+        "bodyMonths": "Each month you log service activity fills all its hearts. Skip a month, and they slowly drain."
+      },
+      "streak": {
+        "title": "Grow your streak",
+        "plans": "Keep your plans to grow your Service Streak. The lamp burns brighter, and new hats and room items open up.",
+        "months": "Share in the ministry each month to grow your streak. The lamp burns brighter, and new hats and room items open up.",
+        "noStreak": "Each month you go out, new hats and room items open up."
+      },
+      "decorate": {
+        "title": "Make it yours",
+        "body": "Tap your pet to pat it. Tap anywhere else on its card to pick a hat and decorate."
+      },
+      "previewA11y": "{{name}}'s room with everything opened up",
+      "next": "Next",
+      "done": "Done",
+      "step": "Step {{step}} of {{count}}"
     }
   },
   "handoff_newDoneSynced": "Cloud Sync is bringing your records, contacts, and notes to this phone. They appear in a moment.",

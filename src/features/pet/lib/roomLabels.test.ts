@@ -52,10 +52,18 @@ describe('Decorate Room labels', () => {
     expect(unlockNoteText('months', 'months')).toBe(
       unlockNoteText('months', 'plans')
     )
+    // Hats keep their own pace in months mode.
+    expect(unlockNoteText('months', 'plans', 'hat')).toBe(
+      'Three open up the first month you log time or save a visit or plan, then one more each month you do.'
+    )
+    expect(unlockNoteText('streak', 'plans', 'hat')).toBe(
+      unlockNoteText('streak', 'plans')
+    )
   })
 
   it('names every tab, section and option', () => {
     expect(ROOM_TABS.map(roomTabLabel)).toEqual([
+      'Hat',
       'Window',
       'Wall',
       'Floor',
@@ -80,5 +88,7 @@ describe('Decorate Room labels', () => {
       'Next plan',
       'Conversations',
     ])
+    expect(roomOptionLabel('hat', 'none')).toBe('No hat')
+    expect(roomOptionLabel('hat', 'tophat')).toBe('Top hat')
   })
 })

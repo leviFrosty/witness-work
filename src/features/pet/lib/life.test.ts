@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { addDays } from '@/features/pet/lib/dayKeys'
-import { moodOf, simulateLife, type PetLife } from '@/features/pet/lib/life'
+import { addDays, daysBetween } from '@/features/pet/lib/dayKeys'
+import {
+  moodOf,
+  simulateLife,
+  type HeartsPace,
+  type PetLife,
+} from '@/features/pet/lib/life'
 
 const ADOPTED = '2026-01-01'
 
@@ -11,15 +16,27 @@ function lifeOn(
     active = [],
     wakes = [],
     adoptedOn = ADOPTED,
-  }: { active?: number[]; wakes?: number[]; adoptedOn?: string } = {}
+    paceOf,
+  }: {
+    active?: number[]
+    wakes?: number[]
+    adoptedOn?: string
+    paceOf?: (month: string) => HeartsPace
+  } = {}
 ): PetLife {
   return simulateLife({
     adoptedOn,
     activeDays: new Set(active.map((d) => addDays(adoptedOn, d))),
     wakes: wakes.map((d) => addDays(adoptedOn, d)),
     today: addDays(adoptedOn, day),
+    paceOf,
   })
 }
+
+/** Every month at the monthly pace (a Kingdom Publisher). */
+const monthly = (): HeartsPace => 'monthly'
+/** Days from adoption (2026-01-01) to `key`. */
+const on = (key: string) => daysBetween(ADOPTED, key)
 
 const range = (from: number, to: number, step = 1) =>
   Array.from(
@@ -96,6 +113,67 @@ describe('simulateLife', () => {
     expect(lifeOn(1, { active: [0, 1] }).hearts).toBe(5)
     for (const day of range(14, 730))
       expect(lifeOn(day, { active: [1, ...active] }).hearts).toBe(5)
+  })
+
+  describe('at the monthly pace', () => {
+    it('fills all five hearts on an active day', () => {
+      expect(lifeOn(0, { active: [0], paceOf: monthly }).hearts).toBe(5)
+    })
+
+    it('keeps a once-a-month publisher at five hearts, and turns them gold', () => {
+      // The 20th of every month, as the "I shared" checkbox might land.
+      const active = range(0, 24).map((i) =>
+        on(
+          `${2026 + Math.floor(i / 12)}-${String((i % 12) + 1).padStart(2, '0')}-20`
+        )
+      )
+      for (const day of range(on('2026-01-20'), on('2027-01-19')))
+        expect(lifeOn(day, { active, paceOf: monthly }).hearts).toBe(5)
+      expect(
+        lifeOn(on('2027-01-19'), { active, paceOf: monthly })
+      ).toMatchObject({ gold: true, goldStartedToday: true })
+    })
+
+    it('holds through the next month, then fades from day 10 after it', () => {
+      const life = (key: string) =>
+        lifeOn(on(key), { active: [on('2026-01-05')], paceOf: monthly })
+      // Nothing in February: the hearts hold until 10 days after it ends.
+      expect(life('2026-02-28')).toMatchObject({ hearts: 5, quietDays: 0 })
+      expect(life('2026-03-09')).toMatchObject({ hearts: 5, quietDays: 9 })
+      expect(life('2026-03-10').hearts).toBe(4.5)
+      expect(life('2026-04-06')).toMatchObject({ hearts: 0.5, asleep: true })
+      expect(life('2026-04-28').dead).toBe(false)
+      expect(life('2026-04-29')).toMatchObject({ dead: true, hearts: 0 })
+    })
+
+    it('brings a sleeping pet back to five hearts, with a rainbow', () => {
+      const active = [on('2026-01-05'), on('2026-05-02')]
+      expect(lifeOn(on('2026-05-01'), { active, paceOf: monthly }).asleep).toBe(
+        false
+      )
+      expect(lifeOn(on('2026-05-01'), { active, paceOf: monthly }).dead).toBe(
+        true
+      )
+      expect(
+        lifeOn(on('2026-05-02'), { active, paceOf: monthly })
+      ).toMatchObject({ hearts: 5, dead: false, rainbowToday: true })
+    })
+
+    it('follows each month’s own pace when the role changes', () => {
+      // Monthly in January, daily from February (say, auxiliary pioneering).
+      const paceOf = (month: string): HeartsPace =>
+        month === '2026-01' ? 'monthly' : 'daily'
+      const active = [on('2026-01-05'), on('2026-03-02')]
+      // January's hold still runs through February.
+      expect(lifeOn(on('2026-03-01'), { active, paceOf }).hearts).toBe(5)
+      // A daily day restarts the quiet count without shortening the hold.
+      expect(lifeOn(on('2026-03-11'), { active, paceOf }).hearts).toBe(5)
+      expect(lifeOn(on('2026-03-12'), { active, paceOf }).hearts).toBe(4.5)
+      // Daily days add one heart at a time again: 3 after fading, then 4.
+      const later = [on('2026-01-05'), on('2026-03-20')]
+      expect(lifeOn(on('2026-03-19'), { active: later, paceOf }).hearts).toBe(3)
+      expect(lifeOn(on('2026-03-20'), { active: later, paceOf }).hearts).toBe(4)
+    })
   })
 
   it('wakes a sleeping pet to 1 heart and restarts the quiet count', () => {

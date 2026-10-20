@@ -20,7 +20,11 @@ import { localDayKey, monthOfDayKey } from '@/features/pet/lib/dayKeys'
 import { pendingGift } from '@/features/pet/lib/gifts'
 import { lampLevel, type LampLevel } from '@/features/pet/lib/lamp'
 import { type PetLife } from '@/features/pet/lib/life'
-import { petLifeOn, selectPetActiveDays } from '@/features/pet/lib/petInputs'
+import {
+  petLifeOn,
+  selectHeartsPace,
+  selectPetActiveDays,
+} from '@/features/pet/lib/petInputs'
 import { defaultRoomFor, readPet, readRoom } from '@/features/pet/lib/records'
 import {
   roomItemsEarnedBy,
@@ -115,14 +119,19 @@ export default function usePetLife(): PetLifeState {
   const recurringPlans = useServiceReport((state) => state.recurringPlans)
   const visits = useConversations((state) => state.conversations)
   const showStreaks = usePreferences((state) => state.showStreaks)
+  const role = usePreferences((state) => state.role)
+  const roleHistory = usePreferences((state) => state.roleHistory)
   const { entryMode } = usePublisher()
   const streak = useServiceStreak()
   const todayKey = localDayKey(useToday())
 
-  // Dev harness: a faked streak shows its unlocks without storing them.
+  // Dev harness: a faked streak shows its unlocks without storing them, and
+  // so does Developer Tools' streak override.
   const fakedStreak = usePetSession((s) =>
     __DEV__ ? s.devOverride?.streak : undefined
   )
+  const toolsStreak = usePreferences((state) => state.devStreakOverride)
+  const faking = fakedStreak !== undefined || toolsStreak !== null
 
   const pet = petOf(storedPet)
   const roomDefaults = defaultRoomFor(entryMode)
@@ -131,10 +140,7 @@ export default function usePetLife(): PetLifeState {
   const mode = unlockMode({
     showStreaks,
     kind: streak.kind,
-    hasPlans:
-      dayPlans.length > 0 ||
-      recurringPlans.length > 0 ||
-      fakedStreak !== undefined,
+    hasPlans: dayPlans.length > 0 || recurringPlans.length > 0 || faking,
   })
 
   const activeDays = pet
@@ -147,8 +153,7 @@ export default function usePetLife(): PetLifeState {
     ? earnedOf(mode, streak.kind, fakedStreak ?? streak.count, months)
     : []
   // Joined, so the effect only runs when the list to store changes.
-  const toStore =
-    fakedStreak === undefined ? roomItemsToStore(stored, earned).join(' ') : ''
+  const toStore = faking ? '' : roomItemsToStore(stored, earned).join(' ')
   useEffect(() => {
     if (!toStore) return
     // Home and Decorate Room can both ask; only the first adds anything.
@@ -175,7 +180,12 @@ export default function usePetLife(): PetLifeState {
       todayKey,
     }
 
-  const life = petLifeOn(pet, activeDays, todayKey)
+  const life = petLifeOn(
+    pet,
+    activeDays,
+    todayKey,
+    selectHeartsPace(roleHistory, role)
+  )
   return {
     pet,
     room,

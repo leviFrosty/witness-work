@@ -1,17 +1,58 @@
 import { crop, scaleNearest, type PixelBuffer } from '@/lib/pixelArt'
+import { shownStreak, type ServiceStreak } from '@/lib/serviceStreak'
 import { composeScene, VIEW_CARD, type PlayerInput } from '@/features/pet/art'
+import { daysBetween } from '@/features/pet/lib/dayKeys'
 
 /** How many image pixels each scene pixel becomes in a shared picture. */
 export const PET_SHARE_SCALE = 4
 
 /**
- * The Home card's room as a still picture, `PET_SHARE_SCALE` times larger with
- * nearest scaling so the pixels stay sharp. The pet sits at rest; particles and
- * motions are left out.
+ * The Home card's room as a still picture, `scale` times larger with nearest
+ * scaling so the pixels stay sharp. The pet sits at rest; particles and motions
+ * are left out.
  */
-export function petShareImage(input: PlayerInput): PixelBuffer {
+export function petShareImage(
+  input: PlayerInput,
+  scale = PET_SHARE_SCALE
+): PixelBuffer {
   const frame = composeScene({ ...input, particles: null }, 0)
-  return scaleNearest(crop(frame, VIEW_CARD), PET_SHARE_SCALE)
+  return scaleNearest(crop(frame, VIEW_CARD), scale)
+}
+
+/** The fun facts on the share card. */
+export type PetShareStats = {
+  /** The Service Streak as people see it; null while hidden or too short. */
+  streak: Pick<ServiceStreak, 'kind' | 'count'> | null
+  /** Days since adoption, the adoption day itself counting as the first. */
+  daysTogether: number
+  /** Hats opened up so far, not counting No hat. */
+  hats: number
+}
+
+/** What the share card says about the pet and its User. */
+export function petShareStats({
+  adoptedOn,
+  today,
+  streak,
+  showStreaks,
+  unlocked,
+}: {
+  adoptedOn: string
+  today: string
+  streak: ServiceStreak
+  showStreaks: boolean
+  unlocked: ReadonlySet<string>
+}): PetShareStats {
+  const count = showStreaks ? shownStreak(streak) : 0
+  const days = daysBetween(adoptedOn, today)
+  let hats = 0
+  for (const item of unlocked)
+    if (item.startsWith('hat:') && item !== 'hat:none') hats++
+  return {
+    streak: count > 0 ? { kind: streak.kind, count } : null,
+    daysTogether: Number.isFinite(days) ? Math.max(1, days + 1) : 1,
+    hats,
+  }
 }
 
 /**

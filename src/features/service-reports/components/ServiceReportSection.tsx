@@ -45,7 +45,6 @@ const ServiceReportSection = () => {
       {/* Only the header long-presses: the card body is full of controls
         with their own menus. */}
       <HomeSectionMenu
-        section='serviceReport'
         accessibilityLabel={i18n.t('viewReport')}
         onPress={viewReport}
         actions={[

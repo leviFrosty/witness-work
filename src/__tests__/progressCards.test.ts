@@ -1,39 +1,53 @@
 import { describe, expect, it } from 'vitest'
 import {
+  ALL_TIME_CARDS,
   addProgressCard,
+  defaultAllTimeProgressCards,
+  defaultYearProgressCards,
   defaultProgressCards,
   describeProgressCardChange,
   getEffectiveProgressCards,
   keepUnknownProgressCards,
+  MONTH_CARDS,
   moveProgressCard,
   removeProgressCard,
   resizeProgressCard,
   sameProgressCards,
   stepProgressCard,
   type ProgressCardLayoutItem,
+  YEAR_CARDS,
 } from '@/lib/progressCards'
 
 const withGoal = { hasMonthlyGoal: true }
 
 describe('progress cards', () => {
   it('starts from the role default until customized', () => {
-    expect(getEffectiveProgressCards(null, withGoal)).toEqual(
-      defaultProgressCards(withGoal)
-    )
     expect(
-      getEffectiveProgressCards(undefined, { hasMonthlyGoal: false }).map(
-        (c) => c.id
+      getEffectiveProgressCards(
+        MONTH_CARDS,
+        null,
+        defaultProgressCards(withGoal)
       )
+    ).toEqual(defaultProgressCards(withGoal))
+    expect(
+      getEffectiveProgressCards(
+        MONTH_CARDS,
+        undefined,
+        defaultProgressCards({ hasMonthlyGoal: false })
+      ).map((c) => c.id)
     ).toEqual(['serviceDays', 'studies', 'days'])
   })
 
   it('keeps an emptied layout empty', () => {
-    expect(getEffectiveProgressCards([], withGoal)).toEqual([])
+    expect(
+      getEffectiveProgressCards(MONTH_CARDS, [], defaultProgressCards(withGoal))
+    ).toEqual([])
   })
 
   it('drops unknown cards and repeats, and fixes sizes', () => {
     expect(
       getEffectiveProgressCards(
+        MONTH_CARDS,
         [
           { id: 'fromTheFuture', size: 'small' },
           { id: 'studies', size: 'wide' },
@@ -42,7 +56,7 @@ describe('progress cards', () => {
           { id: 'days', size: 'huge' },
           null,
         ],
-        withGoal
+        defaultProgressCards(withGoal)
       )
     ).toEqual([
       { id: 'studies', size: 'wide' },
@@ -59,9 +73,9 @@ describe('progress cards', () => {
   ]
 
   it('adds first at the first size, once', () => {
-    const added = addProgressCard(layout, 'weeks')
+    const added = addProgressCard(MONTH_CARDS, layout, 'weeks')
     expect(added[0]).toEqual({ id: 'weeks', size: 'wide' })
-    expect(addProgressCard(added, 'weeks')).toBe(added)
+    expect(addProgressCard(MONTH_CARDS, added, 'weeks')).toBe(added)
   })
 
   it('removes and resizes', () => {
@@ -70,12 +84,16 @@ describe('progress cards', () => {
       'projected',
       'days',
     ])
-    expect(resizeProgressCard(layout, 'days', 'compact')[3]).toEqual({
+    expect(
+      resizeProgressCard(MONTH_CARDS, layout, 'days', 'compact')[3]
+    ).toEqual({
       id: 'days',
       size: 'compact',
     })
     // A size the card doesn't come in is ignored.
-    expect(resizeProgressCard(layout, 'projected', 'small')).toEqual(layout)
+    expect(
+      resizeProgressCard(MONTH_CARDS, layout, 'projected', 'small')
+    ).toEqual(layout)
   })
 
   it('moves a card to another card’s place', () => {
@@ -99,7 +117,10 @@ describe('progress cards', () => {
   it('compares layouts', () => {
     expect(sameProgressCards(layout, [...layout])).toBe(true)
     expect(
-      sameProgressCards(layout, resizeProgressCard(layout, 'days', 'compact'))
+      sameProgressCards(
+        layout,
+        resizeProgressCard(MONTH_CARDS, layout, 'days', 'compact')
+      )
     ).toBe(false)
   })
 
@@ -127,12 +148,63 @@ describe('progress cards', () => {
       { id: 'fromTheFuture', size: 'small' },
     ]
     const edited = removeProgressCard(
-      getEffectiveProgressCards(stored, withGoal),
+      getEffectiveProgressCards(
+        MONTH_CARDS,
+        stored,
+        defaultProgressCards(withGoal)
+      ),
       'studies'
     )
-    expect(keepUnknownProgressCards(stored, edited)).toEqual([
+    expect(keepUnknownProgressCards(MONTH_CARDS, stored, edited)).toEqual([
       { id: 'fromTheFuture', size: 'small' },
     ])
-    expect(keepUnknownProgressCards(null, edited)).toEqual([])
+    expect(keepUnknownProgressCards(MONTH_CARDS, null, edited)).toEqual([])
+  })
+})
+
+describe('year and all time cards', () => {
+  it('start from the role default, the pace chart first with an annual goal', () => {
+    expect(
+      defaultYearProgressCards({ hasAnnualGoal: true, showsTimeEntry: true })
+    ).toEqual([
+      { id: 'pace', size: 'wide' },
+      { id: 'monthlyAverage', size: 'small' },
+      { id: 'studies', size: 'small' },
+    ])
+    expect(
+      defaultYearProgressCards({ hasAnnualGoal: false, showsTimeEntry: false })
+    ).toEqual([
+      { id: 'monthsShared', size: 'small' },
+      { id: 'studies', size: 'small' },
+    ])
+    expect(defaultAllTimeProgressCards().map((c) => c.id)).toEqual([
+      'bestYear',
+      'yearlyAverage',
+    ])
+  })
+
+  it("keep to their own tab's cards", () => {
+    // A Month card stored on Year (or from a newer version) is dropped.
+    expect(
+      getEffectiveProgressCards(
+        YEAR_CARDS,
+        [
+          { id: 'dailyPace', size: 'small' },
+          { id: 'pace', size: 'small' },
+          { id: 'bestMonth', size: 'wide' },
+        ],
+        []
+      )
+    ).toEqual([
+      { id: 'pace', size: 'wide' },
+      { id: 'bestMonth', size: 'wide' },
+    ])
+    expect(
+      addProgressCard(
+        ALL_TIME_CARDS,
+        defaultAllTimeProgressCards(),
+        'studies'
+      )[0]
+    ).toEqual({ id: 'studies', size: 'small' })
   })
 })

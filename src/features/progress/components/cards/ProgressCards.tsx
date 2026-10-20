@@ -1,59 +1,31 @@
-import { type ReactNode, useState } from 'react'
-import {
-  LayoutGrid as LayoutGridIcon,
-  Plus as PlusIcon,
-} from 'lucide-react-native'
-import { View } from 'react-native'
-import Button from '@/components/ui/Button'
-import LucideIcon from '@/components/ui/LucideIcon'
-import Text from '@/components/ui/MyText'
-import useTheme from '@/contexts/theme'
-import ReorderableGrid from '@/components/ui/reorderable/ReorderableGrid'
+import type { ReactNode } from 'react'
 import ReorderableLiftZone from '@/components/ui/reorderable/ReorderableLiftZone'
 import { useReorderableDragging } from '@/components/ui/reorderable/context'
 import type { ReorderScroller } from '@/components/ui/reorderable/useReorderScroller'
-import confirmDestructive from '@/lib/confirmDestructive'
-import i18n from '@/lib/locales'
-import {
-  PROGRESS_CARD_SIZES,
-  spansBothColumns,
-  type ProgressCardId,
-  type ProgressCardLayoutItem,
-} from '@/lib/progressCards'
+import { MONTH_CARDS, type ProgressCardId } from '@/lib/progressCards'
 import type { RevealAboveSheet } from '@/hooks/useRevealAboveSheet'
 import useProgressCards from '@/features/progress/hooks/useProgressCards'
 import {
+  PROGRESS_CARD_GROUPS,
   PROGRESS_CARDS,
   type ProgressCardDestination,
 } from '@/features/progress/components/cards/progressCardRegistry'
-import { progressCardSizeLabel } from '@/features/progress/components/cards/progressCardSizes'
 import ProgressCardPressable from '@/features/progress/components/cards/ProgressCardPressable'
-import AddProgressCardSheet from '@/features/progress/components/cards/AddProgressCardSheet'
+import ProgressCardGrid, {
+  type ProgressCardEditStart,
+} from '@/features/progress/components/cards/ProgressCardGrid'
 import DaysCard from '@/features/progress/components/cards/DaysCard'
 import DaysEditPreview, {
   DAYS_PREVIEW_HEIGHTS,
 } from '@/features/progress/components/cards/DaysEditPreview'
 
-const SIZE_ORDER: ProgressCardLayoutItem['size'][] = [
-  'small',
-  'compact',
-  'wide',
-  'full',
-]
-
-/** Space between cards. */
-export const PROGRESS_CARD_GAP = 12
-/**
- * Narrower than this (a tablet's side column), two small cards can't fit their
- * titles, so every card takes the full width.
- */
-const TWO_COLUMN_MIN_WIDTH = 340
+export { PROGRESS_CARD_GAP } from '@/features/progress/components/cards/ProgressCardGrid'
 
 type Props = {
   month: number
   year: number
   editing: boolean
-  onStartEditing: (source: 'card' | 'add' | 'footer') => void
+  onStartEditing: (source: ProgressCardEditStart) => void
   /** Tapping empty space ends editing, as Done does. */
   onFinishEditing: () => void
   /** The Add Cards sheet is open (from here or the header's Add Cards). */
@@ -68,12 +40,6 @@ type Props = {
   dayReveal?: RevealAboveSheet
 }
 
-/**
- * The User's cards under the month's report. Outside edit mode they're just
- * cards; holding one (or Edit Cards) starts editing, as on the Home Screen: the
- * cards jiggle, the minus removes one, its corner handle resizes it, and
- * holding one drags it. More come from Add Cards.
- */
 /**
  * While editing, the Days list stands in as a short preview, except while it's
  * held: a hold on its header outside edit mode lifts it straight into a drag,
@@ -92,271 +58,62 @@ function DaysSlot({
   return editing && !held ? preview : children
 }
 
+/** The User's cards under the month's report (see `ProgressCardGrid`). */
 export default function ProgressCards({
   month,
   year,
-  editing,
-  onStartEditing,
-  onFinishEditing,
-  adding,
-  onAddingChange,
-  onNavigate,
-  scroller,
-  onDragChange,
-  exclude = [],
   dayReveal,
+  onStartEditing,
+  ...grid
 }: Props) {
-  const theme = useTheme()
   const cards = useProgressCards(month, year)
-  // Laid out afresh when editing ends (see `layoutKey`), but not when it
-  // starts: a card held to start editing is still under the finger.
-  const [layoutGeneration, setLayoutGeneration] = useState(0)
-  const [wasEditing, setWasEditing] = useState(editing)
-  if (wasEditing !== editing) {
-    setWasEditing(editing)
-    if (!editing) setLayoutGeneration(layoutGeneration + 1)
-  }
-  const items = cards.shown.filter((item) => !exclude.includes(item.id))
-
-  const renderCard = (item: ProgressCardLayoutItem) => {
-    const card = PROGRESS_CARDS[item.id]
-    if (item.id === 'days') {
-      return (
-        <DaysSlot
-          editing={editing}
-          preview={<DaysEditPreview size={item.size} />}
-        >
-          <DaysCard
-            month={month}
-            year={year}
-            size={item.size}
-            dayReveal={dayReveal}
-            // Each day has a menu of its own, so only the header lifts the list
-            // (`liftOutsideEditing='zone'`).
-            wrapEditTrigger={(header) => (
-              <ReorderableLiftZone>
-                <ProgressCardPressable
-                  onEdit={() => onStartEditing('card')}
-                  fill={false}
-                >
-                  {header}
-                </ProgressCardPressable>
-              </ReorderableLiftZone>
-            )}
-          />
-        </DaysSlot>
-      )
-    }
-    const content = (
-      <card.Component month={month} year={year} size={item.size} />
-    )
-    if (editing) return content
-    const destination = card.destination
-    return (
-      <ProgressCardPressable
-        onEdit={() => onStartEditing('card')}
-        onPress={destination ? () => onNavigate(destination) : undefined}
-      >
-        {content}
-      </ProgressCardPressable>
-    )
-  }
-
-  const shownIds = items.map((item) => item.id)
 
   return (
-    <View style={{ gap: 12 }}>
-      {editing ? (
-        <Text
-          style={{
-            textAlign: 'center',
-            fontSize: theme.fontSize('sm'),
-            color: theme.colors.textAlt,
-          }}
-        >
-          {i18n.t('progressCards.editHint')}
-        </Text>
-      ) : null}
-
-      {!items.length ? (
-        // With no cards, Add Cards in the header is easy to miss.
-        <Button
-          onPress={() => {
-            if (!editing) onStartEditing('add')
-            onAddingChange(true)
-          }}
-          accessibilityLabel={i18n.t('progressCards.addCards')}
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 8,
-            paddingVertical: 16,
-            borderRadius: theme.numbers.borderRadiusLg,
-            borderWidth: 1.5,
-            borderStyle: 'dashed',
-            borderColor: theme.colors.accent,
-            backgroundColor: theme.colors.accentTranslucent,
-          }}
-          noTransform
-        >
-          <LucideIcon icon={PlusIcon} size={16} color={theme.colors.accent} />
-          <Text
-            style={{
-              fontFamily: theme.fonts.semiBold,
-              color: theme.colors.accent,
-            }}
+    <ProgressCardGrid
+      {...grid}
+      cards={cards}
+      ids={MONTH_CARDS.ids}
+      sizes={MONTH_CARDS.sizes}
+      meta={PROGRESS_CARDS}
+      groups={PROGRESS_CARD_GROUPS}
+      onStartEditing={onStartEditing}
+      renderContent={(item) => {
+        const { Component } = PROGRESS_CARDS[item.id]
+        return <Component month={month} year={year} size={item.size} />
+      }}
+      renderOwn={(item) =>
+        item.id === 'days' ? (
+          <DaysSlot
+            editing={grid.editing}
+            preview={<DaysEditPreview size={item.size} />}
           >
-            {i18n.t('progressCards.addCards')}
-          </Text>
-        </Button>
-      ) : null}
-
-      {items.length ? (
-        <ReorderableGrid
-          layoutKey={`${layoutGeneration}`}
-          items={items}
-          editing={editing}
-          span={(size) => (spansBothColumns(size) ? 2 : 1)}
-          minWidth={TWO_COLUMN_MIN_WIDTH}
-          gap={PROGRESS_CARD_GAP}
-          renderItem={renderCard}
-          itemProps={(item) => {
-            const title = PROGRESS_CARDS[item.id].title()
-            const at = shownIds.indexOf(item.id)
-            const sizes = PROGRESS_CARD_SIZES[item.id]
-            return {
-              // Each day has a menu of its own; the list lifts by its header.
-              liftOutsideEditing: item.id === 'days' ? 'zone' : true,
-              removeLabel: i18n.t('progressCards.removeA11y', { card: title }),
-              onRemove: () => cards.remove(item.id),
-              resize:
-                sizes.length > 1
-                  ? {
-                      label: i18n.t('progressCards.resizeA11y', {
-                        card: title,
-                      }),
-                      // Smallest first.
-                      options: [...sizes]
-                        .sort(
-                          (a, b) =>
-                            SIZE_ORDER.indexOf(a) - SIZE_ORDER.indexOf(b)
-                        )
-                        .map((size) => ({
-                          size,
-                          height:
-                            item.id === 'days' &&
-                            size !== 'small' &&
-                            size !== 'wide'
-                              ? DAYS_PREVIEW_HEIGHTS[size]
-                              : undefined,
-                        })),
-                      onResize: (size) => cards.resize(item.id, size),
-                    }
-                  : undefined,
-              accessibilityLabel: `${title}, ${progressCardSizeLabel(item.size)}`,
-              accessibilityActions: [
-                ...(at > 0
-                  ? [{ name: 'earlier', label: i18n.t('moveUp') }]
-                  : []),
-                ...(at < shownIds.length - 1
-                  ? [{ name: 'later', label: i18n.t('moveDown') }]
-                  : []),
-                ...sizes
-                  .filter((size) => size !== item.size)
-                  .map((size) => ({
-                    name: `size:${size}`,
-                    label: progressCardSizeLabel(size),
-                  })),
-                { name: 'remove', label: i18n.t('progressCards.removeCard') },
-              ],
-              onAccessibilityAction: (name) => {
-                // Among the cards here; on iPad Days may sit beside them.
-                if (name === 'earlier') cards.step(item.id, -1, shownIds)
-                else if (name === 'later') cards.step(item.id, 1, shownIds)
-                else if (name === 'remove') cards.remove(item.id)
-                else if (name.startsWith('size:'))
-                  cards.resize(
-                    item.id,
-                    name.slice(5) as ProgressCardLayoutItem['size']
-                  )
-              },
-            }
-          }}
-          onMove={cards.move}
-          onLiftToEdit={() => onStartEditing('card')}
-          onBackgroundPress={onFinishEditing}
-          onDragChange={onDragChange}
-          scroller={scroller}
-        />
-      ) : null}
-
-      {!editing && items.length ? (
-        // Long press is invisible and the header button is an icon on a
-        // phone; this says it in words where the cards end.
-        <Button
-          onPress={() => onStartEditing('footer')}
-          style={{
-            alignSelf: 'center',
-            flexDirection: 'row',
-            alignItems: 'center',
-            gap: 6,
-            paddingVertical: 8,
-            paddingHorizontal: 12,
-          }}
-        >
-          <LucideIcon
-            icon={LayoutGridIcon}
-            size={14}
-            color={theme.colors.textAlt}
-          />
-          <Text
-            style={{
-              fontSize: theme.fontSize('sm'),
-              fontFamily: theme.fonts.semiBold,
-              color: theme.colors.textAlt,
-            }}
-          >
-            {i18n.t('progressCards.editCards')}
-          </Text>
-        </Button>
-      ) : null}
-
-      {editing && cards.isCustomized ? (
-        <Button
-          onPress={() =>
-            confirmDestructive({
-              title: i18n.t('progressCards.resetTitle'),
-              description: i18n.t('progressCards.resetDescription'),
-              confirmLabel: i18n.t('progressCards.reset'),
-              onConfirm: cards.reset,
-            })
-          }
-          style={{
-            alignSelf: 'center',
-            paddingVertical: 8,
-            paddingHorizontal: 12,
-          }}
-        >
-          <Text
-            style={{
-              fontSize: theme.fontSize('sm'),
-              fontFamily: theme.fonts.semiBold,
-              color: theme.colors.textAlt,
-            }}
-          >
-            {i18n.t('progressCards.reset')}
-          </Text>
-        </Button>
-      ) : null}
-
-      <AddProgressCardSheet
-        open={adding}
-        onClose={() => onAddingChange(false)}
-        added={cards.layout.map((item) => item.id)}
-        isAvailable={cards.isAvailable}
-        onAdd={cards.add}
-      />
-    </View>
+            <DaysCard
+              month={month}
+              year={year}
+              size={item.size}
+              dayReveal={dayReveal}
+              // Each day has a menu of its own, so only the header lifts the
+              // list (`liftsByZone`).
+              wrapEditTrigger={(header) => (
+                <ReorderableLiftZone>
+                  <ProgressCardPressable
+                    onEdit={() => onStartEditing('card')}
+                    fill={false}
+                  >
+                    {header}
+                  </ProgressCardPressable>
+                </ReorderableLiftZone>
+              )}
+            />
+          </DaysSlot>
+        ) : undefined
+      }
+      liftsByZone={(id) => id === 'days'}
+      sizeHeight={(id, size) =>
+        id === 'days' && size !== 'small' && size !== 'wide'
+          ? DAYS_PREVIEW_HEIGHTS[size]
+          : undefined
+      }
+    />
   )
 }

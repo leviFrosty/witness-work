@@ -12,7 +12,11 @@ import type { SyncDeviceFiles } from '@/lib/syncDevices'
 import { roleHistoryEntries } from '@/lib/syncPreferencePolicy'
 import { DEFAULT_SCHEDULE_SCREEN_ELEMENTS_ORDER } from '@/lib/scheduleScreenPreferences'
 import { DEFAULT_TAB_ORDER } from '@/lib/tabOrderPreferences'
-import type { ProgressCardLayoutItem } from '@/lib/progressCards'
+import type {
+  AllTimeCardId,
+  ProgressCardLayoutItem,
+  YearCardId,
+} from '@/lib/progressCards'
 import { create } from 'zustand'
 import { persist, combine } from 'zustand/middleware'
 import { Publisher, PublisherHours } from '@/types/publisher'
@@ -588,6 +592,10 @@ export const PREFERENCE_DEFAULTS = {
    * their role; always read through `getEffectiveProgressCards`.
    */
   progressCards: null as ProgressCardLayoutItem[] | null,
+  /** The cards on Progress → Year, like `progressCards`. */
+  yearProgressCards: null as ProgressCardLayoutItem<YearCardId>[] | null,
+  /** The cards on Progress → All Time, like `progressCards`. */
+  allTimeProgressCards: null as ProgressCardLayoutItem<AllTimeCardId>[] | null,
   /**
    * User-defined order of the navigation tabs. Resolved through
    * `getEffectiveTabOrder` at read time.

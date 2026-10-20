@@ -1,7 +1,10 @@
 import { CalendarCheck as TodayIcon } from 'lucide-react-native'
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { StyleSheet, View } from 'react-native'
 import AdaptiveSplitScrollView from '@/components/ui/layout/AdaptiveSplitScrollView'
+import type { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
+import useReorderScroller from '@/components/ui/reorderable/useReorderScroller'
+import { TAB_BAR_HEIGHT } from '@/components/ui/TabBar'
 import type { HideBarsScrollProps } from '@/hooks/useHideBarsOnScroll'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import moment from 'moment'
@@ -40,8 +43,11 @@ import {
 } from '@/features/service-reports/lib/monthEditTargets'
 import MonthSummaryPreview from '@/features/service-reports/components/MonthSummaryPreview'
 import ContextMenu from '@/components/ui/ContextMenu'
-import ServiceYearPaceCard from '@/features/progress/components/ServiceYearPaceCard'
 import GoalBar, { GoalBarKey } from '@/components/GoalBar'
+import YearProgressCards from '@/features/progress/components/cards/year/YearProgressCards'
+import RestWhileEditing from '@/features/progress/components/cards/RestWhileEditing'
+import type { ProgressCardEditStart } from '@/features/progress/components/cards/ProgressCardGrid'
+import type { ProgressCardDestination } from '@/features/progress/components/cards/progressCardRegistry'
 import useServiceYearPace from '@/features/progress/hooks/useServiceYearPace'
 import { alignText } from '@/lib/direction'
 import { tracking } from '@/lib/tracking'
@@ -56,6 +62,14 @@ interface ProgressYearTabProps {
   onMonthPress: (month: number, year: number) => void
   /** Tucks the screen's header and tab bar away; see `useHideBarsOnScroll`. */
   scrollBars?: HideBarsScrollProps
+  /** The cards are being edited (Edit in the header, or a long press). */
+  editing: boolean
+  onStartEditing: (source: ProgressCardEditStart) => void
+  onFinishEditing: () => void
+  /** The Add Cards sheet is open. */
+  adding: boolean
+  onAddingChange: (adding: boolean) => void
+  onNavigate: (destination: ProgressCardDestination) => void
 }
 
 const CurrentMonthIcon = () => {
@@ -348,20 +362,32 @@ const MonthRow = ({
 }
 
 /**
- * Service-year tab body. Renders the milestone hero card at the top and then an
- * "ALL MONTHS" list — one compact row per month across the service year.
- * Service years run Sep → Aug (12 months), so month order here is `[8, 9, 10,
- * 11, 0, 1, 2, 3, 4, 5, 6, 7]`.
+ * Service-year tab body. Renders the milestone hero card at the top, the User's
+ * Year cards under it (see `YearProgressCards`), and then an "ALL MONTHS" list
+ * — one compact row per month across the service year. Service years run Sep →
+ * Aug (12 months), so month order here is `[8, 9, 10, 11, 0, 1, 2, 3, 4, 5, 6,
+ * 7]`.
  */
 const ProgressYearTab = ({
   year,
   onAdjustMilestones,
   onMonthPress,
   scrollBars,
+  editing: editingCards,
+  onStartEditing,
+  onFinishEditing,
+  adding,
+  onAddingChange,
+  onNavigate,
 }: ProgressYearTabProps) => {
   const theme = useTheme()
   const insets = useSafeAreaInsets()
   const { hasSidebar } = useAdaptiveLayout()
+  const scrollRef = useRef<KeyboardAwareScrollView>(null)
+  const scroller = useReorderScroller(scrollRef, {
+    obscuredBottom: hasSidebar ? 0 : insets.bottom + TAB_BAR_HEIGHT,
+  })
+  const [dragging, setDragging] = useState(false)
 
   // One pair of status/goal sheets for every row; `target` null = closed.
   const [editing, setEditing] = useState<{
@@ -387,7 +413,7 @@ const ProgressYearTab = ({
     return list
   }, [year])
 
-  const { hasAnnualGoal, monthlyGoalHours, milestones } = usePublisher(
+  const { hasAnnualGoal, monthlyGoalHours } = usePublisher(
     serviceYearFocusMonth(year - 1)
   )
   const showDeltaColumn = monthlyGoalHours > 0
@@ -399,70 +425,70 @@ const ProgressYearTab = ({
       scrollBars={scrollBars}
       paddingTop={0}
       paddingBottom={insets.bottom + (hasSidebar ? 30 : 100)}
+      leadingReorder={{ scrollRef, scroller, scrollEnabled: !dragging }}
       leading={
         <View style={{ gap: 24 }}>
           {/* Roles without an Annual Goal get a raw service-year total instead
-            of the milestone hero, and no projection (there is nothing to
-            project against). */}
-          {hasAnnualGoal ? (
-            <>
+            of the milestone hero. Their pace and projection are cards. */}
+          <RestWhileEditing
+            editing={editingCards}
+            onFinishEditing={onFinishEditing}
+          >
+            {hasAnnualGoal ? (
               <YearMilestoneCard
                 year={year}
                 onAdjustMilestones={onAdjustMilestones}
                 categoriesSlot={<YearCategoryBreakdownSection year={year} />}
                 separateMilestones
               />
-              <ServiceYearPaceCard data={paceData} milestones={milestones} />
-            </>
-          ) : (
-            <YearTotalCard
-              year={year}
-              categoriesSlot={<YearCategoryBreakdownSection year={year} />}
-            />
-          )}
+            ) : (
+              <YearTotalCard
+                year={year}
+                categoriesSlot={<YearCategoryBreakdownSection year={year} />}
+              />
+            )}
+          </RestWhileEditing>
+          <YearProgressCards
+            serviceYear={year - 1}
+            editing={editingCards}
+            onStartEditing={onStartEditing}
+            onFinishEditing={onFinishEditing}
+            adding={adding}
+            onAddingChange={onAddingChange}
+            onNavigate={onNavigate}
+            scroller={scroller.scroller}
+            onDragChange={setDragging}
+          />
         </View>
       }
       trailing={
-        <View style={{ gap: 8, paddingTop: 10 }}>
-          <View style={{ gap: 6 }}>
-            <XView
-              style={[
-                styles.columns,
-                { paddingHorizontal: 16, paddingBottom: 2 },
-              ]}
-            >
-              <Text
+        <RestWhileEditing
+          editing={editingCards}
+          onFinishEditing={onFinishEditing}
+        >
+          <View style={{ gap: 8, paddingTop: 10 }}>
+            <View style={{ gap: 6 }}>
+              <XView
                 style={[
-                  styles.monthColumn,
-                  {
-                    fontFamily: theme.fonts.semiBold,
-                    color: theme.colors.textAlt,
-                    fontSize: theme.fontSize('xs'),
-                    textTransform: 'uppercase',
-                    letterSpacing: tracking(0.5),
-                  },
+                  styles.columns,
+                  { paddingHorizontal: 16, paddingBottom: 2 },
                 ]}
-                numberOfLines={1}
               >
-                {i18n.t('month')}
-              </Text>
-              <Text
-                style={[
-                  styles.numericColumn,
-                  {
-                    fontFamily: theme.fonts.semiBold,
-                    color: theme.colors.textAlt,
-                    fontSize: theme.fontSize('xs'),
-                    textTransform: 'uppercase',
-                    letterSpacing: tracking(0.5),
-                    textAlign: alignText('end'),
-                  },
-                ]}
-                numberOfLines={1}
-              >
-                {i18n.t('hours')}
-              </Text>
-              {showDeltaColumn ? (
+                <Text
+                  style={[
+                    styles.monthColumn,
+                    {
+                      fontFamily: theme.fonts.semiBold,
+                      color: theme.colors.textAlt,
+                      fontSize: theme.fontSize('xs'),
+                      textTransform: 'uppercase',
+                      letterSpacing: tracking(0.5),
+                    },
+                  ]}
+                  numberOfLines={1}
+                >
+                  {i18n.t('month')}
+                </Text>
                 <Text
                   style={[
                     styles.numericColumn,
@@ -477,56 +503,77 @@ const ProgressYearTab = ({
                   ]}
                   numberOfLines={1}
                 >
-                  {i18n.t('vsGoal')}
+                  {i18n.t('hours')}
                 </Text>
-              ) : (
-                <View style={styles.numericColumn} />
-              )}
-            </XView>
-            {monthBars.scaleMinutes > 0 ? (
-              <View style={{ paddingHorizontal: 16, paddingBottom: 2 }}>
-                <GoalBarKey
-                  credit={monthBars.hasCredit}
-                  planned={monthBars.hasPlanned}
-                  goal={monthBars.hasGoal}
-                />
-              </View>
-            ) : null}
-            {months.map(({ month, year: calendarYear }) => {
-              const isCurrent =
-                month === currentMonth && calendarYear === currentYear
-              const isFuture =
-                calendarYear > currentYear ||
-                (calendarYear === currentYear && month > currentMonth)
-              const paceMonth =
-                paceData.pace.months[
-                  serviceYearMonthIndex({ year: calendarYear, month }, year - 1)
-                ]
-              return (
-                <MonthRow
-                  key={`${calendarYear}-${month}`}
-                  month={month}
-                  year={calendarYear}
-                  isCurrent={isCurrent}
-                  isFuture={isFuture}
-                  plannedMinutes={paceMonth?.plannedMinutes ?? 0}
-                  barScaleMinutes={monthBars.scaleMinutes}
-                  onPress={() => onMonthPress(month, calendarYear)}
-                  onEdit={(target) =>
-                    setEditing({ month, year: calendarYear, target })
-                  }
-                />
-              )
-            })}
+                {showDeltaColumn ? (
+                  <Text
+                    style={[
+                      styles.numericColumn,
+                      {
+                        fontFamily: theme.fonts.semiBold,
+                        color: theme.colors.textAlt,
+                        fontSize: theme.fontSize('xs'),
+                        textTransform: 'uppercase',
+                        letterSpacing: tracking(0.5),
+                        textAlign: alignText('end'),
+                      },
+                    ]}
+                    numberOfLines={1}
+                  >
+                    {i18n.t('vsGoal')}
+                  </Text>
+                ) : (
+                  <View style={styles.numericColumn} />
+                )}
+              </XView>
+              {monthBars.scaleMinutes > 0 ? (
+                <View style={{ paddingHorizontal: 16, paddingBottom: 2 }}>
+                  <GoalBarKey
+                    credit={monthBars.hasCredit}
+                    planned={monthBars.hasPlanned}
+                    goal={monthBars.hasGoal}
+                  />
+                </View>
+              ) : null}
+              {months.map(({ month, year: calendarYear }) => {
+                const isCurrent =
+                  month === currentMonth && calendarYear === currentYear
+                const isFuture =
+                  calendarYear > currentYear ||
+                  (calendarYear === currentYear && month > currentMonth)
+                const paceMonth =
+                  paceData.pace.months[
+                    serviceYearMonthIndex(
+                      { year: calendarYear, month },
+                      year - 1
+                    )
+                  ]
+                return (
+                  <MonthRow
+                    key={`${calendarYear}-${month}`}
+                    month={month}
+                    year={calendarYear}
+                    isCurrent={isCurrent}
+                    isFuture={isFuture}
+                    plannedMinutes={paceMonth?.plannedMinutes ?? 0}
+                    barScaleMinutes={monthBars.scaleMinutes}
+                    onPress={() => onMonthPress(month, calendarYear)}
+                    onEdit={(target) =>
+                      setEditing({ month, year: calendarYear, target })
+                    }
+                  />
+                )
+              })}
+            </View>
+            <MonthStatusGoalSheets
+              month={editing.month}
+              year={editing.year}
+              editing={editing.target}
+              onClose={() => setEditing({ ...editing, target: null })}
+              source='year_tab'
+            />
           </View>
-          <MonthStatusGoalSheets
-            month={editing.month}
-            year={editing.year}
-            editing={editing.target}
-            onClose={() => setEditing({ ...editing, target: null })}
-            source='year_tab'
-          />
-        </View>
+        </RestWhileEditing>
       }
     />
   )

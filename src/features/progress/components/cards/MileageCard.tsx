@@ -2,6 +2,7 @@ import { Car as CarIcon } from 'lucide-react-native'
 import moment from 'moment'
 import i18n from '@/lib/locales'
 import {
+  type MileagePeriod,
   periodContaining,
   summarizeTrips,
   tripsInPeriod,
@@ -11,15 +12,31 @@ import useMileageFormatter from '@/features/mileage/hooks/useMileageFormatter'
 import useMileageIndex from '@/features/mileage/hooks/useMileageIndex'
 import StatCard from '@/features/progress/components/cards/StatCard'
 import type { ProgressCardProps } from '@/features/progress/components/cards/types'
+import type { ProgressCardSize } from '@/lib/progressCards'
 
 /** The month's distance driven in service, and its estimated cost. */
 export default function MileageCard({ month, year, size }: ProgressCardProps) {
+  return (
+    <MileageStatCard
+      period={periodContaining('month', moment({ year, month, day: 1 }))}
+      size={size}
+    />
+  )
+}
+
+/** Distance driven in service in `period` (every trip without one). */
+export function MileageStatCard({
+  period,
+  size,
+}: {
+  period?: MileagePeriod
+  size: ProgressCardSize
+}) {
   const { vehicles, trips } = useMileage()
   const index = useMileageIndex()
   const format = useMileageFormatter()
-  const period = periodContaining('month', moment({ year, month, day: 1 }))
-  const monthTrips = tripsInPeriod(trips, period)
-  const summary = summarizeTrips(monthTrips, index, vehicles)
+  const shown = period ? tripsInPeriod(trips, period) : trips
+  const summary = summarizeTrips(shown, index, vehicles)
 
   return (
     <StatCard

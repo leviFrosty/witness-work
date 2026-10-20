@@ -83,7 +83,6 @@ export default function MileageHomeSection() {
       }}
     >
       <HomeSectionMenu
-        section='mileage'
         accessibilityLabel={i18n.t('mileage.title')}
         onPress={openMileage}
         actions={[

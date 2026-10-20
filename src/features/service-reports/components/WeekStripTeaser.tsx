@@ -231,7 +231,6 @@ const WeekStripTeaser = ({
   // individually reachable; the header reads as the Schedule button.
   return (
     <HomeSectionMenu
-      section='thisWeek'
       onPress={openSchedule}
       accessible={false}
       hoverRadius={theme.numbers.borderRadiusLg}

@@ -6,13 +6,10 @@ import ContextMenu, {
 } from '@/components/ui/ContextMenu'
 import { useReorderableEditing } from '@/components/ui/reorderable/context'
 import useHomeEditing from '@/hooks/useHomeEditing'
-import { hideHomeSection } from '@/lib/homeSections'
 import i18n from '@/lib/locales'
-import type { HomeScreenElementKey } from '@/stores/preferences'
 
 type HomeSectionMenuProps = {
-  section: HomeScreenElementKey
-  /** The section's own actions, listed above Hide / Customize. */
+  /** The section's own actions, listed above Edit Home Screen. */
   actions?: ContextMenuEntries
   children: ReactElement
   onPress?: () => void
@@ -26,12 +23,11 @@ type HomeSectionMenuProps = {
 
 /**
  * Long-press menu for a toggleable Home section, like an app's on the Home
- * Screen: the section's own actions, then Edit Home Screen (which starts the
- * jiggle mode, where sections move and hide) and Hide This Section. Off while
- * Home is being edited, when holding a section lifts it instead.
+ * Screen: the section's own actions, then Edit Home Screen, which starts the
+ * jiggle mode where sections move and hide. Off while Home is being edited,
+ * when holding a section lifts it instead.
  */
 export default function HomeSectionMenu({
-  section,
   actions = [],
   ...props
 }: HomeSectionMenuProps) {
@@ -42,18 +38,13 @@ export default function HomeSectionMenu({
     <ContextMenu
       actions={[
         ...actions,
+        // Its own group, below the section's actions.
         [
           {
             id: 'edit_home',
             title: i18n.t('homeEdit.editHomeScreen'),
             systemImage: 'square.grid.2x2',
             onPress: () => start('menu'),
-          },
-          {
-            id: 'hide_section',
-            title: i18n.t('hideThisSection'),
-            systemImage: 'eye.slash',
-            onPress: () => hideHomeSection(section),
           },
         ],
       ]}

@@ -37,7 +37,9 @@ import { HomeTabStackParamList } from '@/types/homeStack'
 import SegmentedControl from '@/components/ui/SegmentedControl'
 import ProgressMonthTab from '@/features/progress/components/ProgressMonthTab'
 import ProgressYearTab from '@/features/progress/components/ProgressYearTab'
-import ProgressAllTimeTab from '@/features/progress/components/ProgressAllTimeTab'
+import ProgressAllTimeTab, {
+  useAllTimeIsEmpty,
+} from '@/features/progress/components/ProgressAllTimeTab'
 import OnboardingBackfillBanner from '@/features/service-reports/components/OnboardingBackfillBanner'
 import useRolloverPrompt from '@/features/service-reports/hooks/useRolloverPrompt'
 import useProgressCardEditing from '@/features/progress/hooks/useProgressCardEditing'
@@ -67,9 +69,18 @@ const ProgressScreen = ({ route, navigation }: Props) => {
   )
 
   const [milestoneSheetOpen, setMilestoneSheetOpen] = useState(false)
-  const cardEditing = useProgressCardEditing()
+  // Each tab edits its own cards.
+  const tabEditing = {
+    month: useProgressCardEditing('month'),
+    year: useProgressCardEditing('year'),
+    allTime: useProgressCardEditing('allTime'),
+  }
+  const cardEditing = tabEditing[activeTab]
   const { finish: finishEditing } = cardEditing
-  // Leaving the Month tab ends editing.
+  const allTimeIsEmpty = useAllTimeIsEmpty()
+  // All Time has no cards until there's time to sum.
+  const hasCards = activeTab !== 'allTime' || !allTimeIsEmpty
+  // Leaving a tab ends its editing.
   const changeTab = (tab: ProgressTab) => {
     finishEditing()
     setActiveTab(tab)
@@ -187,7 +198,7 @@ const ProgressScreen = ({ route, navigation }: Props) => {
                 </>
               ) : (
                 <>
-                  {activeTab === 'month' ? (
+                  {hasCards ? (
                     <HeaderPillButton
                       icon={LayoutGridIcon}
                       label={i18n.t('progressCards.editCards')}
@@ -289,11 +300,11 @@ const ProgressScreen = ({ route, navigation }: Props) => {
             year={year}
             onSwipeForward={() => handleMonthNav('forward')}
             onSwipeBack={() => handleMonthNav('back')}
-            editing={cardEditing.editing}
-            onStartEditing={cardEditing.start}
-            onFinishEditing={finishEditing}
-            adding={cardEditing.adding}
-            onAddingChange={cardEditing.setAdding}
+            editing={tabEditing.month.editing}
+            onStartEditing={tabEditing.month.start}
+            onFinishEditing={tabEditing.month.finish}
+            adding={tabEditing.month.adding}
+            onAddingChange={tabEditing.month.setAdding}
             onNavigate={openCardDestination}
             scrollBars={bars.scrollProps}
           />
@@ -303,6 +314,12 @@ const ProgressScreen = ({ route, navigation }: Props) => {
             year={serviceYear}
             onAdjustMilestones={() => setMilestoneSheetOpen(true)}
             scrollBars={bars.scrollProps}
+            editing={tabEditing.year.editing}
+            onStartEditing={tabEditing.year.start}
+            onFinishEditing={tabEditing.year.finish}
+            adding={tabEditing.year.adding}
+            onAddingChange={tabEditing.year.setAdding}
+            onNavigate={openCardDestination}
             onMonthPress={(m, y) => {
               setMonth(m)
               setYear(y)
@@ -313,6 +330,12 @@ const ProgressScreen = ({ route, navigation }: Props) => {
         {activeTab === 'allTime' ? (
           <ProgressAllTimeTab
             scrollBars={bars.scrollProps}
+            editing={tabEditing.allTime.editing}
+            onStartEditing={tabEditing.allTime.start}
+            onFinishEditing={tabEditing.allTime.finish}
+            adding={tabEditing.allTime.adding}
+            onAddingChange={tabEditing.allTime.setAdding}
+            onNavigate={openCardDestination}
             onYearPress={(endYear) => {
               setYear(endYear)
               changeTab('year')

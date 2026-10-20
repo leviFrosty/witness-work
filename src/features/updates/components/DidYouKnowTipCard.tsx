@@ -63,7 +63,6 @@ const DidYouKnowTipCard = ({ style }: { style?: StyleProp<ViewStyle> }) => {
       {/* Only the tip's content is long-pressable; the ✕ stays a sibling so
           it remains its own tap target. */}
       <HomeSectionMenu
-        section='didYouKnow'
         style={{ flex: 1 }}
         actions={[
           {

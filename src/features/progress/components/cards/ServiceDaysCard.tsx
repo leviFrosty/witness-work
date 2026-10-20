@@ -9,6 +9,8 @@ import { serviceDayStats } from '@/features/progress/lib/progressCardStats'
 import useMonthProgress from '@/features/progress/hooks/useMonthProgress'
 import StatCard from '@/features/progress/components/cards/StatCard'
 import type { ProgressCardProps } from '@/features/progress/components/cards/types'
+import type { ProgressCardSize } from '@/lib/progressCards'
+import type { TimeEntry } from '@/types/timeEntry'
 
 /** How many days had time this month, and the average day out. */
 export default function ServiceDaysCard({
@@ -16,8 +18,19 @@ export default function ServiceDaysCard({
   year,
   size,
 }: ProgressCardProps) {
-  const timeDisplayFormat = usePreferences((s) => s.timeDisplayFormat)
   const { reports } = useMonthProgress(month, year)
+  return <ServiceDaysStatCard reports={reports} size={size} />
+}
+
+/** How many days `reports` have time on, the average day, and the longest. */
+export function ServiceDaysStatCard({
+  reports,
+  size,
+}: {
+  reports: TimeEntry[]
+  size: ProgressCardSize
+}) {
+  const timeDisplayFormat = usePreferences((s) => s.timeDisplayFormat)
   const stats = serviceDayStats(reports)
 
   return (

@@ -1869,6 +1869,7 @@
   "planDetails_guestNotBuddyBody": "To become buddies, scan each other's Buddies Code when you're together.",
   "planDetails_guestShowCode": "Show My Buddies Code",
   "planDetails_guestNotBuddyHint": "Shows how to become buddies",
+  "planDetails_timerResume": "Resume timer",
   "planDetails_askedToJoin": "Asked to join",
   "visitDetails_title": "Conversation",
   "dayPhrase_today": "today",

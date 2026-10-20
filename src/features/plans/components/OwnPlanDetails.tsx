@@ -1,6 +1,8 @@
+import moment from 'moment'
 import type { PlanListItem } from '@/types/timeEntry'
 import type { RootStackParamList } from '@/types/rootStack'
 import DetailsHeaderActions from '@/components/DetailsHeaderActions'
+import usePublisher from '@/hooks/usePublisher'
 import usePlanMenuActions from '@/hooks/usePlanMenuActions'
 import { describeRecurrence } from '@/lib/recurrenceText'
 import { planTypeLabel } from '@/lib/planTypeLabel'
@@ -21,6 +23,7 @@ import InvitationAnswerSection, {
 } from '@/features/buddies/components/InvitationAnswerSection'
 import PlanDetailsLayout from '@/features/plans/components/PlanDetailsLayout'
 import PlanDetailsSummary from '@/features/plans/components/PlanDetailsSummary'
+import PlanDetailsTimer from '@/features/plans/components/PlanDetailsTimer'
 import {
   trackPlanDetailsAction,
   type PlanDetailsAction,
@@ -97,6 +100,8 @@ export function OwnPlanDetailsBody({
   const { plan } = item
   const { effective } = usePlanMenuActions(item)
   const organizerHours = useOrganizerHours(item)
+  const { showsTimer } = usePublisher()
+  const isToday = moment(item.date).isSame(now, 'day')
 
   return (
     <>
@@ -123,14 +128,17 @@ export function OwnPlanDetailsBody({
             : undefined
         }
         lead={
-          item.type === 'day' && item.plan.buddyShare ? (
-            <InvitationAnswerSection
-              from={item.plan.buddyShare.from}
-              share={share}
-              status={share?.status === 'declined' ? 'declined' : 'going'}
-              answering={answering}
-            />
-          ) : undefined
+          <>
+            {item.type === 'day' && item.plan.buddyShare ? (
+              <InvitationAnswerSection
+                from={item.plan.buddyShare.from}
+                share={share}
+                status={share?.status === 'declined' ? 'declined' : 'going'}
+                answering={answering}
+              />
+            ) : null}
+            {showsTimer && isToday ? <PlanDetailsTimer /> : null}
+          </>
         }
       />
       {}

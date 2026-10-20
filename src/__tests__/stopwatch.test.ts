@@ -1,3 +1,5 @@
+import React, { useEffect } from 'react'
+import { act, create } from 'react-test-renderer'
 import { describe, expect, it, vi } from 'vitest'
 import fc from 'fast-check'
 
@@ -18,7 +20,12 @@ vi.mock('../../modules/stopwatch-bridge', () => ({
   isAvailable: () => false,
   getState,
   areLiveActivitiesEnabled: () => false,
-  start: vi.fn(),
+  start: vi.fn(async () => ({
+    startedAt: 100,
+    accumulatedMs: 0,
+    isRunning: true,
+    updatedAt: 100,
+  })),
   pause: vi.fn(),
   resume: vi.fn(),
   stop: vi.fn(),
@@ -33,6 +40,7 @@ import {
   resetStopwatchSession,
   sessionStartMs,
   splitElapsed,
+  useStopWatch,
 } from '@/features/service-reports/hooks/useStopWatch'
 
 describe('formatMs', () => {
@@ -254,5 +262,22 @@ describe('resetStopwatchSession', () => {
       action: 'reset',
     })
     warn.mockRestore()
+  })
+})
+
+describe('useStopWatch', () => {
+  it('reports where the timer was started', async () => {
+    const Harness = () => {
+      const { start } = useStopWatch('plan_details')
+      useEffect(start, [start])
+      return null
+    }
+    await act(async () => {
+      create(React.createElement(Harness))
+    })
+    expect(capture).toHaveBeenCalledWith('timer_action_completed', {
+      action: 'started',
+      source: 'plan_details',
+    })
   })
 })

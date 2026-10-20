@@ -32,6 +32,8 @@ interface Props {
   nameInput: RefObject<TextInput | null>
   nameError?: string
   onNameChange: (name: string) => void
+  /** The keyboard's Next key on the name field. */
+  onNameSubmit: () => void
 }
 
 /**
@@ -131,6 +133,7 @@ const ContactIdentityCard = ({
   nameInput,
   nameError,
   onNameChange,
+  onNameSubmit,
 }: Props) => {
   const theme = useTheme()
   // Gender is householder data with no ministry need, and a photo of a
@@ -186,6 +189,8 @@ const ContactIdentityCard = ({
               autoFocus={!editMode}
               autoFocusNative={!editMode}
               enterKeyHint='next'
+              submitBehavior='submit'
+              onSubmitEditing={onNameSubmit}
               fontSize={20}
               fontFamily={theme.fonts.semiBold}
               textAlign='start'

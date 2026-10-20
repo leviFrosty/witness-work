@@ -19,7 +19,9 @@ import Button from '@/components/ui/Button'
 import { usePreferences } from '@/stores/preferences'
 import moment from 'moment'
 
-import PersonalContactSection from '@/features/contacts/components/PersonalContactSection'
+import PersonalContactSection, {
+  type PersonalContactSectionHandle,
+} from '@/features/contacts/components/PersonalContactSection'
 import AddressSection from '@/features/contacts/components/AddressSection'
 import { RootStackParamList } from '@/types/rootStack'
 import { Errors } from '@/types/textInput'
@@ -28,6 +30,10 @@ import ContactConsentSection from '@/features/contacts/components/ContactConsent
 import { analytics } from '@/lib/analytics'
 import { classifyNetworkError } from '@/lib/http/networkError'
 import { isDeviceOffline } from '@/lib/http/online'
+import {
+  getContactInformationFields,
+  nextKeyboardField,
+} from '@/lib/contactInformationFields'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Contact Form'>
 
@@ -41,7 +47,7 @@ const GEOCODE_NAV_TIMEOUT_MS = 4000
 
 const ContactFormScreen = ({ route, navigation }: Props) => {
   const theme = useTheme()
-  const { addContact, contacts, updateContact } = useContacts()
+  const { addContact, contacts, updateContact, customFieldDefs } = useContacts()
   const {
     incrementGeocodeApiCallCount,
     prefillAddress,
@@ -50,6 +56,9 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
     defaultPhoneRegionCode,
     setDefaultPhoneRegionCode,
     dataProtectionMode,
+    contactInformationOrder,
+    showContactPhone,
+    showContactEmail,
   } = usePreferences()
   const editMode = route.params.edit
   const [errors, setErrors] = useState<Errors>({
@@ -246,13 +255,21 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
   }
 
   const nameInput = useRef<TextInput>(null)
-  const emailInput = useRef<TextInput>(null)
+  const searchInput = useRef<TextInput>(null)
   const line1Input = useRef<TextInput>(null)
   const line2Input = useRef<TextInput>(null)
   const cityInput = useRef<TextInput>(null)
   const stateInput = useRef<TextInput>(null)
   const zipInput = useRef<TextInput>(null)
   const countryInput = useRef<TextInput>(null)
+  const infoSection = useRef<PersonalContactSectionHandle>(null)
+
+  const infoFields = getContactInformationFields(
+    customFieldDefs,
+    contactInformationOrder,
+    { phone: showContactPhone, email: showContactEmail }
+  )
+  const hasInfoKeyboardField = !!nextKeyboardField(infoFields, -1)
 
   const validateForm = useCallback((): boolean => {
     if (consentRequired && !hasConsent) {
@@ -639,6 +656,9 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
               setName(name)
               if (errors.name) setErrors({ ...errors, name: '' })
             }}
+            onNameSubmit={() =>
+              (line1Input.current ?? searchInput.current)?.focus()
+            }
           />
         )}
         {detailsVisible && (
@@ -661,12 +681,19 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
             onPlacePicked={(address, coordinate) => {
               pickedPlace.current = coordinate ? { address, coordinate } : null
             }}
+            searchInput={searchInput}
+            onSubmitLastField={
+              hasInfoKeyboardField
+                ? () => infoSection.current?.focusFirst()
+                : undefined
+            }
           />
         )}
         {detailsVisible && (
           <PersonalContactSection
             contact={contact}
-            emailInput={emailInput}
+            fields={infoFields}
+            ref={infoSection}
             setEmail={setEmail}
             setPhone={setPhone}
             setRegionCode={setRegionCode}

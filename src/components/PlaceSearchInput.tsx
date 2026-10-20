@@ -1,8 +1,9 @@
 import { LocateFixed as LocateFixedIcon } from 'lucide-react-native'
-import { useEffect, useState } from 'react'
+import { type RefObject, useEffect, useState } from 'react'
 import {
   ActivityIndicator,
   Linking,
+  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native'
@@ -176,6 +177,13 @@ interface PlaceSearchInputProps {
   borderless?: boolean
   onFocus?: () => void
   onBlur?: () => void
+  /** The search field, for moving focus to it from another field. */
+  inputRef?: RefObject<TextInput | null>
+  /**
+   * Return while the field shows a picked place (`searchEnabled` false). The
+   * key reads Next instead of Search when this is set.
+   */
+  onSubmitPicked?: () => void
 }
 
 /**
@@ -195,6 +203,8 @@ export default function PlaceSearchInput({
   borderless,
   onFocus,
   onBlur,
+  inputRef,
+  onSubmitPicked,
 }: PlaceSearchInputProps) {
   const theme = useTheme()
   const { location, status, requestLocation, refreshStatus } = useLocation()
@@ -312,6 +322,7 @@ export default function PlaceSearchInput({
     <View style={{ gap: 8 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center' }}>
         <MyTextInput
+          ref={inputRef}
           style={{
             flex: 1,
             minWidth: 0,
@@ -331,7 +342,13 @@ export default function PlaceSearchInput({
           textAlign='start'
           clearButtonMode='while-editing'
           autoCorrect={false}
-          returnKeyType='search'
+          {...(onSubmitPicked && !searchEnabled
+            ? {
+                enterKeyHint: 'next' as const,
+                submitBehavior: 'submit' as const,
+                onSubmitEditing: onSubmitPicked,
+              }
+            : { returnKeyType: 'search' as const })}
         />
         {searching && (
           <ActivityIndicator

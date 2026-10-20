@@ -90,6 +90,8 @@ export default function AddressSection({
   setCountry,
   prefill,
   onPlacePicked,
+  searchInput,
+  onSubmitLastField,
 }: {
   contact: Contact
   setContact: (value: React.SetStateAction<Contact>) => void
@@ -116,6 +118,12 @@ export default function AddressSection({
       }
   /** A search result was picked; `coordinate` is set when MapKit found it. */
   onPlacePicked?: (address: Address, coordinate?: Coordinate) => void
+  searchInput: React.RefObject<TextInput | null>
+  /**
+   * Moves the keyboard past the address: Next on Country (the last manual
+   * field), or picking a search result. Without it Country shows Done.
+   */
+  onSubmitLastField?: () => void
 }) {
   const theme = useTheme()
   // Address search is the one entry path that leaves the device (Apple MapKit
@@ -193,6 +201,7 @@ export default function AddressSection({
         ? { latitude, longitude }
         : undefined
     )
+    onSubmitLastField?.()
   }
 
   const switchMode = (next: Mode) => {
@@ -266,6 +275,10 @@ export default function AddressSection({
               searchEnabled={!isResult}
               placeholder={i18n.t('enterAddress')}
               accessibilityLabel={i18n.t('enterAddress')}
+              inputRef={searchInput}
+              // Once the field shows a picked place, return moves on like
+              // Country does in manual entry.
+              onSubmitPicked={onSubmitLastField}
             />
           </View>
         ) : (
@@ -276,6 +289,7 @@ export default function AddressSection({
               controlWidth='full'
               textInputProps={{
                 onSubmitEditing: () => line2Input.current?.focus(),
+                submitBehavior: 'submit',
                 onChangeText: (val: string) => setLine1(val),
                 autoCapitalize: 'words',
                 value: contact.address?.line1 || '',
@@ -288,6 +302,7 @@ export default function AddressSection({
               controlWidth='full'
               textInputProps={{
                 onSubmitEditing: () => cityInput.current?.focus(),
+                submitBehavior: 'submit',
                 onChangeText: (val: string) => setLine2(val),
                 value: contact.address?.line2 || '',
                 autoCapitalize: 'words',
@@ -310,6 +325,7 @@ export default function AddressSection({
                   style={{ flex: 1 }}
                   textInputProps={{
                     onSubmitEditing: () => stateInput.current?.focus(),
+                    submitBehavior: 'submit',
                     onChangeText: (val: string) => setCity(val),
                     autoCapitalize: 'words',
                     value: contact.address?.city || '',
@@ -326,6 +342,7 @@ export default function AddressSection({
                   style={{ flex: 1 }}
                   textInputProps={{
                     onSubmitEditing: () => zipInput.current?.focus(),
+                    submitBehavior: 'submit',
                     onChangeText: (val: string) => setState(val),
                     value: contact.address?.state || '',
                     autoCapitalize: 'words',
@@ -350,9 +367,13 @@ export default function AddressSection({
                   style={{ flex: 1 }}
                   textInputProps={{
                     onSubmitEditing: () => countryInput.current?.focus(),
+                    submitBehavior: 'submit',
                     onChangeText: (val: string) => setZip(val),
                     value: contact.address?.zip || '',
-                    inputMode: 'numeric',
+                    // Not a number pad: iOS's has no return key, and UK and
+                    // Canadian postcodes have letters.
+                    keyboardType: 'numbers-and-punctuation',
+                    enterKeyHint: 'next',
                     textAlign: 'start',
                   }}
                   lastInSection
@@ -366,6 +387,9 @@ export default function AddressSection({
                   noHorizontalPadding
                   style={{ flex: 1 }}
                   textInputProps={{
+                    enterKeyHint: onSubmitLastField ? 'next' : 'done',
+                    submitBehavior: onSubmitLastField ? 'submit' : undefined,
+                    onSubmitEditing: onSubmitLastField,
                     onChangeText: (val: string) => setCountry(val),
                     value: contact.address?.country || '',
                     autoCapitalize: 'words',

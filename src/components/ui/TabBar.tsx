@@ -50,6 +50,11 @@ const SIDEBAR_PADDING = 12
 const SIDEBAR_CONTROL_RADIUS = SIDEBAR_RADIUS - SIDEBAR_PADDING
 /** Clears the bar's shadow too as it slides away. */
 const HIDDEN_OVERSHOOT = 24
+/**
+ * The capsule keeps its height, so its small labels stop growing with large
+ * text sizes here instead of spilling out of it.
+ */
+const CAPSULE_LABEL_FONT_SCALE_CAP = 1.3
 
 /**
  * Vertical space reserved above the safe-area bottom inset for the floating tab
@@ -220,6 +225,9 @@ const TabBar = ({ state, descriptors, shortcutHints, ...props }: Props) => {
                 numberOfLines={1}
                 adjustsFontSizeToFit
                 minimumFontScale={0.85}
+                maxFontSizeMultiplier={
+                  hasSidebar ? undefined : CAPSULE_LABEL_FONT_SCALE_CAP
+                }
                 style={{
                   color,
                   flexShrink: 1,
@@ -330,6 +338,7 @@ const TabBar = ({ state, descriptors, shortcutHints, ...props }: Props) => {
         numberOfLines={1}
         adjustsFontSizeToFit
         minimumFontScale={0.85}
+        maxFontSizeMultiplier={CAPSULE_LABEL_FONT_SCALE_CAP}
         style={{
           color: theme.colors.textInverse,
           fontSize: theme.fontSize('xs'),

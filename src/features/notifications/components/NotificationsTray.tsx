@@ -107,7 +107,10 @@ function BellTrigger({
             backgroundColor: theme.colors.error,
           }}
         >
+          {/* The badge keeps its size beside the icon; the bell's label
+              reads the count. */}
           <Text
+            maxFontSizeMultiplier={1.2}
             style={{
               color: theme.colors.textInverse,
               fontSize: 10,

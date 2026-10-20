@@ -13,6 +13,7 @@ import type {
   ContextMenuSubmenu,
 } from '@/components/ui/ContextMenu.types'
 import { useInReorderableGhost } from '@/components/ui/reorderable/context'
+import useHostedContentWidth from '@/components/ui/useHostedContentWidth'
 
 /**
  * Material dropdown menu anchored to the content, opened by long press. Android
@@ -38,7 +39,8 @@ export default function ContextMenu({
   // Hosted RN content sizes to its own content, so pass the width the
   // surrounding layout gives us down to it explicitly, unless the content is
   // meant to keep its own width.
-  const [width, setWidth] = useState<number>()
+  const { width, overflowed, onLayout, onContentLayout } =
+    useHostedContentWidth(fitContent)
   // The dragged copy of a rearranged section draws without the native host.
   const ghost = useInReorderableGhost()
   const groups = ghost ? [] : menuGroups(actions)
@@ -104,6 +106,7 @@ export default function ContextMenu({
                 { width },
                 pressed && onPress ? { opacity: 0.7 } : null,
               ]}
+              onLayout={onContentLayout}
               onPress={onPress}
               onLongPress={disabled ? undefined : open}
               accessibilityRole={onPress ? 'button' : undefined}
@@ -130,15 +133,14 @@ export default function ContextMenu({
   if (hosted) return menu
 
   return (
-    <View
-      style={style}
-      onLayout={
-        fitContent
-          ? undefined
-          : (event) => setWidth(event.nativeEvent.layout.width)
-      }
-    >
-      <Host matchContents colorScheme={colorScheme}>
+    <View style={style} onLayout={onLayout}>
+      <Host
+        // Content that ran wider than the width before it arrived keeps that
+        // layout; remount it at the width.
+        key={overflowed ? width : undefined}
+        matchContents
+        colorScheme={colorScheme}
+      >
         {menu}
       </Host>
     </View>

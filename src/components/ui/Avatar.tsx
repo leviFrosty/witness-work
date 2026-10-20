@@ -210,7 +210,10 @@ const Avatar = ({
     if (avatar.type === 'emoji' && avatar.value) {
       return (
         <View style={{ ...base, backgroundColor: bg }}>
-          <Text style={{ fontSize: size * 0.5 }}>{avatar.value}</Text>
+          {/* Sized from the circle, which doesn't grow with the text size. */}
+          <Text maxFontSizeMultiplier={1} style={{ fontSize: size * 0.5 }}>
+            {avatar.value}
+          </Text>
         </View>
       )
     }
@@ -221,6 +224,7 @@ const Avatar = ({
       return (
         <View style={{ ...base, backgroundColor: bg }}>
           <Text
+            maxFontSizeMultiplier={1}
             style={{
               fontSize: size * 0.42,
               color: theme.colors.textInverse,

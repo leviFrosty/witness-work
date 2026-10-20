@@ -124,8 +124,10 @@ const WeekStripTeaser = ({
     <View
       style={{
         flexDirection: 'row',
+        flexWrap: 'wrap',
         justifyContent: 'space-between',
         alignItems: 'center',
+        columnGap: 8,
       }}
     >
       <Text
@@ -143,11 +145,13 @@ const WeekStripTeaser = ({
         style={{
           flexDirection: 'row',
           alignItems: 'center',
+          flexShrink: 1,
           gap: 4,
         }}
       >
         <Text
           style={{
+            flexShrink: 1,
             color: theme.colors.textAlt,
             fontFamily: theme.fonts.semiBold,
             fontSize: theme.fontSize('sm'),

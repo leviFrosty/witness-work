@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 const mocks = vi.hoisted(() => ({
   capture: vi.fn(),
@@ -57,9 +57,15 @@ const august = { month: 7, year: 2026 }
 
 beforeEach(() => {
   vi.clearAllMocks()
+  // August is last month.
+  vi.setSystemTime(new Date('2026-09-04T12:00:00.000Z'))
   mocks.share.mockResolvedValue({ action: 'sharedAction' })
   mocks.openURL.mockResolvedValue(true)
   mocks.platform.OS = 'ios'
+})
+
+afterEach(() => {
+  vi.useRealTimers()
 })
 
 describe('availableExportMethods', () => {
@@ -88,6 +94,7 @@ describe('exportMonthReport', () => {
     expect(mocks.capture).toHaveBeenCalledWith('service_report_exported', {
       method: 'copy',
       source: 'context_menu',
+      report_month: 'previous',
     })
   })
 
@@ -102,7 +109,7 @@ describe('exportMonthReport', () => {
     expect(sent).toBe(false)
     expect(mocks.capture).toHaveBeenCalledWith(
       'service_report_export_dismissed',
-      { method: 'share', source: 'report_screen' }
+      { method: 'share', source: 'report_screen', report_month: 'previous' }
     )
   })
 
@@ -128,6 +135,7 @@ describe('exportMonthReport', () => {
     expect(mocks.capture).toHaveBeenCalledWith('service_report_exported', {
       method: 'share',
       source: 'report_screen',
+      report_month: 'previous',
     })
   })
 
@@ -164,7 +172,21 @@ describe('exportMonthReport', () => {
     expect(mocks.openURL).toHaveBeenCalledTimes(1)
     expect(mocks.capture).toHaveBeenCalledWith(
       'service_report_export_requested',
-      { method: 'hourglass', source: 'context_menu' }
+      { method: 'hourglass', source: 'context_menu', report_month: 'previous' }
     )
+  })
+
+  it('flags a report sent before its month is over', async () => {
+    await exportMonthReport(
+      'copy',
+      report({ isLastMonth: false }),
+      { month: 8, year: 2026 },
+      'context_menu'
+    )
+    expect(mocks.capture).toHaveBeenCalledWith('service_report_exported', {
+      method: 'copy',
+      source: 'context_menu',
+      report_month: 'current',
+    })
   })
 })

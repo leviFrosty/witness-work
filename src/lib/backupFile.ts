@@ -29,6 +29,30 @@ export type BackupFile = {
   petStore?: unknown
 }
 
+/** Every store a backup file can hold, in the shape createBackupFile writes. */
+const BACKUP_STORE_KEYS = Object.keys({
+  serviceReportStore: true,
+  contactStore: true,
+  conversationStore: true,
+  preferencesStore: true,
+  categoryStore: true,
+  profileStore: true,
+  mileageStore: true,
+  petStore: true,
+} satisfies Record<keyof BackupFile, true>) as (keyof BackupFile)[]
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null && !Array.isArray(value)
+
+/**
+ * Whether parsed JSON looks like a WitnessWork backup: an object holding at
+ * least one known store. Another app's JSON or an array restores nothing, so it
+ * mustn't count as a successful restore.
+ */
+export function isBackupFile(data: unknown): data is BackupFile {
+  return isRecord(data) && BACKUP_STORE_KEYS.some((key) => isRecord(data[key]))
+}
+
 /** The same backup Settings exports, from the stores' current state. */
 export function createBackupFile(): BackupFile {
   return {

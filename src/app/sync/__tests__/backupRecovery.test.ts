@@ -15,7 +15,11 @@ vi.mock('@/lib/errorTracking', () => ({
   errorTracking: { captureException: vi.fn() },
 }))
 vi.mock('expo-crypto', () => ({ randomUUID: () => 'new' }))
-import { createBackupFile, restoreBackupFile } from '@/lib/backupFile'
+import {
+  createBackupFile,
+  isBackupFile,
+  restoreBackupFile,
+} from '@/lib/backupFile'
 import useCategories from '@/stores/categories'
 import useContacts from '@/stores/contactsStore'
 import useConversations from '@/stores/conversationStore'
@@ -61,6 +65,25 @@ it('accepts a full serialized payload from the shipped stores', () => {
   expect(
     parsePayload(JSON.stringify(buildPayload({ deviceId: 'test' })))
   ).not.toBeNull()
+})
+
+describe('JSON backup file validation', () => {
+  it('rejects JSON that holds no WitnessWork store', () => {
+    expect(isBackupFile({ foo: 1 })).toBe(false)
+    expect(isBackupFile([])).toBe(false)
+    expect(isBackupFile([{ contactStore: {} }])).toBe(false)
+    expect(isBackupFile({ contactStore: [] })).toBe(false)
+    expect(isBackupFile({ preferencesStore: 'x' })).toBe(false)
+    expect(isBackupFile(null)).toBe(false)
+  })
+  it('accepts an exported backup and old backups with only some stores', () => {
+    expect(isBackupFile(JSON.parse(JSON.stringify(createBackupFile())))).toBe(
+      true
+    )
+    expect(isBackupFile({ serviceReportStore: { serviceReports: {} } })).toBe(
+      true
+    )
+  })
 })
 
 describe('JSON backup completeness and restore isolation', () => {

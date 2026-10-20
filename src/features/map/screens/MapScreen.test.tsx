@@ -19,6 +19,9 @@ const mocks = vi.hoisted(() => ({
   getCurrentIndex: vi.fn(),
   onExplore: vi.fn(),
   appearance: {} as Record<string, unknown>,
+  appStateListeners: new Set<(state: string) => void>(),
+  watchPositionAsync: vi.fn(),
+  removeWatch: vi.fn(),
 }))
 // Stands in for a rendered overlay and records the appearance it receives.
 const appearanceProbe = vi.hoisted(() => (name: string) => async () => {
@@ -43,6 +46,12 @@ const appearanceProbe = vi.hoisted(() => (name: string) => async () => {
 })
 vi.mock('@react-navigation/native', () => ({ useNavigation: () => mocks }))
 vi.mock('react-native', () => ({
+  AppState: {
+    addEventListener: (_event: string, listener: (state: string) => void) => {
+      mocks.appStateListeners.add(listener)
+      return { remove: () => mocks.appStateListeners.delete(listener) }
+    },
+  },
   I18nManager: { isRTL: false },
   Platform: {
     get OS() {
@@ -142,7 +151,10 @@ vi.mock('expo-glass-effect', () => ({
 }))
 vi.mock('expo-crypto', () => ({ randomUUID: () => 'new-contact' }))
 vi.mock('expo-location', () => ({
-  getForegroundPermissionsAsync: async () => ({ granted: false }),
+  Accuracy: { BestForNavigation: 6 },
+  getForegroundPermissionsAsync: async () => ({ granted: true }),
+  getLastKnownPositionAsync: async () => null,
+  watchPositionAsync: mocks.watchPositionAsync,
 }))
 vi.mock('react-native-safe-area-context', () => ({
   useSafeAreaInsets: () => ({ top: 0, bottom: 0 }),
@@ -278,6 +290,8 @@ const contact = (id: string, name: string): Contact => ({
 beforeEach(async () => {
   vi.clearAllMocks()
   mocks.listeners.clear()
+  mocks.appStateListeners.clear()
+  mocks.watchPositionAsync.mockResolvedValue({ remove: mocks.removeWatch })
   mocks.isWide = false
   mocks.platform = 'ios'
   mocks.contacts = [contact('first', 'First'), contact('second', 'Second')]
@@ -632,5 +646,67 @@ describe('Stowed cards handle', () => {
       peek('pan').handler({ translationY: -60, velocityY: -50 })
     )
     expect(stowed()).toBe(false)
+  })
+})
+
+describe('Following my location', () => {
+  const locationButton = () =>
+    root.root.find(
+      (node) =>
+        typeof node.props.onPress === 'function' &&
+        ['map_centerOnMyLocation', 'map_stopFollowingLocation'].includes(
+          node.props.accessibilityLabel
+        )
+    )
+  const following = () =>
+    locationButton().props.accessibilityLabel === 'map_stopFollowingLocation'
+  const follow = () => act(async () => locationButton().props.onPress())
+
+  it('stops the location watch when the map loses focus', async () => {
+    await follow()
+    expect(following()).toBe(true)
+    expect(mocks.removeWatch).not.toHaveBeenCalled()
+
+    await act(async () => emit('blur'))
+    expect(mocks.removeWatch).toHaveBeenCalledTimes(1)
+    expect(following()).toBe(false)
+  })
+
+  it('stops the location watch when the app goes to the background', async () => {
+    await follow()
+    await act(async () => {
+      for (const listener of mocks.appStateListeners) listener('inactive')
+    })
+    expect(following()).toBe(true)
+
+    await act(async () => {
+      for (const listener of mocks.appStateListeners) listener('background')
+    })
+    expect(mocks.removeWatch).toHaveBeenCalledTimes(1)
+    expect(following()).toBe(false)
+  })
+
+  it('removes a watch that finishes starting after the map lost focus', async () => {
+    let finishStarting!: (subscription: { remove: () => void }) => void
+    mocks.watchPositionAsync.mockReturnValue(
+      new Promise((resolve) => (finishStarting = resolve))
+    )
+    await follow()
+    expect(mocks.watchPositionAsync).toHaveBeenCalledTimes(1)
+
+    await act(async () => emit('blur'))
+    expect(mocks.removeWatch).not.toHaveBeenCalled()
+    await act(async () => finishStarting({ remove: mocks.removeWatch }))
+    expect(mocks.removeWatch).toHaveBeenCalledTimes(1)
+    expect(following()).toBe(false)
+  })
+
+  it('removes the location watch when the map closes', async () => {
+    await follow()
+    await act(async () => root.unmount())
+    expect(mocks.removeWatch).toHaveBeenCalledTimes(1)
+    await act(async () => {
+      root = create(screen())
+    })
   })
 })

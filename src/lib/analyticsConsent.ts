@@ -4,11 +4,15 @@ import {
   setAnalyticsEventsAllowed,
 } from '@/lib/analyticsPolicy'
 import { usePreferences } from '@/stores/preferences'
+import { isStorageLocked } from '@/stores/mmkv'
 
 function publish(): void {
   const wasAllowed = analyticsEventsAllowed()
+  // A launch before the device's first unlock can't read the User's choice;
+  // its default would turn analytics on for someone who turned them off.
   setAnalyticsEventsAllowed(
-    usePreferences.persist.hasHydrated() &&
+    !isStorageLocked() &&
+      usePreferences.persist.hasHydrated() &&
       usePreferences.getState().analyticsEnabled
   )
   // Revoke and prune synchronously with the preference change; waiting for a

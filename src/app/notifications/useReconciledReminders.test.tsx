@@ -14,6 +14,7 @@ const runtime = vi.hoisted(() => ({
   platform: 'ios',
   storage: new Map<string, string>(),
   failWrites: false,
+  storageLocked: false,
   appState: new Set<(state: string) => void>(),
   scheduled: [] as { identifier: string }[],
   presented: [] as {
@@ -34,6 +35,7 @@ vi.mock('react-native', () => ({
   },
 }))
 vi.mock('@/stores/mmkv', () => ({
+  isStorageLocked: () => runtime.storageLocked,
   mmkvStorage: {
     getString: (key: string) => runtime.storage.get(key),
     set: (key: string, value: string) => {
@@ -135,6 +137,7 @@ beforeEach(() => {
   vi.clearAllMocks()
   runtime.storage.clear()
   runtime.failWrites = false
+  runtime.storageLocked = false
   runtime.scheduled = []
   runtime.presented = []
   useContacts.setState({
@@ -350,6 +353,24 @@ it('retains obsolete IDs for retry after the OS fails to list reminders', async 
     usePreferences.setState({ dataProtectionMode: true })
   })
   expect(runtime.scheduled).toEqual([])
+})
+
+it('leaves reminders alone on a launch before the first unlock', async () => {
+  // The stores hold only their defaults then: no Visits, no plans.
+  runtime.storageLocked = true
+  useContacts.setState({ contacts: [] })
+  runtime.scheduled = [{ identifier: 'witness-work-visit-v' }]
+  await act(async () => {
+    renderer = create(<Harness />)
+  })
+  await act(async () => {
+    for (const listener of runtime.appState) listener('active')
+  })
+  expect(runtime.scheduled).toEqual([{ identifier: 'witness-work-visit-v' }])
+  expect(Notifications.getAllScheduledNotificationsAsync).not.toHaveBeenCalled()
+  expect(Notifications.cancelScheduledNotificationAsync).not.toHaveBeenCalled()
+  expect(Notifications.scheduleNotificationAsync).not.toHaveBeenCalled()
+  expect(runtime.storage.size).toBe(0)
 })
 
 it('schedules and reports once when the schedule state cannot be saved', async () => {

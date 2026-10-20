@@ -26,7 +26,7 @@ import { ensureReminderChannel, REMINDER_CHANNEL_ID } from '@/lib/notifications'
 import { canonicalJson } from '@/lib/canonicalJson'
 import { contentHash } from '@/lib/contentHash'
 import { addForegroundListener } from '@/lib/appLifecycle'
-import { mmkvStorage } from '@/stores/mmkv'
+import { isStorageLocked, mmkvStorage } from '@/stores/mmkv'
 import { errorTracking } from '@/lib/errorTracking'
 import { captureExceptionThrottled } from '@/lib/throttledErrorReport'
 import { supportsAppIconBadge } from '@/features/notifications/lib/appIconBadge'
@@ -200,7 +200,9 @@ function reminderRequest(
  */
 export function useReconciledReminders(ready: boolean | undefined) {
   useEffect(() => {
-    if (!ready) return
+    // Before the device's first unlock the stores hold only defaults; a pass
+    // would cancel every reminder.
+    if (!ready || isStorageLocked()) return
     let stopped = false,
       running = false,
       queued = false

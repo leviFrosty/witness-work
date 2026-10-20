@@ -252,6 +252,13 @@ function captureWatchStatus(): void {
   if (!status.isWatchAppInstalled) return
   const capturedAt = mmkvStorage.getNumber(STATUS_CAPTURED_AT_KEY) ?? 0
   if (Date.now() - capturedAt < STATUS_CAPTURE_INTERVAL_MS) return
+  try {
+    mmkvStorage.set(STATUS_CAPTURED_AT_KEY, Date.now())
+  } catch (e) {
+    // Unsaved, it would be captured again on every return to the app.
+    captureExceptionThrottled('watchSync:status', e)
+    return
+  }
   // Unknown until the watch app reports the complications in use.
   const kinds = status.activeComplications
   const progressStyles = kinds
@@ -267,7 +274,6 @@ function captureWatchStatus(): void {
     // Wear OS only; the Apple Watch has no tiles.
     ...(Platform.OS === 'android' && { tile: kinds?.includes(WEAR_TILE) }),
   })
-  mmkvStorage.set(STATUS_CAPTURED_AT_KEY, Date.now())
 }
 
 const debouncedPush = debounce(() => pushWatchSnapshot('store-change'), 500, {

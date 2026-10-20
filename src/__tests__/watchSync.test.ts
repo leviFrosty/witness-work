@@ -54,6 +54,7 @@ vi.mock('../../modules/watch-bridge', () => ({
 
 const capture = vi.hoisted(() => vi.fn())
 const captureException = vi.hoisted(() => vi.fn())
+const mmkvSet = vi.hoisted(() => vi.fn())
 vi.mock('@/lib/errorTracking', () => ({
   errorTracking: { captureException },
 }))
@@ -61,7 +62,7 @@ vi.mock('@/lib/analytics', () => ({ analytics: { capture } }))
 vi.mock('@/lib/logger', () => import('@/__tests__/mocks/logger'))
 vi.mock('@/stores/mmkv', async () => ({
   ...(await import('@/__tests__/mocks/mmkv')),
-  mmkvStorage: { getNumber: () => undefined, set: () => {} },
+  mmkvStorage: { getNumber: () => undefined, set: mmkvSet },
 }))
 vi.mock(
   '@react-native-async-storage/async-storage',
@@ -203,6 +204,7 @@ describe('watch sync', () => {
     bridge.urgent = []
     capture.mockClear()
     captureException.mockClear()
+    mmkvSet.mockReset()
   })
 
   afterEach(() => {
@@ -341,6 +343,23 @@ describe('watch sync', () => {
       progress_complication_styles: undefined,
       up_next_complication: true,
     })
+  })
+
+  it('still installs when the status time cannot be saved', () => {
+    mmkvSet.mockImplementation(() => {
+      throw new Error('Failed to set watchStatusCapturedAt!')
+    })
+
+    teardown = installWatchSync()
+    bridge.statusListener?.()
+
+    expect(bridge.snapshots).toHaveLength(1)
+    // Unsaved, it would repeat on every return to the app.
+    expect(capture).not.toHaveBeenCalledWith(
+      'watch_app_status',
+      expect.anything()
+    )
+    expect(captureException).toHaveBeenCalledOnce()
   })
 
   it('reports each Monthly Progress style in use', () => {

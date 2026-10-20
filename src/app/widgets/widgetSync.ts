@@ -219,7 +219,13 @@ async function pushSnapshotNow(reason: string): Promise<void> {
       return
     }
     WidgetBridge.writeSnapshot(JSON.stringify(snapshot))
-    mmkvStorage.set(SNAPSHOT_HASH_KEY, hash)
+    try {
+      mmkvStorage.set(SNAPSHOT_HASH_KEY, hash)
+    } catch (e) {
+      // The widgets still reload with this snapshot; the next push only writes
+      // it again.
+      captureExceptionThrottled('widgetSync:hash', e)
+    }
     perf.count('widget:reload')
     WidgetBridge.reloadAllTimelines()
     await petWriter.written(pet)

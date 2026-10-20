@@ -318,6 +318,29 @@ describe('Cloud Sync between devices', () => {
     }
   })
 
+  it('waits for a slow upload instead of timing it out and putting again', async () => {
+    const phone = await device('phone')
+    phone.useContacts.setState({
+      contacts: [contact('c1', 'Ada Reyes', NOW)] as never,
+    })
+    // A multi-MB snapshot on a slow connection: longer than the engine's
+    // usual 60 s, within the put's own 90 s.
+    server.state.putDelayMs = 70_000
+    vi.useFakeTimers()
+    try {
+      const pushed = phone.iCloudSync.push('manual')
+      await vi.advanceTimersByTimeAsync(70_000)
+      expect(await pushed).toBe(true)
+    } finally {
+      vi.useRealTimers()
+    }
+    expect(server.slotIds('family')).toEqual([phone.slotId()])
+    expect(server.state.log.filter((op) => op === 'POST sync/put')).toEqual([
+      'POST sync/put',
+    ])
+    expect(phone.usePreferences.getState().iCloudSyncErrorCode).toBe(null)
+  })
+
   it('converges three devices on one account', async () => {
     const iphone = await device('iphone', { os: 'ios' })
     const pixel = await device('pixel', { os: 'android' })

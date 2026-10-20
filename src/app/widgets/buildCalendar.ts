@@ -171,11 +171,14 @@ function widgetBuddy(buddy: Buddy): WidgetCalendarBuddy {
   }
 }
 
-export function buildCalendar(args: BuildCalendarArgs): WidgetCalendar {
-  const now = moment()
+/** The grid of `now`'s month; the widget snapshot also builds next month's. */
+export function buildCalendar(
+  args: BuildCalendarArgs,
+  now: moment.Moment = moment()
+): WidgetCalendar {
   const month = now.month()
   const year = now.year()
-  const monthStart = moment().year(year).month(month).startOf('month')
+  const monthStart = now.clone().startOf('month')
   const monthEnd = monthStart.clone().endOf('month')
 
   // Localized short weekday labels reordered by startOfWeek.

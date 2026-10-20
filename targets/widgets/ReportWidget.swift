@@ -14,15 +14,17 @@ private struct ReportProvider: TimelineProvider {
   }
 
   func getSnapshot(in context: Context, completion: @escaping (ReportEntry) -> Void) {
-    completion(ReportEntry(date: Date(), snapshot: SnapshotLoader.load()))
+    let now = Date()
+    completion(ReportEntry(date: now, snapshot: SnapshotLoader.load()?.asOf(now)))
   }
 
+  /// The app reloads us when it writes a snapshot. Entries at the next
+  /// midnights move "reported today" and the month along without it.
   func getTimeline(in context: Context, completion: @escaping (Timeline<ReportEntry>) -> Void) {
-    let entry = ReportEntry(date: Date(), snapshot: SnapshotLoader.load())
-    // Re-check hourly even if the app never reloads us — covers the case
-    // where the user never opens the app and background fetch doesn't fire.
-    let next = Calendar.current.date(byAdding: .hour, value: 1, to: Date()) ?? Date()
-    completion(Timeline(entries: [entry], policy: .after(next)))
+    let snapshot = SnapshotLoader.load()
+    let timeline = SnapshotDay.timeline(from: Date())
+    let entries = timeline.dates.map { ReportEntry(date: $0, snapshot: snapshot?.asOf($0)) }
+    completion(Timeline(entries: entries, policy: .after(timeline.reload)))
   }
 }
 
@@ -253,15 +255,16 @@ private struct MediumMonthCard: View {
 
 // MARK: - Checkbox / Publisher mode (state machine)
 //
-// Three states the JS computes for us:
+// Three states the JS computes for the day it builds the snapshot:
 //
 //   .unreported        → checkbox CTA, taps "Shared the Good News" action
 //   .reportedToday     → confirmation card for the rest of today only
 //   .reportedThisMonth → conversations + studies running totals for the month
 //
-// The state advances on its own as the day rolls over, so the widget actually
-// stays useful for publishers throughout the month instead of being a static
-// "you reported" sticker after day one.
+// The timeline's midnight entries move the state along (`SnapshotDay`):
+// .reportedToday becomes .reportedThisMonth the next day, and a new month
+// starts at .unreported, so the widget stays useful for publishers throughout
+// the month instead of being a static "you reported" sticker after day one.
 
 private struct CheckboxReportView: View {
   let snapshot: WidgetSnapshot

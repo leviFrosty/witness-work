@@ -15,6 +15,7 @@ import {
   WidgetContactAction,
   WidgetContactSort,
 } from '@/stores/preferences'
+import moment from 'moment'
 import i18n from '@/lib/locales'
 import { buildReport, ReportFields } from '@/app/widgets/buildReport'
 import { buildContacts, WidgetContact } from '@/app/widgets/buildContacts'
@@ -46,7 +47,8 @@ import type { NativeLocale } from '@/lib/nativeLocale'
  * to the calendar: per-day `buddies` badges and the `calendar.buddies` avatars
  * they reference. Since 6, without a bump (Swift decodes them as optional):
  * `rtl`, `numberLocale`, the `reportLabel`/`timerLabel` strings, and the Pet
- * widget's `pet` slice and `petPlaceholderLabel` string.
+ * widget's `pet` slice and `petPlaceholderLabel` string, and `builtOn` with the
+ * `nextMonth` slice.
  */
 export const SNAPSHOT_VERSION = 6
 
@@ -110,10 +112,26 @@ export type WidgetConfig = {
   appointmentWindow: WidgetAppointmentWindow
 }
 
+/** The Report and Calendar widgets' data as of the first day of next month. */
+export type WidgetNextMonth = {
+  /** `YYYY-MM-01`, the local day `report` and `calendar` describe. */
+  builtOn: string
+  report: ReportFields
+  calendar: WidgetCalendar
+}
+
 export type WidgetSnapshot = {
   version: number
   /** Epoch ms when the snapshot was produced. */
   updatedAt: number
+  /**
+   * The local day (`YYYY-MM-DD`) the date-dependent fields describe: "reported
+   * today", the calendar's today, overdue follow-ups. The widgets keep showing
+   * a snapshot until the app writes another, so each timeline entry moves these
+   * along from this day to its own (`SnapshotDay.swift`). Part of the content
+   * hash, so the first write of a day isn't skipped.
+   */
+  builtOn: string
   /** App locale at write time, e.g. 'en-us'. */
   locale: string
   /**
@@ -167,12 +185,19 @@ export type WidgetSnapshot = {
    * folder. `null` when there's no pet; the widget shows a placeholder.
    */
   pet: PetWidgetSnapshot | null
+  /**
+   * What the Report and Calendar widgets show from the 1st of next month until
+   * the app writes a new snapshot.
+   */
+  nextMonth: WidgetNextMonth
 }
 
 export type BuildSnapshotArgs = {
   // Report inputs
   serviceReports: TimeEntriesByYear
   publisher: Publisher
+  /** Next month's role (Role History), for the `nextMonth` slice. */
+  nextMonthPublisher: Publisher
   /** Mirrors `preferences.logsHours` — unlocks the calendar for publishers. */
   logsHours: boolean
   publisherHours: PublisherHours
@@ -221,18 +246,40 @@ export type BuildSnapshotArgs = {
 }
 
 export function buildWidgetSnapshot(args: BuildSnapshotArgs): WidgetSnapshot {
-  const report = buildReport({
-    serviceReports: args.serviceReports,
-    publisher: args.publisher,
-    publisherHours: args.publisherHours,
-    monthlyGoalOverrides: args.monthlyGoalOverrides,
-    overrideCreditLimit: args.overrideCreditLimit,
-    customCreditLimitHours: args.customCreditLimitHours,
-    timeDisplayFormat: args.timeDisplayFormat,
-    dayPlans: args.dayPlans,
-    recurringPlans: args.recurringPlans,
-    conversations: args.conversations,
-  })
+  const now = moment()
+  const nextMonthStart = now.clone().add(1, 'month').startOf('month')
+
+  const reportFor = (publisher: Publisher, at: moment.Moment) =>
+    buildReport(
+      {
+        serviceReports: args.serviceReports,
+        publisher,
+        publisherHours: args.publisherHours,
+        monthlyGoalOverrides: args.monthlyGoalOverrides,
+        overrideCreditLimit: args.overrideCreditLimit,
+        customCreditLimitHours: args.customCreditLimitHours,
+        timeDisplayFormat: args.timeDisplayFormat,
+        dayPlans: args.dayPlans,
+        recurringPlans: args.recurringPlans,
+        conversations: args.conversations,
+      },
+      at
+    )
+  const calendarFor = (publisher: Publisher, at: moment.Moment) =>
+    buildCalendar(
+      {
+        serviceReports: args.serviceReports,
+        dayPlans: args.dayPlans,
+        recurringPlans: args.recurringPlans,
+        publisher,
+        logsHours: args.logsHours,
+        startOfWeek: args.startOfWeek,
+        buddyMarkers: args.buddyMarkers,
+      },
+      at
+    )
+
+  const report = reportFor(args.publisher, now)
 
   const contacts = buildContacts({
     contacts: args.contacts,
@@ -248,19 +295,12 @@ export function buildWidgetSnapshot(args: BuildSnapshotArgs): WidgetSnapshot {
     conversations: args.conversations,
   })
 
-  const calendar = buildCalendar({
-    serviceReports: args.serviceReports,
-    dayPlans: args.dayPlans,
-    recurringPlans: args.recurringPlans,
-    publisher: args.publisher,
-    logsHours: args.logsHours,
-    startOfWeek: args.startOfWeek,
-    buddyMarkers: args.buddyMarkers,
-  })
+  const calendar = calendarFor(args.publisher, now)
 
   return {
     version: SNAPSHOT_VERSION,
-    updatedAt: Date.now(),
+    updatedAt: now.valueOf(),
+    builtOn: now.format('YYYY-MM-DD'),
     locale: args.locale,
     rtl: args.nativeLocale.rtl,
     numberLocale: args.nativeLocale.numberLocale,
@@ -313,5 +353,10 @@ export function buildWidgetSnapshot(args: BuildSnapshotArgs): WidgetSnapshot {
     appointments,
     calendar,
     pet: args.pet,
+    nextMonth: {
+      builtOn: nextMonthStart.format('YYYY-MM-DD'),
+      report: reportFor(args.nextMonthPublisher, nextMonthStart),
+      calendar: calendarFor(args.nextMonthPublisher, nextMonthStart),
+    },
   }
 }

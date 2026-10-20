@@ -3,8 +3,9 @@ import WidgetKit
 
 // MARK: - Timeline
 //
-// The grid itself is pre-built by JS (see `buildCalendar.ts`), so Swift only
-// branches on widget family: medium renders a single row (the current week)
+// The grid itself is pre-built by JS (see `buildCalendar.ts`) for this month
+// and next, so Swift only moves today along (`SnapshotDay`) and branches on
+// widget family: medium renders a single row (the current week)
 // and large renders the full six-week month.
 //
 // Publishers get a locked placeholder; the feature is hidden because they
@@ -22,15 +23,17 @@ private struct CalendarProvider: TimelineProvider {
   }
 
   func getSnapshot(in context: Context, completion: @escaping (CalendarEntry) -> Void) {
-    completion(CalendarEntry(date: Date(), snapshot: SnapshotLoader.load()))
+    let now = Date()
+    completion(CalendarEntry(date: now, snapshot: SnapshotLoader.load()?.asOf(now)))
   }
 
+  /// Entries at the next midnights slide the "today" highlight along, and turn
+  /// to next month's grid on the 1st, even if the app never reloads us.
   func getTimeline(in context: Context, completion: @escaping (Timeline<CalendarEntry>) -> Void) {
-    let entry = CalendarEntry(date: Date(), snapshot: SnapshotLoader.load())
-    // Hourly re-check so the "today" highlight slides to the right cell at
-    // midnight even if the app never reloaded the widget.
-    let next = Foundation.Calendar.current.date(byAdding: .hour, value: 1, to: Date()) ?? Date()
-    completion(Timeline(entries: [entry], policy: .after(next)))
+    let snapshot = SnapshotLoader.load()
+    let timeline = SnapshotDay.timeline(from: Date())
+    let entries = timeline.dates.map { CalendarEntry(date: $0, snapshot: snapshot?.asOf($0)) }
+    completion(Timeline(entries: entries, policy: .after(timeline.reload)))
   }
 }
 

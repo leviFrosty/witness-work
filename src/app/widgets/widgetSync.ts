@@ -19,7 +19,11 @@ import { applyFormatRegion, resolveStartOfWeek } from '@/lib/dates'
 import { nativeLocale } from '@/lib/nativeLocale'
 import { buildWidgetSnapshot } from '@/app/widgets/snapshot'
 import { logger } from '@/lib/logger'
-import { calendarMonthOf, roleForMonth } from '@/lib/roleHistory'
+import {
+  addCalendarMonths,
+  calendarMonthOf,
+  roleForMonth,
+} from '@/lib/roleHistory'
 import { iCloudSync } from '@/app/sync/iCloudSync'
 import { mmkvStorage } from '@/stores/mmkv'
 import { addForegroundListener } from '@/lib/appLifecycle'
@@ -166,6 +170,11 @@ async function pushSnapshotNow(reason: string): Promise<void> {
       serviceReports: sr.serviceReports,
       // Widgets show this month, so they use this month's role (Role History).
       publisher: roleForMonth(prefs.roleHistory, prefs.role, calendarMonthOf()),
+      nextMonthPublisher: roleForMonth(
+        prefs.roleHistory,
+        prefs.role,
+        addCalendarMonths(calendarMonthOf(), 1)
+      ),
       logsHours: prefs.logsHours,
       publisherHours: prefs.publisherHours,
       monthlyGoalOverrides: prefs.monthlyGoalOverrides,

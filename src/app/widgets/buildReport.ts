@@ -3,7 +3,6 @@ import moment from 'moment'
 import { isStoredDateOnLocalDay } from '@/lib/normalizeDate'
 import {
   adjustedMinutesForSpecificMonth,
-  getDaysLeftInCurrentMonth,
   getMonthsReports,
   isCountableEntry,
 } from '@/lib/serviceReport'
@@ -175,8 +174,14 @@ function pickEncouragementPhrase(progress: number, now: moment.Moment): string {
   return i18n.t(pool[index])
 }
 
-export function buildReport(args: BuildReportArgs): ReportFields {
-  const now = moment()
+/**
+ * The report as of `now`; the widget snapshot also builds next month's first
+ * day.
+ */
+export function buildReport(
+  args: BuildReportArgs,
+  now: moment.Moment = moment()
+): ReportFields {
   const month = now.month()
   const year = now.year()
 
@@ -225,7 +230,12 @@ export function buildReport(args: BuildReportArgs): ReportFields {
     minutes: adjusted.value,
     goalMinutes,
   }).remaining
-  const daysLeftInMonth = getDaysLeftInCurrentMonth()
+  // Same count as `getDaysLeftInCurrentMonth`, from `now`.
+  const daysLeftInMonth = now
+    .clone()
+    .add(1, 'month')
+    .startOf('month')
+    .diff(now, 'days')
 
   // Mirrors HourEntryCard's hoursPerDayNeeded calc, but null when ≤ 0 so the
   // widget can hide the badge entirely instead of rendering "0 hrs/day".

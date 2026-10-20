@@ -20,7 +20,7 @@ struct WidgetSnapshot: Decodable {
     let hoursPerDayToGoalSuffix: String
     let aheadOfScheduleLabel: String
     let behindScheduleLabel: String
-    let encouragementPhrase: String
+    var encouragementPhrase: String
     let monthLabel: String
     let reportedTodayLabel: String
     let conversationsThisMonthLabel: String
@@ -98,24 +98,30 @@ struct WidgetSnapshot: Decodable {
     case reportedThisMonth
   }
 
+  /// Describes the day the snapshot was built for (`builtOn`); see
+  /// `SnapshotDay.swift` for how an entry moves it to its own day.
   struct Report: Decodable {
     let mode: ReportMode
 
     // Month
-    let monthMinutes: Int
-    let monthHoursFormatted: String
+    var monthMinutes: Int
+    var monthHoursFormatted: String
     let goalHours: Int
-    let progress: Double
+    var progress: Double
     /// `nil` when the value would be misleading (≤ 0 hours, no remaining work).
-    let hoursPerDayNeeded: Double?
+    var hoursPerDayNeeded: Double?
     /// Minutes ahead (+) or behind (−) of plan. `nil` when no plan exists.
-    let aheadBehindMinutes: Int?
+    var aheadBehindMinutes: Int?
 
     // Publisher (checkbox) mode
-    let hasReportedThisMonth: Bool
-    let publisherState: PublisherState
-    let monthConversationCount: Int
-    let monthBibleStudyCount: Int
+    var hasReportedThisMonth: Bool
+    var publisherState: PublisherState
+    var monthConversationCount: Int
+    var monthBibleStudyCount: Int
+
+    /// Same as `Strings.encouragementPhrase` for the top-level report. Read
+    /// for `nextMonth`'s. `nil` from an older app.
+    let encouragementPhrase: String?
   }
 
   // MARK: Contacts
@@ -151,8 +157,8 @@ struct WidgetSnapshot: Decodable {
     let date: Double
     let topic: String?
     /// Pre-formatted, locale-aware time-of-day string from JS.
-    let timeFormatted: String
-    let isOverdue: Bool
+    var timeFormatted: String
+    var isOverdue: Bool
 
     var dateAsDate: Date {
       Date(timeIntervalSince1970: date / 1000)
@@ -165,8 +171,8 @@ struct WidgetSnapshot: Decodable {
     let date: String
     let day: Int
     let isCurrentMonth: Bool
-    let isToday: Bool
-    let isPast: Bool
+    var isToday: Bool
+    var isPast: Bool
     let wentInService: Bool
     let hasPlan: Bool
     /// Pre-formatted compact planned hours (e.g. `"1.5h"`). Empty when no plan.
@@ -211,10 +217,10 @@ struct WidgetSnapshot: Decodable {
     let weekdayLabels: [String]
     let monthTitle: String
     /// Always 42 cells (6 weeks) when `locked == false`, empty otherwise.
-    let days: [CalendarDay]
+    var days: [CalendarDay]
     /// Index into `days` where the current week starts. Used by the medium
-    /// widget to slice out a single row without re-deriving dates.
-    let currentWeekStart: Int
+    /// widget to slice out a single row.
+    var currentWeekStart: Int
     /// Every buddy referenced by a day's `buddies.withIds`.
     let buddies: [CalendarBuddy]
   }
@@ -287,8 +293,19 @@ struct WidgetSnapshot: Decodable {
     }
   }
 
+  /// The Report and Calendar widgets' data as of the 1st of next month.
+  struct NextMonth: Decodable {
+    /// `YYYY-MM-01`.
+    let builtOn: String
+    let report: Report
+    let calendar: Calendar
+  }
+
   let version: Int
   let updatedAt: Double
+  /// The local day (`YYYY-MM-DD`) the date-dependent fields describe. `nil`
+  /// from an older app; the day of `updatedAt` stands in.
+  let builtOn: String?
   let locale: String
   /// The app lays out right to left (its Language, or the dev switch). `nil`
   /// from an app older than right-to-left support.
@@ -299,15 +316,17 @@ struct WidgetSnapshot: Decodable {
   /// Supporter-only hex (`#RRGGBB`). `nil` means fall back to the brand green.
   /// JS already gates this on supporter status, so Swift just trusts the field.
   let accentColor: String?
-  let strings: Strings
+  var strings: Strings
   let config: Config
-  let report: Report
+  var report: Report
   let contacts: [Contact]
-  let appointments: [Appointment]
-  let calendar: Calendar
+  var appointments: [Appointment]
+  var calendar: Calendar
   /// Added after version 6: `nil` from an older app and when there's no pet.
   /// Read leniently (`pet?.value`).
   let pet: LenientPet?
+  /// Added after version 6: `nil` from an older app.
+  let nextMonth: NextMonth?
 }
 
 extension WidgetSnapshot {

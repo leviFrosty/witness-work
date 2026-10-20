@@ -2966,8 +2966,6 @@
   "homeChecklistLogFirstMinute": "سجّل أول دقيقة لك في الخدمة",
   "homeChecklistCheckOffFirstMonth": "أنجز أول شهر لك",
   "homeChecklistAddFirstContact": "أضف أول زيارة مكررة لك",
-  "homeChecklistSetMonthlyGoal": "أنشئ أول خطة لك",
-  "homeChecklistSendFirstReport": "أرسل أول تقرير لك",
   "onboardingHeroTagline": "مساعدك في خدمة الحقل.",
   "onboardingHeroReturningLink": "أستخدم WitnessWork بالفعل",
   "onboardingHeroWelcome": "مرحبًا بك في {{appName}}",

@@ -193,6 +193,7 @@ export const analyticsEventNames = [
   'onboarding_calendar_setup_result',
   'onboarding_checklist_completed',
   'onboarding_checklist_dismissed',
+  'onboarding_checklist_item_completed',
   'onboarding_checklist_viewed',
   'onboarding_completed',
   'onboarding_import_options_viewed',

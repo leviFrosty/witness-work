@@ -220,12 +220,25 @@ never be verified.
 Notification permission request/result, import availability/skip, and backfill
 completion distinguish friction from deliberate choices. `completion_method` is
 `guided`, `icloud_restore`, `backup_restore`, or `account_backup` (From your other
-phone restored the account's backup). Home checklist view/completed/
-dismissed remains; individual manual checkbox toggles are dropped. The checklist
-is the same four steps for everyone (plan, log time or check off the month, add
-a return visit, send the first report), so completion now spans a full report
-cycle and is comparable across users. Measure onboarding drop-off over an
+phone restored the account's backup). Measure onboarding drop-off over an
 observation window that allows resumption.
+
+The Home checklist is meant to be finished in the first week: plan a day of
+service, log time (Regular Publishers without Hours Logging check off the
+month), add a return visit, and log time on 3 different days. The last step is
+left out for those Regular Publishers, since they share once a month, so
+`onboarding_checklist_viewed` carries `item_count` (3 or 4). Until October 2026
+the last step was "send your first report", which couldn't finish before the
+month ended; compare completion rates across that change by app version. Its
+question is which step people stall on, and whether finishing early comes with
+coming back in week 2. Each step that gets done while the checklist is mounted sends
+`onboarding_checklist_item_completed` with `item` (`setMonthlyGoal` for the
+plan step, `logFirstMinute`, `addFirstContact`, `logThreeDays`), `method`
+(`auto` when the app detected it, `manual` when ticked by hand), and
+`days_since_install` (`0`, `1`, `2_3`, `4_7`, `8_14`, `15_30`, `over_30`, or
+`unknown`). Steps already done when the checklist mounts aren't sent again, and
+unticking sends nothing. View, completed, and dismissed (`all_done`) stay;
+individual manual checkbox toggles beyond completion are dropped.
 
 ## Imports and backups
 

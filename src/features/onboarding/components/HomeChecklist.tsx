@@ -37,35 +37,40 @@ import PointerHover from '@/components/ui/PointerHover'
 import { getMonthsReports, isCountableEntry } from '@/lib/serviceReport'
 import { TimeEntry } from '@/types/timeEntry'
 import { useShallow } from 'zustand/react/shallow'
+import {
+  countLoggedDays,
+  daysSinceInstallBucket,
+  HomeChecklistItemId,
+  LOGGED_DAYS_GOAL,
+  manualCompletionIdsFor,
+  resolveManualCompletions,
+} from '@/features/onboarding/lib/homeChecklist'
 
 /**
- * Checklist item ids. Stable because manual completions are persisted (and
- * synced) by id.
+ * The first week with WitnessWork, in the order it happens. Every step can be
+ * done in the first few days; none waits for the month to end.
  */
-export type HomeChecklistItemId =
-  | 'setMonthlyGoal'
-  | 'logFirstMinute'
-  | 'addFirstContact'
-  | 'sendFirstReport'
-
-/** The first month with WitnessWork, in the order it happens. */
 const ITEM_IDS: HomeChecklistItemId[] = [
   'setMonthlyGoal',
   'logFirstMinute',
   'addFirstContact',
-  'sendFirstReport',
+  'logThreeDays',
 ]
 
 const LABEL_I18N_KEY: Record<HomeChecklistItemId, TranslationKey> = {
-  setMonthlyGoal: 'homeChecklistSetMonthlyGoal',
+  setMonthlyGoal: 'homeChecklistPlanADay',
   logFirstMinute: 'homeChecklistLogFirstMinute',
   addFirstContact: 'homeChecklistAddFirstContact',
-  sendFirstReport: 'homeChecklistSendFirstReport',
+  logThreeDays: 'homeChecklistLogThreeDays',
 }
 
 type ChecklistItem = {
   id: HomeChecklistItemId
   label: string
+  /** "1/3" while a counted step is partway done. */
+  progress?: string
+  /** Spoken in place of `progress`. */
+  progressA11y?: string
   onPress: () => void
   /** Tapping checks off this month instead of opening a screen. */
   checksOffMonth: boolean
@@ -81,14 +86,14 @@ const HomeChecklist = () => {
     homeChecklistDismissed,
     homeChecklistManualCompletions,
     homeChecklistAllDoneCelebrated,
-    submittedReportMonths,
+    installedOn,
     set: setPref,
   } = usePreferences(
     useShallow((s) => ({
       homeChecklistDismissed: s.homeChecklistDismissed,
       homeChecklistManualCompletions: s.homeChecklistManualCompletions,
       homeChecklistAllDoneCelebrated: s.homeChecklistAllDoneCelebrated,
-      submittedReportMonths: s.submittedReportMonths,
+      installedOn: s.installedOn,
       set: s.set,
     }))
   )
@@ -111,21 +116,17 @@ const HomeChecklist = () => {
   // is actually looking at the Home tab.
   const isFocused = useIsFocused()
 
-  // Any logged TimeEntry (dayPlans/recurringPlans intentionally excluded —
-  // the aha moment is a _logged_ minute, not a planned or rolled-over one).
-  const hasAnyServiceReport = useMemo(() => {
-    for (const year of Object.keys(serviceReports)) {
-      const months = serviceReports[year]
-      for (const month of Object.keys(months)) {
-        if (months[month]?.some(isCountableEntry)) return true
-      }
-    }
-    return false
-  }, [serviceReports])
+  // Days with a logged TimeEntry (dayPlans/recurringPlans intentionally
+  // excluded — the aha moment is a _logged_ minute, not a planned or
+  // rolled-over one). Coming back on 3 different days in the first week is
+  // what keeps people using the app.
+  const loggedDays = useMemo(
+    () => countLoggedDays(serviceReports),
+    [serviceReports]
+  )
 
   const hasAnyContact = contacts.length > 0
   const hasAnyPlan = dayPlans.length > 0 || recurringPlans.length > 0
-  const hasSentReport = submittedReportMonths.length > 0
 
   const hasReportThisMonth = useMemo(
     () =>
@@ -157,20 +158,38 @@ const HomeChecklist = () => {
   const autoCompletedIds = useMemo(() => {
     const set = new Set<HomeChecklistItemId>()
     if (hasAnyPlan) set.add('setMonthlyGoal')
-    if (hasAnyServiceReport) set.add('logFirstMinute')
+    if (loggedDays > 0) set.add('logFirstMinute')
     if (hasAnyContact) set.add('addFirstContact')
-    if (hasSentReport) set.add('sendFirstReport')
+    if (loggedDays >= LOGGED_DAYS_GOAL) set.add('logThreeDays')
     return set
-  }, [hasAnyPlan, hasAnyServiceReport, hasAnyContact, hasSentReport])
+  }, [hasAnyPlan, loggedDays, hasAnyContact])
 
-  const items: ChecklistItem[] = ITEM_IDS.map((id) => {
+  const manualCompletions = resolveManualCompletions(
+    homeChecklistManualCompletions
+  )
+
+  // Checkbox publishers share once a month, so logging on separate days
+  // doesn't apply; checking off the month is their step.
+  const itemIds = ITEM_IDS.filter(
+    (id) => id !== 'logThreeDays' || showsTimeEntry
+  )
+
+  const items: ChecklistItem[] = itemIds.map((id) => {
     const checksOffMonth = id === 'logFirstMinute' && !showsTimeEntry
+    const counted = id === 'logThreeDays' && loggedDays > 0
+    const progressParams = { count: loggedDays, total: LOGGED_DAYS_GOAL }
     return {
       id,
       checksOffMonth,
       label: i18n.t(
         checksOffMonth ? 'homeChecklistCheckOffFirstMonth' : LABEL_I18N_KEY[id]
       ),
+      progress: counted
+        ? i18n.t('homeChecklistDaysProgress', progressParams)
+        : undefined,
+      progressA11y: counted
+        ? i18n.t('homeChecklistDaysProgressA11y', progressParams)
+        : undefined,
       onPress: () => {
         switch (id) {
           case 'setMonthlyGoal':
@@ -183,11 +202,8 @@ const HomeChecklist = () => {
           case 'addFirstContact':
             rootNavigation.navigate('Contact Form', { id: '' })
             break
-          case 'sendFirstReport':
-            rootNavigation.navigate('ServiceReportView', {
-              month: moment().month(),
-              year: moment().year(),
-            })
+          case 'logThreeDays':
+            rootNavigation.navigate('Add Time')
             break
         }
       },
@@ -199,18 +215,25 @@ const HomeChecklist = () => {
   const isComplete = (id: HomeChecklistItemId) =>
     homeChecklistAllDoneCelebrated ||
     autoCompletedIds.has(id) ||
-    homeChecklistManualCompletions.includes(id)
+    manualCompletions.has(id)
 
   // Items the app can't detect (or the user did another way) can be checked
   // off by hand from the step marker or the item's long-press menu.
   // Auto-completed items stay done.
   const setManuallyDone = (id: HomeChecklistItemId, done: boolean) => {
-    const others = homeChecklistManualCompletions.filter((it) => it !== id)
+    const stored = manualCompletionIdsFor(id)
+    const others = homeChecklistManualCompletions.filter(
+      (it) => !stored.includes(it)
+    )
     setPref({ homeChecklistManualCompletions: done ? [...others, id] : others })
   }
 
   const allDone = items.every((it) => isComplete(it.id))
   const nextId = items.find((it) => !isComplete(it.id))?.id
+  const doneKey = items
+    .filter((it) => isComplete(it.id))
+    .map((it) => it.id)
+    .join(',')
 
   const handleDismiss = () => {
     analytics.capture('onboarding_checklist_dismissed', { all_done: allDone })
@@ -222,10 +245,35 @@ const HomeChecklist = () => {
     if (!isFocused || homeChecklistDismissed || viewed.current) return
     viewed.current = true
     analytics.capture('onboarding_checklist_viewed', {
-      item_count: ITEM_IDS.length,
+      item_count: items.length,
       all_done: allDone,
     })
-  }, [isFocused, homeChecklistDismissed, allDone])
+  }, [isFocused, homeChecklistDismissed, allDone, items.length])
+
+  // One event per step as it gets done while the checklist is up. Steps that
+  // were already done when it mounted aren't sent again.
+  const reportedDoneKey = useRef<string | null>(null)
+  useEffect(() => {
+    if (homeChecklistDismissed || homeChecklistAllDoneCelebrated) return
+    const before = reportedDoneKey.current
+    reportedDoneKey.current = doneKey
+    if (before === null) return
+    const wasDone = new Set(before.split(','))
+    for (const id of doneKey.split(',') as HomeChecklistItemId[]) {
+      if (!id || wasDone.has(id)) continue
+      analytics.capture('onboarding_checklist_item_completed', {
+        item: id,
+        method: autoCompletedIds.has(id) ? 'auto' : 'manual',
+        days_since_install: daysSinceInstallBucket(installedOn),
+      })
+    }
+  }, [
+    doneKey,
+    homeChecklistDismissed,
+    homeChecklistAllDoneCelebrated,
+    autoCompletedIds,
+    installedOn,
+  ])
 
   // One-shot celebration. Only fires when the user is actually focused on the
   // Home tab — if `allDone` flips while they're elsewhere (or the app is
@@ -319,6 +367,9 @@ const HomeChecklist = () => {
                   accessibilityRole='checkbox'
                   accessibilityState={{ checked: done, disabled: autoDone }}
                   accessibilityLabel={item.label}
+                  accessibilityValue={
+                    item.progressA11y ? { text: item.progressA11y } : undefined
+                  }
                   style={{
                     width: NODE_SIZE,
                     height: NODE_SIZE,
@@ -358,7 +409,11 @@ const HomeChecklist = () => {
               <ContextMenu
                 style={{ flex: 1 }}
                 onPress={item.onPress}
-                accessibilityLabel={item.label}
+                accessibilityLabel={
+                  item.progressA11y
+                    ? `${item.label}, ${item.progressA11y}`
+                    : item.label
+                }
                 hoverRadius={theme.numbers.borderRadiusSm}
                 actions={[
                   !item.checksOffMonth && {
@@ -382,17 +437,33 @@ const HomeChecklist = () => {
                     },
                 ]}
               >
-                <Text
-                  style={{
-                    minHeight: NODE_SIZE,
-                    paddingTop: 2,
-                    fontSize: theme.fontSize('md'),
-                    fontFamily: isNext ? theme.fonts.semiBold : undefined,
-                    color: done ? theme.colors.textAlt : theme.colors.text,
-                  }}
-                >
-                  {item.label}
-                </Text>
+                <XView style={{ gap: 8, alignItems: 'flex-start' }}>
+                  <Text
+                    style={{
+                      flex: 1,
+                      minHeight: NODE_SIZE,
+                      paddingTop: 2,
+                      fontSize: theme.fontSize('md'),
+                      fontFamily: isNext ? theme.fonts.semiBold : undefined,
+                      color: done ? theme.colors.textAlt : theme.colors.text,
+                    }}
+                  >
+                    {item.label}
+                  </Text>
+                  {!done && item.progress && (
+                    <Text
+                      style={{
+                        paddingTop: 2,
+                        fontSize: theme.fontSize('sm'),
+                        fontFamily: theme.fonts.semiBold,
+                        color: theme.colors.textAlt,
+                        fontVariant: ['tabular-nums'],
+                      }}
+                    >
+                      {item.progress}
+                    </Text>
+                  )}
+                </XView>
               </ContextMenu>
             </XView>
           )

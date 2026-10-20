@@ -1,6 +1,7 @@
 import { navigationRef } from '@/features/contacts/lib/linking'
 import type { ReminderData } from '@/lib/notificationData'
 import { currentServiceStreak } from '@/lib/currentServiceStreak'
+import { recurringPlanOnDay } from '@/lib/reminderSchedule'
 import { logPlannedDayParams, unloggedDay } from '@/lib/unloggedDayReminders'
 import useContacts from '@/stores/contactsStore'
 import useConversations from '@/stores/conversationStore'
@@ -8,10 +9,10 @@ import useServiceReport from '@/stores/serviceReport'
 
 /**
  * Opens what a local reminder is about: the Follow-up's Visit (its Contact when
- * only the Visit is gone), the Plan, the returning Contact, Add Time for a
- * planned day, or where a streak about to end is kept. False when the record is
- * gone (deleted on this or another device), the day has time logged, or
- * navigation isn't ready.
+ * only the Visit is gone), the Plan or Recurring Plan instance, the returning
+ * Contact, Add Time for a planned day, or where a streak about to end is kept.
+ * False when the record is gone (deleted on this or another device), the day
+ * has time logged, or navigation isn't ready.
  */
 export function openReminderTarget(target: ReminderData): boolean {
   if (!navigationRef.isReady()) return false
@@ -28,6 +29,18 @@ export function openReminderTarget(target: ReminderData): boolean {
       return true
     }
     case 'plan': {
+      if (target.day) {
+        const recurring = useServiceReport
+          .getState()
+          .recurringPlans.find((p) => p.id === target.id)
+        if (!recurring || !recurringPlanOnDay(recurring, target.day))
+          return false
+        navigationRef.navigate('Plan Details', {
+          recurringPlanId: recurring.id,
+          date: target.day,
+        })
+        return true
+      }
       const plan = useServiceReport
         .getState()
         .dayPlans.find((p) => p.id === target.id)

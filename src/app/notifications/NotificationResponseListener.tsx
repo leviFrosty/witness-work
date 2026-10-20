@@ -118,6 +118,7 @@ function markReminderSeen(target: ReminderData) {
     contacts: useContacts.getState().contacts,
     visits: useConversations.getState().conversations,
     plans: records.dayPlans,
+    recurringPlans: records.recurringPlans,
     unloggedDays: unloggedDaySources(records, prefs),
     streak: streakRemindersOn(prefs) ? currentServiceStreak() : undefined,
     visitOffset: {
@@ -129,7 +130,12 @@ function markReminderSeen(target: ReminderData) {
       ...prefs.planNotificationOffset,
     },
   })
-    .filter((r) => r.kind === target.kind && r.targetId === target.id)
+    .filter(
+      (r) =>
+        r.kind === target.kind &&
+        r.targetId === target.id &&
+        r.day === target.day
+    )
     .map(reminderTrayId)
   markSeen(ids)
 }

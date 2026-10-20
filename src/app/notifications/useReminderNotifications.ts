@@ -115,12 +115,14 @@ export default function useReminderNotifications(
       kind: reminder.kind,
       id: reminder.targetId,
       contactId: reminder.contactId,
+      day: reminder.day,
     })
 
   return firedReminders({
     contacts,
     visits,
     plans,
+    recurringPlans,
     visitOffset: {
       ...DEFAULT_RETURN_VISIT_NOTIFICATION_OFFSET,
       ...visitOffset,

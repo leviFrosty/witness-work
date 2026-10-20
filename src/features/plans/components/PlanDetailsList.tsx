@@ -49,7 +49,6 @@ type Props = {
    * User to set Buddies up. Omitted where Buddies doesn't apply.
    */
   buddies?: InviteBuddiesRowContent
-  /** Omitted for recurring plans, which don't have reminders. */
   notifyMe?: {
     on: boolean
     onToggle: (on: boolean) => void

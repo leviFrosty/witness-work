@@ -693,23 +693,26 @@ const PlanDayForm = ({
   }
 
   const initialNotifyOffset = (): NotifyMeOffset => {
-    const savedMinutes =
-      existingDayPlan &&
-      savedReminderOffsetMinutes(
-        combineDateAndStartTime(
-          existingDayPlan.date,
-          existingDayPlan.startTimeInMinutes
-        ),
-        existingDayPlan
-      )
+    const savedMinutes = existingDayPlan
+      ? savedReminderOffsetMinutes(
+          combineDateAndStartTime(
+            existingDayPlan.date,
+            existingDayPlan.startTimeInMinutes
+          ),
+          existingDayPlan
+        )
+      : existingRecurringPlan?.reminderOffsetMinutes
     if (typeof savedMinutes === 'number')
       return offsetFromMinutes(savedMinutes) ?? { amount: 0, unit: 'minutes' }
     return defaultNotifyOffset
   }
 
-  const [notifyMe, setNotifyMe] = useState<boolean>(
-    existingDayPlan ? !!existingDayPlan.notifyMe : planAlwaysNotify
-  )
+  const initialNotifyMe = existingDayPlan
+    ? !!existingDayPlan.notifyMe
+    : existingRecurringPlan
+      ? !!existingRecurringPlan.notifyMe
+      : planAlwaysNotify
+  const [notifyMe, setNotifyMe] = useState<boolean>(initialNotifyMe)
   const [notifyMeOffset, setNotifyMeOffset] = useState<NotifyMeOffset>(
     initialNotifyOffset()
   )
@@ -787,7 +790,7 @@ const PlanDayForm = ({
         prefill?.location
     )
     setInvitedBuddies(initialInvitedBuddies)
-    setNotifyMe(existingDayPlan ? !!existingDayPlan.notifyMe : planAlwaysNotify)
+    setNotifyMe(initialNotifyMe)
     setNotifyMeOffset(initialNotifyOffset())
     setTypeValue(resolveInitialTypeValue())
     setSaveScopeModalOpen(false)
@@ -852,6 +855,9 @@ const PlanDayForm = ({
 
   const buildRecurringPayload = () => {
     const { planDate, startTimeInMinutes } = splitPickedDate()
+    // Each instance's reminder is worked out from these. An anytime one
+    // reminds the morning of; the offset still applies to dates given a time.
+    const offsetMinutes = notifyMe ? offsetToMinutes(notifyMeOffset) : null
     return {
       startDate: planDate,
       startTimeInMinutes,
@@ -870,6 +876,8 @@ const PlanDayForm = ({
       title: title.trim() || undefined,
       location,
       ...savedNote,
+      notifyMe,
+      reminderOffsetMinutes: offsetMinutes ?? undefined,
     }
   }
 
@@ -888,12 +896,16 @@ const PlanDayForm = ({
     const categoryChanged =
       (payload.categoryId ?? undefined) !==
       (existingRecurringPlan.categoryId ?? undefined)
-    // Like the Type, title and location are pattern-level: an instance that
-    // changes them becomes its own Day Plan.
+    // Like the Type, title, location and reminder are pattern-level: an
+    // instance that changes them becomes its own Day Plan.
     const detailsChanged =
       payload.title !== existingRecurringPlan.title ||
       JSON.stringify(payload.location) !==
-        JSON.stringify(existingRecurringPlan.location)
+        JSON.stringify(existingRecurringPlan.location) ||
+      payload.notifyMe !== !!existingRecurringPlan.notifyMe ||
+      (payload.notifyMe &&
+        payload.reminderOffsetMinutes !==
+          existingRecurringPlan.reminderOffsetMinutes)
 
     if (scope === 'instance') {
       const selectedDateMatchesInstance = sameDay(
@@ -919,8 +931,11 @@ const PlanDayForm = ({
           location: payload.location,
           note: payload.note,
           noteDoc: payload.noteDoc,
-          notifyMe: false,
-          notifications: [],
+          ...planReminderIntent(
+            id,
+            payload.startDate,
+            payload.startTimeInMinutes
+          ),
         })
 
         return { dayPlanId: id }
@@ -1101,7 +1116,7 @@ const PlanDayForm = ({
         has_title: !!plannedTitle,
         has_location: !!location,
         invited_buddies: oneTime ? (plannedBuddies?.length ?? 0) : 0,
-        reminder_enabled: oneTime && notifyMe,
+        reminder_enabled: notifyMe,
         time_mode: anytime ? 'hours' : 'span',
         prefilled: !!prefill,
       })
@@ -1285,34 +1300,31 @@ const PlanDayForm = ({
       note={note}
       setNote={setNote}
       buddies={buddiesRow}
-      notifyMe={
-        oneTime
-          ? {
-              on: notificationsAllowed && notifyMe,
-              onToggle: (on) => void handleNotifyMeChange(on),
-              description: notificationsAllowed
-                ? undefined
-                : i18n.t('notifyMe_description'),
-              offset: anytime ? (
-                <Text style={{ color: theme.colors.textAlt, fontSize: 12 }}>
-                  {i18n.t('planForm_anytimeReminder', {
-                    time: formatTime(anytimeReminderAt),
-                  })}
-                </Text>
-              ) : (
-                <ReminderOffsetSelects
-                  notifyMeOffset={notifyMeOffset}
-                  setNotifyMeOffset={setNotifyMeOffset}
-                />
-              ),
-              notice: reminderPassed && (
-                <Text style={{ color: theme.colors.textAlt, fontSize: 12 }}>
-                  {i18n.t('reminderTimePassed')}
-                </Text>
-              ),
-            }
-          : undefined
-      }
+      notifyMe={{
+        on: notificationsAllowed && notifyMe,
+        onToggle: (on) => void handleNotifyMeChange(on),
+        description: notificationsAllowed
+          ? undefined
+          : i18n.t('notifyMe_description'),
+        offset: anytime ? (
+          <Text style={{ color: theme.colors.textAlt, fontSize: 12 }}>
+            {i18n.t('planForm_anytimeReminder', {
+              time: formatTime(anytimeReminderAt),
+            })}
+          </Text>
+        ) : (
+          <ReminderOffsetSelects
+            notifyMeOffset={notifyMeOffset}
+            setNotifyMeOffset={setNotifyMeOffset}
+          />
+        ),
+        // A Recurring Plan's later dates still remind.
+        notice: oneTime && reminderPassed && (
+          <Text style={{ color: theme.colors.textAlt, fontSize: 12 }}>
+            {i18n.t('reminderTimePassed')}
+          </Text>
+        ),
+      }}
       end={
         oneTime
           ? undefined

@@ -12,6 +12,7 @@ import {
 } from '@/stores/preferences'
 import {
   buildReminderSchedule,
+  recurringPlanOnDay,
   type LocalReminder,
 } from '@/lib/reminderSchedule'
 import { reminderContent } from '@/lib/reminderContent'
@@ -33,9 +34,10 @@ import type { DayPlan } from '@/types/timeEntry'
 
 /**
  * Removes already-delivered reminders whose record is gone, so an erased
- * Contact's name doesn't stay in Notification Center. A reminder to log time
- * goes once the day has time, its Plans are gone, or the setting is off; a
- * streak's once it's kept or the setting is off.
+ * Contact's name doesn't stay in Notification Center. A Recurring Plan's goes
+ * once that date is deleted from it. A reminder to log time goes once the day
+ * has time, its Plans are gone, or the setting is off; a streak's once it's
+ * kept or the setting is off.
  */
 async function retractErasedReminders() {
   const presented = await Notifications.getPresentedNotificationsAsync()
@@ -46,11 +48,16 @@ async function retractErasedReminders() {
   )
   const records = useServiceReport.getState()
   const plans = new Set(records.dayPlans.map((p) => p.id))
+  const recurringPlans = new Map(records.recurringPlans.map((p) => [p.id, p]))
   const prefs = usePreferences.getState()
   const unloggedDays = unloggedDaySources(records, prefs)
   const streakDue = streakRemindersOn(prefs)
     ? currentServiceStreak().due?.period
     : undefined
+  const recurringPlanExists = (id: string, day: string) => {
+    const plan = recurringPlans.get(id)
+    return !!plan && recurringPlanOnDay(plan, day)
+  }
   for (const notification of presented) {
     const reminder = reminderData(notification)
     if (!reminder) continue
@@ -63,7 +70,9 @@ async function retractErasedReminders() {
             ? !!unloggedDays && !!unloggedDay(reminder.id, unloggedDays)
             : reminder.kind === 'streak'
               ? streakDue === reminder.id
-              : plans.has(reminder.id)
+              : reminder.day
+                ? recurringPlanExists(reminder.id, reminder.day)
+                : plans.has(reminder.id)
     if (!exists)
       await Notifications.dismissNotificationAsync(
         notification.request.identifier
@@ -200,6 +209,7 @@ export function useReconciledReminders(ready: boolean | undefined) {
             contacts: useContacts.getState().contacts,
             visits: useConversations.getState().conversations,
             plans: records.dayPlans,
+            recurringPlans: records.recurringPlans,
             unloggedDays: unloggedDaySources(records, prefs),
             streak: streakRemindersOn(prefs)
               ? currentServiceStreak()

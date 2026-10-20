@@ -78,6 +78,23 @@ describe('reminderContent', () => {
     expect(content.data).toEqual({ reminder: { kind: 'plan', id: 'p' } })
   })
 
+  it("opens a Recurring Plan's instance", () => {
+    const content = reminderContent(
+      {
+        ...visit,
+        kind: 'plan',
+        targetId: 'r',
+        contactId: undefined,
+        day: '2026-05-01',
+        minutes: 90,
+      },
+      options
+    )
+    expect(content.data).toEqual({
+      reminder: { kind: 'plan', id: 'r', day: '2026-05-01' },
+    })
+  })
+
   describe('a reminder to log time', () => {
     const unlogged: LocalReminder = {
       id: 'witness-work-unloggedDay-2026-05-01',

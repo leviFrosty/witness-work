@@ -913,6 +913,45 @@ test('the install record is cleared before installing and set only after', async
   assert.equal(ok.after.hash, 'h')
 })
 
+// A verify emulator boots locked behind a screen-lock PIN; bootAndroid must
+// enter it and leave an unlocked one alone.
+test('unlockAndroid enters the PIN on a locked emulator and waits for the unlock', async () => {
+  const { unlockAndroid } = await import(VERIFY)
+  const calls = []
+  let locked = true
+  const shell = (...args) => {
+    calls.push(args.join(' '))
+    if (args[0] === 'dumpsys')
+      return `State: ${locked ? 'RUNNING_LOCKED' : 'RUNNING_UNLOCKED'}`
+    if (args.join(' ') === 'input keyevent 66') locked = false
+    return ''
+  }
+  const sleep = async () => {}
+  assert.equal(await unlockAndroid('emulator-5580', { shell, sleep }), true)
+  assert.deepEqual(calls, [
+    'dumpsys user',
+    'input keyevent KEYCODE_WAKEUP',
+    'wm dismiss-keyguard',
+    'input text 1111',
+    'input keyevent 66',
+    'dumpsys user',
+  ])
+  calls.length = 0
+  assert.equal(await unlockAndroid('emulator-5580', { shell, sleep }), false)
+  assert.deepEqual(calls, ['dumpsys user'])
+})
+
+test('unlockAndroid fails when the PIN does not unlock', async () => {
+  const { unlockAndroid } = await import(VERIFY)
+  await assert.rejects(
+    unlockAndroid('emulator-5580', {
+      shell: (...args) => (args[0] === 'dumpsys' ? 'RUNNING_LOCKED' : ''),
+      sleep: async () => {},
+    }),
+    /still locked/
+  )
+})
+
 test('monkey: popups the app owns are its focus; other windows are not', async () => {
   const { androidFocus, focusIsOurs, isStuck } = await import(MONKEY)
   const app =

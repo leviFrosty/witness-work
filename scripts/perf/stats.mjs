@@ -227,6 +227,8 @@ export function renderMarkdown(result) {
         lines.push(`### ${title}`, '', `Not measured: ${cycles.skipped}`, '')
         continue
       }
+      // No cycles ran (--foreground 0), so there is nothing to summarize.
+      if (!cycles.summary) continue
       lines.push(`### ${title}`, '')
       lines.push(
         `${cycles.cycles.length} cycles; JS blocked in the 8 s after return: median ${fmt(cycles.summary.blockedMs?.median)} ms, p90 ${fmt(cycles.summary.blockedMs?.p90)} ms.`,

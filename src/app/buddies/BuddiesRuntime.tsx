@@ -44,6 +44,7 @@ import {
 } from '@/features/buddies/lib/linkedPlans'
 import { createLiveInbox } from '@/features/buddies/lib/liveInbox'
 import { registerBuddiesPush } from '@/features/buddies/lib/pushRegistration'
+import { nextReplyAttempt } from '@/features/buddies/lib/replyDelivery'
 import { shareRecipientsKey, sharedKeys } from '@/features/buddies/lib/shares'
 import { hasSharedEventEnded } from '@/features/buddies/lib/shareTiming'
 import { Buddy, incomingShareKey } from '@/features/buddies/lib/state'
@@ -308,23 +309,25 @@ export default function BuddiesRuntime() {
       recipients = next
       publishNow()
     }
-    /** Sends each held answer when its wait ends (see `replyHoldMs`). */
+    /**
+     * Sends each held answer when its wait ends (see `replyHoldMs`), and tries
+     * one that failed once more (see `nextReplyAttempt`).
+     */
     const scheduleHeldReplies = () => {
       if (replyTimer) clearTimeout(replyTimer)
       replyTimer = null
       const now = Date.now()
-      // Past-due answers that failed are retried by syncs, not in a loop here.
-      const due = Object.values(useBuddies.getState().incomingShares)
-        .map((share) => share.replySendAt)
-        .filter((at): at is number => at !== undefined && at > now)
-      if (due.length === 0) return
-      replyTimer = setTimeout(
-        () => {
-          replyTimer = null
-          void buddiesEngine.deliverReplies().catch(logFailure)
-        },
-        Math.min(...due) - now
+      // After that one retry, syncs and Try Again send it, not a loop here.
+      const next = nextReplyAttempt(
+        Object.values(useBuddies.getState().incomingShares),
+        now
       )
+      if (next === undefined) return
+      replyTimer = setTimeout(() => {
+        replyTimer = null
+        void buddiesEngine.deliverReplies().catch(logFailure)
+        scheduleHeldReplies()
+      }, next - now)
     }
     const live = createLiveInbox({
       open: () => buddiesEngine.openLive(),

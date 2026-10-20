@@ -99,7 +99,9 @@ export default function BuddyNotificationRow({
   const status = share ? effectiveShareStatus(share, dayPlans) : undefined
   // A Plan or Follow-up that has happened can't be answered any more.
   const ended = !!share && hasSharedEventEnded(share, Date.now())
-  const replyDelivery = useReplyDelivery(share ? entry.shareKey : undefined)
+  const replyDelivery = useReplyDelivery(
+    share ? entry.shareKey : undefined
+  ).label
 
   const run = async (action: () => Promise<void>) => {
     setBusy(true)

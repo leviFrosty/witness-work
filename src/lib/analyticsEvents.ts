@@ -101,6 +101,7 @@ export const analyticsEventNames = [
   'buddies_tray_sync_failed',
   'buddy_badges_opened',
   'buddy_customized',
+  'buddy_invitation_answer_retried',
   'buddy_invitation_answered',
   'buddy_invite_overlap_resolved',
   'buddy_join_request_answered',

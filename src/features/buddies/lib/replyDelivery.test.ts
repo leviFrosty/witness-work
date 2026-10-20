@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { replyDelivery } from '@/features/buddies/lib/replyDelivery'
+import {
+  nextReplyAttempt,
+  REPLY_RETRY_MS,
+  replyDelivery,
+} from '@/features/buddies/lib/replyDelivery'
 import { REPLY_HOLD_MS } from '@/features/buddies/lib/state'
 
 const answeredAt = 1_000_000
@@ -45,5 +49,31 @@ describe('replyDelivery', () => {
     expect(replyDelivery(undefined, answeredAt, false)).toEqual({
       kind: 'sent',
     })
+  })
+})
+
+describe('nextReplyAttempt', () => {
+  const due = answeredAt + REPLY_HOLD_MS
+
+  it('sends a held answer when its wait ends', () => {
+    expect(nextReplyAttempt([held], answeredAt + 1_000)).toBe(due)
+  })
+
+  it('tries an answer that failed once more, then leaves it to syncs', () => {
+    expect(nextReplyAttempt([held], due + 1)).toBe(due + REPLY_RETRY_MS)
+    expect(nextReplyAttempt([held], due + REPLY_RETRY_MS)).toBeUndefined()
+    // Going goes out at once, so its retry counts from the answer.
+    const going = { unsentReplyRev: answeredAt }
+    expect(nextReplyAttempt([going], answeredAt + 5_000)).toBe(
+      answeredAt + REPLY_RETRY_MS
+    )
+  })
+
+  it('picks the earliest, and skips answers already sent', () => {
+    const later = { unsentReplyRev: due, replySendAt: due + REPLY_HOLD_MS }
+    expect(nextReplyAttempt([later, {}, held], answeredAt + 1_000)).toBe(due)
+    expect(
+      nextReplyAttempt([{}, { replySendAt: due }], answeredAt)
+    ).toBeUndefined()
   })
 })

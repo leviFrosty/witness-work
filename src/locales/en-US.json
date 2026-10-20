@@ -704,6 +704,7 @@
   "map_emptyNoContactsBody": "Contacts with an address or pin location will appear here when you add them.",
   "map_emptyNoContactsTitle": "Start building your map",
   "map_droppedPin": "Dropped pin",
+  "map_pinMoved": "Pin moved · {{name}}",
   "map_frameTitle": "Map",
   "map_unavailableTitle": "Map unavailable",
   "map_unavailableBody": "The map can't load right now. Everything else still works.",

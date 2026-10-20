@@ -43,6 +43,7 @@ import * as Crypto from 'expo-crypto'
 import { usePreferences } from '@/stores/preferences'
 import { useShallow } from 'zustand/react/shallow'
 import { useTabBarHidden } from '@/stores/tabBarVisibility'
+import { toast } from '@/stores/toasts'
 import Button from '@/components/ui/Button'
 import Empty from '@/components/ui/Empty'
 import MapEmptyState from '@/features/map/components/MapEmptyState'
@@ -281,10 +282,21 @@ const FullMapView = ({
   const [controlsLayout, setControlsLayout] =
     useState<MapControlsLayout | null>(null)
   const handleDragContactPin = (id: string, coordinate: LatLng) => {
+    const before = useContacts.getState().contacts.find((c) => c.id === id)
+    if (!before) return
     updateContact({
       id,
       coordinate,
       userDraggedCoordinate: true,
+    })
+    toast.undo({
+      title: i18n.t('map_pinMoved', { name: before.name }),
+      onUndo: () =>
+        updateContact({
+          id,
+          coordinate: before.coordinate,
+          userDraggedCoordinate: before.userDraggedCoordinate,
+        }),
     })
   }
 

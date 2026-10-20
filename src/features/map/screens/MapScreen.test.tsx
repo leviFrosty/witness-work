@@ -358,6 +358,7 @@ import CreateContactCard from '@/features/map/components/CreateContactCard'
 import MapView from 'react-native-maps'
 import { Carousel } from 'react-native-reanimated-carousel'
 import { Input } from 'tamagui'
+import { useToasts } from '@/stores/toasts'
 
 let root: ReturnType<typeof create>
 const stored = () => useContacts.getState().contacts
@@ -922,5 +923,56 @@ describe('User location dot', () => {
     expect(showsDot()).toBe(false)
     await act(async () => setAppState('active'))
     expect(showsDot()).toBe(true)
+  })
+})
+
+describe('Dragging a contact pin', () => {
+  const drag = async (id: string, latitude: number) => {
+    const marker = root.root
+      .findAllByType('Marker' as never)
+      .find((m) => m.props.identifier === id)!
+    await act(async () => marker.props.onDragStart())
+    await act(async () =>
+      marker.props.onDragEnd({
+        nativeEvent: { coordinate: { latitude, longitude: -73 } },
+      })
+    )
+  }
+  const undoToast = () =>
+    useToasts.getState().toasts.find((t) => t.intent === 'undo')!
+
+  afterEach(() => useToasts.setState({ toasts: [] }))
+
+  it('moves the pin with an Undo that puts it back', async () => {
+    await drag('first', 42)
+    expect(mocks.updateContact).toHaveBeenCalledWith({
+      id: 'first',
+      coordinate: { latitude: 42, longitude: -73 },
+      userDraggedCoordinate: true,
+    })
+    expect(undoToast().title).toBe('map_pinMoved')
+
+    undoToast().action!.onPress()
+    expect(mocks.updateContact).toHaveBeenLastCalledWith({
+      id: 'first',
+      coordinate: { latitude: 40, longitude: -73 },
+      userDraggedCoordinate: undefined,
+    })
+  })
+
+  it('keeps an earlier dragged pin dragged after Undo', async () => {
+    setContacts(
+      stored().map((c) =>
+        c.id === 'second' ? { ...c, userDraggedCoordinate: true } : c
+      )
+    )
+    await act(async () => root.update(screen()))
+    await drag('second', 43)
+    undoToast().action!.onPress()
+    expect(mocks.updateContact).toHaveBeenLastCalledWith({
+      id: 'second',
+      coordinate: { latitude: 41, longitude: -73 },
+      userDraggedCoordinate: true,
+    })
   })
 })

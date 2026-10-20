@@ -8,6 +8,8 @@ const setItem = vi.fn<(k: string, v: string) => Promise<void>>()
 const getItem = vi.fn<(k: string) => Promise<string | null>>()
 const removeItem = vi.fn<(k: string) => Promise<void>>()
 const addBreadcrumb = vi.fn()
+const captureException = vi.fn()
+const mmkvSet = vi.fn<(k: string, v: string) => void>()
 
 vi.mock('@react-native-async-storage/async-storage', () => ({
   default: {
@@ -26,7 +28,9 @@ vi.mock('react-native-mmkv', () => ({
     getString() {
       return undefined
     }
-    set() {}
+    set(k: string, v: string) {
+      mmkvSet(k, v)
+    }
     delete() {}
   },
 }))
@@ -34,10 +38,15 @@ vi.mock('react-native-mmkv', () => ({
 vi.mock('@/lib/errorTracking', () => ({
   errorTracking: {
     addBreadcrumb: (...args: unknown[]) => addBreadcrumb(...args),
+    captureException: (...args: unknown[]) => captureException(...args),
   },
 }))
 
-import { GuardedAsyncStorage, isTransientStorageReadError } from '@/stores/mmkv'
+import {
+  GuardedAsyncStorage,
+  MmkvStorage,
+  isTransientStorageReadError,
+} from '@/stores/mmkv'
 
 describe('GuardedAsyncStorage', () => {
   beforeEach(() => {
@@ -91,6 +100,27 @@ describe('GuardedAsyncStorage', () => {
   it('rethrows non-transient read errors', async () => {
     getItem.mockRejectedValueOnce(new Error('boom'))
     await expect(GuardedAsyncStorage.getItem('k')).rejects.toThrow('boom')
+  })
+})
+
+describe('MmkvStorage', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('reports a failed write once an hour instead of throwing', () => {
+    mmkvSet.mockImplementation(() => {
+      throw new Error('Failed to set preferences!')
+    })
+
+    expect(() => MmkvStorage.setItem('preferences', '{"a":1}')).not.toThrow()
+    expect(() => MmkvStorage.setItem('preferences', '{"a":2}')).not.toThrow()
+
+    expect(captureException).toHaveBeenCalledOnce()
+    expect(captureException).toHaveBeenCalledWith(
+      new Error('Failed to set preferences!'),
+      { storageKey: 'preferences' }
+    )
   })
 })
 

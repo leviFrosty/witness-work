@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { errorTracking } from '@/lib/errorTracking'
+import { captureExceptionThrottled } from '@/lib/throttledErrorReport'
 import { MMKV } from 'react-native-mmkv'
 import { StateStorage } from 'zustand/middleware'
 
@@ -151,10 +152,22 @@ export const GuardedAsyncStorage: StateStorage = {
   removeItem: (name) => AsyncStorage.removeItem(name),
 }
 
-/** MMKV storage interface for Zustand middleware */
+/**
+ * MMKV storage interface for Zustand middleware.
+ *
+ * MMKV throws `Failed to set <key>!` when a write fails, e.g. on a launch while
+ * the device is locked. Like `GuardedAsyncStorage`, writes don't throw: zustand
+ * calls `setItem` synchronously inside `set`, so a throw would break the action
+ * that changed the store even though its state is already updated in memory.
+ * The next write tries again.
+ */
 export const MmkvStorage: StateStorage = {
   setItem: (name, value) => {
-    return mmkvStorage.set(name, value)
+    try {
+      mmkvStorage.set(name, value)
+    } catch (error) {
+      captureExceptionThrottled(`mmkv:${name}`, error, { storageKey: name })
+    }
   },
   getItem: (name) => {
     const value = mmkvStorage.getString(name)

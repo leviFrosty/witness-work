@@ -28,6 +28,7 @@ import { contentHash } from '@/lib/contentHash'
 import { addForegroundListener } from '@/lib/appLifecycle'
 import { mmkvStorage } from '@/stores/mmkv'
 import { errorTracking } from '@/lib/errorTracking'
+import { captureExceptionThrottled } from '@/lib/throttledErrorReport'
 import { supportsAppIconBadge } from '@/features/notifications/lib/appIconBadge'
 import { useNotificationsTray } from '@/features/notifications/stores/notificationsTray'
 import type { Contact } from '@/types/contact'
@@ -113,8 +114,18 @@ function loadState(): ScheduleState {
   return { key: '', day: '', ids: {} }
 }
 
+/**
+ * Best effort: MMKV refuses writes while the device is locked, and the schedule
+ * is already in the OS. A later pass compares against the OS schedule.
+ */
 function saveState(state: ScheduleState) {
-  mmkvStorage.set(STATE_KEY, JSON.stringify(state))
+  try {
+    mmkvStorage.set(STATE_KEY, JSON.stringify(state))
+  } catch (error) {
+    captureExceptionThrottled('localReminders:save', error, {
+      localReminders: 'save',
+    })
+  }
 }
 
 const isLegacyId = (id: string) => !id.startsWith(OWN_PREFIX)

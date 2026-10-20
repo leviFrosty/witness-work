@@ -13,6 +13,7 @@ import { normalizeDateForStorage } from '@/lib/normalizeDate'
 const runtime = vi.hoisted(() => ({
   platform: 'ios',
   storage: new Map<string, string>(),
+  failWrites: false,
   appState: new Set<(state: string) => void>(),
   scheduled: [] as { identifier: string }[],
   presented: [] as {
@@ -35,7 +36,10 @@ vi.mock('react-native', () => ({
 vi.mock('@/stores/mmkv', () => ({
   mmkvStorage: {
     getString: (key: string) => runtime.storage.get(key),
-    set: (key: string, value: string) => runtime.storage.set(key, value),
+    set: (key: string, value: string) => {
+      if (runtime.failWrites) throw new Error(`Failed to set ${key}!`)
+      runtime.storage.set(key, value)
+    },
   },
 }))
 vi.mock('@/stores/contactsStore', async () => ({
@@ -110,6 +114,7 @@ import useConversations from '@/stores/conversationStore'
 import useServiceReport from '@/stores/serviceReport'
 import { usePreferences } from '@/stores/preferences'
 import { useNotificationsTray } from '@/features/notifications/stores/notificationsTray'
+import { errorTracking } from '@/lib/errorTracking'
 import { useReconciledReminders } from './useReconciledReminders'
 /** Runs `change`, then lets the debounced pass run to the end. */
 async function act(change: () => unknown) {
@@ -129,6 +134,7 @@ beforeEach(() => {
   vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
   vi.clearAllMocks()
   runtime.storage.clear()
+  runtime.failWrites = false
   runtime.scheduled = []
   runtime.presented = []
   useContacts.setState({
@@ -344,6 +350,45 @@ it('retains obsolete IDs for retry after the OS fails to list reminders', async 
     usePreferences.setState({ dataProtectionMode: true })
   })
   expect(runtime.scheduled).toEqual([])
+})
+
+it('schedules and reports once when the schedule state cannot be saved', async () => {
+  runtime.failWrites = true
+  useConversations.setState({
+    conversations: [
+      {
+        id: 'v',
+        date: new Date(),
+        isBibleStudy: false,
+        contact: { id: 'c' },
+        followUp: {
+          date: new Date(Date.now() + 24 * 60 * 60_000),
+          notifyMe: true,
+        },
+      },
+    ],
+  })
+  const unhandled = vi.fn()
+  process.on('unhandledRejection', unhandled)
+  try {
+    await act(async () => {
+      renderer = create(<Harness />)
+    })
+    await act(async () => {
+      usePreferences.setState({ dataProtectionMode: true })
+    })
+    // Let any escaped rejection reach the process.
+    await new Promise((resolve) => setImmediate(resolve))
+  } finally {
+    process.off('unhandledRejection', unhandled)
+  }
+  expect(runtime.scheduled).toEqual([{ identifier: 'witness-work-visit-v' }])
+  expect(unhandled).not.toHaveBeenCalled()
+  expect(errorTracking.captureException).toHaveBeenCalledOnce()
+  expect(errorTracking.captureException).toHaveBeenCalledWith(
+    new Error('Failed to set reminderSchedule!'),
+    { localReminders: 'save' }
+  )
 })
 
 it.each(['ios', 'android'])(

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import useServiceReport from '@/stores/serviceReport'
 import useCategories from '@/stores/categories'
 import { usePreferences } from '@/stores/preferences'
+import { useShallow } from 'zustand/react/shallow'
 import {
   getLoggedDayKeys,
   getServiceYearMonthlyBreakdowns,
@@ -86,7 +87,19 @@ const useServiceYearPace = (serviceYear: number): ServiceYearPaceData => {
     customCreditLimitHours,
     logsHours,
     monthlyGoalOverrides,
-  } = usePreferences()
+  } = usePreferences(
+    useShallow((s) => ({
+      role: s.role,
+      roleHistory: s.roleHistory,
+      publisherHours: s.publisherHours,
+      userSpecifiedHasAnnualGoal: s.userSpecifiedHasAnnualGoal,
+      milestoneOverrides: s.milestoneOverrides,
+      overrideCreditLimit: s.overrideCreditLimit,
+      customCreditLimitHours: s.customCreditLimitHours,
+      logsHours: s.logsHours,
+      monthlyGoalOverrides: s.monthlyGoalOverrides,
+    }))
+  )
   // One "now" per mount so the chart, rows, and status line agree.
   const [today] = useState(() => new Date())
 

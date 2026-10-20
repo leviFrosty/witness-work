@@ -163,6 +163,7 @@ const load = async () => {
   const { usePreferences } = await import('@/stores/preferences')
   const { default: useContacts } = await import('@/stores/contactsStore')
   const { errorTracking } = await import('@/lib/errorTracking')
+  const { PersistStorage } = await import('@/stores/mmkv')
   usePreferences.setState({
     iCloudSyncEnabled: true,
     iCloudDeviceId: 'ipad',
@@ -187,6 +188,7 @@ const load = async () => {
     usePreferences,
     useContacts,
     errorTracking,
+    PersistStorage,
   }
 }
 
@@ -303,6 +305,48 @@ describe('a foreground with nothing new', () => {
     await settle()
     expect(bridge.readFiles).toHaveBeenCalledTimes(1)
     vi.restoreAllMocks()
+  })
+})
+
+describe('preference writes', () => {
+  // Each write persists the whole preferences store and notifies every
+  // subscriber, so sync's bookkeeping writes only what changed, together.
+  it('an edit burst writes once before its push and once after', async () => {
+    runtime.files = [ownFile()]
+    const { bridge, useContacts, usePreferences, PersistStorage } =
+      await launched()
+    const setItem = vi.spyOn(PersistStorage, 'setItem')
+    const notified = vi.fn()
+    const unsubscribe = usePreferences.subscribe(notified)
+    const writes = () =>
+      setItem.mock.calls.filter(([name]) => name === 'preferences').length
+    vi.useFakeTimers()
+    try {
+      // Typing a note: several edits inside the debounce, one pending flag.
+      for (let i = 0; i < 3; i++) {
+        useContacts.getState().set({
+          contacts: [{ id: 'typed', name: `Edit ${i}` } as never],
+        })
+        await vi.advanceTimersByTimeAsync(500)
+      }
+      expect(writes()).toBe(1)
+      expect(usePreferences.getState().iCloudSyncPendingPush).toBe(true)
+      await vi.advanceTimersByTimeAsync(5_000)
+      expect(bridge.write).toHaveBeenCalledTimes(1)
+      expect(writes()).toBe(2)
+      expect(usePreferences.getState()).toMatchObject({
+        iCloudSyncPendingPush: false,
+        iCloudUploadPendingSince: expect.any(Number),
+      })
+      // iCloud confirms the upload on its first check.
+      await vi.advanceTimersByTimeAsync(3_000)
+      expect(writes()).toBe(3)
+      expect(notified).toHaveBeenCalledTimes(3)
+      expect(usePreferences.getState().iCloudUploadPendingSince).toBeNull()
+    } finally {
+      unsubscribe()
+      vi.useRealTimers()
+    }
   })
 })
 

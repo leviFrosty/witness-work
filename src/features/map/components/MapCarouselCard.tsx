@@ -48,7 +48,9 @@ const MapCarouselCard = ({ contact, index, inspector = false }: Props) => {
   const theme = useTheme()
   const navigation = useNavigation<RootStackNavigation>()
   const locales = getLocales()
-  const { defaultNavigationMapProvider } = usePreferences()
+  const defaultNavigationMapProvider = usePreferences(
+    (s) => s.defaultNavigationMapProvider
+  )
   const copyText = useCopyText()
   const contactActions = useContactMenuActions(contact)
 

@@ -106,7 +106,17 @@ const storeMock = vi.hoisted(
         subscribe: () => () => {},
       })
 )
-vi.mock('@/stores/preferences', () => ({ usePreferences: storeMock(prefs) }))
+const prefListeners = vi.hoisted(
+  () => new Set<(state: unknown, prev: unknown) => void>()
+)
+vi.mock('@/stores/preferences', () => ({
+  usePreferences: Object.assign(storeMock(prefs), {
+    subscribe: (listener: (state: unknown, prev: unknown) => void) => {
+      prefListeners.add(listener)
+      return () => prefListeners.delete(listener)
+    },
+  }),
+}))
 vi.mock('@/stores/conversationStore', () => ({
   useConversations: storeMock({ conversations: [] }),
 }))
@@ -136,6 +146,7 @@ import { installWatchSync } from '@/app/watch/watchSync'
 import useServiceReport from '@/stores/serviceReport'
 import useMileage from '@/stores/mileage'
 import { getMonthsReports } from '@/lib/serviceReport'
+import { counters } from '@/lib/perf'
 
 const draft = (overrides: Partial<WatchEntryDraft> = {}): WatchEntryDraft => ({
   id: 'watch-1',
@@ -482,6 +493,29 @@ describe('watch sync', () => {
     })
     bridge.statusListener?.()
     expect(bridge.snapshots).toHaveLength(2)
+  })
+
+  it('rebuilds only for the preferences the snapshot reads', () => {
+    teardown = installWatchSync()
+    const builds = () => counters['watch:push'] ?? 0
+    const before = builds()
+    const write = (next: Record<string, unknown>) => {
+      const prev = { ...prefs }
+      Object.assign(prefs, next)
+      prefListeners.forEach((listener) => listener(prefs, prev))
+    }
+    try {
+      // Sync bookkeeping after an edit.
+      write({ iCloudSyncPendingPush: true, lastiCloudSyncAt: 1 })
+      vi.advanceTimersByTime(500)
+      expect(builds()).toBe(before)
+
+      write({ timeDisplayFormat: 'short' })
+      vi.advanceTimersByTime(500)
+      expect(builds()).toBe(before + 1)
+    } finally {
+      write({ timeDisplayFormat: 'decimal' })
+    }
   })
 
   it('sends an unchanged snapshot again on a new day', () => {

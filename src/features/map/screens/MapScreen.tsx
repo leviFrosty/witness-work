@@ -46,6 +46,7 @@ import MapCarouselCard from '@/features/map/components/MapCarouselCard'
 import * as Location from 'expo-location'
 import * as Crypto from 'expo-crypto'
 import { usePreferences } from '@/stores/preferences'
+import { useShallow } from 'zustand/react/shallow'
 import { useTabBarHidden } from '@/stores/tabBarVisibility'
 import Button from '@/components/ui/Button'
 import Empty from '@/components/ui/Empty'
@@ -154,7 +155,17 @@ const FullMapView = ({
   const bottomBarHeight = hasSidebar || tabBarHidden ? 0 : TAB_BAR_HEIGHT
   const inspectorWidth = 360
   const [inspectorRevealRequest, setInspectorRevealRequest] = useState(0)
-  const { colorScheme, mapLayer, set: setPreferences } = usePreferences()
+  const {
+    colorScheme,
+    mapLayer,
+    set: setPreferences,
+  } = usePreferences(
+    useShallow((s) => ({
+      colorScheme: s.colorScheme,
+      mapLayer: s.mapLayer,
+      set: s.set,
+    }))
+  )
   const mapRef = useRef<MapView>(null)
   const [isMapReady, setIsMapReady] = useState(false)
   const [hasMapLayout, setHasMapLayout] = useState(false)
@@ -1425,7 +1436,12 @@ const MapScreen = ({
 }) => {
   const { contacts: allContacts } = useContacts()
   const { conversations } = useConversations()
-  const { hasCompletedMapOnboarding, stalenessBreakpoints } = usePreferences()
+  const { hasCompletedMapOnboarding, stalenessBreakpoints } = usePreferences(
+    useShallow((s) => ({
+      hasCompletedMapOnboarding: s.hasCompletedMapOnboarding,
+      stalenessBreakpoints: s.stalenessBreakpoints,
+    }))
+  )
   const colors = useMarkerColors()
 
   const activeContacts = useMemo(

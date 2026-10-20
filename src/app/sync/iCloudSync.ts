@@ -486,6 +486,20 @@ function tag(): string {
   return `[iCloudSync/${id ? id.slice(0, 6) : '?'}]`
 }
 
+type PreferencesState = ReturnType<typeof usePreferences.getState>
+
+/**
+ * `usePreferences.setState` persists the whole store and notifies every
+ * subscriber even when nothing changed, and sync's bookkeeping often rewrites
+ * what's already there (the pending flag on every edit).
+ */
+function setPrefsIfChanged(partial: Partial<PreferencesState>): void {
+  const state = usePreferences.getState()
+  const keys = Object.keys(partial) as (keyof PreferencesState)[]
+  if (keys.every((key) => Object.is(state[key], partial[key]))) return
+  usePreferences.setState(partial)
+}
+
 /**
  * Whether the user has opted into iCloud sync AND is currently entitled to it
  * AND iCloud is actually usable. The supporter check is a runtime gate: if the
@@ -681,7 +695,7 @@ export function replaceLocalWithRemote(remote: SyncPayload): void {
     if (hasPetSlice) applyPetSnapshot(petFromPayload(remote))
 
     const now = Date.now()
-    usePreferences.setState({
+    setPrefsIfChanged({
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       ...(syncableValues(remote.preferencesStore.values) as any),
       preferenceUpdatedAt: remote.preferencesStore.updatedAt ?? {},
@@ -711,7 +725,7 @@ export function replaceLocalWithRemote(remote: SyncPayload): void {
  * merges with it rather than adopting it and replacing the data being merged.
  */
 export function joinRemoteResetEpoch(remote: SyncPayload): void {
-  usePreferences.setState({ iCloudResetEpoch: remote.resetEpoch ?? null })
+  setPrefsIfChanged({ iCloudResetEpoch: remote.resetEpoch ?? null })
 }
 
 /**
@@ -776,7 +790,7 @@ async function overwriteRemoteWithLocalInner(): Promise<void> {
     deviceName: Device.modelName ?? undefined,
   })
   // `push` needs sync on. Pulls meanwhile ignore every pre-reset file.
-  usePreferences.setState({
+  setPrefsIfChanged({
     iCloudResetEpoch: epoch,
     iCloudResetAdoptedNotice: null,
     iCloudSyncEnabled: true,
@@ -879,7 +893,7 @@ function deleteUnreferencedCloudPhotos(): Promise<void> {
       ...(usePreferences.getState().iCloudImageSync ?? {}),
     }
     for (const filename of deleted) delete next[filename]
-    usePreferences.setState({ iCloudImageSync: next })
+    setPrefsIfChanged({ iCloudImageSync: next })
     logger.log(`${tag()} reset cleanup: photos`, { deleted: deleted.length })
   })
 }
@@ -1250,7 +1264,7 @@ async function pushNoteImagesInner(published: boolean): Promise<void> {
       deps: buildImageSyncDeps(),
     })
     if (!result.uploaded && !result.failed) return
-    usePreferences.setState({ iCloudImageSync: result.bookkeeping })
+    setPrefsIfChanged({ iCloudImageSync: result.bookkeeping })
     logger.log(`${tag()} note photo push`, {
       uploaded: result.uploaded,
       failed: result.failed,
@@ -1325,7 +1339,7 @@ async function pushImagesInner(
       deps,
       trigger,
     })
-    usePreferences.setState({ iCloudImageSync: result.bookkeeping })
+    setPrefsIfChanged({ iCloudImageSync: result.bookkeeping })
     // Surface the first failure's error message — lossy when there are many,
     // but keeps the log from exploding and tells the operator exactly why
     // writes are failing (path mismatch, quota, coordinator error, etc.).
@@ -1387,7 +1401,7 @@ async function pullImagesInner(oneShot = false): Promise<void> {
     if (result.downloaded.length === 0) {
       // Still persist bookkeeping even without downloads in case we tracked
       // new containerMtime observations via skip-branch.
-      usePreferences.setState({ iCloudImageSync: result.bookkeeping })
+      setPrefsIfChanged({ iCloudImageSync: result.bookkeeping })
       return
     }
     const contactsState = useContacts.getState()
@@ -1444,7 +1458,7 @@ async function pullImagesInner(oneShot = false): Promise<void> {
           filenameForSource({ ...download, localPath: '' })
         ]
     }
-    usePreferences.setState({ iCloudImageSync: result.bookkeeping })
+    setPrefsIfChanged({ iCloudImageSync: result.bookkeeping })
     logger.log(`${tag()} image pull`, {
       downloaded: result.downloaded.length,
       missing: result.missing.length,
@@ -1549,7 +1563,7 @@ async function gcImages(): Promise<void> {
         ...(usePreferences.getState().iCloudImageSync ?? {}),
       }
       for (const filename of deletedFiles) delete next[filename]
-      usePreferences.setState({ iCloudImageSync: next })
+      setPrefsIfChanged({ iCloudImageSync: next })
       logger.log(`${tag()} image gc`, {
         deleted: result.deleted.length,
         notePhotos: notes.deleted.length,
@@ -1590,7 +1604,7 @@ export function push(reason: string): Promise<boolean> {
 async function calibrateClock(): Promise<void> {
   const offset = await refreshSyncClock()
   if (offset !== null)
-    usePreferences.setState({
+    setPrefsIfChanged({
       iCloudClockOffsetMs: offset,
       iCloudClockCalibrated: true,
     })
@@ -1599,7 +1613,7 @@ async function calibrateClock(): Promise<void> {
 async function pushInner(reason: string): Promise<boolean> {
   perf.count('sync:push')
   if (!canSync()) {
-    usePreferences.setState({ iCloudSyncPendingPush: true })
+    setPrefsIfChanged({ iCloudSyncPendingPush: true })
     logger.log(`${tag()} push skipped (canSync=false)`, { reason })
     return false
   }
@@ -1607,7 +1621,7 @@ async function pushInner(reason: string): Promise<boolean> {
   try {
     await calibrateClock()
     if (!canSync()) {
-      usePreferences.setState({ iCloudSyncPendingPush: true })
+      setPrefsIfChanged({ iCloudSyncPendingPush: true })
       return false
     }
     const generation = editGeneration
@@ -1642,21 +1656,38 @@ async function pushInner(reason: string): Promise<boolean> {
       preferenceKeys: Object.keys(payload.preferencesStore.values).length,
     })
     await withTransportTimeout('write', syncTransport().write(filename, json))
-    if (syncTransport().writeConfirmsUpload) recordConfirmedUpload()
-    else awaitUpload()
     const covered = generation === editGeneration
-    usePreferences.setState({ iCloudSyncPendingPush: !covered })
+    const now = Date.now()
+    const prefs = usePreferences.getState()
+    const confirmsUpload = syncTransport().writeConfirmsUpload
+    // A binary that can't tell keeps showing local activity, as before.
+    const awaitsUpload =
+      !confirmsUpload && syncTransport().supportsUploadStatus()
+    // The push's bookkeeping in one write; each persists the whole store.
+    setPrefsIfChanged({
+      iCloudSyncPendingPush: !covered,
+      lastiCloudSyncAt: now,
+      lastiCloudPushedAt: now,
+      ...(prefs.iCloudSyncIssue === 'push-failed' && {
+        iCloudSyncIssue: null,
+        iCloudSyncErrorCode: null,
+      }),
+      // A write that already reached the cloud (`writeConfirmsUpload`).
+      ...(confirmsUpload && uploadedAt(now)),
+      // Otherwise this version waits for iCloud to confirm its upload.
+      ...(awaitsUpload &&
+        prefs.iCloudUploadPendingSince === null && {
+          iCloudUploadPendingSince: now,
+        }),
+    })
+    if (confirmsUpload) reportUploadRecovered(prefs.iCloudUploadIssue)
+    else if (awaitsUpload) {
+      uploadGeneration++
+      restartUploadChecks()
+    }
     resetPushBackoff()
     publishedThisLaunch = true
     if (!covered) schedulePush()
-    const now = Date.now()
-    usePreferences.getState().set({
-      lastiCloudSyncAt: now,
-      lastiCloudPushedAt: now,
-      ...(usePreferences.getState().iCloudSyncIssue === 'push-failed'
-        ? { iCloudSyncIssue: null, iCloudSyncErrorCode: null }
-        : {}),
-    })
     logger.log(`${tag()} push success`, { reason, filename })
     errorTracking.addBreadcrumb({
       category: 'iCloudSync',
@@ -1683,7 +1714,7 @@ async function pushInner(reason: string): Promise<boolean> {
       logger.error(`${tag()} push failed (${reason})`, e)
       errorTracking.captureException(e, { iCloudSync: 'push' })
     }
-    usePreferences.setState({
+    setPrefsIfChanged({
       iCloudSyncPendingPush: true,
       iCloudSyncIssue: 'push-failed',
       iCloudSyncErrorCode: code ?? 'unknown',
@@ -1705,26 +1736,26 @@ function isExpectedTransportFailure(error: unknown): boolean {
   return code !== null && code !== 'unknown' && code !== 'not-found'
 }
 
-/** A write that already reached the cloud (`writeConfirmsUpload`). */
-function recordConfirmedUpload(): void {
-  const previousIssue = usePreferences.getState().iCloudUploadIssue
-  usePreferences.setState({
-    lastiCloudUploadedAt: Date.now(),
-    iCloudUploadPendingSince: null,
-    iCloudUploadIssue: null,
+const uploadedAt = (at: number) => ({
+  lastiCloudUploadedAt: at,
+  iCloudUploadPendingSince: null,
+  iCloudUploadIssue: null,
+})
+
+function reportUploadRecovered(
+  previousIssue: PreferencesState['iCloudUploadIssue']
+): void {
+  if (!previousIssue) return
+  logger.log(`${tag()} upload recovered`, { previousIssue })
+  analytics.capture('icloud_sync_upload_recovered', {
+    previous_issue: analyticsReason(previousIssue),
   })
-  if (previousIssue) {
-    logger.log(`${tag()} upload recovered`, { previousIssue })
-    analytics.capture('icloud_sync_upload_recovered', {
-      previous_issue: analyticsReason(previousIssue),
-    })
-  }
 }
 
 /** The cloud account is full; shown until a write succeeds again. */
 function recordUploadIssue(): void {
   if (usePreferences.getState().iCloudUploadIssue === 'icloud-full') return
-  usePreferences.setState({ iCloudUploadIssue: 'icloud-full' })
+  setPrefsIfChanged({ iCloudUploadIssue: 'icloud-full' })
   analytics.capture('icloud_sync_upload_failed', {
     reason: analyticsReason('icloud-full'),
   })
@@ -1733,17 +1764,6 @@ function recordUploadIssue(): void {
 function awaitingUpload(): boolean {
   const prefs = usePreferences.getState()
   return prefs.iCloudUploadPendingSince !== null || !!prefs.iCloudUploadIssue
-}
-
-/** After a write: this version waits for iCloud to confirm its upload. */
-function awaitUpload(): void {
-  // A binary that can't tell keeps showing local activity, as before.
-  if (!syncTransport().supportsUploadStatus()) return
-  uploadGeneration++
-  if (usePreferences.getState().iCloudUploadPendingSince === null) {
-    usePreferences.setState({ iCloudUploadPendingSince: Date.now() })
-  }
-  restartUploadChecks()
 }
 
 function cancelUploadChecks(): void {
@@ -1790,7 +1810,7 @@ async function checkUploadInner(): Promise<UploadVerdict | null> {
   if (!awaitingUpload() || !canSync()) return null
   if (!syncTransport().supportsUploadStatus()) {
     // Recorded by a newer binary before an OTA rollback onto this one.
-    usePreferences.setState({
+    setPrefsIfChanged({
       iCloudUploadPendingSince: null,
       iCloudUploadIssue: null,
     })
@@ -1816,22 +1836,13 @@ async function checkUploadInner(): Promise<UploadVerdict | null> {
       // A write since the read started is a newer version still uploading.
       if (generation !== uploadGeneration) return 'waiting'
       cancelUploadChecks()
-      usePreferences.setState({
-        lastiCloudUploadedAt: Date.now(),
-        iCloudUploadPendingSince: null,
-        iCloudUploadIssue: null,
-      })
-      if (previousIssue) {
-        logger.log(`${tag()} upload recovered`, { previousIssue })
-        analytics.capture('icloud_sync_upload_recovered', {
-          previous_issue: analyticsReason(previousIssue),
-        })
-      }
+      setPrefsIfChanged(uploadedAt(Date.now()))
+      reportUploadRecovered(previousIssue)
       break
     case 'icloud-full':
     case 'upload-failed':
       if (previousIssue === verdict) break
-      usePreferences.setState({ iCloudUploadIssue: verdict })
+      setPrefsIfChanged({ iCloudUploadIssue: verdict })
       logger.warn(`${tag()} upload failed`, { verdict, error: status.error })
       errorTracking.addBreadcrumb({
         category: 'iCloudSync',
@@ -1871,7 +1882,7 @@ const debouncedPush = debounce(
 
 function schedulePush() {
   editGeneration++
-  usePreferences.setState({ iCloudSyncPendingPush: true })
+  setPrefsIfChanged({ iCloudSyncPendingPush: true })
   if (!canSync()) {
     // Most often an edit at cold launch, before supporter status loads.
     // `catchUp` pushes it once sync is ready instead of waiting for the
@@ -2035,7 +2046,7 @@ async function pullAndMergeInner(reason: string): Promise<PullOutcome> {
     if (readRetries === 0 && !expected) {
       errorTracking.captureException(e, { iCloudSync: 'pull' })
     }
-    usePreferences.setState({
+    setPrefsIfChanged({
       iCloudSyncIssue: 'read-failed',
       iCloudSyncErrorCode: syncTransportErrorCode(e) ?? 'unknown',
     })
@@ -2273,7 +2284,7 @@ async function pullAndMergeInner(reason: string): Promise<PullOutcome> {
   }
 
   applyMergedState(acc)
-  usePreferences.setState({
+  setPrefsIfChanged({
     lastiCloudSyncAt: Date.now(),
     lastiCloudPulledAt: Date.now(),
   })
@@ -2372,7 +2383,7 @@ function recordDeviceFiles(args: {
       seenAt,
     }
   }
-  usePreferences.setState({
+  setPrefsIfChanged({
     iCloudSyncDevices: mergeSyncDeviceFiles(
       usePreferences.getState().iCloudSyncDevices ?? {},
       observed,
@@ -2430,7 +2441,7 @@ export async function removeSyncDevice(filename: string): Promise<{
   await withTransportTimeout('delete', syncTransport().deleteFile(filename))
   const { [filename]: _removed, ...rest } =
     usePreferences.getState().iCloudSyncDevices ?? {}
-  usePreferences.setState({ iCloudSyncDevices: rest })
+  setPrefsIfChanged({ iCloudSyncDevices: rest })
   logger.log(`${tag()} device removed`, { filename, status: entry.status })
   errorTracking.addBreadcrumb({
     category: 'iCloudSync',
@@ -2455,7 +2466,7 @@ async function adoptResetEpoch(
   const remote = foldRemotePayloads(payloads)!
   const epoch = remote.resetEpoch!
   replaceLocalWithRemote(remote)
-  usePreferences.setState({
+  setPrefsIfChanged({
     iCloudSyncIssue: issue,
     iCloudResetAdoptedNotice: {
       epochId: epoch.id,
@@ -2516,7 +2527,7 @@ export function backfillUpdatedAtIfNeeded(): void {
       recurringPlans: reconciled.recurringPlans,
     })
     useCategories.setState({ categories: reconciled.categories })
-    usePreferences.setState({ hasReconciledSyncDefinitions: true })
+    setPrefsIfChanged({ hasReconciledSyncDefinitions: true })
   }
   if (prefs.hasMigratedToSyncSchema) return
 
@@ -2806,12 +2817,12 @@ export function installiCloudSync(): () => void {
 export function clearCloudPhotos(): Promise<void> {
   return serializeImages(async () => {
     await syncTransport().deleteAllBinaries()
-    usePreferences.setState({ iCloudImageSync: {} })
+    setPrefsIfChanged({ iCloudImageSync: {} })
   })
 }
 
 export async function disableImageSync(): Promise<void> {
-  usePreferences.setState({ iCloudSyncIncludeImages: false })
+  setPrefsIfChanged({ iCloudSyncIncludeImages: false })
 }
 
 /**
@@ -2828,7 +2839,7 @@ export async function disableImageSync(): Promise<void> {
  *   merge-that-changes-something, which may never come.
  */
 export async function enableImageSync(): Promise<void> {
-  usePreferences.setState({ iCloudSyncIncludeImages: true })
+  setPrefsIfChanged({ iCloudSyncIncludeImages: true })
   if (canSync() && !(await push('images-enabled'))) {
     throw new Error('Could not write photo references to iCloud')
   }

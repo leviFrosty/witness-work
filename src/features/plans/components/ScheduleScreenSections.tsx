@@ -4,6 +4,7 @@ import useProjectedTotal from '@/hooks/useProjectedTotal'
 import { getPeriodTense } from '@/lib/projectedTotalCopy'
 import { getEffectiveScheduleScreenOrder } from '@/lib/scheduleScreenPreferences'
 import { usePreferences } from '@/stores/preferences'
+import { useShallow } from 'zustand/react/shallow'
 
 const ScheduleScreenSections = ({
   month,
@@ -12,7 +13,12 @@ const ScheduleScreenSections = ({
   month: number
   year: number
 }) => {
-  const preferences = usePreferences()
+  const preferences = usePreferences(
+    useShallow((s) => ({
+      scheduleScreenElementsOrder: s.scheduleScreenElementsOrder,
+      scheduleScreenElements: s.scheduleScreenElements,
+    }))
+  )
   return getEffectiveScheduleScreenOrder(
     preferences.scheduleScreenElementsOrder
   ).map((key) => {
@@ -32,7 +38,7 @@ const MonthAssistantCard = ({
   month: number
   year: number
 }) => {
-  const { set } = usePreferences()
+  const set = usePreferences((s) => s.set)
   const { effectiveGoalHours: monthlyGoalHours } = useMonthlyGoal({
     month,
     year,

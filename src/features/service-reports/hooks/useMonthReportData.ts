@@ -1,4 +1,5 @@
 import { usePreferences } from '@/stores/preferences'
+import { useShallow } from 'zustand/react/shallow'
 import useServiceReport from '@/stores/serviceReport'
 import useCategories from '@/stores/categories'
 import useConversations from '@/stores/conversationStore'
@@ -19,7 +20,13 @@ const useMonthReportData = (
     overrideCreditLimit,
     customCreditLimitHours,
     reportCommentOverrides,
-  } = usePreferences()
+  } = usePreferences(
+    useShallow((s) => ({
+      overrideCreditLimit: s.overrideCreditLimit,
+      customCreditLimitHours: s.customCreditLimitHours,
+      reportCommentOverrides: s.reportCommentOverrides,
+    }))
+  )
   // Report in the role that applied that month (Role History): a month spent
   // as a Regular Publisher still exports as yes/no after becoming a pioneer.
   const { type: publisher, entryMode } = usePublisher(

@@ -227,7 +227,7 @@ const AllDaysList = ({
   const { fontScale } = useWindowDimensions()
   const { serviceReports, dayPlans, recurringPlans } = useServiceReport()
   const { categories } = useCategories()
-  const { timeDisplayFormat } = usePreferences()
+  const timeDisplayFormat = usePreferences((s) => s.timeDisplayFormat)
 
   const [sheet, setSheet] = useState<SelectedDateSheetState>({
     open: false,

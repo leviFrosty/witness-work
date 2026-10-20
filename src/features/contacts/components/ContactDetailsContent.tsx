@@ -323,7 +323,7 @@ const ContactDetailsContent = ({
                 )}
               </XView>
               <AddVisitMenu
-                contactId={contact.id}
+                contact={contact}
                 navigation={navigation}
                 color={theme.colors.text}
                 compact

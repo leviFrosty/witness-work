@@ -8,6 +8,7 @@ import PointerHover from '@/components/ui/PointerHover'
 import PullDownMenu from '@/components/ui/PullDownMenu'
 import useTheme from '@/contexts/theme'
 import useShareContact from '@/features/contacts/hooks/useShareContact'
+import useLogNotAtHome from '@/hooks/useLogNotAtHome'
 import { useContactRemovalActions } from '@/hooks/useContactMenuActions'
 import { isContactDismissed } from '@/lib/dismissedContacts'
 import i18n from '@/lib/locales'
@@ -22,29 +23,30 @@ export type ContactDetailsNavigation = Pick<
 >
 
 /**
- * "+ Add": a pull-down of what to record — a conversation or a not-at-home.
- * Data protection mode drops not-at-home records, leaving one choice, so the
- * button adds a conversation directly.
+ * "+ Add": a pull-down of what to record — a conversation, or a not-at-home,
+ * which logs right away with an Undo toast like Log Visit's. Data protection
+ * mode drops not-at-home records, leaving one choice, so the button adds a
+ * conversation directly.
  */
 export function AddVisitMenu({
-  contactId,
+  contact,
   navigation,
   color,
   compact = false,
 }: {
-  contactId: string
+  contact: Contact
   navigation: ContactDetailsNavigation
   color: string
   compact?: boolean
 }) {
   const theme = useTheme()
   const dataProtectionMode = usePreferences((s) => s.dataProtectionMode)
+  const notAtHome = useLogNotAtHome()
 
-  const add = (notAtHome: boolean) => {
+  const addConversation = () => {
     // Push over the details so Back and Save both return here.
     navigation.navigate('Visit Form', {
-      contactId,
-      notAtHome,
+      contactId: contact.id,
       returnToContacts: true,
     })
   }
@@ -78,7 +80,7 @@ export function AddVisitMenu({
     return (
       <PointerHover effect='highlight'>
         <Pressable
-          onPress={() => add(false)}
+          onPress={addConversation}
           accessibilityRole='button'
           accessibilityLabel={i18n.t('addConversation')}
           hitSlop={8}
@@ -101,13 +103,14 @@ export function AddVisitMenu({
           id: 'conversation',
           title: i18n.t('conversation'),
           systemImage: 'bubble.left.and.bubble.right',
-          onPress: () => add(false),
+          onPress: addConversation,
         },
         {
           id: 'not_at_home',
           title: i18n.t('notAtHome'),
           systemImage: 'door.left.hand.closed',
-          onPress: () => add(true),
+          onPress: () =>
+            notAtHome.logWithUndo(contact, { source: 'contact_details' }),
         },
       ]}
     >
@@ -185,11 +188,7 @@ export default function ContactDetailsActions({
         )}
         onPress={() => toggleFavoriteContact(contact.id)}
       />
-      <AddVisitMenu
-        contactId={contact.id}
-        navigation={navigation}
-        color={color}
-      />
+      <AddVisitMenu contact={contact} navigation={navigation} color={color} />
     </View>
   )
 }

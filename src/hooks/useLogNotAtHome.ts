@@ -1,19 +1,24 @@
 import * as Crypto from 'expo-crypto'
 import { noteUserAction } from '@/lib/userAction'
 import { analytics } from '@/lib/analytics'
+import Haptics from '@/lib/haptics'
+import i18n from '@/lib/locales'
 import useConversations from '@/stores/conversationStore'
+import { showUndoToast } from '@/stores/undoToast'
+import type { Contact } from '@/types/contact'
 import type { Visit } from '@/types/visit'
 import type { LogVisitAttribution } from '@/types/rootStack'
 
 /** Where a one-tap Not at Home was logged from (analytics). */
 export type NotAtHomeAttribution =
   | { source: 'follow_up_card' }
+  | { source: 'contact_details' }
   | LogVisitAttribution
 
 /**
- * One-tap Not at Home, with an undo: from Home's Follow-up card or the Log
- * Visit quick action. The Visit has no Follow-up of its own; rescheduling moves
- * the original one instead.
+ * One-tap Not at Home, with an undo: from Home's Follow-up card, the Log Visit
+ * quick action, or Contact Details' + Add. The Visit has no Follow-up of its
+ * own; rescheduling moves the original one instead.
  */
 export default function useLogNotAtHome() {
   const addConversation = useConversations((s) => s.addConversation)
@@ -46,5 +51,19 @@ export default function useLogNotAtHome() {
     deleteConversation(visit.id)
   }
 
-  return { log, undo }
+  /** Logs it, then shows the app-wide Undo toast. */
+  const logWithUndo = (
+    contact: Pick<Contact, 'id' | 'name'>,
+    attribution: NotAtHomeAttribution
+  ): Visit => {
+    Haptics.light()
+    const visit = log(contact.id, attribution)
+    showUndoToast({
+      message: i18n.t('logVisit_notAtHomeLogged', { name: contact.name }),
+      onUndo: () => undo(visit),
+    })
+    return visit
+  }
+
+  return { log, undo, logWithUndo }
 }

@@ -17,7 +17,7 @@ import FollowUpCardEntry from '@/features/visits/components/FollowUpCardEntry'
 import FollowUpCardProgress from '@/features/visits/components/FollowUpCardProgress'
 import useFollowUpCardDismissal from '@/features/visits/hooks/useFollowUpCardDismissal'
 import useFollowUpCardItems from '@/features/visits/hooks/useFollowUpCardItems'
-import useLogNotAtHome from '@/features/visits/hooks/useLogNotAtHome'
+import useLogNotAtHome from '@/hooks/useLogNotAtHome'
 import { flowScrollX, isRtlLayout } from '@/lib/direction'
 
 const PADDING = 16

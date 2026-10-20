@@ -13,8 +13,6 @@ import PointerHover, { HoverTint } from '@/components/ui/PointerHover'
 import { useEffect, useRef, useState } from 'react'
 import { Pressable, TextInput as RNTextInput, View } from 'react-native'
 import i18n from '@/lib/locales'
-import { parseDecimalInput } from '@/lib/digits'
-import { formatPlainNumber } from '@/lib/numbers'
 import { analytics } from '@/lib/analytics'
 import Section from '@/components/ui/inputs/Section'
 import InputRowContainer from '@/components/ui/inputs/InputRowContainer'
@@ -26,7 +24,8 @@ import AnnualGoalSelector from '@/features/settings/components/AnnualGoalSelecto
 import ProfileCard from '@/features/profile/components/ProfileCard'
 import BuddiesAccountNameHint from '@/features/buddies/components/BuddiesAccountNameHint'
 import DateTimePicker from '@/components/ui/DateTimePicker'
-import { usePreferences } from '@/stores/preferences'
+import { PREFERENCE_DEFAULTS, usePreferences } from '@/stores/preferences'
+import useGoalHoursInput from '@/hooks/useGoalHoursInput'
 import { useProfile } from '@/stores/profile'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
@@ -67,10 +66,13 @@ const PublisherPreferencesSection = () => {
   const [advancedOpen, setAdvancedOpen] = useState(false)
   const [advancedHovered, setAdvancedHovered] = useState(false)
   // Hours Logging goal input — mirrors the Custom role's goal input in
-  // `PublisherTypeSelector`: local text state, persisted on blur.
-  const [logHoursGoal, setLogHoursGoal] = useState(
-    formatPlainNumber(publisherHours.publisher)
-  )
+  // `PublisherTypeSelector`.
+  const logHoursGoal = useGoalHoursInput({
+    hours: publisherHours.publisher,
+    defaultHours: PREFERENCE_DEFAULTS.publisherHours.publisher,
+    onSave: (publisher) =>
+      set((s) => ({ publisherHours: { ...s.publisherHours, publisher } })),
+  })
   const logHoursGoalInput = useRef<RNTextInput>(null)
 
   useEffect(() => {
@@ -90,12 +92,6 @@ const PublisherPreferencesSection = () => {
       enabled,
       source: 'publisher_preferences',
     })
-  }
-
-  const saveLogHoursGoal = () => {
-    const next = parseDecimalInput(logHoursGoal) ?? 0
-    setLogHoursGoal(formatPlainNumber(next))
-    set({ publisherHours: { ...publisherHours, publisher: next } })
   }
 
   const navigation = useNavigation<RootStackNavigation>()
@@ -164,9 +160,8 @@ const PublisherPreferencesSection = () => {
             textInputProps={{
               accessibilityLabel: i18n.t('logHoursGoal'),
               maxLength: 5,
-              value: logHoursGoal,
-              onChangeText: setLogHoursGoal,
-              onBlur: saveLogHoursGoal,
+              ...logHoursGoal,
+              returnKeyType: 'done',
               inputMode: 'decimal',
               textAlign: 'start',
             }}

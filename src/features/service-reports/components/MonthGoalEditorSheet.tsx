@@ -157,7 +157,7 @@ const MonthGoalEditorSheet = ({
                 onChangeText={(value) => {
                   setDraftGoal(normalizeDecimalInput(value))
                 }}
-                onSubmitEditing={() => inputRef.current?.blur()}
+                onSubmitEditing={handleSave}
                 keyboardType='decimal-pad'
                 returnKeyType='done'
                 selectTextOnFocus

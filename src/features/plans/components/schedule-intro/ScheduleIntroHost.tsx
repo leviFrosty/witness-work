@@ -1,6 +1,7 @@
+import type { ComponentProps } from 'react'
 import useTakeoverTurn from '@/hooks/useTakeoverTurn'
 import { useScheduleIntro } from '@/stores/scheduleIntro'
-import ScheduleIntroOverlay from '@/features/plans/components/schedule-intro/ScheduleIntroOverlay'
+import type ScheduleIntroOverlayComponent from '@/features/plans/components/schedule-intro/ScheduleIntroOverlay'
 
 /**
  * Mounted once in HomeTabStack; shows the Schedule intro once the takeover
@@ -12,4 +13,13 @@ export default function ScheduleIntroHost() {
   const turn = useTakeoverTurn('schedule-intro', source !== null)
   if (!source || !turn.active) return null
   return <ScheduleIntroOverlay key={source} source={source} />
+}
+
+/** The intro's module loads the first time it shows, not at launch. */
+function ScheduleIntroOverlay(
+  props: ComponentProps<typeof ScheduleIntroOverlayComponent>
+) {
+  const Overlay: typeof ScheduleIntroOverlayComponent =
+    require('@/features/plans/components/schedule-intro/ScheduleIntroOverlay').default
+  return <Overlay {...props} />
 }

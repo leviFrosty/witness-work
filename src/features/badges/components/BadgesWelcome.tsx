@@ -27,7 +27,9 @@ import { earnedBadgeCount, highestEarned } from '@/lib/badges/display'
 import Haptics from '@/lib/haptics'
 import i18n, { TranslationKey } from '@/lib/locales'
 import { usePreferences } from '@/stores/preferences'
-import { Confetti, type ConfettiHandle } from '@/vendor/ConfettiSkia'
+import Confetti, {
+  type ConfettiHandle,
+} from '@/vendor/ConfettiSkia/react/Confetti'
 import { tracking } from '@/lib/tracking'
 
 export type BadgesWelcomeAction = 'look' | 'later'

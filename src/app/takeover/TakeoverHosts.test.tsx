@@ -1,6 +1,16 @@
-import React from 'react'
+import Module from 'node:module'
+import React, { createElement } from 'react'
 import { act, create, type ReactTestRenderer } from 'react-test-renderer'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from 'vitest'
 
 /**
  * HomeTabStack's takeover hosts with the real arbiter, the real host logic and
@@ -85,41 +95,56 @@ vi.mock('@/features/notifications/stores/notificationsTray', async () => {
   return { useNotificationsTray: create(() => ({ open: false })) }
 })
 
-// The visuals: each renders a host element named after its takeover.
-const { stub, stubWhenShown } = vi.hoisted(() => {
-  const { createElement } = require('react') as typeof import('react')
-  return {
-    stub: (name: string) => (props: Record<string, unknown>) =>
-      createElement(name, props),
-    stubWhenShown: (name: string) => (props: { show: boolean }) =>
-      props.show ? createElement(name, props) : null,
+// The visuals: each renders a host element named after its takeover. The hosts
+// `require()` them the first time they show, which `vi.mock` doesn't
+// intercept, so stand them in at the loader and note which ones loaded.
+const stub = (name: string) => (props: Record<string, unknown>) =>
+  createElement(name, props)
+const stubWhenShown = (name: string) => (props: { show: boolean }) =>
+  props.show ? createElement(name, props) : null
+const visuals: Record<string, unknown> = {
+  '@/features/updates/components/reveal/UpdateRevealOverlay': {
+    default: stub('update-reveal'),
+  },
+  '@/features/updates/components/WhatsNewSheet': {
+    default: stubWhenShown('whats-new'),
+  },
+  '@/features/milestones/components/MilestoneRevealOverlay': {
+    default: stubWhenShown('milestone-reveal'),
+  },
+  '@/features/plans/components/schedule-intro/ScheduleIntroOverlay': {
+    default: stub('schedule-intro'),
+  },
+  '@/features/profile/components/StreakCelebrationOverlay': {
+    default: stub('streak-celebration'),
+  },
+  '@/features/badges/components/BadgeCelebration': {
+    default: stub('badge-celebration'),
+  },
+  '@/features/badges/components/BadgesWelcome': {
+    default: stub('badges-welcome'),
+  },
+}
+const loadedVisuals = new Set<string>()
+const loader = Module as unknown as {
+  _load: (request: string, ...rest: unknown[]) => unknown
+}
+const originalLoad = loader._load
+beforeAll(() => {
+  loader._load = (request, ...rest) => {
+    if (!(request in visuals))
+      return originalLoad.call(loader, request, ...rest)
+    loadedVisuals.add(request)
+    return visuals[request]
   }
 })
-vi.mock('@/features/updates/components/reveal/UpdateRevealOverlay', () => ({
-  default: stub('update-reveal'),
-}))
-vi.mock('@/features/updates/components/WhatsNewSheet', () => ({
-  default: stubWhenShown('whats-new'),
-}))
-vi.mock('@/features/milestones/components/MilestoneRevealOverlay', () => ({
-  default: stubWhenShown('milestone-reveal'),
-}))
-vi.mock(
-  '@/features/plans/components/schedule-intro/ScheduleIntroOverlay',
-  () => ({ default: stub('schedule-intro') })
-)
-vi.mock('@/features/profile/components/StreakCelebrationOverlay', () => ({
-  default: stub('streak-celebration'),
-}))
-vi.mock('@/features/badges/components/BadgeCelebration', () => ({
-  default: stub('badge-celebration'),
-}))
-vi.mock('@/features/badges/components/BadgesWelcome', () => ({
-  default: stub('badges-welcome'),
-}))
+afterAll(() => {
+  loader._load = originalLoad
+})
 
 import TakeoverEnvironment from '@/app/takeover/TakeoverEnvironment'
 import TakeoverHosts from '@/app/takeover/TakeoverHosts'
+import { useMilestoneRevealStore } from '@/features/milestones/stores/milestoneReveal'
 import { useStreakCelebration } from '@/features/profile/stores/streakCelebration'
 import { useUpdateRevealStore } from '@/features/updates/stores/updateReveal'
 import { noteUserAction, resetUserActions } from '@/lib/userAction'
@@ -166,10 +191,10 @@ async function advance(ms: number) {
   }
 }
 
-const tree = (launchReveal = false) => (
+const tree = (launchReveal = false, whatsNewSince?: string) => (
   <>
     <TakeoverEnvironment />
-    <TakeoverHosts launchReveal={launchReveal} />
+    <TakeoverHosts launchReveal={launchReveal} whatsNewSince={whatsNewSince} />
   </>
 )
 
@@ -177,9 +202,9 @@ async function rerender() {
   await act(async () => renderer?.update(tree()))
 }
 
-async function mount(launchReveal = false) {
+async function mount(launchReveal = false, whatsNewSince?: string) {
   await act(async () => {
-    renderer = create(tree(launchReveal))
+    renderer = create(tree(launchReveal, whatsNewSince))
   })
   onScreen()
 }
@@ -188,6 +213,7 @@ beforeEach(() => {
   vi.useFakeTimers()
   vi.setSystemTime(new Date(2026, 9, 8, 12))
   vi.clearAllMocks()
+  loadedVisuals.clear()
   resetTakeovers()
   resetUserActions()
   runtime.focused = true
@@ -197,6 +223,7 @@ beforeEach(() => {
   useStreakCelebration.setState({ seen: null, celebrating: null, grewAt: 0 })
   useScheduleIntro.setState({ source: null })
   useUpdateRevealStore.setState({ source: null })
+  useMilestoneRevealStore.setState({ show: false })
   useProfileOverlay.setState({ open: false, away: false, origin: null })
   usePreferences.setState({
     badgesWelcome: null,
@@ -212,6 +239,32 @@ afterEach(async () => {
 })
 
 describe('takeover hosts (ADR 0021)', () => {
+  it('loads no takeover visuals on a launch without takeovers', async () => {
+    await mount()
+    await advance(5000)
+    expect(onScreen()).toBeNull()
+    expect([...loadedVisuals]).toEqual([])
+
+    // The first turn loads only that takeover's module.
+    await act(async () => useMilestoneRevealStore.getState().request())
+    expect(onScreen()).toBe('milestone-reveal')
+    expect([...loadedVisuals]).toEqual([
+      '@/features/milestones/components/MilestoneRevealOverlay',
+    ])
+    await act(async () => props('milestone-reveal').onDismiss())
+    expect(onScreen()).toBeNull()
+  })
+
+  it("shows What's New when its turn comes, and closes it", async () => {
+    await mount(false, '1.40.0')
+    await advance(800)
+    expect(onScreen()).toBe('whats-new')
+    expect(props('whats-new').sinceVersion).toBe('1.40.0')
+    await act(async () => props('whats-new').onClose())
+    await advance(800)
+    expect(onScreen()).toBeNull()
+  })
+
   it('plays an update launch one takeover at a time, in order', async () => {
     // Everything wants the screen in the first session after the update.
     usePreferences.setState({ badgesWelcome: 'pending' })

@@ -32,7 +32,9 @@ import Haptics from '@/lib/haptics'
 import i18n, { TranslationKey } from '@/lib/locales'
 import { usePreferences } from '@/stores/preferences'
 import type { BadgeKey } from '@/types/badges'
-import { Confetti, type ConfettiHandle } from '@/vendor/ConfettiSkia'
+import Confetti, {
+  type ConfettiHandle,
+} from '@/vendor/ConfettiSkia/react/Confetti'
 import { tracking } from '@/lib/tracking'
 
 export type BadgeCelebrationContent =

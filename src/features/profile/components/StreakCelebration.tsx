@@ -1,11 +1,11 @@
-import { useEffect } from 'react'
+import { type ComponentProps, useEffect } from 'react'
 import useServiceStreak from '@/hooks/useServiceStreak'
 import useTakeoverTurn from '@/hooks/useTakeoverTurn'
 import { analytics } from '@/lib/analytics'
 import Haptics from '@/lib/haptics'
 import { isStreakMilestone, nextSeenStreak } from '@/lib/serviceStreak'
 import { actionBehind, celebrationClaim } from '@/lib/userAction'
-import StreakCelebrationOverlay from '@/features/profile/components/StreakCelebrationOverlay'
+import type StreakCelebrationOverlayComponent from '@/features/profile/components/StreakCelebrationOverlay'
 import { useStreakCelebration } from '@/features/profile/stores/streakCelebration'
 import { usePreferences } from '@/stores/preferences'
 
@@ -94,4 +94,13 @@ export default function StreakCelebration() {
       onDone={() => useStreakCelebration.setState({ celebrating: null })}
     />
   )
+}
+
+/** The celebration's module (and Skia) loads the first time it plays. */
+function StreakCelebrationOverlay(
+  props: ComponentProps<typeof StreakCelebrationOverlayComponent>
+) {
+  const Overlay: typeof StreakCelebrationOverlayComponent =
+    require('@/features/profile/components/StreakCelebrationOverlay').default
+  return <Overlay {...props} />
 }

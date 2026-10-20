@@ -1,12 +1,12 @@
-import { useLayoutEffect, useState } from 'react'
+import { type ComponentProps, useLayoutEffect, useState } from 'react'
 import { useNavigation } from '@react-navigation/native'
 import BadgeCelebrationOverlay from '@/features/badges/components/BadgeCelebrationOverlay'
-import MilestoneRevealOverlay from '@/features/milestones/components/MilestoneRevealOverlay'
+import type MilestoneRevealOverlayComponent from '@/features/milestones/components/MilestoneRevealOverlay'
 import { useMilestoneRevealStore } from '@/features/milestones/stores/milestoneReveal'
 import ScheduleIntroHost from '@/features/plans/components/schedule-intro/ScheduleIntroHost'
 import StreakCelebration from '@/features/profile/components/StreakCelebration'
-import WhatsNewSheet from '@/features/updates/components/WhatsNewSheet'
-import UpdateRevealOverlay from '@/features/updates/components/reveal/UpdateRevealOverlay'
+import type WhatsNewSheetComponent from '@/features/updates/components/WhatsNewSheet'
+import type UpdateRevealOverlayComponent from '@/features/updates/components/reveal/UpdateRevealOverlay'
 import { useUpdateRevealStore } from '@/features/updates/stores/updateReveal'
 import useTakeoverTurn from '@/hooks/useTakeoverTurn'
 import { newTakeoverId, useTakeover } from '@/stores/takeover'
@@ -25,6 +25,9 @@ type Props = {
  * the arbiter decides the order (`policy.ts`). The launch reveal is seeded on
  * screen before anything else can ask, since it picks up from the splash in the
  * very first frame. A new badge's card says which buddies will see it.
+ *
+ * Every takeover's visuals load the first time it gets a turn, so a launch
+ * doesn't evaluate screens it almost never shows.
  */
 export default function TakeoverHosts({
   launchReveal: launchRevealOnMount,
@@ -60,6 +63,9 @@ export default function TakeoverHosts({
     whatsNewSince !== undefined
   )
   const whatsNew = useTakeoverTurn('whats-new', whatsNewWanted)
+  // Stays mounted once shown, so the sheet can animate closed.
+  const [whatsNewShown, setWhatsNewShown] = useState(false)
+  if (whatsNew.active && !whatsNewShown) setWhatsNewShown(true)
 
   // The Milestone Update (1.38.2) is replay-only, from Developer Tools.
   const milestoneRequested = useMilestoneRevealStore((s) => s.show)
@@ -70,7 +76,7 @@ export default function TakeoverHosts({
 
   return (
     <>
-      {whatsNewSince && (
+      {whatsNewSince && whatsNewShown && (
         <WhatsNewSheet
           sinceVersion={whatsNewSince}
           show={whatsNew.active}
@@ -90,15 +96,39 @@ export default function TakeoverHosts({
           }}
         />
       )}
-      <MilestoneRevealOverlay
-        show={milestone.active}
-        onDismiss={dismissMilestoneReveal}
-        onSeeWhatsNew={() => {
-          dismissMilestoneReveal()
-          rootNavigation.navigate('MilestoneShowcase')
-        }}
-      />
+      {milestone.active && (
+        <MilestoneRevealOverlay
+          show
+          onDismiss={dismissMilestoneReveal}
+          onSeeWhatsNew={() => {
+            dismissMilestoneReveal()
+            rootNavigation.navigate('MilestoneShowcase')
+          }}
+        />
+      )}
       <BadgeCelebrationOverlay />
     </>
   )
+}
+
+function WhatsNewSheet(props: ComponentProps<typeof WhatsNewSheetComponent>) {
+  const Sheet: typeof WhatsNewSheetComponent =
+    require('@/features/updates/components/WhatsNewSheet').default
+  return <Sheet {...props} />
+}
+
+function UpdateRevealOverlay(
+  props: ComponentProps<typeof UpdateRevealOverlayComponent>
+) {
+  const Overlay: typeof UpdateRevealOverlayComponent =
+    require('@/features/updates/components/reveal/UpdateRevealOverlay').default
+  return <Overlay {...props} />
+}
+
+function MilestoneRevealOverlay(
+  props: ComponentProps<typeof MilestoneRevealOverlayComponent>
+) {
+  const Overlay: typeof MilestoneRevealOverlayComponent =
+    require('@/features/milestones/components/MilestoneRevealOverlay').default
+  return <Overlay {...props} />
 }

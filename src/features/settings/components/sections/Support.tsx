@@ -4,14 +4,12 @@ import {
   Medal as MedalIcon,
   Share2 as Share2Icon,
 } from 'lucide-react-native'
-import { Platform } from 'react-native'
 import { GroupedListRow, GroupedListSection } from '@/components/ui/GroupedList'
 import i18n from '@/lib/locales'
-import links from '@/constants/links'
 import useIsSupporter from '@/hooks/useIsSupporter'
 import { isFoundingSupporter } from '@/lib/foundingSupporter'
 import useTheme from '@/contexts/theme'
-import { openURL } from '@/lib/links'
+import { openStoreListing } from '@/lib/storeListing'
 import { useNavigation } from '@react-navigation/native'
 import { RootStackNavigation } from '@/types/rootStack'
 import { SettingsSectionProps } from '@/features/settings/screens/settingScreen'
@@ -79,11 +77,7 @@ const SupportSection = ({
         icon={MedalIcon}
         label={i18n.t('rateWitnessWorkOnAppStore')}
         accessory='external'
-        onPress={() =>
-          openURL(
-            Platform.OS === 'android' ? links.playStore : links.appStoreReview
-          )
-        }
+        onPress={() => openStoreListing({ review: true })}
       />
     </GroupedListSection>
   )

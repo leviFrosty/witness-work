@@ -12,6 +12,28 @@ import type { TimeEntriesByYear, TimeEntry } from '@/types/timeEntry'
 import type { Publisher } from '@/types/publisher'
 import type { MappedImport, MappedPublisher } from '@/lib/import/types'
 
+/**
+ * Ids the user deleted. An import skips them, so a newer export of the same
+ * data doesn't bring back what the user removed. Tombstones an import's Undo
+ * left don't count: running that import again restores its records.
+ */
+const userDeletedIds = (
+  tombstones: { id: string; importUndone?: true }[]
+): string[] =>
+  tombstones.filter((t) => !t.importUndone).map((tombstone) => tombstone.id)
+
+/**
+ * Marks the tombstones `ids` just got as left by an import's Undo. They still
+ * carry the Undo to the user's other devices.
+ */
+const markImportUndone = <T extends { id: string; importUndone?: true }>(
+  tombstones: T[],
+  ids: Set<string>
+): T[] =>
+  tombstones.map((tombstone) =>
+    ids.has(tombstone.id) ? { ...tombstone, importUndone: true } : tombstone
+  )
+
 /** Flattens every TimeEntry id already in the service-report store. */
 const existingServiceReportIds = (reports: TimeEntriesByYear): Set<string> => {
   const ids = new Set<string>()
@@ -169,8 +191,11 @@ export const writeMappedDataToStores = (
   if (contactsToAdd.length) contacts.addContacts(contactsToAdd)
   const insertedContactIds = contactsToAdd.map((c) => c.id)
 
-  // Visits (addConversations skips existing ids).
-  const existingVisitIds = new Set(conversations.conversations.map((v) => v.id))
+  // Visits (addConversations skips existing ids), and ones the user deleted.
+  const existingVisitIds = new Set([
+    ...conversations.conversations.map((v) => v.id),
+    ...userDeletedIds(conversations.deletedConversations),
+  ])
   const visitsToAdd = mapped.visits.filter((visit) => {
     if (existingVisitIds.has(visit.id)) return false
     existingVisitIds.add(visit.id)
@@ -180,10 +205,12 @@ export const writeMappedDataToStores = (
   const insertedVisitIds = visitsToAdd.map((v) => v.id)
 
   // `addServiceReports` appends unconditionally (no id dedup), so we guard
-  // idempotency here — against prior imports and dupes within this batch. We
-  // record the STORED (date-normalized) entry so undo's `deleteServiceReport`
-  // resolves the same month/year bucket.
+  // idempotency here — against prior imports, entries the user deleted, and
+  // dupes within this batch. We record the STORED (date-normalized) entry so
+  // undo's `deleteServiceReport` resolves the same month/year bucket.
   const seenEntryIds = existingServiceReportIds(serviceReport.serviceReports)
+  for (const id of userDeletedIds(serviceReport.deletedServiceReports))
+    seenEntryIds.add(id)
   const entriesToAdd = mapped.timeEntries.filter((entry) => {
     if (seenEntryIds.has(entry.id)) return false
     seenEntryIds.add(entry.id)
@@ -279,10 +306,33 @@ export const undoImport = (commit: ImportCommitResult): void => {
     contacts.removeDeletedContact(id)
     void deleteAvatarFiles(id)
   }
-  for (const id of commit.insertedVisitIds) conversations.deleteConversation(id)
+  // Only the records still here: one the user deleted since stays deleted.
+  const liveVisitIds = new Set(conversations.conversations.map((v) => v.id))
+  const undoneVisitIds = new Set(
+    commit.insertedVisitIds.filter((id) => liveVisitIds.has(id))
+  )
+  for (const id of undoneVisitIds) conversations.deleteConversation(id)
+  useConversations.setState(({ deletedConversations }) => ({
+    deletedConversations: markImportUndone(
+      deletedConversations,
+      undoneVisitIds
+    ),
+  }))
+  const liveEntryIds = existingServiceReportIds(serviceReport.serviceReports)
+  const undoneEntryIds = new Set(
+    commit.insertedTimeEntries
+      .map((entry) => entry.id)
+      .filter((id) => liveEntryIds.has(id))
+  )
   for (const entry of commit.insertedTimeEntries) {
-    serviceReport.deleteServiceReport(entry)
+    if (undoneEntryIds.has(entry.id)) serviceReport.deleteServiceReport(entry)
   }
+  useServiceReport.setState(({ deletedServiceReports }) => ({
+    deletedServiceReports: markImportUndone(
+      deletedServiceReports,
+      undoneEntryIds
+    ),
+  }))
   for (const id of commit.insertedCategoryIds) {
     // Kept: a sibling import still has a time entry pointing at this category.
     if (externallyReferencedCategoryIds.has(id)) continue

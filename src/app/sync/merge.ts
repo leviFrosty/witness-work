@@ -619,7 +619,15 @@ function mergeTombstones<T extends { id: string; deletedAt: number }>(
       byId.set(t.id, t)
       continue
     }
-    const winner = t.deletedAt > existing.deletedAt ? t : existing
+    let winner = t.deletedAt > existing.deletedAt ? t : existing
+    // Same deletion: older versions drop `importUndone`, so keep it when
+    // either copy has it, whichever side merges first.
+    if (
+      t.deletedAt === existing.deletedAt &&
+      !(winner as T & { importUndone?: true }).importUndone &&
+      (t as T & { importUndone?: true }).importUndone
+    )
+      winner = { ...winner, importUndone: true }
     const aliases = [
       ...new Set([
         ...((existing as T & { legacyIds?: string[] }).legacyIds ?? []),

@@ -505,4 +505,102 @@ describe('undoImport — sync and re-import', () => {
       'Maria',
     ])
   })
+
+  it('keeps a Visit and time entry the user deleted deleted on a re-import', () => {
+    const first = writeMappedDataToStores(sampleImport(), {
+      publisherMode: 'overwrite',
+    })
+    expect(first.insertedVisitIds).toEqual(['notes-h-v-v1'])
+    expect(first.insertedTimeEntries.map((e) => e.id)).toEqual(['notes-h-t-t1'])
+    minutesLater(1)
+    useConversations.getState().deleteConversation('notes-h-v-v1')
+    useServiceReport
+      .getState()
+      .deleteServiceReport(first.insertedTimeEntries[0])
+
+    minutesLater(2)
+    const again = writeMappedDataToStores(sampleImport(), {
+      publisherMode: 'overwrite',
+    })
+
+    expect(again.insertedVisitIds).toEqual([])
+    expect(again.insertedTimeEntries).toEqual([])
+    expect(useConversations.getState().conversations).toEqual([])
+    expect(timeEntriesOf(deviceFromStores())).toEqual([])
+  })
+
+  it('restores only what Undo removed when the import runs again', () => {
+    const first = writeMappedDataToStores(
+      {
+        ...sampleImport(),
+        timeEntries: [
+          { id: 'notes-h-t-t1', hours: 1, minutes: 30, date: AT },
+          { id: 'notes-h-t-t2', hours: 2, minutes: 0, date: AT },
+        ],
+      },
+      { publisherMode: 'overwrite' }
+    )
+    minutesLater(1)
+    // The user deletes one imported entry, then undoes the whole import.
+    useServiceReport
+      .getState()
+      .deleteServiceReport(first.insertedTimeEntries[1])
+    minutesLater(2)
+    undoImport(first)
+    expect(useServiceReport.getState().deletedServiceReports).toEqual([
+      { id: 'notes-h-t-t2', deletedAt: expect.any(Number) },
+      { id: 'notes-h-t-t1', deletedAt: expect.any(Number), importUndone: true },
+    ])
+
+    minutesLater(3)
+    const again = writeMappedDataToStores(
+      {
+        ...sampleImport(),
+        timeEntries: [
+          { id: 'notes-h-t-t1', hours: 1, minutes: 30, date: AT },
+          { id: 'notes-h-t-t2', hours: 2, minutes: 0, date: AT },
+        ],
+      },
+      { publisherMode: 'overwrite' }
+    )
+
+    expect(again.insertedVisitIds).toEqual(['notes-h-v-v1'])
+    expect(again.insertedTimeEntries.map((e) => e.id)).toEqual(['notes-h-t-t1'])
+    expect(timeEntriesOf(deviceFromStores()).map((e) => e.id)).toEqual([
+      'notes-h-t-t1',
+    ])
+
+    // Deleting a restored entry by hand makes it the user's deletion again.
+    minutesLater(4)
+    useServiceReport
+      .getState()
+      .deleteServiceReport(again.insertedTimeEntries[0])
+    const third = writeMappedDataToStores(sampleImport(), {
+      publisherMode: 'overwrite',
+    })
+    expect(third.insertedTimeEntries).toEqual([])
+  })
+
+  it('keeps the Undo marker when an older version echoes the tombstone back', () => {
+    const first = writeMappedDataToStores(sampleImport(), {
+      publisherMode: 'overwrite',
+    })
+    minutesLater(1)
+    undoImport(first)
+    const marked = deviceFromStores()
+    // An older version reads the same tombstones without the marker.
+    const older = structuredClone(marked)
+    older.deletedConversations = older.deletedConversations.map(
+      ({ id, deletedAt }) => ({ id, deletedAt })
+    )
+    older.deletedServiceReports = older.deletedServiceReports.map(
+      ({ id, deletedAt }) => ({ id, deletedAt })
+    )
+
+    for (const device of [pullFrom(older, marked), pullFrom(marked, older)]) {
+      expect(device.deletedConversations).toEqual(marked.deletedConversations)
+      expect(device.deletedServiceReports).toEqual(marked.deletedServiceReports)
+      expect(device.deletedConversations[0]?.importUndone).toBe(true)
+    }
+  })
 })

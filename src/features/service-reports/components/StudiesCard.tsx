@@ -8,9 +8,15 @@ import { getStudiesForGivenMonth } from '@/lib/contacts'
 import useContacts from '@/stores/contactsStore'
 import useConversations from '@/stores/conversationStore'
 import i18n from '@/lib/locales'
+import useAccessibilityTextSize, {
+  FIT_ONE_LINE,
+} from '@/hooks/useAccessibilityTextSize'
 
 export default function StudiesCard() {
   const theme = useTheme()
+  // At accessibility text sizes the figure and its label shrink to fit the
+  // half-width column instead of breaking mid-word.
+  const fit = useAccessibilityTextSize() ? FIT_ONE_LINE : undefined
   const { contacts } = useContacts()
   const { conversations } = useConversations()
   const studies = useMemo(
@@ -31,6 +37,7 @@ export default function StudiesCard() {
       }}
     >
       <Text
+        {...fit}
         style={{
           fontSize: theme.fontSize('3xl'),
           fontFamily: theme.fonts.bold,
@@ -41,7 +48,9 @@ export default function StudiesCard() {
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
         <LucideIcon icon={StudyIcon} size={14} color={theme.colors.accent} />
         <Text
+          {...fit}
           style={{
+            flexShrink: 1,
             color: theme.colors.textAlt,
             fontFamily: theme.fonts.semiBold,
             fontSize: theme.fontSize('sm'),

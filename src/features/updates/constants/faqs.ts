@@ -285,7 +285,7 @@ export const FAQS: FAQEntry[] = [
   { id: 'accountBackupPrivacy', category: 'backups' },
   { id: 'accountBackupRestore', category: 'backups' },
   { id: 'accountBackupDelete', category: 'backups' },
-  { id: 'cloudSync', category: 'backups' },
+  { id: 'cloudSync', category: 'backups', pinned: true },
   { id: 'cloudSyncPrivacy', category: 'backups' },
   { id: 'cloudSyncSwitch', category: 'backups' },
   { id: 'syncTroubleshooting', category: 'backups', related: [118] },

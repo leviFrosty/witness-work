@@ -27,8 +27,9 @@ import useLocalDay from '@/hooks/useLocalDay'
  * dependencies through props.
  */
 export function useContactsSorted() {
-  const { contacts, customFieldDefs } = useContacts()
-  const { conversations } = useConversations()
+  const contacts = useContacts((s) => s.contacts)
+  const customFieldDefs = useContacts((s) => s.customFieldDefs)
+  const conversations = useConversations((s) => s.conversations)
   const stalenessBreakpoints = usePreferences((s) => s.stalenessBreakpoints)
   const { query, hasActiveFilters, isSortNonDefault } = useContactsQuery()
   const {

@@ -1,6 +1,9 @@
+import Button from '@/components/ui/Button'
 import InfoPopover from '@/components/ui/InfoPopover'
 import InputRowContainer from '@/components/ui/inputs/InputRowContainer'
+import Text from '@/components/ui/MyText'
 import SegmentedControl from '@/components/ui/SegmentedControl'
+import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import type { BuddyShareRef } from '@/types/timeEntry'
 import BuddiesSection from '@/features/buddies/components/BuddiesSection'
@@ -24,7 +27,8 @@ export type ShareAnswering = {
 /**
  * A buddy's Plan or Follow-up invitation: who organized it, and (while it can
  * still be answered) the User's answer as two side-by-side choices, so
- * switching back is one tap either way.
+ * switching back is one tap either way. An answer that didn't send offers Try
+ * Again.
  */
 export default function InvitationAnswerSection({
   from,
@@ -38,6 +42,7 @@ export default function InvitationAnswerSection({
   status: Exclude<IncomingShareStatus, 'cancelled'>
   answering: ShareAnswering
 }) {
+  const theme = useTheme()
   const buddy = useBuddies((state) =>
     state.buddies.find((candidate) => candidate.inboxId === from)
   )
@@ -64,7 +69,26 @@ export default function InvitationAnswerSection({
       {share ? (
         <InputRowContainer
           label={i18n.t('planDetails_yourAnswer')}
-          description={delivery}
+          description={delivery.label}
+          labelTrailing={
+            delivery.retry ? (
+              <Button
+                onPress={delivery.retry}
+                accessibilityRole='button'
+                style={{ marginLeft: 'auto' }}
+              >
+                <Text
+                  style={{
+                    color: theme.colors.accent,
+                    fontFamily: theme.fonts.semiBold,
+                    fontSize: theme.fontSize('sm'),
+                  }}
+                >
+                  {i18n.t('buddies_tryAgain')}
+                </Text>
+              </Button>
+            ) : undefined
+          }
           controlWidth='full'
           lastInSection
         >

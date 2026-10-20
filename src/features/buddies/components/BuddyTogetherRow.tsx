@@ -66,7 +66,7 @@ export default function BuddyTogetherRow({
   const going = item.status === 'going'
   const replyDelivery = useReplyDelivery(
     item.direction === 'incoming' ? item.shareKey : undefined
-  )
+  ).label
   const status =
     item.direction === 'incoming'
       ? i18n.t(going ? 'buddies_answeredGoing' : 'buddies_answeredDeclined')

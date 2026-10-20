@@ -156,6 +156,8 @@ export const useMytimeImport = ({
         stage: 'parse',
         error_code:
           e instanceof MytimeImportError ? 'invalid_file' : 'unexpected',
+        // What kind of file was picked, from its first bytes (no contents).
+        ...(e instanceof MytimeImportError && { file_kind: e.fileKind }),
       })
       mappedRef.current = null
       setPreview(null)

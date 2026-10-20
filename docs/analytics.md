@@ -265,6 +265,14 @@ preview edits, prompt toggles, and warning openings are dropped.
 | Backup reminder        | View (daily reach), clicked, dismissed; reminder preference events are dropped.                                                                                                                                                                                |
 | iCloud photo consent   | `icloud_restore_images_prompted`, requested, skipped; replace confirmation remains.                                                                                                                                                                            |
 
+MyTime `import_failed` at stage `parse` with `error_code: invalid_file` adds
+`file_kind`, what the picked file looks like from its first bytes: `sqlite` (a
+database without MyTime's tables, or one SQLite couldn't read), `zip`, `pdf`,
+`bplist` (a binary property list), `json`, `text`, `empty`, or `unknown`
+(another binary format, or the file couldn't be read). It shows which wrong
+files people pick, so the guidance can name them. Only the kind is sent, never
+the file's name or contents.
+
 Notes Import on Android (ADR 0017) adds no events: break the Notes Import events
 and `import_failed` (`import_type: notes`) down by the SDK's `$os_name` to compare
 platforms during the `notes-import-android` rollout. Notes Import runs on the

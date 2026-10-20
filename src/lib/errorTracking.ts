@@ -7,6 +7,7 @@ import {
   mergeErrorContext,
   shouldIgnoreError,
 } from '@/lib/errorTrackingPolicy'
+import { toPurchasesError } from '@/lib/purchasesError'
 
 type ErrorProperties = Record<string, unknown>
 
@@ -26,8 +27,9 @@ function safely(send: () => unknown): void {
   }
 }
 
-function report(error: unknown, properties?: ErrorProperties): void {
+function report(original: unknown, properties?: ErrorProperties): void {
   if (!errorTrackingEnabled) return
+  const error = toPurchasesError(original)
   // A full device isn't a bug, but how often it happens is still worth knowing.
   if (isStorageFullError(error)) analytics.capture('device_storage_full')
   else if (!shouldIgnoreError(error))

@@ -4,6 +4,41 @@ import {
   shouldIgnoreError,
   shouldIgnoreExceptionProperties,
 } from '@/lib/errorTrackingPolicy'
+import { PurchasesError, toPurchasesError } from '@/lib/purchasesError'
+
+// RevenueCat rejects with plain objects. iOS sets the readable code at the top
+// level and in `userInfo`; Android only in `userInfo`.
+const iosRevenueCat = (code: string, readable: string, message: string) => ({
+  code,
+  message,
+  readableErrorCode: readable,
+  userInfo: { readableErrorCode: readable },
+  underlyingErrorMessage: '',
+})
+const androidRevenueCat = (
+  code: string,
+  readable: string,
+  message: string
+) => ({
+  code,
+  message,
+  userInfo: { readableErrorCode: readable },
+  underlyingErrorMessage: '',
+})
+
+const STORE_STATES = [
+  [
+    '3',
+    'PURCHASE_NOT_ALLOWED_ERROR',
+    'The device or user is not allowed to make the purchase.',
+  ],
+  ['2', 'STORE_PROBLEM_ERROR', 'There was a problem with the store.'],
+  [
+    '5',
+    'PRODUCT_NOT_AVAILABLE_FOR_PURCHASE_ERROR',
+    'The product is not available for purchase.',
+  ],
+] as const
 
 describe('isStorageFullError', () => {
   it.each([
@@ -96,6 +131,92 @@ describe('shouldIgnoreError', () => {
     ],
   ])('reports %s', (_, error) => {
     expect(shouldIgnoreError(error)).toBe(false)
+  })
+})
+
+describe('RevenueCat store states', () => {
+  describe.each([
+    ['iOS', iosRevenueCat],
+    ['Android', androidRevenueCat],
+  ])('%s', (_, revenueCat) => {
+    it.each(STORE_STATES)(
+      'ignores code %s from a background read',
+      (code, readable, message) => {
+        const error = toPurchasesError(revenueCat(code, readable, message), {
+          background: true,
+        })
+        expect(shouldIgnoreError(error)).toBe(true)
+      }
+    )
+
+    it.each(STORE_STATES)(
+      'reports code %s from a purchase',
+      (code, readable, message) => {
+        const raw = revenueCat(code, readable, message)
+        expect(shouldIgnoreError(raw)).toBe(false)
+        expect(shouldIgnoreError(toPurchasesError(raw))).toBe(false)
+      }
+    )
+
+    it('reports other codes from a background read', () => {
+      const error = toPurchasesError(
+        revenueCat('16', 'UNKNOWN_BACKEND_ERROR', 'Unknown backend error.'),
+        { background: true }
+      )
+      expect(shouldIgnoreError(error)).toBe(false)
+    })
+
+    it('still ignores being offline once wrapped', () => {
+      const error = toPurchasesError(
+        revenueCat('10', 'NETWORK_ERROR', 'Error performing request.')
+      )
+      expect(shouldIgnoreError(error)).toBe(true)
+    })
+  })
+})
+
+describe('toPurchasesError', () => {
+  it.each([
+    ['iOS', iosRevenueCat],
+    ['Android', androidRevenueCat],
+  ])('names a %s error after its code', (_, revenueCat) => {
+    const error = toPurchasesError(
+      revenueCat('3', 'PURCHASE_NOT_ALLOWED_ERROR', 'Not allowed.')
+    )
+    expect(error).toBeInstanceOf(PurchasesError)
+    expect(error).toMatchObject({
+      name: 'PurchasesError:PURCHASE_NOT_ALLOWED_ERROR',
+      message: 'Not allowed.',
+      code: '3',
+      background: false,
+    })
+  })
+
+  it('keeps the stack of a bridged Error', () => {
+    const bridged = Object.assign(new Error('There was a problem.'), {
+      code: '2',
+      userInfo: { readableErrorCode: 'STORE_PROBLEM_ERROR' },
+    })
+    const error = toPurchasesError(bridged) as PurchasesError
+    expect(error.name).toBe('PurchasesError:STORE_PROBLEM_ERROR')
+    expect(error.stack).toBe(bridged.stack)
+  })
+
+  it('leaves a wrapped error as it is', () => {
+    const error = toPurchasesError(
+      androidRevenueCat('2', 'STORE_PROBLEM_ERROR', 'Store problem.'),
+      { background: true }
+    )
+    expect(toPurchasesError(error)).toBe(error)
+  })
+
+  it.each([
+    ['a bug', new TypeError('x is not a function')],
+    ['a coded non-RevenueCat error', { code: 'ENOSPC', message: 'write' }],
+    ['a string', 'boom'],
+    ['null', null],
+  ])('leaves %s unchanged', (_, error) => {
+    expect(toPurchasesError(error, { background: true })).toBe(error)
   })
 })
 

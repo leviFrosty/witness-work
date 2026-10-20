@@ -1,5 +1,6 @@
 import { isOfflineError } from '@/lib/offlineError'
 import { isExpectedLocationError } from '@/lib/locationError'
+import { PurchasesError } from '@/lib/purchasesError'
 
 // Internal policy shared by the public module and the provider's automatic
 // capture hook. Keeping it independent of the client avoids an import cycle.
@@ -65,11 +66,33 @@ export function isStorageFullError(error: unknown): boolean {
   return STORAGE_FULL_PATTERNS.some((pattern) => pattern.test(message))
 }
 
+/**
+ * RevenueCat `PURCHASES_ERROR_CODE`s that describe the device's store, not a
+ * bug: no Play billing or purchases restricted (PURCHASE_NOT_ALLOWED), the
+ * store failing (STORE_PROBLEM), or a product this store doesn't offer
+ * (PRODUCT_NOT_AVAILABLE_FOR_PURCHASE).
+ */
+const STORE_STATE_CODES = new Set(['2', '3', '5'])
+
+/**
+ * A store state from a RevenueCat read the user didn't start. The read runs
+ * again on its own, so nothing is lost. A purchase or restore the user started
+ * still reports them as `storeErrorOutcome` decides.
+ */
+export function isBackgroundStoreStateError(error: unknown): boolean {
+  return (
+    error instanceof PurchasesError &&
+    error.background &&
+    STORE_STATE_CODES.has(error.code)
+  )
+}
+
 export function shouldIgnoreError(error: unknown): boolean {
   return (
     isOfflineError(error) ||
     isExpectedLocationError(error) ||
-    isStorageFullError(error)
+    isStorageFullError(error) ||
+    isBackgroundStoreStateError(error)
   )
 }
 

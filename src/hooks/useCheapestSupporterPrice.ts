@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import Purchases from 'react-native-purchases'
 import { errorTracking } from '@/lib/errorTracking'
+import { toPurchasesError } from '@/lib/purchasesError'
 import useCustomer from '@/hooks/useCustomer'
 import { logger } from '@/lib/logger'
 import { isConnectivityError } from '@/lib/http/networkError'
@@ -50,7 +51,10 @@ const useCheapestSupporterPrice = () => {
         // available — no user-facing error needed.
         hasFetched.current = false
         logger.warn('[useCheapestSupporterPrice] getOfferings failed', error)
-        if (!isConnectivityError(error)) errorTracking.captureException(error)
+        if (!isConnectivityError(error))
+          errorTracking.captureException(
+            toPurchasesError(error, { background: true })
+          )
       })
   }, [ready])
 

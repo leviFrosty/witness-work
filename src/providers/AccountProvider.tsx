@@ -9,6 +9,7 @@ import {
 import { addForegroundListener } from '@/lib/appLifecycle'
 import Purchases from 'react-native-purchases'
 import { errorTracking } from '@/lib/errorTracking'
+import { toPurchasesError } from '@/lib/purchasesError'
 import debounce from 'lodash/debounce'
 import { hasSyncTransport, syncTransport } from '@/lib/syncTransport'
 import { AccountContext, AccountCtx } from '@/contexts/account'
@@ -251,7 +252,9 @@ const AccountProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
           logger.warn('[Account] account id still unavailable', { reason })
         } else {
           logger.error('[Account] reconcile failed', error)
-          errorTracking.captureException(error)
+          errorTracking.captureException(
+            toPurchasesError(error, { background: true })
+          )
         }
       } finally {
         inFlightRef.current = false

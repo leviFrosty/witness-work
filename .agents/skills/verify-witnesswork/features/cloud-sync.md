@@ -7,7 +7,7 @@ Supporters keep their devices in step: each device that turns sync on shares its
 - `sync-enable` turns sync on from Settings ("iCloud Sync" / "Google Drive Sync" → "Sync with iCloud" / "Sync with Google Drive"). On Android it first shows Google's account picker and consent screen.
 - `sync-transfer` sends edits to the cloud a few seconds after they're made and brings other devices' edits in on foreground, on "Sync now", and (Android, while open) within about a minute.
 - `sync-first-enable` asks how to combine ("Keep this device's data", "Restore from …", "Merge both") when both this device and the cloud have records.
-- `sync-restore` restores during onboarding: "Pick up where you left off" → "From iCloud backup" / "From Google Drive".
+- `sync-restore` restores during onboarding: "Pick up where you left off" → "From iCloud backup" / "From Google Drive". The step follows the tour when iOS already lists another device's sync file; otherwise "I already use WitnessWork" on the welcome opens it (always, on Android).
 - `sync-lapse` pauses transfer while Supporter access is gone ("Paused until Supporter access returns") and resumes on its own.
 - `sync-account` (Android) shows the connected Google Account state, "Use a different Google Account", "Disconnect Google Drive", and "Reconnect" after Google withdraws access.
 - `sync-photos` uploads and downloads photos when "Include images in sync" is on.
@@ -16,7 +16,7 @@ Supporters keep their devices in step: each device that turns sync on shares its
 ## How to get to it (user POV)
 
 - Settings → App → "iCloud Sync" (iOS) / "Google Drive Sync" (Android). Non-Supporters see the Supporter paywall there.
-- Onboarding → "Pick up where you left off" → the cloud option.
+- Onboarding → "I already use WitnessWork" (or the tour, when a backup is already listed) → "Pick up where you left off" → the cloud option.
 - The notification bell, after another device rebuilt the data or when a choice is needed.
 
 ## Driving it with ww-verify

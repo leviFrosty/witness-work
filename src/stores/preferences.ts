@@ -430,8 +430,8 @@ export const PREFERENCE_DEFAULTS = {
   /** The Schedule intro has been seen or closed; Schedule won't open it again. */
   scheduleIntroSeen: false,
   /**
-   * Schedule intro pages onboarding already showed (its tour, Plan Month or
-   * Buddies step). The intro leaves them out rather than repeat them.
+   * Schedule intro pages onboarding already showed (its tour or Plan Month
+   * step). The intro leaves them out rather than repeat them.
    */
   scheduleIntroCoveredPages: [] as ScheduleIntroPageId[],
   displayDetailsOnProgressBarHomeScreen:

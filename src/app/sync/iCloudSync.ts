@@ -941,6 +941,25 @@ export async function peekRemotePayload(): Promise<RemotePeek> {
   return confirmICloudAccount(account) ? peek : { status: 'unavailable' }
 }
 
+/**
+ * Whether the cloud lists another device's sync file, from the listing alone:
+ * no file is downloaded or read, so nothing is marked observed. Onboarding's
+ * cheap "anything to restore?" check, made before the user asks. False when
+ * sync storage isn't signed in (Google Drive until the user connects it) or the
+ * listing isn't trustworthy within `scanTimeoutMs`.
+ */
+export async function hasRemoteBackup(scanTimeoutMs = 5000): Promise<boolean> {
+  if (!hasSyncTransport() || !syncTransport().isAvailable()) return false
+  if (!(await syncTransport().waitForInitialScan(scanTimeoutMs))) return false
+  const own = filenameForDevice(ensureDeviceId())
+  let listed = false
+  await syncTransport().readFiles((filename) => {
+    if (isPayloadFilename(filename) && filename !== own) listed = true
+    return false
+  })
+  return listed
+}
+
 async function readRemotePeek(account: ICloudAccount): Promise<RemotePeek> {
   try {
     if (!(await syncTransport().waitForInitialScan(5000))) {
@@ -2808,6 +2827,7 @@ export const iCloudSync = {
   joinRemoteResetEpoch,
   overwriteRemoteWithLocal,
   peekRemotePayload,
+  hasRemoteBackup,
   resolveInitialEnable,
   applySeedEnable,
   applyPullEnable,

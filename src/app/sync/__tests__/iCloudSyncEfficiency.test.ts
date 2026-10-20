@@ -452,3 +452,37 @@ describe('peeking at a backup', () => {
     }
   })
 })
+
+describe('checking for a backup from the listing', () => {
+  it("finds another device's file without reading any", async () => {
+    const { hasRemoteBackup, bridge } = await load()
+    let read: string[] | null = null
+    vi.mocked(bridge.readFiles).mockImplementationOnce(async (include) => {
+      read = runtime.files.map((f) => f.filename).filter(include)
+      return { files: [], pending: [] }
+    })
+    expect(await hasRemoteBackup()).toBe(true)
+    expect(read).toEqual([])
+  })
+
+  it("ignores this device's own file and the account file", async () => {
+    const { hasRemoteBackup } = await load()
+    runtime.files = [
+      { ...phonePayload(), filename: 'witness-work-ipad.json' },
+      { ...phonePayload(), filename: 'witness-work-account.json' },
+    ]
+    expect(await hasRemoteBackup()).toBe(false)
+  })
+
+  it('says no while the listing is not trustworthy yet', async () => {
+    const { hasRemoteBackup, bridge } = await load()
+    vi.mocked(bridge.waitForInitialScan).mockResolvedValueOnce(false)
+    expect(await hasRemoteBackup()).toBe(false)
+  })
+
+  it('says no without iCloud', async () => {
+    const { hasRemoteBackup } = await load()
+    runtime.available = false
+    expect(await hasRemoteBackup()).toBe(false)
+  })
+})

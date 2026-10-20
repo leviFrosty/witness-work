@@ -20,19 +20,19 @@ import PickUpWhereLeftOff from '@/features/onboarding/components/steps/PickUpWhe
 import FounderNote from '@/features/onboarding/components/steps/FounderNote'
 import FeatureTour from '@/features/onboarding/components/steps/FeatureTour'
 import PlanMonth from '@/features/onboarding/components/steps/PlanMonth'
-import Buddies from '@/features/onboarding/components/steps/Buddies'
-import useOnboardingBuddiesAvailable from '@/features/onboarding/hooks/useOnboardingBuddiesAvailable'
-import { useBuddies } from '@/features/buddies/stores/buddiesStore'
+import useRestoreSourceFound from '@/features/onboarding/hooks/useRestoreSourceFound'
 import OnboardingBackfill from '@/features/onboarding/components/steps/OnboardingBackfill'
 import { hasReportsInCatchUpWindow } from '@/features/service-reports/components/OnboardingBackfillForm'
 import { usePreferences } from '@/stores/preferences'
+import { FRESH_SETUP_PREFERENCES } from '@/lib/syncPreferencePolicy'
 import useServiceReport from '@/stores/serviceReport'
 import {
   effectiveHasAnnualGoal,
   tracksTenure,
 } from '@/lib/publisherCapabilities'
 import {
-  reachedStep,
+  passesRestoreStep,
+  resumedRestoreOffer,
   resumeStepIndex,
   type StepId,
   type StepShowIfContext,
@@ -49,8 +49,6 @@ import { analytics } from '@/lib/analytics'
 interface StepProps {
   goBack: () => void
   goNext: () => void
-  /** Whether Buddies is part of this onboarding, held once its step is reached. */
-  buddiesAvailable: boolean
 }
 
 const STEP_COMPONENTS: Record<StepId, ComponentType<StepProps>> = {
@@ -61,7 +59,6 @@ const STEP_COMPONENTS: Record<StepId, ComponentType<StepProps>> = {
   pioneerDate: ProfileSetupPioneerDate,
   planMonth: PlanMonth,
   dataProtection: DataProtection,
-  buddies: Buddies,
   notifications: StepThree,
   calendarSync: CalendarSync,
   onboardingBackfill: OnboardingBackfill,
@@ -81,10 +78,15 @@ const OnBoarding = () => {
   } = usePreferences()
   const { serviceReports } = useServiceReport()
   const hasCompletedProfileSetup = useProfile((s) => s.hasCompletedProfileSetup)
-  // The persisted id tracks the current step (and survives a relaunch).
-  const buddiesAvailable = useOnboardingBuddiesAvailable(
-    reachedStep(onboardingStepId, 'buddies', hasCompletedProfileSetup)
+  // "Pick up where you left off" shows when this device already sees a
+  // restore source, or the user says they already use WitnessWork. The answer
+  // settles once they move past the tour (null until then), so one that comes
+  // in late never adds or removes a step behind them.
+  const restoreFound = useRestoreSourceFound()
+  const [restoreSettled, setRestoreSettled] = useState(() =>
+    resumedRestoreOffer(onboardingStepId, hasCompletedProfileSetup)
   )
+  const restoreOffered = restoreSettled ?? restoreFound
 
   const showIfCtx: StepShowIfContext = useMemo(
     () => ({
@@ -94,7 +96,7 @@ const OnBoarding = () => {
       installedOn,
       userSpecifiedHasAnnualGoal,
       hasCatchUpReports: hasReportsInCatchUpWindow(serviceReports, installedOn),
-      buddiesAvailable,
+      restoreOffered,
       calendarAvailable: calendarBridgeAvailable,
     }),
     [
@@ -104,7 +106,7 @@ const OnBoarding = () => {
       installedOn,
       userSpecifiedHasAnnualGoal,
       serviceReports,
-      buddiesAvailable,
+      restoreOffered,
     ]
   )
 
@@ -152,7 +154,6 @@ const OnBoarding = () => {
   }, [stepIndex, visibleSteps, onboardingStepId, set])
 
   const isFocused = useIsFocused()
-  const onboardingStartedAt = useRef(Date.now())
   const stepViewedAt = useRef(Date.now())
   const lastViewedStep = useRef<StepId | null>(null)
   const initialStepId = useRef(onboardingStepId)
@@ -179,6 +180,9 @@ const OnBoarding = () => {
       backfill_step_available: visibleSteps.some(
         (candidate) => candidate.id === 'onboardingBackfill'
       ),
+      restore_step_available: visibleSteps.some(
+        (candidate) => candidate.id === 'pickUpWhereLeftOff'
+      ),
     })
   }, [stepIndex, visibleSteps, isFocused, role, userSpecifiedHasAnnualGoal])
 
@@ -189,39 +193,38 @@ const OnBoarding = () => {
       elapsed_ms: Date.now() - stepViewedAt.current,
       next_step_id: visibleSteps[stepIndex + 1]?.id ?? 'complete',
       publisher_role: preferences.role,
-      ...(visibleSteps[stepIndex]?.id === 'buddies'
-        ? {
-            selected_option: useBuddies
-              .getState()
-              .outgoingInvites.some(
-                (invite) => invite.createdAt >= onboardingStartedAt.current
-              )
-              ? 'invited'
-              : 'skipped',
-          }
-        : {}),
     })
     if (stepIndex >= visibleSteps.length - 1) {
       set({ onboardingComplete: true, onboardingStepId: null })
       analytics.capture('onboarding_completed', { completion_method: 'guided' })
       return
     }
+    // Leaving the tour settles the restore step. Passing it by starts fresh,
+    // as its "Start fresh" does.
+    if (
+      restoreSettled === null &&
+      passesRestoreStep(visibleSteps[stepIndex + 1]?.id)
+    ) {
+      setRestoreSettled(restoreOffered)
+      if (!restoreOffered) set(FRESH_SETUP_PREFERENCES)
+    }
     setStepIndex(stepIndex + 1)
-  }, [stepIndex, visibleSteps, set])
+  }, [stepIndex, visibleSteps, set, restoreSettled, restoreOffered])
 
   const goBack = useCallback(() => {
     setStepIndex((idx) => (idx === 0 ? 0 : idx - 1))
   }, [])
 
-  const goToStep = useCallback(
-    (id: StepId) => {
-      const target = visibleSteps.findIndex((s) => s.id === id)
-      if (target >= 0) {
-        setStepIndex(target)
-      }
-    },
-    [visibleSteps]
-  )
+  // The welcome's "I already use WitnessWork" opens the restore step for
+  // anyone this device couldn't tell.
+  const goToRestore = useCallback(() => {
+    setRestoreSettled(true)
+    const target = visibleOnboardingSteps({
+      ...showIfCtx,
+      restoreOffered: true,
+    }).findIndex((s) => s.id === 'pickUpWhereLeftOff')
+    if (target >= 0) setStepIndex(target)
+  }, [showIfCtx])
 
   // A screen pushed over onboarding (the Notes Import composer, opened from the
   // "From Notes" step) can ask us to advance — e.g. the user chose to keep
@@ -253,13 +256,9 @@ const OnBoarding = () => {
     <OnboardingProgressContext.Provider value={progress}>
       <View style={{ flexGrow: 1 }}>
         {current.id === 'hero' ? (
-          <StepOne goBack={goBack} goNext={goNext} goToStep={goToStep} />
+          <StepOne goBack={goBack} goNext={goNext} goToRestore={goToRestore} />
         ) : (
-          <StepComponent
-            goBack={goBack}
-            goNext={goNext}
-            buddiesAvailable={buddiesAvailable}
-          />
+          <StepComponent goBack={goBack} goNext={goNext} />
         )}
       </View>
     </OnboardingProgressContext.Provider>

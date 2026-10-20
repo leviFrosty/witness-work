@@ -18,7 +18,6 @@ Buddies lets two publishers connect through an end-to-end encrypted relay (ww-ap
 
 - Schedule tab → "Buddies".
 - Opening an invite link, which leads to the Buddy Invite screen.
-- During setup, the Buddies step (iOS, flag on). Inviting there registers the inbox, creates the invite, and marks the Buddies intro as seen, so Schedule → Buddies opens on the list with the pending invite.
 
 ## Driving it with ww-verify
 

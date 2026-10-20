@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import {
+  passesRestoreStep,
   reachedStep,
+  resumedRestoreOffer,
   resumeStepIndex,
   type StepShowIfContext,
   visibleOnboardingSteps,
@@ -25,7 +27,7 @@ const ctx = (
   installedOn: new Date(2026, 1, 10),
   userSpecifiedHasAnnualGoal: 'default',
   hasCatchUpReports: false,
-  buddiesAvailable: true,
+  restoreOffered: false,
   calendarAvailable: true,
   ...overrides,
 })
@@ -33,14 +35,12 @@ const ctx = (
 const ids = (c: StepShowIfContext) => visibleOnboardingSteps(c).map((s) => s.id)
 
 describe('visibleOnboardingSteps', () => {
-  it('asks a publisher no maps or report-method question', () => {
+  it('asks a publisher no maps, report-method or Buddies question', () => {
     expect(ids(ctx('publisher'))).toEqual([
       'hero',
       'featureTour',
-      'pickUpWhereLeftOff',
       'publisherType',
       'dataProtection',
-      'buddies',
       'notifications',
       'calendarSync',
       'profileSetup',
@@ -52,18 +52,22 @@ describe('visibleOnboardingSteps', () => {
     expect(ids(ctx('regularPioneer'))).toEqual([
       'hero',
       'featureTour',
-      'pickUpWhereLeftOff',
       'publisherType',
       'pioneerDate',
       'planMonth',
       'dataProtection',
-      'buddies',
       'notifications',
       'calendarSync',
       'onboardingBackfill',
       'profileSetup',
       'founderNote',
     ])
+  })
+
+  it('offers the restore step after the tour when there is something to restore', () => {
+    expect(ids(ctx('publisher', { restoreOffered: true })).slice(0, 4)).toEqual(
+      ['hero', 'featureTour', 'pickUpWhereLeftOff', 'publisherType']
+    )
   })
 
   it('drops the backfill step for a September install', () => {
@@ -100,6 +104,45 @@ describe('resumeStepIndex', () => {
   it('resumes on a step that still exists', () => {
     expect(resume('notifications', ctx('publisher'))).toBe('notifications')
   })
+
+  it('resumes on the restore step when it was open', () => {
+    const c = ctx('publisher', {
+      restoreOffered: resumedRestoreOffer('pickUpWhereLeftOff', false) ?? false,
+    })
+    expect(resume('pickUpWhereLeftOff', c)).toBe('pickUpWhereLeftOff')
+  })
+
+  it('resumes on what follows the restore step when it is left out', () => {
+    expect(resume('pickUpWhereLeftOff', ctx('publisher'))).toBe('publisherType')
+  })
+})
+
+describe('resumedRestoreOffer', () => {
+  it('stays open until the user is past the tour', () => {
+    expect(resumedRestoreOffer(null, false)).toBeNull()
+    expect(resumedRestoreOffer('hero', false)).toBeNull()
+    expect(resumedRestoreOffer('featureTour', false)).toBeNull()
+  })
+
+  it('keeps the step for someone on it, and leaves it out behind anyone past it', () => {
+    expect(resumedRestoreOffer('pickUpWhereLeftOff', false)).toBe(true)
+    expect(resumedRestoreOffer('publisherType', false)).toBe(false)
+    expect(resumedRestoreOffer('buddies', false)).toBe(false)
+  })
+
+  it('keeps it for retired steps that resume on it', () => {
+    expect(resumedRestoreOffer('privacyFirst', false)).toBe(true)
+    expect(resumedRestoreOffer('founderNote', false)).toBe(true)
+    expect(resumedRestoreOffer('founderNote', true)).toBe(false)
+  })
+})
+
+describe('passesRestoreStep', () => {
+  it('settles when leaving the tour, not the welcome', () => {
+    expect(passesRestoreStep('featureTour')).toBe(false)
+    expect(passesRestoreStep('pickUpWhereLeftOff')).toBe(true)
+    expect(passesRestoreStep('publisherType')).toBe(true)
+  })
 })
 
 describe('retired step ids', () => {
@@ -108,7 +151,13 @@ describe('retired step ids', () => {
     c: StepShowIfContext,
     hasCompletedProfileSetup = false
   ) => {
-    const visible = visibleOnboardingSteps(c)
+    // As onboarding does: a retired step that resumes on the restore step
+    // keeps it in the flow.
+    const visible = visibleOnboardingSteps({
+      ...c,
+      restoreOffered:
+        resumedRestoreOffer(saved, hasCompletedProfileSetup) ?? false,
+    })
     return visible[resumeStepIndex(saved, visible, hasCompletedProfileSetup)]
       ?.id
   }
@@ -118,6 +167,7 @@ describe('retired step ids', () => {
     ['intentPicker', 'pioneerDate'],
     ['yourPlanPreview', 'planMonth'],
     ['badges', 'notifications'],
+    ['buddies', 'notifications'],
     ['defaultNav', 'onboardingBackfill'],
     ['defaultExportMethod', 'onboardingBackfill'],
     ['supporter', 'founderNote'],
@@ -135,23 +185,20 @@ describe('retired step ids', () => {
   })
 
   it.each(['defaultNav', 'defaultExportMethod'])(
-    'counts a saved %s as past Buddies, so its answer holds',
+    'counts a saved %s as past notifications',
     (saved) => {
-      expect(reachedStep(saved, 'buddies', false)).toBe(true)
+      expect(reachedStep(saved, 'notifications', false)).toBe(true)
     }
   )
 
   it.each(['privacyFirst', 'intentPicker', 'yourPlanPreview'])(
-    'counts a saved %s as before Buddies',
+    'counts a saved %s as before notifications',
     (saved) => {
-      expect(reachedStep(saved, 'buddies', false)).toBe(false)
+      expect(reachedStep(saved, 'notifications', false)).toBe(false)
     }
   )
 
-  it('keeps the backfill step when Buddies drops out after resuming', () => {
-    // The answer is held once reached, so Buddies can't vanish beneath the
-    // resumed index; if it did, the saved id would still resume on backfill.
-    const withoutBuddies = ctx('regularPioneer', { buddiesAvailable: false })
-    expect(resume('defaultNav', withoutBuddies)).toBe('onboardingBackfill')
+  it('counts a saved Buddies step as past the restore step', () => {
+    expect(reachedStep('buddies', 'pickUpWhereLeftOff', false)).toBe(true)
   })
 })

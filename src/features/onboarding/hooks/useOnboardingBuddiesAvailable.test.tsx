@@ -20,16 +20,16 @@ import useOnboardingBuddiesAvailable from '@/features/onboarding/hooks/useOnboar
 
 let renderer: ReactTestRenderer | undefined
 
-const Probe = ({ reached }: { reached: boolean }) =>
+const Probe = () =>
   React.createElement('probe', {
-    available: useOnboardingBuddiesAvailable(reached),
+    available: useOnboardingBuddiesAvailable(),
   })
 
-/** Renders with `reached` and returns what the hook answered. */
-const render = async (reached: boolean) => {
+/** Renders and returns what the hook answered. */
+const render = async () => {
   await act(() => {
-    if (renderer) renderer.update(<Probe reached={reached} />)
-    else renderer = create(<Probe reached={reached} />)
+    if (renderer) renderer.update(<Probe />)
+    else renderer = create(<Probe />)
   })
   const json = renderer?.toJSON()
   return json && !Array.isArray(json) ? json.props.available : undefined
@@ -43,40 +43,27 @@ afterEach(() => {
 })
 
 describe('useOnboardingBuddiesAvailable', () => {
-  it('follows availability before the step is reached', async () => {
-    expect(await render(false)).toBe(false)
+  it('follows availability', async () => {
+    expect(await render()).toBe(false)
     runtime.availability = 'enabled'
-    expect(await render(false)).toBe(true)
+    expect(await render()).toBe(true)
     runtime.availability = 'hidden'
-    expect(await render(false)).toBe(false)
+    expect(await render()).toBe(false)
   })
 
   it('counts loading and a relay that is off as available', async () => {
     runtime.availability = 'loading'
-    expect(await render(false)).toBe(true)
+    expect(await render()).toBe(true)
     runtime.availability = 'disabled'
-    expect(await render(false)).toBe(true)
+    expect(await render()).toBe(true)
   })
 
-  it('leaves the step out on a device that can never be verified', async () => {
+  it('leaves Buddies out on a device that can never be verified', async () => {
     runtime.availability = 'enabled'
     runtime.support = 'unsupported'
-    expect(await render(false)).toBe(false)
+    expect(await render()).toBe(false)
     // Still checking, or unsure: Buddies says so if it can't verify later.
     runtime.support = 'unknown'
-    expect(await render(false)).toBe(true)
-  })
-
-  it('holds the answer once the step is reached', async () => {
-    runtime.availability = 'enabled'
-    await render(true)
-    runtime.availability = 'hidden'
-    expect(await render(true)).toBe(true)
-  })
-
-  it('never adds the step behind someone already past it', async () => {
-    await render(true)
-    runtime.availability = 'enabled'
-    expect(await render(true)).toBe(false)
+    expect(await render()).toBe(true)
   })
 })

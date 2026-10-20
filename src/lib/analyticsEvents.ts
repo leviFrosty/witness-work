@@ -189,7 +189,6 @@ export const analyticsEventNames = [
   'update_required_store_opened',
   // Onboarding and activation.
   'onboarding_backfill_completed',
-  'onboarding_buddies_invite_result',
   'onboarding_calendar_setup_result',
   'onboarding_checklist_completed',
   'onboarding_checklist_dismissed',

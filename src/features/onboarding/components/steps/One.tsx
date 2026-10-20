@@ -3,22 +3,12 @@ import WelcomeHero from '@/features/onboarding/components/welcome/WelcomeHero'
 interface Props {
   goNext: () => void
   goBack?: () => void
-  goToStep?: (stepId: 'pickUpWhereLeftOff') => void
+  /** Opens "Pick up where you left off". */
+  goToRestore?: () => void
 }
 
-const StepOne = ({ goNext, goToStep }: Props) => {
-  const handleReturningUser = () => {
-    if (goToStep) {
-      goToStep('pickUpWhereLeftOff')
-      return
-    }
-    goNext()
-    goNext()
-  }
-
-  return (
-    <WelcomeHero onGetStarted={goNext} onReturningUser={handleReturningUser} />
-  )
-}
+const StepOne = ({ goNext, goToRestore }: Props) => (
+  <WelcomeHero onGetStarted={goNext} onReturningUser={goToRestore ?? goNext} />
+)
 
 export default StepOne

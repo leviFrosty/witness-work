@@ -14,7 +14,6 @@ export type StepId =
   | 'pioneerDate'
   | 'planMonth'
   | 'dataProtection'
-  | 'buddies'
   | 'notifications'
   | 'calendarSync'
   | 'onboardingBackfill'
@@ -34,8 +33,12 @@ export interface StepShowIfContext {
   userSpecifiedHasAnnualGoal: boolean | 'default'
   /** A restore already put reports in the backfill step's catch-up window. */
   hasCatchUpReports: boolean
-  /** Buddies shows on this device; see `useOnboardingBuddiesAvailable`. */
-  buddiesAvailable: boolean
+  /**
+   * There's something to pick up: this device already sees a restore source
+   * (see `detectRestoreSource`), or the user said they already use
+   * WitnessWork.
+   */
+  restoreOffered: boolean
   /** The binary has the native calendar module. */
   calendarAvailable: boolean
 }
@@ -60,7 +63,13 @@ export interface StepDef {
 export const onboardingSteps: StepDef[] = [
   { id: 'hero', countsTowardProgress: false },
   { id: 'featureTour', countsTowardProgress: false },
-  { id: 'pickUpWhereLeftOff', countsTowardProgress: false },
+  {
+    id: 'pickUpWhereLeftOff',
+    countsTowardProgress: false,
+    // Most people have nothing to bring over; the welcome's "I already use
+    // WitnessWork" opens it for anyone the device couldn't tell.
+    showIf: ({ restoreOffered }) => restoreOffered,
+  },
   { id: 'publisherType', countsTowardProgress: true },
   {
     id: 'pioneerDate',
@@ -75,12 +84,6 @@ export const onboardingSteps: StepDef[] = [
       tracksHours(publisher, logsHours) && publisherHours[publisher] > 0,
   },
   { id: 'dataProtection', countsTowardProgress: true },
-  {
-    id: 'buddies',
-    countsTowardProgress: true,
-    // Needs the Buddies key module and the rollout flag (iOS and Android).
-    showIf: ({ buddiesAvailable }) => buddiesAvailable,
-  },
   { id: 'notifications', countsTowardProgress: true },
   {
     id: 'calendarSync',
@@ -131,7 +134,7 @@ const resumeStepId = (
   // end: one saved before the name step was the old, early one.
   // The maps and report-method questions were removed (both are set in
   // Settings, and the report method sits above Submit); resume on what
-  // followed them.
+  // followed them. Buddies left setup for Schedule → Buddies, likewise.
   if (
     savedId === 'privacyFirst' ||
     (savedId === 'founderNote' && !hasCompletedProfileSetup)
@@ -142,12 +145,16 @@ const resumeStepId = (
   if (savedId === 'yourPlanPreview') {
     return hasPlanMonth ? 'planMonth' : 'notifications'
   }
-  if (savedId === 'badges') return 'notifications'
+  if (savedId === 'badges' || savedId === 'buddies') return 'notifications'
   if (savedId === 'defaultNav' || savedId === 'defaultExportMethod') {
     return 'onboardingBackfill'
   }
   return savedId
 }
+
+/** Where `id` sits in the full flow; -1 for an id that isn't in it. */
+export const stepOrder = (id: string | null | undefined) =>
+  onboardingSteps.findIndex((step) => step.id === id)
 
 /**
  * `current` (a persisted step id, possibly a retired one) is at or past `id`'s
@@ -161,12 +168,38 @@ export const reachedStep = (
   if (!current) return false
   // Visibility isn't known yet here, so a retired plan preview counts as
   // the earlier of its two places.
-  const resumeId = resumeStepId(current, true, hasCompletedProfileSetup)
-  const index = onboardingSteps.findIndex((step) => step.id === resumeId)
+  const index = stepOrder(resumeStepId(current, true, hasCompletedProfileSetup))
+  return index >= 0 && index >= stepOrder(id)
+}
+
+/**
+ * Whether the restore step is settled in or out for an onboarding that resumes
+ * on `savedId`, or null while it's still open (nothing saved yet, or still on
+ * the welcome or tour). Resuming on the step keeps it; resuming anywhere past
+ * it, including on a retired step, leaves it out, as the user already passed
+ * it.
+ */
+export const resumedRestoreOffer = (
+  savedId: string | null,
+  hasCompletedProfileSetup: boolean
+): boolean | null => {
+  if (
+    !savedId ||
+    !reachedStep(savedId, 'pickUpWhereLeftOff', hasCompletedProfileSetup)
+  )
+    return null
   return (
-    index >= 0 && index >= onboardingSteps.findIndex((step) => step.id === id)
+    resumeStepId(savedId, true, hasCompletedProfileSetup) ===
+    'pickUpWhereLeftOff'
   )
 }
+
+/**
+ * Moving from the current step to `nextId` passes the restore step's place, so
+ * whether it shows is settled from here on.
+ */
+export const passesRestoreStep = (nextId: StepId | undefined) =>
+  stepOrder(nextId) >= stepOrder('pickUpWhereLeftOff')
 
 /** Where a relaunch resumes, given the step id saved before it. */
 export const resumeStepIndex = (
@@ -185,9 +218,9 @@ export const resumeStepIndex = (
   )
   const idx = visibleSteps.findIndex((s) => s.id === resumeId)
   if (idx >= 0) return idx
-  // A conditional step that no longer shows (e.g. Buddies after its flag
-  // turned off): resume on the next step that does.
-  const order = onboardingSteps.findIndex((s) => s.id === resumeId)
+  // A conditional step that no longer shows (e.g. the restore step once
+  // nothing is offered): resume on the next step that does.
+  const order = stepOrder(resumeId)
   const next =
     order >= 0
       ? visibleSteps.findIndex((s) => onboardingSteps.indexOf(s) > order)

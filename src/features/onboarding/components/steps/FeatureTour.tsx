@@ -15,6 +15,7 @@ import type { ScheduleIntroPageId } from '@/stores/scheduleIntro'
 import { EASE_OUT } from '@/features/onboarding/constants/welcome'
 import useWelcomeMotion from '@/features/onboarding/hooks/useWelcomeMotion'
 import useTourPages from '@/features/onboarding/hooks/useTourPages'
+import useOnboardingBuddiesAvailable from '@/features/onboarding/hooks/useOnboardingBuddiesAvailable'
 import { getWelcomePalette } from '@/features/onboarding/lib/welcomePalette'
 import WelcomeBackdrop from '@/features/onboarding/components/welcome/WelcomeBackdrop'
 import { RevealPage } from '@/features/updates/hooks/useRevealPages'
@@ -32,7 +33,6 @@ type CloseMethod = 'finished' | 'skipped' | 'back'
 interface Props {
   goBack: () => void
   goNext: () => void
-  buddiesAvailable: boolean
 }
 
 /**
@@ -41,7 +41,7 @@ interface Props {
  * picture, over the welcome's aurora. Skip is always one tap away; setup comes
  * after.
  */
-const FeatureTour = ({ goBack, goNext, buddiesAvailable }: Props) => {
+const FeatureTour = ({ goBack, goNext }: Props) => {
   const theme = useTheme()
   const palette = getWelcomePalette(theme)
   const reduceMotion = useReducedMotion()
@@ -56,7 +56,7 @@ const FeatureTour = ({ goBack, goNext, buddiesAvailable }: Props) => {
 
   // Buddies' flag can still be loading as the tour opens. Pages may change
   // until the first swipe, then hold, so none shifts under the user.
-  const livePages = useTourPages(buddiesAvailable)
+  const livePages = useTourPages(useOnboardingBuddiesAvailable())
   const [heldPages, setHeldPages] = useState<RevealPage[] | null>(null)
   const pages = heldPages ?? livePages
 

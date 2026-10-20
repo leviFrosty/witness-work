@@ -31,7 +31,7 @@ Each feature file starts with an H1 and one paragraph of user-visible behavior, 
 
 ## Features
 
-- [Onboarding](./onboarding.md) covers the fresh install welcome, the publisher-type choice, the Buddies step and finishing setup.
+- [Onboarding](./onboarding.md) covers the fresh install welcome, the restore step, the publisher-type choice and finishing setup.
 - [Time entry](./time-entry.md) covers logging time from the Home card, the Quick Action menu, the `add-time` deep link and a day's sheet, with read-back.
 - [Contacts and visits](./contacts-visits.md) covers creating a contact, logging a visit and follow-ups, and the `contact/:id` deep link.
 - [Rich notes](./rich-notes.md) covers the full-screen note editor (formatting toolbar on the keyboard, checklists, links, photos) from every note field, and how notes read back.

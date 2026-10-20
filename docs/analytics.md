@@ -140,7 +140,7 @@ speculative tier/billing/price/options/legal-link paywall events were removed.
 | Do reminders to log planned time work?                       | `unlogged_day_reminders_changed` (`enabled`); `notification_opened` with `kind: unloggedDay`, then `time_entry_created` from the Add Time it opens.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | Do streaks keep people planning and keeping their plans?     | `streak_milestone_reached` (`count`, `kind`: `plans` \| `months`; `after_action`: whether the User's own action just reached it, so it got the full celebration rather than the chip's flare, ADR 0021) once per device when the streak reaches a celebrated milestone (3, 5, 10, 15, 20, 25, 30, 40, 50, then every 25 for Plans; every month from 3 for months), not on every kept day. `streak_reminders_changed` (`enabled`) when Streak Reminders is switched. `streaks_setting_changed` (`enabled`) when Show streak is switched in Preferences → Streaks & Badges; while it's off, milestones send nothing. Taps on a fired reminder arrive as `notification_opened` with `kind: streak`. Never dates, Plan details, or time logged. |
 | Do people plan hours without a set time?                     | `plan_created.time_mode`: `hours` for Just hours (no set time) or `span` for a start and end time. Never the time itself.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
-| Does the Schedule intro lead to planning?                    | `schedule_intro_closed` once per showing, with `source` (`first_visit`), `method` (`plan` for Plan a Day, `done`, `close`, or `back` for Android's back button), `pages_viewed`, and `page_count` (3, or 4 where Buddies shows; 2 fewer with Show streak off; less any page onboarding already showed: the tour's Plan or Buddies page, or the Plan Month or Buddies step). Compare `method: plan` with the `plan_created` that follows.                                                                                                                                                                                                                                                                                                    |
+| Does the Schedule intro lead to planning?                    | `schedule_intro_closed` once per showing, with `source` (`first_visit`), `method` (`plan` for Plan a Day, `done`, `close`, or `back` for Android's back button), `pages_viewed`, and `page_count` (3, or 4 where Buddies shows; 2 fewer with Show streak off; less any page onboarding already showed: the tour's Plan or Buddies page, or the Plan Month step). Compare `method: plan` with the `plan_created` that follows.                                                                                                                                                                                                                                                                                                               |
 | Are reports exported?                                        | `service_report_export_requested`, `service_report_exported`, `service_report_export_dismissed`. Share-sheet resolution has platform limitations; it is not proof of submission.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 | Are new features adopted?                                    | Timer start/failure, Buddies open/pairings by platform (`buddy_paired`)/same-time planning/plan invites/invitation answers/customization, `custom_field_created` (`scope`: `contact` or `conversation`), `visit_created.custom_field_count`, calendar connection/disconnection/failure, and map permission results.                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | Do buddies use Ask to Join, and does it lead to joint Plans? | `buddy_join_requested` and `buddy_join_request_withdrawn` (`source`: `buddy_plans_for_day` \| `buddy_detail`), `buddy_join_request_answered` (`action`: `invited` \| `not_now`; `invited` when Invite adds the buddy to the Plan, `not_now` for Not Now, dismiss, or Clear All), `buddy_join_request_notifications_changed` (`scope`: `all` \| `buddy`, `enabled`), `buddy_invite_overlap_resolved` (`choice`: `replace` \| `keep_both`; `includes_recurring`: whether a recurring Plan's instance overlapped). Never names, relay ids, or Plan dates and times.                                                                                                                                                                            |
@@ -169,7 +169,7 @@ A skipped step can also complete: completion means advancing, not filling every
 optional field. `elapsed_ms` includes background time and time on other screens.
 
 Stable step IDs, in order: `hero`, `featureTour`, `pickUpWhereLeftOff`,
-`publisherType`, `pioneerDate`, `planMonth`, `dataProtection`, `buddies`,
+`publisherType`, `pioneerDate`, `planMonth`, `dataProtection`,
 `notifications`, `calendarSync`, `onboardingBackfill`, `profileSetup`,
 `founderNote`. The flow introduces the app before it asks for anything, asks for
 the name last, and ends on the founder note.
@@ -180,8 +180,23 @@ their content moved into `featureTour`; `profileSetup` moved from after
 end. `defaultNav` and `defaultExportMethod` were retired in October 2026: the
 maps app defaults by platform and is set in Settings → Preferences → Navigation,
 and the report method is chosen above Submit on the report screen. Their
-`onboarding_step_completed` events carried `selected_option`. Compare funnels
-across these changes by step, not position.
+`onboarding_step_completed` events carried `selected_option`. In the release
+after 1.44.1 (October 2026), `buddies` was retired (Buddies is introduced by the
+tour and opened from Schedule → Buddies) and `pickUpWhereLeftOff` became
+conditional; see below. From that release, a missing `pickUpWhereLeftOff` view
+means the step didn't show, not that people skipped it, so its view count and
+skip rate aren't comparable with earlier versions. Compare funnels across these
+changes by step, not position.
+
+`pickUpWhereLeftOff` shows after the tour only when the device already sees
+something to restore (an account key that iCloud Keychain or Block Store
+brought back, or another device's iCloud sync file; Google Drive can't be seen
+before the user connects it), or when the user taps "I already use WitnessWork"
+on the welcome. Whether it shows is settled when the user leaves the tour.
+Passing it by applies the same fresh-start sync choice as its Start fresh button,
+without `onboarding_step_skipped`. `onboarding_step_viewed` carries
+`restore_step_available` so funnels can be split by whether the step was in the
+flow.
 
 `featureTour` is a paged tour of the app, shown right after `hero`. Its question
 is whether showing the features first keeps people in setup, and how much of it
@@ -200,24 +215,13 @@ slider; `shape` is `manual` when every plan was added by hand. "I'll plan later"
 sends `onboarding_step_skipped`. Divide accepted by `onboarding_step_viewed` for
 the step. Exclude `source: onboarding` when measuring the Schedule Assistant.
 
-`buddies` only appears where Buddies is available (iOS builds with the Keychain
-module and the `buddies` flag on). Its question is whether introducing Buddies
-during setup leads people to invite a buddy, and what gets in the way. The
-name comes at the end of setup, so a buddy invite without one first asks for it
-on the step and reports `name_required` only if the invite still fails. Its
-`onboarding_step_completed` carries `selected_option`: `invited` when the step
-created a Buddies Invite (the share sheet opened), else `skipped`; Continue
-without inviting also sends `onboarding_step_skipped`. Each invite attempt sends
-`onboarding_buddies_invite_result` with `status`: `shared` (the share sheet
-completed), `dismissed`, or `error` with a bounded `reason` (`name_required`,
-`limit`, `offline`, `disabled`, `suspended`, `rate_limited`, `unverified`,
-`verify_later`, `update`, or `error`). No links, invite ids, or names are sent.
-The same Buddies failure reasons (`buddiesFailureReason`) are on
-`buddies_push_registration` and `buddies_tray_sync_failed`: `unverified` means
-this device can't be verified, so it has no account session and Buddies sends
-nothing (ADR 0027); `verify_later`, that verifying it failed for now; `update`,
-that ww-api needs a newer app. The step leaves itself out on a device that can
-never be verified.
+The retired `buddies` step's `onboarding_step_completed` carried
+`selected_option` (`invited` or `skipped`), and its invite attempts sent
+`onboarding_buddies_invite_result`, which is no longer captured. The Buddies
+failure reasons (`buddiesFailureReason`) are on `buddies_push_registration` and
+`buddies_tray_sync_failed`: `unverified` means this device can't be verified, so
+it has no account session and Buddies sends nothing (ADR 0027); `verify_later`,
+that verifying it failed for now; `update`, that ww-api needs a newer app.
 
 Notification permission request/result, import availability/skip, and backfill
 completion distinguish friction from deliberate choices. `completion_method` is

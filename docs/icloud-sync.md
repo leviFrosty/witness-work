@@ -271,7 +271,10 @@ switching, `components/CloudSyncDefault.tsx`).
 - **Identity.** The namespace is the server account: `cloudSyncAccountToken`
   holds a hash of its id. Moving to another account (a QR code or recovery key)
   flushes, deletes this device's slot, resets the namespace bookkeeping, and
-  decides again as a device that never chose.
+  decides again as a device that never chose. Leaving Cloud Sync forgets the
+  account, and switching to it records the current one, so an account changed
+  while the device was on iCloud, Drive or Off isn't taken for a change on Cloud
+  Sync.
 - **Photos** aren't transferred yet: binaries list empty and photo passes skip
   Cloud Sync. Settings says so.
 - **Errors.** `too_large` and `limit` read as storage full (20 MB a snapshot,

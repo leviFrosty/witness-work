@@ -176,7 +176,12 @@ async function runSwitch(
   const previous = snapshot()
   usePreferences.setState({ iCloudSyncEnabled: false })
   await iCloudSync.waitForSyncIdle()
-  if (from === 'cloud') await deleteOwnCloudSyncSlot()
+  if (from === 'cloud') {
+    await deleteOwnCloudSyncSlot()
+    // Off Cloud Sync, the account it was on stops mattering: turning it on
+    // again records whichever account this device has by then.
+    usePreferences.setState({ cloudSyncAccountToken: null })
+  }
 
   if (to === 'off') {
     usePreferences.setState({ iCloudSyncSetByUser: true })
@@ -196,14 +201,19 @@ async function runSwitch(
     iCloudAccountChangedAt: null,
     // Choosing either way answers the one-time offer.
     cloudSyncOffer: 'dismissed',
+    // The server account is recorded as it is now (ADR 0030 §4), not compared
+    // with the one this device last synced with: a QR code or a recovery key
+    // may have moved it to another while it was off Cloud Sync, and with no
+    // slot or bookkeeping left there, that's no account change to stop for.
+    ...(to === 'cloud' && { cloudSyncAccountToken: null }),
   })
   const restore = (pendingPush = false) =>
     usePreferences.setState({
       ...previous,
       ...(pendingPush && { iCloudSyncPendingPush: true }),
     })
-  // Records the new option's account, or notices it changed since this
-  // device last used it.
+  // Records the new option's account, or notices that iCloud's or Drive's
+  // changed since this device last used it.
   if (!checkICloudIdentity('initial_enable')) {
     restore(from === 'cloud')
     return fail('account_changed')

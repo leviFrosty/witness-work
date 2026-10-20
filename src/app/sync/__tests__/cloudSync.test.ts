@@ -587,6 +587,41 @@ describe('Switching between Cloud Sync and Google Drive', () => {
     expect(await iphone.iCloudSync.push('manual')).toBe(false)
   })
 
+  it('moves back to Cloud Sync on the account a QR code moved it to meanwhile', async () => {
+    const phone = await device('phone', { os: 'android' })
+    phone.useContacts.setState({
+      contacts: [contact('c1', 'Ada', NOW - 5_000)] as never,
+    })
+    await phone.iCloudSync.push('manual')
+    expect((await phone.switchSyncOption('platform', 'settings')).outcome).toBe(
+      'switched'
+    )
+    // Signed in with a QR code to the family's account while on Drive: the
+    // Cloud Sync account it last recorded is another.
+    phone.usePreferences.setState({ cloudSyncAccountToken: 'account:mine' })
+
+    expect(await phone.switchSyncOption('cloud', 'settings')).toEqual({
+      outcome: 'switched',
+      pending: false,
+    })
+    expect(phone.currentSyncOption()).toBe('cloud')
+    expect(phone.usePreferences.getState().cloudSyncAccountToken).toBe(
+      'account:family'
+    )
+    expect(server.slotIds('family')).toEqual([phone.slotId()])
+  })
+
+  it('forgets its Cloud Sync account when it leaves', async () => {
+    const phone = await device('phone', { os: 'android' })
+    await phone.iCloudSync.push('manual')
+    expect(phone.usePreferences.getState().cloudSyncAccountToken).toBe(
+      'account:family'
+    )
+    await phone.switchSyncOption('off', 'settings')
+    // Turning it on again from Off records the account it has then.
+    expect(phone.usePreferences.getState().cloudSyncAccountToken).toBe(null)
+  })
+
   it('refuses a switch the account isn’t entitled to, changing nothing', async () => {
     const { phone } = await driveFleet()
     server.state.supporters.clear()

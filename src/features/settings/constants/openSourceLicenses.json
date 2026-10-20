@@ -4596,12 +4596,6 @@
     "license": "MIT"
   },
   {
-    "name": "react-native-calendars",
-    "version": "1.1314.0",
-    "license": "MIT",
-    "author": "Wix.com"
-  },
-  {
     "name": "react-native-country-codes-picker",
     "version": "2.3.5",
     "license": "ISC",
@@ -4728,12 +4722,6 @@
     "license": "MIT"
   },
   {
-    "name": "react-native-swipe-gestures",
-    "version": "1.0.5",
-    "license": "MIT",
-    "author": "Goran Lepur"
-  },
-  {
     "name": "react-native-web",
     "version": "0.21.2",
     "license": "MIT",
@@ -4788,12 +4776,6 @@
     "version": "4.2.0",
     "license": "MIT",
     "author": "Ahmed AlAbsi"
-  },
-  {
-    "name": "recyclerlistview",
-    "version": "4.2.3",
-    "license": "Apache-2.0",
-    "author": "naqvitalha"
   },
   {
     "name": "regenerate",
@@ -5310,12 +5292,6 @@
     "author": "kamiazya"
   },
   {
-    "name": "ts-object-utils",
-    "version": "0.0.5",
-    "license": "ISC",
-    "author": "naqvitalha"
-  },
-  {
     "name": "tsconfig-paths",
     "version": "4.2.0",
     "license": "MIT",
@@ -5600,12 +5576,6 @@
     "version": "3.0.1",
     "license": "Apache-2.0",
     "author": "Apache Software Foundation"
-  },
-  {
-    "name": "xdate",
-    "version": "0.8.3",
-    "license": "(MIT OR GPL-2.0)",
-    "author": "Adam Shaw"
   },
   {
     "name": "xml2js",

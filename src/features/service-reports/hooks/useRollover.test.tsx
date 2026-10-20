@@ -16,9 +16,6 @@ vi.mock('expo-device', () => ({
   deviceType: 1,
   osName: 'iOS',
 }))
-vi.mock('react-native-calendars', () => ({
-  LocaleConfig: { locales: {}, defaultLocale: '' },
-}))
 
 import useServiceReport from '@/stores/serviceReport'
 import { useRollover } from '@/features/service-reports/hooks/useRollover'

@@ -28,9 +28,6 @@ vi.mock('expo-device', () => ({
   deviceType: 1,
   osName: 'iOS',
 }))
-vi.mock('react-native-calendars', () => ({
-  LocaleConfig: { locales: {}, defaultLocale: '' },
-}))
 vi.mock(
   'lucide-react-native',
   () => new Proxy({}, { get: (_, name) => String(name), has: () => true })

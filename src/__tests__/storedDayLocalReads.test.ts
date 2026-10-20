@@ -67,7 +67,7 @@ describe('calendar day reads at UTC>=+12', () => {
     )
     expect(monthsReports).toHaveLength(1)
 
-    // CalendarDay's per-cell filter, keyed by react-native-calendars'
+    // CalendarDay's per-cell filter, keyed by its `DateData`'s
     // `dateString`.
     expect(isStoredDateOnLocalDay(monthsReports[0].date, '2026-08-19')).toBe(
       true

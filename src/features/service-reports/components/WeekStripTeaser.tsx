@@ -19,9 +19,8 @@ import {
   TimeEntriesByYear,
 } from '@/types/timeEntry'
 import { HomeTabStackNavigation } from '@/types/homeStack'
-import CalendarDay from '@/components/CalendarDay'
+import CalendarDay, { type DateData } from '@/components/CalendarDay'
 import HomeSectionMenu from '@/components/HomeSectionMenu'
-import type { DateData } from 'react-native-calendars'
 import { tracking } from '@/lib/tracking'
 
 type Props = {

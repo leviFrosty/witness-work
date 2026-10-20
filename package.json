@@ -141,7 +141,6 @@
     "react-compiler-runtime": "19.0.0-beta-af1b7da-20250417",
     "react-dom": "19.2.3",
     "react-native": "0.86.3",
-    "react-native-calendars": "1.1314.0",
     "react-native-gesture-handler": "2.32.0",
     "react-native-international-phone-number": "0.8.7",
     "react-native-keyboard-aware-scroll-view": "0.9.5",

@@ -133,16 +133,21 @@ export const momentStoredDate = (date: Date | string): moment.Moment => {
 export const localDayFromUtcCursor = (cursor: moment.Moment): Date =>
   new Date(cursor.year(), cursor.month(), cursor.date(), 12)
 
+/**
+ * True for a noon-UTC ISO string, the form rehydrated stored days take.
+ * `storedDayKey` slices its key out without parsing, so the key never depends
+ * on the device's time zone.
+ */
+export const isAnchoredIsoString = (date: Date | string): date is string =>
+  typeof date === 'string' &&
+  date.length === 24 &&
+  date.endsWith('T12:00:00.000Z')
+
 /** The `YYYY-MM-DD` calendar day carried by a stored noon-UTC anchor. */
 export const storedDayKey = (date: Date | string): string => {
   // Rehydrated state is JSON, so most stored days arrive as anchored ISO
   // strings, which already start with their key.
-  if (
-    typeof date === 'string' &&
-    date.length === 24 &&
-    date.endsWith('T12:00:00.000Z')
-  )
-    return date.slice(0, 10)
+  if (isAnchoredIsoString(date)) return date.slice(0, 10)
   return momentStoredDate(date).format('YYYY-MM-DD')
 }
 

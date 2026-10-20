@@ -2,7 +2,8 @@ import { ChevronForwardIcon } from '@/components/ui/DirectionalIcon'
 import { ReactElement, ReactNode, useMemo, useState } from 'react'
 import { ScrollView, useWindowDimensions, View } from 'react-native'
 import moment from 'moment'
-import { isStoredDateOnLocalDay } from '@/lib/normalizeDate'
+import { dayPlansOnLocalDay } from '@/lib/dayPlansByDay'
+import { localDayKey, storedDayKey } from '@/lib/normalizeDate'
 
 import useServiceReport from '@/stores/serviceReport'
 import useCategories from '@/stores/categories'
@@ -261,8 +262,9 @@ const AllDaysList = ({
     for (let d = 1; d <= limit; d++) {
       const day = moment(base).date(d)
       const dayDate = day.toDate()
-      const reportsForDay = thisMonthsReports.filter((r) =>
-        isStoredDateOnLocalDay(r.date, day)
+      const dayKey = localDayKey(day)
+      const reportsForDay = thisMonthsReports.filter(
+        (r) => storedDayKey(r.date) === dayKey
       )
 
       const totalMinutes = reportsForDay.reduce(
@@ -274,9 +276,7 @@ const AllDaysList = ({
           ? '—'
           : formatMinutes(totalMinutes, timeDisplayFormat).formatted
 
-      const dayPlansForDay = dayPlans.filter((dp) =>
-        isStoredDateOnLocalDay(dp.date, day)
-      )
+      const dayPlansForDay = dayPlansOnLocalDay(dayPlans, day)
       const recurringPlansForDay = getPlansIntersectingDay(
         dayDate,
         recurringPlans

@@ -10,6 +10,7 @@ import i18n from '@/lib/locales'
 import useTheme from '@/contexts/theme'
 import usePublisher from '@/hooks/usePublisher'
 import moment from 'moment'
+import { dayPlansOnLocalDay } from '@/lib/dayPlansByDay'
 import { isStoredDateOnLocalDay } from '@/lib/normalizeDate'
 import { FlashList } from '@shopify/flash-list'
 import { TimeEntry, DayPlan } from '@/types/timeEntry'
@@ -141,7 +142,7 @@ const DayHistoryView: React.FC<DayHistoryViewProps> = ({
   )
 
   const dayPlansForToday = useMemo(() => {
-    return dayPlans.filter((dp) => isStoredDateOnLocalDay(dp.date, date))
+    return dayPlansOnLocalDay(dayPlans, date)
   }, [dayPlans, date])
 
   const contributions = resolvePlannedContributionsForDay(

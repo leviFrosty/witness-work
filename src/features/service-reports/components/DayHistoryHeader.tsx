@@ -9,6 +9,7 @@ import { formatDate } from '@/lib/dates'
 import i18n from '@/lib/locales'
 import { useFormattedMinutes } from '@/lib/minutes'
 import { entryMinutes } from '@/lib/entryMinutes'
+import { dayPlansOnLocalDay } from '@/lib/dayPlansByDay'
 import { isStoredDateOnLocalDay } from '@/lib/normalizeDate'
 import { resolvePlannedContributionsForDay } from '@/lib/recurrence'
 import { isCountableEntry } from '@/lib/serviceReport'
@@ -37,7 +38,7 @@ const DayHistoryHeader = ({
   )
 
   const dayPlansForToday = useMemo(
-    () => dayPlans.filter((dp) => isStoredDateOnLocalDay(dp.date, date)),
+    () => dayPlansOnLocalDay(dayPlans, date),
     [dayPlans, date]
   )
   const contributions = resolvePlannedContributionsForDay(

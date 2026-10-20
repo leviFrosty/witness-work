@@ -9,7 +9,8 @@ import DayPreview, { dayHasPreview } from '@/components/DayPreview'
 import useDayMenuActions from '@/hooks/useDayMenuActions'
 import useServiceReport from '@/stores/serviceReport'
 import moment from 'moment'
-import { isStoredDateOnLocalDay } from '@/lib/normalizeDate'
+import { dayPlansOnLocalDay } from '@/lib/dayPlansByDay'
+import { localDayKey, storedDayKey } from '@/lib/normalizeDate'
 import { DayPlan, TimeEntry } from '@/types/timeEntry'
 import {
   RecurringPlan,
@@ -341,14 +342,15 @@ const CalendarDay = (
   const timeDisplayFormat = usePreferences((s) => s.timeDisplayFormat)
 
   const dateString = props.date?.dateString
+  const dayKey = dateString ? localDayKey(dateString) : undefined
   const reportsForDay =
-    dateString && props.monthsReports
-      ? props.monthsReports.filter((report) =>
-          isStoredDateOnLocalDay(report.date, dateString)
+    dayKey && props.monthsReports
+      ? props.monthsReports.filter(
+          (report) => storedDayKey(report.date) === dayKey
         )
       : []
   const dayPlansForDay = dateString
-    ? dayPlans.filter((plan) => isStoredDateOnLocalDay(plan.date, dateString))
+    ? dayPlansOnLocalDay(dayPlans, dateString)
     : []
   const recurringPlansForDay = dateString
     ? getPlansIntersectingDay(moment(dateString).toDate(), recurringPlans)

@@ -1,5 +1,6 @@
 import Constants from 'expo-constants'
 import apis from '@/constants/apis'
+import { usePreferences } from '@/stores/preferences'
 import {
   createAppConfigCheck,
   fetchAppConfig,
@@ -15,6 +16,17 @@ export const checkAppConfig = createAppConfigCheck({
   fetchConfig: () => fetchAppConfig(apis.appConfig),
   currentVersion: appVersion,
   now: Date.now,
+  // Cloud Sync's switches decide a never-chosen device's default (ADR 0030).
+  // A worker from before it has none: Cloud Sync is off there.
+  onConfig: ({ sync: read }) => {
+    const sync = read ?? { enabled: false, entitlement: 'supporter' as const }
+    const current = usePreferences.getState().cloudSyncConfig
+    if (
+      current?.enabled !== sync?.enabled ||
+      current?.entitlement !== sync?.entitlement
+    )
+      usePreferences.setState({ cloudSyncConfig: sync })
+  },
 })
 
 /** Ww-api refused a request with 426 `upgrade_required`. */

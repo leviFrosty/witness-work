@@ -13,6 +13,8 @@ import { foregroundPresentation } from '@/app/notifications/foregroundPresentati
 import { usePreferences } from '@/stores/preferences'
 import { registerAndroidSyncTransport } from '@/lib/syncTransport'
 import { googleDriveTransport } from '@/lib/syncTransport/googleDrive/googleDriveTransport'
+import { registerCloudSync } from '@/app/sync/cloudSync'
+import * as BuddiesKeychain from '../../modules/buddies-keychain'
 
 export function initializeApp() {
   perf.mark('initializeApp')
@@ -22,6 +24,9 @@ export function initializeApp() {
   // iOS keeps iCloud, and its copy keeps naming iCloud.
   if (Platform.OS === 'android')
     registerAndroidSyncTransport(googleDriveTransport)
+  // Cloud Sync (ADR 0030) needs the account key, so only binaries that can
+  // hold one offer it.
+  if (BuddiesKeychain.isAvailable()) registerCloudSync()
 
   Notifications.setNotificationHandler({
     handleNotification: async (notification) =>

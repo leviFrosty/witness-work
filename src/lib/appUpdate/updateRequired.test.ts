@@ -103,13 +103,40 @@ describe('fetchAppConfig', () => {
         'https://api.test/app/v1/config',
         answer({ ok: true, minAppVersion: '1.42.0' }) as unknown as typeof fetch
       )
-    ).resolves.toEqual({ minAppVersion: '1.42.0' })
+    ).resolves.toEqual({ minAppVersion: '1.42.0', sync: null })
     await expect(
       fetchAppConfig(
         'https://api.test/app/v1/config',
         answer({ ok: true }) as unknown as typeof fetch
       )
-    ).resolves.toEqual({ minAppVersion: null })
+    ).resolves.toEqual({ minAppVersion: null, sync: null })
+  })
+
+  it("reads Cloud Sync's switches", async () => {
+    await expect(
+      fetchAppConfig(
+        'https://api.test/app/v1/config',
+        answer({
+          ok: true,
+          sync: { enabled: true, entitlement: 'everyone' },
+        }) as unknown as typeof fetch
+      )
+    ).resolves.toEqual({
+      minAppVersion: null,
+      sync: { enabled: true, entitlement: 'everyone' },
+    })
+    await expect(
+      fetchAppConfig(
+        'https://api.test/app/v1/config',
+        answer({
+          ok: true,
+          sync: { enabled: false, entitlement: 'odd' },
+        }) as unknown as typeof fetch
+      )
+    ).resolves.toEqual({
+      minAppVersion: null,
+      sync: { enabled: false, entitlement: 'supporter' },
+    })
   })
 
   it('throws on an answer that isn’t the config', async () => {

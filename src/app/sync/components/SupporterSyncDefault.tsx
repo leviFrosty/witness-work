@@ -5,18 +5,43 @@ import { usePreferences } from '@/stores/preferences'
 import { iCloudSync } from '@/app/sync/iCloudSync'
 import { analytics } from '@/lib/analytics'
 import { hasSyncTransport, syncTransport } from '@/lib/syncTransport'
+import { registeredCloudSyncTransport } from '@/lib/syncTransport/provider'
+
+/**
+ * Whether Cloud Sync decides this device's default instead (ADR 0030 §3,
+ * `CloudSyncDefault`): it's registered, the device hasn't settled on iCloud or
+ * Drive, and the server's switch is on or hasn't been read yet.
+ */
+export const cloudSyncDecidesDefault = (state: {
+  syncProvider?: 'cloud' | 'platform' | null
+  cloudSyncConfig?: { enabled: boolean } | null
+}) =>
+  registeredCloudSyncTransport() !== null &&
+  state.syncProvider !== 'platform' &&
+  (state.cloudSyncConfig == null || state.cloudSyncConfig.enabled)
 
 // Auto-enable only before an explicit user choice. Conflicts stay disabled
-// until the user resolves them in Settings through FirstEnableSheet.
+// until the user resolves them in Settings through FirstEnableSheet. Without
+// Cloud Sync (its switch off on the server), iCloud or Drive, as before it.
 export default function SupporterSyncDefault() {
   const { isSupporter } = useIsSupporter()
-  const { iCloudSyncEnabled, iCloudSyncSetByUser } = usePreferences()
+  const {
+    iCloudSyncEnabled,
+    iCloudSyncSetByUser,
+    syncProvider,
+    cloudSyncConfig,
+  } = usePreferences()
+  const cloudDecides = cloudSyncDecidesDefault({
+    syncProvider,
+    cloudSyncConfig,
+  })
 
   useEffect(() => {
     if (!hasSyncTransport()) return
     if (!isSupporter) return
     if (iCloudSyncSetByUser) return
     if (iCloudSyncEnabled) return
+    if (cloudDecides) return
 
     // Only `incomplete` decides again; every other outcome is final here.
     let settled = false
@@ -93,7 +118,7 @@ export default function SupporterSyncDefault() {
     void attempt()
 
     return settle
-  }, [isSupporter, iCloudSyncSetByUser, iCloudSyncEnabled])
+  }, [isSupporter, iCloudSyncSetByUser, iCloudSyncEnabled, cloudDecides])
 
   return null
 }

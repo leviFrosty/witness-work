@@ -1,13 +1,22 @@
-# iCloud sync (and Google Drive sync on Android)
+# Sync: Cloud Sync, iCloud, and Google Drive
 
-WitnessWork uses a private iCloud Drive container on iOS and the hidden Google
-Drive app data folder on Android ([ADR 0019](./adr/0019-android-sync-over-google-drive-app-data.md)).
-Supporter access and this device’s opt-in are required for ongoing sync on
-both. One engine (`src/app/sync/iCloudSync.ts`) makes every sync decision and
-reads and writes only through a `SyncTransport`
-(`src/lib/syncTransport/types.ts`), so everything below applies to both
-platforms except where a section says otherwise. Sync between an iPhone and an
-Android device isn't supported.
+Each device syncs through exactly one option ([ADR 0030](./adr/0030-cloud-sync-through-ww-api.md)):
+
+- **Cloud Sync**: the account's end-to-end encrypted slots on ww-api, one per
+  device, on iPhone and Android alike. See [Cloud Sync](#cloud-sync).
+- **iCloud** on iOS: a private iCloud Drive container.
+- **Google Drive** on Android: the hidden app data folder
+  ([ADR 0019](./adr/0019-android-sync-over-google-drive-app-data.md)).
+- **Off.**
+
+One engine (`src/app/sync/iCloudSync.ts`) makes every sync decision and reads
+and writes only through a `SyncTransport` (`src/lib/syncTransport/types.ts`):
+`activeSyncTransport()` (`src/lib/syncTransport/provider.ts`) is the option's.
+Everything below applies to all three except where a section says otherwise.
+Devices on different options don't sync with each other, so an iPhone and an
+Android device sync only through Cloud Sync. iCloud and Google Drive need
+Supporter access; Cloud Sync needs what the server's `sync:entitlement` says
+(a Supporter, or everyone). Every option needs this device's opt-in.
 
 ## Data and identity
 
@@ -234,6 +243,59 @@ What differs from iCloud, and where it's handled
 Verify on emulators without a Google Account through the fake Drive server
 (`scripts/verify/fake-google-drive-server.mjs`, `__WW_DEV__.fakeGoogleDrive`).
 The Cloud console setup is in ADR 0019's Consequences.
+
+## Cloud Sync
+
+The wire contract is "Sync" in [accounts-protocol.md](./accounts-protocol.md);
+the decisions are ADR 0030. Code: `src/lib/syncTransport/server/` (transport,
+client, crypto) and `src/app/sync/` (`cloudSync.ts` runtime, `syncOption.ts`
+switching, `components/CloudSyncDefault.tsx`).
+
+- **Namespace.** Each slot reads as `witness-work-<slotId>.json`, the slot id
+  being the device's sync id, so the engine sees the same names a cloud folder
+  gives it. The account file (ADR 0011) stays on iCloud/Drive whatever the
+  option.
+- **Encryption.** Each snapshot is sealed with a key derived from the account
+  key (`HKDF(accountKey, "ww-account/v1/sync")`), which only the User's
+  devices hold. The server stores and relays ciphertext, sizes, and times.
+- **Reads** list the slots and download only those whose ETag changed;
+  **writes** put and resolve once the server has the bytes
+  (`writeConfirmsUpload`).
+- **Remote changes** come from the live socket (`/accounts/v1/sync/live`),
+  open only in the foreground, one per device, never from polling. A `changed`
+  message, or a `hello` with a newer `seq`, pulls at once.
+- **Gate.** `canSync` uses `cloudSyncEntitled` (from `GET /accounts/v1/sync`)
+  instead of the device's Supporter status. A 503 `disabled` or 403
+  `supporter_required` records itself and pauses sync; the choice is kept, so
+  it resumes when the server allows it again. Settings keeps the option rows for a device on Cloud Sync while the kill switch is off, so it can still move to iCloud, Google Drive, or Off, and its status says Cloud Sync is paused. While the server offers Cloud Sync to everyone, Settings → Sync isn't behind the Supporter gate; iCloud and Google Drive still are.
+- **Identity.** The namespace is the server account: `cloudSyncAccountToken`
+  holds a hash of its id. Moving to another account (a QR code or recovery key)
+  flushes, deletes this device's slot, resets the namespace bookkeeping, and
+  decides again as a device that never chose.
+- **Photos** aren't transferred yet: binaries list empty and photo passes skip
+  Cloud Sync. Settings says so.
+- **Errors.** `too_large` and `limit` read as storage full (20 MB a snapshot,
+  20 devices an account), 429 as rate limited, network and 5xx as offline.
+
+### Choosing and switching
+
+- A device that never chose gets Cloud Sync while the server offers it, once
+  onboarding is done and it's entitled (`CloudSyncDefault`): it seeds an empty
+  account, pulls into a device without records, or asks Merge or Replace.
+- A device already syncing through iCloud or Drive keeps it, and Settings →
+  Sync offers the switch once, with the security reason (`cloudSyncOffer`).
+- `switchSyncOption` flushes the old option's pending edits, stops, resets the
+  namespace bookkeeping (photo bookkeeping stays), reads the new option's
+  devices, joins their newest reset generation, merges ("Merge both"), and
+  pushes. A switch that can't happen (not entitled, offline, unreadable)
+  changes nothing.
+- Leaving Cloud Sync deletes this device's slot. Leaving iCloud or Drive leaves
+  this device's file there: it holds nothing newer than the switch, and
+  tombstones win over anything not strictly newer, so it can't bring back a
+  record deleted later. A switch never touches another device's file or slot.
+- Settings explains the security difference: Cloud Sync is end-to-end
+  encrypted; WitnessWork doesn't encrypt iCloud or Drive sync end to end. On
+  iCloud/Drive it says this device syncs only with devices on the same option.
 
 ## Files and validation
 

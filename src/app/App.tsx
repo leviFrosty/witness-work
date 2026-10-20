@@ -36,6 +36,7 @@ import SystemMenu from '@/app/menu-bar/SystemMenu'
 import NotesImportAttestPreparation from '@/features/notes-import/components/NotesImportAttestPreparation'
 import SupporterStoreSync from '@/features/supporter/components/SupporterStoreSync'
 import SupporterSyncDefault from '@/app/sync/components/SupporterSyncDefault'
+import CloudSyncDefault from '@/app/sync/components/CloudSyncDefault'
 import SupporterSyncLapseGate from '@/app/sync/components/SupporterSyncLapseGate'
 import AppIconSync from '@/features/settings/components/AppIconSync'
 import { FeatureFlagsRuntime } from '@/lib/featureFlags'
@@ -117,6 +118,7 @@ export default function App() {
         <NotesImportAttestPreparation />
         <SupporterStoreSync />
         <SupporterSyncDefault />
+        <CloudSyncDefault />
         <SupporterSyncLapseGate />
         <AppIconSync />
         <ThemeProvider>

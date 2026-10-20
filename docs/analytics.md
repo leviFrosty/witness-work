@@ -460,6 +460,25 @@ Device list views, generic sync notices, and resolution-link clicks are removed.
 A local manual-sync completion does not prove Apple's cloud replication finished.
 No device IDs/names, filenames, records, or payloads are included.
 
+### Cloud Sync
+
+Cloud Sync (ADR 0030) runs on the same engine, so it sends the same
+`icloud_sync_*` events; split them by the device's option with the events
+below. Each device syncs through one option: Cloud Sync, iCloud/Google Drive
+(`platform`), or `off`.
+
+| Event                        | Interpretation                                                                                                                                                                                                                 |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `cloud_sync_default_outcome` | A device that never chose a sync option tried Cloud Sync as its default. `outcome`: `seed`, `pull`, `conflict` (it asks Merge or Replace), `incomplete`, `unavailable`, `not_entitled`, `disabled`, `no_session`, or `failed`. |
+| `cloud_sync_option_changed`  | A switch finished. `from` and `to` (`cloud`, `platform`, `off`), and `source` (`settings`, `offer`, `tools`).                                                                                                                  |
+| `cloud_sync_switch_failed`   | A switch couldn't happen and nothing changed. `from`, `to`, `source`, and `reason` (`not_entitled`, `disabled`, `no_session`, `unavailable`, `incomplete`, `offline`, `account_changed`).                                      |
+| `cloud_sync_offer_answered`  | A device on iCloud/Google Drive answered the one-time offer to switch. `choice`: `switch` or `dismiss`.                                                                                                                        |
+| `cloud_sync_account_changed` | The server account behind Cloud Sync changed (a QR code or recovery key to another account), so sync stopped and the device decides again. `source` (the identity check's trigger) and `sync_was_enabled`.                     |
+
+They answer how many devices use each option, whether the default and the offer
+move devices to Cloud Sync, and why switches fail. No account ids, slot ids,
+device names, or records are sent.
+
 ## Calendar Sync and notification badges
 
 Calendar Sync is available on iOS and Android. The onboarding `calendarSync` step

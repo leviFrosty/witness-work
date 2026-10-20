@@ -63,7 +63,7 @@ import JsonViewer from '@/features/contacts/components/JsonViewer'
 import { useNavigation } from '@react-navigation/native'
 import { RootStackNavigation } from '@/types/rootStack'
 import { useRollover } from '@/features/service-reports/hooks/useRollover'
-import { syncTransport } from '@/lib/syncTransport'
+import { activeSyncTransport } from '@/lib/syncTransport/provider'
 import * as Notifications from 'expo-notifications'
 import { splitDateAndStartTime } from '@/lib/normalizeDate'
 import useCelebrationQueue from '@/features/service-reports/stores/celebrationQueue'
@@ -971,7 +971,7 @@ export default function ToolsScreen() {
   const resetAllAndWipeICloud = () =>
     Alert.alert(
       'Reset all + wipe iCloud',
-      'This wipes local data AND every witness-work file in iCloud (Google Drive on Android) — affecting all devices on this account. Cannot be undone.',
+      'This wipes local data AND every witness-work file in the sync option this device uses (iCloud, Google Drive on Android, or every Cloud Sync slot) — affecting all devices on it. Cannot be undone.',
       [
         { text: i18n.t('cancel'), style: 'cancel' },
         {
@@ -979,8 +979,8 @@ export default function ToolsScreen() {
           style: 'destructive',
           onPress: async () => {
             try {
-              await syncTransport().deleteAll()
-              await syncTransport().deleteAllBinaries()
+              await activeSyncTransport().deleteAll()
+              await activeSyncTransport().deleteAllBinaries()
             } catch (e) {
               toast.show('iCloud wipe failed', {
                 message: (e as Error).message,

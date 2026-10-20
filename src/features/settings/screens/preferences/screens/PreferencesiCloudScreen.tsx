@@ -19,13 +19,18 @@ import InputRowContainer from '@/components/ui/inputs/InputRowContainer'
 import InputRowButton from '@/components/ui/inputs/InputRowButton'
 import Text from '@/components/ui/MyText'
 import Badge from '@/components/ui/Badge'
-import IsSupporter from '@/components/IsSupporter'
+import SyncSupporterGate from '@/features/settings/components/sync/SyncSupporterGate'
+import SupporterInfoSheet from '@/components/SupporterInfoSheet'
+import useIsSupporter from '@/hooks/useIsSupporter'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
-import { syncKey } from '@/lib/syncCopy'
+import { platformSyncKey, syncKey, syncSettingsTitleKey } from '@/lib/syncCopy'
 import { usePreferences } from '@/stores/preferences'
 import { dismissICloudAccountChangeNotice } from '@/lib/iCloudIdentity'
-import { syncTransport, usesGoogleDriveSync } from '@/lib/syncTransport'
+import {
+  syncTransport as platformSyncTransport,
+  usesGoogleDriveSync,
+} from '@/lib/syncTransport'
 import { isKnownOffline, useOnline } from '@/lib/http/online'
 import { connectGoogleDriveFromUser } from '@/app/sync/googleDriveConnect'
 import GoogleDriveAccountSection from '@/features/settings/components/sync/GoogleDriveAccountSection'
@@ -42,9 +47,61 @@ import {
   UPLOAD_GRACE_MS,
 } from '@/features/settings/lib/iCloudStatus'
 import { alignText } from '@/lib/direction'
+import * as BuddiesKeychain from '../../../../../../modules/buddies-keychain'
+import { fromB64u } from '@/lib/bytes'
+import { accountSessions } from '@/lib/serverAccount'
+import { signedInElsewhere } from '@/lib/serverAccount/accountDevices'
+import {
+  activeSyncTransport as syncTransport,
+  addActiveAvailabilityListener,
+  registeredCloudSyncTransport,
+  usesCloudSync,
+} from '@/lib/syncTransport/provider'
+import { prepareCloudSync } from '@/app/sync/cloudSync'
+import {
+  currentSyncOption,
+  dismissCloudSyncOffer,
+  showsCloudSyncOffer,
+  switchSyncOption,
+  type SwitchFailure,
+  type SyncOption,
+} from '@/app/sync/syncOption'
+import SyncOptionSection, {
+  useOtherDevicesSignedIn,
+} from '@/features/settings/components/sync/SyncOptionSection'
 
 const formatOrDash = (ts: number | null): string =>
   ts ? formatDateTime(ts, { style: 'medium', withSeconds: true }) : '—'
+
+/**
+ * Whether the account has other signed-in devices: the mixed-fleet note on
+ * iCloud/Drive (ADR 0030 §6). False without an account key or session.
+ */
+async function accountHasOtherDevices(): Promise<boolean> {
+  if (!accountSessions.snapshot()) return false
+  const seed = await BuddiesKeychain.peekRootSeed().catch(() => null)
+  return seed ? signedInElsewhere(fromB64u(seed)) : false
+}
+
+/** What to tell the User when a switch or Cloud Sync's turn-on can't happen. */
+const switchFailureMessage = (reason: SwitchFailure) => {
+  switch (reason) {
+    case 'not_entitled':
+      return i18n.t('cloudSyncNotEntitled')
+    case 'disabled':
+      return i18n.t('cloudSyncDisabled')
+    case 'no_session':
+      return i18n.t('cloudSyncNoSession')
+    case 'offline':
+      return i18n.t('iCloudSyncNowOffline_description')
+    case 'incomplete':
+      return i18n.t(syncKey('iCloudRemoteNotReady_description'))
+    case 'unavailable':
+      return i18n.t(platformSyncKey('iCloudUnavailable_description'))
+    case 'account_changed':
+      return i18n.t('syncOption_accountChanged')
+  }
+}
 
 const PreferencesiCloudScreenInner = () => {
   const theme = useTheme()
@@ -68,10 +125,29 @@ const PreferencesiCloudScreenInner = () => {
     iCloudAccountChangedAt,
     googleDriveNeedsReconnect,
     developerTools,
+    cloudSyncConfig,
+    cloudSyncEntitled,
+    syncProvider,
     set,
   } = usePreferences()
+  // Cloud Sync (ADR 0030) is offered once the server's switch is on; the
+  // screen then picks between it, iCloud or Google Drive, and Off.
+  // A device already on Cloud Sync keeps the choice while the server's switch
+  // pauses it, so it can still move to iCloud, Google Drive, or Off.
+  const cloudOffered =
+    registeredCloudSyncTransport() !== null &&
+    (cloudSyncConfig?.enabled === true || syncProvider === 'cloud')
+  const option = currentSyncOption()
+  const onCloud = option === 'cloud'
+  const offer = usePreferences(showsCloudSyncOffer)
+  const [switchingTo, setSwitchingTo] = useState<SyncOption | null>(null)
+  const otherDevicesSignedIn = useOtherDevicesSignedIn(accountHasOtherDevices)
+  // With Cloud Sync open to everyone the screen isn't gated, but iCloud and
+  // Google Drive sync still are.
+  const { isSupporter } = useIsSupporter()
+  const [platformGateOpen, setPlatformGateOpen] = useState(false)
   // Android syncs through the connected Google Account's Drive (ADR 0019).
-  const googleDrive = usesGoogleDriveSync()
+  const googleDrive = usesGoogleDriveSync() && syncProvider !== 'cloud'
   const [syncing, setSyncing] = useState(false)
   const [available, setAvailable] = useState(() =>
     syncTransport().isAvailable()
@@ -126,7 +202,7 @@ const PreferencesiCloudScreenInner = () => {
   // Re-check availability on mount and whenever the identity changes.
   useEffect(() => {
     setAvailable(syncTransport().isAvailable())
-    const sub = syncTransport().addAvailabilityChangeListener((e) => {
+    const sub = addActiveAvailabilityListener((e) => {
       setAvailable(e.available)
     })
     return () => sub.remove()
@@ -296,9 +372,11 @@ const PreferencesiCloudScreenInner = () => {
     }
     set({ iCloudSyncSetByUser: true, iCloudAccountChangedAt: null })
     setPendingEnable(true)
-    // Turning sync on is how Android users first connect Google Drive.
+    // Turning sync on is how Android users first connect Google Drive. Read
+    // now: the option picker may have just chosen it.
     if (
-      googleDrive &&
+      usesGoogleDriveSync() &&
+      !usesCloudSync() &&
       !syncTransport().isAvailable() &&
       !(await connectGoogleDriveFromUser({ source: 'settings' }))
     ) {
@@ -376,6 +454,130 @@ const PreferencesiCloudScreenInner = () => {
       setSyncing(false)
       setPendingEnable(null)
     }
+  }
+
+  /** Runs a switch between options, saying how it went. */
+  const runSwitch = async (next: SyncOption, source: 'settings' | 'offer') => {
+    setSwitchingTo(next)
+    try {
+      const result = await switchSyncOption(next, source)
+      if (result.outcome === 'failed') {
+        Alert.alert(
+          i18n.t('syncOption_switchFailed_title'),
+          switchFailureMessage(result.reason)
+        )
+        return
+      }
+      toast.show(
+        i18n.t(
+          next === 'cloud'
+            ? 'syncOption_switchedCloud'
+            : next === 'platform'
+              ? platformSyncKey('syncOption_switchedPlatform')
+              : 'syncOption_turnedOff'
+        ),
+        { native: true }
+      )
+    } finally {
+      setSwitchingTo(null)
+    }
+  }
+
+  /**
+   * The option picker. From Off it turns sync on through the first-enable flow
+   * (which asks Merge, Replace or Keep when both sides have data); between
+   * Cloud Sync and iCloud/Drive it switches, merging this device's data into
+   * the new option; to Off it pauses.
+   */
+  const handleSelect = async (
+    next: SyncOption,
+    source: 'settings' | 'offer' = 'settings'
+  ) => {
+    if (syncing || switchingTo || next === option) return
+    if (next === 'platform' && !isSupporter) {
+      setPlatformGateOpen(true)
+      return
+    }
+    if (source === 'offer')
+      analytics.capture('cloud_sync_offer_answered', { choice: 'switch' })
+    if (option === 'off') {
+      if (next === 'cloud') {
+        setSwitchingTo('cloud')
+        const prepared = await prepareCloudSync()
+        setSwitchingTo(null)
+        if (prepared.outcome !== 'ready') {
+          Alert.alert(
+            i18n.t('syncOption_switchFailed_title'),
+            switchFailureMessage(
+              prepared.outcome === 'not_entitled'
+                ? 'not_entitled'
+                : prepared.outcome === 'disabled'
+                  ? 'disabled'
+                  : 'no_session'
+            )
+          )
+          return
+        }
+      }
+      // A choice made here answers the one-time offer too.
+      set({
+        syncProvider: next === 'cloud' ? 'cloud' : 'platform',
+        cloudSyncOffer: 'dismissed',
+      })
+      await handleToggle(true)
+      return
+    }
+    if (next === 'off') {
+      if (option === 'platform') {
+        await handleToggle(false)
+        return
+      }
+      Alert.alert(
+        i18n.t('cloudSyncTurnOff_title'),
+        i18n.t('cloudSyncTurnOff_description'),
+        [
+          { text: i18n.t('cancel'), style: 'cancel' },
+          {
+            text: i18n.t('cloudSyncTurnOff_action'),
+            style: 'destructive',
+            onPress: () => void runSwitch('off', source),
+          },
+        ]
+      )
+      return
+    }
+    // Turning Drive on is how Android users connect a Google Account, from
+    // Cloud Sync too (where `googleDrive` is false).
+    if (
+      next === 'platform' &&
+      usesGoogleDriveSync() &&
+      !platformSyncTransport().isAvailable() &&
+      !(await connectGoogleDriveFromUser({ source: 'settings' }))
+    )
+      return
+    if (source === 'offer') {
+      void runSwitch(next, source)
+      return
+    }
+    Alert.alert(
+      i18n.t(
+        next === 'cloud'
+          ? 'syncOption_toCloud_title'
+          : platformSyncKey('syncOption_toPlatform_title')
+      ),
+      i18n.t(
+        next === 'cloud'
+          ? platformSyncKey('syncOption_toCloud_description')
+          : platformSyncKey('syncOption_toPlatform_description')
+      ),
+      [
+        { text: i18n.t('cancel'), style: 'cancel' },
+        {
+          text: i18n.t('syncOption_switchAction'),
+          onPress: () => void runSwitch(next, source),
+        },
+      ]
+    )
   }
 
   const handleFirstEnableChoice = (choice: FirstEnableChoice) => {
@@ -493,7 +695,9 @@ const PreferencesiCloudScreenInner = () => {
   const status = buildICloudStatus({
     enabled: iCloudSyncEnabled,
     available,
-    paused: iCloudSyncPausedForLapse,
+    // Cloud Sync's entitlement is the server's (ADR 0030).
+    paused: onCloud ? cloudSyncEntitled === false : iCloudSyncPausedForLapse,
+    pausedBySwitch: onCloud && cloudSyncConfig?.enabled === false,
     needsResolution: iCloudSyncNeedsResolution,
     issue: iCloudSyncIssue,
     uploadIssue: iCloudUploadIssue,
@@ -725,12 +929,16 @@ const PreferencesiCloudScreenInner = () => {
                   color: theme.colors.text,
                 }}
               >
-                {i18n.t(syncKey('iCloudSync'))}
+                {i18n.t(syncSettingsTitleKey())}
               </Text>
               <InfoPopover
-                title={i18n.t(syncKey('iCloudSync'))}
+                title={i18n.t(syncSettingsTitleKey())}
                 description={i18n.t('twoSentences', {
-                  first: i18n.t(syncKey('iCloudSync_description')),
+                  first: i18n.t(
+                    cloudOffered
+                      ? platformSyncKey('syncSettings_description')
+                      : syncKey('iCloudSync_description')
+                  ),
                   second: i18n.t(syncKey('iCloudBetaNotice')),
                 })}
               />
@@ -749,9 +957,29 @@ const PreferencesiCloudScreenInner = () => {
             </Badge>
           </View>
           <Text style={{ fontSize: 13, color: theme.colors.textAlt }}>
-            {i18n.t(syncKey('iCloudSync_summary'))}
+            {i18n.t(
+              cloudOffered
+                ? 'syncSettings_summary'
+                : syncKey('iCloudSync_summary')
+            )}
           </Text>
         </View>
+
+        {cloudOffered && (
+          <SyncOptionSection
+            option={
+              pendingEnable && option === 'off'
+                ? (syncProvider ?? 'cloud')
+                : option
+            }
+            busy={switchingTo}
+            onSelect={(next) => void handleSelect(next)}
+            onSwitchFromOffer={() => void handleSelect('cloud', 'offer')}
+            offer={offer}
+            onDismissOffer={dismissCloudSyncOffer}
+            otherDevicesSignedIn={otherDevicesSignedIn}
+          />
+        )}
 
         {showAccountChangedNotice && (
           <Card
@@ -785,24 +1013,29 @@ const PreferencesiCloudScreenInner = () => {
         )}
 
         <Section>
-          <InputRowContainer
-            label={i18n.t(syncKey('iCloudEnableLabel'))}
-            controlWidth='auto'
-            style={{ justifyContent: 'space-between' }}
-          >
-            <View
-              style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}
+          {!cloudOffered && (
+            <InputRowContainer
+              label={i18n.t(syncKey('iCloudEnableLabel'))}
+              controlWidth='auto'
+              style={{ justifyContent: 'space-between' }}
             >
-              {syncing && (
-                <ActivityIndicator size='small' color={theme.colors.textAlt} />
-              )}
-              <Switch
-                value={pendingEnable ?? iCloudSyncEnabled}
-                onValueChange={handleToggle}
-                disabled={syncing || pendingEnable !== null}
-              />
-            </View>
-          </InputRowContainer>
+              <View
+                style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}
+              >
+                {syncing && (
+                  <ActivityIndicator
+                    size='small'
+                    color={theme.colors.textAlt}
+                  />
+                )}
+                <Switch
+                  value={pendingEnable ?? iCloudSyncEnabled}
+                  onValueChange={handleToggle}
+                  disabled={syncing || pendingEnable !== null}
+                />
+              </View>
+            </InputRowContainer>
+          )}
           <InputRowContainer
             label={i18n.t(syncKey('iCloudStatusLabel'))}
             lastInSection
@@ -845,9 +1078,9 @@ const PreferencesiCloudScreenInner = () => {
           )}
         </Section>
 
-        {googleDrive && <GoogleDriveAccountSection />}
+        {googleDrive && !onCloud && <GoogleDriveAccountSection />}
 
-        {!googleDrive && !available && (
+        {!googleDrive && !onCloud && !available && (
           <Section>
             <InputRowButton
               label={i18n.t(syncKey('iCloudOpenSettings'))}
@@ -984,7 +1217,15 @@ const PreferencesiCloudScreenInner = () => {
           </Section>
         )}
 
-        {iCloudSyncEnabled && (
+        {iCloudSyncEnabled && onCloud && (
+          <View>
+            <Text style={{ fontSize: 12, color: theme.colors.textAlt }}>
+              {i18n.t('cloudSyncPhotosNote')}
+            </Text>
+          </View>
+        )}
+
+        {iCloudSyncEnabled && !onCloud && (
           <View style={{ gap: 8 }}>
             <View
               style={{
@@ -1089,15 +1330,20 @@ const PreferencesiCloudScreenInner = () => {
         remote={pendingRemote}
         onChoose={handleFirstEnableChoice}
       />
+      <SupporterInfoSheet
+        open={platformGateOpen}
+        setOpen={setPlatformGateOpen}
+        featureKey='iCloudSync'
+      />
     </Wrapper>
   )
 }
 
 const PreferencesiCloudScreen = () => (
   <SettingsInputLayout>
-    <IsSupporter analyticsSurface='icloud_sync' feature='iCloudSync' fill>
+    <SyncSupporterGate>
       <PreferencesiCloudScreenInner />
-    </IsSupporter>
+    </SyncSupporterGate>
   </SettingsInputLayout>
 )
 

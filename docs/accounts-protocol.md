@@ -1,6 +1,6 @@
 # Server account protocol
 
-The wire contract for the server account between the WitnessWork app (`src/lib/serverAccount`) and ww-api (`ww-api/src/accounts`). Why it exists is in [ADR 0024](./adr/0024-anonymous-server-accounts.md); moving it, recovering it, and backing up to it are in [ADR 0026](./adr/0026-move-and-recover-the-server-account.md); attested sessions and bearer tokens are in [ADR 0027](./adr/0027-account-sessions-attest-once-then-bearer-tokens.md); the activity log and device list are in [ADR 0028](./adr/0028-account-activity-log.md); Supporter status on the account is in [ADR 0029](./adr/0029-supporter-status-on-the-server-account.md).
+The wire contract for the server account between the WitnessWork app (`src/lib/serverAccount`) and ww-api (`ww-api/src/accounts`). Why it exists is in [ADR 0024](./adr/0024-anonymous-server-accounts.md); moving it, recovering it, and backing up to it are in [ADR 0026](./adr/0026-move-and-recover-the-server-account.md); attested sessions and bearer tokens are in [ADR 0027](./adr/0027-account-sessions-attest-once-then-bearer-tokens.md); the activity log and device list are in [ADR 0028](./adr/0028-account-activity-log.md); Supporter status on the account is in [ADR 0029](./adr/0029-supporter-status-on-the-server-account.md); Cloud Sync is in [ADR 0030](./adr/0030-cloud-sync-through-ww-api.md).
 
 The server account is not ADR 0011's account id. That one is the RevenueCat identity, shared through a file in iCloud Drive. This one is a row ww-api owns, so it can suspend someone for abuse. The account links the RevenueCat customers its devices use (see [Supporter status](#supporter-status)).
 
@@ -292,6 +292,55 @@ Each device keeps its own encrypted slot in R2, at `v1/<accountId>/<slotId>`. A 
 - **Delete.** Settings → Account lists the account's slots as "This phone" or "Another device" with their date and size (names are inside the ciphertext). Deleting one, or Delete Backup for all, deletes from R2 at once; either also turns backup off on this device. Turning backup off asks whether to delete this device's slot.
 - **Delete Buddies** deletes the account key, so it first deletes every slot of the account, with the key's session and signature, then closes the session. If deleting the slots fails, nothing else happens and the User is told. With backup on, the next upload creates the new key's account, and the app says the recovery key changed. Replacing the key with another (a handoff or a recovery key) leaves the old account's slots to expire.
 
+## Sync
+
+Cloud Sync ([ADR 0030](./adr/0030-cloud-sync-through-ww-api.md)): each device on it keeps one end-to-end encrypted snapshot of its data in a slot of the account, and every device merges the others' with the sync engine ([icloud-sync.md](./icloud-sync.md)). One `AccountSync` Durable Object per account holds the slots' metadata and the live sockets; R2 holds the ciphertext at `v1/<accountId>/<slotId>`.
+
+### The blob
+
+The backup's format under its own key and AAD:
+
+- Sync key: `HKDF-SHA256(accountKey, "", "ww-account/v1/sync", 32)`.
+- `0x01 ‖ nonce[24] ‖ XChaCha20-Poly1305(syncKey, nonce, gzip(plaintext), aad)`, with `aad = UTF-8("ww-account/v1/sync\n" + accountId + "\n" + slotId)`.
+- The plaintext is the backup's JSON (`v`, `deviceName`, `platform`, `createdAt`, `payload`), where `payload` is the whole sync payload, `resetEpoch` included.
+- The slot id is the device's sync id (`iCloudDeviceId`, the `<deviceId>` in `witness-work-<deviceId>.json`): 8 to 64 characters of `A-Z a-z 0-9 _ -`.
+
+### Ops
+
+Every op is **Bearer**. Ids travel in bodies and headers, never URLs.
+
+| Op                              | Request                                   | Response                                                      |
+| ------------------------------- | ----------------------------------------- | ------------------------------------------------------------- |
+| `GET /accounts/v1/sync`         | None                                      | `{ ok, enabled, entitled, entitlement, supporter }`           |
+| `POST /accounts/v1/sync/put`    | The blob; `slotId`, `sha256`, `If-Match`? | `{ ok, etag, size, updatedAt, seq }`                          |
+| `POST /accounts/v1/sync/list`   | `{}`                                      | `{ ok, seq, slots: [{ slotId, etag, size, updatedAt }] }`     |
+| `POST /accounts/v1/sync/get`    | `{ slotId }`                              | The blob, `application/octet-stream`; `not_found` without one |
+| `POST /accounts/v1/sync/delete` | `{ slotId }`, or `{}` for every slot      | `{ ok, seq }`                                                 |
+| `GET /accounts/v1/sync/live`    | WebSocket upgrade; `x-ww-slot-id`         | `hello`, then `changed` messages                              |
+
+- `GET /accounts/v1/sync` is the account's answer: `enabled` (the kill switch), `entitlement` (`supporter` or `everyone`), `supporter` (the account's own status, ADR 0029), and `entitled` (enabled, and `everyone` or a Supporter). A RevenueCat failure answers `supporter: false` with `supporterCheckFailed: true`, never a 5xx. Works while disabled.
+- `sync/put` sends the blob as the raw body with the slot id in `x-ww-slot-id`, `sha256` (b64u of the body's SHA-256) in `x-ww-sha256`, and its size as `Content-Length`. The slot's ETag is that `sha256`. `If-Match: "<etag>"` puts only if the slot still holds that ETag (412 `precondition_failed` otherwise); `If-Match: *` only if the slot exists. Without it the put replaces whatever is there. A slot deleted while its put was uploading is 409 `conflict`; nothing is stored.
+- `updatedAt` is the server's time of the slot's last put (epoch ms), the transport's `modifiedAt`. `seq` counts the account's puts and deletes; it only grows.
+- `sync/get` answers with the bytes exactly as put, `ETag: "<etag>"`, `x-ww-updated-at`, and `Cache-Control: no-store`.
+- `sync/delete` is idempotent: a missing slot is `ok`. Without `slotId` it deletes every slot of the account. Deleting every slot needs a live session (`requireLiveSession`), so a signed-out device's last access token can't. A device deletes its own slot when it leaves Cloud Sync or the account; another device's only from its Devices list, Rebuild, or "Keep this device's data".
+- **Live socket**: the upgrade carries the bearer token and the device's own slot id (`x-ww-slot-id`). The server sends `{"type":"hello","seq":n}` once (as Buddies' inbox socket does), then `{"type":"changed","seq":n}` after every put or delete by another slot. Sending `ping` gets `pong` without waking the Durable Object. At most 20 sockets an account: one more closes the oldest with `4000 "replaced"`. It carries no data.
+- **Switches**: `put`, `list`, `get`, and `live` are 503 `disabled` (with `Retry-After`) while the kill switch is off, and 403 `supporter_required` when the account isn't entitled. With `entitlement: supporter`, a RevenueCat failure is 503 `unavailable` (with `Retry-After`), never `supporter_required`. `delete` and the status always work.
+- **Limits**: 20 MiB a blob (`too_large`, 413, refused from `Content-Length` before the body is read), 20 slots an account (`limit`, 429, for a new slot only), one put a slot every 2 seconds and one at a time, and 1,000 puts and 2 GiB an account a rolling day (`rate_limited`, 429, with `Retry-After`). `sync/put` counts against the Buddies write edge tier, the rest against the read tier.
+- **Retention**: a slot not written for 30 days whose last writer's session has ended is deleted; so is any slot not written for 400 days (R2's lifecycle rule is the backstop).
+- A suspended account keeps syncing.
+- `disabled` (503) also when the worker has no sync bucket or accounts database.
+
+`GET /app/v1/config` carries the switches for devices without a session: `sync: { enabled, entitlement }`.
+
+### The app
+
+- **One option.** A device syncs through Cloud Sync, iCloud (iOS) or Google Drive (Android), or not at all (`syncProvider` in device-local preferences). The engine runs on that one transport (`activeSyncTransport()`); devices on different options don't see each other.
+- **Default.** A device that never chose (no `syncProvider`, sync not turned off by the User) gets Cloud Sync once `sync.enabled` and it's entitled (`everyone`, or a Supporter): it opens the account's session (creating the account key when there's none), then decides like the Supporter auto-enable: seed an empty account, pull into a device without records, or ask Merge or Replace. A device already on iCloud or Google Drive keeps it and sees a one-time offer to switch in Settings → Sync.
+- **Switching** flushes the old transport, joins the new one's newest reset generation and merges with its devices, then pushes. Leaving Cloud Sync deletes this device's slot (devices on Cloud Sync keep what they've already pulled from it; one that was offline since its last edits doesn't get them); leaving iCloud or Drive leaves this device's file there, where it can't bring back a record deleted later.
+- **Reads.** A pull lists the slots and downloads only those whose ETag changed since this launch's last read; this device's own slot is never downloaded. Photos aren't transferred.
+- **Live.** One socket per device, in the foreground only, reconnecting with backoff (1, 2, 5, 15, 30 s, then every minute) and with a fresh token after a refresh. `hello` with a `seq` newer than the last pull, and every `changed`, pull at once.
+- **Leaving the account** (a QR code or a recovery key to another account) flushes, deletes this device's slot, and stops sync before the key is replaced. Delete Buddies on the account's last device deletes every slot.
+
 ## Supporter status
 
 ww-api answers whether an account is a Supporter from its own record, which RevenueCat's webhook keeps current ([ADR 0029](./adr/0029-supporter-status-on-the-server-account.md)). Who counts is still [ADR 0014](./adr/0014-supporter-status-rule.md)'s rule. The app keeps logging in to RevenueCat with ADR 0011's shared id and links that customer to its account.
@@ -380,3 +429,5 @@ The RevenueCat app user ids an account's devices link, each with its Supporter s
 The activity log holds, for 400 days, each entry's kind and time, the session ids and platforms it names, their sealed device labels, and backup slot ids. No IP address, location, user agent, or content, and nothing about buddies.
 
 Handoff channels hold two temporary public keys and two sealed blobs for at most ten minutes. Backups are ciphertext under a key only the User's devices can derive; the server keeps each slot's size, upload time, and random slot id, and can't read a device name or any data. Losing every device and the recovery key loses the backup.
+
+Cloud Sync holds the same kind of ciphertext, one slot per device, with each slot's id (the device's sync id), size, ETag, last write time, and the session that wrote it, until 30 days after that session ends (400 days at most without a write). Its live sockets carry only change notices.

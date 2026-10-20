@@ -40,20 +40,41 @@ export function requireUpdateFromServer(currentVersion: string | null) {
   })
 }
 
+/** Cloud Sync's switches (ADR 0030), for devices without a session. */
+export type AppSyncConfig = {
+  enabled: boolean
+  entitlement: 'supporter' | 'everyone'
+}
+
+export type AppConfig = {
+  minAppVersion: string | null
+  /** Null from a worker before Cloud Sync. */
+  sync: AppSyncConfig | null
+}
+
 /** `GET /app/v1/config`. Failures throw `HttpError`. */
 export async function fetchAppConfig(
   url: string,
   fetchImpl?: typeof fetch
-): Promise<{ minAppVersion: string | null }> {
+): Promise<AppConfig> {
   const response = await request<{
     ok?: unknown
     minAppVersion?: unknown
+    sync?: { enabled?: unknown; entitlement?: unknown } | null
   } | null>({ url, timeoutMs: 8_000, fetchImpl })
   if (response.data?.ok !== true)
     throw new HttpError('server', response.status, 'unexpected_response')
-  const { minAppVersion } = response.data
+  const { minAppVersion, sync } = response.data
   return {
     minAppVersion: typeof minAppVersion === 'string' ? minAppVersion : null,
+    sync:
+      sync && typeof sync.enabled === 'boolean'
+        ? {
+            enabled: sync.enabled,
+            entitlement:
+              sync.entitlement === 'everyone' ? 'everyone' : 'supporter',
+          }
+        : null,
   }
 }
 
@@ -69,9 +90,13 @@ export const APP_CONFIG_MIN_INTERVAL_MS = 60_000
  * working app is never locked for a config it couldn't read.
  */
 export function createAppConfigCheck(deps: {
-  fetchConfig: () => Promise<{ minAppVersion: string | null }>
+  fetchConfig: () => Promise<
+    Partial<AppConfig> & { minAppVersion: string | null }
+  >
   currentVersion: () => string | null | undefined
   now: () => number
+  /** Every config read, for what else it carries (Cloud Sync's switches). */
+  onConfig?: (config: AppConfig) => void
 }) {
   let lastAt = -Infinity
   let pending: Promise<void> | null = null
@@ -82,7 +107,8 @@ export function createAppConfigCheck(deps: {
     lastAt = deps.now()
     pending = deps
       .fetchConfig()
-      .then(({ minAppVersion }) => {
+      .then(({ minAppVersion, sync = null }) => {
+        deps.onConfig?.({ minAppVersion, sync })
         const required = useUpdateRequired.getState().required
         if (required?.source === 'server') return
         const below = belowMinVersion(deps.currentVersion(), minAppVersion)

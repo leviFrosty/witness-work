@@ -29,4 +29,21 @@ describe('syncKey', () => {
     // Neutral wording has no variant.
     expect(syncKey('iCloudSyncNow')).toBe('iCloudSyncNow')
   })
+
+  it('uses the Cloud variant on Cloud Sync, where one exists', async () => {
+    const { syncKey, registerAndroidSyncTransport } = await load()
+    const { registerCloudSyncCopy } = await import(
+      '@/lib/syncTransport/registry'
+    )
+    registerAndroidSyncTransport({ kind: 'google-drive' } as never)
+    registerCloudSyncCopy({ offered: () => true, used: () => true })
+    expect(syncKey('iCloudSync')).toBe('iCloudSyncCloud')
+    // No Cloud variant: Drive's, then the base string.
+    expect(syncKey('iCloudSyncNow')).toBe('iCloudSyncNow')
+    const { platformSyncKey, syncSettingsTitleKey } = await import(
+      '@/lib/syncCopy'
+    )
+    expect(platformSyncKey('iCloudSync')).toBe('iCloudSyncAndroid')
+    expect(syncSettingsTitleKey()).toBe('syncSettingsTitle')
+  })
 })

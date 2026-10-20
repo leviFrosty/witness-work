@@ -1,10 +1,12 @@
 /**
- * The sync engine (docs/icloud-sync.md, ADR 0019). Platform-agnostic: it reads
- * and writes per-device snapshots, photos and the account file through
- * `syncTransport()` — the iCloud container on iOS, the Google Drive app data
- * folder on Android — and owns every decision about them: merges, resets,
- * retries, photo transfer, and the Devices list. The `iCloud*` names in this
- * file and its preferences predate Android and describe either transport.
+ * The sync engine (docs/icloud-sync.md, ADR 0019, ADR 0030).
+ * Transport-agnostic: it reads and writes per-device snapshots and photos
+ * through `activeSyncTransport()` — Cloud Sync's slots on ww-api, the iCloud
+ * container on iOS, or the Google Drive app data folder on Android, one at a
+ * time — and owns every decision about them: merges, resets, retries, photo
+ * transfer, and the Devices list. The `iCloud*` names in this file and its
+ * preferences predate Android and Cloud Sync and describe whichever transport
+ * is active.
  */
 import { perf } from '@/lib/perf'
 import { lastForegroundAt } from '@/lib/appLifecycle'
@@ -53,7 +55,7 @@ import * as FileSystem from 'expo-file-system/legacy'
 import debounce from 'lodash/debounce'
 import {
   hasSyncTransport,
-  syncTransport,
+  syncTransport as platformSyncTransport,
   syncTransportErrorCode,
   type SyncFile,
   type SyncRead,
@@ -64,6 +66,12 @@ import {
   TRANSPORT_READ_TIMEOUT_MS,
   withTransportTimeout,
 } from '@/lib/syncTransport/timeout'
+import {
+  activeSyncTransport as syncTransport,
+  addActiveAvailabilityListener,
+  addActiveRemoteChangeListener,
+  usesCloudSync,
+} from '@/lib/syncTransport/provider'
 import useContacts from '@/stores/contactsStore'
 import useConversations from '@/stores/conversationStore'
 import useServiceReport from '@/stores/serviceReport'
@@ -96,7 +104,6 @@ import {
 import { logger } from '@/lib/logger'
 import { errorTracking } from '@/lib/errorTracking'
 import * as Device from 'expo-device'
-import { EventSubscription } from 'expo-modules-core'
 import { CustomFieldDefinition } from '@/types/customField'
 import { Category } from '@/types/category'
 import { isSeededBuiltinCategory } from '@/constants/categories'
@@ -493,10 +500,25 @@ export function canSync(): boolean {
   if (!hasSyncTransport()) return false
   const { iCloudSyncEnabled } = usePreferences.getState()
   if (!iCloudSyncEnabled) return false
-  if (!useSupporter.getState().isSupporter) return false
+  if (!syncEntitled()) return false
   if (!syncTransport().isAvailable()) return false
   return checkICloudIdentity('can_sync')
 }
+
+/**
+ * Whether this device may sync on its transport right now. iCloud and Drive
+ * sync are a Supporter benefit by RevenueCat's client-side answer; Cloud Sync
+ * asks the server, which applies its own entitlement switch
+ * (`sync:entitlement`) to the account (ADR 0030).
+ */
+export function syncEntitled(): boolean {
+  if (usesCloudSync())
+    return usePreferences.getState().cloudSyncEntitled === true
+  return useSupporter.getState().isSupporter
+}
+
+/** Whether the active transport moves photo bytes (Cloud Sync doesn't yet). */
+const transportHoldsPhotos = () => syncTransport().supportsBinaries !== false
 
 /**
  * The Apple Account a read of iCloud was made under, as `checkICloudIdentity`
@@ -829,6 +851,7 @@ async function removePreResetFiles(
  */
 function deleteUnreferencedCloudPhotos(): Promise<void> {
   return serializeImages(async () => {
+    if (!transportHoldsPhotos()) return
     const keep = new Set<string>()
     const { contacts, deletedContacts } = useContacts.getState()
     for (const contact of [...contacts, ...deletedContacts])
@@ -1111,6 +1134,7 @@ function buildImageSyncDeps(oneShot = false): ImageSyncDeps {
   return {
     canTransfer: () =>
       usePreferences.getState().iCloudSyncIncludeImages &&
+      transportHoldsPhotos() &&
       syncTransport().isAvailable() &&
       (oneShot || canSync()),
     bridge: {
@@ -1212,6 +1236,7 @@ function pushImagesIfEnabled(
 /** Uploads note photos that aren't in the cloud yet. */
 async function pushNoteImagesInner(published: boolean): Promise<void> {
   const prefs = usePreferences.getState()
+  if (!transportHoldsPhotos()) return
   if (!prefs.iCloudSyncIncludeImages || !canSync()) return
   if (!published && prefs.iCloudSyncPendingPush) return
   if (!hasSyncTransport()) return
@@ -1239,6 +1264,7 @@ async function pushNoteImagesInner(published: boolean): Promise<void> {
 /** Downloads note photos a note refers to that this device doesn't have. */
 async function pullNoteImagesInner(oneShot: boolean): Promise<void> {
   const prefs = usePreferences.getState()
+  if (!transportHoldsPhotos()) return
   if (!prefs.iCloudSyncIncludeImages) return
   if (!hasSyncTransport()) return
   if (!oneShot && !canSync()) return
@@ -1278,6 +1304,7 @@ async function pushImagesInner(
   publishedSources?: AvatarSource[]
 ): Promise<void> {
   const prefs = usePreferences.getState()
+  if (!transportHoldsPhotos()) return
   if (!prefs.iCloudSyncIncludeImages || !canSync()) return
   if (!publishedSources && prefs.iCloudSyncPendingPush) return
   if (!hasSyncTransport()) return
@@ -1334,6 +1361,7 @@ function pullImagesIfEnabled(oneShot = false): Promise<void> {
 }
 async function pullImagesInner(oneShot = false): Promise<void> {
   const prefs = usePreferences.getState()
+  if (!transportHoldsPhotos()) return
   if (!prefs.iCloudSyncIncludeImages) return
   if (!hasSyncTransport()) return
   if (!oneShot && !canSync()) return
@@ -1453,6 +1481,7 @@ const sameIds = (a: Set<string>, b: Set<string>) =>
 
 async function gcImages(): Promise<void> {
   const prefs = usePreferences.getState()
+  if (!transportHoldsPhotos()) return
   if (!prefs.iCloudSyncIncludeImages) return
   if (!hasSyncTransport()) return
   try {
@@ -2686,22 +2715,24 @@ export function installiCloudSync(): () => void {
   // Drive lists the folder every minute while the app is open. With sync off
   // that's only worth it for a device that may adopt another device's
   // Supporter status from the account file.
-  syncTransport().setShouldPoll?.(
+  // Not while this device is on Cloud Sync, which never reads the folder.
+  platformSyncTransport().setShouldPoll?.(
     () =>
-      usePreferences.getState().iCloudSyncEnabled ||
-      !useSupporter.getState().isSupporter
+      !usesCloudSync() &&
+      (usePreferences.getState().iCloudSyncEnabled ||
+        !useSupporter.getState().isSupporter)
   )
   // The launch-time rollover waits for a pull only when one can come.
   setICloudPullWaitGate(
     () =>
       usePreferences.getState().iCloudSyncEnabled &&
-      useSupporter.getState().isSupporter &&
+      syncEntitled() &&
       syncTransport().isAvailable() &&
       !isKnownOffline()
   )
 
-  let remoteChangeSub: EventSubscription | null = null
-  let availabilitySub: EventSubscription | null = null
+  let remoteChangeSub: { remove: () => void } | null = null
+  let availabilitySub: { remove: () => void } | null = null
   const debouncedRemotePull = debounce(
     () => {
       if (!canSync()) return
@@ -2710,7 +2741,7 @@ export function installiCloudSync(): () => void {
     REMOTE_CHANGE_DEBOUNCE_MS,
     { leading: true, trailing: true }
   )
-  remoteChangeSub = syncTransport().addRemoteChangeListener(() => {
+  remoteChangeSub = addActiveRemoteChangeListener(() => {
     if (!canSync()) return
     debouncedRemotePull()
   })
@@ -2734,7 +2765,12 @@ export function installiCloudSync(): () => void {
       catchUpIfActive('supporter-ready')
     }
   })
-  availabilitySub = syncTransport().addAvailabilityChangeListener((e) => {
+  // Cloud Sync's entitlement is the server's answer, recorded as it arrives.
+  const unsubEntitled = usePreferences.subscribe((state, prev) => {
+    if (state.cloudSyncEntitled && !prev.cloudSyncEntitled && usesCloudSync())
+      catchUpIfActive('entitled')
+  })
+  availabilitySub = addActiveAvailabilityListener((e) => {
     checkICloudIdentity('availability')
     if (!e.available) {
       logger.warn(`${tag()} iCloud became unavailable`)
@@ -2747,11 +2783,12 @@ export function installiCloudSync(): () => void {
   return () => {
     unsubLocalData()
     unsubSupporter()
+    unsubEntitled()
     appStateSub.remove()
     foregroundSub.remove()
     backgroundSub.remove()
     reconnectSub.remove()
-    syncTransport().setShouldPoll?.(() => true)
+    platformSyncTransport().setShouldPoll?.(() => true)
     setICloudPullWaitGate(() => true)
     remoteChangeSub?.remove()
     availabilitySub?.remove()
@@ -2800,6 +2837,15 @@ export async function enableImageSync(): Promise<void> {
   await pullImagesIfEnabled(!canSync())
 }
 
+/**
+ * Resolves once no push or pull is running. Switching sync options waits for it
+ * with sync turned off, so nothing starts again meanwhile.
+ */
+export async function waitForSyncIdle(): Promise<void> {
+  while (pushInFlight || pullInFlight)
+    await Promise.allSettled([pushInFlight, pullInFlight])
+}
+
 /** For tests + the Settings "Sync now" button. */
 export const iCloudSync = {
   push,
@@ -2827,4 +2873,5 @@ export const iCloudSync = {
   pullImagesIfEnabled: () => pullImagesIfEnabled(true),
   gcImagesIfEnabled,
   isPushScheduled: () => pushScheduled,
+  waitForSyncIdle,
 }

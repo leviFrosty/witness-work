@@ -2,15 +2,20 @@ import { Platform } from 'react-native'
 import { usePreferences } from '@/stores/preferences'
 import { clearAdoptedAccountId } from '@/lib/account'
 import { androidDeviceInstallId, getOrCreateInstallId } from '@/lib/installId'
-import { hasSyncTransport, syncTransport } from '@/lib/syncTransport'
+import { hasSyncTransport } from '@/lib/syncTransport'
+import {
+  activeSyncTransport as syncTransport,
+  usesCloudSync,
+} from '@/lib/syncTransport/provider'
 import { analytics } from '@/lib/analytics'
 import { logger } from '@/lib/logger'
 
 /**
  * Which physical device and which cloud account sync is talking for — the Apple
- * Account on iOS, the connected Google Account on Android (ADR 0019). Both
- * identities are recorded device-locally (`NON_SYNCABLE_PREFERENCE_KEYS`) and
- * checked before sync reads or writes anything:
+ * Account on iOS, the connected Google Account on Android (ADR 0019), or the
+ * server account on Cloud Sync (ADR 0030). Both identities are recorded
+ * device-locally (`NON_SYNCABLE_PREFERENCE_KEYS`) and checked before sync reads
+ * or writes anything:
  *
  * - **Device.** `iCloudDeviceId` names this device's snapshot file. It lives in
  *   preferences, which iOS device backups and Quick Start copy to a new device;
@@ -137,6 +142,20 @@ export const ACCOUNT_CHANGE_RESET = {
 } as const
 
 /**
+ * Cloud Sync's version of `ACCOUNT_CHANGE_RESET`, for a device that moved to
+ * another server account (ADR 0030 §7): the previous account's slots and
+ * generations no longer apply, and the device decides again on the new account
+ * as one that never chose, so a phone that signed in with a QR code gets the
+ * account's data without a restore step.
+ */
+export const CLOUD_ACCOUNT_CHANGE_RESET = {
+  ...ACCOUNT_CHANGE_RESET,
+  iCloudSyncSetByUser: false,
+  syncProvider: null,
+  cloudSyncEntitled: null,
+} as const
+
+/**
  * Lightweight UUID-ish id. Good enough for attributing writes to a device in
  * the sync payload metadata. Not security-sensitive, so a stronger RNG would be
  * overkill.
@@ -243,7 +262,10 @@ export function checkICloudIdentity(source: IdentityCheckSource): boolean {
   // account, so nothing is decided.
   if (!checkDeviceBinding()) return true
   const prefs = usePreferences.getState()
-  const stored = prefs.iCloudIdentityToken
+  // Each option remembers its own account: the Apple or Google Account for
+  // iCloud and Drive, the server account for Cloud Sync.
+  const cloud = usesCloudSync()
+  const stored = cloud ? prefs.cloudSyncAccountToken : prefs.iCloudIdentityToken
   let current: string | null
   try {
     current = syncTransport().identityToken()
@@ -255,10 +277,29 @@ export function checkICloudIdentity(source: IdentityCheckSource): boolean {
     case 'unchanged':
       return true
     case 'record':
-      usePreferences.setState({ iCloudIdentityToken: current })
+      usePreferences.setState(
+        cloud
+          ? { cloudSyncAccountToken: current }
+          : { iCloudIdentityToken: current }
+      )
       return true
     case 'changed': {
       const wasEnabled = prefs.iCloudSyncEnabled
+      if (cloud) {
+        usePreferences.setState({
+          ...CLOUD_ACCOUNT_CHANGE_RESET,
+          cloudSyncAccountToken: current,
+        })
+        logger.warn('[iCloudIdentity] server account changed; Cloud Sync off', {
+          source,
+          wasEnabled,
+        })
+        analytics.capture('cloud_sync_account_changed', {
+          source,
+          sync_was_enabled: wasEnabled,
+        })
+        return false
+      }
       usePreferences.setState({
         ...ACCOUNT_CHANGE_RESET,
         // Sync that was on turns off as an explicit choice, so the Supporter

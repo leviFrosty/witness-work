@@ -126,6 +126,11 @@ export type BearerAccountOp =
   | 'backup/put'
   | 'backup/list'
   | 'backup/get'
+  | 'sync'
+  | 'sync/put'
+  | 'sync/list'
+  | 'sync/get'
+  | 'sync/delete'
 
 /**
  * `GET /accounts/v1/account` reads the account; the rest are `POST
@@ -135,11 +140,12 @@ const BEARER_ROUTES: Partial<
   Record<BearerAccountOp, { method: 'GET'; path: string }>
 > = {
   'account/info': { method: 'GET', path: 'account' },
+  sync: { method: 'GET', path: 'sync' },
 }
 
 /** How one bearer op travels, past the default JSON body and answer. */
 export type BearerAccountTransport = {
-  /** Sent as the raw body (`backup/put`), with these headers. */
+  /** Sent as the raw body (`backup/put`, `sync/put`), with these headers. */
   rawBody?: Uint8Array
   headers?: Record<string, string>
   responseType?: RequestOptions['responseType']

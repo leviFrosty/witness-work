@@ -18,6 +18,7 @@ const mocks = vi.hoisted(() => ({
   goBack: vi.fn(),
   reset: vi.fn(),
   buddies: 0,
+  onboarded: true,
 }))
 vi.mock('react-native', () => ({ ScrollView: 'ScrollView', View: 'View' }))
 vi.mock('@react-navigation/native', () => ({
@@ -63,6 +64,11 @@ vi.mock('@/features/settings/hooks/useClaimHandoff', () => ({
 vi.mock('@/features/settings/lib/completeOnboardingFromRestore', () => ({
   completeOnboardingFromRestore: vi.fn(),
 }))
+vi.mock('@/stores/preferences', () => ({
+  usePreferences: {
+    getState: () => ({ onboardingComplete: mocks.onboarded }),
+  },
+}))
 vi.mock('@/features/buddies/stores/buddiesStore', () => ({
   useBuddies: (select: (state: { buddies: unknown[] }) => unknown) =>
     select({ buddies: Array.from({ length: mocks.buddies }) }),
@@ -70,6 +76,7 @@ vi.mock('@/features/buddies/stores/buddiesStore', () => ({
 
 import SignInWithQrScreen from './SignInWithQrScreen'
 import HandoffStatus from '@/features/settings/components/account/handoff/HandoffStatus'
+import { completeOnboardingFromRestore } from '@/features/settings/lib/completeOnboardingFromRestore'
 
 type Action = { label: string; onPress: () => void; testID?: string }
 
@@ -128,6 +135,7 @@ const RETRYABLE: HandoffFailure[] = [
 beforeEach(() => {
   vi.clearAllMocks()
   mocks.buddies = 0
+  mocks.onboarded = true
 })
 
 it.each([
@@ -228,5 +236,38 @@ it.each<HandoffFailure | 'replace_failed'>([...RETRYABLE, 'replace_failed'])(
     primary!.onPress()
     expect(mocks.reset).toHaveBeenCalledTimes(1)
     expect(mocks.goBack).not.toHaveBeenCalled()
+  }
+)
+
+it.each([
+  [false, 1],
+  [true, 0],
+])(
+  'a link opened during onboarding (onboarded: %s) finishes it once Cloud Sync brings the data',
+  async (onboarded, completions) => {
+    mocks.onboarded = onboarded
+    mocks.claim = {
+      session: {},
+      state: { step: 'done' },
+      linkProblem: null,
+      completion: {
+        outcome: 'done',
+        buddiesStarted: false,
+        restore: { outcome: 'synced', combine: false },
+      } as ClaimCompletion,
+      scanned: vi.fn(),
+      reset: mocks.reset,
+    }
+    let root!: ReturnType<typeof create>
+    await act(async () => {
+      root = create(<SignInWithQrScreen />)
+    })
+    const done = root.root
+      .findAllByType(HandoffStatus)
+      .find((node) => node.props.testID === 'handoff-new-done')!
+    expect(done.props.detail).toBe('handoff_newDoneSynced')
+    ;(done.props.primary as Action).onPress()
+    expect(completeOnboardingFromRestore).toHaveBeenCalledTimes(completions)
+    expect(mocks.goBack).toHaveBeenCalledTimes(1)
   }
 )

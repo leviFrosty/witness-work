@@ -9,7 +9,7 @@ import InputRowContainer from '@/components/ui/inputs/InputRowContainer'
 import InfoPopover from '@/components/ui/InfoPopover'
 import Button from '@/components/ui/Button'
 import Text from '@/components/ui/MyText'
-import IsSupporter from '@/components/IsSupporter'
+import SyncSupporterGate from '@/features/settings/components/sync/SyncSupporterGate'
 import useTheme from '@/contexts/theme'
 import i18n, { type TranslationKey } from '@/lib/locales'
 import { syncKey } from '@/lib/syncCopy'
@@ -226,9 +226,9 @@ const PreferencesiCloudDevicesScreenInner = () => {
 
 const PreferencesiCloudDevicesScreen = () => (
   <SettingsInputLayout>
-    <IsSupporter analyticsSurface='icloud_sync' feature='iCloudSync' fill>
+    <SyncSupporterGate cloudOnly>
       <PreferencesiCloudDevicesScreenInner />
-    </IsSupporter>
+    </SyncSupporterGate>
   </SettingsInputLayout>
 )
 

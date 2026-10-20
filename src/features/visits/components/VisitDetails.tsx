@@ -92,6 +92,7 @@ export default function VisitDetails({
   const logVisit = () =>
     navigation.navigate('Visit Form', {
       contactId: contact.id,
+      followUpVisitId: visit.id,
       returnOnSave: true,
       overSheet: true,
     })

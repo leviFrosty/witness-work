@@ -29,6 +29,7 @@ const NoteInputRow = (props: {
   onChange: (note: NoteUpdate) => void
   surface: NoteSurface
   placeholder: string
+  description?: string
   info?: string
   lastInSection?: boolean
   maxLength?: number
@@ -52,6 +53,7 @@ const NoteInputRow = (props: {
   return (
     <InputRowContainer
       label={props.label}
+      description={props.description}
       info={props.info}
       lastInSection={props.lastInSection}
       controlWidth='full'

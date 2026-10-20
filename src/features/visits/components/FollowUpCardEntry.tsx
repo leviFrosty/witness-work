@@ -78,6 +78,7 @@ export default function FollowUpCardEntry({ item, width, onNotAtHome }: Props) {
   const talked = () => {
     navigation.navigate('Visit Form', {
       contactId: contact.id,
+      followUpVisitId: visit.id,
       returnOnSave: true,
     })
   }

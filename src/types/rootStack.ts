@@ -26,6 +26,8 @@ export type RootStackParamList = {
     overSheet?: boolean
     /** Opens an edit with Follow Up on, e.g. Visit Details' Plan the next visit. */
     planFollowUp?: boolean
+    /** A new Visit answering this Visit's Follow-up shows its planned topic. */
+    followUpVisitId?: string
   }
   'Contact Details': { id: string; highlightedVisitId?: string } // Contact ID
   'Contact Form': {

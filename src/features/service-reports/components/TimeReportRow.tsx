@@ -29,6 +29,7 @@ import * as Clipboard from 'expo-clipboard'
 import CreditBadge from '@/features/service-reports/components/CreditBadge'
 import { RootStackNavigation } from '@/types/rootStack'
 import { formatMinutes, useFormattedMinutes } from '@/lib/minutes'
+import { entryMinutes } from '@/lib/entryMinutes'
 import { useCardStyle } from '@/components/ui/Card'
 import useCategories from '@/stores/categories'
 import { usePreferences } from '@/stores/preferences'
@@ -61,7 +62,7 @@ const TimeReportRow = ({ report, onPress, onNavigate }: TimeReportRowProps) => {
   const categoryLabel = getCategoryLabel(report, categories)
   const isLdc = isLdcEntry(report)
 
-  const totalMinutes = report.hours * 60 + report.minutes
+  const totalMinutes = entryMinutes(report)
   const formattedTime = useFormattedMinutes(Math.abs(totalMinutes))
   const isRollover = report.rollover === true
   const sign = totalMinutes < 0 ? '−' : '+'

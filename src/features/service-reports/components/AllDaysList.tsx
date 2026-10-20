@@ -17,6 +17,7 @@ import {
 } from '@/lib/recurrence'
 import { getCategoryLabel, isLdcEntry } from '@/lib/serviceReportCategory'
 import { formatMinutes } from '@/lib/minutes'
+import { entryMinutes } from '@/lib/entryMinutes'
 import { usePreferences } from '@/stores/preferences'
 import { DayPlan, TimeEntry } from '@/types/timeEntry'
 import type { RevealAboveSheet } from '@/hooks/useRevealAboveSheet'
@@ -268,7 +269,7 @@ const AllDaysList = ({
       )
 
       const totalMinutes = reportsForDay.reduce(
-        (acc, r) => acc + r.hours * 60 + r.minutes,
+        (acc, r) => acc + entryMinutes(r),
         0
       )
       const hoursLabel =

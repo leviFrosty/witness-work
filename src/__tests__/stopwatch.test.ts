@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
+import fc from 'fast-check'
 
 const { capture, reset, getState } = vi.hoisted(() => ({
   capture: vi.fn(),
@@ -171,6 +172,18 @@ describe('splitElapsed', () => {
       minutes: 2,
     })
     expect(splitElapsed(25 * 3600 * 1000)).toEqual({ hours: 25, minutes: 0 })
+  })
+
+  it('matches the floor-and-modulo split it replaced', () => {
+    fc.assert(
+      fc.property(fc.nat({ max: 1_000 * 3600 * 1000 }), (ms) => {
+        const total = Math.floor(ms / 60000)
+        expect(splitElapsed(ms)).toEqual({
+          hours: Math.floor(total / 60),
+          minutes: total % 60,
+        })
+      })
+    )
   })
 })
 

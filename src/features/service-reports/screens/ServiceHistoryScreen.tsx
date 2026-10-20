@@ -31,8 +31,8 @@ import { formatMinutes } from '@/lib/minutes'
 import { formatPlainNumber } from '@/lib/numbers'
 import { monthlyGoalKey } from '@/lib/monthlyGoals'
 import {
+  monthStatusItems,
   monthStatusLabel,
-  monthStatuses,
   roleOfMonthStatus,
   type MonthStatus,
 } from '@/lib/monthStatus'
@@ -172,10 +172,7 @@ const ServiceHistoryScreen = ({ navigation, route }: Props) => {
     navigation.goBack()
   }
 
-  const statusItems: SelectData<MonthStatus> = monthStatuses.map((s) => ({
-    label: monthStatusLabel(s, publisherHours),
-    value: s,
-  }))
+  const statusItems: SelectData<MonthStatus> = monthStatusItems(publisherHours)
 
   return (
     <Wrapper insets='bottom' style={{ flex: 1 }}>

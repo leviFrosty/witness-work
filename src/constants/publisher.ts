@@ -7,6 +7,20 @@ export const publishers = [
   'custom',
 ] as const
 
+/**
+ * The order every Publisher status picker lists the roles in: onboarding,
+ * Settings, a month's status, and Service History. Pioneer roles sit together
+ * (as in Full-Time Service), then the circuit overseer, then Custom.
+ */
+export const publisherChoices = [
+  'publisher',
+  'regularAuxiliary',
+  'regularPioneer',
+  'specialPioneer',
+  'circuitOverseer',
+  'custom',
+] as const satisfies readonly (typeof publishers)[number][]
+
 type StartDateRole =
   | 'pioneer'
   | 'specialPioneer'

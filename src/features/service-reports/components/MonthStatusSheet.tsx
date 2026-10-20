@@ -10,11 +10,7 @@ import type { SelectData } from '@/components/ui/Select'
 import { inputLayout } from '@/components/ui/inputs/InputLayout'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
-import {
-  monthStatusLabel,
-  monthStatuses,
-  type MonthStatus,
-} from '@/lib/monthStatus'
+import { monthStatusItems, type MonthStatus } from '@/lib/monthStatus'
 import { usePreferences } from '@/stores/preferences'
 import { formatDisplay } from '@/lib/dates'
 
@@ -55,10 +51,7 @@ const MonthStatusSheet = ({
 
   const monthLabel = formatDisplay({ year, month }, 'MMMM YYYY')
 
-  const statusItems: SelectData<MonthStatus> = monthStatuses.map((s) => ({
-    label: monthStatusLabel(s, publisherHours),
-    value: s,
-  }))
+  const statusItems: SelectData<MonthStatus> = monthStatusItems(publisherHours)
   const scopeItems: SelectData<MonthStatusScope> = [
     {
       label: i18n.t('monthStatus.onlyMonth', { month: monthLabel }),

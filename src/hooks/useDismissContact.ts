@@ -55,6 +55,15 @@ export const dismissOptions: DismissOption[] = [
   },
 ]
 
+/** A suggestion's quick dismiss: back in 30 days, like "Dismiss For" does. */
+export const notNowDismissOption: DismissOption = {
+  key: 'not_now',
+  duration: 30,
+  unit: 'days',
+  label: 'notNow',
+  example: 'dismissExample',
+}
+
 export const testDismissOptions: DismissOption[] = [
   {
     key: '10_seconds',

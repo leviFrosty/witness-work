@@ -38,6 +38,9 @@ import { useMarkerColors } from '@/hooks/useMarkerColors'
 import useContactMenuActions, {
   useContactRemovalActions,
 } from '@/hooks/useContactMenuActions'
+import useDismissContact, {
+  notNowDismissOption,
+} from '@/hooks/useDismissContact'
 import {
   findNameMatch,
   MatchSource,
@@ -74,6 +77,7 @@ const ContactRow = ({
   onSelect,
   selectionMode = false,
   checked = false,
+  offersNotNow = false,
 }: {
   selected?: boolean
   /** False when selecting this row updates an adjacent detail pane. */
@@ -89,6 +93,8 @@ const ContactRow = ({
   selectionMode?: boolean
   /** Whether the row is checked in Select mode. */
   checked?: boolean
+  /** Adds "Not Now" to the menu, dismissing the Contact for 30 days. */
+  offersNotNow?: boolean
   contact: Contact
   onPress?: () => void
   /**
@@ -118,10 +124,14 @@ const ContactRow = ({
   // Portal, so rows only mount theirs once it's first asked for.
   const [dismissSheetMounted, setDismissSheetMounted] = useState(false)
   const share = useShareContact(contact)
+  const dismiss = useDismissContact()
   const menu = useContactMenuActions(contact, {
     showOpen: showOpenInMenu,
     onShare: share,
     onSelect,
+    onNotNow: offersNotNow
+      ? () => void dismiss(contact, notNowDismissOption)
+      : undefined,
   })
   // Swiping archives; data protection mode, which keeps nothing to archive,
   // deletes instead.

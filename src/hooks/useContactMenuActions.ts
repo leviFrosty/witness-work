@@ -37,6 +37,8 @@ export type ContactMenuOptions = {
   onRemoved?: () => void
   /** Adds "Select", starting the list's Select mode with this contact checked. */
   onSelect?: () => void
+  /** Adds "Not Now" ahead of Dismiss For, for a suggestion to step back. */
+  onNotNow?: () => void
 }
 
 /**
@@ -116,7 +118,15 @@ export default function useContactMenuActions(
     (s) => s.defaultNavigationMapProvider
   )
 
-  const { showOpen, onShare, onEdit, onAddVisit, onRemoved, onSelect } = options
+  const {
+    showOpen,
+    onShare,
+    onEdit,
+    onAddVisit,
+    onRemoved,
+    onSelect,
+    onNotNow,
+  } = options
   const removal = useContactRemovalActions(contact, {
     onDismissed: onRemoved,
     onRemoved,
@@ -213,6 +223,12 @@ export default function useContactMenuActions(
       },
     ],
     [
+      onNotNow && {
+        id: 'not_now',
+        title: i18n.t('notNow'),
+        systemImage: 'clock',
+        onPress: onNotNow,
+      },
       !isContactDismissed(contact) && removal.dismiss,
       removal.archive,
       removal.remove,

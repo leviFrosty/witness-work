@@ -276,6 +276,7 @@ export type LogVisitPickedFrom =
   | 'nearby'
   | 'followUpsDue'
   | 'recent'
+  | 'beenAWhile'
   | 'all'
   | 'search'
   | 'new_contact'

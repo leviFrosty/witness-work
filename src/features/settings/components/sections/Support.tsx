@@ -4,7 +4,7 @@ import {
   Medal as MedalIcon,
   Share2 as Share2Icon,
 } from 'lucide-react-native'
-import { Alert, Platform } from 'react-native'
+import { Platform } from 'react-native'
 import { GroupedListRow, GroupedListSection } from '@/components/ui/GroupedList'
 import i18n from '@/lib/locales'
 import links from '@/constants/links'
@@ -79,18 +79,11 @@ const SupportSection = ({
         icon={MedalIcon}
         label={i18n.t('rateWitnessWorkOnAppStore')}
         accessory='external'
-        onPress={() => {
-          try {
-            openURL(
-              Platform.OS === 'android' ? links.playStore : links.appStoreReview
-            )
-          } catch (error) {
-            Alert.alert(
-              i18n.t('appleAppStoreReviewErrorTitle'),
-              i18n.t('appleAppStoreReviewErrorMessage')
-            )
-          }
-        }}
+        onPress={() =>
+          openURL(
+            Platform.OS === 'android' ? links.playStore : links.appStoreReview
+          )
+        }
       />
     </GroupedListSection>
   )

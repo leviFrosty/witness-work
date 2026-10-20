@@ -555,8 +555,6 @@
   "pleaseDescribeYourIssue": "Tafadhali eleza suala lako kwa undani",
   "invalidPhone": "Nambari ya Simu Batili",
   "invalidPhone_message": "\"{{number}}\" si nambari halali kwa msimbo wa eneo: {{region}}.",
-  "appleAppStoreReviewErrorTitle": "Hitilafu ya Duka la Programu",
-  "appleAppStoreReviewErrorMessage": "Tafadhali sasisha programu yako ya WitnessWork iwe toleo jipya zaidi ikiwa inapatikana na ujaribu tena.",
   "notAtHome": "Sio Nyumbani",
   "editNotAtHome": "Hariri Sio Nyumbani",
   "addNotAtHome": "Sio Nyumbani",

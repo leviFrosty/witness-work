@@ -555,8 +555,6 @@
   "pleaseDescribeYourIssue": "문제를 자세히 설명해 주세요.",
   "invalidPhone": "유효하지 않은 전화 번호",
   "invalidPhone_message": "\"{{number}}\"은(는) 지역 코드 {{region}}에 유효한 번호가 아닙니다.",
-  "appleAppStoreReviewErrorTitle": "앱스토어 오류",
-  "appleAppStoreReviewErrorMessage": "가능한 경우 WitnessWork 앱을 최신 버전으로 업데이트하고 다시 시도해 보세요.",
   "notAtHome": "부재자",
   "editNotAtHome": "부재자 수정",
   "addNotAtHome": "부재자",

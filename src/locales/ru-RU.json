@@ -579,8 +579,6 @@
   "pleaseDescribeYourIssue": "Пожалуйста, опишите вашу проблему подробно",
   "invalidPhone": "Неправильный номер телефона",
   "invalidPhone_message": "«{{number}}» — недопустимый номер для кода региона {{region}}.",
-  "appleAppStoreReviewErrorTitle": "Ошибка магазина приложений",
-  "appleAppStoreReviewErrorMessage": "Обновите приложение WitnessWork до последней версии, если она доступна, и повторите попытку.",
   "notAtHome": "Не дома",
   "editNotAtHome": "Редактировать «Не дома»",
   "addNotAtHome": "Не дома",

@@ -555,8 +555,6 @@
   "pleaseDescribeYourIssue": "请详细描述您的问题",
   "invalidPhone": "无效的电话号码",
   "invalidPhone_message": "「{{number}}」不是地區代碼 {{region}} 的有效號碼。",
-  "appleAppStoreReviewErrorTitle": "应用商店错误",
-  "appleAppStoreReviewErrorMessage": "请将您的 WitnessWork 应用程序更新到最新版本（如果可用），然后重试。",
   "notAtHome": "不在家",
   "editNotAtHome": "不在家编辑",
   "addNotAtHome": "不在家",

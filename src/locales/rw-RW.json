@@ -555,8 +555,6 @@
   "pleaseDescribeYourIssue": "Turakwiginze, sobanura ikibazo cyawe neza",
   "invalidPhone": "Nimero ntiyemewe",
   "invalidPhone_message": "\"{{number}}\" si nimero yemewe kuri kode y'igihugu: {{region}}.",
-  "appleAppStoreReviewErrorTitle": "Ikibazo cya App Store",
-  "appleAppStoreReviewErrorMessage": "Turakwiginze, huza n'igihe porogaramu ya Umurimo w'Umuhamya niba bikunda. Wongere mukanya.",
   "notAtHome": "Abatari mu rugo",
   "editNotAtHome": "Hindura 'Abatari mu rugo'",
   "addNotAtHome": "Ntabwo ari mu rugo",

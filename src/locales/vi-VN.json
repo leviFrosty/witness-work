@@ -555,8 +555,6 @@
   "pleaseDescribeYourIssue": "Vui lòng mô tả chi tiết vấn đề của bạn",
   "invalidPhone": "Số điện thoại không hợp lệ",
   "invalidPhone_message": "\"{{number}}\" không phải là số hợp lệ cho mã vùng: {{region}}.",
-  "appleAppStoreReviewErrorTitle": "Lỗi Appstore",
-  "appleAppStoreReviewErrorMessage": "Vui lòng cập nhật ứng dụng WitnessWork của bạn lên phiên bản mới nhất nếu có và thử lại.",
   "notAtHome": "Không có ở nhà",
   "editNotAtHome": "Chỉnh sửa Không ở nhà",
   "addNotAtHome": "Không ở nhà",

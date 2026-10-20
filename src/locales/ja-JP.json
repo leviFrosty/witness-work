@@ -2576,8 +2576,6 @@
   "homeChecklistLogFirstMinute": "サービス開始1分を記録",
   "homeChecklistCheckOffFirstMonth": "最初の月をチェックしてください",
   "homeChecklistAddFirstContact": "初回再診の記録",
-  "homeChecklistSetMonthlyGoal": "月間目標を設定する",
-  "homeChecklistSendFirstReport": "最初の報告を送る",
   "homeChecklistTryTheMap": "地図を試す",
   "homeChecklistTrackTime": "時間を記録する",
   "homeChecklistReturnVisits": "再訪を管理する",

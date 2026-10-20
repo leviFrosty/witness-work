@@ -1,3 +1,7 @@
+const path = require('path')
+
+const appSourceDir = path.join(__dirname, 'src') + path.sep
+
 module.exports = function (api) {
   api.cache(true)
 
@@ -7,16 +11,7 @@ module.exports = function (api) {
         'babel-preset-expo',
         {
           'react-compiler': {
-            sources: (filename) => {
-              const matches = ['src']
-              const include = matches.some((match) => filename.includes(match))
-              if (include) {
-                console.log('Compiling: ', filename)
-              } else {
-                console.log('Skipping compilation: ', filename)
-              }
-              return include
-            },
+            sources: (filename) => filename.startsWith(appSourceDir),
           },
         },
       ],

@@ -222,8 +222,8 @@ const VisitFormScreen = ({
   const contactId = params.contactId || conversationToUpdate?.contact.id || ''
 
   // The entry points that pass `notAtHome` are hidden in data protection mode
-  // (see `AddVisitMenu` and `useContactMenuActions`); refusing it here too means a stale deep link or
-  // navigation state can't slip one through. Editing an existing not-at-home
+  // (see `useContactMenuActions`); refusing it here too means a stale deep link
+  // or navigation state can't slip one through. Editing an existing not-at-home
   // visit still works — its flag comes off the stored record, not from params.
   const notAtHome = dataProtectionMode ? undefined : params.notAtHome
 

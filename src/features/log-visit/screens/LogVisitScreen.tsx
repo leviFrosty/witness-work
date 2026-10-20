@@ -5,7 +5,6 @@ import * as Crypto from 'expo-crypto'
 import type { NativeStackScreenProps } from '@react-navigation/native-stack'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
-import Haptics from '@/lib/haptics'
 import { analytics } from '@/lib/analytics'
 import { filterActivesContacts } from '@/lib/dismissedContacts'
 import { buildConversationIndex } from '@/lib/conversationIndex'
@@ -13,7 +12,6 @@ import { buildSuggestedContacts } from '@/lib/suggestedContacts'
 import useContacts from '@/stores/contactsStore'
 import useConversations from '@/stores/conversationStore'
 import { usePreferences } from '@/stores/preferences'
-import { showUndoToast } from '@/stores/undoToast'
 import useLocationSnapshot from '@/hooks/useLocationSnapshot'
 import Empty from '@/components/ui/Empty'
 import Button from '@/components/ui/Button'
@@ -26,7 +24,7 @@ import type {
 } from '@/types/rootStack'
 import type { Contact } from '@/types/contact'
 import { buildContactsFuse, searchContactsFuzzy } from '@/lib/contactsSearch'
-import useLogNotAtHome from '@/features/visits/hooks/useLogNotAtHome'
+import useLogNotAtHome from '@/hooks/useLogNotAtHome'
 import LogVisitHeader from '@/features/log-visit/components/LogVisitHeader'
 import LogVisitContactList from '@/features/log-visit/components/LogVisitContactList'
 import LogVisitOutcome from '@/features/log-visit/components/LogVisitOutcome'
@@ -135,13 +133,8 @@ export default function LogVisitScreen({ navigation }: Props) {
   }
 
   const logNotAtHome = ({ contact, pickedFrom }: Picked) => {
-    Haptics.light()
-    const visit = notAtHome.log(contact.id, attribution(pickedFrom))
+    notAtHome.logWithUndo(contact, attribution(pickedFrom))
     handedOff.current = true
-    showUndoToast({
-      message: i18n.t('logVisit_notAtHomeLogged', { name: contact.name }),
-      onUndo: () => notAtHome.undo(visit),
-    })
     close()
   }
 

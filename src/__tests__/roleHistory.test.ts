@@ -3,6 +3,7 @@ import {
   addCalendarMonths,
   annualGoalHoursByMonth,
   annualGoalHoursForServiceYear,
+  laterRoleReplacedFrom,
   normalizeRoleHistory,
   publisherCapabilitiesForMonth,
   roleForMonth,
@@ -343,6 +344,126 @@ describe('publisherCapabilitiesForMonth', () => {
     expect(april.entryMode).toBe('hours')
     expect(april.annualGoalHours).toBe(300)
     expect(april.milestones.at(-1)).toBe(300)
+  })
+})
+
+describe('a status set ahead for next month', () => {
+  // Today is October 2026; November is next month.
+  const oct2026 = { year: 2026, month: 9 }
+  const nov2026 = { year: 2026, month: 10 }
+  const dec2026 = { year: 2026, month: 11 }
+  const prefsWith = (
+    role: RolePreferences['role'],
+    roleHistory: RolePreferences['roleHistory']
+  ): RolePreferences => ({
+    role,
+    roleHistory,
+    publisherHours,
+    userSpecifiedHasAnnualGoal: 'default',
+    milestoneOverrides: null,
+    overrideCreditLimit: false,
+    customCreditLimitHours: 55,
+    logsHours: false,
+  })
+
+  it('applies a one-off next month without touching this month', () => {
+    const history = setRoleForPeriod(
+      null,
+      'publisher',
+      nov2026,
+      nov2026,
+      'regularAuxiliary'
+    )
+    expect(roleForMonth(history, 'publisher', oct2026)).toBe('publisher')
+    expect(roleForMonth(history, 'publisher', nov2026)).toBe('regularAuxiliary')
+    expect(roleForMonth(history, 'publisher', dec2026)).toBe('publisher')
+    expect(standingRole(history, 'publisher')).toBe('publisher')
+
+    const prefs = prefsWith('publisher', history)
+    const october = publisherCapabilitiesForMonth(prefs, oct2026)
+    const november = publisherCapabilitiesForMonth(prefs, nov2026)
+    expect(october.entryMode).toBe('checkbox')
+    expect(october.monthlyGoalHours).toBe(0)
+    expect(november.entryMode).toBe('hours')
+    expect(november.monthlyGoalHours).toBe(30)
+    expect(november.creditCapMinutes).toBe(55 * 60)
+  })
+
+  it('starts a standing role next month and keeps this month as it was', () => {
+    const history = setRoleForPeriod(
+      null,
+      'publisher',
+      nov2026,
+      null,
+      'regularPioneer'
+    )
+    // The standing role is the one the timeline ends on.
+    const role = standingRole(history, 'publisher')
+    expect(role).toBe('regularPioneer')
+
+    const prefs = prefsWith(role, history)
+    expect(publisherCapabilitiesForMonth(prefs, oct2026).type).toBe('publisher')
+    const november = publisherCapabilitiesForMonth(prefs, nov2026)
+    expect(november.type).toBe('regularPioneer')
+    expect(november.monthlyGoalHours).toBe(50)
+    // November through August of Service Year 2026: 10 pioneer months.
+    expect(november.annualGoalHours).toBe(500)
+  })
+
+  it('names a next month that "onward" from this month would replace', () => {
+    const history = setRoleForPeriod(
+      null,
+      'publisher',
+      nov2026,
+      nov2026,
+      'regularAuxiliary'
+    )
+    expect(laterRoleReplacedFrom(history, oct2026, 'regularPioneer')).toEqual({
+      month: nov2026,
+      role: 'regularAuxiliary',
+    })
+    // Saving it replaces November's auxiliary month.
+    const after = setRoleForPeriod(
+      history,
+      'publisher',
+      oct2026,
+      null,
+      'regularPioneer'
+    )
+    expect(roleForMonth(after, 'publisher', nov2026)).toBe('regularPioneer')
+  })
+
+  it('names the first later month whose role would change', () => {
+    const history = setRoleForPeriod(
+      setRoleForPeriod(null, 'publisher', nov2026, null, 'regularAuxiliary'),
+      'publisher',
+      dec2026,
+      null,
+      'regularPioneer'
+    )
+    // November already matches, so December is the month that changes.
+    expect(laterRoleReplacedFrom(history, oct2026, 'regularAuxiliary')).toEqual(
+      { month: dec2026, role: 'regularPioneer' }
+    )
+  })
+
+  it('names nothing when no later month has its own status', () => {
+    expect(laterRoleReplacedFrom(null, oct2026, 'regularPioneer')).toBeNull()
+    const history = setRoleForPeriod(
+      null,
+      'publisher',
+      oct2026,
+      null,
+      'regularPioneer'
+    )
+    expect(
+      laterRoleReplacedFrom(history, oct2026, 'regularAuxiliary')
+    ).toBeNull()
+    expect(laterRoleReplacedFrom(history, nov2026, 'publisher')).toBeNull()
+    // An earlier change isn't replaced by "onward" from a later month.
+    expect(
+      laterRoleReplacedFrom(history, dec2026, 'regularAuxiliary')
+    ).toBeNull()
   })
 })
 

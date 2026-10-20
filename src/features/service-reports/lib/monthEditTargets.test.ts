@@ -5,7 +5,7 @@ import { monthEditTargets } from '@/features/service-reports/lib/monthEditTarget
 const now = new Date(2026, 8, 15)
 
 describe('monthEditTargets', () => {
-  it('allows status changes for started months only', () => {
+  it('allows status changes for started months and next month', () => {
     expect(
       monthEditTargets({ month: 8, year: 2026, baseGoalHours: 0, now }).status
     ).toBe(true)
@@ -14,6 +14,29 @@ describe('monthEditTargets', () => {
     ).toBe(true)
     expect(
       monthEditTargets({ month: 9, year: 2026, baseGoalHours: 0, now }).status
+    ).toBe(true)
+    expect(
+      monthEditTargets({ month: 10, year: 2026, baseGoalHours: 0, now }).status
+    ).toBe(false)
+  })
+
+  it('reaches next month across the end of the year', () => {
+    const december = new Date(2026, 11, 20)
+    expect(
+      monthEditTargets({
+        month: 0,
+        year: 2027,
+        baseGoalHours: 0,
+        now: december,
+      }).status
+    ).toBe(true)
+    expect(
+      monthEditTargets({
+        month: 1,
+        year: 2027,
+        baseGoalHours: 0,
+        now: december,
+      }).status
     ).toBe(false)
   })
 

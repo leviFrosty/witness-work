@@ -5,7 +5,7 @@ import {
   monthStatusOf,
   type MonthStatus,
 } from '@/lib/monthStatus'
-import { roleForMonth } from '@/lib/roleHistory'
+import { calendarMonthOf, roleForMonth } from '@/lib/roleHistory'
 import { usePreferences } from '@/stores/preferences'
 
 export type MonthStatusSource = 'month_card' | 'year_tab' | 'history_editor'
@@ -32,10 +32,13 @@ const useMonthStatus = (target: CalendarMonth) => {
   ) => {
     if (next === status && scope === 'month') return
     setMonthStatus(target, next, scope)
+    const now = calendarMonthOf()
     analytics.capture('role_period_set', {
       source,
       role: next,
       scope: scope === 'onward' ? 'from_month' : 'single_month',
+      // -1 = set ahead for next month.
+      months_back: (now.year - target.year) * 12 + now.month - target.month,
     })
   }
 

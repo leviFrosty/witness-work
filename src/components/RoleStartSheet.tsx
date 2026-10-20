@@ -14,6 +14,7 @@ import i18n from '@/lib/locales'
 import { monthlyGoalKey, type CalendarMonth } from '@/lib/monthlyGoals'
 import type { Publisher } from '@/types/publisher'
 import { formatDisplay } from '@/lib/dates'
+import { addCalendarMonths, calendarMonthOf } from '@/lib/roleHistory'
 
 /** Sentinel select value: the new role applies to every month. */
 const ALL_MONTHS = 'all'
@@ -28,7 +29,10 @@ export interface RoleStartSheetProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   role: Publisher
-  /** Most recent month first; the first entry is the default. */
+  /**
+   * Latest first: next month, this month, then earlier months. This month is
+   * the default.
+   */
   months: CalendarMonth[]
   /** Offer to reset custom goals saved for this month and later. */
   hasFutureGoalOverrides: boolean
@@ -52,20 +56,29 @@ const RoleStartSheet = ({
   const [startKey, setStartKey] = useState<string>(ALL_MONTHS)
   const [resetFutureGoals, setResetFutureGoals] = useState(false)
 
+  const thisMonthKey = monthlyGoalKey(calendarMonthOf())
+  const nextMonthKey = monthlyGoalKey(addCalendarMonths(calendarMonthOf(), 1))
+
   useEffect(() => {
     if (!open) return
-    setStartKey(months[0] ? monthlyGoalKey(months[0]) : ALL_MONTHS)
+    const keys = months.map(monthlyGoalKey)
+    setStartKey(
+      keys.includes(thisMonthKey) ? thisMonthKey : (keys[0] ?? ALL_MONTHS)
+    )
     setResetFutureGoals(false)
-  }, [open, months])
+  }, [open, months, thisMonthKey])
+
+  const monthLabel = (m: CalendarMonth) => {
+    const month = formatDisplay(m, 'MMMM YYYY')
+    const key = monthlyGoalKey(m)
+    if (key === thisMonthKey) return i18n.t('roleStart.thisMonth', { month })
+    if (key === nextMonthKey) return i18n.t('roleStart.nextMonth', { month })
+    return month
+  }
 
   const items: SelectData<string> = [
-    ...months.map((m, i) => ({
-      label:
-        i === 0
-          ? i18n.t('roleStart.thisMonth', {
-              month: formatDisplay(m, 'MMMM YYYY'),
-            })
-          : formatDisplay(m, 'MMMM YYYY'),
+    ...months.map((m) => ({
+      label: monthLabel(m),
       value: monthlyGoalKey(m),
     })),
     { label: i18n.t('roleStart.allMonths'), value: ALL_MONTHS },

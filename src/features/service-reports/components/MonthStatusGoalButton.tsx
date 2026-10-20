@@ -13,7 +13,7 @@ import { useFormattedMinutes } from '@/lib/minutes'
 type EditTarget = 'status' | 'goal'
 
 type Props = {
-  /** Short status name; null hides status (e.g. future months). */
+  /** Short status name; null hides status (months after next). */
   statusLabel: string | null
   /** The month's status differs from the User's standing role. */
   isStatusDifferent: boolean

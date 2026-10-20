@@ -104,10 +104,10 @@ const PublisherTypeSelector = ({
   const hasFutureGoalOverrides = Object.keys(monthlyGoalOverrides).some(
     (key) => key >= currentMonthKey
   )
-  // Months the new role could start from: this month back to the earliest
-  // logged month (capped), most recent first.
+  // Months the new role could start from: next month (to plan ahead), then
+  // this month back to the earliest logged month (capped), most recent first.
   const earliest = earliestLoggedMonth(serviceReports)
-  const startMonths: CalendarMonth[] = []
+  const startMonths: CalendarMonth[] = [addCalendarMonths(thisMonth, 1)]
   for (let i = 0; i < MAX_START_MONTHS; i++) {
     const m = addCalendarMonths(thisMonth, -i)
     if (i > 0 && (!earliest || monthlyGoalKey(m) < monthlyGoalKey(earliest))) {
@@ -115,13 +115,15 @@ const PublisherTypeSelector = ({
     }
     startMonths.push(m)
   }
-  const hasEarlierMonths = startMonths.length > 1
 
-  const resetFutureGoalOverrides = () => {
+  /** Clears custom goals from the role's first month (this month at most). */
+  const resetFutureGoalOverrides = (from: CalendarMonth | null) => {
+    const fromKey =
+      from && monthlyGoalKey(from) > currentMonthKey
+        ? monthlyGoalKey(from)
+        : currentMonthKey
     const pastOverrides = Object.fromEntries(
-      Object.entries(monthlyGoalOverrides).filter(
-        ([key]) => key < currentMonthKey
-      )
+      Object.entries(monthlyGoalOverrides).filter(([key]) => key < fromKey)
     )
     set({ monthlyGoalOverrides: pastOverrides })
   }
@@ -129,15 +131,8 @@ const PublisherTypeSelector = ({
   const handleRoleChange = (nextRole: Publisher) => {
     if (nextRole === role) return
 
-    // Onboarding and Users with nothing to preserve skip the question.
-    if (!askStartMonth || (!hasEarlierMonths && !hasFutureGoalOverrides)) {
-      if (askStartMonth) {
-        analytics.capture('role_period_set', {
-          source: 'settings',
-          role: nextRole,
-          scope: 'all_months',
-        })
-      }
+    // Onboarding skips the question: a new User's role applies to every month.
+    if (!askStartMonth) {
       setRole(nextRole)
       return
     }
@@ -147,7 +142,7 @@ const PublisherTypeSelector = ({
 
   const handleStartChoice = ({ from, resetFutureGoals }: RoleStartChoice) => {
     if (!pendingRole) return
-    if (resetFutureGoals) resetFutureGoalOverrides()
+    if (resetFutureGoals) resetFutureGoalOverrides(from)
     setRole(pendingRole, from ? { from } : undefined)
     analytics.capture('role_period_set', {
       source: 'settings',
@@ -306,7 +301,7 @@ const PublisherTypeSelector = ({
             if (!open) setPendingRole(null)
           }}
           role={pendingRole ?? role}
-          months={hasEarlierMonths ? startMonths : []}
+          months={startMonths}
           hasFutureGoalOverrides={hasFutureGoalOverrides}
           onSave={handleStartChoice}
         />

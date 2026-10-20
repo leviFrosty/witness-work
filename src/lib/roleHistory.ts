@@ -160,6 +160,26 @@ export const setRoleForPeriod = (
   return compact({ initial: base.initial, changes })
 }
 
+/**
+ * The first later month whose role a standing change to `role` from `target`
+ * would replace — e.g. auxiliary pioneering already set for next month — so the
+ * "onward" choice can say so. `null` when no later month would change.
+ */
+export const laterRoleReplacedFrom = (
+  history: RoleHistory | null | undefined,
+  target: CalendarMonth,
+  role: Publisher
+): { month: CalendarMonth; role: Publisher } | null => {
+  if (!history) return null
+  const targetKey = monthlyGoalKey(target)
+  for (const key of Object.keys(history.changes).sort()) {
+    if (key <= targetKey || history.changes[key] === role) continue
+    const [year, month] = key.split('-').map(Number)
+    return { month: { year, month: month - 1 }, role: history.changes[key] }
+  }
+  return null
+}
+
 export type AnnualGoalInput = {
   history: RoleHistory | null | undefined
   currentRole: Publisher

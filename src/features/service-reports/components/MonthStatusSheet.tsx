@@ -12,9 +12,14 @@ import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import {
   monthStatusLabel,
+  monthStatusOf,
+  monthStatusShortLabel,
   monthStatuses,
+  roleOfMonthStatus,
   type MonthStatus,
 } from '@/lib/monthStatus'
+import { monthlyGoalKey } from '@/lib/monthlyGoals'
+import { laterRoleReplacedFrom } from '@/lib/roleHistory'
 import { usePreferences } from '@/stores/preferences'
 import { formatDisplay } from '@/lib/dates'
 
@@ -43,7 +48,7 @@ const MonthStatusSheet = ({
   onSave,
 }: MonthStatusSheetProps) => {
   const theme = useTheme()
-  const { publisherHours } = usePreferences()
+  const { publisherHours, roleHistory, monthlyGoalOverrides } = usePreferences()
   const [draftStatus, setDraftStatus] = useState<MonthStatus>(status)
   const [scope, setScope] = useState<MonthStatusScope>('month')
 
@@ -69,6 +74,28 @@ const MonthStatusSheet = ({
       value: 'onward',
     },
   ]
+
+  // "Onward" replaces every later change, such as a status already set for
+  // next month; name the first one so it isn't lost silently.
+  const replaced =
+    scope === 'onward'
+      ? laterRoleReplacedFrom(
+          roleHistory,
+          { year, month },
+          roleOfMonthStatus(draftStatus)
+        )
+      : null
+  const replacedNote = replaced
+    ? i18n.t('monthStatus.replacesLater', {
+        status: monthStatusShortLabel(
+          monthStatusOf(
+            replaced.role,
+            monthlyGoalOverrides[monthlyGoalKey(replaced.month)]
+          )
+        ),
+        month: formatDisplay(replaced.month, 'MMMM YYYY'),
+      })
+    : undefined
 
   const handleSave = () => {
     onSave(draftStatus, scope)
@@ -126,6 +153,7 @@ const MonthStatusSheet = ({
           />
           <InputRowSelect
             label={i18n.t('monthStatus.appliesTo')}
+            description={replacedNote}
             lastInSection
             selectProps={{
               data: scopeItems,

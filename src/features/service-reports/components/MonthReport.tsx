@@ -411,10 +411,14 @@ const MonthReport = ({
     }, [fireFireworks, month, year])
   )
 
+  // What this month lets the User change, from the status line and from the
+  // long-press menu on the card's hero (the Progress → Month card).
+  const editable = monthEditTargets({ month, year, baseGoalHours })
+
   const statusGoalButton = (
     <MonthStatusGoalButton
       statusLabel={
-        monthInFuture ? null : monthStatusShortLabel(monthStatus.status)
+        editable.status ? monthStatusShortLabel(monthStatus.status) : null
       }
       isStatusDifferent={monthStatus.isDifferent}
       goalHours={baseGoalHours > 0 ? goalHours : null}
@@ -441,9 +445,6 @@ const MonthReport = ({
           date: moment().month(month).year(year).toISOString(),
         })
 
-  // Long-press on the card's hero (the Progress → Month card). Every item is
-  // also a visible control on the card or the report screen.
-  const editable = monthEditTargets({ month, year, baseGoalHours })
   const editFromMenu = (target: MonthEditTarget) => {
     setEditing(target)
   }

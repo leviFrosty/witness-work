@@ -168,6 +168,66 @@ describe('dayPlansByDayKey', () => {
     expect(dayPlansByDayKey([...dayPlans])).not.toBe(dayPlansByDayKey(dayPlans))
   })
 
+  it('re-keys Day Plans off the anchor when the time zone changes', () => {
+    setTZ('America/Los_Angeles')
+    const anchoredPlan = { id: 'anchored', date: '2024-06-01T12:00:00.000Z' }
+    const rawString = { id: 'raw-string', date: '2024-06-01T13:00:00.000Z' }
+    const rawDate = { id: 'raw-date', date: new Date('2024-06-01T14:00:00Z') }
+    const dayPlans = [anchoredPlan, rawString, rawDate].map((p) => ({
+      ...p,
+      date: p.date as Date,
+      minutes: 60,
+    }))
+    // 6-7 AM on June 1 in Los Angeles; 1-2 AM on June 2 in Auckland.
+    expect(ids(dayPlansOnLocalDay(dayPlans, '2024-06-01'))).toEqual([
+      'anchored',
+      'raw-string',
+      'raw-date',
+    ])
+
+    setTZ('Pacific/Auckland')
+    expect(ids(dayPlansOnLocalDay(dayPlans, '2024-06-01'))).toEqual([
+      'anchored',
+    ])
+    expect(ids(dayPlansOnLocalDay(dayPlans, '2024-06-02'))).toEqual([
+      'raw-string',
+      'raw-date',
+    ])
+  })
+
+  it('matches scanning every Day Plan after the time zone changes', () => {
+    setTZ('America/Los_Angeles')
+    const dayPlans = makeDayPlans(3)
+    dayPlansByDayKey(dayPlans)
+    for (const tz of tzs) {
+      setTZ(tz)
+      for (let d = -3; d < DAYS + 3; d += 11) {
+        const dayString = new Date(START + d * 864e5).toISOString().slice(0, 10)
+        expect(ids(dayPlansOnLocalDay(dayPlans, dayString))).toEqual(
+          ids(dayPlans.filter((p) => isStoredDateOnLocalDay(p.date, dayString)))
+        )
+      }
+    }
+  })
+
+  it('keeps the index of normalized Day Plans across time zones', () => {
+    setTZ('America/Los_Angeles')
+    const dayPlans = makeDayPlans(4).map((p) => ({
+      ...p,
+      date: normalizeDateForStorage(p.date),
+    }))
+    const index = dayPlansByDayKey(dayPlans)
+    setTZ('Pacific/Auckland')
+    expect(dayPlansByDayKey(dayPlans)).toBe(index)
+
+    // Off-anchor dates in the list: rebuilt only once the zone moves them.
+    const mixed = makeDayPlans(4)
+    const before = dayPlansByDayKey(mixed)
+    expect(dayPlansByDayKey(mixed)).toBe(before)
+    setTZ('America/Los_Angeles')
+    expect(dayPlansByDayKey(mixed)).not.toBe(before)
+  })
+
   it('totals a Service Year of 1,000 Day Plans quickly', () => {
     const dayPlans = makeDayPlans(2)
     const start = performance.now()

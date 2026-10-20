@@ -1,4 +1,5 @@
 import {
+  CalendarClock as CalendarClockIcon,
   Clock as ClockIcon,
   History as HistoryIcon,
   MapPin as MapPinIcon,
@@ -26,6 +27,7 @@ const ICONS: Record<SuggestedHeaderSection, AppIcon> = {
   nearby: MapPinIcon,
   followUpsDue: ClockIcon,
   recent: HistoryIcon,
+  beenAWhile: CalendarClockIcon,
   all: UsersIcon,
   other: UsersIcon,
   search: SearchIcon,

@@ -632,6 +632,7 @@ const ContactsScreen = ({
                     showsDisclosure={!isWide}
                     selectionMode={selection.selecting}
                     checked={selection.isSelected(contact.id)}
+                    offersNotNow={section === 'beenAWhile'}
                     onSelect={() => selection.start(contact.id)}
                     onPress={() => {
                       if (selection.selecting) {

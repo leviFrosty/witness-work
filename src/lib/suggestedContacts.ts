@@ -3,6 +3,9 @@ import type { Visit } from '@/types/visit'
 import type { ConversationIndex } from '@/lib/conversationIndex'
 import i18n, { type TranslationKey } from '@/lib/locales'
 import { distanceMeters } from '@/lib/geo'
+import { formatRelative } from '@/lib/dates'
+import { DATA_PROTECTION_RETENTION_DAYS } from '@/lib/dataProtection'
+import { isContactDismissed } from '@/lib/dismissedContacts'
 import {
   followUpAnswer,
   isAppointment,
@@ -21,8 +24,19 @@ export const RECENT_VISIT_DAYS = 14
 export const DUE_FOLLOW_UP_LOOKBACK_DAYS = 30
 /** Each suggested section shows at most this many Contacts. */
 export const SUGGESTED_SECTION_LIMIT = 5
+/**
+ * Been a While: the last conversation is at least this many calendar days old,
+ * and no Visit of any kind (a Not at Home included) is newer.
+ */
+export const BEEN_A_WHILE_MIN_DAYS = 21
+/** Been a While stops at this many days; older Contacts have moved on. */
+export const BEEN_A_WHILE_MAX_DAYS = 120
 
-export type SuggestedSectionKey = 'nearby' | 'followUpsDue' | 'recent'
+export type SuggestedSectionKey =
+  | 'nearby'
+  | 'followUpsDue'
+  | 'recent'
+  | 'beenAWhile'
 
 export type SuggestedSection = {
   key: SuggestedSectionKey
@@ -42,17 +56,24 @@ export type SuggestedContacts = {
    * earlier section, so rows can still say "Follow-up today".
    */
   dueFollowUpById: Map<string, Visit>
+  /**
+   * The last real conversation (not a Not at Home) per Contact in Been a While,
+   * for the row's "Talked 2 months ago" line.
+   */
+  lastTalkById: Map<string, Visit>
 }
 
 /**
  * Splits Contacts into the Suggested sections: Nearby (within
  * {@link NEARBY_RADIUS_METERS} of `here`, closest first), then Follow-ups due
- * (most overdue first), then Recent (most recent Visit first). Each section is
+ * (most overdue first), then Recent (most recent Visit first), then, when
+ * `beenAWhile` is on, Been a While (see `beenAWhileContacts`). Each section is
  * capped at {@link SUGGESTED_SECTION_LIMIT} and skips Contacts already shown in
  * an earlier one. Without `here`, there's no Nearby section.
  *
  * Shared by the Log Visit contact picker and the Contacts list's Suggested sort
- * so both suggest the same people.
+ * so both suggest the same people. Only the Contacts list asks for Been a
+ * While; the picker is for someone just visited.
  */
 export const buildSuggestedContacts = ({
   contacts,
@@ -60,12 +81,18 @@ export const buildSuggestedContacts = ({
   index,
   here,
   currentTime = new Date(),
+  beenAWhile = false,
+  dataProtectionMode = false,
 }: {
   contacts: Contact[]
   conversations: Visit[]
   index: ConversationIndex
   here?: Coordinate | null
   currentTime?: Date
+  /** Adds the Been a While section. */
+  beenAWhile?: boolean
+  /** Ends Been a While at the retention prompt's cutoff. */
+  dataProtectionMode?: boolean
 }): SuggestedContacts => {
   const suggestedIds = new Set<string>()
   const sections: SuggestedSection[] = []
@@ -115,7 +142,106 @@ export const buildSuggestedContacts = ({
       .sort((a, b) => lastVisitMs(b) - lastVisitMs(a))
   )
 
-  return { sections, suggestedIds, distanceById, dueFollowUpById }
+  const lastTalkById = new Map<string, Visit>()
+  if (beenAWhile) {
+    const lapsed = beenAWhileContacts({
+      contacts,
+      conversations,
+      index,
+      currentTime,
+      maxDays: dataProtectionMode
+        ? Math.min(BEEN_A_WHILE_MAX_DAYS, DATA_PROTECTION_RETENTION_DAYS)
+        : BEEN_A_WHILE_MAX_DAYS,
+    })
+    take(
+      'beenAWhile',
+      lapsed.map(({ contact }) => contact)
+    )
+    for (const { contact, lastTalk } of lapsed) {
+      if (suggestedIds.has(contact.id)) lastTalkById.set(contact.id, lastTalk)
+    }
+  }
+
+  return { sections, suggestedIds, distanceById, dueFollowUpById, lastTalkById }
+}
+
+/** Whole calendar days from `from` to `to`, so the window doesn't move by hour. */
+const calendarDaysBetween = (from: Date, to: Date) => {
+  const startOfDay = (d: Date) => {
+    const copy = new Date(d)
+    copy.setHours(0, 0, 0, 0)
+    return copy.getTime()
+  }
+  return Math.round((startOfDay(to) - startOfDay(from)) / 86_400_000)
+}
+
+/**
+ * People talked with a while ago who'd otherwise go quiet: the last real
+ * conversation (a Not at Home doesn't count) was {@link BEEN_A_WHILE_MIN_DAYS}
+ * to `maxDays` days ago, no Visit at all is newer than the minimum (a recent
+ * Not at Home means the User is already trying), no open Follow-up is upcoming
+ * or missed within {@link DUE_FOLLOW_UP_LOOKBACK_DAYS} days, and the Contact
+ * isn't dismissed. Bible studies come first, then favorites, then the most
+ * recently talked with.
+ */
+const beenAWhileContacts = ({
+  contacts,
+  conversations,
+  index,
+  currentTime,
+  maxDays,
+}: {
+  contacts: Contact[]
+  conversations: Visit[]
+  index: ConversationIndex
+  currentTime: Date
+  maxDays: number
+}) => {
+  const lastTalkByContact = new Map<string, { visit: Visit; ms: number }>()
+  for (const visit of conversations) {
+    if (visit.notAtHome) continue
+    const ms = new Date(visit.date).getTime()
+    if (Number.isNaN(ms)) continue
+    const prev = lastTalkByContact.get(visit.contact.id)
+    if (!prev || ms > prev.ms)
+      lastTalkByContact.set(visit.contact.id, { visit, ms })
+  }
+
+  const byContact = visitsByContact(conversations)
+  // A Follow-up missed longer ago than Follow-ups Due looks back has lapsed
+  // too, so it doesn't keep the Contact out.
+  const lookbackStart = new Date(currentTime)
+  lookbackStart.setHours(0, 0, 0, 0)
+  lookbackStart.setDate(lookbackStart.getDate() - DUE_FOLLOW_UP_LOOKBACK_DAYS)
+  const hasOpenFollowUp = (contactId: string) =>
+    (byContact.get(contactId) ?? []).some(
+      (visit) =>
+        isAppointment(visit) &&
+        new Date(visit.followUp!.date).getTime() >= lookbackStart.getTime() &&
+        !followUpAnswer(visit, byContact.get(contactId) ?? [])
+    )
+
+  const daysSince = (ms: number) =>
+    calendarDaysBetween(new Date(ms), currentTime)
+  const lapsed: { contact: Contact; lastTalk: Visit; ms: number }[] = []
+  for (const contact of contacts) {
+    const talk = lastTalkByContact.get(contact.id)
+    if (!talk || isContactDismissed(contact)) continue
+    const talkDays = daysSince(talk.ms)
+    if (talkDays < BEEN_A_WHILE_MIN_DAYS || talkDays > maxDays) continue
+    const lastVisitMs = index.mostRecentConvMs.get(contact.id)
+    if (
+      lastVisitMs !== undefined &&
+      daysSince(lastVisitMs) < BEEN_A_WHILE_MIN_DAYS
+    )
+      continue
+    if (hasOpenFollowUp(contact.id)) continue
+    lapsed.push({ contact, lastTalk: talk.visit, ms: talk.ms })
+  }
+
+  const rank = ({ contact, lastTalk }: (typeof lapsed)[number]) =>
+    lastTalk.isBibleStudy ? 0 : contact.isFavorite ? 1 : 2
+  return lapsed.sort((a, b) => rank(a) - rank(b) || b.ms - a.ms)
 }
 
 /**
@@ -154,6 +280,7 @@ export const suggestedSectionTitleKey: Record<
   nearby: 'suggested_nearby',
   followUpsDue: 'suggested_followUpsDue',
   recent: 'suggested_recent',
+  beenAWhile: 'suggested_beenAWhile',
 }
 
 /** "Follow-up today" or "Follow-up 2 days overdue" for a due Follow-up. */
@@ -183,17 +310,28 @@ export type SuggestedRowDetail = { text: string; tone?: 'default' | 'due' }
 /**
  * Why a suggested Contact is listed: Nearby shows the street so neighbors in
  * one building are easy to tell apart (after "Follow-up today" when one is
- * due); Follow-ups Due shows how overdue. Recent keeps the row's default line.
+ * due); Follow-ups Due shows how overdue; Been a While shows when they last
+ * talked, which a later Not at Home would hide. Recent keeps the row's default
+ * line.
  */
 export const suggestedRowDetail = (
   section: SuggestedSectionKey,
   contact: Contact,
-  suggested: Pick<SuggestedContacts, 'dueFollowUpById'>,
+  suggested: Pick<SuggestedContacts, 'dueFollowUpById'> &
+    Partial<Pick<SuggestedContacts, 'lastTalkById'>>,
   currentTime: Date = new Date()
 ): SuggestedRowDetail | undefined => {
   const due = suggested.dueFollowUpById.get(contact.id)
   if (section === 'followUpsDue' && due) {
     return { text: dueFollowUpLabel(due, currentTime), tone: 'due' }
+  }
+  const lastTalk = suggested.lastTalkById?.get(contact.id)
+  if (section === 'beenAWhile' && lastTalk) {
+    return {
+      text: i18n.t('suggested_lastTalked', {
+        when: formatRelative(lastTalk.date),
+      }),
+    }
   }
   if (section !== 'nearby') return undefined
   const parts = [

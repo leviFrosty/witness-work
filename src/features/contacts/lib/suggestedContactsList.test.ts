@@ -45,6 +45,7 @@ const suggestedOf = (
   suggestedIds: new Set(sections.flatMap((s) => s.contacts.map((c) => c.id))),
   distanceById: new Map(),
   dueFollowUpById: new Map(due.map((visit) => [visit.contact.id, visit])),
+  lastTalkById: new Map(),
 })
 
 const shape = (items: ContactsListItem[]) =>

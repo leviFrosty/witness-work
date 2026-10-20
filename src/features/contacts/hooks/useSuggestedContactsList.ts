@@ -1,14 +1,15 @@
 import type { Contact } from '@/types/contact'
 import type { ConversationIndex } from '@/lib/conversationIndex'
 import useConversations from '@/stores/conversationStore'
+import { usePreferences } from '@/stores/preferences'
 import useLocationSnapshot from '@/hooks/useLocationSnapshot'
 import { buildSuggestedContacts } from '@/lib/suggestedContacts'
 import { buildContactsList } from '@/features/contacts/lib/suggestedContactsList'
 
 /**
  * The Contacts list laid out for the Suggested sort (see `buildContactsList`):
- * Nearby, Follow-ups Due, and Recent sections ahead of everyone else, or the
- * flat list when `enabled` is false.
+ * Nearby, Follow-ups Due, Recent, and Been a While sections ahead of everyone
+ * else, or the flat list when `enabled` is false.
  *
  * Location and "today" come from `useLocationSnapshot`, read on focus so rows
  * don't move while the User reads (call `markInteracted` from the list's
@@ -29,6 +30,7 @@ export default function useSuggestedContactsList({
   listVisible: boolean
 }) {
   const conversations = useConversations((s) => s.conversations)
+  const dataProtectionMode = usePreferences((s) => s.dataProtectionMode)
   const location = useLocationSnapshot({ enabled: enabled && listVisible })
 
   const suggested = enabled
@@ -38,6 +40,8 @@ export default function useSuggestedContactsList({
         index,
         here: location.here,
         currentTime: new Date(location.at),
+        beenAWhile: true,
+        dataProtectionMode,
       })
     : null
   const list = buildContactsList({

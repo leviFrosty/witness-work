@@ -69,6 +69,10 @@ vi.mock('@/stores/preferences', () => ({
 vi.mock('@/features/contacts/hooks/useShareContact', () => ({
   default: () => vi.fn(),
 }))
+vi.mock('@/hooks/useDismissContact', () => ({
+  default: () => vi.fn(),
+  notNowDismissOption: {},
+}))
 vi.mock('@/features/contacts/components/HighlightedText', () => ({
   default: 'HighlightedText',
 }))

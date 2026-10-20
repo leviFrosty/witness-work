@@ -18,6 +18,7 @@ export const analyticsEventNames = [
   'map_location_permission_result',
   'plan_created',
   'plan_details_action',
+  'plans_copied_from_last_week',
   'role_period_set',
   'schedule_intro_closed',
   'service_history_saved',

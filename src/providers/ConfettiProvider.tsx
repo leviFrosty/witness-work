@@ -5,6 +5,7 @@ import useConfetti from '@/vendor/ConfettiSkia/react/useConfetti'
 import type { ConfettiConfig } from '@/vendor/ConfettiSkia/core/Config'
 import type ConfettiComponent from '@/vendor/ConfettiSkia/react/Confetti'
 import { ConfettiContext, FireworksCtx, FireOpts } from '@/contexts/Confetti'
+import useReduceMotionEnabled from '@/hooks/useReduceMotionEnabled'
 
 /**
  * Visual buffer between the global Lottie + chime ending and the Skia fireworks
@@ -34,8 +35,11 @@ const ConfettiProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
   const { width, height } = useWindowDimensions()
   const [overlayMounted, setOverlayMounted] = useState(false)
   const pendingTriggersRef = useRef<Partial<ConfettiConfig>[]>([])
+  // Reduce Motion skips the fireworks; callers keep their own haptics.
+  const reduceMotion = useReduceMotionEnabled()
 
   const triggerBurst = (cfg?: Partial<ConfettiConfig>) => {
+    if (reduceMotion) return
     const handle = confettiRef.current
     if (handle) {
       handle.trigger(cfg)
@@ -47,6 +51,7 @@ const ConfettiProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
   }
 
   const fire = (opts?: FireOpts) => {
+    if (reduceMotion) return
     const count = opts?.count ?? DEFAULT_COUNT
     const velocity = opts?.velocity ?? DEFAULT_VELOCITY
     const fade = opts?.fade ?? DEFAULT_FADE

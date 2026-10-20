@@ -4,6 +4,14 @@
  * it imports nothing from React Native.
  */
 
+/**
+ * The widest the note's column gets, gutters included, like the app's other
+ * content on a wide iPad. The editor's text and its toolbar share it.
+ */
+export const NOTE_MAX_WIDTH = 720
+/** The note's side gutter while the screen is narrower than its column. */
+export const NOTE_GUTTER = 16
+
 export type EditorMark = 'bold' | 'italic' | 'underline' | 'strike'
 export type EditorBlock = 'paragraph' | 'heading1' | 'heading2'
 export type EditorList = 'bulletList' | 'orderedList' | 'taskList'

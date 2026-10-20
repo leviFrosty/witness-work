@@ -15,10 +15,12 @@ import { Extension, type NodeViewRenderer } from '@tiptap/core'
 import type { Node as ProseMirrorNode } from '@tiptap/pm/model'
 import { Plugin, PluginKey } from '@tiptap/pm/state'
 import { Decoration, DecorationSet } from '@tiptap/pm/view'
-import type {
-  EditorCommand,
-  EditorFormatState,
-  EditorSetup,
+import {
+  NOTE_GUTTER,
+  NOTE_MAX_WIDTH,
+  type EditorCommand,
+  type EditorFormatState,
+  type EditorSetup,
 } from '@/components/richText/editor/editorProtocol'
 import { normalizeImageScale, snapImageScale } from '@/lib/richText/imageScale'
 import { textDirection } from '@/lib/textDirection'
@@ -473,7 +475,8 @@ function styles(setup: EditorSetup): string {
 #root{flex-direction:column;}
 html,body{margin:0;padding:0;min-height:100%;overflow-x:hidden;background:${t.background};-webkit-text-size-adjust:100%;}
 body{color:${t.text};font-family:NoteInter,-apple-system,system-ui,Roboto,sans-serif;font-size:${t.fontSize}px;line-height:1.45;-webkit-tap-highlight-color:transparent;}
-.ProseMirror{outline:none;box-sizing:border-box;min-height:100vh;padding:12px 16px 96px;caret-color:${t.accent};white-space:pre-wrap;word-wrap:break-word;-webkit-user-select:text;user-select:text;}
+/* On a wide screen the side padding grows so the text keeps to a ${NOTE_MAX_WIDTH}px column, while a tap beside it still reaches the note. A photo's share is of that column. */
+.ProseMirror{outline:none;box-sizing:border-box;min-height:100vh;padding:12px max(${NOTE_GUTTER}px,calc((100% - ${NOTE_MAX_WIDTH}px) / 2 + ${NOTE_GUTTER}px)) 96px;caret-color:${t.accent};white-space:pre-wrap;word-wrap:break-word;-webkit-user-select:text;user-select:text;}
 .ProseMirror p{margin:0 0 6px;}
 .ProseMirror h1{font-size:1.43em;font-weight:700;line-height:1.25;margin:4px 0 6px;}
 .ProseMirror h2{font-size:1.15em;font-weight:700;line-height:1.3;margin:4px 0 6px;}

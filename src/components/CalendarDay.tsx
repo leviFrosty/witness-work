@@ -1,7 +1,5 @@
 import { ReactNode } from 'react'
 import { StyleSheet, View } from 'react-native'
-import { DateData } from 'react-native-calendars'
-import { DayProps } from 'react-native-calendars/src/calendar/day'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 import ContextMenu from '@/components/ui/ContextMenu'
@@ -28,6 +26,24 @@ import { isCountableEntry } from '@/lib/serviceReport'
 import { hasNote as noteExists } from '@/lib/richText/notes'
 
 const boxSize = 40
+
+/** A calendar day, as the Schedule and the week strip describe each cell. */
+export type DateData = {
+  year: number
+  /** 1-based. */
+  month: number
+  day: number
+  timestamp: number
+  /** `YYYY-MM-DD`. */
+  dateString: string
+}
+
+type DayProps = {
+  date?: DateData | undefined
+  state?: 'disabled' | 'today' | ''
+  onPress?: (date?: DateData) => void
+}
+
 /**
  * The square is a fixed size, so its text grows only this far with the system
  * text size; the day's label reads everything out instead.
@@ -81,8 +97,7 @@ const getNoteIndicatorColor = (
 }
 
 const NonPlannedDay = (
-  props: Omit<DayProps, 'date'> & {
-    date?: DateData | undefined
+  props: DayProps & {
     serviceReports: TimeEntry[] | undefined
     viewMode?: CalendarViewMode
     height?: number
@@ -176,8 +191,7 @@ const NonPlannedDay = (
 }
 
 const PlannedDay = (
-  props: Omit<DayProps, 'date'> & {
-    date?: DateData | undefined
+  props: DayProps & {
     serviceReports: TimeEntry[] | undefined
     dayPlans?: DayPlan[]
     recurringPlans?: RecurringPlan[]
@@ -314,8 +328,7 @@ const PlannedDay = (
 }
 
 const CalendarDay = (
-  props: Omit<DayProps, 'date'> & {
-    date?: DateData | undefined
+  props: DayProps & {
     monthsReports: TimeEntry[] | null
     viewMode?: CalendarViewMode
     height?: number

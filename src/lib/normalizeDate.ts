@@ -162,8 +162,8 @@ export const localDayKey = (localDay: Date | string | moment.Moment): string =>
 /**
  * True when a stored calendar-day anchor falls on the given local calendar day.
  * `localDay` expresses a day in _local_ mode — a `YYYY-MM-DD` string (e.g.
- * react-native-calendars' `dateString`), a local-mode Date, or a local-mode
- * moment cursor. Never pass another stored anchor as `localDay`; compare
+ * CalendarDay's `dateString`), a local-mode Date, or a local-mode moment
+ * cursor. Never pass another stored anchor as `localDay`; compare
  * `storedDayKey`s instead.
  */
 export const isStoredDateOnLocalDay = (

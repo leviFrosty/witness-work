@@ -9,8 +9,6 @@ import {
 } from '@/lib/locales'
 import { applyFormatRegion } from '@/lib/dates'
 import { usePreferences } from '@/stores/preferences'
-import { LocaleConfig } from 'react-native-calendars'
-import moment from 'moment'
 import { useShallow } from 'zustand/react/shallow'
 
 export default function useUserLocalePrefs() {
@@ -52,13 +50,6 @@ export default function useUserLocalePrefs() {
       timeFormatOverride: timeFormat,
       dateOrderOverride: dateOrder,
     })
-    LocaleConfig.locales[localeOrFallback] = {
-      monthNames: moment.months(),
-      monthNamesShort: moment.monthsShort(),
-      dayNames: moment.weekdays(),
-      dayNamesShort: moment.weekdaysShort(),
-    }
-    LocaleConfig.defaultLocale = localeOrFallback
   }, [locale, formatRegion, startOfWeek, timeFormat, dateOrder])
 
   return { loadedLocale, languageFound, isFallback }

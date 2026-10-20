@@ -20,9 +20,6 @@ vi.mock('expo-localization', () => ({
   getLocales: () => [{ languageTag: 'en-US' }],
   getCalendars: () => [{ uses24hourClock: false, firstWeekday: 1 }],
 }))
-vi.mock('react-native-calendars', () => ({
-  LocaleConfig: { locales: {}, defaultLocale: '' },
-}))
 
 import { usePreferences } from '@/stores/preferences'
 import usePublisher from '@/hooks/usePublisher'

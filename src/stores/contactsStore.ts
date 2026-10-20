@@ -37,6 +37,77 @@ const initialState = {
   deletedCustomFieldDefs: [] as CustomFieldTombstone[],
 }
 
+/**
+ * Moves the `ids` contacts to their tombstones in one update; the single and
+ * Select-mode deletes share it. Every tombstone gets one stamp, strictly newer
+ * than the newest of them, so iCloud's merge sees the delete win. Unknown ids
+ * are skipped, and a delete of none leaves the state untouched.
+ */
+function withContactsDeleted(
+  {
+    contacts,
+    deletedContacts,
+  }: Pick<typeof initialState, 'contacts' | 'deletedContacts'>,
+  ids: string[],
+  options?: { redact?: boolean }
+) {
+  const targets = new Set(ids)
+  const removed = contacts.filter((contact) => targets.has(contact.id))
+  if (!removed.length) return { contacts, deletedContacts }
+  const removedIds = new Set(removed.map((contact) => contact.id))
+  const now = syncTimestamp(
+    removed.reduce(
+      (stamp, contact) => Math.max(stamp, contact.updatedAt ?? 0),
+      0
+    )
+  )
+  return {
+    deletedContacts: [
+      ...deletedContacts.filter((contact) => !removedIds.has(contact.id)),
+      ...removed.map((contact) =>
+        options?.redact === true
+          ? stripContactForTombstone(contact, now)
+          : { ...contact, updatedAt: now }
+      ),
+    ],
+    contacts: contacts.filter((contact) => !removedIds.has(contact.id)),
+  }
+}
+
+/** Snoozes each listed contact until its `dismissedUntil`. */
+function withContactsDismissed(
+  contacts: Contact[],
+  updates: {
+    id: string
+    dismissedUntil: Date
+    dismissedNotificationId?: string
+  }[]
+) {
+  const byId = new Map(updates.map((update) => [update.id, update]))
+  return contacts.map((c) => {
+    const update = byId.get(c.id)
+    if (!update) return c
+    return {
+      ...c,
+      dismissedUntil: update.dismissedUntil,
+      dismissedNotificationId: update.dismissedNotificationId,
+      updatedAt: syncTimestamp(c.updatedAt),
+    }
+  })
+}
+
+/** Brings each listed contact back from being dismissed. */
+function withContactsUndismissed(contacts: Contact[], ids: string[]) {
+  const targets = new Set(ids)
+  return contacts.map((c) => {
+    if (!targets.has(c.id)) return c
+    const updatedContact = { ...c, updatedAt: syncTimestamp(c.updatedAt) }
+    delete updatedContact.dismissedUntil
+    delete updatedContact.dismissedNotificationId
+    return updatedContact
+  })
+}
+
 export const useContacts = create(
   persist(
     combine(initialState, (set) => ({
@@ -107,55 +178,14 @@ export const useContacts = create(
        * it; a bare `deleteContact` is the archive-and-keep path.
        */
       deleteContact: (id: string, options?: { redact?: boolean }) => {
-        const redact = options?.redact === true
-        set(({ contacts, deletedContacts }) => {
-          const foundContact = contacts.find((contact) => contact.id === id)
-          if (!foundContact) {
-            return { contacts, deletedContacts }
-          }
-          const now = syncTimestamp(foundContact.updatedAt)
-          return {
-            deletedContacts: [
-              ...deletedContacts.filter((contact) => contact.id !== id),
-              redact
-                ? stripContactForTombstone(foundContact, now)
-                : { ...foundContact, updatedAt: now },
-            ],
-            contacts: contacts.filter((contact) => contact.id !== id),
-          }
-        })
+        set((state) => withContactsDeleted(state, [id], options))
       },
       /**
        * Batch `deleteContact` for Select mode: one store update (and one
        * persist) for the whole selection instead of one per contact.
        */
       deleteContacts: (ids: string[], options?: { redact?: boolean }) => {
-        const redact = options?.redact === true
-        const targets = new Set(ids)
-        set(({ contacts, deletedContacts }) => {
-          const removed = contacts.filter((contact) => targets.has(contact.id))
-          if (!removed.length) return { contacts, deletedContacts }
-          const removedIds = new Set(removed.map((contact) => contact.id))
-          const now = syncTimestamp(
-            removed.reduce(
-              (stamp, contact) => Math.max(stamp, contact.updatedAt ?? 0),
-              0
-            )
-          )
-          return {
-            deletedContacts: [
-              ...deletedContacts.filter(
-                (contact) => !removedIds.has(contact.id)
-              ),
-              ...removed.map((contact) =>
-                redact
-                  ? stripContactForTombstone(contact, now)
-                  : { ...contact, updatedAt: now }
-              ),
-            ],
-            contacts: contacts.filter((contact) => !removedIds.has(contact.id)),
-          }
-        })
+        set((state) => withContactsDeleted(state, ids, options))
       },
       updateContact: (contact: Partial<Contact>) => {
         set(({ contacts, deletedCustomFieldDefs }) => {
@@ -373,21 +403,11 @@ export const useContacts = create(
         dismissedUntil: Date,
         dismissedNotificationId?: string
       ) => {
-        set(({ contacts }) => {
-          return {
-            contacts: contacts.map((c) => {
-              if (c.id !== id) {
-                return c
-              }
-              return {
-                ...c,
-                dismissedUntil,
-                dismissedNotificationId,
-                updatedAt: syncTimestamp(c.updatedAt),
-              }
-            }),
-          }
-        })
+        set(({ contacts }) => ({
+          contacts: withContactsDismissed(contacts, [
+            { id, dismissedUntil, dismissedNotificationId },
+          ]),
+        }))
       },
       /**
        * Batch `dismissContact` for Select mode: one store update (and one
@@ -400,34 +420,14 @@ export const useContacts = create(
           dismissedNotificationId?: string
         }[]
       ) => {
-        const byId = new Map(updates.map((update) => [update.id, update]))
         set(({ contacts }) => ({
-          contacts: contacts.map((c) => {
-            const update = byId.get(c.id)
-            if (!update) return c
-            return {
-              ...c,
-              dismissedUntil: update.dismissedUntil,
-              dismissedNotificationId: update.dismissedNotificationId,
-              updatedAt: syncTimestamp(c.updatedAt),
-            }
-          }),
+          contacts: withContactsDismissed(contacts, updates),
         }))
       },
       /** Batch `undismissContact` for Select mode, in one store update. */
       undismissContacts: (ids: string[]) => {
-        const targets = new Set(ids)
         set(({ contacts }) => ({
-          contacts: contacts.map((c) => {
-            if (!targets.has(c.id)) return c
-            const updatedContact = {
-              ...c,
-              updatedAt: syncTimestamp(c.updatedAt),
-            }
-            delete updatedContact.dismissedUntil
-            delete updatedContact.dismissedNotificationId
-            return updatedContact
-          }),
+          contacts: withContactsUndismissed(contacts, ids),
         }))
       },
       /** Batch favorite for Select mode; leaves already-matching contacts alone. */
@@ -458,22 +458,9 @@ export const useContacts = create(
         })
       },
       undismissContact: (id: string) => {
-        set(({ contacts }) => {
-          return {
-            contacts: contacts.map((c) => {
-              if (c.id !== id) {
-                return c
-              }
-              const updatedContact = {
-                ...c,
-                updatedAt: syncTimestamp(c.updatedAt),
-              }
-              delete updatedContact.dismissedUntil
-              delete updatedContact.dismissedNotificationId
-              return updatedContact
-            }),
-          }
-        })
+        set(({ contacts }) => ({
+          contacts: withContactsUndismissed(contacts, [id]),
+        }))
       },
       _WARNING_forceDeleteContacts: () => set({ contacts: [] }),
       _WARNING_clearDeleted: () => set({ deletedContacts: [] }),

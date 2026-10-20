@@ -10,6 +10,7 @@ import {
 import { CustomerContext, CustomerCtx } from '@/contexts/customer'
 import Purchases, { CustomerInfo, LOG_LEVEL } from 'react-native-purchases'
 import { errorTracking } from '@/lib/errorTracking'
+import { toPurchasesError } from '@/lib/purchasesError'
 import { logger } from '@/lib/logger'
 import { isOfflineError } from '@/lib/offlineError'
 import { getOrCreateAccountId } from '@/lib/account'
@@ -43,7 +44,9 @@ const CustomerProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
         logger.warn('[CustomerProvider] getCustomerInfo offline', error)
         return
       }
-      errorTracking.captureException(error)
+      errorTracking.captureException(
+        toPurchasesError(error, { background: true })
+      )
     }
   }, [])
 
@@ -146,7 +149,9 @@ const CustomerProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
     identify.catch((error) => {
       if (accountId && !isOfflineError(error)) {
         logger.warn('[CustomerProvider] Purchases.logIn failed', error)
-        errorTracking.captureException(error)
+        errorTracking.captureException(
+          toPurchasesError(error, { background: true })
+        )
       } else {
         logger.warn('[CustomerProvider] initial customer info failed', error)
       }

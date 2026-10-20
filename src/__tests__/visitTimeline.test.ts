@@ -6,7 +6,6 @@ import {
   getJourney,
   getUpNext,
   sortVisitsNewestFirst,
-  visibleNote,
   visitOutcome,
 } from '@/features/contacts/lib/visitTimeline'
 import { Visit } from '@/types/visit'
@@ -220,7 +219,7 @@ describe('sortVisitsNewestFirst', () => {
   })
 })
 
-describe('gapBetween / visibleNote', () => {
+describe('gapBetween', () => {
   it('humanizes day gaps and flags same-day pairs', () => {
     expect(
       gapBetween(at('2026-06-05T18:00'), at('2026-06-05T09:00'))
@@ -228,11 +227,5 @@ describe('gapBetween / visibleNote', () => {
     expect(gapBetween(at('2026-06-05T01:00'), at('2026-05-29T23:00'))).toBe(
       '7 days'
     )
-  })
-
-  it('treats whitespace-only notes as empty', () => {
-    expect(visibleNote('   \n  ')).toBeNull()
-    expect(visibleNote(undefined)).toBeNull()
-    expect(visibleNote(' hi ')).toBe('hi')
   })
 })

@@ -6,12 +6,6 @@ export type ZoomTransform = {
   translateY: number
 }
 
-export const IDENTITY_TRANSFORM: ZoomTransform = {
-  scale: 1,
-  translateX: 0,
-  translateY: 0,
-}
-
 /**
  * The transform, applied about `frame`'s center, that carries rect `from`
  * `progress` of the way onto rect `to`. Scale moves geometrically (equal ratios

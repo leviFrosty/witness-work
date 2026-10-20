@@ -1391,11 +1391,3 @@ export function listedNotifications(
         (n) => n.kind !== 'badge' && n.kind !== 'badgeReaction'
       )
 }
-
-/** The queue entry a relay event (by inbox sequence) produced, if still listed. */
-export function notificationIdForSeq(
-  notifications: BuddyNotification[],
-  seq: number
-): string | null {
-  return notifications.find((n) => n.seq === seq)?.id ?? null
-}

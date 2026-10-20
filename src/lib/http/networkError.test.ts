@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest'
 import {
   classifyNetworkError,
   isConnectivityError,
-  isRetryableNetworkError,
 } from '@/lib/http/networkError'
 import { isOfflineError } from '@/lib/offlineError'
 
@@ -122,11 +121,8 @@ describe('classifyNetworkError', () => {
     expect(classifyNetworkError(undefined)).toBe('unknown')
   })
 
-  it('separates connectivity from retryable failures', () => {
+  it('treats cancelled and offline requests as connectivity failures', () => {
     expect(isConnectivityError({ name: 'AbortError' })).toBe(true)
-    expect(isRetryableNetworkError({ name: 'AbortError' })).toBe(false)
-    expect(isRetryableNetworkError({ status: 503 })).toBe(true)
-    expect(isRetryableNetworkError({ status: 400 })).toBe(false)
     expect(isOfflineError(new TypeError('Network request failed'))).toBe(true)
   })
 })

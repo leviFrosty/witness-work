@@ -109,14 +109,3 @@ export function noteFields(doc: RichTextDoc | null | undefined): NoteUpdate {
     },
   }
 }
-
-/** Whether two records' notes read the same (for "did anything change"). */
-export function sameNote(a: NoteFields, b: NoteFields): boolean {
-  return canonicalJson(getNoteDoc(a)) === canonicalJson(getNoteDoc(b))
-}
-
-/** `noteFields` for a plain-text note, e.g. one written by an import. */
-export function noteFieldsFromText(text: string | undefined): NoteUpdate {
-  const note = text?.trim()
-  return { note: note || undefined, noteDoc: undefined }
-}

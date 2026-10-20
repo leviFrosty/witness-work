@@ -22,22 +22,3 @@ export const filterActivesContacts = (contacts: Contact[]): Contact[] => {
 export const getDismissedContacts = (contacts: Contact[]): Contact[] => {
   return contacts.filter((contact) => isContactDismissed(contact))
 }
-
-/**
- * Checks if any contacts have expired dismiss periods and automatically
- * undismisses them
- */
-export const cleanupExpiredDismissals = (contacts: Contact[]): Contact[] => {
-  return contacts.map((contact) => {
-    if (
-      contact.dismissedUntil &&
-      moment(contact.dismissedUntil).isSameOrBefore(moment())
-    ) {
-      // Dismiss period has expired, remove the dismissal
-      const updatedContact = { ...contact }
-      delete updatedContact.dismissedUntil
-      return updatedContact
-    }
-    return contact
-  })
-}

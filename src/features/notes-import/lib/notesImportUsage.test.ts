@@ -5,7 +5,6 @@ import {
   notesImportCreditsForHash,
   normalizeNotesImportCredits,
   normalizeNotesImportStatus,
-  shouldShowNotesImportSupporterCta,
 } from '@/features/notes-import/lib/notesImportUsage'
 
 const finiteSnapshot = {
@@ -296,13 +295,6 @@ describe('normalizeNotesImportStatus', () => {
     ],
   ])('rejects %s', (_label, status) => {
     expect(normalizeNotesImportStatus(status)).toBeNull()
-  })
-})
-
-describe('shouldShowNotesImportSupporterCta', () => {
-  it('uses real entitlement status, including unlimited development usage', () => {
-    expect(shouldShowNotesImportSupporterCta({ isSupporter: false })).toBe(true)
-    expect(shouldShowNotesImportSupporterCta({ isSupporter: true })).toBe(false)
   })
 })
 

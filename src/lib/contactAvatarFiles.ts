@@ -84,34 +84,6 @@ export async function originalExists(
   return info.exists
 }
 
-/**
- * Copy a freshly-picked image into the documents directory as the canonical
- * "original" for this contact, then read back its on-disk size and pixel
- * dimensions. The dimensions are sourced from a no-op manipulator call —
- * `getInfoAsync` doesn't decode the image, so it can't give us width/height.
- */
-export async function saveOriginalImage(
-  srcUri: string,
-  contactId: string
-): Promise<{ path: string; size?: number; width: number; height: number }> {
-  const dest = originalAvatarPath(contactId)
-  await FileSystem.deleteAsync(dest, { idempotent: true })
-  await FileSystem.copyAsync({ from: srcUri, to: dest })
-
-  const info = await FileSystem.getInfoAsync(dest)
-  const dims = await ImageManipulator.manipulateAsync(dest, [], {
-    compress: 1,
-    format: ImageManipulator.SaveFormat.JPEG,
-  })
-
-  return {
-    path: dest,
-    size: info.exists ? info.size : undefined,
-    width: dims.width,
-    height: dims.height,
-  }
-}
-
 export interface CropRect {
   /** Top-left X in the source image's pixel coordinates. */
   originX: number

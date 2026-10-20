@@ -11,14 +11,14 @@ import { getServiceYearReports } from '@/lib/serviceYear'
 import { LDC_BUILTIN_CATEGORY_ID } from '@/constants/categories'
 import {
   getPlansIntersectingDay,
-  plannedMinutesToCurrentDayForMonth,
+  plannedMinutesThroughDayForMonth,
   getEffectiveMinutesForRecurringPlan,
   getEffectiveNoteForRecurringPlan,
   calculateMonthlyPlannedMinutesOptimized,
 } from '@/lib/recurrence'
 import { LegacyTimeEntry, TimeEntriesByYear } from '@/types/timeEntry'
 import { monthCreditMaxMinutes } from '@/constants/serviceReports'
-import { describe, expect, it, beforeEach, afterEach, vi } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 
 // Mock the logger to avoid MMKV dependencies in tests
 vi.mock('@/lib/logger', () => import('@/__tests__/mocks/logger'))
@@ -1272,7 +1272,7 @@ describe('lib/serviceReport', () => {
       ).toBe(expected)
       // Parity with the unoptimized walk.
       expect(
-        plannedMinutesToCurrentDayForMonth(0, 2024, dayPlans, recurringPlans)
+        plannedMinutesThroughDayForMonth(0, 2024, 31, dayPlans, recurringPlans)
       ).toBe(expected)
     })
   })
@@ -1361,7 +1361,7 @@ describe('lib/serviceReport', () => {
     })
   })
 
-  describe('plannedMinutesToCurrentDayForMonth with overrides', () => {
+  describe('plannedMinutesThroughDayForMonth with overrides', () => {
     const baseRecurringPlan: RecurringPlan = {
       id: 'monthly-calc-test-plan',
       startDate: moment('2024-01-01').toDate(), // Monday
@@ -1372,15 +1372,6 @@ describe('lib/serviceReport', () => {
         endDate: null,
       },
     }
-
-    beforeEach(() => {
-      vi.useFakeTimers()
-      vi.setSystemTime(moment('2024-01-31').toDate()) // End of January
-    })
-
-    afterEach(() => {
-      vi.useRealTimers()
-    })
 
     it('should calculate correct total with overrides applied', () => {
       // January 2024: Mondays are 1st, 8th, 15th, 22nd, 29th = 5 Mondays
@@ -1397,9 +1388,10 @@ describe('lib/serviceReport', () => {
         ],
       }
 
-      const totalMinutes = plannedMinutesToCurrentDayForMonth(
+      const totalMinutes = plannedMinutesThroughDayForMonth(
         0, // January
         2024,
+        31, // Through the end of the month
         [], // No day plans
         [planWithOverride]
       )
@@ -1423,9 +1415,10 @@ describe('lib/serviceReport', () => {
         ],
       }
 
-      const totalMinutes = plannedMinutesToCurrentDayForMonth(
+      const totalMinutes = plannedMinutesThroughDayForMonth(
         0, // January
         2024,
+        31, // Through the end of the month
         [], // No day plans
         [planWithMultipleOverrides]
       )
@@ -1445,9 +1438,10 @@ describe('lib/serviceReport', () => {
         ],
       }
 
-      const totalMinutes = plannedMinutesToCurrentDayForMonth(
+      const totalMinutes = plannedMinutesThroughDayForMonth(
         0, // January
         2024,
+        31, // Through the end of the month
         [], // No day plans
         [planWithZeroOverride]
       )
@@ -1491,9 +1485,10 @@ describe('lib/serviceReport', () => {
         ],
       }
 
-      const totalMinutes = plannedMinutesToCurrentDayForMonth(
+      const totalMinutes = plannedMinutesThroughDayForMonth(
         0, // January
         2024,
+        31, // Through the end of the month
         [], // No day plans
         [plan1, plan2]
       )

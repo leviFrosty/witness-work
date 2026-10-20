@@ -6,7 +6,6 @@ import {
   getEffectiveProgressCards,
   keepUnknownProgressCards,
   moveProgressCard,
-  nextProgressCardSize,
   removeProgressCard,
   resizeProgressCard,
   sameProgressCards,
@@ -77,9 +76,6 @@ describe('progress cards', () => {
     })
     // A size the card doesn't come in is ignored.
     expect(resizeProgressCard(layout, 'projected', 'small')).toEqual(layout)
-    expect(nextProgressCardSize('studies', 'small')).toBe('wide')
-    expect(nextProgressCardSize('studies', 'wide')).toBe('small')
-    expect(nextProgressCardSize('projected', 'wide')).toBe('wide')
   })
 
   it('moves a card to another card’s place', () => {

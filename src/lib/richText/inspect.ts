@@ -75,19 +75,6 @@ export function isRichTextEmpty(doc: RichTextDoc): boolean {
   return true
 }
 
-/** Anything beyond plain paragraphs and links: for analytics only. */
-export function hasRichFormatting(doc: RichTextDoc): boolean {
-  for (const block of walkBlocks(doc.content)) {
-    if (block.type !== 'paragraph') return true
-  }
-  for (const node of walkInline(doc)) {
-    if (node.type === 'text' && node.marks?.some((m) => m.type !== 'link')) {
-      return true
-    }
-  }
-  return false
-}
-
 const mapBlocks = (
   blocks: RichTextBlock[],
   map: (block: RichTextBlock) => RichTextBlock | null

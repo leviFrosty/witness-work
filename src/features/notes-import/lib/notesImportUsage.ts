@@ -361,11 +361,6 @@ export const notesImportCreditsForHash = (
   return globalCredits && refinements ? { ...globalCredits, refinements } : null
 }
 
-/** Unlimited dev usage is not a Supporter entitlement and must retain the CTA. */
-export const shouldShowNotesImportSupporterCta = (
-  credits: Pick<NotesImportCredits, 'isSupporter'>
-): boolean => !credits.isSupporter
-
 /** What the composer's Import Credits control shows. */
 export type NotesImportUsageView =
   /**

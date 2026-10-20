@@ -172,7 +172,3 @@ export const gapBetween = (newer: Date, older: Date): string | null =>
           )
           .humanize()
       )
-
-/** A note that holds only whitespace is treated as no note at all. */
-export const visibleNote = (note?: string): string | null =>
-  note && note.trim().length > 0 ? note.trim() : null

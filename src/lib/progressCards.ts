@@ -62,16 +62,6 @@ const isCardId = (id: unknown): id is ProgressCardId =>
 /** Whether a card spans both columns at this size. */
 export const spansBothColumns = (size: ProgressCardSize) => size !== 'small'
 
-/** The size after `size` in the card's list, wrapping around. */
-export const nextProgressCardSize = (
-  id: ProgressCardId,
-  size: ProgressCardSize
-): ProgressCardSize => {
-  const sizes = PROGRESS_CARD_SIZES[id]
-  const at = sizes.indexOf(size)
-  return sizes[(at + 1) % sizes.length]
-}
-
 export type ProgressCardDefaultsInput = {
   /** The month has a Monthly Goal to pace against. */
   hasMonthlyGoal: boolean

@@ -132,8 +132,3 @@ export function isValidImageFilename(name: string): boolean {
   if (middle.length === 0) return false
   return true
 }
-
-/** An avatar (contact or profile) photo, as opposed to a note photo. */
-export function isAvatarImageFilename(name: string): boolean {
-  return name.startsWith(IMG_PREFIX) && isValidImageFilename(name)
-}

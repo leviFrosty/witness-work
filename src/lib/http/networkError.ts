@@ -157,14 +157,3 @@ export function isConnectivityError(error: unknown): boolean {
   const kind = classifyNetworkError(error)
   return kind === 'offline' || kind === 'timeout' || kind === 'cancelled'
 }
-
-/** Worth trying again later without changing the request. */
-export function isRetryableNetworkError(error: unknown): boolean {
-  const kind = classifyNetworkError(error)
-  return (
-    kind === 'offline' ||
-    kind === 'timeout' ||
-    kind === 'rateLimited' ||
-    kind === 'server'
-  )
-}

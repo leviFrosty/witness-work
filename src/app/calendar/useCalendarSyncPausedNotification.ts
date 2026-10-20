@@ -2,6 +2,7 @@ import { Linking, Platform } from 'react-native'
 import { CalendarX as CalendarXIcon } from 'lucide-react-native'
 import { useNavigation } from '@react-navigation/native'
 import { calendarBridgeAvailable } from '../../../modules/calendar-bridge'
+import { calendarRecovery } from '@/app/calendar/calendarRecovery'
 import { confirmDisconnectCalendar } from '@/app/calendar/confirmDisconnectCalendar'
 import { useCalendarPublishing, useCalendarSync } from '@/stores/calendarSync'
 import i18n, { type TranslationKey } from '@/lib/locales'
@@ -16,10 +17,6 @@ const TRANSIENT_ERRORS = [
   'calendarConnectionError',
   'calendarConnectionErrorAndroid',
   'calendarWaitingForEvents',
-]
-const PERMISSION_ERRORS = [
-  'calendarPermissionError',
-  'calendarPermissionErrorAndroid',
 ]
 export const TRANSIENT_ALERT_DELAY_MS = 24 * 60 * 60 * 1000
 
@@ -77,7 +74,7 @@ export default function useCalendarSyncPausedNotification(
     title: i18n.t('calendarSyncPaused'),
     description: i18n.t(paused.error as TranslationKey),
     actions: [
-      PERMISSION_ERRORS.includes(paused.error)
+      calendarRecovery(paused.error) === 'open_settings'
         ? {
             id: 'open_settings',
             label: i18n.t(

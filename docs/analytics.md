@@ -495,6 +495,12 @@ The one-time `calendar_sync` tray invitation retains setup behavior; outcomes us
 `onboarding` for Skip after a failed setup, or `tools` when developer tools
 generate mock data, reset, or clear calendar events).
 `calendar_sync_failed` includes bounded `error_key` and `background`: boolean.
+Recovery attempts add `recovery` to `calendar_sync_failed` (the retry failed
+too) and `calendar_connected` (setup succeeded on the retry): `try_again` when
+the user tapped **Try Again**, or `open_settings` when the app retried by itself
+after the user allowed calendar access in Settings and came back. Compare them
+to first failures (no `recovery`) to see whether people get past an error. A
+successful retry that only updates an already connected calendar sends no event.
 Android uses the same events (break them down by the SDK's `$os_name`); it never
 reports `elsewhere`. Its `calendar_connected` adds `local_calendar`: boolean, true
 for a calendar stored only on the device, to show how many people publish to a

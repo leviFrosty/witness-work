@@ -13,8 +13,11 @@ import {
   createCalendar,
   publishCalendar,
   refreshPublishing,
+  retryCalendarAction,
   setSharedOptions,
 } from '@/app/calendar/calendarSync'
+import { calendarRecovery } from '@/app/calendar/calendarRecovery'
+import { resumeWhenCalendarAllowed } from '@/app/calendar/resumeWhenCalendarAllowed'
 import { useCalendarPublishing, useCalendarSync } from '@/stores/calendarSync'
 import { confirmDisconnectCalendar } from '@/app/calendar/confirmDisconnectCalendar'
 
@@ -58,9 +61,19 @@ export default function CalendarSettings() {
     if (android) return
     void calendarAction(refreshPublishing).catch(() => undefined)
   }, [])
+  // Back from Settings with access allowed: carry on where it stopped.
+  useEffect(() => {
+    const subscription = resumeWhenCalendarAllowed(() => {
+      void retryCalendarAction('open_settings').catch(() => undefined)
+    })
+    return () => subscription.remove()
+  }, [])
   const run = (action: () => Promise<unknown>) => {
     void calendarAction(action).catch(() => undefined)
   }
+  const recovery = calendarRecovery(error)
+  // Its own Try Again already shows while iCloud can't be checked.
+  const checking = !settings.enabled && !canPublishHere && !state
   const loadCalendars = () => {
     Alert.alert(i18n.t('calendarSync'), i18n.t('calendarAccessExplanation'), [
       {
@@ -239,10 +252,21 @@ export default function CalendarSettings() {
           {((error === 'calendarWaitingForEvents' &&
             isPrimary &&
             settings.enabled) ||
-            error === 'calendarPermissionError' ||
-            error === 'calendarPermissionErrorAndroid') && (
+            recovery === 'open_settings' ||
+            (recovery === 'try_again' && !checking)) && (
             <Section>
-              {error === 'calendarWaitingForEvents' ? (
+              {recovery === 'try_again' ? (
+                <InputRowButton
+                  label={i18n.t(
+                    working ? 'calendarSyncing' : 'calendarTryAgain'
+                  )}
+                  disabled={working}
+                  lastInSection
+                  onPress={() => {
+                    void retryCalendarAction('try_again').catch(() => undefined)
+                  }}
+                />
+              ) : error === 'calendarWaitingForEvents' ? (
                 <InputRowButton
                   label={i18n.t('calendarRepair')}
                   disabled={working}

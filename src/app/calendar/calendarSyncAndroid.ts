@@ -11,6 +11,7 @@ import {
 } from '@/app/calendar/androidEvents'
 import i18n from '@/lib/locales'
 import { analytics } from '@/lib/analytics'
+import { recoveryProperties } from '@/app/calendar/calendarRecovery'
 
 /**
  * Android Calendar Sync: one device, no ownership protocol. Options and the
@@ -59,6 +60,7 @@ export async function connectCalendar(
   analytics.capture('calendar_connected', {
     created: fresh,
     local_calendar: !!destination.local,
+    ...recoveryProperties(),
   })
 }
 

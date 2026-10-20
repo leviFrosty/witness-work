@@ -9,19 +9,22 @@ import Button from '@/components/ui/Button'
 import FullWindowOverlay from '@/components/ui/FullWindowOverlay'
 import { TAB_BAR_HEIGHT } from '@/components/ui/TabBar'
 import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
+import useScreenReaderEnabled from '@/hooks/useScreenReaderEnabled'
+import { undoToastDuration } from '@/lib/undoToastDuration'
 import { hideUndoToast, useUndoToast, type UndoToast } from '@/stores/undoToast'
-
-/** How long Undo stays available, like the Follow-up card's. */
-export const UNDO_TOAST_MS = 5000
 
 /** Mount once near the app root; draws the Undo toast while one is showing. */
 export default function UndoToastLayer() {
   const toast = useUndoToast((s) => s.toast)
+  // Read here, where it's always mounted, so it's known when a toast shows.
+  const screenReader = useScreenReaderEnabled()
   if (!toast) return null
   // Mounted only while visible: an idle window-level overlay can interfere
   // with native sheets (see PointerTooltipLayer). Over the window on iOS, so
   // it shows while the sheet that logged it is still closing.
-  const content = <PlacedToast key={toast.id} toast={toast} />
+  const content = (
+    <PlacedToast key={toast.id} toast={toast} screenReader={screenReader} />
+  )
   return Platform.OS === 'ios' ? (
     <FullWindowOverlay>{content}</FullWindowOverlay>
   ) : (
@@ -29,16 +32,32 @@ export default function UndoToastLayer() {
   )
 }
 
-function PlacedToast({ toast }: { toast: UndoToast }) {
+function PlacedToast({
+  toast,
+  screenReader,
+}: {
+  toast: UndoToast
+  screenReader: boolean
+}) {
   const theme = useTheme()
   const insets = useSafeAreaInsets()
   const { hasSidebar } = useAdaptiveLayout()
 
   useEffect(() => {
     AccessibilityInfo.announceForAccessibility(toast.message)
-    const timer = setTimeout(() => hideUndoToast(toast.id), UNDO_TOAST_MS)
-    return () => clearTimeout(timer)
   }, [toast])
+
+  useEffect(() => {
+    let cancelled = false
+    let timer: ReturnType<typeof setTimeout> | undefined
+    void undoToastDuration(screenReader).then((ms) => {
+      if (!cancelled) timer = setTimeout(() => hideUndoToast(toast.id), ms)
+    })
+    return () => {
+      cancelled = true
+      clearTimeout(timer)
+    }
+  }, [toast, screenReader])
 
   return (
     <View

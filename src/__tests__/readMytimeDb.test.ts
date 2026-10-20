@@ -152,3 +152,46 @@ describe('readMytimeTables — reading', () => {
     expect(tables.timeEntries).toEqual([])
   })
 })
+
+describe('readMytimeTables — files SQLite cannot read', () => {
+  const notADatabase = new Error('Error code 26: file is not a database')
+
+  it('rejects as openFailed when listing tables says the file is not a database', async () => {
+    const source: MytimeTableSource = {
+      ...fakeSource({}),
+      listTables: () => Promise.reject(notADatabase),
+    }
+    await expect(readMytimeTables(source)).rejects.toThrow(MytimeImportError)
+    await expect(readMytimeTables(source)).rejects.toMatchObject({
+      reason: 'openFailed',
+    })
+  })
+
+  it('lets any other listing failure through unchanged', async () => {
+    const busy = new Error('Error code 5: database is locked')
+    const source: MytimeTableSource = {
+      ...fakeSource({}),
+      listTables: () => Promise.reject(busy),
+    }
+    await expect(readMytimeTables(source)).rejects.toBe(busy)
+  })
+
+  it('rejects as openFailed when a later read says the file is not a database', async () => {
+    const source: MytimeTableSource = {
+      ...fakeSource(withCoreTables({ ZCALL: [{ Z_PK: 1 }] })),
+      selectAll: () => Promise.reject(notADatabase),
+    }
+    await expect(readMytimeTables(source)).rejects.toMatchObject({
+      reason: 'openFailed',
+    })
+  })
+
+  it('lets any other read failure through unchanged', async () => {
+    const boom = new Error('disk I/O error')
+    const source: MytimeTableSource = {
+      ...fakeSource(withCoreTables({ ZCALL: [{ Z_PK: 1 }] })),
+      selectAll: () => Promise.reject(boom),
+    }
+    await expect(readMytimeTables(source)).rejects.toBe(boom)
+  })
+})

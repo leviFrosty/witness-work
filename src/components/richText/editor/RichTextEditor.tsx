@@ -135,11 +135,15 @@ const RichTextEditor = (props: {
     )?.setGestureExclusion?.(rects)
   }
 
+  // The web view adds `run` once the page has loaded. Until then there's
+  // nothing to command, so a toolbar tap does nothing rather than throwing.
   const run = (command: EditorCommand) =>
-    dom.current?.run(command as unknown as BridgeValue)
+    dom.current?.run?.(command as unknown as BridgeValue)
 
   useImperativeHandle(props.ref, () => ({
     flush: (done) => {
+      // Not loaded yet, so there's no edit to hand over.
+      if (!dom.current?.run) return done()
       const timer = setTimeout(finish, FLUSH_TIMEOUT_MS)
       function finish() {
         clearTimeout(timer)

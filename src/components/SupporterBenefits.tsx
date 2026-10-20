@@ -53,11 +53,7 @@ const HeroCard = () => {
                 color: theme.colors.text,
               }}
             >
-              {i18n.t(
-                Platform.OS === 'android'
-                  ? 'supporterHeroTitleAndroid'
-                  : 'supporterHeroTitle'
-              )}
+              {i18n.t('supporterHeroTitle')}
             </Text>
           </View>
           <Text
@@ -68,7 +64,11 @@ const HeroCard = () => {
               lineHeight: 18,
             }}
           >
-            {i18n.t('supporterHeroDesc')}
+            {i18n.t(
+              Platform.OS === 'android'
+                ? 'supporterHeroDescAndroid'
+                : 'supporterHeroDesc'
+            )}
           </Text>
         </View>
       </View>
@@ -121,7 +121,7 @@ const PerkRow = ({ icon, title, desc }: PerkProps) => {
 }
 
 interface Props {
-  /** Hides the hero (cloud sync) row. Useful in narrow contexts. */
+  /** Hides the hero (device sync) row. Useful in narrow contexts. */
   compact?: boolean
 }
 

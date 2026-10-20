@@ -11,6 +11,9 @@ import {
   replaceLocalWithBackup,
 } from '@/app/account/backupData'
 import { hasMeaningfulLocalData } from '@/app/sync/iCloudSync'
+import { usesCloudSync } from '@/lib/syncTransport/provider'
+import { usePreferences } from '@/stores/preferences'
+import { cloudSyncCoversRestore } from '@/app/sync/cloudSync'
 import type { SyncPayload } from '@/app/sync/payload'
 import { analytics } from '@/lib/analytics'
 import { formatDateTime } from '@/lib/dates'
@@ -77,6 +80,12 @@ export type RestoreOutcome =
   /** The account has no backup, or this device has no account key. */
   | { outcome: 'none' }
   | { outcome: 'skipped' }
+  /**
+   * Cloud Sync brings the account's data to this device instead (ADR 0030 §3),
+   * so no restore is offered. `combine`: this device has records of its own, so
+   * Cloud Sync asks how to combine them first.
+   */
+  | { outcome: 'synced'; combine: boolean }
   | {
       outcome: 'restored'
       mode: 'replace' | 'combine'
@@ -336,6 +345,30 @@ async function runRestore(
     logBackup('warn', `restore failed (${reason})`)
     if (!quiet) showFailure(reason)
     return { outcome: 'failed', reason }
+  }
+  // A new phone on Cloud Sync gets everything streamed down; asking to
+  // restore a backup as well would only duplicate that. Settings and the
+  // Tools still offer it.
+  if (
+    (source === 'handoff' ||
+      source === 'recovery_key' ||
+      source === 'fresh_install') &&
+    (await cloudSyncCoversRestore())
+  ) {
+    // Cloud Sync's default may already have pulled the account's records in;
+    // a choice is pending only when it found records of this device's own.
+    const prefs = usePreferences.getState()
+    const combine =
+      prefs.iCloudSyncNeedsResolution ||
+      (!(prefs.iCloudSyncEnabled && usesCloudSync()) &&
+        hasMeaningfulLocalData())
+    analytics.capture('account_restore_offered', {
+      source,
+      slots: 0,
+      local_data: combine,
+      cloud_sync: true,
+    })
+    return { outcome: 'synced', combine }
   }
   let listed: { access: BackupAccess; slots: BackupSlot[] } | null
   try {

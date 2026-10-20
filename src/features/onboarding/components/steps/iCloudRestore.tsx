@@ -21,7 +21,7 @@ import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
-import { syncKey } from '@/lib/syncCopy'
+import { platformSyncKey as syncKey } from '@/lib/syncCopy'
 import {
   hasSyncTransport,
   syncTransport,
@@ -108,6 +108,20 @@ const ICloudRestore = ({ goBack, goNext }: Props) => {
   // Breathing animation for the cloud icon while probing. Runs only while
   // `probe.state === 'probing'` and stops cleanly when the state resolves.
   const pulse = useRef(new Animated.Value(0)).current
+
+  // This step reads iCloud (Google Drive on Android), whatever this device
+  // would sync with by default (ADR 0030): a device that never chose is on
+  // iCloud/Drive while it's open. Leaving without turning sync on hands the
+  // choice back, so Cloud Sync can still be the default.
+  useEffect(() => {
+    if (usePreferences.getState().syncProvider !== null) return
+    usePreferences.setState({ syncProvider: 'platform' })
+    return () => {
+      const prefs = usePreferences.getState()
+      if (prefs.syncProvider === 'platform' && !prefs.iCloudSyncEnabled)
+        usePreferences.setState({ syncProvider: null })
+    }
+  }, [])
 
   useEffect(() => {
     let cancelled = false

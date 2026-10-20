@@ -16,6 +16,26 @@ export const registeredAndroidTransport = (): SyncTransport | null =>
   androidTransport
 
 /**
+ * Cloud Sync's answers for copy (ADR 0030), set when its transport registers
+ * (`@/lib/syncTransport/provider`), so copy can name it without loading the
+ * stores.
+ */
+let cloudSyncCopy = {
+  offered: () => false,
+  used: () => false,
+}
+
+export function registerCloudSyncCopy(answers: typeof cloudSyncCopy): void {
+  cloudSyncCopy = answers
+}
+
+/** Whether Cloud Sync is offered to this device. */
+export const cloudSyncOfferedForCopy = (): boolean => cloudSyncCopy.offered()
+
+/** Whether this device syncs through Cloud Sync. */
+export const usesCloudSyncForCopy = (): boolean => cloudSyncCopy.used()
+
+/**
  * Whether this device syncs through Google Drive, so sync copy should name
  * Google Drive rather than iCloud. Doesn't read the platform: only Android
  * registers the Drive transport.

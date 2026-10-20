@@ -35,6 +35,8 @@ vi.mock('@/lib/syncTransport', () => ({
 vi.mock('@/lib/syncTransport/googleDrive/googleDriveTransport', () => ({
   googleDriveTransport: {},
 }))
+vi.mock('@/app/sync/cloudSync', () => ({ registerCloudSync: vi.fn() }))
+vi.mock('../../modules/buddies-keychain', () => ({ isAvailable: () => false }))
 vi.mock('@/app/dev-harness/installDevHarness', () => ({
   installDevHarness: vi.fn(),
 }))

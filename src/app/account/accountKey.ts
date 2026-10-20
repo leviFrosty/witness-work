@@ -1,4 +1,5 @@
 import * as BuddiesKeychain from '../../../modules/buddies-keychain'
+import { usePreferences } from '@/stores/preferences'
 import { joinBuddiesHere } from '@/app/buddies/joinBuddiesHere'
 import { analytics } from '@/lib/analytics'
 import {
@@ -12,6 +13,8 @@ import { signedInElsewhere } from '@/lib/serverAccount/accountDevices'
 import { buddiesEngine } from '@/features/buddies/lib/buddiesService'
 import { buddyDisplayName } from '@/features/buddies/lib/buddyProfile'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
+import { leaveCloudSyncAccount } from '@/app/sync/cloudSync'
+import { iCloudSync } from '@/app/sync/iCloudSync'
 
 /**
  * This device's account key (ADR 0026), wired to the native store, the server
@@ -51,6 +54,17 @@ export const accountKey = createAccountKeyService({
         ? buddiesEngine.leaveThisDevice()
         : buddiesEngine.deleteEverything(),
     forget: () => buddiesEngine.dropIdentity(),
+  },
+  sync: {
+    leave: () =>
+      leaveCloudSyncAccount(async () => {
+        iCloudSync.resetPushBackoff()
+        if (usePreferences.getState().iCloudSyncPendingPush)
+          await iCloudSync.push('leave-account')
+        // Nothing may start against the old account from here.
+        usePreferences.setState({ iCloudSyncEnabled: false })
+        await iCloudSync.waitForSyncIdle()
+      }),
   },
 })
 

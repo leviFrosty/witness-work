@@ -17,7 +17,7 @@
  * copy and removes the rest when it next writes or deletes that name.
  */
 
-export type SyncTransportKind = 'icloud' | 'google-drive'
+export type SyncTransportKind = 'icloud' | 'google-drive' | 'cloud'
 
 export type SyncFile = {
   filename: string
@@ -94,6 +94,11 @@ export interface SyncTransport {
    * case `uploadStatus` may confirm it.
    */
   readonly writeConfirmsUpload: boolean
+  /**
+   * False when the transport can't hold photo binaries (Cloud Sync, phase 1):
+   * photo references still travel, their bytes don't. Absent means it can.
+   */
+  readonly supportsBinaries?: boolean
   /** Signed in and permitted to use the namespace right now. */
   isAvailable(): boolean
   /**

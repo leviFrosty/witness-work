@@ -70,7 +70,8 @@ end-to-end encrypted sharing`"]
 anonymous account, recovery key,
 Set Up Another Device, backup`"]
     A_SYNC["`**Sync + backups**
-sync, restore, JSON backups`"]
+one option per device: Cloud Sync,
+iCloud / Google Drive, or off`"]
     A_NOTES["`**Notes Import (Scribe AI)**
 on-device voice + photo text`"]
     A_ROUTE["`**Route planning**
@@ -122,13 +123,14 @@ HERE proxy, key stays server-side`"]
       R_ACC["`**/accounts/v1/...**
 attested sessions, bearer ops,
 handoff relay, encrypted backups,
+Cloud Sync slots + live WebSocket,
 RevenueCat link + Supporter status`"]
       R_RCHOOK["`**POST /revenuecat/v1/webhook**
 keeps Supporter status current`"]
       R_ATTEST["`**/attestation/v1/...**
 challenges, App Attest key setup`"]
       R_APPCFG["`**GET /app/v1/config**
-minimum app version`"]
+minimum app version, sync switches`"]
       R_LINKS["`**GET /c, /b, /h, /.well-known**
 link pages, Universal + App Links`"]
       R_RATINGS["`**GET /app-store/ratings**
@@ -166,6 +168,11 @@ sessions, linked RevenueCat customers`")]
 one per handoff, 10 minutes`")]
       R2_BACKUP[("`**R2: ww-account-backups**
 sealed slot per device, 400 days idle`")]
+      DO_SYNC[("`**AccountSync DO**
+one per account: slot index,
+sync sockets, limits`")]
+      R2_SYNC[("`**R2: ww-account-sync**
+sealed sync slot per device`")]
     end
     DO_RPQ[("`**RoutePlanningQuota DO**
 10 routes a day per account`")]
@@ -200,7 +207,9 @@ analytics, flags, surveys, errors`"]
 
   A_CORE -->|"Follow-ups as events"| P_CAL
   A_BUDDIES -->|"root seed"| P_SEED
-  A_SYNC -->|"sync files + photos"| P_SYNC
+  A_SYNC -->|"iCloud / Drive: sync files + photos"| P_SYNC
+  A_SYNC -->|"Cloud Sync: account session"| A_ACCOUNT
+  A_SYNC -->|"Cloud Sync: bearer: sealed snapshots, WebSocket"| R_ACC
   A_ACCOUNT -->|"attest device"| P_ATTEST
   A_CONTACTS -->|"maps, place search"| P_MAPS
   A_SHELL -->|"fingerprint-compatible OTA"| S_OTA
@@ -228,6 +237,9 @@ analytics, flags, surveys, errors`"]
   R_ACC -->|"accounts"| D_ACC
   R_ACC -->|"handoff channel"| DO_HANDOFF
   R_ACC -->|"backup slots"| R2_BACKUP
+  R_ACC -->|"sync index, WebSocket"| DO_SYNC
+  R_ACC -->|"sync slots"| R2_SYNC
+  DO_SYNC -.->|"retention sweep"| R2_SYNC
   R_ACC -->|"iOS assertion"| DO_AA
   R_ACC -->|"Android verdict"| S_GPI
   R_ATTEST -->|"iOS keys, challenges"| DO_AA
@@ -273,13 +285,14 @@ analytics, flags, surveys, errors`"]
   class A_LOCAL local
   class P_CAL,P_SEED,P_SYNC,P_ATTEST,P_MAPS,P_PUSH,P_STORE,S_GPI platform
   class R_BUD,R_ACC,R_RCHOOK,R_ATTEST,R_APPCFG,R_NOTES,R_ROUTE,R_PLACES,R_LINKS,R_RATINGS,CRON worker
-  class DO_REGQ,DO_INV,DO_INBOX,R2,D_ACC,DO_HANDOFF,R2_BACKUP,DO_AA,DO_PI,DO_IDX,DO_RUN,DO_RPQ,KV state
+  class DO_REGQ,DO_INV,DO_INBOX,R2,D_ACC,DO_HANDOFF,R2_BACKUP,DO_SYNC,R2_SYNC,DO_AA,DO_PI,DO_IDX,DO_RUN,DO_RPQ,KV state
   class S_OR,S_LLM,S_HERE,S_SENTRY,S_RC,S_PH,S_EAS external
 ```
 
 - ww-api runs as one Cloudflare Worker, `ww-proxy`, at `ww-proxy.leviwilkerson.com`. The dev Worker, `ww-proxy-dev`, has its own KV namespace, Durable Objects, and R2 buckets.
 - Buddies cards, events, and photos are sealed on the device before they reach the relay. [docs/buddies-protocol.md](./docs/buddies-protocol.md) lists what the relay can see.
 - Account backups are sealed on the device with a key only the User's devices can derive; the server keeps each device's ciphertext, its size and upload time ([docs/accounts-protocol.md](./docs/accounts-protocol.md#backup)).
+- Each device syncs through one option ([ADR 0030](./docs/adr/0030-cloud-sync-through-ww-api.md)). Cloud Sync, the default, works across iOS and Android: each device's snapshot is sealed with the account's sync key before it reaches ww-api, and the account's sync socket tells its other devices to pull. iCloud and Google Drive sync stay available, and devices sync only with devices on the same option ([docs/icloud-sync.md](./docs/icloud-sync.md)).
 - Notes Import reaches its model through OpenRouter, pinned to zero-data-retention hosts ([ADR 0008](./docs/adr/0008-notes-import-third-party-llm-zero-retention.md)). It calls ww-api with the account's attested session, which stands in for attesting each import ([ADR 0027](./docs/adr/0027-account-sessions-attest-once-then-bearer-tokens.md)); the legacy edges serve app versions from before sessions.
 - Supporter status lives on the server account ([ADR 0029](./docs/adr/0029-supporter-status-on-the-server-account.md)): the app names the RevenueCat customer it's logged in as, ww-api reads that customer from RevenueCat itself, and RevenueCat's webhook keeps the record current. Legacy route planning and Notes Import still ask RevenueCat about the id they send.
 - Left out: `GET /health` (the app checks its clock against it), the admin reset route, the private CloudKit record that picks which iPhone publishes Follow-ups to the calendar, link previews the device fetches for URLs in notes, and the build and release pipeline.

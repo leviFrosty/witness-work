@@ -174,6 +174,12 @@ export const analyticsEventNames = [
   'route_saved_place_set',
   'route_stop_added',
   'route_stops_reordered',
+  // Cloud Sync (ADR 0030): which option devices use, defaults, and switches.
+  'cloud_sync_account_changed',
+  'cloud_sync_default_outcome',
+  'cloud_sync_offer_answered',
+  'cloud_sync_option_changed',
+  'cloud_sync_switch_failed',
   // Supporter cloud sync (iCloud; Google Drive on Android) adoption and recovery.
   'icloud_account_changed',
   'icloud_restore_images_prompted',

@@ -7,8 +7,9 @@ import {
   FileText as FileTextIcon,
 } from 'lucide-react-native'
 import i18n from '@/lib/locales'
-import { syncKey } from '@/lib/syncCopy'
+import { syncSettingsTitleKey } from '@/lib/syncCopy'
 import useCloudSyncSupported from '@/hooks/useCloudSyncSupported'
+import { registeredCloudSyncTransport } from '@/lib/syncTransport/provider'
 import { GroupedListRow, GroupedListSection } from '@/components/ui/GroupedList'
 import { SettingsSectionProps } from '@/features/settings/screens/settingScreen'
 import { useNotesImportAvailability } from '@/features/notes-import/hooks/useNotesImportAvailability'
@@ -71,10 +72,11 @@ const AppSection = ({
           }
         />
       )}
-      {cloudSyncSupported && (
+      {/* Cloud Sync needs neither iCloud nor Google Play services. */}
+      {(cloudSyncSupported || registeredCloudSyncTransport() !== null) && (
         <GroupedListRow
           icon={CloudIcon}
-          label={i18n.t(syncKey('iCloudSync'))}
+          label={i18n.t(syncSettingsTitleKey())}
           onPress={() => handleNavigate('PreferencesiCloud')}
           selected={selectedDestination === 'PreferencesiCloud'}
         />

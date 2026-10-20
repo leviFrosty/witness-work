@@ -28,6 +28,7 @@ import UseRecoveryKeySheet from '@/features/settings/components/account/UseRecov
 import useAttestationSupport from '@/features/settings/hooks/useAttestationSupport'
 import useClaimHandoff from '@/features/settings/hooks/useClaimHandoff'
 import { completeOnboardingFromRestore } from '@/features/settings/lib/completeOnboardingFromRestore'
+import { usePreferences } from '@/stores/preferences'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 
 const LINK_PROBLEM = {
@@ -122,6 +123,9 @@ const SignInWithQrScreen = () => {
     if (completion !== 'idle' && completion !== 'running') {
       if (completion.outcome === 'done') {
         const restored = completion.restore.outcome === 'restored'
+        // Cloud Sync is bringing the data down (ADR 0030): like a restore,
+        // the remaining onboarding steps would only set up what it replaces.
+        const synced = completion.restore.outcome === 'synced'
         return (
           <HandoffStatus
             icon={CircleCheckIcon}
@@ -135,16 +139,26 @@ const SignInWithQrScreen = () => {
             detail={i18n.t(
               restored
                 ? 'handoff_newDoneRestored'
-                : completion.restore.outcome === 'none'
-                  ? 'handoff_newDoneData'
-                  : 'handoff_newDoneRestoreLater'
+                : synced
+                  ? completion.restore.outcome === 'synced' &&
+                    completion.restore.combine
+                    ? 'handoff_newDoneSyncedCombine'
+                    : 'handoff_newDoneSynced'
+                  : completion.restore.outcome === 'none'
+                    ? 'handoff_newDoneData'
+                    : 'handoff_newDoneRestoreLater'
             )}
             primary={{
               label: i18n.t(entry === 'onboarding' ? 'continue' : 'done'),
               onPress: () => {
                 // The restored records replace what the remaining steps
                 // would set up, as a backup file's restore does.
-                if (restored && entry === 'onboarding')
+                // A link opened from the welcome screen arrives as `link`,
+                // still during onboarding.
+                if (
+                  (restored || synced) &&
+                  !usePreferences.getState().onboardingComplete
+                )
                   completeOnboardingFromRestore()
                 navigation.goBack()
               },
@@ -276,7 +290,8 @@ const SignInWithQrScreen = () => {
         onClose={() => setRecovering(false)}
         onDone={() => navigation.goBack()}
         onRestored={() => {
-          if (entry === 'onboarding') completeOnboardingFromRestore()
+          if (!usePreferences.getState().onboardingComplete)
+            completeOnboardingFromRestore()
         }}
       />
     </Wrapper>

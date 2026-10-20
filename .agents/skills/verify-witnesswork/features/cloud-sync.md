@@ -1,9 +1,13 @@
-# Cloud sync (iCloud on iOS, Google Drive on Android)
+# Cloud sync (Cloud Sync, iCloud on iOS, Google Drive on Android)
 
-Supporters keep their devices in step: each device that turns sync on shares its contacts, visits, time, plans, categories, mileage, profile and shared preferences with the user's other devices of the same platform, and can restore them on a new install. iOS syncs through iCloud; Android syncs through the hidden Google Drive folder of a Google Account the user connects. Photos sync only on devices that opt in.
+Each device syncs through one option (ADR 0030): Cloud Sync (end-to-end encrypted through ww-api, iOS and Android together, the default), iCloud/Google Drive, or off. Devices on different options don't sync with each other. With iCloud or Drive, Supporters keep their devices in step: each device that turns sync on shares its contacts, visits, time, plans, categories, mileage, profile and shared preferences with the user's other devices of the same platform, and can restore them on a new install. iOS syncs through iCloud; Android syncs through the hidden Google Drive folder of a Google Account the user connects. Photos sync only on devices that opt in.
 
 ## Sub-features
 
+- `cloud-sync-option` is Settings → Sync's "Sync With" rows (Cloud Sync, iCloud / Google Drive, Off), the security footer, and the switch confirmations.
+- `cloud-sync-offer` is the one-time "Switch to Cloud Sync?" card on a device that already used iCloud/Drive.
+- `cloud-sync-default` turns Cloud Sync on by itself for a device that never chose, after onboarding.
+- `cloud-sync-live` pulls within seconds of another device's change through the account's sync socket, in the foreground.
 - `sync-enable` turns sync on from Settings ("iCloud Sync" / "Google Drive Sync" → "Sync with iCloud" / "Sync with Google Drive"). On Android it first shows Google's account picker and consent screen.
 - `sync-transfer` sends edits to the cloud a few seconds after they're made and brings other devices' edits in on foreground, on "Sync now", and (Android, while open) within about a minute.
 - `sync-first-enable` asks how to combine ("Keep this device's data", "Restore from …", "Merge both") when both this device and the cloud have records.
@@ -20,6 +24,27 @@ Supporters keep their devices in step: each device that turns sync on shares its
 - The notification bell, after another device rebuilt the data or when a choice is needed.
 
 ## Driving it with ww-verify
+
+### Cloud Sync
+
+Needs the sync routes on the local worker: `WW_API_DIR=<ww-api checkout>` on `wwv up` until they're on `origin/main`. The local worker has Cloud Sync on; its entitlement is `supporter` until you open it to everyone, from the ww-api checkout:
+
+```bash
+node scripts/verify/dev.mjs kv put sync:entitlement everyone   # free for everyone
+node scripts/verify/dev.mjs kv put sync:enabled false           # kill switch
+node scripts/verify/dev.mjs kv delete sync:enabled              # back on
+```
+
+The status is cached about a minute per device; `__WW_DEV__.cloudSync.refresh()` reads it again.
+
+- **Two devices on one account.** iOS and Android in the same worktree (`wwv up --platform ios`, then `--platform android`), then Set Up Another Device (see [account.md](account.md)) so both hold the account key. The new phone says "Cloud Sync is bringing your records…" instead of offering a restore.
+- **State.** `wwv eval '__WW_DEV__.cloudSync.state()'`: `option`, `entitled`, `config`, `offer`, `canSync`, `slotId`, `lastSeq`, the last socket events (`liveEvents`), and the contact count. `cloudSync.list()`, then `cloudSync.last`, lists the account's slots.
+- **Realtime.** Add a contact through the UI on one device, then `wwv ad wait text "<name>"` on the other's Contacts tab without touching it. `liveEvents` shows `changed`.
+- **Switching.** Settings → Sync → "Sync With" → iCloud / Google Drive, confirm; `state().option` is `platform`, and `list()` from the other device no longer shows this slot. Back to Cloud Sync, confirm: no duplicates (contact counts), nothing deleted comes back.
+- **Upgraded device.** `__WW_DEV__.cloudSync.simulateUpgradedPlatformDevice()`, then `remount()` and open Settings → Sync: the offer card (`cloud-sync-offer`) shows once; "Not Now" (`cloud-sync-offer-dismiss`) hides it for good.
+- **Default.** `__WW_DEV__.cloudSync.forgetChoice()`, then `remount()`: with the entitlement open, Cloud Sync turns on by itself (`cloud_sync_default_outcome` in the Metro log).
+
+### iCloud and Google Drive
 
 Preconditions:
 

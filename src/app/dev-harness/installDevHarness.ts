@@ -38,6 +38,7 @@ import { useSavedPlaces } from '@/features/route-planning/stores/savedPlaces'
 import { useSavedRoutes } from '@/features/route-planning/stores/savedRoutes'
 import { seedScenario } from '@/app/dev-harness/seedScenario'
 import { petHarness } from '@/app/dev-harness/pet'
+import { cloudSyncHarness } from '@/app/dev-harness/cloudSync'
 import { mmkvStorage } from '@/stores/mmkv'
 import {
   accountHarness,
@@ -348,6 +349,14 @@ export function installDevHarness() {
      * `offerRestore()`, `deleteAll()`, then `backup.last`.
      */
     backup: backupHarness,
+    /**
+     * Cloud Sync (ADR 0030): `cloudSync.state()`; `checkConfig()`, `refresh()`,
+     * `prepare()`, `list()` (the account's slots), `switchTo('cloud' |
+     * 'platform' | 'off')`, `syncNow()`, then `cloudSync.last`.
+     * `simulateUpgradedPlatformDevice()` and `forgetChoice()` set up the
+     * default and the one-time offer.
+     */
+    cloudSync: cloudSyncHarness,
     /**
      * The Pet Companion (see `dev-harness/pet.ts`): `adopt(species, coat?,
      * name?)`, `setAppearance`, `setRoom`, `release()`, `override({ hearts,

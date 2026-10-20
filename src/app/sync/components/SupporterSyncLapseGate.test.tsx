@@ -7,6 +7,7 @@ const runtime = vi.hoisted(() => ({
   enabled: true,
   paused: false,
   platform: 'ios',
+  cloud: false,
   set: vi.fn((partial: { iCloudSyncPausedForLapse?: boolean }) => {
     if (partial.iCloudSyncPausedForLapse !== undefined)
       runtime.paused = partial.iCloudSyncPausedForLapse
@@ -37,6 +38,9 @@ vi.mock('@/stores/preferences', () => {
   return { usePreferences }
 })
 vi.mock('@/lib/analytics', () => ({ analytics: { capture: vi.fn() } }))
+vi.mock('@/lib/syncTransport/provider', () => ({
+  usesCloudSync: () => runtime.cloud,
+}))
 import SupporterSyncLapseGate from './SupporterSyncLapseGate'
 let renderer: ReactTestRenderer | undefined
 beforeEach(() => {
@@ -46,6 +50,7 @@ beforeEach(() => {
   runtime.enabled = true
   runtime.paused = false
   runtime.platform = 'ios'
+  runtime.cloud = false
 })
 afterEach(() => {
   act(() => renderer?.unmount())
@@ -109,4 +114,22 @@ it("doesn't write for a supporter who was never paused", async () => {
     renderer = create(<SupporterSyncLapseGate />)
   })
   expect(runtime.set).not.toHaveBeenCalled()
+})
+
+it('leaves Cloud Sync to the server’s entitlement, and lifts a pause on switching to it', async () => {
+  runtime.customer = {}
+  runtime.cloud = true
+  await act(async () => {
+    renderer = create(<SupporterSyncLapseGate />)
+  })
+  expect(runtime.set).not.toHaveBeenCalled()
+  runtime.paused = true
+  await act(async () => renderer!.update(<SupporterSyncLapseGate />))
+  runtime.cloud = false
+  await act(async () => renderer!.update(<SupporterSyncLapseGate />))
+  runtime.cloud = true
+  await act(async () => renderer!.update(<SupporterSyncLapseGate />))
+  expect(runtime.set).toHaveBeenLastCalledWith({
+    iCloudSyncPausedForLapse: false,
+  })
 })

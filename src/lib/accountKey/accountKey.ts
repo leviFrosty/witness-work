@@ -81,6 +81,12 @@ export type AccountKeyServiceDeps = {
     release: (scope: 'device' | 'account') => Promise<void>
     forget: () => void
   }
+  /**
+   * Cloud Sync (ADR 0030 §7): before the key changes, this device sends its
+   * last edits, deletes only its own slot, and stops, so the account's other
+   * devices keep everything. Bounded, and never throws.
+   */
+  sync?: { leave: () => Promise<void> }
 }
 
 /**
@@ -161,6 +167,8 @@ export function createAccountKeyService(deps: AccountKeyServiceDeps) {
       // Throws, changing nothing more, while a buddy can't be left yet.
       await deps.buddies.release(loss.keptElsewhere ? 'device' : 'account')
     }
+    // Cloud Sync leaves the old account while its session still works.
+    if (current) await deps.sync?.leave().catch(() => undefined)
     // The old key's session ends before the new key is stored, and the new
     // one (or `session`) is the next to open.
     await deps.account.changeKey(

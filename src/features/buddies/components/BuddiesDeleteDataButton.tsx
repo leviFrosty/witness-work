@@ -7,6 +7,7 @@ import { fromB64u } from '@/lib/bytes'
 import i18n from '@/lib/locales'
 import { logger } from '@/lib/logger'
 import { deleteBackupsBeforeKeyLoss } from '@/lib/serverAccount/backupAccess'
+import { deleteCloudSyncBeforeKeyLoss } from '@/lib/syncTransport/server/cloudSyncCleanup'
 import {
   requestBackupSoon,
   useBackupState,
@@ -31,6 +32,9 @@ export default function BuddiesDeleteDataButton() {
     if (seed) {
       try {
         await deleteBackupsBeforeKeyLoss(fromB64u(seed))
+        // Cloud Sync's slots too (ADR 0030 §5); best effort, the server's
+        // retention deletes what's left.
+        await deleteCloudSyncBeforeKeyLoss(fromB64u(seed))
       } catch (error) {
         logger.warn('[buddies] deleting the backup first failed', error)
         Alert.alert(

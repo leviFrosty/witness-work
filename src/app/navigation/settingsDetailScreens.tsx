@@ -1,6 +1,6 @@
 import type { ComponentType } from 'react'
 import i18n from '@/lib/locales'
-import { syncKey } from '@/lib/syncCopy'
+import { syncSettingsTitleKey } from '@/lib/syncCopy'
 import { useNotesImportEnabled } from '@/hooks/useNotesImportEnabled'
 import { RootStackParamList } from '@/types/rootStack'
 
@@ -218,7 +218,7 @@ export const settingsDetailScreens: SettingsDetailScreen[] = [
     getComponent: () =>
       require('@/features/settings/screens/preferences/screens/PreferencesiCloudScreen')
         .default,
-    title: () => i18n.t(syncKey('iCloudSync')),
+    title: () => i18n.t(syncSettingsTitleKey()),
   },
   {
     name: 'PreferencesiCloudDevices',

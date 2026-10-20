@@ -741,6 +741,38 @@ export const PREFERENCE_DEFAULTS = {
    */
   iCloudSyncIncludeImages: false,
   /**
+   * The sync option this device chose (ADR 0030): Cloud Sync (`cloud`) or
+   * iCloud/Google Drive (`platform`); null until anything chose. Whether sync
+   * runs is still `iCloudSyncEnabled`. Read through `syncProvider()`
+   * (`@/lib/syncTransport/provider`), which defaults a device that never chose
+   * to Cloud Sync. Per-device (non-syncable).
+   */
+  syncProvider: null as 'cloud' | 'platform' | null,
+  /**
+   * The one-time offer to move a device already on iCloud/Drive to Cloud Sync:
+   * `pending` until the User switches or dismisses it. Per-device.
+   */
+  cloudSyncOffer: null as 'pending' | 'dismissed' | null,
+  /**
+   * A hash of the server account Cloud Sync last ran under, to notice the
+   * device moving to another account (a QR code or a recovery key), as
+   * `iCloudIdentityToken` notices an Apple Account switch. Per-device.
+   */
+  cloudSyncAccountToken: null as string | null,
+  /**
+   * Cloud Sync's switches as the server last said (`GET /app/v1/config`):
+   * whether it's on, and who it's for. Null until read once. Per-device.
+   */
+  cloudSyncConfig: null as {
+    enabled: boolean
+    entitlement: 'supporter' | 'everyone'
+  } | null,
+  /**
+   * Whether the server last said this device's account may use Cloud Sync (`GET
+   * /accounts/v1/sync`); null until it answered. Per-device.
+   */
+  cloudSyncEntitled: null as boolean | null,
+  /**
    * Data protection mode (EU/EEA, UK, Switzerland). When true the app hides and
    * disables householder-data features that CJEU C-25/17 and GDPR make risky
    * without consent: see `docs/gdpr-mode-research.md` section 11. Per-device

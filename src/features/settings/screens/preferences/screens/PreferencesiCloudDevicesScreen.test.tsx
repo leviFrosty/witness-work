@@ -43,6 +43,10 @@ vi.mock('@/lib/locales', () => ({
       [key, options?.name ?? options?.relative].filter(Boolean).join(':'),
   },
 }))
+vi.mock('@/lib/syncTransport/provider', () => ({
+  usesCloudSync: () => false,
+  registeredCloudSyncTransport: () => null,
+}))
 vi.mock('@/lib/dates', () => ({ formatRelative: () => 'recently' }))
 vi.mock('@/app/sync/iCloudSync', () => ({
   iCloudSync: { removeSyncDevice: mocks.removeSyncDevice },

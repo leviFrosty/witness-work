@@ -81,14 +81,23 @@ export function sealBackup(
   address: BackupAddress,
   nonce: Uint8Array
 ): Uint8Array {
+  return sealPlaintext(backupKey, plaintext, backupAad(address), nonce)
+}
+
+/**
+ * The blob format itself, under any key and AAD: Cloud Sync's slots use it with
+ * their own (`syncCrypto.ts`).
+ */
+export function sealPlaintext(
+  key: Uint8Array,
+  plaintext: BackupPlaintext,
+  aad: Uint8Array,
+  nonce: Uint8Array
+): Uint8Array {
   if (nonce.length !== NONCE_LENGTH) throw new Error('Nonce must be 24 bytes')
   // mtime 0 keeps the gzip header free of when it was written.
   const compressed = gzipSync(utf8(JSON.stringify(plaintext)), { mtime: 0 })
-  const ciphertext = xchacha20poly1305(
-    backupKey,
-    nonce,
-    backupAad(address)
-  ).encrypt(compressed)
+  const ciphertext = xchacha20poly1305(key, nonce, aad).encrypt(compressed)
   return concatBytes(new Uint8Array([BLOB_VERSION]), nonce, ciphertext)
 }
 
@@ -101,14 +110,23 @@ export function openBackup(
   blob: Uint8Array,
   address: BackupAddress
 ): BackupPlaintext {
+  return openPlaintext(backupKey, blob, backupAad(address))
+}
+
+/** `openBackup` under any key and AAD (see `sealPlaintext`). */
+export function openPlaintext(
+  key: Uint8Array,
+  blob: Uint8Array,
+  aad: Uint8Array
+): BackupPlaintext {
   if (blob.length < 1 + NONCE_LENGTH + TAG_LENGTH || blob[0] !== BLOB_VERSION)
     throw new BackupOpenError('format')
   let compressed: Uint8Array
   try {
     compressed = xchacha20poly1305(
-      backupKey,
+      key,
       blob.subarray(1, 1 + NONCE_LENGTH),
-      backupAad(address)
+      aad
     ).decrypt(blob.subarray(1 + NONCE_LENGTH))
   } catch {
     throw new BackupOpenError('decrypt')

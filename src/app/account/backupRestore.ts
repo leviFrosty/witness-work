@@ -13,7 +13,7 @@ import {
 import { hasMeaningfulLocalData } from '@/app/sync/iCloudSync'
 import { usesCloudSync } from '@/lib/syncTransport/provider'
 import { usePreferences } from '@/stores/preferences'
-import { cloudSyncCoversRestore } from '@/app/sync/cloudSync'
+import { cloudSyncNewestSlotAt } from '@/app/sync/cloudSync'
 import type { SyncPayload } from '@/app/sync/payload'
 import { analytics } from '@/lib/analytics'
 import { formatDateTime } from '@/lib/dates'
@@ -318,6 +318,27 @@ const markOffered = (key: Uint8Array) =>
 let restoring: Promise<RestoreOutcome> | null = null
 
 /**
+ * How much later than another device's Cloud Sync slot the newest backup may be
+ * and still hold nothing newer. A device on both writes its slot about 5
+ * seconds after an edit and its backup 30 seconds after the edits stop (at most
+ * 5 minutes into a steady stream), and both times are the server's, so there's
+ * no device clock to skew them.
+ */
+export const SYNC_COVERS_BACKUP_GRACE_MS = 10 * 60_000
+
+/**
+ * Whether Cloud Sync, whose newest slot from another device was written at
+ * `newestSyncAt`, is at least as current as the account's backups. A backup
+ * clearly newer (a phone that stayed on iCloud while a rarely used iPad or a
+ * retired phone left a stale slot) holds records Cloud Sync never had, so the
+ * restore is offered instead.
+ */
+export const syncCoversBackups = (newestSyncAt: number, slots: BackupSlot[]) =>
+  slots.every(
+    (slot) => slot.uploadedAt <= newestSyncAt + SYNC_COVERS_BACKUP_GRACE_MS
+  )
+
+/**
  * Offers to restore the account's backup onto this device: lists the slots,
  * asks (Restore or Not Now with no records here; Replace, Combine or Not Now
  * otherwise), downloads and applies them, then offers to turn backup on here.
@@ -347,13 +368,27 @@ async function runRestore(
     return { outcome: 'failed', reason }
   }
   // A new phone on Cloud Sync gets everything streamed down; asking to
-  // restore a backup as well would only duplicate that. Settings and the
-  // Tools still offer it.
+  // restore a backup as well would only duplicate that, unless the backup is
+  // newer than every other device's slot. Settings and the Tools still offer
+  // it. When the backups can't be listed, Cloud Sync still brings what it has.
+  const syncedAt =
+    source === 'handoff' ||
+    source === 'recovery_key' ||
+    source === 'fresh_install'
+      ? cloudSyncNewestSlotAt()
+      : Promise.resolve(null)
+  const listing = asAccount(async (access) => ({
+    access,
+    slots: await listBackups(access.options),
+  })).then(
+    (listed) => ({ ok: true as const, listed }),
+    (error: unknown) => ({ ok: false as const, error })
+  )
+  const [newestSync, listedBackups] = await Promise.all([syncedAt, listing])
   if (
-    (source === 'handoff' ||
-      source === 'recovery_key' ||
-      source === 'fresh_install') &&
-    (await cloudSyncCoversRestore())
+    newestSync !== null &&
+    (!listedBackups.ok ||
+      syncCoversBackups(newestSync, listedBackups.listed?.slots ?? []))
   ) {
     // Cloud Sync's default may already have pulled the account's records in;
     // a choice is pending only when it found records of this device's own.
@@ -370,16 +405,11 @@ async function runRestore(
     })
     return { outcome: 'synced', combine }
   }
-  let listed: { access: BackupAccess; slots: BackupSlot[] } | null
-  try {
-    listed = await asAccount(async (access) => ({
-      access,
-      slots: await listBackups(access.options),
-    }))
-  } catch (error) {
-    logger.warn('[backup] listing for a restore failed', error)
-    return fail(failureFrom(error), quietWhenNone)
+  if (!listedBackups.ok) {
+    logger.warn('[backup] listing for a restore failed', listedBackups.error)
+    return fail(failureFrom(listedBackups.error), quietWhenNone)
   }
+  const { listed } = listedBackups
   if (!listed || listed.slots.length === 0) {
     if (listed) markOffered(listed.access.accountKey)
     return { outcome: 'none' }
@@ -390,6 +420,7 @@ async function runRestore(
     source,
     slots: slots.length,
     local_data: localData,
+    cloud_sync_older: newestSync !== null,
   })
   markOffered(access.accountKey)
   const choice = await askToRestore(slots, localData)

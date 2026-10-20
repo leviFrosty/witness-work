@@ -19,6 +19,7 @@ import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import { useMytimeImport } from '@/features/mytime-import/hooks/useMytimeImport'
 import MytimeImportPreview from '@/features/mytime-import/components/MytimeImportPreview'
+import MytimeFileHint from '@/features/mytime-import/components/MytimeFileHint'
 import { inputLayout } from '@/components/ui/inputs/InputLayout'
 
 /**
@@ -148,6 +149,7 @@ const MytimeImportScreen = () => {
                 </Card>
               )}
               <Card>
+                <MytimeFileHint />
                 <ActionButton
                   disabled={status === 'parsing'}
                   onPress={pickAndParse}

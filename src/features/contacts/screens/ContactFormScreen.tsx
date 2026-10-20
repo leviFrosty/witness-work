@@ -34,6 +34,8 @@ import {
   getContactInformationFields,
   nextKeyboardField,
 } from '@/lib/contactInformationFields'
+import { isRetryableGeocodeFailure } from '@/lib/geocodeRetry'
+import { useGeocodeRetry } from '@/stores/geocodeRetry'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Contact Form'>
 
@@ -307,11 +309,23 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
           }
         }
       } catch (error) {
-        // The contact is already saved; it just has no map pin yet.
-        if (isDeviceOffline(classifyNetworkError(error))) {
+        // The contact is already saved; it just has no map pin yet. Look it up
+        // again once the connection is back (`src/app/contacts/geocodeRetry`).
+        const kind = classifyNetworkError(error)
+        const saved = useContacts
+          .getState()
+          .contacts.find((item) => item.id === c.id)
+        if (
+          isRetryableGeocodeFailure(kind) &&
+          saved &&
+          mayApplyGeocode(c, saved)
+        ) {
+          useGeocodeRetry.getState().enqueue(saved)
+        }
+        if (isDeviceOffline(kind)) {
           Alert.alert(
             i18n.t('internetUnavailable'),
-            i18n.t('couldNotFetchCoordinatesFromAddress')
+            i18n.t('couldNotFetchCoordinatesFromAddress_retry')
           )
         }
       }

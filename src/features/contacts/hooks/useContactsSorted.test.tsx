@@ -24,11 +24,8 @@ vi.mock('@/lib/appLifecycle', () => ({
     return { remove: () => runtime.foreground.delete(listener) }
   },
 }))
-vi.mock('@/features/contacts/lib/contactsSearch', async (importOriginal) => {
-  const actual =
-    await importOriginal<
-      typeof import('@/features/contacts/lib/contactsSearch')
-    >()
+vi.mock('@/lib/contactsSearch', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/lib/contactsSearch')>()
   runtime.buildFuse.mockImplementation(actual.buildContactsFuse)
   return { ...actual, buildContactsFuse: runtime.buildFuse }
 })

@@ -181,7 +181,10 @@ vi.mock('@/stores/contactsStore', () => ({
   ),
 }))
 vi.mock('@/stores/conversationStore', () => ({
-  default: () => ({ conversations: [] }),
+  default: (selector?: (state: { conversations: [] }) => unknown) => {
+    const state = { conversations: [] as [] }
+    return selector ? selector(state) : state
+  },
 }))
 vi.mock('@/stores/preferences', async () => {
   const { create } = await import('zustand')

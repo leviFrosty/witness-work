@@ -10,7 +10,7 @@ import {
   type SuggestedRowDetail,
 } from '@/lib/suggestedContacts'
 import type { SuggestedHeaderSection } from '@/components/SuggestedSectionHeader'
-import type { ContactSearchMatch } from '@/features/contacts/lib/contactsSearch'
+import type { ContactSearchMatch } from '@/lib/contactsSearch'
 
 export type LogVisitListItem =
   | {

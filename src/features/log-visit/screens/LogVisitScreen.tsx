@@ -25,10 +25,7 @@ import type {
   RootStackParamList,
 } from '@/types/rootStack'
 import type { Contact } from '@/types/contact'
-import {
-  buildContactsFuse,
-  searchContactsFuzzy,
-} from '@/features/contacts/lib/contactsSearch'
+import { buildContactsFuse, searchContactsFuzzy } from '@/lib/contactsSearch'
 import useLogNotAtHome from '@/features/visits/hooks/useLogNotAtHome'
 import LogVisitHeader from '@/features/log-visit/components/LogVisitHeader'
 import LogVisitContactList from '@/features/log-visit/components/LogVisitContactList'

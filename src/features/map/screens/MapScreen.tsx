@@ -74,7 +74,7 @@ import {
   resolveCarouselSnapContact,
 } from '@/features/map/lib/mapCarousel'
 import { fitMapToCoordinates } from '@/features/map/lib/mapCamera'
-import { addressToString, coordinateAsString } from '@/lib/address'
+import { buildContactsFuse, searchContactsFuzzy } from '@/lib/contactsSearch'
 import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
 import MapContactInspector, {
   type MapContactRowRenderer,
@@ -209,23 +209,23 @@ const FullMapView = ({
   const CARD_HEIGHT = 200
   const isDark = theme.colors.background === '#121212'
 
-  const normalizedSearch = search.trim().toLocaleLowerCase()
+  // The same search as the Contacts list: typos, notes, custom fields and
+  // Arabic spellings all match. Built only while there's a query, so logging a
+  // visit doesn't rebuild an index nobody is using.
+  const conversations = useConversations((s) => s.conversations)
+  const hasSearch = search.trim().length > 0
+  const searchFuse = useMemo(
+    () => (hasSearch ? buildContactsFuse(contactMarkers, conversations) : null),
+    [hasSearch, contactMarkers, conversations]
+  )
   const visibleContactMarkers = useMemo(
     () =>
-      normalizedSearch
-        ? contactMarkers.filter((contact) => {
-            const address = contact.address
-              ? addressToString(contact.address)
-              : coordinateAsString(contact)
-
-            return [contact.name, contact.phone, contact.email, address]
-              .filter(Boolean)
-              .some((value) =>
-                value?.toLocaleLowerCase().includes(normalizedSearch)
-              )
-          })
+      searchFuse
+        ? searchContactsFuzzy(search, searchFuse, contactMarkers).map(
+            (result) => result.contact
+          )
         : contactMarkers,
-    [contactMarkers, normalizedSearch]
+    [search, searchFuse, contactMarkers]
   )
 
   // Room the floating inspector takes on the trailing edge, the physical left

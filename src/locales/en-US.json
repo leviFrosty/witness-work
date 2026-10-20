@@ -3005,7 +3005,9 @@
   "faq_reorderTabs_q": "Can I change the order of the tabs?",
   "faq_reorderTabs_a": "Yes. Open Settings → Preferences → Tab Order and use the up and down arrows beside each tab, or long-press a tab's name to move it to the top or bottom. The new order applies right away to the bottom bar on phones and the sidebar on tablets, on iOS and Android. Tabs can be reordered but not hidden. WitnessWork still opens on Home, and Progress only appears for roles that log hours; it keeps its place in your order if you change roles. On iPad, Command-number keyboard shortcuts follow your order too. The order is a preference, so it's included in backups and syncs with iCloud when sync is on; it doesn't change any of your records. To go back, move the tabs back to Home, Contacts, Progress, Schedule. If the order doesn't update, restart the app and use Still need help? below.",
   "faq_progressCards_q": "How do I choose what's on my Progress screen?",
-  "faq_progressCards_a": "Open the Progress tab and stay on Month. Below the month's report are cards you choose. To change them, press and hold any card; it lifts and the cards start to jiggle, and you can drag it straight away. You can also tap Edit Cards under your cards, or the grid button at the top. While the cards jiggle, drag a card to move it, tap the gray minus at its top corner to remove it (tap Undo if you didn't mean to), and drag the curved handle at its bottom corner to make it small or wide; tapping the handle switches sizes too. Cards that come in only one size have no handle. Tap Add Cards at the top to see every card you can add, such as Daily Pace, Studies, Days Out, Visits, Credit, Weeks, Projected Month, Service Year, Year Pace, Streak, and Lifetime. The Days list can show every day of the month or, when compact, only the latest few in a short list that scrolls on its own; drag its handle down or up to switch. To lift the Days list, hold its title rather than a day, since each day has its own menu. Tap Done, or tap the month's report, when you're finished. The month's report, with your status, goal, and total, always stays at the top. Some cards only appear when they apply: Daily Pace and Projected Month need a monthly goal, Year Pace needs an annual goal, Credit needs a role whose report counts hours, Streak needs streaks turned on, and Mileage needs mileage tracking. With Reduce Motion on, the cards stay still while you edit. Removing a card never deletes your time or reports. Your cards are a preference, so they're included in backups and sync with your other devices when sync is on. To start over, tap Edit Cards, then Reset Cards.",
+  "faq_progressCards_a": "Each tab on Progress (Month, Year, and All-time) has its own cards under its summary, and you choose them separately. To change a tab's cards, press and hold any card; it lifts and the cards start to jiggle, and you can drag it straight away. You can also tap Edit Cards under your cards, or the grid button at the top. While the cards jiggle, drag a card to move it, tap the gray minus at its top corner to remove it (tap Undo if you didn't mean to), and drag the curved handle at its bottom corner to make it small or wide; tapping the handle switches sizes too. Cards that come in only one size have no handle. Tap Add Cards at the top to see every card that tab offers. Month has Daily Pace, Studies, Days Out, Visits, Credit, Weeks, Projected Month, Service Year, Year Pace, Streak, Lifetime, and Days. Year has Service Year Pace, Needed a Month, Average, Best Month, Last Year, Days Out, Months Out, Studies, and Visits for the service year shown. All-time has Best Year, Average, Best Month, Days Out, Months Out, Studies, and Visits across all your records. The Days list on Month can show every day of the month or, when compact, only the latest few in a short list that scrolls on its own; drag its handle down or up to switch. To lift the Days list, hold its title rather than a day, since each day has its own menu. Tap Done, or tap the summary at the top, when you're finished. Each tab's summary (the month's report, the service year's total, or your lifetime hours) and the lists of months and years always stay. Some cards only appear when they apply: Daily Pace and Projected Month need a monthly goal, Year Pace, Service Year Pace, and Needed a Month need an annual goal, Credit needs a role whose report counts hours, hour cards on Year need a role that logs hours, Streak needs streaks turned on, and Mileage needs mileage tracking. With Reduce Motion on, the cards stay still while you edit. Removing a card never deletes your time or reports. Your cards are a preference, so they're included in backups and sync with your other devices when sync is on. To start over on a tab, tap Edit Cards there, then Reset Cards.",
+  "faq_progressStats_q": "What do the Year and All-time cards count?",
+  "faq_progressStats_a": "On Year, time counts as each month's report counts it: credit time counts up to that month's limit. Average on Year runs from your first month with time to the last month that's ended; the month under way joins only while it's the only one. Last Year compares this service year so far with last service year at the same point, or the whole of both once the year is over. On All-time, time counts as you logged it, before monthly credit limits, the same as your lifetime hours and Year by Year. Average on All-time covers the service years that have ended, or the one under way if it's your first. Months Out counts the months you shared in the ministry, with or without hours, starting from your first record; the month under way counts once you've shared in it, and it's never shown as missed. On All-time it also shows your longest run of months in a row. Studies counts each contact you marked a Bible study with once, and shows the most any one month had, which is that month's figure for your report. Contacts you've deleted aren't counted. Visits counts visits where you talked with someone; not-at-homes are counted separately. Everything is worked out on this device from your own records, and nothing new is stored or shared. If a figure looks wrong, check the month's report and the visits on the contact; you can contact support from the Help Center, leaving out names and notes.",
   "faq_timerRounding_q": "Why was my timer rounded to the nearest 5 minutes?",
   "faq_timerRounding_a": "That was old behavior. Recent versions save the exact stopwatch time when you stop the timer, with no rounding. If you're still seeing 5-minute rounding, update the app to the latest version.",
   "faq_addNotesToTime_q": "Can I add notes to a time entry?",
@@ -3135,7 +3137,7 @@
   "faq_followUpReminders_q": "Can I keep visit notes without scheduling a return visit or reminder?",
   "faq_followUpReminders_a": "Yes. When adding or editing a visit, turn off Follow Up and save. The visit and its notes remain, but that visit has no scheduled follow-up or reminder and will not appear as overdue. You can turn Follow Up on later and choose a date and time. To stop an older follow-up reminder, edit that visit and turn Follow Up off.",
   "faq_followUpCard_q": "How do I use the Today's Conversations card on Home?",
-  "faq_followUpCard_a": "The card shows the follow-ups you scheduled for today. From 5 PM it shows Upcoming Conversations, which adds tomorrow's; those can be rescheduled but not logged until their day. Swipe sideways to move between people. When you've been, tap Talked to log the conversation in the visit form, or tap Not at Home to log the attempt right away. Undo appears below the card for a few seconds after Not at Home. The calendar button reschedules the follow-up. Tap a person to see that conversation and its follow-up in a sheet. Use the ••• button or touch and hold a person for call, message, directions, Open Contact, and Dismiss Follow-Up. A follow-up counts as done once you log any visit with that person on or after its day. The bar at the top fills as you go, and the card shows All caught up when every one is done. Tap Done, or touch and hold the title and choose Close for Now, to hide the card until you add or reschedule a follow-up. A follow-up still open 4 hours after its time moves to missed follow-ups in the notifications tray. Not at Home is unavailable while data protection mode is on. Visits are saved like any other visit on this device. To remove the card for good, touch and hold its title and choose Hide This Section, or turn it back on in Customize Home. If something looks wrong, contact support from the Help Center and leave out names, addresses, and notes.",
+  "faq_followUpCard_a": "The card shows the follow-ups you scheduled for today. From 5 PM it shows Upcoming Conversations, which adds tomorrow's; those can be rescheduled but not logged until their day. Swipe sideways to move between people. When you've been, tap Talked to log the conversation in the visit form, or tap Not at Home to log the attempt right away. Undo appears below the card for a few seconds after Not at Home. The calendar button reschedules the follow-up. Tap a person to see that conversation and its follow-up in a sheet. Use the ••• button or touch and hold a person for call, message, directions, Open Contact, and Dismiss Follow-Up. A follow-up counts as done once you log any visit with that person on or after its day. The bar at the top fills as you go, and the card shows All caught up when every one is done. Tap Done, or touch and hold the title and choose Close for Now, to hide the card until you add or reschedule a follow-up. A follow-up still open 4 hours after its time moves to missed follow-ups in the notifications tray. Not at Home is unavailable while data protection mode is on. Visits are saved like any other visit on this device. To remove the card for good, touch and hold its title, choose Edit Home Screen, and tap the minus on the card. Add Sections brings it back while you edit Home. If something looks wrong, contact support from the Help Center and leave out names, addresses, and notes.",
   "faq_logVisit_q": "How do I quickly log a visit?",
   "faq_logVisit_a": "Tap + and choose Log Visit, then pick the person. On iPad, Log Visit… is also in the menu bar's File menu. Without searching, the list starts with Nearby (contacts within about 250 m of you, closest first), then Follow-ups Due (today's and missed ones from the last 30 days), then Recent (visited in the last 2 weeks), then All Contacts A–Z. Type to search; if the person isn't there, tap Add as a new contact to create them and log the visit next. After you pick someone, tap Had a Conversation to add notes and a follow-up in the visit form, or Not at Home to log it right away, with Undo at the bottom of the screen for a few seconds. In data protection mode, Not at Home isn't offered and the visit form opens directly. Nearby is optional: it appears only if you allow location, and you're never asked unless you tap Turn On. Your location is used on this device only to sort the list; it isn't saved or sent anywhere. If Nearby is missing, check that location is allowed for WitnessWork in your device settings and that the contact has a location on the map. Touch and hold a person to open their contact instead.",
   "faq_reminders_q": "How do follow-up, plan, and contact reminders work?",
@@ -3215,7 +3217,7 @@
   "faq_mileageChart_a": "Open the Mileage screen and choose Week, Month, or Year. The chart shows how far you drove each day, or each month of the service year (September through August). When more than one car has trips in that period, each bar is split by car, using the colors next to each car's total. Tap a bar to open that day or month and see its trips. The Day view has no chart, and a period without trips shows none. Bars show distance, not estimated cost.",
   "faq_mileageTurnOff_a": "Use the Track Mileage switch in Settings → Profile. Turning it off hides the Home card, the Log Trip action, and the Mileage screen, but keeps your trips; turn it back on and everything returns. If you chose No Thanks on the Home card, this switch turns it on anytime. To erase your mileage, open Mileage → Settings → Delete All Mileage Data. This deletes it on every device that syncs with this one and can't be undone. You can also hide only the Home card with Settings → Preferences → Home Screen.",
   "faq_petStart_q": "How do I get a pet, and how do I turn it off?",
-  "faq_petStart_a": "The Pet Companion is optional and works on iOS and Android. On Home, the Meet your companion card offers one: tap Choose a pet, pick a lion cub, golden pup, kitten, donkey, or lamb (the pup and the kitten come in several coats), give it a name if you like, and tap Adopt. If you chose Not now, bring the offer back with Add Sections while editing Home (press and hold an empty space on Home), or turn on Pet in Settings → Preferences → Home Screen. To hide the pet, long-press its card and choose Hide This Section, tap the gray minus on it while editing Home, or turn off Pet in Settings → Preferences → Home Screen. Hiding keeps your pet, its room, and its keepsakes; turn Pet back on and everything returns. You have one companion at a time.",
+  "faq_petStart_a": "The Pet Companion is optional and works on iOS and Android. On Home, the Meet your companion card offers one: tap Choose a pet, pick a lion cub, golden pup, kitten, donkey, or lamb (the pup and the kitten come in several coats), give it a name if you like, and tap Adopt. If you chose Not now, bring the offer back with Add Sections while editing Home (press and hold an empty space on Home), or turn on Pet in Settings → Preferences → Home Screen. To hide the pet, long-press its card, choose Edit Home Screen, and tap the gray minus on it, or turn off Pet in Settings → Preferences → Home Screen. Hiding keeps your pet, its room, and its keepsakes; turn Pet back on and everything returns. You have one companion at a time.",
   "faq_petHearts_q": "How do my pet’s hearts work?",
   "faq_petHearts_a": "A new pet starts with 3 of 5 hearts. Each day you're active in the ministry adds one heart, up to 5. A day counts when you log time (including marking that you shared in the ministry, even with 0 minutes), save a visit (a conversation, return visit, or not-at-home), or save a plan. One heart a day, however much you did; hours don't matter. When 10 days pass without an active day, your pet loses half a heart every 3 days. At half a heart it falls asleep, and after 60 days without an active day it dies (it's shown greyed and lying down). Tap a sleeping pet (or, if it died, Tap to wake) to wake it with 1 heart; the next active day adds hearts again. Patting it (tap it, or drag across it to rub) is just for fun and never adds hearts. Hearts are worked out from your records each time, so they're the same on every device and come back if you restore a backup.",
   "faq_petLamp_q": "What does the lamp in the room mean?",
@@ -4770,7 +4772,9 @@
     "group": {
       "month": "This Month",
       "serviceYear": "Service Year",
-      "more": "More"
+      "more": "More",
+      "time": "Time",
+      "ministry": "Ministry"
     },
     "ofGoal": "of {{goal}}",
     "perMonth": "per month",
@@ -4874,6 +4878,138 @@
     "mileage": {
       "description": "Distance driven this month",
       "cost": "About {{value}} in fuel"
+    },
+    "bestMonth": {
+      "title": "Best Month"
+    },
+    "studiesPeople": {
+      "unit": {
+        "one": "person",
+        "other": "people"
+      }
+    },
+    "monthsShared": {
+      "title": "Months Out",
+      "of": "of {{total}}",
+      "every": "Every month",
+      "missed": {
+        "one": "{{count}} month missed",
+        "other": "{{count}} months missed"
+      },
+      "missedMonths": "Missed: {{months}}",
+      "none": "Nothing to count yet"
+    },
+    "year": {
+      "pace": {
+        "description": "Your time against your annual goal, month by month"
+      },
+      "needed": {
+        "title": "Needed a Month"
+      },
+      "monthlyAverage": {
+        "title": "Average",
+        "description": "Your usual month this service year",
+        "over": {
+          "one": "Over {{count}} month",
+          "other": "Over {{count}} months"
+        },
+        "goal": "Monthly goal: {{goal}}",
+        "info": "Your time after each month's credit limit, averaged from your first month with time to the last month that's ended."
+      },
+      "bestMonth": {
+        "description": "The month with the most time this service year"
+      },
+      "lastYear": {
+        "title": "Last Year",
+        "description": "This service year against the last one",
+        "ahead": "Ahead of last year at this point",
+        "behind": "Behind last year at this point",
+        "morePast": "More than the year before",
+        "lessPast": "Less than the year before",
+        "detail": "{{thisYear}} this year, {{lastYear}} last year",
+        "none": "No time logged last service year",
+        "future": "Starts in September",
+        "info": "Your time this service year against last service year's at the same point, after each month's credit limit."
+      },
+      "serviceDays": {
+        "description": "Days with time this service year"
+      },
+      "monthsShared": {
+        "description": "Months you shared in the ministry this service year"
+      },
+      "studies": {
+        "description": "People you studied with this service year",
+        "peak": "Most in a month: {{value}}",
+        "none": "None this service year",
+        "info": "Each contact you marked a Bible study with this service year counts once. Most in a month is the highest count on a month's report."
+      },
+      "visits": {
+        "description": "Visits where someone was home this service year",
+        "notAtHome": {
+          "zero": "This service year",
+          "one": "Plus {{count}} not at home",
+          "other": "Plus {{count}} not at home"
+        },
+        "info": "Visits where you talked with someone this service year. Not-at-homes are counted separately."
+      },
+      "mileage": {
+        "description": "Distance driven this service year"
+      }
+    },
+    "allTime": {
+      "perYear": "per year",
+      "rawInfo": "Time as you logged it, before monthly credit limits, as in Year by Year.",
+      "bestYear": {
+        "title": "Best Year",
+        "description": "The service year with the most time"
+      },
+      "yearlyAverage": {
+        "title": "Average",
+        "description": "Your usual service year",
+        "over": {
+          "one": "Over {{count}} service year",
+          "other": "Over {{count}} service years"
+        },
+        "currentOnly": "This service year so far",
+        "goal": "Annual goal: {{goal}}",
+        "info": "Time as you logged it, before monthly credit limits, averaged over the service years that have ended since your first record."
+      },
+      "bestMonth": {
+        "description": "The month with the most time, ever"
+      },
+      "serviceDays": {
+        "description": "Every day you've had time"
+      },
+      "monthsShared": {
+        "description": "Every month you shared in the ministry",
+        "longestRun": {
+          "one": "Longest run: {{count}} month in a row",
+          "other": "Longest run: {{count}} months in a row"
+        }
+      },
+      "studies": {
+        "description": "Everyone you've studied with",
+        "peak": "Most in a month: {{value}}, in {{month}}",
+        "none": "No Bible studies yet",
+        "info": "Each contact you've marked a Bible study with counts once. Most in a month is the highest count on a month's report."
+      },
+      "visits": {
+        "description": "Every visit where someone was home",
+        "people": {
+          "zero": "No one yet",
+          "one": "With {{count}} person",
+          "other": "With {{count}} different people"
+        },
+        "notAtHome": {
+          "zero": "No not-at-homes",
+          "one": "Plus {{count}} not at home",
+          "other": "Plus {{count}} not at home"
+        },
+        "info": "Every visit where you talked with someone. Not-at-homes are counted separately."
+      },
+      "mileage": {
+        "description": "Every trip you've logged"
+      }
     }
   },
   "pet": {

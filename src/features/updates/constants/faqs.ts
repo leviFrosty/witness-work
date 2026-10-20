@@ -214,6 +214,7 @@ export const FAQS: FAQEntry[] = [
     category: 'customization',
     related: [775, 119, 259],
   },
+  { id: 'progressStats', category: 'customization' },
   { id: 'reorderTabs', category: 'customization' },
   {
     id: 'timerRounding',

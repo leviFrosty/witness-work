@@ -65,7 +65,6 @@ export const TimerSection = () => {
   // stay individually reachable.
   return (
     <HomeSectionMenu
-      section='timer'
       accessible={false}
       actions={[
         [

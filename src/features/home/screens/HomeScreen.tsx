@@ -200,8 +200,8 @@ export const HomeScreen = ({ header }: { header: ReactNode }) => {
         }}
         scrollEnabled={!dragging}
         contentContainerStyle={{
-          paddingBottom:
-            insets.bottom + (hasSidebar ? 30 : 85) + weekStrip.bottomInset,
+          // The room under the sections is inside them (see AdaptiveColumns),
+          // where holding it still starts editing.
           paddingHorizontal: isWide ? 24 : 15,
           paddingTop: 15,
           width: '100%',
@@ -260,7 +260,12 @@ export const HomeScreen = ({ header }: { header: ReactNode }) => {
         >
           <AdaptiveColumns
             wide={isWide}
-            style={{ paddingBottom: insets.bottom }}
+            style={{
+              paddingBottom:
+                insets.bottom * 2 +
+                (hasSidebar ? 30 : 85) +
+                weekStrip.bottomInset,
+            }}
           >
             {!homeChecklistDismissed && (
               // Getting started stays put; holding it doesn't edit Home.
@@ -303,7 +308,6 @@ export const HomeScreen = ({ header }: { header: ReactNode }) => {
                         {/* The badge goes on the card, not the heading. */}
                         <ReorderableItemBox>
                           <HomeSectionMenu
-                            section='tabletServiceYearSummary'
                             onPress={viewServiceYear}
                             accessibilityLabel={i18n.t('viewYear')}
                             hoverRadius={theme.numbers.borderRadiusLg}

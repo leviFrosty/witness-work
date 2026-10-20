@@ -16,7 +16,12 @@ import {
 import type { ProgressCardProps } from '@/features/progress/components/cards/types'
 
 /** How much a month it takes to reach the Annual Goal (#358). */
-export default function YearPaceCard({ month, year, size }: ProgressCardProps) {
+export default function YearPaceCard({
+  month,
+  year,
+  size,
+  title = i18n.t('progressCards.yearPace.title'),
+}: ProgressCardProps & { title?: string }) {
   const today = moment(useLocalDay(), 'YYYY-MM-DD')
   const serviceYear = serviceYearOf({ month, year })
   const { annualGoalHours } = usePublisher({ month, year })
@@ -36,7 +41,7 @@ export default function YearPaceCard({ month, year, size }: ProgressCardProps) {
     formatMinutes(minutes, timeDisplayFormat).formatted
   const common = {
     icon: TrendingUpIcon,
-    title: i18n.t('progressCards.yearPace.title'),
+    title,
     info: i18n.t('progressCards.yearPace.info'),
     size,
   }

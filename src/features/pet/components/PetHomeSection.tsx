@@ -34,7 +34,6 @@ export default function PetHomeSection({
   return (
     <Card style={{ gap: 12, paddingVertical: 16, paddingHorizontal: 16 }}>
       <HomeSectionMenu
-        section='pet'
         accessibilityLabel={name}
         actions={[
           {

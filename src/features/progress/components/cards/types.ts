@@ -12,3 +12,15 @@ export type ProgressCardProps = {
    */
   wrapEditTrigger?: (trigger: ReactElement) => ReactElement
 }
+
+/** What every Year card is given: the Service Year shown and its size. */
+export type YearCardProps = {
+  /** Start year: September of `serviceYear` to August of the next. */
+  serviceYear: number
+  size: ProgressCardSize
+}
+
+/** What every All Time card is given. */
+export type AllTimeCardProps = {
+  size: ProgressCardSize
+}

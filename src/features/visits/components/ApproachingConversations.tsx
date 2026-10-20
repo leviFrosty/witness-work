@@ -160,7 +160,6 @@ const ApproachingConversations = ({
         {/* The action sits outside the menu, whose native wrapper takes taps. */}
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
           <HomeSectionMenu
-            section='approachingConversations'
             accessibilityLabel={title}
             style={{ flex: 1 }}
             actions={[

@@ -2,6 +2,9 @@ import { Platform, requireOptionalNativeModule } from 'expo-modules-core'
 
 type WidgetBridgeNative = {
   writeSnapshot(json: string): void
+  /** Missing from binaries built before the Pet widget. */
+  writeFile?(name: string, base64: string): Promise<void>
+  pruneFiles?(keep: string[]): Promise<void>
   reloadAllTimelines(): void
   getAppGroupIdentifier(): string | null
 }
@@ -16,6 +19,27 @@ const native = requireOptionalNativeModule<WidgetBridgeNative>('WidgetBridge')
 export function writeSnapshot(json: string): void {
   if (Platform.OS !== 'ios' || !native) return
   native.writeSnapshot(json)
+}
+
+/**
+ * Writes a base64-encoded file to `pet/<name>` in the App Group container,
+ * atomically, for the Pet widget's images. `name` must match
+ * `^[a-z0-9-]+\.png$`; the promise rejects otherwise. Resolves without writing
+ * outside iOS, before prebuild, or in a binary older than the Pet widget.
+ */
+export async function writeFile(name: string, base64: string): Promise<void> {
+  if (Platform.OS !== 'ios' || !native?.writeFile) return
+  await native.writeFile(name, base64)
+}
+
+/**
+ * Deletes every file in the App Group's `pet/` folder that isn't in `keep`.
+ * Resolves without deleting anything outside iOS, before prebuild, or in a
+ * binary older than the Pet widget.
+ */
+export async function pruneFiles(keep: string[]): Promise<void> {
+  if (Platform.OS !== 'ios' || !native?.pruneFiles) return
+  await native.pruneFiles(keep)
 }
 
 /**

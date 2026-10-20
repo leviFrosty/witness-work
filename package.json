@@ -72,7 +72,7 @@
     "@react-navigation/native": "^7.3.8",
     "@react-navigation/native-stack": "^7.17.7",
     "@shopify/flash-list": "2.0.2",
-    "@shopify/react-native-skia": "^2.6.2",
+    "@shopify/react-native-skia": "2.6.2",
     "@tamagui/config": "^2.4.2",
     "@tamagui/toast": "^2.4.2",
     "@tiptap/core": "3.31.4",

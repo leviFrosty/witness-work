@@ -73,6 +73,8 @@ import {
   applyMileageSnapshot,
   hasMileageData,
 } from '@/app/sync/mileageStoreSync'
+import { petFromPayload } from '@/app/sync/petPayload'
+import { applyPetSnapshot, hasPetData } from '@/app/sync/petStoreSync'
 import { usePreferences } from '@/stores/preferences'
 import { useProfile } from '@/stores/profile'
 import { useSupporter } from '@/features/supporter/stores/supporter'
@@ -578,6 +580,7 @@ export function hasMeaningfulLocalData(): boolean {
     return true
   if (categories.deletedCategories.length > 0) return true
   if (hasMileageData()) return true
+  if (hasPetData()) return true
   return false
 }
 
@@ -598,6 +601,9 @@ export function hasMeaningfulLocalData(): boolean {
  * merges).
  */
 export function replaceLocalWithRemote(remote: SyncPayload): void {
+  // A writer from before the Pet Companion sends no pet slice; that's not "no
+  // pet", so the local one stays (`foldRemotePayloads` leaves it out too).
+  const hasPetSlice = remote.petStore !== undefined
   remote = foldRemotePayloads([remote])!
   withRemoteDataMutation(() => {
     const deletedCustomFieldDefs =
@@ -650,6 +656,7 @@ export function replaceLocalWithRemote(remote: SyncPayload): void {
       deletedCategories: remote.categoryStore?.deletedCategories ?? [],
     })
     applyMileageSnapshot(mileageFromPayload(remote))
+    if (hasPetSlice) applyPetSnapshot(petFromPayload(remote))
 
     const now = Date.now()
     usePreferences.setState({

@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { publishers } from '@/constants/publisher'
+import { PET_SPECIES_IDS } from '@/types/pet'
 import { entryTimestampKey } from '@/lib/syncPreferencePolicy'
 import {
   bibleStudyFlagSchema,
@@ -201,6 +202,33 @@ const trip = record.extend({
   note: z.string().optional(),
   createdAt: timestamp,
 })
+// Cosmetic choices (coat, room options, gift kinds) read as strings, so an
+// option from a newer build keeps the record; the pet feature falls back to a
+// default for anything it doesn't know.
+const pet = record.extend({
+  species: z.enum(PET_SPECIES_IDS),
+  coat: z.string(),
+  name: z.string().optional(),
+  adoptedOn: dateKey,
+  wakes: z.array(dateKey),
+  keepsakes: z.array(z.object({ kind: z.string(), on: dateKey })),
+  // Absent on pets adopted before gift seeds (`petGiftSeed` falls back).
+  seed: z.string().min(1).max(64).optional(),
+  // Room item ids, kept even when this build doesn't know them.
+  earnedRoomItems: z.array(z.string()).optional(),
+  updatedAt: timestamp,
+})
+const petRoom = record.extend({
+  window: z.object({ time: z.string(), season: z.string() }),
+  wallColor: z.string(),
+  wallPattern: z.string(),
+  floor: z.string(),
+  bed: z.string(),
+  shelf: z.string(),
+  lamp: z.string(),
+  sign: z.string(),
+  updatedAt: timestamp,
+})
 const values = z.object({
   values: z.record(z.unknown()),
   updatedAt: z.record(timestamp).optional().default({}),
@@ -260,6 +288,13 @@ export const payloadSchema = z.object({
       deletedMileageRecords: z.array(tombstone).optional(),
     })
     .optional(),
+  petStore: z
+    .object({
+      pets: z.array(pet),
+      petRooms: z.array(petRoom),
+      deletedPetRecords: z.array(tombstone).optional(),
+    })
+    .optional(),
   preferencesStore: values,
   profileStore: values.optional(),
 })
@@ -294,6 +329,7 @@ const recordLists: Record<string, Record<string, z.ZodTypeAny>> = {
     trips: trip,
     deletedMileageRecords: tombstone,
   },
+  petStore: { pets: pet, petRooms: petRoom, deletedPetRecords: tombstone },
 }
 
 const isMap = (value: unknown): value is Record<string, unknown> =>
@@ -544,6 +580,7 @@ const preferenceShapes = z
       .enum(['mpgUS', 'mpgUK', 'lPer100km', 'kmPerL'])
       .optional(),
     mileageEntryMode: z.enum(['distance', 'odometer']).optional(),
+    petPromptDismissed: z.boolean().optional(),
   })
   .passthrough()
 

@@ -28,6 +28,11 @@ import { captureExceptionThrottled } from '@/lib/throttledErrorReport'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 import { currentBuddyDayMarkers } from '@/features/buddies/lib/currentBuddyDayMarkers'
 import type { BuddyDayMarker } from '@/features/buddies/lib/calendarMarkers'
+import { usePet } from '@/stores/pet'
+import { bufferToPngBase64 } from '@/features/pet/render/skiaImage'
+import { planPetWidgetSnapshot } from '@/app/widgets/petWidgetInput'
+import { renderPetWidget } from '@/app/widgets/petWidget'
+import { createPetWidgetWriter } from '@/app/widgets/petWidgetWriter'
 
 export const WIDGET_REFRESH_TASK = 'com.leviwilkerson.jwtime.widget.refresh'
 
@@ -62,6 +67,7 @@ const WIDGET_PREFERENCES = [
   'widgetContactSort',
   'widgetContactAction',
   'widgetAppointmentWindow',
+  'showStreaks',
 ] as const satisfies (keyof ReturnType<typeof usePreferences.getState>)[]
 
 /** Called from React whenever the app knows whether Buddies is shown. */
@@ -86,15 +92,36 @@ function buddyMarkers(): Record<string, BuddyDayMarker> {
   }
 }
 
+/** The Pet widget's images and the slice last written (`petWidgetWriter.ts`). */
+const petWriter = createPetWidgetWriter({
+  storage: mmkvStorage,
+  bridge: WidgetBridge,
+  render: (plan) => renderPetWidget(plan, bufferToPngBase64),
+  onError: (message, error) => {
+    logger.error(`[widgetSync] ${message}`, error)
+    captureExceptionThrottled('widgetSync:pet', error)
+  },
+})
+
+/** Pushes run one at a time, so image writes and prunes never interleave. */
+let pushQueue: Promise<void> = Promise.resolve()
+
 /**
- * Reads the current zustand state synchronously and pushes a freshly built
- * widget snapshot into the iOS App Group container, then asks WidgetKit to
- * reload all timelines. Skipped when the snapshot is the one already written,
- * since timeline reloads come out of a daily budget. Safe to call from React
- * effects, AppState handlers, and background fetch tasks alike — none of these
- * go through React.
+ * Reads the current zustand state and pushes a freshly built widget snapshot
+ * into the iOS App Group container, then asks WidgetKit to reload all
+ * timelines. The Pet widget's images are written first, and the ones neither
+ * this snapshot nor the previous one names pruned after. Skipped when the
+ * snapshot is the one already written, since timeline reloads come out of a
+ * daily budget. Safe to call from React effects, AppState handlers, and
+ * background fetch tasks alike — none of these go through React. Never
+ * rejects.
  */
-function pushSnapshot(reason: string): void {
+function pushSnapshot(reason: string): Promise<void> {
+  pushQueue = pushQueue.then(() => pushSnapshotNow(reason))
+  return pushQueue
+}
+
+async function pushSnapshotNow(reason: string): Promise<void> {
   perf.count('widget:push')
   if (!WidgetBridge.isAvailable()) return
 
@@ -128,6 +155,13 @@ function pushSnapshot(reason: string): void {
       dateOrderOverride: prefs.dateOrder,
     })
 
+    // Images first: the snapshot below names them.
+    const pet = await petWriter.prepare(() =>
+      planPetWidgetSnapshot(new Date(), {
+        deviceRegion: defaultPhoneRegionCode || null,
+      })
+    )
+
     const snapshot = buildWidgetSnapshot({
       serviceReports: sr.serviceReports,
       // Widgets show this month, so they use this month's role (Role History).
@@ -156,18 +190,21 @@ function pushSnapshot(reason: string): void {
       locale: prefs.locale ?? DEFAULT_LOCALE,
       nativeLocale: nativeLocale(language),
       accentColor,
+      pet: pet.snapshot,
     })
 
     const { updatedAt: _updatedAt, ...content } = snapshot
     const hash = contentHash(JSON.stringify(content))
     if (hash === mmkvStorage.getString(SNAPSHOT_HASH_KEY)) {
+      petWriter.unchanged(pet)
       perf.count('widget:skip')
       return
     }
     WidgetBridge.writeSnapshot(JSON.stringify(snapshot))
+    mmkvStorage.set(SNAPSHOT_HASH_KEY, hash)
     perf.count('widget:reload')
     WidgetBridge.reloadAllTimelines()
-    mmkvStorage.set(SNAPSHOT_HASH_KEY, hash)
+    await petWriter.written(pet)
   } catch (e) {
     logger.error(`[widgetSync] failed to push snapshot (${reason})`, e)
     captureExceptionThrottled('widgetSync', e, { widgetSync: reason })
@@ -196,7 +233,7 @@ if (Platform.OS === 'ios' && !TaskManager.isTaskDefined(WIDGET_REFRESH_TASK)) {
       // After the pull, so one push carries what it merged; the store-change
       // debounce might not fire before the task is suspended.
       debouncedPush.cancel()
-      pushSnapshot('background-fetch')
+      await pushSnapshot('background-fetch')
     }
     return BackgroundTask.BackgroundTaskResult.Success
   })
@@ -241,6 +278,11 @@ export function installWidgetSync(): () => void {
   })
   // Only the slices the calendar's buddy badges read; the store also holds
   // notifications and sync bookkeeping that change far more often.
+  // The companion and its room; hearts come from the records above.
+  const unsubPet = usePet.subscribe((state, previous) => {
+    if (state.pet !== previous.pet || state.room !== previous.room)
+      debouncedPush()
+  })
   const unsubBuddies = useBuddies.subscribe((state, previous) => {
     if (
       state.buddies !== previous.buddies ||
@@ -276,6 +318,7 @@ export function installWidgetSync(): () => void {
     unsubConversations()
     unsubSupporter()
     unsubBuddies()
+    unsubPet()
     debouncedPush.cancel()
     foregroundSub.remove()
     BackgroundTask.unregisterTaskAsync(WIDGET_REFRESH_TASK).catch(() => {})

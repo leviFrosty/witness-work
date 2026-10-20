@@ -40,8 +40,8 @@ export function seedScenario(name: string) {
   const { addServiceReport, addDayPlan, addRecurringPlan } =
     useServiceReport.getState()
   scenario.timeEntries.forEach(addServiceReport)
-  scenario.dayPlans.forEach(addDayPlan)
-  scenario.recurringPlans.forEach(addRecurringPlan)
+  scenario.dayPlans.forEach((plan) => addDayPlan(plan))
+  scenario.recurringPlans.forEach((plan) => addRecurringPlan(plan))
   if (scenario.onboarded) {
     // File every badge the seeded records reach as history now, so a seed
     // never sets off celebrations or the history summary, and mark them seen

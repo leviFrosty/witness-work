@@ -256,4 +256,25 @@ describe('first enable on a fresh install', () => {
       outcome: 'conflict',
     })
   })
+  it.each([
+    ['an adopted pet', () => {}],
+    [
+      'a released pet',
+      (pet: typeof import('@/stores/pet').default) =>
+        pet.getState().releaseCompanion(),
+    ],
+  ])('asks before replacing %s, the only data', async (_, change) => {
+    const { resolveInitialEnable, hasMeaningfulLocalData } =
+      await freshInstall()
+    const { default: usePet } = await import('@/stores/pet')
+    usePet
+      .getState()
+      .adopt({ species: 'lamb', coat: 'default', today: '2026-10-01' })
+    change(usePet)
+
+    expect(hasMeaningfulLocalData()).toBe(true)
+    expect(await resolveInitialEnable()).toMatchObject({
+      outcome: 'conflict',
+    })
+  })
 })

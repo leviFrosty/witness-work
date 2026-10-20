@@ -1,0 +1,120 @@
+import { View } from 'react-native'
+import { useNavigation } from '@react-navigation/native'
+import Button from '@/components/ui/Button'
+import Card from '@/components/ui/Card'
+import Text from '@/components/ui/MyText'
+import useTheme from '@/contexts/theme'
+import { analytics } from '@/lib/analytics'
+import i18n from '@/lib/locales'
+import { usePreferences } from '@/stores/preferences'
+import { defaultCoatFor, PET_SPECIES_IDS } from '@/types/pet'
+import type { RootStackNavigation } from '@/types/rootStack'
+import PetSpriteTile from '@/features/pet/render/PetSpriteTile'
+
+/**
+ * Home's one-time offer of a Pet Companion, in the pet's slot: the five animals
+ * idling, Choose a pet (the picker) and Not now (hides the offer on every
+ * synced device until Pet is turned on in Settings → Preferences → Home
+ * Screen).
+ */
+export default function PetPromptCard() {
+  const theme = useTheme()
+  const navigation = useNavigation<RootStackNavigation>()
+
+  const choose = () => {
+    analytics.capture('pet_prompt_answered', { choice: 'choose' })
+    navigation.navigate('PetPicker', { mode: 'adopt' })
+  }
+  const notNow = () => {
+    analytics.capture('pet_prompt_answered', { choice: 'not_now' })
+    usePreferences.getState().set({ petPromptDismissed: true })
+  }
+
+  const buttonStyle = {
+    flex: 1,
+    minHeight: 44,
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+    borderRadius: theme.numbers.borderRadiusMd,
+  }
+
+  return (
+    <Card style={{ gap: 14 }}>
+      <View style={{ gap: 2 }}>
+        <Text
+          style={{
+            fontSize: theme.fontSize('lg'),
+            fontFamily: theme.fonts.semiBold,
+          }}
+        >
+          {i18n.t('pet.promptTitle')}
+        </Text>
+        <Text
+          style={{
+            color: theme.colors.textAlt,
+            fontSize: theme.fontSize('sm'),
+          }}
+        >
+          {i18n.t('pet.promptDescription')}
+        </Text>
+      </View>
+      <View
+        accessible
+        accessibilityRole='image'
+        accessibilityLabel={i18n.t('pet.a11y.promptAnimals')}
+        style={{
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          paddingHorizontal: 4,
+        }}
+      >
+        {PET_SPECIES_IDS.map((species, i) => (
+          <View
+            key={species}
+            style={{
+              padding: 4,
+              borderRadius: theme.numbers.borderRadiusMd,
+              backgroundColor: theme.colors.backgroundLighter,
+            }}
+          >
+            <PetSpriteTile
+              species={species}
+              coat={defaultCoatFor(species)}
+              size={44}
+              seed={i * 900}
+            />
+          </View>
+        ))}
+      </View>
+      <View style={{ flexDirection: 'row', gap: 10 }}>
+        <Button
+          accessibilityRole='button'
+          onPress={notNow}
+          style={{
+            ...buttonStyle,
+            borderWidth: 1,
+            borderColor: theme.colors.border,
+          }}
+        >
+          <Text style={{ fontFamily: theme.fonts.semiBold }}>
+            {i18n.t('pet.promptNotNow')}
+          </Text>
+        </Button>
+        <Button
+          accessibilityRole='button'
+          onPress={choose}
+          style={{ ...buttonStyle, backgroundColor: theme.colors.accent }}
+        >
+          <Text
+            style={{
+              fontFamily: theme.fonts.semiBold,
+              color: theme.colors.textInverse,
+            }}
+          >
+            {i18n.t('pet.promptChoose')}
+          </Text>
+        </Button>
+      </View>
+    </Card>
+  )
+}

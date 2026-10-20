@@ -4,6 +4,7 @@ import {
   type HomeScreenElementKey,
   usePreferences,
 } from '@/stores/preferences'
+import usePet from '@/stores/pet'
 import { showUndoToast } from '@/stores/undoToast'
 
 /** A Home section's name, as in Preferences → Home Screen. */
@@ -17,6 +18,8 @@ export const homeSectionTitle = (key: HomeScreenElementKey): string => {
       return i18n.t('serviceReport')
     case 'mileage':
       return i18n.t('mileage.title')
+    case 'pet':
+      return i18n.t('pet.homeSectionLabel')
     case 'thisWeek':
       return i18n.t('thisWeek')
     case 'timer':
@@ -71,9 +74,39 @@ export const moveHomeSection = (
   return next
 }
 
-const setSectionShown = (key: HomeScreenElementKey, shown: boolean) => {
+/**
+ * Whether the User shows a section. Before there's a companion, Pet is the
+ * offer to adopt one, which "Not now" hides too.
+ */
+export const isHomeSectionShown = (
+  key: HomeScreenElementKey,
+  {
+    homeScreenElements,
+    petPromptDismissed,
+    hasPet,
+  }: {
+    homeScreenElements: Partial<Record<HomeScreenElementKey, boolean>>
+    petPromptDismissed: boolean
+    hasPet: boolean
+  }
+) =>
+  (homeScreenElements[key] ?? true) &&
+  !(key === 'pet' && !hasPet && petPromptDismissed)
+
+/**
+ * Shows or hides a section; showing Pet brings back an offer answered "Not
+ * now".
+ */
+export const setHomeSectionShown = (
+  key: HomeScreenElementKey,
+  shown: boolean
+) => {
   const { homeScreenElements, set } = usePreferences.getState()
-  set({ homeScreenElements: { ...homeScreenElements, [key]: shown } })
+  const offerAgain = key === 'pet' && shown && usePet.getState().pet === null
+  set({
+    homeScreenElements: { ...homeScreenElements, [key]: shown },
+    ...(offerAgain ? { petPromptDismissed: false } : {}),
+  })
 }
 
 /** Moves a section to where `target` is (dragging it over `target`). */
@@ -93,10 +126,10 @@ export const moveHomeSectionTo = (
 
 /** Hides a section, with an Undo toast that shows it again. */
 export const hideHomeSection = (key: HomeScreenElementKey) => {
-  setSectionShown(key, false)
+  setHomeSectionShown(key, false)
   showUndoToast({
     message: i18n.t('homeEdit.removed', { section: homeSectionTitle(key) }),
-    onUndo: () => setSectionShown(key, true),
+    onUndo: () => setHomeSectionShown(key, true),
   })
 }
 
@@ -105,5 +138,5 @@ export const showHomeSection = (key: HomeScreenElementKey) => {
   const { homeScreenElementsOrder, set } = usePreferences.getState()
   const order = getEffectiveHomeScreenOrder(homeScreenElementsOrder)
   set({ homeScreenElementsOrder: [key, ...order.filter((k) => k !== key)] })
-  setSectionShown(key, true)
+  setHomeSectionShown(key, true)
 }

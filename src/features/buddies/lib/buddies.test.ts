@@ -3612,6 +3612,8 @@ describe('badges', () => {
       updatedAt: 10,
       badges: false,
       badgesUpdatedAt: 5,
+      pet: true,
+      petUpdatedAt: 0,
     }
     // An older app's later photo choice, with no badges fields.
     expect(

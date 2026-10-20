@@ -3,9 +3,12 @@
  * @bacons/apple-targets configuration for the WitnessWork widget extension.
  *
  * One iOS extension hosts a `WidgetBundle` of multiple widgets:
- *   - ReportWidget       (hours / checkbox)
- *   - ContactsWidget     (top contacts with quick actions)
+ *   - ReportWidget       (hours / checkbox, plus lock screen)
+ *   - CalendarWidget     (month calendar)
  *   - AppointmentsWidget (upcoming follow-ups)
+ *   - ContactsWidget     (top contacts with quick actions)
+ *   - PetWidget          (Pet Companion and its room)
+ *   - StopwatchLiveActivity (the timer's Live Activity)
  *
  * `name` and `bundleIdentifier` are pinned to what has always shipped
  * (`widgets` / `<host>.widget`). Changing either orphans widgets users have

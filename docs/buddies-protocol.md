@@ -399,7 +399,16 @@ Roster plaintext (JSON):
   ],
   "closedInviteIds": { "<inviteId>": 0 },
   "removedBuddies": { "<inboxId>": 0 },
-  "sharing": { "photo": true, "tenure": true, "streak": true, "updatedAt": 0 },
+  "sharing": {
+    "photo": true,
+    "tenure": true,
+    "streak": true,
+    "updatedAt": 0,
+    "badges": true,
+    "badgesUpdatedAt": 0,
+    "pet": true,
+    "petUpdatedAt": 0
+  },
   "answers": {
     "<from>|<shareId>": { "s": "going", "v": 0, "r": 0, "x": 0 }
   },
@@ -409,7 +418,7 @@ Roster plaintext (JSON):
 }
 ```
 
-- `buddies` (≤ 5) may also carry `tenure`, `color` (a hex this User picked), and `expiresAt` (only while `awaitingConfirm`). `avatar` is an emoji only; each device gets photos, and streaks, from Buddy Cards. `prefsAt` is when the nickname, color, or `showOnCalendar` last changed; a buddy's later `prefsAt` replaces all three on a device that already has that buddy. Rosters without it never replace them.
+- `buddies` (≤ 5) may also carry `tenure`, `color` (a hex this User picked), and `expiresAt` (only while `awaitingConfirm`). `avatar` is an emoji only; each device gets photos, streaks, and pets from Buddy Cards. `prefsAt` is when the nickname, color, or `showOnCalendar` last changed; a buddy's later `prefsAt` replaces all three on a device that already has that buddy. Rosters without it never replace them.
 - `answers`, `read`, and `dismissed` keep the User's devices showing the same thing (see [Another of the User's devices](#another-of-the-users-devices)). Each is optional: a roster without them reads as empty, and an entry a reader can't parse is dropped on its own, not the roster.
 - `version` counts roster writes across the User's devices: each write is the newest version the device has read or written, plus one, and only a write the relay accepted counts. Rosters from builds before it have none.
 - `closedInviteIds`: invites cancelled, rejected, or confirmed (`inviteId → expiresAt`), pruned once they expire. A rejected claim goes with its invite: the claim expires at the same moment.
@@ -432,7 +441,7 @@ A removed buddy's slot is gone from the inbox too, so the next sync drops them o
 
 **Limits.** A device restoring from the root seed with no Buddies data yet has neither a version nor tombstones of its own, so it relies on the roster the relay serves it. A relay that serves such a device a roster from before a removal can bring that buddy back there. Builds without roster versions don't read tombstones, and removals made on them leave none.
 
-The roster also carries the User's sharing choices (`sharing`: `{ photo, tenure, streak, updatedAt, badges?, badgesUpdatedAt? }`), merged last-writer-wins so every device publishes the same Buddy Card: photo, Tenure, and the streak on `updatedAt`, badges on their own `badgesUpdatedAt`. A roster written before streaks existed reads `streak` as `true`. A withheld photo or Tenure is left out of invites, claims, `pair.confirmed`, and cards; the next card clears the buddy's copy. The streak only ever travels in cards, and the roster never stores a buddy's streak. Withheld badges are left out of cards and not announced. The badges fields came later, so they're optional: a roster without them (written before badges, or by an older app, which drops them when it rewrites the roster) parses, keeps the device's own badges choice and stamp, and counts as different from the device's copy only when that device made a choice (stamp > 0), which it then writes back once. On equal `badgesUpdatedAt`, withholding wins, so devices can't disagree forever. A choice never made defaults to on with stamp 0. Push templates are per device: a device that registers without a kind's template (Buddies notifications off there) gets no push for it.
+The roster also carries the User's sharing choices (`sharing`: `{ photo, tenure, streak, updatedAt, badges?, badgesUpdatedAt?, pet?, petUpdatedAt? }`), merged last-writer-wins so every device publishes the same Buddy Card: photo, Tenure, and the streak on `updatedAt`, badges on their own `badgesUpdatedAt`, and the pet on its own `petUpdatedAt`. A roster written before streaks existed reads `streak` as `true`. A withheld photo or Tenure is left out of invites, claims, `pair.confirmed`, and cards; the next card clears the buddy's copy. The streak only ever travels in cards, and the roster never stores a buddy's streak. Withheld badges are left out of cards and not announced. The badges fields came later, so they're optional: a roster without them (written before badges, or by an older app, which drops them when it rewrites the roster) parses, keeps the device's own badges choice and stamp, and counts as different from the device's copy only when that device made a choice (stamp > 0), which it then writes back once. On equal `badgesUpdatedAt`, withholding wins, so devices can't disagree forever. A choice never made defaults to on with stamp 0. The pet fields came later still and work the same way on `petUpdatedAt`; a `pet` a reader can't parse reads as absent. A withheld pet is left out of cards, and the roster never stores a buddy's pet. Push templates are per device: a device that registers without a kind's template (Buddies notifications off there) gets no push for it.
 
 If `inbox/sync` returns `not_found` (inactivity wipe), the client re-registers the inbox, re-adds every buddy's slot, and writes its roster. A local flag makes a failure part-way retry instead of looking like every buddy left.
 
@@ -470,7 +479,8 @@ Sending stays idempotent across devices:
   "updatedAt": 0,
   "level": "daysTimes",
   "days": [{ "d": "2026-09-27", "p": [{ "s": 540, "m": 180 }] }],
-  "badges": [{ "c": "monthsShared", "l": 2 }, { "c": "firstBuddy" }]
+  "badges": [{ "c": "monthsShared", "l": 2 }, { "c": "firstBuddy" }],
+  "pet": { "species": "cat", "coat": "grey", "name": "Pip" }
 }
 ```
 
@@ -481,6 +491,8 @@ Sending stays idempotent across devices:
 `streak` is optional: the sender's Service Streak (`n`, planned days kept or months in service, 1–10,000) once it's at least 3 and only while `sharing.streak` is on. `until` is the sender's last local day it lasts without more service: the day after the next planned day still waiting for time, or the end of the next month for months. With no Plan ahead it's the end of the Plan window. The receiver hides the streak once its own local date is past `until`, so a streak that lapsed while the sender's app was closed stops showing. Whether `n` counts Plans or months isn't sent. A receiver that can't parse `streak` drops just that field, not the card. The card's content hash includes `streak`, so a change republishes it.
 
 `badges` (optional, added without bumping `v`) lists the sender's earned badges, newest first: each Badge Collection once at its highest level (`c` = collection id, `l` = level 1–4), plus earned One-time Badges (`c` only). First Bible Study stays off the card in data protection mode. Never counts, dates, progress, or locked badges. It's left out when there are none, or when the User turned off badges or sharing them (`sharing.badges`). Receivers take each card's list as the whole truth, drop entries they don't recognize (a newer app's badges) one by one, and treat a malformed list (over 40 entries, wrong shape) as no badges without rejecting the card. Older apps ignore the field. Badges never travel in invites, claims, `pair.confirmed`, or the roster. The card's content hash includes `badges` too.
+
+`pet` (optional, added without bumping `v`) is the sender's Pet Companion ([`docs/pet-companion.md`](./pet-companion.md)): `species` (`lion | dog | cat | donkey | lamb`), `coat` (a coat id, 1–24 characters), and `name` (optional, 1–20 characters, user-entered). It's sent only while the User has a companion and `sharing.pet` is on (default on), and left out otherwise, so releasing the pet or turning sharing off clears the buddy's copy on the next card. A receiver that doesn't know the species, or can't parse the pet, drops just `pet`, never the card; a name it can't parse drops just the name, and a coat it doesn't know is drawn in the species' default coat. Receivers use it for the `visitor` moment: on a day the User has a Plan with that buddy (and the buddy didn't decline), the buddy's pet sits beside the User's own. Older apps ignore the field. The pet never travels in invites, claims, `pair.confirmed`, or the roster. The card's content hash includes `pet`, so adopting, Change Pet, renaming, or releasing republishes.
 
 ### Event kinds (MVP)
 

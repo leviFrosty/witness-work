@@ -24,9 +24,11 @@ vi.mock('@/lib/locales', () => ({
 import { isHomeSectionAvailable, moveHomeSection } from '@/lib/homeSections'
 import {
   hideHomeSection,
+  isHomeSectionShown,
   moveHomeSectionTo,
   showHomeSection,
 } from '@/lib/homeSections'
+import usePet from '@/stores/pet'
 import {
   DEFAULT_HOME_SCREEN_ELEMENTS_ORDER,
   getEffectiveHomeScreenOrder,
@@ -115,5 +117,37 @@ describe('Home sections', () => {
       'timer',
       ...DEFAULT_HOME_SCREEN_ELEMENTS_ORDER.filter((k) => k !== 'timer'),
     ])
+  })
+
+  describe('Pet before a companion', () => {
+    const shown = () =>
+      isHomeSectionShown('pet', {
+        ...usePreferences.getState(),
+        hasPet: usePet.getState().pet !== null,
+      })
+
+    it('counts the offer answered Not now as hidden', () => {
+      expect(shown()).toBe(true)
+      usePreferences.setState({ petPromptDismissed: true })
+      expect(shown()).toBe(false)
+    })
+
+    it('brings the offer back when Pet is shown again', () => {
+      usePreferences.setState({ petPromptDismissed: true })
+      showHomeSection('pet')
+      expect(usePreferences.getState().petPromptDismissed).toBe(false)
+      expect(shown()).toBe(true)
+    })
+
+    it('leaves Not now alone with a companion', () => {
+      usePet
+        .getState()
+        .adopt({ species: 'lamb', coat: 'default', today: '2026-10-18' })
+      usePreferences.setState({ petPromptDismissed: true })
+      expect(shown()).toBe(true)
+      showHomeSection('pet')
+      expect(usePreferences.getState().petPromptDismissed).toBe(true)
+      usePet.getState()._WARNING_forceDeletePet()
+    })
   })
 })

@@ -201,7 +201,7 @@ A User's request to be invited to a buddy's Plan they saw on that buddy's calend
 _Avoid_: "join request" in UI copy (internal term), "Buddy request" (that's pairing).
 
 **Buddy Card**:
-Internal term for the encrypted payload one User publishes to each buddy: their shared name, photo, pioneer status, **Service Streak**, earned **Badges**, and planned days and times for the next 8 weeks. Never shown by name in the UI.
+Internal term for the encrypted payload one User publishes to each buddy: their shared name, photo, pioneer status, **Service Streak**, earned **Badges**, **Pet** (its kind, coat and name), and planned days and times for the next 8 weeks. Never shown by name in the UI.
 _Avoid_: "profile" (the **Profile** is the User's own identity data; a Buddy Card is the shared, filtered copy).
 
 **Buddies Alert**:
@@ -349,6 +349,24 @@ _Avoid_: "secret badge", "achievement".
 **Badge Reaction**:
 A buddy's one-tap reply to one of the User's **Badges** (the Encourage idea, shipped for Badges): one of six preset reactions (🎉 🎊 🔥 👏 👍 🙌), never free text. One per buddy and Badge; choosing another replaces it. Only active buddies react, only to Badges on the User's **Buddy Card**, and only the Badge's owner sees who reacted, on that Badge's full-screen view and in the notification bell. Its **Buddies Alert** names the buddy and the Badge ("Anna reacted 🔥 to your badge") and follows Badge Alerts.
 _Avoid_: "like", "comment", "kudos", "emoji reply".
+
+### Pet
+
+**Pet** (Companion):
+The User's one opt-in Pet Companion on Home: a small pixel-art pet (lion cub, golden pup, kitten, donkey or lamb, in a chosen coat) that lives in a room and stays happy while the User keeps going out in the ministry. "Change Pet" changes its species and coat but keeps the same companion: its name, **Hearts**, history, room and **Keepsakes**. Releasing it removes it from every synced device. Shared with buddies in the **Buddy Card** unless the User turns it off; on a day the User has a Plan with a buddy who shares one, that buddy's pet visits. Its room items open up as the **Service Streak** reaches each one's number (one per active month instead while streaks are hidden or there are no Plans to keep) and stay open after the streak ends. Pets never speak in words, and nothing about them is triggered by hours.
+_Avoid_: "avatar" (that's the **Profile** picture), "virtual pet"; ghost, halo, angel or "went to heaven" imagery for a pet that died.
+
+**Hearts**:
+The Pet's wellbeing, ½ to 5 in half steps (0 once it died). Replayed day by day from synced records, never stored (ADR 0030): it starts at 3 on the adoption day, each active day (a Time Entry including the checkbox, a Visit, or a Plan saved that day; never a Time Rollover) adds one up to 5, and from the 10th quiet day half a heart fades every 3 days down to ½ (asleep). After 60 quiet days the pet died. Tapping it records a wake, back to 1. 365 days in a row at 5 turns them gold.
+_Avoid_: "health", "lives", "HP", "score".
+
+**Lamp**:
+The lamp in the Pet's room, whose brightness (0–5) is the User's **Service Streak**, by its raw count. With streaks hidden it still burns at a middle level and no streak number shows.
+_Avoid_: "streak light"; showing a streak count next to it.
+
+**Keepsake**:
+A small gift (olive, fig, pebble, feather or lily) the Pet leaves on its rug on some days after 30 days in a row at five **Hearts**; the same days on every device. Tapping it keeps it; the newest few sit on the window sill. Distinct from **Badges**, which the app's own Badge copy also calls keepsakes in prose.
+_Avoid_: "reward", "loot", "collectible".
 
 ### Update intros
 

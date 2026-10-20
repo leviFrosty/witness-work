@@ -19,7 +19,9 @@ files after absorbing them: an older app may write between our read and a delete
 JSON carries contacts, visits, time entries, day plans, recurring plans,
 categories, custom field definitions, mileage (cars, fuels, price and car setup
 histories, trips, and one shared tombstone list in the optional `mileageStore`
-slice), shared preferences, and profile data.
+slice), the Pet Companion (its pet and room records and their tombstones in the
+optional `petStore` slice; hearts aren't stored, every device replays them from
+the records above, ADR 0030), shared preferences, and profile data.
 Saved Views for the Contacts list are a shared preference; which view a device
 is showing, and its unsaved edits, stay on that device. A view this build can't
 read (e.g. a filter from a newer version) is skipped with its stamp, leaving the
@@ -44,7 +46,7 @@ uploads the same payload, end-to-end encrypted, to ww-api, without its
 (`mergeIntoLocal.ts`, as a pull does), keeping this device's reset generation
 and pull bookkeeping, so sync here merges the restored records with its cloud.
 
-JSON backups additionally include categories, mileage, and profile. Restoring a backup
+JSON backups additionally include categories, mileage, the pet, and profile. Restoring a backup
 preserves installation identity and local consent/settings, including backups
 created by older versions that included them. Missing optional stores are kept.
 Photo bytes are not embedded in JSON backups.

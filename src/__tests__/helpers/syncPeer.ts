@@ -37,6 +37,9 @@ export const emptyDevice = (
   vehicleSetups: [],
   trips: [],
   deletedMileageRecords: [],
+  pets: [],
+  petRooms: [],
+  deletedPetRecords: [],
   preferencesValues: {},
   preferenceUpdatedAt: {},
   profileValues: {},
@@ -110,6 +113,11 @@ export const payloadOf = (device: DeviceState): SyncPayload => ({
     vehicleSetups: device.vehicleSetups,
     trips: device.trips,
     deletedMileageRecords: device.deletedMileageRecords,
+  },
+  petStore: {
+    pets: device.pets,
+    petRooms: device.petRooms,
+    deletedPetRecords: device.deletedPetRecords,
   },
   preferencesStore: {
     values: device.preferencesValues,

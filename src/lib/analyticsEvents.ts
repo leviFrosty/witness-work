@@ -15,6 +15,7 @@ export const analyticsEventNames = [
   'hours_logging_changed',
   'log_visit_dismissed',
   'log_visit_location_answered',
+  'map_find_contacts_result',
   'map_location_permission_result',
   'plan_created',
   'plan_details_action',

@@ -296,6 +296,9 @@ vi.mock('@/features/map/components/MapColorKey', () => ({
 vi.mock('@/features/map/components/MapOnboarding', () => ({
   default: 'MapOnboarding',
 }))
+vi.mock('@/features/map/components/MapFindContacts', () => ({
+  default: 'MapFindContacts',
+}))
 
 import MapScreen from '@/features/map/screens/MapScreen'
 import useContacts from '@/stores/contactsStore'

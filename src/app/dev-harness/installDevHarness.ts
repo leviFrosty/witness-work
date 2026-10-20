@@ -5,6 +5,7 @@ import { CommonActions } from '@react-navigation/native'
 import { I18nManager, LogBox } from 'react-native'
 import useContacts from '@/stores/contactsStore'
 import { useGeocodeRetry } from '@/stores/geocodeRetry'
+import { useMapFindSkips } from '@/features/map/stores/mapFindSkips'
 import useConversations from '@/stores/conversationStore'
 import useServiceReport from '@/stores/serviceReport'
 import useMileage from '@/stores/mileage'
@@ -421,6 +422,8 @@ export function installDevHarness() {
       contacts: useContacts,
       // Contacts whose address lookup failed on save, waiting to retry.
       geocodeRetry: useGeocodeRetry,
+      // Address keys the Map's Find contacts row no longer offers.
+      mapFindSkips: useMapFindSkips,
       conversations: useConversations,
       serviceReports: useServiceReport,
       mileage: useMileage,

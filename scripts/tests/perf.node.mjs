@@ -172,3 +172,19 @@ test('summaries, the report and the comparison agree', () => {
     /launch counters \| calendar:run/
   )
 })
+
+test('the report renders when no foreground cycles ran', () => {
+  const noForeground = result('ccc', 0)
+  noForeground.platforms.ios.foreground = { cycles: [] }
+  noForeground.platforms.ios.active = { cycles: [] }
+  const markdown = renderMarkdown(noForeground)
+  assert.match(markdown, /\| Launch to first screen \(end to end\) \| 910 \|/)
+  assert.doesNotMatch(markdown, /Foreground/)
+  assert.doesNotMatch(markdown, /Inactive blip/)
+  assert.deepEqual(
+    compareResults(noForeground, result('ddd', 0)).filter(
+      (r) => r.group === 'foreground'
+    ),
+    []
+  )
+})

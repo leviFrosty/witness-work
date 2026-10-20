@@ -1241,6 +1241,35 @@ function createAvd(pool) {
   return { key: `avd-${name}`, id: emulatorSerial(name), name, n: next }
 }
 
+// The shared verify AVDs carry a screen-lock PIN, so every cold boot leaves the
+// user RUNNING_LOCKED: the dev client link doesn't resolve and the app never
+// starts. Wake, dismiss the keyguard, enter the PIN, and wait for the unlock.
+// The PIN stays on the AVD (other agents rely on it); override with
+// WW_VERIFY_ANDROID_PIN. `deps` is for tests.
+async function unlockAndroid(serial, deps = {}) {
+  const shell =
+    deps.shell ??
+    ((...args) =>
+      run('adb', ['-s', serial, 'shell', ...args], { check: false }).stdout)
+  const wait = deps.sleep ?? sleep
+  const pin = deps.pin ?? process.env.WW_VERIFY_ANDROID_PIN ?? '1111'
+  const locked = () => /RUNNING_LOCKED/.test(shell('dumpsys', 'user'))
+  if (!locked()) return false
+  log(`${serial} is locked; entering the screen-lock PIN`)
+  shell('input', 'keyevent', 'KEYCODE_WAKEUP')
+  shell('wm', 'dismiss-keyguard')
+  await wait(1000)
+  shell('input', 'text', pin)
+  shell('input', 'keyevent', '66')
+  for (let i = 0; i < 30; i++) {
+    if (!locked()) return true
+    await wait(1000)
+  }
+  fail(
+    `${serial} is still locked after entering the PIN; set WW_VERIFY_ANDROID_PIN to the AVD's screen-lock PIN`
+  )
+}
+
 /** Boots the leased AVD headless and lean; returns its adb serial. */
 async function bootAndroid(device) {
   const name = device.name
@@ -1284,6 +1313,7 @@ async function bootAndroid(device) {
       await sleep(2000)
     }
   }
+  await unlockAndroid(serial)
   return serial
 }
 
@@ -3270,6 +3300,7 @@ export {
   stopLocalApi,
   takeLease,
   toolEnv,
+  unlockAndroid,
   updateInstalls,
   waitLogger,
   writeJson,

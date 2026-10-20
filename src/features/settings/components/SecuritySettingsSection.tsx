@@ -14,6 +14,7 @@ import {
   appLockRequireLabel,
   authenticateAppLock,
   getAppLockAvailability,
+  openScreenLockSettings,
   type AppLockMethod,
 } from '@/lib/appLock'
 import { useAppLockAvailability } from '@/hooks/useAppLockAvailability'
@@ -65,10 +66,24 @@ const SecuritySettingsSection = () => {
   const handleToggle = async (value: boolean) => {
     // Checked now, not on mount: they may have just set a passcode.
     if (value && !(await getAppLockAvailability()).available) {
-      Alert.alert(
-        i18n.t('appLock_unavailableTitle'),
-        i18n.t('appLock_unavailableDesc')
-      )
+      if (Platform.OS === 'android') {
+        Alert.alert(
+          i18n.t('appLock_unavailableTitleAndroid'),
+          i18n.t('appLock_unavailableDescAndroid'),
+          [
+            { text: i18n.t('notNow'), style: 'cancel' },
+            {
+              text: i18n.t('appLock_openSettings'),
+              onPress: () => void openScreenLockSettings(),
+            },
+          ]
+        )
+      } else {
+        Alert.alert(
+          i18n.t('appLock_unavailableTitle'),
+          i18n.t('appLock_unavailableDesc')
+        )
+      }
       return
     }
     const result = await authenticateAppLock(

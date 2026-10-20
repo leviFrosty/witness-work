@@ -56,8 +56,7 @@ import ActionButton from '@/components/ui/ActionButton'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import { formatDate } from '@/lib/dates'
-import { openURL } from '@/lib/links'
-import links from '@/constants/links'
+import { openStoreListing } from '@/lib/storeListing'
 import type { RootStackNavigation, RootStackParamList } from '@/types/rootStack'
 import { useNotesImportManager } from '@/features/notes-import/hooks/useNotesImportManager'
 import { useNotesImportAvailability } from '@/features/notes-import/hooks/useNotesImportAvailability'
@@ -777,7 +776,7 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
   // Pinned top-of-screen notice when the proxy reports the feature is down,
   // appending the operator's detail (e.g. a maintenance window) when present.
   // When this build is under the proxy's minimum app version the message
-  // explains the version gap instead and offers an App Store jump — the only
+  // explains the version gap instead and offers a store jump — the only
   // unavailable state the user can fix themselves. A device that can't be
   // verified gets the account's words for it.
   const unavailableBanner = () => {
@@ -825,7 +824,9 @@ const NotesImportComposerScreen = ({ renderSupporterCta }: Props) => {
           {updateRequired && (
             <Button
               accessibilityRole='button'
-              onPress={() => openURL(links.appStore)}
+              onPress={() =>
+                openStoreListing({ title: i18n.t('updateRequired_title') })
+              }
               style={{
                 alignSelf: 'flex-start',
                 backgroundColor: '#fff',

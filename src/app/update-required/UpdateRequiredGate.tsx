@@ -1,7 +1,6 @@
 import { useEffect } from 'react'
-import { BackHandler, Platform } from 'react-native'
+import { BackHandler } from 'react-native'
 import FullWindowOverlay from '@/components/ui/FullWindowOverlay'
-import links from '@/constants/links'
 import { useTakeoverHold } from '@/hooks/useTakeoverTurn'
 import { analytics } from '@/lib/analytics'
 import { addForegroundListener } from '@/lib/appLifecycle'
@@ -10,8 +9,8 @@ import {
   checkAppConfig,
   useUpdateRequired,
 } from '@/lib/appUpdate'
-import { openURL } from '@/lib/links'
 import i18n from '@/lib/locales'
+import { openStoreListing } from '@/lib/storeListing'
 import UpdateRequiredScreen from '@/app/update-required/UpdateRequiredScreen'
 
 /**
@@ -46,17 +45,7 @@ export default function UpdateRequiredGate() {
     analytics.capture('update_required_store_opened', {
       source: required.source,
     })
-    const android = Platform.OS === 'android'
-    void openURL(android ? links.playStore : links.appStore, {
-      alert: {
-        title: i18n.t('updateRequired_title'),
-        description: i18n.t(
-          android
-            ? 'updateRequired_storeFailedAndroid'
-            : 'updateRequired_storeFailed'
-        ),
-      },
-    })
+    void openStoreListing({ title: i18n.t('updateRequired_title') })
   }
 
   return (

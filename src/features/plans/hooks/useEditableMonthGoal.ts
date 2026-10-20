@@ -1,6 +1,10 @@
 import moment from 'moment'
+import { useShallow } from 'zustand/react/shallow'
 import type { CalendarMonth } from '@/lib/monthlyGoals'
-import { publisherCapabilitiesForMonth } from '@/lib/roleHistory'
+import {
+  publisherCapabilitiesForMonth,
+  type RolePreferences,
+} from '@/lib/roleHistory'
 import { usePreferences } from '@/stores/preferences'
 
 /**
@@ -11,33 +15,23 @@ import { usePreferences } from '@/stores/preferences'
 export default function useEditableMonthGoal(): (
   target: CalendarMonth
 ) => boolean {
-  const {
-    role,
-    roleHistory,
-    publisherHours,
-    userSpecifiedHasAnnualGoal,
-    milestoneOverrides,
-    overrideCreditLimit,
-    customCreditLimitHours,
-    logsHours,
-  } = usePreferences()
-  const thisMonth = moment().startOf('month')
+  // Only the role preferences: the Schedule screen calls this, and any other
+  // preference write would re-render the whole tab.
+  const prefs: RolePreferences = usePreferences(
+    useShallow((s) => ({
+      role: s.role,
+      roleHistory: s.roleHistory,
+      publisherHours: s.publisherHours,
+      userSpecifiedHasAnnualGoal: s.userSpecifiedHasAnnualGoal,
+      milestoneOverrides: s.milestoneOverrides,
+      overrideCreditLimit: s.overrideCreditLimit,
+      customCreditLimitHours: s.customCreditLimitHours,
+      logsHours: s.logsHours,
+    }))
+  )
   return (target) =>
     !moment({ year: target.year, month: target.month, day: 1 }).isBefore(
-      thisMonth,
+      moment(),
       'month'
-    ) &&
-    publisherCapabilitiesForMonth(
-      {
-        role,
-        roleHistory,
-        publisherHours,
-        userSpecifiedHasAnnualGoal,
-        milestoneOverrides,
-        overrideCreditLimit,
-        customCreditLimitHours,
-        logsHours,
-      },
-      target
-    ).monthlyGoalHours > 0
+    ) && publisherCapabilitiesForMonth(prefs, target).monthlyGoalHours > 0
 }

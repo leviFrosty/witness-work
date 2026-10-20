@@ -119,6 +119,14 @@ export function reminderContent(
         data,
       }
     }
+    case 'monthReport':
+      return {
+        title: i18n.t('monthReportReminder_title', {
+          month: moment(reminder.targetId, 'YYYY-MM').format('MMMM'),
+        }),
+        body: i18n.t('monthReportReminder_body'),
+        data,
+      }
     case 'contact':
       return {
         title: i18n.t('contactAvailableAgain'),

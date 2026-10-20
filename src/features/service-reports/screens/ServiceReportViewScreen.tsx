@@ -46,6 +46,7 @@ import useMonthReportData, {
 } from '@/features/service-reports/hooks/useMonthReportData'
 import useRolloverPrompt from '@/features/service-reports/hooks/useRolloverPrompt'
 import { exportMonthReport } from '@/features/service-reports/lib/monthReportExport'
+import MonthReportReminderOffer from '@/features/service-reports/components/MonthReportReminderOffer'
 import { getSubmitCtaLabel } from '@/features/service-reports/lib/submissionMethod'
 import {
   buildReportMonthMenu,
@@ -190,6 +191,8 @@ const ServiceReportViewScreen = ({ route, navigation }: Props) => {
   const [isEditingNotes, setIsEditingNotes] = useState(false)
   const [notesDraft, setNotesDraft] = useState('')
   const [isSubmitConfirmed, setIsSubmitConfirmed] = useState(false)
+  // Someone who just sent a report here is offered the report reminder.
+  const [sentHere, setSentHere] = useState(false)
   const submitConfirmationTimerRef = useRef<ReturnType<
     typeof setTimeout
   > | null>(null)
@@ -214,6 +217,7 @@ const ServiceReportViewScreen = ({ route, navigation }: Props) => {
     noteUserAction('report')
     markReportSubmitted(reportMonthKey)
     setIsSubmitConfirmed(true)
+    setSentHere(true)
     Haptics.success()
 
     if (submitConfirmationTimerRef.current !== null) {
@@ -381,7 +385,8 @@ const ServiceReportViewScreen = ({ route, navigation }: Props) => {
         style={{ flex: 1 }}
         contentContainerStyle={{
           paddingTop: 18,
-          paddingBottom: insets.bottom + 190,
+          // Room for the reminder offer above the Submit controls.
+          paddingBottom: insets.bottom + 190 + (sentHere ? 52 : 0),
           paddingHorizontal: 16,
           alignItems: 'center',
         }}
@@ -467,6 +472,7 @@ const ServiceReportViewScreen = ({ route, navigation }: Props) => {
           gap: 8,
         }}
       >
+        {sentHere && <MonthReportReminderOffer />}
         <Section>
           <DefaultExportMethodSelector
             lastInSection

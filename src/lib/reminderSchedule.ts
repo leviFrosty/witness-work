@@ -27,16 +27,20 @@ import {
   unloggedDayReminderGroups,
   type UnloggedDaySources,
 } from '@/lib/unloggedDayReminders'
+import {
+  nextMonthReportReminder,
+  type MonthReportSources,
+} from '@/lib/monthReportReminders'
 
 export type LocalReminder = {
   /** The OS request id. Stable per record, so reconciling replaces it. */
   id: string
   date: Date
-  kind: 'visit' | 'plan' | 'contact' | 'unloggedDay' | 'streak'
+  kind: 'visit' | 'plan' | 'contact' | 'unloggedDay' | 'streak' | 'monthReport'
   /**
    * The Visit, Plan, or Contact the reminder opens; for a reminder to log time,
    * its earliest planned day (`YYYY-MM-DD`); for a streak, the day or month
-   * (its 1st) it waits on.
+   * (its 1st) it waits on; for a report reminder, its month (`YYYY-MM`).
    */
   targetId: string
   /** The Visit's Contact. */
@@ -193,6 +197,8 @@ type ReminderSources = {
   unloggedDays?: UnloggedDaySources
   /** The Service Streak; absent when its reminders are off. */
   streak?: ServiceStreak
+  /** Months with a report to send; absent when its reminder is off. */
+  monthReport?: MonthReportSources
 }
 
 /**
@@ -200,7 +206,8 @@ type ReminderSources = {
  * records alone, so it is the same after an edit, sync, or restore. The OS
  * schedule and the notifications tray both read it. Reminders to log time and a
  * Recurring Plan's are the exception: they run up to two weeks after `now` (the
- * first from a week back, the second from yesterday's instance).
+ * first from a week back, the second from yesterday's instance), and the report
+ * reminder is only the next one after `now`.
  */
 export function reminderOccurrences(
   args: ReminderSources & { now?: number }
@@ -290,6 +297,17 @@ export function reminderOccurrences(
       streak: { count, kind },
     })
   }
+  const report = args.monthReport
+    ? nextMonthReportReminder(args.monthReport, args.now ?? Date.now())
+    : null
+  if (report)
+    reminders.push({
+      id: reminderRequestId('monthReport', report.month),
+      date: report.date,
+      kind: 'monthReport',
+      targetId: report.month,
+      anchor: report.date,
+    })
   return reminders.filter((reminder) =>
     Number.isFinite(reminder.date.getTime())
   )

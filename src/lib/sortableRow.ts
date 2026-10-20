@@ -70,3 +70,20 @@ export function reorderForDrag(
     index = target
   }
 }
+
+/**
+ * Whether a touch `x` points from a row's left edge lands on its drag handle,
+ * the trailing `handleWidth` points: the right end, or the left end in RTL.
+ * gesture-handler measures `x` from the left in both directions. False until
+ * the row has a width.
+ */
+export function isInDragHandle(
+  x: number,
+  width: number,
+  handleWidth: number,
+  rtl: boolean
+): boolean {
+  'worklet'
+  if (handleWidth <= 0 || width <= 0) return false
+  return rtl ? x <= handleWidth : x >= width - handleWidth
+}

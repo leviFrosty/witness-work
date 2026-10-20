@@ -12,6 +12,7 @@ import {
   AnimationViewContext,
   AnimationViewCtx,
 } from '@/contexts/AnimationView'
+import useReduceMotionEnabled from '@/hooks/useReduceMotionEnabled'
 import { useLazySound } from '@/lib/audio'
 
 interface Props {}
@@ -33,6 +34,7 @@ const AnimationViewProvider: React.FC<PropsWithChildren<Props>> = ({
   const lottieViewRef = useRef<LottieView>(null)
   // Created on the first celebration, not at launch.
   const playSound = useLazySound('successChime')
+  const reduceMotion = useReduceMotionEnabled()
   const [overlayMounted, setOverlayMounted] = useState(false)
   const pendingPlayRef = useRef(false)
   const safetyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -61,6 +63,12 @@ const AnimationViewProvider: React.FC<PropsWithChildren<Props>> = ({
   }, [playSound])
 
   const playConfetti = useCallback(() => {
+    if (reduceMotion) {
+      // Reduce Motion: skip the full-screen confetti but keep the chime, on
+      // the same beat callers time their haptics to.
+      setTimeout(playSound, CONFETTI_DELAY_MS)
+      return
+    }
     armSafety()
     if (overlayMounted) {
       // LottieView ref is already attached — replay immediately.
@@ -69,7 +77,7 @@ const AnimationViewProvider: React.FC<PropsWithChildren<Props>> = ({
     }
     pendingPlayRef.current = true
     setOverlayMounted(true)
-  }, [armSafety, overlayMounted, playSequence])
+  }, [armSafety, overlayMounted, playSequence, playSound, reduceMotion])
 
   /**
    * Drains the pending play once the FullWindowOverlay finishes mounting and

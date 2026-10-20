@@ -21,6 +21,7 @@ import { GlassColorSchemeOverrideContext } from '@/contexts/glassColorScheme'
 import useConversations from '@/stores/conversationStore'
 import { filterActivesContacts } from '@/lib/dismissedContacts'
 import {
+  AppState,
   Platform,
   useWindowDimensions,
   Pressable,
@@ -170,6 +171,9 @@ const FullMapView = ({
   const locationSubscriptionRef = useRef<Location.LocationSubscription | null>(
     null
   )
+  // Each start takes a number and each stop bumps it, so a watch that finishes
+  // starting after the user stopped or left the Map is removed, not kept.
+  const trackingRequestRef = useRef(0)
   const [emptyStateHeight, setEmptyStateHeight] = useState(0)
   const draggingContactRef = useRef(false)
   const [noResultsHeight, setNoResultsHeight] = useState(0)
@@ -435,6 +439,7 @@ const FullMapView = ({
   }, [])
 
   const stopTrackingUser = useCallback(() => {
+    trackingRequestRef.current += 1
     if (locationSubscriptionRef.current) {
       locationSubscriptionRef.current.remove()
       locationSubscriptionRef.current = null
@@ -458,6 +463,8 @@ const FullMapView = ({
   })
 
   const startTrackingUser = useCallback(async () => {
+    const request = ++trackingRequestRef.current
+    const isCancelled = () => request !== trackingRequestRef.current
     let granted = locationPermission
     if (!granted) {
       const existing = await Location.getForegroundPermissionsAsync()
@@ -468,7 +475,7 @@ const FullMapView = ({
       }
       if (granted) setLocationPermission(true)
     }
-    if (!granted) return
+    if (!granted || isCancelled()) return
 
     // 0.005 deltas ≈ Google Maps zoom level ~16–17 (street level),
     // which is what Google/Apple Maps land on when you tap "my location".
@@ -490,6 +497,7 @@ const FullMapView = ({
     const lastKnown = await Location.getLastKnownPositionAsync({
       maxAge: 60_000,
     })
+    if (isCancelled()) return
     if (lastKnown) {
       mapRef.current?.animateToRegion(
         {
@@ -504,7 +512,7 @@ const FullMapView = ({
     }
 
     if (!locationSubscriptionRef.current) {
-      locationSubscriptionRef.current = await Location.watchPositionAsync(
+      const subscription = await Location.watchPositionAsync(
         {
           // BestForNavigation = highest accuracy with sensor fusion, the
           // documented choice for continuous "follow-me" tracking.
@@ -546,6 +554,11 @@ const FullMapView = ({
           )
         }
       )
+      if (isCancelled()) {
+        subscription.remove()
+        return
+      }
+      locationSubscriptionRef.current = subscription
     }
 
     setIsTrackingUser(true)
@@ -559,14 +572,26 @@ const FullMapView = ({
     }
   }
 
+  // Following runs the GPS at navigation accuracy, so it stops when the Map
+  // leaves view: other tabs and pushed screens keep it mounted. A start still
+  // in flight is left alone in the background, since its own permission and
+  // location-settings prompts pause the app on Android.
   useEffect(() => {
-    return () => {
-      if (locationSubscriptionRef.current) {
-        locationSubscriptionRef.current.remove()
-        locationSubscriptionRef.current = null
+    const unsubscribeBlur = navigation.addListener('blur', stopTrackingUser)
+    const appStateSubscription = AppState.addEventListener(
+      'change',
+      (state) => {
+        if (state === 'background' && locationSubscriptionRef.current) {
+          stopTrackingUser()
+        }
       }
+    )
+    return () => {
+      unsubscribeBlur()
+      appStateSubscription.remove()
+      stopTrackingUser()
     }
-  }, [])
+  }, [navigation, stopTrackingUser])
 
   const parallaxScrollingScale =
     visibleContactMarkers.length === 1 ? 0.9 : isTablet ? 0.92 : 0.8025

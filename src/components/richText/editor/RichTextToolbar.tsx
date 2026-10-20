@@ -24,9 +24,10 @@ import Button from '@/components/ui/Button'
 import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
 import PointerTooltip from '@/components/ui/PointerTooltip'
 import PullDownMenu from '@/components/ui/PullDownMenu'
-import type {
-  EditorCommand,
-  EditorFormatState,
+import {
+  NOTE_MAX_WIDTH,
+  type EditorCommand,
+  type EditorFormatState,
 } from '@/components/richText/editor/editorProtocol'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
@@ -268,56 +269,66 @@ const RichTextToolbar = (props: {
     <View
       style={{
         height: TOOLBAR_HEIGHT,
-        flexDirection: 'row',
-        alignItems: 'center',
         backgroundColor: theme.colors.card,
         borderTopWidth: 1,
         borderTopColor: theme.colors.border,
+        alignItems: 'center',
       }}
       accessibilityRole='toolbar'
       accessibilityLabel={i18n.t('richText_formatting')}
     >
-      <ScrollView
-        horizontal
-        keyboardShouldPersistTaps='always'
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{
+      {/* The tools keep to the note's column on a wide screen. */}
+      <View
+        style={{
+          flex: 1,
+          width: '100%',
+          maxWidth: NOTE_MAX_WIDTH,
+          flexDirection: 'row',
           alignItems: 'center',
-          paddingHorizontal: 6,
-          gap: 2,
         }}
-        style={{ flex: 1 }}
       >
-        {groups.map((group, index) => (
-          <Fragment key={group[0]?.key ?? index}>
-            {index > 0 && <GroupDivider />}
-            {group.map((tool) => (
-              <ToolButton key={tool.key} tool={tool} />
-            ))}
-            {group[0]?.key === 'link' && photoButton}
-          </Fragment>
-        ))}
-      </ScrollView>
-      {props.keyboardVisible && (
-        <View
-          style={{
-            flexDirection: 'row',
+        <ScrollView
+          horizontal
+          keyboardShouldPersistTaps='always'
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{
             alignItems: 'center',
-            paddingHorizontal: 4,
-            borderLeftWidth: 1,
-            borderLeftColor: theme.colors.border,
+            paddingHorizontal: 6,
+            gap: 2,
           }}
+          style={{ flex: 1 }}
         >
-          <ToolButton
-            tool={{
-              key: 'dismiss',
-              icon: KeyboardOffIcon,
-              label: i18n.t('richText_hideKeyboard'),
-              onPress: props.onDismissKeyboard,
+          {groups.map((group, index) => (
+            <Fragment key={group[0]?.key ?? index}>
+              {index > 0 && <GroupDivider />}
+              {group.map((tool) => (
+                <ToolButton key={tool.key} tool={tool} />
+              ))}
+              {group[0]?.key === 'link' && photoButton}
+            </Fragment>
+          ))}
+        </ScrollView>
+        {props.keyboardVisible && (
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              paddingHorizontal: 4,
+              borderLeftWidth: 1,
+              borderLeftColor: theme.colors.border,
             }}
-          />
-        </View>
-      )}
+          >
+            <ToolButton
+              tool={{
+                key: 'dismiss',
+                icon: KeyboardOffIcon,
+                label: i18n.t('richText_hideKeyboard'),
+                onPress: props.onDismissKeyboard,
+              }}
+            />
+          </View>
+        )}
+      </View>
     </View>
   )
 }

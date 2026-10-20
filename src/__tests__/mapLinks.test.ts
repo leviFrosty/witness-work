@@ -44,7 +44,7 @@ describe('lib/mapLinks', () => {
   it('builds encoded Apple Maps and Google Maps links', () => {
     const { apple, google } = mapLinks('Apt #3, 1 Main St & Co')
     expect(apple).toBe(
-      'http://maps.apple.com/?q=Apt%20%233%2C%201%20Main%20St%20%26%20Co'
+      'https://maps.apple.com/?q=Apt%20%233%2C%201%20Main%20St%20%26%20Co'
     )
     expect(google).toBe(
       'https://www.google.com/maps/search/?api=1&query=Apt%20%233%2C%201%20Main%20St%20%26%20Co'

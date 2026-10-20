@@ -77,7 +77,7 @@ export const navigateTo = (
   contact: Contact,
   provider: DefaultNavigationMapProvider
 ) => {
-  const getScheme = () => {
+  const getBase = () => {
     switch (resolveNavigationMapProvider(provider, Platform.OS)) {
       case 'apple':
         return links.appleMapsBase
@@ -90,18 +90,25 @@ export const navigateTo = (
     }
   }
 
-  let url = getScheme()
-  if (contact.userDraggedCoordinate) {
-    url += encodeURI(coordinateAsString(contact))
-  } else {
-    url += encodeURI(addressToString(contact.address))
-  }
+  // Encoded whole, so a `#` or `&` in the address (an apartment number) stays
+  // in the search instead of cutting it short.
+  const query = encodeURIComponent(
+    contact.userDraggedCoordinate
+      ? coordinateAsString(contact)
+      : addressToString(contact.address)
+  )
+  const base = getBase()
 
-  openURL(url, {
+  openURL(`${base}${query}`, {
     alert: {
       title: i18n.t('couldNotOpenMaps'),
       description: i18n.t('couldNotOpenMaps_description'),
     },
+    // Apple Maps can be deleted or restricted; Google Maps' web link still opens.
+    fallbackUrl:
+      base === links.appleMapsBase
+        ? `${links.googleMapsBase}${query}`
+        : undefined,
   })
 }
 

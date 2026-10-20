@@ -2,7 +2,11 @@ import moment from 'moment'
 import type { Contact } from '@/types/contact'
 import type { Visit } from '@/types/visit'
 import type { DayPlan } from '@/types/timeEntry'
-import type { NotificationOffset } from '@/lib/notificationOffset'
+import {
+  reminderFireDate,
+  reminderOffsetMinutesBetween,
+  type NotificationOffset,
+} from '@/lib/notificationOffset'
 import { combineDateAndStartTime } from '@/lib/normalizeDate'
 import {
   streakReminderAt,
@@ -69,9 +73,7 @@ export function savedReminderOffsetMinutes(
     return saved.reminderOffsetMinutes
   const notification = saved.notifications?.[0]?.date
   if (!notification) return undefined
-  const minutes = Math.round(
-    (anchor.getTime() - new Date(notification).getTime()) / 60_000
-  )
+  const minutes = reminderOffsetMinutesBetween(anchor, new Date(notification))
   return Number.isFinite(minutes) && minutes >= 0 ? minutes : undefined
 }
 
@@ -83,7 +85,7 @@ function reminderDate(
   const minutes = savedReminderOffsetMinutes(anchor, saved)
   return minutes === undefined
     ? moment(anchor).subtract(fallback.amount, fallback.unit).toDate()
-    : new Date(anchor.getTime() - minutes * 60_000)
+    : reminderFireDate(anchor, minutes)
 }
 
 /** An anytime Plan has no start to count back from: it reminds at 8:00 AM. */

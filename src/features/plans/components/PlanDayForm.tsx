@@ -37,7 +37,11 @@ import {
   planDayFromRouteDate,
   splitPlanDate,
 } from '@/features/plans/lib/planDayDates'
-import { offsetFromMinutes, offsetToMinutes } from '@/lib/notificationOffset'
+import {
+  offsetFromMinutes,
+  offsetToMinutes,
+  reminderFireDate,
+} from '@/lib/notificationOffset'
 import {
   ANYTIME_PLAN_REMINDER_MINUTES,
   anytimePlanReminderDate,
@@ -826,7 +830,7 @@ const PlanDayForm = ({
       notifications: [
         {
           id: reminderRequestId('plan', planId),
-          date: new Date(planStart.getTime() - minutes * 60_000),
+          date: reminderFireDate(planStart, minutes),
         },
       ],
     }

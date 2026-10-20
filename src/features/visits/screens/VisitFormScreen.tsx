@@ -42,7 +42,11 @@ import { maybeRequestStoreReview } from '@/features/visits/lib/storeReview'
 import useNotifications from '@/hooks/notifications'
 import { useToastController } from '@tamagui/toast'
 import { RootStackParamList } from '@/types/rootStack'
-import { offsetFromMinutes, offsetToMinutes } from '@/lib/notificationOffset'
+import {
+  offsetFromMinutes,
+  offsetToMinutes,
+  reminderFireDate,
+} from '@/lib/notificationOffset'
 import {
   reminderRequestId,
   savedReminderOffsetMinutes,
@@ -409,9 +413,7 @@ const VisitFormScreen = ({
               : [
                   {
                     id: reminderRequestId('visit', conversation.id),
-                    date: new Date(
-                      new Date(followUp.date).getTime() - minutes * 60_000
-                    ),
+                    date: reminderFireDate(new Date(followUp.date), minutes),
                   },
                 ],
         },

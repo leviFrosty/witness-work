@@ -15,6 +15,45 @@ const UNITS: {
   { unit: 'minutes', minutes: 1 },
 ]
 
+const DAY_MINUTES = 60 * 24
+
+/**
+ * When a reminder `minutes` ahead of `anchor` fires. Whole days count back on
+ * the wall clock, so "1 day before" a 10:00 start fires at 10:00 the day before
+ * even across a daylight saving change; the rest counts back in minutes.
+ */
+export const reminderFireDate = (anchor: Date, minutes: number): Date =>
+  moment(anchor)
+    .subtract(Math.floor(minutes / DAY_MINUTES), 'days')
+    .subtract(minutes % DAY_MINUTES, 'minutes')
+    .toDate()
+
+/**
+ * How many minutes ahead of `anchor` a reminder at `fireAt` is, the inverse of
+ * `reminderFireDate`: whole days on the wall clock, the rest in minutes. A gap
+ * of whole elapsed days reads as those days, since older app versions saved day
+ * offsets in elapsed time. Rounds sub-minute drift.
+ */
+export const reminderOffsetMinutesBetween = (
+  anchor: Date,
+  fireAt: Date
+): number => {
+  const elapsedMinutes = Math.round(
+    (anchor.getTime() - fireAt.getTime()) / 60_000
+  )
+  if (elapsedMinutes > 0 && elapsedMinutes % DAY_MINUTES === 0)
+    return elapsedMinutes
+  const wallClockMinutes = Math.round(
+    (anchor.getTime() - fireAt.getTime()) / 60_000 -
+      (anchor.getTimezoneOffset() - fireAt.getTimezoneOffset())
+  )
+  const days = Math.max(0, Math.floor(wallClockMinutes / DAY_MINUTES))
+  const daysBefore = moment(anchor).subtract(days, 'days').valueOf()
+  return (
+    days * DAY_MINUTES + Math.round((daysBefore - fireAt.getTime()) / 60_000)
+  )
+}
+
 /**
  * Derives the cleanest `{ amount, unit }` representation of the gap between an
  * anchor (e.g., a plan's start time) and the moment a notification was
@@ -27,22 +66,22 @@ const UNITS: {
 export const deriveOffsetFromDates = (
   anchorDate: Date,
   notificationDate: Date
-): NotificationOffset | null => {
-  const minutes = Math.round(
-    (anchorDate.getTime() - notificationDate.getTime()) / 60000
-  )
-  if (minutes <= 0) return null
-  for (const { unit, minutes: divisor } of UNITS) {
-    if (minutes % divisor === 0) {
-      return { amount: minutes / divisor, unit }
-    }
-  }
-  return { amount: minutes, unit: 'minutes' }
-}
+): NotificationOffset | null =>
+  offsetFromMinutes(reminderOffsetMinutesBetween(anchorDate, notificationDate))
 
 /** The cleanest `{ amount, unit }` for a positive number of minutes. */
-export const offsetFromMinutes = (minutes: number): NotificationOffset | null =>
-  deriveOffsetFromDates(new Date(minutes * 60_000), new Date(0))
+export const offsetFromMinutes = (
+  minutes: number
+): NotificationOffset | null => {
+  const whole = Math.round(minutes)
+  if (!(whole > 0)) return null
+  for (const { unit, minutes: divisor } of UNITS) {
+    if (whole % divisor === 0) {
+      return { amount: whole / divisor, unit }
+    }
+  }
+  return { amount: whole, unit: 'minutes' }
+}
 
 /** Whole minutes in an offset; null when it is incomplete. */
 export const offsetToMinutes = (offset: {

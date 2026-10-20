@@ -1,7 +1,15 @@
 import React, { type ReactNode } from 'react'
 import moment from 'moment'
 import { act, create, type ReactTestRendererJSON } from 'react-test-renderer'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import {
+  afterAll,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from 'vitest'
 
 import type { Category } from '@/types/category'
 import type { DayPlan, PlanListItem } from '@/types/timeEntry'
@@ -153,6 +161,7 @@ vi.mock('@/lib/recurrence', () => ({
 }))
 
 import PlanRow from '@/components/PlanRow'
+import type { RootStackParamList } from '@/types/rootStack'
 import type { RecurringPlan } from '@/lib/recurrence'
 import { flattenMenu, menuGroups, isSubmenu } from '@/components/ui/menuEntries'
 import type {
@@ -332,23 +341,82 @@ describe('PlanRow', () => {
     ])
   })
 
-  it('duplicates into a new plan prefilled from this one', () => {
+  const duplicateOf = (item: PlanListItem) => {
+    const { groups } = renderMenu(item)
+    flattenMenu(groups)
+      .find(({ key }) => key === 'duplicate')!
+      .action.onPress()
+    return navigation.navigate.mock.lastCall as [
+      'PlanDay',
+      RootStackParamList['PlanDay'],
+    ]
+  }
+
+  it('duplicates a Day Plan into a new plan on the same weekday next week', () => {
     const plan = { ...dayPlan('p1', 'metro'), note: 'Bring tracts' }
-    const { groups } = renderMenu({ type: 'day', date: past, plan })
-    const leaves = flattenMenu(groups)
-    leaves.find(({ key }) => key === 'duplicate')!.action.onPress()
-    expect(navigation.navigate).toHaveBeenCalledWith('PlanDay', {
-      date: past.toISOString(),
-      prefill: {
-        startTime: moment(past).startOf('day').add(9, 'hours').toISOString(),
-        minutes: 60,
-        note: 'Bring tracts',
-        title: undefined,
-        location: undefined,
-        categoryId: 'metro',
+    const nextWeek = new Date(2026, 8, 3)
+    expect(duplicateOf({ type: 'day', date: past, plan })).toEqual([
+      'PlanDay',
+      {
+        date: nextWeek.toISOString(),
+        prefill: {
+          startTime: moment(nextWeek).add(9, 'hours').toISOString(),
+          minutes: 60,
+          note: 'Bring tracts',
+          title: undefined,
+          location: undefined,
+          categoryId: 'metro',
+        },
       },
-    })
+    ])
   })
+
+  it("keeps a Recurring Plan's copy on its own day", () => {
+    const plan = {
+      id: 'r1',
+      startDate: past,
+      minutes: 60,
+      startTimeInMinutes: 9 * 60,
+      recurrence: { frequency: 0, interval: 1, endDate: null },
+    } as unknown as RecurringPlan
+    const [, params] = duplicateOf({ type: 'recurring', date: past, plan })
+    expect(params.date).toBe(past.toISOString())
+  })
+
+  describe.each(['Pacific/Auckland', 'Etc/GMT-12', 'America/Los_Angeles'])(
+    'in %s',
+    (tz) => {
+      const originalTZ = process.env.TZ
+      beforeAll(() => {
+        process.env.TZ = tz
+      })
+      afterAll(() => {
+        if (originalTZ === undefined) delete process.env.TZ
+        else process.env.TZ = originalTZ
+      })
+
+      // Thursday Sep 24 → Thursday Oct 1, 2026: across a month and, in
+      // Auckland, the start of daylight time (UTC+12 → UTC+13).
+      it('stores the copy a week later on the calendar, at the same time', async () => {
+        const { normalizeDateForStorage } = await vi.importActual<
+          typeof import('@/lib/normalizeDate')
+        >('@/lib/normalizeDate')
+        // A tapped day's local midnight: at UTC+12 that's noon UTC the day before.
+        const thursday = new Date(2026, 8, 24)
+        const [, params] = duplicateOf({
+          type: 'day',
+          date: thursday,
+          plan: dayPlan('p1'),
+        })
+        // The form, like the store, keeps the route date's local calendar day.
+        expect(
+          normalizeDateForStorage(params.date!).toISOString().slice(0, 10)
+        ).toBe('2026-10-01')
+        const start = moment(params.prefill!.startTime)
+        expect([start.hours(), start.minutes()]).toEqual([9, 0])
+      })
+    }
+  )
 
   it('offers each recurring delete scope in a Delete submenu', () => {
     const plan = {

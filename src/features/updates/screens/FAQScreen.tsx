@@ -9,7 +9,7 @@ import {
   useRef,
   useState,
 } from 'react'
-import { View, ScrollView, useWindowDimensions } from 'react-native'
+import { Platform, View, ScrollView, useWindowDimensions } from 'react-native'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import * as Clipboard from 'expo-clipboard'
@@ -26,9 +26,9 @@ import IconButton from '@/components/ui/IconButton'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import {
-  FAQS,
-  FAQ_CATEGORIES,
   FAQCategory,
+  faqCategoriesFor,
+  faqsForPlatform,
 } from '@/features/updates/constants/faqs'
 import {
   FAQIntro,
@@ -54,9 +54,9 @@ const FAQScreen = () => {
   const navigation = useNavigation()
   const route = useRoute<RouteProp<RootStackParamList, 'FAQ'>>()
   const requestedCategory = route.params?.scrollToCategory
-  const targetCategory = FAQ_CATEGORIES.includes(
-    requestedCategory as FAQCategory
-  )
+  const faqs = faqsForPlatform(Platform.OS)
+  const categories = faqCategoriesFor(faqs)
+  const targetCategory = categories.includes(requestedCategory as FAQCategory)
     ? (requestedCategory as FAQCategory)
     : undefined
   const [selectedTopic, setSelectedTopic] = useState<FAQTopic>(
@@ -172,22 +172,24 @@ const FAQScreen = () => {
     })
   }, [navigation, isWide])
 
-  const pinned = FAQS.filter((entry) => entry.pinned)
+  const pinned = faqs.filter((entry) => entry.pinned)
   const visibleAnswers = isSearching
     ? matches
     : selectedTopic === 'all'
-      ? FAQS
+      ? faqs
       : selectedTopic === 'pinned'
         ? pinned
-        : FAQS.filter((entry) => entry.category === selectedTopic)
-  const grouped = FAQ_CATEGORIES.map((category) => ({
-    category,
-    entries: FAQS.filter(
-      (entry) =>
-        entry.category === category &&
-        (!entry.pinned || category === targetCategory)
-    ),
-  })).filter((group) => group.entries.length > 0)
+        : faqs.filter((entry) => entry.category === selectedTopic)
+  const grouped = categories
+    .map((category) => ({
+      category,
+      entries: faqs.filter(
+        (entry) =>
+          entry.category === category &&
+          (!entry.pinned || category === targetCategory)
+      ),
+    }))
+    .filter((group) => group.entries.length > 0)
 
   const support = <FAQSupport onCopyAccountId={handleCopyAccountId} />
   const results = (
@@ -241,6 +243,7 @@ const FAQScreen = () => {
               <FAQIntro compact />
               <FAQSearch search={search} setSearch={setSearch} />
               <FAQTopics
+                categories={categories}
                 selected={isSearching ? undefined : selectedTopic}
                 onSelect={(topic) => {
                   setSelectedTopic(topic)

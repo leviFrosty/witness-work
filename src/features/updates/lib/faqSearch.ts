@@ -1,7 +1,7 @@
 import Fuse from 'fuse.js'
 import i18n, { TranslationKey } from '@/lib/locales'
 import { foldArabicForSearch } from '@/lib/searchNormalize'
-import { FAQEntry, FAQS } from '@/features/updates/constants/faqs'
+import { FAQEntry, faqsForPlatform } from '@/features/updates/constants/faqs'
 
 type FAQSearchEntry = {
   entry: FAQEntry
@@ -9,16 +9,23 @@ type FAQSearchEntry = {
   answer: string
 }
 
-let cachedIndex: { locale: string; fuse: Fuse<FAQSearchEntry> } | undefined
+let cachedIndex:
+  | { locale: string; platform: string; fuse: Fuse<FAQSearchEntry> }
+  | undefined
 
 // FAQ content is static. Keep the translated index across keystrokes and screen
 // visits, rebuilding only when the language changes.
-const getFAQIndex = (locale: string): Fuse<FAQSearchEntry> => {
-  if (cachedIndex?.locale === locale) return cachedIndex.fuse
+const getFAQIndex = (
+  locale: string,
+  platform: string
+): Fuse<FAQSearchEntry> => {
+  if (cachedIndex?.locale === locale && cachedIndex.platform === platform) {
+    return cachedIndex.fuse
+  }
 
   // Indexed folded, like the query, so Arabic matches with or without
   // harakat and across alef/ta marbuta spellings.
-  const entries = FAQS.map((entry) => ({
+  const entries = faqsForPlatform(platform).map((entry) => ({
     entry,
     question: foldArabicForSearch(
       i18n.t(`faq_${entry.id}_q` as TranslationKey, { locale })
@@ -38,14 +45,19 @@ const getFAQIndex = (locale: string): Fuse<FAQSearchEntry> => {
     includeMatches: false,
     includeScore: false,
   })
-  cachedIndex = { locale, fuse }
+  cachedIndex = { locale, platform, fuse }
   return fuse
 }
 
-export const searchFAQsFuzzy = (query: string, locale: string): FAQEntry[] => {
+/** Searches the FAQs shown on `platform`; a blank query returns them all. */
+export const searchFAQsFuzzy = (
+  query: string,
+  locale: string,
+  platform: string
+): FAQEntry[] => {
   const trimmed = query.trim()
-  if (!trimmed) return FAQS
-  return getFAQIndex(locale)
+  if (!trimmed) return faqsForPlatform(platform)
+  return getFAQIndex(locale, platform)
     .search(foldArabicForSearch(trimmed))
     .map((result) => result.item.entry)
 }

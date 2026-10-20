@@ -3,7 +3,7 @@ import Button from '@/components/ui/Button'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 import i18n, { TranslationKey } from '@/lib/locales'
-import { FAQ_CATEGORIES, FAQCategory } from '@/features/updates/constants/faqs'
+import { FAQCategory } from '@/features/updates/constants/faqs'
 
 export type FAQTopic = FAQCategory | 'pinned' | 'all' | 'support'
 
@@ -19,14 +19,16 @@ export const faqTopicTitle = (topic: FAQTopic) =>
   )
 
 export default function FAQTopics({
+  categories,
   selected,
   onSelect,
 }: {
+  categories: FAQCategory[]
   selected?: FAQTopic
   onSelect: (topic: FAQTopic) => void
 }) {
   const theme = useTheme()
-  const topics: FAQTopic[] = ['pinned', 'all', ...FAQ_CATEGORIES, 'support']
+  const topics: FAQTopic[] = ['pinned', 'all', ...categories, 'support']
   return (
     <View style={{ gap: 4, paddingHorizontal: 12 }}>
       {topics.map((topic) => (

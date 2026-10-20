@@ -12,6 +12,7 @@ import LucideIcon from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
 import type { RootStackNavigation } from '@/types/rootStack'
 import { useShallow } from 'zustand/react/shallow'
+import useAccessibilityTextSize from '@/hooks/useAccessibilityTextSize'
 
 /**
  * One-time Home question: track mileage? Yes turns the feature on and asks for
@@ -22,6 +23,9 @@ export default function MileagePromptCard() {
   const theme = useTheme()
   const toast = useToastController()
   const navigation = useNavigation<RootStackNavigation>()
+  // At accessibility text sizes the buttons stack, so their labels get the
+  // full width instead of breaking mid-word.
+  const largeText = useAccessibilityTextSize()
   const { mileageTrackingEnabled, set } = usePreferences(
     useShallow((s) => ({
       mileageTrackingEnabled: s.mileageTrackingEnabled,
@@ -44,7 +48,7 @@ export default function MileagePromptCard() {
   }
 
   const buttonStyle = {
-    flex: 1,
+    flex: largeText ? undefined : 1,
     minHeight: 44,
     alignItems: 'center' as const,
     justifyContent: 'center' as const,
@@ -74,7 +78,7 @@ export default function MileagePromptCard() {
           </Text>
         </View>
       </View>
-      <View style={{ flexDirection: 'row', gap: 10 }}>
+      <View style={{ flexDirection: largeText ? 'column' : 'row', gap: 10 }}>
         <Button
           accessibilityRole='button'
           onPress={() => answer(false)}

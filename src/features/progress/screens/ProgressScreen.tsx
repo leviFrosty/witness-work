@@ -8,8 +8,8 @@ import {
   ArrowBackwardIcon,
   ArrowForwardIcon,
 } from '@/components/ui/DirectionalIcon'
-import { useCallback, useEffect, useMemo, useState } from 'react'
-import { View, StyleSheet } from 'react-native'
+import { ReactNode, useCallback, useEffect, useMemo, useState } from 'react'
+import { LayoutChangeEvent, View, StyleSheet } from 'react-native'
 import { BlurView } from 'expo-blur'
 import { NativeStackScreenProps } from '@react-navigation/native-stack'
 import { useNavigation } from '@react-navigation/native'
@@ -243,8 +243,8 @@ const ProgressScreen = ({ route, navigation }: Props) => {
             ]}
           />
           {activeTab === 'month' ? (
-            <View>
-              <XView style={{ justifyContent: 'space-between' }}>
+            <MonthNav
+              back={
                 <Button
                   onPress={() => handleMonthNav('back')}
                   accessibilityLabel={i18n.t('previousMonth')}
@@ -263,11 +263,16 @@ const ProgressScreen = ({ route, navigation }: Props) => {
                     </Text>
                   </View>
                 </Button>
+              }
+              renderTitle={(stacked) => (
                 <TodayTitleStack
                   title={formatDisplay(selectedMonth, 'MMMM YYYY')}
                   showTodayBadge={!isCurrentMonth}
                   onPressToday={jumpToToday}
+                  centerLines={stacked}
                 />
+              )}
+              forward={
                 <Button
                   onPress={() => handleMonthNav('forward')}
                   accessibilityLabel={i18n.t('nextMonth')}
@@ -286,8 +291,8 @@ const ProgressScreen = ({ route, navigation }: Props) => {
                     <IconButton icon={ArrowForwardIcon} size={15} />
                   </View>
                 </Button>
-              </XView>
-            </View>
+              }
+            />
           ) : null}
         </View>
       </View>
@@ -360,6 +365,59 @@ const navButtonStyle = (theme: ReturnType<typeof useTheme>) => ({
   paddingVertical: 5,
 })
 
+const NAV_GAP = 5
+
+/**
+ * The month title between its previous and next buttons. When the title can't
+ * fit between them (a large text size, a long month name, a narrow screen), it
+ * moves to its own row above them instead of running off the screen.
+ */
+const MonthNav = ({
+  back,
+  renderTitle,
+  forward,
+}: {
+  back: ReactNode
+  /** Stacked, the title has the row to itself and may wrap. */
+  renderTitle: (stacked: boolean) => ReactNode
+  forward: ReactNode
+}) => {
+  // Each part keeps its own width in either layout (the title up to the
+  // row's), so whether it fits doesn't depend on which layout is showing.
+  const [widths, setWidths] = useState({
+    row: 0,
+    back: 0,
+    title: 0,
+    forward: 0,
+  })
+  const measure = (part: keyof typeof widths) => (event: LayoutChangeEvent) => {
+    const { width } = event.nativeEvent.layout
+    setWidths((current) =>
+      current[part] === width ? current : { ...current, [part]: width }
+    )
+  }
+  const stacked =
+    widths.row > 0 &&
+    widths.back + widths.title + widths.forward + NAV_GAP * 2 > widths.row
+
+  const titleView = (
+    <View onLayout={measure('title')} style={{ alignSelf: 'center' }}>
+      {renderTitle(stacked)}
+    </View>
+  )
+
+  return (
+    <View onLayout={measure('row')} style={stacked && { gap: 6 }}>
+      {stacked ? titleView : null}
+      <XView style={{ justifyContent: 'space-between', gap: NAV_GAP }}>
+        <View onLayout={measure('back')}>{back}</View>
+        {stacked ? null : titleView}
+        <View onLayout={measure('forward')}>{forward}</View>
+      </XView>
+    </View>
+  )
+}
+
 /**
  * Stack of the current section's title (e.g. "April 2026" or "2025–2026") with
  * an optional "Today" badge directly beneath. When the badge is absent the
@@ -370,10 +428,13 @@ const TodayTitleStack = ({
   title,
   showTodayBadge,
   onPressToday,
+  centerLines,
 }: {
   title: string
   showTodayBadge: boolean
   onPressToday: () => void
+  /** Centers the title's lines when it wraps. */
+  centerLines?: boolean
 }) => {
   const theme = useTheme()
 
@@ -383,6 +444,7 @@ const TodayTitleStack = ({
         style={{
           fontSize: theme.fontSize('md'),
           fontFamily: theme.fonts.semiBold,
+          ...(centerLines && { textAlign: 'center' }),
         }}
       >
         {title}

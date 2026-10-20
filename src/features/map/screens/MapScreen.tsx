@@ -46,6 +46,7 @@ import * as Location from 'expo-location'
 import * as Crypto from 'expo-crypto'
 import { usePreferences } from '@/stores/preferences'
 import { useTabBarHidden } from '@/stores/tabBarVisibility'
+import { showUndoToast } from '@/stores/undoToast'
 import Button from '@/components/ui/Button'
 import Empty from '@/components/ui/Empty'
 import MapEmptyState from '@/features/map/components/MapEmptyState'
@@ -252,10 +253,23 @@ const FullMapView = ({
   // letting them dismiss the keyboard blurs the search input mid-word.
   const programmaticScrollRef = useRef(false)
   const handleDragContactPin = (id: string, coordinate: LatLng) => {
+    const before = useContacts.getState().contacts.find((c) => c.id === id)
+    if (!before) return
     updateContact({
       id,
       coordinate,
       userDraggedCoordinate: true,
+    })
+    // A pin dragged by mistake also reroutes navigation (a dragged pin wins
+    // over the address), so offer to put it back.
+    showUndoToast({
+      message: i18n.t('map_pinMoved', { name: before.name }),
+      onUndo: () =>
+        updateContact({
+          id,
+          coordinate: before.coordinate,
+          userDraggedCoordinate: before.userDraggedCoordinate,
+        }),
     })
   }
 

@@ -255,6 +255,7 @@ import CreateContactCard from '@/features/map/components/CreateContactCard'
 import MapView from 'react-native-maps'
 import { Carousel } from 'react-native-reanimated-carousel'
 import { Input } from 'tamagui'
+import { hideUndoToast, useUndoToast } from '@/stores/undoToast'
 
 let root: ReturnType<typeof create>
 // `shown` stands in for the contacts the Contacts filters let through.
@@ -632,5 +633,50 @@ describe('Stowed cards handle', () => {
       peek('pan').handler({ translationY: -60, velocityY: -50 })
     )
     expect(stowed()).toBe(false)
+  })
+})
+
+describe('Dragging a contact pin', () => {
+  const drag = async (id: string, latitude: number) => {
+    const marker = root.root
+      .findAllByType('Marker' as never)
+      .find((m) => m.props.identifier === id)!
+    await act(async () => marker.props.onDragStart())
+    await act(async () =>
+      marker.props.onDragEnd({
+        nativeEvent: { coordinate: { latitude, longitude: -73 } },
+      })
+    )
+  }
+
+  afterEach(() => hideUndoToast())
+
+  it('moves the pin with an Undo that puts it back', async () => {
+    await drag('first', 42)
+    expect(mocks.updateContact).toHaveBeenCalledWith({
+      id: 'first',
+      coordinate: { latitude: 42, longitude: -73 },
+      userDraggedCoordinate: true,
+    })
+    const toast = useUndoToast.getState().toast!
+    expect(toast.message).toBe('map_pinMoved')
+
+    toast.onUndo()
+    expect(mocks.updateContact).toHaveBeenLastCalledWith({
+      id: 'first',
+      coordinate: { latitude: 40, longitude: -73 },
+      userDraggedCoordinate: undefined,
+    })
+  })
+
+  it('keeps an earlier dragged pin dragged after Undo', async () => {
+    mocks.contacts[1].userDraggedCoordinate = true
+    await drag('second', 43)
+    useUndoToast.getState().toast!.onUndo()
+    expect(mocks.updateContact).toHaveBeenLastCalledWith({
+      id: 'second',
+      coordinate: { latitude: 41, longitude: -73 },
+      userDraggedCoordinate: true,
+    })
   })
 })

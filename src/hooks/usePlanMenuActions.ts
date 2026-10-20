@@ -151,14 +151,22 @@ export default function usePlanMenuActions(
     )
   }
 
+  /**
+   * A Day Plan's copy starts on the same weekday next week, the usual reason to
+   * duplicate one; the form still lets the day change. A Recurring Plan usually
+   * already has next week's occurrence, so its copy keeps the day.
+   */
+  const duplicateDay =
+    item.type === 'day' ? dateMoment.clone().add(1, 'week') : dateMoment
+
   const duplicate = () =>
     go(() =>
       navigation.navigate('PlanDay', {
-        date: date.toISOString(),
+        date: duplicateDay.toISOString(),
         prefill: {
           startTime: effective.anytime
             ? undefined
-            : dateMoment
+            : duplicateDay
                 .clone()
                 .startOf('day')
                 .add(effective.startTimeInMinutes, 'minutes')

@@ -1,8 +1,8 @@
 import {
-  CloudUpload as CloudUploadIcon,
   FileText as FileTextIcon,
   Palette as PaletteIcon,
   Plus as PlusIcon,
+  RefreshCw as RefreshCwIcon,
   Route as RouteIcon,
   Shapes as ShapesIcon,
 } from 'lucide-react-native'
@@ -39,7 +39,7 @@ const HeroCard = () => {
           }}
         >
           <LucideIcon
-            icon={CloudUploadIcon}
+            icon={RefreshCwIcon}
             size={18}
             color={theme.colors.textInverse}
           />

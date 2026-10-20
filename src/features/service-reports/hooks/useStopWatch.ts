@@ -1,4 +1,5 @@
 import { analytics } from '@/lib/analytics'
+import { splitMinutes } from '@/lib/entryMinutes'
 import { localizeAppDigits } from '@/lib/numbers'
 import { useEffect, useRef, useState, useCallback } from 'react'
 import * as Stopwatch from '../../../../modules/stopwatch-bridge'
@@ -51,10 +52,7 @@ export const sessionStartMs = (
 }
 
 /** Elapsed time as Add Time's Hours and Minutes. */
-export const splitElapsed = (ms: number) => {
-  const total = Math.floor(ms / 60000)
-  return { hours: Math.floor(total / 60), minutes: total % 60 }
-}
+export const splitElapsed = (ms: number) => splitMinutes(Math.floor(ms / 60000))
 
 /** Save needs a whole minute, the least a time entry can hold. */
 export const MIN_MS_TO_SAVE = 60000

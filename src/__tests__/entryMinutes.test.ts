@@ -13,6 +13,18 @@ describe('entryMinutes', () => {
     expect(entryMinutes({ hours: -1, minutes: -30 })).toBe(-90)
   })
 
+  it('matches the hand-written hours * 60 + minutes sum it replaced', () => {
+    fc.assert(
+      fc.property(
+        fc.integer({ min: -10_000, max: 10_000 }),
+        fc.integer({ min: -59, max: 59 }),
+        (hours, minutes) => {
+          expect(entryMinutes({ hours, minutes })).toBe(hours * 60 + minutes)
+        }
+      )
+    )
+  })
+
   it('counts a missing or NaN part as 0', () => {
     expect(entryMinutes({ minutes: 45 })).toBe(45)
     expect(entryMinutes({ hours: 3 })).toBe(180)

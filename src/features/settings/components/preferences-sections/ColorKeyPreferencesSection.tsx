@@ -1,10 +1,10 @@
 import { Pencil as PencilIcon } from 'lucide-react-native'
 import LucideIcon from '@/components/ui/LucideIcon'
+import PointerHover from '@/components/ui/PointerHover'
 import { useState } from 'react'
 import { Pressable, StyleProp, View, ViewStyle } from 'react-native'
 import useTheme from '@/contexts/theme'
 import i18n, { TranslationKey } from '@/lib/locales'
-import { parseIntegerInput } from '@/lib/digits'
 import { formatPlainNumber } from '@/lib/numbers'
 import {
   ContactStaleness,
@@ -15,7 +15,6 @@ import {
 import { getStalenessCriteriaText } from '@/lib/stalenessText'
 import {
   DEFAULT_STALENESS_BREAKPOINTS,
-  MIN_STALENESS_DAYS,
   normalizeStalenessBreakpoints,
 } from '@/constants/staleness'
 import { StalenessBreakpoints } from '@/types/staleness'
@@ -29,6 +28,7 @@ import Text from '@/components/ui/MyText'
 import Button from '@/components/ui/Button'
 import Divider from '@/components/ui/Divider'
 import ColorPickerSheet from '@/components/ColorPickerSheet'
+import { readStalenessDaysInput } from '@/features/settings/lib/stalenessDaysInput'
 
 const SectionHeading = ({
   title,
@@ -92,6 +92,14 @@ const ColorKeyPreferencesSection = () => {
   const [activeBucket, setActiveBucket] = useState<ContactStaleness | null>(
     null
   )
+  // The day field being edited: what it shows, so it can be cleared to type a
+  // new number without the stored value snapping back, and the value it held
+  // before the edit, kept while the text isn't a usable day count.
+  const [draft, setDraft] = useState<{
+    key: keyof StalenessBreakpoints
+    text: string
+    daysBeforeEdit: number
+  } | null>(null)
 
   const updateBucketColor = (bucket: ContactStaleness, hex: string | null) => {
     set({
@@ -105,23 +113,34 @@ const ColorKeyPreferencesSection = () => {
   const isColorOverridden = (bucket: ContactStaleness) =>
     mapKeyColors?.[stalenessToMarkerKey[bucket]] !== undefined
 
-  // While typing, accept any whole number of days ≥ 1 — no upper bound. The
+  // While typing, store any whole number of days ≥ 1 — no upper bound. The
   // ordering rule (stale at least MIN_STALENESS_GAP_DAYS above recent) is not
   // enforced mid-keystroke so intermediate values don't fight the keyboard;
   // it's applied when editing ends, and the classifiers normalize anyway.
-  const setBreakpoint = (key: keyof StalenessBreakpoints, raw: string) => {
-    const days = parseIntegerInput(raw) ?? 0
-    if (days >= MIN_STALENESS_DAYS) {
-      set({ stalenessBreakpoints: { ...stalenessBreakpoints, [key]: days } })
-    }
+  const setBreakpoint = (key: keyof StalenessBreakpoints, text: string) => {
+    const daysBeforeEdit =
+      draft?.key === key ? draft.daysBeforeEdit : stalenessBreakpoints[key]
+    const days = readStalenessDaysInput(text, daysBeforeEdit)
+    if (days === null) return
+    setDraft({ key, text, daysBeforeEdit })
+    if (days === stalenessBreakpoints[key]) return
+    set({ stalenessBreakpoints: { ...stalenessBreakpoints, [key]: days } })
   }
 
-  // Snap the stored values to the enforced shape so the inputs show what the
+  // Drop the draft (a blank field shows the stored value again) and snap the
+  // stored values to the enforced shape so the inputs show what the
   // classifiers will actually use (e.g. stale raised to recent + 2).
-  const commitBreakpoints = () =>
+  const commitBreakpoints = () => {
+    setDraft(null)
     set({
       stalenessBreakpoints: normalizeStalenessBreakpoints(stalenessBreakpoints),
     })
+  }
+
+  const breakpointValue = (key: keyof StalenessBreakpoints) =>
+    draft?.key === key
+      ? draft.text
+      : formatPlainNumber(stalenessBreakpoints[key])
 
   const breakpointsAreDefault =
     stalenessBreakpoints.weekDays === DEFAULT_STALENESS_BREAKPOINTS.weekDays &&
@@ -152,45 +171,51 @@ const ColorKeyPreferencesSection = () => {
             {isColorOverridden(bucket) && (
               <ResetLink onPress={() => updateBucketColor(bucket, null)} />
             )}
-            <Pressable
-              onPress={() => setActiveBucket(bucket)}
-              accessibilityLabel={i18n.t('colorKey_edit')}
-              accessibilityRole='button'
-              hitSlop={8}
-            >
-              <View
-                style={{
-                  width: 32,
-                  height: 32,
-                  borderRadius: 16,
-                  backgroundColor: stalenessToColor(bucket, colors),
-                  borderWidth: 1,
-                  borderColor: theme.colors.border,
-                }}
-              />
-              {/* Pencil badge — signals the swatch itself is tappable. */}
-              <View
-                style={{
-                  position: 'absolute',
-                  right: -5,
-                  bottom: -5,
-                  width: 18,
-                  height: 18,
-                  borderRadius: 9,
-                  backgroundColor: theme.colors.card,
-                  borderWidth: 1,
-                  borderColor: theme.colors.border,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
+            <PointerHover effect='lift'>
+              <Pressable
+                onPress={() => setActiveBucket(bucket)}
+                accessibilityLabel={i18n.t('colorKey_editBucketColor', {
+                  label: i18n.t(
+                    `contacts_pinStaleness_${bucket}` as TranslationKey
+                  ),
+                })}
+                accessibilityRole='button'
+                hitSlop={8}
               >
-                <LucideIcon
-                  icon={PencilIcon}
-                  size={9}
-                  color={theme.colors.textAlt}
+                <View
+                  style={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: 16,
+                    backgroundColor: stalenessToColor(bucket, colors),
+                    borderWidth: 1,
+                    borderColor: theme.colors.border,
+                  }}
                 />
-              </View>
-            </Pressable>
+                {/* Pencil badge — signals the swatch itself is tappable. */}
+                <View
+                  style={{
+                    position: 'absolute',
+                    right: -5,
+                    bottom: -5,
+                    width: 18,
+                    height: 18,
+                    borderRadius: 9,
+                    backgroundColor: theme.colors.card,
+                    borderWidth: 1,
+                    borderColor: theme.colors.border,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <LucideIcon
+                    icon={PencilIcon}
+                    size={9}
+                    color={theme.colors.textAlt}
+                  />
+                </View>
+              </Pressable>
+            </PointerHover>
           </InputRowContainer>
         ))}
       </Section>
@@ -213,9 +238,10 @@ const ColorKeyPreferencesSection = () => {
         </View>
         {!breakpointsAreDefault && (
           <ResetLink
-            onPress={() =>
+            onPress={() => {
+              setDraft(null)
               set({ stalenessBreakpoints: DEFAULT_STALENESS_BREAKPOINTS })
-            }
+            }}
           />
         )}
       </View>
@@ -226,7 +252,7 @@ const ColorKeyPreferencesSection = () => {
             label: i18n.t('contacts_pinStaleness_recent'),
           })}
           textInputProps={{
-            value: formatPlainNumber(stalenessBreakpoints.weekDays),
+            value: breakpointValue('weekDays'),
             onChangeText: (value) => setBreakpoint('weekDays', value),
             onEndEditing: commitBreakpoints,
             type: 'number',
@@ -241,7 +267,7 @@ const ColorKeyPreferencesSection = () => {
             label: i18n.t('contacts_pinStaleness_month'),
           })}
           textInputProps={{
-            value: formatPlainNumber(stalenessBreakpoints.monthDays),
+            value: breakpointValue('monthDays'),
             onChangeText: (value) => setBreakpoint('monthDays', value),
             onEndEditing: commitBreakpoints,
             type: 'number',

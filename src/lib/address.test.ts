@@ -3,13 +3,21 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 const mocks = vi.hoisted(() => ({
   fetch: vi.fn(),
   capture: vi.fn(),
+  openURL: vi.fn(),
   offline: false,
+  os: 'ios',
 }))
 
-vi.mock('react-native', () => ({ Platform: { OS: 'ios' } }))
+vi.mock('react-native', () => ({
+  Platform: {
+    get OS() {
+      return mocks.os
+    },
+  },
+}))
 vi.mock('expo-location', () => ({}))
 vi.mock('@/stores/preferences', () => ({}))
-vi.mock('@/lib/links', () => ({ openURL: vi.fn() }))
+vi.mock('@/lib/links', () => ({ openURL: mocks.openURL }))
 vi.mock('@/lib/locales', () => ({ default: { t: (key: string) => key } }))
 vi.mock('@/lib/errorTracking', () => ({
   errorTracking: { captureException: mocks.capture },
@@ -21,7 +29,9 @@ vi.mock('@/constants/apis', () => ({
 }))
 vi.stubGlobal('fetch', mocks.fetch)
 
-import { fetchCoordinateFromAddress } from '@/lib/address'
+import links from '@/constants/links'
+import { fetchCoordinateFromAddress, navigateTo } from '@/lib/address'
+import type { Contact } from '@/types/contact'
 
 const address = { line1: '12 Oak St', city: 'Springfield' }
 const respond = (status: number, body: unknown) =>
@@ -32,6 +42,61 @@ const respond = (status: number, body: unknown) =>
 beforeEach(() => {
   vi.clearAllMocks()
   mocks.offline = false
+  mocks.os = 'ios'
+})
+
+describe('navigateTo', () => {
+  // Made-up address.
+  const contact = {
+    id: 'c1',
+    name: 'Sam Sample',
+    address: { line1: '12 Example St #4', city: 'Faketown & Co' },
+  } as Contact
+  const query = '12%20Example%20St%20%234%20Faketown%20%26%20Co'
+  const opened = () => mocks.openURL.mock.calls[0]
+
+  it('keeps a # or & in the address inside the search', () => {
+    navigateTo(contact, 'apple')
+    expect(opened()[0]).toBe(`https://maps.apple.com/?q=${query}`)
+  })
+
+  it('falls back to Google Maps when Apple Maps cannot open', () => {
+    navigateTo(contact, null)
+    expect(opened()[0]).toBe(`${links.appleMapsBase}${query}`)
+    expect(opened()[1]).toMatchObject({
+      alert: { title: 'couldNotOpenMaps' },
+      fallbackUrl: `${links.googleMapsBase}${query}`,
+    })
+  })
+
+  it('opens Google or Waze directly, with no fallback', () => {
+    navigateTo(contact, 'google')
+    navigateTo(contact, 'waze')
+    expect(mocks.openURL.mock.calls.map(([url]) => url)).toEqual([
+      `${links.googleMapsBase}${query}`,
+      `${links.wazeMapsBase}${query}`,
+    ])
+    expect(mocks.openURL.mock.calls[0][1].fallbackUrl).toBeUndefined()
+    expect(mocks.openURL.mock.calls[1][1].fallbackUrl).toBeUndefined()
+  })
+
+  it('opens Google Maps on Android', () => {
+    mocks.os = 'android'
+    navigateTo(contact, 'apple')
+    expect(opened()[0]).toBe(`${links.googleMapsBase}${query}`)
+  })
+
+  it('searches a dragged pin by its coordinate', () => {
+    navigateTo(
+      {
+        ...contact,
+        coordinate: { latitude: 1.5, longitude: -2.25 },
+        userDraggedCoordinate: true,
+      },
+      'apple'
+    )
+    expect(opened()[0]).toBe(`${links.appleMapsBase}1.5%2C%20-2.25`)
+  })
 })
 
 describe('fetchCoordinateFromAddress', () => {

@@ -8,7 +8,7 @@ export default {
   appStoreReview: `itms-apps://itunes.apple.com/app/viewContentsUserReviews/id${itunesItemId}?action=write-review`,
   playStore: `https://play.google.com/store/apps/details?id=${androidPackage}`,
   githubRepo,
-  appleMapsBase: 'http://maps.apple.com/?q=',
+  appleMapsBase: 'https://maps.apple.com/?q=',
   googleMapsBase: 'https://www.google.com/maps/search/?api=1&query=',
   wazeMapsBase: 'https://waze.com/ul?q=',
   hourglassBase: 'https://app.hourglass-app.com/report/submit?',

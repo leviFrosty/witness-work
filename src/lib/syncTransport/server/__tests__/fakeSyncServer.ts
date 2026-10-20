@@ -18,6 +18,8 @@ export function createFakeSyncServer() {
     enabled: true,
     entitlement: 'supporter' as 'supporter' | 'everyone',
     supporters: new Set<string>(),
+    /** How long a put takes to upload (a slow connection). */
+    putDelayMs: 0,
     /** Every request, as `<method> <op>` (no ids), for assertions. */
     log: [] as string[],
   }
@@ -72,6 +74,8 @@ export function createFakeSyncServer() {
         const etag = toB64u(sha256(bytes))
         if (etag !== headers.get('x-ww-sha256'))
           return refuse('bad_request', 400)
+        if (state.putDelayMs)
+          await new Promise((resolve) => setTimeout(resolve, state.putDelayMs))
         const updatedAt = (clock = Math.max(clock + 1, Date.now()))
         slots.set(slotId, { bytes, etag, updatedAt })
         return json({

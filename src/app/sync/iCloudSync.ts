@@ -1655,7 +1655,12 @@ async function pushInner(reason: string): Promise<boolean> {
         payload.serviceReportStore.deletedRecurringPlans?.length ?? 0,
       preferenceKeys: Object.keys(payload.preferencesStore.values).length,
     })
-    await withTransportTimeout('write', syncTransport().write(filename, json))
+    const transport = syncTransport()
+    await withTransportTimeout(
+      'write',
+      transport.write(filename, json),
+      transport.writeTimeoutMs
+    )
     const covered = generation === editGeneration
     const now = Date.now()
     const prefs = usePreferences.getState()

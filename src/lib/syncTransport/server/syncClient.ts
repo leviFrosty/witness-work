@@ -25,7 +25,7 @@ export const SYNC_LIMITS = {
 } as const
 
 /** A blob of up to 20 MiB, on a phone connection. */
-const BLOB_TIMEOUT_MS = 90_000
+export const BLOB_TIMEOUT_MS = 90_000
 
 export type SyncEntitlement = 'supporter' | 'everyone'
 

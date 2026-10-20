@@ -6,6 +6,7 @@ import {
   type BackupPlatform,
 } from '@/lib/serverAccount/backupCrypto'
 import {
+  BLOB_TIMEOUT_MS,
   deleteSyncSlot,
   getSyncSlot,
   listSyncSlots,
@@ -70,6 +71,14 @@ export type ServerTransportDeps = {
   /** The server refused a call; the app updates what it knows. */
   onRefused?: (refusal: ServerSyncRefusal) => void
 }
+
+/**
+ * The engine's wait for a write: the put's own upload timeout, plus opening or
+ * refreshing the session and sealing the snapshot first. Shorter, and the
+ * engine would give up on a slow upload that still lands, then retry with a put
+ * the server refuses (429) while the first is uploading.
+ */
+export const SERVER_WRITE_TIMEOUT_MS = BLOB_TIMEOUT_MS + 30_000
 
 const PREFIX = 'witness-work-'
 const SUFFIX = '.json'
@@ -204,6 +213,7 @@ export function createServerTransport(
     kind: 'cloud',
     writeConfirmsUpload: true,
     supportsBinaries: false,
+    writeTimeoutMs: SERVER_WRITE_TIMEOUT_MS,
     isAvailable: deps.isAvailable,
     identityToken: deps.identityToken,
     identityTokenMatches: (stored) => {

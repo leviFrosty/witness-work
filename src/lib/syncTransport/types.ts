@@ -99,6 +99,12 @@ export interface SyncTransport {
    * photo references still travel, their bytes don't. Absent means it can.
    */
   readonly supportsBinaries?: boolean
+  /**
+   * Longest the engine waits for `write`, when the transport's own requests can
+   * take longer than `TRANSPORT_TIMEOUT_MS` (Cloud Sync's upload). Absent means
+   * `TRANSPORT_TIMEOUT_MS`.
+   */
+  readonly writeTimeoutMs?: number
   /** Signed in and permitted to use the namespace right now. */
   isAvailable(): boolean
   /**

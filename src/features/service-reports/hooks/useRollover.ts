@@ -64,7 +64,7 @@ export const useRollover = (): RolloverContext => {
       set: s.set,
     }))
   )
-  const { serviceReports } = useServiceReport()
+  const serviceReports = useServiceReport((state) => state.serviceReports)
 
   const overrideMs = devRolloverDateOverride
     ? new Date(devRolloverDateOverride).getTime()

@@ -16,8 +16,8 @@ export default function useMissedFollowUpNotifications(
   now: number
 ): NotificationItem[] {
   const navigation = useNavigation<RootStackNavigation>()
-  const { conversations } = useConversations()
-  const { contacts } = useContacts()
+  const conversations = useConversations((state) => state.conversations)
+  const contacts = useContacts((state) => state.contacts)
 
   const names = new Map(contacts.map((contact) => [contact.id, contact.name]))
   return overdueFollowUpConversations({

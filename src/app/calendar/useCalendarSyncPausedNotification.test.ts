@@ -91,7 +91,7 @@ describe('Calendar Sync paused alert', () => {
   it('alerts on Android, which has no ownership record', () => {
     expect(
       pausedCalendarSync(
-        { ...settings, namespace: null, sharedCalendar: null },
+        { ...settings, namespace: null },
         {
           ...publishing,
           state: null,

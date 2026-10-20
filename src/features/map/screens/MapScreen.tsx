@@ -86,6 +86,7 @@ import {
   MapImageryContext,
 } from '@/features/map/lib/mapImageryTheme'
 import MapLayerMenu from '@/features/map/components/MapLayerMenu'
+import MapFindContacts from '@/features/map/components/MapFindContacts'
 import MapPinLabel, {
   PinHoverArea,
 } from '@/features/map/components/MapPinLabel'
@@ -423,6 +424,15 @@ const FullMapView = ({
     })
     return unsubscribe
   }, [fitToMarkers, navigation])
+
+  // Fits every pin once Contacts found by the Find contacts row are on it.
+  const [fitRequest, setFitRequest] = useState(0)
+  const handledFitRequest = useRef(0)
+  useEffect(() => {
+    if (fitRequest === handledFitRequest.current) return
+    handledFitRequest.current = fitRequest
+    fitToMarkers()
+  }, [fitRequest, fitToMarkers])
 
   const hasFitOnMount = useRef(false)
 
@@ -1365,6 +1375,25 @@ const FullMapView = ({
             >
               <MapKey />
             </Popover>
+          </View>
+          <View
+            pointerEvents='box-none'
+            style={{
+              position: 'absolute',
+              top: topInset + 8,
+              // Clear of the search button and the controls under it.
+              left: 72,
+              right:
+                isWide && hasMappedContacts && !cardsStowed
+                  ? inspectorWidth + 48
+                  : 16,
+              alignItems: 'center',
+            }}
+          >
+            <MapFindContacts
+              hidden={searchExpanded}
+              onFound={() => setFitRequest((request) => request + 1)}
+            />
           </View>
           <Animated.View
             style={{

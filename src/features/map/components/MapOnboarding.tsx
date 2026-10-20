@@ -17,12 +17,7 @@ import Spinner from '@/components/ui/Spinner'
 import Switch from '@/components/ui/Switch'
 
 import { countTruthyValueStrings } from '@/lib/objects'
-import { mayApplyGeocode } from '@/lib/contactEdits'
-import {
-  addressToString,
-  fetchCoordinateFromAddress,
-  requestLocationPermission,
-} from '@/lib/address'
+import { addressToString, requestLocationPermission } from '@/lib/address'
 import AnimatedLottieView from 'lottie-react-native'
 import { usePreferences } from '@/stores/preferences'
 import useContacts from '@/stores/contactsStore'
@@ -40,8 +35,12 @@ import { HomeTabStackNavigation } from '@/types/homeStack'
 import MapKey from '@/features/map/components/MapColorKey'
 import LocationPreview from '@/features/map/components/LocationPreview'
 import { analytics } from '@/lib/analytics'
-import { classifyNetworkError } from '@/lib/http/networkError'
-import { isDeviceOffline, isKnownOffline } from '@/lib/http/online'
+import { isKnownOffline } from '@/lib/http/online'
+import {
+  geocodeContacts,
+  pinLookupKey,
+} from '@/features/map/lib/geocodeContacts'
+import { skipPinLookups } from '@/features/map/stores/mapFindSkips'
 import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
 
 type FetchStatus = 'idle' | 'loading' | 'success' | 'error'
@@ -88,7 +87,7 @@ const LocationBenefit = ({
 export default function MapOnboarding() {
   const { incrementGeocodeApiCallCount, set, dataProtectionMode } =
     usePreferences()
-  const { contacts, updateContact } = useContacts()
+  const { contacts } = useContacts()
   const theme = useTheme()
   const navigation = useNavigation<HomeTabStackNavigation>()
   const abortController = useRef<AbortController | null>(null)
@@ -172,7 +171,6 @@ export default function MapOnboarding() {
       setFetchSnapshot(contactsToFetch)
       const controller = new AbortController()
       abortController.current = controller
-      let wentOffline = false
 
       const initialStatuses: Record<string, FetchStatus> = {}
       contactsToFetch.forEach((c) => {
@@ -180,48 +178,25 @@ export default function MapOnboarding() {
       })
       setStatuses(initialStatuses)
 
-      const queue = [...contactsToFetch]
-
-      const worker = async () => {
-        while (queue.length > 0) {
-          if (controller.signal.aborted) break
-          const contact = queue.shift()
-          if (!contact) break
-          try {
-            const position = await fetchCoordinateFromAddress(
-              incrementGeocodeApiCallCount,
-              contact.address,
-              controller.signal
-            )
-            if (controller.signal.aborted) break
-            if (position) {
-              const latest = useContacts
-                .getState()
-                .contacts.find((item) => item.id === contact.id)
-              if (!mayApplyGeocode(contact, latest)) {
-                setStatuses((prev) => ({ ...prev, [contact.id]: 'idle' }))
-                continue
-              }
-              updateContact({ id: contact.id, coordinate: position })
-              setStatuses((prev) => ({ ...prev, [contact.id]: 'success' }))
-            } else {
-              setStatuses((prev) => ({ ...prev, [contact.id]: 'error' }))
-            }
-          } catch (error) {
-            if (controller.signal.aborted) break
-            // Every other contact would fail the same way: stop the whole
-            // batch once rather than once per worker.
-            if (isDeviceOffline(classifyNetworkError(error))) {
-              wentOffline = true
-              controller.abort()
-              break
-            }
-            setStatuses((prev) => ({ ...prev, [contact.id]: 'error' }))
-          }
-        }
-      }
-
-      await Promise.all(Array.from({ length: 3 }, worker))
+      const notFound: string[] = []
+      const { wentOffline } = await geocodeContacts(contactsToFetch, {
+        controller,
+        incrementGeocodeApiCallCount,
+        onResult: (contact, outcome) => {
+          if (outcome === 'notFound') notFound.push(pinLookupKey(contact))
+          setStatuses((prev) => ({
+            ...prev,
+            [contact.id]:
+              outcome === 'found'
+                ? 'success'
+                : outcome === 'changed'
+                  ? 'idle'
+                  : 'error',
+          }))
+        },
+      })
+      // The Map's Find contacts row won't offer them again.
+      if (notFound.length > 0) skipPinLookups(notFound)
 
       setFetching(false)
       if (wentOffline) {
@@ -232,7 +207,7 @@ export default function MapOnboarding() {
         alertOffline()
       }
     },
-    [incrementGeocodeApiCallCount, updateContact]
+    [incrementGeocodeApiCallCount]
   )
 
   useEffect(() => {

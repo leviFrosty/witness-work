@@ -11,6 +11,7 @@ import {
   plannedMinutesForDay,
 } from '@/lib/recurrence'
 import { formatMinutesCompact } from '@/lib/minutes'
+import { entryMinutes } from '@/lib/entryMinutes'
 import i18n from '@/lib/locales'
 import {
   type BuddyDayMarker,
@@ -228,7 +229,7 @@ export function buildCalendar(args: BuildCalendarArgs): WidgetCalendar {
       : []
     const wentInService = reportsForDay.some(isCountableEntry)
     const workedMinutes = reportsForDay.reduce(
-      (acc, r) => acc + r.minutes + r.hours * 60,
+      (acc, r) => acc + entryMinutes(r),
       0
     )
 

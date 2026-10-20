@@ -11,6 +11,7 @@ import {
   type RoleHistory,
 } from '@/lib/roleHistory'
 import { getMonthsReports, isCountableEntry } from '@/lib/serviceReport'
+import { entryMinutes } from '@/lib/entryMinutes'
 import type { Publisher } from '@/types/publisher'
 import type { TimeEntriesByYear } from '@/types/timeEntry'
 
@@ -67,7 +68,7 @@ export const buildServiceHistoryRows = ({
         savedStatus,
         status: savedStatus,
         loggedMinutes: reports.some(isCountableEntry)
-          ? reports.reduce((sum, r) => sum + r.hours * 60 + r.minutes, 0)
+          ? reports.reduce((sum, r) => sum + entryMinutes(r), 0)
           : null,
         hours: '',
         creditHours: '',

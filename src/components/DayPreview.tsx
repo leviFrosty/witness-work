@@ -5,6 +5,7 @@ import useTheme from '@/contexts/theme'
 import { formatDate, formatStartTime } from '@/lib/dates'
 import i18n, { type TranslationKey } from '@/lib/locales'
 import { formatMinutes } from '@/lib/minutes'
+import { entryMinutes } from '@/lib/entryMinutes'
 import { getStartTimeInMinutes } from '@/lib/normalizeDate'
 import {
   getEffectiveMinutesForRecurringPlan,
@@ -53,7 +54,7 @@ export default function DayPreview({
     formatMinutes(minutes, timeDisplayFormat).formatted
 
   const reportLines: Line[] = reports.map((report) => {
-    const minutes = report.hours * 60 + report.minutes
+    const minutes = entryMinutes(report)
     const categoryName = getCategoryLabel(report, categories)
     const type = report.rollover
       ? i18n.t('timeRollover_rowLabel')

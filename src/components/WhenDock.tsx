@@ -22,6 +22,7 @@ import {
 } from '@/lib/dates'
 import i18n from '@/lib/locales'
 import { useFormattedMinutes } from '@/lib/minutes'
+import { entryMinutes, splitMinutes } from '@/lib/entryMinutes'
 import { formatPlainNumber } from '@/lib/numbers'
 
 type Props = {
@@ -277,7 +278,8 @@ const WhenDock = (props: Props) => {
   const [draftAnytime, setDraftAnytime] = useState(false)
   const [draftStart, setDraftStart] = useState(0)
   const [draftTotal, setDraftTotal] = useState(0)
-  const totalMinutes = props.hours * 60 + props.minutes
+  const totalMinutes = entryMinutes(props)
+  const draftSplit = splitMinutes(draftTotal)
   const { formatted: duration } = useFormattedMinutes(totalMinutes)
   const hourItems = wheelItems([...Array(props.maxHours + 1).keys()])
   const minuteItems = wheelItems(
@@ -468,11 +470,12 @@ const WhenDock = (props: Props) => {
             </View>
             {draftAnytime ? (
               durationWheels(
-                Math.floor(draftTotal / 60),
-                (hours) => setDraftTotal(hours * 60 + (draftTotal % 60)),
-                draftTotal % 60,
+                draftSplit.hours,
+                (hours) =>
+                  setDraftTotal(entryMinutes({ ...draftSplit, hours })),
+                draftSplit.minutes,
                 (minutes) =>
-                  setDraftTotal(Math.floor(draftTotal / 60) * 60 + minutes)
+                  setDraftTotal(entryMinutes({ ...draftSplit, minutes }))
               )
             ) : (
               <SpanWheels

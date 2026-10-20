@@ -12,6 +12,7 @@ import { monthCreditMaxMinutes } from '@/constants/serviceReports'
 import { creditCapMinutesFor } from '@/lib/publisherCapabilities'
 import { momentStoredDate } from '@/lib/normalizeDate'
 import { getServiceYearFromDate } from '@/lib/serviceYear'
+import { entryMinutes } from '@/lib/entryMinutes'
 
 // Re-exported for backwards compatibility — canonical home is `types/timeEntry`.
 // Recurrence helpers that used to live here now live in `@/lib/recurrence`;
@@ -32,7 +33,7 @@ export type {
  * included.
  */
 export const isCountableEntry = (entry: TimeEntry) =>
-  entry.rollover !== true && (entry.hours ?? 0) * 60 + (entry.minutes ?? 0) >= 0
+  entry.rollover !== true && entryMinutes(entry) >= 0
 
 export const getTotalMinutesDetailedForSpecificMonth = (
   monthsReports: TimeEntry[],
@@ -52,14 +53,14 @@ export const getTotalMinutesDetailedForSpecificMonth = (
   // here would inflate the credit total.
   const otherWithNonCreditMinutes = reportsForMonth.reduce((prev, report) => {
     if (hasCategory(report) && !isLdcEntry(report) && !report.credit) {
-      return prev + report.hours * 60 + report.minutes
+      return prev + entryMinutes(report)
     }
     return prev
   }, 0)
 
   const otherWithCreditMinutes = reportsForMonth.reduce((prev, report) => {
     if (hasCategory(report) && !isLdcEntry(report) && report.credit) {
-      return prev + report.hours * 60 + report.minutes
+      return prev + entryMinutes(report)
     }
     return prev
   }, 0)
@@ -180,7 +181,7 @@ export const ldcMinutesForSpecificMonth = (
       )
     })
     .reduce((accumulator, report) => {
-      return accumulator + report.hours * 60 + report.minutes
+      return accumulator + entryMinutes(report)
     }, 0)
 
   return totalMinutesForMonth
@@ -235,9 +236,9 @@ export const otherMinutesForSpecificMonth = (
           : item.tag === report.tag
       )
       if (existingTag) {
-        existingTag.minutes += report.hours * 60 + report.minutes
+        existingTag.minutes += entryMinutes(report)
       } else {
-        const minutes = report.hours * 60 + report.minutes
+        const minutes = entryMinutes(report)
         accumulator.push({
           categoryId: report.categoryId,
           tag: report.tag ?? report.categoryId ?? '',
@@ -269,7 +270,7 @@ export const standardMinutesForSpecificMonth = (
       )
     })
     .reduce((accumulator, report) => {
-      return accumulator + report.hours * 60 + report.minutes
+      return accumulator + entryMinutes(report)
     }, 0)
 
   return totalMinutesForMonth
@@ -323,7 +324,7 @@ export const getServiceYearMonthlyBreakdowns = (
       let otherWithCredit = 0
       let otherWithoutCredit = 0
       for (const report of monthReports) {
-        const m = report.hours * 60 + report.minutes
+        const m = entryMinutes(report)
         if (isLdcEntry(report)) {
           // LDC keeps its own bucket so visual breakdowns stay separable; the
           // cap math folds it back into the credit total anyway.
@@ -430,7 +431,7 @@ export const getCategoryBreakdownForServiceYear = (
       // re-filtering by `report.date` would drop legacy entries whose stored
       // UTC calendar day drifted off their bucket.
       for (const report of monthReports) {
-        const minutes = report.hours * 60 + report.minutes
+        const minutes = entryMinutes(report)
         if (isLdcEntry(report)) {
           ldc += minutes
         } else if (hasCategory(report)) {
@@ -484,10 +485,7 @@ export const getLifetimeHours = (serviceReports: TimeEntry[]): number => {
  * Preferred for rendering, since the display formatter takes minutes.
  */
 export const getLifetimeMinutes = (serviceReports: TimeEntry[]): number => {
-  return serviceReports.reduce(
-    (sum, report) => sum + report.hours * 60 + report.minutes,
-    0
-  )
+  return serviceReports.reduce((sum, report) => sum + entryMinutes(report), 0)
 }
 
 /** Earliest `date` found across all reports, or `null` if none. */
@@ -568,7 +566,7 @@ export const getMinutesForServiceYearEndYear = (
     const m = momentStoredDate(report.date)
     const reportStartYear = getServiceYearFromDate(m)
     if (reportStartYear !== startYear) return sum
-    return sum + report.hours * 60 + report.minutes
+    return sum + entryMinutes(report)
   }, 0)
 }
 

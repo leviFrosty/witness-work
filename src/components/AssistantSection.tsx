@@ -29,6 +29,7 @@ import {
 } from '@/lib/assistantState'
 import { usePreferences } from '@/stores/preferences'
 import { formatMinutes } from '@/lib/minutes'
+import { entryMinutes } from '@/lib/entryMinutes'
 import useServiceReport from '@/stores/serviceReport'
 import useCategories from '@/stores/categories'
 import useConversations from '@/stores/conversationStore'
@@ -130,7 +131,7 @@ const AssistantSection = ({
     return reports.reduce((sum, r) => {
       const d = momentStoredDate(r.date)
       if (d.isSameOrAfter(start, 'day') && d.isSameOrBefore(end, 'day')) {
-        return sum + r.hours * 60 + r.minutes
+        return sum + entryMinutes(r)
       }
       return sum
     }, 0)

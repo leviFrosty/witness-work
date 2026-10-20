@@ -16,6 +16,7 @@ import {
   type PublisherImportMode,
 } from '@/features/mytime-import/lib/importMytime'
 import type { Publisher } from '@/types/publisher'
+import { entryMinutes } from '@/lib/entryMinutes'
 
 /**
  * Where the import flow is: `idle` → `parsing` (reading + mapping the picked
@@ -74,10 +75,7 @@ const buildPreview = (mapped: MappedImport): MytimeImportPreview => ({
   contacts: mapped.contacts.length,
   visits: mapped.visits.length,
   timeEntries: mapped.timeEntries.length,
-  totalMinutes: mapped.timeEntries.reduce(
-    (sum, e) => sum + e.hours * 60 + e.minutes,
-    0
-  ),
+  totalMinutes: mapped.timeEntries.reduce((sum, e) => sum + entryMinutes(e), 0),
   publisherRole: mapped.publisher?.role,
   tenureStartDate: mapped.publisher?.tenureStartDate ?? null,
 })

@@ -7,6 +7,10 @@ description: How to render time/duration in WitnessWork — always route measure
 
 All render-time math goes through `src/lib/minutes.ts` helpers — never hand-roll hours/minutes parsing.
 
+## Hours and minutes arithmetic
+
+Total an `{ hours, minutes }` pair (a Time Entry, a duration wheel) with `entryMinutes(entry)` and split a total back with `splitMinutes(total)`, both from `src/lib/entryMinutes.ts`; never hand-roll `hours * 60 + minutes` or `Math.floor(total / 60)` / `total % 60`. That module has no dependencies, so pure libs can import it.
+
 ## User-facing displays
 
 User-facing time displays MUST go through `useFormattedMinutes(minutes)` (hook) or `formatMinutes(minutes, format)` (pure):

@@ -20,6 +20,7 @@ import {
 import { usePreferences } from '@/stores/preferences'
 import { Theme } from '@/types/theme'
 import { formatMinutesCompact } from '@/lib/minutes'
+import { entryMinutes } from '@/lib/entryMinutes'
 import { isCountableEntry } from '@/lib/serviceReport'
 import { hasNote as noteExists } from '@/lib/richText/notes'
 
@@ -82,7 +83,7 @@ const NonPlannedDay = (
   const theme = useTheme()
   const minutesForDay =
     props.serviceReports?.reduce(
-      (acc, report) => acc + report.minutes + report.hours * 60,
+      (acc, report) => acc + entryMinutes(report),
       0
     ) || 0
   const actualDurationText = formatMinutesCompact(minutesForDay)
@@ -177,7 +178,7 @@ const PlannedDay = (
   const theme = useTheme()
   const minutesForDay =
     props.serviceReports?.reduce(
-      (acc, report) => acc + report.minutes + report.hours * 60,
+      (acc, report) => acc + entryMinutes(report),
       0
     ) || 0
 

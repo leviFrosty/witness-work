@@ -6,6 +6,7 @@ import {
 } from '@/lib/recurrence'
 import { serviceYearMonths } from '@/lib/roleHistory'
 import { isCountableEntry } from '@/lib/serviceReport'
+import { entryMinutes } from '@/lib/entryMinutes'
 import type { DayPlan, TimeEntriesByYear, TimeEntry } from '@/types/timeEntry'
 import { dayStatus, type DayStatus } from '@/features/plans/lib/dayStatus'
 import { dayKeyOf } from '@/features/plans/lib/scheduleRows'
@@ -80,7 +81,7 @@ export function serviceYearDayStatuses({
           plannedMinutes,
           hasEntries: reports.length > 0,
           loggedMinutes: reports.reduce(
-            (total, report) => total + report.hours * 60 + report.minutes,
+            (total, report) => total + entryMinutes(report),
             0
           ),
           isPast: key < todayKey,

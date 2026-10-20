@@ -62,6 +62,11 @@ export type SyncTransportErrorCode =
   | 'network'
   /** The service is throttling this user or app; retry later. */
   | 'rate-limited'
+  /**
+   * The service answered with its own failure (a 5xx); retry later. Not a lost
+   * connection, so the User isn't told they're offline.
+   */
+  | 'server-error'
   | 'not-found'
   | 'unknown'
 

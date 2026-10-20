@@ -702,6 +702,7 @@ export const PREFERENCE_DEFAULTS = {
     | 'unauthorized'
     | 'network'
     | 'rate-limited'
+    | 'server-error'
     | 'not-found'
     | 'unknown'
     | null,

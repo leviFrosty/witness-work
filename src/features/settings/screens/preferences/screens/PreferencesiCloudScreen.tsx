@@ -677,7 +677,7 @@ const PreferencesiCloudScreenInner = () => {
             prefs.iCloudUploadIssue === 'icloud-full' ||
               errorCode === 'storage-full'
               ? syncKey('iCloudStorageFullHelp')
-              : errorCode === 'rate-limited'
+              : errorCode === 'rate-limited' || errorCode === 'server-error'
                 ? syncKey('iCloudSyncNowRateLimited')
                 : syncKey('iCloudOperationFailed')
           )

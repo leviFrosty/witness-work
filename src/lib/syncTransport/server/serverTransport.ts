@@ -124,12 +124,11 @@ export function toServerTransportError(
     return new SyncTransportError('unauthorized', message)
   if (error.kind === 'rateLimited' || error.status === 429)
     return new SyncTransportError('rate-limited', message, error.retryAfterMs)
-  if (
-    error.kind === 'offline' ||
-    error.kind === 'timeout' ||
-    error.kind === 'server'
-  )
+  if (error.kind === 'offline' || error.kind === 'timeout')
     return new SyncTransportError('network', message, error.retryAfterMs)
+  // ww-api answered, so the phone is online: retried like `network`.
+  if (error.kind === 'server')
+    return new SyncTransportError('server-error', message, error.retryAfterMs)
   return new SyncTransportError('unknown', message)
 }
 

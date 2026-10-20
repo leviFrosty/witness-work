@@ -1,15 +1,26 @@
 import { describe, it, expect, vi } from 'vitest'
 
-// The reader module imports native-only packages at the top level; the pure
-// core under test (`readMytimeTables`) never touches them, so empty stubs are
-// enough to let the module load under vitest.
-vi.mock('expo-sqlite', () => ({}))
+// The reader module imports native-only packages at the top level. The pure
+// core (`readMytimeTables`) never touches them; `readMytimeDb` only gets as far
+// as the file-kind check, so the file system stubs just serve the file's head.
+const native = vi.hoisted(() => ({
+  readAsStringAsync: vi.fn<() => Promise<string>>(),
+  openDatabaseAsync: vi.fn(),
+}))
+vi.mock('expo-sqlite', () => ({ openDatabaseAsync: native.openDatabaseAsync }))
 vi.mock('expo-file-system/legacy', () => ({
   documentDirectory: 'file:///doc/',
+  EncodingType: { Base64: 'base64' },
+  makeDirectoryAsync: () => Promise.resolve(),
+  deleteAsync: () => Promise.resolve(),
+  copyAsync: () => Promise.resolve(),
+  readAsStringAsync: native.readAsStringAsync,
 }))
 
 import {
+  classifyFileHead,
   MytimeImportError,
+  readMytimeDb,
   readMytimeTables,
   type MytimeTableSource,
 } from '@/features/mytime-import/lib/readMytimeDb'
@@ -193,5 +204,78 @@ describe('readMytimeTables — files SQLite cannot read', () => {
       selectAll: () => Promise.reject(boom),
     }
     await expect(readMytimeTables(source)).rejects.toBe(boom)
+  })
+})
+
+const bytes = (head: string) => new TextEncoder().encode(head)
+const binary = (...values: number[]) => new Uint8Array(values)
+
+describe('classifyFileHead', () => {
+  it('names each known header', () => {
+    expect(classifyFileHead(bytes('SQLite format 3\0\x10\x00'))).toBe('sqlite')
+    expect(classifyFileHead(binary(0x50, 0x4b, 0x03, 0x04, 0x14, 0x00))).toBe(
+      'zip'
+    )
+    // An empty archive is only its end record.
+    expect(classifyFileHead(binary(0x50, 0x4b, 0x05, 0x06, 0x00))).toBe('zip')
+    expect(classifyFileHead(bytes('%PDF-1.7\n%\xe2\xe3'))).toBe('pdf')
+    expect(classifyFileHead(bytes('bplist00\xd4\x01'))).toBe('bplist')
+  })
+
+  it('calls a file with no bytes empty', () => {
+    expect(classifyFileHead(new Uint8Array())).toBe('empty')
+  })
+
+  it('tells JSON from other text', () => {
+    expect(classifyFileHead(bytes('{"contacts": []}'))).toBe('json')
+    expect(classifyFileHead(bytes('\ufeff\n  [1, 2]'))).toBe('json')
+    expect(classifyFileHead(bytes('Name,Street\r\nSam,1 Main St'))).toBe('text')
+    expect(classifyFileHead(bytes('Visita a Zoë — café'))).toBe('text')
+  })
+
+  it('calls other binary data unknown', () => {
+    // A PNG's signature.
+    expect(
+      classifyFileHead(binary(0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a))
+    ).toBe('unknown')
+    expect(classifyFileHead(binary(0x00, 0x00, 0x00, 0x00))).toBe('unknown')
+  })
+})
+
+describe('readMytimeDb — files that are not SQLite', () => {
+  const head = (data: Uint8Array) =>
+    native.readAsStringAsync.mockResolvedValue(
+      Buffer.from(data).toString('base64')
+    )
+
+  it.each([
+    ['zip', binary(0x50, 0x4b, 0x03, 0x04, 0x14, 0x00)],
+    ['pdf', bytes('%PDF-1.4\n')],
+    ['empty', new Uint8Array()],
+  ] as const)(
+    'rejects a %s file as openFailed without opening it',
+    async (kind, data) => {
+      head(data)
+      const error = await readMytimeDb('file:///picked/backup').catch(
+        (e: unknown) => e
+      )
+      expect(error).toBeInstanceOf(MytimeImportError)
+      expect(error).toMatchObject({ reason: 'openFailed', fileKind: kind })
+      expect(native.openDatabaseAsync).not.toHaveBeenCalled()
+    }
+  )
+
+  it('calls a file it cannot read unknown', async () => {
+    native.readAsStringAsync.mockRejectedValue(new Error('no such file'))
+    await expect(readMytimeDb('file:///picked/backup')).rejects.toMatchObject({
+      reason: 'openFailed',
+      fileKind: 'unknown',
+    })
+  })
+})
+
+describe('MytimeImportError', () => {
+  it('defaults to a SQLite file, the only kind that gets past the header check', () => {
+    expect(new MytimeImportError('notMytime', 'x').fileKind).toBe('sqlite')
   })
 })

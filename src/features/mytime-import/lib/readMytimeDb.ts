@@ -25,12 +25,36 @@ import type {
  */
 export type MytimeImportErrorReason = 'notMytime' | 'openFailed'
 
+/**
+ * What the picked file looks like from its first bytes, so analytics can tell
+ * which wrong files people pick without sending anything from inside them.
+ */
+export type MytimeFileKind =
+  | 'sqlite'
+  | 'zip'
+  | 'pdf'
+  | 'bplist'
+  | 'json'
+  | 'text'
+  | 'empty'
+  | 'unknown'
+
 export class MytimeImportError extends Error {
   readonly reason: MytimeImportErrorReason
-  constructor(reason: MytimeImportErrorReason, message: string) {
+  /**
+   * Defaults to `sqlite`: only the header check rejects other kinds, so every
+   * error raised after it is about a file that starts like a SQLite database.
+   */
+  readonly fileKind: MytimeFileKind
+  constructor(
+    reason: MytimeImportErrorReason,
+    message: string,
+    fileKind: MytimeFileKind = 'sqlite'
+  ) {
     super(message)
     this.name = 'MytimeImportError'
     this.reason = reason
+    this.fileKind = fileKind
   }
 }
 
@@ -215,21 +239,51 @@ const copyIntoSqliteDir = async (uri: string): Promise<void> => {
   await FileSystem.copyAsync({ from: uri, to: IMPORT_DB_PATH })
 }
 
-/** Every SQLite database starts with these 16 bytes: `SQLite format 3\0`. */
-const SQLITE_HEADER_BASE64 = 'U1FMaXRlIGZvcm1hdCAzAA=='
+const startsWith = (bytes: Uint8Array, prefix: string): boolean =>
+  bytes.length >= prefix.length &&
+  [...prefix].every((ch, i) => bytes[i] === ch.charCodeAt(0))
+
+/** How many leading bytes `classifyFileHead` needs to tell the kinds apart. */
+const FILE_HEAD_LENGTH = 64
 
 /**
- * Cheap check that the copy is a SQLite database before we hand it to SQLite,
- * so a wrong file type (a PDF, a text export, an undownloaded iCloud
- * placeholder) is turned away without opening it.
+ * Names a file's kind from its first bytes. Only the kind leaves the device;
+ * the bytes themselves are never logged or sent.
  */
-const hasSqliteHeader = async (path: string): Promise<boolean> => {
+export const classifyFileHead = (bytes: Uint8Array): MytimeFileKind => {
+  if (bytes.length === 0) return 'empty'
+  // Every SQLite database starts with `SQLite format 3\0`.
+  if (startsWith(bytes, 'SQLite format 3\0')) return 'sqlite'
+  // Local file header, or the end record of an empty archive.
+  if (startsWith(bytes, 'PK\x03\x04') || startsWith(bytes, 'PK\x05\x06'))
+    return 'zip'
+  if (startsWith(bytes, '%PDF-')) return 'pdf'
+  if (startsWith(bytes, 'bplist')) return 'bplist'
+  // Text has no control bytes besides tab, newline and carriage return; bytes
+  // from 0x80 up are allowed so UTF-8 text still counts.
+  const isText = bytes.every(
+    (b) => b === 0x09 || b === 0x0a || b === 0x0d || (b >= 0x20 && b !== 0x7f)
+  )
+  if (!isText) return 'unknown'
+  // Skip a UTF-8 byte order mark and leading whitespace before the first char.
+  let i = startsWith(bytes, '\xef\xbb\xbf') ? 3 : 0
+  while (i < bytes.length && [0x09, 0x0a, 0x0d, 0x20].includes(bytes[i])) i++
+  return bytes[i] === 0x7b || bytes[i] === 0x5b ? 'json' : 'text'
+}
+
+/**
+ * Reads the copy's first bytes and names its kind, so a wrong file type (a PDF,
+ * a text export, a zip) is turned away before SQLite opens it.
+ */
+const readFileKind = async (path: string): Promise<MytimeFileKind> => {
   const head = await FileSystem.readAsStringAsync(path, {
     encoding: FileSystem.EncodingType.Base64,
     position: 0,
-    length: 16,
-  }).catch(() => '')
-  return head === SQLITE_HEADER_BASE64
+    length: FILE_HEAD_LENGTH,
+  }).catch(() => null)
+  if (head === null) return 'unknown'
+  const binary = globalThis.atob(head)
+  return classifyFileHead(Uint8Array.from(binary, (c) => c.charCodeAt(0)))
 }
 
 /**
@@ -251,10 +305,12 @@ export async function readMytimeDb(uri: string): Promise<MytimeRawTables> {
 
   let db: SQLite.SQLiteDatabase | undefined
   try {
-    if (!(await hasSqliteHeader(IMPORT_DB_PATH))) {
+    const fileKind = await readFileKind(IMPORT_DB_PATH)
+    if (fileKind !== 'sqlite') {
       throw new MytimeImportError(
         'openFailed',
-        'File does not start with the SQLite header.'
+        `File does not start with the SQLite header (${fileKind}).`,
+        fileKind
       )
     }
     try {

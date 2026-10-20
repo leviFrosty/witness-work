@@ -7,7 +7,11 @@ name: Open a conversation's details from Contact Details, then edit it
     visible: Contacts
     timeout: 60000
 - tapOn: Contacts
-- tapOn: Chen Wei
+# The row's accessible name is "Chen Wei, <last visit>, …", so match the name as
+# part of it rather than as the whole label.
+- tapOn:
+    text: Chen Wei
+    index: 0
 - scrollUntilVisible:
     element: Conversation History
 # Tapping a conversation opens its details in a sheet, not the form.

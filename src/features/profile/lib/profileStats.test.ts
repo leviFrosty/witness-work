@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { busiestWeekday } from '@/features/profile/lib/profileStats'
+import {
+  busiestWeekday,
+  ContributionCell,
+  contributionSummary,
+} from '@/features/profile/lib/profileStats'
 
 // Wednesday, 2026-10-07.
 const now = new Date(2026, 9, 7, 12)
@@ -58,5 +62,41 @@ describe('busiestWeekday', () => {
 
   it('is null with no activity', () => {
     expect(busiestWeekday(new Map(), [], now)).toBeNull()
+  })
+})
+
+describe('contributionSummary', () => {
+  const cell = (minutes: number, future = false): ContributionCell => ({
+    date: now,
+    minutes,
+    level: minutes > 0 ? 1 : 0,
+    future,
+  })
+
+  it('counts days with service and the longest run across weeks', () => {
+    const grid = [
+      [0, 60, 30, 0, 0, 45, 60].map((m) => cell(m)),
+      // The run from the end of last week carries into this one.
+      [90, 15, 0, 120, 0, 0, 0].map((m) => cell(m)),
+    ]
+    expect(contributionSummary(grid)).toEqual({
+      daysWithService: 7,
+      longestRun: 4,
+    })
+  })
+
+  it('leaves out days after today', () => {
+    const grid = [[cell(60), cell(60), cell(0, true), cell(0, true)]]
+    expect(contributionSummary(grid)).toEqual({
+      daysWithService: 2,
+      longestRun: 2,
+    })
+  })
+
+  it('is empty with no service logged', () => {
+    expect(contributionSummary([[cell(0), cell(0)]])).toEqual({
+      daysWithService: 0,
+      longestRun: 0,
+    })
   })
 })

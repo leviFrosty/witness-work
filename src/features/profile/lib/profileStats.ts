@@ -172,6 +172,37 @@ export const contributionGrid = (
   )
 }
 
+export type ContributionSummary = {
+  /** Days in the window with any logged service. */
+  daysWithService: number
+  /** Longest stretch of consecutive days with service in the window. */
+  longestRun: number
+}
+
+/** What a contribution grid shows, for its screen-reader summary. */
+export const contributionSummary = (
+  grid: ContributionCell[][]
+): ContributionSummary => {
+  let daysWithService = 0
+  let longestRun = 0
+  let run = 0
+  // Columns are consecutive weeks and rows Mon..Sun, so this walks the days in
+  // order.
+  for (const col of grid) {
+    for (const cell of col) {
+      if (cell.future) continue
+      if (cell.minutes > 0) {
+        daysWithService++
+        run++
+        if (run > longestRun) longestRun = run
+      } else {
+        run = 0
+      }
+    }
+  }
+  return { daysWithService, longestRun }
+}
+
 /** Total minutes across all reports. */
 export const totalMinutes = (daily: Map<string, number>): number => {
   let total = 0

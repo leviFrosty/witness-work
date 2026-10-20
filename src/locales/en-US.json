@@ -1981,7 +1981,15 @@
     "previousServiceYear": "Previous service year",
     "nextServiceYear": "Next service year",
     "serviceYearHint": "Shows the whole service year",
-    "editMonthlyGoal": "Edit Monthly Goal"
+    "editMonthlyGoal": "Edit Monthly Goal",
+    "dayLabelDate": "{{date}}.",
+    "dayLabelToday": "Today.",
+    "dayLabelLogged": "Logged {{value}}.",
+    "dayLabelPlanned": "Planned {{value}}.",
+    "dayLabelPlannedGoalMet": "Planned {{value}}, goal met.",
+    "dayLabelMissed": "Plan missed.",
+    "dayLabelNote": "Has a note.",
+    "dayLabelExtra": "{{text}}."
   },
   "scheduleInsights": {
     "schedulePace": "Schedule pace",

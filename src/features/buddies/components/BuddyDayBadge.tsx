@@ -33,16 +33,29 @@ export function BuddiesOutDot() {
   )
 }
 
+const names = (buddies: Buddy[]) => buddies.map(buddyDisplayName).join(', ')
+
+/** What a day's {@link BuddyDayBadge} shows, for the day's own label. */
+export function buddyDayMarkerLabel(
+  marker: BuddyDayMarker
+): string | undefined {
+  if (marker.withBuddies.length > 0) {
+    return i18n.t('buddies_withName', { name: names(marker.withBuddies) })
+  }
+  if (marker.goingOut.length === 0) return undefined
+  return i18n.t('buddies_calendarGoingOut', { names: names(marker.goingOut) })
+}
+
 /**
  * A calendar day's buddy mark, drawn over the day's cell. Going out with
  * buddies stacks their avatars up the cell's right edge, first one in front at
  * the corner; past three, the top circle counts the rest. Other buddies going
  * out show a dot under the day. Avatars use no buddy colors so the day's status
- * colors stay readable. VoiceOver reads the labels as part of the day.
+ * colors stay readable. Screen readers hear {@link buddyDayMarkerLabel} in the
+ * day's label instead.
  */
 export default function BuddyDayBadge({ marker }: { marker: BuddyDayMarker }) {
   const theme = useTheme()
-  const names = (buddies: Buddy[]) => buddies.map(buddyDisplayName).join(', ')
 
   if (marker.withBuddies.length > 0) {
     const { shown, more } = stackedBuddies(marker.withBuddies)
@@ -61,13 +74,7 @@ export default function BuddyDayBadge({ marker }: { marker: BuddyDayMarker }) {
         : []),
     ]
     return (
-      <View
-        accessible
-        accessibilityLabel={i18n.t('buddies_withName', {
-          name: names(marker.withBuddies),
-        })}
-        style={{ flex: 1 }}
-      >
+      <View style={{ flex: 1 }}>
         {/* Drawn top-down so the first buddy, at the corner, is in front. */}
         {circles
           .map((circle, index) => (
@@ -93,13 +100,7 @@ export default function BuddyDayBadge({ marker }: { marker: BuddyDayMarker }) {
 
   if (marker.goingOut.length === 0) return null
   return (
-    <View
-      accessible
-      accessibilityLabel={i18n.t('buddies_calendarGoingOut', {
-        names: names(marker.goingOut),
-      })}
-      style={{ flex: 1, alignItems: 'center' }}
-    >
+    <View style={{ flex: 1, alignItems: 'center' }}>
       <View style={{ position: 'absolute', bottom: -7 }}>
         <BuddiesOutDot />
       </View>

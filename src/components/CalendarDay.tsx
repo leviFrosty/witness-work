@@ -19,12 +19,19 @@ import {
 } from '@/lib/recurrence'
 import { usePreferences } from '@/stores/preferences'
 import { Theme } from '@/types/theme'
-import { formatMinutesCompact } from '@/lib/minutes'
+import { formatMinutes, formatMinutesCompact } from '@/lib/minutes'
+import { formatDisplay } from '@/lib/dates'
+import { calendarDayAccessibilityLabel } from '@/lib/calendarDayLabel'
 import { entryMinutes } from '@/lib/entryMinutes'
 import { isCountableEntry } from '@/lib/serviceReport'
 import { hasNote as noteExists } from '@/lib/richText/notes'
 
 const boxSize = 40
+/**
+ * The square is a fixed size, so its text grows only this far with the system
+ * text size; the day's label reads everything out instead.
+ */
+const FONT_SCALE_CAP = 1.15
 
 /**
  * What a day's square counts: its Plans, the time logged, or (`auto`) the time
@@ -130,6 +137,7 @@ const NonPlannedDay = (
           fontFamily: theme.fonts.semiBold,
           fontSize: theme.fontSize('lg'),
         }}
+        maxFontSizeMultiplier={FONT_SCALE_CAP}
       >
         {props.date?.day}
       </Text>
@@ -141,6 +149,7 @@ const NonPlannedDay = (
           }}
           numberOfLines={1}
           ellipsizeMode='tail'
+          maxFontSizeMultiplier={FONT_SCALE_CAP}
         >
           {actualDurationText}
         </Text>
@@ -255,6 +264,7 @@ const PlannedDay = (
           fontSize: theme.fontSize('lg'),
           fontFamily: theme.fonts.semiBold,
         }}
+        maxFontSizeMultiplier={FONT_SCALE_CAP}
       >
         {props.date?.day}
       </Text>
@@ -267,6 +277,7 @@ const PlannedDay = (
               }}
               numberOfLines={1}
               ellipsizeMode='tail'
+              maxFontSizeMultiplier={FONT_SCALE_CAP}
             >
               {actualDurationText}
             </Text>
@@ -279,6 +290,7 @@ const PlannedDay = (
               }}
               numberOfLines={1}
               ellipsizeMode='tail'
+              maxFontSizeMultiplier={FONT_SCALE_CAP}
             >
               {plannedDurationText}
             </Text>
@@ -313,11 +325,10 @@ const CalendarDay = (
      */
     dayPlansOverride?: DayPlan[]
     recurringPlansOverride?: RecurringPlan[]
-    /**
-     * Drawn over the cell, positioned within its box, e.g. who a Plan is with.
-     * Read by VoiceOver along with the day.
-     */
+    /** Drawn over the cell, positioned within its box, e.g. who a Plan is with. */
     overlay?: ReactNode
+    /** What `overlay` shows, read out after the day's own label. */
+    overlayAccessibilityLabel?: string
   }
 ) => {
   // Only the slices a day reads: the Schedule keeps hundreds of days mounted,
@@ -327,6 +338,7 @@ const CalendarDay = (
   const dayPlans = props.dayPlansOverride ?? storeDayPlans
   const recurringPlans = props.recurringPlansOverride ?? storeRecurringPlans
   const theme = useTheme()
+  const timeDisplayFormat = usePreferences((s) => s.timeDisplayFormat)
 
   const dateString = props.date?.dateString
   const reportsForDay =
@@ -349,6 +361,35 @@ const CalendarDay = (
 
   if (props.date === undefined || !dateString || !localDay) return null
 
+  const loggedMinutes = reportsForDay.reduce(
+    (acc, report) => acc + entryMinutes(report),
+    0
+  )
+  const wentInService = reportsForDay.some(isCountableEntry)
+  const accessibilityLabel = calendarDayAccessibilityLabel(
+    {
+      date: formatDisplay(localDay, 'dddd, LL'),
+      isToday: moment().isSame(localDay, 'day'),
+      isPast: moment(localDay).isBefore(moment(), 'day'),
+      wentInService,
+      loggedMinutes,
+      hasPlan: !!(dayPlansForDay.length || recurringPlansForDay.length),
+      plannedMinutes: plannedMinutesForDay(
+        localDay,
+        dayPlansForDay,
+        recurringPlansForDay
+      ),
+      hasNote:
+        reportsForDay.some(noteExists) ||
+        dayPlansForDay.some(noteExists) ||
+        recurringPlansForDay.some((plan) =>
+          noteExists(getEffectiveNoteForRecurringPlan(plan, localDay))
+        ),
+      extra: props.overlayAccessibilityLabel,
+    },
+    (minutes) => formatMinutes(minutes, timeDisplayFormat).formatted
+  )
+
   const previewData = {
     reports: reportsForDay,
     dayPlans: dayPlansForDay,
@@ -358,6 +399,7 @@ const CalendarDay = (
   return (
     <ContextMenu
       actions={menu}
+      accessibilityLabel={accessibilityLabel}
       onPress={() => {
         props.onPress?.(props.date)
         const { howToAddPlan, removeHint } = usePreferences.getState()
@@ -377,7 +419,6 @@ const CalendarDay = (
         opacity: disabled ? 0.4 : 1,
       }}
     >
-      {/* The overlay sits inside the trigger so VoiceOver reads it with its day. */}
       <View>
         {dayPlansForDay.length || recurringPlansForDay.length ? (
           <PlannedDay

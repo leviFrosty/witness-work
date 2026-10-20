@@ -33,7 +33,7 @@ import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 import { currentBuddyDayMarkers } from '@/features/buddies/lib/currentBuddyDayMarkers'
 import type { BuddyDayMarker } from '@/features/buddies/lib/calendarMarkers'
 import { usePet } from '@/stores/pet'
-import { bufferToPngBase64 } from '@/features/pet/render/skiaImage'
+import type * as SkiaImage from '@/features/pet/render/skiaImage'
 import { planPetWidgetSnapshot } from '@/app/widgets/petWidgetInput'
 import { renderPetWidget } from '@/app/widgets/petWidget'
 import { createPetWidgetWriter } from '@/app/widgets/petWidgetWriter'
@@ -96,11 +96,20 @@ function buddyMarkers(): Record<string, BuddyDayMarker> {
   }
 }
 
-/** The Pet widget's images and the slice last written (`petWidgetWriter.ts`). */
+/**
+ * The Pet widget's images and the slice last written (`petWidgetWriter.ts`).
+ * Skia is required on the first image render, so launch doesn't set it up for
+ * the widget.
+ */
 const petWriter = createPetWidgetWriter({
   storage: mmkvStorage,
   bridge: WidgetBridge,
-  render: (plan) => renderPetWidget(plan, bufferToPngBase64),
+  render: (plan) => {
+    const {
+      bufferToPngBase64,
+    }: typeof SkiaImage = require('@/features/pet/render/skiaImage')
+    return renderPetWidget(plan, bufferToPngBase64)
+  },
   onError: (message, error) => {
     logger.error(`[widgetSync] ${message}`, error)
     captureExceptionThrottled('widgetSync:pet', error)

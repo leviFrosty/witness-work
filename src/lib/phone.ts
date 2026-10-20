@@ -1,6 +1,6 @@
 import { Alert } from 'react-native'
 import i18n from '@/lib/locales'
-import { ParsedPhoneNumber } from 'awesome-phonenumber'
+import type { ParsedPhoneNumber } from 'awesome-phonenumber'
 import { Contact } from '@/types/contact'
 import { openURL } from '@/lib/links'
 import { RootStackNavigation } from '@/types/rootStack'

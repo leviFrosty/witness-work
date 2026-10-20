@@ -4,11 +4,11 @@ import {
   LocateFixed as LocateFixedIcon,
   Navigation as NavigationIcon,
 } from 'lucide-react-native'
-import { Alert } from 'react-native'
+import { Alert, AppState } from 'react-native'
 import * as Linking from 'expo-linking'
 import i18n from '@/lib/locales'
 import { GroupedListRow, GroupedListSection } from '@/components/ui/GroupedList'
-import { requestLocationPermission } from '@/lib/address'
+import { requestOrOfferLocationSettings } from '@/lib/locationPermission'
 import { useEffect, useState } from 'react'
 import * as Location from 'expo-location'
 import useNotifications from '@/hooks/notifications'
@@ -18,15 +18,21 @@ const AppPreferencesSection = () => {
   const [locationEnabled, setLocationEnabled] = useState(false)
 
   useEffect(() => {
+    let active = true
     const updateLocationStatus = async () => {
       const { granted } = await Location.getForegroundPermissionsAsync()
-
-      if (granted) {
-        setLocationEnabled(true)
-      }
+      if (active) setLocationEnabled(granted)
     }
 
-    updateLocationStatus()
+    void updateLocationStatus()
+    // Re-read on return from Settings, where location may have been allowed.
+    const subscription = AppState.addEventListener('change', (state) => {
+      if (state === 'active') void updateLocationStatus()
+    })
+    return () => {
+      active = false
+      subscription.remove()
+    }
   }, [])
 
   const askToTakeToSettings = () => {
@@ -74,10 +80,8 @@ const AppPreferencesSection = () => {
         onPress={
           locationEnabled
             ? undefined
-            : () =>
-                requestLocationPermission((status) =>
-                  setLocationEnabled(status)
-                )
+            : async () =>
+                setLocationEnabled(await requestOrOfferLocationSettings())
         }
       />
     </GroupedListSection>

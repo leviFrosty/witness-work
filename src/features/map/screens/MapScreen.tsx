@@ -76,6 +76,7 @@ import {
 } from '@/features/map/lib/mapCarousel'
 import { fitMapToCoordinates } from '@/features/map/lib/mapCamera'
 import { buildContactsFuse, searchContactsFuzzy } from '@/lib/contactsSearch'
+import { requestOrOfferLocationSettings } from '@/lib/locationPermission'
 import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
 import MapContactInspector, {
   type MapContactRowRenderer,
@@ -484,12 +485,7 @@ const FullMapView = ({
     const isCancelled = () => request !== trackingRequestRef.current
     let granted = locationPermission
     if (!granted) {
-      const existing = await Location.getForegroundPermissionsAsync()
-      granted = existing.granted
-      if (!granted) {
-        const requested = await Location.requestForegroundPermissionsAsync()
-        granted = requested.granted
-      }
+      granted = await requestOrOfferLocationSettings()
       if (granted) setLocationPermission(true)
     }
     if (!granted || isCancelled()) return

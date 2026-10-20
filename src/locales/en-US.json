@@ -2189,6 +2189,7 @@
   "saved": "Saved",
   "locationDisabled_description": "Your location sharing is disabled. The map will not be able to automatically zoom into your location.",
   "locationDisabled_callToAction": "Open app settings",
+  "locationSettings_description": "Allow location for WitnessWork in its settings to see where you are on the map and find contacts near you.",
   "overrideCoordinate": "Override Coordinate",
   "overrideCoordinate_description": "You specified your own coordinate. Since you just changed the address, do you want to automatically fetch an updated coordinate based on the new address?",
   "fetchCoordinate": "Fetch Coordinate",

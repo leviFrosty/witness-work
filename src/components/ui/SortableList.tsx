@@ -19,9 +19,11 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated'
 import { scheduleOnRN, scheduleOnUI } from 'react-native-worklets'
+import { isRtlLayout } from '@/lib/direction'
 import Haptics from '@/lib/haptics'
 import {
   RowWidths,
+  isInDragHandle,
   reorderForDrag,
   rowLength,
   rowSlots,
@@ -215,6 +217,7 @@ export default function SortableList<T>({
     list.active.value = key
   }
 
+  const rtl = isRtlLayout()
   const measuredKeys = keys.filter((key) => key in heights)
   const placedStyle = measured
     ? { height: rowLength(measuredKeys, heights, 0) }
@@ -230,9 +233,9 @@ export default function SortableList<T>({
             itemKey={key}
             list={list}
             enabled={enabled && measured && keys.length > 1}
-            handleFrom={
-              handleWidth > 0 && widths[key] ? widths[key] - handleWidth : null
-            }
+            width={widths[key] ?? 0}
+            handleWidth={handleWidth}
+            rtl={rtl}
             onMeasure={measureRow}
             beginDrag={beginDrag}
             onDragStarted={dragStarted}
@@ -271,7 +274,9 @@ function SortableRow({
   itemKey: key,
   list,
   enabled,
-  handleFrom,
+  width,
+  handleWidth,
+  rtl,
   onMeasure,
   beginDrag,
   onDragStarted,
@@ -282,8 +287,11 @@ function SortableRow({
   itemKey: string
   list: ListState
   enabled: boolean
-  /** Where the drag handle starts, from the row's leading edge. */
-  handleFrom: number | null
+  /** The row's measured width, 0 until it's laid out. */
+  width: number
+  /** The drag handle's width, at the row's trailing edge. */
+  handleWidth: number
+  rtl: boolean
   onMeasure: (key: string, height: number, width: number) => void
   beginDrag: (key: string, fingerY: number, travel: number) => void
   onDragStarted: () => void
@@ -363,7 +371,7 @@ function SortableRow({
         y: point.absoluteY,
         at: Date.now(),
         pointer: e.pointerType === PointerType.MOUSE,
-        handle: handleFrom !== null && point.x >= handleFrom,
+        handle: isInDragHandle(point.x, width, handleWidth, rtl),
       }
     })
     .onTouchesMove((e, manager) => {

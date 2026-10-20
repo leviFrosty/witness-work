@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { reorderForDrag, rowLength, rowSlots } from '@/lib/sortableRow'
+import {
+  isInDragHandle,
+  reorderForDrag,
+  rowLength,
+  rowSlots,
+} from '@/lib/sortableRow'
 
 const widths = { a: 40, b: 100, c: 60 }
 
@@ -40,5 +45,28 @@ describe('reorderForDrag', () => {
 
   it('ignores a key that is not in the row', () => {
     expect(reorderForDrag(order, 'z', 500, widths, 8)).toBe(order)
+  })
+})
+
+describe('isInDragHandle', () => {
+  // A 390 pt row with a 44 pt handle at its trailing end.
+  it('is the right end in LTR', () => {
+    expect(isInDragHandle(346, 390, 44, false)).toBe(true)
+    expect(isInDragHandle(389, 390, 44, false)).toBe(true)
+    expect(isInDragHandle(345, 390, 44, false)).toBe(false)
+    expect(isInDragHandle(10, 390, 44, false)).toBe(false)
+  })
+
+  it('is the left end in RTL, where x is still measured from the left', () => {
+    expect(isInDragHandle(0, 390, 44, true)).toBe(true)
+    expect(isInDragHandle(44, 390, 44, true)).toBe(true)
+    expect(isInDragHandle(45, 390, 44, true)).toBe(false)
+    expect(isInDragHandle(380, 390, 44, true)).toBe(false)
+  })
+
+  it('has no handle without a handle width or before the row is measured', () => {
+    expect(isInDragHandle(380, 390, 0, false)).toBe(false)
+    expect(isInDragHandle(10, 390, 0, true)).toBe(false)
+    expect(isInDragHandle(10, 0, 44, true)).toBe(false)
   })
 })

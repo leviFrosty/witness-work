@@ -19,6 +19,8 @@ import { useNavigation } from '@react-navigation/native'
 import { RootStackNavigation } from '@/types/rootStack'
 import HomeSectionMenu from '@/components/HomeSectionMenu'
 import useMonthReportExport from '@/features/service-reports/hooks/useMonthReportExport'
+import useReportSentState from '@/features/service-reports/hooks/useReportSentState'
+import ReportSentLabel from '@/features/service-reports/components/ReportSentLabel'
 
 const ServiceReportSection = () => {
   const theme = useTheme()
@@ -28,6 +30,7 @@ const ServiceReportSection = () => {
   const year = moment().year()
 
   const { reportMenuItems } = useMonthReportExport()
+  const { label: sentLabel } = useReportSentState(month, year)
 
   const viewReport = () =>
     navigation.navigate('ServiceReportView', { month, year })
@@ -85,11 +88,14 @@ const ServiceReportSection = () => {
           >
             {i18n.t('serviceReport')}
           </Text>
-          <LucideIcon
-            icon={ChevronForwardIcon}
-            size={16}
-            color={theme.colors.textAlt}
-          />
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            {sentLabel !== null && <ReportSentLabel label={sentLabel} />}
+            <LucideIcon
+              icon={ChevronForwardIcon}
+              size={16}
+              color={theme.colors.textAlt}
+            />
+          </View>
         </View>
       </HomeSectionMenu>
 

@@ -14,9 +14,10 @@ export const openURL = async (
       buttons?: AlertButton[]
     }
   }
-) => {
+): Promise<boolean> => {
   try {
     await Linking.openURL(url)
+    return true
   } catch (error) {
     Alert.alert(
       options?.alert?.title ?? i18n.t('failedToOpenLink'),
@@ -24,5 +25,6 @@ export const openURL = async (
       options?.alert?.buttons
     )
     errorTracking.captureException(error)
+    return false
   }
 }

@@ -1,4 +1,4 @@
-import { Share } from 'react-native'
+import { Platform, Share } from 'react-native'
 import * as Clipboard from 'expo-clipboard'
 import moment from 'moment'
 import { analytics } from '@/lib/analytics'
@@ -69,7 +69,8 @@ export const availableExportMethods = (
 /**
  * Sends a month's report by `method` and records the export. Resolves `true`
  * when the report was handed off, so the caller can mark it submitted; `false`
- * when the share sheet was dismissed or the method isn't available.
+ * when the share sheet was dismissed, the app or site didn't open, the method
+ * isn't available, or (Android Share) there's no telling whether it was sent.
  */
 export const exportMonthReport = async (
   method: ReportExportMethod,
@@ -89,7 +90,9 @@ export const exportMonthReport = async (
       shared ? 'service_report_exported' : 'service_report_export_dismissed',
       { method: 'share', source }
     )
-    return shared
+    // Android resolves `sharedAction` even when the sheet is dismissed, so a
+    // share there leaves the month unmarked; Mark as Sent records it.
+    return shared && Platform.OS !== 'android'
   }
 
   // NW Publisher has a separate credit field, so its default remark only
@@ -107,21 +110,20 @@ export const exportMonthReport = async (
       method: 'hourglass',
       source,
     })
-    await openURL(
+    return openURL(
       buildHourglassLink({
         month: month + 1,
         year,
         ...data.hourglassReport,
       })
     )
-    return true
   }
   if (method === 'nwpublisher' && data.isLastMonth) {
     analytics.capture('service_report_export_requested', {
       method: 'nwpublisher',
       source,
     })
-    await openURL(
+    return openURL(
       buildNwPublisherLink({
         sharedInMinistry: data.sharedInMinistry,
         hours: data.showHours ? data.hours : undefined,
@@ -130,7 +132,6 @@ export const exportMonthReport = async (
         remarks,
       })
     )
-    return true
   }
   return false
 }

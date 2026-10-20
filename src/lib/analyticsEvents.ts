@@ -26,6 +26,8 @@ export const analyticsEventNames = [
   'service_report_export_dismissed',
   'service_report_export_requested',
   'service_report_exported',
+  'service_report_marked_not_sent',
+  'service_report_marked_sent',
   'streak_milestone_reached',
   'streak_reminders_changed',
   'streaks_setting_changed',

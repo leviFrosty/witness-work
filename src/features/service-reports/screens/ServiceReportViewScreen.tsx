@@ -47,6 +47,12 @@ import useMonthReportData, {
 import useRolloverPrompt from '@/features/service-reports/hooks/useRolloverPrompt'
 import { exportMonthReport } from '@/features/service-reports/lib/monthReportExport'
 import MonthReportReminderOffer from '@/features/service-reports/components/MonthReportReminderOffer'
+import {
+  markReportNotSent,
+  markReportSent,
+} from '@/features/service-reports/hooks/useMonthReportExport'
+import useReportSentState from '@/features/service-reports/hooks/useReportSentState'
+import ReportSentLabel from '@/features/service-reports/components/ReportSentLabel'
 import { getSubmitCtaLabel } from '@/features/service-reports/lib/submissionMethod'
 import {
   buildReportMonthMenu,
@@ -190,9 +196,15 @@ const ServiceReportViewScreen = ({ route, navigation }: Props) => {
 
   const [isEditingNotes, setIsEditingNotes] = useState(false)
   const [notesDraft, setNotesDraft] = useState('')
-  const [isSubmitConfirmed, setIsSubmitConfirmed] = useState(false)
+  // The method just used, while the CTA briefly confirms it: "Copied!" for
+  // Copy, which only puts the report on the clipboard, else "Report Submitted".
+  const [confirmedMethod, setConfirmedMethod] =
+    useState<ReportExportMethod | null>(null)
   // Someone who just sent a report here is offered the report reminder.
   const [sentHere, setSentHere] = useState(false)
+  const isSubmitConfirmed = confirmedMethod !== null
+  const sentState = useReportSentState(month, year)
+  const sentLabel = sentState.label ?? i18n.t('reportNotSent')
   const submitConfirmationTimerRef = useRef<ReturnType<
     typeof setTimeout
   > | null>(null)
@@ -200,7 +212,7 @@ const ServiceReportViewScreen = ({ route, navigation }: Props) => {
   useEffect(() => {
     setIsEditingNotes(false)
     setNotesDraft('')
-    setIsSubmitConfirmed(false)
+    setConfirmedMethod(null)
     Keyboard.dismiss()
   }, [month, year])
 
@@ -213,21 +225,24 @@ const ServiceReportViewScreen = ({ route, navigation }: Props) => {
     []
   )
 
-  const confirmSubmission = useCallback(() => {
-    noteUserAction('report')
-    markReportSubmitted(reportMonthKey)
-    setIsSubmitConfirmed(true)
-    setSentHere(true)
-    Haptics.success()
+  const confirmSubmission = useCallback(
+    (method: ReportExportMethod) => {
+      noteUserAction('report')
+      markReportSubmitted(reportMonthKey)
+      setConfirmedMethod(method)
+      setSentHere(true)
+      Haptics.success()
 
-    if (submitConfirmationTimerRef.current !== null) {
-      clearTimeout(submitConfirmationTimerRef.current)
-    }
-    submitConfirmationTimerRef.current = setTimeout(() => {
-      submitConfirmationTimerRef.current = null
-      setIsSubmitConfirmed(false)
-    }, SUBMIT_CONFIRMATION_DURATION_MS)
-  }, [markReportSubmitted, reportMonthKey])
+      if (submitConfirmationTimerRef.current !== null) {
+        clearTimeout(submitConfirmationTimerRef.current)
+      }
+      submitConfirmationTimerRef.current = setTimeout(() => {
+        submitConfirmationTimerRef.current = null
+        setConfirmedMethod(null)
+      }, SUBMIT_CONFIRMATION_DURATION_MS)
+    },
+    [markReportSubmitted, reportMonthKey]
+  )
 
   const handleStartEditNotes = useCallback(() => {
     setNotesDraft(data.notes)
@@ -277,7 +292,7 @@ const ServiceReportViewScreen = ({ route, navigation }: Props) => {
         { month, year },
         'report_screen'
       )
-      if (sent) confirmSubmission()
+      if (sent) confirmSubmission(action)
     },
     [confirmSubmission, data, month, year]
   )
@@ -375,6 +390,50 @@ const ServiceReportViewScreen = ({ route, navigation }: Props) => {
         </PullDownMenu>
         {/* Spacer mirroring the close button so the title stays centered */}
         <View style={{ width: 18 }} />
+      </View>
+
+      {/* Sent / Not Sent status; its menu fixes the mark by hand: undo a
+        mistaken one, or record a report sent another way or shared from
+        Android, whose share sheet can't tell. */}
+      <View style={{ alignItems: 'center', marginTop: 2 }}>
+        <PullDownMenu
+          actions={[
+            sentState.sent
+              ? {
+                  id: 'mark_not_sent',
+                  title: i18n.t('markAsNotSent'),
+                  systemImage: 'arrow.uturn.backward',
+                  onPress: () =>
+                    markReportNotSent(month, year, 'report_screen'),
+                }
+              : {
+                  id: 'mark_sent',
+                  title: i18n.t('markAsSent'),
+                  systemImage: 'checkmark.circle',
+                  onPress: () => markReportSent(month, year, 'report_screen'),
+                },
+          ]}
+          accessibilityLabel={sentLabel}
+          accessibilityHint={i18n.t(
+            sentState.sent ? 'markAsNotSent' : 'markAsSent'
+          )}
+          onOpen={handleMenuOpen}
+          hoverRadius={theme.numbers.borderRadiusSm}
+        >
+          <View style={{ paddingHorizontal: 8, paddingVertical: 4 }}>
+            <ReportSentLabel
+              label={sentLabel}
+              sent={sentState.sent}
+              trailing={
+                <LucideIcon
+                  icon={ChevronDownIcon}
+                  size={11}
+                  color={theme.colors.textAlt}
+                />
+              }
+            />
+          </View>
+        </PullDownMenu>
       </View>
 
       <ScrollView
@@ -501,7 +560,11 @@ const ServiceReportViewScreen = ({ route, navigation }: Props) => {
                 fontFamily: theme.fonts.bold,
               }}
             >
-              {isSubmitConfirmed ? i18n.t('reportSubmitted') : submitCtaLabel}
+              {confirmedMethod === 'copy'
+                ? i18n.t('copied')
+                : isSubmitConfirmed
+                  ? i18n.t('reportSubmitted')
+                  : submitCtaLabel}
             </Text>
             {submitIsExternal && !isSubmitConfirmed && (
               <LucideIcon

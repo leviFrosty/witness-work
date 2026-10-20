@@ -8,9 +8,16 @@ import { useCalendarPublishing, useCalendarSync } from '@/stores/calendarSync'
 import i18n, { type TranslationKey } from '@/lib/locales'
 import type { NotificationItem } from '@/types/notifications'
 import type { RootStackNavigation } from '@/types/rootStack'
+import { useShallow } from 'zustand/react/shallow'
 
-type Settings = ReturnType<typeof useCalendarSync.getState>
-type Publishing = ReturnType<typeof useCalendarPublishing.getState>
+type Settings = Pick<
+  ReturnType<typeof useCalendarSync.getState>,
+  'enabled' | 'optedOut' | 'destination' | 'failingSince' | 'namespace'
+>
+type Publishing = Pick<
+  ReturnType<typeof useCalendarPublishing.getState>,
+  'error' | 'state' | 'deviceId'
+>
 
 /** Usually clear once the connection or the calendar account catches up. */
 const TRANSIENT_ERRORS = [
@@ -57,8 +64,28 @@ export default function useCalendarSyncPausedNotification(
   now: number
 ): NotificationItem | null {
   const navigation = useNavigation<RootStackNavigation>()
-  const settings = useCalendarSync()
-  const publishing = useCalendarPublishing()
+  // Just the fields the alert reads: every update stamps `lastSyncedAt` and
+  // flips `working`, and the Home bell shouldn't re-render for those.
+  const settings = useCalendarSync(
+    useShallow(
+      (s): Settings => ({
+        enabled: s.enabled,
+        optedOut: s.optedOut,
+        destination: s.destination,
+        failingSince: s.failingSince,
+        namespace: s.namespace,
+      })
+    )
+  )
+  const publishing = useCalendarPublishing(
+    useShallow(
+      (s): Publishing => ({
+        error: s.error,
+        state: s.state,
+        deviceId: s.deviceId,
+      })
+    )
+  )
   if (!calendarBridgeAvailable) return null
   const paused = pausedCalendarSync(settings, publishing, now)
   if (!paused) return null

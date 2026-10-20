@@ -19,6 +19,7 @@ import {
   openSupporterSurvey,
   useSupporterSurveys,
 } from '@/features/supporter/stores/supporterSurveys'
+import { useShallow } from 'zustand/react/shallow'
 
 /**
  * The feedback survey invitation (found by `SupporterSurveyHost`) or, when
@@ -46,7 +47,18 @@ export default function useSupporterNotifications(
     devSupporterNudgeForceShow,
     homeChecklistCompletedAt,
     set,
-  } = usePreferences()
+  } = usePreferences(
+    useShallow((s) => ({
+      hideDonateHeart: s.hideDonateHeart,
+      hideSupporterNudge: s.hideSupporterNudge,
+      installedOn: s.installedOn,
+      supporterNudgeDismissedAt: s.supporterNudgeDismissedAt,
+      supporterNudgeAvailableSince: s.supporterNudgeAvailableSince,
+      devSupporterNudgeForceShow: s.devSupporterNudgeForceShow,
+      homeChecklistCompletedAt: s.homeChecklistCompletedAt,
+      set: s.set,
+    }))
+  )
 
   // First time this build runs on the device, stamp the intro grace start.
   // The nudge predicate waits `introGraceDays` after this so existing

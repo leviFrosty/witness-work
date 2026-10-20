@@ -21,6 +21,7 @@ export const analyticsEventNames = [
   'map_location_permission_result',
   'plan_created',
   'plan_details_action',
+  'plans_copied_from_last_week',
   'unlock_opened_from_tray',
   'unlock_toast_closed',
   'unlock_toast_shown',

@@ -3293,6 +3293,13 @@
   "logAgainToday": "Log Again Today",
   "changeCategory": "Change Category",
   "planThisDay": "Plan This Day",
+  "copyLastWeekPlans": "Copy Last Week’s Plans",
+  "copyLastWeekPlans_copied": {
+    "one": "Copied {{count}} plan from last week",
+    "other": "Copied {{count}} plans from last week"
+  },
+  "copyLastWeekPlans_noneTitle": "No plans to copy",
+  "copyLastWeekPlans_noneMessage": "Last week has no one-time plans left to copy to this week.",
   "assistantSettings": "Assistant Settings",
   "changeStatusEllipsis": "Change Status…",
   "changeGoalEllipsis": "Change Goal…",

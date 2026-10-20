@@ -11,6 +11,7 @@ import { hasNote } from '@/lib/richText/notes'
 import type { NoteFields } from '@/types/richText'
 import {
   DEFAULT_START_TIME_IN_MINUTES,
+  isStoredDateAnchored,
   momentStoredDate,
   normalizeDateForStorage,
   storedDayKey,
@@ -38,20 +39,86 @@ export type { MonthlyByWeekdayConfig, RecurringPlan, RecurringPlanOverride }
 // (an instant) lands on the wrong local calendar day in TZs away from UTC.
 // ---------------------------------------------------------------------------
 
+const MS_PER_DAY = 86_400_000
+
+/**
+ * A stored calendar day as a count of days since the epoch. Every value
+ * `momentStoredDate` returns sits at noon UTC, so two stored dates fall on the
+ * same day exactly when these match, and their difference is a whole number of
+ * days.
+ */
+const storedEpochDay = (date: Date | string): number =>
+  Math.floor(momentStoredDate(date).valueOf() / MS_PER_DAY)
+
+/**
+ * A Recurring Plan's dates read once into epoch days, so matching a day is an
+ * integer compare and a Set/Map lookup instead of a moment per skipped day and
+ * override. `deletedDates` and `overrides` grow for as long as a plan exists,
+ * and range walks (a service year, widgets) ask about every day.
+ */
+type CompiledRecurringPlan = {
+  start: number
+  /** `null` when the plan never ends. */
+  end: number | null
+  startDayOfMonth: number
+  skipped: Set<number>
+  overrides: Map<number, RecurringPlanOverride>
+}
+
+// Keyed by the plan object: the store replaces a plan on every edit and never
+// mutates one in place, so a cached entry can't go stale.
+const compiledPlans = new WeakMap<RecurringPlan, CompiledRecurringPlan>()
+
+const compileRecurringPlan = (plan: RecurringPlan): CompiledRecurringPlan => {
+  const cached = compiledPlans.get(plan)
+  if (cached) return cached
+
+  const { startDate, recurrence } = plan
+  const { endDate } = recurrence
+  const deletedDates = plan.deletedDates ?? []
+  const overrides = plan.overrides ?? []
+  const compiled: CompiledRecurringPlan = {
+    start: storedEpochDay(startDate),
+    end: endDate ? storedEpochDay(endDate) : null,
+    startDayOfMonth: momentStoredDate(startDate).date(),
+    // Unreadable dates never match a day, so leave them out (a NaN key would
+    // match an unreadable day).
+    skipped: new Set(
+      deletedDates.map(storedEpochDay).filter((day) => !Number.isNaN(day))
+    ),
+    overrides: new Map(),
+  }
+  // Last to first, so the first override on a day wins, as `find` did.
+  for (const override of [...overrides].reverse()) {
+    const day = storedEpochDay(override.date)
+    if (!Number.isNaN(day)) compiled.overrides.set(day, override)
+  }
+
+  // A date off the noon-UTC anchor reads as whatever local day it falls on
+  // in the current time zone, so it's recompiled on every call.
+  const anchored = [
+    startDate,
+    ...(endDate ? [endDate] : []),
+    ...deletedDates,
+    ...overrides.map((o) => o.date),
+  ].every(isStoredDateAnchored)
+  if (anchored) compiledPlans.set(plan, compiled)
+  return compiled
+}
+
+/** The epoch day of a calendar-day `Date` handed to the recurrence helpers. */
+const epochDayOf = (day: Date): number =>
+  Math.floor(normalizeDateForStorage(day).getTime() / MS_PER_DAY)
+
 /**
  * Single override lookup shared by every effective-* getter: finds the override
- * whose stored calendar day matches `date`. Consolidates what used to be three
- * separate copies of the same `overrides?.find(...)` reduction.
+ * whose stored calendar day matches `date`.
  */
 const findOverrideForDay = (
   plan: RecurringPlan,
   date: Date
-): RecurringPlanOverride | undefined => {
-  const targetDay = momentStoredDate(normalizeDateForStorage(date))
-  return plan.overrides?.find((o) =>
-    momentStoredDate(o.date).isSame(targetDay, 'day')
-  )
-}
+): RecurringPlanOverride | undefined =>
+  compileRecurringPlan(plan).overrides.get(epochDayOf(date))
 
 // Helper function to check if a date matches a monthly by weekday pattern.
 // Caller is responsible for passing a calendar-day Date that's already been
@@ -103,55 +170,34 @@ export const getPlansIntersectingDay = (
   // local-mode `diff` against a noon-UTC startDate would silently round to a
   // negative day count and miss every weekly occurrence.
   const normalizedDay = normalizeDateForStorage(day)
-  const momentDay = momentStoredDate(normalizedDay)
+  const dayNumber = Math.floor(normalizedDay.getTime() / MS_PER_DAY)
 
   return plans.filter((plan) => {
-    const { startDate, recurrence } = plan
-    const { frequency, interval, endDate } = recurrence
+    const { recurrence } = plan
+    const { frequency, interval } = recurrence
+    const { start, end, startDayOfMonth, skipped } = compileRecurringPlan(plan)
 
-    if (
-      plan.deletedDates?.some((deletedDate) =>
-        momentStoredDate(deletedDate).isSame(momentDay, 'day')
-      )
-    ) {
-      return false
-    }
+    if (skipped.has(dayNumber)) return false
 
-    const momentStartDate = momentStoredDate(startDate)
-    const momentEndDate = endDate ? momentStoredDate(endDate) : null
-
-    // Calculate the difference in days between the start date and the given day
-    const daysDiff = momentDay.diff(momentStartDate, 'days')
+    const daysDiff = dayNumber - start
+    const inRange = dayNumber >= start && (end === null || dayNumber <= end)
 
     // Check if the given day falls within the recurrence pattern
     switch (frequency) {
       case RecurringPlanFrequencies.WEEKLY:
-        return (
-          daysDiff % (interval * 7) === 0 &&
-          momentDay.isSameOrAfter(momentStartDate) &&
-          (!momentEndDate || momentDay.isSameOrBefore(momentEndDate))
-        )
+        return daysDiff % (interval * 7) === 0 && inRange
       case RecurringPlanFrequencies.BI_WEEKLY:
-        return (
-          daysDiff % (interval * 14) === 0 &&
-          momentDay.isSameOrAfter(momentStartDate) &&
-          (!momentEndDate || momentDay.isSameOrBefore(momentEndDate))
-        )
+        return daysDiff % (interval * 14) === 0 && inRange
       case RecurringPlanFrequencies.MONTHLY:
-        return (
-          momentDay.date() === momentStartDate.date() &&
-          momentDay.isSameOrAfter(momentStartDate) &&
-          (!momentEndDate || momentDay.isSameOrBefore(momentEndDate))
-        )
+        return normalizedDay.getUTCDate() === startDayOfMonth && inRange
       case RecurringPlanFrequencies.MONTHLY_BY_WEEKDAY:
         return (
-          recurrence.monthlyByWeekdayConfig &&
+          !!recurrence.monthlyByWeekdayConfig &&
+          inRange &&
           doesDayMatchMonthlyByWeekday(
             normalizedDay,
             recurrence.monthlyByWeekdayConfig
-          ) &&
-          momentDay.isSameOrAfter(momentStartDate) &&
-          (!momentEndDate || momentDay.isSameOrBefore(momentEndDate))
+          )
         )
       default:
         return false

@@ -28,6 +28,14 @@ const isAnchoredNoonUtc = (d: Date): boolean =>
   d.getUTCMilliseconds() === 0
 
 /**
+ * True when a stored value sits on the noon-UTC anchor, so its calendar day
+ * doesn't depend on the device's time zone. `momentStoredDate` reads any other
+ * value as the local day it falls on _now_, so don't cache that read.
+ */
+export const isStoredDateAnchored = (date: Date | string): boolean =>
+  isAnchoredNoonUtc(date instanceof Date ? date : new Date(date))
+
+/**
  * Variant for the migration / iCloud-merge paths, where the input is already a
  * _stored_ Date — either a freshly-anchored noon-UTC value from a post-fix
  * peer, or a pre-fix raw value. Preserves already-anchored values so syncs

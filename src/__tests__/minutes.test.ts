@@ -97,6 +97,40 @@ describe('Duration Format (src/lib/minutes.ts)', () => {
       )
     })
 
+    it.each<[number, 'decimal' | 'short', string]>([
+      [-30, 'short', '−0 Hrs 30 Mins'],
+      [-30, 'decimal', '−0.5 Hrs'],
+      [-90, 'short', '−1 Hr 30 Mins'],
+      [-60, 'decimal', '−1 Hr'],
+    ])(
+      'formats a negative %d min by its magnitude as %s → "%s"',
+      (minutes, format, expected) => {
+        expect(formatMinutes(minutes, format).formatted).toBe(expected)
+      }
+    )
+
+    it('mirrors a positive duration for its negative', () => {
+      fc.assert(
+        fc.property(
+          fc.integer({ min: 1, max: 100_000 }),
+          fc.constantFrom('decimal' as const, 'short' as const),
+          (total, format) => {
+            const positive = formatMinutes(total, format)
+            const negative = formatMinutes(-total, format)
+            expect(negative.formatted).toBe(`−${positive.formatted}`)
+            expect(negative.hours).toBe(
+              positive.hours === 0 ? 0 : -positive.hours
+            )
+            expect(negative.minutes).toBe(
+              positive.minutes === 0 ? 0 : -positive.minutes
+            )
+            expect(negative.hours * 60 + negative.minutes).toBe(-total)
+          }
+        ),
+        runs
+      )
+    })
+
     it.each<[number, string]>([
       [59.97, '1 Hr'],
       [92.99, '1.6 Hrs'],

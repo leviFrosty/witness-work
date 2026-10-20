@@ -102,6 +102,7 @@ export const builtInContactSortOptions: {
 }[] = [
   { label: () => i18n.t('contacts_sortBySuggested'), value: 'suggested' },
   { label: () => i18n.t('recentConversation'), value: 'recentConversation' },
+  { label: () => i18n.t('contacts_sortByNextFollowUp'), value: 'nextFollowUp' },
   { label: () => i18n.t('alphabeticalAsc'), value: 'az' },
   { label: () => i18n.t('alphabeticalDesc'), value: 'za' },
   { label: () => i18n.t('bibleStudy'), value: 'bibleStudy' },

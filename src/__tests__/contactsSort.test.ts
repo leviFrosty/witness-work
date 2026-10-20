@@ -411,4 +411,62 @@ describe('lib/contactsSort', () => {
       expect(result.map((x) => x.id)).toEqual(['a', 'b', 'c'])
     })
   })
+
+  describe('nextFollowUp', () => {
+    const visit = (
+      id: string,
+      contactId: string,
+      followUpDate?: moment.Moment
+    ): Visit => ({
+      id,
+      contact: { id: contactId },
+      date: moment().subtract(5, 'days').toDate(),
+      isBibleStudy: false,
+      ...(followUpDate
+        ? { followUp: { date: followUpDate.toDate(), notifyMe: true } }
+        : {}),
+    })
+    const soon = c({ id: 'soon', name: 'Soon' })
+    const later = c({ id: 'later', name: 'Later' })
+    const missed = c({ id: 'missed', name: 'Missed' })
+    const none = c({ id: 'none', name: 'None' })
+    const context = ctx({
+      conversations: [
+        visit('v1', 'later', moment().add(6, 'days')),
+        visit('v2', 'soon', moment().add(1, 'day')),
+        visit('v3', 'missed', moment().subtract(2, 'days')),
+        visit('v4', 'none'),
+      ],
+    })
+
+    it('desc (default) puts the soonest follow-up first, then missed, none last', () => {
+      const result = sortContacts(
+        [none, missed, later, soon],
+        'nextFollowUp',
+        'desc',
+        context
+      )
+      expect(result.map((x) => x.id)).toEqual([
+        'soon',
+        'later',
+        'missed',
+        'none',
+      ])
+    })
+
+    it('asc puts the latest first and still keeps missed, then none, last', () => {
+      const result = sortContacts(
+        [none, soon, missed, later],
+        'nextFollowUp',
+        'asc',
+        context
+      )
+      expect(result.map((x) => x.id)).toEqual([
+        'later',
+        'soon',
+        'missed',
+        'none',
+      ])
+    })
+  })
 })

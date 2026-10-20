@@ -343,6 +343,11 @@ export const FAQS: FAQEntry[] = [
   { id: 'deleteContact', category: 'contacts' },
   { id: 'contactStalenessFilter', category: 'contacts' },
   {
+    id: 'contactsFollowUpFilter',
+    category: 'contacts',
+    related: [260, 310, 480],
+  },
+  {
     id: 'findNavigation',
     category: 'general',
     pinned: true,

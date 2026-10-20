@@ -34,6 +34,7 @@ import Text from '@/components/ui/MyText'
 import ContactsFilterSheet from '@/features/contacts/components/ContactsFilterSheet'
 import { RootStackNavigation } from '@/types/rootStack'
 import { tracking } from '@/lib/tracking'
+import { analytics } from '@/lib/analytics'
 
 const operatorLabel = (op: TextOperator | ComparableOperator): string => {
   switch (op) {
@@ -114,6 +115,13 @@ const describeFilter = (
       return i18n.t('contacts_field_hasStudy')
     case 'isActiveStudy':
       return i18n.t('contacts_field_isActiveStudy')
+    case 'hasFollowUp':
+    case 'noFollowUp':
+    case 'followUpOverdue':
+      return i18n.t('contacts_filterSummaryField', {
+        field: i18n.t('contacts_field_followUp'),
+        value: i18n.t(`contacts_followUpFilter_${filter.kind}` as const),
+      })
   }
 }
 
@@ -188,6 +196,7 @@ const ContactsSortAndFilterScreen = () => {
   const handleSaveFilter = (filter: ActiveFilter, index: number | null) => {
     if (index === null) {
       setContactsFilters([...contactsFilters, filter])
+      analytics.capture('contacts_filter_added', { variant: filter.kind })
     } else {
       setContactsFilters(
         contactsFilters.map((f, i) => (i === index ? filter : f))

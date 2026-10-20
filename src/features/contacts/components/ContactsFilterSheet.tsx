@@ -10,7 +10,10 @@ import {
   ActiveFilter,
   AddressKind,
   ComparableOperator,
+  FOLLOW_UP_FILTER_KINDS,
+  FollowUpFilterKind,
   IdentityKind,
+  isFollowUpFilterKind,
   TextOperator,
 } from '@/lib/contactsFilters'
 import { ContactStaleness } from '@/lib/contactStaleness'
@@ -35,7 +38,12 @@ export type ContactsFilterSheetProps = {
 
 type TextFieldKey = IdentityKind | AddressKind
 type BooleanFieldKey = 'isFavorite' | 'hasStudy' | 'isActiveStudy'
-type StaticFieldKey = TextFieldKey | BooleanFieldKey | 'pinStaleness'
+// One field for the three Follow-up filters, picked by value like Color pin.
+type StaticFieldKey =
+  | TextFieldKey
+  | BooleanFieldKey
+  | 'pinStaleness'
+  | 'followUp'
 
 type CustomFieldKey = `customField:${string}`
 
@@ -97,6 +105,10 @@ const fieldKeyFromFilter = (filter: ActiveFilter): FieldKey => {
   switch (filter.kind) {
     case 'customField':
       return `customField:${filter.defId}` as CustomFieldKey
+    case 'hasFollowUp':
+    case 'noFollowUp':
+    case 'followUpOverdue':
+      return 'followUp'
     default:
       return filter.kind
   }
@@ -125,6 +137,8 @@ const fieldLabel = (
       return i18n.t('contacts_field_zip')
     case 'pinStaleness':
       return i18n.t('contacts_field_pinStaleness')
+    case 'followUp':
+      return i18n.t('contacts_field_followUp')
     case 'isFavorite':
       return i18n.t('contacts_field_isFavorite')
     case 'hasStudy':
@@ -163,7 +177,8 @@ const operatorsForField = (
   customFieldDefs: CustomFieldDefinition[]
 ): (TextOperator | ComparableOperator)[] => {
   if (key === null) return []
-  if (isBooleanField(key) || key === 'pinStaleness') return []
+  if (isBooleanField(key) || key === 'pinStaleness' || key === 'followUp')
+    return []
   if (isTextField(key)) return TEXT_OPERATORS
   if (isCustomFieldKey(key)) {
     const def = customFieldDefs.find((d) => d.id === customFieldIdFromKey(key))
@@ -219,6 +234,12 @@ const ContactsFilterSheet: React.FC<ContactsFilterSheetProps> = ({
           setOp(null)
           setValue(initial.value)
           break
+        case 'hasFollowUp':
+        case 'noFollowUp':
+        case 'followUpOverdue':
+          setOp(null)
+          setValue(initial.kind)
+          break
         case 'isFavorite':
         case 'hasStudy':
         case 'isActiveStudy':
@@ -267,11 +288,20 @@ const ContactsFilterSheet: React.FC<ContactsFilterSheetProps> = ({
     }
   }, [field, value])
 
+  // Choice values from another field (e.g. Color pin's `week`) don't carry
+  // over to the Follow-up field; this runs only when the field changes.
+  useEffect(() => {
+    if (field === 'followUp')
+      setValue((v) => (isFollowUpFilterKind(v) ? v : ''))
+    else setValue((v) => (isFollowUpFilterKind(v) ? '' : v))
+  }, [field])
+
   // An archived field stays listed for the filter on it being edited (e.g. a
   // Saved View's), so that filter can still be changed.
   const availableFields: Exclude<FieldKey, null>[] = [
     ...TEXT_FIELD_KEYS,
     'pinStaleness',
+    'followUp',
     ...BOOLEAN_FIELD_KEYS,
     ...customFieldDefs
       .filter(
@@ -293,12 +323,15 @@ const ContactsFilterSheet: React.FC<ContactsFilterSheetProps> = ({
     return customFieldDefs.find((d) => d.id === customFieldIdFromKey(field))
   }, [field, customFieldDefs])
 
+  const isChoiceField = field === 'pinStaleness' || field === 'followUp'
+
   const showOperatorRow =
-    field !== null && !isBooleanField(field) && field !== 'pinStaleness'
+    field !== null && !isBooleanField(field) && !isChoiceField
 
   const showValueRow =
     field !== null &&
     !isBooleanField(field) &&
+    !isChoiceField &&
     op !== 'isSet' &&
     op !== 'notSet'
 
@@ -308,6 +341,7 @@ const ContactsFilterSheet: React.FC<ContactsFilterSheetProps> = ({
     if (field === 'pinStaleness') {
       return PIN_STALENESS_VALUES.includes(value as ContactStaleness)
     }
+    if (field === 'followUp') return isFollowUpFilterKind(value)
     if (op === null) return false
     if (op === 'isSet' || op === 'notSet') return true
     return value.trim().length > 0
@@ -331,6 +365,9 @@ const ContactsFilterSheet: React.FC<ContactsFilterSheetProps> = ({
     if (field === 'pinStaleness') {
       if (!PIN_STALENESS_VALUES.includes(value as ContactStaleness)) return null
       return { kind: 'pinStaleness', value: value as ContactStaleness }
+    }
+    if (field === 'followUp') {
+      return isFollowUpFilterKind(value) ? { kind: value } : null
     }
     if (op === null) return null
     if (isCustomFieldKey(field)) {
@@ -390,6 +427,12 @@ const ContactsFilterSheet: React.FC<ContactsFilterSheetProps> = ({
     PIN_STALENESS_VALUES.map((candidate) => ({
       key: candidate,
       label: i18n.t(`contacts_pinStaleness_${candidate}` as const),
+    }))
+
+  const followUpOptions: ChoiceChip<FollowUpFilterKind>[] =
+    FOLLOW_UP_FILTER_KINDS.map((candidate) => ({
+      key: candidate,
+      label: i18n.t(`contacts_followUpFilter_${candidate}` as const),
     }))
 
   // Pick the proper TextInput config for the active field. Custom number/date
@@ -516,7 +559,29 @@ const ContactsFilterSheet: React.FC<ContactsFilterSheetProps> = ({
               </View>
             )}
 
-            {showValueRow && field !== 'pinStaleness' && (
+            {field === 'followUp' && (
+              <View
+                style={{
+                  gap: 8,
+                  borderWidth: 1,
+                  borderColor: validation.invalid('value')
+                    ? theme.colors.error
+                    : 'transparent',
+                  borderRadius: theme.numbers.borderRadiusMd,
+                }}
+              >
+                <Text style={sectionTitleStyle}>
+                  {i18n.t('contacts_filterValue')}
+                </Text>
+                <ChoiceChips<FollowUpFilterKind>
+                  value={isFollowUpFilterKind(value) ? value : null}
+                  onChange={(v) => setValue(v)}
+                  options={followUpOptions}
+                />
+              </View>
+            )}
+
+            {showValueRow && (
               <View style={{ gap: 8 }}>
                 <Pressable
                   onPress={() => valueInput.current?.focus()}

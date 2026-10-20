@@ -132,6 +132,39 @@ describe('Saved View payloads and backups', () => {
     ).toBeUndefined()
   })
 
+  it('round-trips follow-up filters and the next follow-up sort', () => {
+    const followUps: SavedContactView = {
+      ...view('Follow-ups'),
+      filters: [
+        { kind: 'hasFollowUp' },
+        { kind: 'noFollowUp' },
+        { kind: 'followUpOverdue' },
+      ],
+      sort: 'nextFollowUp',
+    }
+    usePreferences.getState().set({
+      savedContactViews: { f: followUps },
+      contactsFilters: [{ kind: 'noFollowUp' }],
+    })
+    const parsed = parsePayload(JSON.stringify(buildPayload({ deviceId: 't' })))
+    expect(parsed?.preferencesStore.values.savedContactViews).toEqual({
+      f: followUps,
+    })
+    expect(parsed?.preferencesStore.values.contactsFilters).toEqual([
+      { kind: 'noFollowUp' },
+    ])
+
+    const backup = JSON.parse(JSON.stringify(createBackupFile()))
+    usePreferences.setState({ savedContactViews: {}, contactsFilters: [] })
+    restoreBackupFile(backup)
+    expect(usePreferences.getState().savedContactViews).toEqual({
+      f: followUps,
+    })
+    expect(usePreferences.getState().contactsFilters).toEqual([
+      { kind: 'noFollowUp' },
+    ])
+  })
+
   it('skips a view it can’t read and leaves the local copy alone', () => {
     const payload = buildPayload({ deviceId: 't' })
     payload.preferencesStore.values.savedContactViews = {

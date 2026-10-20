@@ -60,6 +60,7 @@ import useHideTabBar from '@/hooks/useHideTabBar'
 import useScreenReaderEnabled from '@/hooks/useScreenReaderEnabled'
 import ScrollAwayHeader from '@/components/ui/ScrollAwayHeader'
 import { contactSortLabel } from '@/features/contacts/lib/contactsQueryLabels'
+import { sortRowDetail } from '@/features/contacts/lib/sortRowDetail'
 import useSavedContactViews from '@/features/contacts/hooks/useSavedContactViews'
 import SavedViewsBar from '@/features/contacts/components/SavedViewsBar'
 import useSuggestedContactsList from '@/features/contacts/hooks/useSuggestedContactsList'
@@ -627,7 +628,17 @@ const ContactsScreen = ({
                     contact={contact}
                     index={conversationIndex}
                     searchMatches={searchMatchesById.get(contact.id)}
-                    detail={item.detail}
+                    detail={
+                      // Suggested rows say why they're listed; other sorts show
+                      // the value they're sorted by.
+                      item.detail ??
+                      sortRowDetail({
+                        sort: contactSort,
+                        sortLabel,
+                        contact,
+                        index: conversationIndex,
+                      })
+                    }
                     selected={isWide && selectedContact?.id === contact.id}
                     showsDisclosure={!isWide}
                     selectionMode={selection.selecting}

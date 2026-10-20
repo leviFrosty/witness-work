@@ -13,8 +13,7 @@ import {
   searchContactsFuzzy,
 } from '@/lib/contactsSearch'
 import { filterActivesContacts } from '@/lib/dismissedContacts'
-import { buildConversationIndex } from '@/lib/conversationIndex'
-import useLocalDay from '@/hooks/useLocalDay'
+import useConversationIndex from '@/hooks/useConversationIndex'
 
 /**
  * Single source of truth for the active contacts pipeline. The Contacts tab
@@ -38,18 +37,18 @@ export function useContactsSorted() {
     direction: contactSortDirection,
   } = query
   const search = useContactsSearchStore((s) => s.search)
-  const localDay = useLocalDay()
 
   const actives = useMemo(() => filterActivesContacts(contacts), [contacts])
 
   // Single per-contact conversation index, shared with the comparator below and
   // handed down to the stats header and every row — so the whole screen scans
-  // the conversations array once instead of once per contact. `localDay`
-  // rebuilds it when the tab stays mounted into a new day, so "this month" and
-  // the staleness buckets don't stay on the day it was first built.
-  const conversationIndex = useMemo(
-    () => buildConversationIndex(conversations, stalenessBreakpoints, localDay),
-    [conversations, stalenessBreakpoints, localDay]
+  // the conversations array once instead of once per contact. It rebuilds
+  // when the tab stays mounted into a new day (so "this month" and the
+  // staleness buckets move on) and when a Follow-up turns missed, so filters
+  // and sort follow the clock.
+  const conversationIndex = useConversationIndex(
+    conversations,
+    stalenessBreakpoints
   )
 
   const hasSearch = search.trim().length > 0

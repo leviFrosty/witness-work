@@ -261,8 +261,8 @@ vi.mock('@/hooks/useAdaptiveLayout', () => ({
 vi.mock('@/hooks/useGlassColorScheme', () => ({ default: () => 'light' }))
 vi.mock('@/hooks/useMarkerColors', () => ({ useMarkerColors: () => ({}) }))
 vi.mock('@/lib/contactStaleness', () => ({ stalenessToColor: () => '#0f0' }))
-vi.mock('@/lib/conversationIndex', () => ({
-  buildConversationIndex: () => ({ stalenessFor: () => 'never' }),
+vi.mock('@/hooks/useConversationIndex', () => ({
+  default: () => ({ stalenessFor: () => 'never' }),
 }))
 vi.mock('@/lib/address', () => ({
   addressToString: () => '',

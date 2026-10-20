@@ -167,6 +167,11 @@ export const isAppointment = (conversation: Visit): boolean => {
   return !followUp.dismissed
 }
 
+/** An open Follow-up becomes missed this many hours after its time. */
+export const MISSED_FOLLOW_UP_AFTER_HOURS = 4
+/** Missed Follow-ups older than this many days stop surfacing as missed. */
+export const MISSED_FOLLOW_UP_LOOKBACK_DAYS = 30
+
 /** Groups Visits by Contact id, for `followUpAnswer` lookups. */
 export const visitsByContact = (visits: Visit[]) => {
   const byContact = new Map<string, Visit[]>()
@@ -224,7 +229,9 @@ export const followUpCardItems = ({
   const max = isMorning
     ? now.clone().endOf('day')
     : now.clone().add(1, 'day').endOf('day')
-  const missedBefore = now.clone().subtract(4, 'hours')
+  const missedBefore = now
+    .clone()
+    .subtract(MISSED_FOLLOW_UP_AFTER_HOURS, 'hours')
   const byContact = visitsByContact(conversations)
 
   return conversations
@@ -265,7 +272,10 @@ export const overdueFollowUpConversations = ({
   conversations: Visit[]
   lookbackDays: number
 }) => {
-  const max = moment(currentTime).subtract(4, 'hours')
+  const max = moment(currentTime).subtract(
+    MISSED_FOLLOW_UP_AFTER_HOURS,
+    'hours'
+  )
   const min = moment(currentTime).subtract(lookbackDays, 'days').startOf('day')
   const byContact = visitsByContact(conversations)
 

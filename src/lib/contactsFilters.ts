@@ -5,6 +5,11 @@ import { CustomFieldDefinition } from '@/types/customField'
 import {
   contactHasAtLeastOneStudy,
   contactStudiedForGivenMonth,
+  followUpAnswer,
+  isAppointment,
+  MISSED_FOLLOW_UP_AFTER_HOURS,
+  MISSED_FOLLOW_UP_LOOKBACK_DAYS,
+  overdueFollowUpConversations,
 } from '@/lib/conversations'
 import { ContactStaleness, getContactStaleness } from '@/lib/contactStaleness'
 import { StalenessBreakpoints } from '@/types/staleness'
@@ -36,6 +41,27 @@ export type ActiveFilter =
   | { kind: 'isFavorite' }
   | { kind: 'hasStudy' }
   | { kind: 'isActiveStudy' }
+  | { kind: FollowUpFilterKind }
+
+/**
+ * Follow-up filters: an upcoming Follow-up, none upcoming, or a missed one (the
+ * same set as the missed Follow-up reminders).
+ */
+export type FollowUpFilterKind =
+  | 'hasFollowUp'
+  | 'noFollowUp'
+  | 'followUpOverdue'
+
+export const FOLLOW_UP_FILTER_KINDS: FollowUpFilterKind[] = [
+  'hasFollowUp',
+  'noFollowUp',
+  'followUpOverdue',
+]
+
+export const isFollowUpFilterKind = (
+  kind: string
+): kind is FollowUpFilterKind =>
+  (FOLLOW_UP_FILTER_KINDS as string[]).includes(kind)
 
 export type FilterContext = {
   conversations: Visit[]
@@ -44,8 +70,9 @@ export type FilterContext = {
   stalenessBreakpoints: StalenessBreakpoints
   /**
    * Per-contact aggregates built from the same `conversations` and
-   * `stalenessBreakpoints`. When given, the staleness and study filters read it
-   * in O(1) instead of scanning every conversation once per contact.
+   * `stalenessBreakpoints`. When given, the staleness, study and Follow-up
+   * filters read it in O(1) instead of scanning every conversation once per
+   * contact.
    */
   conversationIndex?: ConversationIndex
 }
@@ -114,6 +141,38 @@ const getAddressField = (contact: Contact, kind: AddressKind): string => {
   return contact.address?.[kind] ?? ''
 }
 
+const contactVisits = (contact: Contact, conversations: Visit[]) =>
+  conversations.filter((v) => v.contact.id === contact.id)
+
+/** Scan fallback for `nextFollowUpMs`: an open Follow-up not missed yet. */
+const hasUpcomingFollowUp = (
+  contact: Contact,
+  conversations: Visit[],
+  now: Date
+) => {
+  const visits = contactVisits(contact, conversations)
+  const missedBefore =
+    now.getTime() - MISSED_FOLLOW_UP_AFTER_HOURS * 60 * 60 * 1000
+  return visits.some(
+    (v) =>
+      isAppointment(v) &&
+      new Date(v.followUp!.date).getTime() > missedBefore &&
+      !followUpAnswer(v, visits)
+  )
+}
+
+/** Scan fallback for `missedFollowUpMs`: the missed Follow-up reminders' set. */
+const hasMissedFollowUp = (
+  contact: Contact,
+  conversations: Visit[],
+  now: Date
+) =>
+  overdueFollowUpConversations({
+    currentTime: now,
+    conversations: contactVisits(contact, conversations),
+    lookbackDays: MISSED_FOLLOW_UP_LOOKBACK_DAYS,
+  }).length > 0
+
 const passesFilter = (
   contact: Contact,
   filter: ActiveFilter,
@@ -178,6 +237,18 @@ const passesFilter = (
         contact,
         month: new Date(),
       })
+    case 'hasFollowUp':
+    case 'noFollowUp': {
+      const upcoming = ctx.conversationIndex
+        ? ctx.conversationIndex.nextFollowUpMs.has(contact.id)
+        : hasUpcomingFollowUp(contact, ctx.conversations, new Date())
+      return filter.kind === 'hasFollowUp' ? upcoming : !upcoming
+    }
+    case 'followUpOverdue':
+      if (ctx.conversationIndex) {
+        return ctx.conversationIndex.missedFollowUpMs.has(contact.id)
+      }
+      return hasMissedFollowUp(contact, ctx.conversations, new Date())
   }
 }
 

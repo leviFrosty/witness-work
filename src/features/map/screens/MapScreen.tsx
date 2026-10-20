@@ -65,10 +65,8 @@ import Popover from '@/components/ui/Popover'
 import MapKey from '@/features/map/components/MapColorKey'
 import { useMarkerColors } from '@/hooks/useMarkerColors'
 import { stalenessToColor } from '@/lib/contactStaleness'
-import {
-  buildConversationIndex,
-  ConversationIndex,
-} from '@/lib/conversationIndex'
+import { ConversationIndex } from '@/lib/conversationIndex'
+import useConversationIndex from '@/hooks/useConversationIndex'
 import {
   findContactIndexById,
   reconcileActiveContact,
@@ -1494,9 +1492,9 @@ const MapScreen = ({
   // Single O(conversations) index shared by the pin-color loop and every
   // carousel card — replaces the per-contact full-array scans that made the
   // screen take seconds to open (same pattern as the Contacts list).
-  const conversationIndex = useMemo(
-    () => buildConversationIndex(conversations, stalenessBreakpoints),
-    [conversations, stalenessBreakpoints]
+  const conversationIndex = useConversationIndex(
+    conversations,
+    stalenessBreakpoints
   )
 
   const contactMarkers: ContactMarker[] = useMemo(

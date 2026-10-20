@@ -21,6 +21,7 @@ export type ContactSortDirection = 'asc' | 'desc'
 export type ContactSortKey =
   | 'suggested'
   | 'recentConversation'
+  | 'nextFollowUp'
   | 'az'
   | 'za'
   | 'bibleStudy'
@@ -113,6 +114,24 @@ const compareKey = (
         return missing(ar !== undefined, br !== undefined)
       }
       return ar - br
+    }
+    case 'nextFollowUp': {
+      // Soonest first under the default (desc) direction, like the other date
+      // sorts put the most relevant date first.
+      const af = index.nextFollowUpMs.get(a.id)
+      const bf = index.nextFollowUpMs.get(b.id)
+      if (af === undefined && bf === undefined) {
+        // A missed Follow-up still comes before none, so the rows saying
+        // "overdue" sit together after the upcoming ones.
+        return missing(
+          index.missedFollowUpMs.has(a.id),
+          index.missedFollowUpMs.has(b.id)
+        )
+      }
+      if (af === undefined || bf === undefined) {
+        return missing(af !== undefined, bf !== undefined)
+      }
+      return bf - af
     }
     case 'az':
       return compareText(a.name, b.name)

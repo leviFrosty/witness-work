@@ -106,7 +106,8 @@ const ContactRow = ({
   searchMatches?: readonly FuseResultMatch[]
   /**
    * Replaces the row's "last visit · city" line, e.g. with why a suggested
-   * section lists the Contact. A search match preview still wins.
+   * section lists the Contact or the value the list is sorted by. A search
+   * match preview still wins.
    */
   detail?: SuggestedRowDetail
   /**

@@ -1,10 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { errorTracking } from '@/lib/errorTracking'
 
 const runtime = vi.hoisted(() => ({
   os: 'android' as 'android' | 'ios',
   androidId: 'dd96dec43fb81c97' as string | null,
   applicationId: 'com.leviwilkerson.jwtime' as string | null,
-  keychain: null as string | null,
+  keychain: null as string | null | Error,
   store: new Map<string, string>(),
 }))
 
@@ -38,7 +39,14 @@ vi.mock('react-native-mmkv', () => ({
   },
 }))
 vi.mock('../../modules/keychain-uuid', () => ({
-  getOrCreate: () => runtime.keychain,
+  getOrCreate: () => {
+    if (runtime.keychain instanceof Error) throw runtime.keychain
+    return runtime.keychain
+  },
+}))
+vi.mock('@/lib/logger', () => import('@/__tests__/mocks/logger'))
+vi.mock('@/lib/errorTracking', () => ({
+  errorTracking: { captureException: vi.fn() },
 }))
 
 const freshModule = async () => {
@@ -47,6 +55,7 @@ const freshModule = async () => {
 }
 
 beforeEach(() => {
+  vi.clearAllMocks()
   runtime.os = 'android'
   runtime.androidId = 'dd96dec43fb81c97'
   runtime.applicationId = 'com.leviwilkerson.jwtime'
@@ -125,6 +134,59 @@ describe('getOrCreateInstallId on iOS', () => {
     runtime.os = 'ios'
     expect((await freshModule()).getOrCreateInstallId()).toBe(
       'random-uuid-0000-0000-000000000000'
+    )
+  })
+
+  it('stores and caches nothing while the Keychain is locked, then returns its id', async () => {
+    runtime.os = 'ios'
+    runtime.keychain = new Error(
+      'Keychain read failed (OSStatus -25308: User interaction is not allowed.)'
+    )
+    const { getOrCreateInstallId, InstallIdUnavailableError } =
+      await freshModule()
+
+    let thrown: unknown
+    try {
+      getOrCreateInstallId()
+    } catch (error) {
+      thrown = error
+    }
+    expect(thrown).toBeInstanceOf(InstallIdUnavailableError)
+    expect(
+      (thrown as InstanceType<typeof InstallIdUnavailableError>).status
+    ).toBe(-25308)
+    expect(runtime.store.size).toBe(0)
+
+    runtime.keychain = 'KEYCHAIN-UUID'
+    expect(getOrCreateInstallId()).toBe('KEYCHAIN-UUID')
+    expect(runtime.store.size).toBe(0)
+  })
+
+  it('reports a locked Keychain once per launch, with its status', async () => {
+    runtime.os = 'ios'
+    const native = new Error(
+      'Keychain read failed (OSStatus -25308: User interaction is not allowed.)'
+    )
+    runtime.keychain = native
+    const { getOrCreateInstallId } = await freshModule()
+
+    expect(getOrCreateInstallId).toThrow()
+    expect(getOrCreateInstallId).toThrow()
+    expect(errorTracking.captureException).toHaveBeenCalledTimes(1)
+    expect(errorTracking.captureException).toHaveBeenCalledWith(native, {
+      keychain_status: -25308,
+    })
+  })
+
+  it('reports a null status from binaries that drop the native message', async () => {
+    runtime.os = 'ios'
+    runtime.keychain = new Error('undefined reason')
+    const { getOrCreateInstallId } = await freshModule()
+
+    expect(getOrCreateInstallId).toThrow()
+    expect(errorTracking.captureException).toHaveBeenCalledWith(
+      runtime.keychain,
+      { keychain_status: null }
     )
   })
 })

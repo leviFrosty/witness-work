@@ -16,6 +16,8 @@ const runtime = vi.hoisted(() => ({
   /** Runs once as the next identity check's detected Apple Account change. */
   appleAccountChange: null as (() => void) | null,
   links: [] as unknown[],
+  /** The Keychain is locked: the install id can't be read yet. */
+  keychainLocked: false,
 }))
 
 vi.mock('react-native', () => ({
@@ -67,7 +69,16 @@ vi.mock('@/hooks/useCustomer', () => ({
     setCustomer: runtime.setCustomer,
   }),
 }))
-vi.mock('@/lib/installId', () => ({ getOrCreateInstallId: () => 'ipad' }))
+vi.mock('@/lib/installId', () => {
+  class InstallIdUnavailableError extends Error {}
+  return {
+    InstallIdUnavailableError,
+    getOrCreateInstallId: () => {
+      if (runtime.keychainLocked) throw new InstallIdUnavailableError()
+      return 'ipad'
+    },
+  }
+})
 // The identity decision itself is covered in `iCloudIdentity.test.ts`; here a
 // detected change only needs its effect on the account id.
 vi.mock('@/lib/iCloudIdentity', () => ({
@@ -125,6 +136,7 @@ beforeEach(() => {
   runtime.pending = []
   runtime.remoteChangeListeners = []
   runtime.appleAccountChange = null
+  runtime.keychainLocked = false
 })
 
 afterEach(() => {
@@ -190,5 +202,28 @@ describe('account reconcile while iCloud is downloading', () => {
     expect(account.getOrCreateAccountId()).toBe('ipad')
     // Another RevenueCat customer: linked to the server account (ADR 0029).
     expect(runtime.links).toContainEqual({ force: true, reason: 'adopted' })
+  })
+
+  it('identifies once an install id the locked Keychain refused reads', async () => {
+    runtime.keychainLocked = true
+    const { AccountProvider, bridge, Purchases } = await load()
+    const { errorTracking } = await import('@/lib/errorTracking')
+
+    await mount(AccountProvider)
+    await act(() => new Promise((resolve) => setTimeout(resolve, 0)))
+    expect(Purchases.logIn).not.toHaveBeenCalled()
+    expect(bridge.write).not.toHaveBeenCalled()
+    // `installId` reports it, once.
+    expect(errorTracking.captureException).not.toHaveBeenCalled()
+
+    runtime.keychainLocked = false
+    await act(async () => {
+      runtime.remoteChangeListeners.forEach((listener) => listener())
+    })
+
+    await vi.waitFor(() =>
+      expect(bridge.write).toHaveBeenCalledWith(ACCOUNT_FILE, ownClaim)
+    )
+    expect(Purchases.logIn).toHaveBeenCalledWith('ipad')
   })
 })

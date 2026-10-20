@@ -13,6 +13,7 @@ import { errorTracking } from '@/lib/errorTracking'
 import { logger } from '@/lib/logger'
 import { isOfflineError } from '@/lib/offlineError'
 import { getOrCreateAccountId } from '@/lib/account'
+import { InstallIdUnavailableError } from '@/lib/installId'
 import { Platform } from 'react-native'
 import { addForegroundListener } from '@/lib/appLifecycle'
 import { ensureRevenueCatLinked } from '@/lib/serverAccount/revenueCatLinkRuntime'
@@ -83,13 +84,16 @@ const CustomerProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
     // device has joined another device's claim (ADR 0011), else the Keychain
     // install id (ADR 0007). Identifying RevenueCat as this id keeps
     // entitlements correlated with the identity the Notes-Import proxy meters.
-    // If it can't resolve, stay anonymous rather than passing an empty id.
+    // If it can't resolve, stay anonymous rather than passing an empty id or
+    // a stand-in; AccountProvider identifies once the id reads.
     let accountId: string | undefined
     try {
       accountId = getOrCreateAccountId()
     } catch (error) {
       logger.error('[CustomerProvider] account id resolution failed', error)
-      errorTracking.captureException(error)
+      // `installId` already reported it.
+      if (!(error instanceof InstallIdUnavailableError))
+        errorTracking.captureException(error)
     }
 
     try {

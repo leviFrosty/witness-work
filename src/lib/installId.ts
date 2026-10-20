@@ -5,6 +5,8 @@ import { sha256 } from '@noble/hashes/sha2.js'
 import { bytesToHex, utf8ToBytes } from '@noble/hashes/utils.js'
 import { MMKV } from 'react-native-mmkv'
 import * as KeychainUuid from '../../modules/keychain-uuid'
+import { errorTracking } from '@/lib/errorTracking'
+import { logger } from '@/lib/logger'
 
 /**
  * Stable per-install identity (ADR 0007). On iOS it lives in the Keychain
@@ -25,6 +27,43 @@ const fallbackStore = (): MMKV => (_store ??= new MMKV({ id: 'install-id' }))
 const FALLBACK_KEY = 'installId'
 
 let _cached: string | null = null
+let _reportedUnavailable = false
+
+/**
+ * The Keychain refused the install id, usually because the app ran before the
+ * device's first unlock. Nothing is cached or stored in its place: a stand-in
+ * id would fork the identity once the Keychain reads again, so callers retry
+ * later. Already reported, so callers needn't report it again.
+ */
+export class InstallIdUnavailableError extends Error {
+  /** The Keychain's `OSStatus`, or null on binaries that don't report it. */
+  readonly status: number | null
+
+  constructor(cause: unknown) {
+    super('Install id unavailable: the Keychain could not be read', { cause })
+    this.name = 'InstallIdUnavailableError'
+    const message = cause instanceof Error ? cause.message : String(cause)
+    const status = /OSStatus (-?\d+)/.exec(message)?.[1]
+    this.status = status === undefined ? null : Number(status)
+  }
+}
+
+const keychainInstallId = (): string | null => {
+  try {
+    return KeychainUuid.getOrCreate()
+  } catch (error) {
+    const unavailable = new InstallIdUnavailableError(error)
+    logger.warn('[installId] Keychain unavailable', unavailable.status)
+    // Once per launch: every caller retries, and each would report it again.
+    if (!_reportedUnavailable) {
+      _reportedUnavailable = true
+      errorTracking.captureException(error, {
+        keychain_status: unavailable.status,
+      })
+    }
+    throw unavailable
+  }
+}
 
 /**
  * A UUID-formatted (RFC 9562 version 8) digest of the app-scoped Android id.
@@ -65,11 +104,12 @@ const androidSeededInstallId = (): string | null => {
 export const androidDeviceInstallId = (): string | null =>
   androidSeededInstallId()
 
+/** Throws `InstallIdUnavailableError` while the iOS Keychain can't be read. */
 export const getOrCreateInstallId = (): string => {
   if (_cached) return _cached
 
   if (Platform.OS === 'ios') {
-    const fromKeychain = KeychainUuid.getOrCreate()
+    const fromKeychain = keychainInstallId()
     if (fromKeychain) {
       _cached = fromKeychain
       return fromKeychain

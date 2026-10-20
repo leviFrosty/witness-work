@@ -1,16 +1,11 @@
 import type { AppIcon } from '@/components/ui/LucideIcon'
-import React, { PropsWithChildren, ReactNode, useState } from 'react'
-import { Pressable, StyleProp, ViewStyle, View } from 'react-native'
+import React, { PropsWithChildren, ReactNode } from 'react'
+import { ViewStyle, View } from 'react-native'
 import useTheme from '@/contexts/theme'
 import Text from '@/components/ui/MyText'
 import Button from '@/components/ui/Button'
 import LucideIcon from '@/components/ui/LucideIcon'
-import PointerHover, { HoverTint } from '@/components/ui/PointerHover'
-import {
-  drawerLayout,
-  inputLayout,
-  useInputLayout,
-} from '@/components/ui/inputs/InputLayout'
+import { inputLayout } from '@/components/ui/inputs/InputLayout'
 import Haptics from '@/lib/haptics'
 import useLinkMenuActions from '@/hooks/useLinkMenuActions'
 import ContextMenu, {
@@ -68,8 +63,6 @@ const InputRowButton: React.FC<PropsWithChildren<Props>> = ({
   contextActions,
 }: Props) => {
   const theme = useTheme()
-  const layout = useInputLayout()
-  const [hovered, setHovered] = useState(false)
   const linkActions = useLinkMenuActions({ url, label, onOpen: onPress })
 
   const menuActions: ContextMenuEntries = [
@@ -80,10 +73,9 @@ const InputRowButton: React.FC<PropsWithChildren<Props>> = ({
 
   // A long-press menu needs non-interactive content, so the row renders as a
   // plain View inside ContextMenu, which owns both the tap and the long press.
-  const withMenu = (row: React.ReactElement, hoverRadius?: number) => (
+  const withMenu = (row: React.ReactElement) => (
     <ContextMenu
       accessibilityLabel={label}
-      hoverRadius={hoverRadius}
       onPress={() => {
         Haptics.light()
         onPress?.()
@@ -93,88 +85,6 @@ const InputRowButton: React.FC<PropsWithChildren<Props>> = ({
       {row}
     </ContextMenu>
   )
-
-  if (layout === 'drawer') {
-    const drawerRowStyle = (pressed: boolean): StyleProp<ViewStyle> => [
-      {
-        flexDirection: 'row',
-        alignItems: 'center',
-        minHeight: drawerLayout.rowMinHeight,
-        paddingHorizontal: drawerLayout.horizontalPadding,
-        paddingVertical: drawerLayout.rowPaddingVertical,
-        gap: drawerLayout.labelGap,
-        borderRadius: theme.numbers.borderRadiusLg,
-        backgroundColor:
-          pressed || selected ? theme.colors.card : 'transparent',
-        opacity: disabled ? 0.4 : 1,
-      },
-      style,
-    ]
-    const drawerContent = (
-      <>
-        {leftIcon && (
-          <LucideIcon
-            icon={leftIcon}
-            size={drawerLayout.iconSize}
-            color={leftIconColor ?? theme.colors.textAlt}
-            fill={leftIconFill}
-          />
-        )}
-        <View style={{ flex: 1, gap: 5 }}>
-          <Text
-            style={{
-              fontFamily: theme.fonts.medium,
-              fontSize: theme.fontSize('md'),
-            }}
-          >
-            {label}
-          </Text>
-          {sublabel && (
-            <Text
-              style={{
-                fontSize: theme.fontSize('sm'),
-                color: theme.colors.textAlt,
-              }}
-            >
-              {sublabel}
-            </Text>
-          )}
-        </View>
-        <View pointerEvents='none' style={{ opacity: 0.6 }}>
-          {children}
-        </View>
-      </>
-    )
-
-    if (hasMenu) {
-      return withMenu(
-        <View style={drawerRowStyle(false)}>{drawerContent}</View>,
-        theme.numbers.borderRadiusLg
-      )
-    }
-
-    return (
-      <PointerHover enabled={!disabled} onHoverChange={setHovered}>
-        <Pressable
-          accessibilityRole='button'
-          accessibilityLabel={label}
-          accessibilityState={{ disabled: !!disabled, selected: !!selected }}
-          disabled={disabled}
-          onPress={() => {
-            Haptics.light()
-            onPress?.()
-          }}
-          style={({ pressed }) => drawerRowStyle(pressed)}
-        >
-          {drawerContent}
-          <HoverTint
-            visible={hovered && !disabled}
-            borderRadius={theme.numbers.borderRadiusLg}
-          />
-        </Pressable>
-      </PointerHover>
-    )
-  }
 
   const rowStyle: ViewStyle = {
     flexDirection: 'row',

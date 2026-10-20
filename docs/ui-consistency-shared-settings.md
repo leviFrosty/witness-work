@@ -48,9 +48,7 @@ in native rows need the native popovers.
 `PreferencesScreen`, Appearance, Backups, Conversations, Custom Fields, Home,
 Navigation, Personalization, Plans, Publisher, Schedule, Widgets, and iCloud
 Preferences all mount through `SettingsInputLayout`. `MoreScreen` and
-`ImportAndExportScreen` use the same content inset contract. The drawer itself
-keeps `InputLayoutProvider value='drawer'` so its 44pt rows, 2pt gaps, 32pt
-section spacing, and nav-aligned headings remain intact.
+`ImportAndExportScreen` use the same content inset contract.
 
 ## Intentional exceptions
 

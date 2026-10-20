@@ -17,11 +17,7 @@ import Animated, {
 } from 'react-native-reanimated'
 import { scheduleOnRN } from 'react-native-worklets'
 import useTheme from '@/contexts/theme'
-import {
-  drawerLayout,
-  inputLayout,
-  useInputLayout,
-} from '@/components/ui/inputs/InputLayout'
+import { inputLayout } from '@/components/ui/inputs/InputLayout'
 
 type Props = ViewProps & {
   /**
@@ -195,22 +191,16 @@ const Section: React.FC<PropsWithChildren<Props>> = ({
   ...props
 }) => {
   const theme = useTheme()
-  const layout = useInputLayout()
 
   return (
     <View
       style={[
         {
           borderColor: theme.colors.border,
-          borderWidth:
-            layout === 'settings' ? inputLayout.sectionBorderWidth : 0,
+          borderWidth: inputLayout.sectionBorderWidth,
           borderRadius: theme.numbers.borderRadiusLg,
-          backgroundColor:
-            layout === 'drawer'
-              ? 'transparent'
-              : theme.colors.backgroundLighter,
+          backgroundColor: theme.colors.backgroundLighter,
           padding: 0,
-          gap: layout === 'drawer' ? drawerLayout.rowGap : 0,
           overflow: 'hidden',
         },
         style,

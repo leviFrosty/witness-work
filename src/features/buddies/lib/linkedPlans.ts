@@ -1,6 +1,7 @@
+import moment from 'moment'
 import {
   DEFAULT_START_TIME_IN_MINUTES,
-  normalizeDateForStorage,
+  storedDayKey,
 } from '@/lib/normalizeDate'
 import { sharedNoteFields } from '@/features/buddies/lib/sharedNotes'
 import { hasSharedEventEnded } from '@/features/buddies/lib/shareTiming'
@@ -51,7 +52,9 @@ function mirroredFields(share: IncomingShare) {
   const { details } = share
   const { noteDoc } = sharedNoteFields(details)
   return {
-    date: normalizeDateForStorage(`${details.d}T12:00:00`),
+    // A local-mode day: the store anchors it to noon UTC itself, and handing
+    // it an anchor lands on the next day at UTC+12 and beyond.
+    date: moment(details.d, 'YYYY-MM-DD').hour(12).toDate(),
     // An invitation with no start time is for an anytime Plan.
     startTimeInMinutes: details.s ?? DEFAULT_START_TIME_IN_MINUTES,
     anytime: details.s === undefined ? true : undefined,
@@ -64,8 +67,12 @@ function mirroredFields(share: IncomingShare) {
   }
 }
 
-const differs = (plan: DayPlan, fields: ReturnType<typeof mirroredFields>) =>
-  new Date(plan.date).getTime() !== fields.date.getTime() ||
+const differs = (
+  plan: DayPlan,
+  share: IncomingShare,
+  fields: ReturnType<typeof mirroredFields>
+) =>
+  storedDayKey(plan.date) !== share.details.d ||
   plan.startTimeInMinutes !== fields.startTimeInMinutes ||
   !!plan.anytime !== !!fields.anytime ||
   plan.minutes !== fields.minutes ||
@@ -129,7 +136,7 @@ export function reconcileLinkedPlans(
         ...fields,
         buddyShare: { from: share.from, shareId: share.shareId },
       })
-    } else if (differs(plan, fields)) {
+    } else if (differs(plan, share, fields)) {
       changes.update.push({ id: plan.id, ...fields })
     }
   }

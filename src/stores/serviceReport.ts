@@ -19,6 +19,7 @@ import {
   migrateNormalizeDates,
   momentStoredDate,
   normalizeDateForStorage,
+  normalizeDateForUpdate,
   normalizePartialRecurringPlan,
   normalizeRecurringPlan,
   PersistedServiceReportState,
@@ -266,10 +267,14 @@ export const useServiceReport = create(
         }),
       updateDayPlan: (dayPlan: Partial<DayPlan>, options?: PlanSaveOptions) => {
         set(({ dayPlans, deletedDayPlans }) => {
+          const existing = dayPlans.find((c) => c.id === dayPlan.id)
           const normalized: Partial<DayPlan> = dayPlan.date
-            ? { ...dayPlan, date: normalizeDateForStorage(dayPlan.date) }
+            ? {
+                ...dayPlan,
+                date: normalizeDateForUpdate(dayPlan.date, existing?.date),
+              }
             : dayPlan
-          const found = dayPlans.some((c) => c.id === normalized.id)
+          const found = !!existing
           return {
             dayPlans: dayPlans.map((c) => {
               if (c.id !== normalized.id) {
@@ -340,8 +345,12 @@ export const useServiceReport = create(
         options?: PlanSaveOptions
       ) => {
         set(({ recurringPlans, deletedRecurringPlans }) => {
-          const normalized = normalizePartialRecurringPlan(recurringPlan)
-          const found = recurringPlans.some((c) => c.id === normalized.id)
+          const existing = recurringPlans.find((c) => c.id === recurringPlan.id)
+          const normalized = normalizePartialRecurringPlan(
+            recurringPlan,
+            existing
+          )
+          const found = !!existing
           return {
             recurringPlans: recurringPlans.map((c) => {
               if (c.id !== normalized.id) {
@@ -410,16 +419,19 @@ export const useServiceReport = create(
         override: RecurringPlanOverride
       ) => {
         set(({ recurringPlans }) => {
-          const normalized: RecurringPlanOverride = {
-            ...override,
-            date: normalizeDateForStorage(override.date),
-          }
           return {
             recurringPlans: recurringPlans.map((c) => {
               if (c.id !== planId) {
                 return c
               }
               const existingOverrides = c.overrides || []
+              const normalized: RecurringPlanOverride = {
+                ...override,
+                date: normalizeDateForUpdate(
+                  override.date,
+                  ...existingOverrides.map((o) => o.date)
+                ),
+              }
               const updatedOverrides = existingOverrides.map((o) => {
                 if (
                   momentStoredDate(o.date).isSame(
@@ -708,15 +720,15 @@ export const useServiceReport = create(
       updateServiceReport: (serviceReport: TimeEntry) => {
         set(({ serviceReports }) => {
           const reports = { ...serviceReports }
-          const normalized: TimeEntry = {
-            ...serviceReport,
-            date: normalizeDateForStorage(serviceReport.date),
-          }
-          const foundReport = getReport(reports, normalized)
+          const foundReport = getReport(reports, serviceReport)
           if (!foundReport) {
             return {}
           }
           const { month, year, report: previous } = foundReport
+          const normalized: TimeEntry = {
+            ...serviceReport,
+            date: normalizeDateForUpdate(serviceReport.date, previous.date),
+          }
           const nextDate = momentStoredDate(normalized.date)
           const nextYear = nextDate.year(),
             nextMonth = nextDate.month()

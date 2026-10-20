@@ -63,6 +63,35 @@ export const preserveOrNormalizeStoredDate = (date: Date | string): Date => {
 }
 
 /**
+ * Write-path variant for update actions: a record's own stored date handed back
+ * unchanged (an edit that spreads the stored record) keeps its day.
+ * Re-anchoring it would read the anchor's local day, which is the next day at
+ * UTC+12 and beyond. Only the stored value itself counts — the same Date, or
+ * the same instant as a serialized string. A fresh Date at that instant may be
+ * local midnight at UTC+12, which names the next day, so it's normalized like
+ * any other input. Callers must pass the stored value itself or a local-mode
+ * Date, never a copy of the anchor (`new Date(stored)`): a copy is read as
+ * local input and moves a day forward at UTC+12 and beyond.
+ */
+export const normalizeDateForUpdate = (
+  date: Date | string,
+  ...stored: (Date | string | null | undefined)[]
+): Date => {
+  const kept = stored.find(
+    (value): value is Date | string =>
+      value != null &&
+      (value === date ||
+        (typeof date === 'string' &&
+          new Date(date).getTime() === new Date(value).getTime()))
+  )
+  if (kept === undefined) return normalizeDateForStorage(date)
+  // The same Date back, so a later edit from a stale copy still matches.
+  return kept instanceof Date && isAnchoredNoonUtc(kept)
+    ? kept
+    : preserveOrNormalizeStoredDate(kept)
+}
+
+/**
  * Reads a stored calendar-day Date in UTC mode. Use this anywhere you'd
  * otherwise call `moment(d)` on a `TimeEntry.date`, `DayPlan.date`,
  * `RecurringPlan.startDate`, etc. — anything that came through
@@ -136,28 +165,43 @@ export const normalizeRecurringPlan = (plan: RecurringPlan): RecurringPlan => ({
   })),
 })
 
-/** Same as `normalizeRecurringPlan` but tolerates missing fields (for updates). */
+/**
+ * Same as `normalizeRecurringPlan` but tolerates missing fields (for updates).
+ * Dates handed back unchanged from `existing` keep their stored day (see
+ * `normalizeDateForUpdate`).
+ */
 export const normalizePartialRecurringPlan = (
-  plan: Partial<RecurringPlan>
+  plan: Partial<RecurringPlan>,
+  existing?: RecurringPlan
 ): Partial<RecurringPlan> => {
   const result: Partial<RecurringPlan> = { ...plan }
-  if (plan.startDate) result.startDate = normalizeDateForStorage(plan.startDate)
+  if (plan.startDate)
+    result.startDate = normalizeDateForUpdate(
+      plan.startDate,
+      existing?.startDate
+    )
   if (plan.recurrence) {
     result.recurrence = {
       ...plan.recurrence,
       endDate: plan.recurrence.endDate
-        ? normalizeDateForStorage(plan.recurrence.endDate)
+        ? normalizeDateForUpdate(
+            plan.recurrence.endDate,
+            existing?.recurrence.endDate
+          )
         : plan.recurrence.endDate,
     }
   }
   if (plan.deletedDates)
     result.deletedDates = plan.deletedDates.map((d) =>
-      normalizeDateForStorage(d)
+      normalizeDateForUpdate(d, ...(existing?.deletedDates ?? []))
     )
   if (plan.overrides)
     result.overrides = plan.overrides.map((o) => ({
       ...o,
-      date: normalizeDateForStorage(o.date),
+      date: normalizeDateForUpdate(
+        o.date,
+        ...(existing?.overrides ?? []).map((e) => e.date)
+      ),
     }))
   return result
 }

@@ -41,6 +41,7 @@ export function reminderContent(
       kind: reminder.kind,
       id: reminder.targetId,
       ...(reminder.contactId ? { contactId: reminder.contactId } : {}),
+      ...(reminder.day ? { day: reminder.day } : {}),
     },
   }
   const lead = reminderLead(reminder.anchor, reminder.date)

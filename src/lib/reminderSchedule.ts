@@ -1,13 +1,23 @@
 import moment from 'moment'
 import type { Contact } from '@/types/contact'
 import type { Visit } from '@/types/visit'
-import type { DayPlan } from '@/types/timeEntry'
+import type { DayPlan, RecurringPlan } from '@/types/timeEntry'
 import {
   reminderFireDate,
   reminderOffsetMinutesBetween,
   type NotificationOffset,
 } from '@/lib/notificationOffset'
-import { combineDateAndStartTime } from '@/lib/normalizeDate'
+import {
+  combineDateAndStartTime,
+  normalizeDateForStorage,
+} from '@/lib/normalizeDate'
+import {
+  getEffectiveMinutesForRecurringPlan,
+  getEffectiveNoteForRecurringPlan,
+  getEffectiveStartTimeInMinutesForRecurringPlan,
+  getPlansIntersectingDay,
+  isRecurringPlanAnytimeOnDate,
+} from '@/lib/recurrence'
 import {
   streakReminderAt,
   type ServiceStreak,
@@ -31,6 +41,8 @@ export type LocalReminder = {
   targetId: string
   /** The Visit's Contact. */
   contactId?: string
+  /** A Recurring Plan's instance (`YYYY-MM-DD`); `targetId` is the Plan. */
+  day?: string
   /**
    * When the Follow-up or Plan starts, or the planned day's Plans end; when a
    * streak ends; the Contact's return otherwise.
@@ -95,10 +107,86 @@ export const ANYTIME_PLAN_REMINDER_MINUTES = 8 * 60
 export const anytimePlanReminderDate = (date: Date | string) =>
   combineDateAndStartTime(date, ANYTIME_PLAN_REMINDER_MINUTES)
 
+const DAY_MS = 24 * 60 * 60_000
+/**
+ * How far ahead a Recurring Plan's instances remind. A weekly Plan schedules
+ * two or three, a small share of the OS's pending-notification limit; opening
+ * the app tops it up.
+ */
+export const RECURRING_PLAN_REMINDER_HORIZON_MS = 14 * DAY_MS
+/** The longest lead looked ahead for; a longer one reminds that far ahead. */
+const MAX_RECURRING_LEAD_MS = 366 * DAY_MS
+
+/** Whether a Recurring Plan still has an instance on `day` (`YYYY-MM-DD`). */
+export function recurringPlanOnDay(plan: RecurringPlan, day: string): boolean {
+  const [year, month, date] = day.split('-').map(Number)
+  return (
+    getPlansIntersectingDay(new Date(year, month - 1, date, 12), [plan])
+      .length > 0
+  )
+}
+
+/**
+ * One reminder per instance of a Recurring Plan, from yesterday's (still listed
+ * in the tray while it runs) to those that fire within the horizon. Skipped
+ * dates, the end date and per-date time, length and note come from the Plan.
+ */
+function recurringPlanReminders(
+  plan: RecurringPlan,
+  fallback: NotificationOffset,
+  now: number
+): LocalReminder[] {
+  const reminders: LocalReminder[] = []
+  const to = now + RECURRING_PLAN_REMINDER_HORIZON_MS
+  const leadMinutes =
+    savedReminderOffsetMinutes(new Date(now), plan) ??
+    moment.duration(fallback.amount, fallback.unit).asMinutes()
+  const lead = Math.min(
+    Number.isFinite(leadMinutes) ? Math.max(leadMinutes, 0) * 60_000 : 0,
+    MAX_RECURRING_LEAD_MS
+  )
+  const last = moment(to + lead).endOf('day')
+  for (
+    const cursor = moment(now).startOf('day').subtract(1, 'day');
+    cursor.isSameOrBefore(last);
+    cursor.add(1, 'day')
+  ) {
+    const day = new Date(cursor.year(), cursor.month(), cursor.date(), 12)
+    if (!getPlansIntersectingDay(day, [plan]).length) continue
+    const stored = normalizeDateForStorage(day)
+    const anytimeAt = isRecurringPlanAnytimeOnDate(plan, day)
+      ? anytimePlanReminderDate(stored)
+      : null
+    const anchor =
+      anytimeAt ??
+      combineDateAndStartTime(
+        stored,
+        getEffectiveStartTimeInMinutesForRecurringPlan(plan, day)
+      )
+    const date = anytimeAt ?? reminderDate(anchor, plan, fallback)
+    if (date.getTime() > to) continue
+    const key = cursor.format('YYYY-MM-DD')
+    reminders.push({
+      id: reminderRequestId('plan', `${plan.id}-${key}`),
+      date,
+      kind: 'plan',
+      targetId: plan.id,
+      day: key,
+      anchor,
+      note: getEffectiveNoteForRecurringPlan(plan, day).note,
+      title: plan.title,
+      minutes: getEffectiveMinutesForRecurringPlan(plan, day),
+    })
+  }
+  return reminders
+}
+
 type ReminderSources = {
   contacts: Contact[]
   visits: Visit[]
   plans: DayPlan[]
+  /** Absent: none. */
+  recurringPlans?: RecurringPlan[]
   visitOffset: NotificationOffset
   planOffset: NotificationOffset
   /** Planned days still without time logged; absent when that's off. */
@@ -110,8 +198,9 @@ type ReminderSources = {
 /**
  * Every reminder the records ask for, past or future, in no order. Built from
  * records alone, so it is the same after an edit, sync, or restore. The OS
- * schedule and the notifications tray both read it. Reminders to log time are
- * the exception: they run from a week back to two weeks after `now`.
+ * schedule and the notifications tray both read it. Reminders to log time and a
+ * Recurring Plan's are the exception: they run up to two weeks after `now` (the
+ * first from a week back, the second from yesterday's instance).
  */
 export function reminderOccurrences(
   args: ReminderSources & { now?: number }
@@ -151,6 +240,12 @@ export function reminderOccurrences(
       title: plan.title,
       minutes: plan.minutes,
     })
+  }
+  for (const plan of args.recurringPlans ?? []) {
+    if (!plan.notifyMe) continue
+    reminders.push(
+      ...recurringPlanReminders(plan, args.planOffset, args.now ?? Date.now())
+    )
   }
   for (const contact of args.contacts) {
     if (!contact.dismissedUntil) continue

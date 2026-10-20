@@ -275,6 +275,13 @@ export type RecurringPlan = {
   noteDoc?: RichText
   deletedDates?: Date[]
   overrides?: RecurringPlanOverride[]
+  /**
+   * Pattern-level, like `title`: every instance reminds, at its own start (an
+   * override's time) less `reminderOffsetMinutes`. See `DayPlan.notifyMe`.
+   */
+  notifyMe?: boolean
+  /** Minutes before each instance's start the reminder fires. */
+  reminderOffsetMinutes?: number
   /** Local day key of the User's last save; see `DayPlan.savedOn`. */
   savedOn?: string
   /** Epoch ms of the most recent change. Used for iCloud merge. */

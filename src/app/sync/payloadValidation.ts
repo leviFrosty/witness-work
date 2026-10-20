@@ -132,6 +132,8 @@ const recurring = record.extend({
   location: location.optional(),
   startTimeInMinutes: z.number().finite().optional(),
   anytime: z.boolean().optional(),
+  notifyMe: z.boolean().optional(),
+  reminderOffsetMinutes: z.number().finite().nonnegative().optional(),
   recurrence: z.object({
     frequency: z.number().int().min(0).max(3),
     interval: z.number().int().positive(),

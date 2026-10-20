@@ -20,6 +20,8 @@ export type ReminderData = {
   id: string
   /** The Visit's Contact, so a Follow-up reminder opens its Contact. */
   contactId?: string
+  /** A Recurring Plan's instance (`YYYY-MM-DD`); `id` is the Recurring Plan. */
+  day?: string
 }
 
 export type BuddiesPushData = {
@@ -76,5 +78,6 @@ export function reminderData(
     ...(typeof reminder.contactId === 'string'
       ? { contactId: reminder.contactId }
       : {}),
+    ...(typeof reminder.day === 'string' ? { day: reminder.day } : {}),
   }
 }

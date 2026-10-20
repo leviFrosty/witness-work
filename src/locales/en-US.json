@@ -3021,6 +3021,7 @@
   },
   "colorKeyScreenTitle": "Color Key",
   "colorKey_edit": "Edit color key",
+  "colorKey_editBucketColor": "Edit color for \"{{label}}\"",
   "colorKey_timePeriods": "Time Periods",
   "colorKey_timePeriods_description": "Set how many days since the last visit move a contact from one color to the next.",
   "colorKey_recentDays": "Recent period (days)",

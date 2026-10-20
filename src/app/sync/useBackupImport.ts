@@ -6,7 +6,8 @@ import * as DocumentPicker from 'expo-document-picker'
 import i18n from '@/lib/locales'
 import { analytics } from '@/lib/analytics'
 import { errorTracking } from '@/lib/errorTracking'
-import { isBackupFile, restoreBackupFile } from '@/lib/backupFile'
+import { isBackupFile } from '@/lib/backupFile'
+import { restoreBackupFile } from '@/app/sync/backupFileRestore'
 import { migrateServiceReports } from '@/stores/serviceReport'
 
 interface Options {
@@ -30,6 +31,19 @@ export function useBackupImport({ source, entryPoint }: Options) {
       import_type: 'backup_json',
       source,
       ...(entryPoint ? { entry_point: entryPoint } : {}),
+    }
+    const rejectInvalidFile = () => {
+      analytics.capture('import_failed', {
+        ...properties,
+        stage,
+        elapsed_ms: Date.now() - startedAt,
+        error_code: 'invalid_file',
+      })
+      Alert.alert(
+        i18n.t('importErrorInvalidFile_title'),
+        i18n.t('importErrorInvalidFile_description')
+      )
+      return false
     }
     setImporting(true)
     analytics.capture('import_started', properties)
@@ -55,19 +69,7 @@ export function useBackupImport({ source, entryPoint }: Options) {
 
       stage = 'validate_file'
       const data: unknown = JSON.parse(contents)
-      if (!isBackupFile(data)) {
-        analytics.capture('import_failed', {
-          ...properties,
-          stage,
-          elapsed_ms: Date.now() - startedAt,
-          error_code: 'invalid_file',
-        })
-        Alert.alert(
-          i18n.t('importErrorInvalidFile_title'),
-          i18n.t('importErrorInvalidFile_description')
-        )
-        return false
-      }
+      if (!isBackupFile(data)) return rejectInvalidFile()
 
       stage = 'migrate'
       if (
@@ -79,7 +81,8 @@ export function useBackupImport({ source, entryPoint }: Options) {
       }
       stage = 'restore'
 
-      restoreBackupFile(data)
+      // Records it can't read drop one by one; a broken frame stops it all.
+      if (!restoreBackupFile(data)) return rejectInvalidFile()
       analytics.capture('backup_imported', {
         ...properties,
         elapsed_ms: Date.now() - startedAt,

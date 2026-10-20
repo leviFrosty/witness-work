@@ -5,14 +5,11 @@ import useServiceReport from '@/stores/serviceReport'
 import useCategories from '@/stores/categories'
 import useMileage from '@/stores/mileage'
 import usePet from '@/stores/pet'
-import { petSliceFromBackup } from '@/lib/petBackup'
 import { useProfile } from '@/stores/profile'
 import {
   syncableValues,
   NON_SYNCABLE_PROFILE_KEYS,
 } from '@/lib/syncPreferencePolicy'
-import { extractProfileFromPreferences } from '@/lib/profileMigration'
-import { withRemoteDataMutation } from '@/lib/remoteDataMutation'
 
 /**
  * The JSON backup file. Any new stores should be added to this type to be
@@ -53,12 +50,29 @@ export function isBackupFile(data: unknown): data is BackupFile {
   return isRecord(data) && BACKUP_STORE_KEYS.some((key) => isRecord(data[key]))
 }
 
-/** The same backup Settings exports, from the stores' current state. */
-export function createBackupFile(): BackupFile {
+/**
+ * The backup file's format. Files from builds before it have no `version`;
+ * restoring them reads their app version instead (`backupFileRestore.ts`).
+ */
+export const BACKUP_FILE_VERSION = 1
+
+/**
+ * The same backup Settings exports, from the stores' current state. Carries the
+ * sync payload's markers (`explicitFollowUps`, `additivePlans`), so a restore
+ * never applies the rules for files from older builds to it.
+ */
+export function createBackupFile(): BackupFile & { version: number } {
   return {
-    serviceReportStore: useServiceReport.getState(),
+    version: BACKUP_FILE_VERSION,
+    serviceReportStore: {
+      ...useServiceReport.getState(),
+      additivePlans: true,
+    },
     contactStore: useContacts.getState(),
-    conversationStore: useConversations.getState(),
+    conversationStore: {
+      ...useConversations.getState(),
+      explicitFollowUps: true,
+    },
     preferencesStore: syncableValues(usePreferences.getState()),
     categoryStore: useCategories.getState(),
     mileageStore: useMileage.getState(),
@@ -68,78 +82,4 @@ export function createBackupFile(): BackupFile {
       NON_SYNCABLE_PROFILE_KEYS
     ),
   }
-}
-
-function knownSlice(
-  value: unknown,
-  state: Record<string, unknown>
-): Record<string, unknown> {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) return {}
-  return Object.fromEntries(
-    Object.entries(value).filter(
-      ([key]) => Object.hasOwn(state, key) && typeof state[key] !== 'function'
-    )
-  )
-}
-
-/** Older backups may lack the new stores; never copy identity or consent. */
-export function restoreBackupFile(data: BackupFile): void {
-  withRemoteDataMutation(() => {
-    if (data.contactStore)
-      useContacts
-        .getState()
-        .set(knownSlice(data.contactStore, useContacts.getState()))
-    if (data.conversationStore)
-      useConversations
-        .getState()
-        .set(knownSlice(data.conversationStore, useConversations.getState()))
-    if (data.serviceReportStore)
-      useServiceReport
-        .getState()
-        .set(knownSlice(data.serviceReportStore, useServiceReport.getState()))
-    if (data.categoryStore)
-      useCategories
-        .getState()
-        .set(knownSlice(data.categoryStore, useCategories.getState()))
-    if (data.mileageStore)
-      useMileage
-        .getState()
-        .set(knownSlice(data.mileageStore, useMileage.getState()))
-    // Checked, so a pet without its wake list can't break the replay.
-    if (data.petStore) usePet.getState().set(petSliceFromBackup(data.petStore))
-    const preferences = extractProfileFromPreferences(
-      knownSlice(data.preferencesStore, {
-        ...usePreferences.getState(),
-        ...useProfile.getState(),
-      })
-    )
-    const restored = syncableValues(preferences.preferences)
-    const current = usePreferences.getState()
-    usePreferences.getState().set({
-      ...restored,
-      // Earned badges are keepsakes: a restore adds to them, never removes
-      // (a removal would also sync to every other device).
-      earnedBadges: {
-        ...((restored.earnedBadges as typeof current.earnedBadges) ?? {}),
-        ...current.earnedBadges,
-      },
-      badgeLedger: [
-        ...new Set([
-          ...((restored.badgeLedger as string[]) ?? []),
-          ...current.badgeLedger,
-        ]),
-      ].sort(),
-      // The next evaluation files what the restored records reach as history.
-      badgesBackfilledAt: null,
-    })
-    const profile = data.profileStore ?? preferences.profile.values
-    useProfile
-      .getState()
-      .set(
-        syncableValues(
-          knownSlice(profile, useProfile.getState()),
-          NON_SYNCABLE_PROFILE_KEYS
-        )
-      )
-  })
 }

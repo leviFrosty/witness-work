@@ -235,15 +235,15 @@ Retain type selection, start, preview readiness, completion, failure, cancellati
 stop, and undo. Intermediate file selection, commit start, retry/reset clicks,
 preview edits, prompt toggles, and warning openings are dropped.
 
-| Flow                   | Outcomes                                                                                                                                                                               |
-| ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Notes Import           | `notes_import_submitted`, `notes_import_refined`, `notes_import_accepted`; a preview is not committed data. Submitted/accepted carry `input_method`.                                   |
-| Notes Import capture   | `notes_import_capture_finished` once per voice log, photo, or paper attempt.                                                                                                           |
-| MyTime / cloud restore | `import_completed` with the import type (`icloud` on iOS, `google_drive` on Android).                                                                                                  |
-| JSON restore           | `backup_imported`; started/cancelled/failed uses `import_type: backup_json`. `import_failed` `error_code: invalid_file` means the JSON held no WitnessWork store (another app's file). |
-| JSON export            | `backup_export_started` → `backup_exported`, or `backup_export_failed`. File-created and share-sheet-requested stages are dropped.                                                     |
-| Backup reminder        | View (daily reach), clicked, dismissed; reminder preference events are dropped.                                                                                                        |
-| iCloud photo consent   | `icloud_restore_images_prompted`, requested, skipped; replace confirmation remains.                                                                                                    |
+| Flow                   | Outcomes                                                                                                                                                                                                                                                       |
+| ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Notes Import           | `notes_import_submitted`, `notes_import_refined`, `notes_import_accepted`; a preview is not committed data. Submitted/accepted carry `input_method`.                                                                                                           |
+| Notes Import capture   | `notes_import_capture_finished` once per voice log, photo, or paper attempt.                                                                                                                                                                                   |
+| MyTime / cloud restore | `import_completed` with the import type (`icloud` on iOS, `google_drive` on Android).                                                                                                                                                                          |
+| JSON restore           | `backup_imported`; started/cancelled/failed uses `import_type: backup_json`. `import_failed` `error_code: invalid_file` means the JSON held no WitnessWork store (another app's file; stage `validate_file`) or its stores couldn't be read (stage `restore`). |
+| JSON export            | `backup_export_started` → `backup_exported`, or `backup_export_failed`. File-created and share-sheet-requested stages are dropped.                                                                                                                             |
+| Backup reminder        | View (daily reach), clicked, dismissed; reminder preference events are dropped.                                                                                                                                                                                |
+| iCloud photo consent   | `icloud_restore_images_prompted`, requested, skipped; replace confirmation remains.                                                                                                                                                                            |
 
 Notes Import on Android (ADR 0017) adds no events: break the Notes Import events
 and `import_failed` (`import_type: notes`) down by the SDK's `$os_name` to compare

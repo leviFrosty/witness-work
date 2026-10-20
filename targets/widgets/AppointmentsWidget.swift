@@ -6,8 +6,8 @@ import WidgetKit
 // Time window lives in `WidgetSnapshot.config.appointmentWindow`, sourced from
 // in-app Settings > Widgets. JS pre-trims to the widest possible window (30d
 // back through 31d forward) and pre-formats the time-of-day string for the
-// current locale; Swift just narrows by the configured forward edge and
-// renders.
+// current locale; Swift narrows by the configured forward edge and, on a
+// later day, marks what's overdue and relabels the times (`SnapshotDay`).
 
 private struct AppointmentsEntry: TimelineEntry {
   let date: Date
@@ -20,13 +20,18 @@ private struct AppointmentsProvider: TimelineProvider {
   }
 
   func getSnapshot(in context: Context, completion: @escaping (AppointmentsEntry) -> Void) {
-    completion(AppointmentsEntry(date: Date(), snapshot: SnapshotLoader.load()))
+    let now = Date()
+    completion(AppointmentsEntry(date: now, snapshot: SnapshotLoader.load()?.asOf(now)))
   }
 
+  /// An entry at each follow-up due before midnight turns it overdue on time;
+  /// the midnight entries relabel the days.
   func getTimeline(in context: Context, completion: @escaping (Timeline<AppointmentsEntry>) -> Void) {
-    let entry = AppointmentsEntry(date: Date(), snapshot: SnapshotLoader.load())
-    let next = Calendar.current.date(byAdding: .hour, value: 1, to: Date()) ?? Date()
-    completion(Timeline(entries: [entry], policy: .after(next)))
+    let snapshot = SnapshotLoader.load()
+    let timeline = SnapshotDay.timeline(
+      from: Date(), adding: snapshot?.appointments.map(\.dateAsDate) ?? [])
+    let entries = timeline.dates.map { AppointmentsEntry(date: $0, snapshot: snapshot?.asOf($0)) }
+    completion(Timeline(entries: entries, policy: .after(timeline.reload)))
   }
 }
 

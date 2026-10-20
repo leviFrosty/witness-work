@@ -43,6 +43,7 @@ MMKV's binary format isn't readable from Swift, so JS computes a small derived *
 | `modules/widget-bridge/`                                                         | Local Expo module exposing `writeSnapshot`, `writeFile`, `pruneFiles`, `reloadAllTimelines`, `getAppGroupIdentifier` to JS. iOS-only. |
 | `targets/widgets/Snapshot.swift`                                                 | Swift mirror of the TS `WidgetSnapshot` schema. Bump `SUPPORTED_VERSION` in lockstep with the TS `SNAPSHOT_VERSION`.                  |
 | `targets/widgets/SnapshotLoader.swift`                                           | Reads `snapshot.json` from the App Group container. App Group resolved from the widget's bundle id.                                   |
+| `targets/widgets/SnapshotDay.swift`                                              | Moves a snapshot from the day it was built for (`builtOn`) to each timeline entry's date. See [Day rollover](#day-rollover).          |
 | `targets/widgets/Theme.swift`                                                    | Widget-only spacing scale + app-matched colors (accent green, warn, error, staleness palette). Tighter than the in-app theme.         |
 | `targets/widgets/WidgetURLs.swift`                                               | Centralized factory for widget → app deep link URLs. Mirrors the route table in `src/lib/linking.ts`.                                 |
 | `targets/widgets/WidgetsBundle.swift`                                            | `@main WidgetBundle` referencing every widget and the Live Activity.                                                                  |
@@ -145,6 +146,16 @@ The snapshot is rebuilt on:
 4. **Cold start**.
 
 Each rebuild is hashed without `updatedAt` (`widgetSnapshotHash` in MMKV). Only a changed snapshot is written and followed by `WidgetCenter.shared.reloadAllTimelines()`, since reloads come out of WidgetKit's daily budget.
+
+### Day rollover
+
+A snapshot describes one local day, its `builtOn`, and the widgets keep showing it until the app writes another, which can be days later. So the Report, Calendar and Appointments widgets return an entry for now, each later follow-up today, and the next two midnights, reload after the first midnight, and move each entry to its own date (`SnapshotDay.swift`, as the watch complications do):
+
+- "Reported today" becomes "reported this month" the next day, and the pace badge falls back to hours per day.
+- From the 1st, the Report and Calendar widgets show the `nextMonth` slice, which the app builds for that day with next month's role. A later month starts from zero.
+- The calendar's today, past days and current week move along; follow-ups turn overdue on time and their labels ("Tomorrow 3:00 PM") are rewritten for the day.
+
+This assumes nothing was logged in the meantime: logging happens in the app, which writes a new snapshot. `builtOn` is part of the hash, so the first rebuild of a day is written.
 
 ## Testing the loop end-to-end
 

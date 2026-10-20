@@ -1,0 +1,207 @@
+import semver from 'semver'
+import { PAYLOAD_VERSION, parsePayload } from '@/app/sync/payload'
+import type { BackupFile } from '@/lib/backupFile'
+import {
+  migrateNormalizeDates,
+  type PersistedServiceReportState,
+} from '@/lib/normalizeDate'
+import { petSliceFromBackup } from '@/lib/petBackup'
+import { extractProfileFromPreferences } from '@/lib/profileMigration'
+import { withRemoteDataMutation } from '@/lib/remoteDataMutation'
+import {
+  syncableValues,
+  NON_SYNCABLE_PROFILE_KEYS,
+} from '@/lib/syncPreferencePolicy'
+import useCategories from '@/stores/categories'
+import useContacts from '@/stores/contactsStore'
+import useConversations from '@/stores/conversationStore'
+import useMileage from '@/stores/mileage'
+import usePet from '@/stores/pet'
+import { usePreferences } from '@/stores/preferences'
+import useServiceReport from '@/stores/serviceReport'
+import { useProfile } from '@/stores/profile'
+
+type Slice = Record<string, unknown>
+
+const isRecord = (value: unknown): value is Slice =>
+  typeof value === 'object' && value !== null && !Array.isArray(value)
+
+/** The first release whose Visits carry `followUp` only when asked for. */
+const EXPLICIT_FOLLOW_UPS_SINCE = '1.43.0'
+/** The first release where every Plan on a day adds up. */
+const ADDITIVE_PLANS_SINCE = '1.44.0'
+/** Preference names renamed in 1.40, so only older files hold them. */
+const LEGACY_PREFERENCE_KEYS = [
+  'publisher',
+  'excludedWeekdays',
+  'meetingWeekdays',
+  'pioneerStartDate',
+  'oneOffGoalHours',
+]
+
+/**
+ * Whether an unmarked file was written before `release`. Files through 1.43
+ * saved every preference, `lastAppVersion` (the app's version) included; 1.44
+ * saves only synced preferences, so a file without it is from 1.44 and already
+ * follows both rules. Old preference names mean an older file still.
+ */
+function writtenBefore(preferences: Slice, release: string): boolean {
+  if (LEGACY_PREFERENCE_KEYS.some((key) => Object.hasOwn(preferences, key)))
+    return true
+  const { lastAppVersion } = preferences
+  const version =
+    typeof lastAppVersion === 'string' ? semver.valid(lastAppVersion) : null
+  return version !== null && semver.lt(version, release)
+}
+
+/** `original` with the keys it holds replaced by their parsed values. */
+function withParsed(original: Slice, parsed: Slice): Slice {
+  const result = { ...original }
+  for (const key of Object.keys(original))
+    if (Object.hasOwn(parsed, key)) result[key] = parsed[key]
+  return result
+}
+
+/**
+ * Runs a JSON backup file through the read path every other restore uses:
+ * `parsePayload` (record validation, the preference renames, and the follow-up
+ * and Plan rules for older builds) and `migrateNormalizeDates`. Only the stores
+ * and keys the file holds come back, so restoring an older file still leaves
+ * what it lacks alone. Null when the file can't be read.
+ */
+export function normalizeBackupFile(data: BackupFile): BackupFile | null {
+  const preferences = isRecord(data.preferencesStore)
+    ? data.preferencesStore
+    : {}
+  const contacts = isRecord(data.contactStore) ? data.contactStore : undefined
+  const visits = isRecord(data.conversationStore)
+    ? data.conversationStore
+    : undefined
+  const reports = isRecord(data.serviceReportStore)
+    ? data.serviceReportStore
+    : undefined
+  const profile = isRecord(data.profileStore) ? data.profileStore : undefined
+
+  const parsed = parsePayload(
+    JSON.stringify({
+      version: PAYLOAD_VERSION,
+      writtenAt: Date.now(),
+      deviceId: 'backup-file',
+      contactStore: { contacts: [], deletedContacts: [], ...contacts },
+      conversationStore: {
+        conversations: [],
+        ...visits,
+        explicitFollowUps:
+          visits?.explicitFollowUps === true ||
+          !writtenBefore(preferences, EXPLICIT_FOLLOW_UPS_SINCE),
+      },
+      serviceReportStore: {
+        serviceReports: {},
+        dayPlans: [],
+        recurringPlans: [],
+        ...reports,
+        additivePlans:
+          reports?.additivePlans === true ||
+          !writtenBefore(preferences, ADDITIVE_PLANS_SINCE),
+      },
+      preferencesStore: { values: preferences, updatedAt: {} },
+      ...(profile ? { profileStore: { values: profile, updatedAt: {} } } : {}),
+    })
+  )
+  if (!parsed) return null
+
+  const result: BackupFile = { ...data }
+  if (contacts) result.contactStore = withParsed(contacts, parsed.contactStore)
+  if (visits)
+    result.conversationStore = withParsed(visits, parsed.conversationStore)
+  if (reports)
+    result.serviceReportStore = withParsed(reports, {
+      ...parsed.serviceReportStore,
+      ...migrateNormalizeDates(
+        parsed.serviceReportStore as unknown as PersistedServiceReportState
+      ),
+    })
+  if (isRecord(data.preferencesStore))
+    result.preferencesStore = parsed.preferencesStore.values
+  // Older files keep profile fields with the preferences; parsing moves them.
+  if (parsed.profileStore) result.profileStore = parsed.profileStore.values
+  return result
+}
+
+function knownSlice(value: unknown, state: Slice): Slice {
+  if (!isRecord(value)) return {}
+  return Object.fromEntries(
+    Object.entries(value).filter(
+      ([key]) => Object.hasOwn(state, key) && typeof state[key] !== 'function'
+    )
+  )
+}
+
+/**
+ * Restores a JSON backup file over the local stores. Older backups may lack the
+ * newer stores; those stay as they are. Never copies identity or consent.
+ * Resolves false, changing nothing, when the file can't be read.
+ */
+export function restoreBackupFile(file: BackupFile): boolean {
+  const data = normalizeBackupFile(file)
+  if (!data) return false
+  withRemoteDataMutation(() => {
+    if (data.contactStore)
+      useContacts
+        .getState()
+        .set(knownSlice(data.contactStore, useContacts.getState()))
+    if (data.conversationStore)
+      useConversations
+        .getState()
+        .set(knownSlice(data.conversationStore, useConversations.getState()))
+    if (data.serviceReportStore)
+      useServiceReport
+        .getState()
+        .set(knownSlice(data.serviceReportStore, useServiceReport.getState()))
+    if (data.categoryStore)
+      useCategories
+        .getState()
+        .set(knownSlice(data.categoryStore, useCategories.getState()))
+    if (data.mileageStore)
+      useMileage
+        .getState()
+        .set(knownSlice(data.mileageStore, useMileage.getState()))
+    // Checked, so a pet without its wake list can't break the replay.
+    if (data.petStore) usePet.getState().set(petSliceFromBackup(data.petStore))
+    const preferences = extractProfileFromPreferences(
+      knownSlice(data.preferencesStore, {
+        ...usePreferences.getState(),
+        ...useProfile.getState(),
+      })
+    )
+    const restored = syncableValues(preferences.preferences)
+    const current = usePreferences.getState()
+    usePreferences.getState().set({
+      ...restored,
+      // Earned badges are keepsakes: a restore adds to them, never removes
+      // (a removal would also sync to every other device).
+      earnedBadges: {
+        ...((restored.earnedBadges as typeof current.earnedBadges) ?? {}),
+        ...current.earnedBadges,
+      },
+      badgeLedger: [
+        ...new Set([
+          ...((restored.badgeLedger as string[]) ?? []),
+          ...current.badgeLedger,
+        ]),
+      ].sort(),
+      // The next evaluation files what the restored records reach as history.
+      badgesBackfilledAt: null,
+    })
+    const profile = data.profileStore ?? preferences.profile.values
+    useProfile
+      .getState()
+      .set(
+        syncableValues(
+          knownSlice(profile, useProfile.getState()),
+          NON_SYNCABLE_PROFILE_KEYS
+        )
+      )
+  })
+  return true
+}

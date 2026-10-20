@@ -17,7 +17,8 @@ vi.mock('@/lib/errorTracking', () => ({
 vi.mock('expo-crypto', () => ({ randomUUID: () => 'new' }))
 vi.mock('react-native', () => ({ Alert: { alert: vi.fn() } }))
 vi.mock('@/lib/locales', () => ({ default: { t: (key: string) => key } }))
-import { createBackupFile, restoreBackupFile } from '@/lib/backupFile'
+import { createBackupFile } from '@/lib/backupFile'
+import { restoreBackupFile } from '@/app/sync/backupFileRestore'
 import { mergePreferences } from '@/app/sync/preferencesMerge'
 import { NON_SYNCABLE_PREFERENCE_KEYS } from '@/lib/syncPreferencePolicy'
 import { usePreferences } from '@/stores/preferences'

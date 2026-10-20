@@ -24,7 +24,7 @@ import { analytics } from '@/lib/analytics'
 import { RouteProp, useRoute } from '@react-navigation/native'
 import { RootStackParamList } from '@/types/rootStack'
 import { createBackupFile } from '@/lib/backupFile'
-import { useBackupImport } from '@/hooks/useBackupImport'
+import { useBackupImport } from '@/app/sync/useBackupImport'
 
 const ImportAndExportScreen = () => {
   const route = useRoute<RouteProp<RootStackParamList, 'Import and Export'>>()

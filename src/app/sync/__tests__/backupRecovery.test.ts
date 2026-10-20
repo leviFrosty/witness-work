@@ -15,11 +15,8 @@ vi.mock('@/lib/errorTracking', () => ({
   errorTracking: { captureException: vi.fn() },
 }))
 vi.mock('expo-crypto', () => ({ randomUUID: () => 'new' }))
-import {
-  createBackupFile,
-  isBackupFile,
-  restoreBackupFile,
-} from '@/lib/backupFile'
+import { createBackupFile, isBackupFile } from '@/lib/backupFile'
+import { restoreBackupFile } from '@/app/sync/backupFileRestore'
 import useCategories from '@/stores/categories'
 import useContacts from '@/stores/contactsStore'
 import useConversations from '@/stores/conversationStore'
@@ -27,6 +24,8 @@ import useServiceReport from '@/stores/serviceReport'
 import { usePreferences } from '@/stores/preferences'
 import { useProfile } from '@/stores/profile'
 import { isApplyingRemoteData } from '@/lib/remoteDataMutation'
+import { storedDayKey } from '@/lib/normalizeDate'
+import { RecurringPlanFrequencies } from '@/types/timeEntry'
 import {
   handleContactImport,
   importedVisitId,
@@ -182,5 +181,112 @@ describe('JSON backup completeness and restore isolation', () => {
       ['existing', 'Changed'],
       [importedVisitId('c', 'new'), 'New'],
     ])
+  })
+})
+
+const at = (day: string) => `${day}T12:00:00.000Z`
+const visit = (id: string, followUp: Record<string, unknown>) => ({
+  id,
+  contact: { id: 'c' },
+  date: at('2026-08-01'),
+  isBibleStudy: false,
+  followUp: { date: at('2026-08-08'), ...followUp },
+})
+const sameDayPlans = () => ({
+  dayPlans: [{ id: 'cart', date: at('2026-10-09'), minutes: 60 }],
+  recurringPlans: [
+    {
+      id: 'morning',
+      startDate: at('2026-10-02'),
+      minutes: 120,
+      recurrence: {
+        frequency: RecurringPlanFrequencies.WEEKLY,
+        interval: 1,
+        endDate: null,
+      },
+    },
+  ],
+})
+
+describe('JSON backups from older builds', () => {
+  it('renames preferences a file from before 1.40 holds', () => {
+    usePreferences.setState({ role: 'publisher', offDays: [] })
+    restoreBackupFile({
+      preferencesStore: { publisher: 'regularPioneer', excludedWeekdays: [0] },
+    })
+    expect(usePreferences.getState()).toMatchObject({
+      role: 'regularPioneer',
+      offDays: [0],
+    })
+  })
+
+  it('strips the placeholder follow-up builds before 1.43 put on every Visit', () => {
+    restoreBackupFile({
+      preferencesStore: { lastAppVersion: '1.42.0' },
+      conversationStore: {
+        conversations: [
+          visit('placeholder', { notifyMe: false }),
+          visit('reminder', { notifyMe: true }),
+        ],
+      },
+    })
+    const [placeholder, reminder] = useConversations.getState().conversations
+    expect(placeholder.followUp).toBeUndefined()
+    expect(reminder.followUp?.notifyMe).toBe(true)
+  })
+
+  it('skips the recurring instance a Day Plan hid before 1.44', () => {
+    restoreBackupFile({
+      preferencesStore: { lastAppVersion: '1.43.0' },
+      serviceReportStore: sameDayPlans(),
+    })
+    const { dayPlans, recurringPlans } = useServiceReport.getState()
+    expect(recurringPlans[0].deletedDates?.map(storedDayKey)).toEqual([
+      '2026-10-09',
+    ])
+    expect(dayPlans[0].date).toBeInstanceOf(Date)
+  })
+
+  it('leaves a 1.44 file alone', () => {
+    restoreBackupFile({
+      preferencesStore: {},
+      conversationStore: {
+        conversations: [visit('date-only', { notifyMe: false })],
+      },
+      serviceReportStore: sameDayPlans(),
+    })
+    expect(useConversations.getState().conversations[0].followUp).toBeDefined()
+    expect(
+      useServiceReport.getState().recurringPlans[0].deletedDates
+    ).toBeUndefined()
+  })
+
+  it('round-trips a current backup unchanged', () => {
+    usePreferences.setState({ role: 'regularPioneer', offDays: [1] })
+    useConversations.setState({
+      conversations: [visit('date-only', { notifyMe: false })] as never,
+    })
+    useServiceReport.setState(
+      JSON.parse(JSON.stringify(sameDayPlans())) as never
+    )
+    const backup = JSON.parse(JSON.stringify(createBackupFile()))
+    expect(backup).toMatchObject({
+      version: 1,
+      conversationStore: { explicitFollowUps: true },
+      serviceReportStore: { additivePlans: true },
+    })
+    usePreferences.setState({ role: 'publisher', offDays: [] })
+    useConversations.setState({ conversations: [] })
+    useServiceReport.setState({ dayPlans: [], recurringPlans: [] })
+    expect(restoreBackupFile(backup)).toBe(true)
+    expect(JSON.parse(JSON.stringify(createBackupFile()))).toEqual(backup)
+  })
+
+  it('rejects a file whose records are the wrong shape', () => {
+    useContacts.setState({ contacts: [{ id: 'keep' }] as never })
+    expect(restoreBackupFile({ contactStore: { contacts: 'nope' } })).toBe(
+      false
+    )
+    expect(useContacts.getState().contacts).toEqual([{ id: 'keep' }])
   })
 })

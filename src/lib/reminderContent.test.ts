@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { LocalReminder } from '@/lib/reminderSchedule'
 
 vi.mock('@/lib/locales', () => ({
@@ -18,6 +18,7 @@ vi.mock('@/lib/minutes', () => ({
 }))
 
 import { reminderContent } from '@/lib/reminderContent'
+import { buildReminderSchedule } from '@/lib/reminderSchedule'
 
 const anchor = new Date('2026-05-01T15:00:00Z')
 const visit: LocalReminder = {
@@ -150,6 +151,37 @@ describe('reminderContent', () => {
       expect(content.body).toContain('streakReminderBodyMonths')
       expect(content.body).toContain('"month":"April"')
       expect(content.body).toContain('"count":5')
+    })
+  })
+
+  describe('across a daylight saving change', () => {
+    const originalTZ = process.env.TZ
+    afterEach(() => {
+      process.env.TZ = originalTZ
+    })
+
+    it('says a day-before Plan reminder is a day ahead, not 25 hours', () => {
+      process.env.TZ = 'America/New_York'
+      const [reminder] = buildReminderSchedule({
+        contacts: [],
+        visits: [],
+        plans: [
+          {
+            id: 'p',
+            date: new Date(Date.UTC(2026, 10, 1, 12)),
+            startTimeInMinutes: 10 * 60,
+            minutes: 60,
+            notifyMe: true,
+            notifications: [],
+          },
+        ],
+        visitOffset: { amount: 30, unit: 'minutes' },
+        planOffset: { amount: 1, unit: 'days' },
+        now: new Date(2026, 0, 1).getTime(),
+      })
+      expect(reminderContent(reminder, options).body).toBe(
+        'planReminderBody {"lead":"reminderLeadDays {\\"count\\":1}","duration":"60m"}'
+      )
     })
   })
 })

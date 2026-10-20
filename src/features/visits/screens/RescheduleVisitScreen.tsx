@@ -39,7 +39,7 @@ import {
   reminderRequestId,
   savedReminderOffsetMinutes,
 } from '@/lib/reminderSchedule'
-import { offsetToMinutes } from '@/lib/notificationOffset'
+import { offsetToMinutes, reminderFireDate } from '@/lib/notificationOffset'
 import { tracking } from '@/lib/tracking'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'RescheduleVisit'>
@@ -358,9 +358,7 @@ const RescheduleVisitScreen = ({ route, navigation }: Props) => {
         }))
       : null
     const fireAt =
-      offsetMinutes === null
-        ? null
-        : new Date(newDate.getTime() - offsetMinutes * 60_000)
+      offsetMinutes === null ? null : reminderFireDate(newDate, offsetMinutes)
 
     updateConversation({
       ...conversation,

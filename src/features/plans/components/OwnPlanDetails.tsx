@@ -1,5 +1,7 @@
+import moment from 'moment'
 import type { PlanListItem } from '@/types/timeEntry'
 import DetailsHeaderActions from '@/components/DetailsHeaderActions'
+import usePublisher from '@/hooks/usePublisher'
 import usePlanMenuActions from '@/hooks/usePlanMenuActions'
 import { describeRecurrence } from '@/lib/recurrenceText'
 import { planTypeLabel } from '@/lib/planTypeLabel'
@@ -12,6 +14,7 @@ import InvitationAnswerSection, {
 } from '@/features/buddies/components/InvitationAnswerSection'
 import PlanDetailsLayout from '@/features/plans/components/PlanDetailsLayout'
 import PlanDetailsSummary from '@/features/plans/components/PlanDetailsSummary'
+import PlanDetailsTimer from '@/features/plans/components/PlanDetailsTimer'
 import {
   trackPlanDetailsAction,
   type PlanDetailsAction,
@@ -19,7 +22,8 @@ import {
 
 /**
  * The User's own Plan (or one date of a Recurring Plan) with Edit and More in
- * the header, then its buddies, or the invitation it follows.
+ * the header, the timer on the Plan's own day, then its buddies, or the
+ * invitation it follows.
  */
 export default function OwnPlanDetails({
   item,
@@ -38,7 +42,9 @@ export default function OwnPlanDetails({
     (state) => state.getRecurringPlanForDate
   )
   const updateDayPlan = useServiceReport((state) => state.updateDayPlan)
+  const { showsTimer } = usePublisher()
   const { plan } = item
+  const isToday = moment(item.date).isSame(now, 'day')
   const track = (action: PlanDetailsAction) =>
     trackPlanDetailsAction(action, {
       kind: item.type,
@@ -77,16 +83,19 @@ export default function OwnPlanDetails({
             : undefined
         }
         lead={
-          item.type === 'day' && item.plan.buddyShare ? (
-            <InvitationAnswerSection
-              from={item.plan.buddyShare.from}
-              share={share}
-              // The linked Plan is here, so it's "Going" (maybe said on another
-              // device) until "Can't make it" removes it.
-              status={share?.status === 'declined' ? 'declined' : 'going'}
-              answering={answering}
-            />
-          ) : undefined
+          <>
+            {item.type === 'day' && item.plan.buddyShare ? (
+              <InvitationAnswerSection
+                from={item.plan.buddyShare.from}
+                share={share}
+                // The linked Plan is here, so it's "Going" (maybe said on
+                // another device) until "Can't make it" removes it.
+                status={share?.status === 'declined' ? 'declined' : 'going'}
+                answering={answering}
+              />
+            ) : null}
+            {showsTimer && isToday ? <PlanDetailsTimer /> : null}
+          </>
         }
       />
       {/* Nothing for a Plan that follows an invitation: only its organizer

@@ -60,6 +60,9 @@ export const MIN_MS_TO_SAVE = 60000
 /** Resetting a session at least this long asks first. */
 export const RESET_CONFIRM_MIN_MS = 60000
 
+/** The surface the timer was used from; analytics only. */
+export type TimerSource = 'home' | 'plan_details'
+
 const ZERO: Stopwatch.StopwatchState = {
   startedAt: null,
   accumulatedMs: 0,
@@ -69,16 +72,22 @@ const ZERO: Stopwatch.StopwatchState = {
 
 type StopwatchAction = 'started' | 'paused' | 'reset'
 
+/**
+ * Runs a native command and records it. `source` is where the user pressed it;
+ * left off for Add Time's reset after a save.
+ */
 const runCommand = async (
   action: StopwatchAction,
-  cmd: () => Promise<Stopwatch.StopwatchState>
+  cmd: () => Promise<Stopwatch.StopwatchState>,
+  source?: TimerSource
 ) => {
+  const props = source ? { action, source } : { action }
   try {
     const next = await cmd()
-    analytics.capture('timer_action_completed', { action })
+    analytics.capture('timer_action_completed', props)
     return next
   } catch (err) {
-    analytics.capture('timer_action_failed', { action })
+    analytics.capture('timer_action_failed', props)
     console.warn('[stopwatch] native command failed', err)
     return null
   }
@@ -117,7 +126,7 @@ export const resetStopwatchSession = async (expectedStartMs: number) => {
  * implementations rehydrate on foreground; this hook renders elapsed time and
  * dispatches commands through the same interface.
  */
-export const useStopWatch = () => {
+export const useStopWatch = (source: TimerSource = 'home') => {
   const [state, setState] = useState<Stopwatch.StopwatchState>(() =>
     Stopwatch.isAvailable() ? Stopwatch.getState() : ZERO
   )
@@ -150,12 +159,12 @@ export const useStopWatch = () => {
       action: StopwatchAction,
       cmd: () => Promise<Stopwatch.StopwatchState>
     ) => {
-      const next = await runCommand(action, cmd)
+      const next = await runCommand(action, cmd, source)
       if (!next) return
       setState(next)
       setNowMs(Date.now())
     },
-    []
+    [source]
   )
 
   const start = useCallback(() => {

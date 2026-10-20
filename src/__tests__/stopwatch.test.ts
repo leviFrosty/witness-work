@@ -1,28 +1,38 @@
 import { describe, expect, it, vi } from 'vitest'
 
-vi.mock('@/lib/analytics', () => ({ analytics: { capture: vi.fn() } }))
+const { capture, reset, getState } = vi.hoisted(() => ({
+  capture: vi.fn(),
+  reset: vi.fn(),
+  getState: vi.fn(() => ({
+    startedAt: null as number | null,
+    accumulatedMs: 0,
+    isRunning: false,
+    updatedAt: 0,
+  })),
+}))
+
+vi.mock('@/lib/analytics', () => ({ analytics: { capture } }))
 
 // Mock the native module so vitest doesn't try to resolve `expo-modules-core`.
 vi.mock('../../modules/stopwatch-bridge', () => ({
   isAvailable: () => false,
-  getState: () => ({
-    startedAt: null,
-    accumulatedMs: 0,
-    isRunning: false,
-    updatedAt: 0,
-  }),
+  getState,
   areLiveActivitiesEnabled: () => false,
   start: vi.fn(),
   pause: vi.fn(),
   resume: vi.fn(),
   stop: vi.fn(),
-  reset: vi.fn(),
+  reset,
   onStateChange: () => ({ remove: () => {} }),
 }))
 
 import {
   computeElapsedMs,
   formatMs,
+  isSameSession,
+  resetStopwatchSession,
+  sessionStartMs,
+  splitElapsed,
 } from '@/features/service-reports/hooks/useStopWatch'
 
 describe('formatMs', () => {
@@ -96,5 +106,147 @@ describe('computeElapsedMs', () => {
         999_999
       )
     ).toBe(42)
+  })
+})
+
+describe('sessionStartMs', () => {
+  it('is null for an empty timer', () => {
+    expect(
+      sessionStartMs({
+        startedAt: null,
+        accumulatedMs: 0,
+        isRunning: false,
+        updatedAt: 500,
+      })
+    ).toBeNull()
+  })
+
+  it('backs a running session off by its earlier segments', () => {
+    expect(
+      sessionStartMs(
+        {
+          startedAt: 1_000,
+          accumulatedMs: 30_000,
+          isRunning: true,
+          updatedAt: 1_000,
+        },
+        1_090_000
+      )
+    ).toBe(970_000)
+  })
+
+  it('backs a paused session off from when it was paused', () => {
+    // Paused at 22:30 with an hour on it, saved the next morning.
+    const pausedAt = new Date(2026, 9, 18, 22, 30).getTime()
+    const start = sessionStartMs(
+      {
+        startedAt: null,
+        accumulatedMs: 3_600_000,
+        isRunning: false,
+        updatedAt: pausedAt / 1000,
+      },
+      new Date(2026, 9, 19, 8, 0).getTime()
+    )
+    expect(start).toBe(new Date(2026, 9, 18, 21, 30).getTime())
+  })
+
+  it('is null when a paused state has no timestamp', () => {
+    expect(
+      sessionStartMs({
+        startedAt: null,
+        accumulatedMs: 120_000,
+        isRunning: false,
+        updatedAt: 0,
+      })
+    ).toBeNull()
+  })
+})
+
+describe('splitElapsed', () => {
+  it('splits elapsed time into hours and leftover minutes', () => {
+    expect(splitElapsed(0)).toEqual({ hours: 0, minutes: 0 })
+    expect(splitElapsed(59_999)).toEqual({ hours: 0, minutes: 0 })
+    expect(splitElapsed((62 * 60 + 30) * 1000)).toEqual({
+      hours: 1,
+      minutes: 2,
+    })
+    expect(splitElapsed(25 * 3600 * 1000)).toEqual({ hours: 25, minutes: 0 })
+  })
+})
+
+describe('isSameSession', () => {
+  it('matches the same start within float drift', () => {
+    expect(isSameSession(970_000, 970_000)).toBe(true)
+    expect(isSameSession(970_000, 971_500)).toBe(true)
+  })
+
+  it('tells a newer session apart', () => {
+    expect(isSameSession(970_000, 1_090_000)).toBe(false)
+    expect(isSameSession(970_000, null)).toBe(false)
+  })
+})
+
+describe('resetStopwatchSession', () => {
+  // Saved while running: started at 1,000 s with 30 s from earlier segments.
+  const running = {
+    startedAt: 1_000,
+    accumulatedMs: 30_000,
+    isRunning: true,
+    updatedAt: 1_000,
+  }
+  const savedStart = 970_000
+  const zero = {
+    startedAt: null,
+    accumulatedMs: 0,
+    isRunning: false,
+    updatedAt: 1,
+  }
+
+  it('resets the session Add Time saved, and records it', async () => {
+    getState.mockReturnValueOnce(running)
+    reset.mockResolvedValueOnce(zero)
+    await expect(resetStopwatchSession(savedStart)).resolves.toEqual(zero)
+    expect(reset).toHaveBeenCalledTimes(1)
+    expect(capture).toHaveBeenCalledWith('timer_action_completed', {
+      action: 'reset',
+    })
+  })
+
+  it('still resets it after a pause', async () => {
+    // Paused at 1,090 s: 120 s in all, so the start is unchanged.
+    getState.mockReturnValueOnce({
+      startedAt: null,
+      accumulatedMs: 120_000,
+      isRunning: false,
+      updatedAt: 1_090,
+    })
+    reset.mockClear()
+    reset.mockResolvedValueOnce(zero)
+    await resetStopwatchSession(savedStart)
+    expect(reset).toHaveBeenCalledTimes(1)
+  })
+
+  it('leaves a session started after the save alone', async () => {
+    // Reset and restarted from a Live Activity while Add Time was open.
+    getState.mockReturnValueOnce({
+      startedAt: 2_000,
+      accumulatedMs: 0,
+      isRunning: true,
+      updatedAt: 2_000,
+    })
+    reset.mockClear()
+    await expect(resetStopwatchSession(savedStart)).resolves.toBeNull()
+    expect(reset).not.toHaveBeenCalled()
+  })
+
+  it('records a failed reset instead of throwing', async () => {
+    getState.mockReturnValueOnce(running)
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    reset.mockRejectedValueOnce(new Error('native'))
+    await expect(resetStopwatchSession(savedStart)).resolves.toBeNull()
+    expect(capture).toHaveBeenCalledWith('timer_action_failed', {
+      action: 'reset',
+    })
+    warn.mockRestore()
   })
 })

@@ -4,13 +4,17 @@ import ColorSwatchPicker, {
 } from '@/components/ColorSwatchPicker'
 import { usePreferences } from '@/stores/preferences'
 import { lightModeColors } from '@/constants/theme'
-import i18n from '@/lib/locales'
+import i18n, { type TranslationKey } from '@/lib/locales'
 import { useShallow } from 'zustand/react/shallow'
 
 /** The default accent followed by the shared `COLOR_PRESETS`. */
-export const ACCENT_PRESETS: { value: string; label: string }[] = [
-  { value: lightModeColors.accent, label: 'default' },
-  ...COLOR_PRESETS.map(({ value, label }) => ({ value, label })),
+export const ACCENT_PRESETS: {
+  value: string
+  label: string
+  name: TranslationKey
+}[] = [
+  { value: lightModeColors.accent, label: 'default', name: 'default' },
+  ...COLOR_PRESETS.map(({ value, label, name }) => ({ value, label, name })),
 ]
 
 const PickerContents = () => {

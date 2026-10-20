@@ -463,6 +463,8 @@ const MilestoneAdjustSheet = ({ visible, onClose }: Props) => {
                       <Pressable
                         onPress={() => handleStep(value, -1)}
                         hitSlop={8}
+                        accessibilityRole='button'
+                        accessibilityLabel={i18n.t('decrease')}
                         style={{
                           width: 28,
                           height: 28,
@@ -524,6 +526,8 @@ const MilestoneAdjustSheet = ({ visible, onClose }: Props) => {
                       <Pressable
                         onPress={() => handleStep(value, 1)}
                         hitSlop={8}
+                        accessibilityRole='button'
+                        accessibilityLabel={i18n.t('increase')}
                         style={{
                           width: 28,
                           height: 28,
@@ -557,6 +561,7 @@ const MilestoneAdjustSheet = ({ visible, onClose }: Props) => {
                         icon={XIcon}
                         size='sm'
                         onPress={() => confirmRemoveMilestone(value)}
+                        accessibilityLabel={i18n.t('remove')}
                       />
                     </View>
                   </View>

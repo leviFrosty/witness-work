@@ -235,6 +235,7 @@ const ProgressScreen = ({ route, navigation }: Props) => {
               <XView style={{ justifyContent: 'space-between' }}>
                 <Button
                   onPress={() => handleMonthNav('back')}
+                  accessibilityLabel={i18n.t('previousMonth')}
                   style={navButtonStyle(theme)}
                 >
                   <View
@@ -257,6 +258,7 @@ const ProgressScreen = ({ route, navigation }: Props) => {
                 />
                 <Button
                   onPress={() => handleMonthNav('forward')}
+                  accessibilityLabel={i18n.t('nextMonth')}
                   style={navButtonStyle(theme)}
                 >
                   <View

@@ -440,6 +440,7 @@ const ContactsSortAndFilterScreen = () => {
                       </ContextMenu>
                       <Button
                         onPress={() => handleRemoveFilter(index)}
+                        accessibilityLabel={i18n.t('removeFilter')}
                         noTransform
                         hitSlop={8}
                         style={{

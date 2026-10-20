@@ -182,6 +182,9 @@ export const BackgroundSwatches = ({
         <PointerHover effect='lift'>
           <Pressable
             onPress={() => onChange(null)}
+            accessibilityRole='radio'
+            accessibilityState={{ checked: value === null }}
+            accessibilityLabel={i18n.t('avatarBackgroundMatchAccent')}
             style={{
               width: SWATCH_SIZE,
               height: SWATCH_SIZE,
@@ -207,6 +210,9 @@ export const BackgroundSwatches = ({
             <PointerHover key={preset.value} effect='lift'>
               <Pressable
                 onPress={() => onChange(preset.value)}
+                accessibilityRole='radio'
+                accessibilityState={{ checked: selected }}
+                accessibilityLabel={i18n.t(preset.name)}
                 style={{
                   width: SWATCH_SIZE,
                   height: SWATCH_SIZE,

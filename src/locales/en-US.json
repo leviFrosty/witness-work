@@ -3908,6 +3908,11 @@
   "deletePermanentlyEllipsis": "Delete Permanently…",
   "editFilterEllipsis": "Edit Filter…",
   "removeFilter": "Remove Filter",
+  "previousMonth": "Previous month",
+  "nextMonth": "Next month",
+  "increase": "Increase",
+  "decrease": "Decrease",
+  "avatarBackgroundMatchAccent": "Match accent color",
   "archiveContacts_question": {
     "one": "Archive 1 Contact?",
     "other": "Archive {{count}} Contacts?"

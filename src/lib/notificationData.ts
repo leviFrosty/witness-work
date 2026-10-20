@@ -7,6 +7,7 @@ export type ReminderKind =
   | 'unloggedDay'
   | 'streak'
   | 'monthReport'
+  | 'weekPlan'
 
 /**
  * What a local reminder carries so a tap can open its record. Ids only — the
@@ -17,7 +18,7 @@ export type ReminderData = {
   /**
    * Visit, Plan, or Contact id; a planned day (`YYYY-MM-DD`) to log time; the
    * day or month (its 1st) a streak waits on; the month (`YYYY-MM`) whose
-   * report is ready.
+   * report is ready; the first day of the week to plan.
    */
   id: string
   /** The Visit's Contact, so a Follow-up reminder opens its Contact. */
@@ -72,7 +73,8 @@ export function reminderData(
     kind !== 'contact' &&
     kind !== 'unloggedDay' &&
     kind !== 'streak' &&
-    kind !== 'monthReport'
+    kind !== 'monthReport' &&
+    kind !== 'weekPlan'
   )
     return null
   return {

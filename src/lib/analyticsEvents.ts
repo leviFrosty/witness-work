@@ -40,6 +40,7 @@ export const analyticsEventNames = [
   'unlogged_day_reminders_changed',
   'visit_created',
   'visit_details_action',
+  'week_plan_reminder_changed',
   // Import and backup outcomes.
   'backup_export_failed',
   'backup_export_started',

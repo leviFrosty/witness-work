@@ -31,16 +31,28 @@ import {
   nextMonthReportReminder,
   type MonthReportSources,
 } from '@/lib/monthReportReminders'
+import {
+  weekPlanReminderDates,
+  type WeekPlanSources,
+} from '@/lib/weekPlanReminders'
 
 export type LocalReminder = {
   /** The OS request id. Stable per record, so reconciling replaces it. */
   id: string
   date: Date
-  kind: 'visit' | 'plan' | 'contact' | 'unloggedDay' | 'streak' | 'monthReport'
+  kind:
+    | 'visit'
+    | 'plan'
+    | 'contact'
+    | 'unloggedDay'
+    | 'streak'
+    | 'monthReport'
+    | 'weekPlan'
   /**
    * The Visit, Plan, or Contact the reminder opens; for a reminder to log time,
    * its earliest planned day (`YYYY-MM-DD`); for a streak, the day or month
-   * (its 1st) it waits on; for a report reminder, its month (`YYYY-MM`).
+   * (its 1st) it waits on; for a report reminder, its month (`YYYY-MM`); to
+   * plan next week, that week's first day.
    */
   targetId: string
   /** The Visit's Contact. */
@@ -49,7 +61,7 @@ export type LocalReminder = {
   day?: string
   /**
    * When the Follow-up or Plan starts, or the planned day's Plans end; when a
-   * streak ends; the Contact's return otherwise.
+   * streak ends; when the week to plan starts; the Contact's return otherwise.
    */
   anchor: Date
   name?: string
@@ -199,15 +211,18 @@ type ReminderSources = {
   streak?: ServiceStreak
   /** Months with a report to send; absent when its reminder is off. */
   monthReport?: MonthReportSources
+  /** Plans for the weeks ahead; absent when inviting to plan them is off. */
+  weekPlan?: WeekPlanSources
 }
 
 /**
  * Every reminder the records ask for, past or future, in no order. Built from
  * records alone, so it is the same after an edit, sync, or restore. The OS
- * schedule and the notifications tray both read it. Reminders to log time and a
- * Recurring Plan's are the exception: they run up to two weeks after `now` (the
- * first from a week back, the second from yesterday's instance), and the report
- * reminder is only the next one after `now`.
+ * schedule and the notifications tray both read it. Reminders to log time, to
+ * plan next week, and a Recurring Plan's are the exception: they run up to two
+ * weeks after `now` (the first two from a week or two back, the last from
+ * yesterday's instance), and the report reminder is only the next one after
+ * `now`.
  */
 export function reminderOccurrences(
   args: ReminderSources & { now?: number }
@@ -308,6 +323,19 @@ export function reminderOccurrences(
       targetId: report.month,
       anchor: report.date,
     })
+  if (args.weekPlan) {
+    for (const { date, week } of weekPlanReminderDates(
+      args.weekPlan,
+      args.now ?? Date.now()
+    ))
+      reminders.push({
+        id: reminderRequestId('weekPlan', week),
+        date,
+        kind: 'weekPlan',
+        targetId: week,
+        anchor: moment(week, 'YYYY-MM-DD').toDate(),
+      })
+  }
   return reminders.filter((reminder) =>
     Number.isFinite(reminder.date.getTime())
   )

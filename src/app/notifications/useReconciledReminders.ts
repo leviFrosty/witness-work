@@ -19,6 +19,7 @@ import { reminderContent } from '@/lib/reminderContent'
 import { reminderData } from '@/lib/notificationData'
 import { unloggedDay, unloggedDaySources } from '@/lib/unloggedDayReminders'
 import { monthReportDue, monthReportSources } from '@/lib/monthReportReminders'
+import { weekNeedsPlan, weekPlanSources } from '@/lib/weekPlanReminders'
 import { currentServiceStreak } from '@/lib/currentServiceStreak'
 import { streakRemindersOn } from '@/lib/serviceStreak'
 import { ensureReminderChannel, REMINDER_CHANNEL_ID } from '@/lib/notifications'
@@ -38,7 +39,8 @@ import type { DayPlan } from '@/types/timeEntry'
  * Contact's name doesn't stay in Notification Center. A Recurring Plan's goes
  * once that date is deleted from it. A reminder to log time goes once the day
  * has time, its Plans are gone, or the setting is off; a streak's once it's
- * kept or the setting is off; a report's once it's sent or the setting is off.
+ * kept or the setting is off; a report's once it's sent or the setting is off;
+ * one to plan next week once that week has a Plan or the setting is off.
  */
 async function retractErasedReminders() {
   const presented = await Notifications.getPresentedNotificationsAsync()
@@ -52,6 +54,7 @@ async function retractErasedReminders() {
   const recurringPlans = new Map(records.recurringPlans.map((p) => [p.id, p]))
   const prefs = usePreferences.getState()
   const unloggedDays = unloggedDaySources(records, prefs)
+  const weekPlan = weekPlanSources(records, prefs)
   const streakDue = streakRemindersOn(prefs)
     ? currentServiceStreak().due?.period
     : undefined
@@ -74,9 +77,11 @@ async function retractErasedReminders() {
               ? streakDue === reminder.id
               : reminder.kind === 'monthReport'
                 ? !!monthReport && monthReportDue(reminder.id, monthReport)
-                : reminder.day
-                  ? recurringPlanExists(reminder.id, reminder.day)
-                  : plans.has(reminder.id)
+                : reminder.kind === 'weekPlan'
+                  ? !!weekPlan && weekNeedsPlan(reminder.id, weekPlan)
+                  : reminder.day
+                    ? recurringPlanExists(reminder.id, reminder.day)
+                    : plans.has(reminder.id)
     if (!exists)
       await Notifications.dismissNotificationAsync(
         notification.request.identifier
@@ -219,6 +224,7 @@ export function useReconciledReminders(ready: boolean | undefined) {
               ? currentServiceStreak()
               : undefined,
             monthReport: monthReportSources(records, prefs),
+            weekPlan: weekPlanSources(records, prefs),
             visitOffset: {
               ...DEFAULT_RETURN_VISIT_NOTIFICATION_OFFSET,
               ...prefs.returnVisitNotificationOffset,
@@ -397,7 +403,9 @@ export function useReconciledReminders(ready: boolean | undefined) {
         state.streakReminders !== previous.streakReminders ||
         state.showStreaks !== previous.showStreaks ||
         state.monthReportReminders !== previous.monthReportReminders ||
-        state.submittedReportMonths !== previous.submittedReportMonths
+        state.submittedReportMonths !== previous.submittedReportMonths ||
+        state.weekPlanReminder !== previous.weekPlanReminder ||
+        state.offDays !== previous.offDays
       )
         retract()
       if (
@@ -413,6 +421,15 @@ export function useReconciledReminders(ready: boolean | undefined) {
         state.monthReportReminders !== previous.monthReportReminders ||
         state.monthReportReminderTime !== previous.monthReportReminderTime ||
         state.submittedReportMonths !== previous.submittedReportMonths ||
+        state.weekPlanReminder !== previous.weekPlanReminder ||
+        state.weekPlanReminderDay !== previous.weekPlanReminderDay ||
+        state.weekPlanReminderTime !== previous.weekPlanReminderTime ||
+        state.weekPlanReminderEnabledAt !==
+          previous.weekPlanReminderEnabledAt ||
+        state.offDays !== previous.offDays ||
+        // Where weeks start decides which week a reminder asks about.
+        state.startOfWeek !== previous.startOfWeek ||
+        state.formatRegion !== previous.formatRegion ||
         state.role !== previous.role ||
         state.roleHistory !== previous.roleHistory ||
         state.logsHours !== previous.logsHours ||

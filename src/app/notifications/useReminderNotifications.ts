@@ -1,12 +1,17 @@
 import {
   BellRing as BellRingIcon,
   CalendarClock as CalendarClockIcon,
+  CalendarPlus as CalendarPlusIcon,
   ClockAlert as ClockAlertIcon,
   Flame as FlameIcon,
   UserCheck as UserCheckIcon,
 } from 'lucide-react-native'
 import moment from 'moment'
-import { formatTime, formatWeekdayMonthDayCompact } from '@/lib/dates'
+import {
+  formatMonthDayCompact,
+  formatTime,
+  formatWeekdayMonthDayCompact,
+} from '@/lib/dates'
 import { serviceStreakFor } from '@/lib/currentServiceStreak'
 import { streakRemindersOn } from '@/lib/serviceStreak'
 import i18n from '@/lib/locales'
@@ -17,6 +22,7 @@ import {
   UNLOGGED_DAY_LISTED_MS,
   unloggedDaySources,
 } from '@/lib/unloggedDayReminders'
+import { weekPlanSources } from '@/lib/weekPlanReminders'
 import useContacts from '@/stores/contactsStore'
 import useConversations from '@/stores/conversationStore'
 import {
@@ -63,6 +69,9 @@ function listedUntil(reminder: TrayReminder): number {
     case 'streak':
       // Leaves sooner once the streak is kept.
       return anchor
+    case 'weekPlan':
+      // Through the week it asks about; leaves sooner once that has a Plan.
+      return moment(reminder.anchor).add(1, 'week').valueOf()
   }
 }
 
@@ -94,9 +103,9 @@ export function firedReminders(
 
 /**
  * The tray copy of each local reminder that has fired: Follow-ups, Plans,
- * returning Contacts, planned days to log time for, and a streak about to end.
- * Listed whether or not the system alert was allowed, so the tray is the same
- * record of what reminded the User.
+ * returning Contacts, planned days to log time for, a streak about to end, and
+ * a week with nothing planned yet. Listed whether or not the system alert was
+ * allowed, so the tray is the same record of what reminded the User.
  */
 export default function useReminderNotifications(
   now: number
@@ -119,6 +128,13 @@ export default function useReminderNotifications(
   const role = usePreferences((s) => s.role)
   const roleHistory = usePreferences((s) => s.roleHistory)
   const logsHours = usePreferences((s) => s.logsHours)
+  const weekPlanReminder = usePreferences((s) => s.weekPlanReminder)
+  const weekPlanReminderDay = usePreferences((s) => s.weekPlanReminderDay)
+  const weekPlanReminderTime = usePreferences((s) => s.weekPlanReminderTime)
+  const weekPlanReminderEnabledAt = usePreferences(
+    (s) => s.weekPlanReminderEnabledAt
+  )
+  const offDays = usePreferences((s) => s.offDays)
   const streakReminders = usePreferences(streakRemindersOn)
   const dataProtectionMode = usePreferences((s) => s.dataProtectionMode)
 
@@ -158,6 +174,16 @@ export default function useReminderNotifications(
           new Date(now)
         )
       : undefined,
+    weekPlan: weekPlanSources(
+      { dayPlans: plans, recurringPlans },
+      {
+        weekPlanReminder,
+        weekPlanReminderDay,
+        weekPlanReminderTime,
+        weekPlanReminderEnabledAt,
+        offDays,
+      }
+    ),
     now,
   }).map((reminder): NotificationItem => {
     const base = {
@@ -254,6 +280,23 @@ export default function useReminderNotifications(
           ],
         }
       }
+      case 'weekPlan':
+        return {
+          ...base,
+          icon: CalendarPlusIcon,
+          title: i18n.t('notifications_reminderWeekPlan', {
+            date: formatMonthDayCompact(
+              moment(reminder.targetId, 'YYYY-MM-DD')
+            ),
+          }),
+          actions: [
+            {
+              id: 'open_schedule',
+              label: i18n.t('openSchedule'),
+              onPress: open(reminder),
+            },
+          ],
+        }
       case 'contact':
         return {
           ...base,

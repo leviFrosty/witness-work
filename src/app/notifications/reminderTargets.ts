@@ -11,8 +11,9 @@ import useServiceReport from '@/stores/serviceReport'
 /**
  * Opens what a local reminder is about: the Follow-up's Visit (its Contact when
  * only the Visit is gone), the Plan or Recurring Plan instance, the returning
- * Contact, Add Time for a planned day, where a streak about to end is kept, or
- * the month's Service Report. False when the record is gone (deleted on this or
+ * Contact, Add Time for a planned day, where a streak about to end is kept, the
+ * month's Service Report, or the Schedule at the week to plan, where the
+ * Assistant offers days. False when the record is gone (deleted on this or
  * another device), the day has time logged, or navigation isn't ready.
  */
 export function openReminderTarget(target: ReminderData): boolean {
@@ -91,6 +92,19 @@ export function openReminderTarget(target: ReminderData): boolean {
         month: month.month(),
         year: month.year(),
       })
+      return true
+    }
+    case 'weekPlan': {
+      const week = moment(target.id, 'YYYY-MM-DD', true)
+      if (!week.isValid()) return false
+      navigationRef.navigate(
+        'Root',
+        {
+          screen: 'Schedule',
+          params: { month: week.month(), year: week.year() },
+        } as never,
+        { pop: true }
+      )
       return true
     }
   }

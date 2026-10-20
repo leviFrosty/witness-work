@@ -8,7 +8,7 @@ import moment from 'moment'
 import { yearPace } from '@/features/progress/lib/progressCardStats'
 import useServiceYearTotal from '@/features/progress/hooks/useServiceYearTotal'
 import StatCard from '@/features/progress/components/cards/StatCard'
-import { serviceYearOf } from '@/features/progress/components/cards/ServiceYearCard'
+import { serviceYearOf } from '@/lib/serviceYear'
 import {
   formatGoalHours,
   formatNeededMinutes,
@@ -18,7 +18,7 @@ import type { ProgressCardProps } from '@/features/progress/components/cards/typ
 /** How much a month it takes to reach the Annual Goal (#358). */
 export default function YearPaceCard({ month, year, size }: ProgressCardProps) {
   const today = moment(useLocalDay(), 'YYYY-MM-DD')
-  const serviceYear = serviceYearOf(month, year)
+  const serviceYear = serviceYearOf({ month, year })
   const { annualGoalHours } = usePublisher({ month, year })
   const timeDisplayFormat = usePreferences((s) => s.timeDisplayFormat)
   const total = useServiceYearTotal(serviceYear)

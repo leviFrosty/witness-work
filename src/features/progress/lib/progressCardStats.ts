@@ -1,4 +1,5 @@
 import moment from 'moment'
+import { serviceYearBounds } from '@/lib/serviceYear'
 import { goalProgress } from '@/lib/goalProgress'
 import { storedDayKey } from '@/lib/normalizeDate'
 import type { TimeEntry } from '@/types/timeEntry'
@@ -228,7 +229,8 @@ export const yearPace = ({
   today: moment.Moment
 }): YearPace | null => {
   if (goalMinutes <= 0) return null
-  const start = moment({ year: serviceYear, month: 8, day: 1 })
+  const { start } = serviceYearBounds(serviceYear)
+  // Exclusive: Sep 1 of the following Service Year.
   const end = start.clone().add(1, 'year')
   if (today.isBefore(start, 'day'))
     return { state: 'future', perMonthMinutes: goalMinutes / 12 }

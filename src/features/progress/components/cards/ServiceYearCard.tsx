@@ -1,5 +1,10 @@
 import { CalendarRange as CalendarRangeIcon } from 'lucide-react-native'
 import moment from 'moment'
+import {
+  isInServiceYear,
+  serviceYearBounds,
+  serviceYearOf,
+} from '@/lib/serviceYear'
 import useLocalDay from '@/hooks/useLocalDay'
 import SimpleProgressBar from '@/components/ui/SimpleProgressBar'
 import YearMilestoneCard from '@/components/YearMilestoneCard'
@@ -15,10 +20,6 @@ import StatCard from '@/features/progress/components/cards/StatCard'
 import { formatGoalHours } from '@/features/progress/components/cards/displayMinutes'
 import type { ProgressCardProps } from '@/features/progress/components/cards/types'
 
-/** The Service Year's start year for a calendar month (September onward). */
-export const serviceYearOf = (month: number, year: number) =>
-  month >= 8 ? year : year - 1
-
 /**
  * The Service Year the shown month belongs to: the Year tab's hero when wide,
  * its total against the Annual Goal when small.
@@ -29,7 +30,7 @@ export default function ServiceYearCard({
   size,
 }: ProgressCardProps) {
   const theme = useTheme()
-  const serviceYear = serviceYearOf(month, year)
+  const serviceYear = serviceYearOf({ month, year })
   const { hasAnnualGoal, annualGoalHours } = usePublisher({ month, year })
   const timeDisplayFormat = usePreferences((s) => s.timeDisplayFormat)
   const total = useServiceYearTotal(serviceYear)
@@ -44,10 +45,9 @@ export default function ServiceYearCard({
   }
 
   const goalMinutes = hasAnnualGoal ? annualGoalHours * 60 : 0
-  const start = moment({ year: serviceYear, month: 8, day: 1 })
-  const end = moment({ year: serviceYear + 1, month: 7, day: 31 })
+  const { end } = serviceYearBounds(serviceYear)
   const today = moment(localDay, 'YYYY-MM-DD')
-  const isCurrent = today.isBetween(start, end, 'day', '[]')
+  const isCurrent = isInServiceYear(today, serviceYear)
 
   return (
     <StatCard

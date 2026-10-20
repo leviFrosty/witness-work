@@ -15,30 +15,55 @@ export type PeriodScope =
 // ---------------------------------------------------------------------------
 // Service Year calendar: the JW service year runs Sept 1 → Aug 31. This module
 // owns the boundary math and month iteration so the Sept/Aug seam is computed
-// in exactly one place (it was previously re-derived in ≥6 spots, some with
-// local moments and some with UTC moments — a latent inconsistency).
+// in exactly one place. Callers must not re-derive `month < 8` / `month >= 8`
+// or rebuild Sep 1 / Aug 31 by hand — use the helpers below.
+//
+// Convention: a Service Year is named by its START year (2025 = Sep 2025 →
+// Aug 2026). Surfaces that key by the END year (the Year tab, YearMilestone
+// card) convert explicitly with `+ 1` / `- 1` at the call site. Months are
+// 0-indexed (`8` = September), matching moment and `Date`.
 // ---------------------------------------------------------------------------
 
-export const serviceYearsDateRange = (serviceYear: number) => {
-  const minDate = moment().month(8).year(serviceYear).startOf('month')
-  const maxDate = moment()
-    .month(7)
-    .year(serviceYear + 1)
-    .endOf('month')
+/** A calendar month; `month` is 0-indexed (0 = January). */
+type YearMonth = { year: number; month: number }
 
-  return { minDate, maxDate }
+/** The Service Year (start year) a calendar month belongs to. */
+export const serviceYearOf = ({ year, month }: YearMonth): number =>
+  month < 8 ? year - 1 : year
+
+/** The Service Year (start year) a date falls in, read in its own zone. */
+export const getServiceYearFromDate = (date: moment.Moment | Date): number => {
+  const m = moment.isMoment(date) ? date : moment(date)
+  return serviceYearOf({ year: m.year(), month: m.month() })
 }
 
-export const getServiceYearFromDate = (moment: moment.Moment) => {
-  const month = moment.month()
-  const year = moment.year()
+/**
+ * Local-time bounds of a Service Year: `start` is Sep 1 00:00 of `serviceYear`,
+ * `end` is Aug 31 23:59:59.999 of `serviceYear + 1`. Returns fresh moments, so
+ * callers may mutate them.
+ */
+export const serviceYearBounds = (
+  serviceYear: number
+): { start: moment.Moment; end: moment.Moment } => ({
+  start: moment({ year: serviceYear, month: 8, day: 1 }),
+  end: moment({ year: serviceYear + 1, month: 7, day: 31 }).endOf('day'),
+})
 
-  if (month < 8) {
-    return year - 1
-  }
+/** Whether a date falls inside the given Service Year (start year). */
+export const isInServiceYear = (
+  date: moment.Moment | Date,
+  serviceYear: number
+): boolean => getServiceYearFromDate(date) === serviceYear
 
-  return year
-}
+/**
+ * Position of a calendar month within a Service Year: September is 0 and August
+ * is 11. Not clamped — months before the year are negative and months after it
+ * are 12 or more, so callers can tell past from future.
+ */
+export const serviceYearMonthIndex = (
+  { year, month }: YearMonth,
+  serviceYear: number
+): number => (year - serviceYear) * 12 + month - 8
 
 export const getServiceYearReports = (
   serviceReports: TimeEntriesByYear,

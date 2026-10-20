@@ -1,4 +1,5 @@
 import moment from 'moment'
+import { getServiceYearFromDate, serviceYearBounds } from '@/lib/serviceYear'
 import { Contact } from '@/types/contact'
 import { Visit } from '@/types/visit'
 import { DayPlan, RecurringPlan, TimeEntry } from '@/types/timeEntry'
@@ -193,8 +194,7 @@ function buildDayPlans(now: moment.Moment): DayPlan[] {
 
 /** Start of the September-to-August service year containing `now`. */
 function serviceYearStartFor(now: moment.Moment): moment.Moment {
-  const start = now.clone().startOf('month').month(8)
-  return now.month() >= 8 ? start : start.subtract(1, 'year')
+  return serviceYearBounds(getServiceYearFromDate(now)).start
 }
 
 export function buildScenario(

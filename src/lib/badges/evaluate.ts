@@ -1,4 +1,5 @@
 import moment from 'moment'
+import { serviceYearOf } from '@/lib/serviceYear'
 import {
   BADGE_COLLECTIONS,
   BadgeCollectionSpec,
@@ -104,10 +105,11 @@ export const sharedMonths = (
 }
 
 /** The Service Year a `YYYY-MM` belongs to (September starts it). */
-const serviceYearOfMonth = (month: string) => {
-  const year = Number(month.slice(0, 4))
-  return Number(month.slice(5, 7)) >= 9 ? year : year - 1
-}
+const serviceYearOfMonth = (month: string) =>
+  serviceYearOf({
+    year: Number(month.slice(0, 4)),
+    month: Number(month.slice(5, 7)) - 1,
+  })
 
 /**
  * Service Years with at least `YEAR_ROUND_MONTHS` shared months, each with the

@@ -48,6 +48,7 @@ import { hasMigratedFromAsyncStorage } from '@/stores/mmkv'
 import useConversations from '@/stores/conversationStore'
 import { request } from '@/lib/http/request'
 import moment from 'moment'
+import { getServiceYearFromDate } from '@/lib/serviceYear'
 import { useState } from 'react'
 import { useToastController } from '@tamagui/toast'
 import { RecurringPlanFrequencies } from '@/lib/serviceReport'
@@ -1010,7 +1011,7 @@ export default function ToolsScreen() {
   // Service-year start = current year if we're past Sep 1, otherwise the prior
   // calendar year. Matches the Sep→Aug window used by YearMilestoneCard /
   // MilestoneProgressBar.
-  const currentServiceYear = now.month() >= 8 ? now.year() : now.year() - 1
+  const currentServiceYear = getServiceYearFromDate(now)
   const prevServiceYear = currentServiceYear - 1
   const currentYearKey = milestoneCelebrationKey(currentServiceYear)
   const prevYearKey = milestoneCelebrationKey(prevServiceYear)

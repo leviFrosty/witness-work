@@ -1,4 +1,5 @@
 import type { CalendarMonth } from '@/lib/monthlyGoals'
+import { serviceYearBounds } from '@/lib/serviceYear'
 
 /** One day in the Schedule's week grid, in local calendar terms. */
 export type ScheduleDay = {
@@ -114,8 +115,8 @@ export function buildScheduleRows({
   }
 
   // Noon keeps DST shifts from skipping or repeating a day.
-  const cursor = new Date(firstServiceYear, 8, 1, 12)
-  const end = new Date(lastServiceYear + 1, 7, 31, 12)
+  const cursor = serviceYearBounds(firstServiceYear).start.hour(12).toDate()
+  const end = serviceYearBounds(lastServiceYear).end.toDate()
   while (cursor <= end) {
     const year = cursor.getFullYear()
     const month = cursor.getMonth()

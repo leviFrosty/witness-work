@@ -1,4 +1,5 @@
 import moment from 'moment'
+import { serviceYearMonthIndex, serviceYearOf } from '@/lib/serviceYear'
 import {
   ChevronBackwardIcon,
   ChevronForwardIcon,
@@ -133,7 +134,8 @@ export default function ScheduleYearView({
 
   // By position (September first) rather than by date: every Service Year
   // lays out the same grid, so a tile can be found while the year changes.
-  const indexOf = (month: CalendarMonth) => (month.month + 4) % 12
+  const indexOf = (month: CalendarMonth) =>
+    serviceYearMonthIndex(month, serviceYearOf(month))
 
   const recordGridFrame = (month: CalendarMonth, frame: LayoutRectangle) =>
     dayGridFrames.current.set(indexOf(month), frame)

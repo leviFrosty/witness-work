@@ -5,6 +5,7 @@ import {
   type PublisherCapabilities,
 } from '@/lib/publisherCapabilities'
 import { monthlyGoalKey, type CalendarMonth } from '@/lib/monthlyGoals'
+import { serviceYearOf } from '@/lib/serviceYear'
 import type { Publisher, PublisherHours } from '@/types/publisher'
 
 /**
@@ -204,10 +205,6 @@ export const annualGoalHoursByMonth = ({
   )
 }
 
-/** The Service Year (start year) a calendar month belongs to. */
-export const serviceYearOfMonth = ({ year, month }: CalendarMonth): number =>
-  month < 8 ? year - 1 : year
-
 /**
  * The month whose role speaks for a whole Service Year on year-level surfaces
  * (Year tab, milestones): this month while the Service Year is running,
@@ -218,7 +215,7 @@ export const serviceYearFocusMonth = (
   now: Date = new Date()
 ): CalendarMonth => {
   const current = calendarMonthOf(now)
-  return serviceYearOfMonth(current) === serviceYear
+  return serviceYearOf(current) === serviceYear
     ? current
     : { year: serviceYear + 1, month: 7 }
 }
@@ -257,6 +254,6 @@ export const publisherCapabilitiesForMonth = (
       currentRole: prefs.role,
       publisherHours: prefs.publisherHours,
       userSpecifiedHasAnnualGoal: prefs.userSpecifiedHasAnnualGoal,
-      serviceYear: serviceYearOfMonth(target),
+      serviceYear: serviceYearOf(target),
     }),
   })

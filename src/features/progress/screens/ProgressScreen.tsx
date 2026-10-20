@@ -14,6 +14,7 @@ import { BlurView } from 'expo-blur'
 import { NativeStackScreenProps } from '@react-navigation/native-stack'
 import { useNavigation } from '@react-navigation/native'
 import moment from 'moment'
+import { serviceYearOf } from '@/lib/serviceYear'
 
 import useTheme from '@/contexts/theme'
 import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
@@ -103,7 +104,7 @@ const ProgressScreen = ({ route, navigation }: Props) => {
   // year, Sep–Dec into the following service year. `serviceYear` here is the
   // END year (matches how YearMilestoneCard / ProgressYearTab expect it).
   const serviceYear = useMemo(
-    () => (month < 8 ? year : year + 1),
+    () => serviceYearOf({ month, year }) + 1,
     [month, year]
   )
 

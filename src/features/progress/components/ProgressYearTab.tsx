@@ -5,6 +5,7 @@ import AdaptiveSplitScrollView from '@/components/ui/layout/AdaptiveSplitScrollV
 import type { HideBarsScrollProps } from '@/hooks/useHideBarsOnScroll'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import moment from 'moment'
+import { serviceYearMonthIndex } from '@/lib/serviceYear'
 
 import useTheme from '@/contexts/theme'
 import usePublisher from '@/hooks/usePublisher'
@@ -497,10 +498,9 @@ const ProgressYearTab = ({
               const isFuture =
                 calendarYear > currentYear ||
                 (calendarYear === currentYear && month > currentMonth)
-              // Service Year months run September (0) through August (11).
               const paceMonth =
                 paceData.pace.months[
-                  calendarYear * 12 + month - ((year - 1) * 12 + 8)
+                  serviceYearMonthIndex({ year: calendarYear, month }, year - 1)
                 ]
               return (
                 <MonthRow

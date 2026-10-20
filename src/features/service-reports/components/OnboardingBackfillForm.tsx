@@ -20,7 +20,7 @@ import { formatPlainNumber } from '@/lib/numbers'
 import { parseHours } from '@/features/service-reports/lib/serviceHistoryDrafts'
 import { usePreferences } from '@/stores/preferences'
 import useServiceReport from '@/stores/serviceReport'
-import { getServiceYearFromDate } from '@/lib/serviceYear'
+import { getServiceYearFromDate, serviceYearBounds } from '@/lib/serviceYear'
 import { isCountableEntry } from '@/lib/serviceReport'
 import { TimeEntriesByYear } from '@/types/timeEntry'
 import { LDC_BUILTIN_CATEGORY_ID } from '@/constants/categories'
@@ -51,7 +51,7 @@ export const buildCatchUpRows = (installedOn: Date): MonthRow[] => {
   const installStart = installMoment.clone().startOf('month')
 
   const rows: MonthRow[] = []
-  const cursor = moment().month(8).year(sy).startOf('month')
+  const cursor = serviceYearBounds(sy).start
   while (cursor.isBefore(installStart)) {
     rows.push({
       monthIndex: cursor.month(),
@@ -77,7 +77,7 @@ export const hasReportsInCatchUpWindow = (
   const installMoment = moment(installedOn)
   const sy = getServiceYearFromDate(installMoment)
   const installStart = installMoment.clone().startOf('month')
-  const cursor = moment().month(8).year(sy).startOf('month')
+  const cursor = serviceYearBounds(sy).start
   while (cursor.isBefore(installStart)) {
     const monthReports = serviceReports[cursor.year()]?.[cursor.month()]
     if (monthReports?.some(isCountableEntry)) return true

@@ -1,4 +1,5 @@
 import moment from 'moment'
+import { serviceYearMonthIndex } from '@/lib/serviceYear'
 import type { CalendarMonth } from '@/lib/monthlyGoals'
 import type { PeriodTense } from '@/lib/projectedTotalCopy'
 import type { ProjectedTotalMonth } from '@/lib/projectedTotal'
@@ -128,8 +129,10 @@ export const buildServiceYearPace = ({
     plannedMinutes: Math.max(0, m.projectedMinutes - m.loggedMinutes),
   }))
 
-  const todayIndex =
-    today.getFullYear() * 12 + today.getMonth() - (serviceYear * 12 + 8)
+  const todayIndex = serviceYearMonthIndex(
+    { year: today.getFullYear(), month: today.getMonth() },
+    serviceYear
+  )
   const tense: PeriodTense =
     todayIndex < 0 ? 'future' : todayIndex > 11 ? 'past' : 'present'
   const dayFraction =

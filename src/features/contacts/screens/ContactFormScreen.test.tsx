@@ -241,6 +241,12 @@ describe('Contact Form map coordinates', () => {
       expect(mocks.addContact).toHaveBeenCalledOnce()
       expect(mocks.updateContact).not.toHaveBeenCalled()
       expect(mocks.alert).toHaveBeenCalledTimes(alerts)
+      if (alerts) {
+        expect(mocks.alert).toHaveBeenCalledWith(
+          'internetUnavailable',
+          'couldNotFetchCoordinatesFromAddress_retry'
+        )
+      }
       // Retried later, once the connection is back.
       expect(mocks.enqueueGeocodeRetry).toHaveBeenCalledTimes(retries)
       if (retries) {
@@ -250,6 +256,29 @@ describe('Contact Form map coordinates', () => {
       }
     }
   )
+
+  it('promises no later lookup offline when nothing was queued', async () => {
+    // A pin from another device lands on the saved contact first, so the
+    // lookup must not overwrite it and isn't queued.
+    mocks.addContact.mockImplementationOnce((contact: Contact) => {
+      mocks.contacts.push({
+        ...contact,
+        coordinate: { latitude: 1, longitude: 2 },
+      })
+    })
+    mocks.geocode.mockRejectedValueOnce({ kind: 'offline' })
+    await mount({ id: 'new-contact' })
+    await act(async () => {
+      root.root.findByType(ContactIdentityCard).props.onNameChange('Neighbor')
+    })
+    await save()
+    expect(mocks.addContact).toHaveBeenCalledOnce()
+    expect(mocks.enqueueGeocodeRetry).not.toHaveBeenCalled()
+    expect(mocks.alert).toHaveBeenCalledExactlyOnceWith(
+      'internetUnavailable',
+      'couldNotFetchCoordinatesFromAddress'
+    )
+  })
 
   it('saves the coordinate of a picked search result without geocoding', async () => {
     await mount({ id: 'new-contact' })

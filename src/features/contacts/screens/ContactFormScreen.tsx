@@ -319,17 +319,20 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
         const saved = useContacts
           .getState()
           .contacts.find((item) => item.id === c.id)
-        if (
+        const queued =
           isRetryableGeocodeFailure(kind) &&
-          saved &&
+          !!saved &&
           mayApplyGeocode(c, saved)
-        ) {
-          useGeocodeRetry.getState().enqueue(saved)
-        }
+        if (queued) useGeocodeRetry.getState().enqueue(saved)
         if (isDeviceOffline(kind)) {
+          // Promise the later lookup only when one is queued.
           Alert.alert(
             i18n.t('internetUnavailable'),
-            i18n.t('couldNotFetchCoordinatesFromAddress_retry')
+            i18n.t(
+              queued
+                ? 'couldNotFetchCoordinatesFromAddress_retry'
+                : 'couldNotFetchCoordinatesFromAddress'
+            )
           )
         }
       }

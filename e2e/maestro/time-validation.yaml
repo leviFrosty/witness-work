@@ -1,4 +1,7 @@
 # seed: pioneer
+# On a small phone the finished Get started checklist pushes Add Time half
+# behind the floating tab bar, where a tap on its center lands on a tab.
+# setup: (() => { __WW_DEV__.stores.preferences.setState({ homeChecklistDismissed: true }); return true })()
 # assert: (() => { const entries = Object.values(__WW_DEV__.stores.serviceReports.getState().serviceReports).flatMap((m) => Object.values(m).flat()).filter((e) => !e.id.startsWith('verify-')); return entries.length === 1 && entries.every((e) => e.hours * 60 + e.minutes > 0) && __WW_DEV__.state().route.name !== 'Add Time' })()
 appId: com.leviwilkerson.jwtimedev
 name: Reject empty time and save after correction

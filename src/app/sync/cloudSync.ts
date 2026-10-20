@@ -147,8 +147,18 @@ export function refreshCloudSyncStatus({
       const status = await fetchSyncStatus(bearerOptions(accountKey))
       statusReadAt = Date.now()
       const prefs = usePreferences.getState()
+      // ww-api couldn't reach RevenueCat, so its `entitled: false` says
+      // nothing about a Supporter here: keep what was recorded rather than
+      // pausing their sync for the outage.
+      const supporterUnknown =
+        status.enabled &&
+        !status.entitled &&
+        status.supporterCheckFailed &&
+        useSupporter.getState().isSupporter
       usePreferences.setState({
-        cloudSyncEntitled: status.entitled,
+        cloudSyncEntitled: supporterUnknown
+          ? prefs.cloudSyncEntitled
+          : status.entitled,
         ...(prefs.cloudSyncConfig?.enabled !== status.enabled ||
         prefs.cloudSyncConfig?.entitlement !== status.entitlement
           ? {

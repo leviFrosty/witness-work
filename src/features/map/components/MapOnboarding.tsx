@@ -6,6 +6,7 @@ import {
   Users as UsersIcon,
 } from 'lucide-react-native'
 import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
+import PointerHover, { HoverTint } from '@/components/ui/PointerHover'
 import {
   Alert,
   FlatList,
@@ -98,6 +99,7 @@ export default function MapOnboarding() {
   const [locationPermissions, setLocationPermissions] = useState<boolean>()
   const [statuses, setStatuses] = useState<Record<string, FetchStatus>>({})
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [hoveredId, setHoveredId] = useState<string | null>(null)
   const [fetchSnapshot, setFetchSnapshot] = useState<Contact[]>([])
 
   const handleLocationPermission = (status: boolean) => {
@@ -294,67 +296,84 @@ export default function MapOnboarding() {
     const isSelected = selectedIds.has(contact.id)
 
     return (
-      <TouchableOpacity
-        onPress={() => toggleSelect(contact.id)}
-        accessibilityRole='switch'
-        accessibilityLabel={contact.name}
-        accessibilityState={{
-          checked: isSelected,
-          disabled: hasFetched,
-        }}
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          gap: 12,
-          paddingVertical: 10,
-        }}
-        activeOpacity={0.7}
-        disabled={hasFetched}
+      <PointerHover
+        enabled={!hasFetched}
+        onHoverChange={(hovered) =>
+          setHoveredId((current) =>
+            hovered ? contact.id : current === contact.id ? null : current
+          )
+        }
       >
-        {!hasFetched && (
-          <View pointerEvents='none'>
-            <Switch value={isSelected} disabled={fetching} accessible={false} />
+        <TouchableOpacity
+          onPress={() => toggleSelect(contact.id)}
+          accessibilityRole='switch'
+          accessibilityLabel={contact.name}
+          accessibilityState={{
+            checked: isSelected,
+            disabled: hasFetched,
+          }}
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 12,
+            paddingVertical: 10,
+          }}
+          activeOpacity={0.7}
+          disabled={hasFetched}
+        >
+          {!hasFetched && (
+            <View pointerEvents='none'>
+              <Switch
+                value={isSelected}
+                disabled={fetching}
+                accessible={false}
+              />
+            </View>
+          )}
+          <View style={{ flex: 1 }}>
+            <Text
+              style={{
+                fontFamily: theme.fonts.semiBold,
+                fontSize: theme.fontSize('sm'),
+              }}
+            >
+              {contact.name}
+            </Text>
+            <Text
+              numberOfLines={1}
+              style={{
+                color: theme.colors.textAlt,
+                fontSize: theme.fontSize('xs'),
+              }}
+            >
+              {addressToString(contact.address)}
+            </Text>
           </View>
-        )}
-        <View style={{ flex: 1 }}>
-          <Text
-            style={{
-              fontFamily: theme.fonts.semiBold,
-              fontSize: theme.fontSize('sm'),
-            }}
-          >
-            {contact.name}
-          </Text>
-          <Text
-            numberOfLines={1}
-            style={{
-              color: theme.colors.textAlt,
-              fontSize: theme.fontSize('xs'),
-            }}
-          >
-            {addressToString(contact.address)}
-          </Text>
-        </View>
-        <View style={{ width: 20, alignItems: 'center' }}>
-          {status === 'loading' && (
-            <Spinner size='small' color={theme.colors.accent} />
-          )}
-          {status === 'success' && (
-            <LucideIcon
-              icon={CheckIcon}
-              color={theme.colors.accent}
-              size={14}
-            />
-          )}
-          {status === 'error' && (
-            <LucideIcon
-              icon={CircleAlertIcon}
-              color={theme.colors.warn}
-              size={14}
-            />
-          )}
-        </View>
-      </TouchableOpacity>
+          <View style={{ width: 20, alignItems: 'center' }}>
+            {status === 'loading' && (
+              <Spinner size='small' color={theme.colors.accent} />
+            )}
+            {status === 'success' && (
+              <LucideIcon
+                icon={CheckIcon}
+                color={theme.colors.accent}
+                size={14}
+              />
+            )}
+            {status === 'error' && (
+              <LucideIcon
+                icon={CircleAlertIcon}
+                color={theme.colors.warn}
+                size={14}
+              />
+            )}
+          </View>
+          <HoverTint
+            visible={hoveredId === contact.id}
+            borderRadius={theme.numbers.borderRadiusSm}
+          />
+        </TouchableOpacity>
+      </PointerHover>
     )
   }
 
@@ -438,16 +457,20 @@ export default function MapOnboarding() {
           ) : (
             <>
               {!hasFetched && (
-                <TouchableOpacity onPress={toggleSelectAll}>
-                  <Text
-                    style={{
-                      color: theme.colors.accent,
-                      fontSize: theme.fontSize('sm'),
-                    }}
-                  >
-                    {allSelected ? i18n.t('deselectAll') : i18n.t('selectAll')}
-                  </Text>
-                </TouchableOpacity>
+                <PointerHover effect='highlight'>
+                  <TouchableOpacity onPress={toggleSelectAll}>
+                    <Text
+                      style={{
+                        color: theme.colors.accent,
+                        fontSize: theme.fontSize('sm'),
+                      }}
+                    >
+                      {allSelected
+                        ? i18n.t('deselectAll')
+                        : i18n.t('selectAll')}
+                    </Text>
+                  </TouchableOpacity>
+                </PointerHover>
               )}
               <FlatList
                 data={listData}

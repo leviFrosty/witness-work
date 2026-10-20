@@ -11,6 +11,7 @@ import { useState } from 'react'
 import Text from '@/components/ui/MyText'
 import i18n, { TranslationKey } from '@/lib/locales'
 import Button from '@/components/ui/Button'
+import PointerHover from '@/components/ui/PointerHover'
 import Section from '@/components/ui/inputs/Section'
 import TextInputRow from '@/components/ui/inputs/TextInputRow'
 import PinLocation from '@/features/contacts/components/PinLocation'
@@ -30,46 +31,48 @@ const ModeSegment: React.FC<{
 }> = ({ active, icon, labelKey, onPress }) => {
   const theme = useTheme()
   return (
-    <TouchableOpacity
-      onPress={onPress}
-      activeOpacity={0.7}
-      accessibilityRole='button'
-      accessibilityState={{ selected: active }}
-      style={{
-        flex: 1,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: 8,
-        minHeight: 44,
-        paddingVertical: 8,
-        borderRadius: theme.numbers.borderRadiusSm,
-        backgroundColor: active
-          ? theme.colors.backgroundLighter
-          : 'transparent',
-        shadowColor: active ? theme.colors.shadow : undefined,
-        shadowOpacity: active ? 0.08 : 0,
-        shadowRadius: 2,
-        shadowOffset: { width: 0, height: 1 },
-      }}
-    >
-      <LucideIcon
-        icon={icon}
-        size={13}
+    <PointerHover effect='highlight'>
+      <TouchableOpacity
+        onPress={onPress}
+        activeOpacity={0.7}
+        accessibilityRole='button'
+        accessibilityState={{ selected: active }}
         style={{
-          color: active ? theme.colors.text : theme.colors.textAlt,
-        }}
-      />
-      <Text
-        style={{
-          color: active ? theme.colors.text : theme.colors.textAlt,
-          fontFamily: active ? theme.fonts.semiBold : theme.fonts.regular,
-          fontSize: theme.fontSize('sm'),
+          flex: 1,
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 8,
+          minHeight: 44,
+          paddingVertical: 8,
+          borderRadius: theme.numbers.borderRadiusSm,
+          backgroundColor: active
+            ? theme.colors.backgroundLighter
+            : 'transparent',
+          shadowColor: active ? theme.colors.shadow : undefined,
+          shadowOpacity: active ? 0.08 : 0,
+          shadowRadius: 2,
+          shadowOffset: { width: 0, height: 1 },
         }}
       >
-        {i18n.t(labelKey)}
-      </Text>
-    </TouchableOpacity>
+        <LucideIcon
+          icon={icon}
+          size={13}
+          style={{
+            color: active ? theme.colors.text : theme.colors.textAlt,
+          }}
+        />
+        <Text
+          style={{
+            color: active ? theme.colors.text : theme.colors.textAlt,
+            fontFamily: active ? theme.fonts.semiBold : theme.fonts.regular,
+            fontSize: theme.fontSize('sm'),
+          }}
+        >
+          {i18n.t(labelKey)}
+        </Text>
+      </TouchableOpacity>
+    </PointerHover>
   )
 }
 

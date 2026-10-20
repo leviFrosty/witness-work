@@ -1,5 +1,6 @@
 import { Check as CheckIcon } from 'lucide-react-native'
 import LucideIcon from '@/components/ui/LucideIcon'
+import PointerHover, { HoverTint } from '@/components/ui/PointerHover'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Image, Pressable, View, type ScrollView } from 'react-native'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
@@ -119,6 +120,7 @@ const PreferencesAppIconPicker = () => {
   const { customAppIcon, set } = usePreferences()
   const [hemisphere, setHemisphere] = useState<Hemisphere>('north')
   const [pending, setPending] = useState<AppIconVariant | null>(null)
+  const [hovered, setHovered] = useState<AppIconVariant | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -171,74 +173,91 @@ const PreferencesAppIconPicker = () => {
           const isSelected = selected === tile.variant
           const isPending = pending === tile.variant
           return (
-            <Pressable
+            <PointerHover
               key={tile.variant}
-              onPress={() => handlePick(tile.variant)}
-              disabled={pending !== null}
-              style={{
-                width: '47%',
-                alignItems: 'center',
-                gap: 8,
-                opacity: pending !== null && !isPending ? 0.5 : 1,
-              }}
-              accessibilityRole='button'
-              accessibilityState={{ selected: isSelected }}
-              accessibilityLabel={i18n.t(tile.label)}
+              enabled={pending === null}
+              onHoverChange={(isHovered) =>
+                setHovered((current) =>
+                  isHovered
+                    ? tile.variant
+                    : current === tile.variant
+                      ? null
+                      : current
+                )
+              }
             >
-              <View
+              <Pressable
+                onPress={() => handlePick(tile.variant)}
+                disabled={pending !== null}
                 style={{
-                  width: '100%',
-                  aspectRatio: 1,
-                  borderRadius: theme.numbers.borderRadiusLg,
-                  overflow: 'hidden',
-                  borderWidth: isSelected ? 3 : 1,
-                  borderColor: isSelected
-                    ? theme.colors.accent
-                    : theme.colors.border,
-                  backgroundColor: theme.colors.backgroundLighter,
+                  width: '47%',
                   alignItems: 'center',
-                  justifyContent: 'center',
+                  gap: 8,
+                  opacity: pending !== null && !isPending ? 0.5 : 1,
                 }}
+                accessibilityRole='button'
+                accessibilityState={{ selected: isSelected }}
+                accessibilityLabel={i18n.t(tile.label)}
               >
-                {tile.preview && (
-                  <Image
-                    source={tile.preview}
-                    style={{ width: '100%', height: '100%' }}
-                    resizeMode='cover'
-                  />
-                )}
-                {isSelected && (
-                  <View
-                    style={{
-                      position: 'absolute',
-                      top: 8,
-                      right: 8,
-                      backgroundColor: theme.colors.accent,
-                      borderRadius: 999,
-                      width: 28,
-                      height: 28,
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    <LucideIcon
-                      icon={CheckIcon}
-                      size={14}
-                      color={theme.colors.textInverse}
+                <View
+                  style={{
+                    width: '100%',
+                    aspectRatio: 1,
+                    borderRadius: theme.numbers.borderRadiusLg,
+                    overflow: 'hidden',
+                    borderWidth: isSelected ? 3 : 1,
+                    borderColor: isSelected
+                      ? theme.colors.accent
+                      : theme.colors.border,
+                    backgroundColor: theme.colors.backgroundLighter,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  {tile.preview && (
+                    <Image
+                      source={tile.preview}
+                      style={{ width: '100%', height: '100%' }}
+                      resizeMode='cover'
                     />
-                  </View>
-                )}
-              </View>
-              <Text
-                style={{
-                  fontFamily: theme.fonts.semiBold,
-                  color: theme.colors.text,
-                  fontSize: theme.fontSize('sm'),
-                }}
-              >
-                {i18n.t(tile.label)}
-              </Text>
-            </Pressable>
+                  )}
+                  {isSelected && (
+                    <View
+                      style={{
+                        position: 'absolute',
+                        top: 8,
+                        right: 8,
+                        backgroundColor: theme.colors.accent,
+                        borderRadius: 999,
+                        width: 28,
+                        height: 28,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <LucideIcon
+                        icon={CheckIcon}
+                        size={14}
+                        color={theme.colors.textInverse}
+                      />
+                    </View>
+                  )}
+                  <HoverTint
+                    visible={hovered === tile.variant}
+                    borderRadius={theme.numbers.borderRadiusLg}
+                  />
+                </View>
+                <Text
+                  style={{
+                    fontFamily: theme.fonts.semiBold,
+                    color: theme.colors.text,
+                    fontSize: theme.fontSize('sm'),
+                  }}
+                >
+                  {i18n.t(tile.label)}
+                </Text>
+              </Pressable>
+            </PointerHover>
           )
         })}
       </View>

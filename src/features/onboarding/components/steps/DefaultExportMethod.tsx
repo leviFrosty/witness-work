@@ -5,10 +5,12 @@ import {
   Share as ShareIcon,
 } from 'lucide-react-native'
 import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
+import { useState } from 'react'
 import { View, Pressable } from 'react-native'
 import i18n from '@/lib/locales'
 import { usePreferences, type ReportExportMethod } from '@/stores/preferences'
 import ActionButton from '@/components/ui/ActionButton'
+import PointerHover, { HoverTint } from '@/components/ui/PointerHover'
 import InfoPopover from '@/components/ui/InfoPopover'
 import Text from '@/components/ui/MyText'
 import Wrapper from '@/components/ui/layout/Wrapper'
@@ -33,6 +35,7 @@ const METHOD_ICON: Record<ReportExportMethod, AppIcon> = {
 const StepDefaultExportMethod = ({ goNext, goBack }: Props) => {
   const { defaultExportMethod, set } = usePreferences()
   const theme = useTheme()
+  const [hovered, setHovered] = useState<ReportExportMethod | null>(null)
 
   const selectedOption = exportMethodSelectionOptions.find(
     (o) => o.value === defaultExportMethod
@@ -83,73 +86,92 @@ const StepDefaultExportMethod = ({ goNext, goBack }: Props) => {
           {exportMethodSelectionOptions.map((opt) => {
             const isSelected = opt.value === defaultExportMethod
             return (
-              <Pressable
+              <PointerHover
                 key={opt.value}
-                onPress={() => set({ defaultExportMethod: opt.value })}
-                accessibilityRole='button'
-                accessibilityLabel={opt.label}
-                accessibilityState={{ selected: isSelected }}
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  gap: 12,
-                  paddingVertical: 14,
-                  paddingHorizontal: 16,
-                  borderRadius: theme.numbers.borderRadiusMd,
-                  borderCurve: 'continuous',
-                  borderWidth: 2,
-                  borderColor: isSelected
-                    ? theme.colors.accent
-                    : theme.colors.border,
-                  backgroundColor: isSelected
-                    ? theme.colors.accentTranslucent
-                    : theme.colors.card,
-                }}
+                onHoverChange={(isHovered) =>
+                  setHovered((current) =>
+                    isHovered
+                      ? opt.value
+                      : current === opt.value
+                        ? null
+                        : current
+                  )
+                }
               >
-                <LucideIcon
-                  icon={METHOD_ICON[opt.value]}
-                  size={18}
-                  color={theme.colors.text}
-                />
-                <Text
+                <Pressable
+                  onPress={() => set({ defaultExportMethod: opt.value })}
+                  accessibilityRole='button'
+                  accessibilityLabel={opt.label}
+                  accessibilityState={{ selected: isSelected }}
                   style={{
-                    fontSize: theme.fontSize('md'),
-                    fontFamily: isSelected
-                      ? theme.fonts.semiBold
-                      : theme.fonts.regular,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 12,
+                    paddingVertical: 14,
+                    paddingHorizontal: 16,
+                    borderRadius: theme.numbers.borderRadiusMd,
+                    borderCurve: 'continuous',
+                    borderWidth: 2,
+                    borderColor: isSelected
+                      ? theme.colors.accent
+                      : theme.colors.border,
+                    backgroundColor: isSelected
+                      ? theme.colors.accentTranslucent
+                      : theme.colors.card,
                   }}
                 >
-                  {opt.label}
-                </Text>
-              </Pressable>
+                  <LucideIcon
+                    icon={METHOD_ICON[opt.value]}
+                    size={18}
+                    color={theme.colors.text}
+                  />
+                  <Text
+                    style={{
+                      fontSize: theme.fontSize('md'),
+                      fontFamily: isSelected
+                        ? theme.fonts.semiBold
+                        : theme.fonts.regular,
+                    }}
+                  >
+                    {opt.label}
+                  </Text>
+                  <HoverTint
+                    visible={hovered === opt.value}
+                    borderRadius={theme.numbers.borderRadiusMd}
+                    borderCurve='continuous'
+                  />
+                </Pressable>
+              </PointerHover>
             )
           })}
         </View>
 
-        <Pressable
-          onPress={() => openURL(links.featureRequest)}
-          accessibilityRole='link'
-        >
-          <Text
-            style={{
-              fontSize: 12,
-              color: theme.colors.textAlt,
-              textAlign: 'center',
-              lineHeight: 18,
-            }}
+        <PointerHover effect='highlight'>
+          <Pressable
+            onPress={() => openURL(links.featureRequest)}
+            accessibilityRole='link'
           >
-            {i18n.t('dontSeeYourCongregationsApp')}{' '}
             <Text
               style={{
                 fontSize: 12,
                 color: theme.colors.textAlt,
-                textDecorationLine: 'underline',
+                textAlign: 'center',
+                lineHeight: 18,
               }}
             >
-              {i18n.t('requestAnIntegration')}
+              {i18n.t('dontSeeYourCongregationsApp')}{' '}
+              <Text
+                style={{
+                  fontSize: 12,
+                  color: theme.colors.textAlt,
+                  textDecorationLine: 'underline',
+                }}
+              >
+                {i18n.t('requestAnIntegration')}
+              </Text>
             </Text>
-          </Text>
-        </Pressable>
+          </Pressable>
+        </PointerHover>
       </View>
       <View>
         <ActionButton onPress={goNext}>{ctaLabel}</ActionButton>

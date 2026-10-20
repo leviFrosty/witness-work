@@ -16,6 +16,7 @@ import {
 import IsSupporter from '@/components/IsSupporter'
 import Card from '@/components/ui/Card'
 import LucideIcon from '@/components/ui/LucideIcon'
+import PointerHover from '@/components/ui/PointerHover'
 import Text from '@/components/ui/MyText'
 import MyTextInput from '@/components/ui/TextInput'
 import useTheme from '@/contexts/theme'
@@ -79,39 +80,42 @@ const BackgroundEditButton = ({
           accessibilityState={{ expanded }}
           style={triggerStyle}
         >
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 6,
-              minHeight: 30,
-              paddingHorizontal: 8,
-              paddingVertical: 4,
-              borderRadius: 15,
-              borderWidth: 1,
-              borderColor: theme.colors.border,
-            }}
-          >
+          {/* Hovers the visible pill, not the taller touch target. */}
+          <PointerHover effect='highlight'>
             <View
               style={{
-                width: 14,
-                height: 14,
-                borderRadius: 7,
-                backgroundColor: swatchColor,
-                borderWidth: StyleSheet.hairlineWidth,
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 6,
+                minHeight: 30,
+                paddingHorizontal: 8,
+                paddingVertical: 4,
+                borderRadius: 15,
+                borderWidth: 1,
                 borderColor: theme.colors.border,
               }}
-            />
-            <Text
-              style={{
-                fontSize: theme.fontSize('xs'),
-                color: theme.colors.textAlt,
-                fontFamily: theme.fonts.medium,
-              }}
             >
-              {i18n.t('contactHeroBackgroundColor')}
-            </Text>
-          </View>
+              <View
+                style={{
+                  width: 14,
+                  height: 14,
+                  borderRadius: 7,
+                  backgroundColor: swatchColor,
+                  borderWidth: StyleSheet.hairlineWidth,
+                  borderColor: theme.colors.border,
+                }}
+              />
+              <Text
+                style={{
+                  fontSize: theme.fontSize('xs'),
+                  color: theme.colors.textAlt,
+                  fontFamily: theme.fonts.medium,
+                }}
+              >
+                {i18n.t('contactHeroBackgroundColor')}
+              </Text>
+            </View>
+          </PointerHover>
         </Pressable>
       )}
     >
@@ -253,26 +257,28 @@ const ContactIdentityCard = ({
                         justifyContent: 'center',
                       }}
                     >
-                      <View
-                        style={{
-                          width: 30,
-                          height: 30,
-                          borderRadius: 15,
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          backgroundColor: selected
-                            ? `${color}26`
-                            : 'transparent',
-                          borderWidth: 1,
-                          borderColor: selected ? color : theme.colors.border,
-                        }}
-                      >
-                        <LucideIcon
-                          icon={icon}
-                          size={14}
-                          color={selected ? color : theme.colors.textAlt}
-                        />
-                      </View>
+                      <PointerHover effect='highlight'>
+                        <View
+                          style={{
+                            width: 30,
+                            height: 30,
+                            borderRadius: 15,
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            backgroundColor: selected
+                              ? `${color}26`
+                              : 'transparent',
+                            borderWidth: 1,
+                            borderColor: selected ? color : theme.colors.border,
+                          }}
+                        >
+                          <LucideIcon
+                            icon={icon}
+                            size={14}
+                            color={selected ? color : theme.colors.textAlt}
+                          />
+                        </View>
+                      </PointerHover>
                     </Pressable>
                   )
                 })}

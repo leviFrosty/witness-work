@@ -213,24 +213,27 @@ export async function prepareCloudSync(): Promise<PrepareCloudSyncOutcome> {
 }
 
 /**
- * Whether Cloud Sync brings the account's data to this device, so a restore
- * from backup isn't needed (ADR 0030 §3): it's offered, this device hasn't
- * chosen iCloud/Drive or turned sync off, the account is entitled, and another
- * device has a slot. False when it can't tell.
+ * When Cloud Sync would bring the account's data to this device (ADR 0030 §3):
+ * the server time of another device's newest slot, so a restore can tell
+ * whether the backup is newer. It's offered, this device hasn't chosen
+ * iCloud/Drive or turned sync off, the account is entitled, and another device
+ * has a slot. Null otherwise, or when it can't tell.
  */
-export async function cloudSyncCoversRestore(): Promise<boolean> {
+export async function cloudSyncNewestSlotAt(): Promise<number | null> {
   const prefs = usePreferences.getState()
-  if (!cloudSyncOffered() || prefs.syncProvider === 'platform') return false
-  if (prefs.iCloudSyncSetByUser && !prefs.iCloudSyncEnabled) return false
+  if (!cloudSyncOffered() || prefs.syncProvider === 'platform') return null
+  if (prefs.iCloudSyncSetByUser && !prefs.iCloudSyncEnabled) return null
   const status = await refreshCloudSyncStatus({ force: true })
-  if (!status?.entitled) return false
+  if (!status?.entitled) return null
   try {
     const { options } = await cloudSyncAccess()
     const { slots } = await listSyncSlots(options)
     const own = ensureSyncDeviceId()
-    return slots.some((slot) => slot.slotId !== own)
+    const others = slots.filter((slot) => slot.slotId !== own)
+    if (others.length === 0) return null
+    return Math.max(...others.map((slot) => slot.updatedAt))
   } catch {
-    return false
+    return null
   }
 }
 

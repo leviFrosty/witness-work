@@ -86,7 +86,10 @@ cloud we can't encrypt for the User who chose ours.
   pulls everything, and a device with records and an account with records
   waits for the User's Merge or Replace choice in Settings. So a new phone
   that signs in with a QR code or a recovery key gets everything streamed down
-  without a restore step.
+  without a restore step. The restore is still offered when the account's
+  newest backup is clearly newer than every other device's slot: a phone that
+  stayed on iCloud or Drive with backup on, beside a rarely used or retired
+  device's stale slot. The newest data wins, not "any slot exists".
 - **The account key.** Cloud Sync needs the account key and its session. A
   device that has the key (iCloud Keychain, Block Store, a QR code, a recovery
   key) opens its session for it. An entitled device without one creates it,

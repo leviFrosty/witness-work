@@ -3,7 +3,7 @@ import { TextStyle } from 'react-native'
 import { FuseResultMatch } from 'fuse.js'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
-import { buildSnippet } from '@/features/contacts/lib/contactsSearch'
+import { buildSnippet } from '@/lib/contactsSearch'
 
 type Props = {
   /**

@@ -7,8 +7,8 @@ import {
   unfoldRange,
 } from '@/lib/searchNormalize'
 
-export type ContactSearchEntry = {
-  contact: Contact
+export type ContactSearchEntry<C extends Contact = Contact> = {
+  contact: C
   notes: string
   customFieldValues: string
 }
@@ -19,15 +19,15 @@ export type ContactSearchEntry = {
  * `matches: undefined`). Per-key match details power the inline highlighting
  * and snippet preview in `ContactRow`.
  */
-export type ContactSearchMatch = {
-  contact: Contact
+export type ContactSearchMatch<C extends Contact = Contact> = {
+  contact: C
   matches?: readonly FuseResultMatch[]
 }
 
-const buildEntries = (
-  contacts: Contact[],
+const buildEntries = <C extends Contact>(
+  contacts: C[],
   conversations: Visit[]
-): ContactSearchEntry[] => {
+): ContactSearchEntry<C>[] => {
   const notesByContactId = new Map<string, string[]>()
   for (const c of conversations) {
     if (!c.note) continue
@@ -55,6 +55,7 @@ const FUSE_KEYS: IFuseOptions<ContactSearchEntry>['keys'] = [
   { name: 'notes', weight: 0.2 },
   { name: 'contact.phone', weight: 0.15 },
   { name: 'contact.email', weight: 0.15 },
+  { name: 'contact.address.line1', weight: 0.1 },
   { name: 'contact.address.city', weight: 0.05 },
   { name: 'contact.address.state', weight: 0.05 },
   { name: 'contact.address.zip', weight: 0.05 },
@@ -100,10 +101,10 @@ const unfoldMatch = (
   }
 }
 
-export const buildContactsFuse = (
-  contacts: Contact[],
+export const buildContactsFuse = <C extends Contact>(
+  contacts: C[],
   conversations: Visit[]
-): Fuse<ContactSearchEntry> => {
+): Fuse<ContactSearchEntry<C>> => {
   const entries = buildEntries(contacts, conversations)
   return new Fuse(entries, {
     keys: FUSE_KEYS,
@@ -132,11 +133,11 @@ export const buildContactsFuse = (
  * - Builds a fresh Fuse index per call; callers should memoize against
  *   `[contacts, conversations]` to avoid rebuilding on every keystroke.
  */
-export const searchContactsFuzzy = (
+export const searchContactsFuzzy = <C extends Contact>(
   query: string,
-  fuse: Fuse<ContactSearchEntry>,
-  contacts: Contact[]
-): ContactSearchMatch[] => {
+  fuse: Fuse<ContactSearchEntry<C>>,
+  contacts: C[]
+): ContactSearchMatch<C>[] => {
   const trimmed = query.trim()
   if (trimmed.length === 0) return contacts.map((contact) => ({ contact }))
   return fuse.search(foldArabicForSearch(trimmed)).map((r) => ({

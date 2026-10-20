@@ -26,10 +26,12 @@ import MyTextInput from '@/components/ui/TextInput'
 import useTheme from '@/contexts/theme'
 import { addressToString } from '@/lib/address'
 import { analytics } from '@/lib/analytics'
+import { buildContactsFuse } from '@/lib/contactsSearch'
 import { filterActivesContacts } from '@/lib/dismissedContacts'
-import i18n from '@/lib/locales'
+import i18n, { type TranslationKey } from '@/lib/locales'
 import { formatPlanLocation, type ResolvedPlace } from '@/lib/placeSearch'
 import useContacts from '@/stores/contactsStore'
+import useConversations from '@/stores/conversationStore'
 import type { Coordinate } from '@/types/contact'
 import type { AddedStopSource } from '@/features/route-planning/hooks/useRouteBuilder'
 import { parseCoordinateInput } from '@/features/route-planning/lib/coordinateInput'
@@ -44,14 +46,13 @@ import {
   savedPlaceLabel,
   savedPlaceOnRoute,
 } from '@/features/route-planning/lib/savedPlaceMenu'
+import { stopContactResults } from '@/features/route-planning/lib/stopContacts'
 import { useSavedPlaces } from '@/features/route-planning/stores/savedPlaces'
 
 type Tab = 'places' | 'contacts' | 'map'
 
 /** What a pick is for: a stop, or where the day starts or finishes. */
 export type AddRouteStopMode = 'stop' | 'start' | 'finish'
-
-const MAX_CONTACT_RESULTS = 30
 
 const SAVED_PLACE_ICONS: Record<SavedPlaceKind, AppIcon> = {
   home: HouseIcon,
@@ -125,6 +126,7 @@ export default function AddRouteStopSheet({
     setSaving(savingAtOpen)
   }
   const contacts = useContacts((s) => s.contacts)
+  const conversations = useConversations((s) => s.conversations)
   const savedPlaces = useSavedPlaces((s) => s.places)
   const savePlace = useSavedPlaces((s) => s.set)
   const forgetPlace = useSavedPlaces((s) => s.clear)
@@ -205,22 +207,14 @@ export default function AddRouteStopSheet({
     )
   }
 
-  const query = contactQuery.trim().toLowerCase()
-  const located = filterActivesContacts(contacts)
-    .filter((contact) => isCoordinate(contact.coordinate))
-    .map((contact) => ({
-      contact,
-      address: addressToString(contact.address).trim(),
-    }))
-  const contactResults = located
-    .filter(
-      ({ contact, address }) =>
-        !query ||
-        contact.name.toLowerCase().includes(query) ||
-        address.toLowerCase().includes(query)
-    )
-    .sort((a, b) => a.contact.name.localeCompare(b.contact.name))
-    .slice(0, MAX_CONTACT_RESULTS)
+  const located = filterActivesContacts(contacts).filter((contact) =>
+    isCoordinate(contact.coordinate)
+  )
+  // Keyed on whether there's a query, not the query itself, so the compiler
+  // keeps one index while the User types.
+  const searching = contactQuery.trim().length > 0
+  const fuse = searching ? buildContactsFuse(located, conversations) : undefined
+  const contactResults = stopContactResults(located, contactQuery, fuse)
 
   // Coordinates pasted into search (or a map link) go straight on the route.
   const pasted = parseCoordinateInput(placeQuery)
@@ -303,7 +297,7 @@ export default function AddRouteStopSheet({
                 coordinate={pin?.coordinate}
                 around={around}
                 onChange={(coordinate) => void dropPin(coordinate)}
-                otherPins={located.map(({ contact }) => ({
+                otherPins={located.map((contact) => ({
                   id: contact.id,
                   coordinate: contact.coordinate!,
                 }))}
@@ -451,7 +445,7 @@ export default function AddRouteStopSheet({
                   clearButtonMode='while-editing'
                   autoCorrect={false}
                 />
-                {contactResults.length === 0 ? (
+                {contactResults.shown.length === 0 ? (
                   <Text style={{ color: theme.colors.textAlt }}>
                     {i18n.t('routeBuilder_noContacts')}
                   </Text>
@@ -463,7 +457,8 @@ export default function AddRouteStopSheet({
                       overflow: 'hidden',
                     }}
                   >
-                    {contactResults.map(({ contact, address }, index) => {
+                    {contactResults.shown.map((contact, index) => {
+                      const address = addressToString(contact.address).trim()
                       const onRoute =
                         mode === 'stop' &&
                         !saving &&
@@ -552,6 +547,22 @@ export default function AddRouteStopSheet({
                       )
                     })}
                   </View>
+                )}
+                {contactResults.more > 0 && (
+                  <Text
+                    style={{
+                      color: theme.colors.textAlt,
+                      fontSize: theme.fontSize('sm'),
+                      textAlign: 'center',
+                    }}
+                  >
+                    {i18n.t(
+                      (searching
+                        ? 'routeBuilder_moreContactsKeepTyping'
+                        : 'routeBuilder_moreContactsSearch') as TranslationKey,
+                      { count: contactResults.more }
+                    )}
+                  </Text>
                 )}
               </>
             )}

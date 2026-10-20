@@ -1,6 +1,6 @@
 import { FuseResultMatch } from 'fuse.js'
 import i18n from '@/lib/locales'
-import { buildSnippet } from '@/features/contacts/lib/contactsSearch'
+import { buildSnippet } from '@/lib/contactsSearch'
 
 /** The " · " a Contact row's second line puts between its details. */
 const DETAIL_SEPARATOR = ' · '

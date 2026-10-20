@@ -4173,6 +4173,14 @@
   "routeBuilder_searchPlaces": "Search places or addresses",
   "routeBuilder_searchContacts": "Search contacts",
   "routeBuilder_noContacts": "No contacts with a map location match.",
+  "routeBuilder_moreContactsSearch": {
+    "one": "{{count}} more contact. Search to find it.",
+    "other": "{{count}} more contacts. Search to find them."
+  },
+  "routeBuilder_moreContactsKeepTyping": {
+    "one": "{{count}} more match. Keep typing to narrow the list.",
+    "other": "{{count}} more matches. Keep typing to narrow the list."
+  },
   "routeBuilder_stopName": "Name",
   "routeBuilder_stopNamePlaceholder": "Optional",
   "routeBuilder_pinnedPlace": "Pinned Location",

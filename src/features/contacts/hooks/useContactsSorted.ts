@@ -11,7 +11,7 @@ import {
   buildContactsFuse,
   ContactSearchMatch,
   searchContactsFuzzy,
-} from '@/features/contacts/lib/contactsSearch'
+} from '@/lib/contactsSearch'
 import { filterActivesContacts } from '@/lib/dismissedContacts'
 import { buildConversationIndex } from '@/lib/conversationIndex'
 import useLocalDay from '@/hooks/useLocalDay'

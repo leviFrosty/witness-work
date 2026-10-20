@@ -42,7 +42,7 @@ import {
   findNameMatch,
   MatchSource,
   pickPreviewMatch,
-} from '@/features/contacts/lib/contactsSearch'
+} from '@/lib/contactsSearch'
 import HighlightedText from '@/features/contacts/components/HighlightedText'
 import { SelectionCheck } from '@/features/contacts/components/ListSelection'
 import useShareContact from '@/features/contacts/hooks/useShareContact'

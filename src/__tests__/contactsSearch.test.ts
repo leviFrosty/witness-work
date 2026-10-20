@@ -6,7 +6,7 @@ import {
   matchSourceForKey,
   pickPreviewMatch,
   searchContactsFuzzy,
-} from '@/features/contacts/lib/contactsSearch'
+} from '@/lib/contactsSearch'
 import { Contact } from '@/types/contact'
 import { Visit } from '@/types/visit'
 
@@ -127,6 +127,34 @@ describe('lib/contactsSearch', () => {
       const result = searchContactsFuzzy('Cincinnati', fuse, contacts)
       expect(result.map((r) => r.contact.id)).toContain('cy')
       expect(result[0].contact.id).toBe('cy')
+    })
+
+    it('matches on the street address', () => {
+      const elm = c({
+        id: 'elm',
+        name: 'Elm Neighbor',
+        address: { line1: '42 Juniper Lane' },
+      })
+      const oak = c({
+        id: 'oak',
+        name: 'Oak Neighbor',
+        address: { line1: '7 Harbor Road' },
+      })
+      const contacts = [elm, oak]
+      const fuse = buildContactsFuse(contacts, [])
+      const result = searchContactsFuzzy('juniper', fuse, contacts)
+      expect(result.map((r) => r.contact.id)).toEqual(['elm'])
+      expect(matchSourceForKey(result[0].matches?.[0]?.key)).toBe('address')
+    })
+
+    it('hands back the same objects it was given, extra fields and all', () => {
+      const pins = [
+        { ...c({ id: 'p', name: 'Pinned Person' }), pinColor: '#ff0000' },
+      ]
+      const fuse = buildContactsFuse(pins, [])
+      const [first] = searchContactsFuzzy('pinned', fuse, pins)
+      expect(first.contact).toBe(pins[0])
+      expect(first.contact.pinColor).toBe('#ff0000')
     })
   })
 

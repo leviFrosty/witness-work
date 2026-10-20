@@ -1,12 +1,12 @@
-import { useEffect, useState } from 'react'
+import { type ComponentProps, useEffect, useState } from 'react'
 import { useNavigation } from '@react-navigation/native'
-import BadgeCelebration, {
-  type BadgeCelebrationAction,
-  type BadgeCelebrationContent,
+import type BadgeCelebrationComponent from '@/features/badges/components/BadgeCelebration'
+import type {
+  BadgeCelebrationAction,
+  BadgeCelebrationContent,
 } from '@/features/badges/components/BadgeCelebration'
-import BadgesWelcome, {
-  type BadgesWelcomeAction,
-} from '@/features/badges/components/BadgesWelcome'
+import type BadgesWelcomeComponent from '@/features/badges/components/BadgesWelcome'
+import type { BadgesWelcomeAction } from '@/features/badges/components/BadgesWelcome'
 import useTakeoverTurn from '@/hooks/useTakeoverTurn'
 import { analytics } from '@/lib/analytics'
 import { useBadgeSession } from '@/stores/badgeSession'
@@ -117,4 +117,20 @@ export default function BadgeCelebrationOverlay() {
   if (content)
     return <BadgeCelebration content={content} onClose={handleClose} />
   return null
+}
+
+// Each card's module (and its confetti) loads the first time it shows.
+
+function BadgeCelebration(
+  props: ComponentProps<typeof BadgeCelebrationComponent>
+) {
+  const Card: typeof BadgeCelebrationComponent =
+    require('@/features/badges/components/BadgeCelebration').default
+  return <Card {...props} />
+}
+
+function BadgesWelcome(props: ComponentProps<typeof BadgesWelcomeComponent>) {
+  const Card: typeof BadgesWelcomeComponent =
+    require('@/features/badges/components/BadgesWelcome').default
+  return <Card {...props} />
 }

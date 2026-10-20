@@ -1,5 +1,5 @@
 import { isOfflineError } from '@/lib/offlineError'
-import { isLocationTemporarilyUnavailableError } from '@/lib/locationError'
+import { isExpectedLocationError } from '@/lib/locationError'
 
 // Internal policy shared by the public module and the provider's automatic
 // capture hook. Keeping it independent of the client avoids an import cycle.
@@ -38,8 +38,39 @@ export function getErrorContext(): Record<string, unknown> {
   return { ...context }
 }
 
+const STORAGE_FULL_PATTERNS = [
+  /out of space/i,
+  /no space left on device/i,
+  /NSCocoaErrorDomain\s+Code=640\b/i,
+  /\bENOSPC\b/,
+]
+
+/**
+ * The OS says the device has no room left to write: iOS (NSCocoaErrorDomain
+ * 640, "out of space") or POSIX ENOSPC. Nothing the app can fix; counted with
+ * the `device_storage_full` event instead of reported. MMKV's `Failed to set`
+ * isn't here: it covers any failed write (a file locked before first unlock, a
+ * damaged file), so it's still reported.
+ */
+export function isStorageFullError(error: unknown): boolean {
+  if (error == null) return false
+  const e = error as { message?: unknown; code?: unknown }
+  if (e.code === 'ENOSPC') return true
+  const message =
+    typeof error === 'string'
+      ? error
+      : typeof e.message === 'string'
+        ? e.message
+        : ''
+  return STORAGE_FULL_PATTERNS.some((pattern) => pattern.test(message))
+}
+
 export function shouldIgnoreError(error: unknown): boolean {
-  return isOfflineError(error) || isLocationTemporarilyUnavailableError(error)
+  return (
+    isOfflineError(error) ||
+    isExpectedLocationError(error) ||
+    isStorageFullError(error)
+  )
 }
 
 export function shouldIgnoreExceptionProperties(

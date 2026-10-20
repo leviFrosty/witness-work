@@ -73,7 +73,9 @@ export default function InfoPopover({
             {...trigger}
             onPress={() => {
               Keyboard.dismiss()
-              void tooltip.current?.show()
+              // Rejects when the native view is gone (unmounting, or after a
+              // reload); there's nothing to show then.
+              Promise.resolve(tooltip.current?.show()).catch(() => {})
             }}
           />
         </RNHostView>

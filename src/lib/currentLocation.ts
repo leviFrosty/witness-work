@@ -2,7 +2,7 @@ import * as Location from 'expo-location'
 import { create } from 'zustand'
 import type { Coordinate } from '@/types/contact'
 import { errorTracking } from '@/lib/errorTracking'
-import { isLocationTemporarilyUnavailableError } from '@/lib/locationError'
+import { isExpectedLocationError } from '@/lib/locationError'
 
 /** A last-known fix this recent and accurate is used as is. */
 const LAST_KNOWN_MAX_AGE_MS = 2 * 60_000
@@ -78,7 +78,7 @@ export const refreshCurrentLocation = ({
       useCurrentLocation.setState({ coordinate, fixedAt: Date.now() })
       return coordinate
     } catch (error) {
-      if (!isLocationTemporarilyUnavailableError(error)) {
+      if (!isExpectedLocationError(error)) {
         errorTracking.captureException(error)
       }
       return null

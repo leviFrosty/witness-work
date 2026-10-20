@@ -45,6 +45,24 @@ describe('classifyNetworkError', () => {
       },
     ],
     [
+      'RevenueCat on Android (userInfo only)',
+      Object.assign(new Error('x'), {
+        code: '10',
+        userInfo: { readableErrorCode: 'NETWORK_ERROR' },
+      }),
+    ],
+    [
+      'RevenueCat offline on Android (userInfo only)',
+      Object.assign(new Error('x'), {
+        code: '35',
+        userInfo: { readableErrorCode: 'OFFLINE_CONNECTION_ERROR' },
+      }),
+    ],
+    [
+      'RevenueCat message only (auto-captured exception value)',
+      'Error performing request.',
+    ],
+    [
       'axios without response',
       { isAxiosError: true, response: undefined, message: 'boom' },
     ],
@@ -90,6 +108,16 @@ describe('classifyNetworkError', () => {
     expect(classifyNetworkError({ code: 'constructor' })).toBe('unknown')
     expect(
       classifyNetworkError({ code: '10', message: 'no RevenueCat marker' })
+    ).toBe('unknown')
+    expect(
+      classifyNetworkError({ code: '10', userInfo: {}, message: 'x' })
+    ).toBe('unknown')
+    expect(
+      classifyNetworkError({
+        code: '2',
+        userInfo: { readableErrorCode: 'STORE_PROBLEM_ERROR' },
+        message: 'There was a problem with the store.',
+      })
     ).toBe('unknown')
     expect(classifyNetworkError(undefined)).toBe('unknown')
   })

@@ -171,7 +171,9 @@ const StalenessChip = ({
         flexDirection: 'row',
         alignItems: 'center',
         gap: 6,
-        height: 32,
+        // Grows with large text sizes instead of clipping the label.
+        minHeight: 32,
+        paddingVertical: 6,
         paddingHorizontal: 12,
         borderRadius: 999,
         borderCurve: 'continuous',

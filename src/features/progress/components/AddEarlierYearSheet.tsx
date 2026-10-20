@@ -92,6 +92,7 @@ const AddEarlierYearSheet = ({
           }))}
           value={draftValue}
           onValueChange={setDraftValue}
+          accessibilityLabel={i18n.t('serviceYear')}
         />
       ) : null}
     </Sheet>

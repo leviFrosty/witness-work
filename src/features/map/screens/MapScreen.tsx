@@ -15,7 +15,7 @@ import Wrapper from '@/components/ui/layout/Wrapper'
 import MapView, { LatLng, Marker } from 'react-native-maps'
 import useContacts from '@/stores/contactsStore'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useNavigation } from '@react-navigation/native'
+import { useIsFocused, useNavigation } from '@react-navigation/native'
 import useTheme, { ThemeContext } from '@/contexts/theme'
 import { GlassColorSchemeOverrideContext } from '@/contexts/glassColorScheme'
 import useConversations from '@/stores/conversationStore'
@@ -56,6 +56,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import MapOnboarding from '@/features/map/components/MapOnboarding'
 import { TAB_BAR_HEIGHT } from '@/components/ui/TabBar'
 import useDevice from '@/hooks/useDevice'
+import useAppActive from '@/hooks/useAppActive'
 import { RootStackNavigation } from '@/types/rootStack'
 import { HomeTabStackNavigation } from '@/types/homeStack'
 import { ContactMarker } from '@/features/map/types/map'
@@ -178,6 +179,11 @@ const FullMapView = ({
   const carouselRef = useRef<CarouselRef>(null)
   const { isTablet } = useDevice()
   const [locationPermission, setLocationPermission] = useState(false)
+  // The Map stays mounted behind other tabs, pushed screens and the
+  // background, and its blue dot keeps the OS location request running (every
+  // 5 s on Android) while it's shown. Show it only while the Map is in view.
+  const isFocused = useIsFocused()
+  const appActive = useAppActive()
   const [isTrackingUser, setIsTrackingUser] = useState(false)
   const locationSubscriptionRef = useRef<Location.LocationSubscription | null>(
     null
@@ -844,7 +850,7 @@ const FullMapView = ({
             <MapView
               mapType={mapLayer}
               userInterfaceStyle={colorScheme ? colorScheme : undefined}
-              showsUserLocation={locationPermission}
+              showsUserLocation={locationPermission && isFocused && appActive}
               showsMyLocationButton={false}
               ref={mapRef}
               onLayout={(e) => {

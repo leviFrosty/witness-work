@@ -68,30 +68,47 @@ const initialState = {
   deletedConversationFieldDefs: [] as CustomFieldTombstone[],
 }
 
+/**
+ * The store changes that add each of `incoming` whose id isn't taken yet, in
+ * order. Pure: never mutates `state`.
+ */
+const withAddedConversations = (
+  {
+    conversations,
+    deletedConversationFieldDefs,
+  }: Pick<
+    typeof initialState,
+    'conversations' | 'deletedConversationFieldDefs'
+  >,
+  incoming: Visit[]
+): Partial<typeof initialState> => {
+  const takenIds = new Set(conversations.map((c) => c.id))
+  const added: Visit[] = []
+  for (const conversation of incoming) {
+    if (takenIds.has(conversation.id)) continue
+    added.push(
+      stripTombstonedCustomFields(
+        { ...conversation, updatedAt: syncTimestamp() },
+        deletedConversationFieldDefs
+      )
+    )
+    takenIds.add(conversation.id)
+  }
+  return added.length ? { conversations: [...conversations, ...added] } : {}
+}
+
 export const useConversations = create(
   persist(
     combine(initialState, (set) => ({
       set,
       addConversation: (conversation: Visit) =>
-        set(({ conversations, deletedConversationFieldDefs }) => {
-          const foundCurrentConversation = conversations.find(
-            (c) => c.id === conversation.id
-          )
-
-          if (foundCurrentConversation) {
-            return {}
-          }
-
-          return {
-            conversations: [
-              ...conversations,
-              stripTombstonedCustomFields(
-                { ...conversation, updatedAt: syncTimestamp() },
-                deletedConversationFieldDefs
-              ),
-            ],
-          }
-        }),
+        set((state) => withAddedConversations(state, [conversation])),
+      /**
+       * `addConversation` for many Visits in one write, so an import persists
+       * and notifies subscribers once instead of once per Visit.
+       */
+      addConversations: (conversations: Visit[]) =>
+        set((state) => withAddedConversations(state, conversations)),
       deleteConversation: (id: string) =>
         set(({ conversations, deletedConversations }) => {
           const foundConversation = conversations.find(

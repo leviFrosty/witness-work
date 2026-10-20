@@ -206,35 +206,56 @@ export const migrateServiceReportPersistedState = (
   return next
 }
 
+/**
+ * `serviceReports` with each of `incoming` appended to its month, its date
+ * normalized for storage. Doesn't dedupe ids. Copies every year and month it
+ * touches, so the previous state is never mutated.
+ */
+const withAddedServiceReports = (
+  serviceReports: TimeEntriesByYear,
+  incoming: TimeEntry[]
+): TimeEntriesByYear => {
+  const reports = { ...serviceReports }
+  const copiedYears = new Set<number>()
+  const copiedMonths = new Set<string>()
+  for (const report of incoming) {
+    const normalizedDate = normalizeDateForStorage(report.date)
+    const m = momentStoredDate(normalizedDate)
+    const month = m.month()
+    const year = m.year()
+    if (!copiedYears.has(year)) {
+      reports[year] = { ...reports[year] }
+      copiedYears.add(year)
+    }
+    if (!copiedMonths.has(`${year}-${month}`)) {
+      reports[year][month] = [...(reports[year][month] ?? [])]
+      copiedMonths.add(`${year}-${month}`)
+    }
+    reports[year][month].push({
+      ...report,
+      date: normalizedDate,
+      updatedAt: syncTimestamp(),
+    })
+  }
+  return reports
+}
+
 export const useServiceReport = create(
   persist(
     combine(initialState, (set) => ({
       set,
       addServiceReport: (report: TimeEntry) =>
-        set(({ serviceReports }) => {
-          const reports = { ...serviceReports }
-          const normalizedDate = normalizeDateForStorage(report.date)
-          const m = momentStoredDate(normalizedDate)
-          const month = m.month()
-          const year = m.year()
-          if (!reports[year]) {
-            reports[year] = {}
-          }
-
-          if (!reports[year][month]) {
-            reports[year][month] = []
-          }
-
-          reports[year][month].push({
-            ...report,
-            date: normalizedDate,
-            updatedAt: syncTimestamp(),
-          })
-
-          return {
-            serviceReports: reports,
-          }
-        }),
+        set(({ serviceReports }) => ({
+          serviceReports: withAddedServiceReports(serviceReports, [report]),
+        })),
+      /**
+       * `addServiceReport` for many entries in one write, so an import persists
+       * and notifies subscribers once instead of once per entry.
+       */
+      addServiceReports: (reports: TimeEntry[]) =>
+        set(({ serviceReports }) => ({
+          serviceReports: withAddedServiceReports(serviceReports, reports),
+        })),
       addDayPlan: (dayPlan: DayPlan, options?: PlanSaveOptions) =>
         set(({ dayPlans, deletedDayPlans }) => {
           const normalized: DayPlan = {

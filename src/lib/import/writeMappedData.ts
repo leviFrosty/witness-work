@@ -149,7 +149,7 @@ export const writeMappedDataToStores = (
     )
     .map((d) => d.id)
 
-  // Contacts. Mirrors addContact: it skips ids that are active or still in
+  // Contacts. Mirrors addContacts: it skips ids that are active or still in
   // Recover Contacts, but replaces a redacted tombstone (left by a permanent
   // delete or an earlier Undo), so an undone import can be run again.
   const existingContactIds = new Set(
@@ -158,39 +158,42 @@ export const writeMappedDataToStores = (
       ...contacts.deletedContacts.filter((c) => !isRedactedContactTombstone(c)),
     ].map((c) => c.id)
   )
-  const insertedContactIds: string[] = []
-  for (const contact of mapped.contacts) {
-    if (existingContactIds.has(contact.id)) continue
-    contacts.addContact(contact)
+  // Each store is written once for the whole batch: a write per record
+  // re-serializes the store and notifies every subscriber, which is quadratic
+  // over a large MyTime import.
+  const contactsToAdd = mapped.contacts.filter((contact) => {
+    if (existingContactIds.has(contact.id)) return false
     existingContactIds.add(contact.id)
-    insertedContactIds.push(contact.id)
-  }
+    return true
+  })
+  if (contactsToAdd.length) contacts.addContacts(contactsToAdd)
+  const insertedContactIds = contactsToAdd.map((c) => c.id)
 
-  // Visits (addConversation skips existing ids).
+  // Visits (addConversations skips existing ids).
   const existingVisitIds = new Set(conversations.conversations.map((v) => v.id))
-  const insertedVisitIds: string[] = []
-  for (const visit of mapped.visits) {
-    if (existingVisitIds.has(visit.id)) continue
-    conversations.addConversation(visit)
+  const visitsToAdd = mapped.visits.filter((visit) => {
+    if (existingVisitIds.has(visit.id)) return false
     existingVisitIds.add(visit.id)
-    insertedVisitIds.push(visit.id)
-  }
+    return true
+  })
+  if (visitsToAdd.length) conversations.addConversations(visitsToAdd)
+  const insertedVisitIds = visitsToAdd.map((v) => v.id)
 
-  // `addServiceReport` appends unconditionally (no id dedup), so we guard
+  // `addServiceReports` appends unconditionally (no id dedup), so we guard
   // idempotency here — against prior imports and dupes within this batch. We
   // record the STORED (date-normalized) entry so undo's `deleteServiceReport`
   // resolves the same month/year bucket.
   const seenEntryIds = existingServiceReportIds(serviceReport.serviceReports)
-  const insertedTimeEntries: TimeEntry[] = []
-  for (const entry of mapped.timeEntries) {
-    if (seenEntryIds.has(entry.id)) continue
-    serviceReport.addServiceReport(entry)
+  const entriesToAdd = mapped.timeEntries.filter((entry) => {
+    if (seenEntryIds.has(entry.id)) return false
     seenEntryIds.add(entry.id)
-    insertedTimeEntries.push({
-      ...entry,
-      date: normalizeDateForStorage(entry.date),
-    })
-  }
+    return true
+  })
+  if (entriesToAdd.length) serviceReport.addServiceReports(entriesToAdd)
+  const insertedTimeEntries: TimeEntry[] = entriesToAdd.map((entry) => ({
+    ...entry,
+    date: normalizeDateForStorage(entry.date),
+  }))
 
   const publisherChange = applyPublisher(mapped.publisher, opts.publisherMode)
 

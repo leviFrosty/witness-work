@@ -12,6 +12,7 @@ import {
   type DefaultNavigationMapProvider,
 } from '@/stores/preferences'
 import ActionButton from '@/components/ui/ActionButton'
+import PointerTooltip from '@/components/ui/PointerTooltip'
 import Text from '@/components/ui/MyText'
 import Wrapper from '@/components/ui/layout/Wrapper'
 import OnboardingNav from '@/features/onboarding/components/OnboardingNav'
@@ -87,31 +88,37 @@ const StepDefaultNav = ({ goNext, goBack }: Props) => {
             const isSelected = opt.value === defaultNavigationMapProvider
             const icon = PROVIDER_ICON[opt.value]
             return (
-              <Pressable
+              <PointerTooltip
                 key={opt.value}
-                onPress={() => set({ defaultNavigationMapProvider: opt.value })}
-                accessibilityRole='button'
-                accessibilityLabel={opt.label}
-                accessibilityState={{ selected: isSelected }}
-                style={{
-                  flex: 1,
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  paddingVertical: 12,
-                  paddingHorizontal: 8,
-                  borderRadius: 999,
-                  borderWidth: 2,
-                  borderColor: isSelected
-                    ? theme.colors.accent
-                    : theme.colors.border,
-                  backgroundColor: isSelected
-                    ? theme.colors.accentTranslucent
-                    : theme.colors.card,
-                }}
+                label={opt.label}
+                style={{ flex: 1, borderRadius: 999 }}
               >
-                <LucideIcon icon={icon} size={18} color={theme.colors.text} />
-              </Pressable>
+                <Pressable
+                  onPress={() =>
+                    set({ defaultNavigationMapProvider: opt.value })
+                  }
+                  accessibilityRole='button'
+                  accessibilityLabel={opt.label}
+                  accessibilityState={{ selected: isSelected }}
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    paddingVertical: 12,
+                    paddingHorizontal: 8,
+                    borderRadius: 999,
+                    borderWidth: 2,
+                    borderColor: isSelected
+                      ? theme.colors.accent
+                      : theme.colors.border,
+                    backgroundColor: isSelected
+                      ? theme.colors.accentTranslucent
+                      : theme.colors.card,
+                  }}
+                >
+                  <LucideIcon icon={icon} size={18} color={theme.colors.text} />
+                </Pressable>
+              </PointerTooltip>
             )
           })}
         </View>

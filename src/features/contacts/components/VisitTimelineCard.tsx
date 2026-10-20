@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Pressable, View } from 'react-native'
+import PointerHover from '@/components/ui/PointerHover'
 import SwipeableRow from '@/components/ui/SwipeableRow'
 import RichNote from '@/components/RichNote'
 import ContextMenu from '@/components/ui/ContextMenu'
@@ -153,24 +154,26 @@ const VisitTimelineCard = ({
                 </>
               )}
               {canExpand && (
-                <Pressable
-                  onPress={() => setExpanded((value) => !value)}
-                  hitSlop={8}
-                  accessibilityRole='button'
-                  style={{ alignSelf: 'flex-start' }}
-                >
-                  <Text
-                    style={{
-                      fontSize: theme.fontSize('sm'),
-                      fontFamily: theme.fonts.semiBold,
-                      color: theme.colors.accent,
-                    }}
+                <PointerHover effect='highlight'>
+                  <Pressable
+                    onPress={() => setExpanded((value) => !value)}
+                    hitSlop={8}
+                    accessibilityRole='button'
+                    style={{ alignSelf: 'flex-start' }}
                   >
-                    {expanded
-                      ? i18n.t('contactDetails.showLess')
-                      : i18n.t('contactDetails.showMore')}
-                  </Text>
-                </Pressable>
+                    <Text
+                      style={{
+                        fontSize: theme.fontSize('sm'),
+                        fontFamily: theme.fonts.semiBold,
+                        color: theme.colors.accent,
+                      }}
+                    >
+                      {expanded
+                        ? i18n.t('contactDetails.showLess')
+                        : i18n.t('contactDetails.showMore')}
+                    </Text>
+                  </Pressable>
+                </PointerHover>
               )}
             </View>
           ) : visit.notAtHome ? (

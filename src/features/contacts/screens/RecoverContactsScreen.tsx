@@ -1,5 +1,6 @@
 import { Trash2 as Trash2Icon } from 'lucide-react-native'
 import { UndoIcon } from '@/components/ui/DirectionalIcon'
+import { useState } from 'react'
 import { Pressable, ScrollView, View } from 'react-native'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
@@ -11,6 +12,7 @@ import Card from '@/components/ui/Card'
 import ContextMenu from '@/components/ui/ContextMenu'
 import Empty from '@/components/ui/Empty'
 import LucideIcon from '@/components/ui/LucideIcon'
+import PointerHover, { HoverTint } from '@/components/ui/PointerHover'
 import { ArchiveRestore as ArchiveRestoreIcon } from 'lucide-react-native'
 import useConversations from '@/stores/conversationStore'
 import { FlashList } from '@shopify/flash-list'
@@ -38,6 +40,7 @@ const RecoverContactsScreen = () => {
     useContacts()
   const toast = useToastController()
   const insets = useSafeAreaInsets()
+  const [hoveredId, setHoveredId] = useState<string | null>(null)
 
   // Tombstones written by a data-protection hard delete keep nothing but an id
   // and a timestamp, so there is nothing to show and nothing to restore. They
@@ -127,29 +130,41 @@ const RecoverContactsScreen = () => {
 
     if (selection.selecting) {
       return (
-        <Pressable
-          onPress={() => selection.toggle(item.id)}
-          accessibilityRole='checkbox'
-          accessibilityState={{ checked }}
-          accessibilityLabel={item.name}
+        <PointerHover
+          onHoverChange={(hovered) =>
+            setHoveredId((current) =>
+              hovered ? item.id : current === item.id ? null : current
+            )
+          }
         >
-          <Card
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 12,
-              backgroundColor: checked
-                ? theme.colors.accentTranslucent
-                : theme.colors.card,
-            }}
+          <Pressable
+            onPress={() => selection.toggle(item.id)}
+            accessibilityRole='checkbox'
+            accessibilityState={{ checked }}
+            accessibilityLabel={item.name}
           >
-            <SelectionCheck checked={checked} />
-            <View style={{ gap: 5, flexShrink: 1 }}>
-              {created}
-              <Text>{item.name}</Text>
-            </View>
-          </Card>
-        </Pressable>
+            <Card
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 12,
+                backgroundColor: checked
+                  ? theme.colors.accentTranslucent
+                  : theme.colors.card,
+              }}
+            >
+              <SelectionCheck checked={checked} />
+              <View style={{ gap: 5, flexShrink: 1 }}>
+                {created}
+                <Text>{item.name}</Text>
+              </View>
+            </Card>
+            <HoverTint
+              visible={hoveredId === item.id}
+              borderRadius={theme.numbers.borderRadiusLg}
+            />
+          </Pressable>
+        </PointerHover>
       )
     }
 
@@ -293,7 +308,7 @@ const RecoverContactsScreen = () => {
             <View style={{ minHeight: 2 }}>
               <FlashList
                 data={sortedContacts}
-                extraData={`${selection.selecting}:${selection.ids.join()}`}
+                extraData={`${selection.selecting}:${selection.ids.join()}:${hoveredId}`}
                 keyExtractor={(item) => item.id}
                 renderItem={({ item }) => (
                   <View style={{ padding: 6 }}>{renderRow(item)}</View>

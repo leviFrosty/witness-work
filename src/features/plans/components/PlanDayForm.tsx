@@ -18,6 +18,7 @@ import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 import Button from '@/components/ui/Button'
 import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
+import PointerHover, { HoverTint } from '@/components/ui/PointerHover'
 import Select from '@/components/ui/Select'
 import confirmDeletePlan, { deletePlan } from '@/lib/confirmDeletePlan'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -204,59 +205,73 @@ const ScopeOption = (props: {
   onPress: (scope: RecurringSaveScope) => void
 }) => {
   const theme = useTheme()
+  const [hovered, setHovered] = useState(false)
 
   return (
-    <Pressable
-      accessibilityRole='radio'
-      accessibilityState={{ selected: props.selected }}
-      onPress={() => props.onPress(props.option.scope)}
-      style={({ pressed }) => ({
-        borderColor: props.selected ? theme.colors.accent : theme.colors.border,
-        borderWidth: 1,
-        borderRadius: theme.numbers.borderRadiusMd,
-        backgroundColor: props.selected
-          ? theme.colors.accentTranslucent
-          : theme.colors.backgroundLighter,
-        padding: 14,
-        opacity: pressed ? 0.78 : 1,
-      })}
-    >
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-        <View
-          style={{
-            width: 44,
-            height: 44,
-            borderRadius: theme.numbers.borderRadiusMd,
-            borderWidth: 1,
-            borderColor: props.selected
-              ? theme.colors.accent
-              : theme.colors.border,
-            backgroundColor: theme.colors.card,
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <LucideIcon
-            icon={props.option.icon}
-            size={18}
-            color={props.selected ? theme.colors.accent : theme.colors.textAlt}
-          />
-        </View>
-
-        <View style={{ flex: 1 }}>
-          <Text
+    <PointerHover onHoverChange={setHovered}>
+      <Pressable
+        accessibilityRole='radio'
+        accessibilityState={{ selected: props.selected }}
+        onPress={() => props.onPress(props.option.scope)}
+        style={({ pressed }) => ({
+          borderColor: props.selected
+            ? theme.colors.accent
+            : theme.colors.border,
+          borderWidth: 1,
+          borderRadius: theme.numbers.borderRadiusMd,
+          backgroundColor: props.selected
+            ? theme.colors.accentTranslucent
+            : theme.colors.backgroundLighter,
+          padding: 14,
+          opacity: pressed ? 0.78 : 1,
+        })}
+      >
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+          <View
             style={{
-              fontFamily: theme.fonts.semiBold,
-              fontSize: theme.fontSize('md'),
-              color: theme.colors.text,
+              width: 44,
+              height: 44,
+              borderRadius: theme.numbers.borderRadiusMd,
+              borderWidth: 1,
+              borderColor: props.selected
+                ? theme.colors.accent
+                : theme.colors.border,
+              backgroundColor: theme.colors.card,
+              alignItems: 'center',
+              justifyContent: 'center',
             }}
           >
-            {props.option.title}
-          </Text>
-          <ScopeTimeline dots={props.option.dots} lines={props.option.lines} />
+            <LucideIcon
+              icon={props.option.icon}
+              size={18}
+              color={
+                props.selected ? theme.colors.accent : theme.colors.textAlt
+              }
+            />
+          </View>
+
+          <View style={{ flex: 1 }}>
+            <Text
+              style={{
+                fontFamily: theme.fonts.semiBold,
+                fontSize: theme.fontSize('md'),
+                color: theme.colors.text,
+              }}
+            >
+              {props.option.title}
+            </Text>
+            <ScopeTimeline
+              dots={props.option.dots}
+              lines={props.option.lines}
+            />
+          </View>
         </View>
-      </View>
-    </Pressable>
+        <HoverTint
+          visible={hovered}
+          borderRadius={theme.numbers.borderRadiusMd}
+        />
+      </Pressable>
+    </PointerHover>
   )
 }
 

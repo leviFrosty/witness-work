@@ -1,4 +1,4 @@
-import { ReactNode } from 'react'
+import { ReactNode, useState } from 'react'
 import { Pressable, View } from 'react-native'
 import {
   Check as CheckIcon,
@@ -10,6 +10,7 @@ import IconButton from '@/components/ui/IconButton'
 import InputRowSelect from '@/components/ui/inputs/InputRowSelect'
 import InputRowSwitch from '@/components/ui/inputs/InputRowSwitch'
 import LucideIcon from '@/components/ui/LucideIcon'
+import PointerHover, { HoverTint } from '@/components/ui/PointerHover'
 import Text from '@/components/ui/MyText'
 import Popover from '@/components/ui/Popover'
 import PointerTooltip from '@/components/ui/PointerTooltip'
@@ -40,6 +41,7 @@ function SourceLayer({
   onPress?: () => void
 }) {
   const theme = useTheme()
+  const [hovered, setHovered] = useState(false)
   const row = (
     <XView
       style={{
@@ -63,9 +65,15 @@ function SourceLayer({
     </XView>
   )
   return onPress ? (
-    <Pressable onPress={onPress} accessibilityRole='button'>
-      {row}
-    </Pressable>
+    <PointerHover onHoverChange={setHovered}>
+      <Pressable onPress={onPress} accessibilityRole='button'>
+        {row}
+        <HoverTint
+          visible={hovered}
+          borderRadius={theme.numbers.borderRadiusSm}
+        />
+      </Pressable>
+    </PointerHover>
   ) : (
     row
   )

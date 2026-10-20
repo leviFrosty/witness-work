@@ -1,5 +1,6 @@
 import { Plus as PlusIcon } from 'lucide-react-native'
 import LucideIcon from '@/components/ui/LucideIcon'
+import PointerHover, { HoverTint } from '@/components/ui/PointerHover'
 import { useMemo, useState } from 'react'
 import { Pressable, View } from 'react-native'
 
@@ -93,6 +94,7 @@ const YearByYearList = ({ onYearPress }: YearByYearListProps) => {
   const confirmDeleteYear = useConfirmDeleteServiceYear()
 
   const [sheetOpen, setSheetOpen] = useState(false)
+  const [addHovered, setAddHovered] = useState(false)
 
   const availableEndYears = useMemo(() => {
     if (endYears.length === 0) return []
@@ -257,32 +259,43 @@ const YearByYearList = ({ onYearPress }: YearByYearListProps) => {
           })}
 
           {availableEndYears.length > 0 && (
-            <Pressable
-              accessibilityRole='button'
-              onPress={() => setSheetOpen(true)}
-              style={({ pressed }) => ({
-                opacity: pressed ? 0.7 : 1,
-                backgroundColor: theme.colors.card,
-                borderRadius: theme.numbers.borderRadiusSm,
-                borderCurve: 'continuous',
-                paddingVertical: 12,
-                paddingHorizontal: 14,
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: 12,
-              })}
-            >
-              <LucideIcon icon={PlusIcon} color={theme.colors.text} size={14} />
-              <Text
-                style={{
-                  fontFamily: theme.fonts.semiBold,
-                  color: theme.colors.text,
-                  fontSize: theme.fontSize('sm'),
-                }}
+            <PointerHover onHoverChange={setAddHovered}>
+              <Pressable
+                accessibilityRole='button'
+                onPress={() => setSheetOpen(true)}
+                style={({ pressed }) => ({
+                  opacity: pressed ? 0.7 : 1,
+                  backgroundColor: theme.colors.card,
+                  borderRadius: theme.numbers.borderRadiusSm,
+                  borderCurve: 'continuous',
+                  paddingVertical: 12,
+                  paddingHorizontal: 14,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 12,
+                })}
               >
-                {i18n.t('addEarlierYear')}
-              </Text>
-            </Pressable>
+                <LucideIcon
+                  icon={PlusIcon}
+                  color={theme.colors.text}
+                  size={14}
+                />
+                <Text
+                  style={{
+                    fontFamily: theme.fonts.semiBold,
+                    color: theme.colors.text,
+                    fontSize: theme.fontSize('sm'),
+                  }}
+                >
+                  {i18n.t('addEarlierYear')}
+                </Text>
+                <HoverTint
+                  visible={addHovered}
+                  borderRadius={theme.numbers.borderRadiusSm}
+                  borderCurve='continuous'
+                />
+              </Pressable>
+            </PointerHover>
           )}
         </View>
       </View>

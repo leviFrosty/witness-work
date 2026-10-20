@@ -1,6 +1,7 @@
 import { Pressable, View } from 'react-native'
 import { Check as CheckIcon } from 'lucide-react-native'
 import InputRowContainer from '@/components/ui/inputs/InputRowContainer'
+import PointerHover from '@/components/ui/PointerHover'
 import { AvatarBadge } from '@/components/ui/Avatar'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
@@ -69,60 +70,61 @@ export default function BuddyPicker({
               : undefined
           : undefined
         return (
-          <Pressable
-            key={buddy.inboxId}
-            onPress={() => toggle(buddy.inboxId)}
-            accessibilityRole='checkbox'
-            accessibilityState={{ checked: isSelected }}
-            accessibilityLabel={
-              status
-                ? `${buddyDisplayName(buddy)}, ${status}`
-                : buddyDisplayName(buddy)
-            }
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 6,
-              paddingLeft: 6,
-              paddingRight: 12,
-              paddingVertical: 5,
-              borderRadius: 999,
-              borderCurve: 'continuous',
-              borderWidth: 1,
-              borderColor: isSelected
-                ? theme.colors.accent
-                : theme.colors.border,
-              backgroundColor: isSelected
-                ? theme.colors.accentTranslucent
-                : undefined,
-            }}
-          >
-            <BuddyAvatar
-              avatar={buddy.avatar}
-              name={buddyDisplayName(buddy)}
-              color={buddy}
-              size={24}
+          <PointerHover key={buddy.inboxId} effect='highlight'>
+            <Pressable
+              onPress={() => toggle(buddy.inboxId)}
+              accessibilityRole='checkbox'
+              accessibilityState={{ checked: isSelected }}
+              accessibilityLabel={
+                status
+                  ? `${buddyDisplayName(buddy)}, ${status}`
+                  : buddyDisplayName(buddy)
+              }
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 6,
+                paddingLeft: 6,
+                paddingRight: 12,
+                paddingVertical: 5,
+                borderRadius: 999,
+                borderCurve: 'continuous',
+                borderWidth: 1,
+                borderColor: isSelected
+                  ? theme.colors.accent
+                  : theme.colors.border,
+                backgroundColor: isSelected
+                  ? theme.colors.accentTranslucent
+                  : undefined,
+              }}
             >
-              {reply ? (
-                <ShareReplyBadge status={reply.status} />
-              ) : isSelected ? (
-                <AvatarBadge color={theme.colors.accent} icon={CheckIcon} />
-              ) : null}
-            </BuddyAvatar>
-            <Text style={{ fontFamily: theme.fonts.semiBold }}>
-              {buddyDisplayName(buddy)}
-            </Text>
-            {status && (
-              <Text
-                style={{
-                  color: theme.colors.textAlt,
-                  fontSize: theme.fontSize('sm'),
-                }}
+              <BuddyAvatar
+                avatar={buddy.avatar}
+                name={buddyDisplayName(buddy)}
+                color={buddy}
+                size={24}
               >
-                {status}
+                {reply ? (
+                  <ShareReplyBadge status={reply.status} />
+                ) : isSelected ? (
+                  <AvatarBadge color={theme.colors.accent} icon={CheckIcon} />
+                ) : null}
+              </BuddyAvatar>
+              <Text style={{ fontFamily: theme.fonts.semiBold }}>
+                {buddyDisplayName(buddy)}
               </Text>
-            )}
-          </Pressable>
+              {status && (
+                <Text
+                  style={{
+                    color: theme.colors.textAlt,
+                    fontSize: theme.fontSize('sm'),
+                  }}
+                >
+                  {status}
+                </Text>
+              )}
+            </Pressable>
+          </PointerHover>
         )
       })}
     </View>

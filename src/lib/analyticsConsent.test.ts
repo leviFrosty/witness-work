@@ -4,11 +4,13 @@ const mocks = vi.hoisted(() => ({
   reset: vi.fn(),
   enabled: true,
   hydrated: true,
+  locked: false,
   changed: () => {},
   finishHydration: () => {},
 }))
 
 vi.mock('@/lib/analytics', () => ({ analytics: { reset: mocks.reset } }))
+vi.mock('@/stores/mmkv', () => ({ isStorageLocked: () => mocks.locked }))
 vi.mock('@/stores/preferences', () => ({
   usePreferences: {
     getState: () => ({ analyticsEnabled: mocks.enabled }),
@@ -29,6 +31,7 @@ beforeEach(() => {
   mocks.reset.mockReset()
   mocks.enabled = true
   mocks.hydrated = true
+  mocks.locked = false
 })
 
 it('revokes consent and resets synchronously, including rapid off/on changes', async () => {
@@ -57,4 +60,14 @@ it('waits for hydration and does not reset identity for an unchanged disabled pr
   mocks.finishHydration()
   expect(analyticsEventsAllowed()).toBe(false)
   expect(mocks.reset).not.toHaveBeenCalled()
+})
+
+it('sends nothing on a launch that cannot read the saved choice', async () => {
+  // Before the first unlock the preference reads as its default, which is on.
+  mocks.locked = true
+  await import('./analyticsConsent')
+  const { analyticsEventsAllowed } = await import('./analyticsPolicy')
+  expect(analyticsEventsAllowed()).toBe(false)
+  mocks.changed()
+  expect(analyticsEventsAllowed()).toBe(false)
 })

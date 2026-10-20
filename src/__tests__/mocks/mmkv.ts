@@ -10,6 +10,8 @@
 //   vi.mock('@/__tests__/stores/mmkv', () => import('@/__tests__/mocks/mocks/mmkv'))
 export const hasMigratedFromAsyncStorage = () => true
 
+export const isStorageLocked = () => false
+
 export const MmkvStorage = {
   getItem: () => null,
   setItem: () => {},

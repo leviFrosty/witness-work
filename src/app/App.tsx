@@ -21,6 +21,7 @@ import AnimationViewProvider from '@/providers/AnimationViewProvider'
 import ConfettiProvider from '@/providers/ConfettiProvider'
 import RootStackComponent from '@/app/navigation/RootStack'
 import LaunchSplash from '@/app/launch/LaunchSplash'
+import { useStorageUnlock } from '@/app/launch/useStorageUnlock'
 import { markLaunched } from '@/app/launch/launchState'
 import { useAfterLaunch } from '@/app/launch/useAfterLaunch'
 import { captureLaunchTiming } from '@/app/launch/captureLaunchTiming'
@@ -93,6 +94,13 @@ function LaunchWork() {
 }
 
 export default function App() {
+  // Before the device's first unlock, nothing past the splash may read or
+  // write the User's data.
+  if (!useStorageUnlock()) return <LaunchSplash />
+  return <UnlockedApp />
+}
+
+function UnlockedApp() {
   perf.count('render:App')
   perf.mark('appFirstRender')
   const systemColorScheme = useColorScheme()

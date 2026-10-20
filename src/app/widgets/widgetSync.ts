@@ -25,7 +25,7 @@ import {
   roleForMonth,
 } from '@/lib/roleHistory'
 import { iCloudSync } from '@/app/sync/iCloudSync'
-import { mmkvStorage } from '@/stores/mmkv'
+import { isStorageLocked, mmkvStorage } from '@/stores/mmkv'
 import { addForegroundListener } from '@/lib/appLifecycle'
 import { contentHash } from '@/lib/contentHash'
 import { captureExceptionThrottled } from '@/lib/throttledErrorReport'
@@ -244,6 +244,9 @@ const debouncedPush = debounce(() => pushSnapshot('store-change'), 500, {
 // cold boot. Idempotent — TaskManager dedupes by name.
 if (Platform.OS === 'ios' && !TaskManager.isTaskDefined(WIDGET_REFRESH_TASK)) {
   TaskManager.defineTask(WIDGET_REFRESH_TASK, async () => {
+    // Before the device's first unlock the stores hold only defaults, which
+    // must reach neither the widgets nor sync.
+    if (isStorageLocked()) return BackgroundTask.BackgroundTaskResult.Success
     // Piggyback on the widget-refresh task to pull any remote iCloud updates
     // and push pending local writes. Gated on the sync opt-in so it's a
     // no-op when the feature is off. Errors are handled inside the sync

@@ -42,7 +42,12 @@ import { useSavedRoutes } from '@/features/route-planning/stores/savedRoutes'
 import { seedScenario } from '@/app/dev-harness/seedScenario'
 import { petHarness } from '@/app/dev-harness/pet'
 import { cloudSyncHarness } from '@/app/dev-harness/cloudSync'
-import { mmkvStorage } from '@/stores/mmkv'
+import {
+  isStorageLocked,
+  mmkvStorage,
+  simulateLockedLaunch,
+} from '@/stores/mmkv'
+import { reloadApp } from '@/lib/hotUpdater'
 import {
   accountHarness,
   backupHarness,
@@ -389,6 +394,17 @@ export function installDevHarness() {
      */
     t: (key: string, options?: Record<string, unknown>) =>
       i18n.t(key as TranslationKey, options),
+    /**
+     * Relaunches as if before the device's first unlock: only the splash, with
+     * stores reading and writing nothing, until the app comes back from the
+     * background. `storageLocked()` reads the guard.
+     */
+    simulateLockedLaunch: () => {
+      simulateLockedLaunch()
+      void reloadApp()
+      return true
+    },
+    storageLocked: isStorageLocked,
     /** Every screen mounts fresh, as on a cold launch, on Home. */
     remount: () => {
       triggerDevRemount()

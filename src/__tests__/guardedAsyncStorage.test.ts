@@ -22,6 +22,8 @@ vi.mock('@react-native-async-storage/async-storage', () => ({
 
 vi.mock('react-native-mmkv', () => ({
   MMKV: class {
+    // An open file with data in it, so the launch check doesn't write.
+    size = 1
     getBoolean() {
       return false
     }

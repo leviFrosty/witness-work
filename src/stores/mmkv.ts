@@ -6,6 +6,84 @@ import { StateStorage } from 'zustand/middleware'
 
 export const mmkvStorage = new MMKV()
 
+/**
+ * MMKV's file is `NSFileProtectionCompleteUntilFirstUserAuthentication`: iOS
+ * keeps it closed until the device is first unlocked after a restart, and it
+ * can launch the app in the background before then (a background task, a push,
+ * prewarming). MMKV then reads as empty and refuses every write, and it doesn't
+ * try the file again for the rest of the process. Every store would hydrate its
+ * defaults, so the app would show Onboarding, and the reminder pass would
+ * cancel the User's reminders. Android apps don't start before the first unlock
+ * (none of ours is direct boot aware), so this only happens on iOS.
+ *
+ * Checked once, before any store hydrates. A file with data in it is open even
+ * when a full disk turns a write down; a fresh install takes the write.
+ */
+const STORAGE_PROBE_KEY = 'storageProbe'
+const DEV_LOCKED_LAUNCH_KEY = 'devSimulateLockedLaunch'
+
+function storageRefusesWrites(): boolean {
+  if (mmkvStorage.size > 0) return false
+  try {
+    mmkvStorage.set(STORAGE_PROBE_KEY, true)
+    return false
+  } catch {
+    return true
+  }
+}
+
+/** Dev builds: `__WW_DEV__.simulateLockedLaunch()` sets it before a reload. */
+const devLockedLaunch =
+  typeof __DEV__ !== 'undefined' &&
+  __DEV__ &&
+  mmkvStorage.getBoolean(DEV_LOCKED_LAUNCH_KEY) === true
+
+let storageLocked = devLockedLaunch || storageRefusesWrites()
+
+/**
+ * True while this launch can't reach its saved data. Persisted stores then read
+ * nothing and write nothing, so their defaults never overwrite the User's
+ * data.
+ */
+export const isStorageLocked = () => storageLocked
+
+/**
+ * Opens MMKV's file again once the device is unlocked: `trim` drops MMKV's
+ * cache, which makes it reload the file. True when the data can be read and
+ * written again. The caller must then reload the app, because every store
+ * already hydrated its defaults; writes stay blocked until that reload.
+ */
+export function reopenLockedStorage(): boolean {
+  if (devLockedLaunch) {
+    mmkvStorage.delete(DEV_LOCKED_LAUNCH_KEY)
+    return true
+  }
+  try {
+    mmkvStorage.trim()
+  } catch {
+    // Still closed; the check below says so.
+  }
+  return !storageRefusesWrites()
+}
+
+/**
+ * Carries on with storage as it is. For a launch whose storage still fails
+ * while the app is in use, which a locked device can't explain.
+ */
+export function releaseStorageLock() {
+  storageLocked = false
+}
+
+/**
+ * Dev builds: the next launch behaves as one before the first unlock, until the
+ * app comes back from the background (a simulator launches it in front).
+ */
+export function simulateLockedLaunch() {
+  mmkvStorage.set(DEV_LOCKED_LAUNCH_KEY, true)
+}
+
+export const isLockedLaunchSimulated = () => devLockedLaunch
+
 export const hasMigratedFromAsyncStorage = () =>
   mmkvStorage.getBoolean('hasMigratedFromAsyncStorage')
 
@@ -163,6 +241,7 @@ export const GuardedAsyncStorage: StateStorage = {
  */
 export const MmkvStorage: StateStorage = {
   setItem: (name, value) => {
+    if (storageLocked) return
     try {
       mmkvStorage.set(name, value)
     } catch (error) {
@@ -170,10 +249,12 @@ export const MmkvStorage: StateStorage = {
     }
   },
   getItem: (name) => {
+    if (storageLocked) return null
     const value = mmkvStorage.getString(name)
     return value ?? null
   },
   removeItem: (name) => {
+    if (storageLocked) return
     return mmkvStorage.delete(name)
   },
 }
@@ -187,7 +268,9 @@ const activeStorage = () =>
   hasMigratedFromAsyncStorage() ? MmkvStorage : GuardedAsyncStorage
 
 export const PersistStorage: StateStorage = {
-  setItem: (name, value) => activeStorage().setItem(name, value),
-  getItem: (name) => activeStorage().getItem(name),
-  removeItem: (name) => activeStorage().removeItem(name),
+  setItem: (name, value) =>
+    storageLocked ? undefined : activeStorage().setItem(name, value),
+  getItem: (name) => (storageLocked ? null : activeStorage().getItem(name)),
+  removeItem: (name) =>
+    storageLocked ? undefined : activeStorage().removeItem(name),
 }

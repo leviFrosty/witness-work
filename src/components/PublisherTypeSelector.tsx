@@ -1,13 +1,12 @@
 import { CircleCheck as CircleCheckIcon } from 'lucide-react-native'
 import { Pressable, TextInput as RNTextInput, View } from 'react-native'
 import i18n from '@/lib/locales'
-import { parseDecimalInput } from '@/lib/digits'
-import { formatPlainNumber } from '@/lib/numbers'
-import { usePreferences } from '@/stores/preferences'
+import { PREFERENCE_DEFAULTS, usePreferences } from '@/stores/preferences'
 import { publisherChoices } from '@/constants/publisher'
 import Select, { SelectData } from '@/components/ui/Select'
 import { Publisher } from '@/types/publisher'
 import { useRef, useState } from 'react'
+import useGoalHoursInput from '@/hooks/useGoalHoursInput'
 import { monthlyGoalKey, type CalendarMonth } from '@/lib/monthlyGoals'
 import { addCalendarMonths, calendarMonthOf } from '@/lib/roleHistory'
 import { analytics } from '@/lib/analytics'
@@ -70,9 +69,12 @@ const PublisherTypeSelector = ({
   const { publisherHours, role, monthlyGoalOverrides, setRole, set } =
     usePreferences()
   const serviceReports = useServiceReport((s) => s.serviceReports)
-  const [goalHours, setGoalHours] = useState(
-    formatPlainNumber(publisherHours.custom)
-  )
+  const customHours = useGoalHoursInput({
+    hours: publisherHours.custom,
+    defaultHours: PREFERENCE_DEFAULTS.publisherHours.custom,
+    onSave: (custom) =>
+      set((s) => ({ publisherHours: { ...s.publisherHours, custom } })),
+  })
   const customHoursInput = useRef<RNTextInput>(null)
   const [pendingRole, setPendingRole] = useState<Publisher | null>(null)
   const [hoveredRole, setHoveredRole] = useState<Publisher | null>(null)
@@ -136,17 +138,6 @@ const PublisherTypeSelector = ({
         : undefined,
       reset_future_goals: resetFutureGoals,
     })
-  }
-
-  const saveCustomHours = () => {
-    if (goalHours) {
-      set({
-        publisherHours: {
-          ...publisherHours,
-          custom: parseDecimalInput(goalHours) ?? 0,
-        },
-      })
-    }
   }
 
   const requirement =
@@ -299,9 +290,8 @@ const PublisherTypeSelector = ({
           textInputProps={{
             accessibilityLabel: i18n.t('customHourRequirement'),
             maxLength: 5,
-            value: goalHours,
-            onChangeText: setGoalHours,
-            onBlur: saveCustomHours,
+            ...customHours,
+            returnKeyType: 'done',
             inputMode: 'decimal',
             textAlign: 'start',
           }}

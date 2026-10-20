@@ -24,11 +24,11 @@ import { richTextImages } from '@/lib/richText/inspect'
 import { getNoteDoc, hasNote, noteFields } from '@/lib/richText/notes'
 import moment from 'moment'
 import useConversations from '@/stores/conversationStore'
-import i18n, { TranslationKey } from '@/lib/locales'
+import i18n from '@/lib/locales'
 import DateTimePicker, {
   type DateTimePickerEvent,
 } from '@/components/ui/DateTimePicker'
-import Select from '@/components/ui/Select'
+import ReminderOffsetSelect from '@/components/ReminderOffsetSelect'
 import Wrapper from '@/components/ui/layout/Wrapper'
 import IconButton from '@/components/ui/IconButton'
 import Button from '@/components/ui/Button'
@@ -91,7 +91,6 @@ const NotificationSection = (props: {
     setConversation,
     setNotifyMeOffset,
   } = props
-  const theme = useTheme()
 
   const setNotifyMe = (notifyMe: boolean) => {
     setConversation({
@@ -120,19 +119,6 @@ const NotificationSection = (props: {
     new Date(conversation.followUp.date).getTime() - offsetMinutes * 60_000 <=
       Date.now()
 
-  const amountOptions = [...Array(1000).keys()].map((value) => ({
-    label: `${value}`,
-    value,
-  }))
-
-  const unitOptions: {
-    label: string
-    value: moment.unitOfTime.DurationConstructor
-  }[] = ['minutes', 'hours', 'days', 'weeks'].map((value) => ({
-    label: i18n.t(`${value}_lowercase` as TranslationKey),
-    value: value as moment.unitOfTime.DurationConstructor,
-  }))
-
   return (
     <SectionRows>
       <InputRowContainer
@@ -158,30 +144,10 @@ const NotificationSection = (props: {
             reminderPassed ? i18n.t('reminderTimePassed') : undefined
           }
         >
-          <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }}>
-            <View style={{ flex: 1 }}>
-              <Select
-                data={amountOptions}
-                onChange={({ value: amount }) =>
-                  setNotifyMeOffset({ ...notifyMeOffset, amount })
-                }
-                placeholder={notifyMeOffset.amount?.toString()}
-                value={notifyMeOffset.amount?.toString()}
-              />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Select
-                data={unitOptions}
-                onChange={({ value: unit }) =>
-                  setNotifyMeOffset({ ...notifyMeOffset, unit })
-                }
-                value={notifyMeOffset.unit}
-              />
-            </View>
-            <Text style={{ color: theme.colors.textAlt }}>
-              {i18n.t('before')}
-            </Text>
-          </View>
+          <ReminderOffsetSelect
+            value={notifyMeOffset}
+            onChange={setNotifyMeOffset}
+          />
         </InputRowContainer>
       )}
     </SectionRows>

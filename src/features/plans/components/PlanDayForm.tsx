@@ -13,13 +13,13 @@ import useServiceReport from '@/stores/serviceReport'
 import * as Crypto from 'expo-crypto'
 import { useEffect, useState } from 'react'
 import { useToastController } from '@tamagui/toast'
-import i18n, { TranslationKey } from '@/lib/locales'
+import i18n from '@/lib/locales'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 import Button from '@/components/ui/Button'
 import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
 import PointerHover, { HoverTint } from '@/components/ui/PointerHover'
-import Select from '@/components/ui/Select'
+import ReminderOffsetSelect from '@/components/ReminderOffsetSelect'
 import confirmDeletePlan, { deletePlan } from '@/lib/confirmDeletePlan'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import moment from 'moment'
@@ -92,18 +92,6 @@ type RecurringSaveScope = 'instance' | 'future' | 'all'
 /** Where Plan Details shows a saved Plan. */
 export type PlanDetailsTarget = RootStackParamList['Plan Details']
 
-const offsetAmountOptions = [...Array(1000).keys()].map((value) => ({
-  label: `${value}`,
-  value,
-}))
-const offsetUnitOptions: {
-  label: string
-  value: moment.unitOfTime.DurationConstructor
-}[] = ['minutes', 'hours', 'days', 'weeks'].map((value) => ({
-  label: i18n.t(`${value}_lowercase` as TranslationKey),
-  value: value as moment.unitOfTime.DurationConstructor,
-}))
-
 const storedDateFor = (date: Date) => preserveOrNormalizeStoredDate(date)
 
 const storedDay = (date: Date) => momentStoredDate(storedDateFor(date))
@@ -111,44 +99,6 @@ const storedDay = (date: Date) => momentStoredDate(storedDateFor(date))
 const localDateForWrite = (date: Date) => localDayFromUtcCursor(storedDay(date))
 
 const sameDay = (a: Date, b: Date) => storedDay(a).isSame(storedDay(b), 'day')
-
-const ReminderOffsetSelects = (props: {
-  notifyMeOffset: NotifyMeOffset
-  setNotifyMeOffset: React.Dispatch<React.SetStateAction<NotifyMeOffset>>
-}) => {
-  const theme = useTheme()
-
-  return (
-    <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }}>
-      <View style={{ flex: 1 }}>
-        <Select
-          data={offsetAmountOptions}
-          onChange={({ value: amount }) =>
-            props.setNotifyMeOffset({
-              ...props.notifyMeOffset,
-              amount,
-            })
-          }
-          placeholder={props.notifyMeOffset.amount.toString()}
-          value={props.notifyMeOffset.amount.toString()}
-        />
-      </View>
-      <View style={{ flex: 1 }}>
-        <Select
-          data={offsetUnitOptions}
-          onChange={({ value: unit }) =>
-            props.setNotifyMeOffset({
-              ...props.notifyMeOffset,
-              unit,
-            })
-          }
-          value={props.notifyMeOffset.unit}
-        />
-      </View>
-      <Text style={{ color: theme.colors.textAlt }}>{i18n.t('before')}</Text>
-    </View>
-  )
-}
 
 type ScopeOptionConfig = {
   scope: RecurringSaveScope
@@ -1313,9 +1263,9 @@ const PlanDayForm = ({
             })}
           </Text>
         ) : (
-          <ReminderOffsetSelects
-            notifyMeOffset={notifyMeOffset}
-            setNotifyMeOffset={setNotifyMeOffset}
+          <ReminderOffsetSelect
+            value={notifyMeOffset}
+            onChange={setNotifyMeOffset}
           />
         ),
         // A Recurring Plan's later dates still remind.

@@ -1,8 +1,10 @@
 import { describe, expect, it, vi } from 'vitest'
+import { HttpError } from '@/lib/http/request'
 import {
   createServerTransport,
   filenameForSlot,
   slotIdForFilename,
+  toServerTransportError,
   type ServerTransportDeps,
 } from '@/lib/syncTransport/server/serverTransport'
 import {
@@ -207,6 +209,23 @@ describe('serverTransport', () => {
     expect(server.slotIds('family')).toEqual([OTHER])
     await transport.deleteAll()
     expect(server.slotIds('family')).toEqual([])
+  })
+
+  it('tells a server failure apart from a lost connection', () => {
+    expect(toServerTransportError(new HttpError('server', 500))).toMatchObject({
+      code: 'server-error',
+    })
+    expect(
+      toServerTransportError(
+        new HttpError('server', 503, 'unavailable', 30_000)
+      )
+    ).toMatchObject({ code: 'server-error', retryAfterMs: 30_000 })
+    expect(toServerTransportError(new HttpError('offline'))).toMatchObject({
+      code: 'network',
+    })
+    expect(toServerTransportError(new HttpError('timeout'))).toMatchObject({
+      code: 'network',
+    })
   })
 
   it('holds no photos yet', async () => {

@@ -11,6 +11,8 @@ vi.mock('@/lib/dates', () => ({
   formatDateTime: (at: number) => `at ${at}`,
 }))
 
+import { HttpError } from '@/lib/http/request'
+import { toServerTransportError } from '@/lib/syncTransport/server/serverTransport'
 import {
   buildICloudStatus,
   type ICloudStatusInput,
@@ -118,6 +120,23 @@ describe('buildICloudStatus', () => {
       'iCloudStatusOffline'
     )
     expect(text(failed)).toBe('iCloudStatusRetryNeeded')
+  })
+
+  it('says a Cloud Sync server failure needs another attempt, not offline', () => {
+    // ww-api answered 5xx: the phone is online.
+    for (const error of [
+      new HttpError('server', 500),
+      new HttpError('server', 503, 'unavailable', 30_000),
+    ]) {
+      const { code } = toServerTransportError(error)
+      expect(
+        text({
+          issue: 'push-failed',
+          errorCode: code,
+          networkErrorsMeanOffline: true,
+        })
+      ).toBe('iCloudStatusRetryNeeded')
+    }
   })
 
   it('tells throttling and a full account apart from other failures', () => {

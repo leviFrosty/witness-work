@@ -275,7 +275,9 @@ switching, `components/CloudSyncDefault.tsx`).
 - **Photos** aren't transferred yet: binaries list empty and photo passes skip
   Cloud Sync. Settings says so.
 - **Errors.** `too_large` and `limit` read as storage full (20 MB a snapshot,
-  20 devices an account), 429 as rate limited, network and 5xx as offline.
+  20 devices an account), 429 as rate limited, network as offline, and 5xx as
+  `server-error`: retried the same way as offline, with the status saying sync
+  needs another attempt rather than waiting for a connection.
 
 ### Choosing and switching
 

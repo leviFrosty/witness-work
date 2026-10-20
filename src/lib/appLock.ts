@@ -1,4 +1,4 @@
-import { Platform } from 'react-native'
+import { Linking, Platform } from 'react-native'
 import * as LocalAuthentication from 'expo-local-authentication'
 import i18n from '@/lib/locales'
 import { useAppLockSession } from '@/stores/appLock'
@@ -20,6 +20,18 @@ export async function getAppLockAvailability(): Promise<AppLockAvailability> {
   return {
     method: appLockMethod(Platform.OS, types),
     available: level !== LocalAuthentication.SecurityLevel.NONE,
+  }
+}
+
+/**
+ * Opens Android's Security settings, where the screen lock is set. Falls back
+ * to the app's settings page when a device doesn't handle that screen.
+ */
+export async function openScreenLockSettings() {
+  try {
+    await Linking.sendIntent('android.settings.SECURITY_SETTINGS')
+  } catch {
+    await Linking.openSettings()
   }
 }
 

@@ -12,11 +12,21 @@ vi.mock('expo-local-authentication', () => ({
   SecurityLevel: { NONE: 0, SECRET: 1, BIOMETRIC_WEAK: 2, BIOMETRIC_STRONG: 3 },
 }))
 
-vi.mock('react-native', () => ({ Platform: { OS: 'ios' } }))
+const linking = vi.hoisted(() => ({
+  sendIntent: vi.fn(),
+  openSettings: vi.fn(),
+}))
+
+vi.mock('react-native', () => ({ Platform: { OS: 'ios' }, Linking: linking }))
 vi.mock('@/lib/locales', () => ({ default: { t: (key: string) => key } }))
 vi.mock('@/stores/mmkv', () => import('@/__tests__/mocks/mmkv'))
 
-import { appLockMethod, authenticateAppLock, shouldRelock } from '@/lib/appLock'
+import {
+  appLockMethod,
+  authenticateAppLock,
+  openScreenLockSettings,
+  shouldRelock,
+} from '@/lib/appLock'
 import { useAppLockSession } from '@/stores/appLock'
 
 describe('appLockMethod', () => {
@@ -28,6 +38,25 @@ describe('appLockMethod', () => {
 
   it('uses one generic method on Android', () => {
     expect(appLockMethod('android', [2])).toBe('biometrics')
+  })
+})
+
+describe('openScreenLockSettings', () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  it('opens the Security settings screen', async () => {
+    linking.sendIntent.mockResolvedValue(undefined)
+    await openScreenLockSettings()
+    expect(linking.sendIntent).toHaveBeenCalledWith(
+      'android.settings.SECURITY_SETTINGS'
+    )
+    expect(linking.openSettings).not.toHaveBeenCalled()
+  })
+
+  it("falls back to the app's settings when that screen can't open", async () => {
+    linking.sendIntent.mockRejectedValue(new Error('No Activity found'))
+    await openScreenLockSettings()
+    expect(linking.openSettings).toHaveBeenCalled()
   })
 })
 

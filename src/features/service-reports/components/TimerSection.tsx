@@ -104,6 +104,8 @@ export const TimerSection = () => {
           </Text>
         </View>
         <Text
+          numberOfLines={1}
+          adjustsFontSizeToFit
           style={{
             fontSize: theme.fontSize('3xl'),
             fontFamily: theme.fonts.bold,
@@ -162,6 +164,8 @@ export const TimerSection = () => {
             }}
           >
             <Text
+              numberOfLines={1}
+              adjustsFontSizeToFit
               style={{
                 textDecorationLine: 'underline',
                 color: hasTime ? theme.colors.text : theme.colors.textAlt,

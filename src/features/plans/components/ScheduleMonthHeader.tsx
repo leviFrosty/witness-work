@@ -6,6 +6,8 @@ import type { ScheduleMonthRow } from '@/features/plans/lib/scheduleRows'
 import { formatDisplay } from '@/lib/dates'
 
 export const MONTH_HEADER_HEIGHT = 48
+/** The most the name can grow with the text size and still fit the row. */
+const NAME_FONT_SCALE_CAP = 1.35
 
 /**
  * Opens a month in the Schedule's week grid, as Apple's Calendar does: a gap
@@ -31,6 +33,7 @@ export default function ScheduleMonthHeader({
         <Text
           accessibilityRole='header'
           numberOfLines={1}
+          maxFontSizeMultiplier={NAME_FONT_SCALE_CAP}
           style={{
             flexShrink: 0,
             // Lines up with the day numbers under it.

@@ -12,6 +12,7 @@ import MenuItems from '@/components/ui/MenuItems.ios'
 import { menuAccessibilityProps, menuGroups } from '@/components/ui/menuEntries'
 import type { ContextMenuProps } from '@/components/ui/ContextMenu.types'
 import { useInReorderableGhost } from '@/components/ui/reorderable/context'
+import useHostedContentWidth from '@/components/ui/useHostedContentWidth'
 
 /** Native SwiftUI context menu: long-press lifts the preview above the menu. */
 export default function ContextMenu({
@@ -29,10 +30,8 @@ export default function ContextMenu({
   style,
 }: ContextMenuProps) {
   const colorScheme = usePreferences((s) => s.colorScheme)
-  // Hosted RN content sizes to its own content, so pass the width the
-  // surrounding layout gives us down to it explicitly, unless the content is
-  // meant to keep its own width.
-  const [width, setWidth] = useState<number>()
+  const { width, overflowed, onLayout, onContentLayout } =
+    useHostedContentWidth(fitContent)
   // Rows mount by the hundred, so the preview renders only once a touch lands
   // on this trigger — well before the long press completes. The Preview slot
   // itself always exists so the native menu isn't rebuilt mid-gesture.
@@ -101,6 +100,7 @@ export default function ContextMenu({
           >
             <View
               style={{ width, borderRadius: hoverRadius }}
+              onLayout={onContentLayout}
               onTouchStart={
                 preview && !armed ? () => setArmed(true) : undefined
               }
@@ -125,19 +125,13 @@ export default function ContextMenu({
   if (hosted) return menu
 
   return (
-    <View
-      style={style}
-      onLayout={
-        fitContent
-          ? undefined
-          : (event) => setWidth(event.nativeEvent.layout.width)
-      }
-    >
+    <View style={style} onLayout={onLayout}>
       {/* Without this, rows first laid out under the home indicator measure short. */}
       <Host
         // Hosted content keeps the layout of its first pass in a right-to-left
-        // layout, measured before the width arrived; remount it at the width.
-        key={isRtlLayout() ? width : undefined}
+        // layout, or when it ran wider than the width, measured before the
+        // width arrived; remount it at the width.
+        key={isRtlLayout() || overflowed ? width : undefined}
         matchContents
         colorScheme={colorScheme}
         ignoreSafeArea='all'

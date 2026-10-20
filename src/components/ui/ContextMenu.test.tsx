@@ -142,6 +142,32 @@ describe('Android context menu', () => {
     expect(triggerWidth()).toBeUndefined()
   })
 
+  it('remounts the host at its width only when the content first ran wider', async () => {
+    const layout = (width: number) => ({ nativeEvent: { layout: { width } } })
+    const run = async (firstPassWidth: number) => {
+      const mounts = countMounts()
+      await render(
+        <AndroidContextMenu actions={actions()} onPress={vi.fn()}>
+          <mounts.Probe />
+        </AndroidContextMenu>
+      )
+      const outer = root.root.findAll(
+        (node) => (node.type as unknown) === 'View' && 'onLayout' in node.props
+      )[0]
+      await act(async () => {
+        trigger().props.onLayout(layout(firstPassWidth))
+        outer.props.onLayout(layout(300))
+      })
+      expect(trigger().props.onLayout).toBeUndefined()
+      await act(async () => root.unmount())
+      return mounts.count()
+    }
+
+    expect(await run(520)).toBe(2)
+    expect(await run(240)).toBe(1)
+    await render(<React.Fragment />)
+  })
+
   it('closes on dismiss without running an action', async () => {
     const list = actions()
     await render(
@@ -352,6 +378,45 @@ describe('iOS context menu', () => {
     expect(root.root.findAllByType(PreviewContent)).toHaveLength(1)
   })
 
+  it('remounts the host at its width only when the content first ran wider', async () => {
+    const layout = (width: number) => ({ nativeEvent: { layout: { width } } })
+    const laidOut = () =>
+      root.root.findAll(
+        (node) =>
+          (node.type as unknown) === 'View' &&
+          typeof node.props.onLayout === 'function'
+      )
+    const triggerWidth = () =>
+      root.root.findAll(
+        (node) =>
+          (node.type as unknown) === 'View' && 'onTouchStart' in node.props
+      )[0].props.style.width
+
+    const run = async (firstPassWidth: number) => {
+      const mounts = countMounts()
+      await render(
+        <IOSContextMenu actions={actions()} onPress={vi.fn()}>
+          <mounts.Probe />
+        </IOSContextMenu>
+      )
+      // The outer view, then the hosted content before it has a width.
+      const [outer, content] = laidOut()
+      await act(async () => {
+        content.props.onLayout(layout(firstPassWidth))
+        outer.props.onLayout(layout(300))
+      })
+      expect(triggerWidth()).toBe(300)
+      await act(async () => root.unmount())
+      return mounts.count()
+    }
+
+    // Large text laid out on one line, wider than the row: lay it out again.
+    expect(await run(520)).toBe(2)
+    // Content that fit grows into the width without a remount.
+    expect(await run(240)).toBe(1)
+    await render(<React.Fragment />)
+  })
+
   it('leaves content without a tap action untinted', async () => {
     await render(
       <IOSContextMenu actions={actions()}>
@@ -367,6 +432,18 @@ describe('iOS context menu', () => {
 
 function PreviewContent() {
   return null
+}
+
+/** A child that counts how often it mounts, i.e. how often its Host does. */
+function countMounts() {
+  let mounts = 0
+  function Probe() {
+    React.useEffect(() => {
+      mounts++
+    }, [])
+    return null
+  }
+  return { Probe, count: () => mounts }
 }
 
 describe('hosted context menu', () => {

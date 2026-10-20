@@ -10,14 +10,18 @@ import useTheme from '@/contexts/theme'
 import useFeatureAccess from '@/hooks/useFeatureAccess'
 import i18n, { type TranslationKey } from '@/lib/locales'
 import useDayRouteStops from '@/features/route-planning/hooks/useDayRouteStops'
-import useOpenTodayRoute, {
-  type TodayRouteEntrySurface,
-} from '@/features/route-planning/hooks/useOpenTodayRoute'
+import { builderStops } from '@/features/route-planning/lib/routeBuilder'
+import { useSavedRoutes } from '@/features/route-planning/stores/savedRoutes'
+import useOpenRouteBuilder, {
+  type RouteBuilderEntrySurface,
+} from '@/hooks/useOpenRouteBuilder'
 
 /**
- * "Plan today's route" in the day view. Shows only on today, once at least two
- * stops have a location. Non-Supporters open it too: the route screen previews
- * their own stops and offers Supporter there.
+ * "Plan today's route" in the day view, or "Plan Route" on a day ahead, on
+ * today and every later day: a day with no follow-ups or plans can still be
+ * planned from scratch, e.g. a day out with buddies. Says how many stops are
+ * planned, or ready to plan. Non-Supporters open it too: the route screen
+ * previews their own stops and offers Supporter there.
  */
 export default function TodayRouteEntry({
   date,
@@ -25,21 +29,40 @@ export default function TodayRouteEntry({
   onNavigate,
 }: {
   date: Date
-  surface: TodayRouteEntrySurface
+  surface: RouteBuilderEntrySurface
   /** Runs the navigation, e.g. after the hosting sheet closes. */
   onNavigate?: (go: () => void) => void
 }) {
   const theme = useTheme()
   const { hasAccess } = useFeatureAccess('routePlanning')
-  const go = useOpenTodayRoute(surface)
+  const go = useOpenRouteBuilder(surface)
   const { stops } = useDayRouteStops(date)
-  if (!moment(date).isSame(moment(), 'day') || stops.length < 2) return null
+  const saved = useSavedRoutes(
+    (s) => s.routes[moment(date).format('YYYY-MM-DD')]
+  )
+  const isToday = moment(date).isSame(moment(), 'day')
+  if (moment(date).isBefore(moment(), 'day')) return null
+  const title = isToday
+    ? i18n.t('routePlan_entryTitle')
+    : i18n.t('routeBuilder_entryTitleDay')
+  const planned = saved ? builderStops(stops, saved).stops.length : 0
+  const subtitle =
+    planned > 0
+      ? i18n.t('routeBuilder_entryPlanned' as TranslationKey, {
+          count: planned,
+        })
+      : stops.length > 0
+        ? i18n.t('routePlan_entrySubtitle' as TranslationKey, {
+            count: stops.length,
+          })
+        : i18n.t('routeBuilder_entryEmpty')
+  const open = () => go(date)
 
   return (
     <View style={{ paddingTop: 12 }}>
       <Button
-        onPress={() => (onNavigate ? onNavigate(go) : go())}
-        accessibilityLabel={i18n.t('routePlan_entryTitle')}
+        onPress={() => (onNavigate ? onNavigate(open) : open())}
+        accessibilityLabel={title}
         style={{
           flexDirection: 'row',
           alignItems: 'center',
@@ -64,18 +87,14 @@ export default function TodayRouteEntry({
           <LucideIcon icon={RouteIcon} size={17} color={theme.colors.accent} />
         </View>
         <View style={{ flex: 1, gap: 2 }}>
-          <Text style={{ fontFamily: theme.fonts.semiBold }}>
-            {i18n.t('routePlan_entryTitle')}
-          </Text>
+          <Text style={{ fontFamily: theme.fonts.semiBold }}>{title}</Text>
           <Text
             style={{
               color: theme.colors.textAlt,
               fontSize: theme.fontSize('sm'),
             }}
           >
-            {i18n.t('routePlan_entrySubtitle' as TranslationKey, {
-              count: stops.length,
-            })}
+            {subtitle}
           </Text>
         </View>
         {hasAccess ? (

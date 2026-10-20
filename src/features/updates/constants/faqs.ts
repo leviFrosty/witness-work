@@ -234,6 +234,8 @@ export const FAQS: FAQEntry[] = [
   { id: 'streakBuddies', category: 'streaks' },
   { id: 'streaksHide', category: 'streaks' },
   { id: 'routePlanning', category: 'plans' },
+  { id: 'routePlanningPlaces', category: 'plans' },
+  { id: 'routePlanningBuddies', category: 'plans' },
   { id: 'routePlanningNavigation', category: 'plans' },
   { id: 'routePlanningPrivacy', category: 'plans' },
   {

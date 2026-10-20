@@ -147,8 +147,12 @@ export type RootStackParamList = {
     recurring?: boolean
   }
   Rollover: undefined
-  /** Supporter: today's stops in the shortest driving order. */
-  TodayRoute: undefined
+  /**
+   * The route builder; `date` (`YYYY-MM-DD`) defaults to today. `planId` ties
+   * the day's route to that Plan: one it was opened from, or (`newPlan`) one
+   * just made from the route to invite buddies.
+   */
+  TodayRoute: { date?: string; planId?: string; newPlan?: boolean } | undefined
   MilestoneShowcase: undefined
   FAQ: { scrollToCategory?: string } | undefined
   /** QR codes and a link for sharing WitnessWork with a friend. */

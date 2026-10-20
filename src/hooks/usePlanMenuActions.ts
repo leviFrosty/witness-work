@@ -5,6 +5,7 @@ import type { ContextMenuEntries } from '@/components/ui/ContextMenu'
 import type { PlanListItem } from '@/types/timeEntry'
 import { planLocationText } from '@/components/PlanLocationLink'
 import { useLinkActions } from '@/components/RichLinkCard'
+import useOpenRouteBuilder from '@/hooks/useOpenRouteBuilder'
 import usePublisher from '@/hooks/usePublisher'
 import confirmDeletePlan, {
   confirmDeletePlanScope,
@@ -77,9 +78,9 @@ export type LogTimePrefill = {
 }
 
 /**
- * Opening a Plan, plus Edit, Log as Time, Duplicate, maps, copy, and Delete,
- * wherever it shows: a row (tap and long-press menu) and Plan Details' More
- * menu. Also returns the Plan's effective values on its date.
+ * Opening a Plan, plus Edit, Log as Time, Duplicate, Plan Route, maps, copy,
+ * and Delete, wherever it shows: a row (tap and long-press menu) and Plan
+ * Details' More menu. Also returns the Plan's effective values on its date.
  */
 export default function usePlanMenuActions(
   item: PlanListItem,
@@ -95,6 +96,7 @@ export default function usePlanMenuActions(
   } = {}
 ) {
   const navigation = useNavigation<RootStackNavigation>()
+  const openRouteBuilder = useOpenRouteBuilder('plan_menu')
   const { showsTimeEntry } = usePublisher()
   const { copyText, openLinksItem } = useLinkActions()
   const { plan, date } = item
@@ -195,6 +197,13 @@ export default function usePlanMenuActions(
       },
     ],
     [
+      // The day's route, tied to this Plan: it starts when and where it does.
+      !dateMoment.isBefore(moment(), 'day') && {
+        id: 'plan_route',
+        title: i18n.t('routePlan_homeAction'),
+        systemImage: 'point.topleft.down.to.point.bottomright.curvepath',
+        onPress: () => go(() => openRouteBuilder(date, plan.id)),
+      },
       mapsUrl
         ? {
             id: 'open_in_maps',

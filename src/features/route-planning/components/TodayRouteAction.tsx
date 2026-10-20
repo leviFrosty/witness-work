@@ -5,7 +5,7 @@ import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import useDayRouteStops from '@/features/route-planning/hooks/useDayRouteStops'
-import useOpenTodayRoute from '@/features/route-planning/hooks/useOpenTodayRoute'
+import useOpenRouteBuilder from '@/hooks/useOpenRouteBuilder'
 
 /**
  * Compact "Plan Route" in Home's Follow-up card header, where publishers look
@@ -13,13 +13,13 @@ import useOpenTodayRoute from '@/features/route-planning/hooks/useOpenTodayRoute
  */
 export default function TodayRouteAction() {
   const theme = useTheme()
-  const open = useOpenTodayRoute('home_follow_ups')
+  const open = useOpenRouteBuilder('home_follow_ups')
   const { stops } = useDayRouteStops(new Date())
   if (stops.length < 2) return null
 
   return (
     <Button
-      onPress={open}
+      onPress={() => open()}
       accessibilityLabel={i18n.t('routePlan_entryTitle')}
       hitSlop={8}
       style={{

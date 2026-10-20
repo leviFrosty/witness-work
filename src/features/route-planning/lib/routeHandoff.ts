@@ -65,7 +65,10 @@ const appleRouteUrl = (destinations: string[]) =>
     ['mode', 'driving'],
   ])}`
 
-const stopLink = (app: NavigationApp, stop: RouteStop) => {
+/** What a link needs from a stop. */
+type HandoffStop = Pick<RouteStop, 'coordinate' | 'destination'>
+
+const stopLink = (app: NavigationApp, stop: HandoffStop) => {
   switch (app) {
     case 'waze':
       return `https://waze.com/ul?${query([
@@ -83,7 +86,7 @@ const stopLink = (app: NavigationApp, stop: RouteStop) => {
 }
 
 // `|` separates Google waypoints; an address can't contain one.
-const googleDestination = (stop: RouteStop) =>
+const googleDestination = (stop: HandoffStop) =>
   stop.destination.replace(/\|/g, ' ')
 
 export const buildRouteHandoff = ({
@@ -93,7 +96,7 @@ export const buildRouteHandoff = ({
 }: {
   app: NavigationApp
   /** In visiting order, the starting stop first when there is one. */
-  stops: RouteStop[]
+  stops: HandoffStop[]
   appleMultiStop: boolean
 }): RouteHandoff => {
   const stopByStop = (): RouteHandoff => ({

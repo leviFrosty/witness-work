@@ -13,6 +13,7 @@ import { AppIcon } from '@/components/ui/LucideIcon'
 import LucideIcon from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
 import PointerHover from '@/components/ui/PointerHover'
+import TimelinePill from '@/components/ui/TimelinePill'
 import useTheme from '@/contexts/theme'
 import { withAlpha } from '@/lib/color'
 import { formatDate, formatMonthDayCompact } from '@/lib/dates'
@@ -112,37 +113,14 @@ const RailConnector = ({
       </View>
       <View style={{ flex: 1, minWidth: 0, gap: 5, paddingLeft: 6 }}>
         {newer && (
-          <View
-            style={{
-              alignSelf: 'flex-start',
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 6,
-              paddingVertical: 3,
-              paddingHorizontal: 10,
-              borderRadius: 11,
-              borderWidth: 1,
-              borderColor: theme.colors.border,
-              backgroundColor: theme.colors.background,
-            }}
-          >
-            <LucideIcon
-              icon={ClockIcon}
-              size={10}
-              color={theme.colors.textAlt}
-            />
-            <Text
-              style={{
-                fontSize: theme.fontSize('xs') + 1,
-                fontFamily: theme.fonts.semiBold,
-                color: theme.colors.textAlt,
-              }}
-            >
-              {gap
+          <TimelinePill
+            icon={ClockIcon}
+            label={
+              gap
                 ? i18n.t('contactDetails.gapEarlier', { gap })
-                : i18n.t('contactDetails.sameDay')}
-            </Text>
-          </View>
+                : i18n.t('contactDetails.sameDay')
+            }
+          />
         )}
         {state && followUp && (
           <Text style={{ fontSize: theme.fontSize('sm'), lineHeight: 16 }}>

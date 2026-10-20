@@ -1,3 +1,4 @@
+import moment from 'moment'
 import { perf } from '@/lib/perf'
 import { useAppLockSession, useAppLockSettings } from '@/stores/appLock'
 import { CommonActions } from '@react-navigation/native'
@@ -30,6 +31,10 @@ import { checkBuddiesRelay } from '@/features/buddies/lib/buddiesService'
 import { checkCryptoVectors } from '@/features/buddies/lib/testing/cryptoVectors'
 import apis from '@/constants/apis'
 import { SCENARIO_NAMES } from '@/app/dev-harness/scenarios'
+import { buildTodayRouteFixture } from '@/app/dev-fixtures/todayRoute'
+import { buildRouteDemoFixture } from '@/app/dev-fixtures/routeDemo'
+import { useSavedPlaces } from '@/features/route-planning/stores/savedPlaces'
+import { useSavedRoutes } from '@/features/route-planning/stores/savedRoutes'
 import { seedScenario } from '@/app/dev-harness/seedScenario'
 import { mmkvStorage } from '@/stores/mmkv'
 import {
@@ -236,6 +241,45 @@ export function installDevHarness() {
     devicePushToken,
     /** The sync engine, for reading state back; drive changes through the UI. */
     sync: iCloudSync,
+    /**
+     * The route builder's San Francisco stops (Tools → Generate today's route)
+     * on the day `daysFromToday` away; re-running a day changes nothing.
+     */
+    seedRoute: (daysFromToday = 0) => {
+      const fixture = buildTodayRouteFixture({
+        now: moment().add(daysFromToday, 'days'),
+      })
+      const contacts = useContacts.getState()
+      fixture.contacts.forEach((contact) => {
+        if (contacts.deletedContacts.some((c) => c.id === contact.id)) {
+          contacts.removeDeletedContact(contact.id)
+        }
+        contacts.addContact(contact)
+      })
+      fixture.visits.forEach(useConversations.getState().addConversation)
+      fixture.dayPlans.forEach((plan) =>
+        useServiceReport.getState().addDayPlan(plan)
+      )
+      fixture.recurringPlans.forEach((plan) =>
+        useServiceReport.getState().addRecurringPlan(plan)
+      )
+      return fixture.visits.length + fixture.dayPlans.length
+    },
+    /**
+     * A tidy demo day for the route builder (one neighborhood, a meeting for
+     * field service, five Follow-ups) `daysFromToday` away.
+     */
+    seedRouteDemo: (daysFromToday = 1) => {
+      const fixture = buildRouteDemoFixture({
+        day: moment().add(daysFromToday, 'days'),
+      })
+      fixture.contacts.forEach(useContacts.getState().addContact)
+      fixture.visits.forEach(useConversations.getState().addConversation)
+      fixture.dayPlans.forEach((plan) =>
+        useServiceReport.getState().addDayPlan(plan)
+      )
+      return fixture.visits.length + fixture.dayPlans.length
+    },
     setSupporter: (on: boolean) => {
       usePreferences
         .getState()
@@ -358,6 +402,9 @@ export function installDevHarness() {
       conversations: useConversations,
       serviceReports: useServiceReport,
       mileage: useMileage,
+      // Route builder routes by day (`routes['YYYY-MM-DD']`), device-local.
+      savedRoutes: useSavedRoutes,
+      savedPlaces: useSavedPlaces,
       categories: useCategories,
       buddies: useBuddies,
       buddiesDiagnostics: useBuddiesDiagnostics,

@@ -22,6 +22,7 @@ vi.mock('@react-navigation/native', () => ({
   useNavigation: () => navigation,
 }))
 vi.mock('@/hooks/usePublisher', () => ({ default: () => publisher }))
+vi.mock('@/hooks/useOpenRouteBuilder', () => ({ default: () => vi.fn() }))
 vi.mock('@/components/ui/ContextMenu', async () => {
   const ReactModule = await import('react')
   return {

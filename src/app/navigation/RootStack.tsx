@@ -240,19 +240,13 @@ const RootStackComponent = () => {
         />
         <RootStack.Screen
           options={{
-            presentation: 'modal',
             header: () => (
-              <Header
-                noInsets
-                buttonType='back'
-                title={i18n.t('routePlan_title')}
-              />
+              <Header buttonType='back' title={i18n.t('routeBuilder_title')} />
             ),
           }}
           name='TodayRoute'
           getComponent={() =>
-            require('@/features/route-planning/screens/TodayRouteScreen')
-              .default
+            require('@/app/route-planning/RouteBuilderRouteScreen').default
           }
         />
         <RootStack.Screen

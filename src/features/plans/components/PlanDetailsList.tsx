@@ -5,7 +5,6 @@ import {
   Flag as FlagIcon,
   MapPin as MapPinIcon,
   Type as TypeIcon,
-  Users as UsersIcon,
   X as XIcon,
 } from 'lucide-react-native'
 import Button from '@/components/ui/Button'
@@ -17,14 +16,14 @@ import TextInput from '@/components/ui/TextInput'
 import FormDetailsSection from '@/components/ui/inputs/FormDetailsSection'
 import FormRow, {
   FORM_ROW_MIN_HEIGHT,
-  FormRowAddBadge,
-  FormRowChevron,
   FormRowLabel,
-  FormRowValue,
   formRowInputStyle,
 } from '@/components/ui/inputs/FormRow'
 import NoteFormRow from '@/components/ui/inputs/NoteFormRow'
 import { useDockedFormLayout } from '@/components/ui/layout/DockedFormLayout'
+import InviteBuddiesFormRow, {
+  type InviteBuddiesRowContent,
+} from '@/components/InviteBuddiesFormRow'
 import PlaceSearchInput from '@/components/PlaceSearchInput'
 import TypeFormRow from '@/components/TypeFormRow'
 import { type TypeSelection } from '@/components/TypeSelectorRow'
@@ -49,7 +48,7 @@ type Props = {
    * Opens a picker of confirmed buddies, or, before there are any, sends the
    * User to set Buddies up. Omitted where Buddies doesn't apply.
    */
-  buddies?: { picker: ReactNode; summary?: string } | { setUp: () => void }
+  buddies?: InviteBuddiesRowContent
   /** Omitted for recurring plans, which don't have reminders. */
   notifyMe?: {
     on: boolean
@@ -183,50 +182,6 @@ const LocationRow = (props: NonNullable<Props['location']>) => {
   )
 }
 
-const BuddiesSetUpRow = (props: { setUp: () => void }) => (
-  <FormRow
-    icon={UsersIcon}
-    onPress={props.setUp}
-    accessibilityLabel={i18n.t('buddies_inviteBuddies')}
-    testID='plan-buddies-row'
-    trailing={<FormRowAddBadge />}
-  >
-    <FormRowLabel>{i18n.t('buddies_inviteBuddies')}</FormRowLabel>
-  </FormRow>
-)
-
-const BuddiesRow = (props: { picker: ReactNode; summary?: string }) => {
-  const layout = useDockedFormLayout()
-  const row = useRef<View>(null)
-  const [open, setOpen] = useState(false)
-  return (
-    <FormRow
-      icon={UsersIcon}
-      containerRef={row}
-      onPress={() => {
-        if (!open) layout.revealAfterLayout(row)
-        setOpen(!open)
-      }}
-      accessibilityLabel={i18n.t('buddies_inviteBuddies')}
-      accessibilityExpanded={open}
-      testID='plan-buddies-row'
-      trailing={
-        <>
-          {!open && <FormRowValue>{props.summary}</FormRowValue>}
-          {props.summary || open ? (
-            <FormRowChevron open={open} />
-          ) : (
-            <FormRowAddBadge />
-          )}
-        </>
-      }
-      expanded={open && props.picker}
-    >
-      <FormRowLabel>{i18n.t('buddies_inviteBuddies')}</FormRowLabel>
-    </FormRow>
-  )
-}
-
 const NotifyMeRow = (props: NonNullable<Props['notifyMe']>) => {
   const theme = useTheme()
   const layout = useDockedFormLayout()
@@ -313,12 +268,9 @@ const PlanDetailsList = (props: Props) => (
       surface='plan'
       testID='plan-note'
     />
-    {props.buddies &&
-      ('setUp' in props.buddies ? (
-        <BuddiesSetUpRow setUp={props.buddies.setUp} />
-      ) : (
-        <BuddiesRow {...props.buddies} />
-      ))}
+    {props.buddies && (
+      <InviteBuddiesFormRow {...props.buddies} testID='plan-buddies-row' />
+    )}
     {props.notifyMe && <NotifyMeRow {...props.notifyMe} />}
     {props.end && <EndDateRow {...props.end} />}
     <TypeFormRow {...props.type} />

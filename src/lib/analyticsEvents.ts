@@ -153,6 +153,13 @@ export const analyticsEventNames = [
   'route_plan_created',
   'route_plan_failed',
   'route_plan_navigation_started',
+  // Route builder: which hands-on tools Supporters use.
+  'route_buddy_invited',
+  'route_finish_set',
+  'route_plan_linked',
+  'route_saved_place_set',
+  'route_stop_added',
+  'route_stops_reordered',
   // Supporter cloud sync (iCloud; Google Drive on Android) adoption and recovery.
   'icloud_account_changed',
   'icloud_restore_images_prompted',

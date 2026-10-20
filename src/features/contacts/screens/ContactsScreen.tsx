@@ -146,7 +146,8 @@ const ContactsScreen = ({
     setPreferences({ contactsView: view })
   }
 
-  const { contacts, customFieldDefs } = useContacts()
+  const contacts = useContacts((s) => s.contacts)
+  const customFieldDefs = useContacts((s) => s.customFieldDefs)
   const dismissedCount = contacts.filter(isContactDismissed).length
   const activeContacts = filterActivesContacts(contacts)
   const mappedContacts = activeContacts.filter((c) => c.coordinate != null)

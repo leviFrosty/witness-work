@@ -4,7 +4,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Contact } from '@/types/contact'
 
 const mocks = vi.hoisted(() => ({
-  contacts: [] as Contact[],
   isWide: false,
   platform: 'ios',
   listeners: new Map<string, Set<() => void>>(),
@@ -23,6 +22,8 @@ const mocks = vi.hoisted(() => ({
   appStateListeners: new Set<(state: string) => void>(),
   watchPositionAsync: vi.fn(),
   removeWatch: vi.fn(),
+  mapViewRenders: 0,
+  markerRenders: 0,
 }))
 // Stands in for a rendered overlay and records the appearance it receives.
 const appearanceProbe = vi.hoisted(() => (name: string) => async () => {
@@ -90,9 +91,13 @@ vi.mock('react-native-maps', () => ({
       fitToCoordinates: mocks.fitToCoordinates,
       fitToSuppliedMarkers: mocks.fitToSuppliedMarkers,
     }))
+    mocks.mapViewRenders++
     return React.createElement('MapView', props)
   },
-  Marker: 'Marker',
+  Marker: function Marker(props: object) {
+    mocks.markerRenders++
+    return React.createElement('Marker', props)
+  },
 }))
 vi.mock('react-native-reanimated-carousel', () => ({
   Carousel: ({
@@ -193,18 +198,26 @@ vi.mock('@/components/ui/DirectionalIcon', () => ({
   PanelTrailingCloseIcon: 'PanelRightClose',
   PanelTrailingOpenIcon: 'PanelRightOpen',
 }))
-vi.mock('@/stores/contactsStore', () => ({
-  default: Object.assign(
-    () => ({ contacts: mocks.contacts, updateContact: mocks.updateContact }),
-    { getState: () => ({ contacts: mocks.contacts }) }
-  ),
-}))
-vi.mock('@/stores/conversationStore', () => ({
-  default: (selector?: (state: { conversations: [] }) => unknown) => {
-    const state = { conversations: [] as [] }
-    return selector ? selector(state) : state
-  },
-}))
+vi.mock('@/stores/contactsStore', async () => {
+  const { create } = await import('zustand')
+  return {
+    default: create(() => ({
+      contacts: [] as Contact[],
+      deletedContacts: [] as Contact[],
+      customFieldDefs: [] as unknown[],
+      updateContact: mocks.updateContact,
+    })),
+  }
+})
+vi.mock('@/stores/conversationStore', async () => {
+  const { create } = await import('zustand')
+  return {
+    default: create(() => ({
+      conversations: [] as unknown[],
+      deletedConversations: [] as unknown[],
+    })),
+  }
+})
 vi.mock('@/stores/preferences', async () => {
   const { create } = await import('zustand')
   const usePreferences = create<Record<string, unknown>>((set) => ({
@@ -285,14 +298,19 @@ vi.mock('@/features/map/components/MapOnboarding', () => ({
 }))
 
 import MapScreen from '@/features/map/screens/MapScreen'
+import useContacts from '@/stores/contactsStore'
+import useConversations from '@/stores/conversationStore'
+import { usePreferences } from '@/stores/preferences'
 import CreateContactCard from '@/features/map/components/CreateContactCard'
 import MapView from 'react-native-maps'
 import { Carousel } from 'react-native-reanimated-carousel'
 import { Input } from 'tamagui'
 
 let root: ReturnType<typeof create>
+const stored = () => useContacts.getState().contacts
+const setContacts = (contacts: Contact[]) => useContacts.setState({ contacts })
 // `shown` stands in for the contacts the Contacts filters let through.
-const screen = (shown: Contact[] = mocks.contacts) => (
+const screen = (shown: Contact[] = stored()) => (
   <MapScreen
     contacts={shown}
     renderContactRow={() => null}
@@ -317,9 +335,13 @@ beforeEach(async () => {
   mocks.locationGranted = true
   mocks.isWide = false
   mocks.platform = 'ios'
-  mocks.contacts = [contact('first', 'First'), contact('second', 'Second')]
-  mocks.contacts[1].coordinate = { latitude: 41, longitude: -73 }
-  const { usePreferences } = await import('@/stores/preferences')
+  setContacts([
+    contact('first', 'First'),
+    {
+      ...contact('second', 'Second'),
+      coordinate: { latitude: 41, longitude: -73 },
+    },
+  ])
   usePreferences.setState({ mapLayer: 'standard' })
   mocks.addListener.mockImplementation((event, listener) => {
     const listeners = mocks.listeners.get(event) ?? new Set()
@@ -376,11 +398,10 @@ describe('Map padding readiness', () => {
 describe('Map camera initialization', () => {
   it('uses street zoom for multiple contacts at the same location', async () => {
     const coordinate = { latitude: 40, longitude: -73 }
-    mocks.contacts = mocks.contacts.map((contact) => ({
-      ...contact,
-      coordinate,
-    }))
-    await act(async () => root.update(screen()))
+    await act(async () => {
+      setContacts(stored().map((contact) => ({ ...contact, coordinate })))
+      root.update(screen())
+    })
     await act(async () => {
       const map = root.root.findByType(MapView)
       map.props.onMapReady()
@@ -406,14 +427,16 @@ describe('Map camera initialization', () => {
       expect(mocks.fitToCoordinates).not.toHaveBeenCalled()
       await act(async () => map().props[second](layoutEvent))
       expect(mocks.fitToCoordinates).toHaveBeenCalledExactlyOnceWith(
-        mocks.contacts.map((contact) => contact.coordinate)
+        stored().map((contact) => contact.coordinate)
       )
     }
   )
 
   it('frames the first contact added after an empty map becomes ready', async () => {
-    mocks.contacts = []
-    await act(async () => root.update(screen()))
+    await act(async () => {
+      setContacts([])
+      root.update(screen())
+    })
     await act(async () => {
       const map = root.root.findByType(MapView)
       map.props.onLayout(layoutEvent)
@@ -421,8 +444,10 @@ describe('Map camera initialization', () => {
     })
     expect(mocks.animateToRegion).not.toHaveBeenCalled()
     const saved = contact('new', 'New contact')
-    mocks.contacts = [saved]
-    await act(async () => root.update(screen()))
+    await act(async () => {
+      setContacts([saved])
+      root.update(screen())
+    })
     expect(mocks.animateToRegion).toHaveBeenCalledExactlyOnceWith(
       { ...saved.coordinate, latitudeDelta: 0.005, longitudeDelta: 0.005 },
       225
@@ -441,8 +466,10 @@ describe('Map carousel after contact creation', () => {
         ...contact('new-contact', 'New contact'),
         coordinate: { latitude: 0, longitude: -73.123456789 },
       }
-      mocks.contacts = [...mocks.contacts, saved]
-      await act(async () => root.update(screen()))
+      await act(async () => {
+        setContacts([...stored(), saved])
+        root.update(screen())
+      })
       expect(root.root.findByType(Input).props.value).toBe(search)
 
       await act(async () => emit('focus'))
@@ -480,7 +507,7 @@ describe('Map with the Contacts filters', () => {
       .map((marker) => marker.props.identifier)
 
   it('pins only the contacts the filters let through', async () => {
-    await act(async () => root.update(screen([mocks.contacts[1]])))
+    await act(async () => root.update(screen([stored()[1]])))
     expect(pins()).toEqual(['second'])
   })
 
@@ -497,11 +524,13 @@ describe('Map with the Contacts filters', () => {
   })
 
   it('keeps a contact made from a dropped pin that the filters would hide', async () => {
-    const filtered = [mocks.contacts[0]]
+    const filtered = [stored()[0]]
     await act(async () => root.update(screen(filtered)))
     await startCreation('')
-    mocks.contacts = [...mocks.contacts, contact('new-contact', 'New contact')]
-    await act(async () => root.update(screen(filtered)))
+    await act(async () => {
+      setContacts([...stored(), contact('new-contact', 'New contact')])
+      root.update(screen(filtered))
+    })
     await act(async () => emit('focus'))
     expect(pins()).toEqual(['first', 'new-contact'])
     const carousel = root.root.findByType(Carousel)
@@ -512,8 +541,10 @@ describe('Map with the Contacts filters', () => {
 describe('Dropped pin on an empty tablet map', () => {
   it('replaces the empty card in place and restores it when cancelled', async () => {
     mocks.isWide = true
-    mocks.contacts = []
-    await act(async () => root.update(screen()))
+    await act(async () => {
+      setContacts([])
+      root.update(screen())
+    })
     const emptyCard = root.root.findAll(
       (node) =>
         String(node.type) === 'AnimatedView' &&
@@ -552,8 +583,6 @@ describe('Map layer', () => {
     const { default: MapLayerMenu } = await import(
       '@/features/map/components/MapLayerMenu'
     )
-    const { usePreferences } = await import('@/stores/preferences')
-
     await act(async () =>
       root.root.findByType(MapLayerMenu).props.onChange('hybrid')
     )
@@ -567,6 +596,62 @@ describe('Map layer', () => {
       '@/lib/syncPreferencePolicy'
     )
     expect(NON_SYNCABLE_PREFERENCE_KEYS.has('mapLayer')).toBe(true)
+  })
+})
+
+describe('Map store subscriptions', () => {
+  const renders = () => ({
+    map: mocks.mapViewRenders,
+    markers: mocks.markerRenders,
+  })
+
+  it.each<[string, () => void]>([
+    [
+      'a contact tombstone',
+      () =>
+        useContacts.setState({ deletedContacts: [contact('gone', 'Gone')] }),
+    ],
+    [
+      'a custom field definition',
+      () =>
+        useContacts.setState({
+          customFieldDefs: [
+            {
+              id: 'field',
+              label: 'Field',
+              order: 0,
+              createdAt: 0,
+              updatedAt: 0,
+            },
+          ],
+        }),
+    ],
+    [
+      'a visit tombstone',
+      () =>
+        useConversations.setState({
+          deletedConversations: [{ id: 'gone', deletedAt: 0 }],
+        }),
+    ],
+    [
+      'an unrelated preference',
+      () => usePreferences.setState({ timeDisplayFormat: 'decimal' }),
+    ],
+  ])('leaves the map and its pins alone on %s', async (_, write) => {
+    const before = renders()
+    await act(async () => {
+      write()
+    })
+    expect(renders()).toEqual(before)
+  })
+
+  it('re-renders the pins when a contact changes', async () => {
+    const before = renders()
+    await act(async () => {
+      setContacts([...stored(), contact('third', 'Third')])
+      root.update(screen())
+    })
+    expect(renders().markers).toBeGreaterThan(before.markers)
   })
 })
 

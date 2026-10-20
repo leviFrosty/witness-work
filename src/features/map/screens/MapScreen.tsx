@@ -211,7 +211,7 @@ const FullMapView = ({
   const overImagery = mapLayer !== 'standard'
   const theme = overImagery ? getMapImageryTheme(appTheme) : appTheme
   const glassColorScheme = overImagery ? 'dark' : appGlassColorScheme
-  const { updateContact } = useContacts()
+  const updateContact = useContacts((s) => s.updateContact)
   const CARD_HEIGHT = 200
   const isDark = theme.colors.background === '#121212'
 
@@ -1440,8 +1440,8 @@ const MapScreen = ({
   /** The user started exploring: dragged the map or stowed the cards. */
   onExplore?: () => void
 }) => {
-  const { contacts: allContacts } = useContacts()
-  const { conversations } = useConversations()
+  const allContacts = useContacts((s) => s.contacts)
+  const conversations = useConversations((s) => s.conversations)
   const { hasCompletedMapOnboarding, stalenessBreakpoints } = usePreferences(
     useShallow((s) => ({
       hasCompletedMapOnboarding: s.hasCompletedMapOnboarding,

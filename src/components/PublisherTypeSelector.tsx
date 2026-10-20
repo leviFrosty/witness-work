@@ -4,7 +4,7 @@ import i18n from '@/lib/locales'
 import { parseDecimalInput } from '@/lib/digits'
 import { formatPlainNumber } from '@/lib/numbers'
 import { usePreferences } from '@/stores/preferences'
-import { publishers } from '@/constants/publisher'
+import { publisherChoices } from '@/constants/publisher'
 import Select, { SelectData } from '@/components/ui/Select'
 import { Publisher } from '@/types/publisher'
 import { useRef, useState } from 'react'
@@ -60,32 +60,10 @@ const PublisherTypeSelector = ({
    */
   askStartMonth?: boolean
 }) => {
-  const items: SelectData<Publisher> = [
-    {
-      label: i18n.t('publisher'),
-      value: publishers[0],
-    },
-    {
-      label: i18n.t('regularAuxiliary'),
-      value: publishers[1],
-    },
-    {
-      label: i18n.t('regularPioneer'),
-      value: publishers[2],
-    },
-    {
-      label: i18n.t('circuitOverseer'),
-      value: publishers[3],
-    },
-    {
-      label: i18n.t('specialPioneer'),
-      value: publishers[4],
-    },
-    {
-      label: i18n.t('custom'),
-      value: publishers[5],
-    },
-  ]
+  const items: SelectData<Publisher> = publisherChoices.map((value) => ({
+    label: i18n.t(value),
+    value,
+  }))
 
   const theme = useTheme()
   const cardStyle = useCardStyle()
@@ -172,7 +150,7 @@ const PublisherTypeSelector = ({
   }
 
   const requirement =
-    role === publishers[0]
+    role === 'publisher'
       ? i18n.t('noHourRequirement')
       : i18n.t('hourMonthlyRequirement', {
           count: publisherHours[role],
@@ -240,7 +218,7 @@ const PublisherTypeSelector = ({
                     color: theme.colors.textAlt,
                   }}
                 >
-                  {value === publishers[0]
+                  {value === 'publisher'
                     ? i18n.t('noHourRequirement')
                     : i18n.t('yourPlanMonthlyGoal', {
                         hours: publisherHours[value],
@@ -289,7 +267,7 @@ const PublisherTypeSelector = ({
         <InputRowContainer
           label={i18n.t('status')}
           info={
-            showGoalDescription && role !== publishers[0]
+            showGoalDescription && role !== 'publisher'
               ? i18n.t('defaultMonthlyGoal_description')
               : undefined
           }

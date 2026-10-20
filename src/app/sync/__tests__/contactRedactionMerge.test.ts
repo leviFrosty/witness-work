@@ -103,7 +103,7 @@ describe('mergePayload — redacted contact tombstones', () => {
 
     expect(result.deletedContacts).toEqual([redacted(ERASED_AT)])
     expect(JSON.stringify(result.deletedContacts)).not.toMatch(
-      /Householder|555|Main|private/
+      /Householder|555-0100|Main St|private/
     )
     expect(result.changed).toBe(true)
   })

@@ -108,6 +108,8 @@ export function createFakeSyncServer() {
   return {
     state,
     fetch: fetchImpl,
+    /** The account change sequence, as the live socket's `hello` says it. */
+    seq: () => seq,
     /** The slot ids an account holds. */
     slotIds: (account: string) => [...slotsOf(account).keys()].sort(),
     /** What a slot holds, as the server sees it: ciphertext. */

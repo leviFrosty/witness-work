@@ -129,7 +129,10 @@ export type ServerTransport = SyncTransport & {
   notifyRemoteChange: () => void
   /** Availability or the account changed (a session opened or ended). */
   notifyAvailabilityChange: () => void
-  /** The `seq` of the listing the last read used; 0 before any. */
+  /**
+   * The account `seq` this device has caught up to: the last listing's, or its
+   * own put right after it. 0 before any.
+   */
   lastSeq: () => number
   /** Forgets cached snapshots, after an account change. */
   reset: () => void
@@ -256,7 +259,11 @@ export function createServerTransport(
         throw new SyncTransportError('storage-full', 'too_large')
       try {
         const put = await putSyncSlot(current.options, slotId, blob)
-        seq = Math.max(seq, put.seq)
+        // Our own put is past what we've read only when nothing came between
+        // (another device's put); otherwise the live socket's `hello` would
+        // look caught up and that change wait for some other pull. The next
+        // listing records it.
+        if (put.seq === seq + 1) seq = put.seq
         return put.updatedAt
       } catch (error) {
         return fail(error)

@@ -125,18 +125,25 @@ describe('lucide-imports babel plugin', () => {
   })
 
   // A barrel import that survives the transform bundles every icon again.
-  it('leaves no app file importing the full icon set', () => {
-    const files = globSync('{src,modules,targets}/**/*.{ts,tsx}', {
-      cwd: root,
-    }).filter((file) => !/node_modules|\.test\.|__tests__/.test(file))
-    expect(files.length).toBeGreaterThan(100)
-    const offenders = files.filter((file) => {
-      const source = readFileSync(path.join(root, file), 'utf8')
-      if (!source.includes('lucide-react-native')) return false
-      return /from ['"]lucide-react-native['"]|require\(['"]lucide-react-native['"]\)/.test(
-        transform(source, file)
-      )
-    })
-    expect(offenders).toEqual([])
-  })
+  // This Babel-transforms every app file that imports an icon (a few hundred),
+  // which is CPU-bound and runs past vitest's 5 s default on a busy machine,
+  // failing pre-push hooks for nothing; give it room.
+  it(
+    'leaves no app file importing the full icon set',
+    { timeout: 30_000 },
+    () => {
+      const files = globSync('{src,modules,targets}/**/*.{ts,tsx}', {
+        cwd: root,
+      }).filter((file) => !/node_modules|\.test\.|__tests__/.test(file))
+      expect(files.length).toBeGreaterThan(100)
+      const offenders = files.filter((file) => {
+        const source = readFileSync(path.join(root, file), 'utf8')
+        if (!source.includes('lucide-react-native')) return false
+        return /from ['"]lucide-react-native['"]|require\(['"]lucide-react-native['"]\)/.test(
+          transform(source, file)
+        )
+      })
+      expect(offenders).toEqual([])
+    }
+  )
 })

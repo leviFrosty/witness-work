@@ -1,6 +1,7 @@
 # seed: badges
 # assert: Object.keys(__WW_DEV__.stores.preferences.getState().earnedBadges).length === 14
 # assert: __WW_DEV__.state().route.name === 'Badges'
+# assert: __WW_DEV__.stores.profileOverlay.getState().open === false
 appId: com.leviwilkerson.jwtimedev
 name: Open badges from the profile overlay, view one full screen, and close it
 ---
@@ -11,6 +12,10 @@ name: Open badges from the profile overlay, view one full screen, and close it
 - tapOn: Profile
 - assertVisible: 14 badges
 - tapOn: See all
+# The closing overlay stays in the tree for a moment with its own Year Round
+# medallion. Tapping that one would open the view from the overlay, which
+# comes back when the view closes.
+- assertNotVisible: See all
 - assertVisible: Sharing the Good News
 - assertVisible: Year Round
 - tapOn: Year Round, Bronze

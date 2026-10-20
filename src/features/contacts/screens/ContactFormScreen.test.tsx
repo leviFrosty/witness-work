@@ -28,8 +28,8 @@ vi.mock('react-native', () => ({
   TextInput: 'TextInput',
   Alert: { alert: mocks.alert },
 }))
-vi.mock('react-native-keyboard-aware-scroll-view', () => ({
-  KeyboardAwareScrollView: 'ScrollView',
+vi.mock('@/components/ui/layout/KeyboardAwareScrollView', () => ({
+  default: 'ScrollView',
 }))
 vi.mock('expo-localization', () => ({
   getLocales: () => [{ regionCode: 'US' }],

@@ -6,16 +6,13 @@ import * as DocumentPicker from 'expo-document-picker'
 import i18n from '@/lib/locales'
 import { analytics } from '@/lib/analytics'
 import { errorTracking } from '@/lib/errorTracking'
-import { BackupFile, restoreBackupFile } from '@/lib/backupFile'
+import { isBackupFile, restoreBackupFile } from '@/lib/backupFile'
 import { migrateServiceReports } from '@/stores/serviceReport'
 
 interface Options {
   source: 'settings' | 'onboarding'
   entryPoint?: string
 }
-
-const validImportFile = (data: unknown): data is BackupFile =>
-  typeof data === 'object' && data !== null
 
 /**
  * Picks a WitnessWork JSON backup and restores it over the local stores. The
@@ -58,7 +55,7 @@ export function useBackupImport({ source, entryPoint }: Options) {
 
       stage = 'validate_file'
       const data: unknown = JSON.parse(contents)
-      if (!validImportFile(data)) {
+      if (!isBackupFile(data)) {
         analytics.capture('import_failed', {
           ...properties,
           stage,

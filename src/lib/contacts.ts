@@ -28,17 +28,18 @@ export const getMostRecentConversationForContact = ({
   conversations: Visit[]
   contact: Contact
 }) => {
-  const contactConversations = conversations.filter(
-    (convo) => convo.contact.id === contact.id
-  )
-
-  if (contactConversations.length === 0) {
-    return null
+  // One pass, parsing each date once. Ties keep the earliest-listed visit,
+  // as the stable sort this replaced did.
+  let mostRecent: Visit | null = null
+  let mostRecentUnix = -Infinity
+  for (const convo of conversations) {
+    if (convo.contact.id !== contact.id) continue
+    const unix = moment(convo.date).unix()
+    if (mostRecent === null || unix > mostRecentUnix) {
+      mostRecent = convo
+      mostRecentUnix = unix
+    }
   }
 
-  const sorted = contactConversations.sort(
-    (a, b) => moment(b.date).unix() - moment(a.date).unix()
-  )
-
-  return sorted[0]
+  return mostRecent
 }

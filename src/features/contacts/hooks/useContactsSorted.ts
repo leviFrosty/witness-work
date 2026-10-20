@@ -9,10 +9,12 @@ import { applyFilters } from '@/lib/contactsFilters'
 import { buildContactComparator } from '@/lib/contactsSort'
 import {
   buildContactsFuse,
+  ContactSearchMatch,
   searchContactsFuzzy,
 } from '@/features/contacts/lib/contactsSearch'
 import { filterActivesContacts } from '@/lib/dismissedContacts'
 import { buildConversationIndex } from '@/lib/conversationIndex'
+import useLocalDay from '@/hooks/useLocalDay'
 
 /**
  * Single source of truth for the active contacts pipeline. The Contacts tab
@@ -35,24 +37,34 @@ export function useContactsSorted() {
     direction: contactSortDirection,
   } = query
   const search = useContactsSearchStore((s) => s.search)
+  const localDay = useLocalDay()
 
   const actives = useMemo(() => filterActivesContacts(contacts), [contacts])
 
   // Single per-contact conversation index, shared with the comparator below and
   // handed down to the stats header and every row — so the whole screen scans
-  // the conversations array once instead of once per contact.
+  // the conversations array once instead of once per contact. `localDay`
+  // rebuilds it when the tab stays mounted into a new day, so "this month" and
+  // the staleness buckets don't stay on the day it was first built.
   const conversationIndex = useMemo(
-    () => buildConversationIndex(conversations, stalenessBreakpoints),
-    [conversations, stalenessBreakpoints]
+    () => buildConversationIndex(conversations, stalenessBreakpoints, localDay),
+    [conversations, stalenessBreakpoints, localDay]
   )
 
+  const hasSearch = search.trim().length > 0
+
+  // Built only while there's a query: the tab stays mounted, so an index keyed
+  // on `conversations` would otherwise rebuild every time a visit is logged.
   const fuse = useMemo(
-    () => buildContactsFuse(actives, conversations),
-    [actives, conversations]
+    () => (hasSearch ? buildContactsFuse(actives, conversations) : null),
+    [hasSearch, actives, conversations]
   )
 
-  const searched = useMemo(
-    () => searchContactsFuzzy(search, fuse, actives),
+  const searched = useMemo<ContactSearchMatch[]>(
+    () =>
+      fuse
+        ? searchContactsFuzzy(search, fuse, actives)
+        : actives.map((contact) => ({ contact })),
     [search, fuse, actives]
   )
 
@@ -80,6 +92,7 @@ export function useContactsSorted() {
         conversations,
         customFieldDefs,
         stalenessBreakpoints,
+        conversationIndex,
       }),
     [
       matchedContacts,
@@ -87,6 +100,7 @@ export function useContactsSorted() {
       conversations,
       customFieldDefs,
       stalenessBreakpoints,
+      conversationIndex,
     ]
   )
 
@@ -112,7 +126,6 @@ export function useContactsSorted() {
   // ranking and re-sort by the default `suggested`/`desc` rule, which buries a
   // freshly-typed match (no conversations → missing-value sentinel sorts last)
   // at the bottom. Only sort when there is no query to rank by.
-  const hasSearch = search.trim().length > 0
   const searchSortedAndFilteredContacts = useMemo(
     () => (hasSearch ? filtered : [...filtered].sort(comparator)),
     [filtered, comparator, hasSearch]
@@ -128,6 +141,7 @@ export function useContactsSorted() {
               conversations,
               customFieldDefs,
               stalenessBreakpoints,
+              conversationIndex,
             }),
           ].sort(comparator)
         : searchSortedAndFilteredContacts,
@@ -138,6 +152,7 @@ export function useContactsSorted() {
       conversations,
       customFieldDefs,
       stalenessBreakpoints,
+      conversationIndex,
       comparator,
       searchSortedAndFilteredContacts,
     ]

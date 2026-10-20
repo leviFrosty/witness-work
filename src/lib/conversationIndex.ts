@@ -49,10 +49,16 @@ export type ConversationIndex = {
  * memoized callers are forced to thread it through — and therefore to include
  * it in their dependency arrays, which is what invalidates the index when the
  * user edits the thresholds in settings.
+ *
+ * `today` (local `YYYY-MM-DD`, from `useLocalDay`) is the day "this month" is
+ * measured from. Memoized callers that stay mounted pass it for the same
+ * reason, so the index (and its clock-based staleness) rebuilds on a new day.
+ * Defaults to the current day.
  */
 export function buildConversationIndex(
   conversations: Visit[],
-  breakpoints: StalenessBreakpoints
+  breakpoints: StalenessBreakpoints,
+  today?: string
 ): ConversationIndex {
   const mostRecentConvMs = new Map<string, number>()
   const mostRecentConvByContact = new Map<string, Visit>()
@@ -61,14 +67,13 @@ export function buildConversationIndex(
   const studiedThisMonthIds = new Set<string>()
 
   const now = new Date()
+  const [year, month] = today
+    ? today.split('-').map(Number)
+    : [now.getFullYear(), now.getMonth() + 1]
   // Current-month bounds as epoch ms, so the "studied this month" check is an
   // integer range test instead of a per-conversation calendar comparison.
-  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).getTime()
-  const startOfNextMonth = new Date(
-    now.getFullYear(),
-    now.getMonth() + 1,
-    1
-  ).getTime()
+  const startOfMonth = new Date(year, month - 1, 1).getTime()
+  const startOfNextMonth = new Date(year, month, 1).getTime()
 
   for (const c of conversations) {
     const id = c.contact.id

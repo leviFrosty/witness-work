@@ -8,6 +8,7 @@ import useTheme from '@/contexts/theme'
 import { formatDate } from '@/lib/dates'
 import i18n from '@/lib/locales'
 import { useFormattedMinutes } from '@/lib/minutes'
+import { entryMinutes } from '@/lib/entryMinutes'
 import { isStoredDateOnLocalDay } from '@/lib/normalizeDate'
 import { resolvePlannedContributionsForDay } from '@/lib/recurrence'
 import { isCountableEntry } from '@/lib/serviceReport'
@@ -31,7 +32,7 @@ const DayHistoryHeader = ({
     [date, serviceReports]
   )
   const actualMinutes = thisDaysReports.reduce(
-    (acc, report) => acc + report.hours * 60 + report.minutes,
+    (acc, report) => acc + entryMinutes(report),
     0
   )
 

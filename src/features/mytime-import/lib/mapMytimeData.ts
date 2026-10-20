@@ -22,6 +22,7 @@ import {
 // Notes import produce them). Imported for local use and re-exported so existing
 // `@/features/mytime-import/lib/mapMytimeData` importers keep resolving.
 import type { MappedImport, MappedPublisher } from '@/lib/import/types'
+import { splitMinutes } from '@/lib/entryMinutes'
 export type { MappedImport, MappedPublisher }
 
 export const callContactId = (zpk: number) => `mytime-call-${zpk}`
@@ -39,17 +40,6 @@ export const timeTypeCategoryId = (zpk: number) => `mytime-timetype-${zpk}`
  * = `YYYYMM`).
  */
 export const hoursAdjustmentId = (yyyymm: number) => `mytime-hours-${yyyymm}`
-
-/**
- * Splits a (possibly negative) minute total into `{ hours, minutes }` such that
- * `hours * 60 + minutes` round-trips exactly. Truncates toward zero so a
- * negative residual stays faithful (`-90 → { -1, -30 }`, not floor's `{ -2, 30
- * }`).
- */
-const minutesToHM = (total: number): { hours: number; minutes: number } => ({
-  hours: Math.trunc(total / 60),
-  minutes: total % 60,
-})
 
 /**
  * Converts a MyTime `YYYYMM` integer to local noon on the 1st — the local day
@@ -357,7 +347,7 @@ export const mapMytimeData = (
   for (const t of tables.timeEntries) {
     const entry: TimeEntry = {
       id: timeEntryId(t.Z_PK),
-      ...minutesToHM(t.ZMINUTES ?? 0),
+      ...splitMinutes(t.ZMINUTES ?? 0),
       date: coreDataRefToDate(t.ZDATE ?? 0),
     }
     const note = clean(t.ZNOTES)
@@ -381,7 +371,7 @@ export const mapMytimeData = (
     if (delta === 0) continue
     timeEntries.push({
       id: hoursAdjustmentId(a.ZTIMESTAMP),
-      ...minutesToHM(delta),
+      ...splitMinutes(delta),
       date: yyyymmToDate(a.ZTIMESTAMP),
     })
   }

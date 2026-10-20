@@ -1,6 +1,7 @@
 import moment from 'moment'
 import { storedDayKey } from '@/lib/normalizeDate'
 import { resolvePlannedContributionsForDay } from '@/lib/recurrence'
+import { entryMinutes } from '@/lib/entryMinutes'
 import type {
   DayPlan,
   RecurringPlan,
@@ -63,7 +64,7 @@ export function serviceDays(reports: TimeEntriesByYear): Map<string, number> {
       for (const entry of month) {
         if (entry.rollover) continue
         const key = storedDayKey(entry.date)
-        const minutes = (entry.hours || 0) * 60 + (entry.minutes || 0)
+        const minutes = entryMinutes(entry)
         days.set(key, (days.get(key) ?? 0) + minutes)
       }
     }

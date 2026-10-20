@@ -2,6 +2,7 @@ import moment from 'moment'
 import { TimeEntriesByYear } from '@/types/timeEntry'
 import { storedDayKey } from '@/lib/normalizeDate'
 import { isCountableEntry } from '@/lib/serviceReport'
+import { entryMinutes } from '@/lib/entryMinutes'
 
 const dayKey = (d: moment.Moment) => d.format('YYYY-MM-DD')
 
@@ -19,7 +20,7 @@ export const flattenDailyMinutes = (
       for (const r of month) {
         if (!isCountableEntry(r)) continue
         const key = storedDayKey(r.date)
-        const minutes = (r.hours || 0) * 60 + (r.minutes || 0)
+        const minutes = entryMinutes(r)
         out.set(key, (out.get(key) || 0) + minutes)
       }
     }

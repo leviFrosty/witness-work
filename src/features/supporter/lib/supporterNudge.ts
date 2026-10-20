@@ -1,6 +1,7 @@
 import moment from 'moment'
 import { TimeEntriesByYear } from '@/types/timeEntry'
 import { isCountableEntry } from '@/lib/serviceReport'
+import { entryMinutes } from '@/lib/entryMinutes'
 
 /**
  * Tenure, engagement, and cooldown thresholds for the tray supporter-nudge
@@ -71,7 +72,7 @@ const countReportMonths = (reports: TimeEntriesByYear): number => {
   return count
 }
 
-const sumTotalHours = (reports: TimeEntriesByYear): number => {
+const sumTotalMinutes = (reports: TimeEntriesByYear): number => {
   let total = 0
   for (const year of Object.keys(reports)) {
     const yearReports = reports[year]
@@ -80,7 +81,7 @@ const sumTotalHours = (reports: TimeEntriesByYear): number => {
       const monthReports = yearReports[month]
       if (!monthReports) continue
       for (const r of monthReports) {
-        total += (r.hours ?? 0) + (r.minutes ?? 0) / 60
+        total += entryMinutes(r)
       }
     }
   }
@@ -95,7 +96,7 @@ const engagementFloorsMet = (
 ): number =>
   [
     countReportMonths(reports) >= SUPPORTER_NUDGE_THRESHOLDS.reportMonths,
-    sumTotalHours(reports) >= SUPPORTER_NUDGE_THRESHOLDS.totalHours,
+    sumTotalMinutes(reports) >= SUPPORTER_NUDGE_THRESHOLDS.totalHours * 60,
     contactsCount >= SUPPORTER_NUDGE_THRESHOLDS.contacts &&
       conversationsCount >= SUPPORTER_NUDGE_THRESHOLDS.conversations,
   ].filter(Boolean).length

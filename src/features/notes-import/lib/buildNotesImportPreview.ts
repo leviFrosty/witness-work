@@ -3,6 +3,7 @@ import type {
   MappedWarning,
 } from '@/features/notes-import/lib/mapNotesImport'
 import type { MappedImport } from '@/lib/import/types'
+import { entryMinutes } from '@/lib/entryMinutes'
 import type { Contact } from '@/types/contact'
 import type { NotesImportSeverity } from '@/features/notes-import/lib/notesImportTypes'
 
@@ -238,7 +239,7 @@ export const buildNotesImportPreview = (
       id: t.id,
       title: t.note ?? '',
       date: t.date,
-      minutes: t.hours * 60 + t.minutes,
+      minutes: entryMinutes(t),
       warnings,
       severity: highestSeverity(warnings),
     }

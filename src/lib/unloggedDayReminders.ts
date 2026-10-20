@@ -8,6 +8,7 @@ import {
   resolvePlannedContributionsForDay,
 } from '@/lib/recurrence'
 import { roleForMonth, type RoleHistory } from '@/lib/roleHistory'
+import { splitMinutes } from '@/lib/entryMinutes'
 import type { Publisher } from '@/types/publisher'
 import type {
   DayPlan,
@@ -229,8 +230,7 @@ export function logPlannedDayParams(
     date: new Date(year, month - 1, date, 12).toISOString(),
     ...(day
       ? {
-          hours: Math.floor(day.minutes / 60),
-          minutes: day.minutes % 60,
+          ...splitMinutes(day.minutes),
           categoryId: day.categoryId,
         }
       : {}),

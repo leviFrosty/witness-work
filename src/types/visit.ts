@@ -12,6 +12,11 @@ export type Notification = {
 export type VisitTombstone = {
   id: string
   deletedAt: number
+  /**
+   * Left by an import's Undo rather than by the user, so running that import
+   * again brings the Visit back.
+   */
+  importUndone?: true
 }
 
 /**

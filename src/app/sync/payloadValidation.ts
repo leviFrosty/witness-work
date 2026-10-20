@@ -162,6 +162,7 @@ const tombstone = z.object({
   id,
   deletedAt: timestamp,
   legacyIds: z.array(id).optional(),
+  importUndone: z.literal(true).optional(),
 })
 const customFieldDef = record.extend({
   label: z.string(),

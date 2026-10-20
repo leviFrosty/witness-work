@@ -88,6 +88,11 @@ export type LegacyTimeEntry = TimeEntry & {
 export type TimeEntryTombstone = {
   id: string
   deletedAt: number
+  /**
+   * Left by an import's Undo rather than by the user, so running that import
+   * again brings the entry back.
+   */
+  importUndone?: true
 }
 
 /**

@@ -299,8 +299,20 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       // Buddies pushes carry `content-available`, so iOS wakes the app to pull
       // what they announced before it's opened (buddiesBackgroundSync.ts).
       // Android gets data-only FCM messages, which wake the same task.
+      // Android draws a notification's small icon from its alpha alone, so it
+      // gets a white-on-transparent brand mark (the launcher icon it falls
+      // back to shows as a blank white disc), tinted with the theme's accent
+      // (`lightModeColors.accent`). The plugin also makes both Firebase's
+      // defaults for FCM messages it displays itself.
       // Otherwise the defaults Expo already applies for this package.
-      ['expo-notifications', { enableBackgroundRemoteNotifications: true }],
+      [
+        'expo-notifications',
+        {
+          enableBackgroundRemoteNotifications: true,
+          icon: './src/assets/notification-icon.png',
+          color: '#08cc50',
+        },
+      ],
       'expo-sqlite',
       'expo-font',
       'expo-image',

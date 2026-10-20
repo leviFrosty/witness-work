@@ -14,6 +14,7 @@ export default function useBuddyCalendarMarkers(): Record<
 > {
   const enabled = useBuddiesEnabled()
   const buddies = useBuddies((state) => state.buddies)
+  const sharing = useBuddies((state) => state.sharing)
   const cards = useBuddies((state) => state.cards)
   const shareReplies = useBuddies((state) => state.shareReplies)
   const incomingShares = useBuddies((state) => state.incomingShares)
@@ -23,6 +24,7 @@ export default function useBuddyCalendarMarkers(): Record<
 
   return currentBuddyDayMarkers({
     buddies,
+    sharing,
     cards,
     shareReplies,
     incomingShares,

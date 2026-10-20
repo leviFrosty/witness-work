@@ -286,6 +286,7 @@ export function installWidgetSync(): () => void {
   const unsubBuddies = useBuddies.subscribe((state, previous) => {
     if (
       state.buddies !== previous.buddies ||
+      state.sharing.showOnCalendar !== previous.sharing.showOnCalendar ||
       state.cards !== previous.cards ||
       state.shareReplies !== previous.shareReplies ||
       state.incomingShares !== previous.incomingShares ||

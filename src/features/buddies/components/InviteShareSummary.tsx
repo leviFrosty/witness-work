@@ -2,8 +2,10 @@ import { View } from 'react-native'
 import {
   Award as AwardIcon,
   CalendarDays as CalendarDaysIcon,
+  Flame as FlameIcon,
   Image as ImageIcon,
   Lock as LockIcon,
+  Medal as MedalIcon,
   UserRound as UserRoundIcon,
 } from 'lucide-react-native'
 import Card from '@/components/ui/Card'
@@ -40,9 +42,10 @@ function Chip({ icon, label }: { icon: AppIcon; label: string }) {
 }
 
 /**
- * What accepting shares, at a glance: each other's plans, the parts of my
- * Profile I share (the inviter's show in the header above), and what stays
- * private. The full list lives in the info popover.
+ * What accepting shares, at a glance, for someone starting Buddies this way:
+ * each other's plans, the parts of my Profile I share (the inviter's show in
+ * the header above), and what stays private. The full list lives in the info
+ * popover; Buddies Settings changes it later.
  */
 export default function InviteShareSummary() {
   const theme = useTheme()
@@ -52,6 +55,10 @@ export default function InviteShareSummary() {
   const tenureStartDate = usePreferences((state) => state.tenureStartDate)
   const sharesTenure =
     sharing.tenure && buddyTenureFor(role, tenureStartDate) !== undefined
+  const showStreaks = usePreferences((state) => state.showStreaks)
+  const showBadges = usePreferences((state) => state.showBadges)
+  const sharesStreak = sharing.streak && showStreaks
+  const sharesBadges = sharing.badges && showBadges
 
   return (
     <Card style={{ gap: 16 }}>
@@ -82,7 +89,11 @@ export default function InviteShareSummary() {
               fontSize: theme.fontSize('sm'),
             }}
           >
-            {i18n.t('buddies_invitePlansHorizon')}
+            {i18n.t(
+              sharing.planTimes === 'exact'
+                ? 'buddies_invitePlansHorizon'
+                : 'buddies_invitePlansHorizonDays'
+            )}
           </Text>
         </View>
       </View>
@@ -102,6 +113,12 @@ export default function InviteShareSummary() {
           )}
           {sharesTenure && (
             <Chip icon={AwardIcon} label={i18n.t('buddies_shareTenure')} />
+          )}
+          {sharesStreak && (
+            <Chip icon={FlameIcon} label={i18n.t('buddies_shareStreak')} />
+          )}
+          {sharesBadges && (
+            <Chip icon={MedalIcon} label={i18n.t('buddies_shareBadges')} />
           )}
         </View>
       </View>

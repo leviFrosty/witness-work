@@ -1,10 +1,12 @@
 import { storedDayKey } from '@/lib/normalizeDate'
 import type { DayPlan } from '@/types/timeEntry'
-import type {
-  Buddy,
-  IncomingShare,
-  ReceivedCard,
-  ReceivedReply,
+import {
+  type Buddy,
+  type BuddySharing,
+  buddySettings,
+  type IncomingShare,
+  type ReceivedCard,
+  type ReceivedReply,
 } from '@/features/buddies/lib/state'
 
 /** What the calendar shows about buddies on one day. */
@@ -25,6 +27,7 @@ export type BuddyDayMarker = {
  */
 export function buildBuddyDayMarkers({
   buddies,
+  sharing,
   cards,
   dayPlans,
   repliesFor,
@@ -33,6 +36,8 @@ export function buildBuddyDayMarkers({
   today,
 }: {
   buddies: Buddy[]
+  /** All Buddies' settings, for buddies who follow them on the calendar. */
+  sharing: BuddySharing
   cards: Record<string, ReceivedCard | undefined>
   dayPlans: DayPlan[]
   /** Buddies' answers to the User's invitation to `plan`, by inbox id. */
@@ -76,7 +81,8 @@ export function buildBuddyDayMarkers({
   }
 
   for (const buddy of buddies) {
-    if (buddy.status !== 'active' || !buddy.showOnCalendar) continue
+    if (buddy.status !== 'active') continue
+    if (!buddySettings(sharing, buddy).settings.showOnCalendar) continue
     for (const day of cards[buddy.inboxId]?.days ?? []) {
       if (day.d < today || day.p.length === 0) continue
       const marker = markerFor(day.d)

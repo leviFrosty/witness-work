@@ -7,7 +7,6 @@ import XView from '@/components/ui/layout/XView'
 import useTheme from '@/contexts/theme'
 import { formatStartTime, formatWeekdayMonthDayCompact } from '@/lib/dates'
 import i18n from '@/lib/locales'
-import { formatMinutes } from '@/lib/minutes'
 import { usePreferences } from '@/stores/preferences'
 import type { RootStackNavigation } from '@/types/rootStack'
 import AskToJoinButton from '@/features/buddies/components/AskToJoinButton'
@@ -18,6 +17,8 @@ import usePlanSameTime from '@/features/buddies/hooks/usePlanSameTime'
 import useBuddyCalendarMarkers from '@/features/buddies/hooks/useBuddyCalendarMarkers'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 import { buddyDisplayName } from '@/features/buddies/lib/buddyProfile'
+import { cardPlanLabel } from '@/features/buddies/lib/cardPlanLabel'
+import { buddySettings } from '@/features/buddies/lib/state'
 import { tracking } from '@/lib/tracking'
 
 /**
@@ -44,6 +45,7 @@ export default function BuddyPlansForDay({
   const { timeDisplayFormat, dataProtectionMode } = usePreferences()
   const buddies = useBuddies((state) => state.buddies)
   const cards = useBuddies((state) => state.cards)
+  const sharing = useBuddies((state) => state.sharing)
   const incomingShares = useBuddies((state) => state.incomingShares)
   const key = moment(date).format('YYYY-MM-DD')
   // Buddies the User goes out with show on the User's own Plans instead.
@@ -54,7 +56,7 @@ export default function BuddyPlansForDay({
     .filter(
       (buddy) =>
         buddy.status === 'active' &&
-        buddy.showOnCalendar &&
+        buddySettings(sharing, buddy).settings.showOnCalendar &&
         !withBuddies.some((other) => other.inboxId === buddy.inboxId)
     )
     .flatMap((buddy) =>
@@ -104,14 +106,7 @@ export default function BuddyPlansForDay({
         {i18n.t('buddies_dayTitle')}
       </Text>
       {rows.map(({ buddy, plan, key: rowKey }) => {
-        const duration = formatMinutes(plan.m, timeDisplayFormat).formatted
-        const label =
-          plan.s === undefined
-            ? i18n.t('buddies_dayPlanAnyTime', { duration })
-            : i18n.t('buddies_dayPlanAtTime', {
-                time: formatStartTime(plan.s),
-                duration,
-              })
+        const label = cardPlanLabel(plan, timeDisplayFormat)
         return (
           <XView key={rowKey} style={{ gap: 10 }}>
             <ContextMenu

@@ -26,6 +26,7 @@ import { notificationHeadline } from '@/features/buddies/lib/notificationText'
 import type { ShareReply } from '@/features/buddies/lib/schemas'
 import { trackShareAnswer } from '@/features/buddies/lib/shareAnswerAnalytics'
 import {
+  buddyAlertSettings,
   replyHoldMs,
   type BuddyNotification,
 } from '@/features/buddies/lib/state'
@@ -114,8 +115,8 @@ export default function BuddyNotificationRow({
   const askerName = buddy ? buddyDisplayName(buddy) : entry.name
   // Nothing to turn off when this buddy's requests already can't alert.
   const mutedJoinRequests = useBuddies((state) =>
-    state.notificationsEnabled && state.joinRequestNotifications && entry.from
-      ? state.mutedJoinRequests.includes(entry.from)
+    state.notificationsEnabled && entry.from
+      ? !buddyAlertSettings(state, entry.from).settings.joinRequests
       : true
   )
   const reply = (answer: ShareReply) => {
@@ -133,7 +134,8 @@ export default function BuddyNotificationRow({
     void Haptics.success()
     onInvite?.()
   }
-  // Muting from where the request is decided; the switch is on their page.
+  // Muting from where the request is decided; the switch is in their
+  // settings.
   const muteJoinRequests = () => {
     const from = entry.from
     if (!from) return
@@ -141,9 +143,7 @@ export default function BuddyNotificationRow({
       scope: 'buddy',
       enabled: false,
     })
-    useBuddies.setState((state) => ({
-      mutedJoinRequests: [...state.mutedJoinRequests, from],
-    }))
+    buddiesEngine.setBuddyAlert(from, 'joinRequests', false)
   }
   const open = onPress
     ? () => {

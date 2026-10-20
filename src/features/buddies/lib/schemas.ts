@@ -14,6 +14,13 @@ export const BUDDY_TENURE_KINDS = [
 ] as const
 export type BuddyTenureKind = (typeof BUDDY_TENURE_KINDS)[number]
 
+/**
+ * How precisely Buddy Cards show when this User's Plans start: the exact time,
+ * only the part of the day, or only which days.
+ */
+export const BUDDY_PLAN_TIMES = ['exact', 'timeOfDay', 'daysOnly'] as const
+export type BuddyPlanTimes = (typeof BUDDY_PLAN_TIMES)[number]
+
 /** Plaintext shapes inside sealed blobs (docs/buddies-protocol.md). */
 
 const relayId = z.string().regex(RELAY_ID_PATTERN)
@@ -130,9 +137,21 @@ export const pairingCardSchema = z.object({
 })
 export type PairingCard = z.infer<typeof pairingCardSchema>
 
+/**
+ * Part of the day a Plan starts in, sent in place of its start time when the
+ * sender shares only the time of day: morning, afternoon, or evening.
+ */
+export const BUDDY_TIMES_OF_DAY = ['m', 'a', 'e'] as const
+export type BuddyTimeOfDay = (typeof BUDDY_TIMES_OF_DAY)[number]
+
 export const buddyCardPlanSchema = z.object({
   s: z.number().int().min(0).max(1439).optional(),
   m: z.number().int().min(1).max(1440),
+  /**
+   * Added after v1 shipped: older apps ignore it and show the Plan as anytime;
+   * one this build can't read leaves just this field out.
+   */
+  t: z.enum(BUDDY_TIMES_OF_DAY).optional().catch(undefined),
 })
 
 export const buddyCardDaySchema = z.object({
@@ -362,6 +381,21 @@ function lenientRecord<V extends z.ZodTypeAny>(key: z.ZodString, value: V) {
 }
 
 /**
+ * A buddy's own settings in the roster, each one dropped alone when it doesn't
+ * parse (a value from a newer app, say) so it follows All Buddies.
+ */
+const buddyOverridesSchema = z.object({
+  photo: z.boolean().optional().catch(undefined),
+  tenure: z.boolean().optional().catch(undefined),
+  streak: z.boolean().optional().catch(undefined),
+  badges: z.boolean().optional().catch(undefined),
+  pet: z.boolean().optional().catch(undefined),
+  plans: z.boolean().optional().catch(undefined),
+  planTimes: z.enum(BUDDY_PLAN_TIMES).optional().catch(undefined),
+  showOnCalendar: z.boolean().optional().catch(undefined),
+})
+
+/**
  * The encrypted multi-device roster: everything needed to rebuild pairings.
  * Unknown fields are dropped, not rejected, so older builds still read rosters
  * that carry fields added since.
@@ -390,12 +424,22 @@ export const rosterSchema = z.object({
           .string()
           .regex(/^#[0-9A-Fa-f]{6}([0-9A-Fa-f]{2})?$/)
           .optional(),
+        /**
+         * Whether this buddy shows on the calendar, All Buddies' choice or
+         * their own: what older builds read and write. Newer ones read
+         * `overrides`.
+         */
         showOnCalendar: z.boolean(),
+        /**
+         * This buddy's own settings; a key left out follows All Buddies. Absent
+         * from older builds' rosters (see `rosterOverrides`).
+         */
+        overrides: buddyOverridesSchema.optional(),
         expiresAt: z.number().optional(),
         /**
-         * When the nickname, color, or `showOnCalendar` last changed; the later
-         * one wins. Absent from older builds' rosters, which then never
-         * override a device's own choices.
+         * When the nickname, color, or `overrides` last changed; the later one
+         * wins. Absent from older builds' rosters, which then never override a
+         * device's own choices.
          */
         prefsAt: z.number().optional(),
       })
@@ -450,6 +494,20 @@ export const rosterSchema = z.object({
       pet: z.boolean().optional().catch(undefined),
       /** When `pet` last changed. */
       petUpdatedAt: z.number().optional().catch(undefined),
+      /**
+       * Added after badges, the same way: absent from older apps' rosters,
+       * whose merge keeps this device's choices (`mergeSharing`).
+       */
+      planTimes: z.enum(BUDDY_PLAN_TIMES).optional().catch(undefined),
+      pausedUntil: z.number().nonnegative().optional(),
+      /** Absent from older apps' rosters too: Plans go to every buddy. */
+      plans: z.boolean().optional(),
+      /** When `plans`, `planTimes`, or `pausedUntil` last changed. */
+      plansUpdatedAt: z.number().optional(),
+      /** New buddies show on the calendar. Absent from older apps' rosters. */
+      showOnCalendar: z.boolean().optional(),
+      /** When `showOnCalendar` last changed. */
+      calendarUpdatedAt: z.number().optional(),
     })
     .default({ photo: true, tenure: true, streak: true, updatedAt: 0 }),
   /**

@@ -25,6 +25,7 @@ import BuddiesAlphaBadge from '@/features/buddies/components/BuddiesAlphaBadge'
 import BuddiesList from '@/features/buddies/components/BuddiesList'
 import BuddiesNotificationsCard from '@/features/buddies/components/BuddiesNotificationsCard'
 import BuddiesOnboarding from '@/features/buddies/components/BuddiesOnboarding'
+import BuddiesPausedNotice from '@/features/buddies/components/BuddiesPausedNotice'
 import BuddiesSyncNotice from '@/features/buddies/components/BuddiesSyncNotice'
 import EnterInviteLink from '@/features/buddies/components/EnterInviteLink'
 import useBuddiesSyncStatus from '@/features/buddies/hooks/useBuddiesSyncStatus'
@@ -217,6 +218,7 @@ export default function BuddiesScreen({
           syncing={syncStatus.syncing}
           onRetry={syncStatus.retry}
         />
+        <BuddiesPausedNotice />
         <EnterInviteLink />
         <BuddiesList
           onInvite={invite}

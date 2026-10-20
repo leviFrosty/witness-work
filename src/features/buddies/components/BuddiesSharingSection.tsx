@@ -1,52 +1,65 @@
 import { ChevronForwardIcon } from '@/components/ui/DirectionalIcon'
 import { useNavigation } from '@react-navigation/native'
 import Avatar from '@/components/ui/Avatar'
-import InputRowSwitch from '@/components/ui/inputs/InputRowSwitch'
 import LucideIcon from '@/components/ui/LucideIcon'
 import useTheme from '@/contexts/theme'
 import useServiceStreak from '@/hooks/useServiceStreak'
-import { analytics } from '@/lib/analytics'
 import i18n from '@/lib/locales'
 import { shownStreak } from '@/lib/serviceStreak'
-import { logger } from '@/lib/logger'
 import { usePet } from '@/stores/pet'
 import { usePreferences } from '@/stores/preferences'
 import { useProfile } from '@/stores/profile'
 import { RootStackNavigation } from '@/types/rootStack'
 import BuddiesSection from '@/features/buddies/components/BuddiesSection'
 import BuddyListRow from '@/features/buddies/components/BuddyListRow'
-import { buddiesEngine } from '@/features/buddies/lib/buddiesService'
+import { ScopedSwitchRow } from '@/features/buddies/components/ScopedSettingRows'
 import {
+  useBuddySettingsScope,
+  useScopedSetting,
+} from '@/features/buddies/hooks/useBuddySettingsScope'
+import {
+  buddyDisplayName,
   buddyTenureFor,
   buddyTenureLabel,
 } from '@/features/buddies/lib/buddyProfile'
-import type { BuddySharing } from '@/features/buddies/lib/state'
-import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 import useBuddiesCardName from '@/features/buddies/hooks/useBuddiesCardName'
 
 /**
  * How buddies see me: the Profile (edited on its own screen) and switches for
- * the parts I can withhold. Name and Plans are the point, so they always go;
- * the name is the account's, which every device's card carries (it can differ
- * from this device's Profile name until the User renames here). The streak
+ * the parts I can withhold, in the current scope (All Buddies, or one buddy
+ * over them). The name is the point, so it always goes; it's the account's,
+ * which every device's card carries (it can differ from this device's Profile
+ * name until the User renames here). Plans have their own section. The streak
  * switch shows before there's a streak, so it can be off from the start. Streak
  * and Badges are offered only while each shows at all, and the Pet only once
- * there's a companion.
+ * there's a companion. `withoutProfile` leaves out the Profile row, for the
+ * Buddies intro that shows the Profile editor above it; a buddy's settings
+ * leave it out too.
  */
-export default function BuddiesSharingSection() {
+export default function BuddiesSharingSection({
+  withoutProfile = false,
+}: {
+  withoutProfile?: boolean
+} = {}) {
   const theme = useTheme()
   const navigation = useNavigation<RootStackNavigation>()
+  const { buddy } = useBuddySettingsScope()
   const { avatar, customAvatarBackground } = useProfile()
   const name = useBuddiesCardName()
   const role = usePreferences((state) => state.role)
   const tenureStartDate = usePreferences((state) => state.tenureStartDate)
   const tenure = buddyTenureFor(role, tenureStartDate)
-  const sharing = useBuddies((state) => state.sharing)
+  const photo = useScopedSetting('photo')
+  const tenureSetting = useScopedSetting('tenure')
+  const streakSetting = useScopedSetting('streak')
+  const badges = useScopedSetting('badges')
+  const petSetting = useScopedSetting('pet')
   const streak = shownStreak(useServiceStreak())
   const showBadges = usePreferences((state) => state.showBadges)
   const showStreaks = usePreferences((state) => state.showStreaks)
   const pet = usePet((state) => state.pet)
   const hasPhoto = avatar.type !== 'none'
+  const profileRow = !withoutProfile && !buddy
   const last = pet
     ? 'pet'
     : showBadges
@@ -59,91 +72,83 @@ export default function BuddiesSharingSection() {
             ? 'photo'
             : 'profile'
 
-  // Saved at once; a failed republish is retried by the next sync.
-  const share = (
-    change: Partial<
-      Omit<BuddySharing, 'updatedAt' | 'badgesUpdatedAt' | 'petUpdatedAt'>
-    >
-  ) =>
-    buddiesEngine
-      .setSharing(change)
-      .catch((error) => logger.warn('[buddies] sharing', error))
+  // Nothing to withhold beyond the Profile.
+  if (!profileRow && last === 'profile') return null
 
   return (
-    <BuddiesSection title={i18n.t('buddies_onboardingProfileTitle')}>
-      <BuddyListRow
-        last={last === 'profile'}
-        leading={
-          <Avatar
-            avatar={avatar}
-            name={name}
-            background={customAvatarBackground ?? undefined}
-          />
-        }
-        title={name.trim() || i18n.t('buddies_editProfile')}
-        subtitle={name.trim() ? i18n.t('buddies_editProfile') : undefined}
-        onPress={() => navigation.navigate('PreferencesPublisher')}
-        accessory={
-          <LucideIcon
-            icon={ChevronForwardIcon}
-            size={18}
-            color={theme.colors.textAlt}
-          />
-        }
-      />
+    <BuddiesSection
+      title={
+        buddy
+          ? i18n.t('buddies_buddySeesTitle', { name: buddyDisplayName(buddy) })
+          : i18n.t(
+              withoutProfile
+                ? 'buddies_onboardingSharedTitle'
+                : 'buddies_onboardingProfileTitle'
+            )
+      }
+      footer={withoutProfile ? i18n.t('buddies_sharingChangeLater') : undefined}
+    >
+      {profileRow && (
+        <BuddyListRow
+          last={last === 'profile'}
+          leading={
+            <Avatar
+              avatar={avatar}
+              name={name}
+              background={customAvatarBackground ?? undefined}
+            />
+          }
+          title={name.trim() || i18n.t('buddies_editProfile')}
+          subtitle={name.trim() ? i18n.t('buddies_editProfile') : undefined}
+          onPress={() => navigation.navigate('PreferencesPublisher')}
+          accessory={
+            <LucideIcon
+              icon={ChevronForwardIcon}
+              size={18}
+              color={theme.colors.textAlt}
+            />
+          }
+        />
+      )}
       {hasPhoto && (
-        <InputRowSwitch
+        <ScopedSwitchRow
+          setting={photo}
           label={i18n.t('buddies_sharePhoto')}
-          value={sharing.photo}
-          onValueChange={(photo) => share({ photo })}
           lastInSection={last === 'photo'}
         />
       )}
       {tenure && (
-        <InputRowSwitch
+        <ScopedSwitchRow
+          setting={tenureSetting}
           label={i18n.t('buddies_shareTenure')}
           description={buddyTenureLabel(tenure)}
-          value={sharing.tenure}
-          onValueChange={(value) => share({ tenure: value })}
           lastInSection={last === 'tenure'}
         />
       )}
       {showStreaks && (
-        <InputRowSwitch
+        <ScopedSwitchRow
+          setting={streakSetting}
           label={i18n.t('buddies_shareStreak')}
           description={
             streak > 0
               ? i18n.t('buddies_shareStreakCount', { count: streak })
               : undefined
           }
-          value={sharing.streak}
-          onValueChange={(value) => share({ streak: value })}
           lastInSection={last === 'streak'}
         />
       )}
       {showBadges && (
-        <InputRowSwitch
+        <ScopedSwitchRow
+          setting={badges}
           label={i18n.t('buddies_shareBadges')}
-          value={sharing.badges}
-          onValueChange={(badges) => {
-            analytics.capture('badges_setting_changed', {
-              setting: 'share',
-              enabled: badges,
-            })
-            void share({ badges })
-          }}
           lastInSection={last === 'badges'}
         />
       )}
       {pet && (
-        <InputRowSwitch
+        <ScopedSwitchRow
+          setting={petSetting}
           label={i18n.t('buddies_sharePet')}
           description={pet.name}
-          value={sharing.pet}
-          onValueChange={(value) => {
-            analytics.capture('pet_sharing_changed', { enabled: value })
-            void share({ pet: value })
-          }}
           lastInSection
         />
       )}

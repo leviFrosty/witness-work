@@ -1,4 +1,4 @@
-import { type ReactNode, useEffect, useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import {
   AccessibilityInfo,
   Dimensions,
@@ -57,13 +57,10 @@ const CONFETTI_DELAY_MS = 380
 export default function BadgeCelebration({
   content,
   onClose,
-  audience,
 }: {
   content: BadgeCelebrationContent
   /** The overlay has faded out. */
   onClose: (action: BadgeCelebrationAction) => void
-  /** Who will see a new badge (Buddies), under what it counts. */
-  audience?: ReactNode
 }) {
   const theme = useTheme()
   const reduceMotion = useReducedMotion()
@@ -283,7 +280,6 @@ export default function BadgeCelebration({
                 </Text>
               </View>
             ) : null}
-            {lead ? audience : null}
             <View style={{ alignSelf: 'stretch', gap: 4, marginTop: 6 }}>
               <ActionButton noTransform onPress={() => close(primary.action)}>
                 {primary.label}

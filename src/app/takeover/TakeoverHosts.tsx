@@ -1,7 +1,6 @@
 import { useLayoutEffect, useState } from 'react'
 import { useNavigation } from '@react-navigation/native'
 import BadgeCelebrationOverlay from '@/features/badges/components/BadgeCelebrationOverlay'
-import BadgeAudienceLine from '@/features/buddies/components/BadgeAudienceLine'
 import MilestoneRevealOverlay from '@/features/milestones/components/MilestoneRevealOverlay'
 import { useMilestoneRevealStore } from '@/features/milestones/stores/milestoneReveal'
 import ScheduleIntroHost from '@/features/plans/components/schedule-intro/ScheduleIntroHost'
@@ -99,9 +98,7 @@ export default function TakeoverHosts({
           rootNavigation.navigate('MilestoneShowcase')
         }}
       />
-      <BadgeCelebrationOverlay
-        audience={(badge) => <BadgeAudienceLine badge={badge} />}
-      />
+      <BadgeCelebrationOverlay />
     </>
   )
 }

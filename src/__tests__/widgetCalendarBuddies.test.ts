@@ -29,7 +29,6 @@ const buddy = (inboxId: string, overrides: Partial<Buddy> = {}): Buddy => ({
   status: 'active',
   pairedAt: 0,
   colorIndex: 0,
-  showOnCalendar: true,
   ...overrides,
 })
 

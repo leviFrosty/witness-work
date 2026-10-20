@@ -68,6 +68,7 @@ import {
 import {
   BUDDY_CARD_HORIZON_DAYS,
   buildBuddyCardDays,
+  withPlanTimes,
 } from '@/features/buddies/lib/card'
 import {
   holdsBadge,
@@ -85,7 +86,12 @@ import {
   BADGE_ANNOUNCEMENT_TTL_MS,
   BadgeAnnouncement,
   Buddy,
+  type BuddyAlertKey,
+  buddyAlertSettings,
   BuddyProfile,
+  type BuddySettingKey,
+  type BuddySettings,
+  buddySettings,
   BuddySharing,
   BuddiesState,
   type CardName,
@@ -107,6 +113,9 @@ import {
   mergeNotificationMarks,
   mergeRemovedBuddies,
   mergeSharing,
+  isSharingPaused,
+  rosterOverrides,
+  withOverride,
   NOTIFICATION_MARK_TTL_MS,
   withoutExpired,
   withPendingInvitesQueued,
@@ -483,6 +492,12 @@ function rosterSignature(roster: Omit<Roster, 'v' | 'version'>) {
     badgesUpdatedAt,
     pet,
     petUpdatedAt,
+    plans,
+    planTimes,
+    pausedUntil,
+    plansUpdatedAt,
+    showOnCalendar,
+    calendarUpdatedAt,
   } = roster.sharing
   return JSON.stringify([
     roster.buddies
@@ -501,6 +516,14 @@ function rosterSignature(roster: Omit<Roster, 'v' | 'version'>) {
     [badges ?? true, badgesUpdatedAt ?? 0],
     // The pet choice came later still, and reads the same way.
     [pet ?? true, petUpdatedAt ?? 0],
+    // Plans, Plan times, the pause, and the calendar, the same way.
+    [
+      plans ?? true,
+      planTimes ?? 'exact',
+      pausedUntil ?? 0,
+      plansUpdatedAt ?? 0,
+    ],
+    [showOnCalendar ?? true, calendarUpdatedAt ?? 0],
     Object.entries(roster.answers)
       .map(([key, { s, v, r }]) => `${key}:${s}:${v}:${r}`)
       .sort(),
@@ -784,7 +807,11 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     saveRosterSoon()
   }
 
-  /** The Profile minus whatever the User chose not to share. */
+  /**
+   * The Profile minus what All Buddies don't see: for pairing, before anyone
+   * has settings of their own. Buddy Cards follow each buddy's
+   * (`sendCardsTo`).
+   */
   function profile(): BuddyProfile {
     const current = deps.getProfile()
     const { sharing } = store.getState()
@@ -797,6 +824,29 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
         ? { photoUnavailable: true }
         : {}),
     }
+  }
+
+  /** What this buddy sees: their own settings over All Buddies'. */
+  function settingsFor(buddy: Pick<Buddy, 'overrides'>): BuddySettings {
+    return buddySettings(store.getState().sharing, buddy).settings
+  }
+
+  /**
+   * Plans, streak, badges, and the pet are paused for everyone, whatever the
+   * buddy's settings.
+   */
+  function sharingPaused(): boolean {
+    return isSharingPaused(store.getState().sharing, deps.now())
+  }
+
+  /** News of new badges goes to this buddy, unless sharing is paused. */
+  function badgesGoTo(buddy: Pick<Buddy, 'overrides'>): boolean {
+    return (deps.showBadges?.() ?? true) && settingsFor(buddy).badges
+  }
+
+  /** This buddy's alerts on this device. */
+  function alertsFor(inboxId: string) {
+    return buddyAlertSettings(store.getState(), inboxId).settings
   }
 
   /** Badges are on, and shared with buddies. */
@@ -913,9 +963,15 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     )
     return {
       // Photos would overflow the roster cap; each device gets them, and
-      // streaks and pets, from cards.
-      buddies: state.buddies.map(({ streak, pet, ...buddy }) =>
-        compactProfile(buddy)
+      // streaks and pets, from cards. `showOnCalendar` is for older apps, which read
+      // and write that alone.
+      buddies: state.buddies.map(({ streak, pet, overrides, ...buddy }) =>
+        compactProfile({
+          ...buddy,
+          showOnCalendar: buddySettings(state.sharing, { overrides }).settings
+            .showOnCalendar,
+          overrides: overrides ?? {},
+        })
       ),
       outgoingInvites: state.outgoingInvites,
       incomingClaims: state.incomingClaims.map(compactProfile),
@@ -1022,7 +1078,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
           ([, request]) => request.to !== inboxId
         )
       ),
-      mutedJoinRequests: state.mutedJoinRequests.filter((id) => id !== inboxId),
+      alertOverrides: omitKey(state.alertOverrides, inboxId),
       notifications: state.notifications.filter((n) => n.from !== inboxId),
       // Pairing again later never brings old badge news.
       badgeAnnouncements: state.badgeAnnouncements.map((announcement) => ({
@@ -1281,7 +1337,6 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
           status: 'awaitingConfirm',
           pairedAt: newPairedAt(state, card.inboxId, deps.now()),
           colorIndex,
-          showOnCalendar: true,
           expiresAt,
         },
       ],
@@ -1348,7 +1403,6 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       status: 'active',
       pairedAt: newPairedAt(state, claim.inboxId, deps.now()),
       colorIndex: nextColorIndex(),
-      showOnCalendar: true,
     }
     const { incoming, outgoing } = pairKeys(me, buddy)
     await addSlot(me, incoming)
@@ -1487,24 +1541,105 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
   }
 
   /**
-   * Changes how this User sees a buddy (nickname, color, calendar). Saved to
-   * the roster, stamped, so every one of their devices takes the latest.
+   * Changes how this User sees a buddy (nickname, color) or their own settings.
+   * Saved to the roster, stamped, so every one of their devices takes the
+   * latest.
    */
   function setBuddyPrefs(
     inboxId: string,
-    prefs: Partial<Pick<Buddy, 'nickname' | 'color' | 'showOnCalendar'>>
+    prefs:
+      | Partial<Pick<Buddy, 'nickname' | 'color'>>
+      | ((buddy: Buddy) => Partial<Pick<Buddy, 'overrides'>>)
   ) {
     const prefsAt = deps.now()
     store.setState((state) => ({
       buddies: state.buddies.map((b) =>
-        b.inboxId === inboxId ? { ...b, ...prefs, prefsAt } : b
+        b.inboxId === inboxId
+          ? {
+              ...b,
+              ...(typeof prefs === 'function' ? prefs(b) : prefs),
+              prefsAt,
+            }
+          : b
       ),
     }))
   }
 
+  /**
+   * From the buddy's menu: back to All Buddies' choice when that's the one
+   * asked for, else their own.
+   */
   function setShowOnCalendar(inboxId: string, showOnCalendar: boolean) {
-    setBuddyPrefs(inboxId, { showOnCalendar })
-    saveRosterSoon()
+    const followsAll =
+      store.getState().sharing.showOnCalendar === showOnCalendar
+    void setBuddySetting(
+      inboxId,
+      'showOnCalendar',
+      followsAll ? undefined : showOnCalendar
+    ).catch(() => {
+      // Saved here; the next change or sync writes the roster.
+    })
+  }
+
+  /**
+   * Gives a buddy their own value for a setting, or (`undefined`) has them
+   * follow All Buddies again. A change to what they see republishes their card;
+   * they aren't told.
+   */
+  async function setBuddySetting<K extends BuddySettingKey>(
+    inboxId: string,
+    key: K,
+    value: BuddySettings[K] | undefined
+  ) {
+    await setBuddyOverrides(inboxId, (overrides) =>
+      withOverride(overrides, key, value)
+    )
+  }
+
+  /**
+   * Replaces a buddy's own settings at once: `undefined` has them follow All
+   * buddies in everything (Reset All), and Undo puts back what was there.
+   */
+  async function setBuddyOverrides(
+    inboxId: string,
+    change: (overrides: Buddy['overrides']) => Buddy['overrides'] | undefined
+  ) {
+    setBuddyPrefs(inboxId, (buddy) => ({ overrides: change(buddy.overrides) }))
+    if (store.getState().registeredInboxId === null) return
+    addCardEdits(new Set([inboxId]))
+    const me = await ensureInbox()
+    await saveRoster(me)
+    await publishCards()
+  }
+
+  /**
+   * Gives a buddy their own alert setting on this device, or (`undefined`) has
+   * them follow this device's alert settings again. The Buddies runtime
+   * re-registers this device's push templates.
+   */
+  function setBuddyAlert(
+    inboxId: string,
+    key: BuddyAlertKey,
+    value: boolean | undefined
+  ) {
+    setBuddyAlerts(inboxId, (alerts) => withOverride(alerts, key, value))
+  }
+
+  /** Replaces a buddy's own alert settings at once, like `setBuddyOverrides`. */
+  function setBuddyAlerts(
+    inboxId: string,
+    change: (
+      alerts: BuddiesState['alertOverrides'][string] | undefined
+    ) => BuddiesState['alertOverrides'][string] | undefined
+  ) {
+    store.setState((state) => {
+      const next = change(state.alertOverrides[inboxId])
+      return {
+        alertOverrides: next
+          ? { ...state.alertOverrides, [inboxId]: next }
+          : omitKey(state.alertOverrides, inboxId),
+      }
+    })
   }
 
   /**
@@ -1524,13 +1659,20 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
   }
 
   /**
-   * Changes what buddies see and republishes, so their copy of a withheld
-   * photo, Tenure, or streak clears. Before Buddies has started it only records
-   * the choice.
+   * Changes All Buddies' settings and republishes, so a withheld photo, Tenure,
+   * streak, badges, or Plans clear from the cards of buddies who follow All
+   * buddies. Before Buddies has started it only records the choice.
    */
   async function setSharing(
     change: Partial<
-      Omit<BuddySharing, 'updatedAt' | 'badgesUpdatedAt' | 'petUpdatedAt'>
+      Omit<
+        BuddySharing,
+        | 'updatedAt'
+        | 'badgesUpdatedAt'
+        | 'petUpdatedAt'
+        | 'plansUpdatedAt'
+        | 'calendarUpdatedAt'
+      >
     >
   ) {
     const now = deps.now()
@@ -1544,10 +1686,17 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
           : {}),
         ...('badges' in change ? { badgesUpdatedAt: now } : {}),
         ...('pet' in change ? { petUpdatedAt: now } : {}),
+        ...('plans' in change ||
+        'planTimes' in change ||
+        'pausedUntil' in change
+          ? { plansUpdatedAt: now }
+          : {}),
+        ...('showOnCalendar' in change ? { calendarUpdatedAt: now } : {}),
       },
     }))
-    // Badge news not yet sent stays home too.
-    if (change.badges === false) dropBadgeAnnouncements()
+    // Badge news not yet sent stays home too, for buddies who follow All
+    // buddies (`pruneBadgeAnnouncements`).
+    if (change.badges === false) pruneBadgeAnnouncements()
     if (store.getState().registeredInboxId === null) return
     const me = await ensureInbox()
     await saveRoster(me)
@@ -1579,82 +1728,92 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
   }
 
   async function sendCards() {
-    const {
-      name,
-      avatar: shown,
-      tenure,
-      badges: shared = [],
-      photoUnavailable,
-    } = profile()
-    const { sharing } = store.getState()
-    const streak = sharing.streak ? deps.getStreak?.() : undefined
-    const pet = sharing.pet ? deps.getPet?.() : undefined
+    const current = deps.getProfile()
+    const { name } = cardName()
     const edits = cardEdits
     cardEdits = new Set()
     const active = store.getState().buddies.filter((b) => b.status === 'active')
     if (active.length === 0 || !name) return
-    // Without the Profile photo, this device's card would take it off buddies'
-    // screens, so cards are left to the device that has it, except for changes
-    // made here (and a buddy paired here, who has no card yet).
+    // Without the Profile photo, this device's card would take it off the
+    // screens of buddies who see it, so cards are left to the device that has
+    // it, except for changes made here (and a buddy paired here, who has no
+    // card yet).
+    const photoUnavailable =
+      current.photoUnavailable && active.some((b) => settingsFor(b).photo)
     const targets = photoUnavailable
       ? active.filter((b) => edits === 'all' || edits.has(b.inboxId))
       : active
     if (targets.length === 0) return
     try {
-      await sendCardsTo(targets, { name, shown, tenure, shared, streak, pet })
+      await sendCardsTo(targets, current)
     } catch (error) {
       addCardEdits(edits)
       throw error
     }
   }
 
-  async function sendCardsTo(
-    targets: Buddy[],
-    {
-      name,
-      shown,
-      tenure,
-      shared,
-      streak,
-      pet,
-    }: {
-      name: string
-      shown: BuddyAvatar | undefined
-      tenure: BuddyProfile['tenure']
-      shared: SharedBadge[]
-      streak: BuddyStreak | undefined
-      pet: BuddyPet | undefined
-    }
-  ) {
+  async function sendCardsTo(targets: Buddy[], current: BuddyProfile) {
     const me = await identity()
-    const avatar = await withFullPhoto(me, shown)
+    // Every device's card carries the account's name, not this device's.
+    const { name } = cardName()
+    const each = targets.map((buddy) => ({
+      buddy,
+      settings: settingsFor(buddy),
+    }))
+    // One upload serves every buddy who sees the photo; with none left it's
+    // taken down.
+    const avatar = await withFullPhoto(
+      me,
+      each.some(({ settings }) => settings.photo) ? current.avatar : undefined
+    )
     const { dayPlans, recurringPlans } = deps.getPlans()
-    const days = buildBuddyCardDays(
+    const cardDays = buildBuddyCardDays(
       dayPlans,
       recurringPlans,
       new Date(deps.now())
     )
+    const streak = each.some(({ settings }) => settings.streak)
+      ? deps.getStreak?.()
+      : undefined
+    const shared = (deps.showBadges?.() ?? true) ? (current.badges ?? []) : []
+    const pet = each.some(({ settings }) => settings.pet)
+      ? deps.getPet?.()
+      : undefined
     // Left out when there are none, so cards (and their hash) stay as before;
     // so is a pet that isn't there or isn't shared.
     const badges = shared.length > 0 ? shared : undefined
-    const contentHash = toB64u(
-      sha256(json({ name, avatar, tenure, streak, days, badges, pet }))
-    )
-    for (const buddy of targets) {
+    // While sharing is paused for everyone, the card keeps who this User is
+    // and drops their Plans, progress, and pet.
+    const paused = sharingPaused()
+    const content = (settings: BuddySettings) => ({
+      name,
+      avatar: settings.photo ? avatar : undefined,
+      tenure: settings.tenure ? current.tenure : undefined,
+      streak: settings.streak && !paused ? streak : undefined,
+      days:
+        settings.plans && !paused
+          ? withPlanTimes(cardDays, settings.planTimes)
+          : [],
+      badges: settings.badges && !paused ? badges : undefined,
+      pet: settings.pet && !paused ? pet : undefined,
+    })
+    for (const { buddy, settings } of each) {
+      const payload = content(settings)
+      const contentHash = toB64u(sha256(json(payload)))
       if (store.getState().publishedCardHashes[buddy.inboxId] === contentHash)
         continue
       const { outgoing } = pairKeys(me, buddy)
       const card = {
         v: 1,
-        name,
-        avatar,
-        tenure,
-        streak,
+        name: payload.name,
+        avatar: payload.avatar,
+        tenure: payload.tenure,
+        streak: payload.streak,
         updatedAt: deps.now(),
         level: 'daysTimes',
-        days,
-        badges,
-        pet,
+        days: payload.days,
+        badges: payload.badges,
+        pet: payload.pet,
       }
       try {
         await relay.putCard(
@@ -3183,7 +3342,6 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       // asked again after a withdrawal comes back already read.
       if (existing && !existing.withdrawn) return
       if (existing?.dismissed) return
-      const { joinRequestNotifications, mutedJoinRequests } = store.getState()
       notify(
         {
           id: event.eventId,
@@ -3194,9 +3352,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
           shareKey: key,
         },
         // Alerts off for this buddy: listed, but it doesn't call for attention.
-        !!existing ||
-          !joinRequestNotifications ||
-          mutedJoinRequests.includes(buddy.inboxId)
+        !!existing || !alertsFor(buddy.inboxId).joinRequests
       )
     } catch {
       // Undecryptable or malformed events are dropped.
@@ -3254,17 +3410,16 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
    * alert this device; left out of the push registration otherwise.
    */
   async function joinRequestPushKinds(): Promise<JoinRequestPushKind[]> {
-    const { buddies, joinRequestNotifications, mutedJoinRequests } =
-      store.getState()
-    if (!joinRequestNotifications) return []
+    const { buddies } = store.getState()
+    const alerting = buddies.filter(
+      (buddy) =>
+        buddy.status === 'active' && alertsFor(buddy.inboxId).joinRequests
+    )
+    if (alerting.length === 0) return []
     const me = await identity()
-    return buddies
-      .filter(
-        (buddy) =>
-          buddy.status === 'active' &&
-          !mutedJoinRequests.includes(buddy.inboxId)
-      )
-      .map((buddy) => joinRequestKind(pairKeys(me, buddy).incoming.slotId))
+    return alerting.map((buddy) =>
+      joinRequestKind(pairKeys(me, buddy).incoming.slotId)
+    )
   }
 
   /**
@@ -3305,12 +3460,12 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       if (!held || (held.l ?? 0) < parsed.level)
         best.set(parsed.art, { c: parsed.art, l: parsed.level })
     }
-    if (best.size === 0 || !sharesBadges()) return
+    if (best.size === 0 || sharingPaused()) return
     const state = store.getState()
     // Buddies never started here: no one to tell, and no seed to create.
     if (state.registeredInboxId === null) return
     const recipients = state.buddies
-      .filter((buddy) => buddy.status === 'active')
+      .filter((buddy) => buddy.status === 'active' && badgesGoTo(buddy))
       .map((buddy) => buddy.inboxId)
     if (recipients.length === 0) return
     const badges = sortedForAnnouncement([...best.values()])
@@ -3341,17 +3496,22 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       store.setState({ badgeAnnouncements: [] })
   }
 
-  /** Drops badge news that's delivered, a week old, or no longer shared. */
+  /**
+   * Drops badge news that's delivered, a week old, or no longer shared with
+   * anyone it's still owed to.
+   */
   function pruneBadgeAnnouncements() {
     const now = deps.now()
-    const { badgeAnnouncements } = store.getState()
-    const kept = sharesBadges()
-      ? badgeAnnouncements.filter(
-          (announcement) =>
-            announcement.createdAt + BADGE_ANNOUNCEMENT_TTL_MS > now &&
-            announcement.recipients.some((id) => !announcement.sent[id])
-        )
-      : []
+    const { badgeAnnouncements, buddies } = store.getState()
+    const owed = (inboxId: string) => {
+      const buddy = buddies.find((b) => b.inboxId === inboxId)
+      return !!buddy && badgesGoTo(buddy)
+    }
+    const kept = badgeAnnouncements.filter(
+      (announcement) =>
+        announcement.createdAt + BADGE_ANNOUNCEMENT_TTL_MS > now &&
+        announcement.recipients.some((id) => !announcement.sent[id] && owed(id))
+    )
     if (kept.length !== badgeAnnouncements.length)
       store.setState({ badgeAnnouncements: kept })
   }
@@ -3419,8 +3579,15 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
         const buddy = store
           .getState()
           .buddies.find((b) => b.inboxId === inboxId && b.status === 'active')
-        // Waits for the hourly budget; retried on every sync.
-        if (!buddy || !hasShareBudget(inboxId)) continue
+        // Waits for the hourly budget, or the pause to end; retried on every
+        // sync.
+        if (
+          !buddy ||
+          !badgesGoTo(buddy) ||
+          sharingPaused() ||
+          !hasShareBudget(inboxId)
+        )
+          continue
         const lastAlert = store.getState().lastBadgeAlertAt[inboxId]
         const alert =
           !!announcement.alerted[inboxId] ||
@@ -3529,21 +3696,29 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
         badges,
         at,
       },
-      // Listed, but not calling for attention: badge alerts are off here, or
-      // it's old news (a day or more, or a new device's whole backlog).
-      !store.getState().badgeNotifications || firstSync || at <= now - DAY_MS
+      // Listed, but not calling for attention: badge alerts are off here for
+      // them, or it's old news (a day or more, or a new device's whole
+      // backlog).
+      !alertsFor(buddy.inboxId).badges || firstSync || at <= now - DAY_MS
     )
   }
 
   /**
-   * The badge push kinds (new badges, reactions), while badge alerts are on for
-   * this device.
+   * The badge push kinds (new badges, reactions), while badge alerts are on
+   * here, or on for a buddy of their own; the alert stays quiet for buddies
+   * with them off (`pushAlerts`).
    */
   function badgePushKinds(): BadgePushKind[] {
-    const { badgeNotifications } = store.getState()
-    return badgeNotifications && (deps.showBadges?.() ?? true)
-      ? [BADGE_PUSH_KIND, BADGE_REACTION_PUSH_KIND]
-      : []
+    return badgeAlertsOn() ? [BADGE_PUSH_KIND, BADGE_REACTION_PUSH_KIND] : []
+  }
+
+  function badgeAlertsOn(): boolean {
+    const { badgeNotifications, alertOverrides } = store.getState()
+    return (
+      (deps.showBadges?.() ?? true) &&
+      (badgeNotifications ||
+        Object.values(alertOverrides).some((alerts) => alerts.badges))
+    )
   }
 
   /**
@@ -3803,9 +3978,10 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
         reaction: body.e,
         at,
       },
-      // Listed, but not calling for attention: badge alerts are off here, or
-      // it's old news (a day or more, or a new device's whole backlog).
-      !store.getState().badgeNotifications || firstSync || at <= now - DAY_MS
+      // Listed, but not calling for attention: badge alerts are off here for
+      // them, or it's old news (a day or more, or a new device's whole
+      // backlog).
+      !alertsFor(buddy.inboxId).badges || firstSync || at <= now - DAY_MS
     )
   }
 
@@ -3908,10 +4084,11 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       remote.removedBuddies
     )
     const ended = (buddy: Buddy) => pairingEnded(removedBuddies, buddy)
+    const sharing = mergeSharing(state.sharing, remote.sharing)
     const known = new Set(state.buddies.map((b) => b.inboxId))
     const usedColors = new Set(state.buddies.map((b) => b.colorIndex))
     const added: Buddy[] = []
-    for (const buddy of remote.buddies) {
+    for (const { showOnCalendar, overrides, ...buddy } of remote.buddies) {
       if (
         known.has(buddy.inboxId) ||
         buddy.inboxId === me.inboxId ||
@@ -3923,7 +4100,8 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
         ? nextColorIndex(usedColors)
         : buddy.colorIndex
       usedColors.add(colorIndex)
-      added.push({ ...buddy, colorIndex })
+      const own = rosterOverrides({ showOnCalendar, overrides }, sharing, {})
+      added.push({ ...buddy, colorIndex, ...(own && { overrides: own }) })
     }
     // Another of this User's devices ended these pairings.
     const endedHere = state.buddies.filter(ended)
@@ -3948,14 +4126,15 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
                   expiresAt: undefined,
                 }
               : local
-          // A nickname, color, or calendar choice made later on another device.
+          // A nickname, color, or setting of their own made later on another
+          // device.
           return theirs?.prefsAt !== undefined &&
             theirs.prefsAt > (local.prefsAt ?? 0)
             ? {
                 ...confirmed,
                 nickname: theirs.nickname,
                 color: theirs.color,
-                showOnCalendar: theirs.showOnCalendar,
+                overrides: rosterOverrides(theirs, sharing, local.overrides),
                 prefsAt: theirs.prefsAt,
               }
             : confirmed
@@ -3992,7 +4171,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
         )
       ),
       rosterVersion: Math.max(state.rosterVersion, remote.version ?? 0),
-      sharing: mergeSharing(state.sharing, remote.sharing),
+      sharing,
       cardName: adoptCardName(state, remote.card),
       answerMarks: mergeAnswerMarks(state.answerMarks, remote.answers, now),
       notificationMarks: mergeNotificationMarks(
@@ -4446,8 +4625,11 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
           slot: incoming.slotId,
           key: toB64u(incoming.contentKey),
           name: buddy.nickname ?? buddy.name,
-          ...(state.mutedJoinRequests.includes(buddy.inboxId)
+          ...(!alertsFor(buddy.inboxId).joinRequests
             ? { joinMuted: true as const }
+            : {}),
+          ...(!alertsFor(buddy.inboxId).badges
+            ? { badgeMuted: true as const }
             : {}),
           ...(Object.keys(shares).length > 0 ? { shares } : {}),
         }
@@ -4466,8 +4648,10 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
             shareWhen(spec.type, spec.details),
           ])
       ),
-      badgeAlerts: state.badgeNotifications && (deps.showBadges?.() ?? true),
-      joinAlerts: state.joinRequestNotifications,
+      badgeAlerts: badgeAlertsOn(),
+      joinAlerts: state.buddies.some(
+        (buddy) => alertsFor(buddy.inboxId).joinRequests
+      ),
       catalog: {
         order: [...ANNOUNCE_ORDER],
         oneTime: [...ONE_TIME_BADGE_IDS],
@@ -4696,6 +4880,10 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     setColor,
     setNickname,
     setSharing,
+    setBuddySetting,
+    setBuddyOverrides,
+    setBuddyAlert,
+    setBuddyAlerts,
     publishCards,
     fetchBuddyPhoto,
     publishShares,

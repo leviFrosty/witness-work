@@ -9,6 +9,12 @@ import {
 } from '@/lib/accountKey/recoveryKey'
 
 const random = () => new Uint8Array(randomBytes(32))
+/**
+ * A fixed key for the checksum tests. A 16-bit checksum lets about 1 in 65,536
+ * wrong keys through, so a random key made them fail now and then.
+ */
+const fixedKey = () =>
+  Uint8Array.from({ length: 32 }, (_, i) => (i * 37 + 11) % 256)
 const keyOf = (input: string) => {
   const parsed = parseRecoveryKey(input)
   if (!parsed.ok) throw new Error(`Refused: ${parsed.problem}`)
@@ -122,7 +128,7 @@ describe('parseRecoveryKey', () => {
   })
 
   it('refuses a typo in any position by its checksum', () => {
-    const recoveryKey = encodeRecoveryKey(random())
+    const recoveryKey = encodeRecoveryKey(fixedKey())
     for (let index = 0; index < RECOVERY_KEY_LENGTH; index++)
       expect(parseRecoveryKey(typo(recoveryKey, index))).toEqual({
         ok: false,
@@ -131,9 +137,9 @@ describe('parseRecoveryKey', () => {
   })
 
   it('refuses two swapped groups', () => {
-    const body = normalizeRecoveryKey(encodeRecoveryKey(random()))
+    const body = normalizeRecoveryKey(encodeRecoveryKey(fixedKey()))
     const swapped = body.slice(5, 10) + body.slice(0, 5) + body.slice(10)
-    if (swapped === body) return
+    expect(swapped).not.toBe(body)
     expect(parseRecoveryKey(swapped)).toMatchObject({ problem: 'checksum' })
   })
 

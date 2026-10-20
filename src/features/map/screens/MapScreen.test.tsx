@@ -8,6 +8,7 @@ const mocks = vi.hoisted(() => ({
   isWide: false,
   platform: 'ios',
   listeners: new Map<string, Set<() => void>>(),
+  locationGranted: true,
   navigate: vi.fn(),
   addListener: vi.fn(),
   updateContact: vi.fn(),
@@ -44,9 +45,25 @@ const appearanceProbe = vi.hoisted(() => (name: string) => async () => {
     },
   }
 })
-vi.mock('@react-navigation/native', () => ({ useNavigation: () => mocks }))
+vi.mock('@react-navigation/native', () => ({
+  useNavigation: () => mocks,
+  // Follows the `focus` and `blur` events the tests emit.
+  useIsFocused: () => {
+    const [focused, setFocused] = React.useState(true)
+    React.useEffect(() => {
+      const offFocus = mocks.addListener('focus', () => setFocused(true))
+      const offBlur = mocks.addListener('blur', () => setFocused(false))
+      return () => {
+        offFocus()
+        offBlur()
+      }
+    }, [])
+    return focused
+  },
+}))
 vi.mock('react-native', () => ({
   AppState: {
+    currentState: 'active',
     addEventListener: (_event: string, listener: (state: string) => void) => {
       mocks.appStateListeners.add(listener)
       return { remove: () => mocks.appStateListeners.delete(listener) }
@@ -152,7 +169,9 @@ vi.mock('expo-glass-effect', () => ({
 vi.mock('expo-crypto', () => ({ randomUUID: () => 'new-contact' }))
 vi.mock('expo-location', () => ({
   Accuracy: { BestForNavigation: 6 },
-  getForegroundPermissionsAsync: async () => ({ granted: true }),
+  getForegroundPermissionsAsync: async () => ({
+    granted: mocks.locationGranted,
+  }),
   getLastKnownPositionAsync: async () => null,
   watchPositionAsync: mocks.watchPositionAsync,
 }))
@@ -295,6 +314,7 @@ beforeEach(async () => {
   mocks.listeners.clear()
   mocks.appStateListeners.clear()
   mocks.watchPositionAsync.mockResolvedValue({ remove: mocks.removeWatch })
+  mocks.locationGranted = true
   mocks.isWide = false
   mocks.platform = 'ios'
   mocks.contacts = [contact('first', 'First'), contact('second', 'Second')]
@@ -711,5 +731,36 @@ describe('Following my location', () => {
     await act(async () => {
       root = create(screen())
     })
+  })
+})
+
+describe('User location dot', () => {
+  const showsDot = () => root.root.findByType(MapView).props.showsUserLocation
+  const setAppState = (state: string) => {
+    for (const listener of [...mocks.appStateListeners]) listener(state)
+  }
+
+  it('stays off without location permission', async () => {
+    mocks.locationGranted = false
+    await act(async () => root.unmount())
+    await act(async () => {
+      root = create(screen())
+    })
+    expect(showsDot()).toBe(false)
+  })
+
+  it('hides while the map is out of view and comes back on return', async () => {
+    expect(showsDot()).toBe(true)
+    await act(async () => emit('blur'))
+    expect(showsDot()).toBe(false)
+    await act(async () => emit('focus'))
+    expect(showsDot()).toBe(true)
+  })
+
+  it('hides while the app is in the background', async () => {
+    await act(async () => setAppState('background'))
+    expect(showsDot()).toBe(false)
+    await act(async () => setAppState('active'))
+    expect(showsDot()).toBe(true)
   })
 })

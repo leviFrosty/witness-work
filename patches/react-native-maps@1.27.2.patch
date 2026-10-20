@@ -1,0 +1,26 @@
+diff --git a/android/src/main/java/com/rnmaps/maps/FusedLocationSource.java b/android/src/main/java/com/rnmaps/maps/FusedLocationSource.java
+index ca65bd7464b3107e9dcc1f6282d0d35aa9bedf40..f71e9493855e6d104bb4dd61d091418d5620d48a 100644
+--- a/android/src/main/java/com/rnmaps/maps/FusedLocationSource.java
++++ b/android/src/main/java/com/rnmaps/maps/FusedLocationSource.java
+@@ -45,6 +45,10 @@ public class FusedLocationSource implements LocationSource {
+     @SuppressLint("MissingPermission")
+     @Override
+     public void activate(final OnLocationChangedListener onLocationChangedListener) {
++        // A reattached MapView activates this shared source again before the
++        // old activation is deactivated. Drop the old request first, or it
++        // keeps running after the map turns the user location off.
++        deactivate();
+         try {
+             fusedLocationClientProviderClient.getLastLocation().addOnSuccessListener(new OnSuccessListener<Location>() {
+                 @Override
+@@ -70,6 +74,9 @@ public class FusedLocationSource implements LocationSource {
+ 
+     @Override
+     public void deactivate() {
+-        fusedLocationClientProviderClient.removeLocationUpdates(locationCallback);
++        if (locationCallback != null) {
++            fusedLocationClientProviderClient.removeLocationUpdates(locationCallback);
++            locationCallback = null;
++        }
+     }
+ }

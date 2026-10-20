@@ -5000,6 +5000,13 @@
       "scene": "{{name}}'s room",
       "patHint": "Tap to pat. Drag across to rub.",
       "wakeHint": "Tap to wake.",
+      "pickUpGift": {
+        "olive": "Pick up the olive",
+        "fig": "Pick up the fig",
+        "pebble": "Pick up the pebble",
+        "feather": "Pick up the feather",
+        "lily": "Pick up the lily"
+      },
       "promptAnimals": "A lion cub, golden pup, kitten, donkey and lamb"
     },
     "rename": {

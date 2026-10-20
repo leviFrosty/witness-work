@@ -17,6 +17,7 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler'
 import { useReducedMotion, useSharedValue } from 'react-native-reanimated'
 import PointerHover, { HoverTint } from '@/components/ui/PointerHover'
 import { errorTracking } from '@/lib/errorTracking'
+import i18n from '@/lib/locales'
 import { createBuffer, type Viewport } from '@/lib/pixelArt'
 import type { PetSoundMoment, PetSpecies } from '@/types/pet'
 import {
@@ -50,6 +51,8 @@ const GIFT_HIT = {
   h: 14,
 }
 const SAMPLING = { filter: FilterMode.Nearest, mipmap: MipmapMode.None }
+/** The screen reader action that keeps the gift, as a tap on it does. */
+const GIFT_ACTION = 'pickUpGift'
 
 /** Motions a parent can play on the scene. */
 export type PetSceneHandle = {
@@ -81,6 +84,7 @@ export type PetSceneViewProps = {
   onTrick?: () => void
   /** A sleeping pet or one that died was touched. */
   onWakeRequest?: () => void
+  /** The gift was tapped, or picked up with a screen reader action. */
   onGiftTap?: () => void
   ref?: Ref<PetSceneHandle>
 }
@@ -92,9 +96,10 @@ type Bubble = { moment: PetSoundMoment; id: number }
  * the JS thread, drawn with nearest sampling so the pixels stay sharp. Each
  * frame goes to the canvas through a shared value, so frames don't re-render
  * React. Tap to pat, drag sideways to rub (vertical drags still scroll), tap
- * the gift to keep it. The clock pauses on other screens, in the background, at
- * rest with Reduce Motion, and (with `pauseOffScreen`) once scrolled out of
- * view.
+ * the gift to keep it; screen readers get an action for the gift while it's
+ * there, since their tap pats. The clock pauses on other screens, in the
+ * background, at rest with Reduce Motion, and (with `pauseOffScreen`) once
+ * scrolled out of view.
  */
 export default function PetSceneView({
   input,
@@ -238,13 +243,17 @@ export default function PetSceneView({
     )
   }
 
+  const takeGift = () => {
+    scene.loop.kick()
+    onGiftTap?.()
+  }
+
   const tap = Gesture.Tap()
     .runOnJS(true)
     .onEnd((event, success) => {
       if (!success) return
       if (hitsGift(event.x, event.y)) {
-        scene.loop.kick()
-        onGiftTap?.()
+        takeGift()
         return
       }
       touch(false)
@@ -263,6 +272,7 @@ export default function PetSceneView({
     .onFinalize(() => scene.rub.end())
 
   const species = input.pet?.species
+  const gift = onGiftTap ? input.moments?.gift : null
   const bubbleText = bubble && species ? petSound(species, bubble.moment) : null
 
   return (
@@ -284,6 +294,20 @@ export default function PetSceneView({
             accessibilityLabel={accessibilityLabel}
             accessibilityHint={accessibilityHint}
             onAccessibilityTap={() => touch(false)}
+            accessibilityActions={
+              gift
+                ? [
+                    {
+                      name: GIFT_ACTION,
+                      label: i18n.t(`pet.a11y.pickUpGift.${gift}`),
+                    },
+                  ]
+                : undefined
+            }
+            onAccessibilityAction={(event) => {
+              if (event.nativeEvent.actionName === GIFT_ACTION && gift)
+                takeGift()
+            }}
             style={{ flex: 1 }}
           >
             {scale > 0 && (

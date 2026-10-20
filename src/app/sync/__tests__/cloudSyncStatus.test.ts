@@ -1,0 +1,144 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import type { SyncStatus } from '@/lib/syncTransport/server/syncClient'
+
+// Cloud Sync's status read (`GET /accounts/v1/sync`), and what it records for
+// the engine's gate.
+
+const runtime = vi.hoisted(() => ({
+  status: null as SyncStatus | null,
+}))
+
+vi.mock('react-native', () => ({
+  Platform: { OS: 'ios' },
+  AppState: { currentState: 'active', addEventListener: vi.fn() },
+}))
+vi.mock('expo-device', () => ({
+  DeviceType: { PHONE: 1, TABLET: 2 },
+  deviceType: 1,
+  modelName: 'iPhone',
+  osName: 'iOS',
+}))
+vi.mock('expo-constants', () => ({
+  default: { expoConfig: { version: '1.0.0' } },
+}))
+vi.mock('expo-localization', () => ({
+  getLocales: () => [{ languageTag: 'en-US' }],
+}))
+vi.mock('@/lib/locales', () => ({ default: { t: (key: string) => key } }))
+vi.mock('expo-crypto', () => ({ getRandomBytes: vi.fn() }))
+vi.mock('../../../../modules/buddies-keychain', () => ({
+  peekRootSeed: async () => 'AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE',
+}))
+vi.mock('@/lib/serverAccount', () => ({
+  accountSessions: {
+    ready: async () => {},
+    snapshot: () => ({ accountId: 'acct-family' }),
+    ensure: async () => {},
+  },
+  bearerOptions: () => ({}),
+  onAccountChange: () => () => {},
+  serverAccount: { connect: vi.fn() },
+}))
+vi.mock('@/lib/serverAccount/revenueCatLinkRuntime', () => ({
+  ensureRevenueCatLinked: vi.fn(async () => {}),
+}))
+vi.mock('@/lib/syncTransport/server/syncClient', async (importOriginal) => ({
+  ...(await importOriginal<
+    typeof import('@/lib/syncTransport/server/syncClient')
+  >()),
+  fetchSyncStatus: vi.fn(async () => runtime.status),
+}))
+vi.mock('../../../../modules/icloud-bridge', () => ({}))
+vi.mock('@/lib/account', () => ({
+  reclaimAccountFile: vi.fn(),
+  clearAdoptedAccountId: vi.fn(),
+}))
+vi.mock('@/lib/installId', () => ({
+  getOrCreateInstallId: () => 'install-phone',
+  androidDeviceInstallId: () => 'install-phone',
+}))
+vi.mock('@/lib/analytics', () => ({ analytics: { capture: vi.fn() } }))
+vi.mock('@/lib/errorTracking', () => ({
+  errorTracking: {
+    captureException: vi.fn(),
+    captureMessage: vi.fn(),
+    addBreadcrumb: vi.fn(),
+  },
+}))
+vi.mock('@/lib/logger', () => import('@/__tests__/mocks/logger'))
+vi.mock('@/stores/mmkv', () => import('@/__tests__/mocks/mmkv'))
+
+const status = (overrides: Partial<SyncStatus> = {}): SyncStatus => ({
+  enabled: true,
+  entitled: true,
+  entitlement: 'supporter',
+  supporter: true,
+  supporterCheckFailed: false,
+  ...overrides,
+})
+
+/** Ww-api's answer while it can't reach RevenueCat (`handleStatus`). */
+const revenueCatDown = status({
+  entitled: false,
+  supporter: false,
+  supporterCheckFailed: true,
+})
+
+async function load() {
+  vi.resetModules()
+  const cloudSync = await import('@/app/sync/cloudSync')
+  const { usePreferences } = await import('@/stores/preferences')
+  const { useSupporter } = await import('@/features/supporter/stores/supporter')
+  return { ...cloudSync, usePreferences, useSupporter }
+}
+
+beforeEach(() => {
+  vi.stubGlobal('__DEV__', true)
+  runtime.status = null
+})
+
+describe('refreshCloudSyncStatus', () => {
+  it('records the account’s answer', async () => {
+    const { refreshCloudSyncStatus, usePreferences } = await load()
+    usePreferences.setState({ cloudSyncEntitled: true })
+    runtime.status = status({ entitled: false, supporter: false })
+    await refreshCloudSyncStatus({ force: true })
+    expect(usePreferences.getState().cloudSyncEntitled).toBe(false)
+  })
+
+  it('keeps a Supporter syncing while ww-api can’t check RevenueCat', async () => {
+    const { refreshCloudSyncStatus, usePreferences, useSupporter } =
+      await load()
+    useSupporter.getState().setSupporter(true)
+    usePreferences.setState({ cloudSyncEntitled: true })
+    runtime.status = revenueCatDown
+    await refreshCloudSyncStatus({ force: true })
+    expect(usePreferences.getState().cloudSyncEntitled).toBe(true)
+  })
+
+  it('doesn’t entitle anyone because the check failed', async () => {
+    const { refreshCloudSyncStatus, usePreferences, useSupporter } =
+      await load()
+    useSupporter.getState().setSupporter(false)
+    usePreferences.setState({ cloudSyncEntitled: true })
+    runtime.status = revenueCatDown
+    await refreshCloudSyncStatus({ force: true })
+    expect(usePreferences.getState().cloudSyncEntitled).toBe(false)
+
+    // A Supporter never entitled before stays as recorded, too.
+    useSupporter.getState().setSupporter(true)
+    usePreferences.setState({ cloudSyncEntitled: null })
+    await refreshCloudSyncStatus({ force: true })
+    expect(usePreferences.getState().cloudSyncEntitled).toBe(null)
+  })
+
+  it('still honors the kill switch during the outage', async () => {
+    const { refreshCloudSyncStatus, usePreferences, useSupporter } =
+      await load()
+    useSupporter.getState().setSupporter(true)
+    usePreferences.setState({ cloudSyncEntitled: true })
+    runtime.status = { ...revenueCatDown, enabled: false }
+    await refreshCloudSyncStatus({ force: true })
+    expect(usePreferences.getState().cloudSyncEntitled).toBe(false)
+  })
+})

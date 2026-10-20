@@ -84,8 +84,14 @@ export default function CloudSyncDefault() {
         if (settled) return
         if (prepared.outcome !== 'ready') {
           report(prepared.outcome)
-          // Offline, or attesting failed for now: try again on return.
-          if (prepared.outcome === 'no_session') retryLater()
+          // Offline, or attesting failed for now: try again on return. So
+          // does a Supporter the server can't confirm yet (RevenueCat down,
+          // or the purchase not linked to the account yet).
+          if (
+            prepared.outcome === 'no_session' ||
+            (prepared.outcome === 'not_entitled' && isSupporter)
+          )
+            retryLater()
           else settle()
           return
         }
@@ -135,6 +141,7 @@ export default function CloudSyncDefault() {
     onboardingComplete,
     offered,
     mayBeEntitled,
+    isSupporter,
     iCloudSyncSetByUser,
     iCloudSyncEnabled,
   ])

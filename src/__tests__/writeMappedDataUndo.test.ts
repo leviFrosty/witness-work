@@ -36,7 +36,6 @@ import useConversations from '@/stores/conversationStore'
 import useServiceReport from '@/stores/serviceReport'
 import useCategories from '@/stores/categories'
 import { usePreferences, PREFERENCE_DEFAULTS } from '@/stores/preferences'
-import { useTimeCache } from '@/stores/timeCache'
 import {
   writeMappedDataToStores,
   undoImport,
@@ -81,7 +80,6 @@ beforeEach(() => {
   useServiceReport.getState()._WARNING_forceDeleteServiceReports()
   useCategories.getState()._WARNING_forceDeleteCategories()
   usePreferences.setState({ ...PREFERENCE_DEFAULTS, preferenceUpdatedAt: {} })
-  useTimeCache.getState().invalidateAllCache()
 })
 
 const sampleImport = (): MappedImport => ({

@@ -1,6 +1,5 @@
 import { useMemo } from 'react'
 import { View, ViewStyle } from 'react-native'
-import round from 'lodash/round'
 
 import useTheme from '@/contexts/theme'
 import usePublisher from '@/hooks/usePublisher'
@@ -17,7 +16,8 @@ import { useShallow } from 'zustand/react/shallow'
 
 interface MilestoneProgressBarPreviewProps {
   milestones: number[]
-  hoursCompleted: number
+  /** Unrounded service-year total; milestones are compared in minutes. */
+  minutesCompleted: number
   annualGoalHours: number
 }
 
@@ -52,8 +52,8 @@ type LabelLayout = {
 
 /**
  * Pure, controlled variant of the milestone progress bar. Takes the milestone
- * ladder, hours completed, and annual goal directly — no store access. Used by
- * the Milestone Adjust sheet's live preview as well as by the default
+ * ladder, minutes completed, and annual goal directly — no store access. Used
+ * by the Milestone Adjust sheet's live preview as well as by the default
  * (connected) `MilestoneProgressBar` below.
  *
  * Visual:
@@ -71,7 +71,7 @@ type LabelLayout = {
  */
 export const MilestoneProgressBarPreview = ({
   milestones,
-  hoursCompleted,
+  minutesCompleted,
   annualGoalHours,
 }: MilestoneProgressBarPreviewProps) => {
   const theme = useTheme()
@@ -86,19 +86,22 @@ export const MilestoneProgressBarPreview = ({
       const widthFlex = range / safeGoal
       let state: SegmentState
       let fillRatio = 0
-      if (hoursCompleted >= m) {
+      if (minutesCompleted >= m * 60) {
         state = 'hit'
         fillRatio = 1
-      } else if (hoursCompleted >= prev && range > 0) {
+      } else if (minutesCompleted >= prev * 60 && range > 0) {
         state = 'progress'
-        fillRatio = Math.min(1, Math.max(0, (hoursCompleted - prev) / range))
+        fillRatio = Math.min(
+          1,
+          Math.max(0, (minutesCompleted - prev * 60) / (range * 60))
+        )
       } else {
         state = 'future'
       }
       segs.push({ start: prev, end: m, widthFlex, state, fillRatio })
       prev = m
     }
-    const next = getMilestoneHitState(milestones, hoursCompleted).next
+    const next = getMilestoneHitState(milestones, minutesCompleted).next
 
     // Lay out labels centered on each milestone divider. When two milestones
     // sit closer than LABEL_MIN_GAP_RATIO, drop the second label to a second
@@ -125,7 +128,7 @@ export const MilestoneProgressBarPreview = ({
       : LABEL_ROW_HEIGHT
 
     return { segments: segs, labels: labelLayout, labelsHeight: height }
-  }, [milestones, hoursCompleted, safeGoal])
+  }, [milestones, minutesCompleted, safeGoal])
 
   const separatorColor = theme.colors.text
   const pastelFill = theme.colors.accentTranslucent
@@ -318,11 +321,6 @@ const MilestoneProgressBar = ({ year }: MilestoneProgressBarProps) => {
     customCreditLimitHours,
   ])
 
-  const hoursCompleted = useMemo(
-    () => round(totalMinutesForServiceYear / 60, 1),
-    [totalMinutesForServiceYear]
-  )
-
   const milestones = useMemo(
     () =>
       getEffectiveMilestones(publisher, milestoneOverrides, annualGoalHours),
@@ -336,7 +334,7 @@ const MilestoneProgressBar = ({ year }: MilestoneProgressBarProps) => {
   return (
     <MilestoneProgressBarPreview
       milestones={milestones}
-      hoursCompleted={hoursCompleted}
+      minutesCompleted={totalMinutesForServiceYear}
       annualGoalHours={annualGoalHours}
     />
   )

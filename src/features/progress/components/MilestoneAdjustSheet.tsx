@@ -11,7 +11,6 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Alert, Pressable, StyleSheet, View } from 'react-native'
 import Sheet from '@/components/ui/Sheet'
 import { useNavigation } from '@react-navigation/native'
-import round from 'lodash/round'
 
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
@@ -145,15 +144,14 @@ const MilestoneAdjustSheet = ({ visible, onClose }: Props) => {
     overrideCreditLimit,
     customCreditLimitHours,
   ])
-  const hoursCompleted = round(completedMinutes / 60, 1)
 
   const milestonesWithGoal = useMemo(
     () => (annualGoalHours > 0 ? [...draft, annualGoalHours] : draft),
     [draft, annualGoalHours]
   )
   const hitState = useMemo(
-    () => getMilestoneHitState(milestonesWithGoal, hoursCompleted),
-    [milestonesWithGoal, hoursCompleted]
+    () => getMilestoneHitState(milestonesWithGoal, completedMinutes),
+    [milestonesWithGoal, completedMinutes]
   )
 
   const nextMilestoneRemainingMinutes =
@@ -410,7 +408,7 @@ const MilestoneAdjustSheet = ({ visible, onClose }: Props) => {
             <View style={{ gap: 8 }}>
               <MilestoneProgressBarPreview
                 milestones={milestonesWithGoal}
-                hoursCompleted={hoursCompleted}
+                minutesCompleted={completedMinutes}
                 annualGoalHours={annualGoalHours}
               />
               <Text

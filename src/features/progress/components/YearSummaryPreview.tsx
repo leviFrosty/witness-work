@@ -1,5 +1,4 @@
 import { View } from 'react-native'
-import round from 'lodash/round'
 
 import Text from '@/components/ui/MyText'
 import { MilestoneProgressBarPreview } from '@/components/MilestoneProgressBar'
@@ -42,12 +41,11 @@ const YearSummaryPreview = ({ endYear }: { endYear: number }) => {
     { enabled: overrideCreditLimit, customLimitHours: customCreditLimitHours }
   )
   const total = useFormattedMinutes(totalMinutes)
-  const hoursCompleted = round(totalMinutes / 60, 1)
   const showsGoal = hasAnnualGoal && annualGoalHours > 0
   const milestones = showsGoal
     ? getEffectiveMilestones(publisher, milestoneOverrides, annualGoalHours)
     : []
-  const hitState = getMilestoneHitState(milestones, hoursCompleted)
+  const hitState = getMilestoneHitState(milestones, totalMinutes)
 
   return (
     <View
@@ -99,7 +97,7 @@ const YearSummaryPreview = ({ endYear }: { endYear: number }) => {
         <>
           <MilestoneProgressBarPreview
             milestones={milestones}
-            hoursCompleted={hoursCompleted}
+            minutesCompleted={totalMinutes}
             annualGoalHours={annualGoalHours}
           />
           {hitState.total > 0 ? (

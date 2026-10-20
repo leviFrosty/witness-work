@@ -51,6 +51,7 @@ import { useWatchSync } from '@/app/watch/useWatchSync'
 import { useReconciledReminders } from '@/app/notifications/useReconciledReminders'
 import { useLocalAvatarCleanup } from '@/app/sync/useLocalAvatarCleanup'
 import { useDeletedContactRetention } from '@/app/useDeletedContactRetention'
+import { useGeocodeRetries } from '@/app/contacts/geocodeRetry'
 import { useTimeEntryCreditNormalization } from '@/app/useTimeEntryCreditNormalization'
 import { useCalendarSync } from '@/app/calendar/useCalendarSync'
 import { useICloudSync } from '@/app/sync/useICloudSync'
@@ -85,6 +86,7 @@ function LaunchWork() {
   useLocalAvatarCleanup(useAfterLaunch('idle'))
   useNoteImageCleanup(useAfterLaunch('idle'))
   useDeletedContactRetention(useAfterLaunch('idle'))
+  useGeocodeRetries(useAfterLaunch('idle'))
   useTimeEntryCreditNormalization(useAfterLaunch('idle'))
   useAccountBackup(useAfterLaunch('idle'))
   return null

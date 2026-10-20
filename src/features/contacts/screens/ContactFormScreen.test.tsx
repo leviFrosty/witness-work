@@ -12,6 +12,7 @@ const mocks = vi.hoisted(() => ({
     longitude: 34,
   })),
   alert: vi.fn(),
+  enqueueGeocodeRetry: vi.fn(),
   updatePrefillAddress: vi.fn(),
   clearPrefillAddress: vi.fn(),
   dataProtectionMode: false,
@@ -52,6 +53,11 @@ vi.mock('@/stores/preferences', () => ({
   }),
 }))
 vi.mock('@/lib/address', () => ({ fetchCoordinateFromAddress: mocks.geocode }))
+vi.mock('@/stores/geocodeRetry', () => ({
+  useGeocodeRetry: {
+    getState: () => ({ enqueue: mocks.enqueueGeocodeRetry }),
+  },
+}))
 vi.mock('@/lib/analytics', () => ({ analytics: { capture: vi.fn() } }))
 vi.mock('@/lib/http/online', () => ({
   isDeviceOffline: (kind: string) => kind === 'offline',
@@ -218,12 +224,13 @@ describe('Contact Form map coordinates', () => {
   })
 
   it.each([
-    ['offline', 1],
-    ['timeout', 0],
-    ['rateLimited', 0],
+    ['offline', 1, 1],
+    ['timeout', 0, 1],
+    ['rateLimited', 0, 1],
+    ['client', 0, 0],
   ])(
     'keeps the contact when geocoding fails %s, alerting only offline',
-    async (kind, alerts) => {
+    async (kind, alerts, retries) => {
       mocks.geocode.mockRejectedValueOnce({ kind })
       await mount({ id: 'new-contact' })
       await act(async () => {
@@ -233,6 +240,13 @@ describe('Contact Form map coordinates', () => {
       expect(mocks.addContact).toHaveBeenCalledOnce()
       expect(mocks.updateContact).not.toHaveBeenCalled()
       expect(mocks.alert).toHaveBeenCalledTimes(alerts)
+      // Retried later, once the connection is back.
+      expect(mocks.enqueueGeocodeRetry).toHaveBeenCalledTimes(retries)
+      if (retries) {
+        expect(mocks.enqueueGeocodeRetry).toHaveBeenCalledWith(
+          expect.objectContaining({ name: 'Neighbor', address: mocks.address })
+        )
+      }
     }
   )
 

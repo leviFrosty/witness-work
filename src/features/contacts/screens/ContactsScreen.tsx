@@ -13,6 +13,7 @@ import {
   RefObject,
   useCallback,
   useEffect,
+  useEffectEvent,
   useRef,
   useState,
 } from 'react'
@@ -279,18 +280,65 @@ const ContactsScreen = ({
     listRef.current?.scrollToOffset({ offset: 0, animated: false })
   }, [search, contactsFilters, contactSort, contactSortDirection])
 
-  // Keep the selected contact in view when a detail pane collapses into a list.
+  // When a detail pane collapses into a list (closing iPhone Duo), a contact
+  // picked in it since it opened stays on screen, pushed as a phone shows it,
+  // with its row in view behind it. Otherwise the list stays where it was.
+  const pickedInPane = useRef(false)
+  /** How far the pane's contact was read, to open it there on a phone. */
+  const paneScroll = useRef<{ id: string; y: number } | null>(null)
+  /** The contact on the list's reading line, a fifth of the way down. */
+  const readingContactId = useEffectEvent(() => {
+    const list = listRef.current
+    if (!list) return undefined
+    const offset = list.getAbsoluteLastScrollOffset()
+    // At the top, the first contact, as without a pick.
+    if (offset <= 1) return undefined
+    const line = offset + list.getWindowSize().height * 0.2
+    const { startIndex, endIndex } = list.computeVisibleIndices()
+    for (let i = Math.max(0, startIndex); i <= endIndex; i++) {
+      const item = contactsList.items[i]
+      const layout = list.getLayout(i)
+      if (item?.kind !== 'contact' || !layout) continue
+      if (layout.y + layout.height > line) return item.contact.id
+    }
+    return undefined
+  })
+  const pickedContact = listContacts.find(
+    (contact) => contact.id === selectedId
+  )
   useEffect(() => {
-    const collapsed = previousIsWide.current && !isWide
+    const changed = previousIsWide.current !== isWide
+    const collapsed = changed && !isWide
     previousIsWide.current = isWide
-    if (!collapsed || !selectedContact) return
-    const index = contactItemIndex(contactsList.items, selectedContact.id)
-    if (index < 0) return
-    const frame = requestAnimationFrame(() => {
-      listRef.current?.scrollToIndex({ index, animated: false })
+    const picked = pickedInPane.current
+    // A pick counts until the pane opens or closes again.
+    if (changed) pickedInPane.current = false
+    // Opening shows the contact being read in the list beside it.
+    if (changed && isWide && !showsMap && !selectedId) {
+      const reading = readingContactId()
+      if (reading) setSelectedId(reading)
+    }
+    if (!collapsed || !picked || !pickedContact || showsMap) return
+    const index = contactItemIndex(contactsList.items, pickedContact.id)
+    // Not cancelled by the next render: the collapse happens once.
+    requestAnimationFrame(() => {
+      if (index >= 0) listRef.current?.scrollToIndex({ index, animated: false })
+      if (!isFocused) return
+      const read = paneScroll.current
+      navigation.navigate('Contact Details', {
+        id: pickedContact.id,
+        scrollY: read?.id === pickedContact.id ? read.y : undefined,
+      })
     })
-    return () => cancelAnimationFrame(frame)
-  }, [isWide, selectedContact, contactsList.items])
+  }, [
+    isWide,
+    selectedId,
+    pickedContact,
+    contactsList.items,
+    showsMap,
+    isFocused,
+    navigation,
+  ])
 
   const expandHeader = () => {
     if (!mapExplored) return
@@ -461,7 +509,10 @@ const ContactsScreen = ({
           color={theme.colors.accent}
           onPress={() => {
             const id = Crypto.randomUUID()
-            if (isWide && !showsMap) setSelectedId(id)
+            if (isWide && !showsMap) {
+              setSelectedId(id)
+              pickedInPane.current = true
+            }
             navigation.navigate('Contact Form', {
               id,
               returnToContacts: isWide && !showsMap,
@@ -472,6 +523,7 @@ const ContactsScreen = ({
     </View>
   )
 
+  const rowState = [selection.selected, isWide, selectedContact?.id] as const
   const listPane = (
     <View
       // Any touch here pins the list's order until the next focus.
@@ -595,8 +647,10 @@ const ContactsScreen = ({
         keyExtractor={(item) => item.key}
         getItemType={(item) => item.kind}
         // A new Set on every selection change, start, and finish — no need
-        // to join every selected id into a string on each render.
-        extraData={selection.selected}
+        // to join every selected id into a string on each render. The list
+        // stays mounted as the pane comes and goes (iPhone Duo), so rows
+        // redraw for it and the contact in it too.
+        extraData={rowState}
         renderItem={({ item }) => {
           if (item.kind === 'header') {
             return <ContactsListSectionHeader section={item.section} />
@@ -636,6 +690,8 @@ const ContactsScreen = ({
                   })
                 }
                 setSelectedId(contact.id)
+                paneScroll.current = null
+                if (isWide) pickedInPane.current = true
                 if (!isWide)
                   navigation.navigate('Contact Details', {
                     id: contact.id,
@@ -722,6 +778,9 @@ const ContactsScreen = ({
           id={selectedContact.id}
           navigation={navigation}
           embedded
+          onScrollY={(y) => {
+            paneScroll.current = { id: selectedContact.id, y }
+          }}
         />
       ) : (
         <View
@@ -780,9 +839,11 @@ const ContactsScreen = ({
     </GestureDetector>
   )
 
-  // As in Mail, the header's controls belong to the list, so they sit above it
-  // and the contact beside it reaches the top.
-  if (isWide && !showsMap)
+  // As in Mail, the header's controls belong to the list, so when wide they sit
+  // above it and the contact beside it reaches the top. One tree either way,
+  // so opening or closing iPhone Duo keeps the list where it was scrolled.
+  const split = isWide && !showsMap
+  if (!showsMap)
     return (
       <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
         {/* The detail pane meets iPhone Duo's fold while it's partly folded. */}
@@ -790,20 +851,34 @@ const ContactsScreen = ({
           style={{
             flex: 1,
             width: '100%',
-            maxWidth: 1200,
+            maxWidth: split ? 1200 : undefined,
             alignSelf: 'center',
           }}
           gap={0}
           // A phone's width, which the header's controls are laid out for.
-          leadingWidth={390}
+          leadingWidth={split ? 390 : undefined}
           leading={
             <View style={{ flex: 1 }}>
               {header}
-              <View style={{ flex: 1, paddingTop: 4 }}>{listPane}</View>
+              <View
+                style={
+                  split
+                    ? { flex: 1, paddingTop: 4 }
+                    : {
+                        flex: 1,
+                        paddingTop: 4,
+                        width: '100%',
+                        maxWidth: 720,
+                        alignSelf: 'center',
+                      }
+                }
+              >
+                {listPane}
+              </View>
             </View>
           }
-          trailing={contactDetailPane}
-          trailingStyle={{ paddingTop: insets.top + 8 }}
+          trailing={split ? contactDetailPane : undefined}
+          trailingStyle={split ? { paddingTop: insets.top + 8 } : undefined}
         />
       </View>
     )
@@ -811,28 +886,13 @@ const ContactsScreen = ({
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
       {header}
-      {showsMap ? (
-        <View style={{ flex: 1 }}>
-          {renderMap({
-            topInset: headerHeight,
-            onExplore: exploreMap,
-            contacts: sortedAndFilteredContacts,
-          })}
-        </View>
-      ) : (
-        <View
-          style={{
-            flex: 1,
-            backgroundColor: theme.colors.background,
-            paddingTop: 4,
-            width: '100%',
-            maxWidth: 720,
-            alignSelf: 'center',
-          }}
-        >
-          {listPane}
-        </View>
-      )}
+      <View style={{ flex: 1 }}>
+        {renderMap({
+          topInset: headerHeight,
+          onExplore: exploreMap,
+          contacts: sortedAndFilteredContacts,
+        })}
+      </View>
     </View>
   )
 }

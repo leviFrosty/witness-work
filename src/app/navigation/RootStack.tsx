@@ -1,4 +1,5 @@
 import { Platform } from 'react-native'
+import { useDisplayRegions } from '@/stores/displayRegions'
 import createSystemBackStackNavigator from '@/app/navigation/createSystemBackStackNavigator'
 import Header from '@/components/ui/layout/Header'
 import useTheme from '@/contexts/theme'
@@ -140,12 +141,20 @@ const RootStackComponent = () => {
           }
         />
         <RootStack.Screen
-          // A sheet on iPhone (full screen on Android); a form sheet on iPad, so
-          // it isn't a phone-height list stretched across the screen.
-          options={{
-            presentation:
-              Platform.OS === 'ios' && Platform.isPad ? 'formSheet' : 'modal',
-            headerShown: false,
+          // A sheet on iPhone (full screen on Android); a form sheet in a
+          // regular-width window (iPad, iPhone Duo open), so it isn't a
+          // phone-height list stretched across the screen.
+          options={() => {
+            const regions = useDisplayRegions.getState().regions
+            const formSheet =
+              Platform.OS === 'ios' &&
+              (regions
+                ? regions.horizontalSizeClass === 'regular'
+                : Platform.isPad)
+            return {
+              presentation: formSheet ? 'formSheet' : 'modal',
+              headerShown: false,
+            }
           }}
           name='Log Visit'
           getComponent={() =>

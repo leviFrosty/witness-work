@@ -4,6 +4,7 @@ import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
 import useRevealAboveSheet from '@/hooks/useRevealAboveSheet'
 import useHideBarsOnScroll from '@/hooks/useHideBarsOnScroll'
 import useTabReselect from '@/hooks/useTabReselect'
+import useScrollAnchor from '@/hooks/useScrollAnchor'
 import ScrollAwayHeader from '@/components/ui/ScrollAwayHeader'
 import { ComponentProps, ReactNode, useState } from 'react'
 import ApproachingConversations from '@/features/visits/components/ApproachingConversations'
@@ -177,10 +178,18 @@ export const HomeScreen = ({ header }: { header: ReactNode }) => {
     enabled: !editing,
     paused: selectedDateSheet.open,
   })
-  // Tapping Home again heads back to the top.
-  useTabReselect(() =>
-    weekStrip.scrollRef.current?.scrollToPosition(0, 0, true)
+  // Opening or closing iPhone Duo keeps the section being read in view.
+  const anchor = useScrollAnchor(isWide)
+  const anchorScroll = anchor.scroll(
+    'home',
+    weekStrip.scrollRef,
+    scroll.frameRef
   )
+  // Tapping Home again heads back to the top.
+  useTabReselect(() => {
+    anchor.reset()
+    weekStrip.scrollRef.current?.scrollToPosition(0, 0, true)
+  })
   return (
     <View
       ref={scroll.frameRef}
@@ -191,6 +200,22 @@ export const HomeScreen = ({ header }: { header: ReactNode }) => {
       <KeyboardAwareScrollView
         ref={weekStrip.scrollRef}
         {...bars.scrollProps}
+        onScrollBeginDrag={(e) => {
+          bars.scrollProps.onScrollBeginDrag(e)
+          anchorScroll.onScrollBeginDrag()
+        }}
+        onScrollEndDrag={() => {
+          bars.scrollProps.onScrollEndDrag()
+          anchorScroll.onScrollEndDrag()
+        }}
+        onMomentumScrollEnd={() => {
+          bars.scrollProps.onMomentumScrollEnd()
+          anchorScroll.onMomentumScrollEnd()
+        }}
+        onScrollToTop={() => {
+          bars.scrollProps.onScrollToTop()
+          anchor.reset()
+        }}
         onScroll={(e) => {
           scroll.props.onScroll(e)
           weekStrip.onScroll(e)
@@ -235,6 +260,7 @@ export const HomeScreen = ({ header }: { header: ReactNode }) => {
           ) : undefined
         }
       >
+        {anchorScroll.origin}
         {/* Like empty space, tapping these while editing ends it. */}
         <Pressable
           disabled={!editing}
@@ -246,7 +272,7 @@ export const HomeScreen = ({ header }: { header: ReactNode }) => {
         >
           <View pointerEvents={editing ? 'none' : 'auto'}>
             <HomeGreeting />
-            {/* Full width above the columns, which alternate their children. */}
+            {/* Full width above the columns. */}
             <HomeNewBadgeCard style={{ marginBottom: 20 }} />
           </View>
         </Pressable>
@@ -273,6 +299,11 @@ export const HomeScreen = ({ header }: { header: ReactNode }) => {
         >
           <AdaptiveColumns
             wide={isWide}
+            sectionRef={(key) => anchor.anchorRef(key, 'home')}
+            // The tip card sits at the bottom while it's last.
+            bottomAnchorLast={
+              isDidYouKnowLast && homeScreenElements.didYouKnow !== false
+            }
             style={{
               paddingBottom:
                 insets.bottom * 2 +
@@ -390,7 +421,7 @@ export const HomeScreen = ({ header }: { header: ReactNode }) => {
                   case 'didYouKnow':
                     if (homeScreenElements.didYouKnow === false) return null
                     return (
-                      // Its item takes the bottom anchor (see `style` below).
+                      // Its cell takes the bottom anchor (`bottomAnchorLast`).
                       <DidYouKnowTipCard key={key} />
                     )
                   default:
@@ -442,11 +473,6 @@ export const HomeScreen = ({ header }: { header: ReactNode }) => {
                   emptyPlaceholder={
                     <HomeEmptySectionPlaceholder title={title} />
                   }
-                  style={
-                    key === 'didYouKnow' && !isWide && isDidYouKnowLast
-                      ? { marginTop: 'auto' }
-                      : undefined
-                  }
                 >
                   {section}
                 </ReorderableItem>
@@ -454,6 +480,7 @@ export const HomeScreen = ({ header }: { header: ReactNode }) => {
             })}
           </AdaptiveColumns>
         </ReorderableContainer>
+        {anchorScroll.room}
       </KeyboardAwareScrollView>
       <HomeAddSectionsSheet
         open={homeEditing.adding}

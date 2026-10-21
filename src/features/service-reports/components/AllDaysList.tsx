@@ -1,5 +1,5 @@
 import { ChevronForwardIcon } from '@/components/ui/DirectionalIcon'
-import { ReactElement, ReactNode, useMemo, useState } from 'react'
+import { ReactElement, ReactNode, Ref, useMemo, useState } from 'react'
 import { ScrollView, useWindowDimensions, View } from 'react-native'
 import moment from 'moment'
 import { dayPlansOnLocalDay } from '@/lib/dayPlansByDay'
@@ -49,6 +49,8 @@ interface AllDaysListProps {
   year: number
   /** Keeps the day picked in view above its sheet. */
   dayReveal?: RevealAboveSheet
+  /** Each day's row, by its date (`YYYY-MM-DD`), e.g. to keep it in view. */
+  dayRef?: (day: string) => Ref<View>
   /** The Plan form, for planning a day in its sheet. */
   renderPlanForm?: (slot: PlanFormSlot) => ReactNode
   /** Plan Details, for showing a day's Plan in its sheet. */
@@ -269,6 +271,7 @@ const AllDaysList = ({
   month,
   year,
   dayReveal,
+  dayRef,
   renderPlanForm,
   renderPlanDetails,
   variant = 'full',
@@ -490,12 +493,17 @@ const AllDaysList = ({
       }
       collapsable={false}
     >
-      <DayRowItem
-        row={row}
-        inset={inset}
-        plain={compact}
-        onPress={() => setSheet({ open: true, date: row.date })}
-      />
+      <View
+        ref={dayRef?.(moment(row.date).format('YYYY-MM-DD'))}
+        collapsable={false}
+      >
+        <DayRowItem
+          row={row}
+          inset={inset}
+          plain={compact}
+          onPress={() => setSheet({ open: true, date: row.date })}
+        />
+      </View>
     </View>
   ))
 

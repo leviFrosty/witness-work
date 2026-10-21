@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useEffectEvent, useRef, useState } from 'react'
 import { BackHandler, Platform, ScrollView, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import {
@@ -100,10 +100,36 @@ const ScheduleScreen = ({ route, navigation }: Props) => {
   const [selectedDateSheet, setSelectedDateSheet] =
     useState<SelectedDateSheetState>({ open: false, date: new Date() })
 
-  // A wide window shows the day in the inspector; a sheet left open would pop
-  // back up once the window narrows again.
+  // A wide window shows the day in the inspector instead of its sheet. Opening
+  // iPhone Duo with no day open shows one in the month on screen; closing it
+  // again opens the sheet on the day that was open or picked beside it.
+  const dayInView = useRef(false)
+  const layoutChanged = useEffectEvent((wide: boolean) => {
+    if (wide) {
+      dayInView.current = selectedDateSheet.open
+      if (selectedDateSheet.open) {
+        setSelectedDateSheet((current) => ({ ...current, open: false }))
+        return
+      }
+      const date = moment(selectedDateSheet.date)
+      if (date.year() === focused.year && date.month() === focused.month) return
+      const today = moment()
+      const shown =
+        today.year() === focused.year && today.month() === focused.month
+          ? today
+          : moment({ year: focused.year, month: focused.month, day: 1 })
+      setSelectedDateSheet({ open: false, date: shown.toDate() })
+      return
+    }
+    if (dayInView.current)
+      setSelectedDateSheet((current) => ({ ...current, open: true }))
+    dayInView.current = false
+  })
+  const wasWide = useRef(isWide)
   useEffect(() => {
-    if (isWide) setSelectedDateSheet((current) => ({ ...current, open: false }))
+    if (wasWide.current === isWide) return
+    wasWide.current = isWide
+    layoutChanged(isWide)
   }, [isWide])
   const [goalMonth, setGoalMonth] = useState<CalendarMonth | null>(null)
   const [goalOpen, setGoalOpen] = useState(false)
@@ -163,6 +189,7 @@ const ScheduleScreen = ({ route, navigation }: Props) => {
       !revealDay(date.toDate(), sheetHeight.current)
     )
       showMonth({ year: date.year(), month: date.month() })
+    if (isWide) dayInView.current = true
     setSelectedDateSheet({ open: !isWide, date: date.toDate() })
   }, [linkedDate, isWide, view, navigation, showMonth, revealDay])
 
@@ -182,6 +209,7 @@ const ScheduleScreen = ({ route, navigation }: Props) => {
   // in view above it, and stays marked while the sheet is open.
   const sheetHeight = useRef(0)
   const pressDay = (date: Date) => {
+    if (isWide) dayInView.current = true
     setSelectedDateSheet({ open: !isWide, date })
     if (!isWide && sheetHeight.current) revealDay(date, sheetHeight.current)
   }
@@ -231,28 +259,42 @@ const ScheduleScreen = ({ route, navigation }: Props) => {
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
-      {isWide ? null : header}
-      {isWide ? (
-        <FoldSplit
-          style={{
-            flex: 1,
-            width: '100%',
-            maxWidth: 1200,
-            alignSelf: 'center',
-          }}
-          paddingHorizontal={15}
-          gap={20}
-          leadingFraction={0.58}
-          // The header's controls are the calendar's, as in Mail, so it sits
-          // above it and the day beside it reaches the top.
-          leading={
-            <View style={{ flex: 1 }}>
-              {header}
+      {/* One tree either way, so opening or closing iPhone Duo keeps the
+          calendar on the month it was showing. */}
+      <FoldSplit
+        style={{
+          flex: 1,
+          width: '100%',
+          maxWidth: isWide ? 1200 : undefined,
+          alignSelf: 'center',
+        }}
+        paddingHorizontal={isWide ? 15 : 0}
+        gap={20}
+        leadingFraction={0.58}
+        // The header's controls are the calendar's, as in Mail, so when wide
+        // it sits above it and the day beside it reaches the top.
+        leading={
+          <View style={{ flex: 1 }}>
+            {header}
+            <View
+              style={
+                isWide
+                  ? { flex: 1 }
+                  : {
+                      flex: 1,
+                      width: '100%',
+                      maxWidth: 720,
+                      alignSelf: 'center',
+                    }
+              }
+            >
               {stage}
             </View>
-          }
-          trailingStyle={{ paddingTop: insets.top + 8 }}
-          trailing={
+          </View>
+        }
+        trailingStyle={isWide ? { paddingTop: insets.top + 8 } : undefined}
+        trailing={
+          isWide ? (
             <ScrollView
               style={{ flex: 1 }}
               // A status bar tap would scroll this column once the calendar
@@ -278,15 +320,9 @@ const ScheduleScreen = ({ route, navigation }: Props) => {
                 year={focused.year}
               />
             </ScrollView>
-          }
-        />
-      ) : (
-        <View
-          style={{ flex: 1, width: '100%', maxWidth: 720, alignSelf: 'center' }}
-        >
-          {stage}
-        </View>
-      )}
+          ) : undefined
+        }
+      />
       {!isWide && (
         <SelectedDateSheet
           sheet={selectedDateSheet}

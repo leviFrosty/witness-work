@@ -44,7 +44,6 @@ export type RevealPageId =
   | 'watch'
   | 'siri'
   | 'more'
-  | 'android'
 
 export interface RevealPageSpec {
   id: RevealPageId
@@ -52,8 +51,6 @@ export interface RevealPageSpec {
   color: RevealColor
   titleKey: TranslationKey
   captionKey: TranslationKey
-  /** Copy for Android, where the iOS wording doesn't fit. */
-  android?: { titleKey: TranslationKey; captionKey: TranslationKey }
   /** Only on this platform. */
   platform?: 'ios' | 'android'
   /** Only for roles with an Annual Goal (the Year Pace card's own gate). */

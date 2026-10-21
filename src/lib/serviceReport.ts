@@ -283,13 +283,6 @@ export const standardMinutesForSpecificMonth = (
   return totalMinutesForMonth
 }
 
-export const getDaysLeftInCurrentMonth = () => {
-  const currentDate = moment()
-  const firstDayOfNextMonth = moment().add(1, 'months').startOf('month')
-  const daysLeftInMonth = firstDayOfNextMonth.diff(currentDate, 'days')
-  return daysLeftInMonth
-}
-
 /**
  * Raw standard/credit logged minutes for one calendar month, before any credit
  * cap is applied. Produced by `getServiceYearMonthlyBreakdowns` and consumed by

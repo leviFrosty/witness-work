@@ -4,7 +4,6 @@
  * module adds the art-only names.
  */
 import {
-  isPetSpecies,
   PET_SOUND_MOMENTS,
   PET_SPECIES_IDS,
   type PetMood as HeartsMood,
@@ -15,9 +14,6 @@ import {
 
 export { PET_SPECIES_IDS }
 export type { PetSpeciesId }
-
-/** Whether `value` is a known species id. */
-export const isPetSpeciesId = isPetSpecies
 
 /**
  * How the pet feels. The first seven come from hearts (`happy` … `nap`, and

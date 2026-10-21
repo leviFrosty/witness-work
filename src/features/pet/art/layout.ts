@@ -54,12 +54,3 @@ export function cropScene(
 ): PixelBuffer {
   return crop(scene, typeof view === 'string' ? VIEWPORTS[view] : view)
 }
-
-/** Converts a point in view pixels to scene pixels. */
-export function viewToScene(
-  view: Viewport,
-  x: number,
-  y: number
-): [number, number] {
-  return [x + view[0], y + view[1]]
-}

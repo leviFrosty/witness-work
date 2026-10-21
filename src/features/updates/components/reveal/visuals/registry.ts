@@ -13,7 +13,6 @@ import MileageVisual from '@/features/updates/components/reveal/visuals/MileageV
 import CalendarVisual from '@/features/updates/components/reveal/visuals/CalendarVisual'
 import WatchVisual from '@/features/updates/components/reveal/visuals/WatchVisual'
 import SiriVisual from '@/features/updates/components/reveal/visuals/SiriVisual'
-import AndroidShareVisual from '@/features/updates/components/reveal/visuals/AndroidShareVisual'
 
 /**
  * The illustration for each page of the update's tour. "And so much more" draws
@@ -35,5 +34,4 @@ export const REVEAL_VISUALS: Record<
   calendar: CalendarVisual,
   watch: WatchVisual,
   siri: SiriVisual,
-  android: AndroidShareVisual,
 }

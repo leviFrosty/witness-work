@@ -33,7 +33,7 @@ actions and import selections use native switches with accessible switch state.
 `YearByYearList`, `YearCategoryBreakdownSection`, `ScheduleInsights`,
 `CalendarKey`, `MonthTimeReportsCalendar`, `AllDaysList`, `DayHistoryView`,
 `MonthReport`, `GoalProgressStats`, `MonthServiceReportProgressBar`,
-`CategorySegmentBar`, `TimeCategoryTableRow`, `TimeReportRow`, `CreditBadge`,
+`CategorySegmentBar`, `TimeReportRow`, `CreditBadge`,
 `CreditInfoSheet`, `ServiceReportInsightOverlay`, `ServiceReportStudiesOverlay`,
 `WeekStripTeaser`, `TimerSection`, `ServiceReportSection`, and the home
 orchestrator render data or expose navigation/action buttons without free-form

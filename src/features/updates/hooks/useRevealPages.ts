@@ -86,18 +86,17 @@ const useRevealPages = () => {
       (!page.watchOnly || watchSupported) &&
       (!page.timeEntryOnly || showsTimeEntry)
   ).map((page) => {
-    const copy = Platform.OS === 'android' && page.android ? page.android : page
     const captionKey =
       !showsTimeEntry && page.checkboxCaptionKey
         ? page.checkboxCaptionKey
         : !buddiesEnabled && page.noBuddiesCaptionKey
           ? page.noBuddiesCaptionKey
-          : copy.captionKey
+          : page.captionKey
     return {
       id: page.id,
       icon: page.icon,
       color: theme.colors[page.color],
-      title: i18n.t(copy.titleKey),
+      title: i18n.t(page.titleKey),
       caption: i18n.t(captionKey),
       callout: page.siriPhraseKey
         ? i18n.t('updateReveal_siri_quote', {

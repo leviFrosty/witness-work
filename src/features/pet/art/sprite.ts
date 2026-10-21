@@ -154,8 +154,3 @@ export function petSprite(
     return greyed(px, pose.grey ?? 'none')
   })
 }
-
-/** Drops every memoized sprite (tests, memory warnings). */
-export function clearSpriteCache(): void {
-  cache.clear()
-}

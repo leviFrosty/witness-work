@@ -97,9 +97,9 @@ const ShimmerChar = ({
  * scaling, no translation), so it reads as "something is happening" without
  * jostling the UI or hurting legibility.
  *
- * Built on Reanimated (mirrors `AuroraBorder`'s frame-callback shimmer) and
- * honours Reduce Motion. Mirrors `MyText`'s theming and font-size scaling, so
- * it's a drop-in for any processing / "thinking" label:
+ * Built on Reanimated (a frame-callback shimmer) and honours Reduce Motion.
+ * Mirrors `MyText`'s theming and font-size scaling, so it's a drop-in for any
+ * processing / "thinking" label:
  *
  * ```tsx
  * ;<ShimmerText style={{ fontFamily: theme.fonts.semiBold }}>

@@ -24,9 +24,6 @@ export type { LampId }
 /** Streak level: 0 (unlit) to 5 (radiant). */
 export type LampLevel = 0 | 1 | 2 | 3 | 4 | 5
 
-/** Highest lamp level. */
-export const MAX_LAMP_LEVEL = 5
-
 /** Flame height and radius by level. */
 export const FLAME_HEIGHT: readonly number[] = [0, 2.4, 3.6, 4.8, 6.2, 7.8]
 const FLAME_RADIUS: readonly number[] = [0, 1.2, 1.6, 2, 2.5, 3]

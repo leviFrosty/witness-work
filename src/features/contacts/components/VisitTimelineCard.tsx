@@ -13,10 +13,12 @@ import { formatTime } from '@/lib/dates'
 import Haptics from '@/lib/haptics'
 import i18n from '@/lib/locales'
 import { richTextImages } from '@/lib/richText/inspect'
-import { getNoteDoc, hasNote } from '@/lib/richText/notes'
+import { getNoteDoc, getNoteText, hasNote } from '@/lib/richText/notes'
 import useConversations from '@/stores/conversationStore'
 import { Visit } from '@/types/visit'
+import { visitCardAccessibilityLabel } from '@/features/contacts/lib/visitCardLabel'
 import { visitDayLabel } from '@/features/contacts/lib/visitDates'
+import { visitOutcome } from '@/features/contacts/lib/visitTimeline'
 
 const NOTE_LINES = 3
 
@@ -66,7 +68,13 @@ const VisitTimelineCard = ({
       <ContextMenu
         onPress={open}
         hoverRadius={theme.numbers.borderRadiusLg}
-        accessibilityLabel={dayLabel}
+        accessibilityLabel={visitCardAccessibilityLabel({
+          day: dayLabel,
+          time: formatTime(visit.date),
+          outcome: visitOutcome(visit),
+          note: getNoteText(visit),
+          fields,
+        })}
         // Keep Show more / Show less reachable by screen readers.
         accessible={!canExpand}
         actions={menu}

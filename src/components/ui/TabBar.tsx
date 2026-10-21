@@ -372,9 +372,13 @@ const TabBar = ({ state, descriptors, shortcutHints, ...props }: Props) => {
 
   if (hasSidebar && !sidebarVisible) return null
 
+  // Each layout gets its own key. Otherwise React reuses the sidebar's view
+  // for the floating bar, and Reanimated leaves the sidebar's animated width
+  // on it, squeezing the bar into the corner after a window resize.
   if (hasSidebar) {
     return (
       <Animated.View
+        key='sidebar'
         pointerEvents='box-none'
         style={[
           sidebarWidthStyle,
@@ -572,6 +576,7 @@ const TabBar = ({ state, descriptors, shortcutHints, ...props }: Props) => {
   return (
     <>
       <Animated.View
+        key='bar'
         pointerEvents={hidden ? 'none' : 'box-none'}
         accessibilityElementsHidden={hidden}
         importantForAccessibility={hidden ? 'no-hide-descendants' : 'auto'}

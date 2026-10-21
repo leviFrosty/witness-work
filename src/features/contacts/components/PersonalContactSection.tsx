@@ -27,7 +27,7 @@ import Text from '@/components/ui/MyText'
 import XView from '@/components/ui/layout/XView'
 import { RootStackNavigation } from '@/types/rootStack'
 import { usePreferences } from '@/stores/preferences'
-import { alignInput, alignText } from '@/lib/direction'
+import { alignInput, alignText, ltrIsolate } from '@/lib/direction'
 import { tracking } from '@/lib/tracking'
 
 const phoneIssueKeys = {
@@ -245,7 +245,7 @@ export default function PersonalContactSection({
                         }}
                       >
                         {i18n.t(phoneIssueKeys[formatted.possibility], {
-                          number: formatted.number?.input ?? '',
+                          number: ltrIsolate(formatted.number?.input ?? ''),
                         })}
                       </Text>
                     )}

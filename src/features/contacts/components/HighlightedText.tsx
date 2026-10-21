@@ -5,6 +5,7 @@ import Text from '@/components/ui/MyText'
 import WholeWordsText from '@/components/ui/WholeWordsText'
 import useTheme from '@/contexts/theme'
 import { buildSnippet } from '@/lib/contactsSearch'
+import { LTR_ISOLATE, ltrIsolate, POP_ISOLATE } from '@/lib/direction'
 
 type Props = {
   /**
@@ -29,6 +30,11 @@ type Props = {
    * at accessibility text sizes); see `WholeWordsText`.
    */
   wholeWords?: boolean
+  /**
+   * Keeps Latin-only data (a phone number or email) left to right in a
+   * right-to-left Language, highlight and ellipses included.
+   */
+  ltr?: boolean
 }
 
 /**
@@ -49,6 +55,7 @@ const HighlightedText: React.FC<Props> = ({
   highlightStyle,
   numberOfLines,
   wholeWords,
+  ltr,
 }) => {
   const theme = useTheme()
   const Paragraph = wholeWords ? WholeWordsText : Text
@@ -67,13 +74,14 @@ const HighlightedText: React.FC<Props> = ({
   if (!snippet) {
     return (
       <Paragraph style={baseStyle} numberOfLines={numberOfLines}>
-        {sourceText}
+        {ltr ? ltrIsolate(sourceText) : sourceText}
       </Paragraph>
     )
   }
 
   return (
     <Paragraph style={baseStyle} numberOfLines={numberOfLines}>
+      {ltr ? LTR_ISOLATE : ''}
       {snippet.truncatedStart ? '…' : ''}
       {snippet.segments.map((seg, i) =>
         seg.highlighted ? (
@@ -85,6 +93,7 @@ const HighlightedText: React.FC<Props> = ({
         )
       )}
       {snippet.truncatedEnd ? '…' : ''}
+      {ltr ? POP_ISOLATE : ''}
     </Paragraph>
   )
 }

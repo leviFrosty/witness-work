@@ -3,7 +3,6 @@ import { useState } from 'react'
 import Sheet from '@/components/ui/Sheet'
 import { View } from 'react-native'
 import Switch from '@/components/ui/Switch'
-import upperFirst from 'lodash/upperFirst'
 import useTheme from '@/contexts/theme'
 import Text from '@/components/ui/MyText'
 import Empty from '@/components/ui/Empty'
@@ -13,7 +12,10 @@ import Divider from '@/components/ui/Divider'
 import i18n from '@/lib/locales'
 import { formatDate, formatDateTime } from '@/lib/dates'
 import { WarningLine } from '@/features/notes-import/components/NotesImportRecordRow'
-import { visitCountLabel } from '@/features/notes-import/lib/notesImportMessages'
+import {
+  contactDetailLines,
+  visitCountLabel,
+} from '@/features/notes-import/lib/notesImportMessages'
 import type {
   PreviewContactInfo,
   PreviewRow,
@@ -219,26 +221,7 @@ const NotesImportContactDetailsModal = ({
   const allVisitsSelected =
     visitIds.length > 0 && visitIds.every((id) => selection.ids.has(id))
 
-  const details: { label: string; value: string }[] = group?.info
-    ? [
-        group.info.phone && {
-          label: i18n.t('notesImport_detailPhone'),
-          value: group.info.phone,
-        },
-        group.info.email && {
-          label: i18n.t('notesImport_detailEmail'),
-          value: group.info.email,
-        },
-        group.info.addressLine && {
-          label: i18n.t('notesImport_detailAddress'),
-          value: group.info.addressLine,
-        },
-        group.info.gender && {
-          label: i18n.t('notesImport_detailGender'),
-          value: upperFirst(group.info.gender),
-        },
-      ].filter((d): d is { label: string; value: string } => !!d)
-    : []
+  const details = contactDetailLines(group?.info)
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>

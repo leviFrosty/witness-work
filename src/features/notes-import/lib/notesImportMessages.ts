@@ -1,8 +1,11 @@
 import { Platform } from 'react-native'
+import upperFirst from 'lodash/upperFirst'
 import i18n, { type TranslationKey } from '@/lib/locales'
+import { ltrIsolate } from '@/lib/direction'
 import type { ImportCommitResult } from '@/lib/import/writeMappedData'
 import type { NotesImportErrorCode } from '@/features/notes-import/lib/notesImportClient'
 import type { NotesImportResult } from '@/features/notes-import/lib/notesImportTypes'
+import type { PreviewContactInfo } from '@/features/notes-import/lib/buildNotesImportPreview'
 
 /**
  * What Notes Import needs on a device that can't be verified: the account's own
@@ -126,3 +129,35 @@ export const notesImportCommitCountsLine = (
 /** Pluralized "N visit(s)" label. */
 export const visitCountLabel = (count: number): string =>
   countLabel('visit', count)
+
+/**
+ * The imported contact's fields as the details sheet lists them. Phone and
+ * email stay left to right in a right-to-left Language ("+1 415 555 0134",
+ * never "0134 555 415 1+").
+ */
+export const contactDetailLines = (
+  info: PreviewContactInfo | undefined
+): { label: string; value: string }[] => {
+  if (!info) return []
+  const lines = [
+    info.phone && {
+      label: i18n.t('notesImport_detailPhone'),
+      value: ltrIsolate(info.phone),
+    },
+    info.email && {
+      label: i18n.t('notesImport_detailEmail'),
+      value: ltrIsolate(info.email),
+    },
+    info.addressLine && {
+      label: i18n.t('notesImport_detailAddress'),
+      value: info.addressLine,
+    },
+    info.gender && {
+      label: i18n.t('notesImport_detailGender'),
+      value: upperFirst(info.gender),
+    },
+  ]
+  return lines.filter(
+    (line): line is { label: string; value: string } => !!line
+  )
+}

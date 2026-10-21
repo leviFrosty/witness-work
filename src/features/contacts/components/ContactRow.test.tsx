@@ -151,6 +151,23 @@ describe('ContactRow', () => {
     ).toBe('Jane Doe, Follow-up today, 12 Oak Street')
   })
 
+  it('keeps a phone or email search match left to right', () => {
+    const snippetFor = (key: string, value: string) =>
+      render(
+        <ContactRow
+          contact={contact}
+          index={index()}
+          searchMatches={[{ key, value, indices: [[0, 2]] }]}
+        />
+      )
+        .findAllByType('HighlightedText' as never)
+        .find((t) => t.props.text === value)!.props
+    expect(snippetFor('contact.phone', '+1 415 555 0134').ltr).toBe(true)
+    expect(snippetFor('contact.email', 'ada@example.com').ltr).toBe(true)
+    // An address can be written in a right-to-left script; it keeps its own.
+    expect(snippetFor('contact.address.line1', '12 Oak Street').ltr).toBe(false)
+  })
+
   it('labels the checkbox the same way in Select mode', () => {
     const root = render(
       <ContactRow contact={contact} index={index()} selectionMode checked />

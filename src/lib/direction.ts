@@ -79,12 +79,20 @@ export function leftForPhysicalX(
   return isRtlLayout() ? containerWidth - x - width : x
 }
 
+/** Opens a left-to-right isolate (LRI); {@link POP_ISOLATE} closes it. */
+export const LTR_ISOLATE = '⁦'
+
+/** Closes a directional isolate (PDI). */
+export const POP_ISOLATE = '⁩'
+
 /**
  * Keeps Latin-only data (a phone number, email or URL) in its own left-to-right
  * order inside a right-to-left paragraph, where "+1 415 555" would otherwise
  * read "555 415 1+". Wraps it in Unicode isolates (LRI…PDI), so use it for
- * display only, never for stored or copied values.
+ * display only, never for stored or copied values. Text split across styled
+ * spans puts {@link LTR_ISOLATE} before the first and {@link POP_ISOLATE} after
+ * the last.
  */
 export function ltrIsolate(text: string): string {
-  return `⁦${text}⁩`
+  return `${LTR_ISOLATE}${text}${POP_ISOLATE}`
 }

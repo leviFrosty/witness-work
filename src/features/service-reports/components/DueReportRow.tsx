@@ -23,8 +23,9 @@ import { reportMonthKey } from '@/features/service-reports/lib/monthReportExport
  */
 const DueReportRow = ({ month, year }: { month: number; year: number }) => {
   const theme = useTheme()
-  // At accessibility text sizes the label takes the send icon's room, so a
-  // long month name ("September's") still fits on a line.
+  // At accessibility text sizes the label takes the send icon's and the
+  // chevron's room, so a long month name ("September's") still fits on a line
+  // at the largest size. The tinted, bordered row still reads as tappable.
   const largeText = useAccessibilityTextSize()
   const navigation = useNavigation<RootStackNavigation>()
   const markReportSubmitted = usePreferences((s) => s.markReportSubmitted)
@@ -83,11 +84,13 @@ const DueReportRow = ({ month, year }: { month: number; year: number }) => {
         >
           {label}
         </Text>
-        <LucideIcon
-          icon={ChevronForwardIcon}
-          size={16}
-          color={theme.colors.accent}
-        />
+        {largeText ? null : (
+          <LucideIcon
+            icon={ChevronForwardIcon}
+            size={16}
+            color={theme.colors.accent}
+          />
+        )}
       </View>
     </ContextMenu>
   )

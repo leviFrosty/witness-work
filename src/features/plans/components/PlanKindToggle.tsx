@@ -7,6 +7,9 @@ import Button from '@/components/ui/Button'
 import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
+import useAccessibilityTextSize, {
+  FIT_ONE_LINE,
+} from '@/hooks/useAccessibilityTextSize'
 import i18n from '@/lib/locales'
 
 /** One Time / Recurring, at the top of the Plan form's dock. */
@@ -15,6 +18,9 @@ const PlanKindToggle = (props: {
   setOneTime: (oneTime: boolean) => void
 }) => {
   const theme = useTheme()
+  // At accessibility text sizes each half is too narrow for its icon and
+  // label: the decorative icon goes, and the label shrinks onto one line.
+  const largeText = useAccessibilityTextSize()
   const option = (oneTime: boolean, icon: AppIcon, label: string) => {
     const active = props.oneTime === oneTime
     const color = active ? theme.colors.accent : theme.colors.text
@@ -39,8 +45,13 @@ const PlanKindToggle = (props: {
           borderColor: theme.colors.accent,
         }}
       >
-        <LucideIcon icon={icon} size={16} color={color} />
-        <Text style={{ color }}>{label}</Text>
+        {!largeText && <LucideIcon icon={icon} size={16} color={color} />}
+        <Text
+          {...(largeText ? FIT_ONE_LINE : undefined)}
+          style={{ color, flexShrink: 1 }}
+        >
+          {label}
+        </Text>
       </Button>
     )
   }

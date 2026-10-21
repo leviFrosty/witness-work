@@ -1,5 +1,5 @@
 import moment from 'moment'
-import i18n, { TranslationKey } from '@/lib/locales'
+import i18n from '@/lib/locales'
 import { addressToString } from '@/lib/addressToString'
 import {
   followUpAnswer,
@@ -12,6 +12,7 @@ import {
   localizeDisplayDate,
 } from '@/lib/dates'
 import { formatMinutesCompact } from '@/lib/minutes'
+import { categoryLabel } from '@/lib/planTypeLabel'
 import {
   combineDateAndStartTime,
   isStoredDateOnLocalDay,
@@ -177,11 +178,7 @@ function planItems(
     const category = plan.categoryId
       ? categoriesById.get(plan.categoryId)
       : undefined
-    return category
-      ? i18n.t(category.name as TranslationKey, {
-          defaultValue: category.name,
-        })
-      : i18n.t('plan')
+    return category ? categoryLabel(category) : i18n.t('plan')
   }
 
   const items: WatchUpNextItem[] = []

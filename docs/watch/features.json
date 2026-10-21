@@ -364,8 +364,11 @@
       "id": "add-time.type",
       "area": "Add Time",
       "title": "Type",
-      "description": "When the user has Types (Categories), a Type picker offers Standard and each Type; a Type deleted before the entry arrives is saved as Standard.",
-      "shared": ["src/app/watch/planWatchEntries.ts#categoryRemoved"],
+      "description": "When the user has Types (Categories), a Type picker offers Standard and each Type, named as the phone names it (LDC in the app's language); a Type deleted before the entry arrives is saved as Standard.",
+      "shared": [
+        "src/app/watch/planWatchEntries.ts#categoryRemoved",
+        "src/app/watch/buildWatchSnapshot.ts#categoryLabel"
+      ],
       "watchos": {
         "status": "implemented",
         "paths": ["targets/watch/AddTimeView.swift#Picker(L10n.t(\"type\""]

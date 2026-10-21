@@ -20,6 +20,10 @@ vi.mock('expo-localization', () => ({
 
 import { buildUpNext, BuildUpNextArgs } from '@/app/watch/buildUpNext'
 import { normalizeDateForStorage } from '@/lib/normalizeDate'
+import {
+  LDC_BUILTIN_CATEGORY_ID,
+  makeLdcBuiltinCategory,
+} from '@/constants/categories'
 import { RecurringPlanFrequencies } from '@/types/timeEntry'
 import type { Contact } from '@/types/contact'
 import type { Visit } from '@/types/visit'
@@ -173,6 +177,18 @@ describe('buildUpNext', () => {
       { title: 'plan', detail: null },
     ])
     expect(items[0]).toMatchObject({ durationText: '2h', timeText: '2:00 PM' })
+  })
+
+  it('names an LDC Plan as the app does, in its language', () => {
+    const [item] = buildUpNext(
+      args({
+        categories: [makeLdcBuiltinCategory(0)],
+        dayPlans: [dayPlan('ldc', 6, { categoryId: LDC_BUILTIN_CATEGORY_ID })],
+      })
+    )
+
+    // The `ldc` string, not the stored English name, which isn't a key.
+    expect(item.title).toBe('ldc')
   })
 
   it('treats a Plan without a time as spanning its day, never noon', () => {

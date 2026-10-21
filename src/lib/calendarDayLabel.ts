@@ -18,6 +18,14 @@ export type CalendarDayFacts = {
 }
 
 /**
+ * A part's template ends its sentence with a period, which doubles when the
+ * value already ends in one, as German's "2 Std." does ("Planned 2 Std..").
+ * Keeps an ellipsis as it is.
+ */
+const singleFullStop = (part: string): string =>
+  part.replace(/(^|[^.])\.\.(?!\.)/g, '$1.')
+
+/**
  * One label for a calendar day, so a screen reader hears what the square's
  * colors, border and dots show: "Tuesday, March 12, 2026. Today. Logged 2h.
  * Planned 3h. Has a note." Each part is its own sentence from the locale, so
@@ -56,5 +64,5 @@ export const calendarDayAccessibilityLabel = (
   if (facts.extra) {
     parts.push(i18n.t('scheduleCalendar.dayLabelExtra', { text: facts.extra }))
   }
-  return parts.join(' ')
+  return parts.map(singleFullStop).join(' ')
 }

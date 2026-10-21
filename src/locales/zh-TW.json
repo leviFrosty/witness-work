@@ -2119,7 +2119,7 @@
   "onPace": "按步就班",
   "hrsShort": "不足 {{value}}",
   "hoursLeftValue": "剩餘 {{value}}",
-  "goalLabel": "目標: {{value}} 小時",
+  "goalLabel": "目標: {{value}}",
   "monthsLeft": "剩餘 {{count}} 個月",
   "vsLastMonthUp": "↑ 較上月 {{value}}",
   "vsLastMonthDown": "↓ 較上月 {{value}}",

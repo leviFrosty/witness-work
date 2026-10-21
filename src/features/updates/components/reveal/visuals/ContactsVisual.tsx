@@ -166,8 +166,10 @@ const ContactsVisual = ({
             height={13}
             color={withAlpha(palette.text, 0xcc)}
           />
+          {/* Longer translations shrink both labels a little rather than
+              cutting one off. */}
           <View style={{ flexDirection: 'row', gap: 8, marginTop: 2 }}>
-            <Animated.View style={pressStyle}>
+            <Animated.View style={[{ flexShrink: 1 }, pressStyle]}>
               <View
                 style={{
                   height: 30,
@@ -186,7 +188,12 @@ const ContactsVisual = ({
                   color={theme.colors.textInverse}
                 />
                 <VisualText
-                  style={{ fontSize: 12, color: theme.colors.textInverse }}
+                  minimumFontScale={0.75}
+                  style={{
+                    flexShrink: 1,
+                    fontSize: 12,
+                    color: theme.colors.textInverse,
+                  }}
                 >
                   {i18n.t('logVisit')}
                 </VisualText>
@@ -216,6 +223,7 @@ const ContactsVisual = ({
                 color={theme.colors.accent}
               />
               <VisualText
+                minimumFontScale={0.75}
                 style={{
                   flexShrink: 1,
                   fontSize: 12,

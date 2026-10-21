@@ -1362,7 +1362,7 @@
   "onPace": "Pa nshita",
   "hrsShort": "Kwacepa {{value}}",
   "hoursLeftValue": "Kwashala {{value}}",
-  "goalLabel": "Icalandwilwe: {{value}} ama-awala",
+  "goalLabel": "Icalandwilwe: {{value}}",
   "monthsLeft": "{{count}} imyeshi yashala",
   "vsLastMonthUp": "↑ {{value}} ukulinganya no mweshi wa kunuma",
   "vsLastMonthDown": "↓ {{value}} ukulinganya no mweshi wa kunuma",

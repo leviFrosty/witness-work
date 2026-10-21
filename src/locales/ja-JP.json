@@ -2119,7 +2119,7 @@
   "onPace": "ペース",
   "hrsShort": "{{value}}不足",
   "hoursLeftValue": "残り{{value}}",
-  "goalLabel": "目標：{{value}} 時間",
+  "goalLabel": "目標：{{value}}",
   "monthsLeft": "{{count}} 残り月数",
   "vsLastMonthUp": "↑ 先月比 {{value}}",
   "vsLastMonthDown": "↓ 先月比 {{value}}",

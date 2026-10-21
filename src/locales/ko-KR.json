@@ -2119,7 +2119,7 @@
   "onPace": "속도에 맞춰",
   "hrsShort": "{{value}} 부족",
   "hoursLeftValue": "{{value}} 남음",
-  "goalLabel": "목표: {{value}} 시간",
+  "goalLabel": "목표: {{value}}",
   "monthsLeft": "{{count}}개월 남음",
   "vsLastMonthUp": "↑ 지난달 대비 {{value}}",
   "vsLastMonthDown": "↓ 지난달 대비 {{value}}",

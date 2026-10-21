@@ -2119,7 +2119,7 @@
   "onPace": "Kwenye mwendo",
   "hrsShort": "Upungufu wa {{value}}",
   "hoursLeftValue": "Zimesalia {{value}}",
-  "goalLabel": "Lengo: Saa {{value}}",
+  "goalLabel": "Lengo: {{value}}",
   "monthsLeft": "Miezi {{count}} iliyobaki",
   "vsLastMonthUp": "↑ {{value}} ikilinganishwa na mwezi uliopita",
   "vsLastMonthDown": "↓ {{value}} ikilinganishwa na mwezi uliopita",

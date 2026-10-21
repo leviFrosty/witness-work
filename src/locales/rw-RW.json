@@ -2119,7 +2119,7 @@
   "onPace": "Uri ku murongo",
   "hrsShort": "Haburaho {{value}}",
   "hoursLeftValue": "Hasigaye {{value}}",
-  "goalLabel": "Intego: {{value}} h",
+  "goalLabel": "Intego: {{value}}",
   "monthsLeft": "Amezi {{count}} asigaye",
   "vsLastMonthUp": "↑ {{value}} ugereranyije n'ukwezi gushize",
   "vsLastMonthDown": "↓ {{value}} ugereranyije n'ukwezi gushize",

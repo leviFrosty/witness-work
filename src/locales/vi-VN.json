@@ -2119,7 +2119,7 @@
   "onPace": "Đúng tiến độ",
   "hrsShort": "Thiếu {{value}}",
   "hoursLeftValue": "Còn {{value}}",
-  "goalLabel": "Mục tiêu: {{value}} giờ",
+  "goalLabel": "Mục tiêu: {{value}}",
   "monthsLeft": "Còn {{count}} tháng",
   "vsLastMonthUp": "↑ {{value}} so với tháng trước",
   "vsLastMonthDown": "↓ {{value}} so với tháng trước",

@@ -2119,7 +2119,7 @@
   "onPace": "Sur le rythme",
   "hrsShort": "{{value}} sous l’objectif",
   "hoursLeftValue": "Reste {{value}}",
-  "goalLabel": "Objectif : {{value}} heures",
+  "goalLabel": "Objectif : {{value}}",
   "monthsLeft": "{{count}} mois restants",
   "vsLastMonthUp": "↑ {{value}} par rapport au mois dernier",
   "vsLastMonthDown": "↓ {{value}} par rapport au mois dernier",

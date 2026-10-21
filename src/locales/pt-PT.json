@@ -1362,7 +1362,7 @@
   "onPace": "No ritmo",
   "hrsShort": "Faltaram {{value}}",
   "hoursLeftValue": "Faltam {{value}}",
-  "goalLabel": "Objetivo: {{value}} horas",
+  "goalLabel": "Objetivo: {{value}}",
   "monthsLeft": "{{count}} meses restantes",
   "vsLastMonthUp": "↑ {{value}} em relação ao mês anterior",
   "vsLastMonthDown": "↓ {{value}} em relação ao mês anterior",

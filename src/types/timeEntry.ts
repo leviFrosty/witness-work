@@ -213,11 +213,17 @@ export type DayPlan = {
   updatedAt?: number
 }
 
+/**
+ * Stored on every Recurring Plan and synced as a number, so each value is
+ * persisted: never renumber or reorder them. A new frequency takes the next
+ * number, and older builds drop a Plan with a number they don't know
+ * (`src/app/sync/payloadValidation.ts`).
+ */
 export enum RecurringPlanFrequencies {
-  WEEKLY,
-  BI_WEEKLY,
-  MONTHLY,
-  MONTHLY_BY_WEEKDAY,
+  WEEKLY = 0,
+  BI_WEEKLY = 1,
+  MONTHLY = 2,
+  MONTHLY_BY_WEEKDAY = 3,
 }
 
 // For monthly by weekday patterns (e.g., "first Monday of the month")

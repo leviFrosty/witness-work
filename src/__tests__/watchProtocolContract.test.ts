@@ -26,6 +26,10 @@ import {
   BuildWatchSnapshotArgs,
 } from '@/app/watch/buildWatchSnapshot'
 import { normalizeDateForStorage } from '@/lib/normalizeDate'
+import {
+  LDC_BUILTIN_CATEGORY_ID,
+  makeLdcBuiltinCategory,
+} from '@/constants/categories'
 import type { Contact } from '@/types/contact'
 
 /**
@@ -173,5 +177,16 @@ describe('watch protocol contract', () => {
   it('sends the month total with its unit, as the phone shows it', () => {
     // 12.5 Standard hours plus the 4 LDC credit hours.
     expect(buildWatchSnapshot(args('ios')).monthFormatted).toBe('16.5 Hrs')
+  })
+
+  it('names the LDC Type in the app’s language, as the phone does', () => {
+    const snapshot = buildWatchSnapshot({
+      ...args('android'),
+      categories: [makeLdcBuiltinCategory(0)],
+    })
+    // The `ldc` string, not the stored English name.
+    expect(snapshot.categories).toEqual([
+      { id: LDC_BUILTIN_CATEGORY_ID, name: 'ldc', isCredit: true },
+    ])
   })
 })

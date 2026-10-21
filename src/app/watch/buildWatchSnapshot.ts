@@ -3,6 +3,7 @@ import i18n, { TranslationKey } from '@/lib/locales'
 import { formatMinutes, formatMinutesCompact } from '@/lib/minutes'
 import { plannedMinutesThroughEachDayOfMonth } from '@/lib/recurrence'
 import { resolveMonthlyGoalHours } from '@/lib/monthlyGoals'
+import { categoryLabel } from '@/lib/planTypeLabel'
 import {
   buildReport,
   BuildReportArgs,
@@ -209,10 +210,11 @@ export function buildWatchSnapshot(
       categories: args.categories,
       includePlans: args.showsTimeEntry,
     }),
-    categories: args.categories.map(({ id, name, isCredit }) => ({
-      id,
-      name,
-      isCredit,
+    // Named as the phone shows them, so LDC is in the app's language.
+    categories: args.categories.map((category) => ({
+      id: category.id,
+      name: categoryLabel(category),
+      isCredit: category.isCredit,
     })),
     mileage: {
       enabled: args.mileageTrackingEnabled !== false,

@@ -1,8 +1,10 @@
 const { withAppDelegate } = require('@expo/config-plugins')
 
 /**
- * Retains our local Expo modules (WidgetBridge, StopwatchBridge) in the main
- * app binary by referencing them directly from AppDelegate.swift.
+ * Retains our local Expo modules (WidgetBridge, StopwatchBridge, and every
+ * other module under `modules/` with iOS code) in the main app binary by
+ * referencing them directly from AppDelegate.swift. A test checks that each one
+ * is listed.
  *
  * ## Background
  *
@@ -37,6 +39,9 @@ const LOCAL_MODULES = [
   { importName: 'BuddiesKeychain', className: 'BuddiesKeychainModule' },
   { importName: 'PlaceSearch', className: 'PlaceSearchModule' },
   { importName: 'WatchBridge', className: 'WatchBridgeModule' },
+  { importName: 'DeviceSecrets', className: 'DeviceSecretsModule' },
+  { importName: 'PointerStyle', className: 'PointerStyleModule' },
+  { importName: 'SystemMenu', className: 'SystemMenuModule' },
   {
     importName: 'AppSwitcherPrivacy',
     className: 'AppSwitcherPrivacyModule',
@@ -122,3 +127,5 @@ module.exports = function withForceLoadLocalModules(config) {
     return config
   })
 }
+
+module.exports.LOCAL_MODULES = LOCAL_MODULES

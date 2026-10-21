@@ -3174,6 +3174,12 @@
     "author": "650 Industries, Inc."
   },
   {
+    "name": "expo-navigation-bar",
+    "version": "57.0.3",
+    "license": "MIT",
+    "author": "650 Industries, Inc."
+  },
+  {
     "name": "expo-network",
     "version": "57.0.2",
     "license": "MIT",

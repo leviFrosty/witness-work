@@ -10,6 +10,7 @@ import InputRowContainer from '@/components/ui/inputs/InputRowContainer'
 import MyTextInput, { TextInputProps } from '@/components/ui/TextInput'
 import { Errors } from '@/types/textInput'
 import useTheme from '@/contexts/theme'
+import useAccessibilityTextSize from '@/hooks/useAccessibilityTextSize'
 import { alignText } from '@/lib/direction'
 
 interface TextInputRowProps {
@@ -51,6 +52,9 @@ const TextInputRow: React.ForwardRefExoticComponent<
   ) => {
     const theme = useTheme()
     const error = id && errors ? errors[id] : undefined
+    // At accessibility text sizes the field sits under its label, so its text
+    // starts where the label does.
+    const align = useAccessibilityTextSize() ? 'start' : 'end'
 
     const innerRef = useRef<RNTextInput>(null)
     useImperativeHandle(ref, () => innerRef.current as RNTextInput)
@@ -78,7 +82,7 @@ const TextInputRow: React.ForwardRefExoticComponent<
             placeholderTextColor={theme.colors.textAlt}
             onChangeText={() => setErrors?.({ ...errors, [id || '']: '' })}
             hitSlop={{ top: 20, bottom: 20 }}
-            textAlign='end'
+            textAlign={align}
             clearButtonMode='while-editing'
             enterKeyHint='next'
             {...textInputProps}
@@ -88,7 +92,7 @@ const TextInputRow: React.ForwardRefExoticComponent<
               style={{
                 color: theme.colors.error,
                 fontFamily: theme.fonts.semiBold,
-                textAlign: alignText('end'),
+                textAlign: alignText(align),
                 fontSize: 12,
               }}
             >

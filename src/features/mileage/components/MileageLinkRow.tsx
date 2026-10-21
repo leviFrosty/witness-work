@@ -38,6 +38,8 @@ export default function MileageLinkRow({
           leftIcon={leftIcon}
           lastInSection={lastInSection}
           controlWidth='auto'
+          // A lone chevron fits beside any label; a value moves under it.
+          inlineAtLargeText={!value}
         >
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
             {value ? (

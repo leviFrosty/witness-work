@@ -1017,6 +1017,7 @@ const PreferencesiCloudScreenInner = () => {
             <InputRowContainer
               label={i18n.t(syncKey('iCloudEnableLabel'))}
               controlWidth='auto'
+              inlineAtLargeText
               style={{ justifyContent: 'space-between' }}
             >
               <View
@@ -1252,6 +1253,7 @@ const PreferencesiCloudScreenInner = () => {
               <InputRowContainer
                 label={i18n.t(syncKey('iCloudImagesToggleLabel'))}
                 controlWidth='auto'
+                inlineAtLargeText
                 style={{ justifyContent: 'space-between' }}
                 lastInSection={googleDrive}
               >

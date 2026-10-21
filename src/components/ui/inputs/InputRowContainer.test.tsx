@@ -22,6 +22,7 @@ vi.mock('@/hooks/useAccessibilityTextSize', () => ({
   default: () => largeText.value,
 }))
 vi.mock('@/components/ui/MyText', () => ({ default: 'Text' }))
+vi.mock('@/components/ui/WholeWordsText', () => ({ default: 'Text' }))
 vi.mock('@/components/ui/InfoPopover', () => ({ default: 'InfoPopover' }))
 vi.mock('@/components/ui/LucideIcon', () => ({ default: 'LucideIcon' }))
 vi.mock('@/components/ui/Switch', () => ({ default: 'Switch' }))

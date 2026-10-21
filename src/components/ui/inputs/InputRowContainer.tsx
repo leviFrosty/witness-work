@@ -9,6 +9,7 @@ import { Pressable, StyleProp, View, ViewStyle } from 'react-native'
 import useTheme from '@/contexts/theme'
 import useAccessibilityTextSize from '@/hooks/useAccessibilityTextSize'
 import Text from '@/components/ui/MyText'
+import WholeWordsText from '@/components/ui/WholeWordsText'
 import InfoPopover from '@/components/ui/InfoPopover'
 import LucideIcon from '@/components/ui/LucideIcon'
 import Switch from '@/components/ui/Switch'
@@ -108,7 +109,9 @@ const InputRowContainer: React.FC<
         />
       )}
       {label && (
-        <Text
+        // A long compound word (German «Kraftstoffverbrauch») shrinks to fit
+        // the label's column instead of breaking in two.
+        <WholeWordsText
           style={{
             flexDirection: 'column',
             gap: 10,
@@ -118,7 +121,7 @@ const InputRowContainer: React.FC<
           }}
         >
           {label}
-        </Text>
+        </WholeWordsText>
       )}
       {required && (
         <Text

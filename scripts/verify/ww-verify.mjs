@@ -2592,6 +2592,9 @@ function ensureSession(state, platform) {
   ])
 }
 
+/** True when an agent-device command targets a snapshot ref (`@e12`, `@e12~s3`). */
+export const actsOnRef = (args) => args.some((a) => /^@e\d+(~s\d+)?$/.test(a))
+
 /**
  * Scripted runs (replay/test) select a device explicitly; session commands
  * don't.
@@ -3151,7 +3154,11 @@ const commands = {
         : raw
     const state = requireUp()
     const platform = currentPlatform(state, { platform: platformFlag })
-    if (!['open', 'close'].includes(args[0])) ensureSession(state, platform)
+    // `open` counts as a device action, so it expires every ref the last
+    // snapshot minted. A command that acts on a ref came right after that
+    // snapshot in this session, so the app is already open.
+    if (!['open', 'close'].includes(args[0]) && !actsOnRef(args))
+      ensureSession(state, platform)
     if (DRIVEN.has(args[0]) || args.includes('--settle')) {
       const result = drive(state, platform, args)
       if (result.stdout)

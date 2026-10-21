@@ -1,0 +1,28 @@
+# seed: pioneer
+# assert: __WW_DEV__.state().route.name === 'FAQ'
+appId: com.leviwilkerson.jwtimedev
+name: Open the Help Center, expand a top question, then search and expand a result
+---
+- extendedWaitUntil:
+    visible: Home
+    timeout: 60000
+- tapOn: Account and settings
+- tapOn: Help Center
+- assertVisible: Top Questions
+# A native disclosure (SwiftUI DisclosureGroup on iOS) exposes its question
+# twice, as the group and as its header, so `index: 0` takes the first rather
+# than failing on an ambiguous match.
+- tapOn:
+    text: How are Bible studies counted?
+    index: 0
+- assertVisible: Studies are tracked per contact
+# The search field has only a placeholder, no label to select by.
+- tapOn:
+    text: Search questions
+    index: 0
+- inputText: mileage sync
+- assertVisible: Does my mileage sync, and does it work on Android?
+- tapOn:
+    text: Does my mileage sync, and does it work on Android?
+    index: 0
+- assertVisible: Mileage works on iOS and Android

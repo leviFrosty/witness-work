@@ -930,6 +930,17 @@ test('androidUnlockStep: storage first, then the lock screen', async () => {
   assert.equal(androidUnlockStep('State: RUNNING_UNLOCKED', hidden), null)
 })
 
+test('actsOnRef: ref commands skip the open that would expire their ref', async () => {
+  const { actsOnRef } = await import(VERIFY)
+  assert.equal(actsOnRef(['press', '@e12']), true)
+  assert.equal(actsOnRef(['press', '@e12~s174355', '--settle']), true)
+  assert.equal(actsOnRef(['fill', '@e8', 'sync']), true)
+  assert.equal(actsOnRef(['press', 'label="Help Center"']), false)
+  assert.equal(actsOnRef(['press', '187', '458']), false)
+  assert.equal(actsOnRef(['press', '@a4']), false)
+  assert.equal(actsOnRef(['snapshot', '-i']), false)
+})
+
 /**
  * An emulator for unlockAndroid: `locksettings verify` unlocks the storage; the
  * lock screen drops the first `ignoredPins` PINs typed (as it does right after

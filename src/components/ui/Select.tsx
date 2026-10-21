@@ -3,6 +3,7 @@ import LucideIcon from '@/components/ui/LucideIcon'
 import { StyleProp, View, ViewStyle } from 'react-native'
 import SelectMenu from '@/components/ui/SelectMenu'
 import useTheme from '@/contexts/theme'
+import useAccessibilityTextSize from '@/hooks/useAccessibilityTextSize'
 import Text from '@/components/ui/MyText'
 import { inputLayout } from '@/components/ui/inputs/InputLayout'
 
@@ -32,6 +33,9 @@ const Select = <T,>({
   accessibilityLabel,
 }: SelectProps<T>) => {
   const theme = useTheme()
+  // At accessibility text sizes a long value wraps whole instead of truncating
+  // ("Auto (Mil…").
+  const largeText = useAccessibilityTextSize()
 
   // Native menus key options by string id. Stringify both sides and map back to
   // the original item on selection so callers receive the untouched object.
@@ -69,6 +73,7 @@ const Select = <T,>({
             paddingHorizontal: 12,
             borderRadius: theme.numbers.borderRadiusMd,
             minHeight: inputLayout.controlMinHeight,
+            paddingVertical: largeText ? 8 : undefined,
             gap: 8,
             flexDirection: 'row',
             alignItems: 'center',
@@ -78,7 +83,7 @@ const Select = <T,>({
         ]}
       >
         <Text
-          numberOfLines={1}
+          numberOfLines={largeText ? undefined : 1}
           style={{
             color: theme.colors.text,
             fontSize: theme.fontSize('md'),

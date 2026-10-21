@@ -19,6 +19,9 @@ import LucideIcon from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
 import PointerHover, { HoverTint } from '@/components/ui/PointerHover'
 import useTheme from '@/contexts/theme'
+import useAccessibilityTextSize, {
+  FIT_ONE_LINE,
+} from '@/hooks/useAccessibilityTextSize'
 import { addressToString, coordinateAsString } from '@/lib/address'
 import i18n from '@/lib/locales'
 import { contactMapLinks } from '@/lib/mapLinks'
@@ -63,6 +66,9 @@ const ContactReachCard = ({
   onNavigate,
 }: Props) => {
   const theme = useTheme()
+  // At accessibility text sizes the action names shrink to their equal-width
+  // buttons instead of truncating ("Na…").
+  const fitActionLabel = useAccessibilityTextSize() ? FIT_ONE_LINE : undefined
   const { showContactPhone, showContactEmail } = usePreferences()
   const [expanded, setExpanded] = useState(false)
   const [summaryHovered, setSummaryHovered] = useState(false)
@@ -363,6 +369,7 @@ const ContactReachCard = ({
               />
               <Text
                 numberOfLines={1}
+                {...fitActionLabel}
                 style={{
                   fontSize: theme.fontSize('xs') + 1,
                   fontFamily: theme.fonts.semiBold,

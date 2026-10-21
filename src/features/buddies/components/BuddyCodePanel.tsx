@@ -10,6 +10,7 @@ import LucideIcon from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
 import XView from '@/components/ui/layout/XView'
 import useTheme from '@/contexts/theme'
+import useAccessibilityTextSize from '@/hooks/useAccessibilityTextSize'
 import i18n from '@/lib/locales'
 import useFullBrightness from '@/hooks/useFullBrightness'
 import BuddiesSection from '@/features/buddies/components/BuddiesSection'
@@ -95,6 +96,9 @@ export default function BuddyCodePanel({
   onClosed: () => void
 }) {
   const theme = useTheme()
+  // At accessibility text sizes the hint takes the full width, so "WitnessWork"
+  // keeps to one line.
+  const largeText = useAccessibilityTextSize()
   const [code, setCode] = useState<CodeState>({ state: 'loading' })
   const [attempt, setAttempt] = useState(0)
   const outgoingInvites = useBuddies((state) => state.outgoingInvites)
@@ -170,6 +174,7 @@ export default function BuddyCodePanel({
   }
 
   const linkButton = {
+    flexShrink: 1,
     flexDirection: 'row' as const,
     alignItems: 'center' as const,
     gap: 8,
@@ -179,6 +184,7 @@ export default function BuddyCodePanel({
     backgroundColor: theme.colors.accentTranslucent,
   }
   const linkButtonText = {
+    flexShrink: 1,
     color: theme.colors.accent,
     fontFamily: theme.fonts.semiBold,
   }
@@ -232,7 +238,12 @@ export default function BuddyCodePanel({
               />
             </View>
           </ContextMenu>
-          <Text style={{ textAlign: 'center', maxWidth: 300 }}>
+          <Text
+            style={{
+              textAlign: 'center',
+              maxWidth: largeText ? undefined : 300,
+            }}
+          >
             {i18n.t('buddies_codeHint')}
           </Text>
           {invite && (
@@ -247,7 +258,11 @@ export default function BuddyCodePanel({
               })}
             </Text>
           )}
-          <XView style={{ gap: 12 }}>
+          {/* At large text sizes Share wraps under Copy Link rather than run
+              both off the screen. */}
+          <XView
+            style={{ gap: 12, flexWrap: 'wrap', justifyContent: 'center' }}
+          >
             <Button onPress={copy} style={linkButton}>
               <LucideIcon
                 icon={CopyIcon}

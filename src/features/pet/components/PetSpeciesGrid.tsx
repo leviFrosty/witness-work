@@ -2,13 +2,19 @@ import { View } from 'react-native'
 import Button from '@/components/ui/Button'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
+import useAccessibilityTextSize, {
+  FIT_ONE_LINE,
+} from '@/hooks/useAccessibilityTextSize'
 import { PET_SPECIES_IDS, type PetSpecies } from '@/types/pet'
 import { speciesName } from '@/features/pet/lib/names'
 import type { PetChoice } from '@/features/pet/lib/pickerSave'
 import PetSpriteTile from '@/features/pet/render/PetSpriteTile'
 import { defaultCoatFor } from '@/types/pet'
 
-/** The five animals in a 3-column grid, each idling; the chosen one ringed. */
+/**
+ * The five animals in a 3-column grid (2 at accessibility text sizes, where the
+ * names shrink to their tile), each idling; the chosen one ringed.
+ */
 export default function PetSpeciesGrid({
   choice,
   onSelect,
@@ -17,6 +23,7 @@ export default function PetSpeciesGrid({
   onSelect: (species: PetSpecies) => void
 }) {
   const theme = useTheme()
+  const largeText = useAccessibilityTextSize()
   return (
     <View style={{ flexDirection: 'row', flexWrap: 'wrap', rowGap: 10 }}>
       {PET_SPECIES_IDS.map((species, i) => {
@@ -24,7 +31,10 @@ export default function PetSpeciesGrid({
         return (
           <View
             key={species}
-            style={{ width: '33.333%', paddingHorizontal: 5 }}
+            style={{
+              width: largeText ? '50%' : '33.333%',
+              paddingHorizontal: 5,
+            }}
           >
             <Button
               accessibilityRole='radio'
@@ -50,6 +60,7 @@ export default function PetSpeciesGrid({
               />
               <Text
                 numberOfLines={1}
+                {...(largeText ? FIT_ONE_LINE : undefined)}
                 style={{
                   fontSize: theme.fontSize('sm'),
                   fontFamily: selected

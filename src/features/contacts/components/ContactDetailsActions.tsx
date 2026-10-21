@@ -6,6 +6,7 @@ import LucideIcon from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
 import PointerHover from '@/components/ui/PointerHover'
 import PullDownMenu from '@/components/ui/PullDownMenu'
+import { MIN_TOUCH_TARGET } from '@/components/ui/touchTarget'
 import useTheme from '@/contexts/theme'
 import useShareContact from '@/features/contacts/hooks/useShareContact'
 import useLogNotAtHome from '@/hooks/useLogNotAtHome'
@@ -119,6 +120,8 @@ export function AddVisitMenu({
   )
 }
 
+const MORE_SIZE = 22
+
 /**
  * Contact Details' toolbar: More (Share…, Edit | Dismiss For ▸, Archive, Delete
  * Permanently…), the favorite star, and "+ Add" as the primary action. Used by
@@ -135,6 +138,7 @@ export default function ContactDetailsActions({
   embedded: boolean
   color: string
 }) {
+  const theme = useTheme()
   const toggleFavoriteContact = useContacts((s) => s.toggleFavoriteContact)
   const share = useShareContact(contact)
   // The pushed screen leaves once its contact is hidden; the iPad pane just
@@ -156,11 +160,18 @@ export default function ContactDetailsActions({
     })
 
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 20 }}>
+    <View
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        // Wide enough for More's frame and the star's to meet.
+        gap: MIN_TOUCH_TARGET - (MORE_SIZE + theme.fontSize()) / 2,
+      }}
+    >
       <PullDownMenu
         accessibilityLabel={i18n.t('moreActions')}
         triggerColor={color}
-        triggerSize={22}
+        triggerSize={MORE_SIZE}
         actions={[
           [
             share && {
@@ -186,7 +197,7 @@ export default function ContactDetailsActions({
         accessibilityLabel={i18n.t(
           contact.isFavorite ? 'removeFromFavorites' : 'addToFavorites'
         )}
-        neighborGap={20}
+        frame
         onPress={() => toggleFavoriteContact(contact.id)}
       />
       <AddVisitMenu contact={contact} navigation={navigation} color={color} />

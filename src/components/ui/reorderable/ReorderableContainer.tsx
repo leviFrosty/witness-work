@@ -17,7 +17,8 @@ import {
   ReorderableGhostContext,
   type WindowPoint,
 } from '@/components/ui/reorderable/context'
-import { cornerInset } from '@/components/ui/reorderable/RemoveBadge'
+import { removeBadgeTargetInset } from '@/components/ui/reorderable/RemoveBadge'
+import { MIN_TOUCH_TARGET } from '@/components/ui/touchTarget'
 import type { ReorderScroller } from '@/components/ui/reorderable/useReorderScroller'
 
 /** How long a finger rests on an item before it lifts. */
@@ -32,8 +33,11 @@ const AUTOSCROLL_SPEED = 14
 const MOVE_COOLDOWN_MS = 220
 const DROP_MS = 200
 const LIFTED_SCALE = 1.04
-/** Touches this close to a remove badge's or resize handle's center are theirs. */
-const BADGE_REACH = 24
+/**
+ * Touches this close to a remove badge's frame or resize handle's center are
+ * theirs. The badge's frame is square, and its reach takes in the jiggle.
+ */
+const BADGE_REACH = MIN_TOUCH_TARGET / 2 + 3
 const HANDLE_REACH = 30
 /** Taps this close to an item aren't on empty space. */
 const ITEM_SLOP = 4
@@ -217,13 +221,13 @@ export default function ReorderableContainer<Id extends string>({
       if (!rect) continue
       next.items.push(rect)
       if (entry.locked) continue
-      const inset = cornerInset(entry.radius)
       if (entry.removable) {
+        const inset = removeBadgeTargetInset(entry.radius)
         next.chrome.push({
           x: rtl ? rect.x + rect.width - inset : rect.x + inset,
           y: rect.y + entry.boxTop + inset,
           reach: BADGE_REACH,
-          square: false,
+          square: true,
         })
       }
       if (entry.resizable) {

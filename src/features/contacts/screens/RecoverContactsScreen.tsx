@@ -20,6 +20,7 @@ import i18n from '@/lib/locales'
 import confirmDestructive from '@/lib/confirmDestructive'
 import Wrapper from '@/components/ui/layout/Wrapper'
 import IconButton from '@/components/ui/IconButton'
+import { MIN_TOUCH_TARGET } from '@/components/ui/touchTarget'
 import { useToastController } from '@tamagui/toast'
 import { isRedactedContactTombstone } from '@/lib/dataProtection'
 import { deleteAvatarFiles } from '@/lib/contactAvatarFiles'
@@ -173,11 +174,12 @@ const RecoverContactsScreen = () => {
         style={{
           flexDirection: 'row',
           alignItems: 'center',
-          gap: 10,
+          // Wide enough for Recover's frame to end where the row's menu starts.
+          gap: (MIN_TOUCH_TARGET - theme.fontSize()) / 2,
         }}
       >
         <IconButton
-          neighborGap={10}
+          frame
           onPress={() => recover([item.id])}
           icon={UndoIcon}
           accessibilityLabel={i18n.t('recover')}

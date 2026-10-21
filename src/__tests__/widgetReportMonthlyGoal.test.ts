@@ -10,6 +10,8 @@ vi.mock('@/stores/preferences', () => ({
 
 import { buildReport, type BuildReportArgs } from '@/app/widgets/buildReport'
 import { monthlyGoalKey } from '@/lib/monthlyGoals'
+import { getStudiesForGivenMonth } from '@/lib/contacts'
+import type { Contact } from '@/types/contact'
 import type { PublisherHours } from '@/types/publisher'
 
 const publisherHours: PublisherHours = {
@@ -20,6 +22,12 @@ const publisherHours: PublisherHours = {
   specialPioneer: 100,
   custom: 50,
 }
+
+const contact = (id: string): Contact => ({
+  id,
+  name: id,
+  createdAt: new Date(2026, 0, 1),
+})
 
 const baseArgs = (): BuildReportArgs => ({
   serviceReports: {
@@ -43,6 +51,7 @@ const baseArgs = (): BuildReportArgs => ({
   timeDisplayFormat: 'decimal',
   dayPlans: [],
   recurringPlans: [],
+  contacts: [],
   conversations: [],
 })
 
@@ -135,6 +144,7 @@ describe('widget month counts', () => {
 
   it("counts the User's own Visits and studies, not a shared contact's", () => {
     const args = baseArgs()
+    args.contacts = [contact('ada'), contact('dee')]
     args.conversations = [
       {
         id: 'own',
@@ -161,6 +171,60 @@ describe('widget month counts', () => {
     const report = buildReport(args)
 
     expect(report.monthConversationCount).toBe(1)
+    expect(report.monthBibleStudyCount).toBe(1)
+  })
+
+  it('leaves Not at Home out of the conversation count', () => {
+    const args = baseArgs()
+    args.contacts = [contact('ada'), contact('bo')]
+    args.conversations = [
+      {
+        id: 'talked',
+        contact: { id: 'ada' },
+        date: new Date(2026, 6, 3, 10),
+        isBibleStudy: false,
+      },
+      {
+        id: 'nobody-home',
+        contact: { id: 'bo' },
+        date: new Date(2026, 6, 4, 10),
+        isBibleStudy: false,
+        notAtHome: true,
+      },
+    ]
+
+    expect(buildReport(args).monthConversationCount).toBe(1)
+  })
+
+  it('counts studies as the Service Report does', () => {
+    const args = baseArgs()
+    // `cy` was archived after this month's study; the report no longer counts
+    // it, so the widget doesn't either.
+    args.contacts = [contact('ada')]
+    args.conversations = [
+      {
+        id: 'ada-study',
+        contact: { id: 'ada' },
+        date: new Date(2026, 6, 3, 10),
+        isBibleStudy: true,
+      },
+      {
+        id: 'cy-study',
+        contact: { id: 'cy' },
+        date: new Date(2026, 6, 4, 10),
+        isBibleStudy: true,
+      },
+    ]
+
+    const report = buildReport(args)
+
+    expect(report.monthBibleStudyCount).toBe(
+      getStudiesForGivenMonth({
+        contacts: args.contacts,
+        conversations: args.conversations,
+        month: new Date(),
+      })
+    )
     expect(report.monthBibleStudyCount).toBe(1)
   })
 })

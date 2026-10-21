@@ -13,6 +13,7 @@ import { dailyPace } from '@/features/progress/lib/progressCardStats'
 import { formatNeededMinutes } from '@/features/progress/components/cards/displayMinutes'
 import { contentHash } from '@/lib/contentHash'
 import { isOwnVisit } from '@/lib/conversations'
+import { getStudiesForGivenMonth } from '@/lib/contacts'
 import i18n, { TranslationKey } from '@/lib/locales'
 import { Publisher, PublisherHours } from '@/types/publisher'
 import { getEntryMode } from '@/lib/publisherCapabilities'
@@ -22,6 +23,7 @@ import {
   TimeEntriesByYear,
 } from '@/types/timeEntry'
 import { Visit } from '@/types/visit'
+import { Contact } from '@/types/contact'
 import {
   resolveMonthlyGoalHours,
   type MonthlyGoalOverrides,
@@ -78,11 +80,15 @@ export type ReportFields = {
   /** Publisher state machine value. Only meaningful when `mode === 'checkbox'`. */
   publisherState: PublisherState
   /**
-   * Number of the User's own conversations recorded this calendar month (not
-   * ones that came with a shared Contact).
+   * Number of the User's own conversations recorded this calendar month: Visits
+   * where someone was home (not Not at Home), and not ones that came with a
+   * shared Contact.
    */
   monthConversationCount: number
-  /** Number of distinct bible studies the User held this calendar month. */
+  /**
+   * Number of distinct bible studies the User held this calendar month, counted
+   * as the Service Report counts them (`getStudiesForGivenMonth`).
+   */
   monthBibleStudyCount: number
 
   /**
@@ -103,6 +109,7 @@ export type BuildReportArgs = {
   timeDisplayFormat: MinuteDisplayFormat
   dayPlans: DayPlan[]
   recurringPlans: RecurringPlan[]
+  contacts: Contact[]
   conversations: Visit[]
 }
 
@@ -304,17 +311,20 @@ export function buildReport(
 
   const monthStart = now.clone().startOf('month')
   const monthEnd = now.clone().endOf('month')
-  const conversationsThisMonth = args.conversations.filter(
+  // A Not at Home is an attempt, not a conversation (CONTEXT.md), as Progress
+  // and Badges count it.
+  const monthConversationCount = args.conversations.filter(
     (c) =>
       isOwnVisit(c) &&
+      !c.notAtHome &&
       moment(c.date).isBetween(monthStart, monthEnd, undefined, '[]')
-  )
-  const monthConversationCount = conversationsThisMonth.length
-  const monthBibleStudyCount = new Set(
-    conversationsThisMonth
-      .filter((c) => c.isBibleStudy)
-      .map((c) => c.contact.id)
-  ).size
+  ).length
+  // The same figure Home's Studies card and the Service Report show.
+  const monthBibleStudyCount = getStudiesForGivenMonth({
+    contacts: args.contacts,
+    conversations: args.conversations,
+    month: now.toDate(),
+  })
 
   return {
     mode: getEntryMode(args.publisher),

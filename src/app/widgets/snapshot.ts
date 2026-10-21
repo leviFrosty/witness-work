@@ -261,6 +261,7 @@ export function buildWidgetSnapshot(args: BuildSnapshotArgs): WidgetSnapshot {
         timeDisplayFormat: args.timeDisplayFormat,
         dayPlans: args.dayPlans,
         recurringPlans: args.recurringPlans,
+        contacts: args.contacts,
         conversations: args.conversations,
       },
       at

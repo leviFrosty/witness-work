@@ -151,7 +151,7 @@ Each rebuild is hashed without `updatedAt` (`widgetSnapshotHash` in MMKV). Only 
 
 A snapshot describes one local day, its `builtOn`, and the widgets keep showing it until the app writes another, which can be days later. So the Report, Calendar and Appointments widgets return an entry for now, each later follow-up today, and the next two midnights, reload after the first midnight, and move each entry to its own date (`SnapshotDay.swift`, as the watch complications do):
 
-- "Reported today" becomes "reported this month" the next day, and the pace badge falls back to hours per day.
+- "Reported today" becomes "reported this month" the next day, and the pace badge falls back to the time per day the app wrote for that day (`report.hoursPerDayToGoalByDay`, counted and formatted as the Daily Pace card does).
 - From the 1st, the Report and Calendar widgets show the `nextMonth` slice, which the app builds for that day with next month's role. A later month starts from zero.
 - The calendar's today, past days and current week move along; follow-ups turn overdue on time and their labels ("Tomorrow 3:00 PM") are rewritten for the day.
 

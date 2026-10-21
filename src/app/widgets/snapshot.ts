@@ -48,7 +48,8 @@ import type { NativeLocale } from '@/lib/nativeLocale'
  * they reference. Since 6, without a bump (Swift decodes them as optional):
  * `rtl`, `numberLocale`, the `reportLabel`/`timerLabel` strings, and the Pet
  * widget's `pet` slice and `petPlaceholderLabel` string, and `builtOn` with the
- * `nextMonth` slice.
+ * `nextMonth` slice, and the report's `hoursPerDayToGoalByDay` (replacing the
+ * `hoursPerDayToGoalSuffix` string).
  */
 export const SNAPSHOT_VERSION = 6
 
@@ -58,7 +59,6 @@ export type WidgetStrings = {
   goalLabel: string
   addTimeLabel: string
   sharedGoodNewsLabel: string
-  hoursPerDayToGoalSuffix: string
   aheadOfScheduleLabel: string
   behindScheduleLabel: string
   encouragementPhrase: string
@@ -310,7 +310,6 @@ export function buildWidgetSnapshot(args: BuildSnapshotArgs): WidgetSnapshot {
       goalLabel: i18n.t('goal'),
       addTimeLabel: i18n.t('addTime'),
       sharedGoodNewsLabel: i18n.t('sharedTheGoodNews').replace(/\n/g, ' '),
-      hoursPerDayToGoalSuffix: i18n.t('hoursPerDayToGoal'),
       aheadOfScheduleLabel: i18n.t('aheadOfSchedule'),
       behindScheduleLabel: i18n.t('behindSchedule'),
       encouragementPhrase: report.encouragementPhrase,

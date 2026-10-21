@@ -31,6 +31,7 @@ import { RootStackNavigation } from '@/types/rootStack'
 import { formatMinutes, useFormattedMinutes } from '@/lib/minutes'
 import { entryMinutes } from '@/lib/entryMinutes'
 import { useCardStyle } from '@/components/ui/Card'
+import useAccessibilityTextSize from '@/hooks/useAccessibilityTextSize'
 import useCategories from '@/stores/categories'
 import { usePreferences } from '@/stores/preferences'
 import { getCategoryLabel, isLdcEntry } from '@/lib/serviceReportCategory'
@@ -52,6 +53,7 @@ interface TimeReportRowProps {
 const TimeReportRow = ({ report, onPress, onNavigate }: TimeReportRowProps) => {
   const theme = useTheme()
   const cardStyle = useCardStyle()
+  const largeText = useAccessibilityTextSize()
   const { deleteServiceReport, deleteRolloverPair, updateServiceReport } =
     useServiceReport()
   const showsNote = hasNote(report)
@@ -282,18 +284,20 @@ const TimeReportRow = ({ report, onPress, onNavigate }: TimeReportRowProps) => {
                 }
           }
         >
+          {/* At accessibility sizes the date takes the row's width, wrapping
+              between its words, and the time sits under it at the end. */}
           <View
             style={{
-              flexDirection: 'row',
+              flexDirection: largeText ? 'column' : 'row',
               justifyContent: 'space-between',
-              alignItems: 'center',
+              alignItems: largeText ? 'stretch' : 'center',
               flexGrow: 1,
-              gap: 10,
+              gap: largeText ? 4 : 10,
             }}
           >
             <View
               style={{
-                flex: 1,
+                flex: largeText ? undefined : 1,
                 flexDirection: 'row',
                 alignItems: 'center',
                 gap: 8,
@@ -305,7 +309,7 @@ const TimeReportRow = ({ report, onPress, onNavigate }: TimeReportRowProps) => {
                   color: isRollover ? theme.colors.textAlt : theme.colors.text,
                   flexShrink: 1,
                 }}
-                numberOfLines={1}
+                numberOfLines={largeText ? undefined : 1}
                 ellipsizeMode='tail'
               >
                 {dateLabel}
@@ -315,6 +319,7 @@ const TimeReportRow = ({ report, onPress, onNavigate }: TimeReportRowProps) => {
               style={{
                 color: theme.colors.textAlt,
                 fontSize: theme.fontSize('sm'),
+                alignSelf: largeText ? 'flex-end' : undefined,
               }}
               numberOfLines={1}
             >

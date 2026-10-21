@@ -21,6 +21,7 @@ import { entryMinutes } from '@/lib/entryMinutes'
 import { usePreferences } from '@/stores/preferences'
 import { DayPlan, TimeEntry } from '@/types/timeEntry'
 import type { RevealAboveSheet } from '@/hooks/useRevealAboveSheet'
+import useAccessibilityTextSize from '@/hooks/useAccessibilityTextSize'
 
 import Button from '@/components/ui/Button'
 import Text from '@/components/ui/MyText'
@@ -104,11 +105,88 @@ const DayRowItem = ({
   const theme = useTheme()
   const cardStyle = useCardStyle()
   const menu = useDayMenuActions(row.date)
+  const stacked = useAccessibilityTextSize()
   const previewData = {
     reports: row.reports,
     dayPlans: row.dayPlans,
     recurringPlans: row.recurringPlans,
   }
+
+  const day = (
+    <View
+      style={{
+        flex: stacked ? undefined : 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        flexWrap: stacked ? 'wrap' : undefined,
+        gap: 8,
+      }}
+    >
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          flexWrap: stacked ? 'wrap' : undefined,
+          gap: 6,
+        }}
+      >
+        <Text
+          style={{
+            fontFamily: theme.fonts.semiBold,
+            color: row.isEmpty ? theme.colors.textAlt : theme.colors.text,
+          }}
+          numberOfLines={1}
+        >
+          {row.dayOfWeekLabel}
+        </Text>
+        {row.planDotColor ? (
+          <Circle color={row.planDotColor} size={6} />
+        ) : (
+          <Circle
+            color='transparent'
+            size={6}
+            style={{
+              borderWidth: 1,
+              borderColor: theme.colors.textAlt,
+            }}
+          />
+        )}
+        <Text
+          style={{
+            fontFamily: theme.fonts.semiBold,
+            color: row.isEmpty ? theme.colors.textAlt : theme.colors.text,
+          }}
+          numberOfLines={1}
+        >
+          {row.monthDayLabel}
+        </Text>
+      </View>
+      {row.isToday ? <Badge size='xs'>{i18n.t('today')}</Badge> : null}
+    </View>
+  )
+  const category = (
+    <Text
+      style={{
+        color: theme.colors.textAlt,
+        fontSize: theme.fontSize('sm'),
+      }}
+      numberOfLines={stacked ? undefined : 1}
+    >
+      {row.categoryLabel}
+    </Text>
+  )
+  const hours = (
+    <Text
+      style={{
+        fontFamily: theme.fonts.semiBold,
+        color: row.isEmpty ? theme.colors.textAlt : theme.colors.text,
+        minWidth: 44,
+        textAlign: alignText('end'),
+      }}
+    >
+      {row.hoursLabel}
+    </Text>
+  )
 
   return (
     <ContextMenu
@@ -139,73 +217,33 @@ const DayRowItem = ({
           gap: 10,
         }}
       >
-        <View
-          style={{
-            flex: 1,
-            flexDirection: 'row',
-            alignItems: 'center',
-            gap: 8,
-          }}
-        >
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 6,
-            }}
-          >
-            <Text
+        {stacked ? (
+          // At accessibility sizes the day can't share a line with its
+          // category and hours: the day takes its own line, the rest sits
+          // under it.
+          <View style={{ flex: 1, gap: 4 }}>
+            {day}
+            <View
               style={{
-                fontFamily: theme.fonts.semiBold,
-                color: row.isEmpty ? theme.colors.textAlt : theme.colors.text,
+                flexDirection: 'row',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                columnGap: 10,
               }}
-              numberOfLines={1}
             >
-              {row.dayOfWeekLabel}
-            </Text>
-            {row.planDotColor ? (
-              <Circle color={row.planDotColor} size={6} />
-            ) : (
-              <Circle
-                color='transparent'
-                size={6}
-                style={{
-                  borderWidth: 1,
-                  borderColor: theme.colors.textAlt,
-                }}
-              />
-            )}
-            <Text
-              style={{
-                fontFamily: theme.fonts.semiBold,
-                color: row.isEmpty ? theme.colors.textAlt : theme.colors.text,
-              }}
-              numberOfLines={1}
-            >
-              {row.monthDayLabel}
-            </Text>
+              {/* Side by side when they fit; otherwise the hours wrap under
+                  the category, still at the end. */}
+              <View style={{ flexGrow: 1, flexShrink: 1 }}>{category}</View>
+              <View style={{ flexGrow: 1 }}>{hours}</View>
+            </View>
           </View>
-          {row.isToday ? <Badge size='xs'>{i18n.t('today')}</Badge> : null}
-        </View>
-        <Text
-          style={{
-            color: theme.colors.textAlt,
-            fontSize: theme.fontSize('sm'),
-          }}
-          numberOfLines={1}
-        >
-          {row.categoryLabel}
-        </Text>
-        <Text
-          style={{
-            fontFamily: theme.fonts.semiBold,
-            color: row.isEmpty ? theme.colors.textAlt : theme.colors.text,
-            minWidth: 44,
-            textAlign: alignText('end'),
-          }}
-        >
-          {row.hoursLabel}
-        </Text>
+        ) : (
+          <>
+            {day}
+            {category}
+            {hours}
+          </>
+        )}
         <LucideIcon
           icon={ChevronForwardIcon}
           size={12}
@@ -239,6 +277,7 @@ const AllDaysList = ({
 }: AllDaysListProps) => {
   const theme = useTheme()
   const { fontScale } = useWindowDimensions()
+  const stacked = useAccessibilityTextSize()
   const { serviceReports, dayPlans, recurringPlans } = useServiceReport()
   const { categories } = useCategories()
   const timeDisplayFormat = usePreferences((s) => s.timeDisplayFormat)
@@ -425,9 +464,12 @@ const AllDaysList = ({
       <Text style={{ ...headingStyle, flex: 1 }} numberOfLines={1}>
         {i18n.t('date')}
       </Text>
-      <Text style={headingStyle} numberOfLines={1}>
-        {i18n.t('category')}
-      </Text>
+      {/* Stacked rows put the category under the day, not in a column. */}
+      {stacked ? null : (
+        <Text style={headingStyle} numberOfLines={1}>
+          {i18n.t('category')}
+        </Text>
+      )}
       <Text
         style={{ ...headingStyle, minWidth: 44, textAlign: alignText('end') }}
         numberOfLines={1}

@@ -86,6 +86,10 @@ export function normalizeBackupFile(data: BackupFile): BackupFile | null {
     ? data.serviceReportStore
     : undefined
   const profile = isRecord(data.profileStore) ? data.profileStore : undefined
+  const categories = isRecord(data.categoryStore)
+    ? data.categoryStore
+    : undefined
+  const mileage = isRecord(data.mileageStore) ? data.mileageStore : undefined
 
   const parsed = parsePayload(
     JSON.stringify({
@@ -109,6 +113,21 @@ export function normalizeBackupFile(data: BackupFile): BackupFile | null {
           reports?.additivePlans === true ||
           !writtenBefore(preferences, ADDITIVE_PLANS_SINCE),
       },
+      ...(categories
+        ? { categoryStore: { categories: [], ...categories } }
+        : {}),
+      ...(mileage
+        ? {
+            mileageStore: {
+              vehicles: [],
+              fuels: [],
+              fuelPrices: [],
+              vehicleSetups: [],
+              trips: [],
+              ...mileage,
+            },
+          }
+        : {}),
       preferencesStore: { values: preferences, updatedAt: {} },
       ...(profile ? { profileStore: { values: profile, updatedAt: {} } } : {}),
     })
@@ -126,6 +145,10 @@ export function normalizeBackupFile(data: BackupFile): BackupFile | null {
         parsed.serviceReportStore as unknown as PersistedServiceReportState
       ),
     })
+  if (categories && parsed.categoryStore)
+    result.categoryStore = withParsed(categories, parsed.categoryStore)
+  if (mileage && parsed.mileageStore)
+    result.mileageStore = withParsed(mileage, parsed.mileageStore)
   if (isRecord(data.preferencesStore))
     result.preferencesStore = parsed.preferencesStore.values
   // Older files keep profile fields with the preferences; parsing moves them.

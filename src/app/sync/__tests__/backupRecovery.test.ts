@@ -19,6 +19,7 @@ import { createBackupFile, isBackupFile } from '@/lib/backupFile'
 import { restoreBackupFile } from '@/app/sync/backupFileRestore'
 import useCategories from '@/stores/categories'
 import useContacts from '@/stores/contactsStore'
+import useMileage from '@/stores/mileage'
 import useConversations from '@/stores/conversationStore'
 import useServiceReport from '@/stores/serviceReport'
 import { usePreferences } from '@/stores/preferences'
@@ -37,6 +38,7 @@ vi.mock('@/lib/locales', () => ({ default: { t: (key: string) => key } }))
 
 beforeEach(() => {
   useCategories.setState({ categories: [], deletedCategories: [] })
+  useMileage.setState({ vehicles: [], trips: [] })
   useContacts.setState({
     contacts: [],
     deletedContacts: [],
@@ -366,5 +368,56 @@ describe('JSON backups from before id-keyed custom fields', () => {
     expect(useContacts.getState().contacts[0].customFields).toEqual({
       Language: 'Spanish',
     })
+  })
+})
+
+describe('JSON backup categories and mileage', () => {
+  const car = { id: 'car', name: 'Car', createdAt: 1, updatedAt: 1 }
+  const trip = {
+    id: 'trip',
+    vehicleId: 'car',
+    date: '2026-10-01',
+    distanceMiles: 12,
+    createdAt: 1,
+    updatedAt: 1,
+  }
+
+  it('rejects a file whose category or mileage lists are not lists', () => {
+    const keep = { id: 'keep', name: 'Keep', isCredit: false }
+    useCategories.setState({ categories: [keep] })
+    useMileage.setState({ vehicles: [car] })
+    expect(
+      restoreBackupFile({
+        contactStore: { contacts: [], deletedContacts: [] },
+        categoryStore: { categories: { a: 1 } },
+        mileageStore: { vehicles: [null], trips: 'x' },
+      })
+    ).toBe(false)
+    expect(useCategories.getState().categories).toEqual([keep])
+    expect(useMileage.getState().vehicles).toEqual([car])
+  })
+
+  it('drops unreadable categories and trips, keeping the rest', () => {
+    restoreBackupFile({
+      categoryStore: {
+        categories: [null, {}, { id: 'type', name: 'Type', isCredit: true }],
+      },
+      mileageStore: {
+        vehicles: [car, null],
+        trips: [trip, { ...trip, id: 'bad', distanceMiles: 'far' }],
+      },
+    })
+    expect(useCategories.getState().categories.map((c) => c.id)).toEqual([
+      'type',
+    ])
+    expect(useMileage.getState().vehicles.map((v) => v.id)).toEqual(['car'])
+    expect(useMileage.getState().trips.map((t) => t.id)).toEqual(['trip'])
+  })
+
+  it('leaves mileage lists a file lacks alone', () => {
+    useMileage.setState({ vehicles: [car], trips: [trip] })
+    restoreBackupFile({ mileageStore: { trips: [] } })
+    expect(useMileage.getState().vehicles).toEqual([car])
+    expect(useMileage.getState().trips).toEqual([])
   })
 })

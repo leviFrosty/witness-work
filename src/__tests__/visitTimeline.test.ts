@@ -73,6 +73,23 @@ describe('followUpState', () => {
     })
     expect(followUpState(self, [self], now)).toBe('missed')
   })
+
+  // Planned for 5 PM, but the user came back that morning. Home's card and
+  // Visit Details call it answered (`followUpAnswer`); so does the timeline.
+  const plannedEvening = visit('p', '2026-06-08T09:00', {
+    followUp: { date: at('2026-06-09T17:00'), notifyMe: true },
+  })
+  const cameMorning = visit('m', '2026-06-09T10:00')
+  const answered = [cameMorning, plannedEvening]
+
+  it('keeps a follow-up answered earlier on its day', () => {
+    expect(followUpState(plannedEvening, answered, now)).toBe('kept')
+  })
+
+  it('keeps it before its time too', () => {
+    const thatAfternoon = at('2026-06-09T12:00')
+    expect(followUpState(plannedEvening, answered, thatAfternoon)).toBe('kept')
+  })
 })
 
 describe('getUpNext', () => {
@@ -106,6 +123,15 @@ describe('getUpNext', () => {
 
   it('returns null without a future follow-up', () => {
     expect(getUpNext([visit('a', '2026-06-01')], now)).toBeNull()
+  })
+
+  it('skips a follow-up a visit already answered', () => {
+    const planned = visit('planned', '2026-06-11T09:00', {
+      followUp: { date: at('2026-06-12T17:00'), notifyMe: true },
+    })
+    // Came back this morning, ahead of the 5 PM plan.
+    const came = visit('came', '2026-06-12T10:00')
+    expect(getUpNext([came, planned], now)).toBeNull()
   })
 })
 

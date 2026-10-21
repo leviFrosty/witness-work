@@ -95,6 +95,7 @@ vi.mock('@/stores/preferences', () => ({
 
 import {
   calendarAction,
+  calendarNativeCode,
   refreshPublishing,
   publishCalendar,
   disconnectCalendar,
@@ -207,6 +208,11 @@ describe('calendar publishing orchestration', () => {
     expect(useCalendarPublishing.getState().error).toBe(
       'calendarConnectionError'
     )
+    expect(analytics.capture).toHaveBeenCalledWith('calendar_sync_failed', {
+      error_key: 'calendarConnectionError',
+      background: false,
+      native_code: 'other',
+    })
   })
   it('does not publish after an app-data read failure', async () => {
     vi.mocked(iCloudSync.pullBeforeCalendarPublish).mockRejectedValueOnce(
@@ -403,6 +409,34 @@ describe('calendar publishing orchestration', () => {
       calendarAction(() => createCalendar('source'))
     ).rejects.toThrow()
     expect(useCalendarPublishing.getState().error).toBe('calendarCreateError')
+    // The cause behind the generic message is reported.
+    expect(analytics.capture).toHaveBeenCalledWith('calendar_sync_failed', {
+      error_key: 'calendarCreateError',
+      background: false,
+      native_code: 'CALENDAR_UNAVAILABLE',
+    })
+  })
+  it('one-tap setup explains a device with no account that can hold calendars', async () => {
+    useCalendarSync.setState({ enabled: false, destination: null })
+    bridge.registerDevice.mockResolvedValue({
+      ...owned,
+      primary: null,
+      calendarTitle: undefined,
+      calendarAccount: undefined,
+    })
+    bridge.requestAccess.mockResolvedValue(true)
+    bridge.destinations.mockResolvedValueOnce([])
+    bridge.sources.mockResolvedValueOnce([])
+    await expect(calendarAction(quickConnectCalendar)).rejects.toThrow(
+      'CALENDAR_NO_SOURCE'
+    )
+    expect(bridge.createCalendar).not.toHaveBeenCalled()
+    expect(useCalendarPublishing.getState().error).toBe('calendarNoSourceError')
+    // A specific message needs no code to tell it apart.
+    expect(analytics.capture).toHaveBeenCalledWith('calendar_sync_failed', {
+      error_key: 'calendarNoSourceError',
+      background: false,
+    })
   })
   it('a new primary reconnects the shared calendar only on an exact match', async () => {
     useCalendarSync.setState({
@@ -636,7 +670,11 @@ describe('calendar publishing orchestration', () => {
         .mock.calls.filter(([event]) => event === 'calendar_sync_failed')
         .map(([, properties]) => properties)
     ).toEqual([
-      { error_key: 'calendarConnectionError', background: true },
+      {
+        error_key: 'calendarConnectionError',
+        background: true,
+        native_code: 'other',
+      },
       { error_key: 'calendarMissingError', background: true },
     ])
   })
@@ -736,13 +774,18 @@ describe('calendar publishing orchestration', () => {
       expect(analytics.capture).toHaveBeenCalledWith('calendar_sync_failed', {
         error_key: 'calendarCreateError',
         background: false,
+        native_code: 'CALENDAR_CREATE_FAILED',
         recovery: 'try_again',
       })
       // First attempts carry no recovery.
       await calendarAction(action).catch(() => undefined)
       expect(analytics.capture).toHaveBeenLastCalledWith(
         'calendar_sync_failed',
-        { error_key: 'calendarCreateError', background: false }
+        {
+          error_key: 'calendarCreateError',
+          background: false,
+          native_code: 'CALENDAR_CREATE_FAILED',
+        }
       )
     })
     it('keeps the failed action through an unrelated success', async () => {
@@ -774,5 +817,34 @@ describe('calendar publishing orchestration', () => {
       expect(useCalendarPublishing.getState().error).toBeNull()
       expect(bridge.publish).not.toHaveBeenCalled()
     })
+  })
+})
+
+describe('calendarNativeCode', () => {
+  const coded = (code: string) =>
+    Object.assign(new Error('Calendar operation failed'), { code })
+  it('reports known bridge codes', () => {
+    for (const code of [
+      'CALENDAR_UNAVAILABLE',
+      'CALENDAR_BUSY',
+      'CALENDAR_JOURNAL',
+      'CALENDAR_DEVICE_UNKNOWN',
+      'CALENDAR_STATE_CHANGED',
+      'CALENDAR_INVALID_URL',
+      'CALENDAR_CREATE_FAILED',
+    ])
+      expect(calendarNativeCode(coded(code))).toBe(code)
+    expect(calendarNativeCode(new Error('CALENDAR_BUSY'))).toBe('CALENDAR_BUSY')
+  })
+  it('reports the cause behind a failed create', () => {
+    const error = Object.assign(new Error('CALENDAR_CREATE_FAILED'), {
+      cause: coded('CALENDAR_JOURNAL'),
+    })
+    expect(calendarNativeCode(error)).toBe('CALENDAR_JOURNAL')
+  })
+  it('bounds anything else to other', () => {
+    expect(calendarNativeCode(coded('ERR_UNEXPECTED'))).toBe('other')
+    expect(calendarNativeCode(new TypeError('x is undefined'))).toBe('other')
+    expect(calendarNativeCode(undefined)).toBe('other')
   })
 })

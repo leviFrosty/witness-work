@@ -527,6 +527,14 @@ The one-time `calendar_sync` tray invitation retains setup behavior; outcomes us
 `onboarding` for Skip after a failed setup, or `tools` when developer tools
 generate mock data, reset, or clear calendar events).
 `calendar_sync_failed` includes bounded `error_key` and `background`: boolean.
+The generic errors (`calendarConnectionError`, `calendarConnectionErrorAndroid`,
+`calendarCreateError`) add `native_code`, the code the calendar module reported
+(for a failed create, the cause behind it): `CALENDAR_UNAVAILABLE` (an iCloud or
+calendar operation failed without a code of its own), `CALENDAR_BUSY`,
+`CALENDAR_JOURNAL`, `CALENDAR_DEVICE_UNKNOWN`, `CALENDAR_STATE_CHANGED`,
+`CALENDAR_INVALID_URL`, `CALENDAR_CREATE_FAILED` (the account refused the new
+calendar), or `other`. `calendarNoSourceError` means setup found no account that
+can hold a new calendar (iCloud Calendars off).
 Recovery attempts add `recovery` to `calendar_sync_failed` (the retry failed
 too) and `calendar_connected` (setup succeeded on the retry): `try_again` when
 the user tapped **Try Again**, or `open_settings` when the app retried by itself

@@ -53,6 +53,8 @@ class UpNextComplicationService : SuspendingTimelineComplicationDataSourceServic
   }
 
   override fun getPreviewData(type: ComplicationType): ComplicationData? {
+    // The face editor may ask before anything else in this process has run.
+    L10n.init(this)
     val icon = image(R.drawable.ic_person)
     val heading = text(L10n.t("watchUpNext", null))
     return when (type) {

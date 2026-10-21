@@ -9,6 +9,7 @@ import LucideIcon from '@/components/ui/LucideIcon'
 import Card from '@/components/ui/Card'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
+import useLocalDay from '@/hooks/useLocalDay'
 import useStartOfWeek from '@/hooks/useStartOfWeek'
 import useServiceReport from '@/stores/serviceReport'
 import { getMonthsReports } from '@/lib/serviceReport'
@@ -63,7 +64,13 @@ const WeekStripTeaser = ({
   const serviceReports = serviceReportsOverride ?? storeServiceReports
   const navigation = useNavigation<HomeTabStackNavigation>()
 
-  const today = useMemo(() => todayProp ?? moment(), [todayProp])
+  // Keyed on the local day, so the strip moves on at midnight and after a time
+  // zone change. Noon keeps each day on its date if the zone moves again.
+  const localDay = useLocalDay()
+  const today = useMemo(
+    () => todayProp ?? moment(localDay, 'YYYY-MM-DD').hour(12),
+    [todayProp, localDay]
+  )
 
   const selectedMonth = useMemo(
     () => moment().month(month).year(year),

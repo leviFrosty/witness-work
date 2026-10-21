@@ -16,6 +16,9 @@ vi.mock('react-native', () => ({
   },
 }))
 
+const refreshLocalTimeOffset = vi.hoisted(() => vi.fn())
+vi.mock('@/lib/deviceTimeZone', () => ({ refreshLocalTimeOffset }))
+
 const emit = (state: string) => appState.handlers.forEach((h) => h(state))
 
 describe('appLifecycle', () => {
@@ -23,6 +26,7 @@ describe('appLifecycle', () => {
     vi.resetModules()
     appState.handlers = []
     appState.currentState = 'active'
+    refreshLocalTimeOffset.mockReset()
   })
 
   it('ignores inactive blips and fires on a return from the background', async () => {
@@ -89,5 +93,19 @@ describe('appLifecycle', () => {
     emit('active')
     expect(lastForegroundAt()).toBe(5_000)
     vi.useRealTimers()
+  })
+
+  it('refreshes the time zone before any listener runs on a return', async () => {
+    const { addForegroundListener } = await import('@/lib/appLifecycle')
+    const zoneRefreshedFirst = vi.fn(
+      () => refreshLocalTimeOffset.mock.calls.length
+    )
+    addForegroundListener(zoneRefreshedFirst)
+    emit('inactive')
+    emit('active')
+    expect(refreshLocalTimeOffset).not.toHaveBeenCalled()
+    emit('background')
+    emit('active')
+    expect(zoneRefreshedFirst).toHaveReturnedWith(1)
   })
 })

@@ -1,4 +1,5 @@
 import { AppState, type AppStateStatus } from 'react-native'
+import { refreshLocalTimeOffset } from '@/lib/deviceTimeZone'
 
 type Listener = () => void
 type Entry = { listener: Listener; minIntervalMs: number; lastRunAt: number }
@@ -21,6 +22,10 @@ function onChange(state: AppStateStatus) {
   // a return from `background` counts as coming back.
   if (state !== 'active' || !backgrounded) return
   backgrounded = false
+  // The device may have moved to another time zone while the app was away.
+  // Refresh first, so every listener and every render after this computes
+  // "today" and local times in the zone the device is in now.
+  refreshLocalTimeOffset()
   const at = Date.now()
   lastForeground = at
   foreground.forEach((entry) => {

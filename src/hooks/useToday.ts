@@ -1,25 +1,15 @@
-import { useEffect, useState } from 'react'
-import { AppState } from 'react-native'
-import moment from 'moment'
+import { useState } from 'react'
+import useLocalDay from '@/hooks/useLocalDay'
 
-/** Today, moved on at midnight and on returning to the app. */
+/**
+ * Today, moved on at midnight and on returning to the app on a new day
+ * (including after a time zone change); see `useLocalDay`.
+ */
 export default function useToday(): Date {
-  const [today, setToday] = useState(() => new Date())
-
-  useEffect(() => {
-    const midnight = setTimeout(
-      () => setToday(new Date()),
-      moment(today).add(1, 'day').startOf('day').diff(moment()) + 1000
-    )
-    const subscription = AppState.addEventListener('change', (state) => {
-      if (state === 'active' && !moment().isSame(today, 'day'))
-        setToday(new Date())
-    })
-    return () => {
-      clearTimeout(midnight)
-      subscription.remove()
-    }
-  }, [today])
-
-  return today
+  const day = useLocalDay()
+  const [today, setToday] = useState(() => ({ day, date: new Date() }))
+  if (today.day === day) return today.date
+  const next = { day, date: new Date() }
+  setToday(next)
+  return next.date
 }

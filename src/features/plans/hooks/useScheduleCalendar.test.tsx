@@ -13,6 +13,9 @@ vi.mock('react-native-reanimated', () => ({
   useSharedValue: (value: number) => ({ value, set: () => {} }),
 }))
 vi.mock('@/hooks/useStartOfWeek', () => ({ default: () => 0 }))
+vi.mock('@/lib/appLifecycle', () => ({
+  addForegroundListener: () => ({ remove: () => {} }),
+}))
 vi.mock('@/lib/analytics', () => ({ analytics: { capture: () => {} } }))
 vi.mock('@/lib/haptics', () => ({
   default: { light: () => {}, selection: () => {} },

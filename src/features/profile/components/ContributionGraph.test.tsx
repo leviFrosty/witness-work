@@ -1,7 +1,7 @@
 import React from 'react'
 import moment from 'moment'
 import { act, create, type ReactTestRenderer } from 'react-test-renderer'
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 
 vi.mock('@/lib/locales', async () => {
   const { I18n } = await import('i18n-js')
@@ -39,6 +39,10 @@ vi.mock('@/contexts/theme', () => {
 })
 vi.mock('@/components/ui/MyText', () => ({ default: 'Text' }))
 vi.mock('@/lib/haptics', () => ({ default: { selection: vi.fn() } }))
+vi.mock('@/hooks/useAccessibilityTextSize', () => ({
+  default: () => false,
+  FIT_ONE_LINE: {},
+}))
 vi.mock('@/lib/pointerHover', () => ({
   notePointerHover: vi.fn(),
   supportsPointerHover: false,
@@ -83,6 +87,46 @@ describe('ContributionGraph', () => {
         deep: true,
       })
     ).toHaveLength(0)
+  })
+
+  describe('month labels', () => {
+    afterEach(() => {
+      vi.useRealTimers()
+    })
+
+    const layout = (width: number) => ({
+      nativeEvent: { layout: { width, height: 14, x: 0, y: 0 } },
+    })
+
+    it('leaves out a month label that would overlap the next one', () => {
+      // The 26 weeks to Sunday 2026-10-25 start on Monday 2026-04-27, so April
+      // gets one column before May.
+      vi.useFakeTimers({ toFake: ['Date'] })
+      vi.setSystemTime(new Date(2026, 9, 21, 12))
+      const root = render(new Map())
+      // 26 columns of 11 pt cells (stride 14).
+      act(() => {
+        root
+          .findByProps({ accessibilityRole: 'image' })
+          .props.onLayout(layout(26 + 26 * 14))
+      })
+      const labels = () =>
+        root.findAll(
+          (node) =>
+            (node.type as unknown) === 'Text' &&
+            typeof node.props.onLayout === 'function'
+        )
+      const shown = () =>
+        labels()
+          .filter((label) => label.props.style.opacity === 1)
+          .map((label) => label.props.children)
+      // Nothing shows until every label is measured.
+      expect(shown()).toEqual([])
+      act(() => {
+        for (const label of labels()) label.props.onLayout(layout(20))
+      })
+      expect(shown()).toEqual(['May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct'])
+    })
   })
 
   it('says when nothing is logged', () => {

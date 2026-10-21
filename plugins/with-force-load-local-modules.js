@@ -42,6 +42,7 @@ const LOCAL_MODULES = [
   { importName: 'DeviceSecrets', className: 'DeviceSecretsModule' },
   { importName: 'PointerStyle', className: 'PointerStyleModule' },
   { importName: 'SystemMenu', className: 'SystemMenuModule' },
+  { importName: 'WindowControls', className: 'WindowControlsModule' },
   {
     importName: 'AppSwitcherPrivacy',
     className: 'AppSwitcherPrivacyModule',

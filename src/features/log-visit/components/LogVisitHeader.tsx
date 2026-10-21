@@ -1,4 +1,4 @@
-import { UserPlus as UserPlusIcon, X as XIcon } from 'lucide-react-native'
+import { X as XIcon } from 'lucide-react-native'
 import { ChevronBackwardIcon } from '@/components/ui/DirectionalIcon'
 import { Platform, StyleSheet, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -6,22 +6,18 @@ import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import Text from '@/components/ui/MyText'
 import IconButton from '@/components/ui/IconButton'
-import PointerTooltip from '@/components/ui/PointerTooltip'
 
 /**
- * "Log Visit" over both steps. Picking: New Contact on the trailing side.
- * Choosing an outcome: a back chevron to the list. The sheet itself closes the
- * picker on iOS; Android presents it full screen, so it gets a close button
- * too.
+ * "Log Visit" over both steps. Choosing an outcome: a back chevron to the list.
+ * The sheet itself closes the picker on iOS; Android presents it full screen,
+ * so it gets a close button too. New Contact is the picker list's first row.
  */
 export default function LogVisitHeader({
   onBack,
   onClose,
-  onNewContact,
 }: {
   onBack?: () => void
   onClose: () => void
-  onNewContact?: () => void
 }) {
   const theme = useTheme()
   const insets = useSafeAreaInsets()
@@ -67,19 +63,8 @@ export default function LogVisitHeader({
       >
         {i18n.t('logVisitAction')}
       </Text>
-      <View style={[styles.side, { alignItems: 'flex-end' }]}>
-        {onNewContact && (
-          <PointerTooltip label={i18n.t('logVisit_newContact')} effect='none'>
-            <IconButton
-              icon={UserPlusIcon}
-              size={22}
-              color={theme.colors.text}
-              onPress={onNewContact}
-              accessibilityLabel={i18n.t('logVisit_newContact')}
-            />
-          </PointerTooltip>
-        )}
-      </View>
+      {/* Balances the leading side so the title stays centered. */}
+      <View style={styles.side} />
     </View>
   )
 }

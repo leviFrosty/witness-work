@@ -7,8 +7,10 @@ const units = vi.hoisted<Record<string, string>>(() => ({
 }))
 vi.mock('@/lib/locales', () => ({
   default: {
-    t: (key: string, options?: { defaultValue?: string }) =>
-      units[key] ?? options?.defaultValue ?? key,
+    t: (key: string, options?: { defaultValue?: string; count?: number }) =>
+      key === 'hoursShort'
+        ? `${options?.count} Hrs`
+        : (units[key] ?? options?.defaultValue ?? key),
   },
 }))
 vi.mock('@/stores/preferences', () => ({
@@ -167,4 +169,9 @@ describe('watch protocol contract', () => {
       )
     }
   )
+
+  it('sends the month total with its unit, as the phone shows it', () => {
+    // 12.5 Standard hours plus the 4 LDC credit hours.
+    expect(buildWatchSnapshot(args('ios')).monthFormatted).toBe('16.5 Hrs')
+  })
 })

@@ -1,6 +1,6 @@
 import moment from 'moment'
 import i18n, { TranslationKey } from '@/lib/locales'
-import { formatMinutesCompact } from '@/lib/minutes'
+import { formatMinutes, formatMinutesCompact } from '@/lib/minutes'
 import { plannedMinutesThroughEachDayOfMonth } from '@/lib/recurrence'
 import { resolveMonthlyGoalHours } from '@/lib/monthlyGoals'
 import {
@@ -43,6 +43,7 @@ export type WatchSnapshot = {
   /** Add Time and the timer are available (hours role or Log my hours). */
   showsTimeEntry: boolean
   entryMode: ReportFields['mode']
+  /** The month's total as the phone shows it, e.g. `12.5 Hrs` or `12h 30m`. */
   monthFormatted: string
   monthCompact: string
   /** Credit-capped minutes this month. */
@@ -175,7 +176,10 @@ export function buildWatchSnapshot(
     monthName: now.format('MMMM'),
     showsTimeEntry: args.showsTimeEntry,
     entryMode: report.mode,
-    monthFormatted: report.monthHoursFormatted,
+    // With its unit, unlike the Report widget's figure: the watch shows no
+    // unit beside it.
+    monthFormatted: formatMinutes(report.monthMinutes, args.timeDisplayFormat)
+      .formatted,
     monthCompact:
       report.monthMinutes > 0
         ? formatMinutesCompact(report.monthMinutes)

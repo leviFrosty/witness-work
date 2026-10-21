@@ -155,7 +155,7 @@ class ProgressTileService : TileService() {
               title = { text(progress.total.layoutString) },
               // The goal, then the pace line or Goal reached.
               content =
-                listOfNotNull(progress.goalHours.takeIf { it > 0 }?.let { "/" + snapshot.appLanguage.number(it) }, footer)
+                listOfNotNull(progress.goalHours.takeIf { it > 0 }?.let { "/" + snapshot.appLanguage.decimal(it) }, footer)
                   .joinToString(" ")
                   .ifEmpty { null }
                   ?.let { { text(it.layoutString, maxLines = 3) } },

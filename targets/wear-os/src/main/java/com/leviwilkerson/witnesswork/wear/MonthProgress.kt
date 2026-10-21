@@ -20,8 +20,8 @@ data class MonthProgress(
   val hours: String,
   /** The total in the user's Duration Format when the phone's figure is current; otherwise `total`. */
   val formatted: String,
-  /** Whole hours the user set; 0 means no goal. */
-  val goalHours: Int,
+  /** Hours the user set, possibly with a decimal; 0 means no goal. */
+  val goalHours: Double,
   /** 0...1 toward the goal; `null` without one. */
   val fraction: Double?,
   /** 0...1: where the user's Plans put them by today; `null` without Plans or once the goal is reached. */
@@ -44,7 +44,7 @@ data class MonthProgress(
       val key = monthKey(date)
       val monthName: String
       val showsTimeEntry: Boolean
-      val goalHours: Int
+      val goalHours: Double
       val baseMinutes: Int?
       val planned: List<Int>?
       var state: String
@@ -127,7 +127,7 @@ data class MonthProgress(
           publisherState = state,
         )
 
-      val goalMinutes = goalHours * 60
+      val goalMinutes = Math.round(goalHours * 60).toInt()
       if (goalMinutes <= 0) return result(null, false, null, null)
       val fraction = (minutes.toDouble() / goalMinutes).coerceIn(0.0, 1.0)
       if (minutes >= goalMinutes) return result(fraction, true, null, null)

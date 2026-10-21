@@ -19,8 +19,8 @@ struct MonthProgress: Equatable {
   /// The total in the user's Duration Format when the iPhone's figure is
   /// current; otherwise `total`.
   let formatted: String
-  /// Whole hours the user set; 0 means no goal.
-  let goalHours: Int
+  /// Hours the user set, possibly with a decimal; 0 means no goal.
+  let goalHours: Double
   /// 0...1 toward the goal; `nil` without one.
   let fraction: Double?
   /// 0...1: where the user's Plans put them by today; `nil` without Plans or
@@ -101,7 +101,7 @@ struct MonthProgress: Equatable {
     formatted = unsyncedMinutes == 0 && snapshot.isCurrent(at: date)
       ? Self.language(snapshot).digits(snapshot.monthFormatted) : total
 
-    let goalMinutes = goalHours * 60
+    let goalMinutes = Int((goalHours * 60).rounded())
     guard goalMinutes > 0 else {
       fraction = nil
       goalReached = false

@@ -119,9 +119,9 @@ private func language(_ snapshot: WatchSnapshot?) -> AppLanguage {
   snapshot?.appLanguage ?? AppLanguage(rtl: nil, numberLocale: nil)
 }
 
-/// The goal's whole hours in the app Language's digits.
+/// The goal's hours (`50`, `37.5`) in the app Language's digits.
 private func goal(_ progress: MonthProgress, _ snapshot: WatchSnapshot?) -> String {
-  language(snapshot).number(progress.goalHours)
+  language(snapshot).decimal(progress.goalHours)
 }
 
 /// The app's green. `Color.accentColor` is white in a watch complication, so

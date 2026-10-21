@@ -41,6 +41,16 @@ import Foundation
     // Rounded up, so keeping to it is enough: 61 minutes over 1 day is 1.1h.
     precondition(MonthProgress.minutesPerDayToGoal(61, at: at(30), calendar: calendar) == 66)
     precondition(MonthProgress.minutesPerDayToGoal(60, at: at(30), calendar: calendar) == 60)
+    // A goal with a decimal, which the app allows (37.5h), decodes and counts
+    // in full: it used to fail the whole snapshot.
+    snapshotJSON["goalHours"] = 37.5
+    json["snapshot"] = snapshotJSON
+    let decimal = try JSONDecoder().decode(
+      PhoneContext.self, from: JSONSerialization.data(withJSONObject: json)
+    ).snapshot!
+    let decimalProgress = MonthProgress(snapshot: decimal, outbox: [], resolvedEntryIds: [], at: at(5))!
+    precondition(decimalProgress.goalHours == 37.5)
+    precondition(abs(decimalProgress.fraction! - 990.0 / 2250) < 1e-9)
     print("watch month progress: ok")
   }
 }

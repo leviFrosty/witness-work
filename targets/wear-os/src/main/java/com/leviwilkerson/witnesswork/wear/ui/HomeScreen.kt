@@ -178,10 +178,10 @@ private fun ProgressSection(
       SectionLabel(progress.monthName)
       Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(2.dp)) {
         Text(progress.formatted, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-        // The goal is whole hours the user entered.
+        // The goal is the hours the user entered, e.g. 50 or 37.5.
         if (progress.goalHours > 0) {
           Text(
-            "/" + snapshot.appLanguage.number(progress.goalHours),
+            "/" + snapshot.appLanguage.decimal(progress.goalHours),
             style = MaterialTheme.typography.bodyLarge,
             color = Secondary,
             modifier = Modifier.padding(bottom = 1.dp),

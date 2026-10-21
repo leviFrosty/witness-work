@@ -281,7 +281,8 @@ public struct WatchSnapshot: Codable, Equatable, Sendable {
   public struct NextMonth: Codable, Equatable, Sendable {
     public let monthKey: String
     public let monthName: String
-    public let goalHours: Int
+    /// Hours, possibly with a decimal (`37.5`), like `WatchSnapshot.goalHours`.
+    public let goalHours: Double
     public let showsTimeEntry: Bool
   }
 
@@ -317,8 +318,9 @@ public struct WatchSnapshot: Codable, Equatable, Sendable {
   public let monthMinutes: Int?
   /// Localized name of the month, e.g. `October`.
   public let monthName: String?
-  /// Monthly goal the user set, in whole hours. 0 means no goal.
-  public let goalHours: Int
+  /// Monthly goal the user set, in hours; the app accepts a decimal (`37.5`).
+  /// 0 means no goal.
+  public let goalHours: Double
   /// 0...1 toward the monthly goal.
   public let progress: Double
   /// Planned minutes through each day of the month (index 0 is the 1st);

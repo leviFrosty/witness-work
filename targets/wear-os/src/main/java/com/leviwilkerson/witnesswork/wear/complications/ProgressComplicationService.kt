@@ -66,7 +66,7 @@ open class ProgressComplicationService(private val style: Style = Style.RING) :
         total = "12.5" + L10n.t("hoursCompact", null),
         hours = "12.5",
         formatted = "",
-        goalHours = 50,
+        goalHours = 50.0,
         fraction = 0.25,
         paceFraction = null,
         paceText = L10n.t("aheadOfSchedule", null),
@@ -223,7 +223,7 @@ open class ProgressComplicationService(private val style: Style = Style.RING) :
     /** `12.5h / 50`, or the total alone without a goal (the Apple Watch's inline text). */
     private fun totalOfGoal(progress: MonthProgress, snapshot: WatchSnapshot?) =
       if (progress.goalHours > 0) {
-        "${progress.total} / ${snapshot.appLanguage.number(progress.goalHours)}"
+        "${progress.total} / ${snapshot.appLanguage.decimal(progress.goalHours)}"
       } else {
         progress.total
       }

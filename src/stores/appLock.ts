@@ -1,5 +1,6 @@
 import { create } from 'zustand'
-import { createJSONStorage, persist } from 'zustand/middleware'
+import { createJSONStorage } from 'zustand/middleware'
+import { keepPersistedState, persist } from '@/stores/persist'
 import { MmkvStorage } from '@/stores/mmkv'
 
 /** Seconds away from the app before it asks to unlock again. */
@@ -28,6 +29,7 @@ export const useAppLockSettings = create<AppLockSettings>()(
     }),
     {
       name: 'app-lock',
+      migrate: keepPersistedState,
       storage: createJSONStorage(() => MmkvStorage),
       partialize: ({ enabled, requireAfter }) => ({ enabled, requireAfter }),
     }

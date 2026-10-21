@@ -1,6 +1,7 @@
 import { syncTimestamp } from '@/lib/syncClock'
 import { create } from 'zustand'
-import { persist, combine, createJSONStorage } from 'zustand/middleware'
+import { combine, createJSONStorage } from 'zustand/middleware'
+import { keepPersistedState, persist } from '@/stores/persist'
 import { PersistStorage } from '@/stores/mmkv'
 import type {
   Fuel,
@@ -135,6 +136,7 @@ export const useMileage = create(
       name: 'mileage',
       storage: createJSONStorage(() => PersistStorage),
       version: 0,
+      migrate: keepPersistedState,
     }
   )
 )

@@ -1,5 +1,6 @@
 import { create } from 'zustand'
-import { persist, combine, createJSONStorage } from 'zustand/middleware'
+import { combine, createJSONStorage } from 'zustand/middleware'
+import { keepPersistedState, persist } from '@/stores/persist'
 import { PersistStorage } from '@/stores/mmkv'
 import type { Contact } from '@/types/contact'
 import { type GeocodeRetry, withGeocodeRetry } from '@/lib/geocodeRetry'
@@ -34,6 +35,7 @@ export const useGeocodeRetry = create(
       name: 'geocode-retry',
       storage: createJSONStorage(() => PersistStorage),
       version: 0,
+      migrate: keepPersistedState,
     }
   )
 )

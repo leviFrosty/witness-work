@@ -1,6 +1,7 @@
 import { syncTimestamp } from '@/lib/syncClock'
 import { create } from 'zustand'
-import { persist, combine, createJSONStorage } from 'zustand/middleware'
+import { combine, createJSONStorage } from 'zustand/middleware'
+import { keepPersistedState, persist } from '@/stores/persist'
 import { Category, CategoryTombstone } from '@/types/category'
 import { PersistStorage } from '@/stores/mmkv'
 
@@ -85,6 +86,7 @@ export const useCategories = create(
       name: 'categories',
       storage: createJSONStorage(() => PersistStorage),
       version: 0,
+      migrate: keepPersistedState,
     }
   )
 )

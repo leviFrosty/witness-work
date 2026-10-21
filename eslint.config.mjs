@@ -43,6 +43,13 @@ const sheetImports = [
   { group: ['@expo/ui/community/bottom-sheet'], message: sheetMessage },
 ]
 
+const persistImports = {
+  group: ['zustand/middleware'],
+  importNames: ['persist'],
+  message:
+    "Use persist from @/stores/persist, which never writes over saved data it couldn't load.",
+}
+
 // Icons that point along the reading direction mirror in right-to-left
 // layouts; `@/components/ui/DirectionalIcon` has a reading-order name for each
 // one the app uses (add one there before using a new name). Not listed, so not
@@ -305,7 +312,8 @@ export default tseslint.config(
   },
   // Sounds and haptics go through `@/lib/audio` and `@/lib/haptics` so the
   // Audio & Haptics settings can't be bypassed, and sheets through
-  // `@/components/ui/Sheet` so they hold takeovers. Flat config replaces
+  // `@/components/ui/Sheet` so they hold takeovers, and stores persist through
+  // `@/stores/persist` so they keep saved data they couldn't load. Flat config replaces
   // (rather than merges) a rule's options, so each file gets one combined list.
   ...[
     {
@@ -316,6 +324,7 @@ export default tseslint.config(
         ...sheetImports,
         directionalIconImports,
         directionalIconFiles,
+        persistImports,
       ],
     },
     {
@@ -325,6 +334,7 @@ export default tseslint.config(
         ...sheetImports,
         directionalIconImports,
         directionalIconFiles,
+        persistImports,
       ],
     },
     {
@@ -334,6 +344,7 @@ export default tseslint.config(
         ...sheetImports,
         directionalIconImports,
         directionalIconFiles,
+        persistImports,
       ],
     },
     {
@@ -343,11 +354,22 @@ export default tseslint.config(
         hapticImports,
         directionalIconImports,
         directionalIconFiles,
+        persistImports,
       ],
     },
     {
       file: 'src/components/ui/DirectionalIcon.tsx',
-      patterns: [soundImports, hapticImports, ...sheetImports],
+      patterns: [soundImports, hapticImports, ...sheetImports, persistImports],
+    },
+    {
+      file: 'src/stores/persist.ts',
+      patterns: [
+        soundImports,
+        hapticImports,
+        ...sheetImports,
+        directionalIconImports,
+        directionalIconFiles,
+      ],
     },
   ].map(({ file, patterns }) => ({
     files: [file ?? 'src/**/*.{js,jsx,ts,tsx}'],
@@ -358,6 +380,7 @@ export default tseslint.config(
           'src/lib/haptics.ts',
           'src/components/ui/NativeSheet*.tsx',
           'src/components/ui/DirectionalIcon.tsx',
+          'src/stores/persist.ts',
           'src/__tests__/**',
         ],
     rules: { 'no-restricted-imports': ['error', { patterns }] },

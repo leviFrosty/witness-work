@@ -1,6 +1,7 @@
 import { syncTimestamp } from '@/lib/syncClock'
 import { create } from 'zustand'
-import { persist, combine, createJSONStorage } from 'zustand/middleware'
+import { combine, createJSONStorage } from 'zustand/middleware'
+import { persist } from '@/stores/persist'
 import {
   DayPlan,
   PlanTombstone,

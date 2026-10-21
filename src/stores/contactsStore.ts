@@ -1,6 +1,7 @@
 import { syncTimestamp } from '@/lib/syncClock'
 import { create } from 'zustand'
-import { persist, combine, createJSONStorage } from 'zustand/middleware'
+import { combine, createJSONStorage } from 'zustand/middleware'
+import { keepPersistedState, persist } from '@/stores/persist'
 import { Contact } from '@/types/contact'
 import {
   CustomFieldDefinition,
@@ -496,6 +497,7 @@ export const useContacts = create(
     })),
     {
       name: 'contacts',
+      migrate: keepPersistedState,
       storage: createJSONStorage(() => PersistStorage),
     }
   )

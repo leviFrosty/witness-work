@@ -1,5 +1,6 @@
 import { create } from 'zustand'
-import { createJSONStorage, persist } from 'zustand/middleware'
+import { createJSONStorage } from 'zustand/middleware'
+import { keepPersistedState, persist } from '@/stores/persist'
 import { MmkvStorage } from '@/stores/mmkv'
 import type { BadgeReactionEmoji } from '@/features/buddies/lib/badgeReactions'
 import {
@@ -21,6 +22,7 @@ export const useBuddies = create<BuddiesState>()(
   persist(() => initialBuddiesState, {
     name: 'buddies',
     version: 1,
+    migrate: keepPersistedState,
     storage: createJSONStorage(() => MmkvStorage),
     // Lapsed shares are wiped before anything restored is shown, even offline,
     // and every invitation still to answer is listed.

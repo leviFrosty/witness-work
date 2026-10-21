@@ -1,6 +1,7 @@
 import moment from 'moment'
 import { create } from 'zustand'
-import { createJSONStorage, persist } from 'zustand/middleware'
+import { createJSONStorage } from 'zustand/middleware'
+import { keepPersistedState, persist } from '@/stores/persist'
 import { MmkvStorage } from '@/stores/mmkv'
 import type { SavedRoute } from '@/features/route-planning/lib/routeBuilder'
 
@@ -46,6 +47,7 @@ export const useSavedRoutes = create<SavedRoutesState>()(
     {
       name: 'saved-routes',
       version: 1,
+      migrate: keepPersistedState,
       storage: createJSONStorage(() => MmkvStorage),
       partialize: ({ routes }) => ({ routes }),
     }

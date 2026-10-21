@@ -18,7 +18,8 @@ import type {
   YearCardId,
 } from '@/lib/progressCards'
 import { create } from 'zustand'
-import { persist, combine } from 'zustand/middleware'
+import { combine } from 'zustand/middleware'
+import { persist } from '@/stores/persist'
 import { Publisher, PublisherHours } from '@/types/publisher'
 import { getTenureType } from '@/lib/publisherCapabilities'
 import i18n, { TranslatedLocale } from '@/lib/locales'

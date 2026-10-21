@@ -1,5 +1,6 @@
 import { create } from 'zustand'
-import { persist, combine, createJSONStorage } from 'zustand/middleware'
+import { combine, createJSONStorage } from 'zustand/middleware'
+import { keepPersistedState, persist } from '@/stores/persist'
 import { PersistStorage } from '@/stores/mmkv'
 import useContacts from '@/stores/contactsStore'
 import {
@@ -29,6 +30,7 @@ export const useMapFindSkips = create(
       name: 'map-find-skips',
       storage: createJSONStorage(() => PersistStorage),
       version: 0,
+      migrate: keepPersistedState,
     }
   )
 )

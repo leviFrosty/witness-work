@@ -1,5 +1,6 @@
 import { create } from 'zustand'
-import { createJSONStorage, persist } from 'zustand/middleware'
+import { createJSONStorage } from 'zustand/middleware'
+import { keepPersistedState, persist } from '@/stores/persist'
 import type { SeenStreak, StreakKind } from '@/lib/serviceStreak'
 import type { CelebrationClaim } from '@/lib/userAction'
 import { MmkvStorage } from '@/stores/mmkv'
@@ -31,6 +32,7 @@ export const useStreakCelebration = create<StreakCelebrationState>()(
     {
       name: 'streakCelebration',
       version: 1,
+      migrate: keepPersistedState,
       storage: createJSONStorage(() => MmkvStorage),
       partialize: ({ seen }) => ({ seen }),
     }

@@ -10,7 +10,7 @@
   <string name="goalReached" formatted="false">Intego yagezweho</string>
   <string name="hours" formatted="false">Amasaha</string>
   <string name="hoursCompact" formatted="false">h</string>
-  <string name="hoursPerDayToGoal" formatted="false">amasaha ku munsi kugera ku ntego!</string>
+  <string name="hoursPerDayToGoalValue" formatted="false">{{value}} ku munsi kugira ngo ugere ku ntego!</string>
   <string name="minutes" formatted="false">Iminota</string>
   <string name="minutesCompact" formatted="false">m</string>
   <string name="month" formatted="false">Ukwezi</string>

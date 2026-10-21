@@ -1072,121 +1072,121 @@
         }
       }
     },
-    "hoursPerDayToGoal" : {
+    "hoursPerDayToGoalValue" : {
       "extractionState" : "manual",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "يوميًا لبلوغ الهدف!"
+            "value" : "{{value}} يوميًا لبلوغ الهدف!"
           }
         },
         "bem" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "hrs/day to goal!"
+            "value" : "{{value}} cila bushiku pa kufika ku calandwilwe!"
           }
         },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Stunden/Tag bis zum Ziel!"
+            "value" : "{{value}} pro Tag bis zum Ziel!"
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "per day to goal!"
+            "value" : "{{value}} per day to goal!"
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "hrs/día para llegar hasta la meta!"
+            "value" : "¡{{value}} al día para llegar a la meta!"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "heures/jour pour atteindre l'objectif !"
+            "value" : "{{value}} par jour pour atteindre l’objectif !"
           }
         },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "ore/giorni all'obiettivo!"
+            "value" : "{{value}} al giorno per l’obiettivo!"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "目標まであと1日何時間！"
+            "value" : "目標まで1日あたり{{value}}！"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "목표까지 시간/일!"
+            "value" : "목표까지 하루 {{value}}!"
           }
         },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "uur/dag tot doel!"
+            "value" : "{{value}} per dag tot je doel!"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "horas/dia para alvo!"
+            "value" : "{{value}} por dia para atingir o alvo!"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "horas/dia para a meta!"
+            "value" : "{{value}} por dia para atingir o alvo!"
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "часов/день до цели!"
+            "value" : "{{value}} в день до цели!"
           }
         },
         "rw" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "amasaha ku munsi kugera ku ntego!"
+            "value" : "{{value}} ku munsi kugira ngo ugere ku ntego!"
           }
         },
         "sw" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "hrs/siku kufikia lengo!"
+            "value" : "{{value}} kwa siku kufikia lengo!"
           }
         },
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "годин/день до мети!"
+            "value" : "{{value}} на день до мети!"
           }
         },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "giờ/ngày để đạt được mục tiêu!"
+            "value" : "{{value}} mỗi ngày để đạt mục tiêu!"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "距离目标还有几个小时/天！"
+            "value" : "每天 {{value}} 即可达成目标！"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "小时/天达到目标！"
+            "value" : "每天 {{value}} 即可達成目標！"
           }
         }
       }

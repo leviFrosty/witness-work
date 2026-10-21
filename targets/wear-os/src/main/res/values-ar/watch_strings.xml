@@ -10,7 +10,7 @@
   <string name="goalReached" formatted="false">تحقّق الهدف</string>
   <string name="hours" formatted="false">الساعات</string>
   <string name="hoursCompact" formatted="false">س</string>
-  <string name="hoursPerDayToGoal" formatted="false">يوميًا لبلوغ الهدف!</string>
+  <string name="hoursPerDayToGoalValue" formatted="false">{{value}} يوميًا لبلوغ الهدف!</string>
   <string name="minutes" formatted="false">الدقائق</string>
   <string name="minutesCompact" formatted="false">د</string>
   <string name="month" formatted="false">الشهر</string>

@@ -145,7 +145,9 @@ data class MonthProgress(
         )
       }
       val perDay = minutesPerDayToGoal(goalMinutes - minutes, date)
-      return result(fraction, false, null, compact(perDay, t, language) + " " + t("hoursPerDayToGoal"))
+      // The phone's sentence, so each language places the value itself.
+      val pace = t("hoursPerDayToGoalValue").replace("{{value}}", compact(perDay, t, language))
+      return result(fraction, false, null, pace)
     }
 
     /**

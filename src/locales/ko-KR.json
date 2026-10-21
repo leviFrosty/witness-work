@@ -472,7 +472,6 @@
   "hourglass": "모래시계",
   "copyToClipboard": "클립 보드에 복사",
   "message": "메시지",
-  "hoursPerDayToGoal": "목표까지 시간/일!",
   "hoursPerDayToGoalValue": "목표까지 하루 {{value}}!",
   "share": "공유",
   "exportContact": "연락처 내보내기",

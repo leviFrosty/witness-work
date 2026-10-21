@@ -129,7 +129,9 @@ struct MonthProgress: Equatable {
     } else {
       paceFraction = nil
       let perDay = Self.minutesPerDayToGoal(goalMinutes - minutes, at: date, calendar: calendar)
-      paceText = Self.compact(perDay, snapshot) + " " + L10n.t("hoursPerDayToGoal", snapshot)
+      // The phone's sentence, so each language places the value itself.
+      paceText = L10n.t("hoursPerDayToGoalValue", snapshot)
+        .replacingOccurrences(of: "{{value}}", with: Self.compact(perDay, snapshot))
     }
   }
 

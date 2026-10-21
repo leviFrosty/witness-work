@@ -10,7 +10,7 @@
   <string name="goalReached" formatted="false">Icalandwilwe cafikwapo</string>
   <string name="hours" formatted="false">Hours</string>
   <string name="hoursCompact" formatted="false">h</string>
-  <string name="hoursPerDayToGoal" formatted="false">hrs/day to goal!</string>
+  <string name="hoursPerDayToGoalValue" formatted="false">{{value}} cila bushiku pa kufika ku calandwilwe!</string>
   <string name="minutes" formatted="false">Minutes</string>
   <string name="minutesCompact" formatted="false">m</string>
   <string name="month" formatted="false">Month</string>

@@ -10,7 +10,7 @@
   <string name="goalReached" formatted="false">目標達成</string>
   <string name="hours" formatted="false">時間</string>
   <string name="hoursCompact" formatted="false">時</string>
-  <string name="hoursPerDayToGoal" formatted="false">目標まであと1日何時間！</string>
+  <string name="hoursPerDayToGoalValue" formatted="false">目標まで1日あたり{{value}}！</string>
   <string name="minutes" formatted="false">分</string>
   <string name="minutesCompact" formatted="false">分</string>
   <string name="month" formatted="false">月</string>

@@ -18,7 +18,7 @@
       120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120
     ],
     "publisherState": "reportedThisMonth",
-    "paceText": "1.3h hoursPerDayToGoal",
+    "paceText": "1.3h per day to goal!",
     "nextMonth": {
       "monthKey": "2026-11",
       "monthName": "November",
@@ -95,7 +95,7 @@
       "goalReached": "goalReached",
       "hours": "hours",
       "hoursCompact": "h",
-      "hoursPerDayToGoal": "hoursPerDayToGoal",
+      "hoursPerDayToGoalValue": "{{value}} per day to goal!",
       "minutes": "minutes",
       "minutesCompact": "m",
       "month": "month",

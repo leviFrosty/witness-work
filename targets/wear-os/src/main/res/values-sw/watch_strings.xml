@@ -10,7 +10,7 @@
   <string name="goalReached" formatted="false">Lengo limefikiwa</string>
   <string name="hours" formatted="false">Saa</string>
   <string name="hoursCompact" formatted="false">h</string>
-  <string name="hoursPerDayToGoal" formatted="false">hrs/siku kufikia lengo!</string>
+  <string name="hoursPerDayToGoalValue" formatted="false">{{value}} kwa siku kufikia lengo!</string>
   <string name="minutes" formatted="false">Dakika</string>
   <string name="minutesCompact" formatted="false">m</string>
   <string name="month" formatted="false">Mwezi</string>

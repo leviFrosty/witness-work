@@ -5,7 +5,7 @@ import {
   create,
   type ReactTestRenderer,
 } from 'react-test-renderer'
-import { afterEach, beforeEach, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Contact } from '@/types/contact'
 import type { Visit } from '@/types/visit'
 import type { DayPlan, TimeEntriesByYear } from '@/types/timeEntry'
@@ -17,6 +17,10 @@ const runtime = vi.hoisted(() => ({
   storageLocked: false,
   appState: new Set<(state: string) => void>(),
   scheduled: [] as { identifier: string }[],
+  /** The zone the device reports. */
+  zone: 'Test/Zone',
+  /** Like Hermes: `Date` follows a new zone only once it's told to check. */
+  dateFollowsRefresh: false,
   presented: [] as {
     request: { identifier: string; content: { data: unknown } }
   }[],
@@ -79,6 +83,12 @@ vi.mock('expo-localization', () => ({
   getLocales: () => [{ languageTag: 'en-US' }],
   getCalendars: () => [],
 }))
+vi.mock('@/lib/deviceTimeZone', () => ({
+  deviceTimeZone: () => runtime.zone,
+  refreshLocalTimeOffset: vi.fn(() => {
+    if (runtime.dateFollowsRefresh) process.env.TZ = runtime.zone
+  }),
+}))
 vi.mock('@/lib/errorTracking', () => ({
   errorTracking: { captureException: vi.fn() },
 }))
@@ -117,6 +127,7 @@ import useServiceReport from '@/stores/serviceReport'
 import { usePreferences } from '@/stores/preferences'
 import { useNotificationsTray } from '@/features/notifications/stores/notificationsTray'
 import { errorTracking } from '@/lib/errorTracking'
+import { refreshLocalTimeOffset } from '@/lib/deviceTimeZone'
 import { useReconciledReminders } from './useReconciledReminders'
 /** Runs `change`, then lets the debounced pass run to the end. */
 async function act(change: () => unknown) {
@@ -929,4 +940,91 @@ it('schedules the new reminders before cancelling the old ones', async () => {
   expect(runtime.scheduled).toEqual([
     { identifier: 'witness-work-visit-first' },
   ])
+})
+
+describe('after the time zone changes', () => {
+  const originalTz = process.env.TZ
+  const inZone = (zone: string, at: () => Date) => {
+    const previous = process.env.TZ
+    process.env.TZ = zone
+    try {
+      return at()
+    } finally {
+      process.env.TZ = previous
+    }
+  }
+  const nineAm = (zone: string, day: moment.Moment) =>
+    inZone(zone, () => new Date(day.year(), day.month(), day.date(), 9))
+  const planTrigger = () =>
+    vi
+      .mocked(Notifications.scheduleNotificationAsync)
+      .mock.calls.map(([request]) => request)
+      .filter((request) => request.identifier === 'witness-work-plan-p')
+      .map((request) => (request.trigger as { date: Date }).date)
+
+  beforeEach(() => {
+    runtime.platform = 'ios'
+    runtime.dateFollowsRefresh = true
+    runtime.zone = 'America/New_York'
+    process.env.TZ = 'America/New_York'
+  })
+  afterEach(() => {
+    runtime.dateFollowsRefresh = false
+    runtime.zone = 'Test/Zone'
+    if (originalTz === undefined) delete process.env.TZ
+    else process.env.TZ = originalTz
+  })
+
+  const renderWithPlan = async () => {
+    const day = moment().add(2, 'days').startOf('day')
+    useServiceReport.setState({
+      dayPlans: [
+        {
+          id: 'p',
+          date: normalizeDateForStorage(day.toDate()),
+          startTimeInMinutes: 9 * 60,
+          minutes: 60,
+          notifyMe: true,
+          reminderOffsetMinutes: 0,
+        },
+      ],
+    })
+    await act(async () => {
+      renderer = create(<Harness />)
+    })
+    return day
+  }
+
+  it('moves a Plan reminder to the same local time in the new zone', async () => {
+    const day = await renderWithPlan()
+    expect(planTrigger()).toEqual([nineAm('America/New_York', day)])
+    vi.clearAllMocks()
+    // The device now reports London, but `Date` keeps New York's offset until
+    // the pass makes it check.
+    runtime.zone = 'Europe/London'
+    await act(comeBack)
+    expect(refreshLocalTimeOffset).toHaveBeenCalledOnce()
+    expect(planTrigger()).toEqual([nineAm('Europe/London', day)])
+  })
+
+  it('leaves the schedule alone while the zone stays the same', async () => {
+    await renderWithPlan()
+    vi.clearAllMocks()
+    await act(comeBack)
+    expect(refreshLocalTimeOffset).not.toHaveBeenCalled()
+    expect(Notifications.scheduleNotificationAsync).not.toHaveBeenCalled()
+  })
+
+  // A Follow-up is saved as a moment, so its reminder stays put.
+  it('keeps a Visit reminder at its moment', async () => {
+    useConversations.setState({ conversations: followUps(['v']) })
+    await act(async () => {
+      renderer = create(<Harness />)
+    })
+    vi.clearAllMocks()
+    runtime.zone = 'Europe/London'
+    await act(comeBack)
+    expect(refreshLocalTimeOffset).toHaveBeenCalledOnce()
+    expect(Notifications.scheduleNotificationAsync).not.toHaveBeenCalled()
+  })
 })

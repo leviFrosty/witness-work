@@ -10,6 +10,7 @@ import Button from '@/components/ui/Button'
 import LucideIcon from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
+import useAccessibilityTextSize from '@/hooks/useAccessibilityTextSize'
 import { getReadableTextColor, withAlpha } from '@/lib/color'
 import { formatRelative, formatTime } from '@/lib/dates'
 import i18n from '@/lib/locales'
@@ -43,6 +44,11 @@ const UpNextCard = ({
   onNavigate,
 }: Props) => {
   const theme = useTheme()
+  // At accessibility text sizes the countdown wraps whole, and Log Visit takes
+  // its own row with Navigate and Reschedule under it, so nothing runs off the
+  // card.
+  const largeText = useAccessibilityTextSize()
+  const wrap = largeText ? 'wrap' : 'nowrap'
   const background = theme.colors.accent3
   const foreground = getReadableTextColor(background)
   const muted = withAlpha(foreground, 0xcc)
@@ -81,11 +87,12 @@ const UpNextCard = ({
           flexDirection: 'row',
           justifyContent: 'space-between',
           alignItems: 'center',
+          flexWrap: wrap,
           gap: 8,
         }}
       >
         <Text
-          numberOfLines={1}
+          numberOfLines={largeText ? undefined : 1}
           style={{
             flexShrink: 1,
             fontSize: theme.fontSize('xs') + 1,
@@ -142,12 +149,14 @@ const UpNextCard = ({
           {upNext.topic}
         </Text>
       )}
-      <View style={{ flexDirection: 'row', gap: 8, marginTop: 4 }}>
+      <View
+        style={{ flexDirection: 'row', flexWrap: wrap, gap: 8, marginTop: 4 }}
+      >
         <Button
           onPress={onLogVisit}
           style={{
             ...buttonStyle,
-            flex: 1,
+            ...(largeText ? { flexBasis: '100%' } : { flex: 1 }),
             borderColor: theme.colors.accent,
             backgroundColor: theme.colors.accent,
           }}
@@ -159,6 +168,7 @@ const UpNextCard = ({
           />
           <Text
             style={{
+              flexShrink: 1,
               fontFamily: theme.fonts.semiBold,
               color: getReadableTextColor(theme.colors.accent),
             }}
@@ -167,10 +177,17 @@ const UpNextCard = ({
           </Text>
         </Button>
         {onNavigate && (
-          <Button onPress={onNavigate} style={buttonStyle}>
+          <Button
+            onPress={onNavigate}
+            style={largeText ? { ...buttonStyle, flex: 1 } : buttonStyle}
+          >
             <LucideIcon icon={NavigationIcon} size={13} color={foreground} />
             <Text
-              style={{ fontFamily: theme.fonts.semiBold, color: foreground }}
+              style={{
+                flexShrink: 1,
+                fontFamily: theme.fonts.semiBold,
+                color: foreground,
+              }}
             >
               {i18n.t('navigate')}
             </Text>

@@ -132,7 +132,8 @@ const NotesImportUsage = ({
           hitSlop={8}
           style={{
             minWidth: 50,
-            height: 32,
+            // Grows with large text instead of clipping the label.
+            minHeight: 32,
             paddingHorizontal: 10,
             borderRadius: theme.numbers.borderRadiusXl,
             alignItems: 'center',

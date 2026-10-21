@@ -8,7 +8,11 @@ const { slot } = vi.hoisted(() => ({
     React.createElement(name, props),
 }))
 
-vi.mock('react-native', () => ({ Pressable: 'Pressable', View: 'View' }))
+vi.mock('react-native', () => ({
+  Pressable: 'Pressable',
+  View: 'View',
+  useWindowDimensions: () => ({ fontScale: 1 }),
+}))
 vi.mock('lucide-react-native', () => ({ ChevronDown: 'ChevronDown' }))
 vi.mock('@/assets/icons/check.xml', () => ({ default: 1 }))
 vi.mock('@expo/ui', () => ({ Host: 'Host' }))

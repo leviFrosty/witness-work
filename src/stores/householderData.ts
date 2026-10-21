@@ -7,6 +7,7 @@ import {
   noteImageIdsOf,
 } from '@/stores/noteImages'
 import { stripContactForTombstone } from '@/lib/dataProtection'
+import { syncTimestamp } from '@/lib/syncClock'
 import type { Contact } from '@/types/contact'
 
 /**
@@ -100,7 +101,6 @@ export const deleteAllHouseholderData = (): DeleteAllHouseholderDataResult => {
   const { deleteConversation } = useConversations.getState()
   const visits = useConversations.getState().conversations
   const { contacts, deletedContacts } = useContacts.getState()
-  const now = Date.now()
 
   // Routed through the store action so each visit's scheduled follow-up
   // notification is cancelled and its (already minimal) tombstone is written.
@@ -110,10 +110,15 @@ export const deleteAllHouseholderData = (): DeleteAllHouseholderDataResult => {
   void deleteUnreferencedNoteImages(noteImageIdsOf(visits))
 
   // Existing soft-delete tombstones still hold full householder records, so
-  // they are redacted in place rather than left as they are.
+  // they are redacted in place rather than left as they are. Each is stamped
+  // on the sync clock after the record it erases, like every other delete, so
+  // a peer's copy can't win the merge and bring it back.
   const tombstones = new Map<string, Contact>()
   for (const record of [...deletedContacts, ...contacts]) {
-    tombstones.set(record.id, stripContactForTombstone(record, now))
+    tombstones.set(
+      record.id,
+      stripContactForTombstone(record, syncTimestamp(record.updatedAt))
+    )
     void deleteAvatarFiles(record.id)
   }
 

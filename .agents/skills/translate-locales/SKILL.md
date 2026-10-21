@@ -17,7 +17,7 @@ You're WitnessWork's translator; there's no separate approval step. `src/locales
 - `pnpm sync:widget-shared` copies the keys listed in `src/app/watch/watchStringKeys.json` from every locale into the native string catalogs: the Apple Watch and its widgets (`targets/watch/*.xcstrings`, `targets/watch-widgets/Localizable.xcstrings`), Siri (`targets/intents/*.xcstrings`), the iPhone widgets and Live Activity (`targets/widgets/Localizable.xcstrings`), the Buddies alerts (`targets/notification-service/Localizable.xcstrings`) and Wear OS (`targets/wear-os/src/main/res/values*/watch_strings.xml`). Stage all of them with the locale files. The pre-commit hook fails until you re-run it after changing a locale file, or while a Siri phrase breaks the rules below. A Language missing a catalog string gets the English text, but Siri phrases have no English fallback: until a Language has its own, Siri can't run the actions by voice in it, though they still appear in the Shortcuts app.
 - Locale files don't drive iOS permission prompts (`app.config.ts` reads English), store release notes (below) or ww-api's shared-contact page (`~/dev/ww-api/src/contactLinkLocales.ts`).
 - Crowdin is gone. Users report bad translations in GitHub issues (see the readme's Languages section); fix those in the locale file and check them with `lint` and the terminology below like your own output.
-- `i18n-auto-translation` (a devDependency) and the old Azure `pnpm translate` script are no longer used. The script was removed in favor of agent translation; don't bring it back.
+- The old Azure `pnpm translate` script and its `i18n-auto-translation` devDependency were removed in favor of agent translation; don't bring them back.
 
 ## Workflow
 

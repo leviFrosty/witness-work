@@ -1018,11 +1018,6 @@
     "license": "MIT"
   },
   {
-    "name": "@react-navigation/drawer",
-    "version": "7.12.8",
-    "license": "MIT"
-  },
-  {
     "name": "@react-navigation/elements",
     "version": "2.9.30",
     "license": "MIT"
@@ -2999,12 +2994,6 @@
     "author": "650 Industries, Inc."
   },
   {
-    "name": "expo-checkbox",
-    "version": "57.0.0",
-    "license": "MIT",
-    "author": "650 Industries, Inc."
-  },
-  {
     "name": "expo-clipboard",
     "version": "57.0.2",
     "license": "MIT",
@@ -4600,11 +4589,6 @@
     "version": "2.3.5",
     "license": "ISC",
     "author": "George Hope"
-  },
-  {
-    "name": "react-native-drawer-layout",
-    "version": "4.2.7",
-    "license": "MIT"
   },
   {
     "name": "react-native-gesture-handler",

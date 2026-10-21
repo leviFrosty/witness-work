@@ -63,7 +63,9 @@ build glue under `infrastructure`).
 Messages are the same JSON on both platforms (`WatchProtocol.swift`,
 `WatchProtocol.kt`). `src/__tests__/watchProtocolContract.test.ts` checks the
 snapshot JavaScript builds against a fixture that the Kotlin tests on both sides
-of the Wear OS connection decode. Wear OS adds two request origins, `tile` and
+of the Wear OS connection decode. `pnpm test:watch-native` runs the Apple
+Watch's `MonthProgress` against the same fixture, as `MonthProgressTest.kt` does
+on Wear OS. Wear OS adds two request origins, `tile` and
 `ongoing_activity`, which only the Android phone receives.
 
 Strings that name the phone have an `…Android` variant ("phone" for "iPhone"),

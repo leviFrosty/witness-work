@@ -123,8 +123,9 @@ describe('widget snapshot day rollover', () => {
 
     expect(report.goalHours).toBe(30)
     expect(nextMonth.report.goalHours).toBe(50)
-    // 50 hours over the 30 days left from Nov 1, 00:00.
-    expect(nextMonth.report.hoursPerDayNeeded).toBe(1.7)
+    // The Daily Pace card's 50 hours over the 29 days after Nov 1, for the
+    // watch too.
+    expect(nextMonth.report.hoursPerDayNeeded).toBe(1.8)
     // The Daily Pace card's 50 hours over the 29 days after Nov 1.
     expect(nextMonth.report.hoursPerDayToGoalByDay['2026-11-01']).toBe(
       '1.8h per day to goal!'
@@ -140,11 +141,19 @@ describe('builders as of a given day', () => {
     return rest
   }
 
-  it('counts the days left from `now`', () => {
-    // 2 of 50 hours logged; 48 left over the 11 whole days to Nov 1.
+  it('counts the days left as the Daily Pace card does', () => {
+    // 2 of 50 hours logged; 48 left over the 11 days after Oct 20.
     const report = buildReport(reportArgs(), moment(new Date(2026, 9, 20, 12)))
-
     expect(report.hoursPerDayNeeded).toBe(4.4)
+
+    // From midnight on, too: 10 days after Oct 21 (it counted 11), rounded up.
+    const midnight = moment(new Date(2026, 9, 21))
+    expect(buildReport(reportArgs(), midnight).hoursPerDayNeeded).toBe(4.8)
+    // One day after Oct 30 (it counted 2: half the pace), and all on the 31st.
+    for (const day of [30, 31]) {
+      const at = moment(new Date(2026, 9, day))
+      expect(buildReport(reportArgs(), at).hoursPerDayNeeded).toBe(48)
+    }
   })
 
   it('writes the pace line for each day left, as the Daily Pace card does', () => {

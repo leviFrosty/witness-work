@@ -110,6 +110,22 @@ class MonthProgressTest {
   }
 
   @Test
+  fun `counts the days left as the phone's Daily Pace does, from midnight on`() {
+    val unplanned = snapshot.copy(plannedThroughDay = null)
+    fun pace(date: ZonedDateTime) = MonthProgress.of(unplanned, emptyList(), emptyList(), date, t)!!.paceText
+    // 2010 minutes over the 10 days after Oct 21, rounded up to a tenth: the complication's
+    // midnight entry used to count 11.
+    assertEquals("3.4h hoursPerDayToGoal", pace(at(21, hour = 0)))
+    assertEquals("3.4h hoursPerDayToGoal", pace(at(21, hour = 23)))
+    // One day after Oct 30 (it used to count 2: half the pace), and all of it on the 31st.
+    assertEquals("33.5h hoursPerDayToGoal", pace(at(30, hour = 0)))
+    assertEquals("33.5h hoursPerDayToGoal", pace(at(31, hour = 0)))
+    // Rounded up, so keeping to it is enough: 61 minutes over 1 day is 1.1h, not 1h.
+    assertEquals(66, MonthProgress.minutesPerDayToGoal(61, at(30)))
+    assertEquals(60, MonthProgress.minutesPerDayToGoal(60, at(30)))
+  }
+
+  @Test
   fun `stops pacing once the goal is reached`() {
     val p = progress(at(5), listOf(entry("w1", "2026-10-05", 34 * 60)))
     assertTrue(p.goalReached)

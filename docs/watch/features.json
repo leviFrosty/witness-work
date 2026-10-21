@@ -174,14 +174,18 @@
       "id": "home.progress",
       "area": "Home",
       "title": "Month progress",
-      "description": "The month's name, its total in the user's Duration Format, the goal in whole hours, a pace bar with a mark where the user's Plans put them by today (never red), and either Goal reached or the ahead/behind or hours-per-day pace line.",
-      "shared": ["src/app/watch/buildWatchSnapshot.ts#paceText"],
+      "description": "The month's name, its total in the user's Duration Format, the goal in whole hours, a pace bar with a mark where the user's Plans put them by today (never red), and either Goal reached or the ahead/behind or hours-per-day pace line. The hours per day count the days left and round up as the phone's Daily Pace card does, from midnight on too.",
+      "shared": [
+        "src/app/watch/buildWatchSnapshot.ts#paceText",
+        "src/features/progress/lib/progressCardStats.ts#export const dailyPace"
+      ],
       "watchos": {
         "status": "implemented",
         "paths": [
           "targets/watch/HomeView.swift#ProgressSection",
           "targets/watch/PaceBar.swift#struct PaceBar",
-          "targets/watch/MonthProgress.swift#struct MonthProgress"
+          "targets/watch/MonthProgress.swift#struct MonthProgress",
+          "targets/watch/MonthProgress.swift#static func minutesPerDayToGoal"
         ]
       },
       "wearos": {
@@ -189,7 +193,8 @@
         "paths": [
           "targets/wear-os/src/main/java/com/leviwilkerson/witnesswork/wear/ui/HomeScreen.kt#ProgressSection",
           "targets/wear-os/src/main/java/com/leviwilkerson/witnesswork/wear/ui/Components.kt#fun PaceBar",
-          "targets/wear-os/src/main/java/com/leviwilkerson/witnesswork/wear/MonthProgress.kt#data class MonthProgress"
+          "targets/wear-os/src/main/java/com/leviwilkerson/witnesswork/wear/MonthProgress.kt#data class MonthProgress",
+          "targets/wear-os/src/main/java/com/leviwilkerson/witnesswork/wear/MonthProgress.kt#fun minutesPerDayToGoal"
         ]
       }
     },

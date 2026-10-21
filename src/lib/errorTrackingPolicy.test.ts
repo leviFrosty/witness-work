@@ -233,10 +233,39 @@ describe('shouldIgnoreExceptionProperties', () => {
     ).toBe(true)
   })
 
+  // `request()` rejects with an `HttpError` whose message is its kind; one
+  // nobody caught arrives with only that message.
+  it.each(['timeout', 'offline', 'cancelled'])(
+    'drops an uncaught HttpError: %s',
+    (value) => {
+      expect(
+        shouldIgnoreExceptionProperties({
+          $exception_list: [{ type: 'HttpError', value }],
+        })
+      ).toBe(true)
+    }
+  )
+
+  it.each(['server: internal', 'client: invalid_request', 'invalid JSON'])(
+    'keeps an uncaught HttpError: %s',
+    (value) => {
+      expect(
+        shouldIgnoreExceptionProperties({
+          $exception_list: [{ type: 'HttpError', value }],
+        })
+      ).toBe(false)
+    }
+  )
+
   it('keeps other exceptions', () => {
     expect(
       shouldIgnoreExceptionProperties({
         $exception_list: [{ type: 'TypeError', value: 'x is not a function' }],
+      })
+    ).toBe(false)
+    expect(
+      shouldIgnoreExceptionProperties({
+        $exception_list: [{ type: 'Error', value: 'timeout' }],
       })
     ).toBe(false)
     expect(shouldIgnoreExceptionProperties({})).toBe(false)

@@ -96,6 +96,20 @@ export function shouldIgnoreError(error: unknown): boolean {
   )
 }
 
+/**
+ * An automatically captured exception keeps only its type and message. An
+ * `HttpError`'s message starts with its kind (`timeout`, `offline: …`), which
+ * is what decides whether a reported one would have been sent.
+ */
+function errorFromException(exception: {
+  type?: unknown
+  value?: unknown
+}): unknown {
+  const { type, value } = exception
+  if (type !== 'HttpError' || typeof value !== 'string') return value
+  return { message: value, kind: value.split(':', 1)[0] }
+}
+
 export function shouldIgnoreExceptionProperties(
   properties: Record<string, unknown>
 ): boolean {
@@ -106,7 +120,7 @@ export function shouldIgnoreExceptionProperties(
       (exception: unknown) =>
         exception !== null &&
         typeof exception === 'object' &&
-        shouldIgnoreError((exception as { value?: unknown }).value)
+        shouldIgnoreError(errorFromException(exception))
     )
   )
 }

@@ -21,6 +21,7 @@ import { HomeTabStackParamList } from '@/types/homeStack'
 import RootHeader from '@/components/RootHeader'
 import ScrollAwayHeader from '@/components/ui/ScrollAwayHeader'
 import useHideBarsOnScroll from '@/hooks/useHideBarsOnScroll'
+import useTabReselect from '@/hooks/useTabReselect'
 import { renderDaySheetPlanForm } from '@/features/plans/components/PlanDayForm'
 import SelectedDateSheet, {
   SelectedDateSheetState,
@@ -84,7 +85,15 @@ const ScheduleScreen = ({ route, navigation }: Props) => {
     showMonth,
     revealDay,
     coverBottom,
+    jumpToToday,
+    showCurrentServiceYear,
   } = calendar
+
+  // Tapping Schedule again comes back to today, as its Today button does.
+  useTabReselect(() => {
+    if (view === 'month') jumpToToday()
+    else showCurrentServiceYear()
+  })
 
   const [selectedDateSheet, setSelectedDateSheet] =
     useState<SelectedDateSheetState>({ open: false, date: new Date() })

@@ -7,6 +7,7 @@ import type { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll
 import useReorderScroller from '@/components/ui/reorderable/useReorderScroller'
 import { TAB_BAR_HEIGHT } from '@/components/ui/TabBar'
 import type { HideBarsScrollProps } from '@/hooks/useHideBarsOnScroll'
+import useTabReselect from '@/hooks/useTabReselect'
 
 import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
 import { getLifetimeHours } from '@/lib/serviceReport'
@@ -80,6 +81,8 @@ const ProgressAllTimeTab = ({
     obscuredBottom: hasSidebar ? 0 : insets.bottom + TAB_BAR_HEIGHT,
   })
   const [dragging, setDragging] = useState(false)
+  // Tapping Progress again heads back to the top.
+  useTabReselect(() => scrollRef.current?.scrollToPosition(0, 0, true))
 
   if (isEmpty) {
     return (

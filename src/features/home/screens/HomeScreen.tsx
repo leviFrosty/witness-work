@@ -3,6 +3,7 @@ import useTheme from '@/contexts/theme'
 import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
 import useRevealAboveSheet from '@/hooks/useRevealAboveSheet'
 import useHideBarsOnScroll from '@/hooks/useHideBarsOnScroll'
+import useTabReselect from '@/hooks/useTabReselect'
 import ScrollAwayHeader from '@/components/ui/ScrollAwayHeader'
 import { ComponentProps, ReactNode, useState } from 'react'
 import ApproachingConversations from '@/features/visits/components/ApproachingConversations'
@@ -175,6 +176,10 @@ export const HomeScreen = ({ header }: { header: ReactNode }) => {
     enabled: !editing,
     paused: selectedDateSheet.open,
   })
+  // Tapping Home again heads back to the top.
+  useTabReselect(() =>
+    weekStrip.scrollRef.current?.scrollToPosition(0, 0, true)
+  )
   return (
     <View
       ref={scroll.frameRef}

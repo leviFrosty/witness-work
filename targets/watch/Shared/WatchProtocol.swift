@@ -258,8 +258,24 @@ public struct UpNextItem: Codable, Equatable, Sendable, Identifiable {
   /// E.g. `Oct 14`.
   public let dateText: String
   public let place: Place?
+  /// `YYYY-MM-DD` of an untimed Plan's day; `nil` when `timed`, or from an
+  /// older iPhone app.
+  public let day: String?
 
-  public var startDate: Date { Date(timeIntervalSince1970: start / 1000) }
+  /// When it starts; an untimed Plan's day starts at midnight in the watch's
+  /// time zone, wherever the iPhone was when it sent it.
+  public var startDate: Date {
+    if !timed, let day, let midnight = Self.localMidnight(of: day) { return midnight }
+    return Date(timeIntervalSince1970: start / 1000)
+  }
+
+  private static func localMidnight(of day: String) -> Date? {
+    let parts = day.split(separator: "-").compactMap { Int($0) }
+    guard parts.count == 3 else { return nil }
+    var calendar = Calendar(identifier: .gregorian)
+    calendar.timeZone = .current
+    return calendar.date(from: DateComponents(year: parts[0], month: parts[1], day: parts[2]))
+  }
 }
 
 /// What the watch shows, built by the iPhone app's JS (`src/app/watch`).

@@ -93,6 +93,7 @@ describe('buildUpNext', () => {
       kind: 'followUp',
       start: at(5, 15).getTime(),
       timed: true,
+      day: null,
       title: 'Maria González',
       detail: 'Why we suffer',
       durationText: null,
@@ -185,6 +186,8 @@ describe('buildUpNext', () => {
     expect(item).toMatchObject({
       timed: false,
       start: new Date(2026, 9, 6).getTime(),
+      // So the watch keeps it on the 6th in another time zone.
+      day: '2026-10-06',
       timeText: null,
       clockText: null,
       periodText: null,
@@ -203,6 +206,7 @@ describe('buildUpNext', () => {
     expect(item).toMatchObject({
       timed: false,
       start: new Date(2026, 9, 6).getTime(),
+      day: '2026-10-06',
       timeText: null,
     })
   })

@@ -51,6 +51,12 @@ export type WatchUpNextItem = {
   start: number
   /** False for a Plan without a start time, which spans its day. */
   timed: boolean
+  /**
+   * `YYYY-MM-DD` of an untimed Plan's day, which the watch places in its own
+   * time zone: after the user flies to another one, `start` is still the old
+   * zone's midnight until the phone app opens. `null` when `timed`.
+   */
+  day: string | null
   /** The Contact's name, or the Plan's title or Type. */
   title: string
   /** The Follow-up's topic or street, or the Plan's place. */
@@ -133,6 +139,7 @@ function followUpItems(
         id: visit.id,
         kind: 'followUp',
         ...timing(start, true),
+        day: null,
         title: contact.name,
         detail:
           visit.followUp.topic?.trim() ||
@@ -223,6 +230,7 @@ function planItems(
         id,
         kind: 'plan',
         ...timing(start, timed),
+        day: timed ? null : day.format('YYYY-MM-DD'),
         title: titleOf(plan),
         detail:
           plan.location?.name?.trim() || plan.location?.address?.trim() || null,

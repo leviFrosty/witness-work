@@ -328,6 +328,8 @@ data class UpNextItem(
   val weekdayText: String,
   val dateText: String,
   val place: Place?,
+  /** `YYYY-MM-DD` of an untimed Plan's day; `null` when `timed`, or from an older phone app. */
+  val day: String? = null,
 ) : JsonEncodable {
   enum class Kind(val raw: String) {
     FOLLOW_UP("followUp"),
@@ -377,6 +379,7 @@ data class UpNextItem(
       .put("weekdayText", weekdayText)
       .put("dateText", dateText)
       .putOpt("place", place?.toJson())
+      .putOpt("day", day)
 
   companion object {
     fun fromJson(json: JSONObject) =
@@ -396,6 +399,7 @@ data class UpNextItem(
         weekdayText = json.getString("weekdayText"),
         dateText = json.getString("dateText"),
         place = json.optJSONObject("place")?.let(Place::fromJson),
+        day = json.optStringOrNull("day"),
       )
   }
 }

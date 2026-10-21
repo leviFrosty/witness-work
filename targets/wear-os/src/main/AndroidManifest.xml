@@ -121,6 +121,16 @@
         android:resource="@drawable/tile_preview" />
     </service>
 
+    <!-- Complication and tile timelines move to a new time zone or clock. -->
+    <receiver
+      android:name=".TimeZoneReceiver"
+      android:exported="false">
+      <intent-filter>
+        <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+        <action android:name="android.intent.action.TIME_SET" />
+      </intent-filter>
+    </receiver>
+
     <!-- What the phone publishes, while the app isn't running. -->
     <service
       android:name=".WatchListenerService"

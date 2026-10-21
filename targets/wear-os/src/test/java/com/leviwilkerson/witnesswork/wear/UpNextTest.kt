@@ -54,6 +54,23 @@ class UpNextTest {
   }
 
   @Test
+  fun `keeps a plan without a time on its day after the watch changes time zone`() {
+    val newYork = ZoneId.of("America/New_York")
+    val losAngeles = ZoneId.of("America/Los_Angeles")
+    // Sent from New York as its midnight on the 22nd: 9 PM on the 21st in Los Angeles.
+    val sent =
+      item("p", ZonedDateTime.of(2026, 10, 22, 0, 0, 0, 0, newYork), timed = false, kind = UpNextItem.Kind.PLAN)
+        .copy(day = "2026-10-22")
+    val evening = ZonedDateTime.of(2026, 10, 21, 22, 0, 0, 0, losAngeles)
+    assertEquals("tomorrow", UpNext.whenText(sent, evening, snapshot()))
+    // Up all of the 22nd in Los Angeles.
+    assertEquals(1, UpNext.items(snapshot(sent), ZonedDateTime.of(2026, 10, 22, 23, 0, 0, 0, losAngeles)).size)
+    assertEquals(0, UpNext.items(snapshot(sent), ZonedDateTime.of(2026, 10, 23, 0, 0, 0, 0, losAngeles)).size)
+    // From a phone app without `day`, New York's midnight decides: today, the 21st.
+    assertNull(UpNext.dayLabel(sent.copy(day = null), evening, snapshot()))
+  }
+
+  @Test
   fun `labels the day the way the Apple Watch does`() {
     val snapshot = snapshot()
     val now = at(5, 9)

@@ -69,8 +69,16 @@ vi.mock(
   () => import('@/__tests__/mocks/asyncStorage')
 )
 const platform = vi.hoisted(() => ({ OS: 'ios' as 'ios' | 'android' }))
+const appState = vi.hoisted(() => ({
+  listeners: [] as ((state: string) => void)[],
+}))
 vi.mock('react-native', () => ({
-  AppState: { addEventListener: () => ({ remove: () => {} }) },
+  AppState: {
+    addEventListener: (_: string, listener: (state: string) => void) => {
+      appState.listeners.push(listener)
+      return { remove: () => {} }
+    },
+  },
   Platform: {
     get OS() {
       return platform.OS
@@ -148,6 +156,8 @@ import useServiceReport from '@/stores/serviceReport'
 import useMileage from '@/stores/mileage'
 import { getMonthsReports } from '@/lib/serviceReport'
 import { counters } from '@/lib/perf'
+import { normalizeDateForStorage } from '@/lib/normalizeDate'
+import type { WatchSnapshot } from '@/app/watch/buildWatchSnapshot'
 
 const draft = (overrides: Partial<WatchEntryDraft> = {}): WatchEntryDraft => ({
   id: 'watch-1',
@@ -534,6 +544,45 @@ describe('watch sync', () => {
       expect(builds()).toBe(before + 1)
     } finally {
       write({ timeDisplayFormat: 'decimal' })
+    }
+  })
+
+  it('sends Up Next in the new time zone when the app comes back', () => {
+    const zone = process.env.TZ
+    process.env.TZ = 'America/New_York'
+    try {
+      vi.setSystemTime(new Date(2026, 9, 4, 15))
+      // A Plan on the 6th without a time.
+      useServiceReport.setState({
+        dayPlans: [
+          {
+            id: 'plan',
+            date: normalizeDateForStorage(new Date(2026, 9, 6)),
+            minutes: 120,
+          },
+        ],
+        recurringPlans: [],
+      })
+      teardown = installWatchSync()
+      const planStart = () =>
+        (JSON.parse(bridge.snapshots.at(-1)!) as WatchSnapshot).upNext[0]
+      expect(planStart()).toMatchObject({
+        start: Date.parse('2026-10-06T00:00:00-04:00'),
+        day: '2026-10-06',
+      })
+
+      // Flown to Los Angeles while the app was away.
+      appState.listeners.forEach((listener) => listener('background'))
+      process.env.TZ = 'America/Los_Angeles'
+      appState.listeners.forEach((listener) => listener('active'))
+
+      expect(planStart()).toMatchObject({
+        start: Date.parse('2026-10-06T00:00:00-07:00'),
+        day: '2026-10-06',
+      })
+    } finally {
+      process.env.TZ = zone
+      useServiceReport.setState({ dayPlans: [] })
     }
   })
 

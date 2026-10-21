@@ -181,6 +181,34 @@ export function refreshCloudSyncStatus({
   return statusInFlight
 }
 
+/**
+ * Why Cloud Sync is paused on this device, as last recorded: the server's
+ * switch is off, or the account isn't entitled. Null when it isn't paused, or
+ * the device doesn't sync through Cloud Sync. Nothing local changes while it's
+ * paused; edits wait and go up once it's back.
+ */
+export type CloudSyncPause = 'switch' | 'entitlement'
+
+export function cloudSyncPause(): CloudSyncPause | null {
+  if (!usesCloudSync()) return null
+  const { cloudSyncConfig, cloudSyncEntitled } = usePreferences.getState()
+  if (cloudSyncConfig?.enabled === false) return 'switch'
+  if (cloudSyncEntitled === false) return 'entitlement'
+  return null
+}
+
+/**
+ * Before a sync the User asked for: reads the account's answer again, so a
+ * pause that has ended lifts now rather than at the next foreground (the engine
+ * catches up when it does), and says what still pauses it. Without an answer
+ * (offline), what was recorded stands.
+ */
+export async function recheckCloudSyncPause(): Promise<CloudSyncPause | null> {
+  if (!usesCloudSync()) return null
+  await refreshCloudSyncStatus({ force: true })
+  return cloudSyncPause()
+}
+
 export type PrepareCloudSyncOutcome =
   | { outcome: 'ready'; status: SyncStatus }
   | { outcome: 'not_entitled'; status: SyncStatus }

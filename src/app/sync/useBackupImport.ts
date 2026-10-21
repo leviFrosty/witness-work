@@ -82,11 +82,36 @@ export function useBackupImport({ source, entryPoint }: Options) {
       stage = 'restore'
 
       // Records it can't read drop one by one; a broken frame stops it all.
-      if (!restoreBackupFile(data)) return rejectInvalidFile()
+      const restore = restoreBackupFile(data)
+      if (!restore.ok && restore.problem === 'newer') {
+        analytics.capture('import_failed', {
+          ...properties,
+          stage,
+          elapsed_ms: Date.now() - startedAt,
+          error_code: 'newer_version',
+        })
+        Alert.alert(
+          i18n.t('importErrorNewerFile_title'),
+          i18n.t('importErrorNewerFile_description')
+        )
+        return false
+      }
+      if (!restore.ok) return rejectInvalidFile()
       analytics.capture('backup_imported', {
         ...properties,
         elapsed_ms: Date.now() - startedAt,
+        ...(restore.droppedRecords > 0
+          ? { dropped_records: restore.droppedRecords }
+          : {}),
       })
+      if (restore.droppedRecords > 0)
+        Alert.alert(
+          i18n.t('importPartial_title'),
+          // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
+          i18n.t('importPartial_description', {
+            count: restore.droppedRecords,
+          })
+        )
       return true
     } catch (error) {
       analytics.capture('import_failed', {

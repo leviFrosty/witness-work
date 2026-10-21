@@ -445,6 +445,33 @@ export function dropUnreadableRecords(payload: unknown): string[] {
 }
 
 /**
+ * How many records the lists `dropUnreadableRecords` checks hold, so a caller
+ * can count what parsing dropped.
+ */
+export function countRecords(payload: unknown): number {
+  if (!isMap(payload)) return 0
+  let count = 0
+  for (const [storeKey, lists] of Object.entries(recordLists)) {
+    const store = payload[storeKey]
+    if (!isMap(store)) continue
+    for (const listKey of Object.keys(lists)) {
+      const list = store[listKey]
+      if (Array.isArray(list)) count += list.length
+    }
+  }
+  const reports = isMap(payload.serviceReportStore)
+    ? payload.serviceReportStore.serviceReports
+    : undefined
+  if (isMap(reports))
+    for (const months of Object.values(reports)) {
+      if (!isMap(months)) continue
+      for (const list of Object.values(months))
+        if (Array.isArray(list)) count += list.length
+    }
+  return count
+}
+
+/**
  * Deletes `key` from a synced values slice with its stamp and per-entry stamps,
  * so the merge keeps the local value.
  */

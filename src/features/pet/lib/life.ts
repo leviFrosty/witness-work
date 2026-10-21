@@ -49,7 +49,10 @@ export const MONTHLY_HOLD_MAX_DAYS = 61
 export type PetLifeInput = {
   /** Day key of the adoption. */
   adoptedOn: string
-  /** Active day keys (`petActiveDays`); days before adoption are ignored. */
+  /**
+   * Active day keys (`petActiveDays`). The day before adoption counts as after
+   * it; earlier days only matter in a `monthly` adoption month (`replay`).
+   */
   activeDays: ReadonlySet<string>
   /** Day keys of wake taps. */
   wakes: readonly string[]
@@ -131,7 +134,9 @@ const sameInput = (a: PetLifeInput, b: PetLifeInput): boolean =>
 /**
  * Replays the pet's life through `today`, one step per day, in O(days):
  *
- * - Starts at 3 hearts on the adoption day.
+ * - Starts at 3 hearts on the adoption day, or the day before when that day is
+ *   active (another time zone may have recorded it after the adoption). In a
+ *   `monthly` month already active before then, starts at 5, held as below.
  * - A wake sets hearts to at least 1 (reviving a pet that died) and restarts the
  *   quiet count. Applied before the day's activity.
  * - An active day adds a heart, up to 5; a pet that died comes back at 1. It also
@@ -187,6 +192,19 @@ export function simulateLifeAhead(
   return lives
 }
 
+/** Whether a day of `day`'s month before it is active. */
+function activeEarlierInMonth(
+  activeDays: ReadonlySet<string>,
+  day: number
+): boolean {
+  const month = monthOfDayKey(dayKeyFromNumber(day))
+  for (let earlier = day - 1; ; earlier--) {
+    const key = dayKeyFromNumber(earlier)
+    if (monthOfDayKey(key) !== month) return false
+    if (activeDays.has(key)) return true
+  }
+}
+
 /** Lives for `today` through `extraDays` after it, in order. */
 function replay(
   {
@@ -204,6 +222,10 @@ function replay(
   if (!Number.isFinite(first)) first = dayNumber(localDayKey())
   const end = first + extraDays
   let start = dayNumber(adoptedOn)
+  // An active day the day before counts: a device behind the adopting one's
+  // time zone may have recorded it after the adoption.
+  if (Number.isFinite(start) && activeDays.has(dayKeyFromNumber(start - 1)))
+    start--
   // A bad or future adoption day (a clock that ran ahead) reads as today.
   if (!Number.isFinite(start) || start > first) start = first
   const wakeDays = new Set(wakes)
@@ -214,6 +236,16 @@ function replay(
   let dead = false
   // The day quiet days count from; later than today while monthly hearts hold.
   let quietFrom = start
+  // At the monthly pace, a month already shared in before adoption has had its
+  // one check: hold five hearts, as for a pet adopted before it (ADR 0031).
+  const startKey = dayKeyFromNumber(start)
+  if (
+    paceOf?.(monthOfDayKey(startKey)) === 'monthly' &&
+    activeEarlierInMonth(activeDays, start)
+  ) {
+    hearts = MAX_HEARTS
+    quietFrom = lastDayOfNextMonth(startKey)
+  }
   let month = ''
   let pace: HeartsPace = 'daily'
   let lowSinceFull = false

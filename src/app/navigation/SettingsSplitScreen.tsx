@@ -1,4 +1,4 @@
-import { ReactNode } from 'react'
+import { ReactNode, useState } from 'react'
 import { View } from 'react-native'
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import {
@@ -14,6 +14,9 @@ import SettingsOverviewScreen from '@/features/settings/screens/SettingsOverview
 import { settingsDetailScreens } from '@/app/navigation/settingsDetailScreens'
 import { RootStackParamList } from '@/types/rootStack'
 import SidebarToggle from '@/components/ui/SidebarToggle'
+import WindowControlsInsetView, {
+  NO_WINDOW_CONTROLS,
+} from '../../../modules/window-controls'
 
 const SettingsDetailStack = createNativeStackNavigator<RootStackParamList>()
 
@@ -31,6 +34,7 @@ const SettingsSplitLayout = ({
 }: LayoutProps) => {
   const theme = useTheme()
   const insets = useSafeAreaInsets()
+  const [controls, setControls] = useState(NO_WINDOW_CONTROLS)
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
@@ -45,9 +49,16 @@ const SettingsSplitLayout = ({
         }}
       >
         <View style={{ width: 350 }}>
-          <View style={{ paddingHorizontal: 12 }}>
-            <SidebarToggle mode='show' />
-          </View>
+          <WindowControlsInsetView onInsetsChange={setControls}>
+            <View
+              style={{
+                paddingStart: 12 + controls.start,
+                paddingEnd: 12,
+              }}
+            >
+              <SidebarToggle mode='show' />
+            </View>
+          </WindowControlsInsetView>
           <SettingsContents
             onNavigate={onNavigate}
             selectedDestination={selectedDestination}

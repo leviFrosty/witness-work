@@ -1,0 +1,7 @@
+{
+  "name": "window-controls",
+  "version": "0.1.0",
+  "description": "Local Expo module that reports where iPadOS window controls overlap a view.",
+  "main": "index.tsx",
+  "private": true
+}

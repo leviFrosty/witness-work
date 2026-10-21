@@ -34,6 +34,9 @@ import { RootStackNavigation } from '@/types/rootStack'
 import { HomeTabStackNavigation } from '@/types/homeStack'
 import SidebarToggle from '@/components/ui/SidebarToggle'
 import { isRtlLayout } from '@/lib/direction'
+import WindowControlsInsetView, {
+  NO_WINDOW_CONTROLS,
+} from '../../modules/window-controls'
 
 export const ROOT_HEADER_AVATAR_SIZE = 34
 
@@ -104,6 +107,7 @@ export default function RootHeader({
   const isDark = theme.colors.background === '#121212'
   const [titleRoom, setTitleRoom] = useState<number>()
   const [titleWidth, setTitleWidth] = useState<number>()
+  const [controls, setControls] = useState(NO_WINDOW_CONTROLS)
   const titleFit =
     titleRoom === undefined || titleWidth === undefined
       ? undefined
@@ -159,83 +163,94 @@ export default function RootHeader({
           contentStyle,
         ]}
       >
-        <Animated.View
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            gap: 12,
-            minHeight: compact ? 36 : 44,
-            transitionProperty: 'minHeight',
-            ...FLOAT_TRANSITION,
-          }}
-        >
-          <SidebarToggle mode='show' />
-          <AccountMenu />
-          <Pressable
-            onPress={onPressTitle}
-            onLongPress={onLongPressTitle}
-            disabled={!onPressTitle && !onLongPressTitle}
-            delayLongPress={800}
-            onLayout={(e) => setTitleRoom(e.nativeEvent.layout.width)}
-            style={{ flex: 1 }}
+        {/* Keeps the avatar clear of a windowed iPad app's window controls. */}
+        <WindowControlsInsetView onInsetsChange={setControls}>
+          <Animated.View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 12,
+              minHeight: compact ? 36 : 44,
+              paddingStart: controls.start,
+              paddingEnd: controls.end,
+              transitionProperty: 'minHeight',
+              ...FLOAT_TRANSITION,
+            }}
           >
-            {/* Scaled rather than resized so the title shrinks smoothly. */}
-            <Animated.View
-              style={{
-                // Shrinks toward the title's reading start.
-                transformOrigin: isRtlLayout() ? 'right center' : 'left center',
-                transform: [{ scale: compact ? 0.82 : 1 }],
-                transitionProperty: 'transform',
-                ...FLOAT_TRANSITION,
-              }}
+            <SidebarToggle mode='show' />
+            <AccountMenu />
+            <Pressable
+              onPress={onPressTitle}
+              onLongPress={onLongPressTitle}
+              disabled={!onPressTitle && !onLongPressTitle}
+              delayLongPress={800}
+              onLayout={(e) => setTitleRoom(e.nativeEvent.layout.width)}
+              style={{ flex: 1 }}
             >
-              {/* Shrinks a little before it truncates, so a crowded header
+              {/* Scaled rather than resized so the title shrinks smoothly. */}
+              <Animated.View
+                style={{
+                  // Shrinks toward the title's reading start.
+                  transformOrigin: isRtlLayout()
+                    ? 'right center'
+                    : 'left center',
+                  transform: [{ scale: compact ? 0.82 : 1 }],
+                  transitionProperty: 'transform',
+                  ...FLOAT_TRANSITION,
+                }}
+              >
+                {/* Shrinks a little before it truncates, so a crowded header
               (or larger text) still shows the section's name. */}
-              <Text
-                accessibilityRole='header'
-                numberOfLines={1}
-                adjustsFontSizeToFit
-                minimumFontScale={0.7}
-                style={titleStyle}
-              >
-                {title}
-              </Text>
-            </Animated.View>
-          </Pressable>
-          {actions && (
-            <TitleFitContext value={titleFit}>
-              {/* Wide enough that 12pt slops on neighbouring buttons don't
+                <Text
+                  accessibilityRole='header'
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                  minimumFontScale={0.7}
+                  style={titleStyle}
+                >
+                  {title}
+                </Text>
+              </Animated.View>
+            </Pressable>
+            {actions && (
+              <TitleFitContext value={titleFit}>
+                {/* Wide enough that 12pt slops on neighbouring buttons don't
               overlap and steal each other's taps. */}
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 24,
+                  }}
+                >
+                  {actions}
+                </View>
+              </TitleFitContext>
+            )}
+            {actions && (
+              // The title at full size, unconstrained, to tell whether it fits.
               <View
-                style={{ flexDirection: 'row', alignItems: 'center', gap: 24 }}
+                pointerEvents='none'
+                accessibilityElementsHidden
+                importantForAccessibility='no-hide-descendants'
+                style={{
+                  position: 'absolute',
+                  width: 9999,
+                  flexDirection: 'row',
+                  opacity: 0,
+                }}
               >
-                {actions}
+                <Text
+                  numberOfLines={1}
+                  onLayout={(e) => setTitleWidth(e.nativeEvent.layout.width)}
+                  style={titleStyle}
+                >
+                  {title}
+                </Text>
               </View>
-            </TitleFitContext>
-          )}
-          {actions && (
-            // The title at full size, unconstrained, to tell whether it fits.
-            <View
-              pointerEvents='none'
-              accessibilityElementsHidden
-              importantForAccessibility='no-hide-descendants'
-              style={{
-                position: 'absolute',
-                width: 9999,
-                flexDirection: 'row',
-                opacity: 0,
-              }}
-            >
-              <Text
-                numberOfLines={1}
-                onLayout={(e) => setTitleWidth(e.nativeEvent.layout.width)}
-                style={titleStyle}
-              >
-                {title}
-              </Text>
-            </View>
-          )}
-        </Animated.View>
+            )}
+          </Animated.View>
+        </WindowControlsInsetView>
       </Animated.View>
       {children}
     </View>

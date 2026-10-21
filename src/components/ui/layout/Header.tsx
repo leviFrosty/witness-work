@@ -12,6 +12,10 @@ import { useNavigation } from '@react-navigation/native'
 import IconButton from '@/components/ui/IconButton'
 import i18n from '@/lib/locales'
 import { RootStackNavigation } from '@/types/rootStack'
+import { useState } from 'react'
+import WindowControlsInsetView, {
+  NO_WINDOW_CONTROLS,
+} from '../../../../modules/window-controls'
 
 type Props = {
   backgroundColor?: string
@@ -62,6 +66,9 @@ const HeaderContent = ({
   const theme = useTheme()
   const insets = useSafeAreaInsets()
   const navigation = useNavigation<RootStackNavigation>()
+  // A windowed iPad app keeps its window controls over the top corner, right
+  // where the back button sits.
+  const [controls, setControls] = useState(NO_WINDOW_CONTROLS)
 
   const handleButtonAction = () => {
     if (onPressLeftIcon) {
@@ -110,7 +117,8 @@ const HeaderContent = ({
         borderBottomColor: theme.colors.border,
       }}
     >
-      <View
+      <WindowControlsInsetView
+        onInsetsChange={setControls}
         style={{
           position: 'relative',
           flexGrow: 1,
@@ -122,11 +130,13 @@ const HeaderContent = ({
         }}
       >
         {leftElement ? (
-          <View style={{ position: 'absolute', left: 0 }}>{leftElement}</View>
+          <View style={{ position: 'absolute', left: controls.start }}>
+            {leftElement}
+          </View>
         ) : (
           buttonType !== 'none' && (
             <IconButton
-              style={{ position: 'absolute', left: 0 }}
+              style={{ position: 'absolute', left: controls.start }}
               onPress={handleButtonAction}
               icon={iconName()}
               accessibilityLabel={buttonLabel()}
@@ -167,7 +177,7 @@ const HeaderContent = ({
           </Text>
         </Pressable>
         {rightElement}
-      </View>
+      </WindowControlsInsetView>
     </View>
   )
 }

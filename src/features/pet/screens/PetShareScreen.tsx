@@ -10,6 +10,7 @@ import i18n from '@/lib/locales'
 import { usePreferences } from '@/stores/preferences'
 import type { RootStackParamList } from '@/types/rootStack'
 import PetShareCard from '@/features/pet/components/PetShareCard'
+import PetSheetClose from '@/features/pet/components/PetSheetClose'
 import usePetRoomScene from '@/features/pet/hooks/usePetRoomScene'
 import usePetSheetInsets from '@/features/pet/hooks/usePetSheetInsets'
 import useSharePet from '@/features/pet/hooks/useSharePet'
@@ -101,6 +102,7 @@ export default function PetShareScreen({ navigation }: Props) {
       >
         {i18n.t('pet.shareCard.share')}
       </ActionButton>
+      <PetSheetClose />
     </View>
   )
 }

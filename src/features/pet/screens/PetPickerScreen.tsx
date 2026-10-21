@@ -12,6 +12,7 @@ import PetCoatSwatches from '@/features/pet/components/PetCoatSwatches'
 import PetIntro from '@/features/pet/components/PetIntro'
 import PetNameField from '@/features/pet/components/PetNameField'
 import PetSpeciesGrid from '@/features/pet/components/PetSpeciesGrid'
+import PetSheetClose from '@/features/pet/components/PetSheetClose'
 import {
   choiceForSpecies,
   initialPetChoice,
@@ -102,6 +103,7 @@ export default function PetPickerScreen({ route, navigation }: Props) {
       >
         {i18n.t(adopting ? 'pet.picker.adopt' : 'pet.picker.save')}
       </ActionButton>
+      <PetSheetClose />
     </View>
   )
 }

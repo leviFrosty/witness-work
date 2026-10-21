@@ -38,6 +38,7 @@ import {
 import { noteSecretFound } from '@/features/pet/lib/secrets'
 import PetSceneView from '@/features/pet/render/PetSceneView'
 import usePetSheetInsets from '@/features/pet/hooks/usePetSheetInsets'
+import PetSheetClose from '@/features/pet/components/PetSheetClose'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'PetRoom'>
 
@@ -147,117 +148,124 @@ export default function PetRoomScreen({ navigation }: Props) {
   )
 
   return (
-    // One scroll view as the sheet's root (react-native-screens tracks the
-    // sheet's first scroll view); the room and tabs stay pinned under the name.
-    <ScrollView
-      style={{
-        flex: 1,
-        marginTop: statusBar,
-        backgroundColor: theme.colors.sheet,
-      }}
-      stickyHeaderIndices={[1]}
-      contentContainerStyle={{
-        // iOS adds the bottom inset below the sheet itself.
-        paddingBottom: Platform.OS === 'ios' ? 24 : sheetInsets.bottom + 8,
-      }}
-    >
-      <View
+    <>
+      {/* One scroll view as the sheet's root (react-native-screens tracks the
+      sheet's first scroll view); the room and tabs stay pinned under the name. */}
+      <ScrollView
         style={{
-          paddingTop: sheetInsets.top - statusBar,
-          paddingHorizontal: 20,
-          paddingBottom: 14,
-          gap: 12,
-        }}
-      >
-        <View accessibilityRole='header'>
-          <PetCardHeader name={scene.name} life={scene.life} size='xl' />
-        </View>
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-          <ActionPill
-            icon={PencilIcon}
-            label={i18n.t('pet.details.rename')}
-            onPress={() => navigation.navigate('PetRename')}
-          />
-          <ActionPill
-            icon={PawPrintIcon}
-            label={i18n.t('pet.details.change')}
-            onPress={() => navigation.navigate('PetPicker', { mode: 'change' })}
-          />
-          <ActionPill
-            icon={ShareIcon}
-            label={i18n.t('pet.details.share')}
-            onPress={() => {
-              analytics.capture('pet_share_opened', { from: 'details' })
-              navigation.navigate('PetShare')
-            }}
-          />
-        </View>
-      </View>
-      <View
-        style={{
-          paddingHorizontal: 20,
-          paddingBottom: 16,
+          flex: 1,
+          marginTop: statusBar,
           backgroundColor: theme.colors.sheet,
+        }}
+        stickyHeaderIndices={[1]}
+        contentContainerStyle={{
+          // iOS adds the bottom inset below the sheet itself.
+          paddingBottom: Platform.OS === 'ios' ? 24 : sheetInsets.bottom + 8,
         }}
       >
         <View
           style={{
-            width: '100%',
-            maxWidth: PREVIEW_MAX_WIDTH,
-            alignSelf: 'center',
-            // The sticky header's wrapper drops `gap`.
-            marginBottom: 14,
+            paddingTop: sheetInsets.top - statusBar,
+            paddingHorizontal: 20,
+            paddingBottom: 14,
+            gap: 12,
           }}
         >
-          <PetSceneView
-            input={scene.input}
-            borderRadius={theme.numbers.borderRadiusMd}
-            accessibilityLabel={i18n.t('pet.a11y.scene', { name: scene.name })}
-            accessibilityHint={i18n.t('pet.a11y.patHint')}
-            onTwirl={() => noteSecretFound('twirl')}
-          />
+          <View accessibilityRole='header'>
+            <PetCardHeader name={scene.name} life={scene.life} size='xl' />
+          </View>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+            <ActionPill
+              icon={PencilIcon}
+              label={i18n.t('pet.details.rename')}
+              onPress={() => navigation.navigate('PetRename')}
+            />
+            <ActionPill
+              icon={PawPrintIcon}
+              label={i18n.t('pet.details.change')}
+              onPress={() =>
+                navigation.navigate('PetPicker', { mode: 'change' })
+              }
+            />
+            <ActionPill
+              icon={ShareIcon}
+              label={i18n.t('pet.details.share')}
+              onPress={() => {
+                analytics.capture('pet_share_opened', { from: 'details' })
+                navigation.navigate('PetShare')
+              }}
+            />
+          </View>
         </View>
-        <ChoiceChips
-          accessibilityLabel={i18n.t('pet.room.tabs')}
-          options={ROOM_TABS.map((key) => ({
-            key,
-            label: roomTabLabel(key),
-            icon: ROOM_TAB_ICONS[key],
-          }))}
-          value={tab}
-          onChange={setTab}
-        />
-      </View>
-      <View style={{ paddingHorizontal: 20, paddingTop: 2, gap: 18 }}>
-        {/* How locked ones open up; each also shows its own number. */}
-        {anyLocked && (
-          <Text
+        <View
+          style={{
+            paddingHorizontal: 20,
+            paddingBottom: 16,
+            backgroundColor: theme.colors.sheet,
+          }}
+        >
+          <View
             style={{
-              fontSize: theme.fontSize('sm'),
-              color: theme.colors.textAlt,
+              width: '100%',
+              maxWidth: PREVIEW_MAX_WIDTH,
+              alignSelf: 'center',
+              // The sticky header's wrapper drops `gap`.
+              marginBottom: 14,
             }}
           >
-            {unlockNoteText(unlocks.mode, unlocks.streakKind, tab)}
-          </Text>
-        )}
-        {tab === 'window' && (
-          <RoomLiveWindowRow
-            live={isLiveWindow(room.window)}
-            onChange={setLive}
+            <PetSceneView
+              input={scene.input}
+              borderRadius={theme.numbers.borderRadiusMd}
+              accessibilityLabel={i18n.t('pet.a11y.scene', {
+                name: scene.name,
+              })}
+              accessibilityHint={i18n.t('pet.a11y.patHint')}
+              onTwirl={() => noteSecretFound('twirl')}
+            />
+          </View>
+          <ChoiceChips
+            accessibilityLabel={i18n.t('pet.room.tabs')}
+            options={ROOM_TABS.map((key) => ({
+              key,
+              label: roomTabLabel(key),
+              icon: ROOM_TAB_ICONS[key],
+            }))}
+            value={tab}
+            onChange={setTab}
           />
-        )}
-        {sections.map((section) => (
-          <RoomOptionGrid
-            key={section.part}
-            section={section}
-            room={room}
-            liveNow={scene.liveNow}
-            thumbBase={scene.thumbBase}
-            unlocks={unlocks}
-            onSelect={(option) => choose(section.part, option)}
-          />
-        ))}
-      </View>
-    </ScrollView>
+        </View>
+        <View style={{ paddingHorizontal: 20, paddingTop: 2, gap: 18 }}>
+          {/* How locked ones open up; each also shows its own number. */}
+          {anyLocked && (
+            <Text
+              style={{
+                fontSize: theme.fontSize('sm'),
+                color: theme.colors.textAlt,
+              }}
+            >
+              {unlockNoteText(unlocks.mode, unlocks.streakKind, tab)}
+            </Text>
+          )}
+          {tab === 'window' && (
+            <RoomLiveWindowRow
+              live={isLiveWindow(room.window)}
+              onChange={setLive}
+            />
+          )}
+          {sections.map((section) => (
+            <RoomOptionGrid
+              key={section.part}
+              section={section}
+              room={room}
+              liveNow={scene.liveNow}
+              thumbBase={scene.thumbBase}
+              unlocks={unlocks}
+              onSelect={(option) => choose(section.part, option)}
+            />
+          ))}
+        </View>
+      </ScrollView>
+      <PetSheetClose />
+    </>
   )
 }

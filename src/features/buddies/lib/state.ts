@@ -98,17 +98,6 @@ export type BuddySettingKey = keyof BuddySettings
 /** A buddy's own settings; a key left out follows All Buddies. */
 export type BuddyOverrides = Partial<BuddySettings>
 
-export const BUDDY_SETTING_KEYS = [
-  'photo',
-  'tenure',
-  'streak',
-  'badges',
-  'pet',
-  'plans',
-  'planTimes',
-  'showOnCalendar',
-] as const satisfies readonly BuddySettingKey[]
-
 /** Per-device alerts a buddy can have their own value for. */
 export type BuddyAlertSettings = {
   /** Their requests to join this User's Plans. */

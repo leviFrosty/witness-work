@@ -147,8 +147,6 @@ export function switchSyncOption(
   return switching
 }
 
-export const isSwitchingSyncOption = () => switching !== null
-
 async function runSwitch(
   to: SyncOption,
   source: SwitchSource

@@ -1,5 +1,5 @@
 import { ReactNode, Ref, useState } from 'react'
-import { AccessibilityInfo, Platform, View } from 'react-native'
+import { Platform, View } from 'react-native'
 import { Collapsible, Host, RNHostView } from '@expo/ui'
 import { useCardStyle } from '@/components/ui/Card'
 import useTheme from '@/contexts/theme'
@@ -46,17 +46,6 @@ export default function CollapsibleCard({
   const [opened, setOpened] = useState(open)
   if (open && !opened) setOpened(true)
 
-  const toggle = (next: boolean) => {
-    onOpenChange(next)
-    // SwiftUI's DisclosureGroup announces its state; Compose's clickable
-    // header doesn't, so say it on Android.
-    if (Platform.OS === 'android') {
-      AccessibilityInfo.announceForAccessibility(
-        i18n.t(next ? 'a11y_expanded' : 'a11y_collapsed')
-      )
-    }
-  }
-
   return (
     <View
       ref={ref}
@@ -74,8 +63,11 @@ export default function CollapsibleCard({
       >
         <Collapsible
           isOpen={open}
-          onOpenChange={toggle}
+          onOpenChange={onOpenChange}
           label={label}
+          // SwiftUI's DisclosureGroup announces its own state; Compose's
+          // header reads this one.
+          stateDescription={i18n.t(open ? 'a11y_expanded' : 'a11y_collapsed')}
           labelStyle={{
             fontFamily: LABEL_FONT ?? theme.fonts.semiBold,
             fontSize: theme.fontSize('md'),

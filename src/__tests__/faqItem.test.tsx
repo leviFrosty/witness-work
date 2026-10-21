@@ -55,15 +55,21 @@ vi.mock('@/features/updates/components/AppVersionInfo', () => ({
   default: () => null,
 }))
 vi.mock('@tamagui/toast', () => ({ useToastController: () => ({}) }))
-vi.mock('tamagui', () => ({ Input: () => null }))
+vi.mock('tamagui', () => ({
+  Input: (props: object) => createElement('input', props),
+}))
 vi.mock('expo-clipboard', () => ({}))
-vi.mock('lucide-react-native', () => ({}))
+vi.mock('lucide-react-native', () => ({ Search: () => null }))
 vi.mock('@/lib/errorTracking', () => ({ errorTracking: {} }))
 vi.mock('@/lib/links', () => ({ openURL: vi.fn() }))
+vi.mock('@/lib/direction', () => ({
+  alignInput: () => 'left',
+  alignText: () => 'left',
+}))
 vi.mock('@/constants/links', () => ({ default: {} }))
 vi.mock('@/constants/contactInformation', () => ({ email: '' }))
 
-import { FAQItem } from '@/features/updates/components/FAQContent'
+import { FAQItem, FAQSearch } from '@/features/updates/components/FAQContent'
 import type { FAQEntry } from '@/features/updates/constants/faqs'
 
 const entry = { id: 'streaks', category: 'streaks' } as unknown as FAQEntry
@@ -95,18 +101,30 @@ describe('FAQItem', () => {
     expect(collapsible().props.isOpen).toBe(false)
   })
 
-  it('leaves the state announcement to SwiftUI on iOS', () => {
+  it('gives the header its expanded or collapsed state', () => {
+    expect(collapsible().props.stateDescription).toBe('a11y_collapsed')
+
     act(() => collapsible().props.onOpenChange(true))
-    expect(native.announce).not.toHaveBeenCalled()
+    expect(collapsible().props.stateDescription).toBe('a11y_expanded')
   })
 
-  it('announces expanded and collapsed on Android', () => {
-    native.os = 'android'
+  it('leaves announcing the state to the screen reader', () => {
     act(() => collapsible().props.onOpenChange(true))
     act(() => collapsible().props.onOpenChange(false))
-    expect(native.announce.mock.calls).toEqual([
-      ['a11y_expanded'],
-      ['a11y_collapsed'],
-    ])
+    expect(native.announce).not.toHaveBeenCalled()
+  })
+})
+
+describe('FAQSearch', () => {
+  it('names the field for screen readers, not just with its placeholder', () => {
+    let search: ReactTestRenderer | undefined
+    act(() => {
+      search = create(
+        createElement(FAQSearch, { search: 'roll', setSearch: () => {} })
+      )
+    })
+    const input = search!.root.findByType('input' as never)
+    expect(input.props.accessibilityLabel).toBe('faq_searchPlaceholder')
+    act(() => search?.unmount())
   })
 })

@@ -12,9 +12,11 @@ import { AnimationViewContext } from '@/contexts/AnimationView'
 import useTheme from '@/contexts/theme'
 import type { LogTimePrefill } from '@/hooks/usePlanMenuActions'
 import i18n from '@/lib/locales'
+import type { RootStackParamList } from '@/types/rootStack'
 import { DayPlan, TimeEntry } from '@/types/timeEntry'
 import DayHistoryHeader from '@/features/service-reports/components/DayHistoryHeader'
 import DayHistoryView, {
+  type PlanDetailsSlot,
   type PlanFormSlot,
 } from '@/features/service-reports/components/DayHistoryView'
 import TimeEntryForm from '@/features/service-reports/components/TimeEntryForm'
@@ -25,12 +27,18 @@ export type SelectedDateSheetState = {
 }
 
 /**
- * A form in place of the day: Add Time for a new entry, maybe from a Plan, or
- * one to change; or a new Plan for the day.
+ * What shows in place of the day: Add Time for a new entry, maybe from a Plan,
+ * or one to change; one of the day's Plans; or the Plan form, for a new Plan or
+ * one to change, coming back to that Plan if it was opened from there.
  */
 type DayForm =
   | { kind: 'time'; existingReport?: TimeEntry; prefill?: LogTimePrefill }
-  | { kind: 'plan' }
+  | { kind: 'planDetails'; plan: RootStackParamList['Plan Details'] }
+  | {
+      kind: 'plan'
+      params?: RootStackParamList['PlanDay']
+      from?: RootStackParamList['Plan Details']
+    }
 
 const HORIZONTAL_PADDING = 24
 /** Long enough for an unfolded form to lay out before scrolling to it. */
@@ -52,6 +60,11 @@ interface Props {
   renderDayPlanFooter?: (plan: DayPlan) => React.ReactNode
   /** The Plan form, for planning the day in the sheet. */
   renderPlanForm?: (slot: PlanFormSlot) => React.ReactNode
+  /** Plan Details, for showing one of the day's Plans in the sheet. */
+  renderPlanDetails?: {
+    actions: (slot: PlanDetailsSlot) => React.ReactNode
+    body: (slot: PlanDetailsSlot) => React.ReactNode
+  }
   /** The sheet's resting height while open, and 0 once closed. */
   onHeightChange?: (height: number) => void
 }
@@ -70,6 +83,7 @@ const SelectedDateSheet: React.FC<Props> = ({
   renderFooter,
   renderDayPlanFooter,
   renderPlanForm,
+  renderPlanDetails,
   onHeightChange,
 }) => {
   const theme = useTheme()
@@ -127,6 +141,40 @@ const SelectedDateSheet: React.FC<Props> = ({
     close()
   }
 
+  const back = () =>
+    setForm(
+      form?.kind === 'plan' && form.from
+        ? { kind: 'planDetails', plan: form.from }
+        : null
+    )
+
+  const openPlan = (plan: RootStackParamList['Plan Details']) =>
+    setForm({ kind: 'planDetails', plan })
+
+  const planDetailsSlot: PlanDetailsSlot | null =
+    form?.kind === 'planDetails'
+      ? {
+          plan: form.plan,
+          onEdit: (params) =>
+            setForm({ kind: 'plan', params, from: form.plan }),
+          onOpenPlan: openPlan,
+          onGone: () => setForm(null),
+          onNavigate: navigateAfterClosing,
+        }
+      : null
+
+  const title = !form
+    ? undefined
+    : form.kind === 'planDetails'
+      ? 'plan'
+      : form.kind === 'plan'
+        ? form.params
+          ? 'editPlan'
+          : 'createPlan'
+        : form.existingReport
+          ? 'updateTime'
+          : 'addTime'
+
   const closeButton = (
     <IconButton
       noTransform
@@ -158,7 +206,7 @@ const SelectedDateSheet: React.FC<Props> = ({
         icon={ChevronBackwardIcon}
         size={28}
         color={theme.colors.text}
-        onPress={() => setForm(null)}
+        onPress={back}
         accessibilityLabel={i18n.t('goBack')}
         hitSlop={{ top: 8, bottom: 8, left: 12, right: 8 }}
         style={{
@@ -179,14 +227,13 @@ const SelectedDateSheet: React.FC<Props> = ({
           fontFamily: theme.fonts.bold,
         }}
       >
-        {i18n.t(
-          form.kind === 'plan'
-            ? 'createPlan'
-            : form.existingReport
-              ? 'updateTime'
-              : 'addTime'
-        )}
+        {i18n.t(title!)}
       </Text>
+      {planDetailsSlot ? (
+        <XView style={{ gap: 16, marginEnd: 16 }}>
+          {renderPlanDetails?.actions(planDetailsSlot)}
+        </XView>
+      ) : null}
       {closeButton}
     </XView>
   ) : (
@@ -214,7 +261,7 @@ const SelectedDateSheet: React.FC<Props> = ({
       hidden={!focused}
       onOpenChange={(open) => setSheet({ ...sheet, open })}
       header={header}
-      onBackPress={form ? () => setForm(null) : undefined}
+      onBackPress={form ? back : undefined}
       onHeightChange={onHeightChange}
     >
       <AnimationViewContext.Provider value={animation}>
@@ -222,9 +269,28 @@ const SelectedDateSheet: React.FC<Props> = ({
           renderPlanForm?.({
             date: sheet.date,
             layout: 'docked',
-            onDone: () => setForm(null),
+            params: form.params,
+            // An edited Plan opened from its details goes back to them, where
+            // it is now (a Recurring Plan's date may have become its own).
+            onDone: (target) =>
+              setForm(
+                form.from && target
+                  ? { kind: 'planDetails', plan: target }
+                  : null
+              ),
           })
-        ) : form ? (
+        ) : planDetailsSlot ? (
+          <ScrollView
+            contentContainerStyle={{
+              gap: 20,
+              paddingHorizontal: HORIZONTAL_PADDING,
+              paddingTop: 8,
+              paddingBottom: insets.bottom + 24,
+            }}
+          >
+            {renderPlanDetails?.body(planDetailsSlot)}
+          </ScrollView>
+        ) : form?.kind === 'time' ? (
           <TimeEntryForm
             existingReport={form.existingReport}
             date={form.prefill?.date ?? sheet.date}
@@ -260,6 +326,12 @@ const SelectedDateSheet: React.FC<Props> = ({
                 renderPlanForm ? () => setForm({ kind: 'plan' }) : undefined
               }
               onNavigate={navigateAfterClosing}
+              onPlanOpen={renderPlanDetails ? openPlan : undefined}
+              onPlanEdit={
+                renderPlanForm
+                  ? (params) => setForm({ kind: 'plan', params })
+                  : undefined
+              }
               renderDayPlanFooter={renderDayPlanFooter}
               inlineForms
               renderPlanForm={renderPlanForm}

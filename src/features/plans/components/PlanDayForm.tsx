@@ -1381,14 +1381,15 @@ const PlanDayForm = ({
 export const renderDaySheetPlanForm = ({
   date,
   layout,
+  params,
   onDone,
 }: PlanFormSlot) => (
   <PlanDayForm
-    params={{ date: date.toISOString() }}
+    params={params ?? { date: date.toISOString() }}
     source='day_sheet'
     layout={layout}
     onSaved={onDone}
-    onDeleted={onDone}
+    onDeleted={() => onDone()}
   />
 )
 

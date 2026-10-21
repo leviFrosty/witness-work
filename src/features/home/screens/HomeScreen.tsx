@@ -20,6 +20,7 @@ import { getMonthsReports } from '@/lib/serviceReport'
 import { getServiceYearFromDate } from '@/lib/serviceYear'
 import WeekStripTeaser from '@/features/service-reports/components/WeekStripTeaser'
 import { renderDaySheetPlanForm } from '@/features/plans/components/PlanDayForm'
+import { daySheetPlanDetails } from '@/features/plans/components/DaySheetPlanDetails'
 import SelectedDateSheet, {
   SelectedDateSheetState,
 } from '@/features/service-reports/components/SelectedDateSheet'
@@ -478,6 +479,7 @@ export const HomeScreen = ({ header }: { header: ReactNode }) => {
         thisMonthsReports={selectedDateReports}
         onHeightChange={weekStrip.onSheetHeightChange}
         renderPlanForm={renderDaySheetPlanForm}
+        renderPlanDetails={daySheetPlanDetails}
         renderFooter={(date, onNavigate) => (
           <TodayRouteEntry
             date={date}

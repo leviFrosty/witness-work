@@ -17,3 +17,160 @@ index 94f57671a000634b77a48dc12aebd2ceb4242df7..d58b93dfcaaa706c0208d7734bd5337a
      }
    }
  
+diff --git a/android/src/main/java/expo/modules/ui/ModifierRegistry.kt b/android/src/main/java/expo/modules/ui/ModifierRegistry.kt
+index 889374921a22844660f113e807f639c33320e575..57454534cf44d9a5a2e14d405a4f6f359977049a 100644
+--- a/android/src/main/java/expo/modules/ui/ModifierRegistry.kt
++++ b/android/src/main/java/expo/modules/ui/ModifierRegistry.kt
+@@ -65,7 +65,9 @@ import androidx.compose.ui.platform.LocalDensity
+ import androidx.compose.ui.semantics.Role
+ import androidx.compose.ui.semantics.contentDescription
+ import androidx.compose.ui.semantics.contentType
++import androidx.compose.ui.semantics.role
+ import androidx.compose.ui.semantics.semantics
++import androidx.compose.ui.semantics.stateDescription
+ import androidx.compose.ui.unit.DpOffset
+ import androidx.compose.ui.unit.dp
+ import androidx.compose.ui.zIndex
+@@ -660,12 +662,24 @@ object ModifierRegistry {
+       val params = recordFromMap<SemanticsParams>(map)
+       val type = params.contentType.toContentType()
+       val description = params.contentDescription
+-      if (type == null && description == null) {
++      val state = params.stateDescription
++      val semanticRole = when (params.role) {
++        "button" -> Role.Button
++        "checkbox" -> Role.Checkbox
++        "switch" -> Role.Switch
++        "radioButton" -> Role.RadioButton
++        "tab" -> Role.Tab
++        "image" -> Role.Image
++        else -> null
++      }
++      if (type == null && description == null && state == null && semanticRole == null) {
+         Modifier
+       } else {
+         Modifier.semantics {
+           type?.let { contentType = it }
+           description?.let { contentDescription = it }
++          state?.let { stateDescription = it }
++          semanticRole?.let { role = it }
+         }
+       }
+     }
+diff --git a/android/src/main/java/expo/modules/ui/SemanticsModifier.kt b/android/src/main/java/expo/modules/ui/SemanticsModifier.kt
+index 6c36d1fcad46d12b693fe962b8594534b8fb2cbe..898007fff7fdd1a672f72eac23ea1844cf104473 100644
+--- a/android/src/main/java/expo/modules/ui/SemanticsModifier.kt
++++ b/android/src/main/java/expo/modules/ui/SemanticsModifier.kt
+@@ -8,7 +8,9 @@ import expo.modules.kotlin.types.OptimizedRecord
+ @OptimizedRecord
+ internal data class SemanticsParams(
+   @Field val contentType: String? = null,
+-  @Field val contentDescription: String? = null
++  @Field val contentDescription: String? = null,
++  @Field val stateDescription: String? = null,
++  @Field val role: String? = null
+ ) : Record
+ 
+ internal fun String?.toContentType(): ContentType? = when (this) {
+diff --git a/build/jetpack-compose/modifiers/index.d.ts b/build/jetpack-compose/modifiers/index.d.ts
+index a8ada54dcf7f463771dd31743a0db04d432e8b4a..c740eea7fca5faf3c6eb13febbc08b239f91df98 100644
+--- a/build/jetpack-compose/modifiers/index.d.ts
++++ b/build/jetpack-compose/modifiers/index.d.ts
+@@ -315,6 +315,14 @@ export type SemanticsConfig = {
+      * content does not read well aloud, as with an abbreviation or a glyph.
+      */
+     contentDescription?: string;
++    /**
++     * The element's state as accessibility services such as TalkBack announce it, e.g. "Expanded".
++     */
++    stateDescription?: string;
++    /**
++     * The element's role, announced by accessibility services such as TalkBack.
++     */
++    role?: 'button' | 'checkbox' | 'switch' | 'radioButton' | 'tab' | 'image';
+ };
+ /**
+  * Applies semantic properties. Wraps `Modifier.semantics { ... }`.
+diff --git a/build/universal/Collapsible/types.d.ts b/build/universal/Collapsible/types.d.ts
+index 65e17099edd23f8980aded7e7890259922b2a949..83aae3d7838f3e7e7c7a8f0e140303f8097b63ec 100644
+--- a/build/universal/Collapsible/types.d.ts
++++ b/build/universal/Collapsible/types.d.ts
+@@ -24,5 +24,11 @@ export interface CollapsibleProps {
+      * Content rendered when `isOpen` is `true`.
+      */
+     children?: React.ReactNode;
++    /**
++     * Android only: the header's state as TalkBack announces it, e.g. "Collapsed".
++     * The header is announced as a button either way. SwiftUI's `DisclosureGroup`
++     * announces its own state on iOS.
++     */
++    stateDescription?: string;
+ }
+ //# sourceMappingURL=types.d.ts.map
+\ No newline at end of file
+diff --git a/src/jetpack-compose/modifiers/index.ts b/src/jetpack-compose/modifiers/index.ts
+index aeddd1c065a3de77f64e52aa2fece7ad23fe68d8..e69f23425e24555dea10b4865425d2636896f6ef 100644
+--- a/src/jetpack-compose/modifiers/index.ts
++++ b/src/jetpack-compose/modifiers/index.ts
+@@ -456,6 +456,14 @@ export type SemanticsConfig = {
+    * content does not read well aloud, as with an abbreviation or a glyph.
+    */
+   contentDescription?: string;
++  /**
++   * The element's state as accessibility services such as TalkBack announce it, e.g. "Expanded".
++   */
++  stateDescription?: string;
++  /**
++   * The element's role, announced by accessibility services such as TalkBack.
++   */
++  role?: 'button' | 'checkbox' | 'switch' | 'radioButton' | 'tab' | 'image';
+ };
+ 
+ /**
+diff --git a/src/universal/Collapsible/index.android.tsx b/src/universal/Collapsible/index.android.tsx
+index 5c1e7205b8cee15a4e98d8b07c9481d52ea909b8..28431aebd9cdcba6725d266f4256036561f6ccf1 100644
+--- a/src/universal/Collapsible/index.android.tsx
++++ b/src/universal/Collapsible/index.android.tsx
+@@ -15,6 +15,7 @@ import {
+   clip,
+   graphicsLayer,
+   padding,
++  semantics,
+   Shapes,
+   spring,
+ } from '@expo/ui/jetpack-compose/modifiers';
+@@ -41,6 +42,7 @@ export function Collapsible({
+   label = '',
+   labelStyle,
+   children,
++  stateDescription,
+ }: CollapsibleProps) {
+   const colors = useMaterialColors();
+   const containerColor = isOpen ? colors.surfaceContainer : 'transparent';
+@@ -55,7 +57,10 @@ export function Collapsible({
+       <ListItem
+         // Transparent so the outer `background` is the sole tint source.
+         colors={{ containerColor: 'transparent' }}
+-        modifiers={[clickable(() => onOpenChange(!isOpen))]}>
++        modifiers={[
++          clickable(() => onOpenChange(!isOpen)),
++          semantics({ role: 'button', stateDescription }),
++        ]}>
+         <ListItem.HeadlineContent>
+           <Text color={labelStyle?.color} style={labelStyle}>
+             {label}
+diff --git a/src/universal/Collapsible/types.ts b/src/universal/Collapsible/types.ts
+index c6675a2f4fd748213bd3a4d74e2efbff2620f606..80d9e1dd75713443e8867d68bfcf26688880085e 100644
+--- a/src/universal/Collapsible/types.ts
++++ b/src/universal/Collapsible/types.ts
+@@ -29,4 +29,10 @@ export interface CollapsibleProps {
+    * Content rendered when `isOpen` is `true`.
+    */
+   children?: React.ReactNode;
++  /**
++   * Android only: the header's state as TalkBack announces it, e.g. "Collapsed".
++   * The header is announced as a button either way. SwiftUI's `DisclosureGroup`
++   * announces its own state on iOS.
++   */
++  stateDescription?: string;
+ }

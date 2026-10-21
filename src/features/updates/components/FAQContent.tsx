@@ -6,7 +6,7 @@ import {
 } from 'lucide-react-native'
 import LucideIcon from '@/components/ui/LucideIcon'
 import { useState } from 'react'
-import { AccessibilityInfo, Image, Platform, Share, View } from 'react-native'
+import { Image, Platform, Share, View } from 'react-native'
 import { Collapsible, Host, RNHostView } from '@expo/ui'
 import * as Clipboard from 'expo-clipboard'
 import { useToastController } from '@tamagui/toast'
@@ -99,17 +99,6 @@ export const FAQItem = ({ entry }: { entry: FAQEntry }) => {
     }
   }
 
-  const toggle = (open: boolean) => {
-    setExpanded(open)
-    // SwiftUI's DisclosureGroup announces its state; Compose's clickable
-    // header doesn't, so say it on Android.
-    if (Platform.OS === 'android') {
-      AccessibilityInfo.announceForAccessibility(
-        i18n.t(open ? 'a11y_expanded' : 'a11y_collapsed')
-      )
-    }
-  }
-
   return (
     <View
       style={[cardStyle, { flexShrink: 1, padding: CARD_PADDING }]}
@@ -125,8 +114,13 @@ export const FAQItem = ({ entry }: { entry: FAQEntry }) => {
       >
         <Collapsible
           isOpen={expanded}
-          onOpenChange={toggle}
+          onOpenChange={setExpanded}
           label={question}
+          // SwiftUI's DisclosureGroup announces its own state; Compose's
+          // header reads this one.
+          stateDescription={i18n.t(
+            expanded ? 'a11y_expanded' : 'a11y_collapsed'
+          )}
           labelStyle={{
             fontFamily: LABEL_FONT ?? theme.fonts.semiBold,
             fontSize: theme.fontSize('md'),
@@ -256,6 +250,8 @@ export const FAQSearch = ({
           unstyled
           value={search}
           onChangeText={setSearch}
+          // The placeholder goes once there's text; screen readers keep this.
+          accessibilityLabel={i18n.t('faq_searchPlaceholder')}
           placeholder={i18n.t('faq_searchPlaceholder')}
           placeholderTextColor={
             theme.colors.textAlt as InputProps['placeholderTextColor']

@@ -4,6 +4,7 @@ import LucideIcon from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
 import StripedFill from '@/components/ui/StripedFill'
 import useTheme from '@/contexts/theme'
+import useAccessibilityTextSize from '@/hooks/useAccessibilityTextSize'
 import useScheduleStatusPresentation from '@/hooks/useScheduleStatusPresentation'
 import i18n from '@/lib/locales'
 import {
@@ -47,6 +48,11 @@ export default function GoalMeterCard({
   editGoal,
 }: Props) {
   const theme = useTheme()
+  // At accessibility text sizes each row wraps its parts onto lines of their
+  // own, and the figures wrap whole instead of truncating.
+  const largeText = useAccessibilityTextSize()
+  const wrap = largeText ? 'wrap' : 'nowrap'
+  const oneLine = largeText ? undefined : 1
   const hasGoal = goalMinutes > 0
   const logged = useFormattedMinutes(loggedMinutes)
   const loggedLabel = i18n.t('scheduleCalendar.logged', {
@@ -143,6 +149,7 @@ export default function GoalMeterCard({
           flexDirection: 'row',
           alignItems: 'baseline',
           justifyContent: 'space-between',
+          flexWrap: wrap,
           gap: 6,
         }}
       >
@@ -168,7 +175,7 @@ export default function GoalMeterCard({
         >
           <Swatch striped={tense !== 'past'} />
           <Text
-            numberOfLines={1}
+            numberOfLines={oneLine}
             style={{
               flexShrink: 1,
               fontFamily: theme.fonts.semiBold,
@@ -191,6 +198,7 @@ export default function GoalMeterCard({
           flexDirection: 'row',
           alignItems: 'center',
           justifyContent: 'space-between',
+          flexWrap: wrap,
           gap: 10,
         }}
       >
@@ -204,7 +212,7 @@ export default function GoalMeterCard({
         >
           <Swatch />
           <Text
-            numberOfLines={1}
+            numberOfLines={oneLine}
             style={{
               flexShrink: 1,
               fontSize: theme.fontSize('xs'),
@@ -226,7 +234,7 @@ export default function GoalMeterCard({
           >
             <LucideIcon icon={paceIcon} color={paceColor} size={13} />
             <Text
-              numberOfLines={1}
+              numberOfLines={oneLine}
               style={{
                 flexShrink: 1,
                 fontSize: theme.fontSize('xs'),

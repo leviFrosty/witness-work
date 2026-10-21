@@ -3,6 +3,9 @@ import { type LayoutRectangle, View } from 'react-native'
 import ContextMenu from '@/components/ui/ContextMenu'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
+import useAccessibilityTextSize, {
+  FIT_ONE_LINE,
+} from '@/hooks/useAccessibilityTextSize'
 import i18n from '@/lib/locales'
 import { formatMinutesCompact, formatMinutesSpoken } from '@/lib/minutes'
 import { formatPlainNumber } from '@/lib/numbers'
@@ -76,6 +79,10 @@ export default function YearMonthTile({
   onGridLayout,
 }: Props) {
   const theme = useTheme()
+  // At accessibility text sizes the month's short name and its amount shrink
+  // to the tile instead of truncating.
+  const largeText = useAccessibilityTextSize()
+  const fit = largeText ? FIT_ONE_LINE : undefined
   const first = moment({ year, month, day: 1 })
   const days = first.daysInMonth()
   const lead = (first.day() - startOfWeek + 7) % 7
@@ -139,6 +146,7 @@ export default function YearMonthTile({
         >
           <Text
             numberOfLines={1}
+            {...fit}
             style={{
               flexShrink: 1,
               fontFamily: theme.fonts.bold,
@@ -146,7 +154,7 @@ export default function YearMonthTile({
               color: focused ? theme.colors.accent : theme.colors.text,
             }}
           >
-            {first.format(width < 130 ? 'MMM' : 'MMMM')}
+            {first.format(width < 130 || largeText ? 'MMM' : 'MMMM')}
           </Text>
           {month === 0 ? (
             <Text
@@ -209,6 +217,7 @@ export default function YearMonthTile({
         />
         <Text
           numberOfLines={1}
+          {...fit}
           style={{
             fontSize: theme.fontSize('xs'),
             fontFamily: theme.fonts.semiBold,

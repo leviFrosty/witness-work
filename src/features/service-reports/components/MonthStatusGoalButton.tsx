@@ -6,6 +6,7 @@ import LucideIcon from '@/components/ui/LucideIcon'
 import PullDownMenu from '@/components/ui/PullDownMenu'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
+import useAccessibilityTextSize from '@/hooks/useAccessibilityTextSize'
 
 import i18n from '@/lib/locales'
 import { useFormattedMinutes } from '@/lib/minutes'
@@ -38,6 +39,9 @@ const MonthStatusGoalButton = ({
   onEditGoal,
 }: Props) => {
   const theme = useTheme()
+  // At accessibility text sizes the line wraps whole ("Regular Pioneer") rather
+  // than truncating the status.
+  const largeText = useAccessibilityTextSize()
   const goalDisplay = useFormattedMinutes(Math.round((goalHours ?? 0) * 60))
   const hasGoal = goalHours !== null && goalHours > 0
 
@@ -61,7 +65,7 @@ const MonthStatusGoalButton = ({
   const content = (
     <>
       <Text
-        numberOfLines={1}
+        numberOfLines={largeText ? undefined : 1}
         style={{
           flexShrink: 1,
           color,

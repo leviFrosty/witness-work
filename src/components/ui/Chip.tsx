@@ -40,6 +40,7 @@ const Chip: React.FC<PropsWithChildren<ChipProps>> = ({
   const content = (
     <View
       style={{
+        flexShrink: 1,
         flexDirection: 'row',
         alignItems: 'center',
         gap: 6,
@@ -62,8 +63,11 @@ const Chip: React.FC<PropsWithChildren<ChipProps>> = ({
           {icon}
         </Text>
       ) : null}
+      {/* Wraps within the chip, at large text sizes, rather than run past the
+          edge of what holds it. */}
       <Text
         style={{
+          flexShrink: 1,
           color,
           fontFamily: theme.fonts.semiBold,
           fontSize: theme.fontSize('xs'),

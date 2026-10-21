@@ -415,9 +415,12 @@ const YearMilestoneCard = ({
 
   const hero = (
     <View style={{ gap: 15 }}>
+      {/* The days left wrap under the Service Year when they don't fit beside
+          it, as at large text sizes. */}
       <View
         style={{
           flexDirection: 'row',
+          flexWrap: 'wrap',
           alignItems: 'center',
           justifyContent: 'space-between',
           gap: 8,
@@ -461,6 +464,7 @@ const YearMilestoneCard = ({
         ) : isCurrentServiceYear ? (
           <Text
             style={{
+              flexShrink: 1,
               fontSize: theme.fontSize('xs'),
               color: theme.colors.textAlt,
             }}

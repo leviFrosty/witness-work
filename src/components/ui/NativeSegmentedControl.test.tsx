@@ -29,6 +29,11 @@ vi.mock('@expo/ui/jetpack-compose/modifiers', () => ({
 vi.mock('@/contexts/theme', () => ({
   default: () => ({ colors: { accent: '#accent' } }),
 }))
+const { largeText } = vi.hoisted(() => ({ largeText: { current: false } }))
+vi.mock('@/hooks/useAccessibilityTextSize', () => ({
+  default: () => largeText.current,
+}))
+vi.mock('@/components/ui/ChoiceChips', () => ({ default: 'ChoiceChips' }))
 vi.mock('@/stores/preferences', () => ({
   usePreferences: (select: (state: { colorScheme: string }) => unknown) =>
     select({ colorScheme: 'dark' }),
@@ -49,6 +54,7 @@ let root: ReactTestRenderer
 
 afterEach(async () => {
   await act(async () => root.unmount())
+  largeText.current = false
 })
 
 const render = async (element: React.ReactElement) => {
@@ -142,5 +148,25 @@ describe('Android segmented control', () => {
     )
     expect(buttons().some((b) => b.props.selected)).toBe(false)
     expect(buttons().some((b) => b.props.enabled)).toBe(false)
+  })
+
+  it('shows chips that wrap at accessibility text sizes', async () => {
+    largeText.current = true
+    const onChange = vi.fn()
+    await render(
+      <AndroidSegmentedControl<Period>
+        options={options}
+        value='month'
+        onChange={onChange}
+        testID='period'
+      />
+    )
+    expect(buttons()).toHaveLength(0)
+    const chips = root.root.findByType('ChoiceChips' as never)
+    expect(chips.props.options).toBe(options)
+    expect(chips.props.value).toBe('month')
+    expect(chips.props.testID).toBe('period')
+    chips.props.onChange('day')
+    expect(onChange).toHaveBeenCalledWith('day')
   })
 })

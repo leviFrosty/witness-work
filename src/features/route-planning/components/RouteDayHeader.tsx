@@ -9,7 +9,7 @@ import InfoPopover from '@/components/ui/InfoPopover'
 import Text from '@/components/ui/MyText'
 import PointerTooltip from '@/components/ui/PointerTooltip'
 import useTheme from '@/contexts/theme'
-import { formatStartTime } from '@/lib/dates'
+import { formatDate, formatDisplay, formatStartTime } from '@/lib/dates'
 import i18n, { type TranslationKey } from '@/lib/locales'
 import { formatMinutes } from '@/lib/minutes'
 import { usePreferences } from '@/stores/preferences'
@@ -89,7 +89,7 @@ export default function RouteDayHeader({
               fontSize: theme.fontSize('sm'),
             }}
           >
-            {relative ? date.format('dddd, LL') : date.format('LL')}
+            {relative ? formatDisplay(date, 'dddd, LL') : formatDate(date)}
           </Text>
         </View>
         <PointerTooltip label={i18n.t('routeBuilder_nextDay')}>

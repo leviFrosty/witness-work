@@ -28,6 +28,7 @@ import {
   useVisualClock,
 } from '@/features/updates/components/reveal/visuals/kit'
 import { formatDisplay } from '@/lib/dates'
+import { formatPlainNumber } from '@/lib/numbers'
 
 const CARD = { top: 6, side: 18, height: 236 }
 /** Share is tapped, the report flies off, comes back confirmed, then resets. */
@@ -85,7 +86,7 @@ const ReportVisual = ({ palette, active, reduceMotion }: RevealVisualProps) => {
       label: i18n.t('sharedInMinistry'),
       value: <CheckDot color={accent} />,
     },
-    { id: 'studies', label: i18n.t('studies'), value: '3' },
+    { id: 'studies', label: i18n.t('studies'), value: formatPlainNumber(3) },
     { id: 'hours', label: i18n.t('hours'), value: hours },
   ]
 

@@ -1,0 +1,43 @@
+# seed: pioneer
+# Last month ends on half an hour: an extra standard entry on the 15th tops its
+# minutes up to :30, whatever day the scenario was built on. The seed marks
+# this month's rollover as decided; clearing that leaves it to the User.
+# Progress brings the prompt up once per app launch, so a rerun needs a
+# relaunch (`wwv up`). With an annual goal, time never rolls into a new Service
+# Year, so this flow can't pass in September.
+# setup: (() => { const store = __WW_DEV__.stores.serviceReports.getState(); const now = new Date(); const last = new Date(now.getFullYear(), now.getMonth() - 1, 1); const entries = store.serviceReports[last.getFullYear()]?.[last.getMonth()] ?? []; const minutes = entries.filter((e) => !e.credit).reduce((sum, e) => sum + e.hours * 60 + e.minutes, 0); const add = (((30 - (minutes % 60)) % 60) + 60) % 60; if (add) store.addServiceReport({ id: 'rollover-flow-top-up', date: new Date(last.getFullYear(), last.getMonth(), 15, 12), hours: 0, minutes: add }); __WW_DEV__.stores.preferences.getState().set({ lastRolloverYearMonth: null }); return true })()
+# Applied: this month's decision is recorded, so the prompt doesn't come back.
+# assert: (() => { const d = new Date(); return __WW_DEV__.stores.preferences.getState().lastRolloverYearMonth === `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}` })()
+# Undone: both halves of the pair are gone.
+# assert: Object.values(__WW_DEV__.stores.serviceReports.getState().serviceReports).flatMap((m) => Object.values(m).flat()).every((e) => !e.rollover)
+appId: com.leviwilkerson.jwtimedev
+name: A pioneer's leftover half hour from last month rolls into this month from the prompt, and deleting the pair undoes it
+---
+- extendedWaitUntil:
+    visible: Progress
+    timeout: 60000
+- tapOn: Progress
+- assertVisible: Time Rollover
+- assertVisible: Move 30 min from
+- tapOn: Roll over time
+- assertNotVisible: Roll over time
+# The pair's new half sits on the 1st. Open that day on Schedule, as the
+# Calendar widget's link (witnesswork://schedule/<date>) does.
+- evalScript: >-
+    (() => { const d = new Date(); const day = [d.getFullYear(),
+    String(d.getMonth() + 1).padStart(2, '0'), '01'].join('-');
+    __WW_DEV__.navigate('Root', { screen: 'Schedule', params: { date: day } });
+    return true })()
+- extendedWaitUntil:
+    visible: Time rollover
+    timeout: 15000
+# Android lists the sheet's rows only once it has slid into view.
+- waitForAnimationToEnd
+# Deleting either half removes the pair, which is how a rollover is undone.
+- longPressOn:
+    id: rollover-row
+- tapOn: Delete
+- assertVisible: Delete rollover pair?
+- tapOn: Delete
+- assertNotVisible:
+    id: rollover-row

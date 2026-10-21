@@ -259,6 +259,7 @@ const TimeReportRow = ({ report, onPress, onNavigate }: TimeReportRowProps) => {
         actions={actions}
         onPress={handlePress}
         hoverRadius={cardStyle.borderRadius}
+        testID={isRollover ? 'rollover-row' : undefined}
       >
         <View
           style={

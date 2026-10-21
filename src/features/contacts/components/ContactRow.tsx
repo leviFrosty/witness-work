@@ -314,6 +314,7 @@ const ContactRow = ({
           actions={menu}
           onPress={onPress}
           accessibilityLabel={accessibilityLabel}
+          testID={`contact-row-${contact.id}`}
           accessible={!selectionMode}
           disabled={selectionMode}
           hoverRadius={theme.numbers.borderRadiusSm}

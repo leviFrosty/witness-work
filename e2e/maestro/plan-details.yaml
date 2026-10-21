@@ -11,8 +11,12 @@ name: Open a Plan's details from Schedule, then edit it
 # first Plan is "Cart witnessing" tomorrow, so it's the first planned day.
 # Let the calendar finish its jump to today first.
 - waitForAnimationToEnd
+# Android's tree can lag the calendar under load, so wait for the day's label.
+- extendedWaitUntil:
+    visible: Planned 2 hours
+    timeout: 15000
 - tapOn:
-    text: Planned 2 Hrs
+    text: Planned 2 hours
     index: 0
 - assertVisible: Cart witnessing
 # Tapping a Plan opens its details, not the form.

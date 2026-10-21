@@ -1,0 +1,26 @@
+# seed: pioneer
+# assert: __WW_DEV__.state().route.name === 'Contacts'
+appId: com.leviwilkerson.jwtimedev
+name: Search Contacts by name, then clear the search to list everyone again
+---
+- extendedWaitUntil:
+    visible: Contacts
+    timeout: 60000
+- tapOn: Contacts
+# The search outlives a seed, so start from an empty one.
+- tapOn:
+    id: contacts-search
+- eraseText
+- assertVisible: Ada Reyes
+- inputText: Gustavo
+# Only the match stays in the list.
+- assertVisible: Gustavo Lima
+- assertNotVisible:
+    id: contact-row-verify-contact-0
+- assertNotVisible:
+    id: contact-row-verify-contact-2
+- eraseText
+- hideKeyboard
+# An empty search lists every contact again.
+- assertVisible: Ada Reyes
+- assertVisible: Chen Wei

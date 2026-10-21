@@ -1,0 +1,32 @@
+# seed: pioneer
+# The pioneer scenario has time last month and leaves its report unsent, so
+# Home's Service Report card leads to it with "Submit <Month>'s Report".
+# assert: (() => { const d = new Date(); const last = new Date(d.getFullYear(), d.getMonth() - 1, 1); const key = `${last.getFullYear()}-${String(last.getMonth() + 1).padStart(2, '0')}`; return __WW_DEV__.stores.preferences.getState().submittedReportMonths.includes(key) })()
+# assert: __WW_DEV__.state().route.name === 'Dashboard'
+appId: com.leviwilkerson.jwtimedev
+name: Open last month's report from Home, mark it sent, and Home stops asking for it
+---
+- extendedWaitUntil:
+    visible: Add Time
+    timeout: 60000
+- tapOn:
+    id: due-report-row
+# The report opens on last month, still unsent.
+- assertVisible: Not Sent
+- tapOn: Not Sent
+- tapOn: Mark as Sent
+- assertNotVisible: Not Sent
+- tapOn:
+    text: Close
+    traits: button
+# The first sent report earns Reports Sent; its celebration comes up over Home.
+- runFlow:
+    when:
+      visible: See all badges
+      timeout: 5000
+    commands:
+      - tapOn: Done
+# Back on Home, the card no longer points at last month's report.
+- assertVisible: Add Time
+- assertNotVisible:
+    id: due-report-row

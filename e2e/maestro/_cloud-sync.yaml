@@ -1,0 +1,48 @@
+# seed: pioneer
+# Cloud Sync for everyone. Before running, open the local worker's entitlement
+# (a verify device can't buy Supporter), from the ww-api checkout `wwv up`
+# printed: `node scripts/verify/dev.mjs kv put sync:entitlement everyone`, and
+# `kv delete sync:entitlement` afterwards; every worktree shares that worker.
+# The leading underscore keeps it out of the default `wwv flow` run.
+# A seed drops the server's sync switches; read them again so Settings offers
+# Cloud Sync.
+# setup: (() => { __WW_DEV__.cloudSync.checkConfig(); return true })()
+# assert: __WW_DEV__.cloudSync.state().option === 'cloud'
+# assert: __WW_DEV__.cloudSync.state().lastSyncAt !== null && __WW_DEV__.cloudSync.state().slotId !== null
+appId: com.leviwilkerson.jwtimedev
+name: Turn on Cloud Sync from Settings and see this device synced
+---
+- extendedWaitUntil:
+    visible: Home
+    timeout: 60000
+- tapOn: Account and settings
+- tapOn: Settings
+# The row reads "Sync" once the switches are back, and the platform's own
+# sync before; either opens the same screen, which offers Cloud Sync once
+# they are.
+- extendedWaitUntil:
+    visible: Sync
+    timeout: 15000
+- tapOn:
+    text: [Sync, iCloud Sync, Google Drive Sync]
+- assertVisible: Sync With
+# Each option's row reads its name and what it covers.
+- tapOn:
+    text: Cloud Sync, End-to-end encrypted
+    index: 0
+# Once Cloud Sync holds data from an earlier run, it asks how to start, after
+# a round trip to the server.
+- extendedWaitUntil:
+    visible:
+      text: [How should we start?, Last synced]
+    timeout: 40000
+- runFlow:
+    when:
+      visible: How should we start?
+    commands:
+      - tapOn:
+          text: Keep this device's data
+          index: 0
+- extendedWaitUntil:
+    visible: Last synced
+    timeout: 30000

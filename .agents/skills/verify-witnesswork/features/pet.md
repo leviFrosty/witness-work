@@ -56,6 +56,7 @@ Steps:
 - **Dark mode.** `wwv ad settings appearance dark`, then capture the card and the picker again.
 - **Android.** Run the same recipes with `--platform android`; the picker opens full screen there.
 - **Proof.** Capture `wwv shot` at each surface you drove, then run `wwv errors`.
+- **Scripted.** Run `wwv flow e2e/maestro/pet.yaml`: it adopts a kitten from the Home offer, opens its room from the card and renames it.
 
 ## Gotchas
 

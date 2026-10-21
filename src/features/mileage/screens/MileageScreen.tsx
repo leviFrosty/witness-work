@@ -54,6 +54,9 @@ export default function MileageScreen() {
   const { exportReport } = useMileageExport()
   const logTrip = useLogTrip('mileage_screen')
   const [kind, setKind] = useState<MileagePeriodKind>('month')
+  // The floating Log Trip button grows with the text size; the list leaves
+  // room to scroll its last row clear of it.
+  const [logTripHeight, setLogTripHeight] = useState(0)
   const [anchor, setAnchor] = useState(() => toDateKey(new Date()))
 
   const period = periodContaining(kind, fromDateKey(anchor), startOfWeek)
@@ -143,7 +146,7 @@ export default function MileageScreen() {
           contentContainerStyle={{
             padding: 15,
             gap: 16,
-            paddingBottom: insets.bottom + 100,
+            paddingBottom: insets.bottom + Math.max(100, logTripHeight + 31),
             width: '100%',
             maxWidth: 720,
             alignSelf: 'center',
@@ -206,6 +209,7 @@ export default function MileageScreen() {
       </SwipeMonthNavigator>
       {vehicles.length > 0 && (
         <View
+          onLayout={(e) => setLogTripHeight(e.nativeEvent.layout.height)}
           style={{
             position: 'absolute',
             left: 15,

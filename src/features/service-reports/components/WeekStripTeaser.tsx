@@ -191,7 +191,10 @@ const WeekStripTeaser = ({
             key={dateString}
             style={{ flex: 1, alignItems: 'center', gap: 4 }}
           >
+            {/* Each day below already names its weekday. */}
             <Text
+              accessibilityElementsHidden
+              importantForAccessibility='no'
               style={{
                 fontSize: theme.fontSize('xs'),
                 color: theme.colors.textAlt,

@@ -136,7 +136,10 @@ export default function ScheduleMonthView({
         style={[{ flex: 1 }, zoomStyle]}
         onLayout={(e) => onZoomFrameLayout(e.nativeEvent.layout)}
       >
+        {/* Each day in the grid already names its weekday. */}
         <View
+          accessibilityElementsHidden
+          importantForAccessibility='no-hide-descendants'
           style={{
             flexDirection: 'row',
             paddingHorizontal: MONTH_GRID_PADDING,

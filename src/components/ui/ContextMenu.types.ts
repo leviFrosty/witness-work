@@ -1,5 +1,5 @@
 import type { ReactElement } from 'react'
-import type { StyleProp, ViewStyle } from 'react-native'
+import type { AccessibilityRole, StyleProp, ViewStyle } from 'react-native'
 import type { ButtonProps } from '@expo/ui/swift-ui'
 
 export type ContextMenuAction = {
@@ -53,6 +53,11 @@ export type ContextMenuProps = {
   onPress?: () => void
   /** Announced on the trigger when it has an `onPress`. */
   accessibilityLabel?: string
+  /**
+   * Role of a trigger without `onPress`, e.g. `header` for a section title that
+   * only long-presses. One with `onPress` is always a button.
+   */
+  accessibilityRole?: AccessibilityRole
   /**
    * Defaults to true: the trigger is one accessibility element carrying the
    * menu as custom actions. Pass false when the content holds its own

@@ -565,7 +565,11 @@ export default function ReorderableContainer<Id extends string>({
             // the sections' own long-press menus from opening. Always there,
             // so editing doesn't remount the items.
             <Pressable
+              // Out of TalkBack too, or it reads the sections' loose text as
+              // one tappable block around their controls.
               accessible={false}
+              focusable={false}
+              importantForAccessibility='no'
               disabled={editing}
               delayLongPress={LIFT_DELAY_MS}
               onLongPress={(e) => {

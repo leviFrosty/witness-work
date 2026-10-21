@@ -235,7 +235,14 @@ export const HomeScreen = ({ header }: { header: ReactNode }) => {
         }
       >
         {/* Like empty space, tapping these while editing ends it. */}
-        <Pressable disabled={!editing} onPress={homeEditing.finish}>
+        <Pressable
+          disabled={!editing}
+          onPress={homeEditing.finish}
+          // The greeting reads as text and the card's controls stay reachable.
+          accessible={false}
+          focusable={false}
+          importantForAccessibility='no'
+        >
           <View pointerEvents={editing ? 'none' : 'auto'}>
             <HomeGreeting />
             {/* Full width above the columns, which alternate their children. */}

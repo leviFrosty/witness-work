@@ -3,7 +3,7 @@ import {
   LayoutGrid as LayoutGridIcon,
   LucideIcon as LucideIconType,
 } from 'lucide-react-native'
-import { View } from 'react-native'
+import { Platform, View } from 'react-native'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import Haptics from '@/lib/haptics'
@@ -58,7 +58,9 @@ const ScheduleViewToggle = ({
                 onChange(key)
               }}
               noTransform
-              accessibilityRole='tab'
+              // iOS gives a view no trait for `tab`, so it would read as plain
+              // text there; a selected button is how iOS reads a segment.
+              accessibilityRole={Platform.OS === 'ios' ? 'button' : 'tab'}
               accessibilityLabel={label()}
               accessibilityState={{ selected: active }}
               style={{

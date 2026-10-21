@@ -117,6 +117,7 @@ const DidYouKnowTipCard = ({ style }: { style?: StyleProp<ViewStyle> }) => {
         <Pressable
           onPress={handleDismiss}
           hitSlop={10}
+          accessibilityRole='button'
           accessibilityLabel={i18n.t('gotIt')}
           // Extra padding (cancelled by the margin) rounds out the pointer
           // highlight around the small icon.

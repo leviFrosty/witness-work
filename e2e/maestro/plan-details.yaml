@@ -7,8 +7,14 @@ name: Open a Plan's details from Schedule, then edit it
     visible: Schedule
     timeout: 60000
 - tapOn: Schedule
-- scrollUntilVisible:
-    element: Cart witnessing
+# Schedule is a calendar, and a Plan's row is in its day's sheet. The seed's
+# first Plan is "Cart witnessing" tomorrow, so it's the first planned day.
+# Let the calendar finish its jump to today first.
+- waitForAnimationToEnd
+- tapOn:
+    text: Planned 2 Hrs
+    index: 0
+- assertVisible: Cart witnessing
 # Tapping a Plan opens its details, not the form.
 - tapOn:
     id: plan-row-verify-plan-0

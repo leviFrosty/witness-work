@@ -127,6 +127,12 @@ test('matches selectors and text like agent-device', () => {
   assert.ok(!matchesSelector(button, { editable: 'true' }))
   assert.ok(matchesText(field, 'search 8'))
   assert.ok(!matchesText(button, 'Open'))
+  // A switch's value comes back as a number.
+  const [toggle] = flatten(
+    app(node('Switch', 'Notify Me', [10, 10, 60, 30], { AXValue: 0 }))
+  )
+  assert.ok(matchesText(toggle, 'Notify'))
+  assert.ok(!matchesText(toggle, '2'))
 })
 
 test('prefers a control over text, then the smaller one', () => {

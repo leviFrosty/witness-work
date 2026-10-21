@@ -1,5 +1,6 @@
 # seed: fresh
 # assert: __WW_DEV__.state().route?.name === 'Onboarding'
+# assert: __WW_DEV__.stores.preferences.getState().onboardingStepId === 'featureTour'
 appId: com.leviwilkerson.jwtimedev
 name: A fresh install starts onboarding
 ---
@@ -7,5 +8,6 @@ name: A fresh install starts onboarding
     visible: Your field service assistant.
     timeout: 60000
 - assertVisible: Your field service assistant.
+# Get Started opens the feature tour (the assert reads its step). Android
+# can't capture the tour's moving cards within a wait, so no UI check follows.
 - tapOn: Get Started
-- assertNotVisible: Get Started

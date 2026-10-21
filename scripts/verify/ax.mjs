@@ -202,7 +202,10 @@ export function matchesSelector(e, selector) {
  */
 export function matchesText(e, text) {
   const needle = String(text).toLowerCase()
-  return [e.label, e.value].some((v) => v?.toLowerCase().includes(needle))
+  // AXe reports a switch's value as a number.
+  return [e.label, e.value].some(
+    (v) => v != null && String(v).toLowerCase().includes(needle)
+  )
 }
 
 /**

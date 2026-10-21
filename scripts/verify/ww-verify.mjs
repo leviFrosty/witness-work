@@ -602,8 +602,10 @@ const output = (result) => `${result.stdout ?? ''}${result.stderr ?? ''}`
 // on iPad they read the screen with AXe (scripts/verify/ax.mjs) and send input
 // to agent-device as coordinates. iPhone keeps agent-device and falls back to
 // AXe when its tree comes back sparse.
+// "capture was truncated": agent-device can't prove a selector absent over a
+// long tree (Home, the calendar), so `wait absent` asks AXe instead.
 const SPARSE =
-  /No snapshot backend could read|sparse accessibility snapshot|snapshot quality verdict is sparse|could not read the current accessibility tree/
+  /No snapshot backend could read|sparse accessibility snapshot|snapshot quality verdict is sparse|could not read the current accessibility tree|capture was truncated/
 const NO_MATCH = /Selector did not match|No element matches|could not find/i
 const BACK_LABELS = ['Go Back', 'Back', 'Close']
 const AX_SETTLE_MS = 8000

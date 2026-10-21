@@ -7,8 +7,14 @@ name: Edit a Plan's title and save it from the dock
     visible: Schedule
     timeout: 60000
 - tapOn: Schedule
-- scrollUntilVisible:
-    element: Cart witnessing
+# Schedule is a calendar, and a Plan's row is in its day's sheet. The seed's
+# first Plan is "Cart witnessing" tomorrow, so it's the first planned day.
+# Let the calendar finish its jump to today first.
+- waitForAnimationToEnd
+- tapOn:
+    text: Planned 2 Hrs
+    index: 0
+- assertVisible: Cart witnessing
 - tapOn:
     id: plan-row-verify-plan-0
 - tapOn: Edit

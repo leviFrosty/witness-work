@@ -11,6 +11,8 @@ import { withRemoteDataMutation } from '@/lib/remoteDataMutation'
 import {
   syncableValues,
   NON_SYNCABLE_PROFILE_KEYS,
+  SYNC_UNION_KEYS,
+  unionPreference,
 } from '@/lib/syncPreferencePolicy'
 import useCategories from '@/stores/categories'
 import useContacts from '@/stores/contactsStore'
@@ -192,6 +194,18 @@ export function restoreBackupFile(file: BackupFile): boolean {
       ].sort(),
       // The next evaluation files what the restored records reach as history.
       badgesBackfilledAt: null,
+      // Celebrations shown here or in the backup both stay shown.
+      ...Object.fromEntries(
+        [...SYNC_UNION_KEYS]
+          .filter((key) => key in restored)
+          .map((key) => [
+            key,
+            unionPreference(
+              current[key as keyof typeof current],
+              restored[key]
+            ),
+          ])
+      ),
     })
     const profile = data.profileStore ?? preferences.profile.values
     useProfile

@@ -574,6 +574,11 @@ const preferenceShapes = z
     offDays: z.array(z.number().int().min(0).max(6)).optional(),
     meetingDays: z.array(z.number().int().min(0).max(6)).optional(),
     homeChecklistManualCompletions: z.array(z.string()).optional(),
+    homeChecklistAllDoneCelebrated: z.boolean().optional(),
+    celebratedTiers: z.record(z.array(z.string())).optional(),
+    celebratedMilestones: z
+      .record(z.array(z.number().finite().nonnegative()))
+      .optional(),
     contactInformationOrder: z.array(z.string()).optional(),
     annualGoalHours: z.number().finite().nonnegative().nullable().optional(),
     customAccentColor: z.string().nullable().optional(),

@@ -982,15 +982,16 @@ export const PREFERENCE_DEFAULTS = {
   /**
    * One-shot flag that flips the first time the Home checklist transitions to
    * fully complete, so the celebration burst (fireworks + success haptic +
-   * scale-pop) plays once and not on every Home screen mount. Per-device so a
-   * user upgrading on a second device doesn't retroactively see a celebration
-   * they already saw elsewhere.
+   * scale-pop) plays once and not on every Home screen mount. Syncable and
+   * merged as a union (`SYNC_UNION_KEYS`), so a second device or a restore
+   * doesn't replay a celebration the User already saw elsewhere.
    */
   homeChecklistAllDoneCelebrated: false,
   /**
    * Epoch ms the Home checklist was first completed on this device. Lists the
    * one-time Supporter note in the notifications tray; `null` for anyone who
-   * finished it before the note moved there. Per-device, like the celebration.
+   * finished it before the note moved there. Per-device: the note stays with
+   * the device that showed the celebration.
    */
   homeChecklistCompletedAt: null as number | null,
   /**
@@ -1027,9 +1028,9 @@ export const PREFERENCE_DEFAULTS = {
    * Tracks which achievement tiers have already been celebrated per month, so
    * the one-time confetti / haptic / scale-pulse doesn't re-fire every time the
    * user reopens the MonthScreen. Keyed `YYYY-MM`; values are the tier names
-   * the user has already been shown the crossing animation for. Non-syncable —
-   * per-device so a user upgrading on a second device doesn't retroactively see
-   * a celebration they've already seen elsewhere.
+   * the user has already been shown the crossing animation for. Syncable and
+   * merged as a union (`SYNC_UNION_KEYS`), so a second device or a restore
+   * doesn't replay a celebration the User already saw elsewhere.
    */
   celebratedTiers: {} as Record<string, string[]>,
   /**
@@ -1040,7 +1041,7 @@ export const PREFERENCE_DEFAULTS = {
    * service year — matches `milestoneCelebrationKey`); values are the milestone
    * hour values already celebrated. The annual-goal value (= the top rung of
    * the ladder) is stored here too, so the "You did it!" fireworks only fire on
-   * the first focus after crossing. Non-syncable for the same reason as
+   * the first focus after crossing. Syncable and unioned like
    * `celebratedTiers`.
    */
   celebratedMilestones: {} as Record<string, number[]>,

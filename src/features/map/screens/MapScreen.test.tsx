@@ -131,7 +131,16 @@ vi.mock('react-native-reanimated', () => ({
   default: { View: 'AnimatedView' },
   Easing: { bezier: () => undefined, inOut: () => undefined },
   useAnimatedStyle: () => ({}),
-  useSharedValue: (value: number) => useRef({ value }).current,
+  useSharedValue: (value: number) =>
+    useRef({
+      value,
+      get() {
+        return this.value
+      },
+      set(next: number) {
+        this.value = next
+      },
+    }).current,
   withSpring: (value: number) => value,
   withTiming: (value: number) => value,
 }))

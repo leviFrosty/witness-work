@@ -1,6 +1,11 @@
-import { type RefObject, useEffect, useRef, useState } from 'react'
+import { type RefObject, useEffect, useMemo, useRef, useState } from 'react'
 import { Platform } from 'react-native'
-import { Gesture, PointerType } from 'react-native-gesture-handler'
+import {
+  Gesture,
+  type GestureStateChangeEvent,
+  type GestureUpdateEvent,
+  PointerType,
+} from 'react-native-gesture-handler'
 import type MapView from 'react-native-maps'
 import { notePointerHover, supportsPointerHover } from '@/lib/pointerHover'
 import { logger } from '@/lib/logger'
@@ -19,6 +24,32 @@ import {
  * has no equivalent, and its mouse hover is untested, so pins stay iPad-only.
  */
 const pinHoverSupported = supportsPointerHover && Platform.OS === 'ios'
+
+const samePin = (a: PinBox | undefined, b: PinBox | undefined) =>
+  a?.id === b?.id && a?.box === b?.box
+
+/**
+ * The pointer hover gesture, built once per set of handlers. A hook of its own,
+ * so the React Compiler doesn't take the handlers' ref reads for render-time
+ * reads and skip `usePinHover`.
+ */
+function useHoverGesture(on: {
+  begin: (event: GestureStateChangeEvent<Point>) => void
+  update: (event: GestureUpdateEvent<Point>) => void
+  finalize: () => void
+}) {
+  return useMemo(
+    () =>
+      pinHoverSupported
+        ? Gesture.Hover()
+            .runOnJS(true)
+            .onBegin(on.begin)
+            .onUpdate(on.update)
+            .onFinalize(on.finalize)
+        : undefined,
+    [on]
+  )
+}
 
 /**
  * Names the contact pin under a hovering pointer (or the one whose inspector
@@ -48,9 +79,7 @@ export default function usePinHover({
   const linkedId = useRef<string | undefined>(undefined)
 
   const show = (next: PinBox | undefined) =>
-    setPin((current) =>
-      current?.id === next?.id && current?.box === next?.box ? current : next
-    )
+    setPin((current) => (samePin(current, next) ? current : next))
 
   const refresh = () => {
     if (!pins.current || dragging.current) return show(undefined)
@@ -99,26 +128,24 @@ export default function usePinHover({
     setPin(undefined)
   }, [contacts])
 
-  const hover = pinHoverSupported
-    ? Gesture.Hover()
-        .runOnJS(true)
-        .onBegin((event) => {
-          // Insurance against a camera start whose completion never arrived.
-          cameraMoving.current = false
-          notePointerHover(
-            event.pointerType === PointerType.STYLUS ? 'stylus' : 'pointer'
-          )
-        })
-        .onUpdate((event) => {
-          pointer.current = { x: event.x, y: event.y }
-          if (pins.current) refresh()
-          else loadPins()
-        })
-        .onFinalize(() => {
-          pointer.current = null
-          refresh()
-        })
-    : undefined
+  const hover = useHoverGesture({
+    begin: (event) => {
+      // Insurance against a camera start whose completion never arrived.
+      cameraMoving.current = false
+      notePointerHover(
+        event.pointerType === PointerType.STYLUS ? 'stylus' : 'pointer'
+      )
+    },
+    update: (event) => {
+      pointer.current = { x: event.x, y: event.y }
+      if (pins.current) refresh()
+      else loadPins()
+    },
+    finalize: () => {
+      pointer.current = null
+      refresh()
+    },
+  })
 
   return {
     /** Attach to a view sharing the map's frame; undefined where unsupported. */

@@ -415,6 +415,11 @@ export const PREFERENCE_DEFAULTS = {
    */
   planTimeMode: 'hours' as PlanTimeMode,
   /**
+   * How long the last new Plan was, in minutes. New Plans start this long, so
+   * they can save in one tap; 2 hours until the first one.
+   */
+  planMinutes: 120,
+  /**
    * Remind the User to log time for a planned day that has none, at
    * `unloggedDayReminderTime` after that day's Plans end. Off by default.
    */

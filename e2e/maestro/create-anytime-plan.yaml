@@ -1,6 +1,6 @@
 # seed: pioneer
 # assert: __WW_DEV__.stores.serviceReports.getState().dayPlans.some((p) => p.anytime === true && p.minutes === 120 && p.startTimeInMinutes === 720)
-# assert: __WW_DEV__.stores.serviceReports.getState().dayPlans.some((p) => !p.anytime && p.minutes === 60)
+# assert: __WW_DEV__.stores.serviceReports.getState().dayPlans.some((p) => !p.anytime && p.minutes === 120)
 # assert: __WW_DEV__.stores.preferences.getState().planTimeMode === 'span'
 appId: com.leviwilkerson.jwtimedev
 name: Plan just hours, then a time span, and the form remembers the last one
@@ -27,7 +27,8 @@ name: Plan just hours, then a time span, and the form remembers the last one
     visible: See all badges
     timeout: 20000
 - tapOn: Done
-# The next Plan opens in Just hours; a time span starts an hour long.
+# The next Plan opens in Just hours, as long as the last one; a time span keeps
+# that length.
 - tapOn: Quick Action
 - tapOn: Create Plan
 - tapOn:

@@ -28,3 +28,13 @@ export const splitPlanDate = (
   const { date, startTimeInMinutes } = splitDateAndStartTime(pickerValue)
   return { date: storedDateToLocalDate(date), startTimeInMinutes }
 }
+
+/** From 6 PM, there's too little of today left to plan it. */
+const LATE_IN_THE_DAY_HOUR = 18
+
+/** The day Plan a Day opens on: today, or tomorrow from 6 PM. */
+export const dayToPlan = (now: Date): Date => {
+  const day = moment(now)
+  if (day.hours() >= LATE_IN_THE_DAY_HOUR) day.add(1, 'day')
+  return day.toDate()
+}

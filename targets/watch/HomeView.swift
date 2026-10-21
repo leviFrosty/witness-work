@@ -166,8 +166,13 @@ private struct ReportStatusSection: View {
     if state == "unreported" {
       Button {
         Task {
-          await model.addEntry(hours: 0, minutes: 0, categoryId: nil, origin: .app)
-          WKInterfaceDevice.current().play(.success)
+          do {
+            try await model.addEntry(hours: 0, minutes: 0, categoryId: nil, origin: .app)
+            WKInterfaceDevice.current().play(.success)
+          } catch {
+            WKInterfaceDevice.current().play(.failure)
+            model.show(error)
+          }
         }
       } label: {
         Label(L10n.line("sharedTheGoodNews", snapshot), systemImage: "circle")

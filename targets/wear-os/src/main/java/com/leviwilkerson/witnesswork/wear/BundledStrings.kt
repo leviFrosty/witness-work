@@ -55,6 +55,7 @@ internal object BundledStrings {
     "watchUpNext" to R.string.watchUpNext,
     "watchUpNextComplicationDescription" to R.string.watchUpNextComplicationDescription,
     "watchUpNextComplicationName" to R.string.watchUpNextComplicationName,
+    "watchUpdatePhoneApp" to R.string.watchUpdatePhoneApp,
     "wearRangeComplicationName" to R.string.wearRangeComplicationName,
     "wearSymbolComplicationName" to R.string.wearSymbolComplicationName,
     )

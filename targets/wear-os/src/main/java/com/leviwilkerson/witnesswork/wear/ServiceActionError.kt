@@ -14,6 +14,9 @@ enum class ServiceActionError(
   TIMER_TOO_LONG("siriTimerTooLong"),
   PHONE_UNREACHABLE("watchPhoneUnreachable"),
   TIMER_CHANGED("watchTimerChanged"),
+
+  /** The phone app is older than the watch app and can't read its request. */
+  PHONE_APP_OUTDATED("watchUpdatePhoneApp"),
   FAILED("requestFailedTryAgain"),
 }
 

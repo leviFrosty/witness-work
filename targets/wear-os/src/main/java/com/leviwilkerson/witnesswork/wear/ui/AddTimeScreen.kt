@@ -74,6 +74,7 @@ fun AddTimeScreen(snapshot: WatchSnapshot, hours: Int, minutes: Int, timerRevisi
         haptics.performHapticFeedback(HapticFeedbackType.Confirm)
         onDone()
       } catch (error: Exception) {
+        haptics.performHapticFeedback(HapticFeedbackType.Reject)
         WatchModel.show(error)
       }
       isSaving = false

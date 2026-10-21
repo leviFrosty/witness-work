@@ -43,7 +43,8 @@
     "watchTimerChanged",
     "watchUpNext",
     "watchUpNextComplicationDescription",
-    "watchUpNextComplicationName"
+    "watchUpNextComplicationName",
+    "watchUpdatePhoneApp"
   ],
   "widgetStrings": [
     "aheadOfSchedule",
@@ -101,7 +102,8 @@
     "watchSetUp",
     "watchStale",
     "watchSyncing",
-    "watchTimerChanged"
+    "watchTimerChanged",
+    "watchUpdatePhoneApp"
   ],
   "intentStrings": [
     "addTime",

@@ -99,6 +99,26 @@ import Foundation
       MonthProgress.midnights(after: at(31, hour: 0), count: 1, calendar: calendar)
         == [calendar.date(from: DateComponents(year: 2026, month: 11, day: 1))!],
       "from a midnight")
+    // Up Next's timeline stops at the eighth midnight, like Progress's: an
+    // item sent for later isn't carried past it.
+    let upNextEnd = UpNext.timelineEnd(after: at(5))
+    precondition(upNextEnd == calendar.date(from: DateComponents(year: 2026, month: 10, day: 13))!)
+    let first = (snapshotJSON["upNext"] as! [[String: Any]])[0]
+    snapshotJSON["upNext"] = [12, 13].map { day in
+      first.merging([
+        "id": "item-\(day)", "timed": true, "day": NSNull(),
+        "start": at(day, hour: 15).timeIntervalSince1970 * 1000,
+      ]) { $1 }
+    }
+    json["snapshot"] = snapshotJSON
+    let upNextSnapshot = try JSONDecoder().decode(
+      PhoneContext.self, from: JSONSerialization.data(withJSONObject: json)
+    ).snapshot
+    let upNextChanges = UpNext.changes(upNextSnapshot, after: at(5))
+    precondition(
+      upNextChanges.last == at(12, hour: 15).addingTimeInterval(UpNext.nowWindow),
+      "up next changes: \(upNextChanges)")
+    precondition(upNextChanges.allSatisfy { $0 < upNextEnd })
     print("watch month progress: ok")
   }
 }

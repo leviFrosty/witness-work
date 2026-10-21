@@ -16,6 +16,7 @@ test(
         'swiftc',
         [
           'targets/watch/MonthProgress.swift',
+          'targets/watch/UpNext.swift',
           'targets/watch/AppLanguage.swift',
           'targets/watch/WatchStorage.swift',
           'targets/watch/WatchStrings.swift',

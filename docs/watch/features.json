@@ -591,13 +591,15 @@
       "id": "complication.up-next-timeline",
       "area": "Complications",
       "title": "Up Next advances on its own",
-      "description": "One timeline entry per change (an item becoming soon, starting, leaving, and each midnight), so Up Next moves along between updates from the phone. A Plan without a time keeps its day in the watch's own time zone, so after a trip to another zone it isn't shown on the day before or after.",
+      "description": "One timeline entry per change (an item becoming soon, starting, leaving, and each of the next seven midnights), so Up Next moves along between updates from the phone. A Plan without a time keeps its day in the watch's own time zone, so after a trip to another zone it isn't shown on the day before or after. A week on without an update (from the eighth midnight) it shows \"—\" rather than what was coming up a week ago.",
       "shared": ["src/app/watch/buildUpNext.ts#day: timed ? null"],
       "watchos": {
         "status": "implemented",
         "paths": [
           "targets/watch/UpNext.swift#static func changes",
+          "targets/watch/UpNext.swift#static func timelineEnd",
           "targets/watch-widgets/UpNextWidget.swift#struct UpNextProvider",
+          "targets/watch-widgets/UpNextWidget.swift#isStale: true",
           "modules/watch-bridge/ios/WatchProtocol.swift#localMidnight"
         ]
       },
@@ -605,6 +607,8 @@
         "status": "implemented",
         "paths": [
           "targets/wear-os/src/main/java/com/leviwilkerson/witnesswork/wear/UpNext.kt#fun changes",
+          "targets/wear-os/src/main/java/com/leviwilkerson/witnesswork/wear/UpNext.kt#fun timelineEnd",
+          "targets/wear-os/src/main/java/com/leviwilkerson/witnesswork/wear/complications/UpNextComplicationService.kt#stale = true",
           "targets/wear-os/src/main/java/com/leviwilkerson/witnesswork/wear/UpNext.kt#atStartOfDay(date.zone)",
           "targets/wear-os/src/main/java/com/leviwilkerson/witnesswork/wear/complications/UpNextComplicationService.kt#MAX_ENTRIES"
         ]

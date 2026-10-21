@@ -1,7 +1,7 @@
-import { ed25519, x25519 } from '@noble/curves/ed25519.js'
 import { hkdf as nobleHkdf } from '@noble/hashes/hkdf.js'
 import { sha256 as nobleSha256 } from '@noble/hashes/sha2.js'
 import { utf8 } from '@/features/buddies/lib/bytes'
+import { curve25519 } from '@/lib/curve25519'
 
 /**
  * The Buddies primitive set (see docs/buddies-protocol.md, "Client
@@ -23,22 +23,22 @@ export function sha256(data: Uint8Array): Uint8Array {
 }
 
 export function x25519PublicKey(privateKey: Uint8Array): Uint8Array {
-  return x25519.getPublicKey(privateKey)
+  return curve25519().x25519.getPublicKey(privateKey)
 }
 
 export function x25519SharedSecret(
   privateKey: Uint8Array,
   publicKey: Uint8Array
 ): Uint8Array {
-  return x25519.getSharedSecret(privateKey, publicKey)
+  return curve25519().x25519.getSharedSecret(privateKey, publicKey)
 }
 
 export function ed25519PublicKey(seed: Uint8Array): Uint8Array {
-  return ed25519.getPublicKey(seed)
+  return curve25519().ed25519.getPublicKey(seed)
 }
 
 export function ed25519Sign(message: Uint8Array, seed: Uint8Array): Uint8Array {
-  return ed25519.sign(message, seed)
+  return curve25519().ed25519.sign(message, seed)
 }
 
 export function ed25519Verify(
@@ -46,7 +46,7 @@ export function ed25519Verify(
   message: Uint8Array,
   publicKey: Uint8Array
 ): boolean {
-  return ed25519.verify(signature, message, publicKey)
+  return curve25519().ed25519.verify(signature, message, publicKey)
 }
 
 // The sealed blob moved to the shared tier (accounts use it too).

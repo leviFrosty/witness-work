@@ -1,4 +1,3 @@
-import { x25519 } from '@noble/curves/ed25519.js'
 import { expand, extract, hkdf } from '@noble/hashes/hkdf.js'
 import { sha256 } from '@noble/hashes/sha2.js'
 import {
@@ -9,6 +8,7 @@ import {
   toB64u,
   utf8,
 } from '@/lib/bytes'
+import { curve25519 } from '@/lib/curve25519'
 import { open, seal } from '@/lib/sealedBlob'
 
 /**
@@ -81,7 +81,10 @@ export function createHandoffKeyPair(
   randomBytes: (length: number) => Uint8Array
 ): HandoffKeyPair {
   const privateKey = randomBytes(32)
-  return { privateKey, publicKey: toB64u(x25519.getPublicKey(privateKey)) }
+  return {
+    privateKey,
+    publicKey: toB64u(curve25519().x25519.getPublicKey(privateKey)),
+  }
 }
 
 /** A new offer for the old phone: a channel, a temporary key, and a secret. */
@@ -200,7 +203,10 @@ export function deriveHandoffKeys({
   offerPub: string
   claimPub: string
 }): HandoffKeys {
-  const shared = x25519.getSharedSecret(privateKey, fromB64u(peerPublicKey))
+  const shared = curve25519().x25519.getSharedSecret(
+    privateKey,
+    fromB64u(peerPublicKey)
+  )
   const prk = extract(sha256, shared, secret)
   const transcript = `${channelId}\n${offerPub}\n${claimPub}`
   const info = (purpose: string) => utf8(`${LABEL}/${purpose}\n${transcript}`)

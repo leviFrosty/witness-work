@@ -1,7 +1,7 @@
-import { ed25519 } from '@noble/curves/ed25519.js'
 import { hkdf } from '@noble/hashes/hkdf.js'
 import { sha256 } from '@noble/hashes/sha2.js'
 import { concatBytes, toB64u, utf8 } from '@/lib/bytes'
+import { curve25519 } from '@/lib/curve25519'
 
 /**
  * Keys of the server account (ADR 0024, docs/accounts-protocol.md). The account
@@ -30,7 +30,7 @@ export function deriveAccountSigningKey(
     utf8('ww-account/v1/sign'),
     32
   )
-  return { seed, publicKey: toB64u(ed25519.getPublicKey(seed)) }
+  return { seed, publicKey: toB64u(curve25519().ed25519.getPublicKey(seed)) }
 }
 
 /** The signature over an account op's payload bytes, b64u. */
@@ -40,7 +40,7 @@ export function signAccountRequest(
   key: AccountSigningKey
 ): string {
   return toB64u(
-    ed25519.sign(
+    curve25519().ed25519.sign(
       concatBytes(utf8(`${SIGNING_CONTEXT}${op}\n`), payload),
       key.seed
     )
@@ -58,7 +58,7 @@ export function signInboxLink(
   ownerPub: string
 ): string {
   return toB64u(
-    ed25519.sign(
+    curve25519().ed25519.sign(
       utf8(
         `${SIGNING_CONTEXT}inbox/link\n${accountId}\n${inboxId}\n${ownerPub}`
       ),

@@ -27,7 +27,7 @@ import Animated, {
 import { scheduleOnRN } from 'react-native-worklets'
 import useTheme from '@/contexts/theme'
 import { usePreferences } from '@/stores/preferences'
-import { useProfileOverlay } from '@/stores/profileOverlay'
+import { type OriginRect, useProfileOverlay } from '@/stores/profileOverlay'
 import usePublisher from '@/hooks/usePublisher'
 import useIsSupporter from '@/hooks/useIsSupporter'
 import { isFoundingSupporter } from '@/lib/foundingSupporter'
@@ -116,14 +116,15 @@ const Stat = ({
  * account menu; HomeTabStack mounts the single instance.
  */
 const ProfileDetailOverlay = () => {
-  const {
-    origin,
-    open,
-    away,
-    close: onClose,
-    stepAway,
-    hide,
-  } = useProfileOverlay()
+  const origin = useProfileOverlay((s) => s.origin)
+  // The header hands over the origin once idle; until then the overlay can't
+  // open, so its stats stay out of the first screen's render.
+  if (!origin) return null
+  return <ProfileDetailSheet origin={origin} />
+}
+
+const ProfileDetailSheet = ({ origin }: { origin: OriginRect }) => {
+  const { open, away, close: onClose, stepAway, hide } = useProfileOverlay()
   const theme = useTheme()
   const insets = useSafeAreaInsets()
   const navigation = useNavigation<RootStackNavigation>()
@@ -167,7 +168,7 @@ const ProfileDetailOverlay = () => {
 
   useEffect(() => {
     // Away, it stays full size and unseen until the badge view closes.
-    if (!origin || away) return
+    if (away) return
     if (open && vanish.value < 1)
       vanish.value = withTiming(1, { duration: RETURN_MS })
     progress.value = withSpring(open ? 1 : 0, SPRING, (finished) => {
@@ -175,7 +176,7 @@ const ProfileDetailOverlay = () => {
       // open: Android's Modal remounts the content and misses that write.
       if (finished && !open) vanish.value = 1
     })
-  }, [open, away, origin, progress, vanish])
+  }, [open, away, progress, vanish])
 
   // Leaves the medallion's spot to the badge view instead of shrinking past it,
   // and comes back when that closes.
@@ -187,22 +188,19 @@ const ProfileDetailOverlay = () => {
   }
 
   // Measured in screen coordinates; `left` is mirrored in RTL.
-  const originLeft = origin ? leftForPhysicalX(origin.x, origin.width, winW) : 0
-  const containerStyle = useAnimatedStyle(() => {
-    if (!origin) return {}
-    return {
-      left: interpolate(progress.value, [0, 1], [originLeft, targetX]),
-      top: interpolate(progress.value, [0, 1], [origin.y, targetY]),
-      width: interpolate(progress.value, [0, 1], [origin.width, targetW]),
-      height: interpolate(progress.value, [0, 1], [origin.height, targetH]),
-      // Starts as the round avatar, settles into the sheet's corners.
-      borderRadius: interpolate(
-        progress.value,
-        [0, 1],
-        [origin.width / 2, SHEET_RADIUS]
-      ),
-    }
-  })
+  const originLeft = leftForPhysicalX(origin.x, origin.width, winW)
+  const containerStyle = useAnimatedStyle(() => ({
+    left: interpolate(progress.value, [0, 1], [originLeft, targetX]),
+    top: interpolate(progress.value, [0, 1], [origin.y, targetY]),
+    width: interpolate(progress.value, [0, 1], [origin.width, targetW]),
+    height: interpolate(progress.value, [0, 1], [origin.height, targetH]),
+    // Starts as the round avatar, settles into the sheet's corners.
+    borderRadius: interpolate(
+      progress.value,
+      [0, 1],
+      [origin.width / 2, SHEET_RADIUS]
+    ),
+  }))
 
   const backdropStyle = useAnimatedStyle(() => ({
     opacity: interpolate(progress.value, [0, 1], [0, 0.55]),
@@ -217,8 +215,6 @@ const ProfileDetailOverlay = () => {
   }))
 
   const vanishStyle = useAnimatedStyle(() => ({ opacity: vanish.value }))
-
-  if (!origin) return null
 
   return (
     <FullWindowOverlay open={open} onClose={onClose}>

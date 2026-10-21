@@ -115,6 +115,39 @@ describe('Button pointer effect', () => {
   })
 })
 
+describe('Button role', () => {
+  const pressable = (type = 'AnimatedPressable') =>
+    root.root.findByType(type as never)
+
+  it('reads as a button by default', async () => {
+    await render({})
+    expect(pressable().props.accessibilityRole).toBe('button')
+  })
+
+  it('reads as a button on the plain variant too', async () => {
+    await act(async () => {
+      root = create(<Button onPress={() => {}} noTransform />)
+    })
+    expect(pressable('Pressable').props.accessibilityRole).toBe('button')
+  })
+
+  it('keeps a role the caller sets', async () => {
+    await act(async () => {
+      root = create(<Button onPress={() => {}} accessibilityRole='tab' />)
+    })
+    expect(pressable().props.accessibilityRole).toBe('tab')
+  })
+
+  it('gives inert buttons no role', async () => {
+    await act(async () => {
+      root = create(<Button />)
+    })
+    expect(root.root.findByType('View' as never).props.accessibilityRole).toBe(
+      undefined
+    )
+  })
+})
+
 describe('Button loading', () => {
   const press = vi.fn()
   const renderLoading = async (props: Partial<ButtonProps>) => {

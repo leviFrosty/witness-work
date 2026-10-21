@@ -486,8 +486,9 @@ upload failed/recovered, and account-changed outcomes remain.
 First-enable viewed/chosen/outcome/dismissed describes conflict resolution. Manual
 sync and reset retain started/outcome; reset adoption remains.
 `icloud_sync_manual_outcome` has `outcome` `completed`, `failed`, `offline` (the
-OS reported no connection, so nothing was tried) or `needs_reconnect` (Android,
-Google Drive needs the user again); a failure carries the transport's
+OS reported no connection, so nothing was tried), `needs_reconnect` (Android,
+Google Drive needs the user again) or `paused` (Cloud Sync's server switch is off
+or the account isn't entitled, checked again first; nothing failed); a failure carries the transport's
 `error_code` (`network`, `rate-limited`, `server-error` (Cloud Sync's server
 failed), `storage-full`, `unauthorized`, `not-found`, `unknown`, or `none`). It
 answers how often "Sync now" fails, and why. `icloud_restore_probe_result` has

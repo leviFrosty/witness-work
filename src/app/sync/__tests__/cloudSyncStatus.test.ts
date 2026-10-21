@@ -142,3 +142,57 @@ describe('refreshCloudSyncStatus', () => {
     expect(usePreferences.getState().cloudSyncEntitled).toBe(false)
   })
 })
+
+describe('recheckCloudSyncPause', () => {
+  /** A device on Cloud Sync that the server's switch paused. */
+  async function pausedBySwitch() {
+    const loaded = await load()
+    loaded.registerCloudSync()
+    loaded.usePreferences.setState({
+      syncProvider: 'cloud',
+      iCloudSyncEnabled: true,
+      cloudSyncEntitled: false,
+      cloudSyncConfig: { enabled: false, entitlement: 'everyone' },
+    })
+    return loaded
+  }
+
+  it('stays paused while the server’s switch is off', async () => {
+    const { recheckCloudSyncPause, cloudSyncPause } = await pausedBySwitch()
+    expect(cloudSyncPause()).toBe('switch')
+    runtime.status = status({ enabled: false, entitled: false })
+    expect(await recheckCloudSyncPause()).toBe('switch')
+  })
+
+  it('lifts once the server offers it again', async () => {
+    const { recheckCloudSyncPause, usePreferences } = await pausedBySwitch()
+    runtime.status = status({ entitlement: 'everyone', supporter: false })
+    expect(await recheckCloudSyncPause()).toBe(null)
+    expect(usePreferences.getState()).toMatchObject({
+      cloudSyncEntitled: true,
+      cloudSyncConfig: { enabled: true, entitlement: 'everyone' },
+      syncProvider: 'cloud',
+      iCloudSyncEnabled: true,
+    })
+  })
+
+  it('keeps what was recorded without an answer', async () => {
+    const { recheckCloudSyncPause } = await pausedBySwitch()
+    runtime.status = null
+    expect(await recheckCloudSyncPause()).toBe('switch')
+  })
+
+  it('says when the account isn’t entitled', async () => {
+    const { recheckCloudSyncPause } = await pausedBySwitch()
+    runtime.status = status({ entitled: false, supporter: false })
+    expect(await recheckCloudSyncPause()).toBe('entitlement')
+  })
+
+  it('isn’t paused off Cloud Sync', async () => {
+    const { recheckCloudSyncPause, cloudSyncPause, usePreferences } =
+      await pausedBySwitch()
+    usePreferences.setState({ syncProvider: 'platform' })
+    expect(cloudSyncPause()).toBe(null)
+    expect(await recheckCloudSyncPause()).toBe(null)
+  })
+})

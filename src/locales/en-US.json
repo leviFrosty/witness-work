@@ -5408,6 +5408,7 @@
   "syncOption_toPlatform_descriptionAndroid": "Your data on this device is kept and combined with your devices on Google Drive. This device's copy is removed from WitnessWork's server. Devices on Cloud Sync keep what they've already synced from it, but stop seeing its changes. WitnessWork doesn't encrypt Google Drive sync end to end.",
   "cloudSyncNotEntitled": "Cloud Sync is a Supporter feature. Become a Supporter, or restore your purchase, then try again.",
   "cloudSyncDisabled": "Cloud Sync is turned off for now. Your data is still on this device. Try again later.",
+  "cloudSyncPaused_title": "Cloud Sync is paused",
   "cloudSyncNoSession": "This device couldn't connect to your WitnessWork account. Check your internet connection and try again. If it keeps happening, open Settings → Account.",
   "cloudSyncTurnOff_title": "Turn off Cloud Sync?",
   "cloudSyncTurnOff_description": "This device stops syncing, and its copy is removed from WitnessWork's server. Your data stays on this device, and your other devices keep what they've already synced from it.",

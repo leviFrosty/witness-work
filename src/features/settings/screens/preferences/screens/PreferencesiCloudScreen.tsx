@@ -57,7 +57,13 @@ import {
   registeredCloudSyncTransport,
   usesCloudSync,
 } from '@/lib/syncTransport/provider'
-import { prepareCloudSync } from '@/app/sync/cloudSync'
+import {
+  cloudSyncPause,
+  type CloudSyncPause,
+  prepareCloudSync,
+  recheckCloudSyncPause,
+  refreshCloudSyncStatus,
+} from '@/app/sync/cloudSync'
 import {
   currentSyncOption,
   dismissCloudSyncOffer,
@@ -101,6 +107,24 @@ const switchFailureMessage = (reason: SwitchFailure) => {
     case 'account_changed':
       return i18n.t('syncOption_accountChanged')
   }
+}
+
+/** Cloud Sync paused by the server, said calmly: nothing failed here. */
+const showCloudSyncPaused = (pause: CloudSyncPause) =>
+  Alert.alert(
+    i18n.t('cloudSyncPaused_title'),
+    i18n.t(
+      pause === 'switch'
+        ? 'iCloudStatusCloudSyncPaused'
+        : 'cloudSyncNotEntitled'
+    )
+  )
+
+/** A sync that didn't finish, unless Cloud Sync was paused meanwhile. */
+const showSyncFailed = () => {
+  const pause = cloudSyncPause()
+  if (pause) showCloudSyncPaused(pause)
+  else Alert.alert(i18n.t('error'), i18n.t(syncKey('iCloudOperationFailed')))
 }
 
 const PreferencesiCloudScreenInner = () => {
@@ -195,6 +219,12 @@ const PreferencesiCloudScreenInner = () => {
     const timer = setInterval(() => setNow(Date.now()), 30_000)
     return () => clearInterval(timer)
   }, [])
+
+  // Cloud Sync's pause can end while the app stays open; opening the screen
+  // asks again (at most once a minute), so its status and sync come back.
+  useEffect(() => {
+    if (onCloud) void refreshCloudSyncStatus()
+  }, [onCloud])
 
   const showAccountChangedNotice =
     iCloudAccountChangedAt !== null && !iCloudSyncEnabled
@@ -294,7 +324,7 @@ const PreferencesiCloudScreenInner = () => {
         choice,
         outcome: 'failed',
       })
-      Alert.alert(i18n.t('error'), i18n.t(syncKey('iCloudOperationFailed')))
+      showSyncFailed()
     } finally {
       setPendingRemote(null)
       setPendingAccount(null)
@@ -449,7 +479,7 @@ const PreferencesiCloudScreenInner = () => {
           break
       }
     } catch {
-      Alert.alert(i18n.t('error'), i18n.t(syncKey('iCloudOperationFailed')))
+      showSyncFailed()
     } finally {
       setSyncing(false)
       setPendingEnable(null)
@@ -630,6 +660,13 @@ const PreferencesiCloudScreenInner = () => {
     // The user asked: skip any backoff from earlier failures.
     iCloudSync.resetPushBackoff()
     try {
+      // Paused by the server: ask it again, and resume if it's back.
+      const pause = await recheckCloudSyncPause()
+      if (pause) {
+        analytics.capture('icloud_sync_manual_outcome', { outcome: 'paused' })
+        showCloudSyncPaused(pause)
+        return
+      }
       const merged = await iCloudSync.pullAndMerge('manual')
       const pullIssue = usePreferences.getState().iCloudSyncIssue
       const pushed = await iCloudSync.push('manual')
@@ -656,11 +693,17 @@ const PreferencesiCloudScreenInner = () => {
     } catch {
       const prefs = usePreferences.getState()
       const errorCode = prefs.iCloudSyncErrorCode
-      analytics.capture('icloud_sync_manual_outcome', {
-        outcome: 'failed',
-        error_code: errorCode ?? 'none',
-      })
-      if (googleDrive && prefs.googleDriveNeedsReconnect) {
+      // The server paused Cloud Sync while this ran.
+      const pause = cloudSyncPause()
+      analytics.capture(
+        'icloud_sync_manual_outcome',
+        pause
+          ? { outcome: 'paused' }
+          : { outcome: 'failed', error_code: errorCode ?? 'none' }
+      )
+      if (pause) {
+        showCloudSyncPaused(pause)
+      } else if (googleDrive && prefs.googleDriveNeedsReconnect) {
         reconnectGoogleDrive()
       } else if (
         isKnownOffline() ||

@@ -1,4 +1,5 @@
 import type {
+  ProjectedTotalResult,
   ProjectedTotalScope,
   ProjectedTotalState,
 } from '@/lib/projectedTotal'
@@ -34,6 +35,62 @@ export const getStatusKey = (
 ): string => {
   const tenseToUse = STATE_BY_TENSE[tense].has(state) ? tense : 'present'
   return `projectedTotal.status.${tenseToUse}.${state}`
+}
+
+export type StatusCopy = {
+  key: string
+  params: { period: string; projected: string; gap: string; over: string }
+}
+
+/**
+ * The status line under a projection, or null when there's nothing worth
+ * saying. "Over goal" counts logged time only (plans haven't happened yet), and
+ * the plans sentence is left out when nothing is planned.
+ */
+export const getStatusCopy = (
+  result: Pick<
+    ProjectedTotalResult,
+    | 'state'
+    | 'loggedMinutes'
+    | 'plannedMinutes'
+    | 'projectedMinutes'
+    | 'goalMinutes'
+    | 'gapMinutes'
+  >,
+  tense: PeriodTense,
+  period: string,
+  format: (minutes: number) => string
+): StatusCopy | null => {
+  const hasPlanned = result.plannedMinutes > 0
+  // Without plans, the "planned hours would put you at…" copy is misleading;
+  // the legend already shows nothing planned.
+  if (
+    !hasPlanned &&
+    (result.state === 'reachable_gap' ||
+      result.state === 'unreachable_gap' ||
+      result.state === 'projected_over_goal')
+  ) {
+    return null
+  }
+
+  const loggedOver = Math.max(0, result.loggedMinutes - result.goalMinutes)
+  let key = getStatusKey(result.state, tense)
+  if (result.state === 'logged_over_goal') {
+    if (loggedOver === 0) key = key.replace(/over_goal$/, 'at_goal')
+    if (!hasPlanned && key.startsWith('projectedTotal.status.present.')) {
+      key = `${key}_no_plans`
+    }
+  }
+
+  return {
+    key,
+    params: {
+      period,
+      projected: format(result.projectedMinutes),
+      gap: format(result.gapMinutes),
+      over: format(loggedOver),
+    },
+  }
 }
 
 export type MarkupSegment = { text: string; bold: boolean }

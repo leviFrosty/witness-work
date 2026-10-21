@@ -6,9 +6,12 @@ vi.mock('@/lib/logger', () => ({
 
 import {
   getPeriodTense,
+  getStatusCopy,
   getStatusKey,
   segmentBoldMarkup,
 } from '@/lib/projectedTotalCopy'
+import type { ProjectedTotalState } from '@/lib/projectedTotal'
+import enUS from '@/locales/en-US.json'
 
 describe('getPeriodTense', () => {
   it('returns "present" when today falls inside the month scope', () => {
@@ -91,6 +94,97 @@ describe('getStatusKey', () => {
     expect(getStatusKey('reachable_gap', 'past')).toBe(
       'projectedTotal.status.present.reachable_gap'
     )
+  })
+})
+
+describe('getStatusCopy', () => {
+  const hours = (minutes: number) => `${minutes / 60}h`
+  const projection = (
+    state: ProjectedTotalState,
+    loggedHours: number,
+    plannedHours: number,
+    goalHours = 50
+  ) => ({
+    state,
+    loggedMinutes: loggedHours * 60,
+    plannedMinutes: plannedHours * 60,
+    projectedMinutes: (loggedHours + plannedHours) * 60,
+    goalMinutes: goalHours * 60,
+    gapMinutes: Math.max(0, goalHours - loggedHours - plannedHours) * 60,
+  })
+  const copy = (
+    result: ReturnType<typeof projection>,
+    tense: 'past' | 'present' | 'future' = 'present'
+  ) => getStatusCopy(result, tense, 'this month', hours)
+
+  it('counts only logged time as over goal, not plans', () => {
+    expect(copy(projection('logged_over_goal', 52, 10))).toEqual({
+      key: 'projectedTotal.status.present.logged_over_goal',
+      params: {
+        period: 'this month',
+        projected: '62h',
+        gap: '0h',
+        over: '2h',
+      },
+    })
+  })
+
+  it('drops the plans sentence when nothing is planned', () => {
+    expect(copy(projection('logged_over_goal', 52, 0))).toMatchObject({
+      key: 'projectedTotal.status.present.logged_over_goal_no_plans',
+      params: { over: '2h' },
+    })
+  })
+
+  it('says the goal is reached when logged time lands exactly on it', () => {
+    expect(copy(projection('logged_over_goal', 50, 10))?.key).toBe(
+      'projectedTotal.status.present.logged_at_goal'
+    )
+    expect(copy(projection('logged_over_goal', 50, 0))?.key).toBe(
+      'projectedTotal.status.present.logged_at_goal_no_plans'
+    )
+    expect(copy(projection('logged_over_goal', 50, 0), 'past')?.key).toBe(
+      'projectedTotal.status.past.logged_at_goal'
+    )
+  })
+
+  it('keeps the past-tense over-goal line for an ended period', () => {
+    expect(copy(projection('logged_over_goal', 55, 0), 'past')).toMatchObject({
+      key: 'projectedTotal.status.past.logged_over_goal',
+      params: { over: '5h' },
+    })
+  })
+
+  it('hides plan-based lines when nothing is planned', () => {
+    expect(copy(projection('reachable_gap', 20, 0))).toBeNull()
+    expect(copy(projection('unreachable_gap', 20, 0))).toBeNull()
+  })
+
+  it('narrates plans that reach the goal', () => {
+    expect(copy(projection('projected_over_goal', 40, 15))).toMatchObject({
+      key: 'projectedTotal.status.present.projected_over_goal',
+      params: { projected: '55h' },
+    })
+  })
+
+  it('resolves to keys that exist in en-US', () => {
+    const cases = [
+      copy(projection('logged_over_goal', 52, 10)),
+      copy(projection('logged_over_goal', 52, 0)),
+      copy(projection('logged_over_goal', 50, 10)),
+      copy(projection('logged_over_goal', 50, 0)),
+      copy(projection('logged_over_goal', 50, 0), 'past'),
+      copy(projection('logged_over_goal', 55, 0), 'past'),
+    ]
+    for (const c of cases) {
+      const value = c!.key
+        .split('.')
+        .reduce<unknown>(
+          (node, part) => (node as Record<string, unknown>)?.[part],
+          enUS
+        )
+      expect(typeof value, c!.key).toBe('string')
+    }
   })
 })
 

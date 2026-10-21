@@ -9,7 +9,7 @@ import InfoPopover from '@/components/ui/InfoPopover'
 import i18n, { type TranslationKey } from '@/lib/locales'
 
 import { formatMinutes } from '@/lib/minutes'
-import { getStatusKey, segmentBoldMarkup } from '@/lib/projectedTotalCopy'
+import { getStatusCopy, segmentBoldMarkup } from '@/lib/projectedTotalCopy'
 import { usePreferences } from '@/stores/preferences'
 import ServiceYearPaceChart from '@/features/progress/components/ServiceYearPaceChart'
 import type { PacePoint } from '@/features/progress/lib/serviceYearPace'
@@ -73,21 +73,15 @@ const ServiceYearPaceCard = ({ data, milestones }: Props) => {
           )
 
   const hasPlanned = pace.points.some((p) => p.planned !== null)
-  // Without Plans, the projection's "planned hours would put you at…" copy is
-  // misleading — the headline already says where the year stands.
-  const hideStatus =
-    !hasPlanned &&
-    (projection.state === 'reachable_gap' ||
-      projection.state === 'unreachable_gap' ||
-      projection.state === 'projected_over_goal')
-  const statusSegments = segmentBoldMarkup(
-    i18n.t(getStatusKey(projection.state, pace.tense) as TranslationKey, {
-      period: i18n.t('projectedTotal.period.thisServiceYear'),
-      projected: format(projection.projectedMinutes),
-      gap: format(projection.gapMinutes),
-      over: format(projection.overMinutes),
-    })
+  const status = getStatusCopy(
+    projection,
+    pace.tense,
+    i18n.t('projectedTotal.period.thisServiceYear'),
+    format
   )
+  const statusSegments = status
+    ? segmentBoldMarkup(i18n.t(status.key as TranslationKey, status.params))
+    : []
 
   const summary = i18n.t('serviceYearPace.summary', {
     logged: format(pace.loggedMinutes),
@@ -245,7 +239,7 @@ const ServiceYearPaceCard = ({ data, milestones }: Props) => {
         )}
       </View>
 
-      {projection.state !== 'empty' && !hideStatus && (
+      {projection.state !== 'empty' && status && (
         <Text
           style={{
             fontSize: theme.fontSize('sm'),

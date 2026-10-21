@@ -18,6 +18,7 @@ import {
 import { applyFormatRegion, resolveStartOfWeek } from '@/lib/dates'
 import { nativeLocale } from '@/lib/nativeLocale'
 import { buildWidgetSnapshot } from '@/app/widgets/snapshot'
+import { flushWatchSnapshot } from '@/app/watch/watchSync'
 import { logger } from '@/lib/logger'
 import {
   addCalendarMonths,
@@ -261,6 +262,8 @@ if (Platform.OS === 'ios' && !TaskManager.isTaskDefined(WIDGET_REFRESH_TASK)) {
       // debounce might not fire before the task is suspended.
       debouncedPush.cancel()
       await pushSnapshot('background-fetch')
+      // The watch and Siri read the merge too.
+      flushWatchSnapshot('background-fetch')
     }
     return BackgroundTask.BackgroundTaskResult.Success
   })

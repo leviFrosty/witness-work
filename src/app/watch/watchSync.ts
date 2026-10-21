@@ -282,6 +282,16 @@ const debouncedPush = debounce(() => pushWatchSnapshot('store-change'), 500, {
 })
 
 /**
+ * Sends the snapshot now rather than after the store-change debounce, for a
+ * background task that just merged a sync: the app may be suspended before the
+ * debounce fires, and the watch wouldn't see the merge until the next launch.
+ */
+export function flushWatchSnapshot(reason: string): void {
+  debouncedPush.cancel()
+  pushWatchSnapshot(reason)
+}
+
+/**
  * Connects the stores to the watch (Apple Watch, or Wear OS on Android) and to
  * Siri on this device: saves the entries and trips they made and keeps their
  * snapshot current. Install once storage has hydrated. Idempotent; returns a
@@ -312,6 +322,12 @@ export function installWatchSync(): () => void {
     captureWatchStatus()
     reportNativeErrors()
   })
+  // Leaving the foreground, send a change still waiting on the debounce: the
+  // app may be suspended first. `inactive` counts, since the app switcher can
+  // end the app from there.
+  const appStateSub = AppState.addEventListener('change', (state) => {
+    if (state !== 'active') debouncedPush.flush()
+  })
   const inboxSub = WatchBridge.onInboxChange(drainInbox)
   // A newly paired watch or newly installed watch app gets the snapshot the
   // native layer keeps; this only adds one the stores changed meanwhile (on
@@ -330,6 +346,7 @@ export function installWatchSync(): () => void {
     unsubscribes.forEach((unsubscribe) => unsubscribe())
     debouncedPush.cancel()
     foregroundSub.remove()
+    appStateSub.remove()
     inboxSub.remove()
     statusSub.remove()
     lastPushedContent = null

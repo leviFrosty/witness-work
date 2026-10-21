@@ -33,13 +33,12 @@ export function seedScenario(name: string) {
       hasCompletedProfileSetup: true,
     })
   }
-  const { addContact } = useContacts.getState()
-  scenario.contacts.forEach(addContact)
-  const { addConversation } = useConversations.getState()
-  scenario.visits.forEach(addConversation)
-  const { addServiceReport, addDayPlan, addRecurringPlan } =
+  // One write per store, so the `stress` scenario seeds in seconds.
+  useContacts.getState().addContacts(scenario.contacts)
+  useConversations.getState().addConversations(scenario.visits)
+  const { addServiceReports, addDayPlan, addRecurringPlan } =
     useServiceReport.getState()
-  scenario.timeEntries.forEach(addServiceReport)
+  addServiceReports(scenario.timeEntries)
   scenario.dayPlans.forEach((plan) => addDayPlan(plan))
   scenario.recurringPlans.forEach((plan) => addRecurringPlan(plan))
   if (scenario.onboarded) {

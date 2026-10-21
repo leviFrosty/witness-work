@@ -2,7 +2,12 @@ import moment from 'moment'
 import { getServiceYearFromDate, serviceYearBounds } from '@/lib/serviceYear'
 import { Contact } from '@/types/contact'
 import { Visit } from '@/types/visit'
-import { DayPlan, RecurringPlan, TimeEntry } from '@/types/timeEntry'
+import {
+  DayPlan,
+  RecurringPlan,
+  RecurringPlanFrequencies,
+  TimeEntry,
+} from '@/types/timeEntry'
 import { Publisher } from '@/types/publisher'
 import { LDC_BUILTIN_CATEGORY_ID } from '@/constants/categories'
 import { buildBadgeHistoryFixture } from '@/app/dev-fixtures/badges'
@@ -19,6 +24,7 @@ export const SCENARIO_NAMES = [
   'pioneer',
   'busy',
   'badges',
+  'stress',
 ] as const
 export type ScenarioName = (typeof SCENARIO_NAMES)[number]
 
@@ -192,6 +198,129 @@ function buildDayPlans(now: moment.Moment): DayPlan[] {
   }))
 }
 
+/**
+ * `stress`: a heavy account for profiling. 2,000 contacts with four visits each
+ * over five years, pioneer hours for five Service Years, and 300 Plans (280 Day
+ * Plans, 20 Recurring Plans with skipped dates and overrides).
+ */
+const STRESS_CONTACTS = 2000
+const STRESS_YEARS = 5
+
+function buildStressVisits(now: moment.Moment, contacts: Contact[]): Visit[] {
+  const days = STRESS_YEARS * 365
+  return contacts.flatMap((contact, index) =>
+    [0, 1, 2, 3].map((visitIndex) => {
+      const date = now
+        .clone()
+        .subtract(((index * 7 + visitIndex * 97) % days) + 1, 'days')
+        .hour(9 + (visitIndex % 4))
+        .minute(0)
+        .second(0)
+        .millisecond(0)
+      const followUp =
+        visitIndex === 0 && index % 25 === 0
+          ? {
+              date: now
+                .clone()
+                .add((index % 50) - 20, 'days')
+                .toDate(),
+              notifyMe: false,
+              topic: 'Bring the brochure',
+            }
+          : undefined
+      return {
+        id: `${SCENARIO_ID_PREFIX}visit-${index}-${visitIndex}`,
+        contact: { id: contact.id },
+        date: date.toDate(),
+        note: visitIndex === 0 ? 'Talked about family' : '',
+        isBibleStudy: index < 40,
+        followUp,
+      }
+    })
+  )
+}
+
+function buildStressPlans(now: moment.Moment): {
+  dayPlans: DayPlan[]
+  recurringPlans: RecurringPlan[]
+} {
+  const today = now.clone().startOf('day')
+  const dayPlans = Array.from({ length: 280 }, (_, index) => ({
+    id: `${SCENARIO_ID_PREFIX}stress-plan-${index}`,
+    // Two years back through two months ahead.
+    date: today
+      .clone()
+      .add(60 - index * 3, 'days')
+      .toDate(),
+    minutes: 60 + (index % 4) * 30,
+    startTimeInMinutes: 9 * 60 + (index % 3) * 60,
+    title: index % 5 === 0 ? 'Cart witnessing' : undefined,
+  }))
+  const recurringPlans = Array.from({ length: 20 }, (_, index) => {
+    const startDate = today
+      .clone()
+      .subtract(2, 'years')
+      .add(index * 11, 'days')
+    return {
+      id: `${SCENARIO_ID_PREFIX}stress-recurring-${index}`,
+      startDate: startDate.toDate(),
+      minutes: 120,
+      startTimeInMinutes: 8 * 60 + (index % 5) * 60,
+      title: `Group ${index + 1}`,
+      recurrence: {
+        frequency:
+          index % 4 === 3
+            ? RecurringPlanFrequencies.MONTHLY
+            : RecurringPlanFrequencies.WEEKLY,
+        interval: 1,
+        endDate: null,
+      },
+      // A skipped week about every five weeks, and a moved one every ten.
+      deletedDates: Array.from({ length: 20 }, (_, skip) =>
+        startDate
+          .clone()
+          .add(skip * 5, 'weeks')
+          .toDate()
+      ),
+      overrides: Array.from({ length: 10 }, (_, moved) => ({
+        date: startDate
+          .clone()
+          .add(moved * 10 + 2, 'weeks')
+          .toDate(),
+        minutes: 90,
+      })),
+    }
+  })
+  return { dayPlans, recurringPlans }
+}
+
+function buildStress(now: moment.Moment): Scenario {
+  const serviceYearStart = serviceYearStartFor(now)
+  const firstYearStart = serviceYearStart
+    .clone()
+    .subtract(STRESS_YEARS - 1, 'years')
+  const contacts = buildContacts(now, STRESS_CONTACTS)
+  const { dayPlans, recurringPlans } = buildStressPlans(now)
+  const submittedReportMonths: string[] = []
+  const month = firstYearStart.clone()
+  while (month.isBefore(now, 'month')) {
+    submittedReportMonths.push(month.format('YYYY-MM'))
+    month.add(1, 'month')
+  }
+  return {
+    onboarded: true,
+    role: 'regularPioneer',
+    tenureStartDate: firstYearStart.toDate(),
+    profileName: 'Verify',
+    contacts,
+    visits: buildStressVisits(now, contacts),
+    timeEntries: buildPioneerEntries(now, firstYearStart),
+    dayPlans,
+    recurringPlans,
+    submittedReportMonths,
+  }
+}
+
 /** Start of the September-to-August service year containing `now`. */
 function serviceYearStartFor(now: moment.Moment): moment.Moment {
   return serviceYearBounds(getServiceYearFromDate(now)).start
@@ -220,6 +349,7 @@ export function buildScenario(
     submittedReportMonths: [],
   }
   if (name === 'fresh' || name === 'onboarded') return empty
+  if (name === 'stress') return buildStress(now)
 
   if (name === 'publisher') {
     const contacts = buildContacts(now, 4)

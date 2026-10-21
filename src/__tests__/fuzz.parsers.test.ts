@@ -125,6 +125,26 @@ describe('buddy invite links', () => {
 })
 
 describe('verification scenarios', () => {
+  const expectConsistent = (name: string, now: Date) => {
+    const scenario = buildScenario(name, now)
+    const ids = [
+      ...scenario.contacts,
+      ...scenario.visits,
+      ...scenario.timeEntries,
+      ...scenario.dayPlans,
+      ...scenario.recurringPlans,
+    ].map((record) => record.id)
+    expect(new Set(ids).size).toBe(ids.length)
+    const contactIds = new Set(scenario.contacts.map((c) => c.id))
+    scenario.visits.forEach((visit) =>
+      expect(contactIds.has(visit.contact.id)).toBe(true)
+    )
+    scenario.timeEntries.forEach((entry) =>
+      expect(moment(entry.date).isSameOrBefore(now, 'day')).toBe(true)
+    )
+    return scenario
+  }
+
   it('stay internally consistent on any day', () => {
     fc.assert(
       fc.property(
@@ -133,23 +153,10 @@ describe('verification scenarios', () => {
           max: new Date('2035-12-31T00:00:00Z'),
           noInvalidDate: true,
         }),
-        fc.constantFrom(...SCENARIO_NAMES),
+        // `stress` is too big to build 300 times; it has its own test.
+        fc.constantFrom(...SCENARIO_NAMES.filter((name) => name !== 'stress')),
         (now, name) => {
-          const scenario = buildScenario(name, now)
-          const ids = [
-            ...scenario.contacts,
-            ...scenario.visits,
-            ...scenario.timeEntries,
-            ...scenario.dayPlans,
-          ].map((record) => record.id)
-          expect(new Set(ids).size).toBe(ids.length)
-          const contactIds = new Set(scenario.contacts.map((c) => c.id))
-          scenario.visits.forEach((visit) =>
-            expect(contactIds.has(visit.contact.id)).toBe(true)
-          )
-          scenario.timeEntries.forEach((entry) =>
-            expect(moment(entry.date).isSameOrBefore(now, 'day')).toBe(true)
-          )
+          const scenario = expectConsistent(name, now)
           scenario.dayPlans.forEach((plan) =>
             expect(moment(plan.date).isAfter(now, 'day')).toBe(true)
           )
@@ -157,6 +164,14 @@ describe('verification scenarios', () => {
       ),
       runs
     )
+  })
+
+  it('builds the stress account at full size', () => {
+    const scenario = expectConsistent('stress', new Date(2026, 9, 20, 12))
+    expect(scenario.contacts).toHaveLength(2000)
+    expect(scenario.visits).toHaveLength(8000)
+    expect(scenario.dayPlans.length + scenario.recurringPlans.length).toBe(300)
+    expect(scenario.submittedReportMonths).toHaveLength(49)
   })
 
   it('rejects unknown names with the valid list', () => {

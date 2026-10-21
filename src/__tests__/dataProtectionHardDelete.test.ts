@@ -41,6 +41,7 @@ import {
   permanentlyDeleteHouseholderContacts,
 } from '@/stores/householderData'
 import { isRedactedContactTombstone } from '@/lib/dataProtection'
+import { setSyncClockOffset } from '@/lib/syncClock'
 import type { Contact } from '@/types/contact'
 import type { Visit } from '@/types/visit'
 
@@ -202,6 +203,29 @@ describe('deleteAllHouseholderData', () => {
     expect(tombstones).toHaveLength(2)
     expect(tombstones.every(isRedactedContactTombstone)).toBe(true)
     expect(JSON.stringify(tombstones)).not.toContain('Name a')
+  })
+
+  it('stamps each tombstone after the record it erases on the sync clock', () => {
+    // The device clock runs 5 minutes behind the server, so edits carry later
+    // stamps than `Date.now()`. A tombstone older than the edit would lose the
+    // merge, and a peer would bring the contact back.
+    setSyncClockOffset(5 * 60_000, true)
+    try {
+      deleteHouseholderContact('a')
+      const archived = useContacts.getState().deletedContacts[0]
+      useContacts.getState().updateContact({ id: 'b', name: 'Edited' })
+      const edited = useContacts.getState().contacts[0]
+
+      deleteAllHouseholderData()
+
+      const tombstones = useContacts.getState().deletedContacts
+      const stamp = (id: string) =>
+        tombstones.find((tombstone) => tombstone.id === id)!.updatedAt!
+      expect(stamp('a')).toBeGreaterThan(archived.updatedAt!)
+      expect(stamp('b')).toBeGreaterThan(edited.updatedAt!)
+    } finally {
+      setSyncClockOffset(0)
+    }
   })
 })
 

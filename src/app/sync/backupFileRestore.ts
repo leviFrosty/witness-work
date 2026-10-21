@@ -1,6 +1,7 @@
 import semver from 'semver'
 import { PAYLOAD_VERSION, parsePayload } from '@/app/sync/payload'
-import type { BackupFile } from '@/lib/backupFile'
+import { countRecords } from '@/app/sync/payloadValidation'
+import { BACKUP_FILE_VERSION, type BackupFile } from '@/lib/backupFile'
 import { migrateCustomFieldsToIds } from '@/features/contacts/lib/customFieldsMigration'
 import type { Contact } from '@/types/contact'
 import type { CustomFieldDefinition } from '@/types/customField'
@@ -72,9 +73,12 @@ function withParsed(original: Slice, parsed: Slice): Slice {
  * `parsePayload` (record validation, the preference renames, and the follow-up
  * and Plan rules for older builds) and `migrateNormalizeDates`. Only the stores
  * and keys the file holds come back, so restoring an older file still leaves
- * what it lacks alone. Null when the file can't be read.
+ * what it lacks alone. `droppedRecords` counts the records this build couldn't
+ * read. Null when the file can't be read.
  */
-export function normalizeBackupFile(data: BackupFile): BackupFile | null {
+export function normalizeBackupFile(
+  data: BackupFile
+): { file: BackupFile; droppedRecords: number } | null {
   const preferences = isRecord(data.preferencesStore)
     ? data.preferencesStore
     : {}
@@ -91,47 +95,44 @@ export function normalizeBackupFile(data: BackupFile): BackupFile | null {
     : undefined
   const mileage = isRecord(data.mileageStore) ? data.mileageStore : undefined
 
-  const parsed = parsePayload(
-    JSON.stringify({
-      version: PAYLOAD_VERSION,
-      writtenAt: Date.now(),
-      deviceId: 'backup-file',
-      contactStore: { contacts: [], deletedContacts: [], ...contacts },
-      conversationStore: {
-        conversations: [],
-        ...visits,
-        explicitFollowUps:
-          visits?.explicitFollowUps === true ||
-          !writtenBefore(preferences, EXPLICIT_FOLLOW_UPS_SINCE),
-      },
-      serviceReportStore: {
-        serviceReports: {},
-        dayPlans: [],
-        recurringPlans: [],
-        ...reports,
-        additivePlans:
-          reports?.additivePlans === true ||
-          !writtenBefore(preferences, ADDITIVE_PLANS_SINCE),
-      },
-      ...(categories
-        ? { categoryStore: { categories: [], ...categories } }
-        : {}),
-      ...(mileage
-        ? {
-            mileageStore: {
-              vehicles: [],
-              fuels: [],
-              fuelPrices: [],
-              vehicleSetups: [],
-              trips: [],
-              ...mileage,
-            },
-          }
-        : {}),
-      preferencesStore: { values: preferences, updatedAt: {} },
-      ...(profile ? { profileStore: { values: profile, updatedAt: {} } } : {}),
-    })
-  )
+  const payload = {
+    version: PAYLOAD_VERSION,
+    writtenAt: Date.now(),
+    deviceId: 'backup-file',
+    contactStore: { contacts: [], deletedContacts: [], ...contacts },
+    conversationStore: {
+      conversations: [],
+      ...visits,
+      explicitFollowUps:
+        visits?.explicitFollowUps === true ||
+        !writtenBefore(preferences, EXPLICIT_FOLLOW_UPS_SINCE),
+    },
+    serviceReportStore: {
+      serviceReports: {},
+      dayPlans: [],
+      recurringPlans: [],
+      ...reports,
+      additivePlans:
+        reports?.additivePlans === true ||
+        !writtenBefore(preferences, ADDITIVE_PLANS_SINCE),
+    },
+    ...(categories ? { categoryStore: { categories: [], ...categories } } : {}),
+    ...(mileage
+      ? {
+          mileageStore: {
+            vehicles: [],
+            fuels: [],
+            fuelPrices: [],
+            vehicleSetups: [],
+            trips: [],
+            ...mileage,
+          },
+        }
+      : {}),
+    preferencesStore: { values: preferences, updatedAt: {} },
+    ...(profile ? { profileStore: { values: profile, updatedAt: {} } } : {}),
+  }
+  const parsed = parsePayload(JSON.stringify(payload))
   if (!parsed) return null
 
   const result: BackupFile = { ...data }
@@ -153,7 +154,10 @@ export function normalizeBackupFile(data: BackupFile): BackupFile | null {
     result.preferencesStore = parsed.preferencesStore.values
   // Older files keep profile fields with the preferences; parsing moves them.
   if (parsed.profileStore) result.profileStore = parsed.profileStore.values
-  return result
+  return {
+    file: result,
+    droppedRecords: countRecords(payload) - countRecords(parsed),
+  }
 }
 
 /**
@@ -221,14 +225,25 @@ function knownSlice(value: unknown, state: Slice): Slice {
   )
 }
 
+export type BackupFileRestore =
+  | { ok: true; droppedRecords: number }
+  | { ok: false; problem: 'newer' | 'unreadable' }
+
 /**
  * Restores a JSON backup file over the local stores. Older backups may lack the
  * newer stores; those stay as they are. Never copies identity or consent.
- * Resolves false, changing nothing, when the file can't be read.
+ * Changes nothing when the file can't be read, or when a newer build wrote it:
+ * this build would drop every record holding a value it doesn't know, and the
+ * restore replaces the lists. `droppedRecords` counts the records it couldn't
+ * read in an older file.
  */
-export function restoreBackupFile(file: BackupFile): boolean {
-  const data = normalizeBackupFile(file)
-  if (!data) return false
+export function restoreBackupFile(file: BackupFile): BackupFileRestore {
+  const { version } = file as { version?: unknown }
+  if (typeof version === 'number' && version > BACKUP_FILE_VERSION)
+    return { ok: false, problem: 'newer' }
+  const normalized = normalizeBackupFile(file)
+  if (!normalized) return { ok: false, problem: 'unreadable' }
+  const data = normalized.file
   withRemoteDataMutation(() => {
     if (data.contactStore)
       useContacts
@@ -307,5 +322,5 @@ export function restoreBackupFile(file: BackupFile): boolean {
         )
       )
   })
-  return true
+  return { ok: true, droppedRecords: normalized.droppedRecords }
 }

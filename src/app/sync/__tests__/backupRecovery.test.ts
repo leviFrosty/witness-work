@@ -15,7 +15,11 @@ vi.mock('@/lib/errorTracking', () => ({
   errorTracking: { captureException: vi.fn() },
 }))
 vi.mock('expo-crypto', () => ({ randomUUID: () => 'new' }))
-import { createBackupFile, isBackupFile } from '@/lib/backupFile'
+import {
+  BACKUP_FILE_VERSION,
+  createBackupFile,
+  isBackupFile,
+} from '@/lib/backupFile'
 import { restoreBackupFile } from '@/app/sync/backupFileRestore'
 import useCategories from '@/stores/categories'
 import useContacts from '@/stores/contactsStore'
@@ -280,7 +284,7 @@ describe('JSON backups from older builds', () => {
     usePreferences.setState({ role: 'publisher', offDays: [] })
     useConversations.setState({ conversations: [] })
     useServiceReport.setState({ dayPlans: [], recurringPlans: [] })
-    expect(restoreBackupFile(backup)).toBe(true)
+    expect(restoreBackupFile(backup)).toEqual({ ok: true, droppedRecords: 0 })
     expect(JSON.parse(JSON.stringify(createBackupFile()))).toEqual(backup)
   })
 
@@ -292,17 +296,60 @@ describe('JSON backups from older builds', () => {
     })
     const backup = JSON.parse(JSON.stringify(createBackupFile()))
     useConversations.setState({ conversations: [] })
-    expect(restoreBackupFile(backup)).toBe(true)
+    expect(restoreBackupFile(backup)).toEqual({ ok: true, droppedRecords: 0 })
     expect(useConversations.getState().conversations[0].receivedAt).toBe(1)
   })
 
   it('rejects a file whose records are the wrong shape', () => {
     useContacts.setState({ contacts: [{ id: 'keep' }] as never })
-    expect(restoreBackupFile({ contactStore: { contacts: 'nope' } })).toBe(
-      false
-    )
+    expect(restoreBackupFile({ contactStore: { contacts: 'nope' } })).toEqual({
+      ok: false,
+      problem: 'unreadable',
+    })
     expect(useContacts.getState().contacts).toEqual([{ id: 'keep' }])
   })
+})
+
+describe('JSON backups this build cannot fully read', () => {
+  // A Contact with a gender this build doesn't know, as a newer build could
+  // write.
+  const fileWith = (version: number | undefined) => ({
+    ...(version === undefined ? {} : { version }),
+    contactStore: {
+      contacts: [
+        { id: 'c1', name: 'Ann', createdAt: '2026-01-01T00:00:00.000Z' },
+        {
+          id: 'c2',
+          name: 'Bob',
+          createdAt: '2026-01-01T00:00:00.000Z',
+          gender: 'unknown-to-this-build',
+        },
+      ],
+      deletedContacts: [],
+    },
+  })
+
+  it('refuses a file from a newer build and changes nothing', () => {
+    useContacts.setState({ contacts: [{ id: 'keep' }] as never })
+    expect(restoreBackupFile(fileWith(BACKUP_FILE_VERSION + 1))).toEqual({
+      ok: false,
+      problem: 'newer',
+    })
+    expect(useContacts.getState().contacts).toEqual([{ id: 'keep' }])
+  })
+
+  it.each([BACKUP_FILE_VERSION, undefined])(
+    'restores the rest of a version %s file and counts what it dropped',
+    (version) => {
+      expect(restoreBackupFile(fileWith(version))).toEqual({
+        ok: true,
+        droppedRecords: 1,
+      })
+      expect(useContacts.getState().contacts.map(({ id }) => id)).toEqual([
+        'c1',
+      ])
+    }
+  )
 })
 
 describe('JSON backups from before id-keyed custom fields', () => {
@@ -326,7 +373,10 @@ describe('JSON backups from before id-keyed custom fields', () => {
 
   it('restores label-keyed values under definitions that show them', () => {
     usePreferences.setState({ hasMigratedCustomFieldsToIds: true })
-    expect(restoreBackupFile(legacyFile())).toBe(true)
+    expect(restoreBackupFile(legacyFile())).toEqual({
+      ok: true,
+      droppedRecords: 0,
+    })
     const { contacts, customFieldDefs } = useContacts.getState()
     const [language] = customFieldDefs
     expect(language.label).toBe('Language')
@@ -392,21 +442,23 @@ describe('JSON backup categories and mileage', () => {
         categoryStore: { categories: { a: 1 } },
         mileageStore: { vehicles: [null], trips: 'x' },
       })
-    ).toBe(false)
+    ).toEqual({ ok: false, problem: 'unreadable' })
     expect(useCategories.getState().categories).toEqual([keep])
     expect(useMileage.getState().vehicles).toEqual([car])
   })
 
   it('drops unreadable categories and trips, keeping the rest', () => {
-    restoreBackupFile({
-      categoryStore: {
-        categories: [null, {}, { id: 'type', name: 'Type', isCredit: true }],
-      },
-      mileageStore: {
-        vehicles: [car, null],
-        trips: [trip, { ...trip, id: 'bad', distanceMiles: 'far' }],
-      },
-    })
+    expect(
+      restoreBackupFile({
+        categoryStore: {
+          categories: [null, {}, { id: 'type', name: 'Type', isCredit: true }],
+        },
+        mileageStore: {
+          vehicles: [car, null],
+          trips: [trip, { ...trip, id: 'bad', distanceMiles: 'far' }],
+        },
+      })
+    ).toEqual({ ok: true, droppedRecords: 4 })
     expect(useCategories.getState().categories.map((c) => c.id)).toEqual([
       'type',
     ])

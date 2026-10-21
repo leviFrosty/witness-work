@@ -52,7 +52,10 @@ export function isBackupFile(data: unknown): data is BackupFile {
 
 /**
  * The backup file's format. Files from builds before it have no `version`;
- * restoring them reads their app version instead (`backupFileRestore.ts`).
+ * restoring them reads their app version instead (`backupFileRestore.ts`). Bump
+ * it when a record can hold a value older builds reject (a new enum value in
+ * `payloadValidation.ts`): they refuse a newer file rather than restore it
+ * without those records.
  */
 export const BACKUP_FILE_VERSION = 1
 

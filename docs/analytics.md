@@ -268,6 +268,11 @@ preview edits, prompt toggles, and warning openings are dropped.
 | Backup reminder        | View (daily reach), clicked, dismissed; reminder preference events are dropped.                                                                                                                                                                                |
 | iCloud photo consent   | `icloud_restore_images_prompted`, requested, skipped; replace confirmation remains.                                                                                                                                                                            |
 
+JSON restore `import_failed` at stage `restore` with `error_code: newer_version`
+means a newer app version wrote the file, so nothing was restored. When some
+records couldn't be read and the rest were restored, `backup_imported` adds
+`dropped_records`, how many were left out. Only the count is sent.
+
 MyTime `import_failed` at stage `parse` with `error_code: invalid_file` adds
 `file_kind`, what the picked file looks like from its first bytes: `sqlite` (a
 database without MyTime's tables, or one SQLite couldn't read), `zip`, `pdf`,

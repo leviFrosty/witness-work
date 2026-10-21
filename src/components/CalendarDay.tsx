@@ -25,6 +25,7 @@ import { calendarDayAccessibilityLabel } from '@/lib/calendarDayLabel'
 import { entryMinutes } from '@/lib/entryMinutes'
 import { isCountableEntry } from '@/lib/serviceReport'
 import { hasNote as noteExists } from '@/lib/richText/notes'
+import { touchTargetFrame } from '@/components/ui/touchTarget'
 
 const boxSize = 40
 
@@ -408,6 +409,11 @@ const CalendarDay = (
     formatMinutesSpoken
   )
 
+  // The square stays 40pt; the tap reaches into the space around it, which
+  // the Schedule's grid and the week strip leave free.
+  const frame = touchTargetFrame(boxSize, props.height ?? boxSize)
+  const inset = (frame.width as number) / 2 - boxSize / 2
+
   const previewData = {
     reports: reportsForDay,
     dayPlans: dayPlansForDay,
@@ -432,32 +438,43 @@ const CalendarDay = (
         ) : undefined
       }
       pointerEffect={disabled ? 'none' : 'highlight'}
-      hoverRadius={theme.numbers.borderRadiusSm}
+      hoverRadius={theme.numbers.borderRadiusSm + inset}
       style={{
         opacity: disabled ? 0.4 : 1,
+        marginHorizontal: frame.marginHorizontal,
+        marginVertical: frame.marginVertical,
       }}
     >
-      <View>
-        {dayPlansForDay.length || recurringPlansForDay.length ? (
-          <PlannedDay
-            {...props}
-            serviceReports={reportsForDay}
-            dayPlans={dayPlansForDay}
-            recurringPlans={recurringPlansForDay}
-            today={today}
-          />
-        ) : (
-          <NonPlannedDay
-            {...props}
-            serviceReports={reportsForDay}
-            today={today}
-          />
-        )}
-        {props.overlay ? (
-          <View pointerEvents='none' style={StyleSheet.absoluteFill}>
-            {props.overlay}
-          </View>
-        ) : null}
+      <View
+        style={{
+          width: frame.width,
+          height: frame.height,
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <View>
+          {dayPlansForDay.length || recurringPlansForDay.length ? (
+            <PlannedDay
+              {...props}
+              serviceReports={reportsForDay}
+              dayPlans={dayPlansForDay}
+              recurringPlans={recurringPlansForDay}
+              today={today}
+            />
+          ) : (
+            <NonPlannedDay
+              {...props}
+              serviceReports={reportsForDay}
+              today={today}
+            />
+          )}
+          {props.overlay ? (
+            <View pointerEvents='none' style={StyleSheet.absoluteFill}>
+              {props.overlay}
+            </View>
+          ) : null}
+        </View>
       </View>
     </ContextMenu>
   )

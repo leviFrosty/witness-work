@@ -30,6 +30,7 @@ import Svg, {
 } from 'react-native-svg'
 
 import IconButton from '@/components/ui/IconButton'
+import { MIN_TOUCH_TARGET } from '@/components/ui/touchTarget'
 import PointerTooltip from '@/components/ui/PointerTooltip'
 import ActionButton from '@/components/ui/ActionButton'
 import PullDownMenu from '@/components/ui/PullDownMenu'
@@ -476,8 +477,13 @@ const ServiceReportViewScreen = ({ route, navigation }: Props) => {
             notesDraft={notesDraft}
             onChangeNotesDraft={setNotesDraft}
             notesAccessory={
+              // Spaced so the buttons' frames meet without overlapping.
               <View
-                style={{ flexDirection: 'row', gap: 16, alignItems: 'center' }}
+                style={{
+                  flexDirection: 'row',
+                  gap: MIN_TOUCH_TARGET - 13,
+                  alignItems: 'center',
+                }}
               >
                 {isEditingNotes ? (
                   <PointerTooltip label={i18n.t('save')} effect='none'>
@@ -485,7 +491,7 @@ const ServiceReportViewScreen = ({ route, navigation }: Props) => {
                       icon={CheckIcon}
                       size={14}
                       color={PAPER_LABEL}
-                      hitSlop={8}
+                      frame
                       onPress={handleSaveNotes}
                       accessibilityLabel={i18n.t('save')}
                     />
@@ -498,7 +504,7 @@ const ServiceReportViewScreen = ({ route, navigation }: Props) => {
                           icon={RotateCcwIcon}
                           size={13}
                           color={PAPER_LABEL}
-                          hitSlop={8}
+                          frame
                           onPress={handleResetNotes}
                           accessibilityLabel={i18n.t('reset')}
                         />
@@ -508,7 +514,7 @@ const ServiceReportViewScreen = ({ route, navigation }: Props) => {
                       icon={PencilIcon}
                       size={13}
                       color={PAPER_LABEL}
-                      hitSlop={8}
+                      frame
                       onPress={handleStartEditNotes}
                       accessibilityLabel={i18n.t('edit')}
                     />

@@ -43,6 +43,7 @@ const DismissableCard = ({
         color={dismissIconColor ?? theme.colors.textAlt}
         onPress={handleDismiss}
         accessibilityLabel={i18n.t('dismiss')}
+        frame
       />
     </View>
   )

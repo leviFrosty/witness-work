@@ -16,6 +16,7 @@ import ContextMenu, {
 import { liftedContent, useCopyAction } from '@/components/ui/Copyeable'
 import { AppIcon } from '@/components/ui/LucideIcon'
 import LucideIcon from '@/components/ui/LucideIcon'
+import { touchTargetFrame } from '@/components/ui/touchTarget'
 import Text from '@/components/ui/MyText'
 import PointerHover, { HoverTint } from '@/components/ui/PointerHover'
 import useTheme from '@/contexts/theme'
@@ -269,17 +270,16 @@ const ContactReachCard = ({
                   <PointerHover effect='highlight'>
                     <Pressable
                       onPress={() => setExpanded(false)}
-                      hitSlop={10}
                       accessibilityRole='button'
                       accessibilityLabel={`${i18n.t('contactDetails.contactInfo')}, ${i18n.t('contactDetails.showLess')}`}
                       accessibilityState={{ expanded }}
-                      // Room around the chevron for the pointer highlight;
-                      // the negative margin keeps the layout unchanged.
-                      style={{
-                        padding: 4,
-                        margin: -4,
-                        borderRadius: theme.numbers.borderRadiusSm,
-                      }}
+                      // A full target around the chevron, which the pointer
+                      // highlight fills too; the negative margin keeps the
+                      // layout unchanged.
+                      style={[
+                        touchTargetFrame(18),
+                        { borderRadius: theme.numbers.borderRadiusSm },
+                      ]}
                     >
                       <LucideIcon
                         icon={ChevronUpIcon}

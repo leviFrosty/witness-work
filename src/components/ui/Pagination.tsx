@@ -10,8 +10,12 @@ import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import { buildPaginationModel, PAGINATION_ELLIPSIS } from '@/lib/pagination'
+import { MIN_TOUCH_TARGET, touchTargetFrame } from '@/components/ui/touchTarget'
 
-const PAGINATION_HIT_SLOP = { top: 4, bottom: 4, left: 0, right: 0 }
+/** Looks 36pt tall; the frames around it reach the full target. */
+const NAV_HEIGHT = 36
+const PAGE_WIDTH = 34
+const GAP = 2
 
 interface Props {
   /** One-based current page. Out-of-range values are clamped for display. */
@@ -46,21 +50,21 @@ const Pagination = ({ page, pageCount, onPageChange, style }: Props) => {
           flexDirection: 'row',
           alignItems: 'center',
           justifyContent: 'flex-end',
-          gap: 2,
+          gap: GAP,
         },
         style,
       ]}
     >
       <Button
         noTransform
-        hitSlop={PAGINATION_HIT_SLOP}
         disabled={!model.hasPrevious}
         onPress={() => changePage(model.page - 1)}
         accessibilityRole='button'
         accessibilityLabel={i18n.t('pagination.previous')}
         accessibilityState={{ disabled: !model.hasPrevious }}
         style={{
-          minHeight: 36,
+          minHeight: MIN_TOUCH_TARGET,
+          marginVertical: (NAV_HEIGHT - MIN_TOUCH_TARGET) / 2,
           paddingHorizontal: 2,
           flexDirection: 'row',
           alignItems: 'center',
@@ -96,7 +100,7 @@ const Pagination = ({ page, pageCount, onPageChange, style }: Props) => {
               accessibilityLabel={i18n.t('pagination.morePages')}
               style={{
                 width: 24,
-                height: 36,
+                height: NAV_HEIGHT,
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
@@ -119,47 +123,59 @@ const Pagination = ({ page, pageCount, onPageChange, style }: Props) => {
           <Button
             key={item}
             noTransform
-            hitSlop={PAGINATION_HIT_SLOP}
             onPress={() => changePage(item)}
             accessibilityRole='button'
             accessibilityLabel={i18n.t('pagination.page', { page: item })}
             accessibilityState={{ selected: active }}
             style={{
-              width: 34,
-              height: 36,
-              alignItems: 'center',
-              justifyContent: 'center',
-              borderWidth: 1,
-              borderColor: active ? theme.colors.border : 'transparent',
+              // Full height, but only as wide as the gap allows: a wider
+              // frame would overlap the next page and take its taps.
+              ...touchTargetFrame(PAGE_WIDTH + GAP, NAV_HEIGHT),
+              width: PAGE_WIDTH + GAP,
+              marginHorizontal: -GAP / 2,
               borderRadius: theme.numbers.borderRadiusMd,
-              backgroundColor: active
-                ? theme.colors.backgroundLighter
-                : 'transparent',
             }}
           >
-            <Text
+            <View
               style={{
-                color: theme.colors.text,
-                fontFamily: active ? theme.fonts.semiBold : theme.fonts.regular,
-                fontSize: theme.fontSize('md'),
+                width: PAGE_WIDTH,
+                height: NAV_HEIGHT,
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderWidth: 1,
+                borderColor: active ? theme.colors.border : 'transparent',
+                borderRadius: theme.numbers.borderRadiusMd,
+                backgroundColor: active
+                  ? theme.colors.backgroundLighter
+                  : 'transparent',
               }}
             >
-              {item}
-            </Text>
+              <Text
+                style={{
+                  color: theme.colors.text,
+                  fontFamily: active
+                    ? theme.fonts.semiBold
+                    : theme.fonts.regular,
+                  fontSize: theme.fontSize('md'),
+                }}
+              >
+                {item}
+              </Text>
+            </View>
           </Button>
         )
       })}
 
       <Button
         noTransform
-        hitSlop={PAGINATION_HIT_SLOP}
         disabled={!model.hasNext}
         onPress={() => changePage(model.page + 1)}
         accessibilityRole='button'
         accessibilityLabel={i18n.t('pagination.next')}
         accessibilityState={{ disabled: !model.hasNext }}
         style={{
-          minHeight: 36,
+          minHeight: MIN_TOUCH_TARGET,
+          marginVertical: (NAV_HEIGHT - MIN_TOUCH_TARGET) / 2,
           paddingHorizontal: 2,
           flexDirection: 'row',
           alignItems: 'center',

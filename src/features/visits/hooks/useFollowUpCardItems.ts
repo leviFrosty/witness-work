@@ -7,8 +7,8 @@ export default function useFollowUpCardItems() {
   const conversations = useConversations((s) => s.conversations)
   const contacts = useContacts((s) => s.contacts)
 
+  const items = followUpCardItems({ currentTime: new Date(), conversations })
+  if (items.length === 0) return items
   const activeIds = new Set(contacts.map((c) => c.id))
-  return followUpCardItems({ currentTime: new Date(), conversations }).filter(
-    (item) => activeIds.has(item.visit.contact.id)
-  )
+  return items.filter((item) => activeIds.has(item.visit.contact.id))
 }

@@ -22,12 +22,18 @@ export default function useMissedFollowUpNotifications(
   const conversations = useConversations((state) => state.conversations)
   const contacts = useContacts((state) => state.contacts)
 
-  const names = new Map(contacts.map((contact) => [contact.id, contact.name]))
-  return overdueFollowUpConversations({
+  const missed = overdueFollowUpConversations({
     currentTime: new Date(now),
     conversations,
     lookbackDays: MISSED_FOLLOW_UP_LOOKBACK_DAYS,
-  }).flatMap((visit): NotificationItem[] => {
+  })
+  if (missed.length === 0) return []
+  // Only the missed ones' names, not a lookup over every Contact.
+  const wanted = new Set(missed.map((visit) => visit.contact.id))
+  const names = new Map<string, string>()
+  for (const contact of contacts)
+    if (wanted.has(contact.id)) names.set(contact.id, contact.name)
+  return missed.flatMap((visit): NotificationItem[] => {
     const name = names.get(visit.contact.id)
     if (name === undefined || !visit.followUp) return []
     const at = moment(visit.followUp.date).valueOf()

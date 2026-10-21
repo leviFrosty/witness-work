@@ -13,6 +13,8 @@ import {
 import { goalProgress } from '@/lib/goalProgress'
 import useMonthlyGoal from '@/hooks/useMonthlyGoal'
 import usePublisher from '@/hooks/usePublisher'
+import useAppActive from '@/hooks/useAppActive'
+import useShownInTab from '@/hooks/useShownInTab'
 import { forwardSign } from '@/lib/direction'
 
 interface ProgressBarSegmentBaseProps extends ViewProps {
@@ -132,7 +134,11 @@ const MonthServiceReportProgressBar = ({
   const { type: role } = usePublisher({ month, year })
   const { effectiveGoalHours: goalHours } = useMonthlyGoal({ month, year })
 
-  // Animation setup
+  // Animation setup. The pulse loops only while its screen shows and the app
+  // is open: each lap wakes JS to start the next.
+  const shown = useShownInTab()
+  const appActive = useAppActive()
+  const pulsing = animated && shown && appActive
   const pulseAnimation = useRef(new Animated.Value(0)).current
   const animationRef = useRef<Animated.CompositeAnimation | null>(null)
   const [shimmerContainerWidth, setShimmerContainerWidth] = useState<number>(0)
@@ -174,8 +180,9 @@ const MonthServiceReportProgressBar = ({
 
   // Animation effect
   useEffect(() => {
-    if (!animated || progress === 0 || shimmerContainerWidth === 0) {
-      // Stop animation if not animated, no progress, or no measurement yet
+    if (!pulsing || progress === 0 || shimmerContainerWidth === 0) {
+      // Stop animation if not animated, hidden, no progress, or no measurement
+      // yet
       if (animationRef.current) {
         animationRef.current.stop()
         animationRef.current = null
@@ -228,7 +235,7 @@ const MonthServiceReportProgressBar = ({
         animationRef.current = null
       }
     }
-  }, [animated, progress, pulseDuration, pulseAnimation, shimmerContainerWidth])
+  }, [pulsing, progress, pulseDuration, pulseAnimation, shimmerContainerWidth])
 
   // Calculate pulse position dynamically based on shimmer container width
   // The shimmer should travel across the entire shimmer container (which is already the filled portion)

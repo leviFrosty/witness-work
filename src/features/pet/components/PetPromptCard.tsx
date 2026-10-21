@@ -1,3 +1,4 @@
+import { useRef } from 'react'
 import { View } from 'react-native'
 import { useNavigation } from '@react-navigation/native'
 import Button from '@/components/ui/Button'
@@ -12,6 +13,8 @@ import { defaultCoatFor, PET_SPECIES_IDS } from '@/types/pet'
 import type { RootStackNavigation } from '@/types/rootStack'
 import PetSpriteTile from '@/features/pet/render/PetSpriteTile'
 import useAccessibilityTextSize from '@/hooks/useAccessibilityTextSize'
+import useOnScreen from '@/features/pet/render/useOnScreen'
+import useSceneActive from '@/features/pet/render/useSceneActive'
 
 /**
  * Home's one-time offer of a Pet Companion, in the pet's slot: the five animals
@@ -25,6 +28,10 @@ export default function PetPromptCard() {
   // At accessibility text sizes the buttons stack, so their labels get the
   // full width instead of breaking mid-word.
   const largeText = useAccessibilityTextSize()
+  // Home keeps the card mounted below the fold; the animals idle only while
+  // it's in view.
+  const animalsRef = useRef<View>(null)
+  const onScreen = useOnScreen(animalsRef, useSceneActive())
 
   const choose = () => {
     analytics.capture('pet_prompt_answered', { choice: 'choose' })
@@ -64,6 +71,7 @@ export default function PetPromptCard() {
         </Text>
       </View>
       <View
+        ref={animalsRef}
         accessible
         accessibilityRole='image'
         accessibilityLabel={i18n.t('pet.a11y.promptAnimals')}
@@ -87,6 +95,7 @@ export default function PetPromptCard() {
               coat={defaultCoatFor(species)}
               size={44}
               seed={i * 900}
+              paused={!onScreen}
             />
           </View>
         ))}

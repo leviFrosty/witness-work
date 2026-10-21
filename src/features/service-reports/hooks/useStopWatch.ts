@@ -1,7 +1,7 @@
 import { analytics } from '@/lib/analytics'
 import { splitMinutes } from '@/lib/entryMinutes'
 import { localizeAppDigits } from '@/lib/numbers'
-import { useEffect, useRef, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import * as Stopwatch from '../../../../modules/stopwatch-bridge'
 
 const padStart = (num: number) => num.toString().padStart(2, '0')
@@ -111,18 +111,60 @@ export const resetStopwatchSession = async (expectedStartMs: number) => {
 }
 
 /**
+ * Elapsed ms of `state`, re-read every second while it runs and `live`. Only a
+ * readout should call it, since its caller re-renders every second. Off `live`
+ * (another tab, the background) it stops, and it catches up on return.
+ */
+export const useElapsedMs = (
+  state: Stopwatch.StopwatchState,
+  live: boolean
+): number => {
+  const [nowMs, setNowMs] = useState(() => Date.now())
+  const ticking = state.isRunning && live
+
+  useEffect(() => {
+    if (!ticking) return
+    setNowMs(Date.now())
+    const interval = setInterval(() => setNowMs(Date.now()), 1000)
+    return () => clearInterval(interval)
+  }, [ticking, state])
+
+  return computeElapsedMs(state, nowMs)
+}
+
+/**
+ * Whether `state` has run for at least `thresholdMs`. A running timer
+ * re-renders once, when it gets there, instead of every second.
+ */
+export const useElapsedReached = (
+  state: Stopwatch.StopwatchState,
+  thresholdMs: number
+): boolean => {
+  const [nowMs, setNowMs] = useState(() => Date.now())
+  const reached = computeElapsedMs(state, nowMs) >= thresholdMs
+
+  useEffect(() => {
+    if (reached || !state.isRunning) return
+    const left = thresholdMs - computeElapsedMs(state, Date.now())
+    const timer = setTimeout(() => setNowMs(Date.now()), Math.max(0, left))
+    return () => clearTimeout(timer)
+  }, [reached, state, thresholdMs])
+
+  return reached
+}
+
+/**
  * The bridge owns persisted timestamp state: Swift/App Group UserDefaults on
  * iOS, `StopwatchStore.kt` on Android. iOS Live Activities can also change it
  * through App Intents, and either watch through the watch bridge. Both
- * implementations rehydrate on foreground; this hook renders elapsed time and
- * dispatches commands through the same interface.
+ * implementations rehydrate on foreground; this hook follows that state and
+ * dispatches commands through the same interface. It doesn't tick: the readout
+ * does, with {@link useElapsedMs}.
  */
 export const useStopWatch = () => {
   const [state, setState] = useState<Stopwatch.StopwatchState>(() =>
     Stopwatch.isAvailable() ? Stopwatch.getState() : ZERO
   )
-  const [nowMs, setNowMs] = useState<number>(() => Date.now())
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   useEffect(() => {
     if (!Stopwatch.isAvailable()) return
@@ -130,30 +172,13 @@ export const useStopWatch = () => {
     return () => sub.remove()
   }, [])
 
-  useEffect(() => {
-    if (state.isRunning) {
-      intervalRef.current = setInterval(() => setNowMs(Date.now()), 1000)
-    } else if (intervalRef.current) {
-      clearInterval(intervalRef.current)
-      intervalRef.current = null
-    }
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current)
-        intervalRef.current = null
-      }
-    }
-  }, [state.isRunning])
-
   const dispatch = useCallback(
     async (
       action: StopwatchAction,
       cmd: () => Promise<Stopwatch.StopwatchState>
     ) => {
       const next = await runCommand(action, cmd)
-      if (!next) return
-      setState(next)
-      setNowMs(Date.now())
+      if (next) setState(next)
     },
     []
   )
@@ -171,16 +196,12 @@ export const useStopWatch = () => {
     void dispatch('reset', Stopwatch.reset)
   }, [dispatch])
 
-  const ms = computeElapsedMs(state, nowMs)
-
   return {
     start,
     stop,
     reset,
+    state,
     isRunning: state.isRunning,
-    time: formatMs(ms),
-    hasStarted: ms > 0,
-    ms,
-    sessionStartedAt: sessionStartMs(state, nowMs),
+    hasStarted: state.isRunning || state.accumulatedMs > 0,
   }
 }

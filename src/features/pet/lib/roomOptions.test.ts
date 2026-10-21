@@ -28,8 +28,9 @@ const FIXED: PetRoomSettings = {
 }
 
 describe('Decorate Room options', () => {
-  it('has the seven tabs in order', () => {
+  it('has the eight tabs in order, the hat first', () => {
     expect(ROOM_TABS).toEqual([
+      'hat',
       'window',
       'wall',
       'floor',
@@ -53,7 +54,7 @@ describe('Decorate Room options', () => {
       'wallColor',
       'wallPattern',
     ])
-    for (const tab of ['floor', 'bed', 'shelf', 'lamp', 'sign'] as const)
+    for (const tab of ['floor', 'bed', 'shelf', 'lamp', 'sign', 'hat'] as const)
       expect(roomTabSections(tab, DEFAULT_ROOM)).toEqual([
         { part: tab, options: ROOM_PART_OPTIONS[tab] },
       ])
@@ -84,6 +85,8 @@ describe('Decorate Room options', () => {
       ...FIXED,
       floor: 'stone',
     })
+    expect(selectedRoomOption(FIXED, 'hat')).toBe('none')
+    expect(roomChoicePatch(FIXED, 'hat', 'beret')).toEqual({ hat: 'beret' })
   })
 
   it('turns Live on for both, and off at what the window shows now', () => {
@@ -115,10 +118,12 @@ describe('Decorate Room options', () => {
     expect(isRoomChoiceUnlocked('floor', 'wood', none)).toBe(true)
     expect(isRoomChoiceUnlocked('floor', 'stone', none)).toBe(false)
     const [first] = UNLOCK_ORDER
-    expect(first).toBe('bed:cushion')
+    expect(first).toBe('bed:hay')
     expect(
-      isRoomChoiceUnlocked('bed', 'cushion', unlockedRoomItems([], [first]))
+      isRoomChoiceUnlocked('bed', 'hay', unlockedRoomItems([], [first]))
     ).toBe(true)
+    expect(isRoomChoiceUnlocked('hat', 'none', none)).toBe(true)
+    expect(isRoomChoiceUnlocked('hat', 'bow', none)).toBe(false)
   })
 
   it('says when a locked option opens up, counting this month only once it’s active', () => {
@@ -132,14 +137,24 @@ describe('Decorate Room options', () => {
       activeMonths,
       thisMonthActive,
     })
-    // bed:cushion is first: one active month away.
-    expect(unlockRequirement('bed', 'cushion', months(0, true))).toEqual({
+    // bed:hay is first: one active month away.
+    expect(unlockRequirement('bed', 'hay', months(0, true))).toEqual({
       by: 'months',
       monthsFromNow: 1,
     })
-    expect(unlockRequirement('bed', 'cushion', months(0, false))).toEqual({
+    expect(unlockRequirement('bed', 'hay', months(0, false))).toEqual({
       by: 'months',
       monthsFromNow: 0,
+    })
+    // The cushion is now one of the last.
+    expect(unlockRequirement('bed', 'cushion', months(0, true))).toEqual({
+      by: 'months',
+      monthsFromNow: 13,
+    })
+    // The top hat takes ten active months.
+    expect(unlockRequirement('hat', 'tophat', months(2, true))).toEqual({
+      by: 'months',
+      monthsFromNow: 8,
     })
     // floor:stone is fifth.
     expect(unlockRequirement('floor', 'stone', months(2, true))).toEqual({
@@ -188,5 +203,23 @@ describe('Decorate Room options', () => {
     ).toBeNull()
     expect(unlockRequirement('floor', 'wood', streak('plans'))).toBeNull()
     expect(unlockRequirement('sign', 'plan', streak('plans'))).toBeNull()
+    // Hats: three quick ones, then longer.
+    expect(unlockRequirement('hat', 'bow', streak('plans'))).toEqual({
+      by: 'streak',
+      count: 3,
+    })
+    expect(unlockRequirement('hat', 'beanie', streak('plans'))).toEqual({
+      by: 'streak',
+      count: 9,
+    })
+    expect(unlockRequirement('hat', 'none', streak('plans'))).toBeNull()
+    expect(unlockRequirement('bed', 'cushion', streak('plans'))).toEqual({
+      by: 'streak',
+      count: 60,
+    })
+    expect(unlockRequirement('bed', 'hay', streak('plans'))).toEqual({
+      by: 'streak',
+      count: 1,
+    })
   })
 })

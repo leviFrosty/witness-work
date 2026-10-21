@@ -6,6 +6,7 @@ import {
   evaluateMotion,
   REST_POSE,
   TRICKS,
+  TWIRL,
   WAKE,
   type MotionTable,
 } from '.'
@@ -17,6 +18,7 @@ const tables: [string, MotionTable][] = [
   ...PET_SPECIES_IDS.map(
     (s) => [`trick ${s}`, TRICKS[s]] as [string, MotionTable]
   ),
+  ['twirl', TWIRL],
   ['wake', WAKE],
 ]
 
@@ -73,6 +75,19 @@ describe('motion tables', () => {
     expect(f.pose).toEqual({ ...REST_POSE, mood: 'joy' })
     expect(f.sayDue).toBe(true)
     expect(evaluateMotion(ENTRANCES.cat, 0).sayDue).toBe(false)
+  })
+
+  it('twirls in place: turns while it hops, then lands happy', () => {
+    const flips = new Set<boolean>()
+    for (let u = 200; u < 800; u += 100) {
+      const { pose } = evaluateMotion(TWIRL, u)
+      expect(pose.dx).toBe(0)
+      flips.add(pose.flip)
+    }
+    expect(flips).toEqual(new Set([false, true]))
+    expect(evaluateMotion(TWIRL, 500).pose.dy).toBeLessThan(-5)
+    expect(evaluateMotion(TWIRL, 800).pose.land).toBe(true)
+    expect(evaluateMotion(TWIRL, 800).sayDue).toBe(true)
   })
 
   it('sweeps colour back from the feet up during the wake', () => {

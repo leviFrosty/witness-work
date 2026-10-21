@@ -47,7 +47,9 @@ import { pendingGift } from '@/features/pet/lib/gifts'
 import { lampLevel } from '@/features/pet/lib/lamp'
 import {
   MAX_HEARTS,
+  MONTHLY_HOLD_MAX_DAYS,
   QUIET_DAYS_UNTIL_DEATH,
+  type HeartsPace,
   type PetLife,
 } from '@/features/pet/lib/life'
 import { resolveWindow } from '@/features/pet/lib/liveWindow'
@@ -115,9 +117,11 @@ export type PetWidgetSnapshot = {
 export const PET_TIMELINE_HOURS = 48
 /**
  * How far ahead the sparse part reaches: a pet at five hearts with nothing
- * logged dies on quiet day 60.
+ * logged dies on quiet day 60, and monthly hearts hold for up to
+ * `MONTHLY_HOLD_MAX_DAYS` before quiet days count.
  */
-export const PET_TIMELINE_DAYS = QUIET_DAYS_UNTIL_DEATH + 1
+export const PET_TIMELINE_DAYS =
+  MONTHLY_HOLD_MAX_DAYS + QUIET_DAYS_UNTIL_DEATH + 1
 /** At most this many entries (and scene renders) per snapshot. */
 export const PET_TIMELINE_MAX_ENTRIES = 12
 /** Hours the Live window changes its time of day (`timeOfDayAt`). */
@@ -151,6 +155,8 @@ export type PetWidgetInput = {
   roomDefaults: PetRoomSettings
   /** `petActiveDays` of the ministry records. */
   activeDays: ReadonlySet<string>
+  /** Each month's hearts pace (`selectHeartsPace`). */
+  heartsPace: (month: string) => HeartsPace
   /** Wakes and the lamp replay "no new activity" from these records. */
   streakAt: (at: Date) => Pick<ServiceStreak, 'kind' | 'count'>
   showStreaks: boolean
@@ -345,7 +351,13 @@ export function petWidgetTimeline(
     .map((keepsake) => keepsake.kind)
 
   const todayKey = localDayKey(now)
-  const lives = petLifeAhead(pet, input.activeDays, todayKey, PET_TIMELINE_DAYS)
+  const lives = petLifeAhead(
+    pet,
+    input.activeDays,
+    todayKey,
+    PET_TIMELINE_DAYS,
+    input.heartsPace
+  )
   const lifeOn = (dayKey: string): PetLife =>
     lives[
       Math.min(lives.length - 1, Math.max(0, daysBetween(todayKey, dayKey)))

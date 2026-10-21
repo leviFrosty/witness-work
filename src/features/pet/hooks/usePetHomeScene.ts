@@ -27,8 +27,12 @@ import {
 
 /** Delay before the pet greets the User with its mood's sound. */
 const GREET_DELAY_MS = 700
+/** Delay before it cheers for hearts that went up (after the greeting). */
+const CHEER_DELAY_MS = 900
 /** Spacing of the dev harness's pats. */
 const DEV_PAT_MS = 120
+/** Spacing of the dev harness's rub steps. */
+const DEV_SCRUB_MS = 100
 
 export type PetHomeScene = {
   pet: PetRecord
@@ -41,6 +45,7 @@ export type PetHomeScene = {
   collectGift: () => void
   onPat: () => void
   onTrick: () => void
+  onTwirl: () => void
 }
 
 /**
@@ -90,8 +95,23 @@ export default function usePetHomeScene(
       if (focused)
         scene.playEntrance(usePetSession.getState().takeEntrance() ?? undefined)
     } else if (command.kind === 'trick') scene.playTrick()
+    else if (command.kind === 'twirl') scene.playTwirl()
     else if (command.kind === 'wake') scene.playWake()
-    else if (command.kind === 'pat') {
+    else if (command.kind === 'cheer') scene.cheer()
+    else if (command.kind === 'scrub') {
+      const end = performance.now() + command.ms
+      const timer = setInterval(() => {
+        if (performance.now() > end) {
+          scene.endRub()
+          return clearInterval(timer)
+        }
+        scene.rub()
+      }, DEV_SCRUB_MS)
+      return () => {
+        clearInterval(timer)
+        scene.endRub()
+      }
+    } else if (command.kind === 'pat') {
       let left = command.count
       const timer = setInterval(() => {
         if (left-- <= 0) return clearInterval(timer)
@@ -141,6 +161,19 @@ export default function usePetHomeScene(
     }, GREET_DELAY_MS)
     return () => clearTimeout(timer)
   }, [focused, hasPet])
+
+  // Hearts that went up since Home last showed them (the "shared" check, a
+  // visit or time saved here or elsewhere): the pet cheers.
+  const hearts = life?.hearts
+  const seenHearts = useRef(hearts)
+  useEffect(() => {
+    if (!focused || hearts === undefined) return
+    const before = seenHearts.current
+    seenHearts.current = hearts
+    if (before === undefined || hearts <= before) return
+    const timer = setTimeout(() => sceneRef.current?.cheer(), CHEER_DELAY_MS)
+    return () => clearTimeout(timer)
+  }, [hearts, focused])
 
   const shown = scene?.shown
   useEffect(() => {
@@ -245,5 +278,6 @@ export default function usePetHomeScene(
     collectGift,
     onPat: () => Haptics.light(),
     onTrick: () => noteSecretFound('trick'),
+    onTwirl: () => noteSecretFound('twirl'),
   }
 }

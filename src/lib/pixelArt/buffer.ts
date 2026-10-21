@@ -209,6 +209,27 @@ export function scaleNearest(src: PixelBuffer, factor: number): PixelBuffer {
   return out
 }
 
+/**
+ * The smallest viewport holding every opaque pixel of `buf`, or null when it
+ * has none.
+ */
+export function opaqueBounds(buf: PixelBuffer): Viewport | null {
+  let x0 = buf.width
+  let y0 = buf.height
+  let x1 = -1
+  let y1 = -1
+  const d = buf.data
+  for (let y = 0; y < buf.height; y++)
+    for (let x = 0; x < buf.width; x++) {
+      if (d[(y * buf.width + x) * 4 + 3] === 0) continue
+      if (x < x0) x0 = x
+      if (x > x1) x1 = x
+      if (y < y0) y0 = y
+      if (y > y1) y1 = y
+    }
+  return x1 < 0 ? null : [x0, y0, x1 - x0 + 1, y1 - y0 + 1]
+}
+
 /** Fills every pixel (opaque) with `c`. */
 export function fillBuffer(buf: PixelBuffer, c: Rgb): void {
   const r = (c >> 16) & 255

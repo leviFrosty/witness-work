@@ -17,6 +17,7 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler'
 import { useReducedMotion, useSharedValue } from 'react-native-reanimated'
 import PointerHover, { HoverTint } from '@/components/ui/PointerHover'
 import { errorTracking } from '@/lib/errorTracking'
+import Haptics from '@/lib/haptics'
 import i18n from '@/lib/locales'
 import { createBuffer, type Viewport } from '@/lib/pixelArt'
 import type { PetSoundMoment, PetSpecies } from '@/types/pet'
@@ -35,6 +36,7 @@ import {
   createPetToucher,
   createRubTracker,
 } from '@/features/pet/lib/patTricks'
+import { sceneTapTarget, startsOnPet } from '@/features/pet/lib/sceneTouch'
 import { createFrameLoop } from '@/features/pet/render/frameLoop'
 import PetSpeechBubble from '@/features/pet/render/PetSpeechBubble'
 import { bufferToSkImage } from '@/features/pet/render/skiaImage'
@@ -44,12 +46,7 @@ import useSceneActive from '@/features/pet/render/useSceneActive'
 /** How long a sound's bubble stays up. */
 const BUBBLE_MS = 1400
 /** The gift on the rug, padded for a finger, in scene pixels. */
-const GIFT_HIT = {
-  x: RUG_GIFT_POS[0] - 5,
-  y: RUG_GIFT_POS[1] - 6,
-  w: 16,
-  h: 14,
-}
+const GIFT_HIT: Viewport = [RUG_GIFT_POS[0] - 5, RUG_GIFT_POS[1] - 6, 16, 14]
 const SAMPLING = { filter: FilterMode.Nearest, mipmap: MipmapMode.None }
 /** The screen reader action that keeps the gift, as a tap on it does. */
 const GIFT_ACTION = 'pickUpGift'
@@ -59,10 +56,17 @@ export type PetSceneHandle = {
   /** The species' entrance (defaults to the pet's own). */
   playEntrance: (species?: PetSpecies) => void
   playTrick: () => void
+  /** The scratch twirl, as a long scrub would start it. */
+  playTwirl: () => void
   /** The wake animation of a pet that died. */
   playWake: () => void
   /** A head pat, as a tap would. */
   pat: () => void
+  /** Happy, with a burst of hearts: its hearts went up. */
+  cheer: () => void
+  /** One rub step, as a drag across the pet makes; `endRub` lifts the finger. */
+  rub: () => void
+  endRub: () => void
   /** Shows the pet's sound for `moment` in a bubble. */
   say: (moment: PetSoundMoment) => void
 }
@@ -82,10 +86,22 @@ export type PetSceneViewProps = {
   onPat?: (kind: 'tap' | 'rub') => void
   /** 15 pats in 5 s: the species' trick started. */
   onTrick?: () => void
+  /** A long scrub on the pet: it twirls (with a success haptic). */
+  onTwirl?: () => void
   /** A sleeping pet or one that died was touched. */
   onWakeRequest?: () => void
   /** The gift was tapped, or picked up with a screen reader action. */
   onGiftTap?: () => void
+  /**
+   * A tap that missed the pet and the gift: anywhere else in the room, or in
+   * the `touchInset` around it.
+   */
+  onRoomTap?: () => void
+  /**
+   * Points around the picture that still take its taps (as room taps), so a
+   * card's padding around the room responds too.
+   */
+  touchInset?: number
   ref?: Ref<PetSceneHandle>
 }
 
@@ -95,10 +111,11 @@ type Bubble = { moment: PetSoundMoment; id: number }
  * The pet's room, live: a {@link createScenePlayer} driven by a 10 fps clock on
  * the JS thread, drawn with nearest sampling so the pixels stay sharp. Each
  * frame goes to the canvas through a shared value, so frames don't re-render
- * React. Tap to pat, drag sideways to rub (vertical drags still scroll), tap
- * the gift to keep it; screen readers get an action for the gift while it's
- * there, since their tap pats. The clock pauses on other screens, in the
- * background, at rest with Reduce Motion, and (with `pauseOffScreen`) once
+ * React. Tap the pet to pat it, drag sideways across it to rub (vertical drags
+ * still scroll; a long scrub makes it twirl), tap the gift to keep it, and tap
+ * anywhere else for `onRoomTap`; screen readers get an action for the gift
+ * while it's there, since their tap pats. The clock pauses on other screens, in
+ * the background, at rest with Reduce Motion, and (with `pauseOffScreen`) once
  * scrolled out of view.
  */
 export default function PetSceneView({
@@ -112,8 +129,11 @@ export default function PetSceneView({
   onSay,
   onPat,
   onTrick,
+  onTwirl,
   onWakeRequest,
   onGiftTap,
+  onRoomTap,
+  touchInset = 0,
   ref,
 }: PetSceneViewProps) {
   const reduceMotion = useReducedMotion()
@@ -125,7 +145,7 @@ export default function PetSceneView({
   const [hovered, setHovered] = useState(false)
   const [bubble, setBubble] = useState<Bubble | null>(null)
   const image = useSharedValue<SkImage | null>(null)
-  const latest = useRef({ input, onSay, onTrick })
+  const latest = useRef({ input, onSay, onTrick, onTwirl })
 
   const [scene] = useState(() => {
     const player = createScenePlayer({ reduceMotion })
@@ -137,9 +157,16 @@ export default function PetSceneView({
       latest.current.onSay?.(moment)
       setBubble({ moment, id: ++bubbleId })
     }
+    const state = {
+      /** Where the pet was last drawn, for telling pats from room taps. */
+      petBox: null as Viewport | null,
+      /** The current drag started on the pet, so it rubs. */
+      rubbing: false,
+    }
     const loop = createFrameLoop({
       onFrame: (tMs) => {
         const frame = player.frame(latest.current.input, tMs, buffer)
+        state.petBox = frame.petBox
         const next = bufferToSkImage(frame.buffer)
         if (next) {
           image.set(next)
@@ -158,6 +185,7 @@ export default function PetSceneView({
     return {
       player,
       loop,
+      state,
       showBubble,
       toucher: createPetToucher(player),
       rub: createRubTracker(),
@@ -169,9 +197,9 @@ export default function PetSceneView({
   })
 
   useEffect(() => {
-    latest.current = { input, onSay, onTrick }
+    latest.current = { input, onSay, onTrick, onTwirl }
     scene.loop.kick()
-  }, [scene, input, onSay, onTrick])
+  }, [scene, input, onSay, onTrick, onTwirl])
 
   useEffect(() => {
     scene.player.setReduceMotion(reduceMotion)
@@ -201,6 +229,10 @@ export default function PetSceneView({
     else if (result === 'pat' || result === 'trick')
       onPat?.(rub ? 'rub' : 'tap')
     if (result === 'trick') latest.current.onTrick?.()
+    if (result === 'twirl') {
+      Haptics.success()
+      latest.current.onTwirl?.()
+    }
   }
 
   useImperativeHandle(ref, () => ({
@@ -217,11 +249,21 @@ export default function PetSceneView({
       scene.player.playTrick(pet.species, now())
       scene.loop.kick()
     },
+    playTwirl: () => {
+      scene.player.playTwirl(now())
+      scene.loop.kick()
+    },
     playWake: () => {
       scene.player.playWake(now())
       scene.loop.kick()
     },
     pat: () => touch(false),
+    cheer: () => {
+      scene.player.cheer(now())
+      scene.loop.kick()
+    },
+    rub: () => touch(true),
+    endRub: () => scene.toucher.endRub(),
     say: (moment) => {
       scene.showBubble(moment)
       scene.loop.kick()
@@ -231,45 +273,54 @@ export default function PetSceneView({
   const scale = width > 0 ? width / viewport[2] : 0
   const height = scale * viewport[3]
 
-  const hitsGift = (x: number, y: number) => {
-    if (!latest.current.input.moments?.gift || scale === 0) return false
-    const sx = viewport[0] + x / scale
-    const sy = viewport[1] + y / scale
-    return (
-      sx >= GIFT_HIT.x &&
-      sx < GIFT_HIT.x + GIFT_HIT.w &&
-      sy >= GIFT_HIT.y &&
-      sy < GIFT_HIT.y + GIFT_HIT.h
-    )
-  }
-
   const takeGift = () => {
     scene.loop.kick()
     onGiftTap?.()
   }
 
+  // Gesture points are in the inset view; the picture starts `touchInset` in.
   const tap = Gesture.Tap()
     .runOnJS(true)
     .onEnd((event, success) => {
       if (!success) return
-      if (hitsGift(event.x, event.y)) {
-        takeGift()
-        return
-      }
-      touch(false)
+      const target = sceneTapTarget({
+        x: event.x - touchInset,
+        y: event.y - touchInset,
+        scale,
+        viewport,
+        petBox: scene.state.petBox,
+        giftBox: latest.current.input.moments?.gift ? GIFT_HIT : null,
+      })
+      if (target === 'gift') takeGift()
+      else if (target === 'pet') touch(false)
+      else onRoomTap?.()
     })
   const pan = Gesture.Pan()
     .runOnJS(true)
     .activeOffsetX([-12, 12])
     .failOffsetY([-10, 10])
+    .onBegin((event) => {
+      scene.state.rubbing = startsOnPet({
+        x: event.x - touchInset,
+        y: event.y - touchInset,
+        scale,
+        viewport,
+        petBox: scene.state.petBox,
+      })
+    })
     .onStart((event) => {
-      scene.rub.move(event.x)
+      if (scene.state.rubbing) scene.rub.move(event.x)
     })
     .onUpdate((event) => {
+      if (!scene.state.rubbing) return
       const steps = scene.rub.move(event.x)
       for (let i = 0; i < steps; i++) touch(true)
     })
-    .onFinalize(() => scene.rub.end())
+    .onFinalize(() => {
+      scene.state.rubbing = false
+      scene.rub.end()
+      scene.toucher.endRub()
+    })
 
   const species = input.pet?.species
   const gift = onGiftTap ? input.moments?.gift : null
@@ -277,63 +328,65 @@ export default function PetSceneView({
 
   return (
     <PointerHover onHoverChange={setHovered}>
-      <View
-        ref={frameRef}
-        onLayout={(event) => setWidth(event.nativeEvent.layout.width)}
-        style={{
-          width: '100%',
-          aspectRatio: viewport[2] / viewport[3],
-          borderRadius,
-          overflow: 'hidden',
-        }}
-      >
-        <GestureDetector gesture={Gesture.Race(pan, tap)}>
+      <GestureDetector gesture={Gesture.Race(pan, tap)}>
+        <View collapsable={false} style={{ padding: touchInset }}>
           <View
-            accessible
-            accessibilityRole='button'
-            accessibilityLabel={accessibilityLabel}
-            accessibilityHint={accessibilityHint}
-            onAccessibilityTap={() => touch(false)}
-            accessibilityActions={
-              gift
-                ? [
-                    {
-                      name: GIFT_ACTION,
-                      label: i18n.t(`pet.a11y.pickUpGift.${gift}`),
-                    },
-                  ]
-                : undefined
-            }
-            onAccessibilityAction={(event) => {
-              if (event.nativeEvent.actionName === GIFT_ACTION && gift)
-                takeGift()
+            ref={frameRef}
+            onLayout={(event) => setWidth(event.nativeEvent.layout.width)}
+            style={{
+              width: '100%',
+              aspectRatio: viewport[2] / viewport[3],
+              borderRadius,
+              overflow: 'hidden',
             }}
-            style={{ flex: 1 }}
           >
-            {scale > 0 && (
-              <Canvas style={{ width, height }} pointerEvents='none'>
-                <Image
-                  image={image}
-                  x={-viewport[0] * scale}
-                  y={-viewport[1] * scale}
-                  width={SCENE_W * scale}
-                  height={SCENE_H * scale}
-                  sampling={SAMPLING}
-                />
-              </Canvas>
+            <View
+              accessible
+              accessibilityRole='button'
+              accessibilityLabel={accessibilityLabel}
+              accessibilityHint={accessibilityHint}
+              onAccessibilityTap={() => touch(false)}
+              accessibilityActions={
+                gift
+                  ? [
+                      {
+                        name: GIFT_ACTION,
+                        label: i18n.t(`pet.a11y.pickUpGift.${gift}`),
+                      },
+                    ]
+                  : undefined
+              }
+              onAccessibilityAction={(event) => {
+                if (event.nativeEvent.actionName === GIFT_ACTION && gift)
+                  takeGift()
+              }}
+              style={{ flex: 1 }}
+            >
+              {scale > 0 && (
+                <Canvas style={{ width, height }} pointerEvents='none'>
+                  <Image
+                    image={image}
+                    x={-viewport[0] * scale}
+                    y={-viewport[1] * scale}
+                    width={SCENE_W * scale}
+                    height={SCENE_H * scale}
+                    sampling={SAMPLING}
+                  />
+                </Canvas>
+              )}
+            </View>
+            {bubbleText && (
+              <PetSpeechBubble
+                key={bubble?.id}
+                text={bubbleText}
+                right={width - (PET_X + 8 - viewport[0]) * scale}
+                bottom={height - (PET_Y + 6 - viewport[1]) * scale}
+              />
             )}
+            <HoverTint visible={hovered} borderRadius={borderRadius} />
           </View>
-        </GestureDetector>
-        {bubbleText && (
-          <PetSpeechBubble
-            key={bubble?.id}
-            text={bubbleText}
-            right={width - (PET_X + 8 - viewport[0]) * scale}
-            bottom={height - (PET_Y + 6 - viewport[1]) * scale}
-          />
-        )}
-        <HoverTint visible={hovered} borderRadius={borderRadius} />
-      </View>
+        </View>
+      </GestureDetector>
     </PointerHover>
   )
 }

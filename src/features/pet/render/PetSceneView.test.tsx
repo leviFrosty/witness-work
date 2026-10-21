@@ -36,6 +36,9 @@ vi.mock('@/components/ui/PointerHover', () => ({
 vi.mock('@/lib/errorTracking', () => ({
   errorTracking: { captureException: vi.fn() },
 }))
+vi.mock('@/lib/haptics', () => ({
+  default: { success: vi.fn(), light: vi.fn() },
+}))
 vi.mock('@/features/pet/art', () => ({
   PET_X: 90,
   PET_Y: 70,

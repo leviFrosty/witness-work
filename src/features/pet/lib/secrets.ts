@@ -4,6 +4,7 @@ import { analytics } from '@/lib/analytics'
 /** The hidden moments (`docs/pet-companion.md` → Hidden moments). */
 export type PetSecret =
   | 'trick'
+  | 'twirl'
   | 'gift'
   | 'paradise'
   | 'star'

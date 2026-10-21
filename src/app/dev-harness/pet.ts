@@ -136,8 +136,11 @@ export const petHarness = {
     usePetSession.getState().setDevOverride(null)
     return state()
   },
-  /** Plays a motion on the Home card (Home must be on screen). */
-  play: (kind: 'entrance' | 'trick' | 'wake') => {
+  /**
+   * Plays a motion on the Home card (Home must be on screen): `cheer` is the
+   * hearts-went-up burst.
+   */
+  play: (kind: 'entrance' | 'trick' | 'twirl' | 'wake' | 'cheer') => {
     usePetSession.getState().send({ kind })
     return kind
   },
@@ -145,6 +148,11 @@ export const petHarness = {
   pat: (count = 1) => {
     usePetSession.getState().send({ kind: 'pat', count })
     return count
+  },
+  /** Rubs the pet every 100 ms for `ms` in one drag (2 s twirls it). */
+  scrub: (ms = 3000) => {
+    usePetSession.getState().send({ kind: 'scrub', ms })
+    return ms
   },
   /** Lets every hidden moment send `pet_secret_found` again. */
   forgetSecrets: () => {

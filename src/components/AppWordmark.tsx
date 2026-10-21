@@ -5,13 +5,12 @@ import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import { tracking } from '@/lib/tracking'
 
-const ICON_SIZE = 20
-
 /**
- * The app icon and name, small, so a screenshot of a badge says where it's
- * from. Decorative for screen readers.
+ * The app icon and name, so a screenshot of a badge or a shared picture says
+ * where it's from. Decorative for screen readers. `size` is the icon's side;
+ * the name scales with it.
  */
-export default function BadgeWordmark() {
+export default function AppWordmark({ size = 20 }: { size?: number }) {
   const theme = useTheme()
   return (
     <View
@@ -21,20 +20,20 @@ export default function BadgeWordmark() {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        gap: 7,
+        gap: Math.round(size * 0.35),
       }}
     >
       <Image
         source={require('@/assets/icon.png')}
         style={{
-          width: ICON_SIZE,
-          height: ICON_SIZE,
-          borderRadius: ICON_SIZE * 0.23,
+          width: size,
+          height: size,
+          borderRadius: size * 0.23,
         }}
       />
       <Text
         style={{
-          fontSize: 14,
+          fontSize: Math.round(size * 0.7),
           fontFamily: theme.fonts.semiBold,
           color: theme.colors.textAlt,
           letterSpacing: tracking(0.2),

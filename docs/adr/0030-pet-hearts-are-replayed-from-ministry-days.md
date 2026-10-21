@@ -38,6 +38,8 @@ Publisher reports only whether they shared, and many people can't pioneer.
 3. **A day counts once, not by size.** One active day is one heart however
    much was done, a 0-minute "shared" checkbox entry counts, and Time
    Rollovers don't. No rule reads minutes, hours, goals or the Publisher role.
+   (Amended by ADR 0031: a month whose role reports by month fills hearts by
+   the month. Still no rule reads minutes, hours or goals.)
 4. **Room items unlock by Service Streak**, each the first time the raw count
    reaches its number (per streak kind, in `UNLOCK_ORDER`). A User with no
    streak to grow (streaks hidden, or a `plans` streak and no Plans) unlocks by

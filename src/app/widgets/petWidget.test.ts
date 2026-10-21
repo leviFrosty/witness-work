@@ -72,6 +72,7 @@ const input = (patch: Partial<PetWidgetInput> = {}): PetWidgetInput => ({
   room: null,
   roomDefaults: DEFAULT_ROOM,
   activeDays: daysFrom('2026-10-01', '2026-10-18'),
+  heartsPace: () => 'daily',
   streakAt: () => ({ kind: 'plans', count: 4 }),
   showStreaks: true,
   signAt: () => ({ sign: DEMO_SIGN_DATA, nextPlanDate: null }),
@@ -181,6 +182,24 @@ describe('petWidgetTimeline', () => {
       asleep: false,
       mood: 'dead',
     })
+  })
+
+  it('reaches past the monthly hold to the fading and the end', () => {
+    // A Kingdom Publisher active Oct 1: hearts hold through November, fade
+    // from Dec 10, and the pet would die on Jan 29, 60 days after Nov 30.
+    const entries = petWidgetTimeline(
+      input({
+        room: FIXED_DAY,
+        activeDays: new Set(['2026-10-01']),
+        heartsPace: () => 'monthly',
+      }),
+      at(18, 10)
+    )
+    expect(entries[0].state).toMatchObject({ hearts: 5, dead: false })
+    const firstFade = entries.find((e) => e.state.hearts < 5)
+    expect(firstFade?.date).toBe(new Date(2026, 11, 10).getTime())
+    expect(entries.at(-1)?.date).toBe(new Date(2027, 0, 29).getTime())
+    expect(entries.at(-1)?.state).toMatchObject({ dead: true, hearts: 0 })
   })
 
   it('changes at each Live window boundary and merges unchanged midnights', () => {

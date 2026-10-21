@@ -2,7 +2,7 @@ import i18n, { type TranslationKey } from '@/lib/locales'
 import type { PetMood, PetSoundMoment, PetSpecies } from '@/types/pet'
 import { SPECIES } from '@/features/pet/art'
 
-/** The localized species name ("Lion cub", "Golden pup"). */
+/** The localized species name ("Lion cub", "Pup"). */
 export const speciesName = (species: PetSpecies): string =>
   i18n.t(`pet.species.${species}` as TranslationKey)
 

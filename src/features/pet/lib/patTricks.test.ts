@@ -4,12 +4,28 @@ import {
   createPetToucher,
   createRubTracker,
   RUB_STEP_PX,
+  SCRUB_PAUSE_MS,
+  SCRUB_TWIRL_MS,
 } from '@/features/pet/lib/patTricks'
 
 const fakePlayer = (result: PatResult = 'pat') => ({
   pat: vi.fn(() => result),
   playTrick: vi.fn(),
+  playTwirl: vi.fn(),
 })
+
+/** Rub steps every `everyMs` from `fromMs` through `toMs`. */
+const scrub = (
+  toucher: ReturnType<typeof createPetToucher>,
+  fromMs: number,
+  toMs: number,
+  everyMs = 100
+) => {
+  const results = []
+  for (let t = fromMs; t <= toMs; t += everyMs)
+    results.push(toucher.touch(t, happyDog, { rub: true }))
+  return results
+}
 
 const happyDog = { species: 'dog' as const, mood: 'happy' as const }
 
@@ -32,11 +48,36 @@ describe('pet touches', () => {
     expect(player.playTrick).not.toHaveBeenCalled()
   })
 
-  it('counts rubs too, and passes the rub along', () => {
+  it('passes the rub along, and counts only taps toward the trick', () => {
     const player = fakePlayer()
     const toucher = createPetToucher(player)
     toucher.touch(0, happyDog, { rub: true })
     expect(player.pat).toHaveBeenCalledWith(0, 'happy', { rub: true })
+    toucher.endRub()
+    for (let i = 0; i < 20; i++) toucher.touch(i * 100, happyDog, { rub: true })
+    expect(player.playTrick).not.toHaveBeenCalled()
+  })
+
+  it('twirls once a scrub has kept going long enough, once per drag', () => {
+    const player = fakePlayer()
+    const toucher = createPetToucher(player)
+    const results = scrub(toucher, 0, SCRUB_TWIRL_MS + 500)
+    expect(results.filter((r) => r === 'twirl')).toHaveLength(1)
+    expect(results[SCRUB_TWIRL_MS / 100]).toBe('twirl')
+    expect(player.playTwirl).toHaveBeenCalledTimes(1)
+    expect(player.playTwirl).toHaveBeenCalledWith(SCRUB_TWIRL_MS)
+    // Lifting the finger allows another.
+    toucher.endRub()
+    scrub(toucher, 10_000, 10_000 + SCRUB_TWIRL_MS)
+    expect(player.playTwirl).toHaveBeenCalledTimes(2)
+  })
+
+  it('starts the scrub over after a pause', () => {
+    const player = fakePlayer()
+    const toucher = createPetToucher(player)
+    scrub(toucher, 0, SCRUB_TWIRL_MS - 100)
+    scrub(toucher, SCRUB_TWIRL_MS + SCRUB_PAUSE_MS, SCRUB_TWIRL_MS * 2)
+    expect(player.playTwirl).not.toHaveBeenCalled()
   })
 
   it('asks to wake, and ignores touches mid-motion', () => {

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import { hashBuffer } from '@/lib/pixelArt'
 
-import { ENTRANCES, WAKE } from '../motion'
+import { ENTRANCES, TWIRL, WAKE } from '../motion'
 import { createScenePlayer, DEMO_SIGN_DATA, type PlayerInput } from '.'
 
 const INPUT: PlayerInput = {
@@ -76,6 +76,31 @@ describe('scene player', () => {
     expect(say).toBe('hi')
   })
 
+  it('twirls: busy while it turns, says happy on landing, then ends', () => {
+    const p = createScenePlayer()
+    p.playTwirl(0)
+    expect(p.isBusy()).toBe(true)
+    expect(p.pat(100, 'happy')).toBe('busy')
+    const says: string[] = []
+    let ended: string | null = null
+    for (let t = 0; t <= TWIRL.durationMs + 100; t += 100) {
+      const f = p.frame(INPUT, t)
+      if (f.say) says.push(f.say)
+      if (f.ended) ended = f.ended
+    }
+    expect(says).toEqual(['happy'])
+    expect(ended).toBe('twirl')
+  })
+
+  it('cheers with a happy sound, but not mid-motion', () => {
+    const p = createScenePlayer()
+    p.cheer(0)
+    expect(p.frame(INPUT, 0).say).toBe('happy')
+    p.playTrick('dog', 100)
+    p.cheer(150)
+    expect(p.frame(INPUT, 200).say).toBeNull()
+  })
+
   it('is deterministic for a seed', () => {
     const render = () => {
       const p = createScenePlayer({ seed: 9 })
@@ -95,5 +120,12 @@ describe('scene player', () => {
     p.playEntrance('lion', 0)
     expect(p.isBusy()).toBe(false)
     expect(p.frame(INPUT, 0).say).toBe('hi')
+  })
+
+  it('skips the twirl with Reduce Motion but is still happy', () => {
+    const p = createScenePlayer({ reduceMotion: true })
+    p.playTwirl(0)
+    expect(p.isBusy()).toBe(false)
+    expect(p.frame(INPUT, 0).say).toBe('happy')
   })
 })

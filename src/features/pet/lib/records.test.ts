@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { readPet } from '@/features/pet/lib/records'
-import type { PetRecord } from '@/types/pet'
+import { readPet, readRoom } from '@/features/pet/lib/records'
+import { DEFAULT_ROOM, type PetRecord, type PetRoomRecord } from '@/types/pet'
 
 const pet: PetRecord = {
   id: 'companion',
@@ -30,5 +30,32 @@ describe('readPet', () => {
         keepsakes: [null, { kind: 'dragonfruit', on: '2026-10-03' }],
       } as unknown as PetRecord).keepsakes
     ).toEqual([])
+  })
+})
+
+describe('readRoom', () => {
+  const stored: PetRoomRecord = {
+    id: 'room',
+    ...DEFAULT_ROOM,
+    floor: 'stone',
+    hat: 'beret',
+    updatedAt: 1,
+  }
+
+  it('reads the hat with the rest of the room', () => {
+    expect(readRoom(stored, DEFAULT_ROOM)).toMatchObject({
+      floor: 'stone',
+      hat: 'beret',
+    })
+  })
+
+  it('reads a room from before hats, or an unknown hat, as no hat', () => {
+    const { hat: _hat, ...older } = stored
+    expect(readRoom(older, DEFAULT_ROOM).hat).toBe('none')
+    expect(
+      readRoom({ ...stored, hat: 'crown' } as unknown as PetRoomRecord, {
+        ...DEFAULT_ROOM,
+      }).hat
+    ).toBe('none')
   })
 })

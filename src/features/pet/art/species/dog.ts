@@ -1,4 +1,4 @@
-/** Golden pup: floppy ears, wagging tail, four coats. */
+/** Pup: floppy ears, wagging tail, four coats. */
 import { dim, mix, rgb, rgbPalette, type Rgb, type Shape } from '@/lib/pixelArt'
 
 import { facePixels } from '../face'

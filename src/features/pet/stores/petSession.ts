@@ -3,8 +3,9 @@ import type { GiftKind, PetSpecies, Season, TimeOfDay } from '@/types/pet'
 
 /** A motion or pat asked of the mounted Home card (dev harness). */
 export type PetCommand =
-  | { kind: 'entrance' | 'trick' | 'wake' }
+  | { kind: 'entrance' | 'trick' | 'twirl' | 'wake' | 'cheer' }
   | { kind: 'pat'; count: number }
+  | { kind: 'scrub'; ms: number }
 
 /** A buddy's pet, as the scene draws it. */
 export type PetVisitor = { species: PetSpecies; coat: string; name?: string }

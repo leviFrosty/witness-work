@@ -7,31 +7,20 @@ import {
   type SkImage,
 } from '@shopify/react-native-skia'
 import i18n from '@/lib/locales'
-import { blit, createBuffer, createLru } from '@/lib/pixelArt'
-import {
-  HEART_ICON_H,
-  HEART_ICON_W,
-  heartFills,
-  heartIcon,
-} from '@/features/pet/art'
+import { createLru } from '@/lib/pixelArt'
+import { HEART_ICON_H, HEARTS_ROW_W, heartsRow } from '@/features/pet/art'
 import { crispScale } from '@/features/pet/render/crispScale'
 import { bufferToSkImage } from '@/features/pet/render/skiaImage'
 
-const GAP = 1
-const ROW_W = HEART_ICON_W * 5 + GAP * 4
 const SAMPLING = { filter: FilterMode.Nearest, mipmap: MipmapMode.None }
 
 const rows = createLru<SkImage | null>(24)
 
 /** Five pixel hearts for `hearts` (halves allowed) in one image. */
 function heartsImage(hearts: number, gold: boolean): SkImage | null {
-  return rows.getOrCreate(`${hearts}|${gold ? 1 : 0}`, () => {
-    const row = createBuffer(ROW_W, HEART_ICON_H)
-    heartFills(hearts).forEach((fill, i) =>
-      blit(row, heartIcon(fill, gold), i * (HEART_ICON_W + GAP), 0)
-    )
-    return bufferToSkImage(row)
-  })
+  return rows.getOrCreate(`${hearts}|${gold ? 1 : 0}`, () =>
+    bufferToSkImage(heartsRow(hearts, gold))
+  )
 }
 
 /**
@@ -50,7 +39,7 @@ export default function PixelHearts({
   height?: number
 }) {
   const scale = crispScale(height, HEART_ICON_H, PixelRatio.get())
-  const width = ROW_W * scale
+  const width = HEARTS_ROW_W * scale
   const h = HEART_ICON_H * scale
   return (
     <View

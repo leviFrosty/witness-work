@@ -1136,6 +1136,13 @@ export const PREFERENCE_DEFAULTS = {
    */
   devRolloverDateOverride: null as Date | null,
   /**
+   * Developer Tools' Service Streak override: when set, `useServiceStreak`
+   * reports this count instead of the recorded one (Home, Progress, the
+   * profile, and the pet's lamp and unlocks, which aren't stored meanwhile).
+   * Non-syncable — local testing only.
+   */
+  devStreakOverride: null as number | null,
+  /**
    * The update reveal (`UPDATE_REVEAL_VERSION`) this device has engaged with.
    * `skipped` (closed before the tour) keeps a tray item to replay it; `seen`
    * (the tour was opened, or that tray item dismissed) ends it. A newer reveal

@@ -1,5 +1,6 @@
 import type { StreakKind } from '@/lib/serviceStreak'
 import {
+  HAT_UNLOCK_ORDER,
   STARTER_ROOM_ITEMS,
   UNLOCK_ORDER,
   type PetRecord,
@@ -16,8 +17,9 @@ import {
  *   grow. Months, not hours, so every role unlocks at the same pace (ADR 0019,
  *   ADR 0030).
  *
- * Either way an earned item is stored on the pet (`earnRoomItems`), so it never
- * locks again.
+ * Hats (`HAT_UNLOCK_ORDER`) open up the same two ways on their own counts
+ * (`HAT_THRESHOLDS`): three quick ones, then slower. Either way an earned item
+ * is stored on the pet (`earnRoomItems`), so it never locks again.
  */
 export type UnlockMode = 'streak' | 'months'
 
@@ -25,6 +27,20 @@ export type UnlockMode = 'streak' | 'months'
 export const STREAK_THRESHOLDS: Record<StreakKind, readonly number[]> = {
   plans: [1, 2, 3, 5, 7, 10, 14, 20, 25, 30, 40, 50, 60, 75, 90, 105, 120],
   months: [1, 2, 2, 3, 3, 4, 4, 5, 6, 6, 7, 8, 9, 10, 11, 12, 12],
+}
+
+/**
+ * The count each hat of `HAT_UNLOCK_ORDER` opens up at: by streak kind in
+ * streak mode, by active months in months mode.
+ */
+export const HAT_THRESHOLDS: Record<
+  StreakKind | 'activeMonths',
+  readonly number[]
+> = {
+  plans: [3, 5, 9, 14, 21, 30, 40, 50, 65, 80, 100, 120],
+  months: [1, 1, 1, 2, 3, 4, 5, 6, 7, 8, 10, 12],
+  // One a month after the first three, as the unlock note says.
+  activeMonths: [1, 1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
 }
 
 /**
@@ -50,12 +66,26 @@ export type UnlockProgress =
   | { mode: 'streak'; kind: StreakKind; count: number }
   | { mode: 'months'; activeMonths: number }
 
-/** The items of `UNLOCK_ORDER` that `progress` earns now, in order. */
+/**
+ * The items of `UNLOCK_ORDER`, then the hats of `HAT_UNLOCK_ORDER`, that
+ * `progress` earns now, in order.
+ */
 export function roomItemsEarnedBy(progress: UnlockProgress): RoomItemId[] {
-  if (progress.mode === 'months')
-    return UNLOCK_ORDER.slice(0, Math.max(0, Math.floor(progress.activeMonths)))
+  if (progress.mode === 'months') {
+    const months = Math.max(0, Math.floor(progress.activeMonths))
+    return [
+      ...UNLOCK_ORDER.slice(0, months),
+      ...HAT_UNLOCK_ORDER.filter(
+        (_, i) => months >= HAT_THRESHOLDS.activeMonths[i]
+      ),
+    ]
+  }
   const thresholds = STREAK_THRESHOLDS[progress.kind]
-  return UNLOCK_ORDER.filter((_, i) => progress.count >= thresholds[i])
+  const hats = HAT_THRESHOLDS[progress.kind]
+  return [
+    ...UNLOCK_ORDER.filter((_, i) => progress.count >= thresholds[i]),
+    ...HAT_UNLOCK_ORDER.filter((_, i) => progress.count >= hats[i]),
+  ]
 }
 
 /**
@@ -95,7 +125,9 @@ export function unlockedRoomItems(
 export function unlockStreakFor(item: string, kind: StreakKind): number | null {
   if ((STARTER_ROOM_ITEMS as readonly string[]).includes(item)) return 0
   const index = (UNLOCK_ORDER as readonly string[]).indexOf(item)
-  return index === -1 ? null : STREAK_THRESHOLDS[kind][index]
+  if (index !== -1) return STREAK_THRESHOLDS[kind][index]
+  const hat = (HAT_UNLOCK_ORDER as readonly string[]).indexOf(item)
+  return hat === -1 ? null : HAT_THRESHOLDS[kind][hat]
 }
 
 /**
@@ -108,9 +140,12 @@ export function nextUnlockIn(
   activeMonthCount: number
 ): number | null {
   if ((STARTER_ROOM_ITEMS as readonly string[]).includes(item)) return 0
+  const months = Math.max(0, Math.floor(activeMonthCount))
   const index = (UNLOCK_ORDER as readonly string[]).indexOf(item)
-  if (index === -1) return null
-  return Math.max(0, index + 1 - Math.max(0, Math.floor(activeMonthCount)))
+  if (index !== -1) return Math.max(0, index + 1 - months)
+  const hat = (HAT_UNLOCK_ORDER as readonly string[]).indexOf(item)
+  if (hat === -1) return null
+  return Math.max(0, HAT_THRESHOLDS.activeMonths[hat] - months)
 }
 
 /**

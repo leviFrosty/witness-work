@@ -9,7 +9,10 @@ import { usePreferences } from '@/stores/preferences'
 import { useServiceReport } from '@/stores/serviceReport'
 import { defaultRoomFor } from '@/features/pet/lib/records'
 import { localDayKey } from '@/features/pet/lib/dayKeys'
-import { selectPetActiveDays } from '@/features/pet/lib/petInputs'
+import {
+  selectHeartsPace,
+  selectPetActiveDays,
+} from '@/features/pet/lib/petInputs'
 import { petRegionCode } from '@/features/pet/lib/region'
 import {
   buildSignData,
@@ -90,6 +93,7 @@ export function readPetWidgetInput(
           recurringPlans,
         })
       : new Set(),
+    heartsPace: selectHeartsPace(prefs.roleHistory, prefs.role),
     streakAt: (at) => serviceStreakFor(prefs, records, at),
     showStreaks: prefs.showStreaks,
     signAt,

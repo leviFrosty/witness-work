@@ -10,6 +10,7 @@ import {
   LIGHT_PHASES,
   lightPhase,
   PET_SPECIES_IDS,
+  petBox,
   petFrame,
   particles as P,
   VIEW_CARD,
@@ -150,6 +151,40 @@ describe('composeScene', () => {
     // Awake at one heart: the faded look it keeps once the wake ends.
     expect(late.sprite.grey).toBe('weak')
     expect(early.sprite.grey).toBe('weak')
+  })
+
+  it('draws the hat on the pet, never on one lying down', () => {
+    const bare = hashBuffer(composeScene(INPUT, 0))
+    const none = { ...INPUT, room: { ...ROOM, hat: 'none' as const } }
+    expect(hashBuffer(composeScene(none, 0))).toBe(bare)
+    // A hat from a newer build draws nothing.
+    const unknown = {
+      ...INPUT,
+      room: { ...ROOM, hat: 'crown' },
+    } as unknown as SceneInput
+    expect(hashBuffer(composeScene(unknown, 0))).toBe(bare)
+    const topHat = { ...INPUT, room: { ...ROOM, hat: 'tophat' as const } }
+    expect(hashBuffer(composeScene(topHat, 0))).not.toBe(bare)
+    const dead = { ...INPUT, pet: { ...INPUT.pet!, mood: 'dead' as const } }
+    expect(hashBuffer(composeScene({ ...dead, room: topHat.room }, 0))).toBe(
+      hashBuffer(composeScene(dead, 0))
+    )
+  })
+
+  it('boxes the pet, taller in a hat', () => {
+    const frame = petFrame(INPUT.pet!, 0)
+    const bare = petBox(INPUT.pet!, frame)!
+    // The lion's sprite sits at (52, 52) and fills most of its 32 × 32.
+    expect(bare[0]).toBeGreaterThanOrEqual(52)
+    expect(bare[1]).toBeGreaterThanOrEqual(52)
+    expect(bare[0] + bare[2]).toBeLessThanOrEqual(84)
+    expect(bare[1] + bare[3]).toBeLessThanOrEqual(84)
+    const hatted = petBox(INPUT.pet!, frame, 'tophat')!
+    expect(hatted[1]).toBeLessThan(bare[1])
+    expect(hatted[1] + hatted[3]).toBe(bare[1] + bare[3])
+    // A pat squishes the head down a pixel; the hat follows it.
+    const squished = petFrame({ ...INPUT.pet!, squishUntilMs: 100 }, 50)
+    expect(petBox(INPUT.pet!, squished, 'tophat')![1]).toBe(hatted[1] + 1)
   })
 
   it('shows joy while patted, and motions override the mood', () => {

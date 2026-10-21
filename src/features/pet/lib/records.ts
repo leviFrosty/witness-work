@@ -110,5 +110,6 @@ export function readRoom(
     shelf: pick(ROOM_PART_OPTIONS.shelf, room.shelf, defaults.shelf),
     lamp: pick(ROOM_PART_OPTIONS.lamp, room.lamp, defaults.lamp),
     sign: pick(ROOM_PART_OPTIONS.sign, room.sign, defaults.sign),
+    hat: pick(ROOM_PART_OPTIONS.hat, room.hat, defaults.hat),
   }
 }

@@ -1,26 +1,30 @@
+import type { RefObject } from 'react'
+import type { View } from 'react-native'
+import { ImageFormat, makeImageFromView } from '@shopify/react-native-skia'
 import * as FileSystem from 'expo-file-system/legacy'
 import * as Sharing from 'expo-sharing'
 import { useToastController } from '@tamagui/toast'
 import { analytics } from '@/lib/analytics'
 import i18n from '@/lib/locales'
 import { logger } from '@/lib/logger'
-import type { PlayerInput } from '@/features/pet/art'
 import { localDayKey } from '@/features/pet/lib/dayKeys'
-import { petShareFileName, petShareImage } from '@/features/pet/lib/share'
-import { bufferToPngBase64 } from '@/features/pet/render/skiaImage'
+import { petShareFileName } from '@/features/pet/lib/share'
 
 /**
- * Share… on the pet card: the room as Home shows it, as a crisp PNG in the
- * share sheet. The file goes to the cache folder (the share sheet reads it by
- * reference, so it can't be deleted right away; the OS clears the cache).
+ * Share on the pet's share sheet: a snapshot of its card (`PetShareCard`) at
+ * the screen's pixel density, as a PNG in the share sheet. The file goes to the
+ * cache folder (the share sheet reads it by reference, so it can't be deleted
+ * right away; the OS clears the cache).
  */
 export default function useSharePet() {
   const toast = useToastController()
-  return async (input: PlayerInput, name: string) => {
+  return async (card: RefObject<View | null>, name: string) => {
     try {
-      const png = bufferToPngBase64(petShareImage(input))
+      const image = await makeImageFromView(card)
+      const png = image?.encodeToBase64(ImageFormat.PNG, 100)
+      image?.dispose()
       if (!png || !(await Sharing.isAvailableAsync()))
-        throw new Error('Pet picture or share sheet unavailable')
+        throw new Error('Pet card or share sheet unavailable')
       const uri = `${FileSystem.cacheDirectory}${petShareFileName(name, localDayKey())}`
       await FileSystem.writeAsStringAsync(uri, png, {
         encoding: FileSystem.EncodingType.Base64,

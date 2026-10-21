@@ -8,7 +8,8 @@
  * 1. Room base (cached: wall, floor, window + rainbow, shelf, sign, sill, plant,
  *    stool, bed back layer, gift on the rug)
  * 2. Lamp (behind the pets: a pet running or hopping past it stays in front)
- * 3. Visitor pet (mirrored, at x 86), then the pet, then the bed front layer
+ * 3. Visitor pet (mirrored, at x 86), then the pet in its hat, then the bed front
+ *    layer
  * 4. Lighting (cached per lamp × level × time × breathing phase); the pets' pixels
  *    darken less, so they stay the centre of the room at night
  * 5. Window moments (paradise walkers, shooting star), gift sparkle
@@ -23,10 +24,12 @@ import {
   createBuffer,
   createMask,
   maskOpaque,
+  opaqueBounds,
   rgbPalette,
   setPixel,
   type PixelBuffer,
   type PixelMask,
+  type Viewport,
 } from '@/lib/pixelArt'
 
 import {
@@ -36,6 +39,7 @@ import {
   type MotionTable,
   type Pose,
 } from '../motion'
+import { HAT_ANCHOR_Y, HAT_EARS_THROUGH, hatOrigin, hatSprite } from './hats'
 import { applyLighting } from './lighting'
 import { PET_X, PET_Y, SCENE_H, SCENE_W, VISITOR_X } from './layout'
 import { draw as drawParticles, type ParticleState } from './particles'
@@ -173,7 +177,96 @@ export function petFrame(
   }
 }
 
+/**
+ * The pet's hat for this frame and where it goes, or null with no hat (or lying
+ * down). While the wake's colour hasn't reached the head, it stays grey.
+ */
+function petHat(
+  pet: Pick<ScenePet, 'species'>,
+  frame: PetFrame,
+  hat: string
+): { sprite: PixelBuffer; at: [number, number] } | null {
+  if (hat === 'none' || frame.sprite.lie) return null
+  const bob = frame.sprite.bob
+  const cut = frame.colorFromRow
+  const grey =
+    cut !== null && cut > HAT_ANCHOR_Y[pet.species] + bob
+      ? 'full'
+      : (frame.sprite.grey ?? 'none')
+  const sprite = hatSprite(hat, { flip: frame.sprite.flip, grey })
+  if (!sprite) return null
+  return { sprite, at: hatOrigin(pet.species, frame.origin, bob) }
+}
+
+const spriteBounds = new WeakMap<PixelBuffer, Viewport | null>()
+
+/** `buf`'s opaque bounds, worked out once per (memoized) sprite. */
+function boundsOf(buf: PixelBuffer): Viewport | null {
+  let bounds = spriteBounds.get(buf)
+  if (bounds === undefined) {
+    bounds = opaqueBounds(buf)
+    spriteBounds.set(buf, bounds)
+  }
+  return bounds
+}
+
+/**
+ * The scene pixels the pet covers this frame, hat included: the box around its
+ * drawn pixels, for telling a touch on the pet from one on the room.
+ */
+export function petBox(
+  pet: Pick<ScenePet, 'species' | 'coat'>,
+  frame: PetFrame,
+  hat = 'none'
+): Viewport | null {
+  const boxes: Viewport[] = []
+  const body = boundsOf(petSprite(pet.species, pet.coat, frame.sprite))
+  if (body)
+    boxes.push([
+      body[0] + frame.origin[0],
+      body[1] + frame.origin[1],
+      body[2],
+      body[3],
+    ])
+  const worn = petHat(pet, frame, hat)
+  const top = worn && boundsOf(worn.sprite)
+  if (worn && top)
+    boxes.push([top[0] + worn.at[0], top[1] + worn.at[1], top[2], top[3]])
+  if (boxes.length === 0) return null
+  const x0 = Math.min(...boxes.map((b) => b[0]))
+  const y0 = Math.min(...boxes.map((b) => b[1]))
+  const x1 = Math.max(...boxes.map((b) => b[0] + b[2]))
+  const y1 = Math.max(...boxes.map((b) => b[1] + b[3]))
+  return [x0, y0, x1 - x0, y1 - y0]
+}
+
 function drawPet(
+  buf: PixelBuffer,
+  pet: ScenePet,
+  frame: PetFrame,
+  subject: PixelMask,
+  hat: string
+): void {
+  drawPetBody(buf, pet, frame, subject)
+  const worn = petHat(pet, frame, hat)
+  if (!worn) return
+  blit(buf, worn.sprite, worn.at[0], worn.at[1])
+  maskOpaque(subject, worn.sprite, worn.at[0], worn.at[1])
+  const ears = HAT_EARS_THROUGH[pet.species]
+  if (!ears) return
+  // The ears again, over the hat, down to just above the brim.
+  const lastRow = HAT_ANCHOR_Y[pet.species] + frame.sprite.bob - 2
+  const cut = frame.colorFromRow
+  const sprite = petSprite(pet.species, pet.coat, {
+    ...frame.sprite,
+    ...(cut !== null && cut > lastRow ? { grey: 'full' as const } : {}),
+  })
+  blit(buf, sprite, frame.origin[0], frame.origin[1], (c, x, y) =>
+    y <= lastRow && (x <= ears[0] || x >= ears[1]) ? c : null
+  )
+}
+
+function drawPetBody(
   buf: PixelBuffer,
   pet: ScenePet,
   frame: PetFrame,
@@ -267,7 +360,7 @@ export function composeScene(
   let origin: readonly [number, number] = [PET_X, PET_Y]
   if (input.pet) {
     const pet = frame ?? petFrame(input.pet, tMs, reduceMotion)
-    drawPet(out, input.pet, pet, subject)
+    drawPet(out, input.pet, pet, subject, room.hat ?? 'none')
     origin = pet.origin
   }
 

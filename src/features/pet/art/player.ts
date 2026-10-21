@@ -4,12 +4,13 @@
  * motion requests into frames and events. Pure TypeScript: the render layer
  * owns the clock and calls {@link ScenePlayer.frame} on each tick.
  */
-import type { PixelBuffer } from '@/lib/pixelArt'
+import type { PixelBuffer, Viewport } from '@/lib/pixelArt'
 
 import {
   ENTRANCES,
   evaluateMotion,
   TRICKS,
+  TWIRL,
   WAKE,
   type MotionTable,
 } from '../motion'
@@ -25,6 +26,7 @@ import {
 } from './particles'
 import {
   composeScene,
+  petBox,
   petFrame,
   type ActiveMotion,
   type SceneInput,
@@ -33,7 +35,7 @@ import {
 import type { PetMoment, PetMood, PetSpeciesId } from './types'
 
 /** Kinds of motion a player can play. */
-export type MotionKind = 'entrance' | 'trick' | 'wake'
+export type MotionKind = 'entrance' | 'trick' | 'twirl' | 'wake'
 
 /** The companion's lasting state, as the player needs it. */
 export interface PlayerPet {
@@ -58,6 +60,8 @@ export interface PlayerFrame {
   readonly say: PetMoment | null
   /** A motion that finished this frame. */
   readonly ended: MotionKind | null
+  /** The scene pixels the pet (and its hat) covers, or null with no pet. */
+  readonly petBox: Viewport | null
 }
 
 /** Result of a tap or rub. */
@@ -75,8 +79,18 @@ export interface ScenePlayer {
   playEntrance(species: PetSpeciesId, tMs: number): void
   /** Plays `species`' trick from `tMs` (skipped with Reduce Motion). */
   playTrick(species: PetSpeciesId, tMs: number): void
+  /**
+   * Plays the scratch twirl from `tMs` (with Reduce Motion: just the hearts and
+   * the happy sound).
+   */
+  playTwirl(tMs: number): void
   /** Plays the wake animation of a pet that died. */
   playWake(tMs: number): void
+  /**
+   * The pet is happy for 1.5 s, says so, and a burst of hearts floats up (its
+   * hearts went up). Ignored during a motion.
+   */
+  cheer(tMs: number): void
   /**
    * A tap (or a rub step, every ~28 px of travel). Asleep or died: returns
    * `wake` (the caller records the wake, then calls {@link playWake} if it
@@ -133,8 +147,22 @@ export function createScenePlayer(
       }
       start('trick', TRICKS[species], tMs)
     },
+    playTwirl(tMs) {
+      if (reduceMotion) {
+        particles = emitHeartBurst(particles, tMs)
+        pendingSay = TWIRL.sayMoment
+        return
+      }
+      start('twirl', TWIRL, tMs)
+    },
     playWake(tMs) {
       playing = { kind: 'wake', table: WAKE, startMs: tMs, said: false }
+    },
+    cheer(tMs) {
+      if (playing) return
+      patUntilMs = tMs + PAT_JOY_MS
+      particles = emitHeartBurst(particles, tMs)
+      pendingSay = 'happy'
     },
     pat(tMs, mood, o = {}) {
       if (playing) return 'busy'
@@ -175,7 +203,7 @@ export function createScenePlayer(
         if (m.sayDue && !current.said) {
           current.said = true
           say = current.table.sayMoment
-          if (current.kind === 'wake')
+          if (current.kind === 'wake' || current.kind === 'twirl')
             particles = emitHeartBurst(particles, tMs)
         }
         if (!reduceMotion && (m.pose.dust || m.pose.land)) {
@@ -202,7 +230,12 @@ export function createScenePlayer(
         out,
         petNow
       )
-      return { buffer, say, ended }
+      return {
+        buffer,
+        say,
+        ended,
+        petBox: pet && petNow ? petBox(pet, petNow, input.room.hat) : null,
+      }
     },
     reset() {
       playing = null

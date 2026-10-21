@@ -10,6 +10,7 @@ import path from 'node:path'
 import { describe, it } from 'vitest'
 
 import { crop, scaleNearest, type PixelBuffer } from '@/lib/pixelArt'
+import { HAT_IDS } from '@/types/pet'
 
 import { ENTRANCES, TRICKS, WAKE, type MotionTable } from '../motion'
 import {
@@ -308,5 +309,28 @@ describe.runIf(process.env.PET_GALLERY === '1')('pet gallery', () => {
       write(`motion/trick-${species}.png`, motionStrip(species, 'trick'), 2)
     }
     write('motion/wake-cat.png', motionStrip('cat', 'wake'), 2)
+
+    // Every hat on every species (default coat), and on a bobbing, joyful
+    // pup; one row per species.
+    const hatCells: PixelBuffer[] = []
+    for (const species of PET_SPECIES_IDS)
+      for (const hat of HAT_IDS)
+        hatCells.push(
+          crop(
+            scene(
+              { hat },
+              {
+                pet: {
+                  species,
+                  coat: SPECIES[species].defaultCoat,
+                  mood: 'happy',
+                  seed: 1000,
+                },
+              }
+            ),
+            [44, 36, 48, 48]
+          )
+        )
+    write('sheets/hats.png', contactSheet(hatCells, HAT_IDS.length), 3)
   }, 120000)
 })

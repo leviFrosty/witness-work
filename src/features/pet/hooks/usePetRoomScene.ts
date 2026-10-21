@@ -6,7 +6,11 @@ import usePetSignData from '@/features/pet/hooks/usePetSignData'
 import usePetWindow from '@/features/pet/hooks/usePetWindow'
 import type { ResolvedWindow } from '@/features/pet/lib/liveWindow'
 import { petDisplayName } from '@/features/pet/lib/names'
-import { cardLife, petSceneInput } from '@/features/pet/lib/sceneInput'
+import {
+  cardLife,
+  petSceneInput,
+  type PetCardLife,
+} from '@/features/pet/lib/sceneInput'
 import { usePetSession } from '@/features/pet/stores/petSession'
 
 const NO_ROLL = { paradise: false, star: false }
@@ -15,6 +19,8 @@ const LIVE: RoomWindow = { time: 'live', season: 'live' }
 export type PetRoomScene = {
   pet: PetRecord
   name: string
+  /** Hearts and status, as the Home card's header shows them. */
+  life: PetCardLife
   state: PetLifeState
   window: ResolvedWindow
   /** The clock's time and season, for the "Live" choices' pictures. */
@@ -26,7 +32,7 @@ export type PetRoomScene = {
 }
 
 /**
- * The Decorate Room sheet's room: the companion as Home shows it, but with no
+ * The pet details sheet's room: the companion as Home shows it, but with no
  * visiting pet or rolled moment, so the preview shows only what the User chose.
  * Null without a companion.
  */
@@ -63,6 +69,7 @@ export default function usePetRoomScene(): PetRoomScene | null {
   return {
     pet,
     name: petDisplayName(pet),
+    life,
     state,
     window,
     liveNow,

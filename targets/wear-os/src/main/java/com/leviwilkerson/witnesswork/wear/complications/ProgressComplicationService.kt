@@ -59,6 +59,8 @@ open class ProgressComplicationService(private val style: Style = Style.RING) :
   }
 
   override fun getPreviewData(type: ComplicationType): ComplicationData? {
+    // The face editor may ask before anything else in this process has run.
+    L10n.init(this)
     val sample =
       MonthProgress(
         monthName = L10n.t("month", null),

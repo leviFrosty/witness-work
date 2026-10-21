@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from 'vitest'
 import {
   getScheduleStatusForMonth,
   getScheduleStatusForServiceYear,
+  loggedMinutesThroughEachDayOfMonth,
 } from '@/lib/scheduleStatus'
 import { RecurringPlanFrequencies } from '@/types/timeEntry'
 import type {
@@ -162,6 +163,38 @@ describe('getScheduleStatusForMonth', () => {
     expect(status.state).toBe('behind')
     expect(status.plannedMinutes).toBe(120)
     expect(status.actualMinutes).toBe(60)
+  })
+})
+
+describe('loggedMinutesThroughEachDayOfMonth', () => {
+  const entries = [
+    entry('early', '2026-07-02', 120),
+    // Credit Time over the cap counts only up to it.
+    { ...entry('credit', '2026-07-05', 60 * 60), credit: true },
+    entry('later', '2026-07-20', 600),
+  ]
+  const logged = loggedMinutesThroughEachDayOfMonth({
+    month: 6,
+    year: 2026,
+    serviceReports: reportsByMonth(entries),
+    publisher: 'regularPioneer',
+    creditLimit: { enabled: false, customLimitHours: 0 },
+  })
+
+  it('counts each day what the schedule status counts that day', () => {
+    expect(logged).toHaveLength(31)
+    logged.forEach((minutes, index) => {
+      const today = moment('2026-07-01').add(index, 'days').format('YYYY-MM-DD')
+      expect(minutes).toBe(statusFor({ today, entries }).actualMinutes)
+    })
+  })
+
+  it('leaves out entries dated later in the month', () => {
+    expect(logged[0]).toBe(0)
+    expect(logged[1]).toBe(120)
+    expect(logged[18]).toBe(logged[4])
+    expect(logged[19]).toBe(logged[4] + 600)
+    expect(logged[30]).toBe(logged[19])
   })
 })
 

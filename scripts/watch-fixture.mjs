@@ -143,6 +143,8 @@ const snapshot = {
   goalHours: hours ? 50 : 0,
   progress: hours ? monthMinutes / (50 * 60) : 0,
   plannedThroughDay: hours ? plannedThroughDay : null,
+  // All of it logged by the 1st.
+  loggedThroughDay: hours ? plannedThroughDay.map(() => monthMinutes) : null,
   publisherState: reported ? 'reportedToday' : 'unreported',
   paceText: hours
     ? monthMinutes >= plannedThroughDay[day - 1]

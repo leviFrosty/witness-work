@@ -4,6 +4,7 @@ import { formatMinutes, formatMinutesCompact } from '@/lib/minutes'
 import { plannedMinutesThroughEachDayOfMonth } from '@/lib/recurrence'
 import { resolveMonthlyGoalHours } from '@/lib/monthlyGoals'
 import { categoryLabel } from '@/lib/planTypeLabel'
+import { loggedMinutesThroughEachDayOfMonth } from '@/lib/scheduleStatus'
 import {
   buildReport,
   BuildReportArgs,
@@ -56,6 +57,12 @@ export type WatchSnapshot = {
    * pace mark and ahead/behind; `null` when the month has no plans.
    */
   plannedThroughDay: number[] | null
+  /**
+   * Credit-capped minutes logged through each day of the month, which ahead/
+   * behind compares with `plannedThroughDay` as the phone's schedule status
+   * does; `null` when the month has no plans.
+   */
+  loggedThroughDay: number[] | null
   publisherState: ReportFields['publisherState']
   paceText: string | null
   /** Next month, so the watch can start it at zero before the iPhone syncs. */
@@ -169,6 +176,7 @@ export function buildWatchSnapshot(
     args.dayPlans,
     args.recurringPlans
   )
+  const hasPlans = !!plannedThroughDay.at(-1)
 
   return {
     version: WATCH_SNAPSHOT_VERSION,
@@ -188,7 +196,19 @@ export function buildWatchSnapshot(
     monthMinutes: report.monthMinutes,
     goalHours: report.goalHours,
     progress: report.progress,
-    plannedThroughDay: plannedThroughDay.at(-1) ? plannedThroughDay : null,
+    plannedThroughDay: hasPlans ? plannedThroughDay : null,
+    loggedThroughDay: hasPlans
+      ? loggedMinutesThroughEachDayOfMonth({
+          month: now.month(),
+          year: now.year(),
+          serviceReports: args.serviceReports,
+          publisher: args.publisher,
+          creditLimit: {
+            enabled: args.overrideCreditLimit,
+            customLimitHours: args.customCreditLimitHours,
+          },
+        })
+      : null,
     publisherState: report.publisherState,
     paceText: paceText(report),
     nextMonth: {

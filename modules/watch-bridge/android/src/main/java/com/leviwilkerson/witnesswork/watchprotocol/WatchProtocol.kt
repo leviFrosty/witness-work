@@ -444,6 +444,12 @@ data class WatchSnapshot(
   val rtl: Boolean? = null,
   /** BCP 47 tag the app writes numbers in, e.g. `ar-u-nu-arab`; `null` from an older phone app. */
   val numberLocale: String? = null,
+  /**
+   * Credit-capped minutes logged through each day of the month, which ahead/behind compares with
+   * `plannedThroughDay`, as the phone's schedule status does. `null` without plans, or from an
+   * older phone app.
+   */
+  val loggedThroughDay: List<Int>? = null,
 ) : JsonEncodable {
   data class Category(val id: String, val name: String, val isCredit: Boolean?) : JsonEncodable {
     override fun toJson(): JSONObject =
@@ -536,6 +542,7 @@ data class WatchSnapshot(
       .put("strings", JSONObject(strings as Map<*, *>))
       .putOpt("rtl", rtl)
       .putOpt("numberLocale", numberLocale)
+      .putOpt("loggedThroughDay", loggedThroughDay?.let { JSONArray(it) })
 
   companion object {
     const val SUPPORTED_VERSION = 1
@@ -566,6 +573,8 @@ data class WatchSnapshot(
         strings = strings.keys().asSequence().associateWith { strings.getString(it) },
         rtl = json.optBooleanOrNull("rtl"),
         numberLocale = json.optStringOrNull("numberLocale"),
+        loggedThroughDay =
+          json.optJSONArray("loggedThroughDay")?.let { a -> List(a.length()) { a.getInt(it) } },
       )
     }
   }

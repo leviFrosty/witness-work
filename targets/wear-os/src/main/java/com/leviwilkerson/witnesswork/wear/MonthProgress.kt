@@ -47,6 +47,7 @@ data class MonthProgress(
       val goalHours: Double
       val baseMinutes: Int?
       val planned: List<Int>?
+      val logged: List<Int>?
       var state: String
       val next = snapshot.nextMonth
       if (snapshot.isCurrent(date)) {
@@ -55,6 +56,7 @@ data class MonthProgress(
         goalHours = snapshot.goalHours
         baseMinutes = snapshot.monthMinutes
         planned = snapshot.plannedThroughDay
+        logged = snapshot.loggedThroughDay
         state = snapshot.publisherState(date)
       } else if (next != null && next.monthKey == key) {
         monthName = next.monthName
@@ -62,6 +64,7 @@ data class MonthProgress(
         goalHours = next.goalHours
         baseMinutes = 0
         planned = null
+        logged = null
         state = "unreported"
       } else {
         return null
@@ -101,10 +104,8 @@ data class MonthProgress(
       // Credit Time waits for the phone, which applies the credit cap. Standard time always
       // counts in full. An unknown Type is saved as Standard.
       val creditIds = snapshot.categories.filter { it.isCredit != false }.map { it.id }.toSet()
-      val unsyncedMinutes =
-        unsynced
-          .filter { entry -> entry.categoryId?.let { it !in creditIds } ?: true }
-          .sumOf { it.hours * 60 + it.minutes }
+      val unsyncedStandard = unsynced.filter { entry -> entry.categoryId?.let { it !in creditIds } ?: true }
+      val unsyncedMinutes = unsyncedStandard.sumOf { it.hours * 60 + it.minutes }
       val minutes = baseMinutes + unsyncedMinutes
 
       val language = snapshot.appLanguage
@@ -137,11 +138,18 @@ data class MonthProgress(
       val day = date.dayOfMonth
       val plannedMinutes = planned?.getOrNull(day - 1)
       if (plannedMinutes != null && plannedMinutes > 0) {
+        // Time logged through today, as the phone counts it: an entry dated later this month
+        // doesn't put the user ahead yet.
+        val today = dayKey(date)
+        val loggedMinutes =
+          logged?.getOrNull(day - 1)?.let { through ->
+            through + unsyncedStandard.filter { it.date <= today }.sumOf { it.hours * 60 + it.minutes }
+          } ?: minutes
         return result(
           fraction,
           false,
           minOf(plannedMinutes.toDouble() / goalMinutes, 1.0),
-          t(if (minutes >= plannedMinutes) "aheadOfSchedule" else "behindSchedule"),
+          t(if (loggedMinutes >= plannedMinutes) "aheadOfSchedule" else "behindSchedule"),
         )
       }
       val perDay = minutesPerDayToGoal(goalMinutes - minutes, date)

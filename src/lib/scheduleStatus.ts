@@ -123,6 +123,45 @@ export const getScheduleStatusForMonth = ({
 }
 
 /**
+ * Credit-capped minutes logged through each day of a month (index 0 is the
+ * 1st): for each day, the `actualMinutes` `getScheduleStatusForMonth` counts
+ * when that day is today. The watches compare these with Plans through the same
+ * day, so an entry dated later in the month doesn't count early.
+ */
+export const loggedMinutesThroughEachDayOfMonth = ({
+  month,
+  year,
+  serviceReports,
+  publisher,
+  creditLimit,
+}: Omit<
+  ScheduleStatusInput,
+  'today' | 'dayPlans' | 'recurringPlans'
+>): number[] => {
+  const entries = getMonthsReports(serviceReports, month, year).map(
+    (report) => ({ report, day: momentStoredDate(report.date).date() })
+  )
+  const daysInMonth = moment({ year, month, date: 1 }).daysInMonth()
+  const logged: number[] = []
+  let minutes = 0
+  for (let day = 1; day <= daysInMonth; day++) {
+    // The credit cap applies to the month so far, so recount on each day
+    // that adds an entry.
+    if (entries.some((entry) => entry.day === day)) {
+      minutes = adjustedMinutesForSpecificMonth(
+        entries.filter((entry) => entry.day <= day).map(({ report }) => report),
+        month,
+        year,
+        publisher,
+        creditLimit
+      ).value
+    }
+    logged.push(minutes)
+  }
+  return logged
+}
+
+/**
  * A Service Year's schedule status: its months' statuses through today, added
  * up, each month's Credit Time capped by the role that applied then. Months
  * still to come add nothing, and a year before its September hasn't started.

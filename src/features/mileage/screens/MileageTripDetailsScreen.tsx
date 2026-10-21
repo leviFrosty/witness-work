@@ -132,12 +132,14 @@ export default function MileageTripDetailsScreen({ route, navigation }: Props) {
             <IconButton
               icon={ShareIcon}
               size={20}
+              neighborGap={16}
               onPress={() => void actions.share(trip)}
               accessibilityLabel={i18n.t('share')}
             />
             <IconButton
               icon={PencilIcon}
               size={20}
+              neighborGap={16}
               onPress={() => actions.edit(trip)}
               accessibilityLabel={i18n.t('edit')}
             />
@@ -145,6 +147,7 @@ export default function MileageTripDetailsScreen({ route, navigation }: Props) {
               icon={Trash2Icon}
               size={20}
               color={theme.colors.error}
+              neighborGap={16}
               onPress={() => actions.requestDelete(trip)}
               accessibilityLabel={i18n.t('delete')}
             />

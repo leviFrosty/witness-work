@@ -121,6 +121,7 @@ const JsonViewer = ({
         <XView style={{ gap: 12 }}>
           <IconButton
             icon={CopyIcon}
+            neighborGap={12}
             onPress={handleCopy}
             color={theme.colors.textAlt}
           />

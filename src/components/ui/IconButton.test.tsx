@@ -68,37 +68,66 @@ const hitSlop = async (props: React.ComponentProps<typeof IconButton>) => {
 }
 
 describe('IconButton hitSlop', () => {
-  it('pads an 18pt icon to a 44pt target with minTarget', async () => {
-    expect(
-      await hitSlop({
-        icon: XIcon,
-        size: 18,
-        minTarget: true,
-        onPress: () => {},
-      })
-    ).toBe(13)
+  it('pads an 18pt icon to a 44pt target by default', async () => {
+    expect(await hitSlop({ icon: XIcon, size: 18, onPress: () => {} })).toBe(13)
+  })
+
+  it('pads a themed size from its point size', async () => {
+    expect(await hitSlop({ icon: XIcon, size: 'lg', onPress: () => {} })).toBe(
+      14
+    )
   })
 
   it('rounds up so an odd gap still reaches 44pt', async () => {
-    expect(
-      await hitSlop({
-        icon: XIcon,
-        size: 21,
-        minTarget: true,
-        onPress: () => {},
-      })
-    ).toBe(12)
+    expect(await hitSlop({ icon: XIcon, size: 21, onPress: () => {} })).toBe(12)
   })
 
   it('adds nothing when the icon already meets the minimum', async () => {
+    expect(await hitSlop({ icon: XIcon, size: 48, onPress: () => {} })).toBe(0)
+  })
+
+  it('counts the padding around the icon', async () => {
     expect(
       await hitSlop({
         icon: XIcon,
-        size: 48,
-        minTarget: true,
+        size: 16,
+        style: { padding: 7 },
         onPress: () => {},
       })
-    ).toBe(0)
+    ).toBe(7)
+  })
+
+  it('counts a fixed width and height over the icon', async () => {
+    expect(
+      await hitSlop({
+        icon: XIcon,
+        size: 16,
+        style: { width: 40, height: 36, paddingHorizontal: 20 },
+        onPress: () => {},
+      })
+    ).toEqual({ top: 4, bottom: 4, left: 2, right: 2 })
+  })
+
+  it('keeps the sides under half the gap to a neighbour', async () => {
+    expect(
+      await hitSlop({
+        icon: XIcon,
+        size: 20,
+        neighborGap: 16,
+        onPress: () => {},
+      })
+    ).toEqual({ top: 12, bottom: 12, left: 7, right: 7 })
+  })
+
+  it('keeps an odd gap clear in the middle', async () => {
+    expect(
+      await hitSlop({
+        icon: XIcon,
+        size: 12,
+        neighborGap: 5,
+        onPress: () => {},
+      })
+    ).toEqual({ top: 16, bottom: 16, left: 2, right: 2 })
   })
 
   it('prefers an explicit hitSlop', async () => {
@@ -106,16 +135,16 @@ describe('IconButton hitSlop', () => {
       await hitSlop({
         icon: XIcon,
         size: 18,
-        minTarget: true,
+        neighborGap: 16,
         hitSlop: 4,
         onPress: () => {},
       })
     ).toBe(4)
   })
 
-  it('adds no slop by default', async () => {
+  it('lets hitSlop 0 opt out', async () => {
     expect(
-      await hitSlop({ icon: XIcon, size: 18, onPress: () => {} })
-    ).toBeUndefined()
+      await hitSlop({ icon: XIcon, size: 18, hitSlop: 0, onPress: () => {} })
+    ).toBe(0)
   })
 })

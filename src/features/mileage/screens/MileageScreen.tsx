@@ -126,6 +126,7 @@ export default function MileageScreen() {
               <IconButton
                 icon={SettingsIcon}
                 size={20}
+                neighborGap={16}
                 onPress={openSettings}
                 accessibilityLabel={i18n.t('mileage.settings')}
               />

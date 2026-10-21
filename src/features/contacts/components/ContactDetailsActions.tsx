@@ -186,6 +186,7 @@ export default function ContactDetailsActions({
         accessibilityLabel={i18n.t(
           contact.isFavorite ? 'removeFromFavorites' : 'addToFavorites'
         )}
+        neighborGap={20}
         onPress={() => toggleFavoriteContact(contact.id)}
       />
       <AddVisitMenu contact={contact} navigation={navigation} color={color} />

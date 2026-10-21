@@ -255,18 +255,21 @@ const AssistantPreviewSheet = ({
                 </View>
                 <IconButton
                   icon={MinusIcon}
+                  neighborGap={10}
                   onPress={() => setRowMinutes(row.rowId, -HOUR_STEP_MINUTES)}
                   size={12}
                   color={theme.colors.textAlt}
                 />
                 <IconButton
                   icon={PlusIcon}
+                  neighborGap={10}
                   onPress={() => setRowMinutes(row.rowId, HOUR_STEP_MINUTES)}
                   size={12}
                   color={theme.colors.textAlt}
                 />
                 <IconButton
                   icon={Trash2Icon}
+                  neighborGap={10}
                   onPress={() => toggleDropped(row.rowId)}
                   size={12}
                   color={row.dropped ? theme.colors.warn : theme.colors.textAlt}

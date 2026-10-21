@@ -112,6 +112,7 @@ export default function BuddyRequestRow({
           </Button>
           <IconButton
             icon={XIcon}
+            neighborGap={6}
             onPress={decline}
             accessibilityLabel={i18n.t('buddies_decline')}
             color={theme.colors.textAlt}

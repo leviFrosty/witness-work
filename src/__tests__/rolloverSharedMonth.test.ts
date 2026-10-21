@@ -103,6 +103,7 @@ const widgetFor = (
     timeDisplayFormat: 'decimal',
     dayPlans: [],
     recurringPlans: [],
+    contacts: [],
     conversations: [],
   }
   return buildReport(args)

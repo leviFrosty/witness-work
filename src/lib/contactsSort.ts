@@ -66,13 +66,38 @@ const localeCmp = (
   return compareText(a!, b!)
 }
 
-const dateCmp = (a: string | undefined, b: string | undefined): KeyCompare => {
+/** A date's Unix seconds, or `null` when moment can't read it. */
+type UnixOf = (value: string | Date) => number | null
+
+/**
+ * Reads each distinct date once per comparator. A sort compares every value
+ * about log₂ n times, so parsing on each comparison made the Added and date
+ * field sorts parse a long list's dates many times over.
+ */
+const cachedUnixOf = (): UnixOf => {
+  const cache = new Map<string | Date, number | null>()
+  return (value) => {
+    let unix = cache.get(value)
+    if (unix === undefined) {
+      const parsed = moment(value)
+      unix = parsed.isValid() ? parsed.unix() : null
+      cache.set(value, unix)
+    }
+    return unix
+  }
+}
+
+const dateCmp = (
+  a: string | undefined,
+  b: string | undefined,
+  unixOf: UnixOf
+): KeyCompare => {
   const aSet = !!a && a.length > 0
   const bSet = !!b && b.length > 0
   if (!aSet || !bSet) return missing(aSet, bSet)
-  const am = moment(a)
-  const bm = moment(b)
-  if (am.isValid() && bm.isValid()) return am.unix() - bm.unix()
+  const au = unixOf(a!)
+  const bu = unixOf(b!)
+  if (au !== null && bu !== null) return au - bu
   return localeCmp(a, b)
 }
 
@@ -94,7 +119,8 @@ const compareKey = (
   b: Contact,
   sort: ContactSortKey,
   ctx: SortContext,
-  index: ConversationIndex
+  index: ConversationIndex,
+  unixOf: UnixOf
 ): KeyCompare => {
   if (sort.startsWith('customField:')) {
     const defId = sort.slice('customField:'.length)
@@ -102,7 +128,7 @@ const compareKey = (
     const av = a.customFields?.[defId]
     const bv = b.customFields?.[defId]
     if (def?.type === 'number') return numberCmp(av, bv)
-    if (def?.type === 'date') return dateCmp(av, bv)
+    if (def?.type === 'date') return dateCmp(av, bv, unixOf)
     return localeCmp(av, bv)
   }
   switch (sort) {
@@ -148,12 +174,10 @@ const compareKey = (
     case 'pinStaleness':
       return index.stalenessRankFor(a.id) - index.stalenessRankFor(b.id)
     case 'createdAt': {
-      const am = a.createdAt ? moment(a.createdAt) : null
-      const bm = b.createdAt ? moment(b.createdAt) : null
-      const aSet = !!am && am.isValid()
-      const bSet = !!bm && bm.isValid()
-      if (!aSet || !bSet) return missing(aSet, bSet)
-      return am!.unix() - bm!.unix()
+      const au = a.createdAt ? unixOf(a.createdAt) : null
+      const bu = b.createdAt ? unixOf(b.createdAt) : null
+      if (au === null || bu === null) return missing(au !== null, bu !== null)
+      return au - bu
     }
     case 'city':
       return localeCmp(a.address?.city, b.address?.city)
@@ -201,6 +225,7 @@ export const buildContactComparator = (
     return index.studiedThisMonthIds.has(c.id) ? 2 : 1
   }
   const dirMul = direction === 'desc' ? -1 : 1
+  const unixOf = cachedUnixOf()
 
   return (a: Contact, b: Contact): number => {
     if (applyPinning) {
@@ -209,7 +234,7 @@ export const buildContactComparator = (
       const bt = studyTier(b)
       if (at !== bt) return bt - at
     }
-    const result = compareKey(a, b, sort, ctx, index)
+    const result = compareKey(a, b, sort, ctx, index, unixOf)
     if (isMissingResult(result)) {
       // Both missing → tie; one missing → that side goes last regardless of
       // direction. The user's intent for "undefineds last" doesn't flip with

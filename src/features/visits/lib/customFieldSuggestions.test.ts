@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import {
   contactCustomFieldHistory,
-  customFieldSuggestions,
+  customFieldSuggestions as suggestFromIndex,
+  customFieldValueIndex,
 } from '@/features/visits/lib/customFieldSuggestions'
 import type { Visit } from '@/types/visit'
 
@@ -23,6 +24,19 @@ const visit = (
     ...(value === undefined ? {} : { [FIELD]: value }),
   },
 })
+
+/** Builds the field's index and narrows it, as one keystroke on a fresh focus. */
+const customFieldSuggestions = (
+  visits: readonly Visit[],
+  fieldId: string,
+  query: string,
+  { excludeVisitId, limit }: { excludeVisitId?: string; limit?: number } = {}
+) =>
+  suggestFromIndex(
+    customFieldValueIndex(visits, fieldId, { excludeVisitId }),
+    query,
+    { limit }
+  )
 
 describe('customFieldSuggestions', () => {
   const visits = [
@@ -104,6 +118,19 @@ describe('customFieldSuggestions', () => {
 
   it('returns nothing when the field has no history', () => {
     expect(customFieldSuggestions(visits, 'unknown', '')).toEqual([])
+  })
+
+  it('answers every keystroke from one index as a fresh one would', () => {
+    const index = customFieldValueIndex(visits, FIELD, { excludeVisitId: '5' })
+    for (const query of ['', 'e', 'en', 'ENJOY', 'life', 'was life created?']) {
+      expect(suggestFromIndex(index, query)).toEqual(
+        customFieldSuggestions(visits, FIELD, query, { excludeVisitId: '5' })
+      )
+    }
+    expect(suggestFromIndex(index, 'life')).toEqual([
+      'Enjoy  Life Forever',
+      'Was Life Created?',
+    ])
   })
 })
 

@@ -1,4 +1,4 @@
-import { RefObject, useEffect, useRef, useState } from 'react'
+import { RefObject, useEffect, useMemo, useRef, useState } from 'react'
 import { Keyboard, ScrollView, View } from 'react-native'
 import CustomFieldPrivacyWarning from '@/components/CustomFieldPrivacyWarning'
 import Chip from '@/components/ui/Chip'
@@ -8,6 +8,7 @@ import useTheme from '@/contexts/theme'
 import {
   contactCustomFieldHistory,
   customFieldSuggestions,
+  customFieldValueIndex,
 } from '@/features/visits/lib/customFieldSuggestions'
 import { analytics } from '@/lib/analytics'
 import i18n from '@/lib/locales'
@@ -69,15 +70,30 @@ export default function VisitCustomFieldInput({
     return () => subscription.remove()
   }, [focused, scrollBy])
 
-  const suggestions = focused
-    ? customFieldSuggestions(visits, def.id, value, { excludeVisitId: visitId })
+  // Both walk every visit, so they're kept apart from what's typed: ranked
+  // once per focus, then narrowed on each keystroke. The React Compiler puts
+  // them in the same memo as the typed value here, which re-walked the visits
+  // on every keystroke (about 15 ms each on a dev build with 8,000 visits).
+  const valueIndex = useMemo(
+    () =>
+      focused
+        ? customFieldValueIndex(visits, def.id, { excludeVisitId: visitId })
+        : null,
+    [focused, visits, def.id, visitId]
+  )
+  const suggestions = valueIndex
+    ? customFieldSuggestions(valueIndex, value)
     : []
-  const history = contactCustomFieldHistory(visits, {
-    contactId,
-    fieldId: def.id,
-    before: visitDate,
-    excludeVisitId: visitId,
-  })
+  const history = useMemo(
+    () =>
+      contactCustomFieldHistory(visits, {
+        contactId,
+        fieldId: def.id,
+        before: visitDate,
+        excludeVisitId: visitId,
+      }),
+    [visits, contactId, def.id, visitDate, visitId]
+  )
 
   // The row's divider moves below the chips and history so they read as part
   // of this field rather than the next row.

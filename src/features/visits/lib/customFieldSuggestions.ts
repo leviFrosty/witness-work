@@ -36,32 +36,49 @@ function collectValues(visits: readonly Visit[], fieldId: string) {
   return [...byKey.values()]
 }
 
+/** One custom field's distinct values, in suggestion order. */
+export type CustomFieldValueIndex = readonly {
+  value: string
+  /** `value` normalized, for matching what is typed. */
+  key: string
+}[]
+
+/**
+ * This custom field's values from other visits, most-used first, then most
+ * recent, for {@link customFieldSuggestions}. Build it once while the field is
+ * focused, so each keystroke filters this short list instead of walking every
+ * visit again.
+ */
+export function customFieldValueIndex(
+  visits: readonly Visit[],
+  fieldId: string,
+  { excludeVisitId }: { excludeVisitId?: string } = {}
+): CustomFieldValueIndex {
+  return collectValues(
+    visits.filter((visit) => visit.id !== excludeVisitId),
+    fieldId
+  )
+    .sort((a, b) => b.count - a.count || b.lastUsed - a.lastUsed)
+    .map(({ value }) => ({ value, key: normalize(value) }))
+}
+
 /**
  * Values the user entered for this custom field on other visits, most-used
  * first, then most recent. Narrowed to those containing `query` (ignoring
  * case); a value that already matches `query` exactly isn't suggested.
  */
 export function customFieldSuggestions(
-  visits: readonly Visit[],
-  fieldId: string,
+  index: CustomFieldValueIndex,
   query: string,
-  {
-    excludeVisitId,
-    limit = DEFAULT_SUGGESTION_LIMIT,
-  }: { excludeVisitId?: string; limit?: number } = {}
+  { limit = DEFAULT_SUGGESTION_LIMIT }: { limit?: number } = {}
 ): string[] {
   const needle = normalize(query)
-  return collectValues(
-    visits.filter((visit) => visit.id !== excludeVisitId),
-    fieldId
-  )
-    .filter(({ value }) => {
-      const key = normalize(value)
-      return key !== needle && key.includes(needle)
-    })
-    .sort((a, b) => b.count - a.count || b.lastUsed - a.lastUsed)
-    .slice(0, limit)
-    .map(({ value }) => value)
+  const suggestions: string[] = []
+  for (const { value, key } of index) {
+    if (suggestions.length >= limit) break
+    if (key !== needle && key.includes(needle)) suggestions.push(value)
+  }
+  return suggestions
 }
 
 /**

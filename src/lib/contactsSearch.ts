@@ -125,6 +125,17 @@ export const buildContactsFuse = <C extends Contact>(
 }
 
 /**
+ * Each index's latest search. The Contacts list searches in a background
+ * render, and an update elsewhere (the search field's own echo of a keystroke)
+ * can restart that render, which would otherwise search the whole list again
+ * for the same query.
+ */
+const lastSearches = new WeakMap<
+  object,
+  { query: string; contacts: Contact[]; results: ContactSearchMatch[] }
+>()
+
+/**
  * Returns a fuzzy-matched subset of `contacts` for a free-text query.
  *
  * - Empty/whitespace query short-circuits to the full list (in original order),
@@ -132,6 +143,8 @@ export const buildContactsFuse = <C extends Contact>(
  *   shape uniformly.
  * - Builds a fresh Fuse index per call; callers should memoize against
  *   `[contacts, conversations]` to avoid rebuilding on every keystroke.
+ * - Asked again with the same index, query and contacts, it returns the same
+ *   results without searching again.
  */
 export const searchContactsFuzzy = <C extends Contact>(
   query: string,
@@ -140,10 +153,16 @@ export const searchContactsFuzzy = <C extends Contact>(
 ): ContactSearchMatch<C>[] => {
   const trimmed = query.trim()
   if (trimmed.length === 0) return contacts.map((contact) => ({ contact }))
-  return fuse.search(foldArabicForSearch(trimmed)).map((r) => ({
+  const last = lastSearches.get(fuse)
+  if (last && last.query === trimmed && last.contacts === contacts) {
+    return last.results as ContactSearchMatch<C>[]
+  }
+  const results = fuse.search(foldArabicForSearch(trimmed)).map((r) => ({
     contact: r.item.contact,
     matches: r.matches?.map((match) => unfoldMatch(r.item, match)),
   }))
+  lastSearches.set(fuse, { query: trimmed, contacts, results })
+  return results
 }
 
 /**

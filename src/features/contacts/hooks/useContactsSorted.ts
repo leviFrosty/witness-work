@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { startTransition, useEffect, useMemo, useState } from 'react'
 import { FuseResultMatch } from 'fuse.js'
 import useContacts from '@/stores/contactsStore'
 import useConversations from '@/stores/conversationStore'
@@ -14,6 +14,26 @@ import {
 } from '@/lib/contactsSearch'
 import { filterActivesContacts } from '@/lib/dismissedContacts'
 import useConversationIndex from '@/hooks/useConversationIndex'
+
+/**
+ * The query the results are for. The search field reads the store itself and
+ * shows each letter as it's typed; this follows in a transition, so the search
+ * and the long list it redraws render in the background, where the next
+ * keystroke interrupts them, and typing never waits on them. A plain store
+ * selector would re-render the whole screen synchronously on every keystroke.
+ */
+function useSearchQuery() {
+  const [query, setQuery] = useState(
+    () => useContactsSearchStore.getState().search
+  )
+  useEffect(() => {
+    const follow = () =>
+      startTransition(() => setQuery(useContactsSearchStore.getState().search))
+    follow()
+    return useContactsSearchStore.subscribe(follow)
+  }, [])
+  return query
+}
 
 /**
  * Single source of truth for the active contacts pipeline. The Contacts tab
@@ -36,7 +56,8 @@ export function useContactsSorted() {
     sort: contactSort,
     direction: contactSortDirection,
   } = query
-  const search = useContactsSearchStore((s) => s.search)
+  // Trails the search field while the results for it render.
+  const search = useSearchQuery()
 
   const actives = useMemo(() => filterActivesContacts(contacts), [contacts])
 

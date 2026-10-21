@@ -8,7 +8,14 @@ import {
 } from 'lucide-react-native'
 import { ChevronForwardIcon } from '@/components/ui/DirectionalIcon'
 import LucideIcon from '@/components/ui/LucideIcon'
-import { ReactNode, useCallback, useEffect, useRef, useState } from 'react'
+import {
+  ReactNode,
+  RefObject,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from 'react'
 import { TextInput, useWindowDimensions, View } from 'react-native'
 import { Input, InputProps } from 'tamagui'
 import { Gesture, GestureDetector } from 'react-native-gesture-handler'
@@ -74,6 +81,45 @@ import {
   ContactsListItem,
 } from '@/features/contacts/lib/suggestedContactsList'
 import { alignInput } from '@/lib/direction'
+
+/**
+ * The search field. It alone follows the typed query, so a keystroke redraws
+ * just the field; the list follows in a transition (`useContactsSorted`).
+ */
+const ContactsSearchInput = ({
+  ref,
+  placeholder,
+}: {
+  ref: RefObject<TextInput | null>
+  placeholder: string
+}) => {
+  const theme = useTheme()
+  const search = useContactsSearchStore((s) => s.search)
+  const setSearch = useContactsSearchStore((s) => s.setSearch)
+  return (
+    <Input
+      unstyled
+      ref={ref}
+      value={search}
+      onChangeText={setSearch}
+      placeholder={placeholder}
+      placeholderTextColor={
+        theme.colors.textAlt as InputProps['placeholderTextColor']
+      }
+      clearButtonMode='while-editing'
+      enterKeyHint='search'
+      style={{
+        flex: 1,
+        color: theme.colors.text,
+        fontFamily: theme.fonts.regular,
+        fontSize: theme.fontSize('md'),
+        // Explicit: an unaligned field follows the app bundle's language on
+        // iOS, which can be Arabic while the app runs in English.
+        textAlign: alignInput('start'),
+      }}
+    />
+  )
+}
 
 /**
  * Tab-level Contacts screen with two workspaces, List and Map. The chosen one
@@ -154,8 +200,6 @@ const ContactsScreen = ({
   const activeContacts = filterActivesContacts(contacts)
   const mappedContacts = activeContacts.filter((c) => c.coordinate != null)
 
-  const search = useContactsSearchStore((s) => s.search)
-  const setSearch = useContactsSearchStore((s) => s.setSearch)
   const searchInputRef = useRef<TextInput>(null)
   const isFocused = useIsFocused()
   // Like the List, each return to the Map starts with the full header and tab
@@ -185,6 +229,7 @@ const ContactsScreen = ({
     sortedAndFilteredContacts,
     searchMatchesById,
     conversationIndex,
+    search,
     hasSearch,
   } = useContactsSorted()
   // What the list draws: Suggested gets its sections, every other sort and any
@@ -265,7 +310,6 @@ const ContactsScreen = ({
   const sortLabel = contactSortLabel(contactSort, customFieldDefs)
 
   const renderEmpty = () => {
-    const hasSearch = search.trim().length > 0
     if (!hasSearch && !hasActiveFilters) {
       return (
         <Empty
@@ -519,11 +563,8 @@ const ContactsScreen = ({
                     size={theme.fontSize('xs')}
                     style={{ color: theme.colors.textAlt }}
                   />
-                  <Input
-                    unstyled
+                  <ContactsSearchInput
                     ref={searchInputRef}
-                    value={search}
-                    onChangeText={setSearch}
                     placeholder={
                       activeContacts.length > 0
                         ? i18n.t(
@@ -534,20 +575,6 @@ const ContactsScreen = ({
                           )
                         : i18n.t('searchForContact')
                     }
-                    placeholderTextColor={
-                      theme.colors.textAlt as InputProps['placeholderTextColor']
-                    }
-                    clearButtonMode='while-editing'
-                    enterKeyHint='search'
-                    style={{
-                      flex: 1,
-                      color: theme.colors.text,
-                      fontFamily: theme.fonts.regular,
-                      fontSize: theme.fontSize('md'),
-                      // Explicit: an unaligned field follows the app bundle's language on
-                      // iOS, which can be Arabic while the app runs in English.
-                      textAlign: alignInput('start'),
-                    }}
                   />
                 </View>
               </View>

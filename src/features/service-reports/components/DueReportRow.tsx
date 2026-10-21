@@ -7,6 +7,7 @@ import ContextMenu from '@/components/ui/ContextMenu'
 import LucideIcon from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
+import useAccessibilityTextSize from '@/hooks/useAccessibilityTextSize'
 import i18n from '@/lib/locales'
 import { noteUserAction } from '@/lib/userAction'
 import { usePreferences } from '@/stores/preferences'
@@ -22,6 +23,9 @@ import { reportMonthKey } from '@/features/service-reports/lib/monthReportExport
  */
 const DueReportRow = ({ month, year }: { month: number; year: number }) => {
   const theme = useTheme()
+  // At accessibility text sizes the label takes the send icon's room, so a
+  // long month name ("September's") still fits on a line.
+  const largeText = useAccessibilityTextSize()
   const navigation = useNavigation<RootStackNavigation>()
   const markReportSubmitted = usePreferences((s) => s.markReportSubmitted)
   const { reportMenuItems } = useMonthReportExport()
@@ -66,7 +70,9 @@ const DueReportRow = ({ month, year }: { month: number; year: number }) => {
           backgroundColor: theme.colors.accentTranslucent,
         }}
       >
-        <LucideIcon icon={SendIcon} size={16} color={theme.colors.accent} />
+        {largeText ? null : (
+          <LucideIcon icon={SendIcon} size={16} color={theme.colors.accent} />
+        )}
         <Text
           style={{
             flex: 1,

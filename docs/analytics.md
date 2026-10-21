@@ -1118,7 +1118,15 @@ device (the OS's own out-of-space errors only; MMKV's `Failed to set` is still
 reported, since any failed write throws it). A full device sends
 `device_storage_full` instead, with no properties, once per UTC day, so it
 stays visible without flooding error tracking.
-Automatically captured storage-full exceptions are dropped without it.
+Automatically captured storage-full exceptions are dropped without it, and so
+are uncaught `request()` failures that were only offline, timed out or
+cancelled.
+
+Native module failures reach JavaScript as a plain `Error` with no stack
+frames, so error tracking can't tell them apart. The module reports them under
+their code instead (`ERR_SQLITE_ERROR`, `ERR_NOTIFICATIONS_FAILED_TO_SCHEDULE`;
+see `src/lib/codedError.ts`), and RevenueCat's as `PurchasesError:<code>`, so
+each kind of failure gets its own issue.
 
 PostHog is the current implementation. Provider configuration, automatic capture,
 and source-map/native-symbol uploads belong to the shared implementation and

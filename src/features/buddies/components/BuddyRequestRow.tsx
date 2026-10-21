@@ -5,6 +5,7 @@ import Button from '@/components/ui/Button'
 import IconButton from '@/components/ui/IconButton'
 import Text from '@/components/ui/MyText'
 import XView from '@/components/ui/layout/XView'
+import { MIN_TOUCH_TARGET } from '@/components/ui/touchTarget'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import BuddyAvatar from '@/features/buddies/components/BuddyAvatar'
@@ -89,7 +90,8 @@ export default function BuddyRequestRow({
             ]
       }
       trailing={
-        <XView style={{ gap: 6 }}>
+        // Wide enough for Decline's frame to end at Confirm's edge.
+        <XView style={{ gap: (MIN_TOUCH_TARGET - theme.fontSize()) / 2 }}>
           <Button
             disabled={busy}
             onPress={confirm}
@@ -112,7 +114,7 @@ export default function BuddyRequestRow({
           </Button>
           <IconButton
             icon={XIcon}
-            neighborGap={6}
+            frame
             onPress={decline}
             accessibilityLabel={i18n.t('buddies_decline')}
             color={theme.colors.textAlt}

@@ -31,6 +31,7 @@ import Button from '@/components/ui/Button'
 import ContextMenu from '@/components/ui/ContextMenu'
 import IconButton from '@/components/ui/IconButton'
 import Text from '@/components/ui/MyText'
+import { MIN_TOUCH_TARGET } from '@/components/ui/touchTarget'
 import ContactsFilterSheet from '@/features/contacts/components/ContactsFilterSheet'
 import { RootStackNavigation } from '@/types/rootStack'
 import { tracking } from '@/lib/tracking'
@@ -451,10 +452,12 @@ const ContactsSortAndFilterScreen = () => {
                         onPress={() => handleRemoveFilter(index)}
                         accessibilityLabel={i18n.t('removeFilter')}
                         noTransform
-                        hitSlop={8}
+                        // A real target: the row clips slop, so the row grows
+                        // to fit it instead.
                         style={{
+                          minWidth: MIN_TOUCH_TARGET,
+                          minHeight: MIN_TOUCH_TARGET,
                           paddingHorizontal: 14,
-                          paddingVertical: 12,
                           justifyContent: 'center',
                           alignItems: 'center',
                         }}

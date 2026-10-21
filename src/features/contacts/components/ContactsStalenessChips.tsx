@@ -1,5 +1,6 @@
 import { Info as InfoIcon } from 'lucide-react-native'
 import LucideIcon from '@/components/ui/LucideIcon'
+import { touchTargetFrame } from '@/components/ui/touchTarget'
 import { View } from 'react-native'
 import useTheme from '@/contexts/theme'
 import i18n, { TranslationKey } from '@/lib/locales'
@@ -98,13 +99,7 @@ const ContactsStalenessChips = ({
             onPress={onPress}
             accessibilityLabel={i18n.t('contacts_stalenessInfo_title')}
             accessibilityRole='button'
-            hitSlop={6}
-            style={{
-              width: 32,
-              height: 32,
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
+            style={touchTargetFrame(32)}
           >
             <LucideIcon
               icon={InfoIcon}

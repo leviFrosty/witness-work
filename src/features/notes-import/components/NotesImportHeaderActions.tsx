@@ -1,5 +1,6 @@
 import { Plus as PlusIcon } from 'lucide-react-native'
 import LucideIcon from '@/components/ui/LucideIcon'
+import { touchTargetFrame } from '@/components/ui/touchTarget'
 import { View } from 'react-native'
 import {
   useNavigation,
@@ -41,14 +42,8 @@ const NotesImportHeaderActions = () => {
         <Button
           accessibilityRole='button'
           accessibilityLabel={i18n.t('notesImport_newImport')}
-          hitSlop={6}
           onPress={startNew}
-          style={{
-            width: 32,
-            height: 32,
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
+          style={touchTargetFrame(32)}
         >
           <LucideIcon icon={PlusIcon} size={15} color={theme.colors.accent} />
         </Button>

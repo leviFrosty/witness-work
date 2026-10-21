@@ -1323,6 +1323,8 @@ export { NON_SYNCABLE_PREFERENCE_KEYS } from '@/lib/syncPreferencePolicy'
  *   `suggested` (see {@link migrateUnchosenContactSortToSuggested}).
  * - V11 → v12: the new Pet Home section starts visible (see
  *   {@link migrateShowPetHomeSection}).
+ * - V12 → v13: This Week starts visible on installs from before it existed (see
+ *   {@link migrateShowThisWeekHomeSection}).
  *
  * Exported for unit testing. Idempotent — re-running on an already-migrated
  * blob is a no-op.
@@ -1370,30 +1372,48 @@ export const migratePreferencesPersistedState = (
   if (version < 12) {
     next = migrateShowPetHomeSection(next)
   }
+  if (version < 13) {
+    next = migrateShowThisWeekHomeSection(next)
+  }
   return next
 }
 
 /**
- * V11 → v12: adds `pet: true` to a persisted `homeScreenElements` that lacks
- * it. Hydration merges shallowly, so an install's saved visibility map replaces
- * the default one whole and a new section would otherwise read as hidden. An
+ * Adds `key: true` to a persisted `homeScreenElements` that lacks it. Hydration
+ * merges shallowly, so an install's saved visibility map replaces the default
+ * one whole and a section added later would otherwise read as hidden. An
  * explicit choice is kept. The stamp is left alone: nobody chose this, so a
  * real choice synced from another device still wins. Readers should still treat
  * a missing key as visible (`!== false`), since a device on an older build can
  * sync its map without the key.
  */
-export const migrateShowPetHomeSection = (state: unknown): unknown => {
+const showMissingHomeSection = (
+  state: unknown,
+  key: HomeScreenElementKey
+): unknown => {
   if (!state || typeof state !== 'object') return state
   const elements = (state as { homeScreenElements?: unknown })
     .homeScreenElements
   if (!elements || typeof elements !== 'object' || Array.isArray(elements))
     return state
-  if (Object.hasOwn(elements, 'pet')) return state
+  if (Object.hasOwn(elements, key)) return state
   return {
     ...state,
-    homeScreenElements: { ...elements, pet: true },
+    homeScreenElements: { ...elements, [key]: true },
   }
 }
+
+/**
+ * V12 → v13: This Week joined Home in April 2026 (9ad9633f) without a
+ * migration, so installs from before then kept a map without it and Home hid it
+ * while Settings listed it as shown. See {@link showMissingHomeSection}.
+ */
+export const migrateShowThisWeekHomeSection = (state: unknown): unknown =>
+  showMissingHomeSection(state, 'thisWeek')
+
+/** V11 → v12: the Pet Home section starts visible. */
+export const migrateShowPetHomeSection = (state: unknown): unknown =>
+  showMissingHomeSection(state, 'pet')
 
 /**
  * V10 → v11: moves Users who never picked a Contacts sort onto the current
@@ -2256,7 +2276,7 @@ export const usePreferences = create(
     {
       name: 'preferences',
       storage: createPreferencesStorage(),
-      version: 12,
+      version: 13,
       migrate: (persistedState, version) =>
         migratePreferencesPersistedState(persistedState, version),
     }

@@ -1,4 +1,5 @@
 import { syncTimestamp } from '@/lib/syncClock'
+import { stampPastTombstone } from '@/lib/syncTombstones'
 import { create } from 'zustand'
 import { combine, createJSONStorage } from 'zustand/middleware'
 import { persist } from '@/stores/persist'
@@ -49,11 +50,13 @@ const newPetSeed = (): string =>
       .padStart(7, '0')
   ).join('')
 
-/** A stamp newer than the record's last edit and any tombstone for its id. */
-function stampFor(state: State, id: string, previous?: number): number {
-  const deletedAt = state.deletedPetRecords.find((t) => t.id === id)?.deletedAt
-  return syncTimestamp(Math.max(previous ?? 0, deletedAt ?? 0))
-}
+/**
+ * A stamp newer than the record's last edit and any tombstone for its id. The
+ * tombstone stays: the merge uses it to tell a released companion's history
+ * from this one's.
+ */
+const stampFor = (state: State, id: string, previous?: number): number =>
+  stampPastTombstone(state.deletedPetRecords, id, previous)
 
 /** Applies `change` to the pet and restamps it; no pet, no change. */
 function editPet(

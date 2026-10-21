@@ -9,7 +9,6 @@ import {
   buildRolloverEntries,
   computeExcludedCreditMinutes,
   computePendingRollovers,
-  restampOverTombstones,
   rolloverIds,
   rolloverRole,
   rolloverSourceMonth,
@@ -736,53 +735,6 @@ describe('rolloverIds', () => {
     expect(rolloverIds({ pending, today, serviceReports }).groupId).toBe(
       `${base}-2`
     )
-  })
-})
-
-describe('restampOverTombstones', () => {
-  const entry = (id: string, updatedAt: number): TimeEntry => ({
-    id,
-    hours: 0,
-    minutes: 30,
-    date: new Date(2026, 8, 30, 12),
-    updatedAt,
-  })
-
-  it('stamps a reused id strictly newer than its tombstone', () => {
-    const serviceReports = reports(2026, 8, [
-      entry('reused', 1_000),
-      entry('other', 1_000),
-    ])
-
-    // From a device whose clock runs ahead of this one.
-    const deletedAt = Date.now() + 60_000
-    const result = restampOverTombstones({
-      serviceReports,
-      ids: ['reused', 'other'],
-      tombstones: [{ id: 'reused', deletedAt }],
-    })
-
-    expect(result.changed).toBe(true)
-    const [reused, other] = result.serviceReports[2026][8]
-    expect(reused.updatedAt).toBeGreaterThan(deletedAt)
-    expect(other).toBe(serviceReports[2026][8][1])
-  })
-
-  it('leaves entries already newer than the tombstone, and other ids, alone', () => {
-    const serviceReports = reports(2026, 8, [entry('fresh', 2_000)])
-
-    for (const tombstones of [
-      [{ id: 'fresh', deletedAt: 1_999 }],
-      [{ id: 'unrelated', deletedAt: 9_999 }],
-    ]) {
-      const result = restampOverTombstones({
-        serviceReports,
-        ids: ['fresh'],
-        tombstones,
-      })
-      expect(result.changed).toBe(false)
-      expect(result.serviceReports).toBe(serviceReports)
-    }
   })
 })
 

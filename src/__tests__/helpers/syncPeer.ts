@@ -1,4 +1,5 @@
 import { mergePayload, type MergeResult } from '@/app/sync/merge'
+import { localMileageSnapshot } from '@/app/sync/mileageStoreSync'
 import type { SyncPayload } from '@/app/sync/payload'
 import useCategories from '@/stores/categories'
 import useContacts from '@/stores/contactsStore'
@@ -75,6 +76,7 @@ export const deviceFromStores = (): DeviceState => {
       deletedRecurringPlans: serviceReport.deletedRecurringPlans,
       categories: categories.categories,
       deletedCategories: categories.deletedCategories,
+      ...localMileageSnapshot(),
     })
   )
 }

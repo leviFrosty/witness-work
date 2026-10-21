@@ -65,7 +65,10 @@ Photo bytes are not embedded in JSON backups.
 Records merge by id and `updatedAt`; an equal timestamp uses canonical content
 ordering so both devices choose the same result. Local photo paths and OS
 notification identifiers do not participate in that comparison. Tombstones win
-unless an active record has a strictly newer timestamp. Change detection compares
+unless an active record has a strictly newer timestamp. A record added again
+under a deleted id (an import run again after its Undo) is stamped past its
+tombstone (`stampPastTombstone`), so it outlives the copy other devices keep
+even when that tombstone is stamped ahead of this clock. Change detection compares
 the final result, including tombstone contents, after deletions are applied.
 Deletion ids are retained without a wall-clock expiry; recoverable contact details
 have a separate expiry below.

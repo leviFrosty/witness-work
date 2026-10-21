@@ -10,8 +10,8 @@ import { hasCategory, isLdcEntry } from '@/lib/serviceReportCategory'
 import moment from 'moment'
 import { monthCreditMaxMinutes } from '@/constants/serviceReports'
 import { creditCapMinutesFor } from '@/lib/publisherCapabilities'
-import { momentStoredDate } from '@/lib/normalizeDate'
-import { getServiceYearFromDate } from '@/lib/serviceYear'
+import { isStoredDateAnchored, momentStoredDate } from '@/lib/normalizeDate'
+import { getServiceYearFromDate, serviceYearOf } from '@/lib/serviceYear'
 import { entryMinutes } from '@/lib/entryMinutes'
 
 // Re-exported for backwards compatibility — canonical home is `types/timeEntry`.
@@ -545,51 +545,45 @@ export const getServiceYearEndYearsSpan = (
   return endYears
 }
 
-/**
- * Raw hours summed across reports whose service year matches `endYear` (i.e.
- * the service year ending Aug 31 of `endYear`). Rounded to 1 dp.
- */
-export const getHoursForServiceYearEndYear = (
-  serviceReports: TimeEntry[],
-  endYear: number
-): number => {
-  return round(getMinutesForServiceYearEndYear(serviceReports, endYear) / 60, 1)
+const storedYearMonth = (date: Date | string) => {
+  const m = momentStoredDate(date)
+  return { year: m.year(), month: m.month() }
+}
+
+export type ServiceYearTotal = {
+  /** Raw minutes, unadjusted for credit caps. */
+  minutes: number
+  /** Entries, zero-hour placeholders included. */
+  reportCount: number
 }
 
 /**
- * Raw minutes summed across reports whose service year matches `endYear`.
- * Preferred for rendering so display formatters can respect the user's
- * time-display preference.
+ * Each Service Year's raw minutes and entry count, keyed by the year it ends in
+ * (August of `endYear`), in one pass over the entries. A year with only
+ * zero-hour placeholders still has its entries counted; a year without entries
+ * has no key.
  */
-export const getMinutesForServiceYearEndYear = (
-  serviceReports: TimeEntry[],
-  endYear: number
-): number => {
-  const startYear = endYear - 1
-  return serviceReports.reduce((sum, report) => {
-    const m = momentStoredDate(report.date)
-    const reportStartYear = getServiceYearFromDate(m)
-    if (reportStartYear !== startYear) return sum
-    return sum + entryMinutes(report)
-  }, 0)
-}
-
-/**
- * Number of reports whose service year matches `endYear`. Distinguishes a year
- * that merely falls inside the rendered span (no entries) from one holding
- * actual entries — even zero-hour placeholders count.
- */
-export const getReportCountForServiceYearEndYear = (
-  serviceReports: TimeEntry[],
-  endYear: number
-): number => {
-  const startYear = endYear - 1
-  return serviceReports.reduce((count, report) => {
-    const reportStartYear = getServiceYearFromDate(
-      momentStoredDate(report.date)
-    )
-    return reportStartYear === startYear ? count + 1 : count
-  }, 0)
+export const getServiceYearTotalsByEndYear = (
+  serviceReports: TimeEntry[]
+): Map<number, ServiceYearTotal> => {
+  const totals = new Map<number, ServiceYearTotal>()
+  for (const report of serviceReports) {
+    // The stored calendar day, as `momentStoredDate` reads it, without a
+    // moment for the usual noon-UTC anchor.
+    const instant = new Date(report.date)
+    const stored = isStoredDateAnchored(instant)
+      ? { year: instant.getUTCFullYear(), month: instant.getUTCMonth() }
+      : storedYearMonth(report.date)
+    const endYear = serviceYearOf(stored) + 1
+    const total = totals.get(endYear)
+    if (total) {
+      total.minutes += entryMinutes(report)
+      total.reportCount += 1
+    } else {
+      totals.set(endYear, { minutes: entryMinutes(report), reportCount: 1 })
+    }
+  }
+  return totals
 }
 
 /**

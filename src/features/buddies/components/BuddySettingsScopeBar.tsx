@@ -140,7 +140,7 @@ export default function BuddySettingsScopeBar({
               size={16}
               color={theme.colors.textAlt}
               onPress={onResetAll}
-              hitSlop={10}
+              frame
               accessibilityLabel={i18n.t('buddies_settingsResetAllLabel', {
                 name: buddyDisplayName(buddy),
               })}

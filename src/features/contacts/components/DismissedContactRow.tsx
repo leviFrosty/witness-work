@@ -116,6 +116,7 @@ export default function DismissedContactRow({
       style={{
         paddingVertical: 0,
         paddingHorizontal: 0,
+        paddingEnd: 14,
         gap: 0,
         flexDirection: 'row',
         alignItems: 'center',
@@ -152,13 +153,12 @@ export default function DismissedContactRow({
         icon={UndoIcon}
         size='md'
         accessibilityLabel={i18n.t('undismiss')}
-        hitSlop={6}
+        frame
         color={theme.colors.accent}
         style={{
           width: 36,
           height: 36,
           borderRadius: 18,
-          marginRight: 14,
           alignItems: 'center',
           justifyContent: 'center',
           backgroundColor: theme.colors.accentTranslucent,

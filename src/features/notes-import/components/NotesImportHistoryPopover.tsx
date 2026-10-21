@@ -18,6 +18,7 @@ import {
 import Text from '@/components/ui/MyText'
 import Button from '@/components/ui/Button'
 import Popover from '@/components/ui/Popover'
+import { touchTargetFrame } from '@/components/ui/touchTarget'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import type { RootStackNavigation, RootStackParamList } from '@/types/rootStack'
@@ -236,13 +237,12 @@ const HistoryRow = ({
         onPress={onDelete}
         accessibilityRole='button'
         accessibilityLabel={i18n.t('delete')}
-        hitSlop={6}
-        style={{
-          paddingVertical: 10,
-          paddingHorizontal: 10,
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
+        // A full frame around the 34pt button it was. It's pulled back over
+        // the row's own padding only: the list clips anything past its edge.
+        style={[
+          touchTargetFrame(34),
+          { marginEnd: 0, borderRadius: theme.numbers.borderRadiusSm },
+        ]}
       >
         <LucideIcon icon={Trash2Icon} size={14} color={theme.colors.textAlt} />
       </Button>

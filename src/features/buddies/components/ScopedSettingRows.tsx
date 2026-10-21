@@ -15,6 +15,7 @@ import Text from '@/components/ui/MyText'
 import Popover from '@/components/ui/Popover'
 import PointerTooltip from '@/components/ui/PointerTooltip'
 import XView from '@/components/ui/layout/XView'
+import { touchTargetFrame } from '@/components/ui/touchTarget'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import BuddyAvatar from '@/features/buddies/components/BuddyAvatar'
@@ -23,6 +24,15 @@ import {
   useBuddySettingsScope,
 } from '@/features/buddies/hooks/useBuddySettingsScope'
 import { buddyDisplayName } from '@/features/buddies/lib/buddyProfile'
+
+const MARKER_SIZE = 16
+/**
+ * The markers after a setting's label get full frames, pulled back top and
+ * bottom so the row keeps its height. The source's frame reaches back over the
+ * label, which takes no taps; after that each frame takes its room, so the
+ * source's, Reset's and the info icon's meet without overlapping.
+ */
+const markerFrame = touchTargetFrame(MARKER_SIZE)
 
 /** One level in the source popover: who, their value, and whether it wins. */
 function SourceLayer({
@@ -108,17 +118,20 @@ function SettingSourceButton<T>({
       contentWidth={280}
       contentStyle={{ padding: 8, gap: 2 }}
       renderTrigger={({ onPress }) => (
-        <PointerTooltip label={i18n.t('buddies_settingSource')} effect='none'>
+        <PointerTooltip
+          label={i18n.t('buddies_settingSource')}
+          effect='none'
+          style={{ marginStart: 6 }}
+        >
           <IconButton
             icon={LayersIcon}
-            size={16}
+            size={MARKER_SIZE}
             color={own || !buddy ? theme.colors.accent : theme.colors.textAlt}
             onPress={onPress}
-            hitSlop={8}
             accessibilityLabel={i18n.t('buddies_settingSourceLabel', {
               setting: label,
             })}
-            style={{ marginStart: 6 }}
+            style={[markerFrame, { marginEnd: 0, borderRadius: 999 }]}
           />
         </PointerTooltip>
       )}
@@ -220,12 +233,11 @@ function SettingResetButton({ onPress }: { onPress: () => void }) {
     <PointerTooltip label={label} effect='none'>
       <IconButton
         icon={UndoIcon}
-        size={16}
+        size={MARKER_SIZE}
         color={theme.colors.textAlt}
         onPress={onPress}
-        hitSlop={8}
         accessibilityLabel={label}
-        style={{ marginStart: 10 }}
+        style={[markerFrame, { marginHorizontal: 0, borderRadius: 999 }]}
       />
     </PointerTooltip>
   )

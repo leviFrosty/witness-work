@@ -484,6 +484,114 @@ describe('lib/conversations', () => {
     })
   })
 
+  describe('Follow-up scans over a long history', () => {
+    // The scans skip moment for dates a plain parse puts far out of range and
+    // group only the candidates' Visits; they must answer exactly like a full
+    // moment scan, including for date-only strings moment reads as local time.
+    const now = moment('2026-09-20T17:30:00')
+    let seed = 7
+    const random = () => {
+      seed = (seed * 16807) % 2147483647
+      return seed / 2147483647
+    }
+    const history: Visit[] = Array.from({ length: 600 }, (_, i) => {
+      const date = now
+        .clone()
+        .subtract(Math.floor(random() * 90 * 24 * 60), 'minutes')
+      const followUpAt = date
+        .clone()
+        .add(Math.floor(random() * 45 * 24 * 60), 'minutes')
+      const shape = i % 4
+      return {
+        id: `v${i}`,
+        contact: { id: `c${i % 300}` },
+        date: date.toDate(),
+        isBibleStudy: false,
+        ...(shape === 3
+          ? {}
+          : {
+              followUp: {
+                // Persisted Visits carry strings; some old ones only a day.
+                date: (shape === 0
+                  ? followUpAt.toDate()
+                  : shape === 1
+                    ? followUpAt.toISOString()
+                    : followUpAt.format('YYYY-MM-DD')) as unknown as Date,
+                notifyMe: true,
+                dismissed: i % 11 === 0,
+              },
+            }),
+      }
+    })
+
+    const fullScanOverdue = (currentTime: Date) => {
+      const max = moment(currentTime).subtract(4, 'hours')
+      const min = moment(currentTime).subtract(30, 'days').startOf('day')
+      return history.filter((visit) => {
+        if (!isAppointment(visit)) return false
+        if (!moment(visit.followUp!.date).isBetween(min, max, undefined, '[]'))
+          return false
+        const others = history.filter((v) => v.contact.id === visit.contact.id)
+        return !followUpAnswer(visit, others)
+      })
+    }
+
+    const fullScanCard = (currentTime: Date) => {
+      const at = moment(currentTime)
+      const isMorning = at.isBefore(at.clone().endOf('day').hour(16))
+      const min = at.clone().startOf('day')
+      const max = isMorning
+        ? at.clone().endOf('day')
+        : at.clone().add(1, 'day').endOf('day')
+      const missedBefore = at.clone().subtract(4, 'hours')
+      return history.flatMap((visit) => {
+        if (!isAppointment(visit)) return []
+        const date = moment(visit.followUp!.date)
+        if (!date.isBetween(min, max, undefined, '[]')) return []
+        const others = history.filter((v) => v.contact.id === visit.contact.id)
+        const answeredBy = followUpAnswer(visit, others)
+        if (!answeredBy && date.isBefore(missedBefore)) return []
+        return [{ visit, answeredBy }]
+      })
+    }
+
+    const times = [
+      now.toDate(),
+      now.clone().hour(9).toDate(),
+      now.clone().startOf('day').toDate(),
+      now.clone().subtract(25, 'days').hour(23).toDate(),
+    ]
+
+    it('finds the same missed Follow-ups as a full scan', () => {
+      for (const currentTime of times) {
+        const expected = fullScanOverdue(currentTime)
+        expect(expected.length).toBeGreaterThan(0)
+        expect(
+          overdueFollowUpConversations({
+            currentTime,
+            conversations: history,
+            lookbackDays: 30,
+          })
+        ).toEqual(expected)
+      }
+    })
+
+    it('lists the same card items as a full scan', () => {
+      for (const currentTime of times) {
+        const expected = fullScanCard(currentTime)
+        expect(expected.length).toBeGreaterThan(0)
+        const items = followUpCardItems({ currentTime, conversations: history })
+        expect(new Set(items.map((i) => i.visit.id))).toEqual(
+          new Set(expected.map((i) => i.visit.id))
+        )
+        for (const item of items)
+          expect(item.answeredBy).toBe(
+            expected.find((e) => e.visit === item.visit)!.answeredBy
+          )
+      }
+    })
+  })
+
   describe('new visit defaults', () => {
     const now = new Date('2026-10-19T12:00:00')
     const daysAgo = (days: number) =>

@@ -187,15 +187,43 @@ export const MISSED_FOLLOW_UP_AFTER_HOURS = 4
 /** Missed Follow-ups older than this many days stop surfacing as missed. */
 export const MISSED_FOLLOW_UP_LOOKBACK_DAYS = 30
 
-/** Groups Visits by Contact id, for `followUpAnswer` lookups. */
-export const visitsByContact = (visits: Visit[]) => {
+/**
+ * Groups Visits by Contact id, for `followUpAnswer` lookups. With `contactIds`,
+ * only those Contacts' Visits.
+ */
+export const visitsByContact = (
+  visits: Visit[],
+  contactIds?: ReadonlySet<string>
+) => {
   const byContact = new Map<string, Visit[]>()
   for (const visit of visits) {
+    if (contactIds && !contactIds.has(visit.contact.id)) continue
     const list = byContact.get(visit.contact.id) ?? []
     list.push(visit)
     byContact.set(visit.contact.id, list)
   }
   return byContact
+}
+
+const DAY_MS = 24 * 60 * 60 * 1000
+
+/**
+ * Whether a Follow-up `date` falls in `[min, max]`, as moment reads it. A plain
+ * `Date` parse settles dates more than a day from either end, which is most of
+ * a long history; that day of slack covers strings moment reads as local time.
+ * Dates near an end, and any `Date` can't parse, go to moment.
+ */
+const followUpInRange = (
+  date: Date,
+  min: moment.Moment,
+  max: moment.Moment
+) => {
+  const time = new Date(date).getTime()
+  if (time < min.valueOf() - DAY_MS || time > max.valueOf() + DAY_MS)
+    return false
+  if (time > min.valueOf() + DAY_MS && time < max.valueOf() - DAY_MS)
+    return true
+  return moment(date).isBetween(min, max, undefined, '[]')
 }
 
 /**
@@ -247,18 +275,24 @@ export const followUpCardItems = ({
   const missedBefore = now
     .clone()
     .subtract(MISSED_FOLLOW_UP_AFTER_HOURS, 'hours')
-  const byContact = visitsByContact(conversations)
+  const due = conversations.filter(
+    (visit) =>
+      isAppointment(visit) && followUpInRange(visit.followUp!.date, min, max)
+  )
+  if (due.length === 0) return []
+  const byContact = visitsByContact(
+    conversations,
+    new Set(due.map((visit) => visit.contact.id))
+  )
 
-  return conversations
+  return due
     .flatMap((visit): FollowUpCardItem[] => {
-      if (!isAppointment(visit)) return []
-      const date = moment(visit.followUp!.date)
-      if (!date.isBetween(min, max, undefined, '[]')) return []
       const answeredBy = followUpAnswer(
         visit,
         byContact.get(visit.contact.id) ?? []
       )
-      if (!answeredBy && date.isBefore(missedBefore)) return []
+      if (!answeredBy && moment(visit.followUp!.date).isBefore(missedBefore))
+        return []
       return [{ visit, answeredBy }]
     })
     .sort(
@@ -292,16 +326,22 @@ export const overdueFollowUpConversations = ({
     'hours'
   )
   const min = moment(currentTime).subtract(lookbackDays, 'days').startOf('day')
-  const byContact = visitsByContact(conversations)
-
-  return conversations.filter((conversation) => {
+  const missed = conversations.filter((conversation) => {
     if (!isAppointment(conversation)) return false
     const date = conversation.followUp?.date
-    if (!date) return false
-    if (!moment(date).isBetween(min, max, undefined, '[]')) return false
-    return !followUpAnswer(
-      conversation,
-      byContact.get(conversation.contact.id) ?? []
-    )
+    return !!date && followUpInRange(date, min, max)
   })
+  if (missed.length === 0) return []
+  const byContact = visitsByContact(
+    conversations,
+    new Set(missed.map((conversation) => conversation.contact.id))
+  )
+
+  return missed.filter(
+    (conversation) =>
+      !followUpAnswer(
+        conversation,
+        byContact.get(conversation.contact.id) ?? []
+      )
+  )
 }

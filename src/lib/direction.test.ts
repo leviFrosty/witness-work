@@ -14,6 +14,9 @@ import {
   forwardSign,
   isRtlLayout,
   leftForPhysicalX,
+  LTR_ISOLATE,
+  ltrIsolate,
+  POP_ISOLATE,
 } from '@/lib/direction'
 import { textDirection } from '@/lib/textDirection'
 
@@ -77,6 +80,19 @@ describe('alignment', () => {
     expect(alignInput('start')).toBe('right')
     layOut('ltr', 'android')
     expect(alignInput('start')).toBe('left')
+  })
+})
+
+describe('ltrIsolate', () => {
+  it('wraps the text in a left-to-right isolate', () => {
+    expect(ltrIsolate('+1 415 555 0134')).toBe('⁦+1 415 555 0134⁩')
+    expect(ltrIsolate('+1 415')).toBe(`${LTR_ISOLATE}+1 415${POP_ISOLATE}`)
+  })
+
+  it('leaves the sentence around it its own direction', () => {
+    const sentence = `الرقم ${ltrIsolate('+1 415 555 0134')} غير صالح`
+    expect(textDirection(sentence)).toBe('rtl')
+    expect(textDirection(`${ltrIsolate('مرحبا')} Hello`)).toBe('ltr')
   })
 })
 

@@ -14,6 +14,7 @@ vi.mock('@/lib/locales', () => ({
 
 import type { NotesImportResult } from '@/features/notes-import/lib/notesImportTypes'
 import {
+  contactDetailLines,
   errorMessageKey,
   notesImportCountsLine,
   unavailableDetail,
@@ -130,5 +131,39 @@ describe('visitCountLabel', () => {
   it('passes the count to one plural key', () => {
     expect(visitCountLabel(1)).toBe('notesImport_visitCount:1')
     expect(visitCountLabel(2)).toBe('notesImport_visitCount:2')
+  })
+})
+
+describe('contactDetailLines', () => {
+  it('keeps phone and email left to right, and the rest as written', () => {
+    expect(
+      contactDetailLines({
+        phone: '+1 415 555 0134',
+        email: 'ada@example.com',
+        addressLine: 'شارع النخيل 12',
+        gender: 'female',
+      })
+    ).toEqual([
+      {
+        label: 'notesImport_detailPhone',
+        value: '\u2066+1 415 555 0134\u2069',
+      },
+      {
+        label: 'notesImport_detailEmail',
+        value: '\u2066ada@example.com\u2069',
+      },
+      { label: 'notesImport_detailAddress', value: 'شارع النخيل 12' },
+      { label: 'notesImport_detailGender', value: 'Female' },
+    ])
+  })
+
+  it('lists only the fields the import has', () => {
+    expect(contactDetailLines(undefined)).toEqual([])
+    expect(contactDetailLines({ email: 'ada@example.com' })).toEqual([
+      {
+        label: 'notesImport_detailEmail',
+        value: '\u2066ada@example.com\u2069',
+      },
+    ])
   })
 })

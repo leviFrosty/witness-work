@@ -241,6 +241,10 @@ const ContactRow = ({
                     fontSize: 11,
                   }}
                   numberOfLines={1}
+                  ltr={
+                    previewMatch.source === 'phone' ||
+                    previewMatch.source === 'email'
+                  }
                 />
               </View>
             </View>

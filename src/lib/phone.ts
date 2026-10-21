@@ -4,6 +4,7 @@ import type { ParsedPhoneNumber } from 'awesome-phonenumber'
 import { Contact } from '@/types/contact'
 import { openURL } from '@/lib/links'
 import { RootStackNavigation } from '@/types/rootStack'
+import { ltrIsolate } from '@/lib/direction'
 
 const alertInvalidPhone = (
   contact: Contact,
@@ -13,7 +14,7 @@ const alertInvalidPhone = (
   Alert.alert(
     i18n.t('invalidPhone'),
     i18n.t('invalidPhone_message', {
-      number: formatted.number?.input ?? '',
+      number: ltrIsolate(formatted.number?.input ?? ''),
       region: formatted.regionCode,
     }),
     [

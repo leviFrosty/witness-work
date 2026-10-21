@@ -40,6 +40,14 @@ import WindowControlsInsetView, {
 
 export const ROOT_HEADER_AVATAR_SIZE = 34
 
+/**
+ * Room past a windowed iPad app's window controls. The system's inset ends
+ * right at them, and the bell's unread badge hangs off its corner, which is the
+ * edge beside the controls when the app and the system read in different
+ * directions (Arabic on an English iPad).
+ */
+const clearOf = (inset: number) => (inset > 0 ? inset + 8 : 0)
+
 /** How far the title may shrink so an action can show its label. */
 const TITLE_MIN_FIT_SCALE = 0.9
 
@@ -171,8 +179,8 @@ export default function RootHeader({
               alignItems: 'center',
               gap: 12,
               minHeight: compact ? 36 : 44,
-              paddingStart: controls.start,
-              paddingEnd: controls.end,
+              paddingStart: clearOf(controls.start),
+              paddingEnd: clearOf(controls.end),
               transitionProperty: 'minHeight',
               ...FLOAT_TRANSITION,
             }}

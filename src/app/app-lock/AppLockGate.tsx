@@ -7,6 +7,7 @@ import i18n from '@/lib/locales'
 import { authenticateAppLock, shouldRelock } from '@/lib/appLock'
 import { useAppLockSession, useAppLockSettings } from '@/stores/appLock'
 import AppLockScreen from '@/app/app-lock/AppLockScreen'
+import { setAppSwitcherHidden } from '../../../modules/app-switcher-privacy'
 
 const unlock = () => useAppLockSession.setState({ locked: false })
 
@@ -26,6 +27,10 @@ export default function AppLockGate() {
   )
   const prompting = useRef(false)
   useTakeoverHold('appLock', enabled && locked)
+
+  // The app switcher and Recents take their picture of the app as it leaves,
+  // before the lock screen below can draw, so the platform hides it instead.
+  useEffect(() => setAppSwitcherHidden(enabled), [enabled])
 
   const promptUnlock = async () => {
     if (prompting.current) return

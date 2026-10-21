@@ -1,5 +1,6 @@
 import { create } from 'zustand'
-import { persist, createJSONStorage } from 'zustand/middleware'
+import { createJSONStorage } from 'zustand/middleware'
+import { persist } from '@/stores/persist'
 import { MmkvStorage } from '@/stores/mmkv'
 import type { TimeEntriesByYear } from '@/types/timeEntry'
 

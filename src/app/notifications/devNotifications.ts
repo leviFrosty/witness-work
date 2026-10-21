@@ -2,7 +2,8 @@ import { useEffect } from 'react'
 import * as Notifications from 'expo-notifications'
 import { FlaskConical as FlaskConicalIcon } from 'lucide-react-native'
 import { create } from 'zustand'
-import { createJSONStorage, persist } from 'zustand/middleware'
+import { createJSONStorage } from 'zustand/middleware'
+import { keepPersistedState, persist } from '@/stores/persist'
 import { MmkvStorage } from '@/stores/mmkv'
 import type { NotificationItem } from '@/types/notifications'
 import { navigationRef } from '@/features/contacts/lib/linking'
@@ -30,6 +31,7 @@ export const useDevNotifications = create<DevNotificationsState>()(
   persist((): DevNotificationsState => ({ items: [] }), {
     name: 'devNotifications',
     version: 1,
+    migrate: keepPersistedState,
     storage: createJSONStorage(() => MmkvStorage),
   })
 )

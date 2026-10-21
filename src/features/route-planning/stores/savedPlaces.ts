@@ -1,5 +1,6 @@
 import { create } from 'zustand'
-import { createJSONStorage, persist } from 'zustand/middleware'
+import { createJSONStorage } from 'zustand/middleware'
+import { keepPersistedState, persist } from '@/stores/persist'
 import { MmkvStorage } from '@/stores/mmkv'
 import type {
   SavedPlace,
@@ -31,6 +32,7 @@ export const useSavedPlaces = create<SavedPlacesState>()(
     {
       name: 'route-saved-places',
       version: 1,
+      migrate: keepPersistedState,
       storage: createJSONStorage(() => MmkvStorage),
       partialize: ({ places }) => ({ places }),
     }

@@ -1,5 +1,6 @@
 import { create } from 'zustand'
-import { createJSONStorage, persist } from 'zustand/middleware'
+import { createJSONStorage } from 'zustand/middleware'
+import { keepPersistedState, persist } from '@/stores/persist'
 import {
   GuardedAsyncStorage,
   hasMigratedFromAsyncStorage,
@@ -41,6 +42,7 @@ export const useCalendarSync = create(
     }),
     {
       name: 'calendar-sync',
+      migrate: keepPersistedState,
       storage: createJSONStorage(() =>
         hasMigratedFromAsyncStorage() ? MmkvStorage : GuardedAsyncStorage
       ),

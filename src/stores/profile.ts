@@ -1,7 +1,8 @@
 import { syncTimestamp } from '@/lib/syncClock'
 import { NON_SYNCABLE_PROFILE_KEYS } from '@/lib/syncPreferencePolicy'
 import { create } from 'zustand'
-import { persist, combine, createJSONStorage } from 'zustand/middleware'
+import { combine, createJSONStorage } from 'zustand/middleware'
+import { keepPersistedState, persist } from '@/stores/persist'
 import { PersistStorage } from '@/stores/mmkv'
 import type { ProfileAvatar } from '@/types/avatar'
 
@@ -102,6 +103,7 @@ export const useProfile = create(
       name: 'profile',
       storage: createJSONStorage(() => PersistStorage),
       version: 0,
+      migrate: keepPersistedState,
     }
   )
 )

@@ -1,5 +1,6 @@
 import { create } from 'zustand'
-import { createJSONStorage, persist } from 'zustand/middleware'
+import { createJSONStorage } from 'zustand/middleware'
+import { keepPersistedState, persist } from '@/stores/persist'
 import { MmkvStorage } from '@/stores/mmkv'
 import { clampSidebarWidth, SIDEBAR_DEFAULT_WIDTH } from '@/lib/sidebarLayout'
 
@@ -21,6 +22,7 @@ export const useSidebarPreferences = create<SidebarPreferences>()(
     }),
     {
       name: 'sidebar-layout',
+      migrate: keepPersistedState,
       storage: createJSONStorage(() => MmkvStorage),
       partialize: ({ width, hidden }) => ({ width, hidden }),
     }

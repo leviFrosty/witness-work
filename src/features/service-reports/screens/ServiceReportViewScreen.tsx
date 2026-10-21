@@ -350,6 +350,7 @@ const ServiceReportViewScreen = ({ route, navigation }: Props) => {
         <IconButton
           icon={XIcon}
           size={18}
+          minTarget
           onPress={() => navigation.goBack()}
         />
         <PullDownMenu

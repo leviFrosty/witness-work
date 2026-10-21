@@ -38,6 +38,7 @@ export default function LogVisitHeader({
       icon={XIcon}
       size={20}
       color={theme.colors.text}
+      minTarget
       onPress={onClose}
       accessibilityLabel={i18n.t('close')}
     />

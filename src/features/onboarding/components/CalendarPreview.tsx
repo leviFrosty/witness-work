@@ -101,8 +101,8 @@ const CalendarPreview = () => {
             top: ROW_HEIGHT + LINE_OFFSET + 2,
             height: ROW_HEIGHT - 4,
             backgroundColor: theme.colors.accentTranslucent,
-            borderLeftWidth: 4,
-            borderLeftColor: theme.colors.accent,
+            borderStartWidth: 4,
+            borderStartColor: theme.colors.accent,
           }}
         >
           <Text

@@ -153,9 +153,9 @@ const ServiceReportSection = () => {
           <ServiceReportStudiesOverlay
             containerStyle={{
               flex: 1,
-              paddingLeft: 18,
-              borderLeftWidth: 1,
-              borderLeftColor: theme.colors.border,
+              paddingStart: 18,
+              borderStartWidth: 1,
+              borderStartColor: theme.colors.border,
             }}
           >
             <StudiesCard />

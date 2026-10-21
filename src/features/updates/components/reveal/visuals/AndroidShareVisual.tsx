@@ -137,10 +137,10 @@ const AndroidShareVisual = ({ active, reduceMotion }: RevealVisualProps) => {
 }
 
 const CORNERS = [
-  { top: 0, left: 0, borderTopWidth: 4, borderLeftWidth: 4 },
-  { top: 0, right: 0, borderTopWidth: 4, borderRightWidth: 4 },
-  { bottom: 0, left: 0, borderBottomWidth: 4, borderLeftWidth: 4 },
-  { bottom: 0, right: 0, borderBottomWidth: 4, borderRightWidth: 4 },
+  { top: 0, left: 0, borderTopWidth: 4, borderStartWidth: 4 },
+  { top: 0, right: 0, borderTopWidth: 4, borderEndWidth: 4 },
+  { bottom: 0, left: 0, borderBottomWidth: 4, borderStartWidth: 4 },
+  { bottom: 0, right: 0, borderBottomWidth: 4, borderEndWidth: 4 },
 ] as const
 
 /** One corner of the viewfinder, settling in and breathing with the loop. */

@@ -166,8 +166,8 @@ export const MilestoneProgressBarPreview = ({
               style={{
                 flex: seg.widthFlex,
                 height: '100%',
-                borderRightWidth: i < segments.length - 1 ? 1 : 0,
-                borderRightColor: separatorColor,
+                borderEndWidth: i < segments.length - 1 ? 1 : 0,
+                borderEndColor: separatorColor,
                 overflow: 'hidden',
                 position: 'relative',
               }}

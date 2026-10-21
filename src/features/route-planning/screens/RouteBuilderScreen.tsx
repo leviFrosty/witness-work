@@ -188,8 +188,8 @@ export default function RouteBuilderScreen({
           <View
             style={{
               width: PANEL_WIDTH,
-              borderRightWidth: 1,
-              borderRightColor: theme.colors.border,
+              borderEndWidth: 1,
+              borderEndColor: theme.colors.border,
             }}
           >
             {list}

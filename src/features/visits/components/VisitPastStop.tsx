@@ -53,9 +53,9 @@ export default function VisitPastStop({
         <View
           style={{
             marginTop: 4,
-            paddingLeft: 10,
-            borderLeftWidth: 2,
-            borderLeftColor: theme.colors.border,
+            paddingStart: 10,
+            borderStartWidth: 2,
+            borderStartColor: theme.colors.border,
           }}
         >
           <RichNote

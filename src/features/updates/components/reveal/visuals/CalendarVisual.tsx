@@ -249,8 +249,8 @@ const Block = ({
         blockFrame({ column, row, rows }),
         {
           backgroundColor: withAlpha(color, 0x33),
-          borderLeftWidth: 3,
-          borderLeftColor: color,
+          borderStartWidth: 3,
+          borderStartColor: color,
         },
         style,
       ]}

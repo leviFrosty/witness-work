@@ -187,9 +187,9 @@ const NotesImportThinking = ({
         {__DEV__ && reasoning ? (
           <View
             style={{
-              borderLeftWidth: 2,
+              borderStartWidth: 2,
               borderColor: theme.colors.accentTranslucent,
-              paddingLeft: 12,
+              paddingStart: 12,
             }}
           >
             <Text

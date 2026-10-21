@@ -36,6 +36,7 @@ import Text from '@/components/ui/MyText'
 import TextInput from '@/components/ui/TextInput'
 import Button from '@/components/ui/Button'
 import IconButton from '@/components/ui/IconButton'
+import { touchTargetFrame } from '@/components/ui/touchTarget'
 import ActionButton from '@/components/ui/ActionButton'
 import { MilestoneProgressBarPreview } from '@/components/MilestoneProgressBar'
 import usePublisher from '@/hooks/usePublisher'
@@ -44,6 +45,8 @@ import { useShallow } from 'zustand/react/shallow'
 import { tracking } from '@/lib/tracking'
 
 const MILESTONE_STEP = 10
+/** The stepper buttons' visible square; each sits in a 44pt frame. */
+const STEPPER_SIZE = 28
 
 type Props = {
   visible: boolean
@@ -206,6 +209,15 @@ const MilestoneAdjustSheet = ({ visible, onClose }: Props) => {
       onConfirm: () => removeMilestone(value),
     })
   }
+
+  const stepperStyle = {
+    width: STEPPER_SIZE,
+    height: STEPPER_SIZE,
+    borderRadius: theme.numbers.borderRadiusSm,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: theme.colors.card,
+  } as const
 
   const handleStep = (value: number, direction: 1 | -1) => {
     setDraft((current) => {
@@ -452,23 +464,17 @@ const MilestoneAdjustSheet = ({ visible, onClose }: Props) => {
                     <PointerHover effect='lift'>
                       <Pressable
                         onPress={() => handleStep(value, -1)}
-                        hitSlop={8}
                         accessibilityRole='button'
                         accessibilityLabel={i18n.t('decrease')}
-                        style={{
-                          width: 28,
-                          height: 28,
-                          borderRadius: theme.numbers.borderRadiusSm,
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          backgroundColor: theme.colors.card,
-                        }}
+                        style={touchTargetFrame(STEPPER_SIZE)}
                       >
-                        <LucideIcon
-                          icon={MinusIcon}
-                          size={theme.fontSize('xs')}
-                          style={{ color: theme.colors.textAlt }}
-                        />
+                        <View style={stepperStyle}>
+                          <LucideIcon
+                            icon={MinusIcon}
+                            size={theme.fontSize('xs')}
+                            style={{ color: theme.colors.textAlt }}
+                          />
+                        </View>
                       </Pressable>
                     </PointerHover>
 
@@ -515,23 +521,17 @@ const MilestoneAdjustSheet = ({ visible, onClose }: Props) => {
                     <PointerHover effect='lift'>
                       <Pressable
                         onPress={() => handleStep(value, 1)}
-                        hitSlop={8}
                         accessibilityRole='button'
                         accessibilityLabel={i18n.t('increase')}
-                        style={{
-                          width: 28,
-                          height: 28,
-                          borderRadius: theme.numbers.borderRadiusSm,
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          backgroundColor: theme.colors.card,
-                        }}
+                        style={touchTargetFrame(STEPPER_SIZE)}
                       >
-                        <LucideIcon
-                          icon={PlusIcon}
-                          size={theme.fontSize('xs')}
-                          style={{ color: theme.colors.textAlt }}
-                        />
+                        <View style={stepperStyle}>
+                          <LucideIcon
+                            icon={PlusIcon}
+                            size={theme.fontSize('xs')}
+                            style={{ color: theme.colors.textAlt }}
+                          />
+                        </View>
                       </Pressable>
                     </PointerHover>
 
@@ -550,6 +550,7 @@ const MilestoneAdjustSheet = ({ visible, onClose }: Props) => {
                         noTransform
                         icon={XIcon}
                         size='sm'
+                        style={touchTargetFrame(theme.fontSize('sm'))}
                         onPress={() => confirmRemoveMilestone(value)}
                         accessibilityLabel={i18n.t('remove')}
                       />

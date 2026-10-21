@@ -8,12 +8,13 @@ import {
 } from '@expo/ui/swift-ui/modifiers'
 import { Ellipsis as EllipsisIcon } from 'lucide-react-native'
 import { useState } from 'react'
-import { View } from 'react-native'
+import { View, type ViewStyle } from 'react-native'
 import useTheme from '@/contexts/theme'
 import LucideIcon from '@/components/ui/LucideIcon'
 import MenuItems from '@/components/ui/MenuItems.ios'
 import PointerHover, { HoverTint } from '@/components/ui/PointerHover'
 import { menuGroups } from '@/components/ui/menuEntries'
+import { touchTargetFrame } from '@/components/ui/touchTarget'
 import type { PullDownMenuProps } from '@/components/ui/PullDownMenu.types'
 import { usePreferences } from '@/stores/preferences'
 
@@ -43,6 +44,11 @@ export default function PullDownMenu({
   if (!groups.length) return null
 
   const tint = pointerEffect === 'tint'
+  // The menu opens only from its label, so no slop can grow the default
+  // ellipsis: it gets a real 44pt frame instead, which the host's negative
+  // margins keep from moving anything.
+  const target: ViewStyle = children ? {} : touchTargetFrame(triggerSize)
+  const { marginHorizontal, marginVertical, ...frame } = target
   // VoiceOver reads the menu itself, a native pop-up button.
   const a11y = [
     labelModifier(accessibilityLabel),
@@ -75,7 +81,11 @@ export default function PullDownMenu({
           matchContents
           colorScheme={colorScheme}
           ignoreSafeArea='all'
-          style={{ borderRadius: hoverRadius }}
+          style={{
+            borderRadius: hoverRadius,
+            marginHorizontal,
+            marginVertical,
+          }}
         >
           <Menu
             modifiers={a11y}
@@ -83,7 +93,11 @@ export default function PullDownMenu({
               <RNHostView matchContents>
                 <View
                   accessibilityElementsHidden
-                  style={{ width, borderRadius: hoverRadius }}
+                  style={[
+                    frame,
+                    { borderRadius: hoverRadius },
+                    width !== undefined && { width },
+                  ]}
                 >
                   {children ?? (
                     <LucideIcon

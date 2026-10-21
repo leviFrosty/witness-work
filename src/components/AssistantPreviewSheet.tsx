@@ -15,6 +15,7 @@ import * as Crypto from 'expo-crypto'
 import Text from '@/components/ui/MyText'
 import Button from '@/components/ui/Button'
 import IconButton from '@/components/ui/IconButton'
+import { touchTargetFrame } from '@/components/ui/touchTarget'
 import useTheme from '@/contexts/theme'
 
 import i18n from '@/lib/locales'
@@ -53,6 +54,12 @@ type Props = {
 }
 
 const HOUR_STEP_MINUTES = 30
+const ROW_ICON_SIZE = 12
+/** A real 44pt frame per row button, keeping the row's height. */
+const rowButtonFrame = {
+  ...touchTargetFrame(ROW_ICON_SIZE),
+  marginHorizontal: 0,
+}
 
 const buildInitialRows = (rec: Recommendation): Row[] =>
   rec.plans.map((p) => ({
@@ -253,27 +260,38 @@ const AssistantPreviewSheet = ({
                     {formatMinutes(row.minutes, timeDisplayFormat).formatted}
                   </Text>
                 </View>
-                <IconButton
-                  icon={MinusIcon}
-                  neighborGap={10}
-                  onPress={() => setRowMinutes(row.rowId, -HOUR_STEP_MINUTES)}
-                  size={12}
-                  color={theme.colors.textAlt}
-                />
-                <IconButton
-                  icon={PlusIcon}
-                  neighborGap={10}
-                  onPress={() => setRowMinutes(row.rowId, HOUR_STEP_MINUTES)}
-                  size={12}
-                  color={theme.colors.textAlt}
-                />
-                <IconButton
-                  icon={Trash2Icon}
-                  neighborGap={10}
-                  onPress={() => toggleDropped(row.rowId)}
-                  size={12}
-                  color={row.dropped ? theme.colors.warn : theme.colors.textAlt}
-                />
+                {/* Side by side, so their 44pt frames touch instead of
+                    overlapping. */}
+                <View style={{ flexDirection: 'row' }}>
+                  <IconButton
+                    icon={MinusIcon}
+                    style={rowButtonFrame}
+                    onPress={() => setRowMinutes(row.rowId, -HOUR_STEP_MINUTES)}
+                    size={ROW_ICON_SIZE}
+                    color={theme.colors.textAlt}
+                    accessibilityLabel={i18n.t('decrease')}
+                  />
+                  <IconButton
+                    icon={PlusIcon}
+                    style={rowButtonFrame}
+                    onPress={() => setRowMinutes(row.rowId, HOUR_STEP_MINUTES)}
+                    size={ROW_ICON_SIZE}
+                    color={theme.colors.textAlt}
+                    accessibilityLabel={i18n.t('increase')}
+                  />
+                  <IconButton
+                    icon={Trash2Icon}
+                    style={rowButtonFrame}
+                    onPress={() => toggleDropped(row.rowId)}
+                    size={ROW_ICON_SIZE}
+                    color={
+                      row.dropped ? theme.colors.warn : theme.colors.textAlt
+                    }
+                    accessibilityLabel={i18n.t(
+                      row.dropped ? 'restore' : 'remove'
+                    )}
+                  />
+                </View>
               </View>
             ))}
           </Sheet.ScrollView>

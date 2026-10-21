@@ -384,11 +384,12 @@ const ContactsScreen = ({
   ) : (
     // Four controls in the width the header's 24pt spacing gives three, so the
     // title keeps its size on a phone. Each gap fits its neighbours' slops
-    // (toggle 10, sliders 4, menu 6, add 10) so no tap lands on the wrong one.
+    // (toggle 10, sliders 4, add 10) and the menu's frame (11pt past its
+    // glyph, 13dp on Android) so no tap lands on the wrong one.
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
       <ContactsViewToggle value={contactsView} onChange={changeView} />
       {/* The menu hides itself when none of its actions apply. */}
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 13 }}>
         <PointerTooltip
           label={i18n.t('contacts_sortAndFilter_title')}
           effect='none'

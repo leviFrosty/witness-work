@@ -12,7 +12,11 @@ const { slot } = vi.hoisted(() => ({
     React.createElement(name, props),
 }))
 
-vi.mock('react-native', () => ({ Pressable: 'Pressable', View: 'View' }))
+vi.mock('react-native', () => ({
+  Platform: { OS: 'ios' },
+  Pressable: 'Pressable',
+  View: 'View',
+}))
 vi.mock('lucide-react-native', () => ({ Ellipsis: 'Ellipsis' }))
 vi.mock('@expo/ui', () => ({ Host: 'Host' }))
 vi.mock('@expo/ui/swift-ui', () => ({
@@ -267,6 +271,26 @@ describe('iOS PullDownMenu', () => {
     await render(IosPullDownMenu, { actions: [false, [null]] })
     expect(root.toJSON()).toBeNull()
   })
+
+  it('frames the default ellipsis at 44pt without moving it', async () => {
+    await render(IosPullDownMenu, { triggerSize: 16 })
+    expect(all('Host')[0].props.style).toMatchObject({
+      marginHorizontal: -14,
+      marginVertical: -14,
+    })
+    expect(Object.assign({}, ...all('View')[1].props.style)).toMatchObject({
+      width: 44,
+      height: 44,
+    })
+  })
+
+  it('leaves a custom trigger its own size', async () => {
+    await render(IosPullDownMenu, { children: <></> })
+    expect(all('Host')[0].props.style.marginVertical).toBeUndefined()
+    expect(
+      Object.assign({}, ...all('View')[1].props.style).height
+    ).toBeUndefined()
+  })
 })
 
 describe('Android PullDownMenu', () => {
@@ -283,6 +307,19 @@ describe('Android PullDownMenu', () => {
   const open = async () => {
     await act(async () => trigger().props.onPress())
   }
+
+  it('frames the default ellipsis without moving it', async () => {
+    await render(AndroidPullDownMenu, { triggerSize: 20 })
+    expect(all('Host')[0].props.style).toMatchObject({
+      marginHorizontal: -12,
+      marginVertical: -12,
+    })
+    const style = trigger().props.style({ pressed: false })
+    expect(Object.assign({}, ...style.filter(Boolean))).toMatchObject({
+      width: 44,
+      height: 44,
+    })
+  })
 
   it('opens on tap and separates groups with dividers', async () => {
     const onOpen = vi.fn()

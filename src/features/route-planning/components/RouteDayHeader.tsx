@@ -5,6 +5,7 @@ import {
   ChevronForwardIcon,
 } from '@/components/ui/DirectionalIcon'
 import IconButton from '@/components/ui/IconButton'
+import { touchTargetFrame } from '@/components/ui/touchTarget'
 import InfoPopover from '@/components/ui/InfoPopover'
 import Text from '@/components/ui/MyText'
 import PointerTooltip from '@/components/ui/PointerTooltip'
@@ -66,12 +67,12 @@ export default function RouteDayHeader({
           <IconButton
             icon={ChevronBackwardIcon}
             size={20}
+            style={touchTargetFrame(20)}
             color={theme.colors.textAlt}
             accessibilityLabel={i18n.t('routeBuilder_previousDay')}
             onPress={() =>
               onChangeDay(date.clone().subtract(1, 'day').toDate())
             }
-            hitSlop={8}
           />
         </PointerTooltip>
         <View style={{ flex: 1, alignItems: 'center' }}>
@@ -96,10 +97,10 @@ export default function RouteDayHeader({
           <IconButton
             icon={ChevronForwardIcon}
             size={20}
+            style={touchTargetFrame(20)}
             color={theme.colors.textAlt}
             accessibilityLabel={i18n.t('routeBuilder_nextDay')}
             onPress={() => onChangeDay(date.clone().add(1, 'day').toDate())}
-            hitSlop={8}
           />
         </PointerTooltip>
       </View>

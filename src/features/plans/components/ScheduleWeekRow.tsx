@@ -1,4 +1,3 @@
-import moment from 'moment'
 import { View } from 'react-native'
 import Animated, {
   type SharedValue,
@@ -7,6 +6,7 @@ import Animated, {
 } from 'react-native-reanimated'
 import CalendarDay from '@/components/CalendarDay'
 import useTheme from '@/contexts/theme'
+import useLocalDay from '@/hooks/useLocalDay'
 import type { RecurringPlan } from '@/lib/recurrence'
 import type { DayPlan, TimeEntry } from '@/types/timeEntry'
 import BuddyDayBadge, {
@@ -149,7 +149,7 @@ function DayCell({
 }) {
   const theme = useTheme()
   const date = new Date(day.year, day.month, day.day)
-  const isToday = moment().isSame(date, 'day')
+  const isToday = day.key === useLocalDay()
 
   return (
     <View

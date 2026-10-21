@@ -3,6 +3,7 @@ import moment from 'moment'
 import { useEffect, useRef, useState } from 'react'
 import type { LayoutRectangle } from 'react-native'
 import { useSharedValue } from 'react-native-reanimated'
+import useLocalDay from '@/hooks/useLocalDay'
 import useStartOfWeek from '@/hooks/useStartOfWeek'
 import { analytics } from '@/lib/analytics'
 import Haptics from '@/lib/haptics'
@@ -80,8 +81,8 @@ export default function useScheduleCalendar({
   initial?: CalendarMonth
 }) {
   // Plain values, so what's derived from today stays cached until it changes.
-  const now = moment()
-  const todayKey = now.format('YYYY-MM-DD')
+  const todayKey = useLocalDay()
+  const now = moment(todayKey, 'YYYY-MM-DD')
   const thisYear = now.year()
   const thisMonthIndex = now.month()
   const start = initial ?? { year: thisYear, month: thisMonthIndex }

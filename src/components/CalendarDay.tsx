@@ -5,6 +5,7 @@ import useTheme from '@/contexts/theme'
 import ContextMenu from '@/components/ui/ContextMenu'
 import DayPreview, { dayHasPreview } from '@/components/DayPreview'
 import useDayMenuActions from '@/hooks/useDayMenuActions'
+import useLocalDay from '@/hooks/useLocalDay'
 import useServiceReport from '@/stores/serviceReport'
 import moment from 'moment'
 import { dayPlansOnLocalDay } from '@/lib/dayPlansByDay'
@@ -101,6 +102,8 @@ const NonPlannedDay = (
     serviceReports: TimeEntry[] | undefined
     viewMode?: CalendarViewMode
     height?: number
+    /** Today's local `YYYY-MM-DD`, from `useLocalDay`. */
+    today: string
   }
 ) => {
   const theme = useTheme()
@@ -113,7 +116,7 @@ const NonPlannedDay = (
 
   if (!props.date) return null
   const disabled = props.state === 'disabled'
-  const isToday = moment().isSame(props.date.dateString, 'day')
+  const isToday = props.date.dateString === props.today
   const wentInService = !!props.serviceReports?.some(isCountableEntry)
   const hasNote = !!props.serviceReports?.some((report) => report.note)
   const showActualTime =
@@ -197,6 +200,8 @@ const PlannedDay = (
     recurringPlans?: RecurringPlan[]
     viewMode?: CalendarViewMode
     height?: number
+    /** Today's local `YYYY-MM-DD`, from `useLocalDay`. */
+    today: string
   }
 ) => {
   const theme = useTheme()
@@ -239,11 +244,9 @@ const PlannedDay = (
   )
   const hitGoal =
     wentInService && plannedMinutes > 0 && minutesForDay >= plannedMinutes
-  const dateInPast = moment(props.date?.dateString).isSameOrBefore(
-    moment(),
-    'day'
-  )
-  const isToday = moment().isSame(props.date?.dateString, 'day')
+  const dateString = props.date?.dateString ?? props.today
+  const dateInPast = dateString <= props.today
+  const isToday = dateString === props.today
 
   const statusColor = disabled
     ? {
@@ -352,6 +355,7 @@ const CalendarDay = (
   const dayPlans = props.dayPlansOverride ?? storeDayPlans
   const recurringPlans = props.recurringPlansOverride ?? storeRecurringPlans
   const theme = useTheme()
+  const today = useLocalDay()
 
   const dateString = props.date?.dateString
   const dayKey = dateString ? localDayKey(dateString) : undefined
@@ -383,8 +387,8 @@ const CalendarDay = (
   const accessibilityLabel = calendarDayAccessibilityLabel(
     {
       date: formatDisplay(localDay, 'dddd, LL'),
-      isToday: moment().isSame(localDay, 'day'),
-      isPast: moment(localDay).isBefore(moment(), 'day'),
+      isToday: dateString === today,
+      isPast: dateString < today,
       wentInService,
       loggedMinutes,
       hasPlan: !!(dayPlansForDay.length || recurringPlansForDay.length),
@@ -440,9 +444,14 @@ const CalendarDay = (
             serviceReports={reportsForDay}
             dayPlans={dayPlansForDay}
             recurringPlans={recurringPlansForDay}
+            today={today}
           />
         ) : (
-          <NonPlannedDay {...props} serviceReports={reportsForDay} />
+          <NonPlannedDay
+            {...props}
+            serviceReports={reportsForDay}
+            today={today}
+          />
         )}
         {props.overlay ? (
           <View pointerEvents='none' style={StyleSheet.absoluteFill}>

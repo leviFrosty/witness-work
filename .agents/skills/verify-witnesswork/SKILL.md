@@ -88,7 +88,7 @@ Checks: free disk, Metro served from this worktree, API `/health`, the device le
 **State.** Never tap through onboarding or hand-enter fixture data.
 
 ```bash
-wwv seed pioneer            # fresh | onboarded | publisher | pioneer | busy | badges
+wwv seed pioneer            # fresh | onboarded | publisher | pioneer | busy | badges | stress
 wwv flag buddies on         # buddies | notes-import; on | off | clear
 wwv eval '__WW_DEV__.setSupporter(true)'
 wwv nav "Contact Details" '{"id":"verify-contact-0"}'
@@ -110,6 +110,7 @@ Scenarios are built relative to today (`src/app/dev-harness/scenarios.ts`).
 - `pioneer`: a regular pioneer with service-year hours, an LDC credit entry, 8 contacts (3 Bible studies, one overdue and one upcoming follow-up), and 3 upcoming plans.
 - `busy`: `pioneer` with 160 contacts, for list and map performance.
 - `badges`: `pioneer` plus a year and a bit of history (one contact visited monthly, sent reports, a weekly plan), which earns 14 badges.
+- `stress`: a heavy pioneer account for profiling: 2,000 contacts with 8,000 visits over five years, five Service Years of hours and sent reports, and 300 Plans (20 of them Recurring, with skipped and moved dates).
 - Every onboarded scenario files the badges its records reach as already seen history, so seeding never shows a badge celebration. `fresh` leaves that first pass for after onboarding, like a real install.
 - Ids start with `verify-`, e.g. `verify-contact-0` is "Ada Reyes".
 

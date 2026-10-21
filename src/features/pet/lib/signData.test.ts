@@ -117,4 +117,16 @@ describe('pet sign data', () => {
       returnVisits: 2,
     })
   })
+
+  it("skips a shared Contact's visits but counts the User's next one", () => {
+    const visits = [
+      visit('1', 'ann', noon(2026, 9, 2), { receivedAt: 1 }),
+      visit('2', 'ann', noon(2026, 9, 3), { receivedAt: 1 }),
+      visit('3', 'ann', noon(2026, 9, 9)),
+    ]
+    expect(visitCountsForMonth(visits, today)).toEqual({
+      conversations: 1,
+      returnVisits: 1,
+    })
+  })
 })

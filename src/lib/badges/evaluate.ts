@@ -239,13 +239,18 @@ type VisitMonths = {
   firstStudyMonth?: string
 }
 
+/**
+ * A Visit that came with a shared Contact (`receivedAt`) is the sender's, so it
+ * counts toward nothing itself. It still dates the Contact's first Visit, so
+ * the User's own later Visit to that person is a return visit.
+ */
 const visitMonths = (visits: readonly Visit[], now: Date): VisitMonths => {
   const conversations = new Set<string>()
   const returnVisits = new Set<string>()
   const nextTime = new Set<string>()
   const byContact = new Map<
     string,
-    { day: string; month: string; talked: boolean }[]
+    { day: string; month: string; talked: boolean; own: boolean }[]
   >()
   let firstStudy: { at: number; month: string } | undefined
   const nowMs = now.getTime()
@@ -255,17 +260,18 @@ const visitMonths = (visits: readonly Visit[], now: Date): VisitMonths => {
     const at = date.getTime()
     if (!Number.isFinite(at) || at > nowMs) continue
     const { day, month } = localKeys(date)
-    const talked = visit.notAtHome !== true
+    const own = visit.receivedAt === undefined
+    const talked = own && visit.notAtHome !== true
     if (talked) {
       conversations.add(month)
       if (visit.isBibleStudy && (!firstStudy || at < firstStudy.at))
         firstStudy = { at, month }
     }
     const followUp = visit.followUp
-    if (followUp && !followUp.dismissed && followUp.topic?.trim())
+    if (own && followUp && !followUp.dismissed && followUp.topic?.trim())
       nextTime.add(month)
     const list = byContact.get(visit.contact.id) ?? []
-    list.push({ day, month, talked })
+    list.push({ day, month, talked, own })
     byContact.set(visit.contact.id, list)
   }
 
@@ -275,7 +281,7 @@ const visitMonths = (visits: readonly Visit[], now: Date): VisitMonths => {
     for (const item of list) if (item.day < firstDay) firstDay = item.day
     const talkedMonths = new Set<string>()
     for (const item of list) {
-      if (item.day > firstDay) returnVisits.add(item.month)
+      if (item.own && item.day > firstDay) returnVisits.add(item.month)
       if (item.talked) talkedMonths.add(item.month)
     }
     monthsPerContact.push([...talkedMonths].sort())

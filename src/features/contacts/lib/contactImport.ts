@@ -234,12 +234,17 @@ type ImportedVisitWrite = { visit: Visit; update: boolean }
  * it was shared from this device (or by an older import that kept the sender's
  * ids). The update keeps the fields that never travel, such as the visit's
  * calendar choice and buddies. Every other visit is added under a fresh id.
+ *
+ * Every copy is stamped `receivedAt`: it's the sender's ministry, so it earns
+ * the User no pet hearts or badges. A visit shared from this device keeps no
+ * stamp, since it was the User's own.
  */
 const planImportedVisits = (
   incoming: Visit[],
   contactId: string,
   stored: Visit[],
-  replacing: boolean
+  replacing: boolean,
+  receivedAt: number
 ): ImportedVisitWrite[] => {
   const byId = new Map(stored.map((visit) => [visit.id, visit]))
   const used = new Set<string>()
@@ -265,6 +270,9 @@ const planImportedVisits = (
           visit: {
             ...fields,
             ...(followUp ? { followUp } : {}),
+            ...(own.id === sourceId
+              ? {}
+              : { receivedAt: own.receivedAt ?? receivedAt }),
             id: own.id,
             contact: { id: contactId },
           } as Visit,
@@ -278,7 +286,7 @@ const planImportedVisits = (
     used.add(id)
     return {
       update: false,
-      visit: { ...fields, id, contact: { id: contactId } } as Visit,
+      visit: { ...fields, id, contact: { id: contactId }, receivedAt } as Visit,
     }
   })
 }
@@ -314,7 +322,8 @@ export const handleContactImport = async (
       importData.conversations ?? [],
       contactId,
       callbacks.getConversations(),
-      replaceExisting
+      replaceExisting,
+      Date.now()
     )
 
     // Merge custom field defs first so the contact's customFields keys have

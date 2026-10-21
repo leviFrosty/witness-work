@@ -231,6 +231,8 @@ const VISIT_FIELDS: FieldRules<Visit> = {
   // label these values.
   customFields: omit,
   updatedAt: omit,
+  // Stamped by the recipient on import (`planImportedVisits`).
+  receivedAt: omit,
 }
 
 const CUSTOM_FIELD_DEF_FIELDS: FieldRules<CustomFieldDefinition> = {

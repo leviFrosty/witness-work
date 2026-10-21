@@ -75,6 +75,7 @@ const visit = record.extend({
   isBibleStudy: bibleStudyFlagSchema,
   note: z.string().optional(),
   notAtHome: z.boolean().optional(),
+  receivedAt: timestamp.optional(),
   customFields: z.record(z.string()).optional(),
   followUp: z
     .object({

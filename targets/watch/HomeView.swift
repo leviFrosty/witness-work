@@ -131,7 +131,7 @@ private struct TimerSection: View {
             snapshot: snapshot,
             hours: Int(timer.elapsedMs() / 3_600_000),
             minutes: Int(timer.elapsedMs() / 60_000) % 60,
-            fromTimer: true)
+            timerRevision: timer.revision)
         } label: {
           Label(L10n.t("timerSaveAction", snapshot), systemImage: "square.and.arrow.down")
         }

@@ -189,10 +189,12 @@ object WatchModel {
       }
     }
 
-  /** Saves the paused timer's time as an entry and resets it, unless the timer changed since. */
-  suspend fun saveTimer(hours: Int, minutes: Int, categoryId: String?) =
+  /**
+   * Saves the paused timer's time as an entry and resets it, unless the timer changed since the
+   * watch showed it at `expectedRevision`, even if the watch has heard of the change since.
+   */
+  suspend fun saveTimer(hours: Int, minutes: Int, categoryId: String?, expectedRevision: Int) =
     withContext(serial) {
-      val timer = timer ?: throw ServiceActionException(ServiceActionError.PHONE_UNREACHABLE)
       val entry =
         WatchEntryDraft(
           id = newId(),
@@ -207,7 +209,7 @@ object WatchModel {
           kind = WatchRequest.Kind.SAVE_TIMER,
           id = entry.id,
           entry = entry,
-          expectedTimerRevision = timer.revision,
+          expectedTimerRevision = expectedRevision,
           origin = WatchOrigin.TIMER,
         )
       val reply =

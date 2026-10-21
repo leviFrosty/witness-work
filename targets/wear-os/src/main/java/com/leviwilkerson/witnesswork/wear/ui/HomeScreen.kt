@@ -54,7 +54,8 @@ import java.time.ZonedDateTime
 @Composable
 fun HomeScreen(
   snapshot: WatchSnapshot,
-  onAddTime: (hours: Int, minutes: Int, fromTimer: Boolean) -> Unit,
+  /** `timerRevision` is the timer's when saving its time, `null` for plain Add Time. */
+  onAddTime: (hours: Int, minutes: Int, timerRevision: Int?) -> Unit,
   onUpNext: (String) -> Unit,
 ) {
   // Up Next and the month move on with the clock, not only with new data.
@@ -99,7 +100,7 @@ fun HomeScreen(
                 modifier = rowModifier(spec),
                 transformation = SurfaceTransformation(spec),
               ) {
-                onAddTime((elapsed / 3_600_000).toInt(), ((elapsed / 60_000) % 60).toInt(), true)
+                onAddTime((elapsed / 3_600_000).toInt(), ((elapsed / 60_000) % 60).toInt(), timer.revision)
               }
             }
           }
@@ -111,7 +112,7 @@ fun HomeScreen(
             modifier = rowModifier(spec),
             transformation = SurfaceTransformation(spec),
           ) {
-            onAddTime(0, 0, false)
+            onAddTime(0, 0, null)
           }
         }
       } else {

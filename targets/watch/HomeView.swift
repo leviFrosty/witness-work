@@ -104,8 +104,10 @@ private struct TimerSection: View {
           Text(timerInterval: timer.effectiveStartDate()...Date.distantFuture, countsDown: false)
             .font(.title3.monospacedDigit())
         } else {
-          // Same shape as the running timer above: no hours under an hour.
-          let elapsed = Duration.milliseconds(timer.elapsedMs())
+          // Same shape as the running timer above: no hours under an hour,
+          // and whole seconds cut off rather than rounded, so 59.6 s reads
+          // 0:59 (as on Wear OS) while Save Time still waits for a minute.
+          let elapsed = Duration.seconds(Int64(timer.elapsedMs() / 1000))
           Text(
             elapsed,
             format: .time(pattern: elapsed < .seconds(3600) ? .minuteSecond : .hourMinuteSecond)

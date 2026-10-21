@@ -3,6 +3,9 @@ import { View } from 'react-native'
 import { momentStoredDate } from '@/lib/normalizeDate'
 
 import useTheme from '@/contexts/theme'
+import useAccessibilityTextSize, {
+  FIT_ONE_LINE,
+} from '@/hooks/useAccessibilityTextSize'
 import useServiceReport from '@/stores/serviceReport'
 import {
   getEarliestReportDate,
@@ -56,6 +59,7 @@ const useFlatServiceReports = (): TimeEntry[] => {
  */
 const LifetimeHoursCard = () => {
   const theme = useTheme()
+  const largeText = useAccessibilityTextSize()
   const reports = useFlatServiceReports()
   const { timeDisplayFormat } = usePreferences()
 
@@ -132,11 +136,17 @@ const LifetimeHoursCard = () => {
           }}
         >
           <Text
+            // At accessibility sizes the figure shrinks onto one line rather
+            // than breaking between its digits.
+            {...(largeText && isDecimal ? FIT_ONE_LINE : {})}
             // "Short" mode emits e.g. "1,234h 30m" — at 64pt that's too wide
             // for a single card row. Drop a tier instead of auto-shrinking.
             style={{
               fontSize: isDecimal ? 64 : 40,
-              lineHeight: isDecimal ? 68 : 44,
+              // A fixed line height would keep the full-size line around a
+              // shrunk figure.
+              lineHeight:
+                largeText && isDecimal ? undefined : isDecimal ? 68 : 44,
               fontFamily: theme.fonts.bold,
               color: theme.colors.text,
               letterSpacing: tracking(-1),

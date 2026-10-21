@@ -3,11 +3,12 @@ import {
   LayoutGrid as LayoutGridIcon,
   Plus as PlusIcon,
 } from 'lucide-react-native'
-import { View } from 'react-native'
+import { useWindowDimensions, View } from 'react-native'
 import Button from '@/components/ui/Button'
 import LucideIcon from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
+import useAccessibilityTextSize from '@/hooks/useAccessibilityTextSize'
 import ReorderableGrid from '@/components/ui/reorderable/ReorderableGrid'
 import type { ReorderScroller } from '@/components/ui/reorderable/useReorderScroller'
 import confirmDestructive from '@/lib/confirmDestructive'
@@ -32,7 +33,8 @@ const SIZE_ORDER: ProgressCardSize[] = ['small', 'compact', 'wide', 'full']
 export const PROGRESS_CARD_GAP = 12
 /**
  * Narrower than this (a tablet's side column), two small cards can't fit their
- * titles, so every card takes the full width.
+ * titles, so every card takes the full width. At accessibility text sizes it
+ * grows with the text, so a phone shows one card a row.
  */
 const TWO_COLUMN_MIN_WIDTH = 340
 
@@ -105,6 +107,8 @@ export default function ProgressCardGrid<
   exclude = [],
 }: Props<Id, Group>) {
   const theme = useTheme()
+  const { fontScale } = useWindowDimensions()
+  const largeText = useAccessibilityTextSize()
   // Laid out afresh when editing ends (see `layoutKey`), but not when it
   // starts: a card held to start editing is still under the finger.
   const [layoutGeneration, setLayoutGeneration] = useState(0)
@@ -187,7 +191,7 @@ export default function ProgressCardGrid<
           items={items}
           editing={editing}
           span={(size) => (spansBothColumns(size) ? 2 : 1)}
-          minWidth={TWO_COLUMN_MIN_WIDTH}
+          minWidth={TWO_COLUMN_MIN_WIDTH * (largeText ? fontScale : 1)}
           gap={PROGRESS_CARD_GAP}
           renderItem={renderCard}
           itemProps={(item) => {

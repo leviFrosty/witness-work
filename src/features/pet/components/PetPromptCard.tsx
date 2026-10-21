@@ -3,6 +3,7 @@ import { useNavigation } from '@react-navigation/native'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 import Text from '@/components/ui/MyText'
+import WholeWordsText from '@/components/ui/WholeWordsText'
 import useTheme from '@/contexts/theme'
 import { analytics } from '@/lib/analytics'
 import i18n from '@/lib/locales'
@@ -45,14 +46,14 @@ export default function PetPromptCard() {
   return (
     <Card style={{ gap: 14 }}>
       <View style={{ gap: 2 }}>
-        <Text
+        <WholeWordsText
           style={{
             fontSize: theme.fontSize('lg'),
             fontFamily: theme.fonts.semiBold,
           }}
         >
           {i18n.t('pet.promptTitle')}
-        </Text>
+        </WholeWordsText>
         <Text
           style={{
             color: theme.colors.textAlt,

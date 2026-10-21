@@ -5,6 +5,7 @@ import InfoPopover from '@/components/ui/InfoPopover'
 import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
+import useAccessibilityTextSize from '@/hooks/useAccessibilityTextSize'
 import { tracking } from '@/lib/tracking'
 import type { ProgressCardSize } from '@/lib/progressCards'
 
@@ -46,6 +47,8 @@ export default function StatCard({
 }: Props) {
   const theme = useTheme()
   const wide = size !== 'small'
+  // At accessibility sizes the lines wrap in full rather than cut off.
+  const lines = useAccessibilityTextSize() ? undefined : 2
   const valueColor =
     tone === 'accent'
       ? theme.colors.accent
@@ -66,7 +69,7 @@ export default function StatCard({
         <LucideIcon icon={icon} size={13} color={theme.colors.accent} />
         <Text
           // Half-width cards in narrow columns wrap rather than truncate.
-          numberOfLines={2}
+          numberOfLines={lines}
           style={{
             flexShrink: 1,
             fontFamily: theme.fonts.semiBold,
@@ -114,7 +117,7 @@ export default function StatCard({
       </View>
       {caption ? (
         <Text
-          numberOfLines={2}
+          numberOfLines={lines}
           style={{
             fontSize: theme.fontSize('xs'),
             color: theme.colors.textAlt,
@@ -125,7 +128,7 @@ export default function StatCard({
       ) : null}
       {wide && detail ? (
         <Text
-          numberOfLines={2}
+          numberOfLines={lines}
           style={{
             fontSize: theme.fontSize('xs'),
             color: theme.colors.text,

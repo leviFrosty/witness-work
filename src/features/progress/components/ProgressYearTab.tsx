@@ -531,7 +531,7 @@ const ProgressYearTab = ({
                       textAlign: alignText('end'),
                     },
                   ]}
-                  numberOfLines={1}
+                  numberOfLines={stacked ? undefined : 1}
                 >
                   {i18n.t('hours')}
                 </Text>
@@ -548,7 +548,7 @@ const ProgressYearTab = ({
                         textAlign: alignText('end'),
                       },
                     ]}
-                    numberOfLines={1}
+                    numberOfLines={stacked ? undefined : 1}
                   >
                     {i18n.t('vsGoal')}
                   </Text>

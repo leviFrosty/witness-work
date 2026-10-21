@@ -13,6 +13,7 @@ import { estimateTrip, fromDateKey } from '@/lib/mileage/calc'
 import useTripActions from '@/features/mileage/hooks/useTripActions'
 import useMileageFormatter from '@/features/mileage/hooks/useMileageFormatter'
 import useMileageIndex from '@/features/mileage/hooks/useMileageIndex'
+import useAccessibilityTextSize from '@/hooks/useAccessibilityTextSize'
 import type { RootStackNavigation } from '@/types/rootStack'
 import type { Trip } from '@/types/mileage'
 import RichNote from '@/components/RichNote'
@@ -32,6 +33,7 @@ export default function TripRow({ trip, vehicleName }: Props) {
   const actions = useTripActions()
   const format = useMileageFormatter()
   const cost = estimateTrip(trip, useMileageIndex()).cost
+  const largeText = useAccessibilityTextSize()
   const subtitle = [
     vehicleName,
     trip.roundTrip && i18n.t('mileage.roundTrip'),
@@ -61,17 +63,19 @@ export default function TripRow({ trip, vehicleName }: Props) {
         }
         accessibilityLabel={`${formatDate(fromDateKey(trip.date))}, ${format.distance(trip.distanceMiles)}`}
       >
+        {/* At accessibility sizes the date and details take the row's width,
+            wrapping between words, and the distance and cost sit under them. */}
         <View
           style={{
             ...cardStyle,
             paddingVertical: 12,
             paddingHorizontal: 15,
-            flexDirection: 'row',
-            alignItems: 'center',
+            flexDirection: largeText ? 'column' : 'row',
+            alignItems: largeText ? 'stretch' : 'center',
             gap: 12,
           }}
         >
-          <View style={{ flex: 1, gap: 4 }}>
+          <View style={{ flex: largeText ? undefined : 1, gap: 4 }}>
             <Text style={{ fontFamily: theme.fonts.semiBold }}>
               {formatDate(fromDateKey(trip.date), { style: 'medium' })}
             </Text>
@@ -81,7 +85,7 @@ export default function TripRow({ trip, vehicleName }: Props) {
                   color: theme.colors.textAlt,
                   fontSize: theme.fontSize('sm'),
                 }}
-                numberOfLines={1}
+                numberOfLines={largeText ? undefined : 1}
               >
                 {subtitle.join(' · ')}
               </Text>

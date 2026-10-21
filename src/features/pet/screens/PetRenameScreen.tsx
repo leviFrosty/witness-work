@@ -11,6 +11,7 @@ import usePet, { cleanPetName } from '@/stores/pet'
 import { PET_NAME_MAX_LENGTH } from '@/types/pet'
 import type { RootStackParamList } from '@/types/rootStack'
 import PetNameField from '@/features/pet/components/PetNameField'
+import PetSheetClose from '@/features/pet/components/PetSheetClose'
 import { speciesName } from '@/features/pet/lib/names'
 import usePetSheetInsets from '@/features/pet/hooks/usePetSheetInsets'
 
@@ -79,6 +80,7 @@ export default function PetRenameScreen({ navigation }: Props) {
       <ActionButton disabled={!changed} onPress={save}>
         {i18n.t('pet.picker.save')}
       </ActionButton>
+      <PetSheetClose />
     </View>
   )
 }

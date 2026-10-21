@@ -297,6 +297,66 @@ describe('lib/contactsSort', () => {
       const result = sortContacts([newest, oldest, middle], 'createdAt', 'asc')
       expect(result.map((x) => x.id)).toEqual(['oldest', 'middle', 'newest'])
     })
+
+    it('reads rehydrated date strings, to the second, with unreadable ones last', () => {
+      // As the store hands them back after a relaunch: JSON date strings.
+      const contacts = JSON.parse(
+        JSON.stringify([
+          c({
+            id: 'b',
+            name: 'B',
+            createdAt: new Date('2024-06-15T10:00:00.900Z'),
+          }),
+          c({
+            id: 'bad',
+            name: 'Bad',
+            createdAt: 'not a date' as unknown as Date,
+          }),
+          c({
+            id: 'a',
+            name: 'A',
+            createdAt: new Date('2020-01-01T00:00:00Z'),
+          }),
+          // Same second as `b`: a tie, so the two keep their order.
+          c({
+            id: 'b2',
+            name: 'B2',
+            createdAt: new Date('2024-06-15T10:00:00.100Z'),
+          }),
+          c({
+            id: 'c',
+            name: 'C',
+            createdAt: new Date('2025-03-10T08:00:00Z'),
+          }),
+        ])
+      ) as Contact[]
+
+      expect(
+        sortContacts(contacts, 'createdAt', 'asc').map((x) => x.id)
+      ).toEqual(['a', 'b', 'b2', 'c', 'bad'])
+      expect(
+        sortContacts(contacts, 'createdAt', 'desc').map((x) => x.id)
+      ).toEqual(['c', 'b', 'b2', 'a', 'bad'])
+    })
+
+    it('orders a long list like sorting by its timestamps', () => {
+      const contacts = Array.from({ length: 300 }, (_, i) =>
+        c({
+          id: `c${i}`,
+          name: `Contact ${i}`,
+          // Many contacts share a day, as an import does.
+          createdAt: moment('2021-01-01')
+            .add((i * 37) % 90, 'days')
+            .toISOString() as unknown as Date,
+        })
+      )
+      const byTimestamp = [...contacts].sort(
+        (a, b) =>
+          Math.floor(Date.parse(String(b.createdAt)) / 1000) -
+          Math.floor(Date.parse(String(a.createdAt)) / 1000)
+      )
+      expect(sortContacts(contacts, 'createdAt', 'desc')).toEqual(byTimestamp)
+    })
   })
 
   describe('city/state/zip', () => {
@@ -396,6 +456,37 @@ describe('lib/contactsSort', () => {
         ctx({ customFieldDefs: [dateDef] })
       )
       expect(result.map((x) => x.id)).toEqual(['a', 'b', 'c'])
+    })
+
+    it('type:date keeps shared dates together and compares unreadable ones as text', () => {
+      const birthday = (id: string, value?: string) =>
+        c({
+          id,
+          name: id,
+          customFields: value === undefined ? {} : { birthday: value },
+        })
+      const result = sortContacts(
+        [
+          birthday('x', '2022-06-15'),
+          birthday('none'),
+          birthday('y', '2020-01-01'),
+          birthday('z', '2022-06-15'),
+          birthday('w', '2020-01-01'),
+        ],
+        'customField:birthday',
+        'desc',
+        ctx({ customFieldDefs: [dateDef] })
+      )
+      expect(result.map((x) => x.id)).toEqual(['x', 'z', 'y', 'w', 'none'])
+
+      // A value moment can't read compares as text against the others.
+      const mixed = sortContacts(
+        [birthday('date', '2021-05-01'), birthday('text', 'spring')],
+        'customField:birthday',
+        'asc',
+        ctx({ customFieldDefs: [dateDef] })
+      )
+      expect(mixed.map((x) => x.id)).toEqual(['date', 'text'])
     })
 
     it('default text sorts lexically', () => {

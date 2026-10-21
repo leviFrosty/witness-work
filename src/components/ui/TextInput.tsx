@@ -196,6 +196,9 @@ const TextInput = forwardRef<InputRef, TextInputProps>((props, ref) => {
         letterSpacing: tracking(letterSpacing),
       })}
       textAlign={inputAlign}
+      // Tamagui's native Input reads only `autoFocusNative` and drops
+      // `autoFocus` (web), so a field asking for focus never got it.
+      autoFocusNative={rest.autoFocusNative ?? rest.autoFocus}
       {...(textAlignVertical !== undefined && { textAlignVertical })}
       {...{
         borderWidth,

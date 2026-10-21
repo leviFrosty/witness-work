@@ -1,6 +1,6 @@
 import { Crown as CrownIcon, Star as StarIcon } from 'lucide-react-native'
 import LucideIcon from '@/components/ui/LucideIcon'
-import { useEffect, useMemo, type ReactNode } from 'react'
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { Pressable, View } from 'react-native'
 import moment from 'moment'
 import Animated, {
@@ -139,17 +139,12 @@ const YearMilestoneCard = ({
   // first time the user lands on the Year tab after the milestone was crossed.
   // Persisted via `celebratedMilestones` so re-opening the screen, or switching
   // between Year and other tabs, doesn't re-fire. We celebrate every milestone
-  // the user has hit but not yet been shown the animation for; the largest such
-  // value drives the inline banner.
+  // the user has hit but not yet been shown the animation for. Derived from the
+  // live preference so a refocus after marking finds nothing left to celebrate.
   const serviceYearKey = milestoneCelebrationKey(serviceYear)
   const celebratedForYear = celebratedMilestones[serviceYearKey] ?? []
-  const justHitMilestones = useMemo(
-    () => hitState.hit.filter((m) => !celebratedForYear.includes(m)),
-    // celebratedForYear is intentionally read once per render — re-deriving on
-    // every prefs write would invalidate the memo every keystroke.
-    // eslint-disable-next-line react-compiler/react-compiler
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [hitState.hit]
+  const justHitMilestones = hitState.hit.filter(
+    (m) => !celebratedForYear.includes(m)
   )
   const justHitTop =
     justHitMilestones.length > 0 ? Math.max(...justHitMilestones) : null
@@ -157,6 +152,10 @@ const YearMilestoneCard = ({
     annualGoalHours > 0 && totalMinutesForServiceYear >= annualGoalHours * 60
   const isJustHitAnnualGoal =
     justHitTop !== null && justHitTop === annualGoalHours
+  // The largest milestone this visit celebrated drives the inline banner. Held
+  // in state because marking it celebrated clears `justHitTop` straight away;
+  // dropped on blur so a re-visit no longer shows it.
+  const [bannerMilestone, setBannerMilestone] = useState<number | null>(null)
 
   const sealScale = useSharedValue(1)
   const sealAnimatedStyle = useAnimatedStyle(() => ({
@@ -189,7 +188,10 @@ const YearMilestoneCard = ({
   // service years can't have unhit milestones (no reports yet), so they're
   // naturally excluded by `justHitTop === null`.
   useEffect(() => {
-    if (!isFocused) return
+    if (!isFocused) {
+      setBannerMilestone(null)
+      return
+    }
     if (!isCurrentServiceYear) return
     if (justHitTop === null) return
     sealScale.value = withSequence(
@@ -201,6 +203,7 @@ const YearMilestoneCard = ({
       fireworks.fire()
     } else {
       Haptics.light()
+      setBannerMilestone(justHitTop)
     }
     for (const m of justHitMilestones) {
       markMilestoneCelebrated(serviceYearKey, m)
@@ -299,10 +302,10 @@ const YearMilestoneCard = ({
 
       {/* Transient "just hit a milestone" banner — only renders when the user
         lands on the tab right after crossing a non-final rung. Marked as
-        celebrated in the focus effect above so a re-visit drops the banner.
-        For the annual goal itself we suppress it (the top-row "You did it!"
-        badge already carries that message). */}
-      {justHitTop !== null && !isJustHitAnnualGoal ? (
+        celebrated in the focus effect above, which also drops the banner on
+        blur. For the annual goal itself we suppress it (the top-row "You did
+        it!" badge already carries that message). */}
+      {bannerMilestone !== null ? (
         <View
           style={{
             flexDirection: 'row',
@@ -327,7 +330,7 @@ const YearMilestoneCard = ({
               color: theme.colors.text,
             }}
           >
-            {i18n.t('milestoneJustHitBanner', { hours: justHitTop })}
+            {i18n.t('milestoneJustHitBanner', { hours: bannerMilestone })}
           </Text>
         </View>
       ) : null}

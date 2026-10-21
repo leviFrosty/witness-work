@@ -318,6 +318,7 @@ const PlainButton: React.FC<PropsWithChildren<ButtonProps>> = ({
   loadingColor,
   accessibilityState,
   accessibilityLabel,
+  accessibilityRole = 'button',
   ...props
 }) => {
   const { baseStyle, isGlass } = useButtonBaseStyle(variant, glassTint)
@@ -352,6 +353,7 @@ const PlainButton: React.FC<PropsWithChildren<ButtonProps>> = ({
       disabled={disabled || loading}
       accessibilityState={busyState(loading, accessibilityState)}
       accessibilityLabel={loadingLabel(loading, accessibilityLabel, children)}
+      accessibilityRole={accessibilityRole}
       onPress={onPress ? _onPress : undefined}
       onLongPress={onLongPress ? _onLongPress : undefined}
       onLayout={pointer.onLayout}
@@ -399,6 +401,7 @@ const AnimatedButton: React.FC<PropsWithChildren<ButtonProps>> = ({
   loadingColor,
   accessibilityState,
   accessibilityLabel,
+  accessibilityRole = 'button',
   ...props
 }) => {
   const translateY = useSharedValue(0)
@@ -451,6 +454,7 @@ const AnimatedButton: React.FC<PropsWithChildren<ButtonProps>> = ({
       disabled={disabled || loading}
       accessibilityState={busyState(loading, accessibilityState)}
       accessibilityLabel={loadingLabel(loading, accessibilityLabel, children)}
+      accessibilityRole={accessibilityRole}
       onPressIn={onPressIn}
       onPressOut={onPressOut}
       onPress={onPress ? _onPress : undefined}
@@ -532,6 +536,11 @@ const InertButton: React.FC<PropsWithChildren<ButtonProps>> = ({
   )
 }
 
+/**
+ * A pressable Button reads as a button to VoiceOver and TalkBack unless the
+ * caller gives it another `accessibilityRole` (tab, radio, link…). An inert one
+ * keeps no role, since nothing happens when it's activated.
+ */
 const Button: React.FC<PropsWithChildren<ButtonProps>> = (props) => {
   if (
     !props.onPress &&

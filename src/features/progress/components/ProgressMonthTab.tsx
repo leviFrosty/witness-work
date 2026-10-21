@@ -94,6 +94,8 @@ const ProgressMonthTab = ({
       disabled={!editing}
       onPress={onFinishEditing}
       accessible={false}
+      focusable={false}
+      importantForAccessibility='no'
       style={{ opacity: editing ? 0.4 : 1 }}
     >
       <View pointerEvents={editing ? 'none' : 'auto'}>

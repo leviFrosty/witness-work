@@ -24,6 +24,7 @@ export default function ContextMenu({
   children,
   onPress,
   accessibilityLabel,
+  accessibilityRole,
   accessible = true,
   disabled = false,
   pointerEffect = 'tint',
@@ -85,10 +86,18 @@ export default function ContextMenu({
     return hosted ? <RNHostView matchContents>{content}</RNHostView> : content
   }
 
-  const a11y =
-    accessible && !disabled
-      ? menuAccessibilityProps(groups)
-      : { accessible: false }
+  // Content that holds its own controls leaves the trigger out of TalkBack
+  // entirely: a focusable Pressable is an element anyway, and one that only
+  // has a state still reads the content's loose text around those controls.
+  const a11y = !accessible
+    ? {
+        accessible: false,
+        focusable: false,
+        importantForAccessibility: 'no' as const,
+      }
+    : disabled
+      ? { accessible: false }
+      : menuAccessibilityProps(groups)
 
   const menu = (
     <DropdownMenu
@@ -109,7 +118,7 @@ export default function ContextMenu({
               onLayout={onContentLayout}
               onPress={onPress}
               onLongPress={disabled ? undefined : open}
-              accessibilityRole={onPress ? 'button' : undefined}
+              accessibilityRole={onPress ? 'button' : accessibilityRole}
               accessibilityLabel={accessibilityLabel}
               {...a11y}
             >

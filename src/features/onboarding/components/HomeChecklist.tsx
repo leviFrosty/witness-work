@@ -309,6 +309,7 @@ const HomeChecklist = () => {
       title={
         // Only the header is long-pressable: the items have their own menus.
         <ContextMenu
+          accessibilityRole='header'
           actions={[
             {
               id: 'hide_checklist',

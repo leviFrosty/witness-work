@@ -245,6 +245,32 @@ describe('Android context menu', () => {
     expect(list[1].onPress).toHaveBeenCalledOnce()
   })
 
+  it('takes a trigger whose content holds the controls out of focus', async () => {
+    await render(
+      <AndroidContextMenu
+        actions={actions()}
+        onPress={vi.fn()}
+        accessible={false}
+      >
+        <React.Fragment />
+      </AndroidContextMenu>
+    )
+    expect(trigger().props).toMatchObject({
+      accessible: false,
+      focusable: false,
+      importantForAccessibility: 'no',
+    })
+  })
+
+  it('gives a trigger without a tap the role it asks for', async () => {
+    await render(
+      <AndroidContextMenu actions={actions()} accessibilityRole='header'>
+        <React.Fragment />
+      </AndroidContextMenu>
+    )
+    expect(trigger().props.accessibilityRole).toBe('header')
+  })
+
   it('renders the content without a menu when there are no actions', async () => {
     const onPress = vi.fn()
     await render(
@@ -343,6 +369,33 @@ describe('iOS context menu', () => {
     })
     expect(list[2].onPress).toHaveBeenCalledOnce()
     expect(analytics.capture).not.toHaveBeenCalled()
+  })
+
+  it('gives a trigger without a tap the role it asks for', async () => {
+    await render(
+      <IOSContextMenu actions={actions()} accessibilityRole='header'>
+        <React.Fragment />
+      </IOSContextMenu>
+    )
+    const trigger = root.root.find(
+      (node) =>
+        (node.type as unknown) === 'View' && node.props.accessibilityRole
+    )
+    expect(trigger.props).toMatchObject({
+      accessible: true,
+      accessibilityRole: 'header',
+    })
+  })
+
+  it('gives no role to a tappable trigger that leaves its content accessible', async () => {
+    await render(
+      <IOSContextMenu actions={actions()} onPress={vi.fn()} accessible={false}>
+        <React.Fragment />
+      </IOSContextMenu>
+    )
+    const trigger = root.root.findByType('Pressable' as never)
+    expect(trigger.props.accessible).toBe(false)
+    expect(trigger.props.accessibilityRole).toBeUndefined()
   })
 
   it('renders the content without a menu when there are no actions', async () => {

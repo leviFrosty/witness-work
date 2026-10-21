@@ -20,6 +20,7 @@ export default function ContextMenu({
   children,
   onPress,
   accessibilityLabel,
+  accessibilityRole,
   accessible = true,
   disabled = false,
   preview,
@@ -52,14 +53,20 @@ export default function ContextMenu({
     <Pressable
       onPress={onPress}
       style={({ pressed }) => pressed && { opacity: 0.7 }}
-      accessibilityRole='button'
+      // Not an element when its content holds the controls, so no role: it
+      // would otherwise surface as an empty button around them.
+      accessibilityRole={accessible ? 'button' : undefined}
       accessibilityLabel={accessibilityLabel}
       {...a11y}
     >
       {children}
     </Pressable>
   ) : (
-    <View accessible={accessible && groups.length > 0} {...a11y}>
+    <View
+      accessible={accessible && groups.length > 0}
+      accessibilityRole={accessibilityRole}
+      {...a11y}
+    >
       {children}
     </View>
   )

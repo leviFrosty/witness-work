@@ -181,7 +181,8 @@ export default function ScheduleMonthView({
             // re-render every week on screen mid-scroll.
             extraData={{ selectedKey, index, buddyMarkers }}
             {...scrollBars}
-            scrollsToTop={!!scrollBars}
+            // Earlier weeks load above, so the top is far in the past.
+            scrollsToTop={false}
             onScroll={(e) => {
               onScroll(e.nativeEvent.contentOffset.y)
               scrollBars?.onScroll(e)

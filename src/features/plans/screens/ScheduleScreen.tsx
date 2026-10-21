@@ -243,6 +243,9 @@ const ScheduleScreen = ({ route, navigation }: Props) => {
             // ScrollView's own style sets `flexGrow: 1`, which outranks `flex`;
             // without its own grow this column takes 63% instead of 42%.
             style={{ flex: 0.42, flexGrow: 0.42 }}
+            // A status bar tap would scroll this column once the calendar
+            // stops taking it; the screen ignores the tap instead.
+            scrollsToTop={false}
             contentContainerStyle={{ gap: 16, paddingBottom: bottomInset }}
           >
             <ScheduleDayInspector

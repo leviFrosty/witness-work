@@ -59,3 +59,63 @@ describe('IconButton accessibility label', () => {
     expect(await label({ icon: CheckIcon, onPress: () => {} })).toBeUndefined()
   })
 })
+
+const hitSlop = async (props: React.ComponentProps<typeof IconButton>) => {
+  await act(async () => {
+    root = create(<IconButton {...props} />)
+  })
+  return root.root.findByType('Button' as never).props.hitSlop
+}
+
+describe('IconButton hitSlop', () => {
+  it('pads an 18pt icon to a 44pt target with minTarget', async () => {
+    expect(
+      await hitSlop({
+        icon: XIcon,
+        size: 18,
+        minTarget: true,
+        onPress: () => {},
+      })
+    ).toBe(13)
+  })
+
+  it('rounds up so an odd gap still reaches 44pt', async () => {
+    expect(
+      await hitSlop({
+        icon: XIcon,
+        size: 21,
+        minTarget: true,
+        onPress: () => {},
+      })
+    ).toBe(12)
+  })
+
+  it('adds nothing when the icon already meets the minimum', async () => {
+    expect(
+      await hitSlop({
+        icon: XIcon,
+        size: 48,
+        minTarget: true,
+        onPress: () => {},
+      })
+    ).toBe(0)
+  })
+
+  it('prefers an explicit hitSlop', async () => {
+    expect(
+      await hitSlop({
+        icon: XIcon,
+        size: 18,
+        minTarget: true,
+        hitSlop: 4,
+        onPress: () => {},
+      })
+    ).toBe(4)
+  })
+
+  it('adds no slop by default', async () => {
+    expect(
+      await hitSlop({ icon: XIcon, size: 18, onPress: () => {} })
+    ).toBeUndefined()
+  })
+})

@@ -114,6 +114,7 @@ const MilestoneShowcaseScreen = () => {
           size={20}
           icon={XIcon}
           color={theme.colors.text}
+          minTarget
         />
       </View>
 

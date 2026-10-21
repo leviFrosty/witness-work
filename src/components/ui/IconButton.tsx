@@ -16,6 +16,9 @@ import type { AppIcon } from '@/components/ui/LucideIcon'
 
 export type IconButtonIcon = AppIcon
 
+/** Apple's minimum comfortable touch target, in points. */
+const MIN_TARGET = 44
+
 type Props = {
   icon: IconButtonIcon
   onPress?: () => void
@@ -33,12 +36,19 @@ type Props = {
    */
   accessibilityLabel?: string
   /**
-   * Override the underlying Button's default 10px hitSlop. Set this when two
-   * IconButtons sit side-by-side with a small gap — the default slop overlaps
-   * and RN resolves overlapping siblings to the last one rendered, so a tap on
-   * the inner edge of the first button fires the second.
+   * Touch slop around the icon. Unset means none: this prop always reaches
+   * `Button`, so its 10px default doesn't apply. Keep side-by-side IconButtons'
+   * slop under half their gap — RN resolves overlapping siblings to the last
+   * one rendered, so a tap on the inner edge of the first button fires the
+   * second.
    */
   hitSlop?: number | Insets
+  /**
+   * Grows the touch target to the 44pt minimum with hitSlop, so the layout and
+   * look don't change. For lone controls with clear space around them, like a
+   * modal's close X. Ignored when `hitSlop` is set.
+   */
+  minTarget?: boolean
   /** Swaps the icon for a spinner and blocks presses; see `Button`. */
   loading?: boolean
   testID?: string
@@ -56,6 +66,7 @@ const IconButton = ({
   noTransform,
   accessibilityLabel,
   hitSlop,
+  minTarget,
   loading,
   testID,
 }: Props) => {
@@ -75,7 +86,12 @@ const IconButton = ({
       disabled={!onPress && !onLongPress}
       onPress={onPress}
       onLongPress={onLongPress}
-      hitSlop={hitSlop}
+      hitSlop={
+        hitSlop ??
+        (minTarget
+          ? Math.max(0, Math.ceil((MIN_TARGET - size) / 2))
+          : undefined)
+      }
       accessibilityLabel={
         accessibilityLabel ??
         (icon === XIcon && onPress ? i18n.t('close') : undefined)

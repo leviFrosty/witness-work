@@ -150,9 +150,9 @@ describe.runIf(process.env.PET_GALLERY === '1')('pet gallery', () => {
     // Large values (decimals dropped, then capped): `signs-<digits>-large`.
     const BIG_SIGN_DATA = {
       ...DEMO_SIGN_DATA,
-      monthHours: 1333.5,
-      yearHours: 13333.5,
-      planHours: 133.5,
+      monthMinutes: 80010,
+      yearMinutes: 800010,
+      planMinutes: 8010,
       conversations: 1333,
       returnVisits: 133,
     }

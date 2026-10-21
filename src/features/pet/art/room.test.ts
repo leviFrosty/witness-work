@@ -210,7 +210,9 @@ describe('room art', () => {
     const a = drawRoomBase(ROOM, DEMO_SIGN_DATA)
     expect(drawRoomBase({ ...ROOM }, { ...DEMO_SIGN_DATA })).toBe(a)
     // Sign values don't matter while no sign is shown...
-    expect(drawRoomBase(ROOM, { ...DEMO_SIGN_DATA, monthHours: 99 })).toBe(a)
+    expect(drawRoomBase(ROOM, { ...DEMO_SIGN_DATA, monthMinutes: 5940 })).toBe(
+      a
+    )
     // ...and do once it is.
     // Same objects or equal copies give the same key.
     const room = { ...ROOM, sign: 'month' as const }
@@ -222,11 +224,11 @@ describe('room art', () => {
       roomBaseKey(room, DEMO_SIGN_DATA, { ...decor, rainbow: true })
     )
     expect(roomBaseKey(room, DEMO_SIGN_DATA)).not.toBe(
-      roomBaseKey(room, { ...DEMO_SIGN_DATA, monthHours: 99 })
+      roomBaseKey(room, { ...DEMO_SIGN_DATA, monthMinutes: 5940 })
     )
     const month = { ...ROOM, sign: 'month' as const }
     expect(hashBuffer(drawRoomBase(month, DEMO_SIGN_DATA))).not.toBe(
-      hashBuffer(drawRoomBase(month, { ...DEMO_SIGN_DATA, monthHours: 99 }))
+      hashBuffer(drawRoomBase(month, { ...DEMO_SIGN_DATA, monthMinutes: 5940 }))
     )
   })
 
@@ -298,11 +300,11 @@ describe('room art', () => {
   it('keeps large values inside the sign, in both digit systems', () => {
     const big = {
       ...DEMO_SIGN_DATA,
-      monthHours: 1333.5,
+      monthMinutes: 80010,
       monthGoal: 50,
-      yearHours: 13333.5,
+      yearMinutes: 800010,
       planDay: 23,
-      planHours: 133.5,
+      planMinutes: 8010,
       conversations: 1333,
       returnVisits: 133,
     }
@@ -330,7 +332,7 @@ describe('room art', () => {
       yearBars: [],
       sharedMonths: [],
       planDay: null,
-      planHours: null,
+      planMinutes: null,
     }
     for (const sign of SIGN_IDS) {
       expect(() => drawRoomBase({ ...ROOM, sign }, empty)).not.toThrow()

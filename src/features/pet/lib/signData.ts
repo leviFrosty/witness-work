@@ -91,22 +91,20 @@ export function visitCountsForMonth(
   return { conversations, returnVisits }
 }
 
-const round1 = (n: number) => Math.round(n * 10) / 10
-
 /** The values the room's wall sign can show, from the User's records. */
 export function buildSignData(input: SignDataInput): SignData {
   const { serviceReports, publisher, creditLimit } = input
-  const hoursIn = ({ month, year }: { month: number; year: number }) =>
+  const minutesIn = ({ month, year }: { month: number; year: number }) =>
     adjustedMinutesForSpecificMonth(
       getMonthsReports(serviceReports, month, year),
       month,
       year,
       publisher,
       creditLimit
-    ).value / 60
+    ).value
 
   const months = serviceYearMonths(input.today)
-  const yearBars = months.map((m) => round1(hoursIn(m)))
+  const minutesByMonth = months.map(minutesIn)
   const sharedMonths = months.map((m) =>
     getMonthsReports(serviceReports, m.month, m.year).some(isCountableEntry)
   )
@@ -118,19 +116,17 @@ export function buildSignData(input: SignDataInput): SignData {
   )
 
   return {
-    monthHours: round1(
-      hoursIn({
-        month: input.today.getMonth(),
-        year: input.today.getFullYear(),
-      })
-    ),
+    monthMinutes: minutesIn({
+      month: input.today.getMonth(),
+      year: input.today.getFullYear(),
+    }),
     monthGoal: Math.max(0, input.monthGoalHours),
-    yearBars,
+    yearBars: minutesByMonth.map((minutes) => minutes / 60),
     currentMonthIndex,
-    yearHours: round1(yearBars.reduce((sum, hours) => sum + hours, 0)),
+    yearMinutes: minutesByMonth.reduce((sum, minutes) => sum + minutes, 0),
     sharedMonths,
     planDay: plan?.day ?? null,
-    planHours: plan ? round1(plan.minutes / 60) : null,
+    planMinutes: plan?.minutes ?? null,
     conversations,
     returnVisits,
     digits: input.digits,

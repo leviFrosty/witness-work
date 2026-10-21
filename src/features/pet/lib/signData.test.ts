@@ -70,14 +70,14 @@ describe('pet sign data', () => {
       monthGoalHours: 50,
       digits: 'latn',
     })
-    expect(sign.monthHours).toBe(3.5)
+    expect(sign.monthMinutes).toBe(210)
     expect(sign.monthGoal).toBe(50)
     expect(sign.currentMonthIndex).toBe(1)
     expect(sign.yearBars.slice(0, 3)).toEqual([10, 3.5, 0])
-    expect(sign.yearHours).toBe(13.5)
+    expect(sign.yearMinutes).toBe(810)
     expect(sign.sharedMonths.slice(0, 3)).toEqual([true, true, false])
     expect(sign.planDay).toBeNull()
-    expect(sign.planHours).toBeNull()
+    expect(sign.planMinutes).toBeNull()
     expect(sign.digits).toBe('latn')
   })
 

@@ -7,7 +7,7 @@ import useMileage from '@/stores/mileage'
 import usePet from '@/stores/pet'
 import { PREFERENCE_DEFAULTS, usePreferences } from '@/stores/preferences'
 import { useProfile, PROFILE_DEFAULTS } from '@/stores/profile'
-import { mmkvStorage } from '@/stores/mmkv'
+import { clearMmkvStorage } from '@/stores/mmkv'
 import { useBadgeSession } from '@/stores/badgeSession'
 import { useCalendarPublishing, useCalendarSync } from '@/stores/calendarSync'
 import useCategories from '@/stores/categories'
@@ -71,6 +71,11 @@ export const RESET_STORES: readonly ResettableStore[] = [
  * allowance.
  */
 export function resetLocalData() {
+  // Storage goes first, so the reset state below (the builtin LDC Category,
+  // the migration flags) and whatever a seed writes next are saved. Clearing
+  // last dropped them: a seeded device lost its LDC Category on relaunch.
+  clearMmkvStorage()
+  void AsyncStorage.clear()
   const setPreferences = usePreferences.getState().set
   // Lock iCloud sync off + mark setByUser BEFORE wiping local data, otherwise
   // SupporterSyncDefault (App.tsx) sees a supporter with no local records and
@@ -104,6 +109,4 @@ export function resetLocalData() {
   useNotesImportManager.getState().hydrate()
   forgetFoundSecrets()
   void Stopwatch.reset()
-  mmkvStorage.clearAll()
-  void AsyncStorage.clear()
 }

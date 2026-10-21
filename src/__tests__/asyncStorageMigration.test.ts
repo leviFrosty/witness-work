@@ -42,6 +42,9 @@ vi.mock('react-native-mmkv', () => ({
     delete(k: string) {
       mmkvStore.delete(k)
     }
+    clearAll() {
+      mmkvStore.clear()
+    }
   },
 }))
 
@@ -50,6 +53,7 @@ vi.mock('@/lib/errorTracking', () => ({
 }))
 
 import {
+  clearMmkvStorage,
   hasMigratedFromAsyncStorage,
   migrateFromAsyncStorage,
   PersistStorage,
@@ -92,5 +96,16 @@ describe('PersistStorage', () => {
 
     expect(mmkvStore.get('preferences')).toBe('after')
     expect(asyncStore.get('preferences')).toBe('before')
+  })
+
+  it('keeps saving to MMKV after a reset clears it', async () => {
+    mmkvStore.set('hasMigratedFromAsyncStorage', true)
+    mmkvStore.set('contacts', 'another run')
+
+    clearMmkvStorage()
+    await PersistStorage.setItem('contacts', 'seeded')
+
+    expect(mmkvStore.get('contacts')).toBe('seeded')
+    expect(asyncStore.has('contacts')).toBe(false)
   })
 })

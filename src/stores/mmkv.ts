@@ -84,8 +84,20 @@ export function simulateLockedLaunch() {
 
 export const isLockedLaunchSimulated = () => devLockedLaunch
 
+const MIGRATED_FROM_ASYNC_STORAGE_KEY = 'hasMigratedFromAsyncStorage'
+
 export const hasMigratedFromAsyncStorage = () =>
-  mmkvStorage.getBoolean('hasMigratedFromAsyncStorage')
+  mmkvStorage.getBoolean(MIGRATED_FROM_ASYNC_STORAGE_KEY)
+
+/**
+ * Empties the default MMKV instance (a reset). Stores go on saving to MMKV:
+ * without the migration flag they'd save to AsyncStorage until the next launch
+ * copied it back.
+ */
+export function clearMmkvStorage() {
+  mmkvStorage.clearAll()
+  mmkvStorage.set(MIGRATED_FROM_ASYNC_STORAGE_KEY, true)
+}
 
 /**
  * Returns true for transient native AsyncStorage read failures we can't act on
@@ -158,14 +170,14 @@ export async function migrateFromAsyncStorage(): Promise<boolean> {
       overwrite: true,
     })
     if (!copied) return false
-    mmkvStorage.set('hasMigratedFromAsyncStorage', true)
+    mmkvStorage.set(MIGRATED_FROM_ASYNC_STORAGE_KEY, true)
     return true
   }
 
   // Fresh install: switch stores to MMKV now, then sweep up any persist writes
   // that landed in AsyncStorage before the flag flipped. MMKV wins on conflict
   // because it already holds the newer post-flip write.
-  mmkvStorage.set('hasMigratedFromAsyncStorage', true)
+  mmkvStorage.set(MIGRATED_FROM_ASYNC_STORAGE_KEY, true)
   try {
     await copyAsyncStorageKeysToMmkv(await AsyncStorage.getAllKeys(), {
       overwrite: false,

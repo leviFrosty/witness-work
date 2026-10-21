@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest'
-import { addDays, daysBetween } from '@/features/pet/lib/dayKeys'
+import { afterEach, describe, expect, it } from 'vitest'
+import { addDays, daysBetween, localDayKey } from '@/features/pet/lib/dayKeys'
 import {
   moodOf,
   simulateLife,
@@ -312,6 +312,86 @@ describe('simulateLife', () => {
     expect(simulateLife({ ...home })).toBe(first)
   })
 })
+
+const originalTZ = process.env.TZ
+/** The local day of the moment `ms` in `zone`. */
+const dayIn = (zone: string, ms: number) => {
+  process.env.TZ = zone
+  return localDayKey(ms)
+}
+const HOUR_MS = 3_600_000
+
+describe.each(['Pacific/Auckland', 'Pacific/Honolulu', 'Europe/London'])(
+  'simulateLife around adoption, on a device in %s',
+  (zone) => {
+    afterEach(() => {
+      process.env.TZ = originalTZ
+    })
+
+    /** The pet's hearts on this device's local day at each moment. */
+    const heartsAt = (
+      moments: number[],
+      input: Omit<Parameters<typeof simulateLife>[0], 'today'>
+    ) =>
+      moments.map(
+        (ms) => simulateLife({ ...input, today: dayIn(zone, ms) }).hearts
+      )
+
+    it('holds five hearts for a month already shared in before adoption', () => {
+      process.env.TZ = zone
+      // Shared on the 3rd, adopted on the 20th: the month's one check is done.
+      const input = {
+        adoptedOn: '2026-10-20',
+        activeDays: new Set(['2026-10-03']),
+        wakes: [],
+        paceOf: monthly,
+      }
+      const life = (today: string) => simulateLife({ ...input, today })
+      expect(life('2026-10-20')).toMatchObject({ hearts: 5, quietDays: 0 })
+      // As for a pet adopted before the 3rd: held through November.
+      expect(life('2026-11-30')).toMatchObject({ hearts: 5, quietDays: 0 })
+      expect(life('2026-12-09').hearts).toBe(5)
+      expect(life('2026-12-10').hearts).toBe(4.5)
+      expect(life('2026-12-10').hearts).toBe(
+        simulateLife({ ...input, adoptedOn: '2026-10-02', today: '2026-12-10' })
+          .hearts
+      )
+      // Not the month before, and not at the daily pace.
+      expect(
+        simulateLife({
+          ...input,
+          activeDays: new Set(['2026-09-30']),
+          today: '2026-10-20',
+        }).hearts
+      ).toBe(3)
+      expect(
+        simulateLife({ ...input, paceOf: undefined, today: '2026-10-20' })
+          .hearts
+      ).toBe(3)
+    })
+
+    it('counts a synced day the adoption ran ahead of', () => {
+      // Adopted at 09:00 on the 21st in Auckland (10:00 on the 20th in
+      // Honolulu), then shared at noon on the 20th in Honolulu.
+      const adoption = Date.UTC(2026, 9, 20, 20)
+      const shared = Date.UTC(2026, 9, 20, 22)
+      const input = {
+        adoptedOn: dayIn('Pacific/Auckland', adoption),
+        activeDays: new Set([dayIn('Pacific/Honolulu', shared)]),
+        wakes: [],
+      }
+      expect(input.adoptedOn).toBe('2026-10-21')
+      expect([...input.activeDays]).toEqual(['2026-10-20'])
+      // Every 6 hours for three days after, on this device: one heart up, and
+      // it stays.
+      const moments = Array.from(
+        { length: 13 },
+        (_, i) => shared + i * 6 * HOUR_MS
+      )
+      expect(new Set(heartsAt(moments, input))).toEqual(new Set([4]))
+    })
+  }
+)
 
 describe('moodOf', () => {
   it.each([

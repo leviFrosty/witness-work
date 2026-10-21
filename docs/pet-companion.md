@@ -28,7 +28,8 @@ ported from) lives outside the repo. The TypeScript port in `src/features/pet/ar
 Hearts are **replayed day by day from synced records**, from the adoption day to today. Nothing about
 hearts is stored, so every device computes the same answer (ADR 0030).
 
-- A pet starts with **3 hearts** on its adoption day.
+- A pet starts with **3 hearts** on its adoption day. An active day the day before counts as after
+  the adoption, so a synced device in an earlier time zone agrees with the adopting one.
 - An **active day** is a local day with any of: a time entry (including a 0-minute "shared in
   ministry" checkbox entry, not rollovers), a Visit (conversation, return visit or not-at-home), or a
   Plan/Recurring Plan the user saved that day (`savedOn`, which also covers adding a buddy to a plan;
@@ -43,7 +44,8 @@ hearts is stored, so every device computes the same answer (ADR 0030).
 - **Monthly pace** (ADR 0031): in a month whose role reports only whether it shared (a Kingdom
   Publisher; its Service Streak counts months, `selectHeartsPace` from Role History), an active day
   fills **all 5 hearts** (a pet that died too) and holds them through the end of the next month;
-  quiet days count from then (fading from day 10, dying on day 60). Each month uses its own role, so
+  quiet days count from then (fading from day 10, dying on day 60). A pet adopted in a month that
+  already has an active day starts that way, at 5 held through the next month. Each month uses its own role, so
   switching roles never rewrites the months before. The widget's timeline reaches
   `MONTHLY_HOLD_MAX_DAYS` further for it.
 - Head pats and rubs are just for fun. They never add hearts.

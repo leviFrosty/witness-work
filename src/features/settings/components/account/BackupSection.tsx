@@ -12,6 +12,7 @@ import InputRowSwitch from '@/components/ui/inputs/InputRowSwitch'
 import Text from '@/components/ui/MyText'
 import Spinner from '@/components/ui/Spinner'
 import useTheme from '@/contexts/theme'
+import useAccessibilityTextSize from '@/hooks/useAccessibilityTextSize'
 import { alignText } from '@/lib/direction'
 import SectionTitle from '@/features/settings/components/shared/SectionTitle'
 import SectionFooter from '@/features/settings/components/account/SectionFooter'
@@ -41,6 +42,9 @@ export default function BackupSection({
   onChanged: () => void
 }) {
   const theme = useTheme()
+  // At accessibility sizes the status sits under its label, so it reads
+  // from the label's edge rather than ragged against the far one.
+  const largeText = useAccessibilityTextSize()
   const enabled = useBackupState((state) => state.enabled)
   const uploading = useBackupState((state) => state.uploading)
   const schedule = useBackupState((state) => state.schedule)
@@ -134,7 +138,7 @@ export default function BackupSection({
                 testID='backup-status'
                 style={{
                   flexShrink: 1,
-                  textAlign: alignText('end'),
+                  textAlign: largeText ? undefined : alignText('end'),
                   fontSize: theme.fontSize('sm'),
                   color:
                     failed && !uploading

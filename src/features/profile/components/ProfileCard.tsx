@@ -75,6 +75,8 @@ interface Props {
    * Profile name, as always, which the card name follows.
    */
   shownName?: string
+  /** Opens the keyboard on an empty name. Defaults to true. */
+  autoFocusName?: boolean
 }
 
 /**
@@ -88,6 +90,7 @@ const ProfileCard = ({
   hideBadges,
   nameInvalid,
   shownName,
+  autoFocusName = true,
 }: Props) => {
   const theme = useTheme()
   const [nameEdited, setNameEdited] = useState(false)
@@ -200,8 +203,8 @@ const ProfileCard = ({
             }
             autoCapitalize='words'
             autoCorrect={false}
-            autoFocus={!fieldName}
-            autoFocusNative={!fieldName}
+            autoFocus={autoFocusName && !fieldName}
+            autoFocusNative={autoFocusName && !fieldName}
             maxLength={40}
             enterKeyHint='done'
             textAlign='start'

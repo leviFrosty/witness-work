@@ -1,7 +1,10 @@
 import { View } from 'react-native'
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import { styles } from '@/features/onboarding/components/Onboarding.styles'
 import OnboardingNav from '@/features/onboarding/components/OnboardingNav'
+import OnboardingFooter, {
+  STEP_BOTTOM_PADDING,
+} from '@/features/onboarding/components/OnboardingFooter'
+import OnboardingScrollView from '@/features/onboarding/components/OnboardingScrollView'
 import Text from '@/components/ui/MyText'
 import i18n from '@/lib/locales'
 import PublisherTypeSelector from '@/components/PublisherTypeSelector'
@@ -40,11 +43,11 @@ const StepTwo = ({ goBack, goNext }: Props) => {
             flex: 1,
             paddingHorizontal: 20,
             paddingTop: 60,
-            paddingBottom: 60,
+            paddingBottom: STEP_BOTTOM_PADDING,
           }}
         >
           <OnboardingNav goBack={goBack} />
-          <KeyboardAwareScrollView
+          <OnboardingScrollView
             style={{ flex: 1 }}
             contentContainerStyle={{
               flexGrow: 1,
@@ -85,8 +88,10 @@ const StepTwo = ({ goBack, goNext }: Props) => {
               </View>
               <PublisherTypeSelector variant='list' />
             </View>
-          </KeyboardAwareScrollView>
-          <ActionButton onPress={goNext}>{ctaLabel}</ActionButton>
+          </OnboardingScrollView>
+          <OnboardingFooter>
+            <ActionButton onPress={goNext}>{ctaLabel}</ActionButton>
+          </OnboardingFooter>
         </Wrapper>
       </View>
     </View>

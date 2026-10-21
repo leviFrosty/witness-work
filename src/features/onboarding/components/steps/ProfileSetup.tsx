@@ -1,7 +1,10 @@
 import { View } from 'react-native'
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import { styles } from '@/features/onboarding/components/Onboarding.styles'
 import OnboardingNav from '@/features/onboarding/components/OnboardingNav'
+import OnboardingFooter, {
+  STEP_BOTTOM_PADDING,
+} from '@/features/onboarding/components/OnboardingFooter'
+import OnboardingScrollView from '@/features/onboarding/components/OnboardingScrollView'
 import Text from '@/components/ui/MyText'
 import i18n from '@/lib/locales'
 import Wrapper from '@/components/ui/layout/Wrapper'
@@ -34,11 +37,11 @@ const ProfileSetup = ({ goBack, goNext }: Props) => {
         flex: 1,
         paddingHorizontal: 20,
         paddingTop: 60,
-        paddingBottom: 60,
+        paddingBottom: STEP_BOTTOM_PADDING,
       }}
     >
       <OnboardingNav goBack={goBack} />
-      <KeyboardAwareScrollView
+      <OnboardingScrollView
         style={{ flex: 1 }}
         contentContainerStyle={{
           flexGrow: 1,
@@ -61,10 +64,16 @@ const ProfileSetup = ({ goBack, goNext }: Props) => {
           >
             {i18n.t('profileSetupNameDesc')}
           </Text>
-          <ProfileCard hideBadges />
+          {/* Both answers are optional, so the keyboard waits to be asked
+              for instead of covering the step on arrival. */}
+          <ProfileCard hideBadges autoFocusName={false} />
         </View>
-      </KeyboardAwareScrollView>
-      <ActionButton onPress={handleContinue}>{i18n.t('continue')}</ActionButton>
+      </OnboardingScrollView>
+      <OnboardingFooter>
+        <ActionButton onPress={handleContinue}>
+          {i18n.t('continue')}
+        </ActionButton>
+      </OnboardingFooter>
     </Wrapper>
   )
 }

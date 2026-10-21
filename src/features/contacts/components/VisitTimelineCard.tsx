@@ -6,6 +6,7 @@ import RichNote from '@/components/RichNote'
 import ContextMenu from '@/components/ui/ContextMenu'
 import Text from '@/components/ui/MyText'
 import SwipeableDelete from '@/components/ui/swipeableActions/Delete'
+import { MIN_TOUCH_TARGET } from '@/components/ui/touchTarget'
 import useTheme from '@/contexts/theme'
 import useAccessibilityTextSize from '@/hooks/useAccessibilityTextSize'
 import useVisitMenuActions from '@/hooks/useVisitMenuActions'
@@ -36,6 +37,8 @@ const VisitTimelineCard = ({
   highlighted: boolean
 }) => {
   const theme = useTheme()
+  // A line of text is at least its font size tall.
+  const showMorePadding = (MIN_TOUCH_TARGET - theme.fontSize('sm')) / 2
   const { open, requestDelete, menu } = useVisitMenuActions(visit)
   const [expanded, setExpanded] = useState(false)
   const [truncates, setTruncates] = useState(false)
@@ -168,11 +171,16 @@ const VisitTimelineCard = ({
               )}
               {canExpand && (
                 <PointerHover effect='highlight'>
+                  {/* A real 44pt-tall frame: the row's swipe takes touches
+                      on slop. The margin keeps the card's layout. */}
                   <Pressable
                     onPress={() => setExpanded((value) => !value)}
-                    hitSlop={8}
                     accessibilityRole='button'
-                    style={{ alignSelf: 'flex-start' }}
+                    style={{
+                      alignSelf: 'flex-start',
+                      paddingVertical: showMorePadding,
+                      marginVertical: -showMorePadding,
+                    }}
                   >
                     <Text
                       style={{

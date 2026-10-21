@@ -2,6 +2,7 @@ import { BellRing as BellRingIcon, X as XIcon } from 'lucide-react-native'
 import { useToastController } from '@tamagui/toast'
 import Button from '@/components/ui/Button'
 import IconButton from '@/components/ui/IconButton'
+import { touchTargetFrame } from '@/components/ui/touchTarget'
 import LucideIcon from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
 import XView from '@/components/ui/layout/XView'
@@ -83,8 +84,7 @@ const MonthReportReminderOffer = () => {
         color={theme.colors.textAlt}
         onPress={() => void setEnabled(false, 'report_offer')}
         accessibilityLabel={i18n.t('dismiss')}
-        hitSlop={8}
-        style={{ padding: 6 }}
+        style={touchTargetFrame(26)}
       />
     </XView>
   )

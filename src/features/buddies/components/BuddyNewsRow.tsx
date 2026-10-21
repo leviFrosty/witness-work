@@ -5,6 +5,7 @@ import BadgeMedallion from '@/components/badges/BadgeMedallion'
 import { measureBadgeOrigin } from '@/components/badges/BadgeButton'
 import ContextMenu from '@/components/ui/ContextMenu'
 import IconButton from '@/components/ui/IconButton'
+import { touchTargetFrame } from '@/components/ui/touchTarget'
 import Text from '@/components/ui/MyText'
 import XView from '@/components/ui/layout/XView'
 import useTheme from '@/contexts/theme'
@@ -21,6 +22,15 @@ import {
 } from '@/features/buddies/lib/notificationText'
 import type { BuddyNotification } from '@/features/buddies/lib/state'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
+
+/**
+ * The dismiss X's frame, centered on the glyph 10pt down, level with the first
+ * line, and taking up the 16 × 26pt it did with that padding.
+ */
+const dismissFrame = {
+  ...touchTargetFrame(16),
+  marginTop: Number(touchTargetFrame(16).marginVertical) + 10,
+}
 
 const AVATAR = 36
 const GAP = 10
@@ -146,8 +156,7 @@ export default function BuddyNewsRow({
         <IconButton
           icon={XIcon}
           size={16}
-          hitSlop={12}
-          style={{ paddingTop: 10 }}
+          style={dismissFrame}
           accessibilityLabel={i18n.t('dismiss')}
           onPress={onDismiss}
         />

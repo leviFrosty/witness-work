@@ -1,5 +1,6 @@
 import { X as XIcon } from 'lucide-react-native'
 import LucideIcon from '@/components/ui/LucideIcon'
+import { touchTargetFrame } from '@/components/ui/touchTarget'
 import { useState } from 'react'
 import { Pressable, StyleProp, StyleSheet, View, ViewStyle } from 'react-native'
 import useTheme from '@/contexts/theme'
@@ -116,16 +117,10 @@ const DidYouKnowTipCard = ({ style }: { style?: StyleProp<ViewStyle> }) => {
       <PointerHover effect='highlight'>
         <Pressable
           onPress={handleDismiss}
-          hitSlop={10}
           accessibilityRole='button'
           accessibilityLabel={i18n.t('gotIt')}
-          // Extra padding (cancelled by the margin) rounds out the pointer
-          // highlight around the small icon.
-          style={{
-            padding: 4,
-            margin: -2,
-            borderRadius: theme.numbers.borderRadiusSm,
-          }}
+          // Takes up the 16pt it did with its old padding.
+          style={{ ...touchTargetFrame(16), borderRadius: 999 }}
         >
           <LucideIcon icon={XIcon} size={12} color={theme.colors.textAlt} />
         </Pressable>

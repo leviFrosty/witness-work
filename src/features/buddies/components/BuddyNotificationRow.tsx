@@ -5,6 +5,7 @@ import ActionButton from '@/components/ui/ActionButton'
 import Button from '@/components/ui/Button'
 import ContextMenu from '@/components/ui/ContextMenu'
 import IconButton from '@/components/ui/IconButton'
+import { touchTargetFrame } from '@/components/ui/touchTarget'
 import LucideIcon from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
 import XView from '@/components/ui/layout/XView'
@@ -44,6 +45,15 @@ import { noteUserAction } from '@/lib/userAction'
  * request to join can: Not Now is dismissing it, and Invite turns into a check
  * once the buddy is invited. Buddies' news has its own row (`BuddyNewsRow`).
  */
+/**
+ * The dismiss X's frame, centered on the glyph 10pt down, level with the first
+ * line, and taking up the 16 × 26pt it did with that padding.
+ */
+const dismissFrame = {
+  ...touchTargetFrame(16),
+  marginTop: Number(touchTargetFrame(16).marginVertical) + 10,
+}
+
 export default function BuddyNotificationRow({
   entry,
   unread,
@@ -283,8 +293,7 @@ export default function BuddyNotificationRow({
           <IconButton
             icon={XIcon}
             size={16}
-            hitSlop={12}
-            style={{ paddingTop: 10 }}
+            style={dismissFrame}
             accessibilityLabel={i18n.t('dismiss')}
             onPress={onDismiss}
           />

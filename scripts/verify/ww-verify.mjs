@@ -20,6 +20,8 @@ import {
   matchesText,
   parseSelector,
   snapshotJson,
+  toScreen,
+  windowOrigin,
 } from './ax.mjs'
 import { readFlow, runSteps } from './flows.mjs'
 import {
@@ -599,9 +601,9 @@ const output = (result) => `${result.stdout ?? ''}${result.stderr ?? ''}`
 
 // agent-device's snapshot reads only the app node on the iPad layout, and its
 // semantic commands (selectors, find, wait, back, --settle) need that tree, so
-// on iPad they read the screen with AXe (scripts/verify/ax.mjs) and send input
-// to agent-device as coordinates. iPhone keeps agent-device and falls back to
-// AXe when its tree comes back sparse.
+// on iPad they read the screen with AXe (scripts/verify/ax.mjs) and tap through
+// AXe at screen coordinates. iPhone keeps agent-device and falls back to AXe
+// when its tree comes back sparse.
 // "capture was truncated": agent-device can't prove a selector absent over a
 // long tree (Home, the calendar), so `wait absent` asks AXe instead.
 const SPARSE =
@@ -679,12 +681,68 @@ function axSettle(state, platform, before) {
   return `settled after ${Date.now() - start}ms (AXe)\n${lines.length ? lines.join('\n') : 'no change'}`
 }
 
-/** Runs an input command; with --settle, waits for the screen through AXe. */
-function axInput(state, platform, args, settle, before) {
+const SCREEN_ORIGIN = { x: 0, y: 0 }
+
+/**
+ * Where the app window sits on screen. AXe frames the app's elements relative
+ * to its window, while taps and `--point` reads take screen coordinates, so in
+ * a resized iPad window every tap at an element adds this. A point outside the
+ * window reads SpringBoard, which frames each window (see `windowOrigin`). A
+ * window that covers the screen's top-left corner starts there.
+ */
+function axWindowOrigin(state, platform) {
+  const device = state.devices[platform]
+  if (device.kind !== 'ipad') return SCREEN_ORIGIN
+  const result = run(
+    axeBin(),
+    ['describe-ui', '--udid', device.id, '--point', '1,1'],
+    { check: false, timeout: 15_000 }
+  )
+  if (result.status !== 0) return SCREEN_ORIGIN
+  try {
+    return windowOrigin(JSON.parse(result.stdout), BUNDLE_ID) ?? SCREEN_ORIGIN
+  } catch {
+    return SCREEN_ORIGIN
+  }
+}
+
+/**
+ * Taps, or fills, at a screen point through AXe. agent-device's XCTest taps
+ * miss once an iPad window is resized (XCTest reports a 391 × 665 window as 70
+ * × 367), so iPad taps at a point go through AXe, which taps in the same screen
+ * coordinates its `--point` reads use. A fill focuses the field with that tap,
+ * then lets agent-device replace the focused field's text.
+ */
+function axPointInput(state, platform, verb, x, y, rest) {
+  const tapped = run(
+    axeBin(),
+    ['tap', '-x', x, '-y', y, '--udid', state.devices[platform].id],
+    { check: false, timeout: 15_000 }
+  )
+  if (tapped.status !== 0)
+    return failed(`axe tap failed: ${output(tapped).trim().slice(-400)}`)
+  if (verb !== 'fill') return done(`Tapped (${x}, ${y})`)
+  sleepSync(500)
+  return sessionCommand(platform, ['fill', x, y, ...rest])
+}
+
+/**
+ * Runs an input command; with --settle, waits for the screen through AXe. `tap`
+ * is where a press or fill lands in window coordinates, for `type`.
+ */
+function axInput(state, platform, args, settle, before, tap) {
   const start = settle ? (before ?? axRead(state, platform)) : null
-  const result = sessionCommand(platform, args)
-  if (['press', 'click', 'fill'].includes(args[0]) && isNumber(args[1]))
-    writeJson(axTapFile(platform), { x: Number(args[1]), y: Number(args[2]) })
+  const [verb, x, y, ...rest] = args
+  const atPoint =
+    state.devices[platform].kind === 'ipad' &&
+    ['press', 'click', 'fill'].includes(verb) &&
+    isNumber(x) &&
+    isNumber(y) &&
+    (verb === 'fill' || !rest.length)
+  const result = atPoint
+    ? axPointInput(state, platform, verb, x, y, rest)
+    : sessionCommand(platform, args)
+  if (tap) writeJson(axTapFile(platform), tap)
   if (!settle || result.status !== 0) return result
   return done(`${result.stdout.trim()}\n${axSettle(state, platform, start)}`)
 }
@@ -697,7 +755,7 @@ function axTarget(
   state,
   platform,
   target,
-  { text = false, first = false } = {}
+  { text = false, first = false, origin = SCREEN_ORIGIN } = {}
 ) {
   if (/^@a\d+$/.test(target)) return axRef(state, platform, target)
   const selector = text ? null : parseSelector(target)
@@ -710,7 +768,8 @@ function axTarget(
     return {
       error: `No element matches ${target} on screen (AXe read ${elements.length}). Run snapshot -i to see what's there.`,
     }
-  const visible = matches.length > 1 ? onTop(state, platform, matches) : matches
+  const visible =
+    matches.length > 1 ? onTop(state, platform, matches, origin) : matches
   const pool = visible.length ? visible : matches
   return { element: first ? pool[0] : best(pool), elements }
 }
@@ -721,10 +780,10 @@ function axTarget(
  * week strip and on a picker wheel) can match twice; hit-testing each center
  * with `axe describe-ui --point` tells which one is in front.
  */
-function onTop(state, platform, matches) {
+function onTop(state, platform, matches, origin) {
   const device = state.devices[platform]
   return matches.slice(0, 6).filter((element) => {
-    const { x, y } = center(element)
+    const { x, y } = toScreen(center(element), origin)
     const result = run(
       axeBin(),
       ['describe-ui', '--udid', device.id, '--point', `${x},${y}`],
@@ -748,15 +807,18 @@ function onTop(state, platform, matches) {
 
 /** Taps (or fills) the element a target resolves to. */
 function axAct(state, platform, verb, target, rest, settle, options) {
-  const found = axTarget(state, platform, target, options)
+  const origin = axWindowOrigin(state, platform)
+  const found = axTarget(state, platform, target, { ...options, origin })
   if (found.error) return failed(found.error)
-  const { x, y } = center(found.element)
+  const point = center(found.element)
+  const { x, y } = toScreen(point, origin)
   const result = axInput(
     state,
     platform,
     [verb === 'fill' ? 'fill' : 'press', String(x), String(y), ...rest],
     settle,
-    found.elements
+    found.elements,
+    point
   )
   if (result.status !== 0) return result
   return done(
@@ -836,12 +898,15 @@ function axType(state, platform, text, settle) {
         ? `No focused field: ${fields.length} on screen and the last tap wasn't in one. Use fill <@aN|selector> <text>.`
         : 'No text field on screen (AXe)'
     )
-  const { x, y } = center(field)
+  const point = center(field)
+  const { x, y } = toScreen(point, axWindowOrigin(state, platform))
   const result = axInput(
     state,
     platform,
     ['fill', String(x), String(y), text],
-    settle
+    settle,
+    null,
+    point
   )
   if (result.status !== 0) return result
   return done(`${formatElement(field)}: ${result.stdout.trim()}`)
@@ -883,10 +948,16 @@ function drive(state, platform, args) {
     case 'click':
     case 'fill': {
       const [target, ...more] = plain
-      if (isNumber(target) && isNumber(more[0]))
-        return ipad
-          ? axInput(state, platform, [command, ...plain], settle)
-          : sessionCommand(platform, args)
+      // Coordinates are the screen's, as in a screenshot.
+      if (isNumber(target) && isNumber(more[0])) {
+        if (!ipad) return sessionCommand(platform, args)
+        const origin = axWindowOrigin(state, platform)
+        const tap = {
+          x: Number(target) - origin.x,
+          y: Number(more[0]) - origin.y,
+        }
+        return axInput(state, platform, [command, ...plain], settle, null, tap)
+      }
       if (/^@e\d+$/.test(target) || !target)
         return sessionCommand(platform, args)
       if (/^@a\d+$/.test(target))

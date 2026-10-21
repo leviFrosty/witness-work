@@ -45,11 +45,12 @@ import com.leviwilkerson.witnesswork.wear.appLanguage
 import kotlinx.coroutines.launch
 
 /**
- * Adds time for today, a port of `AddTimeView.swift`. From the timer, it saves the timer's
- * time and resets the timer on the phone.
+ * Adds time for today, a port of `AddTimeView.swift`. From the timer (`timerRevision`, the
+ * revision of the timer whose time it shows), it saves the timer's time and resets the timer on
+ * the phone, unless the timer changed since this opened.
  */
 @Composable
-fun AddTimeScreen(snapshot: WatchSnapshot, hours: Int, minutes: Int, fromTimer: Boolean, onDone: () -> Unit) {
+fun AddTimeScreen(snapshot: WatchSnapshot, hours: Int, minutes: Int, timerRevision: Int?, onDone: () -> Unit) {
   val scope = rememberCoroutineScope()
   val haptics = LocalHapticFeedback.current
   val hoursState = rememberPickerState(initialNumberOfOptions = 24, initiallySelectedIndex = hours.coerceIn(0, 23))
@@ -65,8 +66,8 @@ fun AddTimeScreen(snapshot: WatchSnapshot, hours: Int, minutes: Int, fromTimer: 
     isSaving = true
     scope.launch {
       try {
-        if (fromTimer) {
-          WatchModel.saveTimer(chosenHours, chosenMinutes, categoryId)
+        if (timerRevision != null) {
+          WatchModel.saveTimer(chosenHours, chosenMinutes, categoryId, timerRevision)
         } else {
           WatchModel.addEntry(chosenHours, chosenMinutes, categoryId, WatchOrigin.APP)
         }

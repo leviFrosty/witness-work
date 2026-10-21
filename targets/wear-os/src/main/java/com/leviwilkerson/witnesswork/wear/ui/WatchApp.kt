@@ -52,21 +52,23 @@ fun WatchApp(launches: StateFlow<MainActivity.Launch?>, onLaunchHandled: () -> U
           if (snapshot != null) {
             HomeScreen(
               snapshot = snapshot,
-              onAddTime = { hours, minutes, fromTimer -> navController.navigate("addTime/$hours/$minutes/$fromTimer") },
+              onAddTime = { hours, minutes, timerRevision ->
+                navController.navigate("addTime/$hours/$minutes/${timerRevision ?: "none"}")
+              },
               onUpNext = { navController.navigate("upNext/$it") },
             )
           } else {
             SetupScreen()
           }
         }
-        composable("addTime/{hours}/{minutes}/{fromTimer}") { entry ->
+        composable("addTime/{hours}/{minutes}/{timerRevision}") { entry ->
           val arguments = entry.arguments
           if (snapshot != null) {
             AddTimeScreen(
               snapshot = snapshot,
               hours = arguments?.getString("hours")?.toIntOrNull() ?: 0,
               minutes = arguments?.getString("minutes")?.toIntOrNull() ?: 0,
-              fromTimer = arguments?.getString("fromTimer") == "true",
+              timerRevision = arguments?.getString("timerRevision")?.toIntOrNull(),
               onDone = { navController.popBackStack() },
             )
           }

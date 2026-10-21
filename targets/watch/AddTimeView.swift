@@ -2,21 +2,24 @@ import SwiftUI
 import WatchKit
 
 /// Adds time for today. From the timer, it saves the timer's time and resets
-/// the timer on the iPhone.
+/// the timer on the iPhone, unless the timer changed since this opened.
 struct AddTimeView: View {
   @Environment(WatchModel.self) private var model
   @Environment(\.dismiss) private var dismiss
   let snapshot: WatchSnapshot
-  let fromTimer: Bool
 
+  /// The revision of the timer whose time this opened with; `nil` when not
+  /// opened from the timer. State, like the time, so Home redrawing with a
+  /// newer timer doesn't move it on.
+  @State private var timerRevision: Int?
   @State private var hours: Int
   @State private var minutes: Int
   @State private var categoryId: String?
   @State private var isSaving = false
 
-  init(snapshot: WatchSnapshot, hours: Int = 0, minutes: Int = 0, fromTimer: Bool = false) {
+  init(snapshot: WatchSnapshot, hours: Int = 0, minutes: Int = 0, timerRevision: Int? = nil) {
     self.snapshot = snapshot
-    self.fromTimer = fromTimer
+    _timerRevision = State(initialValue: timerRevision)
     _hours = State(initialValue: min(hours, 23))
     _minutes = State(initialValue: minutes)
   }
@@ -70,8 +73,10 @@ struct AddTimeView: View {
     isSaving = true
     Task {
       do {
-        if fromTimer {
-          try await model.saveTimer(hours: hours, minutes: minutes, categoryId: categoryId)
+        if let timerRevision {
+          try await model.saveTimer(
+            hours: hours, minutes: minutes, categoryId: categoryId,
+            expectedRevision: timerRevision)
         } else {
           await model.addEntry(
             hours: hours, minutes: minutes, categoryId: categoryId, origin: .app)

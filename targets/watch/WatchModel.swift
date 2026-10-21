@@ -165,9 +165,12 @@ final class WatchModel {
   }
 
   /// Saves the paused timer's time as an entry and resets the timer. The
-  /// iPhone refuses if its timer changed since the watch showed it.
-  func saveTimer(hours: Int, minutes: Int, categoryId: String?) async throws {
-    guard let timer, PhoneSession.shared.isReachable else {
+  /// iPhone refuses if its timer changed since the watch showed it at
+  /// `expectedRevision`, even if the watch has heard of the change since.
+  func saveTimer(
+    hours: Int, minutes: Int, categoryId: String?, expectedRevision: Int
+  ) async throws {
+    guard PhoneSession.shared.isReachable else {
       throw ServiceActionError.phoneUnreachable
     }
     let entry = WatchEntryDraft(
@@ -175,7 +178,7 @@ final class WatchModel {
       categoryId: categoryId, origin: .timer)
     let request = WatchRequest(
       kind: .saveTimer, id: entry.id, entry: entry,
-      expectedTimerRevision: timer.revision, origin: .timer)
+      expectedTimerRevision: expectedRevision, origin: .timer)
     let reply: WatchReply
     do {
       reply = try await PhoneSession.shared.send(request)

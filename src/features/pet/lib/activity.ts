@@ -22,9 +22,9 @@ export type PetActivityRecords = {
 /**
  * The pet's active days: local days with a Time Entry (a 0-minute checkbox
  * entry counts, a Time Rollover doesn't), a Visit of any outcome, or a Plan or
- * Recurring Plan the User saved that day (`savedOn`, which adding a buddy to a
- * Plan also sets; Buddies keeping a linked Plan in step doesn't). One active
- * day is one heart, however much was done (ADR 0030).
+ * Recurring Plan the User first saved that day (`savedOn`, which later edits
+ * keep; Buddies keeping a linked Plan in step never sets it). One active day is
+ * one heart, however much was done (ADR 0030).
  */
 export function petActiveDays({
   serviceReports,

@@ -27,9 +27,10 @@ Publisher reports only whether they shared, and many people can't pioneer.
    synced records only: active days from Time Entries, Visits and Plan saves
    (`petActiveDays`), plus the wake taps on the pet record. Every device gets
    the same hearts, gold, rainbow day and gift days from the same records.
-   A Plan save is the local day in the Plan's `savedOn`, which only the User's
-   own saves write; Buddies keeping a linked Plan in step, or taking a removed
-   buddy off a Plan, restamps `updatedAt` for sync but leaves `savedOn` alone.
+   A Plan save is the local day in the Plan's `savedOn`, the day the User first
+   saved it; later edits keep it. Buddies keeping a linked Plan in step, or
+   taking a removed buddy off a Plan, restamps `updatedAt` for sync but never
+   writes `savedOn`.
 2. **The pet record stores only what the User did to the pet**: species, coat,
    name, adoption day, wake days, kept keepsakes, the room items it has earned,
    and a random gift `seed` set at adoption, merged by id like mileage records. The room is a second record.
@@ -54,9 +55,13 @@ Publisher reports only whether they shared, and many people can't pioneer.
 - Deleting or backdating records changes the pet's past, and so today's
   hearts. That's accepted: the pet reflects the records, like the Service
   Streak does.
-- Plans count on their `savedOn` day, so editing an old Plan counts today, and
-  the day it was first saved stops counting once it's edited again. Deleting a
-  Plan or one occurrence isn't a save.
+- Plans count on the day they were first saved. Editing a Plan (its form, an
+  occurrence, a buddy invite, or ticking a checklist item in its note) isn't a
+  new save: it doesn't count today, and the first day keeps counting. Moving
+  `savedOn` on every edit took that day out of the pet's past, so one checklist
+  tick could end a year of gold. A Plan saved before `savedOn` existed, or
+  added by Buddies, gets it on the User's first edit. Deleting a Plan or one
+  occurrence isn't a save.
 - Active days are local calendar days, worked out on each device: a Visit's
   instant and the day a Plan was saved fall on the day of the device that
   reads them (Visits) or saved them (Plans). Devices in different time zones,

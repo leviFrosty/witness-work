@@ -97,9 +97,19 @@ export type PlanSaveOptions = {
   automatic?: boolean
 }
 
-/** `savedOn` for a save the User made today, unless it's `automatic`. */
-const savedOnStamp = (options?: PlanSaveOptions): { savedOn?: string } =>
-  options?.automatic ? {} : { savedOn: moment().format('YYYY-MM-DD') }
+/**
+ * `savedOn` for a save the User made today, unless it's `automatic`. A Plan
+ * keeps the day it was first saved (`savedOn`): an edit, even ticking a
+ * checklist item in its note, would otherwise move it to today and take that
+ * day out of the Pet Companion's history (ADR 0030).
+ */
+const savedOnStamp = (
+  options?: PlanSaveOptions,
+  savedOn?: string
+): { savedOn?: string } =>
+  options?.automatic
+    ? {}
+    : { savedOn: savedOn ?? moment().format('YYYY-MM-DD') }
 
 /** Migrates legacy service report data: `TimeEntry[]` -> `TimeEntriesByYear` */
 export const migrateServiceReports = (
@@ -304,7 +314,7 @@ export const useServiceReport = create(
               return {
                 ...c,
                 ...normalized,
-                ...savedOnStamp(options),
+                ...savedOnStamp(options, c.savedOn),
                 updatedAt: syncTimestamp(c.updatedAt),
               }
             }),
@@ -383,7 +393,7 @@ export const useServiceReport = create(
               return {
                 ...c,
                 ...normalized,
-                ...savedOnStamp(options),
+                ...savedOnStamp(options, c.savedOn),
                 updatedAt: syncTimestamp(c.updatedAt),
               }
             }),
@@ -428,7 +438,7 @@ export const useServiceReport = create(
               return {
                 ...c,
                 overrides: [...updatedOverrides, normalized],
-                ...savedOnStamp(),
+                ...savedOnStamp(undefined, c.savedOn),
                 updatedAt: syncTimestamp(c.updatedAt),
               }
             }),
@@ -467,7 +477,7 @@ export const useServiceReport = create(
               return {
                 ...c,
                 overrides: updatedOverrides,
-                ...savedOnStamp(),
+                ...savedOnStamp(undefined, c.savedOn),
                 updatedAt: syncTimestamp(c.updatedAt),
               }
             }),

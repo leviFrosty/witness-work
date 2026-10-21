@@ -13447,6 +13447,125 @@
           }
         }
       }
+    },
+    "watchUpdatePhoneApp" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Update WitnessWork on your iPhone, then try again."
+          }
+        },
+        "bem" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Update WitnessWork on your iPhone, then try again."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Update WitnessWork on your iPhone, then try again."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Update WitnessWork on your iPhone, then try again."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Update WitnessWork on your iPhone, then try again."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Update WitnessWork on your iPhone, then try again."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Update WitnessWork on your iPhone, then try again."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Update WitnessWork on your iPhone, then try again."
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Update WitnessWork on your iPhone, then try again."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Update WitnessWork on your iPhone, then try again."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Update WitnessWork on your iPhone, then try again."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Update WitnessWork on your iPhone, then try again."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Update WitnessWork on your iPhone, then try again."
+          }
+        },
+        "rw" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Update WitnessWork on your iPhone, then try again."
+          }
+        },
+        "sw" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Update WitnessWork on your iPhone, then try again."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Update WitnessWork on your iPhone, then try again."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Update WitnessWork on your iPhone, then try again."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Update WitnessWork on your iPhone, then try again."
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Update WitnessWork on your iPhone, then try again."
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

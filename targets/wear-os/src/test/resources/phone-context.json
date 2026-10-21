@@ -143,6 +143,7 @@
       "watchUpNext": "watchUpNext",
       "watchUpNextComplicationDescription": "watchUpNextComplicationDescription",
       "watchUpNextComplicationName": "watchUpNextComplicationName",
+      "watchUpdatePhoneApp": "watchUpdatePhoneAppAndroid",
       "wearRangeComplicationName": "wearRangeComplicationName",
       "wearSymbolComplicationName": "wearSymbolComplicationName"
     },

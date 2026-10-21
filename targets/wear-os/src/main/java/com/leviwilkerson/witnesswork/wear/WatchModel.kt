@@ -101,7 +101,8 @@ object WatchModel {
       runCatching { PhoneSession.send(hello) }.getOrNull()?.context?.let(PhoneSession::receive)
       for (item in outboxState.value.filter { !it.delivered }) {
         val reply = runCatching { PhoneSession.send(item.request) }.getOrNull() ?: return@withContext
-        handle(reply, item.id)
+        val delivery = handle(reply, item.id)
+        if (delivery is OutboxDelivery.Refused) alertKey.value = delivery.error.key
       }
     }
 
@@ -109,7 +110,7 @@ object WatchModel {
 
   /**
    * Adds a Time Entry for today. Returns once it's stored and handed to the connection; the
-   * phone app saves it when it next runs.
+   * phone app saves it when it next runs. Throws if the phone refused it.
    */
   suspend fun addEntry(hours: Int, minutes: Int, categoryId: String?, origin: WatchOrigin) =
     withContext(serial) {
@@ -129,25 +130,29 @@ object WatchModel {
     saveOutbox(outboxState.value + OutboxItem(request, System.currentTimeMillis(), delivered = false))
     val reply = runCatching { PhoneSession.send(request) }.getOrNull()
     if (reply != null) {
-      handle(reply, request.id)
-      // Only a temporarily unavailable phone is worth queuing for later.
-      if (reply.reason != WatchReply.Reason.UNAVAILABLE) return
+      when (val delivery = handle(reply, request.id)) {
+        OutboxDelivery.Accepted -> return
+        is OutboxDelivery.Refused -> throw ServiceActionException(delivery.error)
+        // Only a temporarily unavailable phone is worth queuing for later.
+        OutboxDelivery.Retry -> {}
+      }
     }
     PhoneSession.transfer(request)
   }
 
-  private fun handle(reply: WatchReply, id: String) {
+  private fun handle(reply: WatchReply, id: String): OutboxDelivery {
     reply.context?.let(PhoneSession::receive)
+    val delivery = OutboxDelivery.of(reply)
     val outbox = outboxState.value
     val index = outbox.indexOfFirst { it.id == id }
-    if (index < 0) return
-    when {
-      reply.status == WatchReply.Status.ACCEPTED ->
+    if (index < 0) return delivery
+    when (delivery) {
+      OutboxDelivery.Accepted ->
         saveOutbox(outbox.toMutableList().also { it[index] = it[index].copy(delivered = true) })
-      // The phone couldn't store it; try again later.
-      reply.reason == WatchReply.Reason.UNAVAILABLE -> return
-      else -> saveOutbox(outbox.filterIndexed { i, _ -> i != index })
+      OutboxDelivery.Retry -> {}
+      is OutboxDelivery.Refused -> saveOutbox(outbox.filterIndexed { i, _ -> i != index })
     }
+    return delivery
   }
 
   // MARK: Timer

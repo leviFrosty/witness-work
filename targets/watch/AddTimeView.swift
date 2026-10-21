@@ -78,12 +78,13 @@ struct AddTimeView: View {
             hours: hours, minutes: minutes, categoryId: categoryId,
             expectedRevision: timerRevision)
         } else {
-          await model.addEntry(
+          try await model.addEntry(
             hours: hours, minutes: minutes, categoryId: categoryId, origin: .app)
         }
         WKInterfaceDevice.current().play(.success)
         dismiss()
       } catch {
+        WKInterfaceDevice.current().play(.failure)
         model.show(error)
       }
       isSaving = false

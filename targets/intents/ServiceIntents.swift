@@ -23,6 +23,8 @@ enum ServiceActionError: Error, CustomLocalizedStringResourceConvertible {
   case invalidDistance
   case phoneUnreachable
   case timerChanged
+  /// The iPhone app is older than the watch app and can't read its request.
+  case phoneAppOutdated
   case failed
 
   /// Translation key.
@@ -43,6 +45,7 @@ enum ServiceActionError: Error, CustomLocalizedStringResourceConvertible {
     case .invalidDistance: return "siriInvalidDistance"
     case .phoneUnreachable: return "watchPhoneUnreachable"
     case .timerChanged: return "watchTimerChanged"
+    case .phoneAppOutdated: return "watchUpdatePhoneApp"
     case .failed: return "requestFailedTryAgain"
     }
   }
@@ -60,6 +63,7 @@ enum ServiceActionError: Error, CustomLocalizedStringResourceConvertible {
     case .invalidDistance: "invalid_distance"
     case .phoneUnreachable: "phone_unreachable"
     case .timerChanged: "timer_changed"
+    case .phoneAppOutdated: "phone_app_outdated"
     case .failed: "failed"
     }
   }

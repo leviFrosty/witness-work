@@ -73,7 +73,7 @@
       "id": "app.alerts",
       "area": "App",
       "title": "Error alerts",
-      "description": "Failed actions show an alert with one OK button: phone unreachable, timer changed on the phone, directions unavailable, or something went wrong.",
+      "description": "Failed actions show an alert with one OK button: phone unreachable, timer changed on the phone, the phone app too old for the watch's request (update it), directions unavailable, or something went wrong.",
       "watchos": {
         "status": "implemented",
         "paths": [
@@ -136,12 +136,13 @@
       "id": "app.haptics",
       "area": "App",
       "title": "Haptic feedback",
-      "description": "Actions confirm with haptics: a click when the timer starts or pauses, success when time is added or saved.",
+      "description": "Actions confirm with haptics: a click when the timer starts or pauses, success when time is added or saved, and failure when the phone refuses it.",
       "watchos": {
         "status": "implemented",
         "paths": [
           "targets/watch/HomeView.swift#WKInterfaceDevice.current().play",
           "targets/watch/AddTimeView.swift#play(.success)",
+          "targets/watch/AddTimeView.swift#play(.failure)",
           "targets/watch/UpNextView.swift#play(.start)"
         ]
       },
@@ -150,6 +151,7 @@
         "paths": [
           "targets/wear-os/src/main/java/com/leviwilkerson/witnesswork/wear/ui/HomeScreen.kt#performHapticFeedback",
           "targets/wear-os/src/main/java/com/leviwilkerson/witnesswork/wear/ui/AddTimeScreen.kt#HapticFeedbackType.Confirm",
+          "targets/wear-os/src/main/java/com/leviwilkerson/witnesswork/wear/ui/AddTimeScreen.kt#HapticFeedbackType.Reject",
           "targets/wear-os/src/main/java/com/leviwilkerson/witnesswork/wear/ui/UpNextScreen.kt#HapticFeedbackType.ToggleOn"
         ]
       }
@@ -385,7 +387,7 @@
       "id": "add-time.save",
       "area": "Add Time",
       "title": "Save",
-      "description": "Saves an entry for today (the watch's Gregorian day, kept even if delivered after midnight), confirms with a haptic and closes; from the timer it saves the timer's time and resets it.",
+      "description": "Saves an entry for today (the watch's Gregorian day, kept even if delivered after midnight), confirms with a haptic and closes; from the timer it saves the timer's time and resets it. If the phone refuses the entry, it shows why instead.",
       "shared": [
         "src/app/watch/planWatchEntries.ts#export function planWatchEntries"
       ],
@@ -949,19 +951,21 @@
       "id": "sync.outbox",
       "area": "Sync",
       "title": "Outbox",
-      "description": "Entries stay in the watch's outbox until the phone app reports them resolved; ids make repeated delivery safe; an unavailable phone (locked) is retried later; anything not resolved in 30 days is dropped.",
+      "description": "Entries stay in the watch's outbox until the phone app reports them resolved; ids make repeated delivery safe; an unavailable phone (locked) is retried later; an entry the phone refuses (invalid, or a newer protocol than it understands) is dropped with an alert, not a success haptic; anything not resolved in 30 days is dropped.",
       "watchos": {
         "status": "implemented",
         "paths": [
           "targets/watch/WatchModel.swift#outboxLifetime",
-          "targets/watch/WatchStorage.swift#struct OutboxItem"
+          "targets/watch/WatchStorage.swift#struct OutboxItem",
+          "targets/watch/WatchStorage.swift#enum OutboxDelivery"
         ]
       },
       "wearos": {
         "status": "implemented",
         "paths": [
           "targets/wear-os/src/main/java/com/leviwilkerson/witnesswork/wear/WatchModel.kt#OUTBOX_LIFETIME_MS",
-          "targets/wear-os/src/main/java/com/leviwilkerson/witnesswork/wear/WatchStorage.kt#data class OutboxItem"
+          "targets/wear-os/src/main/java/com/leviwilkerson/witnesswork/wear/WatchStorage.kt#data class OutboxItem",
+          "targets/wear-os/src/main/java/com/leviwilkerson/witnesswork/wear/WatchStorage.kt#sealed interface OutboxDelivery"
         ]
       }
     },

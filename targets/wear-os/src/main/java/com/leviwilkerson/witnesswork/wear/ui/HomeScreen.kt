@@ -273,8 +273,13 @@ private fun ReportStatusSection(
       transformation = transformation,
     ) {
       scope.launch {
-        WatchModel.addEntry(hours = 0, minutes = 0, categoryId = null, origin = WatchOrigin.APP)
-        haptics.performHapticFeedback(HapticFeedbackType.Confirm)
+        try {
+          WatchModel.addEntry(hours = 0, minutes = 0, categoryId = null, origin = WatchOrigin.APP)
+          haptics.performHapticFeedback(HapticFeedbackType.Confirm)
+        } catch (error: Exception) {
+          haptics.performHapticFeedback(HapticFeedbackType.Reject)
+          WatchModel.show(error)
+        }
       }
     }
   } else {

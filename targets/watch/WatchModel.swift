@@ -69,56 +69,72 @@ final class WatchModel {
       guard PhoneSession.shared.isReachable,
             let reply = try? await PhoneSession.shared.send(item.request)
       else { return }
-      handle(reply, for: item.id)
+      if case .refused(let reason) = handle(reply, for: item.id) {
+        show(Self.error(refusing: reason))
+      }
     }
   }
 
   // MARK: Entries
 
   /// Adds a Time Entry for today. Returns once it's stored and handed to the
-  /// connection; the iPhone app saves it when it next runs.
-  func addEntry(hours: Int, minutes: Int, categoryId: String?, origin: WatchOrigin) async {
+  /// connection; the iPhone app saves it when it next runs. Throws if the
+  /// iPhone refused it.
+  func addEntry(
+    hours: Int, minutes: Int, categoryId: String?, origin: WatchOrigin
+  ) async throws {
     let entry = WatchEntryDraft(
       id: UUID().uuidString, date: Self.today(), hours: hours, minutes: minutes,
       categoryId: categoryId, origin: origin)
-    await enqueue(WatchRequest(kind: .addEntry, id: entry.id, entry: entry, origin: origin))
+    try await enqueue(WatchRequest(kind: .addEntry, id: entry.id, entry: entry, origin: origin))
   }
 
   /// Logs a mileage trip for today, delivered like an entry.
   func addTrip(
     vehicleId: String, distanceMiles: Double, roundTrip: Bool, origin: WatchOrigin
-  ) async {
+  ) async throws {
     let trip = WatchTripDraft(
       id: UUID().uuidString, date: Self.today(), vehicleId: vehicleId,
       distanceMiles: distanceMiles, roundTrip: roundTrip, origin: origin)
-    await enqueue(WatchRequest(kind: .addTrip, id: trip.id, trip: trip, origin: origin))
+    try await enqueue(WatchRequest(kind: .addTrip, id: trip.id, trip: trip, origin: origin))
   }
 
-  private func enqueue(_ request: WatchRequest) async {
+  private func enqueue(_ request: WatchRequest) async throws {
     outbox.append(OutboxItem(request: request, createdAt: .now, delivered: false))
     saveOutbox()
 
     if PhoneSession.shared.isReachable,
        let reply = try? await PhoneSession.shared.send(request) {
-      handle(reply, for: request.id)
+      switch handle(reply, for: request.id) {
+      case .accepted: return
+      case .refused(let reason): throw Self.error(refusing: reason)
       // Only a temporarily unavailable iPhone is worth queuing for later.
-      if reply.reason != .unavailable { return }
+      case .retry: break
+      }
     }
     PhoneSession.shared.transfer(request)
   }
 
-  private func handle(_ reply: WatchReply, for id: String) {
+  @discardableResult
+  private func handle(_ reply: WatchReply, for id: String) -> OutboxDelivery {
     reply.context.map(PhoneSession.shared.receive)
-    guard let index = outbox.firstIndex(where: { $0.id == id }) else { return }
-    switch (reply.status, reply.reason) {
-    case (.accepted, _):
+    let delivery = OutboxDelivery(reply)
+    guard let index = outbox.firstIndex(where: { $0.id == id }) else { return delivery }
+    switch delivery {
+    case .accepted:
       outbox[index].delivered = true
-    case (.rejected, .unavailable):
-      return  // The iPhone is locked after a restart; try again later.
-    case (.rejected, _):
+    case .retry:
+      return delivery
+    case .refused:
       outbox.remove(at: index)
     }
     saveOutbox()
+    return delivery
+  }
+
+  /// A refused entry or trip isn't saved; sending it again won't change that.
+  private static func error(refusing reason: WatchReply.Reason?) -> ServiceActionError {
+    reason == .unsupportedVersion ? .phoneAppOutdated : .failed
   }
 
   // MARK: Timer

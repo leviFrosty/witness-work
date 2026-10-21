@@ -15,7 +15,7 @@ enum ServiceActions {
   }
 
   static func addEntry(minutes: Int, categoryId: String?) async throws {
-    await WatchModel.shared.addEntry(
+    try await WatchModel.shared.addEntry(
       hours: minutes / 60, minutes: minutes % 60, categoryId: categoryId, origin: .shortcut)
   }
 
@@ -28,7 +28,7 @@ enum ServiceActions {
   }
 
   static func addTrip(vehicleId: String, distanceMiles: Double, roundTrip: Bool) async throws {
-    await WatchModel.shared.addTrip(
+    try await WatchModel.shared.addTrip(
       vehicleId: vehicleId, distanceMiles: distanceMiles, roundTrip: roundTrip,
       origin: .shortcut)
   }

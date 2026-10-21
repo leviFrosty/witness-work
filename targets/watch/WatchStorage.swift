@@ -15,6 +15,24 @@ struct OutboxItem: Codable, Identifiable {
   var id: String { request.id }
 }
 
+/// What the iPhone's reply means for an outbox item.
+enum OutboxDelivery: Equatable {
+  /// It now only waits for the iPhone app to save it.
+  case accepted
+  /// The iPhone couldn't store it (locked after a restart); send it again.
+  case retry
+  /// The iPhone refused it, and would again; drop it and say so.
+  case refused(WatchReply.Reason?)
+
+  init(_ reply: WatchReply) {
+    switch (reply.status, reply.reason) {
+    case (.accepted, _): self = .accepted
+    case (.rejected, .unavailable): self = .retry
+    case (.rejected, let reason): self = .refused(reason)
+    }
+  }
+}
+
 /// The watch's copy of what the iPhone published, plus its outbox, in the
 /// watch's own App Group container (shared with the complications, never with
 /// the iPhone).

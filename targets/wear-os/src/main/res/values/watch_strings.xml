@@ -51,6 +51,7 @@
   <string name="watchUpNext" formatted="false">Up Next</string>
   <string name="watchUpNextComplicationDescription" formatted="false">Your next follow-up or plan.</string>
   <string name="watchUpNextComplicationName" formatted="false">Up Next</string>
+  <string name="watchUpdatePhoneApp" formatted="false">Update WitnessWork on your phone, then try again.</string>
   <string name="wearRangeComplicationName" formatted="false">Monthly Progress, 0 to Goal</string>
   <string name="wearSymbolComplicationName" formatted="false">Monthly Progress with Clock</string>
 </resources>

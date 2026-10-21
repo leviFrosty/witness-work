@@ -2,6 +2,7 @@ package com.leviwilkerson.witnesswork.wear
 
 import android.content.Context
 import com.leviwilkerson.witnesswork.watchprotocol.PhoneContext
+import com.leviwilkerson.witnesswork.watchprotocol.WatchReply
 import com.leviwilkerson.witnesswork.watchprotocol.WatchRequest
 import com.leviwilkerson.witnesswork.watchprotocol.WatchSnapshot
 import org.json.JSONArray
@@ -32,6 +33,28 @@ data class OutboxItem(
         createdAtMs = json.getLong("createdAt"),
         delivered = json.getBoolean("delivered"),
       )
+  }
+}
+
+/** What the phone's reply means for an outbox item, as `OutboxDelivery` in `WatchStorage.swift`. */
+sealed interface OutboxDelivery {
+  /** It now only waits for the phone app to save it. */
+  data object Accepted : OutboxDelivery
+
+  /** The phone couldn't store it; send it again. */
+  data object Retry : OutboxDelivery
+
+  /** The phone refused it, and would again; drop it and say so. */
+  data class Refused(val error: ServiceActionError) : OutboxDelivery
+
+  companion object {
+    fun of(reply: WatchReply): OutboxDelivery =
+      when {
+        reply.status == WatchReply.Status.ACCEPTED -> Accepted
+        reply.reason == WatchReply.Reason.UNAVAILABLE -> Retry
+        reply.reason == WatchReply.Reason.UNSUPPORTED_VERSION -> Refused(ServiceActionError.PHONE_APP_OUTDATED)
+        else -> Refused(ServiceActionError.FAILED)
+      }
   }
 }
 

@@ -10,7 +10,7 @@
   <string name="goalReached" formatted="false">達到目標</string>
   <string name="hours" formatted="false">小時</string>
   <string name="hoursCompact" formatted="false">h</string>
-  <string name="hoursPerDayToGoal" formatted="false">小时/天达到目标！</string>
+  <string name="hoursPerDayToGoalValue" formatted="false">每天 {{value}} 即可達成目標！</string>
   <string name="minutes" formatted="false">分鐘</string>
   <string name="minutesCompact" formatted="false">m</string>
   <string name="month" formatted="false">月</string>

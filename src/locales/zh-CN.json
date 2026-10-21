@@ -472,7 +472,6 @@
   "hourglass": "沙漏",
   "copyToClipboard": "复制到剪贴板",
   "message": "消息",
-  "hoursPerDayToGoal": "距离目标还有几个小时/天！",
   "hoursPerDayToGoalValue": "每天 {{value}} 即可达成目标！",
   "share": "分享",
   "exportContact": "导出联系人",

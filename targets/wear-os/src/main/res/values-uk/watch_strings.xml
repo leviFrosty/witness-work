@@ -10,7 +10,7 @@
   <string name="goalReached" formatted="false">Мета досягнута</string>
   <string name="hours" formatted="false">години</string>
   <string name="hoursCompact" formatted="false">h</string>
-  <string name="hoursPerDayToGoal" formatted="false">годин/день до мети!</string>
+  <string name="hoursPerDayToGoalValue" formatted="false">{{value}} на день до мети!</string>
   <string name="minutes" formatted="false">хвилин</string>
   <string name="minutesCompact" formatted="false">m</string>
   <string name="month" formatted="false">місяць</string>

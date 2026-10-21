@@ -17,7 +17,9 @@ import java.time.ZonedDateTime
 /** The same month as `MonthProgress.swift` shows it; keep both in step. */
 class MonthProgressTest {
   private val zone = ZoneId.of("America/Chicago")
-  private val t: (String) -> String = { mapOf("hoursCompact" to "h", "minutesCompact" to "m")[it] ?: it }
+  private val t: (String) -> String = {
+    mapOf("hoursCompact" to "h", "minutesCompact" to "m", "hoursPerDayToGoalValue" to "{{value}} per day to goal!")[it] ?: it
+  }
 
   /** The phone's contract fixture: October 2026, 16.5h of a 50h goal, plans from the 6th. */
   private val snapshot: WatchSnapshot =
@@ -101,7 +103,7 @@ class MonthProgressTest {
   @Test
   fun `paces against the plans through today, otherwise per remaining day`() {
     // No plans through the 5th: hours per day for the 26 whole days left.
-    assertEquals("1.3h hoursPerDayToGoal", progress(at(5)).paceText)
+    assertEquals("1.3h per day to goal!", progress(at(5)).paceText)
     assertNull(progress(at(5)).paceFraction)
     // 120 planned minutes through the 6th, 990 done: ahead, with the mark at 120/3000.
     val sixth = progress(at(6))
@@ -115,14 +117,22 @@ class MonthProgressTest {
     fun pace(date: ZonedDateTime) = MonthProgress.of(unplanned, emptyList(), emptyList(), date, t)!!.paceText
     // 2010 minutes over the 10 days after Oct 21, rounded up to a tenth: the complication's
     // midnight entry used to count 11.
-    assertEquals("3.4h hoursPerDayToGoal", pace(at(21, hour = 0)))
-    assertEquals("3.4h hoursPerDayToGoal", pace(at(21, hour = 23)))
+    assertEquals("3.4h per day to goal!", pace(at(21, hour = 0)))
+    assertEquals("3.4h per day to goal!", pace(at(21, hour = 23)))
     // One day after Oct 30 (it used to count 2: half the pace), and all of it on the 31st.
-    assertEquals("33.5h hoursPerDayToGoal", pace(at(30, hour = 0)))
-    assertEquals("33.5h hoursPerDayToGoal", pace(at(31, hour = 0)))
+    assertEquals("33.5h per day to goal!", pace(at(30, hour = 0)))
+    assertEquals("33.5h per day to goal!", pace(at(31, hour = 0)))
     // Rounded up, so keeping to it is enough: 61 minutes over 1 day is 1.1h, not 1h.
     assertEquals(66, MonthProgress.minutesPerDayToGoal(61, at(30)))
     assertEquals(60, MonthProgress.minutesPerDayToGoal(60, at(30)))
+  }
+
+  @Test
+  fun `lets the language place the time in the pace line`() {
+    val unplanned = snapshot.copy(plannedThroughDay = null)
+    val japanese: (String) -> String = { if (it == "hoursPerDayToGoalValue") "目標まで1日あたり{{value}}！" else t(it) }
+    // It used to append the old key's own wording: "1.3h 目標まであと1日何時間！".
+    assertEquals("目標まで1日あたり1.3h！", MonthProgress.of(unplanned, emptyList(), emptyList(), at(5), japanese)!!.paceText)
   }
 
   @Test

@@ -14,7 +14,7 @@ internal object BundledStrings {
     "goalReached" to R.string.goalReached,
     "hours" to R.string.hours,
     "hoursCompact" to R.string.hoursCompact,
-    "hoursPerDayToGoal" to R.string.hoursPerDayToGoal,
+    "hoursPerDayToGoalValue" to R.string.hoursPerDayToGoalValue,
     "minutes" to R.string.minutes,
     "minutesCompact" to R.string.minutesCompact,
     "month" to R.string.month,

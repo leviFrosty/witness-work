@@ -10,7 +10,7 @@
   <string name="goalReached" formatted="false">Meta alcançada</string>
   <string name="hours" formatted="false">Horas</string>
   <string name="hoursCompact" formatted="false">h</string>
-  <string name="hoursPerDayToGoal" formatted="false">horas/dia para alvo!</string>
+  <string name="hoursPerDayToGoalValue" formatted="false">{{value}} por dia para atingir o alvo!</string>
   <string name="minutes" formatted="false">Minutos</string>
   <string name="minutesCompact" formatted="false">m</string>
   <string name="month" formatted="false">Mês</string>

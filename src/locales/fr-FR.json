@@ -472,7 +472,6 @@
   "hourglass": "Sablier",
   "copyToClipboard": "Copier dans le presse-papier",
   "message": "Message",
-  "hoursPerDayToGoal": "heures/jour pour atteindre l'objectif !",
   "hoursPerDayToGoalValue": "{{value}} par jour pour atteindre l’objectif !",
   "share": "Partager",
   "exportContact": "Exporter le contact",

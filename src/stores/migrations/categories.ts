@@ -7,6 +7,15 @@ export function runTagsToCategoriesMigration() {
   const prefs = usePreferences.getState()
   if (prefs.hasMigratedTagsToCategories) return
 
+  // The flag is local-only, so it reads false whenever the preferences blob
+  // is lost. Categories that already exist (or were deleted) mean the
+  // migration ran: seeding again would replace them.
+  const { categories, deletedCategories } = useCategories.getState()
+  if (categories.length > 0 || deletedCategories.length > 0) {
+    usePreferences.setState({ hasMigratedTagsToCategories: true })
+    return
+  }
+
   const reports = useServiceReport.getState()
   const legacyTags = ((
     prefs as unknown as {

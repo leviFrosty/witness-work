@@ -6,12 +6,24 @@ export function runCustomFieldsMigration() {
   const prefs = usePreferences.getState()
   if (prefs.hasMigratedCustomFieldsToIds) return
 
+  // The flag is local-only, so it reads false whenever the preferences blob
+  // is lost. Field definitions that already exist (or were deleted) mean the
+  // migration ran: running it again would replace them and turn every
+  // id-keyed value into an archived field labelled with its id.
+  const contactsState = useContacts.getState()
+  if (
+    contactsState.customFieldDefs.length > 0 ||
+    contactsState.deletedCustomFieldDefs.length > 0
+  ) {
+    usePreferences.setState({ hasMigratedCustomFieldsToIds: true })
+    return
+  }
+
   // The legacy field was removed from the type; read it from the persisted
   // state where it may still live as an unknown key.
   const legacyLabels = ((prefs as unknown as { customContactFields?: string[] })
     .customContactFields ?? []) as string[]
 
-  const contactsState = useContacts.getState()
   const result = migrateCustomFieldsToIds({
     legacyLabels,
     contacts: contactsState.contacts,

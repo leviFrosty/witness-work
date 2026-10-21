@@ -68,6 +68,19 @@ describe('widget Monthly Goal', () => {
     expect(report.progress).toBe(0.5)
   })
 
+  it('reports a 0-hour goal as no goal, so the widget hides the goal and bar', () => {
+    const args = baseArgs()
+    args.monthlyGoalOverrides = {
+      [monthlyGoalKey({ year: 2026, month: 6 })]: 0,
+    }
+
+    const report = buildReport(args)
+
+    expect(report.goalHours).toBe(0)
+    expect(report.progress).toBe(0)
+    expect(report.hoursPerDayNeeded).toBeNull()
+  })
+
   it('ignores overrides belonging to another month', () => {
     const args = baseArgs()
     args.monthlyGoalOverrides = {

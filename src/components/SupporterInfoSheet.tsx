@@ -6,6 +6,7 @@ import { useEffect, useRef } from 'react'
 import { useNavigation } from '@react-navigation/native'
 import useTheme from '@/contexts/theme'
 import Text from '@/components/ui/MyText'
+import WholeWordsText from '@/components/ui/WholeWordsText'
 import IconButton from '@/components/ui/IconButton'
 import Button from '@/components/ui/Button'
 import SupporterBadge from '@/components/SupporterBadge'
@@ -116,7 +117,7 @@ const SupporterInfoSheet = ({
         >
           <View style={{ flex: 1, gap: 8 }}>
             <SupporterBadge size='md' style={{ alignSelf: 'flex-start' }} />
-            <Text
+            <WholeWordsText
               style={{
                 fontSize: theme.fontSize('2xl'),
                 fontFamily: theme.fonts.bold,
@@ -124,7 +125,7 @@ const SupporterInfoSheet = ({
               }}
             >
               {title}
-            </Text>
+            </WholeWordsText>
             <Text
               style={{
                 fontSize: 14,

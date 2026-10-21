@@ -9,6 +9,7 @@ import Empty from '@/components/ui/Empty'
 import InfoPopover from '@/components/ui/InfoPopover'
 import LucideIcon from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
+import WholeWordsText from '@/components/ui/WholeWordsText'
 import Header from '@/components/ui/layout/Header'
 import Wrapper from '@/components/ui/layout/Wrapper'
 import XView from '@/components/ui/layout/XView'
@@ -319,7 +320,7 @@ const ContactDetailsContent = ({
                     flexWrap: 'wrap',
                   }}
                 >
-                  <Text
+                  <WholeWordsText
                     style={{
                       flexShrink: 1,
                       fontSize: theme.fontSize('lg') - 1,
@@ -327,7 +328,7 @@ const ContactDetailsContent = ({
                     }}
                   >
                     {i18n.t('conversationHistory')}
-                  </Text>
+                  </WholeWordsText>
                   {contactVisits.length > 0 && (
                     <Text
                       style={{

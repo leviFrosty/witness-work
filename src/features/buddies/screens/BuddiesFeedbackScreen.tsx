@@ -18,9 +18,11 @@ import Divider from '@/components/ui/Divider'
 import InfoPopover from '@/components/ui/InfoPopover'
 import LucideIcon from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
+import WholeWordsText from '@/components/ui/WholeWordsText'
 import Switch from '@/components/ui/Switch'
 import Wrapper from '@/components/ui/layout/Wrapper'
 import useTheme from '@/contexts/theme'
+import useAccessibilityTextSize from '@/hooks/useAccessibilityTextSize'
 import { analytics, surveyClient } from '@/lib/analytics'
 import { errorTracking } from '@/lib/errorTracking'
 import i18n, { handleLangFallback } from '@/lib/locales'
@@ -46,6 +48,7 @@ type Props = NativeStackScreenProps<RootStackParamList, 'Buddies Feedback'>
  */
 export default function BuddiesFeedbackScreen({ route }: Props) {
   const theme = useTheme()
+  const largeText = useAccessibilityTextSize()
   const navigation = useNavigation<RootStackNavigation>()
   const source = route.params?.source ?? 'unknown'
   const { locale } = usePreferences()
@@ -148,8 +151,16 @@ export default function BuddiesFeedbackScreen({ route }: Props) {
         }}
       >
         <View style={{ gap: 10 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <Text
+          {/* At accessibility text sizes the info button and the Alpha pill
+              wrap under the headline rather than squeeze it. */}
+          <View
+            style={{
+              flexDirection: 'row',
+              flexWrap: largeText ? 'wrap' : 'nowrap',
+              alignItems: 'center',
+            }}
+          >
+            <WholeWordsText
               style={{
                 flexShrink: 1,
                 fontFamily: theme.fonts.bold,
@@ -157,7 +168,7 @@ export default function BuddiesFeedbackScreen({ route }: Props) {
               }}
             >
               {i18n.t('buddies_alphaHeadline')}
-            </Text>
+            </WholeWordsText>
             <InfoPopover
               title={i18n.t('buddies_alphaInfoTitle')}
               description={i18n.t('buddies_alphaBody')}

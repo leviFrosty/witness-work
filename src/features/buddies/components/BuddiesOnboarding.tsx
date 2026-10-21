@@ -14,6 +14,7 @@ import IconButton from '@/components/ui/IconButton'
 import InfoPopover from '@/components/ui/InfoPopover'
 import LucideIcon, { AppIcon } from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
+import WholeWordsText from '@/components/ui/WholeWordsText'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import { useProfile } from '@/stores/profile'
@@ -81,6 +82,7 @@ export default function BuddiesOnboarding({
   const next = () => setStep((index) => index + 1)
 
   const title = {
+    flexShrink: 1,
     fontFamily: theme.fonts.bold,
     fontSize: theme.fontSize('2xl'),
   }
@@ -149,9 +151,9 @@ export default function BuddiesOnboarding({
                 size={44}
                 color={theme.colors.accent}
               />
-              <Text style={title}>
+              <WholeWordsText style={title}>
                 {i18n.t('buddies_onboardingWelcomeTitle')}
-              </Text>
+              </WholeWordsText>
               <Text style={lead}>
                 {i18n.t('buddies_onboardingWelcomeBody')}
               </Text>
@@ -178,9 +180,9 @@ export default function BuddiesOnboarding({
         {current === 'profile' && (
           <>
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <Text style={title}>
+              <WholeWordsText style={title}>
                 {i18n.t('buddies_onboardingProfileTitle')}
-              </Text>
+              </WholeWordsText>
               <InfoPopover
                 title={i18n.t('buddies_onboardingProfileTitle')}
                 description={i18n.t('buddies_onboardingProfileInfo')}

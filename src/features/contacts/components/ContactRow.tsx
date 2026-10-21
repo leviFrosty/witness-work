@@ -11,6 +11,7 @@ import { ChevronForwardIcon } from '@/components/ui/DirectionalIcon'
 import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
 import { View } from 'react-native'
 import useTheme from '@/contexts/theme'
+import useAccessibilityTextSize from '@/hooks/useAccessibilityTextSize'
 import ContactCard, {
   ContactCardBody,
   ContactCardSubtitle,
@@ -119,6 +120,8 @@ const ContactRow = ({
 }) => {
   const dataProtectionMode = usePreferences((s) => s.dataProtectionMode)
   const theme = useTheme()
+  // At accessibility sizes the name wraps instead of cutting off.
+  const largeText = useAccessibilityTextSize()
   const markerColors = useMarkerColors()
   const [dismissSheetOpen, setDismissSheetOpen] = useState(false)
   // A closed Tamagui modal sheet still mounts its whole content through a
@@ -210,7 +213,7 @@ const ContactRow = ({
             text={contact.name}
             match={nameMatch}
             baseStyle={{ fontSize: 18 }}
-            numberOfLines={1}
+            numberOfLines={largeText ? undefined : 1}
           />
         }
         subtitle={

@@ -5,6 +5,7 @@ import ContextMenu, {
 } from '@/components/ui/ContextMenu'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
+import useAccessibilityTextSize from '@/hooks/useAccessibilityTextSize'
 
 /**
  * One row in a Buddies list section: avatar, two lines, trailing controls.
@@ -40,6 +41,9 @@ export default function BuddyListRow({
   muted?: boolean
 }) {
   const theme = useTheme()
+  // At accessibility sizes the name and line under it wrap in full instead of
+  // cutting off.
+  const largeText = useAccessibilityTextSize()
   return (
     <View
       style={{
@@ -68,7 +72,7 @@ export default function BuddyListRow({
           <View style={{ opacity: muted ? 0.5 : 1 }}>{leading}</View>
           <View style={{ flex: 1, gap: 2 }}>
             <Text
-              numberOfLines={1}
+              numberOfLines={largeText ? undefined : 1}
               style={{
                 fontFamily: theme.fonts.semiBold,
                 color: muted ? theme.colors.textAlt : theme.colors.text,
@@ -78,7 +82,7 @@ export default function BuddyListRow({
             </Text>
             {subtitle ? (
               <Text
-                numberOfLines={2}
+                numberOfLines={largeText ? undefined : 2}
                 style={{
                   color: theme.colors.textAlt,
                   fontSize: theme.fontSize('sm'),

@@ -126,7 +126,7 @@ const SupporterInfoSheet = ({
             >
               {title}
             </WholeWordsText>
-            <Text
+            <WholeWordsText
               style={{
                 fontSize: 14,
                 color: theme.colors.textAlt,
@@ -134,7 +134,7 @@ const SupporterInfoSheet = ({
               }}
             >
               {subtitle}
-            </Text>
+            </WholeWordsText>
           </View>
           <IconButton
             noTransform

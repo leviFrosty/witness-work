@@ -1009,32 +1009,32 @@
   },
   {
     "name": "@react-navigation/bottom-tabs",
-    "version": "7.18.8",
+    "version": "7.21.0",
     "license": "MIT"
   },
   {
     "name": "@react-navigation/core",
-    "version": "7.21.5",
+    "version": "7.24.0",
     "license": "MIT"
   },
   {
     "name": "@react-navigation/elements",
-    "version": "2.9.30",
+    "version": "2.9.45",
     "license": "MIT"
   },
   {
     "name": "@react-navigation/native",
-    "version": "7.3.8",
+    "version": "7.5.1",
     "license": "MIT"
   },
   {
     "name": "@react-navigation/native-stack",
-    "version": "7.17.10",
+    "version": "7.21.0",
     "license": "MIT"
   },
   {
     "name": "@react-navigation/routers",
-    "version": "7.6.0",
+    "version": "7.6.5",
     "license": "MIT"
   },
   {
@@ -2091,7 +2091,7 @@
   },
   {
     "name": "axios",
-    "version": "1.18.0",
+    "version": "1.20.0",
     "license": "MIT",
     "author": "Matt Zabriskie"
   },
@@ -2218,7 +2218,7 @@
   },
   {
     "name": "brace-expansion",
-    "version": "5.0.9",
+    "version": "5.0.12",
     "license": "MIT"
   },
   {
@@ -2439,7 +2439,7 @@
   },
   {
     "name": "compression",
-    "version": "1.8.1",
+    "version": "1.8.2",
     "license": "MIT"
   },
   {
@@ -2626,12 +2626,6 @@
     "version": "1.2.0",
     "license": "MIT",
     "author": "Sindre Sorhus"
-  },
-  {
-    "name": "decode-uri-component",
-    "version": "0.2.2",
-    "license": "MIT",
-    "author": "Sam Verschueren"
   },
   {
     "name": "deep-extend",
@@ -3314,12 +3308,6 @@
     "author": "Jon Schlinkert"
   },
   {
-    "name": "filter-obj",
-    "version": "1.1.0",
-    "license": "MIT",
-    "author": "Sindre Sorhus"
-  },
-  {
     "name": "finalhandler",
     "version": "1.1.2",
     "license": "MIT",
@@ -3338,7 +3326,7 @@
   },
   {
     "name": "follow-redirects",
-    "version": "1.16.0",
+    "version": "1.16.1",
     "license": "MIT",
     "author": "Ruben Verborgh"
   },
@@ -4087,9 +4075,8 @@
   },
   {
     "name": "moment",
-    "version": "2.30.1",
-    "license": "MIT",
-    "author": "Iskren Ivov Chernev"
+    "version": "2.31.0",
+    "license": "MIT"
   },
   {
     "name": "motion",
@@ -4514,12 +4501,6 @@
     "version": "1.5.4",
     "license": "MIT",
     "author": "Ryan Day"
-  },
-  {
-    "name": "query-string",
-    "version": "7.1.3",
-    "license": "MIT",
-    "author": "Sindre Sorhus"
   },
   {
     "name": "quote-unquote",
@@ -5037,7 +5018,7 @@
   },
   {
     "name": "source-map-js",
-    "version": "1.2.1",
+    "version": "1.2.2",
     "license": "BSD-3-Clause",
     "author": "Valentin 7rulnik Semirulnik"
   },
@@ -5045,12 +5026,6 @@
     "name": "source-map-support",
     "version": "0.5.21",
     "license": "MIT"
-  },
-  {
-    "name": "split-on-first",
-    "version": "1.1.0",
-    "license": "MIT",
-    "author": "Sindre Sorhus"
   },
   {
     "name": "stackframe",
@@ -5065,7 +5040,7 @@
   },
   {
     "name": "standard-navigation",
-    "version": "0.0.7",
+    "version": "0.0.8",
     "license": "MIT",
     "author": "Satyajit Sahoo"
   },
@@ -5090,12 +5065,6 @@
     "version": "2.3.0",
     "license": "MIT",
     "author": "Jonathan Ong"
-  },
-  {
-    "name": "strict-uri-encode",
-    "version": "2.0.0",
-    "license": "MIT",
-    "author": "Kevin Mårtensson"
   },
   {
     "name": "string_decoder",

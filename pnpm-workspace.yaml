@@ -18,7 +18,7 @@ overrides:
   '@bacons/apple-targets>@expo/prebuild-config': 57.0.16
   expo-modules-autolinking: 57.0.6
   react-native-safe-area-context: $react-native-safe-area-context
-  axios: '>=1.15.2'
+  axios: 1.20.0
   '@expo/metro': 56.0.2
   glob: '>=11.1.0'
   # Fix both critical Handlebars injection advisories in eslint-plugin-boundaries.
@@ -27,11 +27,11 @@ overrides:
   '@tootallnate/once': '>=3.0.1'
   postcss: '^8.5.26'
   fast-xml-parser: '>=5.7.0'
-  follow-redirects: '>=1.16.0'
-  'brace-expansion@1': '^1.1.18'
-  'brace-expansion@5': '^5.0.9'
+  follow-redirects: 1.16.1
+  'brace-expansion@1': 1.1.21
+  'brace-expansion@5': 5.0.12
   browserslist: 4.28.9
-  fast-uri: 3.1.7
+  fast-uri: 3.1.8
   'js-yaml@3': 3.15.2
   'js-yaml@4': 4.3.2
   metro: 0.84.5
@@ -42,6 +42,13 @@ overrides:
   'nanoid@3': '^3.3.18'
   shell-quote: '^1.11.0'
   'ws@8': '^8.21.3'
+  # Advisories in build and test tooling only: the Expo CLI dev server, Metro's
+  # postcss, vitest's vite, and the hot-updater CLI and console.
+  '@hot-updater/expo>@babel/core': 7.29.7
+  compression: 1.8.2
+  hono: 4.13.13
+  source-map-js: 1.2.2
+  vite: 7.3.7
 patchedDependencies:
   '@expo/dom-webview@57.0.1': patches/@expo__dom-webview@57.0.1.patch
   '@expo/fingerprint@0.20.13': patches/@expo__fingerprint.patch

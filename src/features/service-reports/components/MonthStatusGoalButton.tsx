@@ -65,7 +65,8 @@ const MonthStatusGoalButton = ({
   const content = (
     <>
       <Text
-        numberOfLines={largeText ? undefined : 1}
+        // Narrow columns wrap the goal instead of cutting it.
+        numberOfLines={largeText ? undefined : 2}
         style={{
           flexShrink: 1,
           color,

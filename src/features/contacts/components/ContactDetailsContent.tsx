@@ -41,6 +41,7 @@ import UpNextCard from '@/features/contacts/components/UpNextCard'
 import VisitJourneyCard from '@/features/contacts/components/VisitJourneyCard'
 import VisitTimeline from '@/features/contacts/components/VisitTimeline'
 import useContactHeroBackground from '@/features/contacts/hooks/useContactHeroBackground'
+import { useHorizontalBleed } from '@/components/ui/layout/HorizontalSafeArea'
 import {
   canNavigateTo,
   contactAddressLines,
@@ -50,6 +51,9 @@ import {
   getUpNext,
   sortVisitsNewestFirst,
 } from '@/features/contacts/lib/visitTimeline'
+
+// The details stay readable on wide screens; the hero's color goes edge to edge.
+const CONTENT_MAX_WIDTH = 760
 
 type Props = {
   id: string
@@ -66,6 +70,7 @@ const ContactDetailsContent = ({
 }: Props) => {
   const theme = useTheme()
   const insets = useSafeAreaInsets()
+  const bleed = useHorizontalBleed()
   const { developerTools, defaultNavigationMapProvider } = usePreferences()
   const { contacts, customFieldDefs } = useContacts()
   const { conversations } = useConversations()
@@ -198,34 +203,43 @@ const ContactDetailsContent = ({
   })
   const mostRecentStudy = contactMostRecentStudy({ conversations, contact })
 
+  const column = {
+    width: '100%',
+    maxWidth: CONTENT_MAX_WIDTH,
+    alignSelf: 'center',
+  } as const
+
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
       {embedded && (
-        <View
-          style={{
-            width: '100%',
-            maxWidth: 760,
-            alignSelf: 'center',
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'flex-end',
-            gap: 20,
-            padding: 16,
-            backgroundColor: heroBackground,
-          }}
-        >
-          <ContactDetailsActions
-            contact={contact}
-            navigation={navigation}
-            embedded
-            color={heroForeground}
-          />
+        <View style={{ backgroundColor: heroBackground }}>
+          <View
+            style={{
+              width: '100%',
+              maxWidth: CONTENT_MAX_WIDTH,
+              alignSelf: 'center',
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'flex-end',
+              gap: 20,
+              padding: 16,
+            }}
+          >
+            <ContactDetailsActions
+              contact={contact}
+              navigation={navigation}
+              embedded
+              color={heroForeground}
+            />
+          </View>
         </View>
       )}
       {!embedded && <StatusBar style={heroIsDark ? 'light' : 'dark'} />}
       <ScrollView
         ref={scrollViewRef}
-        style={{ width: '100%', maxWidth: 760, alignSelf: 'center' }}
+        // Full width, out under the side insets too, so the hero's color runs
+        // edge to edge like the header's; the content keeps its column.
+        style={{ marginLeft: -bleed.left, marginRight: -bleed.right }}
         contentContainerStyle={{
           paddingBottom: embedded ? 24 : insets.bottom + 60,
         }}
@@ -241,158 +255,175 @@ const ContactDetailsContent = ({
             backgroundColor: heroBackground,
           }}
         />
-        <ContactHero
-          contact={contact}
-          heroBackground={heroBackground}
-          heroForeground={heroForeground}
-          overlapped={!!upNext}
-          isActiveStudy={isActiveStudy}
-          mostRecentStudy={mostRecentStudy}
-          onEdit={editContact}
-        />
         <View
           style={{
-            paddingHorizontal: 14,
-            gap: 16,
-            paddingTop: upNext ? 0 : 16,
+            backgroundColor: heroBackground,
+            paddingLeft: bleed.left,
+            paddingRight: bleed.right,
           }}
         >
-          {upNext && (
-            <UpNextCard
-              upNext={upNext}
-              overlap
-              onOpen={() =>
-                navigation.navigate('Visit Details', {
-                  visitId: upNext.visit.id,
-                })
-              }
-              onLogVisit={logVisit}
-              onReschedule={() =>
-                navigation.navigate('RescheduleVisit', {
-                  contactId: contact.id,
-                  visitId: upNext.visit.id,
-                })
-              }
+          <View style={column}>
+            <ContactHero
+              contact={contact}
+              heroBackground={heroBackground}
+              heroForeground={heroForeground}
+              overlapped={!!upNext}
+              isActiveStudy={isActiveStudy}
+              mostRecentStudy={mostRecentStudy}
+              onEdit={editContact}
+            />
+          </View>
+        </View>
+        <View style={{ paddingLeft: bleed.left, paddingRight: bleed.right }}>
+          <View
+            style={[
+              column,
+              {
+                paddingHorizontal: 14,
+                gap: 16,
+                paddingTop: upNext ? 0 : 16,
+              },
+            ]}
+          >
+            {upNext && (
+              <UpNextCard
+                upNext={upNext}
+                overlap
+                onOpen={() =>
+                  navigation.navigate('Visit Details', {
+                    visitId: upNext.visit.id,
+                  })
+                }
+                onLogVisit={logVisit}
+                onReschedule={() =>
+                  navigation.navigate('RescheduleVisit', {
+                    contactId: contact.id,
+                    visitId: upNext.visit.id,
+                  })
+                }
+                onNavigate={navigate}
+              />
+            )}
+            <ContactReachCard
+              contact={contact}
+              phoneDisplay={phone?.number?.international}
+              onCall={call}
+              onText={text}
+              onEmail={email}
               onNavigate={navigate}
             />
-          )}
-          <ContactReachCard
-            contact={contact}
-            phoneDisplay={phone?.number?.international}
-            onCall={call}
-            onText={text}
-            onEmail={email}
-            onNavigate={navigate}
-          />
-          <ContactCustomFieldsCard contact={contact} />
-          {!hasInformation && (
-            <Text style={{ color: theme.colors.textAlt, paddingHorizontal: 2 }}>
-              {i18n.t('noPersonalInformationSaved')}
-            </Text>
-          )}
-          {developerTools && (
-            <JsonViewer label={i18n.t('data')} value={contact} />
-          )}
-          <View style={{ gap: 12 }}>
-            <View
-              style={{
-                flexDirection: stackHistoryHeader ? 'column' : 'row',
-                alignItems: stackHistoryHeader ? 'flex-start' : 'center',
-                justifyContent: 'space-between',
-                gap: 8,
-                paddingHorizontal: 2,
-              }}
-            >
-              {/* The count and info button wrap under a heading that fills
-                  its row, so a long word never has to break. */}
-              <XView
+            <ContactCustomFieldsCard contact={contact} />
+            {!hasInformation && (
+              <Text
+                style={{ color: theme.colors.textAlt, paddingHorizontal: 2 }}
+              >
+                {i18n.t('noPersonalInformationSaved')}
+              </Text>
+            )}
+            {developerTools && (
+              <JsonViewer label={i18n.t('data')} value={contact} />
+            )}
+            <View style={{ gap: 12 }}>
+              <View
                 style={{
-                  alignItems: 'center',
-                  flexShrink: 1,
-                  flexWrap: 'wrap',
+                  flexDirection: stackHistoryHeader ? 'column' : 'row',
+                  alignItems: stackHistoryHeader ? 'flex-start' : 'center',
+                  justifyContent: 'space-between',
+                  gap: 8,
+                  paddingHorizontal: 2,
                 }}
               >
+                {/* The count and info button wrap under a heading that fills
+                  its row, so a long word never has to break. */}
                 <XView
                   style={{
-                    gap: 8,
-                    alignItems: 'baseline',
+                    alignItems: 'center',
                     flexShrink: 1,
                     flexWrap: 'wrap',
                   }}
                 >
-                  <WholeWordsText
+                  <XView
                     style={{
+                      gap: 8,
+                      alignItems: 'baseline',
                       flexShrink: 1,
-                      fontSize: theme.fontSize('lg') - 1,
-                      fontFamily: theme.fonts.semiBold,
+                      flexWrap: 'wrap',
                     }}
                   >
-                    {i18n.t('conversationHistory')}
-                  </WholeWordsText>
-                  {contactVisits.length > 0 && (
-                    <Text
+                    <WholeWordsText
                       style={{
-                        fontSize: theme.fontSize('sm'),
-                        fontFamily: theme.fonts.medium,
-                        color: theme.colors.textAlt,
+                        flexShrink: 1,
+                        fontSize: theme.fontSize('lg') - 1,
+                        fontFamily: theme.fonts.semiBold,
                       }}
                     >
-                      {contactVisits.length}
-                    </Text>
+                      {i18n.t('conversationHistory')}
+                    </WholeWordsText>
+                    {contactVisits.length > 0 && (
+                      <Text
+                        style={{
+                          fontSize: theme.fontSize('sm'),
+                          fontFamily: theme.fonts.medium,
+                          color: theme.colors.textAlt,
+                        }}
+                      >
+                        {contactVisits.length}
+                      </Text>
+                    )}
+                  </XView>
+                  {journey && (
+                    <InfoPopover
+                      inline
+                      title={i18n.t('conversationHistory')}
+                      description={i18n.t('contactDetails.historyInfo')}
+                    />
                   )}
                 </XView>
-                {journey && (
-                  <InfoPopover
-                    inline
-                    title={i18n.t('conversationHistory')}
-                    description={i18n.t('contactDetails.historyInfo')}
-                  />
-                )}
-              </XView>
-              <AddVisitMenu
-                contact={contact}
-                navigation={navigation}
-                color={theme.colors.text}
-                compact
-              />
-            </View>
-            {journey ? (
-              <>
-                <VisitJourneyCard journey={journey} upNext={upNext} />
-                <VisitTimeline
-                  visits={contactVisits}
-                  upNext={upNext}
-                  highlightedVisitId={highlightedVisitId}
-                  highlightedRef={highlightedRowRef}
-                  onPressUpNext={() =>
-                    scrollViewRef.current?.scrollTo({ y: 0, animated: true })
-                  }
+                <AddVisitMenu
+                  contact={contact}
+                  navigation={navigation}
+                  color={theme.colors.text}
+                  compact
                 />
-              </>
-            ) : (
-              <Empty
-                icon={
-                  <LucideIcon
-                    icon={MessageCircleIcon}
-                    size={24}
-                    color={theme.colors.text}
+              </View>
+              {journey ? (
+                <>
+                  <VisitJourneyCard journey={journey} upNext={upNext} />
+                  <VisitTimeline
+                    visits={contactVisits}
+                    upNext={upNext}
+                    highlightedVisitId={highlightedVisitId}
+                    highlightedRef={highlightedRowRef}
+                    onPressUpNext={() =>
+                      scrollViewRef.current?.scrollTo({ y: 0, animated: true })
+                    }
                   />
-                }
-                title={i18n.t('noConversationYet')}
-                description={i18n.t('thisContactHasNoConversations')}
-              />
-            )}
+                </>
+              ) : (
+                <Empty
+                  icon={
+                    <LucideIcon
+                      icon={MessageCircleIcon}
+                      size={24}
+                      color={theme.colors.text}
+                    />
+                  }
+                  title={i18n.t('noConversationYet')}
+                  description={i18n.t('thisContactHasNoConversations')}
+                />
+              )}
+            </View>
+            <Text
+              style={{
+                fontSize: theme.fontSize('xs'),
+                color: theme.colors.textAlt,
+                textAlign: 'center',
+                paddingTop: 8,
+              }}
+            >
+              {i18n.t('createdDate', { date: formatDate(contact.createdAt) })}
+            </Text>
           </View>
-          <Text
-            style={{
-              fontSize: theme.fontSize('xs'),
-              color: theme.colors.textAlt,
-              textAlign: 'center',
-              paddingTop: 8,
-            }}
-          >
-            {i18n.t('createdDate', { date: formatDate(contact.createdAt) })}
-          </Text>
         </View>
       </ScrollView>
     </View>

@@ -74,11 +74,11 @@ const ProgressAllTimeTab = ({
 }: ProgressAllTimeTabProps) => {
   const theme = useTheme()
   const insets = useSafeAreaInsets()
-  const { isWide, hasSidebar } = useAdaptiveLayout()
+  const { isWide, hasBottomBar } = useAdaptiveLayout()
   const isEmpty = useAllTimeIsEmpty()
   const scrollRef = useRef<KeyboardAwareScrollView>(null)
   const scroller = useReorderScroller(scrollRef, {
-    obscuredBottom: hasSidebar ? 0 : insets.bottom + TAB_BAR_HEIGHT,
+    obscuredBottom: hasBottomBar ? insets.bottom + TAB_BAR_HEIGHT : 0,
   })
   const [dragging, setDragging] = useState(false)
   // Tapping Progress again heads back to the top.
@@ -109,7 +109,7 @@ const ProgressAllTimeTab = ({
     <AdaptiveSplitScrollView
       scrollBars={scrollBars}
       leadingFraction={0.42}
-      paddingBottom={insets.bottom + (hasSidebar ? 30 : 100)}
+      paddingBottom={insets.bottom + (hasBottomBar ? 100 : 30)}
       compactPaddingHorizontal={0}
       leadingReorder={{ scrollRef, scroller, scrollEnabled: !dragging }}
       leading={

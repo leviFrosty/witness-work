@@ -83,7 +83,7 @@ export const HomeScreen = ({ header }: { header: ReactNode }) => {
   perf.count('render:Home')
   const theme = useTheme()
   const insets = useSafeAreaInsets()
-  const { isWide, hasSidebar, contentMaxWidth } = useAdaptiveLayout()
+  const { isWide, hasBottomBar, contentMaxWidth } = useAdaptiveLayout()
   const {
     homeChecklistDismissed,
     iCloudSyncEnabled,
@@ -162,7 +162,7 @@ export const HomeScreen = ({ header }: { header: ReactNode }) => {
   const { editing } = homeEditing
   const [dragging, setDragging] = useState(false)
   const scroll = useReorderScroller(weekStrip.scrollRef, {
-    obscuredBottom: hasSidebar ? 0 : insets.bottom + TAB_BAR_HEIGHT,
+    obscuredBottom: hasBottomBar ? insets.bottom + TAB_BAR_HEIGHT : 0,
   })
   const sections = useAvailableHomeSections()
   const shownSections = sections.available.filter(
@@ -220,7 +220,7 @@ export const HomeScreen = ({ header }: { header: ReactNode }) => {
         automaticallyAdjustKeyboardInsets
         style={{
           flex: 1,
-          paddingBottom: hasSidebar ? 0 : insets.bottom + 50,
+          paddingBottom: hasBottomBar ? insets.bottom + 50 : 0,
         }}
         refreshControl={
           iCloudSyncEnabled && !editing ? (
@@ -275,7 +275,7 @@ export const HomeScreen = ({ header }: { header: ReactNode }) => {
             style={{
               paddingBottom:
                 insets.bottom * 2 +
-                (hasSidebar ? 30 : 85) +
+                (hasBottomBar ? 85 : 30) +
                 weekStrip.bottomInset,
             }}
           >

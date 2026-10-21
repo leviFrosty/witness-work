@@ -807,7 +807,7 @@ const MonthReport = ({
               color: theme.colors.textAlt,
               fontSize: theme.fontSize('sm'),
             }}
-            numberOfLines={1}
+            numberOfLines={2}
           >
             {i18n.t('timeRollover_inlineCard', {
               minutes: rollover.availablePending[0].minutes,

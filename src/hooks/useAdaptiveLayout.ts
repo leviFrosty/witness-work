@@ -1,19 +1,26 @@
 import { useWindowDimensions } from 'react-native'
 import { getAdaptiveLayout } from '@/lib/sidebarLayout'
 import { useSidebarPreferences, useSidebarResize } from '@/stores/sidebar'
+import { useDisplayRegions } from '@/stores/displayRegions'
 
 /**
- * Window-based so multitasking and Dynamic Type can use compact layouts. Only
- * navigation previews the live label mode; the drag width itself animates on
- * the UI thread. Content breakpoints settle on release so dragging does not
- * repeatedly rebuild navigators and sheet portals.
+ * Window-based so multitasking and Dynamic Type can use compact layouts, plus
+ * the vertical bar edge iPhone Duo reports. Only navigation previews the live
+ * label mode; the drag width itself animates on the UI thread. Content
+ * breakpoints settle on release so dragging does not repeatedly rebuild
+ * navigators and sheet portals.
  */
 export default function useAdaptiveLayout({ liveResize = false } = {}) {
   const { width, fontScale } = useWindowDimensions()
   const savedWidth = useSidebarPreferences((s) => s.width)
   const hidden = useSidebarPreferences((s) => s.hidden)
   const dragCompact = useSidebarResize((s) => (liveResize ? s.compact : null))
-  const layout = getAdaptiveLayout(width, fontScale, savedWidth, hidden)
+  const verticalBarEdge = useDisplayRegions(
+    (s) => s.regions?.verticalBarEdge ?? null
+  )
+  const layout = getAdaptiveLayout(width, fontScale, savedWidth, hidden, {
+    verticalBarEdge,
+  })
 
   return dragCompact === null
     ? layout

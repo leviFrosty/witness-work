@@ -1,19 +1,42 @@
 import { Platform } from 'react-native'
-import { createNativeStackNavigator } from '@react-navigation/native-stack'
+import createSystemBackStackNavigator from '@/app/navigation/createSystemBackStackNavigator'
 import Header from '@/components/ui/layout/Header'
+import useTheme from '@/contexts/theme'
+import HorizontalSafeArea from '@/components/ui/layout/HorizontalSafeArea'
 import { usePreferences } from '@/stores/preferences'
 import HomeTabStack from '@/app/navigation/HomeTabStack'
 import i18n from '@/lib/locales'
 import { settingsDetailScreens } from '@/app/navigation/settingsDetailScreens'
 import { RootStackParamList } from '@/types/rootStack'
 
-const RootStack = createNativeStackNavigator<RootStackParamList>()
+// Pushed screens get the system's Back button in iPhone Duo's vertical bar.
+const RootStack = createSystemBackStackNavigator<RootStackParamList>()
 
 const RootStackComponent = () => {
   const onboardingComplete = usePreferences((s) => s.onboardingComplete)
+  const theme = useTheme()
 
   return (
-    <RootStack.Navigator>
+    <RootStack.Navigator
+      // The tabs keep their own; the badge viewer places its coin in window
+      // coordinates.
+      screenLayout={({ route, options, children }) =>
+        route.name === 'Root' || route.name === 'BadgeView' ? (
+          children
+        ) : (
+          <HorizontalSafeArea
+            backgroundColor={
+              options.presentation === 'transparentModal' ||
+              options.presentation === 'containedTransparentModal'
+                ? undefined
+                : theme.colors.background
+            }
+          >
+            {children}
+          </HorizontalSafeArea>
+        )
+      }
+    >
       <RootStack.Group
         navigationKey={onboardingComplete ? 'app' : 'onboarding'}
       >

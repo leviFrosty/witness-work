@@ -20,6 +20,7 @@ import AnimationViewProvider from '@/providers/AnimationViewProvider'
 import ConfettiProvider from '@/providers/ConfettiProvider'
 import RootStackComponent from '@/app/navigation/RootStack'
 import SystemBars from '@/app/components/SystemBars'
+import DisplayRegionsObserver from '@/components/DisplayRegionsObserver'
 import LaunchSplash from '@/app/launch/LaunchSplash'
 import { useStorageUnlock } from '@/app/launch/useStorageUnlock'
 import { markLaunched } from '@/app/launch/launchState'
@@ -136,6 +137,7 @@ function UnlockedApp() {
         <ThemeProvider>
           <SafeAreaProvider>
             <GestureHandlerRootView style={{ flex: 1 }}>
+              <DisplayRegionsObserver />
               {/* Off except while the note editor is open (it pins its
                   toolbar to the keyboard); the rest of the app avoids the
                   keyboard with React Native's own events. */}

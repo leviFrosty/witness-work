@@ -44,6 +44,17 @@ iPad users can hover with a trackpad, mouse, or Apple Pencil; iPhone can't, and 
   - build hover-only UI that behaves differently from touch.
 - **Test:** with a real pointer on an iPad simulator. See [`docs/ipad-pointer-testing.md`](./docs/ipad-pointer-testing.md). Unit tests can't show whether hover actually works.
 
+## iPhone Duo (foldable)
+
+iPhone Duo has a compact outer display and a regular-width inner one. On both, the system's vertical bar (status bar, Back) sits on the right edge, and when the device is half-open a fold divides the inner display. Follow Apple's [iPhone Duo guidance](https://developer.apple.com/design/human-interface-guidelines/designing-for-iphone-duo). `modules/display-regions` reads the bar edge and the fold into `useDisplayRegions`, and the layout primitives below act on them. On other devices they change nothing.
+
+- **Layout by size, never by device.** Use `useAdaptiveLayout` (`isWide`, `hasBottomBar`, `navigationRail`), not `Platform.isPad` or `isTablet`. When the vertical bar is present, tabs become a side rail; pad for the bottom bar only when `hasBottomBar` is true.
+- **Two columns go in `FoldSplit`.** It meets the fold when the device is half-open and springs there; never hand-roll a `flexDirection: 'row'` split.
+- **Controls sit above the content they affect.** In a master–detail split, the screen header goes in the leading column and the detail pane runs to the top (see Contacts, Schedule, Progress Month). A header spans both columns only when both hold the same kind of content (Home, Progress Year).
+- **Side safe areas.** Stack screens are already wrapped in `HorizontalSafeArea`. Hero backgrounds bleed under the bar with `useHorizontalBleed()`, while content stays inset.
+- **Back button.** On a stack screen, use `Header buttonType='back'`. On iPhone Duo the system draws the button in the vertical bar (`createSystemBackStackNavigator`). Custom `onPressLeftIcon` or `leftElement` keep the app's own button.
+- **Test:** run `wwv up --duo` and check it closed, open and half-open (`wwv ad fold …`). Also check `--ipad`, `--ipad-mini` and `--se` for regressions.
+
 ## Screenshots of UI changes
 
 Reviewers check UI changes by looking at them. Whenever a change adds or alters something users see, show it. Capture screens as described in [`docs/ios-simulator-testing.md`](./docs/ios-simulator-testing.md#collect-evidence).

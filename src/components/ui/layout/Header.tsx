@@ -9,6 +9,7 @@ import {
   SafeAreaProvider,
   useSafeAreaInsets,
 } from 'react-native-safe-area-context'
+import { isRtlLayout } from '@/lib/direction'
 import { useNavigation } from '@react-navigation/native'
 import IconButton from '@/components/ui/IconButton'
 import i18n from '@/lib/locales'
@@ -17,6 +18,7 @@ import { cloneElement, isValidElement, useState } from 'react'
 import WindowControlsInsetView, {
   NO_WINDOW_CONTROLS,
 } from '../../../../modules/window-controls'
+import { useSystemBackButton } from '@/components/ui/layout/SystemBackButton'
 
 type Props = {
   backgroundColor?: string
@@ -46,13 +48,24 @@ type Props = {
 /** Room between the title and the buttons beside it. */
 const TITLE_GAP = 8
 
-// The nested provider measures the header's own safe area, so a screen pushed
-// inside an iOS modal sheet gets no status-bar inset instead of the window's.
-const Header = (props: Props) => (
-  <SafeAreaProvider style={{ flex: 0 }}>
-    <HeaderContent {...props} />
-  </SafeAreaProvider>
-)
+const Header = (props: Props) => {
+  // Where the navigation bar draws Back (iPhone Duo's vertical bar), ours
+  // steps aside.
+  const systemBack = useSystemBackButton(
+    props.buttonType === 'back' && !props.leftElement && !props.onPressLeftIcon
+  )
+  // The window's insets, as the bar's own (in the screen's safe area) would
+  // push the header below it. Pushed screens are never in a sheet.
+  if (systemBack) return <HeaderContent {...props} systemBack />
+
+  // The nested provider measures the header's own safe area, so a screen pushed
+  // inside an iOS modal sheet gets no status-bar inset instead of the window's.
+  return (
+    <SafeAreaProvider style={{ flex: 0 }}>
+      <HeaderContent {...props} systemBack={false} />
+    </SafeAreaProvider>
+  )
+}
 
 const HeaderContent = ({
   title,
@@ -66,7 +79,8 @@ const HeaderContent = ({
   noInsets,
   onPressLeftIcon,
   onLongPressTitle,
-}: Props) => {
+  systemBack,
+}: Props & { systemBack: boolean }) => {
   const theme = useTheme()
   const insets = useSafeAreaInsets()
   const navigation = useNavigation<RootStackNavigation>()
@@ -78,7 +92,10 @@ const HeaderContent = ({
   // (large text, long translations) never runs under them.
   const [leftWidth, setLeftWidth] = useState(0)
   const [rightWidth, setRightWidth] = useState(0)
-  const titleInset = Math.max(controls.start + leftWidth, rightWidth)
+  const titleInset = Math.max(
+    controls.start + (systemBack ? 0 : leftWidth),
+    rightWidth
+  )
   const widthSetter =
     (set: (width: number) => void) => (e: LayoutChangeEvent) =>
       set(Math.round(e.nativeEvent.layout.width))
@@ -144,7 +161,10 @@ const HeaderContent = ({
         style={{
           position: 'relative',
           flexGrow: 1,
-          marginHorizontal: 15,
+          // Stack headers sit outside the screen's horizontal safe area. Insets
+          // are physical; React Native mirrors left and right margins in RTL.
+          marginLeft: 15 + (isRtlLayout() ? insets.right : insets.left),
+          marginRight: 15 + (isRtlLayout() ? insets.left : insets.right),
           flexDirection: 'row',
           alignItems: 'center',
           justifyContent: 'center',
@@ -159,7 +179,8 @@ const HeaderContent = ({
             {leftElement}
           </View>
         ) : (
-          buttonType !== 'none' && (
+          buttonType !== 'none' &&
+          !systemBack && (
             <View
               onLayout={widthSetter(setLeftWidth)}
               style={{ position: 'absolute', left: controls.start }}

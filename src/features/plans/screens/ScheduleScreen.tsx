@@ -18,6 +18,7 @@ import { usePreferences } from '@/stores/preferences'
 import { useScheduleIntro } from '@/stores/scheduleIntro'
 import { useTakeover } from '@/stores/takeover'
 import { HomeTabStackParamList } from '@/types/homeStack'
+import FoldSplit from '@/components/ui/layout/FoldSplit'
 import RootHeader from '@/components/RootHeader'
 import ScrollAwayHeader from '@/components/ui/ScrollAwayHeader'
 import useHideBarsOnScroll from '@/hooks/useHideBarsOnScroll'
@@ -46,7 +47,7 @@ type Props = BottomTabScreenProps<HomeTabStackParamList, 'Schedule'>
 
 const ScheduleScreen = ({ route, navigation }: Props) => {
   const theme = useTheme()
-  const { isWide, hasSidebar } = useAdaptiveLayout()
+  const { isWide, hasBottomBar } = useAdaptiveLayout()
   const insets = useSafeAreaInsets()
   const tabBarHeight = useBottomTabBarHeight()
   const serviceReports = useServiceReport((s) => s.serviceReports)
@@ -69,7 +70,7 @@ const ScheduleScreen = ({ route, navigation }: Props) => {
   const buddyMarkers = useBuddyCalendarMarkers()
   const index = useScheduleDayIndex()
   const editableGoal = useEditableMonthGoal()
-  const bottomInset = (hasSidebar ? insets.bottom : tabBarHeight) + 40
+  const bottomInset = (hasBottomBar ? tabBarHeight : insets.bottom) + 40
 
   const routeMonth =
     route.params?.year !== undefined && route.params.month !== undefined
@@ -207,63 +208,77 @@ const ScheduleScreen = ({ route, navigation }: Props) => {
     />
   )
 
+  const header = (
+    <ScrollAwayHeader hidden={bars.hidden}>
+      <RootHeader
+        title={i18n.t('Schedule')}
+        actions={
+          <>
+            <ScheduleViewToggle
+              value={view}
+              onChange={(next) => changeView(next, 'toggle')}
+            />
+            {/* Phones show the label only where the title still fits beside
+                it; it's easy to miss as an icon. */}
+            <BuddiesHeaderButton compact={isWide ? false : 'auto'} />
+          </>
+        }
+        contentStyle={isWide ? { paddingHorizontal: 0 } : { maxWidth: 720 }}
+      />
+    </ScrollAwayHeader>
+  )
+
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
-      <ScrollAwayHeader hidden={bars.hidden}>
-        <RootHeader
-          title={i18n.t('Schedule')}
-          actions={
-            <>
-              <ScheduleViewToggle
-                value={view}
-                onChange={(next) => changeView(next, 'toggle')}
-              />
-              {/* Phones show the label only where the title still fits beside
-            it; it's easy to miss as an icon. */}
-              <BuddiesHeaderButton compact={isWide ? false : 'auto'} />
-            </>
-          }
-          contentStyle={{ maxWidth: isWide ? 1200 : 720 }}
-        />
-      </ScrollAwayHeader>
+      {isWide ? null : header}
       {isWide ? (
-        <View
+        <FoldSplit
           style={{
             flex: 1,
-            flexDirection: 'row',
-            gap: 20,
             width: '100%',
             maxWidth: 1200,
             alignSelf: 'center',
-            paddingHorizontal: 15,
           }}
-        >
-          <View style={{ flex: 0.58 }}>{stage}</View>
-          <ScrollView
-            // ScrollView's own style sets `flexGrow: 1`, which outranks `flex`;
-            // without its own grow this column takes 63% instead of 42%.
-            style={{ flex: 0.42, flexGrow: 0.42 }}
-            // A status bar tap would scroll this column once the calendar
-            // stops taking it; the screen ignores the tap instead.
-            scrollsToTop={false}
-            contentContainerStyle={{ gap: 16, paddingBottom: bottomInset }}
-          >
-            <ScheduleDayInspector
-              date={selectedDate}
-              reports={selectedMonthReports}
-            />
-            <ScheduleInsights
-              month={focused.month}
-              year={focused.year}
-              onEditGoal={
-                editableGoal(focused)
-                  ? () => openGoalEditor(focused)
-                  : undefined
-              }
-            />
-            <ScheduleScreenSections month={focused.month} year={focused.year} />
-          </ScrollView>
-        </View>
+          paddingHorizontal={15}
+          gap={20}
+          leadingFraction={0.58}
+          // The header's controls are the calendar's, as in Mail, so it sits
+          // above it and the day beside it reaches the top.
+          leading={
+            <View style={{ flex: 1 }}>
+              {header}
+              {stage}
+            </View>
+          }
+          trailingStyle={{ paddingTop: insets.top + 8 }}
+          trailing={
+            <ScrollView
+              style={{ flex: 1 }}
+              // A status bar tap would scroll this column once the calendar
+              // stops taking it; the screen ignores the tap instead.
+              scrollsToTop={false}
+              contentContainerStyle={{ gap: 16, paddingBottom: bottomInset }}
+            >
+              <ScheduleDayInspector
+                date={selectedDate}
+                reports={selectedMonthReports}
+              />
+              <ScheduleInsights
+                month={focused.month}
+                year={focused.year}
+                onEditGoal={
+                  editableGoal(focused)
+                    ? () => openGoalEditor(focused)
+                    : undefined
+                }
+              />
+              <ScheduleScreenSections
+                month={focused.month}
+                year={focused.year}
+              />
+            </ScrollView>
+          }
+        />
       ) : (
         <View
           style={{ flex: 1, width: '100%', maxWidth: 720, alignSelf: 'center' }}

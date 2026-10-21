@@ -65,7 +65,8 @@ export default function StatCard({
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
         <LucideIcon icon={icon} size={13} color={theme.colors.accent} />
         <Text
-          numberOfLines={1}
+          // Half-width cards in narrow columns wrap rather than truncate.
+          numberOfLines={2}
           style={{
             flexShrink: 1,
             fontFamily: theme.fonts.semiBold,

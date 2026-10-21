@@ -39,8 +39,12 @@ import PointerTooltip from '@/components/ui/PointerTooltip'
 import { refreshCurrentLocation } from '@/lib/currentLocation'
 import { useTabBarHidden } from '@/stores/tabBarVisibility'
 import { BARS_TRANSITION_MS } from '@/components/ui/ScrollAwayHeader'
+import { isRtlLayout } from '@/lib/direction'
+import { NAVIGATION_RAIL_MIN_WIDTH } from '@/lib/sidebarLayout'
 
 const CAPSULE_HEIGHT = 52
+const RAIL_ITEM_SIZE = 48
+const RAIL_PADDING = 4
 const HORIZONTAL_MARGIN = 12
 const PILL_GAP = 8
 const ACCESSORY_MIN_WIDTH = 60
@@ -78,8 +82,22 @@ const TabBar = ({ state, descriptors, shortcutHints, ...props }: Props) => {
   const insets = useSafeAreaInsets()
   const glassColorScheme = useGlassColorScheme()
   const isDark = theme.colors.background === '#121212'
-  const { hasSidebar, sidebarVisible, sidebarCompact, sidebarWidth } =
-    useAdaptiveLayout({ liveResize: true })
+  const {
+    hasSidebar,
+    sidebarVisible,
+    sidebarCompact,
+    sidebarWidth,
+    navigationRail,
+  } = useAdaptiveLayout({ liveResize: true })
+  const rail = navigationRail !== null
+  // Like the system's vertical bar, the rail shows icons without titles.
+  const iconOnly = sidebarCompact || rail
+  // Toward the content. PointerTooltip mirrors `left` and `right` in RTL, and
+  // the rail's side is physical.
+  const railTooltipPlacement =
+    (navigationRail === 'right') !== isRtlLayout()
+      ? ('left' as const)
+      : ('right' as const)
   // Scrolling down or exploring the map slides the floating bar away; the
   // sidebar always stays.
   const hidden = useTabBarHidden()
@@ -145,14 +163,17 @@ const TabBar = ({ state, descriptors, shortcutHints, ...props }: Props) => {
       <PointerTooltip
         key={route.key}
         label={i18n.t(labelKey)}
-        placement='right'
-        // Labels are visible unless the sidebar is narrowed to icons.
-        enabled={hasSidebar && sidebarCompact}
+        placement={railTooltipPlacement}
+        // Labels are visible unless the sidebar is narrowed to icons; the rail
+        // shows icons only, as the system's vertical bar does.
+        enabled={(hasSidebar && sidebarCompact) || rail}
         style={{
-          flex: hasSidebar ? undefined : 1,
-          borderRadius: hasSidebar
-            ? SIDEBAR_CONTROL_RADIUS
-            : theme.numbers.borderRadiusMd,
+          flex: hasSidebar || rail ? undefined : 1,
+          borderRadius: rail
+            ? RAIL_ITEM_SIZE / 2
+            : hasSidebar
+              ? SIDEBAR_CONTROL_RADIUS
+              : theme.numbers.borderRadiusMd,
         }}
       >
         <Pressable
@@ -162,9 +183,13 @@ const TabBar = ({ state, descriptors, shortcutHints, ...props }: Props) => {
             options.tabBarAccessibilityLabel ?? i18n.t(labelKey)
           }
           onPress={onPress}
-          hitSlop={hasSidebar ? 0 : { top: 20, bottom: 20, left: 4, right: 4 }}
+          hitSlop={
+            hasSidebar || rail ? 0 : { top: 20, bottom: 20, left: 4, right: 4 }
+          }
           style={({ pressed }) => ({
-            flex: hasSidebar ? undefined : 1,
+            flex: hasSidebar || rail ? undefined : 1,
+            width: rail ? RAIL_ITEM_SIZE : undefined,
+            height: rail ? RAIL_ITEM_SIZE : undefined,
             flexDirection: hasSidebar ? 'row' : 'column',
             alignItems: 'center',
             justifyContent:
@@ -173,12 +198,14 @@ const TabBar = ({ state, descriptors, shortcutHints, ...props }: Props) => {
             paddingHorizontal: hasSidebar ? (sidebarCompact ? 0 : 14) : 2,
             paddingVertical: hasSidebar ? 14 : 0,
             minHeight: hasSidebar ? 50 : undefined,
-            borderRadius: hasSidebar
-              ? SIDEBAR_CONTROL_RADIUS
-              : theme.numbers.borderRadiusMd,
+            borderRadius: rail
+              ? RAIL_ITEM_SIZE / 2
+              : hasSidebar
+                ? SIDEBAR_CONTROL_RADIUS
+                : theme.numbers.borderRadiusMd,
             borderCurve: 'continuous',
             backgroundColor:
-              hasSidebar && isFocused && !isSettings
+              (hasSidebar || rail) && isFocused && !isSettings
                 ? theme.colors.accentTranslucent
                 : 'transparent',
             opacity: pressed ? 0.6 : 1,
@@ -187,10 +214,13 @@ const TabBar = ({ state, descriptors, shortcutHints, ...props }: Props) => {
           <View>
             <IconButton
               iconStyle={{
-                color: hasSidebar && !isSettings ? theme.colors.accent : color,
+                color:
+                  (hasSidebar && !isSettings) || (rail && isFocused)
+                    ? theme.colors.accent
+                    : color,
               }}
               icon={icon}
-              size={hasSidebar ? 22 : 18}
+              size={hasSidebar || rail ? 22 : 18}
             />
             {options.tabBarBadge !== undefined && (
               <View
@@ -211,16 +241,16 @@ const TabBar = ({ state, descriptors, shortcutHints, ...props }: Props) => {
               flex: hasSidebar && !sidebarCompact ? 1 : undefined,
               flexDirection: 'row',
               alignItems: 'center',
-              justifyContent: sidebarCompact ? 'center' : undefined,
-              position: sidebarCompact ? 'absolute' : undefined,
-              bottom: sidebarCompact ? 1 : undefined,
-              left: sidebarCompact ? 0 : undefined,
-              right: sidebarCompact ? 0 : undefined,
+              justifyContent: iconOnly ? 'center' : undefined,
+              position: iconOnly ? 'absolute' : undefined,
+              bottom: iconOnly ? 1 : undefined,
+              left: iconOnly ? 0 : undefined,
+              right: iconOnly ? 0 : undefined,
               maxWidth: '100%',
               gap: 4,
             }}
           >
-            {!sidebarCompact && (
+            {!sidebarCompact && !rail && (
               <Text
                 numberOfLines={1}
                 adjustsFontSizeToFit
@@ -570,6 +600,91 @@ const TabBar = ({ state, descriptors, shortcutHints, ...props }: Props) => {
           liveWidth={liveSidebarWidth}
         />
       </Animated.View>
+    )
+  }
+
+  if (navigationRail) {
+    // The vertical status bar's safe area, which the system's own vertical
+    // bar shares; screens keep clear of it (see HomeTabStack).
+    const sideInset = navigationRail === 'right' ? insets.right : insets.left
+    const railShape = {
+      width: RAIL_ITEM_SIZE + RAIL_PADDING * 2,
+      borderRadius: RAIL_ITEM_SIZE / 2 + RAIL_PADDING,
+      borderCurve: 'continuous' as const,
+      overflow: 'hidden' as const,
+    }
+    const railTabs = (
+      <View style={{ padding: RAIL_PADDING, gap: 4 }}>
+        {state.routes.map(renderTab)}
+      </View>
+    )
+
+    return (
+      <>
+        <View
+          style={{
+            width: Math.max(sideInset, NAVIGATION_RAIL_MIN_WIDTH),
+            alignItems: 'center',
+            // Tab bars come after the toolbar's items, low on the side.
+            justifyContent: 'flex-end',
+            gap: 12,
+            paddingTop: insets.top + 12,
+            paddingBottom: Math.max(insets.bottom, 12),
+            backgroundColor: theme.colors.background,
+          }}
+        >
+          {liquidGlass ? (
+            <GlassView
+              glassEffectStyle='regular'
+              colorScheme={glassColorScheme}
+              style={railShape}
+            >
+              {railTabs}
+            </GlassView>
+          ) : (
+            <View
+              style={[railShape, { backgroundColor: theme.colors.card + 'cc' }]}
+            >
+              <BlurView
+                tint={isDark ? 'dark' : 'light'}
+                intensity={60}
+                style={StyleSheet.absoluteFill}
+              />
+              {railTabs}
+            </View>
+          )}
+          <PointerTooltip
+            label={i18n.t('add')}
+            placement={railTooltipPlacement}
+            effect='none'
+          >
+            <Button
+              noTransform
+              onPress={() => setSheetOpen(true)}
+              accessibilityLabel={i18n.t('quickAction')}
+              style={{
+                width: RAIL_ITEM_SIZE + RAIL_PADDING * 2,
+                height: RAIL_ITEM_SIZE + RAIL_PADDING * 2,
+                borderRadius: RAIL_ITEM_SIZE / 2 + RAIL_PADDING,
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: theme.colors.accent,
+              }}
+            >
+              <IconButton
+                icon={PlusIcon}
+                color={theme.colors.textInverse}
+                size={22}
+              />
+            </Button>
+          </PointerTooltip>
+        </View>
+        <QuickActionSheet
+          navigation={rootNavigation}
+          setSheetOpen={setSheetOpen}
+          sheetOpen={sheetOpen}
+        />
+      </>
     )
   }
 

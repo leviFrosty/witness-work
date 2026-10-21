@@ -969,7 +969,7 @@ function axType(state, platform, text, settle) {
 function drive(state, platform, args) {
   const device = state.devices[platform]
   if (platform !== 'ios' || !axeBin()) return sessionCommand(platform, args)
-  const ipad = device.kind === 'ipad'
+  const ipad = isIpadKind(device.kind)
   const [command, ...rest] = args
   const settle = rest.includes('--settle')
   const plain = rest.filter((a) => a !== '--settle')
@@ -1192,7 +1192,7 @@ function simctlDevices() {
   )
 }
 
-function newestIosRuntime() {
+function newerFirstIosRuntimes() {
   const out = run('xcrun', [
     'simctl',
     'list',
@@ -1200,28 +1200,48 @@ function newestIosRuntime() {
     'available',
     '-j',
   ]).stdout
-  const runtimes = JSON.parse(out).runtimes.filter((r) => r.platform === 'iOS')
-  if (!runtimes.length)
-    fail('No iOS simulator runtime installed (Xcode > Settings > Components)')
-  return runtimes
+  return JSON.parse(out)
+    .runtimes.filter((r) => r.platform === 'iOS')
     .sort((a, b) =>
-      a.version.localeCompare(b.version, undefined, { numeric: true })
+      b.version.localeCompare(a.version, undefined, { numeric: true })
     )
-    .pop()
 }
 
-function pickDeviceType(runtime, kind) {
-  const types = runtime.supportedDeviceTypes ?? []
-  const pattern = kind === 'ipad' ? /^iPad Pro 13-inch/ : /^iPhone \d+ Pro$/
-  const match = types.filter((t) => pattern.test(t.name)).pop()
-  if (!match) fail(`No ${kind} device type for ${runtime.name}`)
-  return match.identifier
+// Each simulator kind: its device type and its pool's name.
+const IOS_KINDS = {
+  iphone: { type: /^iPhone \d+ Pro$/, name: 'iPhone' },
+  ipad: { type: /^iPad Pro 13-inch/, name: 'iPad', ipad: true },
+  duo: { type: /^iPhone Duo$/, name: 'iPhone Duo' },
+  // The smallest screens: 375 pt wide without a notch, and iPad in portrait.
+  se: { type: /^iPhone SE \(3rd generation\)$/, name: 'iPhone SE' },
+  'ipad-mini': {
+    type: /^iPad mini \(A17 Pro\)$/,
+    name: 'iPad mini',
+    ipad: true,
+  },
+}
+
+const isIpadKind = (kind) => IOS_KINDS[kind]?.ipad === true
+
+/** The newest runtime with this kind's device type, and that type. */
+function pickRuntimeAndType(kind) {
+  const pattern = IOS_KINDS[kind].type
+  const runtimes = newerFirstIosRuntimes()
+  if (!runtimes.length)
+    fail('No iOS simulator runtime installed (Xcode > Settings > Components)')
+  for (const runtime of runtimes) {
+    const match = (runtime.supportedDeviceTypes ?? [])
+      .filter((t) => pattern.test(t.name))
+      .pop()
+    if (match) return { runtime, type: match.identifier }
+  }
+  fail(`No ${kind} device type in any installed iOS runtime`)
 }
 
 const iosPattern = (kind) =>
-  new RegExp(`^WW Verify ${kind === 'ipad' ? 'iPad' : 'iPhone'} (\\d+)$`)
+  new RegExp(`^WW Verify ${IOS_KINDS[kind].name} (\\d+)$`)
 
-/** The fixed-size simulator pool for a kind (iphone | ipad). */
+/** The fixed-size simulator pool for a kind (see IOS_KINDS). */
 function iosPool(kind) {
   const pattern = iosPattern(kind)
   return simctlDevices()
@@ -1237,14 +1257,14 @@ function iosPool(kind) {
 
 function createIosDevice(kind, pool) {
   const next = pool.length ? Math.max(...pool.map((d) => d.n)) + 1 : 1
-  const runtime = newestIosRuntime()
-  const name = `WW Verify ${kind === 'ipad' ? 'iPad' : 'iPhone'} ${next}`
+  const { runtime, type } = pickRuntimeAndType(kind)
+  const name = `WW Verify ${IOS_KINDS[kind].name} ${next}`
   log(`creating simulator "${name}" (${runtime.name})`)
   const udid = run('xcrun', [
     'simctl',
     'create',
     name,
-    pickDeviceType(runtime, kind),
+    type,
     runtime.identifier,
   ]).stdout.trim()
   return { key: udid, id: udid, name, n: next }
@@ -2684,10 +2704,20 @@ const commands = {
     delete state.reapedAt
     delete state.reapedReason
     const kind =
-      platform === 'ios' ? (flags.ipad ? 'ipad' : 'iphone') : 'emulator'
+      platform === 'ios'
+        ? flags['ipad-mini']
+          ? 'ipad-mini'
+          : flags.ipad
+            ? 'ipad'
+            : flags.duo
+              ? 'duo'
+              : flags.se
+                ? 'se'
+                : 'iphone'
+        : 'emulator'
     heartbeat(ROOT) // an idle agent coming back keeps its device
     await reapExpired()
-    // Switching iPhone <-> iPad: hand back the other kind's lease first.
+    // Switching iPhone, iPad or iPhone Duo: hand back the other kind's lease first.
     const held = readLeases().find(
       (l) => l.worktree === ROOT && l.platform === platform && !l.expired
     )
@@ -2905,8 +2935,8 @@ const commands = {
           Boolean(axe),
           axe
             ? `${axe} (reads the screen where agent-device can't)`
-            : `missing; ${AXE_MISSING.split(': ')[1]}${device.kind === 'ipad' ? ' (needed to drive an iPad)' : ''}`,
-          device.kind !== 'ipad'
+            : `missing; ${AXE_MISSING.split(': ')[1]}${isIpadKind(device.kind) ? ' (needed to drive an iPad)' : ''}`,
+          !isIpadKind(device.kind)
         )
         const covered = splashCovers(state, platform)
         check(
@@ -3388,7 +3418,7 @@ const commands = {
   async help() {
     console.log(`ww-verify <command> [--platform ios|android]
 
-  up [--platform ios|android] [--ipad] [--api local|env] [--seed <scenario>]
+  up [--platform ios|android] [--ipad|--ipad-mini|--duo|--se] [--api local|env] [--seed <scenario>]
      [--rebuild] [--accept-stale-native] [--wait 30] [--keep-build-dirs]
                                            lease a device, start the local API and
                                            Metro, install, launch

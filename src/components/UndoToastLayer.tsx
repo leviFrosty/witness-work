@@ -41,7 +41,7 @@ function PlacedToast({
 }) {
   const theme = useTheme()
   const insets = useSafeAreaInsets()
-  const { hasSidebar } = useAdaptiveLayout()
+  const { hasBottomBar } = useAdaptiveLayout()
 
   useEffect(() => {
     AccessibilityInfo.announceForAccessibility(toast.message)
@@ -67,7 +67,8 @@ function PlacedToast({
         styles.placement,
         {
           // Above the floating tab bar, when there is one.
-          paddingBottom: insets.bottom + (hasSidebar ? 0 : TAB_BAR_HEIGHT) + 16,
+          paddingBottom:
+            insets.bottom + (hasBottomBar ? TAB_BAR_HEIGHT : 0) + 16,
         },
       ]}
     >

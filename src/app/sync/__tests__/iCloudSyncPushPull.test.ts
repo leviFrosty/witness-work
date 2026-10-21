@@ -369,4 +369,52 @@ describe('Plan deletions over iCloud', () => {
     })
     expect(usePet.getState().pet).toBeNull()
   })
+
+  it('a restore from devices that predate mileage keeps local mileage', async () => {
+    const { peekRemotePayload, replaceLocalWithRemote } = await load()
+    const { default: useMileage } = await import('@/stores/mileage')
+    const vehicle = { id: 'v1', name: 'Car', updatedAt: OLD }
+    const trip = { id: 't1', vehicleId: 'v1', miles: 12, updatedAt: OLD }
+    useMileage.setState({
+      vehicles: [vehicle],
+      trips: [trip],
+      deletedMileageRecords: [],
+    } as never)
+    runtime.files = [peerFile('phone', { dayPlans: [dayPlan('d1', OLD)] })]
+
+    const peek = await peekRemotePayload()
+    if (peek.status !== 'found') throw new Error(peek.status)
+    expect(peek.remote.mileageStore).toBeUndefined()
+    replaceLocalWithRemote(peek.remote)
+    expect(useMileage.getState().vehicles).toEqual([vehicle])
+    expect(useMileage.getState().trips).toEqual([trip])
+
+    // A device that knows mileage and has none replaces it.
+    replaceLocalWithRemote({
+      ...peek.remote,
+      mileageStore: {
+        vehicles: [],
+        fuels: [],
+        fuelPrices: [],
+        vehicleSetups: [],
+        trips: [],
+        deletedMileageRecords: [],
+      },
+    })
+    expect(useMileage.getState().vehicles).toEqual([])
+    expect(useMileage.getState().trips).toEqual([])
+  })
+
+  it('a restore from devices without categories keeps local categories', async () => {
+    const { replaceLocalWithRemote, useCategories } = await load()
+    useCategories.setState({
+      categories: [category('cat1', OLD)],
+      deletedCategories: [],
+    } as never)
+    const { categoryStore: _categories, ...remote } = JSON.parse(
+      peerFile('phone', { dayPlans: [dayPlan('d1', OLD)] }).json
+    )
+    replaceLocalWithRemote(remote)
+    expect(useCategories.getState().categories).toEqual([category('cat1', OLD)])
+  })
 })

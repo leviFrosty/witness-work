@@ -639,7 +639,10 @@ export function hasMeaningfulLocalData(): boolean {
 export function replaceLocalWithRemote(remote: SyncPayload): void {
   // A writer from before the Pet Companion sends no pet slice; that's not "no
   // pet", so the local one stays (`foldRemotePayloads` leaves it out too).
+  // Likewise categories, and mileage from writers before 1.44.
   const hasPetSlice = remote.petStore !== undefined
+  const hasCategorySlice = remote.categoryStore !== undefined
+  const hasMileageSlice = remote.mileageStore !== undefined
   remote = foldRemotePayloads([remote])!
   withRemoteDataMutation(() => {
     const deletedCustomFieldDefs =
@@ -687,11 +690,12 @@ export function replaceLocalWithRemote(remote: SyncPayload): void {
       deletedRecurringPlans:
         remote.serviceReportStore.deletedRecurringPlans ?? [],
     })
-    useCategories.setState({
-      categories: (remote.categoryStore?.categories ?? []) as Category[],
-      deletedCategories: remote.categoryStore?.deletedCategories ?? [],
-    })
-    applyMileageSnapshot(mileageFromPayload(remote))
+    if (hasCategorySlice)
+      useCategories.setState({
+        categories: (remote.categoryStore?.categories ?? []) as Category[],
+        deletedCategories: remote.categoryStore?.deletedCategories ?? [],
+      })
+    if (hasMileageSlice) applyMileageSnapshot(mileageFromPayload(remote))
     if (hasPetSlice) applyPetSnapshot(petFromPayload(remote))
 
     const now = Date.now()

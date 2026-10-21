@@ -56,10 +56,12 @@ const StepDefaultNav = ({ goNext, goBack }: Props) => {
         paddingTop: 60,
         paddingBottom: 100,
         justifyContent: 'space-between',
+        gap: 20,
       }}
     >
       <OnboardingNav goBack={goBack} />
-      <View style={{ gap: 20 }}>
+      {/* Shrinks so the map gives up height before Continue leaves the screen. */}
+      <View style={{ gap: 20, flexShrink: 1 }}>
         <View style={{ gap: 6 }}>
           <Text
             style={{

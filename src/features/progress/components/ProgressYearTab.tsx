@@ -15,6 +15,7 @@ import useTheme from '@/contexts/theme'
 import usePublisher from '@/hooks/usePublisher'
 import useServiceReport from '@/stores/serviceReport'
 import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
+import useAccessibilityTextSize from '@/hooks/useAccessibilityTextSize'
 import { usePreferences } from '@/stores/preferences'
 import {
   adjustedMinutesForSpecificMonth,
@@ -152,6 +153,10 @@ const MonthRow = ({
 }) => {
   const theme = useTheme()
   const cardStyle = useCardStyle()
+  // At accessibility sizes the numbers move under the month, which then has
+  // the row's width; in a third of it the month and "Hrs" broke mid-word.
+  const stacked = useAccessibilityTextSize()
+  const numericColumn = stacked ? styles.stackedColumn : styles.numericColumn
   const navigation = useNavigation<RootStackNavigation>()
   const { reportMenuItems } = useMonthReportExport()
   const { overrideCreditLimit, customCreditLimitHours } = usePreferences()
@@ -223,6 +228,74 @@ const MonthRow = ({
   )
   const editable = monthEditTargets({ month, year, baseGoalHours })
 
+  const monthColumn = (
+    <View style={[!stacked && styles.monthColumn, { gap: 4 }]}>
+      <XView style={{ gap: 8 }}>
+        <Text
+          style={{
+            fontFamily: theme.fonts.semiBold,
+            fontSize: theme.fontSize('md'),
+            color: theme.colors.text,
+            flexShrink: 1,
+          }}
+        >
+          {monthYearLabel}
+        </Text>
+        {isCurrent ? <CurrentMonthIcon /> : null}
+      </XView>
+      {isOverridden || monthStatus.isDifferent ? (
+        <XView style={{ gap: 6, flexWrap: 'wrap' }}>
+          {monthStatus.isDifferent ? (
+            <RowBadge label={monthStatus.label} />
+          ) : null}
+          {isOverridden ? (
+            <RowBadge
+              label={i18n.t('monthGoalEditor.goalBadge', {
+                goal: goalDisplay.formatted,
+              })}
+            />
+          ) : null}
+        </XView>
+      ) : null}
+    </View>
+  )
+  const figures = (
+    <>
+      <Text
+        style={[
+          numericColumn,
+          {
+            fontFamily: theme.fonts.semiBold,
+            color: hasActivity ? theme.colors.text : theme.colors.textAlt,
+            letterSpacing: tracking(-0.3),
+            textAlign: alignText('end'),
+          },
+        ]}
+      >
+        {showFuturePlanned
+          ? plannedDisplay.formatted
+          : completedDisplay.formatted}
+      </Text>
+      {showDelta ? (
+        <Text
+          style={[
+            numericColumn,
+            {
+              fontFamily: theme.fonts.semiBold,
+              color: deltaColor,
+              letterSpacing: tracking(-0.3),
+              textAlign: alignText('end'),
+            },
+          ]}
+        >
+          {deltaLabel}
+        </Text>
+      ) : (
+        <View style={numericColumn} />
+      )}
+    </>
+  )
+
   return (
     <ContextMenu
       onPress={onPress}
@@ -283,69 +356,17 @@ const MonthRow = ({
           gap: 8,
         }}
       >
-        <XView style={styles.columns}>
-          <View style={[styles.monthColumn, { gap: 4 }]}>
-            <XView style={{ gap: 8 }}>
-              <Text
-                style={{
-                  fontFamily: theme.fonts.semiBold,
-                  fontSize: theme.fontSize('md'),
-                  color: theme.colors.text,
-                  flexShrink: 1,
-                }}
-              >
-                {monthYearLabel}
-              </Text>
-              {isCurrent ? <CurrentMonthIcon /> : null}
-            </XView>
-            {isOverridden || monthStatus.isDifferent ? (
-              <XView style={{ gap: 6, flexWrap: 'wrap' }}>
-                {monthStatus.isDifferent ? (
-                  <RowBadge label={monthStatus.label} />
-                ) : null}
-                {isOverridden ? (
-                  <RowBadge
-                    label={i18n.t('monthGoalEditor.goalBadge', {
-                      goal: goalDisplay.formatted,
-                    })}
-                  />
-                ) : null}
-              </XView>
-            ) : null}
-          </View>
-          <Text
-            style={[
-              styles.numericColumn,
-              {
-                fontFamily: theme.fonts.semiBold,
-                color: hasActivity ? theme.colors.text : theme.colors.textAlt,
-                letterSpacing: tracking(-0.3),
-                textAlign: alignText('end'),
-              },
-            ]}
-          >
-            {showFuturePlanned
-              ? plannedDisplay.formatted
-              : completedDisplay.formatted}
-          </Text>
-          {showDelta ? (
-            <Text
-              style={[
-                styles.numericColumn,
-                {
-                  fontFamily: theme.fonts.semiBold,
-                  color: deltaColor,
-                  letterSpacing: tracking(-0.3),
-                  textAlign: alignText('end'),
-                },
-              ]}
-            >
-              {deltaLabel}
-            </Text>
-          ) : (
-            <View style={styles.numericColumn} />
-          )}
-        </XView>
+        {stacked ? (
+          <>
+            {monthColumn}
+            <XView style={styles.columns}>{figures}</XView>
+          </>
+        ) : (
+          <XView style={styles.columns}>
+            {monthColumn}
+            {figures}
+          </XView>
+        )}
         {/* Every row shares one scale, so the bars compare down the list. The
           columns above carry the numbers; the key under the header explains
           the marks. */}
@@ -420,6 +441,10 @@ const ProgressYearTab = ({
     serviceYearFocusMonth(year - 1)
   )
   const showDeltaColumn = monthlyGoalHours > 0
+  // Stacked rows (see `MonthRow`) show their numbers in two halves under the
+  // month, so the headings do too, without one for the month.
+  const stacked = useAccessibilityTextSize()
+  const numericColumn = stacked ? styles.stackedColumn : styles.numericColumn
   const paceData = useServiceYearPace(year - 1)
   const { monthBars } = paceData
 
@@ -477,24 +502,26 @@ const ProgressYearTab = ({
                   { paddingHorizontal: 16, paddingBottom: 2 },
                 ]}
               >
+                {stacked ? null : (
+                  <Text
+                    style={[
+                      styles.monthColumn,
+                      {
+                        fontFamily: theme.fonts.semiBold,
+                        color: theme.colors.textAlt,
+                        fontSize: theme.fontSize('xs'),
+                        textTransform: 'uppercase',
+                        letterSpacing: tracking(0.5),
+                      },
+                    ]}
+                    numberOfLines={1}
+                  >
+                    {i18n.t('month')}
+                  </Text>
+                )}
                 <Text
                   style={[
-                    styles.monthColumn,
-                    {
-                      fontFamily: theme.fonts.semiBold,
-                      color: theme.colors.textAlt,
-                      fontSize: theme.fontSize('xs'),
-                      textTransform: 'uppercase',
-                      letterSpacing: tracking(0.5),
-                    },
-                  ]}
-                  numberOfLines={1}
-                >
-                  {i18n.t('month')}
-                </Text>
-                <Text
-                  style={[
-                    styles.numericColumn,
+                    numericColumn,
                     {
                       fontFamily: theme.fonts.semiBold,
                       color: theme.colors.textAlt,
@@ -511,7 +538,7 @@ const ProgressYearTab = ({
                 {showDeltaColumn ? (
                   <Text
                     style={[
-                      styles.numericColumn,
+                      numericColumn,
                       {
                         fontFamily: theme.fonts.semiBold,
                         color: theme.colors.textAlt,
@@ -526,7 +553,7 @@ const ProgressYearTab = ({
                     {i18n.t('vsGoal')}
                   </Text>
                 ) : (
-                  <View style={styles.numericColumn} />
+                  <View style={numericColumn} />
                 )}
               </XView>
               {monthBars.scaleMinutes > 0 ? (
@@ -593,6 +620,10 @@ const styles = StyleSheet.create({
   },
   numericColumn: {
     width: '25%',
+    minWidth: 0,
+  },
+  stackedColumn: {
+    flex: 1,
     minWidth: 0,
   },
 })

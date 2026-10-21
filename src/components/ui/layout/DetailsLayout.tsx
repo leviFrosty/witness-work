@@ -36,7 +36,7 @@ export default function DetailsLayout({
                 right: 0,
                 flexDirection: 'row',
                 alignItems: 'center',
-                gap: 16,
+                gap: 24,
               }}
             >
               {actions}

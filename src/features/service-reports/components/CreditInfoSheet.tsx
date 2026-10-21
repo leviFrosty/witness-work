@@ -45,6 +45,7 @@ const CreditInfoSheet = ({ creditOverageMinutes }: Props) => {
               {i18n.t('aboutCreditCap')}
             </Text>
             <IconButton
+              frame
               noTransform
               icon={XIcon}
               onPress={() => setOpen(false)}

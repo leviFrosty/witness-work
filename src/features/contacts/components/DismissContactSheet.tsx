@@ -57,6 +57,7 @@ const DismissContactSheet: React.FC<DismissContactSheetProps> = ({
           {i18n.t('dismissForLater')}
         </Text>
         <IconButton
+          frame
           noTransform
           onPress={() => setOpen(false)}
           size={20}

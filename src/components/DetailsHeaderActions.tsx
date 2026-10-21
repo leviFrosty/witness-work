@@ -5,7 +5,10 @@ import PointerTooltip from '@/components/ui/PointerTooltip'
 import PullDownMenu from '@/components/ui/PullDownMenu'
 import i18n from '@/lib/locales'
 
-/** Edit and More (the record's other actions) for a details screen's header. */
+/**
+ * Edit and More (the record's other actions) for a details screen's header. Lay
+ * them out 24pt apart, so their 44pt frames don't overlap.
+ */
 export default function DetailsHeaderActions({
   onEdit,
   menu,
@@ -17,9 +20,9 @@ export default function DetailsHeaderActions({
     <>
       <PointerTooltip label={i18n.t('edit')} effect='none'>
         <IconButton
+          frame
           icon={PencilIcon}
           size={20}
-          neighborGap={16}
           onPress={onEdit}
           accessibilityLabel={i18n.t('edit')}
         />

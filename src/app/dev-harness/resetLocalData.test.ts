@@ -6,15 +6,29 @@ const native = vi.hoisted(() => {
   vi.stubGlobal('__DEV__', false)
   return {
     cleared: [] as string[],
+    /** The default MMKV instance: what the stores saved. */
+    saved: new Map<string, string>(),
     stopwatchReset: vi.fn(async () => undefined),
     hydrateNotesImports: vi.fn(),
   }
 })
 
-vi.mock('@/stores/mmkv', async () => ({
-  ...(await import('@/__tests__/mocks/mmkv')),
-  mmkvStorage: { clearAll: () => native.cleared.push('default') },
-}))
+vi.mock('@/stores/mmkv', async () => {
+  const storage = {
+    getItem: (key: string) => native.saved.get(key) ?? null,
+    setItem: (key: string, value: string) => void native.saved.set(key, value),
+    removeItem: (key: string) => void native.saved.delete(key),
+  }
+  return {
+    ...(await import('@/__tests__/mocks/mmkv')),
+    MmkvStorage: storage,
+    PersistStorage: storage,
+    clearMmkvStorage: () => {
+      native.cleared.push('default')
+      native.saved.clear()
+    },
+  }
+})
 vi.mock('@react-native-async-storage/async-storage', () => ({
   default: { clear: async () => undefined },
 }))
@@ -144,6 +158,7 @@ const persistName = (store: unknown) =>
 describe('resetLocalData', () => {
   beforeEach(() => {
     native.cleared.length = 0
+    native.saved.clear()
     vi.clearAllMocks()
   })
 
@@ -189,6 +204,22 @@ describe('resetLocalData', () => {
     expect(useCategories.getState().categories.map((c) => c.id)).toEqual([
       LDC_BUILTIN_CATEGORY_ID,
     ])
+  })
+
+  it('saves the reset state, so it is still there after a relaunch', () => {
+    native.saved.set('leftover', 'from another run')
+    resetLocalData()
+    expect(native.saved.has('leftover')).toBe(false)
+    const saved = (key: string) => JSON.parse(native.saved.get(key)!).state
+    expect(
+      saved('categories').categories.map((c: { id: string }) => c.id)
+    ).toEqual([LDC_BUILTIN_CATEGORY_ID])
+    expect(saved('preferences')).toMatchObject({
+      onboardingComplete: false,
+      hasMigratedTagsToCategories: true,
+      hasCollapsedLdcIntoCategory: true,
+    })
+    expect(saved('buddies')).toMatchObject({ buddies: [] })
   })
 
   it('clears the Notes Import ledger, pet secrets and the stopwatch', () => {

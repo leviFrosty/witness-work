@@ -2,7 +2,6 @@ package com.leviwilkerson.witnesswork.wear
 
 import com.leviwilkerson.witnesswork.watchprotocol.WatchSnapshot
 import java.time.ZonedDateTime
-import java.time.temporal.ChronoUnit
 import kotlin.math.floor
 
 /**
@@ -134,7 +133,7 @@ data class MonthProgress(
       if (minutes >= goalMinutes) return result(fraction, true, null, null)
 
       // Same pace as the phone: against the Plans through today when there are any,
-      // otherwise hours per remaining day.
+      // otherwise time per day to the goal.
       val day = date.dayOfMonth
       val plannedMinutes = planned?.getOrNull(day - 1)
       if (plannedMinutes != null && plannedMinutes > 0) {
@@ -145,21 +144,19 @@ data class MonthProgress(
           t(if (minutes >= plannedMinutes) "aheadOfSchedule" else "behindSchedule"),
         )
       }
-      val remainingHours = (goalMinutes - minutes).toDouble() / 60
-      val daysLeft = daysLeftInMonth(date)
-      val perDay = if (daysLeft == 0L) remainingHours else rounded(remainingHours / daysLeft * 10) / 10
-      return result(
-        fraction,
-        false,
-        null,
-        compact(rounded(perDay * 60).toInt(), t, language) + " " + t("hoursPerDayToGoal"),
-      )
+      val perDay = minutesPerDayToGoal(goalMinutes - minutes, date)
+      return result(fraction, false, null, compact(perDay, t, language) + " " + t("hoursPerDayToGoal"))
     }
 
-    /** Whole days from `date` to the start of next month, like the phone's `getDaysLeftInCurrentMonth`. */
-    private fun daysLeftInMonth(date: ZonedDateTime): Long {
-      val nextMonth = date.withDayOfMonth(1).startOfDay().plusMonths(1)
-      return ChronoUnit.DAYS.between(date, nextMonth)
+    /**
+     * The phone's Daily Pace (`dailyPace`): `remaining` minutes over the days after `date`'s, or
+     * all of them on the month's last day, rounded up to a tenth of an hour (`formatNeededMinutes`)
+     * so keeping to it is enough. Counts calendar days, so a complication's entry for midnight
+     * agrees with the phone all that day.
+     */
+    fun minutesPerDayToGoal(remaining: Int, date: ZonedDateTime): Int {
+      val tenthPerDay = maxOf(date.toLocalDate().lengthOfMonth() - date.dayOfMonth, 1) * 6
+      return (maxOf(remaining, 0) + tenthPerDay - 1) / tenthPerDay * 6
     }
 
     /**

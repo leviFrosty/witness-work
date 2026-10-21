@@ -118,7 +118,7 @@ struct MonthProgress: Equatable {
     }
 
     // Same pace as the iPhone: against the Plans through today when there are
-    // any, otherwise hours per remaining day.
+    // any, otherwise time per day to the goal.
     let calendar = Calendar(identifier: .gregorian)
     let day = calendar.component(.day, from: date)
     if let planned, planned.indices.contains(day - 1), planned[day - 1] > 0 {
@@ -128,22 +128,21 @@ struct MonthProgress: Equatable {
         minutes >= plannedMinutes ? "aheadOfSchedule" : "behindSchedule", snapshot)
     } else {
       paceFraction = nil
-      let remainingHours = Double(goalMinutes - minutes) / 60
-      let daysLeft = Self.daysLeftInMonth(after: date, calendar: calendar)
-      let perDay = daysLeft == 0
-        ? remainingHours : (remainingHours / Double(daysLeft) * 10).rounded() / 10
-      paceText = Self.compact(Int((perDay * 60).rounded()), snapshot)
-        + " " + L10n.t("hoursPerDayToGoal", snapshot)
+      let perDay = Self.minutesPerDayToGoal(goalMinutes - minutes, at: date, calendar: calendar)
+      paceText = Self.compact(perDay, snapshot) + " " + L10n.t("hoursPerDayToGoal", snapshot)
     }
   }
 
-  /// Whole days from `date` to the start of next month, like the iPhone's
-  /// `getDaysLeftInCurrentMonth`.
-  private static func daysLeftInMonth(after date: Date, calendar: Calendar) -> Int {
-    guard let monthStart = calendar.dateInterval(of: .month, for: date)?.start,
-          let nextMonth = calendar.date(byAdding: .month, value: 1, to: monthStart)
-    else { return 0 }
-    return calendar.dateComponents([.day], from: date, to: nextMonth).day ?? 0
+  /// The iPhone's Daily Pace (`dailyPace`): `remaining` minutes over the days
+  /// after `date`'s, or all of them on the month's last day, rounded up to a
+  /// tenth of an hour (`formatNeededMinutes`) so keeping to it is enough.
+  /// Counts calendar days, so a complication's entry for midnight agrees with
+  /// the iPhone all that day.
+  static func minutesPerDayToGoal(_ remaining: Int, at date: Date, calendar: Calendar) -> Int {
+    let day = calendar.component(.day, from: date)
+    let daysInMonth = calendar.range(of: .day, in: .month, for: date)?.count ?? day
+    let tenthPerDay = max(daysInMonth - day, 1) * 6
+    return (max(remaining, 0) + tenthPerDay - 1) / tenthPerDay * 6
   }
 
   /// The iPhone's `formatMinutesCompact`: `30m`, `2h`, `1.5h`, `11.5h`; `0h`

@@ -1,4 +1,3 @@
-import round from 'lodash/round'
 import moment from 'moment'
 import { isStoredDateOnLocalDay } from '@/lib/normalizeDate'
 import {
@@ -52,9 +51,9 @@ export type ReportFields = {
   /** 0..1 */
   progress: number
   /**
-   * Hours per remaining day to hit the goal, for the watch's pace line. `null`
-   * when there's nothing left to do or the value would be misleading (last day
-   * of month, already met).
+   * Hours per day to the goal as the Daily Pace card counts them as of `now`,
+   * rounded up to a tenth, for the watch's pace line (which counts the same way
+   * after midnight). `null` once the goal needs nothing more.
    */
   hoursPerDayNeeded: number | null
   /**
@@ -238,27 +237,19 @@ export function buildReport(
       ? formatted.decimalHours.toString()
       : formatted.formatted
 
-  const minutesRemaining = goalProgress({
-    minutes: adjusted.value,
+  // The Daily Pace card's time per day as of `now`, rounded up to a tenth of
+  // an hour as `formatNeededMinutes` does, so keeping to it is enough.
+  const todaysPace = dailyPace({
+    loggedMinutes: adjusted.value,
     goalMinutes,
-  }).remaining
-  // Same count as `getDaysLeftInCurrentMonth`, from `now`.
-  const daysLeftInMonth = now
-    .clone()
-    .add(1, 'month')
-    .startOf('month')
-    .diff(now, 'days')
-
-  // Mirrors HourEntryCard's hoursPerDayNeeded calc, but null when ≤ 0 so the
-  // widget can hide the badge entirely instead of rendering "0 hrs/day".
-  let hoursPerDayNeeded: number | null
-  if (minutesRemaining <= 0) {
-    hoursPerDayNeeded = null
-  } else if (daysLeftInMonth === 0) {
-    hoursPerDayNeeded = minutesRemaining / 60
-  } else {
-    hoursPerDayNeeded = round(minutesRemaining / 60 / daysLeftInMonth, 1)
-  }
+    month,
+    year,
+    today: now,
+  })
+  const hoursPerDayNeeded =
+    todaysPace?.state === 'current'
+      ? Math.ceil(todaysPace.perDayMinutes / 6) / 10
+      : null
 
   const hoursPerDayToGoalByDay: Record<string, string> = {}
   for (

@@ -117,10 +117,16 @@ useBackupState.subscribe((state, previous) => {
 
 export const backupSchedule = {
   get: () => useBackupState.getState().schedule,
+  // A patch that changes nothing (re-arming the same attempt) keeps the state,
+  // so it isn't saved again.
   set: (patch: Partial<BackupSchedule>) =>
-    useBackupState.setState((state) => ({
-      schedule: { ...state.schedule, ...patch },
-    })),
+    useBackupState.setState((state) =>
+      Object.entries(patch).every(
+        ([key, value]) => state.schedule[key as keyof BackupSchedule] === value
+      )
+        ? state
+        : { schedule: { ...state.schedule, ...patch } }
+    ),
 }
 
 /** Adds a line to the Tools log: codes and sizes, never data or ids. */

@@ -127,6 +127,8 @@ wwv ad react-native dismiss-overlay      # if a LogBox/RedBox overlay covers the
 ```
 
 - Prefer refs, then `label=`/`id=` selectors. Use coordinates only when the snapshot has no target.
+- Every other `wwv ad` command reopens the app first, and that expires the last snapshot's refs. So act on a ref right after its `snapshot`, and take a fresh snapshot after any other command.
+- Native disclosures (the Help Center's questions: a SwiftUI `DisclosureGroup` on iOS) list each question twice, as `[disclosuretriangle]` parent and child. `press 'label="…"'` then fails with `AMBIGUOUS_MATCH`; press the first ref, or use `find "<question>" click --first` (Maestro: `tapOn` with `index: 0`). The Help Center's search field has no label, only its placeholder, so focus it by ref or with `find "Search questions" click --first`.
 - Labels are en-US i18n strings (`src/locales/en-US.json`). Tabs are "Home", "Schedule", "Contacts", "Progress". The center "+" is "Quick Action".
 - `wwv ad help workflow` has the full reference.
 

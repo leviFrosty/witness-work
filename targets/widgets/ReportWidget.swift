@@ -66,7 +66,8 @@ private struct MonthEyebrow: View {
 
 private struct BigHoursNumber: View {
   let formatted: String
-  let goalHours: Int
+  let goalHours: Double
+  let language: AppLanguage
   let size: CGFloat
 
   var body: some View {
@@ -77,7 +78,7 @@ private struct BigHoursNumber: View {
         .lineLimit(1)
       // No goal (a 0-hour goal) leaves nothing to show after the slash.
       if goalHours > 0 {
-        Text("/\(goalHours)")
+        Text(verbatim: "/" + language.decimal(goalHours))
           .font(.system(size: size * 0.38, weight: .semibold, design: .rounded))
           .foregroundStyle(.tertiary)
       }
@@ -174,6 +175,7 @@ private struct SmallMonthCard: View {
       BigHoursNumber(
         formatted: snapshot.appLanguage.digits(report.monthHoursFormatted),
         goalHours: report.goalHours,
+        language: snapshot.appLanguage,
         size: 46
       )
 
@@ -235,6 +237,7 @@ private struct MediumMonthCard: View {
           BigHoursNumber(
             formatted: snapshot.appLanguage.digits(report.monthHoursFormatted),
             goalHours: report.goalHours,
+            language: snapshot.appLanguage,
             size: 44
           )
           Text(strings.encouragementPhrase)
@@ -420,7 +423,7 @@ private struct CircularReportView: View {
           VStack(spacing: 0) {
             Text(compactHours(report.monthMinutes, snapshot.appLanguage))
               .font(.system(size: 14, weight: .bold))
-            Text("/\(report.goalHours)")
+            Text(verbatim: "/" + snapshot.appLanguage.decimal(report.goalHours))
               .font(.system(size: 8, weight: .semibold))
           }
         }
@@ -495,7 +498,7 @@ private struct RectangularReportView: View {
           Spacer(minLength: 0)
           Text(
             report.goalHours > 0
-              ? "\(snapshot.appLanguage.digits(report.monthHoursFormatted)) / \(report.goalHours)"
+              ? "\(snapshot.appLanguage.digits(report.monthHoursFormatted)) / \(snapshot.appLanguage.decimal(report.goalHours))"
               : snapshot.appLanguage.digits(report.monthHoursFormatted)
           )
           .font(.system(size: 12, weight: .bold))

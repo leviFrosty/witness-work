@@ -193,6 +193,8 @@ const PreferencesConversationFieldsScreen = () => {
                         />
                         <PullDownMenu
                           triggerSize={16}
+                          // Room beside the field for the menu's 44pt frame.
+                          style={{ marginStart: 10 }}
                           accessibilityLabel={i18n.t('moreActionsFor', {
                             name: def.label,
                           })}

@@ -9,6 +9,7 @@ const { slot } = vi.hoisted(() => ({
 }))
 
 vi.mock('react-native', () => ({
+  Platform: { OS: 'ios' },
   Pressable: 'Pressable',
   View: 'View',
   useWindowDimensions: () => ({ fontScale: 1 }),

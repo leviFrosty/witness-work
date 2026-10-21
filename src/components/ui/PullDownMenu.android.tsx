@@ -2,12 +2,13 @@ import { Host } from '@expo/ui'
 import { DropdownMenu, RNHostView } from '@expo/ui/jetpack-compose'
 import { Ellipsis as EllipsisIcon } from 'lucide-react-native'
 import { useState } from 'react'
-import { Pressable, View } from 'react-native'
+import { Pressable, View, type ViewStyle } from 'react-native'
 import useTheme from '@/contexts/theme'
 import LucideIcon from '@/components/ui/LucideIcon'
 import MenuItems from '@/components/ui/MenuItems.android'
 import PointerHover, { HoverTint } from '@/components/ui/PointerHover'
 import { menuGroups } from '@/components/ui/menuEntries'
+import { touchTargetFrame } from '@/components/ui/touchTarget'
 import type { ContextMenuSubmenu } from '@/components/ui/ContextMenu.types'
 import type { PullDownMenuProps } from '@/components/ui/PullDownMenu.types'
 import { usePreferences } from '@/stores/preferences'
@@ -40,6 +41,10 @@ export default function PullDownMenu({
   const [hovered, setHovered] = useState(false)
   const groups = menuGroups(actions)
   if (!groups.length) return null
+  // The default ellipsis gets a real 48dp frame, which the host's negative
+  // margins keep from moving anything.
+  const target: ViewStyle = children ? {} : touchTargetFrame(triggerSize)
+  const { marginHorizontal, marginVertical, ...frame } = target
 
   const open = () => {
     onOpen?.()
@@ -61,7 +66,11 @@ export default function PullDownMenu({
           : undefined
       }
     >
-      <Host matchContents colorScheme={colorScheme}>
+      <Host
+        matchContents
+        colorScheme={colorScheme}
+        style={{ marginHorizontal, marginVertical }}
+      >
         <DropdownMenu
           expanded={expanded}
           onDismissRequest={close}
@@ -91,7 +100,9 @@ export default function PullDownMenu({
                   pointerEvents='box-only'
                   testID={testID}
                   style={({ pressed }) => [
-                    { width, borderRadius: hoverRadius },
+                    frame,
+                    { borderRadius: hoverRadius },
+                    width !== undefined && { width },
                     pressed && { opacity: 0.7 },
                   ]}
                 >

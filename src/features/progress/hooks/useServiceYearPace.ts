@@ -1,8 +1,8 @@
-import { useState } from 'react'
 import useServiceReport from '@/stores/serviceReport'
 import useCategories from '@/stores/categories'
 import { usePreferences } from '@/stores/preferences'
 import { useShallow } from 'zustand/react/shallow'
+import useToday from '@/hooks/useToday'
 import {
   sharedServiceYearPace,
   type ServiceYearPaceData,
@@ -41,8 +41,9 @@ const useServiceYearPace = (serviceYear: number): ServiceYearPaceData => {
       monthlyGoalOverrides: s.monthlyGoalOverrides,
     }))
   )
-  // One "now" per mount so the chart, rows, and status line agree.
-  const [today] = useState(() => new Date())
+  // One "now" per day so the chart, rows, and status line agree; it moves on
+  // at midnight and after a time zone change (`useLocalDay`).
+  const today = useToday()
 
   const shared = sharedServiceYearPace({
     ...prefs,

@@ -68,7 +68,8 @@ const ContactReachCard = ({
   const theme = useTheme()
   // At accessibility text sizes the action names shrink to their equal-width
   // buttons instead of truncating ("Na…").
-  const fitActionLabel = useAccessibilityTextSize() ? FIT_ONE_LINE : undefined
+  const largeText = useAccessibilityTextSize()
+  const fitActionLabel = largeText ? FIT_ONE_LINE : undefined
   const { showContactPhone, showContactEmail } = usePreferences()
   const [expanded, setExpanded] = useState(false)
   const [summaryHovered, setSummaryHovered] = useState(false)
@@ -324,7 +325,9 @@ const ContactReachCard = ({
               </View>
               <View style={{ flex: 1, minWidth: 0 }}>
                 <Text
-                  numberOfLines={1}
+                  // One line previews the details; at accessibility sizes
+                  // that's only a word or two, so it gets a few.
+                  numberOfLines={largeText ? 3 : 1}
                   style={{ ...textStyle, fontFamily: theme.fonts.medium }}
                 >
                   {summaryText}

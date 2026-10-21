@@ -203,9 +203,11 @@ const DayHistoryView: React.FC<DayHistoryViewProps> = ({
       )}
 
       <View style={{ gap: 8 }}>
-        <XView style={{ justifyContent: 'space-between' }}>
+        {/* The heading wraps before it pushes + against the sheet's edge. */}
+        <XView style={{ justifyContent: 'space-between', gap: 12 }}>
           <Text
             style={{
+              flexShrink: 1,
               fontFamily: theme.fonts.semiBold,
               color: theme.colors.textAlt,
               textTransform: 'uppercase',
@@ -295,9 +297,10 @@ const DayHistoryView: React.FC<DayHistoryViewProps> = ({
       </View>
 
       <View style={{ gap: 8 }}>
-        <XView style={{ justifyContent: 'space-between' }}>
+        <XView style={{ justifyContent: 'space-between', gap: 12 }}>
           <Text
             style={{
+              flexShrink: 1,
               fontFamily: theme.fonts.semiBold,
               color: theme.colors.textAlt,
               textTransform: 'uppercase',

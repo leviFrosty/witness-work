@@ -3,6 +3,9 @@ import { View } from 'react-native'
 import moment from 'moment'
 
 import useTheme from '@/contexts/theme'
+import useAccessibilityTextSize, {
+  FIT_ONE_LINE,
+} from '@/hooks/useAccessibilityTextSize'
 import useRoleForMonth from '@/hooks/useRoleForMonth'
 import useServiceReport from '@/stores/serviceReport'
 import { usePreferences } from '@/stores/preferences'
@@ -36,6 +39,7 @@ interface YearTotalCardProps {
  */
 const YearTotalCard = ({ year, categoriesSlot }: YearTotalCardProps) => {
   const theme = useTheme()
+  const largeText = useAccessibilityTextSize()
   const roleFor = useRoleForMonth()
   const { timeDisplayFormat, overrideCreditLimit, customCreditLimitHours } =
     usePreferences()
@@ -126,9 +130,15 @@ const YearTotalCard = ({ year, categoriesSlot }: YearTotalCardProps) => {
         }}
       >
         <Text
+          // At accessibility sizes the figure shrinks onto one line rather
+          // than breaking between its digits.
+          {...(largeText && isDecimal ? FIT_ONE_LINE : {})}
           style={{
             fontSize: isDecimal ? 64 : 40,
-            lineHeight: isDecimal ? 68 : 44,
+            // A fixed line height would keep the full-size line around a
+            // shrunk figure.
+            lineHeight:
+              largeText && isDecimal ? undefined : isDecimal ? 68 : 44,
             fontFamily: theme.fonts.bold,
             color: theme.colors.text,
           }}

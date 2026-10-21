@@ -2,6 +2,7 @@ import React, { useMemo } from 'react'
 import { TextStyle } from 'react-native'
 import { FuseResultMatch } from 'fuse.js'
 import Text from '@/components/ui/MyText'
+import WholeWordsText from '@/components/ui/WholeWordsText'
 import useTheme from '@/contexts/theme'
 import { buildSnippet } from '@/lib/contactsSearch'
 
@@ -23,6 +24,11 @@ type Props = {
   baseStyle?: TextStyle | TextStyle[]
   highlightStyle?: TextStyle
   numberOfLines?: number
+  /**
+   * Shrinks the text when a single word would break across lines (a long name
+   * at accessibility text sizes); see `WholeWordsText`.
+   */
+  wholeWords?: boolean
 }
 
 /**
@@ -42,8 +48,10 @@ const HighlightedText: React.FC<Props> = ({
   baseStyle,
   highlightStyle,
   numberOfLines,
+  wholeWords,
 }) => {
   const theme = useTheme()
+  const Paragraph = wholeWords ? WholeWordsText : Text
   const sourceText = match?.value ?? text
 
   const snippet = useMemo(() => {
@@ -58,14 +66,14 @@ const HighlightedText: React.FC<Props> = ({
 
   if (!snippet) {
     return (
-      <Text style={baseStyle} numberOfLines={numberOfLines}>
+      <Paragraph style={baseStyle} numberOfLines={numberOfLines}>
         {sourceText}
-      </Text>
+      </Paragraph>
     )
   }
 
   return (
-    <Text style={baseStyle} numberOfLines={numberOfLines}>
+    <Paragraph style={baseStyle} numberOfLines={numberOfLines}>
       {snippet.truncatedStart ? '…' : ''}
       {snippet.segments.map((seg, i) =>
         seg.highlighted ? (
@@ -77,7 +85,7 @@ const HighlightedText: React.FC<Props> = ({
         )
       )}
       {snippet.truncatedEnd ? '…' : ''}
-    </Text>
+    </Paragraph>
   )
 }
 

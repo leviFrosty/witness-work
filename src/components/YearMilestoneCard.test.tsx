@@ -37,6 +37,10 @@ vi.mock('expo-localization', () => ({
   getCalendars: () => [{ uses24hourClock: false, firstWeekday: 1 }],
 }))
 vi.mock('react-native', () => ({ View: 'View', Pressable: 'Pressable' }))
+vi.mock('@/hooks/useAccessibilityTextSize', () => ({
+  default: () => false,
+  FIT_ONE_LINE: {},
+}))
 vi.mock('react-native-reanimated', () => ({
   default: { View: 'AnimatedView' },
   useSharedValue: () => runtime.sealScale,

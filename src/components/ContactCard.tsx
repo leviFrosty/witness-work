@@ -5,6 +5,7 @@ import GenderIcon from '@/components/GenderIcon'
 import Avatar from '@/components/ui/Avatar'
 import Card from '@/components/ui/Card'
 import Text from '@/components/ui/MyText'
+import WholeWordsText from '@/components/ui/WholeWordsText'
 import useTheme from '@/contexts/theme'
 import useAccessibilityTextSize from '@/hooks/useAccessibilityTextSize'
 import type { Contact } from '@/types/contact'
@@ -82,6 +83,8 @@ export function ContactCardBody({
   trailing?: ReactNode
 }) {
   const largeText = useAccessibilityTextSize()
+  // A long name at accessibility sizes shrinks rather than breaking mid-word.
+  const Name = largeText ? WholeWordsText : Text
   return (
     <View style={{ alignItems: 'center', flexDirection: 'row', gap: 12 }}>
       {leading}
@@ -95,12 +98,12 @@ export function ContactCardBody({
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
           <View style={{ flexShrink: 1 }}>
             {name ?? (
-              <Text
+              <Name
                 style={{ fontSize: 18 }}
                 numberOfLines={largeText ? undefined : 1}
               >
                 {contact.name}
-              </Text>
+              </Name>
             )}
           </View>
           {contact.gender && (

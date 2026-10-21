@@ -5,6 +5,9 @@ import Animated from 'react-native-reanimated'
 import Text from '@/components/ui/MyText'
 import i18n from '@/lib/locales'
 import useTheme from '@/contexts/theme'
+import useAccessibilityTextSize, {
+  FIT_ONE_LINE,
+} from '@/hooks/useAccessibilityTextSize'
 import { AchievementTier, tierColor } from '@/lib/achievementTier'
 import { goalProgress } from '@/lib/goalProgress'
 import { formatMinutesSpoken, useFormattedMinutes } from '@/lib/minutes'
@@ -70,6 +73,7 @@ const GoalProgressStats = ({
   metaTrailing,
 }: GoalProgressStatsProps) => {
   const theme = useTheme()
+  const largeText = useAccessibilityTextSize()
   const { timeDisplayFormat } = usePreferences()
   const completedMinutes = Math.round(hoursCompleted * 60)
   const goalMinutes = Math.round(goalHours * 60)
@@ -185,13 +189,19 @@ const GoalProgressStats = ({
         }}
       >
         <Text
+          // At accessibility sizes the figure shrinks onto one line rather
+          // than breaking between its digits.
+          {...(largeText && isDecimal ? FIT_ONE_LINE : {})}
           // Short preference renders "0 Hrs 10 Mins" — three tokens that
           // don't fit at 64pt on a single card row. Drop one size class so
           // the line wraps gracefully (or stays single-line) without the
           // auto-shrink turning the hero into fine print.
           style={{
             fontSize: isDecimal ? 64 : 40,
-            lineHeight: isDecimal ? 68 : 44,
+            // A fixed line height would keep the full-size line around a
+            // shrunk figure.
+            lineHeight:
+              largeText && isDecimal ? undefined : isDecimal ? 68 : 44,
             fontFamily: theme.fonts.bold,
             color: heroColor,
           }}

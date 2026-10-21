@@ -214,6 +214,7 @@ const ContactRow = ({
             match={nameMatch}
             baseStyle={{ fontSize: 18 }}
             numberOfLines={largeText ? undefined : 1}
+            wholeWords={largeText}
           />
         }
         subtitle={

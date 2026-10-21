@@ -13,6 +13,9 @@ import Animated, {
 import { useIsFocused } from '@react-navigation/native'
 
 import useTheme from '@/contexts/theme'
+import useAccessibilityTextSize, {
+  FIT_ONE_LINE,
+} from '@/hooks/useAccessibilityTextSize'
 import usePublisher from '@/hooks/usePublisher'
 import useRoleForMonth from '@/hooks/useRoleForMonth'
 import { serviceYearFocusMonth } from '@/lib/roleHistory'
@@ -79,6 +82,7 @@ const YearMilestoneCard = ({
   separateMilestones = false,
 }: YearMilestoneCardProps) => {
   const theme = useTheme()
+  const largeText = useAccessibilityTextSize()
   const serviceYear = year - 1
   const { type: publisher, annualGoalHours } = usePublisher(
     serviceYearFocusMonth(serviceYear)
@@ -490,11 +494,17 @@ const YearMilestoneCard = ({
           }}
         >
           <Text
+            // At accessibility sizes the figure shrinks onto one line rather
+            // than breaking between its digits.
+            {...(largeText && isDecimal ? FIT_ONE_LINE : {})}
             // Drop a tier in "short" mode so "234h 56m / 600 hours" fits the
             // card without auto-shrinking the hero to fine print.
             style={{
               fontSize: isDecimal ? 64 : 40,
-              lineHeight: isDecimal ? 68 : 44,
+              // A fixed line height would keep the full-size line around a
+              // shrunk figure.
+              lineHeight:
+                largeText && isDecimal ? undefined : isDecimal ? 68 : 44,
               fontFamily: theme.fonts.bold,
               color: theme.colors.text,
             }}

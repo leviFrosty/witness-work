@@ -11,7 +11,8 @@ name: Saving a Plan for today celebrates Ready to Go full screen (the User's own
 - tapOn: Quick Action
 - tapOn: Create Plan
 - assertVisible: Add One Time Plan
-# Today, for 5 minutes (the minutes wheel; the hours digits can collide with the bell's count).
+# Today, 5 minutes past the 2 hours a new Plan starts with (the minutes wheel;
+# the hours digits can collide with the bell's count).
 - tapOn:
     id: plan-duration-pill
 - tapOn: '5'

@@ -203,10 +203,10 @@ export type DayPlan = {
    */
   source?: 'manual' | 'recommendation'
   /**
-   * Local day key (`YYYY-MM-DD`) of the User's last save of this Plan. Code
-   * that changes a Plan on its own (Buddies) leaves it alone. The Pet Companion
-   * counts it as an active day (ADR 0030). Absent on Plans not saved since it
-   * was added.
+   * Local day key (`YYYY-MM-DD`) of the User's first save of this Plan; later
+   * edits keep it. Code that changes a Plan on its own (Buddies) leaves it
+   * alone. The Pet Companion counts it as an active day (ADR 0030). Absent on
+   * Plans not saved since it was added; the User's next edit stamps it.
    */
   savedOn?: string
   /** Epoch ms of the most recent change. Used for iCloud merge. */
@@ -282,7 +282,7 @@ export type RecurringPlan = {
   notifyMe?: boolean
   /** Minutes before each instance's start the reminder fires. */
   reminderOffsetMinutes?: number
-  /** Local day key of the User's last save; see `DayPlan.savedOn`. */
+  /** Local day key of the User's first save; see `DayPlan.savedOn`. */
   savedOn?: string
   /** Epoch ms of the most recent change. Used for iCloud merge. */
   updatedAt?: number

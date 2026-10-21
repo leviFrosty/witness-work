@@ -31,8 +31,8 @@ hearts is stored, so every device computes the same answer (ADR 0030).
 - A pet starts with **3 hearts** on its adoption day.
 - An **active day** is a local day with any of: a time entry (including a 0-minute "shared in
   ministry" checkbox entry, not rollovers), a Visit (conversation, return visit or not-at-home), or a
-  Plan/Recurring Plan the user saved that day (`savedOn`, which also covers adding a buddy to a plan;
-  automatic buddy updates don't stamp it).
+  Plan/Recurring Plan the user first saved that day (`savedOn`; later edits, including checklist
+  ticks in its note and adding a buddy, keep the first day, and automatic buddy updates don't stamp it).
 - Each active day: **+1 heart**, max 5. One heart per day however much was done.
 - Quiet days: once 10 days have passed since the last active day (or wake), lose **½ heart every 3
   days** (quiet day 10, 13, 16, …). Hearts never drop below ½ by decay; at ½ the pet is **asleep**.

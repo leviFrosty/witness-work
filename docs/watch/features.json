@@ -550,18 +550,20 @@
     {
       "id": "complication.progress-timeline",
       "area": "Complications",
-      "title": "Progress at midnight",
-      "description": "The Progress complication carries entries for coming midnights, so it rolls the day and month over without the phone.",
+      "title": "Progress through the week",
+      "description": "The Progress complication carries an entry for each of the next seven midnights, computed from the same snapshot, so it rolls the day and month over without the phone (and on watchOS without WidgetKit's budgeted reload). A week on without an update it shows no progress (—) rather than an old day's.",
       "watchos": {
         "status": "implemented",
         "paths": [
-          "targets/watch-widgets/WatchWidgets.swift#entry(at: midnight)"
+          "targets/watch-widgets/WatchWidgets.swift#MonthProgress.timelineDays + 1",
+          "targets/watch/MonthProgress.swift#static func midnights"
         ]
       },
       "wearos": {
         "status": "implemented",
         "paths": [
-          "targets/wear-os/src/main/java/com/leviwilkerson/witnesswork/wear/complications/ProgressComplicationService.kt#TimelineEntry"
+          "targets/wear-os/src/main/java/com/leviwilkerson/witnesswork/wear/complications/ProgressComplicationService.kt#TimelineEntry",
+          "targets/wear-os/src/main/java/com/leviwilkerson/witnesswork/wear/MonthProgress.kt#fun midnights"
         ]
       }
     },

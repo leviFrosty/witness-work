@@ -193,4 +193,13 @@ class MonthProgressTest {
     assertEquals("reportedToday", reportedToday.publisherState(at(5, hour = 23)))
     assertEquals("reportedThisMonth", reportedToday.publisherState(at(6, hour = 0)))
   }
+
+  @Test
+  fun `the complications carry a week of midnights, across a clock change`() {
+    // Daylight saving time ends on Nov 1 in Chicago.
+    val week = MonthProgress.midnights(at(30), 8)
+    assertEquals((0L until 8L).map { at(31, hour = 0).plusDays(it) }, week)
+    assertTrue(week.all { it.hour == 0 && it.minute == 0 })
+    assertEquals(listOf(at(1, hour = 0, month = 11)), MonthProgress.midnights(at(31, hour = 0), 1))
+  }
 }

@@ -87,6 +87,18 @@ import Foundation
     expect(schedule(try planned(later), at(20)), "aheadOfSchedule", "Oct 20")
     // An iPhone app from before `loggedThroughDay` paces with the month's total.
     expect(schedule(try planned(nil), at(7)), "aheadOfSchedule", "Oct 7, older iPhone app")
+    // The complications' week of midnights, across the end of daylight saving
+    // time (Nov 1 in Chicago): each the start of the next day. watchOS used to
+    // carry only the first.
+    let week = MonthProgress.midnights(after: at(30), count: 8, calendar: calendar)
+    let expectedWeek = (0..<8).map {
+      calendar.date(from: DateComponents(year: 2026, month: 10, day: 31 + $0))!
+    }
+    precondition(week == expectedWeek, "midnights: \(week)")
+    precondition(
+      MonthProgress.midnights(after: at(31, hour: 0), count: 1, calendar: calendar)
+        == [calendar.date(from: DateComponents(year: 2026, month: 11, day: 1))!],
+      "from a midnight")
     print("watch month progress: ok")
   }
 }

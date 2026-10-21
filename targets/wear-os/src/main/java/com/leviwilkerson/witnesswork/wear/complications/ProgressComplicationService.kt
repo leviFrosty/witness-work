@@ -27,14 +27,14 @@ import com.leviwilkerson.witnesswork.wear.WatchModel
 import com.leviwilkerson.witnesswork.wear.WatchStorage
 import com.leviwilkerson.witnesswork.wear.appLanguage
 import com.leviwilkerson.witnesswork.wear.now
-import com.leviwilkerson.witnesswork.wear.startOfDay
 import java.time.ZonedDateTime
 
 /**
  * Monthly Progress, the counterpart of the Apple Watch's `ProgressComplication`
  * (`targets/watch-widgets/WatchWidgets.swift`). It reads what the app stored, including time
- * added on the watch that the phone hasn't saved yet. A timeline entry for each coming midnight
- * moves "reported today" and the pace along, and starts the next month, without the phone.
+ * added on the watch that the phone hasn't saved yet. A timeline entry for each of the next week's
+ * midnights moves "reported today" and the pace along, and starts the next month, without the
+ * phone; after that week it shows no progress rather than an old day's.
  *
  * Wear OS faces pick the type a slot takes: RANGED_VALUE is the circular gauge, SHORT_TEXT the
  * corner and small slots, LONG_TEXT the rectangular and inline ones. Like the Apple Watch's, the
@@ -81,26 +81,29 @@ open class ProgressComplicationService(private val style: Style = Style.RING) :
   override suspend fun onComplicationRequest(request: ComplicationRequest): ComplicationDataTimeline? {
     WatchModel.init(this)
     val now = now()
-    val default = data(this, request.complicationType, progress(now), snapshot(), style) ?: return null
-    val entries = mutableListOf<TimelineEntry>()
-    var midnight = now.startOfDay()
-    repeat(7) {
-      val start = midnight.plusDays(1)
-      val end = start.plusDays(1)
-      data(this, request.complicationType, progress(start), snapshot(), style)?.let {
-        entries += TimelineEntry(TimeInterval(start.toInstant(), end.toInstant()), it)
-      }
-      midnight = start
+    val type = request.complicationType
+    val context = WatchStorage.loadContext()
+    val snapshot = context?.snapshot
+    val outbox = WatchStorage.loadOutbox()
+    val resolved = context?.resolvedEntryIds.orEmpty()
+    fun progress(date: ZonedDateTime) = snapshot?.let { MonthProgress.of(it, outbox, resolved, date) }
+
+    // Shown outside the entries: until the next midnight.
+    val default = data(this, type, progress(now), snapshot, style) ?: return null
+    val midnights = MonthProgress.midnights(now, MonthProgress.TIMELINE_DAYS + 1)
+    val entries =
+      midnights.zipWithNext().mapNotNull { (start, end) ->
+        data(this, type, progress(start), snapshot, style)?.let {
+          TimelineEntry(TimeInterval(start.toInstant(), end.toInstant()), it)
+        }
+      }.toMutableList()
+    // A week on without an update, the default would show today's progress on another day; none
+    // is shown instead.
+    val end = midnights.last()
+    data(this, type, null, snapshot, style)?.let {
+      entries += TimelineEntry(TimeInterval(end.toInstant(), end.plusYears(1).toInstant()), it)
     }
     return ComplicationDataTimeline(default, entries)
-  }
-
-  private fun snapshot(): WatchSnapshot? = WatchStorage.loadContext()?.snapshot
-
-  private fun progress(date: ZonedDateTime): MonthProgress? {
-    val context = WatchStorage.loadContext() ?: return null
-    val snapshot = context.snapshot ?: return null
-    return MonthProgress.of(snapshot, WatchStorage.loadOutbox(), context.resolvedEntryIds, date)
   }
 
   companion object {

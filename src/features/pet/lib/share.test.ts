@@ -77,14 +77,14 @@ describe('sharing the pet', () => {
     ).data
     const otherRecords: SignData = {
       ...DEMO_SIGN_DATA,
-      monthHours: 71.5,
+      monthMinutes: 4290,
       monthGoal: 50,
       yearBars: [60, 55, 71.5, 0, 0, 0, 0, 0, 0, 0, 0, 0],
       currentMonthIndex: 2,
-      yearHours: 186.5,
+      yearMinutes: 11190,
       sharedMonths: Array.from({ length: 12 }, (_, i) => i < 3),
       planDay: 3,
-      planHours: 4,
+      planMinutes: 240,
       conversations: 42,
       returnVisits: 17,
     }

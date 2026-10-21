@@ -151,7 +151,7 @@
     "react-native-reanimated": "4.5.1",
     "react-native-reanimated-carousel": "5.1.1",
     "react-native-safe-area-context": "5.7.0",
-    "react-native-screens": "4.26.0",
+    "react-native-screens": "4.30.0",
     "react-native-svg": "15.15.4",
     "react-native-webview": "13.16.1",
     "react-native-worklets": "0.10.2",
@@ -202,6 +202,7 @@
     "install": {
       "exclude": [
         "react-native-reanimated",
+        "react-native-screens",
         "react-native-worklets"
       ]
     },

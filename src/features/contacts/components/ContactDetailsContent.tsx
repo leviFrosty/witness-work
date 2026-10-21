@@ -1,5 +1,5 @@
 import { MessageCircle as MessageCircleIcon } from 'lucide-react-native'
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { ScrollView, View } from 'react-native'
 import { getLocales } from 'expo-localization'
 import { StatusBar } from 'expo-status-bar'
@@ -42,6 +42,9 @@ import VisitJourneyCard from '@/features/contacts/components/VisitJourneyCard'
 import VisitTimeline from '@/features/contacts/components/VisitTimeline'
 import useContactHeroBackground from '@/features/contacts/hooks/useContactHeroBackground'
 import { useHorizontalBleed } from '@/components/ui/layout/HorizontalSafeArea'
+import WindowControlsInsetView, {
+  NO_WINDOW_CONTROLS,
+} from '../../../../modules/window-controls'
 import {
   canNavigateTo,
   contactAddressLines,
@@ -71,6 +74,9 @@ const ContactDetailsContent = ({
   const theme = useTheme()
   const insets = useSafeAreaInsets()
   const bleed = useHorizontalBleed()
+  // Beside the list, the pane's end corner is a windowed iPad app's top corner
+  // when the app reads right to left on a left-to-right system, or the reverse.
+  const [controls, setControls] = useState(NO_WINDOW_CONTROLS)
   const { developerTools, defaultNavigationMapProvider } = usePreferences()
   const { contacts, customFieldDefs } = useContacts()
   const { conversations } = useConversations()
@@ -212,7 +218,10 @@ const ContactDetailsContent = ({
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
       {embedded && (
-        <View style={{ backgroundColor: heroBackground }}>
+        <WindowControlsInsetView
+          onInsetsChange={setControls}
+          style={{ backgroundColor: heroBackground }}
+        >
           <View
             style={{
               width: '100%',
@@ -223,6 +232,7 @@ const ContactDetailsContent = ({
               justifyContent: 'flex-end',
               gap: 20,
               padding: 16,
+              paddingEnd: 16 + controls.end,
             }}
           >
             <ContactDetailsActions
@@ -232,7 +242,7 @@ const ContactDetailsContent = ({
               color={heroForeground}
             />
           </View>
-        </View>
+        </WindowControlsInsetView>
       )}
       {!embedded && <StatusBar style={heroIsDark ? 'light' : 'dark'} />}
       <ScrollView

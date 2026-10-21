@@ -84,8 +84,9 @@ const HeaderContent = ({
   const theme = useTheme()
   const insets = useSafeAreaInsets()
   const navigation = useNavigation<RootStackNavigation>()
-  // A windowed iPad app keeps its window controls over the top corner, right
-  // where the back button sits.
+  // A windowed iPad app keeps its window controls over a top corner: the back
+  // button's, or the end buttons' when the app and the system read in
+  // different directions (Arabic on an English iPad, or the reverse).
   const [controls, setControls] = useState(NO_WINDOW_CONTROLS)
   // The buttons float over the header's ends. The title keeps clear of the
   // wider side on both sides, so it stays centered and a title that wraps
@@ -94,7 +95,7 @@ const HeaderContent = ({
   const [rightWidth, setRightWidth] = useState(0)
   const titleInset = Math.max(
     controls.start + (systemBack ? 0 : leftWidth),
-    rightWidth
+    controls.end + rightWidth
   )
   const widthSetter =
     (set: (width: number) => void) => (e: LayoutChangeEvent) =>
@@ -230,13 +231,29 @@ const HeaderContent = ({
             {title}
           </Text>
         </Pressable>
-        {isValidElement<{ onLayout?: (e: LayoutChangeEvent) => void }>(
-          rightElement
-        )
-          ? cloneElement(rightElement, {
-              onLayout: widthSetter(setRightWidth),
-            })
-          : rightElement}
+        {/* Callers pin their buttons to the end (`right: 0`); this keeps
+            that end clear of the window controls. */}
+        <View
+          pointerEvents='box-none'
+          style={{
+            position: 'absolute',
+            top: 0,
+            bottom: 0,
+            start: 0,
+            end: controls.end,
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          {isValidElement<{ onLayout?: (e: LayoutChangeEvent) => void }>(
+            rightElement
+          )
+            ? cloneElement(rightElement, {
+                onLayout: widthSetter(setRightWidth),
+              })
+            : rightElement}
+        </View>
       </WindowControlsInsetView>
     </View>
   )

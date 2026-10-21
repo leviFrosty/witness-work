@@ -246,6 +246,21 @@ export const fittingMonthLabels = (
   return kept
 }
 
+/**
+ * The week column under a touch at physical `x` in a grid `gridWidth` wide.
+ * Columns run from the reading start, the right edge in a right-to-left layout.
+ * May fall outside the grid; the caller checks.
+ */
+export const contributionColumnAt = (
+  x: number,
+  stride: number,
+  gridWidth: number,
+  rtl: boolean
+): number => {
+  'worklet'
+  return Math.floor((rtl ? gridWidth - x : x) / stride)
+}
+
 export type ContributionSummary = {
   /** Days in the window with any logged service. */
   daysWithService: number

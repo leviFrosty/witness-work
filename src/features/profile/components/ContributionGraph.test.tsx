@@ -8,7 +8,10 @@ vi.mock('@/lib/locales', async () => {
   const { default: en } = await import('@/locales/en-US.json')
   return { default: new I18n({ en }, { locale: 'en' }) }
 })
-vi.mock('react-native', () => ({ View: 'View' }))
+vi.mock('react-native', () => ({
+  View: 'View',
+  I18nManager: { isRTL: false },
+}))
 vi.mock('react-native-reanimated', () => ({
   default: { View: 'AnimatedView' },
   runOnJS: (fn: unknown) => fn,

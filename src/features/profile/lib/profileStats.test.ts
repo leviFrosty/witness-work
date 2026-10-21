@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   busiestWeekday,
   ContributionCell,
+  contributionColumnAt,
   contributionGrid,
   contributionMonthLabels,
   contributionSummary,
@@ -223,5 +224,28 @@ describe('fittingMonthLabels', () => {
         label.column * 11
       )
     })
+  })
+})
+
+describe('contributionColumnAt', () => {
+  // 3 columns of 10 pt cells with 2 pt gaps: 34 pt wide.
+  const stride = 12
+  const width = 34
+
+  it('counts columns from the left edge left to right', () => {
+    expect(contributionColumnAt(2, stride, width, false)).toBe(0)
+    expect(contributionColumnAt(13, stride, width, false)).toBe(1)
+    expect(contributionColumnAt(30, stride, width, false)).toBe(2)
+  })
+
+  it('counts columns from the right edge right to left', () => {
+    expect(contributionColumnAt(32, stride, width, true)).toBe(0)
+    expect(contributionColumnAt(21, stride, width, true)).toBe(1)
+    expect(contributionColumnAt(4, stride, width, true)).toBe(2)
+  })
+
+  it('falls outside the grid past either edge', () => {
+    expect(contributionColumnAt(-1, stride, width, false)).toBe(-1)
+    expect(contributionColumnAt(width + 1, stride, width, true)).toBe(-1)
   })
 })

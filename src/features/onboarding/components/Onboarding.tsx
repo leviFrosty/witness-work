@@ -16,6 +16,7 @@ import CalendarSync from '@/features/onboarding/components/steps/CalendarSync'
 import StepDefaultNav from '@/features/onboarding/components/steps/DefaultNav'
 import DataProtection from '@/features/onboarding/components/steps/DataProtection'
 import ProfileSetup from '@/features/onboarding/components/steps/ProfileSetup'
+import { OnboardingKeyboardProvider } from '@/features/onboarding/components/OnboardingFooter'
 import ProfileSetupPioneerDate from '@/features/onboarding/components/steps/ProfileSetupPioneerDate'
 import PickUpWhereLeftOff from '@/features/onboarding/components/steps/PickUpWhereLeftOff'
 import FounderNote from '@/features/onboarding/components/steps/FounderNote'
@@ -256,17 +257,19 @@ const OnBoarding = () => {
 
   return (
     <OnboardingProgressContext.Provider value={progress}>
-      <View style={{ flexGrow: 1 }}>
-        {current.id === 'hero' ? (
-          <StepOne goBack={goBack} goNext={goNext} goToStep={goToStep} />
-        ) : (
-          <StepComponent
-            goBack={goBack}
-            goNext={goNext}
-            buddiesAvailable={buddiesAvailable}
-          />
-        )}
-      </View>
+      <OnboardingKeyboardProvider>
+        <View style={{ flexGrow: 1 }}>
+          {current.id === 'hero' ? (
+            <StepOne goBack={goBack} goNext={goNext} goToStep={goToStep} />
+          ) : (
+            <StepComponent
+              goBack={goBack}
+              goNext={goNext}
+              buddiesAvailable={buddiesAvailable}
+            />
+          )}
+        </View>
+      </OnboardingKeyboardProvider>
     </OnboardingProgressContext.Provider>
   )
 }

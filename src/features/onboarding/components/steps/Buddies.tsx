@@ -1,6 +1,5 @@
 import { type ReactNode, useEffect, useRef, useState } from 'react'
-import { ActivityIndicator, Share, View } from 'react-native'
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
+import { ActivityIndicator, type ScrollView, Share, View } from 'react-native'
 import {
   CircleCheck as CircleCheckIcon,
   Lock as LockIcon,
@@ -8,6 +7,10 @@ import {
 } from 'lucide-react-native'
 import { styles } from '@/features/onboarding/components/Onboarding.styles'
 import OnboardingNav from '@/features/onboarding/components/OnboardingNav'
+import OnboardingFooter, {
+  STEP_BOTTOM_PADDING,
+} from '@/features/onboarding/components/OnboardingFooter'
+import OnboardingScrollView from '@/features/onboarding/components/OnboardingScrollView'
 import BuddiesPreview from '@/features/onboarding/components/BuddiesPreview'
 import { BuddyInviteError } from '@/features/buddies/lib/engine'
 import {
@@ -110,10 +113,12 @@ const Buddies = ({ goBack, goNext }: Props) => {
   const name = useProfile((state) => state.name)
   const setProfile = useProfile((state) => state.set)
   const [askName, setAskName] = useState(false)
-  const scrollRef = useRef<KeyboardAwareScrollView>(null)
+  const scrollRef = useRef<ScrollView>(null)
   // The field lands at the bottom of the step; keep it in view.
   const revealNameField = () =>
-    requestAnimationFrame(() => scrollRef.current?.scrollToEnd(true))
+    requestAnimationFrame(() =>
+      scrollRef.current?.scrollToEnd({ animated: true })
+    )
 
   useEffect(() => {
     mounted.current = true
@@ -194,13 +199,12 @@ const Buddies = ({ goBack, goNext }: Props) => {
         flex: 1,
         paddingHorizontal: 20,
         paddingTop: 60,
-        paddingBottom: 60,
+        paddingBottom: STEP_BOTTOM_PADDING,
       }}
     >
       <OnboardingNav goBack={goBack} />
-      <KeyboardAwareScrollView
+      <OnboardingScrollView
         ref={scrollRef}
-        enableOnAndroid
         style={{ flex: 1 }}
         contentContainerStyle={{
           flexGrow: 1,
@@ -265,7 +269,7 @@ const Buddies = ({ goBack, goNext }: Props) => {
                 maxLength={40}
                 enterKeyHint='done'
                 textAlign='start'
-                // Done closes the keyboard, bringing Invite back into view.
+                // Keeps the field in view as the step grows back.
                 onBlur={revealNameField}
               />
             </View>
@@ -282,10 +286,10 @@ const Buddies = ({ goBack, goNext }: Props) => {
             </Text>
           )}
         </View>
-      </KeyboardAwareScrollView>
+      </OnboardingScrollView>
       {/* Inviting and moving on stay the same size and one tap away. Once an
           invite has gone out, Continue takes the lead. */}
-      <View style={{ gap: 10 }}>
+      <OnboardingFooter style={{ gap: 10 }}>
         {sent ? (
           <>
             <ActionButton onPress={finish}>{i18n.t('continue')}</ActionButton>
@@ -310,7 +314,7 @@ const Buddies = ({ goBack, goNext }: Props) => {
             </Button>
           </>
         )}
-      </View>
+      </OnboardingFooter>
     </Wrapper>
   )
 }

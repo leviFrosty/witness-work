@@ -151,7 +151,7 @@ vi.mock('expo-localization', () => ({
   getCalendars: () => [{ uses24hourClock: false }],
 }))
 
-import { installWatchSync } from '@/app/watch/watchSync'
+import { flushWatchSnapshot, installWatchSync } from '@/app/watch/watchSync'
 import useServiceReport from '@/stores/serviceReport'
 import useMileage from '@/stores/mileage'
 import { getMonthsReports } from '@/lib/serviceReport'
@@ -584,6 +584,48 @@ describe('watch sync', () => {
       process.env.TZ = zone
       useServiceReport.setState({ dayPlans: [] })
     }
+  })
+
+  it('sends a change still waiting on the debounce when the app leaves', () => {
+    teardown = installWatchSync()
+    expect(bridge.snapshots).toHaveLength(1)
+    useServiceReport.getState().addServiceReport({
+      id: 'phone-1',
+      date: new Date(2026, 9, 4),
+      hours: 1,
+      minutes: 0,
+    })
+    expect(bridge.snapshots).toHaveLength(1)
+
+    // Suspended right after, the debounce would never fire.
+    appState.listeners.forEach((listener) => listener('background'))
+    expect(bridge.snapshots).toHaveLength(2)
+    vi.advanceTimersByTime(500)
+    expect(bridge.snapshots).toHaveLength(2)
+  })
+
+  it('leaves nothing to send when no change is waiting', () => {
+    teardown = installWatchSync()
+    const builds = () => counters['watch:push'] ?? 0
+    const before = builds()
+    appState.listeners.forEach((listener) => listener('inactive'))
+    expect(builds()).toBe(before)
+  })
+
+  it('sends what a background sync merged before the task ends', () => {
+    teardown = installWatchSync()
+    useServiceReport.getState().addServiceReport({
+      id: 'merged-1',
+      date: new Date(2026, 9, 4),
+      hours: 3,
+      minutes: 0,
+    })
+
+    flushWatchSnapshot('background-fetch')
+    expect(bridge.snapshots).toHaveLength(2)
+    // The debounce doesn't send it again.
+    vi.advanceTimersByTime(500)
+    expect(bridge.snapshots).toHaveLength(2)
   })
 
   it('sends an unchanged snapshot again on a new day', () => {

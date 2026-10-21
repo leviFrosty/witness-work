@@ -51,6 +51,20 @@ import Foundation
     let decimalProgress = MonthProgress(snapshot: decimal, outbox: [], resolvedEntryIds: [], at: at(5))!
     precondition(decimalProgress.goalHours == 37.5)
     precondition(abs(decimalProgress.fraction! - 990.0 / 2250) < 1e-9)
+    // An untimed Plan starts at midnight of its day in the watch's zone, though
+    // the iPhone sent another zone's midnight (New York's, 11 PM the day before
+    // in Chicago).
+    var upNextJSON = (snapshotJSON["upNext"] as! [[String: Any]])[1]
+    upNextJSON["timed"] = false
+    upNextJSON["start"] = 1_792_641_600_000.0  // Oct 22, 00:00 in New York
+    upNextJSON["day"] = "2026-10-22"
+    let untimed = try JSONDecoder().decode(
+      UpNextItem.self, from: JSONSerialization.data(withJSONObject: upNextJSON))
+    precondition(untimed.startDate == at(22, hour: 0), "untimed: \(untimed.startDate)")
+    upNextJSON["day"] = NSNull()
+    let older = try JSONDecoder().decode(
+      UpNextItem.self, from: JSONSerialization.data(withJSONObject: upNextJSON))
+    precondition(older.startDate == at(21, hour: 23), "older iPhone app: \(older.startDate)")
     print("watch month progress: ok")
   }
 }

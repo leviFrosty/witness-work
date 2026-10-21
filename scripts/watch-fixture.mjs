@@ -65,6 +65,13 @@ function timing(start, timed) {
   return {
     start: start.getTime(),
     timed,
+    day: timed
+      ? null
+      : [
+          start.getFullYear(),
+          String(start.getMonth() + 1).padStart(2, '0'),
+          String(start.getDate()).padStart(2, '0'),
+        ].join('-'),
     timeText: timed ? time : null,
     clockText: timed ? time.replace(/\s*[AP]M$/, '') : null,
     periodText: timed ? (time.match(/[AP]M$/)?.[0] ?? null) : null,

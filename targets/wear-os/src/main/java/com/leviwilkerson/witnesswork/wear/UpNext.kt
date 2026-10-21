@@ -3,6 +3,7 @@ package com.leviwilkerson.witnesswork.wear
 import com.leviwilkerson.witnesswork.watchprotocol.UpNextItem
 import com.leviwilkerson.witnesswork.watchprotocol.WatchSnapshot
 import java.time.Instant
+import java.time.LocalDate
 import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
 
@@ -60,8 +61,14 @@ object UpNext {
     return times.filter { it > after }.sorted().map { ZonedDateTime.ofInstant(Instant.ofEpochMilli(it), date.zone) }
   }
 
-  private fun start(item: UpNextItem, date: ZonedDateTime): ZonedDateTime =
-    ZonedDateTime.ofInstant(Instant.ofEpochMilli(item.startMs), date.zone)
+  /**
+   * When `item` starts in `date`'s zone. An untimed Plan's day starts at midnight there, wherever
+   * the phone was when it sent it.
+   */
+  private fun start(item: UpNextItem, date: ZonedDateTime): ZonedDateTime {
+    val day = item.day?.takeIf { !item.timed }?.let { runCatching { LocalDate.parse(it) }.getOrNull() }
+    return day?.atStartOfDay(date.zone) ?: ZonedDateTime.ofInstant(Instant.ofEpochMilli(item.startMs), date.zone)
+  }
 
   // MARK: Labels
 

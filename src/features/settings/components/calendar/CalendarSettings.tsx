@@ -7,6 +7,7 @@ import type {
 } from '../../../../../modules/calendar-bridge'
 import {
   calendarAction,
+  calendarChoices,
   calendarDestinations,
   calendarSources,
   connectCalendar,
@@ -20,6 +21,7 @@ import { calendarRecovery } from '@/app/calendar/calendarRecovery'
 import { resumeWhenCalendarAllowed } from '@/app/calendar/resumeWhenCalendarAllowed'
 import { useCalendarPublishing, useCalendarSync } from '@/stores/calendarSync'
 import { confirmDisconnectCalendar } from '@/app/calendar/confirmDisconnectCalendar'
+import { addForegroundListener } from '@/lib/appLifecycle'
 
 import Section from '@/components/ui/inputs/Section'
 import InputRowSwitch from '@/components/ui/inputs/InputRowSwitch'
@@ -68,12 +70,28 @@ export default function CalendarSettings() {
     })
     return () => subscription.remove()
   }, [])
+  // Back from Settings, maybe with iCloud Calendars on: look again.
+  useEffect(() => {
+    const subscription = addForegroundListener(() => {
+      const { error, working } = useCalendarPublishing.getState()
+      if (working || error !== 'calendarNoSourceError') return
+      void retryCalendarAction('open_settings').catch(() => undefined)
+    })
+    return () => subscription.remove()
+  }, [])
   const run = (action: () => Promise<unknown>) => {
     void calendarAction(action).catch(() => undefined)
   }
   const recovery = calendarRecovery(error)
   // Its own Try Again already shows while iCloud can't be checked.
   const checking = !settings.enabled && !canPublishHere && !state
+  const showChoices = async () => {
+    setLoaded(false)
+    const choices = await calendarChoices()
+    setDestinations(choices.destinations)
+    setSources(choices.sources)
+    setLoaded(true)
+  }
   const loadCalendars = () => {
     Alert.alert(i18n.t('calendarSync'), i18n.t('calendarAccessExplanation'), [
       {
@@ -82,12 +100,7 @@ export default function CalendarSettings() {
       },
       {
         text: i18n.t('continue'),
-        onPress: () =>
-          run(async () => {
-            setDestinations(await calendarDestinations())
-            setSources(await calendarSources())
-            setLoaded(true)
-          }),
+        onPress: () => run(showChoices),
       },
     ])
   }
@@ -165,6 +178,19 @@ export default function CalendarSettings() {
   const googleSetup = i18n.t(
     android ? 'calendarGoogleSetupAndroid' : 'calendarGoogleSetup'
   )
+  const openSettings = (
+    <InputRowButton
+      label={i18n.t(
+        android ? 'calendarOpenSettingsAndroid' : 'calendarOpenSettings'
+      )}
+      lastInSection
+      onPress={() => {
+        void Linking.openSettings()
+      }}
+    />
+  )
+  // Fixed in Settings, by turning on iCloud Calendars.
+  const noSource = error === 'calendarNoSourceError'
   const note = { fontSize: 12, color: theme.colors.textAlt }
   const padded = { paddingHorizontal: inputLayout.horizontalPadding }
   return (
@@ -256,16 +282,21 @@ export default function CalendarSettings() {
             (recovery === 'try_again' && !checking)) && (
             <Section>
               {recovery === 'try_again' ? (
-                <InputRowButton
-                  label={i18n.t(
-                    working ? 'calendarSyncing' : 'calendarTryAgain'
-                  )}
-                  disabled={working}
-                  lastInSection
-                  onPress={() => {
-                    void retryCalendarAction('try_again').catch(() => undefined)
-                  }}
-                />
+                <>
+                  <InputRowButton
+                    label={i18n.t(
+                      working ? 'calendarSyncing' : 'calendarTryAgain'
+                    )}
+                    disabled={working}
+                    lastInSection={!noSource}
+                    onPress={() => {
+                      void retryCalendarAction('try_again').catch(
+                        () => undefined
+                      )
+                    }}
+                  />
+                  {noSource && openSettings}
+                </>
               ) : error === 'calendarWaitingForEvents' ? (
                 <InputRowButton
                   label={i18n.t('calendarRepair')}
@@ -287,17 +318,7 @@ export default function CalendarSettings() {
                   }}
                 />
               ) : (
-                <InputRowButton
-                  label={i18n.t(
-                    android
-                      ? 'calendarOpenSettingsAndroid'
-                      : 'calendarOpenSettings'
-                  )}
-                  lastInSection
-                  onPress={() => {
-                    void Linking.openSettings()
-                  }}
-                />
+                openSettings
               )}
             </Section>
           )}

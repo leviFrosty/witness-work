@@ -99,6 +99,7 @@ import {
   refreshPublishing,
   publishCalendar,
   disconnectCalendar,
+  calendarChoices,
   calendarDestinations,
   connectCalendar,
   createCalendar,
@@ -436,6 +437,37 @@ describe('calendar publishing orchestration', () => {
     expect(analytics.capture).toHaveBeenCalledWith('calendar_sync_failed', {
       error_key: 'calendarNoSourceError',
       background: false,
+    })
+  })
+  it('explains an empty calendar picker, and clears it once there is a choice', async () => {
+    useCalendarSync.setState({ enabled: false, destination: null })
+    bridge.requestAccess.mockResolvedValue(true)
+    bridge.destinations.mockResolvedValueOnce([])
+    bridge.sources.mockResolvedValueOnce([])
+    await expect(calendarAction(calendarChoices)).rejects.toThrow(
+      'CALENDAR_NO_SOURCE'
+    )
+    expect(useCalendarPublishing.getState().error).toBe('calendarNoSourceError')
+    expect(analytics.capture).toHaveBeenCalledWith('calendar_sync_failed', {
+      error_key: 'calendarNoSourceError',
+      background: false,
+    })
+
+    // iCloud Calendars turned on, then Try Again.
+    bridge.destinations.mockResolvedValueOnce([])
+    bridge.sources.mockResolvedValueOnce([{ id: 'icloud', title: 'iCloud' }])
+    await expect(retryCalendarAction('try_again')).resolves.toEqual({
+      destinations: [],
+      sources: [{ id: 'icloud', title: 'iCloud' }],
+    })
+    expect(useCalendarPublishing.getState().error).toBeNull()
+  })
+  it('offers existing calendars even with no account for a new one', async () => {
+    bridge.requestAccess.mockResolvedValue(true)
+    bridge.sources.mockResolvedValueOnce([])
+    await expect(calendarChoices()).resolves.toEqual({
+      destinations: [calendar],
+      sources: [],
     })
   })
   it('a new primary reconnects the shared calendar only on an exact match', async () => {

@@ -2119,7 +2119,7 @@
   "onPace": "Im Takt",
   "hrsShort": "{{value}} unter dem Ziel",
   "hoursLeftValue": "Noch {{value}}",
-  "goalLabel": "Ziel: {{value}} Std",
+  "goalLabel": "Ziel: {{value}}",
   "monthsLeft": "{{count}} Monate übrig",
   "vsLastMonthUp": "↑ {{value}} gegenüber Vormonat",
   "vsLastMonthDown": "↓ {{value}} gegenüber Vormonat",

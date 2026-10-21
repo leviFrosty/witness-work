@@ -2119,7 +2119,7 @@
   "onPace": "Op tempo",
   "hrsShort": "{{value}} tekort",
   "hoursLeftValue": "Nog {{value}}",
-  "goalLabel": "Doel: {{value}} uur",
+  "goalLabel": "Doel: {{value}}",
   "monthsLeft": "{{count}} resterende maanden",
   "vsLastMonthUp": "↑ {{value}} t.o.v. vorige maand",
   "vsLastMonthDown": "↓ {{value}} t.o.v. vorige maand",

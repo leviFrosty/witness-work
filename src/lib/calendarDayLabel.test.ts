@@ -125,6 +125,22 @@ describe('calendarDayAccessibilityLabel', () => {
     ).toBe('Tuesday, March 12, 2026. Logged 2h. With Sam.')
   })
 
+  it("doesn't double the period after an abbreviated unit", () => {
+    const abbreviated = (minutes: number) => `${minutes / 60} Std.`
+    expect(
+      calendarDayAccessibilityLabel(
+        day({
+          isPast: true,
+          wentInService: true,
+          loggedMinutes: 60,
+          hasPlan: true,
+          plannedMinutes: 120,
+        }),
+        abbreviated
+      )
+    ).toBe('Tuesday, March 12, 2026. Logged 1 Std. Planned 2 Std.')
+  })
+
   it('builds every part from the Language, not English', () => {
     i18n.current.locale = 'xx'
     try {

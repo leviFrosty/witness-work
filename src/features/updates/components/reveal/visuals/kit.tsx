@@ -236,22 +236,28 @@ export const IconTile = ({
 
 /**
  * Copy inside an illustration. Font scaling is off: the illustrations are
- * fixed-size sketches, and the page's real copy scales normally.
+ * fixed-size sketches, and the page's real copy scales normally. Set
+ * `minimumFontScale` to shrink a label that would otherwise be cut off, as a
+ * longer translation can be; text that fits keeps its size.
  */
 export const VisualText = ({
   children,
   style,
   numberOfLines = 1,
+  minimumFontScale,
 }: {
   children: string
   style?: StyleProp<TextStyle>
   numberOfLines?: number
+  minimumFontScale?: number
 }) => {
   const theme = useTheme()
   return (
     <Text
       allowFontScaling={false}
       numberOfLines={numberOfLines}
+      adjustsFontSizeToFit={minimumFontScale !== undefined}
+      minimumFontScale={minimumFontScale}
       style={[{ fontFamily: theme.fonts.semiBold, fontSize: 12 }, style]}
     >
       {children}

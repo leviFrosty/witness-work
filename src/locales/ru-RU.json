@@ -2185,7 +2185,7 @@
   "onPace": "В темпе",
   "hrsShort": "не хватает {{value}}",
   "hoursLeftValue": "Осталось {{value}}",
-  "goalLabel": "Цель: {{value}} ч",
+  "goalLabel": "Цель: {{value}}",
   "monthsLeft": "осталось {{count}} месяцев",
   "vsLastMonthUp": "↑ {{value}} к прошлому месяцу",
   "vsLastMonthDown": "↓ {{value}} к прошлому месяцу",

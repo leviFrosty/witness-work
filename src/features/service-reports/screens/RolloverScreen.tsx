@@ -16,6 +16,7 @@ import { RootStackNavigation } from '@/types/rootStack'
 import { useFormattedMinutes } from '@/lib/minutes'
 import { tracking } from '@/lib/tracking'
 import { formatDisplay } from '@/lib/dates'
+import { isRtlLayout } from '@/lib/direction'
 
 const RolloverScreen = () => {
   const theme = useTheme()
@@ -49,6 +50,9 @@ const RolloverScreen = () => {
 
   const today = moment()
   const destinationLabel = today.format('MMMM')
+  // Points from the time toward the month it moves into, so it flips with the
+  // reading direction.
+  const arrow = isRtlLayout() ? '←' : '→'
 
   const handleApply = () => {
     Haptics.success()
@@ -95,7 +99,7 @@ const RolloverScreen = () => {
               marginBottom: 16,
             }}
           >
-            {totalDisplay.formatted} → {destinationLabel}
+            {totalDisplay.formatted} {arrow} {destinationLabel}
           </Text>
           <Text
             style={{

@@ -2119,7 +2119,7 @@
   "onPace": "No ritmo",
   "hrsShort": "Faltaram {{value}}",
   "hoursLeftValue": "Faltam {{value}}",
-  "goalLabel": "Meta: {{value}} horas",
+  "goalLabel": "Meta: {{value}}",
   "monthsLeft": "{{count}} meses restantes",
   "vsLastMonthUp": "↑ {{value}} em relação ao mês passado",
   "vsLastMonthDown": "↓ {{value}} em relação ao mês passado",

@@ -17,7 +17,13 @@ const NotificationPreview = () => {
 
   return (
     <View
-      accessibilityLabel={i18n.t('notificationPreview_title')}
+      // One picture to a screen reader, not the banner's pieces one by one.
+      accessible
+      accessibilityRole='image'
+      accessibilityLabel={i18n.t('notificationPreview_accessibilityLabel', {
+        title: i18n.t('notificationPreview_title'),
+        body: i18n.t('notificationPreview_body'),
+      })}
       style={{
         // Tuned to mimic the iOS banner look rather than an in-app card:
         // lighter background, smaller radius, and a more pronounced shadow.

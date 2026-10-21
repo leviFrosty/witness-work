@@ -147,6 +147,7 @@ const PlanMonth = ({ goBack, goNext }: Props) => {
         <View style={{ gap: 8 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <Text
+              accessibilityRole='header'
               style={[styles.stepTitle, { marginBottom: 0, flexShrink: 1 }]}
             >
               {i18n.t('planMonth.title', { month: monthName })}

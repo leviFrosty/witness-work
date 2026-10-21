@@ -84,7 +84,9 @@ const MytimeImport = ({ goBack, goNext }: Props) => {
             color={theme.colors.accent}
           />
         </View>
-        <Text style={styles.stepTitle}>{i18n.t('mytimeImport_title')}</Text>
+        <Text accessibilityRole='header' style={styles.stepTitle}>
+          {i18n.t('mytimeImport_title')}
+        </Text>
         <Text
           style={{
             fontSize: 14,

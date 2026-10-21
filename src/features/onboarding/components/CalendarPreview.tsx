@@ -28,7 +28,13 @@ const CalendarPreview = () => {
 
   return (
     <View
-      accessibilityLabel={i18n.t('calendarFollowUpTitle')}
+      // One picture to a screen reader, not each hour of the mock day.
+      accessible
+      accessibilityRole='image'
+      accessibilityLabel={i18n.t('calendarPreview_accessibilityLabel', {
+        start: at(10),
+        end: at(11),
+      })}
       style={{
         borderRadius: theme.numbers.borderRadiusLg,
         backgroundColor: theme.colors.backgroundLighter,

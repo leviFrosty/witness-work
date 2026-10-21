@@ -533,7 +533,7 @@ const ICloudRestore = ({ goBack, goNext }: Props) => {
             />
           </Animated.View>
         </View>
-        <Text style={styles.stepTitle}>
+        <Text accessibilityRole='header' style={styles.stepTitle}>
           {i18n.t(syncKey('iCloudRestoreTitle'))}
         </Text>
         <Text

@@ -57,7 +57,9 @@ const DataProtection = ({ goBack, goNext }: Props) => {
         showsVerticalScrollIndicator={false}
       >
         <View style={[styles.stepContentContainer, { marginRight: 0 }]}>
-          <Text style={styles.stepTitle}>{i18n.t('dataProtectionTitle')}</Text>
+          <Text accessibilityRole='header' style={styles.stepTitle}>
+            {i18n.t('dataProtectionTitle')}
+          </Text>
           <Text
             style={{
               fontSize: 14,

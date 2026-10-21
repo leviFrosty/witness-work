@@ -298,6 +298,7 @@ const OnboardingBackfillForm = ({
           }}
         >
           <Text
+            accessibilityRole='header'
             style={{
               fontSize: 32,
               fontFamily: theme.fonts.bold,

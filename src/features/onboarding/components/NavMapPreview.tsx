@@ -149,9 +149,18 @@ interface Props {
 const NavMapPreview = ({ provider }: Props) => {
   const [frame, setFrame] = useState<Size | null>(null)
   const size = frame && fitAspectRatio(frame, SVG_WIDTH / SVG_HEIGHT)
+  const key: ProviderKey = (provider ?? 'apple') as ProviderKey
 
+  // One picture to a screen reader, not a dozen scattered labels.
   return (
-    <View style={styles.column}>
+    <View
+      style={styles.column}
+      accessible
+      accessibilityRole='image'
+      accessibilityLabel={i18n.t('defaultNavPreview_accessibilityLabel', {
+        app: i18n.t(PROVIDER_THEMES[key].wordmarkKey),
+      })}
+    >
       <View
         style={styles.frame}
         onLayout={(e: LayoutChangeEvent) => setFrame(e.nativeEvent.layout)}

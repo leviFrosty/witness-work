@@ -24,6 +24,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated'
 import useTheme from '@/contexts/theme'
+import i18n from '@/lib/locales'
 import Text from '@/components/ui/MyText'
 import PointerHover from '@/components/ui/PointerHover'
 import { ProfileAvatar } from '@/types/avatar'
@@ -268,6 +269,8 @@ const Avatar = ({
           <Pressable
             onPress={handlePress}
             accessibilityRole='imagebutton'
+            // Otherwise it's read as the initial or emoji it shows.
+            accessibilityLabel={i18n.t('profilePicture')}
             hitSlop={4}
             // Shapes the pointer lift to the circle.
             style={{ borderRadius: size / 2 }}

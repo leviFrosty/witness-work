@@ -155,9 +155,8 @@ const VisitJourneyCard = ({
             </View>
           )
         })}
+        {/* The pill above already reads "Today". */}
         <View
-          accessible
-          accessibilityLabel={i18n.t('today')}
           style={{
             position: 'absolute',
             top: 0,

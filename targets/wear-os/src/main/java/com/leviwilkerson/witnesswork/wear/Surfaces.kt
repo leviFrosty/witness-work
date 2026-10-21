@@ -4,6 +4,7 @@ import android.content.ComponentName
 import android.content.Context
 import androidx.wear.tiles.TileService
 import androidx.wear.watchface.complications.datasource.ComplicationDataSourceUpdateRequester
+import com.leviwilkerson.witnesswork.watchprotocol.PhoneContext
 import com.leviwilkerson.witnesswork.wear.complications.ProgressComplicationService
 import com.leviwilkerson.witnesswork.wear.complications.ProgressRangeComplicationService
 import com.leviwilkerson.witnesswork.wear.complications.ProgressSymbolComplicationService
@@ -34,8 +35,26 @@ object Surfaces {
       )) {
       ComplicationDataSourceUpdateRequester.create(context, ComponentName(context, service)).requestUpdateAll()
     }
+    updateTile(context)
+  }
+
+  /** The tile alone, whose Start/Pause button shows whether the timer runs. */
+  fun updateTile(context: Context) {
     TileService.getUpdater(context).requestUpdate(ProgressTileService::class.java)
   }
+
+  enum class Refresh { ALL, TILE, NONE }
+
+  /**
+   * What a new context from the phone changes: everything with the snapshot, and the tile when
+   * only the timer started or paused, which the snapshot doesn't carry.
+   */
+  fun refreshFor(previous: PhoneContext?, next: PhoneContext): Refresh =
+    when {
+      previous?.snapshot != next.snapshot -> Refresh.ALL
+      previous?.timer?.isRunning != next.timer.isRunning -> Refresh.TILE
+      else -> Refresh.NONE
+    }
 
   /** Records that the `kind` with this instance id was added to (or removed from) a face or the tiles. */
   fun setActive(context: Context, kind: String, instanceId: Int, active: Boolean) {

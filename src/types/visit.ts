@@ -41,6 +41,12 @@ export type Visit = {
     id: string
   }
   date: Date
+  /**
+   * Epoch ms this Visit arrived with a Contact someone shared with the User. It
+   * records the sender's ministry, not the User's, so pet hearts and badges
+   * skip it. Never travels in a share; each recipient stamps their own copy.
+   */
+  receivedAt?: number
   note?: string
   /** The note with formatting, when it has any; see `src/lib/richText/notes.ts`. */
   noteDoc?: RichText

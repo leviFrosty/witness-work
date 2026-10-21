@@ -172,4 +172,13 @@ describe('mergePayload — conversation fields', () => {
       [publication.id]: 'Enjoy Life',
     })
   })
+
+  it("keeps a shared Contact's visit marked as received", () => {
+    const received = { ...visit('v1'), receivedAt: now - 5_000 }
+    const payload = payloadSchema.parse(
+      JSON.parse(JSON.stringify(remote({ conversations: [received] })))
+    ) as unknown as SyncPayload
+    const result = mergePayload(emptyDevice(), payload)
+    expect(result.conversations[0].receivedAt).toBe(received.receivedAt)
+  })
 })

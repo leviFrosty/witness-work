@@ -72,6 +72,19 @@ describe('petActiveDays', () => {
     expect([...days].sort()).toEqual(['2026-03-02', '2026-03-09', '2026-03-10'])
   })
 
+  it("skips visits that came with a shared Contact (the sender's ministry)", () => {
+    const days = petActiveDays({
+      serviceReports: {},
+      visits: [
+        { date: new Date(2026, 5, 1, 9), receivedAt: 1 },
+        { date: new Date(2026, 5, 2, 9) },
+      ],
+      dayPlans: [],
+      recurringPlans: [],
+    })
+    expect([...days]).toEqual(['2026-06-02'])
+  })
+
   it('reads visit dates that came back from storage as strings', () => {
     const at = new Date(2026, 5, 1, 9)
     const days = petActiveDays({

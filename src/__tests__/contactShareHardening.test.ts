@@ -49,6 +49,8 @@ import {
   gunzipWithLimit,
   parseContactShareLink,
 } from '@/features/contacts/lib/contactShareLink'
+import { petActiveDays } from '@/features/pet/lib/activity'
+import { evaluateBadges } from '@/lib/badges/evaluate'
 import { hasUnsafeKeys } from '@/lib/recordValidation'
 import useContacts from '@/stores/contactsStore'
 import useConversations from '@/stores/conversationStore'
@@ -533,6 +535,127 @@ describe('visits stay with the contact being imported', () => {
       useContacts.getState().contacts.find((contact) => contact.id === 'B')
         ?.name
     ).toBe('Shared Contact')
+  })
+})
+
+describe("a sender's visits aren't the User's ministry", () => {
+  const sendersVisit = (id: string, date: string, extra: object = {}) => ({
+    id,
+    contact: { id: validContact.id },
+    date,
+    isBibleStudy: false,
+    ...extra,
+  })
+  const engagement = () => {
+    const visits = useConversations.getState().conversations
+    return {
+      petDays: [
+        ...petActiveDays({
+          serviceReports: {},
+          visits,
+          dayPlans: [],
+          recurringPlans: [],
+        }),
+      ],
+      badges: evaluateBadges({
+        now: NOW,
+        serviceReports: {},
+        dayPlans: [],
+        recurringPlans: [],
+        visits,
+        submittedReportMonths: [],
+        ledger: [],
+        togetherMonths: [],
+        hasActiveBuddy: false,
+      }).earned.map((badge) => badge.key),
+    }
+  }
+
+  it('earns no pet hearts or badges from an imported share', async () => {
+    const months = ['2026-05', '2026-06', '2026-07', '2026-08', '2026-09']
+    const result = validateContactImport(
+      share(
+        validContact,
+        months.map((month, i) =>
+          sendersVisit(`s${i}`, `${month}-10T15:00:00.000Z`, {
+            isBibleStudy: i === 0,
+            followUp: {
+              date: `${month}-20T15:00:00.000Z`,
+              notifyMe: false,
+              topic: 'Next topic',
+            },
+          })
+        )
+      )
+    )
+    await runImport(result.data!)
+
+    expect(visitsOf(validContact.id)).toHaveLength(months.length)
+    expect(engagement()).toEqual({ petDays: [], badges: [] })
+    expect(visitsOf(validContact.id).every((visit) => visit.receivedAt)).toBe(
+      true
+    )
+  })
+
+  it("counts the User's own later visits, as return visits", async () => {
+    const result = validateContactImport(
+      share(validContact, [sendersVisit('s0', '2026-09-10T15:00:00.000Z')])
+    )
+    await runImport(result.data!)
+    useConversations.getState().addConversation({
+      id: 'mine',
+      contact: { id: validContact.id },
+      date: new Date('2026-09-25T15:00:00.000Z'),
+      isBibleStudy: false,
+    })
+
+    const { petDays, badges } = engagement()
+    expect(petDays).toHaveLength(1)
+    expect(badges).toEqual(
+      expect.arrayContaining(['conversations.1', 'returnVisits.1'])
+    )
+  })
+
+  it('Replace stamps an earlier copy but not a visit that was the User’s own', async () => {
+    useContacts.getState().addContact({ ...validContact, createdAt: NOW })
+    const { addConversation } = useConversations.getState()
+    addConversation({
+      id: 'own-visit',
+      contact: { id: validContact.id },
+      date: NOW,
+      isBibleStudy: false,
+    })
+    addConversation({
+      id: importedVisitId(validContact.id, 'earlier'),
+      contact: { id: validContact.id },
+      date: NOW,
+      isBibleStudy: false,
+    })
+    const result = validateContactImport(
+      share(validContact, [
+        sendersVisit('own-visit', NOW.toISOString(), { note: 'Edited' }),
+        sendersVisit('earlier', NOW.toISOString(), { note: 'Edited too' }),
+      ])
+    )
+    await runImport(result.data!, 'replace')
+
+    const byId = new Map(
+      visitsOf(validContact.id).map((visit) => [visit.id, visit])
+    )
+    expect(byId.get('own-visit')).toMatchObject({ note: 'Edited' })
+    expect(byId.get('own-visit')?.receivedAt).toBeUndefined()
+    expect(
+      byId.get(importedVisitId(validContact.id, 'earlier'))?.receivedAt
+    ).toEqual(expect.any(Number))
+  })
+
+  it('never takes the stamp from a share', () => {
+    const result = validateContactImport(
+      share(validContact, [
+        sendersVisit('s0', NOW.toISOString(), { receivedAt: 1 }),
+      ])
+    )
+    expect(result.data?.conversations?.[0]).not.toHaveProperty('receivedAt')
   })
 })
 

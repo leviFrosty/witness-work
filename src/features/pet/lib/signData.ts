@@ -67,7 +67,8 @@ export function nextPlannedDay(
 
 /**
  * This month's conversations (Visits where someone was home) and return visits
- * (Visits to a Contact on a later day than their first Visit).
+ * (Visits to a Contact on a later day than their first Visit). A Visit that
+ * came with a shared Contact is the sender's: it only dates that first Visit.
  */
 export function visitCountsForMonth(
   visits: readonly Visit[],
@@ -84,7 +85,7 @@ export function visitCountsForMonth(
   let returnVisits = 0
   for (const visit of visits) {
     const day = moment(visit.date).format('YYYY-MM-DD')
-    if (day.slice(0, 7) !== month) continue
+    if (day.slice(0, 7) !== month || visit.receivedAt !== undefined) continue
     if (visit.notAtHome !== true) conversations++
     if (day > (firstDay.get(visit.contact.id) ?? day)) returnVisits++
   }

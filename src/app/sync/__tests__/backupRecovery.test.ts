@@ -282,6 +282,18 @@ describe('JSON backups from older builds', () => {
     expect(JSON.parse(JSON.stringify(createBackupFile()))).toEqual(backup)
   })
 
+  it("keeps a shared Contact's visit marked as received", () => {
+    useConversations.setState({
+      conversations: [
+        { ...visit('received', { notifyMe: false }), receivedAt: 1 },
+      ] as never,
+    })
+    const backup = JSON.parse(JSON.stringify(createBackupFile()))
+    useConversations.setState({ conversations: [] })
+    expect(restoreBackupFile(backup)).toBe(true)
+    expect(useConversations.getState().conversations[0].receivedAt).toBe(1)
+  })
+
   it('rejects a file whose records are the wrong shape', () => {
     useContacts.setState({ contacts: [{ id: 'keep' }] as never })
     expect(restoreBackupFile({ contactStore: { contacts: 'nope' } })).toBe(

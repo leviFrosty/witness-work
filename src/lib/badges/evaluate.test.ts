@@ -190,6 +190,29 @@ describe('evaluateBadges', () => {
     )
   })
 
+  it("earns nothing from a shared Contact's visits", () => {
+    const received = { receivedAt: NOW.getTime() }
+    const visits = [5, 6, 7, 8].map((m) =>
+      visit(`r${m}`, 'c1', new Date(2026, m, 3, 10), {
+        ...received,
+        isBibleStudy: true,
+        followUp: { date: new Date(2026, m, 20), notifyMe: false, topic: 'Q' },
+      })
+    )
+    const result = evaluateBadges(input({ visits }))
+    expect(result.earned).toEqual([])
+    expect(result.ledgerAdditions).toEqual([])
+
+    // The User's own visit after them is a conversation and a return visit.
+    const mine = evaluateBadges(
+      input({ visits: [...visits, visit('v', 'c1', new Date(2026, 9, 1))] })
+    )
+    expect(mine.earned.map((badge) => badge.key).sort()).toEqual([
+      'conversations.1',
+      'returnVisits.1',
+    ])
+  })
+
   it('keeps ledger months after the visits behind them are deleted', () => {
     const result = evaluateBadges(
       input({

@@ -1,6 +1,7 @@
 import InputRowContainer from '@/components/ui/inputs/InputRowContainer'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
+import useAccessibilityTextSize from '@/hooks/useAccessibilityTextSize'
 import { alignText } from '@/lib/direction'
 
 /** A read-only label and value on a details screen (Plan, Visit). */
@@ -16,6 +17,8 @@ export default function DetailRow({
   last?: boolean
 }) {
   const theme = useTheme()
+  // At accessibility text sizes the row puts the value under its label.
+  const stacked = useAccessibilityTextSize()
   return (
     <InputRowContainer
       label={label}
@@ -24,10 +27,13 @@ export default function DetailRow({
       controlWidth='auto'
       // A long value (a range past midnight) wraps rather than squeezing the
       // label.
-      controlStyle={{ maxWidth: '70%' }}
+      controlStyle={stacked ? undefined : { maxWidth: '70%' }}
     >
       <Text
-        style={{ color: theme.colors.textAlt, textAlign: alignText('end') }}
+        style={{
+          color: theme.colors.textAlt,
+          textAlign: alignText(stacked ? 'start' : 'end'),
+        }}
         selectable
       >
         {value}

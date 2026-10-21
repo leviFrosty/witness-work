@@ -1,8 +1,9 @@
 import { Menu as MenuIcon, X as XIcon } from 'lucide-react-native'
 import { ChevronBackwardIcon } from '@/components/ui/DirectionalIcon'
 import type { AppIcon } from '@/components/ui/LucideIcon'
-import { Platform, Pressable, View } from 'react-native'
+import { type LayoutChangeEvent, Platform, Pressable, View } from 'react-native'
 import useTheme from '@/contexts/theme'
+import useAccessibilityTextSize from '@/hooks/useAccessibilityTextSize'
 import Text from '@/components/ui/MyText'
 import {
   SafeAreaProvider,
@@ -12,7 +13,7 @@ import { useNavigation } from '@react-navigation/native'
 import IconButton from '@/components/ui/IconButton'
 import i18n from '@/lib/locales'
 import { RootStackNavigation } from '@/types/rootStack'
-import { useState } from 'react'
+import { cloneElement, isValidElement, useState } from 'react'
 import WindowControlsInsetView, {
   NO_WINDOW_CONTROLS,
 } from '../../../../modules/window-controls'
@@ -42,6 +43,9 @@ type Props = {
   onLongPressTitle?: () => void
 }
 
+/** Room between the title and the buttons beside it. */
+const TITLE_GAP = 8
+
 // The nested provider measures the header's own safe area, so a screen pushed
 // inside an iOS modal sheet gets no status-bar inset instead of the window's.
 const Header = (props: Props) => (
@@ -69,6 +73,24 @@ const HeaderContent = ({
   // A windowed iPad app keeps its window controls over the top corner, right
   // where the back button sits.
   const [controls, setControls] = useState(NO_WINDOW_CONTROLS)
+  // The buttons float over the header's ends. The title keeps clear of the
+  // wider side on both sides, so it stays centered and a title that wraps
+  // (large text, long translations) never runs under them.
+  const [leftWidth, setLeftWidth] = useState(0)
+  const [rightWidth, setRightWidth] = useState(0)
+  const titleInset = Math.max(controls.start + leftWidth, rightWidth)
+  const widthSetter =
+    (set: (width: number) => void) => (e: LayoutChangeEvent) =>
+      set(Math.round(e.nativeEvent.layout.width))
+  // At accessibility text sizes the title wraps between words and shrinks
+  // rather than breaking a word that doesn't fit between the buttons.
+  const titleFit = useAccessibilityTextSize()
+    ? {
+        numberOfLines: Math.min(title?.trim().split(/\s+/).length ?? 1, 3),
+        adjustsFontSizeToFit: true,
+        minimumFontScale: 0.5,
+      }
+    : undefined
 
   const handleButtonAction = () => {
     if (onPressLeftIcon) {
@@ -130,40 +152,51 @@ const HeaderContent = ({
         }}
       >
         {leftElement ? (
-          <View style={{ position: 'absolute', left: controls.start }}>
+          <View
+            onLayout={widthSetter(setLeftWidth)}
+            style={{ position: 'absolute', left: controls.start }}
+          >
             {leftElement}
           </View>
         ) : (
           buttonType !== 'none' && (
-            <IconButton
+            <View
+              onLayout={widthSetter(setLeftWidth)}
               style={{ position: 'absolute', left: controls.start }}
-              onPress={handleButtonAction}
-              icon={iconName()}
-              accessibilityLabel={buttonLabel()}
-              hitSlop={24}
-              iconStyle={{
-                color:
-                  foregroundColor ??
-                  (inverseTextAndIconColor
-                    ? theme.colors.textInverse
-                    : theme.colors.text),
-              }}
-              size={'xl'}
-            />
+            >
+              <IconButton
+                onPress={handleButtonAction}
+                icon={iconName()}
+                accessibilityLabel={buttonLabel()}
+                hitSlop={24}
+                iconStyle={{
+                  color:
+                    foregroundColor ??
+                    (inverseTextAndIconColor
+                      ? theme.colors.textInverse
+                      : theme.colors.text),
+                }}
+                size={'xl'}
+              />
+            </View>
           )
         )}
         <Pressable
           onLongPress={onLongPressTitle}
           disabled={!onLongPressTitle}
           delayLongPress={800}
-          style={
-            onLongPressTitle && !title
-              ? { minWidth: 120, minHeight: 24 }
-              : undefined
-          }
+          style={[
+            {
+              flexShrink: 1,
+              marginHorizontal: titleInset > 0 ? titleInset + TITLE_GAP : 0,
+            },
+            onLongPressTitle && !title && { minWidth: 120, minHeight: 24 },
+          ]}
         >
           <Text
+            {...titleFit}
             style={{
+              textAlign: 'center',
               fontSize: 18,
               fontFamily: theme.fonts.semiBold,
               color:
@@ -176,7 +209,13 @@ const HeaderContent = ({
             {title}
           </Text>
         </Pressable>
-        {rightElement}
+        {isValidElement<{ onLayout?: (e: LayoutChangeEvent) => void }>(
+          rightElement
+        )
+          ? cloneElement(rightElement, {
+              onLayout: widthSetter(setRightWidth),
+            })
+          : rightElement}
       </WindowControlsInsetView>
     </View>
   )

@@ -1,10 +1,17 @@
 import type { AppIcon } from '@/components/ui/LucideIcon'
-import React, { PropsWithChildren, ReactNode } from 'react'
+import React, {
+  Children,
+  isValidElement,
+  PropsWithChildren,
+  ReactNode,
+} from 'react'
 import { Pressable, StyleProp, View, ViewStyle } from 'react-native'
 import useTheme from '@/contexts/theme'
+import useAccessibilityTextSize from '@/hooks/useAccessibilityTextSize'
 import Text from '@/components/ui/MyText'
 import InfoPopover from '@/components/ui/InfoPopover'
 import LucideIcon from '@/components/ui/LucideIcon'
+import Switch from '@/components/ui/Switch'
 import { inputLayout } from '@/components/ui/inputs/InputLayout'
 
 export interface InputRowContainerProps {
@@ -36,6 +43,18 @@ export interface InputRowContainerProps {
   controlStyle?: StyleProp<ViewStyle>
   /** Override the settings control width for multiline or compound controls. */
   controlWidth?: 'compact' | 'full' | 'auto'
+  /**
+   * Keeps a small control (a switch inside a wrapper) beside the label at
+   * accessibility text sizes. A row whose only control is a `Switch` already
+   * does.
+   */
+  inlineAtLargeText?: boolean
+}
+
+/** Whether a row's control is a lone `Switch`, which fits beside any label. */
+const isSwitch = (children: ReactNode) => {
+  const only = Children.toArray(children)
+  return only.length === 1 && isValidElement(only[0]) && only[0].type === Switch
 }
 
 const InputRowContainer: React.FC<
@@ -57,10 +76,20 @@ const InputRowContainer: React.FC<
   onLabelPress,
   controlStyle,
   controlWidth = 'compact',
+  inlineAtLargeText,
 }: InputRowContainerProps) => {
   const theme = useTheme()
   const hasInfo = Boolean(label && (info || labelTrailing))
   const hasLabelContent = Boolean(label || leftIcon || description)
+  // At accessibility text sizes a field, picker or value beside the label
+  // leaves it too little room, and words break mid-way; the control moves
+  // under the label and takes the row's width instead.
+  const stack =
+    useAccessibilityTextSize() &&
+    hasLabelContent &&
+    controlWidth !== 'full' &&
+    !inlineAtLargeText &&
+    !isSwitch(children)
 
   const labelCluster = (leftIcon || label) && (
     <View
@@ -163,7 +192,7 @@ const InputRowContainer: React.FC<
           flexGrow: 0,
           justifyContent: justifyContent ?? 'space-between',
           gap: gap ?? inputLayout.controlGap,
-          ...(controlWidth === 'full' && {
+          ...((controlWidth === 'full' || stack) && {
             flexDirection: 'column',
             alignItems: 'stretch',
           }),
@@ -188,16 +217,19 @@ const InputRowContainer: React.FC<
         style={[
           {
             width:
-              !hasLabelContent || controlWidth === 'full'
+              !hasLabelContent || controlWidth === 'full' || stack
                 ? '100%'
                 : controlWidth === 'auto'
                   ? 'auto'
                   : '48%',
             maxWidth:
-              !hasLabelContent || controlWidth !== 'compact'
+              !hasLabelContent || controlWidth !== 'compact' || stack
                 ? '100%'
                 : inputLayout.controlMaxWidth,
             flexShrink: 1,
+            // A value under its label starts where the label does.
+            ...(stack &&
+              controlWidth === 'auto' && { alignItems: 'flex-start' }),
           },
           controlStyle,
           invalid && {

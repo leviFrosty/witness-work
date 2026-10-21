@@ -1401,11 +1401,27 @@ function createAvd(pool) {
   return { key: `avd-${name}`, id: emulatorSerial(name), name, n: next }
 }
 
+/**
+ * What an emulator still needs before the app can run in front, from `dumpsys
+ * user` and `dumpsys window`: `storage` while the user's storage is locked
+ * (every cold boot, until the PIN is entered), then `keyguard` while the lock
+ * screen still shows; null when it's unlocked.
+ */
+export function androidUnlockStep(users, windows) {
+  if (!/State: RUNNING_UNLOCKED\b/.test(users)) return 'storage'
+  if (/isKeyguardShowing=true/.test(windows)) return 'keyguard'
+  return null
+}
+
 // The shared verify AVDs carry a screen-lock PIN, so every cold boot leaves the
 // user RUNNING_LOCKED: the dev client link doesn't resolve and the app never
-// starts. Wake, dismiss the keyguard, enter the PIN, and wait for the unlock.
-// The PIN stays on the AVD (other agents rely on it); override with
-// WW_VERIFY_ANDROID_PIN. `deps` is for tests.
+// starts. The lock screen ignores a PIN typed for a while after
+// sys.boot_completed (on API 36 a PIN typed then was lost and the user stayed
+// locked), so the storage is unlocked with `locksettings verify`, which works
+// as soon as the system is up. The lock screen then still covers the app, and
+// it takes the PIN again; each step is retried until it takes. The PIN stays
+// on the AVD (other agents rely on it); override with WW_VERIFY_ANDROID_PIN.
+// `deps` is for tests.
 async function unlockAndroid(serial, deps = {}) {
   const shell =
     deps.shell ??
@@ -1413,20 +1429,34 @@ async function unlockAndroid(serial, deps = {}) {
       run('adb', ['-s', serial, 'shell', ...args], { check: false }).stdout)
   const wait = deps.sleep ?? sleep
   const pin = deps.pin ?? process.env.WW_VERIFY_ANDROID_PIN ?? '1111'
-  const locked = () => /RUNNING_LOCKED/.test(shell('dumpsys', 'user'))
-  if (!locked()) return false
+  const step = () =>
+    androidUnlockStep(shell('dumpsys', 'user'), shell('dumpsys', 'window'))
+  let next = step()
+  if (!next) return false
   log(`${serial} is locked; entering the screen-lock PIN`)
-  shell('input', 'keyevent', 'KEYCODE_WAKEUP')
-  shell('wm', 'dismiss-keyguard')
-  await wait(1000)
-  shell('input', 'text', pin)
-  shell('input', 'keyevent', '66')
-  for (let i = 0; i < 30; i++) {
-    if (!locked()) return true
-    await wait(1000)
+  for (let attempt = 0; attempt < 12; attempt++) {
+    const tried = next
+    if (tried === 'storage') {
+      // A wrong PIN fails at once instead of counting towards a lockout.
+      if (/didn't match/.test(shell('locksettings', 'verify', '--old', pin)))
+        fail(
+          `${serial} rejected the screen-lock PIN ${pin}; set WW_VERIFY_ANDROID_PIN to the AVD's PIN`
+        )
+    } else {
+      shell('input', 'keyevent', 'KEYCODE_WAKEUP')
+      shell('wm', 'dismiss-keyguard')
+      await wait(1500)
+      shell('input', 'text', pin)
+      shell('input', 'keyevent', '66')
+    }
+    for (let i = 0; i < 5 && next === tried; i++) {
+      await wait(1000)
+      next = step()
+    }
+    if (!next) return true
   }
   fail(
-    `${serial} is still locked after entering the PIN; set WW_VERIFY_ANDROID_PIN to the AVD's screen-lock PIN`
+    `${serial} is still locked (${next}) after entering the PIN; set WW_VERIFY_ANDROID_PIN to the AVD's screen-lock PIN`
   )
 }
 

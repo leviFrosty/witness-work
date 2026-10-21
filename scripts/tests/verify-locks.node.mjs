@@ -914,41 +914,109 @@ test('the install record is cleared before installing and set only after', async
 })
 
 // A verify emulator boots locked behind a screen-lock PIN; bootAndroid must
-// enter it and leave an unlocked one alone.
-test('unlockAndroid enters the PIN on a locked emulator and waits for the unlock', async () => {
-  const { unlockAndroid } = await import(VERIFY)
+// unlock it unattended and leave an unlocked one alone.
+test('androidUnlockStep: storage first, then the lock screen', async () => {
+  const { androidUnlockStep } = await import(VERIFY)
+  const showing = 'isKeyguardShowing=true'
+  const hidden = 'isKeyguardShowing=false'
+  assert.equal(androidUnlockStep('State: BOOTING', showing), 'storage')
+  assert.equal(androidUnlockStep('State: RUNNING_LOCKED', showing), 'storage')
+  assert.equal(androidUnlockStep('State: RUNNING_UNLOCKING', hidden), 'storage')
+  assert.equal(androidUnlockStep('', ''), 'storage')
+  assert.equal(
+    androidUnlockStep('State: RUNNING_UNLOCKED', showing),
+    'keyguard'
+  )
+  assert.equal(androidUnlockStep('State: RUNNING_UNLOCKED', hidden), null)
+})
+
+/**
+ * An emulator for unlockAndroid: `locksettings verify` unlocks the storage; the
+ * lock screen drops the first `ignoredPins` PINs typed (as it does right after
+ * boot) and takes the PIN only once the storage is unlocked.
+ */
+function fakeEmulator({
+  storage = true,
+  keyguard = true,
+  ignoredPins = 0,
+  pin = '1111',
+} = {}) {
   const calls = []
-  let locked = true
+  let typed = ''
   const shell = (...args) => {
-    calls.push(args.join(' '))
-    if (args[0] === 'dumpsys')
-      return `State: ${locked ? 'RUNNING_LOCKED' : 'RUNNING_UNLOCKED'}`
-    if (args.join(' ') === 'input keyevent 66') locked = false
+    const call = args.join(' ')
+    calls.push(call)
+    if (call === 'dumpsys user')
+      return `State: ${storage ? 'RUNNING_LOCKED' : 'RUNNING_UNLOCKED'}`
+    if (call === 'dumpsys window') return `isKeyguardShowing=${keyguard}`
+    if (call.startsWith('locksettings verify --old ')) {
+      if (args[3] !== pin) return `Old password '${args[3]}' didn't match`
+      storage = false
+      return 'Lock credential verified successfully'
+    }
+    if (args[0] === 'input' && args[1] === 'text') typed = args[2]
+    if (call === 'input keyevent 66') {
+      if (ignoredPins > 0) ignoredPins--
+      else if (!storage && typed === pin) keyguard = false
+      typed = ''
+    }
     return ''
   }
-  const sleep = async () => {}
-  assert.equal(await unlockAndroid('emulator-5580', { shell, sleep }), true)
-  assert.deepEqual(calls, [
-    'dumpsys user',
+  return { calls, shell, sleep: async () => {} }
+}
+
+const pinTyped = (calls) => calls.filter((c) => c === 'input text 1111').length
+
+test('unlockAndroid unlocks a cold-booted emulator whose lock screen drops the first PIN', async () => {
+  const { unlockAndroid } = await import(VERIFY)
+  const emulator = fakeEmulator({ ignoredPins: 1 })
+  assert.equal(await unlockAndroid('emulator-5580', emulator), true)
+  assert.equal(
+    emulator.calls.filter((c) => c.startsWith('locksettings')).length,
+    1
+  )
+  assert.equal(pinTyped(emulator.calls), 2)
+  assert.ok(
+    emulator.calls.indexOf('locksettings verify --old 1111') <
+      emulator.calls.indexOf('input text 1111')
+  )
+})
+
+test('unlockAndroid clears a lock screen over an unlocked user', async () => {
+  const { unlockAndroid } = await import(VERIFY)
+  const emulator = fakeEmulator({ storage: false })
+  assert.equal(await unlockAndroid('emulator-5580', emulator), true)
+  assert.ok(!emulator.calls.some((c) => c.startsWith('locksettings')))
+  assert.deepEqual(emulator.calls.slice(2, 6), [
     'input keyevent KEYCODE_WAKEUP',
     'wm dismiss-keyguard',
     'input text 1111',
     'input keyevent 66',
-    'dumpsys user',
   ])
-  calls.length = 0
-  assert.equal(await unlockAndroid('emulator-5580', { shell, sleep }), false)
-  assert.deepEqual(calls, ['dumpsys user'])
 })
 
-test('unlockAndroid fails when the PIN does not unlock', async () => {
+test('unlockAndroid leaves an unlocked emulator alone', async () => {
+  const { unlockAndroid } = await import(VERIFY)
+  const emulator = fakeEmulator({ storage: false, keyguard: false })
+  assert.equal(await unlockAndroid('emulator-5580', emulator), false)
+  assert.deepEqual(emulator.calls, ['dumpsys user', 'dumpsys window'])
+})
+
+test('unlockAndroid stops at a wrong PIN without typing it', async () => {
+  const { unlockAndroid } = await import(VERIFY)
+  const emulator = fakeEmulator({ pin: '2222' })
+  await assert.rejects(
+    unlockAndroid('emulator-5580', emulator),
+    /rejected the screen-lock PIN 1111/
+  )
+  assert.equal(pinTyped(emulator.calls), 0)
+})
+
+test('unlockAndroid fails when the lock screen never takes the PIN', async () => {
   const { unlockAndroid } = await import(VERIFY)
   await assert.rejects(
-    unlockAndroid('emulator-5580', {
-      shell: (...args) => (args[0] === 'dumpsys' ? 'RUNNING_LOCKED' : ''),
-      sleep: async () => {},
-    }),
-    /still locked/
+    unlockAndroid('emulator-5580', fakeEmulator({ ignoredPins: Infinity })),
+    /still locked \(keyguard\)/
   )
 })
 

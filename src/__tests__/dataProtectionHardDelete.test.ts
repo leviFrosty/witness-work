@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import * as FileSystem from 'expo-file-system/legacy'
 
 vi.mock('expo-crypto', () => ({ randomUUID: () => 'generated' }))
 vi.mock('@/stores/mmkv', () => import('@/__tests__/mocks/mmkv'))
@@ -11,9 +12,20 @@ vi.mock('@/lib/logger', () => import('@/__tests__/mocks/logger'))
 // expo imports need expo-modules-core's `__DEV__`.
 vi.mock('expo-file-system/legacy', () => ({
   documentDirectory: 'file:///test/Documents/',
+  cacheDirectory: 'file:///test/Caches/',
   getInfoAsync: vi.fn(async () => ({ exists: false })),
   copyAsync: vi.fn(async () => undefined),
   deleteAsync: vi.fn(async () => undefined),
+  // A shared backup, a shared contact file and the picker's photo copies.
+  readDirectoryAsync: vi.fn(async (directory: string) =>
+    directory === 'file:///test/Caches/'
+      ? [
+          'witness-work-backup.json',
+          'Name_a_2026-02-01.witnesswork',
+          'ImagePicker',
+        ]
+      : []
+  ),
 }))
 vi.mock('expo-image-manipulator', () => ({
   manipulateAsync: vi.fn(async () => ({ uri: '', width: 1, height: 1 })),
@@ -66,7 +78,23 @@ const visitFor = (contactId: string, id: string): Visit => ({
   isBibleStudy: false,
 })
 
+const cacheCopies = [
+  'file:///test/Caches/witness-work-backup.json',
+  'file:///test/Caches/Name_a_2026-02-01.witnesswork',
+  'file:///test/Caches/ImagePicker',
+]
+
+const deletedCacheCopies = async () => {
+  // Let the fire-and-forget cleanup list the folder and delete.
+  await new Promise((resolve) => setTimeout(resolve, 0))
+  return vi
+    .mocked(FileSystem.deleteAsync)
+    .mock.calls.map(([path]) => path)
+    .filter((path) => path.startsWith('file:///test/Caches/'))
+}
+
 const reset = (dataProtectionMode: boolean) => {
+  vi.mocked(FileSystem.deleteAsync).mockClear()
   usePreferences.setState({
     dataProtectionMode,
     dataProtectionModeSetByUser: false,
@@ -129,6 +157,16 @@ describe('deleteHouseholderContact in data protection mode', () => {
     useContacts.getState().recoverContact('a')
     expect(useContacts.getState().contacts.map((c) => c.id)).toEqual(['b'])
   })
+})
+
+it('deletes shared backups, contact files and photo copies left in the cache', async () => {
+  reset(false)
+  permanentlyDeleteHouseholderContacts(['a'])
+  expect((await deletedCacheCopies()).sort()).toEqual([...cacheCopies].sort())
+
+  reset(false)
+  deleteAllHouseholderData()
+  expect((await deletedCacheCopies()).sort()).toEqual([...cacheCopies].sort())
 })
 
 describe('deleteHouseholderContact with the mode off', () => {

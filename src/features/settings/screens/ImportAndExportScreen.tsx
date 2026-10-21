@@ -24,6 +24,7 @@ import { analytics } from '@/lib/analytics'
 import { RouteProp, useRoute } from '@react-navigation/native'
 import { RootStackParamList } from '@/types/rootStack'
 import { createBackupFile } from '@/lib/backupFile'
+import { BACKUP_EXPORT_FILE_NAME } from '@/lib/temporaryCopies'
 import { useBackupImport } from '@/app/sync/useBackupImport'
 
 const ImportAndExportScreen = () => {
@@ -37,7 +38,7 @@ const ImportAndExportScreen = () => {
 
   const [loading, setLoading] = useState(false)
   const [successfulImport, setSuccessfulImport] = useState(false)
-  const exportFileUri = FileSystem.cacheDirectory + `witness-work-backup.json`
+  const exportFileUri = FileSystem.cacheDirectory + BACKUP_EXPORT_FILE_NAME
   const theme = useTheme()
 
   const handleImport = async () => {

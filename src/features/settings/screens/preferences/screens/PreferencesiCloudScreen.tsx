@@ -1030,6 +1030,7 @@ const PreferencesiCloudScreenInner = () => {
                   />
                 )}
                 <Switch
+                  accessibilityLabel={i18n.t(syncKey('iCloudEnableLabel'))}
                   value={pendingEnable ?? iCloudSyncEnabled}
                   onValueChange={handleToggle}
                   disabled={syncing || pendingEnable !== null}
@@ -1271,6 +1272,9 @@ const PreferencesiCloudScreenInner = () => {
                     />
                   )}
                   <Switch
+                    accessibilityLabel={i18n.t(
+                      syncKey('iCloudImagesToggleLabel')
+                    )}
                     value={pendingImagesEnable ?? iCloudSyncIncludeImages}
                     onValueChange={handleImagesToggle}
                     disabled={migratingImages || pendingImagesEnable !== null}

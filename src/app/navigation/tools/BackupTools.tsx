@@ -290,7 +290,13 @@ export default function BackupTools() {
           <>
             <ToolRow
               label='Show raw payloads'
-              trailing={<Switch value={raw} onValueChange={setRaw} />}
+              trailing={
+                <Switch
+                  accessibilityLabel='Show raw payloads'
+                  value={raw}
+                  onValueChange={setRaw}
+                />
+              }
             />
             <JsonViewer
               label='Decrypted slots'

@@ -6,13 +6,10 @@ import InputRowContainer, {
 interface Props
   extends Pick<
     InputRowContainerProps,
-    | 'label'
-    | 'description'
-    | 'labelTrailing'
-    | 'info'
-    | 'lastInSection'
-    | 'leftIcon'
+    'description' | 'labelTrailing' | 'info' | 'lastInSection' | 'leftIcon'
   > {
+  /** Names the row and the switch, which screen readers read on its own. */
+  label: string
   value: boolean
   onValueChange: (value: boolean) => void
 }

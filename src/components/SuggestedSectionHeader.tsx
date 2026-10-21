@@ -49,7 +49,9 @@ export default function SuggestedSectionHeader({
   const theme = useTheme()
   return (
     <View
+      accessible
       accessibilityRole='header'
+      accessibilityLabel={title}
       testID={testID}
       style={{
         flexDirection: 'row',

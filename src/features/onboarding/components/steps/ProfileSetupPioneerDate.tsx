@@ -46,7 +46,9 @@ const ProfileSetupPioneerDate = ({ goBack, goNext }: Props) => {
         enableOnAndroid={true}
       >
         <View style={[styles.stepContentContainer, { marginRight: 0 }]}>
-          <Text style={styles.stepTitle}>{i18n.t(labels.title)}</Text>
+          <Text accessibilityRole='header' style={styles.stepTitle}>
+            {i18n.t(labels.title)}
+          </Text>
           <Text
             style={{
               fontSize: 14,

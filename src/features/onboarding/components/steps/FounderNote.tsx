@@ -107,6 +107,7 @@ const FounderNote = ({ goBack, goNext }: Props) => {
             />
           </View>
           <Text
+            accessibilityRole='header'
             style={{
               fontSize: 11,
               fontFamily: theme.fonts.semiBold,

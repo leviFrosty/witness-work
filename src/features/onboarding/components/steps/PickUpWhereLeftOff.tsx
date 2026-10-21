@@ -228,7 +228,7 @@ const PickUpWhereLeftOff = ({ goBack, goNext }: StepProps) => {
         showsVerticalScrollIndicator={false}
       >
         <View style={[styles.stepContentContainer, { marginRight: 0 }]}>
-          <Text style={styles.stepTitle}>
+          <Text accessibilityRole='header' style={styles.stepTitle}>
             {i18n.t('onboardingPickUp_title')}
           </Text>
           <Text

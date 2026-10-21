@@ -64,6 +64,7 @@ const StepDefaultNav = ({ goNext, goBack }: Props) => {
       <View style={{ gap: 20, flexShrink: 1 }}>
         <View style={{ gap: 6 }}>
           <Text
+            accessibilityRole='header'
             style={{
               fontSize: 32,
               fontFamily: theme.fonts.bold,

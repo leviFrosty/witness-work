@@ -216,7 +216,7 @@ const Buddies = ({ goBack, goNext }: Props) => {
         <View style={{ marginBottom: 24 }}>
           <BuddiesPreview />
         </View>
-        <Text style={styles.stepTitle}>
+        <Text accessibilityRole='header' style={styles.stepTitle}>
           {i18n.t('onboardingBuddies_title')}
         </Text>
         <Text style={styles.description}>

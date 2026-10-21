@@ -51,7 +51,7 @@ const ProfileSetup = ({ goBack, goNext }: Props) => {
         showsVerticalScrollIndicator={false}
       >
         <View style={[styles.stepContentContainer, { marginRight: 0 }]}>
-          <Text style={styles.stepTitle}>
+          <Text accessibilityRole='header' style={styles.stepTitle}>
             {i18n.t('profileSetupNameTitle')}
           </Text>
           <Text

@@ -26,6 +26,7 @@ import { ensureReminderChannel, REMINDER_CHANNEL_ID } from '@/lib/notifications'
 import { canonicalJson } from '@/lib/canonicalJson'
 import { contentHash } from '@/lib/contentHash'
 import { addForegroundListener } from '@/lib/appLifecycle'
+import { deviceTimeZone, refreshLocalTimeOffset } from '@/lib/deviceTimeZone'
 import { isStorageLocked, mmkvStorage } from '@/stores/mmkv'
 import { errorTracking } from '@/lib/errorTracking'
 import { captureExceptionThrottled } from '@/lib/throttledErrorReport'
@@ -100,6 +101,11 @@ type ScheduleState = {
   key: string
   /** The local day of that pass. A new day checks the OS schedule again. */
   day: string
+  /**
+   * The device's time zone in that pass. Plans and the other reminders set for
+   * a local time move to the same time in a new zone.
+   */
+  zone?: string
   /** Each scheduled reminder's content key, by OS request id. */
   ids: Record<string, string>
 }
@@ -225,6 +231,10 @@ export function useReconciledReminders(ready: boolean | undefined) {
       try {
         while (queued && !stopped) {
           queued = false
+          // Travel: OS reminders are fixed instants, and Hermes still computes
+          // local times in the old zone until it checks again.
+          const zone = deviceTimeZone()
+          if (zone !== state.zone) refreshLocalTimeOffset()
           const prefs = usePreferences.getState()
           const records = useServiceReport.getState()
           const schedule = buildReminderSchedule({
@@ -282,6 +292,7 @@ export function useReconciledReminders(ready: boolean | undefined) {
           if (
             key === state.key &&
             day === state.day &&
+            zone === state.zone &&
             obsoleteIds.size === 0
           ) {
             perf.count('reminders:skip')
@@ -338,7 +349,7 @@ export function useReconciledReminders(ready: boolean | undefined) {
             })
           )
           if (!interrupted && !queued && !stopped)
-            state = { ...state, key, day }
+            state = { ...state, key, day, zone }
           saveState(state)
         }
       } catch (error) {

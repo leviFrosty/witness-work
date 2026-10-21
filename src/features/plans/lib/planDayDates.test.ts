@@ -8,7 +8,10 @@ vi.mock('@/lib/errorTracking', () => ({
   errorTracking: { captureException: vi.fn() },
 }))
 
-import { allEventsStartDate } from '@/features/plans/lib/planDayDates'
+import {
+  allEventsStartDate,
+  dayToPlan,
+} from '@/features/plans/lib/planDayDates'
 import { getPlansIntersectingDay } from '@/lib/recurrence'
 import { RecurringPlanFrequencies } from '@/lib/serviceReport'
 import useServiceReport from '@/stores/serviceReport'
@@ -86,5 +89,22 @@ describe('an "All events" edit from a later occurrence', () => {
     expect(getPlansIntersectingDay(day('2026-01-06'), plans)).toHaveLength(1)
     expect(getPlansIntersectingDay(day('2026-01-13'), plans)).toHaveLength(1)
     expect(plans[0].minutes).toBe(90)
+  })
+})
+
+describe('dayToPlan', () => {
+  it('plans today before 6 PM', () => {
+    expect(dayToPlan(new Date(2026, 9, 20, 9, 0)).getDate()).toBe(20)
+    expect(dayToPlan(new Date(2026, 9, 20, 17, 59)).getDate()).toBe(20)
+  })
+
+  it('plans tomorrow from 6 PM', () => {
+    expect(dayToPlan(new Date(2026, 9, 20, 18, 0)).getDate()).toBe(21)
+    expect(dayToPlan(new Date(2026, 9, 20, 23, 30)).getDate()).toBe(21)
+  })
+
+  it('rolls over the end of the month', () => {
+    const planned = dayToPlan(new Date(2026, 9, 31, 21, 0))
+    expect([planned.getMonth(), planned.getDate()]).toEqual([10, 1])
   })
 })

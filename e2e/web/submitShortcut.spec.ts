@@ -38,6 +38,9 @@ test('plain Enter and the other modifier leave a form alone, and an invalid form
   app,
 }) => {
   await openCreatePlan(app)
+  await app.getByTestId('plan-duration-pill').click()
+  await app.getByRole('listbox', { name: 'Hours' }).selectOption('0')
+  await app.getByRole('button', { name: 'Done' }).click()
   const title = app.getByRole('textbox', { name: 'Title' })
   await title.fill('Cart witnessing')
 

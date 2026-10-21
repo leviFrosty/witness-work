@@ -1,4 +1,5 @@
 import { syncTimestamp } from '@/lib/syncClock'
+import { stampPastTombstone, withoutTombstones } from '@/lib/syncTombstones'
 import { create } from 'zustand'
 import { combine, createJSONStorage } from 'zustand/middleware'
 import { persist } from '@/stores/persist'
@@ -53,8 +54,9 @@ const initialState = {
   conversations: [] as Visit[],
   /**
    * Tombstones for deleted Visits. Populated by `deleteConversation` so iCloud
-   * sync can propagate deletions across devices. Pruned when a tombstone
-   * exceeds the retention window (see `src/lib/sync/merge.ts`).
+   * sync can propagate deletions across devices. Never pruned: the merge keeps
+   * every one (`mergeTombstones` in `src/app/sync/merge.ts`). Adding a Visit
+   * under the id drops its tombstone here.
    *
    * Persisted key kept as `deletedConversations` for backward compatibility.
    */
@@ -71,15 +73,18 @@ const initialState = {
 
 /**
  * The store changes that add each of `incoming` whose id isn't taken yet, in
- * order. Pure: never mutates `state`.
+ * order. Pure: never mutates `state`. A deleted id can come back (an import run
+ * again after its Undo), so each Visit is stamped past its tombstone and the
+ * tombstone is dropped.
  */
 const withAddedConversations = (
   {
     conversations,
+    deletedConversations,
     deletedConversationFieldDefs,
   }: Pick<
     typeof initialState,
-    'conversations' | 'deletedConversationFieldDefs'
+    'conversations' | 'deletedConversations' | 'deletedConversationFieldDefs'
   >,
   incoming: Visit[]
 ): Partial<typeof initialState> => {
@@ -89,13 +94,23 @@ const withAddedConversations = (
     if (takenIds.has(conversation.id)) continue
     added.push(
       stripTombstonedCustomFields(
-        { ...conversation, updatedAt: syncTimestamp() },
+        {
+          ...conversation,
+          updatedAt: stampPastTombstone(deletedConversations, conversation.id),
+        },
         deletedConversationFieldDefs
       )
     )
     takenIds.add(conversation.id)
   }
-  return added.length ? { conversations: [...conversations, ...added] } : {}
+  if (!added.length) return {}
+  return {
+    conversations: [...conversations, ...added],
+    deletedConversations: withoutTombstones(
+      deletedConversations,
+      new Set(added.map((conversation) => conversation.id))
+    ),
+  }
 }
 
 export const useConversations = create(

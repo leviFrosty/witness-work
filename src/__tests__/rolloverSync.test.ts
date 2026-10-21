@@ -159,15 +159,15 @@ describe('rollover across devices', () => {
     vi.setSystemTime(LAUNCH + 30_000)
     restore(pullFrom(beforeUndo, tablet))
     expect(rolloverIdsOf(deviceFromStores())).toEqual([])
+    const tombstoneAt = Math.max(
+      ...deviceFromStores().deletedServiceReports.map((t) => t.deletedAt)
+    )
 
     // Re-applied here a minute later by this device's clock, which is still
     // earlier than the tablet's tombstones.
     minutesLater(1)
     applyNow()
     const local = deviceFromStores()
-    const tombstoneAt = Math.max(
-      ...local.deletedServiceReports.map((t) => t.deletedAt)
-    )
     expect(tombstoneAt).toBeGreaterThan(Date.now())
     for (const entry of timeEntriesOf(local).filter((e) => e.rollover)) {
       expect(entry.updatedAt).toBeGreaterThan(tombstoneAt)

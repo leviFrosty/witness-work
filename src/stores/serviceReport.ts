@@ -1,4 +1,5 @@
 import { syncTimestamp } from '@/lib/syncClock'
+import { stampPastTombstone, withoutTombstones } from '@/lib/syncTombstones'
 import { create } from 'zustand'
 import { combine, createJSONStorage } from 'zustand/middleware'
 import { persist } from '@/stores/persist'
@@ -75,17 +76,7 @@ const withoutPlanTombstone = (
   tombstones: PlanTombstone[],
   id: string | undefined
 ): PlanTombstone[] =>
-  tombstones.some((tombstone) => tombstone.id === id)
-    ? tombstones.filter((tombstone) => tombstone.id !== id)
-    : tombstones
-
-/**
- * The `updatedAt` for a Plan added under `id`. A removed id can come back (a
- * buddy's linked Plan has a fixed id), so it's stamped past that removal: other
- * devices keep the tombstone, and the Plan must outlive it there too.
- */
-const addedPlanStamp = (tombstones: PlanTombstone[], id: string) =>
-  syncTimestamp(tombstones.find((tombstone) => tombstone.id === id)?.deletedAt)
+  id === undefined ? tombstones : withoutTombstones(tombstones, new Set([id]))
 
 /** How a Plan change came about. */
 export type PlanSaveOptions = {
@@ -218,14 +209,19 @@ export const migrateServiceReportPersistedState = (
 }
 
 /**
- * `serviceReports` with each of `incoming` appended to its month, its date
+ * The store changes that append each of `incoming` to its month, its date
  * normalized for storage. Doesn't dedupe ids. Copies every year and month it
- * touches, so the previous state is never mutated.
+ * touches, so the previous state is never mutated. A deleted id can come back
+ * (an import run again after its Undo, a rollover re-applied), so each entry is
+ * stamped past its tombstone and the tombstone is dropped.
  */
 const withAddedServiceReports = (
-  serviceReports: TimeEntriesByYear,
+  {
+    serviceReports,
+    deletedServiceReports,
+  }: Pick<typeof initialState, 'serviceReports' | 'deletedServiceReports'>,
   incoming: TimeEntry[]
-): TimeEntriesByYear => {
+): Pick<typeof initialState, 'serviceReports' | 'deletedServiceReports'> => {
   const reports = { ...serviceReports }
   const copiedYears = new Set<number>()
   const copiedMonths = new Set<string>()
@@ -245,10 +241,16 @@ const withAddedServiceReports = (
     reports[year][month].push({
       ...report,
       date: normalizedDate,
-      updatedAt: syncTimestamp(),
+      updatedAt: stampPastTombstone(deletedServiceReports, report.id),
     })
   }
-  return reports
+  return {
+    serviceReports: reports,
+    deletedServiceReports: withoutTombstones(
+      deletedServiceReports,
+      new Set(incoming.map((report) => report.id))
+    ),
+  }
 }
 
 export const useServiceReport = create(
@@ -256,17 +258,13 @@ export const useServiceReport = create(
     combine(initialState, (set) => ({
       set,
       addServiceReport: (report: TimeEntry) =>
-        set(({ serviceReports }) => ({
-          serviceReports: withAddedServiceReports(serviceReports, [report]),
-        })),
+        set((state) => withAddedServiceReports(state, [report])),
       /**
        * `addServiceReport` for many entries in one write, so an import persists
        * and notifies subscribers once instead of once per entry.
        */
       addServiceReports: (reports: TimeEntry[]) =>
-        set(({ serviceReports }) => ({
-          serviceReports: withAddedServiceReports(serviceReports, reports),
-        })),
+        set((state) => withAddedServiceReports(state, reports)),
       addDayPlan: (dayPlan: DayPlan, options?: PlanSaveOptions) =>
         set(({ dayPlans, deletedDayPlans }) => {
           const normalized: DayPlan = {
@@ -286,7 +284,7 @@ export const useServiceReport = create(
               {
                 ...normalized,
                 ...savedOnStamp(options),
-                updatedAt: addedPlanStamp(deletedDayPlans, normalized.id),
+                updatedAt: stampPastTombstone(deletedDayPlans, normalized.id),
               },
             ],
             // A removed id can come back (a buddy's linked Plan has a fixed
@@ -362,7 +360,10 @@ export const useServiceReport = create(
               {
                 ...normalized,
                 ...savedOnStamp(options),
-                updatedAt: addedPlanStamp(deletedRecurringPlans, normalized.id),
+                updatedAt: stampPastTombstone(
+                  deletedRecurringPlans,
+                  normalized.id
+                ),
               },
             ],
             // Same rule as `addDayPlan`.

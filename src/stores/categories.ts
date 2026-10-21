@@ -1,4 +1,5 @@
 import { syncTimestamp } from '@/lib/syncClock'
+import { stampPastTombstone, withoutTombstones } from '@/lib/syncTombstones'
 import { create } from 'zustand'
 import { combine, createJSONStorage } from 'zustand/middleware'
 import { keepPersistedState, persist } from '@/stores/persist'
@@ -29,14 +30,23 @@ export const useCategories = create(
     combine(initialState, (set) => ({
       set,
       addCategory: (category: Category) =>
-        set(({ categories }) => {
+        set(({ categories, deletedCategories }) => {
           const existing = categories.find((c) => c.id === category.id)
           if (existing) return {}
+          // A deleted id can come back (an import run again after its Undo):
+          // stamped past its tombstone, which other devices keep.
           return {
             categories: [
               ...categories,
-              { ...category, updatedAt: syncTimestamp() },
+              {
+                ...category,
+                updatedAt: stampPastTombstone(deletedCategories, category.id),
+              },
             ],
+            deletedCategories: withoutTombstones(
+              deletedCategories,
+              new Set([category.id])
+            ),
           }
         }),
       updateCategory: (category: Partial<Category> & { id: string }) =>

@@ -1,10 +1,6 @@
 import moment from 'moment'
 import { Publisher } from '@/types/publisher'
-import {
-  TimeEntry,
-  TimeEntriesByYear,
-  TimeEntryTombstone,
-} from '@/types/timeEntry'
+import { TimeEntry, TimeEntriesByYear } from '@/types/timeEntry'
 import {
   AdjustedMinutes,
   adjustedMinutesForSpecificMonth,
@@ -14,7 +10,6 @@ import {
 import type { CalendarMonth } from '@/lib/monthlyGoals'
 import type { PublisherCapabilities } from '@/lib/publisherCapabilities'
 import { getServiceYearFromDate } from '@/lib/serviceYear'
-import { syncTimestamp } from '@/lib/syncClock'
 
 export type PendingRollover = {
   sourceYear: number
@@ -230,8 +225,7 @@ export type RolloverIds = {
  * of the ids, as when the same month is rolled over again after backdated
  * entries. `addServiceReport` doesn't dedupe ids, so reusing a live id would
  * store two entries under it. A deleted pair's ids are free again; re-applying
- * after Undo must then be stamped newer than its tombstones (see
- * `restampOverTombstones`).
+ * after Undo stamps them past their tombstones (`addServiceReports`).
  */
 export const rolloverIds = ({
   pending,
@@ -328,52 +322,6 @@ export const buildRolloverEntries = ({
   })
 
   return entries
-}
-
-/**
- * Re-stamps just-added entries (`ids`) whose ids an undone rollover already
- * used, so each is strictly newer than its tombstone. `addServiceReport` stamps
- * the current time, which loses to the tombstone in the iCloud merge when that
- * tombstone came from a device whose clock runs ahead, and the re-applied pair
- * would silently disappear. Returns `changed: false` when nothing needed it.
- */
-export const restampOverTombstones = ({
-  serviceReports,
-  ids,
-  tombstones,
-}: {
-  serviceReports: TimeEntriesByYear
-  ids: string[]
-  tombstones: TimeEntryTombstone[]
-}): { changed: boolean; serviceReports: TimeEntriesByYear } => {
-  const targets = new Set(ids)
-  const deletedAt = new Map<string, number>()
-  for (const tombstone of tombstones) {
-    if (!targets.has(tombstone.id)) continue
-    deletedAt.set(
-      tombstone.id,
-      Math.max(deletedAt.get(tombstone.id) ?? 0, tombstone.deletedAt)
-    )
-  }
-  if (deletedAt.size === 0) return { changed: false, serviceReports }
-
-  let changed = false
-  const next: TimeEntriesByYear = {}
-  for (const [year, months] of Object.entries(serviceReports)) {
-    next[year] = {}
-    for (const [month, entries] of Object.entries(months)) {
-      next[year][month] = entries.map((entry) => {
-        const tombstoneAt = deletedAt.get(entry.id)
-        if (tombstoneAt === undefined || (entry.updatedAt ?? 0) > tombstoneAt)
-          return entry
-        changed = true
-        return { ...entry, updatedAt: syncTimestamp(tombstoneAt) }
-      })
-    }
-  }
-  return changed
-    ? { changed, serviceReports: next }
-    : { changed, serviceReports }
 }
 
 export type RolloverApplication = {

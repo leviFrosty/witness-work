@@ -192,6 +192,7 @@ const WhatsNewSheet: React.FC<Props> = ({ show, onClose, sinceVersion }) => {
         </Text>
 
         <IconButton
+          frame
           noTransform
           onPress={onClose}
           size={20}

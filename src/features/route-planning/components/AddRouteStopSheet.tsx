@@ -258,6 +258,7 @@ export default function AddRouteStopSheet({
                   : i18n.t('routeBuilder_addStop')}
           </Text>
           <IconButton
+            frame
             noTransform
             icon={XIcon}
             size='xl'

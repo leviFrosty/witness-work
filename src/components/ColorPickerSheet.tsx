@@ -81,7 +81,13 @@ const ColorPickerSheet = ({
           >
             {title ?? ''}
           </Text>
-          <IconButton noTransform icon={XIcon} size='lg' onPress={onClose} />
+          <IconButton
+            noTransform
+            frame
+            icon={XIcon}
+            size='lg'
+            onPress={onClose}
+          />
         </View>
 
         <ColorPicker

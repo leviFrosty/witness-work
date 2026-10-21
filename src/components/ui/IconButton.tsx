@@ -7,12 +7,14 @@ import {
   StyleProp,
   StyleSheet,
   TextStyle,
+  View,
   ViewStyle,
 } from 'react-native'
 import { ThemeContext } from '@/contexts/theme'
 import { useContext } from 'react'
 import { ThemeSizes } from '@/types/theme'
 import type { AppIcon } from '@/components/ui/LucideIcon'
+import { touchTargetFrame } from '@/components/ui/touchTarget'
 
 export type IconButtonIcon = AppIcon
 
@@ -24,22 +26,25 @@ const toNumber = (value: unknown) =>
 
 /**
  * The button's size before any slop: the style's fixed width and height, else
- * the icon plus its padding.
+ * the icon plus its padding and border.
  */
 const boxSize = (iconSize: number, style: ViewStyle | undefined) => {
   const s = style ?? {}
   const pad = (...keys: (keyof ViewStyle)[]) =>
     keys.map((key) => toNumber(s[key])).find((value) => value !== undefined) ??
     0
+  const border = 2 * (toNumber(s.borderWidth) ?? 0)
   return {
     width:
       toNumber(s.width) ??
       iconSize +
+        border +
         pad('paddingLeft', 'paddingStart', 'paddingHorizontal', 'padding') +
         pad('paddingRight', 'paddingEnd', 'paddingHorizontal', 'padding'),
     height:
       toNumber(s.height) ??
       iconSize +
+        border +
         pad('paddingTop', 'paddingVertical', 'padding') +
         pad('paddingBottom', 'paddingVertical', 'padding'),
   }
@@ -94,6 +99,13 @@ type Props = {
    * button would fire the second. Ignored when `hitSlop` is set.
    */
   neighborGap?: number
+  /**
+   * Gives the button a real 44pt frame (48dp on Android), pulled back with
+   * negative margin so nothing moves; `style` then draws its look inside the
+   * frame. Use it in a drag area (sheet headers, swipeable rows), where a pan
+   * claims a touch on the slop before the button sees it.
+   */
+  frame?: boolean
   /** Swaps the icon for a spinner and blocks presses; see `Button`. */
   loading?: boolean
   testID?: string
@@ -112,6 +124,7 @@ const IconButton = ({
   accessibilityLabel,
   hitSlop,
   neighborGap,
+  frame,
   loading,
   testID,
 }: Props) => {
@@ -123,11 +136,23 @@ const IconButton = ({
     iconStyle,
   ] satisfies StyleProp<TextStyle>
   const iconColor = StyleSheet.flatten(iconStyleWithFallback)?.color
-  const box = boxSize(size, StyleSheet.flatten(style))
+  const look = boxSize(size, StyleSheet.flatten(style))
+  const frameStyle = frame
+    ? [touchTargetFrame(look.width, look.height), { borderRadius: 999 }]
+    : undefined
+  const box = frameStyle ? boxSize(size, StyleSheet.flatten(frameStyle)) : look
+  const glyph = (
+    <Icon
+      color={iconColor}
+      fill={fill ?? 'none'}
+      size={size}
+      style={iconStyleWithFallback as LucideProps['style']}
+    />
+  )
 
   return (
     <Button
-      style={style}
+      style={frameStyle ?? style}
       noTransform={noTransform ?? !onPress}
       disabled={!onPress && !onLongPress}
       onPress={onPress}
@@ -141,12 +166,7 @@ const IconButton = ({
       loadingColor={typeof iconColor === 'string' ? iconColor : undefined}
       testID={testID}
     >
-      <Icon
-        color={iconColor}
-        fill={fill ?? 'none'}
-        size={size}
-        style={iconStyleWithFallback as LucideProps['style']}
-      />
+      {frameStyle ? <View style={style}>{glyph}</View> : glyph}
     </Button>
   )
 }

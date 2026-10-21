@@ -115,6 +115,7 @@ const AvailabilityOnboardingSheet = ({
             {i18n.t('availability.onboarding.title')}
           </Text>
           <IconButton
+            frame
             noTransform
             icon={XIcon}
             onPress={handleSkip}

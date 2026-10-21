@@ -175,9 +175,11 @@ const SelectedDateSheet: React.FC<Props> = ({
           ? 'updateTime'
           : 'addTime'
 
+  // The header is the sheet's drag handle too, so its buttons get real frames.
   const closeButton = (
     <IconButton
       noTransform
+      frame
       icon={XIcon}
       size={16}
       color={theme.colors.textAlt}
@@ -230,7 +232,7 @@ const SelectedDateSheet: React.FC<Props> = ({
         {i18n.t(title!)}
       </Text>
       {planDetailsSlot ? (
-        <XView style={{ gap: 16, marginEnd: 16 }}>
+        <XView style={{ gap: 24, marginEnd: 20 }}>
           {renderPlanDetails?.actions(planDetailsSlot)}
         </XView>
       ) : null}

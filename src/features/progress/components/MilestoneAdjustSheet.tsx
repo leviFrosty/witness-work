@@ -345,6 +345,7 @@ const MilestoneAdjustSheet = ({ visible, onClose }: Props) => {
           </Text>
           {noGoalSet ? (
             <IconButton
+              frame
               noTransform
               icon={XIcon}
               size='xl'

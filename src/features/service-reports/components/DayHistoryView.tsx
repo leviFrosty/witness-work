@@ -219,6 +219,7 @@ const DayHistoryView: React.FC<DayHistoryViewProps> = ({
           {hasTimeReports && onAddTime && (
             <IconButton
               noTransform
+              frame
               icon={PlusIcon}
               onPress={onAddTime}
               accessibilityLabel={i18n.t('addTime')}
@@ -230,7 +231,6 @@ const DayHistoryView: React.FC<DayHistoryViewProps> = ({
                 borderRadius: 999,
                 padding: 7,
               }}
-              hitSlop={8}
             />
           )}
         </XView>
@@ -312,6 +312,7 @@ const DayHistoryView: React.FC<DayHistoryViewProps> = ({
           {hasPlans && onPlanDay && (
             <IconButton
               noTransform
+              frame
               icon={PlusIcon}
               onPress={onPlanDay}
               accessibilityLabel={i18n.t('planDay')}
@@ -322,7 +323,6 @@ const DayHistoryView: React.FC<DayHistoryViewProps> = ({
                 borderRadius: 999,
                 padding: 7,
               }}
-              hitSlop={8}
             />
           )}
         </XView>

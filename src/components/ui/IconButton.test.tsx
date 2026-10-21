@@ -3,7 +3,12 @@ import { act, create, type ReactTestRenderer } from 'react-test-renderer'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 vi.mock('react-native', () => ({
-  StyleSheet: { flatten: (style: unknown) => style },
+  Platform: { OS: 'ios' },
+  StyleSheet: {
+    flatten: (style: unknown) =>
+      Array.isArray(style) ? Object.assign({}, ...style) : style,
+  },
+  View: 'View',
 }))
 vi.mock('lucide-react-native', () => ({
   X: 'XIcon',
@@ -146,5 +151,48 @@ describe('IconButton hitSlop', () => {
     expect(
       await hitSlop({ icon: XIcon, size: 18, hitSlop: 0, onPress: () => {} })
     ).toBe(0)
+  })
+
+  it('counts the border around the icon', async () => {
+    expect(
+      await hitSlop({
+        icon: XIcon,
+        size: 13,
+        style: { padding: 7, borderWidth: 1 },
+        onPress: () => {},
+      })
+    ).toBe(8)
+  })
+})
+
+describe('IconButton frame', () => {
+  const render = async (props: React.ComponentProps<typeof IconButton>) => {
+    await act(async () => {
+      root = create(<IconButton {...props} />)
+    })
+    return root.root.findByType('Button' as never)
+  }
+
+  it('grows a 30pt circle to a real 44pt frame that takes up 30pt', async () => {
+    const look = { padding: 7, borderRadius: 999, backgroundColor: '#eee' }
+    const button = await render({
+      icon: XIcon,
+      size: 16,
+      frame: true,
+      style: look,
+      onPress: () => {},
+    })
+    expect(button.props.style).toEqual([
+      expect.objectContaining({
+        width: 44,
+        height: 44,
+        marginHorizontal: -7,
+        marginVertical: -7,
+      }),
+      { borderRadius: 999 },
+    ])
+    expect(button.props.hitSlop).toBe(0)
+    // The look is drawn inside the frame.
+    expect(button.findByType('View' as never).props.style).toBe(look)
   })
 })

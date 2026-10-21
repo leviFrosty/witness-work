@@ -478,6 +478,7 @@ const ContactsFilterSheet: React.FC<ContactsFilterSheetProps> = ({
           {i18n.t('contacts_filters')}
         </Text>
         <IconButton
+          frame
           onPress={handleCancel}
           size={20}
           icon={XIcon}

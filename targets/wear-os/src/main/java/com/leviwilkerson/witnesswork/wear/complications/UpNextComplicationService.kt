@@ -73,14 +73,21 @@ class UpNextComplicationService : SuspendingTimelineComplicationDataSourceServic
     val snapshot = WatchStorage.loadContext()?.snapshot
     val now = now()
     val default = data(request.complicationType, snapshot, now) ?: return null
-    val changes = UpNext.changes(snapshot, now).take(MAX_ENTRIES)
+    val all = UpNext.changes(snapshot, now)
+    val changes = all.take(MAX_ENTRIES)
+    // Past the entries, the default would show what was coming up when they were made as if it
+    // still were; "—" is shown instead until the phone's next update.
+    val end = all.getOrNull(MAX_ENTRIES) ?: UpNext.timelineEnd(now)
     val entries =
       changes.mapIndexedNotNull { index, start ->
-        val end = changes.getOrNull(index + 1) ?: start.plusDays(1)
+        val until = changes.getOrNull(index + 1) ?: end
         data(request.complicationType, snapshot, start)?.let {
-          TimelineEntry(TimeInterval(start.toInstant(), end.toInstant()), it)
+          TimelineEntry(TimeInterval(start.toInstant(), until.toInstant()), it)
         }
-      }
+      }.toMutableList()
+    data(request.complicationType, snapshot, end, stale = true)?.let {
+      entries += TimelineEntry(TimeInterval(end.toInstant(), end.plusYears(1).toInstant()), it)
+    }
     return ComplicationDataTimeline(default, entries)
   }
 
@@ -88,8 +95,10 @@ class UpNextComplicationService : SuspendingTimelineComplicationDataSourceServic
 
   private fun image(id: Int) = MonochromaticImage.Builder(Icon.createWithResource(this, id)).build()
 
-  private fun data(type: ComplicationType, snapshot: WatchSnapshot?, date: ZonedDateTime): ComplicationData? {
-    val item = UpNext.items(snapshot, date).firstOrNull()
+  /** `stale`: the timeline ran out, so what's coming up isn't known; shown as before setup. */
+  private fun data(type: ComplicationType, snapshot: WatchSnapshot?, date: ZonedDateTime, stale: Boolean = false): ComplicationData? {
+    val item = if (stale) null else UpNext.items(snapshot, date).firstOrNull()
+    val isSetUp = snapshot != null && !stale
     val upNext = L10n.t("watchUpNext", snapshot)
     val tap = open(this, item)
     return when (type) {
@@ -104,7 +113,7 @@ class UpNextComplicationService : SuspendingTimelineComplicationDataSourceServic
                   text(description(item, snapshot, date)),
                 )
                 .setMonochromaticImage(image(UpNext.icon(item)))
-            snapshot != null ->
+            isSetUp ->
               ShortTextComplicationData.Builder(text("—"), text(L10n.t("watchNothingScheduled", snapshot)))
                 .setMonochromaticImage(image(R.drawable.ic_calendar))
             else -> ShortTextComplicationData.Builder(text("—"), text(upNext))
@@ -131,7 +140,7 @@ class UpNextComplicationService : SuspendingTimelineComplicationDataSourceServic
             }
             else ->
               LongTextComplicationData.Builder(
-                  text(if (snapshot != null) L10n.t("watchNothingScheduled", snapshot) else "—"),
+                  text(if (isSetUp) L10n.t("watchNothingScheduled", snapshot) else "—"),
                   text(upNext),
                 )
                 .setTitle(text(upNext))

@@ -102,4 +102,15 @@ class UpNextTest {
     assertEquals(10, changes.size)
     assertTrue(changes.zipWithNext().all { (a, b) -> a < b })
   }
+
+  @Test
+  fun `stops a week on, at the eighth midnight`() {
+    // Sent for the 13th, past the week from the 5th.
+    val snapshot = snapshot(item("a", at(12, 15)), item("b", at(13, 15)))
+    val now = at(5, 9)
+    assertEquals(at(13, 0), UpNext.timelineEnd(now))
+    val changes = UpNext.changes(snapshot, now)
+    assertEquals(at(12, 15, 15), changes.last())
+    assertTrue(changes.all { it < UpNext.timelineEnd(now) })
+  }
 }

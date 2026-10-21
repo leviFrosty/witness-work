@@ -10,6 +10,9 @@ struct UpNextEntry: TimelineEntry {
   /// Raises Up Next in the Smart Stack in the hour before an item and while
   /// it's Now.
   let relevance: TimelineEntryRelevance?
+  /// The timeline ran out, so what's coming up isn't known; shown as before
+  /// the first snapshot.
+  var isStale = false
 }
 
 /// One entry for each time what Up Next shows changes (`UpNext.changes`), so
@@ -29,9 +32,17 @@ struct UpNextProvider: TimelineProvider {
   func getTimeline(in context: Context, completion: @escaping (Timeline<UpNextEntry>) -> Void) {
     let now = Date.now
     let snapshot = WatchStorage.loadContext()?.snapshot
-    let dates = [now] + UpNext.changes(snapshot, after: now).prefix(Self.maxEntries - 1)
-    completion(
-      Timeline(entries: dates.map { entry(at: $0, snapshot: snapshot) }, policy: .atEnd))
+    let changes = UpNext.changes(snapshot, after: now)
+    let dates = [now] + changes.prefix(Self.maxEntries - 2)
+    var entries = dates.map { entry(at: $0, snapshot: snapshot) }
+    // Without a reload past the entries, the last would stay up as if what it
+    // shows were still coming; "—" is shown instead.
+    let end =
+      changes.count > Self.maxEntries - 2
+      ? changes[Self.maxEntries - 2] : UpNext.timelineEnd(after: now)
+    entries.append(
+      UpNextEntry(date: end, snapshot: snapshot, items: [], relevance: nil, isStale: true))
+    completion(Timeline(entries: entries, policy: .atEnd))
   }
 
   private func entry(at date: Date, snapshot: WatchSnapshot?) -> UpNextEntry {
@@ -80,7 +91,7 @@ private struct UpNextContent {
   let hidesNames: Bool
 
   var snapshot: WatchSnapshot? { entry.snapshot }
-  var isSetUp: Bool { entry.snapshot != nil }
+  var isSetUp: Bool { entry.snapshot != nil && !entry.isStale }
   var item: UpNextItem? { entry.items.first }
   var then: UpNextItem? { entry.items.dropFirst().first }
 

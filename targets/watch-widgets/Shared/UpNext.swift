@@ -42,6 +42,7 @@ enum UpNext {
 
   /// Times after `date` when what Up Next shows changes: an item becoming
   /// soon, starting, or leaving, and each midnight, when day labels change.
+  /// Only those before `timelineEnd`.
   static func changes(_ snapshot: WatchSnapshot?, after date: Date) -> [Date] {
     var dates: [Date] = []
     for item in snapshot?.upNext ?? [] where item.timed {
@@ -49,14 +50,19 @@ enum UpNext {
         item.startDate.addingTimeInterval(-soonWindow), item.startDate, shownUntil(item),
       ]
     }
-    let calendar = Calendar.current
-    var midnight = calendar.startOfDay(for: date)
-    for _ in 0..<7 {
-      guard let next = calendar.date(byAdding: .day, value: 1, to: midnight) else { break }
-      midnight = next
-      dates.append(midnight)
-    }
-    return Array(Set(dates.filter { $0 > date })).sorted()
+    dates += MonthProgress.midnights(
+      after: date, count: MonthProgress.timelineDays, calendar: .current)
+    let end = timelineEnd(after: date)
+    return Array(Set(dates.filter { $0 > date && $0 < end })).sorted()
+  }
+
+  /// Where a complication timeline made at `date` runs out: the eighth
+  /// midnight, like Monthly Progress's. Past it, a week on without a reload, it
+  /// shows "—" rather than what was coming up a week ago.
+  static func timelineEnd(after date: Date) -> Date {
+    MonthProgress.midnights(
+      after: date, count: MonthProgress.timelineDays + 1, calendar: .current
+    ).last ?? date.addingTimeInterval(8 * 24 * 60 * 60)
   }
 
   // MARK: Labels

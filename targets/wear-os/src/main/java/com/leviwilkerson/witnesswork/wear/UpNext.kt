@@ -42,7 +42,7 @@ object UpNext {
 
   /**
    * Times after `date` when what Up Next shows changes: an item becoming soon, starting, or
-   * leaving, and each midnight, when day labels change.
+   * leaving, and each midnight, when day labels change. Only those before `timelineEnd`.
    */
   fun changes(snapshot: WatchSnapshot?, date: ZonedDateTime): List<ZonedDateTime> {
     val times = mutableSetOf<Long>()
@@ -52,14 +52,18 @@ object UpNext {
       times += item.startMs
       times += shownUntil(item, date)
     }
-    var midnight = date.startOfDay()
-    repeat(7) {
-      midnight = midnight.plusDays(1)
-      times += midnight.toInstant().toEpochMilli()
-    }
+    times += MonthProgress.midnights(date, MonthProgress.TIMELINE_DAYS).map { it.toInstant().toEpochMilli() }
     val after = date.toInstant().toEpochMilli()
-    return times.filter { it > after }.sorted().map { ZonedDateTime.ofInstant(Instant.ofEpochMilli(it), date.zone) }
+    val end = timelineEnd(date).toInstant().toEpochMilli()
+    return times.filter { it > after && it < end }.sorted().map { ZonedDateTime.ofInstant(Instant.ofEpochMilli(it), date.zone) }
   }
+
+  /**
+   * Where a complication timeline made at `date` runs out: the eighth midnight, like Monthly
+   * Progress's. Past it, a week on without an update, it shows "—" rather than what was coming
+   * up a week ago.
+   */
+  fun timelineEnd(date: ZonedDateTime): ZonedDateTime = MonthProgress.midnights(date, MonthProgress.TIMELINE_DAYS + 1).last()
 
   /**
    * When `item` starts in `date`'s zone. An untimed Plan's day starts at midnight there, wherever

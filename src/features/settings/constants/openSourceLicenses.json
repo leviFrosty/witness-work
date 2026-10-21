@@ -4639,12 +4639,6 @@
     "author": "Marc Rousavy"
   },
   {
-    "name": "react-native-pager-view",
-    "version": "8.0.2",
-    "license": "MIT",
-    "author": "troZee"
-  },
-  {
     "name": "react-native-purchases",
     "version": "10.4.0",
     "license": "MIT",

@@ -43,6 +43,7 @@ import {
   resolveStartOfWeek,
   resolveTimeFormat,
 } from '@/lib/dates'
+import { loadableMomentLocales } from '@/lib/momentLocales'
 
 // Factory, not a constant: moment instances capture the global locale at
 // creation, and importing locale files above moved it. Each test wants the
@@ -335,6 +336,75 @@ describe('formatCalendar (calendar-relative time)', () => {
       formatCalendar(ref.clone().subtract(1, 'day'), { referenceTime: ref })
     ).toMatch(/Yesterday/)
   })
+
+  it('drops German "Uhr" after a 12-hour time and keeps it after a 24-hour one', () => {
+    const ref = sample()
+    // Language German, Format Region United States (12-hour).
+    applyFormatRegion({ language: 'de', region: 'en' })
+    expect(formatCalendar(sample(), { referenceTime: ref })).toBe(
+      'heute um 1:30 PM'
+    )
+    expect(
+      formatCalendar(sample().subtract(1, 'day'), { referenceTime: ref })
+    ).toBe('gestern um 1:30 PM')
+    expect(
+      formatCalendar(sample().add(3, 'days'), { referenceTime: ref })
+    ).toBe('Sonntag um 1:30 PM')
+
+    applyFormatRegion({ language: 'de', region: 'de' })
+    expect(formatCalendar(sample(), { referenceTime: ref })).toBe(
+      'heute um 13:30 Uhr'
+    )
+
+    applyFormatRegion({
+      language: 'de',
+      region: 'de',
+      timeFormatOverride: '12',
+    })
+    expect(formatCalendar(sample(), { referenceTime: ref })).toBe(
+      'heute um 1:30 PM'
+    )
+
+    applyFormatRegion({ language: 'de-at', timeFormatOverride: '24' })
+    expect(formatCalendar(sample(), { referenceTime: ref })).toBe(
+      'heute um 13:30 Uhr'
+    )
+  })
+
+  it('keeps other Languages unchanged on either clock', () => {
+    const ref = sample()
+    applyFormatRegion({ language: 'en', timeFormatOverride: '24' })
+    expect(formatCalendar(sample(), { referenceTime: ref })).toBe(
+      'Today at 13:30'
+    )
+    applyFormatRegion({ language: 'fr', region: 'en' })
+    expect(formatCalendar(sample(), { referenceTime: ref })).toBe(
+      'Aujourd’hui à 1:30 PM'
+    )
+    applyFormatRegion({ language: 'ru', region: 'en' })
+    expect(
+      formatCalendar(sample().subtract(3, 'days'), { referenceTime: ref })
+    ).toBe('В понедельник, в 1:30 дня')
+  })
+
+  it.each(['12', '24'] as const)(
+    'ends every timed bucket with the %s-hour time in every Language',
+    (clock) => {
+      const ref = sample()
+      for (const language of ['en', ...loadableMomentLocales]) {
+        applyFormatRegion({ language, timeFormatOverride: clock })
+        const hourWord =
+          clock === '24' && language.startsWith('de') ? ' Uhr' : ''
+        for (const days of [0, 1, -1, 3, -3]) {
+          const date = sample().add(days, 'days')
+          expect(
+            formatCalendar(date, { referenceTime: ref }),
+            `${language} ${days}`
+          ).toMatch(new RegExp(`${formatTime(date)}${hourWord}$`))
+        }
+      }
+    }
+  )
 
   it('falls through to the supplied sameElse pattern outside the window', () => {
     const ref = sample().clone().add(30, 'days')

@@ -682,6 +682,9 @@ const deleteEntriesWhere = (
 export const clearCompletedLedgerEntries = (): number =>
   deleteEntriesWhere((entry) => entry.state === 'done')
 
+/** Forgets every import (Reset all). Does NOT touch committed data. */
+export const clearLedger = (): void => store().clearAll()
+
 /** Auto-prunes rows older than {@link LEDGER_MAX_AGE_MS}. Returns the count. */
 export const pruneLedgerEntries = (
   nowMs: number = Date.now(),

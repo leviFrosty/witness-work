@@ -41,6 +41,8 @@ vi.mock('@/hooks/usePublisher', () => ({
   default: () => ({ type: 'publisher' }),
 }))
 vi.mock('@/lib/direction', () => ({ forwardSign: () => 1 }))
+vi.mock('@/hooks/useAppActive', () => ({ default: () => true }))
+vi.mock('@/hooks/useShownInTab', () => ({ default: () => true }))
 
 import MonthServiceReportProgressBar from '@/features/service-reports/components/MonthServiceReportProgressBar'
 

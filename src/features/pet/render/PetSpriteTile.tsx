@@ -71,6 +71,7 @@ export default function PetSpriteTile({
   size,
   mood = 'happy',
   seed = 0,
+  paused = false,
 }: {
   species: PetSpecies
   coat: string
@@ -78,9 +79,11 @@ export default function PetSpriteTile({
   size: number
   mood?: PetMood
   seed?: number
+  /** Holds still, e.g. while scrolled out of view. */
+  paused?: boolean
 }) {
   const reduceMotion = useReducedMotion()
-  const active = useSceneActive()
+  const active = useSceneActive(paused)
   const side = crispScale(size, SPRITE_SIZE, PixelRatio.get()) * SPRITE_SIZE
   const image = useSharedValue<SkImage | null>(
     spriteImage(species, coat, frameKey(mood, 0, seed))

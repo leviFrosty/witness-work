@@ -11,11 +11,17 @@ import IconButton from '@/components/ui/IconButton'
 import i18n from '@/lib/locales'
 import XView from '@/components/ui/layout/XView'
 import {
+  computeElapsedMs,
+  formatMs,
   MIN_MS_TO_SAVE,
   RESET_CONFIRM_MIN_MS,
+  sessionStartMs,
   splitElapsed,
+  useElapsedMs,
+  useElapsedReached,
   useStopWatch,
 } from '@/features/service-reports/hooks/useStopWatch'
+import type { StopwatchState } from '../../../../modules/stopwatch-bridge'
 import useTheme from '@/contexts/theme'
 import Button from '@/components/ui/Button'
 import { useNavigation } from '@react-navigation/native'
@@ -24,18 +30,48 @@ import HomeSectionMenu from '@/components/HomeSectionMenu'
 import { tracking } from '@/lib/tracking'
 import confirmDestructive from '@/lib/confirmDestructive'
 import { formatSecondsSpoken } from '@/lib/minutes'
+import useAppActive from '@/hooks/useAppActive'
+import useShownInTab from '@/hooks/useShownInTab'
+
+/**
+ * The running time, the only part of the timer that changes every second. Ticks
+ * only while Home shows and the app is open.
+ */
+const TimerReadout = ({ state }: { state: StopwatchState }) => {
+  const theme = useTheme()
+  const shown = useShownInTab()
+  const active = useAppActive()
+  const ms = useElapsedMs(state, shown && active)
+
+  return (
+    <Text
+      numberOfLines={1}
+      adjustsFontSizeToFit
+      // "00:12:05" would be read digit group by digit group.
+      accessibilityLabel={formatSecondsSpoken(ms / 1000)}
+      style={{
+        fontSize: theme.fontSize('3xl'),
+        fontFamily: theme.fonts.bold,
+      }}
+    >
+      {formatMs(ms)}
+    </Text>
+  )
+}
 
 export const TimerSection = () => {
-  const { start, stop, reset, isRunning, time, ms, sessionStartedAt } =
-    useStopWatch()
+  const { start, stop, reset, isRunning, hasStarted, state } = useStopWatch()
   const navigation = useNavigation<RootStackNavigation>()
   const theme = useTheme()
-  const hasTime = ms >= MIN_MS_TO_SAVE
+  const hasTime = useElapsedReached(state, MIN_MS_TO_SAVE)
 
   // The timer keeps its session until Add Time saves it, so backing out of
   // Add Time loses nothing. The entry lands on the day the session began,
   // not the day it's saved.
   const handleSave = () => {
+    const now = Date.now()
+    const ms = computeElapsedMs(state, now)
+    const sessionStartedAt = sessionStartMs(state, now)
     navigation.navigate('Add Time', {
       ...splitElapsed(ms),
       date:
@@ -48,7 +84,7 @@ export const TimerSection = () => {
   }
 
   const handleReset = () => {
-    if (ms < RESET_CONFIRM_MIN_MS) {
+    if (computeElapsedMs(state, Date.now()) < RESET_CONFIRM_MIN_MS) {
       reset()
       return
     }
@@ -81,7 +117,7 @@ export const TimerSection = () => {
             systemImage: 'square.and.arrow.down',
             onPress: handleSave,
           },
-          ms > 0 && {
+          hasStarted && {
             id: 'reset',
             title: i18n.t('timerResetAction'),
             systemImage: 'arrow.counterclockwise',
@@ -104,18 +140,7 @@ export const TimerSection = () => {
             {i18n.t('timer')}
           </Text>
         </View>
-        <Text
-          numberOfLines={1}
-          adjustsFontSizeToFit
-          // "00:12:05" would be read digit group by digit group.
-          accessibilityLabel={formatSecondsSpoken(ms / 1000)}
-          style={{
-            fontSize: theme.fontSize('3xl'),
-            fontFamily: theme.fonts.bold,
-          }}
-        >
-          {time}
-        </Text>
+        <TimerReadout state={state} />
         <XView>
           <Button
             accessibilityRole='button'

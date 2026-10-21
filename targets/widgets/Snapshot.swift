@@ -105,7 +105,8 @@ struct WidgetSnapshot: Decodable {
     // Month
     var monthMinutes: Int
     var monthHoursFormatted: String
-    let goalHours: Int
+    /// Hours the user set; the app accepts a decimal (`37.5`). 0 means no goal.
+    let goalHours: Double
     var progress: Double
     /// The pace badge's "4.8 Hrs per day to goal!" as of the entry's day, from
     /// `hoursPerDayToGoalByDay` (`SnapshotDay.report`). `nil` when the goal

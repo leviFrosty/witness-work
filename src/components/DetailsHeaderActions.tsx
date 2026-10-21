@@ -19,6 +19,7 @@ export default function DetailsHeaderActions({
         <IconButton
           icon={PencilIcon}
           size={20}
+          neighborGap={16}
           onPress={onEdit}
           accessibilityLabel={i18n.t('edit')}
         />

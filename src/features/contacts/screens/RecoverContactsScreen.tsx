@@ -177,6 +177,7 @@ const RecoverContactsScreen = () => {
         }}
       >
         <IconButton
+          neighborGap={10}
           onPress={() => recover([item.id])}
           icon={UndoIcon}
           accessibilityLabel={i18n.t('recover')}

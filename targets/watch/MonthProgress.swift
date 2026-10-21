@@ -159,6 +159,21 @@ struct MonthProgress: Equatable {
     return (max(remaining, 0) + tenthPerDay - 1) / tenthPerDay * 6
   }
 
+  /// Days a complication's timeline covers after today, so the day and the
+  /// month move on without the iPhone or a reload, which WidgetKit budgets.
+  /// Wear OS's covers as many.
+  static let timelineDays = 7
+
+  /// The `count` midnights after `date`.
+  static func midnights(after date: Date, count: Int, calendar: Calendar) -> [Date] {
+    var day = calendar.startOfDay(for: date)
+    return (0..<count).compactMap { _ in
+      guard let next = calendar.date(byAdding: .day, value: 1, to: day) else { return nil }
+      day = calendar.startOfDay(for: next)
+      return day
+    }
+  }
+
   /// The iPhone's `formatMinutesCompact`: `30m`, `2h`, `1.5h`, `11.5h`; `0h`
   /// for zero, as the snapshot's `monthCompact` has it. Digits are the app
   /// Language's (`AppLanguage`).

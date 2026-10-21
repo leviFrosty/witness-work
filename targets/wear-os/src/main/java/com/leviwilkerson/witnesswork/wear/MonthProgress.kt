@@ -33,6 +33,18 @@ data class MonthProgress(
   val publisherState: String,
 ) {
   companion object {
+    /** Days a complication's timeline covers after today, as the Apple Watch's does. */
+    const val TIMELINE_DAYS = 7
+
+    /** The `count` midnights after `date`. */
+    fun midnights(date: ZonedDateTime, count: Int): List<ZonedDateTime> {
+      var day = date.startOfDay()
+      return List(count) {
+        day = day.plusDays(1).startOfDay()
+        day
+      }
+    }
+
     /** `null` when the snapshot describes neither the month of `date` nor the month before it. */
     fun of(
       snapshot: WatchSnapshot,

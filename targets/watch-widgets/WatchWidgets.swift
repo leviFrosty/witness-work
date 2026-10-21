@@ -21,9 +21,9 @@ struct ProgressEntry: TimelineEntry {
 }
 
 /// Reads what the watch app stored, including time added on the watch that the
-/// iPhone hasn't saved yet. The app reloads timelines when either changes; a
-/// second entry at midnight moves "reported today" and the pace along, and
-/// starts the next month, without the iPhone.
+/// iPhone hasn't saved yet. The app reloads timelines when either changes; an
+/// entry for each of the next week's midnights moves "reported today" and the
+/// pace along, and starts the next month, without the iPhone.
 struct ProgressProvider: TimelineProvider {
   func placeholder(in context: Context) -> ProgressEntry {
     ProgressEntry(date: .now, snapshot: nil, progress: nil)
@@ -35,22 +35,37 @@ struct ProgressProvider: TimelineProvider {
 
   func getTimeline(in context: Context, completion: @escaping (Timeline<ProgressEntry>) -> Void) {
     let now = Date.now
-    let midnight = Calendar.current.nextDate(
-      after: now, matching: DateComponents(hour: 0, minute: 0), matchingPolicy: .nextTime
-    ) ?? now.addingTimeInterval(24 * 60 * 60)
-    completion(Timeline(entries: [entry(at: now), entry(at: midnight)], policy: .after(midnight)))
+    let stored = WatchStorage.loadContext()
+    let outbox = WatchStorage.loadOutbox()
+    let midnights = MonthProgress.midnights(
+      after: now, count: MonthProgress.timelineDays + 1, calendar: .current)
+    var entries = ([now] + midnights.dropLast()).map {
+      entry(at: $0, context: stored, outbox: outbox)
+    }
+    // A week on without a reload, the last day's progress would be another
+    // day's; none is shown instead.
+    if let end = midnights.last {
+      entries.append(ProgressEntry(date: end, snapshot: stored?.snapshot, progress: nil))
+    }
+    // Reloaded at midnight when WidgetKit's budget allows; the entries carry
+    // it through the week when it doesn't.
+    let midnight = midnights.first ?? now.addingTimeInterval(24 * 60 * 60)
+    completion(Timeline(entries: entries, policy: .after(midnight)))
   }
 
   private func entry(at date: Date) -> ProgressEntry {
-    guard let context = WatchStorage.loadContext(), let snapshot = context.snapshot else {
+    entry(at: date, context: WatchStorage.loadContext(), outbox: WatchStorage.loadOutbox())
+  }
+
+  private func entry(at date: Date, context: PhoneContext?, outbox: [OutboxItem]) -> ProgressEntry {
+    guard let context, let snapshot = context.snapshot else {
       return ProgressEntry(date: date, snapshot: nil, progress: nil)
     }
     return ProgressEntry(
       date: date,
       snapshot: snapshot,
       progress: MonthProgress(
-        snapshot: snapshot, outbox: WatchStorage.loadOutbox(),
-        resolvedEntryIds: context.resolvedEntryIds, at: date))
+        snapshot: snapshot, outbox: outbox, resolvedEntryIds: context.resolvedEntryIds, at: date))
   }
 }
 

@@ -19,6 +19,7 @@ import type {
 } from '@/components/ui/Sheet.types'
 import { SheetWindowFrameContext } from '@/components/ui/sheetWindowFrame'
 import { useDisplayRegions } from '@/stores/displayRegions'
+import { useWindowSideInsets } from '@/components/ui/layout/HorizontalSafeArea'
 
 type Frame = { x: number; y: number; width: number }
 
@@ -50,12 +51,14 @@ export default function NativeSheet({
 }: NativeSheetProps) {
   const window = useWindowDimensions()
   const insets = useSafeAreaInsets()
+  const sides = useWindowSideInsets()
   const fit = !snapPoints?.length
   // Content that fits sizes itself, so it needs the sheet's width up front.
   // A sheet spans the window, even when iOS 26 floats a short one (it scales
-  // the whole sheet down rather than narrowing it); a regular-width window
-  // (iPad, or iPhone Duo open) shows a form sheet instead, as wide as its
-  // content. Builds without the size class fall back to the iPad idiom.
+  // the whole sheet down rather than narrowing it), less the side safe areas
+  // it keeps its content out of (iPhone Duo's vertical bar). A regular-width
+  // window (iPad, or iPhone Duo open) shows a form sheet instead, as wide as
+  // its content. Builds without the size class fall back to the iPad idiom.
   const regularWidth = useDisplayRegions((s) =>
     s.regions
       ? s.regions.horizontalSizeClass === 'regular'
@@ -64,7 +67,7 @@ export default function NativeSheet({
   const width =
     regularWidth && window.width >= 600
       ? Math.min(window.width, FORM_SHEET_WIDTH)
-      : window.width
+      : window.width - sides.left - sides.right
   // Content that fits is kept above the keyboard, where the sheet rides, so
   // a tall form scrolls instead of running under it.
   const [keyboardTop, setKeyboardTop] = useState(

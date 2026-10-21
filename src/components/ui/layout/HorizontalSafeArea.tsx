@@ -7,6 +7,10 @@ import {
 import { isRtlLayout } from '@/lib/direction'
 
 const HorizontalBleedContext = createContext({ left: 0, right: 0 })
+const WindowSideInsetsContext = createContext<{
+  left: number
+  right: number
+} | null>(null)
 
 /**
  * The side padding a screen sits inside, as `paddingLeft`/`paddingRight`
@@ -14,6 +18,17 @@ const HorizontalBleedContext = createContext({ left: 0, right: 0 })
  * margins, running under iPhone Duo's vertical bar as system bars expect.
  */
 export const useHorizontalBleed = () => useContext(HorizontalBleedContext)
+
+/**
+ * The window's side safe areas, which the insets inside a screen no longer
+ * show. A native sheet keeps its content clear of them on iPhone Duo, so
+ * content sized up front has to know how much room that leaves.
+ */
+export function useWindowSideInsets() {
+  const insets = useSafeAreaInsets()
+  const outer = useContext(WindowSideInsetsContext)
+  return outer ?? { left: insets.left, right: insets.right }
+}
 
 type Props = {
   children: ReactNode
@@ -34,6 +49,7 @@ export default function HorizontalSafeArea({
   backgroundColor,
 }: Props) {
   const insets = useSafeAreaInsets()
+  const windowSides = useWindowSideInsets()
   const left = covered === 'left' ? 0 : insets.left
   const right = covered === 'right' ? 0 : insets.right
   // Insets are physical; React Native mirrors left and right paddings in RTL.
@@ -53,11 +69,13 @@ export default function HorizontalSafeArea({
       <HorizontalBleedContext.Provider
         value={{ left: paddingLeft, right: paddingRight }}
       >
-        <SafeAreaInsetsContext.Provider
-          value={{ ...insets, left: 0, right: 0 }}
-        >
-          {children}
-        </SafeAreaInsetsContext.Provider>
+        <WindowSideInsetsContext.Provider value={windowSides}>
+          <SafeAreaInsetsContext.Provider
+            value={{ ...insets, left: 0, right: 0 }}
+          >
+            {children}
+          </SafeAreaInsetsContext.Provider>
+        </WindowSideInsetsContext.Provider>
       </HorizontalBleedContext.Provider>
     </View>
   )

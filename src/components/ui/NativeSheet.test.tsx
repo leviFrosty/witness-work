@@ -6,6 +6,7 @@ import type { NativeSheetProps } from '@/components/ui/Sheet.types'
 const runtime = vi.hoisted(() => ({
   isPad: false,
   window: { width: 400, height: 800 },
+  sides: { left: 0, right: 0 },
   hide: vi.fn(),
   keyboard: {} as Record<string, (event: unknown) => void>,
   keyboardMetrics: undefined as { screenY: number } | undefined,
@@ -26,13 +27,25 @@ vi.mock('react-native', () => ({
     },
   },
   useWindowDimensions: () => runtime.window,
+  View: 'View',
 }))
 vi.mock('react-native-gesture-handler', () => ({
   GestureHandlerRootView: 'GestureHandlerRootView',
 }))
-vi.mock('react-native-safe-area-context', () => ({
-  useSafeAreaInsets: () => ({ top: 50, bottom: 30 }),
-}))
+vi.mock('react-native-safe-area-context', async () => {
+  const { createContext, useContext } = await import('react')
+  const SafeAreaInsetsContext = createContext<object | null>(null)
+  return {
+    SafeAreaInsetsContext,
+    useSafeAreaInsets: () =>
+      useContext(SafeAreaInsetsContext) ?? {
+        top: 50,
+        bottom: 30,
+        ...runtime.sides,
+      },
+  }
+})
+vi.mock('@/lib/direction', () => ({ isRtlLayout: () => false }))
 vi.mock('@expo/ui', () => ({ Host: 'Host' }))
 vi.mock('@expo/ui/swift-ui', () => ({
   BottomSheet: 'BottomSheet',
@@ -88,6 +101,7 @@ vi.mock('@/contexts/theme', () => ({
 import IOSNativeSheet from '@/components/ui/NativeSheet.ios'
 import AndroidNativeSheet from '@/components/ui/NativeSheet.android'
 import { useToWindow } from '@/components/ui/sheetWindowFrame'
+import HorizontalSafeArea from '@/components/ui/layout/HorizontalSafeArea'
 
 /** Reports where a 10×10 view at (20, 40) in the sheet lands in the window. */
 const Probe = () => {
@@ -130,6 +144,7 @@ beforeEach(() => {
   vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true)
   runtime.isPad = false
   runtime.window = { width: 400, height: 800 }
+  runtime.sides = { left: 0, right: 0 }
   runtime.hide.mockResolvedValue(undefined)
   runtime.keyboard = {}
   runtime.keyboardMetrics = undefined
@@ -162,6 +177,33 @@ describe('iOS native sheet', () => {
     runtime.window = { width: 1024, height: 768 }
     render(IOSNativeSheet)
     expect(content()[1].width).toBe(540)
+  })
+
+  it("keeps content that fits clear of iPhone Duo's vertical bar", () => {
+    runtime.window = { width: 466, height: 678 }
+    runtime.sides = { left: 0, right: 84 }
+    render(IOSNativeSheet)
+    expect(content()[1].width).toBe(382)
+
+    // Inside a screen the insets no longer show the bar; the sheet still
+    // clears it.
+    act(() => root.unmount())
+    act(() => {
+      root = create(
+        <HorizontalSafeArea covered='right'>
+          <IOSNativeSheet
+            open
+            onDismiss={onDismiss}
+            onClosed={onClosed}
+            dismissible
+            backgroundColor='#fff'
+          >
+            <Probe />
+          </IOSNativeSheet>
+        </HorizontalSafeArea>
+      )
+    })
+    expect(content()[1].width).toBe(382)
   })
 
   it('rests at its snap points and fills the sheet', () => {

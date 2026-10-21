@@ -1,0 +1,60 @@
+import { PropsWithChildren, useState } from 'react'
+import {
+  StyleSheet,
+  TextProps,
+  TextStyle,
+  useWindowDimensions,
+} from 'react-native'
+import Text from '@/components/ui/MyText'
+import useTheme from '@/contexts/theme'
+import { splitWordShare } from '@/lib/wholeWords'
+
+/** The smallest the text shrinks to; a word still too wide then breaks. */
+const MIN_SCALE = 0.4
+
+/**
+ * A display title that never breaks a word in two. It wraps between words as
+ * usual, and only when a single word is wider than the whole line (a long word
+ * at the largest text sizes) does it shrink, just enough for that word to fit.
+ * At regular sizes it renders exactly like `Text`.
+ */
+export default function WholeWordsText({
+  style,
+  onTextLayout,
+  children,
+  ...props
+}: PropsWithChildren<TextProps>) {
+  const theme = useTheme()
+  const { width, fontScale } = useWindowDimensions()
+  // A new text, window width or text size starts over at full size.
+  const key = `${width}:${fontScale}:${typeof children === 'string' ? children : ''}`
+  const [fit, setFit] = useState({ key, scale: 1 })
+  const scale = fit.key === key ? fit.scale : 1
+
+  const flat = (StyleSheet.flatten(style) ?? {}) as TextStyle
+  const fontSize = flat.fontSize ?? theme.fontSize('md')
+
+  return (
+    <Text
+      {...props}
+      style={[
+        style,
+        scale < 1 && {
+          fontSize: fontSize * scale,
+          lineHeight: flat.lineHeight && flat.lineHeight * scale,
+        },
+      ]}
+      onTextLayout={(e) => {
+        onTextLayout?.(e)
+        const share = splitWordShare(e.nativeEvent.lines.map((l) => l.text))
+        if (share === null || scale <= MIN_SCALE) return
+        setFit({
+          key,
+          scale: Math.max(MIN_SCALE, scale * Math.min(0.95, share)),
+        })
+      }}
+    >
+      {children}
+    </Text>
+  )
+}

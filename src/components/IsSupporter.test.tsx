@@ -68,6 +68,7 @@ vi.mock('@/hooks/useCheapestSupporterPrice', () => ({
   default: () => ({ priceString: '$1' }),
 }))
 vi.mock('@/components/ui/MyText', () => ({ default: 'Text' }))
+vi.mock('@/components/ui/WholeWordsText', () => ({ default: 'Text' }))
 vi.mock('@/components/ui/Button', () => ({ default: 'Button' }))
 vi.mock('@/components/ui/IconButton', () => ({ default: 'IconButton' }))
 vi.mock('@/components/SupporterBadge', () => ({ default: 'SupporterBadge' }))

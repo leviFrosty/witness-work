@@ -5,7 +5,7 @@ import RichNote from '@/components/RichNote'
 import DetailRow from '@/components/ui/inputs/DetailRow'
 import InputRowContainer from '@/components/ui/inputs/InputRowContainer'
 import Section from '@/components/ui/inputs/Section'
-import Text from '@/components/ui/MyText'
+import WholeWordsText from '@/components/ui/WholeWordsText'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import { useFormattedMinutes } from '@/lib/minutes'
@@ -67,7 +67,7 @@ export default function PlanDetailsSummary(props: PlanDetailsFields) {
   return (
     <View style={{ gap: 20 }}>
       {props.title ? (
-        <Text
+        <WholeWordsText
           style={{
             fontSize: theme.fontSize('2xl'),
             fontFamily: theme.fonts.bold,
@@ -76,7 +76,7 @@ export default function PlanDetailsSummary(props: PlanDetailsFields) {
           selectable
         >
           {props.title}
-        </Text>
+        </WholeWordsText>
       ) : null}
       {props.lead}
       <Section>

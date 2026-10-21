@@ -6,7 +6,9 @@ import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 import IconButton from '@/components/ui/IconButton'
 import Text from '@/components/ui/MyText'
+import WholeWordsText from '@/components/ui/WholeWordsText'
 import useTheme from '@/contexts/theme'
+import useAccessibilityTextSize from '@/hooks/useAccessibilityTextSize'
 import useNow from '@/hooks/useNow'
 import { analytics } from '@/lib/analytics'
 import { parseBadgeKey } from '@/lib/badges/catalog'
@@ -45,6 +47,9 @@ export default function HomeNewBadgeCard({
   const dismissed = usePreferences((s) => s.badgeCardDismissed)
   const showBadges = usePreferences((s) => s.showBadges)
   const waiting = useBadgeSession((s) => s.celebrations)
+  // At accessibility text sizes the badge's name gets the card's full width,
+  // with View under it, instead of a sliver beside the medallion.
+  const largeText = useAccessibilityTextSize()
   if (!showBadges) return null
 
   const keys = homeCardBadges({ earned, seenAt, dismissed, waiting, now })
@@ -89,17 +94,27 @@ export default function HomeNewBadgeCard({
           onPress={() => close('dismiss')}
         />
       </View>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+      <View
+        style={{
+          flexDirection: largeText ? 'column' : 'row',
+          alignItems: largeText ? 'flex-start' : 'center',
+          gap: 14,
+        }}
+      >
         <BadgeMedallion art={lead.art} level={lead.level} size={COIN_SIZE} />
-        <View style={{ flex: 1, gap: 2 }}>
-          <Text
+        <View
+          style={
+            largeText ? { alignSelf: 'stretch', gap: 2 } : { flex: 1, gap: 2 }
+          }
+        >
+          <WholeWordsText
             style={{
               fontSize: theme.fontSize('lg'),
               fontFamily: theme.fonts.semiBold,
             }}
           >
             {title}
-          </Text>
+          </WholeWordsText>
           <Text
             numberOfLines={2}
             style={{

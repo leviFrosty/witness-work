@@ -1,6 +1,7 @@
 import moment from 'moment'
 import { useMemo } from 'react'
 import Text from '@/components/ui/MyText'
+import WholeWordsText from '@/components/ui/WholeWordsText'
 import Circle from '@/components/ui/Circle'
 import XView from '@/components/ui/layout/XView'
 import { getDateStatusColor } from '@/components/CalendarDay'
@@ -77,7 +78,7 @@ const DayHistoryHeader = ({
         gap: 8,
       }}
     >
-      <Text
+      <WholeWordsText
         accessibilityRole='header'
         style={{
           color: theme.colors.text,
@@ -86,7 +87,7 @@ const DayHistoryHeader = ({
         }}
       >
         {formatDate(date)}
-      </Text>
+      </WholeWordsText>
 
       <XView style={{ flexShrink: 1 }}>
         {goalMinutes ? (

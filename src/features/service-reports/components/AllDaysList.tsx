@@ -16,7 +16,7 @@ import {
   type RecurringPlan,
 } from '@/lib/recurrence'
 import { getCategoryLabel, isLdcEntry } from '@/lib/serviceReportCategory'
-import { formatMinutes } from '@/lib/minutes'
+import { formatMinutes, formatMinutesSpoken } from '@/lib/minutes'
 import { entryMinutes } from '@/lib/entryMinutes'
 import { usePreferences } from '@/stores/preferences'
 import { DayPlan, TimeEntry } from '@/types/timeEntry'
@@ -36,7 +36,7 @@ import { getDateStatusColor } from '@/components/CalendarDay'
 import ContextMenu from '@/components/ui/ContextMenu'
 import DayPreview, { dayHasPreview } from '@/components/DayPreview'
 import useDayMenuActions from '@/hooks/useDayMenuActions'
-import { formatMonthDayCompact } from '@/lib/dates'
+import { formatDisplay, formatMonthDayCompact } from '@/lib/dates'
 import { alignText } from '@/lib/direction'
 import { tracking } from '@/lib/tracking'
 
@@ -68,6 +68,8 @@ type DayRow = {
   isToday: boolean
   hoursLabel: string
   categoryLabel: string
+  /** The row in words: the day, then its category and time or "No time". */
+  accessibilityLabel: string
   isEmpty: boolean
   planDotColor: string | null
   reports: TimeEntry[]
@@ -104,6 +106,7 @@ const DayRowItem = ({
     <ContextMenu
       actions={menu}
       onPress={onPress}
+      accessibilityLabel={row.accessibilityLabel}
       hoverRadius={plain ? 0 : cardStyle.borderRadius}
       preview={
         dayHasPreview(previewData) ? (
@@ -342,6 +345,7 @@ const AllDaysList = ({
       }
 
       const isToday = isCurrentMonth && d === now.date()
+      const isEmpty = reportsForDay.length === 0
 
       entries.push({
         date: dayDate,
@@ -350,7 +354,18 @@ const AllDaysList = ({
         isToday,
         hoursLabel,
         categoryLabel,
-        isEmpty: reportsForDay.length === 0,
+        // The dashes an empty row shows would be read as "dash, dash".
+        accessibilityLabel: [
+          formatDisplay(day, 'dddd'),
+          formatMonthDayCompact(day),
+          isToday && i18n.t('today'),
+          ...(isEmpty
+            ? [i18n.t('durationSpoken.noTime')]
+            : [categoryLabel, formatMinutesSpoken(totalMinutes)]),
+        ]
+          .filter(Boolean)
+          .join(', '),
+        isEmpty,
         planDotColor,
         reports: reportsForDay,
         dayPlans: dayPlansForDay,

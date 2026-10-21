@@ -7,7 +7,7 @@ import i18n from '@/lib/locales'
 import useTheme from '@/contexts/theme'
 import { AchievementTier, tierColor } from '@/lib/achievementTier'
 import { goalProgress } from '@/lib/goalProgress'
-import { useFormattedMinutes } from '@/lib/minutes'
+import { formatMinutesSpoken, useFormattedMinutes } from '@/lib/minutes'
 import { formatPlainNumber } from '@/lib/numbers'
 import { usePreferences } from '@/stores/preferences'
 import { tierIcon } from '@/features/service-reports/lib/achievementTierIcon'
@@ -123,6 +123,16 @@ const GoalProgressStats = ({
         i18n.t('hoursUnitLabel', { count: heroSource.decimalHours })
       : ''
 
+  // Read as one phrase ("18 hours of 50 hours"), not "18, / 50 hours".
+  const heroSpoken = showsGoalInHero
+    ? i18n.t('durationSpoken.ofGoal', {
+        value: formatMinutesSpoken(completedMinutes),
+        goal: formatMinutesSpoken(goalMinutes),
+      })
+    : formatMinutesSpoken(
+        periodState === 'future' ? goalMinutes : completedMinutes
+      )
+
   // Meta line under the bar: the actionable figure (left/short) leads in the
   // primary color, the calendar context trails in the secondary color.
   let metaLead: string | null = null
@@ -164,6 +174,9 @@ const GoalProgressStats = ({
     <View style={{ gap: 10 }}>
       {tierBadge}
       <View
+        accessibilityLabel={heroSpoken}
+        // A label alone doesn't keep the view, and the card reads its label.
+        collapsable={false}
         style={{
           flexDirection: 'row',
           alignItems: 'baseline',

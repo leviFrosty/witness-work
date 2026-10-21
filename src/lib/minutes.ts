@@ -1,7 +1,7 @@
 import round from 'lodash/round'
 import { usePreferences } from '@/stores/preferences'
 import { MinuteDisplayFormat } from '@/types/timeEntry'
-import i18n from '@/lib/locales'
+import i18n, { type TranslationKey } from '@/lib/locales'
 import { formatPlainNumber } from '@/lib/numbers'
 
 /**
@@ -14,6 +14,10 @@ import { formatPlainNumber } from '@/lib/numbers'
  * 2. {@link formatMinutesCompact} — ultra-compact, single-token Duration Format
  *    ("30m" / "2h" / "1.5h") for space-constrained UI (calendar squares,
  *    contribution-graph tooltips, widgets).
+ *
+ * {@link formatMinutesSpoken} and {@link formatSecondsSpoken} are the
+ * screen-reader counterparts: whole unit words for accessibility labels, never
+ * shown on screen.
  *
  * {@link useFormattedMinutes} is the only React entry point: a thin reader that
  * supplies the user's display preference to {@link formatMinutes}. The compact
@@ -137,3 +141,61 @@ export const formatMinutesCompact = (
   // square agrees with the day's "X of Y planned" total.
   return `${formatPlainNumber(Math.round(decimalHours * 10) / 10)}${i18n.t('hoursCompact')}`
 }
+
+type SpokenUnit = 'hours' | 'minutes' | 'seconds'
+
+/**
+ * @param zero - The unit nothing is counted in: hours beside goals and totals,
+ *   seconds on a timer.
+ */
+const spokenDuration = (
+  totalSeconds: number,
+  smallest: SpokenUnit,
+  zero: SpokenUnit
+) => {
+  const magnitude = Math.abs(totalSeconds)
+  const counts: [SpokenUnit, number][] = [
+    ['hours', Math.floor(magnitude / 3600)],
+    ['minutes', Math.floor(magnitude / 60) % 60],
+    ['seconds', magnitude % 60],
+  ]
+  const units = counts.slice(0, smallest === 'seconds' ? 3 : 2)
+  const shown = units.filter(([, count]) => count > 0)
+  const spoken = (shown.length ? shown : [[zero, 0] as const])
+    .map(([unit, count]) =>
+      i18n.t(`durationSpoken.${unit}` as TranslationKey, { count })
+    )
+    .join(' ')
+  return totalSeconds < 0 ? `−${spoken}` : spoken
+}
+
+/**
+ * Spoken Duration Format for screen-reader labels: whole unit words in place of
+ * the on-screen abbreviations, so "6h / 50h" isn't read as "6 h slash 50 h" and
+ * "30m" isn't heard as meters. Preference-independent, like the compact
+ * variant, since nobody sees it.
+ *
+ * @example
+ *   formatMinutesSpoken(0) // "0 hours"
+ *   formatMinutesSpoken(30) // "30 minutes"
+ *   formatMinutesSpoken(60) // "1 hour"
+ *   formatMinutesSpoken(390) // "6 hours 30 minutes"
+ *
+ * @param totalMinutes - Duration in minutes, rounded to the nearest whole
+ *   minute.
+ */
+export const formatMinutesSpoken = (totalMinutes: number): string =>
+  spokenDuration(round(totalMinutes, 0) * 60, 'minutes', 'hours')
+
+/**
+ * {@link formatMinutesSpoken} down to the second, for a running timer.
+ *
+ * @example
+ *   formatSecondsSpoken(0) // "0 seconds"
+ *   formatSecondsSpoken(725) // "12 minutes 5 seconds"
+ *   formatSecondsSpoken(3600) // "1 hour"
+ *
+ * @param totalSeconds - Duration in seconds; fractions are dropped.
+ */
+export const formatSecondsSpoken = (totalSeconds: number): string =>
+  spokenDuration(Math.trunc(totalSeconds), 'seconds', 'seconds')

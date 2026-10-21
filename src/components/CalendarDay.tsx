@@ -18,7 +18,7 @@ import {
 } from '@/lib/recurrence'
 import { usePreferences } from '@/stores/preferences'
 import { Theme } from '@/types/theme'
-import { formatMinutes, formatMinutesCompact } from '@/lib/minutes'
+import { formatMinutesCompact, formatMinutesSpoken } from '@/lib/minutes'
 import { formatDisplay } from '@/lib/dates'
 import { calendarDayAccessibilityLabel } from '@/lib/calendarDayLabel'
 import { entryMinutes } from '@/lib/entryMinutes'
@@ -352,7 +352,6 @@ const CalendarDay = (
   const dayPlans = props.dayPlansOverride ?? storeDayPlans
   const recurringPlans = props.recurringPlansOverride ?? storeRecurringPlans
   const theme = useTheme()
-  const timeDisplayFormat = usePreferences((s) => s.timeDisplayFormat)
 
   const dateString = props.date?.dateString
   const dayKey = dateString ? localDayKey(dateString) : undefined
@@ -402,7 +401,7 @@ const CalendarDay = (
         ),
       extra: props.overlayAccessibilityLabel,
     },
-    (minutes) => formatMinutes(minutes, timeDisplayFormat).formatted
+    formatMinutesSpoken
   )
 
   const previewData = {

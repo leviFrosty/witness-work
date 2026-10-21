@@ -2266,6 +2266,24 @@
   },
   "hoursCompact": "h",
   "minutesCompact": "m",
+  "durationSpoken": {
+    "hours": {
+      "one": "{{count}} hour",
+      "other": "{{count}} hours"
+    },
+    "minutes": {
+      "one": "{{count}} minute",
+      "other": "{{count}} minutes"
+    },
+    "seconds": {
+      "one": "{{count}} second",
+      "other": "{{count}} seconds"
+    },
+    "ofGoal": "{{value}} of {{goal}}",
+    "ofGoalPlanned": "{{value}} of {{goal}} planned",
+    "ofGoalLogged": "{{value}} of {{goal}} logged",
+    "noTime": "No time"
+  },
   "decimalExample": "15.5",
   "shortExample": "15 Hrs 30 Mins",
   "durationFormat": "Duration Format",

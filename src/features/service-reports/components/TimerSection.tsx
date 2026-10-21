@@ -23,6 +23,7 @@ import { RootStackNavigation } from '@/types/rootStack'
 import HomeSectionMenu from '@/components/HomeSectionMenu'
 import { tracking } from '@/lib/tracking'
 import confirmDestructive from '@/lib/confirmDestructive'
+import { formatSecondsSpoken } from '@/lib/minutes'
 
 export const TimerSection = () => {
   const { start, stop, reset, isRunning, time, ms, sessionStartedAt } =
@@ -106,6 +107,8 @@ export const TimerSection = () => {
         <Text
           numberOfLines={1}
           adjustsFontSizeToFit
+          // "00:12:05" would be read digit group by digit group.
+          accessibilityLabel={formatSecondsSpoken(ms / 1000)}
           style={{
             fontSize: theme.fontSize('3xl'),
             fontFamily: theme.fonts.bold,

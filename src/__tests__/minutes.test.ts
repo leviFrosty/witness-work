@@ -28,7 +28,12 @@ vi.mock('expo-device', () => ({
 }))
 
 import { _i18n } from '@/lib/locales'
-import { formatMinutes, formatMinutesCompact } from '@/lib/minutes'
+import {
+  formatMinutes,
+  formatMinutesCompact,
+  formatMinutesSpoken,
+  formatSecondsSpoken,
+} from '@/lib/minutes'
 
 // Property runs print the seed on failure; rerun with
 // `FC_SEED=<seed> pnpm vitest run src/__tests__/minutes.test.ts`.
@@ -207,6 +212,46 @@ describe('Duration Format (src/lib/minutes.ts)', () => {
       expect(formatMinutesCompact(2, { unit: 'hours' })).toBe('2h')
       // Unlike the minutes path, the hours path always emits a token for zero.
       expect(formatMinutesCompact(0, { unit: 'hours' })).toBe('0h')
+    })
+  })
+
+  describe('formatMinutesSpoken — screen-reader words', () => {
+    it.each<[number, string]>([
+      [0, '0 hours'],
+      [1, '1 minute'],
+      [30, '30 minutes'],
+      [60, '1 hour'],
+      [61, '1 hour 1 minute'],
+      [390, '6 hours 30 minutes'],
+      [3000, '50 hours'],
+      [59.6, '1 hour'],
+      [-90, '−1 hour 30 minutes'],
+    ])('speaks %d min as "%s"', (minutes, expected) => {
+      expect(formatMinutesSpoken(minutes)).toBe(expected)
+    })
+
+    it('never uses the on-screen abbreviations', () => {
+      fc.assert(
+        fc.property(nonNegativeMinutes, (total) => {
+          expect(formatMinutesSpoken(total)).toMatch(
+            /^\d+ (hours?|minutes?)( \d+ minutes?)?$/
+          )
+        }),
+        runs
+      )
+    })
+  })
+
+  describe('formatSecondsSpoken — a running timer', () => {
+    it.each<[number, string]>([
+      [0, '0 seconds'],
+      [1, '1 second'],
+      [59.9, '59 seconds'],
+      [725, '12 minutes 5 seconds'],
+      [3600, '1 hour'],
+      [3725, '1 hour 2 minutes 5 seconds'],
+    ])('speaks %d s as "%s"', (seconds, expected) => {
+      expect(formatSecondsSpoken(seconds)).toBe(expected)
     })
   })
 })

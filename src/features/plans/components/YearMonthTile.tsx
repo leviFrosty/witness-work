@@ -4,7 +4,7 @@ import ContextMenu from '@/components/ui/ContextMenu'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
-import { formatMinutesCompact } from '@/lib/minutes'
+import { formatMinutesCompact, formatMinutesSpoken } from '@/lib/minutes'
 import { formatPlainNumber } from '@/lib/numbers'
 import type { CalendarMonth } from '@/lib/monthlyGoals'
 import type { Theme } from '@/types/theme'
@@ -95,6 +95,13 @@ export default function YearMonthTile({
           goal: formatMinutesCompact(goalMinutes),
         })
       : formatMinutesCompact(total) || formatPlainNumber(0)
+  const spokenAmount =
+    goalMinutes > 0
+      ? i18n.t('durationSpoken.ofGoal', {
+          value: formatMinutesSpoken(total),
+          goal: formatMinutesSpoken(goalMinutes),
+        })
+      : formatMinutesSpoken(total)
 
   return (
     <ContextMenu
@@ -107,7 +114,7 @@ export default function YearMonthTile({
         },
       ]}
       onPress={() => onPress({ year, month })}
-      accessibilityLabel={`${formatDisplay(first, 'MMMM YYYY')}. ${amount}`}
+      accessibilityLabel={`${formatDisplay(first, 'MMMM YYYY')}. ${spokenAmount}`}
       hoverRadius={theme.numbers.borderRadiusMd}
       style={{ width }}
     >

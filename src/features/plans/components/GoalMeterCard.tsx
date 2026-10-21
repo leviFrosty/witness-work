@@ -6,7 +6,11 @@ import StripedFill from '@/components/ui/StripedFill'
 import useTheme from '@/contexts/theme'
 import useScheduleStatusPresentation from '@/hooks/useScheduleStatusPresentation'
 import i18n from '@/lib/locales'
-import { formatMinutesCompact, useFormattedMinutes } from '@/lib/minutes'
+import {
+  formatMinutesCompact,
+  formatMinutesSpoken,
+  useFormattedMinutes,
+} from '@/lib/minutes'
 import { formatPlainNumber } from '@/lib/numbers'
 import type { PeriodTense } from '@/lib/projectedTotalCopy'
 import type { ScheduleStatus } from '@/lib/scheduleStatus'
@@ -84,7 +88,40 @@ export default function GoalMeterCard({
         { value: total }
       )
 
-  const accessibilityLabel = [title, amount, loggedLabel, pace]
+  // The same facts in words, so "6h / 50h" isn't read as "6 h slash 50 h".
+  const spokenTotal = formatMinutesSpoken(
+    tense === 'past' ? loggedMinutes : plannedMinutes
+  )
+  const spokenAmount = hasGoal
+    ? i18n.t(
+        tense === 'past'
+          ? 'durationSpoken.ofGoalLogged'
+          : 'durationSpoken.ofGoalPlanned',
+        { value: spokenTotal, goal: formatMinutesSpoken(goalMinutes) }
+      )
+    : i18n.t(
+        tense === 'past'
+          ? 'scheduleCalendar.logged'
+          : 'scheduleCalendar.planned',
+        { value: spokenTotal }
+      )
+  const spokenDifference = formatMinutesSpoken(
+    Math.abs(schedule.differenceMinutes)
+  )
+  const spokenPace =
+    schedule.state === 'behind'
+      ? i18n.t('scheduleCalendar.behindPlan', { value: spokenDifference })
+      : schedule.state === 'ahead'
+        ? i18n.t('scheduleCalendar.aheadOfPlan', { value: spokenDifference })
+        : pace
+  const accessibilityLabel = [
+    title,
+    spokenAmount,
+    i18n.t('scheduleCalendar.logged', {
+      value: formatMinutesSpoken(loggedMinutes),
+    }),
+    spokenPace,
+  ]
     .filter(Boolean)
     .join('. ')
 

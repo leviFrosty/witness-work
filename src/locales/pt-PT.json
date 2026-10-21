@@ -2655,7 +2655,6 @@
   "appIconUnsupported": "Este dispositivo não permite alterar o ícone da aplicação.",
   "appIconChangeFailed": "Não foi possível alterar o ícone da aplicação. Tente novamente dentro de instantes.",
   "appIconArtistCallTitle": "Procura-se parceiro de design",
-  "appIconArtistCallDescription": "Olá, adoraria colaborar com um artista ou designer gráfico para criar variantes divertidas e únicas do ícone da aplicação. Este é um pequeno projeto independente, por isso não posso oferecer um orçamento elevado — mas terei todo o gosto em oferecer um pagamento modesto e uma adesão vitalícia gratuita como Apoiante, em forma de agradecimento. Se lhe parecer uma colaboração interessante, contacte-me em",
   "supporterSheetSupportFrom": "Apoie a partir de {{price}}/mês",
   "paywallTitle": "Apoiar o WitnessWork",
   "paywallSocialProofRatingAverage": "Média de {{rating}} em {{ratings}} avaliações",

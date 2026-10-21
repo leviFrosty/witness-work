@@ -60,6 +60,14 @@ final class PhoneSession: NSObject, WCSessionDelegate, @unchecked Sendable {
     WCSession.default.transferUserInfo(payload)
   }
 
+  /// Ids of the requests whose transfer is still on its way to the iPhone.
+  func outstandingTransferIds() -> Set<String> {
+    guard WCSession.default.activationState == .activated else { return [] }
+    return Set(WCSession.default.outstandingUserInfoTransfers.compactMap {
+      WatchProtocol.decode(WatchRequest.self, from: $0.userInfo)?.id
+    })
+  }
+
   /// Keeps the task until pending deliveries are stored, as WatchKit expects.
   func handle(_ task: WKWatchConnectivityRefreshBackgroundTask) {
     lock.withLock { backgroundTasks.append(task) }

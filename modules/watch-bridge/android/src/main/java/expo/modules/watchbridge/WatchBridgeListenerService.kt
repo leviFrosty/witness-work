@@ -29,8 +29,9 @@ class WatchBridgeListenerService : WearableListenerService() {
       val item = event.dataItem
       if (event.type != DataEvent.TYPE_CHANGED) continue
       if (item.uri.path?.startsWith(WatchProtocol.QUEUED_PATH_PREFIX) != true) continue
-      coordinator.process(item.data ?: continue)
-      // Handled (or refused for good); a repeat delivery would be recognized by id anyway.
+      // Handled (or refused for good); a repeat delivery would be recognized by id anyway. One
+      // the phone couldn't store stays, for `WatchSessionCoordinator.retryQueued`.
+      if (!coordinator.processQueued(item.data ?: continue)) continue
       Wearable.getDataClient(this).deleteDataItems(item.uri)
       handled = true
     }

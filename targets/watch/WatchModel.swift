@@ -50,6 +50,8 @@ final class WatchModel {
       outbox = remaining
       saveOutbox()
     }
+    // The iPhone is running and can store entries again.
+    resendQueued()
   }
 
   func connectionChanged() {
@@ -60,7 +62,10 @@ final class WatchModel {
   /// Asks the iPhone for fresh data and resends anything it hasn't accepted.
   func refresh() async {
     isReachable = PhoneSession.shared.isReachable
-    guard isReachable else { return }
+    guard isReachable else {
+      resendQueued()
+      return
+    }
     let hello = WatchRequest(kind: .hello, complications: await Self.complicationKinds())
     if let reply = try? await PhoneSession.shared.send(hello) {
       reply.context.map(PhoneSession.shared.receive)
@@ -220,6 +225,16 @@ final class WatchModel {
   private func saveOutbox() {
     WatchStorage.saveOutbox(outbox)
     WidgetCenter.shared.reloadAllTimelines()
+  }
+
+  /// Queues what the iPhone hasn't accepted again. A transfer is used up even
+  /// when the iPhone couldn't store it (locked after a restart), and nothing
+  /// tells the watch so; repeats are recognized by id.
+  private func resendQueued() {
+    let waiting = PhoneSession.shared.outstandingTransferIds()
+    for item in OutboxItem.toResend(outbox, waiting: waiting) {
+      PhoneSession.shared.transfer(item.request)
+    }
   }
 
   /// Widget kinds of the complications in use, for the iPhone's analytics.

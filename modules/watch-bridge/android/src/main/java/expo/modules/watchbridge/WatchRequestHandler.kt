@@ -42,6 +42,12 @@ class WatchRequestHandler(
     const val MAX_EVENTS = 100
   }
 
+  /**
+   * Handles a request the watch queued as a data item. Returns whether it's done with: anything
+   * but one the phone couldn't store, which stays queued for the next try.
+   */
+  fun processQueued(message: ByteArray): Boolean = process(message).reason != Reason.UNAVAILABLE
+
   fun process(message: ByteArray): WatchReply {
     val request =
       WatchProtocol.decode(message, WatchRequest::fromJson)

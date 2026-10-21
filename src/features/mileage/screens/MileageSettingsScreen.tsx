@@ -169,8 +169,11 @@ export default function MileageSettingsScreen() {
         <View style={{ gap: 8 }}>
           <SectionTitle>{i18n.t('mileage.units.title')}</SectionTitle>
           <Section>
+            {/* The units' names are the point, so they take the room they
+                need, e.g. German «Automatisch (Meilen)». */}
             <InputRowSelect
               label={i18n.t('mileage.distanceUnit')}
+              controlWidth='auto'
               selectProps={{
                 data: [
                   {
@@ -196,6 +199,7 @@ export default function MileageSettingsScreen() {
             />
             <InputRowSelect
               label={i18n.t('mileage.fuelEconomyUnit')}
+              controlWidth='auto'
               lastInSection
               selectProps={{
                 data: [

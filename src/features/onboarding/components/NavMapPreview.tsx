@@ -3,8 +3,8 @@ import {
   Navigation as NavigationIcon,
 } from 'lucide-react-native'
 import LucideIcon from '@/components/ui/LucideIcon'
-import { useEffect } from 'react'
-import { View, StyleSheet } from 'react-native'
+import { useEffect, useState } from 'react'
+import { View, StyleSheet, type LayoutChangeEvent } from 'react-native'
 import Animated, {
   Easing,
   useSharedValue,
@@ -23,6 +23,11 @@ import useTheme from '@/contexts/theme'
 import i18n, { TranslationKey } from '@/lib/locales'
 import type { DefaultNavigationMapProvider } from '@/stores/preferences'
 import { tracking } from '@/lib/tracking'
+import { inputLayout } from '@/components/ui/inputs/InputLayout'
+import {
+  fitAspectRatio,
+  type Size,
+} from '@/features/onboarding/lib/fitAspectRatio'
 
 type ProviderKey = 'apple' | 'google' | 'waze'
 
@@ -136,7 +141,30 @@ interface Props {
   provider: DefaultNavigationMapProvider
 }
 
+/**
+ * The map at its poster shape, as wide as the column allows (up to the form
+ * width) and shrinking when the step runs out of height: full width on an iPad,
+ * it grew taller than the screen and pushed Continue off it.
+ */
 const NavMapPreview = ({ provider }: Props) => {
+  const [frame, setFrame] = useState<Size | null>(null)
+  const size = frame && fitAspectRatio(frame, SVG_WIDTH / SVG_HEIGHT)
+
+  return (
+    <View style={styles.column}>
+      <View
+        style={styles.frame}
+        onLayout={(e: LayoutChangeEvent) => setFrame(e.nativeEvent.layout)}
+      >
+        {size && size.width > 0 && size.height > 0 && (
+          <NavMapCard provider={provider} size={size} />
+        )}
+      </View>
+    </View>
+  )
+}
+
+const NavMapCard = ({ provider, size }: Props & { size: Size }) => {
   const theme = useTheme()
   const key: ProviderKey = (provider ?? 'apple') as ProviderKey
   const mt = PROVIDER_THEMES[key]
@@ -287,6 +315,8 @@ const NavMapPreview = ({ provider }: Props) => {
       style={[
         styles.container,
         {
+          width: size.width,
+          height: size.height,
           borderColor: theme.colors.border,
           shadowColor: theme.colors.shadow,
         },
@@ -639,9 +669,23 @@ const DestinationPin = ({
 }
 
 const styles = StyleSheet.create({
-  container: {
+  column: {
+    width: '100%',
+    maxWidth: inputLayout.contentMaxWidth,
+    alignSelf: 'center',
+    flexShrink: 1,
+  },
+  // Asks for the full column width at the map's shape, then gives up height
+  // when the step needs it; the card fits inside whatever it gets.
+  frame: {
     width: '100%',
     aspectRatio: SVG_WIDTH / SVG_HEIGHT,
+    alignSelf: 'center',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 1,
+  },
+  container: {
     borderRadius: 16,
     borderWidth: 1,
     overflow: 'hidden',

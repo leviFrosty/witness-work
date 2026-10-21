@@ -17,8 +17,8 @@ export default function StudiesCard() {
   // At accessibility text sizes the figure and its label shrink to fit the
   // half-width column instead of breaking mid-word.
   const fit = useAccessibilityTextSize() ? FIT_ONE_LINE : undefined
-  const { contacts } = useContacts()
-  const { conversations } = useConversations()
+  const contacts = useContacts((s) => s.contacts)
+  const conversations = useConversations((s) => s.conversations)
   const studies = useMemo(
     () =>
       getStudiesForGivenMonth({ contacts, conversations, month: new Date() }),

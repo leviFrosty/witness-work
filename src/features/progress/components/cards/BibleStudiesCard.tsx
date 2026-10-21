@@ -13,8 +13,8 @@ export default function BibleStudiesCard({
   year,
   size,
 }: ProgressCardProps) {
-  const { contacts } = useContacts()
-  const { conversations } = useConversations()
+  const contacts = useContacts((s) => s.contacts)
+  const conversations = useConversations((s) => s.conversations)
   const studied = getStudyContactsForGivenMonth({
     contacts,
     conversations,

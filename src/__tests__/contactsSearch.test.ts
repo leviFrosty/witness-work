@@ -69,6 +69,28 @@ describe('lib/contactsSearch', () => {
       expect(result.map((r) => r.contact.id)).toContain('j')
     })
 
+    it('answers a repeated query from its last search, with the same results', () => {
+      const john = c({ id: 'j', name: 'John Doe' })
+      const joan = c({ id: 'n', name: 'Joan Doe' })
+      const sally = c({ id: 's', name: 'Sally Smith' })
+      const contacts = [john, joan, sally]
+      const fuse = buildContactsFuse(contacts, [])
+
+      const first = searchContactsFuzzy('jo', fuse, contacts)
+      // A restarted render asks again, with or without the trailing space.
+      expect(searchContactsFuzzy('jo ', fuse, contacts)).toBe(first)
+      expect(first).toEqual(
+        searchContactsFuzzy('jo', buildContactsFuse(contacts, []), contacts)
+      )
+
+      // A new query or a new list searches again.
+      const next = searchContactsFuzzy('john', fuse, contacts)
+      expect(next).not.toBe(first)
+      expect(next[0].contact.id).toBe('j')
+      const fewer = [john, sally]
+      expect(searchContactsFuzzy('john', fuse, fewer)).not.toBe(next)
+    })
+
     it('matches on a substring of a conversation note', () => {
       const target = c({ id: 't', name: 'Target Person' })
       const other = c({ id: 'o', name: 'Other Person' })

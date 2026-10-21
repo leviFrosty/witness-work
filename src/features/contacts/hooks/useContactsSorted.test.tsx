@@ -125,6 +125,36 @@ describe('useContactsSorted search index', () => {
   })
 })
 
+describe('useContactsSorted while typing', () => {
+  it('lets the typed query render before the search catches up', async () => {
+    const renders: { typed: string; search: string; ids: string[] }[] = []
+    const Typing = () => {
+      const typed = useContactsSearchStore((s) => s.search)
+      const result = useContactsSorted()
+      renders.push({
+        typed,
+        search: result.search,
+        ids: result.searchSortedAndFilteredContacts.map((c) => c.id),
+      })
+      return null
+    }
+    act(() => {
+      create(<Typing />)
+    })
+    renders.length = 0
+
+    // Outside `act`, so React schedules the transition as it would on a device
+    // instead of flushing everything at once.
+    useContactsSearchStore.setState({ search: 'gra' })
+    await vi.waitFor(() => expect(renders.at(-1)?.search).toBe('gra'))
+
+    // The first render shows the new letters over the previous results…
+    expect(renders[0]).toEqual({ typed: 'gra', search: '', ids: ['a', 'b'] })
+    // …and the results follow, ranked as before.
+    expect(renders.at(-1)).toEqual({ typed: 'gra', search: 'gra', ids: ['b'] })
+  })
+})
+
 describe('useContactsSorted across a day change', () => {
   beforeEach(() => {
     vi.useFakeTimers()

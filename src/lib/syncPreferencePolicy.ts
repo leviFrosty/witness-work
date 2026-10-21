@@ -66,9 +66,6 @@ export const NON_SYNCABLE_PREFERENCE_KEYS = new Set<string>([
   'backupReminderSnoozedAt',
   'analyticsEnabled',
   'onboardingStepId',
-  'celebratedTiers',
-  'celebratedMilestones',
-  'homeChecklistAllDoneCelebrated',
   'homeChecklistCompletedAt',
   'devRolloverDateOverride',
   'devStreakOverride',
@@ -106,6 +103,47 @@ export const SYNC_SET_KEYS = new Set([
   'submittedReportMonths',
   'badgeLedger',
 ])
+/**
+ * Celebrations already shown (`celebratedTiers`, `celebratedMilestones`,
+ * `homeChecklistAllDoneCelebrated`). They follow the account, so a second
+ * device or a restore doesn't replay fireworks the User saw elsewhere. They
+ * arrive in the same payload as the records that reach them, so no Home focus
+ * sees one without the other; seeding them after a restore would instead have
+ * to guess which ones the User saw. A merge keeps every one either side saw
+ * (true wins, lists and maps union): an older copy, or a dev Tools reset, never
+ * takes one back.
+ */
+export const SYNC_UNION_KEYS = new Set([
+  'celebratedTiers',
+  'celebratedMilestones',
+  'homeChecklistAllDoneCelebrated',
+])
+
+/** Union of two `SYNC_UNION_KEYS` values, in `local`'s order first. */
+export function unionPreference(local: unknown, remote: unknown): unknown {
+  if (typeof local === 'boolean' || typeof remote === 'boolean')
+    return local === true || remote === true
+  if (Array.isArray(local) || Array.isArray(remote)) {
+    const list = Array.isArray(local) ? local : []
+    return [
+      ...list,
+      ...(Array.isArray(remote) ? remote : []).filter(
+        (entry) => !list.includes(entry)
+      ),
+    ]
+  }
+  const a = (local ?? {}) as Record<string, unknown>
+  const b = (remote ?? {}) as Record<string, unknown>
+  return Object.fromEntries(
+    [...new Set([...Object.keys(a), ...Object.keys(b)])].map((key) => [
+      key,
+      key in a && key in b
+        ? unionPreference(a[key], b[key])
+        : (a[key] ?? b[key]),
+    ])
+  )
+}
+
 export const entryTimestampKey = (key: string, entry: string) =>
   `${key}:${entry}`
 

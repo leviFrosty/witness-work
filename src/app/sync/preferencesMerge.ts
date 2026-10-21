@@ -2,8 +2,10 @@ import { canonicalJson } from '@/lib/canonicalJson'
 import {
   SYNC_MAP_KEYS,
   SYNC_SET_KEYS,
+  SYNC_UNION_KEYS,
   entryTimestampKey,
   roleHistoryEntries,
+  unionPreference,
 } from '@/lib/syncPreferencePolicy'
 import { normalizeRoleHistory, standingRole } from '@/lib/roleHistory'
 import type { Publisher } from '@/types/publisher'
@@ -76,6 +78,9 @@ export function mergePreferences(
         remoteUpdatedAt,
         updatedAt
       )
+      updatedAt[key] = Math.max(lt, rt)
+    } else if (SYNC_UNION_KEYS.has(key)) {
+      values[key] = unionPreference(localValues[key], remoteValues[key])
       updatedAt[key] = Math.max(lt, rt)
     } else if (SYNC_SET_KEYS.has(key)) {
       const localSet = Object.fromEntries(

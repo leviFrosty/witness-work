@@ -302,3 +302,69 @@ describe('JSON backups from older builds', () => {
     expect(useContacts.getState().contacts).toEqual([{ id: 'keep' }])
   })
 })
+
+describe('JSON backups from before id-keyed custom fields', () => {
+  const legacyFile = () => ({
+    preferencesStore: {
+      lastAppVersion: '1.30.0',
+      customContactFields: ['Language'],
+    },
+    contactStore: {
+      contacts: [
+        {
+          id: 'c1',
+          name: 'Ann',
+          createdAt: '2025-01-01T00:00:00.000Z',
+          customFields: { Language: 'Spanish' },
+        },
+      ],
+      deletedContacts: [],
+    },
+  })
+
+  it('restores label-keyed values under definitions that show them', () => {
+    usePreferences.setState({ hasMigratedCustomFieldsToIds: true })
+    expect(restoreBackupFile(legacyFile())).toBe(true)
+    const { contacts, customFieldDefs } = useContacts.getState()
+    const [language] = customFieldDefs
+    expect(language.label).toBe('Language')
+    expect(contacts[0].customFields).toEqual({ [language.id]: 'Spanish' })
+  })
+
+  it("keeps the device's own definitions", () => {
+    useContacts.setState({
+      customFieldDefs: [
+        { id: 'local', label: 'Floor', order: 0, createdAt: 1, updatedAt: 1 },
+      ],
+    })
+    restoreBackupFile(legacyFile())
+    expect(
+      useContacts.getState().customFieldDefs.map((def) => def.label)
+    ).toEqual(['Floor', 'Language'])
+  })
+
+  it('files values under a local definition with the same label', () => {
+    useContacts.setState({
+      customFieldDefs: [
+        { id: 'mine', label: 'Language', order: 0, createdAt: 1, updatedAt: 1 },
+      ],
+    })
+    restoreBackupFile(legacyFile())
+    const { contacts, customFieldDefs } = useContacts.getState()
+    expect(customFieldDefs.map((def) => def.id)).toEqual(['mine'])
+    expect(contacts[0].customFields).toEqual({ mine: 'Spanish' })
+  })
+
+  it('leaves a current file without legacy labels alone', () => {
+    restoreBackupFile({
+      preferencesStore: {},
+      contactStore: {
+        contacts: [{ ...legacyFile().contactStore.contacts[0] }],
+        customFieldDefs: [],
+      },
+    })
+    expect(useContacts.getState().contacts[0].customFields).toEqual({
+      Language: 'Spanish',
+    })
+  })
+})

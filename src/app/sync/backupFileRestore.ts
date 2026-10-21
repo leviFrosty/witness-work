@@ -1,6 +1,9 @@
 import semver from 'semver'
 import { PAYLOAD_VERSION, parsePayload } from '@/app/sync/payload'
 import type { BackupFile } from '@/lib/backupFile'
+import { migrateCustomFieldsToIds } from '@/features/contacts/lib/customFieldsMigration'
+import type { Contact } from '@/types/contact'
+import type { CustomFieldDefinition } from '@/types/customField'
 import {
   migrateNormalizeDates,
   type PersistedServiceReportState,
@@ -130,6 +133,62 @@ export function normalizeBackupFile(data: BackupFile): BackupFile | null {
   return result
 }
 
+/**
+ * Files from before id-keyed custom fields key each Contact's values by label
+ * and keep the labels in `customContactFields`. The boot migration already ran
+ * on this device, so convert them here: each label maps to the device's own
+ * definition with that id (or alias) or active label, or else gets a new
+ * definition, so the restored values show.
+ */
+function withLegacyCustomFields(contactStore: Slice, preferences: unknown) {
+  const legacyLabels = isRecord(preferences)
+    ? preferences.customContactFields
+    : undefined
+  if (!Array.isArray(legacyLabels) || 'customFieldDefs' in contactStore)
+    return contactStore
+  const localDefs = useContacts.getState().customFieldDefs
+  const migrated = migrateCustomFieldsToIds({
+    legacyLabels: legacyLabels.filter(
+      (label): label is string => typeof label === 'string'
+    ),
+    contacts: (contactStore.contacts ?? []) as Contact[],
+    deletedContacts: (contactStore.deletedContacts ?? []) as Contact[],
+    now: Date.now(),
+  })
+  const localIds = new Map<string, string>()
+  for (const def of localDefs) {
+    if (!def.archived) localIds.set(`label:${def.label.trim()}`, def.id)
+    for (const alias of def.legacyIds ?? []) localIds.set(alias, def.id)
+    localIds.set(def.id, def.id)
+  }
+  const target = new Map<string, string>()
+  const added: CustomFieldDefinition[] = []
+  let order = Math.max(-1, ...localDefs.map((def) => def.order))
+  for (const def of migrated.defs) {
+    const local = localIds.get(def.id) ?? localIds.get(`label:${def.label}`)
+    target.set(def.id, local ?? def.id)
+    if (!local) added.push({ ...def, order: ++order })
+  }
+  const rekey = (contact: Contact): Contact =>
+    contact.customFields
+      ? {
+          ...contact,
+          customFields: Object.fromEntries(
+            Object.entries(contact.customFields).map(([id, value]) => [
+              target.get(id) ?? id,
+              value,
+            ])
+          ),
+        }
+      : contact
+  return {
+    ...contactStore,
+    contacts: migrated.contacts.map(rekey),
+    deletedContacts: migrated.deletedContacts.map(rekey),
+    customFieldDefs: [...localDefs, ...added],
+  }
+}
+
 function knownSlice(value: unknown, state: Slice): Slice {
   if (!isRecord(value)) return {}
   return Object.fromEntries(
@@ -151,7 +210,15 @@ export function restoreBackupFile(file: BackupFile): boolean {
     if (data.contactStore)
       useContacts
         .getState()
-        .set(knownSlice(data.contactStore, useContacts.getState()))
+        .set(
+          knownSlice(
+            withLegacyCustomFields(
+              data.contactStore as Slice,
+              file.preferencesStore
+            ),
+            useContacts.getState()
+          )
+        )
     if (data.conversationStore)
       useConversations
         .getState()

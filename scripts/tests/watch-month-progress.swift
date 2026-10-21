@@ -65,6 +65,28 @@ import Foundation
     let older = try JSONDecoder().decode(
       UpNextItem.self, from: JSONSerialization.data(withJSONObject: upNextJSON))
     precondition(older.startDate == at(21, hour: 23), "older iPhone app: \(older.startDate)")
+    // With Plans: only time logged through today counts, as on the iPhone. The
+    // fixture's 990 minutes are dated the 2nd and 3rd, so the 7th is ahead of
+    // its 120 planned minutes; dated the 20th instead, the 7th is behind.
+    var plannedJSON = try JSONSerialization.jsonObject(with: fixture) as! [String: Any]
+    var plannedSnapshotJSON = plannedJSON["snapshot"] as! [String: Any]
+    func planned(_ logged: [Int]?) throws -> WatchSnapshot {
+      plannedSnapshotJSON["loggedThroughDay"] = logged ?? NSNull()
+      plannedJSON["snapshot"] = plannedSnapshotJSON
+      return try JSONDecoder().decode(
+        PhoneContext.self, from: JSONSerialization.data(withJSONObject: plannedJSON)
+      ).snapshot!
+    }
+    func schedule(_ snapshot: WatchSnapshot, _ date: Date) -> String? {
+      MonthProgress(snapshot: snapshot, outbox: [], resolvedEntryIds: [], at: date)?.paceText
+    }
+    let fixtureLogged = plannedSnapshotJSON["loggedThroughDay"] as! [Int]
+    expect(schedule(try planned(fixtureLogged), at(7)), "aheadOfSchedule", "Oct 7, logged early")
+    let later = (1...31).map { $0 >= 20 ? 990 : 0 }
+    expect(schedule(try planned(later), at(7)), "behindSchedule", "Oct 7, logged on the 20th")
+    expect(schedule(try planned(later), at(20)), "aheadOfSchedule", "Oct 20")
+    // An iPhone app from before `loggedThroughDay` paces with the month's total.
+    expect(schedule(try planned(nil), at(7)), "aheadOfSchedule", "Oct 7, older iPhone app")
     print("watch month progress: ok")
   }
 }

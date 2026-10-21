@@ -174,6 +174,21 @@ describe('watch protocol contract', () => {
     }
   )
 
+  it('sends what was logged and planned through each day', () => {
+    const snapshot = buildWatchSnapshot(args('android'))
+    expect(snapshot.plannedThroughDay).toEqual(
+      fixture.snapshot.plannedThroughDay
+    )
+    // 12.5 hours on the 2nd, then 4 LDC hours on the 3rd.
+    expect(snapshot.loggedThroughDay).toEqual(fixture.snapshot.loggedThroughDay)
+  })
+
+  it('sends no logged time per day without Plans', () => {
+    const snapshot = buildWatchSnapshot({ ...args('ios'), dayPlans: [] })
+    expect(snapshot.plannedThroughDay).toBeNull()
+    expect(snapshot.loggedThroughDay).toBeNull()
+  })
+
   it('sends the month total with its unit, as the phone shows it', () => {
     // 12.5 Standard hours plus the 4 LDC credit hours.
     expect(buildWatchSnapshot(args('ios')).monthFormatted).toBe('16.5 Hrs')

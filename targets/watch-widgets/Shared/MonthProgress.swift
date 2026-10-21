@@ -42,6 +42,7 @@ struct MonthProgress: Equatable {
     let key = WatchSnapshot.monthKey(for: date)
     let baseMinutes: Int?
     let planned: [Int]?
+    let logged: [Int]?
     var state: String
     if snapshot.isCurrent(at: date) {
       monthName = snapshot.monthName ?? L10n.t("month", snapshot)
@@ -49,6 +50,7 @@ struct MonthProgress: Equatable {
       goalHours = snapshot.goalHours
       baseMinutes = snapshot.monthMinutes
       planned = snapshot.plannedThroughDay
+      logged = snapshot.loggedThroughDay
       state = snapshot.publisherState(at: date)
     } else if let next = snapshot.nextMonth, next.monthKey == key {
       monthName = next.monthName
@@ -56,6 +58,7 @@ struct MonthProgress: Equatable {
       goalHours = next.goalHours
       baseMinutes = 0
       planned = nil
+      logged = nil
       state = "unreported"
     } else {
       return nil
@@ -91,9 +94,9 @@ struct MonthProgress: Equatable {
     // Standard time always counts in full. An unknown Type is saved as
     // Standard.
     let creditIds = Set(snapshot.categories.filter { $0.isCredit != false }.map(\.id))
-    let unsyncedMinutes = unsynced
+    let unsyncedStandard = unsynced
       .filter { $0.categoryId.map { !creditIds.contains($0) } ?? true }
-      .reduce(0) { $0 + $1.hours * 60 + $1.minutes }
+    let unsyncedMinutes = Self.minutes(unsyncedStandard)
     let minutes = baseMinutes + unsyncedMinutes
 
     total = Self.compact(minutes, snapshot)
@@ -124,8 +127,13 @@ struct MonthProgress: Equatable {
     if let planned, planned.indices.contains(day - 1), planned[day - 1] > 0 {
       let plannedMinutes = planned[day - 1]
       paceFraction = min(Double(plannedMinutes) / Double(goalMinutes), 1)
+      // Time logged through today, as the iPhone counts it: an entry dated
+      // later this month doesn't put the user ahead yet.
+      let today = WatchSnapshot.dayKey(for: date)
+      let loggedMinutes = logged.flatMap { $0.indices.contains(day - 1) ? $0[day - 1] : nil }
+        .map { $0 + Self.minutes(unsyncedStandard.filter { $0.date <= today }) } ?? minutes
       paceText = L10n.t(
-        minutes >= plannedMinutes ? "aheadOfSchedule" : "behindSchedule", snapshot)
+        loggedMinutes >= plannedMinutes ? "aheadOfSchedule" : "behindSchedule", snapshot)
     } else {
       paceFraction = nil
       let perDay = Self.minutesPerDayToGoal(goalMinutes - minutes, at: date, calendar: calendar)
@@ -133,6 +141,10 @@ struct MonthProgress: Equatable {
       paceText = L10n.t("hoursPerDayToGoalValue", snapshot)
         .replacingOccurrences(of: "{{value}}", with: Self.compact(perDay, snapshot))
     }
+  }
+
+  private static func minutes(_ entries: [WatchEntryDraft]) -> Int {
+    entries.reduce(0) { $0 + $1.hours * 60 + $1.minutes }
   }
 
   /// The iPhone's Daily Pace (`dailyPace`): `remaining` minutes over the days

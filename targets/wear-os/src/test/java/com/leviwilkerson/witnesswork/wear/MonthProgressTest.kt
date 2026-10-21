@@ -126,6 +126,22 @@ class MonthProgressTest {
   }
 
   @Test
+  fun `counts only time logged through today against the Plans, as the phone does`() {
+    // All 990 minutes are dated the 20th: the month's total is ahead of the 120 planned
+    // minutes on the 7th, but nothing was logged by then, so the phone says behind.
+    val later = snapshot.copy(loggedThroughDay = List(31) { day -> if (day + 1 >= 20) 990 else 0 })
+    fun pace(date: ZonedDateTime, outbox: List<OutboxItem> = emptyList()) =
+      MonthProgress.of(later, outbox, emptyList(), date, t)!!.paceText
+    assertEquals("behindSchedule", pace(at(7)))
+    assertEquals("aheadOfSchedule", pace(at(20)))
+    // Standard time added on the watch today counts at once; Credit Time waits for the phone.
+    assertEquals("aheadOfSchedule", pace(at(7), listOf(entry("w1", "2026-10-07", 120))))
+    assertEquals("behindSchedule", pace(at(7), listOf(entry("w2", "2026-10-07", 120, categoryId = "ldc"))))
+    // A phone app from before `loggedThroughDay` paces with the month's total.
+    assertEquals("aheadOfSchedule", MonthProgress.of(snapshot.copy(loggedThroughDay = null), emptyList(), emptyList(), at(7), t)!!.paceText)
+  }
+
+  @Test
   fun `counts the days left as the phone's Daily Pace does, from midnight on`() {
     val unplanned = snapshot.copy(plannedThroughDay = null)
     fun pace(date: ZonedDateTime) = MonthProgress.of(unplanned, emptyList(), emptyList(), date, t)!!.paceText

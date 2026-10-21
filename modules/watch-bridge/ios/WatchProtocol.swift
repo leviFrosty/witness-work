@@ -342,6 +342,11 @@ public struct WatchSnapshot: Codable, Equatable, Sendable {
   /// Planned minutes through each day of the month (index 0 is the 1st);
   /// `nil` when the month has no plans.
   public let plannedThroughDay: [Int]?
+  /// Credit-capped minutes logged through each day of the month (index 0 is
+  /// the 1st), which ahead/behind compares with `plannedThroughDay`, as the
+  /// iPhone's schedule status does. `nil` without plans, or from an older
+  /// iPhone app.
+  public let loggedThroughDay: [Int]?
   /// `unreported`, `reportedToday` or `reportedThisMonth`.
   public let publisherState: String
   /// Ahead/behind or per-day pace line; `nil` when there's nothing to show.

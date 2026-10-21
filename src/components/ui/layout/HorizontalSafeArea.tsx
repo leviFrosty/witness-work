@@ -1,0 +1,64 @@
+import { createContext, ReactNode, useContext } from 'react'
+import { View } from 'react-native'
+import {
+  SafeAreaInsetsContext,
+  useSafeAreaInsets,
+} from 'react-native-safe-area-context'
+import { isRtlLayout } from '@/lib/direction'
+
+const HorizontalBleedContext = createContext({ left: 0, right: 0 })
+
+/**
+ * The side padding a screen sits inside, as `paddingLeft`/`paddingRight`
+ * values. A hero can pull its background out by this much with negative
+ * margins, running under iPhone Duo's vertical bar as system bars expect.
+ */
+export const useHorizontalBleed = () => useContext(HorizontalBleedContext)
+
+type Props = {
+  children: ReactNode
+  /** Sides something else already covers, such as the navigation rail. */
+  covered?: 'left' | 'right' | null
+  /** Fills the insets, so the vertical bar sits on the screen's own color. */
+  backgroundColor?: string
+}
+
+/**
+ * Keeps a screen clear of the side safe areas, which iPhone Duo's vertical
+ * status bar takes, and tells everything inside that they're handled. Phones in
+ * portrait and iPads have none, so this changes nothing there.
+ */
+export default function HorizontalSafeArea({
+  children,
+  covered,
+  backgroundColor,
+}: Props) {
+  const insets = useSafeAreaInsets()
+  const left = covered === 'left' ? 0 : insets.left
+  const right = covered === 'right' ? 0 : insets.right
+  // Insets are physical; React Native mirrors left and right paddings in RTL.
+  const rtl = isRtlLayout()
+  const paddingLeft = rtl ? right : left
+  const paddingRight = rtl ? left : right
+
+  return (
+    <View
+      style={{
+        flex: 1,
+        backgroundColor: left || right ? backgroundColor : undefined,
+        paddingLeft,
+        paddingRight,
+      }}
+    >
+      <HorizontalBleedContext.Provider
+        value={{ left: paddingLeft, right: paddingRight }}
+      >
+        <SafeAreaInsetsContext.Provider
+          value={{ ...insets, left: 0, right: 0 }}
+        >
+          {children}
+        </SafeAreaInsetsContext.Provider>
+      </HorizontalBleedContext.Provider>
+    </View>
+  )
+}

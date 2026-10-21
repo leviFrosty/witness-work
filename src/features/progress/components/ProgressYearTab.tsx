@@ -383,10 +383,10 @@ const ProgressYearTab = ({
 }: ProgressYearTabProps) => {
   const theme = useTheme()
   const insets = useSafeAreaInsets()
-  const { hasSidebar } = useAdaptiveLayout()
+  const { hasBottomBar } = useAdaptiveLayout()
   const scrollRef = useRef<KeyboardAwareScrollView>(null)
   const scroller = useReorderScroller(scrollRef, {
-    obscuredBottom: hasSidebar ? 0 : insets.bottom + TAB_BAR_HEIGHT,
+    obscuredBottom: hasBottomBar ? insets.bottom + TAB_BAR_HEIGHT : 0,
   })
   const [dragging, setDragging] = useState(false)
   // Tapping Progress again heads back to the top.
@@ -427,7 +427,7 @@ const ProgressYearTab = ({
     <AdaptiveSplitScrollView
       scrollBars={scrollBars}
       paddingTop={0}
-      paddingBottom={insets.bottom + (hasSidebar ? 30 : 100)}
+      paddingBottom={insets.bottom + (hasBottomBar ? 100 : 30)}
       leadingReorder={{ scrollRef, scroller, scrollEnabled: !dragging }}
       leading={
         <View style={{ gap: 24 }}>

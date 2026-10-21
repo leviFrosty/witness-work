@@ -22,6 +22,8 @@ import {
   getReleaseAnnounceBetween,
 } from '@/features/updates/lib/evaluateRevealOnLaunch'
 import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
+import HorizontalSafeArea from '@/components/ui/layout/HorizontalSafeArea'
+import { isRtlLayout } from '@/lib/direction'
 import {
   getEffectiveTabOrder,
   type TabOrderKey,
@@ -112,7 +114,7 @@ const renderTabScreen = (name: TabOrderKey) => {
 }
 
 const HomeTabStack = () => {
-  const { hasSidebar } = useAdaptiveLayout()
+  const { hasSidebar, navigationRail } = useAdaptiveLayout()
   const developerTools = usePreferences((s) => s.developerTools)
   const storedTabOrder = usePreferences((s) => s.tabOrder)
   const set = usePreferences((s) => s.set)
@@ -176,8 +178,22 @@ const HomeTabStack = () => {
         tabBar={(props) => <NavigationTabBar {...props} />}
         screenOptions={{
           header: () => null,
-          tabBarPosition: hasSidebar ? 'left' : 'bottom',
+          tabBarPosition: hasSidebar
+            ? 'left'
+            : navigationRail
+              ? // The rail's side is physical; the tab row mirrors in RTL.
+                isRtlLayout() === (navigationRail === 'left')
+                ? 'right'
+                : 'left'
+              : 'bottom',
         }}
+        // The rail sits in the vertical status bar's safe area; content keeps
+        // clear of any other side's.
+        screenLayout={({ children }) => (
+          <HorizontalSafeArea covered={navigationRail}>
+            {children}
+          </HorizontalSafeArea>
+        )}
       >
         {/* At most four destinations, in the user's order (Preferences →
             Tab Order). Features join an existing destination (Map in

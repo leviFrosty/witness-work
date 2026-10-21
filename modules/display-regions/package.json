@@ -1,0 +1,7 @@
+{
+  "name": "display-regions",
+  "version": "0.1.0",
+  "description": "Local Expo module reporting iPhone Duo reserved regions and the vertical bar edge.",
+  "main": "index.tsx",
+  "private": true
+}

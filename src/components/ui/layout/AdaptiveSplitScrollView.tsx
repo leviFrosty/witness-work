@@ -2,6 +2,7 @@ import { ReactNode, RefObject } from 'react'
 import { View } from 'react-native'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
+import FoldSplit from '@/components/ui/layout/FoldSplit'
 import type { RevealAboveSheet } from '@/hooks/useRevealAboveSheet'
 import type { HideBarsScrollProps } from '@/hooks/useHideBarsOnScroll'
 import type useReorderScroller from '@/components/ui/reorderable/useReorderScroller'
@@ -37,7 +38,10 @@ type Props = {
   leadingReorder?: LeadingReorder
 }
 
-/** Keep reference content visible while browsing records in a wide window. */
+/**
+ * Keep reference content visible while browsing records in a wide window. The
+ * columns meet at iPhone Duo's fold while it's partly folded.
+ */
 export default function AdaptiveSplitScrollView({
   leading,
   trailing,
@@ -119,12 +123,12 @@ export default function AdaptiveSplitScrollView({
       }}
     >
       {header && <View style={{ paddingBottom: gap }}>{header}</View>}
-      <View style={{ flex: 1, minHeight: 0, flexDirection: 'row', gap }}>
-        <View
-          ref={leadingReorder?.scroller.frameRef}
-          collapsable={false}
-          style={{ flex: leadingFraction, minWidth: 0 }}
-        >
+      <FoldSplit
+        style={{ flex: 1, minHeight: 0 }}
+        gap={gap}
+        leadingFraction={leadingFraction}
+        leadingRef={leadingReorder?.scroller.frameRef}
+        leading={
           <KeyboardAwareScrollView
             ref={leadingReorder?.scrollRef}
             onScroll={reorder?.onScroll}
@@ -139,20 +143,22 @@ export default function AdaptiveSplitScrollView({
           >
             {leading}
           </KeyboardAwareScrollView>
-        </View>
-        <KeyboardAwareScrollView
-          ref={trailingReveal?.scrollRef}
-          onScroll={trailingReveal?.onScroll}
-          scrollEventThrottle={trailingReveal ? 16 : undefined}
-          style={{ flex: 1 - leadingFraction, minWidth: 0 }}
-          contentContainerStyle={{
-            paddingBottom: paddingBottom + (trailingReveal?.bottomInset ?? 0),
-          }}
-          keyboardShouldPersistTaps='handled'
-        >
-          {trailing}
-        </KeyboardAwareScrollView>
-      </View>
+        }
+        trailing={
+          <KeyboardAwareScrollView
+            ref={trailingReveal?.scrollRef}
+            onScroll={trailingReveal?.onScroll}
+            scrollEventThrottle={trailingReveal ? 16 : undefined}
+            style={{ flex: 1 }}
+            contentContainerStyle={{
+              paddingBottom: paddingBottom + (trailingReveal?.bottomInset ?? 0),
+            }}
+            keyboardShouldPersistTaps='handled'
+          >
+            {trailing}
+          </KeyboardAwareScrollView>
+        }
+      />
     </View>
   )
 }

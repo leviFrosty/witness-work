@@ -1,5 +1,6 @@
 import moment from 'moment'
 import { perf } from '@/lib/perf'
+import { useDisplayRegions } from '@/stores/displayRegions'
 import { useAppLockSession, useAppLockSettings } from '@/stores/appLock'
 import { CommonActions } from '@react-navigation/native'
 import { I18nManager, LogBox } from 'react-native'
@@ -388,6 +389,12 @@ export function installDevHarness() {
         locale: _i18n.locale,
       }),
     },
+    /**
+     * What UIKit reports for the window on iPhone Duo: the fold (`divisions`,
+     * `active` while partly folded), the vertical bar edge and the size class.
+     * Null on devices that never report.
+     */
+    displayRegions: () => useDisplayRegions.getState().regions,
     /**
      * A string in the app Language, as the app renders it (`t('hoursShort', {
      * count: 2 })`).

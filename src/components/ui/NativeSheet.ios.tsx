@@ -18,10 +18,11 @@ import type {
   SheetSnapPoint,
 } from '@/components/ui/Sheet.types'
 import { SheetWindowFrameContext } from '@/components/ui/sheetWindowFrame'
+import { useDisplayRegions } from '@/stores/displayRegions'
 
 type Frame = { x: number; y: number; width: number }
 
-/** How wide an iPad form sheet is when it fits its content. */
+/** How wide a form sheet is when it fits its content. */
 const FORM_SHEET_WIDTH = 540
 /** Clears the grabber, which sits over the top of the sheet's content. */
 const GRABBER_INSET = 10
@@ -52,10 +53,16 @@ export default function NativeSheet({
   const fit = !snapPoints?.length
   // Content that fits sizes itself, so it needs the sheet's width up front.
   // A sheet spans the window, even when iOS 26 floats a short one (it scales
-  // the whole sheet down rather than narrowing it); a regular-width iPad
-  // window shows a form sheet instead, as wide as its content.
+  // the whole sheet down rather than narrowing it); a regular-width window
+  // (iPad, or iPhone Duo open) shows a form sheet instead, as wide as its
+  // content. Builds without the size class fall back to the iPad idiom.
+  const regularWidth = useDisplayRegions((s) =>
+    s.regions
+      ? s.regions.horizontalSizeClass === 'regular'
+      : Platform.OS === 'ios' && Platform.isPad
+  )
   const width =
-    Platform.OS === 'ios' && Platform.isPad && window.width >= 600
+    regularWidth && window.width >= 600
       ? Math.min(window.width, FORM_SHEET_WIDTH)
       : window.width
   // Content that fits is kept above the keyboard, where the sheet rides, so

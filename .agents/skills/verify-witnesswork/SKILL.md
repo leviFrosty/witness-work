@@ -50,7 +50,7 @@ Work in the same worktree, so the subagent uses this worktree's lease, Metro and
 ## Launch
 
 ```bash
-wwv up --platform ios --seed pioneer         # iPhone; add --ipad for an iPad
+wwv up --platform ios --seed pioneer         # iPhone; add --ipad (or --ipad-mini) for an iPad, --duo for iPhone Duo, --se for the smallest iPhone
 wwv up --platform android --seed pioneer     # headless emulator, same Metro
 ```
 
@@ -161,6 +161,13 @@ agent-device can't read the iPad layout: its XCTest capture times out on the sid
 
 iPhone keeps agent-device and falls back to AXe only when its tree comes back sparse or a selector misses.
 
+## iPhone Duo
+
+`wwv up --duo` leases a `WW Verify iPhone Duo N` simulator (needs Xcode 27.1 and the iOS 27.1 runtime). It boots closed, on the 466×678 pt outer display. `wwv ad fold open|half-open|closed` changes the pose; open puts the app in a 951×669 window on the inner display, and half-open folds it like a book, with the fold down the middle. Re-snapshot after every fold; refs and coordinates don't survive one.
+
+- On this machine `fold` can fail with `fold-pose-dispatched-unverified`: the pose still changes, but devicectl can't read the hinge back. Read it from the app instead: `wwv eval '__WW_DEV__.displayRegions()'` returns what UIKit reports for the window, including the fold (`divisions[].active` is true while half-open), the vertical bar edge and the horizontal size class.
+- agent-device's screenshot can capture the dark panel (an all-black PNG). Capture the lit one with `xcrun simctl io <udid> screenshot --display=<panel UUID>`; `xcrun simctl io <udid> enumerate` lists both panels (1398 px wide outer, 2007 px wide inner).
+
 ## Fuzz
 
 ```bash
@@ -191,7 +198,7 @@ Proof standards:
 - Read side effects back. After a save, `wwv eval` the store (for example `__WW_DEV__.stores.contacts.getState().contacts.find(c => c.name === "X")`), or reopen the record from a second screen.
 - `wwv errors` must be empty at the end. The Metro log (`.verify/metro.log`) shows warnings and red boxes.
 - Check both platforms for anything touching layout, native APIs, maps, notifications, purchases or permissions. On Android, iOS-only features (listed in `agents.md`) must have no entry point at all, not a broken one.
-- Layout changes need an iPad too (`--ipad`): a sidebar appears from 1,000 pt wide, along with split views and the menu bar.
+- Layout changes need an iPad too (`--ipad`): a sidebar appears from 1,000 pt wide, along with split views and the menu bar. Layouts with columns or bars also need iPhone Duo (`--duo`), closed, open and half-open, and the smallest screens: iPad mini in portrait (`--ipad-mini`, 744 pt: a bottom bar and one column) and iPhone SE (`--se`, 375 pt with no notch or home indicator).
 - New surfaces need light and dark: `wwv ad settings appearance dark` (or `light`), then `wwv shot`.
 - Run the regular checks too: `pnpm run typecheck`, `pnpm run lint` and `pnpm vitest run` (add `--maxWorkers=2` when memory is tight).
 - Report what you verified, on which devices, the artifact paths, and what you couldn't verify and why.

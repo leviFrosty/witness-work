@@ -35,7 +35,9 @@ import XView from '@/components/ui/layout/XView'
 import { HomeTabStackParamList } from '@/types/homeStack'
 
 import SegmentedControl from '@/components/ui/SegmentedControl'
-import ProgressMonthTab from '@/features/progress/components/ProgressMonthTab'
+import ProgressMonthTab, {
+  useDaysBeside,
+} from '@/features/progress/components/ProgressMonthTab'
 import ProgressYearTab from '@/features/progress/components/ProgressYearTab'
 import ProgressAllTimeTab, {
   useAllTimeIsEmpty,
@@ -76,6 +78,8 @@ const ProgressScreen = ({ route, navigation }: Props) => {
     allTime: useProgressCardEditing('allTime'),
   }
   const cardEditing = tabEditing[activeTab]
+  const daysBeside = useDaysBeside(month, year)
+  const headerInColumn = activeTab === 'month' && daysBeside
   const { finish: finishEditing } = cardEditing
   const allTimeIsEmpty = useAllTimeIsEmpty()
   // All Time has no cards until there's time to sum.
@@ -149,6 +153,155 @@ const ProgressScreen = ({ route, navigation }: Props) => {
     navigation.setOptions({ header: () => null })
   }, [navigation])
 
+  // Beside the Days list, the header and its controls sit above the cards they
+  // belong to, as in Mail, and Days runs the full height.
+  const renderHeader = (inColumn: boolean) => (
+    <View style={{ overflow: 'hidden' }}>
+      <BlurView
+        tint={theme.colors.background === '#121212' ? 'dark' : 'light'}
+        intensity={40}
+        style={StyleSheet.absoluteFill}
+      />
+      <View
+        pointerEvents='none'
+        style={[
+          StyleSheet.absoluteFill,
+          {
+            backgroundColor: theme.colors.background,
+            opacity: 0.6,
+          },
+        ]}
+      />
+      <ScrollAwayHeader hidden={bars.hidden}>
+        <RootHeader
+          title={i18n.t('Progress')}
+          contentStyle={
+            inColumn
+              ? { paddingHorizontal: 0 }
+              : {
+                  maxWidth: isWide ? contentMaxWidth : 720,
+                  paddingHorizontal: isWide ? 24 : 15,
+                }
+          }
+          actions={
+            cardEditing.editing ? (
+              // As on the Home Screen: add on one side of the header, Done on
+              // the other.
+              <>
+                <HeaderPillButton
+                  icon={PlusIcon}
+                  label={i18n.t('progressCards.addCards')}
+                  onPress={() => cardEditing.setAdding(true)}
+                  compact='auto'
+                />
+                <HeaderPillButton
+                  icon={CheckIcon}
+                  label={i18n.t('done')}
+                  onPress={finishEditing}
+                />
+              </>
+            ) : (
+              <>
+                {hasCards ? (
+                  <HeaderPillButton
+                    icon={LayoutGridIcon}
+                    label={i18n.t('progressCards.editCards')}
+                    onPress={() => cardEditing.start('header')}
+                    compact
+                  />
+                ) : null}
+                <HeaderPillButton
+                  icon={FileTextIcon}
+                  label={i18n.t('viewReport')}
+                  onPress={() => {
+                    rootNavigation.navigate('ServiceReportView', {
+                      month,
+                      year,
+                    })
+                  }}
+                  compact={isWide ? false : 'auto'}
+                />
+              </>
+            )
+          }
+        />
+      </ScrollAwayHeader>
+      <View
+        style={{
+          paddingTop: isWide ? 9 : 0,
+          paddingBottom: isWide ? 15 : 6,
+          paddingHorizontal: inColumn ? 0 : isWide ? 24 : 15,
+          width: '100%',
+          maxWidth: inColumn ? undefined : isWide ? contentMaxWidth : 720,
+          alignSelf: 'center',
+          gap: 6,
+        }}
+      >
+        <SegmentedControl<ProgressTab>
+          value={activeTab}
+          onChange={changeTab}
+          options={[
+            { key: 'month', label: i18n.t('month') },
+            { key: 'year', label: i18n.t('year') },
+            { key: 'allTime', label: i18n.t('allTime') },
+          ]}
+        />
+        {activeTab === 'month' ? (
+          <MonthNav
+            back={
+              <Button
+                onPress={() => handleMonthNav('back')}
+                accessibilityLabel={i18n.t('previousMonth')}
+                style={navButtonStyle(theme)}
+              >
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    gap: 5,
+                    alignItems: 'center',
+                  }}
+                >
+                  <IconButton icon={ArrowBackwardIcon} size={15} />
+                  <Text style={{ color: theme.colors.textAlt }}>
+                    {moment(selectedMonth).subtract(1, 'month').format('MMM')}
+                  </Text>
+                </View>
+              </Button>
+            }
+            renderTitle={(stacked) => (
+              <TodayTitleStack
+                title={formatDisplay(selectedMonth, 'MMMM YYYY')}
+                showTodayBadge={!isCurrentMonth}
+                onPressToday={jumpToToday}
+                centerLines={stacked}
+              />
+            )}
+            forward={
+              <Button
+                onPress={() => handleMonthNav('forward')}
+                accessibilityLabel={i18n.t('nextMonth')}
+                style={navButtonStyle(theme)}
+              >
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    gap: 5,
+                    alignItems: 'center',
+                  }}
+                >
+                  <Text style={{ color: theme.colors.textAlt }}>
+                    {moment(selectedMonth).add(1, 'month').format('MMM')}
+                  </Text>
+                  <IconButton icon={ArrowForwardIcon} size={15} />
+                </View>
+              </Button>
+            }
+          />
+        ) : null}
+      </View>
+    </View>
+  )
+
   return (
     <View
       style={{
@@ -156,149 +309,10 @@ const ProgressScreen = ({ route, navigation }: Props) => {
         backgroundColor: theme.colors.background,
       }}
     >
-      <View style={{ overflow: 'hidden' }}>
-        <BlurView
-          tint={theme.colors.background === '#121212' ? 'dark' : 'light'}
-          intensity={40}
-          style={StyleSheet.absoluteFill}
-        />
-        <View
-          pointerEvents='none'
-          style={[
-            StyleSheet.absoluteFill,
-            {
-              backgroundColor: theme.colors.background,
-              opacity: 0.6,
-            },
-          ]}
-        />
-        <ScrollAwayHeader hidden={bars.hidden}>
-          <RootHeader
-            title={i18n.t('Progress')}
-            contentStyle={{
-              maxWidth: isWide ? contentMaxWidth : 720,
-              paddingHorizontal: isWide ? 24 : 15,
-            }}
-            actions={
-              cardEditing.editing ? (
-                // As on the Home Screen: add on one side of the header, Done on
-                // the other.
-                <>
-                  <HeaderPillButton
-                    icon={PlusIcon}
-                    label={i18n.t('progressCards.addCards')}
-                    onPress={() => cardEditing.setAdding(true)}
-                    compact='auto'
-                  />
-                  <HeaderPillButton
-                    icon={CheckIcon}
-                    label={i18n.t('done')}
-                    onPress={finishEditing}
-                  />
-                </>
-              ) : (
-                <>
-                  {hasCards ? (
-                    <HeaderPillButton
-                      icon={LayoutGridIcon}
-                      label={i18n.t('progressCards.editCards')}
-                      onPress={() => cardEditing.start('header')}
-                      compact
-                    />
-                  ) : null}
-                  <HeaderPillButton
-                    icon={FileTextIcon}
-                    label={i18n.t('viewReport')}
-                    onPress={() => {
-                      rootNavigation.navigate('ServiceReportView', {
-                        month,
-                        year,
-                      })
-                    }}
-                    compact={isWide ? false : 'auto'}
-                  />
-                </>
-              )
-            }
-          />
-        </ScrollAwayHeader>
-        <View
-          style={{
-            paddingTop: isWide ? 9 : 0,
-            paddingBottom: isWide ? 15 : 6,
-            paddingHorizontal: isWide ? 24 : 15,
-            width: '100%',
-            maxWidth: isWide ? contentMaxWidth : 720,
-            alignSelf: 'center',
-            gap: 6,
-          }}
-        >
-          <SegmentedControl<ProgressTab>
-            value={activeTab}
-            onChange={changeTab}
-            options={[
-              { key: 'month', label: i18n.t('month') },
-              { key: 'year', label: i18n.t('year') },
-              { key: 'allTime', label: i18n.t('allTime') },
-            ]}
-          />
-          {activeTab === 'month' ? (
-            <MonthNav
-              back={
-                <Button
-                  onPress={() => handleMonthNav('back')}
-                  accessibilityLabel={i18n.t('previousMonth')}
-                  style={navButtonStyle(theme)}
-                >
-                  <View
-                    style={{
-                      flexDirection: 'row',
-                      gap: 5,
-                      alignItems: 'center',
-                    }}
-                  >
-                    <IconButton icon={ArrowBackwardIcon} size={15} />
-                    <Text style={{ color: theme.colors.textAlt }}>
-                      {moment(selectedMonth).subtract(1, 'month').format('MMM')}
-                    </Text>
-                  </View>
-                </Button>
-              }
-              renderTitle={(stacked) => (
-                <TodayTitleStack
-                  title={formatDisplay(selectedMonth, 'MMMM YYYY')}
-                  showTodayBadge={!isCurrentMonth}
-                  onPressToday={jumpToToday}
-                  centerLines={stacked}
-                />
-              )}
-              forward={
-                <Button
-                  onPress={() => handleMonthNav('forward')}
-                  accessibilityLabel={i18n.t('nextMonth')}
-                  style={navButtonStyle(theme)}
-                >
-                  <View
-                    style={{
-                      flexDirection: 'row',
-                      gap: 5,
-                      alignItems: 'center',
-                    }}
-                  >
-                    <Text style={{ color: theme.colors.textAlt }}>
-                      {moment(selectedMonth).add(1, 'month').format('MMM')}
-                    </Text>
-                    <IconButton icon={ArrowForwardIcon} size={15} />
-                  </View>
-                </Button>
-              }
-            />
-          ) : null}
-        </View>
-      </View>
+      {headerInColumn ? null : renderHeader(false)}
 
       <View style={{ flex: 1 }}>
-        <OnboardingBackfillBanner />
+        {headerInColumn ? null : <OnboardingBackfillBanner />}
         {activeTab === 'month' ? (
           <ProgressMonthTab
             month={month}
@@ -312,6 +326,12 @@ const ProgressScreen = ({ route, navigation }: Props) => {
             onAddingChange={tabEditing.month.setAdding}
             onNavigate={openCardDestination}
             scrollBars={bars.scrollProps}
+            header={
+              <>
+                {renderHeader(true)}
+                <OnboardingBackfillBanner />
+              </>
+            }
           />
         ) : null}
         {activeTab === 'year' ? (

@@ -20,6 +20,7 @@ import SidebarToggle from '@/components/ui/SidebarToggle'
 import WindowControlsInsetView, {
   NO_WINDOW_CONTROLS,
 } from '../../../modules/window-controls'
+import FoldSplit from '@/components/ui/layout/FoldSplit'
 
 const SettingsDetailStack = createNativeStackNavigator<RootStackParamList>()
 
@@ -41,49 +42,50 @@ const SettingsSplitLayout = ({
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
-      <View
+      {/* The pane meets iPhone Duo's fold while it's partly folded. */}
+      <FoldSplit
         style={{
           flex: 1,
-          flexDirection: 'row',
           paddingTop: insets.top + 8,
           width: '100%',
           maxWidth: 1200,
           alignSelf: 'center',
         }}
-      >
-        <View style={{ width: 350 }}>
-          <WindowControlsInsetView onInsetsChange={setControls}>
-            <View
-              style={{
-                paddingStart: 12 + controls.start,
-                paddingEnd: 12,
-              }}
-            >
-              <SidebarToggle mode='show' />
-            </View>
-          </WindowControlsInsetView>
-          <SettingsContents
-            onNavigate={onNavigate}
-            selectedDestination={selectedDestination}
-          />
-        </View>
-        <View
-          style={{
-            flex: 1,
-            borderStartWidth: 1,
-            borderStartColor: theme.colors.border,
-            marginRight: 16,
-            overflow: 'hidden',
-            borderRadius: theme.numbers.borderRadiusLg,
-          }}
-        >
-          {/* The pane starts below the status bar, so its headers must not
-              pad for it again. */}
+        gap={0}
+        leadingWidth={350}
+        leading={
+          <>
+            <WindowControlsInsetView onInsetsChange={setControls}>
+              <View
+                style={{
+                  paddingStart: 12 + controls.start,
+                  paddingEnd: 12,
+                }}
+              >
+                <SidebarToggle mode='show' />
+              </View>
+            </WindowControlsInsetView>
+            <SettingsContents
+              onNavigate={onNavigate}
+              selectedDestination={selectedDestination}
+            />
+          </>
+        }
+        trailingStyle={{
+          borderStartWidth: 1,
+          borderStartColor: theme.colors.border,
+          marginRight: 16,
+          overflow: 'hidden',
+          borderRadius: theme.numbers.borderRadiusLg,
+        }}
+        trailing={
+          // The pane starts below the status bar, so its headers must not pad
+          // for it again.
           <SafeAreaInsetsContext.Provider value={{ ...insets, top: 0 }}>
             {children}
           </SafeAreaInsetsContext.Provider>
-        </View>
-      </View>
+        }
+      />
     </View>
   )
 }

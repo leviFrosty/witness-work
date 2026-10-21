@@ -173,14 +173,14 @@ const FullMapView = ({
 }: FullMapViewProps) => {
   const navigation = useNavigation<HomeTabStackNavigation>()
   const { height: windowHeight } = useWindowDimensions()
-  const { isWide, hasSidebar, contentWidth: width } = useAdaptiveLayout()
+  const { isWide, hasBottomBar, contentWidth: width } = useAdaptiveLayout()
   // Map runs under the floating Contacts header (`topInset`), so size overlays
   // to its own frame.
   const [height, setHeight] = useState(windowHeight)
   // Exploring slides the tab bar away (see Contacts), and the cards and
   // controls drop into its room.
   const tabBarHidden = useTabBarHidden()
-  const bottomBarHeight = hasSidebar || tabBarHidden ? 0 : TAB_BAR_HEIGHT
+  const bottomBarHeight = !hasBottomBar || tabBarHidden ? 0 : TAB_BAR_HEIGHT
   const inspectorWidth = 360
   const [inspectorRevealRequest, setInspectorRevealRequest] = useState(0)
   const {

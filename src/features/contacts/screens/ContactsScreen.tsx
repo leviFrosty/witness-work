@@ -49,6 +49,7 @@ import ContactRow from '@/features/contacts/components/ContactRow'
 import ContactsStalenessChips from '@/features/contacts/components/ContactsStalenessChips'
 import ContactsViewToggle from '@/features/contacts/components/ContactsViewToggle'
 import { TAB_BAR_HEIGHT } from '@/components/ui/TabBar'
+import FoldSplit from '@/components/ui/layout/FoldSplit'
 import { RootStackNavigation } from '@/types/rootStack'
 import { useContactsSorted } from '@/features/contacts/hooks/useContactsSorted'
 import { Contact } from '@/types/contact'
@@ -160,7 +161,7 @@ const ContactsScreen = ({
   onSearchFocused?: () => void
 }) => {
   const theme = useTheme()
-  const { isWide, hasSidebar } = useAdaptiveLayout()
+  const { isWide, hasBottomBar } = useAdaptiveLayout()
   const [selectedId, setSelectedId] = useState<string>()
   const insets = useSafeAreaInsets()
   const { height: windowHeight } = useWindowDimensions()
@@ -181,7 +182,7 @@ const ContactsScreen = ({
   const screenReader = useScreenReaderEnabled()
   // Exploring the map slides the tab bar away too, and its cards drop into the
   // room.
-  const mapBarHidden = showsMap && mapExplored && !hasSidebar && !screenReader
+  const mapBarHidden = showsMap && mapExplored && hasBottomBar && !screenReader
   useHideTabBar(mapBarHidden)
 
   // Map was its own tab; keep reporting its reach as the `Map` screen (sent
@@ -257,7 +258,7 @@ const ContactsScreen = ({
   const selectedContacts = listContacts.filter((contact) =>
     selection.isSelected(contact.id)
   )
-  const bottomChrome = insets.bottom + (hasSidebar ? 0 : TAB_BAR_HEIGHT)
+  const bottomChrome = insets.bottom + (hasBottomBar ? TAB_BAR_HEIGHT : 0)
   // Select mode keeps its bar where the tab bar was, so nothing moves.
   const bars = useHideBarsOnScroll({
     enabled: !showsMap && !selection.selecting,
@@ -466,47 +467,343 @@ const ContactsScreen = ({
     </View>
   )
 
+  const listPane = (
+    <View
+      // Any touch here pins the list's order until the next focus.
+      onTouchStart={contactsList.markInteracted}
+      style={{ flex: 1 }}
+    >
+      {/* No side padding here: the staleness chips scroll edge to edge. */}
+      <View style={{ paddingBottom: 12 }}>
+        {/* Search row. Inline TextInput so results update live as the user
+        types; its placeholder carries the contact count. */}
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 8,
+            paddingHorizontal: 12,
+          }}
+        >
+          <View
+            style={{
+              flex: 1,
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 10,
+              paddingHorizontal: 12,
+              minHeight: 44,
+              height: 44,
+              borderRadius: theme.numbers.borderRadiusMd,
+              borderWidth: 1,
+              borderColor: theme.colors.border,
+              backgroundColor: theme.colors.backgroundLighter,
+            }}
+          >
+            <LucideIcon
+              icon={SearchIcon}
+              size={theme.fontSize('xs')}
+              style={{ color: theme.colors.textAlt }}
+            />
+            <ContactsSearchInput
+              ref={searchInputRef}
+              placeholder={
+                activeContacts.length > 0
+                  ? i18n.t('contacts_searchPlaceholder' as TranslationKey, {
+                      count: activeContacts.length,
+                    })
+                  : i18n.t('searchForContact')
+              }
+            />
+          </View>
+        </View>
+
+        {showsSavedViews && (
+          <Collapse collapsed={bars.hidden}>
+            <View style={{ paddingTop: 10 }}>
+              <SavedViewsBar surface='list' />
+            </View>
+          </Collapse>
+        )}
+
+        <Collapse collapsed={bars.hidden}>
+          <View style={{ paddingTop: 10 }}>
+            <ContactsStalenessChips
+              contacts={activeContacts}
+              index={conversationIndex}
+              surface='list'
+            />
+          </View>
+        </Collapse>
+
+        {/* Subtle sort indicator. Only shows when the user has changed
+        away from the default — keeps the resting state quiet. */}
+        {isSortNonDefault && sortLabel.length > 0 && (
+          <Collapse collapsed={bars.hidden}>
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 6,
+                paddingTop: 10,
+                paddingHorizontal: 12,
+              }}
+            >
+              <LucideIcon
+                icon={
+                  contactSortDirection === 'asc' ? ArrowUpIcon : ArrowDownIcon
+                }
+                size={theme.fontSize('xs')}
+                style={{ color: theme.colors.textAlt }}
+              />
+              <Text
+                style={{
+                  color: theme.colors.textAlt,
+                  fontSize: theme.fontSize('xs'),
+                  fontFamily: theme.fonts.semiBold,
+                }}
+                numberOfLines={1}
+              >
+                {i18n.t('contacts_sortAndFilter_sortLabel', {
+                  label: sortLabel,
+                })}
+              </Text>
+            </View>
+          </Collapse>
+        )}
+      </View>
+
+      <FlashList
+        ref={listRef}
+        data={contactsList.items}
+        // FlashList v2 enables maintainVisibleContentPosition by default — it's
+        // meant for chat UIs and anchors the viewport to a content item when the
+        // data changes. On a search/filter list that's wrong: clearing the query
+        // makes the data jump from a small filtered set back to the full list,
+        // and MVCP anchors to the old item instead of re-laying-out, leaving the
+        // list blank until a manual scroll forces a recompute. We always want to
+        // pin to the top on data change (see the scrollToOffset effect above),
+        // so disable it here.
+        maintainVisibleContentPosition={{ disabled: true }}
+        keyExtractor={(item) => item.key}
+        getItemType={(item) => item.kind}
+        // A new Set on every selection change, start, and finish — no need
+        // to join every selected id into a string on each render.
+        extraData={selection.selected}
+        renderItem={({ item }) => {
+          if (item.kind === 'header') {
+            return <ContactsListSectionHeader section={item.section} />
+          }
+          const { contact, section } = item
+          return (
+            <ContactRow
+              contact={contact}
+              index={conversationIndex}
+              searchMatches={searchMatchesById.get(contact.id)}
+              detail={
+                // Suggested rows say why they're listed; other sorts show
+                // the value they're sorted by.
+                item.detail ??
+                sortRowDetail({
+                  sort: contactSort,
+                  sortLabel,
+                  contact,
+                  index: conversationIndex,
+                })
+              }
+              selected={isWide && selectedContact?.id === contact.id}
+              showsDisclosure={!isWide}
+              selectionMode={selection.selecting}
+              checked={selection.isSelected(contact.id)}
+              offersNotNow={section === 'beenAWhile'}
+              onSelect={() => selection.start(contact.id)}
+              onPress={() => {
+                if (selection.selecting) {
+                  selection.toggle(contact.id)
+                  return
+                }
+                if (section) {
+                  analytics.capture('contacts_suggested_contact_opened', {
+                    variant: section,
+                    nearby_shown: contactsList.showsNearby,
+                  })
+                }
+                setSelectedId(contact.id)
+                if (!isWide)
+                  navigation.navigate('Contact Details', {
+                    id: contact.id,
+                  })
+              }}
+            />
+          )
+        }}
+        ItemSeparatorComponent={ContactsListSeparator}
+        ListEmptyComponent={renderEmpty()}
+        // Down here so its late-arriving count can't shift the list.
+        ListFooterComponent={
+          dismissedCount > 0 && !selection.selecting ? (
+            <Button
+              onPress={() => navigation.navigate('Dismissed Contacts')}
+              hitSlop={8}
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'center',
+                alignSelf: 'center',
+                gap: 4,
+                marginTop: 20,
+                paddingVertical: 8,
+                paddingHorizontal: 12,
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: theme.fontSize('sm'),
+                  color: theme.colors.textAlt,
+                }}
+              >
+                {i18n.t('contacts_dismissed' as TranslationKey, {
+                  count: dismissedCount,
+                })}
+              </Text>
+              <LucideIcon
+                icon={ChevronForwardIcon}
+                size={theme.fontSize('sm')}
+                style={{ color: theme.colors.textAlt }}
+              />
+            </Button>
+          ) : null
+        }
+        keyboardShouldPersistTaps='handled'
+        keyboardDismissMode='on-drag'
+        drawDistance={flashListDrawDistance}
+        // Tapping the status bar (iOS) brings the bars back too.
+        {...bars.scrollProps}
+        contentContainerStyle={{
+          paddingHorizontal: 12,
+          paddingBottom:
+            bottomChrome +
+            16 +
+            (selection.selecting ? SELECTION_BAR_HEIGHT + 12 : 0),
+        }}
+      />
+      {selection.selecting && (
+        <ContactsSelectionBar
+          contacts={selectedContacts}
+          selection={selection}
+          bottom={bottomChrome + (hasBottomBar ? 8 : 12)}
+        />
+      )}
+    </View>
+  )
+
+  const contactDetailPane = (
+    <View
+      style={{
+        flex: 1,
+        borderStartWidth: 1,
+        borderStartColor: theme.colors.border,
+        marginRight: 16,
+        marginBottom: hasBottomBar ? TAB_BAR_HEIGHT : 0,
+        overflow: 'hidden',
+        borderRadius: theme.numbers.borderRadiusLg,
+      }}
+    >
+      {selectedContact ? (
+        <ContactDetailsContent
+          key={selectedContact.id}
+          id={selectedContact.id}
+          navigation={navigation}
+          embedded
+        />
+      ) : (
+        <View
+          style={{
+            flex: 1,
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 32,
+          }}
+        >
+          {renderEmpty()}
+        </View>
+      )}
+    </View>
+  )
+
+  const header = (
+    <GestureDetector gesture={headerSwipeDown}>
+      <View
+        onLayout={(e) => setHeaderHeight(e.nativeEvent.layout.height)}
+        style={
+          showsMap
+            ? { position: 'absolute', top: 0, left: 0, right: 0, zIndex: 1 }
+            : undefined
+        }
+      >
+        <ScrollAwayHeader hidden={bars.hidden}>
+          <RootHeader
+            floating={showsMap}
+            compact={headerCollapsed}
+            onPressTitle={headerCollapsed ? () => expandHeader() : undefined}
+            title={
+              selection.selecting
+                ? // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
+                  i18n.t('selectedCount', { count: selection.ids.length })
+                : i18n.t('contacts_screen_title')
+            }
+            actions={headerActions}
+            contentStyle={{ maxWidth: isWide ? 1200 : 720 }}
+          >
+            {showsMapFilters && (
+              <Collapse collapsed={headerCollapsed}>
+                <View style={{ gap: 10, paddingBottom: 10 }}>
+                  {showsSavedViews && <SavedViewsBar surface='map' />}
+                  <ContactsStalenessChips
+                    contacts={mappedContacts}
+                    index={conversationIndex}
+                    surface='map'
+                  />
+                </View>
+              </Collapse>
+            )}
+          </RootHeader>
+        </ScrollAwayHeader>
+      </View>
+    </GestureDetector>
+  )
+
+  // As in Mail, the header's controls belong to the list, so they sit above it
+  // and the contact beside it reaches the top.
+  if (isWide && !showsMap)
+    return (
+      <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
+        {/* The detail pane meets iPhone Duo's fold while it's partly folded. */}
+        <FoldSplit
+          style={{
+            flex: 1,
+            width: '100%',
+            maxWidth: 1200,
+            alignSelf: 'center',
+          }}
+          gap={0}
+          // A phone's width, which the header's controls are laid out for.
+          leadingWidth={390}
+          leading={
+            <View style={{ flex: 1 }}>
+              {header}
+              <View style={{ flex: 1, paddingTop: 4 }}>{listPane}</View>
+            </View>
+          }
+          trailing={contactDetailPane}
+          trailingStyle={{ paddingTop: insets.top + 8 }}
+        />
+      </View>
+    )
+
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
-      <GestureDetector gesture={headerSwipeDown}>
-        <View
-          onLayout={(e) => setHeaderHeight(e.nativeEvent.layout.height)}
-          style={
-            showsMap
-              ? { position: 'absolute', top: 0, left: 0, right: 0, zIndex: 1 }
-              : undefined
-          }
-        >
-          <ScrollAwayHeader hidden={bars.hidden}>
-            <RootHeader
-              floating={showsMap}
-              compact={headerCollapsed}
-              onPressTitle={headerCollapsed ? () => expandHeader() : undefined}
-              title={
-                selection.selecting
-                  ? // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
-                    i18n.t('selectedCount', { count: selection.ids.length })
-                  : i18n.t('contacts_screen_title')
-              }
-              actions={headerActions}
-              contentStyle={{ maxWidth: isWide ? 1200 : 720 }}
-            >
-              {showsMapFilters && (
-                <Collapse collapsed={headerCollapsed}>
-                  <View style={{ gap: 10, paddingBottom: 10 }}>
-                    {showsSavedViews && <SavedViewsBar surface='map' />}
-                    <ContactsStalenessChips
-                      contacts={mappedContacts}
-                      index={conversationIndex}
-                      surface='map'
-                    />
-                  </View>
-                </Collapse>
-              )}
-            </RootHeader>
-          </ScrollAwayHeader>
-        </View>
-      </GestureDetector>
+      {header}
       {showsMap ? (
         <View style={{ flex: 1 }}>
           {renderMap({
@@ -521,280 +818,12 @@ const ContactsScreen = ({
             flex: 1,
             backgroundColor: theme.colors.background,
             paddingTop: 4,
-            flexDirection: isWide ? 'row' : 'column',
             width: '100%',
-            maxWidth: isWide ? 1200 : 720,
+            maxWidth: 720,
             alignSelf: 'center',
           }}
         >
-          <View
-            // Any touch here pins the list's order until the next focus.
-            onTouchStart={contactsList.markInteracted}
-            style={{
-              flex: isWide ? undefined : 1,
-              width: isWide ? 350 : undefined,
-            }}
-          >
-            {/* No side padding here: the staleness chips scroll edge to edge. */}
-            <View style={{ paddingBottom: 12 }}>
-              {/* Search row. Inline TextInput so results update live as the user
-              types; its placeholder carries the contact count. */}
-              <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  gap: 8,
-                  paddingHorizontal: 12,
-                }}
-              >
-                <View
-                  style={{
-                    flex: 1,
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    gap: 10,
-                    paddingHorizontal: 12,
-                    minHeight: 44,
-                    height: 44,
-                    borderRadius: theme.numbers.borderRadiusMd,
-                    borderWidth: 1,
-                    borderColor: theme.colors.border,
-                    backgroundColor: theme.colors.backgroundLighter,
-                  }}
-                >
-                  <LucideIcon
-                    icon={SearchIcon}
-                    size={theme.fontSize('xs')}
-                    style={{ color: theme.colors.textAlt }}
-                  />
-                  <ContactsSearchInput
-                    ref={searchInputRef}
-                    placeholder={
-                      activeContacts.length > 0
-                        ? i18n.t(
-                            'contacts_searchPlaceholder' as TranslationKey,
-                            {
-                              count: activeContacts.length,
-                            }
-                          )
-                        : i18n.t('searchForContact')
-                    }
-                  />
-                </View>
-              </View>
-
-              {showsSavedViews && (
-                <Collapse collapsed={bars.hidden}>
-                  <View style={{ paddingTop: 10 }}>
-                    <SavedViewsBar surface='list' />
-                  </View>
-                </Collapse>
-              )}
-
-              <Collapse collapsed={bars.hidden}>
-                <View style={{ paddingTop: 10 }}>
-                  <ContactsStalenessChips
-                    contacts={activeContacts}
-                    index={conversationIndex}
-                    surface='list'
-                  />
-                </View>
-              </Collapse>
-
-              {/* Subtle sort indicator. Only shows when the user has changed
-              away from the default — keeps the resting state quiet. */}
-              {isSortNonDefault && sortLabel.length > 0 && (
-                <Collapse collapsed={bars.hidden}>
-                  <View
-                    style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      gap: 6,
-                      paddingTop: 10,
-                      paddingHorizontal: 12,
-                    }}
-                  >
-                    <LucideIcon
-                      icon={
-                        contactSortDirection === 'asc'
-                          ? ArrowUpIcon
-                          : ArrowDownIcon
-                      }
-                      size={theme.fontSize('xs')}
-                      style={{ color: theme.colors.textAlt }}
-                    />
-                    <Text
-                      style={{
-                        color: theme.colors.textAlt,
-                        fontSize: theme.fontSize('xs'),
-                        fontFamily: theme.fonts.semiBold,
-                      }}
-                      numberOfLines={1}
-                    >
-                      {i18n.t('contacts_sortAndFilter_sortLabel', {
-                        label: sortLabel,
-                      })}
-                    </Text>
-                  </View>
-                </Collapse>
-              )}
-            </View>
-
-            <FlashList
-              ref={listRef}
-              data={contactsList.items}
-              // FlashList v2 enables maintainVisibleContentPosition by default — it's
-              // meant for chat UIs and anchors the viewport to a content item when the
-              // data changes. On a search/filter list that's wrong: clearing the query
-              // makes the data jump from a small filtered set back to the full list,
-              // and MVCP anchors to the old item instead of re-laying-out, leaving the
-              // list blank until a manual scroll forces a recompute. We always want to
-              // pin to the top on data change (see the scrollToOffset effect above),
-              // so disable it here.
-              maintainVisibleContentPosition={{ disabled: true }}
-              keyExtractor={(item) => item.key}
-              getItemType={(item) => item.kind}
-              // A new Set on every selection change, start, and finish — no need
-              // to join every selected id into a string on each render.
-              extraData={selection.selected}
-              renderItem={({ item }) => {
-                if (item.kind === 'header') {
-                  return <ContactsListSectionHeader section={item.section} />
-                }
-                const { contact, section } = item
-                return (
-                  <ContactRow
-                    contact={contact}
-                    index={conversationIndex}
-                    searchMatches={searchMatchesById.get(contact.id)}
-                    detail={
-                      // Suggested rows say why they're listed; other sorts show
-                      // the value they're sorted by.
-                      item.detail ??
-                      sortRowDetail({
-                        sort: contactSort,
-                        sortLabel,
-                        contact,
-                        index: conversationIndex,
-                      })
-                    }
-                    selected={isWide && selectedContact?.id === contact.id}
-                    showsDisclosure={!isWide}
-                    selectionMode={selection.selecting}
-                    checked={selection.isSelected(contact.id)}
-                    offersNotNow={section === 'beenAWhile'}
-                    onSelect={() => selection.start(contact.id)}
-                    onPress={() => {
-                      if (selection.selecting) {
-                        selection.toggle(contact.id)
-                        return
-                      }
-                      if (section) {
-                        analytics.capture('contacts_suggested_contact_opened', {
-                          variant: section,
-                          nearby_shown: contactsList.showsNearby,
-                        })
-                      }
-                      setSelectedId(contact.id)
-                      if (!isWide)
-                        navigation.navigate('Contact Details', {
-                          id: contact.id,
-                        })
-                    }}
-                  />
-                )
-              }}
-              ItemSeparatorComponent={ContactsListSeparator}
-              ListEmptyComponent={renderEmpty()}
-              // Down here so its late-arriving count can't shift the list.
-              ListFooterComponent={
-                dismissedCount > 0 && !selection.selecting ? (
-                  <Button
-                    onPress={() => navigation.navigate('Dismissed Contacts')}
-                    hitSlop={8}
-                    style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      alignSelf: 'center',
-                      gap: 4,
-                      marginTop: 20,
-                      paddingVertical: 8,
-                      paddingHorizontal: 12,
-                    }}
-                  >
-                    <Text
-                      style={{
-                        fontSize: theme.fontSize('sm'),
-                        color: theme.colors.textAlt,
-                      }}
-                    >
-                      {i18n.t('contacts_dismissed' as TranslationKey, {
-                        count: dismissedCount,
-                      })}
-                    </Text>
-                    <LucideIcon
-                      icon={ChevronForwardIcon}
-                      size={theme.fontSize('sm')}
-                      style={{ color: theme.colors.textAlt }}
-                    />
-                  </Button>
-                ) : null
-              }
-              keyboardShouldPersistTaps='handled'
-              keyboardDismissMode='on-drag'
-              drawDistance={flashListDrawDistance}
-              // Tapping the status bar (iOS) brings the bars back too.
-              {...bars.scrollProps}
-              contentContainerStyle={{
-                paddingHorizontal: 12,
-                paddingBottom:
-                  bottomChrome +
-                  16 +
-                  (selection.selecting ? SELECTION_BAR_HEIGHT + 12 : 0),
-              }}
-            />
-            {selection.selecting && (
-              <ContactsSelectionBar
-                contacts={selectedContacts}
-                selection={selection}
-                bottom={bottomChrome + (hasSidebar ? 12 : 8)}
-              />
-            )}
-          </View>
-          {isWide && (
-            <View
-              style={{
-                flex: 1,
-                borderStartWidth: 1,
-                borderStartColor: theme.colors.border,
-                marginRight: 16,
-                marginBottom: hasSidebar ? 0 : TAB_BAR_HEIGHT,
-                overflow: 'hidden',
-                borderRadius: theme.numbers.borderRadiusLg,
-              }}
-            >
-              {selectedContact ? (
-                <ContactDetailsContent
-                  key={selectedContact.id}
-                  id={selectedContact.id}
-                  navigation={navigation}
-                  embedded
-                />
-              ) : (
-                <View
-                  style={{
-                    flex: 1,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    padding: 32,
-                  }}
-                >
-                  {renderEmpty()}
-                </View>
-              )}
-            </View>
-          )}
+          {listPane}
         </View>
       )}
     </View>

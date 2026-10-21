@@ -25,6 +25,15 @@ vi.mock('react-native-keyboard-aware-scroll-view', () => ({
       children
     ),
 }))
+vi.mock('@/components/ui/layout/FoldSplit', () => ({
+  default: ({
+    leading,
+    trailing,
+  }: {
+    leading: ReactNode
+    trailing: ReactNode
+  }) => createElement('div', null, leading, trailing),
+}))
 
 import AdaptiveSplitScrollView from '@/components/ui/layout/AdaptiveSplitScrollView'
 

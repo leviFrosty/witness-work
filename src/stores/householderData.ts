@@ -8,6 +8,7 @@ import {
 } from '@/stores/noteImages'
 import { stripContactForTombstone } from '@/lib/dataProtection'
 import { syncTimestamp } from '@/lib/syncClock'
+import { deleteTemporaryCopies } from '@/lib/temporaryCopies'
 import type { Contact } from '@/types/contact'
 
 /**
@@ -34,6 +35,8 @@ const hardDeleteContacts = (contactIds: string[]) => {
   for (const visit of visits) deleteConversation(visit.id)
   contactIds.forEach((id) => void deleteAvatarFiles(id))
   void deleteUnreferencedNoteImages(noteImageIdsOf(visits))
+  // A backup or contact file shared earlier, and the picker's copy of a photo.
+  void deleteTemporaryCopies()
   useContacts.getState().deleteContacts(contactIds, { redact: true })
 }
 
@@ -79,8 +82,9 @@ export type DeleteAllHouseholderDataResult = {
 
 /**
  * Erases every householder record this device holds: all contacts, all visits,
- * every contact avatar and visit note photo on disk, and the content of any
- * tombstone left behind by an earlier soft delete.
+ * every contact avatar and visit note photo on disk, exported backups and
+ * contact files still in the cache, and the content of any tombstone left
+ * behind by an earlier soft delete.
  *
  * This is the "erase all householder data" affordance from
  * `docs/gdpr-mode-research.md` §9.6 — the counterpart to per-contact deletion,
@@ -121,6 +125,7 @@ export const deleteAllHouseholderData = (): DeleteAllHouseholderDataResult => {
     )
     void deleteAvatarFiles(record.id)
   }
+  void deleteTemporaryCopies()
 
   useContacts.setState({
     contacts: [],

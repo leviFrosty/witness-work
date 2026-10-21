@@ -57,6 +57,33 @@ export function calendarErrorKey(error: unknown) {
   return (Platform.OS === 'android' && ANDROID_ERROR_KEYS[key]) || key
 }
 
+/**
+ * Codes the bridge reports that don't name a cause the user can fix, so they
+ * share a generic message. Reported as `native_code` to tell them apart.
+ */
+const NATIVE_CODES = [
+  'CALENDAR_UNAVAILABLE',
+  'CALENDAR_BUSY',
+  'CALENDAR_JOURNAL',
+  'CALENDAR_DEVICE_UNKNOWN',
+  'CALENDAR_STATE_CHANGED',
+  'CALENDAR_INVALID_URL',
+  'CALENDAR_CREATE_FAILED',
+]
+const GENERIC_ERROR_KEYS = [
+  'calendarConnectionError',
+  'calendarConnectionErrorAndroid',
+  'calendarCreateError',
+]
+
+/** Bounded: a known code or `other`. A failed create reports its cause. */
+export function calendarNativeCode(error: unknown) {
+  const cause =
+    error instanceof Error && error.cause !== undefined ? error.cause : error
+  const code = calendarErrorCode(cause)
+  return NATIVE_CODES.find((known) => code.includes(known)) ?? 'other'
+}
+
 function errorKey(code: string) {
   if (code.includes('CALENDAR_STATE_CHANGED')) return 'calendarConnectionError'
   if (code.includes('CALENDAR_PERMISSION')) return 'calendarPermissionError'
@@ -69,6 +96,7 @@ function errorKey(code: string) {
     return 'calendarWaitingForEvents'
   if (code.includes('CALENDAR_CHOOSE_EXISTING')) return 'calendarChooseExisting'
   if (code.includes('CALENDAR_CREATE_FAILED')) return 'calendarCreateError'
+  if (code.includes('CALENDAR_NO_SOURCE')) return 'calendarNoSourceError'
   if (code.includes('CALENDAR_DEVICE_IN_USE')) return 'calendarDeviceInUse'
   if (code.includes('CALENDAR_BINARY_REQUIRED')) return 'calendarBinaryError'
   if (code.includes('CALENDAR_ACCOUNT_CHANGED')) return 'calendarAccountChanged'
@@ -132,6 +160,9 @@ export function calendarAction<T>(
           analytics.capture('calendar_sync_failed', {
             error_key: errorKey,
             background,
+            ...(GENERIC_ERROR_KEYS.includes(errorKey) && {
+              native_code: calendarNativeCode(error),
+            }),
             ...recoveryProperties(),
           })
         throw error
@@ -293,9 +324,9 @@ export async function createCalendar(sourceId: string) {
       state.configurationToken ?? state.namespace
     )
   } catch (error) {
-    // Some CalDAV accounts don't support creating calendars.
+    // Some CalDAV accounts, such as Google, don't support creating calendars.
     if (calendarErrorKey(error) === 'calendarConnectionError')
-      throw new Error('CALENDAR_CREATE_FAILED')
+      throw Object.assign(new Error('CALENDAR_CREATE_FAILED'), { cause: error })
     throw error
   }
   await connectCalendar(destination, { fresh: true })
@@ -327,7 +358,9 @@ export async function quickConnectCalendar(): Promise<
     const sources = await calendarBridge().sources()
     const source =
       sources.find((candidate) => candidate.title === 'iCloud') ?? sources[0]
-    if (!source) throw new Error('CALENDAR_CREATE_FAILED')
+    // Signed in to iCloud (ownership just worked) with its Calendars off, and
+    // no other account that can hold calendars. Local ones are never used.
+    if (!source) throw new Error('CALENDAR_NO_SOURCE')
     await createCalendar(source.id)
   }
   return 'connected'

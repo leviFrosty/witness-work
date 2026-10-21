@@ -10,6 +10,8 @@ const RETRY_ERRORS = [
   'calendarConnectionError',
   'calendarConnectionErrorAndroid',
   'calendarCreateError',
+  // After turning on iCloud Calendars.
+  'calendarNoSourceError',
 ]
 
 export function calendarRecovery(

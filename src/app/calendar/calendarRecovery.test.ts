@@ -59,6 +59,7 @@ describe('calendarRecovery', () => {
     expect(calendarRecovery('calendarConnectionError')).toBe('try_again')
     expect(calendarRecovery('calendarConnectionErrorAndroid')).toBe('try_again')
     expect(calendarRecovery('calendarCreateError')).toBe('try_again')
+    expect(calendarRecovery('calendarNoSourceError')).toBe('try_again')
   })
   it('offers nothing where repeating the same step would not help', () => {
     expect(calendarRecovery(null)).toBeNull()

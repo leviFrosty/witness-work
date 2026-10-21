@@ -136,7 +136,7 @@ const ProfileDetailOverlay = () => {
   }
   const { type: publisher, tracksTenure, entryMode } = usePublisher()
   const { since: supporterSince } = useIsSupporter()
-  const { conversations } = useConversations()
+  const conversations = useConversations((s) => s.conversations)
   const daily = useDailyMinutes()
 
   const stats = useMemo(() => {

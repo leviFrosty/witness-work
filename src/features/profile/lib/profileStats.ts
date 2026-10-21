@@ -8,6 +8,26 @@ import { Visit } from '@/types/visit'
 
 const dayKey = (d: moment.Moment) => d.format('YYYY-MM-DD')
 
+const pad2 = (n: number) => String(n).padStart(2, '0')
+
+/**
+ * `dayKey(moment(date))` without a moment: the local calendar day. Parsing a
+ * moment per Visit made the Profile stats, which stay mounted on Home, cost a
+ * few hundred milliseconds at launch on an account with thousands of Visits.
+ */
+const localDateKey = (date: Date | string) => {
+  const d = new Date(date)
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`
+}
+
+/** The weekday (0 = Sunday) of a `YYYY-MM-DD` key. */
+const weekdayOfKey = (key: string) =>
+  new Date(
+    Number(key.slice(0, 4)),
+    Number(key.slice(5, 7)) - 1,
+    Number(key.slice(8, 10))
+  ).getDay()
+
 /**
  * Flattens nested service reports into a day→minutes map. Time Rollovers are
  * left out: they move minutes between months, not onto a day of service, and
@@ -86,7 +106,7 @@ export const busiestWeekday = (
   }
   for (const visit of visits) {
     if (!isOwnVisit(visit)) continue
-    const key = dayKey(moment(visit.date))
+    const key = localDateKey(visit.date)
     if (inPastYear(key) && !activeDays.has(key)) activeDays.set(key, 0)
   }
 
@@ -94,7 +114,7 @@ export const busiestWeekday = (
   const minutes = Array<number>(7).fill(0)
   const latest = Array<string>(7).fill('')
   for (const [key, dayMinutes] of activeDays) {
-    const weekday = moment(key, 'YYYY-MM-DD').day()
+    const weekday = weekdayOfKey(key)
     days[weekday]++
     minutes[weekday] += dayMinutes
     if (key > latest[weekday]) latest[weekday] = key

@@ -60,6 +60,15 @@ describe('busiestWeekday', () => {
     expect(busiestWeekday(lastSunday, [], now)).toBe(SUNDAY)
   })
 
+  it('reads rehydrated Visit dates on their local day', () => {
+    // Stored dates come back from JSON as strings after a restart.
+    const rehydrated = (date: string) => ({ date: date as unknown as Date })
+    const visits = [visit(2026, 9, 6), visit(2026, 8, 29), visit(2026, 9, 3)]
+      .map((v) => rehydrated(v.date.toISOString()))
+      .concat(rehydrated('not a date'))
+    expect(busiestWeekday(new Map(), visits, now)).toBe(TUESDAY)
+  })
+
   it('is null with no activity', () => {
     expect(busiestWeekday(new Map(), [], now)).toBeNull()
   })

@@ -1,6 +1,7 @@
 import moment from 'moment'
 import { Visit } from '@/types/visit'
 import { localizeDisplayDate } from '@/lib/dates'
+import { followUpAnswer } from '@/lib/conversations'
 
 /**
  * Pure derivations behind the Contact Details timeline. A Visit's outcome and
@@ -18,9 +19,9 @@ export const visitOutcome = (
   visit.notAtHome ? 'notAtHome' : visit.isBibleStudy ? 'study' : 'conversation'
 
 /**
- * - `upcoming` — still in the future and not dismissed.
- * - `kept` — a later visit to the same contact fulfilled it.
- * - `missed` — its date passed with no later visit, and it wasn't dismissed.
+ * - `upcoming` — still in the future, not dismissed, and not yet answered.
+ * - `kept` — a later visit to the same contact answered it.
+ * - `missed` — its date passed with no answer, and it wasn't dismissed.
  * - `dismissed` — the user dismissed it (data preserved).
  */
 export type FollowUpState = 'upcoming' | 'kept' | 'missed' | 'dismissed'
@@ -34,8 +35,9 @@ export const sortVisitsNewestFirst = (visits: Visit[]): Visit[] =>
   )
 
 /**
- * Mirrors the supersede rule used by Missed Conversations: any other visit on
- * or after the follow-up's date counts as having followed up.
+ * A follow-up is kept once `followUpAnswer` finds the visit that answered it,
+ * the rule Home's card, missed Follow-ups and Visit Details use: a later visit
+ * on the follow-up's day counts even before its time.
  */
 export const followUpState = (
   visit: Visit,
@@ -45,12 +47,8 @@ export const followUpState = (
   const followUp = visit.followUp
   if (!followUp) return null
   if (followUp.dismissed) return 'dismissed'
-  const due = ms(followUp.date)
-  if (due > now.getTime()) return 'upcoming'
-  const fulfilled = contactVisits.some(
-    (other) => other.id !== visit.id && ms(other.date) >= due
-  )
-  return fulfilled ? 'kept' : 'missed'
+  if (followUpAnswer(visit, contactVisits)) return 'kept'
+  return ms(followUp.date) > now.getTime() ? 'upcoming' : 'missed'
 }
 
 export type UpNext = {
@@ -60,7 +58,10 @@ export type UpNext = {
   topic?: string
 }
 
-/** The soonest upcoming, non-dismissed follow-up — promoted to the Up Next card. */
+/**
+ * The soonest upcoming follow-up that isn't dismissed or already answered —
+ * promoted to the Up Next card.
+ */
 export const getUpNext = (
   contactVisits: Visit[],
   now: Date = new Date()
@@ -71,6 +72,7 @@ export const getUpNext = (
     if (!followUp || followUp.dismissed) continue
     const date = new Date(followUp.date)
     if (date.getTime() <= now.getTime()) continue
+    if (followUpAnswer(visit, contactVisits)) continue
     if (!best || date.getTime() < best.date.getTime()) {
       best = {
         visit,

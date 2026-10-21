@@ -6,7 +6,15 @@ vi.mock('expo-location', () => ({}))
 vi.mock('@/lib/errorTracking', () => ({ errorTracking: {} }))
 vi.mock('@/lib/links', () => ({ openURL: vi.fn() }))
 vi.mock('@/lib/locales', () => ({
-  default: { t: (key: string) => key },
+  default: {
+    t: (key: string, o: Record<string, unknown> = {}) =>
+      ({
+        hoursShort: `${o.count}h`,
+        minutesShort: `${o.count}m`,
+        hoursAndMinutesShort: `${o.hours} ${o.minutes}`,
+        hoursPerDayToGoalValue: `${o.value} per day to goal!`,
+      })[key] ?? key,
+  },
 }))
 vi.mock('@/stores/preferences', () => ({
   usePreferences: () => ({ timeDisplayFormat: 'decimal' }),
@@ -117,6 +125,10 @@ describe('widget snapshot day rollover', () => {
     expect(nextMonth.report.goalHours).toBe(50)
     // 50 hours over the 30 days left from Nov 1, 00:00.
     expect(nextMonth.report.hoursPerDayNeeded).toBe(1.7)
+    // The Daily Pace card's 50 hours over the 29 days after Nov 1.
+    expect(nextMonth.report.hoursPerDayToGoalByDay['2026-11-01']).toBe(
+      '1.8h per day to goal!'
+    )
   })
 })
 
@@ -133,6 +145,63 @@ describe('builders as of a given day', () => {
     const report = buildReport(reportArgs(), moment(new Date(2026, 9, 20, 12)))
 
     expect(report.hoursPerDayNeeded).toBe(4.4)
+  })
+
+  it('writes the pace line for each day left, as the Daily Pace card does', () => {
+    // 48 of 50 hours to go, built on Oct 21.
+    const { hoursPerDayToGoalByDay } = buildReport(
+      reportArgs(),
+      moment(new Date(2026, 9, 21, 12))
+    )
+
+    expect(Object.keys(hoursPerDayToGoalByDay)).toEqual(
+      Array.from({ length: 11 }, (_, i) => `2026-10-${21 + i}`)
+    )
+    // 10 days after Oct 21 (the widget counted 11 from its midnight).
+    expect(hoursPerDayToGoalByDay['2026-10-21']).toBe('4.8h per day to goal!')
+    // One day after Oct 30 (the widget counted 2: half the pace).
+    expect(hoursPerDayToGoalByDay['2026-10-30']).toBe('48h per day to goal!')
+    // All of it on the last day.
+    expect(hoursPerDayToGoalByDay['2026-10-31']).toBe('48h per day to goal!')
+  })
+
+  it('formats the pace line in hours and minutes when set to', () => {
+    const { hoursPerDayToGoalByDay } = buildReport(
+      { ...reportArgs(), timeDisplayFormat: 'short' },
+      moment(new Date(2026, 9, 21, 12))
+    )
+
+    expect(hoursPerDayToGoalByDay['2026-10-21']).toBe('4h 48m per day to goal!')
+    // 2880 minutes over 9 days: 320, which decimal rounds up to 5.4h.
+    expect(hoursPerDayToGoalByDay['2026-10-22']).toBe('5h 20m per day to goal!')
+  })
+
+  it('writes no pace line without a goal to reach', () => {
+    const met = buildReport(
+      {
+        ...reportArgs(),
+        serviceReports: {
+          2026: {
+            9: [
+              {
+                id: 'done',
+                date: new Date(2026, 9, 2, 12),
+                hours: 50,
+                minutes: 0,
+              },
+            ],
+          },
+        },
+      },
+      moment(new Date(2026, 9, 21, 12))
+    )
+    const noGoal = buildReport(
+      { ...reportArgs(), publisher: 'publisher' },
+      moment(new Date(2026, 9, 21, 12))
+    )
+
+    expect(met.hoursPerDayToGoalByDay).toEqual({})
+    expect(noGoal.hoursPerDayToGoalByDay).toEqual({})
   })
 
   it("is reported only on the day it's built for", () => {

@@ -127,14 +127,8 @@ private struct PaceBadge: View {
         text: isAhead ? strings.aheadOfScheduleLabel : strings.behindScheduleLabel,
         tint: tint
       )
-    } else if let perDay = report.hoursPerDayNeeded {
-      // Drops the trailing `.0` for whole numbers so the badge doesn't read
-      // "5.0 hrs/day". Mirrors `_.round(x, 1)` formatting from HourEntryCard.
-      pill(
-        icon: "target",
-        text: "\(snapshot.appLanguage.decimal(perDay)) \(strings.hoursPerDayToGoalSuffix)",
-        tint: accent
-      )
+    } else if let perDay = report.hoursPerDayToGoal {
+      pill(icon: "target", text: snapshot.appLanguage.digits(perDay), tint: accent)
     }
   }
 
@@ -145,6 +139,7 @@ private struct PaceBadge: View {
       Text(text)
         .font(.system(size: 11, weight: .semibold))
         .lineLimit(1)
+        .minimumScaleFactor(0.8)
     }
     .foregroundStyle(tint)
     .padding(.horizontal, 8)

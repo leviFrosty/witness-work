@@ -17,7 +17,6 @@ struct WidgetSnapshot: Decodable {
     let goalLabel: String
     let addTimeLabel: String
     let sharedGoodNewsLabel: String
-    let hoursPerDayToGoalSuffix: String
     let aheadOfScheduleLabel: String
     let behindScheduleLabel: String
     var encouragementPhrase: String
@@ -108,10 +107,15 @@ struct WidgetSnapshot: Decodable {
     var monthHoursFormatted: String
     let goalHours: Int
     var progress: Double
-    /// `nil` when the value would be misleading (≤ 0 hours, no remaining work).
-    var hoursPerDayNeeded: Double?
+    /// The pace badge's "4.8 Hrs per day to goal!" as of the entry's day, from
+    /// `hoursPerDayToGoalByDay` (`SnapshotDay.report`). `nil` when the goal
+    /// needs nothing more.
+    var hoursPerDayToGoal: String?
     /// Minutes ahead (+) or behind (−) of plan. `nil` when no plan exists.
     var aheadBehindMinutes: Int?
+    /// `hoursPerDayToGoal` for each day left in the month, keyed `YYYY-MM-DD`.
+    /// `nil` from an older app.
+    let hoursPerDayToGoalByDay: [String: String]?
 
     // Publisher (checkbox) mode
     var hasReportedThisMonth: Bool

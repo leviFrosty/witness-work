@@ -13,8 +13,8 @@ import Foundation
 //   - The calendar's today, past days and current week move along.
 //   - Follow-ups turn overdue, and "Tomorrow 3:00 PM" is rewritten for the
 //     entry's day.
-//   - The pace badge falls back to hours per day, because the Plans it counts
-//     through today have moved on.
+//   - The pace badge falls back to the time per day the app wrote for the
+//     entry's day, because the Plans it counts through today have moved on.
 //
 // Nothing was logged in the meantime: logging opens the app, which writes a
 // new snapshot.
@@ -49,29 +49,13 @@ enum SnapshotDay {
     return ([now] + between + [midnight, following], midnight)
   }
 
-  /// Whole days from `date` to the 1st of next month, like
-  /// `getDaysLeftInCurrentMonth`.
-  static func daysLeftInMonth(at date: Date, calendar: Calendar = gregorian) -> Int {
-    guard let month = calendar.dateInterval(of: .month, for: date) else { return 0 }
-    return calendar.dateComponents([.day], from: date, to: month.end).day ?? 0
-  }
-
-  /// Mirrors `hoursPerDayNeeded` in `buildReport.ts`.
-  static func hoursPerDayNeeded(goalHours: Int, minutes: Int, daysLeft: Int) -> Double? {
-    let goal = goalHours * 60
-    let remaining = min(max(goal - minutes, 0), goal)
-    guard remaining > 0 else { return nil }
-    let hours = Double(remaining) / 60
-    guard daysLeft > 0 else { return hours }
-    return (hours / Double(daysLeft) * 10).rounded() / 10
-  }
-
   /// `report`, built for the day `builtOn`, as of the day `today`.
   static func report(
-    _ report: WidgetSnapshot.Report, builtOn: String, today: String, daysLeft: Int
+    _ report: WidgetSnapshot.Report, builtOn: String, today: String
   ) -> WidgetSnapshot.Report {
-    guard today > builtOn else { return report }
     var report = report
+    report.hoursPerDayToGoal = report.hoursPerDayToGoalByDay?[today]
+    guard today > builtOn else { return report }
     if today.prefix(7) != builtOn.prefix(7) {
       // An empty month's label is already formatted for the user's setting.
       if report.monthMinutes != 0 { report.monthHoursFormatted = "0" }
@@ -85,8 +69,6 @@ enum SnapshotDay {
       report.publisherState = .reportedThisMonth
     }
     report.aheadBehindMinutes = nil
-    report.hoursPerDayNeeded = hoursPerDayNeeded(
-      goalHours: report.goalHours, minutes: report.monthMinutes, daysLeft: daysLeft)
     return report
   }
 
@@ -165,9 +147,7 @@ extension WidgetSnapshot {
         copy.strings.encouragementPhrase = phrase
       }
     }
-    copy.report = SnapshotDay.report(
-      copy.report, builtOn: reportDay, today: today,
-      daysLeft: SnapshotDay.daysLeftInMonth(at: date, calendar: calendar))
+    copy.report = SnapshotDay.report(copy.report, builtOn: reportDay, today: today)
     copy.calendar = SnapshotDay.calendar(month, today: today)
     let locale = Locale(identifier: self.locale)
     let tomorrow = strings.tomorrowLabel

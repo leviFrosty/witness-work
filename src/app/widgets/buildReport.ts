@@ -10,6 +10,8 @@ import { RecurringPlan } from '@/lib/recurrence'
 import { getScheduleStatusForMonth } from '@/lib/scheduleStatus'
 import { goalProgress } from '@/lib/goalProgress'
 import { formatMinutes } from '@/lib/minutes'
+import { dailyPace } from '@/features/progress/lib/progressCardStats'
+import { formatNeededMinutes } from '@/features/progress/components/cards/displayMinutes'
 import { contentHash } from '@/lib/contentHash'
 import i18n, { TranslationKey } from '@/lib/locales'
 import { Publisher, PublisherHours } from '@/types/publisher'
@@ -50,15 +52,25 @@ export type ReportFields = {
   /** 0..1 */
   progress: number
   /**
-   * Hours per remaining day to hit the goal. `null` when there's nothing left
-   * to do or the value would be misleading (last day of month, already met).
+   * Hours per remaining day to hit the goal, for the watch's pace line. `null`
+   * when there's nothing left to do or the value would be misleading (last day
+   * of month, already met).
    */
   hoursPerDayNeeded: number | null
   /**
    * Minutes ahead (+) or behind (-) of plan. `null` when no plan exists for
-   * this month, in which case the widget falls back to `hoursPerDayNeeded`.
+   * this month, in which case the widget falls back to
+   * `hoursPerDayToGoalByDay`.
    */
   aheadBehindMinutes: number | null
+  /**
+   * The pace badge's "4.8 Hrs per day to goal!" for each day from `now` to the
+   * end of its month, keyed `YYYY-MM-DD`, as the Daily Pace card counts and
+   * formats it. The widget reads the entry for its own day, so it neither
+   * counts days nor formats time. A day is missing once the goal needs nothing
+   * more.
+   */
+  hoursPerDayToGoalByDay: Record<string, string>
 
   // Checkbox/publisher mode
   /** True when at least one service report exists for the current month. */
@@ -248,6 +260,28 @@ export function buildReport(
     hoursPerDayNeeded = round(minutesRemaining / 60 / daysLeftInMonth, 1)
   }
 
+  const hoursPerDayToGoalByDay: Record<string, string> = {}
+  for (
+    const day = now.clone().startOf('day');
+    day.month() === month;
+    day.add(1, 'day')
+  ) {
+    const pace = dailyPace({
+      loggedMinutes: adjusted.value,
+      goalMinutes,
+      month,
+      year,
+      today: day,
+    })
+    if (pace?.state !== 'current') break
+    hoursPerDayToGoalByDay[day.format('YYYY-MM-DD')] = i18n.t(
+      'hoursPerDayToGoalValue',
+      {
+        value: formatNeededMinutes(pace.perDayMinutes, args.timeDisplayFormat),
+      }
+    )
+  }
+
   // Same Schedule Status as the app's pace cards: time logged through today
   // against Plans through today.
   const scheduleStatus = getScheduleStatusForMonth({
@@ -293,6 +327,7 @@ export function buildReport(
     progress,
     hoursPerDayNeeded,
     aheadBehindMinutes,
+    hoursPerDayToGoalByDay,
     hasReportedThisMonth,
     publisherState,
     monthConversationCount,

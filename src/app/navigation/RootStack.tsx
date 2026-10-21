@@ -318,7 +318,7 @@ const RootStackComponent = () => {
           }}
           name='SettingsMenu'
           getComponent={() =>
-            require('@/features/settings/screens/SettingsScreen').default
+            require('@/app/navigation/SettingsMenuScreen').default
           }
         />
         <RootStack.Screen

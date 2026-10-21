@@ -762,6 +762,40 @@ describe('TimeEntry Store - Override Functionality', () => {
   })
 })
 
+describe('TimeEntry Store - Single entry deletion', () => {
+  beforeEach(() => {
+    useServiceReport.getState()._WARNING_forceDeleteServiceReports()
+  })
+
+  const entry = (id: string) => ({
+    id,
+    hours: 1,
+    minutes: 0,
+    date: moment('2026-10-05').toDate(),
+  })
+
+  it('leaves the previous state untouched', () => {
+    const { addServiceReport, deleteServiceReport } =
+      useServiceReport.getState()
+    addServiceReport(entry('a'))
+    addServiceReport(entry('b'))
+    const before = useServiceReport.getState().serviceReports
+    const previousYear = before[2026]
+
+    deleteServiceReport(entry('a'))
+
+    expect(previousYear[9].map((r) => r.id)).toEqual(['a', 'b'])
+    const after = useServiceReport.getState().serviceReports
+    expect(after[2026]).not.toBe(previousYear)
+    expect(after[2026][9].map((r) => r.id)).toEqual(['b'])
+
+    deleteServiceReport(entry('b'))
+
+    expect(after[2026][9].map((r) => r.id)).toEqual(['b'])
+    expect(useServiceReport.getState().serviceReports[2026][9]).toBeUndefined()
+  })
+})
+
 describe('TimeEntry Store - Rollover pair deletion', () => {
   beforeEach(() => {
     useServiceReport.getState()._WARNING_forceDeleteServiceReports()

@@ -638,8 +638,10 @@ export const useServiceReport = create(
             (r) => r.id !== report.id
           )
 
+          // Copy the year before changing it: the previous state shares it.
+          reports[year] = { ...reports[year] }
           if (!monthWithRemovedReport.length) {
-            delete reports[year]?.[month]
+            delete reports[year][month]
           } else {
             reports[year][month] = monthWithRemovedReport
           }

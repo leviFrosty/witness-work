@@ -3,6 +3,8 @@ import { TimeEntriesByYear } from '@/types/timeEntry'
 import { storedDayKey } from '@/lib/normalizeDate'
 import { isCountableEntry } from '@/lib/serviceReport'
 import { entryMinutes } from '@/lib/entryMinutes'
+import { isOwnVisit } from '@/lib/conversations'
+import { Visit } from '@/types/visit'
 
 const dayKey = (d: moment.Moment) => d.format('YYYY-MM-DD')
 
@@ -64,13 +66,14 @@ export const minutesInTrailingDays = (
 /**
  * The weekday (0 = Sunday) the User went out on most often in the past year:
  * the one with the most days that have logged time or a Visit. Visits cover
- * publishers who only check off the month. Ties go to the weekday with more
- * logged minutes, then to the one gone out on most recently. `null` when there
- * was no activity.
+ * publishers who only check off the month; ones that came with a shared Contact
+ * are the sender's and don't count. Ties go to the weekday with more logged
+ * minutes, then to the one gone out on most recently. `null` when there was no
+ * activity.
  */
 export const busiestWeekday = (
   daily: Map<string, number>,
-  visits: { date: Date }[],
+  visits: Pick<Visit, 'date' | 'receivedAt'>[],
   now: Date = new Date()
 ): number | null => {
   const today = dayKey(moment(now))
@@ -82,6 +85,7 @@ export const busiestWeekday = (
     if (minutes > 0 && inPastYear(key)) activeDays.set(key, minutes)
   }
   for (const visit of visits) {
+    if (!isOwnVisit(visit)) continue
     const key = dayKey(moment(visit.date))
     if (inPastYear(key) && !activeDays.has(key)) activeDays.set(key, 0)
   }

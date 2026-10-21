@@ -2,6 +2,20 @@ import moment from 'moment'
 import { Contact } from '@/types/contact'
 import { Visit } from '@/types/visit'
 
+/**
+ * Whether the User made this Visit. One that came with a shared Contact
+ * (`receivedAt`) is the sender's ministry: it stays in the Contact's history
+ * but counts toward none of the User's own figures (report, Progress, profile,
+ * widgets).
+ */
+export const isOwnVisit = (visit: Pick<Visit, 'receivedAt'>): boolean =>
+  visit.receivedAt === undefined
+
+/**
+ * Whether the User studied with the Contact in `month`: one of their own Visits
+ * that month is marked as a Bible Study. This is what the month's report
+ * counts, so a study the sender of a shared Contact conducted doesn't count.
+ */
 export const contactStudiedForGivenMonth = ({
   conversations,
   contact,
@@ -18,6 +32,7 @@ export const contactStudiedForGivenMonth = ({
     const isStudyInMonth =
       conversation.contact.id === contact.id &&
       conversation.isBibleStudy &&
+      isOwnVisit(conversation) &&
       moment(conversation.date).isSame(targetMonth, 'month')
 
     return isStudyInMonth

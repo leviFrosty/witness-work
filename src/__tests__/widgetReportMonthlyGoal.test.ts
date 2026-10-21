@@ -122,3 +122,45 @@ describe('widget Monthly Goal', () => {
     expect(phrases.size).toBe(1)
   })
 })
+
+describe('widget month counts', () => {
+  beforeEach(() => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date(2026, 6, 9, 12))
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it("counts the User's own Visits and studies, not a shared contact's", () => {
+    const args = baseArgs()
+    args.conversations = [
+      {
+        id: 'own',
+        contact: { id: 'ada' },
+        date: new Date(2026, 6, 3, 10),
+        isBibleStudy: true,
+      },
+      {
+        id: 'received-study',
+        contact: { id: 'dee' },
+        date: new Date(2026, 6, 4, 10),
+        isBibleStudy: true,
+        receivedAt: 1,
+      },
+      {
+        id: 'received-visit',
+        contact: { id: 'dee' },
+        date: new Date(2026, 6, 5, 10),
+        isBibleStudy: false,
+        receivedAt: 1,
+      },
+    ]
+
+    const report = buildReport(args)
+
+    expect(report.monthConversationCount).toBe(1)
+    expect(report.monthBibleStudyCount).toBe(1)
+  })
+})

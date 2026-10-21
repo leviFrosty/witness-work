@@ -8,6 +8,7 @@ import {
   followUpAnswer,
   followUpCardItems,
   isAppointment,
+  isOwnVisit,
   isPlaceholderFollowUp,
   newVisitIsBibleStudy,
   overdueFollowUpConversations,
@@ -213,6 +214,41 @@ describe('lib/conversations', () => {
         month: testDate,
       })
       expect(studied).toBe(true)
+    })
+
+    it("doesn't count a study that came with a shared contact", () => {
+      const received = baseVisit({
+        date: testDate,
+        isBibleStudy: true,
+        receivedAt: 1,
+      })
+      expect(
+        contactStudiedForGivenMonth({
+          contact,
+          conversations: [received],
+          month: testDate,
+        })
+      ).toBe(false)
+      // The User's own study with them that month counts.
+      expect(
+        contactStudiedForGivenMonth({
+          contact,
+          conversations: [
+            received,
+            baseVisit({ id: 'v2', date: testDate, isBibleStudy: true }),
+          ],
+          month: testDate,
+        })
+      ).toBe(true)
+    })
+  })
+
+  describe('isOwnVisit', () => {
+    it('is false only for a Visit that came with a shared contact', () => {
+      expect(isOwnVisit(baseVisit())).toBe(true)
+      expect(isOwnVisit(baseVisit({ receivedAt: 1_700_000_000_000 }))).toBe(
+        false
+      )
     })
   })
 

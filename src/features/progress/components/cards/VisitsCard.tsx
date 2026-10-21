@@ -4,6 +4,7 @@ import i18n from '@/lib/locales'
 import { formatNumber } from '@/lib/numbers'
 import useContacts from '@/stores/contactsStore'
 import useConversations from '@/stores/conversationStore'
+import { visitStats } from '@/features/progress/lib/periodCardStats'
 import StatCard from '@/features/progress/components/cards/StatCard'
 import type { ProgressCardProps } from '@/features/progress/components/cards/types'
 
@@ -12,16 +13,11 @@ export default function VisitsCard({ month, year, size }: ProgressCardProps) {
   const { contacts } = useContacts()
   const { conversations } = useConversations()
   const shown = moment({ year, month, day: 1 })
-  let talked = 0
-  let notAtHome = 0
-  for (const visit of conversations) {
-    if (!moment(visit.date).isSame(shown, 'month')) continue
-    if (visit.notAtHome) notAtHome += 1
-    else talked += 1
-  }
-  const newContacts = contacts.filter(
-    (c) => c.createdAt && moment(c.createdAt).isSame(shown, 'month')
-  ).length
+  const { talked, notAtHome, newContacts } = visitStats({
+    contacts,
+    conversations,
+    inRange: (date) => date.isSame(shown, 'month'),
+  })
 
   return (
     <StatCard

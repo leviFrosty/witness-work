@@ -215,6 +215,17 @@ describe('studyStats', () => {
     expect([...stats.contactIds]).toEqual(['cy'])
     expect(stats.peak).toEqual({ year: 2026, month: 0, count: 1 })
   })
+
+  it('leaves out studies that came with a shared contact', () => {
+    const stats = studyStats({
+      contacts: [contact('dee')],
+      conversations: [
+        visit('dee', '2026-02-02', { isBibleStudy: true, receivedAt: 1 }),
+      ],
+    })
+    expect(stats.contactIds.size).toBe(0)
+    expect(stats.peak).toBeNull()
+  })
 })
 
 describe('visitStats', () => {
@@ -237,6 +248,20 @@ describe('visitStats', () => {
       })
     ).toEqual({ talked: 2, notAtHome: 1, people: 1, newContacts: 1 })
     expect(visitStats({ contacts, conversations }).people).toBe(2)
+  })
+
+  it('leaves out Visits that came with a shared contact', () => {
+    const conversations = [
+      visit('ada', '2025-10-02'),
+      visit('dee', '2025-10-04', { receivedAt: 1 }),
+      visit('dee', '2025-10-05', { notAtHome: true, receivedAt: 1 }),
+    ]
+    expect(visitStats({ contacts: [], conversations })).toEqual({
+      talked: 1,
+      notAtHome: 0,
+      people: 1,
+      newContacts: 0,
+    })
   })
 })
 

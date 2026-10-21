@@ -32,6 +32,7 @@ import usePublisher from '@/hooks/usePublisher'
 import useIsSupporter from '@/hooks/useIsSupporter'
 import { isFoundingSupporter } from '@/lib/foundingSupporter'
 import useConversations from '@/stores/conversationStore'
+import { isOwnVisit } from '@/lib/conversations'
 import Text from '@/components/ui/MyText'
 import IconButton from '@/components/ui/IconButton'
 import ProfileCard from '@/features/profile/components/ProfileCard'
@@ -145,6 +146,7 @@ const ProfileDetailOverlay = () => {
       days: daysLogged(daily),
       last30Minutes: minutesInTrailingDays(daily, 30),
       busiestWeekday: busiestWeekday(daily, conversations),
+      conversations: conversations.filter(isOwnVisit).length,
     }
   }, [daily, conversations])
   const totalDisplay = useFormattedMinutes(stats.totalMinutes)
@@ -327,7 +329,7 @@ const ProfileDetailOverlay = () => {
                 ) : (
                   <Stat
                     label={i18n.t('profileStatConversations')}
-                    value={formatPlainNumber(conversations.length)}
+                    value={formatPlainNumber(stats.conversations)}
                     sub={i18n.t('profileStatConversationsSub')}
                   />
                 )}

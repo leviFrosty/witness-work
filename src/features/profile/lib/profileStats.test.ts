@@ -63,6 +63,17 @@ describe('busiestWeekday', () => {
   it('is null with no activity', () => {
     expect(busiestWeekday(new Map(), [], now)).toBeNull()
   })
+
+  it('skips Visits that came with a shared contact', () => {
+    const logged = daily(['2026-10-03', 60]) // Sat
+    // The sender's Tuesdays outnumber the User's Saturday, but aren't theirs.
+    const received = [visit(2026, 9, 6), visit(2026, 8, 29)].map((v) => ({
+      ...v,
+      receivedAt: 1,
+    }))
+    expect(busiestWeekday(logged, received, now)).toBe(SATURDAY)
+    expect(busiestWeekday(new Map(), received, now)).toBeNull()
+  })
 })
 
 describe('contributionSummary', () => {

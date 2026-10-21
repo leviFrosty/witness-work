@@ -147,9 +147,11 @@ wwv flow e2e/maestro/add-contact.yaml --platform android
 
 ## iPad
 
-agent-device can't read the iPad layout: its XCTest capture times out on the sidebar shell and returns only the app node, so refs, selectors, `find` and `wait` find nothing. Coordinate input still works. So on iPad, `wwv ad` reads the screen with AXe and sends agent-device coordinates. The commands above work unchanged, and `wwv flow` and `wwv monkey` go the same way:
+agent-device can't read the iPad layout: its XCTest capture times out on the sidebar shell and returns only the app node, so refs, selectors, `find` and `wait` find nothing. Its coordinate taps also miss once the app window is resized. So on iPad, `wwv ad` reads the screen with AXe and taps through AXe. The commands above work unchanged, and `wwv flow` and `wwv monkey` go the same way:
 
-- `snapshot` lists `@aN` refs from AXe, warning when the splash covers the app. `press`, `fill` and `find … click` resolve `@aN`, `label=`/`id=`/`role=` selectors or text, then tap the center.
+- `snapshot` lists `@aN` refs from AXe, warning when the splash covers the app. `press`, `fill` and `find … click` resolve `@aN`, `label=`/`id=`/`role=` selectors or text, then tap the center. A `fill` focuses the field with that tap and lets agent-device replace its text.
+- **Resized windows.** AXe frames elements relative to the app window, so taps add the window's place on screen, which `wwv ad` reads from SpringBoard (`axe describe-ui --point 1,1`). Refs, selectors and `back` land in any window size. Raw `press <x> <y>` coordinates are screen points, as in a screenshot. Resize the window by dragging its bottom-right corner with `axe drag`. agent-device's `scroll` and `swipe` still miss in a resized window; scroll with `axe swipe` at screen coordinates.
+- Don't send keys through AXe (`axe key`, `key-combo`, `type`): the simulator then treats them as a hardware keyboard and hides the software keyboard, and agent-device's `type` and `fill` fail with `TEXT_INPUT_NOT_FOCUSED` until the simulator reboots (`wwv down --shutdown`).
 - A sheet leaves the screen under it in the tree, so a label can match twice. `wwv ad` hit-tests each match and taps the one in front.
 - `wait text|absent|stable` poll AXe, and `back` presses the screen's "Go Back" (or "Back", "Close") control.
 - `--settle` waits until nothing moves, including a dock riding the keyboard, then prints an AXe diff: `+` lines carry new refs, `-` lines what left the screen.

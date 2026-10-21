@@ -3,8 +3,8 @@
 // find and wait. On iPad simulators agent-device 0.21 reads only the app node
 // for the sidebar shell (its XCTest query sweep times out and its private-AX
 // fallback stops at three nodes), while AXe reads the whole tree through
-// CoreSimulator. Coordinate input through agent-device works on both, so
-// ww-verify resolves targets here and lets agent-device do the tapping.
+// CoreSimulator. ww-verify resolves targets here; on iPad it taps them with
+// AXe too, at the element's window position plus the window's place on screen.
 //
 // Everything in this file is pure; ww-verify.mjs runs AXe and agent-device.
 
@@ -114,6 +114,39 @@ export function flatten(tree) {
 export const center = (e) => ({
   x: Math.round(e.x + e.width / 2),
   y: Math.round(e.y + e.height / 2),
+})
+
+/**
+ * The app window's top-left corner on screen, from an `axe describe-ui --point`
+ * read that landed on SpringBoard: its app switcher lists each window as a
+ * `card:<bundle id>:sceneID:…` element framed in screen coordinates. Null when
+ * the read has no card for the app (the point landed in the app itself).
+ */
+export function windowOrigin(tree, bundleId) {
+  const prefix = `card:${bundleId}:`
+  const find = (node) => {
+    if (String(node.AXUniqueId ?? '').startsWith(prefix) && node.frame)
+      return { x: node.frame.x, y: node.frame.y }
+    for (const child of node.children ?? []) {
+      const found = find(child)
+      if (found) return found
+    }
+    return null
+  }
+  for (const root of Array.isArray(tree) ? tree : [tree]) {
+    const found = find(root)
+    if (found) return found
+  }
+  return null
+}
+
+/**
+ * A point from AXe's window coordinates in screen coordinates, where taps and
+ * `--point` reads land. They differ once an iPad window is resized.
+ */
+export const toScreen = (point, origin) => ({
+  x: Math.round(point.x + origin.x),
+  y: Math.round(point.y + origin.y),
 })
 
 const quoted = (text) => JSON.stringify(String(text))

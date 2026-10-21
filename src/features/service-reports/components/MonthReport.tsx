@@ -714,6 +714,9 @@ const MonthReport = ({
               borderTopWidth: 1,
               borderTopColor: theme.colors.border,
               flexDirection: 'row',
+              // At large text sizes the recency note wraps under the action
+              // instead of running off the card.
+              flexWrap: 'wrap',
               alignItems: 'center',
               justifyContent: 'space-between',
               gap: 12,

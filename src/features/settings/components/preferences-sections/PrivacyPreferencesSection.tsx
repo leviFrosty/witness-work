@@ -109,7 +109,7 @@ const PrivacyPreferencesSection = () => {
       <Section>
         <InputRowSwitch
           label={i18n.t('anonymousAnalytics')}
-          description={i18n.t('anonymousAnalyticsDesc')}
+          info={i18n.t('anonymousAnalyticsDesc')}
           value={analyticsEnabled}
           onValueChange={(value) => set({ analyticsEnabled: value })}
           lastInSection

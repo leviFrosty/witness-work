@@ -8,6 +8,7 @@ import { useToastController } from '@tamagui/toast'
 import Wrapper from '@/components/ui/layout/Wrapper'
 import Text from '@/components/ui/MyText'
 import IsSupporter from '@/components/IsSupporter'
+import InfoPopover from '@/components/ui/InfoPopover'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import { email } from '@/constants/contactInformation'
@@ -82,15 +83,23 @@ const ArtistCallout = () => {
         gap: 8,
       }}
     >
-      <Text
-        style={{
-          fontFamily: theme.fonts.semiBold,
-          fontSize: theme.fontSize('md'),
-          color: theme.colors.text,
-        }}
-      >
-        {i18n.t('appIconArtistCallTitle')}
-      </Text>
+      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+        <Text
+          style={{
+            flexShrink: 1,
+            fontFamily: theme.fonts.semiBold,
+            fontSize: theme.fontSize('md'),
+            color: theme.colors.text,
+          }}
+        >
+          {i18n.t('appIconArtistCallTitle')}
+        </Text>
+        <InfoPopover
+          title={i18n.t('appIconArtistCallTitle')}
+          description={i18n.t('appIconArtistCallDetails')}
+          inline
+        />
+      </View>
       <Text
         style={{
           fontSize: theme.fontSize('sm'),
@@ -98,7 +107,7 @@ const ArtistCallout = () => {
           lineHeight: 20,
         }}
       >
-        {i18n.t('appIconArtistCallDescription')}{' '}
+        {i18n.t('appIconArtistCallContact')}{' '}
         <Text
           onPress={() => openURL(`mailto:${email}`)}
           style={{

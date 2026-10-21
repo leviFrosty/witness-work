@@ -12,7 +12,7 @@ const AudioAndHapticsPreferencesSection = () => {
       <Section>
         <InputRowSwitch
           label={i18n.t('playSounds')}
-          description={i18n.t(
+          info={i18n.t(
             Platform.OS === 'android'
               ? 'playSounds_descriptionAndroid'
               : 'playSounds_description'
@@ -22,7 +22,7 @@ const AudioAndHapticsPreferencesSection = () => {
         />
         <InputRowSwitch
           label={i18n.t('haptics')}
-          description={i18n.t('haptics_description')}
+          info={i18n.t('haptics_description')}
           value={hapticsEnabled}
           onValueChange={(value) => set({ hapticsEnabled: value })}
           lastInSection

@@ -174,7 +174,7 @@
       "id": "home.progress",
       "area": "Home",
       "title": "Month progress",
-      "description": "The month's name, its total in the user's Duration Format, the goal in whole hours, a pace bar with a mark where the user's Plans put them by today (never red), and either Goal reached or the ahead/behind or hours-per-day pace line. The hours per day count the days left and round up as the phone's Daily Pace card does, from midnight on too.",
+      "description": "The month's name, its total in the user's Duration Format, the goal in hours as the user set it (50, or 37.5), a pace bar with a mark where the user's Plans put them by today (never red), and either Goal reached or the ahead/behind or hours-per-day pace line. The hours per day count the days left and round up as the phone's Daily Pace card does, from midnight on too.",
       "shared": [
         "src/app/watch/buildWatchSnapshot.ts#paceText",
         "src/features/progress/lib/progressCardStats.ts#export const dailyPace"

@@ -78,7 +78,21 @@ class MonthProgressTest {
     assertEquals("16.5", p.hours)
     assertEquals(snapshot.monthFormatted, p.formatted)
     assertEquals(990.0 / 3000, p.fraction!!, 1e-9)
-    assertEquals(50, p.goalHours)
+    assertEquals(50.0, p.goalHours, 0.0)
+  }
+
+  @Test
+  fun `takes a goal with a decimal, as the phone allows`() {
+    val json = JSONObject(javaClass.classLoader!!.getResource("phone-context.json")!!.readText())
+    json.getJSONObject("snapshot").put("goalHours", 37.5)
+    json.getJSONObject("snapshot").getJSONObject("nextMonth").put("goalHours", 12.5)
+    val decimal = PhoneContext.fromJson(json).snapshot!!
+    assertEquals(12.5, decimal.nextMonth!!.goalHours, 0.0)
+
+    val p = MonthProgress.of(decimal, emptyList(), emptyList(), at(5), t)!!
+    assertEquals(37.5, p.goalHours, 0.0)
+    // 990 of 2250 minutes, not of 37 hours' 2220.
+    assertEquals(990.0 / 2250, p.fraction!!, 1e-9)
   }
 
   @Test

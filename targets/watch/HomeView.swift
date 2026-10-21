@@ -61,9 +61,9 @@ private struct ProgressSection: View {
       HStack(alignment: .firstTextBaseline, spacing: 2) {
         Text(progress.formatted)
           .font(.title2.bold())
-        // The goal is whole hours the user entered.
+        // The goal is the hours the user entered, e.g. 50 or 37.5.
         if progress.goalHours > 0 {
-          Text(verbatim: "/" + snapshot.appLanguage.number(progress.goalHours))
+          Text(verbatim: "/" + snapshot.appLanguage.decimal(progress.goalHours))
             .foregroundStyle(.secondary)
         }
       }

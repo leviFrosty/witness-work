@@ -421,8 +421,8 @@ data class WatchSnapshot(
   /** Credit-capped minutes this month. */
   val monthMinutes: Int?,
   val monthName: String?,
-  /** Whole hours; 0 means no goal. */
-  val goalHours: Int,
+  /** Hours, possibly with a decimal (`37.5`); 0 means no goal. */
+  val goalHours: Double,
   /** 0...1 toward the monthly goal. */
   val progress: Double,
   /** Planned minutes through each day of the month; `null` without plans. */
@@ -458,7 +458,7 @@ data class WatchSnapshot(
   data class NextMonth(
     val monthKey: String,
     val monthName: String,
-    val goalHours: Int,
+    val goalHours: Double,
     val showsTimeEntry: Boolean,
   ) : JsonEncodable {
     override fun toJson(): JSONObject =
@@ -473,7 +473,7 @@ data class WatchSnapshot(
         NextMonth(
           monthKey = json.getString("monthKey"),
           monthName = json.getString("monthName"),
-          goalHours = json.getInt("goalHours"),
+          goalHours = json.getDouble("goalHours"),
           showsTimeEntry = json.getBoolean("showsTimeEntry"),
         )
     }
@@ -548,7 +548,7 @@ data class WatchSnapshot(
         monthCompact = json.getString("monthCompact"),
         monthMinutes = json.optIntOrNull("monthMinutes"),
         monthName = json.optStringOrNull("monthName"),
-        goalHours = json.getInt("goalHours"),
+        goalHours = json.getDouble("goalHours"),
         progress = json.getDouble("progress"),
         plannedThroughDay =
           json.optJSONArray("plannedThroughDay")?.let { a -> List(a.length()) { a.getInt(it) } },

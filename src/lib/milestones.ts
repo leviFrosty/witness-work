@@ -81,6 +81,26 @@ export const getMilestoneHitState = (
 }
 
 /**
+ * Which row each milestone value sits on under the progress bar, given each
+ * divider's place along it (0–1, ascending) and the least room two values on
+ * one row need. A value goes on the top row when it clears the top row's last
+ * value, else on the second row when it clears that row's, else it's left out
+ * (`null`) rather than drawn over a neighbor.
+ */
+export const milestoneLabelRows = (
+  positions: number[],
+  minGap: number
+): (0 | 1 | null)[] => {
+  const last = [-Infinity, -Infinity]
+  return positions.map((position) => {
+    const row = ([0, 1] as const).find((r) => position - last[r] >= minGap)
+    if (row === undefined) return null
+    last[row] = position
+    return row
+  })
+}
+
+/**
  * Stable key used by the `celebratedMilestones` preference map. Mirrors
  * `monthCelebrationKey` in shape — a single stringified identifier for the
  * service year the milestones live in. We key by the service-year START year

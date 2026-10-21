@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { View, ViewStyle } from 'react-native'
+import { useWindowDimensions, View, ViewStyle } from 'react-native'
 
 import useTheme from '@/contexts/theme'
 import usePublisher from '@/hooks/usePublisher'
@@ -9,7 +9,11 @@ import useServiceReport from '@/stores/serviceReport'
 import { usePreferences } from '@/stores/preferences'
 import { getTotalMinutesForServiceYear } from '@/lib/serviceReport'
 import { getServiceYearReports } from '@/lib/serviceYear'
-import { getEffectiveMilestones, getMilestoneHitState } from '@/lib/milestones'
+import {
+  getEffectiveMilestones,
+  getMilestoneHitState,
+  milestoneLabelRows,
+} from '@/lib/milestones'
 import StripedFill from '@/components/ui/StripedFill'
 import Text from '@/components/ui/MyText'
 import { useShallow } from 'zustand/react/shallow'
@@ -31,6 +35,8 @@ const LABEL_ROW_GAP = 2
 // drop the next one to a second row. ~7% comfortably clears a 4-digit label at
 // xs font on a typical card-width bar.
 const LABEL_MIN_GAP_RATIO = 0.06
+/** A value's line height per point of font size, roughly. */
+const LINE_HEIGHT = 1.25
 
 type SegmentState = 'hit' | 'progress' | 'future'
 
@@ -66,8 +72,8 @@ type LabelLayout = {
  * - Future segments render with the shared `StripedFill` diagonal pattern,
  *   matching the planned portion of the projected-total bar.
  * - Milestone values are centered beneath their divider line; labels that would
- *   crowd a neighbor drop to a second row. The "next" value is emphasized in
- *   accent.
+ *   crowd a neighbor drop to a second row, and are left out when that row is
+ *   crowded too. The "next" value is emphasized in accent.
  */
 export const MilestoneProgressBarPreview = ({
   milestones,
@@ -75,6 +81,15 @@ export const MilestoneProgressBarPreview = ({
   annualGoalHours,
 }: MilestoneProgressBarPreviewProps) => {
   const theme = useTheme()
+  // Larger text makes the values taller and wider: the rows grow by the extra
+  // line height, and values need more room before they drop to a second row,
+  // so neither row covers the other or the content below.
+  const textScale = Math.max(1, useWindowDimensions().fontScale)
+  const labelWidth = LABEL_WIDTH * textScale
+  const rowHeight =
+    LABEL_ROW_HEIGHT + (textScale - 1) * theme.fontSize('xs') * LINE_HEIGHT
+  const rowGap = LABEL_ROW_GAP * textScale
+  const minGapRatio = LABEL_MIN_GAP_RATIO * textScale
 
   const safeGoal = annualGoalHours > 0 ? annualGoalHours : 1
 
@@ -104,31 +119,34 @@ export const MilestoneProgressBarPreview = ({
     const next = getMilestoneHitState(milestones, minutesCompleted).next
 
     // Lay out labels centered on each milestone divider. When two milestones
-    // sit closer than LABEL_MIN_GAP_RATIO, drop the second label to a second
-    // row so values never collide or wrap inside a too-narrow segment.
-    const labelLayout: LabelLayout[] = []
+    // sit closer than the minimum gap, the second label drops to a second row,
+    // or is left out when it would crowd that row too, so values never
+    // collide or wrap inside a too-narrow segment.
+    const positions: number[] = []
     let cumulative = 0
-    let lastTopRowPos = -Infinity
     for (const seg of segs) {
       cumulative += seg.widthFlex
-      const tooClose = cumulative - lastTopRowPos < LABEL_MIN_GAP_RATIO
-      const row = tooClose ? 1 : 0
-      if (!tooClose) lastTopRowPos = cumulative
-      labelLayout.push({
-        value: seg.end,
-        position: cumulative,
-        row,
-        isNext: seg.end === next,
-        state: seg.state,
-      })
+      positions.push(cumulative)
     }
+    const rows = milestoneLabelRows(positions, minGapRatio)
+    const labelLayout: LabelLayout[] = segs.flatMap((seg, i) => {
+      const row = rows[i]
+      if (row === null) return []
+      return [
+        {
+          value: seg.end,
+          position: positions[i],
+          row,
+          isNext: seg.end === next,
+          state: seg.state,
+        },
+      ]
+    })
     const hasSecondRow = labelLayout.some((l) => l.row === 1)
-    const height = hasSecondRow
-      ? LABEL_ROW_HEIGHT * 2 + LABEL_ROW_GAP
-      : LABEL_ROW_HEIGHT
+    const height = hasSecondRow ? rowHeight * 2 + rowGap : rowHeight
 
     return { segments: segs, labels: labelLayout, labelsHeight: height }
-  }, [milestones, minutesCompleted, safeGoal])
+  }, [milestones, minutesCompleted, safeGoal, minGapRatio, rowHeight, rowGap])
 
   const separatorColor = theme.colors.text
   const pastelFill = theme.colors.accentTranslucent
@@ -235,8 +253,8 @@ export const MilestoneProgressBarPreview = ({
               ? { left: 0, alignItems: 'flex-start' }
               : {
                   left: `${label.position * 100}%`,
-                  width: LABEL_WIDTH,
-                  marginLeft: -LABEL_WIDTH / 2,
+                  width: labelWidth,
+                  marginLeft: -labelWidth / 2,
                   alignItems: 'center',
                 }
           return (
@@ -244,7 +262,7 @@ export const MilestoneProgressBarPreview = ({
               key={label.value}
               style={{
                 position: 'absolute',
-                top: label.row * (LABEL_ROW_HEIGHT + LABEL_ROW_GAP),
+                top: label.row * (rowHeight + rowGap),
                 ...positionStyle,
               }}
             >

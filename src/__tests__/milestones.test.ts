@@ -4,13 +4,27 @@ vi.mock('@/lib/logger', () => import('@/__tests__/mocks/logger'))
 vi.mock('@/stores/mmkv', () => import('@/__tests__/mocks/mmkv'))
 
 import { LDC_BUILTIN_CATEGORY_ID } from '@/constants/categories'
-import { getMilestoneHitState } from '@/lib/milestones'
+import { getMilestoneHitState, milestoneLabelRows } from '@/lib/milestones'
 import { getTotalMinutesForServiceYear } from '@/lib/serviceReport'
 import { getServiceYearReports } from '@/lib/serviceYear'
 import { migrateTimeCachePersistedState } from '@/stores/timeCache'
 import type { TimeEntriesByYear, TimeEntry } from '@/types/timeEntry'
 
 const LADDER = [30, 50, 100, 200, 350, 600]
+
+describe('milestoneLabelRows', () => {
+  const positions = LADDER.map((value) => value / 600)
+
+  it('drops a value that crowds its neighbor to the second row', () => {
+    expect(milestoneLabelRows(positions, 0.06)).toEqual([0, 1, 0, 0, 0, 0])
+  })
+
+  it('leaves out a value that would crowd both rows', () => {
+    // Large text needs about three times the room: 50 and 100 can't share the
+    // second row, so 100 is left out instead of drawn over 50.
+    expect(milestoneLabelRows(positions, 0.18)).toEqual([0, 1, null, 0, 0, 0])
+  })
+})
 
 describe('getMilestoneHitState', () => {
   it("doesn't count 599h 57m as the 600-hour goal", () => {

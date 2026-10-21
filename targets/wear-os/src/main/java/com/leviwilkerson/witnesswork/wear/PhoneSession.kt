@@ -106,7 +106,11 @@ object PhoneSession {
   fun receive(context: PhoneContext) {
     val previous = WatchStorage.loadContext()
     if (!WatchStorage.saveContextIfNewer(context)) return
-    if (previous?.snapshot != context.snapshot) Surfaces.update(this.context)
+    when (Surfaces.refreshFor(previous, context)) {
+      Surfaces.Refresh.ALL -> Surfaces.update(this.context)
+      Surfaces.Refresh.TILE -> Surfaces.updateTile(this.context)
+      Surfaces.Refresh.NONE -> {}
+    }
     TimerOngoingActivity.update(this.context, context.timer, context.snapshot)
     WatchModel.apply(context)
   }

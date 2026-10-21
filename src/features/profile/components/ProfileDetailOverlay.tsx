@@ -29,6 +29,7 @@ import useTheme from '@/contexts/theme'
 import { usePreferences } from '@/stores/preferences'
 import { type OriginRect, useProfileOverlay } from '@/stores/profileOverlay'
 import usePublisher from '@/hooks/usePublisher'
+import useAccessibilityTextSize from '@/hooks/useAccessibilityTextSize'
 import useIsSupporter from '@/hooks/useIsSupporter'
 import { isFoundingSupporter } from '@/lib/foundingSupporter'
 import useConversations from '@/stores/conversationStore'
@@ -73,10 +74,12 @@ const Stat = ({
   sub?: string
 }) => {
   const theme = useTheme()
+  const stacked = useAccessibilityTextSize()
   return (
     <View
       style={{
-        flex: 1,
+        // Side by side, the pair shares the row; stacked, each takes its own.
+        flex: stacked ? undefined : 1,
         padding: 14,
         borderRadius: theme.numbers.borderRadiusMd,
         backgroundColor: theme.colors.backgroundLighter,
@@ -127,6 +130,12 @@ const ProfileDetailSheet = ({ origin }: { origin: OriginRect }) => {
   const { open, away, close: onClose, stepAway, hide } = useProfileOverlay()
   const theme = useTheme()
   const insets = useSafeAreaInsets()
+  // At accessibility text sizes the stats stack, so their labels and notes
+  // keep whole words.
+  const statRowStyle = {
+    flexDirection: useAccessibilityTextSize() ? 'column' : 'row',
+    gap: 10,
+  } as const
   const navigation = useNavigation<RootStackNavigation>()
   const { width: winW, height: winH } = useWindowDimensions()
   const tenureStartDate = usePreferences((s) => s.tenureStartDate)
@@ -306,7 +315,7 @@ const ProfileDetailSheet = ({ origin }: { origin: OriginRect }) => {
                 onBeforeOpenBadge={stepAwayForBadge}
               />
 
-              <View style={{ flexDirection: 'row', gap: 10 }}>
+              <View style={statRowStyle}>
                 <Stat
                   label={i18n.t('profileStatBusiestDay')}
                   value={
@@ -331,7 +340,7 @@ const ProfileDetailSheet = ({ origin }: { origin: OriginRect }) => {
                 )}
               </View>
               {entryMode === 'hours' && (
-                <View style={{ flexDirection: 'row', gap: 10 }}>
+                <View style={statRowStyle}>
                   <Stat
                     label={i18n.t('profileStatHours')}
                     value={totalDisplay.formatted}

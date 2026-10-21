@@ -1,6 +1,9 @@
 import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
 import { View } from 'react-native'
 import useTheme from '@/contexts/theme'
+import useAccessibilityTextSize, {
+  FIT_ONE_LINE,
+} from '@/hooks/useAccessibilityTextSize'
 import Text from '@/components/ui/MyText'
 import { tracking } from '@/lib/tracking'
 
@@ -15,6 +18,11 @@ interface Props {
 
 const SinceBadge = ({ icon, label, value, tint, tintBg, iconFill }: Props) => {
   const theme = useTheme()
+  // At accessibility text sizes the decorative icon gives the date its room,
+  // and the date shrinks onto one line rather than breaking a long month name.
+  const largeText = useAccessibilityTextSize()
+  const showIcon = !largeText
+  const fitValue = largeText ? FIT_ONE_LINE : undefined
   return (
     <View
       style={{
@@ -26,18 +34,20 @@ const SinceBadge = ({ icon, label, value, tint, tintBg, iconFill }: Props) => {
         backgroundColor: theme.colors.backgroundLighter,
       }}
     >
-      <View
-        style={{
-          width: 36,
-          height: 36,
-          borderRadius: 18,
-          alignItems: 'center',
-          justifyContent: 'center',
-          backgroundColor: tintBg,
-        }}
-      >
-        <LucideIcon icon={icon} size={15} color={tint} fill={iconFill} />
-      </View>
+      {showIcon && (
+        <View
+          style={{
+            width: 36,
+            height: 36,
+            borderRadius: 18,
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: tintBg,
+          }}
+        >
+          <LucideIcon icon={icon} size={15} color={tint} fill={iconFill} />
+        </View>
+      )}
       <View style={{ flex: 1 }}>
         <Text
           style={{
@@ -50,6 +60,7 @@ const SinceBadge = ({ icon, label, value, tint, tintBg, iconFill }: Props) => {
           {label}
         </Text>
         <Text
+          {...fitValue}
           style={{
             fontSize: 15,
             color: theme.colors.text,

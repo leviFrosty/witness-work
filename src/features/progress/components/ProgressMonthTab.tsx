@@ -8,6 +8,7 @@ import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
 import useRevealAboveSheet from '@/hooks/useRevealAboveSheet'
 import type { HideBarsScrollProps } from '@/hooks/useHideBarsOnScroll'
 import useTabReselect from '@/hooks/useTabReselect'
+import useScrollAnchor from '@/hooks/useScrollAnchor'
 import { getMonthsReports } from '@/lib/serviceReport'
 
 import MonthReport from '@/features/service-reports/components/MonthReport'
@@ -98,8 +99,23 @@ const ProgressMonthTab = ({
     obscuredBottom: hasBottomBar ? insets.bottom + TAB_BAR_HEIGHT : 0,
   })
   const paddingBottom = insets.bottom + (hasBottomBar ? 100 : 30)
+  // Opening or closing iPhone Duo keeps what's being read in view, a day of
+  // the Days list too as it moves to its own column and back.
+  const anchor = useScrollAnchor(daysBeside)
+  const trailingFrame = useRef<View>(null)
+  const leadingAnchor = anchor.scroll('leading', leadingRef, leading.frameRef)
+  const trailingAnchor = anchor.scroll(
+    'trailing',
+    dayReveal.scrollRef,
+    trailingFrame
+  )
+  const dayRef = (day: string) =>
+    anchor.anchorRef(`day:${day}`, daysBeside ? 'trailing' : 'leading')
   // Tapping Progress again heads back to the top.
-  useTabReselect(() => leadingRef.current?.scrollToPosition(0, 0, true))
+  useTabReselect(() => {
+    anchor.reset()
+    leadingRef.current?.scrollToPosition(0, 0, true)
+  })
 
   // The report can't be removed or moved, so it rests while the cards are
   // edited; tapping it, like any empty space, ends editing.
@@ -139,6 +155,7 @@ const ProgressMonthTab = ({
       onDragChange={setDragging}
       exclude={daysBeside ? ['days'] : []}
       dayReveal={daysBeside ? undefined : dayReveal}
+      dayRef={dayRef}
     />
   )
 
@@ -147,6 +164,22 @@ const ProgressMonthTab = ({
       <KeyboardAwareScrollView
         ref={leadingRef}
         {...scrollBars}
+        onScrollBeginDrag={(e) => {
+          scrollBars?.onScrollBeginDrag(e)
+          leadingAnchor.onScrollBeginDrag()
+        }}
+        onScrollEndDrag={() => {
+          scrollBars?.onScrollEndDrag()
+          leadingAnchor.onScrollEndDrag()
+        }}
+        onMomentumScrollEnd={() => {
+          scrollBars?.onMomentumScrollEnd()
+          leadingAnchor.onMomentumScrollEnd()
+        }}
+        onScrollToTop={() => {
+          scrollBars?.onScrollToTop()
+          anchor.reset()
+        }}
         onScroll={(e) => {
           leading.props.onScroll(e)
           if (!daysBeside) dayReveal.onScroll(e)
@@ -176,8 +209,10 @@ const ProgressMonthTab = ({
           gap: 12,
         }}
       >
-        {report}
-        {cardsSection}
+        {leadingAnchor.origin}
+        <View ref={anchor.anchorRef('report', 'leading')}>{report}</View>
+        <View ref={anchor.anchorRef('cards', 'leading')}>{cardsSection}</View>
+        {leadingAnchor.room}
       </KeyboardAwareScrollView>
     </View>
   )
@@ -210,71 +245,79 @@ const ProgressMonthTab = ({
         trailingStyle={daysBeside ? { paddingTop: insets.top } : undefined}
         trailing={
           daysBeside ? (
-            <KeyboardAwareScrollView
-              ref={dayReveal.scrollRef}
-              onScroll={dayReveal.onScroll}
-              scrollEventThrottle={16}
-              keyboardShouldPersistTaps='handled'
-              style={{ flex: 1 }}
-              contentContainerStyle={{
-                // The grid's cells pad each card by half a gap, which is where
-                // the edit buttons sit; the list gets the same room.
-                paddingTop: 15 - PROGRESS_CARD_GAP / 2,
-                paddingBottom: paddingBottom + dayReveal.bottomInset,
-              }}
-            >
-              <ReorderableContainer
-                editing={editing}
-                // Beside the cards there's nothing to move it among.
-                onMove={() => {}}
-                onLiftToEdit={() => onStartEditing('card')}
-                onBackgroundPress={onFinishEditing}
-                style={{
-                  padding: PROGRESS_CARD_GAP / 2,
-                  // The list's header starts at its edge; keep it clear of the
-                  // remove badge.
-                  paddingTop: PROGRESS_CARD_GAP / 2 + (editing ? 8 : 0),
+            <View ref={trailingFrame} collapsable={false} style={{ flex: 1 }}>
+              <KeyboardAwareScrollView
+                ref={dayReveal.scrollRef}
+                onScrollBeginDrag={trailingAnchor.onScrollBeginDrag}
+                onScrollEndDrag={trailingAnchor.onScrollEndDrag}
+                onMomentumScrollEnd={trailingAnchor.onMomentumScrollEnd}
+                onScroll={dayReveal.onScroll}
+                scrollEventThrottle={16}
+                keyboardShouldPersistTaps='handled'
+                style={{ flex: 1 }}
+                contentContainerStyle={{
+                  // The grid's cells pad each card by half a gap, which is where
+                  // the edit buttons sit; the list gets the same room.
+                  paddingTop: 15 - PROGRESS_CARD_GAP / 2,
+                  paddingBottom: paddingBottom + dayReveal.bottomInset,
                 }}
               >
-                <ReorderableItem
-                  id='days'
-                  movable={false}
-                  liftOutsideEditing='zone'
-                  onRemove={() => cards.remove('days')}
-                  removeLabel={i18n.t('progressCards.removeA11y', {
-                    card: PROGRESS_CARDS.days.title(),
-                  })}
-                  accessibilityLabel={PROGRESS_CARDS.days.title()}
-                  accessibilityActions={[
-                    {
-                      name: 'remove',
-                      label: i18n.t('progressCards.removeCard'),
-                    },
-                  ]}
-                  onAccessibilityAction={(name) => {
-                    if (name === 'remove') cards.remove('days')
+                {trailingAnchor.origin}
+                <ReorderableContainer
+                  editing={editing}
+                  // Beside the cards there's nothing to move it among.
+                  onMove={() => {}}
+                  onLiftToEdit={() => onStartEditing('card')}
+                  onBackgroundPress={onFinishEditing}
+                  style={{
+                    padding: PROGRESS_CARD_GAP / 2,
+                    // The list's header starts at its edge; keep it clear of the
+                    // remove badge.
+                    paddingTop: PROGRESS_CARD_GAP / 2 + (editing ? 8 : 0),
                   }}
                 >
-                  {/* Beside the cards the list always shows every day. */}
-                  <DaysCard
-                    month={month}
-                    year={year}
-                    size='full'
-                    dayReveal={dayReveal}
-                    wrapEditTrigger={(header) => (
-                      <ReorderableLiftZone>
-                        <ProgressCardPressable
-                          onEdit={() => onStartEditing('card')}
-                          fill={false}
-                        >
-                          {header}
-                        </ProgressCardPressable>
-                      </ReorderableLiftZone>
-                    )}
-                  />
-                </ReorderableItem>
-              </ReorderableContainer>
-            </KeyboardAwareScrollView>
+                  <ReorderableItem
+                    id='days'
+                    movable={false}
+                    liftOutsideEditing='zone'
+                    onRemove={() => cards.remove('days')}
+                    removeLabel={i18n.t('progressCards.removeA11y', {
+                      card: PROGRESS_CARDS.days.title(),
+                    })}
+                    accessibilityLabel={PROGRESS_CARDS.days.title()}
+                    accessibilityActions={[
+                      {
+                        name: 'remove',
+                        label: i18n.t('progressCards.removeCard'),
+                      },
+                    ]}
+                    onAccessibilityAction={(name) => {
+                      if (name === 'remove') cards.remove('days')
+                    }}
+                  >
+                    {/* Beside the cards the list always shows every day. */}
+                    <DaysCard
+                      month={month}
+                      year={year}
+                      size='full'
+                      dayReveal={dayReveal}
+                      dayRef={dayRef}
+                      wrapEditTrigger={(header) => (
+                        <ReorderableLiftZone>
+                          <ProgressCardPressable
+                            onEdit={() => onStartEditing('card')}
+                            fill={false}
+                          >
+                            {header}
+                          </ProgressCardPressable>
+                        </ReorderableLiftZone>
+                      )}
+                    />
+                  </ReorderableItem>
+                </ReorderableContainer>
+                {trailingAnchor.room}
+              </KeyboardAwareScrollView>
+            </View>
           ) : undefined
         }
       />

@@ -63,6 +63,10 @@ type Props = {
   highlightedVisitId?: string
   navigation: ContactDetailsNavigation
   embedded?: boolean
+  /** Opens scrolled this far, e.g. as it was read in another layout. */
+  scrollY?: number
+  /** Where the user's scrolling came to rest. */
+  onScrollY?: (y: number) => void
 }
 
 const ContactDetailsContent = ({
@@ -70,6 +74,8 @@ const ContactDetailsContent = ({
   highlightedVisitId,
   navigation,
   embedded = false,
+  scrollY,
+  onScrollY,
 }: Props) => {
   const theme = useTheme()
   const insets = useSafeAreaInsets()
@@ -97,6 +103,8 @@ const ContactDetailsContent = ({
   const journey = getJourney(contactVisits, new Date(), upNext?.date)
 
   const scrollViewRef = useRef<ScrollView>(null)
+  // Once the content is tall enough to hold it.
+  const scrolledToStart = useRef(!scrollY)
   const highlightedRowRef = useRef<View>(null)
   const hasHighlightedVisit = contactVisits.some(
     (visit) => visit.id === highlightedVisitId
@@ -253,6 +261,21 @@ const ContactDetailsContent = ({
         contentContainerStyle={{
           paddingBottom: embedded ? 24 : insets.bottom + 60,
         }}
+        onContentSizeChange={(_width, height) => {
+          if (scrolledToStart.current || !scrollY || height <= scrollY) return
+          scrolledToStart.current = true
+          scrollViewRef.current?.scrollTo({ y: scrollY, animated: false })
+        }}
+        onScrollEndDrag={
+          onScrollY
+            ? (e) => onScrollY(e.nativeEvent.contentOffset.y)
+            : undefined
+        }
+        onMomentumScrollEnd={
+          onScrollY
+            ? (e) => onScrollY(e.nativeEvent.contentOffset.y)
+            : undefined
+        }
       >
         {/* Keeps overscroll above the hero tinted. */}
         <View

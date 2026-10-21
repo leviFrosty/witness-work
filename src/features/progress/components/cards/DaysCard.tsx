@@ -1,6 +1,8 @@
 import AllDaysList from '@/features/service-reports/components/AllDaysList'
 import { renderDaySheetPlanForm } from '@/features/plans/components/PlanDayForm'
 import { daySheetPlanDetails } from '@/features/plans/components/DaySheetPlanDetails'
+import type { Ref } from 'react'
+import type { View } from 'react-native'
 import type { RevealAboveSheet } from '@/hooks/useRevealAboveSheet'
 import type { ProgressCardProps } from '@/features/progress/components/cards/types'
 
@@ -14,9 +16,12 @@ export default function DaysCard({
   size,
   wrapEditTrigger,
   dayReveal,
+  dayRef,
 }: ProgressCardProps & {
   /** Keeps a picked day above its sheet in the full list. */
   dayReveal?: RevealAboveSheet
+  /** Each day's row, by its date, e.g. to keep it in view. */
+  dayRef?: (day: string) => Ref<View>
 }) {
   return (
     <AllDaysList
@@ -25,6 +30,7 @@ export default function DaysCard({
       variant={size === 'compact' ? 'compact' : 'full'}
       inset={0}
       dayReveal={dayReveal}
+      dayRef={dayRef}
       wrapHeader={wrapEditTrigger}
       renderPlanForm={renderDaySheetPlanForm}
       renderPlanDetails={daySheetPlanDetails}

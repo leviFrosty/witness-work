@@ -40,7 +40,9 @@ export type HideBarsScrollProps = {
  *
  * Phone-width layouts only: wide layouts and the sidebar keep their chrome. So
  * does a screen reader, so focus never lands on a bar that has gone. Each visit
- * to the screen starts with the bars showing.
+ * to the screen starts with the bars showing. A window that widens and narrows
+ * again (opening and closing iPhone Duo) leaves them as they were, so the
+ * content doesn't shift under the reader.
  */
 export default function useHideBarsOnScroll({
   enabled = true,
@@ -61,13 +63,15 @@ export default function useHideBarsOnScroll({
   const { fontScale } = useWindowDimensions()
   const screenReader = useScreenReaderEnabled()
   const isFocused = useIsFocused()
-  const active = enabled && isFocused && !isWide && !hasSidebar && !screenReader
+  // Off only while the window is wide: picks up again where it was.
+  const available = enabled && isFocused && !screenReader
+  const active = available && !isWide && !hasSidebar
   const [scrolledAway, setScrolledAway] = useState(false)
   const [shownKey, setShownKey] = useState(resetKey)
   if (shownKey !== resetKey) {
     setShownKey(resetKey)
     setScrolledAway(false)
-  } else if (!active && scrolledAway) setScrolledAway(false)
+  } else if (!available && scrolledAway) setScrolledAway(false)
   const hidden = active && scrolledAway
   useHideTabBar(hidden)
 
@@ -115,7 +119,12 @@ export default function useHideBarsOnScroll({
       viewportHeight: layoutMeasurement.height,
     }
     const { tracker, userDriven } = scroll.current
-    if (!active) return
+    // Scrolling back to the top while wide shows them (not the screen keeping
+    // its place as the window changes).
+    if (!active) {
+      if (userDriven && frame.y < 1 && scrolledAway) setScrolledAway(false)
+      return
+    }
     if (!userDriven || paused) {
       tracker.lastY = frame.y
       tracker.anchorY = frame.y

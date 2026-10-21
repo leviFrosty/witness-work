@@ -7,6 +7,7 @@ const layout = vi.hoisted(() => ({ isWide: true }))
 vi.mock('@/hooks/useAdaptiveLayout', () => ({
   default: () => ({ isWide: layout.isWide, contentMaxWidth: 1200 }),
 }))
+vi.mock('@react-navigation/native', () => ({ useIsFocused: () => true }))
 vi.mock('react-native', () => ({
   View: ({ children }: { children: ReactNode }) =>
     createElement('div', null, children),
@@ -37,6 +38,7 @@ vi.mock('@/components/ui/layout/FoldSplit', () => ({
 
 import AdaptiveSplitScrollView from '@/components/ui/layout/AdaptiveSplitScrollView'
 
+// Wrapper views (the anchors that keep a place across layouts) left out.
 const renderLayout = () =>
   renderToStaticMarkup(
     createElement(AdaptiveSplitScrollView, {
@@ -45,7 +47,7 @@ const renderLayout = () =>
       trailing: createElement('span', null, 'Records'),
       paddingBottom: 30,
     })
-  )
+  ).replace(/<\/?div>/g, '')
 
 describe('adaptive split scrolling', () => {
   beforeEach(() => {

@@ -1,5 +1,10 @@
 import { useEffect, useEffectEvent, useState, type ReactNode } from 'react'
-import { useWindowDimensions, View } from 'react-native'
+import {
+  I18nManager,
+  StyleSheet,
+  useWindowDimensions,
+  View,
+} from 'react-native'
 import Animated, {
   useAnimatedRef,
   useAnimatedStyle,
@@ -14,8 +19,11 @@ import {
 import * as Crypto from 'expo-crypto'
 import moment from 'moment'
 import useTheme from '@/contexts/theme'
+import DisplayRegionsView, {
+  type DisplayDivision,
+} from '../../../../modules/display-regions'
+import { getFoldSplit } from '@/lib/foldSplit'
 import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
-import FoldSplit from '@/components/ui/layout/FoldSplit'
 import useFeatureAccess from '@/hooks/useFeatureAccess'
 import i18n from '@/lib/locales'
 import type { RootStackNavigation, RootStackParamList } from '@/types/rootStack'
@@ -78,10 +86,15 @@ export default function RouteBuilderScreen({
   } | null>(null)
   // On narrow screens the map sits above the timeline at a height the User
   // can drag; it starts at a bit over a third of the window.
+  const [splitWidth, setSplitWidth] = useState(0)
+  const [divisions, setDivisions] = useState<DisplayDivision[]>([])
   const mapMin = 160
   const mapMax = Math.max(mapMin, height * 0.7)
   const mapHeight = useSharedValue(Math.max(240, Math.min(440, height * 0.38)))
-  const mapStyle = useAnimatedStyle(() => ({ height: mapHeight.value }))
+  // Wide, the map fills the space beside the timeline.
+  const mapStyle = useAnimatedStyle(() =>
+    isWide ? { flex: 1, height: '100%' } : { flex: 0, height: mapHeight.value }
+  )
 
   const changeDay = (next: Date) => {
     setDay(next)
@@ -182,35 +195,54 @@ export default function RouteBuilderScreen({
     <RouteActionBar builder={builder} bottomInset={insets.bottom} />
   ) : null
 
+  // While iPhone Duo is partly folded, the panel ends at the fold and the map
+  // starts past it.
+  const panel =
+    isWide && splitWidth > 0
+      ? getFoldSplit({
+          width: splitWidth,
+          paddingHorizontal: 0,
+          gap: 0,
+          leading: { width: PANEL_WIDTH },
+          minColumnWidth: 220,
+          divisions,
+          rtl: I18nManager.isRTL,
+        })
+      : { leadingWidth: PANEL_WIDTH, gap: 0 }
+
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
-      {isWide ? (
-        // Half-open iPhone Duo puts the panel and the map on either side of
-        // the fold.
-        <FoldSplit
-          style={{ flex: 1 }}
-          gap={0}
-          leadingWidth={PANEL_WIDTH}
-          leadingStyle={{
-            borderEndWidth: 1,
-            borderEndColor: theme.colors.border,
-          }}
-          leading={
-            <>
-              {list}
-              {actions}
-            </>
-          }
-          trailing={map}
+      {/* One tree either way, so opening or closing iPhone Duo keeps the
+          map's camera and the timeline's place: the map above the timeline,
+          or beside it when wide. */}
+      <View
+        style={{ flex: 1, flexDirection: isWide ? 'row-reverse' : 'column' }}
+        onLayout={(e) => setSplitWidth(e.nativeEvent.layout.width)}
+      >
+        <DisplayRegionsView
+          style={StyleSheet.absoluteFill}
+          onRegionsChange={(regions) => setDivisions(regions.divisions)}
         />
-      ) : (
-        <>
-          <Animated.View style={mapStyle}>{map}</Animated.View>
+        <Animated.View style={mapStyle}>{map}</Animated.View>
+        {!isWide && (
           <RouteSplitHandle height={mapHeight} min={mapMin} max={mapMax} />
+        )}
+        <View
+          style={
+            isWide
+              ? {
+                  width: panel.leadingWidth,
+                  marginEnd: panel.gap,
+                  borderEndWidth: 1,
+                  borderEndColor: theme.colors.border,
+                }
+              : { flex: 1 }
+          }
+        >
           <View style={{ flex: 1 }}>{list}</View>
           {actions}
-        </>
-      )}
+        </View>
+      </View>
 
       <AddRouteStopSheet
         open={sheet !== null}

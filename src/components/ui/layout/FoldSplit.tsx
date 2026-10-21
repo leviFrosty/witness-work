@@ -86,10 +86,14 @@ export default function FoldSplit({
 
   const leadingSize = useSharedValue(-1)
   const gapSize = useSharedValue(gap)
+  // One column just fills the row: no width to chase while the window
+  // resizes, which a list inside would lay its rows out at.
+  const fill = useSharedValue(single)
   const laidOutWidth = useRef(0)
   const targetLeading = split?.leadingWidth
   const targetGap = split?.gap
   useEffect(() => {
+    fill.value = single
     if (targetLeading === undefined || targetGap === undefined) return
     // The first layout and resizes jump; only folding and unfolding animate.
     const animate =
@@ -99,10 +103,23 @@ export default function FoldSplit({
       ? withSpring(targetLeading, FOLD_SPRING)
       : targetLeading
     gapSize.value = animate ? withSpring(targetGap, FOLD_SPRING) : targetGap
-  }, [targetLeading, targetGap, width, reduceMotion, leadingSize, gapSize])
+  }, [
+    single,
+    targetLeading,
+    targetGap,
+    width,
+    reduceMotion,
+    leadingSize,
+    gapSize,
+    fill,
+  ])
 
   const leadingAnimatedStyle = useAnimatedStyle(() =>
-    leadingSize.value < 0 ? {} : { width: leadingSize.value, flex: 0 }
+    leadingSize.value < 0
+      ? {}
+      : fill.value
+        ? { width: '100%', flex: 0 }
+        : { width: leadingSize.value, flex: 0 }
   )
   const gapAnimatedStyle = useAnimatedStyle(() => ({ width: gapSize.value }))
 

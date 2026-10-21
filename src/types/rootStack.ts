@@ -29,7 +29,12 @@ export type RootStackParamList = {
     /** A new Visit answering this Visit's Follow-up shows its planned topic. */
     followUpVisitId?: string
   }
-  'Contact Details': { id: string; highlightedVisitId?: string } // Contact ID
+  'Contact Details': {
+    id: string // Contact ID
+    highlightedVisitId?: string
+    /** Opens scrolled this far, as it was read in a pane (iPhone Duo). */
+    scrollY?: number
+  }
   'Contact Form': {
     id: string
     edit?: boolean

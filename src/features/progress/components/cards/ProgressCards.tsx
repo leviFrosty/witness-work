@@ -1,4 +1,5 @@
-import type { ReactNode } from 'react'
+import type { ReactNode, Ref } from 'react'
+import type { View } from 'react-native'
 import ReorderableLiftZone from '@/components/ui/reorderable/ReorderableLiftZone'
 import { useReorderableDragging } from '@/components/ui/reorderable/context'
 import type { ReorderScroller } from '@/components/ui/reorderable/useReorderScroller'
@@ -38,6 +39,8 @@ type Props = {
   exclude?: ProgressCardId[]
   /** Keeps a day picked in the full Days list above its sheet. */
   dayReveal?: RevealAboveSheet
+  /** Each row of the Days list, by its date, e.g. to keep it in view. */
+  dayRef?: (day: string) => Ref<View>
 }
 
 /**
@@ -63,6 +66,7 @@ export default function ProgressCards({
   month,
   year,
   dayReveal,
+  dayRef,
   onStartEditing,
   ...grid
 }: Props) {
@@ -92,6 +96,7 @@ export default function ProgressCards({
               year={year}
               size={item.size}
               dayReveal={dayReveal}
+              dayRef={dayRef}
               // Each day has a menu of its own, so only the header lifts the
               // list (`liftsByZone`).
               wrapEditTrigger={(header) => (

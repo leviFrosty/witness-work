@@ -74,11 +74,7 @@ export default function QuickActionMenu({
   return (
     <View style={{ gap: 10 }}>
       {leading}
-      <ActionButton
-        text='logVisitAction'
-        icon={DoorOpenIcon}
-        onPress={() => handleQuickAction('logVisit')}
-      />
+      {/* Add Time stays first: people reach for the top row out of habit. */}
       {showsTimer && (
         <ActionButton
           text='addTime'
@@ -86,6 +82,11 @@ export default function QuickActionMenu({
           onPress={() => handleQuickAction('addTime')}
         />
       )}
+      <ActionButton
+        text='logVisitAction'
+        icon={DoorOpenIcon}
+        onPress={() => handleQuickAction('logVisit')}
+      />
       <ActionButton
         text='createPlan'
         icon={CalendarIcon}

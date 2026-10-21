@@ -137,6 +137,9 @@ const directionalIconFiles = {
 }
 // Corners React Native never mirrors.
 const physicalCornerRadius = '/^border(Top|Bottom)(Left|Right)Radius$/'
+// Side borders React Native draws on the physical side in right-to-left
+// layouts, while the margins and paddings beside them mirror.
+const physicalBorderSide = '/^border(Left|Right)(Width|Color)$/'
 
 export default tseslint.config(
   {
@@ -364,7 +367,9 @@ export default tseslint.config(
   // `alignText`/`alignInput` (`@/lib/direction`) or a TextInput's
   // `textAlign='start'|'end'`, which say what they mean. Corner radii are never
   // mirrored, so a corner that marks a side (a chat bubble's tail, joined
-  // segments) uses `border(Top|Bottom)(Start|End)Radius`. Letter spacing breaks
+  // segments) uses `border(Top|Bottom)(Start|End)Radius`. Side borders stay on
+  // their physical side too, apart from the padding next to them, so a divider
+  // or accent bar uses `border(Start|End)(Width|Color)`. Letter spacing breaks
   // joined scripts, so non-zero values go through `tracking()`
   // (`@/lib/tracking`). Disable per line, with a reason, where a physical side
   // or fixed spacing is meant (Latin-only artwork).
@@ -395,6 +400,11 @@ export default tseslint.config(
           selector: `JSXAttribute[name.name=${physicalCornerRadius}]`,
           message:
             'Use border(Top|Bottom)(Start|End)Radius, which mirror in right-to-left layouts.',
+        },
+        {
+          selector: `Property:matches([key.name=${physicalBorderSide}], [key.value=${physicalBorderSide}])`,
+          message:
+            'Use border(Start|End)(Width|Color), which mirror in right-to-left layouts.',
         },
         {
           selector:

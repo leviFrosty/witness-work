@@ -314,8 +314,8 @@ const RichTextToolbar = (props: {
               flexDirection: 'row',
               alignItems: 'center',
               paddingHorizontal: 4,
-              borderLeftWidth: 1,
-              borderLeftColor: theme.colors.border,
+              borderStartWidth: 1,
+              borderStartColor: theme.colors.border,
             }}
           >
             <ToolButton

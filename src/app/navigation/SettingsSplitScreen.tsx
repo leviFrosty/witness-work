@@ -56,8 +56,8 @@ const SettingsSplitLayout = ({
         <View
           style={{
             flex: 1,
-            borderLeftWidth: 1,
-            borderLeftColor: theme.colors.border,
+            borderStartWidth: 1,
+            borderStartColor: theme.colors.border,
             marginRight: 16,
             overflow: 'hidden',
             borderRadius: theme.numbers.borderRadiusLg,

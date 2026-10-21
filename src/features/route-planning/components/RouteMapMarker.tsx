@@ -165,11 +165,15 @@ export function RouteMapCard({
         transform: [{ rotate: '45deg' }],
         backgroundColor: cardColor,
         borderColor: theme.colors.border,
+        // Physical sides: the rotated square's outlined corner is the tip,
+        // which points at the pin in either direction.
         ...(selected
           ? {}
           : above
-            ? { borderRightWidth: 1, borderBottomWidth: 1 }
-            : { borderLeftWidth: 1, borderTopWidth: 1 }),
+            ? // eslint-disable-next-line no-restricted-syntax
+              { borderRightWidth: 1, borderBottomWidth: 1 }
+            : // eslint-disable-next-line no-restricted-syntax
+              { borderLeftWidth: 1, borderTopWidth: 1 }),
       }}
     />
   )

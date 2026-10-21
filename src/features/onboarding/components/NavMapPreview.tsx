@@ -611,11 +611,11 @@ const DestinationPin = ({
           style={{
             width: 0,
             height: 0,
-            borderLeftWidth: 5,
-            borderRightWidth: 5,
+            borderStartWidth: 5,
+            borderEndWidth: 5,
             borderTopWidth: 8,
-            borderLeftColor: 'transparent',
-            borderRightColor: 'transparent',
+            borderStartColor: 'transparent',
+            borderEndColor: 'transparent',
             borderTopColor: color,
             marginTop: -2,
           }}
@@ -642,11 +642,11 @@ const DestinationPin = ({
           style={{
             width: 0,
             height: 0,
-            borderLeftWidth: 5,
-            borderRightWidth: 5,
+            borderStartWidth: 5,
+            borderEndWidth: 5,
             borderTopWidth: 7,
-            borderLeftColor: 'transparent',
-            borderRightColor: 'transparent',
+            borderStartColor: 'transparent',
+            borderEndColor: 'transparent',
             borderTopColor: color,
             marginTop: -2,
           }}

@@ -34,6 +34,7 @@ import {
   storedDateToLocalDate,
 } from '@/lib/normalizeDate'
 import {
+  allEventsStartDate,
   planDayFromRouteDate,
   splitPlanDate,
 } from '@/features/plans/lib/planDayDates'
@@ -954,6 +955,11 @@ const PlanDayForm = ({
     updateRecurringPlan({
       id: existingRecurringPlan.id,
       ...payload,
+      startDate: allEventsStartDate(
+        existingRecurringPlan.startDate,
+        editingDate,
+        payload.startDate
+      ),
     })
     return editedDate
   }

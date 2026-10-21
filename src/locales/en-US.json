@@ -3459,6 +3459,9 @@
       "present": {
         "empty": "No hours logged or planned yet for {{period}}.",
         "logged_over_goal": "You're already **{{over}}** over goal. Planned hours would put you at **{{projected}}**.",
+        "logged_over_goal_no_plans": "You're already **{{over}}** over goal.",
+        "logged_at_goal": "You've reached your goal. Planned hours would put you at **{{projected}}**.",
+        "logged_at_goal_no_plans": "You've reached your goal.",
         "projected_over_goal": "On track — planned hours would put you at **{{projected}}**.",
         "reachable_gap": "Planned hours put you at **{{projected}}** — **{{gap}}** short of your goal.",
         "unreachable_gap": "Planned hours put you at **{{projected}}**. **{{gap}}** to goal — a stretch from here."
@@ -3466,6 +3469,7 @@
       "past": {
         "empty": "No hours were logged or planned for {{period}}.",
         "logged_over_goal": "You ended **{{over}}** over goal.",
+        "logged_at_goal": "You reached your goal.",
         "unreachable_gap": "You ended **{{gap}}** short of goal."
       },
       "future": {

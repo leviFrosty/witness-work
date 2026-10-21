@@ -13,7 +13,7 @@ import i18n, { TranslationKey } from '@/lib/locales'
 import { type ProjectedTotalScope } from '@/lib/projectedTotal'
 import {
   getPeriodTense,
-  getStatusKey,
+  getStatusCopy,
   segmentBoldMarkup,
 } from '@/lib/projectedTotalCopy'
 import usePublisher from '@/hooks/usePublisher'
@@ -63,28 +63,10 @@ const ProjectedTotalCard = ({ scope, showAssistant = false }: Props) => {
   const loggedDisplay = formatHours(result.loggedMinutes)
   const plannedDisplay = formatHours(result.plannedMinutes)
   const projectedDisplay = formatHours(result.projectedMinutes)
-  const gapDisplay = formatHours(result.gapMinutes)
-  const overDisplay = formatHours(result.overMinutes)
-
-  const hasPlanned = result.plannedMinutes > 0
-  // When there are no future plans, the default status copy ("plans would
-  // put you at…") is misleading — drop it. The legend already shows 0h
-  // planned, so the user isn't missing information.
-  const hideStatus =
-    !hasPlanned &&
-    (result.state === 'reachable_gap' ||
-      result.state === 'unreachable_gap' ||
-      result.state === 'projected_over_goal')
-
-  const statusKey = getStatusKey(result.state, tense) as TranslationKey
-
-  const statusText = i18n.t(statusKey, {
-    period: periodLabel,
-    projected: projectedDisplay,
-    gap: gapDisplay,
-    over: overDisplay,
-  })
-  const segments = segmentBoldMarkup(statusText)
+  const status = getStatusCopy(result, tense, periodLabel, formatHours)
+  const segments = status
+    ? segmentBoldMarkup(i18n.t(status.key as TranslationKey, status.params))
+    : []
 
   return (
     <Card>
@@ -163,7 +145,7 @@ const ProjectedTotalCard = ({ scope, showAssistant = false }: Props) => {
         />
       </View>
 
-      {result.state !== 'empty' && !hideStatus && (
+      {result.state !== 'empty' && status && (
         <Text
           style={{
             fontSize: theme.fontSize('sm'),

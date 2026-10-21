@@ -104,21 +104,29 @@ export function foldRemotePayloads(
       deletedDayPlans: acc.deletedDayPlans,
       deletedRecurringPlans: acc.deletedRecurringPlans,
     },
-    categoryStore: {
-      categories: acc.categories,
-      deletedCategories: acc.deletedCategories,
-    },
-    mileageStore: {
-      vehicles: acc.vehicles,
-      fuels: acc.fuels,
-      fuelPrices: acc.fuelPrices,
-      vehicleSetups: acc.vehicleSetups,
-      trips: acc.trips,
-      deletedMileageRecords: acc.deletedMileageRecords,
-    },
-    // Only when a device wrote one: a payload without it predates the Pet
-    // Companion, which isn't the same as having no pet (a restore keeps the
-    // local one).
+    // Categories, mileage and the pet come back only when a device wrote
+    // them: a payload without one predates it (mileage arrived in 1.44), which
+    // isn't the same as having none, so a restore keeps the local records.
+    ...(payloads.some((payload) => payload.categoryStore)
+      ? {
+          categoryStore: {
+            categories: acc.categories,
+            deletedCategories: acc.deletedCategories,
+          },
+        }
+      : {}),
+    ...(payloads.some((payload) => payload.mileageStore)
+      ? {
+          mileageStore: {
+            vehicles: acc.vehicles,
+            fuels: acc.fuels,
+            fuelPrices: acc.fuelPrices,
+            vehicleSetups: acc.vehicleSetups,
+            trips: acc.trips,
+            deletedMileageRecords: acc.deletedMileageRecords,
+          },
+        }
+      : {}),
     ...(payloads.some((payload) => payload.petStore)
       ? {
           petStore: {

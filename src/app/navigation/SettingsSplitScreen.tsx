@@ -1,5 +1,6 @@
-import { ReactNode, useState } from 'react'
-import { View } from 'react-native'
+import { ReactNode, useEffect, useRef, useState } from 'react'
+import { Dimensions, View } from 'react-native'
+import { StackActions, useIsFocused } from '@react-navigation/native'
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import {
   SafeAreaInsetsContext,
@@ -7,6 +8,8 @@ import {
 } from 'react-native-safe-area-context'
 import useTheme from '@/contexts/theme'
 import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
+import { getAdaptiveLayout } from '@/lib/sidebarLayout'
+import { navigationRef } from '@/features/contacts/lib/linking'
 
 import Header from '@/components/ui/layout/Header'
 import SettingsContents from '@/features/settings/components/SettingsContents'
@@ -85,6 +88,44 @@ const SettingsSplitLayout = ({
   )
 }
 
+type PaneRoute = { name: keyof RootStackParamList; params?: object }
+
+/**
+ * The Settings tab exists only beside the sidebar. When the window gets too
+ * narrow for one (Split View, Stage Manager), the tab goes away and the app
+ * would land on Home, so this reopens Settings as a page at the same
+ * destination.
+ */
+function useKeepSettingsWhenSidebarHides() {
+  const isFocused = useIsFocused()
+  const focused = useRef(isFocused)
+  const pane = useRef<PaneRoute[]>([])
+
+  useEffect(() => {
+    focused.current = isFocused
+  }, [isFocused])
+
+  useEffect(
+    () => () => {
+      const { width, fontScale } = Dimensions.get('window')
+      const { hasSidebar } = getAdaptiveLayout(width, fontScale, 0, false)
+      if (!focused.current || hasSidebar) return
+      const routes = pane.current
+      requestAnimationFrame(() => {
+        if (!navigationRef.isReady()) return
+        navigationRef.dispatch(StackActions.push('SettingsMenu'))
+        for (const route of routes)
+          navigationRef.dispatch(StackActions.push(route.name, route.params))
+      })
+    },
+    []
+  )
+
+  return (state: { routes: PaneRoute[] }) => {
+    pane.current = state.routes.map(({ name, params }) => ({ name, params }))
+  }
+}
+
 /**
  * Wide Settings tab: the settings list stays visible while destinations open
  * beside it, like Contacts. Screens pushed from a destination (e.g. a
@@ -93,10 +134,14 @@ const SettingsSplitLayout = ({
  */
 export default function SettingsSplitScreen() {
   const { isWide } = useAdaptiveLayout()
+  const rememberPane = useKeepSettingsWhenSidebarHides()
   if (!isWide) return <SettingsOverviewScreen />
 
   return (
     <SettingsDetailStack.Navigator
+      screenListeners={{
+        state: (event) => rememberPane(event.data.state),
+      }}
       initialRouteName='PreferencesPublisher'
       layout={({ state, navigation, children }) => (
         <SettingsSplitLayout

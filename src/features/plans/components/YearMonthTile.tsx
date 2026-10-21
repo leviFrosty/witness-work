@@ -5,6 +5,7 @@ import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import { formatMinutesCompact } from '@/lib/minutes'
+import { formatPlainNumber } from '@/lib/numbers'
 import type { CalendarMonth } from '@/lib/monthlyGoals'
 import type { Theme } from '@/types/theme'
 import GoalSplitBar from '@/features/plans/components/GoalSplitBar'
@@ -90,10 +91,10 @@ export default function YearMonthTile({
   const amount =
     goalMinutes > 0
       ? i18n.t('scheduleCalendar.ofGoal', {
-          value: formatMinutesCompact(total) || '0',
+          value: formatMinutesCompact(total) || formatPlainNumber(0),
           goal: formatMinutesCompact(goalMinutes),
         })
-      : formatMinutesCompact(total) || '0'
+      : formatMinutesCompact(total) || formatPlainNumber(0)
 
   return (
     <ContextMenu

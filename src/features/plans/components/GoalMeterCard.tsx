@@ -7,6 +7,7 @@ import useTheme from '@/contexts/theme'
 import useScheduleStatusPresentation from '@/hooks/useScheduleStatusPresentation'
 import i18n from '@/lib/locales'
 import { formatMinutesCompact, useFormattedMinutes } from '@/lib/minutes'
+import { formatPlainNumber } from '@/lib/numbers'
 import type { PeriodTense } from '@/lib/projectedTotalCopy'
 import type { ScheduleStatus } from '@/lib/scheduleStatus'
 import GoalSplitBar from '@/features/plans/components/GoalSplitBar'
@@ -68,7 +69,7 @@ export default function GoalMeterCard({
   // A past period shows what was logged instead.
   const total =
     formatMinutesCompact(tense === 'past' ? loggedMinutes : plannedMinutes) ||
-    '0'
+    formatPlainNumber(0)
   const amount = hasGoal
     ? i18n.t(
         tense === 'past'

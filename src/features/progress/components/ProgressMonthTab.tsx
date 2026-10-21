@@ -7,6 +7,7 @@ import useServiceReport from '@/stores/serviceReport'
 import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
 import useRevealAboveSheet from '@/hooks/useRevealAboveSheet'
 import type { HideBarsScrollProps } from '@/hooks/useHideBarsOnScroll'
+import useTabReselect from '@/hooks/useTabReselect'
 import { getMonthsReports } from '@/lib/serviceReport'
 
 import MonthReport from '@/features/service-reports/components/MonthReport'
@@ -83,6 +84,8 @@ const ProgressMonthTab = ({
     obscuredBottom: hasSidebar ? 0 : insets.bottom + TAB_BAR_HEIGHT,
   })
   const paddingBottom = insets.bottom + (hasSidebar ? 30 : 100)
+  // Tapping Progress again heads back to the top.
+  useTabReselect(() => leadingRef.current?.scrollToPosition(0, 0, true))
 
   // The report can't be removed or moved, so it rests while the cards are
   // edited; tapping it, like any empty space, ends editing.

@@ -9,6 +9,7 @@ import { useIsFocused } from '@react-navigation/native'
 import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
 import useHideTabBar from '@/hooks/useHideTabBar'
 import useScreenReaderEnabled from '@/hooks/useScreenReaderEnabled'
+import useTabReselect from '@/hooks/useTabReselect'
 import {
   createBarsScrollTracker,
   fitsWithoutScrolling,
@@ -33,8 +34,9 @@ export type HideBarsScrollProps = {
 /**
  * Tucks a root screen's header (see `ScrollAwayHeader`) and the floating tab
  * bar away while the user scrolls down through its content, and brings them
- * back on a scroll up, at the top, or on a status-bar tap. Only the user's own
- * scrolling counts, not the screen jumping to a row by itself.
+ * back on a scroll up, at the top, on a status-bar tap, or on a tap of the tab
+ * it's already on. Only the user's own scrolling counts, not the screen jumping
+ * to a row by itself.
  *
  * Phone-width layouts only: wide layouts and the sidebar keep their chrome. So
  * does a screen reader, so focus never lands on a bar that has gone. Each visit
@@ -89,6 +91,12 @@ export default function useHideBarsOnScroll({
     scroll.current.userDriven = false
     setScrolledAway(false)
   }
+
+  // A tap on the tab already showing heads back up (see `useTabReselect`), so
+  // the bars come back with it rather than once the scroll reaches the top.
+  useTabReselect(() => {
+    if (scrolledAway && !paused) reveal()
+  })
 
   // Content that shrinks to fit (a filter, a shorter tab) or a viewport that
   // grows past it can't be scrolled to bring the bars back, so they come back

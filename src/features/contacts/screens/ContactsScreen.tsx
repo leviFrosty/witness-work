@@ -56,6 +56,7 @@ import {
 } from '@/features/contacts/components/ListSelection'
 import useListSelection from '@/features/contacts/hooks/useListSelection'
 import useHideBarsOnScroll from '@/hooks/useHideBarsOnScroll'
+import useTabReselect from '@/hooks/useTabReselect'
 import useHideTabBar from '@/hooks/useHideTabBar'
 import useScreenReaderEnabled from '@/hooks/useScreenReaderEnabled'
 import ScrollAwayHeader from '@/components/ui/ScrollAwayHeader'
@@ -241,6 +242,13 @@ const ContactsScreen = ({
     if (!mapExplored) return
     setMapExplored(false)
   }
+
+  // Tapping Contacts again heads back to the top of the list. On the map, which
+  // fits itself to every pin, the header and tab bar come back.
+  useTabReselect(() => {
+    if (showsMap) expandHeader()
+    else listRef.current?.scrollToOffset({ offset: 0, animated: true })
+  })
 
   const headerCollapsed = mapExplored
   const headerSwipeDown = Gesture.Pan()

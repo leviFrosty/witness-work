@@ -135,7 +135,8 @@ const MonthlyRoutine = ({ onBeforeNavigate }: MonthlyRoutineProps = {}) => {
   }, [])
 
   return (
-    <View style={{ height: 60 }}>
+    // Grows past its usual height when large text makes the months taller.
+    <View style={{ minHeight: 60 }}>
       <FlashList
         horizontal
         initialScrollIndex={5}

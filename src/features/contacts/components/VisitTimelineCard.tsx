@@ -7,6 +7,7 @@ import ContextMenu from '@/components/ui/ContextMenu'
 import Text from '@/components/ui/MyText'
 import SwipeableDelete from '@/components/ui/swipeableActions/Delete'
 import useTheme from '@/contexts/theme'
+import useAccessibilityTextSize from '@/hooks/useAccessibilityTextSize'
 import useVisitMenuActions from '@/hooks/useVisitMenuActions'
 import { activeCustomFieldDefs } from '@/lib/customFields'
 import { formatTime } from '@/lib/dates'
@@ -45,6 +46,9 @@ const VisitTimelineCard = ({
   const hasPhotos = richTextImages(getNoteDoc(visit)).length > 0
   const canExpand = showsNote && (truncates || hasPhotos || expanded)
   const dayLabel = visitDayLabel(visit.date)
+  // At accessibility text sizes the day wraps whole, with the time under it,
+  // instead of shrinking to its first letter.
+  const largeText = useAccessibilityTextSize()
   const fields = activeCustomFieldDefs(
     useConversations((state) => state.conversationFieldDefs)
   ).flatMap((def) => {
@@ -96,11 +100,12 @@ const VisitTimelineCard = ({
               flexDirection: 'row',
               justifyContent: 'space-between',
               alignItems: 'baseline',
+              flexWrap: largeText ? 'wrap' : 'nowrap',
               gap: 9,
             }}
           >
             <Text
-              numberOfLines={1}
+              numberOfLines={largeText ? undefined : 1}
               style={{
                 flexShrink: 1,
                 fontSize: theme.fontSize('lg'),

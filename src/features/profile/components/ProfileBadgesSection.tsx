@@ -77,9 +77,11 @@ export default function ProfileBadgesSection({
       <View
         style={{
           flexDirection: 'row',
+          // See All wraps under the count when large text fills the row.
+          flexWrap: 'wrap',
           alignItems: 'center',
           justifyContent: 'space-between',
-          gap: 12,
+          columnGap: 12,
         }}
       >
         <Text

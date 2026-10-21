@@ -1,6 +1,6 @@
 import { Bell as BellIcon } from 'lucide-react-native'
 import moment from 'moment'
-import { View } from 'react-native'
+import { useWindowDimensions, View } from 'react-native'
 import LucideIcon from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
@@ -44,6 +44,7 @@ const VisitJourneyCard = ({
   upNext: UpNext | null
 }) => {
   const theme = useTheme()
+  const textScale = Math.max(1, useWindowDimensions().fontScale)
   const today = journey.todayPosition
   const labelStyle = {
     fontSize: theme.fontSize('xs') + 0.5,
@@ -73,8 +74,9 @@ const VisitJourneyCard = ({
       }}
     >
       {/* Today: a dark pill and a full-height tick in the text color, like
-          the calendar's today ring. */}
-      <View style={{ height: 18 }}>
+          the calendar's today ring. Its row and slot grow with the text size,
+          so a larger pill neither covers the rail nor gets cut short. */}
+      <View style={{ height: 18 * textScale }}>
         <View
           style={
             today === 1
@@ -83,8 +85,8 @@ const VisitJourneyCard = ({
                   position: 'absolute',
                   left: pct(today),
                   // Wide enough for the label, centered on the tick.
-                  width: PILL_SLOT,
-                  marginLeft: -PILL_SLOT / 2,
+                  width: PILL_SLOT * textScale,
+                  marginLeft: (-PILL_SLOT * textScale) / 2,
                   alignItems: 'center',
                 }
           }
@@ -185,20 +187,24 @@ const VisitJourneyCard = ({
           </View>
         )}
       </View>
-      <View style={{ height: 20 }}>
-        <Text style={[labelStyle, { position: 'absolute', left: 0, top: 2 }]}>
-          {formatRelative(journey.windowStart)}
-        </Text>
+      {/* The rail's ends, left and right like the rail itself. When large
+          text makes them meet, the next visit's date wraps under. */}
+      <View
+        style={{
+          direction: 'ltr',
+          minHeight: 20,
+          paddingTop: 2,
+          flexDirection: 'row',
+          flexWrap: 'wrap',
+          columnGap: 12,
+        }}
+      >
+        <Text style={labelStyle}>{formatRelative(journey.windowStart)}</Text>
         {upNext && (
           <Text
             style={[
               labelStyle,
-              {
-                position: 'absolute',
-                right: 0,
-                top: 2,
-                color: theme.colors.accent,
-              },
+              { marginLeft: 'auto', color: theme.colors.accent },
             ]}
           >
             {formatMonthDayCompact(moment(upNext.date))}

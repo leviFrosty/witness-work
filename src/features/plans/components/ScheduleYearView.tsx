@@ -206,7 +206,8 @@ export default function ScheduleYearView({
         <ScrollView
           ref={scrollRef}
           {...scrollBars}
-          scrollsToTop={!!scrollBars}
+          // The Schedule screen ignores status bar taps; see ScheduleMonthView.
+          scrollsToTop={false}
           onScroll={(e) => {
             scrollY.current = e.nativeEvent.contentOffset.y
             scrollBars?.onScroll(e)

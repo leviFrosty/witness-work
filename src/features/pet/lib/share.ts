@@ -9,13 +9,17 @@ export const PET_SHARE_SCALE = 4
 /**
  * The Home card's room as a still picture, `scale` times larger with nearest
  * scaling so the pixels stay sharp. The pet sits at rest; particles and motions
- * are left out.
+ * are left out. The wall sign is left off too: every sign shows the User's
+ * records (hours, goal, plans, visits), which the picture never shares.
  */
 export function petShareImage(
   input: PlayerInput,
   scale = PET_SHARE_SCALE
 ): PixelBuffer {
-  const frame = composeScene({ ...input, particles: null }, 0)
+  const frame = composeScene(
+    { ...input, room: { ...input.room, sign: 'none' }, particles: null },
+    0
+  )
   return scaleNearest(crop(frame, VIEW_CARD), scale)
 }
 

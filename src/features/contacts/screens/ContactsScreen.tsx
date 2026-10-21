@@ -105,6 +105,8 @@ const ContactsSearchInput = ({
       testID='contacts-search'
       value={search}
       onChangeText={setSearch}
+      // The placeholder goes once there's text; screen readers keep this.
+      accessibilityLabel={placeholder}
       placeholder={placeholder}
       placeholderTextColor={
         theme.colors.textAlt as InputProps['placeholderTextColor']

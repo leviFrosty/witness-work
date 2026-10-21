@@ -361,16 +361,15 @@ const HomeChecklist = () => {
                 />
               )}
               <PointerHover effect='highlight' enabled={!autoDone}>
+                {/* Screen readers get one element per step: the row beside
+                it, which reads the done state and offers Mark as Done / Not
+                Done as actions. Otherwise each step is read twice. */}
                 <Pressable
                   onPress={() => setManuallyDone(item.id, !done)}
                   disabled={autoDone}
                   hitSlop={8}
-                  accessibilityRole='checkbox'
-                  accessibilityState={{ checked: done, disabled: autoDone }}
-                  accessibilityLabel={item.label}
-                  accessibilityValue={
-                    item.progressA11y ? { text: item.progressA11y } : undefined
-                  }
+                  accessibilityElementsHidden
+                  importantForAccessibility='no-hide-descendants'
                   style={{
                     width: NODE_SIZE,
                     height: NODE_SIZE,
@@ -410,11 +409,12 @@ const HomeChecklist = () => {
               <ContextMenu
                 style={{ flex: 1 }}
                 onPress={item.onPress}
-                accessibilityLabel={
-                  item.progressA11y
-                    ? `${item.label}, ${item.progressA11y}`
-                    : item.label
-                }
+                accessibilityLabel={[
+                  item.label,
+                  done ? i18n.t('completed') : item.progressA11y,
+                ]
+                  .filter(Boolean)
+                  .join(', ')}
                 hoverRadius={theme.numbers.borderRadiusSm}
                 actions={[
                   !item.checksOffMonth && {

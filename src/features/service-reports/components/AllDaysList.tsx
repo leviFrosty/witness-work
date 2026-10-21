@@ -25,7 +25,10 @@ import type { RevealAboveSheet } from '@/hooks/useRevealAboveSheet'
 import Button from '@/components/ui/Button'
 import Text from '@/components/ui/MyText'
 import LucideIcon from '@/components/ui/LucideIcon'
-import type { PlanFormSlot } from '@/features/service-reports/components/DayHistoryView'
+import type {
+  PlanDetailsSlot,
+  PlanFormSlot,
+} from '@/features/service-reports/components/DayHistoryView'
 import SelectedDateSheet, {
   SelectedDateSheetState,
 } from '@/features/service-reports/components/SelectedDateSheet'
@@ -47,6 +50,11 @@ interface AllDaysListProps {
   dayReveal?: RevealAboveSheet
   /** The Plan form, for planning a day in its sheet. */
   renderPlanForm?: (slot: PlanFormSlot) => ReactNode
+  /** Plan Details, for showing a day's Plan in its sheet. */
+  renderPlanDetails?: {
+    actions: (slot: PlanDetailsSlot) => ReactNode
+    body: (slot: PlanDetailsSlot) => ReactNode
+  }
   /**
    * `compact` keeps the list to a few days in one card that scrolls on its own,
    * for a Progress layout that wants the room for other cards.
@@ -224,6 +232,7 @@ const AllDaysList = ({
   year,
   dayReveal,
   renderPlanForm,
+  renderPlanDetails,
   variant = 'full',
   inset = 15,
   wrapHeader = (header) => header,
@@ -508,6 +517,7 @@ const AllDaysList = ({
         thisMonthsReports={thisMonthsReports}
         onHeightChange={compact ? undefined : dayReveal?.onSheetHeightChange}
         renderPlanForm={renderPlanForm}
+        renderPlanDetails={renderPlanDetails}
       />
     </View>
   )

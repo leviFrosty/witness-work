@@ -1,24 +1,9 @@
 import { useEffect } from 'react'
 import { NativeStackScreenProps } from '@react-navigation/native-stack'
-import type { PlanListItem } from '@/types/timeEntry'
-import useNow from '@/hooks/useNow'
-import { storedDateToLocalDate } from '@/lib/normalizeDate'
-import { getPlansIntersectingDay } from '@/lib/recurrence'
-import useServiceReport from '@/stores/serviceReport'
 import type { RootStackParamList } from '@/types/rootStack'
-import type { BuddyShareRef } from '@/types/timeEntry'
-import useAnswerShare from '@/features/buddies/hooks/useAnswerShare'
-import useBuddiesEnabled from '@/features/buddies/hooks/useBuddiesEnabled'
-import {
-  isOpenPlanInvitation,
-  isShownPlanShare,
-} from '@/features/buddies/lib/linkedPlans'
-import type { ShareReply } from '@/features/buddies/lib/schemas'
-import { incomingShareKey } from '@/features/buddies/lib/state'
-import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 import InvitationPlanDetails from '@/features/plans/components/InvitationPlanDetails'
 import OwnPlanDetails from '@/features/plans/components/OwnPlanDetails'
-import { planDayFromRouteDate } from '@/features/plans/lib/planDayDates'
+import usePlanDetails from '@/features/plans/hooks/usePlanDetails'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Plan Details'>
 
@@ -29,71 +14,23 @@ type Props = NativeStackScreenProps<RootStackParamList, 'Plan Details'>
  * changed back.
  */
 export default function PlanDetailsScreen({ route, navigation }: Props) {
-  const {
-    dayPlanId,
-    recurringPlanId,
-    date,
-    share: invitationRef,
-  } = route.params
-  const { now } = useNow()
-  const enabled = useBuddiesEnabled()
-  const dayPlans = useServiceReport((state) => state.dayPlans)
-  const recurringPlans = useServiceReport((state) => state.recurringPlans)
-  const incomingShares = useBuddies((state) => state.incomingShares)
-  const { busy, answer: sendAnswer } = useAnswerShare('plan_details')
-
-  const dayPlan =
-    (dayPlanId ? dayPlans.find((plan) => plan.id === dayPlanId) : undefined) ??
-    (invitationRef
-      ? dayPlans.find(
-          (plan) =>
-            plan.buddyShare?.from === invitationRef.from &&
-            plan.buddyShare.shareId === invitationRef.shareId
-        )
-      : undefined)
-  const day = date ? planDayFromRouteDate(date) : undefined
-  const recurringPlan =
-    !dayPlan && recurringPlanId && day
-      ? recurringPlans.find((plan) => plan.id === recurringPlanId)
-      : undefined
-  // The Plan's local day: what Log as Time, Duplicate, and Edit are handed.
-  const item: PlanListItem | undefined = dayPlan
-    ? { type: 'day', date: storedDateToLocalDate(dayPlan.date), plan: dayPlan }
-    : recurringPlan && day && getPlansIntersectingDay(day, [recurringPlan])[0]
-      ? { type: 'recurring', date: day, plan: recurringPlan }
-      : undefined
-  const followedRef = dayPlan?.buddyShare ?? invitationRef
-  const followed = followedRef
-    ? incomingShares[incomingShareKey(followedRef.from, followedRef.shareId)]
-    : undefined
-  const shared =
-    enabled && isShownPlanShare(followed, now) ? followed : undefined
-  // A buddy's Plan that has happened can still be looked at, not answered.
-  const invitation =
-    shared && isOpenPlanInvitation(shared, now) ? shared : undefined
-  const gone = !item && !shared
+  const { now, item, shared, invitation, gone, answering } = usePlanDetails(
+    route.params,
+    {
+      // Remembered first: "Can't make it" removes the linked Plan, and the
+      // screen falls back to the invitation.
+      onAnswer: (target) =>
+        navigation.setParams({
+          share: { from: target.from, shareId: target.shareId },
+        }),
+    }
+  )
 
   // Deleted here, from the editor, on another device, or the invitation was
   // cancelled.
   useEffect(() => {
     if (gone && navigation.canGoBack()) navigation.goBack()
   }, [gone, navigation])
-
-  /**
-   * Answers the invitation, remembering it first: "Can't make it" removes the
-   * linked Plan, and the screen falls back to the invitation.
-   */
-  const answer = (target: BuddyShareRef, reply: ShareReply) => {
-    navigation.setParams({
-      share: { from: target.from, shareId: target.shareId },
-    })
-    void sendAnswer(
-      incomingShareKey(target.from, target.shareId),
-      'plan',
-      reply
-    )
-  }
-  const answering = { busy, answer }
 
   if (item) {
     return (

@@ -24,6 +24,7 @@ import ScrollAwayHeader from '@/components/ui/ScrollAwayHeader'
 import useHideBarsOnScroll from '@/hooks/useHideBarsOnScroll'
 import useTabReselect from '@/hooks/useTabReselect'
 import { renderDaySheetPlanForm } from '@/features/plans/components/PlanDayForm'
+import { daySheetPlanDetails } from '@/features/plans/components/DaySheetPlanDetails'
 import SelectedDateSheet, {
   SelectedDateSheetState,
 } from '@/features/service-reports/components/SelectedDateSheet'
@@ -297,6 +298,7 @@ const ScheduleScreen = ({ route, navigation }: Props) => {
             if (height) revealDay(selectedDate, height)
           }}
           renderPlanForm={renderDaySheetPlanForm}
+          renderPlanDetails={daySheetPlanDetails}
           renderFooter={(date, onNavigate) => (
             <>
               <TodayRouteEntry

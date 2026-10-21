@@ -1,4 +1,5 @@
 import type { PlanListItem } from '@/types/timeEntry'
+import type { RootStackParamList } from '@/types/rootStack'
 import DetailsHeaderActions from '@/components/DetailsHeaderActions'
 import usePlanMenuActions from '@/hooks/usePlanMenuActions'
 import { describeRecurrence } from '@/lib/recurrenceText'
@@ -17,21 +18,54 @@ import {
   type PlanDetailsAction,
 } from '@/features/plans/lib/planDetailsAnalytics'
 
+const trackFor = (item: PlanListItem) => (action: PlanDetailsAction) =>
+  trackPlanDetailsAction(action, {
+    kind: item.type,
+    linked: item.type === 'day' && !!item.plan.buddyShare,
+  })
+
 /**
- * The User's own Plan (or one date of a Recurring Plan) with Edit and More in
- * the header, then its buddies, or the invitation it follows.
+ * Edit and More for the User's own Plan, in Plan Details' header or a day
+ * sheet's.
  */
-export default function OwnPlanDetails({
+export function OwnPlanDetailsActions({
+  item,
+  onEdit,
+  onNavigate,
+}: {
+  item: PlanListItem
+  /** Edits in place, instead of opening the Plan screen. */
+  onEdit?: (params: RootStackParamList['PlanDay']) => void
+  /** Runs a navigation from the menu; a host sheet closes itself first. */
+  onNavigate?: (navigate: () => void) => void
+}) {
+  const { edit, menu } = usePlanMenuActions(item, {
+    withoutEdit: true,
+    edit: onEdit,
+    go: onNavigate,
+    onDeleted: () => trackFor(item)('delete'),
+  })
+  return <DetailsHeaderActions onEdit={edit} menu={menu} />
+}
+
+/**
+ * The User's own Plan (or one date of a Recurring Plan), then its buddies, or
+ * the invitation it follows.
+ */
+export function OwnPlanDetailsBody({
   item,
   share,
   now,
   answering,
+  onOpenPlan,
 }: {
   item: PlanListItem
   /** The buddy's invitation this Plan follows, while it can be answered. */
   share?: IncomingShare
   now: number
   answering: ShareAnswering
+  /** Shows another Plan in place, instead of opening its Plan Details. */
+  onOpenPlan?: (target: RootStackParamList['Plan Details']) => void
 }) {
   const categories = useCategories((state) => state.categories)
   const getRecurringPlanForDate = useServiceReport(
@@ -39,20 +73,10 @@ export default function OwnPlanDetails({
   )
   const updateDayPlan = useServiceReport((state) => state.updateDayPlan)
   const { plan } = item
-  const track = (action: PlanDetailsAction) =>
-    trackPlanDetailsAction(action, {
-      kind: item.type,
-      linked: item.type === 'day' && !!item.plan.buddyShare,
-    })
-  const { edit, menu, effective } = usePlanMenuActions(item, {
-    withoutEdit: true,
-    onDeleted: () => track('delete'),
-  })
+  const { effective } = usePlanMenuActions(item)
 
   return (
-    <PlanDetailsLayout
-      actions={<DetailsHeaderActions onEdit={edit} menu={menu} />}
-    >
+    <>
       <PlanDetailsSummary
         title={plan.title}
         date={item.date}
@@ -94,7 +118,36 @@ export default function OwnPlanDetails({
       <PlanDetailsBuddies
         item={item}
         now={now}
-        onInvited={() => track('invite_buddy')}
+        onInvited={() => trackFor(item)('invite_buddy')}
+        onOpenPlan={onOpenPlan}
+      />
+    </>
+  )
+}
+
+/**
+ * The User's own Plan (or one date of a Recurring Plan) with Edit and More in
+ * the header, then its buddies, or the invitation it follows.
+ */
+export default function OwnPlanDetails({
+  item,
+  share,
+  now,
+  answering,
+}: {
+  item: PlanListItem
+  /** The buddy's invitation this Plan follows, while it can be answered. */
+  share?: IncomingShare
+  now: number
+  answering: ShareAnswering
+}) {
+  return (
+    <PlanDetailsLayout actions={<OwnPlanDetailsActions item={item} />}>
+      <OwnPlanDetailsBody
+        item={item}
+        share={share}
+        now={now}
+        answering={answering}
       />
     </PlanDetailsLayout>
   )

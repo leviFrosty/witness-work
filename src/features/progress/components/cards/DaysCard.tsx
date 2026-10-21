@@ -1,5 +1,6 @@
 import AllDaysList from '@/features/service-reports/components/AllDaysList'
 import { renderDaySheetPlanForm } from '@/features/plans/components/PlanDayForm'
+import { daySheetPlanDetails } from '@/features/plans/components/DaySheetPlanDetails'
 import type { RevealAboveSheet } from '@/hooks/useRevealAboveSheet'
 import type { ProgressCardProps } from '@/features/progress/components/cards/types'
 
@@ -26,6 +27,7 @@ export default function DaysCard({
       dayReveal={dayReveal}
       wrapHeader={wrapEditTrigger}
       renderPlanForm={renderDaySheetPlanForm}
+      renderPlanDetails={daySheetPlanDetails}
     />
   )
 }

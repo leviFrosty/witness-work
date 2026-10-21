@@ -29,7 +29,7 @@ import {
 import type { RootStackNavigation, RootStackParamList } from '@/types/rootStack'
 
 /** Plan Details for a row's Plan (a Recurring Plan's date). */
-const planDetailsParams = (
+export const planDetailsParams = (
   item: PlanListItem
 ): RootStackParamList['Plan Details'] =>
   item.type === 'day'
@@ -37,7 +37,9 @@ const planDetailsParams = (
     : { recurringPlanId: item.plan.id, date: item.date.toISOString() }
 
 /** The Plan form editing a row's Plan (a Recurring Plan's date). */
-const planEditParams = (item: PlanListItem): RootStackParamList['PlanDay'] =>
+export const planEditParams = (
+  item: PlanListItem
+): RootStackParamList['PlanDay'] =>
   item.type === 'day'
     ? { date: item.date.toISOString(), existingDayPlanId: item.plan.id }
     : {
@@ -89,6 +91,10 @@ export default function usePlanMenuActions(
     go?: (navigate: () => void) => void
     /** Logs the Plan as time in place, instead of opening Add Time. */
     logTime?: (prefill: LogTimePrefill) => void
+    /** Shows the Plan in place, instead of opening Plan Details. */
+    open?: (target: RootStackParamList['Plan Details']) => void
+    /** Edits the Plan in place, instead of opening the Plan screen. */
+    edit?: (params: RootStackParamList['PlanDay']) => void
     /** Leaves Edit out, for hosts with their own Edit button. */
     withoutEdit?: boolean
     /** A delete was confirmed and done. */
@@ -111,10 +117,14 @@ export default function usePlanMenuActions(
     options.go ? options.go(navigate) : navigate()
 
   const open = () =>
-    go(() => navigation.navigate('Plan Details', planDetailsParams(item)))
+    options.open
+      ? options.open(planDetailsParams(item))
+      : go(() => navigation.navigate('Plan Details', planDetailsParams(item)))
 
   const edit = () =>
-    go(() => navigation.navigate('PlanDay', planEditParams(item)))
+    options.edit
+      ? options.edit(planEditParams(item))
+      : go(() => navigation.navigate('PlanDay', planEditParams(item)))
 
   const removePlan = (scope?: RecurringDeleteScope) => {
     if (item.type === 'day') {

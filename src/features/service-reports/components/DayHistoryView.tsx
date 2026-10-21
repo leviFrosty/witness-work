@@ -28,6 +28,7 @@ import {
 import PlanRow, { getPlanItemStartTime } from '@/components/PlanRow'
 import type { PlanListItem } from '@/types/timeEntry'
 import type { LogTimePrefill } from '@/hooks/usePlanMenuActions'
+import type { RootStackParamList } from '@/types/rootStack'
 import DayHistoryHeader from '@/features/service-reports/components/DayHistoryHeader'
 import TimeEntryForm from '@/features/service-reports/components/TimeEntryForm'
 import CollapsibleCard from '@/components/ui/CollapsibleCard'
@@ -36,8 +37,26 @@ import CollapsibleCard from '@/components/ui/CollapsibleCard'
 export type PlanFormSlot = {
   date: Date
   layout: 'docked' | 'inline'
-  /** Saved or deleted. */
-  onDone: () => void
+  /** The Plan to edit, as PlanDay takes it; a new Plan for `date` without. */
+  params?: RootStackParamList['PlanDay']
+  /** Saved, with where Plan Details shows the Plan now; or deleted. */
+  onDone: (target?: RootStackParamList['Plan Details']) => void
+}
+
+/**
+ * What a day's sheet shows one of its Plans with, in place of the day, by the
+ * screen that provides Plan Details.
+ */
+export type PlanDetailsSlot = {
+  plan: RootStackParamList['Plan Details']
+  /** Opens the Plan form for this Plan in the sheet. */
+  onEdit: (params: RootStackParamList['PlanDay']) => void
+  /** Shows another Plan instead, e.g. a date split off a Recurring Plan. */
+  onOpenPlan: (target: RootStackParamList['Plan Details']) => void
+  /** The Plan is gone (deleted here or elsewhere), so the day comes back. */
+  onGone: () => void
+  /** Runs a navigation from the Plan's menu, closing the sheet first. */
+  onNavigate: (navigate: () => void) => void
 }
 
 interface DayHistoryViewProps {
@@ -65,6 +84,10 @@ interface DayHistoryViewProps {
   renderPlanForm?: (slot: PlanFormSlot) => ReactNode
   /** A folded form was opened, so its host can scroll it into view. */
   onFormOpen?: (card: View) => void
+  /** Shows a Plan in place, for hosts that show Plan Details themselves. */
+  onPlanOpen?: (target: RootStackParamList['Plan Details']) => void
+  /** Edits a Plan in place, for hosts that show the Plan form themselves. */
+  onPlanEdit?: (params: RootStackParamList['PlanDay']) => void
 }
 
 const contributionToPlanListItem = (
@@ -127,6 +150,8 @@ const DayHistoryView: React.FC<DayHistoryViewProps> = ({
   inlineForms,
   renderPlanForm,
   onFormOpen,
+  onPlanOpen,
+  onPlanEdit,
 }) => {
   const theme = useTheme()
   const { showsTimeEntry } = usePublisher()
@@ -324,6 +349,8 @@ const DayHistoryView: React.FC<DayHistoryViewProps> = ({
                   item={item}
                   onNavigate={onNavigate}
                   onLogTime={onLogTime}
+                  onOpen={onPlanOpen}
+                  onEdit={onPlanEdit}
                   footer={
                     item.type === 'day'
                       ? renderDayPlanFooter?.(item.plan)

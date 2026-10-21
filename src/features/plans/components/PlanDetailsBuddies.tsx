@@ -14,7 +14,7 @@ import { analytics } from '@/lib/analytics'
 import i18n from '@/lib/locales'
 import { storedDayKey } from '@/lib/normalizeDate'
 import useServiceReport from '@/stores/serviceReport'
-import type { RootStackNavigation } from '@/types/rootStack'
+import type { RootStackNavigation, RootStackParamList } from '@/types/rootStack'
 import BuddiesSection from '@/features/buddies/components/BuddiesSection'
 import ShareReplyBadge, {
   shareReplyLabel,
@@ -47,11 +47,14 @@ export default function PlanDetailsBuddies({
   item,
   now,
   onInvited,
+  onOpenPlan,
 }: {
   item: PlanListItem
   now: number
   /** Invite Buddies added someone. */
   onInvited: () => void
+  /** Shows another Plan in place, instead of opening its Plan Details. */
+  onOpenPlan?: (target: RootStackParamList['Plan Details']) => void
 }) {
   const theme = useTheme()
   const navigation = useNavigation<RootStackNavigation>()
@@ -117,8 +120,9 @@ export default function PlanDetailsBuddies({
     const planId = sendJoinRequestInvite(invitation)
     analytics.capture('buddy_join_request_answered', { action: 'invited' })
     // A Recurring Plan's date became a one-time Plan carrying the invitation.
-    if (planId !== dayPlan?.id)
-      navigation.replace('Plan Details', { dayPlanId: planId })
+    if (planId === dayPlan?.id) return
+    if (onOpenPlan) onOpenPlan({ dayPlanId: planId })
+    else navigation.replace('Plan Details', { dayPlanId: planId })
   }
 
   const rowCount = invited.length + former.length + asking.length

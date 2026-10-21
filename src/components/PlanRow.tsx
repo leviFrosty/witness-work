@@ -42,6 +42,7 @@ import { richTextImages } from '@/lib/richText/inspect'
 import { getNoteDoc, getNoteText, hasNote } from '@/lib/richText/notes'
 import type { NoteFields } from '@/types/richText'
 import { alignText } from '@/lib/direction'
+import type { RootStackParamList } from '@/types/rootStack'
 
 /** For ordering a day's Plans; anytime Plans come first, like all-day events. */
 export const getPlanItemStartTime = (item: PlanListItem): number => {
@@ -153,6 +154,10 @@ const PlanRow = (props: {
   onNavigate?: (navigate: () => void) => void
   /** Logs the Plan as time in place, instead of opening Add Time. */
   onLogTime?: (prefill: LogTimePrefill) => void
+  /** Shows the Plan in place, instead of opening Plan Details. */
+  onOpen?: (target: RootStackParamList['Plan Details']) => void
+  /** Edits the Plan in place, instead of opening the Plan screen. */
+  onEdit?: (params: RootStackParamList['PlanDay']) => void
 }) => {
   const theme = useTheme()
   const cardStyle = useCardStyle()
@@ -163,7 +168,12 @@ const PlanRow = (props: {
   const date = props.item.date
   const { open, menu, requestDelete, effective } = usePlanMenuActions(
     props.item,
-    { go: props.onNavigate, logTime: props.onLogTime }
+    {
+      go: props.onNavigate,
+      logTime: props.onLogTime,
+      open: props.onOpen,
+      edit: props.onEdit,
+    }
   )
   const displayNote = effective.note
   const showsNote = hasNote(displayNote)

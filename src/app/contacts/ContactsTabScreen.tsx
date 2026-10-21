@@ -3,11 +3,17 @@ import { BottomTabScreenProps } from '@react-navigation/bottom-tabs'
 import ContactRow from '@/features/contacts/components/ContactRow'
 import ContactsScreen from '@/features/contacts/screens/ContactsScreen'
 import MapScreen from '@/features/map/screens/MapScreen'
+import type { MapContactRowRenderer } from '@/features/map/components/MapContactInspector'
 
 import { usePreferences } from '@/stores/preferences'
 import { HomeTabStackParamList } from '@/types/homeStack'
 
 type Props = BottomTabScreenProps<HomeTabStackParamList, 'Contacts'>
+
+/** Outside the component, so the Map gets the same function every render. */
+const renderMapContactRow: MapContactRowRenderer = (props) => (
+  <ContactRow {...props} showsDisclosure={false} showOpenInMenu />
+)
 
 /** Composes the Map into Contacts without coupling the two feature tiers. */
 export default function ContactsTabScreen({ route, navigation }: Props) {
@@ -33,9 +39,7 @@ export default function ContactsTabScreen({ route, navigation }: Props) {
           contacts={contacts}
           topInset={topInset}
           onExplore={onExplore}
-          renderContactRow={(props) => (
-            <ContactRow {...props} showsDisclosure={false} showOpenInMenu />
-          )}
+          renderContactRow={renderMapContactRow}
         />
       )}
     />

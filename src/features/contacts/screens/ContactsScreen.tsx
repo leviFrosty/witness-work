@@ -174,6 +174,9 @@ const ContactsScreen = ({
   const [mapExplored, setMapExplored] = useState(false)
   // Each visit to the Map starts with the full header.
   if (!showsMap && mapExplored) setMapExplored(false)
+  // Kept out of the `renderMap` call, so the Map gets the same function on
+  // every render here and its pins don't re-render.
+  const exploreMap = () => setMapExplored(true)
   const screenReader = useScreenReaderEnabled()
   // Exploring the map slides the tab bar away too, and its cards drop into the
   // room.
@@ -507,7 +510,7 @@ const ContactsScreen = ({
         <View style={{ flex: 1 }}>
           {renderMap({
             topInset: headerHeight,
-            onExplore: () => setMapExplored(true),
+            onExplore: exploreMap,
             contacts: sortedAndFilteredContacts,
           })}
         </View>

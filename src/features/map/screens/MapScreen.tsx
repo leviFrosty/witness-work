@@ -14,7 +14,7 @@ import useGlassColorScheme from '@/hooks/useGlassColorScheme'
 import Wrapper from '@/components/ui/layout/Wrapper'
 import MapView, { LatLng, Marker } from 'react-native-maps'
 import useContacts from '@/stores/contactsStore'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useIsFocused, useNavigation } from '@react-navigation/native'
 import useTheme, { ThemeContext } from '@/contexts/theme'
 import { GlassColorSchemeOverrideContext } from '@/contexts/glassColorScheme'
@@ -134,6 +134,33 @@ interface FullMapViewProps {
   onContactCreated: (id: string) => void
 }
 
+/**
+ * Sets `flag` while `run` runs. Outside the component: the React Compiler skips
+ * a component with a `try … finally` in it.
+ */
+function whileFlagged(flag: { current: boolean }, run: () => void) {
+  flag.current = true
+  try {
+    run()
+  } finally {
+    flag.current = false
+  }
+}
+
+/**
+ * The same search as the Contacts list: typos, notes, custom fields and Arabic
+ * spellings all match. Built only while there's a query, so logging a visit
+ * doesn't rebuild an index nobody is using. A hook of its own, so the React
+ * Compiler keeps it apart from the query and typing doesn't rebuild it.
+ */
+function useMapSearchIndex(
+  contactMarkers: ContactMarker[],
+  hasSearch: boolean
+) {
+  const conversations = useConversations((s) => s.conversations)
+  return hasSearch ? buildContactsFuse(contactMarkers, conversations) : null
+}
+
 const FullMapView = ({
   contactMarkers,
   hasMappedContacts,
@@ -215,24 +242,12 @@ const FullMapView = ({
   const CARD_HEIGHT = 200
   const isDark = theme.colors.background === '#121212'
 
-  // The same search as the Contacts list: typos, notes, custom fields and
-  // Arabic spellings all match. Built only while there's a query, so logging a
-  // visit doesn't rebuild an index nobody is using.
-  const conversations = useConversations((s) => s.conversations)
-  const hasSearch = search.trim().length > 0
-  const searchFuse = useMemo(
-    () => (hasSearch ? buildContactsFuse(contactMarkers, conversations) : null),
-    [hasSearch, contactMarkers, conversations]
-  )
-  const visibleContactMarkers = useMemo(
-    () =>
-      searchFuse
-        ? searchContactsFuzzy(search, searchFuse, contactMarkers).map(
-            (result) => result.contact
-          )
-        : contactMarkers,
-    [search, searchFuse, contactMarkers]
-  )
+  const searchFuse = useMapSearchIndex(contactMarkers, search.trim().length > 0)
+  const visibleContactMarkers = searchFuse
+    ? searchContactsFuzzy(search, searchFuse, contactMarkers).map(
+        (result) => result.contact
+      )
+    : contactMarkers
 
   // Room the floating inspector takes on the trailing edge, the physical left
   // in a right-to-left layout. Map padding and pin points are physical.
@@ -341,12 +356,9 @@ const FullMapView = ({
     const carousel = carouselRef.current
     if (!carousel || carousel.getCurrentIndex() === index) return false
 
-    programmaticScrollRef.current = true
-    try {
+    whileFlagged(programmaticScrollRef, () =>
       carousel.scrollTo({ index, animated })
-    } finally {
-      programmaticScrollRef.current = false
-    }
+    )
     return true
   }, [])
 
@@ -475,7 +487,7 @@ const FullMapView = ({
 
   const mapContactCreation = useMapContactCreation((id, coordinate) => {
     setCardsStowed(false)
-    stowProgress.value = withTiming(0, STOW_TIMING)
+    stowProgress.set(withTiming(0, STOW_TIMING))
     // Clear the old search before reconciliation so the saved Contact can
     // become the selected carousel card (or the revealed iPad inspector row).
     // It stays pinned even if the Contacts filters would hide it.
@@ -673,12 +685,12 @@ const FullMapView = ({
     const stowed = !cardsStowed
 
     setCardsStowed(stowed)
-    stowProgress.value = withTiming(stowed ? 1 : 0, STOW_TIMING)
+    stowProgress.set(withTiming(stowed ? 1 : 0, STOW_TIMING))
     if (stowed) onExplore?.()
   }
 
   const settleStowProgress = () => {
-    stowProgress.value = withTiming(cardsStowed ? 1 : 0, STOW_TIMING)
+    stowProgress.set(withTiming(cardsStowed ? 1 : 0, STOW_TIMING))
   }
 
   const clampProgress = (value: number) => Math.min(1, Math.max(0, value))
@@ -690,7 +702,7 @@ const FullMapView = ({
     .activeOffsetY(12)
     .failOffsetX([-12, 12])
     .onUpdate((e) => {
-      stowProgress.value = clampProgress(e.translationY / stowDistance)
+      stowProgress.set(clampProgress(e.translationY / stowDistance))
     })
     .onEnd((e) => {
       if (e.translationY > stowSwipeDistance || e.velocityY > 500) {
@@ -709,13 +721,13 @@ const FullMapView = ({
     }
 
     setSearchExpanded(true)
-    searchExpand.value = withSpring(1, SEARCH_SPRING_OPEN)
+    searchExpand.set(withSpring(1, SEARCH_SPRING_OPEN))
     requestAnimationFrame(() => searchInputRef.current?.focus())
   }
 
   const handleSearchBlur = () => {
     if (search.trim().length === 0) {
-      searchExpand.value = withSpring(0, SEARCH_SPRING_CLOSE)
+      searchExpand.set(withSpring(0, SEARCH_SPRING_CLOSE))
       setSearchExpanded(false)
     }
   }
@@ -723,7 +735,7 @@ const FullMapView = ({
   const collapseSearch = () => {
     if (!searchExpanded) return
     searchInputRef.current?.blur()
-    searchExpand.value = withSpring(0, SEARCH_SPRING_CLOSE)
+    searchExpand.set(withSpring(0, SEARCH_SPRING_CLOSE))
     setSearchExpanded(false)
   }
 
@@ -734,7 +746,7 @@ const FullMapView = ({
       .activeOffsetY(-8)
       .failOffsetY(8)
       .onUpdate((e) => {
-        stowProgress.value = clampProgress(1 + e.translationY / stowDistance)
+        stowProgress.set(clampProgress(1 + e.translationY / stowDistance))
       })
       .onEnd((e) => {
         if (e.translationY < -24 || e.velocityY < -400) {
@@ -1445,6 +1457,19 @@ const FullMapView = ({
   )
 }
 
+/** `contacts`, then those made from a dropped pin that the filters hide. */
+function withDroppedContacts(
+  contacts: Contact[],
+  activeContacts: Contact[],
+  droppedIds: string[]
+): Contact[] {
+  const shown = new Set(contacts.map((c) => c.id))
+  const dropped = activeContacts.filter(
+    (c) => droppedIds.includes(c.id) && !shown.has(c.id)
+  )
+  return dropped.length > 0 ? [...contacts, ...dropped] : contacts
+}
+
 const MapScreen = ({
   contacts,
   renderContactRow,
@@ -1472,23 +1497,9 @@ const MapScreen = ({
     }))
   )
   const colors = useMarkerColors()
-
-  const activeContacts = useMemo(
-    () => filterActivesContacts(allContacts),
-    [allContacts]
-  )
-  const hasMappedContacts = activeContacts.some((c) => c.coordinate != null)
   // Contacts made from a dropped pin stay on the map for this visit even when
   // the filters would hide them, so a new pin doesn't vanish once saved.
   const [droppedIds, setDroppedIds] = useState<string[]>([])
-  const pinnedContacts = useMemo(() => {
-    const shown = new Set(contacts.map((c) => c.id))
-    const dropped = activeContacts.filter(
-      (c) => droppedIds.includes(c.id) && !shown.has(c.id)
-    )
-    return dropped.length > 0 ? [...contacts, ...dropped] : contacts
-  }, [contacts, activeContacts, droppedIds])
-
   // Single O(conversations) index shared by the pin-color loop and every
   // carousel card — replaces the per-contact full-array scans that made the
   // screen take seconds to open (same pattern as the Contacts list).
@@ -1497,19 +1508,21 @@ const MapScreen = ({
     stalenessBreakpoints
   )
 
-  const contactMarkers: ContactMarker[] = useMemo(
-    () =>
-      pinnedContacts
-        .filter((c) => c.coordinate != null)
-        .map((c) => ({
-          ...c,
-          pinColor: stalenessToColor(
-            conversationIndex.stalenessFor(c.id),
-            colors
-          ),
-        })),
-    [pinnedContacts, colors, conversationIndex]
+  // After every hook: the React Compiler can't memoize a value across one.
+  const activeContacts = filterActivesContacts(allContacts)
+  const hasMappedContacts = activeContacts.some((c) => c.coordinate != null)
+  const pinnedContacts = withDroppedContacts(
+    contacts,
+    activeContacts,
+    droppedIds
   )
+
+  const contactMarkers: ContactMarker[] = pinnedContacts
+    .filter((c) => c.coordinate != null)
+    .map((c) => ({
+      ...c,
+      pinColor: stalenessToColor(conversationIndex.stalenessFor(c.id), colors),
+    }))
 
   if (!hasCompletedMapOnboarding) {
     return (

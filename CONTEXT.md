@@ -125,7 +125,7 @@ A person the User is engaged with in field ministry. Has identifying info (name,
 _Avoid_: "lead", "prospect" (those are sales-funnel terms).
 
 **Visit**:
-A single field-ministry interaction with a Contact on a given date. May result in a real conversation (someone home, talked) or a not-at-home outcome (no one answered). Carries an optional note, an optional Follow-up, and a Bible Study flag for the User to indicate this Visit conducted a bible study.
+A single field-ministry interaction with a Contact on a given date. May result in a real conversation (someone home, talked) or a not-at-home outcome (no one answered). Carries an optional note, an optional Follow-up, and a Bible Study flag for the User to indicate this Visit conducted a bible study. Visits that came with a Contact someone shared with the User (`receivedAt`) are the sender's ministry: they stay in the Contact's history but count toward none of the User's own figures (Service Report, Progress, profile, widgets, pet, badges).
 _Avoid_: "Conversation" (legacy type name — Visit is the canonical term because not every Visit is a conversation).
 
 **Not at Home**:
@@ -133,7 +133,7 @@ A Visit outcome indicating no one answered. Recorded as a flag on the Visit so t
 _Avoid_: treating Not at Home as a separate record type — it's a Visit outcome.
 
 **Bible Study**:
-A designation a User applies to a Visit to indicate that a bible study was conducted during that Visit. Aggregated across a month, the Bible-Study Visit count is one of the figures reported on the **Service Report**. In this app, Bible Study is a per-Visit attribute, not a Contact-level relationship status.
+A designation a User applies to a Visit to indicate that a bible study was conducted during that Visit. Aggregated across a month, the Bible-Study Visit count is one of the figures reported on the **Service Report**; only the User's own Visits count, so a study the sender of a shared Contact conducted doesn't, until the User logs their own. In this app, Bible Study is a per-Visit attribute, not a Contact-level relationship status.
 _Avoid_: assuming a Contact is "a Bible Study" on the Contact record itself — the app does not model the standing relationship; only the per-Visit designation.
 
 **Follow-up**:

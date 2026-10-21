@@ -8,6 +8,7 @@ import {
   isCountableEntry,
 } from '@/lib/serviceReport'
 import { getServiceYearReports } from '@/lib/serviceYear'
+import { isOwnVisit } from '@/lib/conversations'
 import type { Contact } from '@/types/contact'
 import type { TimeEntriesByYear, TimeEntry } from '@/types/timeEntry'
 import type { Visit } from '@/types/visit'
@@ -194,7 +195,7 @@ export type StudyStats = {
  * The people the User studied with (Visits marked as a Bible Study) on dates
  * `inRange` accepts, and the month with the most, as each month's report counts
  * its Bible Studies. Only Contacts still on this device count, as on the
- * month's report.
+ * month's report, and only the User's own Visits (`isOwnVisit`).
  */
 export const studyStats = ({
   contacts,
@@ -209,7 +210,12 @@ export const studyStats = ({
   const contactIds = new Set<string>()
   const byMonth = new Map<number, Set<string>>()
   for (const visit of conversations) {
-    if (!visit.isBibleStudy || !known.has(visit.contact.id)) continue
+    if (
+      !visit.isBibleStudy ||
+      !isOwnVisit(visit) ||
+      !known.has(visit.contact.id)
+    )
+      continue
     const date = moment(visit.date)
     if (!inRange(date)) continue
     contactIds.add(visit.contact.id)
@@ -237,7 +243,10 @@ export type VisitStats = {
   newContacts: number
 }
 
-/** Visits on dates `inRange` accepts, and the Contacts added then. */
+/**
+ * The User's own Visits (`isOwnVisit`) on dates `inRange` accepts, and the
+ * Contacts added then.
+ */
 export const visitStats = ({
   contacts,
   conversations,
@@ -251,7 +260,7 @@ export const visitStats = ({
   let talked = 0
   let notAtHome = 0
   for (const visit of conversations) {
-    if (!inRange(moment(visit.date))) continue
+    if (!isOwnVisit(visit) || !inRange(moment(visit.date))) continue
     if (visit.notAtHome) {
       notAtHome += 1
     } else {

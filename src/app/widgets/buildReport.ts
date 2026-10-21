@@ -12,6 +12,7 @@ import { formatMinutes } from '@/lib/minutes'
 import { dailyPace } from '@/features/progress/lib/progressCardStats'
 import { formatNeededMinutes } from '@/features/progress/components/cards/displayMinutes'
 import { contentHash } from '@/lib/contentHash'
+import { isOwnVisit } from '@/lib/conversations'
 import i18n, { TranslationKey } from '@/lib/locales'
 import { Publisher, PublisherHours } from '@/types/publisher'
 import { getEntryMode } from '@/lib/publisherCapabilities'
@@ -76,9 +77,12 @@ export type ReportFields = {
   hasReportedThisMonth: boolean
   /** Publisher state machine value. Only meaningful when `mode === 'checkbox'`. */
   publisherState: PublisherState
-  /** Number of conversations recorded this calendar month. */
+  /**
+   * Number of the User's own conversations recorded this calendar month (not
+   * ones that came with a shared Contact).
+   */
   monthConversationCount: number
-  /** Number of distinct bible studies held this calendar month. */
+  /** Number of distinct bible studies the User held this calendar month. */
   monthBibleStudyCount: number
 
   /**
@@ -300,8 +304,10 @@ export function buildReport(
 
   const monthStart = now.clone().startOf('month')
   const monthEnd = now.clone().endOf('month')
-  const conversationsThisMonth = args.conversations.filter((c) =>
-    moment(c.date).isBetween(monthStart, monthEnd, undefined, '[]')
+  const conversationsThisMonth = args.conversations.filter(
+    (c) =>
+      isOwnVisit(c) &&
+      moment(c.date).isBetween(monthStart, monthEnd, undefined, '[]')
   )
   const monthConversationCount = conversationsThisMonth.length
   const monthBibleStudyCount = new Set(

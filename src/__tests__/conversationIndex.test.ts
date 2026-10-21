@@ -155,6 +155,35 @@ describe('lib/conversationIndex', () => {
     expect(index.studiedThisMonthIds.has('studiedBefore')).toBe(false)
   })
 
+  it("keeps a shared contact's study as history, not this month's study", () => {
+    const received: Visit = {
+      ...visit({ contactId: 'shared', date: new Date(), isBibleStudy: true }),
+      receivedAt: Date.now(),
+    }
+
+    const index = buildConversationIndex(
+      [received],
+      DEFAULT_STALENESS_BREAKPOINTS
+    )
+
+    expect(index.studyContactIds.has('shared')).toBe(true)
+    expect(index.mostRecentStudyMs.has('shared')).toBe(true)
+    expect(index.studiedThisMonthIds.has('shared')).toBe(false)
+
+    const own = visit({
+      contactId: 'shared',
+      id: 'own',
+      date: new Date(),
+      isBibleStudy: true,
+    })
+    expect(
+      buildConversationIndex(
+        [received, own],
+        DEFAULT_STALENESS_BREAKPOINTS
+      ).studiedThisMonthIds.has('shared')
+    ).toBe(true)
+  })
+
   it('measures "this month" from the given local day', () => {
     // The clock is frozen on 2026-06-12.
     const conversations: Visit[] = [

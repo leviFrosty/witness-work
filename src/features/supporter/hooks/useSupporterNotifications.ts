@@ -6,6 +6,7 @@ import {
 import { useNavigation } from '@react-navigation/native'
 import useIsSupporter from '@/hooks/useIsSupporter'
 import { analytics } from '@/lib/analytics'
+import { isOwnVisit } from '@/lib/conversations'
 import i18n from '@/lib/locales'
 import useContacts from '@/stores/contactsStore'
 import useConversations from '@/stores/conversationStore'
@@ -35,8 +36,9 @@ export default function useSupporterNotifications(
   const { isSupporter } = useIsSupporter()
   const serviceReports = useServiceReport((state) => state.serviceReports)
   const contactsCount = useContacts((state) => state.contacts.length)
+  // A shared Contact's Visits are the sender's use of the app, not the User's.
   const conversationsCount = useConversations(
-    (state) => state.conversations.length
+    (state) => state.conversations.filter(isOwnVisit).length
   )
   const {
     hideDonateHeart,

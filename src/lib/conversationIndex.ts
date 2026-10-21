@@ -4,6 +4,7 @@ import { normalizeStalenessBreakpoints } from '@/constants/staleness'
 import { ContactStaleness } from '@/lib/contactStaleness'
 import {
   isAppointment,
+  isOwnVisit,
   MISSED_FOLLOW_UP_AFTER_HOURS,
   MISSED_FOLLOW_UP_LOOKBACK_DAYS,
 } from '@/lib/conversations'
@@ -41,7 +42,11 @@ export type ConversationIndex = {
   mostRecentStudyMs: Map<string, number>
   /** Contact ids that have at least one Bible-study conversation, ever. */
   studyContactIds: Set<string>
-  /** Contact ids with a Bible-study conversation in the current calendar month. */
+  /**
+   * Contact ids the User studied with in the current calendar month, as the
+   * month's report counts them (`contactStudiedForGivenMonth`): a study that
+   * came with a shared Contact is the sender's.
+   */
   studiedThisMonthIds: Set<string>
   /**
    * Epoch-ms of the soonest open Follow-up per contact id that isn't missed yet
@@ -128,7 +133,7 @@ export function buildConversationIndex(
       if (prevStudy === undefined || ms > prevStudy) {
         mostRecentStudyMs.set(id, ms)
       }
-      if (ms >= startOfMonth && ms < startOfNextMonth) {
+      if (ms >= startOfMonth && ms < startOfNextMonth && isOwnVisit(c)) {
         studiedThisMonthIds.add(id)
       }
     }

@@ -13,6 +13,7 @@ import Header from '@/components/ui/layout/Header'
 import Wrapper from '@/components/ui/layout/Wrapper'
 import XView from '@/components/ui/layout/XView'
 import useTheme from '@/contexts/theme'
+import useAccessibilityTextSize from '@/hooks/useAccessibilityTextSize'
 import { navigateTo } from '@/lib/address'
 import { getReadableTextColor, relativeLuminance } from '@/lib/color'
 import {
@@ -73,6 +74,9 @@ const ContactDetailsContent = ({
   // foreground from the resolved background for the hero and header chrome.
   const heroForeground = getReadableTextColor(heroBackground)
   const heroIsDark = relativeLuminance(heroBackground) <= 0.45
+  // At accessibility text sizes the Conversation History heading takes the
+  // whole row and Add moves under it, instead of being pushed off the screen.
+  const stackHistoryHeader = useAccessibilityTextSize()
 
   const contactVisits = sortVisitsNewestFirst(
     conversations.filter((visit) => visit.contact.id === id)
@@ -289,13 +293,35 @@ const ContactDetailsContent = ({
             <JsonViewer label={i18n.t('data')} value={contact} />
           )}
           <View style={{ gap: 12 }}>
-            <XView
-              style={{ justifyContent: 'space-between', paddingHorizontal: 2 }}
+            <View
+              style={{
+                flexDirection: stackHistoryHeader ? 'column' : 'row',
+                alignItems: stackHistoryHeader ? 'flex-start' : 'center',
+                justifyContent: 'space-between',
+                gap: 8,
+                paddingHorizontal: 2,
+              }}
             >
-              <XView style={{ alignItems: 'center' }}>
-                <XView style={{ gap: 8, alignItems: 'baseline' }}>
+              {/* The count and info button wrap under a heading that fills
+                  its row, so a long word never has to break. */}
+              <XView
+                style={{
+                  alignItems: 'center',
+                  flexShrink: 1,
+                  flexWrap: 'wrap',
+                }}
+              >
+                <XView
+                  style={{
+                    gap: 8,
+                    alignItems: 'baseline',
+                    flexShrink: 1,
+                    flexWrap: 'wrap',
+                  }}
+                >
                   <Text
                     style={{
+                      flexShrink: 1,
                       fontSize: theme.fontSize('lg') - 1,
                       fontFamily: theme.fonts.semiBold,
                     }}
@@ -328,7 +354,7 @@ const ContactDetailsContent = ({
                 color={theme.colors.text}
                 compact
               />
-            </XView>
+            </View>
             {journey ? (
               <>
                 <VisitJourneyCard journey={journey} upNext={upNext} />

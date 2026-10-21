@@ -136,3 +136,17 @@ describe('TextInput validation outline', () => {
     }
   )
 })
+
+describe('TextInput focus', () => {
+  it('passes autoFocus on as the native focus Tamagui reads', async () => {
+    await render({ autoFocus: true })
+
+    expect(input().props.autoFocusNative).toBe(true)
+  })
+
+  it('keeps an explicit autoFocusNative', async () => {
+    await render({ autoFocus: true, autoFocusNative: false })
+
+    expect(input().props.autoFocusNative).toBe(false)
+  })
+})

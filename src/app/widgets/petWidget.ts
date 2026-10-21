@@ -261,12 +261,12 @@ function signKey(kind: SignId, values: PetSignValues | null): unknown {
     case 'none':
       return null
     case 'month':
-      return [sign.monthHours, sign.monthGoal, sign.digits]
+      return [sign.monthMinutes, sign.monthGoal, sign.digits]
     case 'year':
       return [
         sign.yearBars,
         sign.currentMonthIndex,
-        sign.yearHours,
+        sign.yearMinutes,
         sign.digits,
       ]
     case 'shared':
@@ -274,7 +274,7 @@ function signKey(kind: SignId, values: PetSignValues | null): unknown {
     case 'plan':
       return [
         sign.planDay,
-        sign.planHours,
+        sign.planMinutes,
         sign.digits,
         values.nextPlanDate ? localDayKey(values.nextPlanDate) : null,
       ]
@@ -575,9 +575,9 @@ export function petLampDaysLabel(
   )
 }
 
-/** Hours as the widget's compact duration, "0h" for none. */
-const compactHours = (hours: number): string =>
-  formatMinutesCompact(hours * 60) || formatMinutesCompact(0, { unit: 'hours' })
+/** Minutes as the widget's compact duration, "0h" for none. */
+const compactMinutes = (minutes: number): string =>
+  formatMinutesCompact(minutes) || formatMinutesCompact(0, { unit: 'hours' })
 
 /** The wall sign's value as one short line; null for no sign. */
 export function petSignLine(
@@ -591,24 +591,26 @@ export function petSignLine(
     case 'month':
       return sign.monthGoal > 0
         ? t('pet.widget.signMonth', {
-            value: compactHours(sign.monthHours),
+            value: compactMinutes(sign.monthMinutes),
             goal: formatMinutesCompact(sign.monthGoal, { unit: 'hours' }),
           })
         : t('pet.widget.signMonthNoGoal', {
-            value: compactHours(sign.monthHours),
+            value: compactMinutes(sign.monthMinutes),
           })
     case 'year':
-      return t('pet.widget.signYear', { value: compactHours(sign.yearHours) })
+      return t('pet.widget.signYear', {
+        value: compactMinutes(sign.yearMinutes),
+      })
     case 'shared':
       return t('pet.widget.signShared', {
         count: sign.sharedMonths.filter(Boolean).length,
         total: sign.sharedMonths.length,
       })
     case 'plan':
-      return nextPlanDate && sign.planHours !== null
+      return nextPlanDate && sign.planMinutes !== null
         ? t('pet.widget.signPlan', {
             date: formatMonthDayCompact(moment(nextPlanDate)),
-            duration: compactHours(sign.planHours),
+            duration: compactMinutes(sign.planMinutes),
           })
         : t('pet.widget.signPlanNone')
     case 'convos':

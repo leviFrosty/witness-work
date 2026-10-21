@@ -103,7 +103,7 @@ export const SCENES: Readonly<Record<string, readonly [SceneInput, number]>> = {
         shelf: 'books',
         sign: 'month',
       }),
-      sign: { ...DEMO_SIGN_DATA, monthHours: 0 },
+      sign: { ...DEMO_SIGN_DATA, monthMinutes: 0 },
       lampLevel: 0,
       pet: { species: 'cat', coat: 'calico', mood: 'dead', seed: 1000 },
     },

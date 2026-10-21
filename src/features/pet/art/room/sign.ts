@@ -30,22 +30,22 @@ export type { SignId }
  * year.
  */
 export interface SignData {
-  /** Hours this month (fractional allowed; shown to one decimal). */
-  readonly monthHours: number
+  /** Minutes this month (the sign shows hours to one decimal). */
+  readonly monthMinutes: number
   /** Monthly hour goal; 0 hides the progress fill. */
   readonly monthGoal: number
   /** Hours per month of the service year, September first (12 values). */
   readonly yearBars: readonly number[]
   /** Index into `yearBars` / `sharedMonths` of the current month. */
   readonly currentMonthIndex: number
-  /** Hours this service year. */
-  readonly yearHours: number
+  /** Minutes this service year. */
+  readonly yearMinutes: number
   /** Months of the service year with shared-in-ministry checked (12 values). */
   readonly sharedMonths: readonly boolean[]
   /** Day of month of the next plan, or null when none. */
   readonly planDay: number | null
-  /** Hours of the next plan, or null when none. */
-  readonly planHours: number | null
+  /** Minutes of the next plan, or null when none. */
+  readonly planMinutes: number | null
   /** Conversations this month. */
   readonly conversations: number
   /** Return visits this month. */
@@ -56,11 +56,11 @@ export interface SignData {
 
 /** Sample values (the design board's demo data). */
 export const DEMO_SIGN_DATA: SignData = {
-  monthHours: 14.5,
+  monthMinutes: 870,
   monthGoal: 30,
   yearBars: [38, 41, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
   currentMonthIndex: 1,
-  yearHours: 312,
+  yearMinutes: 18720,
   sharedMonths: [
     true,
     true,
@@ -76,7 +76,7 @@ export const DEMO_SIGN_DATA: SignData = {
     false,
   ],
   planDay: 21,
-  planHours: 2.5,
+  planMinutes: 150,
   conversations: 8,
   returnVisits: 3,
   digits: 'latn',
@@ -184,11 +184,14 @@ const CONTENT: Readonly<Record<Exclude<SignId, 'none'>, (p: Painter) => void>> =
   {
     month({ buf, ink, data, centered }) {
       stamp(buf, CLOCK, 144, 15, { o: ink.ink, k: ink.ink })
-      centered(fitSignNumber(data.monthHours, data.digits, SIGN_TEXT_WIDTH), 24)
+      centered(
+        fitSignNumber(data.monthMinutes / 60, data.digits, SIGN_TEXT_WIDTH),
+        24
+      )
       fillRect(buf, 138, 32, 156, 34, ink.faint)
       const progress =
         data.monthGoal > 0
-          ? Math.min(1, Math.max(0, data.monthHours / data.monthGoal))
+          ? Math.min(1, Math.max(0, data.monthMinutes / 60 / data.monthGoal))
           : 0
       fillRect(buf, 138, 32, 138 + Math.round(18 * progress), 34, ink.green)
     },
@@ -201,7 +204,10 @@ const CONTENT: Readonly<Record<Exclude<SignId, 'none'>, (p: Painter) => void>> =
           i === data.currentMonthIndex ? ink.green : v ? ink.ink : ink.faint
         fillRect(buf, x, 23 - h, x + 1, 23, c)
       })
-      centered(fitSignNumber(data.yearHours, data.digits, SIGN_TEXT_WIDTH), 27)
+      centered(
+        fitSignNumber(data.yearMinutes / 60, data.digits, SIGN_TEXT_WIDTH),
+        27
+      )
     },
     shared({ buf, ink, data, centered }) {
       fillRect(buf, 143, 15, 152, 24, ink.ink)
@@ -217,7 +223,14 @@ const CONTENT: Readonly<Record<Exclude<SignId, 'none'>, (p: Painter) => void>> =
       fillRect(buf, 142, 14, 153, 17, mix(RED, ink.paper, 0.35))
       fillRect(buf, 143, 17, 152, 24, mix(ink.paper, WHITE, 0.5))
       centered(fitSignNumber(data.planDay, data.digits, PLAN_DAY_WIDTH), 18)
-      centered(fitSignNumber(data.planHours, data.digits, SIGN_TEXT_WIDTH), 29)
+      centered(
+        fitSignNumber(
+          data.planMinutes === null ? null : data.planMinutes / 60,
+          data.digits,
+          SIGN_TEXT_WIDTH
+        ),
+        29
+      )
     },
     convos({ buf, ink, data }) {
       const count = (value: number, y: number) => {

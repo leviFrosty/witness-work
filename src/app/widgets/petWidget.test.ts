@@ -19,6 +19,7 @@ import { hashBuffer, type PixelBuffer } from '@/lib/pixelArt'
 import { DEFAULT_ROOM, type PetRecord, type PetRoomRecord } from '@/types/pet'
 import { DEMO_SIGN_DATA } from '@/features/pet/art'
 import { addDays } from '@/features/pet/lib/dayKeys'
+import { buildSignData } from '@/features/pet/lib/signData'
 import {
   buildPetWidget,
   createPetImageCache,
@@ -330,7 +331,7 @@ describe('petWidgetTimeline after the 48 hours', () => {
         signAt: (day) => ({
           sign: {
             ...DEMO_SIGN_DATA,
-            monthHours: day.getMonth() === 9 ? 14.5 : 0,
+            monthMinutes: day.getMonth() === 9 ? 870 : 0,
           },
           nextPlanDate: null,
         }),
@@ -341,12 +342,12 @@ describe('petWidgetTimeline after the 48 hours', () => {
       entries.map((e) => [
         e.date,
         e.state.lampLevel,
-        e.sign?.sign.monthHours,
+        e.sign?.sign.monthMinutes,
         e.state.dead,
       ])
     ).toEqual([
-      [at(25).getTime(), 2, 14.5, true],
-      [at(27).getTime(), 0, 14.5, true],
+      [at(25).getTime(), 2, 870, true],
+      [at(27).getTime(), 0, 870, true],
       [at(1, 0, 10).getTime(), 0, 0, true],
     ])
   })
@@ -402,7 +403,7 @@ describe('planPetWidget', () => {
     const signed = planPetWidget(
       input({
         signAt: () => ({
-          sign: { ...DEMO_SIGN_DATA, monthHours: 15 },
+          sign: { ...DEMO_SIGN_DATA, monthMinutes: 900 },
           nextPlanDate: null,
         }),
       }),
@@ -413,7 +414,7 @@ describe('planPetWidget', () => {
     const yearOnly = planPetWidget(
       input({
         signAt: () => ({
-          sign: { ...DEMO_SIGN_DATA, yearHours: 999 },
+          sign: { ...DEMO_SIGN_DATA, yearMinutes: 59940 },
           nextPlanDate: null,
         }),
       }),
@@ -618,13 +619,13 @@ describe('petSignLine', () => {
     expect(petSignLine('month', { ...sign, monthGoal: 0 }, null)).toBe(
       '14.5h this month'
     )
-    expect(petSignLine('month', { ...sign, monthHours: 0 }, null)).toBe(
+    expect(petSignLine('month', { ...sign, monthMinutes: 0 }, null)).toBe(
       '0h of 30h'
     )
     expect(petSignLine('year', sign, null)).toBe('312h this service year')
     expect(petSignLine('shared', sign, null)).toBe('Shared in 2 of 12 months')
     expect(petSignLine('plan', sign, at(21))).toBe('Next plan: Oct 21, 2.5h')
-    expect(petSignLine('plan', { ...sign, planHours: null }, null)).toBe(
+    expect(petSignLine('plan', { ...sign, planMinutes: null }, null)).toBe(
       'No plans ahead'
     )
     expect(petSignLine('convos', sign, null)).toBe(
@@ -637,5 +638,34 @@ describe('petSignLine', () => {
         null
       )
     ).toBe('1 conversation · 1 return visit')
+  })
+
+  it('keeps the minutes of short durations', () => {
+    const today = new Date(2026, 9, 18, 10)
+    const lines = [10, 25, 50].map((minutes) => {
+      const built = buildSignData({
+        today,
+        serviceReports: {
+          2026: { 9: [{ id: 'a', date: today, hours: 0, minutes }] },
+        },
+        dayPlans: [{ id: 'p', date: today, minutes }],
+        recurringPlans: [],
+        visits: [],
+        publisher: 'regularPioneer',
+        creditLimit: { enabled: false, customLimitHours: 55 },
+        monthGoalHours: 0,
+        digits: 'latn',
+      })
+      return [
+        petSignLine('month', built, null),
+        petSignLine('year', built, null),
+        petSignLine('plan', built, today),
+      ]
+    })
+    expect(lines).toEqual([
+      ['10m this month', '10m this service year', 'Next plan: Oct 18, 10m'],
+      ['25m this month', '25m this service year', 'Next plan: Oct 18, 25m'],
+      ['50m this month', '50m this service year', 'Next plan: Oct 18, 50m'],
+    ])
   })
 })

@@ -6,7 +6,6 @@ import React, { useRef } from 'react'
 import { NavigationContainer } from '@react-navigation/native'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { useColorScheme } from 'react-native'
-import { StatusBar } from 'expo-status-bar'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { useNoteImageCleanup } from '@/app/notes/useNoteImageCleanup'
 import { KeyboardProvider } from 'react-native-keyboard-controller'
@@ -20,6 +19,7 @@ import SurveyProvider from '@/providers/SurveyProvider'
 import AnimationViewProvider from '@/providers/AnimationViewProvider'
 import ConfettiProvider from '@/providers/ConfettiProvider'
 import RootStackComponent from '@/app/navigation/RootStack'
+import SystemBars from '@/app/components/SystemBars'
 import LaunchSplash from '@/app/launch/LaunchSplash'
 import { useStorageUnlock } from '@/app/launch/useStorageUnlock'
 import { markLaunched } from '@/app/launch/launchState'
@@ -181,7 +181,7 @@ function UnlockedApp() {
                       }
                       config={tamaguiConfig}
                     >
-                      <StatusBar />
+                      <SystemBars />
                       <ToastViewport />
                       <ConfettiProvider>
                         <AnimationViewProvider>

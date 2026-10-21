@@ -1317,6 +1317,7 @@ export default function ToolsScreen() {
               info='Off hides every Mileage entry point but keeps data. Reset the prompt to see the Home opt-in card again.'
               trailing={
                 <Switch
+                  accessibilityLabel='Tracking enabled'
                   value={!!mileageTrackingEnabled}
                   onValueChange={(value) =>
                     setPreferences({ mileageTrackingEnabled: value })
@@ -1536,6 +1537,7 @@ export default function ToolsScreen() {
                 label='Force-show nudge'
                 trailing={
                   <Switch
+                    accessibilityLabel='Force-show nudge'
                     value={devSupporterNudgeForceShow}
                     onValueChange={(value) =>
                       setPreferences({ devSupporterNudgeForceShow: value })
@@ -1626,6 +1628,7 @@ export default function ToolsScreen() {
               label='Auto rollover'
               trailing={
                 <Switch
+                  accessibilityLabel='Auto rollover'
                   value={autoRolloverEnabled}
                   onValueChange={(value) =>
                     setPreferences({ autoRolloverEnabled: value })
@@ -2255,6 +2258,7 @@ export default function ToolsScreen() {
                 info='By default, app-icon changes (manual picks, seasonal rotation, supporter-lapse reverts) bypass the iOS "App Icon Updated" system alert via a patched private selector. Turn this on to use the public API instead — the alert fires on every change, useful for confirming a change landed when the icon doesn’t appear to update.'
                 trailing={
                   <Switch
+                    accessibilityLabel='Show app icon alerts'
                     value={devShowAppIconAlerts}
                     onValueChange={(value) =>
                       setPreferences({ devShowAppIconAlerts: value })

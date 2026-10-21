@@ -166,6 +166,7 @@ export default function BuddiesTools() {
             label='Show without the remote flag'
             trailing={
               <Switch
+                accessibilityLabel='Show without the remote flag'
                 value={devOverride}
                 onValueChange={(value) => {
                   useBuddies.setState({ devOverride: value })

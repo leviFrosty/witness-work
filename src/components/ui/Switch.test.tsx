@@ -95,7 +95,12 @@ describe('Android Switch', () => {
   it('disables the Compose switch and its TalkBack action', () => {
     const onValueChange = vi.fn()
     const tree = render(
-      <AndroidSwitch value onValueChange={onValueChange} disabled />
+      <AndroidSwitch
+        value
+        onValueChange={onValueChange}
+        disabled
+        accessibilityLabel='Notify me'
+      />
     )
     expect(tree.root.findByType('ComposeSwitch' as never).props.enabled).toBe(
       false

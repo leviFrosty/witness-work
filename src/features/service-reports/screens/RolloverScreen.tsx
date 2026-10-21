@@ -181,6 +181,7 @@ const RolloverScreen = () => {
               </Text>
             </View>
             <Switch
+              accessibilityLabel={i18n.t('timeRollover_autoLabel')}
               value={autoEnabled}
               onValueChange={(enabled) => {
                 setAutoEnabled(enabled)

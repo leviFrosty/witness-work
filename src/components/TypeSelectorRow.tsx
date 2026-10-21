@@ -320,6 +320,7 @@ const TypeSelectorRow = ({
                 />
               </View>
               <Switch
+                accessibilityLabel={i18n.t('credit')}
                 value={selectedCategory.isCredit}
                 onValueChange={(val) => setCategoryIsCredit(val)}
               />

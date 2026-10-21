@@ -339,6 +339,7 @@ export default function BadgesTools() {
           info='showBadges. Off hides badges everywhere, stops sharing them on the Buddy Card and skips celebrations, without forgetting them. Synced.'
           trailing={
             <Switch
+              accessibilityLabel='Show badges'
               value={showBadges}
               onValueChange={(value) =>
                 usePreferences.getState().setShowBadges(value)
@@ -602,7 +603,11 @@ export default function BadgesTools() {
           label='Show gallery'
           info='Every illustration at Bronze, Silver, Gold and Pearl plus locked, and the one-time badges, at 56 pt.'
           trailing={
-            <Switch value={galleryVisible} onValueChange={setGalleryVisible} />
+            <Switch
+              accessibilityLabel='Show gallery'
+              value={galleryVisible}
+              onValueChange={setGalleryVisible}
+            />
           }
         />
       </ToolList>

@@ -334,7 +334,11 @@ const AssistantPreviewSheet = ({
             >
               {i18n.t('assistant.preview.notifyMe')}
             </Text>
-            <Switch value={notifyMe} onValueChange={setNotifyMe} />
+            <Switch
+              accessibilityLabel={i18n.t('assistant.preview.notifyMe')}
+              value={notifyMe}
+              onValueChange={setNotifyMe}
+            />
           </View>
 
           <Button

@@ -15,6 +15,7 @@ import * as Crypto from 'expo-crypto'
 import moment from 'moment'
 import useTheme from '@/contexts/theme'
 import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
+import FoldSplit from '@/components/ui/layout/FoldSplit'
 import useFeatureAccess from '@/hooks/useFeatureAccess'
 import i18n from '@/lib/locales'
 import type { RootStackNavigation, RootStackParamList } from '@/types/rootStack'
@@ -184,19 +185,24 @@ export default function RouteBuilderScreen({
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
       {isWide ? (
-        <View style={{ flex: 1, flexDirection: 'row' }}>
-          <View
-            style={{
-              width: PANEL_WIDTH,
-              borderEndWidth: 1,
-              borderEndColor: theme.colors.border,
-            }}
-          >
-            {list}
-            {actions}
-          </View>
-          <View style={{ flex: 1 }}>{map}</View>
-        </View>
+        // Half-open iPhone Duo puts the panel and the map on either side of
+        // the fold.
+        <FoldSplit
+          style={{ flex: 1 }}
+          gap={0}
+          leadingWidth={PANEL_WIDTH}
+          leadingStyle={{
+            borderEndWidth: 1,
+            borderEndColor: theme.colors.border,
+          }}
+          leading={
+            <>
+              {list}
+              {actions}
+            </>
+          }
+          trailing={map}
+        />
       ) : (
         <>
           <Animated.View style={mapStyle}>{map}</Animated.View>

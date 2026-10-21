@@ -146,24 +146,34 @@ const SelectedDateSheet: React.FC<Props> = ({
   const header = form ? (
     <XView
       style={{
-        paddingLeft: HORIZONTAL_PADDING - 8,
+        paddingLeft: HORIZONTAL_PADDING - 20,
         paddingRight: HORIZONTAL_PADDING,
-        paddingBottom: 8,
-        gap: 4,
+        paddingBottom: 4,
       }}
     >
+      {/* A real 44pt frame, plus slop: this header is also the sheet's drag
+          handle, so a thin target loses taps to the drag. */}
       <IconButton
         noTransform
         icon={ChevronBackwardIcon}
-        size={24}
+        size={28}
         color={theme.colors.text}
         onPress={() => setForm(null)}
         accessibilityLabel={i18n.t('goBack')}
+        hitSlop={{ top: 8, bottom: 8, left: 12, right: 8 }}
+        style={{
+          width: 44,
+          height: 44,
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
       />
       <Text
         accessibilityRole='header'
         style={{
           flex: 1,
+          // Tucks into the chevron's frame, where it sat before.
+          marginStart: -6,
           color: theme.colors.text,
           fontSize: theme.fontSize('lg'),
           fontFamily: theme.fonts.bold,

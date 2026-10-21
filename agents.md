@@ -55,6 +55,17 @@ iPhone Duo has a compact outer display and a regular-width inner one. On both, t
 - **Back button.** On a stack screen, use `Header buttonType='back'`. On iPhone Duo the system draws the button in the vertical bar (`createSystemBackStackNavigator`). Custom `onPressLeftIcon` or `leftElement` keep the app's own button.
 - **Test:** run `wwv up --duo` and check it closed, open and half-open (`wwv ad fold …`). Also check `--ipad`, `--ipad-mini` and `--se` for regressions.
 
+## Touch targets
+
+Small tap targets are the UX bug that keeps coming back, usually as a bare 16–24pt chevron or X with a few points of `hitSlop`. Follow Apple's [Accessibility guidance](https://developer.apple.com/design/human-interface-guidelines/accessibility#Buttons-and-controls) and Material's 48dp target.
+
+- **Size:** every control's tappable area is at least **44×44pt** on iOS/iPadOS and **48×48dp** on Android. Apple's 28×28pt "minimum" is for dense, secondary controls only, never a primary action like back or close.
+- **Give the frame real size, not only slop.** For an icon-only control, set `width`/`height` (or padding) to 44 and center the icon, then pull the frame outward with negative margin or less container padding so the glyph stays aligned. `hitSlop` is extra margin on top of that, not the target itself: it doesn't show, and it loses to a sibling or a parent gesture.
+- **Glyphs:** a back chevron in a header is about 28pt. Don't shrink an icon to make room; give it space instead.
+- **Spacing:** keep about 12pt around controls with a visible background or border, and about 24pt around bare icons, so a tap can't land on the wrong one. When icon buttons sit side by side, pass `neighborGap` to `IconButton`.
+- **Inside drag areas** (sheet headers, `SplitSheet`, swipeable rows), a pan gesture claims any touch that moves a few points. Buttons there especially need the full 44pt frame.
+- **Check it:** in a screenshot, measure the frame. If the tappable area isn't visibly about the size of a fingertip around the glyph, it's too small.
+
 ## Screenshots of UI changes
 
 Reviewers check UI changes by looking at them. Whenever a change adds or alters something users see, show it. Capture screens as described in [`docs/ios-simulator-testing.md`](./docs/ios-simulator-testing.md#collect-evidence).

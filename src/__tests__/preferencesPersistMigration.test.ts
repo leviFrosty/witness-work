@@ -22,6 +22,7 @@ vi.mock('@/lib/locales', () => ({
 }))
 
 import {
+  migrateDropProgressBarDetailsPreference,
   migratePreferencesPersistedState,
   migrateShowPetHomeSection,
   migrateShowThisWeekHomeSection,
@@ -884,5 +885,38 @@ describe('preferences persist migrate v12 → v13 (This Week starts visible)', (
   it('does not run for a v13 blob', () => {
     const v13 = { homeScreenElements: { timer: true } }
     expect(migratePreferencesPersistedState(v13, 13)).toEqual(v13)
+  })
+})
+
+describe('preferences persist migrate v13 → v14 (remove progress bar details)', () => {
+  it('drops the unused preference and its iCloud timestamp', () => {
+    const migrated = migratePreferencesPersistedState(
+      {
+        displayDetailsOnProgressBarHomeScreen: true,
+        role: 'regularPioneer',
+        preferenceUpdatedAt: {
+          displayDetailsOnProgressBarHomeScreen: 1700000000000,
+          role: 1700000001000,
+        },
+      },
+      13
+    )
+
+    expect(migrated).not.toHaveProperty('displayDetailsOnProgressBarHomeScreen')
+    expect(migrated.preferenceUpdatedAt).toEqual({ role: 1700000001000 })
+    expect(migrated.role).toBe('regularPioneer')
+  })
+
+  it('drops a stamp left without its value', () => {
+    const migrated = migrateDropProgressBarDetailsPreference({
+      preferenceUpdatedAt: { displayDetailsOnProgressBarHomeScreen: 1 },
+    })
+    expect(migrated).toEqual({ preferenceUpdatedAt: {} })
+  })
+
+  it('is idempotent on an already-v14 state', () => {
+    const v14State = { role: 'publisher', preferenceUpdatedAt: { role: 1 } }
+    expect(migratePreferencesPersistedState(v14State, 14)).toBe(v14State)
+    expect(migrateDropProgressBarDetailsPreference(v14State)).toBe(v14State)
   })
 })

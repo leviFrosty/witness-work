@@ -153,6 +153,26 @@ describe('parsePayload salvage', () => {
     ])
   })
 
+  it('reads a file from an older build that still has a removed setting', () => {
+    // Removed in preferences v14; older builds still sync it.
+    const json = payloadWith((p) => {
+      p.preferencesStore.values.displayDetailsOnProgressBarHomeScreen = true
+      p.preferencesStore.values.offDays = [0]
+      p.preferencesStore.updatedAt = {
+        displayDetailsOnProgressBarHomeScreen: 300,
+        offDays: 300,
+      }
+    })
+    const dropped: string[] = []
+    const parsed = parsePayload(json, (paths) => dropped.push(...paths))
+    expect(parsed).not.toBeNull()
+    expect(parsed?.preferencesStore.values).not.toHaveProperty(
+      'displayDetailsOnProgressBarHomeScreen'
+    )
+    expect(parsed?.preferencesStore.values.offDays).toEqual([0])
+    expect(dropped).toEqual([])
+  })
+
   it('drops an unreadable profile value and keeps the name', () => {
     const json = payloadWith((p) => {
       p.profileStore.values = { name: 'Sam', avatar: { type: 'gif' } }

@@ -474,8 +474,6 @@ export const PREFERENCE_DEFAULTS = {
    * Buddies step). The intro leaves them out rather than repeat them.
    */
   scheduleIntroCoveredPages: [] as ScheduleIntroPageId[],
-  displayDetailsOnProgressBarHomeScreen:
-    Device.deviceType === Device.DeviceType.TABLET,
   monthlyRoutineHasShownInvalidMonthAlert: false,
   hideDonateHeart: false,
   /**
@@ -1326,6 +1324,8 @@ export { NON_SYNCABLE_PREFERENCE_KEYS } from '@/lib/syncPreferencePolicy'
  *   {@link migrateShowPetHomeSection}).
  * - V12 → v13: This Week starts visible on installs from before it existed (see
  *   {@link migrateShowThisWeekHomeSection}).
+ * - V13 → v14: remove `displayDetailsOnProgressBarHomeScreen` and its iCloud LWW
+ *   timestamp (see {@link migrateDropProgressBarDetailsPreference}).
  *
  * Exported for unit testing. Idempotent — re-running on an already-migrated
  * blob is a no-op.
@@ -1375,6 +1375,36 @@ export const migratePreferencesPersistedState = (
   }
   if (version < 13) {
     next = migrateShowThisWeekHomeSection(next)
+  }
+  if (version < 14) {
+    next = migrateDropProgressBarDetailsPreference(next)
+  }
+  return next
+}
+
+/**
+ * V13 → v14: remove `displayDetailsOnProgressBarHomeScreen`. Its Home progress
+ * bar toggle went away with the customizable Home dashboard (8e88f488), and
+ * nothing has read it since. A device on an older build may still sync it;
+ * `parsePayload` drops preference keys the store no longer has.
+ */
+export const migrateDropProgressBarDetailsPreference = (
+  state: unknown
+): unknown => {
+  if (!state || typeof state !== 'object') return state
+  const record = state as Record<string, unknown>
+  const timestamps =
+    record.preferenceUpdatedAt && typeof record.preferenceUpdatedAt === 'object'
+      ? (record.preferenceUpdatedAt as Record<string, unknown>)
+      : null
+  const key = 'displayDetailsOnProgressBarHomeScreen'
+  if (!(key in record) && !(timestamps && key in timestamps)) return state
+
+  const { [key]: _value, ...rest } = record
+  const next: Record<string, unknown> = { ...rest }
+  if (timestamps) {
+    const { [key]: _timestamp, ...restTimestamps } = timestamps
+    next.preferenceUpdatedAt = restTimestamps
   }
   return next
 }
@@ -2277,7 +2307,7 @@ export const usePreferences = create(
     {
       name: 'preferences',
       storage: createPreferencesStorage(),
-      version: 13,
+      version: 14,
       migrate: (persistedState, version) =>
         migratePreferencesPersistedState(persistedState, version),
     }

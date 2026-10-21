@@ -192,6 +192,44 @@ const LT_PATTERNS: Record<TimeFormat, { LT: string; LTS: string }> = {
 }
 
 /**
+ * An hour word a Language's calendar templates put after the clock, which only
+ * reads with a 24-hour time: German's `[heute um] LT [Uhr]` gives "heute um
+ * 17:02 Uhr", but "heute um 5:02 PM Uhr" on a 12-hour clock. `de`, `de-at` and
+ * `de-ch` are the only bundled locales that do this.
+ */
+const HOUR_WORD_AFTER_TIME = /(LTS?) \[Uhr\]/g
+
+const CALENDAR_KEYS = [
+  'sameDay',
+  'nextDay',
+  'nextWeek',
+  'lastDay',
+  'lastWeek',
+  'sameElse',
+] as const
+
+/**
+ * The Language's calendar templates for a 12-hour clock: each bucket as the
+ * Language writes it, minus an hour word after the time. Buckets can be
+ * functions of the date (Russian picks "в"/"во"), so this wraps each one.
+ * moment calls a bucket with the date as `this` and the reference time as its
+ * argument, whatever its typings say.
+ */
+const calendarFor12HourClock = (
+  language: moment.Locale
+): moment.CalendarSpec => {
+  const spec: moment.CalendarSpec = {}
+  for (const key of CALENDAR_KEYS) {
+    spec[key] = function (this: moment.Moment, now?: moment.MomentInput) {
+      return language
+        .calendar(key, this, now as moment.Moment | undefined)
+        .replace(HOUR_WORD_AFTER_TIME, '$1')
+    }
+  }
+  return spec
+}
+
+/**
  * Best-effort moment locale data for the device's own locale, used only at the
  * device rung of the Date Order axis (no calendar API exposes ordering). Falls
  * back to `null` when the device locale isn't bundled — callers then keep the
@@ -359,7 +397,8 @@ export const applyFormatRegion = (
   }
   moment.locale(activeKey)
 
-  const languagePristine = readLongDateFormat(moment.localeData(activeKey))
+  const languageData = moment.localeData(activeKey)
+  const languagePristine = readLongDateFormat(languageData)
   patchedKey = activeKey
   patchedKeyPristine = languagePristine
 
@@ -409,6 +448,10 @@ export const applyFormatRegion = (
   moment.updateLocale(activeKey, {
     longDateFormat,
     week: { dow: resolved.startOfWeek },
+    // "Today at 5:02 PM", never "heute um 5:02 PM Uhr".
+    ...(resolved.timeFormat === '12' && {
+      calendar: calendarFor12HourClock(languageData),
+    }),
   })
   // updateLocale shouldn't move the global locale, but be defensive — every
   // caller expects the language to stay active.

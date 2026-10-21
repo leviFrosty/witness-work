@@ -5,6 +5,7 @@ import { useMemo, useState } from 'react'
 import { Pressable, View } from 'react-native'
 
 import moment from 'moment'
+import round from 'lodash/round'
 
 import useTheme from '@/contexts/theme'
 import useServiceReport from '@/stores/serviceReport'
@@ -12,10 +13,8 @@ import usePublisher from '@/hooks/usePublisher'
 import { useNavigation } from '@react-navigation/native'
 import type { RootStackNavigation } from '@/types/rootStack'
 import {
-  getHoursForServiceYearEndYear,
-  getMinutesForServiceYearEndYear,
-  getReportCountForServiceYearEndYear,
   getServiceYearEndYearsSpan,
+  getServiceYearTotalsByEndYear,
   getAvailableEarlierEndYears,
 } from '@/lib/serviceReport'
 import { getServiceYearFromDate } from '@/lib/serviceYear'
@@ -79,12 +78,16 @@ const YearByYearList = ({ onYearPress }: YearByYearListProps) => {
   const endYears = useMemo(() => getServiceYearEndYearsSpan(reports), [reports])
 
   const rows = useMemo(() => {
-    const data = endYears.map((endYear) => ({
-      endYear,
-      hours: getHoursForServiceYearEndYear(reports, endYear),
-      minutes: getMinutesForServiceYearEndYear(reports, endYear),
-      reportCount: getReportCountForServiceYearEndYear(reports, endYear),
-    }))
+    const totals = getServiceYearTotalsByEndYear(reports)
+    const data = endYears.map((endYear) => {
+      const minutes = totals.get(endYear)?.minutes ?? 0
+      return {
+        endYear,
+        hours: round(minutes / 60, 1),
+        minutes,
+        reportCount: totals.get(endYear)?.reportCount ?? 0,
+      }
+    })
     // Most-recent first.
     data.sort((a, b) => b.endYear - a.endYear)
     return data

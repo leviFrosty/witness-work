@@ -369,7 +369,7 @@ export const HomeScreen = ({ header }: { header: ReactNode }) => {
                   }
 
                   case 'thisWeek':
-                    if (!homeScreenElements.thisWeek) return null
+                    if (homeScreenElements.thisWeek === false) return null
                     // Its item is measured to keep the week above the day's
                     // sheet (see `viewRef` below).
                     return (

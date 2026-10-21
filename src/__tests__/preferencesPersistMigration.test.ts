@@ -24,6 +24,7 @@ vi.mock('@/lib/locales', () => ({
 import {
   migratePreferencesPersistedState,
   migrateShowPetHomeSection,
+  migrateShowThisWeekHomeSection,
   migrateUnchosenContactSortToSuggested,
 } from '@/stores/preferences'
 import { mergePreferences } from '@/app/sync/preferencesMerge'
@@ -815,6 +816,7 @@ describe('preferences persist migrate v11 → v12 (Pet Home section starts visib
       mileage: false,
       timer: true,
       pet: true,
+      thisWeek: true,
     })
     // Nobody chose it, so the stamp stays and a real choice still wins.
     expect(migrated.preferenceUpdatedAt).toEqual({
@@ -823,7 +825,7 @@ describe('preferences persist migrate v11 → v12 (Pet Home section starts visib
   })
 
   it('keeps an explicit choice and is idempotent', () => {
-    const hidden = { homeScreenElements: { pet: false } }
+    const hidden = { homeScreenElements: { pet: false, thisWeek: true } }
     expect(migratePreferencesPersistedState(hidden, 11)).toEqual(hidden)
     const once = migrateShowPetHomeSection({ homeScreenElements: {} })
     expect(migrateShowPetHomeSection(once)).toEqual(once)
@@ -835,7 +837,52 @@ describe('preferences persist migrate v11 → v12 (Pet Home section starts visib
   })
 
   it('does not run for a v12 blob', () => {
-    const v12 = { homeScreenElements: { timer: true } }
+    const v12 = { homeScreenElements: { timer: true, thisWeek: false } }
     expect(migratePreferencesPersistedState(v12, 12)).toEqual(v12)
+  })
+})
+
+describe('preferences persist migrate v12 → v13 (This Week starts visible)', () => {
+  it('adds This Week to a visibility map saved before it existed', () => {
+    // An April 2026 install: every section it knew about, no `thisWeek`.
+    const migrated = migratePreferencesPersistedState(
+      {
+        homeScreenElements: {
+          approachingConversations: true,
+          serviceReport: true,
+          timer: false,
+          pet: true,
+        },
+        preferenceUpdatedAt: { homeScreenElements: 1700000000000 },
+      },
+      12
+    )
+    expect(migrated.homeScreenElements).toEqual({
+      approachingConversations: true,
+      serviceReport: true,
+      timer: false,
+      pet: true,
+      thisWeek: true,
+    })
+    expect(migrated.preferenceUpdatedAt).toEqual({
+      homeScreenElements: 1700000000000,
+    })
+  })
+
+  it('keeps a hidden This Week and is idempotent', () => {
+    const hidden = { homeScreenElements: { thisWeek: false } }
+    expect(migratePreferencesPersistedState(hidden, 12)).toEqual(hidden)
+    const once = migrateShowThisWeekHomeSection({ homeScreenElements: {} })
+    expect(migrateShowThisWeekHomeSection(once)).toEqual(once)
+  })
+
+  it('leaves a blob without a visibility map to the defaults', () => {
+    expect(migratePreferencesPersistedState({}, 12)).toEqual({})
+    expect(migrateShowThisWeekHomeSection(undefined)).toBeUndefined()
+  })
+
+  it('does not run for a v13 blob', () => {
+    const v13 = { homeScreenElements: { timer: true } }
+    expect(migratePreferencesPersistedState(v13, 13)).toEqual(v13)
   })
 })

@@ -15,12 +15,17 @@ import { formatDate } from '@/lib/dates'
 import useTheme from '@/contexts/theme'
 import Text from '@/components/ui/MyText'
 import Haptics from '@/lib/haptics'
+import useAccessibilityTextSize, {
+  FIT_ONE_LINE,
+} from '@/hooks/useAccessibilityTextSize'
 import { notePointerHover, supportsPointerHover } from '@/lib/pointerHover'
 import { formatMinutesCompact } from '@/lib/minutes'
 import {
   ContributionCell,
   contributionGrid,
+  contributionMonthLabels,
   contributionSummary,
+  fittingMonthLabels,
 } from '@/features/profile/lib/profileStats'
 import i18n, { type TranslationKey } from '@/lib/locales'
 
@@ -34,6 +39,8 @@ const MIN_CELL = 8
 const MAX_CELL = 14
 const LABEL_WIDTH = 22
 const LABEL_GAP = 4
+// Least room between one month label's end and the next one's start.
+const MONTH_LABEL_GAP = 4
 const POPOVER_WIDTH = 150
 const POPOVER_OFFSET = 8
 // Hold this long before the scrub gesture activates. Below this threshold the
@@ -145,6 +152,9 @@ const accessibilityLabelFor = (grid: ContributionCell[][], weeks: number) => {
 
 const ContributionGraph = ({ daily, weeks = 26 }: Props) => {
   const theme = useTheme()
+  // At accessibility text sizes the weekday labels shrink to their column
+  // instead of breaking into letters.
+  const fitDayLabel = useAccessibilityTextSize() ? FIT_ONE_LINE : undefined
   const [width, setWidth] = useState(0)
   const [hovered, setHovered] = useState<{ col: number; row: number } | null>(
     null
@@ -294,20 +304,43 @@ const ContributionGraph = ({ daily, weeks = 26 }: Props) => {
     opacity: ringOpacity.value,
   }))
 
-  // Month labels: first column of each month renders the month name; others
-  // render empty. Labels are absolutely positioned so they can extend past
-  // their column without clipping.
-  const monthStarts = useMemo(
-    () =>
-      grid.map((col, i) => {
-        const firstOfWeek = col[0].date
-        const prevFirst = i > 0 ? grid[i - 1][0].date : null
-        const sameMonth =
-          prevFirst && moment(firstOfWeek).month() === moment(prevFirst).month()
-        return sameMonth ? null : moment(firstOfWeek).format('MMM')
-      }),
-    [grid]
+  // Month labels sit over each month's first column, absolutely positioned so
+  // they can extend past it. Each one's rendered width decides which fit
+  // without overlapping; until all are measured, none show.
+  const monthLabels = useMemo(() => contributionMonthLabels(grid), [grid])
+  const [labelSizes, setLabelSizes] = useState<
+    Record<number, { width: number; height: number }>
+  >({})
+  const labelWidths = Object.fromEntries(
+    Object.entries(labelSizes).map(([column, size]) => [column, size.width])
   )
+  // Large text makes the labels taller than their row; the row grows to fit.
+  const labelRowHeight = Math.max(
+    14,
+    ...Object.values(labelSizes).map((size) => size.height)
+  )
+  const measured = monthLabels.every(
+    (label) => labelSizes[label.column] !== undefined
+  )
+  const shownColumns = new Set(
+    measured
+      ? fittingMonthLabels(
+          monthLabels,
+          labelWidths,
+          stride,
+          MONTH_LABEL_GAP
+        ).map((label) => label.column)
+      : []
+  )
+  const onLabelLayout = (column: number) => (e: LayoutChangeEvent) => {
+    const { width: labelWidth, height } = e.nativeEvent.layout
+    setLabelSizes((current) =>
+      current[column]?.width === labelWidth &&
+      current[column]?.height === height
+        ? current
+        : { ...current, [column]: { width: labelWidth, height } }
+    )
+  }
 
   return (
     <View
@@ -324,22 +357,27 @@ const ContributionGraph = ({ daily, weeks = 26 }: Props) => {
       >
         <View style={{ flexDirection: 'row', gap: LABEL_GAP }}>
           <View style={{ width: LABEL_WIDTH }} />
-          <View style={{ height: 14, position: 'relative', flex: 1 }}>
-            {monthStarts.map((label, i) =>
-              label ? (
-                <Text
-                  key={`m-${i}`}
-                  style={{
-                    position: 'absolute',
-                    left: i * stride,
-                    fontSize: 10,
-                    color: theme.colors.textAlt,
-                  }}
-                >
-                  {label}
-                </Text>
-              ) : null
-            )}
+          <View
+            style={{ height: labelRowHeight, position: 'relative', flex: 1 }}
+          >
+            {monthLabels.map(({ column, label }) => (
+              <Text
+                key={`m-${column}`}
+                onLayout={onLabelLayout(column)}
+                numberOfLines={1}
+                style={{
+                  position: 'absolute',
+                  left: column * stride,
+                  fontSize: 10,
+                  color: theme.colors.textAlt,
+                  // Hidden labels stay laid out, so they're measured again
+                  // when the text size or cell size changes.
+                  opacity: shownColumns.has(column) ? 1 : 0,
+                }}
+              >
+                {label}
+              </Text>
+            ))}
           </View>
         </View>
         <View style={{ flexDirection: 'row', gap: LABEL_GAP }}>
@@ -351,19 +389,26 @@ const ContributionGraph = ({ daily, weeks = 26 }: Props) => {
           >
             {dayLabels.map((label, i) =>
               label ? (
-                <Text
+                // Centered on its row, in a box tall enough that the label
+                // isn't clipped when it's taller than a cell.
+                <View
                   key={`lbl-${i}`}
                   style={{
                     position: 'absolute',
                     left: 0,
-                    top: i * stride + cell / 2 - 6,
-                    fontSize: 10,
-                    lineHeight: 12,
-                    color: theme.colors.textAlt,
+                    top: i * stride + cell / 2 - stride,
+                    width: LABEL_WIDTH,
+                    height: stride * 2,
+                    justifyContent: 'center',
                   }}
                 >
-                  {label}
-                </Text>
+                  <Text
+                    {...fitDayLabel}
+                    style={{ fontSize: 10, color: theme.colors.textAlt }}
+                  >
+                    {label}
+                  </Text>
+                </View>
               ) : null
             )}
           </View>

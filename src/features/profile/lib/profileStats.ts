@@ -196,6 +196,54 @@ export const contributionGrid = (
   )
 }
 
+export type MonthLabel = {
+  /** The grid column (week) the label sits over. */
+  column: number
+  /** Short month name, e.g. "May". */
+  label: string
+}
+
+/** One label per month, over the first week that starts in it. */
+export const contributionMonthLabels = (
+  grid: ContributionCell[][]
+): MonthLabel[] =>
+  grid.flatMap((col, column) => {
+    const month = col[0].date.getMonth()
+    const previous = grid[column - 1]?.[0].date.getMonth()
+    return month === previous
+      ? []
+      : [{ column, label: moment(col[0].date).format('MMM') }]
+  })
+
+/**
+ * The month labels that fit above the grid without running into each other.
+ * Labels start at their column and may be wider than the gap to the next month:
+ * the window's first month can have a single week, and large text or narrow
+ * cells widen every label. Working from the right, a label that would reach the
+ * next shown one is left out. The window's first month, which it usually clips,
+ * shows only if its label fits over its own weeks, so a label never names the
+ * month after it.
+ */
+export const fittingMonthLabels = (
+  labels: MonthLabel[],
+  /** The rendered width of each label, by column. */
+  widths: Record<number, number>,
+  stride: number,
+  gap: number
+): MonthLabel[] => {
+  const kept: MonthLabel[] = []
+  let nextLeft = Infinity
+  for (let i = labels.length - 1; i >= 0; i--) {
+    const left = labels[i].column * stride
+    const right = left + (widths[labels[i].column] ?? 0) + gap
+    const limit = i === 0 && labels[1] ? labels[1].column * stride : Infinity
+    if (right > Math.min(nextLeft, limit)) continue
+    kept.unshift(labels[i])
+    nextLeft = left
+  }
+  return kept
+}
+
 export type ContributionSummary = {
   /** Days in the window with any logged service. */
   daysWithService: number

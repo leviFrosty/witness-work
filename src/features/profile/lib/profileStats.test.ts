@@ -2,7 +2,10 @@ import { describe, expect, it } from 'vitest'
 import {
   busiestWeekday,
   ContributionCell,
+  contributionGrid,
+  contributionMonthLabels,
   contributionSummary,
+  fittingMonthLabels,
 } from '@/features/profile/lib/profileStats'
 
 // Wednesday, 2026-10-07.
@@ -117,6 +120,93 @@ describe('contributionSummary', () => {
     expect(contributionSummary([[cell(0), cell(0)]])).toEqual({
       daysWithService: 0,
       longestRun: 0,
+    })
+  })
+})
+
+describe('contributionMonthLabels', () => {
+  it('names each month over its first week', () => {
+    // The 26 weeks to Sunday 2026-10-25 start on Monday 2026-04-27, so April
+    // has a single week before May begins.
+    const grid = contributionGrid(new Map(), 26, new Date(2026, 9, 21, 12))
+    expect(contributionMonthLabels(grid)).toEqual([
+      { column: 0, label: 'Apr' },
+      { column: 1, label: 'May' },
+      { column: 5, label: 'Jun' },
+      { column: 10, label: 'Jul' },
+      { column: 14, label: 'Aug' },
+      { column: 19, label: 'Sep' },
+      { column: 23, label: 'Oct' },
+    ])
+  })
+})
+
+describe('fittingMonthLabels', () => {
+  const labels = [
+    { column: 0, label: 'Apr' },
+    { column: 1, label: 'May' },
+    { column: 5, label: 'Jun' },
+    { column: 9, label: 'Jul' },
+  ]
+  const widths = (width: number) =>
+    Object.fromEntries(labels.map((l) => [l.column, width]))
+  const names = (kept: { label: string }[]) => kept.map((l) => l.label)
+
+  it('drops a one-week month that would run into the next', () => {
+    // 14 pt columns: "Apr" (20 pt) starts 14 pt before "May".
+    expect(names(fittingMonthLabels(labels, widths(20), 14, 4))).toEqual([
+      'May',
+      'Jun',
+      'Jul',
+    ])
+  })
+
+  it('keeps every label that has room', () => {
+    expect(names(fittingMonthLabels(labels, widths(9), 14, 4))).toEqual([
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+    ])
+  })
+
+  it('thins out labels wider than a month of columns', () => {
+    // Large text: each label is wider than four 11 pt columns, so every other
+    // month shows.
+    expect(names(fittingMonthLabels(labels, widths(50), 11, 4))).toEqual([
+      'May',
+      'Jul',
+    ])
+  })
+
+  it("names the window's first month only over its own weeks", () => {
+    // 11 pt columns, 30 pt labels: May doesn't fit before June, and April
+    // would fit there only by reaching over May's weeks.
+    const crowded = [
+      { column: 0, label: 'Apr' },
+      { column: 1, label: 'May' },
+      { column: 4, label: 'Jun' },
+    ]
+    expect(
+      names(fittingMonthLabels(crowded, { 0: 30, 1: 30, 4: 30 }, 11, 4))
+    ).toEqual(['Jun'])
+    // With room over its own weeks, it shows.
+    const roomy = [
+      { column: 0, label: 'Apr' },
+      { column: 3, label: 'May' },
+    ]
+    expect(names(fittingMonthLabels(roomy, { 0: 20, 3: 20 }, 14, 4))).toEqual([
+      'Apr',
+      'May',
+    ])
+  })
+
+  it('never lets a kept label reach the next one', () => {
+    const kept = fittingMonthLabels(labels, widths(30), 11, 4)
+    kept.slice(1).forEach((label, i) => {
+      expect(kept[i].column * 11 + 30 + 4).toBeLessThanOrEqual(
+        label.column * 11
+      )
     })
   })
 })

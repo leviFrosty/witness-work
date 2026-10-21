@@ -310,6 +310,22 @@ export async function calendarSources() {
   return calendarBridge().sources()
 }
 
+/**
+ * What Choose a calendar offers: existing calendars, and accounts that can hold
+ * a new one. With neither (iCloud Calendars off and no other account), it fails
+ * with what to do instead of showing an empty list.
+ */
+export async function calendarChoices() {
+  const destinations = await calendarDestinations()
+  const sources = await calendarSources()
+  if (!destinations.length && !sources.length)
+    throw new Error('CALENDAR_NO_SOURCE')
+  // An account was added since: the earlier message no longer applies.
+  if (useCalendarPublishing.getState().error === 'calendarNoSourceError')
+    useCalendarPublishing.setState({ error: null })
+  return { destinations, sources }
+}
+
 export async function createCalendar(sourceId: string) {
   if (Platform.OS === 'android') return android.createCalendar()
   const { id, name } = identity()

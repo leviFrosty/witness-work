@@ -533,12 +533,14 @@ The generic errors (`calendarConnectionError`, `calendarConnectionErrorAndroid`,
 calendar operation failed without a code of its own), `CALENDAR_BUSY`,
 `CALENDAR_JOURNAL`, `CALENDAR_DEVICE_UNKNOWN`, `CALENDAR_STATE_CHANGED`,
 `CALENDAR_INVALID_URL`, `CALENDAR_CREATE_FAILED` (the account refused the new
-calendar), or `other`. `calendarNoSourceError` means setup found no account that
-can hold a new calendar (iCloud Calendars off).
+calendar), or `other`. `calendarNoSourceError` means setup, or Choose a calendar
+in Calendar Sync settings, found no account that can hold a new calendar (iCloud
+Calendars off) and, for Choose a calendar, no existing calendar to use either.
 Recovery attempts add `recovery` to `calendar_sync_failed` (the retry failed
 too) and `calendar_connected` (setup succeeded on the retry): `try_again` when
 the user tapped **Try Again**, or `open_settings` when the app retried by itself
-after the user allowed calendar access in Settings and came back. Compare them
+after the user allowed calendar access in Settings and came back, or came back to
+Calendar Sync settings while it showed `calendarNoSourceError`. Compare them
 to first failures (no `recovery`) to see whether people get past an error. A
 successful retry that only updates an already connected calendar sends no event.
 Android uses the same events (break them down by the SDK's `$os_name`); it never

@@ -75,9 +75,12 @@ private struct BigHoursNumber: View {
         .font(.system(size: size, weight: .bold, design: .rounded))
         .minimumScaleFactor(0.6)
         .lineLimit(1)
-      Text("/\(goalHours)")
-        .font(.system(size: size * 0.38, weight: .semibold, design: .rounded))
-        .foregroundStyle(.tertiary)
+      // No goal (a 0-hour goal) leaves nothing to show after the slash.
+      if goalHours > 0 {
+        Text("/\(goalHours)")
+          .font(.system(size: size * 0.38, weight: .semibold, design: .rounded))
+          .foregroundStyle(.tertiary)
+      }
     }
   }
 }
@@ -184,9 +187,11 @@ private struct SmallMonthCard: View {
 
       Spacer(minLength: 0)
 
-      ProgressView(value: progress)
-        .progressViewStyle(.linear)
-        .tint(accent)
+      if report.goalHours > 0 {
+        ProgressView(value: progress)
+          .progressViewStyle(.linear)
+          .tint(accent)
+      }
     }
     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     .widgetURL(WidgetURLs.addTime)
@@ -217,9 +222,11 @@ private struct MediumMonthCard: View {
         PaceBadge(snapshot: snapshot)
       }
 
-      ProgressView(value: progress)
-        .progressViewStyle(.linear)
-        .tint(accent)
+      if report.goalHours > 0 {
+        ProgressView(value: progress)
+          .progressViewStyle(.linear)
+          .tint(accent)
+      }
 
       Spacer(minLength: 0)
 
@@ -406,18 +413,30 @@ private struct CircularReportView: View {
 
     switch report.mode {
     case .hours:
-      Gauge(value: min(max(report.progress, 0), 1)) {
-        EmptyView()
-      } currentValueLabel: {
-        VStack(spacing: 0) {
-          Text(compactHours(report.monthMinutes, snapshot.appLanguage))
-            .font(.system(size: 14, weight: .bold))
-          Text("/\(report.goalHours)")
-            .font(.system(size: 8, weight: .semibold))
+      if report.goalHours > 0 {
+        Gauge(value: min(max(report.progress, 0), 1)) {
+          EmptyView()
+        } currentValueLabel: {
+          VStack(spacing: 0) {
+            Text(compactHours(report.monthMinutes, snapshot.appLanguage))
+              .font(.system(size: 14, weight: .bold))
+            Text("/\(report.goalHours)")
+              .font(.system(size: 8, weight: .semibold))
+          }
         }
+        .gaugeStyle(.accessoryCircularCapacity)
+        .widgetURL(WidgetURLs.addTime)
+      } else {
+        // Without a goal there's no ring to fill: just the hours.
+        ZStack {
+          AccessoryWidgetBackground()
+          Text(compactHours(report.monthMinutes, snapshot.appLanguage))
+            .font(.system(size: 18, weight: .bold))
+            .minimumScaleFactor(0.6)
+            .lineLimit(1)
+        }
+        .widgetURL(WidgetURLs.addTime)
       }
-      .gaugeStyle(.accessoryCircularCapacity)
-      .widgetURL(WidgetURLs.addTime)
 
     case .checkbox:
       switch report.publisherState {
@@ -474,12 +493,18 @@ private struct RectangularReportView: View {
           Text(strings.monthLabel.uppercased())
             .font(.system(size: 9, weight: .bold))
           Spacer(minLength: 0)
-          Text("\(snapshot.appLanguage.digits(report.monthHoursFormatted)) / \(report.goalHours)")
-            .font(.system(size: 12, weight: .bold))
-            .lineLimit(1)
+          Text(
+            report.goalHours > 0
+              ? "\(snapshot.appLanguage.digits(report.monthHoursFormatted)) / \(report.goalHours)"
+              : snapshot.appLanguage.digits(report.monthHoursFormatted)
+          )
+          .font(.system(size: 12, weight: .bold))
+          .lineLimit(1)
         }
-        ProgressView(value: min(max(report.progress, 0), 1))
-          .progressViewStyle(.linear)
+        if report.goalHours > 0 {
+          ProgressView(value: min(max(report.progress, 0), 1))
+            .progressViewStyle(.linear)
+        }
         Text(strings.encouragementPhrase)
           .font(.system(size: 10))
           .lineLimit(1)

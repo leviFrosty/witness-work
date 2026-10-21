@@ -285,6 +285,10 @@ const MonthServiceReportProgressBar = ({
     segmentScalingFactor,
   ])
 
+  // No goal (a Regular Publisher logging hours, or a 0-hour goal) leaves
+  // nothing to fill toward; `goalProgress` would report it as done.
+  if (goalHours <= 0) return null
+
   return (
     <View
       style={[

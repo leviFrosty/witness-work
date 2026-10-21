@@ -12,16 +12,16 @@ import Animated, {
 } from 'react-native-reanimated'
 import moment from 'moment'
 import { formatDate } from '@/lib/dates'
+import { forwardSign, isRtlLayout } from '@/lib/direction'
 import useTheme from '@/contexts/theme'
 import Text from '@/components/ui/MyText'
 import Haptics from '@/lib/haptics'
-import useAccessibilityTextSize, {
-  FIT_ONE_LINE,
-} from '@/hooks/useAccessibilityTextSize'
+import { FIT_ONE_LINE } from '@/hooks/useAccessibilityTextSize'
 import { notePointerHover, supportsPointerHover } from '@/lib/pointerHover'
 import { formatMinutesCompact } from '@/lib/minutes'
 import {
   ContributionCell,
+  contributionColumnAt,
   contributionGrid,
   contributionMonthLabels,
   contributionSummary,
@@ -152,9 +152,6 @@ const accessibilityLabelFor = (grid: ContributionCell[][], weeks: number) => {
 
 const ContributionGraph = ({ daily, weeks = 26 }: Props) => {
   const theme = useTheme()
-  // At accessibility text sizes the weekday labels shrink to their column
-  // instead of breaking into letters.
-  const fitDayLabel = useAccessibilityTextSize() ? FIT_ONE_LINE : undefined
   const [width, setWidth] = useState(0)
   const [hovered, setHovered] = useState<{ col: number; row: number } | null>(
     null
@@ -230,12 +227,17 @@ const ContributionGraph = ({ daily, weeks = 26 }: Props) => {
 
   const clearHover = useCallback(() => setHovered(null), [])
 
+  // Columns run from the reading start, which is the right edge in a
+  // right-to-left layout; touches arrive in physical x.
+  const rtl = isRtlLayout()
+  const sign = forwardSign()
+
   const gesture = useMemo(() => {
     // Moves the ring and popover to the cell under (x, y). Haptics are for
     // touch, so a hovering pointer skips them.
     const scrubTo = (x: number, y: number, haptic: boolean) => {
       'worklet'
-      const col = Math.floor(x / stride)
+      const col = contributionColumnAt(x, stride, gridPixelWidth, rtl)
       const row = Math.floor(y / stride)
       const valid = col >= 0 && col < weeks && row >= 0 && row <= 6
       const idx = valid ? col * 7 + row : -1
@@ -246,7 +248,8 @@ const ContributionGraph = ({ daily, weeks = 26 }: Props) => {
         runOnJS(clearHover)()
         return
       }
-      ringX.value = col * stride
+      // The ring sits at the start edge, so it moves toward the end.
+      ringX.value = sign * col * stride
       ringY.value = row * stride
       ringOpacity.value = 1
       runOnJS(applyHover)(col, row, haptic)
@@ -297,6 +300,9 @@ const ContributionGraph = ({ daily, weeks = 26 }: Props) => {
     lastIdx,
     stride,
     weeks,
+    rtl,
+    sign,
+    gridPixelWidth,
   ])
 
   const ringStyle = useAnimatedStyle(() => ({
@@ -404,7 +410,9 @@ const ContributionGraph = ({ daily, weeks = 26 }: Props) => {
                   }}
                 >
                   <Text
-                    {...fitDayLabel}
+                    // Shrinks to its column rather than clipping, as a long
+                    // weekday (Arabic «خميس») or large text would.
+                    {...FIT_ONE_LINE}
                     style={{ fontSize: 10, color: theme.colors.textAlt }}
                   >
                     {label}
@@ -545,6 +553,9 @@ const ScrubPopover = ({
           color: theme.colors.text,
         }}
         numberOfLines={1}
+        // Long month names (Arabic's «تشرين الأول (أكتوبر)») shrink to fit.
+        adjustsFontSizeToFit
+        minimumFontScale={0.7}
       >
         {formatDate(hoveredCell.date)}
       </Text>

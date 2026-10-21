@@ -1,0 +1,33 @@
+# seed: pioneer
+# assert: Date.now() - new Date(__WW_DEV__.stores.preferences.getState().lastBackupDate).getTime() < 10 * 60 * 1000
+# assert: __WW_DEV__.state().route.name === 'Import and Export'
+appId: com.leviwilkerson.jwtimedev
+name: Create a backup from Settings, which opens the share sheet, then cancel it
+---
+- extendedWaitUntil:
+    visible: Home
+    timeout: 60000
+- tapOn: Account and settings
+- tapOn: Settings
+- tapOn: Backup & Restore
+- tapOn: Create Backup
+# The system share sheet offers the backup file. iOS shows it out of process,
+# so only its dimmed backdrop ("dismiss popup") reads; Android's names the file.
+- extendedWaitUntil:
+    visible:
+      text: [dismiss popup, witness-work-backup.json]
+    timeout: 20000
+# Cancel without saving anywhere: tap outside it (iOS) or go back (Android).
+- runFlow:
+    when:
+      visible: dismiss popup
+    commands:
+      - tapOn: dismiss popup
+- runFlow:
+    when:
+      visible: witness-work-backup.json
+    commands:
+      - back
+- assertNotVisible: dismiss popup
+- assertNotVisible: witness-work-backup.json
+- assertVisible: Restore From Backup

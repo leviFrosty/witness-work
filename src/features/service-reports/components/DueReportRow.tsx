@@ -40,6 +40,7 @@ const DueReportRow = ({ month, year }: { month: number; year: number }) => {
   return (
     <ContextMenu
       accessibilityLabel={label}
+      testID='due-report-row'
       onPress={openReport}
       hoverRadius={theme.numbers.borderRadiusMd}
       actions={[

@@ -32,6 +32,7 @@ export default function ContextMenu({
   fitContent = false,
   hosted = false,
   style,
+  testID,
 }: ContextMenuProps) {
   const theme = useTheme()
   const colorScheme = usePreferences((s) => s.colorScheme)
@@ -75,6 +76,7 @@ export default function ContextMenu({
           onPress={onPress}
           accessibilityRole='button'
           accessibilityLabel={accessibilityLabel}
+          testID={testID}
         >
           {children}
           {tint}
@@ -120,6 +122,7 @@ export default function ContextMenu({
               onLongPress={disabled ? undefined : open}
               accessibilityRole={onPress ? 'button' : accessibilityRole}
               accessibilityLabel={accessibilityLabel}
+              testID={testID}
               {...a11y}
             >
               {children}

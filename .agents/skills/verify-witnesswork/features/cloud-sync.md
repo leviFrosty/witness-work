@@ -76,6 +76,7 @@ Steps:
 - **Lapse.** `wwv eval '__WW_DEV__.setSupporter(false)'`; the status reads "Paused until Supporter access returns"; set it back and the status returns to "Last synced …".
 - **Restore.** `wwv seed fresh` on a new user/device, choose "From Google Drive", then "Connect Google Drive" and "Restore from Google Drive". The restored contacts appear on Home.
 - **Proof.** `wwv shot <label>` for each screen and `wwv errors`.
+- **Scripted.** With `sync:entitlement everyone` on the local worker, run `wwv flow e2e/maestro/_cloud-sync.yaml` (Settings → Sync → Cloud Sync → "Last synced"). Delete the key afterwards.
 
 ## Gotchas
 

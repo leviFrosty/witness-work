@@ -1,0 +1,49 @@
+# seed: pioneer
+# New Follow-ups default to an hour from now (the "Default Follow Up"
+# preference), so this one is due today and shows on Home's Follow-up card.
+# setup: (() => { __WW_DEV__.stores.preferences.getState().set({ returnVisitTimeOffset: { amount: 1, unit: 'hours' } }); return true })()
+# On a small phone the finished Get started checklist pushes the card's buttons
+# behind the floating tab bar, where a tap on their center lands on a tab. The
+# pet offer's sprites redraw ten times a second, which slows every screen read.
+# setup: (() => { __WW_DEV__.stores.preferences.setState({ homeChecklistDismissed: true, petPromptDismissed: true }); return true })()
+# assert: (() => { const visits = __WW_DEV__.stores.conversations.getState().conversations.filter((v) => v.contact.id === 'verify-contact-0' && !v.id.startsWith('verify-')); const asked = visits.find((v) => v.followUp?.topic === 'Share the brochure'); return visits.length === 2 && !!asked && visits.some((v) => v !== asked && !v.followUp && new Date(v.date) > new Date(asked.date)) })()
+appId: com.leviwilkerson.jwtimedev
+name: Log a visit with a Follow-up for a contact, answer it with a later visit, and the Follow-up card is all caught up
+---
+- extendedWaitUntil:
+    visible: Quick Action
+    timeout: 60000
+- tapOn: Quick Action
+- tapOn: Log Visit
+- tapOn:
+    text: Ada Reyes
+    index: 0
+- tapOn:
+    id: log-visit-conversation
+- assertVisible: Add Conversation
+# Follow Up starts on for a conversation; give it a topic.
+# The row's label focuses its field.
+- tapOn:
+    text: Topic
+    traits: button
+- inputText: Share the brochure
+- hideKeyboard
+- tapOn:
+    text: Add
+    traits: button
+- tapOn:
+    text: Home
+    traits: button
+# The Follow-up card offers to log how it went.
+- scrollUntilVisible:
+    element: Talked
+- tapOn: Talked
+- assertVisible: 'Planned topic: Share the brochure'
+# No new Follow-up this time, so the card has nothing left open.
+- tapOn:
+    text: Follow Up
+    role: switch
+- tapOn:
+    text: Add
+    traits: button
+- assertVisible: All caught up

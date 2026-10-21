@@ -100,6 +100,7 @@ const ContactsSearchInput = ({
     <Input
       unstyled
       ref={ref}
+      testID='contacts-search'
       value={search}
       onChangeText={setSearch}
       placeholder={placeholder}

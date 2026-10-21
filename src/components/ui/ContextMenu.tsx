@@ -27,6 +27,7 @@ export default function ContextMenu({
   accessibilityLabel,
   accessible,
   style,
+  testID,
 }: ContextMenuProps) {
   if (onPress) {
     return (
@@ -36,6 +37,7 @@ export default function ContextMenu({
         accessible={accessible}
         accessibilityRole='button'
         accessibilityLabel={accessibilityLabel}
+        testID={testID}
       >
         {children}
       </Pressable>

@@ -1,0 +1,41 @@
+# seed: pioneer
+# A seed doesn't release a pet made earlier on the device, so start from the offer.
+# setup: (() => { __WW_DEV__.pet.release(); __WW_DEV__.pet.resetPrompt(); return true })()
+# assert: __WW_DEV__.stores.pet.getState().pet?.species === 'cat'
+# assert: __WW_DEV__.stores.pet.getState().pet?.name === 'Biscuit'
+# assert: __WW_DEV__.state().route.name === 'PetRoom'
+appId: com.leviwilkerson.jwtimedev
+name: Adopt a pet from Home, open its room, and rename it
+---
+# The pet's sprites redraw ten times a second, so taps here wait out --settle's
+# deadline; assert text instead of waiting for a still screen.
+- extendedWaitUntil:
+    visible: Add Time
+    timeout: 60000
+- scrollUntilVisible:
+    element: Meet your companion
+- tapOn:
+    text: Choose a pet
+    traits: button
+- tapOn: Kitten
+# Adopt without a name; the card then goes by the species.
+- tapOn: Adopt
+- assertVisible: Go out, fill its hearts
+- tapOn: Next
+- assertVisible: Grow your streak
+- tapOn: Next
+- assertVisible: Make it yours
+- tapOn: Done
+# The card's header carries the pet's name (the species until it has one) and
+# opens its room.
+- tapOn: Kitten
+- assertVisible: Rename
+- tapOn: Rename
+- assertVisible: Rename pet
+- tapOn:
+    text: Name (optional)
+    editable: true
+- inputText: Biscuit
+- tapOn: Save
+# The room's title follows the new name.
+- assertVisible: Biscuit

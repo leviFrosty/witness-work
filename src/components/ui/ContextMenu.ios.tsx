@@ -29,6 +29,7 @@ export default function ContextMenu({
   fitContent = false,
   hosted = false,
   style,
+  testID,
 }: ContextMenuProps) {
   const colorScheme = usePreferences((s) => s.colorScheme)
   const { width, overflowed, onLayout, onContentLayout } =
@@ -57,6 +58,7 @@ export default function ContextMenu({
       // would otherwise surface as an empty button around them.
       accessibilityRole={accessible ? 'button' : undefined}
       accessibilityLabel={accessibilityLabel}
+      testID={testID}
       {...a11y}
     >
       {children}

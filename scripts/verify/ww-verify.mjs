@@ -607,7 +607,7 @@ const output = (result) => `${result.stdout ?? ''}${result.stderr ?? ''}`
 // "capture was truncated": agent-device can't prove a selector absent over a
 // long tree (Home, the calendar), so `wait absent` asks AXe instead.
 const SPARSE =
-  /No snapshot backend could read|sparse accessibility snapshot|snapshot quality verdict is sparse|could not read the current accessibility tree|capture was truncated/
+  /No snapshot backend could read|sparse accessibility snapshot|snapshot quality verdict is sparse|could not read the current accessibility tree|capture was truncated|could not read the screen/
 const NO_MATCH = /Selector did not match|No element matches|could not find/i
 const BACK_LABELS = ['Go Back', 'Back', 'Close']
 const AX_SETTLE_MS = 8000
@@ -803,6 +803,55 @@ function onTop(state, platform, matches, origin) {
       (node.children ?? []).some(found)
     return found(Array.isArray(hit) ? { children: hit } : hit)
   })
+}
+
+/**
+ * Long-presses the element a target resolves to, for a context menu, when
+ * agent-device can't find it (its XCTest reads back off after slow screens).
+ */
+function axLongPress(state, platform, target, rest) {
+  const origin = axWindowOrigin(state, platform)
+  const found = axTarget(state, platform, target, { origin })
+  if (found.error) return failed(found.error)
+  const { x, y } = toScreen(center(found.element), origin)
+  const ms = Number(rest.find(isNumber) ?? 1000)
+  const result = run(
+    axeBin(),
+    [
+      'touch',
+      '-x',
+      String(x),
+      '-y',
+      String(y),
+      '--down',
+      '--up',
+      '--delay',
+      String(ms / 1000),
+      '--udid',
+      state.devices[platform].id,
+    ],
+    { check: false, timeout: 15_000 }
+  )
+  if (result.status !== 0)
+    return failed(`axe touch failed: ${output(result).trim().slice(-400)}`)
+  sleepSync(800)
+  return done(`Long pressed ${formatElement(found.element)} at (${x}, ${y})`)
+}
+
+/**
+ * `scroll <direction> --until <selector>` when agent-device can't read the
+ * screen: scrolls a pass at a time until AXe finds the target on screen.
+ */
+function axScrollUntil(state, platform, direction, target) {
+  for (let pass = 0; pass <= 8; pass++) {
+    if (!axTarget(state, platform, target).error)
+      return done(`${target} is on screen after ${pass} passes (AXe)`)
+    if (pass === 8) break
+    const result = sessionCommand(platform, ['scroll', direction, '0.5'])
+    if (result.status !== 0) return result
+    sleepSync(400)
+  }
+  return failed(`${target} didn't come on screen scrolling ${direction} (AXe)`)
 }
 
 /** Taps (or fills) the element a target resolves to. */
@@ -1008,6 +1057,22 @@ function drive(state, platform, args) {
         settle
       )
     }
+    case 'longpress': {
+      const [target, ...more] = plain
+      if (!target || /^@e\d+$/.test(target) || isNumber(target))
+        return sessionCommand(platform, args)
+      return tryAgentDevice(() => axLongPress(state, platform, target, more))
+    }
+    case 'scroll': {
+      const until = plain.indexOf('--until')
+      if (until < 0 || ipad)
+        return ipad && settle
+          ? axInput(state, platform, [command, ...plain], true)
+          : sessionCommand(platform, args)
+      return tryAgentDevice(() =>
+        axScrollUntil(state, platform, plain[0], plain[until + 1])
+      )
+    }
     case 'back':
       if (!ipad) return sessionCommand(platform, args)
       for (const label of BACK_LABELS) {
@@ -1042,6 +1107,8 @@ const DRIVEN = new Set([
   'wait',
   'back',
   'type',
+  'longpress',
+  'scroll',
 ])
 
 // ---------- splash detection ----------
@@ -3084,7 +3151,11 @@ const commands = {
       await cdpEval(state, platform, '__WW_DEV__.clearErrors()')
       const name = path.basename(flow, '.yaml')
       const { steps } = readFlow(source)
-      const result = runSteps(steps, (args) => drive(state, platform, args))
+      const result = await runSteps(
+        steps,
+        (args) => drive(state, platform, args),
+        (expression) => cdpEval(state, platform, expression)
+      )
       if (!result.ok) screenshot(state, platform, `flow-${name}-failed`)
       const jsErrors = await cdpEval(
         state,

@@ -99,4 +99,6 @@ export type ContextMenuProps = {
    */
   hosted?: boolean
   style?: StyleProp<ViewStyle>
+  /** The trigger's test id, for e2e flows (`e2e/maestro`). */
+  testID?: string
 }

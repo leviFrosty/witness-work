@@ -925,20 +925,27 @@
       "id": "sync.queued",
       "area": "Sync",
       "title": "Delivery when the phone is away",
-      "description": "An entry made while the phone is out of reach is queued and delivered when they next connect, even if the watch app isn't running: transferUserInfo on watchOS, a data item the phone deletes once handled on Wear OS.",
+      "description": "An entry made while the phone is out of reach is queued and delivered when they next connect, even if the watch app isn't running: transferUserInfo on watchOS, a data item the phone deletes once handled on Wear OS. One the phone couldn't store when it arrived (e.g. an iPhone locked after a restart) is queued again rather than waiting for the watch app to be open with the phone in reach.",
       "watchos": {
         "status": "implemented",
         "paths": [
           "targets/watch/PhoneSession.swift#func transfer",
-          "modules/watch-bridge/ios/WatchSessionCoordinator.swift#didReceiveUserInfo"
-        ]
+          "modules/watch-bridge/ios/WatchSessionCoordinator.swift#didReceiveUserInfo",
+          "targets/watch/WatchModel.swift#private func resendQueued",
+          "targets/watch/PhoneSession.swift#func outstandingTransferIds",
+          "modules/watch-bridge/ios/WatchSessionCoordinator.swift#it began while storage was locked"
+        ],
+        "notes": "A transfer is used up even when the iPhone couldn't store it, so the watch queues unaccepted entries again (skipping ones still in flight) when a context arrives from the iPhone, which publishes once its storage is readable, and when the app opens without the iPhone in reach."
       },
       "wearos": {
         "status": "implemented",
         "paths": [
           "targets/wear-os/src/main/java/com/leviwilkerson/witnesswork/wear/PhoneSession.kt#fun transfer",
-          "modules/watch-bridge/android/src/main/java/expo/modules/watchbridge/WatchBridgeListenerService.kt#override fun onDataChanged"
-        ]
+          "modules/watch-bridge/android/src/main/java/expo/modules/watchbridge/WatchBridgeListenerService.kt#override fun onDataChanged",
+          "modules/watch-bridge/android/src/main/java/expo/modules/watchbridge/WatchRequestHandler.kt#fun processQueued",
+          "modules/watch-bridge/android/src/main/java/expo/modules/watchbridge/WatchSessionCoordinator.kt#private fun retryQueued"
+        ],
+        "notes": "The phone keeps a data item it couldn't store and handles it again at launch and when the watch reconnects; the watch also resends through a request when the phone becomes reachable, even with the app closed."
       }
     },
     {

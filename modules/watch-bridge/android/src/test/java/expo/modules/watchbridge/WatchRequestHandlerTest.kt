@@ -78,6 +78,21 @@ class WatchRequestHandlerTest {
   }
 
   @Test
+  fun `keeps a queued entry it couldn't store until it can`() {
+    val queued = WatchProtocol.encode(WatchRequest(kind = WatchRequest.Kind.ADD_ENTRY, id = "E1", entry = entry()))
+    stores = false
+    // Deleting it here used to lose the entry until the watch app was next open.
+    assertEquals(false, handler.processQueued(queued))
+    assertTrue(inbox.pending.isEmpty())
+
+    stores = true
+    assertEquals(true, handler.processQueued(queued))
+    assertEquals(listOf("E1"), inbox.pending.map { it.draft.id })
+    // Refused for good: nothing to wait for.
+    assertEquals(true, handler.processQueued(WatchProtocol.encode(WatchRequest(kind = WatchRequest.Kind.ADD_ENTRY, id = "other", entry = entry()))))
+  }
+
+  @Test
   fun `sets the timer once per request and records it for analytics`() {
     val start = WatchRequest(kind = WatchRequest.Kind.TIMER, id = "T1", timerAction = WatchTimerAction.START, origin = WatchOrigin.TILE)
     val reply = send(start)

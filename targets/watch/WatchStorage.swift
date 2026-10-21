@@ -88,3 +88,11 @@ extension WatchSnapshot {
       ? publisherState : "reportedThisMonth"
   }
 }
+
+extension OutboxItem {
+  /// What to queue for the iPhone again: entries and trips it hasn't accepted,
+  /// unless a transfer of them (`waiting`) is still on its way.
+  static func toResend(_ outbox: [OutboxItem], waiting: Set<String>) -> [OutboxItem] {
+    outbox.filter { !$0.delivered && !waiting.contains($0.id) }
+  }
+}

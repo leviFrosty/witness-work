@@ -128,8 +128,12 @@ final class WatchSessionCoordinator: NSObject, WCSessionDelegate {
     let snapshot = try JSONDecoder().decode(WatchSnapshot.self, from: Data(json.utf8))
     queue.async {
       self.loadIfNeeded()
-      // Already stored and sent: launch and status pushes often repeat it.
+      // Already stored: launch and status pushes often repeat it. Published
+      // only if this launch hasn't yet, e.g. it began while storage was locked
+      // after a restart: hearing from the iPhone, the watch sends again what
+      // it couldn't store then.
       if self.loaded, let stored = self.inbox.snapshot, Self.sameContent(stored, snapshot) {
+        self.publish()
         return
       }
       // The Siri extension reads it from the App Group.

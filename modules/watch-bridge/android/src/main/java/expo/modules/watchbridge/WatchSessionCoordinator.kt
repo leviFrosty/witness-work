@@ -1,11 +1,13 @@
 package expo.modules.watchbridge
 
 import android.content.Context
+import android.net.Uri
 import android.util.Log
 import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.GoogleApiAvailability
 import com.google.android.gms.tasks.Tasks
 import com.google.android.gms.wearable.CapabilityClient
+import com.google.android.gms.wearable.DataClient
 import com.google.android.gms.wearable.PutDataRequest
 import com.google.android.gms.wearable.Wearable
 import com.leviwilkerson.witnesswork.watchprotocol.TimerSnapshot
@@ -196,6 +198,33 @@ class WatchSessionCoordinator private constructor(context: Context) {
 
   fun process(message: ByteArray): WatchReply = synchronized(lock) { handler.process(message) }
 
+  fun processQueued(message: ByteArray): Boolean = synchronized(lock) { handler.processQueued(message) }
+
+  /**
+   * Handles requests the watch queued that are still waiting: ones the phone couldn't store when
+   * they arrived. Call on `worker`, with a watch connected.
+   */
+  private fun retryQueued() {
+    val client = Wearable.getDataClient(context)
+    var handled = false
+    try {
+      val items =
+        Tasks.await(client.getDataItems(Uri.parse("wear://*" + WatchProtocol.QUEUED_PATH_PREFIX), DataClient.FILTER_PREFIX))
+      try {
+        for (item in items) {
+          if (!processQueued(item.data ?: continue)) continue
+          client.deleteDataItems(item.uri)
+          handled = true
+        }
+      } finally {
+        items.release()
+      }
+    } catch (error: Exception) {
+      recordError("Couldn't read the watch's queued requests", error)
+    }
+    if (handled) publish(urgent = true)
+  }
+
   // MARK: Publishing
 
   /** Publishes the context off the calling thread. */
@@ -264,6 +293,8 @@ class WatchSessionCoordinator private constructor(context: Context) {
         lastPublished = null
         publish(urgent = true)
       }
+      // At launch and when the watch reconnects: what couldn't be stored before may be now.
+      if (next.isWatchAppInstalled) retryQueued()
       if (changed || announce) statusListeners.forEach { it() }
     }
   }

@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import { pixelAt } from '@/lib/pixelArt'
-import { DEMO_SIGN_DATA, VIEW_CARD, type PlayerInput } from '@/features/pet/art'
+import {
+  DEMO_SIGN_DATA,
+  SIGN_IDS,
+  VIEW_CARD,
+  type PlayerInput,
+  type SignData,
+} from '@/features/pet/art'
 import type { ServiceStreak } from '@/lib/serviceStreak'
 import {
   PET_SHARE_SCALE,
@@ -62,6 +68,34 @@ describe('sharing the pet', () => {
     const image = petShareImage(INPUT, 8)
     expect(image.width).toBe(VIEW_CARD[2] * 8)
     expect(pixelAt(image, 7, 7)).toEqual(pixelAt(image, 0, 0))
+  })
+
+  it('leaves the wall sign and its records out of the picture', () => {
+    const noSign = petShareImage(
+      { ...INPUT, room: { ...INPUT.room, sign: 'none' } },
+      1
+    ).data
+    const otherRecords: SignData = {
+      ...DEMO_SIGN_DATA,
+      monthHours: 71.5,
+      monthGoal: 50,
+      yearBars: [60, 55, 71.5, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      currentMonthIndex: 2,
+      yearHours: 186.5,
+      sharedMonths: Array.from({ length: 12 }, (_, i) => i < 3),
+      planDay: 3,
+      planHours: 4,
+      conversations: 42,
+      returnVisits: 17,
+    }
+    for (const sign of SIGN_IDS)
+      for (const data of [DEMO_SIGN_DATA, otherRecords])
+        expect(
+          petShareImage(
+            { ...INPUT, room: { ...INPUT.room, sign }, sign: data },
+            1
+          ).data
+        ).toEqual(noSign)
   })
 
   it('lists the streak, the days together and the hats on the card', () => {

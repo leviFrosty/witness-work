@@ -8,6 +8,7 @@ import {
 } from 'lucide-react-native'
 import { View } from 'react-native'
 import useTheme from '@/contexts/theme'
+import useAccessibilityTextSize from '@/hooks/useAccessibilityTextSize'
 import Text from '@/components/ui/MyText'
 import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
 import type { SuggestedSectionKey } from '@/lib/suggestedContacts'
@@ -47,6 +48,8 @@ export default function SuggestedSectionHeader({
   testID?: string
 }) {
   const theme = useTheme()
+  // At accessibility sizes the title wraps instead of cutting off.
+  const largeText = useAccessibilityTextSize()
   return (
     <View
       accessible
@@ -66,7 +69,7 @@ export default function SuggestedSectionHeader({
         style={{ color: theme.colors.textAlt }}
       />
       <Text
-        numberOfLines={1}
+        numberOfLines={largeText ? undefined : 1}
         style={{
           flexShrink: 1,
           color: theme.colors.textAlt,

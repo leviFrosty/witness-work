@@ -6,6 +6,7 @@ import Avatar from '@/components/ui/Avatar'
 import Card from '@/components/ui/Card'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
+import useAccessibilityTextSize from '@/hooks/useAccessibilityTextSize'
 import type { Contact } from '@/types/contact'
 
 /**
@@ -80,6 +81,7 @@ export function ContactCardBody({
   leading?: ReactNode
   trailing?: ReactNode
 }) {
+  const largeText = useAccessibilityTextSize()
   return (
     <View style={{ alignItems: 'center', flexDirection: 'row', gap: 12 }}>
       {leading}
@@ -93,7 +95,10 @@ export function ContactCardBody({
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
           <View style={{ flexShrink: 1 }}>
             {name ?? (
-              <Text style={{ fontSize: 18 }} numberOfLines={1}>
+              <Text
+                style={{ fontSize: 18 }}
+                numberOfLines={largeText ? undefined : 1}
+              >
                 {contact.name}
               </Text>
             )}
@@ -120,6 +125,8 @@ export function ContactCardSubtitle({
   children: ReactNode
 }) {
   const theme = useTheme()
+  // At accessibility sizes it wraps rather than cutting off after a word.
+  const largeText = useAccessibilityTextSize()
   const text = (
     <Text
       style={{
@@ -127,7 +134,7 @@ export function ContactCardSubtitle({
         fontSize: icon ? 11 : 10,
         flexShrink: 1,
       }}
-      numberOfLines={1}
+      numberOfLines={largeText ? undefined : 1}
     >
       {children}
     </Text>

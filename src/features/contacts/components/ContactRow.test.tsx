@@ -11,6 +11,7 @@ vi.mock('@/lib/locales', async () => {
   return { default: new I18n({ en }, { locale: 'en' }) }
 })
 vi.mock('react-native', () => ({ View: 'View' }))
+vi.mock('@/hooks/useAccessibilityTextSize', () => ({ default: () => false }))
 vi.mock('lucide-react-native', () => ({
   BookOpen: 'BookOpen',
   Mail: 'Mail',

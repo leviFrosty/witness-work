@@ -1,6 +1,7 @@
 import { ReactNode, useState } from 'react'
 import { Pressable, View } from 'react-native'
 import useTheme from '@/contexts/theme'
+import useAccessibilityTextSize from '@/hooks/useAccessibilityTextSize'
 import Text from '@/components/ui/MyText'
 import SupporterBadge from '@/components/SupporterBadge'
 import SupporterInfoSheet from '@/components/SupporterInfoSheet'
@@ -57,6 +58,9 @@ const IsSupporter = ({
 }: Props) => {
   const theme = useTheme()
   const { hasAccess } = useFeatureAccess(feature)
+  // At accessibility sizes the badge wraps under a title it would squeeze
+  // into breaking mid-word.
+  const largeText = useAccessibilityTextSize()
   const [sheetOpen, setSheetOpen] = useState(false)
   const [attribution, setAttribution] = useState<SupporterGateAttribution>()
   const { headerRef, recordClick } = useSupporterGateAnalytics(
@@ -112,6 +116,7 @@ const IsSupporter = ({
             flexDirection: 'row',
             alignItems: 'center',
             justifyContent: title ? 'space-between' : 'flex-end',
+            flexWrap: largeText ? 'wrap' : undefined,
             gap: 12,
             ...(fill ? { paddingHorizontal: 12 } : null),
           }}

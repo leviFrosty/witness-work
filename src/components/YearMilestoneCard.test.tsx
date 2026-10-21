@@ -77,6 +77,9 @@ vi.mock('@/lib/haptics', () => ({
   default: { heavy: runtime.heavy, light: runtime.light },
 }))
 vi.mock('@/components/ui/LucideIcon', () => ({ default: 'LucideIcon' }))
+vi.mock('@/components/ui/DirectionalIcon', () => ({
+  ChevronForwardIcon: 'ChevronForwardIcon',
+}))
 vi.mock('@/components/ui/Card', () => ({ default: 'Card' }))
 vi.mock('@/components/ui/Chip', () => ({ default: 'Chip' }))
 vi.mock('@/components/ui/MyText', () => ({ default: 'Text' }))

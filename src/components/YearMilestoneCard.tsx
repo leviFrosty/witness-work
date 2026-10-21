@@ -1,5 +1,6 @@
 import { Crown as CrownIcon, Star as StarIcon } from 'lucide-react-native'
 import LucideIcon from '@/components/ui/LucideIcon'
+import { ChevronForwardIcon } from '@/components/ui/DirectionalIcon'
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { Pressable, View } from 'react-native'
 import moment from 'moment'
@@ -268,32 +269,44 @@ const YearMilestoneCard = ({
       </View>
     ) : null
 
+  // Keeps the link at the trailing edge, also when a long translation wraps it
+  // below the text beside it.
   const adjustLink = onAdjustMilestones ? (
-    <PointerHover effect='highlight'>
-      <Pressable
-        onPress={onAdjustMilestones}
-        accessibilityRole='button'
-        hitSlop={8}
-        // Room for the pointer highlight; the margin keeps the layout.
-        style={{
-          paddingHorizontal: 6,
-          paddingVertical: 2,
-          marginHorizontal: -6,
-          marginVertical: -2,
-          borderRadius: theme.numbers.borderRadiusSm,
-        }}
-      >
-        <Text
+    <View style={{ flexGrow: 1, alignItems: 'flex-end' }}>
+      <PointerHover effect='highlight'>
+        <Pressable
+          onPress={onAdjustMilestones}
+          accessibilityRole='button'
+          hitSlop={8}
+          // Room for the pointer highlight; the margin keeps the layout.
           style={{
-            fontSize: theme.fontSize('sm'),
-            color: theme.colors.accent,
-            fontFamily: theme.fonts.semiBold,
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 2,
+            paddingHorizontal: 6,
+            paddingVertical: 2,
+            marginHorizontal: -6,
+            marginVertical: -2,
+            borderRadius: theme.numbers.borderRadiusSm,
           }}
         >
-          {i18n.t('adjustMilestones')} ›
-        </Text>
-      </Pressable>
-    </PointerHover>
+          <Text
+            style={{
+              fontSize: theme.fontSize('sm'),
+              color: theme.colors.accent,
+              fontFamily: theme.fonts.semiBold,
+            }}
+          >
+            {i18n.t('adjustMilestones')}
+          </Text>
+          <LucideIcon
+            icon={ChevronForwardIcon}
+            size={14}
+            color={theme.colors.accent}
+          />
+        </Pressable>
+      </PointerHover>
+    </View>
   ) : null
 
   const milestoneDetails = (
@@ -339,6 +352,7 @@ const YearMilestoneCard = ({
         <View
           style={{
             flexDirection: 'row',
+            flexWrap: 'wrap',
             alignItems: 'center',
             justifyContent: 'space-between',
             gap: 8,
@@ -346,6 +360,7 @@ const YearMilestoneCard = ({
         >
           <Text
             style={{
+              flexShrink: 1,
               fontSize: theme.fontSize('sm'),
               fontFamily: theme.fonts.semiBold,
               color: theme.colors.supporter,
@@ -359,6 +374,7 @@ const YearMilestoneCard = ({
         <View
           style={{
             flexDirection: 'row',
+            flexWrap: 'wrap',
             alignItems: 'center',
             justifyContent: 'space-between',
             gap: 8,
@@ -366,6 +382,7 @@ const YearMilestoneCard = ({
         >
           <View
             style={{
+              flexShrink: 1,
               borderWidth: 1,
               borderColor: theme.colors.border,
               borderRadius: theme.numbers.borderRadiusSm,

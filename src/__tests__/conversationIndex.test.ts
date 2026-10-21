@@ -3,12 +3,27 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { buildConversationIndex } from '@/lib/conversationIndex'
 import { DEFAULT_STALENESS_BREAKPOINTS } from '@/constants/staleness'
 import { Visit } from '@/types/visit'
+import {
+  MISSED_FOLLOW_UP_AFTER_HOURS,
+  MISSED_FOLLOW_UP_LOOKBACK_DAYS,
+  overdueFollowUpConversations,
+} from '@/lib/conversations'
 
 const visit = (overrides: Partial<Visit> & { contactId: string }): Visit => ({
   id: overrides.id ?? `${overrides.contactId}-${overrides.date}`,
   contact: { id: overrides.contactId },
   date: overrides.date ?? new Date(),
   isBibleStudy: overrides.isBibleStudy ?? false,
+  ...(overrides.followUp ? { followUp: overrides.followUp } : {}),
+})
+
+const followUp = (
+  date: moment.Moment,
+  extra: { dismissed?: boolean } = {}
+) => ({
+  date: date.toDate(),
+  notifyMe: true,
+  ...extra,
 })
 
 describe('lib/conversationIndex', () => {
@@ -182,5 +197,152 @@ describe('lib/conversationIndex', () => {
 
     expect(index.mostRecentConvMs.has('bad')).toBe(false)
     expect(index.stalenessFor('bad')).toBe('never')
+  })
+
+  describe('follow-ups', () => {
+    const now = () => moment()
+    const conversations = (): Visit[] => [
+      // Upcoming in 3 days.
+      visit({
+        id: 'u1',
+        contactId: 'upcoming',
+        date: now().subtract(4, 'days').toDate(),
+        followUp: followUp(now().add(3, 'days')),
+      }),
+      // A sooner one on an older Visit wins for the next Follow-up.
+      visit({
+        id: 'u0',
+        contactId: 'upcoming',
+        date: now().subtract(10, 'days').toDate(),
+        followUp: followUp(now().add(1, 'day')),
+      }),
+      // Two hours ago: still on Home's card, not missed yet.
+      visit({
+        id: 'd1',
+        contactId: 'due',
+        date: now().subtract(7, 'days').toDate(),
+        followUp: followUp(now().subtract(2, 'hours')),
+      }),
+      // Missed two days ago with no Visit since.
+      visit({
+        id: 'm1',
+        contactId: 'missed',
+        date: now().subtract(9, 'days').toDate(),
+        followUp: followUp(now().subtract(2, 'days')),
+      }),
+      // Missed, then answered by a later Visit.
+      visit({
+        id: 'a1',
+        contactId: 'answered',
+        date: now().subtract(9, 'days').toDate(),
+        followUp: followUp(now().subtract(3, 'days')),
+      }),
+      visit({
+        id: 'a2',
+        contactId: 'answered',
+        date: now().subtract(1, 'day').toDate(),
+      }),
+      // A Visit before the Follow-up's day doesn't answer it.
+      visit({
+        id: 'e1',
+        contactId: 'early',
+        date: now().subtract(9, 'days').toDate(),
+        followUp: followUp(now().subtract(2, 'days')),
+      }),
+      visit({
+        id: 'e2',
+        contactId: 'early',
+        date: now().subtract(5, 'days').toDate(),
+      }),
+      // Missed too long ago to count.
+      visit({
+        id: 'o1',
+        contactId: 'old',
+        date: now()
+          .subtract(MISSED_FOLLOW_UP_LOOKBACK_DAYS + 10, 'days')
+          .toDate(),
+        followUp: followUp(
+          now().subtract(MISSED_FOLLOW_UP_LOOKBACK_DAYS + 2, 'days')
+        ),
+      }),
+      visit({
+        id: 'x1',
+        contactId: 'dismissed',
+        date: now().subtract(4, 'days').toDate(),
+        followUp: followUp(now().add(2, 'days'), { dismissed: true }),
+      }),
+      visit({
+        id: 'n1',
+        contactId: 'none',
+        date: now().subtract(4, 'days').toDate(),
+      }),
+    ]
+
+    it('keeps the soonest open Follow-up that is not missed yet', () => {
+      const index = buildConversationIndex(
+        conversations(),
+        DEFAULT_STALENESS_BREAKPOINTS
+      )
+      expect([...index.nextFollowUpMs.keys()].sort()).toEqual([
+        'due',
+        'upcoming',
+      ])
+      expect(index.nextFollowUpMs.get('upcoming')).toBe(
+        now().add(1, 'day').valueOf()
+      )
+    })
+
+    it('marks the same contacts missed as the missed Follow-up reminders', () => {
+      const list = conversations()
+      const index = buildConversationIndex(list, DEFAULT_STALENESS_BREAKPOINTS)
+      const missed = overdueFollowUpConversations({
+        currentTime: new Date(),
+        conversations: list,
+        lookbackDays: MISSED_FOLLOW_UP_LOOKBACK_DAYS,
+      }).map((v) => v.contact.id)
+      expect([...index.missedFollowUpMs.keys()].sort()).toEqual(
+        [...new Set(missed)].sort()
+      )
+      expect([...index.missedFollowUpMs.keys()].sort()).toEqual([
+        'early',
+        'missed',
+      ])
+      expect(index.missedFollowUpMs.get('missed')).toBe(
+        now().subtract(2, 'days').valueOf()
+      )
+    })
+
+    it('moves a Follow-up from upcoming to missed as the clock passes due + 4h', () => {
+      const due = now().add(1, 'hour')
+      const list = [
+        visit({
+          id: 'c1',
+          contactId: 'soon',
+          date: now().subtract(3, 'days').toDate(),
+          followUp: followUp(due),
+        }),
+      ]
+      const missedAt = due.clone().add(MISSED_FOLLOW_UP_AFTER_HOURS, 'hours')
+
+      const before = buildConversationIndex(
+        list,
+        DEFAULT_STALENESS_BREAKPOINTS,
+        undefined,
+        missedAt.valueOf() - 1
+      )
+      expect(before.nextFollowUpMs.get('soon')).toBe(due.valueOf())
+      expect(before.missedFollowUpMs.has('soon')).toBe(false)
+      expect(before.followUpsChangeAtMs).toBe(missedAt.valueOf())
+
+      const after = buildConversationIndex(
+        list,
+        DEFAULT_STALENESS_BREAKPOINTS,
+        undefined,
+        missedAt.valueOf()
+      )
+      expect(after.nextFollowUpMs.has('soon')).toBe(false)
+      expect(after.missedFollowUpMs.has('soon')).toBe(true)
+      expect(after.followUpsChangeAtMs).toBeNull()
+    })
   })
 })

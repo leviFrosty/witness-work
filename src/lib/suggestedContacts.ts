@@ -283,26 +283,40 @@ export const suggestedSectionTitleKey: Record<
   beenAWhile: 'suggested_beenAWhile',
 }
 
-/** "Follow-up today" or "Follow-up 2 days overdue" for a due Follow-up. */
-export const dueFollowUpLabel = (
-  visit: Visit,
+/**
+ * A Follow-up's due day relative to `currentTime`, by calendar day: "Follow-up
+ * 2 days overdue", "Follow-up today", "Follow-up tomorrow", or "Follow-up in 3
+ * days".
+ */
+export const followUpDayLabel = (
+  due: Date | number,
   currentTime: Date = new Date()
 ): string => {
-  const startOfDay = (d: Date) => {
+  const startOfDay = (d: Date | number) => {
     const copy = new Date(d)
     copy.setHours(0, 0, 0, 0)
     return copy.getTime()
   }
-  const daysOverdue = Math.round(
-    (startOfDay(currentTime) - startOfDay(new Date(visit.followUp!.date))) /
-      86_400_000
+  const daysAway = Math.round(
+    (startOfDay(due) - startOfDay(currentTime)) / 86_400_000
   )
-  return daysOverdue <= 0
-    ? i18n.t('suggested_followUpToday')
-    : i18n.t('suggested_followUpOverdue' as TranslationKey, {
-        count: daysOverdue,
-      })
+  if (daysAway < 0) {
+    return i18n.t('suggested_followUpOverdue' as TranslationKey, {
+      count: -daysAway,
+    })
+  }
+  if (daysAway === 0) return i18n.t('suggested_followUpToday')
+  if (daysAway === 1) return i18n.t('contacts_sortDetail_followUpTomorrow')
+  return i18n.t('contacts_sortDetail_followUpInDays' as TranslationKey, {
+    count: daysAway,
+  })
 }
+
+/** "Follow-up today" or "Follow-up 2 days overdue" for a due Follow-up. */
+export const dueFollowUpLabel = (
+  visit: Visit,
+  currentTime: Date = new Date()
+): string => followUpDayLabel(new Date(visit.followUp!.date), currentTime)
 
 /** A row's second line, saying why a suggested Contact is listed. */
 export type SuggestedRowDetail = { text: string; tone?: 'default' | 'due' }

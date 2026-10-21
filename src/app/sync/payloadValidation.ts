@@ -487,7 +487,16 @@ const filter = z.union([
     value: z.string(),
   }),
   z.object({ kind: z.literal('pinStaleness'), value: z.string() }),
-  z.object({ kind: z.enum(['isFavorite', 'hasStudy', 'isActiveStudy']) }),
+  z.object({
+    kind: z.enum([
+      'isFavorite',
+      'hasStudy',
+      'isActiveStudy',
+      'hasFollowUp',
+      'noFollowUp',
+      'followUpOverdue',
+    ]),
+  }),
 ])
 
 const savedContactView = z.object({

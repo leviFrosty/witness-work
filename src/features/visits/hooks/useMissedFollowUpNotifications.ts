@@ -1,7 +1,10 @@
 import moment from 'moment'
 import { CalendarX as CalendarXIcon } from 'lucide-react-native'
 import { useNavigation } from '@react-navigation/native'
-import { overdueFollowUpConversations } from '@/lib/conversations'
+import {
+  MISSED_FOLLOW_UP_LOOKBACK_DAYS,
+  overdueFollowUpConversations,
+} from '@/lib/conversations'
 import i18n from '@/lib/locales'
 import useContacts from '@/stores/contactsStore'
 import useConversations from '@/stores/conversationStore'
@@ -23,7 +26,7 @@ export default function useMissedFollowUpNotifications(
   return overdueFollowUpConversations({
     currentTime: new Date(now),
     conversations,
-    lookbackDays: 30,
+    lookbackDays: MISSED_FOLLOW_UP_LOOKBACK_DAYS,
   }).flatMap((visit): NotificationItem[] => {
     const name = names.get(visit.contact.id)
     if (name === undefined || !visit.followUp) return []

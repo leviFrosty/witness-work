@@ -120,6 +120,7 @@ export const analyticsEventNames = [
   'calendar_connected',
   'calendar_disconnected',
   'calendar_sync_failed',
+  'contacts_filter_added',
   'contacts_staleness_chip_applied',
   'contacts_suggested_contact_opened',
   'custom_field_created',

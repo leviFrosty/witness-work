@@ -20,6 +20,7 @@ const sessionEvents = new Set([
   'buddies_opened',
   'badges_opened',
   'buddy_badges_opened',
+  'contacts_filter_added',
   'contacts_staleness_chip_applied',
   'contacts_suggested_contact_opened',
   'buddies_push_registration',

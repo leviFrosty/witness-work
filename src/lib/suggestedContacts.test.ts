@@ -11,6 +11,7 @@ import { DEFAULT_STALENESS_BREAKPOINTS } from '@/constants/staleness'
 import {
   buildSuggestedContacts,
   dueFollowUpLabel,
+  followUpDayLabel,
   suggestedRowDetail,
   SUGGESTED_SECTION_LIMIT,
 } from '@/lib/suggestedContacts'
@@ -298,6 +299,26 @@ describe('dueFollowUpLabel', () => {
     )
     expect(dueFollowUpLabel(visit('b', 'c', 5, -2), now)).toBe(
       'suggested_followUpOverdue:2'
+    )
+  })
+})
+
+describe('followUpDayLabel', () => {
+  it('counts calendar days to an upcoming Follow-up', () => {
+    expect(followUpDayLabel(new Date('2026-10-09T23:00:00'), now)).toBe(
+      'suggested_followUpToday'
+    )
+    expect(followUpDayLabel(new Date('2026-10-10T08:00:00'), now)).toBe(
+      'contacts_sortDetail_followUpTomorrow'
+    )
+    expect(
+      followUpDayLabel(new Date('2026-10-14T08:00:00').getTime(), now)
+    ).toBe('contacts_sortDetail_followUpInDays:5')
+  })
+
+  it('counts calendar days past a missed Follow-up', () => {
+    expect(followUpDayLabel(new Date('2026-10-08T23:00:00'), now)).toBe(
+      'suggested_followUpOverdue:1'
     )
   })
 })

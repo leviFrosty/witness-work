@@ -9,6 +9,7 @@ import { Contact } from '@/types/contact'
 import { Visit } from '@/types/visit'
 import { CustomFieldDefinition } from '@/types/customField'
 import { DEFAULT_STALENESS_BREAKPOINTS } from '@/constants/staleness'
+import { buildConversationIndex } from '@/lib/conversationIndex'
 
 const baseContact = (overrides: Partial<Contact> = {}): Contact => ({
   id: 'c1',
@@ -410,6 +411,66 @@ describe('lib/contactsFilters', () => {
         emptyCtx({ conversations })
       )
       expect(result).toEqual([active])
+    })
+  })
+
+  describe('follow-up filters', () => {
+    const upcoming = baseContact({ id: 'u', name: 'Upcoming' })
+    const missed = baseContact({ id: 'm', name: 'Missed' })
+    const none = baseContact({ id: 'n', name: 'None' })
+    const all = [upcoming, missed, none]
+    const conversations: Visit[] = [
+      {
+        id: 'v1',
+        contact: { id: upcoming.id },
+        date: moment().subtract(3, 'days').toDate(),
+        isBibleStudy: false,
+        followUp: { date: moment().add(2, 'days').toDate(), notifyMe: true },
+      },
+      {
+        id: 'v2',
+        contact: { id: missed.id },
+        date: moment().subtract(8, 'days').toDate(),
+        isBibleStudy: false,
+        followUp: {
+          date: moment().subtract(1, 'day').toDate(),
+          notifyMe: true,
+        },
+      },
+      {
+        id: 'v3',
+        contact: { id: none.id },
+        date: moment().subtract(2, 'days').toDate(),
+        isBibleStudy: false,
+      },
+    ]
+    const run = (filter: ActiveFilter) =>
+      applyFilters(all, [filter], emptyCtx({ conversations }))
+
+    it('hasFollowUp keeps contacts with an upcoming follow-up', () => {
+      expect(run({ kind: 'hasFollowUp' })).toEqual([upcoming])
+    })
+
+    it('noFollowUp keeps everyone without an upcoming follow-up', () => {
+      expect(run({ kind: 'noFollowUp' })).toEqual([missed, none])
+    })
+
+    it('followUpOverdue keeps contacts with a missed follow-up', () => {
+      expect(run({ kind: 'followUpOverdue' })).toEqual([missed])
+    })
+
+    it('reads a prebuilt conversation index when given one', () => {
+      const conversationIndex = buildConversationIndex(
+        [],
+        DEFAULT_STALENESS_BREAKPOINTS
+      )
+      expect(
+        applyFilters(
+          all,
+          [{ kind: 'hasFollowUp' }],
+          emptyCtx({ conversations, conversationIndex })
+        )
+      ).toEqual([])
     })
   })
 })

@@ -7,7 +7,7 @@ import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import { analytics } from '@/lib/analytics'
 import { filterActivesContacts } from '@/lib/dismissedContacts'
-import { buildConversationIndex } from '@/lib/conversationIndex'
+import useConversationIndex from '@/hooks/useConversationIndex'
 import { buildSuggestedContacts } from '@/lib/suggestedContacts'
 import useContacts from '@/stores/contactsStore'
 import useConversations from '@/stores/conversationStore'
@@ -82,7 +82,7 @@ export default function LogVisitScreen({ navigation }: Props) {
   }, [])
 
   const actives = filterActivesContacts(contacts)
-  const index = buildConversationIndex(conversations, stalenessBreakpoints)
+  const index = useConversationIndex(conversations, stalenessBreakpoints)
   const suggested = buildSuggestedContacts({
     contacts: actives,
     conversations,

@@ -20,8 +20,9 @@ const rng = (seed: number) => () => {
 
 /**
  * Contacts in every staleness bucket, studies this month and earlier, dismissed
- * contacts (still dismissed and expired), and visits whose contact is no longer
- * in the list (archived).
+ * contacts (still dismissed and expired), visits whose contact is no longer in
+ * the list (archived), and Follow-ups that are upcoming, due, missed, missed
+ * too long ago, answered, or dismissed.
  */
 const generate = (contactCount: number, visitCount: number) => {
   const rand = rng(42)
@@ -47,11 +48,23 @@ const generate = (contactCount: number, visitCount: number) => {
     // Whole days plus a quarter day keeps every visit clear of the staleness
     // thresholds, which `moment` and the index measure in different units.
     const daysAgo = Math.floor(rand() * 120)
+    // Follow-ups from ~40 days ago to ~10 days ahead, on the half hour so none
+    // lands exactly on the missed (due + 4h) or lookback boundary.
+    const followUpHours = Math.floor(rand() * 50 * 24) - 40 * 24 + 0.5
     visits.push({
       id: `v${v}`,
       contact: { id: archived ? `archived${idx}` : `c${idx}` },
       date: now.clone().subtract(daysAgo, 'days').subtract(6, 'hours').toDate(),
       isBibleStudy: rand() < 0.25,
+      ...(rand() < 0.3
+        ? {
+            followUp: {
+              date: now.clone().add(followUpHours, 'hours').toDate(),
+              notifyMe: true,
+              ...(rand() < 0.1 ? { dismissed: true } : {}),
+            },
+          }
+        : {}),
     })
   }
 
@@ -87,6 +100,11 @@ const FILTER_SETS: ActiveFilter[][] = [
     { kind: 'name', op: 'contains', value: '1' },
     { kind: 'pinStaleness', value: 'week' },
   ],
+  [{ kind: 'hasFollowUp' }],
+  [{ kind: 'noFollowUp' }],
+  [{ kind: 'followUpOverdue' }],
+  [{ kind: 'followUpOverdue' }, { kind: 'hasFollowUp' }],
+  [{ kind: 'noFollowUp' }, { kind: 'pinStaleness', value: 'recent' }],
 ]
 
 const BREAKPOINTS: StalenessBreakpoints[] = [
@@ -149,5 +167,12 @@ describe('applyFilters with a ConversationIndex', () => {
       ctx
     ).length
     expect(withAnyStudy).toBeGreaterThan(studiedThisMonth)
+    for (const kind of [
+      'hasFollowUp',
+      'noFollowUp',
+      'followUpOverdue',
+    ] as const) {
+      expect(applyFilters(contacts, [{ kind }], ctx).length).toBeGreaterThan(0)
+    }
   })
 })

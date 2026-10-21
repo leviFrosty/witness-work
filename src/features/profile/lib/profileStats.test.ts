@@ -179,6 +179,21 @@ describe('fittingMonthLabels', () => {
     ])
   })
 
+  it('drops a last label that would run past the end of the row', () => {
+    // Large text: "Jul" (50 pt) starts 126 pt in, but the row ends at 150 pt.
+    expect(names(fittingMonthLabels(labels, widths(50), 14, 4, 150))).toEqual([
+      'May',
+      'Jun',
+    ])
+    // It still shows when it fits.
+    expect(names(fittingMonthLabels(labels, widths(9), 14, 4, 150))).toEqual([
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+    ])
+  })
+
   it("names the window's first month only over its own weeks", () => {
     // 11 pt columns, 30 pt labels: May doesn't fit before June, and April
     // would fit there only by reaching over May's weeks.

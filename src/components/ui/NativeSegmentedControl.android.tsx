@@ -9,7 +9,9 @@ import {
   testID as testIDModifier,
 } from '@expo/ui/jetpack-compose/modifiers'
 import useTheme from '@/contexts/theme'
+import useAccessibilityTextSize from '@/hooks/useAccessibilityTextSize'
 import { usePreferences } from '@/stores/preferences'
+import ChoiceChips from '@/components/ui/ChoiceChips'
 import type { NativeSegmentedControlProps } from '@/components/ui/NativeSegmentedControl.types'
 
 /** Material 3 single-choice segmented buttons, seeded from the accent color. */
@@ -23,6 +25,22 @@ export default function NativeSegmentedControl<T extends string = string>({
 }: NativeSegmentedControlProps<T>) {
   const theme = useTheme()
   const colorScheme = usePreferences((s) => s.colorScheme)
+  const largeText = useAccessibilityTextSize()
+
+  // Material's segments can neither shrink a label nor wrap it between words,
+  // so at accessibility text sizes "Month" broke into "Mont / h". The same
+  // choices show as chips there, which wrap onto as many rows as they need.
+  if (largeText && !disabled) {
+    return (
+      <ChoiceChips
+        options={options}
+        value={value}
+        onChange={onChange}
+        style={style}
+        testID={testID}
+      />
+    )
+  }
 
   return (
     <Host

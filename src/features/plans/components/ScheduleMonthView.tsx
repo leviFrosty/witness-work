@@ -10,6 +10,9 @@ import Animated, {
 import type { ViewStyle } from 'react-native'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
+import useAccessibilityTextSize, {
+  FIT_ONE_LINE,
+} from '@/hooks/useAccessibilityTextSize'
 import useStartOfWeek from '@/hooks/useStartOfWeek'
 import type { CalendarMonth } from '@/lib/monthlyGoals'
 import useServiceReport from '@/stores/serviceReport'
@@ -91,10 +94,14 @@ export default function ScheduleMonthView({
   const theme = useTheme()
   const startOfWeek = useStartOfWeek()
   const recurringPlans = useServiceReport((s) => s.recurringPlans)
-  const weekdays = moment.weekdaysShort()
+  // At accessibility text sizes the weekdays take their shortest names and
+  // shrink to their column instead of truncating to a letter.
+  const largeText = useAccessibilityTextSize()
+  const weekdays = largeText ? moment.weekdaysMin() : moment.weekdaysShort()
   const weekdayLabels = weekdays.map(
     (_, column) => weekdays[(column + startOfWeek) % 7]
   )
+  const fitWeekday = largeText ? FIT_ONE_LINE : undefined
 
   return (
     <View style={{ flex: 1 }}>
@@ -153,8 +160,11 @@ export default function ScheduleMonthView({
             <Text
               key={column}
               numberOfLines={1}
+              {...fitWeekday}
               style={{
                 flex: 1,
+                // Keeps shrunk names from running into each other.
+                paddingHorizontal: largeText ? 3 : 0,
                 textAlign: 'center',
                 fontSize: theme.fontSize('xs'),
                 fontFamily: theme.fonts.semiBold,

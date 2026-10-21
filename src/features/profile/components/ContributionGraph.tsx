@@ -328,7 +328,8 @@ const ContributionGraph = ({ daily, weeks = 26 }: Props) => {
           monthLabels,
           labelWidths,
           stride,
-          MONTH_LABEL_GAP
+          MONTH_LABEL_GAP,
+          width > 0 ? width - LABEL_WIDTH - LABEL_GAP : undefined
         ).map((label) => label.column)
       : []
   )

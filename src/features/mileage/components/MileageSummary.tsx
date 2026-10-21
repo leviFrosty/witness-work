@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { View } from 'react-native'
 import useTheme from '@/contexts/theme'
+import useAccessibilityTextSize from '@/hooks/useAccessibilityTextSize'
 import i18n from '@/lib/locales'
 import { formatNumber } from '@/lib/numbers'
 import Text from '@/components/ui/MyText'
@@ -32,15 +33,19 @@ function Stat({
   info?: string
 }) {
   const theme = useTheme()
+  // At accessibility text sizes the stats stack, each with the full width, so
+  // the label wraps whole instead of truncating.
+  const largeText = useAccessibilityTextSize()
   return (
-    <View style={{ flex: 1, gap: 2 }}>
+    <View style={largeText ? { gap: 2 } : { flex: 1, gap: 2 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center' }}>
         <Text
           style={{
+            flexShrink: largeText ? 1 : 0,
             fontSize: theme.fontSize('sm'),
             color: theme.colors.textAlt,
           }}
-          numberOfLines={1}
+          numberOfLines={largeText ? undefined : 1}
         >
           {label}
         </Text>
@@ -67,11 +72,12 @@ export default function MileageSummary({
   vehicleColors,
 }: Props) {
   const theme = useTheme()
+  const largeText = useAccessibilityTextSize()
   const breakdown = showBreakdown && summary.byVehicle.length > 1
 
   return (
     <View style={{ gap: 14 }}>
-      <View style={{ flexDirection: 'row', gap: 12 }}>
+      <View style={{ flexDirection: largeText ? 'column' : 'row', gap: 12 }}>
         <Stat
           label={i18n.t('mileage.distance')}
           value={format.distance(summary.distanceMiles)}

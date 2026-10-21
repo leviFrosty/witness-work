@@ -1,0 +1,9 @@
+{
+  "platforms": ["ios", "android"],
+  "ios": {
+    "modules": ["AppSwitcherPrivacyModule"]
+  },
+  "android": {
+    "modules": ["expo.modules.appswitcherprivacy.AppSwitcherPrivacyModule"]
+  }
+}

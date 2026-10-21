@@ -38,6 +38,10 @@ const LOCAL_MODULES = [
   { importName: 'PlaceSearch', className: 'PlaceSearchModule' },
   { importName: 'WatchBridge', className: 'WatchBridgeModule' },
   {
+    importName: 'AppSwitcherPrivacy',
+    className: 'AppSwitcherPrivacyModule',
+  },
+  {
     importName: 'SpeechTranscription',
     className: 'SpeechTranscriptionModule',
   },

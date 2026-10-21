@@ -1,0 +1,7 @@
+{
+  "name": "app-switcher-privacy",
+  "version": "0.1.0",
+  "description": "Local Expo module that keeps the app's screen out of the iOS app switcher and Android Recents while App Lock is on.",
+  "main": "index.ts",
+  "private": true
+}

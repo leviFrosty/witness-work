@@ -5,6 +5,7 @@ import BadgeMedallion from '@/components/badges/BadgeMedallion'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 import IconButton from '@/components/ui/IconButton'
+import { touchTargetFrame } from '@/components/ui/touchTarget'
 import Text from '@/components/ui/MyText'
 import WholeWordsText from '@/components/ui/WholeWordsText'
 import useTheme from '@/contexts/theme'
@@ -88,7 +89,7 @@ export default function HomeNewBadgeCard({
         <IconButton
           icon={XIcon}
           size={18}
-          hitSlop={12}
+          style={touchTargetFrame(18)}
           color={theme.colors.textAlt}
           accessibilityLabel={i18n.t('dismiss')}
           onPress={() => close('dismiss')}

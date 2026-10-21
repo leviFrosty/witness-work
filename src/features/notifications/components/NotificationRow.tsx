@@ -2,6 +2,7 @@ import { Pressable, View } from 'react-native'
 import { Bell as BellIcon, X as XIcon } from 'lucide-react-native'
 import Button from '@/components/ui/Button'
 import IconButton from '@/components/ui/IconButton'
+import { touchTargetFrame } from '@/components/ui/touchTarget'
 import LucideIcon from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
 import XView from '@/components/ui/layout/XView'
@@ -133,7 +134,7 @@ export default function NotificationRow({
         <IconButton
           icon={XIcon}
           size={16}
-          hitSlop={12}
+          style={touchTargetFrame(16)}
           accessibilityLabel={i18n.t('dismiss')}
           onPress={onDismiss}
         />

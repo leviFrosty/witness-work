@@ -1,6 +1,8 @@
 import { ArrowDown, ArrowUp } from 'lucide-react-native'
 import { View } from 'react-native'
-import IconButton from '@/components/ui/IconButton'
+import Button from '@/components/ui/Button'
+import LucideIcon from '@/components/ui/LucideIcon'
+import { MIN_TOUCH_TARGET, touchTargetFrame } from '@/components/ui/touchTarget'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 
@@ -9,40 +11,54 @@ interface Props {
   onMoveDown?: () => void
 }
 
-// Visible button is 36pt; a 4pt hitSlop on every side brings the tap target
-// to 44pt. The 8pt gap keeps adjacent slops from overlapping (see IconButton).
+// Each visible button is a 36pt square in a real 44pt frame (48dp on
+// Android): these sit in rows that drag, where slop loses to the drag. The gap
+// lets the frames touch without overlapping.
 const BUTTON_SIZE = 36
-const HIT_SLOP = 4
 
 export default function ReorderControls({ onMoveUp, onMoveDown }: Props) {
   const theme = useTheme()
 
   return (
-    <View style={{ flexDirection: 'row', gap: HIT_SLOP * 2, flexShrink: 0 }}>
+    <View
+      style={{
+        flexDirection: 'row',
+        gap: MIN_TOUCH_TARGET - BUTTON_SIZE,
+        flexShrink: 0,
+      }}
+    >
       {[
         { icon: ArrowUp, onPress: onMoveUp, label: i18n.t('moveUp') },
         { icon: ArrowDown, onPress: onMoveDown, label: i18n.t('moveDown') },
       ].map(({ icon, onPress, label }) => (
-        <IconButton
+        <Button
           key={label}
-          icon={icon}
+          noTransform={!onPress}
+          disabled={!onPress}
           onPress={onPress}
           accessibilityLabel={label}
-          hitSlop={HIT_SLOP}
-          size={16}
+          hitSlop={0}
           style={{
-            width: BUTTON_SIZE,
-            height: BUTTON_SIZE,
-            alignItems: 'center',
-            justifyContent: 'center',
+            ...touchTargetFrame(BUTTON_SIZE),
             borderRadius: theme.numbers.borderRadiusSm,
-            borderWidth: 1,
-            borderColor: theme.colors.border,
-            backgroundColor: theme.colors.backgroundLightest,
-            opacity: onPress ? 1 : 0.4,
           }}
-          color={theme.colors.textAlt}
-        />
+        >
+          <View
+            style={{
+              width: BUTTON_SIZE,
+              height: BUTTON_SIZE,
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderRadius: theme.numbers.borderRadiusSm,
+              borderWidth: 1,
+              borderColor: theme.colors.border,
+              backgroundColor: theme.colors.backgroundLightest,
+              opacity: onPress ? 1 : 0.4,
+            }}
+          >
+            <LucideIcon icon={icon} size={16} color={theme.colors.textAlt} />
+          </View>
+        </Button>
       ))}
     </View>
   )

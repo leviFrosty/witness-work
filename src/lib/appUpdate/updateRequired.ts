@@ -87,7 +87,8 @@ export const APP_CONFIG_MIN_INTERVAL_MS = 60_000
 /**
  * Reads the config at most once a minute (callers share one request) and blocks
  * or unblocks the app from it. A failure (offline, say) changes nothing: a
- * working app is never locked for a config it couldn't read.
+ * working app is never locked for a config it couldn't read. It doesn't count
+ * toward the minute, so the next check after it asks again.
  */
 export function createAppConfigCheck(deps: {
   fetchConfig: () => Promise<
@@ -119,7 +120,10 @@ export function createAppConfigCheck(deps: {
         // The floor came down again.
         else if (required) useUpdateRequired.setState({ required: null })
       })
-      .catch(() => undefined)
+      // Nothing was learned: the next foreground or reconnect asks again.
+      .catch(() => {
+        lastAt = -Infinity
+      })
       .finally(() => {
         pending = null
       })

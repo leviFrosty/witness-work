@@ -228,6 +228,16 @@ describe('serverTransport', () => {
     })
   })
 
+  it('reads an app too old for the server as needing the User', () => {
+    // Update Required shows; the engine mustn't report it on every retry.
+    expect(
+      toServerTransportError(new HttpError('client', 426, 'upgrade_required'))
+    ).toMatchObject({ code: 'unauthorized' })
+    expect(
+      toServerTransportError(new HttpError('client', 400, 'upgrade_required'))
+    ).toMatchObject({ code: 'unauthorized' })
+  })
+
   it('holds no photos yet', async () => {
     const { transport } = setup()
     expect(transport.supportsBinaries).toBe(false)

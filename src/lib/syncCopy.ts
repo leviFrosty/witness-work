@@ -33,6 +33,21 @@ export function platformSyncKey(key: TranslationKey): TranslationKey {
 }
 
 /**
+ * The same, for one option whatever this device uses now: a switch that failed
+ * names the option it was moving to, since the device is back on the old one.
+ */
+export function optionSyncKey(
+  key: TranslationKey,
+  option: 'cloud' | 'platform'
+): TranslationKey {
+  if (option === 'cloud') {
+    const cloud = `${key}Cloud`
+    if (cloud in enUS) return cloud as TranslationKey
+  }
+  return platformSyncKey(key)
+}
+
+/**
  * The sync screen's name: "Sync" once it offers Cloud Sync beside iCloud or
  * Google Drive, else the platform's own.
  */

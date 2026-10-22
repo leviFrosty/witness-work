@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import moment from 'moment'
+import { readdirSync, readFileSync } from 'node:fs'
+import path from 'node:path'
 
 const stored = vi.hoisted(() => ({
   preferences: undefined as string | undefined,
@@ -21,6 +23,54 @@ const load = async () => {
   vi.resetModules()
   return import('@/lib/locales')
 }
+
+type Strings = { [key: string]: string | Strings }
+const localeDir = path.join(__dirname, '../locales')
+const localeFiles = readdirSync(localeDir).map(
+  (file) =>
+    [
+      file,
+      JSON.parse(readFileSync(path.join(localeDir, file), 'utf8')) as Strings,
+    ] as const
+)
+const english = localeFiles.find(([file]) => file === 'en-US.json')![1]
+const PLURAL_FORMS = ['zero', 'one', 'two', 'few', 'many', 'other']
+const isPluralNode = (node: Strings) =>
+  Object.keys(node).every((key) => PLURAL_FORMS.includes(key))
+
+/** Keys English doesn't have, apart from extra plural forms (Russian `few`). */
+function deadKeys(en: Strings, strings: Strings, prefix = ''): string[] {
+  return Object.entries(strings).flatMap(([key, value]) => {
+    const enValue = en[key]
+    if (enValue === undefined)
+      return isPluralNode(en) && PLURAL_FORMS.includes(key)
+        ? []
+        : [prefix + key]
+    return typeof value === 'object' && typeof enValue === 'object'
+      ? deadKeys(enValue, value, `${prefix}${key}.`)
+      : []
+  })
+}
+
+// Every locale ships in every app binary and OTA bundle, so keys English
+// dropped are dead weight. `locales.mjs prune` (translate-locales) deletes them.
+describe('locale files', () => {
+  it.each(localeFiles.filter(([file]) => file !== 'en-US.json'))(
+    '%s has no keys English lacks',
+    (_file, strings) => {
+      expect(deadKeys(english, strings)).toEqual([])
+    }
+  )
+
+  it('keeps plural forms English lacks', () => {
+    expect(
+      deadKeys(
+        { count: { one: '1 item', other: '{{count}} items' } },
+        { count: { one: '1', few: '2', other: '5' }, gone: 'x' }
+      )
+    ).toEqual(['gone'])
+  })
+})
 
 describe('translations load on demand', () => {
   beforeEach(() => {
@@ -45,6 +95,14 @@ describe('translations load on demand', () => {
     setI18nLocale('de-de')
     expect(Object.keys(_i18n.translations)).toEqual(['en-us', 'de-de'])
     expect(i18n.t('addTime')).toBe('Zeit hinzufügen')
+  })
+
+  it('loads every shipped locale file under its language', async () => {
+    const { _i18n, setI18nLocale, translatedLocales } = await load()
+    for (const locale of translatedLocales) setI18nLocale(locale)
+    const loaded = translatedLocales.map((locale) => _i18n.translations[locale])
+    for (const [file, strings] of localeFiles)
+      expect(loaded, file).toContainEqual(strings)
   })
 
   it('falls back to English for keys a language lacks', async () => {

@@ -4,6 +4,7 @@
 //   todo  [--since <ref>] [--locale <name>]... [--chunk <n>] [--out <dir>]
 //   apply <name> <translations.json> [--dry-run]
 //   lint  [--locale <name>]...
+//   prune [--locale <name>]... [--dry-run]
 //   terms <name> <english term>... [--limit <n>]
 //
 // <name> is a file in src/locales without `.json`, e.g. `ru-RU`.
@@ -111,6 +112,35 @@ function* extraPluralForms(en, name, keyPath = []) {
   }
   for (const [key, child] of Object.entries(en))
     yield* extraPluralForms(child, name, [...keyPath, key])
+}
+
+/**
+ * Key paths in `strings` that English doesn't have, apart from plural forms of
+ * an English plural key (Russian `few`). Nothing reads them, yet every app
+ * binary and OTA bundle ships them.
+ */
+function* deadKeys(en, strings, keyPath = []) {
+  for (const [key, child] of Object.entries(strings)) {
+    if (!Object.hasOwn(en, key)) {
+      if (!(isPluralNode(en) && PLURAL_FORMS.has(key))) yield [...keyPath, key]
+    } else if (isObject(child) && isObject(en[key]))
+      yield* deadKeys(en[key], child, [...keyPath, key])
+  }
+}
+
+/** `strings` without its `deadKeys`. */
+function withoutDeadKeys(en, strings) {
+  const kept = {}
+  for (const [key, child] of Object.entries(strings)) {
+    if (!Object.hasOwn(en, key)) {
+      if (isPluralNode(en) && PLURAL_FORMS.has(key)) kept[key] = child
+    } else
+      kept[key] =
+        isObject(child) && isObject(en[key])
+          ? withoutDeadKeys(en[key], child)
+          : child
+  }
+  return kept
 }
 
 /** Nonempty string leaves, the same set `pnpm check:locales` requires. */
@@ -276,6 +306,10 @@ function lintStrings(en, strings, name) {
     for (const key of Object.keys(enNode))
       pluralForms(enNode[key], node[key], [...keyPath, key])
   })(en, strings, [])
+
+  if (strings !== en)
+    for (const keyPath of deadKeys(en, strings))
+      add(keyPath.join('.'), `not in ${SOURCE}.json; run \`prune\``)
 
   return issues
 }
@@ -452,6 +486,27 @@ function lint() {
   console.log('No problems found.')
 }
 
+/** Deletes the keys English no longer has (`deadKeys`) from each locale. */
+function prune() {
+  const en = readLocale(SOURCE)
+  let total = 0
+  for (const name of targets()) {
+    const strings = readLocale(name)
+    const count = [...deadKeys(en, strings)].length
+    if (!count) continue
+    total += count
+    if (!flags.dryRun)
+      writeJson(
+        path.join(localeDir, `${name}.json`),
+        withoutDeadKeys(en, strings)
+      )
+    console.log(`${name}: ${count} keys not in ${SOURCE}.json`)
+  }
+  console.log(
+    flags.dryRun || !total ? `${total} keys to prune.` : `Pruned ${total} keys.`
+  )
+}
+
 function terms() {
   const [name, ...words] = positional
   if (!name || !words.length) fail('Usage: terms <name> <english term>...')
@@ -475,7 +530,9 @@ function terms() {
   }
 }
 
-const commands = { todo, apply, lint, terms }
+const commands = { todo, apply, lint, prune, terms }
 if (!Object.hasOwn(commands, command ?? ''))
-  fail('Usage: locales.mjs <todo|apply|lint|terms> (see the header comment)')
+  fail(
+    'Usage: locales.mjs <todo|apply|lint|prune|terms> (see the header comment)'
+  )
 commands[command]()

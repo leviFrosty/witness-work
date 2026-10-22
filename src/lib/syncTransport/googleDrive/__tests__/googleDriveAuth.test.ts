@@ -24,7 +24,11 @@ vi.mock('react-native', () => ({
   AppState: {
     addEventListener: (_: string, listener: (state: string) => void) => {
       native.appState.push(listener)
-      return { remove: () => {} }
+      return {
+        remove: () => {
+          native.appState = native.appState.filter((l) => l !== listener)
+        },
+      }
     },
   },
 }))
@@ -353,6 +357,8 @@ describe('consent screen', () => {
       native.appState.forEach((listener) => listener('active'))
       await vi.advanceTimersByTimeAsync(3_000)
       expect(await outcome).toBe('canceled')
+      // The screen's result never comes; stop watching for it anyway.
+      expect(native.appState).toHaveLength(0)
     } finally {
       vi.useRealTimers()
     }

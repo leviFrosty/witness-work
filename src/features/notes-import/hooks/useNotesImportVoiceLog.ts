@@ -162,6 +162,9 @@ export function useNotesImportVoiceLog({
       if (permissions.status === 'undetermined') {
         permissions = await Speech.requestPermissions()
       }
+      // Cancelled or left while asking: listeners added now would never be
+      // removed.
+      if (phaseRef.current === 'idle') return
       if (permissions.status !== 'granted') {
         report('permission_denied')
         teardown()

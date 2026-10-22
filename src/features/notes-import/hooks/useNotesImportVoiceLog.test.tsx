@@ -4,8 +4,11 @@ import { beforeEach, expect, it, vi } from 'vitest'
 
 const mocks = vi.hoisted(() => {
   const listeners = new Map<string, (event: never) => void>()
+  /** Native subscriptions not yet removed. */
+  const live = new Set<object>()
   return {
     listeners,
+    live,
     alert: vi.fn(),
     capture: vi.fn(),
     permissions: {
@@ -27,7 +30,14 @@ const mocks = vi.hoisted(() => {
       speechErrorCode: vi.fn(() => 'failed'),
       addListener: vi.fn((event: string, listener: (event: never) => void) => {
         listeners.set(event, listener)
-        return { remove: () => listeners.delete(event) }
+        const subscription = {
+          remove: () => {
+            listeners.delete(event)
+            live.delete(subscription)
+          },
+        }
+        live.add(subscription)
+        return subscription
       }),
     },
   }
@@ -84,6 +94,7 @@ const emit = (event: string, payload: unknown) =>
 beforeEach(() => {
   vi.clearAllMocks()
   mocks.listeners.clear()
+  mocks.live.clear()
   mocks.speech.getPermissions.mockResolvedValue(mocks.permissions)
 })
 
@@ -177,6 +188,38 @@ it('discards the recording on cancel', async () => {
     'notes_import_capture_finished',
     expect.objectContaining({ outcome: 'cancelled' })
   )
+})
+
+it('starts nothing when cancelled while checking access', async () => {
+  let grant!: (value: typeof mocks.permissions) => void
+  mocks.speech.getPermissions.mockReturnValueOnce(
+    new Promise((resolve) => {
+      grant = resolve
+    })
+  )
+  await mount()
+  let starting!: Promise<void>
+  act(() => {
+    starting = hook.start()
+  })
+  await act(async () => hook.cancel())
+  await act(async () => {
+    grant(mocks.permissions)
+    await starting
+  })
+  expect(mocks.speech.start).not.toHaveBeenCalled()
+  expect(mocks.live.size).toBe(0)
+  expect(hook.phase).toBe('idle')
+})
+
+it('leaves no listeners behind across repeated recordings', async () => {
+  await mount()
+  for (let i = 0; i < 5; i++) {
+    await act(() => hook.start())
+    await act(async () => hook.cancel())
+  }
+  expect(mocks.speech.addListener).toHaveBeenCalledTimes(20)
+  expect(mocks.live.size).toBe(0)
 })
 
 it('explains and hides the mic when the device cannot transcribe after all', async () => {

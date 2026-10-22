@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useEffectEvent, useRef } from 'react'
 import { Platform, ScrollView, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import useTheme from '@/contexts/theme'
@@ -56,22 +56,25 @@ const PaywallThankYouScreen = () => {
   const { playConfetti } = useAnimation()
   const fireworks = useFireworks()
 
+  // Starting the confetti hands back a new `playConfetti`, so the celebration
+  // can't re-run on its identity: that would clear the fireworks timer.
   const hasCelebratedRef = useRef(false)
-  useEffect(() => {
+  const celebrate = useEffectEvent(() => {
     if (hasCelebratedRef.current) return
     hasCelebratedRef.current = true
-
     playConfetti()
     Haptics.heavy()
-
+  })
+  const fireFireworks = useEffectEvent(() =>
+    fireworks.fire(PAYWALL_FIREWORKS_OPTS)
+  )
+  useEffect(() => {
+    celebrate()
     const buffer =
       CONFETTI_DELAY_MS + CONFETTI_DURATION + FIREWORKS_AFTER_LOTTIE_BUFFER_MS
-    const timer = setTimeout(() => {
-      fireworks.fire(PAYWALL_FIREWORKS_OPTS)
-    }, buffer)
-
+    const timer = setTimeout(() => fireFireworks(), buffer)
     return () => clearTimeout(timer)
-  }, [playConfetti, fireworks])
+  }, [])
 
   return (
     <Wrapper

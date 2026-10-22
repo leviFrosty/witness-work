@@ -141,4 +141,74 @@ describe('mergePayload — Role History', () => {
     expect(merged.preferencesValues.role).toBe('regularPioneer')
     expect(merged.preferencesValues.roleHistory).toEqual(history)
   })
+
+  it('keeps per-month stamps when it takes a history this device lacked', () => {
+    // Found by the sync merge property tests. The phone never set a role; the
+    // iPad's history reaches it whole.
+    const phone = emptyLocal()
+    phone.preferencesValues = { role: 'publisher', roleHistory: null }
+    const ipad = {
+      values: {
+        role: 'specialPioneer',
+        roleHistory: {
+          initial: 'publisher',
+          changes: { '2026-03': 'regularPioneer', '2026-09': 'specialPioneer' },
+        },
+      },
+      updatedAt: {
+        role: 100,
+        roleHistory: 100,
+        'roleHistory:initial': 100,
+        'roleHistory:2026-03': 100,
+        'roleHistory:2026-09': 100,
+      },
+    }
+    const first = mergePayload(phone, makeRemote({ preferencesStore: ipad }))
+    expect(first.preferenceUpdatedAt).toMatchObject(ipad.updatedAt)
+
+    // Then the iPad takes March back out, while the phone changes September.
+    const ipadLater = makeRemote({
+      preferencesStore: {
+        values: {
+          role: 'specialPioneer',
+          roleHistory: {
+            initial: 'publisher',
+            changes: { '2026-09': 'specialPioneer' },
+          },
+        },
+        updatedAt: {
+          ...ipad.updatedAt,
+          roleHistory: 200,
+          'roleHistory:2026-03': 200,
+        },
+      },
+    })
+    const phoneLater = {
+      ...emptyLocal(),
+      preferencesValues: {
+        role: 'circuitOverseer',
+        roleHistory: {
+          initial: 'publisher',
+          changes: {
+            '2026-03': 'regularPioneer',
+            '2026-09': 'circuitOverseer',
+          },
+        },
+      },
+      preferenceUpdatedAt: {
+        ...first.preferenceUpdatedAt,
+        role: 300,
+        roleHistory: 300,
+        'roleHistory:2026-09': 300,
+      },
+    }
+
+    // March's removal is newer than the phone's March, which it never edited.
+    const merged = mergePayload(phoneLater, ipadLater)
+    expect(merged.preferencesValues.roleHistory).toEqual({
+      initial: 'publisher',
+      changes: { '2026-09': 'circuitOverseer' },
+    })
+    expect(merged.preferencesValues.role).toBe('circuitOverseer')
+  })
 })

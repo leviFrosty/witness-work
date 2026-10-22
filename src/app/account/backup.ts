@@ -220,6 +220,9 @@ function forgetUploads() {
   })
 }
 
+/** Bumped by each listing and deletion, so an older listing can't land last. */
+let slotsVersion = 0
+
 /**
  * The account's slots, listed again; null without an account key. Tells the
  * scheduler whether this device's slot is still there unless `report` is false
@@ -229,19 +232,23 @@ export async function refreshBackupSlots({
   report = true,
 }: { report?: boolean } = {}): Promise<BackupSlot[] | null> {
   const listedAt = Date.now()
+  const listing = ++slotsVersion
   const listed = await asAccount(async (access) => ({
     accountId: access.accountId,
     slots: await listBackups(access.options),
   }))
+  // A newer listing or a deletion since this one started has the newer list.
+  const latest = listing === slotsVersion
   if (!listed) {
-    useBackupState.setState({ slots: [], slotsAccountId: null })
+    if (latest) useBackupState.setState({ slots: [], slotsAccountId: null })
     return null
   }
-  useBackupState.setState({
-    slots: listed.slots,
-    slotsAccountId: listed.accountId,
-    slotsListedAt: Date.now(),
-  })
+  if (latest)
+    useBackupState.setState({
+      slots: listed.slots,
+      slotsAccountId: listed.accountId,
+      slotsListedAt: Date.now(),
+    })
   const slotId = useBackupState.getState().slotId
   if (report && slotId)
     scheduler.serverCopyListed(
@@ -301,6 +308,7 @@ export async function deleteBackupSlot(
   if (mine) forgetUploads()
   analytics.capture('account_backup_deleted', { scope: 'slot', source })
   logBackup('info', `deleted ${mine ? 'this device’s' : 'another'} slot`)
+  slotsVersion++
   useBackupState.setState((state) => ({
     slots: state.slots?.filter((slot) => slot.slotId !== slotId) ?? null,
   }))
@@ -319,6 +327,7 @@ export async function deleteAllBackups(
   forgetUploads()
   analytics.capture('account_backup_deleted', { scope: 'all', source })
   logBackup('info', 'deleted every slot')
+  slotsVersion++
   useBackupState.setState({ slots: [] })
 }
 

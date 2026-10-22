@@ -10,8 +10,12 @@ import { logger } from '@/lib/logger'
 export default function useFullBrightness() {
   useEffect(() => {
     let previous: number | null = null
+    let closed = false
     const raise = async () => {
-      previous ??= await Brightness.getBrightnessAsync()
+      const level = await Brightness.getBrightnessAsync()
+      // Closed or left meanwhile, and `restore` found nothing to put back.
+      if (closed || AppState.currentState === 'background') return
+      previous ??= level
       await Brightness.setBrightnessAsync(1)
     }
     const restore = async () => {
@@ -27,6 +31,7 @@ export default function useFullBrightness() {
       else void restore().catch(log)
     })
     return () => {
+      closed = true
       subscription.remove()
       void restore().catch(log)
     }

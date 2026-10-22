@@ -68,7 +68,10 @@ vi.mock('@/lib/serverAccount/backupScheduler', async (importOriginal) => ({
   }),
 }))
 
-const { deleteAllBackups, deleteBackupSlot } = await import('./backup')
+const { deleteAllBackups, deleteBackupSlot, refreshBackupSlots } = await import(
+  './backup'
+)
+const { listBackups } = await import('@/lib/serverAccount/backupClient')
 const { useBackupState } = await import('@/lib/serverAccount/backupStore')
 const { analytics } = await import('@/lib/analytics')
 
@@ -116,5 +119,39 @@ describe('deleting backups', () => {
     await deleteBackupSlot('other', 'settings')
     expect(useBackupState.getState().enabled).toBe(true)
     expect(fake.stop).not.toHaveBeenCalled()
+  })
+})
+
+describe('listing slots', () => {
+  const slot = (slotId: string) => ({ slotId }) as never
+
+  it('keeps a deleted slot gone when an older listing arrives after the delete', async () => {
+    let answer!: (slots: never[]) => void
+    vi.mocked(listBackups).mockReturnValueOnce(
+      new Promise((resolve) => {
+        answer = resolve
+      })
+    )
+    useBackupState.setState({ slots: [slot('mine'), slot('other')] })
+    const listing = refreshBackupSlots({ report: false })
+    await deleteBackupSlot('other', 'settings')
+    answer([slot('mine'), slot('other')])
+    await listing
+    expect(useBackupState.getState().slots).toEqual([slot('mine')])
+  })
+
+  it('keeps the newest of two listings', async () => {
+    const answers: ((slots: never[]) => void)[] = []
+    vi.mocked(listBackups).mockImplementation(
+      () => new Promise((resolve) => answers.push(resolve))
+    )
+    const older = refreshBackupSlots({ report: false })
+    const newer = refreshBackupSlots({ report: false })
+    await vi.waitFor(() => expect(answers).toHaveLength(2))
+    answers[1]([slot('new')])
+    await newer
+    answers[0]([slot('old')])
+    await older
+    expect(useBackupState.getState().slots).toEqual([slot('new')])
   })
 })

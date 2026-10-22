@@ -190,10 +190,11 @@ function untilConsentReturns(request: Promise<string>): Promise<string> {
         return
       }
       if (!left || timer) return
-      timer = setTimeout(
-        () => reject(new GoogleDriveAuthError('canceled')),
-        CONSENT_RESULT_GRACE_MS
-      )
+      timer = setTimeout(() => {
+        // The request may never settle, so its cleanup below may never run.
+        sub.remove()
+        reject(new GoogleDriveAuthError('canceled'))
+      }, CONSENT_RESULT_GRACE_MS)
     })
     request.then(resolve, reject).finally(() => {
       sub.remove()

@@ -19,6 +19,7 @@ import PlaceSearchInput from '@/components/PlaceSearchInput'
 import { addressToString } from '@/lib/address'
 import type { ResolvedPlace } from '@/lib/placeSearch'
 import { usePreferences } from '@/stores/preferences'
+import useAccessibilityTextSize from '@/hooks/useAccessibilityTextSize'
 import { tracking } from '@/lib/tracking'
 
 type Mode = 'search' | 'manual'
@@ -27,8 +28,9 @@ const ModeSegment: React.FC<{
   active: boolean
   icon: AppIcon
   labelKey: TranslationKey
+  stacked: boolean
   onPress: () => void
-}> = ({ active, icon, labelKey, onPress }) => {
+}> = ({ active, icon, labelKey, stacked, onPress }) => {
   const theme = useTheme()
   return (
     <PointerHover effect='highlight'>
@@ -38,7 +40,7 @@ const ModeSegment: React.FC<{
         accessibilityRole='button'
         accessibilityState={{ selected: active }}
         style={{
-          flex: 1,
+          flex: stacked ? undefined : 1,
           flexDirection: 'row',
           alignItems: 'center',
           justifyContent: 'center',
@@ -64,6 +66,8 @@ const ModeSegment: React.FC<{
         />
         <Text
           style={{
+            // The largest sizes wrap the label rather than clip it.
+            ...(stacked && { flexShrink: 1, textAlign: 'center' }),
             color: active ? theme.colors.text : theme.colors.textAlt,
             fontFamily: active ? theme.fonts.semiBold : theme.fonts.regular,
             fontSize: theme.fontSize('sm'),
@@ -129,6 +133,9 @@ export default function AddressSection({
   onSubmitLastField?: () => void
 }) {
   const theme = useTheme()
+  // At accessibility text sizes "Enter Manually" no longer fits half the row,
+  // so the two modes stack.
+  const stackModes = useAccessibilityTextSize()
   // Address search is the one entry path that leaves the device (Apple MapKit
   // on iOS, HERE via the vendor's proxy elsewhere). With data protection mode
   // on the segmented control is gone and the section is manual-entry only, so
@@ -242,7 +249,7 @@ export default function AddressSection({
         {!dataProtectionMode && (
           <View
             style={{
-              flexDirection: 'row',
+              flexDirection: stackModes ? 'column' : 'row',
               marginTop: 12,
               marginHorizontal: 12,
               marginBottom: 8,
@@ -258,12 +265,14 @@ export default function AddressSection({
               active={mode === 'search'}
               icon={SearchIcon}
               labelKey='searchAddress'
+              stacked={stackModes}
               onPress={() => switchMode('search')}
             />
             <ModeSegment
               active={mode === 'manual'}
               icon={SquarePenIcon}
               labelKey='enterManually'
+              stacked={stackModes}
               onPress={() => switchMode('manual')}
             />
           </View>

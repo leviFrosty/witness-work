@@ -95,6 +95,8 @@ export const payloadOf = (device: DeviceState): SyncPayload => ({
   conversationStore: {
     conversations: device.conversations,
     deletedConversations: device.deletedConversations,
+    conversationFieldDefs: device.conversationFieldDefs,
+    deletedConversationFieldDefs: device.deletedConversationFieldDefs,
   },
   serviceReportStore: {
     serviceReports: device.serviceReports,

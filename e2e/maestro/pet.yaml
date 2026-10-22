@@ -12,8 +12,10 @@ name: Adopt a pet from Home, open its room, and rename it
 - extendedWaitUntil:
     visible: Add Time
     timeout: 60000
+# Scroll to the offer's button, not its heading: the heading can show with
+# the button still below the fold.
 - scrollUntilVisible:
-    element: Meet your companion
+    element: Choose a pet
 - tapOn:
     text: Choose a pet
     traits: button

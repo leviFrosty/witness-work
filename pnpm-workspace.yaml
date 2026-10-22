@@ -49,6 +49,8 @@ overrides:
   hono: 4.13.13
   source-map-js: 1.2.2
   vite: 7.3.7
+  # GHSA-g7r4-m6w7-qqqr (Windows dev server); @tamagui/static pins ^0.27.
+  esbuild: 0.28.2
 patchedDependencies:
   '@expo/dom-webview@57.0.1': patches/@expo__dom-webview@57.0.1.patch
   '@expo/fingerprint@0.20.13': patches/@expo__fingerprint.patch

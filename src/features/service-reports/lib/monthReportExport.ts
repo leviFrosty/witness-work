@@ -1,9 +1,11 @@
-import { Platform, Share } from 'react-native'
+import { Alert, Platform, Share } from 'react-native'
 import * as Clipboard from 'expo-clipboard'
 import moment from 'moment'
 import { analytics } from '@/lib/analytics'
 import i18n from '@/lib/locales'
 import { openURL } from '@/lib/links'
+import { addForegroundListener } from '@/lib/appLifecycle'
+import { isKnownOffline } from '@/lib/http/online'
 import { publisherCapabilitiesForMonth } from '@/lib/roleHistory'
 import { usePreferences, type ReportExportMethod } from '@/stores/preferences'
 import useServiceReport from '@/stores/serviceReport'
@@ -79,11 +81,80 @@ export const availableExportMethods = (
     ? ['copy', 'share', 'hourglass', 'nwpublisher']
     : ['copy', 'share', 'hourglass']
 
+/** The hand-off waiting for the user to say whether it sent, if any. */
+let pendingHandOff: { settle: (sent: boolean) => void } | null = null
+
+/**
+ * Hourglass and NW Publisher take the report over the internet, so one opened
+ * while the device is offline may never have received it. Asks the user once
+ * they're back in the app, and resolves whether they say it sent. A newer
+ * hand-off replaces one still waiting, which counts as not sent.
+ */
+const confirmOfflineHandOff = (
+  method: 'hourglass' | 'nwpublisher',
+  properties: { source: ReportExportSource; report_month: string }
+): Promise<boolean> =>
+  new Promise((resolve) => {
+    pendingHandOff?.settle(false)
+    const app = i18n.t(method === 'hourglass' ? 'hourglass' : 'nwPublisher')
+    const handOff = {
+      settle: (sent: boolean) => {
+        returned.remove()
+        if (pendingHandOff === handOff) pendingHandOff = null
+        resolve(sent)
+      },
+    }
+    pendingHandOff = handOff
+    const answer = (sent: boolean) => () => {
+      analytics.capture('service_report_handoff_confirmed', {
+        method,
+        ...properties,
+        sent,
+      })
+      handOff.settle(sent)
+    }
+    const returned = addForegroundListener(() => {
+      returned.remove()
+      Alert.alert(
+        i18n.t('reportHandOffOffline_title', { app }),
+        i18n.t('reportHandOffOffline_description', { app }),
+        [
+          {
+            text: i18n.t('reportNotSent'),
+            style: 'cancel',
+            onPress: answer(false),
+          },
+          { text: i18n.t('markAsSent'), onPress: answer(true) },
+        ],
+        { cancelable: false }
+      )
+    })
+  })
+
+/**
+ * Opens Hourglass or NW Publisher with the report. Resolves `true` once it
+ * opened online; offline, only after the user says it sent.
+ */
+const handOffReport = async (
+  method: 'hourglass' | 'nwpublisher',
+  url: string,
+  properties: { source: ReportExportSource; report_month: string }
+): Promise<boolean> => {
+  analytics.capture('service_report_export_requested', {
+    method,
+    ...properties,
+  })
+  const offline = isKnownOffline()
+  if (!(await openURL(url))) return false
+  return offline ? confirmOfflineHandOff(method, properties) : true
+}
+
 /**
  * Sends a month's report by `method` and records the export. Resolves `true`
  * when the report was handed off, so the caller can mark it submitted; `false`
  * when the share sheet was dismissed, the app or site didn't open, the method
- * isn't available, or (Android Share) there's no telling whether it was sent.
+ * isn't available, (Android Share) there's no telling whether it was sent, or
+ * the user says a hand-off opened offline didn't send.
  */
 export const exportMonthReport = async (
   method: ReportExportMethod,
@@ -124,33 +195,27 @@ export const exportMonthReport = async (
       : undefined
 
   if (method === 'hourglass') {
-    analytics.capture('service_report_export_requested', {
-      method: 'hourglass',
-      source,
-      report_month,
-    })
-    return openURL(
+    return handOffReport(
+      'hourglass',
       buildHourglassLink({
         month: month + 1,
         year,
         ...data.hourglassReport,
-      })
+      }),
+      { source, report_month }
     )
   }
   if (method === 'nwpublisher' && data.isLastMonth) {
-    analytics.capture('service_report_export_requested', {
-      method: 'nwpublisher',
-      source,
-      report_month,
-    })
-    return openURL(
+    return handOffReport(
+      'nwpublisher',
       buildNwPublisherLink({
         sharedInMinistry: data.sharedInMinistry,
         hours: data.showHours ? data.hours : undefined,
         credit: data.credit,
         bibleStudies: data.studies,
         remarks,
-      })
+      }),
+      { source, report_month }
     )
   }
   return false

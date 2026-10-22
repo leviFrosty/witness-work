@@ -6,9 +6,13 @@ const mocks = vi.hoisted(() => ({
   share: vi.fn(async () => ({ action: 'sharedAction' })),
   openURL: vi.fn(async () => true),
   platform: { OS: 'ios' },
+  offline: false,
+  alert: vi.fn(),
+  foreground: new Set<() => void>(),
 }))
 
 vi.mock('react-native', () => ({
+  Alert: { alert: mocks.alert },
   Platform: mocks.platform,
   Share: {
     share: mocks.share,
@@ -19,6 +23,15 @@ vi.mock('react-native', () => ({
 vi.mock('expo-clipboard', () => ({ setStringAsync: mocks.setString }))
 vi.mock('@/lib/analytics', () => ({ analytics: { capture: mocks.capture } }))
 vi.mock('@/lib/links', () => ({ openURL: mocks.openURL }))
+vi.mock('@/lib/http/online', () => ({
+  isKnownOffline: () => mocks.offline,
+}))
+vi.mock('@/lib/appLifecycle', () => ({
+  addForegroundListener: (listener: () => void) => {
+    mocks.foreground.add(listener)
+    return { remove: () => mocks.foreground.delete(listener) }
+  },
+}))
 vi.mock('@/stores/preferences', () => ({ usePreferences: {} }))
 vi.mock('@/stores/serviceReport', () => ({ default: {} }))
 vi.mock('@/stores/categories', () => ({ default: {} }))
@@ -62,6 +75,8 @@ beforeEach(() => {
   mocks.share.mockResolvedValue({ action: 'sharedAction' })
   mocks.openURL.mockResolvedValue(true)
   mocks.platform.OS = 'ios'
+  mocks.offline = false
+  mocks.foreground.clear()
 })
 
 afterEach(() => {
@@ -174,6 +189,97 @@ describe('exportMonthReport', () => {
       'service_report_export_requested',
       { method: 'hourglass', source: 'context_menu', report_month: 'previous' }
     )
+  })
+
+  describe('opened while offline', () => {
+    type Button = { text: string; onPress?: () => void }
+    const comeBack = () => [...mocks.foreground].forEach((l) => l())
+    const answer = (text: string) => {
+      const buttons = mocks.alert.mock.calls.at(-1)?.[2] as Button[]
+      buttons.find((button) => button.text === text)?.onPress?.()
+    }
+    const settled = async (promise: Promise<boolean>) => {
+      let value: boolean | undefined
+      void promise.then((sent) => (value = sent))
+      await Promise.resolve()
+      await Promise.resolve()
+      return value
+    }
+
+    beforeEach(() => {
+      mocks.offline = true
+    })
+
+    it("asks on return instead of marking it sent, and isn't sent when the user says so", async () => {
+      const sent = exportMonthReport(
+        'hourglass',
+        report(),
+        august,
+        'report_screen'
+      )
+      await settled(sent)
+      expect(mocks.openURL).toHaveBeenCalledTimes(1)
+      expect(mocks.alert).not.toHaveBeenCalled()
+      expect(await settled(sent)).toBeUndefined()
+
+      comeBack()
+      expect(mocks.alert).toHaveBeenCalledWith(
+        'Did your report reach Hourglass?',
+        expect.stringContaining('offline'),
+        expect.any(Array),
+        { cancelable: false }
+      )
+      answer('Not Sent')
+
+      expect(await sent).toBe(false)
+      expect(mocks.foreground.size).toBe(0)
+      expect(mocks.capture).toHaveBeenCalledWith(
+        'service_report_handoff_confirmed',
+        {
+          method: 'hourglass',
+          source: 'report_screen',
+          report_month: 'previous',
+          sent: false,
+        }
+      )
+    })
+
+    it('counts it sent when the user confirms', async () => {
+      const sent = exportMonthReport(
+        'nwpublisher',
+        report(),
+        august,
+        'context_menu'
+      )
+      await settled(sent)
+      comeBack()
+      expect(mocks.alert.mock.calls[0][0]).toBe(
+        'Did your report reach NW Publisher?'
+      )
+      answer('Mark as Sent')
+      expect(await sent).toBe(true)
+    })
+
+    it('treats an earlier unanswered hand-off as not sent', async () => {
+      const first = exportMonthReport(
+        'hourglass',
+        report(),
+        august,
+        'context_menu'
+      )
+      await settled(first)
+      const second = exportMonthReport(
+        'hourglass',
+        report(),
+        august,
+        'context_menu'
+      )
+      expect(await first).toBe(false)
+      comeBack()
+      expect(mocks.alert).toHaveBeenCalledTimes(1)
+      answer('Mark as Sent')
+      expect(await second).toBe(true)
+    })
   })
 
   it('flags a report sent before its month is over', async () => {

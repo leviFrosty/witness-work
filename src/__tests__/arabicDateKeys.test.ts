@@ -16,6 +16,8 @@ vi.mock('react-native', () => ({
 vi.mock('expo-clipboard', () => ({}))
 vi.mock('@/lib/analytics', () => ({ analytics: { capture: vi.fn() } }))
 vi.mock('@/lib/links', () => ({ openURL: vi.fn() }))
+vi.mock('@/lib/appLifecycle', () => ({ addForegroundListener: vi.fn() }))
+vi.mock('@/lib/http/online', () => ({ isKnownOffline: () => false }))
 vi.mock('@/lib/logger', () => import('@/__tests__/mocks/logger'))
 vi.mock('@/stores/preferences', () => ({
   usePreferences: () => ({ timeDisplayFormat: 'decimal' }),

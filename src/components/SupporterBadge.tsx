@@ -49,7 +49,7 @@ const SupporterBadge = ({ iconOnly, size = 'sm', style }: Props) => {
           style={{
             fontSize,
             fontFamily: theme.fonts.semiBold,
-            color: theme.colors.supporter,
+            color: theme.colors.supporterText,
             letterSpacing: tracking(0.3),
           }}
         >

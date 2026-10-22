@@ -111,7 +111,7 @@ const FounderNote = ({ goBack, goNext }: Props) => {
             style={{
               fontSize: 11,
               fontFamily: theme.fonts.semiBold,
-              color: theme.colors.supporter,
+              color: theme.colors.supporterText,
               letterSpacing: tracking(1.2),
               textTransform: 'uppercase',
             }}

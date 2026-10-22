@@ -64,7 +64,7 @@ const SupporterNote = ({ source }: Props) => {
           style={{
             fontSize: theme.fontSize('sm'),
             fontFamily: theme.fonts.semiBold,
-            color: theme.colors.supporter,
+            color: theme.colors.supporterText,
           }}
         >
           {i18n.t('learnMore')}

@@ -62,6 +62,20 @@ export const relativeLuminance = (hex: string): number => {
 }
 
 /**
+ * WCAG contrast ratio (1–21) of `foreground` over an opaque `background`. A
+ * `#RRGGBBAA` foreground is blended over the background first, the way it
+ * renders. AA asks 4.5 for text, 3 for large text and for icons and controls.
+ */
+export const contrastRatio = (foreground: string, background: string) => {
+  const h = foreground.replace('#', '')
+  const alpha = h.length === 8 ? parseInt(h.slice(6, 8), 16) / 255 : 1
+  const shown = alpha < 1 ? mix(background, foreground, alpha) : foreground
+  const a = relativeLuminance(shown)
+  const b = relativeLuminance(background)
+  return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05)
+}
+
+/**
  * Pick a contrasting foreground for a given background. Returns `light` on dark
  * backgrounds and `dark` on light ones so text/icons stay legible regardless of
  * the user-picked hero tint.

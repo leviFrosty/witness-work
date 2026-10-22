@@ -367,7 +367,7 @@ const YearMilestoneCard = ({
               flexShrink: 1,
               fontSize: theme.fontSize('sm'),
               fontFamily: theme.fonts.semiBold,
-              color: theme.colors.supporter,
+              color: theme.colors.supporterText,
             }}
           >
             {i18n.t('annualGoalCompleteCongrats')}
@@ -459,7 +459,7 @@ const YearMilestoneCard = ({
               style={{
                 fontSize: theme.fontSize('sm'),
                 fontFamily: theme.fonts.semiBold,
-                color: theme.colors.supporter,
+                color: theme.colors.supporterText,
               }}
             >
               {i18n.t('annualGoalCompleteBadge')}

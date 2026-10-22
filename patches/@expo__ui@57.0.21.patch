@@ -108,6 +108,95 @@ index 65e17099edd23f8980aded7e7890259922b2a949..83aae3d7838f3e7e7c7a8f0e140303f8
  }
  //# sourceMappingURL=types.d.ts.map
 \ No newline at end of file
+diff --git a/ios/DatePickerView.swift b/ios/DatePickerView.swift
+index 24db7b13b0eb4e935cacfdc5b34978d13a290246..801cfc52dd32db0c8cc726432ae535a1a05b33a2 100644
+--- a/ios/DatePickerView.swift
++++ b/ios/DatePickerView.swift
+@@ -3,7 +3,19 @@ import SwiftUI
+ 
+ internal struct DatePickerView: ExpoSwiftUI.View {
+   @ObservedObject var props: DatePickerProps
+-  @State private var date = Date()
++  // Nil until the user picks or the selection changes, so the first render
++  // already shows the selection rather than today.
++  @State private var date: Date?
++  // A compact picker is first sized for today's date, before its label shows
++  // the selection. A wider selection then doesn't fit, and it shows in the
++  // short numeric style until SwiftUI measures it again, which during a
++  // screen transition is only once the transition ends. Flipping this right
++  // after it appears changes the layout so SwiftUI measures it at once.
++  @State private var remeasured = false
++
++  private var selection: Binding<Date> {
++    Binding(get: { date ?? props.selection ?? Date() }, set: { date = $0 })
++  }
+   // `.graphical` has some AutoLayout bug (it uses UICalendarView under the hood)
+   // It shrinks height when user taps a date.
+   // https://github.com/expo/expo/issues/47062
+@@ -22,16 +34,17 @@ internal struct DatePickerView: ExpoSwiftUI.View {
+ #else
+     createDatePicker()
+       .frame(minWidth: isGraphicalStyle ? 320 : nil)
++      .padding(.trailing, remeasured ? 0 : 0.001)
++      .onAppear {
++        DispatchQueue.main.async { remeasured = true }
++      }
+       .onChange(of: date) { newDate in
+-        if props.selection == newDate { return }
++        guard let newDate, props.selection != newDate else { return }
+         props.onDateChange(["date": newDate.timeIntervalSince1970 * 1000])
+       }
+       .onChange(of: props.selection) { newValue in
+         date = newValue ?? Date()
+       }
+-      .onAppear {
+-        date = props.selection ?? Date()
+-      }
+       .if(props.title == nil && !hasChildren) { $0.labelsHidden() }
+ #endif
+   }
+@@ -50,19 +63,19 @@ internal struct DatePickerView: ExpoSwiftUI.View {
+     // Use children as custom label
+     if hasChildren {
+       if let start, let end {
+-        DatePicker(selection: $date, in: start...end, displayedComponents: components) {
++        DatePicker(selection: selection, in: start...end, displayedComponents: components) {
+           Children()
+         }
+       } else if let start {
+-        DatePicker(selection: $date, in: start..., displayedComponents: components) {
++        DatePicker(selection: selection, in: start..., displayedComponents: components) {
+           Children()
+         }
+       } else if let end {
+-        DatePicker(selection: $date, in: ...end, displayedComponents: components) {
++        DatePicker(selection: selection, in: ...end, displayedComponents: components) {
+           Children()
+         }
+       } else {
+-        DatePicker(selection: $date, displayedComponents: components) {
++        DatePicker(selection: selection, displayedComponents: components) {
+           Children()
+         }
+       }
+@@ -71,13 +84,13 @@ internal struct DatePickerView: ExpoSwiftUI.View {
+     else {
+       let title = props.title ?? ""
+       if let start, let end {
+-        DatePicker(title, selection: $date, in: start...end, displayedComponents: components)
++        DatePicker(title, selection: selection, in: start...end, displayedComponents: components)
+       } else if let start {
+-        DatePicker(title, selection: $date, in: start..., displayedComponents: components)
++        DatePicker(title, selection: selection, in: start..., displayedComponents: components)
+       } else if let end {
+-        DatePicker(title, selection: $date, in: ...end, displayedComponents: components)
++        DatePicker(title, selection: selection, in: ...end, displayedComponents: components)
+       } else {
+-        DatePicker(title, selection: $date, displayedComponents: components)
++        DatePicker(title, selection: selection, displayedComponents: components)
+       }
+     }
+   }
 diff --git a/src/jetpack-compose/modifiers/index.ts b/src/jetpack-compose/modifiers/index.ts
 index aeddd1c065a3de77f64e52aa2fece7ad23fe68d8..e69f23425e24555dea10b4865425d2636896f6ef 100644
 --- a/src/jetpack-compose/modifiers/index.ts

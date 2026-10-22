@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { afterAll, describe, expect, it } from 'vitest'
 import { normalizeDateForStorage } from '@/lib/normalizeDate'
 import { RecurringPlanFrequencies } from '@/lib/recurrence'
 import {
@@ -264,6 +264,41 @@ describe('streakEndsSoon', () => {
 
   it("doesn't warn about a streak that isn't shown", () => {
     expect(streakEndsSoon(streak({ count: 2 }), now)).toBe(false)
+  })
+
+  describe('when clocks change', () => {
+    const originalTZ = process.env.TZ
+    afterAll(() => {
+      if (originalTZ === undefined) delete process.env.TZ
+      else process.env.TZ = originalTZ
+    })
+
+    // The last day's start, however long the days before the end are.
+    it.each([
+      // Falls back on Nov 1 (25 hours), springs forward on Mar 8 (23 hours).
+      ['America/New_York', [2026, 10, 1]],
+      ['America/New_York', [2026, 2, 8]],
+      ['Europe/London', [2026, 9, 25]],
+      ['Australia/Sydney', [2026, 9, 4]],
+    ] as const)('warns from the last day’s start in %s', (zone, [y, m, d]) => {
+      process.env.TZ = zone
+      const plans = streak({
+        due: { period: '', endsAt: new Date(y, m, d + 1) },
+      })
+      expect(streakEndsSoon(plans, new Date(y, m, d - 1, 23, 30))).toBe(false)
+      expect(streakEndsSoon(plans, new Date(y, m, d, 0, 30))).toBe(true)
+    })
+
+    it('warns a week before a month ends across the change', () => {
+      process.env.TZ = 'Europe/London'
+      // Clocks fall back on Sunday Oct 25, the week's first day.
+      const month = streak({
+        kind: 'months',
+        due: { period: '2026-09-01', endsAt: new Date(2026, 10, 1) },
+      })
+      expect(streakEndsSoon(month, new Date(2026, 9, 24, 23, 30))).toBe(false)
+      expect(streakEndsSoon(month, new Date(2026, 9, 25, 0, 30))).toBe(true)
+    })
   })
 })
 

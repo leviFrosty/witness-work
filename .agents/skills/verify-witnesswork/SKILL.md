@@ -54,6 +54,8 @@ wwv up --platform ios --seed pioneer         # iPhone; add --ipad (or --ipad-min
 wwv up --platform android --seed pioneer     # headless emulator, same Metro
 ```
 
+Start on iOS. Bring up Android for the platform pass once the change works there (see [Evidence](#evidence) and [Concurrency and resources](#concurrency-and-resources)).
+
 What `up` does, in order:
 
 1. Reaps expired leases and orphaned builds.
@@ -199,7 +201,7 @@ Proof standards:
 - Capture the action and the resulting state: a settled diff or `wait text`, plus a screenshot. A screenshot alone isn't proof of an interaction.
 - Read side effects back. After a save, `wwv eval` the store (for example `__WW_DEV__.stores.contacts.getState().contacts.find(c => c.name === "X")`), or reopen the record from a second screen.
 - `wwv errors` must be empty at the end. The Metro log (`.verify/metro.log`) shows warnings and red boxes.
-- Check both platforms for anything touching layout, native APIs, maps, notifications, purchases or permissions. On Android, iOS-only features (listed in `agents.md`) must have no entry point at all, not a broken one.
+- Prove it on iOS first. Then check Android too for anything touching layout, native APIs, maps, notifications, purchases or permissions. On Android, iOS-only features (listed in `agents.md`) must have no entry point at all, not a broken one.
 - Layout changes need an iPad too (`--ipad`): a sidebar appears from 1,000 pt wide, along with split views and the menu bar. Layouts with columns or bars also need iPhone Duo (`--duo`), closed, open and half-open, and the smallest screens: iPad mini in portrait (`--ipad-mini`, 744 pt: a bottom bar and one column) and iPhone SE (`--se`, 375 pt with no notch or home indicator).
 - New surfaces need light and dark: `wwv ad settings appearance dark` (or `light`), then `wwv shot`.
 - Run the regular checks too: `pnpm run typecheck`, `pnpm run lint` and `pnpm vitest run` (add `--maxWorkers=2` when memory is tight).
@@ -211,6 +213,7 @@ Many worktrees share one Mac. All of them coordinate through `~/.ww-verify`.
 
 - **Only through `wwv`.** Don't boot, build or serve by hand: no `pnpm run ios`/`android`, `simctl boot`, `emulator -avd`, T3 `device_open`, or Metro on 8081. Those skip the leases and the build cache, and collide with the user's devices and other worktrees. Never run `adb emu kill` or `gradlew --stop`, which hit every worktree's emulator or Gradle.
 - **Iterate without a device.** Use typecheck, lint and vitest while you work. Take a device lease once, for the proof. Use Android only when the change is platform-sensitive.
+- **iOS first.** When you do need a device in the loop, or a change needs only a light pass, use an iOS simulator. An emulator is for the Android pass after the change works on iOS, or for a bug or feature that exists only on Android.
 - **Caps.** At most `WW_VERIFY_MAX_IOS` simulators and `WW_VERIFY_MAX_ANDROID` emulators are leased at once, and the pool never grows past the cap. Only `WW_VERIFY_MAX_BUILDS` native builds run at a time. A worktree waiting for a build slot stops waiting as soon as its fingerprint appears in the cache, and a cached artifact never waits.
 - **Builds.** Always the development variant (`com.leviwilkerson.jwtimedev`); the harness refuses to cache or install anything else and never adds PostHog's symbol upload. A build never installs anything; `up` installs the cached artifact after it holds a lease. A failed build's `.verify/DerivedData` or `android/app/build` is deleted too. Android builds run without a Gradle or Kotlin daemon, so nothing stays resident afterwards.
 - **Orphaned builds.** A build runs in its own process group, recorded with its slot. If its `up` dies (killed, crashed), the next `up` or `wwv gc` kills that group and deletes its build dirs; `wwv status` shows it as `orphaned` until then.

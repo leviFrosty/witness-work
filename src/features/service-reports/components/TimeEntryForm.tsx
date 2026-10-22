@@ -402,7 +402,7 @@ const TimeEntryForm = (props: Props) => {
       minuteStep={1}
       notice={
         providedLessThanOneMinute && (
-          <Text style={{ color: theme.colors.warn }}>
+          <Text style={{ color: theme.colors.warnText }}>
             {i18n.t('providedTimeIsLessThanOneMinute')}
           </Text>
         )

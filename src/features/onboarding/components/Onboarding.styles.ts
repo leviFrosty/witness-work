@@ -81,7 +81,6 @@ export const styles = StyleSheet.create({
     fontFamily: 'Inter_700Bold',
   },
   navSkip: {
-    color: '#9B9B9B',
     textDecorationLine: 'underline',
   },
   stepContainer: {
@@ -101,7 +100,6 @@ export const styles = StyleSheet.create({
   },
   description: {
     fontSize: 12,
-    color: '#9B9B9B',
   },
   dropDownPicker: {
     backgroundColor: '#F8F8F6',

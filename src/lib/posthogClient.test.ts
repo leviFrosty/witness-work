@@ -80,6 +80,7 @@ vi.mock('posthog-react-native', async () => {
       ErrorTracking: class {
         onRemoteConfig() {}
         clearExceptionSteps() {}
+        shutdown() {}
       },
     },
   }

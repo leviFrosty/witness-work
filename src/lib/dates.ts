@@ -361,6 +361,20 @@ export const getPristineLongDateFormat = (
   return data ? data.longDateFormat(token) : null
 }
 
+type LayeredLocale = moment.Locale & { parentLocale?: moment.Locale }
+
+/**
+ * Peels every `updateLocale` layer off `key`, back to the locale moment
+ * defined. Leaves an unlayered locale alone: `updateLocale(key, null)` on one
+ * DELETES it from moment's registry outright.
+ */
+const removeOverlays = (key: string): void => {
+  if (!moment.locales().includes(key)) return
+  while ((moment.localeData(key) as LayeredLocale).parentLocale) {
+    moment.updateLocale(key, null)
+  }
+}
+
 /**
  * Applies the Language + Format Region combination to moment's global state.
  *
@@ -391,13 +405,13 @@ export const applyFormatRegion = (
 
   // Reset the previous overlay so every localeData read below is pristine —
   // including the case where the chosen Region IS the active language key.
-  // Only reset a key we actually patched: `updateLocale(key, null)` on a
-  // never-updated locale DELETES it from moment's registry outright.
-  if (patchedKey) {
-    moment.updateLocale(patchedKey, null)
-    patchedKey = null
-    patchedKeyPristine = null
-  }
+  // The active key too: a re-evaluated copy of this module (Fast Refresh)
+  // starts without `patchedKey` while moment keeps the old overlay, and the
+  // 12-hour calendar below would then wrap itself.
+  if (patchedKey) removeOverlays(patchedKey)
+  removeOverlays(activeKey)
+  patchedKey = null
+  patchedKeyPristine = null
   moment.locale(activeKey)
 
   const languageData = moment.localeData(activeKey)

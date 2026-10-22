@@ -3,7 +3,7 @@ import {
   UserPlus as UserPlusIcon,
 } from 'lucide-react-native'
 import { useEffect, useRef } from 'react'
-import { View } from 'react-native'
+import { useWindowDimensions, View } from 'react-native'
 import { FlashList, type FlashListRef } from '@shopify/flash-list'
 import { Input, type InputProps } from 'tamagui'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -45,6 +45,7 @@ export default function LogVisitContactList({
 }) {
   const theme = useTheme()
   const insets = useSafeAreaInsets()
+  const { fontScale } = useWindowDimensions()
   const listRef = useRef<FlashListRef<LogVisitListItem>>(null)
 
   // Back to the top as the query changes, so the best matches are in view.
@@ -60,7 +61,10 @@ export default function LogVisitContactList({
             flexDirection: 'row',
             alignItems: 'center',
             gap: 8,
-            height: 44,
+            minHeight: 44,
+            // With enlarged text the field grows with its text; a fixed 44
+            // clips the placeholder's top on Android from 1.5x.
+            height: fontScale > 1 ? undefined : 44,
             paddingHorizontal: 12,
             borderRadius: theme.numbers.borderRadiusMd,
             borderWidth: 1,

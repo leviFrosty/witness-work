@@ -8,6 +8,7 @@ import LucideIcon from '@/components/ui/LucideIcon'
 import { Platform, View } from 'react-native'
 import { Image } from 'expo-image'
 import Text from '@/components/ui/MyText'
+import { FIT_ONE_LINE } from '@/hooks/useAccessibilityTextSize'
 import useTheme from '@/contexts/theme'
 import i18n, { TranslationKey } from '@/lib/locales'
 import { formatNumber } from '@/lib/numbers'
@@ -311,7 +312,10 @@ export const ComparisonChart = ({
         >
           <View style={{ flex: 1 }} />
           <View style={{ width: FREE_COL_WIDTH, alignItems: 'center' }}>
+            {/* Column headings shrink to fit their fixed-width column at large
+            text sizes instead of breaking mid-word ("SUPPORTE / R"). */}
             <Text
+              {...FIT_ONE_LINE}
               style={{
                 fontSize: 11,
                 fontFamily: theme.fonts.semiBold,
@@ -331,6 +335,7 @@ export const ComparisonChart = ({
           >
             <View>
               <Text
+                {...FIT_ONE_LINE}
                 style={{
                   fontSize: 11,
                   fontFamily: theme.fonts.semiBold,

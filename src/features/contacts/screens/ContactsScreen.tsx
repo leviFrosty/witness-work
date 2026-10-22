@@ -29,7 +29,6 @@ import {
 import * as Crypto from 'expo-crypto'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import useTheme from '@/contexts/theme'
-import useAccessibilityTextSize from '@/hooks/useAccessibilityTextSize'
 import useContacts from '@/stores/contactsStore'
 import {
   filterActivesContacts,
@@ -168,8 +167,7 @@ const ContactsScreen = ({
   const { isWide, hasBottomBar } = useAdaptiveLayout()
   const [selectedId, setSelectedId] = useState<string>()
   const insets = useSafeAreaInsets()
-  const { height: windowHeight } = useWindowDimensions()
-  const largeText = useAccessibilityTextSize()
+  const { height: windowHeight, fontScale } = useWindowDimensions()
   const navigation = useNavigation<RootStackNavigation>()
   const contactsView = usePreferences((s) => s.contactsView)
   const hasCompletedMapOnboarding = usePreferences(
@@ -550,9 +548,9 @@ const ContactsScreen = ({
               gap: 10,
               paddingHorizontal: 12,
               minHeight: 44,
-              // At accessibility sizes the field grows with its text; a
-              // fixed 44 clips the placeholder on Android.
-              height: largeText ? undefined : 44,
+              // With enlarged text the field grows with its text; a fixed 44
+              // clips the placeholder's top on Android from 1.5x.
+              height: fontScale > 1 ? undefined : 44,
               borderRadius: theme.numbers.borderRadiusMd,
               borderWidth: 1,
               borderColor: theme.colors.border,

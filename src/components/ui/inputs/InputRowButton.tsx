@@ -3,6 +3,7 @@ import React, { PropsWithChildren, ReactNode } from 'react'
 import { ViewStyle, View } from 'react-native'
 import useTheme from '@/contexts/theme'
 import Text from '@/components/ui/MyText'
+import WholeWordsText from '@/components/ui/WholeWordsText'
 import Button from '@/components/ui/Button'
 import LucideIcon from '@/components/ui/LucideIcon'
 import { inputLayout } from '@/components/ui/inputs/InputLayout'
@@ -42,6 +43,12 @@ interface Props {
   sublabel?: string
   /** Highlights the row whose destination is open beside the list. */
   selected?: boolean
+  /**
+   * A long text value (children) that wraps under enlarged text. The label
+   * keeps its width, up to half the row, and the value wraps in the rest
+   * instead of squeezing the label.
+   */
+  wrapValue?: boolean
   style?: ViewStyle
 }
 
@@ -55,6 +62,7 @@ const InputRowButton: React.FC<PropsWithChildren<Props>> = ({
   disabled,
   sublabel,
   selected,
+  wrapValue,
   style,
   leftIcon,
   leftIconColor,
@@ -112,6 +120,7 @@ const InputRowButton: React.FC<PropsWithChildren<Props>> = ({
           gap: inputLayout.labelGap,
           alignItems: 'center',
           flexShrink: 1,
+          ...(wrapValue && { flexShrink: 0, maxWidth: '50%' }),
         }}
       >
         {leftIcon && (
@@ -123,14 +132,16 @@ const InputRowButton: React.FC<PropsWithChildren<Props>> = ({
           />
         )}
         <View style={{ flexDirection: 'column', flexShrink: 1, gap: 4 }}>
-          <Text
+          {/* A long value beside it can leave the label a narrow column; a
+          word too wide for it shrinks instead of breaking ("Availab / ility"). */}
+          <WholeWordsText
             style={{
               fontFamily: theme.fonts.medium,
               fontSize: theme.fontSize('md'),
             }}
           >
             {label}
-          </Text>
+          </WholeWordsText>
           {sublabel && (
             <Text
               style={{
@@ -145,7 +156,7 @@ const InputRowButton: React.FC<PropsWithChildren<Props>> = ({
       </View>
       <View
         pointerEvents={hasMenu ? 'none' : undefined}
-        style={{ flexShrink: 0, alignItems: 'flex-end' }}
+        style={{ flexShrink: wrapValue ? 1 : 0, alignItems: 'flex-end' }}
       >
         {children}
       </View>

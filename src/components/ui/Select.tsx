@@ -1,10 +1,10 @@
 import { ChevronDown as ChevronDownIcon } from 'lucide-react-native'
 import LucideIcon from '@/components/ui/LucideIcon'
-import { StyleProp, View, ViewStyle } from 'react-native'
+import { StyleProp, useWindowDimensions, View, ViewStyle } from 'react-native'
 import SelectMenu from '@/components/ui/SelectMenu'
 import useTheme from '@/contexts/theme'
-import useAccessibilityTextSize from '@/hooks/useAccessibilityTextSize'
 import Text from '@/components/ui/MyText'
+import WholeWordsText from '@/components/ui/WholeWordsText'
 import { inputLayout } from '@/components/ui/inputs/InputLayout'
 
 export type SelectDataItem<T> = { label: string; value: T }
@@ -33,9 +33,11 @@ const Select = <T,>({
   accessibilityLabel,
 }: SelectProps<T>) => {
   const theme = useTheme()
-  // At accessibility text sizes a long value wraps whole instead of truncating
-  // ("Auto (Mil…").
-  const largeText = useAccessibilityTextSize()
+  // At any enlarged text size a long value wraps between words instead of
+  // truncating ("Auto (Mil…", "Regular Pi…"), and a word too wide for the
+  // control shrinks rather than breaking ("minut / es").
+  const enlarged = useWindowDimensions().fontScale > 1
+  const ValueText = enlarged ? WholeWordsText : Text
 
   // Native menus key options by string id. Stringify both sides and map back to
   // the original item on selection so callers receive the untouched object.
@@ -73,7 +75,7 @@ const Select = <T,>({
             paddingHorizontal: 12,
             borderRadius: theme.numbers.borderRadiusMd,
             minHeight: inputLayout.controlMinHeight,
-            paddingVertical: largeText ? 8 : undefined,
+            paddingVertical: enlarged ? 8 : undefined,
             gap: 8,
             flexDirection: 'row',
             alignItems: 'center',
@@ -82,8 +84,8 @@ const Select = <T,>({
           style,
         ]}
       >
-        <Text
-          numberOfLines={largeText ? undefined : 1}
+        <ValueText
+          numberOfLines={enlarged ? undefined : 1}
           style={{
             color: theme.colors.text,
             fontSize: theme.fontSize('md'),
@@ -91,7 +93,7 @@ const Select = <T,>({
           }}
         >
           {selectedLabel ?? placeholder ?? ''}
-        </Text>
+        </ValueText>
         <LucideIcon
           icon={ChevronDownIcon}
           color={theme.colors.text}

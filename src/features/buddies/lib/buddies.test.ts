@@ -769,6 +769,62 @@ describe('buddies pairing', () => {
     expect(mom.store.getState().outgoingInvites).toHaveLength(3)
   })
 
+  it('keeps an invite whose answer got lost, so Try Again shows it instead of a second one', async () => {
+    const { fake, user, setAfterOp } = setup()
+    const mom = user('Mom')
+    // The relay stores the invite, then the answer never arrives.
+    setAfterOp(async (op) => {
+      if (op !== 'invite/create') return
+      setAfterOp(null)
+      throw new TypeError('Network request failed')
+    })
+    await expect(mom.engine.createInvite()).rejects.toThrow()
+    expect(fake.invites.size).toBe(1)
+
+    const link = await mom.engine.createInvite()
+    expect(fake.invites.size).toBe(1)
+    const [invite] = mom.store.getState().outgoingInvites
+    expect(mom.store.getState().outgoingInvites).toHaveLength(1)
+    expect(mom.engine.inviteLinkFor(invite.inviteId)).toBe(link)
+    expect(fake.invites.has(invite.inviteId)).toBe(true)
+
+    // It can be cancelled, which frees its spot under the relay's cap.
+    await mom.engine.cancelInvite(invite.inviteId)
+    for (let index = 0; index < 3; index++) await mom.engine.createInvite()
+    expect(mom.store.getState().outgoingInvites).toHaveLength(3)
+  })
+
+  it('lists an invite whose answer got lost on the next sync', async () => {
+    const { fake, user, setAfterOp } = setup()
+    const mom = user('Mom')
+    setAfterOp(async (op) => {
+      if (op !== 'invite/create') return
+      setAfterOp(null)
+      throw new TypeError('Network request failed')
+    })
+    await expect(mom.engine.createInvite()).rejects.toThrow()
+    await mom.engine.sync()
+    const [created] = fake.invites.keys()
+    expect(mom.store.getState().outgoingInvites).toMatchObject([
+      { inviteId: created },
+    ])
+  })
+
+  it('forgets an invite that never reached the relay', async () => {
+    const { fake, offlineOps, user } = setup()
+    const mom = user('Mom')
+    await mom.engine.sync()
+    offlineOps.add('invite/create')
+    await expect(mom.engine.createInvite()).rejects.toThrow()
+    offlineOps.clear()
+    await mom.engine.sync()
+    expect(mom.store.getState().outgoingInvites).toHaveLength(0)
+    expect(mom.store.getState().unconfirmedInvites).toHaveLength(0)
+    await mom.engine.createInvite()
+    expect(fake.invites.size).toBe(1)
+    expect(mom.store.getState().outgoingInvites).toHaveLength(1)
+  })
+
   it('restores buddies on a second device from the encrypted roster', async () => {
     const { user } = setup()
     const mom = user('Mom')

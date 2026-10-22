@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { AppState, useWindowDimensions, View } from 'react-native'
 import { Bell as BellIcon } from 'lucide-react-native'
 import Popover from '@/components/ui/Popover'
@@ -31,16 +31,28 @@ const TRIGGER_PADDING = 8
 
 /**
  * Opens the popover when something (a tapped push) asked for it, once nothing
- * is taking over the screen (the update reveal, a celebration).
+ * is taking over the screen (the update reveal, a celebration). A tap that
+ * launched the app asks while Home is still mounting: the bell waits for its
+ * own layout and two frames, since a popover presented before the native views
+ * settle opens off its anchor, clipped at the screen's edge.
  */
-function useOpenOnRequest(open: () => void) {
+function useOpenOnRequest(open: () => void, laidOut: boolean) {
   const requested = useNotificationsTray((state) => state.openRequested)
   const takingOver = useIsTakingOver()
+  const latestOpen = useRef(open)
   useEffect(() => {
-    if (!requested || takingOver) return
-    useNotificationsTray.setState({ openRequested: false })
-    open()
-  }, [requested, takingOver, open])
+    latestOpen.current = open
+  })
+  useEffect(() => {
+    if (!requested || takingOver || !laidOut) return
+    let frame = requestAnimationFrame(() => {
+      frame = requestAnimationFrame(() => {
+        useNotificationsTray.setState({ openRequested: false })
+        latestOpen.current()
+      })
+    })
+    return () => cancelAnimationFrame(frame)
+  }, [requested, takingOver, laidOut])
 }
 
 /** Keeps the app icon badge on the unread count. */
@@ -70,10 +82,14 @@ function BellTrigger({
   news: boolean
 }) {
   const theme = useTheme()
-  useOpenOnRequest(onPress)
+  const [laidOut, setLaidOut] = useState(false)
+  useOpenOnRequest(onPress, laidOut)
 
   return (
-    <View style={{ padding: TRIGGER_PADDING }}>
+    <View
+      style={{ padding: TRIGGER_PADDING }}
+      onLayout={() => setLaidOut(true)}
+    >
       <PointerTooltip label={i18n.t('notifications_a11y')} effect='none'>
         <IconButton
           icon={BellIcon}

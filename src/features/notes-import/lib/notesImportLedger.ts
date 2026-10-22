@@ -5,6 +5,7 @@ import {
   NOTES_IMPORT_INPUT_METHODS,
   type NotesImportInputMethod,
 } from '@/features/notes-import/lib/notesImportCapture'
+import { isEmptyPreview } from '@/features/notes-import/lib/buildNotesImportPreview'
 
 /**
  * Client-only Import ledger (ADR 0008/0009). Keyed by content hash, it is the
@@ -167,6 +168,28 @@ export const isUnviewedReady = (entry: NotesImportLedgerEntry): boolean =>
   entry.state === 'ready' &&
   (entry.viewedAt == null ||
     (entry.parsedAt != null && entry.viewedAt < entry.parsedAt))
+
+/**
+ * True when an import's parse found nothing and the server didn't charge an
+ * Import Credit for it (ADR 0012). Only an unrefined parse qualifies: once a
+ * refinement replaces the result, the empty one on screen isn't the parse that
+ * decided the charge.
+ */
+export const isUnchargedEmptyImport = (
+  entry: NotesImportLedgerEntry
+): boolean =>
+  entry.state !== 'working' &&
+  entry.result !== null &&
+  entry.history.length === 0 &&
+  !entry.emptyCharged &&
+  isEmptyPreview({
+    counts: {
+      contacts: entry.result.contacts.length,
+      visits: entry.result.visits.length,
+      timeEntries: entry.result.timeEntries.length,
+    },
+    hasPublisher: !!entry.result.publisher,
+  })
 
 /** How many Ready imports still have an unseen result (drives the blue dot). */
 export const unviewedReadyImportCount = (

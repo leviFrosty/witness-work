@@ -1,5 +1,8 @@
 import { usePreferences } from '@/stores/preferences'
 import { useProfile } from '@/stores/profile'
+import { useContacts } from '@/stores/contactsStore'
+import { useConversations } from '@/stores/conversationStore'
+import { useServiceReport } from '@/stores/serviceReport'
 import { FRESH_SETUP_PREFERENCES } from '@/lib/syncPreferencePolicy'
 import { useNotesImportEnabled } from '@/hooks/useNotesImportEnabled'
 import { analytics } from '@/lib/analytics'
@@ -28,6 +31,7 @@ import i18n, { TranslationKey } from '@/lib/locales'
 import MytimeImport from '@/features/onboarding/components/steps/MytimeImport'
 import ICloudRestore from '@/features/onboarding/components/steps/iCloudRestore'
 import { useNotesImportAvailability } from '@/features/notes-import/hooks/useNotesImportAvailability'
+import { useNotesImportManager } from '@/features/notes-import/hooks/useNotesImportManager'
 import { pickPaperPages } from '@/features/notes-import/hooks/useNotesImportPaperImport'
 import { useBackupImport } from '@/app/sync/useBackupImport'
 import type { RootStackNavigation } from '@/types/rootStack'
@@ -104,6 +108,25 @@ const OptionCard = ({
 }
 
 /**
+ * Whether anything has been brought in yet: records from any import, or an
+ * accepted Notes Import (which may only have set the publisher). Setup runs on
+ * a new install, so existing data means the user imported it here.
+ */
+const useHasImportedData = (): boolean => {
+  const hasContacts = useContacts((s) => s.contacts.length > 0)
+  const hasVisits = useConversations((s) => s.conversations.length > 0)
+  const hasTimeEntries = useServiceReport((s) =>
+    Object.values(s.serviceReports).some((months) =>
+      Object.values(months).some((entries) => entries.length > 0)
+    )
+  )
+  const hasAcceptedNotesImport = useNotesImportManager((s) =>
+    s.entries.some((entry) => entry.state === 'done')
+  )
+  return hasContacts || hasVisits || hasTimeEntries || hasAcceptedNotesImport
+}
+
+/**
  * Onboarding "Pick up where you left off" chooser — replaces the separate
  * iCloud-restore and MyTime-import steps with one fork into Notes / MyTime /
  * iCloud / a backup file (decision 9), plus Paper (ADR 0025), which picks page
@@ -119,7 +142,8 @@ const OptionCard = ({
  * remaining steps would set. "From your other phone" opens Sign In with QR Code
  * (ADR 0026), which brings the account and buddies, then returns here so the
  * data can come over too. "Start fresh" is the primary action: most users have
- * nothing to bring over.
+ * nothing to bring over. Once something has been imported and the user comes
+ * back here, it reads "Continue" instead, since they aren't starting fresh.
  */
 const PickUpWhereLeftOff = ({ goBack, goNext }: StepProps) => {
   const theme = useTheme()
@@ -138,6 +162,7 @@ const PickUpWhereLeftOff = ({ goBack, goNext }: StepProps) => {
   const notesImportEnabled = useNotesImportEnabled()
   const notesImport = useNotesImportAvailability()
   const { importing, importBackup } = useBackupImport({ source: 'onboarding' })
+  const hasImportedData = useHasImportedData()
 
   useEffect(() => {
     if (!isFocused || mode !== 'choose') return
@@ -320,14 +345,16 @@ const PickUpWhereLeftOff = ({ goBack, goNext }: StepProps) => {
       <ActionButton
         disabled={importing}
         onPress={() => {
-          analytics.capture('onboarding_step_skipped', {
-            step_id: 'pickUpWhereLeftOff',
-          })
+          if (!hasImportedData)
+            analytics.capture('onboarding_step_skipped', {
+              step_id: 'pickUpWhereLeftOff',
+            })
+          // Not a restore either way, so sync starts off as on a fresh setup.
           usePreferences.getState().set(FRESH_SETUP_PREFERENCES)
           goNext()
         }}
       >
-        {i18n.t('onboardingPickUp_skip')}
+        {hasImportedData ? i18n.t('continue') : i18n.t('onboardingPickUp_skip')}
       </ActionButton>
     </Wrapper>
   )

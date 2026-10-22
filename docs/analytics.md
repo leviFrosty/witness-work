@@ -176,7 +176,10 @@ Use `onboarding_started` / `onboarding_resumed`, `onboarding_step_viewed`,
 Break down by stable `step_id`, since conditional steps change numeric positions.
 Back/jump/button micro-interactions and hero-animation skipping are dropped.
 A skipped step can also complete: completion means advancing, not filling every
-optional field. `elapsed_ms` includes background time and time on other screens.
+optional field.
+`pickUpWhereLeftOff` sends `onboarding_step_skipped` only from Start fresh.
+Once something has been imported there, the button reads Continue and sends
+just `onboarding_step_completed`. `elapsed_ms` includes background time and time on other screens.
 
 Stable step IDs, in order: `hero`, `featureTour`, `pickUpWhereLeftOff`,
 `publisherType`, `pioneerDate`, `planMonth`, `dataProtection`, `buddies`,

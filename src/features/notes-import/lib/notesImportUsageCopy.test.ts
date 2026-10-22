@@ -64,9 +64,7 @@ describe('Notes Import usage copy', () => {
       supporter: true,
     })
     expect(shown.trigger).toBe('8 left')
-    expect(shown.body).toBe(
-      'New notes use 1 credit. Reusing the same notes is free.'
-    )
+    expect(shown.body).toBe('New notes use 1 credit.')
   })
 
   it('still offers Supporter to everyone else, unlimited development usage included', () => {

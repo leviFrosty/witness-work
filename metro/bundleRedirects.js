@@ -1,0 +1,58 @@
+const path = require('node:path')
+
+/**
+ * Packages that ship a CommonJS and an ES module build. Metro resolves an
+ * `import` to one and a `require()` to the other, so when the app imports a
+ * package that a dependency requires, the bundle holds two copies and the app
+ * evaluates both. Every request for these resolves the CommonJS way instead.
+ */
+const commonJsPackages = [
+  // The app imports it; react-native-international-phone-number requires it.
+  'awesome-phonenumber',
+  // The app imports it; posthog-react-native requires it.
+  '@posthog/core',
+  // @hot-updater/react-native imports it; its client plugins require it.
+  '@hot-updater/protocol',
+]
+
+/**
+ * Modules iOS and Android builds can't reach, swapped for a stub that throws if
+ * one ever runs.
+ */
+const nativeStubs = [
+  {
+    // RevenueCat's browser mode (Expo Go, Rork, web) is the only caller of
+    // purchases-js, an 800 KB library the SDK evaluates at launch. Our builds
+    // always have the native module, so browser mode never starts.
+    request: '@revenuecat/purchases-js-hybrid-mappings',
+    stub: 'revenueCatBrowserMode.js',
+  },
+  {
+    // Renders `QRCode`'s `logoSVG` through react-native-svg/css (css-tree and
+    // its CSS data, css-select, entities). The app passes a bitmap `logo`.
+    request: './LogoSVG',
+    from: `${path.sep}react-native-qrcode-svg${path.sep}`,
+    stub: 'qrCodeLogoSvg.js',
+  },
+]
+
+const isPackageRequest = (request, name) =>
+  request === name || request.startsWith(`${name}/`)
+
+/**
+ * How Metro should treat a request: `commonJs` to resolve it with the `require`
+ * condition, `stub` to replace it with that file, or `null` to leave it alone.
+ */
+function bundleRedirect(request, originModulePath, platform) {
+  if (commonJsPackages.some((name) => isPackageRequest(request, name)))
+    return { commonJs: true }
+  if (platform !== 'ios' && platform !== 'android') return null
+  const stub = nativeStubs.find(
+    (entry) =>
+      entry.request === request &&
+      (!entry.from || originModulePath.includes(entry.from))
+  )
+  return stub ? { stub: path.join(__dirname, 'stubs', stub.stub) } : null
+}
+
+module.exports = { bundleRedirect, commonJsPackages, nativeStubs }

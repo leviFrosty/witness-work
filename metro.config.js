@@ -1,6 +1,7 @@
 const { getPostHogExpoConfig } = require('posthog-react-native/metro')
 const path = require('node:path')
 const { lucidePackageDir } = require('./babel/lucide-imports')
+const { bundleRedirect } = require('./metro/bundleRedirects')
 
 const config = getPostHogExpoConfig(__dirname)
 // Temporary i18n-js workaround: https://stackoverflow.com/questions/75876705/i18n-js-unable-to-resolve-make-plural-from-pluralization-js
@@ -10,9 +11,19 @@ config.resolver.sourceExts.push('mjs')
 // babel/lucide-imports.js rewrites icon imports to per-icon files such as
 // `lucide-react-native/dist/esm/icons/plus.mjs`. The package's `exports` map
 // doesn't list them, so resolve those subpaths by file path instead.
+// metro/bundleRedirects.js keeps one build of dual CommonJS/ESM packages and
+// stubs out code iOS and Android can't reach.
 const resolveRequest = config.resolver.resolveRequest
 config.resolver.resolveRequest = (context, moduleName, platform) => {
   const resolve = resolveRequest ?? context.resolveRequest
+  const redirect = bundleRedirect(
+    moduleName,
+    context.originModulePath,
+    platform
+  )
+  if (redirect?.stub) return { type: 'sourceFile', filePath: redirect.stub }
+  if (redirect?.commonJs)
+    return resolve({ ...context, isESMImport: false }, moduleName, platform)
   if (moduleName.startsWith('lucide-react-native/dist/')) {
     return resolve(
       { ...context, unstable_enablePackageExports: false },

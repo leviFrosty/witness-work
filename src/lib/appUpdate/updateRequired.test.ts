@@ -70,6 +70,18 @@ describe('the app config check', () => {
     expect(useUpdateRequired.getState().required).toBeNull()
   })
 
+  it('asks again right after a read that failed', async () => {
+    const { config, fetchConfig, check } = setup('1.42.0')
+    config.fail = true
+    await check()
+    expect(useUpdateRequired.getState().required).toBeNull()
+    // The connection came back within the minute.
+    config.fail = false
+    await check()
+    expect(fetchConfig).toHaveBeenCalledTimes(2)
+    expect(useUpdateRequired.getState().required?.source).toBe('config')
+  })
+
   it('never lifts a block from a 426', async () => {
     const { check } = setup(null)
     requireUpdateFromServer('1.40.0')

@@ -24,7 +24,12 @@ import SupporterInfoSheet from '@/components/SupporterInfoSheet'
 import useIsSupporter from '@/hooks/useIsSupporter'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
-import { platformSyncKey, syncKey, syncSettingsTitleKey } from '@/lib/syncCopy'
+import {
+  optionSyncKey,
+  platformSyncKey,
+  syncKey,
+  syncSettingsTitleKey,
+} from '@/lib/syncCopy'
 import { usePreferences } from '@/stores/preferences'
 import { dismissICloudAccountChangeNotice } from '@/lib/iCloudIdentity'
 import {
@@ -89,8 +94,12 @@ async function accountHasOtherDevices(): Promise<boolean> {
   return seed ? signedInElsewhere(fromB64u(seed)) : false
 }
 
-/** What to tell the User when a switch or Cloud Sync's turn-on can't happen. */
-const switchFailureMessage = (reason: SwitchFailure) => {
+/**
+ * What to tell the User when a switch to `to` or Cloud Sync's turn-on can't
+ * happen. Worded for `to`: the device is back on the option it left.
+ */
+const switchFailureMessage = (reason: SwitchFailure, to: SyncOption) => {
+  const option = to === 'cloud' ? 'cloud' : 'platform'
   switch (reason) {
     case 'not_entitled':
       return i18n.t('cloudSyncNotEntitled')
@@ -101,9 +110,9 @@ const switchFailureMessage = (reason: SwitchFailure) => {
     case 'offline':
       return i18n.t('iCloudSyncNowOffline_description')
     case 'incomplete':
-      return i18n.t(syncKey('iCloudRemoteNotReady_description'))
+      return i18n.t(optionSyncKey('iCloudRemoteNotReady_description', option))
     case 'unavailable':
-      return i18n.t(platformSyncKey('iCloudUnavailable_description'))
+      return i18n.t(optionSyncKey('iCloudUnavailable_description', option))
     case 'account_changed':
       return i18n.t('syncOption_accountChanged')
   }
@@ -494,7 +503,7 @@ const PreferencesiCloudScreenInner = () => {
       if (result.outcome === 'failed') {
         Alert.alert(
           i18n.t('syncOption_switchFailed_title'),
-          switchFailureMessage(result.reason)
+          switchFailureMessage(result.reason, next)
         )
         return
       }
@@ -543,7 +552,8 @@ const PreferencesiCloudScreenInner = () => {
                 ? 'not_entitled'
                 : prepared.outcome === 'disabled'
                   ? 'disabled'
-                  : 'no_session'
+                  : 'no_session',
+              'cloud'
             )
           )
           return

@@ -120,7 +120,14 @@ export function toServerTransportError(
     case 'not_found':
       return new SyncTransportError('not-found', message)
   }
-  if (error.status === 401 || error.status === 403)
+  // This app version is too old (Update Required shows); only the User
+  // updating fixes it, so it isn't reported as a bug on every retry.
+  if (
+    error.status === 401 ||
+    error.status === 403 ||
+    error.status === 426 ||
+    error.serverCode === 'upgrade_required'
+  )
     return new SyncTransportError('unauthorized', message)
   if (error.kind === 'rateLimited' || error.status === 429)
     return new SyncTransportError('rate-limited', message, error.retryAfterMs)

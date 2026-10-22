@@ -47,3 +47,19 @@ describe('syncKey', () => {
     expect(syncSettingsTitleKey()).toBe('syncSettingsTitle')
   })
 })
+
+describe('optionSyncKey', () => {
+  it('names the option asked for, not the one in use', async () => {
+    const { registerAndroidSyncTransport } = await load()
+    const { optionSyncKey } = await import('@/lib/syncCopy')
+    registerAndroidSyncTransport({ kind: 'google-drive' } as never)
+    expect(optionSyncKey('iCloudUnavailable_description', 'cloud')).toBe(
+      'iCloudUnavailable_descriptionCloud'
+    )
+    expect(optionSyncKey('iCloudUnavailable_description', 'platform')).toBe(
+      'iCloudUnavailable_descriptionAndroid'
+    )
+    // No Cloud variant: the platform's wording.
+    expect(optionSyncKey('iCloudSyncNow', 'cloud')).toBe('iCloudSyncNow')
+  })
+})

@@ -26,9 +26,10 @@ enum UpNext {
 
   static func shownUntil(_ item: UpNextItem) -> Date {
     guard !item.timed else { return item.startDate.addingTimeInterval(nowWindow) }
-    let calendar = Calendar.current
-    let day = calendar.startOfDay(for: item.startDate)
-    return calendar.date(byAdding: .day, value: 1, to: day) ?? item.startDate
+    // The next day's start, not a day after this one's: where the clocks skip
+    // midnight, the day starts at 1:00 and the next one at midnight.
+    return MonthProgress.midnights(after: item.startDate, count: 1, calendar: .current).first
+      ?? item.startDate
   }
 
   static func isNow(_ item: UpNextItem, at date: Date) -> Bool {
@@ -70,9 +71,13 @@ enum UpNext {
   /// `nil` today; otherwise `Tomorrow`, a weekday this week, or a date.
   static func dayLabel(_ item: UpNextItem, at date: Date, _ snapshot: WatchSnapshot?) -> String? {
     let calendar = Calendar.current
+    // Counted from noon to noon: a day that starts at 1:00, because the clocks
+    // skip midnight, is less than a day before the next one starts.
+    let noon: (Date) -> Date = {
+      calendar.date(bySettingHour: 12, minute: 0, second: 0, of: $0) ?? $0
+    }
     let days = calendar.dateComponents(
-      [.day], from: calendar.startOfDay(for: date),
-      to: calendar.startOfDay(for: item.startDate)
+      [.day], from: noon(date), to: noon(item.startDate)
     ).day ?? 0
     switch days {
     case ...0: return nil

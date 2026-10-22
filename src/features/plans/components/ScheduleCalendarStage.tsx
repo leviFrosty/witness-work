@@ -1,3 +1,4 @@
+import { startTransition, useState } from 'react'
 import { StyleSheet, View } from 'react-native'
 import { Gesture, GestureDetector } from 'react-native-gesture-handler'
 import type { CalendarMonth } from '@/lib/monthlyGoals'
@@ -77,6 +78,13 @@ export default function ScheduleCalendarStage({
     showCurrentServiceYear,
   } = calendar
   const monthActive = view === 'month'
+  // The Year view stays out until the Month view has drawn: mounted with it,
+  // its twelve months held up Schedule's first open by a few hundred ms. It
+  // then mounts as a transition, so a tap on the month goes first. A zoom out
+  // before then mounts it at once, and the views cross-fade as they do
+  // whenever the tiles aren't laid out yet.
+  const [yearMounted, setYearMounted] = useState(false)
+  const showYear = yearMounted || !monthActive
 
   const pinch = Gesture.Pinch()
     .runOnJS(true)
@@ -122,7 +130,10 @@ export default function ScheduleCalendarStage({
             onScroll={onScroll}
             onZoomFrameLayout={onZoomFrameLayout}
             onListLayout={onListLayout}
-            onListLoad={onListLoad}
+            onListLoad={() => {
+              onListLoad()
+              startTransition(() => setYearMounted(true))
+            }}
             onPressDay={onPressDay}
             onPressServiceYear={(serviceYear) =>
               zoomOut('divider', serviceYear)
@@ -134,19 +145,21 @@ export default function ScheduleCalendarStage({
           />
         </View>
         <View {...layer(!monthActive)}>
-          <ScheduleYearView
-            ref={yearRef}
-            serviceYear={yearServiceYear}
-            focusedMonth={yearFocusedMonth}
-            index={index}
-            bottomInset={bottomInset}
-            zoomStyle={zoom.yearZoomStyle}
-            scrollBars={monthActive ? undefined : scrollBars}
-            onChangeServiceYear={changeServiceYear}
-            onPressMonth={zoomIn}
-            editableGoal={editableGoal}
-            onEditGoal={onEditGoal}
-          />
+          {showYear ? (
+            <ScheduleYearView
+              ref={yearRef}
+              serviceYear={yearServiceYear}
+              focusedMonth={yearFocusedMonth}
+              index={index}
+              bottomInset={bottomInset}
+              zoomStyle={zoom.yearZoomStyle}
+              scrollBars={monthActive ? undefined : scrollBars}
+              onChangeServiceYear={changeServiceYear}
+              onPressMonth={zoomIn}
+              editableGoal={editableGoal}
+              onEditGoal={onEditGoal}
+            />
+          ) : null}
         </View>
         <JumpToTodayButton
           visible={

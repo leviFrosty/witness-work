@@ -190,7 +190,9 @@ function planItems(
 
   const items: WatchUpNextItem[] = []
   for (let i = 0; i <= HORIZON_DAYS; i++) {
-    const day = today.clone().add(i, 'days')
+    // Back to the day's start: on a day that starts at 1:00 (clocks skip
+    // midnight), `today` is 1:00 and adding days keeps that hour.
+    const day = today.clone().add(i, 'days').startOf('day')
     const dayDate = day.toDate()
     const anchor = normalizeDateForStorage(dayDate)
     // Every Plan on the day is shown, as on the Schedule, including ones the

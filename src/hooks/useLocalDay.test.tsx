@@ -131,6 +131,11 @@ describe('useLocalDay', () => {
     // Clocks spring forward: Mar 8 and Oct 4 have 23 hours.
     ['America/New_York', '2026-03-08T04:59:00Z', '2026-03-07', 23],
     ['Australia/Sydney', '2026-10-03T13:59:00Z', '2026-10-03', 23],
+    // Clocks change at midnight: Mar 8 and Sep 6 start at 1:00; Nov 1's
+    // midnight happens twice.
+    ['America/Havana', '2026-03-08T04:59:00Z', '2026-03-07', 23],
+    ['America/Havana', '2026-11-01T03:59:00Z', '2026-10-31', 25],
+    ['America/Santiago', '2026-09-06T03:59:00Z', '2026-09-05', 23],
   ] as const)(
     'moves on at each midnight around a daylight saving change in %s',
     (zone, start, eve, hours) => {

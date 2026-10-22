@@ -6,6 +6,7 @@ import {
   localizeDisplayDate,
 } from '@/lib/dates'
 import i18n from '@/lib/locales'
+import { calendarDaysBetween } from '@/lib/normalizeDate'
 
 /**
  * A day mid-sentence: "today", "tomorrow", or "yesterday", the weekday within a
@@ -14,10 +15,7 @@ import i18n from '@/lib/locales'
  */
 export function dayPhrase(date: Date, now: number): string {
   const day = moment(date)
-  const days = day
-    .clone()
-    .startOf('day')
-    .diff(moment(now).startOf('day'), 'days')
+  const days = calendarDaysBetween(now, date)
   if (days === 0) return i18n.t('dayPhrase_today')
   if (days === 1) return i18n.t('dayPhrase_tomorrow')
   if (days === -1) return i18n.t('dayPhrase_yesterday')

@@ -4,6 +4,7 @@ import {
   formatWeekdayMonthDayCompact,
 } from '@/lib/dates'
 import i18n from '@/lib/locales'
+import { calendarDaysBetween } from '@/lib/normalizeDate'
 import { deriveOffsetFromDates } from '@/lib/notificationOffset'
 import { formatMinutes } from '@/lib/minutes'
 import type { MinuteDisplayFormat } from '@/types/timeEntry'
@@ -82,7 +83,7 @@ export function reminderContent(
     case 'unloggedDay': {
       const days = reminder.days?.length ?? 1
       const day = moment(reminder.targetId, 'YYYY-MM-DD')
-      const daysAgo = moment(reminder.date).startOf('day').diff(day, 'days')
+      const daysAgo = calendarDaysBetween(day, reminder.date)
       const duration = formatMinutes(
         reminder.minutes ?? 0,
         options.timeDisplayFormat

@@ -36,6 +36,7 @@ vi.mock('../../modules/stopwatch-bridge', () => ({
 import moment from 'moment'
 import { buildUpNext } from '@/app/watch/buildUpNext'
 import { joinRequestExpiry } from '@/features/buddies/lib/joinRequests'
+import { daysSinceInstallBucket } from '@/features/onboarding/lib/homeChecklist'
 import {
   computeElapsedMs,
   sessionStartMs,
@@ -45,7 +46,8 @@ import {
   followUpCardItems,
   overdueFollowUpConversations,
 } from '@/lib/conversations'
-import { formatStartTime } from '@/lib/dates'
+import { formatCalendar, formatStartTime } from '@/lib/dates'
+import { dayPhrase, distancePhrase } from '@/lib/dayPhrases'
 import {
   combineDateAndStartTime,
   normalizeDateForStorage,
@@ -55,8 +57,14 @@ import {
   getPlansIntersectingDay,
   plannedMinutesThroughEachDayOfMonth,
 } from '@/lib/recurrence'
+import { reminderContent } from '@/lib/reminderContent'
 import { buildReminderSchedule } from '@/lib/reminderSchedule'
 import { loggedMinutesThroughEachDayOfMonth } from '@/lib/scheduleStatus'
+import {
+  serviceStreak,
+  streakEndsSoon,
+  type ServiceStreak,
+} from '@/lib/serviceStreak'
 import { unloggedDayReminderGroups } from '@/lib/unloggedDayReminders'
 import { weekPlanReminderDates } from '@/lib/weekPlanReminders'
 import {
@@ -69,18 +77,31 @@ import type { Visit } from '@/types/visit'
 
 type Transition = {
   zone: string
-  /** The transition day, `YYYY-MM-DD`; a Sunday in every zone here. */
+  /** The transition day, `YYYY-MM-DD`. */
   day: string
   /** Hours in that day. */
   hours: 23 | 24 | 25
 }
 
+// Clocks change in the small hours; each day is a Sunday.
 const TRANSITIONS: Transition[] = [
   { zone: 'America/New_York', day: '2026-11-01', hours: 25 },
   { zone: 'America/New_York', day: '2026-03-08', hours: 23 },
   { zone: 'Europe/London', day: '2026-10-25', hours: 25 },
   { zone: 'Australia/Sydney', day: '2026-10-04', hours: 23 },
   { zone: 'Asia/Tokyo', day: '2026-11-01', hours: 24 },
+]
+
+// Clocks change at midnight. Springing forward, the day starts at 1:00 (there
+// is no midnight); falling back, midnight happens twice.
+const MIDNIGHT_TRANSITIONS: Transition[] = [
+  { zone: 'America/Havana', day: '2026-03-08', hours: 23 },
+  { zone: 'America/Havana', day: '2026-11-01', hours: 25 },
+  { zone: 'America/Santiago', day: '2026-09-06', hours: 23 },
+  { zone: 'Atlantic/Azores', day: '2026-03-29', hours: 23 },
+  { zone: 'Atlantic/Azores', day: '2026-10-25', hours: 25 },
+  { zone: 'Asia/Beirut', day: '2026-03-29', hours: 23 },
+  { zone: 'Africa/Cairo', day: '2026-04-24', hours: 23 },
 ]
 
 const originalTZ = process.env.TZ
@@ -92,26 +113,41 @@ afterAll(() => {
   else process.env.TZ = originalTZ
 })
 
+const onTransition = ({ zone, day }: Transition) => {
+  const [y, m, d] = day.split('-').map(Number)
+  /** Local wall-clock time on the transition day (or `days` from it). */
+  const at = (hour: number, minute = 0, days = 0) =>
+    new Date(y, m - 1, d + days, hour, minute)
+  return {
+    y,
+    m,
+    d,
+    at,
+    stored: (days = 0) => normalizeDateForStorage(at(12, 0, days)),
+    /** `YYYY-MM-DD`, `days` from the transition day. */
+    key: (days = 0) => moment(day).add(days, 'days').format('YYYY-MM-DD'),
+    setNow: (date: Date) => {
+      vi.useFakeTimers({ toFake: ['Date'] })
+      vi.setSystemTime(date)
+    },
+    // Set the zone before each test body (describe.each bodies run at
+    // collection time, so zone-dependent values are built inside `it`).
+    inZone: (fn: () => void) => () => {
+      process.env.TZ = zone
+      fn()
+    },
+  }
+}
+
 describe.each(TRANSITIONS)(
   '$zone on $day ($hours h)',
   ({ zone, day, hours }) => {
-    const [y, m, d] = day.split('-').map(Number)
-    /** Local wall-clock time on the transition day (or `days` from it). */
-    const at = (hour: number, minute = 0, days = 0) =>
-      new Date(y, m - 1, d + days, hour, minute)
-    const stored = (days = 0) => normalizeDateForStorage(at(12, 0, days))
+    const { y, m, d, at, stored, setNow, inZone } = onTransition({
+      zone,
+      day,
+      hours,
+    })
     const extra = hours - 24
-    const setNow = (date: Date) => {
-      vi.useFakeTimers({ toFake: ['Date'] })
-      vi.setSystemTime(date)
-    }
-
-    // Set the zone before each test body (describe.each bodies run at
-    // collection time, so zone-dependent values are built inside `it`).
-    const inZone = (fn: () => void) => () => {
-      process.env.TZ = zone
-      fn()
-    }
 
     it(
       'the timer counts real elapsed time across the change, and its entry lands on the day it began',
@@ -423,6 +459,286 @@ describe.each(TRANSITIONS)(
       inZone(() => {
         expect(joinRequestExpiry(day, 600)).toBe(at(10).getTime())
         expect(joinRequestExpiry(day, undefined)).toBe(at(12).getTime())
+      })
+    )
+  }
+)
+
+describe.each(MIDNIGHT_TRANSITIONS)(
+  '$zone on $day ($hours h, clocks change at midnight)',
+  (transition) => {
+    const { day } = transition
+    const { y, m, d, at, stored, key, setNow, inZone } =
+      onTransition(transition)
+    /** The start of a day, as `moment` reads its date. */
+    const startOf = (days: number) => moment(key(days)).toDate()
+    /** Around the day: each day's first minute, small hours, noon, and night. */
+    const nows = () =>
+      [-1, 0, 1].flatMap((days) => [
+        startOf(days),
+        at(0, 30, days),
+        at(12, 0, days),
+        at(23, 30, days),
+      ])
+    /** `days` from `now`'s date, at `hour`:30. */
+    const daysFrom = (now: Date, days: number, hour: number) =>
+      new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate() + days,
+        hour,
+        30
+      )
+
+    it(
+      'says today, tomorrow, yesterday and “in 2 days” by the calendar',
+      inZone(() => {
+        const names: Record<number, string> = {
+          [-1]: 'dayPhrase_yesterday',
+          0: 'dayPhrase_today',
+          1: 'dayPhrase_tomorrow',
+        }
+        const distances: Record<number, string> = {
+          [-2]: '2 days ago',
+          [-1]: 'a day ago',
+          1: 'in a day',
+          2: 'in 2 days',
+        }
+        for (const now of nows())
+          for (const days of [-2, -1, 0, 1, 2])
+            for (const hour of [0, 12, 23]) {
+              const date = daysFrom(now, days, hour)
+              const when = [now.toString(), date.toString()]
+              expect([...when, dayPhrase(date, now.getTime())]).toEqual([
+                ...when,
+                names[days] ?? moment(date).format('dddd'),
+              ])
+              if (days !== 0)
+                expect([...when, distancePhrase(date, now.getTime())]).toEqual([
+                  ...when,
+                  distances[days],
+                ])
+            }
+      })
+    )
+
+    it(
+      'formats Today, Tomorrow and Yesterday by the calendar',
+      inZone(() => {
+        const names: Record<number, string> = {
+          [-1]: 'Yesterday',
+          0: 'Today',
+          1: 'Tomorrow',
+        }
+        for (const now of nows())
+          for (const days of [-1, 0, 1])
+            for (const hour of [0, 23]) {
+              const date = daysFrom(now, days, hour)
+              const when = [now.toString(), date.toString()]
+              const label = formatCalendar(date, { referenceTime: now })
+              expect([...when, label.split(' ')[0]]).toEqual([
+                ...when,
+                names[days],
+              ])
+            }
+      })
+    )
+
+    it(
+      'a reminder to log time says today or yesterday by the calendar',
+      inZone(() => {
+        const body = (target: number, firesOn: number) =>
+          reminderContent(
+            {
+              id: `u${target}`,
+              kind: 'unloggedDay',
+              targetId: key(target),
+              date: at(20, 0, firesOn),
+              anchor: at(11, 0, target),
+              minutes: 120,
+              days: [key(target)],
+            },
+            { dataProtectionMode: false, timeDisplayFormat: 'short' }
+          ).body
+        expect(body(0, 0)).toBe('unloggedDayReminderBodyToday')
+        expect(body(0, 1)).toBe('unloggedDayReminderBodyYesterday')
+        expect(body(-1, 0)).toBe('unloggedDayReminderBodyYesterday')
+        expect(body(1, 1)).toBe('unloggedDayReminderBodyToday')
+        expect(body(-1, 1)).toBe('unloggedDayReminderBodyOnDate')
+      })
+    )
+
+    it(
+      'counts days since install by the calendar',
+      inZone(() => {
+        expect(daysSinceInstallBucket(at(0, 30), at(23, 30))).toBe('0')
+        expect(daysSinceInstallBucket(at(12), at(0, 30, 1))).toBe('1')
+        expect(daysSinceInstallBucket(at(23, 30, -1), at(0, 30))).toBe('1')
+        expect(daysSinceInstallBucket(at(12, 0, -1), at(23, 30, 1))).toBe('2_3')
+      })
+    )
+
+    it(
+      'a Plans streak ends at midnight, and warns from the last day’s start',
+      inZone(() => {
+        for (const planDay of [-1, 0, 1])
+          for (const nowDay of [planDay - 2, planDay - 1, planDay]) {
+            const streak = serviceStreak(
+              'plans',
+              {
+                serviceReports: {},
+                dayPlans: [{ id: 'p', date: stored(planDay), minutes: 60 }],
+                recurringPlans: [],
+              },
+              at(12, 0, nowDay)
+            )
+            expect([nowDay, streak.due]).toEqual([
+              nowDay,
+              { period: key(planDay), endsAt: startOf(planDay + 2) },
+            ])
+          }
+        for (const endsDay of [0, 1, 2]) {
+          const streak: ServiceStreak = {
+            kind: 'plans',
+            count: 5,
+            latest: key(endsDay - 3),
+            due: { period: key(endsDay - 1), endsAt: startOf(endsDay) },
+          }
+          const lastDay = startOf(endsDay - 1)
+          const before = new Date(lastDay.getTime() - 60_000)
+          expect([endsDay, streakEndsSoon(streak, before)]).toEqual([
+            endsDay,
+            false,
+          ])
+          expect([endsDay, streakEndsSoon(streak, lastDay)]).toEqual([
+            endsDay,
+            true,
+          ])
+        }
+      })
+    )
+
+    it(
+      'the watch’s Up Next starts an untimed Plan at its day’s start',
+      inZone(() => {
+        for (const nowDay of [-1, 0, 1]) {
+          setNow(at(12, 0, nowDay))
+          const items = buildUpNext({
+            contacts: [],
+            conversations: [],
+            dayPlans: [0, 1, 2, 3].map((n) => ({
+              id: `p${n}`,
+              date: stored(nowDay + n),
+              minutes: 60,
+              anytime: true,
+            })),
+            recurringPlans: [],
+            categories: [],
+            includePlans: true,
+          })
+          expect(items.map((item) => [item.day, item.start])).toEqual(
+            [0, 1, 2, 3].map((n) => [
+              key(nowDay + n),
+              startOf(nowDay + n).getTime(),
+            ])
+          )
+        }
+      })
+    )
+
+    it(
+      'reminds to log a planned day and to plan next week at their set times',
+      inZone(() => {
+        for (const from of [at(9, 0, -1), at(0, 30), at(9)]) {
+          const unlogged = unloggedDayReminderGroups(
+            {
+              dayPlans: [
+                { id: 'p', date: stored(), minutes: 120, anytime: true },
+                { id: 'q', date: stored(1), minutes: 120, anytime: true },
+              ],
+              recurringPlans: [],
+              timeEntries: {},
+              remindAt: 20 * 60,
+              enabledAt: 0,
+              tracksHoursIn: () => true,
+            },
+            from.getTime()
+          )
+          expect(
+            unlogged.map(({ date, days }) => [
+              moment(date).format('YYYY-MM-DD HH:mm'),
+              days.map((x) => x.key),
+            ])
+          ).toEqual([
+            [`${key(0)} 20:00`, [key(0)]],
+            [`${key(1)} 20:00`, [key(1)]],
+          ])
+          const weekly = weekPlanReminderDates(
+            {
+              dayPlans: [],
+              recurringPlans: [],
+              offDays: [],
+              weekday: moment(day).day(),
+              remindAt: 18 * 60,
+              enabledAt: 0,
+            },
+            from.getTime()
+          ).map(({ date }) => moment(date).format('YYYY-MM-DD HH:mm'))
+          expect(weekly).toContain(`${day} 18:00`)
+          expect(weekly).toContain(`${key(7)} 18:00`)
+        }
+      })
+    )
+
+    it(
+      'a weekly Recurring Plan falls on the day once, counted under its date',
+      inZone(() => {
+        const weekly: RecurringPlan = {
+          id: 'w',
+          startDate: stored(-28),
+          minutes: 120,
+          recurrence: {
+            frequency: RecurringPlanFrequencies.WEEKLY,
+            interval: 1,
+            endDate: null,
+          },
+        }
+        const matched: string[] = []
+        for (let i = -8; i <= 8; i++)
+          for (const date of [startOf(i), at(12, 0, i)])
+            if (getPlansIntersectingDay(date, [weekly]).length)
+              matched.push(key(i))
+        expect(matched).toEqual([key(-7), key(-7), day, day, key(7), key(7)])
+
+        const month = m - 1
+        const planned = plannedMinutesThroughEachDayOfMonth(
+          month,
+          y,
+          [],
+          [weekly]
+        )
+        expect(planned).toHaveLength(moment(day).daysInMonth())
+        expect(planned[d - 1] - (planned[d - 2] ?? 0)).toBe(120)
+        expect(planned[d] - planned[d - 1]).toBe(0)
+        const logged = loggedMinutesThroughEachDayOfMonth({
+          month,
+          year: y,
+          serviceReports: {
+            [y]: {
+              [month]: [
+                {
+                  id: 'e',
+                  hours: 1,
+                  minutes: 0,
+                  date: normalizeDateForStorage(at(0, 30)),
+                },
+              ],
+            },
+          },
+          publisher: 'regularPioneer',
+          creditLimit: { enabled: false, customLimitHours: 0 },
+        })
+        expect([logged[d - 2] ?? 0, logged[d - 1]]).toEqual([0, 60])
       })
     )
   }

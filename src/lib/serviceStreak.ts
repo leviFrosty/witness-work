@@ -117,7 +117,9 @@ function plansStreak(records: StreakRecords, now: Date): ServiceStreak {
     if (!isPlanned(ahead) || (i <= 0 && isKept(key))) continue
     due = {
       period: key,
-      endsAt: ahead.clone().add(2, 'days').toDate(),
+      // Back to the day's start: past a day that starts at 1:00 (clocks skip
+      // midnight), `ahead` keeps that hour.
+      endsAt: ahead.clone().add(2, 'days').startOf('day').toDate(),
     }
     break
   }
@@ -209,7 +211,10 @@ export function streakEndsSoon(streak: ServiceStreak, now: Date): boolean {
   if (!shownStreak(streak) || !streak.due) return false
   const { endsAt } = streak.due
   // Days on the calendar, so a day clocks change in still starts at midnight.
-  const from = moment(endsAt).subtract(streak.kind === 'plans' ? 1 : 7, 'days')
+  // From that day's start: when clocks skip midnight, `endsAt` is 1:00.
+  const from = moment(endsAt)
+    .subtract(streak.kind === 'plans' ? 1 : 7, 'days')
+    .startOf('day')
   return now.getTime() >= from.valueOf() && now < endsAt
 }
 

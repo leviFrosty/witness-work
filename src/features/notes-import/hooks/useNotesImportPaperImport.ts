@@ -1,7 +1,6 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Alert } from 'react-native'
 import * as ImagePicker from 'expo-image-picker'
-import * as FileSystem from 'expo-file-system/legacy'
 import { analytics } from '@/lib/analytics'
 import Haptics from '@/lib/haptics'
 import i18n, { type TranslationKey } from '@/lib/locales'
@@ -14,9 +13,12 @@ import {
 import { errorMessageKey } from '@/features/notes-import/lib/notesImportMessages'
 import {
   PAPER_PAGE_CONCURRENCY,
+  deletePaperPages,
+  firstUnreadPage,
   joinPaperPages,
   mapInOrder,
   preparePaperPage,
+  retriesPaperPage,
   stopsPaperBatch,
   type PaperPage,
 } from '@/features/notes-import/lib/notesImportPaper'
@@ -56,11 +58,27 @@ export async function pickPaperPages(
 }
 
 /**
+ * Picked pages until every one is read or the user skips the rest. `texts[i]`
+ * is page i's text once read (null until then); the first `inserted` pages are
+ * in the draft already.
+ */
+type PaperBatch = {
+  pages: readonly PaperPage[]
+  texts: (string | null)[]
+  inserted: number
+  truncated: boolean
+  source: PaperImportSource
+}
+
+/**
  * Import from Paper (ADR 0025): reads page photos into text with ww-api's
  * vision model and hands the joined text to `onText` for the user to edit
  * before importing. Pages are read a few at a time and the text keeps their
  * order. A failure that would repeat on every page (allowance, device
- * verification, connection) stops the batch; whatever was read is kept.
+ * verification, connection) stops the batch; whatever was read is kept. When
+ * pages are left unread for a reason that can pass (no connection, a busy
+ * service), the picked copies stay until Try Again reads them or the user skips
+ * them, so nothing has to be picked again.
  */
 export function useNotesImportPaperImport({
   maxPages,
@@ -78,12 +96,29 @@ export function useNotesImportPaperImport({
     total: number
   } | null>(null)
   const controller = useRef<AbortController | null>(null)
+  // The batch waiting on Try Again or Skip.
+  const kept = useRef<PaperBatch | null>(null)
+
+  // Leaving the composer stops a batch and drops kept pages.
+  useEffect(
+    () => () => {
+      controller.current?.abort()
+      if (kept.current) deletePaperPages(kept.current.pages)
+      kept.current = null
+    },
+    []
+  )
 
   const report = (
     source: PaperImportSource,
     outcome: Outcome,
     pageCount: number,
-    extra: { failed_pages?: number; error_code?: NotesImportErrorCode } = {}
+    extra: {
+      failed_pages?: number
+      error_code?: NotesImportErrorCode
+      retry?: boolean
+      retry_offered?: boolean
+    } = {}
   ) =>
     analytics.capture('notes_import_capture_finished', {
       method: 'paper',
@@ -93,48 +128,61 @@ export function useNotesImportPaperImport({
       ...extra,
     })
 
-  const read = async (
-    pages: readonly PaperPage[],
-    source: PaperImportSource
-  ) => {
-    if (!pages.length || controller.current) return
+  /** Puts the rest of what was read in the draft and deletes the copies. */
+  const finish = (batch: PaperBatch) => {
+    if (kept.current === batch) kept.current = null
+    const text = joinPaperPages(batch.texts.slice(batch.inserted))
+    batch.inserted = batch.texts.length
+    deletePaperPages(batch.pages)
+    if (text) {
+      void Haptics.success()
+      onText(text)
+    }
+  }
+
+  const run = async (batch: PaperBatch, retry: boolean) => {
+    const unread = batch.texts.flatMap((text, index) =>
+      text == null ? [index] : []
+    )
+    if (!unread.length || controller.current) return
+    kept.current = null
     const abort = new AbortController()
     controller.current = abort
-    setProgress({ done: 0, total: pages.length })
+    setProgress({ done: 0, total: unread.length })
     // Written from the page tasks, so kept off TypeScript's narrowing.
-    const batch = {
+    const attempt = {
       stopCode: null as NotesImportErrorCode | null,
       failed: 0,
-      truncated: false,
+      retryable: false,
     }
     try {
-      const texts = await mapInOrder(
-        pages,
+      await mapInOrder(
+        unread,
         PAPER_PAGE_CONCURRENCY,
-        async (page) => {
+        async (index) => {
           try {
-            const image = await preparePaperPage(page)
+            const image = await preparePaperPage(batch.pages[index])
             const result = await transcribeNotesPage({
               image,
               mimeType: 'image/jpeg',
               signal: abort.signal,
             })
             batch.truncated ||= result.truncated
-            return result.text
+            batch.texts[index] = result.text
           } catch (error) {
             const code =
               error instanceof NotesImportClientError ? error.code : 'unknown'
             if (abort.signal.aborted) {
               // A stopped batch aborts its other pages; keep the first cause.
-              batch.stopCode ??= 'cancelled'
+              attempt.stopCode ??= 'cancelled'
             } else if (stopsPaperBatch(code)) {
-              batch.stopCode ??= code
+              attempt.stopCode ??= code
               abort.abort()
             } else {
               logger.warn('Paper page failed', error)
             }
-            batch.failed += 1
-            return null
+            attempt.retryable ||= retriesPaperPage(code)
+            attempt.failed += 1
           } finally {
             setProgress((current) =>
               current ? { ...current, done: current.done + 1 } : current
@@ -143,72 +191,135 @@ export function useNotesImportPaperImport({
         },
         () => abort.signal.aborted
       )
-      const text = joinPaperPages(texts)
-      const { stopCode, failed, truncated } = batch
-      // Nothing to keep after a cancel; a stopped batch keeps what it read.
-      if (stopCode === 'cancelled') {
-        report(source, 'cancelled', pages.length)
-        return
-      }
+    } finally {
+      controller.current = null
+      setProgress(null)
+    }
+
+    const { stopCode, failed } = attempt
+    const pageCount = unread.length
+    // Nothing more goes in the draft after a cancel.
+    if (stopCode === 'cancelled') {
+      report(batch.source, 'cancelled', pageCount, { retry })
+      deletePaperPages(batch.pages)
+      return
+    }
+    const attemptText = joinPaperPages(unread.map((i) => batch.texts[i]))
+    const missing = batch.texts.filter((text) => text == null).length
+
+    if (
+      missing &&
+      (stopCode ? retriesPaperPage(stopCode) : attempt.retryable)
+    ) {
+      // Text up to the first unread page goes in now; the pages after it wait
+      // so the draft keeps page order.
+      const gap = firstUnreadPage(batch.texts, batch.inserted)
+      const text = joinPaperPages(batch.texts.slice(batch.inserted, gap))
+      batch.inserted = gap
       if (text) {
         void Haptics.success()
         onText(text)
       }
-      if (stopCode === 'limit_reached') {
-        report(source, 'limit_reached', pages.length)
-        onLimitReached()
-        return
-      }
-      if (stopCode) {
-        report(source, text ? 'partial' : 'failed', pages.length, {
-          failed_pages: failed,
-          error_code: stopCode,
-        })
-        Alert.alert(
-          i18n.t('notesImport_paperErrorTitle'),
-          i18n.t(errorMessageKey(stopCode) as TranslationKey)
-        )
-        return
-      }
-      if (!text) {
-        report(source, failed ? 'failed' : 'empty', pages.length, {
-          failed_pages: failed,
-        })
-        Alert.alert(
-          i18n.t(
-            failed
-              ? 'notesImport_paperErrorTitle'
-              : 'notesImport_photoEmptyTitle'
-          ),
-          i18n.t(failed ? 'notesImport_error' : 'notesImport_photoEmptyBody')
-        )
-        return
-      }
-      report(source, failed ? 'partial' : 'inserted', pages.length, {
+      kept.current = batch
+      report(batch.source, attemptText ? 'partial' : 'failed', pageCount, {
         failed_pages: failed,
+        error_code: stopCode ?? undefined,
+        retry,
+        retry_offered: true,
       })
-      if (failed || truncated) {
-        Alert.alert(
-          i18n.t('notesImport_paperPartialTitle'),
-          failed
-            ? // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
-              i18n.t('notesImport_paperPartialBody', {
-                count: failed,
-                total: pages.length,
-              })
-            : i18n.t('notesImport_paperTruncatedBody')
-        )
-      }
-    } finally {
-      controller.current = null
-      setProgress(null)
-      // The picker's copies hold the user's private notes; don't keep them.
-      for (const page of pages) {
-        void FileSystem.deleteAsync(page.uri, { idempotent: true }).catch(
-          () => {}
-        )
-      }
+      Alert.alert(
+        i18n.t('notesImport_paperErrorTitle'),
+        stopCode
+          ? i18n.t(errorMessageKey(stopCode) as TranslationKey)
+          : // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
+            i18n.t('notesImport_paperUnreadBody', {
+              count: missing,
+              total: batch.pages.length,
+            }),
+        [
+          {
+            text: i18n.t('notesImport_paperSkipUnread'),
+            style: 'cancel',
+            onPress: () => finish(batch),
+          },
+          {
+            text: i18n.t('common_tryAgain'),
+            onPress: () => void run(batch, true),
+          },
+        ],
+        { cancelable: false }
+      )
+      return
     }
+
+    const anyText = !!joinPaperPages(batch.texts)
+    finish(batch)
+    if (stopCode === 'limit_reached') {
+      report(batch.source, 'limit_reached', pageCount, { retry })
+      onLimitReached()
+      return
+    }
+    if (stopCode) {
+      report(batch.source, attemptText ? 'partial' : 'failed', pageCount, {
+        failed_pages: failed,
+        error_code: stopCode,
+        retry,
+      })
+      Alert.alert(
+        i18n.t('notesImport_paperErrorTitle'),
+        i18n.t(errorMessageKey(stopCode) as TranslationKey)
+      )
+      return
+    }
+    if (!anyText) {
+      report(batch.source, failed ? 'failed' : 'empty', pageCount, {
+        failed_pages: failed,
+        retry,
+      })
+      Alert.alert(
+        i18n.t(
+          failed ? 'notesImport_paperErrorTitle' : 'notesImport_photoEmptyTitle'
+        ),
+        i18n.t(failed ? 'notesImport_error' : 'notesImport_photoEmptyBody')
+      )
+      return
+    }
+    report(
+      batch.source,
+      failed ? (attemptText ? 'partial' : 'failed') : 'inserted',
+      pageCount,
+      { failed_pages: failed, retry }
+    )
+    if (missing || batch.truncated) {
+      Alert.alert(
+        i18n.t('notesImport_paperPartialTitle'),
+        missing
+          ? // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
+            i18n.t('notesImport_paperPartialBody', {
+              count: missing,
+              total: batch.pages.length,
+            })
+          : i18n.t('notesImport_paperTruncatedBody')
+      )
+    }
+  }
+
+  const read = async (
+    pages: readonly PaperPage[],
+    source: PaperImportSource
+  ) => {
+    if (!pages.length || controller.current) return
+    if (kept.current) finish(kept.current)
+    await run(
+      {
+        pages,
+        texts: pages.map(() => null),
+        inserted: 0,
+        truncated: false,
+        source,
+      },
+      false
+    )
   }
 
   const choose = async () => {

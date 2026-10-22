@@ -79,6 +79,47 @@ export const stopsPaperBatch = (code: NotesImportErrorCode): boolean =>
   BATCH_STOPPING_CODES.has(code)
 
 /**
+ * Failures a later attempt can get past (a lost connection, a busy or briefly
+ * unavailable service), so the unread pages are kept for Try Again.
+ */
+const RETRYABLE_CODES = new Set<NotesImportErrorCode>([
+  'network',
+  'unavailable',
+  'attestation_unavailable',
+  'active_cap',
+  'model_error',
+  'unknown',
+])
+
+export const retriesPaperPage = (code: NotesImportErrorCode): boolean =>
+  RETRYABLE_CODES.has(code)
+
+/**
+ * The first page at or after `from` that hasn't been read (`null`), or
+ * `texts.length` when all of them have. Text up to there can go into the draft
+ * now and keep page order; text after it waits for the pages before it.
+ */
+export const firstUnreadPage = (
+  texts: readonly (string | null)[],
+  from: number
+): number => {
+  let index = from
+  while (index < texts.length && texts[index] != null) index += 1
+  return index
+}
+
+/**
+ * Deletes the picker's copies of the pages. They hold the user's private notes,
+ * so they go once the pages are read or skipped; the launch cleanup of
+ * `ImagePicker/` catches any an app kill left behind.
+ */
+export const deletePaperPages = (pages: readonly PaperPage[]) => {
+  for (const page of pages) {
+    void FileSystem.deleteAsync(page.uri, { idempotent: true }).catch(() => {})
+  }
+}
+
+/**
  * Runs `task` over `items` with at most `limit` in flight, keeping results in
  * input order. Stops starting new items once `shouldStop` returns true.
  */

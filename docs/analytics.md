@@ -328,7 +328,11 @@ with `method: paper`, `paper_source` (`onboarding` or `composer`), `page_count`,
 and `outcome`: `inserted`, `partial` (some pages read, with `failed_pages`),
 `empty`, `cancelled`, `failed`, or `limit_reached` (no Import Credits left, so
 no page was read). A stopped batch adds `error_code` (for example
-`transcribe_limit`, `network`, `attestation_failed`, `suspended`). The onboarding chooser's
+`transcribe_limit`, `network`, `attestation_failed`, `suspended`). When pages
+are left unread for a reason that can pass (no connection, a busy service), the
+batch adds `retry_offered: true` and the app keeps the pages for Try Again; each
+Try Again sends its own event with `retry: true` and `page_count` of the pages it
+read again. The onboarding chooser's
 `import_type_selected` uses `import_type: paper`, and
 `onboarding_import_options_viewed` adds `paper_available`. Page images and their
 text are never sent.

@@ -77,7 +77,9 @@ export function extractProfileFromPreferences(
   const profileValues: Record<string, unknown> = {}
   for (const [key, value] of Object.entries(preferences)) {
     if (PROFILE_KEY_SET.has(key)) {
-      profileValues[key] = value
+      // A key left as undefined by an earlier run (the in-memory store keeps
+      // it) has nothing to move, and copying it would blank the profile.
+      if (value !== undefined) profileValues[key] = value
     } else {
       nextPrefs[key] = value
     }

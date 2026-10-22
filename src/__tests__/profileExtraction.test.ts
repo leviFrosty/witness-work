@@ -101,4 +101,19 @@ describe('extractProfileFromPreferences (boot-runner one-shot)', () => {
     })
     expect(result.profile.updatedAt).toEqual({})
   })
+
+  it('moves nothing for profile keys left behind as undefined', () => {
+    // An earlier run in the same session leaves the in-memory keys set to
+    // undefined; copying them would blank the profile's avatar.
+    const prefs = {
+      role: 'publisher',
+      name: undefined,
+      avatar: undefined,
+      customAvatarBackground: undefined,
+      hasCompletedProfileSetup: undefined,
+    }
+    const result = extractProfileFromPreferences(prefs)
+    expect(result.profile.values).toEqual({})
+    expect(result.preferences).toEqual({ role: 'publisher' })
+  })
 })

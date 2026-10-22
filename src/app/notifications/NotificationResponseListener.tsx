@@ -38,6 +38,7 @@ import {
 import useServiceReport from '@/stores/serviceReport'
 import { openReminderTarget } from '@/app/notifications/reminderTargets'
 import { reminderTrayId } from '@/app/notifications/useReminderNotifications'
+import { takeHandedOffNotificationResponse } from '@/app/launch/reloadHandoff'
 
 type Pending =
   | { type: 'reminder'; reminder: ReminderData }
@@ -194,7 +195,11 @@ export default function NotificationResponseListener() {
       setRetry(0)
     }
 
-    const initial = Notifications.getLastNotificationResponse()
+    // After the launch's layout-direction reload, native no longer has the
+    // tap that launched the app; the launch before the reload handed it off.
+    const initial =
+      Notifications.getLastNotificationResponse() ??
+      takeHandedOffNotificationResponse()
     if (initial) accept(initial, true)
     const subscription = Notifications.addNotificationResponseReceivedListener(
       (response) => accept(response, false)

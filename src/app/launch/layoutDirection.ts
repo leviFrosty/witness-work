@@ -4,10 +4,17 @@ import { _i18n } from '@/lib/locales'
 import { logger } from '@/lib/logger'
 import { launchRead, reloadApp } from '@/lib/hotUpdater'
 import { applyLayoutDirectionAtLaunch } from '@/lib/rtl'
+import {
+  dropLaunchHandoff,
+  handOffLaunchBeforeReload,
+  restoreLaunchAfterReload,
+} from '@/app/launch/reloadHandoff'
 
 // Imported right after `@/lib/locales` has picked the Language, before
 // anything renders. React Native fixes the layout direction when the JS loads,
 // so a direction that doesn't match the Language costs one reload (ADR 0026).
+// A launch after that reload opens the tap or link that launched the one before.
+restoreLaunchAfterReload()
 let reloadDue = false
 applyLayoutDirectionAtLaunch(_i18n.locale, () => {
   reloadDue = true
@@ -108,7 +115,16 @@ export function useLayoutDirectionReload(): boolean {
   const [due, setDue] = useState(reloadDue)
   useEffect(() => {
     if (!reloadDue) return
-    return reloadWhenReady(reloadApp, launchRead, () => setDue(false))
+    return reloadWhenReady(
+      // The reloaded launch opens what launched this one.
+      () => handOffLaunchBeforeReload().then(reloadApp),
+      launchRead,
+      () => {
+        // No reload after all: this launch opens them itself.
+        dropLaunchHandoff()
+        setDue(false)
+      }
+    )
   }, [])
   return due
 }

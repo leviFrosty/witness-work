@@ -24,6 +24,14 @@ export function stopRecordingLaunchLinks() {
   recording = null
 }
 
+/**
+ * Opens `url` at launch as if it had come while the app started, unless a link
+ * already has: the link a launch handed across its reload.
+ */
+export function adoptLaunchLink(url: string) {
+  startupLink ??= url
+}
+
 /** The newest link that came while the app was starting, if any. */
 export function linkSinceLaunch(): string | null {
   return startupLink

@@ -1,0 +1,30 @@
+# seed: fresh
+# assert: __WW_DEV__.stores.preferences.getState().logsHours === true
+# assert: __WW_DEV__.stores.preferences.getState().hoursLoggingAsked === true
+# assert: __WW_DEV__.stores.preferences.getState().onboardingStepId === 'dataProtection'
+appId: com.leviwilkerson.jwtimedev
+name: Onboarding asks a Kingdom Publisher whether to log hours
+---
+- extendedWaitUntil:
+    visible: Your field service assistant.
+    timeout: 60000
+- tapOn: Get Started
+# The feature tour.
+- tapOn: Skip
+- tapOn: Start fresh
+- tapOn: Continue as Kingdom Publisher
+- extendedWaitUntil:
+    visible: Do you want to log your hours?
+    timeout: 10000
+# Nothing is chosen yet, so Continue stays on the question.
+- tapOn:
+    text: Continue
+    traits: button
+- assertVisible: Do you want to log your hours?
+- tapOn: Yes, log my hours
+- tapOn:
+    text: Continue
+    traits: button
+- extendedWaitUntil:
+    true: __WW_DEV__.stores.preferences.getState().onboardingStepId === 'dataProtection'
+    timeout: 10000

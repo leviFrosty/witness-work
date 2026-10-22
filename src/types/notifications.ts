@@ -11,6 +11,8 @@ export type NotificationKind =
   /** A local Follow-up, Plan, or returning Contact reminder that fired. */
   | 'reminder'
   | 'auxiliary_month'
+  /** Asks a Kingdom Publisher once whether to log hours. */
+  | 'hours_logging'
   | 'whats_new'
   | 'update_reveal'
   | 'notes_import'

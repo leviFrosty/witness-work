@@ -1124,6 +1124,13 @@ export const PREFERENCE_DEFAULTS = {
    */
   logsHours: false,
   /**
+   * The User has answered whether to log hours: in onboarding, in the tray
+   * question, or by switching **Hours Logging** in Settings. Retires the tray
+   * question, which asks a Kingdom Publisher once. Syncable, so another device
+   * doesn't ask again.
+   */
+  hoursLoggingAsked: false,
+  /**
    * When true, fractional credit minutes are included in the rollover amount
    * (the pre-v1.44 behavior). Off by default: credit time is not eligible for
    * rollover, so only standard-time minutes are moved. Syncable.

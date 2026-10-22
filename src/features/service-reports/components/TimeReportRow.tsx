@@ -14,6 +14,7 @@ import SwipeableDelete from '@/components/ui/swipeableActions/Delete'
 import { Alert, View } from 'react-native'
 import i18n, { type TranslationKey } from '@/lib/locales'
 import useServiceReport from '@/stores/serviceReport'
+import { timeEntryMode } from '@/lib/serviceReport'
 import Text from '@/components/ui/MyText'
 import { formatDate } from '@/lib/dates'
 import { momentStoredDate, storedDateToLocalDate } from '@/lib/normalizeDate'
@@ -95,7 +96,10 @@ const TimeReportRow = ({ report, onPress, onNavigate }: TimeReportRowProps) => {
           analytics.capture('time_rollover_undone')
         } else {
           deleteServiceReport(report)
-          analytics.capture('time_entry_deleted', { source: 'time_report_row' })
+          analytics.capture('time_entry_deleted', {
+            source: 'time_report_row',
+            entry_mode: timeEntryMode(report),
+          })
         }
         toast.show(i18n.t('success'), {
           message: i18n.t('deleted'),
@@ -171,6 +175,7 @@ const TimeReportRow = ({ report, onPress, onNavigate }: TimeReportRowProps) => {
     })
     analytics.capture('time_entry_updated', {
       source: 'time_report_row_menu',
+      entry_mode: timeEntryMode(report),
       has_category: !!category,
       has_note: !!report.note,
     })

@@ -15,6 +15,9 @@ name: Onboarding explains Buddies, and Continue moves on without inviting
 - tapOn: Skip
 - tapOn: Start fresh
 - tapOn: Continue as Kingdom Publisher
+# Whether to log hours.
+- tapOn: No, just check off each month
+- tapOn: Continue
 # Data protection.
 - tapOn: Continue
 - extendedWaitUntil:

@@ -38,6 +38,7 @@ vi.mock('@/lib/serviceReport', () => ({
     entry ? { report: entry } : undefined,
   getMonthsReports: () => [],
   adjustedMinutesForSpecificMonth: () => ({ value: 0 }),
+  timeEntryMode: () => 'hours',
 }))
 vi.mock('@/lib/monthlyGoals', () => ({ resolveMonthlyGoalHours: () => 0 }))
 vi.mock('@/lib/roleHistory', () => ({

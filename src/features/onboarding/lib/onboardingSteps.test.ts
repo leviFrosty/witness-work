@@ -33,12 +33,13 @@ const ctx = (
 const ids = (c: StepShowIfContext) => visibleOnboardingSteps(c).map((s) => s.id)
 
 describe('visibleOnboardingSteps', () => {
-  it('asks a publisher for maps but not a report method', () => {
+  it('asks a publisher whether to log hours, and for maps but not a report method', () => {
     expect(ids(ctx('publisher'))).toEqual([
       'hero',
       'featureTour',
       'pickUpWhereLeftOff',
       'publisherType',
+      'hoursLogging',
       'dataProtection',
       'buddies',
       'notifications',
@@ -66,6 +67,27 @@ describe('visibleOnboardingSteps', () => {
       'profileSetup',
       'founderNote',
     ])
+  })
+
+  it('keeps the hours question in place once a publisher says yes', () => {
+    const yes = ids(ctx('publisher', { logsHours: true }))
+    expect(yes.indexOf('hoursLogging')).toBe(yes.indexOf('publisherType') + 1)
+    expect(yes).not.toContain('planMonth')
+  })
+
+  it('plans the month for a publisher logging hours toward a goal', () => {
+    const steps = ids(
+      ctx('publisher', {
+        logsHours: true,
+        publisherHours: { ...ctx('publisher').publisherHours, publisher: 10 },
+      })
+    )
+    expect(steps.indexOf('planMonth')).toBe(steps.indexOf('hoursLogging') + 1)
+  })
+
+  it('never asks an hours-mode role whether to log hours', () => {
+    expect(ids(ctx('regularAuxiliary'))).not.toContain('hoursLogging')
+    expect(ids(ctx('custom'))).not.toContain('hoursLogging')
   })
 
   it('drops the backfill step for a September install', () => {

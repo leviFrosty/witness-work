@@ -1,6 +1,7 @@
 import moment from 'moment'
 import {
   effectiveHasAnnualGoal,
+  getEntryMode,
   tracksHours,
   tracksTenure,
 } from '@/lib/publisherCapabilities'
@@ -11,6 +12,7 @@ export type StepId =
   | 'featureTour'
   | 'pickUpWhereLeftOff'
   | 'publisherType'
+  | 'hoursLogging'
   | 'pioneerDate'
   | 'planMonth'
   | 'dataProtection'
@@ -63,6 +65,13 @@ export const onboardingSteps: StepDef[] = [
   { id: 'featureTour', countsTowardProgress: false },
   { id: 'pickUpWhereLeftOff', countsTowardProgress: false },
   { id: 'publisherType', countsTowardProgress: true },
+  {
+    id: 'hoursLogging',
+    countsTowardProgress: true,
+    // The Kingdom Publisher reports only whether they shared, so the hours
+    // surfaces stay hidden unless they say they want them (Hours Logging).
+    showIf: ({ publisher }) => getEntryMode(publisher) === 'checkbox',
+  },
   {
     id: 'pioneerDate',
     countsTowardProgress: true,

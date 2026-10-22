@@ -1,0 +1,23 @@
+# seed: publisher
+# setup: __WW_DEV__.stores.preferences.getState().set({ logsHours: false, hoursLoggingAsked: false })
+# assert: __WW_DEV__.stores.preferences.getState().logsHours === true
+# assert: __WW_DEV__.stores.preferences.getState().hoursLoggingAsked === true
+appId: com.leviwilkerson.jwtimedev
+name: The tray asks a Kingdom Publisher once whether to log hours
+---
+- tapOn:
+    id: notifications-bell
+- extendedWaitUntil:
+    visible: Do you want to log your hours?
+    timeout: 10000
+# The row is one element whose label starts with the title, so its buttons
+# aren't in the tree: tapping the row runs the first action, Log My Hours.
+- tapOn:
+    text: Do you want to log your hours?
+    index: 0
+# The tray closes, and Home's Service Report card gains Add Time.
+- extendedWaitUntil:
+    visible:
+      text: Add Time
+      traits: button
+    timeout: 10000

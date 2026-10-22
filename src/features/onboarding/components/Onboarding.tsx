@@ -11,6 +11,7 @@ import { View } from 'react-native'
 import { calendarBridgeAvailable } from '../../../../modules/calendar-bridge'
 import StepOne from '@/features/onboarding/components/steps/One'
 import StepTwo from '@/features/onboarding/components/steps/Two'
+import StepHoursLogging from '@/features/onboarding/components/steps/HoursLogging'
 import StepThree from '@/features/onboarding/components/steps/Three'
 import CalendarSync from '@/features/onboarding/components/steps/CalendarSync'
 import StepDefaultNav from '@/features/onboarding/components/steps/DefaultNav'
@@ -60,6 +61,7 @@ const STEP_COMPONENTS: Record<StepId, ComponentType<StepProps>> = {
   featureTour: FeatureTour,
   pickUpWhereLeftOff: PickUpWhereLeftOff,
   publisherType: StepTwo,
+  hoursLogging: StepHoursLogging,
   pioneerDate: ProfileSetupPioneerDate,
   planMonth: PlanMonth,
   dataProtection: DataProtection,
@@ -192,6 +194,9 @@ const OnBoarding = () => {
       elapsed_ms: Date.now() - stepViewedAt.current,
       next_step_id: visibleSteps[stepIndex + 1]?.id ?? 'complete',
       publisher_role: preferences.role,
+      ...(visibleSteps[stepIndex]?.id === 'hoursLogging'
+        ? { selected_option: preferences.logsHours ? 'yes' : 'no' }
+        : {}),
       ...(visibleSteps[stepIndex]?.id === 'defaultNav'
         ? { selected_option: preferences.defaultNavigationMapProvider }
         : {}),

@@ -414,7 +414,11 @@ const VisitFormScreen = ({
     else addConversation(visit)
     toast.show(i18n.t('success'), {
       message: i18n.t(
-        conversation.notAtHome ? 'addedNotAtHome' : 'addedConversation'
+        params.visitToEditId
+          ? 'updated'
+          : conversation.notAtHome
+            ? 'addedNotAtHome'
+            : 'addedConversation'
       ),
       native: true,
     })

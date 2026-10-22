@@ -1,4 +1,4 @@
-import { Platform, View } from 'react-native'
+import { Platform, useWindowDimensions, View } from 'react-native'
 import {
   Activity as ActivityIcon,
   Hash as HashIcon,
@@ -57,6 +57,10 @@ export default function AccountStatusSection({
   onRetry?: () => void
 }) {
   const theme = useTheme()
+  // The account number is one long unbreakable word. Beside the label it
+  // leaves the label no room once text is enlarged ("Accou / nt / Numb / er"),
+  // so from there it goes under the label.
+  const numberUnderLabel = useWindowDimensions().fontScale > 1
   const accountId =
     ('accountId' in overview ? overview.accountId : null) ?? null
   const statusColor =
@@ -86,7 +90,7 @@ export default function AccountStatusSection({
           leftIcon={HashIcon}
           label={i18n.t('account_number')}
           info={i18n.t('account_numberInfo')}
-          controlWidth='auto'
+          controlWidth={numberUnderLabel ? 'full' : 'auto'}
           style={{ justifyContent: 'space-between' }}
         >
           <Text
@@ -94,7 +98,7 @@ export default function AccountStatusSection({
             testID='account-number'
             style={{
               flexShrink: 1,
-              textAlign: alignText('end'),
+              textAlign: alignText(numberUnderLabel ? 'start' : 'end'),
               fontFamily: accountId ? MONO : theme.fonts.regular,
               fontSize: theme.fontSize('sm'),
               color: theme.colors.textAlt,

@@ -122,6 +122,7 @@ const PlansPreferencesSection = () => {
         />
         <InputRowButton
           lastInSection
+          wrapValue
           label={i18n.t('availability.settingsRow')}
           onPress={() => setAvailabilityOpen(true)}
         >

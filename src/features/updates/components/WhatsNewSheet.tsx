@@ -59,16 +59,22 @@ export const WhatsNewContent = ({
         data={notes}
         renderItem={({ item }) => (
           <View style={{ gap: 10, minHeight: 5 }} key={item.date.toString()}>
+            {/* With large text the release's date wraps under its version and
+            name instead of running off the edge ("13 days" over the pill). */}
             <View
               style={{
                 flexDirection: 'row',
+                flexWrap: 'wrap',
                 justifyContent: 'space-between',
                 alignItems: 'center',
+                rowGap: 4,
               }}
             >
               <View
                 style={{
                   flexDirection: 'row',
+                  flexWrap: 'wrap',
+                  flexShrink: 1,
                   alignItems: 'center',
                   gap: 7,
                 }}

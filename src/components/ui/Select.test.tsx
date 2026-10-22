@@ -3,6 +3,7 @@ import { act, create, type ReactTestRenderer } from 'react-test-renderer'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 const platform = vi.hoisted(() => ({ android: false }))
+const dims = vi.hoisted(() => ({ fontScale: 1 }))
 const { slot } = vi.hoisted(() => ({
   slot: (name: string) => (props: React.PropsWithChildren) =>
     React.createElement(name, props),
@@ -12,7 +13,7 @@ vi.mock('react-native', () => ({
   Platform: { OS: 'ios' },
   Pressable: 'Pressable',
   View: 'View',
-  useWindowDimensions: () => ({ fontScale: 1 }),
+  useWindowDimensions: () => dims,
 }))
 vi.mock('lucide-react-native', () => ({ ChevronDown: 'ChevronDown' }))
 vi.mock('@/assets/icons/check.xml', () => ({ default: 1 }))
@@ -88,6 +89,7 @@ vi.mock('@/stores/preferences', () => ({
     selector({ colorScheme: 'dark' }),
 }))
 vi.mock('@/components/ui/MyText', () => ({ default: 'Text' }))
+vi.mock('@/components/ui/WholeWordsText', () => ({ default: 'WholeWordsText' }))
 vi.mock('@/components/ui/PointerHover', () => ({
   default: ({ children }: { children: unknown }) => children,
   HoverTint: () => null,
@@ -225,5 +227,26 @@ describe('iOS Select', () => {
     await act(async () => toggles[0].props.onIsOnChange(true))
     expect(onChange).toHaveBeenCalledExactlyOnceWith(data[0])
     expect(onChange.mock.calls[0][0]).toBe(data[0])
+  })
+})
+
+describe('Select value text', () => {
+  afterEach(() => {
+    dims.fontScale = 1
+  })
+
+  it('keeps the value on one line at the default text size', async () => {
+    await render()
+    const value = root.root.findByType('Text' as never)
+    expect(value.props.numberOfLines).toBe(1)
+    expect(root.root.findAllByType('WholeWordsText' as never)).toHaveLength(0)
+  })
+
+  it('wraps the value between whole words once text is enlarged', async () => {
+    dims.fontScale = 1.3
+    await render()
+    const value = root.root.findByType('WholeWordsText' as never)
+    expect(value.props.numberOfLines).toBeUndefined()
+    expect(value.props.children).toBe('Second')
   })
 })

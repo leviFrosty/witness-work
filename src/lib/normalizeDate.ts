@@ -160,6 +160,24 @@ export const localDayKey = (localDay: Date | string | moment.Moment): string =>
   moment(localDay).format('YYYY-MM-DD')
 
 /**
+ * Whole days from `from`'s local date to `to`'s, negative when `to` is earlier.
+ * Compares dates rather than the time between their midnights: where clocks
+ * change at midnight (Havana, Santiago, Cairo), that day starts at 1:00 and the
+ * day after it is only 23 hours away, so a `diff` of `startOf('day')`s comes up
+ * a day short.
+ */
+export const calendarDaysBetween = (
+  from: moment.MomentInput,
+  to: moment.MomentInput
+): number => {
+  const day = (input: moment.MomentInput) => {
+    const date = moment(input)
+    return Date.UTC(date.year(), date.month(), date.date())
+  }
+  return Math.round((day(to) - day(from)) / 86_400_000)
+}
+
+/**
  * True when a stored calendar-day anchor falls on the given local calendar day.
  * `localDay` expresses a day in _local_ mode — a `YYYY-MM-DD` string (e.g.
  * CalendarDay's `dateString`), a local-mode Date, or a local-mode moment

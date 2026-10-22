@@ -1,4 +1,5 @@
 import moment from 'moment'
+import { calendarDaysBetween } from '@/lib/normalizeDate'
 import { isCountableEntry } from '@/lib/serviceReport'
 import { TimeEntriesByYear } from '@/types/timeEntry'
 
@@ -65,9 +66,7 @@ export const daysSinceInstallBucket = (
   installedOn: moment.MomentInput,
   now: moment.MomentInput = new Date()
 ): string => {
-  const days = moment(now)
-    .startOf('day')
-    .diff(moment(installedOn).startOf('day'), 'days')
+  const days = calendarDaysBetween(installedOn, now)
   if (!Number.isFinite(days) || days < 0) return 'unknown'
   if (days === 0) return '0'
   if (days === 1) return '1'

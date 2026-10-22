@@ -88,7 +88,7 @@ const dayLabel = (date: Date) => {
   const day = moment(date).startOf('day')
   const today = moment().startOf('day')
   if (day.isSame(today)) return i18n.t('today')
-  if (day.isSame(today.clone().add(1, 'day'))) return i18n.t('tomorrow')
+  if (day.isSame(today.clone().add(1, 'day'), 'day')) return i18n.t('tomorrow')
   if (day.isSame(today, 'year')) return formatWeekdayMonthDayCompact(day)
   return formatDate(day, { style: 'medium' })
 }

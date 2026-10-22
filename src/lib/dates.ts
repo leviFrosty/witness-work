@@ -1,6 +1,9 @@
 import moment from 'moment'
 import { getCalendars, getLocales } from 'expo-localization'
-import { DEFAULT_START_TIME_IN_MINUTES } from '@/lib/normalizeDate'
+import {
+  calendarDaysBetween,
+  DEFAULT_START_TIME_IN_MINUTES,
+} from '@/lib/normalizeDate'
 import { loadMomentLocale } from '@/lib/momentLocales'
 import { RLM } from '@/lib/digits'
 import { localizeAppDateText, setNumberConventions } from '@/lib/numbers'
@@ -638,8 +641,8 @@ export const formatRelative = (
 ): string => localizeDisplayDate(moment(input).fromNow(options?.withoutSuffix))
 
 /**
- * Calendar-relative time ("Today at 9:00 AM", "Yesterday", "06/11/2026")
- * wrapping moment's `calendar`. `referenceTime` defaults to now; `formats`
+ * Calendar-relative time ("Today at 9:00 AM", "Yesterday", "06/11/2026") in
+ * moment's `calendar` wording. `referenceTime` defaults to now; `formats`
  * overrides the per-bucket patterns (use locale tokens like `LT`).
  */
 export const formatCalendar = (
@@ -648,10 +651,33 @@ export const formatCalendar = (
     referenceTime?: moment.MomentInput
     formats?: moment.CalendarSpec
   }
-): string =>
-  localizeDisplayDate(
-    moment(input).calendar(options?.referenceTime, options?.formats)
-  )
+): string => {
+  const date = moment(input)
+  const now = moment(options?.referenceTime ?? undefined)
+  // moment's own `calendar` buckets by hours since midnight, which is a day
+  // off for the first hour after a day without a midnight.
+  const days = calendarDaysBetween(now, date)
+  const bucket: moment.CalendarKey =
+    days < -6
+      ? 'sameElse'
+      : days < -1
+        ? 'lastWeek'
+        : days === -1
+          ? 'lastDay'
+          : days === 0
+            ? 'sameDay'
+            : days === 1
+              ? 'nextDay'
+              : days < 7
+                ? 'nextWeek'
+                : 'sameElse'
+  const spec = options?.formats?.[bucket]
+  const pattern =
+    typeof spec === 'function'
+      ? spec.call(date, now)
+      : (spec ?? date.localeData().calendar(bucket, date, now))
+  return localizeDisplayDate(date.format(pattern))
+}
 
 /**
  * A plan's start time rendered via the active locale's `LT` token ("9:00 AM"

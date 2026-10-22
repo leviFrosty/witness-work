@@ -1,5 +1,6 @@
 import moment from 'moment'
-import { isStoredDateOnLocalDay } from '@/lib/normalizeDate'
+import { localDayKey, storedDayKey } from '@/lib/normalizeDate'
+import { dayPlansOnLocalDay } from '@/lib/dayPlansByDay'
 import { DayPlan, TimeEntriesByYear } from '@/types/timeEntry'
 import { Publisher } from '@/types/publisher'
 import { tracksHours } from '@/lib/publisherCapabilities'
@@ -227,8 +228,9 @@ export function buildCalendar(
     const isPast = d.isSameOrBefore(now, 'day')
 
     // Reports only live in the current month bucket; skip the cross-month tail.
+    const dayKey = localDayKey(d)
     const reportsForDay = isCurrentMonth
-      ? monthReports.filter((r) => isStoredDateOnLocalDay(r.date, d))
+      ? monthReports.filter((r) => storedDayKey(r.date) === dayKey)
       : []
     const wentInService = reportsForDay.some(isCountableEntry)
     const workedMinutes = reportsForDay.reduce(
@@ -236,9 +238,7 @@ export function buildCalendar(
       0
     )
 
-    const dayPlansForDay = args.dayPlans.filter((p) =>
-      isStoredDateOnLocalDay(p.date, d)
-    )
+    const dayPlansForDay = dayPlansOnLocalDay(args.dayPlans, d)
     const recurringPlansForDay = getPlansIntersectingDay(
       dDate,
       args.recurringPlans

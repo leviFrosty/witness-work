@@ -15,9 +15,9 @@ import { formatMinutesCompact } from '@/lib/minutes'
 import { categoryLabel } from '@/lib/planTypeLabel'
 import {
   combineDateAndStartTime,
-  isStoredDateOnLocalDay,
   normalizeDateForStorage,
 } from '@/lib/normalizeDate'
+import { dayPlansOnLocalDay } from '@/lib/dayPlansByDay'
 import {
   getEffectiveMinutesForRecurringPlan,
   getPlansIntersectingDay,
@@ -198,14 +198,12 @@ function planItems(
     // Every Plan on the day is shown, as on the Schedule, including ones the
     // forecast doesn't count.
     const instances = [
-      ...args.dayPlans
-        .filter((plan) => isStoredDateOnLocalDay(plan.date, day))
-        .map((plan) => ({
-          id: plan.id,
-          plan,
-          minutes: plan.minutes,
-          startTime: plan.anytime ? undefined : plan.startTimeInMinutes,
-        })),
+      ...dayPlansOnLocalDay(args.dayPlans, day).map((plan) => ({
+        id: plan.id,
+        plan,
+        minutes: plan.minutes,
+        startTime: plan.anytime ? undefined : plan.startTimeInMinutes,
+      })),
       ...getPlansIntersectingDay(dayDate, args.recurringPlans).map((plan) => ({
         id: `${plan.id}:${day.format('YYYY-MM-DD')}`,
         plan,

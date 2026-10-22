@@ -1,5 +1,5 @@
 import moment from 'moment'
-import { isStoredDateOnLocalDay } from '@/lib/normalizeDate'
+import { localDayKey, storedDayKey } from '@/lib/normalizeDate'
 import {
   adjustedMinutesForSpecificMonth,
   getMonthsReports,
@@ -210,8 +210,9 @@ export function buildReport(
   const monthReports = getMonthsReports(args.serviceReports, month, year)
   const sharedReports = monthReports.filter(isCountableEntry)
   const hasReportedThisMonth = sharedReports.length > 0
-  const hasReportedToday = sharedReports.some((r) =>
-    isStoredDateOnLocalDay(r.date, now)
+  const todayKey = localDayKey(now)
+  const hasReportedToday = sharedReports.some(
+    (r) => storedDayKey(r.date) === todayKey
   )
 
   const adjusted = adjustedMinutesForSpecificMonth(
@@ -309,16 +310,16 @@ export function buildReport(
       ? 'reportedToday'
       : 'reportedThisMonth'
 
-  const monthStart = now.clone().startOf('month')
-  const monthEnd = now.clone().endOf('month')
+  const monthStart = now.clone().startOf('month').valueOf()
+  const monthEnd = now.clone().endOf('month').valueOf()
   // A Not at Home is an attempt, not a conversation (CONTEXT.md), as Progress
-  // and Badges count it.
-  const monthConversationCount = args.conversations.filter(
-    (c) =>
-      isOwnVisit(c) &&
-      !c.notAtHome &&
-      moment(c.date).isBetween(monthStart, monthEnd, undefined, '[]')
-  ).length
+  // and Badges count it. Compared as instants: parsing every visit with moment
+  // was most of a snapshot's cost on an account with years of visits.
+  const monthConversationCount = args.conversations.filter((c) => {
+    if (!isOwnVisit(c) || c.notAtHome) return false
+    const time = new Date(c.date).getTime()
+    return time >= monthStart && time <= monthEnd
+  }).length
   // The same figure Home's Studies card and the Service Report show.
   const monthBibleStudyCount = getStudiesForGivenMonth({
     contacts: args.contacts,

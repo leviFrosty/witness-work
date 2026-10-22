@@ -38,6 +38,7 @@ import { isRetryableGeocodeFailure } from '@/lib/geocodeRetry'
 import { useGeocodeRetry } from '@/stores/geocodeRetry'
 import useDiscardChangesGuard from '@/hooks/useDiscardChangesGuard'
 import useDraftChanged from '@/hooks/useDraftChanged'
+import { contactDraftForChanges } from '@/features/contacts/lib/contactDraft'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Contact Form'>
 
@@ -136,7 +137,9 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
     }
   )
 
-  const allowLeave = useDiscardChangesGuard(useDraftChanged(contact))
+  const allowLeave = useDiscardChangesGuard(
+    useDraftChanged(contactDraftForChanges(contact, contactToUpdate))
+  )
 
   /**
    * Consent gate (`docs/gdpr-mode-research.md` §9.5). In data protection mode a

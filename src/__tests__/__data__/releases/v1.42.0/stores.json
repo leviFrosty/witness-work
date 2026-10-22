@@ -1,0 +1,663 @@
+{
+ "preferences": {
+  "state": {
+   "role": "regularPioneer",
+   "publisherHours": {
+    "publisher": 0,
+    "regularAuxiliary": 30,
+    "regularPioneer": 50,
+    "circuitOverseer": 50,
+    "specialPioneer": 100,
+    "custom": 40
+   },
+   "monthlyGoalOverrides": {
+    "2025-12": 30
+   },
+   "onboardingComplete": true,
+   "onboardingIntents": [],
+   "tenureStartDate": "2025-09-01T05:00:00.000Z",
+   "installedOn": "2025-06-01T17:00:00.000Z",
+   "contactSort": "az",
+   "contactSortDirection": "desc",
+   "contactsFilters": [],
+   "hasCompletedMapOnboarding": false,
+   "calledGoecodeApiTimes": 0,
+   "lastTimeRequestedAReview": null,
+   "defaultNavigationMapProvider": "google",
+   "lastAppVersion": "1.42.0",
+   "returnVisitTimeOffset": null,
+   "returnVisitNotificationOffset": null,
+   "returnVisitAlwaysNotify": true,
+   "planNotificationOffset": null,
+   "planAlwaysNotify": false,
+   "displayDetailsOnProgressBarHomeScreen": false,
+   "monthlyRoutineHasShownInvalidMonthAlert": false,
+   "hideDonateHeart": true,
+   "supporterNudgeDismissedAt": null,
+   "hideSupporterNudge": false,
+   "supporterNudgeAvailableSince": null,
+   "devSupporterNudgeForceShow": false,
+   "howToAddPlan": true,
+   "lastBackupDate": "2025-10-01T02:00:00.000Z",
+   "remindMeAboutBackups": true,
+   "backupNotificationFrequencyAsDays": 120,
+   "userSpecifiedHasAnnualGoal": "default",
+   "fontSizeOffset": 2,
+   "hasMigratedCustomFieldsToIds": true,
+   "hasMigratedTagsToCategories": true,
+   "hasMigratedProfileFromPreferences": true,
+   "hasCollapsedLdcIntoCategory": true,
+   "hasAttemptedToMigrateToMmkv": false,
+   "developerTools": false,
+   "prefillAddress": {
+    "enabled": true
+   },
+   "defaultPhoneRegionCode": null,
+   "contactInformationOrder": [],
+   "showContactPhone": true,
+   "showContactEmail": true,
+   "scheduleScreenElements": {
+    "assistant": true
+   },
+   "scheduleScreenElementsOrder": [
+    "assistant"
+   ],
+   "homeScreenElements": {
+    "approachingConversations": true,
+    "monthlyRoutine": true,
+    "tabletServiceYearSummary": true,
+    "thisWeek": true,
+    "serviceReport": true,
+    "timer": false,
+    "contacts": true,
+    "didYouKnow": false
+   },
+   "homeScreenElementsOrder": [
+    "approachingConversations",
+    "tabletServiceYearSummary",
+    "serviceReport",
+    "thisWeek",
+    "timer",
+    "didYouKnow"
+   ],
+   "colorScheme": "dark",
+   "timeDisplayFormat": "short",
+   "stalenessBreakpoints": {
+    "weekDays": 7,
+    "monthDays": 30
+   },
+   "startOfWeek": 1,
+   "overrideCreditLimit": true,
+   "customCreditLimitHours": 60,
+   "widgetContactSort": "longestContacted",
+   "widgetContactAction": "directions",
+   "widgetAppointmentWindow": "7days",
+   "customAccentColor": null,
+   "customAppIcon": null,
+   "devSupporterOverride": null,
+   "devShowAppIconAlerts": false,
+   "iCloudSyncEnabled": false,
+   "iCloudSyncSetByUser": false,
+   "iCloudSyncIncludeImages": false,
+   "iCloudImageSync": {},
+   "lastiCloudSyncAt": null,
+   "lastiCloudPushedAt": null,
+   "lastiCloudPulledAt": null,
+   "lastiCloudRemoteWrittenAt": null,
+   "lastiCloudRemoteDeviceId": null,
+   "lastiCloudRemoteDeviceName": null,
+   "iCloudDeviceId": null,
+   "preferenceUpdatedAt": {
+    "onboardingComplete": 1759798800000,
+    "installedOn": 1759798800000,
+    "timeDisplayFormat": 1759798800000,
+    "startOfWeek": 1759798800000,
+    "fontSizeOffset": 1759798800000,
+    "colorScheme": 1759798800000,
+    "contactSort": 1759798800000,
+    "defaultNavigationMapProvider": 1759798800000,
+    "returnVisitAlwaysNotify": 1759798800000,
+    "hideDonateHeart": 1759798800000,
+    "homeScreenElements": 1759798800000,
+    "publisherHours": 1759798800000,
+    "offDays": 1759798800000,
+    "meetingDays": 1759798800000,
+    "submittedReportMonths": 1759798800000,
+    "overrideCreditLimit": 1759798800000,
+    "customCreditLimitHours": 1759798800000,
+    "role": 1759798800000,
+    "tenureStartDate": 1759798800000,
+    "monthlyGoalOverrides": 1759798800000
+   },
+   "hasMigratedToSyncSchema": false,
+   "homeChecklistDismissed": false,
+   "homeChecklistManualCompletions": [],
+   "homeChecklistAllDoneCelebrated": false,
+   "onboardingStepId": null,
+   "serviceYearCatchUpStatus": null,
+   "celebratedTiers": {},
+   "celebratedMilestones": {},
+   "milestoneOverrides": null,
+   "lastRolloverYearMonth": null,
+   "autoRolloverEnabled": false,
+   "rolloverIncludesCredit": false,
+   "devRolloverDateOverride": null,
+   "seenMilestoneUpdateReveal": false,
+   "dismissedMilestoneRevealOnce": false,
+   "seenFoundingSupporterReveal": false,
+   "seenTipIds": [],
+   "defaultExportMethod": "copy",
+   "submittedReportMonths": [
+    "2025-07",
+    "2025-08"
+   ],
+   "reportCommentOverrides": {},
+   "offDays": [
+    0
+   ],
+   "meetingDays": [
+    3,
+    6
+   ],
+   "hasSeenAvailabilityOnboarding": false,
+   "assistantHistory": []
+  },
+  "version": 7
+ },
+ "contacts": {
+  "state": {
+   "contacts": [
+    {
+     "id": "c-ada",
+     "name": "Ada Lindqvist",
+     "phone": "6515550142",
+     "phoneRegionCode": "US",
+     "email": "ada.lindqvist@example.com",
+     "address": {
+      "line1": "14 Birch Lane",
+      "line2": "Apt 2",
+      "city": "Maplewood",
+      "state": "MN",
+      "zip": "55109",
+      "country": "US"
+     },
+     "coordinate": {
+      "latitude": 45.0122,
+      "longitude": -93.0311
+     },
+     "createdAt": "2025-06-02T22:05:00.000Z",
+     "customFields": {
+      "gen-uuid-1": "Evenings after 6"
+     },
+     "updatedAt": 1759798800000,
+     "isFavorite": true
+    },
+    {
+     "id": "c-bram",
+     "name": "Bram Okafor",
+     "phone": "6515550188",
+     "phoneRegionCode": "US",
+     "address": {
+      "line1": "902 Larpenteur Ave",
+      "city": "Roseville",
+      "state": "MN",
+      "zip": "55113",
+      "country": "US"
+     },
+     "coordinate": {
+      "latitude": 44.9918,
+      "longitude": -93.1502
+     },
+     "userDraggedCoordinate": true,
+     "createdAt": "2025-06-20T15:30:00.000Z",
+     "updatedAt": 1759798800000
+    },
+    {
+     "id": "c-chen",
+     "name": "Chen Wei-Lin",
+     "email": "chen.wl@example.com",
+     "address": {
+      "line1": "3 Harbor Court",
+      "city": "Saint Paul",
+      "state": "MN",
+      "zip": "55101",
+      "country": "US"
+     },
+     "createdAt": "2025-07-01T14:00:00.000Z",
+     "updatedAt": 1759798800000,
+     "dismissedUntil": "2025-12-01T15:00:00.000Z",
+     "dismissedNotificationId": "notif-dismiss-chen"
+    },
+    {
+     "id": "c-dora",
+     "name": "Dora Halvorsen",
+     "address": {
+      "line1": "77 Elm Street",
+      "city": "Maplewood",
+      "state": "MN",
+      "zip": "55109"
+     },
+     "createdAt": "2025-07-15T19:45:00.000Z",
+     "updatedAt": 1759798800000
+    }
+   ],
+   "deletedContacts": [
+    {
+     "id": "c-eli",
+     "name": "Eli Marsh",
+     "phone": "6515550101",
+     "address": {
+      "line1": "5 Cedar Row",
+      "city": "Saint Paul",
+      "state": "MN"
+     },
+     "createdAt": "2025-06-05T17:00:00.000Z",
+     "updatedAt": 1759798800000
+    }
+   ],
+   "customFieldDefs": [
+    {
+     "id": "gen-uuid-1",
+     "label": "Best time to visit",
+     "order": 0,
+     "createdAt": 1759798800000,
+     "updatedAt": 1759798800000
+    }
+   ],
+   "deletedCustomFieldDefs": []
+  },
+  "version": 0
+ },
+ "conversations": {
+  "state": {
+   "conversations": [
+    {
+     "id": "v-ada-1",
+     "date": "2025-09-25T23:30:00.000Z",
+     "isBibleStudy": true,
+     "note": "Discussed lesson 3. Asked about the resurrection.",
+     "followUp": {
+      "date": "2025-10-09T23:30:00.000Z",
+      "notifyMe": true,
+      "topic": "Lesson 4",
+      "notifications": [
+       {
+        "id": "notif-v-ada-1",
+        "date": "2025-10-09T23:00:00.000Z"
+       }
+      ]
+     },
+     "contact": {
+      "id": "c-ada"
+     },
+     "updatedAt": 1759798800000
+    },
+    {
+     "id": "v-ada-2",
+     "date": "2025-09-11T23:00:00.000Z",
+     "isBibleStudy": true,
+     "note": "Lesson 2",
+     "contact": {
+      "id": "c-ada"
+     },
+     "followUp": {
+      "date": "2025-09-18T23:00:00.000Z",
+      "topic": "",
+      "notifyMe": false
+     },
+     "updatedAt": 1759798800000
+    },
+    {
+     "id": "v-ada-3",
+     "date": "2025-08-28T22:45:00.000Z",
+     "isBibleStudy": false,
+     "note": "Left a tract",
+     "contact": {
+      "id": "c-ada"
+     },
+     "followUp": {
+      "date": "2025-09-04T22:45:00.000Z",
+      "topic": "",
+      "notifyMe": false
+     },
+     "updatedAt": 1759798800000
+    },
+    {
+     "id": "v-bram-1",
+     "date": "2025-09-14T15:20:00.000Z",
+     "isBibleStudy": false,
+     "notAtHome": true,
+     "contact": {
+      "id": "c-bram"
+     },
+     "note": "",
+     "followUp": {
+      "date": "2025-09-21T15:20:00.000Z",
+      "topic": "",
+      "notifyMe": false
+     },
+     "updatedAt": 1759798800000
+    },
+    {
+     "id": "v-bram-2",
+     "date": "2025-09-21T15:40:00.000Z",
+     "isBibleStudy": false,
+     "note": "Interested in the brochure",
+     "followUp": {
+      "date": "2025-10-12T15:00:00.000Z",
+      "notifyMe": false,
+      "topic": "Brochure follow-up"
+     },
+     "contact": {
+      "id": "c-bram"
+     },
+     "updatedAt": 1759798800000
+    },
+    {
+     "id": "v-chen-1",
+     "date": "2025-08-30T16:00:00.000Z",
+     "isBibleStudy": false,
+     "note": "Spoke at the door",
+     "contact": {
+      "id": "c-chen"
+     },
+     "followUp": {
+      "date": "2025-09-06T16:00:00.000Z",
+      "topic": "",
+      "notifyMe": false
+     },
+     "updatedAt": 1759798800000
+    },
+    {
+     "id": "v-chen-2",
+     "date": "2025-07-19T16:15:00.000Z",
+     "isBibleStudy": false,
+     "contact": {
+      "id": "c-chen"
+     },
+     "note": "",
+     "followUp": {
+      "date": "2025-07-26T16:15:00.000Z",
+      "topic": "",
+      "notifyMe": false
+     },
+     "updatedAt": 1759798800000
+    },
+    {
+     "id": "v-eli-1",
+     "date": "2025-07-08T18:00:00.000Z",
+     "isBibleStudy": false,
+     "note": "Moved away",
+     "contact": {
+      "id": "c-eli"
+     },
+     "followUp": {
+      "date": "2025-07-15T18:00:00.000Z",
+      "topic": "",
+      "notifyMe": false
+     },
+     "updatedAt": 1759798800000
+    }
+   ],
+   "deletedConversations": [
+    {
+     "id": "v-deleted",
+     "deletedAt": 1759798800000
+    }
+   ]
+  },
+  "version": 0
+ },
+ "serviceReports": {
+  "state": {
+   "serviceReports": {
+    "2025": {
+     "6": [
+      {
+       "id": "e-01",
+       "date": "2025-07-05T12:00:00.000Z",
+       "hours": 2,
+       "minutes": 30,
+       "updatedAt": 1759798800000
+      },
+      {
+       "id": "e-02",
+       "date": "2025-07-12T12:00:00.000Z",
+       "hours": 3,
+       "minutes": 0,
+       "note": "Cart witnessing downtown",
+       "updatedAt": 1759798800000
+      },
+      {
+       "id": "e-03",
+       "date": "2025-07-31T12:00:00.000Z",
+       "hours": 1,
+       "minutes": 45,
+       "updatedAt": 1759798800000
+      }
+     ],
+     "7": [
+      {
+       "id": "e-04",
+       "date": "2025-08-02T12:00:00.000Z",
+       "hours": 0,
+       "minutes": 50,
+       "updatedAt": 1759798800000
+      },
+      {
+       "id": "e-05",
+       "date": "2025-08-16T12:00:00.000Z",
+       "hours": 4,
+       "minutes": 10,
+       "note": "Roofing",
+       "categoryId": "cat-khc",
+       "credit": true,
+       "updatedAt": 1759798800000
+      },
+      {
+       "id": "e-06",
+       "date": "2025-08-20T12:00:00.000Z",
+       "hours": 5,
+       "minutes": 0,
+       "categoryId": "ldc-builtin-3f9c4a1d",
+       "credit": true,
+       "updatedAt": 1759798800000
+      }
+     ],
+     "8": [
+      {
+       "id": "e-07",
+       "date": "2025-09-01T12:00:00.000Z",
+       "hours": 2,
+       "minutes": 0,
+       "updatedAt": 1759798800000
+      },
+      {
+       "id": "e-08",
+       "date": "2025-09-06T12:00:00.000Z",
+       "hours": 3,
+       "minutes": 20,
+       "note": "Group with the Okafors",
+       "updatedAt": 1759798800000
+      },
+      {
+       "id": "e-09",
+       "date": "2025-09-13T12:00:00.000Z",
+       "hours": 6,
+       "minutes": 0,
+       "categoryId": "cat-bethel",
+       "credit": true,
+       "updatedAt": 1759798800000
+      },
+      {
+       "id": "e-10",
+       "date": "2025-09-20T12:00:00.000Z",
+       "hours": 1,
+       "minutes": 5,
+       "categoryId": "cat-letters",
+       "updatedAt": 1759798800000
+      },
+      {
+       "id": "e-11",
+       "date": "2025-09-27T12:00:00.000Z",
+       "hours": 2,
+       "minutes": 40,
+       "updatedAt": 1759798800000
+      }
+     ],
+     "9": [
+      {
+       "id": "e-12",
+       "date": "2025-10-04T12:00:00.000Z",
+       "hours": 1,
+       "minutes": 30,
+       "updatedAt": 1759798800000
+      }
+     ]
+    }
+   },
+   "dayPlans": [
+    {
+     "id": "p-1",
+     "date": "2025-10-10T12:00:00.000Z",
+     "minutes": 180,
+     "note": "Morning group",
+     "updatedAt": 1759798800000
+    },
+    {
+     "id": "p-2",
+     "date": "2025-10-18T12:00:00.000Z",
+     "minutes": 120,
+     "startTimeInMinutes": 540,
+     "title": "Rural territory",
+     "location": {
+      "name": "Kingdom Hall",
+      "address": "100 Main St"
+     },
+     "categoryId": "cat-letters",
+     "updatedAt": 1759798800000
+    },
+    {
+     "id": "p-3",
+     "date": "2025-09-30T12:00:00.000Z",
+     "minutes": 60,
+     "updatedAt": 1759798800000
+    }
+   ],
+   "recurringPlans": [
+    {
+     "id": "r-weekly",
+     "startDate": "2025-09-02T12:00:00.000Z",
+     "minutes": 120,
+     "note": "Tuesday ministry",
+     "recurrence": {
+      "frequency": 0,
+      "interval": 1,
+      "endDate": null
+     },
+     "startTimeInMinutes": 600,
+     "deletedDates": [
+      "2025-09-23T12:00:00.000Z"
+     ],
+     "overrides": [
+      {
+       "date": "2025-09-16T12:00:00.000Z",
+       "minutes": 90,
+       "note": "Shorter"
+      }
+     ],
+     "updatedAt": 1759798800000
+    },
+    {
+     "id": "r-first-saturday",
+     "startDate": "2025-08-02T12:00:00.000Z",
+     "minutes": 240,
+     "recurrence": {
+      "frequency": 3,
+      "interval": 1,
+      "endDate": "2025-12-31T12:00:00.000Z",
+      "monthlyByWeekdayConfig": {
+       "weekday": 6,
+       "weekOfMonth": 1
+      }
+     },
+     "updatedAt": 1759798800000
+    },
+    {
+     "id": "r-biweekly",
+     "startDate": "2025-09-05T12:00:00.000Z",
+     "minutes": 60,
+     "recurrence": {
+      "frequency": 1,
+      "interval": 1,
+      "endDate": null
+     },
+     "updatedAt": 1759798800000
+    }
+   ],
+   "deletedServiceReports": [
+    {
+     "id": "e-deleted",
+     "deletedAt": 1759798800000
+    }
+   ]
+  },
+  "version": 4
+ },
+ "categories": {
+  "state": {
+   "categories": [
+    {
+     "id": "ldc-builtin-3f9c4a1d",
+     "name": "LDC",
+     "isCredit": true,
+     "builtin": true,
+     "updatedAt": 1759798800000
+    },
+    {
+     "id": "cat-khc",
+     "name": "Kingdom Hall construction",
+     "isCredit": true,
+     "updatedAt": 1759798800000
+    },
+    {
+     "id": "cat-bethel",
+     "name": "Bethel",
+     "isCredit": true,
+     "updatedAt": 1759798800000
+    },
+    {
+     "id": "cat-letters",
+     "name": "Letter writing",
+     "isCredit": false,
+     "updatedAt": 1759798800000
+    }
+   ],
+   "deletedCategories": [
+    {
+     "id": "cat-gone",
+     "deletedAt": 1759798800000
+    }
+   ]
+  },
+  "version": 0
+ },
+ "profile": {
+  "state": {
+   "name": "Sam Rivera",
+   "avatar": {
+    "type": "emoji",
+    "value": "🌻"
+   },
+   "customAvatarBackground": "#3A7D44",
+   "hasCompletedProfileSetup": true,
+   "profileUpdatedAt": {
+    "name": 1759798800000,
+    "hasCompletedProfileSetup": 1759798800000,
+    "avatar": 1759798800000,
+    "customAvatarBackground": 1759798800000
+   }
+  },
+  "version": 0
+ }
+}

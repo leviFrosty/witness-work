@@ -763,7 +763,7 @@ const MonthReport = ({
                 style={{
                   fontSize: theme.fontSize('xs'),
                   fontFamily: theme.fonts.semiBold,
-                  color: theme.colors.warn,
+                  color: theme.colors.warnText,
                 }}
               >
                 {i18n.t('nothingLoggedYet')}

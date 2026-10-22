@@ -219,7 +219,7 @@ const Buddies = ({ goBack, goNext }: Props) => {
         <Text accessibilityRole='header' style={styles.stepTitle}>
           {i18n.t('onboardingBuddies_title')}
         </Text>
-        <Text style={styles.description}>
+        <Text style={[styles.description, { color: theme.colors.textAlt }]}>
           {i18n.t('onboardingBuddies_description')}
         </Text>
         <View style={{ gap: 10, marginTop: 16 }}>

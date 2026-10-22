@@ -10,6 +10,7 @@ import Wrapper from '@/components/ui/layout/Wrapper'
 import ActionButton from '@/components/ui/ActionButton'
 import Button from '@/components/ui/Button'
 import useNotifications from '@/hooks/notifications'
+import useTheme from '@/contexts/theme'
 
 interface Props {
   goBack: () => void
@@ -17,6 +18,7 @@ interface Props {
 }
 
 const StepThree = ({ goBack, goNext }: Props) => {
+  const theme = useTheme()
   const notifications = useNotifications()
 
   return (
@@ -37,7 +39,7 @@ const StepThree = ({ goBack, goNext }: Props) => {
         <Text accessibilityRole='header' style={styles.stepTitle}>
           {i18n.t('neverForgetAReturnVisit')}
         </Text>
-        <Text style={styles.description}>
+        <Text style={[styles.description, { color: theme.colors.textAlt }]}>
           {i18n.t('neverForgetAReturnVisit_description')}
         </Text>
       </View>
@@ -79,7 +81,9 @@ const StepThree = ({ goBack, goNext }: Props) => {
               goNext()
             }}
           >
-            <Text style={styles.navSkip}>{i18n.t('skip')}</Text>
+            <Text style={[styles.navSkip, { color: theme.colors.textAlt }]}>
+              {i18n.t('skip')}
+            </Text>
           </Button>
         </View>
       </View>

@@ -96,7 +96,7 @@ const CalendarSync = ({ goBack, goNext }: Props) => {
         <Text accessibilityRole='header' style={styles.stepTitle}>
           {i18n.t('calendarOnboardingTitle')}
         </Text>
-        <Text style={styles.description}>
+        <Text style={[styles.description, { color: theme.colors.textAlt }]}>
           {i18n.t('calendarOnboardingDescription')}
         </Text>
         <View
@@ -160,7 +160,9 @@ const CalendarSync = ({ goBack, goNext }: Props) => {
               goNext()
             }}
           >
-            <Text style={styles.navSkip}>{i18n.t('skip')}</Text>
+            <Text style={[styles.navSkip, { color: theme.colors.textAlt }]}>
+              {i18n.t('skip')}
+            </Text>
           </Button>
         </View>
       </View>

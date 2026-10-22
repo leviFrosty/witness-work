@@ -20,7 +20,7 @@ const toneColor = (tone: ChipTone, theme: ReturnType<typeof useTheme>) => {
     case 'negative':
       return theme.colors.error
     case 'warn':
-      return theme.colors.warn
+      return theme.colors.warnText
     case 'info':
       return theme.colors.accent3
     default:

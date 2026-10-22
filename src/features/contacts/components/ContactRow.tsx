@@ -250,7 +250,7 @@ const ContactRow = ({
             </View>
           ) : detail ? (
             <ContactCardSubtitle
-              color={detail.tone === 'due' ? theme.colors.orange : undefined}
+              color={detail.tone === 'due' ? theme.colors.warnText : undefined}
             >
               {detail.text}
             </ContactCardSubtitle>

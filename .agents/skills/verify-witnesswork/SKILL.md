@@ -94,7 +94,8 @@ wwv eval '__WW_DEV__.setSupporter(true)'
 wwv nav "Contact Details" '{"id":"verify-contact-0"}'
 wwv link 'witnesswork://add-time'   # real deep-link path; accepts the iOS "Open in" prompt
 wwv eval '__WW_DEV__.state()'       # route, counts, role, badges, captured error count
-wwv eval '__WW_DEV__.remount()'     # every screen mounts fresh on Home, dropping open sheets
+wwv eval '__WW_DEV__.remount()'     # every screen mounts fresh on Home, dropping open sheets; state().ready turns true once they're up
+wwv eval '__WW_DEV__.alerts()'      # Alert.alert dialogs still on screen: { title, buttons, cancel }
 wwv eval '__WW_DEV__.stores.preferences.getState().timeDisplayFormat'
 wwv eval '__WW_DEV__.forgetNotesImportCredits()'   # Notes Import as before the first import
 wwv eval '__WW_DEV__.stores.updateRequired.setState({ required: { source: "config", currentVersion: "1.44.1", minVersion: "9.0.0" } })'
@@ -139,11 +140,14 @@ wwv flow                                 # every flow in e2e/maestro
 wwv flow e2e/maestro/add-contact.yaml --platform android
 ```
 
-- `scripts/verify/flows.mjs` interprets a Maestro subset through this run's agent-device session: `tapOn`, `longPressOn`, `assertVisible`, `assertNotVisible`, `extendedWaitUntil`, `inputText`, `eraseText`, `hideKeyboard`, `back`, `scroll`, `scrollUntilVisible`, `waitForAnimationToEnd`, `evalScript` and `runFlow` (inline `commands` with `when: { visible }` only). It doesn't use the Maestro CLI, because Maestro 2.4's iOS driver (and agent-device's own replay runner) can't see React Native views on iOS 27 simulators.
+- `scripts/verify/flows.mjs` interprets a Maestro subset through this run's agent-device session: `tapOn`, `longPressOn`, `assertVisible`, `assertNotVisible`, `extendedWaitUntil`, `inputText`, `eraseText`, `hideKeyboard`, `back`, `scroll`, `scrollUntilVisible`, `waitForAnimationToEnd`, `evalScript` and `runFlow` (inline `commands` with `when: { visible, platform }` only; `platform: iOS` or `Android`). It doesn't use the Maestro CLI, because Maestro 2.4's iOS driver (and agent-device's own replay runner) can't see React Native views on iOS 27 simulators.
+- **Every flow starts from a known state**, whatever the last one left: the runner presses a button on any alert still up (`__WW_DEV__.alerts()`; "Discard Changes?" from a form a failed flow abandoned), seeds, remounts every screen on the root (dropping sheets, modals and the keyboard), runs `# setup:`, then waits until navigation is ready and a snapshot lists controls. A share sheet left over on iOS is tapped away. So one failed flow fails alone; don't add `back` steps at a flow's end to tidy up for the next. A failure in that start reports as step `start`.
+- **Relaunches.** Before each flow the runner relaunches the app if its JS runtime is gone (killed, crashed) or the start above fails (a render error can leave it running with no screens; on iOS, agent-device has turned its fast reader off for the app, `circuit-disabled`), and on Android once it holds more than `WW_VERIFY_ANDROID_RELAUNCH_MB` (default 1400) of PSS. A dev build starts near 1.05 GB and grows 10 to 15 MB per seed or remount; most screens it keeps are held by React DevTools' record of unmounted screens, which release builds don't have. A 2 GB emulator kills it near 1.5 GB.
+- **Wait for readiness, never sleep.** A plain text in `assertVisible`/`extendedWaitUntil` matches anywhere in a label, so a sentence that quotes it counts too (the Backup screen's hint names `witness-work-backup.json`); with `id`, `role`, `traits` or `editable` it waits for that element instead. `waitForAnimationToEnd` waits up to 10 s for a still screen and then goes on, as in Maestro (a live map never stops). `extendedWaitUntil: { true: <js> }` (an extension, after Maestro's `assertTrue`) polls the app until the expression is true, for readiness no screen shows. The note editor is a web view that loads slowly on a fresh Metro, and typing before it loads goes nowhere: after opening it, wait for `__WW_DEV__.noteEditorLoaded()` (see `add-time.yaml`).
 - Use `traits: button` (or `role: switch`) to target the control rather than its label. `editable: true` picks a row's text field over the row's label, which names the field too. `text: [A, B]` tries each label, for accessible names that differ by platform, such as Android appending a control's value ("Hours, 0"). `index: 0` taps the first element whose text contains the given text (agent-device's `find --first`), such as the same number on two wheels or a row whose name continues past it; which one is first is agent-device's choice, so assert something either match satisfies.
 - `eraseText` clears the field the last `tapOn` landed on. `evalScript` runs its JS in the app and must return `true`; use it where a deep link would take the User mid-flow (a day computed from today). Write it as a `>-` block scalar, since a plain YAML value with `: ` in it parses as a map.
-- `# seed: <scenario>` seeds before the flow. `# setup: <js>` lines then run in the app, to adjust what the scenario seeded (for example, clear a day it fills only on some weekdays). `# assert: <js>` lines must evaluate to `true` in the app afterwards, which is the read-back.
-- A flow fails on a failed step, a captured JS error, or a false assert. A screenshot of the failure lands in the artifacts.
+- `# seed: <scenario>` seeds before the flow. `# setup: <js>` lines then run in the app on the remounted screens, to adjust what the scenario seeded (for example, clear a day it fills only on some weekdays) or to open a screen (`__WW_DEV__.navigate(…)`). `# assert: <js>` lines must evaluate to `true` in the app afterwards, which is the read-back.
+- A flow fails on a failed step, a captured JS error, or a false assert. A screenshot of the screen as the flow left it lands in the artifacts in each case. Each result line ends with the flow's duration, and `<platform>-flows.json` keeps the details.
 - Add a flow for any user path you change that a later agent should re-prove.
 
 **Feature map.** [`features/README.md`](features/README.md) lists every mapped feature, with its entry points, drive recipe and proof. Read the matching file before verifying a feature. A proof that drives only one convenient entry point is incomplete when the map lists others.
@@ -161,7 +165,7 @@ agent-device can't read the iPad layout: its XCTest capture times out on the sid
 - `type` fills the field the last tap landed in, replacing its text, because agent-device can't find the focused field.
 - `alert` and other XCTest queries can overrun and leave agent-device's runner busy for a few seconds. `wwv ad` waits and retries instead of failing the next tap.
 
-iPhone keeps agent-device and falls back to AXe only when its tree comes back sparse or a selector misses.
+iPhone keeps agent-device and falls back to AXe only when its tree comes back sparse or a selector misses. A failed `wait text` or `wait absent` is checked again through AXe, since agent-device's reader can stop seeing the app late in a long session. An action agent-device reports done is never repeated through AXe, even when its settled diff reads sparse, since that would tap twice. AXe reports a switch as a `CheckBox`; `role=switch` matches it.
 
 ## iPhone Duo
 

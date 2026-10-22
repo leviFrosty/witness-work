@@ -224,7 +224,12 @@ export function matchesSelector(e, selector) {
     if (e.editable !== (selector.editable === 'true')) return false
   if (selector.role !== undefined) {
     const role = selector.role.toLowerCase()
-    if (e.type !== role && e.axType?.toLowerCase() !== role) return false
+    // AXe reports a UISwitch as a CheckBox; agent-device calls it a switch.
+    const roles =
+      e.type === 'checkbox'
+        ? [e.type, 'switch']
+        : [e.type, e.axType?.toLowerCase()]
+    if (!roles.includes(role)) return false
   }
   return true
 }

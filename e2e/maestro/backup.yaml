@@ -11,22 +11,27 @@ name: Create a backup from Settings, which opens the share sheet, then cancel it
 - tapOn: Settings
 - tapOn: Backup & Restore
 - tapOn: Create Backup
-# The system share sheet offers the backup file. iOS shows it out of process,
-# so only its dimmed backdrop ("dismiss popup") reads; Android's names the file.
-- extendedWaitUntil:
-    visible:
-      text: [dismiss popup, witness-work-backup.json]
-    timeout: 20000
-# Cancel without saving anywhere: tap outside it (iOS) or go back (Android).
+# The system share sheet offers the backup file; cancel it without saving
+# anywhere. The screen's own hint names the file too, so each platform waits
+# for its sheet rather than for the file name.
+# iOS shows the sheet out of process, so only its dimmed backdrop ("dismiss
+# popup") reads; tap outside the sheet.
 - runFlow:
     when:
-      visible: dismiss popup
+      platform: iOS
     commands:
+      - extendedWaitUntil:
+          visible: dismiss popup
+          timeout: 20000
       - tapOn: dismiss popup
+# Android's chooser says how many files it shares; go back.
 - runFlow:
     when:
-      visible: witness-work-backup.json
+      platform: Android
     commands:
+      - extendedWaitUntil:
+          visible: Sharing 1 file
+          timeout: 20000
       - back
 - assertNotVisible: dismiss popup
 - assertNotVisible: witness-work-backup.json

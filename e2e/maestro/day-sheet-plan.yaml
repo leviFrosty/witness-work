@@ -1,13 +1,13 @@
 # seed: pioneer
 # setup: (() => { __WW_DEV__.stores.serviceReports.setState({ dayPlans: [], recurringPlans: [] }); __WW_DEV__.stores.preferences.setState({ planTimeMode: 'hours' }); return true })()
-# setup: (() => { const d = new Date(); const day = [d.getFullYear(), String(d.getMonth() + 1).padStart(2, '0'), String(d.getDate()).padStart(2, '0')].join('-'); __WW_DEV__.remount(); setTimeout(() => __WW_DEV__.navigate('Root', { screen: 'Schedule', params: { date: day } }), 2500); return true })()
+# setup: (() => { const d = new Date(); const day = [d.getFullYear(), String(d.getMonth() + 1).padStart(2, '0'), String(d.getDate()).padStart(2, '0')].join('-'); __WW_DEV__.navigate('Root', { screen: 'Schedule', params: { date: day } }); return true })()
 # assert: __WW_DEV__.stores.serviceReports.getState().dayPlans.some((p) => p.title === 'Cart from the day' && p.minutes > 0 && p.anytime && new Date(p.date).toDateString() === new Date().toDateString())
 # assert: __WW_DEV__.state().route.name !== 'PlanDay'
 appId: com.leviwilkerson.jwtimedev
 name: Plan a day in its sheet without leaving the day
 ---
-# Setup cleared every Plan and remounted every screen, so nothing is left from
-# the last flow, then opened today on Schedule: the Plan form is folded into the
+# Setup cleared every Plan, then opened today on Schedule (every flow starts on
+# freshly remounted screens): the Plan form is folded into the
 # day's Plans under Plan Day. Home offers Plan Day too with no Plans, so wait
 # for the day's sheet first.
 - extendedWaitUntil:

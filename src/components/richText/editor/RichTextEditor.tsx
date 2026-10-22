@@ -72,6 +72,8 @@ const RichTextEditor = (props: {
   onChange: (doc: RichTextDoc) => void
   onPhotoAdded?: (count: number) => void
   onPhotoFailed?: () => void
+  /** Called once the editor's page has loaded and can take typing. */
+  onLoad?: () => void
 }) => {
   const theme = useTheme()
   const insets = useSafeAreaInsets()
@@ -297,6 +299,7 @@ const RichTextEditor = (props: {
             // an input connection; the keyboard follows once it has.
             requestKeyboard()
             run({ type: 'focus', at: 'end' })
+            props.onLoad?.()
           }}
           onChange={onChange}
           onImageHandles={excludeFromBackGesture}

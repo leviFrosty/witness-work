@@ -3,7 +3,7 @@ import { perf } from '@/lib/perf'
 import { useDisplayRegions } from '@/stores/displayRegions'
 import { useAppLockSession, useAppLockSettings } from '@/stores/appLock'
 import { CommonActions } from '@react-navigation/native'
-import { I18nManager, LogBox } from 'react-native'
+import { Alert, I18nManager, LogBox, type AlertButton } from 'react-native'
 import useContacts from '@/stores/contactsStore'
 import { useGeocodeRetry } from '@/stores/geocodeRetry'
 import { useMapFindSkips } from '@/features/map/stores/mapFindSkips'
@@ -40,7 +40,10 @@ import { buildTodayRouteFixture } from '@/app/dev-fixtures/todayRoute'
 import { buildRouteDemoFixture } from '@/app/dev-fixtures/routeDemo'
 import { useSavedPlaces } from '@/features/route-planning/stores/savedPlaces'
 import { useSavedRoutes } from '@/features/route-planning/stores/savedRoutes'
-import { seedScenario } from '@/app/dev-harness/seedScenario'
+import {
+  cancelSeedRootReset,
+  seedScenario,
+} from '@/app/dev-harness/seedScenario'
 import { petHarness } from '@/app/dev-harness/pet'
 import { cloudSyncHarness } from '@/app/dev-harness/cloudSync'
 import {
@@ -49,6 +52,7 @@ import {
   simulateLockedLaunch,
 } from '@/stores/mmkv'
 import { reloadApp } from '@/lib/hotUpdater'
+import { isNoteEditorLoaded } from '@/lib/richText/noteEditorSession'
 import {
   accountHarness,
   backupHarness,
@@ -152,6 +156,68 @@ function captureErrors() {
   }
 }
 
+type OpenAlert = { title: string; buttons: string[]; cancel?: string }
+
+/** Alerts on screen now, newest last (`Alert.alert` is native, out of reach). */
+const openAlerts: OpenAlert[] = []
+
+/**
+ * Notes each `Alert.alert` until one of its buttons (or Android's tap outside)
+ * closes it, so the harness knows which button to press to clear the screen:
+ * agent-device's own alert query times out over a busy iOS screen.
+ */
+function trackAlerts() {
+  const show = Alert.alert
+  Alert.alert = (title, message, buttons, options) => {
+    // With no buttons the system shows a lone OK, which reports nothing back;
+    // the entry then stays until the harness forgets it.
+    const list: AlertButton[] = buttons ?? []
+    const entry: OpenAlert = {
+      title,
+      buttons: list.length ? list.map((button) => button.text ?? '') : ['OK'],
+      cancel: list.find((button) => button.style === 'cancel')?.text,
+    }
+    openAlerts.push(entry)
+    const close = () => {
+      const index = openAlerts.indexOf(entry)
+      if (index >= 0) openAlerts.splice(index, 1)
+    }
+    show(
+      title,
+      message,
+      buttons?.map((button) => ({
+        ...button,
+        onPress: (value?: string) => {
+          close()
+          // A prompt passes its text; an alert passes nothing.
+          ;(button.onPress as ((value?: string) => void) | undefined)?.(value)
+        },
+      })),
+      {
+        ...options,
+        onDismiss: () => {
+          close()
+          options?.onDismiss?.()
+        },
+      }
+    )
+  }
+}
+
+/**
+ * The navigation container a `remount()` replaces; the new one is ready once
+ * `navigationRef` points elsewhere and its first screen is up.
+ */
+let remountedFrom: unknown
+
+function remount() {
+  // The remount lands on Home already; a seed's later move there would undo
+  // a screen opened right after it.
+  cancelSeedRootReset()
+  remountedFrom = navigationRef.current
+  triggerDevRemount()
+}
+
 function summary() {
   const preferences = usePreferences.getState()
   const reports = useServiceReport.getState()
@@ -172,6 +238,11 @@ function summary() {
     route: route ? { name: route.name, params: route.params } : null,
     // false at the app's root, where Android back would leave the app
     canGoBack: navigationRef.isReady() && navigationRef.canGoBack(),
+    // false until the screens a `remount()` asked for have mounted
+    ready:
+      navigationRef.current !== remountedFrom &&
+      navigationRef.isReady() &&
+      route !== undefined,
     errors: errors.length,
     apiBase: new URL(apis.notesImportHealth).origin,
   }
@@ -195,6 +266,7 @@ function seed(name: string) {
 export function installDevHarness() {
   if (!__DEV__) return
   captureErrors()
+  trackAlerts()
   restoreFakeGoogleDrive()
   const harness = {
     version: 1,
@@ -202,6 +274,16 @@ export function installDevHarness() {
     seed,
     reset: () => seed('fresh'),
     state: summary,
+    /**
+     * Alerts still on screen (`{ title, buttons, cancel }`); `wwv flow` presses
+     * one of their buttons before each flow.
+     */
+    alerts: () => [...openAlerts],
+    /** Forgets alerts the harness pressed away. */
+    forgetAlerts: () => {
+      openAlerts.length = 0
+      return true
+    },
     /** Launch milestones and work counters since launch (src/lib/perf). */
     perf: () => perf.snapshot(),
     errors: () => [...errors],
@@ -412,9 +494,14 @@ export function installDevHarness() {
       return true
     },
     storageLocked: isStorageLocked,
+    /**
+     * Whether the open note editor's web view has loaded; typing before that
+     * goes nowhere (its page builds slowly on a fresh Metro).
+     */
+    noteEditorLoaded: isNoteEditorLoaded,
     /** Every screen mounts fresh, as on a cold launch, on Home. */
     remount: () => {
-      triggerDevRemount()
+      remount()
       return true
     },
     navigate: (name: string, params?: object) => {

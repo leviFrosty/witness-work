@@ -2,9 +2,9 @@
 # Last month ends on half an hour: an extra standard entry on the 15th tops its
 # minutes up to :30, whatever day the scenario was built on. The seed marks
 # this month's rollover as decided; clearing that leaves it to the User.
-# Progress brings the prompt up once per app launch, so a rerun needs a
-# relaunch (`wwv up`). With an annual goal, time never rolls into a new Service
-# Year, so this flow can't pass in September.
+# Progress brings the prompt up once per app launch; the seed starts that over.
+# With an annual goal, time never rolls into a new Service Year, so this flow
+# can't pass in September.
 # setup: (() => { const store = __WW_DEV__.stores.serviceReports.getState(); const now = new Date(); const last = new Date(now.getFullYear(), now.getMonth() - 1, 1); const entries = store.serviceReports[last.getFullYear()]?.[last.getMonth()] ?? []; const minutes = entries.filter((e) => !e.credit).reduce((sum, e) => sum + e.hours * 60 + e.minutes, 0); const add = (((30 - (minutes % 60)) % 60) + 60) % 60; if (add) store.addServiceReport({ id: 'rollover-flow-top-up', date: new Date(last.getFullYear(), last.getMonth(), 15, 12), hours: 0, minutes: add }); __WW_DEV__.stores.preferences.getState().set({ lastRolloverYearMonth: null }); return true })()
 # Applied: this month's decision is recorded, so the prompt doesn't come back.
 # assert: (() => { const d = new Date(); return __WW_DEV__.stores.preferences.getState().lastRolloverYearMonth === `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}` })()

@@ -8,6 +8,19 @@ import { navigationRef } from '@/features/contacts/lib/linking'
 import { buildScenario } from '@/app/dev-harness/scenarios'
 import { resetLocalData } from '@/app/dev-harness/resetLocalData'
 import { runBadgeEvaluation } from '@/app/badges/runBadgeEvaluation'
+import { forgetRolloverPrompts } from '@/features/service-reports/hooks/useRolloverPrompt'
+
+/** The seed's move to Home, pending until RootStack has swapped stacks. */
+let rootReset: ReturnType<typeof setTimeout> | undefined
+
+/**
+ * Drops a pending move to Home, for a caller that remounts every screen anyway:
+ * landing later, it would undo a screen opened after the remount.
+ */
+export function cancelSeedRootReset() {
+  clearTimeout(rootReset)
+  rootReset = undefined
+}
 
 /**
  * Replaces this device's data with a scenario (`scenarios.ts`). Used by the dev
@@ -16,6 +29,8 @@ import { runBadgeEvaluation } from '@/app/badges/runBadgeEvaluation'
 export function seedScenario(name: string) {
   const scenario = buildScenario(name, moment())
   resetLocalData()
+  // Progress offers a rollover once per launch; a seed starts over like one.
+  forgetRolloverPrompts()
   const preferences = usePreferences.getState()
   preferences.setRole(scenario.role)
   usePreferences.getState().set({
@@ -49,7 +64,9 @@ export function seedScenario(name: string) {
     runBadgeEvaluation({ quiet: true })
     usePreferences.getState().markBadgesSeen()
     // Start from Home, after RootStack swaps Onboarding out for Root.
-    setTimeout(() => {
+    clearTimeout(rootReset)
+    rootReset = setTimeout(() => {
+      rootReset = undefined
       if (navigationRef.isReady())
         navigationRef.resetRoot({ index: 0, routes: [{ name: 'Root' }] })
     }, 100)

@@ -33,6 +33,8 @@ name: Plan just hours, then a time span, and the form remembers the last one
 - tapOn:
     id: plan-duration-pill
 - tapOn: Time span
+# Switching modes swaps the wheels; a Done tap mid-swap can miss.
+- waitForAnimationToEnd
 - tapOn:
     id: plan-picker-done
 - tapOn:

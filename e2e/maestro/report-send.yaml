@@ -19,11 +19,22 @@ name: Share a Service Report and cancel the share sheet, then copy it, which mar
     timeout: 20000
 - assertVisible: Not Sent
 # The submission method is remembered, and the button below says what it does.
-# iOS also has a text with this name, and Android adds the method to the
-# control's; the first match is the control on both.
-- tapOn:
-    text: Submission method
-    index: 0
+# iOS also has a text with this name, so pick the menu control itself; Android
+# adds the method to the control's name, and its first match is the control.
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - tapOn:
+          text: Submission method
+          role: pop-up-button
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - tapOn:
+          text: Submission method
+          index: 0
 - waitForAnimationToEnd
 - tapOn: Share
 - tapOn:
@@ -47,9 +58,20 @@ name: Share a Service Report and cancel the share sheet, then copy it, which mar
       - back
 - assertNotVisible: dismiss popup
 - assertVisible: Not Sent
-- tapOn:
-    text: Submission method
-    index: 0
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - tapOn:
+          text: Submission method
+          role: pop-up-button
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - tapOn:
+          text: Submission method
+          index: 0
 - waitForAnimationToEnd
 - tapOn: Copy To Clipboard
 - tapOn:

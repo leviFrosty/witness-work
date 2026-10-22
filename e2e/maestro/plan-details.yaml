@@ -18,7 +18,10 @@ name: Open a Plan's details from Schedule, then edit it
 - tapOn:
     text: Planned 2 hours
     index: 0
-- assertVisible: Cart witnessing
+# The day's sheet can take a while to read under load.
+- extendedWaitUntil:
+    visible: Cart witnessing
+    timeout: 30000
 # Tapping a Plan opens its details in the day's sheet, not the form, and Edit
 # opens the form there too: the route stays on Schedule.
 - tapOn:

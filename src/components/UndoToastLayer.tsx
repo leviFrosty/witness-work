@@ -26,7 +26,7 @@ export default function UndoToastLayer() {
     <PlacedToast key={toast.id} toast={toast} screenReader={screenReader} />
   )
   return Platform.OS === 'ios' ? (
-    <FullWindowOverlay>{content}</FullWindowOverlay>
+    <FullWindowOverlay interactive>{content}</FullWindowOverlay>
   ) : (
     content
   )

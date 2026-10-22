@@ -77,6 +77,7 @@ import {
 import { useBadgeSession } from '@/stores/badgeSession'
 import { takeoverSnapshot, useTakeover } from '@/stores/takeover'
 import { useSplitSheetPreferences } from '@/stores/splitSheet'
+import { useUndoToast } from '@/stores/undoToast'
 import { triggerDevRemount } from '@/lib/devRemount'
 import { noteUserAction, type UserActionKind } from '@/lib/userAction'
 import {
@@ -581,6 +582,8 @@ export function installDevHarness() {
       updateReveal: useUpdateRevealStore,
       // `getState().request()` replays The Milestone Update's grand reveal.
       milestoneReveal: useMilestoneRevealStore,
+      // `setState({ toast: { id, message, onUndo } })` shows the Undo toast.
+      undoToast: useUndoToast,
     },
   }
   ;(globalThis as { __WW_DEV__?: typeof harness }).__WW_DEV__ = harness

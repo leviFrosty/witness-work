@@ -78,7 +78,7 @@ export const FounderLetter = ({ spacious = false }: { spacious?: boolean }) => {
           style={{
             fontSize: 11,
             fontFamily: theme.fonts.semiBold,
-            color: theme.colors.supporter,
+            color: theme.colors.supporterText,
             letterSpacing: tracking(1.2),
             textTransform: 'uppercase',
           }}
@@ -198,7 +198,9 @@ const CompareCell = ({
   highlight?: boolean
 }) => {
   const theme = useTheme()
-  const accentColor = highlight ? theme.colors.supporter : theme.colors.textAlt
+  const accentColor = highlight
+    ? theme.colors.supporterText
+    : theme.colors.textAlt
   if (typeof value === 'string') {
     return (
       <View style={{ width, alignItems: 'center' }}>
@@ -342,7 +344,7 @@ export const ComparisonChart = ({
                 style={{
                   fontSize: 11,
                   fontFamily: theme.fonts.semiBold,
-                  color: theme.colors.supporter,
+                  color: theme.colors.supporterText,
                   letterSpacing: tracking(1),
                   textTransform: 'uppercase',
                 }}

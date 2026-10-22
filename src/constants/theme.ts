@@ -1,8 +1,10 @@
 import * as Device from 'expo-device'
 
+// The text colors (text, textAlt, error, warnText, supporterText) meet WCAG AA
+// (4.5:1) on every surface they're drawn on. theme.test.ts checks those pairs.
 export const lightModeColors = {
   text: '#373737',
-  textAlt: '#9B9B9B',
+  textAlt: '#696969',
   textInverse: '#FFFFFF',
   textInverseAlt: '#E2E2E2',
   accent: '#08cc50',
@@ -24,10 +26,10 @@ export const lightModeColors = {
   accent2Alt: '#FFF3F2',
   accent3: '#003D46',
   accent3Alt: '#9fb9d1',
-  error: '#E30909',
+  error: '#D30808',
   errorTranslucent: '#E3090933',
   errorAlt: '#FA6868',
-  info: '#3B82F6',
+  info: '#2563EB',
   warn: '#fac220',
   warnTranslucent: '#d19b0033',
   warnAlt: '#FFEAB8',
@@ -57,11 +59,14 @@ export const lightModeColors = {
   supporter: '#ffc228',
   supporterTranslucent: '#ffc12533',
   supporterAlt: '#FBE9A5',
+  // Supporter-colored text. The gold above is too light to read as text on
+  // light surfaces, so labels use this darker amber (see warnText).
+  supporterText: '#8A6100',
 }
 
 const darkModeColors: Colors = {
   text: '#E2E2E2',
-  textAlt: '#7D7D7D',
+  textAlt: '#8B8B8B',
   textInverse: '#141414',
   textInverseAlt: '#373737',
   accent: '#1BD15D',
@@ -80,7 +85,7 @@ const darkModeColors: Colors = {
   accent2Alt: '#FFF3F2',
   accent3: '#159fb0',
   accent3Alt: '#003D46',
-  error: '#F20A0A',
+  error: '#F64F4F',
   errorTranslucent: '#F20A0A33',
   errorAlt: '#FA6868',
   info: '#60A5FA',
@@ -112,6 +117,7 @@ const darkModeColors: Colors = {
   supporter: '#F4C23A',
   supporterTranslucent: '#F4C23A33',
   supporterAlt: '#5A4310',
+  supporterText: '#F4C23A',
 }
 
 export const numbers = {

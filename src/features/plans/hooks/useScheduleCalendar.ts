@@ -76,16 +76,30 @@ function useScheduleRows(firstServiceYear: number, lastServiceYear: number) {
  */
 export default function useScheduleCalendar({
   initial,
+  initialDay,
 }: {
   /** The month to open on; this month when absent. */
   initial?: CalendarMonth
+  /**
+   * A day (`YYYY-MM-DD`) to open on, e.g. one a link opens as the tab first
+   * mounts. Its week starts near the top, clear of the day's sheet.
+   */
+  initialDay?: string
 }) {
   // Plain values, so what's derived from today stays cached until it changes.
   const todayKey = useLocalDay()
   const now = moment(todayKey, 'YYYY-MM-DD')
   const thisYear = now.year()
   const thisMonthIndex = now.month()
-  const start = initial ?? { year: thisYear, month: thisMonthIndex }
+  const [openedDay] = useState(() => {
+    const day = initialDay ? moment(initialDay, 'YYYY-MM-DD', true) : null
+    return day?.isValid() ? day : null
+  })
+  const openedMonth = openedDay
+    ? { year: openedDay.year(), month: openedDay.month() }
+    : undefined
+  const start = initial ??
+    openedMonth ?? { year: thisYear, month: thisMonthIndex }
   const currentServiceYear = serviceYearOf({
     year: thisYear,
     month: thisMonthIndex,
@@ -151,8 +165,14 @@ export default function useScheduleCalendar({
   const pinchStart = useRef({ x: 0, y: 0 })
   /** Counts holds on the Month view, so a stale release can't end a newer one. */
   const monthHold = useRef(0)
-  const [initialRowIndex] = useState(
-    () => schedule.monthHeader.get(calendarMonthKey(start)) ?? 0
+  const [openedDayRow] = useState(() =>
+    openedDay ? schedule.dayRow.get(openedDay.format('YYYY-MM-DD')) : undefined
+  )
+  // A day opened on starts a row down, so the week before it shows too.
+  const [initialRowIndex] = useState(() =>
+    openedDayRow !== undefined
+      ? Math.max(0, openedDayRow - 1)
+      : (schedule.monthHeader.get(calendarMonthKey(start)) ?? 0)
   )
 
   const zoom = useScheduleZoom('month')
@@ -337,6 +357,13 @@ export default function useScheduleCalendar({
     if (row === undefined) return false
     const layout = listRef.current?.getLayout(row)
     const frame = listFrame.current
+    if (!listLoaded.current && row === openedDayRow) {
+      // The list opens on it, clear of the sheet. Scrolling there once the
+      // list loaded instead landed on the month above on a busy cold start,
+      // leaving the day under the sheet.
+      pendingReveal.current = null
+      return true
+    }
     if (!listLoaded.current || !layout || !frame) {
       pendingReveal.current = { date, covered }
       return true

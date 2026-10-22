@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import * as Linking from 'expo-linking'
+import { launchURL } from '@/lib/launchLinks'
 import { navigationRef } from '@/features/contacts/lib/linking'
 import { isHandoffLink } from '@/lib/serverAccount/handoff'
 import { useIsTakingOver, useTakeoverHold } from '@/hooks/useTakeoverTurn'
@@ -21,7 +22,7 @@ export default function HandoffLinkListener() {
   useTakeoverHold('handoff-link', pendingLink !== null && onboarded)
 
   useEffect(() => {
-    void Linking.getInitialURL().then((url) => {
+    void launchURL().then((url) => {
       if (url && isHandoffLink(url)) setPendingLink(url)
     })
     const subscription = Linking.addEventListener('url', ({ url }) => {

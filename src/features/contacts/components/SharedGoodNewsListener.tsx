@@ -1,6 +1,7 @@
 import { analytics } from '@/lib/analytics'
 import { useEffect, useState } from 'react'
 import * as Linking from 'expo-linking'
+import { launchURL } from '@/lib/launchLinks'
 import * as Crypto from 'expo-crypto'
 import moment from 'moment'
 import useServiceReport from '@/stores/serviceReport'
@@ -60,7 +61,7 @@ export default function SharedGoodNewsListener() {
     }
 
     // Cold start: widget tap launched the app.
-    Linking.getInitialURL().then(handle)
+    launchURL().then(handle)
 
     // Warm start: widget tap foregrounded an already-running app.
     const sub = Linking.addEventListener('url', ({ url }) => handle(url))

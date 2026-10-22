@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import * as Linking from 'expo-linking'
+import { launchURL } from '@/lib/launchLinks'
 import { navigationRef } from '@/features/contacts/lib/linking'
 import useBuddiesEnabled from '@/features/buddies/hooks/useBuddiesEnabled'
 import { isInviteLink } from '@/features/buddies/lib/inviteLink'
@@ -21,7 +22,7 @@ export default function BuddyInviteListener() {
   useTakeoverHold('invite-link', pendingLink !== null && enabled)
 
   useEffect(() => {
-    void Linking.getInitialURL().then((url) => {
+    void launchURL().then((url) => {
       if (url && isInviteLink(url)) setPendingLink(url)
     })
     const subscription = Linking.addEventListener('url', ({ url }) => {

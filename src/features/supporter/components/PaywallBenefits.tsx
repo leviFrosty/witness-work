@@ -9,6 +9,7 @@ import { Platform, View } from 'react-native'
 import { Image } from 'expo-image'
 import Text from '@/components/ui/MyText'
 import { FIT_ONE_LINE } from '@/hooks/useAccessibilityTextSize'
+import WholeWordsText from '@/components/ui/WholeWordsText'
 import useTheme from '@/contexts/theme'
 import i18n, { TranslationKey } from '@/lib/locales'
 import { formatNumber } from '@/lib/numbers'
@@ -201,7 +202,9 @@ const CompareCell = ({
   if (typeof value === 'string') {
     return (
       <View style={{ width, alignItems: 'center' }}>
-        <Text
+        {/* The column has a fixed width, so at large text sizes (iPad at AX3)
+        a word wider than it shrinks instead of breaking ("Unlimit / ed"). */}
+        <WholeWordsText
           style={{
             fontSize: 13,
             fontFamily: theme.fonts.semiBold,
@@ -210,7 +213,7 @@ const CompareCell = ({
           }}
         >
           {value}
-        </Text>
+        </WholeWordsText>
       </View>
     )
   }

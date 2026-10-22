@@ -8,6 +8,7 @@ import EmphasizedText from '@/components/ui/EmphasizedText'
 import useTheme from '@/contexts/theme'
 import { dayPhrase, distancePhrase, whenPhrase } from '@/lib/dayPhrases'
 import i18n from '@/lib/locales'
+import { atMinutesOfDay } from '@/lib/normalizeDate'
 import { usePreferences } from '@/stores/preferences'
 import type { IncomingShare } from '@/features/buddies/lib/state'
 
@@ -30,9 +31,10 @@ export default function FollowUpInvitationCard({
   const theme = useTheme()
   const dataProtectionMode = usePreferences((s) => s.dataProtectionMode)
   const { details } = share
-  const start = moment(details.d, 'YYYY-MM-DD')
-    .add(details.s ?? 0, 'minutes')
-    .toDate()
+  const start = atMinutesOfDay(
+    moment(details.d, 'YYYY-MM-DD'),
+    details.s ?? 0
+  ).toDate()
   const when =
     details.s === undefined ? dayPhrase(start, now) : whenPhrase(start, now)
   const name = dataProtectionMode ? undefined : details.firstName

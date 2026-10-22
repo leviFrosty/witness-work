@@ -136,7 +136,10 @@ import {
 } from '@/features/buddies/lib/shares'
 import { hasSharedEventEnded } from '@/features/buddies/lib/shareTiming'
 import { ANNOUNCE_ORDER, parseBadgeKey } from '@/lib/badges/catalog'
-import { DEFAULT_START_TIME_IN_MINUTES } from '@/lib/normalizeDate'
+import {
+  atMinutesOfDay,
+  DEFAULT_START_TIME_IN_MINUTES,
+} from '@/lib/normalizeDate'
 import type { RecurringPlan } from '@/lib/recurrence'
 import {
   type BadgeKey,
@@ -3369,10 +3372,10 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       // The Plan's start here, whatever the asker's clock says: a request
       // lapses by then (a day's slack for time zones) and can't reach past
       // the Buddy Card's window.
-      const start = moment(request.d, 'YYYY-MM-DD')
-        .startOf('day')
-        .add(request.s ?? DEFAULT_START_TIME_IN_MINUTES, 'minutes')
-        .valueOf()
+      const start = atMinutesOfDay(
+        moment(request.d, 'YYYY-MM-DD'),
+        request.s ?? DEFAULT_START_TIME_IN_MINUTES
+      ).valueOf()
       const expiresAt = Math.min(request.expiresAt, start + DAY_MS)
       if (expiresAt <= deps.now()) return
       if (start > deps.now() + (BUDDY_CARD_HORIZON_DAYS + 1) * DAY_MS) return

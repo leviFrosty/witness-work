@@ -17,9 +17,11 @@ import { inputLayout } from '@/components/ui/inputs/InputLayout'
 import useTheme from '@/contexts/theme'
 import {
   formatDate,
+  formatStartTime,
   formatTime,
   formatWeekdayMonthDayCompact,
 } from '@/lib/dates'
+import { atMinutesOfDay } from '@/lib/normalizeDate'
 import i18n from '@/lib/locales'
 import { useFormattedMinutes } from '@/lib/minutes'
 import { entryMinutes, splitMinutes } from '@/lib/entryMinutes'
@@ -173,11 +175,7 @@ const steps = (from: number, to: number, keep: number) => {
 }
 
 const clockLabel = (minutesOfDay: number) => {
-  const label = formatTime(
-    moment()
-      .startOf('day')
-      .add(minutesOfDay % DAY_MINUTES, 'minutes')
-  )
+  const label = formatStartTime(minutesOfDay % DAY_MINUTES)
   return minutesOfDay >= DAY_MINUTES
     ? i18n.t('planForm_nextDayTime', { time: label })
     : label
@@ -187,7 +185,10 @@ const clockLabel = (minutesOfDay: number) => {
 const timeRange = (date: Date, minutes: number) =>
   i18n.t('planForm_timeRange', {
     start: formatTime(date),
-    end: formatTime(new Date(date.getTime() + minutes * 60_000)),
+    // On the wall clock, like Plan Details, across a daylight saving change.
+    end: formatTime(
+      atMinutesOfDay(date, date.getHours() * 60 + date.getMinutes() + minutes)
+    ),
   })
 
 /**

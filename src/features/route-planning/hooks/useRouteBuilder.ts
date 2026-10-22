@@ -41,6 +41,7 @@ import {
 } from '@/features/route-planning/lib/routeTimeline'
 import { formatPlanLocation } from '@/lib/placeSearch'
 import { formatStartTime } from '@/lib/dates'
+import { atMinutesOfDay } from '@/lib/normalizeDate'
 import { useSavedRoutes } from '@/features/route-planning/stores/savedRoutes'
 
 /** A Plan on the day the route can belong to. */
@@ -292,10 +293,7 @@ export default function useRouteBuilder(day: Date) {
    * length), so buddies can be invited to it. Invitations travel with Plans.
    */
   const planPrefill = {
-    startTime: moment(day)
-      .startOf('day')
-      .add(startTime, 'minutes')
-      .toISOString(),
+    startTime: atMinutesOfDay(day, startTime).toISOString(),
     ...(stops.length > 0 && {
       minutes: Math.max(15, Math.round((timeline.end - startTime) / 5) * 5),
     }),

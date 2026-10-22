@@ -10,6 +10,7 @@ import Text from '@/components/ui/MyText'
 import PullDownMenu from '@/components/ui/PullDownMenu'
 import useTheme from '@/contexts/theme'
 import { formatStartTime } from '@/lib/dates'
+import { atMinutesOfDay } from '@/lib/normalizeDate'
 import i18n from '@/lib/locales'
 import { RailDot } from '@/features/route-planning/components/RouteTimelineRail'
 import type { RoutePlanOption } from '@/features/route-planning/hooks/useRouteBuilder'
@@ -183,7 +184,7 @@ export default function RouteTimelineStart({
         <View accessibilityLabel={i18n.t('routeBuilder_leaveAt')}>
           <DateTimePicker
             iOSMode='time'
-            value={moment().startOf('day').add(startTime, 'minutes').toDate()}
+            value={atMinutesOfDay(moment(), startTime).toDate()}
             onChange={(_event, date) => {
               if (!date) return
               const picked = moment(date)

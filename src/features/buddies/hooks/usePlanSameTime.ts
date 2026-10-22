@@ -1,6 +1,7 @@
 import { useNavigation } from '@react-navigation/native'
 import moment from 'moment'
 import { analytics } from '@/lib/analytics'
+import { atMinutesOfDay } from '@/lib/normalizeDate'
 import type { RootStackNavigation } from '@/types/rootStack'
 import type { BuddyCardDay } from '@/features/buddies/lib/schemas'
 
@@ -26,7 +27,7 @@ export default function usePlanSameTime(source: Source) {
         startTime:
           plan.s === undefined
             ? undefined
-            : date.clone().startOf('day').add(plan.s, 'minutes').toISOString(),
+            : atMinutesOfDay(date, plan.s).toISOString(),
         // A buddy's Plan with no start time is anytime.
         anytime: plan.s === undefined,
         minutes: plan.m,

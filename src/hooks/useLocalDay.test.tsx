@@ -123,4 +123,38 @@ describe('useLocalDay', () => {
     advance(6 * 60 * 60_000)
     expect(latest().day).toBe('2026-10-22')
   })
+
+  it.each([
+    // Clocks fall back: Nov 1 has 25 hours.
+    ['America/New_York', '2026-11-01T03:59:00Z', '2026-10-31', 25],
+    ['Europe/London', '2026-10-24T22:59:00Z', '2026-10-24', 25],
+    // Clocks spring forward: Mar 8 and Oct 4 have 23 hours.
+    ['America/New_York', '2026-03-08T04:59:00Z', '2026-03-07', 23],
+    ['Australia/Sydney', '2026-10-03T13:59:00Z', '2026-10-03', 23],
+  ] as const)(
+    'moves on at each midnight around a daylight saving change in %s',
+    (zone, start, eve, hours) => {
+      runtime.zone = zone
+      process.env.TZ = zone
+      vi.useFakeTimers({ toFake: ['Date', 'setTimeout', 'clearTimeout'] })
+      // 11:59 PM the evening before the change.
+      vi.setSystemTime(new Date(start))
+      mount()
+      expect(latest().day).toBe(eve)
+      const [year, month, date] = eve.split('-').map(Number)
+      const next = (days: number) =>
+        new Date(Date.UTC(year, month - 1, date + days))
+          .toISOString()
+          .slice(0, 10)
+
+      advance(2 * 60_000)
+      expect(latest().day).toBe(next(1))
+      // 11:01 PM on the change day, however long it is.
+      advance((hours - 1) * 60 * 60_000)
+      expect(latest().day).toBe(next(1))
+      expect(new Date().getHours()).toBe(23)
+      advance(60 * 60_000)
+      expect(latest().day).toBe(next(2))
+    }
+  )
 })

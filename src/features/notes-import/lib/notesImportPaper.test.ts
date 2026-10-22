@@ -3,9 +3,13 @@ import { describe, expect, it, vi } from 'vitest'
 vi.mock('expo-file-system/legacy', () => ({ deleteAsync: vi.fn() }))
 vi.mock('expo-image-manipulator', () => ({}))
 
-const { joinPaperPages, mapInOrder, stopsPaperBatch } = await import(
-  '@/features/notes-import/lib/notesImportPaper'
-)
+const {
+  firstUnreadPage,
+  joinPaperPages,
+  mapInOrder,
+  retriesPaperPage,
+  stopsPaperBatch,
+} = await import('@/features/notes-import/lib/notesImportPaper')
 const { canonicalProtectedRequest } = await import(
   '@/lib/attestation/appAttest'
 )
@@ -54,6 +58,22 @@ describe('Import from Paper helpers', () => {
     expect(stopsPaperBatch('network')).toBe(true)
     expect(stopsPaperBatch('model_error')).toBe(false)
     expect(stopsPaperBatch('too_large')).toBe(false)
+  })
+
+  it('keeps pages for Try Again only when a later attempt can read them', () => {
+    expect(retriesPaperPage('network')).toBe(true)
+    expect(retriesPaperPage('unavailable')).toBe(true)
+    expect(retriesPaperPage('model_error')).toBe(true)
+    expect(retriesPaperPage('transcribe_limit')).toBe(false)
+    expect(retriesPaperPage('too_large')).toBe(false)
+    expect(retriesPaperPage('cancelled')).toBe(false)
+  })
+
+  it('finds the first unread page from where the draft is', () => {
+    expect(firstUnreadPage(['a', '', null, 'd'], 0)).toBe(2)
+    expect(firstUnreadPage(['a', 'b'], 0)).toBe(2)
+    expect(firstUnreadPage([null, 'b'], 0)).toBe(0)
+    expect(firstUnreadPage(['a', null, 'c'], 2)).toBe(3)
   })
 
   it('signs the same request hash ww-api recomputes for a page', () => {

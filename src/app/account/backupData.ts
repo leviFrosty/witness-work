@@ -1,4 +1,3 @@
-import { sha256 } from '@noble/hashes/sha2.js'
 import { alignPayloadClock } from '@/app/sync/clockSkew'
 import { foldRemotePayloads } from '@/app/sync/foldRemotePayloads'
 import { replaceLocalWithRemote } from '@/app/sync/iCloudSync'
@@ -16,6 +15,7 @@ import {
 } from '@/app/sync/payload'
 import { toB64u, utf8 } from '@/lib/bytes'
 import { ensureSyncDeviceId } from '@/lib/iCloudIdentity'
+import { sha256Native } from '@/lib/sha256'
 import {
   type BackupAddress,
   type BackupPlaintext,
@@ -70,13 +70,13 @@ export function buildBackupPlaintext({
  * snapshot isn't uploaded again. Includes where it goes: a new account or slot
  * uploads even when the data is the same.
  */
-export function backupPlaintextHash(
+export async function backupPlaintextHash(
   plaintext: BackupPlaintext,
   address: BackupAddress
-): string {
+): Promise<string> {
   const payload = plaintext.payload as SyncPayload
   return toB64u(
-    sha256(
+    await sha256Native(
       utf8(
         JSON.stringify({
           address,

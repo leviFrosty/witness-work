@@ -1,6 +1,7 @@
 import { hkdf } from '@noble/hashes/hkdf.js'
 import { sha256 } from '@noble/hashes/sha2.js'
 import { toB64u, utf8 } from '@/lib/bytes'
+import { sha256Native } from '@/lib/sha256'
 import {
   type BackupPlaintext,
   openPlaintext,
@@ -37,7 +38,8 @@ export const syncAad = ({ accountId, slotId }: SyncAddress) =>
   utf8(`ww-account/v1/sync\n${accountId}\n${slotId}`)
 
 /** B64u SHA-256 of the blob: `sync/put`'s `x-ww-sha256` and the slot's ETag. */
-export const syncBlobDigest = (blob: Uint8Array) => toB64u(sha256(blob))
+export const syncBlobDigest = async (blob: Uint8Array) =>
+  toB64u(await sha256Native(blob))
 
 export const sealSyncBlob = (
   syncKey: Uint8Array,

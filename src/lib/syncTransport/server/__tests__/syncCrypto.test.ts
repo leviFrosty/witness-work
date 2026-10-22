@@ -78,11 +78,11 @@ describe('sync blob', () => {
     )
   })
 
-  it('names slots by sync device id', () => {
+  it('names slots by sync device id', async () => {
     expect(SYNC_SLOT_ID_PATTERN.test('mfx81kq2a0b1c2d3')).toBe(true)
     expect(SYNC_SLOT_ID_PATTERN.test('short')).toBe(false)
     expect(SYNC_SLOT_ID_PATTERN.test('has/slash-in-it')).toBe(false)
-    expect(syncBlobDigest(new Uint8Array([1, 2, 3]))).toMatch(
+    expect(await syncBlobDigest(new Uint8Array([1, 2, 3]))).toMatch(
       /^[A-Za-z0-9_-]{43}$/
     )
   })

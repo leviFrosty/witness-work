@@ -149,9 +149,9 @@ describe('backup blob', () => {
     ).toBe('newer')
   })
 
-  it('makes 16-byte slot ids and the digest the server checks', () => {
+  it('makes 16-byte slot ids and the digest the server checks', async () => {
     expect(newBackupSlotId(random)).toMatch(/^[A-Za-z0-9_-]{22}$/)
-    expect(backupBlobDigest(new Uint8Array([1, 2, 3]))).toBe(
+    expect(await backupBlobDigest(new Uint8Array([1, 2, 3]))).toBe(
       // SHA-256 of 01 02 03, b64u.
       'A5BYxvLAy0ksUzsKTRTvd8wPeKvMztUofYShogEc-4E'
     )

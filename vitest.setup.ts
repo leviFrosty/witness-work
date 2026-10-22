@@ -38,3 +38,16 @@ vi.mock('expo-network', () => ({
     isInternetReachable: true,
   })),
 }))
+
+// Stub the native SHA-256 globally with Node's: backup and Cloud Sync hash
+// their snapshots and blobs through it, and expo-crypto needs the native
+// module. `src/lib/sha256.test.ts` checks the real wrapper.
+vi.mock('@/lib/sha256', async () => {
+  const { createHash } = await import('node:crypto')
+  return {
+    sha256Native: vi.fn(
+      async (bytes: Uint8Array) =>
+        new Uint8Array(createHash('sha256').update(bytes).digest())
+    ),
+  }
+})

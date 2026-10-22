@@ -99,7 +99,7 @@ const scheduler = createBackupScheduler({
       now: Date.now(),
     })
     return {
-      hash: backupPlaintextHash(plaintext, address),
+      hash: await backupPlaintextHash(plaintext, address),
       upload: async () => {
         const blob = sealBackup(
           deriveBackupKey(access.accountKey),

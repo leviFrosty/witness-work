@@ -46,6 +46,7 @@ import {
 } from '@/app/dev-harness/seedScenario'
 import { petHarness } from '@/app/dev-harness/pet'
 import { cloudSyncHarness } from '@/app/dev-harness/cloudSync'
+import { appUpdateHarness } from '@/app/dev-harness/appUpdate'
 import {
   isStorageLocked,
   mmkvStorage,
@@ -252,6 +253,9 @@ function seed(name: string) {
   const fakeDrive = mmkvStorage.getString(FAKE_GOOGLE_DRIVE_KEY)
   const forceRtl = isDevForceRtl()
   seedScenario(name)
+  // A flow that stopped while the app was gated leaves the next one a clean app.
+  appUpdateHarness.clear()
+  useUpdateRequired.setState({ required: null })
   if (fakeDrive) mmkvStorage.set(FAKE_GOOGLE_DRIVE_KEY, fakeDrive)
   // A seed keeps the layout direction it found (Tools → Force Right to Left).
   if (forceRtl) setDevForceRtl(true)
@@ -448,6 +452,14 @@ export function installDevHarness() {
      * default and the one-time offer.
      */
     cloudSync: cloudSyncHarness,
+    /**
+     * Update Required through this device's own answers (see
+     * `dev-harness/appUpdate.ts`): `minAppVersion('99.0.0')` gates from the
+     * config and `minAppVersion(null)` lifts it; `upgradeRequired(path)`
+     * answers 426 to matching ww-api requests; `requests()` lists what was sent
+     * since; `clear()`.
+     */
+    appUpdate: appUpdateHarness,
     /**
      * The Pet Companion (see `dev-harness/pet.ts`): `adopt(species, coat?,
      * name?)`, `setAppearance`, `setRoom`, `release()`, `override({ hearts,

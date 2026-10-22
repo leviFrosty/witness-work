@@ -29,8 +29,17 @@ import {
  */
 const useProjectedTotal = (
   scope: ProjectedTotalScope,
-  goalMinutes: number
-): { projection: ProjectedTotalResult; today: Date } => {
+  goalMinutes: number,
+  /**
+   * Projects as if it were this day instead of today, so Plans from it onward
+   * count. Onboarding plans a whole month, days already gone included.
+   */
+  asOf?: Date
+): {
+  projection: ProjectedTotalResult
+  today: Date
+  loggedDayKeys: Set<string>
+} => {
   const serviceReports = useServiceReport((s) => s.serviceReports)
   const dayPlans = useServiceReport((s) => s.dayPlans)
   const recurringPlans = useServiceReport((s) => s.recurringPlans)
@@ -52,9 +61,13 @@ const useProjectedTotal = (
     return { kind: 'serviceYear', serviceYear: scopeYear }
   }, [scopeKind, scopeYear, scopeMonth])
 
-  // Captured once per mount. Memoizing keeps the downstream useMemos stable
+  // Captured once per mount, unless `asOf` pins it. Memoizing keeps the downstream useMemos stable
   // across renders that didn't actually cross midnight.
-  const today = useMemo(() => new Date(), [])
+  const asOfTime = asOf?.getTime()
+  const today = useMemo(
+    () => (asOfTime === undefined ? new Date() : new Date(asOfTime)),
+    [asOfTime]
+  )
 
   // Raw standard/credit buckets per month plus the set of days that already
   // have a logged entry. The projection applies the cap itself, month by month,
@@ -127,7 +140,7 @@ const useProjectedTotal = (
     ]
   )
 
-  return { projection, today }
+  return { projection, today, loggedDayKeys }
 }
 
 export default useProjectedTotal

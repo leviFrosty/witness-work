@@ -35,8 +35,6 @@ export type PlanMonthCell = {
   /** Day of the month, 1-based. */
   day: number
   weekday: number
-  /** Before today, so the plan can't use it. */
-  isPast: boolean
 }
 
 /**
@@ -45,20 +43,13 @@ export type PlanMonthCell = {
  */
 export const monthWeeks = (
   target: CalendarMonth,
-  startOfWeek: number,
-  today: Date
+  startOfWeek: number
 ): (PlanMonthCell | null)[][] => {
   const first = moment({ year: target.year, month: target.month, day: 1 })
-  const todayDay = moment(today).startOf('day')
   const leading = (first.day() - startOfWeek + 7) % 7
   const cells: (PlanMonthCell | null)[] = Array(leading).fill(null)
   for (let day = 1; day <= first.daysInMonth(); day++) {
-    const date = first.clone().date(day)
-    cells.push({
-      day,
-      weekday: date.day(),
-      isPast: date.isBefore(todayDay, 'day'),
-    })
+    cells.push({ day, weekday: first.clone().date(day).day() })
   }
   while (cells.length % 7 !== 0) cells.push(null)
   const weeks: (PlanMonthCell | null)[][] = []

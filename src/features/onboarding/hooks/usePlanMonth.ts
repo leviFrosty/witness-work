@@ -1,3 +1,4 @@
+import moment from 'moment'
 import useMonthlyGoal from '@/hooks/useMonthlyGoal'
 import useProjectedTotal from '@/hooks/useProjectedTotal'
 import {
@@ -33,12 +34,18 @@ export type PlanMonth = {
   minutesByDay: Map<number, number>
   /** Days that already have a saved plan, which this step leaves alone. */
   savedDays: Set<number>
+  /** Days that already have time logged, which this step doesn't plan. */
+  loggedDays: Set<number>
 }
 
 /**
  * The Assistant's recommendation for `target` when the publisher goes out only
  * on `serviceDays` — the same engine and projection as the Schedule screen,
  * spread evenly across the picked days.
+ *
+ * It plans the whole month, days already gone included: someone who installs
+ * late in the month has usually been out already, and can log that time on the
+ * planned days instead of cramming the goal into what's left.
  */
 const usePlanMonth = (
   target: CalendarMonth,
@@ -47,9 +54,10 @@ const usePlanMonth = (
   edits: ReadonlyMap<number, number>
 ): PlanMonth => {
   const { effectiveGoalHours } = useMonthlyGoal(target)
-  const { projection, today } = useProjectedTotal(
+  const { projection, today, loggedDayKeys } = useProjectedTotal(
     { kind: 'month', ...target },
-    effectiveGoalHours * 60
+    effectiveGoalHours * 60,
+    new Date(target.year, target.month, 1)
   )
   const dayPlans = useServiceReport((s) => s.dayPlans)
   const recurringPlans = useServiceReport((s) => s.recurringPlans)
@@ -73,6 +81,7 @@ const usePlanMonth = (
           // The publisher just picked these days, so give each a similar
           // session instead of filling the fewest days at the stretch cap.
           spreadEvenly: true,
+          skipDayKeys: loggedDayKeys,
         })
 
   const minutesByDay = new Map<number, number>()
@@ -85,6 +94,13 @@ const usePlanMonth = (
     if (date.year() === target.year && date.month() === target.month) {
       addMinutes(date.date(), plan.minutes)
       savedDays.add(date.date())
+    }
+  }
+  const loggedDays = new Set<number>()
+  for (const key of loggedDayKeys) {
+    const date = moment(key, 'YYYY-MM-DD')
+    if (date.year() === target.year && date.month() === target.month) {
+      loggedDays.add(date.date())
     }
   }
   const plans = applyDayEdits(
@@ -115,6 +131,7 @@ const usePlanMonth = (
     plans,
     minutesByDay,
     savedDays,
+    loggedDays,
   }
 }
 

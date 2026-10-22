@@ -56,25 +56,16 @@ describe('orderedWeekdays', () => {
 describe('monthWeeks', () => {
   it('pads the first and last weeks to seven cells', () => {
     // October 2026 starts on a Thursday.
-    const weeks = monthWeeks({ year: 2026, month: 9 }, 0, new Date(2026, 9, 5))
+    const weeks = monthWeeks({ year: 2026, month: 9 }, 0)
     expect(weeks.every((week) => week.length === 7)).toBe(true)
     expect(weeks[0].slice(0, 4)).toEqual([null, null, null, null])
-    expect(weeks[0][4]).toEqual({ day: 1, weekday: 4, isPast: true })
+    expect(weeks[0][4]).toEqual({ day: 1, weekday: 4 })
     const cells = weeks.flat().filter((cell) => cell !== null)
     expect(cells).toHaveLength(31)
   })
 
-  it('marks only days before today as past', () => {
-    const cells = monthWeeks({ year: 2026, month: 9 }, 1, new Date(2026, 9, 5))
-      .flat()
-      .filter((cell) => cell !== null)
-    expect(cells.filter((cell) => cell.isPast).map((cell) => cell.day)).toEqual(
-      [1, 2, 3, 4]
-    )
-  })
-
   it('aligns to a Monday Start of Week', () => {
-    const weeks = monthWeeks({ year: 2026, month: 9 }, 1, new Date(2026, 9, 5))
+    const weeks = monthWeeks({ year: 2026, month: 9 }, 1)
     expect(weeks[0].slice(0, 3)).toEqual([null, null, null])
     expect(weeks[0][3]?.day).toBe(1)
   })

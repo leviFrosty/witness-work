@@ -147,6 +147,11 @@ export type EngineInput = {
    * (onboarding), so each of them gets a similar session.
    */
   spreadEvenly?: boolean
+  /**
+   * Days (`YYYY-MM-DD`) the engine leaves alone, like days that already have
+   * time logged.
+   */
+  skipDayKeys?: ReadonlySet<string>
   params?: Partial<EngineParams>
 }
 
@@ -167,7 +172,8 @@ const eligibleDays = (
   offDays: number[],
   meetingDays: number[],
   dayPlans: DayPlan[],
-  recurringPlans: RecurringPlan[]
+  recurringPlans: RecurringPlan[],
+  skipDayKeys: ReadonlySet<string>
 ): EligibleDay[] => {
   const start = moment.utc({ year, month, day: 1 })
   const end = start.clone().endOf('month')
@@ -183,11 +189,11 @@ const eligibleDays = (
     const weekday = cursor.day()
     const isOffDay = offDays.includes(weekday)
     const key = cursor.format('YYYY-MM-DD')
-    const hasDayPlan = dayPlanKeys.has(key)
+    const isTaken = dayPlanKeys.has(key) || skipDayKeys.has(key)
     const hasRecurring =
       getPlansIntersectingDay(localDayFromUtcCursor(cursor), recurringPlans)
         .length > 0
-    if (!isOffDay && !hasDayPlan && !hasRecurring) {
+    if (!isOffDay && !isTaken && !hasRecurring) {
       days.push({
         m: cursor.clone(),
         // Off Days already filtered out — meeting flag only matters for the
@@ -631,7 +637,8 @@ export const generateRecommendation = (
     input.offDays,
     input.meetingDays ?? [],
     input.dayPlans,
-    input.recurringPlans
+    input.recurringPlans,
+    input.skipDayKeys ?? new Set()
   )
   if (eligible.length === 0) return null
 

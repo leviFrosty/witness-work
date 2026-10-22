@@ -89,12 +89,18 @@ const PlanMonth = ({ goBack, goNext }: Props) => {
   const addPlan = () => {
     const { recommendation, plans } = plan
     if (plans.length === 0) return
+    const today = moment().startOf('day')
+    let pastPlanCount = 0
     for (const { day, minutes, fromAssistant } of plans) {
+      const date = moment({ ...target, day })
+      // Days already gone are there to log time on, not to be reminded of.
+      const isPast = date.isBefore(today, 'day')
+      if (isPast) pastPlanCount++
       addDayPlan({
         id: Crypto.randomUUID(),
-        date: moment({ ...target, day }).toDate(),
+        date: date.toDate(),
         minutes,
-        notifyMe: planAlwaysNotify,
+        notifyMe: planAlwaysNotify && !isPast,
         source: fromAssistant ? 'recommendation' : 'manual',
       })
     }
@@ -115,6 +121,7 @@ const PlanMonth = ({ goBack, goNext }: Props) => {
       source: 'onboarding',
       shape: recommendation?.shape ?? 'manual',
       plan_count: plans.length,
+      past_plan_count: pastPlanCount,
       edited_day_count: edits.size,
       service_day_count: serviceDays.length,
       reaches_goal: plan.reachesGoal,

@@ -33,6 +33,7 @@ import {
 import type { AccountDevice } from '@/lib/serverAccount/activityClient'
 import { analytics } from '@/lib/analytics'
 import { addForegroundListener } from '@/lib/appLifecycle'
+import { addReconnectListener } from '@/lib/http/online'
 import {
   formatDate,
   formatMonthDayCompact,
@@ -133,10 +134,13 @@ const AccountDevicesScreen = () => {
   // Signing out happens on other devices too, while this one was away.
   useEffect(() => {
     if (!focused) return
-    const foreground = addForegroundListener(() =>
-      setReloads((count) => count + 1)
-    )
-    return () => foreground.remove()
+    const reload = () => setReloads((count) => count + 1)
+    const foreground = addForegroundListener(reload)
+    const reconnect = addReconnectListener(reload)
+    return () => {
+      foreground.remove()
+      reconnect.remove()
+    }
   }, [focused])
 
   const refresh = () => setReloads((count) => count + 1)

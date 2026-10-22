@@ -1,3 +1,4 @@
+import { getOnline } from '@/lib/http/online'
 import { HttpError } from '@/lib/http/request'
 import type {
   AccountStatus,
@@ -89,7 +90,11 @@ export type ServerAccountCheck =
     }
   | { state: 'updateRequired'; accountId: string | null }
   | {
-      state: 'offline'
+      /**
+       * `offline`: this device has no connection. `unreachable`: it has one,
+       * but ww-api failed, refused or didn't answer in time.
+       */
+      state: 'offline' | 'unreachable'
       accountId: string | null
       lastStatus: AccountStatus | null
     }
@@ -253,8 +258,11 @@ export function createServerAccount(deps: ServerAccountDeps) {
       }
     if (failure.failure === 'upgrade')
       return { state: 'updateRequired', accountId: known?.accountId ?? null }
+    const noConnection =
+      (failure.failure === 'offline' || failure.failure === 'cancelled') &&
+      getOnline() !== true
     return {
-      state: 'offline',
+      state: noConnection ? 'offline' : 'unreachable',
       accountId: known?.accountId ?? null,
       lastStatus: known?.status ?? null,
     }

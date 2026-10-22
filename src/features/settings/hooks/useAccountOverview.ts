@@ -2,6 +2,7 @@ import { useCallback, useRef, useState } from 'react'
 import { useFocusEffect } from '@react-navigation/native'
 import { accountKey } from '@/app/account/accountKey'
 import { addForegroundListener } from '@/lib/appLifecycle'
+import { addReconnectListener } from '@/lib/http/online'
 import { onAccountStatus, serverAccount } from '@/lib/serverAccount'
 import type { ServerAccountCheck } from '@/lib/serverAccount/serverAccount'
 import { logger } from '@/lib/logger'
@@ -16,10 +17,11 @@ export type AccountOverview =
 
 /**
  * The account's number and status, checked with the server each time the screen
- * comes into view or the app returns to it (opening this device's session when
- * there's none), and updated while it's in view when another call finds the
- * status changed (a refusal as suspended, or a reinstatement). Doesn't create
- * an account key: without one, the account isn't set up yet.
+ * comes into view, the app returns to it, or the connection comes back (opening
+ * this device's session when there's none), and updated while it's in view when
+ * another call finds the status changed (a refusal as suspended, or a
+ * reinstatement). Doesn't create an account key: without one, the account isn't
+ * set up yet.
  */
 export default function useAccountOverview() {
   const [overview, setOverview] = useState<AccountOverview>({
@@ -50,6 +52,7 @@ export default function useAccountOverview() {
     useCallback(() => {
       void refresh()
       const foreground = addForegroundListener(() => void refresh())
+      const reconnect = addReconnectListener(() => void refresh())
       const unsubscribe = onAccountStatus((status) =>
         setOverview((current) =>
           current.state === 'active' || current.state === 'suspended'
@@ -59,6 +62,7 @@ export default function useAccountOverview() {
       )
       return () => {
         foreground.remove()
+        reconnect.remove()
         unsubscribe()
       }
     }, [refresh])

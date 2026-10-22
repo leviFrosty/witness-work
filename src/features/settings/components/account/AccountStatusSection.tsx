@@ -28,6 +28,7 @@ const STATUS: Record<AccountOverview['state'], TranslationKey> = {
   unverified: 'account_statusUnverified',
   updateRequired: 'account_statusUpdate',
   offline: 'account_statusOffline',
+  unreachable: 'account_statusUnreachable',
 }
 
 const FOOTER: Partial<Record<AccountOverview['state'], TranslationKey>> = {
@@ -40,6 +41,7 @@ const FOOTER: Partial<Record<AccountOverview['state'], TranslationKey>> = {
   ),
   updateRequired: 'account_updateRequired',
   offline: 'account_footerOffline',
+  unreachable: 'account_footerUnreachable',
 }
 
 /**
@@ -71,7 +73,10 @@ export default function AccountStatusSection({
   const footer = temporary
     ? 'account_footerVerifyLater'
     : FOOTER[overview.state]
-  const retry = overview.state === 'unverified' ? onRetry : undefined
+  const retry =
+    overview.state === 'unverified' || overview.state === 'unreachable'
+      ? onRetry
+      : undefined
 
   return (
     <View style={{ gap: 5 }}>

@@ -47,6 +47,7 @@ import type {
 } from '@/lib/serverAccount/activityClient'
 import { analytics } from '@/lib/analytics'
 import { addForegroundListener } from '@/lib/appLifecycle'
+import { addReconnectListener } from '@/lib/http/online'
 import { formatDateTime } from '@/lib/dates'
 import i18n from '@/lib/locales'
 import { logger } from '@/lib/logger'
@@ -128,10 +129,13 @@ const AccountActivityScreen = () => {
 
   useEffect(() => {
     if (!focused) return
-    const foreground = addForegroundListener(() =>
-      setReloads((count) => count + 1)
-    )
-    return () => foreground.remove()
+    const reload = () => setReloads((count) => count + 1)
+    const foreground = addForegroundListener(reload)
+    const reconnect = addReconnectListener(reload)
+    return () => {
+      foreground.remove()
+      reconnect.remove()
+    }
   }, [focused])
 
   const refreshControl = (

@@ -1,6 +1,6 @@
 # Account and recovery key
 
-Settings → Account shows the User's anonymous server account (its number and whether it's active, suspended, not set up, unavailable, or offline) and its recovery key. Show Recovery Key asks for the device's own authentication when a screen lock is set, then shows the key (`WW1-` and eleven groups of five) with Copy and Share; viewing it creates the account key when there's none. Use a Recovery Key checks a key as it's typed, refuses a typo by its checksum, does nothing for the key the device already has, and replaces the account for a different key, warning first (and running Delete Buddies) when Buddies has data on the device. On iOS the warning also says it reaches the User's other Apple devices.
+Settings → Account shows the User's anonymous server account (its number and whether it's active, suspended, not set up, unavailable, offline, or not responding) and its recovery key. Show Recovery Key asks for the device's own authentication when a screen lock is set, then shows the key (`WW1-` and eleven groups of five) with Copy and Share; viewing it creates the account key when there's none. Use a Recovery Key checks a key as it's typed, refuses a typo by its checksum, does nothing for the key the device already has, and replaces the account for a different key, warning first (and running Delete Buddies) when Buddies has data on the device. On iOS the warning also says it reaches the User's other Apple devices.
 
 ## Sub-features
 

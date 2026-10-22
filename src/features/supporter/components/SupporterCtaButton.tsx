@@ -1,5 +1,12 @@
-import { PropsWithChildren, useCallback, useState } from 'react'
+import {
+  PropsWithChildren,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from 'react'
 import { LayoutChangeEvent, View, ViewStyle } from 'react-native'
+import { useIsFocused } from '@react-navigation/native'
 import {
   Canvas,
   RoundedRect,
@@ -13,6 +20,8 @@ import {
 } from 'react-native-reanimated'
 import Button, { ButtonProps } from '@/components/ui/Button'
 import useTheme from '@/contexts/theme'
+import useAppActive from '@/hooks/useAppActive'
+import useOnScreen from '@/hooks/useOnScreen'
 
 interface Props extends ButtonProps {
   onPress: () => unknown
@@ -78,13 +87,29 @@ const ShimmerCta: React.FC<PropsWithChildren<Omit<Props, 'shimmer'>>> = ({
   ...rest
 }) => {
   const theme = useTheme()
+  const rimRef = useRef<View>(null)
   const [size, setSize] = useState<{ w: number; h: number } | null>(null)
   const time = useSharedValue(0)
 
-  useFrameCallback((frame) => {
+  // Only turn while someone can see the rim: a frame callback keeps redrawing
+  // the canvas behind other screens, in the background on Android, and when
+  // scrolled away, which pins a core on software-rendered GPUs.
+  const focused = useIsFocused()
+  const appActive = useAppActive()
+  const visible = focused && appActive && !disabled && size !== null
+  const onScreen = useOnScreen(rimRef, visible)
+  const running = visible && onScreen
+
+  const frame = useFrameCallback(({ timeSincePreviousFrame }) => {
     'worklet'
-    time.value = frame.timeSinceFirstFrame / 1000
-  })
+    // Cap the step so the rim resumes where it paused instead of jumping.
+    time.value += Math.min(timeSincePreviousFrame ?? 16, 64) / 1000
+  }, false)
+
+  useEffect(() => {
+    frame.setActive(running)
+    return () => frame.setActive(false)
+  }, [running, frame])
 
   const handleLayout = useCallback((e: LayoutChangeEvent) => {
     const { width: w, height: h } = e.nativeEvent.layout
@@ -115,7 +140,7 @@ const ShimmerCta: React.FC<PropsWithChildren<Omit<Props, 'shimmer'>>> = ({
   ]
 
   return (
-    <View>
+    <View ref={rimRef}>
       <View onLayout={handleLayout}>
         <Button
           onPress={onPress}

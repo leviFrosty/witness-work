@@ -66,6 +66,13 @@ const AGENT_DEVICE_VERSION = '0.21.12'
 const METRO_WORKERS = process.env.WW_VERIFY_METRO_WORKERS || '2'
 const GRADLE_WORKERS = process.env.WW_VERIFY_GRADLE_WORKERS || '2'
 const EMULATOR_MEMORY_MB = 2048
+// Emulator GPU mode (`emulator -help-gpu`). Headless, `auto` picks ANGLE on
+// SwiftShader, which renders every frame on the Mac's CPU: an animated screen
+// such as Welcome keeps qemu near 1,200%. `host` renders on the Mac's GPU,
+// headless too, and holds the same screen near 70%.
+const EMULATOR_GPU =
+  process.env.WW_VERIFY_ANDROID_GPU ||
+  (process.platform === 'darwin' ? 'host' : 'auto')
 const ANDROID_HOME =
   process.env.ANDROID_HOME || path.join(os.homedir(), 'Library/Android/sdk')
 const ANDROID_AVD_HOME =
@@ -1475,11 +1482,25 @@ async function unlockAndroid(serial, deps = {}) {
   )
 }
 
+/** The `-gpu` mode a running AVD's emulator was started with (`auto` if none). */
+function emulatorGpu(name) {
+  const command = run('ps', ['-axo', 'command'], { check: false })
+    .stdout.split('\n')
+    .find((line) => /qemu-system/.test(line) && line.includes(`-avd ${name} `))
+  return command?.match(/ -gpu (\S+)/)?.[1] ?? 'auto'
+}
+
 /** Boots the leased AVD headless and lean; returns its adb serial. */
 async function bootAndroid(device) {
   const name = device.name
   let serial = runningAvds()[name]
-  if (!serial) {
+  if (serial) {
+    const gpu = emulatorGpu(name)
+    if (gpu !== EMULATOR_GPU)
+      log(
+        `${name} runs with -gpu ${gpu}, not ${EMULATOR_GPU}; \`wwv down --platform android --shutdown\` reboots it`
+      )
+  } else {
     const port = 5580 + 2 * (avdNumber(name) - 1)
     serial = `emulator-${port}`
     log(`booting ${name} headless on ${serial}`)
@@ -1502,6 +1523,8 @@ async function bootAndroid(device) {
         String(EMULATOR_MEMORY_MB),
         '-cores',
         '2',
+        '-gpu',
+        EMULATOR_GPU,
       ],
       { detached: true, stdio: ['ignore', logFile, logFile], env: toolEnv() }
     ).unref()

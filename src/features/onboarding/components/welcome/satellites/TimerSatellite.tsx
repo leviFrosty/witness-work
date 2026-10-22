@@ -1,11 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Text, View } from 'react-native'
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withRepeat,
-  withTiming,
-} from 'react-native-reanimated'
+import Animated, { useAnimatedStyle } from 'react-native-reanimated'
 import useTheme from '@/contexts/theme'
 import { formatMs } from '@/features/service-reports/hooks/useStopWatch'
 import SatelliteSurface, {
@@ -15,24 +10,34 @@ import { tracking } from '@/lib/tracking'
 
 // A believable session already under way: 1h 24m 07s.
 const STARTED_MS = (84 * 60 + 7) * 1000
+// Seconds per beat of the recording dot.
+const PULSE_SECONDS = 1.6
 
 /** A running stopwatch, ticking in real time. */
-const TimerSatellite = ({ palette, focus, reduceMotion }: SatelliteProps) => {
+const TimerSatellite = ({
+  palette,
+  focus,
+  reduceMotion,
+  time,
+}: SatelliteProps) => {
   const theme = useTheme()
   const [elapsed, setElapsed] = useState(STARTED_MS)
-  const pulse = useSharedValue(0)
 
   useEffect(() => {
     if (reduceMotion) return
     const id = setInterval(() => setElapsed((ms) => ms + 1000), 1000)
-    pulse.value = withRepeat(withTiming(1, { duration: 1600 }), -1, false)
     return () => clearInterval(id)
-  }, [reduceMotion, pulse])
+  }, [reduceMotion])
 
-  const ringStyle = useAnimatedStyle(() => ({
-    opacity: (1 - pulse.value) * 0.6,
-    transform: [{ scale: 1 + pulse.value * 1.6 }],
-  }))
+  const ringStyle = useAnimatedStyle(() => {
+    const pulse = reduceMotion
+      ? 0
+      : (time.value % PULSE_SECONDS) / PULSE_SECONDS
+    return {
+      opacity: (1 - pulse) * 0.6,
+      transform: [{ scale: 1 + pulse * 1.6 }],
+    }
+  })
 
   return (
     <SatelliteSurface

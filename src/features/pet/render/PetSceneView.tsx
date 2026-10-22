@@ -40,7 +40,7 @@ import { sceneTapTarget, startsOnPet } from '@/features/pet/lib/sceneTouch'
 import { createFrameLoop } from '@/features/pet/render/frameLoop'
 import PetSpeechBubble from '@/features/pet/render/PetSpeechBubble'
 import { bufferToSkImage } from '@/features/pet/render/skiaImage'
-import useOnScreen from '@/features/pet/render/useOnScreen'
+import useOnScreen from '@/hooks/useOnScreen'
 import useSceneActive from '@/features/pet/render/useSceneActive'
 
 /** How long a sound's bubble stays up. */

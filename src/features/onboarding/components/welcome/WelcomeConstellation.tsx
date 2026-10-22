@@ -137,6 +137,7 @@ const SatelliteSlot = ({
           focus={focus}
           active={focused}
           reduceMotion={reduceMotion}
+          time={time}
         />
       </Animated.View>
     </View>

@@ -1,6 +1,6 @@
 import { useEffect, useState, type RefObject } from 'react'
 import { useWindowDimensions, type View } from 'react-native'
-import { isOnScreen } from '@/features/pet/render/onScreen'
+import { isOnScreen } from '@/lib/onScreen'
 
 /** How often a scene checks whether it was scrolled out of view. */
 const CHECK_MS = 500

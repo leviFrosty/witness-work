@@ -77,7 +77,10 @@ const ScheduleScreen = ({ route, navigation }: Props) => {
     route.params?.year !== undefined && route.params.month !== undefined
       ? { year: route.params.year, month: route.params.month }
       : undefined
-  const calendar = useScheduleCalendar({ initial: routeMonth })
+  const calendar = useScheduleCalendar({
+    initial: routeMonth,
+    initialDay: route.params?.date,
+  })
   // Taken out up front: `calendar` itself changes with each month scrolled
   // into focus, and whatever closes over it would re-render with it.
   const {

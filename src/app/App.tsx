@@ -62,6 +62,7 @@ import { useAccountBackup } from '@/app/account/useAccountBackup'
 import { useAppFonts } from '@/app/useAppFonts'
 import { initializeApp } from '@/app/initializeApp'
 import { linking, navigationRef } from '@/features/contacts/lib/linking'
+import { stopRecordingLaunchLinks } from '@/lib/launchLinks'
 import { analytics } from '@/lib/analytics'
 import { PointerTooltipLayer } from '@/components/ui/PointerTooltip'
 import UndoToastLayer from '@/components/UndoToastLayer'
@@ -153,6 +154,8 @@ function UnlockedApp() {
                   // Shown while deep links resolve, before the first screen.
                   fallback={<LaunchSplash />}
                   onReady={() => {
+                    // Every link listener is up now.
+                    stopRecordingLaunchLinks()
                     markLaunched()
                     reportLaunch()
                     captureLaunchTiming()

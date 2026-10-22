@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Alert } from 'react-native'
 import * as Linking from 'expo-linking'
+import { launchURL } from '@/lib/launchLinks'
 import { useToastController } from '@tamagui/toast'
 import {
   ImportHandlerCallbacks,
@@ -48,7 +49,7 @@ export default function ContactImportListener() {
     }
     if (!handledInitialUrl.current) {
       handledInitialUrl.current = true
-      Linking.getInitialURL()
+      launchURL()
         .then((initial) => {
           logger.log(
             '[ContactImportListener] getInitialURL resolved =',

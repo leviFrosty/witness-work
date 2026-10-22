@@ -43,8 +43,9 @@ const SCREEN = 600
 const TODAY_TOP = 48 + ROW * 2.5 - ROW / 2
 
 const renders: ReturnType<typeof useScheduleCalendar>[] = []
+let options: Parameters<typeof useScheduleCalendar>[0] = {}
 const Harness = () => {
-  renders.push(useScheduleCalendar({}))
+  renders.push(useScheduleCalendar(options))
   return null
 }
 const calendar = () => renders[renders.length - 1]
@@ -86,6 +87,7 @@ beforeEach(async () => {
 afterEach(() => {
   act(() => renderer?.unmount())
   renderer = undefined
+  options = {}
   vi.useRealTimers()
   vi.unstubAllGlobals()
 })
@@ -177,4 +179,34 @@ it('keeps its focus line in the part a day’s sheet leaves in view', () => {
     offset: row * ROW - (100 - ROW / 2),
     animated: true,
   })
+})
+
+it('opens on a linked day’s week, with nothing left to reveal once it loads', async () => {
+  // A link opens the day as the tab first mounts, on a busy cold start.
+  act(() => renderer?.unmount())
+  renders.length = 0
+  options = { initialDay: '2026-11-19' }
+  await act(async () => {
+    renderer = create(<Harness />)
+  })
+  ;(calendar().listRef as { current: unknown }).current = list
+  act(() => calendar().onListLayout({ x: 0, y: 0, width: 390, height: SCREEN }))
+
+  const row = calendar().schedule.dayRow.get('2026-11-19')!
+  // A row above the day's week, so the week before it shows too.
+  expect(calendar().initialRowIndex).toBe(row - 1)
+  expect(calendar().focusedMonth).toEqual({ year: 2026, month: 10 })
+
+  // The list's own first scroll brings the week in. A second one once it
+  // loaded landed on the month above on a busy cold start.
+  offset = (row - 6) * ROW
+  act(() => {
+    calendar().revealDay(new Date(2026, 10, 19), 300)
+  })
+  act(() => {
+    calendar().onListLoad()
+    vi.advanceTimersByTime(150)
+  })
+  expect(list.scrollToOffset).not.toHaveBeenCalled()
+  expect(list.scrollToIndex).not.toHaveBeenCalled()
 })

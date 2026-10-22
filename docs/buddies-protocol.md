@@ -347,7 +347,7 @@ Both people can derive both directions; each registers the _incoming_ direction'
 
 ### Pairing sequence
 
-1. **A** creates `s`, uploads the invite card (`invite/create`), and shares the link.
+1. **A** creates `s`, uploads the invite card (`invite/create`), and shares the link. A create with no answer (offline, a timeout, a 5xx) may still have stored the invite, which would count toward the 3 open invites with no way to share or cancel it. So the device keeps its `inviteId` and secret (`unconfirmedInvites`, this device only), and the next invite or sync looks it up with `invite/fetch`: an open one joins the outgoing invites (and the next invite shows it rather than making a second), and a `not_found` one is forgotten.
 2. **B** opens the link → `invite/fetch` → decrypts the card → pre-accept screen.
 3. **B** accepts → derives `pairSecret` → `slot/add` for A→B in B's inbox → `invite/claim` with its own card.
 4. **A** gets `invite.claimed` (push + sync) → decrypts the claim → **confirm** → `slot/add` for B→A in A's inbox → `event/put` `pair.confirmed` (push) into B's inbox → `card/put` → `invite/delete`.

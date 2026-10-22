@@ -1014,6 +1014,13 @@ export type BuddiesState = {
   lastSyncAt: number
   buddies: Buddy[]
   outgoingInvites: OutgoingInvite[]
+  /**
+   * Invites whose `invite/create` got no answer (offline, a timeout), so the
+   * relay may hold them, counting toward its cap on open invites. The next sync
+   * or invite looks each up: one the relay has becomes an outgoing invite, one
+   * it doesn't is forgotten. Per device; never in the roster.
+   */
+  unconfirmedInvites: OutgoingInvite[]
   incomingClaims: IncomingClaim[]
   /**
    * Invites cancelled, rejected, or confirmed (inviteId → expiresAt), so a
@@ -1146,6 +1153,7 @@ export const initialBuddiesState: BuddiesState = {
   lastSyncAt: 0,
   buddies: [],
   outgoingInvites: [],
+  unconfirmedInvites: [],
   incomingClaims: [],
   closedInviteIds: {},
   removedBuddies: {},

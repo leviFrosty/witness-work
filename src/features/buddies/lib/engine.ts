@@ -102,6 +102,7 @@ import {
   JOIN_REQUEST_ALERTS_PER_DAY,
   JOIN_REQUEST_LEAD_MS,
   MAX_OPEN_JOIN_REQUESTS,
+  type OutgoingInvite,
   OutgoingJoinRequest,
   OutgoingShare,
   incomingShareKey,
@@ -1190,11 +1191,50 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     if (!displayName()) throw new BuddyInviteError('nameRequired')
   }
 
+  /**
+   * Looks up each invite whose create got no answer (`unconfirmedInvites`): one
+   * the relay holds open joins the outgoing invites, so it can be shared or
+   * cancelled; one it doesn't (or that expired) is forgotten. Stops at the
+   * first lookup that fails, for the next sync. Returns the newest one found.
+   */
+  async function confirmUnsureInvites(): Promise<OutgoingInvite | null> {
+    let found: OutgoingInvite | null = null
+    for (const invite of store.getState().unconfirmedInvites) {
+      let open = false
+      if (invite.expiresAt > deps.now()) {
+        try {
+          open = (await relay.fetchInvite(invite.inviteId)).status === 'open'
+        } catch (error) {
+          if (!isRelayError(error, 'not_found')) return found
+        }
+      }
+      store.setState((state) => ({
+        unconfirmedInvites: state.unconfirmedInvites.filter(
+          (candidate) => candidate.inviteId !== invite.inviteId
+        ),
+        outgoingInvites:
+          open &&
+          !state.outgoingInvites.some((i) => i.inviteId === invite.inviteId)
+            ? [...state.outgoingInvites, invite]
+            : state.outgoingInvites,
+      }))
+      if (open) found = invite
+    }
+    return found
+  }
+
   async function createInvite(): Promise<string> {
     requireName()
     if (occupiedBuddySpots(store.getState()) >= MAX_BUDDIES)
       throw new BuddyInviteError('limit')
     const me = await ensureInbox()
+    // An earlier try may have created one without hearing back: that's the
+    // one to show, not a second.
+    const unsure = await confirmUnsureInvites()
+    if (unsure) {
+      await saveRoster(me)
+      return buildInviteLink(fromB64u(unsure.secret))
+    }
     const secret = deps.randomBytes(16)
     const invite = deriveInvite(secret)
     const createdAt = deps.now()
@@ -1212,6 +1252,23 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
         expiresAt,
       })
     } catch (error) {
+      // No answer: the relay may have created it anyway.
+      if (
+        isRelayConnectivityError(error) ||
+        isRelayError(error, 'cancelled') ||
+        isRelayError(error, 'unknown')
+      )
+        store.setState((state) => ({
+          unconfirmedInvites: [
+            ...state.unconfirmedInvites,
+            {
+              inviteId: invite.inviteId,
+              secret: toB64u(secret),
+              createdAt,
+              expiresAt,
+            },
+          ],
+        }))
       if (!isRelayError(error, 'limit')) throw error
       // Every spot is taken, or (with spots free here) the relay's cap on
       // invites still waiting to be accepted, some maybe from another device.
@@ -4457,6 +4514,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     coolDownUntil = 0
     cancelled(call)
     await flushRemovals(me)
+    if (await confirmUnsureInvites()) rosterChanged = true
     await deliverReplies().catch(() => {
       // Retried on the next sync.
     })

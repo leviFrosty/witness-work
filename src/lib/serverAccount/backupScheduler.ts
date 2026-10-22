@@ -201,6 +201,8 @@ export function createBackupScheduler(deps: BackupSchedulerDeps) {
   /** Wakes the next server check; only while in the foreground. */
   let checkTimer: unknown = null
   let foreground = false
+  /** Whether this launch has come to the foreground yet. */
+  let launched = false
 
   const state = () => deps.state.get()
   const log = (level: 'info' | 'warn', message: string) =>
@@ -467,9 +469,16 @@ export function createBackupScheduler(deps: BackupSchedulerDeps) {
     /** A real return to the app, or the launch. */
     onForeground() {
       foreground = true
+      // Only updating fixes `update`, and an update relaunches the app, so the
+      // launch tries again instead of waiting out the day.
+      const launching = !launched
+      launched = true
       if (!deps.isEnabled()) return
       const { lastError } = state()
-      if (lastError && PASSING.has(lastError))
+      if (
+        lastError &&
+        (PASSING.has(lastError) || (lastError === 'update' && launching))
+      )
         deps.state.set({ retryAt: null, failures: 0 })
       if (state().pending || due()) plan(BACKUP_FOREGROUND_DELAY_MS)
       else plan(0)

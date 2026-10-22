@@ -309,6 +309,36 @@ describe('backup scheduler', () => {
     expect(u.world.uploads).toHaveLength(1)
   })
 
+  it('tries again at the next launch after ww-api asked for an update, not on every return', async () => {
+    // The last launch's upload got 426: an update relaunches the app.
+    const updated = setup({
+      schedule: {
+        lastPutAt: START - 60 * 60_000,
+        pending: true,
+        lastResult: 'failed',
+        lastError: 'update',
+        failures: 1,
+        retryAt: START + BACKUP_DAILY_MS - 60 * 60_000,
+      },
+    })
+    updated.scheduler.onForeground()
+    await updated.advance(10_000)
+    expect(updated.world.uploads).toEqual([{ at: START + 5_000, data: 'v1' }])
+    expect(updated.state()).toMatchObject({ lastError: null, retryAt: null })
+
+    // Within one launch, coming back can't change the version.
+    const t = setup({ schedule: { lastPutAt: START - 1_000_000 } })
+    t.scheduler.onForeground()
+    t.world.fail.push(new BackupError('update'))
+    t.scheduler.noteChange()
+    await t.advance(BACKUP_DEBOUNCE_MS)
+    expect(t.state().lastError).toBe('update')
+    t.scheduler.onForeground()
+    await t.advance(60 * 60_000)
+    expect(t.world.uploads).toEqual([])
+    expect(t.state().retryAt).toBe(START + BACKUP_DEBOUNCE_MS + BACKUP_DAILY_MS)
+  })
+
   it('catches up on launch when a day has passed, or edits were left pending', async () => {
     const due = setup({
       schedule: { lastPutAt: START - BACKUP_DAILY_MS - 1, lastHash: 'hash:v1' },

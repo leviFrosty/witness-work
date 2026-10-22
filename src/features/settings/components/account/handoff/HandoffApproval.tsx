@@ -10,18 +10,20 @@ import { handoffDeviceLine } from '@/features/settings/components/account/handof
 
 /**
  * A phone claimed the code: who it says it is, the code to compare, and the
- * User's answer.
+ * User's answer. `sendFailed` when an Allow didn't get through.
  */
 export default function HandoffApproval({
   hello,
   code,
   sending,
+  sendFailed = false,
   onAllow,
   onDecline,
 }: {
   hello: HandoffHello
   code: string
   sending: boolean
+  sendFailed?: boolean
   onAllow: () => void
   onDecline: () => void
 }) {
@@ -45,6 +47,15 @@ export default function HandoffApproval({
       <Text style={{ textAlign: 'center', maxWidth: 320 }}>
         {i18n.t('handoff_matchCode')}
       </Text>
+      {sendFailed && !sending && (
+        <Text
+          accessibilityRole='alert'
+          style={{ color: theme.colors.error, textAlign: 'center' }}
+          testID='handoff-allow-failed'
+        >
+          {i18n.t('handoff_allowFailed')}
+        </Text>
+      )}
       <View style={{ alignSelf: 'stretch', gap: 4, marginTop: 8 }}>
         <ActionButton
           onPress={onAllow}

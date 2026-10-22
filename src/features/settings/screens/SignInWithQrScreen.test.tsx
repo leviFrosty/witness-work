@@ -10,12 +10,14 @@ type Claim = {
   linkProblem: null
   completion: 'idle' | 'running' | ClaimCompletion
   scanned: () => void
+  retry?: () => void
   reset: () => void
 }
 
 const mocks = vi.hoisted(() => ({
   claim: null as unknown as Claim,
   goBack: vi.fn(),
+  retry: vi.fn(),
   reset: vi.fn(),
   buddies: 0,
   onboarded: true,
@@ -80,15 +82,16 @@ import { completeOnboardingFromRestore } from '@/features/settings/lib/completeO
 
 type Action = { label: string; onPress: () => void; testID?: string }
 
-const actionsOf = async () => {
+const actionsOf = async (testID = 'handoff-failed') => {
   let root!: ReturnType<typeof create>
   await act(async () => {
     root = create(<SignInWithQrScreen />)
   })
   const status = root.root
     .findAllByType(HandoffStatus)
-    .find((node) => node.props.testID === 'handoff-failed')!
+    .find((node) => node.props.testID === testID)!
   return {
+    body: status.props.body as string,
     primary: status.props.primary as Action | undefined,
     secondary: status.props.secondary as Action | undefined,
   }
@@ -236,6 +239,36 @@ it.each<HandoffFailure | 'replace_failed'>([...RETRYABLE, 'replace_failed'])(
     primary!.onPress()
     expect(mocks.reset).toHaveBeenCalledTimes(1)
     expect(mocks.goBack).not.toHaveBeenCalled()
+  }
+)
+
+it.each<[HandoffFailure, string]>([
+  ['offline', 'new:offline'],
+  ['server', 'handoff_signInRetryServer'],
+  ['verifyLater', 'new:verifyLater'],
+])(
+  'offers Try Again with the key still here when signing in fails as %s for now',
+  async (reason, body) => {
+    mocks.claim = {
+      session: {},
+      state: { step: 'received' },
+      linkProblem: null,
+      completion: { outcome: 'failed', reason, retryable: true },
+      scanned: vi.fn(),
+      retry: mocks.retry,
+      reset: mocks.reset,
+    }
+    const actions = await actionsOf('handoff-failed-retryable')
+
+    expect(actions.body).toBe(body)
+    expect(actions.primary).toMatchObject({
+      label: 'handoff_tryAgain',
+      testID: 'handoff-retry',
+    })
+    expect(actions.secondary).toMatchObject({ testID: 'handoff-scan-again' })
+    actions.primary!.onPress()
+    expect(mocks.retry).toHaveBeenCalledTimes(1)
+    expect(mocks.reset).not.toHaveBeenCalled()
   }
 )
 

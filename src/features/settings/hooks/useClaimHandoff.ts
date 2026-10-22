@@ -6,6 +6,7 @@ import {
   type HandoffEntry,
   startClaimHandoff,
 } from '@/app/account/handoff'
+import { addReconnectListener } from '@/lib/http/online'
 import { logger } from '@/lib/logger'
 import {
   type HandoffOffer,
@@ -24,16 +25,23 @@ type LinkProblem = Extract<ParsedHandoffLink, { ok: false }>['problem']
 
 const ACTIVE_STEPS = new Set(['idle', 'claiming', 'waiting'])
 
-/** Cancels a session that's still waiting for the key. */
-function endIfActive(session: ClaimSession | null) {
-  if (session && ACTIVE_STEPS.has(session.state.step))
+/**
+ * Cancels a session that's still waiting for the key, or holds one it couldn't
+ * use yet (`received` while nothing is completing it).
+ */
+function endIfActive(session: ClaimSession | null, completing: boolean) {
+  if (!session) return
+  const step = session.state.step
+  if (ACTIVE_STEPS.has(step) || (step === 'received' && !completing))
     void endHandoff(session, 'left')
 }
 
 /**
  * The new phone's handoff for Sign In with QR Code: claims the code it's given
  * (scanned, or an opened link), polls until the old phone sends the account,
- * then checks and stores it. Leaving before the key arrives cancels.
+ * then checks and stores it. Signing in with the key that failed for now
+ * (offline, a server error) runs again from Try Again or when the connection
+ * comes back. Leaving before the key is stored cancels.
  */
 export default function useClaimHandoff(
   entry: HandoffEntry,
@@ -46,10 +54,12 @@ export default function useClaimHandoff(
     'idle' | 'running' | ClaimCompletion
   >('idle')
   const current = useRef<ClaimSession | null>(null)
+  /** Whether `completeClaimHandoff` is running, read when the screen closes. */
+  const completing = useRef(false)
   const state = useHandoffState(session)
 
   const begin = (offer: HandoffOffer, how: HandoffEntry) => {
-    endIfActive(current.current)
+    endIfActive(current.current, completing.current)
     const next = startClaimHandoff(offer, how)
     current.current = next
     setLinkProblem(null)
@@ -67,7 +77,7 @@ export default function useClaimHandoff(
     }
     // The same code again (a link opened twice) keeps the claim going.
     if (current.current?.channelId === parsed.offer.channelId) return
-    endIfActive(current.current)
+    endIfActive(current.current, completing.current)
     const next = startClaimHandoff(parsed.offer, entry)
     current.current = next
     setLinkProblem(null)
@@ -78,7 +88,8 @@ export default function useClaimHandoff(
   // Leaving the screen before the key arrives cancels the channel.
   useEffect(() => {
     const latest = current
-    return () => endIfActive(latest.current)
+    const running = completing
+    return () => endIfActive(latest.current, running.current)
   }, [])
 
   useHandoffPolling(session, state?.step === 'waiting')
@@ -86,6 +97,7 @@ export default function useClaimHandoff(
   useEffect(() => {
     if (!session || state?.step !== 'received' || completion !== 'idle') return
     setCompletion('running')
+    completing.current = true
     completeClaimHandoff(session, {
       confirmReplace: (loss) => confirmAccountReplace(loss, 'handoff'),
       buddiesEnabled,
@@ -96,11 +108,32 @@ export default function useClaimHandoff(
         session.fail('server')
         setCompletion({ outcome: 'failed', reason: 'server' })
       })
+      .finally(() => {
+        completing.current = false
+      })
   }, [session, state?.step, completion, buddiesEnabled])
+
+  const retryable =
+    typeof completion === 'object' &&
+    completion.outcome === 'failed' &&
+    completion.retryable === true
+
+  /** Signs in with the received key again. */
+  const retry = () => {
+    if (current.current?.state.step === 'received') setCompletion('idle')
+  }
+
+  useEffect(() => {
+    if (!retryable) return
+    const reconnect = addReconnectListener(() => {
+      if (current.current?.state.step === 'received') setCompletion('idle')
+    })
+    return () => reconnect.remove()
+  }, [retryable])
 
   /** Back to the scanner. */
   const reset = () => {
-    endIfActive(current.current)
+    endIfActive(current.current, completing.current)
     current.current = null
     setSession(null)
     setLinkProblem(null)
@@ -113,6 +146,7 @@ export default function useClaimHandoff(
     linkProblem,
     completion,
     scanned: (offer: HandoffOffer) => begin(offer, entry),
+    retry,
     reset,
   }
 }

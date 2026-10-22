@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { Pressable, View } from 'react-native'
+import { Pressable, StyleSheet, View } from 'react-native'
 import { DropdownMenu, Host, RNHostView } from '@expo/ui/jetpack-compose'
+import { fillMaxSize } from '@expo/ui/jetpack-compose/modifiers'
 import useTheme from '@/contexts/theme'
 import Haptics from '@/lib/haptics'
 import { usePreferences } from '@/stores/preferences'
@@ -33,6 +34,7 @@ export default function ContextMenu({
   hosted = false,
   style,
   testID,
+  deferHost = false,
 }: ContextMenuProps) {
   const theme = useTheme()
   const colorScheme = usePreferences((s) => s.colorScheme)
@@ -52,7 +54,11 @@ export default function ContextMenu({
     onPress && pointerEffect !== 'none' ? setHovered : undefined
   const tint = <HoverTint visible={hovered} borderRadius={hoverRadius} />
 
+  // With `deferHost`, whether the first long press has mounted the host.
+  const [hostMounted, setHostMounted] = useState(false)
+
   const open = () => {
+    setHostMounted(true)
     void Haptics.androidLongPress()
     setSubmenu(null)
     setExpanded(true)
@@ -101,6 +107,54 @@ export default function ContextMenu({
       ? { accessible: false }
       : menuAccessibilityProps(groups)
 
+  const items = (
+    <DropdownMenu.Items>
+      <MenuItems
+        groups={groups}
+        submenu={submenu}
+        onSubmenuChange={setSubmenu}
+        onSelect={select}
+      />
+    </DropdownMenu.Items>
+  )
+
+  if (deferHost && !hosted) {
+    // The host stays mounted once it is, so the menu's exit plays out and
+    // later long presses open it as fast as a host made up front would.
+    return (
+      <View style={style}>
+        {hostMounted ? (
+          // Behind the content and filling it: the menu's anchor, the same
+          // rectangle a host around the content would give it.
+          <Host style={StyleSheet.absoluteFill} colorScheme={colorScheme}>
+            <DropdownMenu
+              expanded={expanded}
+              onDismissRequest={close}
+              color={theme.colors.card}
+              modifiers={[fillMaxSize()]}
+            >
+              {items}
+            </DropdownMenu>
+          </Host>
+        ) : null}
+        <PointerHover onHoverChange={onHoverChange}>
+          <Pressable
+            style={({ pressed }) => pressed && onPress && { opacity: 0.7 }}
+            onPress={onPress}
+            onLongPress={disabled ? undefined : open}
+            accessibilityRole={onPress ? 'button' : accessibilityRole}
+            accessibilityLabel={accessibilityLabel}
+            testID={testID}
+            {...a11y}
+          >
+            {children}
+            {tint}
+          </Pressable>
+        </PointerHover>
+      </View>
+    )
+  }
+
   const menu = (
     <DropdownMenu
       expanded={expanded}
@@ -131,14 +185,7 @@ export default function ContextMenu({
           </PointerHover>
         </RNHostView>
       </DropdownMenu.Trigger>
-      <DropdownMenu.Items>
-        <MenuItems
-          groups={groups}
-          submenu={submenu}
-          onSubmenuChange={setSubmenu}
-          onSelect={select}
-        />
-      </DropdownMenu.Items>
+      {items}
     </DropdownMenu>
   )
 

@@ -11,7 +11,14 @@ const { slot } = vi.hoisted(() => ({
     React.createElement(name, props),
 }))
 
-vi.mock('react-native', () => ({ Pressable: 'Pressable', View: 'View' }))
+vi.mock('react-native', () => ({
+  Pressable: 'Pressable',
+  View: 'View',
+  StyleSheet: { absoluteFill: { position: 'absolute' } },
+}))
+vi.mock('@expo/ui/jetpack-compose/modifiers', () => ({
+  fillMaxSize: () => ({ $type: 'fillMaxSize' }),
+}))
 vi.mock('@expo/ui/jetpack-compose', () => ({
   Host: 'ComposeHost',
   RNHostView: 'RNHostView',
@@ -166,6 +173,39 @@ describe('Android context menu', () => {
     expect(await run(520)).toBe(2)
     expect(await run(240)).toBe(1)
     await render(<React.Fragment />)
+  })
+
+  it('mounts a deferred host on the first long press and keeps it', async () => {
+    const onPress = vi.fn()
+    const list = actions()
+    await render(
+      <AndroidContextMenu actions={list} onPress={onPress} deferHost>
+        <React.Fragment />
+      </AndroidContextMenu>
+    )
+    const hosts = () => root.root.findAllByType('ComposeHost' as never)
+    expect(hosts()).toHaveLength(0)
+    expect(
+      trigger().props.accessibilityActions.map(
+        (a: { label: string }) => a.label
+      )
+    ).toEqual(['Pin', 'Archive', 'Delete'])
+
+    trigger().props.onPress()
+    expect(onPress).toHaveBeenCalledOnce()
+    expect(hosts()).toHaveLength(0)
+
+    await act(async () => trigger().props.onLongPress())
+    expect(hosts()).toHaveLength(1)
+    expect(hosts()[0].props.style).toEqual({ position: 'absolute' })
+    expect(menu().props.expanded).toBe(true)
+    expect(menu().props.modifiers).toEqual([{ $type: 'fillMaxSize' }])
+    expect(haptics.perform).toHaveBeenCalledOnce()
+
+    await act(async () => items()[1].props.onClick())
+    expect(list[1].onPress).toHaveBeenCalledOnce()
+    expect(menu().props.expanded).toBe(false)
+    expect(hosts()).toHaveLength(1)
   })
 
   it('closes on dismiss without running an action', async () => {

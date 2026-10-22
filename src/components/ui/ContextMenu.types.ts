@@ -98,6 +98,15 @@ export type ContextMenuProps = {
    * its own width, as with `fitContent`, and `style` is ignored.
    */
   hosted?: boolean
+  /**
+   * Android: mounts the native menu host on the first long press rather than
+   * with the content, for content that mounts by the hundred (the Schedule's
+   * days), where those hosts are most of the screen's cost. The long press is
+   * React Native's either way, and the host then sits behind the content at its
+   * size, so the menu opens where it always does. Ignored with `hosted`, and on
+   * iOS, whose native long press must exist before the touch lands.
+   */
+  deferHost?: boolean
   style?: StyleProp<ViewStyle>
   /** The trigger's test id, for e2e flows (`e2e/maestro`). */
   testID?: string

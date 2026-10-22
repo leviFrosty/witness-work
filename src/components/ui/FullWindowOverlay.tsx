@@ -2,26 +2,63 @@ import type { PropsWithChildren } from 'react'
 import { Modal, Platform, StyleSheet, View } from 'react-native'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { FullWindowOverlay as IOSFullWindowOverlay } from 'react-native-screens'
+import { useAppLockSession, useAppLockSettings } from '@/stores/appLock'
 
 type Props = PropsWithChildren<{
   open?: boolean
+  /**
+   * Makes it a dialog or takeover: modal for screen readers, so they can't
+   * reach the app under it, and Android's back button calls this.
+   */
   onClose?: () => void
+  /**
+   * Without `onClose`, the content takes touches and stays readable by screen
+   * readers next to the app (the Undo toast). Otherwise it's decoration that
+   * neither does (confetti, tooltips).
+   */
+  interactive?: boolean
 }>
 
 /**
- * Keep interactive overlays above navigation and decorations out of hit
- * testing.
+ * Draws above navigation and sheets. Dialogs and takeovers pass `onClose`;
+ * anything else lets screen readers keep reaching the app underneath, and waits
+ * while App Lock covers the app so it can't land on top of the lock.
  */
 export default function FullWindowOverlay({
   children,
   open = true,
   onClose,
+  interactive = false,
 }: Props) {
+  const locked = useAppLockSession((s) => s.locked)
+  const appLocked = useAppLockSettings((s) => s.enabled) && locked
+  const modal = onClose !== undefined
+
+  if (!modal && (!open || appLocked)) return null
+
+  const content = modal ? (
+    children
+  ) : (
+    <View
+      collapsable={false}
+      pointerEvents={interactive ? 'box-none' : 'none'}
+      accessibilityElementsHidden={!interactive}
+      importantForAccessibility={interactive ? 'auto' : 'no-hide-descendants'}
+      style={[StyleSheet.absoluteFill, styles.decoration]}
+    >
+      {children}
+    </View>
+  )
+
   if (Platform.OS === 'ios') {
-    return <IOSFullWindowOverlay>{children}</IOSFullWindowOverlay>
+    return (
+      <IOSFullWindowOverlay unstable_accessibilityContainerViewIsModal={modal}>
+        {content}
+      </IOSFullWindowOverlay>
+    )
   }
 
-  if (onClose) {
+  if (modal) {
     return (
       <Modal
         visible={open}
@@ -31,20 +68,13 @@ export default function FullWindowOverlay({
         onRequestClose={onClose}
       >
         <GestureHandlerRootView style={styles.gestureRoot}>
-          {children}
+          {content}
         </GestureHandlerRootView>
       </Modal>
     )
   }
 
-  return open ? (
-    <View
-      pointerEvents='none'
-      style={[StyleSheet.absoluteFill, styles.decoration]}
-    >
-      {children}
-    </View>
-  ) : null
+  return content
 }
 
 const styles = StyleSheet.create({

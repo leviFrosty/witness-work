@@ -196,6 +196,27 @@ describe('widget month counts', () => {
     expect(buildReport(args).monthConversationCount).toBe(1)
   })
 
+  it("counts Visits from the month's first instant through its last, saved or rehydrated", () => {
+    const args = baseArgs()
+    args.contacts = [contact('ada')]
+    const visit = (id: string, date: Date | string) => ({
+      id,
+      contact: { id: 'ada' },
+      date: date as Date,
+      isBibleStudy: false,
+    })
+    args.conversations = [
+      visit('june-last', new Date(2026, 5, 30, 23, 59, 59, 999)),
+      visit('july-first', new Date(2026, 6, 1, 0, 0, 0, 0)),
+      // Rehydrated state holds ISO strings.
+      visit('july-mid', new Date(2026, 6, 15, 9).toISOString()),
+      visit('july-last', new Date(2026, 6, 31, 23, 59, 59, 999).toISOString()),
+      visit('august-first', new Date(2026, 7, 1, 0, 0, 0, 0)),
+    ]
+
+    expect(buildReport(args).monthConversationCount).toBe(3)
+  })
+
   it('counts studies as the Service Report does', () => {
     const args = baseArgs()
     // `cy` was archived after this month's study; the report no longer counts

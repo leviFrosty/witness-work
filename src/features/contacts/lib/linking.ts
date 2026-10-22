@@ -149,7 +149,7 @@ function afterOnboarding(run: () => void): () => void {
 function afterAppScreens(run: () => void): () => void {
   const ready = () =>
     navigationRef.isReady() &&
-    navigationRef.getRootState().routeNames.includes('Root')
+    navigationRef.getRootState()?.routeNames.includes('Root') === true
   if (ready()) {
     run()
     return () => {}

@@ -372,6 +372,35 @@ describe('calendar publishing orchestration', () => {
     expect(bridge.createCalendar).not.toHaveBeenCalled()
     expect(bridge.setDestination.mock.calls[0][2]).toBe('calendar')
   })
+  it('one-tap setup after a reinstall starts from the events the calendar holds', async () => {
+    // A reinstall keeps this device's id, so the shared record still names it
+    // primary and lists an event deleted while the app was gone.
+    useCalendarSync.setState({
+      enabled: false,
+      registered: false,
+      destination: null,
+    })
+    const inCalendar: string[] = []
+    let shared = { ...owned, publishedKeys: ['deleted-visit'] }
+    bridge.registerDevice.mockImplementation(async () => shared)
+    bridge.requestAccess.mockResolvedValue(true)
+    // Native: a reset manifest lists what the calendar holds, and publishing
+    // waits while a listed event is missing from it.
+    bridge.setDestination.mockImplementation(async (...args: unknown[]) => {
+      if (args[5]) shared = { ...shared, publishedKeys: inCalendar }
+      return shared
+    })
+    bridge.publish.mockImplementation(async () => {
+      if (shared.publishedKeys.some((key) => !inCalendar.includes(key)))
+        throw new Error('CALENDAR_WAITING_FOR_EVENTS')
+      return 0
+    })
+    await expect(quickConnectCalendar()).resolves.toBe('connected')
+    expect(analytics.capture).toHaveBeenCalledWith(
+      'calendar_connected',
+      expect.objectContaining({ created: false })
+    )
+  })
   it('one-tap setup creates a calendar in iCloud when none exists', async () => {
     useCalendarSync.setState({ enabled: false, destination: null })
     const fresh = {

@@ -167,6 +167,17 @@ async function attemptRequest<T>(
       try {
         data = text ? JSON.parse(text) : null
       } catch {
+        // A web page in place of the API's JSON is the network's, not the
+        // service's: a captive portal (hotel or guest Wi-Fi) answering every
+        // request with its sign-in page. No real connection yet.
+        if (isHtml(response.headers, text))
+          throw new HttpError(
+            'offline',
+            response.status,
+            null,
+            null,
+            'offline: HTML page instead of JSON'
+          )
         throw new HttpError(
           'unknown',
           response.status,
@@ -203,6 +214,13 @@ function toHttpError(error: unknown): HttpError {
     null,
     null,
     error instanceof Error ? error.message : undefined
+  )
+}
+
+function isHtml(headers: Headers, text: string): boolean {
+  return (
+    (headers.get('content-type') ?? '').toLowerCase().includes('html') ||
+    text.trimStart().startsWith('<')
   )
 }
 

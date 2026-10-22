@@ -119,6 +119,42 @@ describe('request', () => {
     expect(clientError).toHaveBeenCalledTimes(1)
   })
 
+  it('reads an HTML page where JSON was expected as no connection (a captive portal)', async () => {
+    const page = (headers: Record<string, string>) =>
+      vi.fn(
+        async () =>
+          new Response(
+            '\n<html><head><title>Guest Wi-Fi</title></head></html>',
+            {
+              status: 200,
+              headers,
+            }
+          )
+      )
+    await expect(
+      request({
+        url: 'https://api.test/x',
+        timeoutMs: 1000,
+        fetchImpl: page({ 'content-type': 'text/html' }),
+      })
+    ).rejects.toMatchObject({ kind: 'offline', status: 200 })
+    await expect(
+      request({
+        url: 'https://api.test/x',
+        timeoutMs: 1000,
+        fetchImpl: page({}),
+      })
+    ).rejects.toMatchObject({ kind: 'offline' })
+    // Anything else that isn't JSON is still a bug to report.
+    await expect(
+      request({
+        url: 'https://api.test/x',
+        timeoutMs: 1000,
+        fetchImpl: vi.fn(async () => new Response('{"cut', { status: 200 })),
+      })
+    ).rejects.toMatchObject({ kind: 'unknown', message: 'invalid JSON' })
+  })
+
   it('attaches the parsed error body, or null when it is not JSON', async () => {
     const body = { code: 'limit_reached', reason: 'window', credits: { n: 1 } }
     await expect(

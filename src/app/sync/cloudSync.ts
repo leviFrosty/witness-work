@@ -44,6 +44,7 @@ import {
 } from '@/features/buddies/lib/liveInbox'
 import type { LiveSocket } from '@/features/buddies/lib/relay'
 import { useSupporter } from '@/features/supporter/stores/supporter'
+import { useUpdateRequired } from '@/lib/appUpdate/updateRequired'
 import { usePreferences } from '@/stores/preferences'
 
 /**
@@ -392,6 +393,10 @@ export function installCloudSyncRuntime(canSync: () => boolean): () => void {
       .catch(() => undefined)
       .then(() => refreshCloudSyncStatus({ force: true }))
   })
+  // Update Required pauses the engine (`canSync`), the socket with it.
+  const gate = useUpdateRequired.subscribe((state, previous) => {
+    if (Boolean(state.required) !== Boolean(previous.required)) update()
+  })
   const account = onAccountChange(() => {
     cloudSyncTransport.notifyAvailabilityChange()
     void refreshCloudSyncStatus({ force: true }).then(update)
@@ -408,6 +413,7 @@ export function installCloudSyncRuntime(canSync: () => boolean): () => void {
     background.remove()
     prefs()
     supporter()
+    gate()
     account()
     installed = false
   }

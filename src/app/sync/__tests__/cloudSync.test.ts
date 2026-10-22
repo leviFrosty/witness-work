@@ -149,6 +149,7 @@ async function device(
   const { useSupporter } = await import('@/features/supporter/stores/supporter')
   const { usePreferences } = await import('@/stores/preferences')
   const { default: useContacts } = await import('@/stores/contactsStore')
+  const { useUpdateRequired } = await import('@/lib/appUpdate/updateRequired')
 
   const driveTransport = createGoogleDriveTransport({
     api: (bound) =>
@@ -221,6 +222,7 @@ async function device(
     cloudTransport,
     usePreferences,
     useContacts,
+    useUpdateRequired,
     slotId: () => usePreferences.getState().iCloudDeviceId!,
     contactNames: () =>
       useContacts
@@ -422,6 +424,43 @@ describe('Cloud Sync between devices', () => {
     pixel.iCloudSync.resetPushBackoff()
     expect(await pixel.iCloudSync.push('manual')).toBe(true)
     expect(server.slotIds('family')).toEqual([pixel.slotId()])
+  })
+
+  it('waits out Update Required, then catches up once it lifts', async () => {
+    const iphone = await device('iphone', { os: 'ios' })
+    iphone.useContacts.setState({
+      contacts: [contact('c1', 'Ada', NOW)] as never,
+    })
+    await sync(iphone)
+    iphone.useUpdateRequired.setState({
+      required: {
+        source: 'config',
+        currentVersion: '1.0.0',
+        minVersion: '99.0.0',
+      },
+    })
+    const uninstall = iphone.installiCloudSync()
+    const sent = server.state.log.length
+
+    // An edit while gated (a widget, Siri) waits; nothing reaches ww-api.
+    iphone.useContacts.setState({
+      contacts: [contact('c1', 'Ada', NOW), contact('c2', 'Ben', NOW)] as never,
+    })
+    expect(iphone.iCloudSync.canSync()).toBe(false)
+    expect(await iphone.iCloudSync.push('manual')).toBe(false)
+    await iphone.iCloudSync.pullAndMerge('manual')
+    expect(server.state.log).toHaveLength(sent)
+    expect(iphone.usePreferences.getState().iCloudSyncPendingPush).toBe(true)
+
+    // The floor came down: the edit goes up without waiting for a foreground.
+    iphone.useUpdateRequired.setState({ required: null })
+    await vi.waitFor(() =>
+      expect(iphone.usePreferences.getState().iCloudSyncPendingPush).toBe(false)
+    )
+    uninstall()
+    const ipad = await device('ipad', { os: 'ios' })
+    await ipad.iCloudSync.pullAndMerge('manual')
+    expect(ipad.contactNames()).toEqual(['Ada', 'Ben'])
   })
 
   it('stops at the kill switch and keeps everything local', async () => {

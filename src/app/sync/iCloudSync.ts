@@ -141,6 +141,7 @@ import {
   noteImagePath,
 } from '@/lib/richText/noteImages'
 import { noteImagesArrived } from '@/lib/richText/noteImageRevision'
+import { useUpdateRequired } from '@/lib/appUpdate/updateRequired'
 import { referencedNoteImageIds } from '@/stores/noteImages'
 
 const PUSH_DEBOUNCE_MS = 5000
@@ -515,9 +516,18 @@ export function canSync(): boolean {
   const { iCloudSyncEnabled } = usePreferences.getState()
   if (!iCloudSyncEnabled) return false
   if (!syncEntitled()) return false
+  if (cloudSyncWaitsForUpdate()) return false
   if (!syncTransport().isAvailable()) return false
   return checkICloudIdentity('can_sync')
 }
+
+/**
+ * Update Required is showing: Cloud Sync calls ww-api, which won't take this
+ * version (or soon won't), so it stops rather than retry and re-upload the
+ * whole snapshot every few minutes. Edits wait and go up once it lifts.
+ */
+const cloudSyncWaitsForUpdate = () =>
+  usesCloudSync() && useUpdateRequired.getState().required !== null
 
 /**
  * Whether this device may sync on its transport right now. iCloud and Drive
@@ -2790,6 +2800,13 @@ export function installiCloudSync(): () => void {
     if (state.cloudSyncEntitled && !prev.cloudSyncEntitled && usesCloudSync())
       catchUpIfActive('entitled')
   })
+  // Update Required paused Cloud Sync (`canSync`). The failures before it
+  // don't count against the first push after it.
+  const unsubUpdateRequired = useUpdateRequired.subscribe((state, prev) => {
+    if (state.required || !prev.required || !usesCloudSync()) return
+    resetPushBackoff()
+    catchUpIfActive('update-required-lifted')
+  })
   availabilitySub = addActiveAvailabilityListener((e) => {
     checkICloudIdentity('availability')
     if (!e.available) {
@@ -2804,6 +2821,7 @@ export function installiCloudSync(): () => void {
     unsubLocalData()
     unsubSupporter()
     unsubEntitled()
+    unsubUpdateRequired()
     appStateSub.remove()
     foregroundSub.remove()
     backgroundSub.remove()

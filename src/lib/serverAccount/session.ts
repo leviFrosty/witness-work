@@ -42,7 +42,8 @@ import {
  * cover): it adds `Authorization`, refreshes ahead of expiry, refreshes once
  * and retries on a 401, and opens a new session (attesting again, without
  * asking the User) when the old one ended or reached its 90 days. A 426
- * `upgrade_required` calls `onUpgradeRequired`.
+ * `upgrade_required` calls `onUpgradeRequired`, and while Update Required shows
+ * (`paused`) nothing goes out: every call fails as that 426 would.
  *
  * Every refresh replaces the refresh token, and presenting a replaced one after
  * the server's grace minute ends the session as a reused token. So a new token
@@ -307,6 +308,11 @@ export type AccountSessionDeps = {
   fetchImpl?: typeof fetch
   /** Ww-api answered 426 `upgrade_required`. */
   onUpgradeRequired?: () => void
+  /**
+   * Update Required is showing: no session opens or refreshes and no call goes
+   * out, each failing as a 426 would, until it lifts.
+   */
+  paused?: () => boolean
   onEvent?: (event: AccountSessionEvent) => void
   /**
    * Writing (`save`) or deleting (`delete`) the stored session failed twice.
@@ -494,6 +500,15 @@ export function createAccountSessions(deps: AccountSessionDeps) {
   const emit = (event: AccountSessionEvent) => deps.onEvent?.(event)
 
   const upgradeRequired = () => deps.onUpgradeRequired?.()
+
+  /** Fails as a 426 would, without asking ww-api, while `paused`. */
+  const refuseWhilePaused = () => {
+    if (deps.paused?.())
+      throw new AccountSessionError('upgrade', {
+        status: 426,
+        serverCode: 'upgrade_required',
+      })
+  }
 
   /** Never throws: a mark that can't be written leaves the token as it is. */
   async function markStale(refreshToken: string | null) {
@@ -786,6 +801,7 @@ export function createAccountSessions(deps: AccountSessionDeps) {
     call: { rejected?: string; retry?: boolean; signal?: AbortSignal }
   ): Promise<Live> {
     const pub = key.publicKey
+    refuseWhilePaused()
     // Nothing starts while the account key is being replaced, so no session
     // opens or refreshes for the old key in between.
     do {
@@ -1005,6 +1021,7 @@ export function createAccountSessions(deps: AccountSessionDeps) {
     accountKey: Uint8Array,
     call: { signal?: AbortSignal } = {}
   ): Promise<DetachedSession> {
+    refuseWhilePaused()
     const key = deriveAccountSigningKey(accountKey)
     const opened = await open(accountKey, key, 'handoff', {
       signal: call.signal,

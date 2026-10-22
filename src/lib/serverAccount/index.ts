@@ -6,7 +6,7 @@ import * as BuddiesKeychain from '../../../modules/buddies-keychain'
 import * as DeviceSecrets from '../../../modules/device-secrets'
 import apis from '@/constants/apis'
 import { analytics } from '@/lib/analytics'
-import { updateRequiredByServer } from '@/lib/appUpdate'
+import { updateRequiredByServer, useUpdateRequired } from '@/lib/appUpdate'
 import { deviceAttestation } from '@/lib/attestation'
 import { errorTracking } from '@/lib/errorTracking'
 import { fromB64u } from '@/lib/bytes'
@@ -233,6 +233,8 @@ export const accountSessions = createAccountSessions({
     }
   },
   onUpgradeRequired: updateRequiredByServer,
+  // Sync, backup, Buddies and Notes Import all wait for the update.
+  paused: () => useUpdateRequired.getState().required !== null,
   onEvent: reportSessionEvent,
   // The keystore's own error, which never holds the token.
   onStoreFailure: (op, error) => {

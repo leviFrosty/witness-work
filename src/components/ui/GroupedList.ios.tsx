@@ -58,11 +58,8 @@ import type {
 
 // SwiftUI resolves fonts by PostScript name; expo-font's `Inter_500Medium`
 // style aliases only exist for React Native text.
-const fonts = {
-  regular: 'Inter-Regular',
-  medium: 'Inter-Medium',
-  semiBold: 'Inter-SemiBold',
-}
+const postScriptName = (family: string) =>
+  family.replace(/^Inter_\d+/, 'Inter-')
 
 const ICON_GAP = 12
 
@@ -85,6 +82,12 @@ function useRowStyle() {
   const fontSizeOffset = usePreferences((s) => s.fontSizeOffset)
   const size = (step: Parameters<typeof theme.fontSize>[0]) =>
     theme.fontSize(step) + fontSizeOffset
+  // The theme's faces, so rows follow Bold Text like the rest of the app.
+  const fonts = {
+    regular: postScriptName(theme.fonts.regular),
+    medium: postScriptName(theme.fonts.medium),
+    semiBold: postScriptName(theme.fonts.semiBold),
+  }
 
   return {
     theme,

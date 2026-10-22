@@ -8,6 +8,7 @@ import { useShallow } from 'zustand/react/shallow'
 import { evaluateFeatureAccess } from '@/lib/featureAccess'
 import { useSupporter } from '@/stores/supporterStatus'
 import { mix, withAlpha } from '@/lib/color'
+import useBoldTextFonts from '@/hooks/useBoldTextFonts'
 
 interface Props {}
 
@@ -33,14 +34,18 @@ const ThemeProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
   )
   const scheme = colorScheme === 'unspecified' ? undefined : colorScheme
   const resolvedScheme = theme ?? scheme
+  // Every face is its own font family, so the system's bold text setting can't
+  // embolden them; the theme swaps in heavier ones itself.
+  const fonts = useBoldTextFonts()
   const userSelectedTheme = getThemeFromColorScheme(resolvedScheme)
 
   const themeWithOverrides = useMemo(() => {
-    if (!canCustomizeAccent) return userSelectedTheme
-    if (!customAccentColor && !customAvatarBackground) return userSelectedTheme
+    const theme = { ...userSelectedTheme, fonts }
+    if (!canCustomizeAccent) return theme
+    if (!customAccentColor && !customAvatarBackground) return theme
 
     const isDark = resolvedScheme === 'dark'
-    const colors = { ...userSelectedTheme.colors }
+    const colors = { ...theme.colors }
 
     if (customAccentColor) {
       // Mix toward white in light mode and toward a mid-gray in dark mode
@@ -58,9 +63,10 @@ const ThemeProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
       colors.accentBackground = customAvatarBackground
     }
 
-    return { ...userSelectedTheme, colors }
+    return { ...theme, colors }
   }, [
     userSelectedTheme,
+    fonts,
     canCustomizeAccent,
     customAccentColor,
     customAvatarBackground,

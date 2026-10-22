@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { classifyNetworkError } from '@/lib/http/networkError'
+import { perf } from '@/lib/perf'
 
 vi.mock('expo-network', () => ({
   addNetworkStateListener: vi.fn(),
@@ -7,9 +8,11 @@ vi.mock('expo-network', () => ({
 }))
 vi.mock('@/lib/perf', () => ({ perf: { count: vi.fn() } }))
 
+import apis from '@/constants/apis'
 import {
   ENDPOINT_TIMEOUT_MS,
   STATUS_TIMEOUT_MS,
+  attestationBaseUrl,
   attestationDevBypass,
   attestationTransport,
 } from '@/lib/attestation/transport'
@@ -40,16 +43,12 @@ afterEach(() => {
   vi.unstubAllGlobals()
 })
 
-describe('Notes Import transport timeouts', () => {
-  it('gives only the posts that wait for a model the longer budgets', () => {
+describe('Attestation transport timeouts', () => {
+  it('gives every attestation round-trip a short budget', () => {
     expect(ENDPOINT_TIMEOUT_MS).toEqual({
       challenge: 15_000,
-      attestationChallenge: 15_000,
       registration: 15_000,
       verify: 15_000,
-      kickoff: 15_000,
-      transcribe: 60_000,
-      legacy: 90_000,
     })
     expect(STATUS_TIMEOUT_MS).toBe(8_000)
   })
@@ -86,45 +85,46 @@ describe('Notes Import transport timeouts', () => {
   })
 })
 
-describe('Notes Import transport errors', () => {
+describe('Attestation transport errors', () => {
   it('carries the server Retry-After', async () => {
     vi.stubGlobal(
       'fetch',
       vi.fn(
         async () =>
           new Response(
-            JSON.stringify({ ok: false, error: 'Busy', code: 'active_cap' }),
+            JSON.stringify({ ok: false, error: 'Busy', code: 'rate_limited' }),
             { status: 429, headers: { 'retry-after': '15' } }
           )
       )
     )
     await expect(
-      attestationTransport.post('kickoff', { a: 1 })
-    ).rejects.toMatchObject({ serverCode: 'active_cap', retryAfterMs: 15_000 })
+      attestationTransport.post('challenge', { a: 1 })
+    ).rejects.toMatchObject({
+      serverCode: 'rate_limited',
+      retryAfterMs: 15_000,
+    })
   })
 
   it('maps an error body to the authorizers’ metadata, reading code not error', async () => {
     vi.stubGlobal(
       'fetch',
       vi.fn(async () =>
-        json(429, {
-          error: 'You have used every import',
-          code: 'limit_reached',
-          reason: 'window',
-          action: 'none',
-          credits: { remaining: 0 },
+        json(401, {
+          error: 'App Attest assertion rejected',
+          code: 'attestation_failed',
+          reason: 'challenge_expired',
+          action: 'start_new_operation',
         })
       )
     )
     await expect(
-      attestationTransport.post('kickoff', { a: 1 })
+      attestationTransport.post('verify', { a: 1 })
     ).rejects.toMatchObject({
       kind: 'http',
-      status: 429,
-      serverCode: 'limit_reached',
-      reason: 'window',
-      action: 'none',
-      credits: { remaining: 0 },
+      status: 401,
+      serverCode: 'attestation_failed',
+      reason: 'challenge_expired',
+      action: 'start_new_operation',
     })
   })
 
@@ -152,21 +152,26 @@ describe('Notes Import transport errors', () => {
     await expect(pending).rejects.toMatchObject({ kind: 'cancelled' })
   })
 
-  it('registers keys and gets other features’ challenges at /attestation/v1', async () => {
+  it('gets challenges, registers keys, and verifies at /attestation/v1', async () => {
     const fetchImpl = vi.fn(async () => json(200, { ok: true }))
     vi.stubGlobal('fetch', fetchImpl)
-    await attestationTransport.post('registration', {})
-    await attestationTransport.post('attestationChallenge', {})
     await attestationTransport.post('challenge', {})
+    await attestationTransport.post('registration', {})
+    await attestationTransport.post('verify', {})
     const urls = (fetchImpl.mock.calls as unknown as [string][]).map(
       ([url]) => new URL(url).pathname
     )
     expect(urls).toEqual([
-      '/attestation/v1/register',
       '/attestation/v1/challenge',
-      // Notes Import keeps its own until it moves.
-      '/notes-import/challenge',
+      '/attestation/v1/register',
+      '/attestation/v1/verify',
     ])
+  })
+
+  it('reports the API base the attestation routes live under', () => {
+    expect(`${attestationBaseUrl}/attestation/v1/status`).toBe(
+      apis.attestationStatus
+    )
   })
 
   it('sends JSON with the caller headers', async () => {
@@ -183,7 +188,7 @@ describe('Notes Import transport errors', () => {
       string,
       RequestInit,
     ]
-    expect(url).toMatch(/\/notes-import\/verify$/)
+    expect(url).toMatch(/\/attestation\/v1\/verify$/)
     expect(init.method).toBe('POST')
     expect(init.body).toBe('{"a":1}')
     expect(init.headers).toMatchObject({
@@ -193,7 +198,18 @@ describe('Notes Import transport errors', () => {
   })
 })
 
-describe('Notes Import status probe', () => {
+describe('Attestation status probe', () => {
+  it('reads the capabilities from /attestation/v1/status', async () => {
+    const fetchImpl = vi.fn(async (url: string) => {
+      void url
+      return json(200, { ok: true, capabilities: { appAttest: {} } })
+    })
+    vi.stubGlobal('fetch', fetchImpl)
+    await attestationTransport.getStatus()
+    expect(fetchImpl.mock.calls[0][0]).toMatch(/\/attestation\/v1\/status$/)
+    expect(perf.count).toHaveBeenCalledWith('attestation:statusProbe')
+  })
+
   it('shares one request between concurrent callers', async () => {
     let answer!: (response: Response) => void
     const fetchImpl = vi.fn(
@@ -220,7 +236,7 @@ describe('Notes Import status probe', () => {
   })
 })
 
-describe('Notes Import dev bypass', () => {
+describe('Attestation dev bypass', () => {
   it('is the shared API bypass', () => {
     expect(attestationDevBypass).toBe(apiDevBypass)
   })

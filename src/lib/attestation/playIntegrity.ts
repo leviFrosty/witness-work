@@ -1,11 +1,11 @@
 import {
+  ATTESTATION_VERIFY_PURPOSE,
   DIAGNOSTIC_CONTENT_HASH,
   AttestationError,
   AttestationHttpError,
   type AttestationPurpose,
   type AttestationSupport,
   type AttestedRequest,
-  canonicalProtectedRequest,
   throwIfAborted,
   waitForSignal,
   type AttestationEndpoint,
@@ -13,7 +13,6 @@ import {
   type AttestationDebugReport,
   type AttestationDebugStep,
   type AttestationRepairReport,
-  type NotesImportProtectedPost,
 } from '@/lib/attestation/appAttest'
 
 /**
@@ -21,7 +20,7 @@ import {
  * requests instead of App Attest.
  *
  * There is no device key, so there is nothing to register, journal, enroll, or
- * recover. Each protected request asks ww-api for a one-time challenge bound to
+ * recover. Each attested request asks ww-api for a one-time challenge bound to
  * the request, then asks Play for a token whose `requestHash` is the SHA-256 of
  * the client data below. ww-api decodes that token with Google and checks the
  * binding, a Play-recognized app, and the device verdict.
@@ -48,11 +47,7 @@ export const tokenRetryDelayMs = (
   return Math.round(base * (1 + TOKEN_RETRY_JITTER * random()))
 }
 
-type PlayPurpose =
-  | 'notes-import-kickoff'
-  | 'notes-import-verify'
-  | 'notes-import-transcribe'
-  | AttestationPurpose
+type PlayPurpose = typeof ATTESTATION_VERIFY_PURPOSE | AttestationPurpose
 
 /** Mirrors `modules/play-integrity`'s taxonomy without importing native code. */
 export type PlayIntegrityNativeFailureCode =
@@ -88,6 +83,7 @@ export interface PlayIntegrityDependencies {
   }
   identity: {
     getOrCreateUuid(): string
+    /** Read only for the snapshot's `accountIdentity`; nothing attests it. */
     getAccountId(): string
   }
   crypto: {
@@ -121,7 +117,6 @@ export interface PlayIntegritySnapshot {
 }
 
 export interface PlayIntegrityAuthorizer {
-  post<T>(request: NotesImportProtectedPost): Promise<T>
   /** Another feature's request, attested with a Play Integrity token. */
   assert<T>(request: AttestedRequest<T>): Promise<T>
   /**
@@ -138,16 +133,11 @@ export interface PlayIntegrityAuthorizer {
   runRepair(): Promise<AttestationRepairReport>
 }
 
-/** Notes Import's own endpoint, or another feature's challenge and request. */
-type ProtectedRoute<T> =
-  | { endpoint: 'kickoff' | 'verify' | 'transcribe'; channel?: undefined }
-  | {
-      endpoint?: undefined
-      channel: {
-        challenge: NonNullable<AttestedRequest<T>['challenge']>
-        submit(body: Record<string, unknown>, signal?: AbortSignal): Promise<T>
-      }
-    }
+/** Where an attested request asks for its challenge and sends its request. */
+type ProtectedChannel<T> = {
+  challenge: NonNullable<AttestedRequest<T>['challenge']>
+  submit(body: Record<string, unknown>, signal?: AbortSignal): Promise<T>
+}
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value)
@@ -161,8 +151,6 @@ export const buildPlayIntegrityClientData = (input: {
   operationId: string
   challenge: string
   uuid: string
-  /** Absent for purposes that aren't metered by it (ww-api reads it as ''). */
-  accountId?: string
   contentHash: string
   requestHash: string
 }): string =>
@@ -174,7 +162,9 @@ export const buildPlayIntegrityClientData = (input: {
     input.operationId,
     input.challenge,
     input.uuid,
-    input.accountId ?? '',
+    // The optional account id slot; nothing attested here sends one, and
+    // ww-api reads it as ''.
+    '',
     input.contentHash,
     input.requestHash,
   ].join('|')
@@ -253,8 +243,8 @@ const metadata = (error: AttestationHttpError) => ({
 
 /**
  * Maps ww-api's Play Integrity reasons to the shared auth taxonomy. Returns
- * null for everything else (allowance denials, kill switch, caps) so those
- * reach the client as the server's own codes.
+ * null for everything else (Update Required, a route's own refusals) so those
+ * reach the caller as the server's own codes.
  */
 const playHttpAuthError = (
   error: AttestationHttpError
@@ -340,11 +330,10 @@ export const createPlayIntegrityAuthorizer = (
     return pending
   }
 
-  const identity = (): { uuid: string; accountId: string } => {
+  const installUuid = (): string => {
     try {
       const uuid = dependencies.identity.getOrCreateUuid()
-      const accountId = dependencies.identity.getAccountId()
-      if (uuid && accountId) return { uuid, accountId }
+      if (uuid) return uuid
     } catch {
       // Fall through to the shared storage failure.
     }
@@ -413,21 +402,19 @@ export const createPlayIntegrityAuthorizer = (
     }
   }
 
-  const protectedPost = async <T>(
-    input: ProtectedRoute<T> & {
-      purpose: PlayPurpose
-      payload: Record<string, unknown>
-      contentHash: string
-      requestHash: string
-      project: string
-      signal?: AbortSignal
-      trace?: Trace
-      validate?: (data: unknown, operationId: string) => boolean
-    }
-  ): Promise<T> => {
-    const { uuid, accountId: installAccountId } = identity()
-    // Only Notes Import meters the install's account id.
-    const accountId = input.channel ? undefined : installAccountId
+  const protectedPost = async <T>(input: {
+    channel: ProtectedChannel<T>
+    purpose: PlayPurpose
+    contentHash: string
+    requestHash: string
+    project: string
+    signal?: AbortSignal
+    trace?: Trace
+    /** The submit step's name in `trace`; the purpose by default. */
+    submitStep?: string
+    validate?: (data: unknown, operationId: string) => boolean
+  }): Promise<T> => {
+    const uuid = installUuid()
     let operationId = dependencies.crypto.randomUuid()
     // Warm the token provider while the challenge round-trips. Failures surface
     // from the token request itself, which prepares again when needed.
@@ -441,18 +428,13 @@ export const createPlayIntegrityAuthorizer = (
         operation: 'assert',
         operationId,
         uuid,
-        ...(accountId !== undefined && { accountId }),
         purpose: input.purpose,
         contentHash: input.contentHash,
         requestHash: input.requestHash,
       }
       try {
         const challengeResponse = await traced(input.trace, 'challenge', () =>
-          input.channel
-            ? input.channel.challenge(fields, input.signal)
-            : dependencies.transport.post<unknown>('challenge', fields, {
-                signal: input.signal,
-              })
+          input.channel.challenge(fields, input.signal)
         )
         if (
           !isRecord(challengeResponse) ||
@@ -470,7 +452,6 @@ export const createPlayIntegrityAuthorizer = (
             operationId,
             challenge,
             uuid,
-            accountId,
             contentHash: input.contentHash,
             requestHash: input.requestHash,
           })
@@ -478,19 +459,10 @@ export const createPlayIntegrityAuthorizer = (
         const integrityToken = await traced(input.trace, 'token', () =>
           requestToken(input.project, binding, input.signal)
         )
-        const step = input.channel ? input.purpose : input.endpoint
+        const step = input.submitStep ?? input.purpose
         return await traced(input.trace, step, async () => {
-          const body = {
-            ...input.payload,
-            ...fields,
-            challenge,
-            integrityToken,
-          }
-          const data = input.channel
-            ? await input.channel.submit(body, input.signal)
-            : await dependencies.transport.post<T>(input.endpoint, body, {
-                signal: input.signal,
-              })
+          const body = { ...fields, challenge, integrityToken }
+          const data = await input.channel.submit(body, input.signal)
           if (input.validate && !input.validate(data, operationId)) {
             throw new AttestationError('authorizationFailed')
           }
@@ -506,18 +478,12 @@ export const createPlayIntegrityAuthorizer = (
     }
   }
 
-  const devBypassPost = <T>(
-    endpoint: 'kickoff' | 'verify' | 'transcribe',
+  /** `POST /attestation/v1/challenge`. */
+  const postChallenge = (
     body: Record<string, unknown>,
     signal?: AbortSignal
-  ): Promise<T> => {
-    const { uuid, accountId } = identity()
-    return dependencies.transport.post<T>(
-      endpoint,
-      { ...body, uuid, accountId },
-      { headers: { 'x-ww-dev-bypass': dependencies.devBypass.token }, signal }
-    )
-  }
+  ): Promise<unknown> =>
+    dependencies.transport.post<unknown>('challenge', body, { signal })
 
   const isVerifyAcknowledgement = (data: unknown, operationId: string) =>
     isRecord(data) &&
@@ -539,14 +505,19 @@ export const createPlayIntegrityAuthorizer = (
       if (dependencies.devBypass.enabled) {
         // Mirrors the App Attest bypass probe: the server accepts the v2 shape.
         await traced(trace, 'verify', async () => {
-          const data = await devBypassPost<unknown>('verify', {
-            protocolVersion: 2,
-            operation: 'assert',
-            purpose: 'notes-import-verify',
-            operationId,
-            contentHash: DIAGNOSTIC_CONTENT_HASH,
-            requestHash: DIAGNOSTIC_CONTENT_HASH,
-          })
+          const data = await dependencies.transport.post<unknown>(
+            'verify',
+            {
+              protocolVersion: 2,
+              operation: 'assert',
+              purpose: ATTESTATION_VERIFY_PURPOSE,
+              operationId,
+              contentHash: DIAGNOSTIC_CONTENT_HASH,
+              requestHash: DIAGNOSTIC_CONTENT_HASH,
+              uuid: installUuid(),
+            },
+            { headers: { 'x-ww-dev-bypass': dependencies.devBypass.token } }
+          )
           if (!isRecord(data) || data.ok !== true) {
             throw new AttestationError('authorizationFailed')
           }
@@ -560,13 +531,17 @@ export const createPlayIntegrityAuthorizer = (
       const project = await traced(trace, 'capability', cloudProjectNumber)
       report.protocolVersion = PROTOCOL_VERSION
       await protectedPost<unknown>({
-        endpoint: 'verify',
-        purpose: 'notes-import-verify',
-        payload: {},
+        channel: {
+          challenge: postChallenge,
+          submit: (body, signal) =>
+            dependencies.transport.post<unknown>('verify', body, { signal }),
+        },
+        purpose: ATTESTATION_VERIFY_PURPOSE,
         contentHash: DIAGNOSTIC_CONTENT_HASH,
         requestHash: DIAGNOSTIC_CONTENT_HASH,
         project,
         trace,
+        submitStep: 'verify',
         validate: isVerifyAcknowledgement,
       })
       report.ok = true
@@ -590,52 +565,6 @@ export const createPlayIntegrityAuthorizer = (
   }
 
   return {
-    async post<T>({
-      endpoint,
-      payload,
-      contentHash,
-      signal,
-    }: NotesImportProtectedPost): Promise<T> {
-      throwIfAborted(signal)
-      // Android only ever uses the streaming kickoff (and page transcription);
-      // ww-api refuses Play Integrity on the legacy synchronous endpoint.
-      if (endpoint === 'legacy') {
-        throw new AttestationError('protocolUnavailable')
-      }
-      const purpose =
-        endpoint === 'transcribe'
-          ? 'notes-import-transcribe'
-          : 'notes-import-kickoff'
-      const requestHash = await hashHex(
-        canonicalProtectedRequest(payload, contentHash)
-      )
-      if (dependencies.devBypass.enabled) {
-        return devBypassPost<T>(
-          endpoint,
-          {
-            ...payload,
-            protocolVersion: 2,
-            operation: 'assert',
-            purpose,
-            operationId: dependencies.crypto.randomUuid(),
-            requestHash,
-            contentHash,
-          },
-          signal
-        )
-      }
-      if (!supported()) throw new AttestationError('unsupported')
-      const project = await waitForSignal(cloudProjectNumber(), signal)
-      return protectedPost<T>({
-        endpoint,
-        purpose,
-        payload,
-        contentHash,
-        requestHash,
-        project,
-        signal,
-      })
-    },
     async assert<T>(request: AttestedRequest<T>): Promise<T> {
       const { purpose, contentHash, requestHash, signal } = request
       throwIfAborted(signal)
@@ -655,17 +584,11 @@ export const createPlayIntegrityAuthorizer = (
       const project = await waitForSignal(cloudProjectNumber(), signal)
       return protectedPost<T>({
         channel: {
-          challenge:
-            request.challenge ??
-            ((body, attemptSignal) =>
-              dependencies.transport.post('attestationChallenge', body, {
-                signal: attemptSignal,
-              })),
+          challenge: request.challenge ?? postChallenge,
           submit: (fields, attemptSignal) =>
             request.submit({ kind: 'attestation', fields }, attemptSignal),
         },
         purpose,
-        payload: {},
         contentHash,
         requestHash,
         project,

@@ -173,13 +173,13 @@ const flushPendingReveal = (handles: LayoutHandles) => {
  * A form's frame: scrolling details above a dock pinned to the bottom, where
  * the thumb already is. The Plan form and Add Time use it.
  *
- * Keyboard avoidance is done by hand, like the Notes Import composer: the
- * scroll view ends exactly at the keyboard's top edge, and the focused field is
- * scrolled into view by measuring it against the scroll content itself.
- * Measuring in the scroll view's own coordinates keeps it right inside a sheet,
- * where window-based math lands fields behind the keyboard. A full keyboard
- * covers the dock, so the dock fades out and stops taking touches; a hardware
- * keyboard's short bar lifts the dock instead.
+ * Keyboard avoidance is done by hand: the scroll view ends exactly at the
+ * keyboard's top edge, and the focused field is scrolled into view by measuring
+ * it against the scroll content itself. Measuring in the scroll view's own
+ * coordinates keeps it right inside a sheet, where window-based math lands
+ * fields behind the keyboard. A full keyboard covers the dock, so the dock
+ * fades out and stops taking touches; a hardware keyboard's short bar lifts the
+ * dock instead.
  */
 const DockedFormLayout = (props: {
   children: ReactNode

@@ -5,6 +5,7 @@ import {
   AttestationError,
   AttestationHttpError,
   type AttestationEndpoint,
+  type AttestationProof,
 } from '@/lib/attestation/appAttest'
 import {
   buildPlayIntegrityClientData,
@@ -14,22 +15,7 @@ import {
   type PlayIntegrityNativeFailureCode,
 } from '@/lib/attestation/playIntegrity'
 
-const CONTENT_HASH =
-  'e0129726d5d80305a40c79da48fae94cdf34a3e95b8a476c5287f268699d7097'
-const PAYLOAD = {
-  notesText: 'Met Ana\nReturn Tuesday',
-  context: {
-    existingContacts: [
-      { name: 'Zoe', id: 'contact-2' },
-      { id: 'contact-1', name: 'Ana' },
-    ],
-    categories: ['Return Visit', 'Bible Study'],
-    locale: 'en-US',
-  },
-}
-// The canonical request hash ww-api recomputes for PAYLOAD (shared golden).
-const REQUEST_HASH =
-  '022bb5d93a09241655bf5a32a2b25308b15e3bc75ebfd4524685c9a90b603148'
+const SESSION_HASH = 'd'.repeat(64)
 const CHALLENGE = 'C'.repeat(43)
 
 const sha256Hex = async (value: string) =>
@@ -52,8 +38,14 @@ class NativeError extends Error {
   }
 }
 
+/**
+ * A transport post, or `submit`: the attested request's own route (the
+ * feature's `submit` callback), recorded alongside.
+ */
+type Call = AttestationEndpoint | 'submit'
+
 type PostHandler = (
-  endpoint: AttestationEndpoint,
+  endpoint: Call,
   body: Record<string, unknown>,
   headers?: Record<string, string>
 ) => unknown
@@ -71,12 +63,12 @@ const createHarness = (
 ) => {
   let operation = 0
   const posts: {
-    endpoint: AttestationEndpoint
+    endpoint: Call
     body: Record<string, unknown>
     headers?: Record<string, string>
   }[] = []
   const defaultPost: PostHandler = (endpoint, body) =>
-    endpoint === 'challenge' || endpoint === 'attestationChallenge'
+    endpoint === 'challenge'
       ? {
           attestationProvider: 'play-integrity',
           protocolVersion: 1,
@@ -92,7 +84,7 @@ const createHarness = (
             protocolVersion: 1,
             operationId: body.operationId,
           }
-        : { importId: 'imp_1', subscribeToken: 'sub' }
+        : { ok: true }
   const dependencies: PlayIntegrityDependencies = {
     playIntegrity: {
       isSupported: () => options.supported ?? true,
@@ -132,21 +124,33 @@ const createHarness = (
     sleep: vi.fn(async () => {}),
     random: options.random ?? (() => 0),
   }
+  /** The attested request's own route: records the proof's fields. */
+  const submit = async (proof: AttestationProof) => {
+    const body =
+      proof.kind === 'attestation' ? proof.fields : { devBypass: proof.token }
+    posts.push({ endpoint: 'submit', body, headers: undefined })
+    const result = await (options.post ?? defaultPost)('submit', body)
+    if (result instanceof Error) throw result
+    return result
+  }
   return {
     dependencies,
     posts,
+    submit,
     module: createPlayIntegrityAuthorizer(dependencies),
   }
 }
 
-const kickoff = (
+/** An account session's attestation, challenged at `/attestation/v1`. */
+const attest = (
   harness: ReturnType<typeof createHarness>,
   signal?: AbortSignal
 ) =>
-  harness.module.post<unknown>({
-    endpoint: 'kickoff',
-    payload: PAYLOAD,
-    contentHash: CONTENT_HASH,
+  harness.module.assert<unknown>({
+    purpose: 'account-session',
+    contentHash: SESSION_HASH,
+    requestHash: SESSION_HASH,
+    submit: (proof) => harness.submit(proof),
     signal,
   })
 
@@ -160,71 +164,30 @@ const httpError = (status: number, reason: string, serverCode?: string) =>
   })
 
 describe('buildPlayIntegrityClientData', () => {
-  it('matches the ww-api golden byte for byte', async () => {
+  it('matches ww-api byte for byte, leaving the account id slot empty', async () => {
     const clientData = buildPlayIntegrityClientData({
-      purpose: 'notes-import-kickoff',
+      purpose: 'attestation-verify',
       operationId: 'play-operation-1',
       challenge: CHALLENGE,
       uuid: '65A8B00C-DA7A-4E0A-BA5C-8E3D1B8C5F1C',
-      accountId: 'account-id-1',
-      contentHash: CONTENT_HASH,
-      requestHash: REQUEST_HASH,
+      contentHash: DIAGNOSTIC_CONTENT_HASH,
+      requestHash: DIAGNOSTIC_CONTENT_HASH,
     })
+    expect(clientData).toBe(
+      `witnesswork.play-integrity|1|assert|attestation-verify|play-operation-1|${CHALLENGE}|65A8B00C-DA7A-4E0A-BA5C-8E3D1B8C5F1C||${DIAGNOSTIC_CONTENT_HASH}|${DIAGNOSTIC_CONTENT_HASH}`
+    )
+    // ww-api `computePlayIntegrityRequestBinding` for the same request.
     await expect(sha256Hex(clientData)).resolves.toBe(
-      '75142f154cfe8b4a2e20220371bfe27d127f93fda168c93d8578c28b508ed08a'
+      'c62e4580fc1d9750b190749f1219c67f552a7d7c49e58d42287566f5661698e3'
     )
   })
 })
 
-describe('Notes Import Play Integrity', () => {
-  it('binds a challenge-scoped token to the exact kickoff', async () => {
-    const harness = createHarness()
-
-    await expect(kickoff(harness)).resolves.toEqual({
-      importId: 'imp_1',
-      subscribeToken: 'sub',
-    })
-
-    const fields = {
-      attestationProvider: 'play-integrity',
-      protocolVersion: 1,
-      operation: 'assert',
-      operationId: 'operation-1',
-      uuid: 'install-uuid-1',
-      accountId: 'account-id-1',
-      purpose: 'notes-import-kickoff',
-      contentHash: CONTENT_HASH,
-      requestHash: REQUEST_HASH,
-    }
-    expect(harness.posts).toEqual([
-      { endpoint: 'challenge', body: fields, headers: undefined },
-      {
-        endpoint: 'kickoff',
-        body: {
-          ...PAYLOAD,
-          ...fields,
-          challenge: CHALLENGE,
-          integrityToken: 'integrity.token',
-        },
-        headers: undefined,
-      },
-    ])
-    const binding = await sha256Hex(
-      buildPlayIntegrityClientData({ ...fields, challenge: CHALLENGE } as never)
-    )
-    expect(
-      harness.dependencies.playIntegrity.requestToken
-    ).toHaveBeenCalledWith('123456789012', binding)
-    // Warmed while the challenge round-trips.
-    expect(harness.dependencies.playIntegrity.prepare).toHaveBeenCalledWith(
-      '123456789012'
-    )
-  })
-
+describe('Play Integrity authorizer', () => {
   it.each(['challenge_expired', 'integrity_token_invalid'])(
     'retries once under a fresh operation after %s',
     async (reason) => {
-      let kickoffs = 0
+      let submits = 0
       const harness = createHarness({
         post: (endpoint, body) => {
           if (endpoint === 'challenge') {
@@ -234,12 +197,12 @@ describe('Notes Import Play Integrity', () => {
               challenge: CHALLENGE,
             }
           }
-          kickoffs += 1
-          return kickoffs === 1 ? httpError(401, reason) : { importId: 'imp_2' }
+          submits += 1
+          return submits === 1 ? httpError(401, reason) : { opened: 2 }
         },
       })
 
-      await expect(kickoff(harness)).resolves.toEqual({ importId: 'imp_2' })
+      await expect(attest(harness)).resolves.toEqual({ opened: 2 })
       expect(
         harness.posts
           .filter((post) => post.endpoint === 'challenge')
@@ -260,13 +223,11 @@ describe('Notes Import Play Integrity', () => {
           : httpError(401, 'challenge_not_found'),
     })
 
-    await expect(kickoff(harness)).rejects.toMatchObject({
+    await expect(attest(harness)).rejects.toMatchObject({
       code: 'challengeExpired',
       reason: 'challenge_not_found',
     })
-    expect(harness.posts.filter((p) => p.endpoint === 'kickoff')).toHaveLength(
-      2
-    )
+    expect(harness.posts.filter((p) => p.endpoint === 'submit')).toHaveLength(2)
   })
 
   it.each([
@@ -291,17 +252,16 @@ describe('Notes Import Play Integrity', () => {
             }),
     })
 
-    const error = await kickoff(harness).catch((e: unknown) => e)
+    const error = await attest(harness).catch((e: unknown) => e)
     expect(error).toBeInstanceOf(AttestationError)
     expect(error).toMatchObject({ code, reason })
   })
 
-  it('passes allowance denials through as the server’s own codes', async () => {
+  it('passes other refusals through as the server’s own codes', async () => {
     const denial = new AttestationHttpError({
       kind: 'http',
-      status: 402,
-      serverCode: 'limit_reached',
-      credits: { remaining: 0 },
+      status: 426,
+      serverCode: 'upgrade_required',
     })
     const harness = createHarness({
       post: (endpoint, body) =>
@@ -314,7 +274,7 @@ describe('Notes Import Play Integrity', () => {
           : denial,
     })
 
-    await expect(kickoff(harness)).rejects.toBe(denial)
+    await expect(attest(harness)).rejects.toBe(denial)
   })
 
   it.each([
@@ -330,11 +290,11 @@ describe('Notes Import Play Integrity', () => {
       },
     })
 
-    await expect(kickoff(harness)).rejects.toMatchObject({ code })
+    await expect(attest(harness)).rejects.toMatchObject({ code })
     expect(
       harness.dependencies.playIntegrity.requestToken
     ).toHaveBeenCalledTimes(1)
-    expect(harness.posts.filter((p) => p.endpoint === 'kickoff')).toEqual([])
+    expect(harness.posts.filter((p) => p.endpoint === 'submit')).toEqual([])
   })
 
   it('backs off 5 s then 10 s on transient token errors', async () => {
@@ -347,7 +307,7 @@ describe('Notes Import Play Integrity', () => {
       },
     })
 
-    await expect(kickoff(harness)).resolves.toMatchObject({ importId: 'imp_1' })
+    await expect(attest(harness)).resolves.toEqual({ ok: true })
     expect(harness.dependencies.sleep).toHaveBeenNthCalledWith(1, 5_000)
     expect(harness.dependencies.sleep).toHaveBeenNthCalledWith(2, 10_000)
   })
@@ -363,7 +323,7 @@ describe('Notes Import Play Integrity', () => {
       },
     })
 
-    await expect(kickoff(harness)).resolves.toMatchObject({ importId: 'imp_1' })
+    await expect(attest(harness)).resolves.toEqual({ ok: true })
     expect(harness.dependencies.sleep).toHaveBeenNthCalledWith(1, 6_250)
     expect(harness.dependencies.sleep).toHaveBeenNthCalledWith(2, 12_500)
   })
@@ -386,7 +346,7 @@ describe('Notes Import Play Integrity', () => {
         throw new AttestationHttpError({ kind: 'network' })
       },
     })
-    await expect(kickoff(harness)).rejects.toMatchObject({ code: 'network' })
+    await expect(attest(harness)).rejects.toMatchObject({ code: 'network' })
   })
 
   it('reports a failing capability probe as protocolUnavailable', async () => {
@@ -395,7 +355,7 @@ describe('Notes Import Play Integrity', () => {
         throw new AttestationHttpError({ kind: 'http', status: 503 })
       },
     })
-    await expect(kickoff(harness)).rejects.toMatchObject({
+    await expect(attest(harness)).rejects.toMatchObject({
       code: 'protocolUnavailable',
     })
   })
@@ -407,7 +367,7 @@ describe('Notes Import Play Integrity', () => {
       },
     })
 
-    await expect(kickoff(harness)).rejects.toMatchObject({ code: 'network' })
+    await expect(attest(harness)).rejects.toMatchObject({ code: 'network' })
     expect(
       harness.dependencies.playIntegrity.requestToken
     ).toHaveBeenCalledTimes(3)
@@ -433,7 +393,7 @@ describe('Notes Import Play Integrity', () => {
     ],
   ])('refuses to attest against %s', async (_name, status) => {
     const harness = createHarness({ status })
-    await expect(kickoff(harness)).rejects.toMatchObject({
+    await expect(attest(harness)).rejects.toMatchObject({
       code: 'protocolUnavailable',
     })
     expect(harness.posts).toEqual([])
@@ -441,57 +401,83 @@ describe('Notes Import Play Integrity', () => {
 
   it('negotiates the capability once per session', async () => {
     const harness = createHarness()
-    await kickoff(harness)
-    await kickoff(harness)
+    await attest(harness)
+    await attest(harness)
     expect(harness.dependencies.transport.getStatus).toHaveBeenCalledTimes(1)
   })
 
   it('fails as unsupported off Android', async () => {
     const harness = createHarness({ supported: false })
-    await expect(kickoff(harness)).rejects.toMatchObject({
+    await expect(attest(harness)).rejects.toMatchObject({
       code: 'unsupported',
     })
-  })
-
-  it('never uses the legacy synchronous endpoint', async () => {
-    const harness = createHarness()
-    await expect(
-      harness.module.post({
-        endpoint: 'legacy',
-        payload: PAYLOAD,
-        contentHash: CONTENT_HASH,
-      })
-    ).rejects.toMatchObject({ code: 'protocolUnavailable' })
   })
 
   it('honors cancellation before any request', async () => {
     const harness = createHarness()
     const controller = new AbortController()
     controller.abort()
-    await expect(kickoff(harness, controller.signal)).rejects.toMatchObject({
+    await expect(attest(harness, controller.signal)).rejects.toMatchObject({
       code: 'cancelled',
     })
     expect(harness.posts).toEqual([])
   })
+})
 
-  it('uses the development bypass without touching Play', async () => {
-    const harness = createHarness({ devBypass: true })
+describe('Play Integrity diagnostics and repair', () => {
+  it('sends the exact verify probe through /attestation/v1', async () => {
+    const harness = createHarness()
 
-    await kickoff(harness)
+    const report = await harness.module.runDiagnostics()
 
+    expect(report.ok).toBe(true)
+    const fields = {
+      attestationProvider: 'play-integrity',
+      protocolVersion: 1,
+      operation: 'assert',
+      operationId: 'operation-2',
+      uuid: 'install-uuid-1',
+      purpose: 'attestation-verify',
+      contentHash: DIAGNOSTIC_CONTENT_HASH,
+      requestHash: DIAGNOSTIC_CONTENT_HASH,
+    }
+    expect(harness.posts).toEqual([
+      { endpoint: 'challenge', body: fields, headers: undefined },
+      {
+        endpoint: 'verify',
+        body: {
+          ...fields,
+          challenge: CHALLENGE,
+          integrityToken: 'integrity.token',
+        },
+        headers: undefined,
+      },
+    ])
+    const binding = await sha256Hex(
+      `witnesswork.play-integrity|1|assert|attestation-verify|operation-2|${CHALLENGE}|install-uuid-1||${DIAGNOSTIC_CONTENT_HASH}|${DIAGNOSTIC_CONTENT_HASH}`
+    )
+    expect(
+      harness.dependencies.playIntegrity.requestToken
+    ).toHaveBeenCalledWith('123456789012', binding)
+  })
+
+  it('proves the development bypass with the verify probe', async () => {
+    const harness = createHarness({ devBypass: true, supported: false })
+
+    const report = await harness.module.runDiagnostics()
+
+    expect(report).toMatchObject({ ok: true, steps: [{ step: 'verify' }] })
     expect(harness.posts).toEqual([
       {
-        endpoint: 'kickoff',
+        endpoint: 'verify',
         body: {
-          ...PAYLOAD,
           protocolVersion: 2,
           operation: 'assert',
-          purpose: 'notes-import-kickoff',
+          purpose: 'attestation-verify',
           operationId: 'operation-1',
-          requestHash: REQUEST_HASH,
-          contentHash: CONTENT_HASH,
+          contentHash: DIAGNOSTIC_CONTENT_HASH,
+          requestHash: DIAGNOSTIC_CONTENT_HASH,
           uuid: 'install-uuid-1',
-          accountId: 'account-id-1',
         },
         headers: { 'x-ww-dev-bypass': 'bypass' },
       },
@@ -520,7 +506,7 @@ describe('Notes Import Play Integrity', () => {
     ])
     const verify = harness.posts.find((post) => post.endpoint === 'verify')
     expect(verify?.body).toMatchObject({
-      purpose: 'notes-import-verify',
+      purpose: 'attestation-verify',
       contentHash: DIAGNOSTIC_CONTENT_HASH,
       requestHash: DIAGNOSTIC_CONTENT_HASH,
     })
@@ -635,9 +621,7 @@ describe('Play Integrity for other features (assert)', () => {
 
     await expect(harness.module.assert(request)).resolves.toEqual({ ok: true })
 
-    expect(harness.posts.map((post) => post.endpoint)).toEqual([
-      'attestationChallenge',
-    ])
+    expect(harness.posts.map((post) => post.endpoint)).toEqual(['challenge'])
     expect(harness.posts[0].body).toMatchObject({
       attestationProvider: 'play-integrity',
       purpose: 'account-session',
@@ -679,6 +663,10 @@ describe('Play Integrity for other features (assert)', () => {
       },
     ])
     expect(harness.posts).toEqual([])
+    // Warmed while the challenge round-trips.
+    expect(harness.dependencies.playIntegrity.prepare).toHaveBeenCalledWith(
+      '123456789012'
+    )
   })
 
   it('restarts once for an invalid token and keeps device verdicts', async () => {

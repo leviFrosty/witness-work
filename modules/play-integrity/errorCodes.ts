@@ -1,7 +1,7 @@
 /**
  * Native → JS error taxonomy for the Play Integrity module. Mirrors Play's
  * `StandardIntegrityErrorCode` one-to-one; grouping them into lifecycle
- * decisions is the Notes Import module's job.
+ * decisions is `src/lib/attestation/playIntegrity.ts`'s job.
  *
  * Deliberately free of native imports so the classifier stays unit-testable.
  */

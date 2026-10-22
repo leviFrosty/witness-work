@@ -3,6 +3,7 @@ import { useIsFocused } from '@react-navigation/native'
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs'
 import TabBar from '@/components/ui/TabBar'
 import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
+import ScribeQuickActionRow from '@/features/scribe/components/ScribeQuickActionRow'
 
 import { errorTracking } from '@/lib/errorTracking'
 import * as SystemMenu from '../../../modules/system-menu'
@@ -75,6 +76,9 @@ export default function NavigationTabBar(props: BottomTabBarProps) {
   return (
     <TabBar
       {...props}
+      renderQuickActionLeading={(close) => (
+        <ScribeQuickActionRow onAction={close} />
+      )}
       shortcutHints={
         isFocused && navigationVisible && commandPressed
           ? Object.fromEntries(

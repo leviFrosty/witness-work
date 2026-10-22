@@ -49,16 +49,40 @@ describe('Home screen preferences', () => {
     ).reverse()
     const result = getEffectiveHomeScreenOrder(stored)
 
-    expect(result[result.indexOf('serviceReport') + 1]).toBe('mileage')
+    expect(result[result.indexOf('thisWeek') + 1]).toBe('mileage')
     expect(result.filter((k) => k !== 'mileage')).toEqual(stored)
   })
 
-  it('places the Pet section right after Mileage for an existing order', () => {
+  it('places the Pet section right after Service Report for an existing order', () => {
     const stored = DEFAULT_HOME_SCREEN_ELEMENTS_ORDER.filter((k) => k !== 'pet')
     const result = getEffectiveHomeScreenOrder(stored)
 
-    expect(result[result.indexOf('mileage') + 1]).toBe('pet')
+    expect(result[result.indexOf('serviceReport') + 1]).toBe('pet')
     expect(result).toEqual(DEFAULT_HOME_SCREEN_ELEMENTS_ORDER)
+  })
+
+  it('places Quick Actions right after Pet for an existing order', () => {
+    const stored = DEFAULT_HOME_SCREEN_ELEMENTS_ORDER.filter(
+      (k) => k !== 'quickActions'
+    )
+    const result = getEffectiveHomeScreenOrder(stored)
+
+    expect(result[result.indexOf('pet') + 1]).toBe('quickActions')
+    expect(result).toEqual(DEFAULT_HOME_SCREEN_ELEMENTS_ORDER)
+  })
+
+  it('puts Quick Actions directly above This Week by default', () => {
+    expect(DEFAULT_HOME_SCREEN_ELEMENTS_ORDER).toEqual([
+      'approachingConversations',
+      'tabletServiceYearSummary',
+      'serviceReport',
+      'pet',
+      'quickActions',
+      'thisWeek',
+      'mileage',
+      'timer',
+      'didYouKnow',
+    ])
   })
 
   it('appends missing sections in default order', () => {

@@ -1,0 +1,10 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+  <!-- Voice logs only. The on-device recognizer records on the app's behalf. -->
+  <uses-permission android:name="android.permission.RECORD_AUDIO" />
+
+  <queries>
+    <intent>
+      <action android:name="android.speech.RecognitionService" />
+    </intent>
+  </queries>
+</manifest>

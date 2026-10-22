@@ -106,7 +106,7 @@ beforeEach(async () => {
   policy.setAnalyticsEventsAllowed(true)
   policy.setAnalyticsProduction(true)
   mocks.reload.mockImplementation(async () => {
-    const values = { 'notes-import': true, buddies: false }
+    const values = { announcement: true, buddies: false }
     publish(values)
     return values
   })
@@ -130,7 +130,7 @@ async function mountReader() {
   )
   function Reader() {
     useInitializeFeatureFlags()
-    const value = useFeatureFlagValue('notes-import')
+    const value = useFeatureFlagValue('announcement')
     return <output data-value={value} />
   }
   await act(async () => {
@@ -154,7 +154,7 @@ it('does not report exposure just for loading all flags', async () => {
 
 it('records a loaded flag at its reader, preserving multivariate values and boolean gating', async () => {
   mocks.reload.mockImplementation(async () => {
-    const values = { 'notes-import': 'variant-b', buddies: false }
+    const values = { announcement: 'variant-b', buddies: false }
     publish(values)
     return values
   })
@@ -162,7 +162,7 @@ it('records a loaded flag at its reader, preserving multivariate values and bool
     await import('./featureFlags')
   function Reader() {
     useInitializeFeatureFlags()
-    const value = useFeatureFlagValue('notes-import')
+    const value = useFeatureFlagValue('announcement')
     const enabled = useFeatureFlag('buddies')
     return <output data-value={value} data-enabled={enabled} />
   }
@@ -173,7 +173,7 @@ it('records a loaded flag at its reader, preserving multivariate values and bool
   expect(root!.root.findByType('output').props['data-enabled']).toBe(false)
   expect(mocks.exposures).toEqual([
     {
-      flag: 'notes-import',
+      flag: 'announcement',
       value: 'variant-b',
       distinctId: 'installation-one',
     },
@@ -225,7 +225,7 @@ it('records exposure when analytics are re-enabled without changing visibility',
   policy.setAnalyticsEventsAllowed(true)
   await act(async () => mocks.preferences!.setState({ analyticsEnabled: true }))
   expect(mocks.exposures).toEqual([
-    { flag: 'notes-import', value: true, distinctId: 'installation-one' },
+    { flag: 'announcement', value: true, distinctId: 'installation-one' },
   ])
 })
 
@@ -246,11 +246,11 @@ it('waits for reset reload, then exposes the new identity and variant after rapi
   })
   expect(shownValue()).toBeUndefined()
   expect(mocks.exposures).toEqual([])
-  await act(async () => publish({ 'notes-import': 'variant-new' }))
+  await act(async () => publish({ announcement: 'variant-new' }))
   expect(shownValue()).toBe('variant-new')
   expect(mocks.exposures).toEqual([
     {
-      flag: 'notes-import',
+      flag: 'announcement',
       value: 'variant-new',
       distinctId: 'installation-two',
     },
@@ -264,7 +264,7 @@ it.each(['quota', 'partial'] as const)(
     await mountReader()
     mocks.exposures = []
     mocks.failure = failure
-    await act(async () => publish({ 'notes-import': true }))
+    await act(async () => publish({ announcement: true }))
     expect(shownValue()).toBeUndefined()
     expect(mocks.exposures).toEqual([])
   }
@@ -278,9 +278,9 @@ it('does not record a cached variant that differs from the rendered value', asyn
     mocks.preferences!.setState({ analyticsEnabled: false })
   )
   // Reload and render A with analytics disabled.
-  await act(async () => publish({ 'notes-import': 'variant-a' }))
+  await act(async () => publish({ announcement: 'variant-a' }))
   // SDK B arrives just before the rendered A's opt-in effect gets to run.
-  mocks.cached = { 'notes-import': 'variant-b' }
+  mocks.cached = { announcement: 'variant-b' }
   policy.setAnalyticsEventsAllowed(true)
   await act(async () => mocks.preferences!.setState({ analyticsEnabled: true }))
   expect(shownValue()).toBe('variant-a')
@@ -289,7 +289,7 @@ it('does not record a cached variant that differs from the rendered value', asyn
   expect(shownValue()).toBe('variant-b')
   expect(mocks.exposures).toEqual([
     {
-      flag: 'notes-import',
+      flag: 'announcement',
       value: 'variant-b',
       distinctId: 'installation-one',
     },
@@ -459,5 +459,86 @@ describe('keeping flags loaded', () => {
     await act(async () => setAppState('background'))
     await act(async () => setOnline(true))
     expect(renders).toBe(1)
+  })
+})
+
+describe('default-on flags', () => {
+  async function mountEnabled() {
+    const { useInitializeFeatureFlags, useFeatureFlag } = await import(
+      './featureFlags'
+    )
+    function Enabled() {
+      useInitializeFeatureFlags()
+      return (
+        <output
+          data-scribe={useFeatureFlag('scribe-ai')}
+          data-buddies={useFeatureFlag('buddies')}
+        />
+      )
+    }
+    await act(async () => {
+      root = create(<Enabled />)
+    })
+    return Enabled
+  }
+  const shown = (prop: 'data-scribe' | 'data-buddies') =>
+    root!.root.findByType('output').props[prop]
+
+  it('is on while loading, while other flags stay closed', async () => {
+    mocks.reload.mockImplementation(() => new Promise(() => undefined))
+    await mountEnabled()
+    expect(shown('data-scribe')).toBe(true)
+    expect(shown('data-buddies')).toBe(false)
+  })
+
+  it('is on offline', async () => {
+    mocks.online = false
+    await mountEnabled()
+    expect(shown('data-scribe')).toBe(true)
+  })
+
+  it('is on while the app is in the background', async () => {
+    mocks.appState = 'background'
+    await mountEnabled()
+    expect(shown('data-scribe')).toBe(true)
+  })
+
+  it('is on after a failed load', async () => {
+    mocks.reload.mockRejectedValue(new Error('offline'))
+    await mountEnabled()
+    expect(shown('data-scribe')).toBe(true)
+    expect(shown('data-buddies')).toBe(false)
+  })
+
+  it('is on when a load leaves it out, or answers true', async () => {
+    await mountEnabled()
+    expect(shown('data-scribe')).toBe(true)
+    await act(async () => publish({ 'scribe-ai': true }))
+    expect(shown('data-scribe')).toBe(true)
+  })
+
+  it('is off only when a response for this identity says false', async () => {
+    mocks.reload.mockImplementation(async () => {
+      publish({ 'scribe-ai': false, buddies: true })
+      return mocks.cached
+    })
+    const Enabled = await mountEnabled()
+    expect(shown('data-scribe')).toBe(false)
+    expect(shown('data-buddies')).toBe(true)
+
+    // Another identity, whose values haven't loaded yet.
+    mocks.distinctId = 'installation-two'
+    await act(async () => root!.update(<Enabled />))
+    expect(shown('data-scribe')).toBe(true)
+    expect(shown('data-buddies')).toBe(false)
+  })
+
+  it('follows a dev override off', async () => {
+    vi.stubGlobal('__DEV__', true)
+    const Enabled = await mountEnabled()
+    const { setDevFlagOverride } = await import('./featureFlags')
+    await act(async () => setDevFlagOverride('scribe-ai', false))
+    await act(async () => root!.update(<Enabled />))
+    expect(shown('data-scribe')).toBe(false)
   })
 })

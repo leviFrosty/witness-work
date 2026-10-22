@@ -25,6 +25,7 @@ import {
   migrateDropProgressBarDetailsPreference,
   migratePreferencesPersistedState,
   migrateShowPetHomeSection,
+  migrateShowQuickActionsHomeSection,
   migrateShowThisWeekHomeSection,
   migrateUnchosenContactSortToSuggested,
 } from '@/stores/preferences'
@@ -818,6 +819,7 @@ describe('preferences persist migrate v11 → v12 (Pet Home section starts visib
       timer: true,
       pet: true,
       thisWeek: true,
+      quickActions: true,
     })
     // Nobody chose it, so the stamp stays and a real choice still wins.
     expect(migrated.preferenceUpdatedAt).toEqual({
@@ -826,7 +828,9 @@ describe('preferences persist migrate v11 → v12 (Pet Home section starts visib
   })
 
   it('keeps an explicit choice and is idempotent', () => {
-    const hidden = { homeScreenElements: { pet: false, thisWeek: true } }
+    const hidden = {
+      homeScreenElements: { pet: false, thisWeek: true, quickActions: true },
+    }
     expect(migratePreferencesPersistedState(hidden, 11)).toEqual(hidden)
     const once = migrateShowPetHomeSection({ homeScreenElements: {} })
     expect(migrateShowPetHomeSection(once)).toEqual(once)
@@ -838,7 +842,9 @@ describe('preferences persist migrate v11 → v12 (Pet Home section starts visib
   })
 
   it('does not run for a v12 blob', () => {
-    const v12 = { homeScreenElements: { timer: true, thisWeek: false } }
+    const v12 = {
+      homeScreenElements: { timer: true, thisWeek: false, quickActions: true },
+    }
     expect(migratePreferencesPersistedState(v12, 12)).toEqual(v12)
   })
 })
@@ -864,6 +870,7 @@ describe('preferences persist migrate v12 → v13 (This Week starts visible)', (
       timer: false,
       pet: true,
       thisWeek: true,
+      quickActions: true,
     })
     expect(migrated.preferenceUpdatedAt).toEqual({
       homeScreenElements: 1700000000000,
@@ -871,7 +878,9 @@ describe('preferences persist migrate v12 → v13 (This Week starts visible)', (
   })
 
   it('keeps a hidden This Week and is idempotent', () => {
-    const hidden = { homeScreenElements: { thisWeek: false } }
+    const hidden = {
+      homeScreenElements: { thisWeek: false, quickActions: true },
+    }
     expect(migratePreferencesPersistedState(hidden, 12)).toEqual(hidden)
     const once = migrateShowThisWeekHomeSection({ homeScreenElements: {} })
     expect(migrateShowThisWeekHomeSection(once)).toEqual(once)
@@ -883,7 +892,7 @@ describe('preferences persist migrate v12 → v13 (This Week starts visible)', (
   })
 
   it('does not run for a v13 blob', () => {
-    const v13 = { homeScreenElements: { timer: true } }
+    const v13 = { homeScreenElements: { timer: true, quickActions: true } }
     expect(migratePreferencesPersistedState(v13, 13)).toEqual(v13)
   })
 })
@@ -918,5 +927,44 @@ describe('preferences persist migrate v13 → v14 (remove progress bar details)'
     const v14State = { role: 'publisher', preferenceUpdatedAt: { role: 1 } }
     expect(migratePreferencesPersistedState(v14State, 14)).toBe(v14State)
     expect(migrateDropProgressBarDetailsPreference(v14State)).toBe(v14State)
+  })
+})
+
+describe('preferences persist migrate v14 → v15 (Quick Actions starts visible)', () => {
+  it('adds Quick Actions to a saved visibility map that lacks it', () => {
+    const migrated = migratePreferencesPersistedState(
+      {
+        homeScreenElements: { pet: true, thisWeek: false, timer: true },
+        preferenceUpdatedAt: { homeScreenElements: 1700000000000 },
+      },
+      14
+    )
+    expect(migrated.homeScreenElements).toEqual({
+      pet: true,
+      thisWeek: false,
+      timer: true,
+      quickActions: true,
+    })
+    // Nobody chose it, so the stamp stays and a real choice still wins.
+    expect(migrated.preferenceUpdatedAt).toEqual({
+      homeScreenElements: 1700000000000,
+    })
+  })
+
+  it('keeps a hidden Quick Actions and is idempotent', () => {
+    const hidden = { homeScreenElements: { quickActions: false } }
+    expect(migratePreferencesPersistedState(hidden, 14)).toEqual(hidden)
+    const once = migrateShowQuickActionsHomeSection({ homeScreenElements: {} })
+    expect(migrateShowQuickActionsHomeSection(once)).toEqual(once)
+  })
+
+  it('leaves a blob without a visibility map to the defaults', () => {
+    expect(migratePreferencesPersistedState({}, 14)).toEqual({})
+    expect(migrateShowQuickActionsHomeSection(null)).toBeNull()
+  })
+
+  it('does not run for a v15 blob', () => {
+    const v15 = { homeScreenElements: { timer: true } }
+    expect(migratePreferencesPersistedState(v15, 15)).toEqual(v15)
   })
 })

@@ -93,9 +93,9 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       // Avatar selection uses Android's system photo picker. Saving a photo
       // does not need broad access to the user's media library.
       blockedPermissions: [
-        // Voice logs are iOS-only for now; keep the microphone off on Android
-        // even though expo-audio and expo-image-picker would request it.
-        'android.permission.RECORD_AUDIO',
+        // RECORD_AUDIO stays allowed: voice logs record through Android's
+        // on-device recognizer (modules/speech-transcription), which asks for
+        // the microphone when the user first starts one.
         'android.permission.READ_MEDIA_IMAGES',
         'android.permission.READ_MEDIA_VIDEO',
         'android.permission.READ_MEDIA_AUDIO',
@@ -206,7 +206,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       associatedDomains: ['applinks:ww-proxy.leviwilkerson.com'],
       entitlements: {
         'com.apple.security.application-groups': [`group.${BUNDLE_ID}`],
-        // App Attest (Notes Import request auth — ADR 0007). The environment
+        // App Attest (account sessions — ADR 0007, ADR 0027). The environment
         // must track the build variant: dev builds attest against Apple's
         // development environment, store builds against production. A mismatch
         // makes every attestation fail. TestFlight (beta) always attests
@@ -394,7 +394,8 @@ export default ({ config }: ConfigContext): ExpoConfig => {
           // two strings identical so plugin order doesn't matter.
           cameraPermission: CAMERA_PERMISSION,
           // We only pick still images, never video; the microphone string is
-          // for voice logs. Android's RECORD_AUDIO stays blocked above.
+          // for voice logs. On Android, modules/speech-transcription declares
+          // RECORD_AUDIO for them.
           microphonePermission: MICROPHONE_PERMISSION,
         },
       ],

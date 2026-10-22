@@ -3,6 +3,7 @@ export type FAQCategory =
   | 'contacts'
   | 'plans'
   | 'notes'
+  | 'scribe'
   | 'streaks'
   | 'buddies'
   | 'badges'
@@ -305,11 +306,14 @@ export const FAQS: FAQEntry[] = [
   { id: 'syncPhotos', category: 'backups' },
   { id: 'syncRecovery', category: 'backups' },
   { id: 'syncRemoveDevice', category: 'backups' },
-  { id: 'notesImportHelp', category: 'backups', related: [360, 378] },
-  { id: 'notesImportPaper', category: 'backups' },
-  { id: 'notesImportVoicePhoto', category: 'backups' },
-  { id: 'notesImportRetry', category: 'backups' },
-  { id: 'notesImportAndroid', category: 'backups', platform: 'android' },
+  { id: 'scribeStart', category: 'scribe', pinned: true },
+  { id: 'scribeWhatItDoes', category: 'scribe' },
+  { id: 'scribeUsage', category: 'scribe' },
+  { id: 'scribePrivacy', category: 'scribe' },
+  { id: 'scribeVoice', category: 'scribe' },
+  { id: 'scribeMistakes', category: 'scribe' },
+  { id: 'scribeOffline', category: 'scribe' },
+  { id: 'scribeImports', category: 'scribe' },
   { id: 'mytimeTrouble', category: 'backups', related: [360] },
   {
     id: 'hourglassSetup',
@@ -407,6 +411,7 @@ export const FAQ_CATEGORIES: FAQCategory[] = [
   'contacts',
   'plans',
   'notes',
+  'scribe',
   'streaks',
   'buddies',
   'badges',

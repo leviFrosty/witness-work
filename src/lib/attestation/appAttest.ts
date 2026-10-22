@@ -1,15 +1,13 @@
 export type AttestationEndpoint =
-  /** Notes Import's own challenge route. */
+  /**
+   * `POST /attestation/v1/challenge`: key registration (bind, enroll) and
+   * assertion challenges for features without a challenge route of their own.
+   */
   | 'challenge'
-  /** `POST /attestation/v1/challenge`, for every other feature. */
-  | 'attestationChallenge'
+  /** `POST /attestation/v1/register`: binds a key or enrolls its recovery. */
   | 'registration'
-  | 'kickoff'
-  | 'legacy'
+  /** `POST /attestation/v1/verify`: the attested no-op diagnostics prove. */
   | 'verify'
-  | 'transcribe'
-
-export type NotesImportProtectedEndpoint = 'kickoff' | 'legacy' | 'transcribe'
 
 export type AppAttestNativeFailureCode =
   | 'unsupported'
@@ -46,7 +44,8 @@ export type AttestationErrorCode =
    */
   | 'playServicesUnavailable'
 
-interface NotesImportAppAttestSemanticMetadata {
+/** The server's stable answer, carried on an `AttestationError`. */
+interface AttestationServerMetadata {
   status?: number
   serverCode?: string
   reason?: string
@@ -62,7 +61,7 @@ export class AttestationError extends Error {
 
   constructor(
     code: AttestationErrorCode,
-    options: NotesImportAppAttestSemanticMetadata = {}
+    options: AttestationServerMetadata = {}
   ) {
     super(`Device attestation failed (${code})`)
     this.name = 'AttestationError'
@@ -86,7 +85,6 @@ export interface AttestationHttpErrorOptions {
   serverCode?: string
   reason?: string
   action?: string
-  credits?: unknown
   /** From the server's Retry-After (or `retryAfter` in the body). */
   retryAfterMs?: number
 }
@@ -102,7 +100,6 @@ export class AttestationHttpError extends Error {
   readonly serverCode?: string
   readonly reason?: string
   readonly action?: string
-  readonly credits?: unknown
   readonly retryAfterMs?: number
 
   constructor(options: AttestationHttpErrorOptions) {
@@ -123,7 +120,6 @@ export class AttestationHttpError extends Error {
     this.serverCode = options.serverCode
     this.reason = options.reason
     this.action = options.action
-    this.credits = options.credits
     this.retryAfterMs = options.retryAfterMs
   }
 }
@@ -160,11 +156,11 @@ export interface AppAttestDependencies {
   identity: {
     peekUuid(): string | null
     getOrCreateUuid(): string
+    /** Read only for the snapshot's `accountIdentity`; nothing attests it. */
     getAccountId(): string
   }
   crypto: {
     sha256Base64(value: string): Promise<string>
-    sha256Hex(value: string): Promise<string>
     recoveryTokenHash(token: string): Promise<string>
     randomUuid(): string
   }
@@ -181,15 +177,14 @@ export interface AppAttestDependencies {
   now(): number
 }
 
-export interface NotesImportProtectedPost {
-  endpoint: NotesImportProtectedEndpoint
-  payload: Record<string, unknown>
-  contentHash: string
-  signal?: AbortSignal
-}
-
 /** Purposes attested on another feature's routes (`AttestedRequest`). */
 export type AttestationPurpose = 'account-session'
+
+/**
+ * The purpose the dev Tools diagnostics and repair sign for `POST
+ * /attestation/v1/verify` (ww-api `src/attestation/purposes.ts`).
+ */
+export const ATTESTATION_VERIFY_PURPOSE = 'attestation-verify'
 
 /**
  * How an attested request proves the device: the fields ww-api verifies (App
@@ -201,12 +196,11 @@ export type AttestationProof =
   | { kind: 'devBypass'; token: string }
 
 /**
- * A request another feature attests through its own routes, with Notes Import's
- * challenge shape (account sessions' `session/challenge` and `session/open`,
- * ADR 0027). Both callbacks throw `AttestationHttpError` for HTTP failures
+ * A request another feature attests through its own routes (account sessions'
+ * `session/open`, ADR 0027), with the `/attestation/v1/challenge` challenge
+ * shape. Both callbacks throw `AttestationHttpError` for HTTP failures
  * (`toAttestationHttpError`), so challenge, counter and key failures are
- * retried or recovered as Notes Import's are; anything else reaches the caller
- * as that error.
+ * retried or recovered here; anything else reaches the caller as that error.
  */
 export interface AttestedRequest<T> {
   purpose: AttestationPurpose
@@ -284,7 +278,6 @@ export interface AttestationRepairReport extends AttestationDebugReport {
 }
 
 export interface AppAttestAuthorizer {
-  post<T>(request: NotesImportProtectedPost): Promise<T>
   /** Another feature's request, asserted with the install's key (protocol v2). */
   assert<T>(request: AttestedRequest<T>): Promise<T>
   /** Never creates a key or asks Apple for anything. */
@@ -298,8 +291,8 @@ export interface AppAttestAuthorizer {
   /**
    * Attested no-op through the full protected path — the one flow that can
    * replace a key Apple refuses to sign with. Unlike diagnostics it may bind,
-   * enroll, and recover, exactly as a real protected request would; it spends
-   * no credits and runs no inference.
+   * enroll, and recover, exactly as a real attested request would; the verify
+   * route spends nothing.
    */
   runRepair(): Promise<AttestationRepairReport>
 }
@@ -308,6 +301,10 @@ const APP_ATTEST_PROTOCOL = 'witnesswork.app-attest'
 const JOURNAL_VERSION = 2 as const
 const JOURNAL_MAX_AGE_MS = 24 * 60 * 60 * 1000
 const JOURNAL_MAX_FUTURE_SKEW_MS = 5 * 60 * 1000
+/**
+ * SHA-256 of the empty string. The verify probe has no payload, so it binds
+ * this as both its content and request hash (ww-api requires them equal).
+ */
 export const DIAGNOSTIC_CONTENT_HASH =
   'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
 
@@ -395,11 +392,7 @@ class FifoLane {
 
 type ProtocolVersion = 1 | 2
 type ChallengeOperation = 'bind' | 'enroll' | 'assert'
-type ProtectedPurpose =
-  | 'notes-import-kickoff'
-  | 'notes-import-verify'
-  | 'notes-import-transcribe'
-  | AttestationPurpose
+type ProtectedPurpose = typeof ATTESTATION_VERIFY_PURPOSE | AttestationPurpose
 
 /** Where a protected attempt asks for its challenge and sends its request. */
 type ProtectedChannel<T> = {
@@ -410,10 +403,25 @@ type ProtectedChannel<T> = {
   submit(body: Record<string, unknown>, signal?: AbortSignal): Promise<T>
 }
 
-/** Notes Import's own endpoint, or another feature's channel. */
-type ProtectedRoute<T> =
-  | { endpoint: NotesImportProtectedEndpoint | 'verify'; channel?: undefined }
-  | { endpoint?: undefined; channel: ProtectedChannel<T> }
+/** One attested request: what it binds, where it goes, and how it's traced. */
+type ProtectedRequest<T> = {
+  channel: ProtectedChannel<T>
+  protocol: ProtocolVersion
+  purpose: ProtectedPurpose
+  contentHash: string
+  /** Bound under protocol v2 only. */
+  requestHash?: string
+  operationId: string
+  keyId: string
+  uuid: string
+  signal?: AbortSignal
+  /** Diagnostics' per-step trace. */
+  trace?: (step: AttestationDebugStep) => void
+  /** The submit step's name in `trace`; the purpose by default. */
+  submitStep?: string
+  /** Rejects a structurally invalid acknowledgement. */
+  validate?: (data: unknown, operationId: string) => boolean
+}
 
 type BootstrapJournal = {
   v: typeof JOURNAL_VERSION
@@ -489,66 +497,6 @@ const optionalStringIsValid = (value: unknown): value is string | undefined =>
 const operationRestartCount = (value: unknown): 0 | 1 | null => {
   if (value === undefined || value === 0) return 0
   return value === 1 ? 1 : null
-}
-
-/**
- * JSON.stringify semantics with recursively sorted object keys. This must stay
- * byte-for-byte identical to ww-api's request canonicalizer.
- */
-const stableCanonicalJson = (value: unknown): string => {
-  try {
-    const serialized = JSON.stringify(value, (_key, nested: unknown) => {
-      if (
-        nested == null ||
-        typeof nested !== 'object' ||
-        Array.isArray(nested)
-      ) {
-        return nested
-      }
-      const record = nested as Record<string, unknown>
-      const ordered: Record<string, unknown> = Object.create(null) as Record<
-        string,
-        unknown
-      >
-      for (const key of Object.keys(record).sort()) ordered[key] = record[key]
-      return ordered
-    })
-    if (serialized === undefined) {
-      throw new AttestationError('invalidInput')
-    }
-    return serialized
-  } catch (error) {
-    if (error instanceof AttestationError) throw error
-    throw new AttestationError('invalidInput')
-  }
-}
-
-/**
- * The exact JSON a protected request hash covers. A page transcription's
- * content hash already covers its image, so its request hash binds only the
- * image hash and type (ww-api `computeNotesImportTranscribeRequestHash`).
- */
-export const canonicalProtectedRequest = (
-  payload: Record<string, unknown>,
-  contentHash: string
-): string => {
-  if (typeof payload.image === 'string') {
-    if (typeof payload.mimeType !== 'string') {
-      throw new AttestationError('invalidInput')
-    }
-    return stableCanonicalJson({
-      imageHash: contentHash,
-      mimeType: payload.mimeType,
-    })
-  }
-  if (typeof payload.notesText !== 'string' || !isRecord(payload.context)) {
-    throw new AttestationError('invalidInput')
-  }
-  return stableCanonicalJson({
-    notesText: payload.notesText,
-    context: payload.context,
-    refinement: payload.refinement ?? null,
-  })
 }
 
 const parseJournal = (raw: string): LifecycleJournal => {
@@ -701,11 +649,6 @@ const protocolVersionFromStatus = (status: unknown): ProtocolVersion => {
   throw new AttestationError('protocolUnavailable')
 }
 
-const purposeForEndpoint = (
-  endpoint: NotesImportProtectedEndpoint
-): ProtectedPurpose =>
-  endpoint === 'transcribe' ? 'notes-import-transcribe' : 'notes-import-kickoff'
-
 const buildBindClientData = (input: {
   operationId: string
   challenge: string
@@ -745,8 +688,6 @@ const buildAssertionClientData = (input: {
   operationId: string
   challenge: string
   uuid: string
-  /** Absent for purposes that aren't metered by it (ww-api reads it as ''). */
-  accountId?: string
   contentHash: string
   requestHash: string
 }): string =>
@@ -758,10 +699,23 @@ const buildAssertionClientData = (input: {
     input.operationId,
     input.challenge,
     input.uuid,
-    input.accountId ?? '',
+    // The optional account id slot; nothing attested here sends one, and
+    // ww-api reads it as ''.
+    '',
     input.contentHash,
     input.requestHash,
   ].join('|')
+
+/**
+ * Protocol v1's assertion client data without an account id (ww-api
+ * `buildAssertionClientData`'s three-field form). Only the diagnostics and
+ * repair verify probe still asserts under v1.
+ */
+const buildV1AssertionClientData = (input: {
+  challenge: string
+  uuid: string
+  contentHash: string
+}): string => `${input.challenge}|${input.uuid}|${input.contentHash}`
 
 const nativeFailureToErrorCode = (
   code: AppAttestNativeFailureCode
@@ -799,7 +753,7 @@ const isDeadKeyFailure = (code: AttestationErrorCode): boolean =>
 const httpAuthError = (
   error: AttestationHttpError
 ): AttestationError | null => {
-  const options: NotesImportAppAttestSemanticMetadata = {
+  const options: AttestationServerMetadata = {
     status: error.status,
     serverCode: error.serverCode,
     reason: error.reason,
@@ -856,7 +810,7 @@ const httpAuthError = (
 
 const semanticMetadata = (
   error: AttestationHttpError
-): NotesImportAppAttestSemanticMetadata => ({
+): AttestationServerMetadata => ({
   status: error.status,
   serverCode: error.serverCode,
   reason: error.reason,
@@ -946,8 +900,8 @@ const pendingKind = (
 
 /**
  * Deep App Attest authorization module (ADR 0017), shared by every feature that
- * attests. Callers provide a protected payload; this module owns identity
- * injection, protocol negotiation, all key lifecycle transitions,
+ * attests. Callers provide the hashes to bind and their own submit; this module
+ * owns identity injection, protocol negotiation, all key lifecycle transitions,
  * exact-operation journaling, FIFO authorization, and redaction.
  */
 export const createAppAttestAuthorizer = (
@@ -1095,23 +1049,6 @@ export const createAppAttestAuthorizer = (
     }
   }
 
-  const hashProtectedRequest = async (
-    payload: Record<string, unknown>,
-    contentHash: string
-  ): Promise<string> => {
-    const canonicalJson = canonicalProtectedRequest(payload, contentHash)
-    try {
-      const hash = await dependencies.crypto.sha256Hex(canonicalJson)
-      if (!/^[a-f0-9]{64}$/.test(hash)) {
-        throw new AttestationError('systemFailure')
-      }
-      return hash
-    } catch (error) {
-      if (error instanceof AttestationError) throw error
-      throw new AttestationError('systemFailure')
-    }
-  }
-
   const nativeError = (error: unknown): AttestationError => {
     const code = dependencies.appAttest.classifyError(error) ?? 'unknown'
     return new AttestationError(nativeFailureToErrorCode(code))
@@ -1167,6 +1104,13 @@ export const createAppAttestAuthorizer = (
     return pending
   }
 
+  /** `POST /attestation/v1/challenge`. */
+  const postChallenge = (
+    body: Record<string, unknown>,
+    signal?: AbortSignal
+  ): Promise<unknown> =>
+    dependencies.transport.post<unknown>('challenge', body, { signal })
+
   const requestChallenge = async (input: {
     protocolVersion: ProtocolVersion
     operation: ChallengeOperation
@@ -1174,10 +1118,12 @@ export const createAppAttestAuthorizer = (
     uuid: string
     keyId: string
     purpose?: ProtectedPurpose
-    accountId?: string
     contentHash?: string
     requestHash?: string
-    /** Another feature's challenge route; Notes Import's by default. */
+    /**
+     * Another feature's challenge route; `/attestation/v1/challenge` by
+     * default.
+     */
     post?: ProtectedChannel<unknown>['challenge']
     signal?: AbortSignal
   }): Promise<string> => {
@@ -1202,18 +1148,13 @@ export const createAppAttestAuthorizer = (
             ...(input.operation === 'assert'
               ? {
                   purpose: input.purpose,
-                  accountId: input.accountId,
                   contentHash: input.contentHash,
                   requestHash: input.requestHash,
                 }
               : {}),
           }
         : {}
-    const response = input.post
-      ? await input.post(body, input.signal)
-      : await dependencies.transport.post<unknown>('challenge', body, {
-          signal: input.signal,
-        })
+    const response = await (input.post ?? postChallenge)(body, input.signal)
     if (!isRecord(response) || !isNonEmptyString(response.challenge)) {
       throw new AttestationError('invalidInput')
     }
@@ -1735,7 +1676,7 @@ export const createAppAttestAuthorizer = (
   const ensureReady = async (
     desiredProtocol: ProtocolVersion,
     signal?: AbortSignal
-  ): Promise<{ keyId: string; uuid: string; accountId: string }> =>
+  ): Promise<{ keyId: string; uuid: string }> =>
     lifecycleLane.run(
       'lifecycle',
       async () => {
@@ -1848,9 +1789,7 @@ export const createAppAttestAuthorizer = (
           }
         }
 
-        const accountId = storage(() => dependencies.identity.getAccountId())
-        if (!accountId) throw new AttestationError('storageFailure')
-        return { keyId, uuid, accountId }
+        return { keyId, uuid }
       },
       signal
     )
@@ -1942,22 +1881,9 @@ export const createAppAttestAuthorizer = (
   }
 
   const protectedAttempt = async <T>(
-    input: ProtectedRoute<T> & {
-      protocol: ProtocolVersion
-      purpose: ProtectedPurpose
-      payload: Record<string, unknown>
-      contentHash: string
-      requestHash?: string
-      operationId: string
-      keyId: string
-      uuid: string
-      accountId?: string
+    input: ProtectedRequest<T> & {
       allowRecovery: boolean
       allowFreshOperation: boolean
-      signal?: AbortSignal
-      trace?: (step: AttestationDebugStep) => void
-      /** Rejects a structurally invalid protected acknowledgement. */
-      validate?: (data: unknown, operationId: string) => boolean
     }
   ): Promise<ProtectedAttempt<T>> =>
     authorizationLane.run(
@@ -1978,10 +1904,9 @@ export const createAppAttestAuthorizer = (
               uuid: input.uuid,
               keyId: input.keyId,
               purpose: input.purpose,
-              accountId: input.accountId,
               contentHash: input.contentHash,
               requestHash: input.requestHash,
-              post: input.channel?.challenge,
+              post: input.channel.challenge,
               signal: input.signal,
             })
           )
@@ -2002,11 +1927,14 @@ export const createAppAttestAuthorizer = (
                 operationId: input.operationId,
                 challenge,
                 uuid: input.uuid,
-                accountId: input.accountId,
                 contentHash: input.contentHash,
                 requestHash: input.requestHash!,
               })
-            : `${challenge}|${input.uuid}|${input.accountId}|${input.contentHash}`
+            : buildV1AssertionClientData({
+                challenge,
+                uuid: input.uuid,
+                contentHash: input.contentHash,
+              })
         const clientDataHash =
           await dependencies.crypto.sha256Base64(clientData)
 
@@ -2034,7 +1962,6 @@ export const createAppAttestAuthorizer = (
         }
 
         const body = {
-          ...input.payload,
           ...(input.protocol === 2
             ? {
                 protocolVersion: 2,
@@ -2045,28 +1972,26 @@ export const createAppAttestAuthorizer = (
               }
             : {}),
           uuid: input.uuid,
-          ...(input.accountId !== undefined && { accountId: input.accountId }),
           contentHash: input.contentHash,
           keyId: input.keyId,
           challenge,
           assertion,
         }
-        const step = input.channel ? input.purpose : input.endpoint
         try {
-          const data = await traced(input.trace, step, async () => {
-            const response = input.channel
-              ? await input.channel.submit(body, input.signal)
-              : await dependencies.transport.post<T>(input.endpoint, body, {
-                  signal: input.signal,
-                })
-            if (
-              input.validate &&
-              !input.validate(response, input.operationId)
-            ) {
-              throw new AttestationError('authorizationFailed')
+          const data = await traced(
+            input.trace,
+            input.submitStep ?? input.purpose,
+            async () => {
+              const response = await input.channel.submit(body, input.signal)
+              if (
+                input.validate &&
+                !input.validate(response, input.operationId)
+              ) {
+                throw new AttestationError('authorizationFailed')
+              }
+              return response
             }
-            return response
-          })
+          )
           return { kind: 'success', data }
         } catch (error) {
           if (input.allowRecovery && recoveryRequested(error)) {
@@ -2081,22 +2006,7 @@ export const createAppAttestAuthorizer = (
       input.signal
     )
 
-  const postProtected = async <T>(
-    input: ProtectedRoute<T> & {
-      protocol: ProtocolVersion
-      purpose: ProtectedPurpose
-      payload: Record<string, unknown>
-      contentHash: string
-      requestHash?: string
-      operationId: string
-      keyId: string
-      uuid: string
-      accountId?: string
-      signal?: AbortSignal
-      trace?: (step: AttestationDebugStep) => void
-      validate?: (data: unknown, operationId: string) => boolean
-    }
-  ): Promise<T> => {
+  const postProtected = async <T>(input: ProtectedRequest<T>): Promise<T> => {
     let keyId = input.keyId
     let operationId = input.operationId
     let allowRecovery = true
@@ -2283,10 +2193,9 @@ export const createAppAttestAuthorizer = (
       if (!capability.ok) return report
       const protocol = capability.value
       report.protocolVersion = protocol
-      const identity = await step('identity', async () => ({
-        uuid: storage(() => dependencies.identity.getOrCreateUuid()),
-        accountId: storage(() => dependencies.identity.getAccountId()),
-      }))
+      const identity = await step('identity', async () =>
+        storage(() => dependencies.identity.getOrCreateUuid())
+      )
       if (!identity.ok) return report
       const verify = await step('verify', async () => {
         const response = await dependencies.transport.post<unknown>(
@@ -2296,13 +2205,12 @@ export const createAppAttestAuthorizer = (
               ? {
                   protocolVersion: 2,
                   operation: 'assert',
-                  purpose: 'notes-import-verify',
+                  purpose: ATTESTATION_VERIFY_PURPOSE,
                   operationId,
                   requestHash: DIAGNOSTIC_CONTENT_HASH,
                 }
               : {}),
-            uuid: identity.value.uuid,
-            accountId: identity.value.accountId,
+            uuid: identity.value,
             contentHash: DIAGNOSTIC_CONTENT_HASH,
           },
           {
@@ -2393,11 +2301,6 @@ export const createAppAttestAuthorizer = (
       if (!capability.ok) return report
       const protocol = capability.value
       report.protocolVersion = protocol
-      const accountIdentity = await step('account-state', async () =>
-        storage(() => dependencies.identity.getAccountId())
-      )
-      if (!accountIdentity.ok) return report
-      const accountId = accountIdentity.value
       const challengeResult = await step('challenge', () =>
         requestChallenge({
           protocolVersion: protocol,
@@ -2405,8 +2308,7 @@ export const createAppAttestAuthorizer = (
           operationId,
           uuid: uuid!,
           keyId: keyId!,
-          purpose: 'notes-import-verify',
-          accountId,
+          purpose: ATTESTATION_VERIFY_PURPOSE,
           contentHash: DIAGNOSTIC_CONTENT_HASH,
           requestHash: DIAGNOSTIC_CONTENT_HASH,
         })
@@ -2416,15 +2318,18 @@ export const createAppAttestAuthorizer = (
       const clientData =
         protocol === 2
           ? buildAssertionClientData({
-              purpose: 'notes-import-verify',
+              purpose: ATTESTATION_VERIFY_PURPOSE,
               operationId,
               challenge,
               uuid: uuid!,
-              accountId,
               contentHash: DIAGNOSTIC_CONTENT_HASH,
               requestHash: DIAGNOSTIC_CONTENT_HASH,
             })
-          : `${challenge}|${uuid}|${accountId}|${DIAGNOSTIC_CONTENT_HASH}`
+          : buildV1AssertionClientData({
+              challenge,
+              uuid: uuid!,
+              contentHash: DIAGNOSTIC_CONTENT_HASH,
+            })
       const clientDataHashResult = await step('client-data-hash', () =>
         dependencies.crypto.sha256Base64(clientData)
       )
@@ -2444,13 +2349,12 @@ export const createAppAttestAuthorizer = (
             ? {
                 protocolVersion: 2,
                 operation: 'assert',
-                purpose: 'notes-import-verify',
+                purpose: ATTESTATION_VERIFY_PURPOSE,
                 operationId,
                 requestHash: DIAGNOSTIC_CONTENT_HASH,
               }
             : {}),
           uuid,
-          accountId,
           contentHash: DIAGNOSTIC_CONTENT_HASH,
           keyId,
           challenge,
@@ -2515,7 +2419,7 @@ export const createAppAttestAuthorizer = (
     const protocol = capability.value
     report.protocolVersion = protocol
 
-    // The same readiness pass every protected post runs: it may resume a
+    // The same readiness pass every attested request runs: it may resume a
     // journaled operation, enroll recovery, or replace a key that dies during
     // enrollment — all of which this repair exists to exercise.
     const ready = await step('ensure-ready', () => ensureReady(protocol))
@@ -2527,16 +2431,19 @@ export const createAppAttestAuthorizer = (
     try {
       await postProtected<unknown>({
         protocol,
-        endpoint: 'verify',
-        purpose: 'notes-import-verify',
-        payload: {},
+        channel: {
+          challenge: postChallenge,
+          submit: (body, signal) =>
+            dependencies.transport.post<unknown>('verify', body, { signal }),
+        },
+        purpose: ATTESTATION_VERIFY_PURPOSE,
         contentHash: DIAGNOSTIC_CONTENT_HASH,
         requestHash: protocol === 2 ? DIAGNOSTIC_CONTENT_HASH : undefined,
         operationId,
         keyId: ready.value.keyId,
         uuid: ready.value.uuid,
-        accountId: ready.value.accountId,
         trace: (entry) => report.steps.push(entry),
+        submitStep: 'verify',
         validate: (value, usedOperationId) =>
           isAssertionAcknowledgement(value, protocol, usedOperationId),
       })
@@ -2555,84 +2462,6 @@ export const createAppAttestAuthorizer = (
   }
 
   return {
-    async post<T>(request: NotesImportProtectedPost): Promise<T> {
-      const { endpoint, payload, contentHash, signal } = request
-      throwIfAborted(signal)
-      const purpose = purposeForEndpoint(endpoint)
-      const operationId = dependencies.crypto.randomUuid()
-      let requestHashPromise: Promise<string> | null = null
-      const getRequestHash = (): Promise<string> =>
-        (requestHashPromise ??= hashProtectedRequest(payload, contentHash))
-
-      if (dependencies.devBypass.enabled) {
-        const uuid = storage(() => dependencies.identity.getOrCreateUuid())
-        const accountId = storage(() => dependencies.identity.getAccountId())
-        const assertsV2 = endpoint === 'kickoff' || endpoint === 'transcribe'
-        const requestHash = assertsV2 ? await getRequestHash() : undefined
-        return authorizationLane.run(
-          'dev-bypass',
-          () =>
-            dependencies.transport.post<T>(
-              endpoint,
-              {
-                ...payload,
-                ...(assertsV2
-                  ? {
-                      protocolVersion: 2,
-                      operation: 'assert',
-                      purpose,
-                      operationId,
-                      requestHash,
-                    }
-                  : {}),
-                uuid,
-                accountId,
-                contentHash,
-              },
-              {
-                headers: {
-                  'x-ww-dev-bypass': dependencies.devBypass.token,
-                },
-                signal,
-              }
-            ),
-          signal
-        )
-      }
-
-      let supported = false
-      try {
-        supported = dependencies.appAttest.isSupported()
-      } catch {
-        throw new AttestationError('nativeUnknown')
-      }
-      if (!supported) {
-        throw new AttestationError('unsupported')
-      }
-      const negotiatedProtocol = await waitForSignal(protocolVersion(), signal)
-      const ready = await ensureReady(negotiatedProtocol, signal)
-      // ww-api reads pages only under v2, where the assertion signs the
-      // request hash that binds the image type.
-      if (endpoint === 'transcribe' && negotiatedProtocol !== 2) {
-        throw new AttestationError('protocolUnavailable')
-      }
-      const protectedProtocol = endpoint === 'legacy' ? 1 : negotiatedProtocol
-      const requestHash =
-        protectedProtocol === 2 ? await getRequestHash() : undefined
-      return postProtected<T>({
-        protocol: protectedProtocol,
-        endpoint,
-        purpose,
-        payload,
-        contentHash,
-        requestHash,
-        operationId,
-        keyId: ready.keyId,
-        uuid: ready.uuid,
-        accountId: ready.accountId,
-        signal,
-      })
-    },
     async assert<T>(request: AttestedRequest<T>): Promise<T> {
       const { purpose, contentHash, requestHash, signal } = request
       throwIfAborted(signal)
@@ -2662,19 +2491,13 @@ export const createAppAttestAuthorizer = (
       return postProtected<T>({
         protocol: 2,
         purpose,
-        payload: {},
         contentHash,
         requestHash,
         operationId: dependencies.crypto.randomUuid(),
         keyId: ready.keyId,
         uuid: ready.uuid,
         channel: {
-          challenge:
-            request.challenge ??
-            ((body, attemptSignal) =>
-              dependencies.transport.post('attestationChallenge', body, {
-                signal: attemptSignal,
-              })),
+          challenge: request.challenge ?? postChallenge,
           submit: (fields, attemptSignal) =>
             request.submit({ kind: 'attestation', fields }, attemptSignal),
         },

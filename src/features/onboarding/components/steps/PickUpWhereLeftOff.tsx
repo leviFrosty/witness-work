@@ -4,7 +4,6 @@ import { useContacts } from '@/stores/contactsStore'
 import { useConversations } from '@/stores/conversationStore'
 import { useServiceReport } from '@/stores/serviceReport'
 import { FRESH_SETUP_PREFERENCES } from '@/lib/syncPreferencePolicy'
-import { useNotesImportEnabled } from '@/hooks/useNotesImportEnabled'
 import { analytics } from '@/lib/analytics'
 import {
   ArchiveRestore as ArchiveRestoreIcon,
@@ -30,9 +29,8 @@ import useTheme from '@/contexts/theme'
 import i18n, { TranslationKey } from '@/lib/locales'
 import MytimeImport from '@/features/onboarding/components/steps/MytimeImport'
 import ICloudRestore from '@/features/onboarding/components/steps/iCloudRestore'
-import { useNotesImportAvailability } from '@/features/notes-import/hooks/useNotesImportAvailability'
-import { useNotesImportManager } from '@/features/notes-import/hooks/useNotesImportManager'
-import { pickPaperPages } from '@/features/notes-import/hooks/useNotesImportPaperImport'
+import { useScribeAvailability, useScribePaperCapture } from '@/features/scribe'
+import { pickScribePaperPages } from '@/features/scribe/components/pickScribePaperPages'
 import { useBackupImport } from '@/app/sync/useBackupImport'
 import type { RootStackNavigation } from '@/types/rootStack'
 import { syncTransport, usesGoogleDriveSync } from '@/lib/syncTransport'
@@ -108,9 +106,9 @@ const OptionCard = ({
 }
 
 /**
- * Whether anything has been brought in yet: records from any import, or an
- * accepted Notes Import (which may only have set the publisher). Setup runs on
- * a new install, so existing data means the user imported it here.
+ * Whether anything has been brought in yet: records from any import, including
+ * what Scribe AI added. Setup runs on a new install, so existing data means the
+ * user imported it here.
  */
 const useHasImportedData = (): boolean => {
   const hasContacts = useContacts((s) => s.contacts.length > 0)
@@ -120,30 +118,27 @@ const useHasImportedData = (): boolean => {
       Object.values(months).some((entries) => entries.length > 0)
     )
   )
-  const hasAcceptedNotesImport = useNotesImportManager((s) =>
-    s.entries.some((entry) => entry.state === 'done')
-  )
-  return hasContacts || hasVisits || hasTimeEntries || hasAcceptedNotesImport
+  const hasDayPlans = useServiceReport((s) => s.dayPlans.length > 0)
+  return hasContacts || hasVisits || hasTimeEntries || hasDayPlans
 }
 
 /**
  * Onboarding "Pick up where you left off" chooser — replaces the separate
  * iCloud-restore and MyTime-import steps with one fork into Notes / MyTime /
  * iCloud / a backup file (decision 9), plus Paper (ADR 0025), which picks page
- * photos first and opens the composer to read them into its draft. MyTime +
- * iCloud reuse their existing step components inline; iCloud is grayed when the
- * device has no iCloud. The Notes option navigates to the shared
- * NotesImportComposer screen — the same surface as Settings, not a one-off —
- * whose import persists and resumes, so the user can leave and come back;
- * backing out returns here to keep going. MyTime returns to the flow
- * (`goNext`); iCloud restore completes onboarding on its own. A backup file
- * restores in place via the same flow as Settings → Backup and, like iCloud,
- * completes onboarding — the backup carries the profile and preferences the
- * remaining steps would set. "From your other phone" opens Sign In with QR Code
- * (ADR 0026), which brings the account and buddies, then returns here so the
- * data can come over too. "Start fresh" is the primary action: most users have
- * nothing to bring over. Once something has been imported and the user comes
- * back here, it reads "Continue" instead, since they aren't starting fresh.
+ * photos first and opens Scribe AI's conversation to read them into its draft.
+ * MyTime + iCloud reuse their existing step components inline; iCloud is grayed
+ * when the device has no iCloud. The Notes option opens Scribe AI's
+ * conversation with the keyboard up, to paste or type notes; backing out
+ * returns here to keep going. MyTime returns to the flow (`goNext`); iCloud
+ * restore completes onboarding on its own. A backup file restores in place via
+ * the same flow as Settings → Backup and, like iCloud, completes onboarding —
+ * the backup carries the profile and preferences the remaining steps would set.
+ * "From your other phone" opens Sign In with QR Code (ADR 0026), which brings
+ * the account and buddies, then returns here so the data can come over too.
+ * "Start fresh" is the primary action: most users have nothing to bring over.
+ * Once something has been imported and the user comes back here, it reads
+ * "Continue" instead, since they aren't starting fresh.
  */
 const PickUpWhereLeftOff = ({ goBack, goNext }: StepProps) => {
   const theme = useTheme()
@@ -159,8 +154,10 @@ const PickUpWhereLeftOff = ({ goBack, goNext }: StepProps) => {
   const icloudAvailable = usesGoogleDriveSync()
     ? cloudSyncSupported
     : syncTransport().isAvailable()
-  const notesImportEnabled = useNotesImportEnabled()
-  const notesImport = useNotesImportAvailability()
+  const scribe = useScribeAvailability()
+  const scribeShown = scribe.status !== 'hidden'
+  const paper = useScribePaperCapture()
+  const paperAvailable = scribeShown && paper.available
   const { importing, importBackup } = useBackupImport({ source: 'onboarding' })
   const hasImportedData = useHasImportedData()
 
@@ -168,16 +165,10 @@ const PickUpWhereLeftOff = ({ goBack, goNext }: StepProps) => {
     if (!isFocused || mode !== 'choose') return
     analytics.capture('onboarding_import_options_viewed', {
       icloud_available: icloudAvailable,
-      notes_available: notesImport.available,
-      paper_available: notesImport.paperMaxPages != null,
+      notes_available: scribe.status === 'available',
+      paper_available: paperAvailable,
     })
-  }, [
-    icloudAvailable,
-    notesImport.available,
-    notesImport.paperMaxPages,
-    isFocused,
-    mode,
-  ])
+  }, [icloudAvailable, scribe.status, paperAvailable, isFocused, mode])
   const restoreBackup = async () => {
     if (!(await importBackup())) return
     analytics.capture('onboarding_completed', {
@@ -193,11 +184,10 @@ const PickUpWhereLeftOff = ({ goBack, goNext }: StepProps) => {
     useProfile.getState().set({ hasCompletedProfileSetup: true })
   }
   const fromPaper = async () => {
-    if (!notesImport.paperMaxPages) return
-    const paperPages = await pickPaperPages(notesImport.paperMaxPages)
+    const paperPages = await pickScribePaperPages()
     if (!paperPages) return
-    navigation.navigate('NotesImportComposer', {
-      fromOnboarding: true,
+    navigation.navigate('ScribeConversation', {
+      entry: 'onboarding',
       paperPages,
     })
   }
@@ -220,7 +210,10 @@ const PickUpWhereLeftOff = ({ goBack, goNext }: StepProps) => {
     if (importType === 'other_phone')
       navigation.navigate('Sign In With QR Code', { entry: 'onboarding' })
     else if (importType === 'notes')
-      navigation.navigate('NotesImportComposer', { fromOnboarding: true })
+      navigation.navigate('ScribeConversation', {
+        entry: 'onboarding',
+        focusComposer: true,
+      })
     else if (importType === 'paper') void fromPaper()
     else if (importType === 'backup_json') void restoreBackup()
     else setMode(importType)
@@ -279,23 +272,25 @@ const PickUpWhereLeftOff = ({ goBack, goNext }: StepProps) => {
               onPress={() => selectImport('other_phone')}
             />
           )}
-          {notesImportEnabled && (
+          {scribeShown && (
             <OptionCard
               icon={FileTextIcon}
               color={theme.colors.cyan}
               titleKey='onboardingPickUp_notes'
               descKey='onboardingPickUp_notesDesc'
-              disabled={notesImport.status === 'unavailable'}
-              disabledNoteKey='notesImport_unavailable'
+              disabled={scribe.status === 'offline'}
+              disabledNoteKey='scribe_offlineBadge'
               onPress={() => selectImport('notes')}
             />
           )}
-          {notesImportEnabled && notesImport.paperMaxPages != null && (
+          {paperAvailable && (
             <OptionCard
               icon={NotebookPenIcon}
               color={theme.colors.orange}
               titleKey='onboardingPickUp_paper'
               descKey='onboardingPickUp_paperDesc'
+              disabled={scribe.status === 'offline'}
+              disabledNoteKey='scribe_offlineBadge'
               onPress={() => selectImport('paper')}
             />
           )}

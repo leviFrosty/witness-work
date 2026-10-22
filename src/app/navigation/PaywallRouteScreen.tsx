@@ -1,27 +1,13 @@
 import PaywallScreen from '@/features/supporter/screens/PaywallScreen'
-import { useNotesImportAvailability } from '@/features/notes-import/hooks/useNotesImportAvailability'
-import { notesImportScheduleCopy } from '@/features/notes-import/lib/notesImportScheduleCopy'
+import { useScribeEnabled } from '@/features/scribe'
 
 /**
- * App-tier composition for Supporter UI that may show fresh Scribe schedule
- * data.
+ * App-tier composition for Supporter UI that lists Scribe AI's limits while
+ * Scribe AI is on.
  */
 const PaywallRouteScreen = () => {
-  const { schedule } = useNotesImportAvailability()
-  const scheduleCopy = schedule ? notesImportScheduleCopy(schedule) : null
-
-  return (
-    <PaywallScreen
-      notesImportAllowance={
-        scheduleCopy
-          ? {
-              free: scheduleCopy.freeImports,
-              supporter: scheduleCopy.supporterImports,
-            }
-          : undefined
-      }
-    />
-  )
+  const scribeAi = useScribeEnabled()
+  return <PaywallScreen scribeAi={scribeAi} />
 }
 
 export default PaywallRouteScreen

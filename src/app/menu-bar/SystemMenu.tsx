@@ -3,6 +3,11 @@ import { usePreferences } from '@/stores/preferences'
 import usePublisher from '@/hooks/usePublisher'
 import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
 import { navigationRef } from '@/features/contacts/lib/linking'
+import {
+  useScribeAvailability,
+  useScribeVoiceAvailability,
+} from '@/features/scribe'
+import { openScribe } from '@/features/scribe/components/openScribe'
 
 import { errorTracking } from '@/lib/errorTracking'
 import * as SystemMenuBridge from '../../../modules/system-menu'
@@ -13,22 +18,32 @@ export default function SystemMenu({ language }: { language: string }) {
   const onboardingComplete = usePreferences((s) => s.onboardingComplete)
   const { showsTimeEntry } = usePublisher()
   const { hasSidebar } = useAdaptiveLayout()
+  const scribe = useScribeAvailability()
+  const voice = useScribeVoiceAvailability()
+  const showsScribe = scribe.status !== 'hidden'
   const [checkingUpdate, setCheckingUpdate] = useState(false)
 
   useEffect(() => {
     if (!SystemMenuBridge.isAvailable) return
     const groups = onboardingComplete
-      ? menuGroups({ showsTimeEntry, checkingUpdate, language })
+      ? menuGroups({ showsTimeEntry, showsScribe, checkingUpdate, language })
       : []
     void SystemMenuBridge.configure(groups).catch((error: unknown) => {
       errorTracking.captureException(error)
     })
-  }, [onboardingComplete, language, showsTimeEntry, checkingUpdate])
+  }, [
+    onboardingComplete,
+    language,
+    showsTimeEntry,
+    showsScribe,
+    checkingUpdate,
+  ])
 
   useEffect(() => {
     if (!SystemMenuBridge.isAvailable || !onboardingComplete) return
     const allowed = menuGroups({
       showsTimeEntry,
+      showsScribe,
       checkingUpdate,
       language,
     }).flatMap((group) =>
@@ -41,13 +56,24 @@ export default function SystemMenu({ language }: { language: string }) {
       if (!navigationRef.isReady() || !command) return
 
       if (action === 'check_update') setCheckingUpdate(true)
-      await runMenuCommand(command, hasSidebar).catch((error: unknown) => {
+      await runMenuCommand(command, hasSidebar, () =>
+        openScribe(navigationRef, 'menu_bar', scribe, voice)
+      ).catch((error: unknown) => {
         errorTracking.captureException(error)
       })
       if (action === 'check_update') setCheckingUpdate(false)
     })
     return () => subscription?.remove()
-  }, [onboardingComplete, showsTimeEntry, checkingUpdate, hasSidebar, language])
+  }, [
+    onboardingComplete,
+    showsTimeEntry,
+    showsScribe,
+    checkingUpdate,
+    hasSidebar,
+    language,
+    scribe,
+    voice,
+  ])
 
   return null
 }

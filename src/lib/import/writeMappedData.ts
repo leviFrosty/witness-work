@@ -245,16 +245,16 @@ export const writeMappedDataToStores = (
  * store hard-blocks it) and is intentionally left in place — it is shared
  * infra, not user data.
  *
- * Reference-aware (F44): the Accept-time reconcile (notes-import) dedupes a NEW
- * import's contacts/categories against CURRENT local data BY NAME, so a later
- * sibling import can be re-pointed onto a contact/category THIS commit inserted
- * — its own visit/time-entry record then references our inserted id while its
- * own id stays out of our commit. Blindly deleting every inserted id would
- * orphan that sibling's live record (a visit pointing at a deleted contact, a
- * time entry pointing at a deleted category). So before deleting we scan the
- * stores for any visit/time entry that (a) references one of our inserted
- * contacts/ categories and (b) is NOT itself part of this commit — those
- * inserted records are KEPT, leaving the sibling's data intact.
+ * Reference-aware (F44): Notes Import's Accept-time reconcile (before Scribe
+ * AI) dedupes a NEW import's contacts/categories against CURRENT local data BY
+ * NAME, so a later sibling import can be re-pointed onto a contact/category
+ * THIS commit inserted — its own visit/time-entry record then references our
+ * inserted id while its own id stays out of our commit. Blindly deleting every
+ * inserted id would orphan that sibling's live record (a visit pointing at a
+ * deleted contact, a time entry pointing at a deleted category). So before
+ * deleting we scan the stores for any visit/time entry that (a) references one
+ * of our inserted contacts/ categories and (b) is NOT itself part of this
+ * commit — those inserted records are KEPT, leaving the sibling's data intact.
  *
  * Accepted trade-off: if BOTH imports that share such a record are later
  * undone, the shared contact/category survives both undos (each kept it for the

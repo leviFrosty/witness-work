@@ -8,28 +8,15 @@ export default {
   autocomplete: `${BASE_URL}/autocomplete`,
   // Paywall social proof; edge-cached by the worker, persisted 7 days here.
   appStoreRatings: `${BASE_URL}/app-store/ratings`,
-  // Unauthenticated worker health probe ({ status, versionId, deployedAt }) —
-  // dev Tools screen only, for checking which worker build is live.
-  notesImportHealth: `${BASE_URL}/health`,
-  notesImport: `${BASE_URL}/notes-import`,
-  notesImportStatus: `${BASE_URL}/notes-import/status`,
-  // The account's allowance, the same on every device (Bearer, read-only).
-  notesImportUsage: `${BASE_URL}/notes-import/usage`,
-  notesImportChallenge: `${BASE_URL}/notes-import/challenge`,
-  // Attested no-op — dev Tools diagnostics verify an assertion server-side
-  // without spending credits or inference.
-  notesImportVerify: `${BASE_URL}/notes-import/verify`,
-  // Streaming import on the account session: kickoff → SSE progress stream →
-  // result snapshot.
-  notesImportKickoff: `${BASE_URL}/notes-import/kickoff`,
-  // Import from Paper: reads one page photo into text, on the account session.
-  notesImportTranscribe: `${BASE_URL}/notes-import/transcribe`,
-  notesImportEvents: (importId: string) =>
-    `${BASE_URL}/notes-import/${importId}/events`,
-  notesImportResult: (importId: string) =>
-    `${BASE_URL}/notes-import/${importId}/result`,
-  notesImportDestroy: (importId: string) =>
-    `${BASE_URL}/notes-import/${importId}/destroy`,
+  // Unauthenticated worker health probe ({ status, versionId, deployedAt }):
+  // the sync clock's server time, and dev Tools' check of which build is live.
+  apiHealth: `${BASE_URL}/health`,
+  // Scribe AI (docs/scribe-ai-protocol.md). Status is public; the rest go
+  // through the account session.
+  scribeStatus: `${BASE_URL}/scribe/v1/status`,
+  scribeUsage: `${BASE_URL}/scribe/v1/usage`,
+  scribeStep: `${BASE_URL}/scribe/v1/step`,
+  scribeTranscribe: `${BASE_URL}/scribe/v1/transcribe`,
   // Supporter-only shortest order for today's stops; coordinates only.
   routePlanningOptimize: `${BASE_URL}/route-planning/optimize`,
   // Base for the Buddies relay's `/buddies/v1/*` ops (docs/buddies-protocol.md).
@@ -37,8 +24,13 @@ export default {
   // Base for the server account's `/accounts/v1/*` ops (docs/accounts-protocol.md).
   accounts: BASE_URL,
   // Device attestation for the whole API (App Attest key setup, challenges).
+  // Status is the App Attest and Play Integrity capabilities, no auth.
+  attestationStatus: `${BASE_URL}/attestation/v1/status`,
   attestationChallenge: `${BASE_URL}/attestation/v1/challenge`,
   attestationRegister: `${BASE_URL}/attestation/v1/register`,
+  // Attested no-op the dev Tools diagnostics use: verifies an assertion
+  // server-side without spending anything.
+  attestationVerify: `${BASE_URL}/attestation/v1/verify`,
   // The app-wide minimum version (docs/accounts-protocol.md, "Updates").
   appConfig: `${BASE_URL}/app/v1/config`,
 }

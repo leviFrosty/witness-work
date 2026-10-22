@@ -4,6 +4,42 @@ import type { BuddyShareRef, PlanLocation } from '@/types/timeEntry'
 import type { RichText } from '@/types/richText'
 import type { SupporterGateAttribution } from '@/lib/supporterGateAnalytics'
 
+/**
+ * Scribe AI's route params, spelled out because shared types can't import a
+ * feature. They mirror `ScribeConversationParams` and `ScribeVoiceParams` in
+ * `@/features/scribe/types`; `src/app/navigation/scribeRouteParams.ts` fails to
+ * compile if they drift.
+ */
+type ScribeRouteEntry =
+  | 'home_orb'
+  | 'plus_sheet'
+  | 'menu_bar'
+  | 'settings'
+  | 'onboarding'
+  | 'history'
+  | 'conversation'
+  | 'say_a_change'
+
+export interface ScribeConversationRouteParams {
+  conversationId?: string
+  /** Sent once per distinct submitId. */
+  initialText?: string
+  inputSource?: 'voice' | 'keyboard' | 'photo' | 'paper'
+  submitId?: string
+  entry: ScribeRouteEntry
+  focusComposer?: boolean
+  /** Unsent text for the composer (Type instead, an interrupted recording). */
+  draftText?: string
+  /** Onboarding's Import from Paper: read on open. */
+  paperPages?: { uri: string; width: number; height: number }[]
+}
+
+export interface ScribeVoiceRouteParams {
+  entry: ScribeRouteEntry
+  /** Continue this conversation (Say a change). */
+  conversationId?: string
+}
+
 export type RootStackParamList = {
   Root: undefined
   /** The full-screen note editor; `sessionId` is from `startNoteEditorSession`. */
@@ -82,14 +118,11 @@ export type RootStackParamList = {
   'Thank You': { purchaseTier?: 'supporter' | 'tip' } | undefined
   'Import and Export': { source: 'backup_reminder' } | undefined
   MytimeImport: undefined
-  NotesImportComposer:
-    | {
-        hash?: string
-        fromOnboarding?: boolean
-        /** Import from Paper: page photos picked in onboarding, read on open. */
-        paperPages?: { uri: string; width: number; height: number }[]
-      }
-    | undefined
+  ScribeConversation: ScribeConversationRouteParams
+  ScribeVoice: ScribeVoiceRouteParams
+  ScribeHistory: undefined
+  ScribeUsage: undefined
+  ScribeOffline: undefined
   PreferencesPublisher: undefined
   PreferencesConversation: undefined
   PreferencesCalendar: undefined

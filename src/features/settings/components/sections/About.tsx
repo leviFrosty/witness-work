@@ -10,13 +10,13 @@ import { GroupedListRow, GroupedListSection } from '@/components/ui/GroupedList'
 import links from '@/constants/links'
 import { openURL } from '@/lib/links'
 import { SettingsSectionProps } from '@/features/settings/screens/settingScreen'
-import { useNotesImportEnabled } from '@/hooks/useNotesImportEnabled'
+import { useScribeEnabled } from '@/features/scribe'
 
 const AboutSection = ({
   handleNavigate,
   selectedDestination,
 }: SettingsSectionProps) => {
-  const notesImportEnabled = useNotesImportEnabled()
+  const scribeEnabled = useScribeEnabled()
 
   return (
     <GroupedListSection title={i18n.t('about')}>
@@ -47,10 +47,10 @@ const AboutSection = ({
         url={links.termsOfUse}
         accessory='external'
       />
-      {notesImportEnabled && (
+      {scribeEnabled && (
         <GroupedListRow
           icon={ShieldHalfIcon}
-          label={i18n.t('notesImport_privacyLink')}
+          label={i18n.t('scribe_privacyLink')}
           onPress={() => openURL(links.openRouterZdr)}
           url={links.openRouterZdr}
           accessory='external'

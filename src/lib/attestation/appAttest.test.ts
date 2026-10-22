@@ -1,34 +1,26 @@
-import { createHash } from 'node:crypto'
 import { describe, expect, it, vi } from 'vitest'
 import {
   createAppAttestAuthorizer,
   AttestationHttpError,
+  type AppAttestAuthorizer,
   type AppAttestNativeFailureCode,
   type AppAttestDependencies,
   type AttestationEndpoint,
+  type AttestationProof,
 } from '@/lib/attestation/appAttest'
 
 const CONTENT_HASH = 'a'.repeat(64)
-const REQUEST_CONTEXT = {
-  now: '2026-07-23T09:30:00-05:00',
-  timeZone: 'America/Chicago',
-  existingContacts: [],
-  existingCategories: [],
-}
-const REQUEST_PAYLOAD = {
-  notesText: 'private notes',
-  context: REQUEST_CONTEXT,
-}
-const CANONICAL_REQUEST =
-  '{"context":{"existingCategories":[],"existingContacts":[],"now":"2026-07-23T09:30:00-05:00","timeZone":"America/Chicago"},"notesText":"private notes","refinement":null}'
-const REQUEST_HASH =
-  'bb0144cb1d8cea15751940db290a90e67bef4695233992418b3a293df7c109cc'
+const REQUEST_HASH = 'f'.repeat(64)
 const RECOVERY_TOKEN_HASH = 'b'.repeat(43)
 const DIAGNOSTIC_HASH =
   'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
 
 type PostCall = {
-  endpoint: AttestationEndpoint
+  /**
+   * A transport post, or `submit`: the attested request's own route (the
+   * feature's `submit` callback), recorded alongside.
+   */
+  endpoint: AttestationEndpoint | 'submit'
   body: Record<string, unknown>
   headers?: Record<string, string>
   signal?: AbortSignal
@@ -49,7 +41,6 @@ interface HarnessOptions {
   attestKey?: (keyId: string, hash: string) => Promise<string>
   generateAssertion?: (keyId: string, hash: string) => Promise<string>
   classifyError?: (error: unknown) => AppAttestNativeFailureCode | null
-  sha256Hex?: (value: string) => Promise<string>
   now?: () => number
 }
 
@@ -78,7 +69,6 @@ const createHarness = (options: HarnessOptions = {}) => {
   const posts: PostCall[] = []
   const events: string[] = []
   const hashedClientData: string[] = []
-  const hashedRequestData: string[] = []
   const recoveryTokensHashed: string[] = []
   let operation = 0
   let challenge = 0
@@ -142,12 +132,6 @@ const createHarness = (options: HarnessOptions = {}) => {
         hashedClientData.push(value)
         return `base64(${value})`
       },
-      sha256Hex:
-        options.sha256Hex ??
-        (async (value) => {
-          hashedRequestData.push(value)
-          return createHash('sha256').update(value, 'utf8').digest('hex')
-        }),
       recoveryTokenHash: async (token) => {
         recoveryTokensHashed.push(token)
         return RECOVERY_TOKEN_HASH
@@ -180,8 +164,7 @@ const createHarness = (options: HarnessOptions = {}) => {
         }
         posts.push(call)
         events.push(`post:${endpoint}:start`)
-        const isChallenge =
-          endpoint === 'challenge' || endpoint === 'attestationChallenge'
+        const isChallenge = endpoint === 'challenge'
         let result = options.post
           ? await options.post(call, posts.length - 1)
           : isChallenge
@@ -228,6 +211,25 @@ const createHarness = (options: HarnessOptions = {}) => {
     now: options.now ?? (() => 1_000),
   }
 
+  /** The attested request's own route: records the proof's fields. */
+  const submit = async (
+    proof: AttestationProof,
+    signal?: AbortSignal
+  ): Promise<unknown> => {
+    const call: PostCall = {
+      endpoint: 'submit',
+      body: proof.kind === 'attestation' ? proof.fields : { devBypass: true },
+      signal,
+    }
+    posts.push(call)
+    events.push('post:submit:start')
+    const result = options.post
+      ? await options.post(call, posts.length - 1)
+      : { ok: true }
+    events.push('post:submit:end')
+    return result
+  }
+
   return {
     module: createAppAttestAuthorizer(dependencies),
     dependencies,
@@ -236,53 +238,53 @@ const createHarness = (options: HarnessOptions = {}) => {
     generateKey,
     getOrCreateRecoveryToken,
     hashedClientData,
-    hashedRequestData,
     identity,
     persisted,
     posts,
     recoveryTokensHashed,
     secure,
+    submit,
   }
 }
 
-const kickoffRequestHash = async (
-  payload: Record<string, unknown>
-): Promise<string> => {
-  const harness = createHarness({
-    activeKeyId: 'active-key',
-    recoveryToken: 'recovery-token',
+/**
+ * An attested request the way an account session makes one: challenged at
+ * `/attestation/v1/challenge`, submitted to the feature's own route.
+ */
+const attest = (
+  harness: ReturnType<typeof createHarness>,
+  options: {
+    module?: AppAttestAuthorizer
+    contentHash?: string
+    signal?: AbortSignal
+  } = {}
+) =>
+  (options.module ?? harness.module).assert({
+    purpose: 'account-session',
+    contentHash: options.contentHash ?? CONTENT_HASH,
+    requestHash: REQUEST_HASH,
+    submit: (proof, signal) => harness.submit(proof, signal),
+    signal: options.signal,
   })
-  await harness.module.post({
-    endpoint: 'kickoff',
-    payload,
-    contentHash: CONTENT_HASH,
-  })
-  const value = harness.posts.find((call) => call.endpoint === 'challenge')
-    ?.body.requestHash
-  if (typeof value !== 'string') throw new Error('missing requestHash')
-  return value
-}
 
-describe('Notes Import App Attest', () => {
+describe('App Attest key lifecycle', () => {
   it('adopts the TestFlight MMKV key into Keychain without generating a key', async () => {
     const harness = createHarness({
-      protocolVersion: 1,
       legacyKeyId: 'legacy-key',
+      recoveryToken: 'recovery-token',
     })
 
-    await harness.module.post({
-      endpoint: 'legacy',
-      payload: REQUEST_PAYLOAD,
-      contentHash: CONTENT_HASH,
-    })
+    await attest(harness)
 
     expect(harness.secure.activeKeyId).toBe('legacy-key')
     expect(harness.generateKey).not.toHaveBeenCalled()
-    expect(harness.posts.at(-1)?.body).toMatchObject({
-      uuid: 'install-uuid',
-      accountId: 'account-id',
-      keyId: 'legacy-key',
-      contentHash: CONTENT_HASH,
+    expect(harness.posts.at(-1)).toMatchObject({
+      endpoint: 'submit',
+      body: {
+        uuid: 'install-uuid',
+        keyId: 'legacy-key',
+        contentHash: CONTENT_HASH,
+      },
     })
   })
 
@@ -295,223 +297,26 @@ describe('Notes Import App Attest', () => {
         endpoint === 'challenge' ? { challenge: 'challenge' } : { ok: true },
     })
 
-    await harness.module.post({
-      endpoint: 'kickoff',
-      payload: REQUEST_PAYLOAD,
-      contentHash: CONTENT_HASH,
-    })
+    await attest(harness)
 
     expect(harness.secure.activeKeyId).toBe('legacy-key')
     expect(harness.generateKey).not.toHaveBeenCalled()
     expect(harness.getOrCreateRecoveryToken).toHaveBeenCalledTimes(1)
     expect(harness.hashedClientData[0]).toBe(
-      `witnesswork.app-attest|2|enroll|operation-2|challenge|install-uuid|legacy-key|${'b'.repeat(43)}`
+      `witnesswork.app-attest|2|enroll|operation-1|challenge|install-uuid|legacy-key|${'b'.repeat(43)}`
     )
     expect(
       harness.posts.find((call) => call.endpoint === 'registration')?.body
     ).toEqual({
       protocolVersion: 2,
       operation: 'enroll',
-      operationId: 'operation-2',
+      operationId: 'operation-1',
       uuid: 'install-uuid',
       keyId: 'legacy-key',
       challenge: 'challenge',
       assertion: 'assertion',
       recoveryToken: 'recovery-token',
     })
-  })
-
-  it('builds the exact v2 kickoff challenge, client data, and body', async () => {
-    const harness = createHarness({
-      activeKeyId: 'active-key',
-      recoveryToken: 'recovery-token',
-      post: ({ endpoint }) =>
-        endpoint === 'challenge'
-          ? { challenge: 'challenge-value' }
-          : { ok: true },
-    })
-
-    await harness.module.post({
-      endpoint: 'kickoff',
-      payload: REQUEST_PAYLOAD,
-      contentHash: CONTENT_HASH,
-    })
-
-    expect(harness.posts[0]).toMatchObject({
-      endpoint: 'challenge',
-      body: {
-        protocolVersion: 2,
-        operation: 'assert',
-        operationId: 'operation-1',
-        uuid: 'install-uuid',
-        keyId: 'active-key',
-        purpose: 'notes-import-kickoff',
-        accountId: 'account-id',
-        contentHash: CONTENT_HASH,
-        requestHash: REQUEST_HASH,
-      },
-    })
-    expect(harness.hashedRequestData).toEqual([CANONICAL_REQUEST])
-    expect(harness.hashedClientData).toEqual([
-      `witnesswork.app-attest|2|assert|notes-import-kickoff|operation-1|challenge-value|install-uuid|account-id|${CONTENT_HASH}|${REQUEST_HASH}`,
-    ])
-    expect(harness.posts[1]).toMatchObject({
-      endpoint: 'kickoff',
-      body: {
-        notesText: 'private notes',
-        protocolVersion: 2,
-        operation: 'assert',
-        purpose: 'notes-import-kickoff',
-        operationId: 'operation-1',
-        requestHash: REQUEST_HASH,
-        uuid: 'install-uuid',
-        accountId: 'account-id',
-        contentHash: CONTENT_HASH,
-        keyId: 'active-key',
-        challenge: 'challenge-value',
-        assertion: 'assertion',
-      },
-    })
-  })
-
-  it('signs a page transcription for its own purpose over the image hash', async () => {
-    const harness = createHarness({
-      activeKeyId: 'active-key',
-      recoveryToken: 'recovery-token',
-      post: ({ endpoint }) =>
-        endpoint === 'challenge'
-          ? { challenge: 'challenge-value' }
-          : { ok: true, text: '' },
-    })
-    const imageHash =
-      '6e7eb94d97c303b438c9c78f339ba53ab979dcbc288e2b1d4068e871588c5f40'
-    // Pinned in ww-api src/notesImport/transcribe.test.ts.
-    const requestHash =
-      '0cf27737695fe2c115efcdc525293fae76c46c6424c9a53c452b4b9b073db34d'
-
-    await harness.module.post({
-      endpoint: 'transcribe',
-      payload: { image: '/9j/4AAQ', mimeType: 'image/jpeg' },
-      contentHash: imageHash,
-    })
-
-    expect(harness.hashedRequestData).toEqual([
-      `{"imageHash":"${imageHash}","mimeType":"image/jpeg"}`,
-    ])
-    expect(harness.hashedClientData).toEqual([
-      `witnesswork.app-attest|2|assert|notes-import-transcribe|operation-1|challenge-value|install-uuid|account-id|${imageHash}|${requestHash}`,
-    ])
-    expect(harness.posts[1]).toMatchObject({
-      endpoint: 'transcribe',
-      body: {
-        image: '/9j/4AAQ',
-        mimeType: 'image/jpeg',
-        purpose: 'notes-import-transcribe',
-        contentHash: imageHash,
-        requestHash,
-      },
-    })
-  })
-
-  it('matches the shared backend canonical JSON and SHA-256 golden vector', async () => {
-    const harness = createHarness({
-      activeKeyId: 'active-key',
-      recoveryToken: 'recovery-token',
-    })
-    const payload = {
-      notesText: 'Met Ana\nReturn Tuesday',
-      context: {
-        existingContacts: [
-          { name: 'Zoe', id: 'contact-2' },
-          { id: 'contact-1', name: 'Ana' },
-        ],
-        categories: ['Return Visit', 'Bible Study'],
-        locale: 'en-US',
-      },
-    }
-
-    await harness.module.post({
-      endpoint: 'kickoff',
-      payload,
-      contentHash: CONTENT_HASH,
-    })
-
-    expect(harness.hashedRequestData).toEqual([
-      '{"context":{"categories":["Return Visit","Bible Study"],"existingContacts":[{"id":"contact-2","name":"Zoe"},{"id":"contact-1","name":"Ana"}],"locale":"en-US"},"notesText":"Met Ana\\nReturn Tuesday","refinement":null}',
-    ])
-    expect(harness.posts[0]?.body.requestHash).toBe(
-      '022bb5d93a09241655bf5a32a2b25308b15e3bc75ebfd4524685c9a90b603148'
-    )
-  })
-
-  it('changes requestHash when signed context changes', async () => {
-    const original = await kickoffRequestHash(REQUEST_PAYLOAD)
-    const mutated = await kickoffRequestHash({
-      ...REQUEST_PAYLOAD,
-      context: { ...REQUEST_CONTEXT, timeZone: 'America/New_York' },
-    })
-
-    expect(original).toBe(REQUEST_HASH)
-    expect(mutated).toMatch(/^[a-f0-9]{64}$/)
-    expect(mutated).not.toBe(original)
-  })
-
-  it('normalizes absent refinement to null and hashes refinement mutations', async () => {
-    const absent = await kickoffRequestHash(REQUEST_PAYLOAD)
-    const explicitNull = await kickoffRequestHash({
-      ...REQUEST_PAYLOAD,
-      refinement: null,
-    })
-    const first = await kickoffRequestHash({
-      ...REQUEST_PAYLOAD,
-      refinement: {
-        previousResultJSON: '{"summary":"first"}',
-        instruction: 'Move it to Friday',
-      },
-    })
-    const mutated = await kickoffRequestHash({
-      ...REQUEST_PAYLOAD,
-      refinement: {
-        previousResultJSON: '{"summary":"first"}',
-        instruction: 'Move it to Saturday',
-      },
-    })
-
-    expect(explicitNull).toBe(absent)
-    expect(first).not.toBe(absent)
-    expect(mutated).not.toBe(first)
-  })
-
-  it('contains kickoff authorization to v1 when capability reports only v1', async () => {
-    const harness = createHarness({
-      protocolVersion: 1,
-      activeKeyId: 'active-key',
-      recoveryToken: null,
-      post: ({ endpoint }) =>
-        endpoint === 'challenge'
-          ? { challenge: 'legacy-challenge' }
-          : { ok: true },
-    })
-
-    await harness.module.post({
-      endpoint: 'kickoff',
-      payload: REQUEST_PAYLOAD,
-      contentHash: CONTENT_HASH,
-    })
-
-    expect(harness.posts[0]?.body).toEqual({})
-    expect(harness.posts[1]?.body).toEqual({
-      ...REQUEST_PAYLOAD,
-      uuid: 'install-uuid',
-      accountId: 'account-id',
-      contentHash: CONTENT_HASH,
-      keyId: 'active-key',
-      challenge: 'legacy-challenge',
-      assertion: 'assertion',
-    })
-    expect(harness.generateKey).not.toHaveBeenCalled()
-    expect(harness.getOrCreateRecoveryToken).not.toHaveBeenCalled()
-    expect(harness.hashedRequestData).toEqual([])
   })
 
   it('contains a first-use bind to the v1 server owner pin', async () => {
@@ -526,12 +331,10 @@ describe('Notes Import App Attest', () => {
           : { ok: true },
     })
 
-    await harness.module.post({
-      endpoint: 'kickoff',
-      payload: REQUEST_PAYLOAD,
-      contentHash: CONTENT_HASH,
-    })
+    // Only repair still runs the lifecycle under v1; assertions need v2.
+    const report = await harness.module.runRepair()
 
+    expect(report).toMatchObject({ ok: true, protocolVersion: 1 })
     expect(harness.generateKey).toHaveBeenCalledTimes(1)
     expect(harness.getOrCreateRecoveryToken).not.toHaveBeenCalled()
     expect(
@@ -553,43 +356,19 @@ describe('Notes Import App Attest', () => {
       recoveryToken: 'enrolled-recovery-token',
     })
 
-    await expect(
-      harness.module.post({
-        endpoint: 'kickoff',
-        payload: REQUEST_PAYLOAD,
-        contentHash: CONTENT_HASH,
-      })
-    ).rejects.toMatchObject({ code: 'protocolUnavailable' })
+    const report = await harness.module.runRepair()
 
+    expect(report.ok).toBe(false)
+    expect(report.steps.at(-1)).toMatchObject({
+      step: 'ensure-ready',
+      ok: false,
+      code: 'protocolUnavailable',
+    })
     expect(harness.generateKey).not.toHaveBeenCalled()
     expect(harness.persisted.journal).toBeNull()
   })
 
-  it('keeps the legacy synchronous endpoint on v1 under a v2 worker', async () => {
-    const harness = createHarness({
-      protocolVersion: 2,
-      activeKeyId: 'active-key',
-      recoveryToken: 'recovery-token',
-      post: ({ endpoint }) =>
-        endpoint === 'challenge'
-          ? { challenge: 'legacy-challenge' }
-          : { ok: true },
-    })
-
-    await harness.module.post({
-      endpoint: 'legacy',
-      payload: REQUEST_PAYLOAD,
-      contentHash: CONTENT_HASH,
-    })
-
-    expect(harness.posts[0]?.body).toEqual({})
-    expect(harness.posts[1]?.body.protocolVersion).toBeUndefined()
-    expect(harness.hashedClientData).toEqual([
-      `legacy-challenge|install-uuid|account-id|${CONTENT_HASH}`,
-    ])
-  })
-
-  it('holds concurrent protected posts in FIFO order through each response', async () => {
+  it('holds concurrent attested requests in FIFO order through each response', async () => {
     let releaseFirstResponse: (() => void) | undefined
     const firstResponse = new Promise<void>((resolve) => {
       releaseFirstResponse = resolve
@@ -600,27 +379,21 @@ describe('Notes Import App Attest', () => {
       recoveryToken: 'recovery-token',
       post: async ({ endpoint }) => {
         if (endpoint === 'challenge') return { challenge: 'challenge' }
-        if (endpoint === 'kickoff' && protectedPosts++ === 0) {
+        if (endpoint === 'submit' && protectedPosts++ === 0) {
           await firstResponse
         }
         return { ok: true }
       },
     })
+    const firstHash = '1'.repeat(64)
+    const secondHash = '2'.repeat(64)
 
-    const first = harness.module.post({
-      endpoint: 'kickoff',
-      payload: { ...REQUEST_PAYLOAD, request: 'first' },
-      contentHash: CONTENT_HASH,
-    })
-    const second = harness.module.post({
-      endpoint: 'kickoff',
-      payload: { ...REQUEST_PAYLOAD, request: 'second' },
-      contentHash: CONTENT_HASH,
-    })
+    const first = attest(harness, { contentHash: firstHash })
+    const second = attest(harness, { contentHash: secondHash })
 
     await vi.waitFor(() => {
       expect(
-        harness.posts.filter((call) => call.endpoint === 'kickoff')
+        harness.posts.filter((call) => call.endpoint === 'submit')
       ).toHaveLength(1)
     })
     expect(
@@ -632,15 +405,15 @@ describe('Notes Import App Attest', () => {
 
     expect(harness.posts.map((call) => call.endpoint)).toEqual([
       'challenge',
-      'kickoff',
+      'submit',
       'challenge',
-      'kickoff',
+      'submit',
     ])
     expect(
       harness.posts
-        .filter((call) => call.endpoint === 'kickoff')
-        .map((call) => call.body.request)
-    ).toEqual(['first', 'second'])
+        .filter((call) => call.endpoint === 'submit')
+        .map((call) => call.body.contentHash)
+    ).toEqual([firstHash, secondHash])
   })
 
   it('skips aborted protected work while it is queued', async () => {
@@ -648,13 +421,13 @@ describe('Notes Import App Attest', () => {
     const firstResponse = new Promise<void>((resolve) => {
       releaseFirstResponse = resolve
     })
-    let kickoffCalls = 0
+    let submits = 0
     const harness = createHarness({
       activeKeyId: 'active-key',
       recoveryToken: 'recovery-token',
       post: async ({ endpoint }) => {
         if (endpoint === 'challenge') return { challenge: 'challenge' }
-        if (endpoint === 'kickoff' && kickoffCalls++ === 0) {
+        if (endpoint === 'submit' && submits++ === 0) {
           await firstResponse
         }
         return { ok: true }
@@ -662,22 +435,13 @@ describe('Notes Import App Attest', () => {
     })
     const controller = new AbortController()
 
-    const first = harness.module.post({
-      endpoint: 'kickoff',
-      payload: { ...REQUEST_PAYLOAD, request: 'first' },
-      contentHash: CONTENT_HASH,
-    })
+    const first = attest(harness)
     await vi.waitFor(() => {
       expect(
-        harness.posts.filter((call) => call.endpoint === 'kickoff')
+        harness.posts.filter((call) => call.endpoint === 'submit')
       ).toHaveLength(1)
     })
-    const second = harness.module.post({
-      endpoint: 'kickoff',
-      payload: { ...REQUEST_PAYLOAD, request: 'second' },
-      contentHash: CONTENT_HASH,
-      signal: controller.signal,
-    })
+    const second = attest(harness, { signal: controller.signal })
     const cancelled = expect(second).rejects.toMatchObject({
       code: 'cancelled',
     })
@@ -689,7 +453,7 @@ describe('Notes Import App Attest', () => {
       harness.posts.filter((call) => call.endpoint === 'challenge')
     ).toHaveLength(1)
     expect(
-      harness.posts.filter((call) => call.endpoint === 'kickoff')
+      harness.posts.filter((call) => call.endpoint === 'submit')
     ).toHaveLength(1)
     expect(harness.generateAssertion).toHaveBeenCalledTimes(1)
   })
@@ -702,12 +466,7 @@ describe('Notes Import App Attest', () => {
     const harness = createHarness({ getStatus: () => status })
     const controller = new AbortController()
 
-    const pending = harness.module.post({
-      endpoint: 'kickoff',
-      payload: REQUEST_PAYLOAD,
-      contentHash: CONTENT_HASH,
-      signal: controller.signal,
-    })
+    const pending = attest(harness, { signal: controller.signal })
     controller.abort()
 
     await expect(pending).rejects.toMatchObject({ code: 'cancelled' })
@@ -730,13 +489,7 @@ describe('Notes Import App Attest', () => {
       },
     })
 
-    await expect(
-      harness.module.post({
-        endpoint: 'kickoff',
-        payload: REQUEST_PAYLOAD,
-        contentHash: CONTENT_HASH,
-      })
-    ).rejects.toMatchObject({ code: 'cancelled' })
+    await expect(attest(harness)).rejects.toMatchObject({ code: 'cancelled' })
 
     expect(
       harness.posts.filter((call) => call.endpoint === 'registration')
@@ -745,29 +498,25 @@ describe('Notes Import App Attest', () => {
   })
 
   it('runs read-only diagnostics through the same per-key FIFO lane', async () => {
-    let releaseKickoff: (() => void) | undefined
-    const heldKickoff = new Promise<void>((resolve) => {
-      releaseKickoff = resolve
+    let releaseSubmit: (() => void) | undefined
+    const heldSubmit = new Promise<void>((resolve) => {
+      releaseSubmit = resolve
     })
-    let kickoffCalls = 0
+    let submits = 0
     const harness = createHarness({
       activeKeyId: 'active-key',
       recoveryToken: 'recovery-token',
       post: async ({ endpoint }) => {
         if (endpoint === 'challenge') return { challenge: 'challenge' }
-        if (endpoint === 'kickoff' && kickoffCalls++ === 0) await heldKickoff
+        if (endpoint === 'submit' && submits++ === 0) await heldSubmit
         return { ok: true }
       },
     })
 
-    const kickoff = harness.module.post({
-      endpoint: 'kickoff',
-      payload: REQUEST_PAYLOAD,
-      contentHash: CONTENT_HASH,
-    })
+    const attested = attest(harness)
     await vi.waitFor(() => {
       expect(
-        harness.posts.filter((call) => call.endpoint === 'kickoff')
+        harness.posts.filter((call) => call.endpoint === 'submit')
       ).toHaveLength(1)
     })
     const diagnostics = harness.module.runDiagnostics()
@@ -776,14 +525,14 @@ describe('Notes Import App Attest', () => {
       harness.posts.filter((call) => call.endpoint === 'challenge')
     ).toHaveLength(1)
 
-    releaseKickoff?.()
-    await kickoff
+    releaseSubmit?.()
+    await attested
     const report = await diagnostics
 
     expect(report.ok).toBe(true)
     expect(harness.posts.map((call) => call.endpoint)).toEqual([
       'challenge',
-      'kickoff',
+      'submit',
       'challenge',
       'verify',
     ])
@@ -807,12 +556,7 @@ describe('Notes Import App Attest', () => {
     })
 
     await expect(
-      harness.module.post({
-        endpoint: 'kickoff',
-        payload: REQUEST_PAYLOAD,
-        contentHash: CONTENT_HASH,
-        signal: controller.signal,
-      })
+      attest(harness, { signal: controller.signal })
     ).rejects.toMatchObject({ code: 'cancelled' })
     expect(JSON.parse(harness.persisted.journal!)).toMatchObject({
       kind: 'candidate',
@@ -820,11 +564,7 @@ describe('Notes Import App Attest', () => {
     })
 
     const restarted = createAppAttestAuthorizer(harness.dependencies)
-    await restarted.post({
-      endpoint: 'kickoff',
-      payload: REQUEST_PAYLOAD,
-      contentHash: CONTENT_HASH,
-    })
+    await attest(harness, { module: restarted })
 
     expect(harness.generateKey).toHaveBeenCalledTimes(1)
     expect(harness.secure.activeKeyId).toBe('generated-before-cancellation')
@@ -845,21 +585,11 @@ describe('Notes Import App Attest', () => {
       },
     })
 
-    await expect(
-      harness.module.post({
-        endpoint: 'kickoff',
-        payload: REQUEST_PAYLOAD,
-        contentHash: CONTENT_HASH,
-      })
-    ).rejects.toMatchObject({ code: 'network' })
+    await expect(attest(harness)).rejects.toMatchObject({ code: 'network' })
     expect(harness.persisted.journal).not.toBeNull()
 
     const restartedModule = createAppAttestAuthorizer(harness.dependencies)
-    await restartedModule.post({
-      endpoint: 'kickoff',
-      payload: REQUEST_PAYLOAD,
-      contentHash: CONTENT_HASH,
-    })
+    await attest(harness, { module: restartedModule })
 
     const registrations = harness.posts.filter(
       (call) => call.endpoint === 'registration'
@@ -892,11 +622,7 @@ describe('Notes Import App Attest', () => {
       },
     })
 
-    await harness.module.post({
-      endpoint: 'kickoff',
-      payload: REQUEST_PAYLOAD,
-      contentHash: CONTENT_HASH,
-    })
+    await attest(harness)
 
     const registrations = harness.posts.filter(
       (call) => call.endpoint === 'registration'
@@ -926,13 +652,7 @@ describe('Notes Import App Attest', () => {
       },
     })
 
-    await expect(
-      harness.module.post({
-        endpoint: 'kickoff',
-        payload: REQUEST_PAYLOAD,
-        contentHash: CONTENT_HASH,
-      })
-    ).rejects.toMatchObject({
+    await expect(attest(harness)).rejects.toMatchObject({
       code: 'serverUnavailable',
       reason: 'too_many_challenges',
       action: 'retry',
@@ -940,11 +660,7 @@ describe('Notes Import App Attest', () => {
     const pending = harness.persisted.journal
     expect(pending).not.toBeNull()
 
-    await harness.module.post({
-      endpoint: 'kickoff',
-      payload: REQUEST_PAYLOAD,
-      contentHash: CONTENT_HASH,
-    })
+    await attest(harness)
 
     const bindChallenges = harness.posts.filter(
       (call) => call.endpoint === 'challenge' && call.body.operation === 'bind'
@@ -976,23 +692,13 @@ describe('Notes Import App Attest', () => {
       },
     })
 
-    await expect(
-      harness.module.post({
-        endpoint: 'kickoff',
-        payload: REQUEST_PAYLOAD,
-        contentHash: CONTENT_HASH,
-      })
-    ).rejects.toMatchObject({
+    await expect(attest(harness)).rejects.toMatchObject({
       reason: 'too_many_challenges',
       action: 'retry',
     })
     expect(harness.persisted.journal).not.toBeNull()
 
-    await harness.module.post({
-      endpoint: 'kickoff',
-      payload: REQUEST_PAYLOAD,
-      contentHash: CONTENT_HASH,
-    })
+    await attest(harness)
 
     const registrations = harness.posts.filter(
       (call) => call.endpoint === 'registration'
@@ -1021,11 +727,7 @@ describe('Notes Import App Attest', () => {
       },
     })
 
-    await harness.module.post({
-      endpoint: 'kickoff',
-      payload: REQUEST_PAYLOAD,
-      contentHash: CONTENT_HASH,
-    })
+    await attest(harness)
 
     const bodies = harness.posts
       .filter((call) => call.endpoint === 'registration')
@@ -1056,13 +758,7 @@ describe('Notes Import App Attest', () => {
       },
     })
 
-    await expect(
-      harness.module.post({
-        endpoint: 'kickoff',
-        payload: REQUEST_PAYLOAD,
-        contentHash: CONTENT_HASH,
-      })
-    ).rejects.toMatchObject({
+    await expect(attest(harness)).rejects.toMatchObject({
       reason: 'operation_conflict',
       action: 'start_new_operation',
     })
@@ -1073,13 +769,7 @@ describe('Notes Import App Attest', () => {
     ).toHaveLength(2)
     expect(harness.persisted.journal).not.toBeNull()
 
-    await expect(
-      harness.module.post({
-        endpoint: 'kickoff',
-        payload: REQUEST_PAYLOAD,
-        contentHash: CONTENT_HASH,
-      })
-    ).rejects.toMatchObject({
+    await expect(attest(harness)).rejects.toMatchObject({
       reason: 'operation_conflict',
       action: 'start_new_operation',
     })
@@ -1114,11 +804,7 @@ describe('Notes Import App Attest', () => {
       },
     })
 
-    await harness.module.post({
-      endpoint: 'kickoff',
-      payload: REQUEST_PAYLOAD,
-      contentHash: CONTENT_HASH,
-    })
+    await attest(harness)
 
     const bodies = harness.posts
       .filter((call) => call.endpoint === 'registration')
@@ -1142,24 +828,20 @@ describe('Notes Import App Attest', () => {
           : { ok: true },
     })
 
-    await harness.module.post({
-      endpoint: 'kickoff',
-      payload: REQUEST_PAYLOAD,
-      contentHash: CONTENT_HASH,
-    })
+    await attest(harness)
 
     expect(harness.recoveryTokensHashed).toContain('recovery-token')
     expect(harness.hashedClientData[0]).toBe(
-      `witnesswork.app-attest|2|bind|operation-2|challenge-value|install-uuid|${'b'.repeat(43)}`
+      `witnesswork.app-attest|2|bind|operation-1|challenge-value|install-uuid|${'b'.repeat(43)}`
     )
     expect(
       harness.posts.find((call) => call.endpoint === 'registration')?.body
     ).toEqual({
       protocolVersion: 2,
       operation: 'bind',
-      operationId: 'operation-2',
+      operationId: 'operation-1',
       uuid: 'install-uuid',
-      keyId: 'generated-key-2',
+      keyId: 'generated-key-1',
       challenge: 'challenge-value',
       attestation: 'attestation',
       recoveryToken: 'recovery-token',
@@ -1175,13 +857,9 @@ describe('Notes Import App Attest', () => {
           : { ok: true, status: 'bound', recoveryEnrolled: false },
     })
 
-    await expect(
-      harness.module.post({
-        endpoint: 'kickoff',
-        payload: REQUEST_PAYLOAD,
-        contentHash: CONTENT_HASH,
-      })
-    ).rejects.toMatchObject({ code: 'authorizationFailed' })
+    await expect(attest(harness)).rejects.toMatchObject({
+      code: 'authorizationFailed',
+    })
 
     expect(harness.secure.activeKeyId).toBeNull()
     expect(harness.secure.recoveryEnrollmentKeyId).toBeNull()
@@ -1203,13 +881,9 @@ describe('Notes Import App Attest', () => {
             },
     })
 
-    await expect(
-      harness.module.post({
-        endpoint: 'kickoff',
-        payload: REQUEST_PAYLOAD,
-        contentHash: CONTENT_HASH,
-      })
-    ).rejects.toMatchObject({ code: 'authorizationFailed' })
+    await expect(attest(harness)).rejects.toMatchObject({
+      code: 'authorizationFailed',
+    })
 
     expect(harness.secure.recoveryEnrollmentKeyId).toBeNull()
     expect(harness.persisted.journal).not.toBeNull()
@@ -1232,11 +906,7 @@ describe('Notes Import App Attest', () => {
           : { ok: true },
     })
 
-    await harness.module.post({
-      endpoint: 'kickoff',
-      payload: REQUEST_PAYLOAD,
-      contentHash: CONTENT_HASH,
-    })
+    await attest(harness)
 
     expect(harness.dependencies.appAttest.attestKey).toHaveBeenCalledTimes(2)
     expect(
@@ -1265,11 +935,7 @@ describe('Notes Import App Attest', () => {
       updatedAt: 1_000,
     })
 
-    await harness.module.post({
-      endpoint: 'kickoff',
-      payload: REQUEST_PAYLOAD,
-      contentHash: CONTENT_HASH,
-    })
+    await attest(harness)
 
     expect(harness.generateKey).toHaveBeenCalledTimes(1)
     expect(harness.secure.activeKeyId).toMatch(/^generated-key-/)
@@ -1297,12 +963,7 @@ describe('Notes Import App Attest', () => {
       updatedAt: 1_000,
     })
 
-    const post = () =>
-      harness.module.post({
-        endpoint: 'kickoff' as const,
-        payload: REQUEST_PAYLOAD,
-        contentHash: CONTENT_HASH,
-      })
+    const post = () => attest(harness)
     await expect(post()).rejects.toMatchObject({ code: 'invalidState' })
     await expect(post()).rejects.toMatchObject({ code: 'invalidState' })
 
@@ -1324,13 +985,9 @@ describe('Notes Import App Attest', () => {
         endpoint === 'challenge' ? { challenge: 'challenge' } : { ok: true },
     })
 
-    await expect(
-      harness.module.post({
-        endpoint: 'kickoff',
-        payload: REQUEST_PAYLOAD,
-        contentHash: CONTENT_HASH,
-      })
-    ).rejects.toMatchObject({ code: 'nativeUnknown' })
+    await expect(attest(harness)).rejects.toMatchObject({
+      code: 'nativeUnknown',
+    })
     expect(JSON.parse(harness.persisted.journal!)).toMatchObject({
       kind: 'candidate',
       attestationInFlight: true,
@@ -1338,11 +995,7 @@ describe('Notes Import App Attest', () => {
     })
 
     const restarted = createAppAttestAuthorizer(harness.dependencies)
-    await restarted.post({
-      endpoint: 'kickoff',
-      payload: REQUEST_PAYLOAD,
-      contentHash: CONTENT_HASH,
-    })
+    await attest(harness, { module: restarted })
 
     expect(harness.generateKey).toHaveBeenCalledTimes(2)
     expect(harness.dependencies.appAttest.attestKey).toHaveBeenCalledTimes(2)
@@ -1364,13 +1017,9 @@ describe('Notes Import App Attest', () => {
         endpoint === 'challenge' ? { challenge: 'challenge' } : { ok: true },
     })
 
-    await expect(
-      harness.module.post({
-        endpoint: 'kickoff',
-        payload: REQUEST_PAYLOAD,
-        contentHash: CONTENT_HASH,
-      })
-    ).rejects.toMatchObject({ code: 'serverUnavailable' })
+    await expect(attest(harness)).rejects.toMatchObject({
+      code: 'serverUnavailable',
+    })
     const pending = JSON.parse(harness.persisted.journal!)
     expect(pending).toMatchObject({
       kind: 'candidate',
@@ -1379,11 +1028,7 @@ describe('Notes Import App Attest', () => {
     })
 
     const restarted = createAppAttestAuthorizer(harness.dependencies)
-    await restarted.post({
-      endpoint: 'kickoff',
-      payload: REQUEST_PAYLOAD,
-      contentHash: CONTENT_HASH,
-    })
+    await attest(harness, { module: restarted })
 
     expect(harness.generateKey).toHaveBeenCalledTimes(1)
     expect(harness.dependencies.appAttest.attestKey).toHaveBeenCalledTimes(3)
@@ -1396,18 +1041,18 @@ describe('Notes Import App Attest', () => {
       legacyKeyId: 'legacy-key',
     })
 
-    await harness.module.post({
-      endpoint: 'kickoff',
-      payload: REQUEST_PAYLOAD,
-      contentHash: CONTENT_HASH,
+    await expect(attest(harness)).rejects.toMatchObject({
+      code: 'protocolUnavailable',
     })
+    const report = await harness.module.runRepair()
 
+    expect(report).toMatchObject({ ok: true, protocolVersion: 1 })
     const challenge = harness.posts.find(
       (call) => call.endpoint === 'challenge'
     )
-    const kickoff = harness.posts.find((call) => call.endpoint === 'kickoff')
+    const verify = harness.posts.find((call) => call.endpoint === 'verify')
     expect(challenge?.body).toEqual({})
-    expect(kickoff?.body.protocolVersion).toBeUndefined()
+    expect(verify?.body.protocolVersion).toBeUndefined()
     expect(harness.getOrCreateRecoveryToken).not.toHaveBeenCalled()
     expect(harness.generateKey).not.toHaveBeenCalled()
   })
@@ -1421,11 +1066,7 @@ describe('Notes Import App Attest', () => {
         endpoint === 'challenge' ? { challenge: 'challenge' } : { ok: true },
     })
 
-    await harness.module.post({
-      endpoint: 'kickoff',
-      payload: REQUEST_PAYLOAD,
-      contentHash: CONTENT_HASH,
-    })
+    await attest(harness)
 
     expect(harness.getOrCreateRecoveryToken).toHaveBeenCalledTimes(1)
     expect(
@@ -1481,11 +1122,7 @@ describe('Notes Import App Attest', () => {
         updatedAt,
       })
 
-      await harness.module.post({
-        endpoint: 'kickoff',
-        payload: REQUEST_PAYLOAD,
-        contentHash: CONTENT_HASH,
-      })
+      await attest(harness)
 
       expect(harness.persisted.journal).toBeNull()
       expect(
@@ -1515,7 +1152,7 @@ describe('Notes Import App Attest', () => {
           }
           return { challenge: 'challenge' }
         }
-        if (endpoint === 'kickoff') {
+        if (endpoint === 'submit') {
           throw new AttestationHttpError({
             kind: 'http',
             status: 409,
@@ -1528,13 +1165,7 @@ describe('Notes Import App Attest', () => {
       },
     })
 
-    await expect(
-      harness.module.post({
-        endpoint: 'kickoff',
-        payload: REQUEST_PAYLOAD,
-        contentHash: CONTENT_HASH,
-      })
-    ).rejects.toMatchObject({
+    await expect(attest(harness)).rejects.toMatchObject({
       code: errorCode,
       reason,
       action: 'start_new_operation',
@@ -1544,7 +1175,7 @@ describe('Notes Import App Attest', () => {
       harness.posts.filter((call) => call.endpoint === 'challenge')
     ).toHaveLength(2)
     expect(
-      harness.posts.filter((call) => call.endpoint === 'kickoff')
+      harness.posts.filter((call) => call.endpoint === 'submit')
     ).toHaveLength(reason === 'counter_not_increasing' ? 2 : 0)
     expect(harness.secure.activeKeyId).toBe('active-key')
     expect(harness.generateKey).not.toHaveBeenCalled()
@@ -1568,11 +1199,7 @@ describe('Notes Import App Attest', () => {
         endpoint === 'challenge' ? { challenge: 'challenge' } : { ok: true },
     })
 
-    await harness.module.post({
-      endpoint: 'kickoff',
-      payload: REQUEST_PAYLOAD,
-      contentHash: CONTENT_HASH,
-    })
+    await attest(harness)
 
     expect(harness.generateKey).toHaveBeenCalledTimes(1)
     const registration = harness.posts.find(
@@ -1586,7 +1213,7 @@ describe('Notes Import App Attest', () => {
     })
     expect(harness.secure.activeKeyId).toMatch(/^generated-key-/)
     expect(
-      harness.posts.filter((call) => call.endpoint === 'kickoff')
+      harness.posts.filter((call) => call.endpoint === 'submit')
     ).toHaveLength(1)
   })
 
@@ -1608,16 +1235,12 @@ describe('Notes Import App Attest', () => {
         endpoint === 'challenge' ? { challenge: 'challenge' } : { ok: true },
     })
 
-    await harness.module.post({
-      endpoint: 'kickoff',
-      payload: REQUEST_PAYLOAD,
-      contentHash: CONTENT_HASH,
-    })
+    await attest(harness)
 
     expect(harness.generateKey).toHaveBeenCalledTimes(1)
     expect(harness.secure.activeKeyId).toMatch(/^generated-key-/)
     expect(
-      harness.posts.filter((call) => call.endpoint === 'kickoff')
+      harness.posts.filter((call) => call.endpoint === 'submit')
     ).toHaveLength(1)
   })
 
@@ -1637,26 +1260,22 @@ describe('Notes Import App Attest', () => {
         endpoint === 'challenge' ? { challenge: 'challenge' } : { ok: true },
     })
 
-    await expect(
-      harness.module.post({
-        endpoint: 'kickoff',
-        payload: REQUEST_PAYLOAD,
-        contentHash: CONTENT_HASH,
-      })
-    ).rejects.toMatchObject({ code: 'invalidArgument' })
+    await expect(attest(harness)).rejects.toMatchObject({
+      code: 'invalidArgument',
+    })
 
     expect(harness.generateKey).not.toHaveBeenCalled()
     expect(harness.secure.activeKeyId).toBe('healthy-key')
   })
 
   it('performs one controlled recovery for typed server key_not_active', async () => {
-    let kickoffAttempts = 0
+    let submitAttempts = 0
     const harness = createHarness({
       activeKeyId: 'inactive-key',
       recoveryToken: 'enrolled-recovery-token',
       post: ({ endpoint }) => {
         if (endpoint === 'challenge') return { challenge: 'challenge' }
-        if (endpoint === 'kickoff' && kickoffAttempts++ === 0) {
+        if (endpoint === 'submit' && submitAttempts++ === 0) {
           throw new AttestationHttpError({
             kind: 'http',
             status: 401,
@@ -1669,15 +1288,11 @@ describe('Notes Import App Attest', () => {
       },
     })
 
-    await harness.module.post({
-      endpoint: 'kickoff',
-      payload: REQUEST_PAYLOAD,
-      contentHash: CONTENT_HASH,
-    })
+    await attest(harness)
 
     expect(harness.generateKey).toHaveBeenCalledTimes(1)
     const protectedOperationIds = harness.posts
-      .filter((call) => call.endpoint === 'kickoff')
+      .filter((call) => call.endpoint === 'submit')
       .map((call) => call.body.operationId)
     expect(protectedOperationIds).toEqual(['operation-1', 'operation-3'])
     expect(harness.secure.activeKeyId).toMatch(/^generated-key-/)
@@ -1692,11 +1307,7 @@ describe('Notes Import App Attest', () => {
         endpoint === 'challenge' ? { challenge: 'challenge' } : { ok: true },
     })
 
-    await harness.module.post({
-      endpoint: 'kickoff',
-      payload: REQUEST_PAYLOAD,
-      contentHash: CONTENT_HASH,
-    })
+    await attest(harness)
 
     expect(harness.generateKey).toHaveBeenCalledTimes(1)
     expect(
@@ -1727,12 +1338,7 @@ describe('Notes Import App Attest', () => {
       },
     })
 
-    const post = () =>
-      harness.module.post({
-        endpoint: 'kickoff' as const,
-        payload: REQUEST_PAYLOAD,
-        contentHash: CONTENT_HASH,
-      })
+    const post = () => attest(harness)
     await expect(post()).rejects.toMatchObject({
       code: 'recoveryUnavailable',
     })
@@ -1761,13 +1367,7 @@ describe('Notes Import App Attest', () => {
       classifyError: (error) => (error === invalidKey ? 'invalidKey' : null),
     })
 
-    await expect(
-      harness.module.post({
-        endpoint: 'kickoff',
-        payload: REQUEST_PAYLOAD,
-        contentHash: CONTENT_HASH,
-      })
-    ).rejects.toMatchObject({
+    await expect(attest(harness)).rejects.toMatchObject({
       code: 'recoveryUnavailable',
     })
 
@@ -1775,10 +1375,10 @@ describe('Notes Import App Attest', () => {
     expect(harness.getOrCreateRecoveryToken).toHaveBeenCalledTimes(1)
   })
 
-  it('does not rotate for a generic legacy HTTP 401', async () => {
+  it('does not rotate for a generic HTTP 401', async () => {
     const harness = createHarness({
-      protocolVersion: 1,
-      activeKeyId: 'legacy-active-key',
+      activeKeyId: 'active-key',
+      recoveryToken: 'recovery-token',
       post: ({ endpoint }) => {
         if (endpoint === 'challenge') return { challenge: 'challenge' }
         throw new AttestationHttpError({
@@ -1789,21 +1389,102 @@ describe('Notes Import App Attest', () => {
       },
     })
 
-    await expect(
-      harness.module.post({
-        endpoint: 'legacy',
-        payload: REQUEST_PAYLOAD,
-        contentHash: CONTENT_HASH,
-      })
-    ).rejects.toMatchObject({
+    await expect(attest(harness)).rejects.toMatchObject({
       code: 'authorizationFailed',
     })
 
     expect(harness.generateKey).not.toHaveBeenCalled()
-    expect(harness.secure.activeKeyId).toBe('legacy-active-key')
+    expect(harness.secure.activeKeyId).toBe('active-key')
     expect(
       harness.posts.filter((call) => call.endpoint === 'registration')
     ).toHaveLength(0)
+  })
+})
+
+describe('App Attest diagnostics and repair', () => {
+  it('sends the exact v2 verify probe through /attestation/v1', async () => {
+    const harness = createHarness({
+      activeKeyId: 'active-key',
+      recoveryToken: 'recovery-token',
+      post: ({ endpoint }) =>
+        endpoint === 'challenge'
+          ? { challenge: 'challenge-value' }
+          : { ok: true },
+    })
+
+    const report = await harness.module.runDiagnostics()
+
+    expect(report).toMatchObject({ ok: true, protocolVersion: 2 })
+    expect(report.steps.map((entry) => entry.step)).toEqual([
+      'capability',
+      'challenge',
+      'client-data-hash',
+      'assertion',
+      'verify',
+    ])
+    expect(harness.posts.map((call) => call.endpoint)).toEqual([
+      'challenge',
+      'verify',
+    ])
+    expect(harness.posts[0]?.body).toEqual({
+      protocolVersion: 2,
+      operation: 'assert',
+      operationId: 'operation-1',
+      uuid: 'install-uuid',
+      keyId: 'active-key',
+      purpose: 'attestation-verify',
+      contentHash: DIAGNOSTIC_HASH,
+      requestHash: DIAGNOSTIC_HASH,
+    })
+    expect(harness.hashedClientData).toEqual([
+      `witnesswork.app-attest|2|assert|attestation-verify|operation-1|challenge-value|install-uuid||${DIAGNOSTIC_HASH}|${DIAGNOSTIC_HASH}`,
+    ])
+    expect(harness.posts[1]?.body).toEqual({
+      protocolVersion: 2,
+      operation: 'assert',
+      purpose: 'attestation-verify',
+      operationId: 'operation-1',
+      requestHash: DIAGNOSTIC_HASH,
+      uuid: 'install-uuid',
+      contentHash: DIAGNOSTIC_HASH,
+      keyId: 'active-key',
+      challenge: 'challenge-value',
+      assertion: 'assertion',
+    })
+  })
+
+  it('sends the v1 verify probe with three-field client data', async () => {
+    const harness = createHarness({
+      protocolVersion: 1,
+      activeKeyId: 'active-key',
+      recoveryToken: null,
+      post: ({ endpoint }) =>
+        endpoint === 'challenge'
+          ? { challenge: 'legacy-challenge' }
+          : { ok: true },
+    })
+
+    const report = await harness.module.runDiagnostics()
+
+    expect(report).toMatchObject({ ok: true, protocolVersion: 1 })
+    expect(harness.posts.map((call) => [call.endpoint, call.body])).toEqual([
+      ['challenge', {}],
+      [
+        'verify',
+        {
+          uuid: 'install-uuid',
+          contentHash: DIAGNOSTIC_HASH,
+          keyId: 'active-key',
+          challenge: 'legacy-challenge',
+          assertion: 'assertion',
+        },
+      ],
+    ])
+    expect(harness.hashedClientData).toEqual([
+      `legacy-challenge|install-uuid|${DIAGNOSTIC_HASH}`,
+    ])
+    expect(harness.generateKey).not.toHaveBeenCalled()
+    expect(harness.getOrCreateRecoveryToken).not.toHaveBeenCalled()
   })
 
   it('rejects mismatched verify acknowledgement metadata in diagnostics', async () => {
@@ -1829,24 +1510,22 @@ describe('Notes Import App Attest', () => {
     })
   })
 
-  it('returns a redacted diagnostic report when account storage fails', async () => {
+  it('returns a redacted diagnostic report when identity storage fails', async () => {
     const harness = createHarness({
       activeKeyId: 'active-key',
       recoveryToken: 'recovery-token',
     })
-    harness.dependencies.identity.getAccountId = () => {
+    harness.dependencies.identity.peekUuid = () => {
       throw new Error('sensitive storage detail')
     }
 
     const report = await harness.module.runDiagnostics()
 
-    expect(report).toMatchObject({
+    expect(report).toEqual({
       ok: false,
-      protocolVersion: 2,
-      steps: [
-        { step: 'capability', ok: true },
-        { step: 'account-state', ok: false, code: 'storageFailure' },
-      ],
+      protocolVersion: null,
+      correlationId: 'operation-1',
+      steps: [{ step: 'read-state', ok: false, ms: 0, code: 'storageFailure' }],
     })
     expect(JSON.stringify(report)).not.toContain('sensitive storage detail')
     expect(
@@ -1892,52 +1571,30 @@ describe('Notes Import App Attest', () => {
     expect(harness.secure.activeKeyId).toBe('secret-active-key-id')
   })
 
-  it('uses the development bypass without touching App Attest lifecycle', async () => {
-    const harness = createHarness({ devBypass: true, uuid: null })
-
-    await harness.module.post({
-      endpoint: 'kickoff',
-      payload: REQUEST_PAYLOAD,
-      contentHash: CONTENT_HASH,
-    })
-
-    expect(harness.posts).toHaveLength(1)
-    expect(harness.posts[0]).toMatchObject({
-      endpoint: 'kickoff',
-      headers: { 'x-ww-dev-bypass': 'dev-bypass-token' },
-      body: {
-        protocolVersion: 2,
-        operation: 'assert',
-        purpose: 'notes-import-kickoff',
-        uuid: 'install-uuid',
-        accountId: 'account-id',
-        contentHash: CONTENT_HASH,
-        requestHash: REQUEST_HASH,
-      },
-    })
-    expect(harness.generateKey).not.toHaveBeenCalled()
-    expect(harness.dependencies.appAttest.attestKey).not.toHaveBeenCalled()
-    expect(harness.generateAssertion).not.toHaveBeenCalled()
-    expect(harness.getOrCreateRecoveryToken).not.toHaveBeenCalled()
-  })
-
-  it('proves the development bypass with the protected verify route', async () => {
+  it('proves the development bypass with the verify route', async () => {
     const harness = createHarness({ devBypass: true, uuid: null })
 
     const report = await harness.module.runDiagnostics()
 
     expect(report.ok).toBe(true)
+    expect(report.steps.map((entry) => entry.step)).toEqual([
+      'capability',
+      'identity',
+      'verify',
+    ])
     expect(harness.posts).toHaveLength(1)
     expect(harness.posts[0]).toMatchObject({
       endpoint: 'verify',
       headers: { 'x-ww-dev-bypass': 'dev-bypass-token' },
-      body: {
-        protocolVersion: 2,
-        operation: 'assert',
-        purpose: 'notes-import-verify',
-        requestHash: DIAGNOSTIC_HASH,
-        contentHash: DIAGNOSTIC_HASH,
-      },
+    })
+    expect(harness.posts[0]?.body).toEqual({
+      protocolVersion: 2,
+      operation: 'assert',
+      purpose: 'attestation-verify',
+      operationId: 'operation-1',
+      requestHash: DIAGNOSTIC_HASH,
+      uuid: 'install-uuid',
+      contentHash: DIAGNOSTIC_HASH,
     })
     expect(harness.generateAssertion).not.toHaveBeenCalled()
   })
@@ -2044,15 +1701,17 @@ describe('Notes Import App Attest', () => {
     expect(verifies[0]?.body).toMatchObject({
       protocolVersion: 2,
       operation: 'assert',
-      purpose: 'notes-import-verify',
+      purpose: 'attestation-verify',
       contentHash: DIAGNOSTIC_HASH,
       requestHash: DIAGNOSTIC_HASH,
       uuid: 'install-uuid',
-      accountId: 'account-id',
     })
+    expect(verifies[0]?.body).not.toHaveProperty('accountId')
     expect(
-      harness.posts.filter((call) => call.endpoint === 'kickoff')
-    ).toHaveLength(0)
+      harness.posts
+        .filter((call) => call.endpoint === 'challenge')
+        .map((call) => call.body.purpose ?? call.body.operation)
+    ).toEqual(['attestation-verify', 'bind', 'attestation-verify'])
     const serialized = JSON.stringify(report)
     for (const secret of [
       'apple-rejected-key',
@@ -2187,7 +1846,7 @@ describe('Notes Import App Attest', () => {
     expect(harness.posts[0]).toMatchObject({
       endpoint: 'verify',
       headers: { 'x-ww-dev-bypass': 'dev-bypass-token' },
-      body: { purpose: 'notes-import-verify' },
+      body: { purpose: 'attestation-verify' },
     })
     expect(harness.generateAssertion).not.toHaveBeenCalled()
   })
@@ -2238,13 +1897,8 @@ describe('App Attest for other features (assert)', () => {
       ok: true,
     })
 
-    const challenges = harness.posts.filter((call) =>
-      call.endpoint.toLowerCase().includes('challenge')
-    )
-    expect(challenges.map((call) => call.endpoint)).toEqual([
-      'attestationChallenge',
-    ])
-    expect(challenges[0].body).toMatchObject({
+    expect(harness.posts.map((call) => call.endpoint)).toEqual(['challenge'])
+    expect(harness.posts[0].body).toMatchObject({
       purpose: 'account-session',
       contentHash: SESSION_HASH,
       requestHash: SESSION_HASH,
@@ -2270,11 +1924,11 @@ describe('App Attest for other features (assert)', () => {
         uuid: 'install-uuid',
         keyId: 'active-key',
         purpose: 'account-session',
-        accountId: undefined,
         contentHash: SESSION_HASH,
         requestHash: SESSION_HASH,
       },
     ])
+    expect(routes.challenges[0]).not.toHaveProperty('accountId')
     expect(harness.hashedClientData).toEqual([
       `witnesswork.app-attest|2|assert|account-session|operation-1|session-challenge-1|install-uuid||${SESSION_HASH}|${SESSION_HASH}`,
     ])
@@ -2295,7 +1949,7 @@ describe('App Attest for other features (assert)', () => {
         },
       },
     ])
-    // Nothing went to Notes Import's routes.
+    // Nothing went to the shared /attestation/v1 routes.
     expect(harness.posts).toEqual([])
   })
 
@@ -2367,7 +2021,11 @@ describe('App Attest for other features (assert)', () => {
     expect(routes.proofs).toEqual([
       { kind: 'devBypass', token: 'dev-bypass-token' },
     ])
+    expect(harness.posts).toEqual([])
+    expect(harness.generateKey).not.toHaveBeenCalled()
+    expect(harness.dependencies.appAttest.attestKey).not.toHaveBeenCalled()
     expect(harness.generateAssertion).not.toHaveBeenCalled()
+    expect(harness.getOrCreateRecoveryToken).not.toHaveBeenCalled()
   })
 
   it('refuses malformed hashes and a worker without protocol v2', async () => {

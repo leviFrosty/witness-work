@@ -16,11 +16,7 @@ import { addForegroundListener } from '@/lib/appLifecycle'
 import { getOnline, useOnline } from '@/lib/http/online'
 
 // Add future flag keys to this union so call sites stay type-checked.
-export type FeatureFlag =
-  | 'notes-import'
-  | 'notes-import-android'
-  | 'buddies'
-  | 'announcement'
+export type FeatureFlag = 'buddies' | 'announcement' | 'scribe-ai'
 type FlagValues = Partial<Record<FeatureFlag, boolean | string>>
 type FlagPayloads = Partial<Record<FeatureFlag, JsonType>>
 
@@ -304,7 +300,16 @@ export function useFeatureFlagPayload(flag: FeatureFlag): JsonType | undefined {
     : undefined
 }
 
+/**
+ * Flags that are on unless a response for the current identity says `false`:
+ * while idle, offline, loading, after a failed load, and for an identity whose
+ * values haven't loaded. Turning one off reaches devices that load flags; it
+ * isn't a kill switch (the server's is).
+ */
+export const DEFAULT_ON_FLAGS: ReadonlySet<FeatureFlag> = new Set(['scribe-ai'])
+
 /** UI visibility only; access control belongs on the server. */
 export function useFeatureFlag(flag: FeatureFlag): boolean {
-  return useFeatureFlagValue(flag) === true
+  const value = useFeatureFlagValue(flag)
+  return DEFAULT_ON_FLAGS.has(flag) ? value !== false : value === true
 }

@@ -9,7 +9,7 @@ The project is **trunk-based on `main`**. PRs target `main` directly, and `main`
 
 ## Branch naming
 
-Bare `[feature-name]`, no `feature/`, `agent/`, or similar prefix (see AGENTS.md guardrails). `fix/...` and `refactor/...` prefixes show up in practice for those categories, but plain descriptive names (`calendar-sync`, `notes-import`) are the norm.
+Bare `[feature-name]`, no `feature/`, `agent/`, or similar prefix (see AGENTS.md guardrails). `fix/...` and `refactor/...` prefixes show up in practice for those categories, but plain descriptive names (`calendar-sync`, `scribe-ai`) are the norm.
 
 ## Day-to-day PR flow
 

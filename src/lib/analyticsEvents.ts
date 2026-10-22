@@ -1,3 +1,5 @@
+import { scribeAnalyticsEventNames } from '@/lib/scribeAnalyticsEvents'
+
 // Every permanent usage event needs a concrete product question. Register new
 // feature outcomes here; temporary experiment details need an explicit expiry.
 // Cosmetic UI actions and background maintenance successes are deliberately absent.
@@ -61,11 +63,7 @@ export const analyticsEventNames = [
   'import_stopped',
   'import_type_selected',
   'import_undone',
-  'notes_import_accepted',
-  'notes_import_availability_failed',
-  'notes_import_capture_finished',
-  'notes_import_refined',
-  'notes_import_submitted',
+  ...scribeAnalyticsEventNames,
   // Feature adoption and actionable outcomes.
   'account_activity_viewed',
   'account_backup_changed',

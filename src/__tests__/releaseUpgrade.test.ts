@@ -190,6 +190,7 @@ import {
   RECURRING_PLANS,
   SAVED_PLACES,
   SAVED_ROUTE,
+  SCRIBE,
   SIDEBAR,
   SPLIT_SHEET_RATIO,
   STREAK_SEEN,
@@ -277,6 +278,12 @@ async function launch() {
   const { useStreakCelebration } = await import(
     '@/features/profile/stores/streakCelebration'
   )
+  // Scribe AI's conversations, undo records and usage, on this device only.
+  const { useScribeConversations } = await import(
+    '@/features/scribe/stores/conversations'
+  )
+  const { useScribeLedger } = await import('@/features/scribe/stores/ledger')
+  const { useScribeUsageStore } = await import('@/features/scribe/stores/usage')
   const { runCustomFieldsMigration } = await import(
     '@/features/contacts/lib/runCustomFieldsMigration'
   )
@@ -312,9 +319,18 @@ async function launch() {
     'sidebar-layout': useSidebarPreferences,
     'split-sheet-layout': useSplitSheetPreferences,
     streakCelebration: useStreakCelebration,
+    'scribe-conversations': useScribeConversations,
+    'scribe-ledger': useScribeLedger,
+    'scribe-usage': useScribeUsageStore,
   }
 }
 type App = Awaited<ReturnType<typeof launch>>
+
+const SCRIBE_STORES = [
+  'scribe-conversations',
+  'scribe-ledger',
+  'scribe-usage',
+] as const
 
 /** Each store's data, keyed by its storage name. */
 const snapshot = (app: App) =>
@@ -374,8 +390,18 @@ function coverage(release: string, source: Source) {
     mileage: since(release, '1.44.0'),
     roleHistory: since(release, '1.44.0'),
     pet: since(release, '1.45.0'),
+    // What Scribe AI's added Proposal wrote syncs like any record.
+    scribe: since(release, '1.45.0'),
   }
 }
+
+/** The scenario's Visits, and the one Scribe AI added where the release ran it. */
+const scenarioVisits = (release: string, source: Source) =>
+  coverage(release, source).scribe ? [...VISITS, SCRIBE.added.visit] : VISITS
+
+/** The scenario's Time Entries, and the one Scribe AI added. */
+const scenarioEntries = (release: string, source: Source) =>
+  coverage(release, source).scribe ? [...ENTRIES, SCRIBE.added.entry] : ENTRIES
 
 function expectContacts(app: App, release: string, source: Source) {
   const { since140 } = coverage(release, source)
@@ -411,8 +437,9 @@ function expectContacts(app: App, release: string, source: Source) {
 function expectVisits(app: App, release: string, source: Source) {
   const { since140 } = coverage(release, source)
   const { conversations, deletedConversations } = app.conversations.getState()
-  expect(ids(conversations)).toEqual(ids(VISITS))
-  for (const want of VISITS) {
+  const visits = scenarioVisits(release, source)
+  expect(ids(conversations)).toEqual(ids(visits))
+  for (const want of visits) {
     const got = conversations.find(({ id }) => id === want.id)!
     expect(got.contact.id).toBe(want.contactId)
     expect(ms(got.date)).toBe(want.date.getTime())
@@ -437,11 +464,10 @@ function expectVisits(app: App, release: string, source: Source) {
 function expectTimeEntries(app: App, release: string, source: Source) {
   const { since140, categories: hasCategories } = coverage(release, source)
   const entries = allEntries(app)
-  expect(entries.map(({ entry }) => entry.id).sort()).toEqual(
-    ENTRIES.map(({ id }) => id).sort()
-  )
+  const wanted = scenarioEntries(release, source)
+  expect(entries.map(({ entry }) => entry.id).sort()).toEqual(ids(wanted))
   const { categories } = app.categories.getState()
-  for (const want of ENTRIES) {
+  for (const want of wanted) {
     const { entry, bucket } = entries.find(({ entry }) => entry.id === want.id)!
     // On the noon-UTC anchor, so the day survives a time zone change.
     expect(isStoredDateAnchored(entry.date), want.id).toBe(true)
@@ -804,34 +830,132 @@ function expectBuddies(app: App) {
   })
 }
 
-/** Notes Import's history: what's been read, and what's still being read. */
-async function expectNotesImports(release: string) {
-  const { getAllLedgerEntries } = await import(
-    '@/features/notes-import/lib/notesImportLedger'
+/**
+ * Notes Import's history. Scribe AI replaced Notes Import (ADR 0032), and only
+ * accepted imports stay, for Undo in History. The release's two were never
+ * accepted (one read and waiting, one still reading), so the old ledger still
+ * reads but offers neither, and the launch cleanup drops them.
+ */
+/** Notes Import's ledger rows still on the device, by MMKV key. */
+const notesImportRows = () => [
+  ...(disk.instances.get('notes-import-ledger')?.keys() ?? []),
+]
+
+async function expectNotesImports() {
+  const { listLegacyImports, pruneLegacyLedger } = await import(
+    '@/features/scribe/legacy/notesImportLedger'
   )
   const { ready, working } = NOTES_IMPORTS
-  const entries = getAllLedgerEntries()
-  expect(entries.map(({ hash }) => hash)).toEqual([working.hash, ready.hash])
-  const [gotWorking, gotReady] = entries
-  // Read and waiting to be added: nothing to read again.
-  expect(gotReady).toMatchObject({
-    state: 'ready',
-    notesText: ready.notesText,
-    result: ready.result,
-    createdAt: ready.createdAt,
-    parsedAt: ready.parsedAt,
-    viewedAt: ready.viewedAt,
-  })
-  expect(gotWorking).toMatchObject({
-    state: 'working',
-    notesText: working.notesText,
-    createdAt: working.createdAt,
-  })
-  // ww-api serves a run started before account sessions only to its subscribe
-  // token, so that run is dropped and the import starts again from its notes.
-  expect(gotWorking.activeRun).toEqual(
-    since(release, '1.45.0') ? { importId: working.activeRun.importId } : null
+  expect(listLegacyImports()).toEqual([])
+  pruneLegacyLedger()
+  expect(notesImportRows()).not.toContain(`entry:${ready.hash}`)
+  expect(notesImportRows()).not.toContain(`entry:${working.hash}`)
+  expect(listLegacyImports()).toEqual([])
+}
+
+/** The scenario's Scribe AI conversation, and its Proposals in turn order. */
+function scribeConversation(app: App) {
+  const conversations = Object.values(
+    app['scribe-conversations'].getState().conversations
   )
+  expect(conversations).toHaveLength(1)
+  const [conversation] = conversations
+  const [added, waiting] = conversation.items.flatMap((item) =>
+    item.type === 'proposal' ? [conversation.proposals[item.proposalId]] : []
+  )
+  return { conversation, added, waiting }
+}
+
+/**
+ * Scribe AI's conversation, the undo record of the Proposal the User added, and
+ * the last usage snapshot: each as the release saved it, the waiting Proposal
+ * still ready to review and add, and the added one still undoable.
+ */
+async function expectScribe(app: App, release: string) {
+  const stores = fixtureStores(release)
+  // Nothing migrates them yet.
+  for (const key of SCRIBE_STORES)
+    expect(data(app[key].getState()), key).toMatchObject(stores[key].state)
+
+  const { conversation, added, waiting } = scribeConversation(app)
+  expect(app['scribe-conversations'].getState().hasFinishedTurn).toBe(true)
+  // Every turn finished, so launch offers none to try again.
+  expect(conversation.suspended).toBeNull()
+  expect(
+    conversation.items.flatMap((item) =>
+      item.type === 'user' || item.type === 'assistant'
+        ? [[item.type, item.text]]
+        : []
+    )
+  ).toEqual(
+    SCRIBE.turns.flatMap(({ text, answer }) => [
+      ['user', text],
+      ['assistant', answer],
+    ])
+  )
+  // Its Refs still name the same records.
+  const { refs } = conversation
+  expect(refs.byRef[refs.byId['c:c-dora']]).toEqual({ kind: 'c', id: 'c-dora' })
+  expect(refs.byRef[refs.byId[`k:${CATEGORIES.letters.id}`]]).toEqual({
+    kind: 'k',
+    id: CATEGORIES.letters.id,
+  })
+  expect(refs.byRef.n1).toEqual({
+    kind: 'n',
+    proposalId: waiting.id,
+    boundId: null,
+  })
+
+  const { toScribeProposal, canAddProposal } = await import(
+    '@/features/scribe/proposals/cards'
+  )
+  const { readScribeStores } = await import(
+    '@/features/scribe/runtime/snapshot'
+  )
+  expect(conversation.pendingProposalId).toBe(waiting.id)
+  expect(canAddProposal(waiting)).toBe(true)
+  const review = toScribeProposal(waiting, readScribeStores())
+  expect(review).toMatchObject({ status: 'pending', invalidCount: 0 })
+  expect(review.cards).toMatchObject([
+    {
+      kind: 'plan',
+      selected: false,
+      status: 'pending',
+      effects: [
+        {
+          preview: {
+            kind: 'plan.create',
+            date: '2025-10-11',
+            minutes: 120,
+            startMinutes: 9 * 60,
+          },
+        },
+      ],
+    },
+    {
+      kind: 'contact',
+      selected: true,
+      needsChoice: false,
+      status: 'pending',
+      contact: { type: 'new', name: 'Lena Park' },
+    },
+  ])
+
+  const { visit, entry } = SCRIBE.added
+  expect(added.status).toBe('applied')
+  const record = app['scribe-ledger'].getState().records[added.id]
+  expect(record.appliedAt).toBe(SCRIBE.added.at.getTime())
+  expect(record.effects.map(({ undo }) => undo)).toEqual([
+    { kind: 'visit.create', visitId: visit.id },
+    { kind: 'time.create', entryId: entry.id },
+  ])
+  const { undoable } = await import('@/features/scribe/stores/ledger')
+  expect(undoable(record, Date.now())).toBe(true)
+  // What Undo would take back is still there.
+  expect(ids(app.conversations.getState().conversations)).toContain(visit.id)
+  expect(allEntries(app).map(({ entry }) => entry.id)).toContain(entry.id)
+
+  expect(app['scribe-usage'].getState().snapshot).toEqual(SCRIBE.usage)
 }
 
 /**
@@ -853,7 +977,7 @@ async function expectDeviceSettings(app: App, release: string) {
       DAILY_MINUTES
     )
     expectBuddies(app)
-    await expectNotesImports(release)
+    await expectNotesImports()
   }
   if (since(release, '1.45.0')) {
     expect(app['app-lock'].getState()).toMatchObject(APP_LOCK)
@@ -879,6 +1003,7 @@ async function expectDeviceSettings(app: App, release: string) {
     expect(
       app['saved-routes'].getState().routes[SAVED_ROUTE.day]
     ).toMatchObject(SAVED_ROUTE)
+    await expectScribe(app, release)
   }
 }
 
@@ -1080,16 +1205,73 @@ describe.each(RELEASES.filter((release) => since(release, '1.44.0')))(
       vi.setSystemTime(TODAY)
     })
 
-    it("keeps them, and Notes Import's history", async () => {
+    it("keeps them, and reads Notes Import's history", async () => {
       expect(disk.errors).toEqual([])
+      // Releases before Scribe AI wrote Notes Import's ledger.
+      const { ready, working } = NOTES_IMPORTS
+      if (!since(release, '1.45.0'))
+        expect(notesImportRows()).toEqual(
+          expect.arrayContaining([
+            `entry:${ready.hash}`,
+            `entry:${working.hash}`,
+          ])
+        )
       await expectDeviceSettings(app, release)
     })
 
     it('keeps them on the next launch', async () => {
+      const before = snapshot(app)
+      const blobs = saved()
       const next = await launch()
       expect(disk.errors).toEqual([])
       await expectDeviceSettings(next, release)
+      if (since(release, '1.45.0'))
+        for (const key of SCRIBE_STORES) {
+          expect(saved()[key], key).toEqual(blobs[key])
+          expect(snapshot(next)[key], key).toEqual(before[key])
+        }
     })
+
+    it.runIf(since(release, '1.45.0'))(
+      "adds Scribe AI's waiting Proposal and undoes the added one",
+      async () => {
+        const app = await launch()
+        const { added, waiting } = scribeConversation(app)
+        const { addScribeProposal, undoScribeProposalNow } = await import(
+          '@/features/scribe/proposals/actions'
+        )
+        const { visit, entry } = SCRIBE.added
+        expect(undoScribeProposalNow(added.id, 'history')).toEqual({
+          status: 'undone',
+          kept: 0,
+        })
+        expect(ids(app.conversations.getState().conversations)).not.toContain(
+          visit.id
+        )
+        expect(allEntries(app).map(({ entry }) => entry.id)).not.toContain(
+          entry.id
+        )
+        // The unchecked Plan stays out.
+        expect(addScribeProposal(waiting.id)).toEqual({
+          status: 'partially_applied',
+          appliedCards: 1,
+          skippedCards: 0,
+        })
+        const lena = app.contacts
+          .getState()
+          .contacts.find(({ name }) => name === 'Lena Park')
+        expect(lena).toBeDefined()
+        expect(
+          app.conversations
+            .getState()
+            .conversations.filter(({ contact }) => contact.id === lena!.id)
+        ).toHaveLength(1)
+        expect(ids(app.serviceReports.getState().dayPlans)).toEqual(
+          ids(DAY_PLANS)
+        )
+        expect(disk.errors).toEqual([])
+      }
+    )
   }
 )
 
@@ -1187,8 +1369,8 @@ describe.each(SYNC_FILES)(
       expect(mine).toHaveLength(1)
       expect(syncedRecordIds(mine[0].json)).toEqual({
         contacts: ids(CONTACTS.filter(({ id }) => id !== DELETED_CONTACT_ID)),
-        visits: ids(VISITS),
-        entries: ids(ENTRIES),
+        visits: ids(scenarioVisits(release, 'merged')),
+        entries: ids(scenarioEntries(release, 'merged')),
         dayPlans: ids(DAY_PLANS),
         recurringPlans: ids(RECURRING_PLANS),
       })

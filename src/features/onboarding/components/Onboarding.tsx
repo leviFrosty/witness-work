@@ -45,7 +45,6 @@ import {
   OnboardingProgress,
   OnboardingProgressContext,
 } from '@/features/onboarding/components/OnboardingProgressContext'
-import { useOnboardingHandoff } from '@/stores/onboardingHandoff'
 import { useProfile } from '@/stores/profile'
 import { analytics } from '@/lib/analytics'
 
@@ -233,18 +232,6 @@ const OnBoarding = () => {
     },
     [visibleSteps]
   )
-
-  // A screen pushed over onboarding (the Notes Import composer, opened from the
-  // "From Notes" step) can ask us to advance — e.g. the user chose to keep
-  // setting up while a slow import finishes. zustand's set is synchronous, so
-  // consuming here can't double-fire across the re-render goNext triggers.
-  const continueRequested = useOnboardingHandoff((s) => s.continueRequested)
-  const consumeContinue = useOnboardingHandoff((s) => s.consumeContinue)
-  useEffect(() => {
-    if (!continueRequested) return
-    consumeContinue()
-    goNext()
-  }, [continueRequested, consumeContinue, goNext])
 
   const current = visibleSteps[stepIndex]
 

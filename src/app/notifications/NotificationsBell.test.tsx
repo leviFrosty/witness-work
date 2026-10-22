@@ -79,9 +79,6 @@ vi.mock('@/features/buddies/hooks/useBuddyNotifications', () => ({
   syncBuddyNotifications: () => {},
   useBuddyTraySyncStatus: () => ({ state: 'idle', retry: () => {} }),
 }))
-vi.mock('@/features/notes-import/hooks/useNotesImportNotifications', () => ({
-  default: () => [],
-}))
 vi.mock('@/features/notifications/components/NotificationsTray', () => ({
   default: ({ items }: { items: NotificationItem[] }) => {
     tray.renders++

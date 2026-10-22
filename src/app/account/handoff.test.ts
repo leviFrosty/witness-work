@@ -14,7 +14,10 @@ vi.mock('expo-application', () => ({ nativeApplicationVersion: '3.0.0' }))
 vi.mock('expo-crypto', () => ({ getRandomBytes: vi.fn() }))
 vi.mock('expo-device', () => ({ modelName: 'Pixel 9' }))
 vi.mock('@/constants/apis', () => ({
-  default: { accounts: 'https://t', notesImport: 'https://t/notes-import' },
+  default: {
+    accounts: 'https://t',
+    attestationStatus: 'https://t/attestation/v1/status',
+  },
 }))
 vi.mock('@/app/account/accountKey', () => ({
   accountKey: {

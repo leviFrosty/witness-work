@@ -23,8 +23,11 @@ import { useTimeCache } from '@/stores/timeCache'
 import { useDevNotifications } from '@/app/notifications/devNotifications'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 import { useMapFindSkips } from '@/features/map/stores/mapFindSkips'
-import { clearLedger } from '@/features/notes-import/lib/notesImportLedger'
-import { useNotesImportManager } from '@/features/notes-import/hooks/useNotesImportManager'
+import { clearLegacyLedger } from '@/features/scribe/legacy/notesImportLedger'
+import { abortAllTurns, useScribeRuns } from '@/features/scribe/runtime/runs'
+import { useScribeConversations } from '@/features/scribe/stores/conversations'
+import { useScribeLedger } from '@/features/scribe/stores/ledger'
+import { useScribeUsageStore } from '@/features/scribe/stores/usage'
 import { useNotificationsTray } from '@/features/notifications/stores/notificationsTray'
 import { forgetFoundSecrets } from '@/features/pet/lib/secrets'
 import { useStreakCelebration } from '@/features/profile/stores/streakCelebration'
@@ -60,6 +63,12 @@ export const RESET_STORES: readonly ResettableStore[] = [
   // are orphaned once the reset forgets the destination.
   useCalendarSync,
   useCalendarPublishing,
+  // Scribe AI's conversations and undo records are device-only, like the
+  // records' own stores here; the usage snapshot is refetched.
+  useScribeConversations,
+  useScribeLedger,
+  useScribeUsageStore,
+  useScribeRuns,
 ]
 
 /**
@@ -67,8 +76,7 @@ export const RESET_STORES: readonly ResettableStore[] = [
  * verification harness). Never touches iCloud or the calendar; Tools removes
  * published events first (`removeConnectedCalendarEvents`). The account key and
  * what belongs to it stay, as they do through a reinstall on iOS: the Keychain
- * seed, the server account's session and backup state, and the Notes Import
- * allowance.
+ * seed, the server account's session and backup state.
  */
 export function resetLocalData() {
   // Storage goes first, so the reset state below (the builtin LDC Category,
@@ -95,6 +103,7 @@ export function resetLocalData() {
   useConversations.getState()._WARNING_forceDeleteConversations()
   useMileage.getState()._WARNING_forceDeleteMileage()
   usePet.getState()._WARNING_forceDeletePet()
+  abortAllTurns()
   for (const store of RESET_STORES)
     store.setState(store.getInitialState() as never, true)
   // The defaults also clear earned badges, the ledger and the first-pass
@@ -105,8 +114,7 @@ export function resetLocalData() {
   runLdcCategoryMigration()
   useBadgeSession.getState().reset()
   useProfile.getState().set({ ...PROFILE_DEFAULTS })
-  clearLedger()
-  useNotesImportManager.getState().hydrate()
+  clearLegacyLedger()
   forgetFoundSecrets()
   void Stopwatch.reset()
 }

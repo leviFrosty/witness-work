@@ -12,7 +12,6 @@ import useBuddyNotifications, {
   syncBuddyNotifications,
   useBuddyTraySyncStatus,
 } from '@/features/buddies/hooks/useBuddyNotifications'
-import useNotesImportNotifications from '@/features/notes-import/hooks/useNotesImportNotifications'
 import NotificationsTray from '@/features/notifications/components/NotificationsTray'
 import useNow from '@/hooks/useNow'
 import useAuxiliaryMonthNotification from '@/features/service-reports/hooks/useAuxiliaryMonthNotification'
@@ -48,7 +47,6 @@ export default function NotificationsBell() {
     ...useReminderNotifications(now),
     ...useMissedFollowUpNotifications(now),
     ...useBuddyNotifications(),
-    ...useNotesImportNotifications(),
     useWhatsNewNotification(),
     useCalendarSyncNotification(),
     useUpdateRevealNotification(),

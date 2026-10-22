@@ -158,12 +158,12 @@ import {
   ENTRIES,
   GEOCODE_RETRY,
   MAP_FIND_SKIP,
-  NOTES_IMPORTS,
   RECURRING_DELETED_DATE,
   RECURRING_OVERRIDE,
   RECURRING_PLANS,
   SAVED_PLACES,
   SAVED_ROUTE,
+  SCRIBE,
   SIDEBAR,
   SPLIT_SHEET_RATIO,
   STREAK_SEEN,
@@ -173,6 +173,11 @@ import {
   type ScenarioEntry,
 } from '@/__tests__/__data__/releases/scenario'
 import type { SyncTransport } from '@/lib/syncTransport'
+import type { ScribeClient } from '@/features/scribe/lib/scribeClient'
+import type {
+  StepStreamEvent,
+  StepTerminalEvent,
+} from '@/features/scribe/lib/wire'
 
 /** The MMKV keys of the persisted stores. */
 const PERSISTED_STORES = [
@@ -198,10 +203,18 @@ const PERSISTED_STORES = [
   'sidebar-layout',
   'split-sheet-layout',
   'streakCelebration',
+  // Scribe AI's conversations, undo records and usage, on this device only.
+  'scribe-conversations',
+  'scribe-ledger',
+  'scribe-usage',
 ]
 
-/** MMKV instances of their own that hold more than a cache. */
-const MMKV_INSTANCES = ['notes-import-ledger']
+/**
+ * MMKV instances of their own that hold more than a cache. Notes Import's
+ * ledger (`notes-import-ledger`) is only read now, for Undo; releases before
+ * Scribe AI wrote it.
+ */
+const MMKV_INSTANCES: string[] = []
 
 /** Android's sync transport, holding its files where iCloud's would be. */
 const googleDrive: SyncTransport = {
@@ -227,6 +240,57 @@ const googleDrive: SyncTransport = {
   deleteAllBinaries: async () => {},
   addRemoteChangeListener: () => ({ remove: () => {} }),
   addAvailabilityChangeListener: () => ({ remove: () => {} }),
+}
+
+/**
+ * Ww-api, answering each Scribe AI turn's one step with what the scenario's
+ * model said: its answer, then its write calls, which name records by the Refs
+ * the request's context lists.
+ */
+const scribeServer: ScribeClient = {
+  status: async () => {
+    throw new Error('Not read by the fixture')
+  },
+  usage: async () => SCRIBE.usage,
+  transcribe: async () => {
+    throw new Error('Not read by the fixture')
+  },
+  step: async (body, { onEvent }) => {
+    const turns = body.messages.filter(({ role }) => role === 'user').length
+    const turn = SCRIBE.turns[turns - 1]
+    const { contacts, categories } = body.context
+    const refOf = (name: string) =>
+      [...contacts, ...categories]
+        .find((line) => line.endsWith(` ${name}`))!
+        .split(' ')[0]
+    const done: StepTerminalEvent = {
+      type: 'done',
+      finish: 'tool_calls',
+      usage: {
+        inputTokens: turn.inputTokens,
+        cachedInputTokens: 0,
+        cacheWriteTokens: 0,
+        outputTokens: 140,
+        reasoningTokens: 0,
+        units: 1_200,
+      },
+      meter: turn.meter,
+    }
+    const events: StepStreamEvent[] = [
+      {
+        type: 'start',
+        offered: body.tools.map(({ name }) => name),
+        dropped: [],
+      },
+      { type: 'text', delta: turn.answer },
+      ...turn
+        .calls(refOf)
+        .map((call) => ({ type: 'tool_call' as const, ...call })),
+      done,
+    ]
+    for (const event of events) onEvent(event)
+    return done
+  },
 }
 
 /**
@@ -581,21 +645,57 @@ describe.skipIf(!RELEASE)('release fixture', () => {
     useSavedPlaces.getState().set('home', SAVED_PLACES.home)
     useSavedRoutes.getState().save({ ...SAVED_ROUTE, updatedAt: Date.now() })
 
-    // --- Notes Import's history
-    const ledger = await import('@/features/notes-import/lib/notesImportLedger')
-    const { ready, working } = NOTES_IMPORTS
-    ledger.beginWorkingEntry(ready.hash, {
-      notesText: ready.notesText,
-      activeRun: { importId: 'import-ready' },
-      nowMs: ready.createdAt,
-    })
-    ledger.putParsedResult(ready.hash, ready.result, ready.parsedAt)
-    ledger.markViewed(ready.hash, ready.viewedAt)
-    ledger.beginWorkingEntry(working.hash, {
-      notesText: working.notesText,
-      activeRun: { importId: working.activeRun.importId },
-      nowMs: working.createdAt,
-    })
+    // --- Scribe AI: a conversation's two turns, the first one's Proposal added
+    // and the second's waiting with a card unchecked
+    const { sendScribeMessage } = await import(
+      '@/features/scribe/runtime/turnLoop'
+    )
+    const { readScribeStores } = await import(
+      '@/features/scribe/runtime/snapshot'
+    )
+    const { DEFAULT_SCRIBE_LIMITS } = await import('@/features/scribe/lib/wire')
+    const { ulid } = await import('@/features/scribe/lib/ulid')
+    const { SCRIBE_TOOLS, scribeTool } = await import('@/features/scribe/tools')
+    const { addScribeProposal, toggleProposalCard } = await import(
+      '@/features/scribe/proposals/actions'
+    )
+    const { getConversation } = await import(
+      '@/features/scribe/stores/conversations'
+    )
+    let random = 0
+    const scribe = {
+      client: () => scribeServer,
+      stores: readScribeStores,
+      now: () => new Date(),
+      ulid: () =>
+        ulid(Date.now(), (count) => new Uint8Array(count).fill(++random)),
+      app: () => ({
+        version: RELEASE!,
+        platform: 'ios' as const,
+        locale: 'en-US',
+      }),
+      tz: () => 'America/Chicago',
+      limits: () => DEFAULT_SCRIBE_LIMITS,
+      tools: SCRIBE_TOOLS,
+      tool: scribeTool,
+    }
+    const [first, second] = SCRIBE.turns
+    vi.setSystemTime(first.at)
+    const conversationId = await sendScribeMessage(scribe, null, first)
+    vi.setSystemTime(SCRIBE.added.at)
+    const addedIds = [SCRIBE.added.visit.id, SCRIBE.added.entry.id]
+    expect(
+      addScribeProposal(getConversation(conversationId)!.pendingProposalId!, {
+        newId: () => addedIds.shift()!,
+      })
+    ).toMatchObject({ status: 'applied' })
+    vi.setSystemTime(second.at)
+    await sendScribeMessage(scribe, conversationId, second)
+    vi.setSystemTime(SCRIBE.uncheckedAt)
+    const { proposals, pendingProposalId } = getConversation(conversationId)!
+    const waiting = proposals[pendingProposalId!]
+    const plan = waiting.cards.find(({ kind }) => kind === 'plan')!
+    toggleProposalCard(waiting.id, plan.id)
 
     const out = `${__dirname}/__data__/releases/v${RELEASE}`
     mkdirSync(out, { recursive: true })

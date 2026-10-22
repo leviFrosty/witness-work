@@ -9,9 +9,9 @@ import {
 /**
  * A failed `request()`. `kind` says what went wrong (see `NetworkErrorKind`);
  * `serverCode` is the service's own code from the body (`error` or `code`),
- * which ww-api, the Buddies relay and Notes Import all send. `body` is the
- * parsed JSON error body (null when there was none or it wasn't JSON), for
- * callers that need more than the code.
+ * which ww-api, the Buddies relay and Scribe AI all send. `body` is the parsed
+ * JSON error body (null when there was none or it wasn't JSON), for callers
+ * that need more than the code.
  */
 export class HttpError extends Error {
   constructor(

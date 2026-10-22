@@ -488,3 +488,157 @@ export const SAVED_ROUTE = {
   keepSetTimes: false,
   note: 'Start at the Kingdom Hall',
 }
+
+// Scribe AI, since 1.45. Its conversations, the undo records of the Proposals
+// the User added, and its last usage snapshot stay on this device; the records
+// an added Proposal wrote sync like any.
+
+const scribeMeter = (percentUsed: number, asOf: Date) => ({
+  plan: 'free' as const,
+  supporterCheckFailed: false,
+  windows: [
+    {
+      id: 'monthly' as const,
+      percentUsed,
+      resetsAt: at(2025, 11, 1).getTime(),
+    },
+  ],
+  limited: false,
+  resetsAt: null,
+  asOf: asOf.getTime(),
+})
+
+/** The Ref the conversation's context lists for a Contact or Category. */
+type ScribeRefOf = (name: string) => string
+
+/** What the User's added Proposal wrote. */
+const scribeVisit: (typeof VISITS)[number] = {
+  id: 'v-dora-scribe',
+  contactId: 'c-dora',
+  date: at(2025, 10, 6, 20, 7),
+  isBibleStudy: false,
+  notAtHome: true,
+}
+const scribeEntry: ScenarioEntry = {
+  id: 'e-scribe',
+  date: at(2025, 10, 6, 12, 0),
+  hours: 1,
+  minutes: 0,
+  kind: 'letters',
+}
+const scribeUsage = scribeMeter(9, at(2025, 10, 6, 20, 20))
+
+/**
+ * One Scribe AI conversation, a turn per message, as ww-api's model answered
+ * it: its answer, and the write calls it made, naming records by the Refs the
+ * context lists. The User added the first turn's Proposal, and unchecked the
+ * second's Plan, which still waits for review.
+ */
+export const SCRIBE = {
+  turns: [
+    {
+      at: at(2025, 10, 6, 20, 5),
+      text: "Dora Halvorsen wasn't home this afternoon, and I wrote letters for an hour",
+      source: 'voice' as const,
+      entry: 'home_orb' as const,
+      answer:
+        'Dora Halvorsen, not at home, and an hour of letter writing today.',
+      calls: (refOf: ScribeRefOf) => [
+        {
+          callId: 'call_dora',
+          name: 'visits_log',
+          args: {
+            contactRef: refOf('Dora Halvorsen'),
+            newContact: null,
+            askBetween: null,
+            date: '2025-10-06',
+            notAtHome: true,
+            bibleStudy: false,
+            note: null,
+            dateSpoken: 'this afternoon',
+            followUp: null,
+          },
+        },
+        {
+          callId: 'call_letters',
+          name: 'time_log',
+          args: {
+            date: '2025-10-06',
+            minutes: 60,
+            categoryRef: refOf('Letter writing'),
+            newCategory: null,
+            note: null,
+            dateSpoken: null,
+          },
+        },
+      ],
+      inputTokens: 5_210,
+      meter: scribeMeter(4, at(2025, 10, 6, 20, 5)),
+    },
+    {
+      at: at(2025, 10, 6, 20, 20),
+      text: 'Plan two hours Saturday at 9. I also met Lena Park at 8 Oak Street today and left a tract, going back next Monday',
+      source: 'keyboard' as const,
+      entry: 'conversation' as const,
+      answer:
+        'Saturday at 9 for two hours, and Lena Park with a follow-up next Monday.',
+      calls: () => [
+        {
+          callId: 'call_saturday',
+          name: 'plans_create',
+          args: {
+            date: '2025-10-11',
+            minutes: 120,
+            startMinutes: 9 * 60,
+            anytime: false,
+            categoryRef: null,
+            newCategory: null,
+            title: null,
+            note: null,
+            dateSpoken: 'Saturday',
+            timeSpoken: 'at 9',
+            withBuddies: null,
+            repeats: false,
+          },
+        },
+        {
+          callId: 'call_lena',
+          name: 'visits_log',
+          args: {
+            contactRef: null,
+            newContact: {
+              name: 'Lena Park',
+              address: {
+                line1: '8 Oak Street',
+                city: 'Maplewood',
+                state: 'MN',
+                zip: null,
+                country: null,
+              },
+              phone: null,
+            },
+            askBetween: null,
+            date: '2025-10-06',
+            notAtHome: false,
+            bibleStudy: false,
+            note: 'Left a tract',
+            dateSpoken: 'today',
+            followUp: {
+              date: '2025-10-13',
+              topic: null,
+              dateSpoken: 'next Monday',
+            },
+          },
+        },
+      ],
+      inputTokens: 6_840,
+      meter: scribeUsage,
+    },
+  ],
+  /** The first turn's Proposal, added. */
+  added: { at: at(2025, 10, 6, 20, 7), visit: scribeVisit, entry: scribeEntry },
+  /** When the User unchecked the waiting Proposal's Plan card. */
+  uncheckedAt: at(2025, 10, 6, 20, 21),
+  /** The usage the last step's meter left. */
+  usage: scribeUsage,
+}

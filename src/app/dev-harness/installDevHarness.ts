@@ -24,9 +24,7 @@ import {
 import { navigationRef } from '@/features/contacts/lib/linking'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 import { useBuddiesDiagnostics } from '@/features/buddies/stores/buddiesDiagnostics'
-import { useNotesImportManager } from '@/features/notes-import/hooks/useNotesImportManager'
 import { useUpdateRequired } from '@/lib/appUpdate'
-import { forgetPersistedCredits } from '@/features/notes-import/lib/notesImportCreditsStore'
 import { useNotificationsTray } from '@/features/notifications/stores/notificationsTray'
 import { useStreakCelebration } from '@/features/profile/stores/streakCelebration'
 import { useUpdateRevealStore } from '@/features/updates/stores/updateReveal'
@@ -47,6 +45,8 @@ import {
 import { petHarness } from '@/app/dev-harness/pet'
 import { cloudSyncHarness } from '@/app/dev-harness/cloudSync'
 import { appUpdateHarness } from '@/app/dev-harness/appUpdate'
+import { scribeHarness } from '@/app/dev-harness/scribe'
+import { getOnline, simulateOffline } from '@/lib/http/online'
 import {
   isStorageLocked,
   mmkvStorage,
@@ -238,6 +238,10 @@ function summary() {
     dayPlans: reports.dayPlans.length,
     badges: Object.keys(preferences.earnedBadges).length,
     route: route ? { name: route.name, params: route.params } : null,
+    // The root stack's screens, bottom first, to catch a screen pushed twice.
+    stack: navigationRef.isReady()
+      ? (navigationRef.getRootState()?.routes.map((r) => r.name) ?? [])
+      : [],
     // false at the app's root, where Android back would leave the app
     canGoBack: navigationRef.isReady() && navigationRef.canGoBack(),
     // false until the screens a `remount()` asked for have mounted
@@ -246,7 +250,7 @@ function summary() {
       navigationRef.isReady() &&
       route !== undefined,
     errors: errors.length,
-    apiBase: new URL(apis.notesImportHealth).origin,
+    apiBase: new URL(apis.apiHealth).origin,
   }
 }
 
@@ -469,6 +473,24 @@ export function installDevHarness() {
      */
     pet: petHarness,
     /**
+     * Scribe AI (see `dev-harness/scribe.ts`): `enableFake()` answers on the
+     * device; `script(name)` queues a canned turn (`scripts`), `send(text)` or
+     * `injectProposal()` runs it; `latest()`, `conversation(id)`,
+     * `proposal(id)`, `add`/`dismiss`/`toggle`/`choose`/`undo`, `state()`,
+     * `availability()`, `setFakeUsage({ limited })`, `setGate({ … })`,
+     * `contextSize()`, `requests()` and `clear()`.
+     */
+    scribe: scribeHarness,
+    /**
+     * Connectivity as the app reads it: `offline(true)` reads as offline
+     * whatever the simulator says, `offline(false)` comes back (reconnect
+     * listeners run). Returns the state the app reads now.
+     */
+    network: {
+      offline: (on = true) => simulateOffline(on),
+      state: getOnline,
+    },
+    /**
      * The Tools "Force Right to Left" switch, without the reload: relaunch
      * (`wwv up`) to apply it. Returns the direction the app runs in now.
      */
@@ -522,23 +544,6 @@ export function installDevHarness() {
       navigationRef.dispatch(CommonActions.navigate({ name, params }))
       return summary().route
     },
-    /**
-     * Forgets this device's Import Credits balance, in memory and in MMKV, so
-     * the composer shows what it does before the first import.
-     */
-    forgetNotesImportCredits: () => {
-      forgetPersistedCredits()
-      useNotesImportManager.setState({
-        credits: null,
-        creditsProvenance: null,
-        creditsKickoffHash: null,
-        authoritativeCredits: null,
-        refinementCredits: {},
-        refinementCreditsProvenance: {},
-        authoritativeRefinementCredits: {},
-      })
-      return 'forgotten'
-    },
     stores: {
       preferences: usePreferences,
       profile: useProfile,
@@ -558,8 +563,6 @@ export function installDevHarness() {
       categories: useCategories,
       buddies: useBuddies,
       buddiesDiagnostics: useBuddiesDiagnostics,
-      // Notes Import's ledger `entries` and each run's live `runtimes`.
-      notesImport: useNotesImportManager,
       // The bell's book (`seen`, `dismissed`) and its counted `unread`.
       notificationsTray: useNotificationsTray,
       // `setState({ celebrating: { count, kind } })` replays a milestone; with

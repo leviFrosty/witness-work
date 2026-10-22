@@ -4,12 +4,14 @@ import type { EventSubscription } from 'expo-modules-core'
 /**
  * On-device speech-to-text (ADR 0018). This file is the platform-neutral
  * contract: iOS implements it in `ios/` (SpeechAnalyzer, or an on-device
- * SFSpeechRecognizer before iOS 26). An Android implementation can plug in
- * later by registering a `SpeechTranscription` module with the same functions
- * and events; until then `isSupported()` is false and voice logs stay hidden.
+ * SFSpeechRecognizer before iOS 26), and Android in `android/` (Android's
+ * on-device SpeechRecognizer, Android 12+). Both register a
+ * `SpeechTranscription` module with the same functions and events.
  *
  * The contract forbids server recognition: an implementation must report
- * unavailable rather than send audio off the device.
+ * unavailable rather than send audio off the device. Where `getAvailability`
+ * says unavailable (no on-device recognizer, or none for the user's languages),
+ * voice input falls back to the keyboard.
  */
 
 export type SpeechPermissionStatus = 'granted' | 'denied' | 'undetermined'
@@ -18,7 +20,7 @@ export interface SpeechPermissions {
   /** Combined status of every permission recording needs. */
   status: SpeechPermissionStatus
   microphone: SpeechPermissionStatus
-  /** IOS 26+ transcribes with microphone access alone. */
+  /** IOS 26+ and Android transcribe with microphone access alone. */
   speechRecognition: SpeechPermissionStatus | 'notRequired'
 }
 
@@ -26,6 +28,8 @@ export type SpeechEngine =
   | 'speechTranscriber'
   | 'dictationTranscriber'
   | 'legacy'
+  /** Android 12+: SpeechRecognizer.createOnDeviceSpeechRecognizer. */
+  | 'androidOnDevice'
 
 export type SpeechAvailability =
   | { available: true; locale: string; engine: SpeechEngine }
@@ -92,7 +96,7 @@ export function speechErrorCode(error: unknown): SpeechErrorCode {
   return NATIVE_CODES[code] ?? 'failed'
 }
 
-/** Whether this binary ships the module (false on Android and older builds). */
+/** Whether this binary ships the module (false in older builds). */
 export function isSupported(): boolean {
   return !!native?.speechTranscriptionVersion
 }

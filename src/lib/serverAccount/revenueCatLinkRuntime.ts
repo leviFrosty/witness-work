@@ -25,6 +25,25 @@ const KEY = 'revenuecat-link'
 /** Before a paid call, wait at most this long for the link. */
 export const PAID_CALL_LINK_WAIT_MS = 5_000
 
+type LinkedListener = (status: {
+  supporter: boolean
+  expiresAt: number | null
+}) => void
+
+const linkedListeners = new Set<LinkedListener>()
+
+/**
+ * Calls `listener` with the account's Supporter status each time a link
+ * answers, so features that show the server's plan (Scribe AI's limits) can
+ * read it again after a purchase or a lapse. Returns the unsubscribe.
+ */
+export const onRevenueCatLinked = (listener: LinkedListener): (() => void) => {
+  linkedListeners.add(listener)
+  return () => {
+    linkedListeners.delete(listener)
+  }
+}
+
 export const revenueCatLink = createRevenueCatLink({
   baseUrl: apis.accounts,
   request: (options) => accountSessions.request(options),
@@ -47,6 +66,9 @@ export const revenueCatLink = createRevenueCatLink({
   onOutcome: (outcome: RevenueCatLinkOutcome, reason: RevenueCatLinkReason) => {
     if (outcome.result !== 'skipped' && outcome.result !== 'no_session')
       logger.debug(`[account] revenuecat link (${reason}): ${outcome.result}`)
+    if (outcome.result === 'linked')
+      for (const listener of linkedListeners)
+        listener({ supporter: outcome.supporter, expiresAt: outcome.expiresAt })
   },
   onError: (error) => errorTracking.captureException(error),
 })
@@ -61,9 +83,9 @@ export const ensureRevenueCatLinked = (options: {
 }) => revenueCatLink.ensure(options)
 
 /**
- * Before Notes Import or route planning, which open the session anyway: links
- * when this launch hasn't, waiting at most `PAID_CALL_LINK_WAIT_MS`. The call
- * goes ahead either way; the server answers from what it already has.
+ * Before Scribe AI or route planning, which open the session anyway: links when
+ * this launch hasn't, waiting at most `PAID_CALL_LINK_WAIT_MS`. The call goes
+ * ahead either way; the server answers from what it already has.
  */
 export const linkBeforePaidCall = async (): Promise<void> => {
   let timer: ReturnType<typeof setTimeout> | undefined

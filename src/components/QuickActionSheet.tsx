@@ -6,7 +6,7 @@ import Text from '@/components/ui/MyText'
 import i18n from '@/lib/locales'
 import useTheme from '@/contexts/theme'
 import IconButton from '@/components/ui/IconButton'
-import { useEffect } from 'react'
+import { type ReactNode, useEffect } from 'react'
 import QuickActionMenu from '@/components/QuickActionMenu'
 import { refreshCurrentLocation } from '@/lib/currentLocation'
 import { RootStackNavigation } from '@/types/rootStack'
@@ -16,12 +16,15 @@ export type QuickActionSheetProps = {
   navigation: RootStackNavigation & HomeTabStackNavigation
   sheetOpen: boolean
   setSheetOpen: React.Dispatch<React.SetStateAction<boolean>>
+  /** Shown above the actions; see `QuickActionMenu`. */
+  leading?: ReactNode
 }
 
 export default function QuickActionSheet({
   sheetOpen,
   setSheetOpen,
   navigation,
+  leading,
 }: QuickActionSheetProps) {
   const theme = useTheme()
 
@@ -58,6 +61,7 @@ export default function QuickActionSheet({
           <QuickActionMenu
             navigation={navigation}
             onAction={() => setSheetOpen(false)}
+            leading={leading}
           />
         </View>
       </Sheet.ScrollView>

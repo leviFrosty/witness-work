@@ -6,6 +6,7 @@ import {
   IdCard as IdCardIcon,
 } from 'lucide-react-native'
 import type { AppIcon } from '@/components/ui/LucideIcon'
+import type { ReactNode } from 'react'
 import { View } from 'react-native'
 import * as Crypto from 'expo-crypto'
 import usePublisher from '@/hooks/usePublisher'
@@ -23,6 +24,8 @@ import { RootStackNavigation } from '@/types/rootStack'
 interface Props {
   navigation: RootStackNavigation
   onAction: () => void
+  /** Shown above the actions (Scribe AI's Speak an update, from the app tier). */
+  leading?: ReactNode
 }
 
 type QuickActionOption =
@@ -33,7 +36,11 @@ type QuickActionOption =
   | 'logTrip'
 
 /** One action set for the compact sheet and the iPad anchored menu. */
-export default function QuickActionMenu({ navigation, onAction }: Props) {
+export default function QuickActionMenu({
+  navigation,
+  onAction,
+  leading,
+}: Props) {
   const { showsTimer } = usePublisher()
   const tracksMileage = usePreferences((s) => s.mileageTrackingEnabled === true)
   const hasActiveCar = useMileage((s) => s.vehicles.some((v) => !v.archived))
@@ -66,6 +73,7 @@ export default function QuickActionMenu({ navigation, onAction }: Props) {
   }
   return (
     <View style={{ gap: 10 }}>
+      {leading}
       <ActionButton
         text='logVisitAction'
         icon={DoorOpenIcon}

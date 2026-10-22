@@ -22,19 +22,12 @@ export const LDC_BUILTIN_CATEGORY_ID = 'ldc-builtin-3f9c4a1d'
  * that belongs to no user Category. It is NOT a real Category record: a Time
  * Entry whose type is Standard simply carries no `categoryId`. The sentinel
  * exists so the value can be referenced explicitly where a category id is
- * expected — the Type picker (`STANDARD_TYPE_VALUE`) and the Notes Import model
- * context, which lists Standard among the existing categories so the model
- * attaches ordinary time to it instead of inventing a junk "Standard"
- * category.
+ * expected, such as the Type picker (`STANDARD_TYPE_VALUE`).
  *
  * Consumers that persist a Time Entry must treat this id as "no category" and
- * drop it (see `mapNotesImport`); it must never reach the store as a real
- * `categoryId`.
+ * drop it; it must never reach the store as a real `categoryId`.
  */
 export const STANDARD_CATEGORY_ID = '__standard__'
-
-/** English label for the Standard type, used in the Notes Import model prompt. */
-export const STANDARD_CATEGORY_NAME = 'Standard'
 
 /**
  * User-visible label for the LDC builtin Category. Stored on the Category

@@ -3,6 +3,7 @@ import {
   Car as CarIcon,
   FileText as FileTextIcon,
   Flag as FlagIcon,
+  LayoutGrid as LayoutGridIcon,
   Lightbulb as LightbulbIcon,
   MessagesSquare as MessagesSquareIcon,
   PawPrint as PawPrintIcon,
@@ -10,6 +11,7 @@ import {
 } from 'lucide-react-native'
 import type { AppIcon } from '@/components/ui/LucideIcon'
 import AddItemsSheet from '@/components/ui/reorderable/AddItemsSheet'
+import { useScribeEnabled } from '@/hooks/useScribeEnabled'
 import i18n from '@/lib/locales'
 import { homeSectionTitle } from '@/lib/homeSections'
 import type { HomeScreenElementKey } from '@/stores/preferences'
@@ -20,6 +22,7 @@ const ICONS: Record<HomeScreenElementKey, AppIcon> = {
   serviceReport: FileTextIcon,
   mileage: CarIcon,
   pet: PawPrintIcon,
+  quickActions: LayoutGridIcon,
   thisWeek: CalendarDaysIcon,
   timer: TimerIcon,
   didYouKnow: LightbulbIcon,
@@ -44,6 +47,12 @@ export default function HomeAddSectionsSheet({
   hidden: HomeScreenElementKey[]
   onAdd: (key: HomeScreenElementKey) => void
 }) {
+  // Quick Actions holds the Scribe AI orb; say so, since hiding it hides that.
+  const scribeEnabled = useScribeEnabled()
+  const description = (key: HomeScreenElementKey) =>
+    key === 'quickActions' && scribeEnabled
+      ? i18n.t('homeEdit.description.quickActionsScribe')
+      : i18n.t(`homeEdit.description.${key}`)
   return (
     <AddItemsSheet
       open={open}
@@ -59,7 +68,7 @@ export default function HomeAddSectionsSheet({
             id: key,
             icon: ICONS[key],
             title: homeSectionTitle(key),
-            description: i18n.t(`homeEdit.description.${key}`),
+            description: description(key),
             added: !hidden.includes(key),
           })),
         },

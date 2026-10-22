@@ -23,8 +23,7 @@ const FEATURE_ROWS: ReadonlyArray<{
   /** Android's wording, where it differs. */
   androidLabelKey?: TranslationKey
   iosOnly?: boolean
-  // `true`/`false` render a check/dash; a TranslationKey renders that text
-  // (e.g. the `5` vs. `Unlimited` Notes Import allowance).
+  // `true`/`false` render a check/dash; a TranslationKey renders that text.
   free: boolean | TranslationKey
   supporter: boolean | TranslationKey
 }> = [
@@ -236,16 +235,12 @@ const CompareCell = ({
   )
 }
 
-export interface NotesImportPaywallAllowance {
-  free: string
-  supporter: string
-}
-
 export const ComparisonChart = ({
-  notesImportAllowance,
+  scribeAi = false,
   spacious = false,
 }: {
-  notesImportAllowance?: NotesImportPaywallAllowance
+  /** Adds Scribe AI's row: limited free, generous for Supporters. */
+  scribeAi?: boolean
   spacious?: boolean
 }) => {
   const theme = useTheme()
@@ -266,12 +261,13 @@ export const ComparisonChart = ({
       supporter: resolveCell(row.supporter),
     })
   )
-  if (notesImportAllowance) {
+  if (scribeAi) {
     rows.splice(1, 0, {
-      key: 'notes-import',
-      label: i18n.t('paywallFeatureNotesImport'),
-      free: notesImportAllowance.free,
-      supporter: notesImportAllowance.supporter,
+      key: 'scribe-ai',
+      label: i18n.t('paywallFeatureScribeAi'),
+      // Never "unlimited": Supporters get generous limits.
+      free: i18n.t('paywallScribeAiFree'),
+      supporter: i18n.t('paywallScribeAiSupporter'),
     })
   }
   return (

@@ -72,8 +72,9 @@ Set Up Another Device, backup`"]
     A_SYNC["`**Sync + backups**
 one option per device: Cloud Sync,
 iCloud / Google Drive, or off`"]
-    A_NOTES["`**Notes Import (Scribe AI)**
-on-device voice + photo text`"]
+    A_SCRIBE["`**Scribe AI**
+on-device voice + photo text,
+tools run on the phone`"]
     A_ROUTE["`**Route planning**
 Supporter only`"]
     A_CONTACTS["`**Contacts, visits + map**
@@ -114,8 +115,8 @@ signed JavaScript + assets`")]
     subgraph WORKER["ww-api Worker"]
       R_BUD["`**/buddies/v1/...**
 signed ops, live WebSocket, photos`"]
-      R_NOTES["`**/notes-import/...**
-status, kickoff, SSE, result`"]
+      R_SCRIBE["`**/scribe/v1/...**
+status, usage, step SSE, transcribe`"]
       R_ROUTE["`**POST /route-planning/optimize**
 coordinates only`"]
       R_PLACES["`**GET /geocode, /autocomplete**
@@ -128,7 +129,7 @@ RevenueCat link + Supporter status`"]
       R_RCHOOK["`**POST /revenuecat/v1/webhook**
 keeps Supporter status current`"]
       R_ATTEST["`**/attestation/v1/...**
-challenges, App Attest key setup`"]
+status, challenges, App Attest key setup`"]
       R_APPCFG["`**GET /app/v1/config**
 minimum app version, sync switches`"]
       R_LINKS["`**GET /c, /b, /h, /.well-known**
@@ -154,12 +155,8 @@ attested key per iOS install`")]
       DO_PI[("`**PlayIntegrityChallenges DO**
 one-time Android challenges`")]
     end
-    subgraph NI_STATE["Notes Import state"]
-      DO_IDX[("`**NotesImportIndex DO**
-credits per account`")]
-      DO_RUN[("`**NotesImportRun DO**
-one per import, about 1 hour`")]
-    end
+    DO_METER[("`**ScribeMeter DO**
+usage windows per account`")]
     subgraph ACC_STATE["Account state"]
       D_ACC[("`**D1: accounts**
 account ids, public keys, inbox links,
@@ -185,8 +182,8 @@ switches, limits, tokens, ratings`")]
 decodes Android verdicts`"]
     S_OR["`**OpenRouter**
 LLM gateway`"]
-    S_LLM["`**Fireworks / DigitalOcean**
-zero data retention hosts`"]
+    S_LLM["`**Azure via OpenRouter**
+(zero data retention)`"]
     S_HERE["`**HERE location APIs**
 geocode, autocomplete, sequence`"]
     P_STORE["`**App Store / Google Play**
@@ -217,10 +214,10 @@ analytics, flags, surveys, errors`"]
   A_BUDDIES -->|"signed ops, WebSocket"| R_BUD
   A_ACCOUNT -->|"account key"| P_SEED
   A_ACCOUNT -->|"open session, sealed handoff, sealed backup, RevenueCat id"| R_ACC
-  A_ACCOUNT -->|"key setup, session challenge"| R_ATTEST
+  A_ACCOUNT -->|"status, key setup, session challenge"| R_ATTEST
   A_SHELL -->|"minimum version"| R_APPCFG
-  A_NOTES -->|"account session"| A_ACCOUNT
-  A_NOTES -->|"bearer: notes text, SSE stream"| R_NOTES
+  A_SCRIBE -->|"account session"| A_ACCOUNT
+  A_SCRIBE -->|"bearer: conversation + tools, SSE per step"| R_SCRIBE
   A_ROUTE -->|"account session"| A_ACCOUNT
   A_ROUTE -->|"bearer: today's stops"| R_ROUTE
   A_CONTACTS -->|"address lookup"| R_PLACES
@@ -246,13 +243,10 @@ analytics, flags, surveys, errors`"]
   R_ATTEST -->|"Android challenge"| DO_PI
   DO_INBOX <-->|"invites"| DO_INV
   DO_INBOX -->|"photo writes"| R2
-  R_NOTES -->|"legacy iOS attest"| DO_AA
-  R_NOTES -->|"legacy Android challenge"| DO_PI
-  R_NOTES -->|"credits"| DO_IDX
-  R_NOTES -->|"run, SSE"| DO_RUN
+  R_SCRIBE -->|"usage windows"| DO_METER
   R_ROUTE -->|"daily quota"| DO_RPQ
   R_ROUTE -->|"Supporter status"| D_ACC
-  R_NOTES -->|"Supporter status"| D_ACC
+  R_SCRIBE -->|"Supporter status"| D_ACC
   R_RCHOOK -->|"customer records"| D_ACC
   R_RATINGS -->|"cached ratings"| KV
   CRON -->|"writes ratings"| KV
@@ -261,8 +255,7 @@ analytics, flags, surveys, errors`"]
   R_BUD -.->|"push"| P_PUSH
   P_PUSH -.->|"iOS alert"| C_NSE
   P_PUSH -.->|"Android data push"| A_BUDDIES
-  R_NOTES -->|"legacy Android verdict"| S_GPI
-  DO_RUN -->|"streamed output"| S_OR
+  R_SCRIBE -->|"model steps (streamed) and page reads, ZDR hosts only"| S_OR
   S_OR --> S_LLM
   R_ROUTE -->|"waypoint sequence"| S_HERE
   R_PLACES -->|"geocode, autocomplete"| S_HERE
@@ -281,11 +274,11 @@ analytics, flags, surveys, errors`"]
   classDef state fill:#ffc078,stroke:#d9480f,color:#1e1e1e
   classDef external fill:#d0bfff,stroke:#6741d9,color:#1e1e1e
   class C_WIDGETS,C_SIRI,C_WATCH,C_WEAR,C_NSE device
-  class A_CORE,A_BUDDIES,A_ACCOUNT,A_SYNC,A_NOTES,A_ROUTE,A_CONTACTS,A_LINKS,A_SUPPORTER,A_SHELL app
+  class A_CORE,A_BUDDIES,A_ACCOUNT,A_SYNC,A_SCRIBE,A_ROUTE,A_CONTACTS,A_LINKS,A_SUPPORTER,A_SHELL app
   class A_LOCAL local
   class P_CAL,P_SEED,P_SYNC,P_ATTEST,P_MAPS,P_PUSH,P_STORE,S_GPI platform
-  class R_BUD,R_ACC,R_RCHOOK,R_ATTEST,R_APPCFG,R_NOTES,R_ROUTE,R_PLACES,R_LINKS,R_RATINGS,CRON worker
-  class DO_REGQ,DO_INV,DO_INBOX,R2,D_ACC,DO_HANDOFF,R2_BACKUP,DO_SYNC,R2_SYNC,DO_AA,DO_PI,DO_IDX,DO_RUN,DO_RPQ,KV state
+  class R_BUD,R_ACC,R_RCHOOK,R_ATTEST,R_APPCFG,R_SCRIBE,R_ROUTE,R_PLACES,R_LINKS,R_RATINGS,CRON worker
+  class DO_REGQ,DO_INV,DO_INBOX,R2,D_ACC,DO_HANDOFF,R2_BACKUP,DO_SYNC,R2_SYNC,DO_AA,DO_PI,DO_METER,DO_RPQ,KV state
   class S_OR,S_LLM,S_HERE,S_SENTRY,S_RC,S_PH,S_EAS external
 ```
 
@@ -293,8 +286,8 @@ analytics, flags, surveys, errors`"]
 - Buddies cards, events, and photos are sealed on the device before they reach the relay. [docs/buddies-protocol.md](./docs/buddies-protocol.md) lists what the relay can see.
 - Account backups are sealed on the device with a key only the User's devices can derive; the server keeps each device's ciphertext, its size and upload time ([docs/accounts-protocol.md](./docs/accounts-protocol.md#backup)).
 - Each device syncs through one option ([ADR 0030](./docs/adr/0030-cloud-sync-through-ww-api.md)). Cloud Sync, the default, works across iOS and Android: each device's snapshot is sealed with the account's sync key before it reaches ww-api, and the account's sync socket tells its other devices to pull. iCloud and Google Drive sync stay available, and devices sync only with devices on the same option ([docs/icloud-sync.md](./docs/icloud-sync.md)).
-- Notes Import reaches its model through OpenRouter, pinned to zero-data-retention hosts ([ADR 0008](./docs/adr/0008-notes-import-third-party-llm-zero-retention.md)). It calls ww-api with the account's attested session, which stands in for attesting each import ([ADR 0027](./docs/adr/0027-account-sessions-attest-once-then-bearer-tokens.md)); the legacy edges serve app versions from before sessions.
-- Supporter status lives on the server account ([ADR 0029](./docs/adr/0029-supporter-status-on-the-server-account.md)): the app names the RevenueCat customer it's logged in as, ww-api reads that customer from RevenueCat itself, and RevenueCat's webhook keeps the record current. Legacy route planning and Notes Import still ask RevenueCat about the id they send.
+- Scribe AI reaches its model through OpenRouter, pinned to zero-data-retention hosts ([ADR 0008](./docs/adr/0008-notes-import-third-party-llm-zero-retention.md)). Its tools run on the phone: each model step is one bearer request on the account's attested session ([ADR 0027](./docs/adr/0027-account-sessions-attest-once-then-bearer-tokens.md)) carrying the conversation, and ww-api keeps only usage records ([ADR 0032](./docs/adr/0032-scribe-ai-agent-harness.md), [docs/scribe-ai-protocol.md](./docs/scribe-ai-protocol.md)). The old `/notes-import/...` routes answer 426 Update Required, except the status probe older app versions still read.
+- Supporter status lives on the server account ([ADR 0029](./docs/adr/0029-supporter-status-on-the-server-account.md)): the app names the RevenueCat customer it's logged in as, ww-api reads that customer from RevenueCat itself, and RevenueCat's webhook keeps the record current. Legacy route planning still asks RevenueCat about the id it sends.
 - Left out: `GET /health` (the app checks its clock against it), the admin reset route, the private CloudKit record that picks which iPhone publishes Follow-ups to the calendar, link previews the device fetches for URLs in notes, and the build and release pipeline.
 
 When a change adds, removes, or reroutes one of these connections, update the diagram in the same pull request.

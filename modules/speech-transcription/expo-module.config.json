@@ -1,4 +1,7 @@
 {
-  "platforms": ["ios"],
-  "ios": { "modules": ["SpeechTranscriptionModule"] }
+  "platforms": ["ios", "android"],
+  "ios": { "modules": ["SpeechTranscriptionModule"] },
+  "android": {
+    "modules": ["expo.modules.speechtranscription.SpeechTranscriptionModule"]
+  }
 }

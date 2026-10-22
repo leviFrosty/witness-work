@@ -5,7 +5,7 @@ description: Drive the real WitnessWork app on an iOS simulator or Android emula
 
 # Verify WitnessWork
 
-`scripts/verify/ww-verify.mjs` claims a dedicated device, runs an isolated Metro, installs a dev build that matches this tree's native fingerprint, launches the app, and drives it. Inside the app, dev builds expose `globalThis.__WW_DEV__`, which seeds data, flips flags, navigates and reads state back over Hermes CDP. It never touches the user's own simulators, emulators or Metro on 8081. Every run also gets a local backend: `up` starts an isolated ww-api and points the bundle at it, so Buddies, Notes Import and other backend features work without the user's own ww-api running.
+`scripts/verify/ww-verify.mjs` claims a dedicated device, runs an isolated Metro, installs a dev build that matches this tree's native fingerprint, launches the app, and drives it. Inside the app, dev builds expose `globalThis.__WW_DEV__`, which seeds data, flips flags, navigates and reads state back over Hermes CDP. It never touches the user's own simulators, emulators or Metro on 8081. Every run also gets a local backend: `up` starts an isolated ww-api and points the bundle at it, so Buddies, Scribe AI and other backend features work without the user's own ww-api running.
 
 Alias it: `alias wwv="node scripts/verify/ww-verify.mjs"`. All commands run from the worktree root and print JSON or `ok`/`FAIL` lines.
 
@@ -73,6 +73,7 @@ It's ready when `up` prints its JSON summary. A first build for a new native fin
 - **The backend.** Before Metro, `up` runs ww-api's `scripts/verify/dev.mjs up`, an isolated `wrangler dev` on 8790-8799 with its own storage (never the user's 8787), and points the bundle at it through `WW_VERIFY_API_BASE_URL`. Its `api` output shows the URL and the ww-api commit. All worktrees share that one worker; it stops when the last lease using it is released or reaped.
   - By default it runs from `~/dev/ww-api-worktrees/ww-verify`, a detached worktree the harness owns. Whenever no worker is running from it, `up` moves it to the latest `origin/main` and reinstalls dependencies when the lockfile changed, so it never depends on the user's checkout. Don't edit files there. `WW_API_REPO` overrides the repo (default `~/dev/ww-api`).
   - When the app change needs an unmerged backend branch, set `WW_API_DIR=<that ww-api worktree>` on `up`. The harness runs that checkout as is.
+  - The worker gets synthetic tokens only, so features that call an outside service (Scribe AI's model, through OpenRouter) need real keys: set `WW_API_SECRETS_FROM=~/dev/ww-api/.dev.vars` on `up`, which hands that file to ww-api's `dev.mjs up --secrets-from`. It keeps only allowlisted names (`OPENROUTER_API_KEY`, `HERE_API_KEY`, …) and writes them to the worker's own vars file; never print or commit them. Keys load only when the worker starts: a worker already running without them is reused as is, so stop it first (`node <ww-api checkout>/scripts/verify/dev.mjs down`) when no other worktree uses it. See [`features/scribe.md`](features/scribe.md).
   - `--api env` uses `.env`'s `EXPO_PUBLIC_API_BASE_URL` instead (the user's ww-api on 8787, or a deployed one), shared with the user and every other worktree. Use it only when the task is about that API.
 - `--ipad` needs [AXe](https://github.com/cameroncooke/AXe) (`brew install cameroncooke/axe/axe`) to read the screen; see [iPad](#ipad). `doctor` checks for it.
 - `up` ends by checking a screenshot for the native splash. If it still covers the app after `hide()`, `up` relaunches once, then fails.
@@ -91,7 +92,7 @@ Checks: free disk, Metro served from this worktree, API `/health`, the device le
 
 ```bash
 wwv seed pioneer            # fresh | onboarded | publisher | pioneer | busy | badges | stress
-wwv flag buddies on         # buddies | notes-import; on | off | clear
+wwv flag buddies on         # buddies | scribe-ai; on | off | clear
 wwv eval '__WW_DEV__.setSupporter(true)'
 wwv nav "Contact Details" '{"id":"verify-contact-0"}'
 wwv link 'witnesswork://add-time'   # real deep-link path; accepts the iOS "Open in" prompt
@@ -99,11 +100,11 @@ wwv eval '__WW_DEV__.state()'       # route, counts, role, badges, captured erro
 wwv eval '__WW_DEV__.remount()'     # every screen mounts fresh on Home, dropping open sheets; state().ready turns true once they're up
 wwv eval '__WW_DEV__.alerts()'      # Alert.alert dialogs still on screen: { title, buttons, cancel }
 wwv eval '__WW_DEV__.stores.preferences.getState().timeDisplayFormat'
-wwv eval '__WW_DEV__.forgetNotesImportCredits()'   # Notes Import as before the first import
+wwv eval '__WW_DEV__.scribe.state()'   # Scribe AI: status, usage, conversations, undo records (see features/scribe.md)
 wwv eval '__WW_DEV__.stores.updateRequired.setState({ required: { source: "config", currentVersion: "1.44.1", minVersion: "9.0.0" } })'
 ```
 
-`seed` clears the device's data first, then saves the scenario, so the seeded data (the builtin LDC Category included) is still there after a relaunch (`wwv up`). It keeps Notes Import's persisted Import Credits; `forgetNotesImportCredits()` drops them. Setting `updateRequired` shows Update Required on this device only (`required: null` lifts it); never put an `app:min-version` floor on the shared local API for that, since every worktree uses it. To drive the real paths, `__WW_DEV__.appUpdate` answers ww-api for this device: `minAppVersion('99.0.0')` serves that floor from `GET /app/v1/config` and reads it, `minAppVersion(null)` lowers it again, `upgradeRequired('/accounts/v1/sync/')` answers 426 to matching requests, `requests()` lists what the app sent since, and `clear()` stops. A `seed` lifts Update Required and clears these. `e2e/maestro/update-required.yaml` uses them.
+`seed` clears the device's data first, then saves the scenario, so the seeded data (the builtin LDC Category included) is still there after a relaunch (`wwv up`). Setting `updateRequired` shows Update Required on this device only (`required: null` lifts it); never put an `app:min-version` floor on the shared local API for that, since every worktree uses it. To drive the real paths, `__WW_DEV__.appUpdate` answers ww-api for this device: `minAppVersion('99.0.0')` serves that floor from `GET /app/v1/config` and reads it, `minAppVersion(null)` lowers it again, `upgradeRequired('/accounts/v1/sync/')` answers 426 to matching requests, `requests()` lists what the app sent since, and `clear()` stops. A `seed` lifts Update Required and clears these. `e2e/maestro/update-required.yaml` uses them.
 
 Scenarios are built relative to today (`src/app/dev-harness/scenarios.ts`).
 

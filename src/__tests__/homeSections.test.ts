@@ -21,7 +21,11 @@ vi.mock('@/lib/locales', () => ({
   default: { t: (k: string) => k },
 }))
 
-import { isHomeSectionAvailable, moveHomeSection } from '@/lib/homeSections'
+import {
+  homeSectionTitle,
+  isHomeSectionAvailable,
+  moveHomeSection,
+} from '@/lib/homeSections'
 import {
   hideHomeSection,
   isHomeSectionShown,
@@ -70,6 +74,24 @@ describe('Home sections', () => {
       })
     ).toBe(false)
     expect(isHomeSectionAvailable('thisWeek', phone)).toBe(true)
+  })
+
+  it('always offers Quick Actions, whatever the device can do', () => {
+    expect(isHomeSectionAvailable('quickActions', phone)).toBe(true)
+    expect(
+      isHomeSectionAvailable('quickActions', {
+        isTablet: true,
+        hasAnnualGoal: false,
+        showsTimer: false,
+        mileageTrackingEnabled: false,
+      })
+    ).toBe(true)
+  })
+
+  it('names every section', () => {
+    expect(homeSectionTitle('quickActions')).toBe('quickActions_sectionTitle')
+    for (const key of DEFAULT_HOME_SCREEN_ELEMENTS_ORDER)
+      expect(homeSectionTitle(key)).toBeTruthy()
   })
 
   it('moves a section to where it was dropped', () => {

@@ -35,7 +35,7 @@ import '@/app/buddies/buddiesBackgroundSync'
 import NotificationResponseListener from '@/app/notifications/NotificationResponseListener'
 import SilentForegroundAlerts from '@/app/notifications/SilentForegroundAlerts'
 import SystemMenu from '@/app/menu-bar/SystemMenu'
-import NotesImportAttestPreparation from '@/features/notes-import/components/NotesImportAttestPreparation'
+import { ScribeRoot } from '@/features/scribe'
 import SupporterStoreSync from '@/features/supporter/components/SupporterStoreSync'
 import SupporterSyncDefault from '@/app/sync/components/SupporterSyncDefault'
 import CloudSyncDefault from '@/app/sync/components/CloudSyncDefault'
@@ -45,7 +45,6 @@ import { FeatureFlagsRuntime } from '@/lib/featureFlags'
 import '@/lib/analyticsConsent'
 import { usePreferences } from '@/stores/preferences'
 import useUserLocalePrefs from '@/features/settings/hooks/useLocale'
-import { useNotesImportResume } from '@/features/notes-import/hooks/useNotesImportResume'
 import { useDevRemountKey } from '@/app/navigation/useDevRemountKey'
 import { useAppMigrations } from '@/app/migrations/useAppMigrations'
 import { useWidgetSync } from '@/app/widgets/useWidgetSync'
@@ -113,7 +112,6 @@ function UnlockedApp() {
   const fontsLoaded = useAppFonts()
   const routeNameRef = useRef<string | undefined>(undefined)
   const devRemountKey = useDevRemountKey()
-  useNotesImportResume()
   const hasMigrated = useAppMigrations()
   const directionReloadDue = useLayoutDirectionReload()
 
@@ -129,7 +127,7 @@ function UnlockedApp() {
       <LaunchWork />
       <AccountProvider>
         <FeatureFlagsRuntime />
-        <NotesImportAttestPreparation />
+        <ScribeRoot />
         <SupporterStoreSync />
         <SupporterSyncDefault />
         <CloudSyncDefault />

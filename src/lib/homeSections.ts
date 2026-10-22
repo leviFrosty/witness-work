@@ -20,6 +20,8 @@ export const homeSectionTitle = (key: HomeScreenElementKey): string => {
       return i18n.t('mileage.title')
     case 'pet':
       return i18n.t('pet.homeSectionLabel')
+    case 'quickActions':
+      return i18n.t('quickActions_sectionTitle')
     case 'thisWeek':
       return i18n.t('thisWeek')
     case 'timer':

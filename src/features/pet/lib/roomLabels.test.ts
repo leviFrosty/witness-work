@@ -1,11 +1,13 @@
 import { describe, expect, it, vi } from 'vitest'
 import { ROOM_PARTS } from '@/features/pet/art'
 import {
+  lockedNoteText,
   roomOptionLabel,
   roomSectionLabel,
   roomTabLabel,
   unlockBadgeText,
   unlockNoteText,
+  unlockPillText,
   unlockRequirementText,
 } from '@/features/pet/lib/roomLabels'
 import { ROOM_TABS, type RoomChoicePart } from '@/features/pet/lib/roomOptions'
@@ -58,6 +60,31 @@ describe('Decorate Room labels', () => {
     )
     expect(unlockNoteText('streak', 'plans', 'hat')).toBe(
       unlockNoteText('streak', 'plans')
+    )
+  })
+
+  it('never says how a secret opens up', () => {
+    expect(unlockRequirementText({ by: 'secret' })).toBe(
+      'A surprise, waiting in its own time.'
+    )
+    expect(unlockPillText({ by: 'secret' })).toBe('?')
+    expect(unlockPillText({ by: 'streak', count: 7 })).toBe('7')
+    expect(unlockPillText({ by: 'months', monthsFromNow: 0 })).toBe(
+      'This month'
+    )
+  })
+
+  it('adds the secrets to the locked note only while one is locked', () => {
+    const regular = unlockNoteText('streak', 'plans', 'bed')
+    const note = (locked: { regular: boolean; secret: boolean }) =>
+      lockedNoteText('streak', 'plans', 'bed', locked)
+    expect(note({ regular: false, secret: false })).toBeNull()
+    expect(note({ regular: true, secret: false })).toBe(regular)
+    expect(note({ regular: false, secret: true })).toBe(
+      'Some items are secrets. They show up along the way.'
+    )
+    expect(note({ regular: true, secret: true })).toBe(
+      `${regular} Some items are secrets. They show up along the way.`
     )
   })
 

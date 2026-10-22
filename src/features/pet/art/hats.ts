@@ -1,15 +1,21 @@
 /**
- * Hats: twelve small pixel hats the pet can wear, drawn with the same shape
- * rasterizer as the pets so they get the same shading and outlines.
+ * Hats: small pixel hats the pet can wear, drawn with the same shape rasterizer
+ * as the pets so they get the same shading and outlines. The first twelve are
+ * here; the secret ones are in `hatsWorld.ts` (folk hats from around the world)
+ * and `hatsWhimsy.ts` (the playful ones).
  *
  * A hat is drawn in its own {@link HAT_W} × {@link HAT_H} canvas, centred on x
  * {@link HAT_CX}; its lowest brim row is {@link HAT_BRIM_ROW}. The scene puts
  * that row on the species' {@link HAT_ANCHOR_Y} row of the sprite (moved down
  * with the head's bob), centred on the sprite, so a hat can rise above the
- * sprite's 32 × 32 box. A pet lying down (rolling over, or one that died) has
- * no hat.
+ * sprite's 32 × 32 box. The first twelve are drawn {@link HAT_LIFT} rows lower
+ * in a {@link HAT_SHORT_H}-row canvas and moved up into it, so their numbers
+ * stay as they were drawn. A pet lying down (rolling over, or one that died)
+ * has no hat.
  */
 import {
+  blit,
+  createBuffer,
   createLru,
   flipH,
   rasterize,
@@ -21,18 +27,30 @@ import {
 } from '@/lib/pixelArt'
 import type { HatId } from '@/types/pet'
 
+import {
+  dome,
+  HAT_BRIM_ROW,
+  HAT_CX,
+  HAT_H,
+  HAT_LIFT,
+  HAT_SHORT_H,
+  HAT_W,
+  rect,
+} from './hatShapes'
+import { WHIMSY_HAT_SPECS } from './hatsWhimsy'
+import { WORLD_HAT_SPECS } from './hatsWorld'
 import { SPRITE_SIZE } from './layout'
 import { greyed } from './sprite'
 import type { GreyMode, PetSpeciesId } from './types'
 
-/** Hat canvas width. */
-export const HAT_W = 24
-/** Hat canvas height. */
-export const HAT_H = 14
-/** The hat canvas' centre column (between pixels 11 and 12). */
-export const HAT_CX = HAT_W / 2
-/** The canvas row of the hat's lowest brim pixels. */
-export const HAT_BRIM_ROW = 11
+export {
+  HAT_BRIM_ROW,
+  HAT_CX,
+  HAT_H,
+  HAT_LIFT,
+  HAT_SHORT_H,
+  HAT_W,
+} from './hatShapes'
 
 /**
  * The sprite row each species' hat brim sits on with no bob: just below the top
@@ -60,31 +78,6 @@ export const HAT_EARS_THROUGH: Readonly<
 }
 
 const C = HAT_CX
-
-/** The top half of an ellipse on `base`, as a polygon. */
-function dome(
-  cx: number,
-  base: number,
-  rx: number,
-  ry: number,
-  steps = 14
-): [number, number][] {
-  const pts: [number, number][] = []
-  for (let i = 0; i <= steps; i++) {
-    const a = Math.PI + (i / steps) * Math.PI
-    pts.push([cx + rx * Math.cos(a), base + ry * Math.sin(a)])
-  }
-  return pts
-}
-
-/** A rectangle from (x0, y0) to (x1, y1). */
-const rect = (x0: number, y0: number, x1: number, y1: number) =>
-  [
-    [x0, y0],
-    [x1, y0],
-    [x1, y1],
-    [x0, y1],
-  ] as [number, number][]
 
 const P = rgbPalette({
   bow: '#ef7b9b',
@@ -157,7 +150,8 @@ function flower(x: number, y: number, petal: Rgb): Shape {
   return { t: 'e', x, y, rx: 1.7, ry: 1.6, c: petal, g: 'crown' }
 }
 
-const SPECS: Readonly<Record<Exclude<HatId, 'none'>, ShapeSpec>> = {
+/** The first twelve hats, in {@link HAT_SHORT_H}-row coordinates. */
+const SHORT_SPECS = {
   bow: {
     shapes: [
       {
@@ -451,6 +445,28 @@ const SPECS: Readonly<Record<Exclude<HatId, 'none'>, ShapeSpec>> = {
       },
     ],
   },
+} satisfies Readonly<Record<string, ShapeSpec>>
+
+type ShortHatId = keyof typeof SHORT_SPECS
+
+/**
+ * Every hat but `none`. Secret hats are drawn in the full {@link HAT_W} ×
+ * {@link HAT_H} canvas with the brim on {@link HAT_BRIM_ROW}.
+ */
+const TALL_SPECS: Readonly<
+  Record<Exclude<HatId, 'none' | ShortHatId>, ShapeSpec>
+> = { ...WORLD_HAT_SPECS, ...WHIMSY_HAT_SPECS }
+
+const isShortHat = (hat: string): hat is ShortHatId =>
+  Object.hasOwn(SHORT_SPECS, hat)
+
+/** Rasterizes a hat into the full canvas. */
+function drawHat(hat: Exclude<HatId, 'none'>): PixelBuffer {
+  if (!isShortHat(hat))
+    return rasterize(TALL_SPECS[hat as keyof typeof TALL_SPECS], HAT_W, HAT_H)
+  const out = createBuffer(HAT_W, HAT_H)
+  blit(out, rasterize(SHORT_SPECS[hat], HAT_W, HAT_SHORT_H), 0, HAT_LIFT)
+  return out
 }
 
 const cache = createLru<PixelBuffer>(64)
@@ -464,11 +480,10 @@ export function hatSprite(
   hat: string,
   opts: { readonly flip?: boolean; readonly grey?: GreyMode } = {}
 ): PixelBuffer | null {
-  if (!Object.hasOwn(SPECS, hat)) return null
-  const spec = SPECS[hat as Exclude<HatId, 'none'>]
+  if (!isShortHat(hat) && !Object.hasOwn(TALL_SPECS, hat)) return null
   const grey = opts.grey ?? 'none'
   return cache.getOrCreate(`${hat}|${opts.flip ? 1 : 0}|${grey}`, () => {
-    let px = rasterize(spec, HAT_W, HAT_H)
+    let px = drawHat(hat as Exclude<HatId, 'none'>)
     if (opts.flip) px = flipH(px)
     return greyed(px, grey)
   })

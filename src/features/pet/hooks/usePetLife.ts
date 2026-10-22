@@ -8,12 +8,13 @@ import useConversations from '@/stores/conversationStore'
 import usePet from '@/stores/pet'
 import { usePreferences } from '@/stores/preferences'
 import { useServiceReport } from '@/stores/serviceReport'
-import type {
-  GiftKind,
-  PetRecord,
-  PetRoomRecord,
-  PetRoomSettings,
-  RoomItemId,
+import {
+  SECRET_ROOM_ITEMS,
+  type GiftKind,
+  type PetRecord,
+  type PetRoomRecord,
+  type PetRoomSettings,
+  type RoomItemId,
 } from '@/types/pet'
 import { activeMonths } from '@/features/pet/lib/activity'
 import { localDayKey, monthOfDayKey } from '@/features/pet/lib/dayKeys'
@@ -34,6 +35,10 @@ import {
   unlockMode,
   type UnlockMode,
 } from '@/features/pet/lib/unlocks'
+import {
+  isSecretItem,
+  secretItemsEarnedBy,
+} from '@/features/pet/lib/secretUnlocks'
 import { usePetSession } from '@/features/pet/stores/petSession'
 
 /**
@@ -68,6 +73,35 @@ const earnedOf = lastResult(
     roomItemsEarnedBy(
       mode === 'streak' ? { mode, kind, count } : { mode, activeMonths: months }
     )
+)
+/**
+ * The secret items earned now (`secretItemsEarnedBy`), the same list while what
+ * their rules read is.
+ */
+const secretsOf = lastResult(
+  (
+    badges: Readonly<Record<string, unknown>>,
+    keepsakes: number,
+    gold: boolean,
+    mode: UnlockMode,
+    kind: StreakKind,
+    count: number,
+    months: number,
+    all: boolean
+  ): RoomItemId[] =>
+    all
+      ? [...SECRET_ROOM_ITEMS]
+      : secretItemsEarnedBy({
+          badges: new Set(Object.keys(badges)),
+          keepsakes,
+          gold,
+          streak: mode === 'streak' ? { kind, count } : null,
+          activeMonths: months,
+        })
+)
+const joinedOf = lastResult(
+  (a: readonly RoomItemId[], b: readonly RoomItemId[]): RoomItemId[] =>
+    b.length ? [...a, ...b] : (a as RoomItemId[])
 )
 const NOTHING_EARNED = unlockedRoomItems([], [])
 const monthsOf = lastResult(activeMonths)
@@ -120,18 +154,23 @@ export default function usePetLife(): PetLifeState {
   const visits = useConversations((state) => state.conversations)
   const showStreaks = usePreferences((state) => state.showStreaks)
   const role = usePreferences((state) => state.role)
+  const earnedBadges = usePreferences((state) => state.earnedBadges)
   const roleHistory = usePreferences((state) => state.roleHistory)
   const { entryMode } = usePublisher()
   const streak = useServiceStreak()
   const todayKey = localDayKey(useToday())
 
-  // Dev harness: a faked streak shows its unlocks without storing them, and
-  // so does Developer Tools' streak override.
+  // Dev harness: a faked streak or revealed secrets show their unlocks without
+  // storing them, and so does Developer Tools' streak override.
   const fakedStreak = usePetSession((s) =>
     __DEV__ ? s.devOverride?.streak : undefined
   )
+  const fakedSecrets = usePetSession((s) =>
+    __DEV__ ? s.devOverride?.secrets === true : false
+  )
   const toolsStreak = usePreferences((state) => state.devStreakOverride)
-  const faking = fakedStreak !== undefined || toolsStreak !== null
+  const faking =
+    fakedStreak !== undefined || fakedSecrets || toolsStreak !== null
 
   const pet = petOf(storedPet)
   const roomDefaults = defaultRoomFor(entryMode)
@@ -149,9 +188,32 @@ export default function usePetLife(): PetLifeState {
   const months =
     pet && activeDays ? monthsOf(activeDays, pet.adoptedOn, todayKey) : 0
   const stored = storedOf(pet)
-  const earned = pet
-    ? earnedOf(mode, streak.kind, fakedStreak ?? streak.count, months)
-    : []
+  const life =
+    pet && activeDays
+      ? petLifeOn(
+          pet,
+          activeDays,
+          todayKey,
+          selectHeartsPace(roleHistory, role)
+        )
+      : null
+  const count = fakedStreak ?? streak.count
+  const earned =
+    pet && life
+      ? joinedOf(
+          earnedOf(mode, streak.kind, count, months),
+          secretsOf(
+            earnedBadges,
+            pet.keepsakes.length,
+            life.gold,
+            mode,
+            streak.kind,
+            count,
+            months,
+            fakedSecrets
+          )
+        )
+      : []
   // Joined, so the effect only runs when the list to store changes.
   const toStore = faking ? '' : roomItemsToStore(stored, earned).join(' ')
   useEffect(() => {
@@ -161,10 +223,13 @@ export default function usePetLife(): PetLifeState {
       .getState()
       .earnRoomItems(toStore.split(' ') as RoomItemId[])
     for (const item of added)
-      analytics.capture('pet_room_item_unlocked', { item, by: mode })
+      analytics.capture('pet_room_item_unlocked', {
+        item,
+        by: isSecretItem(item) ? 'secret' : mode,
+      })
   }, [toStore, mode])
 
-  if (!pet || !activeDays)
+  if (!pet || !life)
     return {
       pet: null,
       room,
@@ -180,12 +245,6 @@ export default function usePetLife(): PetLifeState {
       todayKey,
     }
 
-  const life = petLifeOn(
-    pet,
-    activeDays,
-    todayKey,
-    selectHeartsPace(roleHistory, role)
-  )
   return {
     pet,
     room,
@@ -197,7 +256,9 @@ export default function usePetLife(): PetLifeState {
     streakKind: streak.kind,
     pendingGift: pendingGift({ life, keepsakes: pet.keepsakes }),
     activeMonths: months,
-    thisMonthActive: thisMonthActiveOf(activeDays, pet.adoptedOn, todayKey),
+    thisMonthActive: activeDays
+      ? thisMonthActiveOf(activeDays, pet.adoptedOn, todayKey)
+      : false,
     todayKey,
   }
 }

@@ -14,7 +14,7 @@ const runtime = vi.hoisted(() => ({
   navigate: vi.fn(),
   capture: vi.fn(),
   measure: vi.fn(),
-  removeListener: vi.fn(),
+  appStateListeners: new Set<(state: string) => void>(),
 }))
 
 vi.mock('react-native', () => ({
@@ -32,7 +32,10 @@ vi.mock('react-native', () => ({
     get currentState() {
       return runtime.appState
     },
-    addEventListener: () => ({ remove: runtime.removeListener }),
+    addEventListener: (_: string, listener: (state: string) => void) => {
+      runtime.appStateListeners.add(listener)
+      return { remove: () => runtime.appStateListeners.delete(listener) }
+    },
   },
 }))
 vi.mock('@react-navigation/native', async () => {
@@ -91,6 +94,11 @@ import Button from '@/components/ui/Button'
 import IconButton from '@/components/ui/IconButton'
 
 let renderer: ReactTestRenderer | undefined
+const setAppState = (state: string) =>
+  act(() => {
+    runtime.appState = state
+    runtime.appStateListeners.forEach((listener) => listener(state))
+  })
 const gate = () => (
   <IsSupporter analyticsSurface='accent_color' feature='customAccentColor'>
     <React.Fragment>Palette</React.Fragment>
@@ -130,6 +138,7 @@ beforeEach(() => {
   runtime.focused = true
   runtime.screen = 'PreferencesPersonalization'
   runtime.appState = 'active'
+  runtime.appStateListeners.clear()
   runtime.platform = 'ios'
   runtime.rect = { x: 12, y: 100, width: 300, height: 30 }
   runtime.nextId = 0
@@ -267,11 +276,26 @@ it('does not count allowed, unfocused, or background gates', () => {
     vi.advanceTimersByTime(500)
   })
   expect(runtime.capture).not.toHaveBeenCalled()
-  runtime.appState = 'active'
-  act(() => {
-    vi.advanceTimersByTime(500)
-  })
+  setAppState('active')
   expect(events('supporter_feature_gate_viewed')).toHaveLength(1)
+})
+
+it('stops sampling an unseen gate while the app is in the background', () => {
+  runtime.rect.y = 850
+  render()
+  setAppState('background')
+  runtime.measure.mockClear()
+  act(() => {
+    vi.advanceTimersByTime(60_000)
+  })
+  expect(runtime.measure).not.toHaveBeenCalled()
+  expect(vi.getTimerCount()).toBe(0)
+  runtime.rect.y = 100
+  setAppState('active')
+  expect(events('supporter_feature_gate_viewed')).toHaveLength(1)
+  act(() => renderer?.unmount())
+  renderer = undefined
+  expect(runtime.appStateListeners.size).toBe(0)
 })
 
 it('starts a new visible visit when returning to the screen', () => {
@@ -317,5 +341,5 @@ it('ignores a measurement that resolves after the screen loses focus', () => {
   act(() => renderer!.update(gate()))
   act(() => complete?.(12, 100, 300, 30))
   expect(runtime.capture).not.toHaveBeenCalled()
-  expect(runtime.removeListener).toHaveBeenCalled()
+  expect(runtime.appStateListeners.size).toBe(0)
 })

@@ -2,6 +2,7 @@ import { useEffect, useState, useSyncExternalStore } from 'react'
 import { AppState } from 'react-native'
 import { useIsFocused } from '@react-navigation/native'
 import type { HandoffSession } from '@/app/account/handoff'
+import useAppActive from '@/hooks/useAppActive'
 import { syncNow } from '@/lib/syncClock'
 
 /** Clients poll this often while a screen shows the handoff (the protocol's). */
@@ -46,14 +47,18 @@ export function useHandoffPolling(
   }, [session, active, focused, foreground])
 }
 
-/** Milliseconds left until `expiresAt` (server time), ticking each second. */
+/**
+ * Milliseconds left until `expiresAt` (server time), ticking each second while
+ * the app is in the foreground.
+ */
 export function useHandoffCountdown(expiresAt: number | null): number | null {
   const [now, setNow] = useState(syncNow)
+  const foreground = useAppActive()
   useEffect(() => {
-    if (expiresAt === null) return
+    if (expiresAt === null || !foreground) return
     setNow(syncNow())
     const timer = setInterval(() => setNow(syncNow()), 1000)
     return () => clearInterval(timer)
-  }, [expiresAt])
+  }, [expiresAt, foreground])
   return expiresAt === null ? null : Math.max(0, expiresAt - now)
 }

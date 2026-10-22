@@ -16,7 +16,10 @@ import confirmDeletePlan, {
 } from '@/lib/confirmDeletePlan'
 import { openURL } from '@/lib/links'
 import i18n from '@/lib/locales'
-import { DEFAULT_START_TIME_IN_MINUTES } from '@/lib/normalizeDate'
+import {
+  atMinutesOfDay,
+  DEFAULT_START_TIME_IN_MINUTES,
+} from '@/lib/normalizeDate'
 import { appleMapsUrl } from '@/lib/placeSearch'
 import { richTextLinks } from '@/lib/richText/inspect'
 import { getNoteDoc, getNoteText } from '@/lib/richText/notes'
@@ -176,11 +179,10 @@ export default function usePlanMenuActions(
         prefill: {
           startTime: effective.anytime
             ? undefined
-            : duplicateDay
-                .clone()
-                .startOf('day')
-                .add(effective.startTimeInMinutes, 'minutes')
-                .toISOString(),
+            : atMinutesOfDay(
+                duplicateDay,
+                effective.startTimeInMinutes
+              ).toISOString(),
           ...(effective.anytime ? { anytime: true } : {}),
           minutes: effective.minutes,
           note: effective.note.note,

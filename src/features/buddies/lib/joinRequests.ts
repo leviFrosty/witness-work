@@ -1,5 +1,6 @@
 import moment from 'moment'
 import {
+  atMinutesOfDay,
   DEFAULT_START_TIME_IN_MINUTES,
   getStartTimeInMinutes,
   storedDayKey,
@@ -26,10 +27,10 @@ type CardPlan = BuddyCardDay['p'][number]
 
 /** When a buddy's Plan starts, as the app reads it: no start time is noon. */
 export function joinRequestExpiry(d: string, s: number | undefined): number {
-  return moment(d, 'YYYY-MM-DD')
-    .startOf('day')
-    .add(s ?? DEFAULT_START_TIME_IN_MINUTES, 'minutes')
-    .valueOf()
+  return atMinutesOfDay(
+    moment(d, 'YYYY-MM-DD'),
+    s ?? DEFAULT_START_TIME_IN_MINUTES
+  ).valueOf()
 }
 
 /**

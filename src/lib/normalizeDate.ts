@@ -332,6 +332,20 @@ export const combineDateAndStartTime = (
 }
 
 /**
+ * `minutes` past midnight on `day`'s calendar day, on the wall clock: 600 is
+ * 10:00 even on a day clocks change, when 600 elapsed minutes after midnight is
+ * 9:00 or 11:00. A time the change skips moves past it (2:30 → 3:30), and 1440
+ * or more runs into the next day.
+ */
+export const atMinutesOfDay = (
+  day: moment.MomentInput,
+  minutes: number
+): moment.Moment => {
+  const m = moment(day)
+  return moment(new Date(m.year(), m.month(), m.date(), 0, minutes))
+}
+
+/**
  * Splits a local-time Date (typically from a datetime picker's `onChange`) into
  * the noon-UTC anchored calendar date and the local wall-clock minutes since
  * midnight.

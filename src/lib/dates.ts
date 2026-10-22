@@ -660,5 +660,7 @@ export const formatCalendar = (
  */
 export const formatStartTime = (startTimeInMinutes?: number): string => {
   const minutes = startTimeInMinutes ?? DEFAULT_START_TIME_IN_MINUTES
-  return formatTime(moment().startOf('day').add(minutes, 'minutes'))
+  // A reading on the clock, not a moment: UTC never changes its clocks, so
+  // 10:00 reads 10:00 even on a day the device's clocks change.
+  return formatTime(moment.utc(0).add(minutes, 'minutes'))
 }

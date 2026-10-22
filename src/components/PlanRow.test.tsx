@@ -143,7 +143,12 @@ vi.mock('@/lib/dates', () => ({
 vi.mock('@/components/ui/Card', () => ({
   useCardStyle: () => ({ borderRadius: 8 }),
 }))
-vi.mock('@/lib/normalizeDate', () => ({
+vi.mock('@/lib/normalizeDate', async () => ({
+  atMinutesOfDay: (
+    await vi.importActual<typeof import('@/lib/normalizeDate')>(
+      '@/lib/normalizeDate'
+    )
+  ).atMinutesOfDay,
   DEFAULT_START_TIME_IN_MINUTES: 12 * 60,
   getStartTimeInMinutes: (plan: { startTimeInMinutes?: number }) =>
     plan.startTimeInMinutes ?? 12 * 60,
@@ -414,6 +419,20 @@ describe('PlanRow', () => {
         ).toBe('2026-10-01')
         const start = moment(params.prefill!.startTime)
         expect([start.hours(), start.minutes()]).toEqual([9, 0])
+      })
+
+      // Onto Sunday Sep 27 (Auckland springs forward) and Sunday Nov 1 (Los
+      // Angeles falls back): 9:00 on the clock, not 9 hours after midnight.
+      it('keeps the time when the copy lands on a day clocks change', () => {
+        for (const sunday of [new Date(2026, 8, 20), new Date(2026, 9, 25)]) {
+          const [, params] = duplicateOf({
+            type: 'day',
+            date: sunday,
+            plan: dayPlan('p1'),
+          })
+          const start = moment(params.prefill!.startTime)
+          expect([start.hours(), start.minutes()]).toEqual([9, 0])
+        }
       })
     }
   )

@@ -207,9 +207,10 @@ export const streakRemindersOn = (prefs: {
  */
 export function streakEndsSoon(streak: ServiceStreak, now: Date): boolean {
   if (!shownStreak(streak) || !streak.due) return false
-  const left = streak.due.endsAt.getTime() - now.getTime()
-  const soon = streak.kind === 'plans' ? 1 : 7
-  return left > 0 && left <= soon * 24 * 60 * 60_000
+  const { endsAt } = streak.due
+  // Days on the calendar, so a day clocks change in still starts at midnight.
+  const from = moment(endsAt).subtract(streak.kind === 'plans' ? 1 : 7, 'days')
+  return now.getTime() >= from.valueOf() && now < endsAt
 }
 
 /**

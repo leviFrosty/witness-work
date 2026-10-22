@@ -577,6 +577,90 @@ describe('handoff sessions', () => {
     ])
   })
 
+  it("doesn't fail an Allow whose answer got lost when the User taps it again", async () => {
+    const server = fakeServer()
+    const account = registeredAccount(server)
+    let mode: 'online' | 'dropSend' | 'offline' = 'online'
+    const flaky = (async (url: string, init: RequestInit) => {
+      if (mode === 'offline') throw new TypeError('Network request failed')
+      const response = await server.fetchImpl(url, init)
+      if (mode === 'dropSend' && url.endsWith('handoff/send')) {
+        mode = 'offline'
+        throw new TypeError('Network request failed')
+      }
+      return response
+    }) as unknown as typeof fetch
+    const old = createOfferSession(account, {
+      ...deps(server),
+      fetchImpl: flaky,
+    })
+    await old.open()
+    if (old.state.step !== 'waiting') throw new Error('not waiting')
+    const parsed = parseHandoffLink(old.state.link)
+    if (!parsed.ok) throw new Error('bad link')
+    const fresh = createClaimSession(parsed.offer, HELLO, deps(server))
+    await fresh.claim()
+    await old.poll()
+
+    // The server took the key, but the answer never came back.
+    mode = 'dropSend'
+    await old.approve()
+    expect(old.state).toMatchObject({ step: 'confirm', sendFailed: true })
+    expect(server.channels.get(old.channelId)?.status).toBe('sent')
+
+    // Back online, Allow again: the key is already there.
+    mode = 'online'
+    await old.approve()
+    expect(old.state.step).toBe('sent')
+    await fresh.poll()
+    await fresh.finish()
+    await old.poll()
+    expect(old.state.step).toBe('done')
+  })
+
+  it('finishes an Allow whose answer got lost once the new phone is done', async () => {
+    const server = fakeServer()
+    let drop = true
+    const flaky = (async (url: string, init: RequestInit) => {
+      const response = await server.fetchImpl(url, init)
+      if (drop && url.endsWith('handoff/send')) {
+        drop = false
+        throw new TypeError('Network request failed')
+      }
+      return response
+    }) as unknown as typeof fetch
+    const account = registeredAccount(server)
+    const old = createOfferSession(account, {
+      ...deps(server),
+      fetchImpl: flaky,
+    })
+    await old.open()
+    if (old.state.step !== 'waiting') throw new Error('not waiting')
+    const parsed = parseHandoffLink(old.state.link)
+    if (!parsed.ok) throw new Error('bad link')
+    const fresh = createClaimSession(parsed.offer, HELLO, deps(server))
+    await fresh.claim()
+    await old.poll()
+    // The status check right after the lost answer finds the key was sent.
+    await old.approve()
+    expect(old.state.step).toBe('sent')
+    await fresh.poll()
+    await fresh.finish()
+    expect(fresh.state.step).toBe('done')
+    await old.poll()
+    expect(old.state.step).toBe('done')
+  })
+
+  it('still fails an Allow the other phone stopped', async () => {
+    const server = fakeServer()
+    const { old, fresh } = await handoff(server)
+    await fresh.claim()
+    await old.poll()
+    await fresh.cancel()
+    await old.approve()
+    expect(old.state).toEqual({ step: 'failed', reason: 'cancelled' })
+  })
+
   it('tells the new phone when the old one declines', async () => {
     const server = fakeServer()
     const { old, fresh } = await handoff(server)

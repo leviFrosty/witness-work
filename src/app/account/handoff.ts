@@ -111,10 +111,14 @@ function track(
       useHandoffDebug.setState((state) => ({ revision: state.revision + 1 }))
     const state = session.state
     if (state.step === previous) return
+    const before = previous
     previous = state.step
     if (quiet) return
+    // An Allow that didn't get through goes back to `confirm`: not a new claim.
     if (
-      (session.role === 'offer' && state.step === 'confirm') ||
+      (session.role === 'offer' &&
+        state.step === 'confirm' &&
+        before === 'waiting') ||
       (session.role === 'claim' && state.step === 'waiting')
     )
       analytics.capture('handoff_claimed', { role })
@@ -253,14 +257,32 @@ export type ClaimCompletion =
       reason: HandoffFailure | 'replace_failed'
       /** Delete Buddies is still waiting to tell a buddy. */
       removalPending?: boolean
+      /**
+       * Opening the account's session failed for now: the key is still here and
+       * the channel open, so `completeClaimHandoff` can run again.
+       */
+      retryable?: boolean
     }
 
 /**
+ * Failures opening the session with the received key that pass by themselves.
+ * The key is already on this phone, so the User tries again instead of making a
+ * new code on the other phone.
+ */
+const RETRYABLE_OPEN_FAILURES: ReadonlySet<HandoffFailure> = new Set([
+  'offline',
+  'server',
+  'rateLimited',
+  'verifyLater',
+])
+
+/**
  * The new phone, once the key arrived: opens a session with the key (attesting
- * this phone) and checks it's the account the key came with, warns when
- * replacing this phone's key loses Buddies data (`confirmReplace`), replaces it
- * and keeps that session, tells the old phone it's done, and starts Buddies
- * when the account uses it.
+ * this phone) and checks it's the account the key came with (a connection
+ * dropped while it opens leaves the session `received` to try again), warns
+ * when replacing this phone's key loses Buddies data (`confirmReplace`),
+ * replaces it and keeps that session, tells the old phone it's done, and starts
+ * Buddies when the account uses it.
  */
 export async function completeClaimHandoff(
   session: ClaimSession,
@@ -285,6 +307,8 @@ export async function completeClaimHandoff(
     opened = await accountSessions.openDetached(newKey)
   } catch (error) {
     const reason = handoffFailureFor(error, 'session/open')
+    if (RETRYABLE_OPEN_FAILURES.has(reason))
+      return { outcome: 'failed', reason, retryable: true }
     session.fail(reason)
     return { outcome: 'failed', reason }
   }

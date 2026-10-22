@@ -247,8 +247,17 @@ export type OfferState =
   | { step: 'opening' }
   /** The QR is up; nobody has claimed it yet. */
   | { step: 'waiting'; link: string; expiresAt: number }
-  /** A phone claimed it: the User allows it or not. */
-  | { step: 'confirm'; hello: HandoffHello; code: string; expiresAt: number }
+  /**
+   * A phone claimed it: the User allows it or not. `sendFailed` after an Allow
+   * that didn't get through, so the User can tap it again.
+   */
+  | {
+      step: 'confirm'
+      hello: HandoffHello
+      code: string
+      expiresAt: number
+      sendFailed?: boolean
+    }
   | { step: 'sending'; hello: HandoffHello; code: string; expiresAt: number }
   /** Sent; waiting for the new phone to pick it up. */
   | { step: 'sent'; hello: HandoffHello; code: string; expiresAt: number }
@@ -397,7 +406,8 @@ export function createOfferSession(account: OfferAccount, deps: SessionDeps) {
   async function approve(): Promise<void> {
     const current = core.state
     if (current.step !== 'confirm' || !keys) return
-    core.set({ ...current, step: 'sending' })
+    const { sendFailed: _, ...asked } = current
+    core.set({ ...asked, step: 'sending' })
     try {
       const key = sealAccountKey(
         keys,
@@ -410,14 +420,45 @@ export function createOfferSession(account: OfferAccount, deps: SessionDeps) {
       )
       if (terminal()) return
       status = 'sent'
-      core.set({ ...current, step: 'sent' })
+      core.set({ ...asked, step: 'sent' })
     } catch (error) {
       if (terminal()) return
       const reason = handoffFailureFor(error, 'handoff/send')
-      // Still `claimed`: the User can try again.
-      if (reason === 'offline') core.set(current)
-      else fail(reason)
+      if (reason !== 'offline' && reason !== 'conflict') return fail(reason)
+      await settleSend(asked, reason)
     }
+  }
+
+  /**
+   * After a send that failed: a lost answer may have delivered the key (and a
+   * repeat of it answers `conflict`), so the channel's status decides. Still
+   * `claimed` after a lost connection, the User can tap Allow again.
+   */
+  async function settleSend(
+    asked: Extract<OfferState, { step: 'confirm' }>,
+    reason: 'offline' | 'conflict'
+  ): Promise<void> {
+    let view: HandoffStatus
+    try {
+      view = (
+        await core.call(
+          'handoff/status',
+          () => handoffStatus(offer.channelId, options()),
+          (value) => value.status
+        )
+      ).status
+    } catch {
+      if (!terminal()) core.set({ ...asked, sendFailed: true })
+      return
+    }
+    if (terminal()) return
+    status = view
+    if (view === 'sent') core.set({ ...asked, step: 'sent' })
+    else if (view === 'done') core.set({ step: 'done', hello: asked.hello })
+    else if (view === 'cancelled') fail('cancelled')
+    else if (view === 'claimed' && reason === 'offline')
+      core.set({ ...asked, sendFailed: true })
+    else fail(reason)
   }
 
   /** Don't Allow: ends the channel. */

@@ -100,6 +100,7 @@ const SetUpAnotherDeviceScreen = () => {
             hello={state.hello}
             code={state.code}
             sending={state.step === 'sending'}
+            sendFailed={state.step === 'confirm' && state.sendFailed}
             onAllow={() => void approveHandoff(session)}
             onDecline={() => void session.decline()}
           />

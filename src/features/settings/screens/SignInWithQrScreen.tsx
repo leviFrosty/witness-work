@@ -64,7 +64,7 @@ const SignInWithQrScreen = () => {
   const hasBuddies = useBuddies((state) => state.buddies.length > 0)
   const unverifiable = support === 'unsupported'
   // An opened link waits until it's known this device can sign in.
-  const { session, state, linkProblem, completion, scanned, reset } =
+  const { session, state, linkProblem, completion, scanned, retry, reset } =
     useClaimHandoff(
       entry,
       support === null || unverifiable ? undefined : route.params?.link
@@ -175,6 +175,29 @@ const SignInWithQrScreen = () => {
             body={i18n.t('handoff_replaceDeclinedBody')}
             primary={scanAgain}
             testID='handoff-replace-declined'
+          />
+        )
+      // The key is here; only signing in with it failed for now.
+      if (completion.retryable && completion.reason !== 'replace_failed')
+        return (
+          <HandoffStatus
+            icon={
+              completion.reason === 'offline' ? WifiOffIcon : CircleAlertIcon
+            }
+            tone='error'
+            title={i18n.t('handoff_failedTitle')}
+            body={
+              completion.reason === 'server'
+                ? i18n.t('handoff_signInRetryServer')
+                : handoffFailureMessage('new', completion.reason)
+            }
+            primary={{
+              label: i18n.t('handoff_tryAgain'),
+              onPress: retry,
+              testID: 'handoff-retry',
+            }}
+            secondary={scanAgain}
+            testID='handoff-failed-retryable'
           />
         )
       return (

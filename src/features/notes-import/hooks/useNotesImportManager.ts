@@ -227,6 +227,8 @@ interface NotesImportManagerState {
   stop: (hash: string) => void
   /** Retry a Working import that errored in place. */
   retry: (hash: string) => void
+  /** The connection came back: retries the imports that stopped for it. */
+  reconnected: () => void
 }
 
 export const useNotesImportManager = create<NotesImportManagerState>(
@@ -1001,6 +1003,11 @@ export const useNotesImportManager = create<NotesImportManagerState>(
         clearCooldown(hash)
         patchRuntime(hash, { error: null, paused: false })
         get().tick()
+      },
+
+      reconnected: () => {
+        for (const [hash, runtime] of Object.entries(get().runtimes))
+          if (runtime.error === 'network') get().retry(hash)
       },
     }
   }

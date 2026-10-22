@@ -561,4 +561,24 @@ describe('useNotesImportManager failure handling', () => {
     await settle()
     expect(errorTracking.captureException).toHaveBeenCalledTimes(1)
   })
+
+  it('goes on with an import that stopped offline once the connection is back', async () => {
+    const ClientError = clientError()
+    const offline = await useNotesImportManager
+      .getState()
+      .submit('notes written offline')
+    harness.pending[0].reject(new ClientError('network', 'offline'))
+    const broken = await useNotesImportManager.getState().submit('bad notes')
+    harness.pending[1].reject(new ClientError('model_error', 'failed'))
+    await settle()
+    const runtimes = () => useNotesImportManager.getState().runtimes
+    expect(runtimes()[offline!]?.error).toBe('network')
+    expect(runtimes()[broken!]?.error).toBe('model_error')
+
+    useNotesImportManager.getState().reconnected()
+    expect(harness.pending).toHaveLength(3)
+    expect(runtimes()[offline!]?.error).toBeNull()
+    // Only the connection's failure; the other waits for Retry.
+    expect(runtimes()[broken!]?.error).toBe('model_error')
+  })
 })

@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import { center, toScreen, windowOrigin } from './ax.mjs'
+import {
+  center,
+  flatten,
+  matchesSelector,
+  parseSelector,
+  toScreen,
+  windowOrigin,
+} from './ax.mjs'
 
 const BUNDLE_ID = 'com.leviwilkerson.jwtimedev'
 
@@ -88,5 +95,27 @@ describe('toScreen', () => {
       x: 331,
       y: 308,
     })
+  })
+})
+
+describe('matchesSelector', () => {
+  it('matches role=switch on the CheckBox AXe reports for a switch', () => {
+    const elements = flatten([
+      node({ x: 0, y: 0, width: 400, height: 800 }, { type: 'Application' }, [
+        node(
+          { x: 300, y: 200, width: 51, height: 31 },
+          { type: 'CheckBox', AXLabel: 'Back Up to WitnessWork' }
+        ),
+      ]),
+    ])
+    const toggle = elements.find((e) => e.label === 'Back Up to WitnessWork')
+    expect(toggle).toBeDefined()
+    expect(
+      matchesSelector(
+        toggle,
+        parseSelector('role="switch" label="Back Up to WitnessWork"')
+      )
+    ).toBe(true)
+    expect(matchesSelector(toggle, parseSelector('role="button"'))).toBe(false)
   })
 })

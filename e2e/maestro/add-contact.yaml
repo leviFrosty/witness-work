@@ -13,6 +13,8 @@ name: Create a contact from the Contacts tab
 - inputText: Maestro Verify
 - hideKeyboard
 - tapOn: Save
-# Saving offers to log the first visit right away.
+# Saving offers to log the first visit right away. Wait for that sheet, since
+# Android's tree can lag it.
+- assertVisible: Add Conversation
 - tapOn: Skip
 - assertVisible: Maestro Verify

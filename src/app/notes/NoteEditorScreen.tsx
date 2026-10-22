@@ -13,6 +13,7 @@ import i18n from '@/lib/locales'
 import {
   endNoteEditorSession,
   getNoteEditorSession,
+  markNoteEditorLoaded,
 } from '@/lib/richText/noteEditorSession'
 import type { RootStackParamList } from '@/types/rootStack'
 
@@ -95,6 +96,7 @@ const NoteEditorScreen = ({ route, navigation }: Props) => {
         characterLimit={session.characterLimit}
         allowImages={session.allowImages}
         onChange={session.onChange}
+        onLoad={() => markNoteEditorLoaded(sessionId)}
         onPhotoAdded={(count) =>
           analytics.capture('note_photo_added', {
             surface: session.surface,

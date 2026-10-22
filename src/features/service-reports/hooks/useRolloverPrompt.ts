@@ -7,6 +7,11 @@ import useICloudPullSettled from '@/hooks/useICloudPullSettled'
 /** Markers already brought up this session, so an undecided exit can't loop. */
 const prompted = new Set<string>()
 
+/** Forgets which prompts came up, as a relaunch does (the dev harness's seed). */
+export function forgetRolloverPrompts() {
+  prompted.clear()
+}
+
 /**
  * Brings up a pending rollover where the User is looking at their numbers,
  * since it isn't shown at launch: on Progress, and before a Service Report for

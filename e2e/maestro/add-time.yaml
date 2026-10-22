@@ -19,6 +19,11 @@ name: Log time from the Home service report card
 # Note opens the full-screen note editor with the cursor already in it.
 - tapOn:
     id: time-entry-note-row
+# The editor is a web view, slow to load on a fresh Metro; typing before it
+# loads goes nowhere.
+- extendedWaitUntil:
+    true: __WW_DEV__.noteEditorLoaded()
+    timeout: 60000
 - inputText: Cart witnessing
 # Done closes the editor; the note stays on the form until it's saved.
 - tapOn:

@@ -23,6 +23,8 @@ export type NoteEditorOptions = {
  * The form saves the note with the rest of the record, as it always has.
  */
 const sessions = new Map<string, NoteEditorOptions>()
+/** Sessions whose editor has loaded, so typing reaches the note. */
+const loaded = new Set<string>()
 let nextId = 0
 
 export function startNoteEditorSession(options: NoteEditorOptions): string {
@@ -39,4 +41,20 @@ export function getNoteEditorSession(
 
 export function endNoteEditorSession(id: string) {
   sessions.delete(id)
+  loaded.delete(id)
+}
+
+/** Records that the session's editor has loaded its page. */
+export function markNoteEditorLoaded(id: string) {
+  if (sessions.has(id)) loaded.add(id)
+}
+
+/**
+ * Whether the newest open editor has loaded. The editor is a web view, which
+ * can take a while on a first open; the dev harness waits on this before
+ * typing.
+ */
+export function isNoteEditorLoaded(): boolean {
+  const newest = [...sessions.keys()].at(-1)
+  return newest !== undefined && loaded.has(newest)
 }

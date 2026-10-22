@@ -1,7 +1,7 @@
 # seed: pioneer
 # Today has no follow-ups or plans in the pioneer scenario, so its route
 # starts empty.
-# assert: (() => { const d = new Date(); const day = [d.getFullYear(), String(d.getMonth() + 1).padStart(2, '0'), String(d.getDate()).padStart(2, '0')].join('-'); const route = __WW_DEV__.stores.savedRoutes.getState().routes[day]; return JSON.stringify(route?.order) === JSON.stringify(['contact:verify-contact-1']) })()
+# assert: (() => { const d = new Date(); const day = [d.getFullYear(), String(d.getMonth() + 1).padStart(2, '0'), String(d.getDate()).padStart(2, '0')].join('-'); const route = __WW_DEV__.stores.savedRoutes.getState().routes[day]; return JSON.stringify(route?.order) === JSON.stringify(['contact:verify-contact-0']) })()
 # assert: __WW_DEV__.state().route.name === 'TodayRoute'
 appId: com.leviwilkerson.jwtimedev
 name: Plan today's route from its day on Schedule, add two contacts as stops, then remove one
@@ -20,6 +20,9 @@ name: Plan today's route from its day on Schedule, add two contacts as stops, th
     String(d.getDate()).padStart(2, '0')].join('-');
     __WW_DEV__.navigate('Root', { screen: 'Schedule', params: { date: day } });
     return true })()
+- extendedWaitUntil:
+    visible: TIME REPORTS
+    timeout: 30000
 - waitForAnimationToEnd
 - tapOn:
     text: Plan Today's Route
@@ -30,11 +33,16 @@ name: Plan today's route from its day on Schedule, add two contacts as stops, th
 - tapOn: Contacts
 - tapOn: Ada Reyes
 - assertVisible: 1 stop
+# The new stop pushes Add Stop below the sheet's fold on a phone.
+- scrollUntilVisible:
+    element: Add Stop
 - tapOn: Add Stop
 - tapOn: Contacts
 - tapOn: Bruno Okafor
 - assertVisible: 2 stops
-- tapOn: Options for Ada Reyes
+# Remove the stop just added, which is still on screen; the first one has
+# scrolled up under the map on a phone.
+- tapOn: Options for Bruno Okafor
 - tapOn: Remove Stop
 - assertVisible: 1 stop
-- assertVisible: Bruno Okafor
+- assertVisible: Ada Reyes

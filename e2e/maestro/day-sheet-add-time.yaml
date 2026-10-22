@@ -1,13 +1,13 @@
 # seed: pioneer
 # setup: (() => { const store = __WW_DEV__.stores.serviceReports.getState(); Object.values(store.serviceReports).flatMap((m) => Object.values(m).flat()).filter((e) => new Date(e.date).toDateString() === new Date().toDateString()).forEach((e) => store.deleteServiceReport(e)); return true })()
-# setup: (() => { const d = new Date(); const day = [d.getFullYear(), String(d.getMonth() + 1).padStart(2, '0'), String(d.getDate()).padStart(2, '0')].join('-'); __WW_DEV__.remount(); setTimeout(() => __WW_DEV__.navigate('Root', { screen: 'Schedule', params: { date: day } }), 2500); return true })()
+# setup: (() => { const d = new Date(); const day = [d.getFullYear(), String(d.getMonth() + 1).padStart(2, '0'), String(d.getDate()).padStart(2, '0')].join('-'); __WW_DEV__.navigate('Root', { screen: 'Schedule', params: { date: day } }); return true })()
 # assert: Object.values(__WW_DEV__.stores.serviceReports.getState().serviceReports).flatMap((m) => Object.values(m).flat()).some((e) => e.hours * 60 + e.minutes > 0 && e.note === 'Logged from the day' && new Date(e.date).toDateString() === new Date().toDateString())
 # assert: __WW_DEV__.state().route.name !== 'Add Time'
 appId: com.leviwilkerson.jwtimedev
 name: Log time in a day's sheet without leaving the day
 ---
-# Setup remounted every screen, so nothing is left from the last flow, then
-# opened today on Schedule as the Calendar widget's link does
+# Every flow starts on freshly remounted screens; setup opened today on
+# Schedule as the Calendar widget's link does
 # (witnesswork://schedule/<today>). Today has no time yet (setup cleared it), so
 # the time form is folded into the day's Time Reports under Add Time. (Home has
 # an Add Time button too, so wait for the day's section.)
@@ -23,6 +23,11 @@ name: Log time in a day's sheet without leaving the day
 # comes back with the form as it was (the assert reads the saved note).
 - tapOn:
     id: time-entry-note-row
+# The editor is a web view, slow to load on a fresh Metro; typing before it
+# loads goes nowhere.
+- extendedWaitUntil:
+    true: __WW_DEV__.noteEditorLoaded()
+    timeout: 60000
 - inputText: Logged from the day
 - tapOn:
     id: note-editor-done

@@ -14,8 +14,10 @@ name: Open badges from the profile overlay, view one full screen, and close it
 - tapOn: See all
 # The closing overlay stays in the tree for a moment with its own Year Round
 # medallion. Tapping that one would open the view from the overlay, which
-# comes back when the view closes.
-- assertNotVisible: See all
+# comes back when the view closes. Under load it can linger past 10 s.
+- extendedWaitUntil:
+    notVisible: See all
+    timeout: 30000
 - assertVisible: Sharing the Good News
 - assertVisible: Year Round
 - tapOn: Year Round, Bronze

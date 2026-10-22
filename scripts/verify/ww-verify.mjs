@@ -23,7 +23,7 @@ import {
   toScreen,
   windowOrigin,
 } from './ax.mjs'
-import { readFlow, runSteps } from './flows.mjs'
+import { readFlow, runSteps, startFlow } from './flows.mjs'
 import {
   CONFIG,
   HOME as GLOBAL_DIR,
@@ -608,7 +608,11 @@ const output = (result) => `${result.stdout ?? ''}${result.stderr ?? ''}`
 // long tree (Home, the calendar), so `wait absent` asks AXe instead.
 const SPARSE =
   /No snapshot backend could read|sparse accessibility snapshot|snapshot quality verdict is sparse|could not read the current accessibility tree|capture was truncated|could not read the screen/
-const NO_MATCH = /Selector did not match|No element matches|could not find/i
+// `find` reports its own miss ("find did not match any element") over a tree
+// agent-device read only partly, such as the Help Center's results under the
+// keyboard.
+const NO_MATCH =
+  /Selector did not match|No element matches|could not find|did not match any element/i
 const BACK_LABELS = ['Go Back', 'Back', 'Close']
 const AX_SETTLE_MS = 8000
 
@@ -973,10 +977,15 @@ function drive(state, platform, args) {
   const [command, ...rest] = args
   const settle = rest.includes('--settle')
   const plain = rest.filter((a) => a !== '--settle')
-  // iPhone: agent-device first, AXe only when it can't read the screen.
+  // iPhone: agent-device first, AXe only when it can't read the screen. An
+  // action agent-device reports done has landed, even when its settled diff
+  // reads sparse; acting again through AXe would tap twice (Archive, then the
+  // list under the closed alert).
+  const acts = ['press', 'click', 'fill', 'longpress', 'find'].includes(command)
   const tryAgentDevice = (retry) => {
     if (ipad) return retry()
     const result = sessionCommand(platform, args)
+    if (acts && result.status === 0) return result
     const text = output(result)
     if (SPARSE.test(text) || (result.status !== 0 && NO_MATCH.test(text)))
       return retry()
@@ -1038,7 +1047,13 @@ function drive(state, platform, args) {
       const [kind, ...more] = plain
       if (!['text', 'absent', 'stable'].includes(kind))
         return sessionCommand(platform, args)
-      return tryAgentDevice(() => axWait(state, platform, kind, more))
+      if (kind === 'stable' || ipad)
+        return tryAgentDevice(() => axWait(state, platform, kind, more))
+      // agent-device's reader can stop seeing the app partway through a long
+      // session ("Current surface: WitnessWork Dev"), and its wait then times
+      // out over a screen that shows the text; AXe reads the screen apart.
+      const result = sessionCommand(platform, args)
+      return result.status === 0 ? result : axWait(state, platform, kind, more)
     }
     case 'type': {
       if (!ipad) return sessionCommand(platform, args)
@@ -2326,7 +2341,13 @@ async function cdpTarget(state, platform) {
 }
 
 async function cdpEval(state, platform, expression, timeoutMs = 30_000) {
-  const target = await cdpTarget(state, platform)
+  let target = await cdpTarget(state, platform)
+  // The app's debugger target can drop off Metro's list for a moment (it
+  // reconnects on its own); a flow's asserts read through here right after.
+  for (let i = 0; !target && i < 5; i++) {
+    await sleep(2000)
+    target = await cdpTarget(state, platform)
+  }
   if (!target)
     throw new Error(
       `No JS runtime for ${platform} on Metro ${state.metro.port}; is the app open?`
@@ -2578,6 +2599,43 @@ function ensureReverse(state, device) {
       check: false,
     })
   }
+}
+
+/**
+ * On Android the dev app starts near 1.05 GB and grows 10 to 15 MB with every
+ * seed and remount, mostly screens React DevTools still records after they
+ * unmount (dev builds only). Past this much PSS, `wwv flow` relaunches it
+ * between flows rather than let the 2 GB emulator kill it mid-flow (near 1.5
+ * GB).
+ */
+const ANDROID_RELAUNCH_MB = Number(
+  process.env.WW_VERIFY_ANDROID_RELAUNCH_MB ?? 1400
+)
+
+/** The app's total PSS in MB on an Android device, or null. */
+function androidPssMb(device) {
+  const result = run(
+    'adb',
+    ['-s', device.id, 'shell', 'dumpsys', 'meminfo', BUNDLE_ID],
+    { check: false }
+  )
+  const kb = Number(result.stdout?.match(/TOTAL PSS:\s+(\d+)/)?.[1])
+  return Number.isFinite(kb) ? Math.round(kb / 1024) : null
+}
+
+/**
+ * Why the app needs relaunching before the next flow, or null: its JS runtime
+ * is gone (killed for memory, crashed), or on Android it holds more memory than
+ * `WW_VERIFY_ANDROID_RELAUNCH_MB`.
+ */
+async function relaunchReason(state, platform) {
+  if (!(await cdpTarget(state, platform)))
+    return 'its JS runtime is gone (killed or crashed)'
+  if (platform !== 'android') return null
+  const pss = androidPssMb(state.devices[platform])
+  return pss > ANDROID_RELAUNCH_MB
+    ? `it holds ${pss} MB (over WW_VERIFY_ANDROID_RELAUNCH_MB=${ANDROID_RELAUNCH_MB})`
+    : null
 }
 
 /** Re-attaches the run's agent-device session to the running app (no relaunch). */
@@ -3201,29 +3259,44 @@ const commands = {
     )
     const outDir = artifactsDir(state)
     const results = []
-    ensureSession(state, platform)
+    const agentDevice = (args) => drive(state, platform, args)
+    const evalApp = (expression) => cdpEval(state, platform, expression)
     for (const flow of flows) {
       const source = fs.readFileSync(flow, 'utf8')
-      const seed = source.match(/^# seed: (\S+)/m)?.[1]
-      if (seed)
-        await cdpEval(
-          state,
-          platform,
-          `__WW_DEV__.seed(${JSON.stringify(seed)})`
-        )
-      // `# setup: <js>` lines adjust the seeded state before the UI steps,
-      // e.g. clearing a day the scenario fills only on some weekdays.
-      for (const [, expression] of source.matchAll(/^# setup: (.+)$/gm))
-        await cdpEval(state, platform, expression)
-      await cdpEval(state, platform, '__WW_DEV__.clearErrors()')
       const name = path.basename(flow, '.yaml')
-      const { steps } = readFlow(source)
-      const result = await runSteps(
-        steps,
-        (args) => drive(state, platform, args),
-        (expression) => cdpEval(state, platform, expression)
-      )
-      if (!result.ok) screenshot(state, platform, `flow-${name}-failed`)
+      const startedAt = Date.now()
+      const relaunch = await relaunchReason(state, platform)
+      if (relaunch) {
+        log(`relaunching the app before ${name}: ${relaunch}`)
+        await launch(state, state.devices[platform])
+      }
+      // Brings the app forward again if a failed flow left another app (a
+      // share sheet's target) in front.
+      ensureSession(state, platform)
+      // Every flow starts on a freshly seeded, remounted app, whatever the
+      // last one left open; `# setup: <js>` lines then adjust the seeded
+      // state, e.g. clearing a day the scenario fills only on some weekdays.
+      const start = (strictReader) =>
+        startFlow(
+          {
+            seed: source.match(/^# seed: (\S+)/m)?.[1],
+            setup: [...source.matchAll(/^# setup: (.+)$/gm)].map((m) => m[1]),
+          },
+          { agentDevice, evalApp, strictReader }
+        )
+      let started = await start(platform === 'ios')
+      // A render error can leave the app running with no screens (the remount
+      // never comes back), and agent-device can turn its iOS reader off for
+      // the app process; a relaunch clears both.
+      if (started) {
+        log(`relaunching the app before ${name}: ${started.output}`)
+        await launch(state, state.devices[platform])
+        started = await start(false)
+      }
+      await evalApp('__WW_DEV__.clearErrors()').catch(() => {})
+      const result =
+        started ??
+        (await runSteps(readFlow(source).steps, agentDevice, evalApp, platform))
       const jsErrors = await cdpEval(
         state,
         platform,
@@ -3242,9 +3315,19 @@ const commands = {
       }
       const ok =
         result.ok && jsErrors.length === 0 && failedAsserts.length === 0
-      results.push({ flow: name, ok, steps: result, jsErrors, failedAsserts })
+      // The screen as the flow left it, whichever check failed.
+      if (!ok) screenshot(state, platform, `flow-${name}-failed`)
+      const seconds = Math.round((Date.now() - startedAt) / 1000)
+      results.push({
+        flow: name,
+        ok,
+        seconds,
+        steps: result,
+        jsErrors,
+        failedAsserts,
+      })
       console.log(
-        `${ok ? 'PASS' : 'FAIL'} ${platform} ${name}${jsErrors.length ? ` (${jsErrors.length} JS errors)` : ''}${failedAsserts.length ? ` (failed: ${failedAsserts.map((a) => a.expression).join('; ')})` : ''}`
+        `${ok ? 'PASS' : 'FAIL'} ${platform} ${name} (${seconds} s)${jsErrors.length ? ` (${jsErrors.length} JS errors)` : ''}${failedAsserts.length ? ` (failed: ${failedAsserts.map((a) => a.expression).join('; ')})` : ''}`
       )
       if (!result.ok)
         console.log(

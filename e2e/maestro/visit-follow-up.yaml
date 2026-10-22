@@ -1,7 +1,8 @@
 # seed: pioneer
-# New Follow-ups default to an hour from now (the "Default Follow Up"
-# preference), so this one is due today and shows on Home's Follow-up card.
-# setup: (() => { __WW_DEV__.stores.preferences.getState().set({ returnVisitTimeOffset: { amount: 1, unit: 'hours' } }); return true })()
+# New Follow-ups default to a minute from now (the "Default Follow Up"
+# preference), so this one is due today and shows on Home's Follow-up card,
+# even in the day's last hour.
+# setup: (() => { __WW_DEV__.stores.preferences.getState().set({ returnVisitTimeOffset: { amount: 1, unit: 'minutes' } }); return true })()
 # On a small phone the finished Get started checklist pushes the card's buttons
 # behind the floating tab bar, where a tap on their center lands on a tab. The
 # pet offer's sprites redraw ten times a second, which slows every screen read.

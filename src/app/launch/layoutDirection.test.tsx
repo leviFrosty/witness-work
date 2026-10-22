@@ -8,6 +8,9 @@ const appState = vi.hoisted(() => ({
 }))
 const launch = vi.hoisted(() => ({ mismatch: false }))
 const reloadApp = vi.hoisted(() => vi.fn(async () => {}))
+const handoff = vi.hoisted(() => ({
+  calls: [] as string[],
+}))
 // Hot Updater's launch read, settled by each test.
 const hotUpdater = vi.hoisted(() => {
   const value = {
@@ -41,6 +44,13 @@ vi.mock('@/lib/hotUpdater', () => ({
     return hotUpdater.launchRead
   },
 }))
+vi.mock('@/app/launch/reloadHandoff', () => ({
+  restoreLaunchAfterReload: () => handoff.calls.push('restore'),
+  handOffLaunchBeforeReload: async () => {
+    handoff.calls.push('handOff')
+  },
+  dropLaunchHandoff: () => handoff.calls.push('drop'),
+}))
 vi.mock('@/lib/rtl', () => ({
   applyLayoutDirectionAtLaunch: (_locale: string, reload: () => void) => {
     if (launch.mismatch) reload()
@@ -68,6 +78,10 @@ beforeEach(() => {
   hotUpdater.reset()
   reloadApp.mockReset()
   reloadApp.mockResolvedValue(undefined)
+  reloadApp.mockImplementation(async () => {
+    handoff.calls.push('reload')
+  })
+  handoff.calls.length = 0
 })
 
 afterEach(() => {
@@ -239,8 +253,16 @@ describe('useLayoutDirectionReload', () => {
     await readLaunch()
     expect(seen.at(-1)).toBe(true)
     expect(reloadApp).not.toHaveBeenCalled()
-    act(() => emit('active'))
+    await act(async () => emit('active'))
     expect(reloadApp).toHaveBeenCalledTimes(1)
+  })
+
+  it('hands what launched the app to the reloaded launch', async () => {
+    launch.mismatch = true
+    await mount()
+    await readLaunch()
+    // Picked up first on every launch, then saved just before the reload.
+    expect(handoff.calls).toEqual(['restore', 'handOff', 'reload'])
   })
 
   it('shows the app if the reload fails', async () => {
@@ -249,6 +271,8 @@ describe('useLayoutDirectionReload', () => {
     await mount()
     await readLaunch()
     expect(seen.at(-1)).toBe(false)
+    // This launch opens the tap itself, so the next one mustn't again.
+    expect(handoff.calls).toContain('drop')
   })
 
   it('shows the app if it gives up waiting', async () => {

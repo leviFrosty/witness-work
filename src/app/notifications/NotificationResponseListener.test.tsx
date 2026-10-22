@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 const runtime = vi.hoisted(() => ({
   ready: false,
   initial: null as unknown,
+  handedOff: null as unknown,
   listener: undefined as undefined | ((response: unknown) => void),
   navigate: vi.fn(),
   openReminderTarget: vi.fn(() => true),
@@ -73,6 +74,13 @@ vi.mock('@/stores/preferences', () => ({
 vi.mock('@/app/notifications/reminderTargets', () => ({
   openReminderTarget: runtime.openReminderTarget,
 }))
+vi.mock('@/app/launch/reloadHandoff', () => ({
+  takeHandedOffNotificationResponse: () => {
+    const handedOff = runtime.handedOff
+    runtime.handedOff = null
+    return handedOff
+  },
+}))
 vi.mock('@/app/notifications/useReminderNotifications', () => ({
   reminderTrayId: () => 'tray-id',
 }))
@@ -98,6 +106,7 @@ beforeEach(() => {
   vi.clearAllMocks()
   runtime.ready = false
   runtime.initial = null
+  runtime.handedOff = null
   runtime.buddiesEnabled = true
   runtime.onboarded = true
   resetTakeovers()
@@ -131,6 +140,26 @@ it('routes the tap that launched the app once navigation is ready', async () => 
   expect(runtime.capture).toHaveBeenCalledWith('notification_opened', {
     source: 'local',
     kind: 'visit',
+    cold_start: true,
+  })
+})
+
+it('routes the tap handed across the launch’s layout-direction reload', async () => {
+  runtime.ready = true
+  // The reloaded JS context: native no longer has the tap.
+  runtime.handedOff = response('before-reload', {
+    reminder: { kind: 'contact', id: 'c' },
+  })
+  await act(async () => {
+    renderer = create(<NotificationResponseListener />)
+  })
+  expect(runtime.openReminderTarget).toHaveBeenCalledWith({
+    kind: 'contact',
+    id: 'c',
+  })
+  expect(runtime.capture).toHaveBeenCalledWith('notification_opened', {
+    source: 'local',
+    kind: 'contact',
     cold_start: true,
   })
 })

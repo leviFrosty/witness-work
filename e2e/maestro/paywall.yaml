@@ -1,0 +1,28 @@
+# seed: pioneer
+# assert: __WW_DEV__.state().route.name === 'Dashboard'
+appId: com.leviwilkerson.jwtimedev
+name: Open the Supporter paywall from the account menu, switch to a one-time tip, and close it without buying
+---
+- extendedWaitUntil:
+    visible: Home
+    timeout: 60000
+# A seed re-renders every screen; let it settle before the first tap.
+- waitForAnimationToEnd
+- tapOn: Account and settings
+# Let the menu finish opening, or a tap can land where it's still growing.
+- waitForAnimationToEnd
+- tapOn: Support
+- extendedWaitUntil:
+    visible: Support WitnessWork
+    timeout: 20000
+- assertVisible: A NOTE FROM LEVI
+- assertVisible: What's included
+# The Supporter plans load from the store; the tip sits under them.
+- scrollUntilVisible:
+    element: Send a tip
+- assertVisible: Pay what feels right
+- tapOn: Send a tip
+- assertVisible: A one-time thank-you
+- tapOn: Go Back
+- assertNotVisible: Support WitnessWork
+- assertVisible: Add Time

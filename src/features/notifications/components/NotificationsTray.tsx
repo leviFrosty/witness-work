@@ -80,6 +80,7 @@ function BellTrigger({
           size='xl'
           hitSlop={12}
           color={theme.colors.text}
+          testID='notifications-bell'
           accessibilityLabel={
             unread > 0
               ? // @ts-expect-error TranslationKey doesn't handle keys that contain objects.

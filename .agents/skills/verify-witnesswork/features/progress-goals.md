@@ -30,7 +30,7 @@ Steps:
 - **Totals follow entries.** Log time (time-entry.md). The logged hours in the month cell rise by the same amount.
 - **Publisher.** After `wwv seed publisher`, Home → "View Report" shows the shared checkbox state for this month and the past two.
 - **Proof.** Run `wwv shot progress-month` and `wwv shot progress-year`, then `wwv errors`.
-- **Scripted.** Run `wwv flow e2e/maestro/rollover.yaml` (its setup leaves last month on :30; the prompt shows once per launch, so `wwv up` before a rerun), and `wwv flow e2e/maestro/monthly-report.yaml` for marking last month's report sent from Home's `due-report-row`.
+- **Scripted.** Run `wwv flow e2e/maestro/rollover.yaml` (its setup leaves last month on :30; the prompt shows once per launch, so `wwv up` before a rerun), `wwv flow e2e/maestro/monthly-report.yaml` for marking last month's report sent from Home's `due-report-row`, `progress-tabs.yaml` (a month back and Today, then Year and All-time), `service-history.yaml` (All-time → Add earlier year → 12 hours in its September's `service-history-hours-0` → Save; Year by Year lists it) and `report-send.yaml` (Submission method → Share, cancel the share sheet and it stays Not Sent; then Copy To Clipboard marks it sent).
 
 ## Gotchas
 

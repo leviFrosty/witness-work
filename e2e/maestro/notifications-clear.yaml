@@ -1,0 +1,36 @@
+# seed: pioneer
+# Bruno Okafor's follow-up was yesterday, so the tray lists it as missed, and
+# Clear All dismisses it with the rest.
+# assert: Object.keys(__WW_DEV__.stores.notificationsTray.getState().dismissed).some((id) => id.startsWith('missed_follow_up:verify-visit-1-0'))
+appId: com.leviwilkerson.jwtimedev
+name: Open the notifications tray from Home and clear it, which leaves it all caught up
+---
+- extendedWaitUntil:
+    visible: Home
+    timeout: 60000
+# A seed re-renders every screen; let it settle before the first tap.
+- waitForAnimationToEnd
+- tapOn:
+    id: notifications-bell
+# The tray can take a few seconds to open on a busy machine. Bruno's item is
+# the oldest, so it can sit below the tray's fold; the assert reads it back.
+- extendedWaitUntil:
+    visible: Clear All
+    timeout: 15000
+- tapOn:
+    text: Clear All
+    traits: button
+- assertVisible: You're all caught up
+# Close the tray: tap outside it (iOS) or go back (Android).
+- runFlow:
+    when:
+      visible: dismiss popup
+    commands:
+      - tapOn: dismiss popup
+- runFlow:
+    when:
+      visible: You're all caught up
+    commands:
+      - back
+- assertNotVisible: You're all caught up
+- assertVisible: Add Time

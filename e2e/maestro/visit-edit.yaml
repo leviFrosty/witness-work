@@ -1,0 +1,36 @@
+# seed: pioneer
+# assert: (() => { const v = __WW_DEV__.stores.conversations.getState().conversations.find((x) => x.id === 'verify-visit-2-0'); return v.isBibleStudy === false && v.followUp?.topic === 'Continue lesson 3' && v.note === 'Talked about family' })()
+# assert: __WW_DEV__.state().route.name === 'Visit Details'
+appId: com.leviwilkerson.jwtimedev
+name: Edit a conversation from its details on the timeline, and the details read the change back
+---
+- extendedWaitUntil:
+    visible: Contacts
+    timeout: 60000
+# A seed re-renders every screen; let it settle before the first tap.
+- waitForAnimationToEnd
+- tapOn: Contacts
+- assertVisible: Follow-ups Due
+- tapOn:
+    id: contact-row-verify-contact-2
+- assertVisible: Up next
+- waitForAnimationToEnd
+- scrollUntilVisible:
+    element: Conversation History
+- tapOn:
+    id: visit-card-verify-visit-2-0
+# The rail says what happened: Chen Wei's latest visit was a Bible study.
+- assertVisible: You held a Bible study with Chen Wei
+# The sheet takes taps once it has slid into place.
+- waitForAnimationToEnd
+- tapOn: Edit
+- assertVisible: Edit Conversation
+- tapOn:
+    text: Conducted Bible Study
+    role: switch
+- tapOn: Save
+# Saving returns to the details, which now tell it as a conversation.
+- assertNotVisible: Edit Conversation
+- assertVisible: You talked with Chen Wei
+- assertNotVisible: You held a Bible study with Chen Wei
+- assertVisible: Continue lesson 3

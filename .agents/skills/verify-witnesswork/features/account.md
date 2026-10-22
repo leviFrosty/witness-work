@@ -33,7 +33,7 @@ Steps:
 
 - **Read the account back.** `wwv eval '__WW_DEV__.account.read()'`, then a moment later `wwv eval '__WW_DEV__.account.last'`: `hasKey`, `accountPub`, `recoveryKey`, `inboxId`, `registeredInboxId`, `accountLinkedInboxId`, `buddies`, and the cached MMKV account.
 - **Open it.** `wwv nav Account`, or Settings → Account. Status settles on Active once the account registered (`account-status`).
-- **Show the key.** Press Show Recovery Key. Simulators and emulators without a screen lock skip authentication. The sheet's key (`recovery-key`) matches `account.last.recoveryKey`. Copy shows "Recovery key copied"; read it with `wwv ad clipboard get` on iOS.
+- **Show the key.** Press Show Recovery Key. Simulators and emulators without a screen lock skip authentication; one with a passcode set asks for it, which a flow can't enter. The sheet's key (`recovery-key`) matches `account.last.recoveryKey`. Copy shows "Recovery key copied"; read it with `wwv ad clipboard read` on iOS.
 - **Same key.** Use a Recovery Key, type the key (`wwv ad fill`), Use Key: "Already using this key", and `account.last` is unchanged.
 - **Bad key.** Change one character: the line under the field says "This key has a typo…", and Use Key stays disabled. A `U` says the character doesn't belong.
 - **Different key.** `wwv eval '__WW_DEV__.account.randomRecoveryKey()'` gives a valid key. With Buddies started (and a buddy), Use Key asks "Use this recovery key?", naming the buddies; on iOS it adds the Apple devices line. Confirm: "Recovery key added", `account.last.recoveryKey` is the new key, `registeredInboxId` is null, and the cached account has a new `accountPub`. A paired buddy's roster drops this User on its next sync.
@@ -57,7 +57,7 @@ Simulators and emulators can't scan a real camera. The old phone shows the QR, a
 
 Needs the backup ops on the local worker (`WW_API_DIR=<ww-api checkout>` until they're on `origin/main`). The upload is debounced 30 s after a data change, and the server takes one put a slot a minute.
 
-- **Turn it on.** Settings → Account → WitnessWork Backup, or `wwv eval '__WW_DEV__.backup.enable()'`. `wwv eval '__WW_DEV__.backup.state()'` gives `enabled`, `slotId`, `schedule` (`lastResult`, `lastSize`, `lastHash`, `pending`, `nextAttemptAt`) and the newest-first `log` (`enabled: uploaded N bytes`).
+- **Turn it on.** Settings → Account → WitnessWork Backup, or `wwv eval '__WW_DEV__.backup.enable()'`. Scripted: `wwv flow e2e/maestro/account-backup.yaml` (it turns backup off in setup, then on from the switch). `wwv eval '__WW_DEV__.backup.state()'` gives `enabled`, `slotId`, `schedule` (`lastResult`, `lastSize`, `lastHash`, `pending`, `nextAttemptAt`) and the newest-first `log` (`enabled: uploaded N bytes`).
 - **The server copy.** `__WW_DEV__.backup.list()`, then `__WW_DEV__.backup.last`: the account's slots. `inspect()` then `last` decrypts every slot to counts; `dryRun()` previews what Combine would add.
 - **Restore on another phone.** Hand the account over (above) or Use a Recovery Key with the first phone's key. The offer follows "Signed in" / "Recovery key added". With seeded data it asks Replace / Combine / Not Now; read the store back afterwards (`wwv eval` on the stores, or the screens). `__WW_DEV__.backup.offerRestore()` runs the offer again.
 - **A corrupt slot.** `__WW_DEV__.backup.simulateCorruptDownload()` before the restore: it restores the rest and says one couldn't be read.

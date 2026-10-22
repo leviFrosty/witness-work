@@ -1,0 +1,35 @@
+# seed: pioneer
+# assert: (() => { const c = __WW_DEV__.stores.contacts.getState().contacts.find((x) => x.id === 'verify-contact-3'); return c.name === 'Dalia Nour' && c.isFavorite === true })()
+# assert: __WW_DEV__.state().route.name === 'Contact Details'
+appId: com.leviwilkerson.jwtimedev
+name: Favorite a contact from Contact Details, then rename them through Edit
+---
+- extendedWaitUntil:
+    visible: Contacts
+    timeout: 60000
+# A seed re-renders every screen; let it settle before the first tap.
+- waitForAnimationToEnd
+- tapOn: Contacts
+- assertVisible: Follow-ups Due
+- tapOn:
+    id: contact-row-verify-contact-3
+- assertVisible: Dalia Haddad
+- waitForAnimationToEnd
+# The star sits in the header; its name says what a tap does.
+- tapOn: Add to Favorites
+- assertVisible: Remove from Favorites
+- tapOn: More actions
+- assertVisible: Delete Permanently…
+- waitForAnimationToEnd
+- tapOn: Edit
+- assertVisible: EDIT CONTACT
+- tapOn:
+    id: contact-name-input
+- eraseText
+- inputText: Dalia Nour
+- hideKeyboard
+- tapOn: Save
+# Saving goes back to Contact Details, which shows the new name.
+- assertNotVisible: EDIT CONTACT
+- assertVisible: Dalia Nour
+- assertNotVisible: Dalia Haddad

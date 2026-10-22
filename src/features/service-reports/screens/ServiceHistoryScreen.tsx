@@ -341,6 +341,7 @@ const ServiceHistoryScreen = ({ navigation, route }: Props) => {
                               month: monthLabel,
                             }
                           ),
+                          testID: `service-history-hours-${index}`,
                           inputMode: 'decimal',
                           maxLength: 6,
                           placeholder: formatPlainNumber(0),

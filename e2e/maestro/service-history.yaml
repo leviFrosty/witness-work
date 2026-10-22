@@ -1,0 +1,34 @@
+# seed: pioneer
+# The pioneer scenario starts this service year, so the year before it has no
+# time: Add earlier year opens it in Service History.
+# assert: (() => { const now = new Date(); const start = now.getMonth() >= 8 ? now.getFullYear() - 1 : now.getFullYear() - 2; const sep = __WW_DEV__.stores.serviceReports.getState().serviceReports[start]?.[8] ?? []; return sep.length === 1 && sep[0].hours === 12 && sep[0].minutes === 0 && !sep[0].credit })()
+# assert: __WW_DEV__.state().route.name === 'Progress'
+appId: com.leviwilkerson.jwtimedev
+name: Add an earlier service year from Progress' All-time tab, fill in a month's hours in Service History, and the year shows in Year by Year
+---
+- extendedWaitUntil:
+    visible: Progress
+    timeout: 60000
+# A seed re-renders every screen; let it settle before the first tap.
+- waitForAnimationToEnd
+- tapOn: Progress
+- assertVisible: PROJECTED MONTH
+- tapOn: All-time
+- assertVisible: 1 service years
+- tapOn: Add earlier year
+# The sheet starts on the most recent year with no time.
+- tapOn:
+    text: Add
+    traits: button
+- assertVisible: Service History
+# The first month's Hours field: September.
+- tapOn:
+    id: service-history-hours-0
+- inputText: '12'
+# The decimal pad has no return key; a tap outside the field closes it and
+# uncovers Save.
+- tapOn: Set your status for each month and add time you didn't log. Each month's goal and Service Report follow its status.
+- tapOn: Save
+- assertVisible: LIFETIME HOURS
+- assertVisible: 2 service years
+- assertVisible: 12 Hrs

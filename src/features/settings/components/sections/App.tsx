@@ -84,6 +84,7 @@ const AppSection = ({
       <GroupedListRow
         icon={EllipsisIcon}
         label={i18n.t('more')}
+        testID='settings-more'
         onPress={() => handleNavigate('More')}
         selected={selectedDestination === 'More'}
       />

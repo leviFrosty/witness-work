@@ -1,0 +1,34 @@
+# seed: pioneer
+# A fresh install has WitnessWork Backup off. Seeding keeps the account, so
+# turn it off (and drop this device's server copy) first.
+# setup: __WW_DEV__.backup.disable(true)
+# assert: (() => { const b = __WW_DEV__.backup.state(); return b.enabled === true && b.slots.length === 1 && b.schedule.lastResult === 'uploaded' })()
+# assert: __WW_DEV__.state().route.name === 'Account'
+appId: com.leviwilkerson.jwtimedev
+name: Open Settings → Account, see the account is active, and turn on WitnessWork Backup, which backs up right away
+---
+- extendedWaitUntil:
+    visible: Home
+    timeout: 60000
+# A seed re-renders every screen; let it settle before the first tap.
+- waitForAnimationToEnd
+- tapOn: Account and settings
+# Let the menu finish opening, or a tap can land where it's still growing.
+- waitForAnimationToEnd
+- tapOn: Settings
+- assertVisible: Personalization
+- tapOn: Account
+- assertVisible: Account Number
+- extendedWaitUntil:
+    visible: Active
+    timeout: 20000
+- assertNotVisible: Last Backup
+- tapOn:
+    text: Back Up to WitnessWork
+    role: switch
+# The first backup runs as soon as it's on, against the local ww-api.
+- extendedWaitUntil:
+    visible: Last Backup
+    timeout: 30000
+- assertVisible: Today at
+- assertVisible: This phone

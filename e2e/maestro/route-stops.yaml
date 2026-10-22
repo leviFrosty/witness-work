@@ -1,0 +1,40 @@
+# seed: pioneer
+# Today has no follow-ups or plans in the pioneer scenario, so its route
+# starts empty.
+# assert: (() => { const d = new Date(); const day = [d.getFullYear(), String(d.getMonth() + 1).padStart(2, '0'), String(d.getDate()).padStart(2, '0')].join('-'); const route = __WW_DEV__.stores.savedRoutes.getState().routes[day]; return JSON.stringify(route?.order) === JSON.stringify(['contact:verify-contact-1']) })()
+# assert: __WW_DEV__.state().route.name === 'TodayRoute'
+appId: com.leviwilkerson.jwtimedev
+name: Plan today's route from its day on Schedule, add two contacts as stops, then remove one
+---
+- extendedWaitUntil:
+    visible: Schedule
+    timeout: 60000
+# A seed re-renders every screen; let it settle before the first tap.
+- waitForAnimationToEnd
+- tapOn: Schedule
+# Open today's day sheet, as the Calendar widget's link
+# (witnesswork://schedule/<date>) does.
+- evalScript: >-
+    (() => { const d = new Date(); const day = [d.getFullYear(),
+    String(d.getMonth() + 1).padStart(2, '0'),
+    String(d.getDate()).padStart(2, '0')].join('-');
+    __WW_DEV__.navigate('Root', { screen: 'Schedule', params: { date: day } });
+    return true })()
+- waitForAnimationToEnd
+- tapOn:
+    text: Plan Today's Route
+    traits: button
+- assertVisible: Plan Route
+- assertVisible: 0 stops
+- tapOn: Add Stop
+- tapOn: Contacts
+- tapOn: Ada Reyes
+- assertVisible: 1 stop
+- tapOn: Add Stop
+- tapOn: Contacts
+- tapOn: Bruno Okafor
+- assertVisible: 2 stops
+- tapOn: Options for Ada Reyes
+- tapOn: Remove Stop
+- assertVisible: 1 stop
+- assertVisible: Bruno Okafor

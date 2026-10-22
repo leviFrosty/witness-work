@@ -12,6 +12,7 @@ const runtime = vi.hoisted(() => {
     getOfferings: vi.fn(),
     restore: vi.fn(),
     revalidate: vi.fn(),
+    setCustomer: vi.fn(),
     replace: vi.fn(),
     alert: vi.fn(),
     captureException: vi.fn(),
@@ -68,6 +69,7 @@ vi.mock('@/hooks/useCustomer', () => ({
     customer: null,
     hasPurchasedBefore: false,
     revalidate: runtime.revalidate,
+    setCustomer: runtime.setCustomer,
   }),
 }))
 vi.mock('react-native-safe-area-context', () => ({
@@ -182,7 +184,10 @@ beforeEach(() => {
   runtime.beforeRemove = undefined
   runtime.foreground.clear()
   runtime.reconnect.clear()
-  runtime.purchase.mockResolvedValue({ productIdentifier: 'annual' })
+  runtime.purchase.mockResolvedValue({
+    productIdentifier: 'annual',
+    customerInfo: { entitlements: { active: { pro: {} } } },
+  })
   const annual = pkg('annual')
   const tip = pkg('tip')
   runtime.getOfferings.mockResolvedValue({
@@ -223,6 +228,9 @@ describe.each(['ios', 'android'])('purchase attribution on %s', (platform) => {
     })
     expect(runtime.replace).toHaveBeenCalledExactlyOnceWith('Thank You', {
       purchaseTier: 'supporter',
+    })
+    expect(runtime.setCustomer).toHaveBeenCalledWith({
+      entitlements: { active: { pro: {} } },
     })
   })
 })
@@ -318,6 +326,27 @@ describe('offerings', () => {
     expect(listeners.size).toBe(0)
     expect(events('paywall_offerings_failed')[0][1].trigger).toBe('initial')
     expect(trigger).toBeTruthy()
+  })
+
+  it('runs a reconnect that comes in during a slow load once that load fails', async () => {
+    const offerings = await runtime.getOfferings()
+    runtime.getOfferings.mockClear()
+    let failSlowLoad = (_error: unknown) => {}
+    runtime.getOfferings.mockReturnValueOnce(
+      new Promise((_, reject) => (failSlowLoad = reject))
+    )
+    await render()
+    expect(runtime.getOfferings).toHaveBeenCalledTimes(1)
+
+    // Back online while the load started offline still waits on the store.
+    runtime.getOfferings.mockResolvedValueOnce(offerings)
+    await act(async () => runtime.reconnect.forEach((listener) => listener()))
+    expect(runtime.getOfferings).toHaveBeenCalledTimes(1)
+
+    await act(async () => failSlowLoad(new Error('network error')))
+    expect(runtime.getOfferings).toHaveBeenCalledTimes(2)
+    expect(empty()).toHaveLength(0)
+    expect(events('paywall_offerings_failed')[0][1].trigger).toBe('initial')
   })
 
   it('explains an empty store instead of showing no prices', async () => {

@@ -86,6 +86,7 @@ type SupporterBilling = 'monthly' | 'annual'
 type PriceView = SupporterBilling | 'tip'
 // What asked for offerings, for `paywall_offerings_failed` / `_empty`.
 type OfferingsTrigger = 'initial' | 'retry' | 'foreground' | 'reconnect'
+type OfferingsLoad = { force: boolean; trigger: OfferingsTrigger }
 
 const storePlatform = Platform.OS === 'android' ? 'android' : 'ios'
 
@@ -293,56 +294,80 @@ const PaywallScreen = ({
   // `getOfferings` is served from the SDK's internal cache (~5 min TTL), so a
   // plain call won't pick up dashboard edits. `force` routes through
   // `syncAttributesAndOfferingsIfNeeded`, which bypasses that cache.
+  // A load asked for while another is out (the reconnect retry while a load
+  // started offline still waits on the store) runs if that load fails,
+  // instead of being dropped.
+  const queuedOfferingsLoad = useRef<OfferingsLoad | null>(null)
   const fetchOfferings = useCallback(
     async ({
       force = false,
       trigger = 'initial',
-    }: { force?: boolean; trigger?: OfferingsTrigger } = {}) => {
-      if (offeringsInFlight.current) return
-      offeringsInFlight.current = true
-      setLoadingOfferings(true)
-      logger.log('[Paywall] calling Purchases.getOfferings', { force, trigger })
-      try {
-        const offerings = force
-          ? await Purchases.syncAttributesAndOfferingsIfNeeded()
-          : await Purchases.getOfferings()
-        logger.log('[Paywall] getOfferings success', {
+    }: Partial<OfferingsLoad> = {}) => {
+      if (offeringsInFlight.current) {
+        queuedOfferingsLoad.current = { force, trigger }
+        return
+      }
+      const load = async ({ force, trigger }: OfferingsLoad) => {
+        logger.log('[Paywall] calling Purchases.getOfferings', {
           force,
-          currentIdentifier: offerings.current?.identifier ?? null,
-          allCount: Object.keys(offerings.all).length,
-          allIdentifiers: Object.keys(offerings.all),
-        })
-        if (totalPackages(offerings) === 0) {
-          analytics.capture('paywall_offerings_empty', {
-            source,
-            ...gateAttribution,
-            trigger,
-          })
-        }
-        setCurrentOfferings(offerings)
-        setOfferingsError(null)
-      } catch (error) {
-        const err = error as PurchasesError
-        const connectivity = isConnectivityError(error)
-        analytics.capture('paywall_offerings_failed', {
-          source,
-          ...gateAttribution,
-          error_code: err?.code ?? 'unknown',
-          offline: isOfflineError(error),
           trigger,
         })
-        const log = connectivity ? logger.warn : logger.error
-        log('[Paywall] getOfferings failed', {
-          code: err?.code,
-          message: err?.message,
-          underlying: err?.underlyingErrorMessage,
-          userInfo: err?.userInfo,
-          raw: err,
-        })
-        setOfferingsError(connectivity ? 'offline' : 'failed')
-        // Offline is expected, not a bug (JW-TIME-BW). Other failures report.
-        if (!connectivity) errorTracking.captureException(error)
-        throw error
+        try {
+          const offerings = force
+            ? await Purchases.syncAttributesAndOfferingsIfNeeded()
+            : await Purchases.getOfferings()
+          logger.log('[Paywall] getOfferings success', {
+            force,
+            currentIdentifier: offerings.current?.identifier ?? null,
+            allCount: Object.keys(offerings.all).length,
+            allIdentifiers: Object.keys(offerings.all),
+          })
+          if (totalPackages(offerings) === 0) {
+            analytics.capture('paywall_offerings_empty', {
+              source,
+              ...gateAttribution,
+              trigger,
+            })
+          }
+          setCurrentOfferings(offerings)
+          setOfferingsError(null)
+        } catch (error) {
+          const err = error as PurchasesError
+          const connectivity = isConnectivityError(error)
+          analytics.capture('paywall_offerings_failed', {
+            source,
+            ...gateAttribution,
+            error_code: err?.code ?? 'unknown',
+            offline: isOfflineError(error),
+            trigger,
+          })
+          const log = connectivity ? logger.warn : logger.error
+          log('[Paywall] getOfferings failed', {
+            code: err?.code,
+            message: err?.message,
+            underlying: err?.underlyingErrorMessage,
+            userInfo: err?.userInfo,
+            raw: err,
+          })
+          setOfferingsError(connectivity ? 'offline' : 'failed')
+          // Offline is expected, not a bug (JW-TIME-BW). Other failures report.
+          if (!connectivity) errorTracking.captureException(error)
+          throw error
+        }
+      }
+      offeringsInFlight.current = true
+      setLoadingOfferings(true)
+      try {
+        let next: OfferingsLoad = { force, trigger }
+        for (;;) {
+          queuedOfferingsLoad.current = null
+          try {
+            return await load(next)
+          } catch (error) {
+            if (!queuedOfferingsLoad.current) throw error
+            next = queuedOfferingsLoad.current
+          }
+        }
       } finally {
         offeringsInFlight.current = false
         setLoadingOfferings(false)
@@ -556,12 +581,14 @@ const PaywallScreen = ({
     setPurchasing(true)
     analytics.capture('supporter_purchase_started', purchaseProperties)
     try {
-      const { productIdentifier } =
+      const { productIdentifier, customerInfo } =
         await Purchases.purchasePackage(selectedPackage)
       if (productIdentifier) {
         purchased.current = true
         analytics.capture('supporter_purchase_completed', purchaseProperties)
-        revalidate()
+        // The store's answer already has the new entitlement; asking again
+        // could fail on a flaky connection and leave Supporter off.
+        setCustomer(customerInfo)
         // Pass the purchased tier so the Thank You screen shows the right
         // tone — a lifetime supporter who tips one-time should see the tip
         // thank-you, not the full supporter celebration, even though

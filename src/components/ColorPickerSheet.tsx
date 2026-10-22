@@ -1,12 +1,8 @@
 import { X as XIcon } from 'lucide-react-native'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ComponentProps } from 'react'
 import { View } from 'react-native'
 import Sheet from '@/components/ui/Sheet'
-import ColorPicker, {
-  HueSlider,
-  Panel1,
-  Preview,
-} from 'reanimated-color-picker'
+import type ColorPickerPanelComponent from '@/components/ColorPickerPanel'
 import useTheme from '@/contexts/theme'
 import Text from '@/components/ui/MyText'
 import Button from '@/components/ui/Button'
@@ -90,19 +86,7 @@ const ColorPickerSheet = ({
           />
         </View>
 
-        <ColorPicker
-          value={value}
-          sliderThickness={22}
-          thumbSize={24}
-          thumbShape='circle'
-          boundedThumb
-          onCompleteJS={(c) => setDraft(c.hex)}
-          style={{ gap: 16 }}
-        >
-          <Preview hideText style={{ height: 36, borderRadius: 8 }} />
-          <Panel1 style={{ borderRadius: 12 }} />
-          <HueSlider style={{ borderRadius: 12 }} />
-        </ColorPicker>
+        <ColorPickerPanel value={value} onComplete={setDraft} />
 
         <Button
           onPress={handleDone}
@@ -126,6 +110,19 @@ const ColorPickerSheet = ({
       </View>
     </Sheet>
   )
+}
+
+/**
+ * Loads reanimated-color-picker when the sheet first opens (the sheet mounts
+ * its content only then) rather than at launch with every screen that hosts a
+ * swatch, Home's profile card included.
+ */
+function ColorPickerPanel(
+  props: ComponentProps<typeof ColorPickerPanelComponent>
+) {
+  const Panel: typeof ColorPickerPanelComponent =
+    require('@/components/ColorPickerPanel').default
+  return <Panel {...props} />
 }
 
 export default ColorPickerSheet

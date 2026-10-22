@@ -423,6 +423,8 @@ const CalendarDay = (
   return (
     <ContextMenu
       actions={menu}
+      // The Schedule mounts a hundred days at once.
+      deferHost
       accessibilityLabel={accessibilityLabel}
       onPress={() => {
         props.onPress?.(props.date)

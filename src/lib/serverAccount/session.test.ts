@@ -748,6 +748,38 @@ describe('account sessions', () => {
     expect(open.attestation.assert).toHaveBeenCalledTimes(1)
   })
 
+  it('sends nothing while Update Required shows, then picks up again', async () => {
+    let paused = false
+    const { worker, attestation, info, onUpgradeRequired, sessions, clock } =
+      setup({ deps: { paused: () => paused } })
+    await info()
+    const sent = worker.calls.length
+
+    paused = true
+    await expect(info()).rejects.toMatchObject({
+      name: 'AccountSessionError',
+      failure: 'upgrade',
+      status: 426,
+      serverCode: 'upgrade_required',
+    })
+    // Nor a refresh or a new session once the token runs out.
+    clock.now += ACCESS_LIFETIME_MS
+    await expect(info()).rejects.toMatchObject({ failure: 'upgrade' })
+    await expect(sessions.withSession(async () => 'ran')).rejects.toMatchObject(
+      { failure: 'upgrade' }
+    )
+    expect(worker.calls).toHaveLength(sent)
+    expect(attestation.assert).toHaveBeenCalledTimes(1)
+    // The gate is already up; this isn't another 426 from ww-api.
+    expect(onUpgradeRequired).not.toHaveBeenCalled()
+
+    paused = false
+    await expect(info()).resolves.toMatchObject({
+      data: { accountId: expect.stringMatching(/^acct/) },
+    })
+    expect(worker.opsCalled('session/refresh')).toHaveLength(1)
+  })
+
   it('names attestation failures and waits before attesting again', async () => {
     let error: Error | null = new AttestationError('unsupported')
     const attestation = fakeAttestation({ fail: () => error })

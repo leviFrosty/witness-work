@@ -31,10 +31,11 @@ describe('openStoreListing', () => {
     })
   })
 
-  it('opens Google Play on Android', () => {
+  it('opens the Play Store app on Android, with the web listing as fallback', () => {
     mocks.os = 'android'
     void openStoreListing({ title: 'updateRequired_title' })
-    expect(mocks.openURL).toHaveBeenCalledWith(links.playStore, {
+    expect(mocks.openURL).toHaveBeenCalledWith(links.playStoreApp, {
+      fallbackUrl: links.playStore,
       alert: {
         title: 'updateRequired_title',
         description: 'updateRequired_storeFailedAndroid',
@@ -52,7 +53,7 @@ describe('openStoreListing', () => {
     mocks.os = 'android'
     void openStoreListing({ review: true })
     expect(mocks.openURL).toHaveBeenLastCalledWith(
-      links.playStore,
+      links.playStoreApp,
       expect.anything()
     )
   })

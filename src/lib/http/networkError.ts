@@ -3,7 +3,8 @@
  * axios, React Native's fetch, a native SDK (RevenueCat), or a feature's own
  * error type (Buddies relay, sync transports, Notes Import).
  *
- * - `offline`: no connection, DNS failure, connection refused or dropped.
+ * - `offline`: no connection, DNS failure, connection refused or dropped, or a
+ *   captive portal's web page where an API's JSON was expected.
  * - `timeout`: started but didn't finish in time.
  * - `cancelled`: the caller aborted it; never an error to report or show.
  * - `rateLimited`: 429, or a service's own throttling code.

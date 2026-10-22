@@ -31,6 +31,8 @@ vi.stubGlobal('fetch', mocks.fetch)
 
 import links from '@/constants/links'
 import { fetchCoordinateFromAddress, navigateTo } from '@/lib/address'
+import { isRetryableGeocodeFailure } from '@/lib/geocodeRetry'
+import { classifyNetworkError } from '@/lib/http/networkError'
 import type { Contact } from '@/types/contact'
 
 const address = { line1: '12 Oak St', city: 'Springfield' }
@@ -156,6 +158,25 @@ describe('fetchCoordinateFromAddress', () => {
     await expect(
       fetchCoordinateFromAddress(vi.fn(), address, controller.signal)
     ).rejects.toMatchObject({ kind: 'cancelled' })
+    expect(mocks.capture).not.toHaveBeenCalled()
+  })
+
+  it("doesn't report a captive portal's sign-in page, and keeps it retryable", async () => {
+    mocks.fetch.mockImplementation(
+      async () =>
+        new Response(
+          '<!DOCTYPE html><html><body>Sign in to Wi-Fi</body></html>',
+          {
+            status: 200,
+            headers: { 'content-type': 'text/html; charset=utf-8' },
+          }
+        )
+    )
+    const failure = await fetchCoordinateFromAddress(vi.fn(), address).catch(
+      (error: unknown) => error
+    )
+    expect(failure).toMatchObject({ kind: 'offline' })
+    expect(isRetryableGeocodeFailure(classifyNetworkError(failure))).toBe(true)
     expect(mocks.capture).not.toHaveBeenCalled()
   })
 

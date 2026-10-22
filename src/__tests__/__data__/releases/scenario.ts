@@ -329,3 +329,162 @@ export const RECURRING_DELETED_DATE = {
   planId: 'r-weekly',
   date: at(2025, 9, 23, 0, 0),
 }
+
+// Device-local stores: settings and bookkeeping kept on this device only,
+// outside iCloud and Google Drive sync and the backup file.
+
+export const APP_LOCK = { enabled: true, requireAfter: 300 } as const
+export const SIDEBAR = { width: 320, hidden: true }
+export const SPLIT_SHEET_RATIO = 0.4
+
+export const CALENDAR_SYNC = {
+  enabled: true,
+  registered: true,
+  destination: {
+    id: 'cal-ministry',
+    title: 'Ministry',
+    account: 'sam.rivera@example.com',
+  },
+  namespace: 'ns-sam-1',
+  includeDetails: true,
+  lastSyncedAt: at(2025, 10, 6, 19, 30).getTime(),
+  failingSince: null,
+  upcomingCount: 2,
+  sharedCalendar: { title: 'Ministry', account: 'sam.rivera@example.com' },
+  optedOut: false,
+  promptAnswered: true,
+}
+
+/** The bell's bookkeeping, by notification item id. */
+export const TRAY = {
+  at: at(2025, 10, 6, 18, 0).getTime(),
+  arrivals: ['report:2025-09', 'followUp:v-ada-1', 'buddyBadge:inbox-noor'],
+  seen: ['report:2025-09'],
+  dismissed: ['followUp:v-bram-1'],
+}
+
+export const STREAK_SEEN = { kind: 'months', latest: '2025-09' } as const
+
+/** The day → minutes map the Home cards read, cached. */
+export const DAILY_MINUTES = {
+  daily: { '2025-09-06': 150, '2025-09-13': 90, '2025-10-04': 120 },
+  fingerprint: 'fp-fixture',
+}
+
+export const BUDDIES = {
+  registeredInboxId: 'inbox-sam',
+  deviceId: 'device-sam-phone',
+  syncSeq: 42,
+  rosterVersion: 7,
+  pushRegistrationKey: 'push-key-fixture',
+  pushRegisteredAt: at(2025, 10, 1, 9, 0).getTime(),
+  /**
+   * Active. This User hides their Plans from the calendar and mutes their
+   * requests to join on this device.
+   */
+  noor: {
+    inboxId: 'inbox-noor',
+    name: 'Noor Haddad',
+    nickname: 'Noor H.',
+    dhPub: 'dh-pub-noor-fixture',
+    inviteSecret: 'invite-secret-noor',
+    status: 'active' as const,
+    pairedAt: at(2025, 8, 10, 12, 0).getTime(),
+    colorIndex: 2,
+    color: '#7A4FB5',
+  },
+  /** Accepted this User's invite; waiting for the confirmation. */
+  pip: {
+    inboxId: 'inbox-pip',
+    name: 'Pip Larsen',
+    dhPub: 'dh-pub-pip-fixture',
+    inviteSecret: 'invite-secret-pip',
+    status: 'awaitingConfirm' as const,
+    pairedAt: at(2025, 10, 5, 16, 0).getTime(),
+    colorIndex: 3,
+    expiresAt: at(2025, 10, 12, 16, 0).getTime(),
+  },
+  invite: {
+    inviteId: 'invite-open',
+    secret: 'invite-secret-open',
+    createdAt: at(2025, 10, 4, 10, 0).getTime(),
+    expiresAt: at(2025, 10, 11, 10, 0).getTime(),
+  },
+  /** Removed; withdrawing its relay slots is still to finish. */
+  removed: {
+    inboxId: 'inbox-old',
+    dhPub: 'dh-pub-old-fixture',
+    inviteSecret: 'invite-secret-old',
+    removedAt: at(2025, 9, 1, 12, 0).getTime(),
+  },
+  /** This User stopped showing their photo to buddies. */
+  sharing: { photo: false, updatedAt: at(2025, 9, 2, 8, 0).getTime() },
+}
+
+/**
+ * Notes Import's history (its own MMKV instance): an import read and waiting to
+ * be added, and one still being read.
+ */
+export const NOTES_IMPORTS = {
+  ready: {
+    hash: 'hash-ready-fixture',
+    notesText: 'Sat 10/4 field service 2h. Visited Lena Park, 8 Oak St.',
+    createdAt: at(2025, 10, 5, 14, 0).getTime(),
+    parsedAt: at(2025, 10, 5, 14, 1).getTime(),
+    viewedAt: at(2025, 10, 5, 14, 2).getTime(),
+    result: {
+      contacts: [
+        {
+          tempId: 't-lena',
+          name: 'Lena Park',
+          address: { line1: '8 Oak St', city: 'Maplewood', state: 'MN' },
+        },
+      ],
+      visits: [
+        {
+          contactTempId: 't-lena',
+          date: '2025-10-04T10:00:00-05:00',
+          isBibleStudy: false,
+          note: 'Left a tract',
+        },
+      ],
+      timeEntries: [{ date: '2025-10-04', hours: 2, minutes: 0 }],
+      categories: [],
+      publisher: null,
+      warnings: [],
+      summary: 'Saturday service',
+      assistantMessage: '',
+    },
+  },
+  working: {
+    hash: 'hash-working-fixture',
+    notesText: 'Sun 10/5 letter writing 1h',
+    createdAt: at(2025, 10, 6, 19, 50).getTime(),
+    activeRun: { importId: 'import-working', subscribeToken: 'token-fixture' },
+  },
+}
+
+// Device-local stores since 1.45.
+
+/** A pin lookup that failed twice, waiting to retry. */
+export const GEOCODE_RETRY = { contactId: 'c-dora', attempts: 2 }
+/** The Map's Find stopped offering to look up this Contact's address. */
+export const MAP_FIND_SKIP = { contactId: 'c-chen' }
+export const SAVED_PLACES = {
+  home: {
+    title: 'Home',
+    subtitle: '12 Pine Street',
+    coordinate: { latitude: 44.98, longitude: -93.1 },
+    destination: '12 Pine Street, Saint Paul, MN',
+  },
+}
+export const SAVED_ROUTE = {
+  day: '2025-10-10',
+  order: ['plan:p-1', 'followUp:v-ada-1'],
+  removed: [] as string[],
+  added: [],
+  stay: { 'plan:p-1': 45 },
+  startTimeInMinutes: 9 * 60,
+  keepSetTimes: false,
+  note: 'Start at the Kingdom Hall',
+}

@@ -812,5 +812,171 @@
    ]
   },
   "version": 0
+ },
+ "buddies": {
+  "state": {
+   "onboardingComplete": true,
+   "deviceId": "device-sam-phone",
+   "registeredInboxId": "inbox-sam",
+   "syncSeq": 42,
+   "lastSyncAt": 1759795200000,
+   "buddies": [
+    {
+     "inboxId": "inbox-noor",
+     "name": "Noor Haddad",
+     "nickname": "Noor H.",
+     "dhPub": "dh-pub-noor-fixture",
+     "inviteSecret": "invite-secret-noor",
+     "status": "active",
+     "pairedAt": 1754845200000,
+     "colorIndex": 2,
+     "color": "#7A4FB5",
+     "showOnCalendar": false
+    },
+    {
+     "inboxId": "inbox-pip",
+     "name": "Pip Larsen",
+     "dhPub": "dh-pub-pip-fixture",
+     "inviteSecret": "invite-secret-pip",
+     "status": "awaitingConfirm",
+     "pairedAt": 1759698000000,
+     "colorIndex": 3,
+     "expiresAt": 1760302800000,
+     "showOnCalendar": true
+    }
+   ],
+   "outgoingInvites": [
+    {
+     "inviteId": "invite-open",
+     "secret": "invite-secret-open",
+     "createdAt": 1759590000000,
+     "expiresAt": 1760194800000
+    }
+   ],
+   "incomingClaims": [],
+   "closedInviteIds": {},
+   "removedBuddies": {
+    "inbox-old": 1756746000000
+   },
+   "rosterVersion": 7,
+   "pendingRemovals": [
+    {
+     "inboxId": "inbox-old",
+     "dhPub": "dh-pub-old-fixture",
+     "inviteSecret": "invite-secret-old"
+    }
+   ],
+   "slotsNeedRestore": false,
+   "cards": {},
+   "publishedCardHashes": {},
+   "outgoingShares": {},
+   "shareReplies": {},
+   "incomingShares": {},
+   "joinRequests": {},
+   "askedToJoin": {},
+   "notifications": [],
+   "pushRegistrationKey": "push-key-fixture",
+   "pushRegisteredAt": 1759327200000,
+   "sharing": {
+    "photo": false,
+    "tenure": true,
+    "streak": true,
+    "updatedAt": 1756818000000,
+    "badges": true,
+    "badgesUpdatedAt": 0
+   },
+   "notificationsEnabled": true,
+   "joinRequestNotifications": true,
+   "mutedJoinRequests": [
+    "inbox-noor"
+   ],
+   "badgeNotifications": true,
+   "badgeAnnouncements": [],
+   "lastBadgeAlertAt": {},
+   "seenBadgeEvents": {},
+   "sentBadgeReactions": {},
+   "badgeReactions": {},
+   "lastBadgeReactionAlertAt": {},
+   "devOverride": false,
+   "flagLastKnown": null,
+   "avatarThumbnail": null
+  },
+  "version": 1
+ },
+ "calendar-sync": {
+  "state": {
+   "enabled": true,
+   "registered": true,
+   "destination": {
+    "id": "cal-ministry",
+    "title": "Ministry",
+    "account": "sam.rivera@example.com"
+   },
+   "namespace": "ns-sam-1",
+   "includeDetails": true,
+   "lastSyncedAt": 1759797000000,
+   "failingSince": null,
+   "upcomingCount": 2,
+   "sharedCalendar": {
+    "title": "Ministry",
+    "account": "sam.rivera@example.com"
+   },
+   "optedOut": false,
+   "promptAnswered": true
+  },
+  "version": 0
+ },
+ "notificationsTray": {
+  "state": {
+   "arrivals": {
+    "report:2025-09": 1759791600000,
+    "followUp:v-ada-1": 1759791600000,
+    "buddyBadge:inbox-noor": 1759791600000
+   },
+   "dismissed": {
+    "followUp:v-bram-1": 1759791600000
+   },
+   "seen": {
+    "report:2025-09": 1759791600000
+   }
+  },
+  "version": 1
+ },
+ "plan-cache": {
+  "state": {
+   "cache": {
+    "2026": {
+     "plannedMinutes": 5400,
+     "lastUpdated": 1759798800000,
+     "planHash": "sr:fixture"
+    }
+   },
+   "dailyMinutes": {
+    "daily": {
+     "2025-09-06": 150,
+     "2025-09-13": 90,
+     "2025-10-04": 120
+    },
+    "lastUpdated": 1759798800000,
+    "fingerprint": "fp-fixture"
+   }
+  },
+  "version": 0
+ },
+ "sidebar-layout": {
+  "state": {
+   "width": 320,
+   "hidden": true
+  },
+  "version": 0
+ },
+ "streakCelebration": {
+  "state": {
+   "seen": {
+    "kind": "months",
+    "latest": "2025-09"
+   }
+  },
+  "version": 1
  }
 }

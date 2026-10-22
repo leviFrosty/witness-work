@@ -1,14 +1,16 @@
-import { readFileSync, readdirSync } from 'node:fs'
+import { existsSync, readFileSync, readdirSync } from 'node:fs'
 import semver from 'semver'
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 
 // Upgrading from a released build must keep the User's data. Each folder in
 // `__data__/releases/` holds what that release saved: every persisted store as
-// its persist middleware wrote it to MMKV (`stores.json`), and the file its
-// Settings → Export wrote (`backup.json`), both from the same made-up records
-// (`__data__/releases/scenario.ts`). This suite launches the current build on
-// each one, through the real persist `migrate`/`merge`, the boot migrations and
-// the backup restore, and checks that every record comes through.
+// its persist middleware wrote it to MMKV (`stores.json`), the file its
+// Settings → Export wrote (`backup.json`), and the file sync wrote to iCloud
+// (`icloud.json`) and Google Drive (`google-drive.json`), all from the same
+// made-up records (`__data__/releases/scenario.ts`). This suite launches the
+// current build on each one, through the real persist `migrate`/`merge`, the
+// boot migrations, the backup restore and the sync engine's restore and merge,
+// and checks that every record and setting comes through.
 // `docs/upgrade-fixtures.md` says how to add a release.
 
 const disk = vi.hoisted(() => {
@@ -18,29 +20,46 @@ const disk = vi.hoisted(() => {
   return {
     tz,
     data: new Map<string, string | boolean>(),
+    /** MMKV instances other than the default (`data`), by id. */
+    instances: new Map<string, Map<string, string | boolean>>(),
     errors: [] as unknown[],
     uuid: 0,
+    os: 'ios' as 'ios' | 'android',
+    /** ICloud's container, or the Google Drive app data folder. */
+    cloud: [] as { filename: string; json: string; modifiedAt: number }[],
   }
 })
 
 vi.mock('react-native-mmkv', () => ({
   MMKV: class {
+    private readonly data: Map<string, string | boolean>
+    constructor(config?: { id?: string }) {
+      const id = config?.id
+      if (id && !disk.instances.has(id)) disk.instances.set(id, new Map())
+      this.data = id ? disk.instances.get(id)! : disk.data
+    }
     get size() {
-      return disk.data.size
+      return this.data.size
     }
     getBoolean(key: string) {
-      const value = disk.data.get(key)
+      const value = this.data.get(key)
       return typeof value === 'boolean' ? value : undefined
     }
     getString(key: string) {
-      const value = disk.data.get(key)
+      const value = this.data.get(key)
       return typeof value === 'string' ? value : undefined
     }
+    getAllKeys() {
+      return [...this.data.keys()]
+    }
+    contains(key: string) {
+      return this.data.has(key)
+    }
     set(key: string, value: string | boolean) {
-      disk.data.set(key, value)
+      this.data.set(key, value)
     }
     delete(key: string) {
-      disk.data.delete(key)
+      this.data.delete(key)
     }
     trim() {}
   },
@@ -57,6 +76,7 @@ vi.mock('@/lib/errorTracking', () => ({
   errorTracking: {
     addBreadcrumb: vi.fn(),
     captureException: (error: unknown) => disk.errors.push(error),
+    captureMessage: vi.fn(),
   },
 }))
 vi.mock('@/lib/logger', () => import('@/__tests__/mocks/logger'))
@@ -66,13 +86,71 @@ vi.mock('expo-constants', () => ({
 vi.mock('expo-device', () => ({
   DeviceType: { TABLET: 2 },
   deviceType: 1,
-  osName: 'iOS',
+  get osName() {
+    return disk.os === 'ios' ? 'iOS' : 'Android'
+  },
+  get modelName() {
+    return disk.os === 'ios' ? 'iPad Air' : 'Pixel 9'
+  },
 }))
 vi.mock('expo-crypto', () => ({ randomUUID: () => `uuid-${++disk.uuid}` }))
 vi.mock('@/lib/locales', () => ({ default: { t: (key: string) => key } }))
 vi.mock('react-native', () => ({
-  Platform: { OS: 'ios', select: (o: { ios?: unknown }) => o.ios },
+  Platform: {
+    get OS() {
+      return disk.os
+    },
+    select: (o: { ios?: unknown; android?: unknown; default?: unknown }) =>
+      disk.os in o ? o[disk.os] : o.default,
+  },
   Alert: { alert: vi.fn() },
+  AppState: {
+    currentState: 'background',
+    addEventListener: () => ({ remove: () => {} }),
+  },
+}))
+// Native modules behind the Map's address lookups, never reached here.
+vi.mock('expo-location', () => ({}))
+vi.mock('expo-linking', () => ({}))
+
+// Sync. iOS reads iCloud through this bridge; Android registers `googleDrive`.
+vi.mock('../../modules/icloud-bridge', () => ({
+  isAvailable: () => true,
+  supportsUploadStatus: () => false,
+  identityToken: () => null,
+  waitForInitialScan: async () => true,
+  readFiles: async (include: (filename: string) => boolean) => ({
+    files: disk.cloud.filter(({ filename }) => include(filename)),
+    pending: [],
+  }),
+  write: async (filename: string, json: string) => {
+    disk.cloud = [
+      ...disk.cloud.filter((file) => file.filename !== filename),
+      { filename, json, modifiedAt: Date.now() },
+    ]
+    return Date.now()
+  },
+  deleteFile: async () => {},
+  addRemoteChangeListener: () => ({ remove: () => {} }),
+  addAvailabilityChangeListener: () => ({ remove: () => {} }),
+}))
+vi.mock('@/lib/account', () => ({
+  reclaimAccountFile: vi.fn(),
+  clearAdoptedAccountId: vi.fn(),
+}))
+vi.mock('@/lib/installId', () => ({ getOrCreateInstallId: () => 'install' }))
+vi.mock('@/lib/analytics', () => ({ analytics: { capture: vi.fn() } }))
+vi.mock('expo-file-system/legacy', () => ({
+  documentDirectory: 'file:///upgraded/Documents/',
+  getInfoAsync: async () => ({ exists: false }),
+}))
+vi.mock('expo-image-manipulator', () => ({
+  manipulateAsync: vi.fn(),
+  SaveFormat: { JPEG: 'jpeg' },
+}))
+vi.mock('@/lib/syncClock', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/syncClock')>()),
+  refreshSyncClock: async () => null,
 }))
 
 import { LDC_BUILTIN_CATEGORY_ID } from '@/constants/categories'
@@ -84,11 +162,19 @@ import {
 } from '@/lib/normalizeDate'
 import { getPlansIntersectingDay } from '@/lib/recurrence'
 import { getCategoryLabel } from '@/lib/serviceReportCategory'
+import { geocodeRetryKey } from '@/lib/geocodeRetry'
+import { pinLookupKey } from '@/features/map/lib/geocodeContacts'
+import { buddyAlertSettings, buddySettings } from '@/features/buddies/lib/state'
+import type { SyncTransport } from '@/lib/syncTransport'
 import type { TimeEntry } from '@/types/timeEntry'
 import {
+  APP_LOCK,
+  BUDDIES,
+  CALENDAR_SYNC,
   CATEGORIES,
   CONTACTS,
   CUSTOM_FIELD,
+  DAILY_MINUTES,
   DAY_PLANS,
   DELETED_CONTACT_ID,
   DELETED_VISIT,
@@ -96,9 +182,18 @@ import {
   DELETED_DAY_PLAN,
   DISMISSED,
   ENTRIES,
+  GEOCODE_RETRY,
+  MAP_FIND_SKIP,
+  NOTES_IMPORTS,
   RECURRING_DELETED_DATE,
   RECURRING_OVERRIDE,
   RECURRING_PLANS,
+  SAVED_PLACES,
+  SAVED_ROUTE,
+  SIDEBAR,
+  SPLIT_SHEET_RATIO,
+  STREAK_SEEN,
+  TRAY,
   VISITS,
   at,
 } from '@/__tests__/__data__/releases/scenario'
@@ -114,6 +209,20 @@ const readJson = <T>(path: string): T =>
   JSON.parse(readFileSync(path, 'utf8')) as T
 const fixtureStores = (release: string) =>
   readJson<Record<string, Blob>>(`${DIR}/${release}/stores.json`)
+
+type Cloud = 'icloud' | 'google-drive'
+const CLOUDS: Cloud[] = ['icloud', 'google-drive']
+type Payload = { deviceId: string; preferencesStore: { values: object } }
+/** The sync files the release wrote, as each cloud holds them. */
+const syncFiles = (release: string) =>
+  CLOUDS.filter((cloud) => existsSync(`${DIR}/${release}/${cloud}.json`)).map(
+    (cloud) => ({
+      cloud,
+      json: readFileSync(`${DIR}/${release}/${cloud}.json`, 'utf8'),
+    })
+  )
+const syncPayloads = (release: string) =>
+  syncFiles(release).map(({ json }) => JSON.parse(json) as Payload)
 
 /** Whether `release` (a folder name like `v1.42.0`) is `version` or later. */
 const since = (release: string, version: string) => semver.gte(release, version)
@@ -147,6 +256,27 @@ async function launch() {
   const { useProfile } = await import('@/stores/profile')
   const { default: useMileage } = await import('@/stores/mileage')
   const { default: usePet } = await import('@/stores/pet')
+  // This device's settings and bookkeeping.
+  const { useAppLockSettings } = await import('@/stores/appLock')
+  const { useBuddies } = await import('@/features/buddies/stores/buddiesStore')
+  const { useCalendarSync } = await import('@/stores/calendarSync')
+  const { useGeocodeRetry } = await import('@/stores/geocodeRetry')
+  const { useMapFindSkips } = await import('@/features/map/stores/mapFindSkips')
+  const { useNotificationsTray } = await import(
+    '@/features/notifications/stores/notificationsTray'
+  )
+  const { useTimeCache } = await import('@/stores/timeCache')
+  const { useSavedPlaces } = await import(
+    '@/features/route-planning/stores/savedPlaces'
+  )
+  const { useSavedRoutes } = await import(
+    '@/features/route-planning/stores/savedRoutes'
+  )
+  const { useSidebarPreferences } = await import('@/stores/sidebar')
+  const { useSplitSheetPreferences } = await import('@/stores/splitSheet')
+  const { useStreakCelebration } = await import(
+    '@/features/profile/stores/streakCelebration'
+  )
   const { runCustomFieldsMigration } = await import(
     '@/features/contacts/lib/runCustomFieldsMigration'
   )
@@ -170,6 +300,18 @@ async function launch() {
     profile: useProfile,
     mileage: useMileage,
     petCompanion: usePet,
+    'app-lock': useAppLockSettings,
+    buddies: useBuddies,
+    'calendar-sync': useCalendarSync,
+    'geocode-retry': useGeocodeRetry,
+    'map-find-skips': useMapFindSkips,
+    notificationsTray: useNotificationsTray,
+    'plan-cache': useTimeCache,
+    'route-saved-places': useSavedPlaces,
+    'saved-routes': useSavedRoutes,
+    'sidebar-layout': useSidebarPreferences,
+    'split-sheet-layout': useSplitSheetPreferences,
+    streakCelebration: useStreakCelebration,
   }
 }
 type App = Awaited<ReturnType<typeof launch>>
@@ -181,15 +323,20 @@ const snapshot = (app: App) =>
   )
 
 function installRelease(release: string) {
-  disk.data.clear()
-  disk.errors.length = 0
-  disk.data.set('hasMigratedFromAsyncStorage', true)
+  freshInstall()
   for (const [key, blob] of Object.entries(fixtureStores(release)))
     disk.data.set(key, JSON.stringify(blob))
+  const instances = `${DIR}/${release}/mmkv.json`
+  if (!existsSync(instances)) return
+  for (const [id, values] of Object.entries(
+    readJson<Record<string, Record<string, string>>>(instances)
+  ))
+    disk.instances.set(id, new Map(Object.entries(values)))
 }
 
 function freshInstall() {
   disk.data.clear()
+  disk.instances.clear()
   disk.errors.length = 0
   disk.data.set('hasMigratedFromAsyncStorage', true)
 }
@@ -205,12 +352,18 @@ const allEntries = (app: App) =>
       )
   )
 
-type Source = 'storage' | 'backup'
+/**
+ * Where the data came from: the release's own storage, its backup file, its
+ * sync file restored on a new device, or its storage after merging its sync
+ * file on turning sync on.
+ */
+type Source = 'storage' | 'backup' | 'sync' | 'merged'
 
 /** What the release saved in `source`, by feature. */
 function coverage(release: string, source: Source) {
+  // The sync file holds Profile and Categories from the start (1.40).
   const inBackupSince = (version: string) =>
-    source === 'storage' || since(release, version)
+    source !== 'backup' || since(release, version)
   return {
     // 1.37 had no contact favorites, Visit or Time Entry tombstones, Plan
     // details (time, title, location, Category), Profile or Categories.
@@ -249,7 +402,10 @@ function expectContacts(app: App, release: string, source: Source) {
   if (since140) expect(ada.isFavorite).toBe(true)
   const dismissed = contacts.find(({ id }) => id === DISMISSED.contactId)!
   expect(ms(dismissed.dismissedUntil)).toBe(DISMISSED.until.getTime())
-  expect(dismissed.dismissedNotificationId).toBe(DISMISSED.notificationId)
+  // The reminder belongs to the device that scheduled it; sync leaves it out
+  // since 1.44.
+  if (source !== 'sync')
+    expect(dismissed.dismissedNotificationId).toBe(DISMISSED.notificationId)
 }
 
 function expectVisits(app: App, release: string, source: Source) {
@@ -484,8 +640,11 @@ function expectPreferences(app: App, release: string, source: Source) {
     ...(mileage ? { distanceUnit: 'km', mileageTrackingEnabled: true } : {}),
   }
   const got = data(prefs)
+  // Turning sync on, or restoring onto a new device, keeps that device's own.
+  const deviceLocal = (key: string) =>
+    source !== 'storage' && NON_SYNCABLE_PREFERENCE_KEYS.has(key)
   for (const [key, value] of Object.entries(want)) {
-    if (source === 'backup' && NON_SYNCABLE_PREFERENCE_KEYS.has(key)) continue
+    if (deviceLocal(key)) continue
     const actual =
       key === 'installedOn' ||
       key === 'lastBackupDate' ||
@@ -500,17 +659,19 @@ function expectPreferences(app: App, release: string, source: Source) {
   // Every other preference the release saved, under a name this build still
   // uses, keeps its value.
   const savedPrefs = (
-    source === 'storage'
-      ? fixtureStores(release).preferences.state
-      : readJson<{ preferencesStore: Record<string, unknown> }>(
+    source === 'backup'
+      ? readJson<{ preferencesStore: Record<string, unknown> }>(
           `${DIR}/${release}/backup.json`
         ).preferencesStore
+      : source === 'sync'
+        ? syncPayloads(release)[0].preferencesStore.values
+        : fixtureStores(release).preferences.state
   ) as Record<string, unknown>
   const changed = Object.keys(savedPrefs).filter(
     (key) =>
       key in got &&
       !MIGRATED_PREFERENCES.has(key) &&
-      !(source === 'backup' && NON_SYNCABLE_PREFERENCE_KEYS.has(key)) &&
+      !deviceLocal(key) &&
       !keeps(got[key], savedPrefs[key])
   )
   expect(changed).toEqual([])
@@ -590,9 +751,229 @@ function expectScenario(app: App, release: string, source: Source) {
   expectPet(app, release, source)
 }
 
+function expectBuddies(app: App) {
+  const state = app.buddies.getState()
+  const { noor, pip, invite, removed } = BUDDIES
+  expect(state.onboardingComplete).toBe(true)
+  expect(state.deviceId).toBe(BUDDIES.deviceId)
+  expect(state.registeredInboxId).toBe(BUDDIES.registeredInboxId)
+  expect(state.syncSeq).toBe(BUDDIES.syncSeq)
+  expect(state.rosterVersion).toBe(BUDDIES.rosterVersion)
+  expect(state.pushRegistrationKey).toBe(BUDDIES.pushRegistrationKey)
+  expect(state.pushRegisteredAt).toBe(BUDDIES.pushRegisteredAt)
+  // Each pairing with the keys its messages are sealed with.
+  expect(state.buddies.map(({ inboxId }) => inboxId)).toEqual([
+    noor.inboxId,
+    pip.inboxId,
+  ])
+  const [gotNoor, gotPip] = state.buddies
+  expect(gotNoor).toMatchObject(noor)
+  expect(gotPip).toMatchObject(pip)
+  // Noor's Plans stay off this User's calendar, and her requests to join stay
+  // muted here.
+  expect(buddySettings(state.sharing, gotNoor)).toMatchObject({
+    settings: { showOnCalendar: false },
+    sources: { showOnCalendar: 'buddy' },
+  })
+  expect(buddySettings(state.sharing, gotPip).settings.showOnCalendar).toBe(
+    true
+  )
+  expect(buddyAlertSettings(state, noor.inboxId)).toMatchObject({
+    settings: { joinRequests: false },
+    sources: { joinRequests: 'buddy' },
+  })
+  expect(buddyAlertSettings(state, pip.inboxId).settings.joinRequests).toBe(
+    true
+  )
+  expect(state.outgoingInvites).toEqual([invite])
+  expect(state.removedBuddies).toEqual({
+    [removed.inboxId]: removed.removedAt,
+  })
+  expect(state.pendingRemovals).toEqual([
+    {
+      inboxId: removed.inboxId,
+      dhPub: removed.dhPub,
+      inviteSecret: removed.inviteSecret,
+    },
+  ])
+  expect(state.sharing).toMatchObject({
+    ...BUDDIES.sharing,
+    tenure: true,
+    streak: true,
+    badges: true,
+  })
+}
+
+/** Notes Import's history: what's been read, and what's still being read. */
+async function expectNotesImports(release: string) {
+  const { getAllLedgerEntries } = await import(
+    '@/features/notes-import/lib/notesImportLedger'
+  )
+  const { ready, working } = NOTES_IMPORTS
+  const entries = getAllLedgerEntries()
+  expect(entries.map(({ hash }) => hash)).toEqual([working.hash, ready.hash])
+  const [gotWorking, gotReady] = entries
+  // Read and waiting to be added: nothing to read again.
+  expect(gotReady).toMatchObject({
+    state: 'ready',
+    notesText: ready.notesText,
+    result: ready.result,
+    createdAt: ready.createdAt,
+    parsedAt: ready.parsedAt,
+    viewedAt: ready.viewedAt,
+  })
+  expect(gotWorking).toMatchObject({
+    state: 'working',
+    notesText: working.notesText,
+    createdAt: working.createdAt,
+  })
+  // ww-api serves a run started before account sessions only to its subscribe
+  // token, so that run is dropped and the import starts again from its notes.
+  expect(gotWorking.activeRun).toEqual(
+    since(release, '1.45.0') ? { importId: working.activeRun.importId } : null
+  )
+}
+
+/**
+ * This device's own settings and bookkeeping. Neither sync nor the backup file
+ * holds them, so an upgrade that drops one loses it for good.
+ */
+async function expectDeviceSettings(app: App, release: string) {
+  if (since(release, '1.44.0')) {
+    expect(app['calendar-sync'].getState()).toMatchObject(CALENDAR_SYNC)
+    expect(app['sidebar-layout'].getState()).toMatchObject(SIDEBAR)
+    expect(app.streakCelebration.getState().seen).toEqual(STREAK_SEEN)
+    const tray = app.notificationsTray.getState()
+    const stamped = (itemIds: string[]) =>
+      Object.fromEntries(itemIds.map((id) => [id, TRAY.at]))
+    expect(tray.arrivals).toEqual(stamped(TRAY.arrivals))
+    expect(tray.seen).toEqual(stamped(TRAY.seen))
+    expect(tray.dismissed).toEqual(stamped(TRAY.dismissed))
+    expect(app['plan-cache'].getState().dailyMinutes).toMatchObject(
+      DAILY_MINUTES
+    )
+    expectBuddies(app)
+    await expectNotesImports(release)
+  }
+  if (since(release, '1.45.0')) {
+    expect(app['app-lock'].getState()).toMatchObject(APP_LOCK)
+    // App Lock still covers the app on its first launch.
+    const { useAppLockSession } = await import('@/stores/appLock')
+    expect(useAppLockSession.getState().locked).toBe(true)
+    expect(app['split-sheet-layout'].getState().ratio).toBe(SPLIT_SHEET_RATIO)
+    const { contacts } = app.contacts.getState()
+    const contact = (id: string) => contacts.find((c) => c.id === id)!
+    // The queued pin lookup still applies to the Contact's address.
+    expect(app['geocode-retry'].getState().queue).toEqual([
+      {
+        contactId: GEOCODE_RETRY.contactId,
+        key: geocodeRetryKey(contact(GEOCODE_RETRY.contactId)),
+        attempts: GEOCODE_RETRY.attempts,
+        notBefore: expect.any(Number),
+      },
+    ])
+    expect(app['map-find-skips'].getState().skipped).toEqual([
+      pinLookupKey(contact(MAP_FIND_SKIP.contactId)),
+    ])
+    expect(app['route-saved-places'].getState().places).toEqual(SAVED_PLACES)
+    expect(
+      app['saved-routes'].getState().routes[SAVED_ROUTE.day]
+    ).toMatchObject(SAVED_ROUTE)
+  }
+}
+
+/** Android's Google Drive app data folder, holding the same files. */
+const googleDrive: SyncTransport = {
+  kind: 'google-drive',
+  writeConfirmsUpload: true,
+  isAvailable: () => true,
+  identityToken: () => 'google-account',
+  identityTokenMatches: (stored) => stored === 'google-account',
+  waitForInitialScan: async () => true,
+  readFiles: async (include) => ({
+    files: disk.cloud.filter(({ filename }) => include(filename)),
+    pending: [],
+  }),
+  write: async (filename, json) => {
+    disk.cloud = [
+      ...disk.cloud.filter((file) => file.filename !== filename),
+      { filename, json, modifiedAt: Date.now() },
+    ]
+    return Date.now()
+  },
+  supportsUploadStatus: () => false,
+  uploadStatus: async () => null,
+  deleteFile: async () => {},
+  deleteAll: async () => {},
+  writeBinary: async () => Date.now(),
+  readBinary: async () => Date.now(),
+  listBinaryFiles: async () => [],
+  deleteBinaryFile: async () => {},
+  deleteAllBinaries: async () => {},
+  addRemoteChangeListener: () => ({ remove: () => {} }),
+  addAvailabilityChangeListener: () => ({ remove: () => {} }),
+}
+
+/**
+ * Puts the file `release` wrote to `cloud` there, as another of the User's
+ * devices left it, and makes this device one that syncs through `cloud`.
+ */
+function installCloud(release: string, cloud: Cloud) {
+  const { json } = syncFiles(release).find((file) => file.cloud === cloud)!
+  const { deviceId, writtenAt } = JSON.parse(json) as {
+    deviceId: string
+    writtenAt: number
+  }
+  disk.os = cloud === 'icloud' ? 'ios' : 'android'
+  disk.cloud = [
+    { filename: `witness-work-${deviceId}.json`, json, modifiedAt: writtenAt },
+  ]
+}
+
+/** The sync engine on this platform's transport, for a Supporter. */
+async function syncEngine() {
+  const sync = await import('@/app/sync/iCloudSync')
+  const { registerAndroidSyncTransport, syncTransport } = await import(
+    '@/lib/syncTransport'
+  )
+  if (disk.os === 'android') registerAndroidSyncTransport(googleDrive)
+  expect(syncTransport().kind).toBe(
+    disk.os === 'ios' ? 'icloud' : 'google-drive'
+  )
+  const { useSupporter } = await import('@/features/supporter/stores/supporter')
+  useSupporter.getState().setSupporter(true)
+  return sync
+}
+
+/** Every record in a sync file this build wrote, by kind. */
+function syncedRecordIds(json: string) {
+  const payload = JSON.parse(json) as {
+    contactStore: { contacts: unknown }
+    conversationStore: { conversations: unknown }
+    serviceReportStore: {
+      serviceReports: Record<string, Record<string, { id: string }[]>>
+      dayPlans: unknown
+      recurringPlans: unknown
+    }
+  }
+  const { serviceReportStore } = payload
+  return {
+    contacts: ids(payload.contactStore.contacts),
+    visits: ids(payload.conversationStore.conversations),
+    entries: Object.values(serviceReportStore.serviceReports)
+      .flatMap((months) => Object.values(months).flat())
+      .map(({ id }) => id)
+      .sort(),
+    dayPlans: ids(serviceReportStore.dayPlans),
+    recurringPlans: ids(serviceReportStore.recurringPlans),
+  }
+}
+
+const TODAY = new Date(2026, 9, 20, 9, 0)
+
 beforeAll(() => {
   vi.useFakeTimers({ toFake: ['Date'] })
-  vi.setSystemTime(new Date(2026, 9, 20, 9, 0))
+  vi.setSystemTime(TODAY)
 })
 afterAll(() => {
   vi.useRealTimers()
@@ -682,6 +1063,138 @@ describe.each(RELEASES)('restoring a backup file from %s', (release) => {
     expectScenario(next, release, 'backup')
   })
 })
+
+// Launched the morning after the release saved them, as a device updating
+// overnight would be: Buddies and the bell drop what has lapsed by launch, and
+// a year-old bell entry is gone by design.
+describe.each(RELEASES.filter((release) => since(release, '1.44.0')))(
+  "upgrading from %s keeps this device's settings",
+  (release) => {
+    let app: App
+    beforeAll(async () => {
+      vi.setSystemTime(at(2025, 10, 7, 9, 0))
+      installRelease(release)
+      app = await launch()
+    })
+    afterAll(() => {
+      vi.setSystemTime(TODAY)
+    })
+
+    it("keeps them, and Notes Import's history", async () => {
+      expect(disk.errors).toEqual([])
+      await expectDeviceSettings(app, release)
+    })
+
+    it('keeps them on the next launch', async () => {
+      const next = await launch()
+      expect(disk.errors).toEqual([])
+      await expectDeviceSettings(next, release)
+    })
+  }
+)
+
+const SYNC_FILES = RELEASES.flatMap((release) =>
+  syncFiles(release).map(({ cloud }) => [release, cloud] as const)
+)
+
+it('has sync files from the latest release and an older format', () => {
+  expect(SYNC_FILES).toContainEqual([RELEASES.at(-1), 'icloud'])
+  expect(SYNC_FILES).toContainEqual([RELEASES.at(-1), 'google-drive'])
+  expect(new Set(SYNC_FILES.map(([release]) => release)).size).toBeGreaterThan(
+    1
+  )
+})
+
+describe.each(SYNC_FILES)(
+  "restoring %s's %s file on a new device",
+  (release, cloud) => {
+    let app: App
+    beforeAll(async () => {
+      freshInstall()
+      installCloud(release, cloud)
+      app = await launch()
+      const sync = await syncEngine()
+      // Turning sync on with nothing of its own yet takes the cloud's data.
+      const decision = await sync.resolveInitialEnable()
+      expect(decision.outcome).toBe('pull')
+      if (decision.outcome === 'pull') sync.applyPullEnable(decision.remote)
+    })
+    afterAll(() => {
+      disk.os = 'ios'
+      disk.cloud = []
+    })
+
+    it('restores every record and synced setting', () => {
+      expect(disk.errors).toEqual([])
+      expectScenario(app, release, 'sync')
+    })
+
+    it('keeps the restored data on the next launch', async () => {
+      const before = snapshot(app)
+      const next = await launch()
+      expect(disk.errors).toEqual([])
+      expect(snapshot(next)).toEqual(before)
+    })
+  }
+)
+
+describe.each(SYNC_FILES)(
+  'turning sync on after upgrading from %s, with its %s file in the cloud',
+  (release, cloud) => {
+    let app: App
+    let pushed: boolean
+    beforeAll(async () => {
+      installRelease(release)
+      installCloud(release, cloud)
+      app = await launch()
+      const sync = await syncEngine()
+      const decision = await sync.resolveInitialEnable()
+      expect(decision.outcome).toBe('conflict')
+      if (decision.outcome !== 'conflict') return
+      // "Merge both", as Settings runs it (`PreferencesiCloudScreen`).
+      sync.backfillUpdatedAtIfNeeded()
+      sync.joinRemoteResetEpoch(decision.remote)
+      app.preferences.getState().set({
+        iCloudSyncEnabled: true,
+        iCloudSyncNeedsResolution: false,
+        iCloudFreshSetup: false,
+      })
+      await sync.pullAndMerge('initial-enable-merge')
+      pushed = await sync.push('initial-enable-merge')
+    })
+    afterAll(() => {
+      disk.os = 'ios'
+      disk.cloud = []
+    })
+
+    it('merges and pushes without an error', () => {
+      expect(app.preferences.getState().iCloudSyncIssue).toBeFalsy()
+      expect(pushed).toBe(true)
+      expect(disk.errors).toEqual([])
+    })
+
+    it('keeps every record and setting, once each', () => {
+      expectScenario(app, release, 'merged')
+    })
+
+    it('pushes every record for the other devices', () => {
+      const { deviceId } = syncPayloads(release).find(
+        (_, i) => syncFiles(release)[i].cloud === cloud
+      )!
+      const mine = disk.cloud.filter(
+        ({ filename }) => filename !== `witness-work-${deviceId}.json`
+      )
+      expect(mine).toHaveLength(1)
+      expect(syncedRecordIds(mine[0].json)).toEqual({
+        contacts: ids(CONTACTS.filter(({ id }) => id !== DELETED_CONTACT_ID)),
+        visits: ids(VISITS),
+        entries: ids(ENTRIES),
+        dayPlans: ids(DAY_PLANS),
+        recurringPlans: ids(RECURRING_PLANS),
+      })
+    })
+  }
+)
 
 describe('data saved by a newer build', () => {
   const latest = RELEASES.at(-1)!

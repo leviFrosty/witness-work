@@ -89,6 +89,8 @@ export const FOREGROUND_RECHECK_MS = 30_000
 
 let freshUntil = 0
 let inFlight: Promise<void> | null = null
+/** A forced check was asked for while one already started was running. */
+let checkAgain = false
 
 const isFailure = (result: ProbeResult | null): boolean =>
   result?.status === 'offline' || result?.status === 'failed'
@@ -173,7 +175,12 @@ const useAvailabilityStore = create<AvailabilityStore>((set, get) => ({
   refreshing: false,
 
   probe: ({ force = false } = {}) => {
-    if (inFlight) return inFlight
+    if (inFlight) {
+      // Its answer predates what forced this one (the account's status, the
+      // connection coming back), so it runs again once that answer lands.
+      if (force) checkAgain = true
+      return inFlight
+    }
     if (!force && Date.now() < freshUntil) return Promise.resolve()
     const startedAt = Date.now()
     perf.count('notesImport:availabilityProbe')
@@ -189,6 +196,9 @@ const useAvailabilityStore = create<AvailabilityStore>((set, get) => ({
       .finally(() => {
         inFlight = null
         if (get().refreshing) set({ refreshing: false })
+        if (!checkAgain) return
+        checkAgain = false
+        void get().probe({ force: true })
       })
     return inFlight
   },
@@ -217,10 +227,10 @@ export const useNotesImportAvailability = (): NotesImportAvailability => {
     const foreground = addForegroundListener(() => void probe(), {
       minIntervalMs: FOREGROUND_RECHECK_MS,
     })
+    // A check still running started while the connection was down.
     const reconnect = addReconnectListener(() => {
-      void probe({
-        force: isFailure(useAvailabilityStore.getState().result),
-      })
+      const { result, refreshing } = useAvailabilityStore.getState()
+      void probe({ force: refreshing || isFailure(result) })
     })
     // A call found the account suspended (an import refused) or reinstated.
     const status = onAccountStatus(() => void probe({ force: true }))

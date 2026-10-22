@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Text, View } from 'react-native'
+import { useIsFocused } from '@react-navigation/native'
 import Animated, { useAnimatedStyle } from 'react-native-reanimated'
 import useTheme from '@/contexts/theme'
 import { formatMs } from '@/features/service-reports/hooks/useStopWatch'
@@ -7,6 +8,7 @@ import SatelliteSurface, {
   SatelliteProps,
 } from '@/features/onboarding/components/welcome/satellites/SatelliteSurface'
 import { tracking } from '@/lib/tracking'
+import useAppActive from '@/hooks/useAppActive'
 
 // A believable session already under way: 1h 24m 07s.
 const STARTED_MS = (84 * 60 + 7) * 1000
@@ -22,12 +24,16 @@ const TimerSatellite = ({
 }: SatelliteProps) => {
   const theme = useTheme()
   const [elapsed, setElapsed] = useState(STARTED_MS)
+  // Paused while a screen covers Welcome or the app is in the background.
+  const focused = useIsFocused()
+  const appActive = useAppActive()
+  const ticking = focused && appActive && !reduceMotion
 
   useEffect(() => {
-    if (reduceMotion) return
+    if (!ticking) return
     const id = setInterval(() => setElapsed((ms) => ms + 1000), 1000)
     return () => clearInterval(id)
-  }, [reduceMotion])
+  }, [ticking])
 
   const ringStyle = useAnimatedStyle(() => {
     const pulse = reduceMotion

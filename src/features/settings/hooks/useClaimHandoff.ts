@@ -29,10 +29,13 @@ const ACTIVE_STEPS = new Set(['idle', 'claiming', 'waiting'])
  * Cancels a session that's still waiting for the key, or holds one it couldn't
  * use yet (`received` while nothing is completing it).
  */
-function endIfActive(session: ClaimSession | null, completing: boolean) {
+function endIfActive(
+  session: ClaimSession | null,
+  completing: ClaimSession | null
+) {
   if (!session) return
   const step = session.state.step
-  if (ACTIVE_STEPS.has(step) || (step === 'received' && !completing))
+  if (ACTIVE_STEPS.has(step) || (step === 'received' && completing !== session))
     void endHandoff(session, 'left')
 }
 
@@ -54,8 +57,8 @@ export default function useClaimHandoff(
     'idle' | 'running' | ClaimCompletion
   >('idle')
   const current = useRef<ClaimSession | null>(null)
-  /** Whether `completeClaimHandoff` is running, read when the screen closes. */
-  const completing = useRef(false)
+  /** The session `completeClaimHandoff` is running for, if any. */
+  const completing = useRef<ClaimSession | null>(null)
   const state = useHandoffState(session)
 
   const begin = (offer: HandoffOffer, how: HandoffEntry) => {
@@ -97,19 +100,22 @@ export default function useClaimHandoff(
   useEffect(() => {
     if (!session || state?.step !== 'received' || completion !== 'idle') return
     setCompletion('running')
-    completing.current = true
+    completing.current = session
     completeClaimHandoff(session, {
       confirmReplace: (loss) => confirmAccountReplace(loss, 'handoff'),
       buddiesEnabled,
     })
-      .then(setCompletion)
-      .catch((error: unknown) => {
+      .catch((error: unknown): ClaimCompletion => {
         logger.warn('[handoff] completing failed', error)
         session.fail('server')
-        setCompletion({ outcome: 'failed', reason: 'server' })
+        return { outcome: 'failed', reason: 'server' }
       })
-      .finally(() => {
-        completing.current = false
+      .then((outcome) => {
+        if (completing.current === session) completing.current = null
+        // Another code was opened meanwhile, and the screen follows that one.
+        // A key this one couldn't use yet is let go.
+        if (current.current !== session) endIfActive(session, null)
+        else setCompletion(outcome)
       })
   }, [session, state?.step, completion, buddiesEnabled])
 

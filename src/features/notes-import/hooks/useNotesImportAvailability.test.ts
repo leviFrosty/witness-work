@@ -521,6 +521,59 @@ describe('availability states', () => {
     expect(mocks.reconnect).toHaveLength(0)
   })
 
+  it('checks again when the connection comes back during a check', async () => {
+    mocks.enabled = true
+    let fail!: (error: unknown) => void
+    mocks.status
+      .mockReturnValueOnce(
+        new Promise((_, reject) => {
+          fail = reject
+        })
+      )
+      .mockResolvedValueOnce({ available: true, limits: schedule })
+    const consumer = await mount()
+    const { act } = await import('react-test-renderer')
+    // The check started on the dead connection is still waiting.
+    await act(async () => {
+      mocks.reconnect.forEach((listener) => listener())
+    })
+    await act(async () => {
+      fail(networkFailure())
+    })
+    expect(mocks.status).toHaveBeenCalledTimes(2)
+    expect(consumer.snapshots.at(-1)?.status).toBe('available')
+    await consumer.close()
+  })
+
+  it('checks again when the account is suspended during a check', async () => {
+    mocks.enabled = true
+    let answer!: (value: unknown) => void
+    mocks.status
+      .mockReturnValueOnce(
+        new Promise((resolve) => {
+          answer = resolve
+        })
+      )
+      .mockResolvedValueOnce({ available: true, limits: schedule })
+    const consumer = await mount()
+    // An import was refused while the check was out; the check had already
+    // read the account as fine.
+    mocks.suspended.mockResolvedValue(true)
+    const { act } = await import('react-test-renderer')
+    await act(async () => {
+      for (const listener of mocks.statusListeners) listener()
+    })
+    await act(async () => {
+      answer({ available: true, limits: schedule })
+    })
+    expect(mocks.status).toHaveBeenCalledTimes(2)
+    expect(consumer.snapshots.at(-1)).toMatchObject({
+      available: false,
+      reason: 'suspended',
+    })
+    await consumer.close()
+  })
+
   it('re-checks a stale answer on returning to the app, at most every 30 s', async () => {
     vi.useFakeTimers()
     mocks.enabled = true

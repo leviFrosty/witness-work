@@ -13,7 +13,7 @@ import { defaultCoatFor, PET_SPECIES_IDS } from '@/types/pet'
 import type { RootStackNavigation } from '@/types/rootStack'
 import PetSpriteTile from '@/features/pet/render/PetSpriteTile'
 import useAccessibilityTextSize from '@/hooks/useAccessibilityTextSize'
-import useOnScreen from '@/features/pet/render/useOnScreen'
+import useOnScreen from '@/hooks/useOnScreen'
 import useSceneActive from '@/features/pet/render/useSceneActive'
 
 /**

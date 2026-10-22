@@ -2,10 +2,10 @@ import { useEffect } from 'react'
 import { View } from 'react-native'
 import Svg, { Path, Rect } from 'react-native-svg'
 import Animated, {
+  SharedValue,
   useAnimatedStyle,
   useSharedValue,
   withDelay,
-  withRepeat,
   withSequence,
   withSpring,
   withTiming,
@@ -19,6 +19,8 @@ import SatelliteSurface, {
 
 const SIZE = 92
 const MARKER = 13
+// Seconds per ripple from the pulsing marker.
+const RING_SECONDS = 1.8
 
 interface MarkerProps {
   x: number
@@ -28,6 +30,7 @@ interface MarkerProps {
   pulse?: boolean
   active: boolean
   reduceMotion: boolean
+  time: SharedValue<number>
 }
 
 const Marker = ({
@@ -38,10 +41,10 @@ const Marker = ({
   pulse,
   active,
   reduceMotion,
+  time,
 }: MarkerProps) => {
   const theme = useTheme()
   const drop = useSharedValue(0)
-  const ring = useSharedValue(0)
 
   // Markers drop back onto the map as the story reaches visits.
   useEffect(() => {
@@ -52,19 +55,17 @@ const Marker = ({
     )
   }, [active, reduceMotion, index, drop])
 
-  useEffect(() => {
-    if (!pulse || reduceMotion) return
-    ring.value = withRepeat(withTiming(1, { duration: 1800 }), -1, false)
-  }, [pulse, reduceMotion, ring])
-
   const markerStyle = useAnimatedStyle(() => ({
     opacity: 1 - drop.value,
     transform: [{ translateY: -drop.value * 14 }],
   }))
-  const ringStyle = useAnimatedStyle(() => ({
-    opacity: (1 - ring.value) * 0.55,
-    transform: [{ scale: 1 + ring.value * 1.5 }],
-  }))
+  const ringStyle = useAnimatedStyle(() => {
+    const ring = reduceMotion ? 0 : (time.value % RING_SECONDS) / RING_SECONDS
+    return {
+      opacity: (1 - ring) * 0.55,
+      transform: [{ scale: 1 + ring * 1.5 }],
+    }
+  })
 
   return (
     <View
@@ -117,6 +118,7 @@ const MapSatellite = ({
   focus,
   active,
   reduceMotion,
+  time,
 }: SatelliteProps) => {
   const theme = useTheme()
   const markers = useMarkerColors()
@@ -169,6 +171,7 @@ const MapSatellite = ({
         pulse
         active={active}
         reduceMotion={reduceMotion}
+        time={time}
       />
       <Marker
         x={70}
@@ -177,6 +180,7 @@ const MapSatellite = ({
         index={1}
         active={active}
         reduceMotion={reduceMotion}
+        time={time}
       />
       <Marker
         x={48}
@@ -185,6 +189,7 @@ const MapSatellite = ({
         index={2}
         active={active}
         reduceMotion={reduceMotion}
+        time={time}
       />
     </SatelliteSurface>
   )

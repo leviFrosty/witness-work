@@ -23,6 +23,11 @@ export interface SatelliteProps {
   active: boolean
   /** Hold every loop still. */
   reduceMotion: boolean
+  /**
+   * The scene clock, in seconds. Loops run off it rather than repeating
+   * animations of their own, so they stop whenever the scene does.
+   */
+  time: SharedValue<number>
 }
 
 interface Props {

@@ -76,7 +76,7 @@ vi.mock('@/features/pet/render/PetSpeechBubble', () => ({
 vi.mock('@/features/pet/render/skiaImage', () => ({
   bufferToSkImage: () => null,
 }))
-vi.mock('@/features/pet/render/useOnScreen', () => ({ default: () => true }))
+vi.mock('@/hooks/useOnScreen', () => ({ default: () => true }))
 vi.mock('@/features/pet/render/useSceneActive', () => ({
   default: () => false,
 }))

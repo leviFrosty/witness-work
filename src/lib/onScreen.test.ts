@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { isOnScreen } from '@/features/pet/render/onScreen'
+import { isOnScreen } from '@/lib/onScreen'
 
 const WINDOW = { width: 390, height: 844 }
 

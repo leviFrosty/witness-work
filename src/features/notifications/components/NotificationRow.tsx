@@ -45,6 +45,9 @@ function toneColors(theme: Theme, tone: NotificationTone = 'accent') {
  * A standard tray entry: icon, title, when it came in, a dismiss button, an
  * optional description, and up to two actions. Tapping the row runs the first
  * action.
+ *
+ * VoiceOver reads the row as one element, which hides the buttons inside it, so
+ * the second action and Dismiss are its custom actions too.
  */
 export default function NotificationRow({
   item,
@@ -67,15 +70,25 @@ export default function NotificationRow({
 
   return (
     <Pressable
-      disabled={!primary}
+      // A row without actions does nothing on tap, but isn't disabled:
+      // VoiceOver would read it as dimmed, though Dismiss still works.
       onPress={primary ? () => onAction(primary) : undefined}
+      accessibilityActions={[
+        ...(secondary ? [{ name: 'secondary', label: secondary.label }] : []),
+        { name: 'dismiss', label: i18n.t('dismiss') },
+      ]}
+      onAccessibilityAction={({ nativeEvent }) => {
+        if (nativeEvent.actionName === 'dismiss') onDismiss()
+        else if (nativeEvent.actionName === 'secondary' && secondary)
+          onAction(secondary)
+      }}
       style={({ pressed }) => ({
         gap: 10,
         paddingVertical: 12,
         paddingHorizontal: 14,
         borderBottomWidth: last ? 0 : 1,
         borderColor: theme.colors.border,
-        opacity: pressed ? 0.7 : 1,
+        opacity: pressed && primary ? 0.7 : 1,
       })}
     >
       <XView style={{ gap: 10, alignItems: 'flex-start' }}>

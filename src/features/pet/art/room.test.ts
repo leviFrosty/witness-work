@@ -1,6 +1,15 @@
 import { describe, expect, it } from 'vitest'
 
 import { createBuffer, hashBuffer, pixelAt, textWidth } from '@/lib/pixelArt'
+import {
+  SECRET_BED_IDS,
+  SECRET_FLOOR_IDS,
+  SECRET_LAMP_IDS,
+  SECRET_ROOM_ITEMS,
+  SECRET_SHELF_IDS,
+  SECRET_WALL_COLORS,
+  SECRET_WALL_PATTERNS,
+} from '@/types/pet'
 
 import {
   DEFAULT_ROOM_CONFIG,
@@ -61,32 +70,49 @@ describe('room registry', () => {
       'autumn',
       'winter',
     ])
+    // Each part's regular options, then its secret ones.
     expect(ROOM_PARTS.wallColor.options).toEqual([
       'sand',
       'sage',
       'sky',
       'rose',
       'cream',
+      ...SECRET_WALL_COLORS,
     ])
     expect(ROOM_PARTS.wallPattern.options).toEqual([
       'plain',
       'dots',
       'stripes',
       'trellis',
+      ...SECRET_WALL_PATTERNS,
     ])
-    expect(ROOM_PARTS.floor.options).toEqual(['wood', 'stone', 'brick', 'tile'])
-    expect(ROOM_PARTS.bed.options).toEqual(['rug', 'hay', 'basket', 'cushion'])
+    expect(ROOM_PARTS.floor.options).toEqual([
+      'wood',
+      'stone',
+      'brick',
+      'tile',
+      ...SECRET_FLOOR_IDS,
+    ])
+    expect(ROOM_PARTS.bed.options).toEqual([
+      'rug',
+      'hay',
+      'basket',
+      'cushion',
+      ...SECRET_BED_IDS,
+    ])
     expect(ROOM_PARTS.shelf.options).toEqual([
       'scrolls',
       'books',
       'pottery',
       'fruit',
+      ...SECRET_SHELF_IDS,
     ])
     expect(ROOM_PARTS.lamp.options).toEqual([
       'clay',
       'lantern',
       'candle',
       'stand',
+      ...SECRET_LAMP_IDS,
     ])
     expect(ROOM_PARTS.sign.options).toEqual([
       'none',
@@ -106,7 +132,7 @@ describe('room registry', () => {
     expect(ROOM_PARTS.sign.starter).toEqual(ROOM_PARTS.sign.options)
   })
 
-  it('unlocks every non-starter item exactly once', () => {
+  it('unlocks every non-starter, non-secret item exactly once', () => {
     const unlockable: RoomPartId[] = [
       'wallColor',
       'wallPattern',
@@ -119,7 +145,9 @@ describe('room registry', () => {
       (ROOM_PARTS[part].options as readonly string[]).map((o) => `${part}:${o}`)
     )
     const locked = all.filter(
-      (id) => !(STARTER_ITEMS as readonly string[]).includes(id)
+      (id) =>
+        !(STARTER_ITEMS as readonly string[]).includes(id) &&
+        !(SECRET_ROOM_ITEMS as readonly string[]).includes(id)
     )
     expect([...UNLOCK_ORDER].sort()).toEqual([...locked].sort())
     expect(new Set(UNLOCK_ORDER).size).toBe(UNLOCK_ORDER.length)

@@ -28,6 +28,8 @@ export type PetDevOverride = {
    * to grow. Items it opens are shown, never stored.
    */
   streak?: number
+  /** Every secret item opens up, shown, never stored. */
+  secrets?: boolean
   window?: { time: TimeOfDay; season: Season }
   paradise?: boolean
   star?: boolean

@@ -22,7 +22,7 @@ import RoomLiveWindowRow from '@/features/pet/components/RoomLiveWindowRow'
 import RoomOptionGrid from '@/features/pet/components/RoomOptionGrid'
 import { ROOM_TAB_ICONS } from '@/features/pet/components/roomTabIcons'
 import usePetRoomScene from '@/features/pet/hooks/usePetRoomScene'
-import { roomTabLabel, unlockNoteText } from '@/features/pet/lib/roomLabels'
+import { lockedNoteText, roomTabLabel } from '@/features/pet/lib/roomLabels'
 import {
   isLiveWindow,
   isRoomChoiceUnlocked,
@@ -35,6 +35,7 @@ import {
   type RoomTab,
   type RoomUnlocks,
 } from '@/features/pet/lib/roomOptions'
+import { isSecretItem } from '@/features/pet/lib/secretUnlocks'
 import { noteSecretFound } from '@/features/pet/lib/secrets'
 import PetSceneView from '@/features/pet/render/PetSceneView'
 import usePetSheetInsets from '@/features/pet/hooks/usePetSheetInsets'
@@ -141,11 +142,18 @@ export default function PetRoomScreen({ navigation }: Props) {
   }
 
   const sections = roomTabSections(tab, room)
-  const anyLocked = sections.some((section) =>
-    section.options.some(
-      (option) => !isRoomChoiceUnlocked(section.part, option, unlocks.unlocked)
-    )
+  const locked = sections.flatMap((section) =>
+    section.options
+      .filter(
+        (option) =>
+          !isRoomChoiceUnlocked(section.part, option, unlocks.unlocked)
+      )
+      .map((option) => `${section.part}:${option}`)
   )
+  const lockedNote = lockedNoteText(unlocks.mode, unlocks.streakKind, tab, {
+    regular: locked.some((item) => !isSecretItem(item)),
+    secret: locked.some(isSecretItem),
+  })
 
   return (
     <>
@@ -238,15 +246,16 @@ export default function PetRoomScreen({ navigation }: Props) {
           />
         </View>
         <View style={{ paddingHorizontal: 20, paddingTop: 2, gap: 18 }}>
-          {/* How locked ones open up; each also shows its own number. */}
-          {anyLocked && (
+          {/* How locked ones open up; each also shows its own number. Secrets
+          only say they're there. */}
+          {lockedNote && (
             <Text
               style={{
                 fontSize: theme.fontSize('sm'),
                 color: theme.colors.textAlt,
               }}
             >
-              {unlockNoteText(unlocks.mode, unlocks.streakKind, tab)}
+              {lockedNote}
             </Text>
           )}
           {tab === 'window' && (

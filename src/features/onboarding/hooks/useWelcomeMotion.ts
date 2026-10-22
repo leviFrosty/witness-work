@@ -1,5 +1,5 @@
-import { useEffect } from 'react'
-import { Platform } from 'react-native'
+import { useEffect, useState } from 'react'
+import { AppState, Platform, type AppStateStatus } from 'react-native'
 import {
   SensorType,
   SharedValue,
@@ -18,13 +18,32 @@ const DOWN = Platform.OS === 'ios' ? 1 : -1
 const TILT_GAIN = 4
 
 /**
- * Drives the welcome scene while `running`: a clock in seconds, and the
- * device's tilt, smoothed, for parallax. Tilt is measured against a slowly
- * re-centring baseline, so the scene rests however the phone is held and only
- * responds to movement. Without a gravity sensor (e.g. a simulator) tilt simply
- * stays at rest.
+ * Whether frames should run in this app state. Android keeps delivering frame
+ * callbacks to a backgrounded app, so a scene left running there redraws
+ * full-screen canvases nobody sees, pinning a core. iOS pauses frames itself;
+ * `inactive` (a system alert, Control Center) keeps them, as before.
+ */
+export const runsInAppState = (state: AppStateStatus): boolean =>
+  state !== 'background'
+
+/**
+ * Drives the welcome scene while `running` and the app isn't in the background:
+ * a clock in seconds, and the device's tilt, smoothed, for parallax. Tilt is
+ * measured against a slowly re-centring baseline, so the scene rests however
+ * the phone is held and only responds to movement. Without a gravity sensor
+ * (e.g. a simulator) tilt simply stays at rest.
  */
 const useWelcomeMotion = (running: boolean) => {
+  const [appRuns, setAppRuns] = useState(() =>
+    runsInAppState(AppState.currentState)
+  )
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (state) =>
+      setAppRuns(runsInAppState(state))
+    )
+    return () => subscription.remove()
+  }, [])
+
   const time = useSharedValue(0)
   const tilt: Tilt = useSharedValue({ x: 0, y: 0 })
   const baseline = useSharedValue<{ x: number; y: number } | null>(null)
@@ -61,8 +80,8 @@ const useWelcomeMotion = (running: boolean) => {
   }, false)
 
   useEffect(() => {
-    frame.setActive(running)
-  }, [running, frame])
+    frame.setActive(running && appRuns)
+  }, [running, appRuns, frame])
 
   return { time, tilt }
 }

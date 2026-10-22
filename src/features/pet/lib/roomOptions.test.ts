@@ -12,6 +12,8 @@ import {
   isLiveWindow,
   isRoomChoiceUnlocked,
   liveWindowPatch,
+  silhouetteRooms,
+  silhouetteStyle,
   ROOM_TABS,
   ROOM_THUMB_VIEWS,
   roomChoicePatch,
@@ -221,5 +223,94 @@ describe('Decorate Room options', () => {
       by: 'streak',
       count: 1,
     })
+  })
+
+  it('never says how a locked secret opens up, in either mode', () => {
+    const unlocks = (mode: RoomUnlocks['mode']): RoomUnlocks => ({
+      unlocked: unlockedRoomItems([], []),
+      mode,
+      streakKind: 'plans',
+      activeMonths: 0,
+      thisMonthActive: false,
+    })
+    expect(unlockRequirement('hat', 'duck', unlocks('streak'))).toEqual({
+      by: 'secret',
+    })
+    expect(unlockRequirement('floor', 'tatami', unlocks('months'))).toEqual({
+      by: 'secret',
+    })
+    const open: RoomUnlocks = {
+      ...unlocks('streak'),
+      unlocked: unlockedRoomItems(['hat:duck'], []),
+    }
+    expect(unlockRequirement('hat', 'duck', open)).toBeNull()
+  })
+
+  it('compares a secret with a few rooms by day for its silhouette', () => {
+    const night: PetRoomSettings = {
+      ...DEFAULT_ROOM,
+      window: { time: 'night', season: 'winter' },
+    }
+    const { room, references } = silhouetteRooms(night, 'hat', 'duck')
+    expect(room.hat).toBe('duck')
+    expect(room.window).toEqual({ time: 'day', season: 'winter' })
+    // An object: itself over another wall and floor, then the other options.
+    expect(references.map((ref) => ref.hat)).toEqual(['duck', 'none'])
+    expect(references[0]).toMatchObject({
+      wallColor: 'indigo',
+      floor: 'lilypond',
+    })
+    const shelf = silhouetteRooms(night, 'shelf', 'globe').references
+    expect(shelf.map((ref) => ref.shelf)).toEqual([
+      'globe',
+      'scrolls',
+      'books',
+      'pottery',
+      'fruit',
+    ])
+    expect(shelf[0].wallColor).not.toBe(night.wallColor)
+    expect(shelf[0].floor).not.toBe(night.floor)
+    // Over an indigo lily pond, the backdrop is another one.
+    const pond = { ...night, wallColor: 'indigo', floor: 'lilypond' } as const
+    expect(silhouetteRooms(pond, 'bed', 'clam').references[0]).toMatchObject({
+      wallColor: 'cream',
+      floor: 'brick',
+      bed: 'clam',
+    })
+    // A wall: plain, and in another colour. A floor: two others.
+    const wall = silhouetteRooms(night, 'wallPattern', 'waves').references
+    expect(wall.map((ref) => [ref.wallColor, ref.wallPattern])).toEqual([
+      ['sand', 'plain'],
+      ['sky', 'waves'],
+    ])
+    expect(
+      silhouetteRooms(night, 'wallColor', 'sky').references.map((ref) => [
+        ref.wallColor,
+        ref.wallPattern,
+      ])
+    ).toEqual([
+      ['sky', 'plain'],
+      ['rose', 'plain'],
+    ])
+    expect(
+      silhouetteRooms(night, 'floor', 'tatami').references.map((r) => r.floor)
+    ).toEqual(['wood', 'tile'])
+    const secrets = [
+      ['wallColor', 'plum'],
+      ['floor', 'hex'],
+      ['bed', 'nest'],
+      ['lamp', 'lava'],
+      ['hat', 'tam'],
+    ] as const
+    for (const [part, option] of secrets) {
+      // A few scenes to draw for each locked thumbnail.
+      const shapes = silhouetteRooms(night, part, option)
+      expect(shapes.references.length).toBeLessThanOrEqual(5)
+      expect(shapes.references.every((ref) => ref.window.time === 'day')).toBe(
+        true
+      )
+    }
+    expect(silhouetteStyle('floor')).toBe('surface')
+    expect(silhouetteStyle('lamp')).toBe('object')
   })
 })

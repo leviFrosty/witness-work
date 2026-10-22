@@ -59,9 +59,9 @@ export function keptKeepsakes(
 
 /**
  * Earned room items once each: those in `UNLOCK_ORDER` in its order, then the
- * rest (hats, and any from a newer build), sorted, so every device writes the
- * same list, whichever build it runs. Nothing is dropped: an earned item never
- * locks again.
+ * rest (hats, secret items, and any from a newer build), sorted, so every
+ * device writes the same list, whichever build it runs. Nothing is dropped: an
+ * earned item never locks again.
  */
 export function keptRoomItems(items: readonly string[]): string[] {
   const unique = new Set(

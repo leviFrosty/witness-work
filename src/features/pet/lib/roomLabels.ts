@@ -1,4 +1,5 @@
 import i18n, { type TranslationKey } from '@/lib/locales'
+import { formatNumber } from '@/lib/numbers'
 import type { StreakKind } from '@/lib/serviceStreak'
 import type {
   RoomChoicePart,
@@ -34,18 +35,39 @@ export const unlockBadgeText = (monthsFromNow: number): string =>
     : i18n.t('pet.room.unlockIn' as TranslationKey, { count: monthsFromNow })
 
 /**
- * How a locked option opens up, in words for its accessibility label: "At a
- * streak of 7", or the months badge. The streak badge itself shows a flame and
- * the number.
+ * How a locked option opens up, in words for its accessibility label and its
+ * tooltip: "At a streak of 7", or the months badge. The streak badge itself
+ * shows a flame and the number. A secret never says.
  */
 export const unlockRequirementText = (
   requirement: UnlockRequirement
-): string =>
-  requirement.by === 'streak'
-    ? i18n.t('pet.room.unlockAtStreak' as TranslationKey, {
+): string => {
+  switch (requirement.by) {
+    case 'streak':
+      return i18n.t('pet.room.unlockAtStreak' as TranslationKey, {
         count: requirement.count,
       })
-    : unlockBadgeText(requirement.monthsFromNow)
+    case 'months':
+      return unlockBadgeText(requirement.monthsFromNow)
+    case 'secret':
+      return i18n.t('pet.room.secret.body')
+  }
+}
+
+/**
+ * A locked option's corner badge, beside the flame for a streak: the streak
+ * count, the months badge, or a question mark for a secret.
+ */
+export const unlockPillText = (requirement: UnlockRequirement): string => {
+  switch (requirement.by) {
+    case 'streak':
+      return formatNumber(requirement.count)
+    case 'months':
+      return unlockBadgeText(requirement.monthsFromNow)
+    case 'secret':
+      return i18n.t('pet.room.secret.badge')
+  }
+}
 
 /**
  * The note under a tab with locked options: how they open up. Hats keep their
@@ -65,3 +87,22 @@ export const unlockNoteText = (
     : kind === 'plans'
       ? i18n.t('pet.room.unlockNote.streakPlans')
       : i18n.t('pet.room.unlockNote.streakMonths')
+
+/**
+ * The note above a tab's options while any are locked: how the regular ones
+ * open up (`unlockNoteText`), and that some are secrets while a secret is
+ * locked. Null with nothing locked.
+ */
+export function lockedNoteText(
+  mode: UnlockMode,
+  kind: StreakKind,
+  tab: RoomTab,
+  locked: { regular: boolean; secret: boolean }
+): string | null {
+  if (!locked.regular)
+    return locked.secret ? i18n.t('pet.room.unlockNote.secrets') : null
+  const note = unlockNoteText(mode, kind, tab)
+  return locked.secret
+    ? i18n.t('pet.room.unlockNote.withSecrets', { note })
+    : note
+}

@@ -14,6 +14,7 @@ import {
 import {
   HAT_UNLOCK_ORDER,
   ROOM_PART_OPTIONS,
+  SECRET_ROOM_ITEMS,
   STARTER_ROOM_ITEMS,
   UNLOCK_ORDER,
   type PetRecord,
@@ -28,14 +29,19 @@ const hatsOnly = (items: readonly string[]) =>
   items.filter((item) => item.startsWith('hat:'))
 
 describe('room unlocks', () => {
-  it('lists every unlockable option once, starters or in the order', () => {
+  it('lists every unlockable option once: a starter, in an order, or secret', () => {
     const parts = Object.keys(ROOM_PART_OPTIONS).filter(
       (part) => part !== 'sign'
     ) as UnlockableRoomPart[]
     const every = parts.flatMap((part) =>
       ROOM_PART_OPTIONS[part].map((option) => `${part}:${option}`)
     )
-    const listed = [...STARTER_ROOM_ITEMS, ...UNLOCK_ORDER, ...HAT_UNLOCK_ORDER]
+    const listed = [
+      ...STARTER_ROOM_ITEMS,
+      ...UNLOCK_ORDER,
+      ...HAT_UNLOCK_ORDER,
+      ...SECRET_ROOM_ITEMS,
+    ]
     expect(new Set(listed).size).toBe(listed.length)
     expect([...listed].sort()).toEqual([...every].sort())
   })

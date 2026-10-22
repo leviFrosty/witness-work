@@ -115,16 +115,18 @@ Swappable parts, each a registry of options (`src/features/pet/art/room/`):
   | `months` (Kingdom Publishers) | 1, 1, 1, 2, 3, 4, 5, 6, 7, 8, 10, 12                                                                                       |
   | months mode (active months)   | 1, 1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10                                                                                        |
 
-  A hat sits on the head (`art/hats.ts`: a 24 × 14 picture whose brim row lands on the species'
-  `HAT_ANCHOR_Y`, following the head's bob, mirrored and greyed with the pet). A pet lying down
+  A hat sits on the head (`art/hats.ts`: a 24 × 20 picture whose brim row 17 lands on the species'
+  `HAT_ANCHOR_Y`, following the head's bob, mirrored and greyed with the pet; the first twelve are
+  drawn 24 × 14 and moved down into it, the secret ones use its full height). A pet lying down
   (rolling over, or one that died) has no hat. No party, holiday, halo or wizard hats (JW
   sensitivities below).
 
 - Earned items are stored on the pet (`earnedRoomItems`, written by `earnRoomItems` from an effect in
   `usePetLife` when the current mode earns one that isn't stored), so nothing locks again when the
   mode changes or a streak ends. Unlocked = starters ∪ stored ∪ earned now. A pet adopted on a long
-  streak gets its items at once.
-- The pet's details (route `PetRoom`) dims a locked item and can't pick it. Its badge says what opens it: in streak mode a
+  streak gets its items at once. Secret items are earned and stored the same way.
+- The pet's details (route `PetRoom`) dims a locked item (a locked secret shows its silhouette instead) and can't
+  pick it; tapping it shows a tooltip (`Popover`) with how it opens up (`pet_room_locked_tapped`). Its badge says what opens it: in streak mode a
   flame and the number ("At a streak of 7" to VoiceOver); in months mode the earliest month ("This
   month" while this month has no active day yet and it's next, "Next month", "In N months"). A note
   above a tab's options, while any are locked, says how they open up, by mode and streak kind (hats have their own
@@ -135,6 +137,51 @@ Swappable parts, each a registry of options (`src/features/pet/art/room/`):
   year by month, shared-in-ministry months of the service year, next plan day + duration,
   conversations + return visits this month. A value too wide for its spot drops the decimal, then
   shows a cap (`9999+`, `99+`; the plus on the left in Eastern Arabic).
+
+### Secret items
+
+Every unlockable part also has rarer **secret** options, listed after its regular ones
+(`SECRET_*_IDS` in `src/types/pet.ts`, `SECRET_ROOM_ITEMS`): 14 hats, 12 wall colours and 10 each
+of wall patterns, floors, beds, shelves and lights. They aren't in `UNLOCK_ORDER` or
+`HAT_UNLOCK_ORDER`; each opens up on its own rule (`SECRET_UNLOCKS` in `lib/secretUnlocks.ts`), in
+either unlock mode:
+
+| Rule        | Opens when                                                                                                     |
+| ----------- | -------------------------------------------------------------------------------------------------------------- |
+| `badge`     | the User has earned that badge (`preferences.earnedBadges`; most secrets, Bronze to Pearl)                     |
+| `badges`    | the User has earned at least that many badges in all (3, 5, 8, 10, 12, 14, 16, 20)                             |
+| `keepsakes` | the pet holds at least that many keepsakes (1, 3, 5, 8, 10, 15)                                                |
+| `gold`      | the hearts are gold (the pineapple hat, the honeycomb pattern)                                                 |
+| `longRun`   | the raw Service Streak reaches a long count by its kind (150–365 days, 15–36 months), or as many active months |
+
+Badges count months, never hours (ADR 0019), so no rule favours a role. No rule needs Buddies
+(`together`, `firstBuddy`), so every User can reach every secret, and none can be missed for good.
+A badge opens at most two secrets. Earned secrets are stored in `earnedRoomItems` like the rest, so a
+badge reset or a broken run never locks one again. `pet_room_item_unlocked` sends `by: 'secret'`.
+
+Decorate Room never shows how a secret opens or what it looks like until it does:
+
+- A locked secret's thumbnail is its **silhouette** (`art/silhouette.ts`), the option's own pixels
+  in one flat shadow (hat, bed, shelf, light) or two shadow tones that keep a pattern's structure
+  (wall colour, pattern, floor), over the room in low-contrast grey. All views are by day.
+  `silhouetteRooms` (`lib/roomOptions.ts`) picks a few reference rooms to tell the option from the
+  rest: for an object, the same item over another wall and floor (so bare wall and floor never
+  count), then no hat or up to four regular options; for a wall, the same wall plain and in another
+  colour; for a floor, two other floors. `silhouetteOf` ignores changes in lamp light, fills small
+  gaps that the room doesn't show through, and drops loose specks.
+- Its badge is `?`, its name `???` (VoiceOver: "Secret item, locked"), and its tooltip says only "A
+  secret. A surprise, waiting in its own time." The tab's unlock note adds "Some items are secrets.
+  They show up along the way." while one is locked.
+- The first time a section shows a secret that opened up, its cell says "New" (per install, MMKV
+  `pet-secrets` `seen:<item>`; `forgetFoundSecrets` clears it). Secrets opened by the dev harness
+  say "New" without being noted as shown.
+- The intro's fully unlocked room uses only `UNLOCK_ORDER` and `HAT_UNLOCK_ORDER`, so it never
+  shows a secret.
+
+Hats are folk hats from around the world (`art/hatsWorld.ts`: nón lá, chullo, salakot, La Paz
+bowler, Malagasy straw hat, fisherman cap, bush hat, tam) and playful ones (`art/hatsWhimsy.ts`:
+rubber duck, teapot, sailboat, pancake stack, camel, pineapple): everyday work, weather and regional
+hats only, none tied to a religion, a ceremony, an office or the military.
 
 ### Hidden moments (easter eggs)
 
@@ -294,6 +341,14 @@ See `docs/analytics.md` → "Pet companion".
 
 Dev harness: `__WW_DEV__.pet` (`src/app/dev-harness/pet.ts`) adopts a pet, sets species/coat/room,
 fakes a life state and forces hidden moments (`override({ hearts, dead, gold, … })`), fakes the
-streak room unlocks read (`override({ streak: 12 })`, shown but never stored), reads back the stored
+streak room unlocks read (`override({ streak: 12 })`, shown but never stored), opens every secret item
+(`override({ secrets: true })`, shown but never stored), reads back the stored
 and current unlocks (`state().unlocks`), and plays any motion (`play`, `pat`),
 so every animation can be recorded in the app. See `.agents/skills/verify-witnesswork/features/pet.md`.
+
+PNG tools for drawing and reviewing art, skipped in normal test runs and written to `.verify/`
+(gitignored): `PET_GALLERY=1 pnpm vitest run src/features/pet/art/gallery` (every sprite, part and
+motion), `PET_PREVIEW=<part> pnpm vitest run src/features/pet/art/preview` (one part's options by day
+and night, their thumbnails and secret silhouettes; `PET_PREVIEW_IDS=duck,teapot` for some) and
+`PET_CATALOG=1 pnpm vitest run src/features/pet/art/secretCatalog` (every secret, opened and locked,
+with its unlock rule).

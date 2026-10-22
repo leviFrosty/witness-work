@@ -20,7 +20,7 @@ import {
 } from '@/lib/pixelArt'
 import { SIGN_IDS, type SignId } from '@/types/pet'
 
-import { WALL_RGB, type WallColor } from './wall'
+import { WALL_RGB, wallDarkness, type WallColor } from './wall'
 
 export { SIGN_IDS }
 export type { SignId }
@@ -108,7 +108,8 @@ interface Ink {
 }
 
 function inkFor(wall: Rgb): Ink {
-  const paper = mix(PAPER, wall, 0.45)
+  // On a dark wall the paper takes less of it, so the numbers still read.
+  const paper = mix(PAPER, wall, 0.45 - 0.2 * wallDarkness(wall))
   const ink = mix(INK_BASE, paper, 0.38)
   return {
     paper,

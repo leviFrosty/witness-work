@@ -161,6 +161,7 @@ export const FAQS: FAQEntry[] = [
   { id: 'petLamp', category: 'pet' },
   { id: 'petRoom', category: 'pet' },
   { id: 'petHats', category: 'pet' },
+  { id: 'petSecrets', category: 'pet' },
   { id: 'petChange', category: 'pet' },
   { id: 'petShare', category: 'pet' },
   { id: 'petWidget', category: 'pet' },

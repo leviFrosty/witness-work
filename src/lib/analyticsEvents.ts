@@ -147,6 +147,7 @@ export const analyticsEventNames = [
   'pet_prompt_answered',
   'pet_room_changed',
   'pet_room_item_unlocked',
+  'pet_room_locked_tapped',
   'pet_secret_found',
   'pet_share_opened',
   'pet_shared',

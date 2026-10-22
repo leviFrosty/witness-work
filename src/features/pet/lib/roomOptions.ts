@@ -6,7 +6,8 @@ import type {
   TimeOfDay,
   Season,
 } from '@/types/pet'
-import { ROOM_PARTS } from '@/features/pet/art'
+import { ROOM_PARTS, type SilhouetteStyle } from '@/features/pet/art'
+import { isSecretItem } from '@/features/pet/lib/secretUnlocks'
 import {
   isRoomOptionUnlocked,
   nextUnlockIn,
@@ -143,7 +144,7 @@ export const ROOM_THUMB_VIEWS: Readonly<Record<RoomChoicePart, Viewport>> = {
   shelf: [67, 10, 48, 30],
   lamp: [92, 47, 80, 50],
   sign: [115, 2, 64, 40],
-  hat: [44, 44, 48, 30],
+  hat: [36, 36, 64, 40],
 }
 
 /** Whether the pet sits in `part`'s thumbnails (the bed's and the hat's). */
@@ -178,11 +179,13 @@ export type RoomUnlocks = {
  * What opens a locked option: the streak count it opens up at, or (months mode)
  * the calendar months from now at the earliest, 0 this month, 1 next month.
  * Each active month unlocks one item, so with this month not yet active, the
- * next item can still open up this month.
+ * next item can still open up this month. A secret item's never says
+ * (`secret`): it shows as a silhouette and a question mark.
  */
 export type UnlockRequirement =
   | { by: 'streak'; count: number }
   | { by: 'months'; monthsFromNow: number }
+  | { by: 'secret' }
 
 /**
  * How a locked option opens up; null for one that's open already, always free,
@@ -195,6 +198,7 @@ export function unlockRequirement(
 ): UnlockRequirement | null {
   if (isRoomChoiceUnlocked(part, option, unlocks.unlocked)) return null
   const item = `${part}:${option}`
+  if (isSecretItem(item)) return { by: 'secret' }
   if (unlocks.mode === 'streak') {
     const count = unlockStreakFor(item, unlocks.streakKind)
     return count ? { by: 'streak', count } : null
@@ -205,4 +209,71 @@ export function unlockRequirement(
     by: 'months',
     monthsFromNow: unlocks.thisMonthActive ? needed : needed - 1,
   }
+}
+
+/**
+ * How a locked secret option's silhouette reads: an object (hat, bed, shelf,
+ * lamp) as one flat shadow, a surface (wall, floor) as two shadow tones so its
+ * pattern shows but not its colours.
+ */
+export const silhouetteStyle = (part: RoomChoicePart): SilhouetteStyle =>
+  part === 'wallColor' || part === 'wallPattern' || part === 'floor'
+    ? 'surface'
+    : 'object'
+
+/**
+ * Rooms to tell a secret option's own pixels from the rest of its thumbnail, in
+ * the order `silhouetteOf` reads them (a few, as each is a scene to draw):
+ *
+ * - A wall colour: the same wall plain (its pattern becomes the light tone) and
+ *   another colour (what isn't wall);
+ * - A pattern: the same wall plain, and the pattern in another colour;
+ * - A floor: two other floors;
+ * - An object (hat, bed, shelf, lamp): the option over another wall and floor, so
+ *   the bare wall and floor around it aren't counted even where every other
+ *   option covers them, then no hat or the regular options, which hold the pet,
+ *   the table and the rest of the room.
+ *
+ * All are shown by day, so the lamp's glow doesn't count as its shape.
+ */
+export function silhouetteRooms(
+  room: PetRoomSettings,
+  part: RoomChoicePart,
+  option: string
+): { room: PetRoomSettings; references: PetRoomSettings[] } {
+  const shown: PetRoomSettings = {
+    ...roomWithChoice(room, part, option),
+    window: { ...room.window, time: 'day' },
+  }
+  const other = <T extends string>(current: string, pick: readonly T[]) =>
+    pick.filter((value) => value !== current)
+  const wallColor = other(shown.wallColor, ['sky', 'rose'])[0]
+  let references: PetRoomSettings[]
+  if (part === 'wallColor' || part === 'wallPattern') {
+    references = [
+      { ...shown, wallPattern: 'plain' },
+      { ...shown, wallColor },
+    ]
+  } else if (part === 'floor') {
+    references = other(shown.floor, ['wood', 'tile', 'stone'])
+      .slice(0, 2)
+      .map((floor) => ({ ...shown, floor }))
+  } else {
+    const backdrop: PetRoomSettings = {
+      ...shown,
+      wallColor: other(shown.wallColor, ['indigo', 'cream'])[0],
+      floor: other(shown.floor, ['lilypond', 'brick'])[0],
+    }
+    const others =
+      part === 'hat'
+        ? ['none']
+        : (ROOM_PARTS[part].options as readonly string[])
+            .filter((o) => o !== option && !isSecretItem(`${part}:${o}`))
+            .slice(0, 4)
+    references = [
+      backdrop,
+      ...others.map((o) => roomWithChoice(shown, part, o)),
+    ]
+  }
+  return { room: shown, references }
 }

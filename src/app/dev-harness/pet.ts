@@ -122,8 +122,9 @@ export const petHarness = {
    * Fakes life and moments on top of the real ones, merged into any earlier
    * override: `hearts`, `dead`, `gold`, `goldStartedToday`, `rainbow`,
    * `lampLevel`, `streak` (the count room unlocks read; shown, never stored),
-   * `window: { time, season }`, `paradise`, `star`, `gift` (`olive`… or null),
-   * `sill`, `visitor: { species, coat }` (or null).
+   * `secrets` (true opens every secret item; shown, never stored), `paradise`,
+   * `star`, `gift` (`olive`… or null), `sill`, `window` (`{ time, season }`),
+   * `visitor` (`{ species, coat }` or null).
    */
   override: (patch: PetDevOverride) => {
     checkWindow(patch.window)

@@ -110,7 +110,7 @@ export async function putSyncSlot(
       rawBody: blob,
       headers: {
         'x-ww-slot-id': slotId,
-        'x-ww-sha256': syncBlobDigest(blob),
+        'x-ww-sha256': await syncBlobDigest(blob),
         ...(ifMatch && { 'if-match': ifMatch === '*' ? '*' : `"${ifMatch}"` }),
       },
       timeoutMs: BLOB_TIMEOUT_MS,

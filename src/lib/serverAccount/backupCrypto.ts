@@ -3,6 +3,7 @@ import { hkdf } from '@noble/hashes/hkdf.js'
 import { sha256 } from '@noble/hashes/sha2.js'
 import { gunzipSync, gzipSync } from 'fflate'
 import { concatBytes, fromUtf8, toB64u, utf8 } from '@/lib/bytes'
+import { sha256Native } from '@/lib/sha256'
 
 /**
  * The end-to-end encrypted backup's blob (docs/accounts-protocol.md, "Backup";
@@ -72,7 +73,8 @@ export const newBackupSlotId = (randomBytes: (length: number) => Uint8Array) =>
   toB64u(randomBytes(16))
 
 /** B64u SHA-256 of the blob, as `backup/put` signs it. */
-export const backupBlobDigest = (blob: Uint8Array) => toB64u(sha256(blob))
+export const backupBlobDigest = async (blob: Uint8Array) =>
+  toB64u(await sha256Native(blob))
 
 /** Encrypts `plaintext` for `address`. Callers supply the nonce. */
 export function sealBackup(

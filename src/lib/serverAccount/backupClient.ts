@@ -65,7 +65,10 @@ export async function putBackup(
     uploadedAt?: unknown
   }>('backup/put', null, options, {
     rawBody: blob,
-    headers: { 'x-ww-slot-id': slotId, 'x-ww-sha256': backupBlobDigest(blob) },
+    headers: {
+      'x-ww-slot-id': slotId,
+      'x-ww-sha256': await backupBlobDigest(blob),
+    },
     timeoutMs: BLOB_TIMEOUT_MS,
   })
   const uploadedAt = response.data?.uploadedAt

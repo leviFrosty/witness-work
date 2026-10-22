@@ -134,7 +134,7 @@ describe('serverTransport', () => {
       headers: {
         authorization: 'Bearer family',
         'x-ww-slot-id': SLOT,
-        'x-ww-sha256': syncBlobDigest(newer),
+        'x-ww-sha256': await syncBlobDigest(newer),
       },
       body: newer as never,
     })

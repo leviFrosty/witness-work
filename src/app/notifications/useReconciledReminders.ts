@@ -22,7 +22,11 @@ import { monthReportDue, monthReportSources } from '@/lib/monthReportReminders'
 import { weekNeedsPlan, weekPlanSources } from '@/lib/weekPlanReminders'
 import { currentServiceStreak } from '@/lib/currentServiceStreak'
 import { streakRemindersOn } from '@/lib/serviceStreak'
-import { ensureReminderChannel, REMINDER_CHANNEL_ID } from '@/lib/notifications'
+import {
+  ensureReminderChannel,
+  REMINDER_CHANNEL_ID,
+  reminderChannelName,
+} from '@/lib/notifications'
 import { canonicalJson } from '@/lib/canonicalJson'
 import { contentHash } from '@/lib/contentHash'
 import { addForegroundListener } from '@/lib/appLifecycle'
@@ -285,8 +289,14 @@ export function useReconciledReminders(ready: boolean | undefined) {
               ] as const
             })
           )
+          // The channel name is in the key so a pass renames the Android
+          // channel after a language change or an update that renames it.
           const key = contentHash(
-            canonicalJson([granted, [...wanted.values()].map((r) => r.key)])
+            canonicalJson([
+              granted,
+              reminderChannelName(),
+              [...wanted.values()].map((r) => r.key),
+            ])
           )
           const day = new Date().toDateString()
           if (

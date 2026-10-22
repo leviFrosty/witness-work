@@ -3526,6 +3526,7 @@
   "haptics": "Haptics",
   "haptics_description": "Vibration feedback when you tap, scrub charts, or reach a goal.",
   "notifications": "Notifications",
+  "remindersChannelName": "Reminders",
   "purchasesUnavailable": "Purchases are unavailable right now. Please try again later.",
   "hideThisSection": "Hide This Section",
   "addToFavorites": "Add to Favorites",

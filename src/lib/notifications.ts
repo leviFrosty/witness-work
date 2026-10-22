@@ -9,9 +9,15 @@ import i18n from '@/lib/locales'
 export const REMINDER_CHANNEL_ID =
   'expo_notifications_fallback_notification_channel'
 
+/**
+ * The reminder channel's name in Android's notification settings, in the app
+ * language. Setting the channel again renames it on existing installs.
+ */
+export const reminderChannelName = () => i18n.t('remindersChannelName')
+
 export async function ensureReminderChannel() {
   await Notifications.setNotificationChannelAsync(REMINDER_CHANNEL_ID, {
-    name: i18n.t('notifications'),
+    name: reminderChannelName(),
     importance: Notifications.AndroidImportance.HIGH,
   })
 }

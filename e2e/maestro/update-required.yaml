@@ -1,0 +1,46 @@
+# seed: pioneer
+# assert: __WW_DEV__.stores.updateRequired.getState().required?.source === 'server'
+# assert: __WW_DEV__.appUpdate.requests().some((r) => r.path.startsWith('/app/v1/config') && r.status === 200)
+# assert: __WW_DEV__.appUpdate.requests().some((r) => r.status === 426)
+appId: com.leviwilkerson.jwtimedev
+name: ww-api raises the minimum version, so Update Required covers the app until it comes down again; then a 426 from ww-api covers it for the rest of the launch
+---
+- extendedWaitUntil:
+    visible: Home
+    timeout: 60000
+- waitForAnimationToEnd
+# The harness answers GET /app/v1/config with a floor above this version and
+# reads it now, as a return to the foreground would.
+- evalScript: >-
+    __WW_DEV__.appUpdate.minAppVersion('99.0.0') === 'started'
+- extendedWaitUntil:
+    visible: Update Required
+    timeout: 20000
+- assertVisible: Version 99.0.0 or later is needed.
+- assertVisible:
+    text: Update WitnessWork
+    traits: button
+# The floor comes down: the next read lifts the gate without a relaunch.
+- evalScript: >-
+    __WW_DEV__.appUpdate.minAppVersion(null) === 'started'
+- extendedWaitUntil:
+    notVisible: Update Required
+    timeout: 20000
+- tapOn: Contacts
+- assertVisible: Ada Reyes
+# ww-api refuses a user-scoped request with 426 upgrade_required: Settings →
+# Account reads the account through the session, which reports it, and Update
+# Required covers the app, this time without a version.
+- evalScript: >-
+    __WW_DEV__.appUpdate.upgradeRequired('/accounts/v1/') === 'ok'
+- tapOn: Home
+- tapOn: Account and settings
+- waitForAnimationToEnd
+- tapOn: Settings
+- scrollUntilVisible:
+    element: Account
+- tapOn: Account
+- extendedWaitUntil:
+    visible: Update Required
+    timeout: 30000
+- assertNotVisible: or later is needed

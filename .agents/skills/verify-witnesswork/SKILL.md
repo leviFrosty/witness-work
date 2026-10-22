@@ -103,7 +103,7 @@ wwv eval '__WW_DEV__.forgetNotesImportCredits()'   # Notes Import as before the 
 wwv eval '__WW_DEV__.stores.updateRequired.setState({ required: { source: "config", currentVersion: "1.44.1", minVersion: "9.0.0" } })'
 ```
 
-`seed` clears the device's data first, then saves the scenario, so the seeded data (the builtin LDC Category included) is still there after a relaunch (`wwv up`). It keeps Notes Import's persisted Import Credits; `forgetNotesImportCredits()` drops them. Setting `updateRequired` shows Update Required on this device only (`required: null` lifts it); never put an `app:min-version` floor on the shared local API for that, since every worktree uses it.
+`seed` clears the device's data first, then saves the scenario, so the seeded data (the builtin LDC Category included) is still there after a relaunch (`wwv up`). It keeps Notes Import's persisted Import Credits; `forgetNotesImportCredits()` drops them. Setting `updateRequired` shows Update Required on this device only (`required: null` lifts it); never put an `app:min-version` floor on the shared local API for that, since every worktree uses it. To drive the real paths, `__WW_DEV__.appUpdate` answers ww-api for this device: `minAppVersion('99.0.0')` serves that floor from `GET /app/v1/config` and reads it, `minAppVersion(null)` lowers it again, `upgradeRequired('/accounts/v1/sync/')` answers 426 to matching requests, `requests()` lists what the app sent since, and `clear()` stops. A `seed` lifts Update Required and clears these. `e2e/maestro/update-required.yaml` uses them.
 
 Scenarios are built relative to today (`src/app/dev-harness/scenarios.ts`).
 

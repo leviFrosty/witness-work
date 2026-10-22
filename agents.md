@@ -25,7 +25,8 @@ iOS and Android are both supported and share the same app flows. Setup and build
 Prove a change in the running app before calling it done; don't hand verification back to the user. The [`verify-witnesswork`](./.agents/skills/verify-witnesswork/SKILL.md) skill (`node scripts/verify/ww-verify.mjs`) claims an isolated simulator or emulator, seeds state, drives the UI, fuzzes, and saves evidence to `.verify/artifacts/`. Backend changes use `verify-ww-api` in ww-api.
 
 - **Match the check to the change.** UI → drive the changed flow and read the result back; data → read the store after the action; deep link → `wwv link`; bug → reproduce it first, then show it fixed on the same surface.
-- **Both platforms** for anything in the Platforms list above. "Not tested on Android" is a gap to close, not a footnote.
+- **iOS first.** Run the development loop (reproduce, fix, re-check) on an iOS simulator, and when a change needs only a light pass, do that pass on iOS. Iterate on an Android emulator only when the bug or feature exists only on Android.
+- **Both platforms** for anything in the Platforms list above: once it works on iOS, add an Android pass. "Not tested on Android" is a gap to close, not a footnote.
 - **Delegate the driving to a cheaper subagent.** Every tap, snapshot and screenshot re-reads your whole conversation, so driving the app from a long thread is our biggest token cost. Hand the device run to a subagent on the cheapest model your harness offers (for example Claude Haiku). You still decide what to prove and judge the evidence. The skill's [Delegate the drive](./.agents/skills/verify-witnesswork/SKILL.md#delegate-the-drive) says what to hand off, what to keep, and how to brief it.
 - **Report evidence:** devices, commands, artifact paths, and what stayed unverified (see the skill's Limits) and why.
 

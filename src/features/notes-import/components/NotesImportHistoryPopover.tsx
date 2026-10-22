@@ -26,11 +26,13 @@ import { useNotesImportManager } from '@/features/notes-import/hooks/useNotesImp
 import type { ImportRuntime } from '@/features/notes-import/lib/notesImportManagerLogic'
 import {
   ledgerEntryTitle,
+  isUnchargedEmptyImport,
   isUnviewedReady,
   type NotesImportLedgerEntry,
 } from '@/features/notes-import/lib/notesImportLedger'
 import { notesImportCountsLine } from '@/features/notes-import/lib/notesImportMessages'
 import { formatRelative } from '@/lib/dates'
+import useIsSupporter from '@/hooks/useIsSupporter'
 import NotesImportReadyDot from '@/features/notes-import/components/NotesImportReadyDot'
 
 /**
@@ -148,6 +150,8 @@ interface RowProps {
   entry: NotesImportLedgerEntry
   runtime: ImportRuntime | undefined
   active: boolean
+  /** Imports draw down a finite allowance, so a free one is worth noting. */
+  metered: boolean
   onPress: () => void
   onDelete: () => void
 }
@@ -157,6 +161,7 @@ const HistoryRow = ({
   entry,
   runtime,
   active,
+  metered,
   onPress,
   onDelete,
 }: RowProps) => {
@@ -164,6 +169,10 @@ const HistoryRow = ({
   const status = useStatusVisual(entry, runtime)
   const title = ledgerEntryTitle(entry) || i18n.t('notesImport_newImport')
   const counts = entry.result ? notesImportCountsLine(entry.result) : ''
+  const noCreditUsed =
+    metered && isUnchargedEmptyImport(entry)
+      ? i18n.t('notesImport_noCreditUsed')
+      : ''
   const relativeTime = formatRelative(entry.updatedAt)
 
   return (
@@ -178,7 +187,7 @@ const HistoryRow = ({
       <Button
         onPress={onPress}
         accessibilityRole='button'
-        accessibilityLabel={`${title}. ${status.label}.${counts ? ` ${counts}.` : ''} ${relativeTime}.`}
+        accessibilityLabel={`${title}. ${status.label}.${counts ? ` ${counts}.` : ''}${noCreditUsed ? ` ${noCreditUsed}.` : ''} ${relativeTime}.`}
         style={{
           flex: 1,
           flexDirection: 'row',
@@ -229,6 +238,16 @@ const HistoryRow = ({
           >
             {status.label}
             {counts ? ` · ${counts}` : ''}
+            {noCreditUsed ? (
+              <Text
+                style={{
+                  color: theme.colors.textAlt,
+                  fontSize: theme.fontSize('xs'),
+                }}
+              >
+                {` · ${noCreditUsed}`}
+              </Text>
+            ) : null}
           </Text>
         </View>
       </Button>
@@ -278,6 +297,12 @@ const NotesImportHistoryPopover = ({ renderTrigger }: Props) => {
   const runtimes = useNotesImportManager((s) => s.runtimes)
   const remove = useNotesImportManager((s) => s.remove)
   const clearCompleted = useNotesImportManager((s) => s.clearCompleted)
+  const credits = useNotesImportManager((s) => s.credits)
+  const { isSupporter: deviceSupporter } = useIsSupporter()
+  // Supporters and unlimited accounts never spend a credit, so "No credit
+  // used" would tell them nothing.
+  const metered =
+    !deviceSupporter && credits?.isSupporter !== true && credits?.limit !== null
   const { readyCount, inProgressCount, hasDone } =
     useNotesImportHistorySummary()
   const popoverWidth = Math.min(width - 24, 380)
@@ -375,6 +400,7 @@ const NotesImportHistoryPopover = ({ renderTrigger }: Props) => {
                 entry={entry}
                 runtime={runtimes[entry.hash]}
                 active={entry.hash === activeHash}
+                metered={metered}
                 onPress={() => {
                   close()
                   open(entry.hash)

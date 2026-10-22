@@ -32,6 +32,7 @@ import {
   provisionalTitleFromNotes,
   ledgerEntryTitle,
   isUnviewedReady,
+  isUnchargedEmptyImport,
   unviewedReadyImportCount,
   markViewed,
   markViewedTransition,
@@ -751,6 +752,45 @@ describe('viewed / unread dot', () => {
       expect(isUnviewedReady(entry({ state: 'done', viewedAt: null }))).toBe(
         false
       )
+    })
+  })
+
+  describe('isUnchargedEmptyImport', () => {
+    it('is true for an empty parse the server did not charge', () => {
+      expect(isUnchargedEmptyImport(entry())).toBe(true)
+    })
+
+    it('is false when the empty parse was charged anyway', () => {
+      expect(isUnchargedEmptyImport(entry({ emptyCharged: true }))).toBe(false)
+    })
+
+    it('is false for a parse with records or a Publisher', () => {
+      expect(
+        isUnchargedEmptyImport(
+          entry({
+            result: result({ visits: [{}] as NotesImportResult['visits'] }),
+          })
+        )
+      ).toBe(false)
+      expect(
+        isUnchargedEmptyImport(
+          entry({
+            result: result({
+              publisher: {} as NonNullable<NotesImportResult['publisher']>,
+            }),
+          })
+        )
+      ).toBe(false)
+    })
+
+    it('is false while working or after a refinement', () => {
+      expect(isUnchargedEmptyImport(entry({ state: 'working' }))).toBe(false)
+      expect(isUnchargedEmptyImport(entry({ result: null }))).toBe(false)
+      expect(
+        isUnchargedEmptyImport(
+          entry({ history: [{ role: 'assistant', text: 'x', at: 1 }] })
+        )
+      ).toBe(false)
     })
   })
 

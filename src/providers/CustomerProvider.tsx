@@ -17,6 +17,7 @@ import { getOrCreateAccountId } from '@/lib/account'
 import { InstallIdUnavailableError } from '@/lib/installId'
 import { Platform } from 'react-native'
 import { addForegroundListener } from '@/lib/appLifecycle'
+import { addReconnectListener } from '@/lib/http/online'
 import { ensureRevenueCatLinked } from '@/lib/serverAccount/revenueCatLinkRuntime'
 
 interface Props {}
@@ -163,6 +164,15 @@ const CustomerProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
       }
     })
   }, [])
+
+  // Offline, the customer is whatever the SDK cached (or none at all), and a
+  // purchase, renewal or lapse made elsewhere goes unseen. Catch up when the
+  // connection returns.
+  useEffect(() => {
+    if (!ready) return
+    const subscription = addReconnectListener(() => void getCustomerInfo())
+    return () => subscription.remove()
+  }, [ready, getCustomerInfo])
 
   // A purchase, a restore, a lapse, or an adopted id changed what RevenueCat
   // says: link again so ww-api reads the customer now (ADR 0029).

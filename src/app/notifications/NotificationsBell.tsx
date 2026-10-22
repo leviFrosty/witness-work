@@ -16,6 +16,7 @@ import useNotesImportNotifications from '@/features/notes-import/hooks/useNotesI
 import NotificationsTray from '@/features/notifications/components/NotificationsTray'
 import useNow from '@/hooks/useNow'
 import useAuxiliaryMonthNotification from '@/features/service-reports/hooks/useAuxiliaryMonthNotification'
+import useHoursLoggingNotification from '@/features/service-reports/hooks/useHoursLoggingNotification'
 import usePreviousReportNotification from '@/features/service-reports/hooks/usePreviousReportNotification'
 import useRolloverNotification from '@/features/service-reports/hooks/useRolloverNotification'
 import useBackupNotification from '@/features/settings/hooks/useBackupNotification'
@@ -38,6 +39,7 @@ export default function NotificationsBell() {
     useRolloverNotification(),
     usePreviousReportNotification(now),
     useAuxiliaryMonthNotification(now),
+    useHoursLoggingNotification(),
     useBackupNotification(now),
     useSyncResolutionNotification(),
     useSyncResetNotification(),

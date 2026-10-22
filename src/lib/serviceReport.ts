@@ -35,6 +35,14 @@ export type {
 export const isCountableEntry = (entry: TimeEntry) =>
   entry.rollover !== true && entryMinutes(entry) >= 0
 
+/**
+ * What kind of Time Entry this is, for analytics `entry_mode`: logged time, or
+ * the 0h 0m checkbox "shared" marker.
+ */
+export const timeEntryMode = (
+  entry: Pick<TimeEntry, 'hours' | 'minutes'>
+): 'hours' | 'checkbox' => (entry.hours || entry.minutes ? 'hours' : 'checkbox')
+
 export const getTotalMinutesDetailedForSpecificMonth = (
   monthsReports: TimeEntry[],
   month: number,

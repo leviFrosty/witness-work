@@ -103,6 +103,12 @@ export const FAQS: FAQEntry[] = [
   { id: 'wearOsSync', category: 'time', platform: 'android' },
   { id: 'siri', category: 'time', platform: 'ios' },
   {
+    id: 'logHoursAsPublisher',
+    category: 'time',
+    pinned: true,
+    related: [162, 287],
+  },
+  {
     id: 'switchingPioneer',
     category: 'time',
     pinned: true,

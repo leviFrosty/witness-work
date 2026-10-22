@@ -21,6 +21,7 @@ import {
   roleForMonth,
 } from '@/lib/roleHistory'
 import { tracksHours } from '@/lib/publisherCapabilities'
+import { timeEntryMode } from '@/lib/serviceReport'
 import { resolveMileageUnits } from '@/features/mileage/lib/format'
 import { buildWatchSnapshot } from '@/app/watch/buildWatchSnapshot'
 import { _i18n } from '@/lib/locales'
@@ -193,8 +194,7 @@ function drainInbox(): void {
             ...(plan.origin === 'phoneShortcut'
               ? { source: 'siri' }
               : { source: 'watch', watch_origin: plan.origin }),
-            entry_mode:
-              plan.entry.hours || plan.entry.minutes ? 'hours' : 'checkbox',
+            entry_mode: timeEntryMode(plan.entry),
             has_category: !!plan.entry.categoryId,
             has_note: false,
           })

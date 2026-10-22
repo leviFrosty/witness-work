@@ -41,6 +41,7 @@ import {
   getMonthsReports,
   getReport,
   getTotalMinutesForServiceYear,
+  timeEntryMode,
 } from '@/lib/serviceReport'
 import { getServiceYearReports } from '@/lib/serviceYear'
 import useAnimation from '@/hooks/useAnimation'
@@ -314,6 +315,7 @@ const TimeEntryForm = (props: Props) => {
     addServiceReport(entry)
     analytics.capture('time_entry_created', {
       source: props.source,
+      entry_mode: timeEntryMode(entry),
       has_category: !!entry.categoryId,
       ...noteAnalytics(entry),
     })
@@ -333,6 +335,7 @@ const TimeEntryForm = (props: Props) => {
     updateServiceReport(entry)
     analytics.capture('time_entry_updated', {
       source: props.source,
+      entry_mode: timeEntryMode(entry),
       has_category: !!entry.categoryId,
       ...noteAnalytics(entry),
     })
@@ -355,7 +358,10 @@ const TimeEntryForm = (props: Props) => {
         style: 'destructive',
         onPress: () => {
           deleteServiceReport(serviceReport)
-          analytics.capture('time_entry_deleted', { source: props.source })
+          analytics.capture('time_entry_deleted', {
+            source: props.source,
+            entry_mode: timeEntryMode(serviceReport),
+          })
           toast.show(i18n.t('success'), {
             message: i18n.t('deleted'),
             native: true,

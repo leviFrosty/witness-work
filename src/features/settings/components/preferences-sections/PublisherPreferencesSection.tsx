@@ -14,6 +14,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Pressable, TextInput as RNTextInput, View } from 'react-native'
 import i18n from '@/lib/locales'
 import { analytics } from '@/lib/analytics'
+import { setHoursLogging } from '@/lib/hoursLogging'
 import Section from '@/components/ui/inputs/Section'
 import InputRowContainer from '@/components/ui/inputs/InputRowContainer'
 import TextInputRow from '@/components/ui/inputs/TextInputRow'
@@ -81,11 +82,6 @@ const PublisherPreferencesSection = () => {
     }
   }, [hasCompletedProfileSetup, hasName, setProfile])
 
-  const handleLogsHoursChange = (enabled: boolean) => {
-    set({ logsHours: enabled })
-    analytics.capture('hours_logging_changed', { enabled })
-  }
-
   const handleMileageChange = (enabled: boolean) => {
     set({ mileageTrackingEnabled: enabled })
     analytics.capture('mileage_tracking_changed', {
@@ -148,7 +144,7 @@ const PublisherPreferencesSection = () => {
             label={i18n.t('logHours')}
             info={i18n.t('logHours_description')}
             value={logsHours}
-            onValueChange={handleLogsHoursChange}
+            onValueChange={(enabled) => setHoursLogging(enabled, 'settings')}
           />
         )}
         {isCheckboxMode && logsHours && (

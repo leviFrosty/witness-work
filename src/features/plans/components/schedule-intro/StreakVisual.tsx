@@ -23,9 +23,11 @@ import {
 import {
   DATE_SIZE,
   DATE_Y,
+  DayNumber,
   FlameCount,
   WeekStrip,
   dayX,
+  thisWeek,
 } from '@/features/plans/components/schedule-intro/introKit'
 
 const CARD_TOP = 84
@@ -46,6 +48,7 @@ const FALL = 0.12
  */
 const StreakVisual = ({ palette, active, reduceMotion }: RevealVisualProps) => {
   const theme = useTheme()
+  const days = thisWeek()
   const { intro, loop } = useVisualClock({
     active,
     reduceMotion,
@@ -95,15 +98,18 @@ const StreakVisual = ({ palette, active, reduceMotion }: RevealVisualProps) => {
               palette={palette}
               renderDate={(i) =>
                 PLANNED.some((plan) => plan.day === i) ? (
-                  <View
-                    style={{
-                      position: 'absolute',
-                      inset: -2,
-                      borderRadius: DATE_SIZE,
-                      borderWidth: 2,
-                      borderColor: theme.colors.accent,
-                    }}
-                  />
+                  <>
+                    <View
+                      style={{
+                        position: 'absolute',
+                        inset: 0,
+                        borderRadius: theme.numbers.borderRadiusSm,
+                        borderWidth: 2,
+                        borderColor: theme.colors.accent,
+                      }}
+                    />
+                    <DayNumber day={days[i]} color={palette.text} />
+                  </>
                 ) : null
               }
             />
@@ -126,7 +132,7 @@ const StreakVisual = ({ palette, active, reduceMotion }: RevealVisualProps) => {
                   style={{
                     width: 12,
                     height: 12,
-                    borderRadius: 6,
+                    borderRadius: 3,
                     borderWidth: 2,
                     borderColor: theme.colors.accent,
                   }}

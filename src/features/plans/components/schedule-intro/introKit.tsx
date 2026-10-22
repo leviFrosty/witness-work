@@ -1,5 +1,6 @@
-import { View } from 'react-native'
+import { StyleProp, View, ViewStyle } from 'react-native'
 import Animated, {
+  type AnimatedStyle,
   DerivedValue,
   useAnimatedStyle,
 } from 'react-native-reanimated'
@@ -18,9 +19,12 @@ import { formatDisplay } from '@/lib/dates'
 /** The intro's week strip: a week's days inside a card, `WEEK.pad` in. */
 export const WEEK = { days: 7, pad: 14, width: 320 }
 export const DAY_W = (WEEK.width - WEEK.pad * 2) / WEEK.days
-/** Where a day's date circle sits, from the strip's top. */
-export const DATE_Y = 17
-export const DATE_SIZE = 28
+/** Where a day's square sits, from the strip's top, under its weekday letter. */
+export const DATE_Y = 18
+/** The Schedule's day square (`CalendarDay`). */
+export const DATE_SIZE = 40
+/** The Schedule's ring around the selected day, flush outside its square. */
+export const SELECTED_RING = 2
 
 /** This week's days, so the sketch matches the User's calendar. */
 export const thisWeek = () => {
@@ -36,9 +40,28 @@ export const dayX = (index: number) => {
   return WEEK.pad + DAY_W * (index + 0.5)
 }
 
+/** A day's number, as the Schedule's square prints it. */
+export function DayNumber({
+  day,
+  color,
+}: {
+  day: moment.Moment
+  color: string
+}) {
+  const theme = useTheme()
+  return (
+    <VisualText
+      style={{ fontSize: 16, fontFamily: theme.fonts.semiBold, color }}
+    >
+      {formatDisplay(day, 'D')}
+    </VisualText>
+  )
+}
+
 /**
- * A week of day letters and dates. `renderDate` draws over each date circle,
- * for marks like a planned ring or a kept check.
+ * A week of weekday letters over the Schedule's day squares. `renderDate` fills
+ * a day's square in place of its plain number, for marks like a Plan's time or
+ * a kept check.
  */
 export function WeekStrip({
   palette,
@@ -47,29 +70,66 @@ export function WeekStrip({
   palette: WelcomePalette
   renderDate?: (index: number) => React.ReactNode
 }) {
+  const theme = useTheme()
   return (
     <View style={{ flexDirection: 'row', paddingHorizontal: WEEK.pad }}>
       {thisWeek().map((day, i) => (
         <View key={i} style={{ width: DAY_W, alignItems: 'center', gap: 4 }}>
-          <VisualText style={{ fontSize: 10, color: palette.textAlt }}>
-            {day.format('dd')}
+          <VisualText
+            style={{
+              fontSize: 10,
+              lineHeight: 14,
+              fontFamily: theme.fonts.medium,
+              color: palette.textAlt,
+            }}
+          >
+            {day.format('dd').charAt(0)}
           </VisualText>
           <View
             style={{
               width: DATE_SIZE,
               height: DATE_SIZE,
+              borderRadius: theme.numbers.borderRadiusSm,
               alignItems: 'center',
               justifyContent: 'center',
             }}
           >
-            {renderDate?.(i)}
-            <VisualText style={{ fontSize: 13, color: palette.text }}>
-              {formatDisplay(day, 'D')}
-            </VisualText>
+            {renderDate?.(i) ?? <DayNumber day={day} color={palette.text} />}
           </View>
         </View>
       ))}
     </View>
+  )
+}
+
+/** The Schedule's ring around the selected day, for a square at `x`, `top`. */
+export function SelectedRing({
+  x,
+  top,
+  style,
+}: {
+  x: number
+  top: number
+  style?: StyleProp<AnimatedStyle<ViewStyle>>
+}) {
+  const theme = useTheme()
+  return (
+    <Animated.View
+      pointerEvents='none'
+      style={[
+        {
+          position: 'absolute',
+          left: x - DATE_SIZE / 2 - SELECTED_RING,
+          top: top - SELECTED_RING,
+          width: DATE_SIZE + SELECTED_RING * 2,
+          height: DATE_SIZE + SELECTED_RING * 2,
+          borderWidth: SELECTED_RING,
+          borderRadius: theme.numbers.borderRadiusSm + 4,
+          borderColor: theme.colors.accent,
+        },
+        style,
+      ]}
+    />
   )
 }
 

@@ -32,7 +32,7 @@ Preconditions:
 Steps:
 
 - **Entry.** On iOS, run `wwv ad press 'label="Schedule"' --settle`, then `wwv ad press 'label="Buddies"' --settle`. The route is `Buddies`.
-- **Invite.** Create an invite, then read the link with `wwv eval` (from the screen, or the clipboard via `wwv ad clipboard get`).
+- **Invite.** Create an invite, then read the link with `wwv eval` (from the screen, or the clipboard via `wwv ad clipboard read`).
 - **Accept on Android.** Run `wwv link '<invite link>' --platform android`. The route is `Buddy Invite`. Accept it.
 - **Both rosters.** Each device's Buddies screen lists the other. Run `wwv eval '__WW_DEV__.state()'` per platform.
 - **Backend proof.** In ww-api, `.verify/wrangler.log` shows the `invite/claim` and `inbox/sync` calls.

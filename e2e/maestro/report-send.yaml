@@ -1,0 +1,72 @@
+# seed: pioneer
+# The pioneer scenario leaves last month's report unsent, so Home's Service
+# Report card leads to it. A dismissed share sheet leaves it unsent; copying it
+# marks it sent.
+# assert: __WW_DEV__.stores.preferences.getState().submittedReportMonths.length === 1
+# assert: __WW_DEV__.stores.preferences.getState().defaultExportMethod === 'copy'
+appId: com.leviwilkerson.jwtimedev
+name: Share a Service Report and cancel the share sheet, then copy it, which marks the month sent
+---
+- extendedWaitUntil:
+    visible: Add Time
+    timeout: 60000
+# A seed re-renders every screen; let it settle before the first tap.
+- waitForAnimationToEnd
+- tapOn:
+    id: due-report-row
+- extendedWaitUntil:
+    visible: NUMBER OF DIFFERENT BIBLE STUDIES CONDUCTED
+    timeout: 20000
+- assertVisible: Not Sent
+# The submission method is remembered, and the button below says what it does.
+# iOS also has a text with this name, and Android adds the method to the
+# control's; the first match is the control on both.
+- tapOn:
+    text: Submission method
+    index: 0
+- waitForAnimationToEnd
+- tapOn: Share
+- tapOn:
+    text: Share
+    traits: button
+# The system share sheet offers the report's text. iOS shows it out of
+# process, so only its title and dimmed backdrop read.
+- extendedWaitUntil:
+    visible:
+      text: Service Report -
+    timeout: 20000
+- runFlow:
+    when:
+      visible: dismiss popup
+    commands:
+      - tapOn: dismiss popup
+- runFlow:
+    when:
+      visible: Service Report -
+    commands:
+      - back
+- assertNotVisible: dismiss popup
+- assertVisible: Not Sent
+- tapOn:
+    text: Submission method
+    index: 0
+- waitForAnimationToEnd
+- tapOn: Copy To Clipboard
+- tapOn:
+    text: Copy To Clipboard
+    traits: button
+# Sent, so the report offers a reminder for next month's.
+- assertVisible: Get a reminder on the 1st
+- assertNotVisible: Not Sent
+- tapOn:
+    text: Close
+    traits: button
+# The first sent report earns Reports Sent; its celebration comes up next.
+- runFlow:
+    when:
+      visible: See all badges
+      timeout: 5000
+    commands:
+      - tapOn: Done
+- assertNotVisible:
+    id: due-report-row

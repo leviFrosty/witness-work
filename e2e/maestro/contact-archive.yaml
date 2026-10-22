@@ -1,0 +1,45 @@
+# seed: pioneer
+# assert: __WW_DEV__.stores.contacts.getState().contacts.some((c) => c.id === 'verify-contact-4') && !__WW_DEV__.stores.contacts.getState().deletedContacts.some((c) => c.id === 'verify-contact-4')
+# Archiving keeps the contact's conversations, so they come back with it.
+# assert: __WW_DEV__.stores.conversations.getState().conversations.filter((v) => v.contact.id === 'verify-contact-4').length === 2
+appId: com.leviwilkerson.jwtimedev
+name: Archive a contact from Contact Details, then recover them from Settings → More → Recover Contacts
+---
+- extendedWaitUntil:
+    visible: Contacts
+    timeout: 60000
+# A seed re-renders every screen; let it settle before the first tap.
+- waitForAnimationToEnd
+- tapOn: Contacts
+- assertVisible: Follow-ups Due
+- tapOn:
+    id: contact-row-verify-contact-4
+- assertVisible: Elif Kaya
+- waitForAnimationToEnd
+- tapOn: More actions
+- assertVisible: Delete Permanently…
+- waitForAnimationToEnd
+- tapOn: Archive
+- assertVisible: Archive Contact?
+- tapOn:
+    text: Archive
+    traits: button
+# Archiving goes back to the list, without the contact.
+- assertVisible: Ada Reyes
+- assertNotVisible:
+    id: contact-row-verify-contact-4
+- tapOn: Account and settings
+# Let the menu finish opening, or a tap can land where it's still growing.
+- waitForAnimationToEnd
+- tapOn: Settings
+- assertVisible: Personalization
+- waitForAnimationToEnd
+- scrollUntilVisible:
+    element: More
+# Other screens on the stack also have a "More" button.
+- tapOn:
+    id: settings-more
+- tapOn: Recover Contacts
+- assertVisible: Elif Kaya
+- tapOn: Recover
+- assertVisible: Deleted contacts will appear here.

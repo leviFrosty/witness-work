@@ -1,0 +1,39 @@
+# seed: pioneer
+# assert: __WW_DEV__.state().route.name === 'Progress'
+appId: com.leviwilkerson.jwtimedev
+name: Step back a month on Progress, then switch to the Year and All-time tabs, each with its own summary
+---
+- extendedWaitUntil:
+    visible: Progress
+    timeout: 60000
+# A seed re-renders every screen; let it settle before the first tap.
+- waitForAnimationToEnd
+- tapOn: Progress
+- assertVisible: PROJECTED MONTH
+- assertVisible: Regular Pioneer · 50 Hrs goal
+# Another month shows a way back to this one.
+- assertNotVisible:
+    text: Today
+    traits: button
+- tapOn: Previous month
+- waitForAnimationToEnd
+- tapOn:
+    text: Today
+    traits: button
+- assertNotVisible:
+    text: Today
+    traits: button
+# Year: the service year's total against the 600-hour goal, its milestones
+# and pace.
+- tapOn: Year
+- assertVisible: / 600 hours
+- assertVisible: MILESTONES
+- assertVisible: SERVICE YEAR PACE
+# All-time: lifetime hours and a row per service year.
+- tapOn: All-time
+- assertVisible: LIFETIME HOURS
+- assertVisible: YEAR BY YEAR
+- assertVisible: Add earlier year
+- assertNotVisible: MILESTONES
+- tapOn: Month
+- assertVisible: PROJECTED MONTH

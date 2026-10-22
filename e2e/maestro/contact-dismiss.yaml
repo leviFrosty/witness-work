@@ -1,0 +1,39 @@
+# seed: pioneer
+# assert: (() => { const c = __WW_DEV__.stores.contacts.getState().contacts.find((x) => x.id === 'verify-contact-3'); return !c.dismissedUntil || new Date(c.dismissedUntil) <= new Date() })()
+# assert: __WW_DEV__.state().route.name === 'Dismissed Contacts'
+appId: com.leviwilkerson.jwtimedev
+name: Dismiss a contact for a week from Contact Details, find them in Dismissed Contacts, and undismiss them
+---
+- extendedWaitUntil:
+    visible: Contacts
+    timeout: 60000
+# A seed re-renders every screen; let it settle before the first tap.
+- waitForAnimationToEnd
+- tapOn: Contacts
+- assertVisible: Follow-ups Due
+- tapOn:
+    id: contact-row-verify-contact-3
+- assertVisible: Dalia Haddad
+- waitForAnimationToEnd
+- tapOn: More actions
+- assertVisible: Delete Permanently…
+- waitForAnimationToEnd
+# Android's menu marks the submenu with an arrow.
+- tapOn:
+    text: [Dismiss For, Dismiss For  ›]
+- assertVisible: 1 Week
+- tapOn: 1 Week
+# Dismissing leaves Contact Details and hides the row.
+- assertNotVisible:
+    id: contact-row-verify-contact-3
+# On iOS a toast says until when, and covers the header until it goes.
+- extendedWaitUntil:
+    notVisible: Contact Dismissed
+    timeout: 15000
+- tapOn: More actions
+- assertVisible: Select Contacts
+- waitForAnimationToEnd
+- tapOn: Dismissed Contacts
+- assertVisible: Dalia Haddad
+- tapOn: Undismiss
+- assertVisible: No Dismissed Contacts

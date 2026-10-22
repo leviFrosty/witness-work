@@ -186,6 +186,7 @@ const ContactIdentityCard = ({
               value={contact.name}
               error={nameError}
               accessibilityLabel={i18n.t('name')}
+              testID='contact-name-input'
               onChangeText={onNameChange}
               placeholder={i18n.t('name_placeholder')}
               autoCapitalize='words'

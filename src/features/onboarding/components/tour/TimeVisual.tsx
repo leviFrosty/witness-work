@@ -26,6 +26,7 @@ import {
   useVisualClock,
 } from '@/features/updates/components/reveal/visuals/kit'
 import { tracking } from '@/lib/tracking'
+import useAppActive from '@/hooks/useAppActive'
 
 const GOAL_MINUTES = 50 * 60
 const BEFORE_MINUTES = 34 * 60
@@ -74,7 +75,8 @@ const TimeVisual = ({ palette, active, reduceMotion }: RevealVisualProps) => {
 
   // The stopwatch ticks in real time and starts over with each loop.
   const [seconds, setSeconds] = useState(0)
-  const ticking = active && !reduceMotion
+  const appActive = useAppActive()
+  const ticking = active && appActive && !reduceMotion
   useEffect(() => {
     if (!ticking) return
     const id = setInterval(() => setSeconds((s) => s + 1), 1000)

@@ -24,6 +24,8 @@ const runtime = vi.hoisted(() => ({
   presented: [] as {
     request: { identifier: string; content: { data: unknown } }
   }[],
+  /** The reminder channel's name in the app language. */
+  channelName: 'Reminders',
 }))
 vi.mock('react-native', () => ({
   Platform: {
@@ -78,7 +80,12 @@ vi.mock('@/features/notifications/stores/notificationsTray', async () => ({
     unread: null as number | null,
   })),
 }))
-vi.mock('@/lib/locales', () => ({ default: { t: (key: string) => key } }))
+vi.mock('@/lib/locales', () => ({
+  default: {
+    t: (key: string) =>
+      key === 'remindersChannelName' ? runtime.channelName : key,
+  },
+}))
 vi.mock('expo-localization', () => ({
   getLocales: () => [{ languageTag: 'en-US' }],
   getCalendars: () => [],
@@ -151,6 +158,7 @@ beforeEach(() => {
   runtime.storageLocked = false
   runtime.scheduled = []
   runtime.presented = []
+  runtime.channelName = 'Reminders'
   useContacts.setState({
     contacts: [{ id: 'c', name: 'Contact', createdAt: new Date() }],
   })
@@ -903,6 +911,23 @@ it('skips launch and returns to the app while the schedule is unchanged', async 
   } as Notifications.NotificationPermissionsStatus)
   await act(comeBack)
   expect(runtime.scheduled).toEqual([])
+})
+
+it('renames the Android reminder channel on a launch in another language', async () => {
+  runtime.platform = 'android'
+  await act(async () => {
+    renderer = create(<Harness />)
+  })
+  await act(() => renderer?.unmount())
+  vi.clearAllMocks()
+  runtime.channelName = 'Erinnerungen'
+  await act(async () => {
+    renderer = create(<Harness />)
+  })
+  expect(Notifications.setNotificationChannelAsync).toHaveBeenCalledWith(
+    'expo_notifications_fallback_notification_channel',
+    { name: 'Erinnerungen', importance: 4 }
+  )
 })
 
 it('checks the OS schedule again on a new day without rescheduling', async () => {

@@ -13,7 +13,7 @@ vi.mock('react-native', () => ({
     },
   },
 }))
-vi.mock('@/lib/locales', () => ({ default: { t: () => 'Notifications' } }))
+vi.mock('@/lib/locales', () => ({ default: { t: () => 'Reminders' } }))
 vi.mock('expo-notifications', () => ({
   setNotificationChannelAsync: native.channel,
   getPermissionsAsync: native.permissions,
@@ -33,7 +33,7 @@ describe('notification permission', () => {
     const result = await registerForPushNotificationsAsync()
     expect(native.channel).toHaveBeenCalledWith(
       'expo_notifications_fallback_notification_channel',
-      { name: 'Notifications', importance: 4 }
+      { name: 'Reminders', importance: 4 }
     )
     expect(native.channel.mock.invocationCallOrder[0]).toBeLessThan(
       native.request.mock.invocationCallOrder[0]

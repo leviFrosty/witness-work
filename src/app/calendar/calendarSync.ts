@@ -265,10 +265,15 @@ export async function calendarDestinations() {
  * `fresh`: the manifest from a previously connected calendar doesn't apply to a
  * calendar created just now, or to a different calendar the user switched to.
  * Waiting for replicated events only makes sense for the same calendar.
+ * `rebuild`: start from the events the calendar holds even when it's the same
+ * calendar, because nothing is still downloading (see `quickConnectCalendar`).
  */
 export async function connectCalendar(
   destination: CalendarDestination,
-  { fresh = false }: { fresh?: boolean } = {}
+  {
+    fresh = false,
+    rebuild = false,
+  }: { fresh?: boolean; rebuild?: boolean } = {}
 ) {
   if (Platform.OS === 'android')
     return android.connectCalendar(destination, { fresh })
@@ -286,7 +291,7 @@ export async function connectCalendar(
       destination.id,
       destination.title,
       destination.account,
-      fresh || switched,
+      fresh || rebuild || switched,
       state.configurationToken ?? state.namespace
     )
   )
@@ -369,7 +374,11 @@ export async function quickConnectCalendar(): Promise<
   )
   if (existing.length > 1) throw new Error('CALENDAR_CHOOSE_EXISTING')
   if (existing.length === 1) {
-    await connectCalendar(existing[0])
+    // Only reached when this device publishes or nobody does yet, so no events
+    // are still downloading from another device. A reinstall keeps this
+    // device's id, and the record it left would list events deleted since,
+    // pausing updates until Restore missing events.
+    await connectCalendar(existing[0], { rebuild: true })
   } else {
     const sources = await calendarBridge().sources()
     const source =

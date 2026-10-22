@@ -1,6 +1,8 @@
 
 # Lottie minified assets
 src/assets/lottie/**
+# Help Center snapshots, minified by `pnpm sync:help`.
+src/assets/help-center/**
 
 # TODO: make this only exluded when using husky and prettier cli
 src/locales/**

@@ -110,6 +110,7 @@ const KEPT_MMKV: Record<string, string> = {
   'notes-import-credits':
     "Notes Import's cached Import Credits; Scribe AI's launch cleanup empties it",
   'app-store-ratings': 'cached App Store totals for the paywall',
+  'help-center': "the website's Help Center manifest, never the User's",
   'analytics-frequency': 'analytics throttling, never shown',
 }
 

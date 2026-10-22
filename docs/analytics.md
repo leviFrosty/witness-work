@@ -19,7 +19,10 @@ intermediate step, preference, or background success.
 The October 2026 reduction retains 123 business event types and removes 133.
 Generic menu actions, navigation/keyboard/sidebar interactions, search/FAQ actions,
 cosmetic preferences, repetitive background maintenance, duplicate notification
-routing, and speculative paywall experiments have no permanent event. Data
+routing, and speculative paywall experiments have no permanent event. The
+exception is two capped Help Center health events (`help_center_search_completed`,
+`help_center_refreshed`), which measure the reach of the website-backed Help
+Center rather than each search or open. Data
 creation outcomes remain; ordinary Contact, Visit, Plan, and mileage edits no
 longer send separate update events. Time Entry edits/deletes remain because they
 measure changes to the app's core recorded service activity.
@@ -56,6 +59,8 @@ automatic events are discarded. Touch/text autocapture and session replay stay o
 | `account_session_failed`                                                          | Once per UTC day and reason; which devices can't open an account session, not how often one retries.                                                                                                                               |
 | `device_storage_full`                                                             | Once per UTC day; how many devices run out of storage, not how often writes fail.                                                                                                                                                  |
 | `update_required_shown`                                                           | Once per session and source; reach of Update Required, not every return to the foreground.                                                                                                                                         |
+| `help_center_search_completed`                                                    | Once per session per source and outcome; reach of the search service and of searches that find nothing, not every search.                                                                                                          |
+| `help_center_refreshed`                                                           | Once per UTC day per outcome and reason; whether new Help Center content reaches devices, not every open.                                                                                                                          |
 | Supporter gate, purchase, and core outcome events                                 | Every meaningful occurrence; placement visits and `gate_flow_id` attribution remain intact.                                                                                                                                        |
 | `$feature_flag_called`                                                            | Once per UTC day and flag/value, with SDK experiment metadata.                                                                                                                                                                     |
 
@@ -81,7 +86,7 @@ Diagnostics use `errorTracking` from `@/lib/errorTracking`.
 Features that call ww-api disclose that traffic in their own Help Center
 entries; it is not analytics. Route planning, for example, sends the stops'
 coordinates and the account id to ww-api, which passes only the coordinates to
-HERE and stores neither (see `faq_routePlanningPrivacy_a`).
+HERE and stores neither (see the Help Center's route planning privacy answer).
 
 The provider uses `personProfiles: never`; the adapter has no `identify`, and
 account/RevenueCat IDs are never usage identities. The SDK's random on-device
@@ -577,6 +582,20 @@ Apple Pencil hover (iPad, or a mouse on Android) to justify pointer-specific
 work. It is sent the first time a pointer hovers a control, capped to once per
 UTC day, with `input` (`pointer` or `stylus`). Individual hovers, tooltips, and
 chart readouts are not captured.
+
+## Help Center
+
+The Help Center's answers come from the website (ADR 0033). These answer whether
+the search service finds answers people's own words miss, and whether new
+content reaches devices.
+
+| Event                          | When                                                                                                                           | Properties                                                                                                                   |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------- |
+| `help_center_search_completed` | A search settled: the search service answered or failed for the typed query. Once per session for each `source` and `outcome`. | `source: remote \| local` (`local`: offline, slow, an error, or nothing the device shows), `outcome: results \| no_results`. |
+| `help_center_refreshed`        | Opening the Help Center checked the website for new content. Once per UTC day for each `outcome` and `reason`.                 | `outcome: updated \| unchanged \| failed`, `reason` when failed: `offline \| http \| invalid \| storage`.                    |
+
+Never the query, the answers opened, or URLs. Individual keystrokes, opened
+answers and copies are not captured.
 
 ## Announcements
 

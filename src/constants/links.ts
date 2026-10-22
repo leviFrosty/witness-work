@@ -18,6 +18,10 @@ export default {
   featureRequest: `${githubRepo}/issues/new?assignees=&labels=enhancement&projects=&template=feature_request.md&title=%5BFEATURE%5D`,
   donate: 'https://ko-fi.com/leviwilkerson',
   termsOfUse: 'https://leviwilkerson.com/witness-work/terms',
+  helpCenterSite: 'https://leviwilkerson.com',
+  helpCenterManifest:
+    'https://leviwilkerson.com/witness-work/help-center/bundle/manifest.json',
+  helpCenterSearch: 'https://help-search.leviwilkerson.com/v1/search',
   nwpublisherSubmitReport: 'https://nwpublisher.com/report/',
   openRouterZdr: 'https://openrouter.ai/docs/guides/features/zdr',
 }

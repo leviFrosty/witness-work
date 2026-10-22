@@ -7,6 +7,7 @@ import { Alert, I18nManager, LogBox, type AlertButton } from 'react-native'
 import useContacts from '@/stores/contactsStore'
 import { useGeocodeRetry } from '@/stores/geocodeRetry'
 import { useMapFindSkips } from '@/features/map/stores/mapFindSkips'
+import { useHelpCenterStore } from '@/features/updates/stores/helpCenter'
 import useConversations from '@/stores/conversationStore'
 import useServiceReport from '@/stores/serviceReport'
 import useMileage from '@/stores/mileage'
@@ -552,6 +553,8 @@ export function installDevHarness() {
       geocodeRetry: useGeocodeRetry,
       // Address keys the Map's Find contacts row no longer offers.
       mapFindSkips: useMapFindSkips,
+      // The Help Center bundle on screen (`locale`, `source`, `bundle.hash`).
+      helpCenter: useHelpCenterStore,
       conversations: useConversations,
       serviceReports: useServiceReport,
       mileage: useMileage,

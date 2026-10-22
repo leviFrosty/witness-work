@@ -58,7 +58,7 @@ Feature work changes only `en-US.json`, so the release cut translates every othe
 
 Run its `todo --since <baseline tag>` for every locale, including Bemba. That covers new, changed, missing, empty and lint-failing keys. Fan out one subagent per locale (or per chunk) as that skill describes. Apply each locale's results, preserving unrelated existing translations. Record each locale's key counts by reason in the journal.
 
-Run the skill's `lint` and `pnpm run check:locales`, which checks every nonempty English leaf at its exact key path, including array indices. Review translation quality separately. Run `pnpm sync:widget-shared` so the watch and Siri catalogs carry the new strings; they are release files too. Format the release files, then run `pnpm run check:all` and `pnpm run deps`. Fix release-generated errors; surface product-code failures for the user to address.
+Run the skill's `lint` and `pnpm run check:locales`, which checks every nonempty English leaf at its exact key path, including array indices. Review translation quality separately. Run `pnpm sync:widget-shared` so the watch and Siri catalogs carry the new strings; they are release files too. Run `pnpm sync:help` so the bundled Help Center snapshot (`src/assets/help-center/`) matches the live site; it is a release file too. Help Center answers are translated in portfolio-v2, not here (`docs/adr/0033-help-center-on-the-website.md`). Format the release files, then run `pnpm run check:all` and `pnpm run deps`. Fix release-generated errors; surface product-code failures for the user to address.
 
 **Complete:** every locale covers every English key, changed and broken translations refreshed, lint and checks pass, native catalogs synced.
 

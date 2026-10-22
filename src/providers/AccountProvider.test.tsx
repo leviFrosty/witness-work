@@ -42,6 +42,7 @@ vi.mock('../../modules/icloud-bridge', () => ({
 vi.mock('react-native-purchases', () => ({
   default: {
     logIn: vi.fn(async () => ({ customerInfo: { entitlements: {} } })),
+    isAnonymous: vi.fn(async () => false),
     invalidateCustomerInfoCache: vi.fn(),
     getCustomerInfo: vi.fn(async () => ({ entitlements: {} })),
   },

@@ -136,7 +136,8 @@ const CustomerProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
     // customer state. logIn resolves with the post-migration CustomerInfo;
     // getCustomerInfo is the anonymous path when there's no account id.
     // Best-effort: on failure (usually offline) fall back to cached CustomerInfo
-    // so existing entitlements still render, and logIn retries next launch.
+    // so existing entitlements still render; AccountProvider retries logIn on
+    // the next return to the app or reconnect.
     perf.count('rc:identify')
     const identify = accountId
       ? Purchases.logIn(accountId).then(({ customerInfo, created }) => {

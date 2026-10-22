@@ -1,5 +1,10 @@
 import { useContext, useEffect, useRef } from 'react'
-import { AppState, useWindowDimensions, type View } from 'react-native'
+import {
+  AppState,
+  useWindowDimensions,
+  type AppStateStatus,
+  type View,
+} from 'react-native'
 import {
   NavigationContainerRefContext,
   NavigationRouteContext,
@@ -39,10 +44,15 @@ export default function useSupporterGateAnalytics(
     if (hasAccess || !focused) return
     let disposed = false
     let measuring = false
+    let timer: ReturnType<typeof setInterval> | undefined
+    const stop = () => {
+      clearInterval(timer)
+      timer = undefined
+    }
 
     const measure = () => {
       if (attribution.current) {
-        clearInterval(timer)
+        stop()
         return
       }
       if (
@@ -91,7 +101,7 @@ export default function useSupporterGateAnalytics(
             'supporter_feature_gate_viewed',
             attribution.current
           )
-          clearInterval(timer)
+          stop()
         })
       }
       if (viewportRef) viewportRef.current?.measureInWindow(measureHeader)
@@ -99,13 +109,18 @@ export default function useSupporterGateAnalytics(
     }
 
     // Layout does not change when a parent scrolls. Sample until the first
-    // visible impression, then stop; background and unfocused screens send none.
-    const timer = setInterval(measure, 500)
-    measure()
-    const subscription = AppState.addEventListener('change', measure)
+    // visible impression, then stop; background and unfocused screens send
+    // none, so the sampling pauses in the background.
+    const watch = (state: AppStateStatus) => {
+      if (state !== 'active') return stop()
+      measure()
+      if (!attribution.current) timer ??= setInterval(measure, 500)
+    }
+    watch(AppState.currentState)
+    const subscription = AppState.addEventListener('change', watch)
     return () => {
       disposed = true
-      clearInterval(timer)
+      stop()
       subscription.remove()
     }
   }, [

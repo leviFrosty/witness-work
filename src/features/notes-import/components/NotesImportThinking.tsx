@@ -5,6 +5,7 @@ import { View } from 'react-native'
 import Text from '@/components/ui/MyText'
 import ShimmerText from '@/components/ui/ShimmerText'
 import useTheme from '@/contexts/theme'
+import useAppActive from '@/hooks/useAppActive'
 import i18n from '@/lib/locales'
 import type { TranslationKey } from '@/lib/locales'
 import { formatNumber } from '@/lib/numbers'
@@ -75,11 +76,14 @@ const NotesImportThinking = ({
   // reasoning TEXT panel below is dev-only.
   const showInferenceStats = startedAt != null
   const [nowMs, setNowMs] = useState(() => Date.now())
+  // In the background (a run keeps going there), nobody sees it tick.
+  const appActive = useAppActive()
   useEffect(() => {
-    if (!showInferenceStats) return
+    if (!showInferenceStats || !appActive) return
+    setNowMs(Date.now())
     const id = setInterval(() => setNowMs(Date.now()), 100)
     return () => clearInterval(id)
-  }, [showInferenceStats])
+  }, [showInferenceStats, appActive])
   const elapsedSec =
     startedAt != null ? Math.max(0, (nowMs - startedAt) / 1000) : 0
 

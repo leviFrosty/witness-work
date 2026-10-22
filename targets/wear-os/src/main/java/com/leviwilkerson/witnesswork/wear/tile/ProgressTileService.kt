@@ -38,7 +38,6 @@ import com.leviwilkerson.witnesswork.wear.WatchModel
 import com.leviwilkerson.witnesswork.wear.WatchStorage
 import com.leviwilkerson.witnesswork.wear.appLanguage
 import com.leviwilkerson.witnesswork.wear.now
-import com.leviwilkerson.witnesswork.wear.startOfDay
 import com.leviwilkerson.witnesswork.wear.ui.Accent
 import java.time.Duration
 
@@ -98,7 +97,7 @@ class ProgressTileService : TileService() {
           }
         }
       // Midnight moves "reported today" and the pace along, and starts the next month.
-      val untilMidnight = Duration.between(now, now.startOfDay().plusDays(1)).toMillis()
+      val untilMidnight = Duration.between(now, MonthProgress.midnights(now, 1).first()).toMillis()
       TileBuilders.Tile.Builder()
         .setResourcesVersion(RESOURCES_VERSION)
         .setFreshnessIntervalMillis(untilMidnight)

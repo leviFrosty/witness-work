@@ -30,8 +30,9 @@ object UpNext {
   /** Epoch ms when `item` stops showing. `zone` decides where its day ends. */
   fun shownUntil(item: UpNextItem, date: ZonedDateTime): Long {
     if (item.timed) return item.startMs + NOW_WINDOW_MS
-    val day = start(item, date).startOfDay()
-    return day.plusDays(1).toInstant().toEpochMilli()
+    // The next day's start, not a day after this one's: where the clocks skip midnight, the day
+    // starts at 1:00 and the next one at midnight.
+    return MonthProgress.midnights(start(item, date), 1).first().toInstant().toEpochMilli()
   }
 
   fun isNow(item: UpNextItem, date: ZonedDateTime): Boolean = item.timed && item.startMs <= date.toInstant().toEpochMilli()

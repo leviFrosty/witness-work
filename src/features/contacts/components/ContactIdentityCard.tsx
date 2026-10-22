@@ -145,6 +145,9 @@ const ContactIdentityCard = ({
   // disabled so the form never invites the entry. Existing values are left
   // untouched on the record. See `docs/gdpr-mode-research.md` §11.1.
   const dataProtectionMode = usePreferences((s) => s.dataProtectionMode)
+  // With enlarged text the placeholder (and a long name) can be wider than the
+  // field; it wraps and the field grows instead of cutting it off.
+  const wrapName = useWindowDimensions().fontScale > 1
 
   return (
     <View style={{ gap: 8 }}>
@@ -187,8 +190,10 @@ const ContactIdentityCard = ({
               error={nameError}
               accessibilityLabel={i18n.t('name')}
               testID='contact-name-input'
-              onChangeText={onNameChange}
+              // A pasted line break becomes a space, as in a one-line field.
+              onChangeText={(name) => onNameChange(name.replace(/\n/g, ' '))}
               placeholder={i18n.t('name_placeholder')}
+              multiline={wrapName}
               autoCapitalize='words'
               autoCorrect={false}
               autoFocus={!editMode}

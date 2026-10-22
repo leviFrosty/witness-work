@@ -14,7 +14,12 @@ import InputRowContainer from '@/components/ui/inputs/InputRowContainer'
 import { parsePhoneNumber, PhoneNumberPossibility } from 'awesome-phonenumber'
 import Button from '@/components/ui/Button'
 import { Contact } from '@/types/contact'
-import { TextInput, useColorScheme, View } from 'react-native'
+import {
+  TextInput,
+  useColorScheme,
+  useWindowDimensions,
+  View,
+} from 'react-native'
 import TextInputRow from '@/components/ui/inputs/TextInputRow'
 import { type Ref, useImperativeHandle, useMemo, useRef } from 'react'
 import * as Localization from 'expo-localization'
@@ -29,6 +34,7 @@ import { RootStackNavigation } from '@/types/rootStack'
 import { usePreferences } from '@/stores/preferences'
 import { alignInput, alignText, ltrIsolate } from '@/lib/direction'
 import { tracking } from '@/lib/tracking'
+import useAccessibilityTextSize from '@/hooks/useAccessibilityTextSize'
 
 const phoneIssueKeys = {
   'is-possible': 'phoneIssue_invalid',
@@ -73,6 +79,10 @@ export default function PersonalContactSection({
   /** Each field's text input by field id, for the keyboard's Next key. */
   const inputs = useRef<Record<string, TextInput | null>>({})
   const phoneTheme = (preferredColorScheme ?? colorScheme ?? 'light') as ITheme
+  // The phone library fixes its field at 48 pt on one line, which cuts the
+  // placeholder off with enlarged text. There it wraps and the field grows.
+  const wrapPhone = useWindowDimensions().fontScale > 1
+  const largeText = useAccessibilityTextSize()
 
   const focusAfter = (index: number) => {
     const next = nextKeyboardField(fields, index)
@@ -83,7 +93,7 @@ export default function PersonalContactSection({
 
   /**
    * Return-key props that move the keyboard to the next field, or close it with
-   * Done after the last one.
+   * Done after the last one. A field that wraps never takes a line break.
    */
   const keyboardProps = (index: number) => {
     const next = nextKeyboardField(fields, index)
@@ -93,7 +103,10 @@ export default function PersonalContactSection({
           submitBehavior: 'submit' as const,
           onSubmitEditing: () => focusAfter(index),
         }
-      : { enterKeyHint: 'done' as const }
+      : {
+          enterKeyHint: 'done' as const,
+          submitBehavior: 'blurAndSubmit' as const,
+        }
   }
 
   const handleCountryChange = (country: ICountry) => {
@@ -181,6 +194,7 @@ export default function PersonalContactSection({
                       theme={phoneTheme}
                       inputMode='numeric'
                       clearButtonMode='while-editing'
+                      multiline={wrapPhone}
                       {...keyboardProps(index)}
                       customCaret={<IconButton icon={ChevronDownIcon} />}
                       phoneInputStyles={{
@@ -191,12 +205,17 @@ export default function PersonalContactSection({
                           backgroundColor: theme.colors.background,
                           minHeight: 44,
                           overflow: 'hidden',
+                          ...(wrapPhone && { height: 'auto', minHeight: 48 }),
                         },
                         flagContainer: {
                           backgroundColor: theme.colors.card,
                           borderRadius: theme.numbers.borderRadiusSm,
                           paddingHorizontal: 10,
                           minWidth: 88,
+                          ...(wrapPhone && {
+                            height: 'auto',
+                            alignSelf: 'stretch',
+                          }),
                         },
                         input: {
                           fontSize: theme.fontSize('lg'),
@@ -261,7 +280,10 @@ export default function PersonalContactSection({
                     inputs.current[field.id] = input
                   }}
                   controlWidth='auto'
-                  controlStyle={{ width: '76%', minWidth: 0 }}
+                  // Under its label (accessibility sizes) it takes the row.
+                  controlStyle={
+                    largeText ? undefined : { width: '76%', minWidth: 0 }
+                  }
                   textInputProps={{
                     placeholder: i18n.t('email_placeholder'),
                     type: 'email',

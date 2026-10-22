@@ -94,6 +94,25 @@ describe('TextInput placeholder on Android', () => {
     expect(flatten(input().props.style)).toMatchObject({ color: 'black' })
   })
 
+  it('grows a multiline field to fit a placeholder that wraps', async () => {
+    await render({
+      accessibilityLabel: 'Name',
+      placeholder: "What's their name?",
+      multiline: true,
+    })
+    const field = () => root.root.findByType('TextArea' as never)
+
+    expect(overlay()[0].props.numberOfLines).toBeUndefined()
+    await act(async () =>
+      overlay()[0].props.onLayout({ nativeEvent: { layout: { height: 90 } } })
+    )
+    // 90 tall text plus 10 padding and a 1 pt border on each side.
+    expect(flatten(field().props.style).minHeight).toBe(112)
+
+    await act(async () => field().props.onChangeText('Ada'))
+    expect(flatten(field().props.style).minHeight).not.toBe(112)
+  })
+
   it('uses the native placeholder when it already is the label', async () => {
     await render({ accessibilityLabel: 'Search', placeholder: 'Search' })
 

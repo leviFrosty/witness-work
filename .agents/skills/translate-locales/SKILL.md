@@ -48,7 +48,7 @@ Then apply the done files and spot-check each locale: the same term for the same
 
 ## Translation rules
 
-- **Values only.** Keep English's keys and nesting; don't add, rename or delete keys, apart from the plural forms your Language needs (Plurals below). Leave keys that aren't in `en-US.json` alone.
+- **Values only.** Keep English's keys and nesting; don't add, rename or delete keys, apart from the plural forms your Language needs (Plurals below). A key that's gone from `en-US.json` is dead: nothing reads it, but every app binary and OTA bundle still ships it. `prune` deletes those keys from every locale, and `lint` flags any that are left.
 - **Placeholders** stay exactly as written: `{{count}}`, `%{name}`, `${applicationName}`. Keep the same names and the same number of each, and translate nothing inside the braces. Move them wherever the grammar needs. Keep `**bold**` markers around the matching words.
 - **Plurals.** `src/lib/locales.ts` registers each Language's CLDR cardinal rule (from `make-plural`) with i18n-js. For a count it tries `zero` first when the count is 0 (English uses it for "No matches"), then the Language's category, then `other`, so a missing form falls back to `other` instead of showing a missing-translation string. A plural key the Language doesn't have yet renders English's forms by English's rule (`i18n.t` in `src/lib/locales.ts`), so it reads as plain English until translated. `lint` checks each locale against its own rule:
   - **Required:** every category a whole number from 0 to 1,000 lands on, plus `other`. English, German and most others need `one`/`other`; Russian and Ukrainian `one`/`few`/`many`/`other`; Arabic all six; Japanese, Korean, Vietnamese and Chinese only `other`.

@@ -136,6 +136,33 @@ export function handoffFailureFor(error: unknown, op: string): HandoffFailure {
   return error.kind === 'rateLimited' ? 'rateLimited' : 'server'
 }
 
+/**
+ * Failed status checks in a row, from a busy or restarting server (5xx) or a
+ * rate limit, before the attempt fails. Polls run every couple of seconds, so
+ * one bad answer mustn't lose a code that's good for minutes.
+ */
+export const HANDOFF_POLL_FAILURE_LIMIT = 5
+
+/**
+ * Whether a failed status check ends the attempt. A lost connection never does
+ * (the next tick tries again); a server error or rate limit does only after
+ * `HANDOFF_POLL_FAILURE_LIMIT` in a row; anything else does at once.
+ */
+function createPollFailures() {
+  let inARow = 0
+  return {
+    succeeded() {
+      inARow = 0
+    },
+    endsAttempt(reason: HandoffFailure) {
+      if (reason === 'offline') return false
+      if (reason !== 'server' && reason !== 'rateLimited') return true
+      inARow += 1
+      return inARow >= HANDOFF_POLL_FAILURE_LIMIT
+    },
+  }
+}
+
 const outcomeOf = (error: unknown) =>
   error instanceof HttpError ? (error.serverCode ?? error.kind) : 'error'
 
@@ -259,6 +286,7 @@ export function createOfferSession(account: OfferAccount, deps: SessionDeps) {
   let expiresAt: number | null = null
   let failure: HandoffFailure | null = null
   let polling = false
+  const pollFailures = createPollFailures()
 
   const options = () => ({
     baseUrl: deps.baseUrl,
@@ -318,6 +346,7 @@ export function createOfferSession(account: OfferAccount, deps: SessionDeps) {
         () => handoffStatus(offer.channelId, options()),
         (value) => value.status
       )
+      pollFailures.succeeded()
       if (terminal()) return
       status = view.status
       expiresAt = view.expiresAt
@@ -357,7 +386,7 @@ export function createOfferSession(account: OfferAccount, deps: SessionDeps) {
       if (!terminal()) {
         const reason = handoffFailureFor(error, 'handoff/status')
         // A dropped poll is retried on the next tick.
-        if (reason !== 'offline') fail(reason)
+        if (pollFailures.endsAttempt(reason)) fail(reason)
       }
     } finally {
       polling = false
@@ -496,6 +525,7 @@ export function createClaimSession(
   let expiresAt: number | null = null
   let failure: HandoffFailure | null = null
   let polling = false
+  const pollFailures = createPollFailures()
 
   const options = () => ({ baseUrl: deps.baseUrl, fetchImpl: deps.fetchImpl })
   const token = { channelId: offer.channelId, claimToken }
@@ -559,6 +589,7 @@ export function createClaimSession(
         () => receiveHandoff(token, options()),
         (value) => value.status
       )
+      pollFailures.succeeded()
       if (terminal() || core.state.step !== 'waiting') return
       status = view.status
       if (view.status === 'cancelled') return fail('cancelled')
@@ -577,7 +608,7 @@ export function createClaimSession(
     } catch (error) {
       if (!terminal()) {
         const reason = handoffFailureFor(error, 'handoff/receive')
-        if (reason !== 'offline') fail(reason)
+        if (pollFailures.endsAttempt(reason)) fail(reason)
       }
     } finally {
       polling = false

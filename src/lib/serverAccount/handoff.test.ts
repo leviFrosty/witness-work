@@ -29,6 +29,7 @@ import {
 import {
   createClaimSession,
   createOfferSession,
+  HANDOFF_POLL_FAILURE_LIMIT,
   handoffFailureFor,
   type OfferAccount,
 } from '@/lib/serverAccount/handoffSession'
@@ -712,6 +713,32 @@ describe('handoff sessions', () => {
     offline = false
     await old.poll()
     expect(old.state.step).toBe('waiting')
+  })
+
+  it('rides out a few server errors while polling, but not a run of them', async () => {
+    const server = fakeServer()
+    let failing = false
+    const flaky = (async (url: string, init: RequestInit) => {
+      if (failing && url.endsWith('/handoff/status'))
+        return new Response('{"error":"internal"}', { status: 503 })
+      return server.fetchImpl(url, init)
+    }) as unknown as typeof fetch
+    const old = createOfferSession(registeredAccount(server), {
+      ...deps(server),
+      fetchImpl: flaky,
+    })
+    await old.open()
+    failing = true
+    for (let i = 1; i < HANDOFF_POLL_FAILURE_LIMIT; i++) await old.poll()
+    expect(old.state.step).toBe('waiting')
+    // An answer starts the count again.
+    failing = false
+    await old.poll()
+    failing = true
+    for (let i = 1; i < HANDOFF_POLL_FAILURE_LIMIT; i++) await old.poll()
+    expect(old.state.step).toBe('waiting')
+    await old.poll()
+    expect(old.state).toEqual({ step: 'failed', reason: 'server' })
   })
 
   it('fails to open while offline', async () => {

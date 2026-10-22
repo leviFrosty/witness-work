@@ -254,6 +254,37 @@ export async function refreshBackupSlots({
 export type BackupDeleteSource = 'settings' | 'disable' | 'tools'
 
 /**
+ * Turns backup off on this device while a deletion runs, so no upload puts the
+ * slot back. A deletion that fails (offline, say) turns it on again: nothing
+ * was deleted, and the User didn't ask to stop backing up.
+ */
+async function deleteWithBackupOff(
+  turnOff: boolean,
+  source: BackupDeleteSource,
+  run: () => Promise<unknown>
+): Promise<void> {
+  if (turnOff) {
+    useBackupState.setState({ enabled: false })
+    scheduler.stop()
+  }
+  try {
+    await run()
+  } catch (error) {
+    if (turnOff) {
+      useBackupState.setState({ enabled: true })
+      scheduler.noteChange()
+    }
+    throw error
+  }
+  if (turnOff)
+    analytics.capture('account_backup_changed', {
+      enabled: false,
+      source,
+      deleted_server_copy: true,
+    })
+}
+
+/**
  * Deletes one slot. Deleting this device's own slot also turns backup off here,
  * or the next upload would put it back.
  */
@@ -262,16 +293,11 @@ export async function deleteBackupSlot(
   source: BackupDeleteSource
 ): Promise<void> {
   const mine = slotId === useBackupState.getState().slotId
-  if (mine && useBackupState.getState().enabled && source !== 'disable') {
-    useBackupState.setState({ enabled: false })
-    scheduler.stop()
-    analytics.capture('account_backup_changed', {
-      enabled: false,
-      source,
-      deleted_server_copy: true,
-    })
-  }
-  await asAccount((access) => deleteBackup(access.options, slotId))
+  await deleteWithBackupOff(
+    mine && useBackupState.getState().enabled && source !== 'disable',
+    source,
+    () => asAccount((access) => deleteBackup(access.options, slotId))
+  )
   if (mine) forgetUploads()
   analytics.capture('account_backup_deleted', { scope: 'slot', source })
   logBackup('info', `deleted ${mine ? 'this device’s' : 'another'} slot`)
@@ -287,16 +313,9 @@ export async function deleteBackupSlot(
 export async function deleteAllBackups(
   source: BackupDeleteSource
 ): Promise<void> {
-  if (useBackupState.getState().enabled) {
-    useBackupState.setState({ enabled: false })
-    scheduler.stop()
-    analytics.capture('account_backup_changed', {
-      enabled: false,
-      source,
-      deleted_server_copy: true,
-    })
-  }
-  await asAccount((access) => deleteBackup(access.options))
+  await deleteWithBackupOff(useBackupState.getState().enabled, source, () =>
+    asAccount((access) => deleteBackup(access.options))
+  )
   forgetUploads()
   analytics.capture('account_backup_deleted', { scope: 'all', source })
   logBackup('info', 'deleted every slot')

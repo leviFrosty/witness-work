@@ -25,6 +25,11 @@ import {
 } from '@/lib/serverAccount/session'
 
 vi.mock('@/lib/logger', () => import('@/__tests__/mocks/logger'))
+const network = vi.hoisted(() => ({ online: null as boolean | null }))
+vi.mock('@/lib/http/online', () => ({
+  getOnline: () => network.online,
+  isKnownOffline: () => network.online === false,
+}))
 
 const random = (length: number) => new Uint8Array(nodeRandomBytes(length))
 const ACCOUNT_ID = 'AAAAAAAAAAAAAAAAAAAAAA'
@@ -404,6 +409,40 @@ describe('serverAccount.check', () => {
       accountId: null,
       lastStatus: null,
     })
+  })
+
+  it('says unreachable when the server fails or stays silent while online', async () => {
+    network.online = true
+    try {
+      const accountKey = random(32)
+      const checkWith = (error: Error) =>
+        createServerAccount({
+          sessions: failing(error).sessions,
+          info: info(),
+          storage: memoryStorage(),
+          now: () => 0,
+        }).check(accountKey)
+      const unreachable = {
+        state: 'unreachable',
+        accountId: null,
+        lastStatus: null,
+      }
+      expect(await checkWith(new HttpError('server', 503))).toEqual(unreachable)
+      expect(await checkWith(new HttpError('timeout'))).toEqual(unreachable)
+      expect(await checkWith(new HttpError('rateLimited', 429))).toEqual(
+        unreachable
+      )
+      // Refused while the OS reports a connection: the server, not the phone.
+      expect(await checkWith(new HttpError('offline'))).toEqual(unreachable)
+
+      network.online = false
+      expect(await checkWith(new HttpError('offline'))).toEqual({
+        ...unreachable,
+        state: 'offline',
+      })
+    } finally {
+      network.online = null
+    }
   })
 
   it("says when this device couldn't be verified, or needs an update", async () => {

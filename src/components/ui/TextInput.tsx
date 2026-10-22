@@ -154,6 +154,9 @@ const TextInput = forwardRef<InputRef, TextInputProps>((props, ref) => {
     rest.defaultValue ?? ''
   )
   const isEmpty = !(rest.value ?? uncontrolledText)
+  // A wrapping placeholder drawn over a multiline field is taller than the
+  // empty field; the field grows to hold it.
+  const [placeholderHeight, setPlaceholderHeight] = useState(0)
 
   const outerStyle: ViewStyle = {}
   const innerStyle = { ...(resolvedStyle as object) } as TextStyle &
@@ -173,6 +176,11 @@ const TextInput = forwardRef<InputRef, TextInputProps>((props, ref) => {
       innerStyle[`padding${axis}`] ??
       innerStyle.padding
     return (typeof padding === 'number' ? padding : 0) + borderWidth
+  }
+  if (drawsPlaceholder && rest.multiline && isEmpty && placeholderHeight) {
+    const fit = placeholderHeight + inset('Top') + inset('Bottom')
+    const min = innerStyle.minHeight
+    innerStyle.minHeight = typeof min === 'number' ? Math.max(min, fit) : fit
   }
 
   const input = (
@@ -244,6 +252,9 @@ const TextInput = forwardRef<InputRef, TextInputProps>((props, ref) => {
           importantForAccessibility='no-hide-descendants'
           style={{
             ...StyleSheet.absoluteFill,
+            // A multiline placeholder gets its full height to wrap into (a
+            // bottom edge would clamp it to the empty field's height).
+            ...(rest.multiline && { bottom: undefined, minHeight: '100%' }),
             paddingTop: inset('Top'),
             paddingRight: inset('Right'),
             paddingBottom: inset('Bottom'),
@@ -256,6 +267,11 @@ const TextInput = forwardRef<InputRef, TextInputProps>((props, ref) => {
         >
           <Text
             numberOfLines={rest.multiline ? undefined : 1}
+            onLayout={
+              rest.multiline
+                ? (e) => setPlaceholderHeight(e.nativeEvent.layout.height)
+                : undefined
+            }
             style={{
               color: (rest.placeholderTextColor ??
                 theme.colors.textAlt) as string,

@@ -74,7 +74,9 @@ const TextInputRow: React.ForwardRefExoticComponent<
         }
         onLabelPress={() => innerRef.current?.focus()}
       >
-        <View style={{ flexGrow: 1, flex: 1, gap: 5 }}>
+        {/* Fills the control's width even when a stacked row starts its
+            control at the label's edge, so an empty field isn't a sliver. */}
+        <View style={{ flexGrow: 1, flex: 1, gap: 5, alignSelf: 'stretch' }}>
           <MyTextInput
             ref={innerRef}
             error={error}

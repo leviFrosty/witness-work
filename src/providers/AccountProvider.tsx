@@ -7,6 +7,7 @@ import {
   useState,
 } from 'react'
 import { addForegroundListener } from '@/lib/appLifecycle'
+import { addReconnectListener } from '@/lib/http/online'
 import Purchases from 'react-native-purchases'
 import { errorTracking } from '@/lib/errorTracking'
 import { toPurchasesError } from '@/lib/purchasesError'
@@ -92,6 +93,15 @@ const AccountProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
     setAccountIdState(id)
   }, [])
 
+  // True until RevenueCat is logged in as this device's account id. Before
+  // `configure` there's nothing to identify yet.
+  const isRevenueCatAnonymous = useCallback(
+    async (): Promise<boolean> =>
+      readyRef.current &&
+      (accountIdRef.current === null || (await Purchases.isAnonymous())),
+    []
+  )
+
   const inFlightRef = useRef(false)
   const queuedReasonRef = useRef<string | null>(null)
 
@@ -110,23 +120,29 @@ const AccountProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
       }
       inFlightRef.current = true
       try {
-        if (accountIdRef.current === null) {
-          // The Keychain refused the id at launch (before the first unlock),
-          // so RevenueCat stayed anonymous. This is the only place that
-          // identifies it once the id reads; until then this throws, and the
-          // next return to the app tries again.
+        if (await isRevenueCatAnonymous()) {
+          // RevenueCat stayed anonymous: the Keychain refused the id at launch
+          // (before the first unlock), or the launch's logIn failed (a first
+          // launch offline; later launches reuse the SDK's saved user id). This
+          // is the only place that identifies it afterwards; until the id reads
+          // and RevenueCat answers this throws, and the next return to the app
+          // or the connection coming back tries again.
           const id = getOrCreateAccountId()
           const { customerInfo } = await Purchases.logIn(id)
+          const changed = id !== accountIdRef.current
           setAccountId(id)
           setCustomer(customerInfo)
           void ensureRevenueCatLinked({ force: true, reason: 'adopted' })
-          logger.log('[Account] identified once the account id read', {
-            reason,
-          })
-          // A follow-up queued meanwhile would still see the anonymous
-          // customer. The new id re-runs reconcile with matching state.
-          queuedReasonRef.current = null
-          return
+          logger.log('[Account] identified after launch', { reason })
+          if (changed) {
+            // A follow-up queued meanwhile would still see the anonymous
+            // customer. The new id re-runs reconcile with matching state.
+            queuedReasonRef.current = null
+            return
+          }
+          // Same id, so nothing re-runs this: carry on with the identified
+          // customer.
+          customerRef.current = customerInfo
         }
 
         if (!hasSyncTransport()) return
@@ -263,7 +279,7 @@ const AccountProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
         if (queued) void reconcile(queued)
       }
     },
-    [setAccountId, setCustomer]
+    [isRevenueCatAnonymous, setAccountId, setCustomer]
   )
 
   // A new id (identified, adopted, or reset) re-runs reconcile once customer
@@ -282,15 +298,24 @@ const AccountProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
     void reconcile('customer-state')
   }, [reconcile, ready, customerKnown, entitled])
 
-  // Every return to the app until the id reads; the throttled foreground
-  // pass below may not run for 15 minutes.
+  // Every return to the app and every reconnect until RevenueCat is
+  // identified; the throttled foreground pass below may not run for 15
+  // minutes.
   useEffect(() => {
-    if (accountId !== null) return
-    const subscription = addForegroundListener(
-      () => void reconcile('foreground')
-    )
-    return () => subscription.remove()
-  }, [accountId, reconcile])
+    const retry = (reason: string) =>
+      void isRevenueCatAnonymous().then(
+        (anonymous) => {
+          if (anonymous) void reconcile(reason)
+        },
+        () => {}
+      )
+    const foregroundSub = addForegroundListener(() => retry('foreground'))
+    const reconnectSub = addReconnectListener(() => retry('reconnect'))
+    return () => {
+      foregroundSub.remove()
+      reconnectSub.remove()
+    }
+  }, [isRevenueCatAnonymous, reconcile])
 
   useEffect(() => {
     if (!hasSyncTransport()) return

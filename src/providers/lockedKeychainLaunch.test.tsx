@@ -14,6 +14,8 @@ const runtime = vi.hoisted(() => ({
   logInGate: null as Promise<void> | null,
   /** The account file a claim wrote, as the next read sees it. */
   accountFile: null as unknown,
+  /** RevenueCat is logged in as the account id. */
+  identified: false,
 }))
 
 vi.mock('react-native', () => ({
@@ -32,12 +34,14 @@ vi.mock('react-native-purchases', () => ({
     setLogLevel: vi.fn(),
     logIn: vi.fn(async () => {
       await runtime.logInGate
+      runtime.identified = true
       return {
         customerInfo: { entitlements: { active: {} } },
         created: false,
       }
     }),
     getCustomerInfo: vi.fn(async () => ({ entitlements: { active: {} } })),
+    isAnonymous: vi.fn(async () => !runtime.identified),
   },
   LOG_LEVEL: { DEBUG: 'DEBUG' },
 }))
@@ -121,6 +125,7 @@ beforeEach(() => {
   runtime.links = []
   runtime.logInGate = null
   runtime.accountFile = null
+  runtime.identified = false
 })
 
 afterEach(() => {

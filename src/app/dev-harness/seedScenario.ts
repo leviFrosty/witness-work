@@ -35,6 +35,7 @@ export function seedScenario(name: string) {
   preferences.setRole(scenario.role)
   usePreferences.getState().set({
     onboardingComplete: scenario.onboarded,
+    roleHistory: scenario.roleHistory,
     tenureStartDate: scenario.tenureStartDate,
     // Keeps the full-screen rollover prompt from covering a fresh seed.
     lastRolloverYearMonth: moment().format('YYYY-MM'),

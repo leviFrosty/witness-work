@@ -113,7 +113,7 @@ Scenarios are built relative to today (`src/app/dev-harness/scenarios.ts`).
 - `pioneer`: a regular pioneer with service-year hours, an LDC credit entry, 8 contacts (3 Bible studies, one overdue and one upcoming follow-up), and 3 upcoming plans.
 - `busy`: `pioneer` with 160 contacts, for list and map performance.
 - `badges`: `pioneer` plus a year and a bit of history (one contact visited monthly, sent reports, a weekly plan), which earns 14 badges.
-- `stress`: a heavy pioneer account for profiling: 2,000 contacts with 8,000 visits over five years, five Service Years of hours and sent reports, and 300 Plans (20 of them Recurring, with skipped and moved dates).
+- `stress`: a heavy pioneer account for profiling: 2,000 contacts with 8,046 visits over six years (`verify-contact-0` has 50, for Contact Details; 300 carry a long note), hours on six days of most weeks for six Service Years with monthly LDC and quarterly other credit, sent reports, a Role History (publisher, then auxiliary pioneer, then regular pioneer), and 420 Plans (20 of them Recurring, with skipped and moved dates).
 - Every onboarded scenario files the badges its records reach as already seen history, so seeding never shows a badge celebration. `fresh` leaves that first pass for after onboarding, like a real install.
 - Ids start with `verify-`, e.g. `verify-contact-0` is "Ada Reyes".
 

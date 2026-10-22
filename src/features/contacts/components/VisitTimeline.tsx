@@ -21,6 +21,7 @@ import i18n from '@/lib/locales'
 import { Visit } from '@/types/visit'
 import VisitOutcomeMarker from '@/features/contacts/components/VisitOutcomeMarker'
 import VisitTimelineCard from '@/features/contacts/components/VisitTimelineCard'
+import useProgressiveCount from '@/features/contacts/hooks/useProgressiveCount'
 import { visitDayLabel } from '@/features/contacts/lib/visitDates'
 import {
   FollowUpState,
@@ -33,6 +34,9 @@ import {
 /** Width of the rail column left of the cards; the line runs at its center. */
 const RAIL = 26
 const NODE = 24
+/** Cards drawn with the screen; older ones follow a batch per frame. */
+const FIRST_CARDS = 8
+const CARD_BATCH = 8
 
 const FOLLOW_UP: Record<
   FollowUpState,
@@ -176,6 +180,14 @@ const VisitTimeline = ({
   const theme = useTheme()
   const now = new Date()
   const oldest = visits[visits.length - 1]
+  // A long history (a weekly study runs to hundreds of visits) draws its
+  // newest cards with the screen and the older ones a batch per frame after.
+  // The highlighted visit is drawn at once, so a deep link can scroll to it.
+  const shown = useProgressiveCount(visits.length, {
+    first: FIRST_CARDS,
+    batch: CARD_BATCH,
+    atLeast: visits.findIndex((visit) => visit.id === highlightedVisitId) + 1,
+  })
 
   return (
     <View>
@@ -265,7 +277,7 @@ const VisitTimeline = ({
           </PointerHover>
         </View>
       )}
-      {visits.map((visit, index) => {
+      {visits.slice(0, shown).map((visit, index) => {
         const raw = followUpState(visit, visits, now)
         // The Up Next source is already shown at the rail head.
         const state =
@@ -297,7 +309,7 @@ const VisitTimeline = ({
           </Fragment>
         )
       })}
-      {oldest && (
+      {oldest && shown >= visits.length && (
         <View
           style={{
             flexDirection: 'row',

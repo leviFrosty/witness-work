@@ -9,6 +9,7 @@ import {
   TimeEntry,
 } from '@/types/timeEntry'
 import { Publisher } from '@/types/publisher'
+import type { RoleHistory } from '@/lib/roleHistory'
 import { LDC_BUILTIN_CATEGORY_ID } from '@/constants/categories'
 import { buildBadgeHistoryFixture } from '@/app/dev-fixtures/badges'
 
@@ -32,6 +33,8 @@ export type Scenario = {
   /** False leaves the app on onboarding (a fresh install). */
   onboarded: boolean
   role: Publisher
+  /** Months with another role; null applies `role` to every month. */
+  roleHistory: RoleHistory | null
   tenureStartDate: Date | null
   profileName: string
   contacts: Contact[]
@@ -199,24 +202,36 @@ function buildDayPlans(now: moment.Moment): DayPlan[] {
 }
 
 /**
- * `stress`: a heavy account for profiling. 2,000 contacts with four visits each
- * over five years, pioneer hours for five Service Years, and 300 Plans (280 Day
- * Plans, 20 Recurring Plans with skipped dates and overrides).
+ * `stress`: a heavy account for profiling, as a publisher sees it after years
+ * of use. 2,000 contacts with about four visits each over six years (8,046; the
+ * first contact has 50, for Contact Details), about 300 of them with a long
+ * note. Hours on most days for six Service Years, with monthly LDC and
+ * quarterly other credit, a Role History (publisher, then auxiliary pioneer
+ * months, then regular pioneer), and 420 Plans (400 Day Plans, 20 Recurring
+ * Plans with skipped and moved dates).
  */
 const STRESS_CONTACTS = 2000
-const STRESS_YEARS = 5
+const STRESS_YEARS = 6
+/** Extra visits for the first contact, on top of its four. */
+const STRESS_LONG_HISTORY_VISITS = 46
+const STRESS_NOTE =
+  'Talked about family and how to find peace of mind. Left the brochure and ' +
+  'agreed to come back on Saturday morning to read Psalm 37 together. ' +
+  'Prefers visits after ten; the side gate is open.'
 
 function buildStressVisits(now: moment.Moment, contacts: Contact[]): Visit[] {
   const days = STRESS_YEARS * 365
-  return contacts.flatMap((contact, index) =>
+  const visitAt = (daysAgo: number, hour: number) =>
+    now
+      .clone()
+      .subtract(daysAgo, 'days')
+      .hour(hour)
+      .minute(0)
+      .second(0)
+      .millisecond(0)
+      .toDate()
+  const visits = contacts.flatMap((contact, index) =>
     [0, 1, 2, 3].map((visitIndex) => {
-      const date = now
-        .clone()
-        .subtract(((index * 7 + visitIndex * 97) % days) + 1, 'days')
-        .hour(9 + (visitIndex % 4))
-        .minute(0)
-        .second(0)
-        .millisecond(0)
       const followUp =
         visitIndex === 0 && index % 25 === 0
           ? {
@@ -231,13 +246,82 @@ function buildStressVisits(now: moment.Moment, contacts: Contact[]): Visit[] {
       return {
         id: `${SCENARIO_ID_PREFIX}visit-${index}-${visitIndex}`,
         contact: { id: contact.id },
-        date: date.toDate(),
-        note: visitIndex === 0 ? 'Talked about family' : '',
+        date: visitAt(
+          ((index * 7 + visitIndex * 97) % days) + 1,
+          9 + (visitIndex % 4)
+        ),
+        note:
+          visitIndex === 1 && index % 7 === 0
+            ? STRESS_NOTE
+            : visitIndex === 0
+              ? 'Talked about family'
+              : '',
         isBibleStudy: index < 40,
         followUp,
       }
     })
   )
+  // Contact Details with a long history: a weekly study for most of a year.
+  const longHistory = Array.from(
+    { length: STRESS_LONG_HISTORY_VISITS },
+    (_, index) => ({
+      id: `${SCENARIO_ID_PREFIX}visit-long-${index}`,
+      contact: { id: contacts[0].id },
+      date: visitAt(index * 7 + 3, 18),
+      note: index % 2 === 0 ? STRESS_NOTE : 'Lesson continued',
+      isBibleStudy: true,
+    })
+  )
+  return [...visits, ...longHistory]
+}
+
+/**
+ * Hours on six days of most weeks from the first Service Year through
+ * yesterday, an LDC credit entry each month and another credit entry each
+ * quarter.
+ */
+function buildStressEntries(
+  now: moment.Moment,
+  firstYearStart: moment.Moment
+): TimeEntry[] {
+  const entries: TimeEntry[] = []
+  const cursor = firstYearStart.clone()
+  const today = now.clone().startOf('day')
+  let index = 0
+  while (cursor.isBefore(today)) {
+    // Sundays off, and Wednesdays off every third week.
+    const weekOff = Math.floor(index / 7) % 3 === 0 && cursor.day() === 3
+    if (cursor.day() !== 0 && !weekOff) {
+      entries.push({
+        id: `${SCENARIO_ID_PREFIX}stress-entry-${index}`,
+        date: cursor.clone().hour(9).toDate(),
+        hours: 1 + (index % 4),
+        minutes: (index % 4) * 15,
+        note: index % 40 === 0 ? 'Cart at the station' : undefined,
+      })
+    }
+    if (cursor.date() === 15) {
+      entries.push({
+        id: `${SCENARIO_ID_PREFIX}stress-ldc-${index}`,
+        date: cursor.clone().hour(13).toDate(),
+        hours: 5,
+        minutes: 0,
+        credit: true,
+        categoryId: LDC_BUILTIN_CATEGORY_ID,
+      })
+      if (cursor.month() % 3 === 0)
+        entries.push({
+          id: `${SCENARIO_ID_PREFIX}stress-credit-${index}`,
+          date: cursor.clone().hour(15).toDate(),
+          hours: 3,
+          minutes: 0,
+          credit: true,
+        })
+    }
+    index++
+    cursor.add(1, 'day')
+  }
+  return entries
 }
 
 function buildStressPlans(now: moment.Moment): {
@@ -245,9 +329,9 @@ function buildStressPlans(now: moment.Moment): {
   recurringPlans: RecurringPlan[]
 } {
   const today = now.clone().startOf('day')
-  const dayPlans = Array.from({ length: 280 }, (_, index) => ({
+  const dayPlans = Array.from({ length: 400 }, (_, index) => ({
     id: `${SCENARIO_ID_PREFIX}stress-plan-${index}`,
-    // Two years back through two months ahead.
+    // Three years back through two months ahead.
     date: today
       .clone()
       .add(60 - index * 3, 'days')
@@ -294,6 +378,22 @@ function buildStressPlans(now: moment.Moment): {
   return { dayPlans, recurringPlans }
 }
 
+/**
+ * A publisher in the first Service Year, auxiliary pioneer for its last three
+ * months, and a regular pioneer since.
+ */
+function buildStressRoleHistory(firstYearStart: moment.Moment): RoleHistory {
+  const month = (offset: number) =>
+    firstYearStart.clone().add(offset, 'months').format('YYYY-MM')
+  return {
+    initial: 'publisher',
+    changes: {
+      [month(9)]: 'regularAuxiliary',
+      [month(12)]: 'regularPioneer',
+    },
+  }
+}
+
 function buildStress(now: moment.Moment): Scenario {
   const serviceYearStart = serviceYearStartFor(now)
   const firstYearStart = serviceYearStart
@@ -310,11 +410,12 @@ function buildStress(now: moment.Moment): Scenario {
   return {
     onboarded: true,
     role: 'regularPioneer',
-    tenureStartDate: firstYearStart.toDate(),
+    roleHistory: buildStressRoleHistory(firstYearStart),
+    tenureStartDate: firstYearStart.clone().add(12, 'months').toDate(),
     profileName: 'Verify',
     contacts,
     visits: buildStressVisits(now, contacts),
-    timeEntries: buildPioneerEntries(now, firstYearStart),
+    timeEntries: buildStressEntries(now, firstYearStart),
     dayPlans,
     recurringPlans,
     submittedReportMonths,
@@ -339,6 +440,7 @@ export function buildScenario(
   const empty: Scenario = {
     onboarded: name !== 'fresh',
     role: 'publisher',
+    roleHistory: null,
     tenureStartDate: null,
     profileName: 'Verify',
     contacts: [],

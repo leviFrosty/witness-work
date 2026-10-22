@@ -169,9 +169,14 @@ describe('verification scenarios', () => {
   it('builds the stress account at full size', () => {
     const scenario = expectConsistent('stress', new Date(2026, 9, 20, 12))
     expect(scenario.contacts).toHaveLength(2000)
-    expect(scenario.visits).toHaveLength(8000)
-    expect(scenario.dayPlans.length + scenario.recurringPlans.length).toBe(300)
-    expect(scenario.submittedReportMonths).toHaveLength(49)
+    expect(scenario.visits).toHaveLength(8046)
+    expect(
+      scenario.visits.filter((v) => v.contact.id === scenario.contacts[0].id)
+    ).toHaveLength(50)
+    expect(scenario.dayPlans.length + scenario.recurringPlans.length).toBe(420)
+    expect(scenario.submittedReportMonths).toHaveLength(61)
+    expect(scenario.timeEntries).toHaveLength(1600)
+    expect(scenario.roleHistory?.initial).toBe('publisher')
   })
 
   it('rejects unknown names with the valid list', () => {

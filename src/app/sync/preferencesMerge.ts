@@ -154,6 +154,12 @@ export function mergePreferences(
     if ('role' in remoteValues || 'roleHistory' in remoteValues) {
       values.roleHistory = remoteHistory
       updatedAt.role = updatedAt.roleHistory = rt
+      // With the history, its per-month stamps: without them each month reads
+      // as stamped when this device's history was, so its next edit to any
+      // month would make every month newer than another device's removal.
+      const prefix = entryTimestampKey('roleHistory', '')
+      for (const [stamp, at] of Object.entries(remoteUpdatedAt))
+        if (stamp.startsWith(prefix)) updatedAt[stamp] = at
     }
   }
   const changed =

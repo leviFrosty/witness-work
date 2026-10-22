@@ -8,6 +8,7 @@ import { View } from 'react-native'
 import ProfileDetailOverlay from '@/features/profile/components/ProfileDetailOverlay'
 import TakeoverEnvironment from '@/app/takeover/TakeoverEnvironment'
 import TakeoverHosts from '@/app/takeover/TakeoverHosts'
+import { useTakeover } from '@/stores/takeover'
 import { useEffect, useRef, useState } from 'react'
 import { HomeTabStackParamList } from '@/types/homeStack'
 import { releaseNotes } from '@/features/updates/constants/releaseNotes'
@@ -118,6 +119,13 @@ const HomeTabStack = () => {
   const developerTools = usePreferences((s) => s.developerTools)
   const storedTabOrder = usePreferences((s) => s.tabOrder)
   const set = usePreferences((s) => s.set)
+  // The update reveal covers the tabs from inside this view rather than a
+  // window of its own (it has to be there in the first frame). iOS skips them
+  // for its `accessibilityViewIsModal`; Android has no such thing, so TalkBack
+  // would still read and press the tabs beneath it.
+  const revealShown = useTakeover(
+    (s) => s.arbiter.active?.kind === 'update-reveal'
+  )
   const { showsYearTabs } = usePublisher()
   const tabOrder = getEffectiveTabOrder(storedTabOrder).filter(
     (name) => name !== 'Progress' || showsYearTabs
@@ -187,6 +195,17 @@ const HomeTabStack = () => {
                 : 'left'
               : 'bottom',
         }}
+        layout={({ children }) => (
+          <View
+            style={{ flex: 1 }}
+            accessibilityElementsHidden={revealShown}
+            importantForAccessibility={
+              revealShown ? 'no-hide-descendants' : 'auto'
+            }
+          >
+            {children}
+          </View>
+        )}
         // The rail sits in the vertical status bar's safe area; content keeps
         // clear of any other side's.
         screenLayout={({ children }) => (

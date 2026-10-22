@@ -2,7 +2,10 @@ import { describe, it, expect, vi } from 'vitest'
 
 vi.mock('@/lib/logger', () => import('@/__tests__/mocks/logger'))
 
-import { generateRecommendation } from '@/lib/assistantRecommendation'
+import {
+  generateRecommendation,
+  proposedPlanLocalDay,
+} from '@/lib/assistantRecommendation'
 import { momentStoredDate, normalizeDateForStorage } from '@/lib/normalizeDate'
 import type { Visit } from '@/types/visit'
 import type { DayPlan, RecurringPlan } from '@/types/timeEntry'
@@ -471,6 +474,26 @@ describe('generateRecommendation', () => {
       // Oct 1–31 has 18 Sun/Tue/Thu/Sat days.
       expect(rec!.plans).toHaveLength(18)
       expect(minutes(rec).every((m) => m === 2 * 60 || m === 3 * 60)).toBe(true)
+      expect(minutes(rec).reduce((s, m) => s + m, 0)).toBe(50 * 60)
+    })
+
+    it('leaves skipped days alone', () => {
+      // Onboarding plans from the 1st but skips days that have time logged.
+      const rec = generateRecommendation({
+        ...baseInput,
+        year: 2026,
+        month: 9,
+        today: normalizeDateForStorage('2026-10-01'),
+        standardGapMinutes: 50 * 60,
+        offDays: [1, 3, 5],
+        spreadEvenly: true,
+        skipDayKeys: new Set(['2026-10-01', '2026-10-03']),
+      })
+
+      const days = rec!.plans.map((p) => proposedPlanLocalDay(p).getDate())
+      expect(days).toHaveLength(16)
+      expect(days).not.toContain(1)
+      expect(days).not.toContain(3)
       expect(minutes(rec).reduce((s, m) => s + m, 0)).toBe(50 * 60)
     })
 

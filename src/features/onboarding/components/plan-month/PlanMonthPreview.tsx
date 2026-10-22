@@ -63,7 +63,7 @@ const PlanMonthPreview = ({
   const format = (minutes: number) =>
     formatMinutes(minutes, timeDisplayFormat).formatted
   const monthName = moment({ ...target, day: 1 }).format('MMMM')
-  const weeks = monthWeeks(target, startOfWeek, new Date())
+  const weeks = monthWeeks(target, startOfWeek)
   const hasPlan = plan.plans.length > 0
   const dateOf = (day: number) => moment({ ...target, day })
   const selectedMinutes =
@@ -132,11 +132,12 @@ const PlanMonthPreview = ({
                 return <View key={col} style={{ flex: 1 }} />
               }
               const minutes = plan.minutesByDay.get(cell.day)
+              const isLogged = plan.loggedDays.has(cell.day)
               const isServiceDay =
-                !cell.isPast && serviceDays.includes(cell.weekday)
+                !isLogged && serviceDays.includes(cell.weekday)
               // Saved plans are changed on the Schedule tab, not here.
               const editable =
-                !cell.isPast &&
+                !isLogged &&
                 !plan.alreadyOnTrack &&
                 !plan.savedDays.has(cell.day)
               const isSelected = selectedDay === cell.day
@@ -168,7 +169,7 @@ const PlanMonthPreview = ({
                         : 'transparent',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      opacity: cell.isPast ? 0.35 : 1,
+                      opacity: isLogged ? 0.35 : 1,
                     }}
                   >
                     {minutes ? (

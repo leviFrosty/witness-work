@@ -40,13 +40,17 @@ enum SnapshotDay {
   static func timeline(
     from now: Date, adding extra: [Date] = [], calendar: Calendar = gregorian
   ) -> (dates: [Date], reload: Date) {
-    let midnight = calendar.nextDate(
-      after: now, matching: DateComponents(hour: 0, minute: 0), matchingPolicy: .nextTime
-    ) ?? now.addingTimeInterval(24 * 60 * 60)
-    let following = calendar.date(byAdding: .day, value: 1, to: midnight)
-      ?? midnight.addingTimeInterval(24 * 60 * 60)
+    let midnight = nextDay(after: now, calendar: calendar)
+    let following = nextDay(after: midnight, calendar: calendar)
     let between = Set(extra.filter { $0 > now && $0 < midnight }).sorted()
     return ([now] + between + [midnight, following], midnight)
+  }
+
+  /// When the day after `date`'s starts: midnight, or 1:00 where the clocks
+  /// skip midnight that day. Where they repeat it, the first midnight.
+  static func nextDay(after date: Date, calendar: Calendar = gregorian) -> Date {
+    calendar.date(byAdding: .day, value: 1, to: calendar.startOfDay(for: date))
+      .map(calendar.startOfDay) ?? date.addingTimeInterval(24 * 60 * 60)
   }
 
   /// `report`, built for the day `builtOn`, as of the day `today`.
@@ -117,9 +121,12 @@ enum SnapshotDay {
     formatter.dateStyle = .none
     formatter.timeStyle = .short
     let time = formatter.string(from: date)
-    let days = calendar.dateComponents(
-      [.day], from: calendar.startOfDay(for: now), to: calendar.startOfDay(for: date)
-    ).day ?? 0
+    // Counted from noon to noon: a day that starts at 1:00, because the clocks
+    // skip midnight, is less than a day before the next one starts.
+    let noon: (Date) -> Date = {
+      calendar.date(bySettingHour: 12, minute: 0, second: 0, of: $0) ?? $0
+    }
+    let days = calendar.dateComponents([.day], from: noon(now), to: noon(date)).day ?? 0
     if days == 0 { return time }
     if days == 1 { return "\(tomorrowLabel) \(time)" }
     var week = Calendar(identifier: .iso8601)

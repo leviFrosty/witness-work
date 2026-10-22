@@ -232,6 +232,9 @@ export default function PetRoomScreen({ navigation }: Props) {
             }))}
             value={tab}
             onChange={setTab}
+            layout='scroll'
+            bleed={20}
+            fadeColor={theme.colors.sheet}
           />
         </View>
         <View style={{ paddingHorizontal: 20, paddingTop: 2, gap: 18 }}>

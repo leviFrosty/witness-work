@@ -31,7 +31,7 @@ import {
   View,
 } from 'react-native'
 import { Input, InputProps } from 'tamagui'
-import { BlurView } from 'expo-blur'
+import { BlurView } from '@/components/ui/BlurView'
 import { GlassView, isLiquidGlassAvailable } from 'expo-glass-effect'
 import Animated, {
   Easing,

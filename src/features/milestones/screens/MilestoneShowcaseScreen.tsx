@@ -34,7 +34,7 @@ import Animated, {
 } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useNavigation } from '@react-navigation/native'
-import { BlurView } from 'expo-blur'
+import { BlurView } from '@/components/ui/BlurView'
 import { Image as ExpoImage } from 'expo-image'
 import Text from '@/components/ui/MyText'
 import IconButton from '@/components/ui/IconButton'

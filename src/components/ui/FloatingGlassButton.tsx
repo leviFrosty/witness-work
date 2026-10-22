@@ -1,5 +1,5 @@
 import { Pressable, StyleSheet, View } from 'react-native'
-import { BlurView } from 'expo-blur'
+import { BlurView } from '@/components/ui/BlurView'
 import { GlassView } from 'expo-glass-effect'
 import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
 import PointerHover from '@/components/ui/PointerHover'

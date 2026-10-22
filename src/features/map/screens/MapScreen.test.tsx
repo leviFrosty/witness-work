@@ -175,7 +175,7 @@ vi.mock('react-native-gesture-handler', () => {
   }
 })
 vi.mock('tamagui', () => ({ Input: 'Input' }))
-vi.mock('expo-blur', () => ({ BlurView: 'BlurView' }))
+vi.mock('@/components/ui/BlurView', () => ({ BlurView: 'BlurView' }))
 vi.mock('expo-glass-effect', () => ({
   GlassView: 'GlassView',
   isLiquidGlassAvailable: () => false,

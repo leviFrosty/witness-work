@@ -19,7 +19,7 @@ import {
 import Spinner from '@/components/ui/Spinner'
 import { Image } from 'expo-image'
 import { GlassView } from 'expo-glass-effect'
-import { BlurView } from 'expo-blur'
+import { BlurView } from '@/components/ui/BlurView'
 import {
   Gesture,
   GestureDetector,

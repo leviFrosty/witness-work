@@ -12,16 +12,21 @@ import {
 } from '@/lib/appUpdate'
 import i18n from '@/lib/locales'
 import { openStoreListing } from '@/lib/storeListing'
+import { useAppLockSession, useAppLockSettings } from '@/stores/appLock'
 import UpdateRequiredScreen from '@/app/update-required/UpdateRequiredScreen'
 
 /**
  * Update Required (ADR 0027): blocks the app while this version is below the
  * minimum ww-api asks for, read at launch, on each return to the foreground and
  * when the connection comes back, or after ww-api refused a request with 426.
- * Above every sheet and screen, below App Lock.
+ * Above every sheet and screen, below App Lock: while App Lock covers the app,
+ * this waits, so it can't land on top of the lock when the answer comes after
+ * it (a launch, or a return to the foreground).
  */
 export default function UpdateRequiredGate() {
   const required = useUpdateRequired((s) => s.required)
+  const appLockOn = useAppLockSettings((s) => s.enabled)
+  const appLocked = useAppLockSession((s) => s.locked) && appLockOn
   useTakeoverHold('updateRequired', required !== null)
 
   useEffect(() => {
@@ -45,7 +50,7 @@ export default function UpdateRequiredGate() {
       })
   }, [required])
 
-  if (!required) return null
+  if (!required || appLocked) return null
 
   const openStore = () => {
     analytics.capture('update_required_store_opened', {

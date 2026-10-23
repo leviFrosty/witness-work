@@ -152,6 +152,7 @@ export type RootStackParamList = {
   PreferencesiCloudDevices: undefined
   PreferencesAppIcon: undefined
   PreferencesColorKey: undefined
+  PreferencesMap: undefined
   PreferencesCustomFields: undefined
   PreferencesConversationFields: undefined
   RescheduleVisit: { contactId: string; visitId: string }
@@ -219,7 +220,15 @@ export type RootStackParamList = {
    * the day's route to that Plan: one it was opened from, or (`newPlan`) one
    * just made from the route to invite buddies.
    */
-  TodayRoute: { date?: string; planId?: string; newPlan?: boolean } | undefined
+  TodayRoute:
+    | {
+        date?: string
+        planId?: string
+        newPlan?: boolean
+        /** Contacts to add as stops, in order (Plan Route on the Map). */
+        addContactIds?: string[]
+      }
+    | undefined
   MilestoneShowcase: undefined
   FAQ: { scrollToCategory?: string } | undefined
   /** QR codes and a link for sharing WitnessWork with a friend. */

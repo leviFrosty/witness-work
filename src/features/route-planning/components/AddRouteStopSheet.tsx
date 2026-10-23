@@ -36,6 +36,7 @@ import type { Coordinate } from '@/types/contact'
 import type { AddedStopSource } from '@/features/route-planning/hooks/useRouteBuilder'
 import { parseCoordinateInput } from '@/features/route-planning/lib/coordinateInput'
 import { coordinateText } from '@/features/route-planning/lib/coordinateText'
+import { contactStop } from '@/features/route-planning/lib/contactStop'
 import { pinTitle } from '@/features/route-planning/lib/pinTitle'
 import {
   SAVED_PLACE_KINDS,
@@ -472,17 +473,10 @@ export default function AddRouteStopSheet({
                           accessibilityLabel={contact.name}
                           onPress={() =>
                             pick(
-                              {
-                                key: `contact:${contact.id}`,
-                                kind: 'contact',
-                                title: contact.name,
-                                subtitle: address || undefined,
+                              contactStop({
+                                ...contact,
                                 coordinate: contact.coordinate!,
-                                destination:
-                                  contact.userDraggedCoordinate || !address
-                                    ? coordinateText(contact.coordinate!)
-                                    : address,
-                              },
+                              }),
                               'contact'
                             )
                           }

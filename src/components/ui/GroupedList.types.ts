@@ -45,6 +45,11 @@ export type GroupedListRowProps = RowBase & {
   disabled?: boolean
   /** Highlights the row whose destination is open beside the list. */
   selected?: boolean
+  /**
+   * One of a list of choices, chosen or not: screen readers hear which one is,
+   * as the row's own check mark shows it. It doesn't highlight the row.
+   */
+  checked?: boolean
   /** Fills the row with a color, e.g. to set a status apart. */
   tint?: string
 }

@@ -24,3 +24,125 @@ index ca65bd7464b3107e9dcc1f6282d0d35aa9bedf40..f71e9493855e6d104bb4dd61d091418d
 +        }
      }
  }
+diff --git a/android/src/main/java/com/rnmaps/maps/MapView.java b/android/src/main/java/com/rnmaps/maps/MapView.java
+index ebf8780..aecd21b 100644
+--- a/android/src/main/java/com/rnmaps/maps/MapView.java
++++ b/android/src/main/java/com/rnmaps/maps/MapView.java
+@@ -333,15 +333,21 @@ public class MapView extends com.google.android.gms.maps.MapView implements Goog
+             prepareAttacherView();
+             getMapAsync((map)->{
+                 onMapReady(map);
++                // As upstream: replay from a copy, with savedFeatures cleared
++                // first, so the features go on the map rather than back in it.
+                 if (savedFeatures != null && !savedFeatures.isEmpty()) {
+-                    for (int i = 0; i < savedFeatures.size(); i++) {
+-                        MapFeature savedFeature = savedFeatures.get(i);
++                    features.clear();
++                    ArrayList<MapFeature> toRestore = savedFeatures;
++                    savedFeatures = null;
++                    for (int i = 0; i < toRestore.size(); i++) {
++                        MapFeature savedFeature = toRestore.get(i);
+                         if (savedFeature != null) {
+                             addFeature(savedFeature, i);
+                         }
+                     }
++                } else {
++                    savedFeatures = null;
+                 }
+-                savedFeatures = null;
+             });
+         }
+     }
+@@ -1165,28 +1171,41 @@ public class MapView extends com.google.android.gms.maps.MapView implements Goog
+         this.handlePanDrag = handlePanDrag;
+     }
+ 
++    // As upstream: Fabric adds a child at its index, so insert there. Setting
++    // the slot orphaned the marker already in it, which stayed on the map and
++    // took the taps meant for its neighbors.
+     private void safeAddFeature(int index, MapFeature mapFeature){
+-        if(paused || features.size() < index){
+-            if (savedFeatures == null) {
+-                savedFeatures = new ArrayList<>();
+-            }
+-
+-            // Ensure the list is large enough to set at the given index
+-            while(savedFeatures.size() <= index){
++        if(savedFeatures != null){
++            // Ensure the list is large enough to insert at the given index
++            while(savedFeatures.size() < index){
+                 savedFeatures.add(null);
+             }
+-            savedFeatures.set(index, mapFeature);
++            savedFeatures.add(index, mapFeature);
+             return;
+         }
+ 
+-        // Ensure the list is large enough to set at the given index
+-        while(features.size() <= index){
++        // Ensure the list is large enough to insert at the given index
++        while(features.size() < index){
+             features.add(null);
+         }
+-        features.set(index, mapFeature);
++        features.add(index, mapFeature);
+     }
+ 
+     public void addFeature(View child, int index) {
++        // As upstream: when detached, skip addToMap calls and just track in
++        // savedFeatures
++        if (savedFeatures != null) {
++            if (child instanceof MapFeature) {
++                safeAddFeature(index, (MapFeature) child);
++            } else if (child instanceof ViewGroup) {
++                ViewGroup children = (ViewGroup) child;
++                for (int i = 0; i < children.getChildCount(); i++) {
++                    addFeature(children.getChildAt(i), index);
++                }
++            }
++            return;
++        }
++
+         // Our desired API is to pass up annotations/overlays as children to the mapview component.
+         // This is where we intercept them and do the appropriate underlying mapview action.
+         if (child instanceof MapMarker) {
+@@ -1272,11 +1291,21 @@ public class MapView extends com.google.android.gms.maps.MapView implements Goog
+         }
+     }
+ 
++    // As upstream: while detached, the features live in savedFeatures.
+     public int getFeatureCount() {
++        if (savedFeatures != null) {
++            return savedFeatures.size();
++        }
+         return features.size();
+     }
+ 
+     public View getFeatureAt(int index) {
++        if (savedFeatures != null) {
++            if (index < savedFeatures.size()) {
++                return savedFeatures.get(index);
++            }
++            return null;
++        }
+         if (index < features.size()) {
+             return features.get(index);
+         }
+@@ -1284,7 +1313,16 @@ public class MapView extends com.google.android.gms.maps.MapView implements Goog
+     }
+ 
+     public void removeFeatureAt(int index) {
+-        MapFeature feature = features.remove(index);
++        MapFeature feature;
++        if (savedFeatures != null) {
++            if (index < savedFeatures.size()) {
++                feature = savedFeatures.remove(index);
++            } else {
++                return;
++            }
++        } else {
++            feature = features.remove(index);
++        }
+         if (feature instanceof MapMarker) {
+             markerMap.remove(feature.getFeature());
+             feature.removeFromMap(markerCollection);

@@ -18,6 +18,7 @@ import {
 } from '@react-navigation/native'
 import * as Crypto from 'expo-crypto'
 import moment from 'moment'
+import { useToastController } from '@tamagui/toast'
 import useTheme from '@/contexts/theme'
 import DisplayRegionsView, {
   type DisplayDivision,
@@ -25,7 +26,7 @@ import DisplayRegionsView, {
 import { getFoldSplit } from '@/lib/foldSplit'
 import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
 import useFeatureAccess from '@/hooks/useFeatureAccess'
-import i18n from '@/lib/locales'
+import i18n, { type TranslationKey } from '@/lib/locales'
 import type { RootStackNavigation, RootStackParamList } from '@/types/rootStack'
 import AddRouteStopSheet, {
   type AddRouteStopMode,
@@ -40,8 +41,10 @@ import RouteSplitHandle from '@/features/route-planning/components/RouteSplitHan
 import RouteSupporterPreview from '@/features/route-planning/components/RouteSupporterPreview'
 import RouteTimeline from '@/features/route-planning/components/RouteTimeline'
 import useRouteBuilder from '@/features/route-planning/hooks/useRouteBuilder'
+import { contactStop } from '@/features/route-planning/lib/contactStop'
 import { coordinateText } from '@/features/route-planning/lib/coordinateText'
 import type { SavedPlaceKind } from '@/features/route-planning/lib/routeBuilder'
+import useContacts from '@/stores/contactsStore'
 
 /** The list beside the map on wide windows. */
 const PANEL_WIDTH = 420
@@ -77,6 +80,7 @@ export default function RouteBuilderScreen({
   )
   const builder = useRouteBuilder(day)
   const { hasAccess } = useFeatureAccess('routePlanning')
+  const toast = useToastController()
   const scrollRef = useAnimatedRef<Animated.ScrollView>()
   const [selectedKey, setSelectedKey] = useState<string | null>(null)
   const [dragging, setDragging] = useState(false)
@@ -111,6 +115,33 @@ export default function RouteBuilderScreen({
   useEffect(() => {
     if (params?.planId) linkFromParams(params.planId, !!params.newPlan)
   }, [params?.planId, params?.newPlan])
+
+  // Contacts picked on the Map join today's route after its stops; say so
+  // when some didn't fit.
+  const addFromParams = useEffectEvent((ids: string[]) => {
+    const { contacts } = useContacts.getState()
+    const { leftOff } = builder.addContactStops(
+      ids.flatMap((id) => {
+        const contact = contacts.find((c) => c.id === id)
+        return contact?.coordinate
+          ? [contactStop({ ...contact, coordinate: contact.coordinate })]
+          : []
+      }),
+      'contacts_map'
+    )
+    if (leftOff > 0) {
+      toast.show(
+        i18n.t('routeBuilder_contactsLeftOff' as TranslationKey, {
+          count: leftOff,
+        }),
+        { native: true }
+      )
+    }
+    navigation.setParams({ addContactIds: undefined })
+  })
+  useEffect(() => {
+    if (params?.addContactIds?.length) addFromParams(params.addContactIds)
+  }, [params?.addContactIds])
 
   const pinStop = (pin: DroppedPin) => ({
     key: `place:${Crypto.randomUUID()}`,

@@ -14,6 +14,7 @@ import type { RoutePlannerFailure } from '@/features/route-planning/lib/routePla
 import { currentCoordinate } from '@/features/route-planning/lib/currentLocation'
 import {
   builderStops,
+  contactStopsToAdd,
   defaultStartTime,
   moveKey,
   newSavedRoute,
@@ -22,7 +23,6 @@ import {
   startingPlan,
   type AddedStop,
   type BuilderStop,
-  type PlanStart,
   type RouteFinish,
   type RouteOrigin,
   type SavedRoute,
@@ -35,20 +35,17 @@ import {
 import { coordinateText } from '@/features/route-planning/lib/coordinateText'
 import { MAX_ROUTE_STOPS } from '@/features/route-planning/lib/routeLimits'
 import { optimizeRoute } from '@/features/route-planning/lib/routePlanningClient'
-import { plansOnDay } from '@/features/route-planning/lib/routeStops'
+import { routePlanOptions } from '@/features/route-planning/lib/routePlanOptions'
 import {
   buildTimeline,
   estimateLeg,
 } from '@/features/route-planning/lib/routeTimeline'
 import { legKey } from '@/features/route-planning/lib/roadLegs'
 import type { Coordinate } from '@/types/contact'
-import { formatPlanLocation } from '@/lib/placeSearch'
-import { formatStartTime } from '@/lib/dates'
 import { atMinutesOfDay } from '@/lib/normalizeDate'
 import { useSavedRoutes } from '@/features/route-planning/stores/savedRoutes'
 
-/** A Plan on the day the route can belong to. */
-export type RoutePlanOption = PlanStart & { title: string; recurring: boolean }
+export type { RoutePlanOption } from '@/features/route-planning/lib/routePlanOptions'
 
 /** Where a stop added by hand came from, for analytics. */
 export type AddedStopSource =
@@ -59,6 +56,7 @@ export type AddedStopSource =
   | 'map_pin'
   | 'home'
   | 'kingdom_hall'
+  | 'contacts_map'
 
 /**
  * How the route came to belong to a Plan: picked in Details, opened from the
@@ -121,48 +119,7 @@ export default function useRouteBuilder(day: Date) {
     setLastOpened(null)
   }
 
-  const planOptions: RoutePlanOption[] = plansOnDay({
-    day,
-    dayPlans,
-    recurringPlans,
-  })
-    .map(({ plan, recurring, time, anytime }) => {
-      const meets = plan.location
-      const place =
-        typeof meets?.latitude === 'number' &&
-        typeof meets.longitude === 'number'
-          ? formatPlanLocation(meets)
-          : undefined
-      return {
-        id: plan.id,
-        stopKey: `plan:${plan.id}`,
-        title:
-          plan.title?.trim() ||
-          place?.primary ||
-          (anytime ? i18n.t('planAnytime') : formatStartTime(time)),
-        time,
-        anytime,
-        recurring,
-        ...(place &&
-          meets && {
-            place: {
-              title: plan.title?.trim() || place.primary,
-              subtitle: plan.title?.trim() ? place.primary : place.secondary,
-              coordinate: {
-                latitude: meets.latitude!,
-                longitude: meets.longitude!,
-              },
-              destination:
-                meets.address?.trim() ||
-                coordinateText({
-                  latitude: meets.latitude!,
-                  longitude: meets.longitude!,
-                }),
-            },
-          }),
-      }
-    })
-    .sort((a, b) => a.time - b.time)
+  const planOptions = routePlanOptions({ day, dayPlans, recurringPlans })
   const route: SavedRoute =
     saved ??
     newSavedRoute(dayKey, dayStops, startingPlan(planOptions, dayStops))
@@ -243,6 +200,28 @@ export default function useRouteBuilder(day: Date) {
       order: [...keys, stop.key],
     })
     analytics.capture('route_stop_added', { source })
+  }
+
+  /**
+   * Adds Contacts picked elsewhere (the Contacts map) after the route's stops,
+   * skipping any already on it, until the route is full (see
+   * `contactStopsToAdd`). Says how many were added, and how many there wasn't
+   * room for.
+   */
+  const addContactStops = (picked: AddedStop[], source: AddedStopSource) => {
+    const { added, leftOff } = contactStopsToAdd(stops, picked)
+    if (added.length > 0) {
+      const addedKeys = new Set(added.map((stop) => stop.key))
+      update({
+        added: [
+          ...route.added.filter((stop) => !addedKeys.has(stop.key)),
+          ...added,
+        ],
+        order: [...keys, ...added.map((stop) => stop.key)],
+      })
+      analytics.capture('route_stop_added', { source, count: added.length })
+    }
+    return { added: added.length, leftOff }
   }
 
   const remove = (key: string) => {
@@ -505,6 +484,7 @@ export default function useRouteBuilder(day: Date) {
     setOrder,
     move: (key: string, by: number) => setOrder(moveKey(keys, key, by)),
     addStop,
+    addContactStops,
     remove,
     restore,
     setStay: (key: string, minutes: number) =>

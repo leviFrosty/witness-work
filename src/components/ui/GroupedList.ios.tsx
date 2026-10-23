@@ -316,6 +316,7 @@ export function GroupedListRow({
   contextActions,
   disabled,
   selected,
+  checked,
   tint,
   testID,
 }: GroupedListRowProps) {
@@ -331,7 +332,7 @@ export function GroupedListRow({
       selected ? theme.colors.accentTranslucent : (tint ?? style.rowBackground)
     ),
     ...separatorModifiers(icon),
-    ...(selected ? [accessibilityAddTraits(['isSelected'])] : []),
+    ...(selected || checked ? [accessibilityAddTraits(['isSelected'])] : []),
   ]
 
   const content: ReactElement = (

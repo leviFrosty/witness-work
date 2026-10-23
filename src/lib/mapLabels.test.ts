@@ -2,9 +2,11 @@ import { describe, expect, it } from 'vitest'
 import {
   estimateCardWidth,
   placeLabels,
+  placeProjectedLabels,
+  projectionFrom,
   projectToMap,
   type MapRegion,
-} from '@/features/route-planning/lib/mapLabels'
+} from '@/lib/mapLabels'
 
 const region: MapRegion = {
   latitude: 37.75,
@@ -84,5 +86,67 @@ describe('estimateCardWidth', () => {
     expect(estimateCardWidth(['9:00 AM', 'Al'])).toBe(16 + 6.4 * 7)
     expect(estimateCardWidth(['x'.repeat(80)])).toBe(132)
     expect(estimateCardWidth([''])).toBe(56)
+  })
+
+  it('counts wide characters about twice', () => {
+    // Two kanji, two kana and a Hangul syllable; then a Han character outside
+    // the Basic Multilingual Plane, which is one character, not two.
+    expect(estimateCardWidth(['田中さん김'])).toBe(16 + 6.4 * 10)
+    expect(estimateCardWidth(['𠮷'])).toBe(56)
+    expect(estimateCardWidth(['𠮷'.repeat(5)])).toBe(16 + 6.4 * 10)
+    // Accented Latin and Arabic stay narrow.
+    expect(estimateCardWidth(['Zoë Ángel'])).toBe(16 + 6.4 * 9)
+    expect(estimateCardWidth(['مريم'])).toBe(56)
+  })
+})
+
+describe('placeProjectedLabels options', () => {
+  const at = (key: string, x: number, y: number) => ({
+    key,
+    coordinate: { latitude: 0, longitude: 0 },
+    x,
+    y,
+    width: 80,
+  })
+
+  it('stops at maxCards, skips pin-only candidates, and avoids controls', () => {
+    const placements = placeProjectedLabels(
+      [
+        { ...at('pinOnly', 100, 100), pinOnly: true },
+        at('blocked', 300, 100),
+        at('first', 100, 300),
+        at('second', 300, 300),
+      ],
+      size,
+      metrics,
+      {
+        maxCards: 1,
+        // A control covering everything around `blocked`.
+        avoid: [{ left: 240, top: 0, right: 400, bottom: 180 }],
+      }
+    )
+    expect([...placements]).toEqual([
+      ['pinOnly', 'none'],
+      ['blocked', 'none'],
+      ['first', 'above'],
+      ['second', 'none'],
+    ])
+  })
+})
+
+describe('projectionFrom', () => {
+  it('matches the map at its reference points and between them', () => {
+    const project = projectionFrom(
+      { coordinate: { latitude: 10, longitude: 0 }, point: { x: 0, y: 0 } },
+      { coordinate: { latitude: 0, longitude: 10 }, point: { x: 100, y: 100 } }
+    )!
+    expect(project({ latitude: 0, longitude: 10 })).toEqual({ x: 100, y: 100 })
+    expect(project({ latitude: 5, longitude: 5 }).x).toBeCloseTo(50)
+    expect(
+      projectionFrom(
+        { coordinate: { latitude: 1, longitude: 1 }, point: { x: 0, y: 0 } },
+        { coordinate: { latitude: 1, longitude: 1 }, point: { x: 0, y: 0 } }
+      )
+    ).toBeNull()
   })
 })

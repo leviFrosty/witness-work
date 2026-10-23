@@ -269,6 +269,7 @@ export function GroupedListRow({
   contextActions,
   disabled,
   selected,
+  checked,
   tint,
   testID,
 }: GroupedListRowProps) {
@@ -302,7 +303,14 @@ export function GroupedListRow({
   const interaction: ModifierConfig[] = groups.length
     ? [combinedClickable({ onClick: press, onLongClick: openMenu })]
     : press
-      ? [selected ? selectable(true, press) : clickable(press)]
+      ? [
+          selected
+            ? selectable(true, press)
+            : checked !== undefined
+              ? // One of a list of choices: TalkBack says if it's the one.
+                selectable(checked, press, 'radioButton')
+              : clickable(press),
+        ]
       : []
 
   const accessoryIcon =

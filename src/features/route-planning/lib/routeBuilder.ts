@@ -236,6 +236,54 @@ export const builderStops = (
   return { stops, removed }
 }
 
+/**
+ * The stops `day`'s route has: the saved route's, or, when there's none or it
+ * has no stops, the day's stops a new route would take (see `newSavedRoute`).
+ * `planned` says it's the saved route's.
+ */
+export const dayRouteStopsFor = (
+  day: string,
+  dayStops: RouteStop[],
+  saved: SavedRoute | undefined,
+  start?: PlanStart
+): { stops: BuilderStop[]; planned: boolean } => {
+  const savedStops = saved ? builderStops(dayStops, saved).stops : []
+  return savedStops.length > 0
+    ? { stops: savedStops, planned: true }
+    : {
+        stops: builderStops(dayStops, newSavedRoute(day, dayStops, start))
+          .stops,
+        planned: false,
+      }
+}
+
+/**
+ * Which Contacts picked elsewhere (the Contacts map) join a route that has
+ * `stops`: those not on it yet, as a stop or a Follow-up, in the order picked,
+ * up to the room left. `leftOff` counts the new ones there wasn't room for.
+ */
+export const contactStopsToAdd = (
+  stops: Pick<BuilderStop, 'key' | 'contactId'>[],
+  picked: AddedStop[]
+): { added: AddedStop[]; leftOff: number } => {
+  const keys = new Set(stops.map((stop) => stop.key))
+  const contactIds = new Set(stops.map((stop) => stop.contactId))
+  const fresh = picked.filter((stop) => {
+    const contactId =
+      stop.kind === 'contact' ? stop.key.slice('contact:'.length) : undefined
+    if (keys.has(stop.key) || (contactId && contactIds.has(contactId)))
+      return false
+    // Picked twice, it's added once.
+    keys.add(stop.key)
+    return true
+  })
+  const room = Math.max(0, MAX_ROUTE_STOPS - stops.length)
+  return {
+    added: fresh.slice(0, room),
+    leftOff: Math.max(0, fresh.length - room),
+  }
+}
+
 /** Rounds down to the 5 minutes before, for a start time people would pick. */
 const roundDown5 = (minutes: number) => Math.max(0, Math.floor(minutes / 5) * 5)
 

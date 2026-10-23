@@ -123,6 +123,7 @@ export function GroupedListRow({
   contextActions,
   disabled,
   selected,
+  checked,
   tint,
   lastInSection,
 }: GroupedListRowProps & { lastInSection?: boolean }) {
@@ -138,6 +139,7 @@ export function GroupedListRow({
       contextActions={contextActions}
       disabled={disabled}
       selected={selected}
+      checked={checked}
       lastInSection={lastInSection}
       style={tint ? { backgroundColor: tint } : undefined}
     >

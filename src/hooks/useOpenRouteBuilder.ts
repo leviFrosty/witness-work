@@ -12,6 +12,7 @@ export type RouteBuilderEntrySurface =
   | 'schedule_inspector'
   | 'plan_menu'
   | 'day_menu'
+  | 'contacts_map'
 
 /**
  * Opens the route builder (on `date`, or today; tied to `planId` when given)

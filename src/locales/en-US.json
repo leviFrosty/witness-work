@@ -650,7 +650,67 @@
   "map_reviewContacts": "Review Contacts",
   "map_searchContacts": "Search mapped contacts",
   "map_showLegend": "Show map legend",
-  "map_chooseLayer": "Choose map layer",
+  "map_options": "Map options",
+  "map_card_noVisits": "No visits yet",
+  "map_card_visitedToday": "Visited today",
+  "map_card_visited": "Visited {{date}}",
+  "map_card_overdue": "Overdue · {{date}}",
+  "map_card_today": "Today {{time}}",
+  "map_card_followUp": "{{date}} {{time}}",
+  "map_group_atStreet": "{{count}} · {{street}}",
+  "map_group_count": {
+    "one": "{{count}} contact",
+    "other": "{{count}} contacts"
+  },
+  "map_group_atStreet_a11y": {
+    "one": "{{count}} contact at {{street}}",
+    "other": "{{count}} contacts at {{street}}"
+  },
+  "map_group_withName": "{{name}} +{{more}}",
+  "map_group_picked": "{{picked}} of {{count}} selected",
+  "map_group_close": "Close list",
+  "map_select": "Select contacts",
+  "map_select_hint": "Draw around pins or tap them",
+  "map_select_count": {
+    "one": "{{count}} selected",
+    "other": "{{count}} selected"
+  },
+  "map_select_picked": "Selected",
+  "map_select_none": "Nothing selected",
+  "map_select_due": "Select Due",
+  "map_select_clear": "Clear",
+  "map_select_done": "Done",
+  "map_select_planRoute": "Plan Route",
+  "map_select_tooMany": "A route holds up to {{max}} stops.",
+  "map_select_roomLeft": {
+    "zero": "Today's route is full.",
+    "one": "Today's route has room for {{count}} more stop.",
+    "other": "Today's route has room for {{count}} more stops."
+  },
+  "map_due_overdue": {
+    "one": "{{count}} overdue",
+    "other": "{{count}} overdue"
+  },
+  "map_due_week": {
+    "one": "{{count}} this week",
+    "other": "{{count}} this week"
+  },
+  "map_due_showOnly": "Show only contacts due",
+  "map_due_showAll": "Show all contacts",
+  "map_todayRoute": "Today's Route",
+  "map_todayRoute_a11y": {
+    "one": "Open today's route, {{count}} stop",
+    "other": "Open today's route, {{count}} stops"
+  },
+  "map_cardDetail": "Pin cards show",
+  "map_cardDetail_nextVisit": "Next visit",
+  "map_cardDetail_nextVisit_description": "Overdue and upcoming follow-ups, otherwise the last visit.",
+  "map_cardDetail_lastVisit": "Last visit",
+  "map_cardDetail_followUpTopic": "Follow-up topic",
+  "map_cardDetail_nameOnly": "Name only",
+  "map_cardDetail_fields": "Contact fields",
+  "map_cardDetail_info": "Each pin on the map can show a card with the contact's name and one detail. Cards for overdue and upcoming follow-ups show first; zoom in to see more.",
+  "mapSettings_title": "Map",
   "map_layer_standard": "Standard",
   "map_layer_satellite": "Satellite",
   "map_layer_hybrid": "Hybrid",
@@ -3699,6 +3759,10 @@
   "routeBuilder_pinnedPlace": "Pinned Location",
   "routeBuilder_addToRoute": "Add to Route",
   "routeBuilder_onRoute": "On route",
+  "routeBuilder_contactsLeftOff": {
+    "one": "The route is full, so {{count}} contact wasn't added.",
+    "other": "The route is full, so {{count}} contacts weren't added."
+  },
   "routeBuilder_details": "Details",
   "routeBuilder_plan": "Plan",
   "routeBuilder_planInfo": "Link one of the day's plans, and the route starts when the plan does, from its place when it has one.",

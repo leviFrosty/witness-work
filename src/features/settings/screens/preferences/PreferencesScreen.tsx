@@ -5,6 +5,7 @@ import {
   Globe as GlobeIcon,
   House as HouseIcon,
   LayoutGrid as LayoutGridIcon,
+  Map as MapIcon,
   PanelBottom as PanelBottomIcon,
   MessagesSquare as MessagesSquareIcon,
   Route as RouteIcon,
@@ -55,6 +56,11 @@ const PreferencesScreen = () => {
           icon={RouteIcon}
           label={i18n.t('navigation')}
           onPress={() => navigation.navigate('PreferencesNavigation')}
+        />
+        <GroupedListRow
+          icon={MapIcon}
+          label={i18n.t('mapSettings_title')}
+          onPress={() => navigation.navigate('PreferencesMap')}
         />
         <GroupedListRow
           icon={SlidersHorizontalIcon}

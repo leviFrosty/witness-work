@@ -1338,8 +1338,6 @@
   "buddies_pushJoinRequestTitle": "طلب الانضمام",
   "buddies_pushJoinRequestBody": "طلب انضمام إلى إحدى خططك من أحد رفاقك.",
   "buddies_inviteBuddies": "دعوة الرفاق",
-  "buddies_invitePlanDescription": "يحصلون على التاريخ والوقت والاسم والموقع والملاحظة، بالإضافة إلى أي تغييرات تجريها.",
-  "buddies_inviteFollowUpDescription": "يحصلون فقط على التاريخ والوقت، والاسم الأول لصاحب البيت، والعنوان، والموضوع. وتُحذف من هواتفهم بعد الزيارة بيوم.",
   "buddies_replyInvited": "مدعو",
   "buddies_replyGoing": "سيحضر",
   "buddies_replyDeclined": "لن يحضر",

@@ -1232,8 +1232,6 @@
   "buddies_pushJoinRequestTitle": "Richiesta di partecipazione",
   "buddies_pushJoinRequestBody": "Un compagno ha chiesto di unirsi a uno dei tuoi piani.",
   "buddies_inviteBuddies": "Invita compagni",
-  "buddies_invitePlanDescription": "Ricevono data, ora, titolo, luogo e nota, oltre a tutte le modifiche che apporti.",
-  "buddies_inviteFollowUpDescription": "Ricevono solo data e ora, il nome di battesimo della persona, l’indirizzo e l’argomento. Viene rimosso dal loro telefono un giorno dopo la visita.",
   "buddies_replyInvited": "Invitato",
   "buddies_replyGoing": "Partecipa",
   "buddies_replyDeclined": "Non può venire",

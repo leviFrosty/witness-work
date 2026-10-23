@@ -11,7 +11,7 @@ import { Modal, Pressable, View } from 'react-native'
 import ActionButton from '@/components/ui/ActionButton'
 import useServiceReport from '@/stores/serviceReport'
 import * as Crypto from 'expo-crypto'
-import { useEffect, useState } from 'react'
+import { Ref, useEffect, useImperativeHandle, useState } from 'react'
 import { useToastController } from '@tamagui/toast'
 import i18n from '@/lib/locales'
 import Text from '@/components/ui/MyText'
@@ -73,7 +73,10 @@ import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 import { buddyDisplayName } from '@/features/buddies/lib/buddyProfile'
 import { placeSearchProvider } from '@/lib/placeSearch'
 import PlanDetailsList from '@/features/plans/components/PlanDetailsList'
-import type { PlanFormSlot } from '@/features/service-reports/components/DayHistoryView'
+import type {
+  PlanFormDraft,
+  PlanFormSlot,
+} from '@/features/service-reports/components/DayHistoryView'
 import PlanRecurrenceControls from '@/features/plans/components/PlanRecurrenceControls'
 import PlanKindToggle from '@/features/plans/components/PlanKindToggle'
 import DockedFormLayout from '@/components/ui/layout/DockedFormLayout'
@@ -394,6 +397,8 @@ type Props = {
    * How long?, then the details, then Add Plan, for that day only.
    */
   layout?: 'docked' | 'inline'
+  /** Set to read the form's new Plan as it stands, e.g. to expand it. */
+  draftRef?: Ref<PlanFormDraft>
 }
 
 /**
@@ -408,6 +413,7 @@ const PlanDayForm = ({
   onSaved,
   onDeleted,
   layout = 'docked',
+  draftRef,
 }: Props) => {
   const navigation = useNavigation<RootStackNavigation>()
   const defaultDate = planDayFromRouteDate(params.date)
@@ -451,6 +457,12 @@ const PlanDayForm = ({
     ? moment(prefill.startTime).hours() * 60 +
       moment(prefill.startTime).minutes()
     : undefined
+  const prefillRecurrence = prefill?.recurrence
+  const initialEndDate = existingRecurringPlan?.recurrence.endDate
+    ? localDateForWrite(existingRecurringPlan.recurrence.endDate)
+    : prefillRecurrence?.endDate
+      ? new Date(prefillRecurrence.endDate)
+      : null
   const initialOneTime = existingRecurringPlan
     ? false
     : isEditMode || !params.recurring
@@ -469,14 +481,8 @@ const PlanDayForm = ({
           )
         : combineDateAndStartTime(defaultStoredDate, prefillStartTime)
   )
-  const [endDate, setEndDate] = useState<Date | null>(
-    existingRecurringPlan?.recurrence.endDate
-      ? localDateForWrite(existingRecurringPlan.recurrence.endDate)
-      : null
-  )
-  const [willEnd, setWillEnd] = useState(
-    !!existingRecurringPlan?.recurrence.endDate
-  )
+  const [endDate, setEndDate] = useState<Date | null>(initialEndDate)
+  const [willEnd, setWillEnd] = useState(!!initialEndDate)
   const [hours, setHours] = useState(
     existingDayPlan
       ? Math.floor(existingDayPlan.minutes / 60)
@@ -492,17 +498,24 @@ const PlanDayForm = ({
         : (prefill?.minutes ?? 0) % 60
   )
   const [interval, setInterval] = useState<number>(
-    existingRecurringPlan?.recurrence.interval ?? 1
+    existingRecurringPlan?.recurrence.interval ??
+      prefillRecurrence?.interval ??
+      1
   )
   const [frequency, setFrequency] = useState<RecurringPlanFrequencies>(
     existingRecurringPlan?.recurrence.frequency ??
+      prefillRecurrence?.frequency ??
       RecurringPlanFrequencies.WEEKLY
   )
   const [weekday, setWeekday] = useState(
-    existingRecurringPlan?.recurrence.monthlyByWeekdayConfig?.weekday ?? 0
+    existingRecurringPlan?.recurrence.monthlyByWeekdayConfig?.weekday ??
+      prefillRecurrence?.weekday ??
+      0
   )
   const [weekOfMonth, setWeekOfMonth] = useState(
-    existingRecurringPlan?.recurrence.monthlyByWeekdayConfig?.weekOfMonth ?? 1
+    existingRecurringPlan?.recurrence.monthlyByWeekdayConfig?.weekOfMonth ??
+      prefillRecurrence?.weekOfMonth ??
+      1
   )
   const [saveScopeModalOpen, setSaveScopeModalOpen] = useState(false)
   const [selectedSaveScope, setSelectedSaveScope] =
@@ -655,18 +668,44 @@ const PlanDayForm = ({
       : existingRecurringPlan?.reminderOffsetMinutes
     if (typeof savedMinutes === 'number')
       return offsetFromMinutes(savedMinutes) ?? { amount: 0, unit: 'minutes' }
-    return defaultNotifyOffset
+    return prefill?.reminderOffset ?? defaultNotifyOffset
   }
 
   const initialNotifyMe = existingDayPlan
     ? !!existingDayPlan.notifyMe
     : existingRecurringPlan
       ? !!existingRecurringPlan.notifyMe
-      : planAlwaysNotify
+      : (prefill?.notifyMe ?? planAlwaysNotify)
   const [notifyMe, setNotifyMe] = useState<boolean>(initialNotifyMe)
   const [notifyMeOffset, setNotifyMeOffset] = useState<NotifyMeOffset>(
     initialNotifyOffset()
   )
+
+  useImperativeHandle(draftRef, () => ({
+    params: () => ({
+      date: date.toISOString(),
+      recurring: !oneTime,
+      prefill: {
+        anytime,
+        startTime: anytime ? undefined : date.toISOString(),
+        minutes: hours * 60 + minutes,
+        title,
+        location,
+        ...savedNote,
+        categoryId: selectedCategoryId,
+        buddies: invitedBuddies,
+        notifyMe,
+        reminderOffset: notifyMeOffset,
+        recurrence: {
+          frequency,
+          interval,
+          weekday,
+          weekOfMonth,
+          endDate: willEnd && endDate ? endDate.toISOString() : undefined,
+        },
+      },
+    }),
+  }))
 
   const reminderMinutes = offsetToMinutes(notifyMeOffset)
   const anytimeReminderAt = new Date(date)
@@ -697,12 +736,8 @@ const PlanDayForm = ({
             )
           : combineDateAndStartTime(defaultStoredDate, prefillStartTime)
     )
-    setEndDate(
-      existingRecurringPlan?.recurrence.endDate
-        ? localDateForWrite(existingRecurringPlan.recurrence.endDate)
-        : null
-    )
-    setWillEnd(!!existingRecurringPlan?.recurrence.endDate)
+    setEndDate(initialEndDate)
+    setWillEnd(!!initialEndDate)
     setHours(
       existingDayPlan
         ? Math.floor(existingDayPlan.minutes / 60)
@@ -717,16 +752,25 @@ const PlanDayForm = ({
           ? recurringPlanData.minutes % 60
           : (prefill?.minutes ?? 0) % 60
     )
-    setInterval(existingRecurringPlan?.recurrence.interval ?? 1)
+    setInterval(
+      existingRecurringPlan?.recurrence.interval ??
+        prefillRecurrence?.interval ??
+        1
+    )
     setFrequency(
       existingRecurringPlan?.recurrence.frequency ??
+        prefillRecurrence?.frequency ??
         RecurringPlanFrequencies.WEEKLY
     )
     setWeekday(
-      existingRecurringPlan?.recurrence.monthlyByWeekdayConfig?.weekday ?? 0
+      existingRecurringPlan?.recurrence.monthlyByWeekdayConfig?.weekday ??
+        prefillRecurrence?.weekday ??
+        0
     )
     setWeekOfMonth(
-      existingRecurringPlan?.recurrence.monthlyByWeekdayConfig?.weekOfMonth ?? 1
+      existingRecurringPlan?.recurrence.monthlyByWeekdayConfig?.weekOfMonth ??
+        prefillRecurrence?.weekOfMonth ??
+        1
     )
     setNote(initialNote())
     setTitle(
@@ -1148,13 +1192,11 @@ const PlanDayForm = ({
       : activeBuddies.length && buddiesAvailability !== 'hidden'
         ? {
             summary: invitedBuddyNames || undefined,
-            description: i18n.t('buddies_invitePlanDescription'),
             picker: (
               <BuddyPicker
                 chipsOnly
                 value={invitedBuddies}
                 onChange={setInvitedBuddies}
-                description={i18n.t('buddies_invitePlanDescription')}
                 replies={shareReplies}
               />
             ),
@@ -1383,11 +1425,13 @@ export const renderDaySheetPlanForm = ({
   layout,
   params,
   onDone,
+  draftRef,
 }: PlanFormSlot) => (
   <PlanDayForm
     params={params ?? { date: date.toISOString() }}
     source='day_sheet'
     layout={layout}
+    draftRef={draftRef}
     onSaved={onDone}
     onDeleted={() => onDone()}
   />

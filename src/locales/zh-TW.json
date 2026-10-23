@@ -1232,8 +1232,6 @@
   "buddies_pushJoinRequestTitle": "請求加入",
   "buddies_pushJoinRequestBody": "有夥伴請求加入你的其中一項計畫。",
   "buddies_inviteBuddies": "邀請夥伴",
-  "buddies_invitePlanDescription": "對方會收到日期、時間、標題、地點和備註，以及你之後所做的任何更改。",
-  "buddies_inviteFollowUpDescription": "對方只會收到日期和時間、住戶的名字、地址和主題。探訪一天後，這些資料就會從對方的手機中移除。",
   "buddies_replyInvited": "已邀請",
   "buddies_replyGoing": "會參加",
   "buddies_replyDeclined": "無法參加",

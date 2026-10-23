@@ -1232,8 +1232,6 @@
   "buddies_pushJoinRequestTitle": "Teilnahme anfragen",
   "buddies_pushJoinRequestBody": "Ein Buddy möchte an einem Ihrer Pläne teilnehmen.",
   "buddies_inviteBuddies": "Buddies einladen",
-  "buddies_invitePlanDescription": "Sie erhalten Datum, Uhrzeit, Titel, Ort und Notiz sowie alle Änderungen, die Sie vornehmen.",
-  "buddies_inviteFollowUpDescription": "Sie erhalten nur Datum und Uhrzeit, den Vornamen des Wohnungsinhabers, die Adresse und das Thema. Einen Tag nach dem Besuch wird es von ihrem Smartphone entfernt.",
   "buddies_replyInvited": "Eingeladen",
   "buddies_replyGoing": "Kommt mit",
   "buddies_replyDeclined": "Kann nicht",

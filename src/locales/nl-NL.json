@@ -1232,8 +1232,6 @@
   "buddies_pushJoinRequestTitle": "Vraag om mee te gaan",
   "buddies_pushJoinRequestBody": "Een buddy heeft gevraagd om mee te gaan met een van je plannen.",
   "buddies_inviteBuddies": "Buddy's uitnodigen",
-  "buddies_invitePlanDescription": "Ze krijgen de datum, tijd, titel, locatie en notitie, plus alle wijzigingen die je maakt.",
-  "buddies_inviteFollowUpDescription": "Ze krijgen alleen de datum en tijd, de voornaam van de huisbewoner, het adres en het onderwerp. Het wordt een dag na het bezoek van hun telefoon verwijderd.",
   "buddies_replyInvited": "Uitgenodigd",
   "buddies_replyGoing": "Gaat mee",
   "buddies_replyDeclined": "Kan niet",

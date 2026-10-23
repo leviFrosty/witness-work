@@ -1,4 +1,3 @@
-import i18n from '@/lib/locales'
 import BuddyPicker from '@/features/buddies/components/BuddyPicker'
 import useShareReplies from '@/features/buddies/hooks/useShareReplies'
 import { followUpShareKey } from '@/features/buddies/lib/shares'
@@ -16,12 +15,5 @@ export default function FollowUpBuddyPicker({
   const replies = useShareReplies(
     value.length > 0 ? followUpShareKey(visitId) : undefined
   )
-  return (
-    <BuddyPicker
-      value={value}
-      onChange={onChange}
-      description={i18n.t('buddies_inviteFollowUpDescription')}
-      replies={replies}
-    />
-  )
+  return <BuddyPicker value={value} onChange={onChange} replies={replies} />
 }

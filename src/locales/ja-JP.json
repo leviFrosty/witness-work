@@ -1232,8 +1232,6 @@
   "buddies_pushJoinRequestTitle": "参加のリクエスト",
   "buddies_pushJoinRequestBody": "バディがあなたのプランへの参加をリクエストしました。",
   "buddies_inviteBuddies": "バディを招待",
-  "buddies_invitePlanDescription": "日付、時間、タイトル、場所、メモのほか、あなたが行う変更も共有されます。",
-  "buddies_inviteFollowUpDescription": "共有されるのは、日時、家の人の名前(名)、住所、話題だけです。訪問の翌日に、相手のスマートフォンから削除されます。",
   "buddies_replyInvited": "招待済み",
   "buddies_replyGoing": "参加します",
   "buddies_replyDeclined": "参加できません",

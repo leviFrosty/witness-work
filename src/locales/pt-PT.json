@@ -2002,8 +2002,6 @@
   "buddies_pushJoinRequestTitle": "Pedir para participar",
   "buddies_pushJoinRequestBody": "Um companheiro pediu para participar num dos seus planos.",
   "buddies_inviteBuddies": "Convidar companheiros",
-  "buddies_invitePlanDescription": "Recebem a data, a hora, o título, o local e a nota, além de quaisquer alterações que fizer.",
-  "buddies_inviteFollowUpDescription": "Recebem apenas a data e a hora, o primeiro nome do morador, a morada e o assunto. É removido do telemóvel deles um dia após a visita.",
   "buddies_replyInvited": "Convidado",
   "buddies_replyGoing": "Vai",
   "buddies_replyDeclined": "Não pode ir",

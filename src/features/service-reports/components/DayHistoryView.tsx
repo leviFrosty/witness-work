@@ -1,6 +1,7 @@
 import {
   CalendarDays as CalendarDaysIcon,
   Clock as ClockIcon,
+  Maximize2 as Maximize2Icon,
   Plus as PlusIcon,
 } from 'lucide-react-native'
 import LucideIcon from '@/components/ui/LucideIcon'
@@ -18,7 +19,7 @@ import TimeReportRow from '@/features/service-reports/components/TimeReportRow'
 import Empty from '@/components/ui/Empty'
 import Button from '@/components/ui/Button'
 import IconButton from '@/components/ui/IconButton'
-import { ReactNode, useMemo, useRef, useState } from 'react'
+import { ReactNode, RefObject, useMemo, useRef, useState } from 'react'
 import useServiceReport from '@/stores/serviceReport'
 import XView from '@/components/ui/layout/XView'
 import {
@@ -30,8 +31,14 @@ import type { PlanListItem } from '@/types/timeEntry'
 import type { LogTimePrefill } from '@/hooks/usePlanMenuActions'
 import type { RootStackParamList } from '@/types/rootStack'
 import DayHistoryHeader from '@/features/service-reports/components/DayHistoryHeader'
-import TimeEntryForm from '@/features/service-reports/components/TimeEntryForm'
+import TimeEntryForm, {
+  type TimeEntryDraft,
+} from '@/features/service-reports/components/TimeEntryForm'
 import CollapsibleCard from '@/components/ui/CollapsibleCard'
+import PointerTooltip from '@/components/ui/PointerTooltip'
+
+/** Reads a new Plan's form as it stands, to carry it to the Plan screen. */
+export type PlanFormDraft = { params: () => RootStackParamList['PlanDay'] }
 
 /** What a day's Plan form is shown with, by the screen that provides it. */
 export type PlanFormSlot = {
@@ -41,6 +48,8 @@ export type PlanFormSlot = {
   params?: RootStackParamList['PlanDay']
   /** Saved, with where Plan Details shows the Plan now; or deleted. */
   onDone: (target?: RootStackParamList['Plan Details']) => void
+  /** Reads the new Plan as it stands, for an inline form to expand. */
+  draftRef?: RefObject<PlanFormDraft | null>
 }
 
 /**
@@ -88,6 +97,10 @@ interface DayHistoryViewProps {
   onPlanOpen?: (target: RootStackParamList['Plan Details']) => void
   /** Edits a Plan in place, for hosts that show the Plan form themselves. */
   onPlanEdit?: (params: RootStackParamList['PlanDay']) => void
+  /** Opens an inline time form full screen, with what's entered so far. */
+  onExpandTime?: (params: RootStackParamList['Add Time']) => void
+  /** Opens an inline Plan form full screen, with what's entered so far. */
+  onExpandPlan?: (params: RootStackParamList['PlanDay']) => void
 }
 
 const contributionToPlanListItem = (
@@ -137,6 +150,30 @@ const EmptyActionButton = (props: {
   )
 }
 
+/** Beside an inline form's chevron: opens the form full screen. */
+const ExpandButton = (props: { onPress: () => void; testID?: string }) => {
+  const theme = useTheme()
+  return (
+    <PointerTooltip label={i18n.t('openFullScreen')}>
+      <IconButton
+        noTransform
+        icon={Maximize2Icon}
+        size={16}
+        color={theme.colors.textAlt}
+        onPress={props.onPress}
+        accessibilityLabel={i18n.t('openFullScreen')}
+        testID={props.testID}
+        style={{
+          width: 44,
+          height: 44,
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      />
+    </PointerTooltip>
+  )
+}
+
 const DayHistoryView: React.FC<DayHistoryViewProps> = ({
   date,
   serviceReports = [],
@@ -152,6 +189,8 @@ const DayHistoryView: React.FC<DayHistoryViewProps> = ({
   onFormOpen,
   onPlanOpen,
   onPlanEdit,
+  onExpandTime,
+  onExpandPlan,
 }) => {
   const theme = useTheme()
   const { showsTimeEntry } = usePublisher()
@@ -187,6 +226,20 @@ const DayHistoryView: React.FC<DayHistoryViewProps> = ({
   const [planFormOpen, setPlanFormOpen] = useState(false)
   const timeCard = useRef<View>(null)
   const planCard = useRef<View>(null)
+  const timeDraft = useRef<TimeEntryDraft>(null)
+  const planDraft = useRef<PlanFormDraft>(null)
+  // The inline draft goes full screen, and the card folds away behind it.
+  const expand =
+    <P,>(
+      draft: RefObject<{ params: () => P } | null>,
+      setOpen: (open: boolean) => void,
+      onExpand: (params: P) => void,
+      fallback: P
+    ) =>
+    () => {
+      onExpand(draft.current?.params() ?? fallback)
+      setOpen(false)
+    }
   const toggleForm =
     (setOpen: (open: boolean) => void, card: React.RefObject<View | null>) =>
     (open: boolean) => {
@@ -240,9 +293,20 @@ const DayHistoryView: React.FC<DayHistoryViewProps> = ({
             label={i18n.t('addTime')}
             open={timeFormOpen}
             onOpenChange={toggleForm(setTimeFormOpen, timeCard)}
+            accessory={
+              onExpandTime ? (
+                <ExpandButton
+                  onPress={expand(timeDraft, setTimeFormOpen, onExpandTime, {
+                    date: date.toISOString(),
+                  })}
+                  testID='day-time-form-expand'
+                />
+              ) : undefined
+            }
             testID='day-time-form'
           >
             <TimeEntryForm
+              draftRef={timeDraft}
               layout='inline'
               date={date}
               source='day_sheet'
@@ -332,11 +396,22 @@ const DayHistoryView: React.FC<DayHistoryViewProps> = ({
             label={i18n.t('planDay')}
             open={planFormOpen}
             onOpenChange={toggleForm(setPlanFormOpen, planCard)}
+            accessory={
+              onExpandPlan ? (
+                <ExpandButton
+                  onPress={expand(planDraft, setPlanFormOpen, onExpandPlan, {
+                    date: date.toISOString(),
+                  })}
+                  testID='day-plan-form-expand'
+                />
+              ) : undefined
+            }
             testID='day-plan-form'
           >
             {renderPlanForm?.({
               date,
               layout: 'inline',
+              draftRef: planDraft,
               // Once saved, the Plan takes the card's place in the list.
               onDone: () => setPlanFormOpen(false),
             })}

@@ -10,6 +10,11 @@ import { postScriptName } from '@/lib/postScriptName'
 
 // Compose's Collapsible pads its own header and content (16dp each side).
 const CARD_PADDING = Platform.OS === 'android' ? 4 : 16
+/**
+ * From the card's trailing edge to an accessory's 44pt frame, clear of the
+ * chevron: SwiftUI's sits at the card's padding, Compose's 16dp inside it.
+ */
+const ACCESSORY_END = Platform.OS === 'android' ? 52 : 36
 const CONTENT_INSET =
   2 + CARD_PADDING * 2 + (Platform.OS === 'android' ? 32 : 0)
 
@@ -19,6 +24,11 @@ type Props = {
   onOpenChange: (open: boolean) => void
   /** React Native content, laid out at the width left inside the card. */
   children: ReactNode
+  /**
+   * A button beside the disclosure chevron, e.g. one that opens the content
+   * full screen. Keep it to one icon: it sits over the header's trailing end.
+   */
+  accessory?: ReactNode
   testID?: string
   ref?: Ref<View>
 }
@@ -34,6 +44,7 @@ export default function CollapsibleCard({
   open,
   onOpenChange,
   children,
+  accessory,
   testID,
   ref,
 }: Props) {
@@ -44,13 +55,20 @@ export default function CollapsibleCard({
   const contentWidth = width && width - CONTENT_INSET
   const [opened, setOpened] = useState(open)
   if (open && !opened) setOpened(true)
+  // The header's height, read while the card is closed, to center the
+  // accessory on it.
+  const [headerHeight, setHeaderHeight] = useState<number>()
 
   return (
     <View
       ref={ref}
       testID={testID}
       style={[cardStyle, { padding: CARD_PADDING }]}
-      onLayout={(event) => setWidth(event.nativeEvent.layout.width)}
+      onLayout={(event) => {
+        const { layout } = event.nativeEvent
+        setWidth(layout.width)
+        if (!open) setHeaderHeight(layout.height - CARD_PADDING * 2)
+      }}
     >
       {/* Without ignoreSafeArea, SwiftUI insets cards laid out under the
       header or home indicator, shifting the label and clipping the content. */}
@@ -93,6 +111,17 @@ export default function CollapsibleCard({
           ) : null}
         </Collapsible>
       </Host>
+      {accessory && headerHeight ? (
+        <View
+          style={{
+            position: 'absolute',
+            top: CARD_PADDING + headerHeight / 2 - 22,
+            end: ACCESSORY_END,
+          }}
+        >
+          {accessory}
+        </View>
+      ) : null}
     </View>
   )
 }

@@ -1258,8 +1258,6 @@
   "buddies_pushJoinRequestTitle": "Просьба присоединиться",
   "buddies_pushJoinRequestBody": "Напарник попросил присоединиться к одному из ваших планов.",
   "buddies_inviteBuddies": "Пригласить напарников",
-  "buddies_invitePlanDescription": "Они получат дату, время, название, место и заметку, а также все ваши изменения.",
-  "buddies_inviteFollowUpDescription": "Они получат только дату и время, имя хозяина дома, адрес и тему. Через день после посещения это удаляется с их телефона.",
   "buddies_replyInvited": "Приглашение отправлено",
   "buddies_replyGoing": "Идёт",
   "buddies_replyDeclined": "Не сможет",

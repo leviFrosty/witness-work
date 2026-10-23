@@ -8,7 +8,7 @@ import {
   noteFields,
   type NoteUpdate,
 } from '@/lib/richText/notes'
-import { useEffect, useState } from 'react'
+import { Ref, useEffect, useImperativeHandle, useState } from 'react'
 import useTheme from '@/contexts/theme'
 import Text from '@/components/ui/MyText'
 import ActionButton from '@/components/ui/ActionButton'
@@ -20,6 +20,8 @@ import {
   storedDateToLocalDate,
 } from '@/lib/normalizeDate'
 import { TimeEntry } from '@/types/timeEntry'
+import type { RichText } from '@/types/richText'
+import type { RootStackParamList } from '@/types/rootStack'
 import i18n from '@/lib/locales'
 import DockedFormLayout from '@/components/ui/layout/DockedFormLayout'
 import FormDetailsSection from '@/components/ui/inputs/FormDetailsSection'
@@ -65,6 +67,13 @@ export type TimeEntryPrefill = {
   minutes?: number
   /** Seeds a new entry's Type, when that Category still exists. */
   categoryId?: string
+  note?: string
+  noteDoc?: RichText
+}
+
+/** Reads a new entry's form as it stands, to carry it to Add Time. */
+export type TimeEntryDraft = {
+  params: () => NonNullable<RootStackParamList['Add Time']>
 }
 
 type Props = TimeEntryPrefill & {
@@ -84,6 +93,8 @@ type Props = TimeEntryPrefill & {
    * Time pill, then Note and Type, then Submit, for that day only.
    */
   layout?: 'docked' | 'inline'
+  /** Set to read the form's new entry as it stands, e.g. to expand it. */
+  draftRef?: Ref<TimeEntryDraft>
 }
 
 /**
@@ -155,8 +166,12 @@ const TimeEntryForm = (props: Props) => {
       prefillCategory?.isCredit ??
       false,
     categoryId: existingServiceReport?.report.categoryId ?? prefillCategory?.id,
-    note: existingServiceReport?.report.note,
-    noteDoc: existingServiceReport?.report.noteDoc,
+    note: existingServiceReport
+      ? existingServiceReport.report.note
+      : props.note,
+    noteDoc: existingServiceReport
+      ? existingServiceReport.report.noteDoc
+      : props.noteDoc,
   })
   const validation = useFormValidation(
     {
@@ -207,6 +222,19 @@ const TimeEntryForm = (props: Props) => {
     ...serviceReport,
     ...noteFields(getNoteDoc(serviceReport)),
   })
+  useImperativeHandle(props.draftRef, () => ({
+    params: () => {
+      const entry = savedEntry()
+      return {
+        date: entry.date.toISOString(),
+        hours: entry.hours,
+        minutes: entry.minutes,
+        categoryId: entry.categoryId,
+        note: entry.note,
+        noteDoc: entry.noteDoc,
+      }
+    },
+  }))
   const changed = useDraftChanged({ entry: savedEntry(), selectedValue })
   const { onChangedChange } = props
   useEffect(() => {

@@ -48,6 +48,8 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
         hours={route.params?.hours}
         minutes={route.params?.minutes}
         categoryId={route.params?.categoryId}
+        note={route.params?.note}
+        noteDoc={route.params?.noteDoc}
         source='time_entry_form'
         onChangedChange={setChanged}
         onDone={() => {

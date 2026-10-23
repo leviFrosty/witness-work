@@ -1258,8 +1258,6 @@
   "buddies_pushJoinRequestTitle": "Прохання приєднатися",
   "buddies_pushJoinRequestBody": "Напарник попросив приєднатися до одного з ваших планів.",
   "buddies_inviteBuddies": "Запросити напарників",
-  "buddies_invitePlanDescription": "Вони отримують дату, час, назву, місце й примітку, а також усі зміни, які ви вносите.",
-  "buddies_inviteFollowUpDescription": "Вони отримують лише дату й час, ім'я співрозмовника, адресу й тему. Через день після візиту це видаляється з їхнього телефона.",
   "buddies_replyInvited": "Запрошено",
   "buddies_replyGoing": "Піду",
   "buddies_replyDeclined": "Не зможу",

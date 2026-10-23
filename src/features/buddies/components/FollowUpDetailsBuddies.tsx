@@ -2,7 +2,6 @@ import { View } from 'react-native'
 import { UserPlus as UserPlusIcon } from 'lucide-react-native'
 import AvatarGroup, { AvatarGroupCount } from '@/components/ui/AvatarGroup'
 import EmphasizedText from '@/components/ui/EmphasizedText'
-import InfoPopover from '@/components/ui/InfoPopover'
 import LucideIcon from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
 import PullDownMenu from '@/components/ui/PullDownMenu'
@@ -175,13 +174,6 @@ export default function FollowUpDetailsBuddies({
               ) : null}
             </View>
           </PullDownMenu>
-        ) : null}
-        {/* Inviting sends right away, so say what goes with it. */}
-        {uninvited.length > 0 ? (
-          <InfoPopover
-            title={i18n.t('buddies_inviteBuddies')}
-            description={i18n.t('buddies_inviteFollowUpDescription')}
-          />
         ) : null}
       </View>
       {sentences.length > 0 ? (

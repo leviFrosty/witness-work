@@ -1,7 +1,7 @@
 import { useContext, useEffect, useRef, useState } from 'react'
 import { ScrollView, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useIsFocused } from '@react-navigation/native'
+import { useIsFocused, useNavigation } from '@react-navigation/native'
 import { X as XIcon } from 'lucide-react-native'
 import { ChevronBackwardIcon } from '@/components/ui/DirectionalIcon'
 import IconButton from '@/components/ui/IconButton'
@@ -12,7 +12,7 @@ import { AnimationViewContext } from '@/contexts/AnimationView'
 import useTheme from '@/contexts/theme'
 import type { LogTimePrefill } from '@/hooks/usePlanMenuActions'
 import i18n from '@/lib/locales'
-import type { RootStackParamList } from '@/types/rootStack'
+import type { RootStackNavigation, RootStackParamList } from '@/types/rootStack'
 import { DayPlan, TimeEntry } from '@/types/timeEntry'
 import DayHistoryHeader from '@/features/service-reports/components/DayHistoryHeader'
 import DayHistoryView, {
@@ -117,6 +117,7 @@ const SelectedDateSheet: React.FC<Props> = ({
   // here can open the note editor: the sheet steps aside for it, keeping what
   // it shows for when the screen is back.
   const focused = useIsFocused()
+  const navigation = useNavigation<RootStackNavigation>()
 
   const close = () => setSheet({ ...sheet, open: false })
 
@@ -338,6 +339,9 @@ const SelectedDateSheet: React.FC<Props> = ({
               inlineForms
               renderPlanForm={renderPlanForm}
               onFormOpen={revealForm}
+              // Full screen, the sheet steps aside and comes back after.
+              onExpandTime={(params) => navigation.navigate('Add Time', params)}
+              onExpandPlan={(params) => navigation.navigate('PlanDay', params)}
             />
             {renderFooter?.(sheet.date, navigateAfterClosing)}
           </ScrollView>

@@ -87,13 +87,11 @@ export default function RouteBuddies({
     <InviteBuddiesFormRow
       testID='route-buddies-row'
       summary={summary || undefined}
-      description={i18n.t('buddies_invitePlanDescription')}
       picker={
         <BuddyPicker
           chipsOnly
           value={invitedIds}
           onChange={invite}
-          description={i18n.t('buddies_invitePlanDescription')}
           replies={replies}
         />
       }

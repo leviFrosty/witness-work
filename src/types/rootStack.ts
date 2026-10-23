@@ -1,6 +1,11 @@
 import { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { Coordinate } from '@/types/contact'
-import type { BuddyShareRef, PlanLocation } from '@/types/timeEntry'
+import type moment from 'moment'
+import type {
+  BuddyShareRef,
+  PlanLocation,
+  RecurringPlanFrequencies,
+} from '@/types/timeEntry'
 import type { RichText } from '@/types/richText'
 import type { SupporterGateAttribution } from '@/lib/supporterGateAnalytics'
 
@@ -90,6 +95,9 @@ export type RootStackParamList = {
         minutes?: number
         /** Seeds a new entry's Type, e.g. logging a Plan as time. */
         categoryId?: string
+        /** Seeds a new entry's Note, e.g. from a day's inline form. */
+        note?: string
+        noteDoc?: RichText
         /** Entering an existing service report ID will enter 'edit' mode. */
         existingReport?: string
         /** Opened by the Home timer's Save: submitting clears the timer. */
@@ -186,6 +194,20 @@ export type RootStackParamList = {
       categoryId?: string
       /** Buddy inbox ids to invite. */
       buddies?: string[]
+      /** A reminder, e.g. one set in a day's inline form. */
+      notifyMe?: boolean
+      reminderOffset?: {
+        amount: number
+        unit: moment.unitOfTime.DurationConstructor
+      }
+      /** How a Recurring Plan repeats. `endDate` is ISO. */
+      recurrence?: {
+        frequency: RecurringPlanFrequencies
+        interval: number
+        weekday: number
+        weekOfMonth: number
+        endDate?: string
+      }
     }
     /** Starts a new plan as Recurring instead of One-Time. */
     recurring?: boolean

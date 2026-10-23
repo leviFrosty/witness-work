@@ -1232,8 +1232,6 @@
   "buddies_pushJoinRequestTitle": "참여 요청",
   "buddies_pushJoinRequestBody": "버디가 내 계획 중 하나에 참여를 요청했습니다.",
   "buddies_inviteBuddies": "버디 초대",
-  "buddies_invitePlanDescription": "날짜, 시간, 제목, 장소, 메모와 이후의 모든 변경 사항을 받습니다.",
-  "buddies_inviteFollowUpDescription": "날짜와 시간, 집주인의 이름, 주소, 주제만 받습니다. 방문 하루 뒤에 상대의 휴대폰에서 삭제됩니다.",
   "buddies_replyInvited": "초대됨",
   "buddies_replyGoing": "참석",
   "buddies_replyDeclined": "참석 불가",

@@ -1232,8 +1232,6 @@
   "buddies_pushJoinRequestTitle": "Xin tham gia",
   "buddies_pushJoinRequestBody": "Một bạn đồng hành đã xin tham gia một trong các Kế hoạch của bạn.",
   "buddies_inviteBuddies": "Mời bạn đồng hành",
-  "buddies_invitePlanDescription": "Họ nhận được ngày, giờ, tiêu đề, địa điểm và ghi chú, cùng mọi thay đổi bạn thực hiện.",
-  "buddies_inviteFollowUpDescription": "Họ chỉ nhận được ngày và giờ, tên của chủ nhà, địa chỉ và chủ đề. Thông tin này bị xóa khỏi điện thoại của họ một ngày sau lần thăm.",
   "buddies_replyInvited": "Đã mời",
   "buddies_replyGoing": "Sẽ đi",
   "buddies_replyDeclined": "Không thể đi",

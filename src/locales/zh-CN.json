@@ -1232,8 +1232,6 @@
   "buddies_pushJoinRequestTitle": "请求加入",
   "buddies_pushJoinRequestBody": "一位同伴请求加入你的一个计划。",
   "buddies_inviteBuddies": "邀请同伴",
-  "buddies_invitePlanDescription": "他们会收到日期、时间、标题、地点和备注，以及你之后所做的任何更改。",
-  "buddies_inviteFollowUpDescription": "他们只会收到日期和时间、住户的名字、地址和话题。访问后一天，它会从他们的手机上移除。",
   "buddies_replyInvited": "已邀请",
   "buddies_replyGoing": "会参加",
   "buddies_replyDeclined": "无法参加",

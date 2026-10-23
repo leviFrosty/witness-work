@@ -68,6 +68,8 @@ interface SpeechTranscriptionNative {
   ): Promise<{ locale: string; engine: SpeechEngine }>
   stop(): Promise<string>
   cancel(): Promise<void>
+  /** Version 2+. */
+  playCue?(uri: string): void
   addListener<E extends keyof Events>(
     event: E,
     listener: Events[E]
@@ -139,6 +141,16 @@ export function stop(): Promise<string> {
 
 export function cancel(): Promise<void> {
   return native ? native.cancel() : Promise.resolve()
+}
+
+/**
+ * Plays a short sound from a local file URI even while recording (iOS mutes app
+ * audio then). Follows the silent switch and ringer mode. A no-op in binaries
+ * before version 2.
+ */
+export function playCue(uri: string): void {
+  if ((native?.speechTranscriptionVersion ?? 0) < 2) return
+  void native?.playCue?.(uri)
 }
 
 export function addListener<E extends keyof Events>(

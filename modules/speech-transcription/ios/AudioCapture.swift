@@ -27,6 +27,9 @@ final class AudioCapture: @unchecked Sendable {
     let session = AVAudioSession.sharedInstance()
     savedSession = (session.category, session.mode, session.categoryOptions)
     try session.setCategory(.record, mode: .measurement, options: [.duckOthers])
+    // Recording mutes haptics and system sounds by default; let the ready
+    // snap, the start cue and taps on the controls through.
+    try? session.setAllowHapticsAndSystemSoundsDuringRecording(true)
     try session.setActive(true, options: .notifyOthersOnDeactivation)
 
     let input = engine.inputNode

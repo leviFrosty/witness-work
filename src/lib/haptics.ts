@@ -26,6 +26,14 @@ const Haptics = {
   heavy: whenEnabled(() =>
     ExpoHaptics.impactAsync(ExpoHaptics.ImpactFeedbackStyle.Heavy)
   ),
+  /** A dull, cushioned tap; repeats well as a "working" pulse. */
+  soft: whenEnabled(() =>
+    ExpoHaptics.impactAsync(ExpoHaptics.ImpactFeedbackStyle.Soft)
+  ),
+  /** A crisp, hard tap: something clicking into place. */
+  rigid: whenEnabled(() =>
+    ExpoHaptics.impactAsync(ExpoHaptics.ImpactFeedbackStyle.Rigid)
+  ),
   /**
    * Lightweight tick — designed for scrub/picker UX. Cheaper than `light` and
    * tuned by iOS to be flooded at high frequency without overwhelming the

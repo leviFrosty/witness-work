@@ -8,6 +8,8 @@ import Animated, {
   useFrameCallback,
   useReducedMotion,
   useSharedValue,
+  withDelay,
+  withSpring,
   withTiming,
   type SharedValue,
 } from 'react-native-reanimated'
@@ -17,7 +19,13 @@ import useOnScreen from '@/hooks/useOnScreen'
 import { orbShader } from '@/features/scribe/shaders/orbShader'
 import { orbPalette } from '@/features/scribe/shaders/orbPalette'
 
-export type ScribeOrbState = 'idle' | 'listening' | 'organizing' | 'disabled'
+export type ScribeOrbState =
+  | 'idle'
+  /** A small spinner; leaving it snaps a dot into place that springs open. */
+  | 'loading'
+  | 'listening'
+  | 'organizing'
+  | 'disabled'
 
 interface Props {
   /** Canvas size; the sphere is `core` of it and the rest is glow. */
@@ -40,16 +48,32 @@ interface Props {
 }
 
 const CROSSFADE_MS = 450
+// The ready snap: the spinner closes into a dot, which springs open once it
+// has registered.
+const POP_MS = 110
+const GROW_DELAY_MS = 160
+const GROW_SPRING = { damping: 13, stiffness: 190, mass: 0.9 }
+// Level smoothing time constants (s). The meter steps every 80 ms; the first
+// stage follows it (quick to rise, slower to fall) and the second rounds off
+// its corners, so the orb glides instead of stepping.
+const LEVEL_RISE = 0.06
+const LEVEL_FALL = 0.26
+const LEVEL_GLIDE = 0.07
+// Flow speed (per s) quiet and at full voice. The phase is integrated, so a
+// change in speed never jumps the pattern.
+const FLOW_BASE = 0.22
+const FLOW_VOICE = 0.3
 
 /**
  * The Scribe AI orb: a Skia shader on the UI thread that breathes when idle,
  * swells and ripples with the voice level (fast attack, slow release), and
- * shrinks into a circling ring while organizing. It stops drawing while its
- * screen is covered or blurred, the app is in the background, or (with
- * `pausesOffscreen`) it has scrolled out of the window, so Home pays nothing
- * for it when it's out of sight. Reduce Motion swaps it for a still ring whose
- * opacity and width follow the level; a shader that fails to compile falls back
- * to a plain circle.
+ * shrinks into a circling ring while organizing. `loading` shows a small
+ * spinner; leaving it snaps a dot into place that springs open into the orb. It
+ * stops drawing while its screen is covered or blurred, the app is in the
+ * background, or (with `pausesOffscreen`) it has scrolled out of the window, so
+ * Home pays nothing for it when it's out of sight. Reduce Motion swaps it for a
+ * still ring whose opacity and width follow the level; a shader that fails to
+ * compile falls back to a plain circle.
  */
 const ScribeOrb = ({
   size,
@@ -68,21 +92,47 @@ const ScribeOrb = ({
   const ref = useRef<View>(null)
   const palette = orbPalette(theme)
   const muted = offline || state === 'disabled'
-  const listening = state === 'listening'
+  const loading = state === 'loading'
 
   const time = useSharedValue(2.35)
+  const flow = useSharedValue(2.35 * FLOW_BASE)
+  const listen = useSharedValue(state === 'listening' ? 1 : 0)
+  const rough = useSharedValue(0)
   const smooth = useSharedValue(0)
   const proc = useSharedValue(state === 'organizing' ? 1 : 0)
   const mute = useSharedValue(muted ? 1 : 0)
+  const load = useSharedValue(loading ? 1 : 0)
+  const pop = useSharedValue(loading ? 0 : 1)
+  const grow = useSharedValue(loading ? 0 : 1)
 
   useEffect(() => {
+    listen.value = state === 'listening' ? 1 : 0
     proc.value = withTiming(state === 'organizing' ? 1 : 0, {
       duration: reduceMotion ? 0 : 650,
     })
     mute.value = withTiming(muted ? 1 : 0, {
       duration: reduceMotion ? 0 : CROSSFADE_MS,
     })
-  }, [state, muted, reduceMotion, proc, mute])
+  }, [state, muted, reduceMotion, listen, proc, mute])
+
+  useEffect(() => {
+    if (loading) {
+      load.value = 1
+      pop.value = 0
+      grow.value = 0
+      return
+    }
+    if (pop.value === 1) return
+    if (reduceMotion) {
+      load.value = withTiming(0, { duration: CROSSFADE_MS })
+      pop.value = 1
+      grow.value = 1
+      return
+    }
+    load.value = withTiming(0, { duration: POP_MS })
+    pop.value = withTiming(1, { duration: POP_MS })
+    grow.value = withDelay(GROW_DELAY_MS, withSpring(1, GROW_SPRING))
+  }, [loading, reduceMotion, load, pop, grow])
 
   // A still orb (offline, disabled) needs no frames; neither does one nobody
   // can see.
@@ -93,11 +143,18 @@ const ScribeOrb = ({
     'worklet'
     const dt = Math.min(timeSincePreviousFrame ?? 16, 64) / 1000
     if (!reduceMotion) time.value += dt
-    const target = listening && level ? level.value : 0
-    if (Math.abs(target - smooth.value) > 0.001) {
-      const k = target > smooth.value ? 0.35 : 0.07
-      smooth.value += (target - smooth.value) * k
+    const target = listen.value === 1 && level ? level.value : 0
+    if (
+      Math.abs(target - rough.value) > 0.0005 ||
+      Math.abs(rough.value - smooth.value) > 0.0005
+    ) {
+      const tau = target > rough.value ? LEVEL_RISE : LEVEL_FALL
+      rough.value += (target - rough.value) * (1 - Math.exp(-dt / tau))
+      smooth.value +=
+        (rough.value - smooth.value) * (1 - Math.exp(-dt / LEVEL_GLIDE))
     }
+    if (!reduceMotion)
+      flow.value += dt * (FLOW_BASE + FLOW_VOICE * smooth.value)
   }, false)
 
   useEffect(() => {
@@ -107,7 +164,11 @@ const ScribeOrb = ({
   const uniforms = useDerivedValue(() => ({
     uSize: [size, size],
     uTime: time.value,
+    uFlow: flow.value,
     uLevel: smooth.value,
+    uLoad: load.value,
+    uPop: pop.value,
+    uGrow: grow.value,
     uProc: proc.value,
     uMute: mute.value,
     uCore: core,
@@ -124,7 +185,7 @@ const ScribeOrb = ({
     borderWidth: 2 + 5 * smooth.value,
   }))
   const coreStyle = useAnimatedStyle(() => ({
-    opacity: 1 - mute.value * 0.55,
+    opacity: (1 - mute.value * 0.55) * (1 - 0.6 * load.value),
     transform: [{ scale: 1 - 0.3 * proc.value }],
   }))
 

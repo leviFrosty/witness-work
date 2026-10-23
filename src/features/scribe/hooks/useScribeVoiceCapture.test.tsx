@@ -34,7 +34,11 @@ vi.mock('@/stores/contactsStore', () => ({
   default: { getState: () => ({ contacts: [] }) },
 }))
 vi.mock('@/lib/haptics', () => ({
-  default: { light: vi.fn(), success: vi.fn() },
+  default: { light: vi.fn(), rigid: vi.fn(), success: vi.fn() },
+}))
+vi.mock('@/lib/audio', () => ({
+  playCue: vi.fn(),
+  prepareCues: vi.fn(async () => {}),
 }))
 vi.mock('@/lib/logger', () => import('@/__tests__/mocks/logger'))
 vi.mock('@/features/scribe/lib/locale', () => ({

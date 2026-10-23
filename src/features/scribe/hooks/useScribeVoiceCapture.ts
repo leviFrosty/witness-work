@@ -5,6 +5,7 @@ import type { EventSubscription } from 'expo-modules-core'
 import * as Speech from '../../../../modules/speech-transcription'
 import useContacts from '@/stores/contactsStore'
 import Haptics from '@/lib/haptics'
+import { playCue, prepareCues } from '@/lib/audio'
 import { logger } from '@/lib/logger'
 import type {
   ScribeVoiceCapture,
@@ -30,6 +31,14 @@ import { trackCaptureFinished } from '@/features/scribe/analytics'
 /** Contact names bias recognition toward people the User visits. On-device only. */
 const MAX_CONTEXTUAL_NAMES = 100
 const ELAPSED_TICK_MS = 250
+/**
+ * The start cue rings into the open microphone; levels in this window would
+ * pulse the orb and set the gain's peak, so they're dropped.
+ */
+const CUE_LEVEL_HOLD_MS = 500
+
+const wait = (ms: number) =>
+  new Promise<void>((resolve) => setTimeout(resolve, ms))
 
 function contactNames(): string[] {
   const names = new Set<string>()
@@ -85,6 +94,7 @@ export function useScribeVoiceCapture(
   const heardSpeech = useRef(false)
   const lastSpeechAt = useRef(0)
   const quietRef = useRef(false)
+  const holdLevelsUntil = useRef(0)
   const onFinished = useRef(options.onFinished)
   onFinished.current = options.onFinished
 
@@ -152,6 +162,7 @@ export function useScribeVoiceCapture(
   }
 
   const onLevel = (raw: number) => {
+    if (Date.now() < holdLevelsUntil.current) return
     const next = normalizeVoiceLevel(range.current, raw)
     range.current = { floor: next.floor, peak: next.peak }
     level.value = next.loudness
@@ -170,6 +181,8 @@ export function useScribeVoiceCapture(
 
   const begin = async () => {
     moveTo('preparing')
+    const readyAt = Date.now() + (options.minPreparingMs ?? 0)
+    void prepareCues('scribeVoiceStart', 'scribeVoiceEnd')
     try {
       subscriptions.current = [
         Speech.addListener('onLevel', ({ level: raw }) => {
@@ -195,10 +208,19 @@ export function useScribeVoiceCapture(
         return
       }
       engine.current = started.engine
+      const early = readyAt - Date.now()
+      if (early > 0) {
+        await wait(early)
+        // Discarded while the spinner finished.
+        if (stateRef.current !== 'preparing') return
+      }
       startedAt.current = Date.now()
+      holdLevelsUntil.current = startedAt.current + CUE_LEVEL_HOLD_MS
       setPreparingPercent(null)
       moveTo('listening')
-      void Haptics.light()
+      // Ready: the snap and the start cue land with the orb's pop.
+      void Haptics.rigid()
+      playCue('scribeVoiceStart')
     } catch (thrown) {
       const code = Speech.speechErrorCode(thrown)
       if (code === 'cancelled' || stateRef.current === 'idle') return
@@ -265,6 +287,7 @@ export function useScribeVoiceCapture(
   const stopWith = async (reason: ScribeVoiceFinishReason) => {
     if (stateRef.current !== 'listening') return
     moveTo('finishing')
+    if (reason !== 'interrupted') playCue('scribeVoiceEnd')
     let text = ''
     try {
       text = await Speech.stop()
@@ -280,6 +303,7 @@ export function useScribeVoiceCapture(
   const discard = () => {
     const current = stateRef.current
     if (current === 'idle') return
+    if (current === 'listening') playCue('scribeVoiceEnd')
     void Speech.cancel()
     if (
       current === 'listening' ||

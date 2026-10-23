@@ -55,8 +55,9 @@ class SpeechTranscriptionModule : Module() {
     Name("SpeechTranscription")
 
     // JS checks this so OTA updates never call into a binary without the module.
+    // 2: playCue.
     Constant("speechTranscriptionVersion") {
-      1
+      2
     }
 
     Events("onTranscript", "onLevel", "onPreparing", "onEnd")
@@ -117,6 +118,10 @@ class SpeechTranscriptionModule : Module() {
 
     AsyncFunction("cancel") Coroutine { ->
       withContext(Dispatchers.Main) { cancelSession() }
+    }
+
+    Function("playCue") { uri: String ->
+      CuePlayer.play(context, uri)
     }
 
     // Android stops the microphone for apps in the background; keep what was

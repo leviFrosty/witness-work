@@ -16,8 +16,20 @@ vi.mock('@/lib/locales', () => ({
 const player = vi.hoisted(() => ({ seekTo: vi.fn(), play: vi.fn() }))
 vi.mock('expo-audio', () => ({ useAudioPlayer: () => player }))
 vi.mock('@/assets/audio/success-chime.mp3', () => ({ default: 1 }))
+vi.mock('@/assets/audio/scribe-voice-start.wav', () => ({ default: 2 }))
+vi.mock('@/assets/audio/scribe-voice-end.wav', () => ({ default: 3 }))
+vi.mock('expo-asset', () => ({
+  Asset: {
+    fromModule: (id: number) => ({
+      localUri: `file:///cues/${id}.wav`,
+      downloadAsync: async () => {},
+    }),
+  },
+}))
+const speech = vi.hoisted(() => ({ playCue: vi.fn() }))
+vi.mock('../../modules/speech-transcription', () => speech)
 
-import { useSound } from '@/lib/audio'
+import { playCue, prepareCues, useSound } from '@/lib/audio'
 import { MmkvStorage } from '@/stores/mmkv'
 import {
   NON_SYNCABLE_PREFERENCE_KEYS,
@@ -29,6 +41,7 @@ describe('Audio setting', () => {
   beforeEach(() => {
     player.seekTo.mockClear()
     player.play.mockClear()
+    speech.playCue.mockClear()
     usePreferences.getState().set({ audioEnabled: true })
   })
 
@@ -62,6 +75,23 @@ describe('Audio setting', () => {
     play()
 
     expect(player.play).not.toHaveBeenCalled()
+  })
+
+  it('plays a prepared cue natively from its local file', async () => {
+    await prepareCues('scribeVoiceStart')
+
+    playCue('scribeVoiceStart')
+
+    expect(speech.playCue).toHaveBeenCalledWith('file:///cues/2.wav')
+  })
+
+  it('keeps cues silent when the User turns audio off', async () => {
+    await prepareCues('scribeVoiceEnd')
+    usePreferences.getState().set({ audioEnabled: false })
+
+    playCue('scribeVoiceEnd')
+
+    expect(speech.playCue).not.toHaveBeenCalled()
   })
 
   it('stays on this device instead of syncing', () => {

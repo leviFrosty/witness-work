@@ -71,7 +71,7 @@ vi.mock('@/contexts/theme', () => ({
   default: () => ({ colors: new Proxy({}, { get: () => '#000' }) }),
 }))
 vi.mock('@/lib/haptics', () => ({
-  default: { light: runtime.light, error: runtime.error },
+  default: { light: runtime.light, soft: vi.fn(), error: runtime.error },
 }))
 vi.mock('@/lib/locales', () => ({
   default: {

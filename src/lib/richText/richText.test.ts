@@ -11,6 +11,8 @@ import {
   isRichTextEmpty,
   richTextImages,
   richTextLinks,
+  richTextPreviewLines,
+  richTextRuns,
   toggleRichTextTask,
   withoutRichTextImages,
 } from '@/lib/richText/inspect'
@@ -352,6 +354,24 @@ describe('inspect', () => {
 
   it('removes photos', () => {
     expect(richTextImages(withoutRichTextImages(formatted))).toEqual([])
+  })
+
+  it('splits the doc where its photos sit', () => {
+    const image = (id: string) => ({ type: 'image', attrs: { id } })
+    const list = {
+      type: 'orderedList',
+      content: [{ type: 'listItem', content: [p(text('b')), image('2')] }],
+    }
+    const runs = richTextRuns(
+      doc(image('1'), p(text('a')), list, image('3'), p(text('c')))
+    )
+    expect(
+      runs.map((run) =>
+        run.type === 'images'
+          ? run.images.map((attrs) => attrs.id)
+          : richTextPreviewLines(run.doc.content)
+      )
+    ).toEqual([['1'], 2, ['2', '3'], 1])
   })
 
   it('trims blank paragraphs at the ends', () => {

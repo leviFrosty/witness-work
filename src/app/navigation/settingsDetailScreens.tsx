@@ -231,6 +231,13 @@ export const settingsDetailScreens: SettingsDetailScreen[] = [
     title: () => i18n.t('appIconScreenTitle'),
   },
   {
+    name: 'PreferencesMap',
+    getComponent: () =>
+      require('@/features/settings/screens/preferences/screens/PreferencesMapScreen')
+        .default,
+    title: () => i18n.t('mapSettings_title'),
+  },
+  {
     name: 'PreferencesColorKey',
     getComponent: () =>
       require('@/features/settings/screens/preferences/screens/PreferencesColorKeyScreen')

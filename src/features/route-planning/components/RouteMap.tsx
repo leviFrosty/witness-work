@@ -12,12 +12,15 @@ import DroppedPinCard from '@/features/route-planning/components/DroppedPinCard'
 import RouteMapSpan from '@/features/route-planning/components/RouteMapSpan'
 import { pinTitle } from '@/features/route-planning/lib/pinTitle'
 import {
-  MARKER_CARD_HEIGHT,
-  MARKER_GAP,
   MARKER_PIN,
   RouteMapCard,
   RouteMapPin,
 } from '@/features/route-planning/components/RouteMapMarker'
+import {
+  MARKER_CARD_HEIGHT,
+  MARKER_GAP,
+  MARKER_POINTER,
+} from '@/lib/mapMarkerMetrics'
 import type {
   BuilderStop,
   RouteFinish,
@@ -29,7 +32,7 @@ import {
   type LabelCandidate,
   type MapRegion,
   type MapSize,
-} from '@/features/route-planning/lib/mapLabels'
+} from '@/lib/mapLabels'
 import {
   straightLineMeters,
   type RouteTimeline,
@@ -272,7 +275,7 @@ export default function RouteMap({
       ? placeLabels(candidates, region, size, {
           cardHeight: MARKER_CARD_HEIGHT,
           // The card's pointer reaches a little past its gap.
-          gap: MARKER_GAP + 5,
+          gap: MARKER_GAP + MARKER_POINTER,
           pin: MARKER_PIN,
         })
       : null

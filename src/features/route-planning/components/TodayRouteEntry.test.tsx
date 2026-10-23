@@ -38,6 +38,14 @@ vi.mock('@/features/route-planning/hooks/useDayRouteStops', () => ({
   }),
 }))
 
+vi.mock('@/stores/serviceReport', () => ({
+  default: (select: (state: object) => unknown) =>
+    select({ dayPlans: [], recurringPlans: [] }),
+}))
+// No Plans on the day, so none is the route's start.
+vi.mock('@/features/route-planning/lib/routePlanOptions', () => ({
+  routePlanOptions: () => [],
+}))
 vi.mock('@/features/route-planning/stores/savedRoutes', () => ({
   useSavedRoutes: (select: (state: { routes: unknown }) => unknown) =>
     select({ routes: mocks.routes }),

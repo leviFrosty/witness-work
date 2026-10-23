@@ -562,6 +562,7 @@ const preferenceShapes = z
     timeFormat: z.string().optional(),
     dateOrder: z.string().optional(),
     mapKeyColors: z.record(z.string()).optional(),
+    mapCardDetail: z.string().optional(),
     hasDismissedRecommendationHash: z.string().optional(),
     monthlyGoalOverrides: z
       .record(z.number().finite().nonnegative())

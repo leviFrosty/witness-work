@@ -2,15 +2,19 @@ import { describe, expect, it } from 'vitest'
 import {
   DEFAULT_STAY_MINUTES,
   builderStops,
+  contactStopsToAdd,
+  dayRouteStopsFor,
   defaultStartTime,
   moveKey,
   newSavedRoute,
   optimizedOrder,
   reorderableStops,
   startingPlan,
+  type AddedStop,
   type PlanStart,
   type SavedRoute,
 } from '@/features/route-planning/lib/routeBuilder'
+import { MAX_ROUTE_STOPS } from '@/features/route-planning/lib/routeLimits'
 import type { RouteStop } from '@/features/route-planning/lib/routeStops'
 
 const at = (latitude: number) => ({ latitude, longitude: -122.42 })
@@ -257,5 +261,92 @@ describe('restoring a removed stop', () => {
       'followUp:b',
       'followUp:c',
     ])
+  })
+})
+
+describe('dayRouteStopsFor', () => {
+  const day = '2026-10-21'
+  const dayStops = [
+    plan('meeting', 540),
+    followUp('a', 600),
+    followUp('b', 660),
+  ]
+  const meeting: PlanStart = {
+    id: 'meeting',
+    stopKey: 'plan:meeting',
+    time: 540,
+    anytime: false,
+    place: {
+      title: 'Kingdom Hall',
+      coordinate: at(37.7),
+      destination: '1 Hall St',
+    },
+  }
+
+  it("counts a new route's stops without the Plan it starts from", () => {
+    expect(dayRouteStopsFor(day, dayStops, undefined, meeting)).toEqual({
+      stops: [
+        expect.objectContaining({ key: 'followUp:a' }),
+        expect.objectContaining({ key: 'followUp:b' }),
+      ],
+      planned: false,
+    })
+  })
+
+  it("counts the saved route's stops", () => {
+    const saved: SavedRoute = {
+      ...newSavedRoute(day, dayStops),
+      removed: ['followUp:b'],
+    }
+    const { stops, planned } = dayRouteStopsFor(day, dayStops, saved)
+    expect(planned).toBe(true)
+    expect(stops.map((stop) => stop.key)).toEqual([
+      'plan:meeting',
+      'followUp:a',
+    ])
+  })
+
+  it('leaves off the stops past the limit', () => {
+    const many = Array.from({ length: MAX_ROUTE_STOPS + 3 }, (_, i) =>
+      followUp(`${i}`, 600 + i)
+    )
+    expect(dayRouteStopsFor(day, many, undefined).stops).toHaveLength(
+      MAX_ROUTE_STOPS
+    )
+  })
+})
+
+describe('contactStopsToAdd', () => {
+  const contact = (id: string): AddedStop => ({
+    key: `contact:${id}`,
+    kind: 'contact',
+    title: `Contact ${id}`,
+    coordinate: at(37.8),
+    destination: `${id} Oak St`,
+  })
+  const onRoute = [
+    { key: 'followUp:1', contactId: 'visited' },
+    { key: 'contact:added', contactId: 'added' },
+  ]
+
+  it("adds only Contacts the route doesn't have, once each, in order", () => {
+    expect(
+      contactStopsToAdd(onRoute, [
+        contact('new'),
+        contact('visited'),
+        contact('added'),
+        contact('other'),
+        contact('new'),
+      ])
+    ).toEqual({ added: [contact('new'), contact('other')], leftOff: 0 })
+  })
+
+  it('stops at the room left and counts the rest', () => {
+    const full = Array.from({ length: MAX_ROUTE_STOPS - 1 }, (_, i) => ({
+      key: `followUp:${i}`,
+    }))
+    expect(
+      contactStopsToAdd(full, [contact('a'), contact('b'), contact('c')])
+    ).toEqual({ added: [contact('a')], leftOff: 2 })
   })
 })

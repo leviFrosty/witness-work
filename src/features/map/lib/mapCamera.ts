@@ -3,7 +3,8 @@ import type { LatLng } from 'react-native-maps'
 
 export function fitMapToCoordinates(
   map: MapView | null,
-  coordinates: LatLng[]
+  coordinates: LatLng[],
+  { animated = true }: { animated?: boolean } = {}
 ) {
   if (!map || coordinates.length === 0) return
 
@@ -18,11 +19,11 @@ export function fitMapToCoordinates(
     // A single-point bounding box zooms Google Maps all the way into a building.
     map.animateToRegion(
       { ...first, latitudeDelta: 0.005, longitudeDelta: 0.005 },
-      225
+      animated ? 225 : 0
     )
     return
   }
 
   // Coordinates do not depend on native marker children having mounted yet.
-  map.fitToCoordinates(coordinates)
+  map.fitToCoordinates(coordinates, { animated })
 }

@@ -154,6 +154,11 @@ vi.mock('react-native-gesture-handler', () => {
       'failOffsetX',
       'failOffsetY',
       'onUpdate',
+      'enabled',
+      'maxPointers',
+      'minDistance',
+      'onStart',
+      'onFinalize',
     ])
       g[method] = () => g
     g.onEnd = (handler: unknown) => ((g.handler = handler), g)
@@ -164,6 +169,7 @@ vi.mock('react-native-gesture-handler', () => {
       Pan: () => gesture('pan'),
       Tap: () => gesture('tap'),
       Exclusive: (...gestures: unknown[]) => ({ gestures }),
+      Simultaneous: (...gestures: unknown[]) => ({ gestures }),
     },
     GestureDetector: ({
       gesture,
@@ -194,14 +200,18 @@ vi.mock('react-native-safe-area-context', () => ({
 }))
 vi.mock('lucide-react-native', () => ({
   BookUser: 'BookUser',
+  Check: 'Check',
   ChevronUp: 'ChevronUp',
+  Clock: 'Clock',
   Expand: 'Expand',
   Info: 'Info',
+  LassoSelect: 'LassoSelect',
   Layers: 'Layers',
   MapPinned: 'MapPinned',
   Navigation: 'Navigation',
   Plus: 'Plus',
   Search: 'Search',
+  Star: 'Star',
 }))
 vi.mock('@/components/ui/DirectionalIcon', () => ({
   PanelTrailingCloseIcon: 'PanelRightClose',
@@ -270,8 +280,26 @@ vi.mock('@/hooks/useAdaptiveLayout', () => ({
 vi.mock('@/hooks/useGlassColorScheme', () => ({ default: () => 'light' }))
 vi.mock('@/hooks/useMarkerColors', () => ({ useMarkerColors: () => ({}) }))
 vi.mock('@/lib/contactStaleness', () => ({ stalenessToColor: () => '#0f0' }))
+// The test theme has no badge colors to read against.
+vi.mock('@/lib/color', () => ({ getReadableTextColor: () => '#000' }))
 vi.mock('@/hooks/useConversationIndex', () => ({
-  default: () => ({ stalenessFor: () => 'never' }),
+  default: () => ({
+    mostRecentConvMs: new Map(),
+    mostRecentConvByContact: new Map(),
+    nextFollowUpMs: new Map(),
+    missedFollowUpMs: new Map(),
+    nowMs: 0,
+    stalenessFor: () => 'never',
+  }),
+}))
+vi.mock('@/lib/dates', () => ({
+  formatDisplay: () => '',
+  formatMonthDayCompact: () => '',
+  formatTime: () => '',
+}))
+vi.mock('react-native-worklets', () => ({
+  scheduleOnRN: (fn: (...args: unknown[]) => void, ...args: unknown[]) =>
+    fn(...args),
 }))
 vi.mock('@/lib/address', () => ({
   addressToString: () => '',
@@ -307,6 +335,21 @@ vi.mock('@/features/map/components/MapOnboarding', () => ({
 }))
 vi.mock('@/features/map/components/MapFindContacts', () => ({
   default: 'MapFindContacts',
+}))
+vi.mock('@/features/map/components/MapSelectionBar', () => ({
+  default: 'MapSelectionBar',
+}))
+vi.mock('@/features/map/components/MapGroupList', () => ({
+  default: 'MapGroupList',
+}))
+vi.mock('@/features/map/components/MapLassoPath', () => ({
+  default: 'MapLassoPath',
+}))
+vi.mock('@/features/map/components/MapDueChip', () => ({
+  default: 'MapDueChip',
+}))
+vi.mock('@/features/map/components/MapTodayRouteButton', () => ({
+  default: 'MapTodayRouteButton',
 }))
 
 import MapScreen from '@/features/map/screens/MapScreen'
@@ -439,10 +482,30 @@ describe('Map camera initialization', () => {
       expect(mocks.fitToCoordinates).not.toHaveBeenCalled()
       await act(async () => map().props[second](layoutEvent))
       expect(mocks.fitToCoordinates).toHaveBeenCalledExactlyOnceWith(
-        stored().map((contact) => contact.coordinate)
+        stored().map((contact) => contact.coordinate),
+        { animated: true }
       )
     }
   )
+
+  it('on Android, fits without animating once the map has drawn', async () => {
+    mocks.platform = 'android'
+    await act(async () => root.unmount())
+    await act(async () => {
+      root = create(screen())
+    })
+    const map = () => root.root.findByType(MapView)
+    await act(async () => {
+      map().props.onLayout(layoutEvent)
+      map().props.onMapReady()
+    })
+    expect(mocks.fitToCoordinates).not.toHaveBeenCalled()
+    await act(async () => map().props.onMapLoaded())
+    expect(mocks.fitToCoordinates).toHaveBeenCalledExactlyOnceWith(
+      stored().map((contact) => contact.coordinate),
+      { animated: false }
+    )
+  })
 
   it('frames the first contact added after an empty map becomes ready', async () => {
     await act(async () => {
@@ -695,8 +758,12 @@ type PanGesture = {
   type: string
   handler: (e?: { translationY: number; velocityY: number }) => void
 }
+// The cards' detectors; the map's own (hover and Select mode's lasso) is left
+// out.
 const gestureDetectors = () =>
-  root.root.findAllByType('GestureDetector' as never)
+  root.root
+    .findAllByType('GestureDetector' as never)
+    .filter((detector) => detector.findAllByType(MapView).length === 0)
 // The cards' swipe-down gesture is the first detector; the stowed handle's
 // tap/swipe-up gestures come after it.
 const swipeCards = (translationY: number, velocityY = 0) =>
@@ -859,5 +926,60 @@ describe('User location dot', () => {
     expect(showsDot()).toBe(false)
     await act(async () => setAppState('active'))
     expect(showsDot()).toBe(true)
+  })
+})
+
+describe('Select mode', () => {
+  const routeActions = {
+    todayStopCount: 1,
+    todayContactIds: new Set(['second']),
+    openTodayRoute: vi.fn(),
+    planRoute: vi.fn(),
+    maxStops: 30,
+    supporter: true,
+  }
+  const bar = () => root.root.findByType('MapSelectionBar' as never)
+  const tapPin = (id: string) =>
+    act(async () => root.root.findByProps({ identifier: id }).props.onPress())
+
+  beforeEach(async () => {
+    await act(async () =>
+      root.update(
+        <MapScreen
+          contacts={stored()}
+          renderContactRow={() => null}
+          routeActions={routeActions}
+        />
+      )
+    )
+    await act(async () =>
+      root.root
+        .findByProps({ accessibilityLabel: 'map_select' })
+        .props.onPress()
+    )
+  })
+
+  it("counts only picks not on today's route against the room it has", async () => {
+    await tapPin('first')
+    await tapPin('second')
+    expect(bar().props).toMatchObject({
+      count: 2,
+      newCount: 1,
+      todayStopCount: 1,
+      maxStops: 30,
+    })
+    await tapPin('first')
+    expect(bar().props).toMatchObject({ count: 1, newCount: 0 })
+  })
+
+  it('leaves picks the search hides out of the count and the route', async () => {
+    await tapPin('first')
+    await tapPin('second')
+    await act(async () =>
+      root.root.findByType(Input).props.onChangeText('Second')
+    )
+    expect(bar().props.count).toBe(1)
+    await act(async () => bar().props.onPlanRoute())
+    expect(routeActions.planRoute).toHaveBeenCalledExactlyOnceWith(['second'])
   })
 })

@@ -9,9 +9,7 @@ import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 import useFeatureAccess from '@/hooks/useFeatureAccess'
 import i18n, { type TranslationKey } from '@/lib/locales'
-import useDayRouteStops from '@/features/route-planning/hooks/useDayRouteStops'
-import { builderStops } from '@/features/route-planning/lib/routeBuilder'
-import { useSavedRoutes } from '@/features/route-planning/stores/savedRoutes'
+import useDayRouteStopCount from '@/features/route-planning/hooks/useDayRouteStopCount'
 import useOpenRouteBuilder, {
   type RouteBuilderEntrySurface,
 } from '@/hooks/useOpenRouteBuilder'
@@ -36,26 +34,21 @@ export default function TodayRouteEntry({
   const theme = useTheme()
   const { hasAccess } = useFeatureAccess('routePlanning')
   const go = useOpenRouteBuilder(surface)
-  const { stops } = useDayRouteStops(date)
-  const saved = useSavedRoutes(
-    (s) => s.routes[moment(date).format('YYYY-MM-DD')]
-  )
+  const { count, planned } = useDayRouteStopCount(date)
   const isToday = moment(date).isSame(moment(), 'day')
   if (moment(date).isBefore(moment(), 'day')) return null
   const title = isToday
     ? i18n.t('routePlan_entryTitle')
     : i18n.t('routeBuilder_entryTitleDay')
-  const planned = saved ? builderStops(stops, saved).stops.length : 0
   const subtitle =
-    planned > 0
-      ? i18n.t('routeBuilder_entryPlanned' as TranslationKey, {
-          count: planned,
-        })
-      : stops.length > 0
-        ? i18n.t('routePlan_entrySubtitle' as TranslationKey, {
-            count: stops.length,
-          })
-        : i18n.t('routeBuilder_entryEmpty')
+    count === 0
+      ? i18n.t('routeBuilder_entryEmpty')
+      : i18n.t(
+          (planned
+            ? 'routeBuilder_entryPlanned'
+            : 'routePlan_entrySubtitle') as TranslationKey,
+          { count }
+        )
   const open = () => go(date)
 
   return (

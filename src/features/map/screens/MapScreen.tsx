@@ -1,18 +1,13 @@
 import {
   ChevronUp as ChevronUpIcon,
-  Expand as ExpandIcon,
-  Info as InfoIcon,
   Navigation as NavigationIcon,
   Search as SearchIcon,
 } from 'lucide-react-native'
-import {
-  PanelTrailingCloseIcon,
-  PanelTrailingOpenIcon,
-} from '@/components/ui/DirectionalIcon'
 import LucideIcon from '@/components/ui/LucideIcon'
 import useGlassColorScheme from '@/hooks/useGlassColorScheme'
 import Wrapper from '@/components/ui/layout/Wrapper'
 import MapView, { LatLng, Marker } from 'react-native-maps'
+import { Gesture } from 'react-native-gesture-handler'
 import useContacts from '@/stores/contactsStore'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useIsFocused, useNavigation } from '@react-navigation/native'
@@ -41,7 +36,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated'
 import { Carousel, type CarouselRef } from 'react-native-reanimated-carousel'
-import { Gesture, GestureDetector } from 'react-native-gesture-handler'
+import { GestureDetector } from 'react-native-gesture-handler'
 import MapCarouselCard from '@/features/map/components/MapCarouselCard'
 import * as Location from 'expo-location'
 import * as Crypto from 'expo-crypto'
@@ -59,10 +54,8 @@ import useDevice from '@/hooks/useDevice'
 import useAppActive from '@/hooks/useAppActive'
 import { RootStackNavigation } from '@/types/rootStack'
 import { HomeTabStackNavigation } from '@/types/homeStack'
-import { ContactMarker } from '@/features/map/types/map'
+import type { ContactMarker, MapRouteActions } from '@/features/map/types/map'
 import { Contact } from '@/types/contact'
-import Popover from '@/components/ui/Popover'
-import MapKey from '@/features/map/components/MapColorKey'
 import { useMarkerColors } from '@/hooks/useMarkerColors'
 import { stalenessToColor } from '@/lib/contactStaleness'
 import { ConversationIndex } from '@/lib/conversationIndex'
@@ -85,14 +78,39 @@ import {
   getMapImageryTheme,
   MapImageryContext,
 } from '@/features/map/lib/mapImageryTheme'
-import MapLayerMenu from '@/features/map/components/MapLayerMenu'
-import MapFindContacts from '@/features/map/components/MapFindContacts'
 import MapPinLabel, {
   PinHoverArea,
 } from '@/features/map/components/MapPinLabel'
 import usePinHover from '@/features/map/hooks/usePinHover'
 import PointerTooltip from '@/components/ui/PointerTooltip'
 import { alignInput, forwardSign, isRtlLayout } from '@/lib/direction'
+import { analytics } from '@/lib/analytics'
+import ContactPinLayer from '@/features/map/components/ContactPinLayer'
+import MapControlColumn, {
+  type MapControlsLayout,
+} from '@/features/map/components/MapControlColumn'
+import MapFloatingCard from '@/features/map/components/MapFloatingCard'
+import MapGroupList from '@/features/map/components/MapGroupList'
+import MapLassoPath from '@/features/map/components/MapLassoPath'
+import MapSelectionBar from '@/features/map/components/MapSelectionBar'
+import MapTopChips from '@/features/map/components/MapTopChips'
+import useContactPinItems from '@/features/map/hooks/useContactPinItems'
+import useMapDueLens from '@/features/map/hooks/useMapDueLens'
+import useMapProjection from '@/features/map/hooks/useMapProjection'
+import useMapSelection from '@/features/map/hooks/useMapSelection'
+import {
+  contactCardLine,
+  contactUrgency,
+  groupTitle,
+  resolveCardDetail,
+} from '@/features/map/lib/contactPins'
+import type { MapPinItem } from '@/features/map/lib/mapPinLayout'
+import {
+  MAP_CONTROL_TOOLTIP,
+  mapControlStyle,
+  STOW_TRANSITION,
+} from '@/features/map/lib/mapStyles'
+import { isSamePlace } from '@/features/map/lib/pinGeometry'
 
 const liquidGlass = isLiquidGlassAvailable()
 
@@ -115,11 +133,6 @@ const STOWED_HANDLE_HEIGHT = 28
 
 const STOW_TIMING = { duration: 280, easing: Easing.inOut(Easing.ease) }
 
-const STOW_TRANSITION = {
-  transitionDuration: 280,
-  transitionTimingFunction: 'ease-in-out',
-} as const
-
 interface FullMapViewProps {
   renderContactRow: MapContactRowRenderer
   /** The pins the Contacts filters let through, in the list's order. */
@@ -132,6 +145,7 @@ interface FullMapViewProps {
   onExplore?: () => void
   /** A contact was saved from a pin dropped on this map. */
   onContactCreated: (id: string) => void
+  routeActions?: MapRouteActions
 }
 
 /**
@@ -170,6 +184,7 @@ const FullMapView = ({
   topInset,
   onExplore,
   onContactCreated,
+  routeActions,
 }: FullMapViewProps) => {
   const navigation = useNavigation<HomeTabStackNavigation>()
   const { height: windowHeight } = useWindowDimensions()
@@ -186,15 +201,23 @@ const FullMapView = ({
   const {
     colorScheme,
     mapLayer,
+    mapCardDetail,
     set: setPreferences,
   } = usePreferences(
     useShallow((s) => ({
       colorScheme: s.colorScheme,
       mapLayer: s.mapLayer,
+      mapCardDetail: s.mapCardDetail,
       set: s.set,
     }))
   )
+  // A string, so editing Contact Fields re-renders the map only when the
+  // field its cards show goes away.
+  const cardDetail = useContacts((s) =>
+    resolveCardDetail(mapCardDetail, s.customFieldDefs)
+  )
   const mapRef = useRef<MapView>(null)
+  const mapProjection = useMapProjection(mapRef)
   const [isMapReady, setIsMapReady] = useState(false)
   const [hasMapLayout, setHasMapLayout] = useState(false)
   const insets = useSafeAreaInsets()
@@ -287,6 +310,21 @@ const FullMapView = ({
   // (search narrows results → reconcile effect re-syncs the carousel), and
   // letting them dismiss the keyboard blurs the search input mid-word.
   const programmaticScrollRef = useRef(false)
+  // The Contacts gathered in one pin at one place, listed over the cards.
+  const [openGroupIds, setOpenGroupIds] = useState<string[] | null>(null)
+  const [floatingCardHeight, setFloatingCardHeight] = useState(0)
+  // Where the chips along the top end and where the control column sits,
+  // measured so pin cards keep clear of them.
+  const [chipsBottom, setChipsBottom] = useState(0)
+  const [controlsLayout, setControlsLayout] =
+    useState<MapControlsLayout | null>(null)
+  // Only Contacts due now or this week stay bright and keep their cards.
+  const dueLens = useMapDueLens({
+    contacts: visibleContactMarkers,
+    index: conversationIndex,
+    projection: mapProjection.projection,
+    top: topInset,
+  })
   const handleDragContactPin = (id: string, coordinate: LatLng) => {
     updateContact({
       id,
@@ -398,6 +436,21 @@ const FullMapView = ({
     ]
   )
 
+  const openGroup = openGroupIds
+    ? visibleContactMarkers
+        .filter((contact) => openGroupIds.includes(contact.id))
+        .map((contact) => ({
+          contact,
+          urgency: contactUrgency(
+            contact,
+            conversationIndex,
+            conversationIndex.nowMs
+          ),
+        }))
+        .sort((a, b) => a.urgency - b.urgency)
+        .map(({ contact }) => contact)
+    : []
+
   // Reconcile carousel + active id when the underlying list changes.
   // - If the active contact still exists, ensure the carousel is on its
   //   current index — covers the case where contacts were inserted/removed
@@ -453,17 +506,34 @@ const FullMapView = ({
 
   const hasFitOnMount = useRef(false)
 
+  // Google Maps re-centers on its current camera when the map's padding is
+  // applied, cutting short a fit already under way and leaving the world view.
+  // So on Android the first fit waits until the map has drawn, which is after
+  // its padding, or a moment after it's ready if it never says (offline, say),
+  // and jumps rather than animates, so padding landing later keeps it.
+  const [isMapLoaded, setIsMapLoaded] = useState(Platform.OS !== 'android')
+  useEffect(() => {
+    if (!isMapReady || isMapLoaded) return
+    const timer = setTimeout(() => setIsMapLoaded(true), 1500)
+    return () => clearTimeout(timer)
+  }, [isMapReady, isMapLoaded])
+
   useEffect(() => {
     if (
       !hasFitOnMount.current &&
       isMapReady &&
+      isMapLoaded &&
       hasMapLayout &&
       visibleContactMarkers.length > 0
     ) {
-      fitToMarkers()
+      fitMapToCoordinates(
+        mapRef.current,
+        visibleContactMarkers.map((contact) => contact.coordinate!),
+        { animated: Platform.OS !== 'android' }
+      )
       hasFitOnMount.current = true
     }
-  }, [fitToMarkers, hasMapLayout, isMapReady, visibleContactMarkers.length])
+  }, [hasMapLayout, isMapReady, isMapLoaded, visibleContactMarkers])
 
   useEffect(() => {
     const getLocation = async () => {
@@ -640,40 +710,6 @@ const FullMapView = ({
   /** How far a drag down has to go to stow the cards, short of a flick. */
   const stowSwipeDistance = (CARD_HEIGHT - cardTopGap) / 6
 
-  // Sit the location FAB just above whichever bottom UI is on screen:
-  // the empty-state card, the no-search-results card, or the carousel.
-  // Heights for the variable cards come from onLayout; the carousel is
-  // fixed at CARD_HEIGHT.
-  const locationButtonBottom = mapContactCreation.coordinate
-    ? mapCardBottom + CARD_HEIGHT + 8
-    : visibleContactMarkers.length > 0
-      ? cardsStowed
-        ? mapCardBottom + STOWED_HANDLE_HEIGHT + 8
-        : mapCardBottom + CARD_HEIGHT + 8
-      : !hasMappedContacts
-        ? bottomOverlayInset + 12 + emptyStateHeight + 8
-        : bottomOverlayInset + 4 + noResultsHeight + 8
-
-  const mapControlStyle = {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    borderCurve: 'continuous' as const,
-    alignItems: 'center' as const,
-    justifyContent: 'center' as const,
-    paddingHorizontal: 0,
-    paddingVertical: 0,
-    backgroundColor: liquidGlass ? undefined : theme.colors.card + 'dd',
-  }
-
-  // Icon-only controls in the left column; their labels open toward the map.
-  // `Button` already supplies the pointer effect.
-  const controlTooltipProps = {
-    placement: 'right',
-    effect: 'none',
-    style: { borderRadius: 22 },
-  } as const
-
   const SEARCH_COLLAPSED_WIDTH = 44
   const SEARCH_EXPANDED_WIDTH = isWide
     ? Math.min(360, width - inspectorWidth - 96)
@@ -739,6 +775,57 @@ const FullMapView = ({
     setSearchExpanded(false)
   }
 
+  // Select mode: Contacts picked by tapping pins or drawing around them, to
+  // plan a route through.
+  const selection = useMapSelection({
+    contacts: visibleContactMarkers,
+    projection: mapProjection.projection,
+    index: conversationIndex,
+    routeActions,
+    onStart: () => {
+      collapseSearch()
+      stopTrackingUser()
+      mapContactCreation.cancel()
+      setOpenGroupIds(null)
+      dueLens.clear()
+    },
+  })
+  const { selecting } = selection
+  // Always attached, so the map's frame never changes views (which would
+  // remount the map); the lasso only listens in Select mode.
+  const mapAreaGesture = pinHover.hover
+    ? Gesture.Simultaneous(pinHover.hover, selection.lasso.gesture)
+    : selection.lasso.gesture
+
+  /** A pin or its card was tapped. */
+  const handlePinItemPress = (item: MapPinItem) => {
+    const ids = item.members.map((contact) => contact.id)
+    if (selecting) {
+      selection.toggle(ids)
+      return
+    }
+    mapContactCreation.cancel()
+    if (item.group) {
+      const coordinates = item.members.map((contact) => contact.coordinate!)
+      // Several in one building get a list; a crowd zooms in to spread out.
+      if (isSamePlace(coordinates)) {
+        if (cardsStowed) toggleCardsStowed()
+        setOpenGroupIds(ids)
+        const count = ids.length
+        analytics.capture('map_group_opened', {
+          count: count <= 2 ? '2' : count <= 5 ? '3-5' : '6+',
+        })
+      } else {
+        fitMapToCoordinates(mapRef.current, coordinates)
+      }
+      return
+    }
+    setOpenGroupIds(null)
+    if (cardsStowed) toggleCardsStowed()
+    setInspectorRevealRequest((request) => request + 1)
+    handlePinPress(ids[0]!)
+  }
+
   // The stowed handle brings the cards back on a tap or an upward swipe.
   const cardsPeekGesture = Gesture.Exclusive(
     Gesture.Pan()
@@ -798,6 +885,10 @@ const FullMapView = ({
     bottom: bottomOverlayInset + 12,
   }
 
+  // Select mode's bar or a group's list, where the cards were.
+  const showsFloatingCard = selecting || openGroup.length > 0
+  const floatingCardBottom = bottomOverlayInset + (isWide ? 28 : 12)
+
   const renderEmptyState = () => (
     <Animated.View
       pointerEvents='box-none'
@@ -853,6 +944,52 @@ const FullMapView = ({
     </Animated.View>
   )
 
+  const pinItems = useContactPinItems({
+    contacts: visibleContactMarkers,
+    index: conversationIndex,
+    detail: cardDetail,
+    projection: mapProjection.projection,
+    size: { width, height },
+    activeId: selecting ? undefined : activeContactId,
+    picked: selection.picked,
+    dueLens: dueLens.active && !selecting,
+    overlays: {
+      // The search button, and the chips beside it.
+      top: [topInset + 8 + 44, chipsBottom],
+      controls: controlsLayout,
+      // The select bar or group list takes the inspector's place.
+      inspectorLeft: showsFloatingCard ? 0 : inspectorLeft,
+      inspectorRight: showsFloatingCard ? 0 : inspectorRight,
+      bottom: {
+        base: isWide ? bottomOverlayInset + 28 : bottomOverlayInset,
+        floatingCard: showsFloatingCard
+          ? { bottom: floatingCardBottom, height: floatingCardHeight }
+          : null,
+        cards:
+          !isWide && visibleContactMarkers.length > 0
+            ? mapCardBottom +
+              (cardsStowed ? STOWED_HANDLE_HEIGHT : CARD_HEIGHT - cardTopGap)
+            : null,
+      },
+    },
+  })
+
+  // Sit the location FAB just above whichever bottom UI is on screen:
+  // the empty-state card, the no-search-results card, the floating card, or
+  // the carousel. Heights for the variable cards come from onLayout; the
+  // carousel is fixed at CARD_HEIGHT.
+  const locationButtonBottom = mapContactCreation.coordinate
+    ? mapCardBottom + CARD_HEIGHT + 8
+    : showsFloatingCard
+      ? floatingCardBottom + floatingCardHeight + 8
+      : visibleContactMarkers.length > 0
+        ? cardsStowed
+          ? mapCardBottom + STOWED_HANDLE_HEIGHT + 8
+          : mapCardBottom + CARD_HEIGHT + 8
+        : !hasMappedContacts
+          ? bottomOverlayInset + 12 + emptyStateHeight + 8
+          : bottomOverlayInset + 4 + noResultsHeight + 8
+
   return (
     <ThemeContext.Provider value={theme}>
       <GlassColorSchemeOverrideContext.Provider
@@ -860,7 +997,7 @@ const FullMapView = ({
       >
         <MapImageryContext.Provider value={overImagery}>
           <PinHoverArea
-            gesture={pinHover.hover}
+            gesture={mapAreaGesture}
             onTouchStart={pinHover.dismiss}
           >
             <MapView
@@ -872,14 +1009,26 @@ const FullMapView = ({
               onLayout={(e) => {
                 setHeight(e.nativeEvent.layout.height)
                 setHasMapLayout(true)
+                mapProjection.onLayout({
+                  width: e.nativeEvent.layout.width,
+                  height: e.nativeEvent.layout.height,
+                })
               }}
+              // Cards and groups are laid out for a north-up, flat map.
+              rotateEnabled={false}
+              pitchEnabled={false}
+              // Select mode's single-finger drag draws the lasso instead.
+              scrollEnabled={!selecting}
               onMapReady={() => setIsMapReady(true)}
+              onMapLoaded={() => setIsMapLoaded(true)}
               onPress={() => {
                 collapseSearch()
                 mapContactCreation.cancel()
+                setOpenGroupIds(null)
               }}
               onLongPress={(e) => {
-                if (draggingContactRef.current) return
+                if (draggingContactRef.current || selecting) return
+                setOpenGroupIds(null)
                 collapseSearch()
                 stopTrackingUser()
                 pendingMarkerSnapIdRef.current = undefined
@@ -891,7 +1040,10 @@ const FullMapView = ({
               }}
               onPanDrag={handlePanDrag}
               onRegionChangeStart={pinHover.onRegionChangeStart}
-              onRegionChangeComplete={pinHover.onRegionChangeComplete}
+              onRegionChangeComplete={(region) => {
+                pinHover.onRegionChangeComplete?.()
+                mapProjection.onRegionChangeComplete(region)
+              }}
               mapPadding={
                 // Android calls GoogleMap.setPadding synchronously; the native
                 // map can still be null when Fabric applies initial props.
@@ -923,37 +1075,24 @@ const FullMapView = ({
                   stopPropagation
                 />
               )}
-              {visibleContactMarkers.map((c) => (
-                <Marker
-                  onPress={() => {
-                    mapContactCreation.cancel()
-                    if (cardsStowed) toggleCardsStowed()
-                    setInspectorRevealRequest((request) => request + 1)
-                    handlePinPress(c.id)
-                  }}
-                  identifier={c.id}
-                  // Include pinColor in the key so the marker remounts when its
-                  // staleness color changes. react-native-maps only applies
-                  // `pinColor` at mount on iOS — without the remount, logging a
-                  // conversation never updates the pin tint until reload.
-                  key={`${c.id}-${c.pinColor}`}
-                  coordinate={c.coordinate!}
-                  pinColor={c.pinColor}
-                  draggable
-                  onDragStart={() => {
-                    draggingContactRef.current = true
-                    pinHover.setDragging(true)
-                    mapContactCreation.cancel()
-                  }}
-                  onDragEnd={(e) => {
-                    draggingContactRef.current = false
-                    pinHover.setDragging(false)
-                    handleDragContactPin(c.id, e.nativeEvent.coordinate)
-                  }}
-                />
-              ))}
+              <ContactPinLayer
+                items={pinItems}
+                selecting={selecting}
+                onPress={handlePinItemPress}
+                onDragStart={() => {
+                  draggingContactRef.current = true
+                  pinHover.setDragging(true)
+                  mapContactCreation.cancel()
+                }}
+                onDragEnd={(contactId, coordinate) => {
+                  draggingContactRef.current = false
+                  pinHover.setDragging(false)
+                  handleDragContactPin(contactId, coordinate)
+                }}
+              />
             </MapView>
           </PinHoverArea>
+          {selecting && <MapLassoPath points={selection.lasso.points} />}
           {pinHover.pin && hoveredPinContact && (
             <MapPinLabel
               key={hoveredPinContact.id}
@@ -1082,6 +1221,52 @@ const FullMapView = ({
                 onCancel={mapContactCreation.cancel}
               />
             </Animated.View>
+          ) : showsFloatingCard ? (
+            <MapFloatingCard
+              isWide={isWide}
+              width={inspectorWidth}
+              bottom={floatingCardBottom}
+              onHeight={setFloatingCardHeight}
+            >
+              {selecting ? (
+                <MapSelectionBar
+                  count={selection.picked?.size ?? 0}
+                  newCount={selection.newCount}
+                  maxStops={routeActions?.maxStops ?? 0}
+                  todayStopCount={routeActions?.todayStopCount ?? 0}
+                  supporter={!!routeActions?.supporter}
+                  canSelectDue={dueLens.due.some(
+                    (contact) => !selection.picked?.has(contact.id)
+                  )}
+                  onSelectDue={() =>
+                    selection.add(dueLens.due.map((contact) => contact.id))
+                  }
+                  onClear={selection.clear}
+                  onDone={selection.stop}
+                  onPlanRoute={selection.planRoute}
+                />
+              ) : (
+                <MapGroupList
+                  title={groupTitle(openGroup)}
+                  members={openGroup}
+                  lineFor={(contact) =>
+                    contactCardLine(
+                      contact,
+                      conversationIndex,
+                      cardDetail,
+                      conversationIndex.nowMs
+                    )
+                  }
+                  activeId={activeContactId}
+                  onSelect={(id) => {
+                    setOpenGroupIds(null)
+                    setInspectorRevealRequest((request) => request + 1)
+                    handlePinPress(id)
+                  }}
+                  onClose={() => setOpenGroupIds(null)}
+                />
+              )}
+            </MapFloatingCard>
           ) : !hasMappedContacts ? (
             renderEmptyState()
           ) : visibleContactMarkers.length === 0 ? (
@@ -1291,122 +1476,59 @@ const FullMapView = ({
               )}
             </Animated.View>
           )}
-          <View
-            style={{
-              position: 'absolute',
-              top: topInset + (hasMappedContacts ? 64 : 8),
-              left: 16,
-              gap: 8,
-            }}
-          >
-            {visibleContactMarkers.length >= 1 && (
-              <PointerTooltip
-                label={i18n.t('map_fitContacts')}
-                {...controlTooltipProps}
-              >
-                <Button
-                  accessibilityLabel={i18n.t('map_fitContacts')}
-                  variant='glass'
-                  onPress={fitToMarkers}
-                  style={mapControlStyle}
-                >
-                  <LucideIcon
-                    icon={ExpandIcon}
-                    size={theme.fontSize('sm')}
-                    style={{ color: theme.colors.text }}
-                  />
-                </Button>
-              </PointerTooltip>
-            )}
-            {/* Phone cards stow with a swipe down instead. */}
-            {isWide &&
+          <MapControlColumn
+            top={topInset + (hasMappedContacts ? 64 : 8)}
+            onFit={visibleContactMarkers.length >= 1 ? fitToMarkers : null}
+            stow={
+              isWide &&
               visibleContactMarkers.length >= 1 &&
-              !mapContactCreation.coordinate && (
-                <PointerTooltip
-                  label={i18n.t(
-                    cardsStowed
-                      ? 'map_showContactCards'
-                      : 'map_hideContactCards'
-                  )}
-                  {...controlTooltipProps}
-                >
-                  <Button
-                    accessibilityLabel={i18n.t(
-                      cardsStowed
-                        ? 'map_showContactCards'
-                        : 'map_hideContactCards'
-                    )}
-                    variant='glass'
-                    onPress={() => toggleCardsStowed()}
-                    style={mapControlStyle}
-                  >
-                    <LucideIcon
-                      icon={
-                        cardsStowed
-                          ? PanelTrailingOpenIcon
-                          : PanelTrailingCloseIcon
-                      }
-                      size={theme.fontSize('sm')}
-                      style={{ color: theme.colors.text }}
-                    />
-                  </Button>
-                </PointerTooltip>
-              )}
-            {/* A click hides the label before the menu opens. */}
-            <PointerTooltip
-              label={i18n.t('map_chooseLayer')}
-              {...controlTooltipProps}
-            >
-              <MapLayerMenu
-                value={mapLayer}
-                onChange={(mapLayer) => setPreferences({ mapLayer })}
-                style={mapControlStyle}
-              />
-            </PointerTooltip>
-            <Popover
-              contentWidth={280}
-              renderTrigger={({ onPress }) => (
-                <PointerTooltip
-                  label={i18n.t('map_showLegend')}
-                  {...controlTooltipProps}
-                >
-                  <Button
-                    accessibilityLabel={i18n.t('map_showLegend')}
-                    variant='glass'
-                    onPress={onPress}
-                    style={mapControlStyle}
-                  >
-                    <LucideIcon
-                      icon={InfoIcon}
-                      size={theme.fontSize('sm')}
-                      style={{ color: theme.colors.text }}
-                    />
-                  </Button>
-                </PointerTooltip>
-              )}
-            >
-              <MapKey />
-            </Popover>
-          </View>
-          <View
-            pointerEvents='box-none'
-            style={{
-              position: 'absolute',
-              top: topInset + 8,
-              // Clear of the search button and the controls under it.
-              left: 72,
-              right:
-                isWide && hasMappedContacts && !cardsStowed
-                  ? inspectorWidth + 48
-                  : 16,
-              alignItems: 'center',
-            }}
-          >
-            <MapFindContacts
-              hidden={searchExpanded}
-              onFound={() => setFitRequest((request) => request + 1)}
-            />
-          </View>
+              !mapContactCreation.coordinate
+                ? { stowed: cardsStowed, onToggle: () => toggleCardsStowed() }
+                : null
+            }
+            select={
+              routeActions && visibleContactMarkers.length >= 1
+                ? {
+                    active: selecting,
+                    onToggle: selecting ? selection.stop : selection.start,
+                  }
+                : null
+            }
+            mapLayer={mapLayer}
+            onChangeLayer={(mapLayer) => setPreferences({ mapLayer })}
+            onLayout={setControlsLayout}
+          />
+          <MapTopChips
+            top={topInset + 8}
+            // Clear of the search button and the controls under it.
+            start={72}
+            end={
+              isWide && hasMappedContacts && !cardsStowed
+                ? inspectorWidth + 48
+                : 16
+            }
+            searchExpanded={searchExpanded}
+            onFound={() => setFitRequest((request) => request + 1)}
+            due={
+              !selecting && dueLens.due.length > 0
+                ? {
+                    overdue: dueLens.overdueCount,
+                    thisWeek: dueLens.due.length - dueLens.overdueCount,
+                    active: dueLens.active,
+                    onPress: dueLens.toggle,
+                  }
+                : null
+            }
+            todayRoute={
+              !selecting && routeActions?.todayStopCount
+                ? {
+                    stopCount: routeActions.todayStopCount,
+                    onPress: routeActions.openTodayRoute,
+                  }
+                : null
+            }
+            onBottom={setChipsBottom}
+          />
           <Animated.View
             style={{
               position: 'absolute',
@@ -1426,7 +1548,7 @@ const FullMapView = ({
                   ? 'map_stopFollowingLocation'
                   : 'map_centerOnMyLocation'
               )}
-              {...controlTooltipProps}
+              {...MAP_CONTROL_TOOLTIP}
               placement='left'
             >
               <Button
@@ -1437,7 +1559,7 @@ const FullMapView = ({
                 }
                 variant='glass'
                 onPress={toggleLocationTracking}
-                style={mapControlStyle}
+                style={mapControlStyle(theme.colors.card)}
               >
                 <LucideIcon
                   icon={NavigationIcon}
@@ -1475,6 +1597,7 @@ const MapScreen = ({
   renderContactRow,
   topInset = 0,
   onExplore,
+  routeActions,
 }: {
   /**
    * Active contacts to pin, with the Contacts filters and sort already applied,
@@ -1487,6 +1610,8 @@ const MapScreen = ({
   topInset?: number
   /** The user started exploring: dragged the map or stowed the cards. */
   onExplore?: () => void
+  /** Today's route and Plan Route for picked Contacts, from the app. */
+  routeActions?: MapRouteActions
 }) => {
   const allContacts = useContacts((s) => s.contacts)
   const conversations = useConversations((s) => s.conversations)
@@ -1543,6 +1668,7 @@ const MapScreen = ({
         topInset={topInset}
         onExplore={onExplore}
         onContactCreated={(id) => setDroppedIds((ids) => [...ids, id])}
+        routeActions={routeActions}
       />
     </Wrapper>
   )

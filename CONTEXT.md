@@ -274,6 +274,17 @@ _Avoid_: treating iCloud Markers as broken data — they are valid "image intend
 The visual pin shown on the Map for a Contact. Colored by **staleness** — i.e. how long it has been since the User's most recent Visit with that Contact. Four buckets: no Visits at all, longer than a month ago, longer than a week ago, and within the past week. Computed at render time from Visit history, not stored.
 _Avoid_: "pin" alone (Marker is the canonical term and it carries the staleness semantic).
 
+**Pin Card**:
+The small card beside a Marker (and beside each stop on a Route's map): a colored line over a name. On the Map the line is what the User chose in Settings → Map ("Pin cards show"): the next visit by default (an overdue or upcoming Follow-up, else the last Visit), the last Visit, the Follow-up's topic, a Custom Field, or nothing. Cards go to the most pressing Contacts first and wait, rather than overlap, until the User zooms in.
+_Avoid_: "label", "callout" (a callout is the native bubble react-native-maps draws on tap).
+
+**Pin Group**:
+One Marker standing for several Contacts whose Markers would sit on top of each other at the current zoom, showing their count and led by the most pressing. Contacts at one address (an apartment building) open as a list; a crowd zooms in to spread out. Worked out per camera position, not stored.
+_Avoid_: "cluster" in user copy.
+
+**Select mode (Map)**:
+Picking Contacts on the Map by tapping Markers or drawing a loop around them, to plan a Route through them: Plan Route adds them to today's Route as stops. Separate from the Contacts list's Select mode, which acts on the Contacts themselves.
+
 ### Monetization
 
 **Supporter**:

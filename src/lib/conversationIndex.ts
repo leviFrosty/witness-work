@@ -65,6 +65,8 @@ export type ConversationIndex = {
    * it then (see `useConversationIndex`).
    */
   followUpsChangeAtMs: number | null
+  /** The clock (epoch ms) Follow-ups and staleness were judged at. */
+  nowMs: number
   /** Staleness bucket for a contact id (mirrors `getContactStaleness`). */
   stalenessFor: (contactId: string) => ContactStaleness
   /** Numeric staleness rank for a contact id (for the comparator). */
@@ -202,6 +204,7 @@ export function buildConversationIndex(
       soonestOpenDueMs === null
         ? null
         : soonestOpenDueMs + MISSED_FOLLOW_UP_AFTER_HOURS * HOUR_MS,
+    nowMs,
     stalenessFor,
     stalenessRankFor,
   }

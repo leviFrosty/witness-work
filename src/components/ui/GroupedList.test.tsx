@@ -270,6 +270,21 @@ describe('Android grouped list', () => {
     expect(named(row, 'selectable')?.args[0]).toBe(true)
   })
 
+  it('says which choice is chosen without tinting it', async () => {
+    const onPress = vi.fn()
+    await render(<GroupedListRow label='Name' onPress={onPress} checked />)
+    const row = find('ListItem')
+    expect(row.props.colors.containerColor).not.toBe('#accent33')
+    expect(named(row, 'selectable')?.args.slice(0, 1)).toEqual([true])
+    expect(named(row, 'selectable')?.args[2]).toBe('radioButton')
+    await act(async () =>
+      root.update(
+        <GroupedListRow label='Name' onPress={onPress} checked={false} />
+      )
+    )
+    expect(named(find('ListItem'), 'selectable')?.args[0]).toBe(false)
+  })
+
   it('toggles only through the switch, beside its info button', async () => {
     const onValueChange = vi.fn()
     await render(
@@ -394,6 +409,15 @@ describe('iOS grouped list', () => {
     await render(<GroupedListRow label='Profile' onPress={vi.fn()} selected />)
     const button = find('SwiftButton')
     expect(named(button, 'listRowBackground')?.args).toEqual(['#accent33'])
+    expect(named(button, 'accessibilityAddTraits')?.args).toEqual([
+      ['isSelected'],
+    ])
+  })
+
+  it('says which choice is chosen without tinting it', async () => {
+    await render(<GroupedListRow label='Name' onPress={vi.fn()} checked />)
+    const button = find('SwiftButton')
+    expect(named(button, 'listRowBackground')?.args).not.toEqual(['#accent33'])
     expect(named(button, 'accessibilityAddTraits')?.args).toEqual([
       ['isSelected'],
     ])

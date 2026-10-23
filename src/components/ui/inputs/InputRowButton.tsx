@@ -43,6 +43,8 @@ interface Props {
   sublabel?: string
   /** Highlights the row whose destination is open beside the list. */
   selected?: boolean
+  /** One of a list of choices: tells screen readers whether it's chosen. */
+  checked?: boolean
   /**
    * A long text value (children) that wraps under enlarged text. The label
    * keeps its width, up to half the row, and the value wraps in the rest
@@ -62,6 +64,7 @@ const InputRowButton: React.FC<PropsWithChildren<Props>> = ({
   disabled,
   sublabel,
   selected,
+  checked,
   wrapValue,
   style,
   leftIcon,
@@ -169,7 +172,14 @@ const InputRowButton: React.FC<PropsWithChildren<Props>> = ({
     <Button
       noTransform
       accessibilityRole={onPress ? 'button' : undefined}
-      accessibilityState={onPress ? { disabled: !!disabled } : undefined}
+      accessibilityState={
+        onPress
+          ? {
+              disabled: !!disabled,
+              ...(checked !== undefined && { selected: checked }),
+            }
+          : undefined
+      }
       // A row that only says something (Account Activity's entries) is read as
       // one element, its label then its sublabel, like a pressable row is.
       accessibilityLabel={

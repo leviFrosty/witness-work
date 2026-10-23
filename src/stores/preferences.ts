@@ -41,7 +41,7 @@ import type {
   SavedContactView,
 } from '@/types/savedContactView'
 import type { ContactsView } from '@/types/homeStack'
-import type { MapLayer } from '@/types/map'
+import type { MapCardDetail, MapLayer } from '@/types/map'
 import type { MarkerColors } from '@/types/markerColors'
 import type { StalenessBreakpoints } from '@/types/staleness'
 import type {
@@ -383,6 +383,11 @@ export const PREFERENCE_DEFAULTS = {
   contactsView: 'list' as ContactsView,
   /** The Map's last chosen imagery. Device-local, like `contactsView`. */
   mapLayer: 'standard' as MapLayer,
+  /**
+   * What the Map's pin cards show over each Contact's name. Syncs, so a Custom
+   * Field picked here (by id) shows on every device.
+   */
+  mapCardDetail: 'nextVisit' as MapCardDetail,
   hasCompletedMapOnboarding: false,
   calledGoecodeApiTimes: 0,
   lastTimeRequestedAReview: null as Date | null,

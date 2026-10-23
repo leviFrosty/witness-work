@@ -73,7 +73,7 @@ const readTool = (name: string) => {
 }
 const writeTool = (name: string) => {
   const tool = scribeTool(name)
-  if (!tool || tool.access === 'read')
+  if (!tool || tool.access === 'read' || tool.access === 'memory')
     throw new Error(`${name} is not a write tool`)
   return tool
 }
@@ -81,6 +81,7 @@ const writeTool = (name: string) => {
 const run = (name: string, args: Args, fx: FixtureContext) => {
   const tool = scribeTool(name)
   if (!tool) throw new Error(`no tool ${name}`)
+  if (tool.access === 'memory') return Promise.resolve(tool.edit(args))
   return tool.access === 'read'
     ? tool.run(args, fx.ctx)
     : Promise.resolve(tool.propose(args, fx.ctx))
@@ -104,7 +105,9 @@ function effectsOf(result: ProposeResult): DraftEffect[] {
   if (!result.ok) throw new Error(`expected effects, got: ${result.error}`)
   return result.effects
 }
-function errorOf(result: ReadResult | ProposeResult): string {
+function errorOf(
+  result: ReadResult | ProposeResult | { ok: true; edit: unknown }
+): string {
   if (result.ok)
     throw new Error(`expected an error, got ${JSON.stringify(result)}`)
   return result.error
@@ -212,6 +215,7 @@ const VALID: Record<string, Args> = {
     dateSpoken: null,
   },
   time_delete: { entryRef: null, onDate: '2026-10-14' },
+  memory_update: { old: null, new: 'Calls the Saturday group "the car group"' },
 }
 
 const visit = (change: Args = {}): Args => ({ ...VALID.visits_log, ...change })

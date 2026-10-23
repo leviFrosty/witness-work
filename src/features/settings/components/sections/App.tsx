@@ -4,6 +4,7 @@ import {
   FileInput as FileInputIcon,
   FileOutput as FileOutputIcon,
   Gauge as GaugeIcon,
+  NotebookPen as NotebookPenIcon,
 } from 'lucide-react-native'
 import i18n from '@/lib/locales'
 import { syncSettingsTitleKey } from '@/lib/syncCopy'
@@ -14,6 +15,7 @@ import { SettingsSectionProps } from '@/features/settings/screens/settingScreen'
 import {
   useScribeAvailability,
   useScribeEnabled,
+  useScribeMemoryEnabled,
   useScribeUsage,
 } from '@/features/scribe'
 import {
@@ -30,6 +32,7 @@ const AppSection = ({
   const scribe = useScribeAvailability()
   // Shown in passing: never opens a session (and an account) to fill it in.
   const fullest = fullestWindow(useScribeUsage({ open: false }).usage)
+  const memoryEnabled = useScribeMemoryEnabled()
   return (
     <GroupedListSection title={i18n.t('app')}>
       <GroupedListRow
@@ -61,6 +64,15 @@ const AppSection = ({
           }
           onPress={() => handleNavigate('ScribeUsage')}
           selected={selectedDestination === 'ScribeUsage'}
+        />
+      )}
+      {scribeEnabled && (
+        <GroupedListRow
+          icon={NotebookPenIcon}
+          label={i18n.t('scribe_memoryTitle')}
+          sublabel={memoryEnabled ? undefined : i18n.t('scribe_memoryOff')}
+          onPress={() => handleNavigate('ScribeMemory')}
+          selected={selectedDestination === 'ScribeMemory'}
         />
       )}
       {/* Cloud Sync needs neither iCloud nor Google Play services. */}

@@ -92,6 +92,10 @@ _Avoid_: calling the rule-based Assistant "AI" or "Scribe AI"; presenting LLM-ge
 One Scribe AI thread: the User's messages, Scribe AI's answers, and the Proposals it made, kept on this device only (not synced or backed up; the records it adds sync like any others). A Conversation ends by asking the User to start a new one when its context budget is nearly used; turns are never dropped silently. History lists past Conversations.
 _Avoid_: "chat", "session" (a session is a Supporter **Usage Window** and an account session).
 
+**Scribe AI Memory**:
+Short notes Scribe AI keeps about how the User works: their own words for things ("the build" means LDC), corrections, lasting preferences, and anything they ask it to remember. Sent with every Conversation so the User doesn't repeat themselves; at most 1,500 characters. It works in the background: Scribe AI saves a note at once, without a Review Card and without saying so in the Conversation, since it changes no records. The User reads, edits, turns off or clears the notes in Settings → Scribe AI memory. Kept on this device only. Never holds a householder's details or text from Visit notes.
+_Avoid_: "context file", "profile" (the Profile is the User's publisher details), "learning".
+
 **Proposal**:
 What Scribe AI would change after one turn: effects the device validated and resolved but hasn't applied, shown as **Review Cards**. The User adds it (all at once, in order, undone together if one fails), or it is dismissed, or superseded when a correction replaces it. An added Proposal can be undone from the toast or History for 30 days; undo leaves alone records changed since.
 _Avoid_: "draft", "preview" (Notes Import's term), "suggestion" (collides with the **Assistant**'s **Recommendation**).

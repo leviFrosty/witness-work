@@ -32,7 +32,10 @@ import {
   type ScribeStores,
 } from '@/features/scribe/runtime/snapshot'
 import { toolDefinitions } from '@/features/scribe/runtime/wireTools'
-import { startToolCalls } from '@/features/scribe/runtime/toolRunner'
+import {
+  startToolCalls,
+  type ToolRunOutcome,
+} from '@/features/scribe/runtime/toolRunner'
 import { budgetState, jsonBytes } from '@/features/scribe/runtime/budget'
 import {
   awaitConnection,
@@ -63,8 +66,14 @@ import {
 } from '@/features/scribe/stores/conversations'
 import { noteUsage } from '@/features/scribe/stores/usage'
 import {
+  setScribeMemoryText,
+  useScribeMemory,
+} from '@/features/scribe/stores/memory'
+import { replayMemoryEdits } from '@/features/scribe/lib/memory'
+import {
   trackContextFull,
   trackLimitReached,
+  trackMemorySaved,
   trackProposalResolved,
   trackTurnFinished,
   trackTurnStarted,
@@ -101,6 +110,22 @@ const EMPTY_STATS = (): TurnStats => ({
   failedWrites: {},
   tainted: false,
 })
+
+/**
+ * A kept step's memory edits, saved in the background. When the User edited the
+ * memory in Settings while the step ran, the edits apply again to theirs. The
+ * conversation's pinned context keeps the memory it started with; the model
+ * sees its edits in the transcript.
+ */
+function saveMemoryEdits(before: string, outcome: ToolRunOutcome): void {
+  const { text } = useScribeMemory.getState()
+  const saved =
+    text === before
+      ? { text: outcome.memoryText, changes: outcome.memoryChanges }
+      : replayMemoryEdits(text, outcome.memoryEdits)
+  if (saved.text !== text) setScribeMemoryText(saved.text)
+  if (saved.changes.length) trackMemorySaved(saved.changes, saved.text.length)
+}
 
 /** The latest outcome per Proposal, oldest Proposal first. */
 function collapseOutcomes(
@@ -400,6 +425,8 @@ async function driveTurn(
   signal: AbortSignal
 ): Promise<void> {
   const reading: ScribeActivityArea[] = []
+  /** The turn took a step for a reply after a silent memory save. */
+  let memoryReplyStep = false
   let conversation = getConversation(conversationId)!
   const proposalId = turn.proposalId ?? `pr_${deps.ulid()}`
   const existing = conversation.proposals[proposalId]?.effects ?? turn.effects
@@ -486,6 +513,8 @@ async function driveTurn(
         context: conversation.context!,
         maxResultBytes: limits.maxToolResultBytes,
         readTimeoutMs: deps.readTimeoutMs,
+        memory: stores.memory,
+        tainted: stats.tainted,
       }
       let run = startToolCalls(runDeps)
       discardStep = () => {
@@ -532,7 +561,8 @@ async function driveTurn(
             }
             calls.push(call)
             run.add(call)
-            if ((deps.tool(call.name)?.access ?? 'read') !== 'read') showDraft()
+            const access = deps.tool(call.name)?.access ?? 'read'
+            if (access !== 'read' && access !== 'memory') showDraft()
             updateTurnDebug(conversationId, (d) => ({
               ...d,
               streamedChars:
@@ -594,10 +624,22 @@ async function driveTurn(
         for (const name of outcome.proposed)
           if (stats.failedWrites[name]) stats.failedWrites[name]--
         reading.push(...outcome.areas)
+        if (outcome.memoryEdits.length) {
+          saveMemoryEdits(stores.memory.text, outcome)
+        }
+        // The model saves to memory without a word, expecting to answer
+        // after; without cards, it gets that step, once a turn.
+        const silentMemory =
+          outcome.memoryCalls > 0 &&
+          outcome.writeCalls === 0 &&
+          !text.trim() &&
+          !memoryReplyStep
+        if (silentMemory) memoryReplyStep = true
         next =
           outcome.readCalls > 0 ||
           outcome.failed.length > 0 ||
-          outcome.awaitsRef
+          outcome.awaitsRef ||
+          silentMemory
       }
 
       conversation = {

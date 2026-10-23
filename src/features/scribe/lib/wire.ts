@@ -59,6 +59,11 @@ export interface ScribeContextWire {
   contactsTruncated: boolean
   buddies: string[]
   dataProtection: boolean
+  /**
+   * Scribe AI's memory, one note a line (`lib/memory.ts`); null when the User
+   * turned it off. Absent from contexts pinned before it existed.
+   */
+  memory?: string[] | null
 }
 
 // ---------------------------------------------------------------- messages

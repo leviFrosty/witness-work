@@ -14,6 +14,11 @@ import type { TurnDraft } from '@/features/scribe/proposals/draft'
 import type { DraftEffect } from '@/features/scribe/proposals/model'
 import type { ScribeStores } from '@/features/scribe/runtime/snapshot'
 import { jsonBytes } from '@/features/scribe/runtime/budget'
+import {
+  editMemory,
+  type ScribeMemoryChange,
+  type ScribeMemoryEdit,
+} from '@/features/scribe/lib/memory'
 
 export const READ_TIMEOUT_ERROR =
   'The app took too long; try a narrower request.'
@@ -36,7 +41,20 @@ export interface ToolRunOutcome {
    * this step used, so the model needs a step to use it.
    */
   awaitsRef: boolean
+  memoryCalls: number
+  /**
+   * Memory edits that changed it, in call order, what each did, and the memory
+   * after them. Saved only when the step is kept.
+   */
+  memoryEdits: ScribeMemoryEdit[]
+  memoryChanges: ScribeMemoryChange[]
+  memoryText: string
 }
+
+export const MEMORY_OFF_ERROR =
+  "Memory is off, so carry on without saving and don't mention it."
+export const MEMORY_TAINTED_ERROR =
+  "Memory can't change in a turn that read a person's notes, so carry on without saving and don't mention it."
 
 export const RESULT_TOO_LARGE_ERROR =
   'That result is too large. Ask for fewer items or a shorter range.'
@@ -137,6 +155,10 @@ export interface ToolRunDeps {
   context: ScribeContextWire
   maxResultBytes: number
   readTimeoutMs?: number
+  /** Scribe AI's memory as the step begins. */
+  memory: { enabled: boolean; text: string }
+  /** The turn read a person's text in an earlier step. */
+  tainted: boolean
 }
 
 /** A step's tool calls, run as they stream in. */
@@ -151,8 +173,9 @@ export interface ToolCallRun {
  * Runs one step's tool calls as their `tool_call` events arrive (protocol: What
  * the app does with a step): each read starts at once, with a 5 s timeout, and
  * reads run in parallel; each write proposes effects into the turn's draft, in
- * call order. Never writes to a store. The caller keeps the draft's and Refs'
- * checkpoint, since a step that doesn't end in `tool_calls` is discarded.
+ * call order; each memory edit applies to a copy of the memory, in call order.
+ * Never writes to a store. The caller keeps the draft's and Refs' checkpoint,
+ * since a step that doesn't end in `tool_calls` is discarded.
  */
 export function startToolCalls(deps: ToolRunDeps): ToolCallRun {
   const outcome: ToolRunOutcome = {
@@ -164,6 +187,10 @@ export function startToolCalls(deps: ToolRunDeps): ToolCallRun {
     areas: [],
     untrusted: false,
     awaitsRef: false,
+    memoryCalls: 0,
+    memoryEdits: [],
+    memoryChanges: [],
+    memoryText: deps.memory.text,
   }
   const timeoutMs = deps.readTimeoutMs ?? SCRIBE_READ_TIMEOUT_MS
   const calls: ToolCallBlock[] = []
@@ -220,6 +247,30 @@ export function startToolCalls(deps: ToolRunDeps): ToolCallRun {
           settled.set(call.callId, block)
         })
       )
+      return
+    }
+    if (tool.access === 'memory') {
+      outcome.memoryCalls++
+      if (!deps.memory.enabled) return fail(call, MEMORY_OFF_ERROR, false)
+      // Text a person wrote mustn't reach every later conversation.
+      if (deps.tainted) return fail(call, MEMORY_TAINTED_ERROR, false)
+      const parsed = tool.edit(call.args)
+      if (!parsed.ok) return fail(call, parsed.error, false)
+      const result = editMemory(outcome.memoryText, parsed.edit)
+      if (!result.ok) return fail(call, result.error, false)
+      outcome.memoryText = result.text
+      if (result.change) {
+        outcome.memoryEdits.push(parsed.edit)
+        outcome.memoryChanges.push(result.change)
+      }
+      settled.set(call.callId, {
+        type: 'tool_result',
+        callId: call.callId,
+        name: call.name,
+        ok: true,
+        trust: 'app',
+        data: { status: 'saved' },
+      })
       return
     }
     outcome.writeCalls++

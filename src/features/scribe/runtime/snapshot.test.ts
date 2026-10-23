@@ -132,6 +132,7 @@ describe('buildScribeContext', () => {
         'contactsTruncated',
         'buddies',
         'dataProtection',
+        'memory',
       ].sort()
     )
     expect(context).toMatchObject({
@@ -144,6 +145,18 @@ describe('buildScribeContext', () => {
       contactsTruncated: false,
     })
     expect(context.now.startsWith('2026-10-21T09:30:00')).toBe(true)
+  })
+
+  it('sends the memory one note a line, and null while it is off', () => {
+    const text =
+      'Says "group" for the Saturday car group\n\n  Prefers 24h times  \n'
+    expect(
+      build(fixtureStores({ memory: { enabled: true, text } })).memory
+    ).toEqual(['Says "group" for the Saturday car group', 'Prefers 24h times'])
+    expect(build(fixtureStores()).memory).toEqual([])
+    expect(
+      build(fixtureStores({ memory: { enabled: false, text } })).memory
+    ).toBeNull()
   })
 
   it('names 22 days, today − 7 … today + 14, with English weekdays', () => {

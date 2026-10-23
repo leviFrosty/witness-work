@@ -71,6 +71,7 @@ import {
   useScribeConversations,
 } from '@/features/scribe/stores/conversations'
 import { useScribeLedger } from '@/features/scribe/stores/ledger'
+import { useScribeMemory } from '@/features/scribe/stores/memory'
 import { SCRIBE_TOOLS, scribeTool } from '@/features/scribe/tools'
 import { NOW } from '@/features/scribe/tools/__fixtures__/stores'
 import { evalStores } from '@/features/scribe/evals/evalStores'
@@ -161,6 +162,7 @@ function seed(stores: ScribeStores) {
     true
   )
   useScribeLedger.setState(useScribeLedger.getInitialState(), true)
+  useScribeMemory.setState({ ...stores.memory, updatedAt: null })
 }
 
 const pick = (scenarios: EvalScenario[]) => {

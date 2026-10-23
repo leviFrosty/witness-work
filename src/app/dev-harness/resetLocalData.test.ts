@@ -226,11 +226,13 @@ describe('resetLocalData', () => {
     expect(native.stopwatchReset).toHaveBeenCalled()
   })
 
-  it('forgets Scribe AI conversations and undo records', async () => {
+  it('forgets Scribe AI conversations, undo records and memory', async () => {
     const { useScribeConversations } = await import(
       '@/features/scribe/stores/conversations'
     )
     const { useScribeLedger } = await import('@/features/scribe/stores/ledger')
+    const { useScribeMemory } = await import('@/features/scribe/stores/memory')
+    useScribeMemory.setState({ enabled: false, text: 'A note' })
     useScribeConversations.setState({
       conversations: { c1: { id: 'c1' } as never },
       hasFinishedTurn: true,
@@ -242,5 +244,9 @@ describe('resetLocalData', () => {
       hasFinishedTurn: false,
     })
     expect(useScribeLedger.getState().records).toEqual({})
+    expect(useScribeMemory.getState()).toMatchObject({
+      enabled: true,
+      text: '',
+    })
   })
 })

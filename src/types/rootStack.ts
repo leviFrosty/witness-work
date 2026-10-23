@@ -130,6 +130,7 @@ export type RootStackParamList = {
   ScribeVoice: ScribeVoiceRouteParams
   ScribeHistory: undefined
   ScribeUsage: undefined
+  ScribeMemory: undefined
   ScribeOffline: undefined
   PreferencesPublisher: undefined
   PreferencesConversation: undefined

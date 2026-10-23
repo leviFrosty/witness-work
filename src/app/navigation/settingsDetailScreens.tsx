@@ -49,6 +49,12 @@ export const settingsDetailScreens: SettingsDetailScreen[] = [
     title: () => i18n.t('scribe_usageTitle'),
   },
   {
+    name: 'ScribeMemory',
+    getComponent: () =>
+      require('@/features/scribe/screens/ScribeMemoryScreen').default,
+    title: () => i18n.t('scribe_memoryTitle'),
+  },
+  {
     name: 'PreferencesPublisher',
     getComponent: () =>
       require('@/features/settings/screens/preferences/screens/PreferencesPublisherScreen')

@@ -43,6 +43,8 @@ import type {
   TimeEntry,
 } from '@/types/timeEntry'
 import type { ScribeContextWire } from '@/features/scribe/lib/wire'
+import { memoryLines } from '@/features/scribe/lib/memory'
+import { useScribeMemory } from '@/features/scribe/stores/memory'
 import {
   RefRegistry,
   STANDARD_CATEGORY_REF,
@@ -82,6 +84,8 @@ export interface ScribeStores {
   buddies: readonly Buddy[]
   buddyCards: Readonly<Record<string, ReceivedCard>>
   preferences: ScribePreferences
+  /** Scribe AI's memory (`stores/memory.ts`). */
+  memory: { enabled: boolean; text: string }
 }
 
 /** The live stores, now. */
@@ -89,6 +93,7 @@ export function readScribeStores(): ScribeStores {
   const prefs = usePreferences.getState()
   const reports = useServiceReport.getState()
   const buddies = useBuddies.getState()
+  const memory = useScribeMemory.getState()
   return {
     contacts: useContacts.getState().contacts,
     visits: useConversations.getState().conversations,
@@ -118,6 +123,7 @@ export function readScribeStores(): ScribeStores {
       returnVisitNotificationOffset: prefs.returnVisitNotificationOffset,
       onboardingComplete: prefs.onboardingComplete,
     },
+    memory: { enabled: memory.enabled, text: memory.text },
   }
 }
 
@@ -501,5 +507,6 @@ export function buildScribeContext(
     contactsTruncated: ordered.length > contacts.length,
     buddies,
     dataProtection,
+    memory: stores.memory.enabled ? memoryLines(stores.memory.text) : null,
   }
 }

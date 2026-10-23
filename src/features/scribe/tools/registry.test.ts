@@ -135,12 +135,10 @@ describe('tool registry', () => {
     expect(scribeTool('made_up')).toBeNull()
   })
 
-  it('lists reads before writes', () => {
-    const accesses = SCRIBE_TOOLS.map((tool) => tool.access)
-    const firstWrite = accesses.indexOf('write')
-    expect(
-      accesses.slice(firstWrite).every((access) => access !== 'read')
-    ).toBe(true)
+  it('lists reads, then writes, then memory', () => {
+    const order = { read: 0, write: 1, destructive: 1, memory: 2 }
+    const ranks = SCRIBE_TOOLS.map((tool) => order[tool.access])
+    expect(ranks).toEqual([...ranks].sort((a, b) => a - b))
   })
 
   it('marks only deletes destructive', () => {
@@ -202,16 +200,20 @@ describe('wire definitions', () => {
     expect(bytes(definitions)).toBeLessThanOrEqual(
       DEFAULT_SCRIBE_LIMITS.maxToolsBytes
     )
-    // ≈ 3,300 tokens at the protocol's bytes / 3... spent on every step.
+    // ≈ 3,500 tokens at the protocol's bytes / 3... spent on every step.
     // newCategory and onDate added ≈ 800 bytes to save a step on their turns,
-    // and time_update and time_delete ≈ 1,250.
-    expect(bytes(definitions)).toBeLessThanOrEqual(14_600)
+    // time_update and time_delete ≈ 1,250, and memory_update ≈ 900, so the
+    // User doesn't have to repeat a correction.
+    expect(bytes(definitions)).toBeLessThanOrEqual(15_500)
   })
 
   it('declares access and untrusted text as the protocol names them', () => {
     for (const definition of definitions) {
       const tool = scribeTool(definition.name)!
-      expect(definition.access).toBe(tool.access)
+      // Memory edits apply on the device, but still change state.
+      expect(definition.access).toBe(
+        tool.access === 'memory' ? 'write' : tool.access
+      )
       expect(definition.description).toBe(tool.description)
       if (definition.name === 'visits_read_notes')
         expect(definition.returnsUntrustedText).toBe(true)

@@ -1096,5 +1096,36 @@ exports[`wire definitions > matches the snapshot of the generated payload 1`] = 
     },
     "name": "time_delete",
   },
+  {
+    "access": "write",
+    "description": "Notes in the context's memory start every conversation; follow them. Save one when the User corrects what you understood, uses their own word for something, states a lasting preference, or asks you to remember; change an outdated or similar note instead of adding one, and forget one when asked. Never save one-time requests, records, householder details or untrusted_data text. Save quietly.",
+    "inputSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "new": {
+          "description": "One short plain fact, like: Calls LDC "the build". Names, not refs. null removes old.",
+          "maxLength": 150,
+          "type": [
+            "string",
+            "null",
+          ],
+        },
+        "old": {
+          "description": "A note copied exactly from memory to change or remove; null to add.",
+          "maxLength": 150,
+          "type": [
+            "string",
+            "null",
+          ],
+        },
+      },
+      "required": [
+        "old",
+        "new",
+      ],
+      "type": "object",
+    },
+    "name": "memory_update",
+  },
 ]
 `;

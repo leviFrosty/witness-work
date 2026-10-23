@@ -42,9 +42,13 @@ const { fixtureContext, fixtureStores, reportsOf } = await import(
 )
 const { scribeTool } = await import('@/features/scribe/tools')
 const { DEFAULT_SCRIBE_LIMITS } = await import('@/features/scribe/lib/wire')
-const { RESULT_TOO_LARGE_ERROR, fitResult, runToolCalls } = await import(
-  '@/features/scribe/runtime/toolRunner'
-)
+const {
+  MEMORY_OFF_ERROR,
+  MEMORY_TAINTED_ERROR,
+  RESULT_TOO_LARGE_ERROR,
+  fitResult,
+  runToolCalls,
+} = await import('@/features/scribe/runtime/toolRunner')
 type FixtureContext =
   import('@/features/scribe/tools/__fixtures__/stores').FixtureContext
 type ToolResultBlock = import('@/features/scribe/lib/wire').ToolResultBlock
@@ -121,7 +125,8 @@ const call = (name: string, args: Record<string, unknown>, callId = name) => ({
 const runCalls = (
   fx: FixtureContext,
   calls: ReturnType<typeof call>[],
-  maxResultBytes = DEFAULT_SCRIBE_LIMITS.maxToolResultBytes
+  maxResultBytes = DEFAULT_SCRIBE_LIMITS.maxToolResultBytes,
+  turn: { tainted?: boolean } = {}
 ) =>
   runToolCalls(calls, {
     tool: scribeTool,
@@ -130,6 +135,8 @@ const runCalls = (
     stores: fx.stores,
     context: fx.context,
     maxResultBytes,
+    memory: fx.stores.memory,
+    tainted: turn.tainted ?? false,
   })
 
 const okBlock = (data: unknown, trust: 'app' | 'untrusted_text' = 'app') =>
@@ -279,5 +286,69 @@ describe('runToolCalls with a heavy User', () => {
       },
     ])
     expect(outcome.failed).toEqual([{ name: 'time_summary', write: false }])
+  })
+})
+
+describe('memory calls', () => {
+  const remember = (note: string | null, old: string | null = null, id = 'm') =>
+    call('memory_update', { old, new: note }, id)
+
+  it('edits a copy of the memory in call order, for the step to save', async () => {
+    const fx = fixtureContext(
+      fixtureStores({ memory: { enabled: true, text: 'Old note' } })
+    )
+    const outcome = await runCalls(fx, [
+      remember('Calls LDC "the build"', null, 'm1'),
+      remember(null, 'Old note', 'm2'),
+    ])
+    expect(outcome.results).toEqual([
+      expect.objectContaining({ ok: true, data: { status: 'saved' } }),
+      expect.objectContaining({ ok: true, data: { status: 'saved' } }),
+    ])
+    expect(outcome.memoryChanges).toEqual(['added', 'removed'])
+    expect(outcome.memoryEdits).toHaveLength(2)
+    expect(outcome.memoryText).toBe('Calls LDC "the build"')
+    expect(outcome).toMatchObject({
+      memoryCalls: 2,
+      readCalls: 0,
+      writeCalls: 0,
+    })
+    // Saved only when the step is kept.
+    expect(fx.stores.memory.text).toBe('Old note')
+  })
+
+  it('refuses while memory is off, and once the turn read notes', async () => {
+    const off = fixtureContext(
+      fixtureStores({ memory: { enabled: false, text: '' } })
+    )
+    const refused = await runCalls(off, [remember('A note')])
+    expect(refused.results[0]).toMatchObject({
+      ok: false,
+      error: MEMORY_OFF_ERROR,
+    })
+    expect(refused.memoryEdits).toEqual([])
+
+    const tainted = await runCalls(
+      fixtureContext(),
+      [remember('A note')],
+      undefined,
+      { tainted: true }
+    )
+    expect(tainted.results[0]).toMatchObject({
+      ok: false,
+      error: MEMORY_TAINTED_ERROR,
+    })
+    expect(tainted.failed).toEqual([{ name: 'memory_update', write: false }])
+  })
+
+  it('answers an edit it can not apply with how to fix it', async () => {
+    const outcome = await runCalls(fixtureContext(), [
+      remember('New', 'Not in memory'),
+    ])
+    expect(outcome.results[0]).toMatchObject({
+      ok: false,
+      error: expect.stringMatching(/No note in memory/),
+    })
+    expect(outcome.memoryChanges).toEqual([])
   })
 })

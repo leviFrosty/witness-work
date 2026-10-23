@@ -27,6 +27,7 @@ import { clearLegacyLedger } from '@/features/scribe/legacy/notesImportLedger'
 import { abortAllTurns, useScribeRuns } from '@/features/scribe/runtime/runs'
 import { useScribeConversations } from '@/features/scribe/stores/conversations'
 import { useScribeLedger } from '@/features/scribe/stores/ledger'
+import { useScribeMemory } from '@/features/scribe/stores/memory'
 import { useScribeUsageStore } from '@/features/scribe/stores/usage'
 import { useNotificationsTray } from '@/features/notifications/stores/notificationsTray'
 import { forgetFoundSecrets } from '@/features/pet/lib/secrets'
@@ -63,10 +64,11 @@ export const RESET_STORES: readonly ResettableStore[] = [
   // are orphaned once the reset forgets the destination.
   useCalendarSync,
   useCalendarPublishing,
-  // Scribe AI's conversations and undo records are device-only, like the
-  // records' own stores here; the usage snapshot is refetched.
+  // Scribe AI's conversations, undo records and memory are device-only, like
+  // the records' own stores here; the usage snapshot is refetched.
   useScribeConversations,
   useScribeLedger,
+  useScribeMemory,
   useScribeUsageStore,
   useScribeRuns,
 ]

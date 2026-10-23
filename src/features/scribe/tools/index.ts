@@ -17,11 +17,12 @@ import visitsLog from '@/features/scribe/tools/visitsLog'
 import categoriesCreate from '@/features/scribe/tools/categoriesCreate'
 import timeUpdate from '@/features/scribe/tools/timeUpdate'
 import timeDelete from '@/features/scribe/tools/timeDelete'
+import memoryUpdate from '@/features/scribe/tools/memoryUpdate'
 
 /**
  * Every tool Scribe AI offers, in the order the definitions are sent (the
  * protocol keeps it stable across a conversation's steps). Reads first, then
- * writes. Adding a tool: see README.md.
+ * writes, then memory. Adding a tool: see README.md.
  */
 export const SCRIBE_TOOLS: readonly ScribeTool[] = [
   contactsSearch,
@@ -42,6 +43,7 @@ export const SCRIBE_TOOLS: readonly ScribeTool[] = [
   categoriesCreate,
   timeUpdate,
   timeDelete,
+  memoryUpdate,
 ]
 
 const BY_NAME = new Map(SCRIBE_TOOLS.map((tool) => [tool.name, tool]))

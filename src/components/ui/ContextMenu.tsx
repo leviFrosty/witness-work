@@ -25,6 +25,7 @@ export default function ContextMenu({
   children,
   onPress,
   accessibilityLabel,
+  accessibilityState,
   accessible,
   style,
   testID,
@@ -37,6 +38,7 @@ export default function ContextMenu({
         accessible={accessible}
         accessibilityRole='button'
         accessibilityLabel={accessibilityLabel}
+        accessibilityState={accessibilityState}
         testID={testID}
       >
         {children}

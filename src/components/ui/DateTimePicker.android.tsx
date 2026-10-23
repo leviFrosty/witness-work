@@ -113,28 +113,32 @@ export default function DateTimePicker({
         justifyContent: 'flex-end',
       }}
     >
-      {parts.map((part) => (
-        <Button
-          key={part}
-          noTransform
-          accessibilityRole='button'
-          accessibilityLabel={i18n.t(part)}
-          testID={testID && `${testID}-${part}`}
-          onPress={() => setOpen(part)}
-          style={{
-            paddingHorizontal: 10,
-            paddingVertical: 8,
-            backgroundColor: theme.colors.card,
-            borderRadius: theme.numbers.borderRadiusSm,
-          }}
-        >
-          <Text>
-            {part === 'date'
-              ? formatDate(value, { style: 'medium' })
-              : formatTime(value)}
-          </Text>
-        </Button>
-      ))}
+      {parts.map((part) => {
+        const shown =
+          part === 'date'
+            ? formatDate(value, { style: 'medium' })
+            : formatTime(value)
+        return (
+          <Button
+            key={part}
+            noTransform
+            accessibilityRole='button'
+            accessibilityLabel={i18n.t(part)}
+            // The label alone hid the value from TalkBack ("Date, button").
+            accessibilityValue={{ text: shown }}
+            testID={testID && `${testID}-${part}`}
+            onPress={() => setOpen(part)}
+            style={{
+              paddingHorizontal: 10,
+              paddingVertical: 8,
+              backgroundColor: theme.colors.card,
+              borderRadius: theme.numbers.borderRadiusSm,
+            }}
+          >
+            <Text>{shown}</Text>
+          </Button>
+        )
+      })}
       {open && (
         <DateTimeDialog
           part={open}

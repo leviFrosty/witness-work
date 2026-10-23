@@ -176,6 +176,7 @@ function DayCell({
             dateString: day.key,
           }}
           state={isToday ? 'today' : ''}
+          selected={selected}
           monthsReports={reports}
           dayPlansOverride={dayPlans}
           recurringPlansOverride={recurringPlans}

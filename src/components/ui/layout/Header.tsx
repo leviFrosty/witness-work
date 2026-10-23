@@ -10,6 +10,7 @@ import {
   useSafeAreaInsets,
 } from 'react-native-safe-area-context'
 import { isRtlLayout } from '@/lib/direction'
+import { transparentToScreenReaders } from '@/lib/screenReader'
 import { useNavigation } from '@react-navigation/native'
 import IconButton from '@/components/ui/IconButton'
 import i18n from '@/lib/locales'
@@ -214,9 +215,15 @@ const HeaderContent = ({
             },
             onLongPressTitle && !title && { minWidth: 120, minHeight: 24 },
           ]}
+          // Without a long press the title itself is the heading, rather
+          // than a disabled element around it.
+          {...(onLongPressTitle
+            ? { accessibilityRole: 'header' as const }
+            : transparentToScreenReaders)}
         >
           <Text
             {...titleFit}
+            accessibilityRole='header'
             style={{
               textAlign: 'center',
               fontSize: 18,

@@ -7,6 +7,7 @@ import Haptics from '@/lib/haptics'
 import { usePreferences } from '@/stores/preferences'
 import MenuItems from '@/components/ui/MenuItems.android'
 import { menuAccessibilityProps, menuGroups } from '@/components/ui/menuEntries'
+import { transparentToScreenReaders } from '@/lib/screenReader'
 import PointerHover, { HoverTint } from '@/components/ui/PointerHover'
 import type {
   ContextMenuAction,
@@ -26,6 +27,7 @@ export default function ContextMenu({
   onPress,
   accessibilityLabel,
   accessibilityRole,
+  accessibilityState,
   accessible = true,
   disabled = false,
   pointerEffect = 'tint',
@@ -82,6 +84,7 @@ export default function ContextMenu({
           onPress={onPress}
           accessibilityRole='button'
           accessibilityLabel={accessibilityLabel}
+          accessibilityState={accessibilityState}
           testID={testID}
         >
           {children}
@@ -98,11 +101,7 @@ export default function ContextMenu({
   // entirely: a focusable Pressable is an element anyway, and one that only
   // has a state still reads the content's loose text around those controls.
   const a11y = !accessible
-    ? {
-        accessible: false,
-        focusable: false,
-        importantForAccessibility: 'no' as const,
-      }
+    ? transparentToScreenReaders
     : disabled
       ? { accessible: false }
       : menuAccessibilityProps(groups)
@@ -144,6 +143,7 @@ export default function ContextMenu({
             onLongPress={disabled ? undefined : open}
             accessibilityRole={onPress ? 'button' : accessibilityRole}
             accessibilityLabel={accessibilityLabel}
+            accessibilityState={accessibilityState}
             testID={testID}
             {...a11y}
           >
@@ -176,6 +176,7 @@ export default function ContextMenu({
               onLongPress={disabled ? undefined : open}
               accessibilityRole={onPress ? 'button' : accessibilityRole}
               accessibilityLabel={accessibilityLabel}
+              accessibilityState={accessibilityState}
               testID={testID}
               {...a11y}
             >

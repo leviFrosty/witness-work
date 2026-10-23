@@ -274,7 +274,7 @@ export function ScopedSwitchRow({
   setting: ScopedSetting<boolean>
   label: string
   info?: string
-  description?: ReactNode
+  description?: string
   lastInSection?: boolean
 }) {
   return (

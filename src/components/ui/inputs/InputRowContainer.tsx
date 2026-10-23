@@ -14,6 +14,7 @@ import InfoPopover from '@/components/ui/InfoPopover'
 import LucideIcon from '@/components/ui/LucideIcon'
 import Switch from '@/components/ui/Switch'
 import { inputLayout } from '@/components/ui/inputs/InputLayout'
+import { hiddenFromScreenReaders } from '@/lib/screenReader'
 
 export interface InputRowContainerProps {
   invalid?: boolean
@@ -40,7 +41,21 @@ export interface InputRowContainerProps {
   gap?: number
   required?: boolean
   style?: StyleProp<ViewStyle>
+  /**
+   * Focuses or opens the control, which must carry `label` as its own
+   * accessibility label: screen readers skip the label's text.
+   */
   onLabelPress?: () => void
+  /**
+   * The control carries `label` as its own accessibility label (a switch), so
+   * screen readers skip the label's text instead of reading the name twice.
+   */
+  labelReadByControl?: boolean
+  /**
+   * The control reads `description` too, as its accessibility hint, so screen
+   * readers skip its text rather than reading it before the control it's for.
+   */
+  descriptionReadByControl?: boolean
   controlStyle?: StyleProp<ViewStyle>
   /** Override the settings control width for multiline or compound controls. */
   controlWidth?: 'compact' | 'full' | 'auto'
@@ -75,6 +90,8 @@ const InputRowContainer: React.FC<
   required,
   style,
   onLabelPress,
+  labelReadByControl = !!onLabelPress,
+  descriptionReadByControl,
   controlStyle,
   controlWidth = 'compact',
   inlineAtLargeText,
@@ -94,6 +111,7 @@ const InputRowContainer: React.FC<
 
   const labelCluster = (leftIcon || label) && (
     <View
+      {...(labelReadByControl && hiddenFromScreenReaders)}
       style={{
         alignItems: 'center',
         gap: inputLayout.labelGap,
@@ -143,8 +161,8 @@ const InputRowContainer: React.FC<
         onPress={onLabelPress}
         style={hasInfo ? { flexShrink: 1 } : undefined}
         hitSlop={{ top: 12, bottom: 12, left: 8, right: 4 }}
-        accessibilityRole='button'
-        accessibilityLabel={label}
+        // A shortcut to the control, which reads the label itself.
+        {...hiddenFromScreenReaders}
       >
         {labelCluster}
       </Pressable>
@@ -168,6 +186,7 @@ const InputRowContainer: React.FC<
       )}
       {description && (
         <Text
+          {...(descriptionReadByControl && hiddenFromScreenReaders)}
           style={{
             fontSize: theme.fontSize('sm'),
             color: theme.colors.textAlt,

@@ -10,6 +10,7 @@ import type { HideBarsScrollProps } from '@/hooks/useHideBarsOnScroll'
 import useTabReselect from '@/hooks/useTabReselect'
 import useScrollAnchor from '@/hooks/useScrollAnchor'
 import { getMonthsReports } from '@/lib/serviceReport'
+import { transparentToScreenReaders } from '@/lib/screenReader'
 
 import MonthReport from '@/features/service-reports/components/MonthReport'
 import FoldSplit from '@/components/ui/layout/FoldSplit'
@@ -123,9 +124,7 @@ const ProgressMonthTab = ({
     <Pressable
       disabled={!editing}
       onPress={onFinishEditing}
-      accessible={false}
-      focusable={false}
-      importantForAccessibility='no'
+      {...transparentToScreenReaders}
       style={{ opacity: editing ? 0.4 : 1 }}
     >
       <View pointerEvents={editing ? 'none' : 'auto'}>

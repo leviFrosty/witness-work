@@ -34,6 +34,7 @@ import { RootStackNavigation } from '@/types/rootStack'
 import { HomeTabStackNavigation } from '@/types/homeStack'
 import SidebarToggle from '@/components/ui/SidebarToggle'
 import { isRtlLayout } from '@/lib/direction'
+import { transparentToScreenReaders } from '@/lib/screenReader'
 import WindowControlsInsetView, {
   NO_WINDOW_CONTROLS,
 } from '../../modules/window-controls'
@@ -194,6 +195,11 @@ export default function RootHeader({
               delayLongPress={800}
               onLayout={(e) => setTitleRoom(e.nativeEvent.layout.width)}
               style={{ flex: 1 }}
+              // Without a press the title itself is the heading, rather than
+              // a disabled element around it.
+              {...(onPressTitle || onLongPressTitle
+                ? { accessibilityRole: 'header' as const }
+                : transparentToScreenReaders)}
             >
               {/* Scaled rather than resized so the title shrinks smoothly. */}
               <Animated.View

@@ -311,6 +311,20 @@ describe('Android context menu', () => {
     expect(trigger().props.accessibilityRole).toBe('header')
   })
 
+  it("reads a deferred trigger's state, e.g. the selected day", async () => {
+    await render(
+      <AndroidContextMenu
+        actions={actions()}
+        onPress={vi.fn()}
+        accessibilityState={{ selected: true }}
+        deferHost
+      >
+        <React.Fragment />
+      </AndroidContextMenu>
+    )
+    expect(trigger().props.accessibilityState).toEqual({ selected: true })
+  })
+
   it('renders the content without a menu when there are no actions', async () => {
     const onPress = vi.fn()
     await render(

@@ -8,6 +8,7 @@ import PointerTooltip from '@/components/ui/PointerTooltip'
 import useTheme from '@/contexts/theme'
 import { useIsTakingOver } from '@/hooks/useTakeoverTurn'
 import i18n from '@/lib/locales'
+import { hiddenFromScreenReaders } from '@/lib/screenReader'
 import type { NotificationItem } from '@/types/notifications'
 import NotificationsList, {
   type TraySyncState,
@@ -109,8 +110,11 @@ function BellTrigger({
         />
       </PointerTooltip>
       {unread > 0 && (
+        // The bell's label reads the count, so the badge stays out of the
+        // screen reader's way rather than being a stop of its own.
         <View
           pointerEvents='none'
+          {...hiddenFromScreenReaders}
           style={{
             position: 'absolute',
             top: TRIGGER_PADDING - 5,
@@ -124,8 +128,7 @@ function BellTrigger({
             backgroundColor: theme.colors.error,
           }}
         >
-          {/* The badge keeps its size beside the icon; the bell's label
-              reads the count. */}
+          {/* The badge keeps its size beside the icon. */}
           <Text
             maxFontSizeMultiplier={1.2}
             style={{

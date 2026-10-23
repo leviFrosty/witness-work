@@ -96,6 +96,12 @@ describe('Android', () => {
       'date',
       'time',
     ])
+    // TalkBack reads the value after the part's name, as the button shows it.
+    expect(buttons().map((b) => b.props.accessibilityValue.text)).toEqual([
+      buttons()[0].findByType('Text' as never).props.children,
+      buttons()[1].findByType('Text' as never).props.children,
+    ])
+    expect(buttons()[1].props.accessibilityValue.text).toMatch(/35/)
     expect(dialogs()).toHaveLength(0)
 
     press(0)

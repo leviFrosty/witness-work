@@ -347,6 +347,8 @@ const CalendarDay = (
     overlay?: ReactNode
     /** What `overlay` shows, read out after the day's own label. */
     overlayAccessibilityLabel?: string
+    /** The day the Schedule has open, drawn by the caller; read as selected. */
+    selected?: boolean
   }
 ) => {
   // Only the slices a day reads: the Schedule keeps hundreds of days mounted,
@@ -426,6 +428,7 @@ const CalendarDay = (
       // The Schedule mounts a hundred days at once.
       deferHost
       accessibilityLabel={accessibilityLabel}
+      accessibilityState={{ selected: !!props.selected }}
       onPress={() => {
         props.onPress?.(props.date)
         const { howToAddPlan, removeHint } = usePreferences.getState()

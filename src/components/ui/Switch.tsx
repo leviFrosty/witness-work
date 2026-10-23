@@ -5,7 +5,7 @@ import {
 
 export type SwitchProps = Pick<
   NativeSwitchProps,
-  'value' | 'onValueChange' | 'disabled' | 'testID'
+  'value' | 'onValueChange' | 'disabled' | 'testID' | 'accessibilityHint'
 > &
   (
     | {

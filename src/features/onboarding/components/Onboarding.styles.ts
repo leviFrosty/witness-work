@@ -12,11 +12,6 @@ export const styles = StyleSheet.create({
   subTitle: {
     fontSize: 25,
   },
-  title: {
-    fontSize: 40,
-    lineHeight: 60,
-    fontFamily: 'Inter_700Bold',
-  },
   actionButton: {
     backgroundColor: '#1BD15D',
     borderRadius: 15,
@@ -24,11 +19,6 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  actionButtonInner: {
-    fontSize: 24,
-    color: '#fff',
-    fontFamily: 'Inter_700Bold',
   },
   navContainer: {
     flexDirection: 'column',
@@ -78,7 +68,6 @@ export const styles = StyleSheet.create({
   },
   navTitle: {
     fontSize: 24,
-    fontFamily: 'Inter_700Bold',
   },
   navSkip: {
     textDecorationLine: 'underline',
@@ -92,7 +81,6 @@ export const styles = StyleSheet.create({
   },
   stepTitle: {
     fontSize: 32,
-    fontFamily: 'Inter_700Bold',
     marginBottom: 20,
   },
   stepContentContainer: {

@@ -169,3 +169,17 @@ describe('TextInput focus', () => {
     expect(input().props.autoFocusNative).toBe(false)
   })
 })
+
+describe('TextInput font', () => {
+  it('keeps the theme font when a style sets the family to undefined', async () => {
+    await render({ style: { fontFamily: undefined, color: 'black' } })
+
+    expect(flatten(input().props.style).fontFamily).toBe('Regular')
+  })
+
+  it('uses a family the style sets', async () => {
+    await render({ style: { fontFamily: 'Bold' } })
+
+    expect(flatten(input().props.style).fontFamily).toBe('Bold')
+  })
+})

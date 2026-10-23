@@ -126,7 +126,9 @@ const OnboardingNav = ({
             <ChevronBackwardIcon color={theme.colors.text} size={22} />
           </Button>
         ) : null}
-        <Text style={styles.navTitle}>{i18n.t('witnessWork')}</Text>
+        <Text style={[styles.navTitle, { fontFamily: theme.fonts.bold }]}>
+          {i18n.t('witnessWork')}
+        </Text>
       </View>
     </View>
   )

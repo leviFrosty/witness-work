@@ -6,11 +6,10 @@ import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import { usePreferences } from '@/stores/preferences'
 import { alignText } from '@/lib/direction'
+import { postScriptName } from '@/lib/postScriptName'
 
 // Compose's Collapsible pads its own header and content (16dp each side).
 const CARD_PADDING = Platform.OS === 'android' ? 4 : 16
-// SwiftUI looks fonts up by PostScript name, not the expo-font alias.
-const LABEL_FONT = Platform.OS === 'ios' ? 'Inter-SemiBold' : undefined
 const CONTENT_INSET =
   2 + CARD_PADDING * 2 + (Platform.OS === 'android' ? 32 : 0)
 
@@ -69,7 +68,12 @@ export default function CollapsibleCard({
           // header reads this one.
           stateDescription={i18n.t(open ? 'a11y_expanded' : 'a11y_collapsed')}
           labelStyle={{
-            fontFamily: LABEL_FONT ?? theme.fonts.semiBold,
+            // SwiftUI looks fonts up by PostScript name, not the expo-font
+            // alias.
+            fontFamily:
+              Platform.OS === 'ios'
+                ? postScriptName(theme.fonts.semiBold)
+                : theme.fonts.semiBold,
             fontSize: theme.fontSize('md'),
             color: theme.colors.text,
             textAlign: alignText('start'),

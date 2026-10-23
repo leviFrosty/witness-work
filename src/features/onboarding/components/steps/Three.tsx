@@ -36,7 +36,10 @@ const StepThree = ({ goBack, goNext }: Props) => {
         <View style={{ marginBottom: 24 }}>
           <NotificationPreview />
         </View>
-        <Text accessibilityRole='header' style={styles.stepTitle}>
+        <Text
+          accessibilityRole='header'
+          style={[styles.stepTitle, { fontFamily: theme.fonts.bold }]}
+        >
           {i18n.t('neverForgetAReturnVisit')}
         </Text>
         <Text style={[styles.description, { color: theme.colors.textAlt }]}>

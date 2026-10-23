@@ -50,6 +50,9 @@ const Text: React.FC<PropsWithChildren<Props>> = ({
   const incomingFontSize = flatStyle.fontSize ?? theme.fontSize('md')
   const modifiedStyle: TextStyle = {
     ...flatStyle,
+    // A style that sets the family to undefined (`isNext ? semiBold :
+    // undefined`) keeps Inter instead of falling back to the system font.
+    fontFamily: flatStyle.fontFamily ?? theme.fonts.regular,
     fontSize: incomingFontSize + fontSizeOffset,
   }
   if (flatStyle.letterSpacing)
@@ -63,7 +66,6 @@ const Text: React.FC<PropsWithChildren<Props>> = ({
       style={[
         {
           color: theme.colors.text,
-          fontFamily: theme.fonts.regular,
           ...(alignStart && { textAlign: alignText('start') }),
         },
         modifiedStyle,

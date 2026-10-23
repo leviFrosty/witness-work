@@ -77,7 +77,14 @@ const StepTwo = ({ goBack, goNext }: Props) => {
                 }}
               >
                 <Text
-                  style={[styles.stepTitle, { marginBottom: 0, flexShrink: 1 }]}
+                  style={[
+                    styles.stepTitle,
+                    {
+                      marginBottom: 0,
+                      flexShrink: 1,
+                      fontFamily: theme.fonts.bold,
+                    },
+                  ]}
                 >
                   {i18n.t('whatTypePublisherAreYou')}
                 </Text>

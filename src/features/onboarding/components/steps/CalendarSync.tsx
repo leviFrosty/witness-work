@@ -93,7 +93,10 @@ const CalendarSync = ({ goBack, goNext }: Props) => {
         <View style={{ marginBottom: 24 }}>
           <CalendarPreview />
         </View>
-        <Text accessibilityRole='header' style={styles.stepTitle}>
+        <Text
+          accessibilityRole='header'
+          style={[styles.stepTitle, { fontFamily: theme.fonts.bold }]}
+        >
           {i18n.t('calendarOnboardingTitle')}
         </Text>
         <Text style={[styles.description, { color: theme.colors.textAlt }]}>

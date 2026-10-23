@@ -27,6 +27,7 @@ vi.mock('react-native-reanimated', async () => {
 vi.mock('react-native', () => ({
   Keyboard: { isVisible: () => false, dismiss: vi.fn() },
   Platform: { OS: 'ios' },
+  View: 'View',
 }))
 vi.mock('react-native-safe-area-context', () => ({
   useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
@@ -82,6 +83,9 @@ vi.mock('@/features/scribe/components/ScribeConversationHeader', () => ({
 }))
 vi.mock('@/features/scribe/components/ScribeTimeline', () => ({
   default: 'ScribeTimeline',
+}))
+vi.mock('@/features/scribe/components/ScribeVoiceSheet', () => ({
+  default: 'ScribeVoiceSheet',
 }))
 vi.mock('@/features/scribe/components/ScribeComposer', () => ({
   default: 'ScribeComposer',

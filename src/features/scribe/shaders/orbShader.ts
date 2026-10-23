@@ -136,7 +136,9 @@ half4 main(float2 xy) {
   float ringW = max(R * 0.045, 1.2);
   float rd = (r - ringR) / ringW;
   float ring = exp(-rd * rd);
-  float sweep = fract(ang / 6.2831853 + t * 0.55);
+  // Screen y points down, so a growing angle runs clockwise: subtracting time
+  // moves the head (sweep near 1) clockwise, with its tail behind it.
+  float sweep = fract(ang / 6.2831853 - t * 0.55);
   // Bright head that fades in over a few degrees, so the comet has no seam.
   float comet = sweep * sweep * sweep * smoothstep(1.0, 0.96, sweep);
   float ringA = uProc * ring * (0.16 + 0.84 * comet);

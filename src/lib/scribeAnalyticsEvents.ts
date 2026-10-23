@@ -11,6 +11,7 @@ export const scribeAnalyticsEventNames = [
   'scribe_limit_reached',
   'scribe_context_full',
   'scribe_capture_finished',
+  'scribe_voice_minimized',
   'scribe_usage_viewed',
   'scribe_upsell_tapped',
   'scribe_supporter_rechecked',

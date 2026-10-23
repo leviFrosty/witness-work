@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Keyboard, Platform, type TextInput } from 'react-native'
+import { Keyboard, Platform, type TextInput, View } from 'react-native'
 import Animated, {
   KeyboardState,
   useAnimatedKeyboard,
@@ -30,6 +30,7 @@ import ScribeConversationHeader from '@/features/scribe/components/ScribeConvers
 import ScribeConversationFooter from '@/features/scribe/components/ScribeConversationFooter'
 import ScribeComposer from '@/features/scribe/components/ScribeComposer'
 import ScribeTimeline from '@/features/scribe/components/ScribeTimeline'
+import ScribeVoiceSheet from '@/features/scribe/components/ScribeVoiceSheet'
 import type { RenderSupporterCta } from '@/features/scribe/components/ScribeStateCards'
 
 /** `submitId`s already sent, so a remount can't send a recording twice. */
@@ -54,12 +55,18 @@ const Conversation = ({
     useRoute<RouteProp<RootStackParamList, 'ScribeConversation'>>()
   const controller = useScribeConversation(params.conversationId ?? null)
   const availability = useScribeAvailability()
-  const voice = useScribeVoiceAvailability()
+  const voiceAvailability = useScribeVoiceAvailability()
   const { usage } = useScribeUsage()
   const photo = useScribePhotoCapture()
   const paper = useScribePaperCapture()
   const [draft, setDraft] = useState('')
   const [draftSource, setDraftSource] = useState<ScribeInputSource>('keyboard')
+  // The voice sheet, drawn over this conversation so it can shrink to a small
+  // orb while the User keeps talking.
+  const [voice, setVoice] = useState<'conversation' | 'say_a_change' | null>(
+    null
+  )
+  const [voiceMinimized, setVoiceMinimized] = useState(false)
   const inputRef = useRef<TextInput>(null)
   const { conversationId, run } = controller
   const running = run.phase === 'sending' || run.phase === 'thinking'
@@ -167,23 +174,46 @@ const Conversation = ({
     !availability.limited &&
     controller.budget !== 'full' &&
     !(run.phase === 'error' && run.error.code === 'context_full')
-  const voiceSupported = voice !== 'unsupported'
+  const voiceSupported = voiceAvailability !== 'unsupported'
+  const listen = (entry: 'conversation' | 'say_a_change') => {
+    // Already listening, minimized: open it again.
+    if (voice) {
+      setVoiceMinimized(false)
+      return
+    }
+    Keyboard.dismiss()
+    setVoiceMinimized(false)
+    setVoice(entry)
+  }
   const speak = () => {
     paper.clearError()
-    navigation.navigate('ScribeVoice', {
-      entry: 'conversation',
-      conversationId: conversationId ?? undefined,
-    })
+    listen('conversation')
   }
   const sayAChange = () => {
     if (!voiceSupported || availability.status !== 'available') {
       inputRef.current?.focus()
       return
     }
-    navigation.navigate('ScribeVoice', {
-      entry: 'say_a_change',
-      conversationId: conversationId ?? undefined,
-    })
+    listen('say_a_change')
+  }
+  const closeVoice = () => {
+    setVoice(null)
+    setVoiceMinimized(false)
+  }
+  const sendVoice = (text: string) => {
+    const entry = voice ?? 'conversation'
+    closeVoice()
+    void controller.send({ text, source: 'voice', entry })
+  }
+  // What a recording heard waits in the composer, after anything typed.
+  const typeVoice = (heard?: string) => {
+    closeVoice()
+    if (heard) {
+      setDraft((typed) => (typed.trim() ? `${typed.trim()} ${heard}` : heard))
+      setDraftSource('voice')
+      forgoScribeResume()
+    }
+    setTimeout(() => inputRef.current?.focus(), 350)
   }
   const upgrade = () => {
     analytics.capture('scribe_upsell_tapped', { surface: 'limit_reached' })
@@ -199,10 +229,21 @@ const Conversation = ({
         onHistory={() => navigation.navigate('ScribeHistory')}
         onNewConversation={conversationId ? startNewConversation : undefined}
       />
-      <ScribeTimeline
-        controller={controller}
-        onSayAChange={canMessage ? sayAChange : undefined}
-      />
+      <View style={{ flex: 1 }}>
+        <ScribeTimeline
+          controller={controller}
+          onSayAChange={canMessage ? sayAChange : undefined}
+        />
+        {voice ? (
+          <ScribeVoiceSheet
+            onSend={sendVoice}
+            onType={typeVoice}
+            onClose={closeVoice}
+            minimized={voiceMinimized}
+            onMinimizedChange={setVoiceMinimized}
+          />
+        ) : null}
+      </View>
       <ScribeConversationFooter
         controller={controller}
         availability={availability}

@@ -13,6 +13,11 @@ import type {
   ScribeVoiceParams,
 } from '@/features/scribe/types'
 
+type BeforeRemove = {
+  preventDefault: () => void
+  data?: { action: unknown }
+}
+
 const runtime = vi.hoisted(() => ({
   params: {} as ScribeVoiceParams,
   capture: null as unknown as ScribeVoiceCapture,
@@ -22,17 +27,14 @@ const runtime = vi.hoisted(() => ({
   announce: vi.fn(),
   light: vi.fn(),
   error: vi.fn(),
+  capture_event: vi.fn(),
   navigation: {
+    dispatch: vi.fn(),
     popTo: vi.fn(),
     replace: vi.fn(),
     goBack: vi.fn(),
-    beforeRemove: undefined as
-      | ((event: { preventDefault: () => void }) => void)
-      | undefined,
-    addListener: (
-      _event: string,
-      listener: (event: { preventDefault: () => void }) => void
-    ) => {
+    beforeRemove: undefined as ((event: BeforeRemove) => void) | undefined,
+    addListener: (_event: string, listener: (event: BeforeRemove) => void) => {
       runtime.navigation.beforeRemove = listener
       return () => {}
     },
@@ -42,6 +44,7 @@ const runtime = vi.hoisted(() => ({
 vi.mock('react-native', () => ({
   AccessibilityInfo: { announceForAccessibility: runtime.announce },
   Alert: { alert: runtime.alert },
+  Modal: 'Modal',
   View: 'View',
   useWindowDimensions: () => ({ width: 400, height: 800, fontScale: 1 }),
 }))
@@ -52,6 +55,20 @@ vi.mock('lucide-react-native', () => ({
   Mic: 'Mic',
   MicOff: 'MicOff',
   X: 'X',
+}))
+vi.mock('react-native-gesture-handler', () => ({
+  GestureHandlerRootView: 'GestureHandlerRootView',
+}))
+vi.mock('react-native-reanimated', () => ({
+  default: { View: 'AnimatedView' },
+  ZoomIn: { duration: () => ({}) },
+}))
+vi.mock('@/components/ui/Button', () => ({ default: 'Button' }))
+vi.mock('@/lib/analytics', () => ({
+  analytics: { capture: runtime.capture_event },
+}))
+vi.mock('@/features/scribe/components/ScribeOrb', () => ({
+  default: 'ScribeOrb',
 }))
 vi.mock('expo-crypto', () => ({ randomUUID: () => 'submit-1' }))
 vi.mock('@react-navigation/native', () => ({
@@ -96,10 +113,17 @@ vi.mock('@/features/scribe/components/ScribeSheetFrame', async () => {
     default: ({
       children,
       onDismissRequest,
+      onMinimizeRequest,
     }: {
       children?: ReactNode
       onDismissRequest: () => void
-    }) => ReactModule.createElement('Sheet', { onDismissRequest }, children),
+      onMinimizeRequest?: () => void
+    }) =>
+      ReactModule.createElement(
+        'Sheet',
+        { onDismissRequest, onMinimizeRequest },
+        children
+      ),
   }
 })
 vi.mock('@/features/scribe/components/ScribeBadge', () => ({
@@ -118,6 +142,7 @@ vi.mock('@/features/scribe/components/ScribeVoiceControls', () => ({
 }))
 
 import ScribeVoiceScreen from '@/features/scribe/screens/ScribeVoiceScreen'
+import ScribeVoiceSheet from '@/features/scribe/components/ScribeVoiceSheet'
 
 const setCapture = (overrides: Partial<ScribeVoiceCapture> = {}) => {
   runtime.capture = {
@@ -405,5 +430,98 @@ describe('ScribeVoiceScreen', () => {
     expect(message()?.props.body).toBe('scribe_voiceModelUnavailable')
     expect(message()?.props.primary.label).toBe('scribe_voiceTypeInstead')
     expect(runtime.error).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe('ScribeVoiceSheet over a conversation', () => {
+  const props = {
+    onSend: vi.fn(),
+    onType: vi.fn(),
+    onClose: vi.fn(),
+    onMinimizedChange: vi.fn(),
+  }
+
+  const renderInline = (minimized = false) => {
+    let renderer!: ReactTestRenderer
+    act(() => {
+      renderer = create(<ScribeVoiceSheet {...props} minimized={minimized} />)
+    })
+    const find = (type: string) =>
+      renderer.root.findAll((node) => node.type === type)
+    const sheet = () => find('Sheet')[0]
+    const modal = () => find('Modal')[0]
+    const miniOrb = (): ReactTestInstance | undefined =>
+      find('Button').find(
+        (node) => node.props.accessibilityLabel === 'scribe_voiceMiniOrb'
+      )
+    const rerender = (next: boolean) =>
+      act(() =>
+        renderer.update(<ScribeVoiceSheet {...props} minimized={next} />)
+      )
+    return { sheet, modal, miniOrb, rerender }
+  }
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    runtime.finishedTurn = false
+    runtime.navigation.beforeRemove = undefined
+    setCapture()
+  })
+
+  it('minimizes when pulled down while listening, keeping the recording', () => {
+    const { sheet } = renderInline()
+    act(() => sheet().props.onMinimizeRequest())
+    expect(props.onMinimizedChange).toHaveBeenCalledWith(true)
+    expect(runtime.capture.discard).not.toHaveBeenCalled()
+    expect(runtime.capture_event).toHaveBeenCalledWith('scribe_voice_minimized')
+  })
+
+  it('shows a small orb that opens the sheet again', () => {
+    const { modal, miniOrb } = renderInline(true)
+    expect(modal().props.visible).toBe(false)
+    act(() => miniOrb()?.props.onPress())
+    expect(props.onMinimizedChange).toHaveBeenCalledWith(false)
+  })
+
+  it('sends what was said while minimized', () => {
+    renderInline(true)
+    act(() => runtime.options.onFinished('Two hours', 'done'))
+    expect(props.onSend).toHaveBeenCalledWith('Two hours')
+  })
+
+  it('only dismisses before the microphone is live', () => {
+    setCapture({ state: 'preparing' })
+    const { sheet } = renderInline()
+    expect(sheet().props.onMinimizeRequest).toBeUndefined()
+  })
+
+  it('opens again for the countdown and for a message', () => {
+    setCapture({ remainingMs: 20_000 })
+    const { modal, rerender } = renderInline(true)
+    expect(modal().props.visible).toBe(true)
+    expect(props.onMinimizedChange).toHaveBeenCalledWith(false)
+
+    vi.clearAllMocks()
+    setCapture()
+    rerender(true)
+    expect(modal().props.visible).toBe(false)
+    act(() => runtime.options.onFinished('', 'done'))
+    expect(modal().props.visible).toBe(true)
+  })
+
+  it('leaves the conversation once a minimized recording is discarded', () => {
+    setCapture({ elapsedMs: 20_000 })
+    renderInline(true)
+    const action = { type: 'POP' }
+    const preventDefault = vi.fn()
+    act(() =>
+      runtime.navigation.beforeRemove?.({ preventDefault, data: { action } })
+    )
+    expect(preventDefault).toHaveBeenCalledTimes(1)
+    const [, , actions] = runtime.alert.mock.calls[0]
+    act(() => actions[1].onPress())
+    expect(runtime.capture.discard).toHaveBeenCalledTimes(1)
+    expect(props.onClose).toHaveBeenCalledTimes(1)
+    expect(runtime.navigation.dispatch).toHaveBeenCalledWith(action)
   })
 })

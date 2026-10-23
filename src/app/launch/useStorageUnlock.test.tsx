@@ -8,7 +8,14 @@ const runtime = vi.hoisted(() => ({
   locked: true,
   simulated: false,
   reopens: true,
-  reloadApp: vi.fn(async () => {}),
+  steps: [] as string[],
+  reloadApp: vi.fn(async () => {
+    runtime.steps.push('reload')
+  }),
+  handOffLaunchBeforeReload: vi.fn(async () => {
+    runtime.steps.push('handoff')
+  }),
+  dropLaunchHandoff: vi.fn(),
   releaseStorageLock: vi.fn(),
 }))
 
@@ -30,6 +37,10 @@ vi.mock('@/stores/mmkv', () => ({
   releaseStorageLock: runtime.releaseStorageLock,
 }))
 vi.mock('@/lib/hotUpdater', () => ({ reloadApp: runtime.reloadApp }))
+vi.mock('@/app/launch/reloadHandoff', () => ({
+  handOffLaunchBeforeReload: runtime.handOffLaunchBeforeReload,
+  dropLaunchHandoff: runtime.dropLaunchHandoff,
+}))
 vi.mock('@/lib/logger', () => ({ logger: { error: vi.fn() } }))
 
 import { useStorageUnlock } from './useStorageUnlock'
@@ -41,7 +52,7 @@ const Harness = () => {
 }
 const ready = () => seen[seen.length - 1]
 const becomeActive = () =>
-  act(() => {
+  act(async () => {
     runtime.appState = 'active'
     for (const listener of runtime.listeners) listener('active')
   })
@@ -50,6 +61,7 @@ let renderer: ReactTestRenderer | undefined
 beforeEach(() => {
   vi.clearAllMocks()
   seen.length = 0
+  runtime.steps.length = 0
   runtime.appState = 'background'
   runtime.listeners.clear()
   runtime.locked = true
@@ -70,7 +82,7 @@ it('is ready straight away when storage is open', () => {
   expect(runtime.listeners.size).toBe(0)
 })
 
-it('waits in the background, then reloads when the unlocked app opens', () => {
+it('waits in the background, then reloads when the unlocked app opens', async () => {
   act(() => {
     renderer = create(<Harness />)
   })
@@ -82,9 +94,30 @@ it('waits in the background, then reloads when the unlocked app opens', () => {
   })
   expect(runtime.reloadApp).not.toHaveBeenCalled()
 
-  becomeActive()
+  await becomeActive()
   expect(runtime.reloadApp).toHaveBeenCalledOnce()
   expect(runtime.releaseStorageLock).not.toHaveBeenCalled()
+  expect(ready()).toBe(false)
+})
+
+it('hands the tap or link that opened the app to the reloaded launch', async () => {
+  act(() => {
+    renderer = create(<Harness />)
+  })
+  await becomeActive()
+  // The reloaded launch opens what brought the app up; this one only showed
+  // the splash.
+  expect(runtime.steps).toEqual(['handoff', 'reload'])
+  expect(runtime.dropLaunchHandoff).not.toHaveBeenCalled()
+})
+
+it('forgets the handoff when the reload fails', async () => {
+  runtime.reloadApp.mockRejectedValueOnce(new Error('no bridge'))
+  act(() => {
+    renderer = create(<Harness />)
+  })
+  await becomeActive()
+  expect(runtime.dropLaunchHandoff).toHaveBeenCalledOnce()
   expect(ready()).toBe(false)
 })
 
@@ -99,7 +132,7 @@ it('carries on without the data when storage still fails in the open app', () =>
   expect(ready()).toBe(true)
 })
 
-it('keeps a simulated locked launch until the app comes back', () => {
+it('keeps a simulated locked launch until the app comes back', async () => {
   runtime.simulated = true
   runtime.appState = 'active'
   act(() => {
@@ -108,6 +141,6 @@ it('keeps a simulated locked launch until the app comes back', () => {
   expect(ready()).toBe(false)
   expect(runtime.reloadApp).not.toHaveBeenCalled()
 
-  becomeActive()
+  await becomeActive()
   expect(runtime.reloadApp).toHaveBeenCalledOnce()
 })

@@ -85,6 +85,21 @@ it('carries the link that launched the app across the reload', async () => {
   expect(reloaded.handoff.takeHandedOffNotificationResponse()).toBeNull()
 })
 
+it('carries a link that brought a background launch to the front', async () => {
+  // Launched in the background (no launch link); the link comes as an event
+  // while the splash shows, before the storage-unlock reload.
+  const first = await launch()
+  first.links.recordLaunchLinks()
+  runtime.urlListener?.({ url: 'witnesswork://schedule/2026-10-23' })
+  await first.handoff.handOffLaunchBeforeReload()
+
+  const reloaded = await launch()
+  reloaded.handoff.restoreLaunchAfterReload()
+  await expect(reloaded.links.launchURL()).resolves.toBe(
+    'witnesswork://schedule/2026-10-23'
+  )
+})
+
 it('keeps a link tapped after the reload over the handed-off one', async () => {
   runtime.initialURL = 'witnesswork://add-time'
   const first = await launch()

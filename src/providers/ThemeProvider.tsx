@@ -9,6 +9,8 @@ import { evaluateFeatureAccess } from '@/lib/featureAccess'
 import { useSupporter } from '@/stores/supporterStatus'
 import { mix, withAlpha } from '@/lib/color'
 import useBoldTextFonts from '@/hooks/useBoldTextFonts'
+import { increaseContrast } from '@/lib/increaseContrast'
+import useIncreaseContrastEnabled from '@/hooks/useIncreaseContrastEnabled'
 
 interface Props {}
 
@@ -38,9 +40,16 @@ const ThemeProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
   // embolden them; the theme swaps in heavier ones itself.
   const fonts = useBoldTextFonts()
   const userSelectedTheme = getThemeFromColorScheme(resolvedScheme)
+  const highContrast = useIncreaseContrastEnabled()
 
   const themeWithOverrides = useMemo(() => {
-    const theme = { ...userSelectedTheme, fonts }
+    const theme = {
+      ...userSelectedTheme,
+      fonts,
+      ...(highContrast
+        ? { colors: increaseContrast(userSelectedTheme.colors) }
+        : {}),
+    }
     if (!canCustomizeAccent) return theme
     if (!customAccentColor && !customAvatarBackground) return theme
 
@@ -67,6 +76,7 @@ const ThemeProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
   }, [
     userSelectedTheme,
     fonts,
+    highContrast,
     canCustomizeAccent,
     customAccentColor,
     customAvatarBackground,

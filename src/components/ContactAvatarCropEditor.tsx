@@ -23,7 +23,7 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Haptics from '@/lib/haptics'
 import { GlassView } from 'expo-glass-effect'
-import { BlurView } from 'expo-blur'
+import { BlurView } from '@/components/ui/BlurView'
 import useTheme from '@/contexts/theme'
 import Text from '@/components/ui/MyText'
 import PointerHover from '@/components/ui/PointerHover'

@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/DirectionalIcon'
 import { ReactNode, useCallback, useEffect, useMemo, useState } from 'react'
 import { LayoutChangeEvent, View, StyleSheet } from 'react-native'
-import { BlurView } from 'expo-blur'
+import { BlurView } from '@/components/ui/BlurView'
 import { NativeStackScreenProps } from '@react-navigation/native-stack'
 import { useNavigation } from '@react-navigation/native'
 import moment from 'moment'
@@ -160,6 +160,7 @@ const ProgressScreen = ({ route, navigation }: Props) => {
       <BlurView
         tint={theme.colors.background === '#121212' ? 'dark' : 'light'}
         intensity={40}
+        reducedTransparencyColor={theme.colors.background}
         style={StyleSheet.absoluteFill}
       />
       <View

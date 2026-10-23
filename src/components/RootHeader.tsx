@@ -15,7 +15,7 @@ import {
   ViewStyle,
 } from 'react-native'
 import { useNavigation } from '@react-navigation/native'
-import { BlurView } from 'expo-blur'
+import { BlurView } from '@/components/ui/BlurView'
 import Animated from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import useTheme from '@/contexts/theme'

@@ -1,6 +1,6 @@
 import { PropsWithChildren } from 'react'
 import { View, ViewProps, StyleSheet } from 'react-native'
-import { BlurView } from 'expo-blur'
+import { BlurView } from '@/components/ui/BlurView'
 import useTheme from '@/contexts/theme'
 
 type GlassCardVariant = 'surface' | 'elevated'

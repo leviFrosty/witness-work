@@ -11,7 +11,7 @@ import {
 import { useEffect, useRef, useState } from 'react'
 import { Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native'
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs'
-import { BlurView } from 'expo-blur'
+import { BlurView } from '@/components/ui/BlurView'
 import { GlassView, isLiquidGlassAvailable } from 'expo-glass-effect'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Animated, {

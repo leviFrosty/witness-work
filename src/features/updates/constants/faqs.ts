@@ -202,6 +202,7 @@ export const FAQS: FAQEntry[] = [
     category: 'customization',
     related: [161, 262],
   },
+  { id: 'displaySettings', category: 'customization' },
   {
     id: 'appIcon',
     category: 'customization',

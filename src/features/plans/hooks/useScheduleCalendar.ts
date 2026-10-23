@@ -39,6 +39,11 @@ const FOCUS_LINE = 1 / 3
 const MAX_FOCUS_LINE = MONTH_HEADER_HEIGHT + WEEK_ROW_HEIGHT * 2.5
 /** Room left between a revealed week and the sheet covering the list. */
 const REVEAL_MARGIN = 12
+/**
+ * Room above the month's name when Today brings it to the top. Within the space
+ * under the last week's squares, so none of them peeks in.
+ */
+const TODAY_HEADER_GAP = 8
 /** Programmatic scrolls don't tick haptics while they settle. */
 const QUIET_AFTER_JUMP_MS = 700
 const MIN_TICK_INTERVAL_MS = 120
@@ -340,8 +345,32 @@ export default function useScheduleCalendar({
   const jumpToToday = () => {
     Haptics.light()
     if (todayRow === undefined) return
-    // Today's week lands on the focus line, so its month stays in focus.
-    scrollToRow(todayRow, true, Math.max(0, focusLine() - WEEK_ROW_HEIGHT / 2))
+    // The month's name lands at the top, clear of the weekday bar, with today
+    // in the weeks under it.
+    const header = schedule.monthHeader.get(
+      calendarMonthKey({ year: thisYear, month: thisMonthIndex })
+    )
+    const headerLayout =
+      header === undefined ? undefined : listRef.current?.getLayout(header)
+    const todayLayout = listRef.current?.getLayout(todayRow)
+    const visible =
+      (listFrame.current?.height ?? 0) - sheetCover.current - REVEAL_MARGIN
+    if (
+      header !== undefined &&
+      headerLayout &&
+      todayLayout &&
+      todayLayout.y + todayLayout.height - headerLayout.y + TODAY_HEADER_GAP <=
+        visible
+    )
+      scrollToRow(header, true, TODAY_HEADER_GAP)
+    // A window too short for both: today's week lands on the focus line, so
+    // its month stays in focus.
+    else
+      scrollToRow(
+        todayRow,
+        true,
+        Math.max(0, focusLine() - WEEK_ROW_HEIGHT / 2)
+      )
     focus({ year: thisYear, month: thisMonthIndex }, false)
   }
 

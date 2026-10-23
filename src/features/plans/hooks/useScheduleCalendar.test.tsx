@@ -39,7 +39,7 @@ import { calendarMonthKey } from '@/features/plans/lib/scheduleRows'
 
 const ROW = 60
 const SCREEN = 600
-/** Where `jumpToToday` puts today's week: on the focus line, less half a week. */
+/** Where a short window puts today's week: on the focus line, less half a week. */
 const TODAY_TOP = 48 + ROW * 2.5 - ROW / 2
 
 const renders: ReturnType<typeof useScheduleCalendar>[] = []
@@ -95,29 +95,45 @@ afterEach(() => {
 const todayOffset = () =>
   calendar().schedule.dayRow.get('2026-10-10')! * ROW - TODAY_TOP
 
+const headerOffset = (year: number, month: number) =>
+  calendar().schedule.monthHeader.get(calendarMonthKey({ year, month }))! * ROW
+
+/** Where `jumpToToday` lands: this month's name at the top, with room above. */
+const todayMonthOffset = () => headerOffset(2026, 9) - 8
+
 it('jumps to today from far off without the list’s scrollToIndex', () => {
-  offset = todayOffset() + SCREEN * 10
+  offset = todayMonthOffset() + SCREEN * 10
   act(() => calendar().jumpToToday())
 
   expect(list.scrollToIndex).not.toHaveBeenCalled()
   // A third of a screen short, then a glide the rest of the way.
   expect(list.scrollToOffset.mock.calls).toEqual([
-    [{ offset: todayOffset() + SCREEN / 3, animated: false }],
-    [{ offset: todayOffset(), animated: true }],
+    [{ offset: todayMonthOffset() + SCREEN / 3, animated: false }],
+    [{ offset: todayMonthOffset(), animated: true }],
   ])
 })
 
 it('glides straight to today when it’s within a screen', () => {
-  offset = todayOffset() - SCREEN / 2
+  offset = todayMonthOffset() - SCREEN / 2
   act(() => calendar().jumpToToday())
 
   expect(list.scrollToOffset.mock.calls).toEqual([
-    [{ offset: todayOffset(), animated: true }],
+    [{ offset: todayMonthOffset(), animated: true }],
   ])
 })
 
-const headerOffset = (year: number, month: number) =>
-  calendar().schedule.monthHeader.get(calendarMonthKey({ year, month }))! * ROW
+it('puts today’s week on the focus line when its month’s name won’t fit above it', () => {
+  // A window too short for the month's name and today's week.
+  act(() => calendar().onListLayout({ x: 0, y: 0, width: 390, height: 180 }))
+  offset = todayOffset() + SCREEN
+  act(() => calendar().jumpToToday())
+
+  const focusTop = 180 / 3 - ROW / 2
+  expect(list.scrollToOffset).toHaveBeenLastCalledWith({
+    offset: calendar().schedule.dayRow.get('2026-10-10')! * ROW - focusTop,
+    animated: true,
+  })
+})
 
 it('jumps straight to a month whose weeks go in below the list', async () => {
   offset = todayOffset()

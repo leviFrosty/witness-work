@@ -81,23 +81,9 @@ describe('room unlocks', () => {
       )
   })
 
-  it('grows by streak only while there is a streak to grow', () => {
-    expect(
-      unlockMode({ showStreaks: true, kind: 'plans', hasPlans: true })
-    ).toBe('streak')
-    expect(
-      unlockMode({ showStreaks: true, kind: 'plans', hasPlans: false })
-    ).toBe('months')
-    // A months streak needs no Plans.
-    expect(
-      unlockMode({ showStreaks: true, kind: 'months', hasPlans: false })
-    ).toBe('streak')
-    expect(
-      unlockMode({ showStreaks: false, kind: 'plans', hasPlans: true })
-    ).toBe('months')
-    expect(
-      unlockMode({ showStreaks: false, kind: 'months', hasPlans: true })
-    ).toBe('months')
+  it('grows by streak while streaks show, and by months while hidden', () => {
+    expect(unlockMode({ showStreaks: true })).toBe('streak')
+    expect(unlockMode({ showStreaks: false })).toBe('months')
   })
 
   it('earns the items whose threshold the streak reaches, by kind', () => {

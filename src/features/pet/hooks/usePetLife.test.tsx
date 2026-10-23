@@ -79,7 +79,11 @@ describe('usePetLife secret items', () => {
     vi.mocked(analytics.capture).mockClear()
     runtime.streak = { kind: 'plans', count: 0 }
     usePet.setState({ pet: { ...PET }, room: null })
-    usePreferences.setState({ earnedBadges: {}, devStreakOverride: null })
+    usePreferences.setState({
+      earnedBadges: {},
+      devStreakOverride: null,
+      showStreaks: true,
+    })
     usePetSession.setState({ devOverride: null })
     latest = null
     renders = 0
@@ -128,12 +132,19 @@ describe('usePetLife secret items', () => {
     expect(analytics.capture).not.toHaveBeenCalled()
   })
 
-  it('opens a long run by the streak only while it can grow', () => {
-    // A days streak with no Plans to keep is months mode: the count is ignored.
+  it('opens a long run by the streak only while streaks show', () => {
+    // Streaks hidden is months mode: the count is ignored.
+    usePreferences.setState({ showStreaks: false })
     runtime.streak = { kind: 'plans', count: 150 }
     mount()
     expect(stored()).not.toContain('hat:bush')
     act(() => renderer?.unmount())
+    // Shown, a days streak counts even with no Plans left to keep.
+    usePreferences.setState({ showStreaks: true })
+    mount()
+    expect(stored()).toContain('hat:bush')
+    act(() => renderer?.unmount())
+    usePet.setState({ pet: { ...PET }, room: null })
     runtime.streak = { kind: 'months', count: 15 }
     mount()
     expect(stored()).toContain('hat:bush')

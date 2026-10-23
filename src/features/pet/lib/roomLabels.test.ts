@@ -22,11 +22,10 @@ vi.mock('@/lib/locales', async () => {
 })
 
 describe('Decorate Room labels', () => {
-  it('says when a locked item opens up', () => {
-    expect(unlockBadgeText(0)).toBe('This month')
-    expect(unlockBadgeText(1)).toBe('Next month')
-    expect(unlockBadgeText(2)).toBe('In 2 months')
-    expect(unlockBadgeText(11)).toBe('In 11 months')
+  it('counts the active months a locked item still needs', () => {
+    expect(unlockBadgeText(1)).toBe('1 more month')
+    expect(unlockBadgeText(2)).toBe('2 more months')
+    expect(unlockBadgeText(11)).toBe('11 more months')
   })
 
   it('says a locked item’s streak or months in words', () => {
@@ -36,14 +35,25 @@ describe('Decorate Room labels', () => {
     expect(unlockRequirementText({ by: 'streak', count: 7 })).toBe(
       'At a streak of 7'
     )
-    expect(unlockRequirementText({ by: 'months', monthsFromNow: 1 })).toBe(
-      'Next month'
+    const months = (monthsNeeded: number, thisMonthCounts: boolean) =>
+      unlockRequirementText({ by: 'months', monthsNeeded, thisMonthCounts })
+    expect(months(1, true)).toBe(
+      'Opens once you log time or save a visit or plan this month.'
+    )
+    expect(months(3, true)).toBe(
+      'Opens after 3 months in which you log time or save a visit or plan, this month included.'
+    )
+    expect(months(1, false)).toBe(
+      'Opens the next month you log time or save a visit or plan.'
+    )
+    expect(months(3, false)).toBe(
+      'Opens after 3 more months in which you log time or save a visit or plan, starting next month.'
     )
   })
 
   it('explains how locked items open up, by mode and streak kind', () => {
     expect(unlockNoteText('streak', 'plans')).toBe(
-      'Each item opens up when your streak reaches its number. Keep your plans to grow it.'
+      'Each item opens up when your streak reaches its number. Plan your ministry and keep your plans to grow it.'
     )
     expect(unlockNoteText('streak', 'months')).toBe(
       'Each item opens up when your streak reaches its number. Share in the ministry each month to grow it.'
@@ -69,9 +79,9 @@ describe('Decorate Room labels', () => {
     )
     expect(unlockPillText({ by: 'secret' })).toBe('?')
     expect(unlockPillText({ by: 'streak', count: 7 })).toBe('7')
-    expect(unlockPillText({ by: 'months', monthsFromNow: 0 })).toBe(
-      'This month'
-    )
+    expect(
+      unlockPillText({ by: 'months', monthsNeeded: 1, thisMonthCounts: true })
+    ).toBe('1 more month')
   })
 
   it('adds the secrets to the locked note only while one is locked', () => {

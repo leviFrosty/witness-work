@@ -4829,18 +4829,27 @@
           "tam": "Tam"
         }
       },
-      "unlockThisMonth": "This month",
-      "unlockIn": {
-        "one": "Next month",
-        "other": "In {{count}} months"
+      "unlockMonthsMore": {
+        "one": "{{count}} more month",
+        "other": "{{count}} more months"
+      },
+      "unlockMonthsHow": {
+        "fromThisMonth": {
+          "one": "Opens once you log time or save a visit or plan this month.",
+          "other": "Opens after {{count}} months in which you log time or save a visit or plan, this month included."
+        },
+        "fromNextMonth": {
+          "one": "Opens the next month you log time or save a visit or plan.",
+          "other": "Opens after {{count}} more months in which you log time or save a visit or plan, starting next month."
+        }
       },
       "unlockAtStreak": {
         "one": "At a streak of {{count}}",
         "other": "At a streak of {{count}}"
       },
-      "lockedA11y": "{{option}}, opens up: {{when}}",
+      "lockedA11y": "{{option}}, locked. {{when}}",
       "unlockNote": {
-        "streakPlans": "Each item opens up when your streak reaches its number. Keep your plans to grow it.",
+        "streakPlans": "Each item opens up when your streak reaches its number. Plan your ministry and keep your plans to grow it.",
         "streakMonths": "Each item opens up when your streak reaches its number. Share in the ministry each month to grow it.",
         "months": "One more opens up each month you log time or save a visit or plan.",
         "monthsHats": "Three open up the first month you log time or save a visit or plan, then one more each month you do.",
@@ -4870,7 +4879,7 @@
       },
       "streak": {
         "title": "Grow your streak",
-        "plans": "Keep your plans to grow your Service Streak. The lamp burns brighter, and new hats and room items open up.",
+        "plans": "Plan your ministry and keep your plans to grow your Service Streak. The lamp burns brighter, and new hats and room items open up.",
         "months": "Share in the ministry each month to grow your streak. The lamp burns brighter, and new hats and room items open up.",
         "noStreak": "Each month you go out, new hats and room items open up."
       },

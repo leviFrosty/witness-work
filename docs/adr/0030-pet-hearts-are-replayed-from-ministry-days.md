@@ -46,7 +46,9 @@ Publisher reports only whether they shared, and many people can't pioneer.
    streak to grow (streaks hidden, or a `plans` streak and no Plans) unlocks by
    active months since adoption instead, one per month, for the same reason
    badges count months (ADR 0019). A streak ends, so unlike hearts an earned
-   item is stored on the pet record and never locks again.
+   item is stored on the pet record and never locks again. (Amended: only
+   hidden streaks switch to months; a `plans` streak with no Plans stays on
+   the streak, and the Decorate Room note tells the User to plan.)
 5. **The lamp is the Service Streak** (ADR 0003), shown as brightness only; with
    streaks hidden it burns at a fixed level.
 

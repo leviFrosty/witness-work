@@ -177,14 +177,14 @@ export type RoomUnlocks = {
 
 /**
  * What opens a locked option: the streak count it opens up at, or (months mode)
- * the calendar months from now at the earliest, 0 this month, 1 next month.
- * Each active month unlocks one item, so with this month not yet active, the
- * next item can still open up this month. A secret item's never says
- * (`secret`): it shows as a silhouette and a question mark.
+ * how many more active months it needs, and whether this month can still be one
+ * of them (it has no active day yet). Skipped months don't count, so it never
+ * says when. A secret item's never says (`secret`): it shows as a silhouette
+ * and a question mark.
  */
 export type UnlockRequirement =
   | { by: 'streak'; count: number }
-  | { by: 'months'; monthsFromNow: number }
+  | { by: 'months'; monthsNeeded: number; thisMonthCounts: boolean }
   | { by: 'secret' }
 
 /**
@@ -207,7 +207,8 @@ export function unlockRequirement(
   if (!needed) return null
   return {
     by: 'months',
-    monthsFromNow: unlocks.thisMonthActive ? needed : needed - 1,
+    monthsNeeded: needed,
+    thisMonthCounts: !unlocks.thisMonthActive,
   }
 }
 

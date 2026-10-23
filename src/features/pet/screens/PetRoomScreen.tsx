@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Platform, ScrollView, View } from 'react-native'
 import { useIsFocused } from '@react-navigation/native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -40,7 +40,10 @@ import {
 } from '@/features/pet/lib/roomOptions'
 import { isSecretItem } from '@/features/pet/lib/secretUnlocks'
 import { noteSecretFound } from '@/features/pet/lib/secrets'
-import PetSceneView from '@/features/pet/render/PetSceneView'
+import PetSceneView, {
+  type PetSceneHandle,
+} from '@/features/pet/render/PetSceneView'
+import { usePetSession } from '@/features/pet/stores/petSession'
 import usePetSheetInsets from '@/features/pet/hooks/usePetSheetInsets'
 import PetSheetClose from '@/features/pet/components/PetSheetClose'
 
@@ -121,6 +124,15 @@ export default function PetRoomScreen({ navigation, route }: Props) {
   useEffect(() => {
     if (!hasPet && focused) navigation.goBack()
   }, [hasPet, focused, navigation])
+  // Change pet, opened from here: the new pet runs into this room once the
+  // picker closes (and Home doesn't play it again).
+  const sceneRef = useRef<PetSceneHandle>(null)
+  const entrancePending = usePetSession((s) => s.entrance !== null)
+  useEffect(() => {
+    if (!focused || !hasPet) return
+    const species = usePetSession.getState().takeEntrance()
+    if (species) sceneRef.current?.playEntrance(species)
+  }, [focused, hasPet])
   if (!scene) return null
 
   const { state, window } = scene
@@ -233,7 +245,11 @@ export default function PetRoomScreen({ navigation, route }: Props) {
             }}
           >
             <PetSceneView
-              input={scene.input}
+              ref={sceneRef}
+              // Until its entrance plays, the pet stays out of the room.
+              input={
+                entrancePending ? { ...scene.input, pet: null } : scene.input
+              }
               borderRadius={theme.numbers.borderRadiusMd}
               accessibilityLabel={i18n.t('pet.a11y.scene', {
                 name: scene.name,

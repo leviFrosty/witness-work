@@ -9,6 +9,7 @@ import type { NoteUpdate } from '@/lib/richText/notes'
 import { usePreferences } from '@/stores/preferences'
 import useServiceReport from '@/stores/serviceReport'
 import useDayRouteStops from '@/features/route-planning/hooks/useDayRouteStops'
+import useRoadLegs from '@/features/route-planning/hooks/useRoadLegs'
 import type { RoutePlannerFailure } from '@/features/route-planning/lib/routePlanErrors'
 import { currentCoordinate } from '@/features/route-planning/lib/currentLocation'
 import {
@@ -39,6 +40,8 @@ import {
   buildTimeline,
   estimateLeg,
 } from '@/features/route-planning/lib/routeTimeline'
+import { legKey } from '@/features/route-planning/lib/roadLegs'
+import type { Coordinate } from '@/types/contact'
 import { formatPlanLocation } from '@/lib/placeSearch'
 import { formatStartTime } from '@/lib/dates'
 import { atMinutesOfDay } from '@/lib/normalizeDate'
@@ -188,9 +191,17 @@ export default function useRouteBuilder(day: Date) {
         ? (originCoordinate ?? stops[0]?.coordinate ?? null)
         : null
   const keepSetTimes = route.keepSetTimes ?? true
+  // The day's drive, leg by leg: by road once directions arrive.
+  const roads = useRoadLegs([
+    ...(originCoordinate ? [originCoordinate] : []),
+    ...stops.map((stop) => stop.coordinate),
+    ...(finishCoordinate && stops.length > 0 ? [finishCoordinate] : []),
+  ])
+  const roadLeg = (from: Coordinate, to: Coordinate) =>
+    roads.get(legKey(from, to))
   const firstLeg =
     originCoordinate && stops[0]
-      ? estimateLeg(originCoordinate, stops[0].coordinate).minutes
+      ? estimateLeg(originCoordinate, stops[0].coordinate, roadLeg).minutes
       : 0
   const startTime =
     route.startTimeInMinutes ?? defaultStartTime(stops, firstLeg)
@@ -200,6 +211,7 @@ export default function useRouteBuilder(day: Date) {
     stops,
     keepSetTimes,
     finish: finishCoordinate,
+    roadLeg,
   })
 
   const linkedPlan = planOptions.find((plan) => plan.id === route.planId)
@@ -474,6 +486,7 @@ export default function useRouteBuilder(day: Date) {
     /** Some stop has a set time, so Keep Set Times changes something. */
     hasSetTimes: stops.some((stop) => stop.setTime !== undefined),
     timeline,
+    roads,
     note: { note: route.note, noteDoc: route.noteDoc },
     planOptions,
     linkedPlan,

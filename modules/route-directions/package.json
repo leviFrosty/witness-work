@@ -1,0 +1,7 @@
+{
+  "name": "route-directions",
+  "version": "0.1.0",
+  "description": "Local Expo module wrapping Apple MapKit directions so the route builder can draw roads and time each leg.",
+  "main": "index.ts",
+  "private": true
+}

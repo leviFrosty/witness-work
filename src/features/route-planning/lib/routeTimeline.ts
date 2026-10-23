@@ -1,11 +1,12 @@
 import type { Coordinate } from '@/types/contact'
 import type { BuilderStop } from '@/features/route-planning/lib/routeBuilder'
+import type { RoadLeg } from '@/features/route-planning/lib/roadLegs'
 
 /**
- * Rough driving estimates for exploring a route on the device, with no network
- * call: straight-line distance stretched to road distance, at a city speed,
- * plus a couple of minutes to park. "Shortest Order" asks ww-api for real
- * driving times.
+ * Driving times through the day. A leg with directions by road (`roadLegs`)
+ * uses them; until then, or offline, a rough estimate with no network call:
+ * straight-line distance stretched to road distance, at a city speed. Either
+ * way plus a couple of minutes to park.
  */
 const EARTH_RADIUS_M = 6_371_000
 /** Roads wind; a straight line underestimates the drive by about this much. */
@@ -15,15 +16,21 @@ const CITY_METERS_PER_MINUTE = 32_000 / 60
 /** Finding parking and walking to the door. */
 const PARKING_MINUTES = 2
 /** Closer than this is the same place: no drive. */
-const SAME_PLACE_M = 75
+export const SAME_PLACE_M = 75
 /** Arriving this much after a stop's set time counts as late. */
 export const LATE_GRACE_MINUTES = 5
 
 export type TimelineLeg = {
-  /** Estimated road distance. */
+  /** Road distance, measured or estimated. */
   meters: number
   minutes: number
 }
+
+/** Directions by road between two places, when known. */
+export type RoadLegLookup = (
+  from: Coordinate,
+  to: Coordinate
+) => RoadLeg | null | undefined
 
 export type TimelineEntry = {
   key: string
@@ -68,9 +75,20 @@ export const straightLineMeters = (a: Coordinate, b: Coordinate): number => {
   return 2 * EARTH_RADIUS_M * Math.asin(Math.min(1, Math.sqrt(h)))
 }
 
-export const estimateLeg = (from: Coordinate, to: Coordinate): TimelineLeg => {
+export const estimateLeg = (
+  from: Coordinate,
+  to: Coordinate,
+  roadLeg?: RoadLegLookup
+): TimelineLeg => {
   const straight = straightLineMeters(from, to)
   if (straight < SAME_PLACE_M) return { meters: 0, minutes: 0 }
+  const road = roadLeg?.(from, to)
+  if (road) {
+    return {
+      meters: road.meters,
+      minutes: Math.round(road.seconds / 60) + PARKING_MINUTES,
+    }
+  }
   const meters = straight * ROAD_FACTOR
   return {
     meters,
@@ -90,6 +108,7 @@ export const buildTimeline = ({
   stops,
   keepSetTimes,
   finish = null,
+  roadLeg,
 }: {
   /** Where the route leaves from; null starts at the first stop. */
   origin: Coordinate | null
@@ -98,6 +117,8 @@ export const buildTimeline = ({
   keepSetTimes: boolean
   /** Where the day ends; null ends at the last stop. */
   finish?: Coordinate | null
+  /** Directions by road, for the legs that have them. */
+  roadLeg?: RoadLegLookup
 }): RouteTimeline => {
   const entries: TimelineEntry[] = []
   let clock = startTime
@@ -106,7 +127,7 @@ export const buildTimeline = ({
   let driveMinutes = 0
 
   for (const stop of stops) {
-    const leg = at ? estimateLeg(at, stop.coordinate) : undefined
+    const leg = at ? estimateLeg(at, stop.coordinate, roadLeg) : undefined
     const arrive = clock + (leg?.minutes ?? 0)
     const setTime = stop.setTime
     const waitMinutes =
@@ -130,7 +151,9 @@ export const buildTimeline = ({
   }
 
   const finishLeg =
-    finish && at && stops.length > 0 ? estimateLeg(at, finish) : undefined
+    finish && at && stops.length > 0
+      ? estimateLeg(at, finish, roadLeg)
+      : undefined
   if (finishLeg) {
     meters += finishLeg.meters
     driveMinutes += finishLeg.minutes

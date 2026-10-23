@@ -137,6 +137,7 @@ export default function RouteBuilderScreen({
     <RouteMap
       stops={builder.stops}
       timeline={builder.timeline}
+      roads={builder.roads}
       origin={builder.origin}
       originCoordinate={builder.originCoordinate}
       finish={builder.finish}

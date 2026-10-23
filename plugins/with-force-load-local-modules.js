@@ -38,6 +38,7 @@ const LOCAL_MODULES = [
   { importName: 'AppAttest', className: 'AppAttestModule' },
   { importName: 'BuddiesKeychain', className: 'BuddiesKeychainModule' },
   { importName: 'PlaceSearch', className: 'PlaceSearchModule' },
+  { importName: 'RouteDirections', className: 'RouteDirectionsModule' },
   { importName: 'WatchBridge', className: 'WatchBridgeModule' },
   { importName: 'DeviceSecrets', className: 'DeviceSecretsModule' },
   { importName: 'PointerStyle', className: 'PointerStyleModule' },

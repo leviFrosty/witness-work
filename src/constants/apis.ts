@@ -19,6 +19,7 @@ export default {
   scribeTranscribe: `${BASE_URL}/scribe/v1/transcribe`,
   // Supporter-only shortest order for today's stops; coordinates only.
   routePlanningOptimize: `${BASE_URL}/route-planning/optimize`,
+  routePlanningDirections: `${BASE_URL}/route-planning/directions`,
   // Base for the Buddies relay's `/buddies/v1/*` ops (docs/buddies-protocol.md).
   buddies: BASE_URL,
   // Base for the server account's `/accounts/v1/*` ops (docs/accounts-protocol.md).

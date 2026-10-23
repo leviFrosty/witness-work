@@ -62,7 +62,6 @@ const layout = (
     projection,
     activeId: undefined,
     checkedIds: null,
-    dueLens: false,
     maxCards: 10,
     cardBounds: { left: 0, top: 0, right: 400, bottom: 400 },
     ...options,
@@ -117,18 +116,6 @@ describe('layoutContactPins', () => {
     })
     expect(items.find((item) => item.key === 'b')!.card).not.toBeNull()
     expect(items.find((item) => item.key === 'a')!.card).toBeNull()
-  })
-
-  it('dims Contacts that are not due under the due lens', () => {
-    const visits = index({ nextFollowUpMs: new Map([['a', NOW + 3600000]]) })
-    const items = layout([at('a', 100, 200), at('b', 300, 200)], {
-      index: visits,
-      dueLens: true,
-    })
-    const b = items.find((item) => item.key === 'b')!
-    expect(b.dimmed).toBe(true)
-    expect(b.card).toBeNull()
-    expect(items.find((item) => item.key === 'a')!.card).not.toBeNull()
   })
 
   it('checks a group only when all its Contacts are picked', () => {

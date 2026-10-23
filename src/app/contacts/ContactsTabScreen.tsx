@@ -57,6 +57,7 @@ function ContactsMap(props: {
   contacts: Contact[]
   topInset: number
   onExplore: () => void
+  onExploreEnd: () => void
 }) {
   const routeActions = useMapRouteActions()
   return (

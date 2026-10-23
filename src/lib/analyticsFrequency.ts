@@ -23,7 +23,6 @@ const sessionEvents = new Set([
   'buddy_badges_opened',
   'contacts_filter_added',
   'contacts_staleness_chip_applied',
-  'map_due_lens_applied',
   'map_group_opened',
   'map_select_started',
   'contacts_suggested_contact_opened',

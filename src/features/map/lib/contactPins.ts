@@ -249,11 +249,9 @@ export type ContactPinFacts = {
   /** See `contactUrgency`: lower is more pressing. */
   urgency: number
   badge?: PinBadge
-  /** See `isDue`. */
-  due: boolean
 }
 
-/** A Contact's Follow-up, urgency, badge and whether they're due, in one go. */
+/** A Contact's Follow-up, urgency and badge, in one go. */
 export const contactPinFacts = (
   contact: Pick<Contact, 'id' | 'isFavorite'>,
   index: ConversationIndex,
@@ -264,7 +262,6 @@ export const contactPinFacts = (
     followUp,
     urgency: urgencyOf(contact, followUp, index, nowMs),
     badge: badgeOf(contact, followUp),
-    due: isDueState(followUp),
   }
 }
 

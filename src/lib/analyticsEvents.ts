@@ -19,7 +19,6 @@ export const analyticsEventNames = [
   'log_visit_location_answered',
   'map_find_contacts_result',
   'map_card_detail_changed',
-  'map_due_lens_applied',
   'map_group_opened',
   'map_select_started',
   'map_selection_route_planned',

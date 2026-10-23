@@ -12,6 +12,8 @@ export const scribeAnalyticsEventNames = [
   'scribe_context_full',
   'scribe_capture_finished',
   'scribe_voice_minimized',
+  'scribe_memory_saved',
+  'scribe_memory_managed',
   'scribe_usage_viewed',
   'scribe_upsell_tapped',
   'scribe_supporter_rechecked',

@@ -66,6 +66,11 @@ import { MMKV } from 'react-native-mmkv'
 import useContacts from '@/stores/contactsStore'
 import useConversations from '@/stores/conversationStore'
 import useServiceReport from '@/stores/serviceReport'
+import {
+  setScribeMemoryEnabled,
+  setScribeMemoryText,
+  useScribeMemory,
+} from '@/features/scribe/stores/memory'
 import { allTimeEntries } from '@/features/scribe/runtime/snapshot'
 import { getOnline } from '@/lib/http/online'
 import { appVersion, useUpdateRequired } from '@/lib/appUpdate'
@@ -327,9 +332,18 @@ export const scribeHarness = {
     clearScribeLocalData()
     return 'cleared'
   },
+  /** Scribe AI's memory: `{ enabled, text, updatedAt }`. */
+  memory: () => useScribeMemory.getState(),
+  /** Seeds the memory (one note a line), and turns it on or off. */
+  setMemory: (text: string, enabled = true) => {
+    setScribeMemoryText(text)
+    setScribeMemoryEnabled(enabled)
+    return useScribeMemory.getState()
+  },
   stores: {
     conversations: useScribeConversations,
     ledger: useScribeLedger,
+    memory: useScribeMemory,
     usage: useScribeUsageStore,
     status: useScribeStatusStore,
     runs: useScribeRuns,

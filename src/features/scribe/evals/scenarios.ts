@@ -14,7 +14,7 @@ import { PREFERENCES } from '@/features/scribe/tools/__fixtures__/stores'
 
 export interface EvalCall {
   name: string
-  access: 'read' | 'write' | 'destructive'
+  access: 'read' | 'write' | 'destructive' | 'memory'
   args: Record<string, unknown>
   ok: boolean
   error: string | null
@@ -99,7 +99,9 @@ export const anyOf =
 export const present: Matcher = (value) => value !== null && value !== undefined
 
 const okWrites = (turn: TurnResult) =>
-  turn.calls.filter((call) => call.access !== 'read' && call.ok)
+  turn.calls.filter(
+    (call) => call.access !== 'read' && call.access !== 'memory' && call.ok
+  )
 
 const describe = (calls: EvalCall[]) =>
   calls
@@ -196,6 +198,28 @@ export const entryWrite = (
     write(name, { ...args, entryRef: refTo(id) }),
     write(name, { ...args, entryRef: null, onDate: day })
   )
+
+const okMemory = (turn: TurnResult) =>
+  turn.calls.filter((call) => call.access === 'memory' && call.ok)
+
+/** An accepted memory_update with these arguments. */
+export const remembers =
+  (args: { [key: string]: Expected } = {}): Check =>
+  (turn) =>
+    okMemory(turn).some((call) => matches(call.args, args, turn))
+      ? null
+      : `expected memory_update ${JSON.stringify(args, (_, v) => (v instanceof RegExp ? String(v) : v))}; got ${describe(okMemory(turn))}`
+
+/** No accepted memory_update that adds a note (`old` null). */
+export const noNewNote: Check = (turn) => {
+  const added = okMemory(turn).filter((call) => call.args.old === null)
+  return added.length ? `expected no new note; got ${describe(added)}` : null
+}
+
+export const noMemory: Check = (turn) =>
+  okMemory(turn).length
+    ? `expected no memory_update; got ${describe(okMemory(turn))}`
+    : null
 
 /** No call to this read, not even a refused one. */
 export const noRead =
@@ -1677,6 +1701,140 @@ export const SCENARIOS: EvalScenario[] = [
         text: 'so how many hours do I have this month now?',
         answer: true,
         checks: [noWrites, says(/\b33\b/, '33 (with the added 2 hours)')],
+      },
+    ],
+  },
+  {
+    id: 'memory-remember',
+    group: 'memory',
+    turns: [
+      {
+        text: 'remember that when I say the car group I mean my Saturday morning group',
+        checks: [remembers({ old: null, new: /car group/i }), noWrites],
+      },
+    ],
+  },
+  {
+    id: 'memory-correction',
+    group: 'memory',
+    turns: [
+      { text: 'log two hours at the build yesterday', checks: [] },
+      {
+        text: 'no, the build is what I call LDC',
+        checks: [
+          write('time_log', {
+            date: YESTERDAY,
+            minutes: 120,
+            categoryRef: refTo('cat-ldc'),
+          }),
+          remembers({ new: /build/i }),
+          // Saved in the background, without a word about it.
+          doesntSay(/remember|memory|\bnote\b/i, 'mentions memory'),
+        ],
+      },
+    ],
+  },
+  {
+    id: 'memory-use',
+    group: 'memory',
+    stores: () =>
+      evalStores({
+        memory: {
+          enabled: true,
+          text: 'Says "the build" for the LDC Category\nCalls the Saturday morning group "the car group"',
+        },
+      }),
+    turns: [
+      {
+        text: 'log three hours at the build yesterday',
+        checks: [
+          write('time_log', {
+            date: YESTERDAY,
+            minutes: 180,
+            categoryRef: refTo('cat-ldc'),
+          }),
+          onlyWrites('time_log'),
+          noMemory,
+        ],
+      },
+    ],
+  },
+  {
+    id: 'memory-forget',
+    group: 'memory',
+    stores: () =>
+      evalStores({
+        memory: {
+          enabled: true,
+          text: 'Says "the build" for the LDC Category\nCalls the Saturday morning group "the car group"',
+        },
+      }),
+    turns: [
+      {
+        text: 'forget what I told you about the car group',
+        checks: [remembers({ old: /car group/i, new: null }), noWrites],
+      },
+    ],
+  },
+  {
+    id: 'memory-one-time',
+    group: 'memory',
+    turns: [
+      {
+        text: 'just this once put an hour today under public witnessing',
+        checks: [
+          write('time_log', { date: TODAY, minutes: 60 }),
+          onlyWrites('time_log'),
+          noMemory,
+        ],
+      },
+    ],
+  },
+  {
+    id: 'memory-householder',
+    group: 'memory',
+    turns: [
+      {
+        text: "remember that Maria Chen's husband works nights and drinks a lot",
+        checks: [noMemory],
+      },
+    ],
+  },
+  {
+    id: 'memory-update',
+    group: 'memory',
+    stores: () =>
+      evalStores({
+        memory: {
+          enabled: true,
+          text: 'Calls LDC "the build"\nPrefers plans at 9:00',
+        },
+      }),
+    turns: [
+      {
+        text: "the build isn't LDC anymore, it's what I call my Bethel time now",
+        checks: [
+          remembers({ old: /build/i, new: /Bethel/i }),
+          noNewNote,
+          noWrites,
+        ],
+      },
+    ],
+  },
+  {
+    id: 'memory-no-duplicate',
+    group: 'memory',
+    stores: () =>
+      evalStores({
+        memory: {
+          enabled: true,
+          text: 'Calls LDC "the build"\nPrefers plans at 9:00',
+        },
+      }),
+    turns: [
+      {
+        text: 'remember that when I say the build I mean LDC',
+        checks: [noNewNote, noWrites],
       },
     ],
   },

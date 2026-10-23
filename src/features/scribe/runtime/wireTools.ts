@@ -141,7 +141,8 @@ export function toolDefinition(tool: ScribeTool): ToolDefinitionWire {
   const definition: ToolDefinitionWire = {
     name: tool.name,
     description: tool.description,
-    access: tool.access,
+    // Memory edits are applied on the device, but they still change state.
+    access: tool.access === 'memory' ? 'write' : tool.access,
     inputSchema: toWireSchema(tool.input),
     ...(tool.returnsUntrustedText ? { returnsUntrustedText: true } : {}),
   }

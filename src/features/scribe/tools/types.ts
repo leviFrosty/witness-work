@@ -4,6 +4,7 @@ import type { ScribeContextWire } from '@/features/scribe/lib/wire'
 import type { RefRegistry } from '@/features/scribe/runtime/refs'
 import type { ScribeStores } from '@/features/scribe/runtime/snapshot'
 import type { DraftEffect } from '@/features/scribe/proposals/model'
+import type { ScribeMemoryEdit } from '@/features/scribe/lib/memory'
 
 /**
  * The turn's Proposal as a write tool sees it: what's already proposed, and the
@@ -83,6 +84,13 @@ export interface WriteToolDefinition<S extends z.ZodObject>
   propose(input: z.output<S>, ctx: ToolContext): ProposeResult
 }
 
+/** Memory holds no householder text, so it works in data protection mode. */
+export interface MemoryToolDefinition<S extends z.ZodObject>
+  extends Omit<ToolDefinitionBase<S>, 'area' | 'offInDataProtection'> {
+  /** The edit a call asks for; the runner applies it to the step's memory. */
+  edit(input: z.output<S>): ScribeMemoryEdit
+}
+
 /** A tool in the registry, its input type erased behind `parse`. */
 export type ScribeTool =
   | {
@@ -106,9 +114,25 @@ export type ScribeTool =
       refForLaterCalls: boolean
       propose(args: unknown, ctx: ToolContext): ProposeResult
     }
+  /**
+   * Edits Scribe AI's memory on the device at once, never the User's records,
+   * so it isn't reviewed. `write` on the wire.
+   */
+  | {
+      access: 'memory'
+      name: string
+      description: string
+      input: z.ZodObject
+      returnsUntrustedText: false
+      offInDataProtection: false
+      edit(
+        args: unknown
+      ): { ok: true; edit: ScribeMemoryEdit } | { ok: false; error: string }
+    }
 
 export type ReadTool = Extract<ScribeTool, { access: 'read' }>
-export type WriteTool = Exclude<ScribeTool, { access: 'read' }>
+export type WriteTool = Exclude<ScribeTool, { access: 'read' | 'memory' }>
+export type MemoryTool = Extract<ScribeTool, { access: 'memory' }>
 
 const MAX_ERROR_CHARS = 400
 
@@ -174,6 +198,26 @@ export function defineWriteTool<S extends z.ZodObject>(
       if (!parsed.success)
         return { ok: false, error: argumentError(parsed.error) }
       return definition.propose(parsed.data, ctx)
+    },
+  }
+}
+
+/** A memory tool: edits Scribe AI's memory as its call arrives. */
+export function defineMemoryTool<S extends z.ZodObject>(
+  definition: MemoryToolDefinition<S>
+): MemoryTool {
+  return {
+    access: 'memory',
+    name: definition.name,
+    description: definition.description,
+    input: definition.input,
+    returnsUntrustedText: false,
+    offInDataProtection: false,
+    edit: (args) => {
+      const parsed = definition.input.safeParse(args)
+      if (!parsed.success)
+        return { ok: false, error: argumentError(parsed.error) }
+      return { ok: true, edit: definition.edit(parsed.data) }
     },
   }
 }

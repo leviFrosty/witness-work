@@ -67,6 +67,7 @@ import {
   useScribeConversations,
 } from '@/features/scribe/stores/conversations'
 import { useScribeUsageStore } from '@/features/scribe/stores/usage'
+import { useScribeMemory } from '@/features/scribe/stores/memory'
 import { SCRIBE_TOOLS, scribeTool } from '@/features/scribe/tools'
 import {
   fixtureStores,
@@ -234,6 +235,7 @@ beforeEach(() => {
   useScribeRuns.setState(useScribeRuns.getInitialState(), true)
   forgoResume()
   useScribeUsageStore.setState(useScribeUsageStore.getInitialState(), true)
+  useScribeMemory.setState(useScribeMemory.getInitialState(), true)
 })
 
 describe('a turn', () => {
@@ -603,6 +605,97 @@ describe('a turn', () => {
     expect(getConversation(id)!.items.at(-1)).toMatchObject({
       notice: { kind: 'couldnt_finish' },
     })
+  })
+})
+
+describe('memory', () => {
+  const remember = (note: string | null, old: string | null = null) =>
+    call('memory_update', { old, new: note })
+
+  it('sends the memory in the context and saves edits in the background', async () => {
+    useScribeMemory.setState({ text: 'Prefers plans at 9:00' })
+    stores = fixtureStores({
+      memory: { enabled: true, text: 'Prefers plans at 9:00' },
+    })
+    const fake = fakeClient([
+      () => [
+        start(),
+        text('Got it.'),
+        remember('Calls the Saturday group "the car group"'),
+        done('tool_calls'),
+      ],
+    ])
+    const id = await send(
+      runtime(fake.client),
+      'Remember that the car group means my Saturday group'
+    )
+
+    expect(fake.bodies).toHaveLength(1)
+    expect(fake.bodies[0].context.memory).toEqual(['Prefers plans at 9:00'])
+    expect(useScribeMemory.getState().text).toBe(
+      'Prefers plans at 9:00\nCalls the Saturday group "the car group"'
+    )
+    // Nothing in the conversation shows it.
+    expect(getConversation(id)!.items.map((item) => item.type)).toEqual([
+      'user',
+      'assistant',
+    ])
+    expect(events('scribe_memory_saved')).toEqual([
+      { added: 1, changed: 0, removed: 0, fill: '<25%' },
+    ])
+  })
+
+  it('takes one step for a reply after a silent save, once a turn', async () => {
+    const fake = fakeClient([
+      () => [start(), remember('First'), done('tool_calls')],
+      () => [start(), remember('Second'), done('tool_calls')],
+    ])
+    const id = await send(runtime(fake.client), 'Remember these')
+    expect(fake.bodies).toHaveLength(2)
+    expect(useScribeMemory.getState().text).toBe('First\nSecond')
+    expect(getConversation(id)!.suspended).toBeNull()
+  })
+
+  it('applies whole-note edits again over a Settings edit made while the step ran', async () => {
+    useScribeMemory.setState({ text: 'Old note' })
+    stores = fixtureStores({ memory: { enabled: true, text: 'Old note' } })
+    const fake = fakeClient([
+      () => [
+        start(),
+        text('Done.'),
+        remember('From the model'),
+        remember(null, 'Old note'),
+        // Part of a note: applies here, but not over the User's edit.
+        remember('a', 'the'),
+        () => useScribeMemory.setState({ text: 'From Settings\nOld note' }),
+        done('tool_calls'),
+      ],
+    ])
+    await send(runtime(fake.client), 'Remember this')
+    expect(fake.bodies).toHaveLength(1)
+    expect(useScribeMemory.getState().text).toBe(
+      'From Settings\nFrom the model'
+    )
+    // Counts only what was saved.
+    expect(events('scribe_memory_saved')).toEqual([
+      { added: 1, changed: 0, removed: 1, fill: '<25%' },
+    ])
+  })
+
+  it("saves nothing from a step that isn't kept", async () => {
+    const fake = fakeClient([
+      () => [start(), remember('Half a thought'), done('length')],
+    ])
+    await send(runtime(fake.client), 'Remember this')
+    expect(useScribeMemory.getState().text).toBe('')
+    expect(events('scribe_memory_saved')).toEqual([])
+  })
+
+  it('sends null while memory is off', async () => {
+    stores = fixtureStores({ memory: { enabled: false, text: 'Hidden' } })
+    const fake = fakeClient([() => [start(), text('Hi.'), done('end')]])
+    await send(runtime(fake.client), 'Hello')
+    expect(fake.bodies[0].context.memory).toBeNull()
   })
 })
 

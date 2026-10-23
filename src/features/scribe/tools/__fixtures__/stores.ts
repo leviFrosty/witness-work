@@ -213,6 +213,7 @@ export function fixtureStores(
     buddies: BUDDIES,
     buddyCards: {},
     preferences: PREFERENCES,
+    memory: { enabled: true, text: '' },
     ...change,
   })
 }

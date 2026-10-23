@@ -65,6 +65,7 @@ import {
   useScribeConversations,
 } from '@/features/scribe/stores/conversations'
 import { useScribeLedger } from '@/features/scribe/stores/ledger'
+import { useScribeMemory } from '@/features/scribe/stores/memory'
 import { SCRIBE_TOOLS, scribeTool } from '@/features/scribe/tools'
 import { NOW, PREFERENCES } from '@/features/scribe/tools/__fixtures__/stores'
 import { evalStores } from '@/features/scribe/evals/evalStores'
@@ -209,6 +210,7 @@ beforeEach(() => {
     true
   )
   useScribeLedger.setState(useScribeLedger.getInitialState(), true)
+  useScribeMemory.setState(useScribeMemory.getInitialState(), true)
 })
 
 describe('golden turns', () => {

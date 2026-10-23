@@ -8,6 +8,10 @@ import type {
   ScribeUndoSource,
   ScribeUsageWindowId,
 } from '@/features/scribe/types'
+import {
+  SCRIBE_MEMORY_MAX_CHARS,
+  type ScribeMemoryChange,
+} from '@/features/scribe/lib/memory'
 
 /**
  * Scribe AI's events (docs/analytics.md → Scribe AI). Structural only: no text,
@@ -134,5 +138,41 @@ export function trackCaptureFinished(props: {
     ...(props.engine ? { engine: props.engine } : {}),
     ...(props.retry !== undefined ? { retry: props.retry } : {}),
     ...(props.retryOffered ? { retry_offered: true } : {}),
+  })
+}
+
+/** How full the memory is: `<25%`, `25-50%`, `50-75%` or `75%+`. */
+export const memoryFillBucket = (chars: number): string => {
+  const share = chars / SCRIBE_MEMORY_MAX_CHARS
+  return share < 0.25
+    ? '<25%'
+    : share < 0.5
+      ? '25-50%'
+      : share < 0.75
+        ? '50-75%'
+        : '75%+'
+}
+
+/** Scribe AI changed its memory in one step. Counts only, never the notes. */
+export function trackMemorySaved(
+  changes: readonly ScribeMemoryChange[],
+  chars: number
+): void {
+  analytics.capture('scribe_memory_saved', {
+    added: changes.filter((change) => change === 'added').length,
+    changed: changes.filter((change) => change === 'changed').length,
+    removed: changes.filter((change) => change === 'removed').length,
+    fill: memoryFillBucket(chars),
+  })
+}
+
+/** The User changed the memory in Settings. */
+export function trackMemoryManaged(
+  action: 'edited' | 'cleared' | 'turned_off' | 'turned_on',
+  chars: number
+): void {
+  analytics.capture('scribe_memory_managed', {
+    action,
+    fill: memoryFillBucket(chars),
   })
 }

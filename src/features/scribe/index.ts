@@ -19,6 +19,7 @@ export { useScribePhotoCapture } from '@/features/scribe/hooks/useScribePhotoCap
 export { useScribePaperCapture } from '@/features/scribe/hooks/useScribePaperCapture'
 export { useScribeHasFinishedTurn } from '@/features/scribe/hooks/useScribeHasFinishedTurn'
 export { ScribeRoot } from '@/features/scribe/runtime/ScribeRoot'
+export { useScribeMemoryEnabled } from '@/features/scribe/stores/memory'
 export { forgoResume as forgoScribeResume } from '@/features/scribe/runtime/runs'
 export {
   SCRIBE_PAPER_MAX_PAGES,

@@ -174,6 +174,27 @@ export const FAKE_SCRIPTS = {
       done('end', fake.usage),
     ],
   ],
+  /**
+   * A note saved to memory without a word (as the real model does), then the
+   * reply in the step the app takes for it.
+   */
+  remember: (): FakeStep[] => [
+    (body) => [
+      start(body),
+      {
+        type: 'tool_call',
+        callId: callId(),
+        name: 'memory_update',
+        args: { old: null, new: 'Says "the build" for the LDC Category' },
+      },
+      done('tool_calls', fake.usage),
+    ],
+    (body) => [
+      start(body),
+      ...words('Got it. I’ll remember that “the build” means LDC.'),
+      done('end', fake.usage),
+    ],
+  ],
   /** One write: an hour logged today. */
   logTime: (): FakeStep[] => [
     (body) => [

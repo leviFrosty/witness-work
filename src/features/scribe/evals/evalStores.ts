@@ -308,6 +308,7 @@ export function evalStores(change: Partial<ScribeStores> = {}): ScribeStores {
     buddies: EVAL_BUDDIES,
     buddyCards: EVAL_BUDDY_CARDS,
     preferences: PREFERENCES,
+    memory: { enabled: true, text: '' },
     ...change,
   })
 }

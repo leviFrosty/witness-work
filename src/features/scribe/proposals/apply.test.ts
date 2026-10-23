@@ -173,7 +173,8 @@ function propose(
   args: Record<string, unknown>
 ) {
   const tool = scribeTool(name)
-  if (!tool || tool.access === 'read') throw new Error(name)
+  if (!tool || tool.access === 'read' || tool.access === 'memory')
+    throw new Error(name)
   const result = tool.propose(args, fixture.ctx)
   if (!result.ok) throw new Error(result.error)
   fixture.draft.add(

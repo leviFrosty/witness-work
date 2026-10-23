@@ -28,32 +28,37 @@ export default function ContactPinLayer({
 
   return (
     <>
-      {items.map((item) => (
-        <ContactMapPin
-          // Keyed by the lead Contact, so a pin that gathers into a group or
-          // spreads out restyles in place. A new badge (a Follow-up due, a
-          // favorite) changes its icon, so it gets a fresh marker; see
-          // ContactMapPin.
-          key={`${item.key}|${item.badge ?? ''}`}
-          // A group's identifier isn't a Contact's, so hovering it names no one.
-          identifier={item.group ? `group:${item.key}` : item.key}
-          coordinate={item.coordinate}
-          label={item.label}
-          color={item.color}
-          group={item.group}
-          badge={item.badge}
-          selected={item.selected}
-          checked={item.checked}
-          partlyChecked={item.partlyChecked}
-          dimmed={item.dimmed}
-          zIndex={item.zIndex}
-          accessibilityLabel={item.accessibilityLabel}
-          onPress={() => onPress(item)}
-          draggable={!item.group && !selecting}
-          onDragStart={onDragStart}
-          onDragEnd={(e) => onDragEnd(item.key, e.nativeEvent.coordinate)}
-        />
-      ))}
+      {items.map((item) => {
+        const avatar = item.members[0]!.avatar
+        return (
+          <ContactMapPin
+            // Keyed by the lead Contact, so a pin that gathers into a group or
+            // spreads out restyles in place. A new badge (a Follow-up due, a
+            // favorite) changes its icon, so it gets a fresh marker; see
+            // ContactMapPin. So does a new avatar.
+            key={`${item.key}|${item.badge ?? ''}|${avatar?.type ?? ''}:${avatar?.value ?? ''}`}
+            // A group's identifier isn't a Contact's, so hovering it names no one.
+            identifier={item.group ? `group:${item.key}` : item.key}
+            coordinate={item.coordinate}
+            label={item.label}
+            color={item.color}
+            avatar={avatar}
+            avatarBackground={item.members[0]!.avatarBackground}
+            group={item.group}
+            badge={item.badge}
+            selected={item.selected}
+            checked={item.checked}
+            partlyChecked={item.partlyChecked}
+            dimmed={item.dimmed}
+            zIndex={item.zIndex}
+            accessibilityLabel={item.accessibilityLabel}
+            onPress={() => onPress(item)}
+            draggable={!item.group && !selecting}
+            onDragStart={onDragStart}
+            onDragEnd={(e) => onDragEnd(item.key, e.nativeEvent.coordinate)}
+          />
+        )
+      })}
       {items.map((item) => {
         const card = item.card
         if (!card) return null

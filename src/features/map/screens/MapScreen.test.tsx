@@ -186,6 +186,12 @@ vi.mock('expo-glass-effect', () => ({
   GlassView: 'GlassView',
   isLiquidGlassAvailable: () => false,
 }))
+vi.mock('expo-image', () => ({ Image: 'Image' }))
+vi.mock('@/components/ui/Avatar', () => ({
+  default: 'Avatar',
+  isRenderableImageValue: (value: string) =>
+    !!value && !value.startsWith('icloud://'),
+}))
 vi.mock('expo-crypto', () => ({ randomUUID: () => 'new-contact' }))
 vi.mock('expo-location', () => ({
   Accuracy: { BestForNavigation: 6 },

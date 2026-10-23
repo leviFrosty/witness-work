@@ -50,6 +50,7 @@ export default function Popover({
             <View>
               {popover.mounted ? (
                 <PopoverContent
+                  contentRef={popover.contentRef}
                   width={contentWidth}
                   maxHeight={popover.maxHeight}
                   style={contentStyle}

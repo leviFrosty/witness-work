@@ -11,6 +11,7 @@ import { useNavigation } from '@react-navigation/native'
 import { useEffect, useId, useState } from 'react'
 import { Keyboard, useWindowDimensions } from 'react-native'
 import { useTakeoverHold } from '@/hooks/useTakeoverTurn'
+import { usePopoverTouchShield } from '@/components/ui/popoverTouchShield'
 import { usePreferences } from '@/stores/preferences'
 import InfoPopoverTrigger, {
   infoPopoverHostStyle,
@@ -35,6 +36,7 @@ export default function InfoPopover({
   const [open, setOpen] = useState(false)
   const holdId = useId()
   useTakeoverHold(`popover:${holdId}`, open)
+  usePopoverTouchShield(`popover:${holdId}`, open)
 
   useEffect(
     () => navigation.addListener('blur', () => setOpen(false)),

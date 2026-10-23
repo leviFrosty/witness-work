@@ -64,6 +64,7 @@ import { linking, navigationRef } from '@/features/contacts/lib/linking'
 import { stopRecordingLaunchLinks } from '@/lib/launchLinks'
 import { analytics } from '@/lib/analytics'
 import { PointerTooltipLayer } from '@/components/ui/PointerTooltip'
+import { PopoverTouchShield } from '@/components/ui/popoverTouchShield'
 import UndoToastLayer from '@/components/UndoToastLayer'
 import AppLockGate from '@/app/app-lock/AppLockGate'
 import UpdateRequiredGate from '@/app/update-required/UpdateRequiredGate'
@@ -137,77 +138,79 @@ function UnlockedApp() {
           <SafeAreaProvider>
             <GestureHandlerRootView style={{ flex: 1 }}>
               <DisplayRegionsObserver />
-              {/* Off except while the note editor is open (it pins its
+              <PopoverTouchShield>
+                {/* Off except while the note editor is open (it pins its
                   toolbar to the keyboard); the rest of the app avoids the
                   keyboard with React Native's own events. */}
-              <KeyboardProvider
-                enabled={false}
-                preload={false}
-                preserveEdgeToEdge
-              >
-                <NavigationContainer
-                  key={devRemountKey}
-                  ref={navigationRef}
-                  linking={linking}
-                  // Shown while deep links resolve, before the first screen.
-                  fallback={<LaunchSplash />}
-                  onReady={() => {
-                    // Every link listener is up now.
-                    stopRecordingLaunchLinks()
-                    markLaunched()
-                    reportLaunch()
-                    captureLaunchTiming()
-                    const initialScreen =
-                      navigationRef.current?.getCurrentRoute()?.name
-                    routeNameRef.current = initialScreen
-                    if (initialScreen) analytics.screen(initialScreen)
-                  }}
-                  onStateChange={() => {
-                    const previousScreen = routeNameRef.current
-                    const currentScreen =
-                      navigationRef.current?.getCurrentRoute()?.name
-                    if (currentScreen && currentScreen !== previousScreen) {
-                      analytics.screen(currentScreen, {
-                        previous_screen: previousScreen,
-                      })
-                    }
-                    routeNameRef.current = currentScreen
-                  }}
+                <KeyboardProvider
+                  enabled={false}
+                  preload={false}
+                  preserveEdgeToEdge
                 >
-                  {/* Toast context must also reach Tamagui’s portaled sheets. */}
-                  <ToastProvider>
-                    <TamaguiProvider
-                      defaultTheme={
-                        colorScheme
-                          ? colorScheme
-                          : systemColorScheme || undefined
+                  <NavigationContainer
+                    key={devRemountKey}
+                    ref={navigationRef}
+                    linking={linking}
+                    // Shown while deep links resolve, before the first screen.
+                    fallback={<LaunchSplash />}
+                    onReady={() => {
+                      // Every link listener is up now.
+                      stopRecordingLaunchLinks()
+                      markLaunched()
+                      reportLaunch()
+                      captureLaunchTiming()
+                      const initialScreen =
+                        navigationRef.current?.getCurrentRoute()?.name
+                      routeNameRef.current = initialScreen
+                      if (initialScreen) analytics.screen(initialScreen)
+                    }}
+                    onStateChange={() => {
+                      const previousScreen = routeNameRef.current
+                      const currentScreen =
+                        navigationRef.current?.getCurrentRoute()?.name
+                      if (currentScreen && currentScreen !== previousScreen) {
+                        analytics.screen(currentScreen, {
+                          previous_screen: previousScreen,
+                        })
                       }
-                      config={tamaguiConfig}
-                    >
-                      <SystemBars />
-                      <ToastViewport />
-                      <ConfettiProvider>
-                        <AnimationViewProvider>
-                          <SurveyProvider>
-                            <DeepLinkListeners />
-                            <BuddiesRuntime />
-                            <BadgesRuntime />
-                            <NotificationResponseListener />
-                            <SilentForegroundAlerts />
-                            <SystemMenu language={loadedLocale} />
-                            <RootStackComponent />
-                            <UndoToastLayer />
-                            <PointerTooltipLayer />
-                            <UpdateRequiredGate />
-                            {/* Last, so it covers everything else. */}
-                            <AppLockGate />
-                          </SurveyProvider>
-                        </AnimationViewProvider>
-                      </ConfettiProvider>
-                    </TamaguiProvider>
-                  </ToastProvider>
-                </NavigationContainer>
-              </KeyboardProvider>
+                      routeNameRef.current = currentScreen
+                    }}
+                  >
+                    {/* Toast context must also reach Tamagui’s portaled sheets. */}
+                    <ToastProvider>
+                      <TamaguiProvider
+                        defaultTheme={
+                          colorScheme
+                            ? colorScheme
+                            : systemColorScheme || undefined
+                        }
+                        config={tamaguiConfig}
+                      >
+                        <SystemBars />
+                        <ToastViewport />
+                        <ConfettiProvider>
+                          <AnimationViewProvider>
+                            <SurveyProvider>
+                              <DeepLinkListeners />
+                              <BuddiesRuntime />
+                              <BadgesRuntime />
+                              <NotificationResponseListener />
+                              <SilentForegroundAlerts />
+                              <SystemMenu language={loadedLocale} />
+                              <RootStackComponent />
+                              <UndoToastLayer />
+                              <PointerTooltipLayer />
+                              <UpdateRequiredGate />
+                              {/* Last, so it covers everything else. */}
+                              <AppLockGate />
+                            </SurveyProvider>
+                          </AnimationViewProvider>
+                        </ConfettiProvider>
+                      </TamaguiProvider>
+                    </ToastProvider>
+                  </NavigationContainer>
+                </KeyboardProvider>
+              </PopoverTouchShield>
             </GestureHandlerRootView>
           </SafeAreaProvider>
         </ThemeProvider>

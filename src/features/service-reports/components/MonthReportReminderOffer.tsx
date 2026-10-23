@@ -1,5 +1,5 @@
 import { BellRing as BellRingIcon, X as XIcon } from 'lucide-react-native'
-import { useToastController } from '@tamagui/toast'
+import { toast } from '@/stores/toasts'
 import Button from '@/components/ui/Button'
 import IconButton from '@/components/ui/IconButton'
 import { touchTargetFrame } from '@/components/ui/touchTarget'
@@ -18,7 +18,6 @@ import useMonthReportReminder from '@/features/service-reports/hooks/useMonthRep
  */
 const MonthReportReminderOffer = () => {
   const theme = useTheme()
-  const toast = useToastController()
   const { enabled, setEnabled } = useMonthReportReminder()
   const answered = usePreferences((s) => s.monthReportReminderOfferAnswered)
 
@@ -28,10 +27,7 @@ const MonthReportReminderOffer = () => {
   // it can be tried again or dismissed.
   const accept = async () => {
     if (await setEnabled(true, 'report_offer'))
-      toast.show(i18n.t('monthReportReminderOffer_turnedOn'), {
-        message: '',
-        native: true,
-      })
+      toast.success(i18n.t('monthReportReminderOffer_turnedOn'))
   }
 
   return (

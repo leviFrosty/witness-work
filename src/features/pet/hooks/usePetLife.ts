@@ -3,6 +3,8 @@ import usePublisher from '@/hooks/usePublisher'
 import useServiceStreak from '@/hooks/useServiceStreak'
 import useToday from '@/hooks/useToday'
 import { analytics } from '@/lib/analytics'
+import { petDisplayName } from '@/features/pet/lib/names'
+import { announcePetUnlocks } from '@/features/pet/lib/unlockAnnounce'
 import type { StreakKind } from '@/lib/serviceStreak'
 import useConversations from '@/stores/conversationStore'
 import usePet from '@/stores/pet'
@@ -214,16 +216,23 @@ export default function usePetLife(): PetLifeState {
   const toStore = faking ? '' : roomItemsToStore(stored, earned).join(' ')
   useEffect(() => {
     if (!toStore) return
+    const { pet: before, earnRoomItems } = usePet.getState()
     // Home and Decorate Room can both ask; only the first adds anything.
-    const added = usePet
-      .getState()
-      .earnRoomItems(toStore.split(' ') as RoomItemId[])
+    const added = earnRoomItems(toStore.split(' ') as RoomItemId[])
     for (const item of added)
       analytics.capture('pet_room_item_unlocked', {
         item,
         by: isSecretItem(item) ? 'secret' : mode,
       })
-  }, [toStore, mode])
+    // A new pet's items are the room it starts with, not news: whatever its
+    // first day opens (streak items, then secrets as the rest settles).
+    if (
+      added.length &&
+      before?.earnedRoomItems &&
+      before.adoptedOn !== todayKey
+    )
+      announcePetUnlocks(added, petDisplayName(before))
+  }, [toStore, mode, todayKey])
 
   if (!pet || !life)
     return {

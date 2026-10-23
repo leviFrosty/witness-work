@@ -1,4 +1,4 @@
-import { useToastController } from '@tamagui/toast'
+import { toast } from '@/stores/toasts'
 import { analytics } from '@/lib/analytics'
 import { noteUserAction } from '@/lib/userAction'
 import moment from 'moment'
@@ -70,7 +70,6 @@ const monthsAgo = (monthKey: string) =>
  * a sent report counts as submitted there too.
  */
 const useMonthReportExport = () => {
-  const toast = useToastController()
   const defaultExportMethod = usePreferences((s) => s.defaultExportMethod)
   // Subscribed so menus built from `reportMenuItems` switch between Mark as
   // Sent and Mark as Not Sent as soon as a month's mark changes.
@@ -93,7 +92,7 @@ const useMonthReportExport = () => {
     usePreferences.getState().markReportSubmitted(reportMonthKey(month, year))
     Haptics.success()
     if (method === 'copy') {
-      toast.show(i18n.t('copied'), { message: '', native: true })
+      toast.success(i18n.t('copied'))
     }
   }
 

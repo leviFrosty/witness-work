@@ -1,7 +1,7 @@
 import { Share } from 'react-native'
 import * as Clipboard from 'expo-clipboard'
 import { useNavigation } from '@react-navigation/native'
-import { useToastController } from '@tamagui/toast'
+import { toast } from '@/stores/toasts'
 import i18n from '@/lib/locales'
 import Haptics from '@/lib/haptics'
 
@@ -17,7 +17,6 @@ import type { Trip } from '@/types/mileage'
 /** Edit, Log Again, Share, Copy, and Delete for one trip — row and details. */
 export default function useTripActions() {
   const navigation = useNavigation<RootStackNavigation>()
-  const toast = useToastController()
   const deleteTrip = useMileage((s) => s.deleteTrip)
   const vehicles = useMileage((s) => s.vehicles)
   const index = useMileageIndex()
@@ -38,7 +37,7 @@ export default function useTripActions() {
   const copy = async (trip: Trip) => {
     await Clipboard.setStringAsync(buildTripText(trip, vehicles, index, format))
     Haptics.success().catch(() => {})
-    toast.show(i18n.t('copied'), { native: true, duration: 2000 })
+    toast.success(i18n.t('copied'), { durationMs: 2000 })
   }
 
   const requestDelete = (trip: Trip, onDeleted?: () => void) =>
@@ -48,9 +47,8 @@ export default function useTripActions() {
       onConfirm: () => {
         deleteTrip(trip.id)
 
-        toast.show(i18n.t('success'), {
+        toast.success(i18n.t('success'), {
           message: i18n.t('deleted'),
-          native: true,
         })
         onDeleted?.()
       },

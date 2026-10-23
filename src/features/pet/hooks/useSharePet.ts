@@ -3,9 +3,9 @@ import type { View } from 'react-native'
 import { ImageFormat, makeImageFromView } from '@shopify/react-native-skia'
 import * as FileSystem from 'expo-file-system/legacy'
 import * as Sharing from 'expo-sharing'
-import { useToastController } from '@tamagui/toast'
 import { analytics } from '@/lib/analytics'
 import i18n from '@/lib/locales'
+import { toast } from '@/stores/toasts'
 import { logger } from '@/lib/logger'
 import { localDayKey } from '@/features/pet/lib/dayKeys'
 import { petShareFileName } from '@/features/pet/lib/share'
@@ -17,7 +17,6 @@ import { petShareFileName } from '@/features/pet/lib/share'
  * right away; the OS clears the cache).
  */
 export default function useSharePet() {
-  const toast = useToastController()
   return async (
     card: RefObject<View | null>,
     name: string,
@@ -41,7 +40,7 @@ export default function useSharePet() {
       analytics.capture('pet_shared', { sign: showSign })
     } catch (error) {
       logger.error('Sharing the pet failed', error)
-      toast.show(i18n.t('pet.share.failed'), { native: true })
+      toast.error(i18n.t('pet.share.failed'))
     }
   }
 }

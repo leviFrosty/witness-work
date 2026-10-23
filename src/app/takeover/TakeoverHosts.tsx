@@ -1,6 +1,7 @@
 import { type ComponentProps, useLayoutEffect, useState } from 'react'
 import { useNavigation } from '@react-navigation/native'
 import BadgeCelebrationOverlay from '@/features/badges/components/BadgeCelebrationOverlay'
+import PetUnlockRevealHost from '@/features/pet/components/PetUnlockRevealHost'
 import type MilestoneRevealOverlayComponent from '@/features/milestones/components/MilestoneRevealOverlay'
 import { useMilestoneRevealStore } from '@/features/milestones/stores/milestoneReveal'
 import ScheduleIntroHost from '@/features/plans/components/schedule-intro/ScheduleIntroHost'
@@ -107,6 +108,7 @@ export default function TakeoverHosts({
         />
       )}
       <BadgeCelebrationOverlay />
+      <PetUnlockRevealHost />
     </>
   )
 }

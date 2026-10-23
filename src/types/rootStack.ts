@@ -291,7 +291,8 @@ export type RootStackParamList = {
   /** Adopt a Pet Companion, or Change Pet (species and coat). */
   PetPicker: { mode: 'adopt' | 'change' }
   /** The pet's details: its hat and room parts, applied as they're picked. */
-  PetRoom: undefined
+  /** `focus`: an unlocked item (`hat:beret`) whose tab opens first. */
+  PetRoom: { focus?: string } | undefined
   /** Rename the companion (an empty name shows the species name). */
   PetRename: undefined
   /** The pet's share card, and Share for a picture of it. */

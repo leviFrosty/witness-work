@@ -1,5 +1,5 @@
 import useFormValidation from '@/hooks/useFormValidation'
-import { Alert, Platform, View } from 'react-native'
+import { Alert, View } from 'react-native'
 import { noteUserAction } from '@/lib/userAction'
 import { richTextImages } from '@/lib/richText/inspect'
 import {
@@ -36,7 +36,7 @@ import {
   STANDARD_TYPE_VALUE,
   type TypeSelection,
 } from '@/components/TypeSelectorRow'
-import { useToastController } from '@tamagui/toast'
+import { toast } from '@/stores/toasts'
 import Button from '@/components/ui/Button'
 import {
   adjustedMinutesForSpecificMonth,
@@ -180,7 +180,6 @@ const TimeEntryForm = (props: Props) => {
     },
     'time_entry'
   )
-  const toast = useToastController()
   // The entry's month decides whose goal its confirmation counts toward.
   const { hasAnnualGoal, annualGoalHours } = usePublisher(
     calendarMonthOf(serviceReport.date)
@@ -347,12 +346,7 @@ const TimeEntryForm = (props: Props) => {
       has_category: !!entry.categoryId,
       ...noteAnalytics(entry),
     })
-    // Android's native toast shows only its title, so it carries both lines.
-    if (Platform.OS === 'android') {
-      toast.show(i18n.t('timeSavedProgress.line', progress), { native: true })
-    } else {
-      toast.show(progress.added, { message: progress.progress, native: true })
-    }
+    toast.success(progress.added, { message: progress.progress })
     props.onDone()
   }
 
@@ -367,9 +361,8 @@ const TimeEntryForm = (props: Props) => {
       has_category: !!entry.categoryId,
       ...noteAnalytics(entry),
     })
-    toast.show(i18n.t('success'), {
+    toast.success(i18n.t('success'), {
       message: i18n.t('updated'),
-      native: true,
     })
 
     props.onDone()
@@ -390,9 +383,8 @@ const TimeEntryForm = (props: Props) => {
             source: props.source,
             entry_mode: timeEntryMode(serviceReport),
           })
-          toast.show(i18n.t('success'), {
+          toast.success(i18n.t('success'), {
             message: i18n.t('deleted'),
-            native: true,
           })
           props.onDone()
         },

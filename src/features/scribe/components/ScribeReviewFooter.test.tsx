@@ -38,7 +38,7 @@ vi.mock('@/lib/locales', () => ({
       params ? `${key} ${JSON.stringify(params)}` : key,
   },
 }))
-vi.mock('@/stores/undoToast', () => ({ showUndoToast: runtime.toast }))
+vi.mock('@/stores/toasts', () => ({ toast: { undo: runtime.toast } }))
 vi.mock('@/features/scribe', () => ({
   useScribeProposal: () => runtime.controller,
   undoScribeProposal: runtime.undo,
@@ -131,7 +131,7 @@ describe('ScribeReviewFooter', () => {
     expect(runtime.controller.add).toHaveBeenCalledTimes(1)
     expect(runtime.success).toHaveBeenCalledTimes(1)
     expect(runtime.toast).toHaveBeenCalledWith({
-      message: 'scribe_added {"count":3}',
+      title: 'scribe_added {"count":3}',
       onUndo: expect.any(Function),
     })
     runtime.toast.mock.calls[0][0].onUndo()

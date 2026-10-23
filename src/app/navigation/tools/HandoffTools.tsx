@@ -3,7 +3,7 @@ import { View } from 'react-native'
 import { useNavigation } from '@react-navigation/native'
 import * as Clipboard from 'expo-clipboard'
 import moment from 'moment'
-import { useToastController } from '@tamagui/toast'
+import { toast } from '@/stores/toasts'
 import Text from '@/components/ui/MyText'
 import TextInput from '@/components/ui/TextInput'
 import useTheme from '@/contexts/theme'
@@ -61,7 +61,6 @@ const dump = (snapshot: HandoffDebugSnapshot, entry: string | null) =>
  */
 export default function HandoffTools() {
   const theme = useTheme()
-  const toast = useToastController()
   const navigation = useNavigation<RootStackNavigation>()
   const session = useHandoffDebug((state) => state.session)
   const entry = useHandoffDebug((state) => state.entry)
@@ -82,9 +81,9 @@ export default function HandoffTools() {
       const passed = await runHandoffSelfTest((step) =>
         setSelfTest((steps) => [...(steps ?? []), step])
       )
-      toast.show(passed ? 'Self-test passed' : 'Self-test failed', {
-        native: true,
-      })
+      passed
+        ? toast.success('Self-test passed')
+        : toast.error('Self-test failed')
     } finally {
       setTesting(false)
     }
@@ -179,7 +178,7 @@ export default function HandoffTools() {
                     const state = session.state
                     if (state.step !== 'waiting') return
                     void Clipboard.setStringAsync(state.link).then(() =>
-                      toast.show('QR link copied', { native: true })
+                      toast.success('QR link copied')
                     )
                   }}
                 />
@@ -189,7 +188,7 @@ export default function HandoffTools() {
               info='JSON of the rows and log above, for a bug report.'
               onPress={() =>
                 void Clipboard.setStringAsync(dump(snapshot, entry)).then(() =>
-                  toast.show('Session log copied', { native: true })
+                  toast.success('Session log copied')
                 )
               }
             />

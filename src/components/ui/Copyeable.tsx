@@ -8,7 +8,7 @@ import {
   type ViewStyle,
 } from 'react-native'
 import * as Clipboard from 'expo-clipboard'
-import { useToastController } from '@tamagui/toast'
+import { toast } from '@/stores/toasts'
 
 import ContextMenu, {
   type ContextMenuAction,
@@ -24,8 +24,6 @@ import i18n from '@/lib/locales'
  * order (e.g. Call, Message, Copy).
  */
 export function useCopyAction() {
-  const toast = useToastController()
-
   return (
     text: string,
     {
@@ -40,7 +38,7 @@ export function useCopyAction() {
       void Clipboard.setStringAsync(text).then(
         () => {
           Haptics.success().catch(() => {})
-          toast.show(i18n.t('copied'), { native: true, duration: 2000 })
+          toast.success(i18n.t('copied'), { durationMs: 2000 })
         },
         () => {
           Haptics.error().catch(() => {})

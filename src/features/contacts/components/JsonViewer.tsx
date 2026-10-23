@@ -1,7 +1,7 @@
 import { Copy as CopyIcon } from 'lucide-react-native'
 import { Platform, View } from 'react-native'
 import { useMemo, useState } from 'react'
-import { useToastController } from '@tamagui/toast'
+import { toast } from '@/stores/toasts'
 import * as Clipboard from 'expo-clipboard'
 import Text from '@/components/ui/MyText'
 import Card from '@/components/ui/Card'
@@ -67,7 +67,6 @@ const JsonViewer = ({
   defaultExpanded = false,
 }: Props) => {
   const theme = useTheme()
-  const toast = useToastController()
   const [expanded, setExpanded] = useState(defaultExpanded)
 
   const serialized = useMemo(() => {
@@ -89,7 +88,7 @@ const JsonViewer = ({
   const handleCopy = async () => {
     Haptics.success()
     await Clipboard.setStringAsync(serialized)
-    toast.show(i18n.t('copied'), { message: '', native: true })
+    toast.success(i18n.t('copied'))
   }
 
   return (

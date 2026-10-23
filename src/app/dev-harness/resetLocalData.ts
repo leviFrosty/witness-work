@@ -30,6 +30,7 @@ import { useScribeLedger } from '@/features/scribe/stores/ledger'
 import { useScribeMemory } from '@/features/scribe/stores/memory'
 import { useScribeUsageStore } from '@/features/scribe/stores/usage'
 import { useNotificationsTray } from '@/features/notifications/stores/notificationsTray'
+import { usePetUnlockNews } from '@/features/pet/stores/petUnlockNews'
 import { forgetFoundSecrets } from '@/features/pet/lib/secrets'
 import { useStreakCelebration } from '@/features/profile/stores/streakCelebration'
 import { useSavedPlaces } from '@/features/route-planning/stores/savedPlaces'
@@ -54,6 +55,7 @@ export const RESET_STORES: readonly ResettableStore[] = [
   useMapFindSkips,
   useGeocodeRetry,
   useNotificationsTray,
+  usePetUnlockNews,
   useDevNotifications,
   useStreakCelebration,
   useSplitSheetPreferences,

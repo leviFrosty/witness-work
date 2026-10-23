@@ -1,5 +1,5 @@
 import i18n from '@/lib/locales'
-import { showUndoToast } from '@/stores/undoToast'
+import { toast } from '@/stores/toasts'
 import {
   addProgressCard,
   getEffectiveProgressCards,
@@ -86,8 +86,8 @@ export default function useProgressCardLayout<Id extends string>({
     remove: (id) => {
       const before = usePreferences.getState()[key]
       edit((l) => removeProgressCard(l, id))
-      showUndoToast({
-        message: i18n.t('progressCards.removed', { card: title(id) }),
+      toast.undo({
+        title: i18n.t('progressCards.removed', { card: title(id) }),
         onUndo: () => write(before),
       })
     },

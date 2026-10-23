@@ -9,12 +9,9 @@ import { configureTakeovers } from '@/stores/takeover'
  * - The update reveal and the dev-only Milestone reveal: the release itself. The
  *   launch reveal is seeded on screen in its first frame, so it never waits.
  * - What's New, then the Schedule intro: explanations, on launch or first visit.
- * - Celebrations of the User's own action. One action gets one celebration: both
- *   share the action's group, so whichever is granted first wins and the other
- *   goes quiet. The streak ranks ahead because its quiet version is only a chip
- *   flare, while a badge left over keeps its Home card and stays New on the
- *   profile. A streak milestone that comes after its action's badge card is
- *   already showing flares the chip instead.
+ * - Celebrations. A streak milestone the User's own action reached plays on its
+ *   own. A badge's or a pet item's moment plays when the User taps its unlock
+ *   toast or tray item (ADR 0034); those toasts wait while any takeover shows.
  * - Last, the badges welcome and the history summary: news about the past, which
  *   can wait for a quiet moment.
  */
@@ -25,6 +22,7 @@ export const TAKEOVER_PRIORITY: Record<TakeoverKind, number> = {
   'schedule-intro': 30,
   'streak-celebration': 40,
   'badge-celebration': 41,
+  'pet-unlock': 42,
   'badges-welcome': 50,
   'badges-history': 51,
 }

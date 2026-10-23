@@ -4,7 +4,7 @@ import { analytics } from '@/lib/analytics'
 import Haptics from '@/lib/haptics'
 import i18n from '@/lib/locales'
 import useConversations from '@/stores/conversationStore'
-import { showUndoToast } from '@/stores/undoToast'
+import { toast } from '@/stores/toasts'
 import type { Contact } from '@/types/contact'
 import type { Visit } from '@/types/visit'
 import type { LogVisitAttribution } from '@/types/rootStack'
@@ -51,15 +51,15 @@ export default function useLogNotAtHome() {
     deleteConversation(visit.id)
   }
 
-  /** Logs it, then shows the app-wide Undo toast. */
+  /** Logs it, then shows an Undo toast. */
   const logWithUndo = (
     contact: Pick<Contact, 'id' | 'name'>,
     attribution: NotAtHomeAttribution
   ): Visit => {
     Haptics.light()
     const visit = log(contact.id, attribution)
-    showUndoToast({
-      message: i18n.t('logVisit_notAtHomeLogged', { name: contact.name }),
+    toast.undo({
+      title: i18n.t('logVisit_notAtHomeLogged', { name: contact.name }),
       onUndo: () => undo(visit),
     })
     return visit

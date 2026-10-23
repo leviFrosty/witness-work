@@ -4,7 +4,7 @@ import { KeyRound as KeyRoundIcon } from 'lucide-react-native'
 import * as Clipboard from 'expo-clipboard'
 import { getRandomBytes } from 'expo-crypto'
 import moment from 'moment'
-import { useToastController } from '@tamagui/toast'
+import { toast } from '@/stores/toasts'
 import * as BuddiesKeychain from '../../../../modules/buddies-keychain'
 import TextInput from '@/components/ui/TextInput'
 import useTheme from '@/contexts/theme'
@@ -69,7 +69,6 @@ type KeyFacts = {
  * Device's handoff, then the backup.
  */
 export default function AccountTools() {
-  const toast = useToastController()
   const [facts, setFacts] = useState<KeyFacts>({ key: null, error: null })
   const [revision, setRevision] = useState(0)
   const [lookup, setLookup] = useState<Lookup>({ state: 'idle' })
@@ -82,8 +81,7 @@ export default function AccountTools() {
   const linkedInboxId = useBuddies((state) => state.accountLinkedInboxId)
 
   const reload = () => setRevision((value) => value + 1)
-  const say = (title: string, message = '') =>
-    toast.show(title, { message, native: true })
+  const say = (title: string, message = '') => toast.info(title, { message })
 
   useEffect(() => {
     let live = true

@@ -6,7 +6,7 @@ import * as Crypto from 'expo-crypto'
 import { NativeStackScreenProps } from '@react-navigation/native-stack'
 import KeyboardAwareScrollView from '@/components/ui/layout/KeyboardAwareScrollView'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useToastController } from '@tamagui/toast'
+import { toast } from '@/stores/toasts'
 import useTheme from '@/contexts/theme'
 import i18n, { type TranslationKey } from '@/lib/locales'
 import { analytics } from '@/lib/analytics'
@@ -48,7 +48,6 @@ const NEW_FUEL = '__new__'
 export default function MileageVehicleFormScreen({ route, navigation }: Props) {
   const theme = useTheme()
   const insets = useSafeAreaInsets()
-  const toast = useToastController()
   const {
     vehicles,
     fuels,
@@ -179,9 +178,8 @@ export default function MileageVehicleFormScreen({ route, navigation }: Props) {
     if (!existing) return
     saveVehicle({ ...existing, archived: archived || undefined })
 
-    toast.show(
-      i18n.t(archived ? 'mileage.carArchived' : 'mileage.carUnarchived'),
-      { native: true }
+    toast.success(
+      i18n.t(archived ? 'mileage.carArchived' : 'mileage.carUnarchived')
     )
     navigation.goBack()
   }

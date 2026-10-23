@@ -2,7 +2,7 @@ import { ScrollView, View } from 'react-native'
 import { useNavigation } from '@react-navigation/native'
 import ContentColumn from '@/components/ui/layout/ContentColumn'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useToastController } from '@tamagui/toast'
+import { toast } from '@/stores/toasts'
 import { Plus as PlusIcon } from 'lucide-react-native'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
@@ -48,7 +48,6 @@ function SectionTitle({ children }: { children: string }) {
 export default function MileageSettingsScreen() {
   const theme = useTheme()
   const insets = useSafeAreaInsets()
-  const toast = useToastController()
   const navigation = useNavigation<RootStackNavigation>()
   const { vehicles, fuels, deleteAllMileageData } = useMileage()
   const { distanceUnit, fuelEconomyUnit, set } = usePreferences()
@@ -98,9 +97,8 @@ export default function MileageSettingsScreen() {
       onConfirm: () => {
         deleteAllMileageData()
         analytics.capture('mileage_data_deleted')
-        toast.show(i18n.t('success'), {
+        toast.success(i18n.t('success'), {
           message: i18n.t('deleted'),
-          native: true,
         })
       },
     })

@@ -1,6 +1,6 @@
 import * as Notifications from 'expo-notifications'
 import moment from 'moment'
-import { useToastController } from '@tamagui/toast'
+import { toast } from '@/stores/toasts'
 
 import { formatDate, formatTime } from '@/lib/dates'
 import i18n from '@/lib/locales'
@@ -124,8 +124,6 @@ const notificationsAllowed = async () =>
  * Dismissing an already-dismissed Contact changes its duration.
  */
 export default function useDismissContact() {
-  const toast = useToastController()
-
   return async (contact: Contact, option: DismissOption) => {
     const dismissedUntil = dismissedUntilFor(option)
     const reminder = reminderWillSend(
@@ -135,22 +133,19 @@ export default function useDismissContact() {
     useContacts.getState().dismissContact(contact.id, dismissedUntil)
     const until = formatUntil(option, dismissedUntil)
 
-    toast.show(i18n.t('contactDismissed'), {
+    toast.success(i18n.t('contactDismissed'), {
       message: reminder
         ? i18n.t('contactDismissedWithNotificationMessage', {
             name: contact.name,
             until,
           })
         : i18n.t('contactDismissedMessage', { name: contact.name, until }),
-      native: true,
     })
   }
 }
 
 /** Select mode's batch dismiss: one duration, one confirming toast. */
 export function useDismissContacts() {
-  const toast = useToastController()
-
   return async (contacts: Contact[], option: DismissOption) => {
     if (!contacts.length) return
     const dismissedUntil = dismissedUntilFor(option)
@@ -161,13 +156,12 @@ export function useDismissContacts() {
       .dismissContacts(
         contacts.map((contact) => ({ id: contact.id, dismissedUntil }))
       )
-    toast.show(i18n.t('contactDismissed'), {
+    toast.success(i18n.t('contactDismissed'), {
       // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
       message: i18n.t('contactsDismissedMessage', {
         count: contacts.length,
         until: formatUntil(option, dismissedUntil),
       }),
-      native: true,
     })
   }
 }
@@ -177,17 +171,14 @@ export function useDismissContacts() {
  * Nothing is lost, so it runs without confirmation.
  */
 export function useUndismissContacts() {
-  const toast = useToastController()
-
   return async (contacts: Contact[]) => {
     if (!contacts.length) return
     useContacts.getState().undismissContacts(contacts.map((c) => c.id))
-    toast.show(
+    toast.success(
       contacts.length === 1
         ? i18n.t('contactUndismissed', { name: contacts[0].name })
         : // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
-          i18n.t('contactsUndismissed', { count: contacts.length }),
-      { native: true }
+          i18n.t('contactsUndismissed', { count: contacts.length })
     )
   }
 }

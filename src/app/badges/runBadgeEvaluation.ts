@@ -1,3 +1,4 @@
+import { showBadgeUnlockToasts } from '@/features/badges/lib/badgeToasts'
 import { buddyTogetherMonths } from '@/features/buddies/lib/badgeEvidence'
 import { buddiesEngine } from '@/features/buddies/lib/buddiesService'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
@@ -35,13 +36,15 @@ export type BadgeEvaluationResult = {
 
 /**
  * Evaluates the User's badges from the current stores, stores anything newly
- * earned, and decides how each newly earned badge arrives (ADR 0021):
+ * earned, and decides how each newly earned badge arrives (ADR 0021, ADR
+ * 0034):
  *
- * - Earned live by `action`, something the User just did: a full-screen
- *   celebration, if it gets its turn while the action is recent.
+ * - Earned live by `action`, something the User just did: an unlock toast, if it
+ *   gets on screen while the action is recent. Tapping it opens the full-screen
+ *   celebration.
  * - Earned live otherwise (iCloud Sync, the Watch or Siri, a buddy's reply, a
- *   Plan's day arriving overnight): stored and new, and named by the Home "New
- *   badge" card instead of taking over.
+ *   Plan's day arriving overnight), or a toast nobody acted on: stored and new,
+ *   and waiting in the notifications tray instead.
  * - Found in history: stored quietly, with the welcome or one summary.
  *
  * `quiet` files everything as history with no celebration or summary — for
@@ -147,8 +150,9 @@ export const runBadgeEvaluation = ({
   }
 
   if (prefs.showBadges && !silent) {
-    // Without an action, live badges wait on the Home card (`homeCardBadges`).
-    if (live.length && action) session.celebrate(live, celebrationClaim(action))
+    // Without an action, live badges wait in the tray (`homeCardBadges`).
+    if (live.length && action)
+      showBadgeUnlockToasts(live, celebrationClaim(action).expiresAt)
     if (history.length && welcome !== 'pending')
       session.addHistory(history.length)
   }

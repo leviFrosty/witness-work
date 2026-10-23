@@ -28,6 +28,10 @@ export type NotificationKind =
   | 'calendar_sync'
   /** A remote notice set through the `announcement` feature flag. */
   | 'announcement'
+  /** A new badge the User hasn't opened or swiped away yet. */
+  | 'badge'
+  /** A pet room item or hat that opened up and hasn't been looked at yet. */
+  | 'pet_unlock'
   /** Test items from the Tools screen. */
   | 'dev_test'
 

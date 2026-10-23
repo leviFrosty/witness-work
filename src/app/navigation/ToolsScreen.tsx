@@ -50,7 +50,7 @@ import { request } from '@/lib/http/request'
 import moment from 'moment'
 import { getServiceYearFromDate } from '@/lib/serviceYear'
 import { useState } from 'react'
-import { useToastController } from '@tamagui/toast'
+import { toast } from '@/stores/toasts'
 import { RecurringPlanFrequencies } from '@/lib/serviceReport'
 import { useTimeCache } from '@/stores/timeCache'
 import { usePreferences } from '@/stores/preferences'
@@ -178,7 +178,6 @@ const confirmDevAction = (title: string, onConfirm: () => void) =>
 export default function ToolsScreen() {
   const theme = useTheme()
   const insets = useSafeAreaInsets()
-  const toast = useToastController()
 
   const {
     serviceReports,
@@ -280,11 +279,11 @@ export default function ToolsScreen() {
     try {
       const report = await runAttestationDiagnostics()
       setAuthReport(report)
-      toast.show(report.ok ? 'Auth diagnostics passed' : 'Auth step failed', {
+      const notify = report.ok ? toast.success : toast.error
+      notify(report.ok ? 'Auth diagnostics passed' : 'Auth step failed', {
         message: report.ok
           ? `${report.steps.length} steps ok`
           : (report.steps.find((s) => !s.ok)?.step ?? ''),
-        native: true,
       })
     } finally {
       setAuthBusy(false)
@@ -298,7 +297,8 @@ export default function ToolsScreen() {
       const report = await runAttestationRepair()
       setRepairReport(report)
       const lastFailed = report.steps.filter((s) => !s.ok).pop()
-      toast.show(
+      const notify = report.ok ? toast.success : toast.error
+      notify(
         report.ok
           ? report.keyRotated
             ? 'Repaired — key rotated'
@@ -308,7 +308,6 @@ export default function ToolsScreen() {
           message: report.ok
             ? `${report.steps.length} steps`
             : `${lastFailed?.step ?? ''} ${lastFailed?.code ?? ''}`.trim(),
-          native: true,
         }
       )
     } finally {
@@ -351,16 +350,14 @@ export default function ToolsScreen() {
     }
   }
 
-  const showDone = (label: string) =>
-    toast.show(label, { message: '', native: true })
+  const showDone = (label: string) => toast.info(label)
 
   // Mock history reaches badges. Evaluate right away, not quietly, so levels
   // reached this or last month celebrate and older ones show the summary.
   const generatedWithBadges = () => {
     const { added, live } = evaluateBadgesNow()
-    toast.show(i18n.t('generated'), {
+    toast.success(i18n.t('generated'), {
       message: added ? `${added} badges · ${live.length} to celebrate` : '',
-      native: true,
     })
   }
 
@@ -787,9 +784,8 @@ export default function ToolsScreen() {
     if (granted) return true
     const r = await Notifications.requestPermissionsAsync()
     if (!r.granted) {
-      toast.show('Notifications denied', {
+      toast.error('Notifications denied', {
         message: 'Enable notifications in iOS Settings, then retry.',
-        native: true,
       })
       return false
     }
@@ -829,9 +825,8 @@ export default function ToolsScreen() {
       at: fireAt.getTime(),
     })
     const count = await refreshScheduledNotifications()
-    toast.show('Scheduled', {
+    toast.success('Scheduled', {
       message: `Fires in 10s · queue=${count} · id ${id.slice(0, 8)}…`,
-      native: true,
     })
   }
 
@@ -875,11 +870,10 @@ export default function ToolsScreen() {
     })
 
     const count = await refreshScheduledNotifications()
-    toast.show('Generated', {
+    toast.success('Generated', {
       message: notificationId
         ? `Plan in 3min · notif in ~2min · queue=${count}`
         : 'Plan created without notification (permission denied)',
-      native: true,
     })
   }
 
@@ -912,9 +906,8 @@ export default function ToolsScreen() {
     await stopCalendarSyncForMockData()
     await generate()
     if (calendarWasOn)
-      toast.show('Calendar Sync turned off', {
+      toast.success('Calendar Sync turned off', {
         message: 'Mock data stays out of your calendar',
-        native: true,
       })
   }
 
@@ -934,9 +927,8 @@ export default function ToolsScreen() {
     try {
       await removeConnectedCalendarEvents()
     } catch (e) {
-      toast.show('Calendar events not removed', {
+      toast.info('Calendar events not removed', {
         message: (e as Error).message,
-        native: true,
       })
     }
   }
@@ -958,9 +950,8 @@ export default function ToolsScreen() {
           const removed = await removeAllCalendarEvents()
           showDone(`Removed ${removed} calendar events`)
         } catch (e) {
-          toast.show('Clearing calendar failed', {
+          toast.error('Clearing calendar failed', {
             message: (e as Error).message,
-            native: true,
           })
         }
       },
@@ -980,9 +971,8 @@ export default function ToolsScreen() {
               await activeSyncTransport().deleteAll()
               await activeSyncTransport().deleteAllBinaries()
             } catch (e) {
-              toast.show('iCloud wipe failed', {
+              toast.error('iCloud wipe failed', {
                 message: (e as Error).message,
-                native: true,
               })
             }
             await removeCalendarEventsBeforeReset()
@@ -1656,9 +1646,8 @@ export default function ToolsScreen() {
               label='Run rollover check now'
               onPress={() => {
                 if (rollover.pending.length === 0) {
-                  toast.show('Nothing pending', {
+                  toast.info('Nothing pending', {
                     message: 'No fractional minutes to roll over right now.',
-                    native: true,
                   })
                   return
                 }
@@ -1939,7 +1928,7 @@ export default function ToolsScreen() {
               }
               onPress={async () => {
                 const count = await refreshScheduledNotifications()
-                toast.show(`${count} scheduled`, { message: '', native: true })
+                toast.success(`${count} scheduled`)
               }}
             />
             <ToolRow

@@ -10,7 +10,6 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { useNoteImageCleanup } from '@/app/notes/useNoteImageCleanup'
 import { KeyboardProvider } from 'react-native-keyboard-controller'
 import { TamaguiProvider } from 'tamagui'
-import { ToastProvider, ToastViewport } from '@tamagui/toast'
 import tamaguiConfig from '../../tamagui.config'
 import ThemeProvider from '@/providers/ThemeProvider'
 import CustomerProvider from '@/providers/CustomerProvider'
@@ -65,7 +64,7 @@ import { stopRecordingLaunchLinks } from '@/lib/launchLinks'
 import { analytics } from '@/lib/analytics'
 import { PointerTooltipLayer } from '@/components/ui/PointerTooltip'
 import { PopoverTouchShield } from '@/components/ui/popoverTouchShield'
-import UndoToastLayer from '@/components/UndoToastLayer'
+import ToastHost from '@/components/toast/ToastHost'
 import AppLockGate from '@/app/app-lock/AppLockGate'
 import UpdateRequiredGate from '@/app/update-required/UpdateRequiredGate'
 
@@ -176,38 +175,34 @@ function UnlockedApp() {
                       routeNameRef.current = currentScreen
                     }}
                   >
-                    {/* Toast context must also reach Tamagui’s portaled sheets. */}
-                    <ToastProvider>
-                      <TamaguiProvider
-                        defaultTheme={
-                          colorScheme
-                            ? colorScheme
-                            : systemColorScheme || undefined
-                        }
-                        config={tamaguiConfig}
-                      >
-                        <SystemBars />
-                        <ToastViewport />
-                        <ConfettiProvider>
-                          <AnimationViewProvider>
-                            <SurveyProvider>
-                              <DeepLinkListeners />
-                              <BuddiesRuntime />
-                              <BadgesRuntime />
-                              <NotificationResponseListener />
-                              <SilentForegroundAlerts />
-                              <SystemMenu language={loadedLocale} />
-                              <RootStackComponent />
-                              <UndoToastLayer />
-                              <PointerTooltipLayer />
-                              <UpdateRequiredGate />
-                              {/* Last, so it covers everything else. */}
-                              <AppLockGate />
-                            </SurveyProvider>
-                          </AnimationViewProvider>
-                        </ConfettiProvider>
-                      </TamaguiProvider>
-                    </ToastProvider>
+                    <TamaguiProvider
+                      defaultTheme={
+                        colorScheme
+                          ? colorScheme
+                          : systemColorScheme || undefined
+                      }
+                      config={tamaguiConfig}
+                    >
+                      <SystemBars />
+                      <ConfettiProvider>
+                        <AnimationViewProvider>
+                          <SurveyProvider>
+                            <DeepLinkListeners />
+                            <BuddiesRuntime />
+                            <BadgesRuntime />
+                            <NotificationResponseListener />
+                            <SilentForegroundAlerts />
+                            <SystemMenu language={loadedLocale} />
+                            <RootStackComponent />
+                            <ToastHost />
+                            <PointerTooltipLayer />
+                            <UpdateRequiredGate />
+                            {/* Last, so it covers everything else. */}
+                            <AppLockGate />
+                          </SurveyProvider>
+                        </AnimationViewProvider>
+                      </ConfettiProvider>
+                    </TamaguiProvider>
                   </NavigationContainer>
                 </KeyboardProvider>
               </PopoverTouchShield>

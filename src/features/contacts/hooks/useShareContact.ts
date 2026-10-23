@@ -2,7 +2,7 @@ import { Alert } from 'react-native'
 import { shareAsync } from 'expo-sharing'
 import * as FileSystem from 'expo-file-system/legacy'
 import moment from 'moment'
-import { useToastController } from '@tamagui/toast'
+import { toast } from '@/stores/toasts'
 
 import {
   buildContactShareLink,
@@ -69,7 +69,6 @@ const shareContactAsFile = async (
  * share runs, not subscribed to.
  */
 export default function useShareContact(contact: Contact | undefined) {
-  const toast = useToastController()
   const dataProtectionMode = usePreferences((s) => s.dataProtectionMode)
 
   if (!contact || dataProtectionMode) return undefined
@@ -98,12 +97,11 @@ export default function useShareContact(contact: Contact | undefined) {
       // both fields causes some targets to duplicate the URL.
       await shareUrl(url, i18n.t('exportContact'))
       if (trimmed) {
-        toast.show(i18n.t('shareContact'), {
+        toast.info(i18n.t('shareContact'), {
           message: i18n.t('shareContactTrimmed', {
             included: includedConversations,
             total: visits.length,
           }),
-          native: true,
         })
       }
     } catch (error) {

@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Pressable, View } from 'react-native'
 import { Award as AwardIcon } from 'lucide-react-native'
 import moment from 'moment'
-import { useToastController } from '@tamagui/toast'
+import { toast } from '@/stores/toasts'
 import BadgeMedallion from '@/components/badges/BadgeMedallion'
 import Text from '@/components/ui/MyText'
 import Select from '@/components/ui/Select'
@@ -271,7 +271,6 @@ const BadgeGallery = () => {
  * and a gallery of every medallion.
  */
 export default function BadgesTools() {
-  const toast = useToastController()
   const earnedBadges = usePreferences((s) => s.earnedBadges)
   const badgeLedger = usePreferences((s) => s.badgeLedger)
   const showBadges = usePreferences((s) => s.showBadges)
@@ -288,8 +287,7 @@ export default function BadgesTools() {
   const sharesBadges = useBuddies((s) => s.sharing.badges !== false)
   const badgeAlerts = useBuddies((s) => s.badgeNotifications)
 
-  const say = (title: string, message = '') =>
-    toast.show(title, { message, native: true })
+  const say = (title: string, message = '') => toast.info(title, { message })
 
   const reportRun = (title: string, run: BadgeRunSummary) =>
     say(
@@ -445,11 +443,11 @@ export default function BadgesTools() {
           }}
         />
         <ToolRow
-          label='Show the Home card again'
+          label='Show the tray item again'
           info='badgeCardDismissed. Forgets which badges the Home “New badge” card has let go of, so it names the newest new badge again. Not synced.'
           onPress={() => {
             usePreferences.getState().set({ badgeCardDismissed: [] })
-            say('Home card reset')
+            say('Tray item reset')
           }}
         />
       </ToolList>

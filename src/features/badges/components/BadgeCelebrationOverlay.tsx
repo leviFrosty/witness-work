@@ -20,9 +20,9 @@ import type { RootStackNavigation } from '@/types/rootStack'
  * 0021), which decides when it won't interrupt (nothing above the tabs, the app
  * in front, nothing else showing):
  *
- * - **Celebration** of badges the User's own action just earned. It expires with
- *   the action's moment, or when another celebration of the same action (a
- *   streak milestone) goes first; the badges then wait on the Home card.
+ * - **Celebration** of a badge the User asked to see: they tapped its unlock
+ *   toast or its tray item (ADR 0034). Developer Tools' previews come here
+ *   too.
  * - **Welcome**, once per device, to the badges their records already reached.
  *   Never on a launch that showed the update reveal: it waits for a quieter
  *   one.
@@ -75,7 +75,7 @@ export default function BadgeCelebrationOverlay() {
     setContent({ kind: 'history', count: historyCount })
   else if (!celebration.active && !summary.active && content) setContent(null)
 
-  // Its moment passed: the badges stay new and the Home card names them.
+  // Its moment passed: the badges stay new and the tray lists them.
   useEffect(() => {
     if (celebration.status === 'expired')
       useBadgeSession.getState().clearCelebrations()
@@ -92,7 +92,7 @@ export default function BadgeCelebrationOverlay() {
 
   const handleClose = (action: BadgeCelebrationAction) => {
     const session = useBadgeSession.getState()
-    // Celebrated: the Home card has nothing to add about these.
+    // Celebrated: the tray has nothing to add about these.
     if (content?.kind === 'live')
       usePreferences.getState().dismissBadgeCard(content.keys)
     session.clearCelebrations()

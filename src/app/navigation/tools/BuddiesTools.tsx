@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Platform, View } from 'react-native'
 import { UsersRound as UsersRoundIcon } from 'lucide-react-native'
 import moment from 'moment'
-import { useToastController } from '@tamagui/toast'
+import { toast } from '@/stores/toasts'
 import * as BuddiesKeychain from '../../../../modules/buddies-keychain'
 import Switch from '@/components/ui/Switch'
 import apis from '@/constants/apis'
@@ -59,7 +59,6 @@ const readableLog = (live: LiveDiagnostics) =>
  * debug dump holds no names or content and only shortened ids.
  */
 export default function BuddiesTools() {
-  const toast = useToastController()
   const { now } = useNow()
   const devOverride = useBuddies((state) => state.devOverride)
   const inboxId = useBuddies((state) => state.registeredInboxId)
@@ -86,8 +85,7 @@ export default function BuddiesTools() {
   } | null>(null)
   const started = inboxId !== null
 
-  const say = (title: string, message = '') =>
-    toast.show(title, { message, native: true })
+  const say = (title: string, message = '') => toast.info(title, { message })
 
   const syncNow = async () => {
     const startedAt = Date.now()

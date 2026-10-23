@@ -1,3 +1,4 @@
+import { showBadgeUnlockToasts } from '@/features/badges/lib/badgeToasts'
 import {
   BadgeEvaluationResult,
   runBadgeEvaluation,
@@ -76,10 +77,10 @@ export const recentUserAction = (): UserAction | null =>
 
 /**
  * Evaluates from the current stores, as after a change. With `action` (an
- * action the User just took), live badges celebrate full screen; without one,
- * as after a change from elsewhere, they wait on the Home "New badge" card.
- * History shows the welcome or summary either way. `quiet` stores everything as
- * history with nothing shown.
+ * action the User just took), live badges show unlock toasts; without one, as
+ * after a change from elsewhere, they wait in the notifications tray. History
+ * shows the welcome or summary either way. `quiet` stores everything as history
+ * with nothing shown.
  */
 export const evaluateBadgesNow = ({
   quiet = false,
@@ -100,7 +101,7 @@ export const resetBadgeState = () => {
 /**
  * Resets, then marks the first pass as done and evaluates, so what the records
  * reach counts as just earned by `action`: levels reached this or last month
- * celebrate (or, without an action, wait on the Home card); older ones still go
+ * show unlock toasts (or, without an action, wait in the tray); older ones go
  * to the history summary.
  */
 export const reEarnBadgesLive = (
@@ -147,25 +148,23 @@ export const celebrateBadge = (key: string) => {
 }
 
 /**
- * A badge arriving now, under the action rule (ADR 0021), for
- * `__WW_DEV__.badges.celebrate`. Right after an action (`noteUserAction`), it
- * celebrates full screen once it gets its turn. Otherwise it arrives quietly:
- * an unearned badge is recorded as earned just now, so the Home "New badge"
- * card names it. A badge already earned quietly before (as history, say) shows
- * nothing new.
+ * A badge arriving now, under the action rule (ADR 0021, ADR 0034), for
+ * `__WW_DEV__.badges.celebrate`. An unearned badge is recorded as earned just
+ * now. Right after an action (`noteUserAction`), it shows an unlock toast,
+ * which opens the full-screen celebration when tapped. Otherwise it arrives
+ * quietly, in the notifications tray. A badge already earned quietly before (as
+ * history, say) shows nothing new in the tray.
  */
 export const offerBadge = (key: string) => {
   if (!parseBadgeKey(key)) throw new Error(`Unknown badge key "${key}"`)
-  const action = recentUserAction()
-  if (action) {
-    useBadgeSession
-      .getState()
-      .celebrate([key as BadgeKey], celebrationClaim(action))
-    return { shown: 'celebration' as const, after: action.kind }
-  }
   if (!usePreferences.getState().earnedBadges[key])
     record([{ key: key as BadgeKey, record: { at: Date.now() } }])
-  return { shown: 'card' as const, card: badgeHarnessState().card }
+  const action = recentUserAction()
+  if (action) {
+    showBadgeUnlockToasts([key as BadgeKey], celebrationClaim(action).expiresAt)
+    return { shown: 'toast' as const, after: action.kind }
+  }
+  return { shown: 'tray' as const, tray: badgeHarnessState().tray }
 }
 
 /** Asks for the "found in your history" summary. */
@@ -364,8 +363,8 @@ export const badgeHarnessState = () => {
       : null,
     historyCount: session.historyCount,
     welcome: preferences.badgesWelcome,
-    /** What the Home "New badge" card names, lead first. */
-    card: homeCardBadges({
+    /** The new badges the notifications tray lists, lead first. */
+    tray: homeCardBadges({
       earned: preferences.earnedBadges,
       seenAt: preferences.badgesSeenAt,
       dismissed: preferences.badgeCardDismissed,

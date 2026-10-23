@@ -1,6 +1,6 @@
 import { View } from 'react-native'
 import { useNavigation } from '@react-navigation/native'
-import { useToastController } from '@tamagui/toast'
+import { toast } from '@/stores/toasts'
 import { Car as CarIcon } from 'lucide-react-native'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
@@ -21,7 +21,6 @@ import useAccessibilityTextSize from '@/hooks/useAccessibilityTextSize'
  */
 export default function MileagePromptCard() {
   const theme = useTheme()
-  const toast = useToastController()
   const navigation = useNavigation<RootStackNavigation>()
   // At accessibility text sizes the buttons stack, so their labels get the
   // full width instead of breaking mid-word.
@@ -41,9 +40,8 @@ export default function MileagePromptCard() {
       navigation.navigate('MileageVehicleForm', { source: 'home_prompt' })
       return
     }
-    toast.show(i18n.t('mileage.promptDeclined'), {
+    toast.info(i18n.t('mileage.promptDeclined'), {
       message: i18n.t('mileage.promptDeclined_description'),
-      native: true,
     })
   }
 

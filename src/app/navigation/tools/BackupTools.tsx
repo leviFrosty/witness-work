@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Alert, View } from 'react-native'
 import moment from 'moment'
-import { useToastController } from '@tamagui/toast'
+import { toast } from '@/stores/toasts'
 import Text from '@/components/ui/MyText'
 import Switch from '@/components/ui/Switch'
 import useTheme from '@/contexts/theme'
@@ -75,14 +75,12 @@ const summarize = (inspection: BackupInspection, raw: boolean) => ({
  */
 export default function BackupTools() {
   const theme = useTheme()
-  const toast = useToastController()
   const state = useBackupState()
   const [busy, setBusy] = useState<string | null>(null)
   const [inspection, setInspection] = useState<BackupInspection | null>(null)
   const [raw, setRaw] = useState(false)
   const [dryRun, setDryRun] = useState<unknown>(null)
-  const say = (title: string, message = '') =>
-    toast.show(title, { message, native: true })
+  const say = (title: string, message = '') => toast.info(title, { message })
   const { schedule } = state
 
   const run = async (label: string, action: () => Promise<void>) => {

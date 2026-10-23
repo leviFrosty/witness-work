@@ -4,7 +4,7 @@ import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 import Haptics from '@/lib/haptics'
 import i18n, { type TranslationKey } from '@/lib/locales'
-import { showUndoToast } from '@/stores/undoToast'
+import { toast } from '@/stores/toasts'
 import { undoScribeProposal, useScribeProposal } from '@/features/scribe'
 
 // Pinned above the composer, so the cards keep room to scroll at the
@@ -36,8 +36,8 @@ const ScribeReviewFooter = ({ proposalId }: { proposalId: string }) => {
       return
     }
     void Haptics.success()
-    showUndoToast({
-      message: i18n.t('scribe_added' as TranslationKey, {
+    toast.undo({
+      title: i18n.t('scribe_added' as TranslationKey, {
         count: result.appliedCards,
       }),
       onUndo: () => void undoScribeProposal(proposalId, 'toast'),

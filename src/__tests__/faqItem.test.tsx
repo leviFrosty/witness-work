@@ -60,7 +60,7 @@ vi.mock('@/components/ui/LucideIcon', () => ({ default: () => null }))
 vi.mock('@/features/updates/components/AppVersionInfo', () => ({
   default: () => null,
 }))
-vi.mock('@tamagui/toast', () => ({ useToastController: () => ({}) }))
+vi.mock('@/stores/toasts', () => ({ toast: {} }))
 vi.mock('tamagui', () => ({
   Input: (props: object) => createElement('input', props),
 }))

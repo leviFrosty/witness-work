@@ -68,6 +68,7 @@ import {
   earnEveryBadge,
   earnRandomBadges,
   evaluateBadgesNow,
+  celebrateBadge,
   offerBadge,
   recentUserAction,
   resetBadgeState,
@@ -78,7 +79,7 @@ import {
 import { useBadgeSession } from '@/stores/badgeSession'
 import { takeoverSnapshot, useTakeover } from '@/stores/takeover'
 import { useSplitSheetPreferences } from '@/stores/splitSheet'
-import { useUndoToast } from '@/stores/undoToast'
+import { toast, useToasts } from '@/stores/toasts'
 import { triggerDevRemount } from '@/lib/devRemount'
 import { noteUserAction, type UserActionKind } from '@/lib/userAction'
 import {
@@ -392,8 +393,9 @@ export function installDevHarness() {
     },
     /**
      * Marks an action the User took, as Add Time's save does (ADR 0021): for
-     * the next 15 s, a badge or streak milestone it brings can celebrate full
-     * screen. Without it, they arrive quietly (the Home card, the chip flare).
+     * the next 15 s, a badge or pet item it brings shows an unlock toast and a
+     * streak milestone celebrates full screen. Without it, they arrive quietly
+     * (the notifications tray, the chip flare).
      */
     noteUserAction: (kind: UserActionKind = 'dev') => noteUserAction(kind),
     /**
@@ -406,14 +408,16 @@ export function installDevHarness() {
     },
     /**
      * Badge controls (see `dev-harness/badges.ts`). `evaluate()` evaluates as
-     * after a change: live badges celebrate only within 15 s of
-     * `noteUserAction()`, and wait on the Home card otherwise; `evaluate(true)`
-     * files everything quietly. `celebrate(key)` follows the same rule.
+     * after a change: live badges show unlock toasts only within 15 s of
+     * `noteUserAction()`, and wait in the tray otherwise; `evaluate(true)`
+     * files everything quietly. `celebrate(key)` follows the same rule;
+     * `moment(key)` opens a badge's full-screen celebration directly.
      */
     badges: {
       evaluate: (quiet = false) =>
         evaluateBadgesNow({ quiet, action: recentUserAction() }),
       celebrate: offerBadge,
+      moment: celebrateBadge,
       history: (count = 5) => showBadgeHistorySummary(count),
       earnAll: () => {
         earnEveryBadge()
@@ -588,8 +592,10 @@ export function installDevHarness() {
       updateReveal: useUpdateRevealStore,
       // `getState().request()` replays The Milestone Update's grand reveal.
       milestoneReveal: useMilestoneRevealStore,
-      // `setState({ toast: { id, message, onUndo } })` shows the Undo toast.
-      undoToast: useUndoToast,
+      // `toast.undo({ title, onUndo })` shows a toast (also `success`, `info`,
+      // `error`, `news`); `toasts.getState().toasts` lists those showing.
+      toast,
+      toasts: useToasts,
     },
   }
   ;(globalThis as { __WW_DEV__?: typeof harness }).__WW_DEV__ = harness

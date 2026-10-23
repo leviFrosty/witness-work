@@ -10,8 +10,8 @@ vi.mock('@/components/ui/Sheet', () => ({
   default: ({ open, children }: React.PropsWithChildren<{ open: boolean }>) =>
     open ? React.createElement('Sheet', null, children) : null,
 }))
-vi.mock('@tamagui/toast', () => ({
-  useToastController: () => ({ show: vi.fn() }),
+vi.mock('@/stores/toasts', () => ({
+  toast: { success: vi.fn(), info: vi.fn(), error: vi.fn() },
 }))
 vi.mock('expo-location', () => ({
   getForegroundPermissionsAsync: async () => ({ granted: false }),

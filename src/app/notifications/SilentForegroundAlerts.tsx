@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { Platform } from 'react-native'
 import * as Notifications from 'expo-notifications'
-import { useToastController } from '@tamagui/toast'
+import { toast } from '@/stores/toasts'
 import { isBuddiesNews } from '@/app/notifications/foregroundPresentation'
 import { isAudioEnabled } from '@/lib/audio'
 
@@ -12,8 +12,6 @@ import { isAudioEnabled } from '@/lib/audio'
  * The alert stays in the notification shade either way.
  */
 export default function SilentForegroundAlerts() {
-  const toast = useToastController()
-
   useEffect(() => {
     if (Platform.OS !== 'android') return
     const subscription = Notifications.addNotificationReceivedListener(
@@ -23,14 +21,13 @@ export default function SilentForegroundAlerts() {
         if (isBuddiesNews(notification)) return
         const { title, body } = notification.request.content
         if (!title && !body) return
-        toast.show(title ?? body ?? '', {
+        toast.news(title ?? body ?? '', {
           message: title ? (body ?? undefined) : undefined,
-          native: true,
         })
       }
     )
     return () => subscription.remove()
-  }, [toast])
+  }, [])
 
   return null
 }

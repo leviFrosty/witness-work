@@ -1,4 +1,4 @@
-import { useToastController } from '@tamagui/toast'
+import { toast } from '@/stores/toasts'
 
 import { analytics } from '@/lib/analytics'
 import confirmDestructive from '@/lib/confirmDestructive'
@@ -20,14 +20,12 @@ import type { Contact } from '@/types/contact'
  * has no Archive (`canArchive`), only Delete.
  */
 export default function useRemoveContacts() {
-  const toast = useToastController()
   const dataProtectionMode = usePreferences((s) => s.dataProtectionMode)
 
   const archiveNow = (contacts: Contact[], onDone?: () => void) => {
     deleteHouseholderContacts(contacts.map((c) => c.id))
-    toast.show(i18n.t('success'), {
+    toast.success(i18n.t('success'), {
       message: i18n.t('archived'),
-      native: true,
     })
     onDone?.()
   }
@@ -80,9 +78,8 @@ export default function useRemoveContacts() {
       onConfirm: () => {
         permanentlyDeleteHouseholderContacts(contacts.map((c) => c.id))
         analytics.capture('contact_deleted', { count })
-        toast.show(i18n.t('success'), {
+        toast.success(i18n.t('success'), {
           message: i18n.t('deleted'),
-          native: true,
         })
         onDone?.()
       },

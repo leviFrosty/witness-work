@@ -412,8 +412,13 @@ _Avoid_: "modal update", "big update" — **Reveal update** is the canonical ter
 ### Takeovers
 
 **Takeover**:
-Anything that covers the app without the User asking for it right then: the update reveal and What's New, the Schedule intro, a Badge or **Service Streak** celebration, and the badges welcome or history summary. One shows at a time, through a single arbiter (ADR 0021), in that order of priority, with a short gap between two; nothing new takes over while the profile overlay, the notification bell, a sheet, or a pushed screen is open, or while the app is in the background. A celebration is a Takeover only right after the User's own action (Add Time, the checkbox, saving a visit or Plan, sending a report, answering Going, confirming a buddy); otherwise the moment arrives quietly, as the New badge card on Home or the streak chip's flare. Push taps and links wait until no Takeover is showing. Buddies' moments are never Takeovers; they live in the notification bell.
+Anything that covers the app without the User asking for it right then: the update reveal and What's New, the Schedule intro, a **Service Streak** celebration, and the badges welcome or history summary. A Badge's celebration and a pet item's reveal open only when the User taps its **Toast** or tray item (ADR 0034), then wait their turn like any Takeover. One shows at a time, through a single arbiter (ADR 0021), in that order of priority, with a short gap between two; nothing new takes over while the profile overlay, the notification bell, a sheet, or a pushed screen is open, or while the app is in the background. A streak celebration is a Takeover only right after the User's own action (Add Time, the checkbox, saving a visit or Plan, sending a report, answering Going, confirming a buddy); otherwise the moment arrives quietly, as the streak chip's flare, and a Badge or pet item waits in the notification bell. Push taps and links wait until no Takeover is showing. Buddies' moments are never Takeovers; they live in the notification bell.
 _Avoid_: "modal", "popup", "interstitial" (say which Takeover), "celebration" for the update reveal or the welcome.
+
+### Toast
+
+A short message that shows over the app and leaves on its own (`docs/toasts.md`). Its intent decides where it goes. The result of the User's own action (saved, copied, failed, Undo) answers at the bottom. An **Unlock Toast** (a Badge just earned, a pet item just opened up) or an alert drops in from the top. Toasts stack, newest in front, and a swipe lets one go. Tapping an Unlock Toast opens its full-screen moment; one nobody acted on waits in the notification bell. Toasts aren't the notification bell: the bell is a separate list that features add their own items to.
+_Avoid_: "snackbar", "banner", "popup", "notification" for a toast; "reward" for an Unlock Toast.
 
 ### Localization
 

@@ -25,6 +25,7 @@ const PRIORITY: Record<TakeoverKind, number> = {
   'badge-celebration': 41,
   'badges-welcome': 50,
   'badges-history': 51,
+  'pet-unlock': 42,
 }
 
 const claim = (

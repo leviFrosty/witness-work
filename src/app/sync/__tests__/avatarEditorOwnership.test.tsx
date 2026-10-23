@@ -78,8 +78,8 @@ vi.mock('@/lib/haptics', () => ({
     error: vi.fn(async () => {}),
   },
 }))
-vi.mock('@tamagui/toast', () => ({
-  useToastController: () => ({ show: vi.fn() }),
+vi.mock('@/stores/toasts', () => ({
+  toast: { success: vi.fn(), info: vi.fn(), error: vi.fn() },
 }))
 vi.mock('@/components/ui/LucideIcon', () => ({ default: 'Icon' }))
 vi.mock('@/components/ui/MyText', () => ({ default: 'Text' }))

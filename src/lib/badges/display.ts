@@ -195,18 +195,18 @@ export const isNewBadge = (record: EarnedBadge, seenAt: number) =>
   record.at > seenAt
 
 /**
- * How long a badge that arrived without a celebration can still be named on the
- * Home card: a badge from a restore or an old sync isn't news.
+ * How long a badge that arrived without a celebration can still wait in the
+ * notifications tray: a badge from a restore or an old sync isn't news.
  */
 export const HOME_BADGE_CARD_MAX_AGE_MS = 31 * 24 * 60 * 60 * 1000
 
 /**
- * What the Home "New badge" card names, most notable first (ADR 0021): the
- * User's own badges that arrived without a full-screen celebration (nothing
- * they just did earned them, the celebration's moment passed, or another device
- * or a restore brought them), still new since they last opened their badges,
- * from the last month, and not dismissed. Badges still waiting for their
- * celebration (`waiting`) aren't named yet.
+ * The new badges the notifications tray lists, most notable first (ADR 0021,
+ * ADR 0034): the User's own badges nobody has settled (nothing they just did
+ * earned them, their unlock toast left unopened, or another device or a restore
+ * brought them), still new since they last opened their badges, from the last
+ * month, and not dismissed. Badges on screen as a toast or waiting for their
+ * celebration (`waiting`) aren't listed yet.
  */
 export const homeCardBadges = ({
   earned,

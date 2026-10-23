@@ -1,6 +1,6 @@
 import { CalendarSync as CalendarSyncIcon } from 'lucide-react-native'
 import { useNavigation } from '@react-navigation/native'
-import { useToastController } from '@tamagui/toast'
+import { toast } from '@/stores/toasts'
 import { calendarBridgeAvailable } from '../../../modules/calendar-bridge'
 import {
   calendarAction,
@@ -27,7 +27,6 @@ export const shouldInviteToCalendarSync = (settings: CalendarSyncSettings) =>
  */
 export default function useCalendarSyncNotification(): NotificationItem | null {
   const navigation = useNavigation<RootStackNavigation>()
-  const toast = useToastController()
   const visible = useCalendarSync(shouldInviteToCalendarSync)
   if (!calendarBridgeAvailable || !visible) return null
 
@@ -53,11 +52,10 @@ export default function useCalendarSyncNotification(): NotificationItem | null {
             .then((status) => {
               // Another device already publishes: show where, in Settings.
               if (status === 'elsewhere') return openSettings()
-              toast.show(i18n.t('calendarSynced'), {
+              toast.success(i18n.t('calendarSynced'), {
                 message: i18n.t('calendarUpcomingCount' as TranslationKey, {
                   count: useCalendarSync.getState().upcomingCount,
                 }),
-                native: true,
               })
             })
             // Settings shows the error and the manual setup options.

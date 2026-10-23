@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Alert } from 'react-native'
 import * as Linking from 'expo-linking'
 import { launchURL } from '@/lib/launchLinks'
-import { useToastController } from '@tamagui/toast'
+import { toast } from '@/stores/toasts'
 import {
   ImportHandlerCallbacks,
   importContactFromIncomingUrl,
@@ -32,7 +32,6 @@ import { usePreferences } from '@/stores/preferences'
  * to the imported contact.
  */
 export default function ContactImportListener() {
-  const toast = useToastController()
   // `getInitialURL` keeps returning the launch URL for the app's lifetime, so
   // handle it once — otherwise a re-run of the effect re-prompts the import.
   const handledInitialUrl = useRef(false)
@@ -123,7 +122,7 @@ export default function ContactImportListener() {
                   getConversations: () =>
                     useConversations.getState().conversations,
                   showToast: (title, message) =>
-                    toast.show(title, { message, native: true }),
+                    toast.success(title, { message }),
                   navigate: (contactId) => {
                     if (navigationRef.isReady()) {
                       navigationRef.navigate('Contact Details', {
@@ -149,7 +148,7 @@ export default function ContactImportListener() {
     }
 
     void handle(url)
-  }, [pendingUrls, onboarded, takingOver, toast])
+  }, [pendingUrls, onboarded, takingOver])
 
   return null
 }

@@ -7,12 +7,14 @@ import useAnnouncementNotification from '@/app/notifications/useAnnouncementNoti
 import useDevNotificationItems from '@/app/notifications/devNotifications'
 import useReminderNotifications from '@/app/notifications/useReminderNotifications'
 import useDataProtectionRetentionNotification from '@/app/data-protection/useDataProtectionRetentionNotification'
+import useBadgeNotifications from '@/features/badges/hooks/useBadgeNotifications'
 import useBuddiesEnabled from '@/features/buddies/hooks/useBuddiesEnabled'
 import useBuddyNotifications, {
   syncBuddyNotifications,
   useBuddyTraySyncStatus,
 } from '@/features/buddies/hooks/useBuddyNotifications'
 import NotificationsTray from '@/features/notifications/components/NotificationsTray'
+import usePetUnlockNotifications from '@/features/pet/hooks/usePetUnlockNotifications'
 import useNow from '@/hooks/useNow'
 import useAuxiliaryMonthNotification from '@/features/service-reports/hooks/useAuxiliaryMonthNotification'
 import useHoursLoggingNotification from '@/features/service-reports/hooks/useHoursLoggingNotification'
@@ -46,6 +48,8 @@ export default function NotificationsBell() {
     useDataProtectionRetentionNotification(now),
     ...useReminderNotifications(now),
     ...useMissedFollowUpNotifications(now),
+    ...useBadgeNotifications(now),
+    ...usePetUnlockNotifications(),
     ...useBuddyNotifications(),
     useWhatsNewNotification(),
     useCalendarSyncNotification(),

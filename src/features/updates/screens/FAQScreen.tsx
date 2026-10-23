@@ -15,7 +15,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import * as Clipboard from 'expo-clipboard'
 import { errorTracking } from '@/lib/errorTracking'
 import Purchases from 'react-native-purchases'
-import { useToastController } from '@tamagui/toast'
+import { toast } from '@/stores/toasts'
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native'
 import Header from '@/components/ui/layout/Header'
 import Wrapper from '@/components/ui/layout/Wrapper'
@@ -73,7 +73,6 @@ const FAQScreen = () => {
   const userScrolledRef = useRef(false)
   // Where the screen last scrolled the requested category to.
   const placedYRef = useRef<number | null>(null)
-  const toast = useToastController()
 
   const handleCopyAccountId = useCallback(async () => {
     try {
@@ -83,12 +82,12 @@ const FAQScreen = () => {
       const id = await Purchases.getAppUserID()
       await Clipboard.setStringAsync(id)
 
-      toast.show(i18n.t('accountIdCopied'), { message: '', native: true })
+      toast.success(i18n.t('accountIdCopied'))
     } catch (error) {
       errorTracking.captureException(error)
-      toast.show(i18n.t('copyAccountIdError'), { message: '', native: true })
+      toast.error(i18n.t('copyAccountIdError'))
     }
-  }, [toast])
+  }, [])
 
   const placeTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const placeTargetCategory = () => {

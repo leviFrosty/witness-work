@@ -1,0 +1,7 @@
+{
+  "name": "font-weight-adjustment",
+  "version": "0.1.0",
+  "description": "Local Expo module reading Android's Bold text setting (Configuration.fontWeightAdjustment), which the app's custom font families don't follow by themselves.",
+  "main": "index.ts",
+  "private": true
+}

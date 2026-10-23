@@ -13,3 +13,7 @@ Serve the model via a **Western (US/EU) inference host with a contractual zero-d
 - Each candidate host's ZDR terms must be read and accepted before launch; the model/host can be swapped via config without app changes.
 - Because nothing is retained server-side, a re-import after the client ledger is lost (e.g. reinstall) re-runs the model rather than replaying — accepted as the cost of the privacy posture.
 - The privacy-disclosure copy shown in the wizard is load-bearing and must match the actual host's contract.
+
+## Update (2026-10-22): the host, not the region
+
+Scribe AI (ADR 0032) uses Azure's global deployment of its model. OpenRouter reports `data_region: "global"` for it, so a request may be processed outside the US and EU. That's accepted. What this decision protects is who runs the model: a trustworthy host (Azure, a Western provider) bound by zero data retention, so nothing is stored or used for training, wherever the request runs. The allowlist still names only such hosts, routing still fails closed, and the app's copy promises zero data retention, not a region.

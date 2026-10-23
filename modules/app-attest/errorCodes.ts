@@ -57,7 +57,7 @@ const tokenCode = (value: string): AppAttestErrorCode | null =>
  * recognized `JavaScriptError` only and never `JavaScriptThrowable`, so the
  * `Exception` carrying the code was stringified into a bare `Error`. Every
  * native failure then collapsed to `unknown`, which erased `invalidKey` — the
- * signal the Notes Import lifecycle uses to re-register a dead key — and left
+ * signal the attestation lifecycle uses to re-register a dead key — and left
  * shipped builds unable to recover.
  *
  * Reading the token back out of the message keeps that class of regression from

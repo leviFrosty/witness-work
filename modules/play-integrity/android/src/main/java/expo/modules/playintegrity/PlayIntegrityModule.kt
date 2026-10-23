@@ -13,7 +13,7 @@ import expo.modules.kotlin.modules.ModuleDefinition
 
 /**
  * Wraps Play Integrity standard requests — the Android security boundary for
- * Notes Import (witness-work ADR 0017), where iOS uses App Attest.
+ * account sessions (witness-work ADR 0017, ADR 0027), where iOS uses App Attest.
  *
  * The JS side computes the request hash. This adapter keeps one warmed-up token
  * provider per Cloud project, re-prepares it once when Play reports it invalid,

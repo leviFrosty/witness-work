@@ -85,38 +85,54 @@ _Avoid_: "Service Year Catch Up" (legacy file/route name; superseded), "Catch Up
 ### AI-powered features
 
 **Scribe AI**:
-The user-facing identity for WitnessWork functionality powered by a third-party large language model (LLM). Scribe AI currently interprets free-form text for **Notes Import**, including follow-up refinements and model-emitted **Import Warnings**. It is distinct from the **Assistant**, which is deterministic and does not use an LLM. Any UI surface that uses AI or an LLM — including Scribe AI — should use sparkles iconography where relevant (such as titles, entry points, and primary actions) to make the AI-powered behavior recognizable.
-_Avoid_: calling the rule-based Assistant "AI" or "Scribe AI"; presenting LLM-generated output as if it were deterministic.
+The user-facing identity for WitnessWork functionality powered by a third-party large language model (LLM). Scribe AI is a **Conversation** in which the User speaks, types, scans notes or reads paper pages, and the model reads the User's data through tools that run on the device and answers or proposes changes as a **Proposal** (ADR 0032). It can log time, create and change Day Plans, add and update Contacts, and log Visits with follow-ups; it can't delete anything, and nothing is written until the User taps Add. Calls go through ww-api to OpenRouter under a zero-data-retention arrangement; ww-api keeps only usage records, never the conversation. Usage is limited per **Usage Window**. Scribe AI replaced **Notes Import**. It is distinct from the **Assistant**, which is deterministic and does not use an LLM. Any UI surface that uses AI or an LLM — including Scribe AI — should use sparkles iconography where relevant (such as titles, entry points, and primary actions) to make the AI-powered behavior recognizable.
+_Avoid_: calling the rule-based Assistant "AI" or "Scribe AI"; presenting LLM-generated output as if it were deterministic; "chat" or "chatbot" in user copy; "credits" for its limits.
+
+**Conversation**:
+One Scribe AI thread: the User's messages, Scribe AI's answers, and the Proposals it made, kept on this device only (not synced or backed up; the records it adds sync like any others). A Conversation ends by asking the User to start a new one when its context budget is nearly used; turns are never dropped silently. History lists past Conversations.
+_Avoid_: "chat", "session" (a session is a Supporter **Usage Window** and an account session).
+
+**Proposal**:
+What Scribe AI would change after one turn: effects the device validated and resolved but hasn't applied, shown as **Review Cards**. The User adds it (all at once, in order, undone together if one fails), or it is dismissed, or superseded when a correction replaces it. An added Proposal can be undone from the toast or History for 30 days; undo leaves alone records changed since.
+_Avoid_: "draft", "preview" (Notes Import's term), "suggestion" (collides with the **Assistant**'s **Recommendation**).
+
+**Review Card**:
+One item of a Proposal as the User sees it: time, a Day Plan, or a Contact with its Visit and follow-up, with dates resolved from what was said ("from 'next Tuesday'"). Each can be unchecked before Add. A choice card ("Which Maria?") names more than one matching Contact and blocks Add until the User picks one, picks + New, or unchecks it.
+_Avoid_: "suggestion card", "preview row".
+
+**Usage Window**:
+A period over which ww-api meters Scribe AI's model usage, shown as percent used and when it resets, never as tokens or messages. Free: a 30-day monthly window that starts with the first use after the last one ended. Supporter: a 5-hour session window and a 7-day weekly window, sized to be generous. When any window is full, Scribe AI works again when it resets; work already running finishes. Reading paper pages also has a daily page ceiling.
+_Avoid_: "credits", "messages left", "unlimited" (no plan is unlimited).
+
+**Quick Actions**:
+A Home section with tiles for Add Time (Log Visit when the publisher doesn't log hours), Add Contact and Plan a Day beside Scribe AI's orb, which opens voice. When Scribe AI is unavailable it shows the tiles only. The + sheet's "Speak an update" row is the same entry point.
+_Avoid_: "shortcuts" (Siri and Shortcuts are a separate feature).
+
+**Voice Log**:
+A Scribe AI input where the User speaks and the device turns speech into text on-device (iOS, and Android 12+ with an on-device recognizer), then sends the text. No audio is saved or uploaded (ADR 0018). Where on-device speech isn't available, Scribe AI opens with the keyboard instead.
+_Avoid_: "voice note" or "recording" (nothing is kept as audio), "dictation" alone (the keyboard's dictation is a different, system feature).
+
+**Photo Import**:
+A Scribe AI input where the User scans handwritten notes with the document camera (iOS) and the device reads the text on-device into the draft to check before sending. No image is saved or uploaded (ADR 0018). Reading paper pages is different: page images go to ww-api to be read and are metered (ADR 0025).
+_Avoid_: "image import", "OCR import" in user copy.
 
 ### Imports
 
 **Import**:
-Bringing a User's prior field-ministry history into the app from an outside source. Three sources: **MyTime Import** (a structured `.mytimedb` Core Data backup from the MyTime app), **iCloud Restore** (a prior WitnessWork backup), and **Notes Import** (free-form text). All three converge on the same internal shape and write into the Contacts, Visits, Time Entries, and Categories stores; an Import is forecast-free history, written straight in.
+Bringing a User's prior field-ministry history into the app from an outside source. Two sources: **MyTime Import** (a structured `.mytimedb` Core Data backup from the MyTime app) and **iCloud Restore** (a prior WitnessWork backup). Both converge on the same internal shape and write into the Contacts, Visits, Time Entries, and Categories stores; an Import is forecast-free history, written straight in. Free-form notes go to **Scribe AI** instead.
 _Avoid_: "sync" (Import is a one-time backfill; iCloud Sync is ongoing replication), "migration".
 
 **Notes Import**:
-An Import whose source is arbitrary free text the User pastes or shares (handwritten-style logs, an export from another app, scattered notes), or text produced on-device from a **Voice Log** or **Photo Import**. **Scribe AI** uses a third-party LLM to translate the text into structured WitnessWork records under a zero-data-retention arrangement. Distinct from MyTime Import (structured database) and iCloud Restore (prior backup) — Notes Import is the only Import that is interpreted rather than mechanically mapped.
-_Avoid_: "AI import" in user copy where it implies the in-app Assistant (the Assistant is rule-based and unrelated); "paste import" (Notes Import also covers shared/picked text).
+Retired; replaced by **Scribe AI** (ADR 0032). Notes Imports added before can still be undone from Scribe AI's History, under Earlier imports, for a year.
 
 **Import Credit**:
-The unit metering free Notes Import usage. A non-**Supporter** gets a server-configured number of Import Credits per rolling window (3 per 30 days); a Supporter is unlimited. Every input method — typed, pasted, **Voice Log**, or **Photo Import** — draws on the same Credits. One Credit is consumed per distinct source text (identified by content hash) the first time it is parsed — follow-up refinements of that same text and re-imports of an already-seen text cost nothing. An **Empty Import** also costs nothing, up to an anti-abuse limit past which repeated Empty Imports begin consuming Credits again.
-_Avoid_: "token" (tokens are the LLM's internal cost unit, separate), "import count" (Credit carries the per-distinct-source and Supporter-exemption semantics).
-
-**Voice Log**:
-A **Notes Import** input where the User dictates notes (typically right after a call) and the device transcribes them on-device into the composer for review and editing before sending. No audio is saved or uploaded; only the text the User sends reaches **Scribe AI** (ADR 0018).
-_Avoid_: "voice note" or "recording" (nothing is kept as audio), "dictation" alone (the iOS keyboard's dictation is a different, system feature).
-
-**Photo Import**:
-A **Notes Import** input where the User scans pages with the document camera or picks photos (handwritten notes, a house-to-house record), and the device reads the text on-device into the composer for review and editing before sending. No image is saved or uploaded (ADR 0018).
-_Avoid_: "image import", "OCR import" in user copy.
+Retired with Notes Import; Scribe AI uses **Usage Windows** instead.
 
 **Empty Import**:
-A **Notes Import** that completes successfully but produces zero records — no contacts, visits, time entries, and no detected Publisher (the `isEmptyPreview` predicate; produced Categories and Warnings alone do not count as records). The import ran correctly; the pasted text simply held nothing to bring in. An Empty Import does not consume an **Import Credit**, so a User's Credits are never spent on a paste that yields nothing — subject to an anti-abuse limit, beyond which further Empty Imports within the window consume a Credit again (a **Supporter**, being unmetered, is exempt from the limit entirely). Distinct from an **Import Warning**, which flags a produced record; an Empty Import produces no records at all.
-_Avoid_: "failed import" (an Empty Import succeeded — nothing errored), "import attempt", "non-valid import" (nothing invalid happened).
+Retired with Notes Import; Scribe AI has no free-empty allowance, since usage is metered by what the model reads and writes.
 
 **Import Warning**:
-A model-emitted flag on a Notes Import about an assumption, ambiguity, or low-confidence guess. Carries a severity (info / warning / error) and optionally targets one specific produced record so the preview can highlight that contact, visit, or time entry. An error-severity Warning marks data unsafe to commit and is deselected by default in the preview.
-_Avoid_: "error" alone (Warnings span info through error); treating a Warning as a hard failure (most are advisory).
+Retired with Notes Import; Scribe AI flags problems as warnings on **Review Cards** (possible duplicate time, an overlapping Plan, going over the **Credit Time** cap).
 
 ### Field activity — visits
 
@@ -257,7 +273,7 @@ _Avoid_: "pin" alone (Marker is the canonical term and it carries the staleness 
 ### Monetization
 
 **Supporter**:
-A User with an active subscription (monthly, annual, or a promotional grant) or a manually gifted Lifetime Supporter grant. Tips never count. The exact rule, shared by the app and ww-api, is ADR 0014. Unlocks the features gated in `src/lib/featureAccess.ts` — **iCloud Sync**, **Route Planning** (which ww-api also refuses to non-Supporters), custom accent color (which also covers avatar and Contact background colors), and custom app icon — plus the Supporter **Notes Import** allowance, which ww-api enforces. Turning off renewal does not end paid access; Supporter status ends when no qualifying entitlement remains active.
+A User with an active subscription (monthly, annual, or a promotional grant) or a manually gifted Lifetime Supporter grant. Tips never count. The exact rule, shared by the app and ww-api, is ADR 0014. Unlocks the features gated in `src/lib/featureAccess.ts` — **iCloud Sync**, **Route Planning** (which ww-api also refuses to non-Supporters), custom accent color (which also covers avatar and Contact background colors), and custom app icon — plus Scribe AI's larger **Usage Windows**, which ww-api enforces. Turning off renewal does not end paid access; Supporter status ends when no qualifying entitlement remains active.
 _Avoid_: "subscriber", "premium user", "paid user" (Supporter is the canonical, donation-framed term used throughout the UI).
 
 **Subscription Cancellation**:

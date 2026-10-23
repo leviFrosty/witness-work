@@ -66,7 +66,6 @@ import {
   FounderLetter,
   SocialProofRow,
   ComparisonChart,
-  type NotesImportPaywallAllowance,
 } from '@/features/supporter/components/PaywallBenefits'
 import {
   TierSwitchCard,
@@ -101,9 +100,10 @@ const SUPPORTER_VISIBLE_OPTION_LIMIT = __DEV__ ? 1 : 4
 const TIP_VISIBLE_OPTION_LIMIT = __DEV__ ? 1 : 5
 
 const PaywallScreen = ({
-  notesImportAllowance,
+  scribeAi = false,
 }: {
-  notesImportAllowance?: NotesImportPaywallAllowance
+  /** Lists Scribe AI's limits in the comparison (when it's turned on). */
+  scribeAi?: boolean
 }) => {
   const theme = useTheme()
   const { width, height, fontScale } = useWindowDimensions()
@@ -747,10 +747,7 @@ const PaywallScreen = ({
             handleTierSectionLayout('supporter', event.nativeEvent.layout.y)
           }
         >
-          <ComparisonChart
-            spacious={isWide}
-            notesImportAllowance={notesImportAllowance}
-          />
+          <ComparisonChart spacious={isWide} scribeAi={scribeAi} />
         </View>
       )}
     </View>

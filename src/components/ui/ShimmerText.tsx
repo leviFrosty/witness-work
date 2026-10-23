@@ -103,7 +103,7 @@ const ShimmerChar = ({
  *
  * ```tsx
  * ;<ShimmerText style={{ fontFamily: theme.fonts.semiBold }}>
- *   {i18n.t('notesImport_deliberating')}
+ *   {i18n.t('scribe_thinking')}
  * </ShimmerText>
  * ```
  */

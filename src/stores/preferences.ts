@@ -249,6 +249,7 @@ export type HomeScreenElementKey =
   | 'serviceReport'
   | 'mileage'
   | 'pet'
+  | 'quickActions'
   | 'thisWeek'
   | 'timer'
   | 'didYouKnow'
@@ -257,9 +258,10 @@ export const DEFAULT_HOME_SCREEN_ELEMENTS_ORDER: HomeScreenElementKey[] = [
   'approachingConversations',
   'tabletServiceYearSummary',
   'serviceReport',
-  'mileage',
   'pet',
+  'quickActions',
   'thisWeek',
+  'mileage',
   'timer',
   'didYouKnow',
 ]
@@ -607,6 +609,7 @@ export const PREFERENCE_DEFAULTS = {
     serviceReport: true,
     mileage: true,
     pet: true,
+    quickActions: true,
     timer: true,
     contacts: true,
     didYouKnow: true,
@@ -1333,6 +1336,8 @@ export { NON_SYNCABLE_PREFERENCE_KEYS } from '@/lib/syncPreferencePolicy'
  *   {@link migrateShowThisWeekHomeSection}).
  * - V13 → v14: remove `displayDetailsOnProgressBarHomeScreen` and its iCloud LWW
  *   timestamp (see {@link migrateDropProgressBarDetailsPreference}).
+ * - V14 → v15: the new Quick Actions Home section starts visible (see
+ *   {@link migrateShowQuickActionsHomeSection}).
  *
  * Exported for unit testing. Idempotent — re-running on an already-migrated
  * blob is a no-op.
@@ -1385,6 +1390,9 @@ export const migratePreferencesPersistedState = (
   }
   if (version < 14) {
     next = migrateDropProgressBarDetailsPreference(next)
+  }
+  if (version < 15) {
+    next = migrateShowQuickActionsHomeSection(next)
   }
   return next
 }
@@ -1452,6 +1460,10 @@ export const migrateShowThisWeekHomeSection = (state: unknown): unknown =>
 /** V11 → v12: the Pet Home section starts visible. */
 export const migrateShowPetHomeSection = (state: unknown): unknown =>
   showMissingHomeSection(state, 'pet')
+
+/** V14 → v15: the Quick Actions Home section starts visible. */
+export const migrateShowQuickActionsHomeSection = (state: unknown): unknown =>
+  showMissingHomeSection(state, 'quickActions')
 
 /**
  * V10 → v11: moves Users who never picked a Contacts sort onto the current
@@ -2314,7 +2326,7 @@ export const usePreferences = create(
     {
       name: 'preferences',
       storage: createPreferencesStorage(),
-      version: 14,
+      version: 15,
       migrate: (persistedState, version) =>
         migratePreferencesPersistedState(persistedState, version),
     }

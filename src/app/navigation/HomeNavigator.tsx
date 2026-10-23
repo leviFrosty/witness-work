@@ -1,4 +1,3 @@
-import { useNotesImportEnabled } from '@/hooks/useNotesImportEnabled'
 import {
   Check as CheckIcon,
   Plus as PlusIcon,
@@ -11,14 +10,12 @@ import HeaderPillButton from '@/components/ui/HeaderPillButton'
 import useHomeEditing from '@/hooks/useHomeEditing'
 import useAvailableHomeSections from '@/hooks/useAvailableHomeSections'
 import RootHeader from '@/components/RootHeader'
-import { useEffect } from 'react'
 import useTheme from '@/contexts/theme'
 import { DevSettings, View } from 'react-native'
 import { triggerDevRemount } from '@/lib/devRemount'
 import { usePreferences } from '@/stores/preferences'
 import NotificationsBell from '@/app/notifications/NotificationsBell'
 import HomeStreakChip from '@/features/profile/components/HomeStreakChip'
-import { useNotesImportManager } from '@/features/notes-import/hooks/useNotesImportManager'
 import i18n from '@/lib/locales'
 import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
 import { useUpdateRevealStore } from '@/features/updates/stores/updateReveal'
@@ -28,19 +25,12 @@ import { useUpdateRevealStore } from '@/features/updates/stores/updateReveal'
 const Stack = createNativeStackNavigator()
 
 const HomeNavigator = () => {
-  const notesImportEnabled = useNotesImportEnabled()
   const set = usePreferences((s) => s.set)
   const theme = useTheme()
   const { isWide, contentMaxWidth } = useAdaptiveLayout()
-  const focusNotesImports = useNotesImportManager((s) => s.focus)
   const requestUpdateReveal = useUpdateRevealStore((s) => s.request)
   const homeEditing = useHomeEditing()
   const { hidden } = useAvailableHomeSections()
-
-  // Populate settings-level status immediately and resume persisted work.
-  useEffect(() => {
-    if (notesImportEnabled) focusNotesImports()
-  }, [focusNotesImports, notesImportEnabled])
 
   // Dev-only reset for the update reveal. Long-press the header title to clear
   // its state and play it again, launch version and all. Wired in __DEV__
@@ -91,7 +81,8 @@ const HomeNavigator = () => {
                   icon={RefreshCwIcon}
                   size='xl'
                   hitSlop={12}
-                  accessibilityLabel='DEV: remount all screens (hold to reload JS)'
+                  // Not "reload JS": agent-device reads that as a LogBox overlay.
+                  accessibilityLabel='DEV: remount all screens (hold to restart)'
                   onPress={triggerDevRemount}
                   onLongPress={() => DevSettings.reload()}
                 />

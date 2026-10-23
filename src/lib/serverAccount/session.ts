@@ -227,8 +227,9 @@ export function toAccountSessionError(error: unknown): AccountSessionError {
 }
 
 /**
- * A call refused because the account is suspended: Notes Import's and the
- * accounts routes' `HttpError`, or a Buddies `RelayError` (`code`).
+ * A call refused because the account is suspended: an `HttpError` from a
+ * session-authenticated route (`serverCode`), or a Buddies `RelayError`
+ * (`code`).
  */
 export const refusedAsSuspended = (error: unknown) => {
   if (typeof error !== 'object' || error === null) return false

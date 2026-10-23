@@ -225,13 +225,16 @@ and a file sealed under the Android Keystore in `noBackupFilesDir` on Android.
 Neither syncs or moves to another device. On a binary without the module the
 token lives in memory, and each launch opens a new session.
 
-Notes Import on Android authenticates with Google Play Integrity instead of App
-Attest (ADR 0017, `modules/play-integrity`). It opens only when both the
-`notes-import` and `notes-import-android` flags are on and ww-api advertises
-`capabilities.playIntegrity`. Real tokens need a Play-installed build of
-`com.leviwilkerson.jwtime` (an internal testing track works); development builds
-and emulators can't pass, so use `EXPO_PUBLIC_API_DEV_BYPASS` against a dev
-worker, as on the iOS simulator.
+Scribe AI on Android opens its account session with Google Play Integrity
+instead of App Attest (ADR 0017, `modules/play-integrity`), when ww-api
+advertises `capabilities.playIntegrity` on `GET /attestation/v1/status`. It shows
+while the `scribe-ai` flag is on (the default). Real tokens need a Play-installed
+build of `com.leviwilkerson.jwtime` (an internal testing track works);
+development builds and emulators can't pass, so use
+`EXPO_PUBLIC_API_DEV_BYPASS` against a dev worker, as on the iOS simulator.
+Voice uses Android's on-device recognizer (`modules/speech-transcription`,
+Android 12 or later, `RECORD_AUDIO`); where it isn't available, Scribe AI opens
+with the keyboard.
 
 ## Android production build and Play draft
 

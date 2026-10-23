@@ -501,15 +501,15 @@ describe('PostHog volume and privacy policy', () => {
 
 it('reports each SDK flag/variant once while preserving the assigned value', async () => {
   const sdk = await start()
-  sdk.updateFlags({ 'notes-import': 'variant-a' })
-  expect(sdk.getFeatureFlag('notes-import', { sendEvent: false })).toBe(
+  sdk.updateFlags({ announcement: 'variant-a' })
+  expect(sdk.getFeatureFlag('announcement', { sendEvent: false })).toBe(
     'variant-a'
   )
-  expect(sdk.getFeatureFlag('notes-import')).toBe('variant-a')
-  sdk.getFeatureFlag('notes-import')
-  sdk.updateFlags({ 'notes-import': 'variant-b' })
-  expect(sdk.getFeatureFlag('notes-import')).toBe('variant-b')
-  sdk.getFeatureFlag('notes-import')
+  expect(sdk.getFeatureFlag('announcement')).toBe('variant-a')
+  sdk.getFeatureFlag('announcement')
+  sdk.updateFlags({ announcement: 'variant-b' })
+  expect(sdk.getFeatureFlag('announcement')).toBe('variant-b')
+  sdk.getFeatureFlag('announcement')
   await sdk.flush()
   const exposures = sentEvents().filter(
     (event: { event: string }) => event.event === '$feature_flag_called'

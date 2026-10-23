@@ -125,7 +125,7 @@ async function searchHere(
     )
   }
   // No retries: the next keystroke is the retry, and every request counts
-  // against ww-api's per-IP limit that geocoding and Notes Import share.
+  // against ww-api's per-IP `places` limit, which geocoding shares.
   let data: { items?: unknown } | null
   try {
     ;({ data } = await request<{ items?: unknown } | null>({

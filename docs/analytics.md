@@ -167,7 +167,7 @@ Existing structural properties and sources remain on retained events. No saved
 content, record identifiers, appointment dates, or exception text is attached.
 Saved View `sort` is a built-in sort key or just `customField`; the events never
 carry view names, filter values, or custom field ids.
-Buddies and Notes Import are rollout-gated; iCloud features retain their iOS
+Buddies and Scribe AI are rollout-gated; iCloud features retain their iOS
 availability rules, and Calendar Sync is available on iOS and Android.
 
 ## Onboarding and activation
@@ -265,15 +265,13 @@ individual manual checkbox toggles beyond completion are dropped.
 
 ## Imports and backups
 
-Filter by `import_type` (`notes`, `paper`, `mytime`, `icloud`, `google_drive`, `backup_json`, `other_phone`) and `source`. `other_phone` is onboarding's From your other phone, which opens Sign In with QR Code; the handoff events below follow it.
+Filter by `import_type` (`notes`, `paper`, `mytime`, `icloud`, `google_drive`, `backup_json`, `other_phone`) and `source`. `other_phone` is onboarding's From your other phone, which opens Sign In with QR Code; the handoff events below follow it. `notes` and `paper` are onboarding choices that open [Scribe AI](#scribe-ai), which sends its own events, not `import_*` ones.
 Retain type selection, start, preview readiness, completion, failure, cancellation,
 stop, and undo. Intermediate file selection, commit start, retry/reset clicks,
 preview edits, prompt toggles, and warning openings are dropped.
 
 | Flow                   | Outcomes                                                                                                                                                                                                                                                       |
 | ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Notes Import           | `notes_import_submitted`, `notes_import_refined`, `notes_import_accepted`; a preview is not committed data. Submitted/accepted carry `input_method`.                                                                                                           |
-| Notes Import capture   | `notes_import_capture_finished` once per voice log, photo, or paper attempt.                                                                                                                                                                                   |
 | MyTime / cloud restore | `import_completed` with the import type (`icloud` on iOS, `google_drive` on Android).                                                                                                                                                                          |
 | JSON restore           | `backup_imported`; started/cancelled/failed uses `import_type: backup_json`. `import_failed` `error_code: invalid_file` means the JSON held no WitnessWork store (another app's file; stage `validate_file`) or its stores couldn't be read (stage `restore`). |
 | JSON export            | `backup_export_started` → `backup_exported`, or `backup_export_failed`. File-created and share-sheet-requested stages are dropped.                                                                                                                             |
@@ -293,56 +291,10 @@ database without MyTime's tables, or one SQLite couldn't read), `zip`, `pdf`,
 files people pick, so the guidance can name them. Only the kind is sent, never
 the file's name or contents.
 
-Notes Import on Android (ADR 0017) adds no events: break the Notes Import events
-and `import_failed` (`import_type: notes`) down by the SDK's `$os_name` to compare
-platforms during the `notes-import-android` rollout. Notes Import runs on the
-account session (ADR 0027), so a device that can't be verified fails before any
-import, with bounded `error_code` values on both platforms: `device_ineligible`
-(this device or app build can never be verified: App Attest unsupported, no
-Google Play, or ww-api found it isn't genuine), `attestation_unavailable`
-(Apple, Google or our verifier couldn't check it just then; temporary), or
-`attestation_failed` (verification ran and didn't pass). `suspended` (the
-account was suspended) and `upgrade_required` (ww-api answered 426) can appear
-too. Builds before sessions sent `play_services_required` for missing or
-outdated Play services; it's `device_ineligible` now. `account_session_failed`
-says why the session itself couldn't open. Their share of attempts shows whether
-the device requirement blocks real users. No verdicts, tokens, or identifiers
-are attached. `active_cap` appears only after the automatic back-off (about 3
-minutes) gives up.
-
-`notes_import_availability_failed` fires at most once per composer visit when
-the availability check couldn't run, with `state`: `offline` (no connection) or
-`check_failed` (online, but the service didn't answer). Explicit outages
-(kill switch, version floor) don't send it, and background re-checks never do.
-
-Notes previews retain `empty`/warning counts and the ledger's original source
-across background work, relaunches, and refinements. `input_method` (`text`,
-`voice`, `photo`, `paper`, `mixed`) records how the submitted notes were produced and is
-kept on the ledger row, so acceptance stays attributed after a relaunch. Each
-processing attempt can start, so start counts are attempts, not unique
-documents.
-
-Voice logs and photo imports (ADR 0018) send one `notes_import_capture_finished`
-per attempt with `method` (`voice` or `photo`) and `outcome` (`inserted`,
-`empty`, `cancelled`, `failed`, `permission_denied`). Voice adds the recognizer
-`engine` and a coarse `duration` bucket; photos add `photo_source` (`scan` or
-`library`) and `page_count`; failures add a stable `error_code`. Transcripts,
-images, and languages are never sent. `inserted` means text reached the draft,
-not that it was imported: follow `input_method` on submitted/accepted for that.
-
-Import from Paper (ADR 0025) sends one `notes_import_capture_finished` per batch
-with `method: paper`, `paper_source` (`onboarding` or `composer`), `page_count`,
-and `outcome`: `inserted`, `partial` (some pages read, with `failed_pages`),
-`empty`, `cancelled`, `failed`, or `limit_reached` (no Import Credits left, so
-no page was read). A stopped batch adds `error_code` (for example
-`transcribe_limit`, `network`, `attestation_failed`, `suspended`). When pages
-are left unread for a reason that can pass (no connection, a busy service), the
-batch adds `retry_offered: true` and the app keeps the pages for Try Again; each
-Try Again sends its own event with `retry: true` and `page_count` of the pages it
-read again. The onboarding chooser's
-`import_type_selected` uses `import_type: paper`, and
-`onboarding_import_options_viewed` adds `paper_available`. Page images and their
-text are never sent.
+The onboarding chooser's `import_type_selected` uses `import_type: notes` or
+`paper`, and `onboarding_import_options_viewed` adds `paper_available`. Both
+choices open Scribe AI's conversation, so their messages carry
+`entry: onboarding` on `scribe_turn_started`.
 
 Export/restore retains
 bounded `entry_point` (`settings` or `backup_reminder`), failure stage/error code,
@@ -354,6 +306,46 @@ Restore probe status is `probing`, `found`, `noBackup`, `unavailable`, or
 `incomplete`; each distinct status survives the session cap. Photo consent does
 not establish that photos downloaded. No file paths, filenames, or contents are
 usage properties.
+
+## Scribe AI
+
+Scribe AI (ADR 0032) is a conversation: the User speaks, types, scans notes or
+reads paper pages, Scribe AI answers or proposes changes as review cards, and
+nothing is written until Add. The questions are whether people reach it, whether
+a turn ends in something useful, how often they keep what it proposes, and
+whether the usage limits get in the way. Every property is a bounded value or a
+count. No message, transcript, answer, name, address, note, Ref, tool argument
+or record id is ever sent, and neither are recordings, photos or page images.
+ww-api logs its own per-step metering, cache writes, billed cost and the gap
+between turns (`api_scribe_step`) without a person profile; see [`scribe-ai-protocol.md` → Logging and privacy](./scribe-ai-protocol.md#logging-and-privacy).
+
+| Event                        | When / properties                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         | Question                                                                                      |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| `scribe_entry_tapped`        | An entry point opened Scribe AI. `entry`: `home_orb` (Home's Quick Actions orb), `plus_sheet` (the + sheet's Speak an update), or `menu_bar` (File → Speak an update in the iPad menu bar). `state`: `available`, `limited` (a usage window is full; the conversation opens on the limit card), `offline` (the no-internet explainer opened instead), `blocked` (the conversation opens on the blocked message), or `voice_unsupported` (no on-device speech; the conversation opens with the keyboard).                                                                                                                                                                                                                                                                                                                                  | Which entry points do people use, and how often does the tap land somewhere other than voice? |
+| `scribe_turn_started`        | A message was sent. `entry`: where the conversation was opened from (the entries above, plus `onboarding`, `history`, `conversation` for a later message, and `say_a_change`). `input`: `voice`, `keyboard`, `photo` (scanned notes) or `paper` (read pages). `turn`: `1`, `2`, `3-5` or `6+` in this conversation. `pending_proposal`: the message was sent while review cards were still waiting (a correction).                                                                                                                                                                                                                                                                                                                                                                                                                        | How do people talk to it, and how long do conversations run?                                  |
+| `scribe_turn_finished`       | A turn ended. `outcome`: `proposal` (review cards), `answer` (text only), `error`, `stopped` (Stop), or `limit`. `steps`, `read_calls`, `write_calls`, `invalid_calls` (tool calls the device rejected). `error_code`: a stable code such as `network`, `timeout`, `too_much`, `couldnt_finish`, `rate_limited`, `model_error`, `device_ineligible`, `attestation_unavailable`, `suspended` or `update_required`, else null. `duration`: `<5s`, `5-15s`, `15-30s` or `30s+`.                                                                                                                                                                                                                                                                                                                                                              | Does a turn end in something useful, and how long does it take?                               |
+| `scribe_proposal_resolved`   | A set of review cards was decided. `outcome`: `applied`, `partially_applied` (some cards were skipped because their record changed or went missing), `dismissed`, `superseded` (a correction replaced it), or `failed`. `cards`, `applied_cards`, `deselected_cards` (unchecked before Add), `choice_cards` ("Which Maria?" cards). `kinds`: the effect kinds on the cards, sorted and comma-separated (`contact.create`, `plan.create`, `time.create`, …). `tainted`: the turn read text someone wrote (notes), which reviews more carefully.                                                                                                                                                                                                                                                                                            | How often do people keep what Scribe AI proposes, and what do they uncheck?                   |
+| `scribe_undo`                | Undo ran. `source`: `toast`, `history`, or `conversation` (the Undo link on an added Proposal in its conversation). `target`: `scribe` or `legacy_import` (a Notes Import from before Scribe AI, under History → Earlier imports). `result`: `undone`, `partially_undone` (records changed since were kept) or `nothing_to_undo`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         | How often is an Add a mistake?                                                                |
+| `scribe_limit_reached`       | A turn or page read hit a full usage window. `plan`: `free` or `supporter`. `window`: `session`, `weekly` or `monthly`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   | Are the limits sized right for each plan?                                                     |
+| `scribe_context_full`        | The conversation neared or reached its length budget. `state`: `near_full` (the banner) or `full` (the composer is replaced by New conversation). Once per conversation per state.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        | Do conversations run long enough to need starting over?                                       |
+| `scribe_capture_finished`    | A voice recording, notes scan or paper batch ended. `input`: `voice`, `photo` or `paper`. `outcome`: `done`, `cap` (the 3-minute voice cap), `interrupted` (a call or leaving the app; what was heard waits in the composer), `typed` (Type instead while listening; what was heard waits in the composer), `discarded` (for paper, the conversation closed while pages were read), `empty`, or `error`. Voice adds a `duration` bucket and the recognizer `engine`; paper adds `pages` and `retry`. `error_code` is a stable code or null. When paper pages are left unread for a reason that can pass (no connection, a busy or unavailable service, a model error), the event adds `retry_offered: true` and the app keeps those pages for Try again; each Try again sends its own event with `retry: true` and `pages` it read again. | Does capture work on both platforms, and why does it fail?                                    |
+| `scribe_usage_viewed`        | Usage was shown. `surface`: `conversation` (the meter in the conversation header, once per visit) or `settings` (Settings → Scribe AI usage, once per visit). `plan`, `limited`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          | Do people check their usage, and do they do it when they're limited?                          |
+| `scribe_upsell_tapped`       | Become a Supporter was tapped. `surface`: `limit_reached` (the limit card) or `usage` (Settings → Scribe AI usage). The Paywall then opens with `source` `scribe_limit_reached` or `scribe_usage`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        | Does reaching a limit lead to supporting?                                                     |
+| `scribe_supporter_rechecked` | Check again was tapped where this device is a Supporter but ww-api metered the account as free (the limit card or Settings → Scribe AI usage). `supporter`: whether ww-api answered Supporter after linking again.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        | How often does a Supporter's status fail to reach the server, and does linking again fix it?  |
+| `quick_actions_tile_tapped`  | A tile in Home's Quick Actions section was tapped. `tile`: `time` (Add Time), `visit` (Log Visit, shown in place of Time when the publisher doesn't log hours), `contact`, or `plan`. The orb in the same section sends `scribe_entry_tapped` with `entry: home_orb`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     | Do the Quick Actions tiles earn their place on Home next to the orb?                          |
+
+Scribe AI runs on the account session (ADR 0027): a device that can't be
+verified sees the blocked message, and its turns end with `error_code`
+`device_ineligible`, `attestation_unavailable` or `suspended`. Break the events
+down by the SDK's `$os_name` to compare iOS and Android, especially
+`scribe_capture_finished` for voice. Typing a draft, editing captured text,
+checking or unchecking a card, and picking a choice chip send nothing; their
+effect shows up in `scribe_proposal_resolved`.
+
+Notes Import's `notes_import_*` events stopped with Scribe AI (October 2026).
+Compare adoption across the change with `scribe_turn_started` against
+`notes_import_submitted`, and `scribe_proposal_resolved` (`applied`) against
+`notes_import_accepted`.
 
 ## Paywall and Supporter
 
@@ -702,8 +694,8 @@ names, or dates are sent; card ids and sizes are a fixed list.
 
 ## Home sections
 
-Home's sections (Approaching Conversations, Service Report, Mileage, This Week,
-Timer, Did You Know, and Service Year Summary on iPad) are rearranged in place
+Home's sections (Approaching Conversations, Service Report, Quick Actions,
+Mileage, This Week, Timer, Did You Know, and Service Year Summary on iPad) are rearranged in place
 the same way: Edit Home Screen in a section's long-press menu, or holding empty
 space, starts editing; sections jiggle, drag to move, the minus hides one (with
 Undo), and Add Sections shows hidden ones again. Preferences → Home Screen still

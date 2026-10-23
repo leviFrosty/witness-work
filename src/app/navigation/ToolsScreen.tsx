@@ -93,10 +93,8 @@ import {
   type AccountAction,
   type AccountFile,
 } from '@/lib/accountFile'
-import {
-  getNotesImportStatus,
-  type NotesImportStatus,
-} from '@/features/notes-import/lib/notesImportClient'
+import { scribeClient } from '@/features/scribe/lib/defaultClient'
+import type { ScribeStatusWire } from '@/features/scribe/lib/wire'
 import {
   getAttestationSnapshot,
   runAttestationDiagnostics,
@@ -104,13 +102,12 @@ import {
   type AttestationDebugReport,
   type AttestationRepairReport,
 } from '@/lib/attestation'
-import { useNotesImportManager } from '@/features/notes-import/hooks/useNotesImportManager'
-import { clientImportCap } from '@/features/notes-import/lib/notesImportManagerLogic'
 import AccountTools from '@/app/navigation/tools/AccountTools'
 import BuddiesTools from '@/app/navigation/tools/BuddiesTools'
 import BadgesTools from '@/app/navigation/tools/BadgesTools'
 import LayoutDirectionTools from '@/app/navigation/tools/LayoutDirectionTools'
 import StreakTools from '@/app/navigation/tools/StreakTools'
+import ScribeTools from '@/app/dev-harness/ScribeTools'
 import {
   applyBadgeHistoryFixture,
   earnRandomBadges,
@@ -248,11 +245,10 @@ export default function ToolsScreen() {
   )
   const mockContactCount = parseMockContactCount(mockContactCountInput)
 
-  // --- Notes Import auth / usage / supporter-sync debug -----------------
+  // --- Attestation and supporter-sync debug ------------------------------
   const { accountId, iCloudSharingAvailable } = useAccount()
   const { customer } = useCustomer()
   const entitled = supporterSinceDate(customer) !== null
-  const notesImportCredits = useNotesImportManager((s) => s.credits)
   // Cheap MMKV/Keychain reads; recomputed per render so recent lifecycle state
   // changes are reflected immediately.
   const authSnapshot = getAttestationSnapshot()
@@ -264,7 +260,7 @@ export default function ToolsScreen() {
     useState<AttestationRepairReport | null>(null)
   const [proxyProbe, setProxyProbe] = useState<{
     health: unknown
-    status: NotesImportStatus | { error: string } | null
+    status: ScribeStatusWire | { error: string } | null
     probedAt: string
   } | null>(null)
   const [accountFileInspection, setAccountFileInspection] = useState<
@@ -322,12 +318,12 @@ export default function ToolsScreen() {
 
   const probeProxy = async () => {
     const [health, status] = await Promise.all([
-      request({ url: apis.notesImportHealth, timeoutMs: 10_000 })
+      request({ url: apis.apiHealth, timeoutMs: 10_000 })
         .then((r) => r.data)
         .catch((e) => ({ error: (e as Error).message })),
-      getNotesImportStatus().catch((e) => ({
-        error: (e as Error).message,
-      })),
+      scribeClient()
+        .status()
+        .catch((e) => ({ error: (e as Error).message })),
     ])
     setProxyProbe({ health, status, probedAt: new Date().toISOString() })
   }
@@ -2083,17 +2079,9 @@ export default function ToolsScreen() {
           </View>
         </ToolSection>
 
-        <ToolSection
-          title='Notes Import'
-          icon={KeyRoundIcon}
-          summary={
-            notesImportCredits
-              ? notesImportCredits.remaining === null
-                ? '∞ imports'
-                : `${notesImportCredits.remaining}/${notesImportCredits.limit} imports`
-              : undefined
-          }
-        >
+        <ScribeTools />
+
+        <ToolSection title='Attestation' icon={KeyRoundIcon}>
           <ToolSubheading
             title='Auth & attestation'
             info='The auth module negotiates the worker protocol and serializes challenge → assertion → protected response per key. Diagnostics use the existing key through that same lane; they never generate, rotate, enroll, recover, or clear lifecycle state. Repair runs the attested no-op verify through the REAL protected path — if Apple refuses to sign with the stored key, it re-registers under the enrolled recovery credential and retries, rotating the key.'
@@ -2110,7 +2098,7 @@ export default function ToolsScreen() {
               onPress={() => void runAuthRepair()}
             />
             <ToolRow
-              label='Probe /health + /status'
+              label='Probe /health + /scribe/v1/status'
               onPress={() => void probeProxy()}
             />
             <ToolRow label='Proxy base' value={authSnapshot.baseUrl} />
@@ -2189,50 +2177,6 @@ export default function ToolsScreen() {
               label='Proxy health / status'
               value={proxyProbe}
               count={proxyProbe ? 2 : 0}
-            />
-          </View>
-
-          <ToolSubheading
-            title='Usage & limits'
-            info='The proxy meters by account id (1 credit per distinct source text; replays and refinements are free, refinements capped per import; Supporters unmetered). There is no read-only usage endpoint — these values come from the most recent kickoff/done response this session, so they’re empty until an import runs.'
-          />
-          <ToolList>
-            <ToolRow
-              label='Server isSupporter'
-              value={
-                notesImportCredits
-                  ? String(notesImportCredits.isSupporter)
-                  : '—'
-              }
-            />
-            <ToolRow
-              label='Imports remaining'
-              value={
-                notesImportCredits
-                  ? notesImportCredits.remaining === null
-                    ? '∞'
-                    : `${notesImportCredits.remaining} / ${notesImportCredits.limit}`
-                  : '—'
-              }
-            />
-            <ToolRow
-              label='Refinements remaining'
-              value={
-                notesImportCredits
-                  ? `${notesImportCredits.refinements.remaining} / ${notesImportCredits.refinements.limit}`
-                  : '—'
-              }
-            />
-            <ToolRow
-              label='Client concurrency cap'
-              value={`${clientImportCap(isSupporter)}`}
-            />
-          </ToolList>
-          <View style={{ paddingTop: 8 }}>
-            <JsonViewer
-              label='Last credits snapshot'
-              value={notesImportCredits}
-              count={notesImportCredits ? 1 : 0}
             />
           </View>
         </ToolSection>

@@ -28,7 +28,6 @@ import {
 } from '@/lib/normalizeDate'
 import { RecurringPlanFrequencies } from '@/lib/serviceReport'
 import { getPeriodTense } from '@/lib/projectedTotalCopy'
-import { mapNotesImport } from '@/features/notes-import/lib/mapNotesImport'
 
 // Regressions for stored calendar days drifting at UTC+12 and beyond, where
 // noon UTC is already the next local day and local midnight is noon UTC of the
@@ -153,40 +152,6 @@ describe('iCloud merge / restore normalization', () => {
       '2026-08-19'
     )
     expect(storedDayKey(migrated.dayPlans[0].date)).toBe('2026-08-20')
-  })
-})
-
-describe('Notes import', () => {
-  it('stores a date-only time entry on its day and in its month', () => {
-    for (const tz of tzs) {
-      setTZ(tz)
-      useServiceReport.getState()._WARNING_forceDeleteServiceReports()
-      const mapped = mapNotesImport(
-        {
-          contacts: [],
-          visits: [],
-          timeEntries: [{ date: '2026-08-31', hours: 1, minutes: 0 }],
-          categories: [],
-          publisher: null,
-          warnings: [],
-          summary: '',
-          assistantMessage: '',
-        },
-        { contentHash: 'h', importedAt: new Date() }
-      )
-      mapped.timeEntries.forEach((e) =>
-        useServiceReport.getState().addServiceReport(e)
-      )
-      const aug = useServiceReport.getState().serviceReports[2026]?.[7] ?? []
-      expect({ tz, aug: aug.map((r) => storedDayKey(r.date)) }).toEqual({
-        tz,
-        aug: ['2026-08-31'],
-      })
-      expect({
-        tz,
-        preview: moment(mapped.timeEntries[0].date).format('YYYY-MM-DD'),
-      }).toEqual({ tz, preview: '2026-08-31' })
-    }
   })
 })
 

@@ -13,7 +13,7 @@ import { AccountSessionError } from '@/lib/serverAccount/session'
  * RevenueCat itself; this only names it.
  *
  * Linking never opens a session on its own (`open` asks for one only where the
- * caller needs one anyway, before Notes Import or route planning). It remembers
+ * caller needs one anyway, before Scribe AI or route planning). It remembers
  * the last link as a hash of the account id and RevenueCat id plus its time,
  * never the ids, and repeats it at most once a day unless forced (a purchase, a
  * restore, another id). A 503 waits out its `Retry-After`. Never throws: every

@@ -4,6 +4,7 @@ import type { AppIcon } from '@/components/ui/LucideIcon'
 import { type LayoutChangeEvent, Platform, Pressable, View } from 'react-native'
 import useTheme from '@/contexts/theme'
 import useAccessibilityTextSize from '@/hooks/useAccessibilityTextSize'
+import useUnbrokenWords from '@/hooks/useUnbrokenWords'
 import Text from '@/components/ui/MyText'
 import {
   SafeAreaProvider,
@@ -103,7 +104,9 @@ const HeaderContent = ({
       set(Math.round(e.nativeEvent.layout.width))
   // At accessibility text sizes the title wraps between words and shrinks
   // rather than breaking a word that doesn't fit between the buttons.
-  const titleFit = useAccessibilityTextSize()
+  const largeText = useAccessibilityTextSize()
+  const unbroken = useUnbrokenWords(title ?? '', largeText)
+  const titleFit = largeText
     ? {
         numberOfLines: Math.min(title?.trim().split(/\s+/).length ?? 1, 3),
         adjustsFontSizeToFit: true,
@@ -224,9 +227,10 @@ const HeaderContent = ({
           <Text
             {...titleFit}
             accessibilityRole='header'
+            onTextLayout={largeText ? unbroken.onTextLayout : undefined}
             style={{
               textAlign: 'center',
-              fontSize: 18,
+              fontSize: 18 * unbroken.scale,
               fontFamily: theme.fonts.semiBold,
               color:
                 foregroundColor ??

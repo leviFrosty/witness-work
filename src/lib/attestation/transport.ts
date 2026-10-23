@@ -9,57 +9,43 @@ import {
 
 /**
  * HTTP transport shared by both attestation authorizers (App Attest on iOS,
- * Play Integrity on Android) and Notes Import's availability check. The
- * install's App Attest key is registered at `/attestation/v1/register`, and
- * features other than Notes Import get challenges from
- * `/attestation/v1/challenge`. Notes Import keeps its own challenge and verify
- * routes, and both providers' capabilities are still read from its status.
- * Failures become sanitized {@link AttestationHttpError}s carrying only stable
- * metadata.
+ * Play Integrity on Android). Everything goes to `/attestation/v1/*`: the
+ * install's App Attest key gets its challenges at `challenge` and registers at
+ * `register`, other features' assertions get their challenges at `challenge`
+ * too, the dev Tools diagnostics prove the whole path at `verify`, and both
+ * providers' capabilities come from `status`. Failures become sanitized
+ * {@link AttestationHttpError}s carrying only stable metadata.
  */
 
 /** Unauthenticated availability/capability probe. */
 export const STATUS_TIMEOUT_MS = 8_000
 /**
- * Per-endpoint budgets. Only the legacy blocking POST waits for the model; the
- * attestation round-trips and the streaming kickoff return quickly, so a
- * stalled connection there fails in seconds instead of a minute and a half.
+ * Per-endpoint budgets. Every attestation round-trip returns quickly, so a
+ * stalled connection fails in seconds instead of hanging.
  */
 export const ENDPOINT_TIMEOUT_MS: Record<AttestationEndpoint, number> = {
   challenge: 15_000,
-  attestationChallenge: 15_000,
   registration: 15_000,
   verify: 15_000,
-  kickoff: 15_000,
-  // Waits for the vision model to read one page.
-  transcribe: 60_000,
-  legacy: 90_000,
 }
 
 /** The shared dev-worker bypass (`@/lib/http/devBypass`). */
 export const attestationDevBypass = apiDevBypass
 
-export const attestationBaseUrl = apis.notesImport.replace(
-  /\/notes-import$/,
+/** The ww-api base URL the attestation routes live under (dev snapshot). */
+export const attestationBaseUrl = apis.attestationStatus.replace(
+  /\/attestation\/v1\/status$/,
   ''
 )
 
 const endpointUrl = (endpoint: AttestationEndpoint): string => {
   switch (endpoint) {
     case 'challenge':
-      return apis.notesImportChallenge
-    case 'attestationChallenge':
       return apis.attestationChallenge
     case 'registration':
       return apis.attestationRegister
-    case 'kickoff':
-      return apis.notesImportKickoff
-    case 'transcribe':
-      return apis.notesImportTranscribe
-    case 'legacy':
-      return apis.notesImport
     case 'verify':
-      return apis.notesImportVerify
+      return apis.attestationVerify
   }
 }
 
@@ -103,7 +89,6 @@ export const toAttestationHttpError = (
     serverCode: typeof payload?.code === 'string' ? payload.code : undefined,
     reason: typeof payload?.reason === 'string' ? payload.reason : undefined,
     action: typeof payload?.action === 'string' ? payload.action : undefined,
-    credits: payload?.credits,
     ...(retryAfterMs !== null && { retryAfterMs }),
   })
 }
@@ -111,15 +96,15 @@ export const toAttestationHttpError = (
 let statusInFlight: Promise<unknown> | null = null
 
 /**
- * The one status probe. Availability, App Attest protocol negotiation and Play
- * Integrity's capability lookup all read it; concurrent callers share a single
- * request.
+ * The one status probe (`GET /attestation/v1/status`). App Attest protocol
+ * negotiation and Play Integrity's capability lookup read it; concurrent
+ * callers share a single request.
  */
 const getStatus = (): Promise<unknown> => {
   if (statusInFlight) return statusInFlight
-  perf.count('notesImport:statusProbe')
+  perf.count('attestation:statusProbe')
   const pending = request<unknown>({
-    url: apis.notesImportStatus,
+    url: apis.attestationStatus,
     timeoutMs: STATUS_TIMEOUT_MS,
   })
     .then(({ data }) => data)

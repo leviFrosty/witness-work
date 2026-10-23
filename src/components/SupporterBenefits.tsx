@@ -1,18 +1,18 @@
 import {
-  FileText as FileTextIcon,
   Palette as PaletteIcon,
   Plus as PlusIcon,
   RefreshCw as RefreshCwIcon,
   Route as RouteIcon,
   Shapes as ShapesIcon,
+  Sparkles as SparklesIcon,
 } from 'lucide-react-native'
 import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
 import { Platform, View } from 'react-native'
 import useTheme from '@/contexts/theme'
 import Text from '@/components/ui/MyText'
 import i18n from '@/lib/locales'
-import { useNotesImportEnabled } from '@/hooks/useNotesImportEnabled'
 import { tracking } from '@/lib/tracking'
+import { useScribeEnabled } from '@/hooks/useScribeEnabled'
 
 const HeroCard = () => {
   const theme = useTheme()
@@ -127,9 +127,7 @@ interface Props {
 
 const SupporterBenefits = ({ compact }: Props) => {
   const theme = useTheme()
-  const notesImportEnabled = useNotesImportEnabled()
-  // iOS always lists the perk; Android only once its Scribe AI rollout is on.
-  const scribeAiPerk = Platform.OS === 'ios' || notesImportEnabled
+  const scribeEnabled = useScribeEnabled()
 
   return (
     <View style={{ gap: 16 }}>
@@ -146,9 +144,9 @@ const SupporterBenefits = ({ compact }: Props) => {
       </Text>
       {!compact && <HeroCard />}
       <View style={{ gap: 14 }}>
-        {scribeAiPerk && (
+        {scribeEnabled && (
           <PerkRow
-            icon={FileTextIcon}
+            icon={SparklesIcon}
             title={i18n.t('supporterPerkAiTitle')}
             desc={i18n.t('supporterPerkAiDesc')}
           />

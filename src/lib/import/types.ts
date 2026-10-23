@@ -21,9 +21,9 @@ export interface MappedPublisher {
  * `notes-*`) so a re-run is idempotent — the stores' `add*` actions skip ids
  * they already hold.
  *
- * This type is shared infrastructure (it lives outside any one feature) because
- * both `mytime-import` and `notes-import` produce it and feed it to the same
- * `writeMappedDataToStores`.
+ * This type is shared infrastructure (it lives outside any one feature):
+ * `mytime-import` produces it for `writeMappedDataToStores`, and Scribe AI's
+ * History undoes Notes Imports from before Scribe AI through `undoImport`.
  */
 export interface MappedImport {
   contacts: Contact[]

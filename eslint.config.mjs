@@ -222,6 +222,8 @@ export default tseslint.config(
             'src/features/plans/**/*',
             'src/features/progress/**/*',
             'src/features/log-visit/**/*',
+            // Scribe AI composes contacts, visits, plans and Buddies.
+            'src/features/scribe/**/*',
             'src/__tests__/**/*',
           ],
         },

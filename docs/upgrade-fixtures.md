@@ -2,12 +2,12 @@
 
 `src/__tests__/releaseUpgrade.test.ts` proves that data saved by released builds still loads on `main`. Each folder in `src/__tests__/__data__/releases/` holds what one release wrote for the same made-up records (`scenario.ts`):
 
-- `stores.json`: every persisted store's `{ state, version }` blob, as its persist middleware saved it to MMKV. That includes the device-local stores neither sync nor the backup file holds: App Lock, the sidebar and split sheet layouts, Buddies, calendar sync, the bell, the streak celebration, the plan cache, the geocode retry queue, the Map's Find skips, and saved routes and places.
-- `mmkv.json`: the MMKV instances of their own that hold the User's work (Notes Import's history), key by key.
+- `stores.json`: every persisted store's `{ state, version }` blob, as its persist middleware saved it to MMKV. That includes the device-local stores neither sync nor the backup file holds: App Lock, the sidebar and split sheet layouts, Buddies, calendar sync, the bell, the streak celebration, the plan cache, the geocode retry queue, the Map's Find skips, saved routes and places, and Scribe AI's conversations, undo records and usage.
+- `mmkv.json`: the MMKV instances of their own that hold the User's work (Notes Import's history, in releases before Scribe AI), key by key.
 - `backup.json`: the file its Settings → Export wrote.
 - `icloud.json` and `google-drive.json`: the per-device file sync wrote when the User turned it on, on iOS and on Android. 1.40.0, the first release with sync, has the older iCloud format; Android sync (Google Drive) started in 1.44.
 
-For each release, the suite launches the current build on those blobs (persist `migrate`/`merge`, then the boot migrations in `useAppMigrations` order) and restores the backup file on a fresh install. It checks that no store fails to load, every store ends at its current `version`, every record, tombstone, and setting comes through, and a second launch changes nothing. It launches once more the morning after the release wrote them to check the device-local stores, since Buddies and the bell drop what has lapsed by launch.
+For each release, the suite launches the current build on those blobs (persist `migrate`/`merge`, then the boot migrations in `useAppMigrations` order) and restores the backup file on a fresh install. It checks that no store fails to load, every store ends at its current `version`, every record, tombstone, and setting comes through, and a second launch changes nothing. It launches once more the morning after the release wrote them to check the device-local stores, since Buddies, the bell and Scribe AI (conversations after 90 days, Undo after 30) drop what has lapsed by launch.
 
 With the sync files in the cloud, it runs the sync engine on that platform's transport twice: turning sync on with a fresh install, which restores the file, and turning sync on after upgrading from that release, which merges it ("Merge both") and pushes. Both must keep every record and synced setting.
 

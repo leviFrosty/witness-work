@@ -10,6 +10,7 @@ import type { SystemMenuGroup } from '../../../modules/system-menu'
 
 export type MenuCommand =
   | 'preferences'
+  | 'speak_update'
   | 'log_visit'
   | 'add_time'
   | 'new_contact'
@@ -27,10 +28,13 @@ type MenuGroup = Omit<SystemMenuGroup, 'actions'> & {
 
 export function menuGroups({
   showsTimeEntry,
+  showsScribe,
   checkingUpdate,
   language,
 }: {
   showsTimeEntry: boolean
+  /** Scribe AI isn't hidden (`ScribeAvailability.status !== 'hidden'`). */
+  showsScribe: boolean
   checkingUpdate: boolean
   language: string
 }): MenuGroup[] {
@@ -50,6 +54,9 @@ export function menuGroups({
       id: 'file',
       title: t('menuBarFile'),
       actions: [
+        ...(showsScribe
+          ? [action('speak_update', t('scribe_speakAnUpdate'))]
+          : []),
         action('log_visit', t('logVisitEllipsis')),
         ...(showsTimeEntry ? [action('add_time', t('addTime'))] : []),
         action('new_contact', t('addContact')),
@@ -78,9 +85,14 @@ export function menuGroups({
 /** Internal page links preserve the app's existing forms and confirmations. */
 export async function runMenuCommand(
   command: MenuCommand,
-  hasSidebar: boolean
+  hasSidebar: boolean,
+  /** Scribe AI's entry point (`openScribe('menu_bar')`). */
+  openScribe: () => void
 ) {
   switch (command) {
+    case 'speak_update':
+      openScribe()
+      break
     case 'preferences':
       if (hasSidebar) {
         navigationRef.dispatch(

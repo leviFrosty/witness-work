@@ -199,6 +199,48 @@ const RootStackComponent = () => {
           />
         ))}
         <RootStack.Screen
+          // Draws its own header, which holds the usage ring and History.
+          options={{ header: () => null }}
+          name='ScribeConversation'
+          getComponent={() =>
+            require('@/app/navigation/ScribeConversationRouteScreen').default
+          }
+        />
+        <RootStack.Screen
+          // A sheet drawn over the screen it opened from.
+          options={{
+            presentation: 'transparentModal',
+            animation: 'fade',
+            headerShown: false,
+          }}
+          name='ScribeVoice'
+          getComponent={() =>
+            require('@/features/scribe/screens/ScribeVoiceScreen').default
+          }
+        />
+        <RootStack.Screen
+          options={{
+            presentation: 'transparentModal',
+            animation: 'fade',
+            headerShown: false,
+          }}
+          name='ScribeOffline'
+          getComponent={() =>
+            require('@/features/scribe/screens/ScribeOfflineSheet').default
+          }
+        />
+        <RootStack.Screen
+          options={{
+            header: () => (
+              <Header buttonType='back' title={i18n.t('scribe_historyTitle')} />
+            ),
+          }}
+          name='ScribeHistory'
+          getComponent={() =>
+            require('@/features/scribe/screens/ScribeHistoryScreen').default
+          }
+        />
+        <RootStack.Screen
           options={{
             header: () => <Header buttonType='back' title={i18n.t('donate')} />,
           }}

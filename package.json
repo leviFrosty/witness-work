@@ -31,6 +31,7 @@
     "test:calendar-native": "node --test scripts/tests/calendar-native.node.mjs",
     "test:buddies-alerts-native": "node --test scripts/tests/buddies-alerts.node.mjs",
     "test:watch-native": "node --test scripts/tests/watch-*.node.mjs",
+    "test:speech-android": "node --test scripts/tests/speech-android.node.mjs",
     "testFinal": "vitest run",
     "check:all": "concurrently 'pnpm run test:release-tools' 'pnpm run testFinal' 'pnpm run typecheck' 'pnpm run lint' 'pnpm run doctor'",
     "testVitest": "",

@@ -12,6 +12,8 @@ import Security
 public class KeychainUuidModule: Module {
   private let service = "com.leviwilkerson.witnesswork.installid"
   private let installIdAccount = "install-id"
+  // Named for Notes Import, which first used the key; installed apps keep
+  // their App Attest key under these accounts, so never rename them.
   private let appAttestKeyIdAccount = "notes-import-app-attest-key-id"
   private let appAttestRecoveryTokenAccount =
     "notes-import-app-attest-recovery-token"

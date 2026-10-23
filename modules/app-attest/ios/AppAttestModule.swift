@@ -5,7 +5,7 @@ import Foundation
 /**
  * Wraps `DCAppAttestService` (Apple App Attest). The Secure Enclave proves a
  * request comes from a genuine, unmodified instance of this app on a real Apple
- * device — the security boundary for Notes Import (ADR 0007).
+ * device — the security boundary for account sessions (ADR 0007, ADR 0027).
  *
  * The JS side computes client-data hashes. This adapter accepts only strict
  * base64 encodings of exactly 32 bytes and maps DeviceCheck errors to stable,
@@ -134,7 +134,7 @@ public class AppAttestModule: Module {
    * every async rejection (`JavaScriptPromise.reject` recognized only
    * `JavaScriptError`, never the `JavaScriptThrowable` carrying the code). JS
    * then saw a bare `Error` whose message was this description, and classified
-   * every failure as `unknown` — which cost Notes Import its `invalidKey`
+   * every failure as `unknown` — which cost the key lifecycle its `invalidKey`
    * recovery signal. On a working runtime the description is unused (the
    * message becomes the exception's debug description, which already leads with
    * this same token as the exception name), so naming the code here only ever

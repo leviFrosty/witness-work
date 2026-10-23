@@ -146,7 +146,7 @@ it('caps flag exposure across launches without merging flags or variants', async
   let { allowAnalyticsFrequency: allow } = await import('./analyticsFrequency')
   expect(
     allow('$feature_flag_called', {
-      $feature_flag: 'notes-import',
+      $feature_flag: 'announcement',
       $feature_flag_response: true,
     })
   ).toBe(true)
@@ -158,13 +158,13 @@ it('caps flag exposure across launches without merging flags or variants', async
   ).toBe(true)
   expect(
     allow('$feature_flag_called', {
-      $feature_flag: 'notes-import',
+      $feature_flag: 'announcement',
       $feature_flag_response: false,
     })
   ).toBe(true)
   expect(
     allow('$feature_flag_called', {
-      $feature_flag: 'notes-import',
+      $feature_flag: 'announcement',
       $feature_flag_response: 'variant-b',
     })
   ).toBe(true)
@@ -172,14 +172,14 @@ it('caps flag exposure across launches without merging flags or variants', async
   ;({ allowAnalyticsFrequency: allow } = await import('./analyticsFrequency'))
   expect(
     allow('$feature_flag_called', {
-      $feature_flag: 'notes-import',
+      $feature_flag: 'announcement',
       $feature_flag_response: true,
     })
   ).toBe(false)
   vi.setSystemTime(new Date('2026-10-05T00:00:00Z'))
   expect(
     allow('$feature_flag_called', {
-      $feature_flag: 'notes-import',
+      $feature_flag: 'announcement',
       $feature_flag_response: true,
     })
   ).toBe(true)

@@ -89,7 +89,7 @@ export function refreshSyncClock({ force = false } = {}): Promise<
     const timeout = setTimeout(() => controller.abort(), 3000)
     const started = elapsedNow()
     try {
-      const response = await fetch(apis.notesImportHealth, {
+      const response = await fetch(apis.apiHealth, {
         signal: controller.signal,
         cache: 'no-store',
       })

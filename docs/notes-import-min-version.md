@@ -1,5 +1,15 @@
 # Notes Import minimum app version
 
+> **Superseded by Scribe AI** ([ADR 0032](./adr/0032-scribe-ai-agent-harness.md)).
+> The app no longer has Notes Import. Scribe AI's floor is KV
+> `scribe:min-version` on `GET /scribe/v1/status`: below it the app shows
+> Update Required for Scribe AI without sending anything
+> ([`scribe-ai-protocol.md` → Versioning](./scribe-ai-protocol.md#versioning)).
+> This page describes app versions from before Scribe AI. ww-api still serves
+> `GET /notes-import/status` to them, and at the cutover
+> `notes-import:min-version` is set to the first Scribe AI version so their
+> composers show this update message instead of a failed import.
+
 `GET /notes-import/status` (ww-api) can advertise `minAppVersion`
 (`major.minor.patch`). When this build's `Constants.expoConfig.version`
 (`app.config.ts`) is below it, the app treats Notes Import as unavailable with

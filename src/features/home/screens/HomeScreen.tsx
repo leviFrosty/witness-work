@@ -47,6 +47,7 @@ import MileagePromptCard from '@/features/mileage/components/MileagePromptCard'
 import MileageHomeSection from '@/features/mileage/components/MileageHomeSection'
 import type PetPromptCardComponent from '@/features/pet/components/PetPromptCard'
 import type PetHomeSectionComponent from '@/features/pet/components/PetHomeSection'
+import type ScribeQuickActionsCardComponent from '@/features/scribe/components/ScribeQuickActionsCard'
 import { petHomeSlot } from '@/features/pet/lib/homeSlot'
 import usePet from '@/stores/pet'
 import usePetVisitor from '@/app/pet/usePetVisitor'
@@ -399,7 +400,9 @@ export const HomeScreen = ({ header }: { header: ReactNode }) => {
                       return <PetHomeSection key={key} visitor={petVisitor} />
                     return null
                   }
-
+                  case 'quickActions':
+                    if (homeScreenElements.quickActions === false) return null
+                    return <QuickActionsCard key={key} />
                   case 'thisWeek':
                     if (homeScreenElements.thisWeek === false) return null
                     // Its item is measured to keep the week above the day's
@@ -533,4 +536,11 @@ function PetHomeSection(props: ComponentProps<typeof PetHomeSectionComponent>) {
   const Section: typeof PetHomeSectionComponent =
     require('@/features/pet/components/PetHomeSection').default
   return <Section {...props} />
+}
+
+/** Quick Actions' Scribe AI orb draws with Skia too; required the same way. */
+function QuickActionsCard() {
+  const Card: typeof ScribeQuickActionsCardComponent =
+    require('@/features/scribe/components/ScribeQuickActionsCard').default
+  return <Card />
 }

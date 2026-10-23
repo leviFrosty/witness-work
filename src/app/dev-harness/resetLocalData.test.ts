@@ -9,7 +9,6 @@ const native = vi.hoisted(() => {
     /** The default MMKV instance: what the stores saved. */
     saved: new Map<string, string>(),
     stopwatchReset: vi.fn(async () => undefined),
-    hydrateNotesImports: vi.fn(),
   }
 })
 
@@ -45,11 +44,6 @@ vi.mock('react-native-mmkv', () => ({
 }))
 vi.mock('../../../modules/stopwatch-bridge', () => ({
   reset: native.stopwatchReset,
-}))
-vi.mock('@/features/notes-import/hooks/useNotesImportManager', () => ({
-  useNotesImportManager: {
-    getState: () => ({ hydrate: native.hydrateNotesImports }),
-  },
 }))
 vi.mock('@/lib/analytics', () => ({ analytics: { capture: vi.fn() } }))
 vi.mock('react-native', () => ({
@@ -113,7 +107,8 @@ const KEPT_MMKV: Record<string, string> = {
     "the account's session, backup state and RevenueCat link, which follow the account key",
   'app-attest': 'App Attest key ids, registered with the server',
   'app-attest-lifecycle-v2': 'App Attest key ids, registered with the server',
-  'notes-import-credits': "the account's Import Credits, read from the server",
+  'notes-import-credits':
+    "Notes Import's cached Import Credits; Scribe AI's launch cleanup empties it",
   'app-store-ratings': 'cached App Store totals for the paywall',
   'analytics-frequency': 'analytics throttling, never shown',
 }
@@ -227,7 +222,24 @@ describe('resetLocalData', () => {
     expect(native.cleared).toEqual(
       expect.arrayContaining(['default', 'notes-import-ledger', 'pet-secrets'])
     )
-    expect(native.hydrateNotesImports).toHaveBeenCalled()
     expect(native.stopwatchReset).toHaveBeenCalled()
+  })
+
+  it('forgets Scribe AI conversations and undo records', async () => {
+    const { useScribeConversations } = await import(
+      '@/features/scribe/stores/conversations'
+    )
+    const { useScribeLedger } = await import('@/features/scribe/stores/ledger')
+    useScribeConversations.setState({
+      conversations: { c1: { id: 'c1' } as never },
+      hasFinishedTurn: true,
+    })
+    useScribeLedger.setState({ records: { p1: { proposalId: 'p1' } as never } })
+    resetLocalData()
+    expect(useScribeConversations.getState()).toMatchObject({
+      conversations: {},
+      hasFinishedTurn: false,
+    })
+    expect(useScribeLedger.getState().records).toEqual({})
   })
 })

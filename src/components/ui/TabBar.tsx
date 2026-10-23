@@ -8,7 +8,7 @@ import {
   Settings as SettingsIcon,
   Wrench as WrenchIcon,
 } from 'lucide-react-native'
-import { useEffect, useRef, useState } from 'react'
+import { type ReactNode, useEffect, useRef, useState } from 'react'
 import { Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native'
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs'
 import { BlurView } from '@/components/ui/BlurView'
@@ -71,9 +71,20 @@ const liquidGlass = isLiquidGlassAvailable()
 type Props = BottomTabBarProps & {
   /** Only supplied while hardware Command is held and shortcuts are active. */
   shortcutHints?: Record<string, string>
+  /**
+   * A row above the "+" actions (Scribe AI's Speak an update), given the
+   * function that closes the sheet or menu.
+   */
+  renderQuickActionLeading?: (close: () => void) => ReactNode
 }
 
-const TabBar = ({ state, descriptors, shortcutHints, ...props }: Props) => {
+const TabBar = ({
+  state,
+  descriptors,
+  shortcutHints,
+  renderQuickActionLeading,
+  ...props
+}: Props) => {
   const [sheetOpen, setSheetOpen] = useState(false)
   const quickActionFocusRef = useRef<View>(null)
   const rootNavigation = props.navigation as unknown as RootStackNavigation &
@@ -493,7 +504,9 @@ const TabBar = ({ state, descriptors, shortcutHints, ...props }: Props) => {
                 route.name === 'Settings' ? renderTab(route, index) : null
               )}
               <AnchoredPopover
-                contentWidth={320}
+                // Wide enough that Speak an update's title, badge and subtitle
+                // each keep to one line at iPad text sizes.
+                contentWidth={400}
                 accessibilityFocusRef={quickActionFocusRef}
                 contentStyle={{ gap: 12 }}
                 resolvePosition={({
@@ -588,6 +601,7 @@ const TabBar = ({ state, descriptors, shortcutHints, ...props }: Props) => {
                     <QuickActionMenu
                       navigation={rootNavigation}
                       onAction={close}
+                      leading={renderQuickActionLeading?.(close)}
                     />
                   </>
                 )}
@@ -683,6 +697,7 @@ const TabBar = ({ state, descriptors, shortcutHints, ...props }: Props) => {
           navigation={rootNavigation}
           setSheetOpen={setSheetOpen}
           sheetOpen={sheetOpen}
+          leading={renderQuickActionLeading?.(() => setSheetOpen(false))}
         />
       </>
     )
@@ -726,6 +741,7 @@ const TabBar = ({ state, descriptors, shortcutHints, ...props }: Props) => {
         }
         setSheetOpen={setSheetOpen}
         sheetOpen={sheetOpen}
+        leading={renderQuickActionLeading?.(() => setSheetOpen(false))}
       />
     </>
   )

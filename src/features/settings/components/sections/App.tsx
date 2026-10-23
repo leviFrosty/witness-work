@@ -1,10 +1,9 @@
-import { useNotesImportEnabled } from '@/hooks/useNotesImportEnabled'
 import {
   Cloud as CloudIcon,
   Ellipsis as EllipsisIcon,
   FileInput as FileInputIcon,
   FileOutput as FileOutputIcon,
-  FileText as FileTextIcon,
+  Gauge as GaugeIcon,
 } from 'lucide-react-native'
 import i18n from '@/lib/locales'
 import { syncSettingsTitleKey } from '@/lib/syncCopy'
@@ -12,21 +11,25 @@ import useCloudSyncSupported from '@/hooks/useCloudSyncSupported'
 import { registeredCloudSyncTransport } from '@/lib/syncTransport/provider'
 import { GroupedListRow, GroupedListSection } from '@/components/ui/GroupedList'
 import { SettingsSectionProps } from '@/features/settings/screens/settingScreen'
-import { useNotesImportAvailability } from '@/features/notes-import/hooks/useNotesImportAvailability'
-import { useNotesImportManager } from '@/features/notes-import/hooks/useNotesImportManager'
-import { unviewedReadyImportCount } from '@/features/notes-import/lib/notesImportLedger'
-import NotesImportReadyDot from '@/features/notes-import/components/NotesImportReadyDot'
+import {
+  useScribeAvailability,
+  useScribeEnabled,
+  useScribeUsage,
+} from '@/features/scribe'
+import {
+  blockedStatusCopy,
+  fullestWindow,
+} from '@/features/scribe/components/scribeCopy'
 
 const AppSection = ({
   handleNavigate,
   selectedDestination,
 }: SettingsSectionProps) => {
-  const notesImportEnabled = useNotesImportEnabled()
   const cloudSyncSupported = useCloudSyncSupported()
-  const notesImport = useNotesImportAvailability()
-  const notesImportReadyCount = useNotesImportManager((s) =>
-    unviewedReadyImportCount(s.entries)
-  )
+  const scribeEnabled = useScribeEnabled()
+  const scribe = useScribeAvailability()
+  // Shown in passing: never opens a session (and an account) to fill it in.
+  const fullest = fullestWindow(useScribeUsage({ open: false }).usage)
   return (
     <GroupedListSection title={i18n.t('app')}>
       <GroupedListRow
@@ -41,35 +44,23 @@ const AppSection = ({
         onPress={() => handleNavigate('MytimeImport')}
         selected={selectedDestination === 'MytimeImport'}
       />
-      {notesImportEnabled && (
+      {scribeEnabled && (
         <GroupedListRow
-          icon={FileTextIcon}
-          label={i18n.t('notesImport_settingsLabel')}
-          // Only a real answer closes it. While checking, offline or after a
-          // failed check, the composer explains and offers Try Again. A
-          // suspended account can still review imports it already ran.
-          disabled={
-            notesImport.status === 'unavailable' &&
-            notesImport.reason !== 'suspended'
-          }
+          icon={GaugeIcon}
+          label={i18n.t('scribe_usageTitle')}
           sublabel={
-            notesImport.status !== 'unavailable'
-              ? undefined
-              : notesImport.updateRequired
-                ? i18n.t('notesImport_updateRequired')
-                : notesImport.reason === 'device_unverified'
-                  ? i18n.t('account_statusUnverified')
-                  : notesImport.reason === 'suspended'
-                    ? i18n.t('account_statusSuspended')
-                    : i18n.t('notesImport_unavailable')
+            scribe.status === 'offline'
+              ? i18n.t('scribe_offlineBadge')
+              : scribe.status === 'blocked'
+                ? i18n.t(blockedStatusCopy(scribe.reason))
+                : fullest
+                  ? i18n.t('scribe_usagePercent', {
+                      percent: fullest.percentUsed,
+                    })
+                  : undefined
           }
-          onPress={() => handleNavigate('NotesImportComposer')}
-          selected={selectedDestination === 'NotesImportComposer'}
-          trailing={
-            notesImportReadyCount > 0 ? (
-              <NotesImportReadyDot visible />
-            ) : undefined
-          }
+          onPress={() => handleNavigate('ScribeUsage')}
+          selected={selectedDestination === 'ScribeUsage'}
         />
       )}
       {/* Cloud Sync needs neither iCloud nor Google Play services. */}

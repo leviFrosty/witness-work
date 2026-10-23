@@ -15,7 +15,6 @@ export type NotificationKind =
   | 'hours_logging'
   | 'whats_new'
   | 'update_reveal'
-  | 'notes_import'
   | 'supporter_nudge'
   | 'supporter_survey'
   /** The Supporter note after finishing the Home checklist. */

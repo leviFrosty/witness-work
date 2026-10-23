@@ -7,7 +7,7 @@ description: WitnessWork's committing and branching strategy — bare branch nam
 
 ## Branch names
 
-Bare feature or fix name, no prefix. `publisher-hours-logging`, `calendar-sync`, `notes-import`.
+Bare feature or fix name, no prefix. `publisher-hours-logging`, `calendar-sync`, `scribe-ai`.
 
 Never `feature/`, `fix/`, `agent/`, `claude/`, or anything else in front of it.
 

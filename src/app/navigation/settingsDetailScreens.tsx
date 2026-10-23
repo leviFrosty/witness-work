@@ -1,16 +1,7 @@
 import type { ComponentType } from 'react'
 import i18n from '@/lib/locales'
 import { syncSettingsTitleKey } from '@/lib/syncCopy'
-import { useNotesImportEnabled } from '@/hooks/useNotesImportEnabled'
 import { RootStackParamList } from '@/types/rootStack'
-
-const NotesImportHeaderRight = () => {
-  const enabled = useNotesImportEnabled()
-  if (!enabled) return null
-  const NotesImportHeaderActions: ComponentType =
-    require('@/features/notes-import/components/NotesImportHeaderActions').default
-  return <NotesImportHeaderActions />
-}
 
 type SettingsDetailScreen = {
   name: keyof RootStackParamList
@@ -52,11 +43,10 @@ export const settingsDetailScreens: SettingsDetailScreen[] = [
     title: () => i18n.t('mytimeImport'),
   },
   {
-    name: 'NotesImportComposer',
+    name: 'ScribeUsage',
     getComponent: () =>
-      require('@/app/navigation/NotesImportComposerRouteScreen').default,
-    title: () => i18n.t('notesImport_title'),
-    headerRight: NotesImportHeaderRight,
+      require('@/app/navigation/ScribeUsageRouteScreen').default,
+    title: () => i18n.t('scribe_usageTitle'),
   },
   {
     name: 'PreferencesPublisher',

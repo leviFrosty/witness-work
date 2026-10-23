@@ -132,10 +132,6 @@ export const appAttestAuthorizer = createAppAttestAuthorizer({
       Crypto.digestStringAsync(Crypto.CryptoDigestAlgorithm.SHA256, value, {
         encoding: Crypto.CryptoEncoding.BASE64,
       }),
-    sha256Hex: (value) =>
-      Crypto.digestStringAsync(Crypto.CryptoDigestAlgorithm.SHA256, value, {
-        encoding: Crypto.CryptoEncoding.HEX,
-      }),
     recoveryTokenHash,
     randomUuid: Crypto.randomUUID,
   },

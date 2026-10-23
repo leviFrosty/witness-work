@@ -219,8 +219,8 @@ export type PrepareCloudSyncOutcome =
 
 /**
  * Gets this device ready for Cloud Sync: the account key (created when there's
- * none, as Notes Import and Backup do), its session, the RevenueCat link (so
- * the server knows a Supporter), and the account's answer.
+ * none, as Scribe AI and Backup do), its session, the RevenueCat link (so the
+ * server knows a Supporter), and the account's answer.
  */
 export async function prepareCloudSync(): Promise<PrepareCloudSyncOutcome> {
   try {

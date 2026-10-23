@@ -3,7 +3,7 @@
 > **Historical.** This is the plan for the first Supporter PR, kept for its principles and rationale. The code has moved on, so don't treat the file lists or decisions below as current. Instead:
 >
 > - **Who is a Supporter:** ADR 0014, implemented by `src/lib/supporterSince.ts` (read through `useIsSupporter`) and ww-api's `isSupporter`.
-> - **What's gated:** `src/lib/featureAccess.ts` — iCloud Sync, custom accent color (also avatar and Contact background colors), and custom app icon — plus the Notes Import allowance enforced by ww-api.
+> - **What's gated:** `src/lib/featureAccess.ts` — iCloud Sync, custom accent color (also avatar and Contact background colors), and custom app icon — plus Scribe AI's larger usage limits, enforced by ww-api.
 > - **Gate UI:** `SupporterGate` shipped as `IsSupporter` (`src/components/IsSupporter.tsx`), which opens `SupporterInfoSheet`.
 > - **Platforms:** RevenueCat runs on iOS and Android. iCloud Sync and app icons stay iOS-only.
 > - **Onboarding:** the Supporter step was removed.

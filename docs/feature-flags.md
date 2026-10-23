@@ -1,6 +1,6 @@
 # Feature flags
 
-Use `useFeatureFlag('notes-import')` from `@/lib/featureFlags` to control feature
+Use `useFeatureFlag('buddies')` from `@/lib/featureFlags` to control feature
 visibility. Add future keys to the `FeatureFlag` string union for type-checked
 call sites. The app root mounts `useInitializeFeatureFlags()` once; consumers
 read a shared Zustand store without making their own flag requests.
@@ -12,13 +12,27 @@ effect cleanup ignores responses from a previous connection. SDK disk caches are
 never used as a fallback. Analytics and flags share the configured provider
 client, but neither calls the other's API.
 
-Notes Import uses the `notes-import` flag:
-https://us.posthog.com/project/492895/feature_flags/892089
-It starts active at 100% rollout. Settings, onboarding, navigation, header actions,
-and ready badges use the visibility flag. Automatic availability probes, startup
-preparation, and startup/foreground import resumption are skipped while hidden.
-The import client and manager do not enforce flags. Server-side access control
-remains the backend's responsibility; already-running work is not cancelled.
+**Default-on flags** (`DEFAULT_ON_FLAGS` in `src/lib/featureFlags.ts`) invert
+that: `useFeatureFlag` returns `true` unless a loaded response for the current
+identity returns `false`. Idle, offline, loading, failed loads, a missing flag
+and an identity whose values haven't loaded all leave the feature on. Use them
+for shipped features where the flag is an off switch for a rollback, not a
+gate. Turning one off reaches only devices that load flags, so the backend
+keeps its own kill switch. `useFeatureFlagValue` is unchanged (it still returns
+`undefined` until values load).
+
+Scribe AI uses the `scribe-ai` flag, default on (create it in PostHog only to
+turn Scribe AI off for some or all users; set it to `false`). `useScribeEnabled()`
+(`@/hooks/useScribeEnabled`) reads it. It gates every entry point, the Supporter
+benefits' Scribe AI perk, the startup status check, attestation preparation and
+the Tools section's probes. ww-api's `scribe:enabled` is the
+real kill switch: `GET /scribe/v1/status` returning `enabled: false` hides
+Scribe AI even with the flag on (`docs/scribe-ai-protocol.md`). Dev builds:
+`__WW_DEV__.setFlag('scribe-ai', false)`.
+
+Scribe AI replaced Notes Import, so the app no longer reads the `notes-import`
+and `notes-import-android` flags; archive them in PostHog once no supported app
+version reads them.
 
 Buddies uses the `buddies` flag (create it in PostHog before rollout; it starts
 off). `useBuddiesEnabled()` also requires a binary that ships the

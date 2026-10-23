@@ -25,6 +25,9 @@ vi.mock('@/hooks/useAdaptiveLayout', () => ({
   }),
 }))
 vi.mock('@/components/ui/TabBar', () => ({ default: () => null }))
+vi.mock('@/features/scribe/components/ScribeQuickActionRow', () => ({
+  default: () => null,
+}))
 vi.mock('@/lib/analytics', () => ({ analytics: { capture: runtime.capture } }))
 vi.mock('@/lib/errorTracking', () => ({
   errorTracking: { captureException: runtime.captureException },

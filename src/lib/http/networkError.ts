@@ -1,7 +1,7 @@
 /**
  * One vocabulary for why a request failed, whatever made it: `request()`,
  * axios, React Native's fetch, a native SDK (RevenueCat), or a feature's own
- * error type (Buddies relay, sync transports, Notes Import).
+ * error type (Buddies relay, sync transports, Scribe AI).
  *
  * - `offline`: no connection, DNS failure, connection refused or dropped, or a
  *   captive portal's web page where an API's JSON was expected.
@@ -53,7 +53,7 @@ const TIMEOUT_PATTERNS = [
 
 /** Feature error codes that mean the same as a kind here. */
 const CODE_KINDS: Record<string, NetworkErrorKind> = {
-  // Shared request(), Buddies relay, sync transports, Notes Import.
+  // Shared request(), Buddies relay, sync transports, Scribe AI.
   offline: 'offline',
   network: 'offline',
   timeout: 'timeout',

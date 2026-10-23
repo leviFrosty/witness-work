@@ -2216,6 +2216,9 @@ function apiRepo() {
 
 const managedApiDir = () => path.join(`${apiRepo()}-worktrees`, 'ww-verify')
 
+const expandHome = (file) =>
+  file.startsWith('~/') ? path.join(os.homedir(), file.slice(2)) : file
+
 function apiDir() {
   return process.env.WW_API_DIR
     ? path.resolve(process.env.WW_API_DIR)
@@ -2296,7 +2299,20 @@ function startLocalApi(dir = apiDir()) {
       fail(
         `${script} not found; ${dir} must be a ww-api checkout that has the verify-ww-api loop`
       )
-    run('node', [script, 'up'], { cwd: dir, timeout: 180_000, ...quiet })
+    // Real credentials (an OpenRouter key for Scribe AI) come only from an
+    // env file the user names; a worker already running keeps what it has.
+    const secrets = process.env.WW_API_SECRETS_FROM
+    run(
+      'node',
+      [
+        script,
+        'up',
+        ...(secrets
+          ? ['--secrets-from', path.resolve(expandHome(secrets))]
+          : []),
+      ],
+      { cwd: dir, timeout: 180_000, ...quiet }
+    )
     const worker = readJson(path.join(dir, '.verify/state.json'), {})
     return {
       mode: 'local',
@@ -3154,7 +3170,7 @@ const commands = {
     const [name, value] = positional
     const parsed = value === 'on' ? true : value === 'off' ? false : undefined
     if (!name || !['on', 'off', 'clear'].includes(value))
-      fail('Usage: ww-verify flag <buddies|notes-import> <on|off|clear>')
+      fail('Usage: ww-verify flag <buddies|scribe-ai> <on|off|clear>')
     await cdpEval(
       state,
       currentPlatform(state, flags),
@@ -3568,7 +3584,7 @@ const commands = {
   doctor                                   read-only health check (exit 1 on failure)
   seed <fresh|onboarded|publisher|pioneer|busy|badges|stress>
   eval '<js expression>'                   run JS in the app, print JSON
-  flag <buddies|notes-import> <on|off|clear>
+  flag <buddies|scribe-ai> <on|off|clear>
   nav "<Route Name>" ['{"json":"params"}']
   link <url>                               open a deep link (accepts the iOS prompt)
   ad <agent-device args...>                agent-device with this run's session

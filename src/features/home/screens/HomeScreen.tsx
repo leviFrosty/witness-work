@@ -179,6 +179,8 @@ export const HomeScreen = ({ header }: { header: ReactNode }) => {
     enabled: !editing,
     paused: selectedDateSheet.open,
   })
+  // The header floats over the content, which starts below it.
+  const [headerHeight, setHeaderHeight] = useState(0)
   // Opening or closing iPhone Duo keeps the section being read in view.
   const anchor = useScrollAnchor(isWide)
   const anchorScroll = anchor.scroll(
@@ -197,7 +199,13 @@ export const HomeScreen = ({ header }: { header: ReactNode }) => {
       collapsable={false}
       style={{ flexGrow: 1, backgroundColor: theme.colors.background }}
     >
-      <ScrollAwayHeader hidden={bars.hidden}>{header}</ScrollAwayHeader>
+      <ScrollAwayHeader
+        hidden={bars.hidden}
+        overlay
+        onHeightChange={setHeaderHeight}
+      >
+        {header}
+      </ScrollAwayHeader>
       <KeyboardAwareScrollView
         ref={weekStrip.scrollRef}
         {...bars.scrollProps}
@@ -235,7 +243,7 @@ export const HomeScreen = ({ header }: { header: ReactNode }) => {
           // The room under the sections is inside them (see AdaptiveColumns),
           // where holding it still starts editing.
           paddingHorizontal: isWide ? 24 : 15,
-          paddingTop: 15,
+          paddingTop: headerHeight + 15,
           width: '100%',
           maxWidth: isWide ? contentMaxWidth : 720,
           alignSelf: 'center',
@@ -245,6 +253,10 @@ export const HomeScreen = ({ header }: { header: ReactNode }) => {
           flexGrow: 1,
         }}
         automaticallyAdjustKeyboardInsets
+        automaticallyAdjustsScrollIndicatorInsets={false}
+        scrollIndicatorInsets={{
+          top: bars.hidden ? insets.top : headerHeight,
+        }}
         style={{
           flex: 1,
           paddingBottom: hasBottomBar ? insets.bottom + 50 : 0,
@@ -255,7 +267,7 @@ export const HomeScreen = ({ header }: { header: ReactNode }) => {
               refreshing={refreshing}
               onRefresh={handleRefresh}
               tintColor={theme.colors.accent}
-              progressViewOffset={16}
+              progressViewOffset={headerHeight + 16}
               style={{ transform: [{ scale: 0.85 }] }}
             />
           ) : undefined

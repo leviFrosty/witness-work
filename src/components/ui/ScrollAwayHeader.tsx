@@ -12,17 +12,28 @@ type Props = PropsWithChildren<{
   hidden: boolean
   /** Fills the status bar's strip while the header is away. */
   backgroundColor?: string
+  /**
+   * Floats the header over the scroll view instead of pushing it down. Pad the
+   * content's top by `onHeightChange`'s height and it scrolls under the header,
+   * so hiding never resizes the scroll view: a resize at the top or bottom edge
+   * fights the scroll's bounce and makes the content jitter. The header needs
+   * an opaque background.
+   */
+  overlay?: boolean
+  onHeightChange?: (height: number) => void
 }>
 
 /**
  * A root header that slides up under the status bar while `hidden`, and the
- * content below it rises into the room it leaves. Its natural height is left
- * alone while it shows, so a header that resizes itself (e.g. compacting) still
- * animates on its own.
+ * content below it rises into the room it leaves (or, as an `overlay`, was
+ * already under it). Its natural height is left alone while it shows, so a
+ * header that resizes itself (e.g. compacting) still animates on its own.
  */
 export default function ScrollAwayHeader({
   hidden,
   backgroundColor,
+  overlay = false,
+  onHeightChange,
   children,
 }: Props) {
   const theme = useTheme()
@@ -35,16 +46,24 @@ export default function ScrollAwayHeader({
 
   return (
     <Animated.View
-      style={{
-        // Pulls whatever follows up into the room the header leaves.
-        marginBottom: hidden ? -travel : 0,
-        transitionProperty: 'marginBottom',
-        transitionDuration: duration,
-        transitionTimingFunction: 'ease-in-out',
-      }}
+      pointerEvents='box-none'
+      style={
+        overlay
+          ? styles.overlay
+          : {
+              // Pulls whatever follows up into the room the header leaves.
+              marginBottom: hidden ? -travel : 0,
+              transitionProperty: 'marginBottom',
+              transitionDuration: duration,
+              transitionTimingFunction: 'ease-in-out',
+            }
+      }
     >
       <Animated.View
-        onLayout={(e) => setHeight(e.nativeEvent.layout.height)}
+        onLayout={(e) => {
+          setHeight(e.nativeEvent.layout.height)
+          onHeightChange?.(e.nativeEvent.layout.height)
+        }}
         pointerEvents={hidden ? 'none' : 'box-none'}
         accessibilityElementsHidden={hidden}
         importantForAccessibility={hidden ? 'no-hide-descendants' : 'auto'}
@@ -80,5 +99,6 @@ export default function ScrollAwayHeader({
 }
 
 const styles = StyleSheet.create({
+  overlay: { position: 'absolute', top: 0, left: 0, right: 0, zIndex: 1 },
   statusBarStrip: { position: 'absolute', top: 0, left: 0, right: 0 },
 })

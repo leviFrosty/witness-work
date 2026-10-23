@@ -13,9 +13,9 @@ import {
  *
  * - `streak`: each the first time the raw Service Streak count reaches its number
  *   (`STREAK_THRESHOLDS`), not the `STREAK_MIN` display gate.
- * - `months`: one per active month since adoption, for a User with no streak to
- *   grow. Months, not hours, so every role unlocks at the same pace (ADR 0019,
- *   ADR 0030).
+ * - `months`: one per active month since adoption, for a User with streaks
+ *   hidden. Months, not hours, so every role unlocks at the same pace (ADR
+ *   0019, ADR 0030).
  *
  * Hats (`HAT_UNLOCK_ORDER`) open up the same two ways on their own counts
  * (`HAT_THRESHOLDS`): three quick ones, then slower. Either way an earned item
@@ -44,22 +44,15 @@ export const HAT_THRESHOLDS: Record<
 }
 
 /**
- * Streak mode while the User has a streak that can grow: streaks shown and, for
- * a `plans` streak, at least one Plan or Recurring Plan to keep. Otherwise
- * months mode, so items still open up.
+ * Streak mode while streaks show, even for a `plans` streak with no Plans yet:
+ * the locked note says to plan. Months mode with streaks hidden, so items still
+ * open up.
  */
-export function unlockMode({
+export const unlockMode = ({
   showStreaks,
-  kind,
-  hasPlans,
 }: {
   showStreaks: boolean
-  kind: StreakKind
-  hasPlans: boolean
-}): UnlockMode {
-  if (!showStreaks) return 'months'
-  return kind === 'plans' && !hasPlans ? 'months' : 'streak'
-}
+}): UnlockMode => (showStreaks ? 'streak' : 'months')
 
 /** What the current mode counts: the streak's raw count, or active months. */
 export type UnlockProgress =

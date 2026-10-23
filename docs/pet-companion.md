@@ -100,8 +100,8 @@ Swappable parts, each a registry of options (`src/features/pet/art/room/`):
   | `plans` (planned days kept)   | 1, 2, 3, 5, 7, 10, 14, 20, 25, 30, 40, 50, 60, 75, 90, 105, 120 |
   | `months` (Kingdom Publishers) | 1, 2, 2, 3, 3, 4, 4, 5, 6, 6, 7, 8, 9, 10, 11, 12, 12           |
 
-  With no streak to grow (`showStreaks` off, or a `plans` streak and no Plans or Recurring Plans at
-  all), items unlock in months mode instead: one item of `UNLOCK_ORDER` per **active month** since
+  With streaks hidden (`showStreaks` off), items unlock in months mode instead (a `plans` streak with
+  no Plans yet stays in streak mode, and the note above the grid says to plan): one item of `UNLOCK_ORDER` per **active month** since
   adoption (a calendar month with at least one active day), as before. Months, not hours, so every
   role unlocks at the same pace (same reasoning as ADR 0019 for badges). `unlockMode` picks the mode.
 
@@ -127,8 +127,9 @@ Swappable parts, each a registry of options (`src/features/pet/art/room/`):
   streak gets its items at once. Secret items are earned and stored the same way.
 - The pet's details (route `PetRoom`) dims a locked item (a locked secret shows its silhouette instead) and can't
   pick it; tapping it shows a tooltip (`Popover`) with how it opens up (`pet_room_locked_tapped`). Its badge says what opens it: in streak mode a
-  flame and the number ("At a streak of 7" to VoiceOver); in months mode the earliest month ("This
-  month" while this month has no active day yet and it's next, "Next month", "In N months"). A note
+  flame and the number ("At a streak of 7" to VoiceOver); in months mode the active months it still needs ("1 more month",
+  "3 more months"), never a date, since a skipped month doesn't count; its tooltip says what counts and
+  whether this month can be one of them. A note
   above a tab's options, while any are locked, says how they open up, by mode and streak kind (hats have their own
   months-mode note).
 - Wall sign: a small square sign on the right of the back wall in muted colors. Digits and icons only

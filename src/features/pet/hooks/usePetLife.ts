@@ -176,11 +176,7 @@ export default function usePetLife(): PetLifeState {
   const roomDefaults = defaultRoomFor(entryMode)
   const room = roomOf(storedRoom, roomDefaults)
   const lamp = lampLevel(streak, showStreaks)
-  const mode = unlockMode({
-    showStreaks,
-    kind: streak.kind,
-    hasPlans: dayPlans.length > 0 || recurringPlans.length > 0 || faking,
-  })
+  const mode = unlockMode({ showStreaks })
 
   const activeDays = pet
     ? selectPetActiveDays({ serviceReports, visits, dayPlans, recurringPlans })

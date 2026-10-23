@@ -26,18 +26,19 @@ export const roomOptionLabel = (part: RoomChoicePart, option: string): string =>
   i18n.t(`pet.room.option.${part}.${option}` as TranslationKey)
 
 /**
- * When a locked option opens up in months mode, from `unlockRequirement`: "This
- * month", "Next month", "In 3 months".
+ * A locked option's months-mode badge, from `unlockRequirement`: "1 more
+ * month", "3 more months". It counts active months, not the calendar.
  */
-export const unlockBadgeText = (monthsFromNow: number): string =>
-  monthsFromNow <= 0
-    ? i18n.t('pet.room.unlockThisMonth')
-    : i18n.t('pet.room.unlockIn' as TranslationKey, { count: monthsFromNow })
+export const unlockBadgeText = (monthsNeeded: number): string =>
+  i18n.t('pet.room.unlockMonthsMore' as TranslationKey, {
+    count: monthsNeeded,
+  })
 
 /**
  * How a locked option opens up, in words for its accessibility label and its
- * tooltip: "At a streak of 7", or the months badge. The streak badge itself
- * shows a flame and the number. A secret never says.
+ * tooltip: "At a streak of 7", or what months mode needs ("Opens after 3 months
+ * in which you log time …"). The streak badge itself shows a flame and the
+ * number. A secret never says.
  */
 export const unlockRequirementText = (
   requirement: UnlockRequirement
@@ -48,7 +49,12 @@ export const unlockRequirementText = (
         count: requirement.count,
       })
     case 'months':
-      return unlockBadgeText(requirement.monthsFromNow)
+      return i18n.t(
+        (requirement.thisMonthCounts
+          ? 'pet.room.unlockMonthsHow.fromThisMonth'
+          : 'pet.room.unlockMonthsHow.fromNextMonth') as TranslationKey,
+        { count: requirement.monthsNeeded }
+      )
     case 'secret':
       return i18n.t('pet.room.secret.body')
   }
@@ -63,7 +69,7 @@ export const unlockPillText = (requirement: UnlockRequirement): string => {
     case 'streak':
       return formatNumber(requirement.count)
     case 'months':
-      return unlockBadgeText(requirement.monthsFromNow)
+      return unlockBadgeText(requirement.monthsNeeded)
     case 'secret':
       return i18n.t('pet.room.secret.badge')
   }

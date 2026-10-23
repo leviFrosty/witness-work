@@ -145,7 +145,7 @@ describe('Decorate Room options', () => {
     expect(isRoomChoiceUnlocked('hat', 'bow', none)).toBe(false)
   })
 
-  it('says when a locked option opens up, counting this month only once it’s active', () => {
+  it('counts the active months a locked option still needs, and whether this month can be one', () => {
     const months = (
       activeMonths: number,
       thisMonthActive: boolean
@@ -156,33 +156,39 @@ describe('Decorate Room options', () => {
       activeMonths,
       thisMonthActive,
     })
-    // bed:hay is first: one active month away.
+    // bed:hay is first: one active month away, maybe this one.
     expect(unlockRequirement('bed', 'hay', months(0, true))).toEqual({
       by: 'months',
-      monthsFromNow: 1,
+      monthsNeeded: 1,
+      thisMonthCounts: false,
     })
     expect(unlockRequirement('bed', 'hay', months(0, false))).toEqual({
       by: 'months',
-      monthsFromNow: 0,
+      monthsNeeded: 1,
+      thisMonthCounts: true,
     })
     // The cushion is now one of the last.
     expect(unlockRequirement('bed', 'cushion', months(0, true))).toEqual({
       by: 'months',
-      monthsFromNow: 13,
+      monthsNeeded: 13,
+      thisMonthCounts: false,
     })
     // The top hat takes ten active months.
     expect(unlockRequirement('hat', 'tophat', months(2, true))).toEqual({
       by: 'months',
-      monthsFromNow: 8,
+      monthsNeeded: 8,
+      thisMonthCounts: false,
     })
     // floor:stone is fifth.
     expect(unlockRequirement('floor', 'stone', months(2, true))).toEqual({
       by: 'months',
-      monthsFromNow: 3,
+      monthsNeeded: 3,
+      thisMonthCounts: false,
     })
     expect(unlockRequirement('floor', 'stone', months(2, false))).toEqual({
       by: 'months',
-      monthsFromNow: 2,
+      monthsNeeded: 3,
+      thisMonthCounts: true,
     })
     // Free or already open: no badge.
     expect(unlockRequirement('floor', 'stone', months(5, true))).toBeNull()

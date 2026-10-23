@@ -11,16 +11,58 @@ import useTheme from '@/contexts/theme'
 import {
   isRichTextEmpty,
   richTextHasMark,
-  richTextImages,
   richTextLinks,
+  richTextPreviewLines,
+  richTextRuns,
   toggleRichTextTask,
   withoutBareLinks,
-  withoutRichTextImages,
+  type RichTextRun,
 } from '@/lib/richText/inspect'
 import { getNoteDoc, noteFields, type NoteUpdate } from '@/lib/richText/notes'
-import type { NoteFields, RichTextImageAttrs } from '@/types/richText'
+import type {
+  NoteFields,
+  RichTextDoc,
+  RichTextImageAttrs,
+} from '@/types/richText'
 
 const MAX_CARDS = 3
+/** About how many lines of text a row of thumbnails stands in for. */
+const THUMBNAIL_LINES = 2
+
+type PreviewRun =
+  | { type: 'text'; doc: RichTextDoc; numberOfLines?: number }
+  | { type: 'images'; images: RichTextImageAttrs[] }
+
+/**
+ * The runs that fit in `numberOfLines`, in the note's order. Photos past the
+ * clamp still show, in one row at the end.
+ */
+function previewRuns(
+  runs: RichTextRun[],
+  numberOfLines: number | undefined
+): PreviewRun[] {
+  let left = numberOfLines ?? Infinity
+  const shown: PreviewRun[] = []
+  const leftover: RichTextImageAttrs[] = []
+  for (const run of runs) {
+    if (run.type === 'images') {
+      if (left > 0) shown.push(run)
+      else leftover.push(...run.images)
+      left -= THUMBNAIL_LINES
+      continue
+    }
+    const lines = richTextPreviewLines(run.doc.content)
+    if (!lines || left <= 0) continue
+    shown.push({
+      type: 'text',
+      doc: run.doc,
+      numberOfLines: numberOfLines === undefined ? undefined : left,
+    })
+    left -= lines
+  }
+  if (leftover.length) shown.push({ type: 'images', images: leftover })
+  return shown
+}
 
 interface Props {
   /** The record (or its note fields) whose note to show. */
@@ -84,10 +126,26 @@ const RichNote = ({
     onLinkLongPress: interactive ? (url) => void copy(url) : undefined,
   }
 
-  const images = preview && thumbnails ? richTextImages(doc) : []
-  const previewText = (
+  const runs = preview && thumbnails ? richTextRuns(shown) : []
+  const previewBody = runs.some((run) => run.type === 'images') ? (
+    <View style={{ gap: 6 }}>
+      {previewRuns(runs, numberOfLines).map((run, index) =>
+        run.type === 'images' ? (
+          <NoteThumbnails key={index} images={run.images} />
+        ) : (
+          <RichTextPreview
+            key={index}
+            doc={run.doc}
+            numberOfLines={run.numberOfLines}
+            style={style}
+            spans={spans}
+          />
+        )
+      )}
+    </View>
+  ) : (
     <RichTextPreview
-      doc={images.length ? withoutRichTextImages(shown) : shown}
+      doc={shown}
       numberOfLines={numberOfLines}
       style={style}
       spans={spans}
@@ -95,14 +153,7 @@ const RichNote = ({
     />
   )
   const body = isRichTextEmpty(shown) ? null : preview ? (
-    images.length ? (
-      <View style={{ gap: 6 }}>
-        {previewText}
-        <NoteThumbnails images={images} />
-      </View>
-    ) : (
-      previewText
-    )
+    previewBody
   ) : (
     <RichTextView
       doc={shown}

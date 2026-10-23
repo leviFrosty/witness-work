@@ -120,6 +120,64 @@ export function withoutRichTextImages(doc: RichTextDoc): RichTextDoc {
   }
 }
 
+export type RichTextRun =
+  | { type: 'text'; doc: RichTextDoc }
+  | { type: 'images'; images: RichTextImageAttrs[] }
+
+/**
+ * The doc split where its photos sit, for previews that show photos small
+ * between the text. A photo inside a list follows the list.
+ */
+export function richTextRuns(doc: RichTextDoc): RichTextRun[] {
+  const runs: RichTextRun[] = []
+  let blocks: RichTextBlock[] = []
+  let images: RichTextImageAttrs[] = []
+  const flushText = () => {
+    if (!blocks.length) return
+    const text: RichTextDoc = { type: 'doc', content: blocks }
+    runs.push({ type: 'text', doc: withoutRichTextImages(text) })
+    images.push(...richTextImages(text))
+    blocks = []
+  }
+  const flushImages = () => {
+    if (images.length) runs.push({ type: 'images', images })
+    images = []
+  }
+  for (const block of doc.content) {
+    if (block.type === 'image') {
+      flushText()
+      images.push(block.attrs)
+    } else {
+      if (!blocks.length) flushImages()
+      blocks.push(block)
+    }
+  }
+  flushText()
+  flushImages()
+  return runs
+}
+
+/** How many lines a squeezed preview gives the blocks, before wrapping. */
+export function richTextPreviewLines(blocks: RichTextBlock[]): number {
+  return blocks.reduce((count, block) => {
+    switch (block.type) {
+      case 'paragraph':
+      case 'heading':
+        return count + (block.content?.length ? 1 : 0)
+      case 'bulletList':
+      case 'orderedList':
+      case 'taskList':
+        return block.content.reduce((items, item) => {
+          const [head, ...tail] = item.content
+          const hasHead = head?.type === 'paragraph' || head?.type === 'heading'
+          return items + 1 + richTextPreviewLines(hasHead ? tail : item.content)
+        }, count)
+      case 'image':
+        return count
+    }
+  }, 0)
+}
+
 /** Swaps photo ids, e.g. a Buddy's shared photos for the local copies. */
 export function mapRichTextImages(
   doc: RichTextDoc,

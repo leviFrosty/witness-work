@@ -613,6 +613,7 @@ const VisitFormScreen = ({
             alignItems: 'center',
             gap: 8,
             paddingHorizontal: 13,
+            paddingTop: 12,
           }}
         >
           <IconButton

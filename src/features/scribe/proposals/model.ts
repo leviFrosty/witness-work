@@ -36,6 +36,13 @@ export interface PlanFields {
   note?: string | null
 }
 
+export interface TimeFields {
+  date?: string
+  minutes?: number
+  category?: CategoryTarget
+  note?: string | null
+}
+
 export interface ContactFields {
   name?: string
   phone?: string | null
@@ -51,6 +58,29 @@ export type DraftEffect =
       category: CategoryTarget
       note: string | null
       spoken: ScribeSpoken
+    }
+  | {
+      kind: 'time.update'
+      entryId: string
+      /** The entry when it was read, for the card. */
+      entryDate: string
+      entryMinutes: number
+      entryCategory: CategoryTarget
+      /** The entry's `updatedAt` when it was read; re-checked at apply. */
+      expectUpdatedAt: number | null
+      set: TimeFields
+      before: TimeFields
+      spoken: ScribeSpoken
+    }
+  | {
+      kind: 'time.delete'
+      entryId: string
+      /** The entry when it was read, for the card. */
+      entryDate: string
+      entryMinutes: number
+      entryCategory: CategoryTarget
+      entryNote: string | null
+      expectUpdatedAt: number | null
     }
   | {
       kind: 'plan.create'
@@ -189,6 +219,8 @@ export const APPLY_ORDER: readonly ScribeEffectKind[] = [
   'contact.update',
   'visit.create',
   'time.create',
+  'time.update',
+  'time.delete',
   'plan.create',
   'plan.update',
 ]

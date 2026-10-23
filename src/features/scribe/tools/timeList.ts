@@ -1,11 +1,13 @@
 import { z } from 'zod/v4'
 import { defineReadTool } from '@/features/scribe/tools/types'
-import { capList, day, daysBetween } from '@/features/scribe/tools/shared'
-import { allTimeEntries, categoryRef } from '@/features/scribe/runtime/snapshot'
-import { entryMinutes } from '@/lib/entryMinutes'
+import {
+  capList,
+  day,
+  daysBetween,
+  entryLine,
+} from '@/features/scribe/tools/shared'
+import { allTimeEntries } from '@/features/scribe/runtime/snapshot'
 import { storedDayKey } from '@/lib/normalizeDate'
-import { hasNote } from '@/lib/richText/notes'
-import { isLdcEntry } from '@/lib/serviceReportCategory'
 
 const MAX_ENTRIES = 60
 const MAX_RANGE_DAYS = 31
@@ -35,13 +37,7 @@ export default defineReadTool({
       ok: true,
       trust: 'app',
       data: {
-        entries: items.map(({ entry, date }) => {
-          const flags = [
-            ...(entry.credit || isLdcEntry(entry) ? ['credit'] : []),
-            ...(hasNote(entry) ? ['note'] : []),
-          ]
-          return `${ctx.refs.issue('t', entry.id)} ${date} ${entryMinutes(entry)}m ${categoryRef(ctx.refs, ctx.stores.categories, entry.categoryId)}${flags.map((flag) => ` ${flag}`).join('')}`
-        }),
+        entries: items.map(({ entry }) => entryLine(ctx, entry)),
         truncated,
       },
     }

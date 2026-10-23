@@ -139,8 +139,16 @@ describe('tool registry', () => {
     const accesses = SCRIBE_TOOLS.map((tool) => tool.access)
     const firstWrite = accesses.indexOf('write')
     expect(
-      accesses.slice(firstWrite).every((access) => access === 'write')
+      accesses.slice(firstWrite).every((access) => access !== 'read')
     ).toBe(true)
+  })
+
+  it('marks only deletes destructive', () => {
+    expect(
+      SCRIBE_TOOLS.filter((tool) => tool.access === 'destructive').map(
+        (tool) => tool.name
+      )
+    ).toEqual(['time_delete'])
   })
 
   it.each(SCRIBE_TOOLS.map((tool) => [tool.name, tool] as const))(
@@ -195,8 +203,9 @@ describe('wire definitions', () => {
       DEFAULT_SCRIBE_LIMITS.maxToolsBytes
     )
     // ≈ 3,300 tokens at the protocol's bytes / 3... spent on every step.
-    // newCategory and onDate added ≈ 800 bytes to save a step on their turns.
-    expect(bytes(definitions)).toBeLessThanOrEqual(13_300)
+    // newCategory and onDate added ≈ 800 bytes to save a step on their turns,
+    // and time_update and time_delete ≈ 1,250.
+    expect(bytes(definitions)).toBeLessThanOrEqual(14_600)
   })
 
   it('declares access and untrusted text as the protocol names them', () => {

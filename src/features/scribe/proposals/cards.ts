@@ -22,6 +22,7 @@ import type {
   DraftEffect,
   PlanFields,
   StoredCard,
+  TimeFields,
   StoredCardContact,
   StoredEffect,
   StoredProposal,
@@ -51,6 +52,8 @@ function contactKey(draft: DraftEffect): string | null {
 
 const CARD_KIND: Record<DraftEffect['kind'], StoredCard['kind']> = {
   'time.create': 'time',
+  'time.update': 'time',
+  'time.delete': 'time',
   'plan.create': 'plan',
   'plan.update': 'plan',
   'contact.create': 'contact',
@@ -287,6 +290,38 @@ function planChanges(set: PlanFields, before: PlanFields): ScribeFieldChange[] {
   return changes
 }
 
+function timeChanges(
+  set: TimeFields,
+  before: TimeFields,
+  stores: ScribeStores,
+  effects: readonly StoredEffect[]
+): ScribeFieldChange[] {
+  const name = (target: CategoryTarget | undefined) =>
+    target ? (categoryLabel(target, stores, effects)?.name ?? null) : null
+  const changes: ScribeFieldChange[] = []
+  if (set.date !== undefined)
+    changes.push({ field: 'date', before: before.date ?? '', after: set.date })
+  if (set.minutes !== undefined)
+    changes.push({
+      field: 'minutes',
+      before: before.minutes ?? 0,
+      after: set.minutes,
+    })
+  if (set.category !== undefined)
+    changes.push({
+      field: 'category',
+      before: name(before.category),
+      after: name(set.category),
+    })
+  if (set.note !== undefined)
+    changes.push({
+      field: 'note',
+      before: before.note ?? null,
+      after: set.note,
+    })
+  return changes
+}
+
 function contactChanges(
   set: ContactFields,
   before: ContactFields
@@ -333,6 +368,23 @@ function preview(
         category: categoryLabel(draft.category, stores, effects),
         note: draft.note,
         spoken: draft.spoken,
+      }
+    case 'time.update':
+      return {
+        kind: draft.kind,
+        date: draft.entryDate,
+        minutes: draft.entryMinutes,
+        category: categoryLabel(draft.entryCategory, stores, effects),
+        changes: timeChanges(draft.set, draft.before, stores, effects),
+        spoken: draft.spoken,
+      }
+    case 'time.delete':
+      return {
+        kind: draft.kind,
+        date: draft.entryDate,
+        minutes: draft.entryMinutes,
+        category: categoryLabel(draft.entryCategory, stores, effects),
+        note: draft.entryNote,
       }
     case 'plan.create':
       return {

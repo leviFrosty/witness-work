@@ -13,6 +13,7 @@ import {
   Plus as PlusIcon,
   Sparkles as SparklesIcon,
   Tag as TagIcon,
+  Trash2 as Trash2Icon,
   TriangleAlert as TriangleAlertIcon,
   UserRound as UserRoundIcon,
   UserRoundPlus as UserRoundPlusIcon,
@@ -411,6 +412,10 @@ const ScribeReviewCard = ({
         break
       case 'category.create':
         icon = TagIcon
+        break
+      case 'time.delete':
+        icon = Trash2Icon
+        tone = 'warn'
         break
       default:
         icon = ClockIcon

@@ -994,5 +994,107 @@ exports[`wire definitions > matches the snapshot of the generated payload 1`] = 
     },
     "name": "categories_create",
   },
+  {
+    "access": "write",
+    "description": "Propose a change to one Time Entry the User asks to change, by entryRef (from time_list) or onDate (its day). Null keeps a field; categoryRef k0 makes it Standard.",
+    "inputSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "categoryRef": {
+          "maxLength": 12,
+          "minLength": 2,
+          "type": [
+            "string",
+            "null",
+          ],
+        },
+        "date": {
+          "format": "date",
+          "type": [
+            "string",
+            "null",
+          ],
+        },
+        "dateSpoken": {
+          "maxLength": 40,
+          "type": [
+            "string",
+            "null",
+          ],
+        },
+        "entryRef": {
+          "maxLength": 12,
+          "minLength": 2,
+          "type": [
+            "string",
+            "null",
+          ],
+        },
+        "minutes": {
+          "maximum": 5999,
+          "minimum": 0,
+          "type": [
+            "integer",
+            "null",
+          ],
+        },
+        "note": {
+          "maxLength": 500,
+          "type": [
+            "string",
+            "null",
+          ],
+        },
+        "onDate": {
+          "format": "date",
+          "type": [
+            "string",
+            "null",
+          ],
+        },
+      },
+      "required": [
+        "entryRef",
+        "onDate",
+        "date",
+        "minutes",
+        "categoryRef",
+        "note",
+        "dateSpoken",
+      ],
+      "type": "object",
+    },
+    "name": "time_update",
+  },
+  {
+    "access": "destructive",
+    "description": "Propose deleting one Time Entry, only when the User asks to remove it, by entryRef (from time_list) or onDate (its day). To fix one, use time_update.",
+    "inputSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "entryRef": {
+          "maxLength": 12,
+          "minLength": 2,
+          "type": [
+            "string",
+            "null",
+          ],
+        },
+        "onDate": {
+          "format": "date",
+          "type": [
+            "string",
+            "null",
+          ],
+        },
+      },
+      "required": [
+        "entryRef",
+        "onDate",
+      ],
+      "type": "object",
+    },
+    "name": "time_delete",
+  },
 ]
 `;

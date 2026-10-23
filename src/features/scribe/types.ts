@@ -192,6 +192,8 @@ export interface ScribeConversationController {
 
 export type ScribeEffectKind =
   | 'time.create'
+  | 'time.update'
+  | 'time.delete'
   | 'plan.create'
   | 'plan.update'
   | 'contact.create'
@@ -216,6 +218,8 @@ export type ScribeFieldChange =
   | { field: 'minutes'; before: number; after: number }
   | { field: 'startMinutes'; before: number | null; after: number | null }
   | { field: 'anytime'; before: boolean; after: boolean }
+  /** Null is Standard. */
+  | { field: 'category'; before: string | null; after: string | null }
   | {
       field: 'title' | 'note' | 'name' | 'phone' | 'email' | 'address'
       before: string | null
@@ -235,6 +239,22 @@ export type ScribeEffectPreview =
       category: ScribeCategoryLabel | null
       note: string | null
       spoken: ScribeSpoken
+    }
+  | {
+      kind: 'time.update'
+      /** The entry as it was read, for the card. */
+      date: string
+      minutes: number
+      category: ScribeCategoryLabel | null
+      changes: ScribeFieldChange[]
+      spoken: ScribeSpoken
+    }
+  | {
+      kind: 'time.delete'
+      date: string
+      minutes: number
+      category: ScribeCategoryLabel | null
+      note: string | null
     }
   | {
       kind: 'plan.create'

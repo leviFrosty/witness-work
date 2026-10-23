@@ -532,7 +532,7 @@ async function driveTurn(
             }
             calls.push(call)
             run.add(call)
-            if (deps.tool(call.name)?.access === 'write') showDraft()
+            if ((deps.tool(call.name)?.access ?? 'read') !== 'read') showDraft()
             updateTurnDebug(conversationId, (d) => ({
               ...d,
               streamedChars:

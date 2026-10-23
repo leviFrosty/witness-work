@@ -6,30 +6,32 @@ Each file here is one tool the model can call (ADR 0032, [protocol: Tool definit
 
 In registry order. Each file's `description` is what the model reads; this is the map.
 
-| Tool                | Access | What it does                                                                                  |
-| ------------------- | ------ | --------------------------------------------------------------------------------------------- |
-| `contacts_search`   | read   | Contacts by name or street, with address, last visit and next Follow-up                       |
-| `contacts_get`      | read   | One Contact's details and visit history, never its notes                                      |
-| `visits_list`       | read   | Visits for one Contact or everyone in a date range, without note text                         |
-| `visits_read_notes` | read   | Note text of a Contact's recent Visits. Untrusted text; refused in data protection mode       |
-| `followups_list`    | read   | Planned Follow-ups through 14 days ahead by default, overdue ones always                      |
-| `plans_list`        | read   | Day Plans (and the buddies going along) and Recurring Plan instances, up to 62 days           |
-| `time_summary`      | read   | Totals for a month, a Service Year or a range: goal, credit, studies, by Category             |
-| `time_list`         | read   | Single Time Entries in a range of up to 31 days                                               |
-| `buddies_plans`     | read   | What buddies share of their plans, up to 56 days                                              |
-| `time_log`          | write  | A Time Entry for today or earlier, in a new Category if named (minutes 0 marks "shared")      |
-| `plans_create`      | write  | A Day Plan, timed or anytime, in a new Category if named; names buddies, refuses repeats      |
-| `plans_update`      | write  | Changes to one Day Plan, by Ref or by its day; Recurring Plans can't be changed               |
-| `contacts_create`   | write  | A new Contact; returns a pending `n` ref                                                      |
-| `contacts_update`   | write  | Changes to an existing Contact; can't delete                                                  |
-| `visits_log`        | write  | A Visit with an optional Follow-up, for a known Contact, a new one, or a choice among several |
-| `categories_create` | write  | A new Category on its own, credit or not; returns a pending `nk` ref                          |
+| Tool                | Access      | What it does                                                                                  |
+| ------------------- | ----------- | --------------------------------------------------------------------------------------------- |
+| `contacts_search`   | read        | Contacts by name or street, with address, last visit and next Follow-up                       |
+| `contacts_get`      | read        | One Contact's details and visit history, never its notes                                      |
+| `visits_list`       | read        | Visits for one Contact or everyone in a date range, without note text                         |
+| `visits_read_notes` | read        | Note text of a Contact's recent Visits. Untrusted text; refused in data protection mode       |
+| `followups_list`    | read        | Planned Follow-ups through 14 days ahead by default, overdue ones always                      |
+| `plans_list`        | read        | Day Plans (and the buddies going along) and Recurring Plan instances, up to 62 days           |
+| `time_summary`      | read        | Totals for a month, a Service Year or a range: goal, credit, studies, by Category             |
+| `time_list`         | read        | Single Time Entries in a range of up to 31 days                                               |
+| `buddies_plans`     | read        | What buddies share of their plans, up to 56 days                                              |
+| `time_log`          | write       | A Time Entry for today or earlier, in a new Category if named (minutes 0 marks "shared")      |
+| `plans_create`      | write       | A Day Plan, timed or anytime, in a new Category if named; names buddies, refuses repeats      |
+| `plans_update`      | write       | Changes to one Day Plan, by Ref or by its day; Recurring Plans can't be changed               |
+| `contacts_create`   | write       | A new Contact; returns a pending `n` ref                                                      |
+| `contacts_update`   | write       | Changes to an existing Contact; can't delete                                                  |
+| `visits_log`        | write       | A Visit with an optional Follow-up, for a known Contact, a new one, or a choice among several |
+| `categories_create` | write       | A new Category on its own, credit or not; returns a pending `nk` ref                          |
+| `time_update`       | write       | Changes to one Time Entry, by Ref or by its day: hours, day, Category, note                   |
+| `time_delete`       | destructive | Deletes one Time Entry, by Ref or by its day. Withdrawn once a turn reads untrusted text      |
 
 Refs the tools take and return: `c` Contact, `n` pending new Contact, `p` Day Plan, `r` Recurring Plan instance, `k` Category (`k0` is Standard), `nk` pending Category, `v` Visit, `t` Time Entry, `b` buddy.
 
 ## Add a tool
 
-1. **One file, one default export.** `defineReadTool` for a tool that answers on the device between steps, `defineWriteTool` for one that proposes changes for the User to review. Name it `noun_verb` (`plans_list`).
+1. **One file, one default export.** `defineReadTool` for a tool that answers on the device between steps, `defineWriteTool` for one that proposes changes for the User to review. Name it `noun_verb` (`plans_list`). A write that removes a record sets `destructive: true`, so ww-api withdraws it once the turn has read untrusted text.
 2. **Input.** A `zod/v4` `z.strictObject` where every key is present: optional values are `.nullable()`, never `.optional()` or `.default()`. Dates are `day` / `optionalDay`, Refs `ref` / `optionalRef`, and the User's own words for a date or time `spoken` (all in `shared.ts`).
 3. **Description.** English for the model, 2–4 sentences, at most 400 characters: when to use it, when not to, and what it returns.
 4. **Behavior.**

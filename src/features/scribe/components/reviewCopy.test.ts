@@ -179,6 +179,48 @@ describe('review card copy', () => {
     ])
   })
 
+  it('heads a time change with the entry as it is, and names Standard', () => {
+    const type = { field: 'category' as const, before: 'Bethel', after: null }
+    expect(
+      lines({
+        kind: 'time.update',
+        date: DAY,
+        minutes: 60,
+        category: { name: 'Bethel', credit: true },
+        changes: [type],
+        spoken: NO_SPOKEN,
+      })
+    ).toEqual([
+      {
+        title: `scribe_cardTimeUpdate {"date":"${DAY}"}`,
+        meta: ['60m', 'Bethel'],
+        spoken: null,
+      },
+      { title: changeLine(type, 'short'), meta: [], spoken: null },
+    ])
+    expect(changeLine(type, 'short')).toBe(
+      'scribe_cardChange {"field":"scribe_field_type","before":"Bethel","after":"standard"}'
+    )
+  })
+
+  it('says which entry a delete removes', () => {
+    expect(
+      lines({
+        kind: 'time.delete',
+        date: DAY,
+        minutes: 90,
+        category: null,
+        note: 'Cart',
+      })
+    ).toEqual([
+      {
+        title: 'scribe_cardTimeDelete {"duration":"90m"}',
+        meta: [DAY, 'Cart'],
+        spoken: null,
+      },
+    ])
+  })
+
   it('describes a new contact by its details', () => {
     expect(
       lines({

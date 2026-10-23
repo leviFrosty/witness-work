@@ -75,8 +75,9 @@ and metering. The model never sees a tool the server's denylist names.
   counted as kept, and the User's next message tells the model the Proposal
   was undone.
 - `destructive` exists in the type so the harness can treat it differently
-  (capped, double-confirmed, withdrawn after untrusted text). v1 ships no
-  destructive tool.
+  (capped, double-confirmed, withdrawn after untrusted text). v1 shipped no
+  destructive tool; `time_delete` is the first. It proposes like a write, so
+  the User still confirms it on a review card, and Undo puts the entry back.
 
 ### 4. The model never sees raw ids
 

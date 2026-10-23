@@ -173,7 +173,7 @@ function propose(
   args: Record<string, unknown>
 ) {
   const tool = scribeTool(name)
-  if (!tool || tool.access !== 'write') throw new Error(name)
+  if (!tool || tool.access === 'read') throw new Error(name)
   const result = tool.propose(args, fixture.ctx)
   if (!result.ok) throw new Error(result.error)
   fixture.draft.add(
@@ -830,6 +830,132 @@ describe('undo', () => {
       status: 'nothing_to_undo',
       kept: 0,
     })
+  })
+})
+
+describe('changing and deleting Time Entries', () => {
+  const timeUpdate = (extra: Record<string, unknown>) => ({
+    entryRef: null,
+    onDate: '2026-10-20',
+    date: null,
+    minutes: null,
+    categoryRef: null,
+    note: null,
+    dateSpoken: null,
+    ...extra,
+  })
+  const entry = (id: string) =>
+    allTimeEntries(useServiceReport.getState().serviceReports).find(
+      (candidate) => candidate.id === id
+    )
+  const apply = (proposal: StoredProposal) =>
+    applyProposal(proposal, {
+      now: NOW,
+      prefs: readScribeStores().preferences,
+      newId,
+    })
+
+  it('changes an entry, moving it to Standard, and Undo puts it back', () => {
+    const fixture = fixtureContext(readScribeStores())
+    propose(
+      fixture,
+      'time_update',
+      timeUpdate({ minutes: 2520, categoryRef: 'k0', note: 'Cart' })
+    )
+    const run = apply(proposalOf(fixture))
+
+    expect(run.applied.map((effect) => effect.kind)).toEqual(['time.update'])
+    expect(entry('entry-3')).toMatchObject({
+      hours: 42,
+      minutes: 0,
+      categoryId: undefined,
+      credit: false,
+      note: 'Cart',
+    })
+    expect(storedDayKey(entry('entry-3')!.date)).toBe('2026-10-20')
+
+    expect(undoApplied(run.applied).result.status).toBe('undone')
+    expect(entry('entry-3')).toMatchObject({
+      hours: 1,
+      minutes: 0,
+      categoryId: 'category-bethel',
+      credit: true,
+      note: undefined,
+    })
+  })
+
+  it('moves an entry to another month', () => {
+    const fixture = fixtureContext(readScribeStores())
+    propose(fixture, 'time_update', timeUpdate({ date: '2026-09-30' }))
+    apply(proposalOf(fixture))
+    expect(storedDayKey(entry('entry-3')!.date)).toBe('2026-09-30')
+    expect(
+      useServiceReport.getState().serviceReports[2026][8].map((e) => e.id)
+    ).toEqual(['entry-3'])
+  })
+
+  it('deletes an entry, and Undo brings it back as it was', () => {
+    const before = records()
+    const fixture = fixtureContext(readScribeStores())
+    propose(fixture, 'time_delete', { entryRef: null, onDate: '2026-10-20' })
+    const run = apply(proposalOf(fixture))
+
+    expect(run.result.status).toBe('applied')
+    expect(entry('entry-3')).toBeUndefined()
+    expect(
+      useServiceReport
+        .getState()
+        .deletedServiceReports.map((tombstone) => tombstone.id)
+    ).toContain('entry-3')
+
+    expect(undoApplied(run.applied).result.status).toBe('undone')
+    expect(records()).toEqual(before)
+    expect(entry('entry-3')).toMatchObject({
+      hours: 1,
+      minutes: 0,
+      categoryId: 'category-bethel',
+      credit: true,
+    })
+    expect(storedDayKey(entry('entry-3')!.date)).toBe('2026-10-20')
+    expect(
+      useServiceReport
+        .getState()
+        .deletedServiceReports.map((tombstone) => tombstone.id)
+    ).not.toContain('entry-3')
+  })
+
+  it('skips an entry that changed since it was proposed', () => {
+    const fixture = fixtureContext(readScribeStores())
+    propose(fixture, 'time_update', timeUpdate({ minutes: 90 }))
+    propose(fixture, 'time_delete', { entryRef: null, onDate: '2026-10-14' })
+    const proposal = proposalOf(fixture)
+    const store = useServiceReport.getState()
+    store.updateServiceReport({ ...entry('entry-3')!, minutes: 30 })
+    store.deleteServiceReport(entry('entry-2')!)
+    const run = apply(proposal)
+
+    expect(
+      run.proposal.effects.map((effect) => [effect.status, effect.skipReason])
+    ).toEqual([
+      ['skipped', 'changed'],
+      ['skipped', 'missing'],
+    ])
+    expect(entry('entry-3')).toMatchObject({ hours: 1, minutes: 30 })
+  })
+
+  it('keeps a change the User edited since', () => {
+    const fixture = fixtureContext(readScribeStores())
+    propose(fixture, 'time_update', timeUpdate({ minutes: 90 }))
+    const run = apply(proposalOf(fixture))
+    useServiceReport
+      .getState()
+      .updateServiceReport({ ...entry('entry-3')!, note: 'Mine' })
+
+    expect(undoApplied(run.applied).result).toEqual({
+      status: 'partially_undone',
+      kept: 1,
+    })
+    expect(entry('entry-3')).toMatchObject({ hours: 1, minutes: 30 })
   })
 })
 

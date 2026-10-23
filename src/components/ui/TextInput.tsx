@@ -127,7 +127,11 @@ const TextInput = forwardRef<InputRef, TextInputProps>((props, ref) => {
     borderRadius?: number
     borderWidth?: number
     borderStyle?: 'solid' | 'dotted' | 'dashed'
+    fontFamily?: string
   }
+  // A style that sets the family to undefined keeps Inter instead of falling
+  // back to the system font.
+  resolvedStyle.fontFamily ??= theme.fonts.regular
   const callerProps = rest as InputProps & {
     backgroundColor?: string
     borderColor?: string

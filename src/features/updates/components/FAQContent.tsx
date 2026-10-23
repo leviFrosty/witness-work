@@ -25,6 +25,7 @@ import { email } from '@/constants/contactInformation'
 import { openURL } from '@/lib/links'
 import { FAQEntry } from '@/features/updates/constants/faqs'
 import { alignInput, alignText } from '@/lib/direction'
+import { postScriptName } from '@/lib/postScriptName'
 
 const ReportLinks = () => {
   const theme = useTheme()
@@ -74,8 +75,6 @@ const ReportLinks = () => {
 
 // Compose's Collapsible pads its own header and content (16dp each side).
 const CARD_PADDING = Platform.OS === 'android' ? 4 : 20
-// SwiftUI looks fonts up by PostScript name, not the expo-font alias.
-const LABEL_FONT = Platform.OS === 'ios' ? 'Inter-SemiBold' : undefined
 const CONTENT_INSET =
   2 + CARD_PADDING * 2 + (Platform.OS === 'android' ? 32 : 0)
 
@@ -122,7 +121,12 @@ export const FAQItem = ({ entry }: { entry: FAQEntry }) => {
             expanded ? 'a11y_expanded' : 'a11y_collapsed'
           )}
           labelStyle={{
-            fontFamily: LABEL_FONT ?? theme.fonts.semiBold,
+            // SwiftUI looks fonts up by PostScript name, not the expo-font
+            // alias.
+            fontFamily:
+              Platform.OS === 'ios'
+                ? postScriptName(theme.fonts.semiBold)
+                : theme.fonts.semiBold,
             fontSize: theme.fontSize('md'),
             color: theme.colors.text,
             textAlign: alignText('start'),

@@ -44,6 +44,7 @@ import InfoPopover from '@/components/ui/InfoPopover'
 import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
 import { inputLayout } from '@/components/ui/inputs/InputLayout'
 import { isSubmenu, menuGroups } from '@/components/ui/menuEntries'
+import { postScriptName } from '@/lib/postScriptName'
 import type {
   ContextMenuAction,
   ContextMenuItem,
@@ -55,11 +56,6 @@ import type {
   GroupedListSectionProps,
   GroupedListSwitchRowProps,
 } from '@/components/ui/GroupedList.types'
-
-// SwiftUI resolves fonts by PostScript name; expo-font's `Inter_500Medium`
-// style aliases only exist for React Native text.
-const postScriptName = (family: string) =>
-  family.replace(/^Inter_\d+/, 'Inter-')
 
 const ICON_GAP = 12
 

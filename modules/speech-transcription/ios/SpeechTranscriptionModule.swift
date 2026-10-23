@@ -38,13 +38,15 @@ private actor SessionSlot {
  */
 public class SpeechTranscriptionModule: Module {
   private let slot = SessionSlot()
+  private let cues = CuePlayer()
 
   public func definition() -> ModuleDefinition {
     Name("SpeechTranscription")
 
     // JS checks this so OTA updates never call into a binary without the module.
+    // 2: playCue.
     Constant("speechTranscriptionVersion") {
-      1
+      2
     }
 
     Events("onTranscript", "onLevel", "onPreparing", "onEnd")
@@ -95,6 +97,10 @@ public class SpeechTranscriptionModule: Module {
     AsyncFunction("cancel") { () async in
       await self.slot.take()?.cancel()
     }
+
+    AsyncFunction("playCue") { (uri: String) in
+      self.cues.play(uri)
+    }.runOnQueue(.main)
 
     OnDestroy {
       let slot = self.slot

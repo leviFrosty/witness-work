@@ -62,6 +62,14 @@ type Cue = 'listening' | 'countdown'
 
 /** Done (76) and its halo: Discard centers in the same room so labels align. */
 const CONTROL_ROOM = 88
+/**
+ * The spinner turns at least this long, so a warm start still reads as loading
+ * and snaps to ready after the sheet has risen.
+ */
+const MIN_LOADING_MS = 700
+// Soft ticks while loading; capped so a slow start doesn't buzz on.
+const LOADING_TICK_MS = 140
+const LOADING_TICKS_MAX = 24
 
 /**
  * Speak an update (V-A): a sheet over the screen it opened from, with the orb
@@ -107,6 +115,7 @@ const ScribeVoiceScreen = () => {
     )
 
   const capture = useScribeVoiceCapture({
+    minPreparingMs: MIN_LOADING_MS,
     onFinished: (text, reason) => {
       const said = text.trim()
       if (reason === 'typed') {
@@ -138,10 +147,23 @@ const ScribeVoiceScreen = () => {
     void capture.start()
   }, [capture])
 
-  // The capture taps lightly when the mic goes live.
+  // The capture snaps when the mic goes live.
   useEffect(() => {
     if (state === 'error') void Haptics.error()
   }, [state])
+
+  // A soft pulse while getting ready, which the snap ends. Not while a
+  // language downloads: that can take minutes.
+  const pulsing = state === 'preparing' && capture.preparingPercent === null
+  useEffect(() => {
+    if (!pulsing) return
+    let ticks = 0
+    const timer = setInterval(() => {
+      if (++ticks > LOADING_TICKS_MAX) clearInterval(timer)
+      else void Haptics.soft()
+    }, LOADING_TICK_MS)
+    return () => clearInterval(timer)
+  }, [pulsing])
 
   // The sheet's text changes silently for VoiceOver, and a live region would
   // read every second of the countdown, so announce the two moments that
@@ -366,7 +388,7 @@ const ScribeVoiceScreen = () => {
                 ? 'listening'
                 : state === 'finishing'
                   ? 'organizing'
-                  : 'idle'
+                  : 'loading'
             }
             level={capture.level}
             orbLabel={title ?? i18n.t('scribe_voiceListening')}

@@ -475,6 +475,12 @@ export interface ScribeVoiceCaptureOptions {
    * nothing was heard).
    */
   onFinished(text: string, reason: ScribeVoiceFinishReason): void
+  /**
+   * Shortest time `preparing` lasts, so a fast start still shows the loading
+   * spinner and snaps to ready once the sheet has settled. The microphone
+   * already records underneath. Default 0.
+   */
+  minPreparingMs?: number
 }
 
 export interface ScribeVoiceCapture {

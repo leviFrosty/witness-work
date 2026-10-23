@@ -11,7 +11,12 @@ import { Skia } from '@shopify/react-native-skia'
  *
  * - `uSize` — canvas size. The aura fades out before the canvas edge.
  * - `uTime` — seconds. Held still while paused.
+ * - `uFlow` — the inner flow's phase, integrated on the UI thread so its speed
+ *   can follow the voice without the pattern jumping.
  * - `uLevel` — 0–1 smoothed voice loudness.
+ * - `uLoad` — 0–1 the loading spinner.
+ * - `uPop` — 0–1 the ready dot replacing the spinner.
+ * - `uGrow` — the dot springing open: 0 dot, 1 full size (overshoots).
  * - `uProc` — 0–1 blend into the organizing state (smaller orb, ring).
  * - `uMute` — 0–1 desaturates and dims (offline/disabled).
  * - `uCore` — core radius as a fraction of the canvas (0.27 leaves room for the
@@ -21,7 +26,11 @@ import { Skia } from '@shopify/react-native-skia'
 const source = `
 uniform float2 uSize;
 uniform float uTime;
+uniform float uFlow;
 uniform float uLevel;
+uniform float uLoad;
+uniform float uPop;
+uniform float uGrow;
 uniform float uProc;
 uniform float uMute;
 uniform float uCore;
@@ -69,14 +78,18 @@ half4 main(float2 xy) {
   float ang = atan(d.y, d.x);
 
   // Size: idle breathing on a ~4 s sine, a small rise with the voice, and a
-  // contraction while organizing.
+  // contraction while organizing. The ready dot pops in at the spinner's size
+  // and springs open.
   float R0 = s * uCore;
   float breathe = 0.03 * sin(t * 1.5708);
-  float R = R0 * (1.0 + breathe + 0.2 * lvl) * (1.0 - 0.36 * uProc);
+  float opened = clamp(uGrow, 0.0, 1.0);
+  float dotR = 0.13 * mix(0.55, 1.0, uPop);
+  float R = R0 * (1.0 + breathe + 0.14 * lvl) * (1.0 - 0.36 * uProc) * mix(dotR, 1.0, uGrow);
 
   // Liquid edge, seamless around the circle; calm when quiet.
-  float wob = (sin(3.0 * ang + t * 1.7) * 0.6 + sin(5.0 * ang - t * 2.3) * 0.4) * (0.005 + 0.018 * lvl);
-  wob += (noise(dir * 1.6 + float2(t * 0.6, -t * 0.45)) - 0.5) * (0.012 + 0.04 * lvl);
+  float wob = (sin(3.0 * ang + t * 1.7) * 0.6 + sin(5.0 * ang - t * 2.3) * 0.4) * (0.005 + 0.012 * lvl);
+  wob += (noise(dir * 1.6 + float2(t * 0.6, -t * 0.45)) - 0.5) * (0.012 + 0.026 * lvl);
+  wob *= opened;
   float Re = R * (1.0 + wob * (1.0 - uProc));
 
   // ---- Aura: a tight bloom hugging the edge plus a wide haze.
@@ -86,7 +99,7 @@ half4 main(float2 xy) {
   float lobe = 0.7 + 0.3 * sin(ang * 2.0 + t * 0.6);
   float edgeFade = smoothstep(s * 0.5, s * 0.36, r);
   float auraA = (bloom * 0.55 + haze * (0.28 + 0.32 * lvl)) * lobe * edgeFade;
-  auraA *= (0.75 + 0.45 * lvl) * (1.0 - 0.45 * uProc);
+  auraA *= (0.75 + 0.45 * lvl) * (1.0 - 0.45 * uProc) * uPop * smoothstep(0.05, 1.0, opened);
   float3 auraCol = mix(uA, uB, 0.5 + 0.5 * sin(ang + t * 0.4));
   auraCol = mix(auraCol, uD, bloom * 0.25);
 
@@ -94,7 +107,7 @@ half4 main(float2 xy) {
   float2 p = d / max(Re, 1.0);
   float rr = clamp(dot(p, p), 0.0, 1.0);
   float z = sqrt(1.0 - rr);
-  float tt = t * (0.22 + 0.4 * lvl);
+  float tt = uFlow;
   float2 q = p * 0.8;
   float2 w = float2(fbm(q + float2(tt, -tt * 0.7)), fbm(q + float2(-tt * 0.6, tt) + 5.2));
   float n = fbm(q * 1.1 + w * 1.5 + float2(t * 0.07, 0.0));
@@ -114,7 +127,9 @@ half4 main(float2 xy) {
   float rim = pow(1.0 - z, 2.2);
   core += mix(uA, uD, 0.5) * rim * (0.7 + 0.5 * lvl);
   core *= 0.95 + 0.25 * lvl;
-  float inside = smoothstep(Re + 1.0, Re - 1.0, r);
+  // The dot is bright, and settles into the orb's colors as it opens.
+  core = mix(core, mix(uA, uD, 0.7), (1.0 - opened) * 0.8);
+  float inside = smoothstep(Re + 1.0, Re - 1.0, r) * uPop;
 
   // ---- Organizing ring: a comet of light circling the contracted orb.
   float ringR = R * 1.42;
@@ -135,6 +150,17 @@ half4 main(float2 xy) {
   float ra = clamp(ringA + ringGlow, 0.0, 1.0) * (1.0 - inside);
   col += mix(uA, uD, comet) * ra;
   a = clamp(a + ra, 0.0, 1.0);
+
+  // ---- Loading: a small arc turning clockwise, its tail fading.
+  float spinR = R0 * 0.15;
+  float spinW = max(R0 * 0.032, 1.4);
+  float stroke = clamp(spinW * 0.5 - abs(r - spinR) + 0.5, 0.0, 1.0);
+  float lead = fract(ang / 6.2831853 - t * 1.25);
+  float arc = smoothstep(0.62, 0.97, lead) * smoothstep(1.0, 0.985, lead);
+  float sa = uLoad * (1.0 - uPop) * stroke * arc * (1.0 - inside);
+  // Mostly accent: the highlight would wash out on a light sheet.
+  col += mix(uA, uD, 0.12) * sa;
+  a = clamp(a + sa, 0.0, 1.0);
 
   float g = dot(col, float3(0.299, 0.587, 0.114));
   col = mix(col, float3(g), uMute * 0.9);

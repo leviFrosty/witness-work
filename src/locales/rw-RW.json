@@ -1747,12 +1747,10 @@
     "tapForDetails": "Kanda kubona ibisobanuro birenzeho"
   },
   "serviceReportInsights": {
-    "openTime": "Open time details",
     "timeToGoal": "Igihe cyo kugera ku ntego",
     "ofGoal": "kuri intego ya {{goal}}",
     "percentComplete": "{{percent}}% complete",
     "projectionDescription": "Projected combines logged time with the effective contribution of remaining Plans after applying the Credit Time cap.",
-    "openStudies": "Open study details",
     "studiesTitle": "Ubushakashatsi muri uku kwezi",
     "studiesDescription": "Buri guhura n'abantu b'ingeri zitandukanye bigomba kuba bifite agaciro inshuro imwe.",
     "studyContacts": "Contacts included",

@@ -1747,12 +1747,10 @@
     "tapForDetails": "點按查看更多詳情"
   },
   "serviceReportInsights": {
-    "openTime": "開放時間詳情",
     "timeToGoal": "攻門時間",
     "ofGoal": "{{goal}} 的目標",
     "percentComplete": "{{percent}}% 完成",
     "projectionDescription": "預計時間與套用信用時間上限後剩餘計劃的有效繳款合併計算。",
-    "openStudies": "公開研究細節",
     "studiesTitle": "本月的學習",
     "studiesDescription": "每次與聖經研讀的接觸都算一次。",
     "studyContacts": "包含聯絡人",

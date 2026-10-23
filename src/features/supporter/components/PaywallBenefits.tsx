@@ -52,6 +52,12 @@ const FEATURE_ROWS: ReadonlyArray<{
 const resolveCell = (value: boolean | TranslationKey): boolean | string =>
   typeof value === 'boolean' ? value : i18n.t(value)
 
+/** A cell as words: the check and dash are only drawn. */
+const spokenCell = (value: boolean | string) =>
+  typeof value === 'string'
+    ? value
+    : i18n.t(value ? 'paywallCompareIncluded' : 'paywallCompareNotIncluded')
+
 export const FounderLetter = ({ spacious = false }: { spacious?: boolean }) => {
   const theme = useTheme()
   return (
@@ -285,6 +291,7 @@ export const ComparisonChart = ({
         }}
       >
         <Text
+          accessibilityRole='header'
           style={{
             fontSize: theme.fontSize(spacious ? 'lg' : 'md'),
             fontFamily: theme.fonts.semiBold,
@@ -306,7 +313,10 @@ export const ComparisonChart = ({
             backgroundColor: theme.colors.supporterTranslucent,
           }}
         />
+        {/* Each row names both columns, so the headings aren't read alone. */}
         <View
+          accessibilityElementsHidden
+          importantForAccessibility='no-hide-descendants'
           style={{
             flexDirection: 'row',
             paddingLeft: ROW_PADDING_HORIZONTAL,
@@ -357,6 +367,14 @@ export const ComparisonChart = ({
         {rows.map((row, index) => (
           <View
             key={row.key}
+            // One item per feature that says who gets it; the check and dash
+            // cells are drawn, so they read as nothing on their own.
+            accessible
+            accessibilityLabel={i18n.t('paywallCompareRowA11y', {
+              feature: row.label,
+              free: spokenCell(row.free),
+              supporter: spokenCell(row.supporter),
+            })}
             style={{
               flexDirection: 'row',
               alignItems: 'center',

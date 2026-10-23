@@ -1,5 +1,6 @@
 import type { ReactElement, ReactNode } from 'react'
 import {
+  type AccessibilityRole,
   StyleSheet,
   View,
   type StyleProp,
@@ -75,6 +76,8 @@ interface Props {
   /** Extra menu items after Copy, e.g. Navigate for an address. */
   actions?: ContextMenuEntries
   accessibilityLabel?: string
+  /** E.g. `header` for a record's title; ignored with `onPress`. */
+  accessibilityRole?: AccessibilityRole
   preview?: ReactElement
   /** Outer style. Its margins replace the lift padding's negative margins. */
   style?: StyleProp<ViewStyle>
@@ -92,6 +95,7 @@ const Copyeable = ({
   onPress,
   actions = [],
   accessibilityLabel,
+  accessibilityRole,
   preview,
   style,
 }: Props) => {
@@ -106,6 +110,7 @@ const Copyeable = ({
         accessibilityLabel ??
         (typeof children === 'string' ? children : undefined)
       }
+      accessibilityRole={accessibilityRole}
       preview={preview}
       style={[liftedContent.outset, style]}
     >

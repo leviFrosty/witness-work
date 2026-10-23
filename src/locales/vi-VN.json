@@ -1747,12 +1747,10 @@
     "tapForDetails": "Chạm để xem thêm chi tiết"
   },
   "serviceReportInsights": {
-    "openTime": "Chi tiết thời gian mở cửa",
     "timeToGoal": "Thời gian đến mục tiêu",
     "ofGoal": "của {{goal}} mục tiêu",
     "percentComplete": "{{percent}}% hoàn thành",
     "projectionDescription": "Dự kiến kết hợp thời gian được ghi lại với đóng góp hiệu quả của các Kế hoạch còn lại sau khi áp dụng giới hạn Thời gian tín dụng.",
-    "openStudies": "Chi tiết nghiên cứu mở",
     "studiesTitle": "Các nghiên cứu trong tháng này",
     "studiesDescription": "Mỗi lần tiếp xúc với một chuyến thăm Học Kinh Thánh được tính một lần.",
     "studyContacts": "Danh bạ bao gồm",

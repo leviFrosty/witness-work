@@ -1747,12 +1747,10 @@
     "tapForDetails": "Touche pour plus de détails"
   },
   "serviceReportInsights": {
-    "openTime": "Détails de l’horaire d’ouverture",
     "timeToGoal": "Temps jusqu’au but",
     "ofGoal": "de {{goal}} objectif",
     "percentComplete": "{{percent}} % terminé",
     "projectionDescription": "Les prévisions combinent le temps enregistré avec la contribution effective des plans restants après l’application du plafond de temps de crédit.",
-    "openStudies": "Détails de l’étude ouverte",
     "studiesTitle": "Études ce mois-ci",
     "studiesDescription": "Chaque contact avec une visite d’étude biblique compte une fois.",
     "studyContacts": "Contacts inclus",

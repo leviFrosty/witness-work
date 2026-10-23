@@ -9,13 +9,14 @@ import Text from '@/components/ui/MyText'
 import SimpleProgressBar from '@/components/ui/SimpleProgressBar'
 import useTheme from '@/contexts/theme'
 import ServiceReportInsightOverlay from '@/features/service-reports/components/ServiceReportInsightOverlay'
+import { useThisMonthMinutes } from '@/features/service-reports/hooks/useThisMonthTotals'
 import useMonthlyGoal from '@/hooks/useMonthlyGoal'
 import useProjectedTotal from '@/hooks/useProjectedTotal'
 import useScheduleStatus from '@/hooks/useScheduleStatus'
 import useScheduleStatusPresentation from '@/hooks/useScheduleStatusPresentation'
 import { goalProgress } from '@/lib/goalProgress'
 import i18n from '@/lib/locales'
-import { useFormattedMinutes } from '@/lib/minutes'
+import { formatMinutesSpoken, useFormattedMinutes } from '@/lib/minutes'
 import { calculateMonthlyPlannedMinutesOptimized } from '@/lib/recurrence'
 import useServiceReport from '@/stores/serviceReport'
 import { tracking } from '@/lib/tracking'
@@ -297,16 +298,20 @@ interface Props {
   containerStyle?: StyleProp<ViewStyle>
 }
 
-const ServiceReportTimeOverlay = ({ children, containerStyle }: Props) => (
-  <ServiceReportInsightOverlay
-    containerStyle={containerStyle}
-    accessibilityLabel={i18n.t('serviceReportInsights.openTime')}
-    accessibilityHint={i18n.t('scheduleInsights.tapForDetails')}
-    expandedHeight={410}
-    content={({ close }) => <TimeInsightContent onClose={close} />}
-  >
-    {children}
-  </ServiceReportInsightOverlay>
-)
+const ServiceReportTimeOverlay = ({ children, containerStyle }: Props) => {
+  // Reads the month's time, which a label naming the action alone hid.
+  const minutes = useThisMonthMinutes()
+  return (
+    <ServiceReportInsightOverlay
+      containerStyle={containerStyle}
+      accessibilityLabel={formatMinutesSpoken(minutes)}
+      accessibilityHint={i18n.t('scheduleInsights.tapForDetails')}
+      expandedHeight={410}
+      content={({ close }) => <TimeInsightContent onClose={close} />}
+    >
+      {children}
+    </ServiceReportInsightOverlay>
+  )
+}
 
 export default ServiceReportTimeOverlay

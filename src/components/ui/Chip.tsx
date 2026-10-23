@@ -54,6 +54,9 @@ const Chip: React.FC<PropsWithChildren<ChipProps>> = ({
     >
       {icon ? (
         <Text
+          // A glyph ("✓", "ⓘ") beside the label, read as nothing useful.
+          accessibilityElementsHidden
+          importantForAccessibility='no'
           style={{
             color,
             fontFamily: theme.fonts.semiBold,

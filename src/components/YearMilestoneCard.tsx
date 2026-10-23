@@ -28,7 +28,7 @@ import {
   getMilestoneHitState,
   milestoneCelebrationKey,
 } from '@/lib/milestones'
-import { useFormattedMinutes } from '@/lib/minutes'
+import { formatMinutesSpoken, useFormattedMinutes } from '@/lib/minutes'
 import i18n from '@/lib/locales'
 import { formatPlainNumber } from '@/lib/numbers'
 import Haptics from '@/lib/haptics'
@@ -251,6 +251,15 @@ const YearMilestoneCard = ({
   )
   const completedHeroDisplay = useFormattedMinutes(totalMinutesForServiceYear)
   const isDecimal = timeDisplayFormat === 'decimal'
+  // Read as one phrase ("43 hours 30 minutes of 600 hours"), not "43.5, / 600
+  // hours".
+  const heroSpoken =
+    annualGoalHours > 0
+      ? i18n.t('durationSpoken.ofGoal', {
+          value: formatMinutesSpoken(totalMinutesForServiceYear),
+          goal: formatMinutesSpoken(annualGoalHours * 60),
+        })
+      : formatMinutesSpoken(totalMinutesForServiceYear)
 
   // Mirror the month card's `record` tier treatment: amber border + translucent
   // supporter background reads as celebratory without overpowering the chart.
@@ -486,6 +495,9 @@ const YearMilestoneCard = ({
 
       <View style={{ gap: 10 }}>
         <View
+          accessibilityLabel={heroSpoken}
+          // A label alone doesn't keep the view, and the card reads its label.
+          collapsable={false}
           style={{
             flexDirection: 'row',
             alignItems: 'baseline',

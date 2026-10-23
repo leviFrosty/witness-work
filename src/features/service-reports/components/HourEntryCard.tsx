@@ -1,58 +1,21 @@
-import { useMemo } from 'react'
 import { View } from 'react-native'
-import moment from 'moment'
 import { Clock3 as ClockIcon } from 'lucide-react-native'
 import LucideIcon from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
-import usePublisher from '@/hooks/usePublisher'
 import { useFormattedMinutes } from '@/lib/minutes'
-import {
-  adjustedMinutesForSpecificMonth,
-  getMonthsReports,
-} from '@/lib/serviceReport'
 import i18n from '@/lib/locales'
 import useAccessibilityTextSize, {
   FIT_ONE_LINE,
 } from '@/hooks/useAccessibilityTextSize'
-import { usePreferences } from '@/stores/preferences'
-import useServiceReport from '@/stores/serviceReport'
-import { useShallow } from 'zustand/react/shallow'
+import { useThisMonthMinutes } from '@/features/service-reports/hooks/useThisMonthTotals'
 
 export default function HourEntryCard() {
   const theme = useTheme()
   // At accessibility text sizes the figure and its label shrink to fit the
   // half-width column instead of breaking mid-word.
   const fit = useAccessibilityTextSize() ? FIT_ONE_LINE : undefined
-  const { type: publisher } = usePublisher()
-  const { overrideCreditLimit, customCreditLimitHours } = usePreferences(
-    useShallow((s) => ({
-      overrideCreditLimit: s.overrideCreditLimit,
-      customCreditLimitHours: s.customCreditLimitHours,
-    }))
-  )
-  const { serviceReports } = useServiceReport()
-  const now = moment()
-
-  const monthReports = useMemo(
-    () => getMonthsReports(serviceReports, now.month(), now.year()),
-    [now, serviceReports]
-  )
-  const adjustedMinutes = useMemo(
-    () =>
-      adjustedMinutesForSpecificMonth(
-        monthReports,
-        now.month(),
-        now.year(),
-        publisher,
-        {
-          enabled: overrideCreditLimit,
-          customLimitHours: customCreditLimitHours,
-        }
-      ).value,
-    [customCreditLimitHours, monthReports, now, overrideCreditLimit, publisher]
-  )
-  const time = useFormattedMinutes(adjustedMinutes)
+  const time = useFormattedMinutes(useThisMonthMinutes())
 
   return (
     <View

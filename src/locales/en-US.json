@@ -2031,12 +2031,10 @@
     "tapForDetails": "Tap for more details"
   },
   "serviceReportInsights": {
-    "openTime": "Open time details",
     "timeToGoal": "Time to goal",
     "ofGoal": "of {{goal}} goal",
     "percentComplete": "{{percent}}% complete",
     "projectionDescription": "Projected combines logged time with the effective contribution of remaining Plans after applying the Credit Time cap.",
-    "openStudies": "Open study details",
     "studiesTitle": "Studies this month",
     "studiesDescription": "Each contact with a Bible Study visit counts once.",
     "studyContacts": "Contacts included",
@@ -2509,6 +2507,9 @@
   "paywallCompareTitle": "What's included",
   "paywallColFree": "Free",
   "paywallColSupporter": "Supporter",
+  "paywallCompareRowA11y": "{{feature}}. Free: {{free}}. Supporter: {{supporter}}.",
+  "paywallCompareIncluded": "Included",
+  "paywallCompareNotIncluded": "Not included",
   "paywallFeatureCore": "All core features",
   "paywallFeaturePrivacy": "Privacy, on-device",
   "paywallFeatureWidgets": "Widgets",

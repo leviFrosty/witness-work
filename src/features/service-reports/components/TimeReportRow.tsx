@@ -25,7 +25,7 @@ import ContextMenu, {
 } from '@/components/ui/ContextMenu'
 import confirmDestructive from '@/lib/confirmDestructive'
 import { useNavigation } from '@react-navigation/native'
-import { useToastController } from '@tamagui/toast'
+import { toast } from '@/stores/toasts'
 import * as Clipboard from 'expo-clipboard'
 import CreditBadge from '@/features/service-reports/components/CreditBadge'
 import { RootStackNavigation } from '@/types/rootStack'
@@ -61,7 +61,6 @@ const TimeReportRow = ({ report, onPress, onNavigate }: TimeReportRowProps) => {
   const { categories } = useCategories()
   const timeDisplayFormat = usePreferences((s) => s.timeDisplayFormat)
   const navigation = useNavigation<RootStackNavigation>()
-  const toast = useToastController()
   const categoryLabel = getCategoryLabel(report, categories)
   const isLdc = isLdcEntry(report)
 
@@ -101,9 +100,8 @@ const TimeReportRow = ({ report, onPress, onNavigate }: TimeReportRowProps) => {
             entry_mode: timeEntryMode(report),
           })
         }
-        toast.show(i18n.t('success'), {
+        toast.success(i18n.t('success'), {
           message: i18n.t('deleted'),
-          native: true,
         })
       },
     })
@@ -161,7 +159,7 @@ const TimeReportRow = ({ report, onPress, onNavigate }: TimeReportRowProps) => {
       .join('\n')
     Haptics.success().catch(() => {})
     await Clipboard.setStringAsync(text)
-    toast.show(i18n.t('copied'), { native: true, duration: 2000 })
+    toast.success(i18n.t('copied'), { durationMs: 2000 })
   }
 
   /** Re-types the entry in place, as the Add Time screen's Type row would. */

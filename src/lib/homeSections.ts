@@ -5,7 +5,7 @@ import {
   usePreferences,
 } from '@/stores/preferences'
 import usePet from '@/stores/pet'
-import { showUndoToast } from '@/stores/undoToast'
+import { toast } from '@/stores/toasts'
 
 /** A Home section's name, as in Preferences → Home Screen. */
 export const homeSectionTitle = (key: HomeScreenElementKey): string => {
@@ -129,8 +129,8 @@ export const moveHomeSectionTo = (
 /** Hides a section, with an Undo toast that shows it again. */
 export const hideHomeSection = (key: HomeScreenElementKey) => {
   setHomeSectionShown(key, false)
-  showUndoToast({
-    message: i18n.t('homeEdit.removed', { section: homeSectionTitle(key) }),
+  toast.undo({
+    title: i18n.t('homeEdit.removed', { section: homeSectionTitle(key) }),
     onUndo: () => setHomeSectionShown(key, true),
   })
 }

@@ -32,6 +32,9 @@ const runtime = vi.hoisted(() => ({
   },
 }))
 
+vi.mock('@/features/pet/components/PetUnlockRevealHost', () => ({
+  default: () => null,
+}))
 vi.mock('react-native', () => ({
   AppState: {
     get currentState() {

@@ -2,7 +2,7 @@ import { Share } from 'react-native'
 import * as Clipboard from 'expo-clipboard'
 import * as FileSystem from 'expo-file-system/legacy'
 import * as Sharing from 'expo-sharing'
-import { useToastController } from '@tamagui/toast'
+import { toast } from '@/stores/toasts'
 import i18n from '@/lib/locales'
 import Haptics from '@/lib/haptics'
 import { analytics } from '@/lib/analytics'
@@ -18,8 +18,6 @@ export type MileageExportMethod = 'copy' | 'share' | 'csv'
 
 /** Copy, Share, and Export CSV for a Mileage report. */
 export default function useMileageExport() {
-  const toast = useToastController()
-
   const exportReport = async (
     method: MileageExportMethod,
     input: MileageReportInput
@@ -33,7 +31,7 @@ export default function useMileageExport() {
       if (method === 'copy') {
         await Clipboard.setStringAsync(buildReportText(input))
         Haptics.success().catch(() => {})
-        toast.show(i18n.t('copied'), { native: true, duration: 2000 })
+        toast.success(i18n.t('copied'), { durationMs: 2000 })
         analytics.capture('mileage_report_exported', properties)
         return
       }
@@ -44,7 +42,7 @@ export default function useMileageExport() {
         return
       }
       if (!(await Sharing.isAvailableAsync())) {
-        toast.show(i18n.t('mileage.csvUnavailable'), { native: true })
+        toast.error(i18n.t('mileage.csvUnavailable'))
         analytics.capture('mileage_report_export_failed', {
           ...properties,
           reason: 'sharing_unavailable',
@@ -63,7 +61,7 @@ export default function useMileageExport() {
       analytics.capture('mileage_report_exported', properties)
     } catch (error) {
       logger.error('Mileage export failed', error)
-      toast.show(i18n.t('mileage.exportFailed'), { native: true })
+      toast.error(i18n.t('mileage.exportFailed'))
       analytics.capture('mileage_report_export_failed', {
         ...properties,
         reason: 'error',

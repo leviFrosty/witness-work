@@ -1,4 +1,8 @@
 import usePet from '@/stores/pet'
+import { petDisplayName } from '@/features/pet/lib/names'
+import { announcePetUnlocks } from '@/features/pet/lib/unlockAnnounce'
+import { usePetUnlockNews } from '@/features/pet/stores/petUnlockNews'
+import type { RoomItemId } from '@/types/pet'
 import { usePreferences } from '@/stores/preferences'
 import {
   defaultCoatFor,
@@ -160,5 +164,18 @@ export const petHarness = {
     forgetFoundSecrets()
     return true
   },
+  /**
+   * Items opening up now (`['hat:beret', 'floor:stone']`), under the action
+   * rule: unlock toasts within 15 s of `noteUserAction()`, the tray otherwise.
+   * Stores nothing on the pet; the news is real until settled.
+   */
+  unlock: (items: string[]) => {
+    const pet = usePet.getState().pet
+    if (!pet) throw new Error('No pet: adopt one first')
+    announcePetUnlocks(items as RoomItemId[], petDisplayName(pet))
+    return usePetUnlockNews.getState().unseen
+  },
+  /** The unlock news the tray lists, oldest first. */
+  unlockNews: () => usePetUnlockNews.getState().unseen,
   state,
 }

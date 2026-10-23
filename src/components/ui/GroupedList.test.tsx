@@ -133,8 +133,8 @@ vi.mock('@/lib/haptics', () => ({ default: haptics }))
 vi.mock('@/lib/locales', () => ({ default: { t: (key: string) => key } }))
 vi.mock('@/lib/share', () => ({ shareUrl: vi.fn(async () => undefined) }))
 vi.mock('expo-clipboard', () => clipboard)
-vi.mock('@tamagui/toast', () => ({
-  useToastController: () => ({ show: vi.fn() }),
+vi.mock('@/stores/toasts', () => ({
+  toast: { success: vi.fn(), info: vi.fn(), error: vi.fn() },
 }))
 vi.mock('@/components/ui/InfoPopover', () => ({ default: 'InfoPopover' }))
 vi.mock('@/components/ui/LucideIcon', () => ({ default: 'LucideIcon' }))

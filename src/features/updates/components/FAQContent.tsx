@@ -9,7 +9,7 @@ import { useState } from 'react'
 import { Image, Platform, Share, View } from 'react-native'
 import { Collapsible, Host, RNHostView } from '@expo/ui'
 import * as Clipboard from 'expo-clipboard'
-import { useToastController } from '@tamagui/toast'
+import { toast } from '@/stores/toasts'
 import { Input, InputProps } from 'tamagui'
 import Text from '@/components/ui/MyText'
 import Card, { useCardStyle } from '@/components/ui/Card'
@@ -85,7 +85,6 @@ export const FAQItem = ({ entry }: { entry: HelpEntry }) => {
   const theme = useTheme()
   const { question, plainText: answer } = entry
   const italicsReady = useItalicFonts(richTextHasMark(entry.doc, 'italic'))
-  const toast = useToastController()
   const cardStyle = useCardStyle()
   const colorScheme = usePreferences((s) => s.colorScheme)
   const [expanded, setExpanded] = useState(false)
@@ -95,7 +94,7 @@ export const FAQItem = ({ entry }: { entry: HelpEntry }) => {
   const copyAnswer = async () => {
     try {
       await Clipboard.setStringAsync(answer)
-      toast.show(i18n.t('copied'), { native: true, duration: 2000 })
+      toast.success(i18n.t('copied'), { durationMs: 2000 })
     } catch (error) {
       errorTracking.captureException(error)
     }

@@ -1,5 +1,5 @@
 import { useNavigation } from '@react-navigation/native'
-import { useToastController } from '@tamagui/toast'
+import { toast } from '@/stores/toasts'
 
 import type { ContextMenuEntries } from '@/components/ui/ContextMenu'
 import { useLinkActions } from '@/components/RichLinkCard'
@@ -31,7 +31,6 @@ export default function useVisitMenuActions(
   } = {}
 ) {
   const navigation = useNavigation<RootStackNavigation>()
-  const toast = useToastController()
   const deleteConversation = useConversations((s) => s.deleteConversation)
   const dismissFollowUp = useDismissFollowUp()
   const copyAction = useCopyAction()
@@ -62,9 +61,8 @@ export default function useVisitMenuActions(
       description: i18n.t('deleteConversation_description'),
       onConfirm: () => {
         deleteConversation(visit.id)
-        toast.show(i18n.t('success'), {
+        toast.success(i18n.t('success'), {
           message: i18n.t('deleted'),
-          native: true,
         })
         options.onDeleted?.()
       },

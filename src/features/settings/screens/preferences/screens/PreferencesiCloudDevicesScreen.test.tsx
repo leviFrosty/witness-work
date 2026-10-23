@@ -24,9 +24,7 @@ vi.mock('react-native', () => ({
 vi.mock('react-native-keyboard-aware-scroll-view', () => ({
   KeyboardAwareScrollView: 'ScrollView',
 }))
-vi.mock('@tamagui/toast', () => ({
-  useToastController: () => ({ show: mocks.toast }),
-}))
+vi.mock('@/stores/toasts', () => ({ toast: { success: mocks.toast } }))
 vi.mock('@/contexts/theme', () => ({
   default: () => ({ colors: {}, fonts: {}, fontSize: () => 12 }),
 }))
@@ -189,9 +187,7 @@ it('removes a device after confirmation and records its age and status', async (
     age_bucket: '30-90d',
     legacy: false,
   })
-  expect(mocks.toast).toHaveBeenCalledWith('iCloudDeviceRemoved:iPad mini', {
-    native: true,
-  })
+  expect(mocks.toast).toHaveBeenCalledWith('iCloudDeviceRemoved:iPad mini')
 })
 
 it('asks to sync first when this device may not hold the data yet', async () => {

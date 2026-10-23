@@ -39,7 +39,6 @@ import {
 import { TimerSection } from '@/features/service-reports/components/TimerSection'
 import UpgradeLegacyTimeReportsSheet from '@/features/service-reports/components/UpgradeLegacyTimeReportsSheet'
 import HomeGreeting from '@/features/profile/components/HomeGreeting'
-import HomeNewBadgeCard from '@/features/badges/components/HomeNewBadgeCard'
 import HomeChecklist from '@/features/onboarding/components/HomeChecklist'
 import TodayRouteAction from '@/features/route-planning/components/TodayRouteAction'
 import TodayRouteEntry from '@/features/route-planning/components/TodayRouteEntry'
@@ -285,8 +284,6 @@ export const HomeScreen = ({ header }: { header: ReactNode }) => {
         >
           <View pointerEvents={editing ? 'none' : 'auto'}>
             <HomeGreeting />
-            {/* Full width above the columns. */}
-            <HomeNewBadgeCard style={{ marginBottom: 20 }} />
           </View>
         </Pressable>
         {editing ? (

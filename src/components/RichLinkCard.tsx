@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { ActivityIndicator, Platform, Share, View } from 'react-native'
 import { Image } from 'expo-image'
 import * as Clipboard from 'expo-clipboard'
-import { useToastController } from '@tamagui/toast'
+import { toast } from '@/stores/toasts'
 import { Link as LinkIcon } from 'lucide-react-native'
 import Text from '@/components/ui/MyText'
 import ContextMenu, {
@@ -36,8 +36,6 @@ function useDelayedFlag(active: boolean, delayMs: number) {
 
 /** Shared tap / menu behavior for links in notes. */
 export function useLinkActions() {
-  const toast = useToastController()
-
   const open = (url: string) => {
     if (!isHttpUrl(url)) return
     void openURL(url)
@@ -47,7 +45,7 @@ export function useLinkActions() {
     Haptics.success().catch(() => {})
     try {
       await Clipboard.setStringAsync(text)
-      toast.show(message, { native: true, duration: 2000 })
+      toast.success(message, { durationMs: 2000 })
     } catch {
       Haptics.error().catch(() => {})
     }

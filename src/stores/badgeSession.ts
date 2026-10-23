@@ -6,7 +6,7 @@ import type { BadgeKey } from '@/types/badges'
 type BadgeSessionState = {
   /** The latest evaluation, for progress toward each next level. */
   evaluation: BadgeEvaluation | null
-  /** Badges earned by the User's own action, waiting to be celebrated. */
+  /** Badges waiting for their full-screen celebration (a toast was tapped). */
   celebrations: BadgeKey[]
   /**
    * The action behind `celebrations`: they celebrate full screen only while
@@ -31,7 +31,7 @@ type BadgeSessionState = {
  * Ephemeral badge state for this app session. Earned badges themselves live in
  * `preferences.earnedBadges`; this holds only what's derived or pending. A
  * celebration that never gets its turn isn't lost: the badge is already saved
- * and new, so the Home "New badge" card names it.
+ * and new, so the notifications tray lists it.
  */
 export const useBadgeSession = create<BadgeSessionState>((set) => ({
   evaluation: null,

@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const mocks = vi.hoisted(() => ({
-  toast: { show: vi.fn() },
+  toast: { success: vi.fn() },
   dismissContact: vi.fn(),
   dismissContacts: vi.fn(),
   undismissContacts: vi.fn(),
@@ -17,7 +17,7 @@ vi.mock('expo-notifications', () => ({
   cancelScheduledNotificationAsync: mocks.cancel,
   SchedulableTriggerInputTypes: { DATE: 'date' },
 }))
-vi.mock('@tamagui/toast', () => ({ useToastController: () => mocks.toast }))
+vi.mock('@/stores/toasts', () => ({ toast: mocks.toast }))
 vi.mock('@/lib/analytics', () => ({ analytics: { capture: mocks.capture } }))
 vi.mock('@/lib/errorTracking', () => ({
   errorTracking: { captureException: vi.fn() },
@@ -72,7 +72,7 @@ describe('useDismissContact', () => {
     expect(mocks.schedule).not.toHaveBeenCalled()
     expect(mocks.dismissContact).toHaveBeenCalledWith('a', expect.any(Date))
     expect(mocks.capture).not.toHaveBeenCalled()
-    expect(mocks.toast.show.mock.calls[0][1].message).toContain(
+    expect(mocks.toast.success.mock.calls[0][1].message).toContain(
       'contactDismissedWithNotificationMessage'
     )
   })
@@ -81,7 +81,7 @@ describe('useDismissContact', () => {
     mocks.granted = false
     await useDismissContact()(contact('a'), oneWeek)
     expect(mocks.capture).not.toHaveBeenCalled()
-    expect(mocks.toast.show.mock.calls[0][1].message).toContain(
+    expect(mocks.toast.success.mock.calls[0][1].message).toContain(
       'contactDismissedMessage'
     )
   })
@@ -100,8 +100,8 @@ describe('useDismissContacts', () => {
       { id: 'b', dismissedUntil: expect.any(Date) },
     ])
     expect(mocks.capture).not.toHaveBeenCalled()
-    expect(mocks.toast.show).toHaveBeenCalledTimes(1)
-    expect(mocks.toast.show.mock.calls[0][1].message).toContain('"count":2')
+    expect(mocks.toast.success).toHaveBeenCalledTimes(1)
+    expect(mocks.toast.success.mock.calls[0][1].message).toContain('"count":2')
   })
 })
 
@@ -114,6 +114,6 @@ describe('useUndismissContacts', () => {
     expect(mocks.cancel).not.toHaveBeenCalled()
     expect(mocks.undismissContacts).toHaveBeenCalledTimes(1)
     expect(mocks.undismissContacts).toHaveBeenCalledWith(['a', 'b'])
-    expect(mocks.toast.show).toHaveBeenCalledTimes(1)
+    expect(mocks.toast.success).toHaveBeenCalledTimes(1)
   })
 })

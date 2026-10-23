@@ -1,6 +1,6 @@
 import { Share, View } from 'react-native'
 import * as Clipboard from 'expo-clipboard'
-import { useToastController } from '@tamagui/toast'
+import { toast } from '@/stores/toasts'
 import {
   Copy as CopyIcon,
   Share as ShareIcon,
@@ -63,12 +63,11 @@ export default function RecoveryKeySheet({
 
 function RecoveryKeyContent({ recoveryKey }: { recoveryKey: string }) {
   const theme = useTheme()
-  const toast = useToastController()
 
   const copy = async () => {
     await Clipboard.setStringAsync(recoveryKey)
     analytics.capture('recovery_key_exported', { method: 'copy' })
-    toast.show(i18n.t('account_recoveryKeyCopied'), { native: true })
+    toast.success(i18n.t('account_recoveryKeyCopied'))
   }
 
   const share = async () => {

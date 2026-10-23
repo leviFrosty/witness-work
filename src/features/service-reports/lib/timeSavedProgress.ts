@@ -61,9 +61,8 @@ const pastPeriodLabel = (
  * What a saved Time Entry did to the User's progress, for its confirmation:
  * `added` ("1h 30m added") and `progress` ("12h 15m of 50h", "Monthly goal
  * reached" when the save crosses the goal, or "12h 15m this month" with no
- * goal). An entry for an earlier month or Service Year names it ("… in Sep").
- * The native toast fits about 25 characters a line, so the current period goes
- * unnamed.
+ * goal). An entry for an earlier month or Service Year names it ("… in Sep"). A
+ * toast line is short, so the current period goes unnamed.
  */
 export const timeSavedProgress = ({
   addedMinutes,

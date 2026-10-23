@@ -25,7 +25,7 @@ import {
 } from '@/features/contacts/lib/contactImport'
 import useContacts from '@/stores/contactsStore'
 import useConversations from '@/stores/conversationStore'
-import { useToastController } from '@tamagui/toast'
+import { toast } from '@/stores/toasts'
 import { logger } from '@/lib/logger'
 import AppPreferencesSection from '@/features/settings/components/preferences-sections/AppPreferencesSection'
 
@@ -41,7 +41,6 @@ const MoreScreen = () => {
     mergeIncomingCustomFieldDefs,
   } = useContacts()
   const { addConversation, updateConversation } = useConversations()
-  const toast = useToastController()
 
   const pushScreen = (screen: keyof RootStackParamList) => {
     navigation.dispatch(StackActions.push(screen))
@@ -67,7 +66,7 @@ const MoreScreen = () => {
     mergeIncomingCustomFieldDefs,
     getConversations: () => useConversations.getState().conversations,
     showToast: (title: string, message: string) => {
-      toast.show(title, { message, native: true })
+      toast.success(title, { message })
     },
     navigate: (contactId: string) => {
       navigation.navigate('Contact Details', { id: contactId })

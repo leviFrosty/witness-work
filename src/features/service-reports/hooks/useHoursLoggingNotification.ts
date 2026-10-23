@@ -1,5 +1,5 @@
 import { Timer as TimerIcon } from 'lucide-react-native'
-import { useToastController } from '@tamagui/toast'
+import { toast } from '@/stores/toasts'
 import { useShallow } from 'zustand/react/shallow'
 import { setHoursLogging, shouldAskAboutHoursLogging } from '@/lib/hoursLogging'
 import usePublisher from '@/hooks/usePublisher'
@@ -13,7 +13,6 @@ import type { NotificationItem } from '@/types/notifications'
  * answer, including dismissing it, retires it on every synced device.
  */
 export default function useHoursLoggingNotification(): NotificationItem | null {
-  const toast = useToastController()
   // This month's role: an auxiliary month already logs hours, so the question
   // waits until the Kingdom Publisher's next month.
   const { type: role } = usePublisher()
@@ -41,10 +40,7 @@ export default function useHoursLoggingNotification(): NotificationItem | null {
         label: i18n.t('hoursLoggingQuestion.turnOn'),
         onPress: () => {
           setHoursLogging(true, 'tray')
-          // One line: Android's native toast shows only the title.
-          toast.show(i18n.t('hoursLoggingQuestion.turnedOn'), {
-            native: true,
-          })
+          toast.success(i18n.t('hoursLoggingQuestion.turnedOn'))
         },
       },
       {

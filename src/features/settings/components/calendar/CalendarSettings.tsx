@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Alert, Linking, Platform, View } from 'react-native'
-import { useToastController } from '@tamagui/toast'
+import { toast } from '@/stores/toasts'
 import type {
   CalendarDestination,
   CalendarSource,
@@ -39,7 +39,6 @@ const android = Platform.OS === 'android'
 
 export default function CalendarSettings() {
   const theme = useTheme()
-  const toast = useToastController()
   const settings = useCalendarSync()
   const { state, deviceId, working, error } = useCalendarPublishing()
   const [destinations, setDestinations] = useState<CalendarDestination[]>([])
@@ -146,11 +145,10 @@ export default function CalendarSettings() {
   const syncNow = () =>
     run(async () => {
       await publishCalendar()
-      toast.show(i18n.t('calendarSynced'), {
+      toast.success(i18n.t('calendarSynced'), {
         message: i18n.t('calendarUpcomingCount' as TranslationKey, {
           count: useCalendarSync.getState().upcomingCount,
         }),
-        native: true,
       })
     })
   const disconnect = () =>

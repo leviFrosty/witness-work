@@ -7,6 +7,10 @@ const runtime = vi.hoisted(() => {
   return { streak: { kind: 'plans' as 'plans' | 'months', count: 0 } }
 })
 
+const unlocks = vi.hoisted(() => ({ announce: vi.fn() }))
+vi.mock('@/features/pet/lib/unlockAnnounce', () => ({
+  announcePetUnlocks: unlocks.announce,
+}))
 vi.mock('@/stores/mmkv', () => import('@/__tests__/mocks/mmkv'))
 vi.mock(
   '@react-native-async-storage/async-storage',
@@ -114,6 +118,31 @@ describe('usePetLife secret items', () => {
     act(() => renderer?.update(<Harness />))
     expect(latest?.unlockedItems).toBe(unlocked)
     expect(renders).toBe(settled + 1)
+  })
+
+  it('announces an item that opens up for a settled pet', () => {
+    unlocks.announce.mockClear()
+    usePreferences.setState({ earnedBadges: { 'monthsShared.1': { at: 1 } } })
+    usePet.setState({ pet: { ...PET, earnedRoomItems: ['lamp:pearl'] } })
+    mount()
+    expect(unlocks.announce).toHaveBeenCalledWith(
+      expect.arrayContaining(['hat:duck']),
+      expect.any(String)
+    )
+  })
+
+  it("keeps a new pet's starting room quiet", () => {
+    unlocks.announce.mockClear()
+    usePreferences.setState({ earnedBadges: { 'monthsShared.1': { at: 1 } } })
+    // Its first items ever, then more on the day it was adopted.
+    mount()
+    act(() => renderer?.unmount())
+    usePet.setState({
+      pet: { ...PET, adoptedOn: '2026-10-21', earnedRoomItems: ['lamp:pearl'] },
+    })
+    mount()
+    expect(stored()).toEqual(expect.arrayContaining(['hat:duck']))
+    expect(unlocks.announce).not.toHaveBeenCalled()
   })
 
   it('keeps a stored secret open after its rule stops holding', () => {

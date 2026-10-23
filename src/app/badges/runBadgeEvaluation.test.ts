@@ -6,6 +6,7 @@ const runtime = vi.hoisted(() => ({
   prefs: {} as Record<string, unknown>,
   capture: vi.fn(),
   announce: vi.fn(async (_keys: string[]) => {}),
+  unlocks: vi.fn((_keys: string[], _expiresAt?: number) => {}),
 }))
 
 vi.mock('react-native', () => ({ Platform: { OS: 'ios' } }))
@@ -13,6 +14,9 @@ vi.mock('@/lib/locales', () => ({ default: { t: (key: string) => key } }))
 vi.mock('@/lib/analytics', () => ({ analytics: { capture: runtime.capture } }))
 vi.mock('@/lib/logger', () => ({
   logger: { log: vi.fn(), warn: vi.fn(), error: vi.fn() },
+}))
+vi.mock('@/features/badges/lib/badgeToasts', () => ({
+  showBadgeUnlockToasts: runtime.unlocks,
 }))
 vi.mock('@/features/buddies/lib/buddiesService', () => ({
   buddiesEngine: { announceBadges: runtime.announce },
@@ -102,18 +106,16 @@ beforeEach(() => {
 })
 
 describe('runBadgeEvaluation: the action rule (ADR 0021)', () => {
-  it('celebrates a badge the User just earned, tied to that action', () => {
-    const prefs = setUp()
+  it("shows an unlock toast for a badge the User just earned, for its action's moment", () => {
+    setUp()
     const action = noteUserAction('report', NOW.getTime())
     runBadgeEvaluation({ now: NOW, action })
-    const session = useBadgeSession.getState()
-    expect(session.celebrations).toEqual(['reportSent.1'])
-    expect(session.claim).toEqual({
-      group: `action:${action.id}`,
-      expiresAt: NOW.getTime() + CELEBRATION_WINDOW_MS,
-    })
-    // Waiting for its celebration, so the Home card doesn't name it too.
-    expect(card(prefs)).toEqual([])
+    expect(runtime.unlocks).toHaveBeenCalledWith(
+      ['reportSent.1'],
+      NOW.getTime() + CELEBRATION_WINDOW_MS
+    )
+    // Nothing takes over the screen until the User taps the toast.
+    expect(useBadgeSession.getState().celebrations).toEqual([])
     expect(runtime.capture).toHaveBeenCalledWith('badge_earned', {
       badge: 'reportSent',
       level: 1,
@@ -126,9 +128,10 @@ describe('runBadgeEvaluation: the action rule (ADR 0021)', () => {
     ['iCloud Sync or the Watch', null],
     ['a Plan arriving overnight', null],
     ['a buddy confirming', null],
-  ])('files a badge from %s quietly on the Home card', (_source, action) => {
+  ])('files a badge from %s quietly in the tray', (_source, action) => {
     const prefs = setUp()
     runBadgeEvaluation({ now: NOW, action })
+    expect(runtime.unlocks).not.toHaveBeenCalled()
     expect(useBadgeSession.getState().celebrations).toEqual([])
     expect(prefs.earnedBadges['reportSent.1']).toBeDefined()
     expect(prefs.earnedBadges['reportSent.1'].history).toBeUndefined()
@@ -158,7 +161,7 @@ describe('runBadgeEvaluation: the action rule (ADR 0021)', () => {
       now: NOW,
       action: noteUserAction('report', NOW.getTime()),
     })
-    expect(useBadgeSession.getState().celebrations).toEqual([])
+    expect(runtime.unlocks).not.toHaveBeenCalled()
     expect(prefs.earnedBadges['reportSent.1']).toBeDefined()
   })
 
@@ -169,7 +172,7 @@ describe('runBadgeEvaluation: the action rule (ADR 0021)', () => {
       quiet: true,
       action: noteUserAction('report', NOW.getTime()),
     })
-    expect(useBadgeSession.getState().celebrations).toEqual([])
+    expect(runtime.unlocks).not.toHaveBeenCalled()
     expect(prefs.earnedBadges['reportSent.1'].history).toBe(true)
     expect(card(prefs)).toEqual([])
   })
@@ -202,9 +205,8 @@ describe('runBadgeEvaluation: right after onboarding', () => {
       afterOnboarding: true,
       action: noteUserAction('report', NOW.getTime()),
     })
-    const session = useBadgeSession.getState()
-    expect(session.celebrations).toEqual([])
-    expect(session.historyCount).toBe(0)
+    expect(runtime.unlocks).not.toHaveBeenCalled()
+    expect(useBadgeSession.getState().historyCount).toBe(0)
     expect(prefs.earnedBadges['reportSent.1'].history).toBe(true)
     expect(card(prefs)).toEqual([])
     expect(runtime.announce).not.toHaveBeenCalled()

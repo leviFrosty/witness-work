@@ -12,7 +12,7 @@ import ActionButton from '@/components/ui/ActionButton'
 import useServiceReport from '@/stores/serviceReport'
 import * as Crypto from 'expo-crypto'
 import { Ref, useEffect, useImperativeHandle, useState } from 'react'
-import { useToastController } from '@tamagui/toast'
+import { toast } from '@/stores/toasts'
 import i18n from '@/lib/locales'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
@@ -715,7 +715,6 @@ const PlanDayForm = ({
     : reminderMinutes !== null &&
       date.getTime() - reminderMinutes * 60_000 <= Date.now()
 
-  const toast = useToastController()
   const theme = useTheme()
 
   const editingContext = `${params.existingDayPlanId || 'new'}-${params.existingRecurringPlanId || 'new'}-${params.recurringPlanDate || params.date}-${params.recurring ? 'recurring' : ''}-${JSON.stringify(prefill ?? null)}`
@@ -1062,10 +1061,9 @@ const PlanDayForm = ({
         detailsTarget = saveExistingRecurringPlan(scope)
       }
 
-      toast.show(i18n.t('success'), {
+      toast.success(i18n.t('success'), {
         message: i18n.t('updatedPlan'),
-        native: true,
-        duration: 2500,
+        durationMs: 2500,
       })
     } else {
       if (oneTime) {
@@ -1094,10 +1092,9 @@ const PlanDayForm = ({
         addRecurringPlan({ id, ...payload })
       }
 
-      toast.show(i18n.t('success'), {
+      toast.success(i18n.t('success'), {
         message: i18n.t('addedPlan'),
-        native: true,
-        duration: 2500,
+        durationMs: 2500,
       })
     }
 
@@ -1154,9 +1151,8 @@ const PlanDayForm = ({
           return
         }
 
-        toast.show(i18n.t('success'), {
+        toast.success(i18n.t('success'), {
           message: i18n.t('deleted'),
-          native: true,
         })
         onDeleted()
       },

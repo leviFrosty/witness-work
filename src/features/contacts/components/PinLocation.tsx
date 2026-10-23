@@ -3,7 +3,7 @@ import PinPickerMap from '@/components/PinPickerMap'
 import Card from '@/components/ui/Card'
 import Sheet from '@/components/ui/Sheet'
 import { Region } from 'react-native-maps'
-import { useToastController } from '@tamagui/toast'
+import { toast } from '@/stores/toasts'
 import { Contact, Coordinate } from '@/types/contact'
 import { useMemo, useState } from 'react'
 import useTheme from '@/contexts/theme'
@@ -37,11 +37,10 @@ export default function PinLocation(props: {
     contact.coordinate
   )
   const theme = useTheme()
-  const toast = useToastController()
 
   function handleSave() {
     setContact({ ...contact, coordinate, userDraggedCoordinate: !!coordinate })
-    toast.show(i18n.t('coordinateSaved'), { native: true })
+    toast.success(i18n.t('coordinateSaved'))
     setOpen(false)
   }
 

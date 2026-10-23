@@ -1,4 +1,4 @@
-import { useToastController } from '@tamagui/toast'
+import { toast } from '@/stores/toasts'
 
 import confirmDestructive from '@/lib/confirmDestructive'
 import i18n from '@/lib/locales'
@@ -10,8 +10,6 @@ import useServiceReport from '@/stores/serviceReport'
  * Progress → All-time year row menu or the Service History editor.
  */
 const useConfirmDeleteServiceYear = () => {
-  const toast = useToastController()
-
   return ({
     endYear,
     onDeleted,
@@ -30,9 +28,8 @@ const useConfirmDeleteServiceYear = () => {
       onConfirm: () => {
         useServiceReport.getState().deleteServiceYearReports(endYear)
 
-        toast.show(i18n.t('success'), {
+        toast.success(i18n.t('success'), {
           message: i18n.t('deleted'),
-          native: true,
         })
         onDeleted?.()
       },

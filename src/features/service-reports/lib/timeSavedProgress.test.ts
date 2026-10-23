@@ -139,9 +139,8 @@ describe('timeSavedProgress', () => {
     ).toBe('121 Hrs 30 Mins of 600 Hrs in 2025–2026')
   })
 
-  // The iOS native toast's line is about 175 pt of semibold footnote text,
-  // roughly 26 characters, before it truncates.
-  it('keeps the current period within a native toast line', () => {
+  // Short enough to read at a glance in a toast, about 26 characters.
+  it('keeps the current period within a short toast line', () => {
     const lines = (['short', 'decimal'] as const).flatMap((format) =>
       [
         timeSavedProgress({ ...base, format, addedMinutes: 659 }),

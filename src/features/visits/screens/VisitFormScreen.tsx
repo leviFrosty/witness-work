@@ -40,7 +40,7 @@ import {
 } from '@/stores/preferences'
 import { maybeRequestStoreReview } from '@/features/visits/lib/storeReview'
 import useNotifications from '@/hooks/notifications'
-import { useToastController } from '@tamagui/toast'
+import { toast } from '@/stores/toasts'
 import { RootStackParamList } from '@/types/rootStack'
 import {
   offsetFromMinutes,
@@ -178,7 +178,6 @@ const VisitFormScreen = ({
     updateConversation,
     deleteConversation,
   } = useConversations()
-  const toast = useToastController()
 
   const conversationToEditViaProps = params.visitToEditId
   const conversationToUpdate = conversationToEditViaProps
@@ -412,7 +411,7 @@ const VisitFormScreen = ({
     const visit = buildVisit()
     if (params.visitToEditId) updateConversation(visit)
     else addConversation(visit)
-    toast.show(i18n.t('success'), {
+    toast.success(i18n.t('success'), {
       message: i18n.t(
         params.visitToEditId
           ? 'updated'
@@ -420,7 +419,6 @@ const VisitFormScreen = ({
             ? 'addedNotAtHome'
             : 'addedConversation'
       ),
-      native: true,
     })
     return Promise.resolve(visit)
   }, [
@@ -429,7 +427,6 @@ const VisitFormScreen = ({
     followUpEnabled,
     notifyMeOffset,
     params.visitToEditId,
-    toast,
     updateConversation,
   ])
 
@@ -563,9 +560,8 @@ const VisitFormScreen = ({
       onConfirm: () => {
         deleteConversation(conversation.id)
 
-        toast.show(i18n.t('success'), {
+        toast.success(i18n.t('success'), {
           message: i18n.t('deleted'),
-          native: true,
         })
         allowLeave()
         navigation.goBack()

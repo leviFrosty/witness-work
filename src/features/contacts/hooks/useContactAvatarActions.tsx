@@ -5,7 +5,7 @@ import { shareAsync } from 'expo-sharing'
 import * as MediaLibrary from 'expo-media-library'
 import Haptics from '@/lib/haptics'
 import * as FileSystem from 'expo-file-system/legacy'
-import { useToastController } from '@tamagui/toast'
+import { toast } from '@/stores/toasts'
 
 import ContactAvatarCropEditor from '@/components/ContactAvatarCropEditor'
 import {
@@ -39,7 +39,6 @@ export default function useContactAvatarActions(
   enabled: boolean
 ) {
   const updateContact = useContacts((s) => s.updateContact)
-  const toast = useToastController()
   const draftFiles = useAvatarDraftFiles()
   const [editorOpen, setEditorOpen] = useState(false)
   const [editSource, setEditSource] = useState<{
@@ -159,9 +158,8 @@ export default function useContactAvatarActions(
       }
       await MediaLibrary.saveToLibraryAsync(stripCacheBuster(displayedUri))
       Haptics.success().catch(() => {})
-      toast.show(i18n.t('success'), {
+      toast.success(i18n.t('success'), {
         message: i18n.t('savedToPhotos'),
-        native: true,
       })
     } catch (e) {
       logger.error('Failed to save avatar to photos', e)

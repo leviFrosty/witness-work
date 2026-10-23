@@ -9,7 +9,7 @@ import { Fragment, useCallback, useEffect, useMemo, useState } from 'react'
 import { View } from 'react-native'
 import Switch from '@/components/ui/Switch'
 import Sheet from '@/components/ui/Sheet'
-import { useToastController } from '@tamagui/toast'
+import { toast } from '@/stores/toasts'
 import * as Crypto from 'expo-crypto'
 
 import Text from '@/components/ui/MyText'
@@ -78,7 +78,6 @@ const AssistantPreviewSheet = ({
   onUndo,
 }: Props) => {
   const theme = useTheme()
-  const toast = useToastController()
   const { addDayPlan, deleteDayPlan } = useServiceReport()
   const { planAlwaysNotify, timeDisplayFormat } = usePreferences()
 
@@ -156,12 +155,12 @@ const AssistantPreviewSheet = ({
     })
     onAccepted()
     setPendingUndoIds(newIds)
-    toast.show(
+    toast.success(
       i18n.t('assistant.snackbar.addedPlans', { count: survivors.length }),
       {
-        // Tamagui toast doesn't expose action buttons cross-platform, so the
-        // inline undo affordance below the toast is the actionable surface.
-        duration: 5000,
+        // This toast carries no Undo button; the inline undo affordance below
+        // is the actionable surface, and it closes with the same 5 seconds.
+        durationMs: 5000,
       }
     )
     onOpenChange(false)
@@ -170,7 +169,6 @@ const AssistantPreviewSheet = ({
     addDayPlan,
     notifyMe,
     onAccepted,
-    toast,
     onOpenChange,
     recommendation.shape,
   ])

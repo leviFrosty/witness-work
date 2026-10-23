@@ -21,7 +21,7 @@ import confirmDestructive from '@/lib/confirmDestructive'
 import Wrapper from '@/components/ui/layout/Wrapper'
 import IconButton from '@/components/ui/IconButton'
 import { MIN_TOUCH_TARGET } from '@/components/ui/touchTarget'
-import { useToastController } from '@tamagui/toast'
+import { toast } from '@/stores/toasts'
 import { isRedactedContactTombstone } from '@/lib/dataProtection'
 import { deleteAvatarFiles } from '@/lib/contactAvatarFiles'
 import type { Contact } from '@/types/contact'
@@ -39,7 +39,6 @@ const RecoverContactsScreen = () => {
   const { deleteConversation } = useConversations()
   const { deletedContacts, recoverContact, removeDeletedContact } =
     useContacts()
-  const toast = useToastController()
   const insets = useSafeAreaInsets()
   const [hoveredId, setHoveredId] = useState<string | null>(null)
 
@@ -72,17 +71,15 @@ const RecoverContactsScreen = () => {
       .getState()
       .conversations.filter((convo) => targets.has(convo.contact.id))
       .forEach((convo) => deleteConversation(convo.id))
-    toast.show(i18n.t('success'), {
+    toast.success(i18n.t('success'), {
       message: i18n.t('deleted'),
-      native: true,
     })
   }
 
   const recover = (ids: string[]) => {
     ids.forEach((id) => recoverContact(id))
-    toast.show(i18n.t('success'), {
+    toast.success(i18n.t('success'), {
       message: i18n.t('recovered'),
-      native: true,
     })
   }
 

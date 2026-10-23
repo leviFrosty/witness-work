@@ -18,7 +18,7 @@ import {
 } from '@react-navigation/native'
 import * as Crypto from 'expo-crypto'
 import moment from 'moment'
-import { useToastController } from '@tamagui/toast'
+import { toast } from '@/stores/toasts'
 import useTheme from '@/contexts/theme'
 import DisplayRegionsView, {
   type DisplayDivision,
@@ -80,7 +80,6 @@ export default function RouteBuilderScreen({
   )
   const builder = useRouteBuilder(day)
   const { hasAccess } = useFeatureAccess('routePlanning')
-  const toast = useToastController()
   const scrollRef = useAnimatedRef<Animated.ScrollView>()
   const [selectedKey, setSelectedKey] = useState<string | null>(null)
   const [dragging, setDragging] = useState(false)
@@ -130,11 +129,10 @@ export default function RouteBuilderScreen({
       'contacts_map'
     )
     if (leftOff > 0) {
-      toast.show(
+      toast.info(
         i18n.t('routeBuilder_contactsLeftOff' as TranslationKey, {
           count: leftOff,
-        }),
-        { native: true }
+        })
       )
     }
     navigation.setParams({ addContactIds: undefined })

@@ -1,5 +1,5 @@
 import { Alert } from 'react-native'
-import { useToastController } from '@tamagui/toast'
+import { toast } from '@/stores/toasts'
 import * as Clipboard from 'expo-clipboard'
 import i18n from '@/lib/locales'
 import { buddiesEngine } from '@/features/buddies/lib/buddiesService'
@@ -11,14 +11,13 @@ import { shareInviteLink } from '@/features/buddies/lib/shareInvite'
  * Buddies list and the Buddies Code screen that shows it.
  */
 export default function useInviteLinkActions(inviteId: string | null) {
-  const toast = useToastController()
   const link = () => (inviteId ? buddiesEngine.inviteLinkFor(inviteId) : null)
 
   const copy = async () => {
     const current = link()
     if (!current) return
     await Clipboard.setStringAsync(current)
-    toast.show(i18n.t('copied'), { message: '', native: true })
+    toast.success(i18n.t('copied'))
   }
 
   const share = () => {

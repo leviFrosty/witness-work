@@ -1,5 +1,5 @@
 import * as Clipboard from 'expo-clipboard'
-import { useToastController } from '@tamagui/toast'
+import { toast } from '@/stores/toasts'
 import type { ContextMenuEntries } from '@/components/ui/ContextMenu.types'
 import Haptics from '@/lib/haptics'
 import i18n from '@/lib/locales'
@@ -19,14 +19,13 @@ export default function useLinkMenuActions({
   label?: string
   onOpen?: () => void
 }): ContextMenuEntries {
-  const toast = useToastController()
   if (!url) return []
 
   const copyLink = async () => {
     try {
       await Clipboard.setStringAsync(url)
       Haptics.success()
-      toast.show(i18n.t('linkCopied'), { native: true, duration: 2000 })
+      toast.success(i18n.t('linkCopied'), { durationMs: 2000 })
     } catch {
       Haptics.error()
     }

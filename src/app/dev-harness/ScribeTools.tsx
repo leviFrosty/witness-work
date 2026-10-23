@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { View } from 'react-native'
 import { MessageSquareText as ScribeIcon } from 'lucide-react-native'
-import { useToastController } from '@tamagui/toast'
+import { toast } from '@/stores/toasts'
 import Switch from '@/components/ui/Switch'
 import confirmDestructive from '@/lib/confirmDestructive'
 import JsonViewer from '@/features/contacts/components/JsonViewer'
@@ -38,7 +38,6 @@ const when = (ms: number | null | undefined) =>
  * English only.
  */
 export default function ScribeTools() {
-  const toast = useToastController()
   const enabled = useScribeEnabled()
   const availability = useScribeAvailability()
   const status = useScribeStatusStore((state) => state.status)
@@ -234,9 +233,8 @@ export default function ScribeTools() {
               label={`Queue “${name}”`}
               onPress={() => {
                 scribeHarness.script(name)
-                toast.show(`Queued ${name}`, {
+                toast.info(`Queued ${name}`, {
                   message: `${fake.queue.length} steps waiting`,
-                  native: true,
                 })
               }}
             />
@@ -247,7 +245,7 @@ export default function ScribeTools() {
             info='Runs the planAndLog turn in a new conversation.'
             onPress={() => {
               scribeHarness.injectProposal()
-              toast.show('Proposal requested', { message: '', native: true })
+              toast.info('Proposal requested')
             }}
           />
         )}
@@ -261,10 +259,7 @@ export default function ScribeTools() {
               description: 'This cannot be undone.',
               onConfirm: () => {
                 clearScribeLocalData()
-                toast.show('Scribe AI data cleared', {
-                  message: '',
-                  native: true,
-                })
+                toast.success('Scribe AI data cleared')
               },
             })
           }

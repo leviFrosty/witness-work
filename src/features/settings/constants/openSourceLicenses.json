@@ -1521,11 +1521,6 @@
     "license": "MIT"
   },
   {
-    "name": "@tamagui/toast",
-    "version": "2.4.2",
-    "license": "Unknown"
-  },
-  {
     "name": "@tamagui/toggle-group",
     "version": "2.4.2",
     "license": "MIT"
@@ -2249,12 +2244,6 @@
     "name": "buffer-from",
     "version": "1.1.2",
     "license": "MIT"
-  },
-  {
-    "name": "burnt",
-    "version": "0.13.0",
-    "license": "MIT",
-    "author": "Fernando Rojo"
   },
   {
     "name": "bytes",

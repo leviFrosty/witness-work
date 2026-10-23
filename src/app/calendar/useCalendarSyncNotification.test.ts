@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest'
 vi.mock('react-native', () => ({ Platform: { OS: 'ios' } }))
 vi.mock('lucide-react-native', () => ({ CalendarSync: 'CalendarSync' }))
 vi.mock('@react-navigation/native', () => ({ useNavigation: vi.fn() }))
-vi.mock('@tamagui/toast', () => ({ useToastController: vi.fn() }))
+vi.mock('@/stores/toasts', () => ({ toast: {} }))
 vi.mock('../../../modules/calendar-bridge', () => ({
   calendarBridgeAvailable: true,
 }))

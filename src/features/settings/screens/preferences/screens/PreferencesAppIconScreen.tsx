@@ -4,7 +4,7 @@ import PointerHover, { HoverTint } from '@/components/ui/PointerHover'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Image, Pressable, View, type ScrollView } from 'react-native'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
-import { useToastController } from '@tamagui/toast'
+import { toast } from '@/stores/toasts'
 import Wrapper from '@/components/ui/layout/Wrapper'
 import Text from '@/components/ui/MyText'
 import IsSupporter from '@/components/IsSupporter'
@@ -116,7 +116,6 @@ const ArtistCallout = () => {
 
 const PreferencesAppIconPicker = () => {
   const theme = useTheme()
-  const toast = useToastController()
   const { customAppIcon, set } = usePreferences()
   const [hemisphere, setHemisphere] = useState<Hemisphere>('north')
   const [pending, setPending] = useState<AppIconVariant | null>(null)
@@ -140,7 +139,7 @@ const PreferencesAppIconPicker = () => {
   const handlePick = async (variant: AppIconVariant) => {
     if (variant === selected) return
     if (!supported) {
-      toast.show(i18n.t('appIconUnsupported'), { native: true })
+      toast.error(i18n.t('appIconUnsupported'))
       return
     }
     setPending(variant)
@@ -148,7 +147,7 @@ const PreferencesAppIconPicker = () => {
       await applyAppIcon(resolvePluginIcon(variant, hemisphere))
       set({ customAppIcon: variant === 'Default' ? null : variant })
     } catch {
-      toast.show(i18n.t('appIconChangeFailed'), { native: true })
+      toast.error(i18n.t('appIconChangeFailed'))
     } finally {
       setPending(null)
     }

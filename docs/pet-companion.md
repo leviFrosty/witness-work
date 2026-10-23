@@ -160,6 +160,12 @@ Badges count months, never hours (ADR 0019), so no rule favours a role. No rule 
 A badge opens at most two secrets. Earned secrets are stored in `earnedRoomItems` like the rest, so a
 badge reset or a broken run never locks one again. `pet_room_item_unlocked` sends `by: 'secret'`.
 
+**Unlock news** (ADR 0034, `docs/toasts.md`). An item or hat that opens up after the pet's first stored items is news on this device (`stores/petUnlockNews`). The first items are the room the pet starts with.
+
+- **Right after the User's own action, in the foreground:** an unlock toast, one per item, drawn by `PetUnlockArt` in the pet's own room. Tapping it opens `PetUnlockReveal`. Its "Try it on" (or "Decorate Room") opens Decorate Room at the item's tab.
+- **Otherwise** (a new month at launch, another device, a toast nobody acted on): only the tray lists it (`usePetUnlockNotifications`).
+- Swiping a toast away, dismissing the tray item, closing the reveal, or opening Decorate Room settles it.
+
 Decorate Room never shows how a secret opens or what it looks like until it does:
 
 - A locked secret's thumbnail is its **silhouette** (`art/silhouette.ts`), the option's own pixels

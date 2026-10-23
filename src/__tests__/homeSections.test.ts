@@ -39,7 +39,7 @@ import {
   PREFERENCE_DEFAULTS,
   usePreferences,
 } from '@/stores/preferences'
-import { useUndoToast } from '@/stores/undoToast'
+import { resetToasts, useToasts } from '@/stores/toasts'
 
 const phone = {
   isTablet: false,
@@ -51,7 +51,7 @@ const phone = {
 describe('Home sections', () => {
   beforeEach(() => {
     usePreferences.setState({ ...PREFERENCE_DEFAULTS })
-    useUndoToast.setState({ toast: null })
+    resetToasts()
   })
 
   it('offers only the sections this User and device can show', () => {
@@ -123,9 +123,10 @@ describe('Home sections', () => {
   it('hides a section with an Undo that shows it again', () => {
     hideHomeSection('timer')
     expect(usePreferences.getState().homeScreenElements.timer).toBe(false)
-    const toast = useUndoToast.getState().toast
-    expect(toast?.message).toBe('homeEdit.removed')
-    toast?.onUndo()
+    const [shown] = useToasts.getState().toasts
+    expect(shown?.intent).toBe('undo')
+    expect(shown?.title).toBe('homeEdit.removed')
+    shown?.action?.onPress()
     expect(usePreferences.getState().homeScreenElements.timer).toBe(true)
   })
 

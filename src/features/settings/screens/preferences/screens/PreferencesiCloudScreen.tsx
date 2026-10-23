@@ -44,7 +44,7 @@ import FirstEnableSheet, {
   FirstEnableChoice,
 } from '@/app/sync/components/FirstEnableSheet'
 import { SyncPayload } from '@/app/sync/payload'
-import { useToastController } from '@tamagui/toast'
+import { toast } from '@/stores/toasts'
 import { formatDateTime } from '@/lib/dates'
 import SettingsInputLayout from '@/features/settings/components/shared/SettingsInputLayout'
 import {
@@ -205,7 +205,6 @@ const PreferencesiCloudScreenInner = () => {
   // status switches to "Uploading" without another preference change.
   const [now, setNow] = useState(() => Date.now())
   const online = useOnline()
-  const toast = useToastController()
   const navigation = useNavigation<RootStackNavigation>()
   const deviceCount = usePreferences(
     (state) =>
@@ -299,17 +298,13 @@ const PreferencesiCloudScreenInner = () => {
       switch (choice) {
         case 'keepLocal':
           await iCloudSync.overwriteRemoteWithLocal()
-          toast.show(i18n.t(syncKey('iCloudEnabledToastKeep')), {
-            native: true,
-          })
+          toast.success(i18n.t(syncKey('iCloudEnabledToastKeep')))
           break
         case 'useRemote':
           if (pendingRemote) {
             iCloudSync.replaceLocalWithRemote(pendingRemote)
             shouldPromptForImages = payloadReferencesPhotos(pendingRemote)
-            toast.show(i18n.t(syncKey('iCloudEnabledToastRestored')), {
-              native: true,
-            })
+            toast.success(i18n.t(syncKey('iCloudEnabledToastRestored')))
           }
           break
         case 'merge':
@@ -319,9 +314,7 @@ const PreferencesiCloudScreenInner = () => {
             !(await iCloudSync.push('initial-enable-merge'))
           )
             throw new Error('iCloud sync incomplete')
-          toast.show(i18n.t(syncKey('iCloudEnabledToastMerged')), {
-            native: true,
-          })
+          toast.success(i18n.t(syncKey('iCloudEnabledToastMerged')))
           break
       }
       analytics.capture('icloud_sync_first_enable_outcome', {
@@ -454,15 +447,11 @@ const PreferencesiCloudScreenInner = () => {
       switch (decision.outcome) {
         case 'seed':
           await iCloudSync.applySeedEnable()
-          toast.show(i18n.t(syncKey('iCloudEnabledToastSeeded')), {
-            native: true,
-          })
+          toast.success(i18n.t(syncKey('iCloudEnabledToastSeeded')))
           break
         case 'pull':
           iCloudSync.applyPullEnable(decision.remote)
-          toast.show(i18n.t(syncKey('iCloudEnabledToastRestored')), {
-            native: true,
-          })
+          toast.success(i18n.t(syncKey('iCloudEnabledToastRestored')))
           break
         case 'incomplete':
           // Part of the remote is still downloading (or from a newer app
@@ -507,15 +496,14 @@ const PreferencesiCloudScreenInner = () => {
         )
         return
       }
-      toast.show(
+      toast.success(
         i18n.t(
           next === 'cloud'
             ? 'syncOption_switchedCloud'
             : next === 'platform'
               ? platformSyncKey('syncOption_switchedPlatform')
               : 'syncOption_turnedOff'
-        ),
-        { native: true }
+        )
       )
     } finally {
       setSwitchingTo(null)
@@ -694,11 +682,10 @@ const PreferencesiCloudScreenInner = () => {
         outcome: 'completed',
         merged,
       })
-      toast.show(
+      toast.success(
         merged
           ? i18n.t(syncKey('iCloudManualSyncMerged'))
-          : i18n.t(syncKey('iCloudManualSyncNoChanges')),
-        { native: true }
+          : i18n.t(syncKey('iCloudManualSyncNoChanges'))
       )
     } catch {
       const prefs = usePreferences.getState()
@@ -789,9 +776,7 @@ const PreferencesiCloudScreenInner = () => {
             onPress: async () => {
               setPendingImagesEnable(true)
               setMigratingImages(true)
-              toast.show(i18n.t(syncKey('iCloudImagesToastMigrating')), {
-                native: true,
-              })
+              toast.info(i18n.t(syncKey('iCloudImagesToastMigrating')))
               try {
                 analytics.capture('icloud_sync_images_changed', {
                   enabled: true,
@@ -811,19 +796,17 @@ const PreferencesiCloudScreenInner = () => {
                   (e) => e.uploadedMtime != null
                 ).length
                 if (failed > 0) {
-                  toast.show(
+                  toast.info(
                     i18n.t(syncKey('iCloudImagesToastMigratedPartial'), {
                       uploaded,
                       total: uploaded + failed,
-                    }),
-                    { native: true }
+                    })
                   )
                 } else {
-                  toast.show(
+                  toast.success(
                     i18n.t(syncKey('iCloudImagesToastMigrated'), {
                       count: uploaded,
-                    }),
-                    { native: true }
+                    })
                   )
                 }
                 analytics.capture('icloud_sync_images_outcome', {
@@ -866,9 +849,7 @@ const PreferencesiCloudScreenInner = () => {
                 enabled: false,
                 source: 'settings',
               })
-              toast.show(i18n.t(syncKey('iCloudImagesToastPaused')), {
-                native: true,
-              })
+              toast.info(i18n.t(syncKey('iCloudImagesToastPaused')))
             } finally {
               setMigratingImages(false)
               setPendingImagesEnable(null)
@@ -887,9 +868,7 @@ const PreferencesiCloudScreenInner = () => {
                 source: 'images_toggle',
                 outcome: 'completed',
               })
-              toast.show(i18n.t(syncKey('iCloudImagesToastRemoved')), {
-                native: true,
-              })
+              toast.success(i18n.t(syncKey('iCloudImagesToastRemoved')))
             } catch {
               analytics.capture('icloud_sync_cloud_photos_removed', {
                 source: 'images_toggle',
@@ -931,9 +910,7 @@ const PreferencesiCloudScreenInner = () => {
               analytics.capture('icloud_sync_reset_outcome', {
                 outcome: 'completed',
               })
-              toast.show(i18n.t(syncKey('iCloudEnabledToastKeep')), {
-                native: true,
-              })
+              toast.success(i18n.t(syncKey('iCloudEnabledToastKeep')))
             } catch {
               analytics.capture('icloud_sync_reset_outcome', {
                 outcome: 'failed',

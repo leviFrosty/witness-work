@@ -12,6 +12,9 @@ import Button from '@/components/ui/Button'
 import ChoiceChips from '@/components/ui/ChoiceChips'
 import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
+import { unlockedPart, unlockTab } from '@/features/pet/lib/unlockNews'
+import { settleAllPetUnlocks } from '@/features/pet/stores/petUnlockNews'
+import type { RoomItemId } from '@/types/pet'
 import useTheme from '@/contexts/theme'
 import { analytics } from '@/lib/analytics'
 import i18n from '@/lib/locales'
@@ -90,14 +93,22 @@ function ActionPill({
  * first), each part's options drawn from the room itself. A choice applies and
  * saves at once; pulling the sheet down closes it.
  */
-export default function PetRoomScreen({ navigation }: Props) {
+export default function PetRoomScreen({ navigation, route }: Props) {
   const theme = useTheme()
   const sheetInsets = usePetSheetInsets()
   // Android shows it full screen: the pinned room stops below the status bar.
   const insets = useSafeAreaInsets()
   const statusBar = Platform.OS === 'android' ? insets.top : 0
   const scene = usePetRoomScene()
-  const [tab, setTab] = useState<RoomTab>('hat')
+  // Opened from an unlocked item's reveal: its tab first.
+  const focus = route.params?.focus
+  const [tab, setTab] = useState<RoomTab>(() =>
+    focus ? unlockTab(unlockedPart(focus as RoomItemId).part) : 'hat'
+  )
+  // Everything that opened up is in front of the User now: no more news.
+  useEffect(() => {
+    settleAllPetUnlocks()
+  }, [])
   const sheetColor = theme.colors.sheet
   useEffect(() => {
     navigation.setOptions({ contentStyle: { backgroundColor: sheetColor } })

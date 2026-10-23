@@ -19,7 +19,7 @@ vi.mock('@/lib/analytics', () => ({ analytics: { capture: runtime.capture } }))
 vi.mock('@/lib/haptics', () => ({ default: { light: runtime.light } }))
 
 import useConversations from '@/stores/conversationStore'
-import { useUndoToast } from '@/stores/undoToast'
+import { resetToasts, useToasts } from '@/stores/toasts'
 import useLogNotAtHome from '@/hooks/useLogNotAtHome'
 
 const mount = () => {
@@ -38,7 +38,7 @@ beforeEach(() => {
   runtime.capture.mockClear()
   runtime.light.mockClear()
   useConversations.setState({ conversations: [] })
-  useUndoToast.setState({ toast: null })
+  resetToasts()
 })
 
 describe('useLogNotAtHome', () => {
@@ -62,10 +62,11 @@ describe('useLogNotAtHome', () => {
       reminder_enabled: false,
       source: 'contact_details',
     })
-    const toast = useUndoToast.getState().toast
-    expect(toast?.message).toBe('logVisit_notAtHomeLogged:Ada')
+    const [shown] = useToasts.getState().toasts
+    expect(shown?.intent).toBe('undo')
+    expect(shown?.title).toBe('logVisit_notAtHomeLogged:Ada')
 
-    act(() => toast?.onUndo())
+    act(() => shown?.action?.onPress())
     expect(useConversations.getState().conversations).toEqual([])
   })
 })

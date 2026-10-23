@@ -8,6 +8,12 @@ const tray = vi.hoisted(() => {
   return { renders: 0, items: [] as NotificationItem[] }
 })
 
+vi.mock('@/features/badges/hooks/useBadgeNotifications', () => ({
+  default: () => [],
+}))
+vi.mock('@/features/pet/hooks/usePetUnlockNotifications', () => ({
+  default: () => [],
+}))
 vi.mock('react-native', () => ({
   Platform: { OS: 'ios', select: (options: { ios?: unknown }) => options.ios },
   Alert: { alert: () => {} },

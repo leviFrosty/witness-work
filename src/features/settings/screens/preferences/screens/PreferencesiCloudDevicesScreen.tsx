@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { ActivityIndicator, Alert, View } from 'react-native'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
-import { useToastController } from '@tamagui/toast'
+import { toast } from '@/stores/toasts'
 import Wrapper from '@/components/ui/layout/Wrapper'
 import Section from '@/components/ui/inputs/Section'
 import { inputLayout } from '@/components/ui/inputs/InputLayout'
@@ -51,7 +51,6 @@ const PreferencesiCloudDevicesScreenInner = () => {
   const files = usePreferences((state) => state.iCloudSyncDevices)
   const ownDeviceId = usePreferences((state) => state.iCloudDeviceId)
   const [removing, setRemoving] = useState<string | null>(null)
-  const toast = useToastController()
   const devices = listSyncDevices(files, ownDeviceId)
 
   const showBlocked = (
@@ -94,11 +93,8 @@ const PreferencesiCloudDevicesScreenInner = () => {
         'icloud_sync_device_removed',
         removalProperties(device.filename, entry ?? device)
       )
-      toast.show(
-        i18n.t(syncKey('iCloudDeviceRemoved'), { name: deviceName(device) }),
-        {
-          native: true,
-        }
+      toast.success(
+        i18n.t(syncKey('iCloudDeviceRemoved'), { name: deviceName(device) })
       )
     } catch {
       analytics.capture('icloud_sync_device_remove_failed', {

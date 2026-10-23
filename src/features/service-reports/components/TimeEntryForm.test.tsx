@@ -66,9 +66,7 @@ vi.mock('@/features/service-reports/lib/monthlyGoalCelebration', () => ({
 }))
 vi.mock('@/lib/userAction', () => ({ noteUserAction: mocks.noteAction }))
 vi.mock('@/lib/analytics', () => ({ analytics: { capture: mocks.capture } }))
-vi.mock('@tamagui/toast', () => ({
-  useToastController: () => ({ show: mocks.toast }),
-}))
+vi.mock('@/stores/toasts', () => ({ toast: { success: mocks.toast } }))
 vi.mock('@/lib/richText/notes', () => ({
   getNoteDoc: () => undefined,
   hasNote: () => false,
@@ -152,7 +150,6 @@ describe('Time Entry submission', () => {
       )
       expect(mocks.toast).toHaveBeenCalledExactlyOnceWith('added', {
         message: 'progress',
-        native: true,
       })
       expect(mocks.done).toHaveBeenCalledOnce()
     }

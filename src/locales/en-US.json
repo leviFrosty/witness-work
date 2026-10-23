@@ -352,6 +352,7 @@
   "moveUp": "Move Up",
   "moveDown": "Move Down",
   "undo": "Undo",
+  "toast_openHint": "Opens it full screen",
   "sharedTheGoodNews": "Shared the\nGood News",
   "serviceReport": "Service Report",
   "reportShareTitle": "Service Report - {{month}}",
@@ -3915,6 +3916,7 @@
   "badges_welcomeLook": "Take a look",
   "badges_welcomeLater": "Later",
   "badges_newBadge": "New badge",
+  "badges_trayTitle": "New badge: {{badge}}",
   "badges_cardView": "View {{title}}",
   "badges_celebrationAnnouncement": "{{title}}. {{badge}}. Added to your collection",
   "buddies_followUpGoingOne": "{{name}} is going with you.",
@@ -4956,6 +4958,18 @@
       "next": "Next",
       "done": "Done",
       "step": "Step {{step}} of {{count}}"
+    },
+    "unlock": {
+      "newHat": "New hat",
+      "newRoomItem": "New for {{name}}'s room",
+      "roomItemTitle": "{{part}}: {{option}}",
+      "hatReady": "{{name}} can wear it now",
+      "roomReady": "Ready for {{name}}'s room",
+      "secret": "A secret, found",
+      "tryOn": "Try it on",
+      "decorate": "Decorate Room",
+      "trayHat": "New hat: {{hat}}",
+      "trayRoomDescription": "{{where}}. {{detail}}"
     }
   },
   "handoff_newDoneSynced": "Cloud Sync is bringing your records, contacts, and notes to this phone. They appear in a moment.",

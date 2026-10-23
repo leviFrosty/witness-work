@@ -7,6 +7,7 @@ const stored = vi.hoisted(() => ({
   preferences: undefined as string | undefined,
 }))
 vi.mock('@/stores/mmkv', () => ({
+  isStorageLocked: () => false,
   mmkvStorage: { getString: () => stored.preferences },
   PersistStorage: {
     getItem: () => null,

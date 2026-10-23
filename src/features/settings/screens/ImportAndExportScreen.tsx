@@ -11,12 +11,13 @@ import { usePreferences } from '@/stores/preferences'
 import * as FileSystem from 'expo-file-system/legacy'
 import { errorTracking } from '@/lib/errorTracking'
 import * as Sharing from 'expo-sharing'
-import { Alert, Platform, View } from 'react-native'
+import { Alert, Platform } from 'react-native'
 import useTheme from '@/contexts/theme'
 import Card from '@/components/ui/Card'
 import Divider from '@/components/ui/Divider'
 import Badge from '@/components/ui/Badge'
 import XView from '@/components/ui/layout/XView'
+import InfoPopover from '@/components/ui/InfoPopover'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import IconButton from '@/components/ui/IconButton'
 import SettingsInputLayout from '@/features/settings/components/shared/SettingsInputLayout'
@@ -110,17 +111,23 @@ const ImportAndExportScreen = () => {
     <SettingsInputLayout>
       <Wrapper insets='bottom' style={{ paddingTop: 30 }}>
         <KeyboardAwareScrollView contentContainerStyle={{ gap: 30 }}>
-          <Text
-            style={{
-              fontSize: theme.fontSize('xl'),
-              fontFamily: theme.fonts.semiBold,
-            }}
-          >
-            {i18n.t('backup')}
-          </Text>
-          <View style={{ gap: 10 }}>
-            <Text>{i18n.t('backupRecommendations')}</Text>
-          </View>
+          <XView style={{ gap: 0 }}>
+            <Text
+              accessibilityRole='header'
+              style={{
+                flexShrink: 1,
+                fontSize: theme.fontSize('xl'),
+                fontFamily: theme.fonts.semiBold,
+              }}
+            >
+              {i18n.t('backup')}
+            </Text>
+            <InfoPopover
+              title={i18n.t('backup')}
+              description={i18n.t('backupRecommendations')}
+              inline
+            />
+          </XView>
           <Card>
             <ActionButton
               disabled={importing}

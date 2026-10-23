@@ -18,6 +18,7 @@ import FollowUpCardProgress from '@/features/visits/components/FollowUpCardProgr
 import useFollowUpCardDismissal from '@/features/visits/hooks/useFollowUpCardDismissal'
 import useFollowUpCardItems from '@/features/visits/hooks/useFollowUpCardItems'
 import useLogNotAtHome from '@/hooks/useLogNotAtHome'
+import useNow from '@/hooks/useNow'
 import { flowScrollX, isRtlLayout } from '@/lib/direction'
 
 const PADDING = 16
@@ -47,6 +48,8 @@ const ApproachingConversations = ({
   const theme = useTheme()
   const reduceMotion = useReducedMotion()
   const items = useFollowUpCardItems()
+  // The items' minute clock, so the title turns with them at 5 PM.
+  const { now: nowMs } = useNow()
   const { dismissed, dismiss } = useFollowUpCardDismissal(
     'approaching',
     items.map((item) => item.visit)
@@ -149,7 +152,8 @@ const ApproachingConversations = ({
     if (target >= 0) scrollTo(target, !reduceMotion)
   }
 
-  const isMorning = moment().isBefore(moment().endOf('day').hour(16)) // 4:59:59 PM
+  const now = moment(nowMs)
+  const isMorning = now.isBefore(now.clone().endOf('day').hour(16)) // 4:59:59 PM
   const title = i18n.t(
     isMorning ? 'todaysConversations' : 'upcomingConversations'
   )

@@ -26,6 +26,7 @@ import LogTripButton from '@/features/mileage/components/LogTripButton'
 import useMileageFormatter from '@/features/mileage/hooks/useMileageFormatter'
 import useMileageIndex from '@/features/mileage/hooks/useMileageIndex'
 import useLogTrip from '@/features/mileage/hooks/useLogTrip'
+import useLocalDay from '@/hooks/useLocalDay'
 import type { RootStackNavigation } from '@/types/rootStack'
 
 function Fact({
@@ -68,7 +69,8 @@ export default function MileageHomeSection() {
   const index = useMileageIndex()
   const format = useMileageFormatter()
   const logTrip = useLogTrip('home_section')
-  const month = periodContaining('month', moment())
+  // Keyed on the day, so the section moves to the new month at midnight.
+  const month = periodContaining('month', moment(useLocalDay(), 'YYYY-MM-DD'))
   const monthTrips = tripsInPeriod(trips, month)
   const summary = summarizeTrips(monthTrips, index, vehicles)
   const openMileage = () => navigation.navigate('Mileage')

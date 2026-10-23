@@ -6,6 +6,7 @@ import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import useDayRouteStops from '@/features/route-planning/hooks/useDayRouteStops'
 import useOpenRouteBuilder from '@/hooks/useOpenRouteBuilder'
+import useToday from '@/hooks/useToday'
 
 /**
  * Compact "Plan Route" in Home's Follow-up card header, where publishers look
@@ -14,7 +15,7 @@ import useOpenRouteBuilder from '@/hooks/useOpenRouteBuilder'
 export default function TodayRouteAction() {
   const theme = useTheme()
   const open = useOpenRouteBuilder('home_follow_ups')
-  const { stops } = useDayRouteStops(new Date())
+  const { stops } = useDayRouteStops(useToday())
   if (stops.length < 2) return null
 
   return (

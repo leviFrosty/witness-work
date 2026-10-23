@@ -1,6 +1,6 @@
-import moment from 'moment'
 import { View } from 'react-native'
 import useTheme from '@/contexts/theme'
+import useLocalDay from '@/hooks/useLocalDay'
 import Text from '@/components/ui/MyText'
 import { formatMonthDayCompact } from '@/lib/dates'
 import { toDateKey, type MileagePeriod } from '@/lib/mileage/calc'
@@ -20,7 +20,8 @@ type Props = {
  */
 export default function MileageDailyChart({ period, trips }: Props) {
   const theme = useTheme()
-  const today = toDateKey(moment())
+  // A date key too (`YYYY-MM-DD`), moving on at midnight.
+  const today = useLocalDay()
   const milesByDay = new Map<string, number>()
   for (const trip of trips) {
     milesByDay.set(

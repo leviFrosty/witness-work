@@ -11,6 +11,7 @@ import useTheme from '@/contexts/theme'
 import ServiceReportInsightOverlay from '@/features/service-reports/components/ServiceReportInsightOverlay'
 import { useThisMonthMinutes } from '@/features/service-reports/hooks/useThisMonthTotals'
 import useMonthlyGoal from '@/hooks/useMonthlyGoal'
+import useLocalDay from '@/hooks/useLocalDay'
 import useProjectedTotal from '@/hooks/useProjectedTotal'
 import useScheduleStatus from '@/hooks/useScheduleStatus'
 import useScheduleStatusPresentation from '@/hooks/useScheduleStatusPresentation'
@@ -80,7 +81,8 @@ const InsightStat = ({
 
 const TimeInsightContent = ({ onClose }: { onClose: () => void }) => {
   const theme = useTheme()
-  const now = moment()
+  // Keyed on the day, like the card it opens from.
+  const now = moment(useLocalDay(), 'YYYY-MM-DD')
   const month = now.month()
   const year = now.year()
   const { effectiveGoalHours } = useMonthlyGoal({ month, year })

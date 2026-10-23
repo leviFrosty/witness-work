@@ -28,6 +28,7 @@ import {
 import i18n from '@/lib/locales'
 import useContacts from '@/stores/contactsStore'
 import useContactMenuActions from '@/hooks/useContactMenuActions'
+import useLocalDay from '@/hooks/useLocalDay'
 import { useContactStalenessColor } from '@/hooks/useContactStalenessColor'
 import { formatRelative } from '@/lib/dates'
 import useConversations from '@/stores/conversationStore'
@@ -103,7 +104,8 @@ const StudiesInsightContent = ({ onClose }: { onClose: () => void }) => {
   const navigation = useNavigation<RootStackNavigation>()
   const contacts = useContacts((state) => state.contacts)
   const conversations = useConversations((state) => state.conversations)
-  const now = moment()
+  // Keyed on the day, like the card it opens from.
+  const now = moment(useLocalDay(), 'YYYY-MM-DD')
   const studyContacts = getStudyContactsForGivenMonth({
     contacts,
     conversations,

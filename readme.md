@@ -99,7 +99,7 @@ sync files + photos`"]
     P_ATTEST["`**App Attest / Play Integrity**
 proves a genuine app`"]
     P_MAPS["`**MapKit / Google Maps SDK**
-maps and place search`"]
+maps, place search, iOS directions`"]
   end
 
   P_PUSH["`**APNs / FCM**
@@ -119,7 +119,7 @@ signed JavaScript + assets`")]
 signed ops, live WebSocket, photos`"]
       R_SCRIBE["`**/scribe/v1/...**
 status, usage, step SSE, transcribe`"]
-      R_ROUTE["`**POST /route-planning/optimize**
+      R_ROUTE["`**POST /route-planning/optimize, /directions**
 coordinates only`"]
       R_PLACES["`**GET /geocode, /autocomplete**
 HERE proxy, key stays server-side`"]
@@ -180,7 +180,7 @@ GET /v1/search, cron content sync`"]
 answers by locale, keyword + meaning`")]
     end
     DO_RPQ[("`**RoutePlanningQuota DO**
-10 routes a day per account`")]
+route and directions quotas per account`")]
     KV[("`**Workers KV: NOTES_KV**
 switches, limits, tokens, ratings`")]
   end
@@ -231,6 +231,7 @@ analytics, flags, surveys, errors`"]
   A_SCRIBE -->|"bearer: conversation + tools, SSE per step"| R_SCRIBE
   A_ROUTE -->|"account session"| A_ACCOUNT
   A_ROUTE -->|"bearer: today's stops"| R_ROUTE
+  A_ROUTE -->|"directions (iOS)"| P_MAPS
   A_CONTACTS -->|"address lookup"| R_PLACES
   A_LINKS -->|"/c, /b and /h links"| R_LINKS
   A_SUPPORTER -->|"paywall ratings"| R_RATINGS
@@ -270,7 +271,7 @@ analytics, flags, surveys, errors`"]
   P_PUSH -.->|"Android data push"| A_BUDDIES
   R_SCRIBE -->|"model steps (streamed) and page reads, ZDR hosts only"| S_OR
   S_OR --> S_LLM
-  R_ROUTE -->|"waypoint sequence"| S_HERE
+  R_ROUTE -->|"waypoint sequence, routing"| S_HERE
   R_PLACES -->|"geocode, autocomplete"| S_HERE
   CRON -->|"ratings lookup"| P_STORE
   S_RC -->|"store receipts"| P_STORE

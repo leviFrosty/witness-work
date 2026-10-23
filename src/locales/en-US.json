@@ -3654,7 +3654,7 @@
   "routeBuilder_timeRange": "{{start}}–{{end}}",
   "routeBuilder_driving": "{{duration}} driving",
   "routeBuilder_estimateInfoTitle": "Estimated Times",
-  "routeBuilder_estimateInfo": "Times are estimated on your device from the distance between stops, plus the time you spend at each one. Shortest Order puts the stops in order using real driving times.",
+  "routeBuilder_estimateInfo": "Driving times follow the roads, with traffic as it is now. Without a connection, they're estimated from the distance between stops. Each stop adds the time you spend there. Shortest Order puts the stops in order using real driving times.",
   "routeBuilder_start": "Start",
   "routeBuilder_startAt": "Start {{time}}",
   "routeBuilder_startFrom": "Start from {{place}}",

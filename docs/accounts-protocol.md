@@ -384,6 +384,10 @@ It remembers the last link (a hash of the account id and RevenueCat id, and the 
 
 **Bearer**, `{ start, stops }` → `{ order, distanceMeters, durationSeconds, remainingToday }`. Supporter only, from the account's status (403 `supporter_required`); refuses a suspended account (403 `suspended`). Limits are per account. Before sessions the body carried `accountId`, the RevenueCat app user id; while the legacy switch is on that still works, and once it's off it's 426 `upgrade_required`. ww-api's README has the full contract.
 
+### Route directions: `POST /route-planning/directions`
+
+**Bearer**, `{ points }` (the start, the stops, and a finish elsewhere; 2–12, coordinates only) → `{ legs: [{ distanceMeters, durationSeconds, coordinates }], remainingToday }`, one leg per consecutive pair, from HERE Routing v8. `coordinates` is the road shape as flat `[lat, lng, …]`. Any account, not only Supporters; refuses a suspended account (403 `suspended`). Its per-account quota is separate from optimizations. There's no legacy form. Android asks it to draw the route and time each leg; iOS asks MapKit on the device instead.
+
 ## Scribe AI
 
 Scribe AI calls ww-api only through the session (ADR 0027 §4, ADR 0032). The wire contract is [`scribe-ai-protocol.md`](./scribe-ai-protocol.md); this is how it uses the account.

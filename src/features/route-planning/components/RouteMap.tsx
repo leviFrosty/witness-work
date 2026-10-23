@@ -34,6 +34,7 @@ import {
   straightLineMeters,
   type RouteTimeline,
 } from '@/features/route-planning/lib/routeTimeline'
+import { legKey, type RoadLegs } from '@/features/route-planning/lib/roadLegs'
 
 /**
  * Room for the cards around the pins when fitting the map to the route: above
@@ -48,13 +49,15 @@ const SAME_PIN_M = 75
 
 /**
  * The route on a map: a line through the start, the stops in order, and the
- * finish, and a card over each pin with when you'd get there. Tapping a pin
+ * finish, along the roads for each leg with directions (straight until they
+ * arrive), and a card over each pin with when you'd get there. Tapping a pin
  * selects the stop; touching and holding the map drops a pin to add as a stop,
  * the start, or the finish.
  */
 export default function RouteMap({
   stops,
   timeline,
+  roads,
   origin,
   originCoordinate,
   finish,
@@ -70,6 +73,8 @@ export default function RouteMap({
 }: {
   stops: BuilderStop[]
   timeline: RouteTimeline
+  /** Directions by road for the legs that have them. */
+  roads: RoadLegs
   origin: RouteOrigin
   originCoordinate: Coordinate | null
   finish: RouteFinish
@@ -112,6 +117,16 @@ export default function RouteMap({
     ...stops.map((stop) => stop.coordinate),
     ...(finishAt ? [finishAt] : []),
   ]
+  // Each leg by road when its directions are known, straight otherwise.
+  const line = path.flatMap((to, index) => {
+    if (index === 0) return [to]
+    return roads.get(legKey(path[index - 1]!, to))?.coordinates ?? [to]
+  })
+  // iOS keeps a polyline's first coordinates: a line that changes (reordered,
+  // or a leg's roads arriving) gets a fresh one.
+  const lineKey = `${line.length}|${path
+    .map((c) => `${c.latitude.toFixed(5)},${c.longitude.toFixed(5)}`)
+    .join('|')}`
   const fitSignature = path
     .map((c) => `${c.latitude.toFixed(5)},${c.longitude.toFixed(5)}`)
     .sort()
@@ -287,14 +302,16 @@ export default function RouteMap({
         {path.length > 1 && (
           <>
             <Polyline
-              coordinates={path}
+              key={`casing|${lineKey}`}
+              coordinates={line}
               strokeColor={theme.colors.card}
               strokeWidth={7}
               lineCap='round'
               lineJoin='round'
             />
             <Polyline
-              coordinates={path}
+              key={`line|${lineKey}`}
+              coordinates={line}
               strokeColor={theme.colors.accent}
               strokeWidth={4}
               lineCap='round'

@@ -49,6 +49,37 @@ describe('estimateLeg', () => {
   })
 })
 
+describe('estimateLeg by road', () => {
+  const road = { meters: 4200, seconds: 9 * 60 + 40, coordinates: [] }
+
+  it('uses directions by road when the leg has them, plus parking', () => {
+    expect(estimateLeg(north(0), north(0.05), () => road)).toEqual({
+      meters: 4200,
+      minutes: 12,
+    })
+  })
+
+  it('estimates a leg without them, or with no road', () => {
+    const estimate = estimateLeg(north(0), north(0.05))
+    expect(estimateLeg(north(0), north(0.05), () => undefined)).toEqual(
+      estimate
+    )
+    expect(estimateLeg(north(0), north(0.05), () => null)).toEqual(estimate)
+  })
+
+  it('times the day from them', () => {
+    const timeline = buildTimeline({
+      origin: north(0),
+      startTime: 9 * 60,
+      stops: [stop('a', 0.05)],
+      keepSetTimes: true,
+      roadLeg: () => road,
+    })
+    expect(timeline.entries[0]!.arrive).toBe(9 * 60 + 12)
+    expect(timeline.meters).toBe(4200)
+  })
+})
+
 describe('buildTimeline', () => {
   it('starts at the first stop when there is no starting place', () => {
     const timeline = buildTimeline({

@@ -116,6 +116,20 @@ export const roomWithChoice = (
 ): PetRoomSettings => ({ ...room, ...roomChoicePatch(room, part, option) })
 
 /**
+ * The room a thumbnail draws for `option`: picked for `part` and lit by day,
+ * whatever the window shows, unless the option is the window's time itself.
+ */
+export function thumbRoom(
+  room: PetRoomSettings,
+  part: RoomChoicePart,
+  option: string
+): PetRoomSettings {
+  const picked = roomWithChoice(room, part, option)
+  if (part === 'windowTime') return picked
+  return { ...picked, window: { ...picked.window, time: 'day' } }
+}
+
+/**
  * The Live switch's change: both Live, or both fixed at what the window shows
  * now so turning Live off changes nothing on screen.
  */

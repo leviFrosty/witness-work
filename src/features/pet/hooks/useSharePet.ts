@@ -18,7 +18,11 @@ import { petShareFileName } from '@/features/pet/lib/share'
  */
 export default function useSharePet() {
   const toast = useToastController()
-  return async (card: RefObject<View | null>, name: string) => {
+  return async (
+    card: RefObject<View | null>,
+    name: string,
+    showSign: boolean
+  ) => {
     try {
       const image = await makeImageFromView(card)
       const png = image?.encodeToBase64(ImageFormat.PNG, 100)
@@ -34,7 +38,7 @@ export default function useSharePet() {
         UTI: 'public.png',
         dialogTitle: i18n.t('pet.share.dialogTitle', { name }),
       })
-      analytics.capture('pet_shared')
+      analytics.capture('pet_shared', { sign: showSign })
     } catch (error) {
       logger.error('Sharing the pet failed', error)
       toast.show(i18n.t('pet.share.failed'), { native: true })

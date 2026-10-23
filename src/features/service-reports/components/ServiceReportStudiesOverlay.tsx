@@ -20,6 +20,7 @@ import Text from '@/components/ui/MyText'
 import Pagination from '@/components/ui/Pagination'
 import useTheme from '@/contexts/theme'
 import ServiceReportInsightOverlay from '@/features/service-reports/components/ServiceReportInsightOverlay'
+import { useThisMonthStudies } from '@/features/service-reports/hooks/useThisMonthTotals'
 import {
   getMostRecentConversationForContact,
   getStudyContactsForGivenMonth,
@@ -233,16 +234,21 @@ interface Props {
   containerStyle?: StyleProp<ViewStyle>
 }
 
-const ServiceReportStudiesOverlay = ({ children, containerStyle }: Props) => (
-  <ServiceReportInsightOverlay
-    containerStyle={containerStyle}
-    accessibilityLabel={i18n.t('serviceReportInsights.openStudies')}
-    accessibilityHint={i18n.t('scheduleInsights.tapForDetails')}
-    expandedHeight={560}
-    content={({ close }) => <StudiesInsightContent onClose={close} />}
-  >
-    {children}
-  </ServiceReportInsightOverlay>
-)
+const ServiceReportStudiesOverlay = ({ children, containerStyle }: Props) => {
+  // Reads the month's studies, which a label naming the action alone hid.
+  const studies = useThisMonthStudies()
+  return (
+    <ServiceReportInsightOverlay
+      containerStyle={containerStyle}
+      // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
+      accessibilityLabel={i18n.t('studiesCount', { count: studies })}
+      accessibilityHint={i18n.t('scheduleInsights.tapForDetails')}
+      expandedHeight={560}
+      content={({ close }) => <StudiesInsightContent onClose={close} />}
+    >
+      {children}
+    </ServiceReportInsightOverlay>
+  )
+}
 
 export default ServiceReportStudiesOverlay

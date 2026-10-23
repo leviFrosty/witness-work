@@ -1747,12 +1747,10 @@
     "tapForDetails": "Gusa kwa maelezo zaidi"
   },
   "serviceReportInsights": {
-    "openTime": "Maelezo ya wakati wazi",
     "timeToGoal": "Wakati wa lengo",
     "ofGoal": "ya lengo la {{goal}}",
     "percentComplete": "{{percent}}% imekamilika",
     "projectionDescription": "Makadirio yanachanganya wakati ulioingia na mchango mzuri wa Mipango iliyobaki baada ya kutumia kikomo cha Muda wa Mikopo.",
-    "openStudies": "Fungua maelezo ya masomo",
     "studiesTitle": "Masomo mwezi huu",
     "studiesDescription": "Kila mawasiliano na ziara ya Funzo la Biblia huhesabiwa mara moja.",
     "studyContacts": "Anwani zimejumuishwa",

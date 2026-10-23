@@ -1747,12 +1747,10 @@
     "tapForDetails": "点按查看更多详情"
   },
   "serviceReportInsights": {
-    "openTime": "开放时间详情",
     "timeToGoal": "距离进球时间",
     "ofGoal": "{{goal}} 目标",
     "percentComplete": "{{percent}}% 完成",
     "projectionDescription": "预计时间与剩余计划在应用抵免时间上限后实际缴款的计算。",
-    "openStudies": "开放研究详情",
     "studiesTitle": "本月学习",
     "studiesDescription": "每次与圣经学习的接触都算一次。",
     "studyContacts": "包括联系人",

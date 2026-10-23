@@ -2428,12 +2428,10 @@
     "tapForDetails": "Toque para ver mais detalhes"
   },
   "serviceReportInsights": {
-    "openTime": "Abrir detalhes do tempo",
     "timeToGoal": "Tempo até ao objetivo",
     "ofGoal": "do objetivo de {{goal}}",
     "percentComplete": "{{percent}}% concluído",
     "projectionDescription": "A projeção combina o tempo registado com o contributo efetivo dos Planos restantes depois de aplicar o limite de Tempo de Crédito.",
-    "openStudies": "Abrir detalhes dos estudos",
     "studiesTitle": "Estudos deste mês",
     "studiesDescription": "Cada contacto com uma Visita de Estudo Bíblico conta uma vez.",
     "studyContacts": "Contactos incluídos",

@@ -234,7 +234,11 @@ export const MilestoneProgressBarPreview = ({
         </View>
       </View>
 
+      {/* The values under the ticks read as loose numbers ("30, 50, 100");
+          the card says how many are hit and how far the next one is. */}
       <View
+        accessibilityElementsHidden
+        importantForAccessibility='no-hide-descendants'
         style={{
           marginTop: LABEL_MARGIN_TOP,
           height: labelsHeight,

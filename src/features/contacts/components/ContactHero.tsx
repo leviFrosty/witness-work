@@ -152,6 +152,8 @@ const ContactHero = ({
       <View style={{ flex: 1, minWidth: 0, gap: 4 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
           <Copyeable
+            // The record's title, for heading navigation.
+            accessibilityRole='header'
             style={{ flexShrink: 1 }}
             textProps={{
               numberOfLines: 3,

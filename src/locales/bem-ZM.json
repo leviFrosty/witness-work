@@ -2428,12 +2428,10 @@
     "tapForDetails": "Tinikeni pa kumona ifyebo fimbi"
   },
   "serviceReportInsights": {
-    "openTime": "Isuleni ifyebo fya nshita",
     "timeToGoal": "Inshita ya kufika pa co mwapanga ukufikapo",
     "ofGoal": "pa co mwapanga ukufikapo ca {{goal}}",
     "percentComplete": "{{percent}}% capwa",
     "projectionDescription": "Ifilelolelwa fikoshanya inshita yalembwa no bwafwilisho bwine bwa bupange ubushele panuma ya kubika umupendo ntamfwa wa Nshita ya Kwishibilwa.",
-    "openStudies": "Isuleni ifyebo fya masambililo",
     "studiesTitle": "Amasambililo ya mweshi uno",
     "studiesDescription": "Umuntu onse uo mwatungululapo isambililo lya Baibolo apendwa fye inshita imo.",
     "studyContacts": "Abantu ba kutandalila abalimo",

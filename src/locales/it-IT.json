@@ -1747,12 +1747,10 @@
     "tapForDetails": "Tocca per maggiori dettagli"
   },
   "serviceReportInsights": {
-    "openTime": "Dettagli dell'orario di apertura",
     "timeToGoal": "Tempo per il gol",
     "ofGoal": "di obiettivo {{goal}}",
     "percentComplete": "{{percent}}% completato",
     "projectionDescription": "Il tempo previsto combina il tempo registrato con il contributo effettivo dei piani rimanenti dopo l'applicazione del limite di tempo di credito.",
-    "openStudies": "Dettagli dello studio aperto",
     "studiesTitle": "Studi di questo mese",
     "studiesDescription": "Ogni contatto con una visita di studio biblico conta una volta.",
     "studyContacts": "Contatti inclusi",

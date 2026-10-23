@@ -620,7 +620,10 @@ const VisitFormScreen = ({
             size={18}
             iconStyle={{ color: theme.colors.text }}
           />
-          <Text style={{ fontSize: 24, fontFamily: theme.fonts.bold }}>
+          <Text
+            accessibilityRole='header'
+            style={{ fontSize: 24, fontFamily: theme.fonts.bold }}
+          >
             {getTitle()}
           </Text>
         </View>

@@ -1,29 +1,20 @@
-import { useMemo } from 'react'
 import { View } from 'react-native'
 import { BookOpenCheck as StudyIcon } from 'lucide-react-native'
 import LucideIcon from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
-import { getStudiesForGivenMonth } from '@/lib/contacts'
-import useContacts from '@/stores/contactsStore'
-import useConversations from '@/stores/conversationStore'
 import i18n from '@/lib/locales'
 import useAccessibilityTextSize, {
   FIT_ONE_LINE,
 } from '@/hooks/useAccessibilityTextSize'
+import { useThisMonthStudies } from '@/features/service-reports/hooks/useThisMonthTotals'
 
 export default function StudiesCard() {
   const theme = useTheme()
   // At accessibility text sizes the figure and its label shrink to fit the
   // half-width column instead of breaking mid-word.
   const fit = useAccessibilityTextSize() ? FIT_ONE_LINE : undefined
-  const contacts = useContacts((s) => s.contacts)
-  const conversations = useConversations((s) => s.conversations)
-  const studies = useMemo(
-    () =>
-      getStudiesForGivenMonth({ contacts, conversations, month: new Date() }),
-    [contacts, conversations]
-  )
+  const studies = useThisMonthStudies()
 
   return (
     <View

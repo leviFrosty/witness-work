@@ -1747,12 +1747,10 @@
     "tapForDetails": "자세히 보려면 탭하세요"
   },
   "serviceReportInsights": {
-    "openTime": "오픈 시간 세부 정보",
     "timeToGoal": "골까지",
     "ofGoal": "{{goal}} 목표의",
     "percentComplete": "{{percent}}% 완료",
     "projectionDescription": "예상 시간은 기록된 시간과 크레딧 시간 제한을 적용한 후 남은 플랜의 유효 기여를 합산한 것입니다.",
-    "openStudies": "공개 연구 세부사항",
     "studiesTitle": "이번 달 공부",
     "studiesDescription": "성경 공부 방문과의 모든 접촉은 한 번씩 인정됩니다.",
     "studyContacts": "포함된 연락처",

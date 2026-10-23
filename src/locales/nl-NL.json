@@ -1747,12 +1747,10 @@
     "tapForDetails": "Tik voor meer details"
   },
   "serviceReportInsights": {
-    "openTime": "Details van de openingstijd",
     "timeToGoal": "Tijd tot doel",
     "ofGoal": "van {{goal}} doel",
     "percentComplete": "{{percent}}% voltooid",
     "projectionDescription": "Projected combineert geregistreerde tijd met de effectieve bijdrage van resterende plannen na het toepassen van de kredietlimiet.",
-    "openStudies": "Open studiedetails",
     "studiesTitle": "Studies deze maand",
     "studiesDescription": "Elk contact met een bijbelstudiebezoek telt één keer.",
     "studyContacts": "Contacten inbegrepen",

@@ -1747,12 +1747,10 @@
     "tapForDetails": "タップして詳細を表示"
   },
   "serviceReportInsights": {
-    "openTime": "営業時間の詳細",
     "timeToGoal": "ゴールまでの時間",
     "ofGoal": "{{goal}} の目標",
     "percentComplete": "{{percent}}% 完了",
     "projectionDescription": "予測時間は、クレジットタイム上限を適用した後の残りのプランの実効拠出と記録された時間を合計したものです。",
-    "openStudies": "公開研究の詳細",
     "studiesTitle": "今月の研究",
     "studiesDescription": "聖書研究会の訪問は1回のカウントです。",
     "studyContacts": "連絡先は含まれていました",

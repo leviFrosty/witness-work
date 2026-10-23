@@ -183,4 +183,17 @@ describe('YearMilestoneCard celebration', () => {
     expect(runtime.light).toHaveBeenCalledTimes(2)
     expect(bannerShown(renderer!)).toBe(true)
   })
+
+  it('reads the hero as one phrase against the annual goal', () => {
+    runtime.minutes = 90
+    render()
+    // Not "1.5, / 600 hours": the hero's figure and suffix share one label.
+    expect(
+      renderer!.root.findAll(
+        (node) =>
+          (node.type as unknown) === 'View' &&
+          node.props.accessibilityLabel === 'durationSpoken.ofGoal'
+      )
+    ).toHaveLength(1)
+  })
 })

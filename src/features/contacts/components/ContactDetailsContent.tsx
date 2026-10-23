@@ -376,6 +376,10 @@ const ContactDetailsContent = ({
                   }}
                 >
                   <XView
+                    // One heading with its count ("Conversation History,
+                    // 2"), not a title and a loose number.
+                    accessible
+                    accessibilityRole='header'
                     style={{
                       gap: 8,
                       alignItems: 'baseline',

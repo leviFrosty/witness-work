@@ -1979,12 +1979,10 @@
     "tapForDetails": "اضغط لمزيد من التفاصيل"
   },
   "serviceReportInsights": {
-    "openTime": "فتح تفاصيل الوقت",
     "timeToGoal": "الوقت المتبقي للهدف",
     "ofGoal": "من هدف {{goal}}",
     "percentComplete": "اكتمل {{percent}}٪",
     "projectionDescription": "يجمع «المتوقع» الوقت المسجّل مع المساهمة الفعلية للخطط المتبقية بعد تطبيق حد الوقت المحتسب.",
-    "openStudies": "فتح تفاصيل الدروس",
     "studiesTitle": "الدروس هذا الشهر",
     "studiesDescription": "تُعدّ مرة واحدة كل جهة اتصال لها زيارة «درس في الكتاب المقدس».",
     "studyContacts": "جهات الاتصال المشمولة",

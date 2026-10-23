@@ -434,7 +434,7 @@ const boatInside: Paint = (x, y) => {
 }
 
 // ---------------------------------------------------------------------------
-// Donut: pink glaze, chocolate drizzle, the pet sitting in the hole.
+// Donut: pink glaze, rainbow sprinkles, the pet sitting in the hole.
 
 const DONUT = rgbPalette({
   dough: '#e2a864',
@@ -445,11 +445,18 @@ const DONUT = rgbPalette({
   glaze: '#f392b4',
   glazeLight: '#ffc6da',
   glazeShade: '#d96b94',
-  choc: '#5a321e',
-  chocLight: '#7e4a2e',
   crumb: '#f8deb0',
   outline: '#6a3c1c',
 })
+
+const SPRINKLE = rgbPalette({
+  white: '#fff8ec',
+  yellow: '#ffd23f',
+  blue: '#4fb3f0',
+  green: '#6fd06a',
+  purple: '#9b6cf0',
+})
+type SprinkleColor = keyof typeof SPRINKLE
 
 const DONUT_RX = 27
 const HOLE_X = 68
@@ -457,38 +464,57 @@ const HOLE_Y = 77
 const HOLE_RX = 13
 const HOLE_RY = 3.2
 
-/** Chocolate drizzle: a zigzag across the glaze, as a set of pixel keys. */
-const DRIZZLE: ReadonlySet<number> = (() => {
-  const pts: readonly (readonly [number, number])[] = [
-    [41, 83],
-    [44, 75],
-    [47, 85],
-    [50, 73],
-    [53, 86],
-    [57, 82],
-    [61, 87],
-    [65, 82.5],
-    [70, 87],
-    [74, 82.5],
-    [78, 86.5],
-    [82, 82],
-    [84, 86],
-    [86, 73],
-    [89, 85],
-    [92, 75],
-    [95, 82],
+/**
+ * Sprinkles on the glaze, as pixel keys: two-pixel strokes from (x, y), lying
+ * flat (`-`), upright (`|`), or slanting down (`\`) or up (`/`) to the right.
+ * The glaze clips any pixel that lands off it.
+ */
+const SPRINKLES: ReadonlyMap<number, Rgb> = (() => {
+  const strokes: readonly (readonly [
+    number,
+    number,
+    '-' | '|' | '\\' | '/',
+    SprinkleColor,
+  ])[] = [
+    // Left of the hole.
+    [43, 79, '|', 'yellow'],
+    [46, 75, '/', 'blue'],
+    [47, 80, '-', 'white'],
+    [50, 73, '-', 'green'],
+    [51, 77, '\\', 'purple'],
+    [45, 83, '-', 'green'],
+    [50, 83, '/', 'yellow'],
+    [54, 81, '|', 'blue'],
+    // Behind the pet, peeking out at its sides.
+    [56, 72, '\\', 'yellow'],
+    [79, 72, '/', 'white'],
+    // Front, below the hole.
+    [57, 85, '-', 'white'],
+    [61, 83, '/', 'purple'],
+    [64, 86, '\\', 'yellow'],
+    [68, 83, '-', 'green'],
+    [72, 86, '/', 'blue'],
+    [75, 83, '\\', 'white'],
+    [79, 85, '-', 'purple'],
+    // Right of the hole, short of the bite.
+    [82, 81, '|', 'yellow'],
+    [85, 78, '\\', 'green'],
+    [87, 83, '/', 'white'],
+    [90, 81, '-', 'blue'],
+    [84, 74, '-', 'purple'],
   ]
-  const out = new Set<number>()
-  for (let i = 1; i < pts.length; i++) {
-    const [x0, y0] = pts[i - 1]
-    const [x1, y1] = pts[i]
-    const n = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0))
-    for (let k = 0; k <= n; k++) {
-      const x = Math.round(x0 + ((x1 - x0) * k) / n)
-      const y = Math.round(y0 + ((y1 - y0) * k) / n)
-      out.add(y * SCENE_W + x)
-      out.add((y + 1) * SCENE_W + x)
-    }
+  const out = new Map<number, Rgb>()
+  for (const [x, y, dir, color] of strokes) {
+    const [dx, dy] =
+      dir === '-'
+        ? [1, 0]
+        : dir === '|'
+          ? [0, 1]
+          : dir === '/'
+            ? [1, -1]
+            : [1, 1]
+    out.set(y * SCENE_W + x, SPRINKLE[color])
+    out.set((y + dy) * SCENE_W + x + dx, SPRINKLE[color])
   }
   return out
 })()
@@ -521,8 +547,8 @@ const donutAt: Paint = (x, y) => {
   const drip = [0, 1, 2, 1, 0, 0, 0][((x % 7) + 7) % 7]
   const glazeEnd = 79.5 + 9 * Math.sqrt(1 - a * a) - 2 + drip
   if (inGlaze && y + 0.5 < glazeEnd) {
-    if (DRIZZLE.has(y * SCENE_W + x) && y + 1 < glazeEnd)
-      return DRIZZLE.has((y - 1) * SCENE_W + x) ? DONUT.choc : DONUT.chocLight
+    const sprinkle = SPRINKLES.get(y * SCENE_W + x)
+    if (sprinkle && y + 1 < glazeEnd) return sprinkle
     const top = (y + 0.5 - 70.5) / 9
     if (a < -0.5 && top < 0.55 && a > -0.85) return DONUT.glazeLight
     if (a > 0.6 || y + 1.5 >= glazeEnd) return DONUT.glazeShade

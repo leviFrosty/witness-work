@@ -16,6 +16,7 @@
     "sync:widget-shared": "node ./scripts/sync-widget-shared.mjs",
     "check:watch-parity": "node ./scripts/check-watch-parity.mjs",
     "check:unused-locales": "node scripts/check-unused-locale-keys.mjs",
+    "sync:help": "node scripts/sync-help-center.mjs",
     "build": "pnpm sync:widget-shared && node scripts/with-local-env.mjs development ios -- eas build -p ios --profile development-simulator --local",
     "build:production": "pnpm sync:widget-shared && node scripts/with-local-env.mjs production ios -- eas build -p ios --profile production-simulator --local",
     "build:prod-auto-submit": "./scripts/build-prod-auto-submit.sh",

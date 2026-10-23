@@ -222,6 +222,9 @@ export const analyticsEventNames = [
   'google_drive_access_lost',
   'google_drive_connect_outcome',
   'google_drive_disconnected',
+  // Help Center (ADR 0033): remote search reach and content refresh health.
+  'help_center_refreshed',
+  'help_center_search_completed',
   // App-wide Update Required (ADR 0027 §6).
   'update_required_shown',
   'update_required_store_opened',

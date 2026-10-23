@@ -30,6 +30,12 @@ vi.mock('@expo/ui', () => ({
     createElement('collapsible', props),
 }))
 vi.mock('@/lib/locales', () => ({ default: { t: (key: string) => key } }))
+vi.mock('@/components/richText/RichTextView', () => ({
+  default: (props: object) => createElement('richtext', props),
+}))
+vi.mock('@/components/richText/richTextFonts', () => ({
+  useItalicFonts: () => true,
+}))
 vi.mock('@/contexts/theme', () => ({
   default: () => ({
     colors: { text: '#000', accent: '#00f', textAlt: '#666', border: '#ccc' },
@@ -70,9 +76,11 @@ vi.mock('@/constants/links', () => ({ default: {} }))
 vi.mock('@/constants/contactInformation', () => ({ email: '' }))
 
 import { FAQItem, FAQSearch } from '@/features/updates/components/FAQContent'
-import type { FAQEntry } from '@/features/updates/constants/faqs'
+import { helpEntry } from '@/__tests__/helpers/helpCenterFixture'
 
-const entry = { id: 'streaks', category: 'streaks' } as unknown as FAQEntry
+const entry = helpEntry('streaks', 'How do streaks work?', 'Log each day.', {
+  category: 'streaks',
+})
 
 let renderer: ReactTestRenderer | undefined
 const collapsible = () => renderer!.root.findByType('collapsible' as never)
@@ -91,7 +99,7 @@ afterEach(() => {
 
 describe('FAQItem', () => {
   it('starts collapsed under its question and opens on toggle', () => {
-    expect(collapsible().props.label).toBe('faq_streaks_q')
+    expect(collapsible().props.label).toBe('How do streaks work?')
     expect(collapsible().props.isOpen).toBe(false)
 
     act(() => collapsible().props.onOpenChange(true))
@@ -106,6 +114,12 @@ describe('FAQItem', () => {
 
     act(() => collapsible().props.onOpenChange(true))
     expect(collapsible().props.stateDescription).toBe('a11y_expanded')
+  })
+
+  it('renders the answer as rich text', () => {
+    const answer = renderer!.root.findByType('richtext' as never)
+    expect(answer.props.doc).toBe(entry.doc)
+    expect(answer.props.showImages).toBe(false)
   })
 
   it('leaves announcing the state to the screen reader', () => {

@@ -14,6 +14,7 @@ const dailyEvents = new Set([
   'account_backup_failed',
   'account_session_failed',
   'device_storage_full',
+  'help_center_refreshed',
 ])
 const sessionEvents = new Set([
   'timer_action_completed',
@@ -31,6 +32,7 @@ const sessionEvents = new Set([
   'account_activity_viewed',
   'account_devices_viewed',
   'update_required_shown',
+  'help_center_search_completed',
 ])
 
 let storage: MMKV | undefined

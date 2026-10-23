@@ -9,7 +9,7 @@ import {
   useRef,
   useState,
 } from 'react'
-import { Platform, View, ScrollView, useWindowDimensions } from 'react-native'
+import { View, ScrollView, useWindowDimensions } from 'react-native'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import * as Clipboard from 'expo-clipboard'
@@ -21,15 +21,11 @@ import Header from '@/components/ui/layout/Header'
 import Wrapper from '@/components/ui/layout/Wrapper'
 import Text from '@/components/ui/MyText'
 import Empty from '@/components/ui/Empty'
+import Spinner from '@/components/ui/Spinner'
 import LucideIcon from '@/components/ui/LucideIcon'
 import IconButton from '@/components/ui/IconButton'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
-import {
-  FAQCategory,
-  faqCategoriesFor,
-  faqsForPlatform,
-} from '@/features/updates/constants/faqs'
 import {
   FAQIntro,
   FAQSearch,
@@ -42,6 +38,7 @@ import FAQTopics, {
 } from '@/features/updates/components/FAQTopics'
 import { RootStackParamList } from '@/types/rootStack'
 import useFAQSearch from '@/features/updates/hooks/useFAQSearch'
+import useHelpCenter from '@/features/updates/hooks/useHelpCenter'
 
 /** Quiet time after the last layout change before scrolling to a category. */
 const LAYOUT_SETTLE_MS = 150
@@ -54,19 +51,24 @@ const FAQScreen = () => {
   const navigation = useNavigation()
   const route = useRoute<RouteProp<RootStackParamList, 'FAQ'>>()
   const requestedCategory = route.params?.scrollToCategory
-  const faqs = faqsForPlatform(Platform.OS)
-  const categories = faqCategoriesFor(faqs)
-  const targetCategory = categories.includes(requestedCategory as FAQCategory)
-    ? (requestedCategory as FAQCategory)
+  const { entries: faqs, categories, locale } = useHelpCenter()
+  const targetCategory = categories.some(
+    (category) => category.id === requestedCategory
+  )
+    ? requestedCategory
     : undefined
   const [selectedTopic, setSelectedTopic] = useState<FAQTopic>(
     targetCategory ?? 'pinned'
   )
   const [search, setSearch] = useState('')
-  const { matches, isSearching } = useFAQSearch(search)
+  const { matches, isSearching, isWaitingForRemote } = useFAQSearch(
+    search,
+    faqs,
+    locale
+  )
   const scrollRef = useRef<ScrollView>(null)
   const answersRef = useRef<ScrollView>(null)
-  const categoryOffsets = useRef<Partial<Record<FAQCategory, number>>>({})
+  const categoryOffsets = useRef<Partial<Record<string, number>>>({})
   // Set once the User scrolls: the screen stops following the category.
   const userScrolledRef = useRef(false)
   // Where the screen last scrolled the requested category to.
@@ -181,8 +183,9 @@ const FAQScreen = () => {
         ? pinned
         : faqs.filter((entry) => entry.category === selectedTopic)
   const grouped = categories
-    .map((category) => ({
+    .map(({ id: category, title }) => ({
       category,
+      title,
       entries: faqs.filter(
         (entry) =>
           entry.category === category &&
@@ -197,7 +200,23 @@ const FAQScreen = () => {
       {(isWide ? visibleAnswers : matches).map((entry) => (
         <FAQItem key={entry.id} entry={entry} />
       ))}
-      {matches.length === 0 && (
+      {matches.length === 0 && isWaitingForRemote && (
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 8,
+            paddingVertical: 24,
+          }}
+        >
+          <Spinner size='small' />
+          <Text style={{ color: theme.colors.textAlt }}>
+            {i18n.t('faq_searching')}
+          </Text>
+        </View>
+      )}
+      {matches.length === 0 && !isWaitingForRemote && (
         <Empty
           icon={
             <LucideIcon icon={SearchIcon} size={24} color={theme.colors.text} />
@@ -276,7 +295,7 @@ const FAQScreen = () => {
               >
                 {isSearching
                   ? i18n.t('faq_allHeader')
-                  : faqTopicTitle(selectedTopic)}
+                  : faqTopicTitle(selectedTopic, categories)}
               </Text>
               {!isSearching && selectedTopic === 'support' ? support : results}
             </View>
@@ -340,7 +359,7 @@ const FAQScreen = () => {
                 >
                   {i18n.t('faq_allHeader')}
                 </Text>
-                {grouped.map(({ category, entries }) => (
+                {grouped.map(({ category, title, entries }) => (
                   <View
                     key={category}
                     style={{ gap: 10, paddingHorizontal: 15 }}
@@ -358,7 +377,7 @@ const FAQScreen = () => {
                         color: theme.colors.textAlt,
                       }}
                     >
-                      {faqTopicTitle(category)}
+                      {title}
                     </Text>
                     {entries.map((entry) => (
                       <FAQItem key={entry.id} entry={entry} />

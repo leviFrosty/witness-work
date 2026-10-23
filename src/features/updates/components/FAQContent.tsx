@@ -19,11 +19,14 @@ import ContextMenu from '@/components/ui/ContextMenu'
 import { errorTracking } from '@/lib/errorTracking'
 import useTheme from '@/contexts/theme'
 import { usePreferences } from '@/stores/preferences'
-import i18n, { TranslationKey } from '@/lib/locales'
+import i18n from '@/lib/locales'
 import links from '@/constants/links'
 import { email } from '@/constants/contactInformation'
 import { openURL } from '@/lib/links'
-import { FAQEntry } from '@/features/updates/constants/faqs'
+import RichTextView from '@/components/richText/RichTextView'
+import { useItalicFonts } from '@/components/richText/richTextFonts'
+import { richTextHasMark } from '@/lib/richText/inspect'
+import type { HelpEntry } from '@/features/updates/types/helpCenter'
 import { alignInput, alignText } from '@/lib/direction'
 import { postScriptName } from '@/lib/postScriptName'
 
@@ -78,10 +81,10 @@ const CARD_PADDING = Platform.OS === 'android' ? 4 : 20
 const CONTENT_INSET =
   2 + CARD_PADDING * 2 + (Platform.OS === 'android' ? 32 : 0)
 
-export const FAQItem = ({ entry }: { entry: FAQEntry }) => {
+export const FAQItem = ({ entry }: { entry: HelpEntry }) => {
   const theme = useTheme()
-  const question = i18n.t(`faq_${entry.id}_q` as TranslationKey)
-  const answer = i18n.t(`faq_${entry.id}_a` as TranslationKey)
+  const { question, plainText: answer } = entry
+  const italicsReady = useItalicFonts(richTextHasMark(entry.doc, 'italic'))
   const toast = useToastController()
   const cardStyle = useCardStyle()
   const colorScheme = usePreferences((s) => s.colorScheme)
@@ -152,19 +155,38 @@ export const FAQItem = ({ entry }: { entry: FAQEntry }) => {
                     message: `${question}\n\n${answer}`,
                   }).catch(() => {}),
               },
+              {
+                id: 'share_link',
+                title: i18n.t('faq_shareLink'),
+                systemImage: 'link',
+                onPress: () =>
+                  void Share.share(
+                    Platform.OS === 'ios'
+                      ? { url: entry.url }
+                      : { message: entry.url }
+                  ).catch(() => {}),
+              },
             ]}
           >
             {/* Hosted RN content sizes to itself, so give it the width left
             inside the card. */}
-            <Text
+            <View
               style={{
                 width: contentWidth,
-                lineHeight: 22,
                 paddingTop: Platform.OS === 'ios' ? 12 : 0,
               }}
             >
-              {answer}
-            </Text>
+              <RichTextView
+                doc={entry.doc}
+                style={{ lineHeight: 22 }}
+                showImages={false}
+                spans={{
+                  italicsReady,
+                  linkColor: theme.colors.accent,
+                  onLinkPress: (href) => void openURL(href),
+                }}
+              />
+            </View>
           </ContextMenu>
           {entry.id === 'reportBug' && (
             <RNHostView matchContents>

@@ -11,6 +11,7 @@ import i18n from '@/lib/locales'
 import type { NoteSurface } from '@/lib/richText/noteEditorSession'
 import {
   getNoteDoc,
+  getNoteText,
   hasNote,
   noteFields,
   type NoteUpdate,
@@ -64,6 +65,11 @@ const NoteInputRow = (props: {
         onPress={open}
         accessibilityRole='button'
         accessibilityLabel={props.label}
+        // The label alone hid the note from screen readers. Always set, since
+        // Android clears the label along with a value that goes away.
+        accessibilityValue={{
+          text: (filled && getNoteText(props.note)) || props.placeholder,
+        }}
         accessibilityHint={i18n.t('richText_editHint')}
         testID={props.testID}
         style={{

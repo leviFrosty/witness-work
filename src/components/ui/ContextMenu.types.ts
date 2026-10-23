@@ -1,5 +1,10 @@
 import type { ReactElement } from 'react'
-import type { AccessibilityRole, StyleProp, ViewStyle } from 'react-native'
+import type {
+  AccessibilityRole,
+  AccessibilityState,
+  StyleProp,
+  ViewStyle,
+} from 'react-native'
 import type { ButtonProps } from '@expo/ui/swift-ui'
 
 export type ContextMenuAction = {
@@ -58,6 +63,8 @@ export type ContextMenuProps = {
    * only long-presses. One with `onPress` is always a button.
    */
   accessibilityRole?: AccessibilityRole
+  /** The trigger's state, e.g. `selected` for the chosen day in a calendar. */
+  accessibilityState?: AccessibilityState
   /**
    * Defaults to true: the trigger is one accessibility element carrying the
    * menu as custom actions. Pass false when the content holds its own

@@ -11,6 +11,7 @@ export default function Switch({
   onValueChange,
   disabled,
   accessibilityLabel,
+  accessibilityHint,
   accessible,
   testID,
 }: SwitchProps) {
@@ -30,6 +31,7 @@ export default function Switch({
       importantForAccessibility={interactive ? 'yes' : 'no-hide-descendants'}
       accessibilityRole='switch'
       accessibilityLabel={accessibilityLabel}
+      accessibilityHint={accessibilityHint}
       accessibilityState={{ checked: value, disabled: !!disabled }}
       accessibilityActions={[{ name: 'activate' }]}
       onAccessibilityAction={() => {

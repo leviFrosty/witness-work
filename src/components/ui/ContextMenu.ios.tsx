@@ -21,6 +21,7 @@ export default function ContextMenu({
   onPress,
   accessibilityLabel,
   accessibilityRole,
+  accessibilityState,
   accessible = true,
   disabled = false,
   preview,
@@ -58,6 +59,7 @@ export default function ContextMenu({
       // would otherwise surface as an empty button around them.
       accessibilityRole={accessible ? 'button' : undefined}
       accessibilityLabel={accessibilityLabel}
+      accessibilityState={accessibilityState}
       testID={testID}
       {...a11y}
     >
@@ -67,6 +69,7 @@ export default function ContextMenu({
     <View
       accessible={accessible && groups.length > 0}
       accessibilityRole={accessibilityRole}
+      accessibilityState={accessibilityState}
       {...a11y}
     >
       {children}

@@ -90,4 +90,86 @@ describe('InputRowContainer', () => {
       )
     ).toBe('row')
   })
+
+  describe('screen readers', () => {
+    const labelHolders = (element: React.ReactElement) => {
+      let renderer: ReactTestRenderer | undefined
+      act(() => {
+        renderer = create(element)
+      })
+      const label = renderer!.root.find(
+        (node) =>
+          (node.type as unknown) === 'Text' && node.props.children === 'Topic'
+      )
+      const holders = []
+      for (let node = label.parent; node; node = node.parent) {
+        holders.push(node)
+      }
+      return holders
+    }
+    const hidden = (element: React.ReactElement) =>
+      labelHolders(element).some(
+        (node) =>
+          node.props.importantForAccessibility === 'no-hide-descendants' &&
+          node.props.accessibilityElementsHidden === true
+      )
+
+    it('reads a plain label', () => {
+      expect(
+        hidden(
+          <InputRowContainer label='Topic'>
+            <></>
+          </InputRowContainer>
+        )
+      ).toBe(false)
+    })
+
+    it("skips a label its control reads, so the name isn't read twice", () => {
+      expect(
+        hidden(
+          <InputRowContainer label='Topic' labelReadByControl>
+            <></>
+          </InputRowContainer>
+        )
+      ).toBe(true)
+      // A pressable label focuses a control that's labelled with it.
+      const holders = labelHolders(
+        <InputRowContainer label='Topic' onLabelPress={() => {}}>
+          <></>
+        </InputRowContainer>
+      )
+      const pressable = holders.find(
+        (node) => (node.type as unknown) === 'Pressable'
+      )
+      expect(pressable?.props).toMatchObject({
+        accessible: false,
+        importantForAccessibility: 'no-hide-descendants',
+      })
+      expect(pressable?.props.accessibilityRole).toBeUndefined()
+    })
+
+    it('skips a description its control reads as a hint', () => {
+      const description = (descriptionReadByControl: boolean) => {
+        let renderer: ReactTestRenderer | undefined
+        act(() => {
+          renderer = create(
+            <InputRowContainer
+              label='Topic'
+              description='Shown under the label'
+              descriptionReadByControl={descriptionReadByControl}
+            >
+              <></>
+            </InputRowContainer>
+          )
+        })
+        return renderer!.root.find(
+          (node) => node.props.children === 'Shown under the label'
+        ).props
+      }
+      expect(description(false).importantForAccessibility).toBeUndefined()
+      expect(description(true).importantForAccessibility).toBe(
+        'no-hide-descendants'
+      )
+    })
+  })
 })

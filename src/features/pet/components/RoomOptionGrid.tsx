@@ -19,10 +19,10 @@ import {
 } from '@/features/pet/lib/roomLabels'
 import {
   ROOM_THUMB_VIEWS,
-  roomWithChoice,
   selectedRoomOption,
   silhouetteRooms,
   silhouetteStyle,
+  thumbRoom,
   thumbShowsPet,
   unlockRequirement,
   type RoomChoicePart,
@@ -190,7 +190,7 @@ export default function RoomOptionGrid({
                 style: silhouetteStyle(part),
               }
             } else {
-              input = sceneOf(roomWithChoice(room, part, option))
+              input = sceneOf(thumbRoom(room, part, option))
             }
 
             const content = (

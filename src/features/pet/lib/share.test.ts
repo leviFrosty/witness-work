@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import { pixelAt } from '@/lib/pixelArt'
+import { crop, pixelAt } from '@/lib/pixelArt'
 import {
+  composeScene,
   DEMO_SIGN_DATA,
   SIGN_IDS,
   VIEW_CARD,
@@ -96,6 +97,15 @@ describe('sharing the pet', () => {
             1
           ).data
         ).toEqual(noSign)
+  })
+
+  it('draws the sign when asked', () => {
+    const room = { ...INPUT.room, sign: 'month' as const }
+    const withSign = petShareImage({ ...INPUT, room }, 1, true).data
+    expect(withSign).not.toEqual(petShareImage({ ...INPUT, room }, 1).data)
+    expect(withSign).toEqual(
+      crop(composeScene({ ...INPUT, room, particles: null }, 0), VIEW_CARD).data
+    )
   })
 
   it('lists the streak, the days together and the hats on the card', () => {

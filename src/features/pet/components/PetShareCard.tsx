@@ -81,6 +81,7 @@ export default function PetShareCard({
   hearts,
   gold,
   stats,
+  showSign,
   maxWidth,
   ref,
 }: {
@@ -89,6 +90,8 @@ export default function PetShareCard({
   hearts: number
   gold: boolean
   stats: PetShareStats
+  /** Draws the wall sign, with the User's records on it. */
+  showSign: boolean
   /** The widest the card may be; the room snaps to whole pixels within it. */
   maxWidth: number
   ref?: Ref<View>
@@ -104,11 +107,13 @@ export default function PetShareCard({
   )
   const roomWidth = (VIEW_CARD[2] * roomScale) / ratio
   const heartsScale = Math.max(1, Math.round((HEARTS_H * ratio) / HEART_ICON_H))
-  // Drawn once: the picture is a still of the room as the sheet opened.
+  // Drawn once: the picture is a still of the room as the sheet opened, with
+  // and without the sign.
   const [images] = useState(() => {
     const row = heartsRow(hearts, gold)
     return {
       room: pngSource(petShareImage(input, 1), roomScale),
+      roomWithSign: pngSource(petShareImage(input, 1, true), roomScale),
       hearts: pngSource(row, heartsScale),
       heartsSize: {
         width: (row.width * heartsScale) / ratio,
@@ -141,9 +146,9 @@ export default function PetShareCard({
         backgroundColor: theme.colors.backgroundLighter,
       }}
     >
-      {images.room && (
+      {images.room && images.roomWithSign && (
         <Image
-          source={images.room}
+          source={showSign ? images.roomWithSign : images.room}
           accessibilityLabel={i18n.t('pet.a11y.scene', { name })}
           style={{
             width: roomWidth,

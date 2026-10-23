@@ -4636,7 +4636,9 @@
     },
     "share": {
       "dialogTitle": "Share {{name}}",
-      "failed": "Couldn't share the picture. Try again."
+      "failed": "Couldn't share the picture. Try again.",
+      "showSign": "Show sign",
+      "showSignInfo": "The sign on the wall shows your records, like your hours this month. It's left out of the picture unless you turn this on."
     },
     "shareCard": {
       "share": "Share",

@@ -3,6 +3,7 @@ import { Platform, useWindowDimensions, View } from 'react-native'
 import { useIsFocused } from '@react-navigation/native'
 import type { NativeStackScreenProps } from '@react-navigation/native-stack'
 import ActionButton from '@/components/ui/ActionButton'
+import InputRowSwitch from '@/components/ui/inputs/InputRowSwitch'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 import useServiceStreak from '@/hooks/useServiceStreak'
@@ -36,6 +37,8 @@ export default function PetShareScreen({ navigation }: Props) {
   const share = useSharePet()
   const card = useRef<View>(null)
   const [sharing, setSharing] = useState(false)
+  // Off by default: the sign shows the User's records.
+  const [showSign, setShowSign] = useState(false)
   const { width } = useWindowDimensions()
   const sheetColor = theme.colors.sheet
   useEffect(() => {
@@ -51,6 +54,7 @@ export default function PetShareScreen({ navigation }: Props) {
   if (!scene) return null
 
   const android = Platform.OS === 'android'
+  const hasSign = scene.state.room.sign !== 'none'
   const stats = petShareStats({
     adoptedOn: scene.pet.adoptedOn,
     today: scene.state.todayKey,
@@ -88,15 +92,33 @@ export default function PetShareScreen({ navigation }: Props) {
           hearts={scene.life.hearts}
           gold={scene.life.gold}
           stats={stats}
+          showSign={hasSign && showSign}
           maxWidth={Math.min(width - SIDE_PAD * 2, CARD_MAX_WIDTH)}
         />
       </View>
+      {hasSign && (
+        <View
+          style={{
+            borderRadius: theme.numbers.borderRadiusMd,
+            backgroundColor: theme.colors.backgroundLighter,
+            overflow: 'hidden',
+          }}
+        >
+          <InputRowSwitch
+            label={i18n.t('pet.share.showSign')}
+            info={i18n.t('pet.share.showSignInfo')}
+            value={showSign}
+            onValueChange={setShowSign}
+            lastInSection
+          />
+        </View>
+      )}
       <ActionButton
         loading={sharing}
         disabled={sharing}
         onPress={async () => {
           setSharing(true)
-          await share(card, scene.name)
+          await share(card, scene.name, hasSign && showSign)
           setSharing(false)
         }}
       >

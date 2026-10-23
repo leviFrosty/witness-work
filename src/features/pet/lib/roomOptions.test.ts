@@ -20,6 +20,7 @@ import {
   roomTabSections,
   roomWithChoice,
   selectedRoomOption,
+  thumbRoom,
   unlockRequirement,
   type RoomUnlocks,
 } from '@/features/pet/lib/roomOptions'
@@ -89,6 +90,22 @@ describe('Decorate Room options', () => {
     })
     expect(selectedRoomOption(FIXED, 'hat')).toBe('none')
     expect(roomChoicePatch(FIXED, 'hat', 'beret')).toEqual({ hat: 'beret' })
+  })
+
+  it('draws thumbnails by day, except the window time choices', () => {
+    expect(thumbRoom(FIXED, 'hat', 'beret')).toEqual({
+      ...FIXED,
+      hat: 'beret',
+      window: { time: 'day', season: 'live' },
+    })
+    expect(thumbRoom(FIXED, 'windowSeason', 'winter').window).toEqual({
+      time: 'day',
+      season: 'winter',
+    })
+    expect(thumbRoom(FIXED, 'windowTime', 'night').window).toEqual({
+      time: 'night',
+      season: 'live',
+    })
   })
 
   it('turns Live on for both, and off at what the window shows now', () => {

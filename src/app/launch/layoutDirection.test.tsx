@@ -6,7 +6,8 @@ const appState = vi.hoisted(() => ({
   currentState: 'active',
   handlers: new Set<(state: string) => void>(),
 }))
-const launch = vi.hoisted(() => ({ mismatch: false }))
+const launch = vi.hoisted(() => ({ mismatch: false, applied: [] as string[] }))
+const storage = vi.hoisted(() => ({ locked: false }))
 const reloadApp = vi.hoisted(() => vi.fn(async () => {}))
 const handoff = vi.hoisted(() => ({
   calls: [] as string[],
@@ -52,10 +53,14 @@ vi.mock('@/app/launch/reloadHandoff', () => ({
   dropLaunchHandoff: () => handoff.calls.push('drop'),
 }))
 vi.mock('@/lib/rtl', () => ({
-  applyLayoutDirectionAtLaunch: (_locale: string, reload: () => void) => {
+  applyLayoutDirectionAtLaunch: (locale: string, reload: () => void) => {
+    launch.applied.push(locale)
     if (launch.mismatch) reload()
     return launch.mismatch
   },
+}))
+vi.mock('@/stores/mmkv', () => ({
+  isStorageLocked: () => storage.locked,
 }))
 
 const emit = (state: string) => {
@@ -75,6 +80,8 @@ beforeEach(() => {
   appState.currentState = 'active'
   appState.handlers.clear()
   launch.mismatch = false
+  launch.applied.length = 0
+  storage.locked = false
   hotUpdater.reset()
   reloadApp.mockReset()
   reloadApp.mockResolvedValue(undefined)
@@ -98,6 +105,20 @@ describe('isLayoutDirectionReloadDue', () => {
     launch.mismatch = true
     const { isLayoutDirectionReloadDue } = await import('./layoutDirection')
     expect(isLayoutDirectionReloadDue()).toBe(true)
+  })
+
+  it('leaves the direction alone before the first unlock', async () => {
+    // The Language is only the device's then, and storage refuses writes.
+    storage.locked = true
+    launch.mismatch = true
+    const { isLayoutDirectionReloadDue } = await import('./layoutDirection')
+    expect(launch.applied).toEqual([])
+    expect(isLayoutDirectionReloadDue()).toBe(false)
+  })
+
+  it('sets the direction from the app Language once unlocked', async () => {
+    await import('./layoutDirection')
+    expect(launch.applied).toEqual(['en-us'])
   })
 })
 

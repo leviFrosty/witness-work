@@ -2,7 +2,7 @@ import type {
   PersistStorage as ZustandPersistStorage,
   StorageValue,
 } from 'zustand/middleware'
-import { mmkvStorage, PersistStorage } from '@/stores/mmkv'
+import { isStorageLocked, mmkvStorage, PersistStorage } from '@/stores/mmkv'
 
 const KEY = 'preferences'
 
@@ -12,10 +12,12 @@ let boot: { raw: string; value: unknown } | null | undefined
  * The persisted preferences blob as launch found it. Language and date
  * conventions are set up from it before the preferences store exists, and the
  * store's hydration then reuses the same parse instead of parsing it again.
+ * Nothing before the device's first unlock, like every store (and so a
+ * simulated locked launch falls back to the device's Language too).
  */
 export function readBootPreferences(): unknown {
   if (boot === undefined) {
-    const raw = mmkvStorage.getString(KEY)
+    const raw = isStorageLocked() ? undefined : mmkvStorage.getString(KEY)
     try {
       boot = raw ? { raw, value: JSON.parse(raw) } : null
     } catch {

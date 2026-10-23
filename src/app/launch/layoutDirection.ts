@@ -4,6 +4,7 @@ import { _i18n } from '@/lib/locales'
 import { logger } from '@/lib/logger'
 import { launchRead, reloadApp } from '@/lib/hotUpdater'
 import { applyLayoutDirectionAtLaunch } from '@/lib/rtl'
+import { isStorageLocked } from '@/stores/mmkv'
 import {
   dropLaunchHandoff,
   handOffLaunchBeforeReload,
@@ -16,9 +17,14 @@ import {
 // A launch after that reload opens the tap or link that launched the one before.
 restoreLaunchAfterReload()
 let reloadDue = false
-applyLayoutDirectionAtLaunch(_i18n.locale, () => {
-  reloadDue = true
-})
+// Before the device's first unlock the User's Language can't be read, so the
+// Language here is only the device's, and storage refuses writes. The direction
+// is left as saved then; the launch after the unlock reload
+// (`useStorageUnlock`) sets it from the User's Language.
+if (!isStorageLocked())
+  applyLayoutDirectionAtLaunch(_i18n.locale, () => {
+    reloadDue = true
+  })
 
 /**
  * Whether this launch reloads to fix its layout direction. The launch skips its

@@ -75,6 +75,11 @@ export interface WriteToolDefinition<S extends z.ZodObject>
    * turn takes one more step so the model can.
    */
   refForLaterCalls?: boolean
+  /**
+   * Removes a record (protocol access `destructive`): proposed and reviewed
+   * like any write, but ww-api withdraws it once the turn read untrusted text.
+   */
+  destructive?: boolean
   propose(input: z.output<S>, ctx: ToolContext): ProposeResult
 }
 
@@ -91,7 +96,7 @@ export type ScribeTool =
       run(args: unknown, ctx: ToolContext): Promise<ReadResult>
     }
   | {
-      access: 'write'
+      access: 'write' | 'destructive'
       name: string
       area: ScribeActivityArea
       description: string
@@ -103,7 +108,7 @@ export type ScribeTool =
     }
 
 export type ReadTool = Extract<ScribeTool, { access: 'read' }>
-export type WriteTool = Extract<ScribeTool, { access: 'write' }>
+export type WriteTool = Exclude<ScribeTool, { access: 'read' }>
 
 const MAX_ERROR_CHARS = 400
 
@@ -148,12 +153,15 @@ export function defineReadTool<S extends z.ZodObject>(
   }
 }
 
-/** A write tool: proposes effects for review; never writes during the loop. */
+/**
+ * A write tool: proposes effects for review; never writes during the loop.
+ * `destructive` ones too.
+ */
 export function defineWriteTool<S extends z.ZodObject>(
   definition: WriteToolDefinition<S>
 ): WriteTool {
   return {
-    access: 'write',
+    access: definition.destructive ? 'destructive' : 'write',
     name: definition.name,
     area: definition.area,
     description: definition.description,

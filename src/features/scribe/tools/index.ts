@@ -15,6 +15,8 @@ import contactsCreate from '@/features/scribe/tools/contactsCreate'
 import contactsUpdate from '@/features/scribe/tools/contactsUpdate'
 import visitsLog from '@/features/scribe/tools/visitsLog'
 import categoriesCreate from '@/features/scribe/tools/categoriesCreate'
+import timeUpdate from '@/features/scribe/tools/timeUpdate'
+import timeDelete from '@/features/scribe/tools/timeDelete'
 
 /**
  * Every tool Scribe AI offers, in the order the definitions are sent (the
@@ -38,6 +40,8 @@ export const SCRIBE_TOOLS: readonly ScribeTool[] = [
   contactsUpdate,
   visitsLog,
   categoriesCreate,
+  timeUpdate,
+  timeDelete,
 ]
 
 const BY_NAME = new Map(SCRIBE_TOOLS.map((tool) => [tool.name, tool]))

@@ -13,7 +13,11 @@ import type {
   ApplyOutcome,
   UndoRecord,
 } from '@/features/scribe/proposals/effects/types'
-import { applyTimeCreate } from '@/features/scribe/proposals/effects/time'
+import {
+  applyTimeCreate,
+  applyTimeDelete,
+  applyTimeUpdate,
+} from '@/features/scribe/proposals/effects/time'
 import {
   applyPlanCreate,
   applyPlanUpdate,
@@ -60,6 +64,10 @@ function applyOne(effect: StoredEffect, ctx: ApplyContext): ApplyOutcome {
       return applyVisitCreate(draft, ctx)
     case 'time.create':
       return applyTimeCreate(draft, ctx)
+    case 'time.update':
+      return applyTimeUpdate(draft, ctx)
+    case 'time.delete':
+      return applyTimeDelete(draft)
     case 'plan.create':
       return applyPlanCreate(draft, ctx)
     case 'plan.update':

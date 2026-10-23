@@ -6,6 +6,16 @@ import type { RichText } from '@/types/richText'
 /** What undoing one applied effect needs; persisted in the ledger. */
 export type UndoRecord =
   | { kind: 'time.create'; entryId: string }
+  | {
+      kind: 'time.update'
+      entryId: string
+      /** The entry as it was before the update. */
+      before: TimeSnapshot
+      /** The entry right after it; Undo reverts only while it still matches. */
+      after: TimeSnapshot
+    }
+  /** The deleted entry, to put back. */
+  | { kind: 'time.delete'; entryId: string; entry: TimeSnapshot }
   | { kind: 'plan.create'; planId: string }
   | {
       kind: 'plan.update'
@@ -31,6 +41,20 @@ export type UndoRecord =
     }
   | { kind: 'visit.create'; visitId: string }
   | { kind: 'category.create'; categoryId: string; ref: string }
+
+/**
+ * A Time Entry as stored, its date as a local `YYYY-MM-DD` day so it survives
+ * the ledger's JSON.
+ */
+export interface TimeSnapshot {
+  date: string
+  hours: number
+  minutes: number
+  categoryId: string | null
+  credit: boolean | null
+  note: string | null
+  noteDoc: RichText | null
+}
 
 /** A Day Plan's editable fields, as stored. */
 export interface PlanSnapshot {

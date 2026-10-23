@@ -109,7 +109,7 @@ function userActionOf(
   now: Date
 ): UserActionKind | null {
   const kinds = new Set(applied.map((effect) => effect.kind))
-  if (kinds.has('time.create')) {
+  if (kinds.has('time.create') || kinds.has('time.update')) {
     const { preferences } = readScribeStores()
     const { entryMode } = publisherCapabilitiesForMonth(
       preferences,

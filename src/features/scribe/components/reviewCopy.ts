@@ -37,6 +37,7 @@ const FIELD_LABEL: Record<ScribeFieldChange['field'], TranslationKey> = {
   minutes: 'scribe_field_minutes',
   startMinutes: 'scribe_field_start',
   anytime: 'scribe_field_anytime',
+  category: 'scribe_field_type',
   title: 'scribe_field_title',
   note: 'scribe_field_note',
   name: 'scribe_field_name',
@@ -51,6 +52,7 @@ export const changeLine = (
   format: MinuteDisplayFormat
 ): string => {
   const value = (v: unknown): string => {
+    if (change.field === 'category') return v ? String(v) : i18n.t('standard')
     if (v === null || v === undefined || v === '') return '—'
     switch (change.field) {
       case 'date':
@@ -126,6 +128,41 @@ export const effectLines = (
                   }),
           meta: [reviewDate(preview.date), preview.note ?? ''].filter(Boolean),
           spoken: fromSpoken(preview.spoken),
+        },
+      ]
+    case 'time.update':
+      return [
+        {
+          title: i18n.t('scribe_cardTimeUpdate', {
+            date: formatWeekdayMonthDayCompact(
+              moment(preview.date, 'YYYY-MM-DD')
+            ),
+          }),
+          meta: [
+            duration(preview.minutes, format),
+            preview.category?.name ?? '',
+          ].filter(Boolean),
+          spoken: fromSpoken(preview.spoken),
+        },
+        ...preview.changes.map((change) => ({
+          title: changeLine(change, format),
+          meta: [],
+          spoken: null,
+        })),
+      ]
+    case 'time.delete':
+      return [
+        {
+          title: preview.category
+            ? i18n.t('scribe_cardTimeDeleteCategory', {
+                duration: duration(preview.minutes, format),
+                category: preview.category.name,
+              })
+            : i18n.t('scribe_cardTimeDelete', {
+                duration: duration(preview.minutes, format),
+              }),
+          meta: [reviewDate(preview.date), preview.note ?? ''].filter(Boolean),
+          spoken: null,
         },
       ]
     case 'plan.create': {

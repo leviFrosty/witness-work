@@ -3,7 +3,11 @@ import type {
   UndoOutcome,
   UndoRecord,
 } from '@/features/scribe/proposals/effects/types'
-import { undoTimeCreate } from '@/features/scribe/proposals/effects/time'
+import {
+  undoTimeCreate,
+  undoTimeDelete,
+  undoTimeUpdate,
+} from '@/features/scribe/proposals/effects/time'
 import {
   undoPlanCreate,
   undoPlanUpdate,
@@ -27,6 +31,10 @@ export function undoRecord(
   switch (undo.kind) {
     case 'time.create':
       return undoTimeCreate(undo.entryId)
+    case 'time.update':
+      return undoTimeUpdate(undo.entryId, undo.before, undo.after)
+    case 'time.delete':
+      return undoTimeDelete(undo.entryId, undo.entry)
     case 'plan.create':
       return undoPlanCreate(undo.planId)
     case 'plan.update':

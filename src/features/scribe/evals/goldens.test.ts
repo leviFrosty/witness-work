@@ -54,6 +54,7 @@ import { ScribeClientError } from '@/features/scribe/lib/errors'
 import { sendScribeMessage } from '@/features/scribe/runtime/turnLoop'
 import { unusedRefNote } from '@/features/scribe/runtime/toolRunner'
 import {
+  allTimeEntries,
   readScribeStores,
   type ScribeStores,
 } from '@/features/scribe/runtime/snapshot'
@@ -609,6 +610,86 @@ describe('golden turns', () => {
         ],
       },
     ])
+  })
+
+  it("changes last month's entry after listing the month", async () => {
+    const result = await turn(
+      [
+        { calls: [['time_list', { from: '2026-09-01', to: '2026-09-30' }]] },
+        {
+          calls: [
+            [
+              'time_update',
+              {
+                entryRef: 't1',
+                onDate: null,
+                date: null,
+                minutes: 2520,
+                categoryRef: null,
+                note: null,
+                dateSpoken: null,
+              },
+            ],
+          ],
+        },
+      ],
+      'can you edit that time entry I made last month to 42 hours'
+    )
+    expect(result.bodies.map((body) => body.step)).toEqual([0, 1])
+    expect(result.results[0]).toMatchObject({
+      name: 'time_list',
+      ok: true,
+      data: { entries: ['t1 2026-09-28 180m k0'] },
+    })
+    expect(result.cards).toEqual([
+      {
+        kind: 'time',
+        choice: false,
+        previews: [
+          {
+            kind: 'time.update',
+            date: '2026-09-28',
+            minutes: 180,
+            category: null,
+            changes: [{ field: 'minutes', before: 180, after: 2520 }],
+            spoken: { date: null, time: null },
+          },
+        ],
+      },
+    ])
+  })
+
+  it("deletes yesterday's entry by its day, as a destructive call", async () => {
+    const result = await turn(
+      [{ calls: [['time_delete', { entryRef: null, onDate: '2026-10-20' }]] }],
+      'remove the time I logged yesterday, it was wrong'
+    )
+    expect(
+      result.bodies[0].tools.find((tool) => tool.name === 'time_delete')
+    ).toMatchObject({ access: 'destructive' })
+    expect(result.cards).toEqual([
+      {
+        kind: 'time',
+        choice: false,
+        previews: [
+          {
+            kind: 'time.delete',
+            date: '2026-10-20',
+            minutes: 120,
+            category: null,
+            note: null,
+          },
+        ],
+      },
+    ])
+    expect(addScribeProposal(result.proposal!.id, { now: NOW }).status).toBe(
+      'applied'
+    )
+    expect(
+      allTimeEntries(useServiceReport.getState().serviceReports).some(
+        (entry) => entry.id === 't-1020'
+      )
+    ).toBe(false)
   })
 
   it('a plan with a buddy: the card says how to invite her, and nobody is invited', async () => {

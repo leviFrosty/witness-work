@@ -196,7 +196,7 @@ export function startToolCalls(deps: ToolRunDeps): ToolCallRun {
       return fail(
         call,
         `${call.name} is off in data protection mode.`,
-        tool.access === 'write'
+        tool.access !== 'read'
       )
     if (tool.access === 'read') {
       outcome.readCalls++

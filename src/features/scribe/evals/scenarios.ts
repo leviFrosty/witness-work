@@ -14,7 +14,7 @@ import { PREFERENCES } from '@/features/scribe/tools/__fixtures__/stores'
 
 export interface EvalCall {
   name: string
-  access: 'read' | 'write'
+  access: 'read' | 'write' | 'destructive'
   args: Record<string, unknown>
   ok: boolean
   error: string | null
@@ -99,7 +99,7 @@ export const anyOf =
 export const present: Matcher = (value) => value !== null && value !== undefined
 
 const okWrites = (turn: TurnResult) =>
-  turn.calls.filter((call) => call.access === 'write' && call.ok)
+  turn.calls.filter((call) => call.access !== 'read' && call.ok)
 
 const describe = (calls: EvalCall[]) =>
   calls
@@ -184,6 +184,18 @@ export const both =
   (turn) =>
     checks.map((check) => check(turn)).find((failure) => failure !== null) ??
     null
+
+/** A write to the Time Entry `id`, named by its Ref or by its day. */
+export const entryWrite = (
+  name: string,
+  id: string,
+  day: string,
+  args: { [key: string]: Expected } = {}
+): Check =>
+  either(
+    write(name, { ...args, entryRef: refTo(id) }),
+    write(name, { ...args, entryRef: null, onDate: day })
+  )
 
 /** No call to this read, not even a refused one. */
 export const noRead =
@@ -634,7 +646,7 @@ export const SCENARIOS: EvalScenario[] = [
           (turn) =>
             new Set(
               turn.calls
-                .filter((call) => call.ok && call.access === 'write')
+                .filter((call) => call.ok && call.access !== 'read')
                 .map((call) => turn.resolve(call.args.categoryRef))
                 .filter((id) => id?.startsWith('new:'))
             ).size > 1
@@ -1188,6 +1200,79 @@ export const SCENARIOS: EvalScenario[] = [
     ],
   },
 
+  // ---- changing and deleting logged time
+  {
+    id: 'time-update-yesterday',
+    group: 'time-edit',
+    turns: [
+      {
+        text: 'actually yesterday was two and a half hours, not two',
+        checks: [
+          onlyWrites('time_update'),
+          entryWrite('time_update', 't-1020', '2026-10-20', { minutes: 150 }),
+        ],
+      },
+    ],
+  },
+  {
+    id: 'time-update-category',
+    group: 'time-edit',
+    turns: [
+      {
+        text: 'the time I put in on the 12th was really LDC',
+        checks: [
+          onlyWrites('time_update'),
+          entryWrite('time_update', 't-1012', '2026-10-12', {
+            categoryRef: refTo('cat-ldc'),
+            minutes: anyOf(null, 60),
+          }),
+        ],
+      },
+    ],
+  },
+  {
+    id: 'time-update-last-month',
+    group: 'time-edit',
+    turns: [
+      {
+        text: 'can you edit that time entry I made last month to 42 hours',
+        checks: [
+          onlyWrites('time_update'),
+          entryWrite('time_update', 't-0901', '2026-09-28', { minutes: 2520 }),
+          doesntSay(/can.?t|cannot|unable/i, 'it can’t'),
+        ],
+      },
+    ],
+  },
+  {
+    id: 'time-delete-yesterday',
+    group: 'time-edit',
+    turns: [
+      {
+        text: 'remove the time I logged yesterday, it was wrong',
+        checks: [
+          onlyWrites('time_delete'),
+          entryWrite('time_delete', 't-1020', '2026-10-20'),
+        ],
+      },
+    ],
+  },
+  {
+    id: 'time-fix-not-delete',
+    group: 'time-edit',
+    turns: [
+      {
+        text: 'I put the wrong day on my time from the 19th, it was the 16th',
+        checks: [
+          onlyWrites('time_update'),
+          entryWrite('time_update', 't-1019', '2026-10-19', {
+            date: '2026-10-16',
+          }),
+        ],
+      },
+    ],
+  },
+
   // ---- things it can't do
   {
     id: 'cant-delete-contact',
@@ -1220,16 +1305,6 @@ export const SCENARIOS: EvalScenario[] = [
       {
         text: "I'm auxiliary pioneering starting this month, change my role",
         checks: [noWrites, says(/settings|can.?t|cannot/i, 'where to do it')],
-      },
-    ],
-  },
-  {
-    id: 'cant-delete-time',
-    group: 'cant',
-    turns: [
-      {
-        text: 'remove the time I logged yesterday, it was wrong',
-        checks: [noWrites, says(/can.?t|cannot|not able|unable/i, 'it can’t')],
       },
     ],
   },

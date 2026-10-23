@@ -73,7 +73,8 @@ const readTool = (name: string) => {
 }
 const writeTool = (name: string) => {
   const tool = scribeTool(name)
-  if (tool?.access !== 'write') throw new Error(`${name} is not a write tool`)
+  if (!tool || tool.access === 'read')
+    throw new Error(`${name} is not a write tool`)
   return tool
 }
 
@@ -201,6 +202,16 @@ const VALID: Record<string, Args> = {
     followUp: null,
   },
   categories_create: { name: 'Hospital', credit: false },
+  time_update: {
+    entryRef: null,
+    onDate: '2026-10-02',
+    date: null,
+    minutes: 150,
+    categoryRef: null,
+    note: null,
+    dateSpoken: null,
+  },
+  time_delete: { entryRef: null, onDate: '2026-10-14' },
 }
 
 const visit = (change: Args = {}): Args => ({ ...VALID.visits_log, ...change })
@@ -1831,5 +1842,183 @@ describe('categories_create', () => {
     expect(
       errorOf(propose('categories_create', { name: 'bethel', credit: true }))
     ).toBe('A category named Bethel already exists as k1. Use that ref.')
+  })
+})
+
+describe('time_update', () => {
+  const timeUpdate = (change: Args = {}): Args => ({
+    ...VALID.time_update,
+    minutes: null,
+    ...change,
+  })
+
+  it('proposes only what changes, with what it was', () => {
+    expect(effectsOf(propose('time_update', VALID.time_update))).toEqual([
+      {
+        kind: 'time.update',
+        entryId: 'entry-1',
+        entryDate: '2026-10-02',
+        entryMinutes: 120,
+        entryCategory: { type: 'standard' },
+        expectUpdatedAt: null,
+        set: { minutes: 150 },
+        before: { minutes: 120 },
+        spoken: { date: null, time: null },
+      },
+    ])
+  })
+
+  it('takes a t ref from time_list', async () => {
+    const fx = fixtureContext()
+    await read('time_list', VALID.time_list, fx)
+    expect(
+      effectsOf(
+        propose(
+          'time_update',
+          timeUpdate({ onDate: null, entryRef: 't3', minutes: 2520 }),
+          fx
+        )
+      )[0]
+    ).toMatchObject({ entryId: 'entry-3', set: { minutes: 2520 } })
+  })
+
+  it('moves an entry to Standard or another Category, and to another day', () => {
+    const fx = fixtureContext()
+    expect(
+      effectsOf(
+        propose(
+          'time_update',
+          timeUpdate({
+            onDate: '2026-10-20',
+            categoryRef: 'k0',
+            date: '2026-10-19',
+            dateSpoken: 'Monday',
+          }),
+          fx
+        )
+      )[0]
+    ).toMatchObject({
+      set: { date: '2026-10-19', category: { type: 'standard' } },
+      before: {
+        date: '2026-10-20',
+        category: { type: 'existing', id: 'category-bethel' },
+      },
+      spoken: { date: 'Monday', time: null },
+    })
+    expect(
+      effectsOf(
+        propose('time_update', timeUpdate({ categoryRef: 'k1' }), fx)
+      )[0]
+    ).toMatchObject({
+      set: { category: { type: 'existing', id: 'category-bethel' } },
+      before: { category: { type: 'standard' } },
+    })
+  })
+
+  it('refuses a future day, zero minutes, and no change', () => {
+    expect(
+      errorOf(propose('time_update', timeUpdate({ date: later(1) })))
+    ).toMatch(/is after today/)
+    expect(errorOf(propose('time_update', timeUpdate({ minutes: 0 })))).toMatch(
+      /use time_delete/
+    )
+    expect(
+      errorOf(propose('time_update', timeUpdate({ minutes: 120 })))
+    ).toMatch(/^Nothing would change/)
+  })
+
+  it("leaves a shared-only User's hours alone", () => {
+    const fx = withPreferences({ role: 'publisher', logsHours: false })
+    expect(
+      errorOf(propose('time_update', timeUpdate({ minutes: 60 }), fx))
+    ).toMatch(/only whether they shared/)
+  })
+
+  it('lists the entries on a day with more than one, and names an empty day', () => {
+    const fx = fixtureContext(
+      fixtureStores({
+        serviceReports: reportsOf([
+          ...TIME_ENTRIES,
+          { ...TIME_ENTRIES[0], id: 'entry-1b', hours: 0, minutes: 45 },
+        ]),
+      })
+    )
+    expect(
+      errorOf(propose('time_update', timeUpdate({ minutes: 60 }), fx))
+    ).toBe(
+      '2026-10-02 has 2 entries: t1 2026-10-02 120m k0, t2 2026-10-02 45m k0. Send the entryRef of the one the User means, or ask which.'
+    )
+    expect(
+      errorOf(
+        propose(
+          'time_update',
+          timeUpdate({ onDate: '2026-10-03', minutes: 60 })
+        )
+      )
+    ).toMatch(/^No time is logged on 2026-10-03/)
+  })
+
+  it('needs exactly one of entryRef and onDate, and refuses rollovers', () => {
+    expect(
+      errorOf(propose('time_update', timeUpdate({ onDate: null, minutes: 60 })))
+    ).toMatch(/^Send exactly one of entryRef or onDate/)
+    const fx = fixtureContext(
+      fixtureStores({
+        serviceReports: reportsOf([
+          { ...TIME_ENTRIES[0], id: 'entry-rollover', rollover: true },
+        ]),
+      })
+    )
+    fx.refs.issue('t', 'entry-rollover')
+    expect(
+      errorOf(
+        propose(
+          'time_update',
+          timeUpdate({ onDate: null, entryRef: 't1', minutes: 60 }),
+          fx
+        )
+      )
+    ).toMatch(/only be changed in the app/)
+  })
+})
+
+describe('time_delete', () => {
+  it('is destructive, so ww-api withdraws it after untrusted text', () => {
+    expect(scribeTool('time_delete')?.access).toBe('destructive')
+  })
+
+  it('proposes deleting the entry, with what it was for the card', () => {
+    const fx = fixtureContext(
+      fixtureStores({
+        serviceReports: reportsOf([
+          { ...TIME_ENTRIES[1], note: 'Cart', updatedAt: 5 },
+        ]),
+      })
+    )
+    expect(effectsOf(propose('time_delete', VALID.time_delete, fx))).toEqual([
+      {
+        kind: 'time.delete',
+        entryId: 'entry-2',
+        entryDate: '2026-10-14',
+        entryMinutes: 90,
+        entryCategory: { type: 'standard' },
+        entryNote: 'Cart',
+        expectUpdatedAt: 5,
+      },
+    ])
+  })
+
+  it('proposes each entry once', () => {
+    const fx = fixtureContext()
+    accept(fx, 'call_1', propose('time_delete', VALID.time_delete, fx))
+    expect(errorOf(propose('time_delete', VALID.time_delete, fx))).toMatch(
+      /already proposed/
+    )
+  })
+
+  it('refuses a Ref that is not a Time Entry', () => {
+    expect(
+      errorOf(propose('time_delete', { entryRef: 'c1', onDate: null }))
+    ).toBe('Unknown entry ref c1. Use a t ref from time_list.')
   })
 })

@@ -2,14 +2,23 @@ import moment from 'moment'
 import { z } from 'zod/v4'
 import type { Contact, Address } from '@/types/contact'
 import type { Visit } from '@/types/visit'
+import type { TimeEntry } from '@/types/timeEntry'
 import { addressToString } from '@/lib/addressToString'
+import { entryMinutes } from '@/lib/entryMinutes'
+import { storedDayKey } from '@/lib/normalizeDate'
+import { hasNote } from '@/lib/richText/notes'
+import { isLdcEntry } from '@/lib/serviceReportCategory'
 import type { ToolContext } from '@/features/scribe/tools/types'
 import type {
   CategoryTarget,
   ContactTarget,
   DraftEffect,
 } from '@/features/scribe/proposals/model'
-import { localDayKey } from '@/features/scribe/runtime/snapshot'
+import {
+  allTimeEntries,
+  categoryRef,
+  localDayKey,
+} from '@/features/scribe/runtime/snapshot'
 
 /**
  * Helpers the tool files share: schema pieces, date math on local `YYYY-MM-DD`
@@ -237,6 +246,92 @@ export function categoryFor(
     ref,
   }
 }
+
+// ---------------------------------------------------------------- time
+
+/** `t1 2026-10-02 120m k0 credit note`: a Time Entry as the model reads it. */
+export function entryLine(ctx: ToolContext, entry: TimeEntry): string {
+  const flags = [
+    ...(entry.credit || isLdcEntry(entry) ? ['credit'] : []),
+    ...(hasNote(entry) ? ['note'] : []),
+  ]
+  return [
+    ctx.refs.issue('t', entry.id),
+    storedDayKey(entry.date),
+    `${entryMinutes(entry)}m`,
+    categoryRef(ctx.refs, ctx.stores.categories, entry.categoryId),
+    ...flags,
+  ].join(' ')
+}
+
+/** Entries a list shows on a day; also the ones an `onDate` can name. */
+export const entriesOnDay = (ctx: ToolContext, date: string): TimeEntry[] =>
+  allTimeEntries(ctx.stores.serviceReports)
+    .filter((entry) => !entry.rollover && storedDayKey(entry.date) === date)
+    .sort((a, b) => a.id.localeCompare(b.id))
+
+/** Entries an `onDate` error lists. */
+const MAX_LISTED_ENTRIES = 6
+
+/**
+ * The Time Entry a `t` Ref or an `onDate` names: the only entry that day, or an
+ * error listing the day's entries so the model can pick or ask.
+ */
+export function resolveEntry(
+  ctx: ToolContext,
+  entryRef: string | null,
+  onDate: string | null
+): Resolved<{ entry: TimeEntry }> {
+  if ((entryRef === null) === (onDate === null))
+    return {
+      ok: false,
+      error: 'Send exactly one of entryRef or onDate; the other null.',
+    }
+  if (onDate !== null) {
+    const entries = entriesOnDay(ctx, onDate)
+    if (entries.length === 1) return { ok: true, entry: entries[0] }
+    if (!entries.length)
+      return {
+        ok: false,
+        error: `No time is logged on ${onDate}. Find the entry with time_list.`,
+      }
+    const listed = entries
+      .slice(0, MAX_LISTED_ENTRIES)
+      .map((entry) => entryLine(ctx, entry))
+      .join(', ')
+    return {
+      ok: false,
+      error: `${onDate} has ${entries.length} entries: ${listed}. Send the entryRef of the one the User means, or ask which.`,
+    }
+  }
+  const resolved = ctx.refs.resolve(entryRef!)
+  if (!resolved || resolved.kind !== 't')
+    return {
+      ok: false,
+      error: `Unknown entry ref ${entryRef}. Use a t ref from time_list.`,
+    }
+  const entry = allTimeEntries(ctx.stores.serviceReports).find(
+    (candidate) => candidate.id === resolved.id
+  )
+  if (!entry)
+    return {
+      ok: false,
+      error: `Entry ${entryRef} no longer exists. List the time again.`,
+    }
+  if (entry.rollover)
+    return {
+      ok: false,
+      error:
+        'That entry moves minutes between months and can only be changed in the app.',
+    }
+  return { ok: true, entry }
+}
+
+/** A Time Entry's Category as a draft names it. */
+export const entryCategory = (entry: TimeEntry): CategoryTarget =>
+  entry.categoryId
+    ? { type: 'existing', id: entry.categoryId }
+    : { type: 'standard' }
 
 // ---------------------------------------------------------------- visits
 

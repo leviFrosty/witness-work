@@ -1,10 +1,18 @@
-import { type ReactNode, useEffect, useId, useRef, useState } from 'react'
+import {
+  type ReactNode,
+  type RefObject,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+} from 'react'
 import { Keyboard, ScrollView, useWindowDimensions, View } from 'react-native'
 import { useNavigation } from '@react-navigation/native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTakeoverHold } from '@/hooks/useTakeoverTurn'
 import { VisibilityViewportContext } from '@/contexts/visibilityViewport'
 import { PopoverContext } from '@/components/ui/popoverContext'
+import { usePopoverTouchShield } from '@/components/ui/popoverTouchShield'
 import type {
   PopoverControls,
   PopoverProps,
@@ -17,8 +25,9 @@ const KEYBOARD_SETTLE_FALLBACK_MS = 600
 /**
  * The state every native popover shares: content that mounts on open and
  * unmounts once dismissed, actions deferred until then, closing when the screen
- * loses focus, holding takeovers off, and a height cap that keeps the content
- * on screen on whichever side of the trigger has more room.
+ * loses focus, holding takeovers off, keeping a tap outside from pressing
+ * what's behind, and a height cap that keeps the content on screen on whichever
+ * side of the trigger has more room.
  */
 export function usePopoverPresentation({
   edge,
@@ -33,6 +42,7 @@ export function usePopoverPresentation({
   const { height } = useWindowDimensions()
   const insets = useSafeAreaInsets()
   const triggerRef = useRef<View>(null)
+  const contentRef = useRef<View>(null)
   const [mounted, setMounted] = useState(false)
   const [open, setOpenState] = useState(false)
   const [maxHeight, setMaxHeight] = useState<number>()
@@ -44,6 +54,7 @@ export function usePopoverPresentation({
   const holdId = useId()
   // Nothing takes over the screen while a popover is open or closing.
   useTakeoverHold(`popover:${holdId}`, mounted)
+  usePopoverTouchShield(`popover:${holdId}`, mounted, contentRef)
 
   const setOpen = (next: boolean) => {
     openRef.current = next
@@ -156,6 +167,7 @@ export function usePopoverPresentation({
 
   return {
     triggerRef,
+    contentRef,
     mounted,
     open,
     maxHeight,
@@ -175,6 +187,7 @@ export function usePopoverPresentation({
  * against.
  */
 export function PopoverContent({
+  contentRef,
   width,
   maxHeight,
   style,
@@ -182,6 +195,8 @@ export function PopoverContent({
   onLayout,
   children,
 }: {
+  /** Shared with the popover's state, which tells touches inside it apart. */
+  contentRef: RefObject<View | null>
   width: number
   maxHeight?: number
   style: PopoverProps['contentStyle']
@@ -189,15 +204,14 @@ export function PopoverContent({
   onLayout: () => void
   children: ReactNode
 }) {
-  const viewportRef = useRef<View>(null)
   return (
-    <View ref={viewportRef} collapsable={false} onLayout={onLayout}>
+    <View ref={contentRef} collapsable={false} onLayout={onLayout}>
       <ScrollView
         style={{ width, maxHeight }}
         contentContainerStyle={[{ padding: 12 }, style]}
         bounces={false}
       >
-        <VisibilityViewportContext value={viewportRef}>
+        <VisibilityViewportContext value={contentRef}>
           <PopoverContext value={controls}>{children}</PopoverContext>
         </VisibilityViewportContext>
       </ScrollView>

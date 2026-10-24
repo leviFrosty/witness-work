@@ -59,7 +59,7 @@ export {
  */
 export const HAT_ANCHOR_Y: Readonly<Record<PetSpeciesId, number>> = {
   lion: 5,
-  dog: 7,
+  dog: 4,
   cat: 7,
   donkey: 7,
   lamb: 9,

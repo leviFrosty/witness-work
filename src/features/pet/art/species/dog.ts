@@ -1,200 +1,275 @@
-/** Pup: floppy ears, wagging tail, four coats. */
-import { dim, mix, rgb, rgbPalette, type Rgb, type Shape } from '@/lib/pixelArt'
+/**
+ * Pup: a golden retriever sitting up, four coats, pixelled by hand in the style
+ * of game retriever sprites: no outline, soft golden shading with light streaks
+ * in the fur, dot eyes and nose, floppy ears, a light ruff down the chest and a
+ * plumed tail.
+ *
+ * Each part is a grid of tone keys (`.` is empty) painted in the coat's
+ * colours: the tail (swayed by the wag), the body, the head (moved down by the
+ * bob), then the face for the mood.
+ */
+import { rgbPalette, type FeaturePixel, type Rgb } from '@/lib/pixelArt'
 
-import { facePixels } from '../face'
-import { defineSpecies, sidePoints, type Points } from './define'
-
-interface DogCoat {
-  /** Fur, shadow, highlight. */
-  readonly f: Rgb
-  readonly fs: Rgb
-  readonly fh: Rgb
-  /** Ears and their shadow. */
-  readonly e: Rgb
-  readonly es: Rgb
-  /** Light fur (muzzle, chest, tail tip). */
-  readonly l: Rgb
-  /** Nose. */
-  readonly n: Rgb
-  /** Eyelid and closed-eye colour, for dark coats. */
-  readonly ec?: Rgb
-  /** Mouth colour, for dark coats. */
-  readonly mc?: Rgb
-}
-
-const WHITE = rgb('#ffffff')
-
-/** The left front leg, rounded at the paw (the right one is mirrored). */
-const LEG: Points = [
-  [12.8, 23],
-  [15.6, 23],
-  [15.6, 29.6],
-  [15, 30.8],
-  [12.4, 30.8],
-  [11.8, 29.6],
-]
+import { SPRITE_SIZE } from '../layout'
+import type { PetFace } from '../types'
+import { defineSpecies } from './define'
 
 /**
- * The left ear (the right one is mirrored): narrow where it hangs from the side
- * of the head, rounded at the bottom.
+ * Tone keys in the grids: fur from deep shade to highlight (`D` `S` `M` `L`
+ * `H`), the light ruff and muzzle (`C`, shade `c`) and the ears (`E`, shade
+ * `e`).
  */
-const EAR: Points = [
-  [9.4, 7.6],
-  [6.8, 8.6],
-  [5, 11.4],
-  [4.8, 14.6],
-  [5.2, 17],
-  [6.8, 18],
-  [8.6, 17],
-  [9.4, 13.8],
-  [10.2, 10],
-]
+type Tone = 'D' | 'S' | 'M' | 'L' | 'H' | 'C' | 'c' | 'E' | 'e'
+
+interface DogCoat extends Readonly<Record<Tone, Rgb>> {
+  /** Eyes. */
+  readonly k: Rgb
+  /** Nose. */
+  readonly n: Rgb
+  /** Tongue. */
+  readonly t: Rgb
+}
+
+/** Rows of tone keys from sprite row `top`, each 32 wide. */
+interface Grid {
+  readonly top: number
+  readonly rows: readonly string[]
+}
+
+const TAIL: Grid = {
+  top: 11,
+  rows: [
+    '...........................LH...',
+    '..........................LHHL..',
+    '.........................MLHLL..',
+    '.........................SMLHLM.',
+    '........................SMLLHLM.',
+    '........................SMLLLLM.',
+    '........................SMMLLMS.',
+    '........................SMMLMSM.',
+    '........................SSMMS.S.',
+    '.......................SSMMSM...',
+    '.......................SSMS.S...',
+    '.......................SMS......',
+  ],
+}
+
+const BODY: Grid = {
+  top: 13,
+  rows: [
+    '...........MLLLLLLLLM...........',
+    '..........MLLSSSSSSLLS..........',
+    '..........MLCCCHCCCCLS..........',
+    '.........MLCCHCCCCCcLMS.........',
+    '.........MLCCCHCCCCcLMS.........',
+    '.........MLLCCCHCCcLLMS.........',
+    '.........MMLLCCCCcLLMMS.........',
+    '.........MMLLLCCcLLLMMS.........',
+    '........MMLLMLLCcLLMLMSS........',
+    '.......MLLLMSLLHcLLSMLMSS.......',
+    '.......MLLLMSLLScSLLSMLMS.......',
+    '......MLHLLMSLHSDSHLSMLMSS......',
+    '......MLLLLMSLLSDSLLSMLLMS......',
+    '......MLLHLMSLLSDSLLSMLLMS......',
+    '......MLLLMMSLLSDSLLSMMLMS......',
+    '......SMLLMSSLLSDSLLSSMLMS......',
+    '......SMMMSSLHLLDLHLLSSMMS......',
+    '......SSSS.SMLLMSDMLLMSSSS......',
+  ],
+}
+
+const HEAD: Grid = {
+  top: 3,
+  rows: [
+    '.............LHHLMS.............',
+    '...........MLHHHLLMMS...........',
+    '..........MLHHHLHLLMMS..........',
+    '.........EMLHHLLLLLMMSe.........',
+    '........EEMLLHLLLLLLMSee........',
+    '........EEELLLLLLLLMSeee........',
+    '........EEEMLLLHHLLMSeee........',
+    '........EEEMMLLHHLLMSeee........',
+    '........eEESMLHHHHLMSeeE........',
+    '........eEESSLHHHHLSSeee........',
+    '........E.E.SSLCCLSS.e.e........',
+    '..............SccS..............',
+  ],
+}
+
+/**
+ * The left eye's left column and the eyes' top row (the right eye mirrors it).
+ * Open eyes are a pixel wide, in the inner column.
+ */
+const EYE_X = 12
+const EYE_Y = 8
+/** The nose's top row. */
+const NOSE_Y = 12
+
+/** `grid`'s pixels in coat `C`, moved down `dy` and across by `dx(y)`. */
+function paint(
+  grid: Grid,
+  C: DogCoat,
+  dy = 0,
+  dx: (y: number) => number = () => 0
+): FeaturePixel[] {
+  const out: FeaturePixel[] = []
+  grid.rows.forEach((row, i) => {
+    const y = grid.top + i
+    for (let x = 0; x < row.length; x++) {
+      const key = row[x]
+      if (key !== '.') out.push([x + dx(y), y + dy, C[key as Tone]])
+    }
+  })
+  return out
+}
+
+/** Both eyes for `face`, their top row on `y`. */
+function eyes(
+  face: PetFace,
+  blink: boolean,
+  y: number,
+  C: DogCoat
+): FeaturePixel[] {
+  const out: FeaturePixel[] = []
+  // Each eye has a box two pixels wide; the right box mirrors the left across
+  // the centre line.
+  for (const x of [EYE_X, SPRITE_SIZE - 2 - EYE_X]) {
+    const d = (dx: number, dy: number, c = C.k) => out.push([x + dx, y + dy, c])
+    const inner = x === EYE_X ? 1 : 0
+    if (face === 'nap' || face === 'dead') {
+      d(-1, 0)
+      d(0, 1)
+      d(1, 1)
+      d(2, 0)
+    } else if (face === 'joy') {
+      d(-1, 1)
+      d(0, 0)
+      d(1, 0)
+      d(2, 1)
+    } else if (blink) {
+      d(0, 1)
+      d(1, 1)
+    } else if (face === 'low') {
+      // Eyes cast down, under brows raised at the middle.
+      d(inner, 1)
+      d(inner, 2)
+      d(inner, -1, C.D)
+      d(1 - inner, 0, C.D)
+    } else if (face === 'wide') {
+      d(inner, -1)
+      d(inner, 0)
+      d(inner, 1)
+    } else {
+      d(inner, 0)
+      d(inner, 1)
+    }
+  }
+  return out
+}
+
+/** The nose on row `y`, and the tongue out below it when joyful or surprised. */
+function nose(face: PetFace, y: number, C: DogCoat): FeaturePixel[] {
+  const out: FeaturePixel[] = [
+    [15, y, C.n],
+    [16, y, C.n],
+    [15, y + 1, C.n],
+    [16, y + 1, C.n],
+  ]
+  if (face === 'joy' || face === 'wide')
+    out.push(
+      [15, y + 2, C.t],
+      [16, y + 2, C.t],
+      [15, y + 3, C.t],
+      [16, y + 3, C.t]
+    )
+  return out
+}
 
 export const dog = defineSpecies<'dog', DogCoat>({
   id: 'dog',
   coats: {
     gold: {
       ...rgbPalette({
-        f: '#e0a548',
-        fs: '#b8792c',
-        fh: '#f5c978',
-        e: '#c98b38',
-        es: '#a46a24',
-        l: '#f6d79e',
-        n: '#3a2620',
+        D: '#9a6f22',
+        S: '#b88a2c',
+        M: '#d4a23a',
+        L: '#e9b64c',
+        H: '#f8d06c',
+        C: '#fadc8e',
+        c: '#ecc470',
+        E: '#c49230',
+        e: '#a87a26',
+        k: '#24160e',
+        n: '#1e1612',
+        t: '#f07a86',
       }),
-      swatch: ['#e0a548'],
+      swatch: ['#d4a23a'],
     },
     white: {
       ...rgbPalette({
-        f: '#f1e5cb',
-        fs: '#d2bf99',
-        fh: '#fffaf0',
-        e: '#e2cda3',
-        es: '#c0a97f',
-        l: '#fffaf2',
+        D: '#a8906a',
+        S: '#c8b088',
+        M: '#e2cfa6',
+        L: '#efe0bd',
+        H: '#faf0d8',
+        C: '#fff8ea',
+        c: '#f3e6c8',
+        E: '#d8bf92',
+        e: '#bfa477',
+        k: '#2a1f1a',
         n: '#3a2620',
+        t: '#f07a86',
       }),
-      swatch: ['#f1e5cb'],
+      swatch: ['#efe0bd'],
     },
     liver: {
       ...rgbPalette({
-        f: '#8c4b2b',
-        fs: '#693520',
-        fh: '#a8643c',
-        e: '#7a3e22',
-        es: '#5a2c18',
-        l: '#b07148',
-        n: '#3d1d12',
-        ec: '#2a1410',
+        D: '#4e2412',
+        S: '#6e361c',
+        M: '#8c4b2b',
+        L: '#a6603a',
+        H: '#c07a4c',
+        C: '#cf9466',
+        c: '#b77650',
+        E: '#7a3e22',
+        e: '#5e2e18',
+        k: '#1a0e0a',
+        n: '#24120c',
+        t: '#e8707c',
       }),
       swatch: ['#8c4b2b'],
     },
     black: {
       ...rgbPalette({
-        f: '#3a3434',
-        fs: '#242020',
-        fh: '#554d4c',
-        e: '#2d2828',
-        es: '#1c1919',
-        l: '#5e5655',
-        n: '#0e0b0b',
-        ec: '#e2d6be',
-        mc: '#c4b8b5',
+        D: '#141111',
+        S: '#221e1e',
+        M: '#332d2d',
+        L: '#453e3d',
+        H: '#5a5251',
+        C: '#6a6160',
+        c: '#4f4847',
+        E: '#2a2525',
+        e: '#1c1919',
+        k: '#0a0808',
+        n: '#0a0808',
+        t: '#e8707c',
       }),
       swatch: ['#3a3434'],
     },
   },
   build(st, C) {
     const b = st.bob
-    const t = st.tail
-    const chest = dim(C.l, 0.93)
-    // A sitting golden puppy: broad head with a short muzzle, soft ears hung
-    // from the sides of the head, a fluffy chest between straight front legs,
-    // haunches folded at the sides and a plumed tail.
-    const ear = (side: -1 | 1): Shape => ({
-      t: 'p',
-      pts: sidePoints(EAR, side, b),
-      c: C.e,
-      s: C.es,
-      g: 'ears',
-      edge: true,
-    })
-    const leg = (side: -1 | 1): Shape => ({
-      t: 'p',
-      pts: sidePoints(LEG, side),
-      c: C.f,
-      s: C.fs,
-      h: C.fh,
-      g: `leg${side}`,
-      edge: true,
-    })
-    const haunch = (x: number): Shape => ({
-      t: 'e',
-      x,
-      y: 27,
-      rx: 3.3,
-      ry: 3,
-      c: C.f,
-      s: C.fs,
-      h: C.fh,
-    })
+    // The wag sways the plume in toward the back, the tip furthest.
+    const wag = (y: number) =>
+      st.tail ? -Math.round(Math.max(0, 18 - y) / 3) : 0
     return {
-      shapes: [
-        {
-          t: 'e',
-          x: t ? 25.8 : 25.2,
-          y: t ? 22 : 22.4,
-          rx: 1.7,
-          ry: 4,
-          a: t ? 48 : 28,
-          c: C.f,
-          s: C.fs,
-          h: C.fh,
-        },
-        haunch(10.2),
-        haunch(21.8),
-        { t: 'e', x: 16, y: 23.4, rx: 5.6, ry: 6, c: C.f, s: C.fs, h: C.fh },
-        leg(-1),
-        leg(1),
-        { t: 'e', x: 16, y: 22.2, rx: 3.4, ry: 3.4, c: C.l },
-        {
-          t: 'e',
-          x: 16,
-          y: 12.4 + b,
-          rx: 8.6,
-          ry: 6.8,
-          c: C.f,
-          s: C.fs,
-          h: C.fh,
-          edge: true,
-        },
-        { t: 'e', x: 16, y: 16 + b, rx: 4.2, ry: 2.5, c: C.l },
-        ear(-1),
-        ear(1),
-      ],
+      shapes: [],
       feats: [
-        ...facePixels(st, {
-          lx: 11,
-          rx: 19,
-          ey: 10 + b,
-          blush: true,
-          mx: 14,
-          my: 17 + b,
-          ec: C.ec,
-          mc: C.mc,
-        }),
-        [14, 14 + b, C.n],
-        [15, 14 + b, mix(C.n, WHITE, 0.4)],
-        [16, 14 + b, C.n],
-        [17, 14 + b, C.n],
-        [15, 15 + b, C.n],
-        [16, 15 + b, C.n],
-        [13, 30, C.fs],
-        [18, 30, C.fs],
-        [14, 22, chest],
-        [17, 21, chest],
-        [15, 24, chest],
+        ...paint(TAIL, C, 0, wag),
+        ...paint(BODY, C),
+        ...paint(HEAD, C, b),
+        ...eyes(st.face, st.blink, EYE_Y + b, C),
+        ...nose(st.face, NOSE_Y + b, C),
       ],
     }
   },

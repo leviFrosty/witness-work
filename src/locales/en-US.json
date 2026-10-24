@@ -668,26 +668,7 @@
     "other": "{{count}} contacts at {{street}}"
   },
   "map_group_withName": "{{name}} +{{more}}",
-  "map_group_picked": "{{picked}} of {{count}} selected",
   "map_group_close": "Close list",
-  "map_select": "Select contacts",
-  "map_select_hint": "Draw around pins or tap them",
-  "map_select_count": {
-    "one": "{{count}} selected",
-    "other": "{{count}} selected"
-  },
-  "map_select_picked": "Selected",
-  "map_select_none": "Nothing selected",
-  "map_select_due": "Select Due",
-  "map_select_clear": "Clear",
-  "map_select_done": "Done",
-  "map_select_planRoute": "Plan Route",
-  "map_select_tooMany": "A route holds up to {{max}} stops.",
-  "map_select_roomLeft": {
-    "zero": "Today's route is full.",
-    "one": "Today's route has room for {{count}} more stop.",
-    "other": "Today's route has room for {{count}} more stops."
-  },
   "map_todayRoute": "Today's Route",
   "map_todayRoute_a11y": {
     "one": "Open today's route, {{count}} stop",

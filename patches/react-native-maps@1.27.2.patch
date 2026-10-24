@@ -24,8 +24,79 @@ index ca65bd7464b3107e9dcc1f6282d0d35aa9bedf40..f71e9493855e6d104bb4dd61d091418d
 +        }
      }
  }
+diff --git a/android/src/main/java/com/rnmaps/maps/MapMarker.java b/android/src/main/java/com/rnmaps/maps/MapMarker.java
+index 3e0250f1b562480583656d8e5c0d2e166d15219c..840ac70b05adf686def58af6ad7eaa70a4d84bec 100644
+--- a/android/src/main/java/com/rnmaps/maps/MapMarker.java
++++ b/android/src/main/java/com/rnmaps/maps/MapMarker.java
+@@ -74,6 +74,8 @@ public class MapMarker extends MapFeature {
+ 
+     private LatLng position;
+     private String title;
++    private String contentDescription;
++    private OnMarkerReplaced onMarkerReplaced;
+     private String snippet;
+ 
+     private boolean anchorIsSet;
+@@ -236,6 +238,37 @@ public class MapMarker extends MapFeature {
+         update(false);
+     }
+ 
++    /**
++     * Google Maps reads a marker's content description only when it's added,
++     * so a new one re-adds the marker.
++     */
++    public void setMarkerContentDescription(String contentDescription) {
++        if (contentDescription != null && contentDescription.isEmpty()) {
++            contentDescription = null;
++        }
++        if (java.util.Objects.equals(this.contentDescription, contentDescription)) {
++            return;
++        }
++        this.contentDescription = contentDescription;
++        MarkerManager.Collection collection =
++            markerCollectionRef != null ? markerCollectionRef.get() : null;
++        if (marker != null && collection != null) {
++            Marker old = marker;
++            removeFromMap(collection);
++            addToMap(collection);
++            if (onMarkerReplaced != null) onMarkerReplaced.onReplaced(old, marker);
++        }
++    }
++
++    public interface OnMarkerReplaced {
++        void onReplaced(Marker old, Marker replacement);
++    }
++
++    /** Lets the map re-key its marker lookup when the marker is re-added. */
++    public void setOnMarkerReplaced(OnMarkerReplaced listener) {
++        this.onMarkerReplaced = listener;
++    }
++
+     public void setSnippet(String snippet) {
+         this.snippet = snippet;
+         if (marker != null) {
+@@ -607,6 +640,7 @@ public class MapMarker extends MapFeature {
+         if (calloutAnchorIsSet) options.infoWindowAnchor(calloutAnchorX, calloutAnchorY);
+         options.title(title);
+         options.snippet(snippet);
++        options.contentDescription(contentDescription);
+         options.rotation(rotation);
+         options.flat(flat);
+         options.draggable(draggable);
+diff --git a/android/src/main/java/com/rnmaps/maps/MapMarkerManager.java b/android/src/main/java/com/rnmaps/maps/MapMarkerManager.java
+index f9d6ec0cc2c0fd8d97ddef2dd3712e20d92c02c0..280638b0a3af44c9ec46abc49852f27b6741aaba 100644
+--- a/android/src/main/java/com/rnmaps/maps/MapMarkerManager.java
++++ b/android/src/main/java/com/rnmaps/maps/MapMarkerManager.java
+@@ -272,6 +272,7 @@ public class MapMarkerManager extends ViewGroupManager<MapMarker> {
+     @ReactProp(name = "accessibilityLabel")
+     public void setAccessibilityLabel(MapMarker view, @Nullable String accessibilityLabel) {
+         view.setTag(R.id.accessibility_label, accessibilityLabel);
++        view.setMarkerContentDescription(accessibilityLabel);
+     }
+ 
+     @Override
 diff --git a/android/src/main/java/com/rnmaps/maps/MapView.java b/android/src/main/java/com/rnmaps/maps/MapView.java
-index ebf8780..aecd21b 100644
+index ebf87802160a201504a277fff47b7a3801c075b8..fd7ad10833c61979e6e205afd3ffb627e8a81572 100644
 --- a/android/src/main/java/com/rnmaps/maps/MapView.java
 +++ b/android/src/main/java/com/rnmaps/maps/MapView.java
 @@ -333,15 +333,21 @@ public class MapView extends com.google.android.gms.maps.MapView implements Goog
@@ -106,7 +177,18 @@ index ebf8780..aecd21b 100644
          // Our desired API is to pass up annotations/overlays as children to the mapview component.
          // This is where we intercept them and do the appropriate underlying mapview action.
          if (child instanceof MapMarker) {
-@@ -1272,11 +1291,21 @@ public class MapView extends com.google.android.gms.maps.MapView implements Goog
+@@ -1216,6 +1235,10 @@ public class MapView extends com.google.android.gms.maps.MapView implements Goog
+ 
+             Marker marker = (Marker) annotation.getFeature();
+             markerMap.put(marker, annotation);
++            annotation.setOnMarkerReplaced((old, replacement) -> {
++                markerMap.remove(old);
++                if (replacement != null) markerMap.put(replacement, annotation);
++            });
+         } else if (child instanceof MapPolyline) {
+             MapPolyline polylineView = (MapPolyline) child;
+             polylineView.addToMap(polylineCollection);
+@@ -1272,11 +1295,21 @@ public class MapView extends com.google.android.gms.maps.MapView implements Goog
          }
      }
  
@@ -128,7 +210,7 @@ index ebf8780..aecd21b 100644
          if (index < features.size()) {
              return features.get(index);
          }
-@@ -1284,7 +1313,16 @@ public class MapView extends com.google.android.gms.maps.MapView implements Goog
+@@ -1284,7 +1317,16 @@ public class MapView extends com.google.android.gms.maps.MapView implements Goog
      }
  
      public void removeFeatureAt(int index) {
@@ -146,3 +228,21 @@ index ebf8780..aecd21b 100644
          if (feature instanceof MapMarker) {
              markerMap.remove(feature.getFeature());
              feature.removeFromMap(markerCollection);
+diff --git a/ios/AirMaps/RNMapsMarkerView.mm b/ios/AirMaps/RNMapsMarkerView.mm
+index be7e91dc6ef5005a68e468f9f223c47c2e095b7f..c68d322f1fb6e55328e97f110bbc61a9838d3dce 100644
+--- a/ios/AirMaps/RNMapsMarkerView.mm
++++ b/ios/AirMaps/RNMapsMarkerView.mm
+@@ -384,6 +384,13 @@ - (void)updateProps:(Props::Shared const &)props oldProps:(Props::Shared const &
+     }
+     REMAP_MAPVIEW_STRING_PROP(title)
+     REMAP_MAPVIEW_STRING_PROP(identifier)
++    // Fabric applies accessibilityLabel to this wrapper, but MapKit shows the
++    // inner annotation view, which VoiceOver otherwise reads as "Map pin".
++    // Set every time: a recycled wrapper gets a fresh inner view, while its
++    // old props can already match.
++    _view.accessibilityLabel = newViewProps.accessibilityLabel.empty()
++        ? nil
++        : RCTNSStringFromString(newViewProps.accessibilityLabel);
+     if (newViewProps.titleVisibility != oldViewProps.titleVisibility){
+         switch (newViewProps.titleVisibility) {
+             case RNMapsMarkerTitleVisibility::Visible:

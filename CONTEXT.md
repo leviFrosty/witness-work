@@ -282,9 +282,6 @@ _Avoid_: "label", "callout" (a callout is the native bubble react-native-maps dr
 One Marker standing for several Contacts whose Markers would sit on top of each other at the current zoom, showing their count and led by the most pressing. Contacts at one address (an apartment building) open as a list; a crowd zooms in to spread out. Worked out per camera position, not stored.
 _Avoid_: "cluster" in user copy.
 
-**Select mode (Map)**:
-Picking Contacts on the Map by tapping Markers or drawing a loop around them, to plan a Route through them: Plan Route adds them to today's Route as stops. Separate from the Contacts list's Select mode, which acts on the Contacts themselves.
-
 ### Monetization
 
 **Supporter**:

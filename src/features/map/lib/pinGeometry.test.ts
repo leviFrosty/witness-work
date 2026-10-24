@@ -1,9 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
-  contactsInLoop,
   groupOverlappingPins,
   isSamePlace,
-  pointInPolygon,
 } from '@/features/map/lib/pinGeometry'
 
 describe('groupOverlappingPins', () => {
@@ -33,44 +31,5 @@ describe('isSamePlace', () => {
       true
     )
     expect(isSamePlace([a, { latitude: 39.11, longitude: -84.5 }])).toBe(false)
-  })
-})
-
-const square = [
-  { x: 0, y: 0 },
-  { x: 10, y: 0 },
-  { x: 10, y: 10 },
-  { x: 0, y: 10 },
-]
-
-describe('pointInPolygon', () => {
-  it('finds points inside a drawn shape', () => {
-    expect(pointInPolygon({ x: 5, y: 5 }, square)).toBe(true)
-    expect(pointInPolygon({ x: 15, y: 5 }, square)).toBe(false)
-  })
-})
-
-describe('contactsInLoop', () => {
-  // Coordinates are map points, so the loop reads like a drawing.
-  const project = (c: { latitude: number; longitude: number }) => ({
-    x: c.longitude,
-    y: c.latitude,
-  })
-  const at = (id: string, x: number, y: number) => ({
-    id,
-    coordinate: { latitude: y, longitude: x },
-  })
-  const contacts = [at('in', 5, 5), at('out', 15, 5), at('alsoIn', 2, 8)]
-
-  it('picks the Contacts inside the loop, in their order', () => {
-    expect(contactsInLoop(contacts, square, project)).toEqual(['in', 'alsoIn'])
-  })
-
-  it('picks nothing from a stroke too short to be a loop', () => {
-    expect(contactsInLoop(contacts, square.slice(0, 2), project)).toEqual([])
-  })
-
-  it('skips Contacts without a place on the map', () => {
-    expect(contactsInLoop([{ id: 'nowhere' }], square, project)).toEqual([])
   })
 })

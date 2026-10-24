@@ -91,13 +91,9 @@ import MapControlColumn, {
 } from '@/features/map/components/MapControlColumn'
 import MapFloatingCard from '@/features/map/components/MapFloatingCard'
 import MapGroupList from '@/features/map/components/MapGroupList'
-import MapLassoPath from '@/features/map/components/MapLassoPath'
-import MapSelectionBar from '@/features/map/components/MapSelectionBar'
 import MapTopChips from '@/features/map/components/MapTopChips'
 import useContactPinItems from '@/features/map/hooks/useContactPinItems'
-import useMapDueInView from '@/features/map/hooks/useMapDueInView'
 import useMapProjection from '@/features/map/hooks/useMapProjection'
-import useMapSelection from '@/features/map/hooks/useMapSelection'
 import {
   contactCardLine,
   contactUrgency,
@@ -322,12 +318,6 @@ const FullMapView = ({
   const [chipsBottom, setChipsBottom] = useState(0)
   const [controlsLayout, setControlsLayout] =
     useState<MapControlsLayout | null>(null)
-  const dueInView = useMapDueInView({
-    contacts: visibleContactMarkers,
-    index: conversationIndex,
-    projection: mapProjection.projection,
-    top: topInset,
-  })
   const handleDragContactPin = (id: string, coordinate: LatLng) => {
     updateContact({
       id,
@@ -786,34 +776,9 @@ const FullMapView = ({
     setSearchExpanded(false)
   }
 
-  // Select mode: Contacts picked by tapping pins or drawing around them, to
-  // plan a route through.
-  const selection = useMapSelection({
-    contacts: visibleContactMarkers,
-    projection: mapProjection.projection,
-    index: conversationIndex,
-    routeActions,
-    onStart: () => {
-      collapseSearch()
-      stopTrackingUser()
-      mapContactCreation.cancel()
-      setOpenGroupIds(null)
-    },
-  })
-  const { selecting } = selection
-  // Always attached, so the map's frame never changes views (which would
-  // remount the map); the lasso only listens in Select mode.
-  const mapAreaGesture = pinHover.hover
-    ? Gesture.Simultaneous(pinHover.hover, selection.lasso.gesture)
-    : selection.lasso.gesture
-
   /** A pin or its card was tapped. */
   const handlePinItemPress = (item: MapPinItem) => {
     const ids = item.members.map((contact) => contact.id)
-    if (selecting) {
-      selection.toggle(ids)
-      return
-    }
     mapContactCreation.cancel()
     if (item.group) {
       const coordinates = item.members.map((contact) => contact.coordinate!)
@@ -895,8 +860,8 @@ const FullMapView = ({
     bottom: bottomOverlayInset + 12,
   }
 
-  // Select mode's bar or a group's list, where the cards were.
-  const showsFloatingCard = selecting || openGroup.length > 0
+  // A group's list, where the cards were.
+  const showsFloatingCard = openGroup.length > 0
   const floatingCardBottom = bottomOverlayInset + (isWide ? 28 : 12)
 
   const renderEmptyState = () => (
@@ -960,13 +925,12 @@ const FullMapView = ({
     detail: cardDetail,
     projection: mapProjection.projection,
     size: { width, height },
-    activeId: selecting ? undefined : activeContactId,
-    picked: selection.picked,
+    activeId: activeContactId,
     overlays: {
       // The search button, and the chips beside it.
       top: [topInset + 8 + 44, chipsBottom],
       controls: controlsLayout,
-      // The select bar or group list takes the inspector's place.
+      // The group list takes the inspector's place.
       inspectorLeft: showsFloatingCard ? 0 : inspectorLeft,
       inspectorRight: showsFloatingCard ? 0 : inspectorRight,
       bottom: {
@@ -1006,7 +970,7 @@ const FullMapView = ({
       >
         <MapImageryContext.Provider value={overImagery}>
           <PinHoverArea
-            gesture={mapAreaGesture}
+            gesture={pinHover.hover}
             onTouchStart={pinHover.dismiss}
           >
             <MapView
@@ -1026,8 +990,6 @@ const FullMapView = ({
               // Cards and groups are laid out for a north-up, flat map.
               rotateEnabled={false}
               pitchEnabled={false}
-              // Select mode's single-finger drag draws the lasso instead.
-              scrollEnabled={!selecting}
               onMapReady={() => setIsMapReady(true)}
               onMapLoaded={() => setIsMapLoaded(true)}
               onPress={() => {
@@ -1036,7 +998,7 @@ const FullMapView = ({
                 setOpenGroupIds(null)
               }}
               onLongPress={(e) => {
-                if (draggingContactRef.current || selecting) return
+                if (draggingContactRef.current) return
                 setOpenGroupIds(null)
                 collapseSearch()
                 stopTrackingUser()
@@ -1086,7 +1048,6 @@ const FullMapView = ({
               )}
               <ContactPinLayer
                 items={pinItems}
-                selecting={selecting}
                 onPress={handlePinItemPress}
                 onDragStart={() => {
                   draggingContactRef.current = true
@@ -1101,7 +1062,6 @@ const FullMapView = ({
               />
             </MapView>
           </PinHoverArea>
-          {selecting && <MapLassoPath points={selection.lasso.points} />}
           {pinHover.pin && hoveredPinContact && (
             <MapPinLabel
               key={hoveredPinContact.id}
@@ -1237,44 +1197,25 @@ const FullMapView = ({
               bottom={floatingCardBottom}
               onHeight={setFloatingCardHeight}
             >
-              {selecting ? (
-                <MapSelectionBar
-                  count={selection.picked?.size ?? 0}
-                  newCount={selection.newCount}
-                  maxStops={routeActions?.maxStops ?? 0}
-                  todayStopCount={routeActions?.todayStopCount ?? 0}
-                  supporter={!!routeActions?.supporter}
-                  canSelectDue={dueInView.some(
-                    (contact) => !selection.picked?.has(contact.id)
-                  )}
-                  onSelectDue={() =>
-                    selection.add(dueInView.map((contact) => contact.id))
-                  }
-                  onClear={selection.clear}
-                  onDone={selection.stop}
-                  onPlanRoute={selection.planRoute}
-                />
-              ) : (
-                <MapGroupList
-                  title={groupTitle(openGroup)}
-                  members={openGroup}
-                  lineFor={(contact) =>
-                    contactCardLine(
-                      contact,
-                      conversationIndex,
-                      cardDetail,
-                      conversationIndex.nowMs
-                    )
-                  }
-                  activeId={activeContactId}
-                  onSelect={(id) => {
-                    setOpenGroupIds(null)
-                    setInspectorRevealRequest((request) => request + 1)
-                    handlePinPress(id)
-                  }}
-                  onClose={() => setOpenGroupIds(null)}
-                />
-              )}
+              <MapGroupList
+                title={groupTitle(openGroup)}
+                members={openGroup}
+                lineFor={(contact) =>
+                  contactCardLine(
+                    contact,
+                    conversationIndex,
+                    cardDetail,
+                    conversationIndex.nowMs
+                  )
+                }
+                activeId={activeContactId}
+                onSelect={(id) => {
+                  setOpenGroupIds(null)
+                  setInspectorRevealRequest((request) => request + 1)
+                  handlePinPress(id)
+                }}
+                onClose={() => setOpenGroupIds(null)}
+              />
             </MapFloatingCard>
           ) : !hasMappedContacts ? (
             renderEmptyState()
@@ -1510,14 +1451,6 @@ const FullMapView = ({
                 ? { stowed: cardsStowed, onToggle: () => toggleCardsStowed() }
                 : null
             }
-            select={
-              routeActions && visibleContactMarkers.length >= 1
-                ? {
-                    active: selecting,
-                    onToggle: selecting ? selection.stop : selection.start,
-                  }
-                : null
-            }
             mapLayer={mapLayer}
             onChangeLayer={(mapLayer) => setPreferences({ mapLayer })}
             onLayout={setControlsLayout}
@@ -1534,7 +1467,7 @@ const FullMapView = ({
             searchExpanded={searchExpanded}
             onFound={() => setFitRequest((request) => request + 1)}
             todayRoute={
-              !selecting && routeActions?.todayStopCount
+              routeActions?.todayStopCount
                 ? {
                     stopCount: routeActions.todayStopCount,
                     onPress: routeActions.openTodayRoute,

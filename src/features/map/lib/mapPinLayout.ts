@@ -56,11 +56,6 @@ export type MapPinItem = {
   badge?: PinBadge
   /** The active Contact is here. */
   selected: boolean
-  /** Select mode: every Contact here is picked. */
-  checked: boolean
-  /** Select mode: some, not all, of the Contacts here are picked. */
-  partlyChecked: boolean
-  dimmed: boolean
   zIndex: number
   /** Empty for a pin off screen; it's worked out once the pin is in view. */
   accessibilityLabel: string
@@ -87,11 +82,10 @@ export const PIN_LAYOUT_METRICS = {
 /**
  * Lays the Map's pins out for the current camera: pins that overlap gather into
  * a group, and cards go to the most pressing pins first (the selected one
- * before all), wherever they fit, up to `maxCards`. With the "due" lens on, or
- * some Contacts picked in Select mode, only those keep cards; the rest dim.
- * Without a `projection` (before the map has settled) every Contact is its own
- * pin and no cards show. Cards and screen reader labels are worked out only for
- * pins on screen, so a big map stays cheap to lay out.
+ * before all), wherever they fit, up to `maxCards`. Without a `projection`
+ * (before the map has settled) every Contact is its own pin and no cards show.
+ * Cards and screen reader labels are worked out only for pins on screen, so a
+ * big map stays cheap to lay out.
  */
 export function layoutContactPins({
   contacts,
@@ -100,7 +94,6 @@ export function layoutContactPins({
   detail,
   projection,
   activeId,
-  checkedIds,
   maxCards,
   cardBounds,
   avoid,
@@ -111,8 +104,6 @@ export function layoutContactPins({
   detail: MapCardDetail
   projection: MapProjection | null
   activeId: string | undefined
-  /** Select mode's picks; null outside Select mode. */
-  checkedIds: ReadonlySet<string> | null
   maxCards: number
   /** Where cards may go, clear of the map's overlays. */
   cardBounds: Rect
@@ -144,14 +135,9 @@ export function layoutContactPins({
       ).map((group) => group.map(({ contact }) => contact).sort(byRank))
     : ranked.map((contact) => [contact])
 
-  const anyChecked = !!checkedIds && checkedIds.size > 0
   const items: MapPinItem[] = groups.map((members) => {
     const lead = members[0]!
     const group = members.length > 1
-    const picked = checkedIds
-      ? members.filter((m) => checkedIds.has(m.id)).length
-      : 0
-    const checked = picked === members.length
     return {
       key: lead.id,
       coordinate: lead.coordinate!,
@@ -161,10 +147,6 @@ export function layoutContactPins({
       color: lead.pinColor,
       badge: factsOf(lead).badge,
       selected: members.some((m) => m.id === activeId),
-      checked,
-      partlyChecked: picked > 0 && !checked,
-      // In Select mode a pin with any picks stays bright.
-      dimmed: anyChecked && picked === 0,
       zIndex: ranked.length - rank.get(lead.id)!,
       accessibilityLabel: '',
       card: null,
@@ -176,19 +158,13 @@ export function layoutContactPins({
     const lead = item.members[0]!
     const active = item.members.find((m) => m.id === activeId)
     const shown = active ?? lead
-    const pickedHere = item.partlyChecked
-      ? item.members.filter((m) => checkedIds?.has(m.id)).length
-      : 0
-    // A group picked in part says how much, so it doesn't read as unpicked.
-    const line = item.partlyChecked
-      ? {
-          text: i18n.t('map_group_picked', {
-            picked: pickedHere,
-            count: item.members.length,
-          }),
-          tone: 'due' as const,
-        }
-      : contactCardLine(shown, index, detail, nowMs, factsOf(shown).followUp)
+    const line = contactCardLine(
+      shown,
+      index,
+      detail,
+      nowMs,
+      factsOf(shown).followUp
+    )
     const title = !item.group
       ? lead.name
       : active
@@ -200,7 +176,6 @@ export function layoutContactPins({
     item.accessibilityLabel = [
       item.group ? groupAccessibilityLabel(item.members) : lead.name,
       line?.text,
-      item.checked && i18n.t('map_select_picked'),
     ]
       .filter(Boolean)
       .join(', ')
@@ -227,8 +202,7 @@ export function layoutContactPins({
     point.y >= cardBounds.top &&
     point.x <= cardBounds.right &&
     point.y <= cardBounds.bottom
-  const priority = (item: MapPinItem) =>
-    item.selected ? 0 : item.checked || item.partlyChecked ? 1 : 2
+  const priority = (item: MapPinItem) => (item.selected ? 0 : 1)
 
   const shown = items
     .map((item) => ({ item, point: projection.project(item.coordinate) }))
@@ -249,7 +223,7 @@ export function layoutContactPins({
       height: line
         ? PIN_LAYOUT_METRICS.cardHeight
         : PIN_LAYOUT_METRICS.singleCardHeight,
-      pinOnly: (item.dimmed && !item.selected) || !inOpen(point),
+      pinOnly: !inOpen(point),
     })
   )
   const placements = placeProjectedLabels(

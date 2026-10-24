@@ -20,8 +20,6 @@ export const analyticsEventNames = [
   'map_find_contacts_result',
   'map_card_detail_changed',
   'map_group_opened',
-  'map_select_started',
-  'map_selection_route_planned',
   'month_report_reminder_changed',
   'map_location_permission_result',
   'plan_created',

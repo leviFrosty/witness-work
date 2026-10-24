@@ -17,7 +17,6 @@ import {
   followUpState,
   groupAccessibilityLabel,
   groupTitle,
-  isDue,
   pinBadge,
   pinInitials,
   resolveCardDetail,
@@ -200,7 +199,6 @@ describe('urgency, badges and due', () => {
       contactCardLine({ id: 'late' }, lastNight, 'nextVisit', afterMidnight)
     ).toEqual({ text: 'Tue 11:30 PM', tone: 'due' })
     expect(pinBadge({ id: 'late' }, lastNight, afterMidnight)).toBeUndefined()
-    expect(isDue('late', lastNight, afterMidnight)).toBe(true)
   })
 
   it('works out the same facts in one pass', () => {
@@ -211,14 +209,6 @@ describe('urgency, badges and due', () => {
         badge: pinBadge(contact, visits, NOW),
       })
     }
-  })
-
-  it('counts follow-ups in the next week as due', () => {
-    expect(
-      ['overdue', 'today', 'soon', 'later', 'recent'].map((id) =>
-        isDue(id, visits, NOW)
-      )
-    ).toEqual([true, true, true, false, false])
   })
 })
 

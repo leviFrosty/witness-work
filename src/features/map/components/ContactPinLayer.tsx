@@ -8,17 +8,15 @@ import type { MapPinItem } from '@/features/map/lib/mapPinLayout'
 
 /**
  * The Map's Contact pins and their cards, as children of the `MapView`. A
- * single Contact's pin drags to move them, outside Select mode.
+ * single Contact's pin drags to move them.
  */
 export default function ContactPinLayer({
   items,
-  selecting,
   onPress,
   onDragStart,
   onDragEnd,
 }: {
   items: MapPinItem[]
-  selecting: boolean
   /** A pin or its card was tapped. */
   onPress: (item: MapPinItem) => void
   onDragStart: () => void
@@ -47,13 +45,10 @@ export default function ContactPinLayer({
             group={item.group}
             badge={item.badge}
             selected={item.selected}
-            checked={item.checked}
-            partlyChecked={item.partlyChecked}
-            dimmed={item.dimmed}
             zIndex={item.zIndex}
             accessibilityLabel={item.accessibilityLabel}
             onPress={() => onPress(item)}
-            draggable={!item.group && !selecting}
+            draggable={!item.group}
             onDragStart={onDragStart}
             onDragEnd={(e) => onDragEnd(item.key, e.nativeEvent.coordinate)}
           />

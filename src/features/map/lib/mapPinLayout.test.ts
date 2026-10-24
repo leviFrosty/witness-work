@@ -61,7 +61,6 @@ const layout = (
     detail: 'nextVisit',
     projection,
     activeId: undefined,
-    checkedIds: null,
     maxCards: 10,
     cardBounds: { left: 0, top: 0, right: 400, bottom: 400 },
     ...options,
@@ -116,43 +115,6 @@ describe('layoutContactPins', () => {
     })
     expect(items.find((item) => item.key === 'b')!.card).not.toBeNull()
     expect(items.find((item) => item.key === 'a')!.card).toBeNull()
-  })
-
-  it('checks a group only when all its Contacts are picked', () => {
-    const items = layout(
-      [
-        at('a', 100, 200),
-        at('b', 105, 202),
-        at('c', 300, 200),
-        at('d', 200, 300),
-      ],
-      { checkedIds: new Set(['a', 'c']) }
-    )
-    expect(
-      items.map((item) => [
-        item.key,
-        item.checked,
-        item.partlyChecked,
-        item.dimmed,
-      ])
-    ).toEqual([
-      ['a', false, true, false],
-      ['c', true, false, false],
-      ['d', false, false, true],
-    ])
-    expect(items[0]!.card?.line?.text).toBe(
-      'map_group_picked {"picked":1,"count":2}'
-    )
-  })
-
-  it('tells screen readers which pins are picked', () => {
-    const items = layout([at('a', 100, 200), at('b', 300, 200)], {
-      checkedIds: new Set(['a']),
-    })
-    expect(items.map((item) => item.accessibilityLabel)).toEqual([
-      'Contact a, map_card_noVisits, map_select_picked',
-      'Contact b, map_card_noVisits',
-    ])
   })
 
   it('reads a group as a count, without its card title', () => {

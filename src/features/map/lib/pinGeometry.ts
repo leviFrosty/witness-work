@@ -54,38 +54,3 @@ export const isSamePlace = (coordinates: Coordinate[]) =>
   coordinates.every(
     (coordinate) => distanceMeters(coordinates[0]!, coordinate) <= SAME_PLACE_M
   )
-
-/** Whether a point is inside a polygon (ray casting; edges are straight). */
-export const pointInPolygon = (point: MapPoint, polygon: MapPoint[]) => {
-  let inside = false
-  for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
-    const a = polygon[i]!
-    const b = polygon[j]!
-    if (
-      a.y > point.y !== b.y > point.y &&
-      point.x < ((b.x - a.x) * (point.y - a.y)) / (b.y - a.y) + a.x
-    ) {
-      inside = !inside
-    }
-  }
-  return inside
-}
-
-/**
- * The ids of the Contacts whose pins sit inside a loop drawn over the map, in
- * the order given. Fewer than three points don't make a loop.
- */
-export const contactsInLoop = (
-  contacts: { id: string; coordinate?: Coordinate }[],
-  loop: MapPoint[],
-  project: (coordinate: Coordinate) => MapPoint
-): string[] =>
-  loop.length < 3
-    ? []
-    : contacts
-        .filter(
-          (contact) =>
-            !!contact.coordinate &&
-            pointInPolygon(project(contact.coordinate), loop)
-        )
-        .map((contact) => contact.id)

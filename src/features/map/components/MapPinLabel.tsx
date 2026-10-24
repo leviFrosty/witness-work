@@ -1,10 +1,6 @@
 import { type ReactNode, useState } from 'react'
 import { View } from 'react-native'
-import {
-  type ComposedGesture,
-  GestureDetector,
-  type GestureType,
-} from 'react-native-gesture-handler'
+import { GestureDetector, type GestureType } from 'react-native-gesture-handler'
 import { TooltipBubble } from '@/components/ui/PointerTooltip'
 import {
   type Bounds,
@@ -56,15 +52,15 @@ export default function MapPinLabel({
 }
 
 /**
- * Shares the map's frame so hover and lasso points are map points. Without a
- * gesture it's a plain view that layout flattens away.
+ * Shares the map's frame so hover points are map points. Without a gesture
+ * (iPhone, Android) it's a plain view that layout flattens away.
  */
 export function PinHoverArea({
   gesture,
   onTouchStart,
   children,
 }: {
-  gesture: GestureType | ComposedGesture | undefined
+  gesture: GestureType | undefined
   onTouchStart: () => void
   children: ReactNode
 }) {

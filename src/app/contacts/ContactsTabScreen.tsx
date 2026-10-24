@@ -1,18 +1,14 @@
 import { useEffect } from 'react'
 import { BottomTabScreenProps } from '@react-navigation/bottom-tabs'
-import { useNavigation } from '@react-navigation/native'
 import ContactRow from '@/features/contacts/components/ContactRow'
 import ContactsScreen from '@/features/contacts/screens/ContactsScreen'
 import MapScreen from '@/features/map/screens/MapScreen'
 import type { MapContactRowRenderer } from '@/features/map/components/MapContactInspector'
 import type { MapRouteActions } from '@/features/map/types/map'
 import useDayRouteStopCount from '@/features/route-planning/hooks/useDayRouteStopCount'
-import { MAX_ROUTE_STOPS } from '@/features/route-planning/lib/routeLimits'
-import useFeatureAccess from '@/hooks/useFeatureAccess'
 import useOpenRouteBuilder from '@/hooks/useOpenRouteBuilder'
 import useToday from '@/hooks/useToday'
 import type { Contact } from '@/types/contact'
-import type { RootStackNavigation } from '@/types/rootStack'
 
 import { usePreferences } from '@/stores/preferences'
 import { HomeTabStackParamList } from '@/types/homeStack'
@@ -24,28 +20,16 @@ const renderMapContactRow: MapContactRowRenderer = (props) => (
   <ContactRow {...props} showsDisclosure={false} showOpenInMenu />
 )
 
-/**
- * Today's route for the Map: how many stops it has and whose, a way to open it,
- * and Plan Route for Contacts picked on the Map.
- */
+/** Today's route for the Map: how many stops it has and a way to open it. */
 function useMapRouteActions(): MapRouteActions {
-  const navigation = useNavigation<RootStackNavigation>()
-  const { hasAccess } = useFeatureAccess('routePlanning')
   const openRoute = useOpenRouteBuilder('contacts_map')
   // The same day until midnight, so today's stops aren't worked out again on
   // every render.
   const today = useToday()
-  const { count, stops } = useDayRouteStopCount(today)
+  const { count } = useDayRouteStopCount(today)
   return {
     todayStopCount: count,
-    todayContactIds: new Set(
-      stops.flatMap((stop) => (stop.contactId ? [stop.contactId] : []))
-    ),
     openTodayRoute: () => openRoute(),
-    planRoute: (contactIds) =>
-      navigation.navigate('TodayRoute', { addContactIds: contactIds }),
-    maxStops: MAX_ROUTE_STOPS,
-    supporter: hasAccess,
   }
 }
 

@@ -211,7 +211,6 @@ vi.mock('lucide-react-native', () => ({
   Clock: 'Clock',
   Expand: 'Expand',
   Info: 'Info',
-  LassoSelect: 'LassoSelect',
   Layers: 'Layers',
   MapPinned: 'MapPinned',
   Navigation: 'Navigation',
@@ -342,14 +341,8 @@ vi.mock('@/features/map/components/MapOnboarding', () => ({
 vi.mock('@/features/map/components/MapFindContacts', () => ({
   default: 'MapFindContacts',
 }))
-vi.mock('@/features/map/components/MapSelectionBar', () => ({
-  default: 'MapSelectionBar',
-}))
 vi.mock('@/features/map/components/MapGroupList', () => ({
   default: 'MapGroupList',
-}))
-vi.mock('@/features/map/components/MapLassoPath', () => ({
-  default: 'MapLassoPath',
 }))
 vi.mock('@/features/map/components/MapTodayRouteButton', () => ({
   default: 'MapTodayRouteButton',
@@ -761,8 +754,7 @@ type PanGesture = {
   type: string
   handler: (e?: { translationY: number; velocityY: number }) => void
 }
-// The cards' detectors; the map's own (hover and Select mode's lasso) is left
-// out.
+// The cards' detectors; the map's own (hover) is left out.
 const gestureDetectors = () =>
   root.root
     .findAllByType('GestureDetector' as never)
@@ -929,60 +921,5 @@ describe('User location dot', () => {
     expect(showsDot()).toBe(false)
     await act(async () => setAppState('active'))
     expect(showsDot()).toBe(true)
-  })
-})
-
-describe('Select mode', () => {
-  const routeActions = {
-    todayStopCount: 1,
-    todayContactIds: new Set(['second']),
-    openTodayRoute: vi.fn(),
-    planRoute: vi.fn(),
-    maxStops: 30,
-    supporter: true,
-  }
-  const bar = () => root.root.findByType('MapSelectionBar' as never)
-  const tapPin = (id: string) =>
-    act(async () => root.root.findByProps({ identifier: id }).props.onPress())
-
-  beforeEach(async () => {
-    await act(async () =>
-      root.update(
-        <MapScreen
-          contacts={stored()}
-          renderContactRow={() => null}
-          routeActions={routeActions}
-        />
-      )
-    )
-    await act(async () =>
-      root.root
-        .findByProps({ accessibilityLabel: 'map_select' })
-        .props.onPress()
-    )
-  })
-
-  it("counts only picks not on today's route against the room it has", async () => {
-    await tapPin('first')
-    await tapPin('second')
-    expect(bar().props).toMatchObject({
-      count: 2,
-      newCount: 1,
-      todayStopCount: 1,
-      maxStops: 30,
-    })
-    await tapPin('first')
-    expect(bar().props).toMatchObject({ count: 1, newCount: 0 })
-  })
-
-  it('leaves picks the search hides out of the count and the route', async () => {
-    await tapPin('first')
-    await tapPin('second')
-    await act(async () =>
-      root.root.findByType(Input).props.onChangeText('Second')
-    )
-    expect(bar().props.count).toBe(1)
-    await act(async () => bar().props.onPlanRoute())
-    expect(routeActions.planRoute).toHaveBeenCalledExactlyOnceWith(['second'])
   })
 })

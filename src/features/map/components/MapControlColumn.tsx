@@ -1,9 +1,5 @@
 import { View } from 'react-native'
-import {
-  Expand as ExpandIcon,
-  Info as InfoIcon,
-  LassoSelect as LassoSelectIcon,
-} from 'lucide-react-native'
+import { Expand as ExpandIcon, Info as InfoIcon } from 'lucide-react-native'
 import Button from '@/components/ui/Button'
 import {
   PanelTrailingCloseIcon,
@@ -38,14 +34,13 @@ export type MapControlsLayout = {
 
 /**
  * The icon buttons down the map's leading edge, under the search: fit every
- * pin, stow the inspector (wide layouts), Select mode, map options and the
- * legend. Reports its frame, so pin cards keep clear of it.
+ * pin, stow the inspector (wide layouts), map options and the legend. Reports
+ * its frame, so pin cards keep clear of it.
  */
 export default function MapControlColumn({
   top,
   onFit,
   stow,
-  select,
   mapLayer,
   onChangeLayer,
   onLayout,
@@ -55,8 +50,6 @@ export default function MapControlColumn({
   onFit: (() => void) | null
   /** The inspector's show/hide button, on wide layouts. */
   stow: { stowed: boolean; onToggle: () => void } | null
-  /** Select mode's button, while route planning lends Plan Route. */
-  select: { active: boolean; onToggle: () => void } | null
   mapLayer: MapLayer
   onChangeLayer: (layer: MapLayer) => void
   onLayout: (layout: MapControlsLayout) => void
@@ -114,25 +107,6 @@ export default function MapControlColumn({
               }
               size={theme.fontSize('sm')}
               style={{ color: theme.colors.text }}
-            />
-          </Button>
-        </PointerTooltip>
-      )}
-      {select && (
-        <PointerTooltip label={i18n.t('map_select')} {...MAP_CONTROL_TOOLTIP}>
-          <Button
-            accessibilityLabel={i18n.t('map_select')}
-            accessibilityState={{ selected: select.active }}
-            variant='glass'
-            onPress={select.onToggle}
-            style={controlStyle}
-          >
-            <LucideIcon
-              icon={LassoSelectIcon}
-              size={theme.fontSize('sm')}
-              style={{
-                color: select.active ? theme.colors.accent : theme.colors.text,
-              }}
             />
           </Button>
         </PointerTooltip>

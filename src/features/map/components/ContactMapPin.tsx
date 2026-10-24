@@ -1,11 +1,7 @@
 import { Platform, View } from 'react-native'
 import { Image } from 'expo-image'
 import { Marker, type MarkerDragStartEndEvent } from 'react-native-maps'
-import {
-  Check as CheckIcon,
-  Clock as ClockIcon,
-  Star as StarIcon,
-} from 'lucide-react-native'
+import { Clock as ClockIcon, Star as StarIcon } from 'lucide-react-native'
 import { isRenderableImageValue } from '@/components/ui/Avatar'
 import LucideIcon from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
@@ -29,8 +25,7 @@ const AVATAR_RING = 3
  * A Contact on the Map: their picture or emoji ringed in their staleness color,
  * else a disc in that color with their initials, or a rounded square counting
  * the Contacts gathered there. A corner badge marks an overdue or today's
- * Follow-up, or a favorite. Selected, it gets an accent ring; in Select mode, a
- * check covers it once picked.
+ * Follow-up, or a favorite. Selected, it gets an accent ring.
  */
 export default function ContactMapPin({
   identifier,
@@ -42,9 +37,6 @@ export default function ContactMapPin({
   group,
   badge,
   selected,
-  checked,
-  partlyChecked,
-  dimmed,
   zIndex,
   accessibilityLabel,
   draggable,
@@ -65,10 +57,6 @@ export default function ContactMapPin({
   group?: boolean
   badge?: PinBadge
   selected: boolean
-  checked?: boolean
-  /** A group with only some of its Contacts picked: outlined, no check. */
-  partlyChecked?: boolean
-  dimmed?: boolean
   zIndex: number
   accessibilityLabel: string
   draggable?: boolean
@@ -83,7 +71,7 @@ export default function ContactMapPin({
       : null
   const emoji = avatar?.type === 'emoji' && avatar.value ? avatar.value : null
   // A group shows its count, but keeps the lead's avatar mounted.
-  const showAvatar = !!(image || emoji) && !group && !checked
+  const showAvatar = !!(image || emoji) && !group
   const marker = useMarkerRedraw(
     [
       label,
@@ -94,9 +82,6 @@ export default function ContactMapPin({
       group,
       badge,
       selected,
-      checked,
-      partlyChecked,
-      dimmed,
       theme.colors.accent,
       theme.colors.error,
       theme.colors.warn,
@@ -138,10 +123,9 @@ export default function ContactMapPin({
           height: FRAME,
           alignItems: 'center',
           justifyContent: 'center',
-          opacity: dimmed ? 0.35 : 1,
         }}
       >
-        {/* Selected: a filled accent ring. Picked in Select mode: an outline. */}
+        {/* Selected: a filled accent ring. */}
         <View
           collapsable={false}
           style={{
@@ -151,9 +135,6 @@ export default function ContactMapPin({
             borderRadius: group ? 9 + RING : ringSize / 2,
             borderCurve: 'continuous',
             backgroundColor: selected ? theme.colors.accent : 'transparent',
-            borderWidth: 2,
-            borderColor:
-              checked || partlyChecked ? theme.colors.accent : 'transparent',
           }}
         />
         <View
@@ -181,7 +162,7 @@ export default function ContactMapPin({
               fontSize: group || label.length < 2 ? 12 : 10,
               fontFamily: theme.fonts.bold,
               color: textColor,
-              opacity: checked || showAvatar ? 0 : 1,
+              opacity: showAvatar ? 0 : 1,
             }}
           >
             {label}
@@ -225,20 +206,6 @@ export default function ContactMapPin({
               )}
             </View>
           ) : null}
-          <View
-            collapsable={false}
-            style={{
-              position: 'absolute',
-              opacity: checked ? 1 : 0,
-            }}
-          >
-            <LucideIcon
-              icon={CheckIcon}
-              size={14}
-              strokeWidth={3}
-              color={textColor}
-            />
-          </View>
         </View>
         {/* The parent keys the marker by its badge, so the icon never swaps. */}
         <View
@@ -257,7 +224,7 @@ export default function ContactMapPin({
             backgroundColor: badgeColor,
             borderWidth: 1.5,
             borderColor: '#fff',
-            opacity: badge && !checked ? 1 : 0,
+            opacity: badge ? 1 : 0,
           }}
         >
           <LucideIcon

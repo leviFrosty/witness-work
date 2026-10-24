@@ -29,7 +29,6 @@ export default function useContactPinItems({
   projection,
   size,
   activeId,
-  picked,
   overlays,
 }: {
   contacts: ContactMarker[]
@@ -39,8 +38,6 @@ export default function useContactPinItems({
   /** The map's size, until the projection has it. */
   size: MapSize
   activeId: string | undefined
-  /** Select mode's picks on the map; null outside Select mode. */
-  picked: ReadonlySet<string> | null
   overlays: {
     /** Where what floats along the top ends: the search, the chips. */
     top: number[]
@@ -53,7 +50,7 @@ export default function useContactPinItems({
     bottom: {
       /** The bars and the map's legal strip. */
       base: number
-      /** Select mode's bar or a group's list, while one shows. */
+      /** A group's list, while it shows. */
       floatingCard: { bottom: number; height: number } | null
       /** The phone's cards, or their handle once stowed, while they show. */
       cards: number | null
@@ -91,7 +88,6 @@ export default function useContactPinItems({
     detail,
     projection,
     activeId,
-    checkedIds: picked,
     maxCards: isWide ? MAX_CARDS_WIDE : MAX_CARDS_PHONE,
     cardBounds: {
       left: overlays.inspectorLeft,

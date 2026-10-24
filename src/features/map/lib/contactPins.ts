@@ -60,13 +60,6 @@ export const followUpState = (
 const isDueState = (state: FollowUpState | null): state is FollowUpState =>
   !!state && state.kind !== 'later'
 
-/** Due now or this week: overdue, or a Follow-up in the next seven days. */
-export const isDue = (
-  contactId: string,
-  index: ConversationIndex,
-  nowMs: number
-) => isDueState(followUpState(contactId, index, nowMs))
-
 const lastVisitLine = (
   contactId: string,
   index: ConversationIndex,

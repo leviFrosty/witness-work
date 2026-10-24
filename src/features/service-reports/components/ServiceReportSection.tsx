@@ -3,6 +3,7 @@ import { Plus as PlusIcon } from 'lucide-react-native'
 import { ChevronForwardIcon } from '@/components/ui/DirectionalIcon'
 import useTheme from '@/contexts/theme'
 import usePublisher from '@/hooks/usePublisher'
+import useLocalDay from '@/hooks/useLocalDay'
 import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
 import LucideIcon from '@/components/ui/LucideIcon'
@@ -28,8 +29,10 @@ const ServiceReportSection = () => {
   const theme = useTheme()
   const { entryMode, showsTimeEntry } = usePublisher()
   const navigation = useNavigation<RootStackNavigation>()
-  const month = moment().month()
-  const year = moment().year()
+  // Keyed on the day, so the card moves to the new month at midnight.
+  const today = moment(useLocalDay(), 'YYYY-MM-DD')
+  const month = today.month()
+  const year = today.year()
 
   const { reportMenuItems } = useMonthReportExport()
   const { label: sentLabel } = useReportSentState(month, year)

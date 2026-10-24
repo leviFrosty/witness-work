@@ -1,6 +1,6 @@
-import { useMemo } from 'react'
 import moment from 'moment'
 import { useShallow } from 'zustand/react/shallow'
+import useLocalDay from '@/hooks/useLocalDay'
 import usePublisher from '@/hooks/usePublisher'
 import { getStudiesForGivenMonth } from '@/lib/contacts'
 import {
@@ -22,35 +22,29 @@ export function useThisMonthMinutes() {
     }))
   )
   const { serviceReports } = useServiceReport()
-  const now = moment()
+  // Keyed on the day, so the total starts over at midnight on the 1st, also on
+  // a Home that stayed open.
+  const today = moment(useLocalDay(), 'YYYY-MM-DD')
+  const month = today.month()
+  const year = today.year()
 
-  const monthReports = useMemo(
-    () => getMonthsReports(serviceReports, now.month(), now.year()),
-    [now, serviceReports]
-  )
-  return useMemo(
-    () =>
-      adjustedMinutesForSpecificMonth(
-        monthReports,
-        now.month(),
-        now.year(),
-        publisher,
-        {
-          enabled: overrideCreditLimit,
-          customLimitHours: customCreditLimitHours,
-        }
-      ).value,
-    [customCreditLimitHours, monthReports, now, overrideCreditLimit, publisher]
-  )
+  return adjustedMinutesForSpecificMonth(
+    getMonthsReports(serviceReports, month, year),
+    month,
+    year,
+    publisher,
+    {
+      enabled: overrideCreditLimit,
+      customLimitHours: customCreditLimitHours,
+    }
+  ).value
 }
 
 /** This month's Bible studies: each contact with a study visit counts once. */
 export function useThisMonthStudies() {
   const contacts = useContacts((s) => s.contacts)
   const conversations = useConversations((s) => s.conversations)
-  return useMemo(
-    () =>
-      getStudiesForGivenMonth({ contacts, conversations, month: new Date() }),
-    [contacts, conversations]
-  )
+  // Keyed on the day, like the minutes above.
+  const month = moment(useLocalDay(), 'YYYY-MM-DD').toDate()
+  return getStudiesForGivenMonth({ contacts, conversations, month })
 }

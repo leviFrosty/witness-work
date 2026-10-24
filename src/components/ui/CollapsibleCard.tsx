@@ -67,7 +67,10 @@ export default function CollapsibleCard({
       onLayout={(event) => {
         const { layout } = event.nativeEvent
         setWidth(layout.width)
-        if (!open) setHeaderHeight(layout.height - CARD_PADDING * 2)
+        // Only until the content first mounts: the native header opens itself
+        // before `open` turns true here, so a later "closed" layout can
+        // already hold the content and drop the accessory onto it.
+        if (!opened) setHeaderHeight(layout.height - CARD_PADDING * 2)
       }}
     >
       {/* Without ignoreSafeArea, SwiftUI insets cards laid out under the

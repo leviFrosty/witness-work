@@ -40,11 +40,8 @@ describe('syncKey', () => {
     expect(syncKey('iCloudSync')).toBe('iCloudSyncCloud')
     // No Cloud variant: Drive's, then the base string.
     expect(syncKey('iCloudSyncNow')).toBe('iCloudSyncNow')
-    const { platformSyncKey, syncSettingsTitleKey } = await import(
-      '@/lib/syncCopy'
-    )
+    const { platformSyncKey } = await import('@/lib/syncCopy')
     expect(platformSyncKey('iCloudSync')).toBe('iCloudSyncAndroid')
-    expect(syncSettingsTitleKey()).toBe('syncSettingsTitle')
   })
 })
 

@@ -1,7 +1,6 @@
 import enUS from '@/locales/en-US.json'
 import type { TranslationKey } from '@/lib/locales'
 import {
-  cloudSyncOfferedForCopy,
   usesCloudSyncForCopy,
   usesGoogleDriveSync,
 } from '@/lib/syncTransport/registry'
@@ -46,10 +45,3 @@ export function optionSyncKey(
   }
   return platformSyncKey(key)
 }
-
-/**
- * The sync screen's name: "Sync" once it offers Cloud Sync beside iCloud or
- * Google Drive, else the platform's own.
- */
-export const syncSettingsTitleKey = (): TranslationKey =>
-  cloudSyncOfferedForCopy() ? 'syncSettingsTitle' : syncKey('iCloudSync')

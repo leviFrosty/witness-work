@@ -24,12 +24,7 @@ import SupporterInfoSheet from '@/components/SupporterInfoSheet'
 import useIsSupporter from '@/hooks/useIsSupporter'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
-import {
-  optionSyncKey,
-  platformSyncKey,
-  syncKey,
-  syncSettingsTitleKey,
-} from '@/lib/syncCopy'
+import { optionSyncKey, platformSyncKey, syncKey } from '@/lib/syncCopy'
 import { usePreferences } from '@/stores/preferences'
 import { dismissICloudAccountChangeNotice } from '@/lib/iCloudIdentity'
 import {
@@ -959,10 +954,10 @@ const PreferencesiCloudScreenInner = () => {
                   color: theme.colors.text,
                 }}
               >
-                {i18n.t(syncSettingsTitleKey())}
+                {i18n.t('syncSettingsTitle')}
               </Text>
               <InfoPopover
-                title={i18n.t(syncSettingsTitleKey())}
+                title={i18n.t('syncSettingsTitle')}
                 description={i18n.t('twoSentences', {
                   first: i18n.t(
                     cloudOffered

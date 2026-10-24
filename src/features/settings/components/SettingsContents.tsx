@@ -4,6 +4,7 @@ import { GroupedList } from '@/components/ui/GroupedList'
 import i18n from '@/lib/locales'
 import PreferencesSection from '@/features/settings/components/sections/Preferences'
 import AppSection from '@/features/settings/components/sections/App'
+import ScribeSection from '@/features/settings/components/sections/Scribe'
 import ContactSection from '@/features/settings/components/sections/Contact'
 import AboutSection from '@/features/settings/components/sections/About'
 import AdvancedSection from '@/features/settings/components/sections/Advanced'
@@ -39,6 +40,7 @@ export default function SettingsContents({
       <GroupedList title={i18n.t('settings')}>
         <PreferencesSection {...sectionProps} />
         <AppSection {...sectionProps} />
+        <ScribeSection {...sectionProps} />
         <SupportSection
           {...sectionProps}
           onManageSubscription={() => setManageSubscriptionOpen(true)}

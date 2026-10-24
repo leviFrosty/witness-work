@@ -26,6 +26,7 @@ import { RootStackParamList } from '@/types/rootStack'
 import { createBackupFile } from '@/lib/backupFile'
 import { BACKUP_EXPORT_FILE_NAME } from '@/lib/temporaryCopies'
 import { useBackupImport } from '@/app/sync/useBackupImport'
+import DeviceSyncLinkSection from '@/features/settings/components/sync/DeviceSyncLinkSection'
 
 const ImportAndExportScreen = () => {
   const route = useRoute<RouteProp<RootStackParamList, 'Import and Export'>>()
@@ -181,6 +182,7 @@ const ImportAndExportScreen = () => {
               </XView>
             </ActionButton>
           </Card>
+          <DeviceSyncLinkSection />
           <Divider />
           <Text style={{ color: theme.colors.textAlt }}>
             {i18n.t('backupReasoning')}

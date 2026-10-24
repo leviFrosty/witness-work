@@ -302,10 +302,13 @@ the file's name or contents.
 The onboarding chooser's `import_type_selected` uses `import_type: notes` or
 `paper`, and `onboarding_import_options_viewed` adds `paper_available`. Both
 choices open Scribe AI's conversation, so their messages carry
-`entry: onboarding` on `scribe_turn_started`.
+`entry: onboarding` on `scribe_turn_started`. Settings → Import Data lists the
+same options and sends `import_type_selected` with `source: settings` (its
+messages carry `entry: settings`); there `icloud` or `google_drive` means the
+person opened Device Sync.
 
 Export/restore retains
-bounded `entry_point` (`settings` or `backup_reminder`), failure stage/error code,
+bounded `entry_point` (`settings`, `backup_reminder`, or `import_data`), failure stage/error code,
 and wall-clock elapsed time. `backup_exported` means Expo's sharing call resolved;
 `outcome: unknown` covers both sharing and cancellation and cannot establish that
 a backup was saved. Reminder dismissal snoozes without changing `lastBackupDate`.

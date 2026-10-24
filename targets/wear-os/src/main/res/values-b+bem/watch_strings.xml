@@ -51,6 +51,7 @@
   <string name="watchUpNext" formatted="false">Ukukonkapo</string>
   <string name="watchUpNextComplicationDescription" formatted="false">Ukukonkapo kwenu ukwisa nelyo ubupange.</string>
   <string name="watchUpNextComplicationName" formatted="false">Ukukonkapo</string>
+  <string name="watchUpdatePhoneApp" formatted="false">Cinjeni WitnessWork pa foni yenu, elyo mwesheko nakabili.</string>
   <string name="wearRangeComplicationName" formatted="false">Ukukula kwa Mweshi, 0 ukufika ku Co Mwapanga</string>
   <string name="wearSymbolComplicationName" formatted="false">Ukukula kwa Mweshi na Wotchi</string>
 </resources>

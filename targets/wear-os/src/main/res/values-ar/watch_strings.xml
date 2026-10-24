@@ -51,6 +51,7 @@
   <string name="watchUpNext" formatted="false">التالي</string>
   <string name="watchUpNextComplicationDescription" formatted="false">متابعتك أو خطتك التالية.</string>
   <string name="watchUpNextComplicationName" formatted="false">التالي</string>
+  <string name="watchUpdatePhoneApp" formatted="false">حدّث WitnessWork على هاتفك، ثم حاول مرة أخرى.</string>
   <string name="wearRangeComplicationName" formatted="false">التقدّم الشهري، من ٠ إلى الهدف</string>
   <string name="wearSymbolComplicationName" formatted="false">التقدّم الشهري مع الساعة</string>
 </resources>

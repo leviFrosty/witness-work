@@ -363,20 +363,20 @@
       "localizations" : {
         "ar" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Your companion and its room, with its hearts."
+            "state" : "translated",
+            "value" : "رفيقك وغرفته، مع قلوبه."
           }
         },
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Your companion and its room, with its hearts."
+            "state" : "translated",
+            "value" : "Pet yenu ne ng'anda yayo, na mutima yayo."
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Your companion and its room, with its hearts."
+            "state" : "translated",
+            "value" : "Ihr Begleiter und sein Zimmer, mit seinen Herzen."
           }
         },
         "en" : {
@@ -387,92 +387,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Your companion and its room, with its hearts."
+            "state" : "translated",
+            "value" : "Tu mascota y su habitación, con sus corazones."
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Your companion and its room, with its hearts."
+            "state" : "translated",
+            "value" : "Votre compagnon et sa chambre, avec ses cœurs."
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Your companion and its room, with its hearts."
+            "state" : "translated",
+            "value" : "Il tuo compagno e la sua stanza, con i suoi cuori."
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Your companion and its room, with its hearts."
+            "state" : "translated",
+            "value" : "ペットとその部屋、そしてハート。"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Your companion and its room, with its hearts."
+            "state" : "translated",
+            "value" : "반려동물과 방, 그리고 하트 수."
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Your companion and its room, with its hearts."
+            "state" : "translated",
+            "value" : "Je maatje en zijn kamer, met zijn hartjes."
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Your companion and its room, with its hearts."
+            "state" : "translated",
+            "value" : "Seu companheiro e o quarto dele, com os corações."
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Your companion and its room, with its hearts."
+            "state" : "translated",
+            "value" : "O seu companheiro e o respetivo quarto, com os seus corações."
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Your companion and its room, with its hearts."
+            "state" : "translated",
+            "value" : "Ваш питомец и его комната, с сердечками."
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Your companion and its room, with its hearts."
+            "state" : "translated",
+            "value" : "Inshuti yawe n'icyumba cyayo, hamwe n'imitima yayo."
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Your companion and its room, with its hearts."
+            "state" : "translated",
+            "value" : "Rafiki yako na chumba chake, pamoja na mioyo yake."
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Your companion and its room, with its hearts."
+            "state" : "translated",
+            "value" : "Ваш улюбленець і його кімната, з його сердечками."
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Your companion and its room, with its hearts."
+            "state" : "translated",
+            "value" : "Thú cưng của bạn và căn phòng của nó, cùng số trái tim."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Your companion and its room, with its hearts."
+            "state" : "translated",
+            "value" : "你的伙伴和它的小屋，还有它的爱心。"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Your companion and its room, with its hearts."
+            "state" : "translated",
+            "value" : "你的寵物和牠的房間，還有牠的愛心。"
           }
         }
       }
@@ -482,20 +482,20 @@
       "localizations" : {
         "ar" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Pet Companion"
+            "state" : "translated",
+            "value" : "الحيوان الأليف الرفيق"
           }
         },
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Pet Companion"
+            "state" : "translated",
+            "value" : "Pet"
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Pet Companion"
+            "state" : "translated",
+            "value" : "Haustier-Begleiter"
           }
         },
         "en" : {
@@ -506,92 +506,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Pet Companion"
+            "state" : "translated",
+            "value" : "Mascota compañera"
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Pet Companion"
+            "state" : "translated",
+            "value" : "Animal de compagnie"
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Pet Companion"
+            "state" : "translated",
+            "value" : "Animaletto compagno"
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Pet Companion"
+            "state" : "translated",
+            "value" : "ペットのパートナー"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Pet Companion"
+            "state" : "translated",
+            "value" : "반려동물 친구"
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Pet Companion"
+            "state" : "translated",
+            "value" : "Huisdiermaatje"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Pet Companion"
+            "state" : "translated",
+            "value" : "Mascote"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Pet Companion"
+            "state" : "translated",
+            "value" : "Mascote companheira"
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Pet Companion"
+            "state" : "translated",
+            "value" : "Питомец"
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Pet Companion"
+            "state" : "translated",
+            "value" : "Inshuti y'itungo"
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Pet Companion"
+            "state" : "translated",
+            "value" : "Rafiki Kipenzi"
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Pet Companion"
+            "state" : "translated",
+            "value" : "Улюбленець-компаньйон"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Pet Companion"
+            "state" : "translated",
+            "value" : "Thú cưng đồng hành"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Pet Companion"
+            "state" : "translated",
+            "value" : "宠物伙伴"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Pet Companion"
+            "state" : "translated",
+            "value" : "寵物陪伴"
           }
         }
       }
@@ -601,20 +601,20 @@
       "localizations" : {
         "ar" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Choose a pet in WitnessWork"
+            "state" : "translated",
+            "value" : "اختر حيوانًا أليفًا في WitnessWork"
           }
         },
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Choose a pet in WitnessWork"
+            "state" : "translated",
+            "value" : "Salaeni pet muli WitnessWork"
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Choose a pet in WitnessWork"
+            "state" : "translated",
+            "value" : "Wählen Sie in WitnessWork ein Haustier"
           }
         },
         "en" : {
@@ -625,92 +625,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Choose a pet in WitnessWork"
+            "state" : "translated",
+            "value" : "Elige una mascota en WitnessWork"
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Choose a pet in WitnessWork"
+            "state" : "translated",
+            "value" : "Choisissez un animal dans WitnessWork"
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Choose a pet in WitnessWork"
+            "state" : "translated",
+            "value" : "Scegli un animaletto in WitnessWork"
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Choose a pet in WitnessWork"
+            "state" : "translated",
+            "value" : "WitnessWorkでペットを選んでください"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Choose a pet in WitnessWork"
+            "state" : "translated",
+            "value" : "WitnessWork에서 반려동물을 선택하세요"
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Choose a pet in WitnessWork"
+            "state" : "translated",
+            "value" : "Kies een huisdier in WitnessWork"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Choose a pet in WitnessWork"
+            "state" : "translated",
+            "value" : "Escolha um mascote no WitnessWork"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Choose a pet in WitnessWork"
+            "state" : "translated",
+            "value" : "Escolha uma mascote no WitnessWork"
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Choose a pet in WitnessWork"
+            "state" : "translated",
+            "value" : "Выберите питомца в WitnessWork"
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Choose a pet in WitnessWork"
+            "state" : "translated",
+            "value" : "Hitamo itungo muri WitnessWork"
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Choose a pet in WitnessWork"
+            "state" : "translated",
+            "value" : "Chagua kipenzi katika WitnessWork"
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Choose a pet in WitnessWork"
+            "state" : "translated",
+            "value" : "Виберіть улюбленця у WitnessWork"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Choose a pet in WitnessWork"
+            "state" : "translated",
+            "value" : "Chọn một thú cưng trong WitnessWork"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Choose a pet in WitnessWork"
+            "state" : "translated",
+            "value" : "在 WitnessWork 中选择一只宠物"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Choose a pet in WitnessWork"
+            "state" : "translated",
+            "value" : "在 WitnessWork 中選擇寵物"
           }
         }
       }
@@ -964,14 +964,14 @@
         },
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Upcoming follow-ups. Overdue items surface a reschedule sheet on tap."
+            "state" : "translated",
+            "value" : "Ukukonkapo kwapantanshi. Ifyafiba filanga icipao ca kucinja inshita nga mwatinika."
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Upcoming follow-ups. Overdue items surface a reschedule sheet on tap."
+            "state" : "translated",
+            "value" : "Anstehende Folgebesuche. Beim Antippen überfälliger Einträge öffnet sich ein Blatt zum Verschieben."
           }
         },
         "en" : {
@@ -982,92 +982,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Upcoming follow-ups. Overdue items surface a reschedule sheet on tap."
+            "state" : "translated",
+            "value" : "Próximos seguimientos. Al tocar un elemento atrasado se abre la hoja para reprogramarlo."
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Upcoming follow-ups. Overdue items surface a reschedule sheet on tap."
+            "state" : "translated",
+            "value" : "Les prochains suivis. Les éléments en retard ouvrent une feuille de report au toucher."
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Upcoming follow-ups. Overdue items surface a reschedule sheet on tap."
+            "state" : "translated",
+            "value" : "Prossimi follow-up. Toccando un elemento in ritardo si apre la schermata per riprogrammarlo."
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Upcoming follow-ups. Overdue items surface a reschedule sheet on tap."
+            "state" : "translated",
+            "value" : "今後のフォローアップです。期限切れの項目をタップすると、日程変更シートが開きます。"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Upcoming follow-ups. Overdue items surface a reschedule sheet on tap."
+            "state" : "translated",
+            "value" : "다가오는 다음 방문입니다. 기한이 지난 항목을 탭하면 일정 변경 화면이 열립니다."
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Upcoming follow-ups. Overdue items surface a reschedule sheet on tap."
+            "state" : "translated",
+            "value" : "Aankomende vervolgbezoeken. Bij achterstallige items verschijnt na een tik een blad om opnieuw in te plannen."
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Upcoming follow-ups. Overdue items surface a reschedule sheet on tap."
+            "state" : "translated",
+            "value" : "Próximos acompanhamentos. Ao tocar em itens atrasados, abre-se uma tela para reagendar."
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Upcoming follow-ups. Overdue items surface a reschedule sheet on tap."
+            "state" : "translated",
+            "value" : "Próximos acompanhamentos. Os itens em atraso abrem uma folha de reagendamento ao tocar."
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Upcoming follow-ups. Overdue items surface a reschedule sheet on tap."
+            "state" : "translated",
+            "value" : "Предстоящие повторные посещения. При нажатии на просроченные открывается окно переноса."
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Upcoming follow-ups. Overdue items surface a reschedule sheet on tap."
+            "state" : "translated",
+            "value" : "Gusubirayo kuza. Ibyarenze igihe bigaragaza urupapuro rwo kubihindurira igihe iyo ukandaho."
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Upcoming follow-ups. Overdue items surface a reschedule sheet on tap."
+            "state" : "translated",
+            "value" : "Ufuatiliaji unaokuja. Vipengee vilivyochelewa hufungua karatasi ya kupanga upya ukigusa."
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Upcoming follow-ups. Overdue items surface a reschedule sheet on tap."
+            "state" : "translated",
+            "value" : "Майбутні повторні зустрічі. Торкніться простроченого, щоб перенести його."
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Upcoming follow-ups. Overdue items surface a reschedule sheet on tap."
+            "state" : "translated",
+            "value" : "Các lần thăm lại sắp tới. Chạm vào mục quá hạn để mở bảng đổi lịch."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Upcoming follow-ups. Overdue items surface a reschedule sheet on tap."
+            "state" : "translated",
+            "value" : "即将到来的跟进。轻点已逾期的项目，会弹出重新安排的面板。"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Upcoming follow-ups. Overdue items surface a reschedule sheet on tap."
+            "state" : "translated",
+            "value" : "即將到來的後續探訪。點按逾期項目會顯示重新安排的面板。"
           }
         }
       }
@@ -1083,14 +1083,14 @@
         },
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Your month at a glance — hours, plans, and notes per day."
+            "state" : "translated",
+            "value" : "Umweshi wenu mu kumona kumo — amaawala, ubupange, na malembo pa bushiku."
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Your month at a glance — hours, plans, and notes per day."
+            "state" : "translated",
+            "value" : "Ihr Monat auf einen Blick – Stunden, Pläne und Notizen pro Tag."
           }
         },
         "en" : {
@@ -1101,92 +1101,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Your month at a glance — hours, plans, and notes per day."
+            "state" : "translated",
+            "value" : "Tu mes de un vistazo: horas, planes y notas de cada día."
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Your month at a glance — hours, plans, and notes per day."
+            "state" : "translated",
+            "value" : "Votre mois en un coup d’œil : heures, plans et notes par jour."
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Your month at a glance — hours, plans, and notes per day."
+            "state" : "translated",
+            "value" : "Il tuo mese a colpo d'occhio: ore, piani e note per ogni giorno."
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Your month at a glance — hours, plans, and notes per day."
+            "state" : "translated",
+            "value" : "1か月を一目で。日ごとの時間、プラン、メモを表示します。"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Your month at a glance — hours, plans, and notes per day."
+            "state" : "translated",
+            "value" : "한 달을 한눈에: 날짜별 시간, 계획, 메모."
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Your month at a glance — hours, plans, and notes per day."
+            "state" : "translated",
+            "value" : "Je maand in één oogopslag: uren, plannen en notities per dag."
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Your month at a glance — hours, plans, and notes per day."
+            "state" : "translated",
+            "value" : "Seu mês em resumo — horas, planos e notas por dia."
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Your month at a glance — hours, plans, and notes per day."
+            "state" : "translated",
+            "value" : "O seu mês num relance — horas, planos e notas por dia."
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Your month at a glance — hours, plans, and notes per day."
+            "state" : "translated",
+            "value" : "Ваш месяц с первого взгляда — часы, планы и заметки по дням."
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Your month at a glance — hours, plans, and notes per day."
+            "state" : "translated",
+            "value" : "Ukwezi kwawe ukureba icyarimwe — amasaha, gahunda n'inyandiko za buri munsi."
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Your month at a glance — hours, plans, and notes per day."
+            "state" : "translated",
+            "value" : "Mwezi wako kwa muhtasari — saa, mipango, na vidokezo kwa kila siku."
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Your month at a glance — hours, plans, and notes per day."
+            "state" : "translated",
+            "value" : "Ваш місяць з одного погляду: години, плани й нотатки за кожен день."
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Your month at a glance — hours, plans, and notes per day."
+            "state" : "translated",
+            "value" : "Tổng quan tháng của bạn — số giờ, kế hoạch và ghi chú mỗi ngày."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Your month at a glance — hours, plans, and notes per day."
+            "state" : "translated",
+            "value" : "一览本月——每天的时数、计划和笔记。"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Your month at a glance — hours, plans, and notes per day."
+            "state" : "translated",
+            "value" : "一覽你的這個月——每天的時數、計畫和筆記。"
           }
         }
       }
@@ -1202,14 +1202,14 @@
         },
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Quick access to your contacts. Sort, action, and favorites set in Settings."
+            "state" : "translated",
+            "value" : "Ukufika bwangu ku bakulanshanya benu. Ukusala, ico mulecita, ne fyatemwikwa fisalwa mu Ifyo Mwasala."
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Quick access to your contacts. Sort, action, and favorites set in Settings."
+            "state" : "translated",
+            "value" : "Schneller Zugriff auf Ihre Kontakte. Sortierung, Aktion und Favoriten stellen Sie in den Einstellungen ein."
           }
         },
         "en" : {
@@ -1220,92 +1220,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Quick access to your contacts. Sort, action, and favorites set in Settings."
+            "state" : "translated",
+            "value" : "Acceso rápido a tus contactos. El orden, la acción y los favoritos se definen en Ajustes."
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Quick access to your contacts. Sort, action, and favorites set in Settings."
+            "state" : "translated",
+            "value" : "Accès rapide à vos contacts. Tri, action et favoris se règlent dans les paramètres."
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Quick access to your contacts. Sort, action, and favorites set in Settings."
+            "state" : "translated",
+            "value" : "Accesso rapido ai tuoi contatti. Ordinamento, azione e preferiti si impostano in Impostazioni."
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Quick access to your contacts. Sort, action, and favorites set in Settings."
+            "state" : "translated",
+            "value" : "連絡先にすばやくアクセスできます。並べ替え、操作、お気に入りは設定で選べます。"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Quick access to your contacts. Sort, action, and favorites set in Settings."
+            "state" : "translated",
+            "value" : "연락처에 빠르게 접근합니다. 정렬, 동작, 즐겨찾기는 설정에서 지정합니다."
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Quick access to your contacts. Sort, action, and favorites set in Settings."
+            "state" : "translated",
+            "value" : "Snelle toegang tot je contacten. Sortering, actie en favorieten stel je in bij Instellingen."
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Quick access to your contacts. Sort, action, and favorites set in Settings."
+            "state" : "translated",
+            "value" : "Acesso rápido aos seus contatos. Ordem, ação e favoritos definidos em Configurações."
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Quick access to your contacts. Sort, action, and favorites set in Settings."
+            "state" : "translated",
+            "value" : "Acesso rápido aos seus contactos. Ordenação, ação e favoritos definidos nas Definições."
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Quick access to your contacts. Sort, action, and favorites set in Settings."
+            "state" : "translated",
+            "value" : "Быстрый доступ к вашим контактам. Сортировка, действие и избранное задаются в настройках."
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Quick access to your contacts. Sort, action, and favorites set in Settings."
+            "state" : "translated",
+            "value" : "Kugera vuba ku bantu bawe. Gutondeka, igikorwa n'abakunzwe bishyirwaho muri Igenamiterere."
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Quick access to your contacts. Sort, action, and favorites set in Settings."
+            "state" : "translated",
+            "value" : "Ufikiaji wa haraka wa anwani zako. Mpangilio wa kupanga, kitendo, na vipendwa huwekwa katika Mipangilio."
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Quick access to your contacts. Sort, action, and favorites set in Settings."
+            "state" : "translated",
+            "value" : "Швидкий доступ до ваших контактів. Сортування, дія й обрані задаються в налаштуваннях."
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Quick access to your contacts. Sort, action, and favorites set in Settings."
+            "state" : "translated",
+            "value" : "Truy cập nhanh vào các liên hệ của bạn. Sắp xếp, thao tác và mục yêu thích được đặt trong Cài đặt."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Quick access to your contacts. Sort, action, and favorites set in Settings."
+            "state" : "translated",
+            "value" : "快速访问你的联系人。排序、操作和收藏可在设置中调整。"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Quick access to your contacts. Sort, action, and favorites set in Settings."
+            "state" : "translated",
+            "value" : "快速存取你的聯絡人。排序、動作和最愛可在「設定」中設定。"
           }
         }
       }
@@ -1321,14 +1321,14 @@
         },
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "This month's hours toward your goal."
+            "state" : "translated",
+            "value" : "Amaawala ya mweshi uno ku co mwapanga."
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "This month's hours toward your goal."
+            "state" : "translated",
+            "value" : "Die Stunden dieses Monats auf dem Weg zu Ihrem Ziel."
           }
         },
         "en" : {
@@ -1339,92 +1339,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "This month's hours toward your goal."
+            "state" : "translated",
+            "value" : "Las horas de este mes hacia tu meta."
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "This month's hours toward your goal."
+            "state" : "translated",
+            "value" : "Les heures de ce mois-ci par rapport à votre objectif."
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "This month's hours toward your goal."
+            "state" : "translated",
+            "value" : "Le ore di questo mese verso il tuo obiettivo."
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "This month's hours toward your goal."
+            "state" : "translated",
+            "value" : "目標に向けた今月の時間です。"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "This month's hours toward your goal."
+            "state" : "translated",
+            "value" : "목표를 향한 이번 달 시간입니다."
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "This month's hours toward your goal."
+            "state" : "translated",
+            "value" : "De uren van deze maand richting je doel."
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "This month's hours toward your goal."
+            "state" : "translated",
+            "value" : "As horas deste mês em direção ao seu alvo."
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "This month's hours toward your goal."
+            "state" : "translated",
+            "value" : "As horas deste mês face ao seu objetivo."
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "This month's hours toward your goal."
+            "state" : "translated",
+            "value" : "Часы этого месяца относительно вашей цели."
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "This month's hours toward your goal."
+            "state" : "translated",
+            "value" : "Amasaha y'uku kwezi agana ku ntego yawe."
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "This month's hours toward your goal."
+            "state" : "translated",
+            "value" : "Saa za mwezi huu kuelekea lengo lako."
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "This month's hours toward your goal."
+            "state" : "translated",
+            "value" : "Години цього місяця до вашої мети."
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "This month's hours toward your goal."
+            "state" : "translated",
+            "value" : "Số giờ của tháng này so với mục tiêu của bạn."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "This month's hours toward your goal."
+            "state" : "translated",
+            "value" : "本月为实现目标已记录的时数。"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "This month's hours toward your goal."
+            "state" : "translated",
+            "value" : "本月朝著你的目標累計的時數。"
           }
         }
       }
@@ -1440,14 +1440,14 @@
         },
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Report"
+            "state" : "translated",
+            "value" : "Lipoti"
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Report"
+            "state" : "translated",
+            "value" : "Bericht"
           }
         },
         "en" : {
@@ -1458,92 +1458,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Report"
+            "state" : "translated",
+            "value" : "Informe"
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Report"
+            "state" : "translated",
+            "value" : "Rapport"
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Report"
+            "state" : "translated",
+            "value" : "Rapporto"
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Report"
+            "state" : "translated",
+            "value" : "報告"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Report"
+            "state" : "translated",
+            "value" : "보고"
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Report"
+            "state" : "translated",
+            "value" : "Verslag"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Report"
+            "state" : "translated",
+            "value" : "Relatório"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Report"
+            "state" : "translated",
+            "value" : "Relatório"
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Report"
+            "state" : "translated",
+            "value" : "Отчёт"
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Report"
+            "state" : "translated",
+            "value" : "Raporo"
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Report"
+            "state" : "translated",
+            "value" : "Ripoti"
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Report"
+            "state" : "translated",
+            "value" : "Звіт"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Report"
+            "state" : "translated",
+            "value" : "Báo cáo"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Report"
+            "state" : "translated",
+            "value" : "报告"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Report"
+            "state" : "translated",
+            "value" : "報告"
           }
         }
       }

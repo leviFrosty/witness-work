@@ -51,6 +51,7 @@
   <string name="watchUpNext" formatted="false">Ibikurikira</string>
   <string name="watchUpNextComplicationDescription" formatted="false">Gusubirayo cyangwa gahunda ukurikira.</string>
   <string name="watchUpNextComplicationName" formatted="false">Ibikurikira</string>
+  <string name="watchUpdatePhoneApp" formatted="false">Vugurura WitnessWork kuri telefoni yawe, hanyuma wongere ugerageze.</string>
   <string name="wearRangeComplicationName" formatted="false">Iterambere ry\'ukwezi, kuva kuri 0 ukagera ku ntego</string>
   <string name="wearSymbolComplicationName" formatted="false">Iterambere ry\'ukwezi hamwe n\'isaha</string>
 </resources>

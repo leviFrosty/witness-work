@@ -51,6 +51,7 @@
   <string name="watchUpNext" formatted="false">Sắp tới</string>
   <string name="watchUpNextComplicationDescription" formatted="false">Lần thăm lại hoặc kế hoạch tiếp theo của bạn.</string>
   <string name="watchUpNextComplicationName" formatted="false">Sắp tới</string>
+  <string name="watchUpdatePhoneApp" formatted="false">Hãy cập nhật WitnessWork trên điện thoại của bạn, rồi thử lại.</string>
   <string name="wearRangeComplicationName" formatted="false">Tiến độ tháng, từ 0 đến mục tiêu</string>
   <string name="wearSymbolComplicationName" formatted="false">Tiến độ tháng kèm đồng hồ</string>
 </resources>

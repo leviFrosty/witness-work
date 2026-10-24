@@ -17,6 +17,7 @@ vi.mock('expo-localization', () => ({
 import { createPluralizer } from '@/lib/plurals'
 import i18n, {
   _i18n,
+  DEFAULT_LOCALE,
   setI18nLocale,
   translatedLocales,
   type TranslationKey,
@@ -103,13 +104,23 @@ describe('registered plural rules', () => {
     // TranslationKey doesn't list keys that hold plural objects.
     const t = (key: string, count: number) =>
       i18n.t(key as TranslationKey, { count })
+    // An English-only key, so the test keeps working once every real key is
+    // translated at a release cut.
+    _i18n.store({
+      [DEFAULT_LOCALE]: {
+        __untranslatedPhotoCount: {
+          one: '{{count}} photo',
+          other: '{{count}} photos',
+        },
+      },
+    })
     // Not translated yet: the English strings render, chosen by English rules.
     setI18nLocale('ru-ru')
-    expect(t('richText_photoCount', 21)).toBe('21 photos')
-    expect(t('richText_photoCount', 1)).toBe('1 photo')
+    expect(t('__untranslatedPhotoCount', 21)).toBe('21 photos')
+    expect(t('__untranslatedPhotoCount', 1)).toBe('1 photo')
     setI18nLocale('fr-fr')
-    expect(t('richText_photoCount', 0)).toBe('0 photos')
-    expect(t('richText_photoCount', 1.5)).toBe('1.5 photos')
+    expect(t('__untranslatedPhotoCount', 0)).toBe('0 photos')
+    expect(t('__untranslatedPhotoCount', 1.5)).toBe('1.5 photos')
     // A translated plural still uses the Language's own rules.
     setI18nLocale('ru-ru')
     expect(t('contactDetails.studyCount', 21)).toBe('21 изучение')

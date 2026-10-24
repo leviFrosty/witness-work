@@ -51,6 +51,7 @@
   <string name="watchUpNext" formatted="false">Als Nächstes</string>
   <string name="watchUpNextComplicationDescription" formatted="false">Ihr nächster Folgebesuch oder Plan.</string>
   <string name="watchUpNextComplicationName" formatted="false">Als Nächstes</string>
+  <string name="watchUpdatePhoneApp" formatted="false">Aktualisieren Sie WitnessWork auf Ihrem Smartphone und versuchen Sie es dann erneut.</string>
   <string name="wearRangeComplicationName" formatted="false">Monatsfortschritt, 0 bis Ziel</string>
   <string name="wearSymbolComplicationName" formatted="false">Monatsfortschritt mit Uhr</string>
 </resources>

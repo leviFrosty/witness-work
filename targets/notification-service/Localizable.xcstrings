@@ -1537,13 +1537,13 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "重访"
+            "value" : "续访"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "回訪"
+            "value" : "續訪"
           }
         }
       }

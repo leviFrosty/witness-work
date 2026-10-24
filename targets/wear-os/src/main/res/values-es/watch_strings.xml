@@ -51,6 +51,7 @@
   <string name="watchUpNext" formatted="false">Próximamente</string>
   <string name="watchUpNextComplicationDescription" formatted="false">Tu próximo seguimiento o plan.</string>
   <string name="watchUpNextComplicationName" formatted="false">Próximamente</string>
+  <string name="watchUpdatePhoneApp" formatted="false">Actualiza WitnessWork en tu teléfono e inténtalo de nuevo.</string>
   <string name="wearRangeComplicationName" formatted="false">Progreso mensual, de 0 a la meta</string>
   <string name="wearSymbolComplicationName" formatted="false">Progreso mensual con reloj</string>
 </resources>

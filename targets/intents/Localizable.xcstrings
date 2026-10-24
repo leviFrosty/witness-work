@@ -2392,14 +2392,14 @@
         },
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Preset Duration"
+            "state" : "translated",
+            "value" : "Inshita Yabikwa Ntanshi"
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Preset Duration"
+            "state" : "translated",
+            "value" : "Voreingestellte Dauer"
           }
         },
         "en" : {
@@ -2410,92 +2410,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Preset Duration"
+            "state" : "translated",
+            "value" : "Duración predefinida"
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Preset Duration"
+            "state" : "translated",
+            "value" : "Durée prédéfinie"
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Preset Duration"
+            "state" : "translated",
+            "value" : "Durata predefinita"
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Preset Duration"
+            "state" : "translated",
+            "value" : "プリセットの時間"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Preset Duration"
+            "state" : "translated",
+            "value" : "미리 설정된 시간"
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Preset Duration"
+            "state" : "translated",
+            "value" : "Vaste duur"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Preset Duration"
+            "state" : "translated",
+            "value" : "Duração predefinida"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Preset Duration"
+            "state" : "translated",
+            "value" : "Duração predefinida"
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Preset Duration"
+            "state" : "translated",
+            "value" : "Стандартная длительность"
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Preset Duration"
+            "state" : "translated",
+            "value" : "Igihe cyateganyijwe"
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Preset Duration"
+            "state" : "translated",
+            "value" : "Muda Uliowekwa Awali"
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Preset Duration"
+            "state" : "translated",
+            "value" : "Попередньо задана тривалість"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Preset Duration"
+            "state" : "translated",
+            "value" : "Thời lượng định sẵn"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Preset Duration"
+            "state" : "translated",
+            "value" : "预设时长"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Preset Duration"
+            "state" : "translated",
+            "value" : "預設時間長度"
           }
         }
       }
@@ -2511,14 +2511,14 @@
         },
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "2 hours"
+            "state" : "translated",
+            "value" : "amaawala 2"
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "2 hours"
+            "state" : "translated",
+            "value" : "2 Stunden"
           }
         },
         "en" : {
@@ -2529,92 +2529,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "2 hours"
+            "state" : "translated",
+            "value" : "2 horas"
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "2 hours"
+            "state" : "translated",
+            "value" : "2 heures"
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "2 hours"
+            "state" : "translated",
+            "value" : "2 ore"
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "2 hours"
+            "state" : "translated",
+            "value" : "2時間"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "2 hours"
+            "state" : "translated",
+            "value" : "2시간"
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "2 hours"
+            "state" : "translated",
+            "value" : "2 uur"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "2 hours"
+            "state" : "translated",
+            "value" : "2 horas"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "2 hours"
+            "state" : "translated",
+            "value" : "2 horas"
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "2 hours"
+            "state" : "translated",
+            "value" : "2 часа"
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "2 hours"
+            "state" : "translated",
+            "value" : "amasaha 2"
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "2 hours"
+            "state" : "translated",
+            "value" : "saa 2"
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "2 hours"
+            "state" : "translated",
+            "value" : "2 години"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "2 hours"
+            "state" : "translated",
+            "value" : "2 giờ"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "2 hours"
+            "state" : "translated",
+            "value" : "2 小时"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "2 hours"
+            "state" : "translated",
+            "value" : "2 小時"
           }
         }
       }
@@ -2630,14 +2630,14 @@
         },
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "two hours"
+            "state" : "translated",
+            "value" : "amaawala yabili"
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "two hours"
+            "state" : "translated",
+            "value" : "zwei Stunden"
           }
         },
         "en" : {
@@ -2648,92 +2648,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "two hours"
+            "state" : "translated",
+            "value" : "dos horas"
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "two hours"
+            "state" : "translated",
+            "value" : "deux heures"
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "two hours"
+            "state" : "translated",
+            "value" : "due ore"
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "two hours"
+            "state" : "translated",
+            "value" : "二時間"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "two hours"
+            "state" : "translated",
+            "value" : "두 시간"
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "two hours"
+            "state" : "translated",
+            "value" : "twee uur"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "two hours"
+            "state" : "translated",
+            "value" : "duas horas"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "two hours"
+            "state" : "translated",
+            "value" : "duas horas"
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "two hours"
+            "state" : "translated",
+            "value" : "два часа"
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "two hours"
+            "state" : "translated",
+            "value" : "amasaha abiri"
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "two hours"
+            "state" : "translated",
+            "value" : "saa mbili"
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "two hours"
+            "state" : "translated",
+            "value" : "дві години"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "two hours"
+            "state" : "translated",
+            "value" : "hai giờ"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "two hours"
+            "state" : "translated",
+            "value" : "两小时"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "two hours"
+            "state" : "translated",
+            "value" : "兩小時"
           }
         }
       }
@@ -2749,14 +2749,14 @@
         },
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "15 minutes"
+            "state" : "translated",
+            "value" : "amineti 15"
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "15 minutes"
+            "state" : "translated",
+            "value" : "15 Minuten"
           }
         },
         "en" : {
@@ -2767,92 +2767,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "15 minutes"
+            "state" : "translated",
+            "value" : "15 minutos"
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
+            "state" : "translated",
             "value" : "15 minutes"
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "15 minutes"
+            "state" : "translated",
+            "value" : "15 minuti"
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "15 minutes"
+            "state" : "translated",
+            "value" : "15分"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "15 minutes"
+            "state" : "translated",
+            "value" : "15분"
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "15 minutes"
+            "state" : "translated",
+            "value" : "15 minuten"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "15 minutes"
+            "state" : "translated",
+            "value" : "15 minutos"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "15 minutes"
+            "state" : "translated",
+            "value" : "15 minutos"
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "15 minutes"
+            "state" : "translated",
+            "value" : "15 минут"
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "15 minutes"
+            "state" : "translated",
+            "value" : "iminota 15"
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "15 minutes"
+            "state" : "translated",
+            "value" : "dakika 15"
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "15 minutes"
+            "state" : "translated",
+            "value" : "15 хвилин"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "15 minutes"
+            "state" : "translated",
+            "value" : "15 phút"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "15 minutes"
+            "state" : "translated",
+            "value" : "15 分钟"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "15 minutes"
+            "state" : "translated",
+            "value" : "15 分鐘"
           }
         }
       }
@@ -2868,14 +2868,14 @@
         },
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "2.5 hours"
+            "state" : "translated",
+            "value" : "amaawala 2,5"
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "2.5 hours"
+            "state" : "translated",
+            "value" : "2,5 Stunden"
           }
         },
         "en" : {
@@ -2886,92 +2886,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "2.5 hours"
+            "state" : "translated",
+            "value" : "2,5 horas"
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "2.5 hours"
+            "state" : "translated",
+            "value" : "2,5 heures"
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "2.5 hours"
+            "state" : "translated",
+            "value" : "2,5 ore"
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "2.5 hours"
+            "state" : "translated",
+            "value" : "2.5時間"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "2.5 hours"
+            "state" : "translated",
+            "value" : "2.5시간"
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "2.5 hours"
+            "state" : "translated",
+            "value" : "2,5 uur"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "2.5 hours"
+            "state" : "translated",
+            "value" : "2,5 horas"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "2.5 hours"
+            "state" : "translated",
+            "value" : "2,5 horas"
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "2.5 hours"
+            "state" : "translated",
+            "value" : "2,5 часа"
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "2.5 hours"
+            "state" : "translated",
+            "value" : "amasaha 2,5"
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "2.5 hours"
+            "state" : "translated",
+            "value" : "saa 2.5"
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "2.5 hours"
+            "state" : "translated",
+            "value" : "2,5 години"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "2.5 hours"
+            "state" : "translated",
+            "value" : "2,5 giờ"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "2.5 hours"
+            "state" : "translated",
+            "value" : "2.5 小时"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "2.5 hours"
+            "state" : "translated",
+            "value" : "2.5 小時"
           }
         }
       }
@@ -2987,14 +2987,14 @@
         },
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "two and a half hours"
+            "state" : "translated",
+            "value" : "amaawala yabili na mineti amakumi yatatu"
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "two and a half hours"
+            "state" : "translated",
+            "value" : "zweieinhalb Stunden"
           }
         },
         "en" : {
@@ -3005,92 +3005,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "two and a half hours"
+            "state" : "translated",
+            "value" : "dos horas y media"
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "two and a half hours"
+            "state" : "translated",
+            "value" : "deux heures et demie"
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "two and a half hours"
+            "state" : "translated",
+            "value" : "due ore e mezza"
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "two and a half hours"
+            "state" : "translated",
+            "value" : "二時間半"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "two and a half hours"
+            "state" : "translated",
+            "value" : "두 시간 반"
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "two and a half hours"
+            "state" : "translated",
+            "value" : "twee en een half uur"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "two and a half hours"
+            "state" : "translated",
+            "value" : "duas horas e meia"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "two and a half hours"
+            "state" : "translated",
+            "value" : "duas horas e meia"
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "two and a half hours"
+            "state" : "translated",
+            "value" : "два с половиной часа"
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "two and a half hours"
+            "state" : "translated",
+            "value" : "amasaha abiri n'igice"
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "two and a half hours"
+            "state" : "translated",
+            "value" : "saa mbili na nusu"
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "two and a half hours"
+            "state" : "translated",
+            "value" : "дві з половиною години"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "two and a half hours"
+            "state" : "translated",
+            "value" : "hai giờ rưỡi"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "two and a half hours"
+            "state" : "translated",
+            "value" : "两个半小时"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "two and a half hours"
+            "state" : "translated",
+            "value" : "兩個半小時"
           }
         }
       }
@@ -3106,14 +3106,14 @@
         },
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "fifteen minutes"
+            "state" : "translated",
+            "value" : "amineti ikumi na sano"
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "fifteen minutes"
+            "state" : "translated",
+            "value" : "fünfzehn Minuten"
           }
         },
         "en" : {
@@ -3124,92 +3124,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "fifteen minutes"
+            "state" : "translated",
+            "value" : "quince minutos"
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "fifteen minutes"
+            "state" : "translated",
+            "value" : "quinze minutes"
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "fifteen minutes"
+            "state" : "translated",
+            "value" : "quindici minuti"
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "fifteen minutes"
+            "state" : "translated",
+            "value" : "十五分"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "fifteen minutes"
+            "state" : "translated",
+            "value" : "십오 분"
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "fifteen minutes"
+            "state" : "translated",
+            "value" : "vijftien minuten"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "fifteen minutes"
+            "state" : "translated",
+            "value" : "quinze minutos"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "fifteen minutes"
+            "state" : "translated",
+            "value" : "quinze minutos"
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "fifteen minutes"
+            "state" : "translated",
+            "value" : "пятнадцать минут"
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "fifteen minutes"
+            "state" : "translated",
+            "value" : "iminota cumi n'itanu"
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "fifteen minutes"
+            "state" : "translated",
+            "value" : "dakika kumi na tano"
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "fifteen minutes"
+            "state" : "translated",
+            "value" : "п’ятнадцять хвилин"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "fifteen minutes"
+            "state" : "translated",
+            "value" : "mười lăm phút"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "fifteen minutes"
+            "state" : "translated",
+            "value" : "十五分钟"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "fifteen minutes"
+            "state" : "translated",
+            "value" : "十五分鐘"
           }
         }
       }
@@ -3225,14 +3225,14 @@
         },
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "3 hours"
+            "state" : "translated",
+            "value" : "amaawala 3"
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "3 hours"
+            "state" : "translated",
+            "value" : "3 Stunden"
           }
         },
         "en" : {
@@ -3243,92 +3243,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "3 hours"
+            "state" : "translated",
+            "value" : "3 horas"
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "3 hours"
+            "state" : "translated",
+            "value" : "3 heures"
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "3 hours"
+            "state" : "translated",
+            "value" : "3 ore"
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "3 hours"
+            "state" : "translated",
+            "value" : "3時間"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "3 hours"
+            "state" : "translated",
+            "value" : "3시간"
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "3 hours"
+            "state" : "translated",
+            "value" : "3 uur"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "3 hours"
+            "state" : "translated",
+            "value" : "3 horas"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "3 hours"
+            "state" : "translated",
+            "value" : "3 horas"
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "3 hours"
+            "state" : "translated",
+            "value" : "3 часа"
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "3 hours"
+            "state" : "translated",
+            "value" : "amasaha 3"
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "3 hours"
+            "state" : "translated",
+            "value" : "saa 3"
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "3 hours"
+            "state" : "translated",
+            "value" : "3 години"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "3 hours"
+            "state" : "translated",
+            "value" : "3 giờ"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "3 hours"
+            "state" : "translated",
+            "value" : "3 小时"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "3 hours"
+            "state" : "translated",
+            "value" : "3 小時"
           }
         }
       }
@@ -3344,14 +3344,14 @@
         },
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "three hours"
+            "state" : "translated",
+            "value" : "amaawala yatatu"
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "three hours"
+            "state" : "translated",
+            "value" : "drei Stunden"
           }
         },
         "en" : {
@@ -3362,92 +3362,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "three hours"
+            "state" : "translated",
+            "value" : "tres horas"
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "three hours"
+            "state" : "translated",
+            "value" : "trois heures"
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "three hours"
+            "state" : "translated",
+            "value" : "tre ore"
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "three hours"
+            "state" : "translated",
+            "value" : "三時間"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "three hours"
+            "state" : "translated",
+            "value" : "세 시간"
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "three hours"
+            "state" : "translated",
+            "value" : "drie uur"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "three hours"
+            "state" : "translated",
+            "value" : "três horas"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "three hours"
+            "state" : "translated",
+            "value" : "três horas"
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "three hours"
+            "state" : "translated",
+            "value" : "три часа"
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "three hours"
+            "state" : "translated",
+            "value" : "amasaha atatu"
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "three hours"
+            "state" : "translated",
+            "value" : "saa tatu"
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "three hours"
+            "state" : "translated",
+            "value" : "три години"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "three hours"
+            "state" : "translated",
+            "value" : "ba giờ"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "three hours"
+            "state" : "translated",
+            "value" : "三小时"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "three hours"
+            "state" : "translated",
+            "value" : "三小時"
           }
         }
       }
@@ -3463,14 +3463,14 @@
         },
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "3.5 hours"
+            "state" : "translated",
+            "value" : "amaawala 3,5"
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "3.5 hours"
+            "state" : "translated",
+            "value" : "3,5 Stunden"
           }
         },
         "en" : {
@@ -3481,92 +3481,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "3.5 hours"
+            "state" : "translated",
+            "value" : "3,5 horas"
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "3.5 hours"
+            "state" : "translated",
+            "value" : "3,5 heures"
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "3.5 hours"
+            "state" : "translated",
+            "value" : "3,5 ore"
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "3.5 hours"
+            "state" : "translated",
+            "value" : "3.5時間"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "3.5 hours"
+            "state" : "translated",
+            "value" : "3.5시간"
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "3.5 hours"
+            "state" : "translated",
+            "value" : "3,5 uur"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "3.5 hours"
+            "state" : "translated",
+            "value" : "3,5 horas"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "3.5 hours"
+            "state" : "translated",
+            "value" : "3,5 horas"
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "3.5 hours"
+            "state" : "translated",
+            "value" : "3,5 часа"
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "3.5 hours"
+            "state" : "translated",
+            "value" : "amasaha 3,5"
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "3.5 hours"
+            "state" : "translated",
+            "value" : "saa 3.5"
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "3.5 hours"
+            "state" : "translated",
+            "value" : "3,5 години"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "3.5 hours"
+            "state" : "translated",
+            "value" : "3,5 giờ"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "3.5 hours"
+            "state" : "translated",
+            "value" : "3.5 小时"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "3.5 hours"
+            "state" : "translated",
+            "value" : "3.5 小時"
           }
         }
       }
@@ -3582,14 +3582,14 @@
         },
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "three and a half hours"
+            "state" : "translated",
+            "value" : "amaawala yatatu na mineti amakumi yatatu"
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "three and a half hours"
+            "state" : "translated",
+            "value" : "dreieinhalb Stunden"
           }
         },
         "en" : {
@@ -3600,92 +3600,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "three and a half hours"
+            "state" : "translated",
+            "value" : "tres horas y media"
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "three and a half hours"
+            "state" : "translated",
+            "value" : "trois heures et demie"
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "three and a half hours"
+            "state" : "translated",
+            "value" : "tre ore e mezza"
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "three and a half hours"
+            "state" : "translated",
+            "value" : "三時間半"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "three and a half hours"
+            "state" : "translated",
+            "value" : "세 시간 반"
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "three and a half hours"
+            "state" : "translated",
+            "value" : "drie en een half uur"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "three and a half hours"
+            "state" : "translated",
+            "value" : "três horas e meia"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "three and a half hours"
+            "state" : "translated",
+            "value" : "três horas e meia"
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "three and a half hours"
+            "state" : "translated",
+            "value" : "три с половиной часа"
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "three and a half hours"
+            "state" : "translated",
+            "value" : "amasaha atatu n'igice"
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "three and a half hours"
+            "state" : "translated",
+            "value" : "saa tatu na nusu"
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "three and a half hours"
+            "state" : "translated",
+            "value" : "три з половиною години"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "three and a half hours"
+            "state" : "translated",
+            "value" : "ba giờ rưỡi"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "three and a half hours"
+            "state" : "translated",
+            "value" : "三个半小时"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "three and a half hours"
+            "state" : "translated",
+            "value" : "三個半小時"
           }
         }
       }
@@ -3701,14 +3701,14 @@
         },
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "4 hours"
+            "state" : "translated",
+            "value" : "amaawala 4"
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "4 hours"
+            "state" : "translated",
+            "value" : "4 Stunden"
           }
         },
         "en" : {
@@ -3719,92 +3719,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "4 hours"
+            "state" : "translated",
+            "value" : "4 horas"
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "4 hours"
+            "state" : "translated",
+            "value" : "4 heures"
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "4 hours"
+            "state" : "translated",
+            "value" : "4 ore"
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "4 hours"
+            "state" : "translated",
+            "value" : "4時間"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "4 hours"
+            "state" : "translated",
+            "value" : "4시간"
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "4 hours"
+            "state" : "translated",
+            "value" : "4 uur"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "4 hours"
+            "state" : "translated",
+            "value" : "4 horas"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "4 hours"
+            "state" : "translated",
+            "value" : "4 horas"
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "4 hours"
+            "state" : "translated",
+            "value" : "4 часа"
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "4 hours"
+            "state" : "translated",
+            "value" : "amasaha 4"
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "4 hours"
+            "state" : "translated",
+            "value" : "saa 4"
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "4 hours"
+            "state" : "translated",
+            "value" : "4 години"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "4 hours"
+            "state" : "translated",
+            "value" : "4 giờ"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "4 hours"
+            "state" : "translated",
+            "value" : "4 小时"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "4 hours"
+            "state" : "translated",
+            "value" : "4 小時"
           }
         }
       }
@@ -3820,14 +3820,14 @@
         },
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "four hours"
+            "state" : "translated",
+            "value" : "amaawala yane"
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "four hours"
+            "state" : "translated",
+            "value" : "vier Stunden"
           }
         },
         "en" : {
@@ -3838,92 +3838,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "four hours"
+            "state" : "translated",
+            "value" : "cuatro horas"
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "four hours"
+            "state" : "translated",
+            "value" : "quatre heures"
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "four hours"
+            "state" : "translated",
+            "value" : "quattro ore"
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "four hours"
+            "state" : "translated",
+            "value" : "四時間"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "four hours"
+            "state" : "translated",
+            "value" : "네 시간"
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "four hours"
+            "state" : "translated",
+            "value" : "vier uur"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "four hours"
+            "state" : "translated",
+            "value" : "quatro horas"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "four hours"
+            "state" : "translated",
+            "value" : "quatro horas"
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "four hours"
+            "state" : "translated",
+            "value" : "четыре часа"
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "four hours"
+            "state" : "translated",
+            "value" : "amasaha ane"
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "four hours"
+            "state" : "translated",
+            "value" : "saa nne"
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "four hours"
+            "state" : "translated",
+            "value" : "чотири години"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "four hours"
+            "state" : "translated",
+            "value" : "bốn giờ"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "four hours"
+            "state" : "translated",
+            "value" : "四小时"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "four hours"
+            "state" : "translated",
+            "value" : "四小時"
           }
         }
       }
@@ -3939,14 +3939,14 @@
         },
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "4.5 hours"
+            "state" : "translated",
+            "value" : "amaawala 4,5"
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "4.5 hours"
+            "state" : "translated",
+            "value" : "4,5 Stunden"
           }
         },
         "en" : {
@@ -3957,92 +3957,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "4.5 hours"
+            "state" : "translated",
+            "value" : "4,5 horas"
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "4.5 hours"
+            "state" : "translated",
+            "value" : "4,5 heures"
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "4.5 hours"
+            "state" : "translated",
+            "value" : "4,5 ore"
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "4.5 hours"
+            "state" : "translated",
+            "value" : "4.5時間"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "4.5 hours"
+            "state" : "translated",
+            "value" : "4.5시간"
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "4.5 hours"
+            "state" : "translated",
+            "value" : "4,5 uur"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "4.5 hours"
+            "state" : "translated",
+            "value" : "4,5 horas"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "4.5 hours"
+            "state" : "translated",
+            "value" : "4,5 horas"
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "4.5 hours"
+            "state" : "translated",
+            "value" : "4,5 часа"
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "4.5 hours"
+            "state" : "translated",
+            "value" : "amasaha 4,5"
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "4.5 hours"
+            "state" : "translated",
+            "value" : "saa 4.5"
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "4.5 hours"
+            "state" : "translated",
+            "value" : "4,5 години"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "4.5 hours"
+            "state" : "translated",
+            "value" : "4,5 giờ"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "4.5 hours"
+            "state" : "translated",
+            "value" : "4.5 小时"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "4.5 hours"
+            "state" : "translated",
+            "value" : "4.5 小時"
           }
         }
       }
@@ -4058,14 +4058,14 @@
         },
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "four and a half hours"
+            "state" : "translated",
+            "value" : "amaawala yane na mineti amakumi yatatu"
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "four and a half hours"
+            "state" : "translated",
+            "value" : "viereinhalb Stunden"
           }
         },
         "en" : {
@@ -4076,92 +4076,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "four and a half hours"
+            "state" : "translated",
+            "value" : "cuatro horas y media"
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "four and a half hours"
+            "state" : "translated",
+            "value" : "quatre heures et demie"
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "four and a half hours"
+            "state" : "translated",
+            "value" : "quattro ore e mezza"
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "four and a half hours"
+            "state" : "translated",
+            "value" : "四時間半"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "four and a half hours"
+            "state" : "translated",
+            "value" : "네 시간 반"
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "four and a half hours"
+            "state" : "translated",
+            "value" : "vier en een half uur"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "four and a half hours"
+            "state" : "translated",
+            "value" : "quatro horas e meia"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "four and a half hours"
+            "state" : "translated",
+            "value" : "quatro horas e meia"
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "four and a half hours"
+            "state" : "translated",
+            "value" : "четыре с половиной часа"
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "four and a half hours"
+            "state" : "translated",
+            "value" : "amasaha ane n'igice"
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "four and a half hours"
+            "state" : "translated",
+            "value" : "saa nne na nusu"
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "four and a half hours"
+            "state" : "translated",
+            "value" : "чотири з половиною години"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "four and a half hours"
+            "state" : "translated",
+            "value" : "bốn giờ rưỡi"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "four and a half hours"
+            "state" : "translated",
+            "value" : "四个半小时"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "four and a half hours"
+            "state" : "translated",
+            "value" : "四個半小時"
           }
         }
       }
@@ -4177,14 +4177,14 @@
         },
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "30 minutes"
+            "state" : "translated",
+            "value" : "amineti 30"
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "30 minutes"
+            "state" : "translated",
+            "value" : "30 Minuten"
           }
         },
         "en" : {
@@ -4195,92 +4195,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "30 minutes"
+            "state" : "translated",
+            "value" : "30 minutos"
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
+            "state" : "translated",
             "value" : "30 minutes"
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "30 minutes"
+            "state" : "translated",
+            "value" : "30 minuti"
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "30 minutes"
+            "state" : "translated",
+            "value" : "30分"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "30 minutes"
+            "state" : "translated",
+            "value" : "30분"
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "30 minutes"
+            "state" : "translated",
+            "value" : "30 minuten"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "30 minutes"
+            "state" : "translated",
+            "value" : "30 minutos"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "30 minutes"
+            "state" : "translated",
+            "value" : "30 minutos"
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "30 minutes"
+            "state" : "translated",
+            "value" : "30 минут"
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "30 minutes"
+            "state" : "translated",
+            "value" : "iminota 30"
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "30 minutes"
+            "state" : "translated",
+            "value" : "dakika 30"
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "30 minutes"
+            "state" : "translated",
+            "value" : "30 хвилин"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "30 minutes"
+            "state" : "translated",
+            "value" : "30 phút"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "30 minutes"
+            "state" : "translated",
+            "value" : "30 分钟"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "30 minutes"
+            "state" : "translated",
+            "value" : "30 分鐘"
           }
         }
       }
@@ -4296,14 +4296,14 @@
         },
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "5 hours"
+            "state" : "translated",
+            "value" : "amaawala 5"
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "5 hours"
+            "state" : "translated",
+            "value" : "5 Stunden"
           }
         },
         "en" : {
@@ -4314,92 +4314,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "5 hours"
+            "state" : "translated",
+            "value" : "5 horas"
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "5 hours"
+            "state" : "translated",
+            "value" : "5 heures"
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "5 hours"
+            "state" : "translated",
+            "value" : "5 ore"
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "5 hours"
+            "state" : "translated",
+            "value" : "5時間"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "5 hours"
+            "state" : "translated",
+            "value" : "5시간"
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "5 hours"
+            "state" : "translated",
+            "value" : "5 uur"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "5 hours"
+            "state" : "translated",
+            "value" : "5 horas"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "5 hours"
+            "state" : "translated",
+            "value" : "5 horas"
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "5 hours"
+            "state" : "translated",
+            "value" : "5 часов"
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "5 hours"
+            "state" : "translated",
+            "value" : "amasaha 5"
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "5 hours"
+            "state" : "translated",
+            "value" : "saa 5"
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "5 hours"
+            "state" : "translated",
+            "value" : "5 годин"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "5 hours"
+            "state" : "translated",
+            "value" : "5 giờ"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "5 hours"
+            "state" : "translated",
+            "value" : "5 小时"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "5 hours"
+            "state" : "translated",
+            "value" : "5 小時"
           }
         }
       }
@@ -4415,14 +4415,14 @@
         },
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "five hours"
+            "state" : "translated",
+            "value" : "amaawala yasano"
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "five hours"
+            "state" : "translated",
+            "value" : "fünf Stunden"
           }
         },
         "en" : {
@@ -4433,92 +4433,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "five hours"
+            "state" : "translated",
+            "value" : "cinco horas"
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "five hours"
+            "state" : "translated",
+            "value" : "cinq heures"
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "five hours"
+            "state" : "translated",
+            "value" : "cinque ore"
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "five hours"
+            "state" : "translated",
+            "value" : "五時間"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "five hours"
+            "state" : "translated",
+            "value" : "다섯 시간"
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "five hours"
+            "state" : "translated",
+            "value" : "vijf uur"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "five hours"
+            "state" : "translated",
+            "value" : "cinco horas"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "five hours"
+            "state" : "translated",
+            "value" : "cinco horas"
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "five hours"
+            "state" : "translated",
+            "value" : "пять часов"
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "five hours"
+            "state" : "translated",
+            "value" : "amasaha atanu"
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "five hours"
+            "state" : "translated",
+            "value" : "saa tano"
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "five hours"
+            "state" : "translated",
+            "value" : "п’ять годин"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "five hours"
+            "state" : "translated",
+            "value" : "năm giờ"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "five hours"
+            "state" : "translated",
+            "value" : "五小时"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "five hours"
+            "state" : "translated",
+            "value" : "五小時"
           }
         }
       }
@@ -4534,14 +4534,14 @@
         },
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "half an hour"
+            "state" : "translated",
+            "value" : "ilubali lya awala"
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "half an hour"
+            "state" : "translated",
+            "value" : "eine halbe Stunde"
           }
         },
         "en" : {
@@ -4552,92 +4552,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "half an hour"
+            "state" : "translated",
+            "value" : "media hora"
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "half an hour"
+            "state" : "translated",
+            "value" : "une demi-heure"
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "half an hour"
+            "state" : "translated",
+            "value" : "mezz'ora"
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "half an hour"
+            "state" : "translated",
+            "value" : "半時間"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "half an hour"
+            "state" : "translated",
+            "value" : "반 시간"
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "half an hour"
+            "state" : "translated",
+            "value" : "een half uur"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "half an hour"
+            "state" : "translated",
+            "value" : "meia hora"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "half an hour"
+            "state" : "translated",
+            "value" : "meia hora"
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "half an hour"
+            "state" : "translated",
+            "value" : "полчаса"
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "half an hour"
+            "state" : "translated",
+            "value" : "igice cy'isaha"
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "half an hour"
+            "state" : "translated",
+            "value" : "nusu saa"
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "half an hour"
+            "state" : "translated",
+            "value" : "пів години"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "half an hour"
+            "state" : "translated",
+            "value" : "nửa tiếng"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "half an hour"
+            "state" : "translated",
+            "value" : "半小时"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "half an hour"
+            "state" : "translated",
+            "value" : "半小時"
           }
         }
       }
@@ -4653,14 +4653,14 @@
         },
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "thirty minutes"
+            "state" : "translated",
+            "value" : "amineti amakumi yatatu"
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "thirty minutes"
+            "state" : "translated",
+            "value" : "dreißig Minuten"
           }
         },
         "en" : {
@@ -4671,92 +4671,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "thirty minutes"
+            "state" : "translated",
+            "value" : "treinta minutos"
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "thirty minutes"
+            "state" : "translated",
+            "value" : "trente minutes"
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "thirty minutes"
+            "state" : "translated",
+            "value" : "trenta minuti"
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "thirty minutes"
+            "state" : "translated",
+            "value" : "三十分"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "thirty minutes"
+            "state" : "translated",
+            "value" : "삼십 분"
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "thirty minutes"
+            "state" : "translated",
+            "value" : "dertig minuten"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "thirty minutes"
+            "state" : "translated",
+            "value" : "trinta minutos"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "thirty minutes"
+            "state" : "translated",
+            "value" : "trinta minutos"
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "thirty minutes"
+            "state" : "translated",
+            "value" : "тридцать минут"
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "thirty minutes"
+            "state" : "translated",
+            "value" : "iminota mirongo itatu"
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "thirty minutes"
+            "state" : "translated",
+            "value" : "dakika thelathini"
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "thirty minutes"
+            "state" : "translated",
+            "value" : "тридцять хвилин"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "thirty minutes"
+            "state" : "translated",
+            "value" : "ba mươi phút"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "thirty minutes"
+            "state" : "translated",
+            "value" : "三十分钟"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "thirty minutes"
+            "state" : "translated",
+            "value" : "三十分鐘"
           }
         }
       }
@@ -4772,14 +4772,14 @@
         },
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "6 hours"
+            "state" : "translated",
+            "value" : "amaawala 6"
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "6 hours"
+            "state" : "translated",
+            "value" : "6 Stunden"
           }
         },
         "en" : {
@@ -4790,92 +4790,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "6 hours"
+            "state" : "translated",
+            "value" : "6 horas"
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "6 hours"
+            "state" : "translated",
+            "value" : "6 heures"
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "6 hours"
+            "state" : "translated",
+            "value" : "6 ore"
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "6 hours"
+            "state" : "translated",
+            "value" : "6時間"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "6 hours"
+            "state" : "translated",
+            "value" : "6시간"
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "6 hours"
+            "state" : "translated",
+            "value" : "6 uur"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "6 hours"
+            "state" : "translated",
+            "value" : "6 horas"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "6 hours"
+            "state" : "translated",
+            "value" : "6 horas"
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "6 hours"
+            "state" : "translated",
+            "value" : "6 часов"
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "6 hours"
+            "state" : "translated",
+            "value" : "amasaha 6"
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "6 hours"
+            "state" : "translated",
+            "value" : "saa 6"
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "6 hours"
+            "state" : "translated",
+            "value" : "6 годин"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "6 hours"
+            "state" : "translated",
+            "value" : "6 giờ"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "6 hours"
+            "state" : "translated",
+            "value" : "6 小时"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "6 hours"
+            "state" : "translated",
+            "value" : "6 小時"
           }
         }
       }
@@ -4891,14 +4891,14 @@
         },
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "six hours"
+            "state" : "translated",
+            "value" : "amaawala mutanda"
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "six hours"
+            "state" : "translated",
+            "value" : "sechs Stunden"
           }
         },
         "en" : {
@@ -4909,92 +4909,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "six hours"
+            "state" : "translated",
+            "value" : "seis horas"
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "six hours"
+            "state" : "translated",
+            "value" : "six heures"
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "six hours"
+            "state" : "translated",
+            "value" : "sei ore"
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "six hours"
+            "state" : "translated",
+            "value" : "六時間"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "six hours"
+            "state" : "translated",
+            "value" : "여섯 시간"
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "six hours"
+            "state" : "translated",
+            "value" : "zes uur"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "six hours"
+            "state" : "translated",
+            "value" : "seis horas"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "six hours"
+            "state" : "translated",
+            "value" : "seis horas"
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "six hours"
+            "state" : "translated",
+            "value" : "шесть часов"
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "six hours"
+            "state" : "translated",
+            "value" : "amasaha atandatu"
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "six hours"
+            "state" : "translated",
+            "value" : "saa sita"
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "six hours"
+            "state" : "translated",
+            "value" : "шість годин"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "six hours"
+            "state" : "translated",
+            "value" : "sáu giờ"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "six hours"
+            "state" : "translated",
+            "value" : "六小时"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "six hours"
+            "state" : "translated",
+            "value" : "六小時"
           }
         }
       }
@@ -5010,14 +5010,14 @@
         },
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "7 hours"
+            "state" : "translated",
+            "value" : "amaawala 7"
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "7 hours"
+            "state" : "translated",
+            "value" : "7 Stunden"
           }
         },
         "en" : {
@@ -5028,92 +5028,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "7 hours"
+            "state" : "translated",
+            "value" : "7 horas"
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "7 hours"
+            "state" : "translated",
+            "value" : "7 heures"
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "7 hours"
+            "state" : "translated",
+            "value" : "7 ore"
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "7 hours"
+            "state" : "translated",
+            "value" : "7時間"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "7 hours"
+            "state" : "translated",
+            "value" : "7시간"
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "7 hours"
+            "state" : "translated",
+            "value" : "7 uur"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "7 hours"
+            "state" : "translated",
+            "value" : "7 horas"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "7 hours"
+            "state" : "translated",
+            "value" : "7 horas"
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "7 hours"
+            "state" : "translated",
+            "value" : "7 часов"
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "7 hours"
+            "state" : "translated",
+            "value" : "amasaha 7"
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "7 hours"
+            "state" : "translated",
+            "value" : "saa 7"
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "7 hours"
+            "state" : "translated",
+            "value" : "7 годин"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "7 hours"
+            "state" : "translated",
+            "value" : "7 giờ"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "7 hours"
+            "state" : "translated",
+            "value" : "7 小时"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "7 hours"
+            "state" : "translated",
+            "value" : "7 小時"
           }
         }
       }
@@ -5129,14 +5129,14 @@
         },
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "seven hours"
+            "state" : "translated",
+            "value" : "amaawala cinelubali"
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "seven hours"
+            "state" : "translated",
+            "value" : "sieben Stunden"
           }
         },
         "en" : {
@@ -5147,92 +5147,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "seven hours"
+            "state" : "translated",
+            "value" : "siete horas"
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "seven hours"
+            "state" : "translated",
+            "value" : "sept heures"
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "seven hours"
+            "state" : "translated",
+            "value" : "sette ore"
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "seven hours"
+            "state" : "translated",
+            "value" : "七時間"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "seven hours"
+            "state" : "translated",
+            "value" : "일곱 시간"
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "seven hours"
+            "state" : "translated",
+            "value" : "zeven uur"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "seven hours"
+            "state" : "translated",
+            "value" : "sete horas"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "seven hours"
+            "state" : "translated",
+            "value" : "sete horas"
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "seven hours"
+            "state" : "translated",
+            "value" : "семь часов"
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "seven hours"
+            "state" : "translated",
+            "value" : "amasaha arindwi"
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "seven hours"
+            "state" : "translated",
+            "value" : "saa saba"
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "seven hours"
+            "state" : "translated",
+            "value" : "сім годин"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "seven hours"
+            "state" : "translated",
+            "value" : "bảy giờ"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "seven hours"
+            "state" : "translated",
+            "value" : "七小时"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "seven hours"
+            "state" : "translated",
+            "value" : "七小時"
           }
         }
       }
@@ -5248,14 +5248,14 @@
         },
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "45 minutes"
+            "state" : "translated",
+            "value" : "amineti 45"
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "45 minutes"
+            "state" : "translated",
+            "value" : "45 Minuten"
           }
         },
         "en" : {
@@ -5266,92 +5266,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "45 minutes"
+            "state" : "translated",
+            "value" : "45 minutos"
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
+            "state" : "translated",
             "value" : "45 minutes"
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "45 minutes"
+            "state" : "translated",
+            "value" : "45 minuti"
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "45 minutes"
+            "state" : "translated",
+            "value" : "45分"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "45 minutes"
+            "state" : "translated",
+            "value" : "45분"
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "45 minutes"
+            "state" : "translated",
+            "value" : "45 minuten"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "45 minutes"
+            "state" : "translated",
+            "value" : "45 minutos"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "45 minutes"
+            "state" : "translated",
+            "value" : "45 minutos"
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "45 minutes"
+            "state" : "translated",
+            "value" : "45 минут"
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "45 minutes"
+            "state" : "translated",
+            "value" : "iminota 45"
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "45 minutes"
+            "state" : "translated",
+            "value" : "dakika 45"
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "45 minutes"
+            "state" : "translated",
+            "value" : "45 хвилин"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "45 minutes"
+            "state" : "translated",
+            "value" : "45 phút"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "45 minutes"
+            "state" : "translated",
+            "value" : "45 分钟"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "45 minutes"
+            "state" : "translated",
+            "value" : "45 分鐘"
           }
         }
       }
@@ -5367,14 +5367,14 @@
         },
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "forty-five minutes"
+            "state" : "translated",
+            "value" : "amineti amakumi yane na sano"
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "forty-five minutes"
+            "state" : "translated",
+            "value" : "fünfundvierzig Minuten"
           }
         },
         "en" : {
@@ -5385,92 +5385,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "forty-five minutes"
+            "state" : "translated",
+            "value" : "cuarenta y cinco minutos"
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "forty-five minutes"
+            "state" : "translated",
+            "value" : "quarante-cinq minutes"
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "forty-five minutes"
+            "state" : "translated",
+            "value" : "quarantacinque minuti"
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "forty-five minutes"
+            "state" : "translated",
+            "value" : "四十五分"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "forty-five minutes"
+            "state" : "translated",
+            "value" : "사십오 분"
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "forty-five minutes"
+            "state" : "translated",
+            "value" : "vijfenveertig minuten"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "forty-five minutes"
+            "state" : "translated",
+            "value" : "quarenta e cinco minutos"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "forty-five minutes"
+            "state" : "translated",
+            "value" : "quarenta e cinco minutos"
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "forty-five minutes"
+            "state" : "translated",
+            "value" : "сорок пять минут"
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "forty-five minutes"
+            "state" : "translated",
+            "value" : "iminota mirongo ine n'itanu"
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "forty-five minutes"
+            "state" : "translated",
+            "value" : "dakika arobaini na tano"
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "forty-five minutes"
+            "state" : "translated",
+            "value" : "сорок п’ять хвилин"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "forty-five minutes"
+            "state" : "translated",
+            "value" : "bốn mươi lăm phút"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "forty-five minutes"
+            "state" : "translated",
+            "value" : "四十五分钟"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "forty-five minutes"
+            "state" : "translated",
+            "value" : "四十五分鐘"
           }
         }
       }
@@ -5486,14 +5486,14 @@
         },
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "8 hours"
+            "state" : "translated",
+            "value" : "amaawala 8"
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "8 hours"
+            "state" : "translated",
+            "value" : "8 Stunden"
           }
         },
         "en" : {
@@ -5504,92 +5504,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "8 hours"
+            "state" : "translated",
+            "value" : "8 horas"
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "8 hours"
+            "state" : "translated",
+            "value" : "8 heures"
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "8 hours"
+            "state" : "translated",
+            "value" : "8 ore"
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "8 hours"
+            "state" : "translated",
+            "value" : "8時間"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "8 hours"
+            "state" : "translated",
+            "value" : "8시간"
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "8 hours"
+            "state" : "translated",
+            "value" : "8 uur"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "8 hours"
+            "state" : "translated",
+            "value" : "8 horas"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "8 hours"
+            "state" : "translated",
+            "value" : "8 horas"
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "8 hours"
+            "state" : "translated",
+            "value" : "8 часов"
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "8 hours"
+            "state" : "translated",
+            "value" : "amasaha 8"
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "8 hours"
+            "state" : "translated",
+            "value" : "saa 8"
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "8 hours"
+            "state" : "translated",
+            "value" : "8 годин"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "8 hours"
+            "state" : "translated",
+            "value" : "8 giờ"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "8 hours"
+            "state" : "translated",
+            "value" : "8 小时"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "8 hours"
+            "state" : "translated",
+            "value" : "8 小時"
           }
         }
       }
@@ -5605,14 +5605,14 @@
         },
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "eight hours"
+            "state" : "translated",
+            "value" : "amaawala cinekonsekonse"
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "eight hours"
+            "state" : "translated",
+            "value" : "acht Stunden"
           }
         },
         "en" : {
@@ -5623,92 +5623,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "eight hours"
+            "state" : "translated",
+            "value" : "ocho horas"
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "eight hours"
+            "state" : "translated",
+            "value" : "huit heures"
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "eight hours"
+            "state" : "translated",
+            "value" : "otto ore"
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "eight hours"
+            "state" : "translated",
+            "value" : "八時間"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "eight hours"
+            "state" : "translated",
+            "value" : "여덟 시간"
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "eight hours"
+            "state" : "translated",
+            "value" : "acht uur"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "eight hours"
+            "state" : "translated",
+            "value" : "oito horas"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "eight hours"
+            "state" : "translated",
+            "value" : "oito horas"
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "eight hours"
+            "state" : "translated",
+            "value" : "восемь часов"
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "eight hours"
+            "state" : "translated",
+            "value" : "amasaha umunani"
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "eight hours"
+            "state" : "translated",
+            "value" : "saa nane"
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "eight hours"
+            "state" : "translated",
+            "value" : "вісім годин"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "eight hours"
+            "state" : "translated",
+            "value" : "tám giờ"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "eight hours"
+            "state" : "translated",
+            "value" : "八小时"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "eight hours"
+            "state" : "translated",
+            "value" : "八小時"
           }
         }
       }
@@ -5724,14 +5724,14 @@
         },
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "9 hours"
+            "state" : "translated",
+            "value" : "amaawala 9"
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "9 hours"
+            "state" : "translated",
+            "value" : "9 Stunden"
           }
         },
         "en" : {
@@ -5742,92 +5742,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "9 hours"
+            "state" : "translated",
+            "value" : "9 horas"
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "9 hours"
+            "state" : "translated",
+            "value" : "9 heures"
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "9 hours"
+            "state" : "translated",
+            "value" : "9 ore"
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "9 hours"
+            "state" : "translated",
+            "value" : "9時間"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "9 hours"
+            "state" : "translated",
+            "value" : "9시간"
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "9 hours"
+            "state" : "translated",
+            "value" : "9 uur"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "9 hours"
+            "state" : "translated",
+            "value" : "9 horas"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "9 hours"
+            "state" : "translated",
+            "value" : "9 horas"
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "9 hours"
+            "state" : "translated",
+            "value" : "9 часов"
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "9 hours"
+            "state" : "translated",
+            "value" : "amasaha 9"
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "9 hours"
+            "state" : "translated",
+            "value" : "saa 9"
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "9 hours"
+            "state" : "translated",
+            "value" : "9 годин"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "9 hours"
+            "state" : "translated",
+            "value" : "9 giờ"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "9 hours"
+            "state" : "translated",
+            "value" : "9 小时"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "9 hours"
+            "state" : "translated",
+            "value" : "9 小時"
           }
         }
       }
@@ -5843,14 +5843,14 @@
         },
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "nine hours"
+            "state" : "translated",
+            "value" : "amaawala pabula"
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "nine hours"
+            "state" : "translated",
+            "value" : "neun Stunden"
           }
         },
         "en" : {
@@ -5861,92 +5861,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "nine hours"
+            "state" : "translated",
+            "value" : "nueve horas"
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "nine hours"
+            "state" : "translated",
+            "value" : "neuf heures"
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "nine hours"
+            "state" : "translated",
+            "value" : "nove ore"
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "nine hours"
+            "state" : "translated",
+            "value" : "九時間"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "nine hours"
+            "state" : "translated",
+            "value" : "아홉 시간"
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "nine hours"
+            "state" : "translated",
+            "value" : "negen uur"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "nine hours"
+            "state" : "translated",
+            "value" : "nove horas"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "nine hours"
+            "state" : "translated",
+            "value" : "nove horas"
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "nine hours"
+            "state" : "translated",
+            "value" : "девять часов"
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "nine hours"
+            "state" : "translated",
+            "value" : "amasaha icyenda"
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "nine hours"
+            "state" : "translated",
+            "value" : "saa tisa"
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "nine hours"
+            "state" : "translated",
+            "value" : "дев’ять годин"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "nine hours"
+            "state" : "translated",
+            "value" : "chín giờ"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "nine hours"
+            "state" : "translated",
+            "value" : "九小时"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "nine hours"
+            "state" : "translated",
+            "value" : "九小時"
           }
         }
       }
@@ -5962,14 +5962,14 @@
         },
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "1 hour"
+            "state" : "translated",
+            "value" : "awala 1"
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "1 hour"
+            "state" : "translated",
+            "value" : "1 Stunde"
           }
         },
         "en" : {
@@ -5980,92 +5980,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "1 hour"
+            "state" : "translated",
+            "value" : "1 hora"
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "1 hour"
+            "state" : "translated",
+            "value" : "1 heure"
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "1 hour"
+            "state" : "translated",
+            "value" : "1 ora"
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "1 hour"
+            "state" : "translated",
+            "value" : "1時間"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "1 hour"
+            "state" : "translated",
+            "value" : "1시간"
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "1 hour"
+            "state" : "translated",
+            "value" : "1 uur"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "1 hour"
+            "state" : "translated",
+            "value" : "1 hora"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "1 hour"
+            "state" : "translated",
+            "value" : "1 hora"
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "1 hour"
+            "state" : "translated",
+            "value" : "1 час"
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "1 hour"
+            "state" : "translated",
+            "value" : "isaha 1"
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "1 hour"
+            "state" : "translated",
+            "value" : "saa 1"
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "1 hour"
+            "state" : "translated",
+            "value" : "1 годину"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "1 hour"
+            "state" : "translated",
+            "value" : "1 giờ"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "1 hour"
+            "state" : "translated",
+            "value" : "1 小时"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "1 hour"
+            "state" : "translated",
+            "value" : "1 小時"
           }
         }
       }
@@ -6081,14 +6081,14 @@
         },
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "10 hours"
+            "state" : "translated",
+            "value" : "amaawala 10"
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "10 hours"
+            "state" : "translated",
+            "value" : "10 Stunden"
           }
         },
         "en" : {
@@ -6099,92 +6099,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "10 hours"
+            "state" : "translated",
+            "value" : "10 horas"
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "10 hours"
+            "state" : "translated",
+            "value" : "10 heures"
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "10 hours"
+            "state" : "translated",
+            "value" : "10 ore"
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "10 hours"
+            "state" : "translated",
+            "value" : "10時間"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "10 hours"
+            "state" : "translated",
+            "value" : "10시간"
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "10 hours"
+            "state" : "translated",
+            "value" : "10 uur"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "10 hours"
+            "state" : "translated",
+            "value" : "10 horas"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "10 hours"
+            "state" : "translated",
+            "value" : "10 horas"
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "10 hours"
+            "state" : "translated",
+            "value" : "10 часов"
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "10 hours"
+            "state" : "translated",
+            "value" : "amasaha 10"
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "10 hours"
+            "state" : "translated",
+            "value" : "saa 10"
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "10 hours"
+            "state" : "translated",
+            "value" : "10 годин"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "10 hours"
+            "state" : "translated",
+            "value" : "10 giờ"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "10 hours"
+            "state" : "translated",
+            "value" : "10 小时"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "10 hours"
+            "state" : "translated",
+            "value" : "10 小時"
           }
         }
       }
@@ -6200,14 +6200,14 @@
         },
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "ten hours"
+            "state" : "translated",
+            "value" : "amaawala ikumi"
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "ten hours"
+            "state" : "translated",
+            "value" : "zehn Stunden"
           }
         },
         "en" : {
@@ -6218,92 +6218,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "ten hours"
+            "state" : "translated",
+            "value" : "diez horas"
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "ten hours"
+            "state" : "translated",
+            "value" : "dix heures"
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "ten hours"
+            "state" : "translated",
+            "value" : "dieci ore"
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "ten hours"
+            "state" : "translated",
+            "value" : "十時間"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "ten hours"
+            "state" : "translated",
+            "value" : "열 시간"
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "ten hours"
+            "state" : "translated",
+            "value" : "tien uur"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "ten hours"
+            "state" : "translated",
+            "value" : "dez horas"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "ten hours"
+            "state" : "translated",
+            "value" : "dez horas"
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "ten hours"
+            "state" : "translated",
+            "value" : "десять часов"
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "ten hours"
+            "state" : "translated",
+            "value" : "amasaha icumi"
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "ten hours"
+            "state" : "translated",
+            "value" : "saa kumi"
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "ten hours"
+            "state" : "translated",
+            "value" : "десять годин"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "ten hours"
+            "state" : "translated",
+            "value" : "mười giờ"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "ten hours"
+            "state" : "translated",
+            "value" : "十小时"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "ten hours"
+            "state" : "translated",
+            "value" : "十小時"
           }
         }
       }
@@ -6319,14 +6319,14 @@
         },
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "an hour"
+            "state" : "translated",
+            "value" : "awala fye limo"
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "an hour"
+            "state" : "translated",
+            "value" : "sechzig Minuten"
           }
         },
         "en" : {
@@ -6337,92 +6337,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "an hour"
+            "state" : "translated",
+            "value" : "sesenta minutos"
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "an hour"
+            "state" : "translated",
+            "value" : "soixante minutes"
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "an hour"
+            "state" : "translated",
+            "value" : "un'ora intera"
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "an hour"
+            "state" : "translated",
+            "value" : "六十分"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "an hour"
+            "state" : "translated",
+            "value" : "60분"
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "an hour"
+            "state" : "translated",
+            "value" : "een uurtje"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "an hour"
+            "state" : "translated",
+            "value" : "sessenta minutos"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "an hour"
+            "state" : "translated",
+            "value" : "sessenta minutos"
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "an hour"
+            "state" : "translated",
+            "value" : "час"
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "an hour"
+            "state" : "translated",
+            "value" : "isaha"
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "an hour"
+            "state" : "translated",
+            "value" : "saa nzima"
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "an hour"
+            "state" : "translated",
+            "value" : "годину"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "an hour"
+            "state" : "translated",
+            "value" : "một tiếng"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "an hour"
+            "state" : "translated",
+            "value" : "一个小时"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "an hour"
+            "state" : "translated",
+            "value" : "一個小時"
           }
         }
       }
@@ -6438,14 +6438,14 @@
         },
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "one hour"
+            "state" : "translated",
+            "value" : "awala limo"
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "one hour"
+            "state" : "translated",
+            "value" : "eine Stunde"
           }
         },
         "en" : {
@@ -6456,92 +6456,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "one hour"
+            "state" : "translated",
+            "value" : "una hora"
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "one hour"
+            "state" : "translated",
+            "value" : "une heure"
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "one hour"
+            "state" : "translated",
+            "value" : "un'ora"
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "one hour"
+            "state" : "translated",
+            "value" : "一時間"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "one hour"
+            "state" : "translated",
+            "value" : "한 시간"
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "one hour"
+            "state" : "translated",
+            "value" : "een uur"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "one hour"
+            "state" : "translated",
+            "value" : "uma hora"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "one hour"
+            "state" : "translated",
+            "value" : "uma hora"
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "one hour"
+            "state" : "translated",
+            "value" : "один час"
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "one hour"
+            "state" : "translated",
+            "value" : "isaha imwe"
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "one hour"
+            "state" : "translated",
+            "value" : "saa moja"
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "one hour"
+            "state" : "translated",
+            "value" : "одну годину"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "one hour"
+            "state" : "translated",
+            "value" : "một giờ"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "one hour"
+            "state" : "translated",
+            "value" : "一小时"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "one hour"
+            "state" : "translated",
+            "value" : "一小時"
           }
         }
       }
@@ -6557,14 +6557,14 @@
         },
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "11 hours"
+            "state" : "translated",
+            "value" : "amaawala 11"
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "11 hours"
+            "state" : "translated",
+            "value" : "11 Stunden"
           }
         },
         "en" : {
@@ -6575,92 +6575,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "11 hours"
+            "state" : "translated",
+            "value" : "11 horas"
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "11 hours"
+            "state" : "translated",
+            "value" : "11 heures"
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "11 hours"
+            "state" : "translated",
+            "value" : "11 ore"
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "11 hours"
+            "state" : "translated",
+            "value" : "11時間"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "11 hours"
+            "state" : "translated",
+            "value" : "11시간"
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "11 hours"
+            "state" : "translated",
+            "value" : "11 uur"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "11 hours"
+            "state" : "translated",
+            "value" : "11 horas"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "11 hours"
+            "state" : "translated",
+            "value" : "11 horas"
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "11 hours"
+            "state" : "translated",
+            "value" : "11 часов"
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "11 hours"
+            "state" : "translated",
+            "value" : "amasaha 11"
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "11 hours"
+            "state" : "translated",
+            "value" : "saa 11"
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "11 hours"
+            "state" : "translated",
+            "value" : "11 годин"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "11 hours"
+            "state" : "translated",
+            "value" : "11 giờ"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "11 hours"
+            "state" : "translated",
+            "value" : "11 小时"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "11 hours"
+            "state" : "translated",
+            "value" : "11 小時"
           }
         }
       }
@@ -6676,14 +6676,14 @@
         },
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "eleven hours"
+            "state" : "translated",
+            "value" : "amaawala ikumi na limo"
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "eleven hours"
+            "state" : "translated",
+            "value" : "elf Stunden"
           }
         },
         "en" : {
@@ -6694,92 +6694,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "eleven hours"
+            "state" : "translated",
+            "value" : "once horas"
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "eleven hours"
+            "state" : "translated",
+            "value" : "onze heures"
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "eleven hours"
+            "state" : "translated",
+            "value" : "undici ore"
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "eleven hours"
+            "state" : "translated",
+            "value" : "十一時間"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "eleven hours"
+            "state" : "translated",
+            "value" : "열한 시간"
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "eleven hours"
+            "state" : "translated",
+            "value" : "elf uur"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "eleven hours"
+            "state" : "translated",
+            "value" : "onze horas"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "eleven hours"
+            "state" : "translated",
+            "value" : "onze horas"
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "eleven hours"
+            "state" : "translated",
+            "value" : "одиннадцать часов"
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "eleven hours"
+            "state" : "translated",
+            "value" : "amasaha cumi n'imwe"
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "eleven hours"
+            "state" : "translated",
+            "value" : "saa kumi na moja"
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "eleven hours"
+            "state" : "translated",
+            "value" : "одинадцять годин"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "eleven hours"
+            "state" : "translated",
+            "value" : "mười một giờ"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "eleven hours"
+            "state" : "translated",
+            "value" : "十一小时"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "eleven hours"
+            "state" : "translated",
+            "value" : "十一小時"
           }
         }
       }
@@ -6795,14 +6795,14 @@
         },
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "12 hours"
+            "state" : "translated",
+            "value" : "amaawala 12"
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "12 hours"
+            "state" : "translated",
+            "value" : "12 Stunden"
           }
         },
         "en" : {
@@ -6813,92 +6813,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "12 hours"
+            "state" : "translated",
+            "value" : "12 horas"
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "12 hours"
+            "state" : "translated",
+            "value" : "12 heures"
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "12 hours"
+            "state" : "translated",
+            "value" : "12 ore"
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "12 hours"
+            "state" : "translated",
+            "value" : "12時間"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "12 hours"
+            "state" : "translated",
+            "value" : "12시간"
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "12 hours"
+            "state" : "translated",
+            "value" : "12 uur"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "12 hours"
+            "state" : "translated",
+            "value" : "12 horas"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "12 hours"
+            "state" : "translated",
+            "value" : "12 horas"
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "12 hours"
+            "state" : "translated",
+            "value" : "12 часов"
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "12 hours"
+            "state" : "translated",
+            "value" : "amasaha 12"
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "12 hours"
+            "state" : "translated",
+            "value" : "saa 12"
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "12 hours"
+            "state" : "translated",
+            "value" : "12 годин"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "12 hours"
+            "state" : "translated",
+            "value" : "12 giờ"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "12 hours"
+            "state" : "translated",
+            "value" : "12 小时"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "12 hours"
+            "state" : "translated",
+            "value" : "12 小時"
           }
         }
       }
@@ -6914,14 +6914,14 @@
         },
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "twelve hours"
+            "state" : "translated",
+            "value" : "amaawala ikumi na yabili"
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "twelve hours"
+            "state" : "translated",
+            "value" : "zwölf Stunden"
           }
         },
         "en" : {
@@ -6932,92 +6932,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "twelve hours"
+            "state" : "translated",
+            "value" : "doce horas"
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "twelve hours"
+            "state" : "translated",
+            "value" : "douze heures"
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "twelve hours"
+            "state" : "translated",
+            "value" : "dodici ore"
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "twelve hours"
+            "state" : "translated",
+            "value" : "十二時間"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "twelve hours"
+            "state" : "translated",
+            "value" : "열두 시간"
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "twelve hours"
+            "state" : "translated",
+            "value" : "twaalf uur"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "twelve hours"
+            "state" : "translated",
+            "value" : "doze horas"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "twelve hours"
+            "state" : "translated",
+            "value" : "doze horas"
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "twelve hours"
+            "state" : "translated",
+            "value" : "двенадцать часов"
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "twelve hours"
+            "state" : "translated",
+            "value" : "amasaha cumi n'abiri"
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "twelve hours"
+            "state" : "translated",
+            "value" : "saa kumi na mbili"
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "twelve hours"
+            "state" : "translated",
+            "value" : "дванадцять годин"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "twelve hours"
+            "state" : "translated",
+            "value" : "mười hai giờ"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "twelve hours"
+            "state" : "translated",
+            "value" : "十二小时"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "twelve hours"
+            "state" : "translated",
+            "value" : "十二小時"
           }
         }
       }
@@ -7033,14 +7033,14 @@
         },
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "1.5 hours"
+            "state" : "translated",
+            "value" : "amaawala 1,5"
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "1.5 hours"
+            "state" : "translated",
+            "value" : "1,5 Stunden"
           }
         },
         "en" : {
@@ -7051,92 +7051,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "1.5 hours"
+            "state" : "translated",
+            "value" : "1,5 horas"
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "1.5 hours"
+            "state" : "translated",
+            "value" : "1,5 heure"
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "1.5 hours"
+            "state" : "translated",
+            "value" : "1,5 ore"
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "1.5 hours"
+            "state" : "translated",
+            "value" : "1.5時間"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "1.5 hours"
+            "state" : "translated",
+            "value" : "1.5시간"
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "1.5 hours"
+            "state" : "translated",
+            "value" : "1,5 uur"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "1.5 hours"
+            "state" : "translated",
+            "value" : "1,5 hora"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "1.5 hours"
+            "state" : "translated",
+            "value" : "1,5 horas"
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "1.5 hours"
+            "state" : "translated",
+            "value" : "1,5 часа"
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "1.5 hours"
+            "state" : "translated",
+            "value" : "amasaha 1,5"
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "1.5 hours"
+            "state" : "translated",
+            "value" : "saa 1.5"
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "1.5 hours"
+            "state" : "translated",
+            "value" : "1,5 години"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "1.5 hours"
+            "state" : "translated",
+            "value" : "1,5 giờ"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "1.5 hours"
+            "state" : "translated",
+            "value" : "1.5 小时"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "1.5 hours"
+            "state" : "translated",
+            "value" : "1.5 小時"
           }
         }
       }
@@ -7152,14 +7152,14 @@
         },
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "an hour and a half"
+            "state" : "translated",
+            "value" : "awala limo na lubali"
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "an hour and a half"
+            "state" : "translated",
+            "value" : "anderthalb Stunden"
           }
         },
         "en" : {
@@ -7170,92 +7170,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "an hour and a half"
+            "state" : "translated",
+            "value" : "hora y media"
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "an hour and a half"
+            "state" : "translated",
+            "value" : "quatre-vingt-dix minutes"
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "an hour and a half"
+            "state" : "translated",
+            "value" : "un'ora e trenta"
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "an hour and a half"
+            "state" : "translated",
+            "value" : "九十分"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "an hour and a half"
+            "state" : "translated",
+            "value" : "90분"
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "an hour and a half"
+            "state" : "translated",
+            "value" : "een uur en een half"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "an hour and a half"
+            "state" : "translated",
+            "value" : "uma hora e trinta minutos"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "an hour and a half"
+            "state" : "translated",
+            "value" : "noventa minutos"
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "an hour and a half"
+            "state" : "translated",
+            "value" : "час с половиной"
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "an hour and a half"
+            "state" : "translated",
+            "value" : "isaha n'igice"
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "an hour and a half"
+            "state" : "translated",
+            "value" : "dakika tisini"
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "an hour and a half"
+            "state" : "translated",
+            "value" : "годину з половиною"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "an hour and a half"
+            "state" : "translated",
+            "value" : "một tiếng rưỡi"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "an hour and a half"
+            "state" : "translated",
+            "value" : "一个半钟头"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "an hour and a half"
+            "state" : "translated",
+            "value" : "一個半小時"
           }
         }
       }
@@ -7271,14 +7271,14 @@
         },
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "one and a half hours"
+            "state" : "translated",
+            "value" : "awala limo na mineti amakumi yatatu"
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "one and a half hours"
+            "state" : "translated",
+            "value" : "eineinhalb Stunden"
           }
         },
         "en" : {
@@ -7289,92 +7289,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "one and a half hours"
+            "state" : "translated",
+            "value" : "una hora y media"
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "one and a half hours"
+            "state" : "translated",
+            "value" : "une heure et demie"
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "one and a half hours"
+            "state" : "translated",
+            "value" : "un'ora e mezza"
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "one and a half hours"
+            "state" : "translated",
+            "value" : "一時間半"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "one and a half hours"
+            "state" : "translated",
+            "value" : "한 시간 반"
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "one and a half hours"
+            "state" : "translated",
+            "value" : "anderhalf uur"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "one and a half hours"
+            "state" : "translated",
+            "value" : "uma hora e meia"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "one and a half hours"
+            "state" : "translated",
+            "value" : "uma hora e meia"
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "one and a half hours"
+            "state" : "translated",
+            "value" : "полтора часа"
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "one and a half hours"
+            "state" : "translated",
+            "value" : "isaha imwe n'igice"
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "one and a half hours"
+            "state" : "translated",
+            "value" : "saa moja na nusu"
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "one and a half hours"
+            "state" : "translated",
+            "value" : "півтори години"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "one and a half hours"
+            "state" : "translated",
+            "value" : "một giờ rưỡi"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "one and a half hours"
+            "state" : "translated",
+            "value" : "一个半小时"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "one and a half hours"
+            "state" : "translated",
+            "value" : "一點五小時"
           }
         }
       }

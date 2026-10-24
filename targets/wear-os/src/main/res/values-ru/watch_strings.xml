@@ -51,6 +51,7 @@
   <string name="watchUpNext" formatted="false">Далее</string>
   <string name="watchUpNextComplicationDescription" formatted="false">Ваше следующее повторное посещение или план.</string>
   <string name="watchUpNextComplicationName" formatted="false">Далее</string>
+  <string name="watchUpdatePhoneApp" formatted="false">Обновите WitnessWork на телефоне и повторите попытку.</string>
   <string name="wearRangeComplicationName" formatted="false">Прогресс за месяц, от 0 до цели</string>
   <string name="wearSymbolComplicationName" formatted="false">Прогресс за месяц с часами</string>
 </resources>

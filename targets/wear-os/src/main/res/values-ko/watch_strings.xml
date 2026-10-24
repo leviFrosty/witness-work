@@ -51,6 +51,7 @@
   <string name="watchUpNext" formatted="false">다음 일정</string>
   <string name="watchUpNextComplicationDescription" formatted="false">다음 방문 또는 계획입니다.</string>
   <string name="watchUpNextComplicationName" formatted="false">다음 일정</string>
+  <string name="watchUpdatePhoneApp" formatted="false">휴대폰에서 WitnessWork를 업데이트한 다음 다시 시도하세요.</string>
   <string name="wearRangeComplicationName" formatted="false">월간 진행, 0에서 목표까지</string>
   <string name="wearSymbolComplicationName" formatted="false">시계가 있는 월간 진행</string>
 </resources>

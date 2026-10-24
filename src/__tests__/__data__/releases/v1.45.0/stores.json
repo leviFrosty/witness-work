@@ -1,0 +1,1837 @@
+{
+ "preferences": {
+  "state": {
+   "role": "regularPioneer",
+   "publisherHours": {
+    "publisher": 0,
+    "regularAuxiliary": 30,
+    "regularPioneer": 50,
+    "circuitOverseer": 50,
+    "specialPioneer": 100,
+    "custom": 40
+   },
+   "monthlyGoalOverrides": {
+    "2025-12": 30
+   },
+   "roleHistory": {
+    "initial": "publisher",
+    "changes": {
+     "2025-08": "regularAuxiliary",
+     "2025-09": "regularPioneer"
+    }
+   },
+   "onboardingComplete": true,
+   "tenureStartDate": "2025-09-01T05:00:00.000Z",
+   "installedOn": "2025-06-01T17:00:00.000Z",
+   "contactSort": "az",
+   "contactSortDirection": "desc",
+   "contactsFilters": [],
+   "stalenessChipOrder": [
+    "month",
+    "week",
+    "recent",
+    "never"
+   ],
+   "savedContactViews": {},
+   "activeSavedContactView": null,
+   "contactsView": "list",
+   "mapLayer": "standard",
+   "mapCardDetail": "nextVisit",
+   "hasCompletedMapOnboarding": false,
+   "calledGoecodeApiTimes": 0,
+   "lastTimeRequestedAReview": null,
+   "defaultNavigationMapProvider": "google",
+   "lastAppVersion": "1.45.0",
+   "unreadReleaseNotes": null,
+   "returnVisitTimeOffset": null,
+   "returnVisitNotificationOffset": null,
+   "returnVisitAlwaysNotify": true,
+   "planNotificationOffset": null,
+   "planAlwaysNotify": false,
+   "planTimeMode": "hours",
+   "unloggedDayReminders": false,
+   "unloggedDayReminderTime": 1200,
+   "unloggedDayRemindersEnabledAt": null,
+   "monthReportReminders": false,
+   "monthReportReminderTime": 540,
+   "monthReportReminderOfferAnswered": false,
+   "weekPlanReminder": false,
+   "weekPlanReminderDay": 6,
+   "weekPlanReminderTime": 1080,
+   "weekPlanReminderEnabledAt": null,
+   "streakReminders": true,
+   "showStreaks": false,
+   "scheduleIntroSeen": false,
+   "scheduleIntroCoveredPages": [],
+   "monthlyRoutineHasShownInvalidMonthAlert": false,
+   "hideDonateHeart": true,
+   "supporterNudgeDismissedAt": null,
+   "hideSupporterNudge": false,
+   "supporterNudgeAvailableSince": null,
+   "devSupporterNudgeForceShow": false,
+   "supporterPauseStartedAt": null,
+   "supporterPauseResumesAt": null,
+   "howToAddPlan": true,
+   "lastBackupDate": "2025-10-01T02:00:00.000Z",
+   "backupReminderSnoozedAt": null,
+   "analyticsEnabled": true,
+   "remindMeAboutBackups": true,
+   "backupNotificationFrequencyAsDays": 120,
+   "userSpecifiedHasAnnualGoal": "default",
+   "fontSizeOffset": 2,
+   "hasMigratedCustomFieldsToIds": true,
+   "hasMigratedTagsToCategories": true,
+   "hasMigratedProfileFromPreferences": true,
+   "hasCollapsedLdcIntoCategory": true,
+   "hasAttemptedToMigrateToMmkv": false,
+   "developerTools": false,
+   "prefillAddress": {
+    "enabled": true
+   },
+   "defaultPhoneRegionCode": null,
+   "contactInformationOrder": [],
+   "showContactPhone": true,
+   "showContactEmail": true,
+   "scheduleScreenElements": {
+    "assistant": true
+   },
+   "scheduleScreenElementsOrder": [
+    "assistant"
+   ],
+   "homeScreenElements": {
+    "approachingConversations": true,
+    "monthlyRoutine": true,
+    "tabletServiceYearSummary": true,
+    "thisWeek": true,
+    "serviceReport": true,
+    "mileage": true,
+    "pet": true,
+    "quickActions": true,
+    "timer": false,
+    "contacts": true,
+    "didYouKnow": false
+   },
+   "homeScreenElementsOrder": [
+    "approachingConversations",
+    "tabletServiceYearSummary",
+    "serviceReport",
+    "pet",
+    "quickActions",
+    "thisWeek",
+    "mileage",
+    "timer",
+    "didYouKnow"
+   ],
+   "progressCards": null,
+   "yearProgressCards": null,
+   "allTimeProgressCards": null,
+   "tabOrder": [
+    "Home",
+    "Contacts",
+    "Progress",
+    "Schedule"
+   ],
+   "colorScheme": "dark",
+   "timeDisplayFormat": "short",
+   "stalenessBreakpoints": {
+    "weekDays": 7,
+    "monthDays": 30
+   },
+   "startOfWeek": 1,
+   "overrideCreditLimit": true,
+   "customCreditLimitHours": 60,
+   "widgetContactSort": "longestContacted",
+   "widgetContactAction": "directions",
+   "widgetAppointmentWindow": "7days",
+   "customAccentColor": null,
+   "customAppIcon": null,
+   "devSupporterOverride": null,
+   "devShowAppIconAlerts": false,
+   "iCloudClockOffsetMs": 0,
+   "iCloudClockCalibrated": false,
+   "iCloudSyncPendingPush": false,
+   "iCloudSyncIssue": null,
+   "iCloudSyncErrorCode": null,
+   "iCloudSyncNeedsResolution": false,
+   "iCloudResetEpoch": null,
+   "iCloudResetAdoptedNotice": null,
+   "iCloudSyncDevices": {},
+   "iCloudSyncPausedForLapse": false,
+   "iCloudFreshSetup": false,
+   "hasReconciledSyncDefinitions": false,
+   "iCloudSyncEnabled": false,
+   "iCloudSyncSetByUser": false,
+   "iCloudSyncIncludeImages": false,
+   "syncProvider": null,
+   "cloudSyncOffer": null,
+   "cloudSyncAccountToken": null,
+   "cloudSyncConfig": null,
+   "cloudSyncEntitled": null,
+   "dataProtectionMode": false,
+   "dataProtectionModeSetByUser": false,
+   "audioEnabled": true,
+   "hapticsEnabled": true,
+   "iCloudImageSync": {},
+   "lastiCloudSyncAt": null,
+   "lastiCloudPushedAt": null,
+   "lastiCloudPulledAt": null,
+   "lastiCloudUploadedAt": null,
+   "iCloudUploadPendingSince": null,
+   "iCloudUploadIssue": null,
+   "lastiCloudRemoteWrittenAt": null,
+   "lastiCloudRemoteDeviceId": null,
+   "lastiCloudRemoteDeviceName": null,
+   "iCloudDeviceId": null,
+   "iCloudDeviceBinding": null,
+   "iCloudIdentityToken": null,
+   "iCloudAccountChangedAt": null,
+   "googleDriveAccountId": null,
+   "googleDriveNeedsReconnect": false,
+   "preferenceUpdatedAt": {
+    "installedOn": 1759798800000,
+    "timeDisplayFormat": 1759798800000,
+    "startOfWeek": 1759798800000,
+    "fontSizeOffset": 1759798800000,
+    "colorScheme": 1759798800000,
+    "contactSort": 1759798800000,
+    "defaultNavigationMapProvider": 1759798800000,
+    "returnVisitAlwaysNotify": 1759798800000,
+    "hideDonateHeart": 1759798800000,
+    "showStreaks": 1759798800000,
+    "homeScreenElements": 1759798800000,
+    "publisherHours": 1759798800000,
+    "publisherHours:custom": 1759798800000,
+    "mileageTrackingEnabled": 1759798800000,
+    "distanceUnit": 1759798800000,
+    "offDays": 1759798800000,
+    "meetingDays": 1759798800000,
+    "submittedReportMonths": 1759798800000,
+    "submittedReportMonths:2025-07": 1759798800000,
+    "submittedReportMonths:2025-08": 1759798800000,
+    "earnedBadges": 1759798800000,
+    "earnedBadges:first-hour": 1759798800000,
+    "earnedBadges:streak-4": 1759798800000,
+    "badgeLedger": 1759798800000,
+    "badgeLedger:first-hour": 1759798800000,
+    "badgeLedger:streak-4": 1759798800000,
+    "overrideCreditLimit": 1759798800000,
+    "customCreditLimitHours": 1759798800000,
+    "roleHistory": 1759798800001,
+    "roleHistory:initial": 1759798800000,
+    "roleHistory:2025-08": 1759798800000,
+    "roleHistory:2025-09": 1759798800001,
+    "role": 1759798800000,
+    "tenureStartDate": 1759798800000,
+    "monthlyGoalOverrides": 1759798800000,
+    "monthlyGoalOverrides:2025-12": 1759798800000
+   },
+   "hasMigratedToSyncSchema": false,
+   "homeChecklistDismissed": false,
+   "homeChecklistManualCompletions": [],
+   "homeChecklistAllDoneCelebrated": false,
+   "homeChecklistCompletedAt": null,
+   "onboardingStepId": null,
+   "serviceYearCatchUpStatus": null,
+   "celebratedTiers": {},
+   "celebratedMilestones": {},
+   "earnedBadges": {
+    "first-hour": {
+     "at": 1751734800000,
+     "month": "2025-07"
+    },
+    "streak-4": {
+     "at": 1756573200000,
+     "month": "2025-08",
+     "history": true
+    }
+   },
+   "badgeLedger": [
+    "first-hour",
+    "streak-4"
+   ],
+   "showBadges": true,
+   "badgesBackfilledAt": null,
+   "badgesSeenAt": 0,
+   "badgesWelcome": null,
+   "badgeCardDismissed": [],
+   "milestoneOverrides": null,
+   "lastRolloverYearMonth": null,
+   "autoRolloverEnabled": false,
+   "logsHours": false,
+   "hoursLoggingAsked": false,
+   "rolloverIncludesCredit": false,
+   "devRolloverDateOverride": null,
+   "devStreakOverride": null,
+   "updateReveal": null,
+   "seenTipIds": [],
+   "defaultExportMethod": "nwpublisher",
+   "submittedReportMonths": [
+    "2025-07",
+    "2025-08"
+   ],
+   "reportCommentOverrides": {},
+   "offDays": [
+    0
+   ],
+   "meetingDays": [
+    3,
+    6
+   ],
+   "hasSeenAvailabilityOnboarding": false,
+   "assistantHistory": [],
+   "dismissedFollowUpCards": {},
+   "mileageTrackingEnabled": true,
+   "distanceUnit": "km",
+   "mileageEntryMode": "distance",
+   "petPromptDismissed": false
+  },
+  "version": 15
+ },
+ "contacts": {
+  "state": {
+   "contacts": [
+    {
+     "id": "c-ada",
+     "name": "Ada Lindqvist",
+     "phone": "6515550142",
+     "phoneRegionCode": "US",
+     "email": "ada.lindqvist@example.com",
+     "address": {
+      "line1": "14 Birch Lane",
+      "line2": "Apt 2",
+      "city": "Maplewood",
+      "state": "MN",
+      "zip": "55109",
+      "country": "US"
+     },
+     "coordinate": {
+      "latitude": 45.0122,
+      "longitude": -93.0311
+     },
+     "createdAt": "2025-06-02T22:05:00.000Z",
+     "customFields": {
+      "uuid-1": "Evenings after 6"
+     },
+     "updatedAt": 1759798800001,
+     "isFavorite": true
+    },
+    {
+     "id": "c-bram",
+     "name": "Bram Okafor",
+     "phone": "6515550188",
+     "phoneRegionCode": "US",
+     "address": {
+      "line1": "902 Larpenteur Ave",
+      "city": "Roseville",
+      "state": "MN",
+      "zip": "55113",
+      "country": "US"
+     },
+     "coordinate": {
+      "latitude": 44.9918,
+      "longitude": -93.1502
+     },
+     "userDraggedCoordinate": true,
+     "createdAt": "2025-06-20T15:30:00.000Z",
+     "updatedAt": 1759798800000
+    },
+    {
+     "id": "c-chen",
+     "name": "Chen Wei-Lin",
+     "email": "chen.wl@example.com",
+     "address": {
+      "line1": "3 Harbor Court",
+      "city": "Saint Paul",
+      "state": "MN",
+      "zip": "55101",
+      "country": "US"
+     },
+     "createdAt": "2025-07-01T14:00:00.000Z",
+     "updatedAt": 1759798800001,
+     "dismissedUntil": "2025-12-01T15:00:00.000Z",
+     "dismissedNotificationId": "notif-dismiss-chen"
+    },
+    {
+     "id": "c-dora",
+     "name": "Dora Halvorsen",
+     "address": {
+      "line1": "77 Elm Street",
+      "city": "Maplewood",
+      "state": "MN",
+      "zip": "55109"
+     },
+     "createdAt": "2025-07-15T19:45:00.000Z",
+     "updatedAt": 1759798800000
+    }
+   ],
+   "deletedContacts": [
+    {
+     "id": "c-eli",
+     "name": "Eli Marsh",
+     "phone": "6515550101",
+     "address": {
+      "line1": "5 Cedar Row",
+      "city": "Saint Paul",
+      "state": "MN"
+     },
+     "createdAt": "2025-06-05T17:00:00.000Z",
+     "updatedAt": 1759798800001
+    }
+   ],
+   "customFieldDefs": [
+    {
+     "id": "uuid-1",
+     "label": "Best time to visit",
+     "order": 0,
+     "createdAt": 1759798800000,
+     "updatedAt": 1759798800000
+    }
+   ],
+   "deletedCustomFieldDefs": []
+  },
+  "version": 0
+ },
+ "conversations": {
+  "state": {
+   "conversations": [
+    {
+     "id": "v-ada-1",
+     "date": "2025-09-25T23:30:00.000Z",
+     "isBibleStudy": true,
+     "note": "Discussed lesson 3. Asked about the resurrection.",
+     "followUp": {
+      "date": "2025-10-09T23:30:00.000Z",
+      "notifyMe": true,
+      "topic": "Lesson 4",
+      "notifications": [
+       {
+        "id": "notif-v-ada-1",
+        "date": "2025-10-09T23:00:00.000Z"
+       }
+      ]
+     },
+     "contact": {
+      "id": "c-ada"
+     },
+     "updatedAt": 1759798800000
+    },
+    {
+     "id": "v-ada-2",
+     "date": "2025-09-11T23:00:00.000Z",
+     "isBibleStudy": true,
+     "note": "Lesson 2",
+     "contact": {
+      "id": "c-ada"
+     },
+     "updatedAt": 1759798800000
+    },
+    {
+     "id": "v-ada-3",
+     "date": "2025-08-28T22:45:00.000Z",
+     "isBibleStudy": false,
+     "note": "Left a tract",
+     "contact": {
+      "id": "c-ada"
+     },
+     "updatedAt": 1759798800000
+    },
+    {
+     "id": "v-bram-1",
+     "date": "2025-09-14T15:20:00.000Z",
+     "isBibleStudy": false,
+     "notAtHome": true,
+     "contact": {
+      "id": "c-bram"
+     },
+     "updatedAt": 1759798800000
+    },
+    {
+     "id": "v-bram-2",
+     "date": "2025-09-21T15:40:00.000Z",
+     "isBibleStudy": false,
+     "note": "Interested in the brochure",
+     "followUp": {
+      "date": "2025-10-12T15:00:00.000Z",
+      "notifyMe": false,
+      "topic": "Brochure follow-up"
+     },
+     "contact": {
+      "id": "c-bram"
+     },
+     "updatedAt": 1759798800000
+    },
+    {
+     "id": "v-chen-1",
+     "date": "2025-08-30T16:00:00.000Z",
+     "isBibleStudy": false,
+     "note": "Spoke at the door",
+     "contact": {
+      "id": "c-chen"
+     },
+     "updatedAt": 1759798800000
+    },
+    {
+     "id": "v-chen-2",
+     "date": "2025-07-19T16:15:00.000Z",
+     "isBibleStudy": false,
+     "contact": {
+      "id": "c-chen"
+     },
+     "updatedAt": 1759798800000
+    },
+    {
+     "id": "v-eli-1",
+     "date": "2025-07-08T18:00:00.000Z",
+     "isBibleStudy": false,
+     "note": "Moved away",
+     "contact": {
+      "id": "c-eli"
+     },
+     "updatedAt": 1759798800000
+    },
+    {
+     "id": "v-dora-scribe",
+     "contact": {
+      "id": "c-dora"
+     },
+     "date": "2025-10-07T01:07:00.000Z",
+     "isBibleStudy": false,
+     "notAtHome": true,
+     "updatedAt": 1759799220000
+    }
+   ],
+   "deletedConversations": [
+    {
+     "id": "v-deleted",
+     "deletedAt": 1759798800001
+    }
+   ],
+   "conversationFieldDefs": [],
+   "deletedConversationFieldDefs": []
+  },
+  "version": 1
+ },
+ "serviceReports": {
+  "state": {
+   "serviceReports": {
+    "2025": {
+     "6": [
+      {
+       "id": "e-01",
+       "date": "2025-07-05T12:00:00.000Z",
+       "hours": 2,
+       "minutes": 30,
+       "updatedAt": 1759798800000
+      },
+      {
+       "id": "e-02",
+       "date": "2025-07-12T12:00:00.000Z",
+       "hours": 3,
+       "minutes": 0,
+       "note": "Cart witnessing downtown",
+       "updatedAt": 1759798800000
+      },
+      {
+       "id": "e-03",
+       "date": "2025-07-31T12:00:00.000Z",
+       "hours": 1,
+       "minutes": 45,
+       "updatedAt": 1759798800000
+      }
+     ],
+     "7": [
+      {
+       "id": "e-04",
+       "date": "2025-08-02T12:00:00.000Z",
+       "hours": 0,
+       "minutes": 50,
+       "updatedAt": 1759798800000
+      },
+      {
+       "id": "e-05",
+       "date": "2025-08-16T12:00:00.000Z",
+       "hours": 4,
+       "minutes": 10,
+       "note": "Roofing",
+       "categoryId": "cat-khc",
+       "credit": true,
+       "updatedAt": 1759798800000
+      },
+      {
+       "id": "e-06",
+       "date": "2025-08-20T12:00:00.000Z",
+       "hours": 5,
+       "minutes": 0,
+       "categoryId": "ldc-builtin-3f9c4a1d",
+       "credit": true,
+       "updatedAt": 1759798800000
+      }
+     ],
+     "8": [
+      {
+       "id": "e-07",
+       "date": "2025-09-01T12:00:00.000Z",
+       "hours": 2,
+       "minutes": 0,
+       "updatedAt": 1759798800000
+      },
+      {
+       "id": "e-08",
+       "date": "2025-09-06T12:00:00.000Z",
+       "hours": 3,
+       "minutes": 20,
+       "note": "Group with the Okafors",
+       "updatedAt": 1759798800000
+      },
+      {
+       "id": "e-09",
+       "date": "2025-09-13T12:00:00.000Z",
+       "hours": 6,
+       "minutes": 0,
+       "categoryId": "cat-bethel",
+       "credit": true,
+       "updatedAt": 1759798800000
+      },
+      {
+       "id": "e-10",
+       "date": "2025-09-20T12:00:00.000Z",
+       "hours": 1,
+       "minutes": 5,
+       "categoryId": "cat-letters",
+       "updatedAt": 1759798800000
+      },
+      {
+       "id": "e-11",
+       "date": "2025-09-27T12:00:00.000Z",
+       "hours": 2,
+       "minutes": 40,
+       "updatedAt": 1759798800000
+      }
+     ],
+     "9": [
+      {
+       "id": "e-12",
+       "date": "2025-10-04T12:00:00.000Z",
+       "hours": 1,
+       "minutes": 30,
+       "updatedAt": 1759798800000
+      },
+      {
+       "id": "e-scribe",
+       "hours": 1,
+       "minutes": 0,
+       "date": "2025-10-06T12:00:00.000Z",
+       "categoryId": "cat-letters",
+       "credit": false,
+       "updatedAt": 1759799220000
+      }
+     ]
+    }
+   },
+   "dayPlans": [
+    {
+     "id": "p-1",
+     "date": "2025-10-10T12:00:00.000Z",
+     "minutes": 180,
+     "note": "Morning group",
+     "savedOn": "2025-10-06",
+     "updatedAt": 1759798800000
+    },
+    {
+     "id": "p-2",
+     "date": "2025-10-18T12:00:00.000Z",
+     "minutes": 120,
+     "startTimeInMinutes": 540,
+     "title": "Rural territory",
+     "location": {
+      "name": "Kingdom Hall",
+      "address": "100 Main St"
+     },
+     "categoryId": "cat-letters",
+     "savedOn": "2025-10-06",
+     "updatedAt": 1759798800000
+    },
+    {
+     "id": "p-3",
+     "date": "2025-09-30T12:00:00.000Z",
+     "minutes": 60,
+     "savedOn": "2025-10-06",
+     "updatedAt": 1759798800000
+    }
+   ],
+   "recurringPlans": [
+    {
+     "id": "r-weekly",
+     "startDate": "2025-09-02T12:00:00.000Z",
+     "minutes": 120,
+     "note": "Tuesday ministry",
+     "recurrence": {
+      "frequency": 0,
+      "interval": 1,
+      "endDate": null
+     },
+     "startTimeInMinutes": 600,
+     "deletedDates": [
+      "2025-09-23T12:00:00.000Z"
+     ],
+     "overrides": [
+      {
+       "date": "2025-09-16T12:00:00.000Z",
+       "minutes": 90,
+       "note": "Shorter"
+      }
+     ],
+     "savedOn": "2025-10-06",
+     "updatedAt": 1759798800002
+    },
+    {
+     "id": "r-first-saturday",
+     "startDate": "2025-08-02T12:00:00.000Z",
+     "minutes": 240,
+     "recurrence": {
+      "frequency": 3,
+      "interval": 1,
+      "endDate": "2025-12-31T12:00:00.000Z",
+      "monthlyByWeekdayConfig": {
+       "weekday": 6,
+       "weekOfMonth": 1
+      }
+     },
+     "savedOn": "2025-10-06",
+     "updatedAt": 1759798800000
+    },
+    {
+     "id": "r-biweekly",
+     "startDate": "2025-09-05T12:00:00.000Z",
+     "minutes": 60,
+     "recurrence": {
+      "frequency": 1,
+      "interval": 1,
+      "endDate": null
+     },
+     "savedOn": "2025-10-06",
+     "updatedAt": 1759798800000
+    }
+   ],
+   "deletedServiceReports": [
+    {
+     "id": "e-deleted",
+     "deletedAt": 1759798800001
+    }
+   ],
+   "deletedDayPlans": [
+    {
+     "id": "p-deleted",
+     "deletedAt": 1759798800001
+    }
+   ],
+   "deletedRecurringPlans": []
+  },
+  "version": 5
+ },
+ "categories": {
+  "state": {
+   "categories": [
+    {
+     "id": "ldc-builtin-3f9c4a1d",
+     "name": "LDC",
+     "isCredit": true,
+     "builtin": true,
+     "updatedAt": 1
+    },
+    {
+     "id": "cat-khc",
+     "name": "Kingdom Hall construction",
+     "isCredit": true,
+     "updatedAt": 1759798800000
+    },
+    {
+     "id": "cat-bethel",
+     "name": "Bethel",
+     "isCredit": true,
+     "updatedAt": 1759798800000
+    },
+    {
+     "id": "cat-letters",
+     "name": "Letter writing",
+     "isCredit": false,
+     "updatedAt": 1759798800000
+    }
+   ],
+   "deletedCategories": [
+    {
+     "id": "cat-gone",
+     "deletedAt": 1759798800001
+    }
+   ]
+  },
+  "version": 0
+ },
+ "profile": {
+  "state": {
+   "name": "Sam Rivera",
+   "avatar": {
+    "type": "emoji",
+    "value": "🌻"
+   },
+   "customAvatarBackground": "#3A7D44",
+   "hasCompletedProfileSetup": true,
+   "profileUpdatedAt": {
+    "name": 1759798800000,
+    "hasCompletedProfileSetup": 1759798800000,
+    "avatar": 1759798800000,
+    "customAvatarBackground": 1759798800000
+   }
+  },
+  "version": 0
+ },
+ "mileage": {
+  "state": {
+   "vehicles": [
+    {
+     "id": "veh-1",
+     "name": "Blue hatchback",
+     "createdAt": 1751346000000,
+     "updatedAt": 1759798800000
+    }
+   ],
+   "fuels": [
+    {
+     "id": "fuel-1",
+     "name": "Regular",
+     "createdAt": 1751346000000,
+     "updatedAt": 1759798800000
+    }
+   ],
+   "fuelPrices": [
+    {
+     "id": "fp-1",
+     "fuelId": "fuel-1",
+     "effectiveFrom": "2025-07-01",
+     "pricePerGallon": 3.19,
+     "updatedAt": 1759798800000
+    }
+   ],
+   "vehicleSetups": [
+    {
+     "id": "vs-1",
+     "vehicleId": "veh-1",
+     "effectiveFrom": "2025-07-01",
+     "fuelId": "fuel-1",
+     "milesPerGallon": 34,
+     "updatedAt": 1759798800000
+    }
+   ],
+   "trips": [
+    {
+     "id": "trip-1",
+     "vehicleId": "veh-1",
+     "date": "2025-09-06",
+     "distanceMiles": 12.4,
+     "roundTrip": true,
+     "createdAt": 1757181600000,
+     "updatedAt": 1759798800000
+    },
+    {
+     "id": "trip-2",
+     "vehicleId": "veh-1",
+     "date": "2025-09-13",
+     "distanceMiles": 31,
+     "note": "Bethel",
+     "createdAt": 1757797200000,
+     "updatedAt": 1759798800000
+    },
+    {
+     "id": "trip-3",
+     "vehicleId": "veh-1",
+     "date": "2025-09-27",
+     "distanceMiles": 8.2,
+     "odometerStartMiles": 40210,
+     "odometerEndMiles": 40218.2,
+     "createdAt": 1758992400000,
+     "updatedAt": 1759798800000
+    }
+   ],
+   "deletedMileageRecords": [
+    {
+     "id": "trip-gone",
+     "deletedAt": 1759798800001
+    }
+   ]
+  },
+  "version": 0
+ },
+ "petCompanion": {
+  "state": {
+   "pet": {
+    "id": "companion",
+    "species": "dog",
+    "coat": "liver",
+    "name": "Biscuit",
+    "adoptedOn": "2025-09-01",
+    "wakes": [
+     "2025-09-02",
+     "2025-09-03"
+    ],
+    "keepsakes": [
+     {
+      "kind": "olive",
+      "on": "2025-09-03"
+     }
+    ],
+    "seed": "1kbs4hh1729oia",
+    "updatedAt": 1759798800003
+   },
+   "room": null,
+   "deletedPetRecords": []
+  },
+  "version": 1
+ },
+ "app-lock": {
+  "state": {
+   "enabled": true,
+   "requireAfter": 300
+  },
+  "version": 0
+ },
+ "buddies": {
+  "state": {
+   "onboardingComplete": true,
+   "deviceId": "device-sam-phone",
+   "registeredInboxId": "inbox-sam",
+   "accountLinkedInboxId": null,
+   "syncSeq": 42,
+   "lastSyncAt": 1759795200000,
+   "buddies": [
+    {
+     "inboxId": "inbox-noor",
+     "name": "Noor Haddad",
+     "nickname": "Noor H.",
+     "dhPub": "dh-pub-noor-fixture",
+     "inviteSecret": "invite-secret-noor",
+     "status": "active",
+     "pairedAt": 1754845200000,
+     "colorIndex": 2,
+     "color": "#7A4FB5",
+     "overrides": {
+      "showOnCalendar": false
+     }
+    },
+    {
+     "inboxId": "inbox-pip",
+     "name": "Pip Larsen",
+     "dhPub": "dh-pub-pip-fixture",
+     "inviteSecret": "invite-secret-pip",
+     "status": "awaitingConfirm",
+     "pairedAt": 1759698000000,
+     "colorIndex": 3,
+     "expiresAt": 1760302800000
+    }
+   ],
+   "outgoingInvites": [
+    {
+     "inviteId": "invite-open",
+     "secret": "invite-secret-open",
+     "createdAt": 1759590000000,
+     "expiresAt": 1760194800000
+    }
+   ],
+   "unconfirmedInvites": [],
+   "incomingClaims": [],
+   "closedInviteIds": {},
+   "removedBuddies": {
+    "inbox-old": 1756746000000
+   },
+   "rosterVersion": 7,
+   "pendingRemovals": [
+    {
+     "inboxId": "inbox-old",
+     "dhPub": "dh-pub-old-fixture",
+     "inviteSecret": "invite-secret-old"
+    }
+   ],
+   "slotsNeedRestore": false,
+   "cards": {},
+   "publishedCardHashes": {},
+   "outgoingShares": {},
+   "unsentShares": {},
+   "cardName": null,
+   "startedAt": null,
+   "sharedPhotos": {},
+   "photosAvailable": false,
+   "profilePhoto": null,
+   "shareReplies": {},
+   "incomingShares": {},
+   "joinRequests": {},
+   "askedToJoin": {},
+   "notifications": [],
+   "answerMarks": {},
+   "notificationMarks": {
+    "read": {},
+    "dismissed": {}
+   },
+   "pushRegistrationKey": "push-key-fixture",
+   "pushRegisteredAt": 1759327200000,
+   "sharing": {
+    "photo": false,
+    "tenure": true,
+    "streak": true,
+    "updatedAt": 1756818000000,
+    "badges": true,
+    "badgesUpdatedAt": 0,
+    "pet": true,
+    "petUpdatedAt": 0,
+    "plans": true,
+    "planTimes": "exact",
+    "pausedUntil": 0,
+    "plansUpdatedAt": 0,
+    "showOnCalendar": true,
+    "calendarUpdatedAt": 0
+   },
+   "notificationsEnabled": true,
+   "joinRequestNotifications": true,
+   "badgeNotifications": true,
+   "alertOverrides": {
+    "inbox-noor": {
+     "joinRequests": false
+    }
+   },
+   "badgeAnnouncements": [],
+   "lastBadgeAlertAt": {},
+   "seenBadgeEvents": {},
+   "sentBadgeReactions": {},
+   "badgeReactions": {},
+   "lastBadgeReactionAlertAt": {},
+   "devOverride": false,
+   "flagLastKnown": null,
+   "avatarThumbnail": null
+  },
+  "version": 1
+ },
+ "calendar-sync": {
+  "state": {
+   "enabled": true,
+   "registered": true,
+   "destination": {
+    "id": "cal-ministry",
+    "title": "Ministry",
+    "account": "sam.rivera@example.com"
+   },
+   "namespace": "ns-sam-1",
+   "includeDetails": true,
+   "lastSyncedAt": 1759797000000,
+   "failingSince": null,
+   "upcomingCount": 2,
+   "sharedCalendar": {
+    "title": "Ministry",
+    "account": "sam.rivera@example.com"
+   },
+   "optedOut": false,
+   "promptAnswered": true
+  },
+  "version": 0
+ },
+ "geocode-retry": {
+  "state": {
+   "queue": [
+    {
+     "contactId": "c-dora",
+     "key": "28sqdko0jhr",
+     "attempts": 2,
+     "notBefore": 1759800600000
+    }
+   ]
+  },
+  "version": 0
+ },
+ "map-find-skips": {
+  "state": {
+   "skipped": [
+    "dqufv5m0mh"
+   ]
+  },
+  "version": 0
+ },
+ "notificationsTray": {
+  "state": {
+   "arrivals": {
+    "report:2025-09": 1759791600000,
+    "followUp:v-ada-1": 1759791600000,
+    "buddyBadge:inbox-noor": 1759791600000
+   },
+   "dismissed": {
+    "followUp:v-bram-1": 1759791600000
+   },
+   "seen": {
+    "report:2025-09": 1759791600000
+   }
+  },
+  "version": 1
+ },
+ "plan-cache": {
+  "state": {
+   "dailyMinutes": {
+    "daily": {
+     "2025-09-06": 150,
+     "2025-09-13": 90,
+     "2025-10-04": 120
+    },
+    "lastUpdated": 1759798800000,
+    "fingerprint": "fp-fixture"
+   }
+  },
+  "version": 1
+ },
+ "route-saved-places": {
+  "state": {
+   "places": {
+    "home": {
+     "title": "Home",
+     "subtitle": "12 Pine Street",
+     "coordinate": {
+      "latitude": 44.98,
+      "longitude": -93.1
+     },
+     "destination": "12 Pine Street, Saint Paul, MN"
+    }
+   }
+  },
+  "version": 1
+ },
+ "saved-routes": {
+  "state": {
+   "routes": {
+    "2025-10-10": {
+     "day": "2025-10-10",
+     "order": [
+      "plan:p-1",
+      "followUp:v-ada-1"
+     ],
+     "removed": [],
+     "added": [],
+     "stay": {
+      "plan:p-1": 45
+     },
+     "startTimeInMinutes": 540,
+     "keepSetTimes": false,
+     "note": "Start at the Kingdom Hall",
+     "updatedAt": 1759798800000
+    }
+   }
+  },
+  "version": 1
+ },
+ "sidebar-layout": {
+  "state": {
+   "width": 320,
+   "hidden": true
+  },
+  "version": 0
+ },
+ "split-sheet-layout": {
+  "state": {
+   "ratio": 0.4
+  },
+  "version": 0
+ },
+ "streakCelebration": {
+  "state": {
+   "seen": {
+    "kind": "months",
+    "latest": "2025-09"
+   }
+  },
+  "version": 1
+ },
+ "scribe-conversations": {
+  "state": {
+   "conversations": {
+    "01K6Y36GK01111111111111111": {
+     "id": "01K6Y36GK01111111111111111",
+     "createdAt": 1759799100000,
+     "updatedAt": 1759800000000,
+     "title": "Dora Halvorsen wasn't home this afternoon, and I wrote lett…",
+     "messages": [
+      {
+       "role": "user",
+       "at": "2025-10-06T20:05:00-05:00",
+       "content": [
+        {
+         "type": "text",
+         "text": "Dora Halvorsen wasn't home this afternoon, and I wrote letters for an hour"
+        }
+       ]
+      },
+      {
+       "role": "assistant",
+       "content": [
+        {
+         "type": "text",
+         "text": "Dora Halvorsen, not at home, and an hour of letter writing today."
+        },
+        {
+         "type": "tool_call",
+         "callId": "call_dora",
+         "name": "visits_log",
+         "args": {
+          "contactRef": "c4",
+          "newContact": null,
+          "askBetween": null,
+          "date": "2025-10-06",
+          "notAtHome": true,
+          "bibleStudy": false,
+          "note": null,
+          "dateSpoken": "this afternoon",
+          "followUp": null
+         }
+        },
+        {
+         "type": "tool_call",
+         "callId": "call_letters",
+         "name": "time_log",
+         "args": {
+          "date": "2025-10-06",
+          "minutes": 60,
+          "categoryRef": "k4",
+          "newCategory": null,
+          "note": null,
+          "dateSpoken": null
+         }
+        }
+       ]
+      },
+      {
+       "role": "tool",
+       "content": [
+        {
+         "type": "tool_result",
+         "callId": "call_dora",
+         "name": "visits_log",
+         "ok": true,
+         "trust": "app",
+         "data": {
+          "status": "proposed",
+          "proposalId": "pr_01K6Y36GK03333333333333333",
+          "ref": "c4"
+         }
+        },
+        {
+         "type": "tool_result",
+         "callId": "call_letters",
+         "name": "time_log",
+         "ok": true,
+         "trust": "app",
+         "data": {
+          "status": "proposed",
+          "proposalId": "pr_01K6Y36GK03333333333333333"
+         }
+        }
+       ]
+      },
+      {
+       "role": "user",
+       "at": "2025-10-06T20:20:00-05:00",
+       "content": [
+        {
+         "type": "proposal_outcome",
+         "proposalId": "pr_01K6Y36GK03333333333333333",
+         "outcome": "applied",
+         "applied": [
+          "call_dora",
+          "call_letters"
+         ],
+         "notApplied": []
+        },
+        {
+         "type": "text",
+         "text": "Plan two hours Saturday at 9. I also met Lena Park at 8 Oak Street today and left a tract, going back next Monday"
+        }
+       ]
+      },
+      {
+       "role": "assistant",
+       "content": [
+        {
+         "type": "text",
+         "text": "Saturday at 9 for two hours, and Lena Park with a follow-up next Monday."
+        },
+        {
+         "type": "tool_call",
+         "callId": "call_saturday",
+         "name": "plans_create",
+         "args": {
+          "date": "2025-10-11",
+          "minutes": 120,
+          "startMinutes": 540,
+          "anytime": false,
+          "categoryRef": null,
+          "newCategory": null,
+          "title": null,
+          "note": null,
+          "dateSpoken": "Saturday",
+          "timeSpoken": "at 9",
+          "withBuddies": null,
+          "repeats": false
+         }
+        },
+        {
+         "type": "tool_call",
+         "callId": "call_lena",
+         "name": "visits_log",
+         "args": {
+          "contactRef": null,
+          "newContact": {
+           "name": "Lena Park",
+           "address": {
+            "line1": "8 Oak Street",
+            "city": "Maplewood",
+            "state": "MN",
+            "zip": null,
+            "country": null
+           },
+           "phone": null
+          },
+          "askBetween": null,
+          "date": "2025-10-06",
+          "notAtHome": false,
+          "bibleStudy": false,
+          "note": "Left a tract",
+          "dateSpoken": "today",
+          "followUp": {
+           "date": "2025-10-13",
+           "topic": null,
+           "dateSpoken": "next Monday"
+          }
+         }
+        }
+       ]
+      },
+      {
+       "role": "tool",
+       "content": [
+        {
+         "type": "tool_result",
+         "callId": "call_saturday",
+         "name": "plans_create",
+         "ok": true,
+         "trust": "app",
+         "data": {
+          "status": "proposed",
+          "proposalId": "pr_01K6Y41ZG05555555555555555"
+         }
+        },
+        {
+         "type": "tool_result",
+         "callId": "call_lena",
+         "name": "visits_log",
+         "ok": true,
+         "trust": "app",
+         "data": {
+          "status": "proposed",
+          "proposalId": "pr_01K6Y41ZG05555555555555555",
+          "ref": "n1"
+         }
+        }
+       ]
+      }
+     ],
+     "context": {
+      "v": 1,
+      "now": "2025-10-06T20:05:00-05:00",
+      "tz": "America/Chicago",
+      "locale": "en-US",
+      "weekStart": 1,
+      "clock": "12h",
+      "days": [
+       "Mon 2025-09-29",
+       "Tue 2025-09-30",
+       "Wed 2025-10-01",
+       "Thu 2025-10-02",
+       "Fri 2025-10-03",
+       "Sat 2025-10-04",
+       "Sun 2025-10-05",
+       "Mon 2025-10-06",
+       "Tue 2025-10-07",
+       "Wed 2025-10-08",
+       "Thu 2025-10-09",
+       "Fri 2025-10-10",
+       "Sat 2025-10-11",
+       "Sun 2025-10-12",
+       "Mon 2025-10-13",
+       "Tue 2025-10-14",
+       "Wed 2025-10-15",
+       "Thu 2025-10-16",
+       "Fri 2025-10-17",
+       "Sat 2025-10-18",
+       "Sun 2025-10-19",
+       "Mon 2025-10-20"
+      ],
+      "publisher": {
+       "role": "regularPioneer",
+       "entryMode": "hours",
+       "showsTimeEntry": true,
+       "monthlyGoalMinutes": 3000,
+       "creditCapMinutes": 3600
+      },
+      "month": {
+       "month": "2025-10",
+       "loggedMinutes": 90,
+       "creditMinutes": 0,
+       "plannedRemainingMinutes": 900,
+       "studies": 0
+      },
+      "categories": [
+       "k0 Standard",
+       "k1 Bethel credit",
+       "k2 Kingdom Hall construction credit",
+       "k3 LDC credit",
+       "k4 Letter writing"
+      ],
+      "plans": [
+       "r1 2025-10-07 120m 10:00 k0",
+       "p1 2025-10-10 180m 12:00 k0",
+       "r2 2025-10-14 120m 10:00 k0",
+       "r3 2025-10-17 60m 12:00 k0",
+       "p2 2025-10-18 120m 09:00 k4 \"Rural territory\""
+      ],
+      "contacts": [
+       "c1 Ada Lindqvist",
+       "c2 Bram Okafor",
+       "c3 Chen Wei-Lin",
+       "c4 Dora Halvorsen"
+      ],
+      "contactsTruncated": false,
+      "buddies": [
+       "b1 Noor H."
+      ],
+      "dataProtection": false,
+      "memory": []
+     },
+     "contextDay": "2025-10-06",
+     "refs": {
+      "next": {
+       "c": 5,
+       "p": 3,
+       "r": 7,
+       "k": 5,
+       "v": 1,
+       "t": 1,
+       "b": 2,
+       "n": 2,
+       "nk": 1
+      },
+      "byRef": {
+       "k1": {
+        "kind": "k",
+        "id": "cat-bethel"
+       },
+       "k2": {
+        "kind": "k",
+        "id": "cat-khc"
+       },
+       "k3": {
+        "kind": "k",
+        "id": "ldc-builtin-3f9c4a1d"
+       },
+       "k4": {
+        "kind": "k",
+        "id": "cat-letters"
+       },
+       "b1": {
+        "kind": "b",
+        "id": "inbox-noor"
+       },
+       "r1": {
+        "kind": "r",
+        "id": "r-weekly",
+        "date": "2025-10-07"
+       },
+       "p1": {
+        "kind": "p",
+        "id": "p-1"
+       },
+       "r2": {
+        "kind": "r",
+        "id": "r-weekly",
+        "date": "2025-10-14"
+       },
+       "r3": {
+        "kind": "r",
+        "id": "r-biweekly",
+        "date": "2025-10-17"
+       },
+       "p2": {
+        "kind": "p",
+        "id": "p-2"
+       },
+       "r4": {
+        "kind": "r",
+        "id": "r-weekly",
+        "date": "2025-10-21"
+       },
+       "r5": {
+        "kind": "r",
+        "id": "r-weekly",
+        "date": "2025-10-28"
+       },
+       "r6": {
+        "kind": "r",
+        "id": "r-biweekly",
+        "date": "2025-10-31"
+       },
+       "c1": {
+        "kind": "c",
+        "id": "c-ada"
+       },
+       "c2": {
+        "kind": "c",
+        "id": "c-bram"
+       },
+       "c3": {
+        "kind": "c",
+        "id": "c-chen"
+       },
+       "c4": {
+        "kind": "c",
+        "id": "c-dora"
+       },
+       "n1": {
+        "kind": "n",
+        "proposalId": "pr_01K6Y41ZG05555555555555555",
+        "boundId": null
+       }
+      },
+      "byId": {
+       "k:cat-bethel": "k1",
+       "k:cat-khc": "k2",
+       "k:ldc-builtin-3f9c4a1d": "k3",
+       "k:cat-letters": "k4",
+       "b:inbox-noor": "b1",
+       "r:r-weekly@2025-10-07": "r1",
+       "p:p-1": "p1",
+       "r:r-weekly@2025-10-14": "r2",
+       "r:r-biweekly@2025-10-17": "r3",
+       "p:p-2": "p2",
+       "r:r-weekly@2025-10-21": "r4",
+       "r:r-weekly@2025-10-28": "r5",
+       "r:r-biweekly@2025-10-31": "r6",
+       "c:c-ada": "c1",
+       "c:c-bram": "c2",
+       "c:c-chen": "c3",
+       "c:c-dora": "c4"
+      }
+     },
+     "items": [
+      {
+       "type": "user",
+       "id": "01K6Y36GK02222222222222222-u",
+       "at": 1759799100000,
+       "text": "Dora Halvorsen wasn't home this afternoon, and I wrote letters for an hour",
+       "source": "voice"
+      },
+      {
+       "type": "assistant",
+       "id": "01K6Y36GK02222222222222222-0",
+       "at": 1759799100000,
+       "text": "Dora Halvorsen, not at home, and an hour of letter writing today.",
+       "streaming": false
+      },
+      {
+       "type": "proposal",
+       "id": "pr_01K6Y36GK03333333333333333-item",
+       "at": 1759799100000,
+       "proposalId": "pr_01K6Y36GK03333333333333333"
+      },
+      {
+       "type": "user",
+       "id": "01K6Y41ZG04444444444444444-u",
+       "at": 1759800000000,
+       "text": "Plan two hours Saturday at 9. I also met Lena Park at 8 Oak Street today and left a tract, going back next Monday",
+       "source": "keyboard"
+      },
+      {
+       "type": "assistant",
+       "id": "01K6Y41ZG04444444444444444-0",
+       "at": 1759800000000,
+       "text": "Saturday at 9 for two hours, and Lena Park with a follow-up next Monday.",
+       "streaming": false
+      },
+      {
+       "type": "proposal",
+       "id": "pr_01K6Y41ZG05555555555555555-item",
+       "at": 1759800000000,
+       "proposalId": "pr_01K6Y41ZG05555555555555555"
+      }
+     ],
+     "proposals": {
+      "pr_01K6Y36GK03333333333333333": {
+       "id": "pr_01K6Y36GK03333333333333333",
+       "conversationId": "01K6Y36GK01111111111111111",
+       "turnId": "01K6Y36GK02222222222222222",
+       "createdAt": 1759799100000,
+       "status": "applied",
+       "effects": [
+        {
+         "id": "call_dora:0",
+         "callIds": [
+          "call_dora"
+         ],
+         "draft": {
+          "kind": "visit.create",
+          "contact": {
+           "type": "existing",
+           "id": "c-dora"
+          },
+          "date": "2025-10-06",
+          "notAtHome": true,
+          "bibleStudy": false,
+          "note": null,
+          "followUp": null,
+          "spoken": {
+           "date": "this afternoon",
+           "time": null
+          }
+         },
+         "warnings": [],
+         "status": "applied",
+         "skipReason": null
+        },
+        {
+         "id": "call_letters:0",
+         "callIds": [
+          "call_letters"
+         ],
+         "draft": {
+          "kind": "time.create",
+          "date": "2025-10-06",
+          "minutes": 60,
+          "category": {
+           "type": "existing",
+           "id": "cat-letters"
+          },
+          "note": null,
+          "spoken": {
+           "date": null,
+           "time": null
+          }
+         },
+         "warnings": [],
+         "status": "applied",
+         "skipReason": null
+        }
+       ],
+       "cards": [
+        {
+         "id": "card-call_dora:0",
+         "kind": "contact",
+         "contact": {
+          "type": "existing",
+          "contactId": "c-dora"
+         },
+         "effectIds": [
+          "call_dora:0"
+         ],
+         "selected": true,
+         "status": "applied"
+        },
+        {
+         "id": "card-call_letters:0",
+         "kind": "time",
+         "contact": null,
+         "effectIds": [
+          "call_letters:0"
+         ],
+         "selected": true,
+         "status": "applied"
+        }
+       ],
+       "invalidCount": 0,
+       "tainted": false,
+       "resolvedAt": 1759799220000
+      },
+      "pr_01K6Y41ZG05555555555555555": {
+       "id": "pr_01K6Y41ZG05555555555555555",
+       "conversationId": "01K6Y36GK01111111111111111",
+       "turnId": "01K6Y41ZG04444444444444444",
+       "createdAt": 1759800000000,
+       "status": "pending",
+       "effects": [
+        {
+         "id": "call_saturday:0",
+         "callIds": [
+          "call_saturday"
+         ],
+         "draft": {
+          "kind": "plan.create",
+          "date": "2025-10-11",
+          "minutes": 120,
+          "startMinutes": 540,
+          "anytime": false,
+          "category": {
+           "type": "standard"
+          },
+          "title": null,
+          "note": null,
+          "spoken": {
+           "date": "Saturday",
+           "time": "at 9"
+          },
+          "inviteHint": []
+         },
+         "warnings": [],
+         "status": "pending",
+         "skipReason": null
+        },
+        {
+         "id": "call_lena:0",
+         "callIds": [
+          "call_lena"
+         ],
+         "draft": {
+          "kind": "contact.create",
+          "ref": "n1",
+          "name": "Lena Park",
+          "address": {
+           "line1": "8 Oak Street",
+           "city": "Maplewood",
+           "state": "MN"
+          },
+          "phone": null,
+          "email": null,
+          "askBetween": null
+         },
+         "warnings": [],
+         "status": "pending",
+         "skipReason": null
+        },
+        {
+         "id": "call_lena:1",
+         "callIds": [
+          "call_lena"
+         ],
+         "draft": {
+          "kind": "visit.create",
+          "contact": {
+           "type": "pending",
+           "ref": "n1"
+          },
+          "date": "2025-10-06",
+          "notAtHome": false,
+          "bibleStudy": false,
+          "note": "Left a tract",
+          "followUp": {
+           "date": "2025-10-13",
+           "topic": null,
+           "spoken": {
+            "date": "next Monday",
+            "time": null
+           }
+          },
+          "spoken": {
+           "date": "today",
+           "time": null
+          }
+         },
+         "warnings": [],
+         "status": "pending",
+         "skipReason": null
+        }
+       ],
+       "cards": [
+        {
+         "id": "card-call_saturday:0",
+         "kind": "plan",
+         "contact": null,
+         "effectIds": [
+          "call_saturday:0"
+         ],
+         "selected": false,
+         "status": "pending"
+        },
+        {
+         "id": "card-call_lena:0",
+         "kind": "contact",
+         "contact": {
+          "type": "new",
+          "ref": "n1"
+         },
+         "effectIds": [
+          "call_lena:0",
+          "call_lena:1"
+         ],
+         "selected": true,
+         "status": "pending"
+        }
+       ],
+       "invalidCount": 0,
+       "tainted": false,
+       "resolvedAt": null
+      }
+     },
+     "pendingProposalId": "pr_01K6Y41ZG05555555555555555",
+     "outcomes": [],
+     "lastInputTokens": 6840,
+     "messagesAtLastStep": 4,
+     "contextFull": false,
+     "contextNoticed": {
+      "nearFull": false,
+      "full": false
+     },
+     "suspended": null,
+     "turns": 2
+    }
+   },
+   "hasFinishedTurn": true
+  },
+  "version": 1
+ },
+ "scribe-ledger": {
+  "state": {
+   "records": {
+    "pr_01K6Y36GK03333333333333333": {
+     "proposalId": "pr_01K6Y36GK03333333333333333",
+     "conversationId": "01K6Y36GK01111111111111111",
+     "appliedAt": 1759799220000,
+     "effects": [
+      {
+       "effectId": "call_dora:0",
+       "kind": "visit.create",
+       "undo": {
+        "kind": "visit.create",
+        "visitId": "v-dora-scribe"
+       }
+      },
+      {
+       "effectId": "call_letters:0",
+       "kind": "time.create",
+       "undo": {
+        "kind": "time.create",
+        "entryId": "e-scribe"
+       }
+      }
+     ]
+    }
+   }
+  },
+  "version": 1
+ },
+ "scribe-usage": {
+  "state": {
+   "snapshot": {
+    "plan": "free",
+    "supporterCheckFailed": false,
+    "windows": [
+     {
+      "id": "monthly",
+      "percentUsed": 9,
+      "resetsAt": 1761973200000
+     }
+    ],
+    "limited": false,
+    "resetsAt": null,
+    "asOf": 1759800000000
+   }
+  },
+  "version": 1
+ }
+}

@@ -51,6 +51,7 @@
   <string name="watchUpNext" formatted="false">Hierna</string>
   <string name="watchUpNextComplicationDescription" formatted="false">Je volgende vervolgbezoek of plan.</string>
   <string name="watchUpNextComplicationName" formatted="false">Hierna</string>
+  <string name="watchUpdatePhoneApp" formatted="false">Werk WitnessWork bij op je telefoon en probeer het opnieuw.</string>
   <string name="wearRangeComplicationName" formatted="false">Maandvoortgang, 0 tot doel</string>
   <string name="wearSymbolComplicationName" formatted="false">Maandvoortgang met klok</string>
 </resources>

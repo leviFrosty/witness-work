@@ -51,6 +51,7 @@
   <string name="watchUpNext" formatted="false">Наступне</string>
   <string name="watchUpNextComplicationDescription" formatted="false">Ваша наступна повторна зустріч або план.</string>
   <string name="watchUpNextComplicationName" formatted="false">Наступне</string>
+  <string name="watchUpdatePhoneApp" formatted="false">Оновіть WitnessWork на вашому телефоні та спробуйте ще раз.</string>
   <string name="wearRangeComplicationName" formatted="false">Прогрес за місяць, від 0 до мети</string>
   <string name="wearSymbolComplicationName" formatted="false">Прогрес за місяць із годинником</string>
 </resources>

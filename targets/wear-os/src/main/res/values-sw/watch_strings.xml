@@ -51,6 +51,7 @@
   <string name="watchUpNext" formatted="false">Up Next</string>
   <string name="watchUpNextComplicationDescription" formatted="false">Ufuatiliaji au mpango wako unaofuata.</string>
   <string name="watchUpNextComplicationName" formatted="false">Up Next</string>
+  <string name="watchUpdatePhoneApp" formatted="false">Sasisha WitnessWork kwenye simu yako, kisha ujaribu tena.</string>
   <string name="wearRangeComplicationName" formatted="false">Maendeleo ya Kila Mwezi, 0 hadi Lengo</string>
   <string name="wearSymbolComplicationName" formatted="false">Maendeleo ya Kila Mwezi na Saa</string>
 </resources>

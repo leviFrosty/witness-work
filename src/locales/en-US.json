@@ -1109,6 +1109,16 @@
       "c5": "Optional mileage tracking logs your trips and fuel costs.",
       "c6": "Follow-ups can sync to a calendar just for WitnessWork, now on Android too, where you can also back up and sync with Google Drive.",
       "c7": "Reminders wait in the notification bell instead of piling up on Home."
+    },
+    "1450": {
+      "c1": "Meet Scribe AI: speak or type an update, and it logs your time, plans your days, adds contacts and logs visits. Nothing is saved until you tap Add.",
+      "c2": "Adopt a pet companion on Home. It stays happy while you keep going out in the ministry, and unlocks room items, hats and secret surprises along the way.",
+      "c3": "The new Account screen backs up your data to WitnessWork with end-to-end encryption, gives you a recovery key, and sets up another device with a QR code.",
+      "c4": "Supporters can sync between iPhone and Android with end-to-end encrypted Cloud Sync, and plan a day's route with stops in the best order.",
+      "c5": "Lock the app behind your face, fingerprint or passcode.",
+      "c6": "WitnessWork is now available in Arabic, with layouts that read right to left.",
+      "c7": "Customize the cards on Home and Progress, format notes and add photos, filter contacts by follow-up, and see when each month's report was sent.",
+      "c8": "Better support for large text sizes, screen readers, bold text and higher contrast."
     }
   },
   "installed": "Installed",

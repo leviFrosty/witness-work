@@ -51,6 +51,7 @@
   <string name="watchUpNext" formatted="false">接下来</string>
   <string name="watchUpNextComplicationDescription" formatted="false">你的下一次跟进或计划。</string>
   <string name="watchUpNextComplicationName" formatted="false">接下来</string>
+  <string name="watchUpdatePhoneApp" formatted="false">请先在你的手机上更新 WitnessWork，然后再试一次。</string>
   <string name="wearRangeComplicationName" formatted="false">每月进度（0 至目标）</string>
   <string name="wearSymbolComplicationName" formatted="false">每月进度与时钟</string>
 </resources>

@@ -51,6 +51,7 @@
   <string name="watchUpNext" formatted="false">次の予定</string>
   <string name="watchUpNextComplicationDescription" formatted="false">次のフォローアップまたはプランです。</string>
   <string name="watchUpNextComplicationName" formatted="false">次の予定</string>
+  <string name="watchUpdatePhoneApp" formatted="false">スマートフォンのWitnessWorkをアップデートしてから、もう一度お試しください。</string>
   <string name="wearRangeComplicationName" formatted="false">今月の進捗(0から目標)</string>
   <string name="wearSymbolComplicationName" formatted="false">今月の進捗(時計付き)</string>
 </resources>

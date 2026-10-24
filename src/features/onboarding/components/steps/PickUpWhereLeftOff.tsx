@@ -5,39 +5,28 @@ import { useConversations } from '@/stores/conversationStore'
 import { useServiceReport } from '@/stores/serviceReport'
 import { FRESH_SETUP_PREFERENCES } from '@/lib/syncPreferencePolicy'
 import { analytics } from '@/lib/analytics'
-import {
-  ArchiveRestore as ArchiveRestoreIcon,
-  Cloud as CloudIcon,
-  FileInput as FileInputIcon,
-  FileText as FileTextIcon,
-  NotebookPen as NotebookPenIcon,
-  ScanQrCode as ScanQrCodeIcon,
-} from 'lucide-react-native'
-import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
-import { useEffect, useState } from 'react'
 import { View } from 'react-native'
-import { useIsFocused, useNavigation } from '@react-navigation/native'
+import { useIsFocused } from '@react-navigation/native'
+import { useEffect, useState } from 'react'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import { styles } from '@/features/onboarding/components/Onboarding.styles'
 import OnboardingNav from '@/features/onboarding/components/OnboardingNav'
+import ImportOptions, {
+  type HostedImportType,
+} from '@/features/onboarding/components/ImportOptions'
 import Text from '@/components/ui/MyText'
-import Card from '@/components/ui/Card'
 import Wrapper from '@/components/ui/layout/Wrapper'
-import Button from '@/components/ui/Button'
 import ActionButton from '@/components/ui/ActionButton'
 import useTheme from '@/contexts/theme'
-import i18n, { TranslationKey } from '@/lib/locales'
+import i18n from '@/lib/locales'
 import MytimeImport from '@/features/onboarding/components/steps/MytimeImport'
 import ICloudRestore from '@/features/onboarding/components/steps/iCloudRestore'
 import { useScribeAvailability, useScribePaperCapture } from '@/features/scribe'
-import { pickScribePaperPages } from '@/features/scribe/components/pickScribePaperPages'
 import { useBackupImport } from '@/app/sync/useBackupImport'
-import type { RootStackNavigation } from '@/types/rootStack'
 import { syncTransport, usesGoogleDriveSync } from '@/lib/syncTransport'
 import { hasSyncTransport } from '@/lib/syncTransport/platform'
 import useCloudSyncSupported from '@/hooks/useCloudSyncSupported'
 import { syncKey } from '@/lib/syncCopy'
-import { accountKeyReplaceable } from '@/app/account/accountKey'
 
 interface StepProps {
   goBack: () => void
@@ -45,65 +34,6 @@ interface StepProps {
 }
 
 type Mode = 'choose' | 'mytime' | 'icloud'
-
-const OptionCard = ({
-  icon,
-  color,
-  titleKey,
-  descKey,
-  disabled,
-  disabledNoteKey,
-  onPress,
-}: {
-  icon: AppIcon
-  color: string
-  titleKey: TranslationKey
-  descKey: TranslationKey
-  disabled?: boolean
-  disabledNoteKey?: TranslationKey
-  onPress: () => void
-}) => {
-  const theme = useTheme()
-  return (
-    <Button
-      onPress={onPress}
-      disabled={disabled}
-      noTransform
-      style={{ marginBottom: 10, opacity: disabled ? 0.5 : 1 }}
-    >
-      <Card
-        flexDirection='row'
-        style={{ alignItems: 'center', gap: 14, paddingVertical: 14 }}
-      >
-        <View
-          style={{
-            width: 40,
-            height: 40,
-            borderRadius: 20,
-            backgroundColor: color,
-            justifyContent: 'center',
-            alignItems: 'center',
-          }}
-        >
-          <LucideIcon icon={icon} size={18} color={theme.colors.textInverse} />
-        </View>
-        <View style={{ flex: 1 }}>
-          <Text style={{ fontFamily: theme.fonts.semiBold }}>
-            {i18n.t(titleKey)}
-          </Text>
-          <Text
-            style={{
-              fontSize: theme.fontSize('sm'),
-              color: theme.colors.textAlt,
-            }}
-          >
-            {i18n.t(disabled && disabledNoteKey ? disabledNoteKey : descKey)}
-          </Text>
-        </View>
-      </Card>
-    </Button>
-  )
-}
 
 /**
  * Whether anything has been brought in yet: records from any import, including
@@ -123,7 +53,8 @@ const useHasImportedData = (): boolean => {
 }
 
 /**
- * Onboarding "Pick up where you left off" chooser — replaces the separate
+ * Onboarding "Pick up where you left off" chooser (its options are
+ * `ImportOptions`, shared with Settings → Import Data) — replaces the separate
  * iCloud-restore and MyTime-import steps with one fork into Notes / MyTime /
  * iCloud / a backup file (decision 9), plus Paper (ADR 0025), which picks page
  * photos first and opens Scribe AI's conversation to read them into its draft.
@@ -142,7 +73,6 @@ const useHasImportedData = (): boolean => {
  */
 const PickUpWhereLeftOff = ({ goBack, goNext }: StepProps) => {
   const theme = useTheme()
-  const navigation = useNavigation<RootStackNavigation>()
   const isFocused = useIsFocused()
   const [mode, setMode] = useState<Mode>('choose')
   const toChooser = () => {
@@ -183,39 +113,8 @@ const PickUpWhereLeftOff = ({ goBack, goNext }: StepProps) => {
     })
     useProfile.getState().set({ hasCompletedProfileSetup: true })
   }
-  const fromPaper = async () => {
-    const paperPages = await pickScribePaperPages()
-    if (!paperPages) return
-    navigation.navigate('ScribeConversation', {
-      entry: 'onboarding',
-      paperPages,
-    })
-  }
-  const selectImport = (
-    importType:
-      | 'notes'
-      | 'paper'
-      | 'mytime'
-      | 'icloud'
-      | 'backup_json'
-      | 'other_phone'
-  ) => {
-    analytics.capture('import_type_selected', {
-      import_type:
-        importType === 'icloud' && usesGoogleDriveSync()
-          ? 'google_drive'
-          : importType,
-      source: 'onboarding',
-    })
-    if (importType === 'other_phone')
-      navigation.navigate('Sign In With QR Code', { entry: 'onboarding' })
-    else if (importType === 'notes')
-      navigation.navigate('ScribeConversation', {
-        entry: 'onboarding',
-        focusComposer: true,
-      })
-    else if (importType === 'paper') void fromPaper()
-    else if (importType === 'backup_json') void restoreBackup()
+  const selectImport = (importType: HostedImportType) => {
+    if (importType === 'backup_json') void restoreBackup()
     else setMode(importType)
   }
 
@@ -263,63 +162,22 @@ const PickUpWhereLeftOff = ({ goBack, goNext }: StepProps) => {
             {i18n.t('onboardingPickUp_description')}
           </Text>
 
-          {accountKeyReplaceable() && (
-            <OptionCard
-              icon={ScanQrCodeIcon}
-              color={theme.colors.accent}
-              titleKey='onboardingPickUp_otherPhone'
-              descKey='onboardingPickUp_otherPhoneDesc'
-              onPress={() => selectImport('other_phone')}
-            />
-          )}
-          {scribeShown && (
-            <OptionCard
-              icon={FileTextIcon}
-              color={theme.colors.cyan}
-              titleKey='onboardingPickUp_notes'
-              descKey='onboardingPickUp_notesDesc'
-              disabled={scribe.status === 'offline'}
-              disabledNoteKey='scribe_offlineBadge'
-              onPress={() => selectImport('notes')}
-            />
-          )}
-          {paperAvailable && (
-            <OptionCard
-              icon={NotebookPenIcon}
-              color={theme.colors.orange}
-              titleKey='onboardingPickUp_paper'
-              descKey='onboardingPickUp_paperDesc'
-              disabled={scribe.status === 'offline'}
-              disabledNoteKey='scribe_offlineBadge'
-              onPress={() => selectImport('paper')}
-            />
-          )}
-          <OptionCard
-            icon={FileInputIcon}
-            color={theme.colors.indigo}
-            titleKey='onboardingPickUp_mytime'
-            descKey='onboardingPickUp_mytimeDesc'
-            onPress={() => selectImport('mytime')}
-          />
-          {hasSyncTransport() && (
-            <OptionCard
-              icon={CloudIcon}
-              color={theme.colors.purple}
-              titleKey={syncKey('onboardingPickUp_icloud')}
-              descKey={syncKey('onboardingPickUp_icloudDesc')}
-              disabled={!icloudAvailable}
-              disabledNoteKey={syncKey('onboardingPickUp_icloudUnavailable')}
-              onPress={() => selectImport('icloud')}
-            />
-          )}
-          <OptionCard
-            icon={ArchiveRestoreIcon}
-            color={theme.colors.teal}
-            titleKey='onboardingPickUp_backup'
-            descKey='onboardingPickUp_backupDesc'
-            disabled={importing}
-            disabledNoteKey='onboardingPickUp_backupRestoring'
-            onPress={() => selectImport('backup_json')}
+          <ImportOptions
+            source='onboarding'
+            cloud={
+              hasSyncTransport()
+                ? {
+                    titleKey: syncKey('onboardingPickUp_icloud'),
+                    descKey: syncKey('onboardingPickUp_icloudDesc'),
+                    disabled: !icloudAvailable,
+                    disabledNoteKey: syncKey(
+                      'onboardingPickUp_icloudUnavailable'
+                    ),
+                  }
+                : null
+            }
+            backupRestoring={importing}
+            onSelect={selectImport}
           />
         </View>
       </KeyboardAwareScrollView>

@@ -1,4 +1,5 @@
 import {
+  Cloud as CloudIcon,
   KeyRound as KeyRoundIcon,
   Lock as LockIcon,
   Palette as PaletteIcon,
@@ -10,11 +11,13 @@ import { GroupedListRow, GroupedListSection } from '@/components/ui/GroupedList'
 import i18n from '@/lib/locales'
 import { SettingsSectionProps } from '@/features/settings/screens/settingScreen'
 import LanguageSelector from '@/features/settings/components/sections/LanguageSelector'
+import useDeviceSyncAvailable from '@/features/settings/hooks/useDeviceSyncAvailable'
 
 const PreferencesSection = ({
   handleNavigate,
   selectedDestination,
 }: SettingsSectionProps) => {
+  const deviceSyncAvailable = useDeviceSyncAvailable()
   return (
     <>
       <GroupedListSection>
@@ -35,6 +38,14 @@ const PreferencesSection = ({
             onPress={() => handleNavigate('Account')}
             selected={selectedDestination === 'Account'}
             testID='settings-account'
+          />
+        )}
+        {deviceSyncAvailable && (
+          <GroupedListRow
+            icon={CloudIcon}
+            label={i18n.t('syncSettingsTitle')}
+            onPress={() => handleNavigate('PreferencesiCloud')}
+            selected={selectedDestination === 'PreferencesiCloud'}
           />
         )}
         <GroupedListRow

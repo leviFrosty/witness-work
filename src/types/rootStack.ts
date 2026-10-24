@@ -125,6 +125,7 @@ export type RootStackParamList = {
     | undefined
   'Thank You': { purchaseTier?: 'supporter' | 'tip' } | undefined
   'Import and Export': { source: 'backup_reminder' } | undefined
+  'Import Data': undefined
   MytimeImport: undefined
   ScribeConversation: ScribeConversationRouteParams
   ScribeVoice: ScribeVoiceRouteParams

@@ -1,6 +1,5 @@
 import type { ComponentType } from 'react'
 import i18n from '@/lib/locales'
-import { syncSettingsTitleKey } from '@/lib/syncCopy'
 import { RootStackParamList } from '@/types/rootStack'
 
 type SettingsDetailScreen = {
@@ -35,6 +34,12 @@ export const settingsDetailScreens: SettingsDetailScreen[] = [
     getComponent: () =>
       require('@/features/settings/screens/ImportAndExportScreen').default,
     title: () => i18n.t('importAndExport'),
+  },
+  {
+    name: 'Import Data',
+    getComponent: () =>
+      require('@/features/settings/screens/ImportDataScreen').default,
+    title: () => i18n.t('importData'),
   },
   {
     name: 'MytimeImport',
@@ -214,7 +219,7 @@ export const settingsDetailScreens: SettingsDetailScreen[] = [
     getComponent: () =>
       require('@/features/settings/screens/preferences/screens/PreferencesiCloudScreen')
         .default,
-    title: () => i18n.t(syncSettingsTitleKey()),
+    title: () => i18n.t('syncSettingsTitle'),
   },
   {
     name: 'PreferencesiCloudDevices',

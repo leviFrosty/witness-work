@@ -17,14 +17,11 @@ name: Turn on Cloud Sync from Settings and see this device synced
     timeout: 60000
 - tapOn: Account and settings
 - tapOn: Settings
-# The row reads "Sync" once the switches are back, and the platform's own
-# sync before; either opens the same screen, which offers Cloud Sync once
-# they are.
+# The screen offers Cloud Sync once the switches are back.
 - extendedWaitUntil:
-    visible: Sync
+    visible: Device Sync
     timeout: 15000
-- tapOn:
-    text: [Sync, iCloud Sync, Google Drive Sync]
+- tapOn: Device Sync
 - assertVisible: Sync With
 # Each option's row reads its name and what it covers.
 - tapOn:

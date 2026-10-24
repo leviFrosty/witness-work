@@ -49,6 +49,13 @@ export const ROOT_HEADER_AVATAR_SIZE = 34
  */
 const clearOf = (inset: number) => (inset > 0 ? inset + 8 : 0)
 
+/**
+ * Side padding on iPhone Duo's inner display. Nothing insets the side away from
+ * the vertical bar, so the avatar would sit in the display's large rounded
+ * corner; this clears it and lines the header up with the wide content.
+ */
+const VERTICAL_BAR_WIDE_PADDING = 24
+
 /** How far the title may shrink so an action can show its label. */
 const TITLE_MIN_FIT_SCALE = 0.9
 
@@ -117,6 +124,7 @@ export default function RootHeader({
   const [titleRoom, setTitleRoom] = useState<number>()
   const [titleWidth, setTitleWidth] = useState<number>()
   const [controls, setControls] = useState(NO_WINDOW_CONTROLS)
+  const { isWide, navigationRail } = useAdaptiveLayout()
   const titleFit =
     titleRoom === undefined || titleWidth === undefined
       ? undefined
@@ -161,7 +169,8 @@ export default function RootHeader({
         style={[
           {
             paddingTop: insets.top + (compact ? 2 : 8),
-            paddingHorizontal: 15,
+            paddingHorizontal:
+              navigationRail && isWide ? VERTICAL_BAR_WIDE_PADDING : 15,
             paddingBottom: compact ? 6 : 8,
             gap: compact ? 6 : 12,
             width: '100%',

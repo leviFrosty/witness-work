@@ -541,67 +541,73 @@ const YearMilestoneCard = ({
     </View>
   )
 
-  return (
-    <>
-      <Card
-        style={{
-          flexGrow: 1,
-          ...(showCompletionTreatment
-            ? {
-                borderWidth: 2,
-                borderColor: theme.colors.supporter,
-                backgroundColor: theme.colors.supporterTranslucent,
-              }
-            : {}),
-        }}
-      >
-        {/* The hero long-presses for the year's actions where the card has
+  const card = (
+    <Card
+      style={{
+        flexGrow: 1,
+        ...(showCompletionTreatment
+          ? {
+              borderWidth: 2,
+              borderColor: theme.colors.supporter,
+              backgroundColor: theme.colors.supporterTranslucent,
+            }
+          : {}),
+      }}
+    >
+      {/* The hero long-presses for the year's actions where the card has
           them (Progress); both stay reachable from the visible links. */}
-        {onAdjustMilestones ? (
-          <ContextMenu
-            actions={[
-              {
-                id: 'adjust_milestones',
-                title: i18n.t('adjustMilestonesEllipsis'),
-                systemImage: 'flag',
-                onPress: onAdjustMilestones,
-              },
-              onViewYear && {
-                id: 'view_year',
-                title: i18n.t('viewYear'),
-                systemImage: 'calendar',
-                onPress: onViewYear,
-              },
-            ]}
-          >
-            {hero}
-          </ContextMenu>
-        ) : (
-          hero
-        )}
+      {onAdjustMilestones ? (
+        <ContextMenu
+          actions={[
+            {
+              id: 'adjust_milestones',
+              title: i18n.t('adjustMilestonesEllipsis'),
+              systemImage: 'flag',
+              onPress: onAdjustMilestones,
+            },
+            onViewYear && {
+              id: 'view_year',
+              title: i18n.t('viewYear'),
+              systemImage: 'calendar',
+              onPress: onViewYear,
+            },
+          ]}
+        >
+          {hero}
+        </ContextMenu>
+      ) : (
+        hero
+      )}
 
-        {categoriesSlot}
+      {categoriesSlot}
 
-        {!separateMilestones && milestoneDetails}
+      {!separateMilestones && milestoneDetails}
+    </Card>
+  )
+
+  if (!separateMilestones) return card
+
+  // Its own View: a fragment's two cards would sit flush wherever a wrapper
+  // (Progress's RestWhileEditing) keeps the parent's gap from reaching them.
+  return (
+    <View style={{ gap: 12 }}>
+      {card}
+      <Card>
+        <Text
+          style={{
+            fontFamily: theme.fonts.semiBold,
+            fontSize: theme.fontSize('sm'),
+            color: theme.colors.textAlt,
+            textTransform: 'uppercase',
+            letterSpacing: tracking(0.5),
+          }}
+        >
+          {i18n.t('milestones')}
+        </Text>
+        {milestoneCount}
+        {milestoneDetails}
       </Card>
-      {separateMilestones ? (
-        <Card>
-          <Text
-            style={{
-              fontFamily: theme.fonts.semiBold,
-              fontSize: theme.fontSize('sm'),
-              color: theme.colors.textAlt,
-              textTransform: 'uppercase',
-              letterSpacing: tracking(0.5),
-            }}
-          >
-            {i18n.t('milestones')}
-          </Text>
-          {milestoneCount}
-          {milestoneDetails}
-        </Card>
-      ) : null}
-    </>
+    </View>
   )
 }
 

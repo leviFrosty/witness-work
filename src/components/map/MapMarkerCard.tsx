@@ -1,4 +1,4 @@
-import { View } from 'react-native'
+import { Platform, View } from 'react-native'
 import { Marker } from 'react-native-maps'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
@@ -109,8 +109,14 @@ export default function MapMarkerCard({
       centerOffset={{ x: 0, y: ((above ? -1 : 1) * (height + clearance)) / 2 }}
       anchor={{ x: 0.5, y: above ? 1 : 0 }}
       zIndex={selected ? 1000 : zIndex}
-      // The pin carries the name and details for screen readers.
-      accessibilityElementsHidden
+      // Apple Maps reads every marker, hidden or not, so the card says what it
+      // shows rather than "Map pin". Android's stays hidden; its pin speaks.
+      accessibilityLabel={
+        Platform.OS === 'ios'
+          ? [title, eyebrow].filter(Boolean).join(', ')
+          : undefined
+      }
+      accessibilityElementsHidden={Platform.OS !== 'ios'}
       importantForAccessibility='no-hide-descendants'
       stopPropagation
     >

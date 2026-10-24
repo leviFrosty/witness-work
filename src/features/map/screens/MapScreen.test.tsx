@@ -351,9 +351,6 @@ vi.mock('@/features/map/components/MapGroupList', () => ({
 vi.mock('@/features/map/components/MapLassoPath', () => ({
   default: 'MapLassoPath',
 }))
-vi.mock('@/features/map/components/MapDueChip', () => ({
-  default: 'MapDueChip',
-}))
 vi.mock('@/features/map/components/MapTodayRouteButton', () => ({
   default: 'MapTodayRouteButton',
 }))

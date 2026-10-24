@@ -29,7 +29,6 @@ import useCopyText from '@/features/map/hooks/useCopyText'
 import { contactMapQuery, mapLinks } from '@/lib/mapLinks'
 
 interface Props {
-  inspector?: boolean
   contact: ContactMarker
   index: ConversationIndex
 }
@@ -44,7 +43,7 @@ const withSecondaryItems = (
   return [first, [...second, ...items], ...rest]
 }
 
-const MapCarouselCard = ({ contact, index, inspector = false }: Props) => {
+const MapCarouselCard = ({ contact, index }: Props) => {
   const theme = useTheme()
   const navigation = useNavigation<RootStackNavigation>()
   const locales = getLocales()
@@ -104,7 +103,7 @@ const MapCarouselCard = ({ contact, index, inspector = false }: Props) => {
   ])
 
   return (
-    <MapCard fill={!inspector}>
+    <MapCard fill={false}>
       <ContextMenu
         actions={actions}
         onPress={() =>

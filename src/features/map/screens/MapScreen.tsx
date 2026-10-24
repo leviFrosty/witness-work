@@ -95,7 +95,7 @@ import MapLassoPath from '@/features/map/components/MapLassoPath'
 import MapSelectionBar from '@/features/map/components/MapSelectionBar'
 import MapTopChips from '@/features/map/components/MapTopChips'
 import useContactPinItems from '@/features/map/hooks/useContactPinItems'
-import useMapDueLens from '@/features/map/hooks/useMapDueLens'
+import useMapDueInView from '@/features/map/hooks/useMapDueInView'
 import useMapProjection from '@/features/map/hooks/useMapProjection'
 import useMapSelection from '@/features/map/hooks/useMapSelection'
 import {
@@ -143,6 +143,7 @@ interface FullMapViewProps {
   conversationIndex: ConversationIndex
   topInset: number
   onExplore?: () => void
+  onExploreEnd?: () => void
   /** A contact was saved from a pin dropped on this map. */
   onContactCreated: (id: string) => void
   routeActions?: MapRouteActions
@@ -183,6 +184,7 @@ const FullMapView = ({
   renderContactRow,
   topInset,
   onExplore,
+  onExploreEnd,
   onContactCreated,
   routeActions,
 }: FullMapViewProps) => {
@@ -313,13 +315,14 @@ const FullMapView = ({
   // The Contacts gathered in one pin at one place, listed over the cards.
   const [openGroupIds, setOpenGroupIds] = useState<string[] | null>(null)
   const [floatingCardHeight, setFloatingCardHeight] = useState(0)
+  // Each carousel card is as tall as its content; keyed by Contact.
+  const [cardHeights, setCardHeights] = useState<Record<string, number>>({})
   // Where the chips along the top end and where the control column sits,
   // measured so pin cards keep clear of them.
   const [chipsBottom, setChipsBottom] = useState(0)
   const [controlsLayout, setControlsLayout] =
     useState<MapControlsLayout | null>(null)
-  // Only Contacts due now or this week stay bright and keep their cards.
-  const dueLens = useMapDueLens({
+  const dueInView = useMapDueInView({
     contacts: visibleContactMarkers,
     index: conversationIndex,
     projection: mapProjection.projection,
@@ -698,15 +701,22 @@ const FullMapView = ({
 
   const parallaxScrollingScale =
     visibleContactMarkers.length === 1 ? 0.9 : isTablet ? 0.92 : 0.8025
-  const mapCardBottom = bottomOverlayInset + LEGAL_LABEL_HEIGHT - 5
-  // The parallax layout scales the focused card around its centre, so its top
-  // edge sits this far below the carousel's frame.
+  // Where the focused card's bottom edge sits: just above the map's legal label.
+  const cardsBottom = bottomOverlayInset + LEGAL_LABEL_HEIGHT - 5
+  // The parallax layout scales the focused card around its centre, so its
+  // edges sit this far inside the carousel's frame.
   const cardTopGap = (CARD_HEIGHT * (1 - parallaxScrollingScale)) / 2
+  // The carousel's frame, dropped by that gap so the card meets cardsBottom.
+  const mapCardBottom = cardsBottom - cardTopGap
+  // The focused card's height on screen, once it's measured.
+  const focusedCardHeight =
+    ((activeContactId && cardHeights[activeContactId]) || CARD_HEIGHT) *
+    parallaxScrollingScale
   // Stowed cards slide off the bottom of the screen rather than leaving a
   // clipped sliver above it. They never fade: iOS can stop drawing glass for
   // good under a view that sat at opacity 0 while the app was backgrounded or
   // the tab left, so the cards came back see-through.
-  const stowDistance = mapCardBottom + CARD_HEIGHT - cardTopGap
+  const stowDistance = cardsBottom + focusedCardHeight
   /** How far a drag down has to go to stow the cards, short of a flick. */
   const stowSwipeDistance = (CARD_HEIGHT - cardTopGap) / 6
 
@@ -723,6 +733,7 @@ const FullMapView = ({
     setCardsStowed(stowed)
     stowProgress.set(withTiming(stowed ? 1 : 0, STOW_TIMING))
     if (stowed) onExplore?.()
+    else onExploreEnd?.()
   }
 
   const settleStowProgress = () => {
@@ -787,7 +798,6 @@ const FullMapView = ({
       stopTrackingUser()
       mapContactCreation.cancel()
       setOpenGroupIds(null)
-      dueLens.clear()
     },
   })
   const { selecting } = selection
@@ -952,7 +962,6 @@ const FullMapView = ({
     size: { width, height },
     activeId: selecting ? undefined : activeContactId,
     picked: selection.picked,
-    dueLens: dueLens.active && !selecting,
     overlays: {
       // The search button, and the chips beside it.
       top: [topInset + 8 + 44, chipsBottom],
@@ -967,8 +976,8 @@ const FullMapView = ({
           : null,
         cards:
           !isWide && visibleContactMarkers.length > 0
-            ? mapCardBottom +
-              (cardsStowed ? STOWED_HANDLE_HEIGHT : CARD_HEIGHT - cardTopGap)
+            ? cardsBottom +
+              (cardsStowed ? STOWED_HANDLE_HEIGHT : focusedCardHeight)
             : null,
       },
     },
@@ -977,15 +986,15 @@ const FullMapView = ({
   // Sit the location FAB just above whichever bottom UI is on screen:
   // the empty-state card, the no-search-results card, the floating card, or
   // the carousel. Heights for the variable cards come from onLayout; the
-  // carousel is fixed at CARD_HEIGHT.
+  // creation card is fixed at CARD_HEIGHT.
   const locationButtonBottom = mapContactCreation.coordinate
     ? mapCardBottom + CARD_HEIGHT + 8
     : showsFloatingCard
       ? floatingCardBottom + floatingCardHeight + 8
       : visibleContactMarkers.length > 0
         ? cardsStowed
-          ? mapCardBottom + STOWED_HANDLE_HEIGHT + 8
-          : mapCardBottom + CARD_HEIGHT + 8
+          ? cardsBottom + STOWED_HANDLE_HEIGHT + 8
+          : cardsBottom + focusedCardHeight + 12
         : !hasMappedContacts
           ? bottomOverlayInset + 12 + emptyStateHeight + 8
           : bottomOverlayInset + 4 + noResultsHeight + 8
@@ -1235,11 +1244,11 @@ const FullMapView = ({
                   maxStops={routeActions?.maxStops ?? 0}
                   todayStopCount={routeActions?.todayStopCount ?? 0}
                   supporter={!!routeActions?.supporter}
-                  canSelectDue={dueLens.due.some(
+                  canSelectDue={dueInView.some(
                     (contact) => !selection.picked?.has(contact.id)
                   )}
                   onSelectDue={() =>
-                    selection.add(dueLens.due.map((contact) => contact.id))
+                    selection.add(dueInView.map((contact) => contact.id))
                   }
                   onClear={selection.clear}
                   onDone={selection.stop}
@@ -1390,10 +1399,25 @@ const FullMapView = ({
                     data={visibleContactMarkers}
                     keyExtractor={(contact) => contact.id}
                     renderItem={({ item }) => (
-                      <MapCarouselCard
-                        contact={item}
-                        index={conversationIndex}
-                      />
+                      // Cards sit on the frame's bottom edge, as tall as their
+                      // content.
+                      <View style={{ flex: 1, justifyContent: 'flex-end' }}>
+                        <View
+                          onLayout={(e) => {
+                            const cardHeight = e.nativeEvent.layout.height
+                            setCardHeights((heights) =>
+                              heights[item.id] === cardHeight
+                                ? heights
+                                : { ...heights, [item.id]: cardHeight }
+                            )
+                          }}
+                        >
+                          <MapCarouselCard
+                            contact={item}
+                            index={conversationIndex}
+                          />
+                        </View>
+                      </View>
                     )}
                     animation={CAROUSEL_ANIMATION}
                     // Leave vertical drags to the swipe-down-to-stow gesture.
@@ -1424,7 +1448,7 @@ const FullMapView = ({
                     style={[
                       {
                         position: 'absolute',
-                        bottom: 0,
+                        bottom: cardTopGap,
                         alignSelf: 'center',
                         // Wider and taller than the handle so it's an easy target.
                         paddingHorizontal: 32,
@@ -1509,16 +1533,6 @@ const FullMapView = ({
             }
             searchExpanded={searchExpanded}
             onFound={() => setFitRequest((request) => request + 1)}
-            due={
-              !selecting && dueLens.due.length > 0
-                ? {
-                    overdue: dueLens.overdueCount,
-                    thisWeek: dueLens.due.length - dueLens.overdueCount,
-                    active: dueLens.active,
-                    onPress: dueLens.toggle,
-                  }
-                : null
-            }
             todayRoute={
               !selecting && routeActions?.todayStopCount
                 ? {
@@ -1597,6 +1611,7 @@ const MapScreen = ({
   renderContactRow,
   topInset = 0,
   onExplore,
+  onExploreEnd,
   routeActions,
 }: {
   /**
@@ -1610,6 +1625,8 @@ const MapScreen = ({
   topInset?: number
   /** The user started exploring: dragged the map or stowed the cards. */
   onExplore?: () => void
+  /** The stowed cards came back, so the header and tab bar should too. */
+  onExploreEnd?: () => void
   /** Today's route and Plan Route for picked Contacts, from the app. */
   routeActions?: MapRouteActions
 }) => {
@@ -1667,6 +1684,7 @@ const MapScreen = ({
         conversationIndex={conversationIndex}
         topInset={topInset}
         onExplore={onExplore}
+        onExploreEnd={onExploreEnd}
         onContactCreated={(id) => setDroppedIds((ids) => [...ids, id])}
         routeActions={routeActions}
       />

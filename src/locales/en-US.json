@@ -688,16 +688,6 @@
     "one": "Today's route has room for {{count}} more stop.",
     "other": "Today's route has room for {{count}} more stops."
   },
-  "map_due_overdue": {
-    "one": "{{count}} overdue",
-    "other": "{{count}} overdue"
-  },
-  "map_due_week": {
-    "one": "{{count}} this week",
-    "other": "{{count}} this week"
-  },
-  "map_due_showOnly": "Show only contacts due",
-  "map_due_showAll": "Show all contacts",
   "map_todayRoute": "Today's Route",
   "map_todayRoute_a11y": {
     "one": "Open today's route, {{count}} stop",

@@ -140,9 +140,9 @@ const ContactsSearchInput = ({
  * header carries the same Saved View and last-visit chips. On the Map the
  * header floats translucent over it so the map runs edge to edge, and compacts
  * (and the tab bar slides away) once the user starts exploring; swiping down on
- * the header or tapping the title restores both. On the List, scrolling down
- * tucks the header, chips and tab bar away and leaves search; scrolling up
- * brings them back.
+ * the header, tapping the title, or bringing the map's cards back restores
+ * both. On the List, scrolling down tucks the header, chips and tab bar away
+ * and leaves search; scrolling up brings them back.
  */
 
 const ContactsScreen = ({
@@ -152,12 +152,14 @@ const ContactsScreen = ({
 }: {
   /**
    * The Map workspace, composed in by the app tier. `topInset` is the height of
-   * the header floating over it; `onExplore` compacts that header. `contacts`
-   * are the active contacts the shared filters let through, in sort order.
+   * the header floating over it; `onExplore` compacts that header and
+   * `onExploreEnd` brings it back. `contacts` are the active contacts the
+   * shared filters let through, in sort order.
    */
   renderMap: (props: {
     topInset: number
     onExplore: () => void
+    onExploreEnd: () => void
     contacts: Contact[]
   }) => ReactNode
   focusSearch?: boolean
@@ -182,6 +184,7 @@ const ContactsScreen = ({
   // Kept out of the `renderMap` call, so the Map gets the same function on
   // every render here and its pins don't re-render.
   const exploreMap = () => setMapExplored(true)
+  const endMapExplore = () => setMapExplored(false)
   const screenReader = useScreenReaderEnabled()
   // Exploring the map slides the tab bar away too, and its cards drop into the
   // room.
@@ -888,6 +891,7 @@ const ContactsScreen = ({
         {renderMap({
           topInset: headerHeight,
           onExplore: exploreMap,
+          onExploreEnd: endMapExplore,
           contacts: sortedAndFilteredContacts,
         })}
       </View>

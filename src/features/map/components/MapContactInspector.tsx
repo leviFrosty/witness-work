@@ -149,7 +149,7 @@ export default function MapContactInspector({
             borderTopColor: theme.colors.border,
           }}
         >
-          <MapCarouselCard contact={activeContact} index={index} inspector />
+          <MapCarouselCard contact={activeContact} index={index} />
         </View>
       )}
     </View>

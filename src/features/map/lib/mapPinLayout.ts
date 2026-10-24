@@ -101,7 +101,6 @@ export function layoutContactPins({
   projection,
   activeId,
   checkedIds,
-  dueLens,
   maxCards,
   cardBounds,
   avoid,
@@ -114,7 +113,6 @@ export function layoutContactPins({
   activeId: string | undefined
   /** Select mode's picks; null outside Select mode. */
   checkedIds: ReadonlySet<string> | null
-  dueLens: boolean
   maxCards: number
   /** Where cards may go, clear of the map's overlays. */
   cardBounds: Rect
@@ -154,7 +152,6 @@ export function layoutContactPins({
       ? members.filter((m) => checkedIds.has(m.id)).length
       : 0
     const checked = picked === members.length
-    const due = members.some((m) => factsOf(m).due)
     return {
       key: lead.id,
       coordinate: lead.coordinate!,
@@ -167,7 +164,7 @@ export function layoutContactPins({
       checked,
       partlyChecked: picked > 0 && !checked,
       // In Select mode a pin with any picks stays bright.
-      dimmed: (dueLens && !due) || (anyChecked && picked === 0),
+      dimmed: anyChecked && picked === 0,
       zIndex: ranked.length - rank.get(lead.id)!,
       accessibilityLabel: '',
       card: null,

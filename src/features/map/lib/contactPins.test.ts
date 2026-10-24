@@ -209,7 +209,6 @@ describe('urgency, badges and due', () => {
         followUp: followUpState(contact.id, visits, NOW),
         urgency: contactUrgency(contact, visits, NOW),
         badge: pinBadge(contact, visits, NOW),
-        due: isDue(contact.id, visits, NOW),
       })
     }
   })

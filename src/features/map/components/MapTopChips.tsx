@@ -1,12 +1,11 @@
 import { View } from 'react-native'
-import MapDueChip from '@/features/map/components/MapDueChip'
 import MapFindContacts from '@/features/map/components/MapFindContacts'
 import MapTodayRouteButton from '@/features/map/components/MapTodayRouteButton'
 
 /**
- * The chips along the map's top, beside the search: Find contacts, the due chip
- * and today's route. They wrap onto a second row when they don't fit, and
- * report where they end, so pin cards stay below them.
+ * The chips in the map's top trailing corner: Find contacts and today's route.
+ * They wrap onto a second row when they don't fit, and report where they end,
+ * so pin cards stay below them.
  */
 export default function MapTopChips({
   top,
@@ -14,7 +13,6 @@ export default function MapTopChips({
   end,
   searchExpanded,
   onFound,
-  due,
   todayRoute,
   onBottom,
 }: {
@@ -26,13 +24,6 @@ export default function MapTopChips({
   searchExpanded: boolean
   /** Find contacts put Contacts on the map. */
   onFound: () => void
-  /** The due chip, while Contacts in view are due. */
-  due: {
-    overdue: number
-    thisWeek: number
-    active: boolean
-    onPress: () => void
-  } | null
   /** Today's route, while it has stops. */
   todayRoute: { stopCount: number; onPress: () => void } | null
   /** Where the chips end, in the map's points from its top. */
@@ -49,7 +40,7 @@ export default function MapTopChips({
         top,
         left: start,
         right: end,
-        alignItems: 'center',
+        alignItems: 'flex-end',
       }}
     >
       <View
@@ -57,12 +48,11 @@ export default function MapTopChips({
         style={{
           flexDirection: 'row',
           flexWrap: 'wrap',
-          justifyContent: 'center',
+          justifyContent: 'flex-end',
           gap: 8,
         }}
       >
         <MapFindContacts hidden={searchExpanded} onFound={onFound} />
-        {!searchExpanded && due && <MapDueChip {...due} />}
         {!searchExpanded && todayRoute && (
           <MapTodayRouteButton {...todayRoute} />
         )}

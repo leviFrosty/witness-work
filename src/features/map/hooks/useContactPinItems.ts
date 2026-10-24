@@ -30,7 +30,6 @@ export default function useContactPinItems({
   size,
   activeId,
   picked,
-  dueLens,
   overlays,
 }: {
   contacts: ContactMarker[]
@@ -42,7 +41,6 @@ export default function useContactPinItems({
   activeId: string | undefined
   /** Select mode's picks on the map; null outside Select mode. */
   picked: ReadonlySet<string> | null
-  dueLens: boolean
   overlays: {
     /** Where what floats along the top ends: the search, the chips. */
     top: number[]
@@ -94,7 +92,6 @@ export default function useContactPinItems({
     projection,
     activeId,
     checkedIds: picked,
-    dueLens,
     maxCards: isWide ? MAX_CARDS_WIDE : MAX_CARDS_PHONE,
     cardBounds: {
       left: overlays.inspectorLeft,

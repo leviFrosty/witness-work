@@ -41,7 +41,7 @@ export default function LogVisitContactList({
   onTurnOnNearby: () => void
   index: ConversationIndex
   onPick: (item: Extract<LogVisitListItem, { type: 'contact' }>) => void
-  onAddNew: (name: string) => void
+  onAddNew: (name?: string) => void
 }) {
   const theme = useTheme()
   const insets = useSafeAreaInsets()
@@ -158,14 +158,18 @@ export default function LogVisitContactList({
             case 'addNew':
               return (
                 <Button
-                  testID='log-visit-add-new'
+                  testID={
+                    item.name === undefined
+                      ? 'log-visit-new-contact'
+                      : 'log-visit-add-new'
+                  }
                   accessibilityRole='button'
                   onPress={() => onAddNew(item.name)}
                   style={{
                     flexDirection: 'row',
                     alignItems: 'center',
                     gap: 10,
-                    marginTop: 8,
+                    marginVertical: 8,
                     paddingHorizontal: 16,
                     paddingVertical: 14,
                     borderRadius: theme.numbers.borderRadiusSm,
@@ -187,7 +191,9 @@ export default function LogVisitContactList({
                       fontFamily: theme.fonts.semiBold,
                     }}
                   >
-                    {i18n.t('logVisit_addAsNewContact', { name: item.name })}
+                    {item.name === undefined
+                      ? i18n.t('logVisit_newContact')
+                      : i18n.t('logVisit_addAsNewContact', { name: item.name })}
                   </Text>
                 </Button>
               )

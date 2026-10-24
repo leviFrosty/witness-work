@@ -13,7 +13,8 @@ ported from) lives outside the repo. The TypeScript port in `src/features/pet/ar
 
 ### Pets
 
-- Five species at launch: `lion` (Lion cub), `dog` (Pup), `cat` (Kitten), `donkey`, `lamb`.
+- Five species at launch: `lion` (Lion cub), `dog` (Pup, a golden retriever), `cat` (Kitten),
+  `donkey`, `lamb`.
 - Coats: dog `gold | white | liver | black`; cat `orange | grey | black | white | tuxedo | calico | siamese | tortoiseshell`.
   The other species have one coat (`default`).
 - One companion per user. "Change Pet" changes the species and coat of the same companion and keeps

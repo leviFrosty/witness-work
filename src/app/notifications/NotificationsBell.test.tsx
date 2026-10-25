@@ -5,7 +5,11 @@ import type { NotificationItem } from '@/types/notifications'
 
 const tray = vi.hoisted(() => {
   Object.assign(globalThis, { __DEV__: false })
-  return { renders: 0, items: [] as NotificationItem[] }
+  return {
+    renders: 0,
+    items: [] as NotificationItem[],
+    applyPendingUpdate: vi.fn(),
+  }
 })
 
 vi.mock('@/features/badges/hooks/useBadgeNotifications', () => ({
@@ -85,6 +89,9 @@ vi.mock('@/features/buddies/hooks/useBuddyNotifications', () => ({
   syncBuddyNotifications: () => {},
   useBuddyTraySyncStatus: () => ({ state: 'idle', retry: () => {} }),
 }))
+vi.mock('@/features/updates/lib/updates', () => ({
+  applyPendingUpdate: tray.applyPendingUpdate,
+}))
 vi.mock('@/features/notifications/components/NotificationsTray', () => ({
   default: ({ items }: { items: NotificationItem[] }) => {
     tray.renders++
@@ -98,6 +105,7 @@ import useContacts from '@/stores/contactsStore'
 import useConversations from '@/stores/conversationStore'
 import useServiceReport from '@/stores/serviceReport'
 import { useCalendarPublishing, useCalendarSync } from '@/stores/calendarSync'
+import { usePendingUpdate } from '@/features/updates/stores/pendingUpdate'
 import NotificationsBell from '@/app/notifications/NotificationsBell'
 
 const HOUR = 60 * 60_000
@@ -164,4 +172,21 @@ it('lists a missed Follow-up as soon as it is saved', async () => {
   })
   expect(missed()).toHaveLength(1)
   expect(missed()[0]?.description).toBe('Psalm 37')
+})
+
+it('offers to restart into a downloaded update until the app runs it', async () => {
+  await act(async () => {
+    renderer = create(<NotificationsBell />)
+  })
+  const pending = () =>
+    tray.items.find((item) => item.kind === 'pending_update')
+  expect(pending()).toBeUndefined()
+
+  await act(async () => usePendingUpdate.setState({ bundleId: 'b2' }))
+  expect(pending()?.id).toBe('pending_update:b2')
+  pending()?.actions?.[0]?.onPress()
+  expect(tray.applyPendingUpdate).toHaveBeenCalledOnce()
+
+  await act(async () => usePendingUpdate.setState({ bundleId: null }))
+  expect(pending()).toBeUndefined()
 })

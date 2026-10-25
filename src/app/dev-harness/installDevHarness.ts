@@ -29,6 +29,7 @@ import { useUpdateRequired } from '@/lib/appUpdate'
 import { useNotificationsTray } from '@/features/notifications/stores/notificationsTray'
 import { useStreakCelebration } from '@/features/profile/stores/streakCelebration'
 import { useUpdateRevealStore } from '@/features/updates/stores/updateReveal'
+import { usePendingUpdate } from '@/features/updates/stores/pendingUpdate'
 import { useMilestoneRevealStore } from '@/features/milestones/stores/milestoneReveal'
 import { useCalendarPublishing, useCalendarSync } from '@/stores/calendarSync'
 import { checkBuddiesRelay } from '@/features/buddies/lib/buddiesService'
@@ -263,6 +264,7 @@ function seed(name: string) {
   // A flow that stopped while the app was gated leaves the next one a clean app.
   appUpdateHarness.clear()
   useUpdateRequired.setState({ required: null })
+  usePendingUpdate.setState({ bundleId: null })
   if (fakeDrive) mmkvStorage.set(FAKE_GOOGLE_DRIVE_KEY, fakeDrive)
   // A seed keeps the layout direction it found (Tools → Force Right to Left).
   if (forceRtl) setDevForceRtl(true)
@@ -590,6 +592,10 @@ export function installDevHarness() {
       appLockSession: useAppLockSession,
       // `getState().request('dev')` plays the update reveal and its tour.
       updateReveal: useUpdateRevealStore,
+      // `setState({ bundleId: 'verify-bundle' })` lists a downloaded OTA update
+      // in the tray, as the launch check does in a release build; Update Now
+      // reloads the JS bundle here.
+      pendingUpdate: usePendingUpdate,
       // `getState().request()` replays The Milestone Update's grand reveal.
       milestoneReveal: useMilestoneRevealStore,
       // `toast.undo({ title, onUndo })` shows a toast (also `success`, `info`,

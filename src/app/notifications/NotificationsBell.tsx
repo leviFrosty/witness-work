@@ -23,6 +23,7 @@ import useRolloverNotification from '@/features/service-reports/hooks/useRollove
 import useBackupNotification from '@/features/settings/hooks/useBackupNotification'
 import useSupporterNotifications from '@/features/supporter/hooks/useSupporterNotifications'
 import useWhatsNewNotification from '@/features/updates/hooks/useWhatsNewNotification'
+import usePendingUpdateNotification from '@/features/updates/hooks/usePendingUpdateNotification'
 import useUpdateRevealNotification from '@/features/updates/hooks/useUpdateRevealNotification'
 import useMissedFollowUpNotifications from '@/features/visits/hooks/useMissedFollowUpNotifications'
 
@@ -51,6 +52,7 @@ export default function NotificationsBell() {
     ...useBadgeNotifications(now),
     ...usePetUnlockNotifications(),
     ...useBuddyNotifications(),
+    usePendingUpdateNotification(),
     useWhatsNewNotification(),
     useCalendarSyncNotification(),
     useUpdateRevealNotification(),

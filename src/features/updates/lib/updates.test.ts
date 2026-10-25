@@ -9,6 +9,7 @@ const runtime = vi.hoisted(() => ({
   captureException: vi.fn(),
   knownOffline: false,
   prepared: false,
+  calls: [] as string[],
 }))
 vi.mock('react-native', () => ({
   Alert: { alert: runtime.alert },
@@ -24,10 +25,21 @@ vi.mock('@/lib/hotUpdater', () => ({
   },
   checkHotUpdate: runtime.check,
   hasPreparedUpdate: async () => runtime.prepared,
+  preparedUpdateId: async () => (runtime.prepared ? 'staged' : null),
+  reloadApp: async () => {
+    runtime.calls.push('reload')
+  },
   hotUpdater: { reload: vi.fn() },
 }))
 vi.mock('@/lib/locales', () => ({ default: { t: (key: string) => key } }))
-vi.mock('@/lib/analytics', () => ({ analytics: { capture: runtime.capture } }))
+vi.mock('@/lib/analytics', () => ({
+  analytics: {
+    capture: runtime.capture,
+    flush: async () => {
+      runtime.calls.push('flush')
+    },
+  },
+}))
 vi.mock('@/lib/errorTracking', () => ({
   errorTracking: { captureException: runtime.captureException },
 }))
@@ -35,7 +47,12 @@ vi.mock('@/lib/http/online', () => ({
   isKnownOffline: () => runtime.knownOffline,
 }))
 
-import { fetchUpdate } from './updates'
+import { usePendingUpdate } from '@/features/updates/stores/pendingUpdate'
+import {
+  applyPendingUpdate,
+  downloadUpdateOnLaunch,
+  fetchUpdate,
+} from './updates'
 
 beforeEach(() => {
   vi.clearAllMocks()
@@ -44,7 +61,9 @@ beforeEach(() => {
   runtime.platform = 'ios'
   runtime.knownOffline = false
   runtime.prepared = false
+  runtime.calls = []
   runtime.check.mockResolvedValue(null)
+  usePendingUpdate.setState({ bundleId: null })
 })
 
 it('checks Hot Updater and enters the existing Update screen only for an available update', async () => {
@@ -141,4 +160,33 @@ it('adopts metadata for the running artifact without requesting a restart', asyn
   expect(await fetchUpdate(navigate)).toBe('up_to_date')
   expect(updateBundle).toHaveBeenCalledOnce()
   expect(navigate).not.toHaveBeenCalled()
+})
+
+it('lists an update the launch check downloaded in the tray', async () => {
+  const updateBundle = vi.fn().mockImplementation(async () => {
+    runtime.prepared = true
+    return true
+  })
+  runtime.check.mockResolvedValue({ transitionKind: 'INSTALL', updateBundle })
+  await downloadUpdateOnLaunch()
+  expect(updateBundle).toHaveBeenCalledOnce()
+  expect(usePendingUpdate.getState().bundleId).toBe('staged')
+})
+
+it('keeps an update the Update screen downloaded in the tray', async () => {
+  runtime.prepared = true
+  runtime.check.mockResolvedValue({ updateBundle: async () => true })
+  const navigate = vi.fn()
+  expect(await fetchUpdate(navigate)).toBe('available')
+  const { downloadSelectedUpdate } = await import('./updates')
+  expect(await downloadSelectedUpdate()).toBe(true)
+  expect(usePendingUpdate.getState().bundleId).toBe('staged')
+})
+
+it('sends Update Now before the restart can drop it', async () => {
+  runtime.capture.mockImplementation((event: string) =>
+    runtime.calls.push(event)
+  )
+  await applyPendingUpdate()
+  expect(runtime.calls).toEqual(['pending_update_applied', 'flush', 'reload'])
 })

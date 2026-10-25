@@ -234,6 +234,8 @@ export const analyticsEventNames = [
   // App-wide Update Required (ADR 0027 §6).
   'update_required_shown',
   'update_required_store_opened',
+  // A downloaded OTA update applied from the tray instead of the next launch.
+  'pending_update_applied',
   // Expected device state kept out of error tracking.
   'device_storage_full',
   // Onboarding and activation.

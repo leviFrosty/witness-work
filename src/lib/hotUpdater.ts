@@ -45,14 +45,22 @@ hotUpdater.setReloadBehavior(
 // JS launch. Capture the running artifact before any check changes selection.
 const launchedSelection = hotUpdater.getActiveUpdateState()
 
-export async function hasPreparedUpdate() {
+/**
+ * The artifact the next launch runs (`builtin` for a rollback to the binary's
+ * own bundle) when it isn't the one running now, else null.
+ */
+export async function preparedUpdateId(): Promise<string | null> {
   const [launched, selected] = await Promise.all([
     launchedSelection,
     hotUpdater.getActiveUpdateState(),
   ])
-  return (
-    launched.activeSelection?.bundleId !== selected.activeSelection?.bundleId
-  )
+  const next = selected.activeSelection?.bundleId
+  if (launched.activeSelection?.bundleId === next) return null
+  return next ?? 'builtin'
+}
+
+export async function hasPreparedUpdate() {
+  return (await preparedUpdateId()) !== null
 }
 
 export async function checkHotUpdate() {

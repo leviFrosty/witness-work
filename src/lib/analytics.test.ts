@@ -6,6 +6,7 @@ const mocks = vi.hoisted(() => ({
   screen: vi.fn(),
   getSessionId: vi.fn(),
   reset: vi.fn(),
+  flush: vi.fn(),
   debug: vi.fn(),
   construct: vi.fn(),
   frequency: new Map<string, string>(),
@@ -27,6 +28,7 @@ vi.mock('posthog-react-native', () => ({
     screen = mocks.screen
     getSessionId = mocks.getSessionId
     reset = mocks.reset
+    flush = mocks.flush
     debug = mocks.debug
   },
 }))
@@ -53,6 +55,26 @@ describe('analytics boundary', () => {
     analytics.reset()
     expect(mocks.construct).not.toHaveBeenCalled()
     expect(mocks.capture).not.toHaveBeenCalled()
+  })
+
+  it('waits a bounded time for queued events before a restart', async () => {
+    const { analytics } = await import('./analytics')
+    mocks.flush.mockResolvedValue(undefined)
+    await analytics.flush()
+    expect(mocks.flush).toHaveBeenCalledOnce()
+
+    vi.useFakeTimers()
+    try {
+      mocks.flush.mockReturnValue(new Promise(() => {}))
+      const stalled = analytics.flush(1000)
+      await vi.advanceTimersByTimeAsync(1000)
+      await expect(stalled).resolves.toBeUndefined()
+
+      mocks.flush.mockRejectedValue(new Error('offline'))
+      await expect(analytics.flush()).resolves.toBeUndefined()
+    } finally {
+      vi.useRealTimers()
+    }
   })
 
   it('configures the provider for anonymous events only', async () => {

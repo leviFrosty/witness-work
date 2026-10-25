@@ -42,7 +42,11 @@ vi.mock('@/lib/errorTracking', () => ({
   errorTracking: { captureException: vi.fn() },
 }))
 
-import { checkHotUpdate, hasPreparedUpdate } from './hotUpdater'
+import {
+  checkHotUpdate,
+  hasPreparedUpdate,
+  preparedUpdateId,
+} from './hotUpdater'
 
 beforeEach(() => {
   runtime.platform = 'ios'
@@ -85,4 +89,14 @@ it('compares artifact identities for staged updates and builtin rollback', async
     activeSelection: { kind: 'BUILTIN', bundleId: null },
   })
   expect(await hasPreparedUpdate()).toBe(true)
+})
+
+it('names the staged artifact the tray offers to restart into', async () => {
+  expect(await preparedUpdateId()).toBeNull()
+  runtime.state.mockResolvedValue({ activeSelection: { bundleId: 'staged' } })
+  expect(await preparedUpdateId()).toBe('staged')
+  runtime.state.mockResolvedValue({
+    activeSelection: { kind: 'BUILTIN', bundleId: null },
+  })
+  expect(await preparedUpdateId()).toBe('builtin')
 })

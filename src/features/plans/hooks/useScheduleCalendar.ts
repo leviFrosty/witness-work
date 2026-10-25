@@ -166,6 +166,13 @@ export default function useScheduleCalendar({
   const listLoaded = useRef(false)
   /** How much of the list's bottom a day's sheet covers. */
   const sheetCover = useRef(0)
+  /**
+   * Where the list was before a day's sheet scrolled it to reveal the day, by
+   * the row then at the top: rows added above shift every offset. The sheet
+   * closing scrolls back there, unless the list has moved some other way
+   * since.
+   */
+  const returnTo = useRef<{ key: string; below: number } | null>(null)
   /** Where the fingers came down on the Year view's last pinch. */
   const pinchStart = useRef({ x: 0, y: 0 })
   /** Counts holds on the Month view, so a stale release can't end a newer one. */
@@ -248,6 +255,8 @@ export default function useScheduleCalendar({
     /** Rows went in above the list's position in the last render. */
     addedAbove = false
   ): Promise<void> => {
+    // Somewhere else now; a reveal remembers its own way back.
+    returnTo.current = null
     quietUntil.current = Date.now() + QUIET_AFTER_JUMP_MS
     const list = listRef.current
     const layout = list?.getLayout(index)
@@ -374,6 +383,25 @@ export default function useScheduleCalendar({
     focus({ year: thisYear, month: thisMonthIndex }, false)
   }
 
+  /** The list's position, by the row at its top. */
+  const placeNow = () => {
+    const offset = scrollOffset()
+    const index = rowAt(offset)
+    const layout =
+      index === undefined ? undefined : listRef.current?.getLayout(index)
+    if (index === undefined || !layout) return null
+    return { key: schedule.rows[index].key, below: offset - layout.y }
+  }
+
+  /** Back to where the list was before a day's sheet scrolled it. */
+  const scrollBack = () => {
+    const place = returnTo.current
+    returnTo.current = null
+    if (!place) return
+    const index = schedule.rows.findIndex((row) => row.key === place.key)
+    if (index >= 0) scrollToRow(index, true, -place.below)
+  }
+
   /**
    * Scrolls a day's week out from under a sheet covering the bottom `covered`
    * points of the list, onto the focus line when there's room, so its month
@@ -406,7 +434,11 @@ export default function useScheduleCalendar({
       focusLine() - WEEK_ROW_HEIGHT / 2,
       visible - layout.height
     )
+    // Another day picked with the sheet open goes back to where the first
+    // one was picked.
+    const back = returnTo.current ?? placeNow()
     scrollToRow(row, true, Math.max(0, target))
+    returnTo.current = back
     return true
   }
 
@@ -445,6 +477,7 @@ export default function useScheduleCalendar({
 
   const zoomOut = (source: YearOpenSource, serviceYear?: number) => {
     if (viewRef.current === 'year') return
+    returnTo.current = null
     const target =
       serviceYear === undefined ||
       serviceYear === serviceYearOf(focusedRef.current)
@@ -568,6 +601,10 @@ export default function useScheduleCalendar({
     currentServiceYear,
     isCurrentServiceYear: yearServiceYear === currentServiceYear,
     onScroll,
+    /** The user scrolls the list: wherever they leave it stays. */
+    onScrollBeginDrag: () => {
+      returnTo.current = null
+    },
     onZoomFrameLayout: (frame: LayoutRectangle) => {
       zoomFrame.current = frame
       zoom.setMonthFrame(frame)
@@ -609,6 +646,7 @@ export default function useScheduleCalendar({
     /** A day's sheet now covers the bottom `height` points of the list. */
     coverBottom: (height: number) => {
       sheetCover.current = height
+      if (!height) scrollBack()
       const row = rowAt(scrollOffset() + focusLine())
       if (row !== undefined) focus(schedule.rows[row].month, false)
     },

@@ -226,3 +226,65 @@ it('opens on a linked day’s week, with nothing left to reveal once it loads', 
   expect(list.scrollToOffset).not.toHaveBeenCalled()
   expect(list.scrollToIndex).not.toHaveBeenCalled()
 })
+
+/** Loads the list and opens a day's sheet on a day under where it will sit. */
+const revealUnderSheet = (from: number) => {
+  offset = from
+  act(() => {
+    calendar().onListLoad()
+    vi.advanceTimersByTime(150)
+  })
+  act(() => {
+    calendar().coverBottom(300)
+    calendar().revealDay(new Date(2026, 9, 10), 300)
+  })
+  // The list lands on the day.
+  offset = list.scrollToOffset.mock.lastCall![0].offset
+  list.scrollToOffset.mockClear()
+}
+
+it('scrolls back to where it was when a day’s sheet closes', () => {
+  const from = todayOffset() - 400 + 25
+  revealUnderSheet(from)
+
+  act(() => calendar().coverBottom(0))
+  expect(list.scrollToOffset).toHaveBeenLastCalledWith({
+    offset: from,
+    animated: true,
+  })
+})
+
+it('stays where the user scrolled while the sheet was open', () => {
+  revealUnderSheet(todayOffset() - 400)
+
+  act(() => calendar().onScrollBeginDrag())
+  offset += 200
+  act(() => calendar().coverBottom(0))
+  expect(list.scrollToOffset).not.toHaveBeenCalled()
+})
+
+it('stays where a jump took the list while the sheet was open', () => {
+  revealUnderSheet(todayOffset() - 400)
+
+  act(() => calendar().jumpToToday())
+  list.scrollToOffset.mockClear()
+  act(() => calendar().coverBottom(0))
+  expect(list.scrollToOffset).not.toHaveBeenCalled()
+})
+
+it('goes back past every day revealed while the sheet stayed open', () => {
+  const from = todayOffset() - 400
+  revealUnderSheet(from)
+  // Another day further down, picked with the sheet still open.
+  act(() => {
+    calendar().revealDay(new Date(2026, 9, 31), 300)
+  })
+  expect(list.scrollToOffset).toHaveBeenCalledTimes(1)
+  offset = list.scrollToOffset.mock.lastCall![0].offset
+
+  act(() => calendar().coverBottom(0))
+  expect(list.scrollToOffset).toHaveBeenLastCalledWith({
+    offset: from,
+    animated: true,
+  })
+})

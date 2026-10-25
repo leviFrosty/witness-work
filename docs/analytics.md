@@ -1188,6 +1188,17 @@ field names (years, months, ids) read as `*`.
 
 `form_validation_failed` records the first invalid submission per mounted form, with `form` (a fixed form identifier) and `fields` (comma-separated field identifiers). This answers which forms and required inputs prevent completion. It never includes input values, custom field labels, names, notes, or other private data; successful completion uses the existing create/update events. Repeated invalid taps do not send additional events.
 
+### Update Ready
+
+When the launch check downloads an OTA update (or someone leaves the Update
+screen after it finished downloading), the notifications tray lists Update
+Ready until the app restarts into it. `pending_update_applied` (no properties)
+fires when the User taps Update Now, just before the restart; the app flushes
+the queue first so the restart doesn't drop it. It answers whether people take
+an update right away instead of on the next cold launch: compare it with Hot
+Updater Insights' downloaded-bundle reports. Dismissing the item sends nothing
+of its own.
+
 ### Update delivery diagnostics
 
 Hot Updater Insights sends operational launch, downloaded-bundle, rollback and

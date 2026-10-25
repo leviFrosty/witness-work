@@ -14,6 +14,8 @@ export type NotificationKind =
   /** Asks a Kingdom Publisher once whether to log hours. */
   | 'hours_logging'
   | 'whats_new'
+  /** An OTA update downloaded this launch that a restart applies. */
+  | 'pending_update'
   | 'update_reveal'
   | 'supporter_nudge'
   | 'supporter_survey'

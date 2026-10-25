@@ -73,6 +73,26 @@ export const analytics = {
     })
   },
   /**
+   * Sends queued events now, before something that ends the JS runtime (an
+   * update restart) drops them. Waits at most `timeoutMs`; never throws.
+   */
+  async flush(timeoutMs = 1500): Promise<void> {
+    if (!client) return
+    let timer: ReturnType<typeof setTimeout> | undefined
+    try {
+      await Promise.race([
+        client.flush(),
+        new Promise<void>((resolve) => {
+          timer = setTimeout(resolve, timeoutMs)
+        }),
+      ])
+    } catch (error) {
+      logger.debug('[Analytics] flush failed', error)
+    } finally {
+      clearTimeout(timer)
+    }
+  },
+  /**
    * Clears the provider's random on-device identifier. Only the analytics
    * identity is affected; the RevenueCat customer and the account ID are
    * separate and untouched. Discards pending usage events and preserves survey

@@ -31,16 +31,16 @@ const FIXED: PetRoomSettings = {
 }
 
 describe('Decorate Room options', () => {
-  it('has the eight tabs in order, the hat first', () => {
+  it('has the eight tabs in order, the hat first and the window last', () => {
     expect(ROOM_TABS).toEqual([
       'hat',
-      'window',
       'wall',
       'floor',
       'bed',
       'shelf',
       'lamp',
       'sign',
+      'window',
     ])
   })
 

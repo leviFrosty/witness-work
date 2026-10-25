@@ -132,6 +132,8 @@ export type PetLifeState = {
   unlockMode: UnlockMode
   /** The Service Streak's kind, for the counts locked items open up at. */
   streakKind: StreakKind
+  /** The Service Streak's raw count that items open up by (streak mode). */
+  streakCount: number
   /** The keepsake waiting on the rug; collect with `collectKeepsake`. */
   pendingGift: { kind: GiftKind; on: string } | null
   /** Months with an active day since adoption (months mode). */
@@ -244,6 +246,7 @@ export default function usePetLife(): PetLifeState {
       unlockedItems: NOTHING_EARNED,
       unlockMode: mode,
       streakKind: streak.kind,
+      streakCount: count,
       pendingGift: null,
       activeMonths: 0,
       thisMonthActive: false,
@@ -259,6 +262,7 @@ export default function usePetLife(): PetLifeState {
     unlockedItems: unlockedOf(stored, earned),
     unlockMode: mode,
     streakKind: streak.kind,
+    streakCount: count,
     pendingGift: pendingGift({ life, keepsakes: pet.keepsakes }),
     activeMonths: months,
     thisMonthActive: activeDays

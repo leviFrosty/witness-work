@@ -21,8 +21,8 @@ describe('buddyStreakCount', () => {
     expect(buddyStreakCount({ n: 8, until: '2026-10-05' }, today)).toBe(0)
   })
 
-  it('hides none, or one under 3', () => {
+  it('hides none, and shows one from its first day', () => {
     expect(buddyStreakCount(undefined, today)).toBe(0)
-    expect(buddyStreakCount({ n: 2, until: '2026-10-30' }, today)).toBe(0)
+    expect(buddyStreakCount({ n: 1, until: '2026-10-30' }, today)).toBe(1)
   })
 })

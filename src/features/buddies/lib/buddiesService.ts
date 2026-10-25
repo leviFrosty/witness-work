@@ -92,8 +92,8 @@ const sharesNotSent = (() => {
 })()
 
 /**
- * The Service Streak buddies see, once it's long enough to show, with the last
- * day it lasts unless more service is logged. None while streaks are hidden.
+ * The Service Streak buddies see, from its first day, with the last day it
+ * lasts unless more service is logged. None while streaks are hidden.
  */
 export function currentBuddyStreak(
   now: Date = new Date()

@@ -126,10 +126,13 @@ describe('sharing the pet', () => {
     expect(
       petShareStats({ ...base, adoptedOn: '2026-10-20' }).daysTogether
     ).toBe(1)
-    // A hidden or too-short streak isn't shown.
+    // A hidden streak, or none, isn't shown; any other is.
     expect(petShareStats({ ...base, showStreaks: false }).streak).toBeNull()
     expect(
-      petShareStats({ ...base, streak: { ...streak, count: 2 } }).streak
+      petShareStats({ ...base, streak: { ...streak, count: 0 } }).streak
     ).toBeNull()
+    expect(
+      petShareStats({ ...base, streak: { ...streak, count: 1 } }).streak
+    ).toEqual({ kind: 'plans', count: 1 })
   })
 })

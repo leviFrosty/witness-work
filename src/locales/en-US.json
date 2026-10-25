@@ -200,7 +200,7 @@
   "streak_howItWorks": "How Streaks Work",
   "streakCelebration_started": "You're on a streak!",
   "streakCelebration_grew": "Your streak is growing!",
-  "streakCelebration_captionPlans": "Planned days kept in a row. Keep it going on your next planned day.",
+  "streakCelebration_captionPlans": "Plans kept without a miss, however far apart. Keep it going on your next planned day.",
   "streakCelebration_captionMonths": "Months in a row in the ministry. Keep it going next month.",
   "countdownDaysHours": "{{days}}d {{hours}}h",
   "countdownHoursMinutes": "{{hours}}h {{minutes}}m",
@@ -4396,7 +4396,7 @@
     },
     "streak": {
       "description": "Your service streak",
-      "plans": "planned days kept in a row",
+      "plans": "plans kept, none missed",
       "months": "months in a row",
       "none": "Keep a few planned days to start one",
       "noneMonths": "Spend time in the ministry this month to start one"
@@ -4692,8 +4692,8 @@
     "shareCard": {
       "share": "Share",
       "streakPlans": {
-        "one": "planned day in a row",
-        "other": "planned days in a row"
+        "one": "plan kept, none missed",
+        "other": "plans kept, none missed"
       },
       "streakMonths": {
         "one": "month in a row",
@@ -4920,7 +4920,14 @@
     "details": {
       "rename": "Rename",
       "change": "Change pet",
-      "share": "Share"
+      "share": "Share",
+      "streakA11y": "Streak: {{count}}",
+      "streakInfoTitle": "Your streak",
+      "streakInfoPlans": "Your streak is {{count}} right now. Each plan you keep (any time logged that day) adds 1, however many days apart your plans are. Miss one, and it starts over. Time logged on a day without a plan doesn't add to it.",
+      "streakInfoMonths": "Your streak is {{count}} right now. It counts months in a row that you shared in the ministry.",
+      "activeMonths": "Active months: {{count}}",
+      "activeMonthsInfoTitle": "Active months",
+      "activeMonthsInfo": "You have {{count}} so far. A month counts when you log time or save a visit or plan in it after adopting your pet. The months don't need to be in a row."
     },
     "intro": {
       "hearts": {

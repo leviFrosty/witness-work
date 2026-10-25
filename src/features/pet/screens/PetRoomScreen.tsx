@@ -4,12 +4,15 @@ import { useIsFocused } from '@react-navigation/native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import type { NativeStackScreenProps } from '@react-navigation/native-stack'
 import {
+  CalendarCheck as CalendarCheckIcon,
+  Flame as FlameIcon,
   PawPrint as PawPrintIcon,
   Pencil as PencilIcon,
   Share as ShareIcon,
 } from 'lucide-react-native'
 import Button from '@/components/ui/Button'
 import ChoiceChips from '@/components/ui/ChoiceChips'
+import InfoPopover from '@/components/ui/InfoPopover'
 import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
 import { unlockedPart, unlockTab } from '@/features/pet/lib/unlockNews'
@@ -18,6 +21,7 @@ import type { RoomItemId } from '@/types/pet'
 import useTheme from '@/contexts/theme'
 import { analytics } from '@/lib/analytics'
 import i18n from '@/lib/locales'
+import { formatNumber } from '@/lib/numbers'
 import usePet from '@/stores/pet'
 import type { RootStackParamList } from '@/types/rootStack'
 import PetCardHeader from '@/features/pet/components/PetCardHeader'
@@ -26,6 +30,8 @@ import RoomOptionGrid from '@/features/pet/components/RoomOptionGrid'
 import { ROOM_TAB_ICONS } from '@/features/pet/components/roomTabIcons'
 import usePetRoomScene from '@/features/pet/hooks/usePetRoomScene'
 import { lockedNoteText, roomTabLabel } from '@/features/pet/lib/roomLabels'
+import type { UnlockMode } from '@/features/pet/lib/unlocks'
+import type { StreakKind } from '@/lib/serviceStreak'
 import {
   isLiveWindow,
   isRoomChoiceUnlocked,
@@ -91,10 +97,81 @@ function ActionPill({
 }
 
 /**
- * The pet's details, opened from its Home card: its name and hearts, quick
- * Rename / Change pet / Share, and the room live with a tab per part (its hat
- * first), each part's options drawn from the room itself. A choice applies and
- * saves at once; pulling the sheet down closes it.
+ * What room items open up by, always shown, even at 0: the Service Streak's
+ * flame and count, or the active months in months mode. The info says what it
+ * counts and that it's the current value.
+ */
+function UnlockCurrency({
+  mode,
+  streakKind,
+  streakCount,
+  activeMonths,
+}: {
+  mode: UnlockMode
+  streakKind: StreakKind
+  streakCount: number
+  activeMonths: number
+}) {
+  const theme = useTheme()
+  const streak = mode === 'streak'
+  const count = streak ? streakCount : activeMonths
+  const lit = streak && streakCount > 0
+  const color = lit ? theme.colors.orange : theme.colors.textAlt
+
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+      <View
+        accessible
+        accessibilityLabel={
+          streak
+            ? i18n.t('pet.details.streakA11y', { count })
+            : i18n.t('pet.details.activeMonths', { count })
+        }
+        style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}
+      >
+        <LucideIcon
+          icon={streak ? FlameIcon : CalendarCheckIcon}
+          size={16}
+          color={color}
+          fill={lit ? color : undefined}
+        />
+        <Text
+          style={{
+            fontSize: theme.fontSize('md'),
+            fontFamily: theme.fonts.semiBold,
+            fontVariant: ['tabular-nums'],
+          }}
+        >
+          {streak
+            ? formatNumber(count)
+            : i18n.t('pet.details.activeMonths', { count })}
+        </Text>
+      </View>
+      <InfoPopover
+        inline
+        title={
+          streak
+            ? i18n.t('pet.details.streakInfoTitle')
+            : i18n.t('pet.details.activeMonthsInfoTitle')
+        }
+        description={
+          streak
+            ? streakKind === 'plans'
+              ? i18n.t('pet.details.streakInfoPlans', { count })
+              : i18n.t('pet.details.streakInfoMonths', { count })
+            : i18n.t('pet.details.activeMonthsInfo', { count })
+        }
+      />
+    </View>
+  )
+}
+
+/**
+ * The pet's details, opened from its Home card: its name and hearts, what its
+ * room items open up by, quick Rename / Change pet / Share, and the room live
+ * with a tab per part (its hat first), each part's options drawn from the room
+ * itself. A choice applies and saves at once; pulling the sheet down closes
+ * it.
  */
 export default function PetRoomScreen({ navigation, route }: Props) {
   const theme = useTheme()
@@ -205,6 +282,12 @@ export default function PetRoomScreen({ navigation, route }: Props) {
           <View accessibilityRole='header'>
             <PetCardHeader name={scene.name} life={scene.life} size='xl' />
           </View>
+          <UnlockCurrency
+            mode={unlocks.mode}
+            streakKind={unlocks.streakKind}
+            streakCount={state.streakCount}
+            activeMonths={unlocks.activeMonths}
+          />
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
             <ActionPill
               icon={PencilIcon}

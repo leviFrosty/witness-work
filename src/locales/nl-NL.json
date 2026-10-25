@@ -4677,8 +4677,7 @@
         "pebble": "Pak het keitje op",
         "feather": "Pak de veer op",
         "lily": "Pak de lelie op"
-      },
-      "promptAnimals": "Een leeuwenwelp, puppy, katje, ezel en lammetje"
+      }
     },
     "rename": {
       "title": "Huisdier hernoemen"

@@ -11,6 +11,8 @@ import {
   TIMES_OF_DAY,
   type PetRoomSettings,
   type PetSpecies,
+  type PetVisit,
+  type PetVisitActivity,
 } from '@/types/pet'
 import { localDayKey } from '@/features/pet/lib/dayKeys'
 import { forgetFoundSecrets } from '@/features/pet/lib/secrets'
@@ -23,6 +25,28 @@ const speciesOrThrow = (species: string): PetSpecies => {
   if (!isPetSpecies(species)) throw new Error(`Unknown species "${species}"`)
   return species
 }
+
+/** A made-up visiting pet for the harness. */
+type DevVisitor = {
+  species: PetSpecies
+  coat?: string
+  name?: string
+  /** The buddy's name. */
+  buddy?: string
+  activity?: PetVisitActivity
+}
+
+const devVisit = (visitor: DevVisitor, i: number): PetVisit => ({
+  inboxId: `dev-visitor-${i}`,
+  buddyName: visitor.buddy ?? `Buddy ${i + 1}`,
+  pet: {
+    species: speciesOrThrow(visitor.species),
+    coat: visitor.coat ?? defaultCoatFor(visitor.species),
+    ...(visitor.name ? { name: visitor.name } : {}),
+  },
+  startMinutes: 540 + i * 30,
+  activity: visitor.activity ?? { type: 'plan', planId: 'dev-visitor' },
+})
 
 /** Rejects a faked window the scene has no art for. */
 const checkWindow = (window: PetDevOverride['window']) => {
@@ -128,13 +152,26 @@ export const petHarness = {
    * `lampLevel`, `streak` (the count room unlocks read; shown, never stored),
    * `secrets` (true opens every secret item; shown, never stored), `paradise`,
    * `star`, `gift` (`olive`… or null), `sill`, `window` (`{ time, season }`),
-   * `visitor` (`{ species, coat }` or null).
+   * `visitors` (buddies' pets visiting in place of today's real ones: each `{
+   * species, coat?, name?, buddy?, activity? }`, made-up buddies and a made-up
+   * Plan filled in; `[]` for none, null for the real ones).
    */
-  override: (patch: PetDevOverride) => {
+  override: (
+    patch: Omit<PetDevOverride, 'visits'> & {
+      visitors?: DevVisitor[] | null
+    }
+  ) => {
     checkWindow(patch.window)
     checkStreak(patch.streak)
+    const { visitors, ...rest } = patch
     const { devOverride, setDevOverride } = usePetSession.getState()
-    setDevOverride({ ...devOverride, ...patch })
+    setDevOverride({
+      ...devOverride,
+      ...rest,
+      ...(visitors !== undefined && {
+        visits: visitors && visitors.map(devVisit),
+      }),
+    })
     return state()
   },
   clearOverride: () => {

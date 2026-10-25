@@ -33,7 +33,9 @@ export default function PetPickerScreen({ route, navigation }: Props) {
   const theme = useTheme()
   const sheetInsets = usePetSheetInsets()
   const current = usePet((s) => s.pet)
-  const [choice, setChoice] = useState(() => initialPetChoice(current))
+  const [choice, setChoice] = useState(() =>
+    initialPetChoice(current, route.params?.species)
+  )
   const [name, setName] = useState('')
   const save = useSavePetChoice()
   // Set once Adopt is pressed, so the intro stays up with the new pet.

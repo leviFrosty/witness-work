@@ -85,6 +85,11 @@ export type ContextMenuProps = {
    */
   preview?: ReactElement
   /**
+   * The menu opened (`true`) or closed. iOS reports it only with a `preview`
+   * (it shows the preview); Android always.
+   */
+  onOpenChange?: (open: boolean) => void
+  /**
    * IPad pointer feedback for content with `onPress`. Rows and cards keep the
    * default `tint` (no scaling into neighbours); small cells may `highlight`.
    */

@@ -1,14 +1,17 @@
 import { create } from 'zustand'
-import type { GiftKind, PetSpecies, Season, TimeOfDay } from '@/types/pet'
+import type {
+  GiftKind,
+  PetVisit,
+  Season,
+  PetSpecies,
+  TimeOfDay,
+} from '@/types/pet'
 
 /** A motion or pat asked of the mounted Home card (dev harness). */
 export type PetCommand =
   | { kind: 'entrance' | 'trick' | 'twirl' | 'wake' | 'cheer' }
   | { kind: 'pat'; count: number }
   | { kind: 'scrub'; ms: number }
-
-/** A buddy's pet, as the scene draws it. */
-export type PetVisitor = { species: PetSpecies; coat: string; name?: string }
 
 /**
  * Dev-only overrides applied on top of the real life and room (the dev harness,
@@ -35,7 +38,8 @@ export type PetDevOverride = {
   star?: boolean
   gift?: GiftKind | null
   sill?: GiftKind[]
-  visitor?: { species: PetSpecies; coat: string } | null
+  /** Buddies' pets visiting, in place of today's real ones. */
+  visits?: PetVisit[] | null
 }
 
 type State = {

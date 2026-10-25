@@ -4677,8 +4677,7 @@
         "pebble": "Raccogli il sassolino",
         "feather": "Raccogli la piuma",
         "lily": "Raccogli il giglio"
-      },
-      "promptAnimals": "Un cucciolo di leone, un cagnolino, un gattino, un asino e un agnello"
+      }
     },
     "rename": {
       "title": "Rinomina l’animaletto"

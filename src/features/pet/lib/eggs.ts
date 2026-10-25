@@ -1,6 +1,3 @@
-import { getStartTimeInMinutes, storedDayKey } from '@/lib/normalizeDate'
-import type { SharedPet } from '@/types/pet'
-import type { DayPlan } from '@/types/timeEntry'
 import type { ResolvedWindow } from '@/features/pet/lib/liveWindow'
 
 /**
@@ -56,45 +53,3 @@ export function createPatCounter({
 }
 
 export type PatCounter = ReturnType<typeof createPatCounter>
-
-export type BuddyWithPet = {
-  /** The buddy's inbox id, as Plans list it (`DayPlan.buddies`). */
-  inboxId: string
-  pet: SharedPet
-}
-
-/**
- * The buddy pet that visits today: a buddy who shares a pet and is on one of
- * today's Plans, invited by the User (`buddies`) or the one whose invitation
- * the User answered (`buddyShare.from`). The earliest Plan wins, then the first
- * buddy on it. Null when nobody visits.
- */
-export function visitorForToday({
-  dayPlans,
-  todayKey,
-  buddiesWithPets,
-}: {
-  dayPlans: readonly Pick<
-    DayPlan,
-    'date' | 'buddies' | 'buddyShare' | 'startTimeInMinutes'
-  >[]
-  todayKey: string
-  buddiesWithPets: readonly BuddyWithPet[]
-}): BuddyWithPet | null {
-  if (buddiesWithPets.length === 0) return null
-  const byInbox = new Map(
-    buddiesWithPets.map((buddy) => [buddy.inboxId, buddy])
-  )
-  const today = dayPlans
-    .filter((plan) => storedDayKey(plan.date) === todayKey)
-    .sort((a, b) => getStartTimeInMinutes(a) - getStartTimeInMinutes(b))
-  for (const plan of today) {
-    const people = [...(plan.buddies ?? [])]
-    if (plan.buddyShare) people.push(plan.buddyShare.from)
-    for (const inboxId of people) {
-      const buddy = byInbox.get(inboxId)
-      if (buddy) return buddy
-    }
-  }
-  return null
-}

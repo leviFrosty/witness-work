@@ -62,6 +62,8 @@ export interface PlayerFrame {
   readonly ended: MotionKind | null
   /** The scene pixels the pet (and its hat) covers, or null with no pet. */
   readonly petBox: Viewport | null
+  /** A heart is still floating up, or the pet is still happy from a pat. */
+  readonly hearts: boolean
 }
 
 /** Result of a tap or rub. */
@@ -235,6 +237,9 @@ export function createScenePlayer(
         say,
         ended,
         petBox: pet && petNow ? petBox(pet, petNow, input.room.hat) : null,
+        hearts:
+          tMs < patUntilMs ||
+          particles.particles.some((p) => p.kind === 'heart'),
       }
     },
     reset() {

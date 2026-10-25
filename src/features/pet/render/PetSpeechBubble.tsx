@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { View } from 'react-native'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
@@ -10,24 +11,48 @@ const EDGE = 2
 
 /**
  * A pet's sound in a square pixel-style bubble with a hard shadow. Position it
- * with `right` / `bottom` so it grows away from the pet.
+ * with `right` (or `left`) and `bottom` so it grows away from the pet. With
+ * `left` and `within` (its container's width), it moves left as far as it must
+ * to stay inside.
  */
 export default function PetSpeechBubble({
   text,
   right,
+  left,
+  within,
   bottom,
 }: {
   text: string
-  right: number
   bottom: number
-}) {
+} & (
+  | { right: number; left?: never; within?: never }
+  | { left: number; right?: never; within?: number }
+)) {
   const theme = useTheme()
+  const [bubbleWidth, setBubbleWidth] = useState<number | null>(null)
+  const clamps = left !== undefined && within !== undefined
+  const shownLeft =
+    clamps && bubbleWidth !== null
+      ? Math.max(EDGE, Math.min(left, within - bubbleWidth - EDGE * 2))
+      : left
   return (
     <View
       pointerEvents='none'
       accessibilityElementsHidden
       importantForAccessibility='no-hide-descendants'
-      style={{ position: 'absolute', right, bottom }}
+      onLayout={
+        clamps
+          ? (event) => setBubbleWidth(event.nativeEvent.layout.width)
+          : undefined
+      }
+      style={{
+        position: 'absolute',
+        right,
+        left: shownLeft,
+        bottom,
+        // Hidden for the one layout pass that measures it.
+        opacity: clamps && bubbleWidth === null ? 0 : 1,
+      }}
     >
       <View
         style={{

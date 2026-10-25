@@ -4677,8 +4677,7 @@
         "pebble": "Pegar a pedrinha",
         "feather": "Pegar a pena",
         "lily": "Pegar o lírio"
-      },
-      "promptAnimals": "Um filhote de leão, um cachorrinho, um gatinho, um burro e um cordeiro"
+      }
     },
     "rename": {
       "title": "Renomear mascote"

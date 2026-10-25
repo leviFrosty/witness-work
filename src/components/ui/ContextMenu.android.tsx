@@ -37,6 +37,7 @@ export default function ContextMenu({
   style,
   testID,
   deferHost = false,
+  onOpenChange,
 }: ContextMenuProps) {
   const theme = useTheme()
   const colorScheme = usePreferences((s) => s.colorScheme)
@@ -64,11 +65,13 @@ export default function ContextMenu({
     void Haptics.androidLongPress()
     setSubmenu(null)
     setExpanded(true)
+    onOpenChange?.(true)
   }
 
   const close = () => {
     setExpanded(false)
     setSubmenu(null)
+    onOpenChange?.(false)
   }
 
   const select = (action: ContextMenuAction) => {

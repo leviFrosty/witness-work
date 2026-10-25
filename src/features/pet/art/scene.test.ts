@@ -80,7 +80,7 @@ describe('composeScene', () => {
                 startMs: 0,
               },
             },
-            visitor: { species: 'dog', coat: 'black' },
+            visitors: [{ species: 'dog', coat: 'black' }],
             particles: P.emitDust(
               P.emitHeartBurst(P.createParticles(2), 0),
               0,
@@ -244,11 +244,57 @@ describe('composeScene', () => {
     expect(ratio(68, 72)).toBeGreaterThan(ratio(30, 60) + 0.15)
   })
 
+  it('outlines a long-pressed visitor in front of the others, behind the pet', () => {
+    const visitors = [
+      { species: 'cat', coat: 'grey' },
+      { species: 'lamb', coat: 'default' },
+      { species: 'donkey', coat: 'default' },
+    ] as const
+    const plain = composeScene({ ...INPUT, visitors: [...visitors] }, 0)
+    const outlined = composeScene(
+      {
+        ...INPUT,
+        visitors: visitors.map((v, i) => ({ ...v, outlined: i === 2 })),
+      },
+      0
+    )
+    expect(hashBuffer(outlined)).not.toBe(hashBuffer(plain))
+    // The pet's chest is the pet's in both.
+    expect(pixelAt(outlined, 68, 72)).toEqual(pixelAt(plain, 68, 72))
+  })
+
+  it("keeps the lamp's stool in front of a visitor sitting behind it", () => {
+    // The 13th seat sits on the stool's top.
+    const crowd = Array.from({ length: 13 }, () => ({
+      species: 'dog' as const,
+      coat: 'black',
+    }))
+    const alone = composeScene({ ...INPUT, visitors: [] }, 0)
+    const visited = composeScene({ ...INPUT, visitors: crowd }, 0)
+    // The visitor shows above the stool and between its legs…
+    expect(pixelAt(visited, 128, 74)).not.toEqual(pixelAt(alone, 128, 74))
+    expect(pixelAt(visited, 124, 80)).not.toEqual(pixelAt(alone, 124, 80))
+    // …and the stool's top and leg are drawn over it.
+    for (const [x, y] of [
+      [116, 77],
+      [126, 78],
+      [120, 80],
+    ] as const)
+      expect(pixelAt(visited, x, y)).toEqual(pixelAt(alone, x, y))
+  })
+
   it('averages under 6 ms per steady frame', () => {
     const input: SceneInput = {
       ...INPUT,
       room: { ...ROOM, bed: 'basket', lamp: 'lantern' },
-      visitor: { species: 'dog', coat: 'gold' },
+      // A full day: five buddies' pets visiting.
+      visitors: [
+        { species: 'dog', coat: 'gold' },
+        { species: 'cat', coat: 'calico' },
+        { species: 'lamb', coat: 'default' },
+        { species: 'donkey', coat: 'default' },
+        { species: 'lion', coat: 'default' },
+      ],
       moments: { gold: true, gift: 'lily', sill: ['olive'] },
     }
     let particles = P.createParticles(1)

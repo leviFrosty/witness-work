@@ -4677,8 +4677,7 @@
         "pebble": "Ramasser le galet",
         "feather": "Ramasser la plume",
         "lily": "Ramasser le lis"
-      },
-      "promptAnimals": "Un lionceau, un chiot, un chaton, un âne et un agneau"
+      }
     },
     "rename": {
       "title": "Renommer l’animal"

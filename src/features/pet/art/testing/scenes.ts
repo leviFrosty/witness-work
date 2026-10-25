@@ -155,7 +155,7 @@ export const SCENES: Readonly<Record<string, readonly [SceneInput, number]>> = {
       sign: DEMO_SIGN_DATA,
       lampLevel: 4,
       pet: { species: 'lamb', coat: 'default', mood: 'happy', seed: 1000 },
-      visitor: { species: 'dog', coat: 'white' },
+      visitors: [{ species: 'dog', coat: 'white' }],
     },
     0,
   ],

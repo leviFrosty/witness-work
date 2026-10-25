@@ -10,6 +10,7 @@ import { analytics } from '@/lib/analytics'
 import i18n from '@/lib/locales'
 import { logger } from '@/lib/logger'
 import { RootStackParamList } from '@/types/rootStack'
+import BuddiesPetVisitsSection from '@/features/buddies/components/BuddiesPetVisitsSection'
 import BuddiesCalendarSettingsSection from '@/features/buddies/components/BuddiesCalendarSettingsSection'
 import BuddiesDeleteDataButton from '@/features/buddies/components/BuddiesDeleteDataButton'
 import BuddiesNotificationsSection from '@/features/buddies/components/BuddiesNotificationsSection'
@@ -129,6 +130,7 @@ export default function BuddiesSettingsScreen({ route, navigation }: Props) {
           <BuddiesSharingSection />
           <BuddiesPlansSharingSection />
           <BuddiesCalendarSettingsSection />
+          <BuddiesPetVisitsSection />
           <BuddiesNotificationsSection />
         </BuddySettingsScope>
         {!buddy && (

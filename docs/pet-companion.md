@@ -193,18 +193,19 @@ hats only, none tied to a religion, a ceremony, an office or the military.
 
 ### Hidden moments (easter eggs)
 
-None of these are listed or explained in the app or the FAQ.
+None of these are listed or explained in the app or the FAQ. The `visitor` moment explains itself only
+while it's happening (Visiting Today in the pet's details), and Pet Settings can turn it off.
 
-| Id         | Trigger                                                                                                                                                                                                                                                                                                                                                                |
-| ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `gold`     | 365 days in a row at five hearts. Gold hearts, sparkles around the pet, and a one-line note under the name on the day it turns gold.                                                                                                                                                                                                                                   |
-| `rainbow`  | The day hearts reach 5 after the pet was asleep or died. Rainbow in the window (not at night) until midnight.                                                                                                                                                                                                                                                          |
-| `paradise` | Live window in daytime, 1 in 20 Home visits: a tiny lion and lamb stroll across the hills (Isaiah 11:6).                                                                                                                                                                                                                                                               |
-| `star`     | Live window at night, 1 in 15 Home visits: a shooting star crosses the window.                                                                                                                                                                                                                                                                                         |
-| `trick`    | 15 taps within 5 seconds (rubs don't count). Species tricks: lion rolls, pup chases its tail, kitten zoomies, donkey dances, lamb bounces.                                                                                                                                                                                                                             |
-| `twirl`    | A scratch: one drag that keeps rubbing the pet for 2 s, rub steps no more than 0.6 s apart (`SCRUB_TWIRL_MS`, `SCRUB_PAUSE_MS` in `lib/patTricks.ts`). A success haptic, then it crouches, hops with three quick turns in place, lands with a burst of hearts and says its happy sound (`motion/twirl.ts`, every species). Once per drag.                              |
-| `visitor`  | A plan today with a buddy who shares a pet: their pet sits beside yours.                                                                                                                                                                                                                                                                                               |
-| `gift`     | After 30 days in a row at five hearts, on deterministic gift days (hash of the pet's `seed` — or its adoption day when it has none — + day, about 1 in 10, at least 7 days apart) the pet leaves a keepsake (`olive fig pebble feather lily`, cycling) on the rug. Tap it (or use the screen reader's Pick up action) to keep it; the newest 5 sit on the window sill. |
+| Id         | Trigger                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `gold`     | 365 days in a row at five hearts. Gold hearts, sparkles around the pet, and a one-line note under the name on the day it turns gold.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| `rainbow`  | The day hearts reach 5 after the pet was asleep or died. Rainbow in the window (not at night) until midnight.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| `paradise` | Live window in daytime, 1 in 20 Home visits: a tiny lion and lamb stroll across the hills (Isaiah 11:6).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| `star`     | Live window at night, 1 in 15 Home visits: a shooting star crosses the window.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| `trick`    | 15 taps within 5 seconds (rubs don't count). Species tricks: lion rolls, pup chases its tail, kitten zoomies, donkey dances, lamb bounces.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| `twirl`    | A scratch: one drag that keeps rubbing the pet for 2 s, rub steps no more than 0.6 s apart (`SCRUB_TWIRL_MS`, `SCRUB_PAUSE_MS` in `lib/patTricks.ts`). A success haptic, then it crouches, hops with three quick turns in place, lands with a burst of hearts and says its happy sound (`motion/twirl.ts`, every species). Once per drag.                                                                                                                                                                                                                                                                                                         |
+| `visitor`  | Anything today with buddies who share a pet (a Plan or Follow-up they're on, or theirs the User joins): every one of their pets visits, sitting behind yours, from either side of it outward (`VISITOR_SPOTS`), so yours stays in front. Once a pat's hearts float off, each says who it came with; a long press outlines that pet, brings it in front of the other visitors, and opens what you do with that buddy today (on iOS, with the pet lifted above the menu). The pet's details sum them up in one Visiting Today row (the first few stacked, "With <buddy> and N others"), which opens all of them in a scrolling sheet (`PetVisits`). |
+| `gift`     | After 30 days in a row at five hearts, on deterministic gift days (hash of the pet's `seed` — or its adoption day when it has none — + day, about 1 in 10, at least 7 days apart) the pet leaves a keepsake (`olive fig pebble feather lily`, cycling) on the rug. Tap it (or use the screen reader's Pick up action) to keep it; the newest 5 sit on the window sill.                                                                                                                                                                                                                                                                            |
 
 JW sensitivities: no birthday or anniversary moments, no holiday or Memorial tie-ins, no ghost, halo,
 angel or "went to heaven" imagery for a pet that died, and no "magic" wording. Nothing is triggered by
@@ -279,9 +280,12 @@ interface PetRoomRecord {
   prompt card while no companion exists and the prompt isn't dismissed.
 - Buddy Card: optional `pet: { species, coat, name? }` field (schema `.optional().catch(undefined)`),
   shared only when the new `sharing.pet` toggle is on (default on; Buddies Settings → Pet, shown once
-  a companion exists). The `visitor` moment reads it through `usePetVisitor` (`src/app/pet/`): the
-  pet of an active buddy on one of today's Plans who didn't decline it, earliest Plan first. See
-  `docs/buddies-protocol.md`.
+  a companion exists). The `visitor` moment reads it through `usePetVisits` (`src/app/pet/`): the
+  pets of active buddies the User goes out with today, as the calendar counts it (their Plans and
+  Follow-ups, minus declines), each once, earliest first, minus buddies whose pets the User hid.
+  `petVisits` (All Buddies, with each buddy's own override, synced in the roster) is that choice:
+  Pet Settings (the pet's details → Settings), a buddy's Buddies settings → Your Pet, or Hide on a
+  visiting pet's long-press menu. See `docs/buddies-protocol.md`.
 
 ## Module layout
 
@@ -311,12 +315,14 @@ Feature tier `src/features/pet/`:
   `lib/intro.ts`, and tapping the card to decorate), the pet's details (`PetRoom`: name, hearts, what
   items open up by (the streak's flame and count, or "Active months: N"), always shown, even at 0,
   with an info popover saying what it counts and that it's the current value,
-  Rename / Change pet / Share, the room, and icon tabs for its hat and parts; `lib/roomOptions.ts`
+  Share and Settings beside its name, Rename / Change pet, buddies' pets visiting today, the room,
+  and icon tabs for its hat and parts; `lib/roomOptions.ts`
   holds its tabs, choices, thumbnail crops and unlock badges; `RoomOptionThumb` draws one crop of a
   still room), Rename (`PetRename`), and Share… on the card's menu and in the details (`lib/share.ts`: the card's view at 4×, nearest scaling, written as a PNG to the cache folder
   for the share sheet).
 
-App tier: `src/app/pet/` for cross-feature glue (visitor from buddies + plans, widget images),
+App tier: `src/app/pet/` for cross-feature glue (visitors from buddies + Plans + Follow-ups, the
+details route that hands them to `PetRoom`, Pet Settings with the buddies' switches, widget images),
 `src/app/widgets/petWidget*.ts` for the iOS widget snapshot.
 
 ## Rendering pipeline
@@ -325,8 +331,9 @@ App tier: `src/app/pet/` for cross-feature glue (visitor from buddies + plans, w
 2. `pixelArt.raster` rasterizes specs to RGBA `PixelBuffer`s; results are memoized by
    `(species, coat, pose key)` so steady-state frames don't rasterize.
 3. `art/scene.ts` composes, back to front: the room base (cached per room config + data: wall,
-   floor, window with rainbow, shelf, sign, sill, plant, stool, bed back, gift on the rug) → lamp
-   (behind the pets, so one running past it stays in front) → visitor pet → pet → bed front →
+   floor, window with rainbow, shelf, sign, sill, plant, stool, bed back, gift on the rug) → visitors
+   (all behind the pet, furthest back first) → lamp and its stool (over the visitors, so they always show, but behind
+   the pet, so one running past it stays in front) → pet → bed front →
    lighting over all of it (cached per lamp × level × time of day × breathing phase; the pets'
    pixels, a `PixelMask`, take half the room's darkness so a dark coat reads at night) → window moments (paradise walkers, shooting star) and the gift sparkle →
    particles and dust.

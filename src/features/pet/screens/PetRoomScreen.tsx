@@ -8,16 +8,18 @@ import {
   Flame as FlameIcon,
   PawPrint as PawPrintIcon,
   Pencil as PencilIcon,
+  Settings as SettingsIcon,
   Share as ShareIcon,
 } from 'lucide-react-native'
 import Button from '@/components/ui/Button'
+import IconButton from '@/components/ui/IconButton'
 import ChoiceChips from '@/components/ui/ChoiceChips'
 import InfoPopover from '@/components/ui/InfoPopover'
 import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
 import { unlockedPart, unlockTab } from '@/features/pet/lib/unlockNews'
 import { settleAllPetUnlocks } from '@/features/pet/stores/petUnlockNews'
-import type { RoomItemId } from '@/types/pet'
+import type { PetVisit, RoomItemId } from '@/types/pet'
 import useTheme from '@/contexts/theme'
 import { analytics } from '@/lib/analytics'
 import i18n from '@/lib/locales'
@@ -52,13 +54,18 @@ import PetSceneView, {
 import { usePetSession } from '@/features/pet/stores/petSession'
 import usePetSheetInsets from '@/features/pet/hooks/usePetSheetInsets'
 import PetSheetClose from '@/features/pet/components/PetSheetClose'
+import PetVisitsSummary from '@/features/pet/components/PetVisitsSummary'
+import useShownPetVisits from '@/features/pet/hooks/useShownPetVisits'
 
-type Props = NativeStackScreenProps<RootStackParamList, 'PetRoom'>
+type Props = NativeStackScreenProps<RootStackParamList, 'PetRoom'> & {
+  /** Buddies' pets visiting today. */
+  visits: readonly PetVisit[]
+}
 
 /** Wider previews only make the sheet taller (iPad, landscape). */
 const PREVIEW_MAX_WIDTH = 420
 
-/** A labelled pill under the pet's name: Rename, Change pet, Share. */
+/** A labelled pill under the pet's name: Rename, Change pet. */
 function ActionPill({
   icon,
   label,
@@ -93,6 +100,39 @@ function ActionPill({
         {label}
       </Text>
     </Button>
+  )
+}
+
+/** Space between the corner buttons, so their full frames don't overlap. */
+const CORNER_GAP = 16
+
+/** A round icon button beside the pet's name: Share, Settings. */
+function CornerButton({
+  icon,
+  label,
+  onPress,
+}: {
+  icon: AppIcon
+  label: string
+  onPress: () => void
+}) {
+  const theme = useTheme()
+  return (
+    <IconButton
+      icon={icon}
+      size={18}
+      color={theme.colors.text}
+      onPress={onPress}
+      accessibilityLabel={label}
+      neighborGap={CORNER_GAP}
+      // The sheet's grabber drags from here.
+      frame
+      style={{
+        padding: 7,
+        borderRadius: 99,
+        backgroundColor: theme.colors.backgroundLighter,
+      }}
+    />
   )
 }
 
@@ -167,13 +207,17 @@ function UnlockCurrency({
 }
 
 /**
- * The pet's details, opened from its Home card: its name and hearts, what its
- * room items open up by, quick Rename / Change pet / Share, and the room live
- * with a tab per part (its hat first), each part's options drawn from the room
- * itself. A choice applies and saves at once; pulling the sheet down closes
- * it.
+ * The pet's details, opened from its Home card: its name and hearts with Share
+ * and Settings beside them, what its room items open up by, Rename / Change
+ * pet, buddies' pets visiting today, the room live with a tab per part (its hat
+ * first), each part's options drawn from the room itself. A choice applies and
+ * saves at once; pulling the sheet down closes it.
  */
-export default function PetRoomScreen({ navigation, route }: Props) {
+export default function PetRoomScreen({
+  navigation,
+  route,
+  visits: realVisits,
+}: Props) {
   const theme = useTheme()
   const sheetInsets = usePetSheetInsets()
   // Android shows it full screen: the pinned room stops below the status bar.
@@ -205,6 +249,7 @@ export default function PetRoomScreen({ navigation, route }: Props) {
   // picker closes (and Home doesn't play it again).
   const sceneRef = useRef<PetSceneHandle>(null)
   const entrancePending = usePetSession((s) => s.entrance !== null)
+  const visits = useShownPetVisits(realVisits)
   useEffect(() => {
     if (!focused || !hasPet) return
     const species = usePetSession.getState().takeEntrance()
@@ -279,8 +324,34 @@ export default function PetRoomScreen({ navigation, route }: Props) {
             gap: 12,
           }}
         >
-          <View accessibilityRole='header'>
-            <PetCardHeader name={scene.name} life={scene.life} size='xl' />
+          <View
+            style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 12 }}
+          >
+            <View accessibilityRole='header' style={{ flex: 1 }}>
+              <PetCardHeader name={scene.name} life={scene.life} size='xl' />
+            </View>
+            <View
+              style={{
+                flexDirection: 'row',
+                gap: CORNER_GAP,
+                // Android's close button sits in the corner, past these.
+                marginEnd: Platform.OS === 'android' ? 42 : 0,
+              }}
+            >
+              <CornerButton
+                icon={ShareIcon}
+                label={i18n.t('pet.details.share')}
+                onPress={() => {
+                  analytics.capture('pet_share_opened', { from: 'details' })
+                  navigation.navigate('PetShare')
+                }}
+              />
+              <CornerButton
+                icon={SettingsIcon}
+                label={i18n.t('pet.details.settings')}
+                onPress={() => navigation.navigate('PetSettings')}
+              />
+            </View>
           </View>
           <UnlockCurrency
             mode={unlocks.mode}
@@ -301,15 +372,8 @@ export default function PetRoomScreen({ navigation, route }: Props) {
                 navigation.navigate('PetPicker', { mode: 'change' })
               }
             />
-            <ActionPill
-              icon={ShareIcon}
-              label={i18n.t('pet.details.share')}
-              onPress={() => {
-                analytics.capture('pet_share_opened', { from: 'details' })
-                navigation.navigate('PetShare')
-              }}
-            />
           </View>
+          <PetVisitsSummary visits={visits} />
         </View>
         <View
           style={{

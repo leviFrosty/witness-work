@@ -3797,6 +3797,8 @@ describe('badges', () => {
       plansUpdatedAt: 5,
       showOnCalendar: true,
       calendarUpdatedAt: 0,
+      petVisits: true,
+      petVisitsUpdatedAt: 0,
     }
     const older = { photo: true, tenure: true, streak: true, updatedAt: 20 }
     // An older app's roster leaves them out.
@@ -3868,6 +3870,8 @@ describe('badges', () => {
       plansUpdatedAt: 0,
       showOnCalendar: true,
       calendarUpdatedAt: 0,
+      petVisits: true,
+      petVisitsUpdatedAt: 0,
     }
     // An older app's later photo choice, with no badges fields.
     expect(

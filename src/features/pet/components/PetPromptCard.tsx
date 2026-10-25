@@ -9,8 +9,9 @@ import useTheme from '@/contexts/theme'
 import { analytics } from '@/lib/analytics'
 import i18n from '@/lib/locales'
 import { usePreferences } from '@/stores/preferences'
-import { defaultCoatFor, PET_SPECIES_IDS } from '@/types/pet'
+import { defaultCoatFor, PET_SPECIES_IDS, type PetSpecies } from '@/types/pet'
 import type { RootStackNavigation } from '@/types/rootStack'
+import { speciesName } from '@/features/pet/lib/names'
 import PetSpriteTile from '@/features/pet/render/PetSpriteTile'
 import useAccessibilityTextSize from '@/hooks/useAccessibilityTextSize'
 import useOnScreen from '@/hooks/useOnScreen'
@@ -18,9 +19,9 @@ import useSceneActive from '@/features/pet/render/useSceneActive'
 
 /**
  * Home's one-time offer of a Pet Companion, in the pet's slot: the five animals
- * idling, Choose a pet (the picker) and Not now (hides the offer on every
- * synced device until Pet is turned on in Settings → Preferences → Home
- * Screen).
+ * idling (tap one for the picker with it chosen), Choose a pet (the picker) and
+ * Not now (hides the offer on every synced device until Pet is turned on in
+ * Settings → Preferences → Home Screen).
  */
 export default function PetPromptCard() {
   const theme = useTheme()
@@ -33,9 +34,12 @@ export default function PetPromptCard() {
   const animalsRef = useRef<View>(null)
   const onScreen = useOnScreen(animalsRef, useSceneActive())
 
-  const choose = () => {
-    analytics.capture('pet_prompt_answered', { choice: 'choose' })
-    navigation.navigate('PetPicker', { mode: 'adopt' })
+  const choose = (species?: PetSpecies) => {
+    analytics.capture('pet_prompt_answered', {
+      choice: 'choose',
+      ...(species ? { species } : {}),
+    })
+    navigation.navigate('PetPicker', { mode: 'adopt', species })
   }
   const notNow = () => {
     analytics.capture('pet_prompt_answered', { choice: 'not_now' })
@@ -72,9 +76,6 @@ export default function PetPromptCard() {
       </View>
       <View
         ref={animalsRef}
-        accessible
-        accessibilityRole='image'
-        accessibilityLabel={i18n.t('pet.a11y.promptAnimals')}
         style={{
           flexDirection: 'row',
           justifyContent: 'space-between',
@@ -82,8 +83,12 @@ export default function PetPromptCard() {
         }}
       >
         {PET_SPECIES_IDS.map((species, i) => (
-          <View
+          <Button
             key={species}
+            accessibilityRole='button'
+            accessibilityLabel={speciesName(species)}
+            accessibilityHint={i18n.t('pet.a11y.promptAnimalHint')}
+            onPress={() => choose(species)}
             style={{
               padding: 4,
               borderRadius: theme.numbers.borderRadiusMd,
@@ -97,7 +102,7 @@ export default function PetPromptCard() {
               seed={i * 900}
               paused={!onScreen}
             />
-          </View>
+          </Button>
         ))}
       </View>
       <View style={{ flexDirection: largeText ? 'column' : 'row', gap: 10 }}>
@@ -116,7 +121,7 @@ export default function PetPromptCard() {
         </Button>
         <Button
           accessibilityRole='button'
-          onPress={choose}
+          onPress={() => choose()}
           style={{ ...buttonStyle, backgroundColor: theme.colors.accent }}
         >
           <Text

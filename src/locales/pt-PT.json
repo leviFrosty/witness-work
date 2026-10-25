@@ -4677,8 +4677,7 @@
         "pebble": "Apanhar a pedrinha",
         "feather": "Apanhar a pena",
         "lily": "Apanhar o lírio"
-      },
-      "promptAnimals": "Um leãozinho, um cachorrinho, um gatinho, um burro e um cordeirinho"
+      }
     },
     "rename": {
       "title": "Mudar o nome da mascote"

@@ -20,7 +20,10 @@ const RootStackComponent = () => {
   return (
     <RootStack.Navigator
       // The tabs keep their own; the badge viewer places its coin in window
-      // coordinates.
+      // coordinates. A form sheet keeps its own color in the insets, and its
+      // wrapper has to stay a layout-only view: a filled one is a real native
+      // view, so react-native-screens can't find the sheet's scroll view to
+      // size it, and a full-height sheet opens blank on iPhone Duo.
       screenLayout={({ route, options, children }) =>
         route.name === 'Root' || route.name === 'BadgeView' ? (
           children
@@ -28,7 +31,8 @@ const RootStackComponent = () => {
           <HorizontalSafeArea
             backgroundColor={
               options.presentation === 'transparentModal' ||
-              options.presentation === 'containedTransparentModal'
+              options.presentation === 'containedTransparentModal' ||
+              options.presentation === 'formSheet'
                 ? undefined
                 : theme.colors.background
             }

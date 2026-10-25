@@ -12,7 +12,7 @@ import {
  * How locked room items open up (`docs/pet-companion.md`):
  *
  * - `streak`: each the first time the raw Service Streak count reaches its number
- *   (`STREAK_THRESHOLDS`), not the `STREAK_MIN` display gate.
+ *   (`STREAK_THRESHOLDS`).
  * - `months`: one per active month since adoption, for a User with streaks
  *   hidden. Months, not hours, so every role unlocks at the same pace (ADR
  *   0019, ADR 0030).

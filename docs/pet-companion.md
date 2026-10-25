@@ -62,7 +62,7 @@ weak 31–33, asleep 34–59, died 60+. A weekly publisher stays at five forever
 ### Lamp (Service Streak)
 
 The lamp's brightness is the existing Service Streak (`useServiceStreak`, ADR 0003), using the raw
-count, not the `STREAK_MIN` display gate. Levels 0–5:
+count. Levels 0–5:
 
 | Level | `plans` streak (days) | `months` streak (Kingdom Publishers) |
 | ----- | --------------------- | ------------------------------------ |
@@ -93,8 +93,8 @@ Swappable parts, each a registry of options (`src/features/pet/art/room/`):
 - "Live" window: time of day from the device clock (night < 6, dawn < 9, day < 17, dusk < 20, night),
   season from the date and hemisphere (southern-hemisphere region codes flip the season).
 - Unlocks: every non-starter item has a place in `UNLOCK_ORDER` and a Service Streak number
-  (`STREAK_THRESHOLDS` in `lib/unlocks.ts`). It unlocks the first time the raw streak count (not the
-  `STREAK_MIN` display gate) reaches its number, and stays unlocked after the streak ends:
+  (`STREAK_THRESHOLDS` in `lib/unlocks.ts`). It unlocks the first time the raw streak count reaches its
+  number, and stays unlocked after the streak ends:
 
   | Kind                          | Numbers, in `UNLOCK_ORDER`                                      |
   | ----------------------------- | --------------------------------------------------------------- |
@@ -308,7 +308,9 @@ Feature tier `src/features/pet/`:
   gift gestures; the sound bubble), `PetSpriteTile` (one idling sprite for the prompt and picker).
 - `components/`, `hooks/`, `screens/` — Home section, prompt card, picker (`PetPicker`, which shows
   the adoption intro `PetIntro` after Adopt: hearts, the streak with a fully unlocked room from
-  `lib/intro.ts`, and tapping the card to decorate), the pet's details (`PetRoom`: name, hearts,
+  `lib/intro.ts`, and tapping the card to decorate), the pet's details (`PetRoom`: name, hearts, what
+  items open up by (the streak's flame and count, or "Active months: N"), always shown, even at 0,
+  with an info popover saying what it counts and that it's the current value,
   Rename / Change pet / Share, the room, and icon tabs for its hat and parts; `lib/roomOptions.ts`
   holds its tabs, choices, thumbnail crops and unlock badges; `RoomOptionThumb` draws one crop of a
   still room), Rename (`PetRename`), and Share… on the card's menu and in the details (`lib/share.ts`: the card's view at 4×, nearest scaling, written as a PNG to the cache folder

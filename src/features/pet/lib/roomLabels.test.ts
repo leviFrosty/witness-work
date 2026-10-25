@@ -101,13 +101,13 @@ describe('Decorate Room labels', () => {
   it('names every tab, section and option', () => {
     expect(ROOM_TABS.map(roomTabLabel)).toEqual([
       'Hat',
-      'Window',
       'Wall',
       'Floor',
       'Bed',
       'Shelf',
       'Light',
       'Sign',
+      'Window',
     ])
     expect(roomSectionLabel('windowTime')).toBe('Time of day')
     expect(roomSectionLabel('wallPattern')).toBe('Pattern')

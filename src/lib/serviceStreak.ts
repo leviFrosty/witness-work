@@ -22,7 +22,10 @@ import type {
  */
 export type StreakKind = 'plans' | 'months'
 
-/** A streak shows, and is celebrated, once it's this long. */
+/**
+ * A streak is celebrated, and its reminders go out, once it's this long. It
+ * shows from its first day.
+ */
 export const STREAK_MIN = 3
 
 const DAY = 'YYYY-MM-DD'
@@ -193,9 +196,9 @@ export function serviceStreak(
   return streak
 }
 
-/** The count people see; a streak shorter than `STREAK_MIN` isn't shown. */
+/** The count people see: any streak at all. */
 export const shownStreak = (streak: ServiceStreak): number =>
-  streak.count >= STREAK_MIN ? streak.count : 0
+  Math.max(0, streak.count)
 
 /** Streak Reminders go out only while the streak shows at all. */
 export const streakRemindersOn = (prefs: {
@@ -219,11 +222,12 @@ export function streakEndsSoon(streak: ServiceStreak, now: Date): boolean {
 }
 
 /**
- * When to remind the User that a shown streak is about to end: 6 PM on its last
- * day for Plans, three days before the month is out for months.
+ * When to remind the User that a streak of `STREAK_MIN` or more is about to
+ * end: 6 PM on its last day for Plans, three days before the month is out for
+ * months.
  */
 export function streakReminderAt(streak: ServiceStreak): Date | null {
-  if (!shownStreak(streak) || !streak.due) return null
+  if (streak.count < STREAK_MIN || !streak.due) return null
   return moment(streak.due.endsAt)
     .subtract(streak.kind === 'plans' ? 1 : 3, 'days')
     .hour(REMINDER_HOUR)

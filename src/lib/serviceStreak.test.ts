@@ -239,8 +239,9 @@ const streak = (overrides: Partial<ServiceStreak>): ServiceStreak => ({
 })
 
 describe('shownStreak', () => {
-  it('hides streaks under 3', () => {
-    expect(shownStreak(streak({ count: 2 }))).toBe(0)
+  it('shows any streak from its first day', () => {
+    expect(shownStreak(streak({ count: 0 }))).toBe(0)
+    expect(shownStreak(streak({ count: 1 }))).toBe(1)
     expect(shownStreak(streak({ count: 3 }))).toBe(3)
   })
 })
@@ -262,8 +263,8 @@ describe('streakEndsSoon', () => {
     expect(streakEndsSoon(month, new Date(2026, 9, 26))).toBe(true)
   })
 
-  it("doesn't warn about a streak that isn't shown", () => {
-    expect(streakEndsSoon(streak({ count: 2 }), now)).toBe(false)
+  it("doesn't warn without a streak", () => {
+    expect(streakEndsSoon(streak({ count: 0 }), now)).toBe(false)
   })
 
   describe('when clocks change', () => {

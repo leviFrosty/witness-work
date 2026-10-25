@@ -8,8 +8,6 @@ import type { ProgressCardProps } from '@/features/progress/components/cards/typ
 /** The Service Streak as it stands today, whichever month is shown. */
 export default function StreakCard({ size }: ProgressCardProps) {
   const streak = useServiceStreak()
-  // The card shows a streak from its first day; elsewhere it waits for
-  // STREAK_MIN.
   const count = streak.count
   const months = streak.kind === 'months'
 

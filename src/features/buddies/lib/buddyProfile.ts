@@ -4,7 +4,6 @@ import { getStartDateLabels } from '@/constants/publisher'
 import { buddyCardBadges } from '@/lib/badges/display'
 import i18n, { type TranslationKey } from '@/lib/locales'
 import { tracksTenure } from '@/lib/publisherCapabilities'
-import { STREAK_MIN } from '@/lib/serviceStreak'
 import { usePreferences } from '@/stores/preferences'
 import { useProfile } from '@/stores/profile'
 import type { Publisher } from '@/types/publisher'
@@ -120,7 +119,7 @@ export function buddyStreakCount(
   streak: BuddyStreak | undefined,
   now: Date = new Date()
 ): number {
-  if (!streak || streak.n < STREAK_MIN) return 0
+  if (!streak || streak.n < 1) return 0
   return moment(now).format('YYYY-MM-DD') <= streak.until ? streak.n : 0
 }
 

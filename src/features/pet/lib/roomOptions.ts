@@ -21,16 +21,16 @@ import {
  * the screen only lays it out.
  */
 
-/** The sheet's tabs, in order. `lamp` is labelled "Light". */
+/** The sheet's tabs, in order, the window last. `lamp` is labelled "Light". */
 export const ROOM_TABS = [
   'hat',
-  'window',
   'wall',
   'floor',
   'bed',
   'shelf',
   'lamp',
   'sign',
+  'window',
 ] as const
 export type RoomTab = (typeof ROOM_TABS)[number]
 

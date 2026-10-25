@@ -12,8 +12,8 @@ const THRESHOLDS: Record<ServiceStreak['kind'], readonly number[]> = {
 }
 
 /**
- * The room lamp's brightness, 0–5, from the raw Service Streak count (not the
- * `STREAK_MIN` display gate). With streaks hidden it still burns, at 3.
+ * The room lamp's brightness, 0–5, from the raw Service Streak count. With
+ * streaks hidden it still burns, at 3.
  */
 export function lampLevel(
   streak: Pick<ServiceStreak, 'kind' | 'count'>,

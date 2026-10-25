@@ -151,8 +151,8 @@ export const SPRITE_HASHES: Readonly<Record<string, string>> = {
 /**
  * FNV-1a hashes of the sample scenes in `scenes.ts`. Changed on purpose since
  * the port: the window's cross bars darken with the room like its frame (the
- * board lit them like glass), the lamp flicker is rounded to 0.1 px, and the
- * pup is redrawn as a golden retriever.
+ * board lit them like glass), the lamp flicker is rounded to 0.1 px, the pup is
+ * redrawn as a golden retriever, and a visitor sits just behind the pet.
  */
 export const SCENE_HASHES: Readonly<Record<string, string>> = {
   winterNight: '4549e407',
@@ -163,7 +163,7 @@ export const SCENE_HASHES: Readonly<Record<string, string>> = {
   rainbow: '24a77dd5',
   paradise: '48e0ca18',
   shootingStar: '499e960c',
-  visitor: '81cef461',
+  visitor: '81de0109',
   gifts: '3829eae4',
   goldArabic: 'bf733354',
 }

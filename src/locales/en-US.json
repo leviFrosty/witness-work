@@ -1331,6 +1331,9 @@
   "buddies_buddySeesTitle": "How {{name}} sees you",
   "buddies_calendarSettingsTitle": "Your Calendar",
   "buddies_showOnCalendarInfo": "Shows the days buddies plan to go out on your calendar. Plans you go out on together always show.",
+  "buddies_petSettingsTitle": "Your Pet",
+  "buddies_petVisits": "Their pets visit mine",
+  "buddies_petVisitsInfo": "On a day you go out together, a buddy's pet visits yours.",
   "buddies_alertsThisDevice": "Only on this device.",
   "buddies_buddySettings": "Sharing & Alerts",
   "buddies_buddySettingsFollowsAll": "Same as All Buddies",
@@ -4678,7 +4681,9 @@
         "feather": "Pick up the feather",
         "lily": "Pick up the lily"
       },
-      "promptAnimals": "A lion cub, pup, kitten, donkey and lamb"
+      "promptAnimalHint": "Choose this pet",
+      "sceneWithVisitors": "{{name}}'s room. Visiting: {{visitors}}",
+      "visitor": "{{pet}}, {{name}}'s pet"
     },
     "rename": {
       "title": "Rename pet"
@@ -4927,7 +4932,8 @@
       "streakInfoMonths": "Your streak is {{count}} right now. It counts months in a row that you shared in the ministry.",
       "activeMonths": "Active months: {{count}}",
       "activeMonthsInfoTitle": "Active months",
-      "activeMonthsInfo": "You have {{count}} so far. A month counts when you log time or save a visit or plan in it after adopting your pet. The months don't need to be in a row."
+      "activeMonthsInfo": "You have {{count}} so far. A month counts when you log time or save a visit or plan in it after adopting your pet. The months don't need to be in a row.",
+      "settings": "Settings"
     },
     "intro": {
       "hearts": {
@@ -4961,6 +4967,35 @@
       "decorate": "Decorate Room",
       "trayHat": "New hat: {{hat}}",
       "trayRoomDescription": "{{where}}. {{detail}}"
+    },
+    "visitor": {
+      "line": "Visiting with {{name}}!",
+      "viewPlan": "View Plan",
+      "viewFollowUp": "View Follow-up",
+      "viewBuddy": "View {{name}}",
+      "hide": "Hide {{name}}'s Pet",
+      "hidden": "{{name}}'s pet won't visit",
+      "todayTitle": "Visiting Today",
+      "summary": {
+        "one": "{{count}} Pet Visiting Today",
+        "other": "{{count}} Pets Visiting Today"
+      },
+      "withOne": "With {{name}}",
+      "withMore": {
+        "one": "With {{name}} and {{count}} other",
+        "other": "With {{name}} and {{count}} others"
+      },
+      "detail": "{{name}}'s pet · {{activity}}",
+      "planAt": "Plan at {{time}}",
+      "followUpAt": "Follow-up at {{time}}"
+    },
+    "settings": {
+      "title": "Pet Settings",
+      "showOnHome": "Show on Home",
+      "buddiesTitle": "Buddies' Pets",
+      "visits": "Buddies' pets visit",
+      "visitsInfo": "On a day you go out with a buddy, their pet visits yours.",
+      "noBuddyPets": "None of your buddies share a pet yet."
     }
   },
   "handoff_newDoneSynced": "Cloud Sync is bringing your records, contacts, and notes to this phone. They appear in a moment.",

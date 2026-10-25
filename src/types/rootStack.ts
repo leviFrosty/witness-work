@@ -6,6 +6,7 @@ import type {
   PlanLocation,
   RecurringPlanFrequencies,
 } from '@/types/timeEntry'
+import type { PetSpecies } from '@/types/pet'
 import type { RichText } from '@/types/richText'
 import type { SupporterGateAttribution } from '@/lib/supporterGateAnalytics'
 
@@ -290,12 +291,17 @@ export type RootStackParamList = {
     | undefined
   MileageFuelForm: { fuelId?: string } | undefined
   /** Adopt a Pet Companion, or Change Pet (species and coat). */
-  PetPicker: { mode: 'adopt' | 'change' }
+  /** `species`: the animal chosen on open (one tapped in the Home offer). */
+  PetPicker: { mode: 'adopt' | 'change'; species?: PetSpecies }
   /** The pet's details: its hat and room parts, applied as they're picked. */
   /** `focus`: an unlocked item (`hat:beret`) whose tab opens first. */
   PetRoom: { focus?: string } | undefined
   /** Rename the companion (an empty name shows the species name). */
   PetRename: undefined
+  /** The pet's settings: shown on Home, and buddies' pets visiting. */
+  PetSettings: undefined
+  /** Every buddy's pet visiting today, in a scrolling list. */
+  PetVisits: undefined
   /** The pet's share card, and Share for a picture of it. */
   PetShare: undefined
   /** The User's badge collection, with progress toward each next level. */

@@ -54,12 +54,11 @@ export default function usePetRoomScene(): PetRoomScene | null {
     sign,
     pendingGift: null,
     keepsakes: pet.keepsakes,
-    visitor: null,
+    visits: [],
     roll: NO_ROLL,
     override: override && {
       ...override,
       window: undefined,
-      visitor: null,
       gift: null,
       paradise: false,
       star: false,

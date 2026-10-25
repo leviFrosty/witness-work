@@ -6,6 +6,7 @@
  * a flame glow from (fx, fy) instead, dark at level 0 and brighter each level.
  */
 import {
+  createBuffer,
   createLru,
   fillRect,
   mix,
@@ -20,6 +21,7 @@ import {
   type ShapeSpec,
 } from '@/lib/pixelArt'
 import { LAMP_IDS, type LampId } from '@/types/pet'
+import { SCENE_H, SCENE_W } from '../layout'
 
 export { LAMP_IDS }
 export type { LampId }
@@ -1959,4 +1961,18 @@ export function drawStool(buf: PixelBuffer): void {
   fillRect(buf, 116, 79, 152, 80, STOOL.edge)
   fillRect(buf, 119, 80, 122, 92, STOOL.leg)
   fillRect(buf, 146, 80, 149, 92, STOOL.leg)
+}
+
+let stoolOnly: PixelBuffer | null = null
+
+/**
+ * The stool alone on a clear scene-sized layer, drawn again over the visiting
+ * pets so the lamp and what it stands on stay in front of them.
+ */
+export function stoolLayer(): PixelBuffer {
+  if (!stoolOnly) {
+    stoolOnly = createBuffer(SCENE_W, SCENE_H)
+    drawStool(stoolOnly)
+  }
+  return stoolOnly
 }

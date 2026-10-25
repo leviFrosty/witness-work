@@ -7,8 +7,9 @@
  *
  * 1. Room base (cached: wall, floor, window + rainbow, shelf, sign, sill, plant,
  *    stool, bed back layer, gift on the rug)
- * 2. Lamp (behind the pets: a pet running or hopping past it stays in front)
- * 3. Visitor pet (mirrored, at x 86), then the pet in its hat, then the bed front
+ * 2. Visiting pets (mirrored, at `VISITOR_SPOTS`, all behind the pet)
+ * 3. Lamp and its stool (in front of the visitors, behind the pet: a pet running
+ *    or hopping past it stays in front), the pet in its hat, then the bed front
  *    layer
  * 4. Lighting (cached per lamp × level × time × breathing phase); the pets' pixels
  *    darken less, so they stay the centre of the room at night
@@ -23,6 +24,7 @@ import {
   copyInto,
   createBuffer,
   createMask,
+  isOpaque,
   maskOpaque,
   opaqueBounds,
   rgbPalette,
@@ -41,13 +43,14 @@ import {
 } from '../motion'
 import { HAT_ANCHOR_Y, HAT_EARS_THROUGH, hatOrigin, hatSprite } from './hats'
 import { applyLighting } from './lighting'
-import { PET_X, PET_Y, SCENE_H, SCENE_W, VISITOR_X } from './layout'
+import { PET_X, PET_Y, SCENE_H, SCENE_W, VISITOR_SPOTS } from './layout'
 import { draw as drawParticles, type ParticleState } from './particles'
 import {
   bedFrontLayer,
   drawRoomBase,
   LAMPS,
   lampSprite,
+  stoolLayer,
   type GiftKind,
   type ResolvedRoom,
   type SignData,
@@ -86,6 +89,8 @@ export interface SceneVisitor {
   readonly coat: string
   /** Joyful until then. */
   readonly joyUntilMs?: number
+  /** Outlined, in front of the other visitors: the one being long-pressed. */
+  readonly outlined?: boolean
 }
 
 /** Hidden moments showing this frame. */
@@ -107,7 +112,8 @@ export interface SceneInput {
   /** Lamp level 0–5 (the Service Streak). */
   readonly lampLevel: number
   readonly pet: ScenePet | null
-  readonly visitor?: SceneVisitor | null
+  /** Buddies' pets visiting, in `VISITOR_SPOTS` order. */
+  readonly visitors?: readonly SceneVisitor[]
   readonly moments?: SceneMoments
   readonly particles?: ParticleState | null
   /** Reduce Motion: no idle bob, no motion offsets, particles stay put. */
@@ -291,20 +297,83 @@ function drawPetBody(
 function drawVisitor(
   buf: PixelBuffer,
   visitor: SceneVisitor,
+  [x, y]: readonly [number, number],
+  seed: number,
   tMs: number,
   reduceMotion: boolean,
   subject: PixelMask
 ): void {
   const joy = visitor.joyUntilMs !== undefined && tMs < visitor.joyUntilMs
-  const idle = idlePose(joy ? 'joy' : 'happy', reduceMotion ? 0 : tMs, 777)
+  const idle = idlePose(joy ? 'joy' : 'happy', reduceMotion ? 0 : tMs, seed)
   const sprite = petSprite(visitor.species, visitor.coat, {
     ...idle,
     blink: reduceMotion ? false : idle.blink,
     flip: true,
     lie: false,
   })
-  blit(buf, sprite, VISITOR_X, PET_Y)
-  maskOpaque(subject, sprite, VISITOR_X, PET_Y)
+  // The one being long-pressed, in its outline.
+  const shown = visitor.outlined ? outlinedSprite(sprite) : sprite
+  const at = visitor.outlined ? 2 : 0
+  blit(buf, shown, x - at, y - at)
+  maskOpaque(subject, shown, x - at, y - at)
+}
+
+const OUTLINE = rgbPalette({ light: '#fffbe6', dark: '#3a2a20' })
+
+/**
+ * `sprite` in a sticker outline, one pixel larger on every side: a light line
+ * around its shape, then a dark one around that.
+ */
+function outlinedSprite(sprite: PixelBuffer): PixelBuffer {
+  const out = createBuffer(sprite.width + 4, sprite.height + 4)
+  const inside = (x: number, y: number) =>
+    x >= 0 &&
+    y >= 0 &&
+    x < sprite.width &&
+    y < sprite.height &&
+    isOpaque(sprite, x, y)
+  const ring =
+    (filled: (x: number, y: number) => boolean) => (x: number, y: number) =>
+      !filled(x, y) &&
+      (filled(x - 1, y) ||
+        filled(x + 1, y) ||
+        filled(x, y - 1) ||
+        filled(x, y + 1))
+  const light = ring(inside)
+  const dark = ring((x, y) => inside(x, y) || light(x, y))
+  for (let y = -2; y < sprite.height + 2; y++) {
+    for (let x = -2; x < sprite.width + 2; x++) {
+      if (light(x, y)) setPixel(out, x + 2, y + 2, OUTLINE.light)
+      else if (dark(x, y)) setPixel(out, x + 2, y + 2, OUTLINE.dark)
+    }
+  }
+  blit(out, sprite, 2, 2)
+  return out
+}
+
+/**
+ * Draws the visitors, the furthest back first and the outlined one in front of
+ * the rest; all sit behind the pet.
+ */
+function drawVisitors(
+  buf: PixelBuffer,
+  visitors: readonly SceneVisitor[],
+  tMs: number,
+  reduceMotion: boolean,
+  subject: PixelMask
+): void {
+  visitors
+    .slice(0, VISITOR_SPOTS.length)
+    .map((visitor, i) => ({ visitor, i, spot: VISITOR_SPOTS[i] }))
+    .sort(
+      (a, b) =>
+        Number(!!a.visitor.outlined) - Number(!!b.visitor.outlined) ||
+        a.spot[1] - b.spot[1]
+    )
+    .forEach(({ visitor, i, spot }) =>
+      // Their own idle timing, so they don't bob in step.
+      drawVisitor(buf, visitor, spot, 777 + i * 131, tMs, reduceMotion, subject)
+    )
 }
 
 /** Which pixels are the pets', for the lighting (reused frame to frame). */
@@ -352,11 +421,20 @@ export function composeScene(
     })
   )
 
-  const lamp = LAMPS[room.lamp]
-  blit(out, lampSprite(room.lamp, level, tMs), lamp.ox, lamp.oy)
-
   subject.data.fill(0)
-  if (input.visitor) drawVisitor(out, input.visitor, tMs, reduceMotion, subject)
+  drawVisitors(out, input.visitors ?? [], tMs, reduceMotion, subject)
+
+  // Over the visitors, so the User's lamp (and its stool) always shows; lit as
+  // the room.
+  const lamp = LAMPS[room.lamp]
+  if (lamp.stool && input.visitors?.length) {
+    const stool = stoolLayer()
+    blit(out, stool, 0, 0)
+    maskOpaque(subject, stool, 0, 0, false)
+  }
+  const lampImage = lampSprite(room.lamp, level, tMs)
+  blit(out, lampImage, lamp.ox, lamp.oy)
+  maskOpaque(subject, lampImage, lamp.ox, lamp.oy, false)
   let origin: readonly [number, number] = [PET_X, PET_Y]
   if (input.pet) {
     const pet = frame ?? petFrame(input.pet, tMs, reduceMotion)

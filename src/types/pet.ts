@@ -493,3 +493,26 @@ export type PetSnapshot = {
 
 /** What a Buddy Card shares about the User's pet. */
 export type SharedPet = { species: PetSpecies; coat: string; name?: string }
+
+/** What the User does today with a visiting pet's buddy: what it opens. */
+export type PetVisitActivity =
+  | { type: 'plan'; planId: string }
+  /** The User's Follow-up, with the buddy invited along. */
+  | { type: 'followUp'; visitId: string }
+  /** The buddy's Follow-up the User is joining. */
+  | { type: 'followUpInvitation'; from: string; shareId: string }
+
+/**
+ * A buddy's pet visiting the User's pet today (the `visitor` hidden moment):
+ * the User goes out with the buddy today.
+ */
+export type PetVisit = {
+  /** The buddy's inbox id. */
+  inboxId: string
+  /** The buddy's name as the User sees it (their nickname, if any). */
+  buddyName: string
+  pet: SharedPet
+  /** The first thing with the buddy today, in minutes after midnight. */
+  startMinutes: number
+  activity: PetVisitActivity
+}

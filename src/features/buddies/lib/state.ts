@@ -79,6 +79,10 @@ export type BuddySharing = {
   showOnCalendar: boolean
   /** When `showOnCalendar` last changed, 0 while it's the default. */
   calendarUpdatedAt: number
+  /** Buddies' pets visit the User's pet on days they go out together. */
+  petVisits: boolean
+  /** When `petVisits` last changed, 0 while it's the default. */
+  petVisitsUpdatedAt: number
 }
 
 /** Settings a buddy can have their own value for; the rest are for everyone. */
@@ -92,6 +96,7 @@ export type BuddySettings = Pick<
   | 'plans'
   | 'planTimes'
   | 'showOnCalendar'
+  | 'petVisits'
 >
 export type BuddySettingKey = keyof BuddySettings
 
@@ -146,6 +151,7 @@ export function allBuddiesSettings(sharing: BuddySharing): BuddySettings {
     plans: sharing.plans,
     planTimes: sharing.planTimes,
     showOnCalendar: sharing.showOnCalendar,
+    petVisits: sharing.petVisits,
   }
 }
 
@@ -291,6 +297,10 @@ export function mergeSharing(
     { on: local.pet, at: local.petUpdatedAt },
     { on: remote.pet, at: remote.petUpdatedAt }
   )
+  const petVisits = mergeStampedChoice(
+    { on: local.petVisits, at: local.petVisitsUpdatedAt },
+    { on: remote.petVisits, at: remote.petVisitsUpdatedAt }
+  )
   return {
     photo: later ? remote.photo : local.photo,
     tenure: later ? remote.tenure : local.tenure,
@@ -302,6 +312,8 @@ export function mergeSharing(
     petUpdatedAt: pet.at,
     ...mergePlanSharing(local, remote),
     ...mergeCalendarSharing(local, remote),
+    petVisits: petVisits.on,
+    petVisitsUpdatedAt: petVisits.at,
   }
 }
 
@@ -1193,6 +1205,8 @@ export const initialBuddiesState: BuddiesState = {
     plansUpdatedAt: 0,
     showOnCalendar: true,
     calendarUpdatedAt: 0,
+    petVisits: true,
+    petVisitsUpdatedAt: 0,
   },
   notificationsEnabled: true,
   joinRequestNotifications: true,

@@ -6,7 +6,7 @@
  * - Window frame x 14–59, y 8–47, glass x 16–57, y 10–43 with a cross bar at x
  *   36–37 and y 26–27;
  * - The pet's 32 × 32 sprite has its top-left at ({@link PET_X}, {@link PET_Y});
- * - A visitor pet sits at ({@link VISITOR_X}, {@link PET_Y}), mirrored.
+ * - Visiting pets sit at {@link VISITOR_SPOTS}, mirrored.
  *
  * Views crop this scene; see the `VIEW_*` viewports.
  */
@@ -22,8 +22,34 @@ export const SPRITE_SIZE = 32
 export const PET_X = 52
 /** Pet sprite top-left y. */
 export const PET_Y = 52
-/** Visitor sprite top-left x. */
-export const VISITOR_X = 86
+/**
+ * Visiting pets' sprite top-lefts, in the order they take them: either side of
+ * the pet, then rows further back around it, then outward. Every spot is behind
+ * the pet ({@link PET_Y} or higher), so it stays in front, and the first ones
+ * keep clear of the lamp (x 112 on). Twenty fill the room on purpose.
+ */
+export const VISITOR_SPOTS: readonly (readonly [number, number])[] = [
+  [82, 50],
+  [24, 50],
+  [66, 42],
+  [40, 42],
+  [92, 42],
+  [52, 34],
+  [80, 34],
+  [26, 34],
+  [66, 26],
+  [38, 26],
+  [94, 26],
+  [12, 42],
+  [104, 50],
+  [12, 26],
+  [106, 34],
+  [52, 18],
+  [80, 18],
+  [24, 18],
+  [120, 42],
+  [108, 18],
+]
 
 /** The whole scene. */
 export const VIEW_FULL: Viewport = [0, 0, SCENE_W, SCENE_H]

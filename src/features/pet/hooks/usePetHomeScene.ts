@@ -5,7 +5,7 @@ import { analytics } from '@/lib/analytics'
 import Haptics from '@/lib/haptics'
 import { createRng } from '@/lib/pixelArt'
 import usePet from '@/stores/pet'
-import type { PetRecord } from '@/types/pet'
+import type { PetRecord, PetVisit } from '@/types/pet'
 import type { PlayerInput } from '@/features/pet/art'
 import usePetLife from '@/features/pet/hooks/usePetLife'
 import usePetSignData from '@/features/pet/hooks/usePetSignData'
@@ -20,10 +20,7 @@ import {
 } from '@/features/pet/lib/sceneInput'
 import { noteSecretFound } from '@/features/pet/lib/secrets'
 import type { PetSceneHandle } from '@/features/pet/render/PetSceneView'
-import {
-  usePetSession,
-  type PetVisitor,
-} from '@/features/pet/stores/petSession'
+import { usePetSession } from '@/features/pet/stores/petSession'
 
 /** Delay before the pet greets the User with its mood's sound. */
 const GREET_DELAY_MS = 700
@@ -36,6 +33,8 @@ const DEV_SCRUB_MS = 100
 
 export type PetHomeScene = {
   pet: PetRecord
+  /** Buddies' pets visiting, the dev override applied. */
+  visits: readonly PetVisit[]
   life: PetCardLife
   name: string
   input: PlayerInput
@@ -55,10 +54,11 @@ export type PetHomeScene = {
  * commands. Null without a companion.
  */
 export default function usePetHomeScene(
-  visitor: PetVisitor | null | undefined
+  realVisits: readonly PetVisit[]
 ): PetHomeScene | null {
   const state = usePetLife()
   const override = usePetSession((s) => (__DEV__ ? s.devOverride : null))
+  const visits = override?.visits ?? realVisits
   const command = usePetSession((s) => s.command)
   const entrancePending = usePetSession((s) => s.entrance !== null)
   const focused = useIsFocused()
@@ -134,7 +134,7 @@ export default function usePetHomeScene(
           sign,
           pendingGift: state.pendingGift,
           keepsakes: pet.keepsakes,
-          visitor,
+          visits,
           roll,
           override,
         })
@@ -268,6 +268,7 @@ export default function usePetHomeScene(
 
   return {
     pet,
+    visits,
     life,
     name: petDisplayName(pet),
     // Until its entrance plays, the pet stays out of the room: it walks in,

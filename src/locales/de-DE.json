@@ -4677,8 +4677,7 @@
         "pebble": "Den Kieselstein aufheben",
         "feather": "Die Feder aufheben",
         "lily": "Die Lilie aufheben"
-      },
-      "promptAnimals": "Ein Löwenjunges, Welpe, Kätzchen, Esel und Lamm"
+      }
     },
     "rename": {
       "title": "Haustier umbenennen"

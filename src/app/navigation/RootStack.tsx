@@ -603,9 +603,7 @@ const RootStackComponent = () => {
               : { presentation: 'modal', headerShown: false }
           }
           name='PetRoom'
-          getComponent={() =>
-            require('@/features/pet/screens/PetRoomScreen').default
-          }
+          getComponent={() => require('@/app/pet/PetRoomRoute').default}
         />
         <RootStack.Screen
           // Sized to its one field on iOS, like the picker.
@@ -624,6 +622,39 @@ const RootStackComponent = () => {
           getComponent={() =>
             require('@/features/pet/screens/PetRenameScreen').default
           }
+        />
+        <RootStack.Screen
+          // Sized to its rows on iOS, like Rename.
+          options={
+            Platform.OS === 'ios'
+              ? {
+                  presentation: 'formSheet',
+                  sheetAllowedDetents: 'fitToContents',
+                  sheetGrabberVisible: true,
+                  sheetCornerRadius: 18,
+                  headerShown: false,
+                }
+              : { presentation: 'modal', headerShown: false }
+          }
+          name='PetSettings'
+          getComponent={() => require('@/app/pet/PetSettingsScreen').default}
+        />
+        <RootStack.Screen
+          // Every visiting pet: a large sheet like the details, so a long list
+          // scrolls. Full screen on Android.
+          options={
+            Platform.OS === 'ios'
+              ? {
+                  presentation: 'formSheet',
+                  sheetAllowedDetents: [1],
+                  sheetGrabberVisible: true,
+                  sheetCornerRadius: 18,
+                  headerShown: false,
+                }
+              : { presentation: 'modal', headerShown: false }
+          }
+          name='PetVisits'
+          getComponent={() => require('@/app/pet/PetVisitsRoute').default}
         />
         <RootStack.Screen
           // The share card, sized to it on iOS like the picker; full screen

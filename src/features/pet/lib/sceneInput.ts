@@ -5,6 +5,7 @@ import type {
   PetMood,
   PetRecord,
   PetRoomSettings,
+  PetVisit,
 } from '@/types/pet'
 import {
   resolveRoom,
@@ -15,10 +16,7 @@ import {
 import { shouldShowRainbow } from '@/features/pet/lib/eggs'
 import { moodOf, type PetLife } from '@/features/pet/lib/life'
 import type { ResolvedWindow } from '@/features/pet/lib/liveWindow'
-import type {
-  PetDevOverride,
-  PetVisitor,
-} from '@/features/pet/stores/petSession'
+import type { PetDevOverride } from '@/features/pet/stores/petSession'
 
 /** The life facts the Home card shows. */
 export type PetCardLife = {
@@ -85,7 +83,8 @@ export type PetSceneArgs = {
   sign: SignData
   pendingGift: { kind: GiftKind; on: string } | null
   keepsakes: readonly PetKeepsake[]
-  visitor: PetVisitor | null | undefined
+  /** Buddies' pets visiting today, the dev override already applied. */
+  visits: readonly PetVisit[]
   roll: PetVisitRoll
   override?: PetDevOverride | null
 }
@@ -112,17 +111,17 @@ export function petSceneInput(args: PetSceneArgs): {
   const o = args.override ?? {}
   const window = o.window ? { ...args.window, ...o.window } : args.window
   const gift = 'gift' in o ? (o.gift ?? null) : (args.pendingGift?.kind ?? null)
-  const visitorPet = 'visitor' in o ? o.visitor : args.visitor
-  const visitor: SceneVisitor | null = visitorPet
-    ? { species: visitorPet.species, coat: visitorPet.coat }
-    : null
+  const visitors: SceneVisitor[] = args.visits.map(({ pet }) => ({
+    species: pet.species,
+    coat: pet.coat,
+  }))
   const shown: PetMomentsShown = {
     rainbow: shouldShowRainbow(args.life, window),
     paradise: o.paradise ?? args.roll.paradise,
     star: o.star ?? args.roll.star,
     gold: args.life.gold,
     gift,
-    visitor: visitor !== null,
+    visitor: visitors.length > 0,
   }
   return {
     input: {
@@ -136,7 +135,7 @@ export function petSceneInput(args: PetSceneArgs): {
         mood: args.life.mood,
         seed: petSeed(args.pet),
       },
-      visitor,
+      visitors,
       moments: {
         rainbow: shown.rainbow,
         paradise: shown.paradise,

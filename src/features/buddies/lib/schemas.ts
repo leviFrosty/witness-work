@@ -393,6 +393,7 @@ const buddyOverridesSchema = z.object({
   plans: z.boolean().optional().catch(undefined),
   planTimes: z.enum(BUDDY_PLAN_TIMES).optional().catch(undefined),
   showOnCalendar: z.boolean().optional().catch(undefined),
+  petVisits: z.boolean().optional().catch(undefined),
 })
 
 /**
@@ -508,6 +509,13 @@ export const rosterSchema = z.object({
       showOnCalendar: z.boolean().optional(),
       /** When `showOnCalendar` last changed. */
       calendarUpdatedAt: z.number().optional(),
+      /**
+       * Buddies' pets visit the User's pet. Absent from older apps' rosters;
+       * merged like `pet`, on its own stamp.
+       */
+      petVisits: z.boolean().optional().catch(undefined),
+      /** When `petVisits` last changed. */
+      petVisitsUpdatedAt: z.number().optional().catch(undefined),
     })
     .default({ photo: true, tenure: true, streak: true, updatedAt: 0 }),
   /**

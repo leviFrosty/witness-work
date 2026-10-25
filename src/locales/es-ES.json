@@ -4677,8 +4677,7 @@
         "pebble": "Recoger el guijarro",
         "feather": "Recoger la pluma",
         "lily": "Recoger el lirio"
-      },
-      "promptAnimals": "Un cachorro de león, un cachorro, un gatito, un burro y un cordero"
+      }
     },
     "rename": {
       "title": "Cambiar nombre de la mascota"

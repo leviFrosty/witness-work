@@ -18,10 +18,15 @@ export type PetPickerSave =
   | { kind: 'change'; species: PetSpecies; coat: string }
   | { kind: 'none' }
 
-/** The picker's first choice: the pet as it is, or a lion cub. */
+/**
+ * The picker's first choice: the animal it was opened with (`species`, from the
+ * Home offer), else the pet as it is, or a lion cub.
+ */
 export function initialPetChoice(
-  current: Pick<PetRecord, 'species' | 'coat'> | null
+  current: Pick<PetRecord, 'species' | 'coat'> | null,
+  species?: PetSpecies
 ): PetChoice {
+  if (species) return choiceForSpecies(species, current)
   if (current)
     return {
       species: current.species,

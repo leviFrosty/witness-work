@@ -29,6 +29,9 @@ vi.mock('react-native-gesture-handler', () => {
     GestureDetector: ({ children }: { children: React.ReactNode }) => children,
   }
 })
+vi.mock('@/components/ui/ContextMenu', () => ({
+  default: ({ children }: { children: React.ReactNode }) => children,
+}))
 vi.mock('@/components/ui/PointerHover', () => ({
   default: ({ children }: { children: React.ReactNode }) => children,
   HoverTint: () => null,
@@ -46,6 +49,7 @@ vi.mock('@/features/pet/art', () => ({
   SCENE_W: 180,
   SCENE_H: 100,
   VIEW_CARD: [0, 0, 180, 100],
+  VISITOR_SPOTS: [[86, 52]],
   createScenePlayer: () => ({
     frame: () => ({ buffer: null }),
     isBusy: () => false,

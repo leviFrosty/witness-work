@@ -49,7 +49,8 @@ import type PetHomeSectionComponent from '@/features/pet/components/PetHomeSecti
 import type ScribeQuickActionsCardComponent from '@/features/scribe/components/ScribeQuickActionsCard'
 import { petHomeSlot } from '@/features/pet/lib/homeSlot'
 import usePet from '@/stores/pet'
-import usePetVisitor from '@/app/pet/usePetVisitor'
+import { hidePetVisits } from '@/app/pet/hidePetVisits'
+import usePetVisits from '@/app/pet/usePetVisits'
 import DidYouKnowTipCard from '@/features/updates/components/DidYouKnowTipCard'
 import NotificationHosts from '@/app/notifications/NotificationHosts'
 import { useServiceReport } from '@/stores/serviceReport'
@@ -105,7 +106,7 @@ export const HomeScreen = ({ header }: { header: ReactNode }) => {
   )
   const hasPet = usePet((s) => s.pet !== null)
   // A buddy's pet visiting today, from Buddies and today's Plans.
-  const petVisitor = usePetVisitor()
+  const petVisits = usePetVisits()
   const serviceReports = useServiceReport((s) => s.serviceReports)
   const [refreshing, setRefreshing] = useState(false)
   const [selectedDateSheet, setSelectedDateSheet] =
@@ -406,7 +407,13 @@ export const HomeScreen = ({ header }: { header: ReactNode }) => {
                     })
                     if (slot === 'prompt') return <PetPromptCard key={key} />
                     if (slot === 'section')
-                      return <PetHomeSection key={key} visitor={petVisitor} />
+                      return (
+                        <PetHomeSection
+                          key={key}
+                          visits={petVisits}
+                          onHideVisit={hidePetVisits}
+                        />
+                      )
                     return null
                   }
                   case 'quickActions':

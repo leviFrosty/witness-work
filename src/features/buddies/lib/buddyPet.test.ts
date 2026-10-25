@@ -241,6 +241,8 @@ describe('the pet sharing choice', () => {
       plansUpdatedAt: 0,
       showOnCalendar: true,
       calendarUpdatedAt: 0,
+      petVisits: true,
+      petVisitsUpdatedAt: 0,
     }
     const remote = { photo: true, tenure: true, streak: true, updatedAt: 30 }
     // An older app's later roster, without the pet fields.
@@ -276,5 +278,45 @@ describe('the pet sharing choice', () => {
       pet: true,
       petUpdatedAt: 9,
     })
+  })
+
+  it("merges whether buddies' pets visit the same way, on its own stamp", () => {
+    const local: BuddySharing = {
+      photo: true,
+      tenure: true,
+      streak: true,
+      updatedAt: 10,
+      badges: true,
+      badgesUpdatedAt: 0,
+      pet: true,
+      petUpdatedAt: 0,
+      plans: true,
+      planTimes: 'exact',
+      pausedUntil: 0,
+      plansUpdatedAt: 0,
+      showOnCalendar: true,
+      calendarUpdatedAt: 0,
+      petVisits: false,
+      petVisitsUpdatedAt: 5,
+    }
+    const remote = { photo: true, tenure: true, streak: true, updatedAt: 30 }
+    // An older app's later roster, without it.
+    expect(mergeSharing(local, remote)).toMatchObject({
+      petVisits: false,
+      petVisitsUpdatedAt: 5,
+    })
+    expect(
+      mergeSharing(local, { ...remote, petVisits: true, petVisitsUpdatedAt: 4 })
+    ).toMatchObject({ petVisits: false, petVisitsUpdatedAt: 5 })
+    expect(
+      mergeSharing(local, { ...remote, petVisits: true, petVisitsUpdatedAt: 6 })
+    ).toMatchObject({ petVisits: true, petVisitsUpdatedAt: 6 })
+    // Hiding wins a tie.
+    expect(
+      mergeSharing(
+        { ...local, petVisits: true },
+        { ...remote, petVisits: false, petVisitsUpdatedAt: 5 }
+      )
+    ).toMatchObject({ petVisits: false, petVisitsUpdatedAt: 5 })
   })
 })

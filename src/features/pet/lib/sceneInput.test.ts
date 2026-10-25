@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { DEFAULT_ROOM, type PetRecord } from '@/types/pet'
+import { DEFAULT_ROOM, type PetRecord, type PetVisit } from '@/types/pet'
 import { DEMO_SIGN_DATA } from '@/features/pet/art'
 import type { PetLife } from '@/features/pet/lib/life'
 import {
@@ -50,7 +50,7 @@ const args = (patch: Partial<PetSceneArgs> = {}): PetSceneArgs => ({
   sign: DEMO_SIGN_DATA,
   pendingGift: null,
   keepsakes: pet.keepsakes,
-  visitor: null,
+  visits: [],
   roll: { paradise: false, star: false },
   ...patch,
 })
@@ -99,11 +99,21 @@ describe('pet scene input', () => {
     ])
   })
 
-  it('draws the pet, room, gift and visitor', () => {
+  it('draws the pet, room, gift and visitors', () => {
+    const visit = (inboxId: string, pet: PetVisit['pet']): PetVisit => ({
+      inboxId,
+      buddyName: inboxId,
+      pet,
+      startMinutes: 540,
+      activity: { type: 'plan', planId: 'p' },
+    })
     const { input, shown } = petSceneInput(
       args({
         pendingGift: { kind: 'lily', on: '2026-10-18' },
-        visitor: { species: 'lamb', coat: 'default', name: 'Snow' },
+        visits: [
+          visit('anna', { species: 'lamb', coat: 'default', name: 'Snow' }),
+          visit('ben', { species: 'cat', coat: 'calico' }),
+        ],
       })
     )
     expect(input.pet).toMatchObject({
@@ -117,8 +127,12 @@ describe('pet scene input', () => {
       sign: 'month',
     })
     expect(input.moments?.gift).toBe('lily')
-    expect(input.visitor).toEqual({ species: 'lamb', coat: 'default' })
+    expect(input.visitors).toEqual([
+      { species: 'lamb', coat: 'default' },
+      { species: 'cat', coat: 'calico' },
+    ])
     expect(shown).toMatchObject({ gift: 'lily', visitor: true, rainbow: false })
+    expect(petSceneInput(args()).shown.visitor).toBe(false)
   })
 
   it('hides the rainbow at night', () => {
@@ -149,15 +163,13 @@ describe('pet scene input', () => {
           lampLevel: 5,
           gift: null,
           sill: ['feather'],
-          visitor: { species: 'cat', coat: 'calico' },
         },
       })
     )
     expect(input.room).toMatchObject({ time: 'night', season: 'winter' })
     expect(input.lampLevel).toBe(5)
-    expect(shown).toMatchObject({ star: true, gift: null, visitor: true })
+    expect(shown).toMatchObject({ star: true, gift: null })
     expect(input.moments?.sill).toEqual(['feather'])
-    expect(input.visitor).toEqual({ species: 'cat', coat: 'calico' })
   })
 
   it('fakes the window over a room whose window is set, not Live', () => {

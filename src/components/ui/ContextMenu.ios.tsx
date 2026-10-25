@@ -1,8 +1,10 @@
 import {
   ContextMenu as SwiftContextMenu,
+  Group,
   Host,
   RNHostView,
 } from '@expo/ui/swift-ui'
+import { onAppear, onDisappear } from '@expo/ui/swift-ui/modifiers'
 import { useState } from 'react'
 import { Pressable, View } from 'react-native'
 import { usePreferences } from '@/stores/preferences'
@@ -25,6 +27,7 @@ export default function ContextMenu({
   accessible = true,
   disabled = false,
   preview,
+  onOpenChange,
   pointerEffect = 'tint',
   hoverRadius,
   fitContent = false,
@@ -128,7 +131,17 @@ export default function ContextMenu({
       </SwiftContextMenu.Trigger>
       {preview && !disabled ? (
         <SwiftContextMenu.Preview>
-          <RNHostView matchContents>{armed ? preview : <View />}</RNHostView>
+          {/* The preview shows exactly while the menu is open. */}
+          <Group
+            modifiers={
+              onOpenChange && [
+                onAppear(() => onOpenChange(true)),
+                onDisappear(() => onOpenChange(false)),
+              ]
+            }
+          >
+            <RNHostView matchContents>{armed ? preview : <View />}</RNHostView>
+          </Group>
         </SwiftContextMenu.Preview>
       ) : null}
     </SwiftContextMenu>

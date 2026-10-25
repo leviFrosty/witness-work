@@ -100,6 +100,7 @@ const SETTING_NAMES: Record<BuddySettingKey, string> = {
   plans: 'plans',
   planTimes: 'plan_times',
   showOnCalendar: 'calendar',
+  petVisits: 'pet_visits',
 }
 
 function captureChange(

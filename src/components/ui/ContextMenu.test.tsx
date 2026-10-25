@@ -35,7 +35,12 @@ vi.mock('@expo/ui/jetpack-compose', () => ({
 vi.mock('@/lib/haptics', () => ({
   default: { androidLongPress: haptics.perform },
 }))
+vi.mock('@expo/ui/swift-ui/modifiers', () => ({
+  onAppear: (handler: () => void) => ({ onAppear: handler }),
+  onDisappear: (handler: () => void) => ({ onDisappear: handler }),
+}))
 vi.mock('@expo/ui/swift-ui', () => ({
+  Group: 'SwiftGroup',
   Host: 'SwiftHost',
   RNHostView: 'RNHostView',
   Button: 'SwiftButton',
@@ -221,6 +226,19 @@ describe('Android context menu', () => {
     list.forEach((action) => expect(action.onPress).not.toHaveBeenCalled())
   })
 
+  it('reports opening and closing', async () => {
+    const onOpenChange = vi.fn()
+    await render(
+      <AndroidContextMenu actions={actions()} onOpenChange={onOpenChange}>
+        <React.Fragment />
+      </AndroidContextMenu>
+    )
+    await act(async () => trigger().props.onLongPress())
+    expect(onOpenChange).toHaveBeenLastCalledWith(true)
+    await act(async () => menu().props.onDismissRequest())
+    expect(onOpenChange).toHaveBeenLastCalledWith(false)
+  })
+
   it('hides falsy items, separates groups, and colors destructive items', async () => {
     const entries: ContextMenuEntries = [
       [{ ...pin, onPress: vi.fn() }, false, null],
@@ -384,6 +402,25 @@ describe('iOS context menu', () => {
     buttons[0].props.onPress()
     expect(list[0].onPress).toHaveBeenCalledOnce()
     expect(analytics.capture).not.toHaveBeenCalled()
+  })
+
+  it('reports opening and closing as the preview shows and hides', async () => {
+    const onOpenChange = vi.fn()
+    await render(
+      <IOSContextMenu
+        actions={actions()}
+        preview={<React.Fragment />}
+        onOpenChange={onOpenChange}
+      >
+        <React.Fragment />
+      </IOSContextMenu>
+    )
+    const [shown, hidden] = root.root.findByType('SwiftGroup' as never).props
+      .modifiers
+    shown.onAppear()
+    expect(onOpenChange).toHaveBeenLastCalledWith(true)
+    hidden.onDisappear()
+    expect(onOpenChange).toHaveBeenLastCalledWith(false)
   })
 
   it('renders groups with dividers and submenus as nested menus', async () => {

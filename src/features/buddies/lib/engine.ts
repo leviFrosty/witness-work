@@ -502,6 +502,8 @@ function rosterSignature(roster: Omit<Roster, 'v' | 'version'>) {
     plansUpdatedAt,
     showOnCalendar,
     calendarUpdatedAt,
+    petVisits,
+    petVisitsUpdatedAt,
   } = roster.sharing
   return JSON.stringify([
     roster.buddies
@@ -528,6 +530,7 @@ function rosterSignature(roster: Omit<Roster, 'v' | 'version'>) {
       plansUpdatedAt ?? 0,
     ],
     [showOnCalendar ?? true, calendarUpdatedAt ?? 0],
+    [petVisits ?? true, petVisitsUpdatedAt ?? 0],
     Object.entries(roster.answers)
       .map(([key, { s, v, r }]) => `${key}:${s}:${v}:${r}`)
       .sort(),
@@ -1642,6 +1645,21 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
   }
 
   /**
+   * From a visiting pet's menu or the pet's settings, like
+   * {@link setShowOnCalendar}: All Buddies' choice when it's the one asked for.
+   */
+  function setPetVisits(inboxId: string, petVisits: boolean) {
+    const followsAll = store.getState().sharing.petVisits === petVisits
+    void setBuddySetting(
+      inboxId,
+      'petVisits',
+      followsAll ? undefined : petVisits
+    ).catch(() => {
+      // Saved here; the next change or sync writes the roster.
+    })
+  }
+
+  /**
    * Gives a buddy their own value for a setting, or (`undefined`) has them
    * follow All Buddies again. A change to what they see republishes their card;
    * they aren't told.
@@ -1732,6 +1750,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
         | 'petUpdatedAt'
         | 'plansUpdatedAt'
         | 'calendarUpdatedAt'
+        | 'petVisitsUpdatedAt'
       >
     >
   ) {
@@ -1752,6 +1771,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
           ? { plansUpdatedAt: now }
           : {}),
         ...('showOnCalendar' in change ? { calendarUpdatedAt: now } : {}),
+        ...('petVisits' in change ? { petVisitsUpdatedAt: now } : {}),
       },
     }))
     // Badge news not yet sent stays home too, for buddies who follow All
@@ -4938,6 +4958,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     rejectClaim,
     removeBuddy,
     setShowOnCalendar,
+    setPetVisits,
     setColor,
     setNickname,
     setSharing,

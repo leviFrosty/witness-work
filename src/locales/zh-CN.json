@@ -4677,8 +4677,7 @@
         "pebble": "捡起小石子",
         "feather": "捡起羽毛",
         "lily": "捡起百合花"
-      },
-      "promptAnimals": "小狮子、小狗、小猫、驴和小羊"
+      }
     },
     "rename": {
       "title": "重命名宠物"

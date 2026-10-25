@@ -4,7 +4,6 @@ import {
   shouldShowParadise,
   shouldShowRainbow,
   shouldShowStar,
-  visitorForToday,
 } from '@/features/pet/lib/eggs'
 
 const live = (time: 'dawn' | 'day' | 'dusk' | 'night') => ({
@@ -60,70 +59,5 @@ describe('hidden moments', () => {
     for (let i = 0; i < 14; i++) counter.pat(i)
     counter.reset()
     expect(counter.pat(20)).toBe(false)
-  })
-
-  describe('visitorForToday', () => {
-    const today = '2026-10-18'
-    const noonUtc = (key: string) => new Date(`${key}T12:00:00.000Z`)
-    const anna = {
-      inboxId: 'anna',
-      pet: { species: 'cat' as const, coat: 'grey' },
-    }
-    const ben = {
-      inboxId: 'ben',
-      pet: { species: 'lamb' as const, coat: 'default' },
-    }
-
-    it("picks a buddy with a pet from today's earliest Plan", () => {
-      expect(
-        visitorForToday({
-          todayKey: today,
-          buddiesWithPets: [anna, ben],
-          dayPlans: [
-            {
-              date: noonUtc(today),
-              startTimeInMinutes: 900,
-              buddies: ['anna'],
-            },
-            {
-              date: noonUtc(today),
-              startTimeInMinutes: 540,
-              buddies: ['cara', 'ben'],
-            },
-          ],
-        })
-      ).toBe(ben)
-    })
-
-    it('counts the buddy whose invitation the User answered', () => {
-      expect(
-        visitorForToday({
-          todayKey: today,
-          buddiesWithPets: [anna],
-          dayPlans: [
-            {
-              date: noonUtc(today),
-              buddyShare: { from: 'anna', shareId: 's' },
-            },
-          ],
-        })
-      ).toBe(anna)
-    })
-
-    it('ignores other days and buddies without a pet', () => {
-      expect(
-        visitorForToday({
-          todayKey: today,
-          buddiesWithPets: [anna],
-          dayPlans: [
-            { date: noonUtc('2026-10-17'), buddies: ['anna'] },
-            { date: noonUtc(today), buddies: ['cara'] },
-          ],
-        })
-      ).toBeNull()
-      expect(
-        visitorForToday({ todayKey: today, buddiesWithPets: [], dayPlans: [] })
-      ).toBeNull()
-    })
   })
 })

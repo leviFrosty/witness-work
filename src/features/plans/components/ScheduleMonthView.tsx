@@ -47,6 +47,8 @@ type Props = {
   /** Scales with the zoom: the weekday header and the weeks. */
   zoomStyle: AnimatedStyle<ViewStyle>
   onScroll: (offsetY: number) => void
+  /** The user starts scrolling the weeks. */
+  onScrollBeginDrag: () => void
   /** Tucks the screen's header and tab bar away; see `useHideBarsOnScroll`. */
   scrollBars?: HideBarsScrollProps
   /** The scaled part's frame within the view. */
@@ -80,6 +82,7 @@ export default function ScheduleMonthView({
   chromeStyle,
   zoomStyle,
   onScroll,
+  onScrollBeginDrag,
   scrollBars,
   onZoomFrameLayout,
   onListLayout,
@@ -196,6 +199,10 @@ export default function ScheduleMonthView({
             onScroll={(e) => {
               onScroll(e.nativeEvent.contentOffset.y)
               scrollBars?.onScroll(e)
+            }}
+            onScrollBeginDrag={(e) => {
+              onScrollBeginDrag()
+              scrollBars?.onScrollBeginDrag(e)
             }}
             scrollEventThrottle={16}
             onStartReached={onStartReached}

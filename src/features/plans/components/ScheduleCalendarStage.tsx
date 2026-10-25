@@ -63,6 +63,7 @@ export default function ScheduleCalendarStage({
     isCurrentServiceYear,
     todayDirection,
     onScroll,
+    onScrollBeginDrag,
     onZoomFrameLayout,
     onListLayout,
     onListLoad,
@@ -128,6 +129,7 @@ export default function ScheduleCalendarStage({
             chromeStyle={zoom.monthChromeStyle}
             zoomStyle={zoom.monthZoomStyle}
             onScroll={onScroll}
+            onScrollBeginDrag={onScrollBeginDrag}
             onZoomFrameLayout={onZoomFrameLayout}
             onListLayout={onListLayout}
             onListLoad={() => {

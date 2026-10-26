@@ -196,7 +196,7 @@
   "streak_howItWorks": "Chuỗi hoạt động thế nào",
   "streakCelebration_started": "Bạn đang có một chuỗi!",
   "streakCelebration_grew": "Chuỗi của bạn đang dài thêm!",
-  "streakCelebration_captionPlans": "Các ngày đã lên kế hoạch được giữ liên tiếp. Hãy tiếp tục vào ngày có kế hoạch tiếp theo.",
+  "streakCelebration_captionPlans": "Bạn đã giữ mọi kế hoạch, không bỏ lỡ lần nào, dù cách nhau bao xa. Hãy tiếp tục vào ngày đã lên kế hoạch tiếp theo.",
   "streakCelebration_captionMonths": "Các tháng liên tiếp tham gia thánh chức. Hãy tiếp tục vào tháng tới.",
   "countdownDaysHours": "{{days}} ngày {{hours}} giờ",
   "countdownHoursMinutes": "{{hours}} giờ {{minutes}} phút",
@@ -445,6 +445,9 @@
   "ok": "ĐƯỢC RỒI",
   "noUpdateAvailable": "Hiện tại không có bản cập nhật nào.",
   "update_error": "Lỗi khi tìm bản cập nhật mới nhất.",
+  "pendingUpdateCard_title": "Bản cập nhật đã sẵn sàng",
+  "pendingUpdateCard_body": "Khởi động lại WitnessWork để hoàn tất cập nhật.",
+  "pendingUpdateCard_cta": "Cập nhật ngay",
   "conductedBibleStudy": "Điều khiển một cuộc học hỏi Kinh Thánh",
   "inactiveBibleStudiesDoNoCountTowardsMonthlyTotals": "Các học viên Kinh Thánh sẽ không được tính vào tổng số học viên hàng tháng trừ khi được điều khiển ít nhất một lần trong tháng hiện tại.",
   "bibleStudy": "Học viên Kinh Thánh",
@@ -1320,6 +1323,9 @@
   "buddies_buddySeesTitle": "{{name}} thấy bạn như thế nào",
   "buddies_calendarSettingsTitle": "Lịch của bạn",
   "buddies_showOnCalendarInfo": "Hiện trên lịch của bạn những ngày bạn đồng hành dự định đi rao giảng. Các kế hoạch bạn cùng đi luôn được hiện.",
+  "buddies_petSettingsTitle": "Thú cưng của bạn",
+  "buddies_petVisits": "Thú cưng của họ đến thăm thú cưng của tôi",
+  "buddies_petVisitsInfo": "Vào ngày hai bạn cùng đi rao giảng, thú cưng của bạn đồng hành sẽ đến thăm thú cưng của bạn.",
   "buddies_alertsThisDevice": "Chỉ trên thiết bị này.",
   "buddies_buddySettings": "Chia sẻ & thông báo",
   "buddies_buddySettingsFollowsAll": "Giống Tất cả bạn đồng hành",
@@ -4396,7 +4402,7 @@
     },
     "streak": {
       "description": "Chuỗi rao giảng của bạn",
-      "plans": "ngày đã lên kế hoạch được giữ liên tiếp",
+      "plans": "kế hoạch đã giữ, không bỏ lỡ",
       "months": "tháng liên tiếp",
       "none": "Giữ vài ngày đã lên kế hoạch để bắt đầu một chuỗi",
       "noneMonths": "Hãy dành thời gian trong thánh chức tháng này để bắt đầu một chuỗi"
@@ -4677,7 +4683,10 @@
         "pebble": "Nhặt viên sỏi",
         "feather": "Nhặt chiếc lông vũ",
         "lily": "Nhặt bông huệ"
-      }
+      },
+      "promptAnimalHint": "Chọn thú cưng này",
+      "sceneWithVisitors": "Phòng của {{name}}. Đang đến thăm: {{visitors}}",
+      "visitor": "{{pet}}, thú cưng của {{name}}"
     },
     "rename": {
       "title": "Đổi tên thú cưng"
@@ -4691,8 +4700,8 @@
     "shareCard": {
       "share": "Chia sẻ",
       "streakPlans": {
-        "one": "ngày đã lên kế hoạch liên tiếp",
-        "other": "ngày đã lên kế hoạch liên tiếp"
+        "one": "kế hoạch đã giữ, không bỏ lỡ",
+        "other": "kế hoạch đã giữ, không bỏ lỡ"
       },
       "streakMonths": {
         "one": "tháng liên tiếp",
@@ -4919,7 +4928,15 @@
     "details": {
       "rename": "Đổi tên",
       "change": "Đổi thú cưng",
-      "share": "Chia sẻ"
+      "share": "Chia sẻ",
+      "streakA11y": "Chuỗi: {{count}}",
+      "streakInfoTitle": "Chuỗi của bạn",
+      "streakInfoPlans": "Chuỗi của bạn hiện là {{count}}. Mỗi kế hoạch bạn giữ (có ghi thời gian vào ngày đó) cộng thêm 1, dù các kế hoạch cách nhau bao nhiêu ngày. Bỏ lỡ một kế hoạch thì chuỗi bắt đầu lại. Thời gian ghi vào ngày không có kế hoạch không được cộng vào.",
+      "streakInfoMonths": "Chuỗi của bạn hiện là {{count}}. Chuỗi đếm số tháng liên tiếp bạn tham gia thánh chức.",
+      "activeMonths": "Tháng hoạt động: {{count}}",
+      "activeMonthsInfoTitle": "Tháng hoạt động",
+      "activeMonthsInfo": "Đến nay bạn có {{count}} tháng. Một tháng được tính khi bạn ghi thời gian hoặc lưu một lần thăm hay kế hoạch trong tháng đó sau khi nhận nuôi thú cưng. Các tháng không cần liên tiếp.",
+      "settings": "Cài đặt"
     },
     "intro": {
       "hearts": {
@@ -4953,6 +4970,35 @@
       "decorate": "Trang trí phòng",
       "trayHat": "Mũ mới: {{hat}}",
       "trayRoomDescription": "{{where}}. {{detail}}"
+    },
+    "visitor": {
+      "line": "Đến thăm cùng {{name}}!",
+      "viewPlan": "Xem kế hoạch",
+      "viewFollowUp": "Xem lần thăm lại",
+      "viewBuddy": "Xem {{name}}",
+      "hide": "Ẩn thú cưng của {{name}}",
+      "hidden": "Thú cưng của {{name}} sẽ không đến thăm",
+      "todayTitle": "Đến thăm hôm nay",
+      "summary": {
+        "one": "{{count}} thú cưng đến thăm hôm nay",
+        "other": "{{count}} thú cưng đến thăm hôm nay"
+      },
+      "withOne": "Cùng {{name}}",
+      "withMore": {
+        "one": "Cùng {{name}} và {{count}} người khác",
+        "other": "Cùng {{name}} và {{count}} người khác"
+      },
+      "detail": "Thú cưng của {{name}} · {{activity}}",
+      "planAt": "Kế hoạch lúc {{time}}",
+      "followUpAt": "Thăm lại lúc {{time}}"
+    },
+    "settings": {
+      "title": "Cài đặt thú cưng",
+      "showOnHome": "Hiện trên Trang chủ",
+      "buddiesTitle": "Thú cưng của bạn đồng hành",
+      "visits": "Thú cưng của bạn đồng hành đến thăm",
+      "visitsInfo": "Vào ngày bạn đi rao giảng cùng một bạn đồng hành, thú cưng của họ sẽ đến thăm thú cưng của bạn.",
+      "noBuddyPets": "Chưa có bạn đồng hành nào chia sẻ thú cưng."
     }
   },
   "handoff_newDoneSynced": "Đồng bộ đám mây đang đưa dữ liệu, liên hệ và ghi chú của bạn vào điện thoại này. Chúng sẽ xuất hiện trong giây lát.",

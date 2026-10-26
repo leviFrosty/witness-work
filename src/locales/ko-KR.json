@@ -196,7 +196,7 @@
   "streak_howItWorks": "연속 기록의 작동 방식",
   "streakCelebration_started": "연속 기록이 시작되었어요!",
   "streakCelebration_grew": "연속 기록이 늘어나고 있어요!",
-  "streakCelebration_captionPlans": "계획한 날을 연속으로 지켰습니다. 다음 계획한 날에도 이어 가세요.",
+  "streakCelebration_captionPlans": "간격이 멀어도 계획을 한 번도 빠뜨리지 않고 지켰습니다. 다음 계획한 날에도 이어 가세요.",
   "streakCelebration_captionMonths": "봉사에 연속으로 참여한 달입니다. 다음 달에도 이어 가세요.",
   "countdownDaysHours": "{{days}}일 {{hours}}시간",
   "countdownHoursMinutes": "{{hours}}시간 {{minutes}}분",
@@ -445,6 +445,9 @@
   "ok": "좋아요",
   "noUpdateAvailable": "현재 사용 가능한 업데이트가 없습니다.",
   "update_error": "최신 업데이트를 가져오는 중에 오류가 발생했습니다.",
+  "pendingUpdateCard_title": "업데이트 준비 완료",
+  "pendingUpdateCard_body": "업데이트를 마치려면 WitnessWork를 다시 시작하세요.",
+  "pendingUpdateCard_cta": "지금 업데이트",
   "conductedBibleStudy": "성서 연구 사회함",
   "inactiveBibleStudiesDoNoCountTowardsMonthlyTotals": "성서 연구는 해당 달에 최소 한 번 이상 진행되지 않으면 월 보고에 계산되지 않습니다.",
   "bibleStudy": "성서 연구",
@@ -1320,6 +1323,9 @@
   "buddies_buddySeesTitle": "{{name}} 님에게 보이는 내 모습",
   "buddies_calendarSettingsTitle": "내 캘린더",
   "buddies_showOnCalendarInfo": "버디가 봉사에 나갈 계획인 날을 내 캘린더에 표시합니다. 함께 나가는 계획은 항상 표시됩니다.",
+  "buddies_petSettingsTitle": "내 반려동물",
+  "buddies_petVisits": "버디의 반려동물이 찾아오기",
+  "buddies_petVisitsInfo": "함께 봉사에 나간 날에는 버디의 반려동물이 내 반려동물을 찾아옵니다.",
   "buddies_alertsThisDevice": "이 기기에만 적용됩니다.",
   "buddies_buddySettings": "공유 및 알림",
   "buddies_buddySettingsFollowsAll": "모든 버디와 동일",
@@ -4396,7 +4402,7 @@
     },
     "streak": {
       "description": "봉사 연속 기록",
-      "plans": "계획한 날을 연속으로 지킴",
+      "plans": "빠짐없이 지킨 계획",
       "months": "개월 연속",
       "none": "계획한 날을 몇 번 지켜서 시작해 보세요",
       "noneMonths": "이번 달에 봉사에 참여해서 시작해 보세요"
@@ -4677,7 +4683,10 @@
         "pebble": "조약돌 줍기",
         "feather": "깃털 줍기",
         "lily": "백합 줍기"
-      }
+      },
+      "promptAnimalHint": "이 반려동물 선택",
+      "sceneWithVisitors": "{{name}}의 방. 방문 중: {{visitors}}",
+      "visitor": "{{name}} 님의 반려동물 {{pet}}"
     },
     "rename": {
       "title": "반려동물 이름 변경"
@@ -4691,8 +4700,8 @@
     "shareCard": {
       "share": "공유",
       "streakPlans": {
-        "one": "계획한 날 연속",
-        "other": "계획한 날 연속"
+        "one": "빠짐없이 지킨 계획",
+        "other": "빠짐없이 지킨 계획"
       },
       "streakMonths": {
         "one": "개월 연속",
@@ -4919,7 +4928,15 @@
     "details": {
       "rename": "이름 변경",
       "change": "반려동물 변경",
-      "share": "공유"
+      "share": "공유",
+      "streakA11y": "연속 기록: {{count}}",
+      "streakInfoTitle": "내 연속 기록",
+      "streakInfoPlans": "현재 연속 기록은 {{count}}입니다. 계획을 지킬 때마다(그날 시간을 기록하면) 1씩 늘어나며, 계획 사이의 간격은 상관없습니다. 하나라도 빠뜨리면 처음부터 다시 시작합니다. 계획이 없는 날에 기록한 시간은 더해지지 않습니다.",
+      "streakInfoMonths": "현재 연속 기록은 {{count}}입니다. 봉사에 참여한 달이 몇 달 연속인지 셉니다.",
+      "activeMonths": "활동한 달: {{count}}",
+      "activeMonthsInfoTitle": "활동한 달",
+      "activeMonthsInfo": "지금까지 {{count}}개월입니다. 반려동물을 입양한 후 시간을 기록하거나 방문 또는 계획을 저장한 달이 포함됩니다. 연속된 달일 필요는 없습니다.",
+      "settings": "설정"
     },
     "intro": {
       "hearts": {
@@ -4953,6 +4970,35 @@
       "decorate": "방 꾸미기",
       "trayHat": "새 모자: {{hat}}",
       "trayRoomDescription": "{{where}}. {{detail}}"
+    },
+    "visitor": {
+      "line": "{{name}} 님과 함께 왔어요!",
+      "viewPlan": "계획 보기",
+      "viewFollowUp": "다음 방문 보기",
+      "viewBuddy": "{{name}} 님 보기",
+      "hide": "{{name}} 님의 반려동물 숨기기",
+      "hidden": "{{name}} 님의 반려동물이 찾아오지 않습니다",
+      "todayTitle": "오늘 찾아온 반려동물",
+      "summary": {
+        "one": "오늘 찾아온 반려동물 {{count}}마리",
+        "other": "오늘 찾아온 반려동물 {{count}}마리"
+      },
+      "withOne": "{{name}} 님과 함께",
+      "withMore": {
+        "one": "{{name}} 님 외 {{count}}명과 함께",
+        "other": "{{name}} 님 외 {{count}}명과 함께"
+      },
+      "detail": "{{name}} 님의 반려동물 · {{activity}}",
+      "planAt": "{{time}} 계획",
+      "followUpAt": "{{time}} 다음 방문"
+    },
+    "settings": {
+      "title": "반려동물 설정",
+      "showOnHome": "홈에 표시",
+      "buddiesTitle": "버디의 반려동물",
+      "visits": "버디의 반려동물이 찾아오기",
+      "visitsInfo": "버디와 함께 봉사에 나간 날에는 버디의 반려동물이 내 반려동물을 찾아옵니다.",
+      "noBuddyPets": "아직 반려동물을 공유하는 버디가 없습니다."
     }
   },
   "handoff_newDoneSynced": "클라우드 동기화가 기록, 연락처, 메모를 이 휴대폰으로 가져오고 있습니다. 잠시 후 표시됩니다.",

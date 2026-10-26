@@ -196,7 +196,7 @@
   "streak_howItWorks": "連続記録のしくみ",
   "streakCelebration_started": "連続記録が始まりました!",
   "streakCelebration_grew": "連続記録が伸びています!",
-  "streakCelebration_captionPlans": "予定した日を連続で守れています。次の予定日も続けましょう。",
+  "streakCelebration_captionPlans": "間隔が空いても、プランを一度も欠かさず守れています。次の予定日も続けましょう。",
   "streakCelebration_captionMonths": "宣教に連続で参加している月数です。来月も続けましょう。",
   "countdownDaysHours": "{{days}}日{{hours}}時間",
   "countdownHoursMinutes": "{{hours}}時間{{minutes}}分",
@@ -445,6 +445,9 @@
   "ok": "わかりました",
   "noUpdateAvailable": "現在利用可能なアップデートはありません。",
   "update_error": "最新のアップデートの取得中にエラーが発生しました。",
+  "pendingUpdateCard_title": "アップデートの準備ができました",
+  "pendingUpdateCard_body": "アップデートを完了するには、WitnessWorkを再起動してください。",
+  "pendingUpdateCard_cta": "今すぐアップデート",
   "conductedBibleStudy": "聖書研究を実施",
   "inactiveBibleStudiesDoNoCountTowardsMonthlyTotals": "聖書研究は、当月に少なくとも 1 回実施されない限り、月の合計には反映されません。",
   "bibleStudy": "聖書研究",
@@ -1320,6 +1323,9 @@
   "buddies_buddySeesTitle": "{{name}}さんに表示される内容",
   "buddies_calendarSettingsTitle": "あなたのカレンダー",
   "buddies_showOnCalendarInfo": "バディが出かける予定の日を、あなたのカレンダーに表示します。一緒に出かけるプランは常に表示されます。",
+  "buddies_petSettingsTitle": "あなたのペット",
+  "buddies_petVisits": "バディのペットが訪ねてくる",
+  "buddies_petVisitsInfo": "一緒に出かけた日は、バディのペットがあなたのペットを訪ねてきます。",
   "buddies_alertsThisDevice": "この端末のみ。",
   "buddies_buddySettings": "共有と通知",
   "buddies_buddySettingsFollowsAll": "すべてのバディと同じ",
@@ -4396,7 +4402,7 @@
     },
     "streak": {
       "description": "奉仕の連続記録",
-      "plans": "予定した日を連続して守った日数",
+      "plans": "欠かさず守ったプラン",
       "months": "連続した月数",
       "none": "予定した日を守ると連続記録が始まります",
       "noneMonths": "今月宣教に時間を使うと連続記録が始まります"
@@ -4677,7 +4683,10 @@
         "pebble": "小石を拾う",
         "feather": "羽を拾う",
         "lily": "ユリを拾う"
-      }
+      },
+      "promptAnimalHint": "このペットを選ぶ",
+      "sceneWithVisitors": "{{name}}の部屋。訪問中:{{visitors}}",
+      "visitor": "{{name}}さんのペット、{{pet}}"
     },
     "rename": {
       "title": "ペットの名前を変更"
@@ -4691,8 +4700,8 @@
     "shareCard": {
       "share": "共有",
       "streakPlans": {
-        "one": "予定した日を連続して守った日数",
-        "other": "予定した日を連続して守った日数"
+        "one": "欠かさず守ったプラン",
+        "other": "欠かさず守ったプラン"
       },
       "streakMonths": {
         "one": "か月連続",
@@ -4919,7 +4928,15 @@
     "details": {
       "rename": "名前を変更",
       "change": "ペットを変更",
-      "share": "共有"
+      "share": "共有",
+      "streakA11y": "連続記録:{{count}}",
+      "streakInfoTitle": "連続記録",
+      "streakInfoPlans": "現在の連続記録は{{count}}です。プランを守る(その日に時間を記録する)たびに1増えます。プランの間隔が何日空いても構いません。1つでも欠かすと、最初からやり直しになります。プランのない日に記録した時間は加算されません。",
+      "streakInfoMonths": "現在の連続記録は{{count}}です。宣教に参加した月が何か月続いているかを数えます。",
+      "activeMonths": "活動した月:{{count}}",
+      "activeMonthsInfoTitle": "活動した月",
+      "activeMonthsInfo": "これまでに{{count}}か月です。ペットを迎えた後に、時間を記録するか、訪問やプランを保存した月が数えられます。連続している必要はありません。",
+      "settings": "設定"
     },
     "intro": {
       "hearts": {
@@ -4953,6 +4970,35 @@
       "decorate": "部屋を飾る",
       "trayHat": "新しい帽子:{{hat}}",
       "trayRoomDescription": "{{where}}。{{detail}}"
+    },
+    "visitor": {
+      "line": "{{name}}さんと一緒に来ました!",
+      "viewPlan": "プランを表示",
+      "viewFollowUp": "フォローアップを表示",
+      "viewBuddy": "{{name}}さんを表示",
+      "hide": "{{name}}さんのペットを非表示",
+      "hidden": "{{name}}さんのペットは訪ねてきません",
+      "todayTitle": "今日の訪問",
+      "summary": {
+        "one": "今日訪ねてきたペット:{{count}}匹",
+        "other": "今日訪ねてきたペット:{{count}}匹"
+      },
+      "withOne": "{{name}}さんと",
+      "withMore": {
+        "one": "{{name}}さんとほか{{count}}人",
+        "other": "{{name}}さんとほか{{count}}人"
+      },
+      "detail": "{{name}}さんのペット · {{activity}}",
+      "planAt": "{{time}}にプラン",
+      "followUpAt": "{{time}}にフォローアップ"
+    },
+    "settings": {
+      "title": "ペットの設定",
+      "showOnHome": "ホームに表示",
+      "buddiesTitle": "バディのペット",
+      "visits": "バディのペットが訪ねてくる",
+      "visitsInfo": "バディと一緒に出かけた日は、バディのペットがあなたのペットを訪ねてきます。",
+      "noBuddyPets": "ペットを共有しているバディはまだいません。"
     }
   },
   "handoff_newDoneSynced": "クラウド同期で、記録、連絡先、メモをこの電話に取り込んでいます。まもなく表示されます。",

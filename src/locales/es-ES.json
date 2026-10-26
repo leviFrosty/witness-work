@@ -196,7 +196,7 @@
   "streak_howItWorks": "Cómo funcionan las rachas",
   "streakCelebration_started": "¡Estás en racha!",
   "streakCelebration_grew": "¡Tu racha va en aumento!",
-  "streakCelebration_captionPlans": "Días planificados cumplidos seguidos. Sigue así en tu próximo día planificado.",
+  "streakCelebration_captionPlans": "Planes cumplidos sin fallar ninguno, aunque estén separados. Sigue así en tu próximo día planificado.",
   "streakCelebration_captionMonths": "Meses seguidos en el ministerio. Sigue así el próximo mes.",
   "countdownDaysHours": "{{days}} d {{hours}} h",
   "countdownHoursMinutes": "{{hours}} h {{minutes}} min",
@@ -445,6 +445,9 @@
   "ok": "DE ACUERDO",
   "noUpdateAvailable": "No hay ninguna actualización disponible actualmente.",
   "update_error": "Error al obtener la última actualización.",
+  "pendingUpdateCard_title": "Actualización lista",
+  "pendingUpdateCard_body": "Reinicia WitnessWork para terminar de actualizar.",
+  "pendingUpdateCard_cta": "Actualizar ahora",
   "conductedBibleStudy": "Estudio bíblico dirigido",
   "inactiveBibleStudiesDoNoCountTowardsMonthlyTotals": "Los estudios bíblicos no contribuirán a los totales mensuales a menos que se realicen al menos una vez durante el mes en curso.",
   "bibleStudy": "Estudio bíblico",
@@ -1320,6 +1323,9 @@
   "buddies_buddySeesTitle": "Cómo te ve {{name}}",
   "buddies_calendarSettingsTitle": "Tu calendario",
   "buddies_showOnCalendarInfo": "Muestra en tu calendario los días en que tus compañeros planean salir. Los planes en los que salen juntos siempre se muestran.",
+  "buddies_petSettingsTitle": "Tu mascota",
+  "buddies_petVisits": "Sus mascotas visitan la mía",
+  "buddies_petVisitsInfo": "Los días que salís juntos, la mascota de un compañero visita la tuya.",
   "buddies_alertsThisDevice": "Solo en este dispositivo.",
   "buddies_buddySettings": "Compartir y avisos",
   "buddies_buddySettingsFollowsAll": "Igual que Todos los compañeros",
@@ -4396,7 +4402,7 @@
     },
     "streak": {
       "description": "Tu racha de servicio",
-      "plans": "días planificados cumplidos seguidos",
+      "plans": "planes cumplidos, ninguno fallado",
       "months": "meses seguidos",
       "none": "Cumple unos cuantos días planificados para empezar una",
       "noneMonths": "Dedica tiempo al ministerio este mes para empezar una"
@@ -4677,7 +4683,10 @@
         "pebble": "Recoger el guijarro",
         "feather": "Recoger la pluma",
         "lily": "Recoger el lirio"
-      }
+      },
+      "promptAnimalHint": "Elegir esta mascota",
+      "sceneWithVisitors": "Habitación de {{name}}. De visita: {{visitors}}",
+      "visitor": "{{pet}}, la mascota de {{name}}"
     },
     "rename": {
       "title": "Cambiar nombre de la mascota"
@@ -4691,8 +4700,8 @@
     "shareCard": {
       "share": "Compartir",
       "streakPlans": {
-        "one": "día planificado seguido",
-        "other": "días planificados seguidos"
+        "one": "plan cumplido, ninguno fallado",
+        "other": "planes cumplidos, ninguno fallado"
       },
       "streakMonths": {
         "one": "mes seguido",
@@ -4919,7 +4928,15 @@
     "details": {
       "rename": "Cambiar nombre",
       "change": "Cambiar mascota",
-      "share": "Compartir"
+      "share": "Compartir",
+      "streakA11y": "Racha: {{count}}",
+      "streakInfoTitle": "Tu racha",
+      "streakInfoPlans": "Tu racha ahora es de {{count}}. Cada plan que cumples (con tiempo registrado ese día) suma 1, sin importar cuántos días haya entre tus planes. Si fallas uno, vuelve a empezar. El tiempo registrado un día sin plan no suma.",
+      "streakInfoMonths": "Tu racha ahora es de {{count}}. Cuenta los meses seguidos en que participaste en el ministerio.",
+      "activeMonths": "Meses activos: {{count}}",
+      "activeMonthsInfoTitle": "Meses activos",
+      "activeMonthsInfo": "Llevas {{count}} hasta ahora. Un mes cuenta cuando, después de adoptar a tu mascota, registras tiempo o guardas una visita o un plan en él. No hace falta que los meses sean seguidos.",
+      "settings": "Ajustes"
     },
     "intro": {
       "hearts": {
@@ -4953,6 +4970,35 @@
       "decorate": "Decorar habitación",
       "trayHat": "Sombrero nuevo: {{hat}}",
       "trayRoomDescription": "{{where}}. {{detail}}"
+    },
+    "visitor": {
+      "line": "¡De visita con {{name}}!",
+      "viewPlan": "Ver plan",
+      "viewFollowUp": "Ver seguimiento",
+      "viewBuddy": "Ver a {{name}}",
+      "hide": "Ocultar la mascota de {{name}}",
+      "hidden": "La mascota de {{name}} no te visitará",
+      "todayTitle": "De visita hoy",
+      "summary": {
+        "one": "{{count}} mascota de visita hoy",
+        "other": "{{count}} mascotas de visita hoy"
+      },
+      "withOne": "Con {{name}}",
+      "withMore": {
+        "one": "Con {{name}} y {{count}} más",
+        "other": "Con {{name}} y {{count}} más"
+      },
+      "detail": "Mascota de {{name}} · {{activity}}",
+      "planAt": "Plan a las {{time}}",
+      "followUpAt": "Seguimiento a las {{time}}"
+    },
+    "settings": {
+      "title": "Ajustes de la mascota",
+      "showOnHome": "Mostrar en Inicio",
+      "buddiesTitle": "Mascotas de compañeros",
+      "visits": "Visitas de mascotas de compañeros",
+      "visitsInfo": "Los días que sales con un compañero, su mascota visita la tuya.",
+      "noBuddyPets": "Ninguno de tus compañeros comparte una mascota todavía."
     }
   },
   "handoff_newDoneSynced": "La sincronización en la nube está trayendo tus registros, contactos y notas a este teléfono. Aparecerán en un momento.",

@@ -196,7 +196,7 @@
   "streak_howItWorks": "Jinsi Mfululizo Unavyofanya Kazi",
   "streakCelebration_started": "Umeanza mfululizo!",
   "streakCelebration_grew": "Mfululizo wako unakua!",
-  "streakCelebration_captionPlans": "Siku zilizopangwa ulizotimiza mfululizo. Endelea siku yako inayofuata iliyopangwa.",
+  "streakCelebration_captionPlans": "Mipango uliyotimiza bila kukosa hata mmoja, hata ikiwa imeachana kwa siku nyingi. Endelea siku yako inayofuata iliyopangwa.",
   "streakCelebration_captionMonths": "Miezi mfululizo katika huduma. Endelea mwezi ujao.",
   "countdownDaysHours": "{{days}}d {{hours}}h",
   "countdownHoursMinutes": "{{hours}}h {{minutes}}m",
@@ -445,6 +445,9 @@
   "ok": "sawa",
   "noUpdateAvailable": "Hakuna sasisho linalopatikana kwa sasa.",
   "update_error": "Hitilafu katika kuleta sasisho jipya zaidi.",
+  "pendingUpdateCard_title": "Sasisho Liko Tayari",
+  "pendingUpdateCard_body": "Anzisha upya WitnessWork ili kukamilisha kusasisha.",
+  "pendingUpdateCard_cta": "Sasisha Sasa",
   "conductedBibleStudy": "Funzo la Biblia Lililoendeshwa",
   "inactiveBibleStudiesDoNoCountTowardsMonthlyTotals": "Masomo ya Biblia hayatachangia jumla ya kila mwezi isipokuwa yakifanywa angalau mara moja katika mwezi huu.",
   "bibleStudy": "Kusoma Biblia",
@@ -1320,6 +1323,9 @@
   "buddies_buddySeesTitle": "Jinsi {{name}} anavyokuona",
   "buddies_calendarSettingsTitle": "Kalenda Yako",
   "buddies_showOnCalendarInfo": "Huonyesha kwenye kalenda yako siku ambazo wenzi wanapanga kutoka. Mipango mnayotoka pamoja huonyeshwa daima.",
+  "buddies_petSettingsTitle": "Kipenzi Chako",
+  "buddies_petVisits": "Vipenzi vyao vitembelee changu",
+  "buddies_petVisitsInfo": "Siku mnapotoka pamoja, kipenzi cha mwenzi kinakitembelea chako.",
   "buddies_alertsThisDevice": "Kwenye kifaa hiki pekee.",
   "buddies_buddySettings": "Kushiriki na Arifa",
   "buddies_buddySettingsFollowsAll": "Sawa na Wenzi Wote",
@@ -4396,7 +4402,7 @@
     },
     "streak": {
       "description": "Mfululizo wako wa huduma",
-      "plans": "siku zilizopangwa zilizotimizwa mfululizo",
+      "plans": "mipango iliyotimizwa, bila kukosa",
       "months": "miezi mfululizo",
       "none": "Timiza siku chache zilizopangwa ili kuanza",
       "noneMonths": "Tumia muda katika huduma mwezi huu ili kuanza"
@@ -4677,7 +4683,10 @@
         "pebble": "Chukua kokoto",
         "feather": "Chukua unyoya",
         "lily": "Chukua yungiyungi"
-      }
+      },
+      "promptAnimalHint": "Chagua kipenzi hiki",
+      "sceneWithVisitors": "Chumba cha {{name}}. Wageni: {{visitors}}",
+      "visitor": "{{pet}}, kipenzi cha {{name}}"
     },
     "rename": {
       "title": "Badilisha jina la kipenzi"
@@ -4691,8 +4700,8 @@
     "shareCard": {
       "share": "Shiriki",
       "streakPlans": {
-        "one": "siku iliyopangwa mfululizo",
-        "other": "siku zilizopangwa mfululizo"
+        "one": "mpango uliotimizwa, bila kukosa",
+        "other": "mipango iliyotimizwa, bila kukosa"
       },
       "streakMonths": {
         "one": "mwezi mfululizo",
@@ -4919,7 +4928,15 @@
     "details": {
       "rename": "Badilisha Jina",
       "change": "Badilisha kipenzi",
-      "share": "Shiriki"
+      "share": "Shiriki",
+      "streakA11y": "Mfululizo: {{count}}",
+      "streakInfoTitle": "Mfululizo wako",
+      "streakInfoPlans": "Mfululizo wako sasa ni {{count}}. Kila mpango unaotimiza (muda wowote uliorekodiwa siku hiyo) unaongeza 1, hata mipango yako ikiachana kwa siku ngapi. Ukikosa mmoja, unaanza upya. Muda uliorekodiwa siku isiyo na mpango hauuongezi.",
+      "streakInfoMonths": "Mfululizo wako sasa ni {{count}}. Unahesabu miezi mfululizo ambayo umeshiriki katika huduma.",
+      "activeMonths": "Miezi uliyoshiriki: {{count}}",
+      "activeMonthsInfoTitle": "Miezi uliyoshiriki",
+      "activeMonthsInfo": "Una {{count}} kufikia sasa. Mwezi unahesabiwa unaporekodi muda au kuhifadhi ziara au mpango ndani yake baada ya kumpokea kipenzi chako. Miezi hiyo haihitaji kuwa mfululizo.",
+      "settings": "Mipangilio"
     },
     "intro": {
       "hearts": {
@@ -4953,6 +4970,35 @@
       "decorate": "Pamba Chumba",
       "trayHat": "Kofia mpya: {{hat}}",
       "trayRoomDescription": "{{where}}. {{detail}}"
+    },
+    "visitor": {
+      "line": "Natembelea pamoja na {{name}}!",
+      "viewPlan": "Tazama Mpango",
+      "viewFollowUp": "Tazama Ufuatiliaji",
+      "viewBuddy": "Tazama {{name}}",
+      "hide": "Ficha Kipenzi cha {{name}}",
+      "hidden": "Kipenzi cha {{name}} hakitatembelea",
+      "todayTitle": "Wageni wa Leo",
+      "summary": {
+        "one": "Kipenzi {{count}} Kinatembelea Leo",
+        "other": "Vipenzi {{count}} Vinatembelea Leo"
+      },
+      "withOne": "Pamoja na {{name}}",
+      "withMore": {
+        "one": "Pamoja na {{name}} na mwingine {{count}}",
+        "other": "Pamoja na {{name}} na wengine {{count}}"
+      },
+      "detail": "Kipenzi cha {{name}} · {{activity}}",
+      "planAt": "Mpango saa {{time}}",
+      "followUpAt": "Ufuatiliaji saa {{time}}"
+    },
+    "settings": {
+      "title": "Mipangilio ya Kipenzi",
+      "showOnHome": "Onyesha kwenye Nyumbani",
+      "buddiesTitle": "Vipenzi vya Wenzi",
+      "visits": "Vipenzi vya wenzi vitembelee",
+      "visitsInfo": "Siku unapotoka na mwenzi, kipenzi chake kinakitembelea chako.",
+      "noBuddyPets": "Hakuna mwenzi wako ambaye ameshiriki kipenzi bado."
     }
   },
   "handoff_newDoneSynced": "Usawazishaji wa Wingu unaleta rekodi, anwani, na madokezo yako kwenye simu hii. Vitaonekana baada ya muda mfupi.",

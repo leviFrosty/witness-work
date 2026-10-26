@@ -240,7 +240,7 @@
   "streak_howItWorks": "كيف تعمل السلاسل",
   "streakCelebration_started": "بدأت سلسلتك!",
   "streakCelebration_grew": "سلسلتك تكبر!",
-  "streakCelebration_captionPlans": "أيام مخطط لها التزمت بها على التوالي. واصل في يومك المخطط التالي.",
+  "streakCelebration_captionPlans": "خطط التزمت بها دون أن تفوّت أيًّا منها، مهما تباعدت. واصل في يومك المخطَّط له التالي.",
   "streakCelebration_captionMonths": "أشهر متتالية في الخدمة. واصل في الشهر القادم.",
   "countdownDaysHours": "{{days}}ي {{hours}}س",
   "countdownHoursMinutes": "{{hours}}س {{minutes}}د",
@@ -517,6 +517,9 @@
   "ok": "حسنًا",
   "noUpdateAvailable": "لا يتوفر تحديث حاليًا.",
   "update_error": "حدث خطأ أثناء جلب آخر تحديث.",
+  "pendingUpdateCard_title": "التحديث جاهز",
+  "pendingUpdateCard_body": "أعد تشغيل WitnessWork لإكمال التحديث.",
+  "pendingUpdateCard_cta": "حدِّث الآن",
   "conductedBibleStudy": "أدرت درسًا في الكتاب المقدس",
   "inactiveBibleStudiesDoNoCountTowardsMonthlyTotals": "لن تُضاف دروس الكتاب المقدس إلى مجاميع الشهر ما لم تُدِرها مرة واحدة على الأقل في الشهر الحالي.",
   "bibleStudy": "درس في الكتاب المقدس",
@@ -1418,6 +1421,9 @@
   "buddies_buddySeesTitle": "كيف يراك {{name}}",
   "buddies_calendarSettingsTitle": "تقويمك",
   "buddies_showOnCalendarInfo": "يعرض في تقويمك الأيام التي يخطط الرفاق للخروج فيها. أما الخطط التي تخرجون فيها معًا فتظهر دائمًا.",
+  "buddies_petSettingsTitle": "حيوانك الأليف",
+  "buddies_petVisits": "حيواناتهم الأليفة تزور حيواني",
+  "buddies_petVisitsInfo": "في اليوم الذي تخرجان فيه معًا إلى الخدمة، يزور حيوان رفيقك الأليف حيوانك.",
   "buddies_alertsThisDevice": "على هذا الجهاز فقط.",
   "buddies_buddySettings": "المشاركة والتنبيهات",
   "buddies_buddySettingsFollowsAll": "مثل «كل الرفاق»",
@@ -4816,7 +4822,7 @@
     },
     "streak": {
       "description": "سلسلة خدمتك",
-      "plans": "أيام مخطَّط لها متتالية",
+      "plans": "خطط التُزم بها دون إخفاق",
       "months": "أشهر متتالية",
       "none": "التزم ببضعة أيام مخطَّط لها لتبدأ سلسلة",
       "noneMonths": "اقضِ وقتًا في الخدمة هذا الشهر لتبدأ سلسلة"
@@ -5146,7 +5152,10 @@
         "pebble": "التقط الحصاة",
         "feather": "التقط الريشة",
         "lily": "التقط الزنبقة"
-      }
+      },
+      "promptAnimalHint": "اختر هذا الحيوان الأليف",
+      "sceneWithVisitors": "غرفة {{name}}. الزوار: {{visitors}}",
+      "visitor": "{{pet}}، الحيوان الأليف لـ{{name}}"
     },
     "rename": {
       "title": "إعادة تسمية الحيوان الأليف"
@@ -5160,12 +5169,12 @@
     "shareCard": {
       "share": "مشاركة",
       "streakPlans": {
-        "zero": "يوم مخطّط متتالٍ",
-        "one": "يوم مخطَّط له متتالٍ",
-        "two": "يوم مخطّط متتالٍ",
-        "few": "أيام مخطّطة متتالية",
-        "many": "يومًا مخطّطًا متتاليًا",
-        "other": "يوم مخطَّط له متتالٍ"
+        "zero": "خطة التُزم بها دون إخفاق",
+        "one": "خطة التُزم بها دون إخفاق",
+        "two": "خطة التُزم بها دون إخفاق",
+        "few": "خطط التُزم بها دون إخفاق",
+        "many": "خطةً التُزم بها دون إخفاق",
+        "other": "خطة التُزم بها دون إخفاق"
       },
       "streakMonths": {
         "zero": "شهر متتالٍ",
@@ -5420,7 +5429,15 @@
     "details": {
       "rename": "إعادة التسمية",
       "change": "تغيير الحيوان الأليف",
-      "share": "مشاركة"
+      "share": "مشاركة",
+      "streakA11y": "السلسلة: {{count}}",
+      "streakInfoTitle": "سلسلتك",
+      "streakInfoPlans": "سلسلتك الآن {{count}}. كل خطة تلتزم بها (أي وقت تسجّله في ذلك اليوم) تضيف ١، مهما كانت الأيام بين خططك. إن فاتتك واحدة، تبدأ السلسلة من جديد. والوقت الذي تسجّله في يوم بلا خطة لا يُضاف إليها.",
+      "streakInfoMonths": "سلسلتك الآن {{count}}. وهي تَعُدّ الأشهر المتتالية التي اشتركت فيها في الخدمة.",
+      "activeMonths": "الأشهر النشطة: {{count}}",
+      "activeMonthsInfoTitle": "الأشهر النشطة",
+      "activeMonthsInfo": "لديك {{count}} حتى الآن. يُحسب الشهر عندما تسجّل فيه وقتًا أو تحفظ فيه زيارة أو خطة بعد تبنّي حيوانك الأليف. ولا يلزم أن تكون الأشهر متتالية.",
+      "settings": "الإعدادات"
     },
     "intro": {
       "hearts": {
@@ -5454,6 +5471,43 @@
       "decorate": "تزيين الغرفة",
       "trayHat": "قبعة جديدة: {{hat}}",
       "trayRoomDescription": "{{where}}. {{detail}}"
+    },
+    "visitor": {
+      "line": "في زيارة مع {{name}}!",
+      "viewPlan": "عرض الخطة",
+      "viewFollowUp": "عرض المتابعة",
+      "viewBuddy": "عرض {{name}}",
+      "hide": "إخفاء حيوان {{name}} الأليف",
+      "hidden": "لن يزورك حيوان {{name}} الأليف",
+      "todayTitle": "الزوار اليوم",
+      "summary": {
+        "zero": "{{count}} حيوان أليف في زيارة اليوم",
+        "one": "حيوان أليف واحد في زيارة اليوم",
+        "two": "حيوانان أليفان في زيارة اليوم",
+        "few": "{{count}} حيوانات أليفة في زيارة اليوم",
+        "many": "{{count}} حيوانًا أليفًا في زيارة اليوم",
+        "other": "{{count}} حيوان أليف في زيارة اليوم"
+      },
+      "withOne": "مع {{name}}",
+      "withMore": {
+        "zero": "مع {{name}} و{{count}} آخرين",
+        "one": "مع {{name}} وشخص آخر",
+        "two": "مع {{name}} وشخصين آخرين",
+        "few": "مع {{name}} و{{count}} أشخاص آخرين",
+        "many": "مع {{name}} و{{count}} شخصًا آخر",
+        "other": "مع {{name}} و{{count}} شخص آخر"
+      },
+      "detail": "حيوان {{name}} الأليف · {{activity}}",
+      "planAt": "خطة في {{time}}",
+      "followUpAt": "متابعة في {{time}}"
+    },
+    "settings": {
+      "title": "إعدادات الحيوان الأليف",
+      "showOnHome": "إظهار في الشاشة الرئيسية",
+      "buddiesTitle": "حيوانات الرفاق الأليفة",
+      "visits": "زيارات حيوانات الرفاق الأليفة",
+      "visitsInfo": "في اليوم الذي تخرج فيه إلى الخدمة مع رفيق، يزور حيوانه الأليف حيوانك.",
+      "noBuddyPets": "لا يشارك أيٌّ من رفاقك حيوانًا أليفًا بعد."
     }
   },
   "handoff_newDoneSynced": "تنقل المزامنة السحابية سجلاتك وجهات اتصالك وملاحظاتك إلى هذا الهاتف. ستظهر بعد لحظات.",

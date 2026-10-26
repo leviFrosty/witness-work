@@ -196,7 +196,7 @@
   "streak_howItWorks": "Ifyo Ukukonkana Kubomba",
   "streakCelebration_started": "Mwatendeka ukukonkana!",
   "streakCelebration_grew": "Ukukonkana kwenu kulekula!",
-  "streakCelebration_captionPlans": "Inshiku shapangwa ishikonkana. Leyeni pantanshi pa bushiku bwapangwa ubukonkapo.",
+  "streakCelebration_captionPlans": "Ubupange mwakonka ukwabula ukulufyapo, nangu bwapatukana shani. Leyeni pantanshi pa bushiku bwapangwa ubukonkapo.",
   "streakCelebration_captionMonths": "Imyeshi iikonkana mu mulimo wa kushimikila. Leyeni pantanshi umweshi ukonkapo.",
   "countdownDaysHours": "{{days}}n {{hours}}a",
   "countdownHoursMinutes": "{{hours}}a {{minutes}}m",
@@ -433,6 +433,9 @@
   "ok": "OK",
   "noUpdateAvailable": "No update currently available.",
   "update_error": "Error fetching latest update.",
+  "pendingUpdateCard_title": "Ifyapya Fyaipekanya",
+  "pendingUpdateCard_body": "Tendekeni nakabili WitnessWork pa kupwisha ukucinja.",
+  "pendingUpdateCard_cta": "Cinjeni Nomba",
   "conductedBibleStudy": "Conducted Bible Study",
   "inactiveBibleStudiesDoNoCountTowardsMonthlyTotals": "Bible studies won't contribute to monthly totals unless conducted at least once in the current month.",
   "bibleStudy": "Bible Study",
@@ -2159,6 +2162,9 @@
   "buddies_buddySeesTitle": "Ifyo {{name}} amimona",
   "buddies_calendarSettingsTitle": "Kalenda Yenu",
   "buddies_showOnCalendarInfo": "Ilanga pa kalenda yenu inshiku banyina bapanga ukuya mu mulimo. Ubupange mulaya pamo bulalangwa inshita yonse.",
+  "buddies_petSettingsTitle": "Cinyama Cenu",
+  "buddies_petVisits": "Ifinyama fyabo fitandalile icandi",
+  "buddies_petVisitsInfo": "Pa bushiku mwaya pamo, cinyama ca munyina citandalila cinyama cenu.",
   "buddies_alertsThisDevice": "Pa cibombelo ici fye.",
   "buddies_buddySettings": "Ukusabankanya & Ifyebo",
   "buddies_buddySettingsFollowsAll": "Fimo na Banyina Bonse",
@@ -4396,7 +4402,7 @@
     },
     "streak": {
       "description": "Ukuteshiwa kwa mulimo wenu",
-      "plans": "inshiku sha mapange isyakonkenkana",
+      "plans": "ubupange bwakonkwa, takuli ubwalubile",
       "months": "imyeshi iikonkana",
       "none": "Konkeleni inshiku shimbi sha mapange ukutendeka",
       "noneMonths": "Ipitisheni inshita mu mulimo wa kushimikila mu mweshi uno ukutendeka"
@@ -4677,7 +4683,10 @@
         "pebble": "Tolani ibwe",
         "feather": "Tolani ubwoya",
         "lily": "Tolani ilili"
-      }
+      },
+      "promptAnimalHint": "Saleni cinyama ici",
+      "sceneWithVisitors": "Ng'anda ya {{name}}. Abalefika: {{visitors}}",
+      "visitor": "{{pet}}, cinyama ca {{name}}"
     },
     "rename": {
       "title": "Cinjeni ishina lya pet"
@@ -4691,8 +4700,8 @@
     "shareCard": {
       "share": "Tumina",
       "streakPlans": {
-        "one": "bushiku bwa pange ubwakonkana",
-        "other": "inshiku sha mapange isyakonkana"
+        "one": "bupange bwakonkwa, takuli ubwalubile",
+        "other": "ubupange bwakonkwa, takuli ubwalubile"
       },
       "streakMonths": {
         "one": "umweshi uwakonkana",
@@ -4919,7 +4928,15 @@
     "details": {
       "rename": "Cinjeni Ishina",
       "change": "Cinjeni pet",
-      "share": "Tumina"
+      "share": "Tumina",
+      "streakA11y": "Ukukonkana: {{count}}",
+      "streakInfoTitle": "Ukukonkana kwenu",
+      "streakInfoPlans": "Ukukonkana kwenu nomba ni {{count}}. Ubupange bonse mwakonka (inshita iili yonse mwalemba pali bulya bushiku) bulundapo 1, nangu inshiku shinga shapatulula ubupange bwenu. Nga mwalufyapo bumo, kulatendeka nakabili. Inshita mwalemba pa bushiku ubushaba ubupange tailundapo.",
+      "streakInfoMonths": "Ukukonkana kwenu nomba ni {{count}}. Kupenda imyeshi iikonkana iyo mwabombelemo mu mulimo wa kushimikila.",
+      "activeMonths": "Imyeshi mwabombelamo: {{count}}",
+      "activeMonthsInfoTitle": "Imyeshi mwabombelamo",
+      "activeMonthsInfo": "Mwakwata {{count}} ukufika nomba. Umweshi upendwa nga mwalemba inshita nelyo mwasunga intandalilo nelyo ubupange muli wene panuma ya kupokelela cinyama cenu. Imyeshi tayafwile ukukonkana.",
+      "settings": "Ifyo Mwasala"
     },
     "intro": {
       "hearts": {
@@ -4953,6 +4970,35 @@
       "decorate": "Kwafyeni Ing'anda",
       "trayHat": "Ikofyo ipya: {{hat}}",
       "trayRoomDescription": "{{where}}. {{detail}}"
+    },
+    "visitor": {
+      "line": "Ndetandalila na {{name}}!",
+      "viewPlan": "Moneni Ubupange",
+      "viewFollowUp": "Moneni Ukukonkapo",
+      "viewBuddy": "Moneni {{name}}",
+      "hide": "Fisheni Cinyama ca {{name}}",
+      "hidden": "Cinyama ca {{name}} tacakatandalile",
+      "todayTitle": "Ifitandalila Lelo",
+      "summary": {
+        "one": "Cinyama {{count}} Citandalila Lelo",
+        "other": "Ifinyama {{count}} Fitandalila Lelo"
+      },
+      "withOne": "Na {{name}}",
+      "withMore": {
+        "one": "Na {{name}} na umbi {{count}}",
+        "other": "Na {{name}} na bambi {{count}}"
+      },
+      "detail": "Cinyama ca {{name}} · {{activity}}",
+      "planAt": "Ubupange pa {{time}}",
+      "followUpAt": "Ukukonkapo pa {{time}}"
+    },
+    "settings": {
+      "title": "Ifyo Mwasala fya Cinyama",
+      "showOnHome": "Langeni pa Ng'anda",
+      "buddiesTitle": "Ifinyama fya Banyina",
+      "visits": "Ifinyama fya banyina fitandalila",
+      "visitsInfo": "Pa bushiku mwaya na munyina, cinyama cakwe citandalila cinyama cenu.",
+      "noBuddyPets": "Takuli munyina wenu nangu umo uwasabankanya cinyama."
     }
   },
   "handoff_newDoneSynced": "Cloud Sync ileleta amalipoti yenu, abakulanshanya ne nsalu pa foni ino. Fileboneka panono.",

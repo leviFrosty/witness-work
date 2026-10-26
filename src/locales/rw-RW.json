@@ -196,7 +196,7 @@
   "streak_howItWorks": "Uko urukurikirane rukora",
   "streakCelebration_started": "Urukurikirane rwawe rwatangiye!",
   "streakCelebration_grew": "Urukurikirane rwawe rurakura!",
-  "streakCelebration_captionPlans": "Iminsi yari ifite gahunda wakurikije ikurikiranye. Komeza ku munsi ukurikira ufite gahunda.",
+  "streakCelebration_captionPlans": "Gahunda wubahirije nta n'imwe usibye, n'iyo zaba zitandukanyijwe n'iminsi myinshi. Komeza ku munsi ukurikira ufite gahunda.",
   "streakCelebration_captionMonths": "Ukwezi gukurikiranye mu murimo wo kubwiriza. Komeza no mu kwezi gutaha.",
   "countdownDaysHours": "{{days}}d {{hours}}h",
   "countdownHoursMinutes": "{{hours}}h {{minutes}}m",
@@ -445,6 +445,9 @@
   "ok": "OK",
   "noUpdateAvailable": "Nta bishya bihari ubu.",
   "update_error": "Kureba ibishya ntabwo byagenze neza.",
+  "pendingUpdateCard_title": "Ibishya biteguye",
+  "pendingUpdateCard_body": "Ongera utangize WitnessWork kugira ngo urangize kuvugurura.",
+  "pendingUpdateCard_cta": "Vugurura nonaha",
   "conductedBibleStudy": "Wayoboye ikigisho cya Bibiliya",
   "inactiveBibleStudiesDoNoCountTowardsMonthlyTotals": "Ibyigisho bya Bibiliya ntibijya kuri raporo y'ukwezi niba bitarayoborewe nibura rimwe mu kwezi.",
   "bibleStudy": "Ikigisho cya Bibiliya",
@@ -1320,6 +1323,9 @@
   "buddies_buddySeesTitle": "Uko {{name}} akubona",
   "buddies_calendarSettingsTitle": "Kalendari yawe",
   "buddies_showOnCalendarInfo": "Yerekana kuri kalendari yawe iminsi bagenzi bawe bateganya kujya kubwiriza. Gahunda mujyana buri gihe zirerekanwa.",
+  "buddies_petSettingsTitle": "Itungo ryawe",
+  "buddies_petVisits": "Amatungo yabo asure iryanjye",
+  "buddies_petVisitsInfo": "Ku munsi mujyanye kubwiriza, itungo rya mugenzi wawe risura iryawe.",
   "buddies_alertsThisDevice": "Kuri iki gikoresho gusa.",
   "buddies_buddySettings": "Gusangiza n'imenyesha",
   "buddies_buddySettingsFollowsAll": "Kimwe na Bagenzi bose",
@@ -4396,7 +4402,7 @@
     },
     "streak": {
       "description": "Urukurikirane rwawe rwo kubwiriza",
-      "plans": "iminsi ya gahunda wubahirije ikurikiranye",
+      "plans": "gahunda wubahirije, nta n'imwe isibwe",
       "months": "amezi akurikiranye",
       "none": "Ubahiriza iminsi mike ya gahunda kugira ngo utangire urukurikirane",
       "noneMonths": "Umare igihe mu murimo muri uku kwezi kugira ngo utangire urukurikirane"
@@ -4677,7 +4683,10 @@
         "pebble": "Fata akabuye gato",
         "feather": "Fata ubwoya bw'inyoni",
         "lily": "Fata ururabo rwa lisi"
-      }
+      },
+      "promptAnimalHint": "Hitamo iri tungo",
+      "sceneWithVisitors": "Icyumba cya {{name}}. Abagisuye: {{visitors}}",
+      "visitor": "{{pet}}, itungo rya {{name}}"
     },
     "rename": {
       "title": "Hindura izina ry'itungo"
@@ -4691,8 +4700,8 @@
     "shareCard": {
       "share": "Sangiza",
       "streakPlans": {
-        "one": "umunsi wa gahunda ukurikiranye",
-        "other": "iminsi ya gahunda ikurikiranye"
+        "one": "gahunda yubahirijwe, nta n'imwe isibwe",
+        "other": "gahunda zubahirijwe, nta n'imwe isibwe"
       },
       "streakMonths": {
         "one": "ukwezi gukurikiranye",
@@ -4919,7 +4928,15 @@
     "details": {
       "rename": "Hindura izina",
       "change": "Hindura itungo",
-      "share": "Sangiza"
+      "share": "Sangiza",
+      "streakA11y": "Urukurikirane: {{count}}",
+      "streakInfoTitle": "Urukurikirane rwawe",
+      "streakInfoPlans": "Urukurikirane rwawe ubu ni {{count}}. Buri gahunda wubahirije (wanditse igihe icyo ari cyo cyose kuri uwo munsi) yongeraho 1, uko iminsi iri hagati ya gahunda zawe yaba ingana kose. Nusiba imwe, rwongera gutangira. Igihe wanditse ku munsi udafite gahunda ntikirwongera.",
+      "streakInfoMonths": "Urukurikirane rwawe ubu ni {{count}}. Rubara amezi akurikiranye wifatanyije mu murimo wo kubwiriza.",
+      "activeMonths": "Amezi wakoreyemo: {{count}}",
+      "activeMonthsInfoTitle": "Amezi wakoreyemo",
+      "activeMonthsInfo": "Kugeza ubu ufite {{count}}. Ukwezi kubarwa iyo wanditsemo igihe cyangwa ukabikamo gusura cyangwa gahunda nyuma yo gutora itungo ryawe. Si ngombwa ko amezi akurikirana.",
+      "settings": "Igenamiterere"
     },
     "intro": {
       "hearts": {
@@ -4953,6 +4970,35 @@
       "decorate": "Rimbisha icyumba",
       "trayHat": "Ingofero nshya: {{hat}}",
       "trayRoomDescription": "{{where}}. {{detail}}"
+    },
+    "visitor": {
+      "line": "Nsuye ndi kumwe na {{name}}!",
+      "viewPlan": "Reba gahunda",
+      "viewFollowUp": "Reba gusubirayo",
+      "viewBuddy": "Reba {{name}}",
+      "hide": "Hisha itungo rya {{name}}",
+      "hidden": "Itungo rya {{name}} ntirizasura",
+      "todayTitle": "Abasuye uyu munsi",
+      "summary": {
+        "one": "Itungo {{count}} risuye uyu munsi",
+        "other": "Amatungo {{count}} asuye uyu munsi"
+      },
+      "withOne": "Na {{name}}",
+      "withMore": {
+        "one": "Na {{name}} n'undi {{count}}",
+        "other": "Na {{name}} n'abandi {{count}}"
+      },
+      "detail": "Itungo rya {{name}} · {{activity}}",
+      "planAt": "Gahunda saa {{time}}",
+      "followUpAt": "Gusubirayo saa {{time}}"
+    },
+    "settings": {
+      "title": "Igenamiterere ry'itungo",
+      "showOnHome": "Erekana kuri Ahabanza",
+      "buddiesTitle": "Amatungo ya bagenzi",
+      "visits": "Amatungo ya bagenzi asura",
+      "visitsInfo": "Ku munsi ujyanye kubwiriza na mugenzi wawe, itungo rye risura iryawe.",
+      "noBuddyPets": "Nta mugenzi wawe urasangiza itungo."
     }
   },
   "handoff_newDoneSynced": "Cloud Sync irimo kuzana inyandiko, abantu n'inyandiko zawe kuri iyi telefoni. Zigaragara mu kanya gato.",

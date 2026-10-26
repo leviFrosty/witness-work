@@ -196,7 +196,7 @@
   "streak_howItWorks": "Fonctionnement des séries",
   "streakCelebration_started": "Vous avez lancé une série !",
   "streakCelebration_grew": "Votre série s’allonge !",
-  "streakCelebration_captionPlans": "Jours planifiés tenus d’affilée. Continuez à votre prochain jour planifié.",
+  "streakCelebration_captionPlans": "Plans tenus sans en manquer un, même espacés. Continuez à votre prochain jour planifié.",
   "streakCelebration_captionMonths": "Mois consécutifs dans le ministère. Continuez le mois prochain.",
   "countdownDaysHours": "{{days}} j {{hours}} h",
   "countdownHoursMinutes": "{{hours}} h {{minutes}} min",
@@ -445,6 +445,9 @@
   "ok": "D'ACCORD",
   "noUpdateAvailable": "Aucune mise à jour disponible actuellement.",
   "update_error": "Erreur lors de la récupération de la dernière mise à jour.",
+  "pendingUpdateCard_title": "Mise à jour prête",
+  "pendingUpdateCard_body": "Redémarrez WitnessWork pour terminer la mise à jour.",
+  "pendingUpdateCard_cta": "Mettre à jour",
   "conductedBibleStudy": "Réalisation d'une étude biblique",
   "inactiveBibleStudiesDoNoCountTowardsMonthlyTotals": "Les études bibliques ne contribueront pas aux totaux mensuels à moins d'être menées au moins une fois au cours du mois en cours.",
   "bibleStudy": "L'étude de la bible",
@@ -1320,6 +1323,9 @@
   "buddies_buddySeesTitle": "Ce que {{name}} voit de vous",
   "buddies_calendarSettingsTitle": "Votre calendrier",
   "buddies_showOnCalendarInfo": "Affiche dans votre calendrier les jours où vos compagnons prévoient de sortir. Les plans pour lesquels vous sortez ensemble s’affichent toujours.",
+  "buddies_petSettingsTitle": "Votre animal",
+  "buddies_petVisits": "Leurs animaux visitent le mien",
+  "buddies_petVisitsInfo": "Le jour où vous sortez ensemble, l’animal d’un compagnon rend visite au vôtre.",
   "buddies_alertsThisDevice": "Uniquement sur cet appareil.",
   "buddies_buddySettings": "Partage et alertes",
   "buddies_buddySettingsFollowsAll": "Identique à Tous les compagnons",
@@ -4396,7 +4402,7 @@
     },
     "streak": {
       "description": "Votre série de service",
-      "plans": "jours planifiés tenus d’affilée",
+      "plans": "plans tenus, aucun manqué",
       "months": "mois d’affilée",
       "none": "Tenez quelques jours planifiés pour en commencer une",
       "noneMonths": "Consacrez du temps au ministère ce mois-ci pour en commencer une"
@@ -4677,7 +4683,10 @@
         "pebble": "Ramasser le galet",
         "feather": "Ramasser la plume",
         "lily": "Ramasser le lis"
-      }
+      },
+      "promptAnimalHint": "Choisir cet animal",
+      "sceneWithVisitors": "La chambre de {{name}}. En visite : {{visitors}}",
+      "visitor": "{{pet}}, l’animal de {{name}}"
     },
     "rename": {
       "title": "Renommer l’animal"
@@ -4691,8 +4700,8 @@
     "shareCard": {
       "share": "Partager",
       "streakPlans": {
-        "one": "jour planifié d’affilée",
-        "other": "jours planifiés d’affilée"
+        "one": "plan tenu, aucun manqué",
+        "other": "plans tenus, aucun manqué"
       },
       "streakMonths": {
         "one": "mois d’affilée",
@@ -4919,7 +4928,15 @@
     "details": {
       "rename": "Renommer",
       "change": "Changer d’animal",
-      "share": "Partager"
+      "share": "Partager",
+      "streakA11y": "Série : {{count}}",
+      "streakInfoTitle": "Votre série",
+      "streakInfoPlans": "Votre série est actuellement de {{count}}. Chaque plan tenu (du temps enregistré ce jour-là) ajoute 1, quel que soit l’écart entre vos plans. Si vous en manquez un, elle repart de zéro. Le temps enregistré un jour sans plan ne compte pas.",
+      "streakInfoMonths": "Votre série est actuellement de {{count}}. Elle compte les mois d’affilée où vous avez participé au ministère.",
+      "activeMonths": "Mois actifs : {{count}}",
+      "activeMonthsInfoTitle": "Mois actifs",
+      "activeMonthsInfo": "Vous en avez {{count}} pour l’instant. Un mois compte quand vous y enregistrez du temps, une visite ou un plan après avoir adopté votre animal. Les mois n’ont pas besoin d’être consécutifs.",
+      "settings": "Paramètres"
     },
     "intro": {
       "hearts": {
@@ -4953,6 +4970,35 @@
       "decorate": "Décorer la chambre",
       "trayHat": "Nouveau chapeau : {{hat}}",
       "trayRoomDescription": "{{where}}. {{detail}}"
+    },
+    "visitor": {
+      "line": "En visite avec {{name}} !",
+      "viewPlan": "Voir le plan",
+      "viewFollowUp": "Voir le suivi",
+      "viewBuddy": "Voir {{name}}",
+      "hide": "Masquer l’animal de {{name}}",
+      "hidden": "L’animal de {{name}} ne viendra plus en visite",
+      "todayTitle": "En visite aujourd’hui",
+      "summary": {
+        "one": "{{count}} animal en visite aujourd’hui",
+        "other": "{{count}} animaux en visite aujourd’hui"
+      },
+      "withOne": "Avec {{name}}",
+      "withMore": {
+        "one": "Avec {{name}} et {{count}} autre",
+        "other": "Avec {{name}} et {{count}} autres"
+      },
+      "detail": "L’animal de {{name}} · {{activity}}",
+      "planAt": "Plan à {{time}}",
+      "followUpAt": "Suivi à {{time}}"
+    },
+    "settings": {
+      "title": "Réglages de l’animal",
+      "showOnHome": "Afficher sur l’Accueil",
+      "buddiesTitle": "Animaux des compagnons",
+      "visits": "Visites des animaux des compagnons",
+      "visitsInfo": "Le jour où vous sortez avec un compagnon, son animal rend visite au vôtre.",
+      "noBuddyPets": "Aucun de vos compagnons ne partage encore d’animal."
     }
   },
   "handoff_newDoneSynced": "Cloud Sync apporte vos données de service, vos contacts et vos notes sur ce téléphone. Elles apparaissent dans un instant.",

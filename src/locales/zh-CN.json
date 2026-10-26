@@ -196,7 +196,7 @@
   "streak_howItWorks": "连续记录的计算方式",
   "streakCelebration_started": "你开始了连续记录！",
   "streakCelebration_grew": "你的连续记录在增长！",
-  "streakCelebration_captionPlans": "连续遵守的计划日。在下一个计划日继续保持。",
+  "streakCelebration_captionPlans": "每个计划都已遵守，无论间隔多久。在下一个计划日继续保持。",
   "streakCelebration_captionMonths": "连续参加传道工作的月数。下个月继续保持。",
   "countdownDaysHours": "{{days}}天{{hours}}小时",
   "countdownHoursMinutes": "{{hours}}小时{{minutes}}分钟",
@@ -445,6 +445,9 @@
   "ok": "确定",
   "noUpdateAvailable": "当前没有可用更新。",
   "update_error": "获取最新更新时出错。",
+  "pendingUpdateCard_title": "更新已就绪",
+  "pendingUpdateCard_body": "重新启动 WitnessWork 以完成更新。",
+  "pendingUpdateCard_cta": "立即更新",
   "conductedBibleStudy": "已进行的圣经学习",
   "inactiveBibleStudiesDoNoCountTowardsMonthlyTotals": "除非在当月至少进行一次，否则圣经学习不会计入每月总数。",
   "bibleStudy": "圣经学习",
@@ -1320,6 +1323,9 @@
   "buddies_buddySeesTitle": "{{name}}看到的你",
   "buddies_calendarSettingsTitle": "你的日历",
   "buddies_showOnCalendarInfo": "在你的日历上显示同伴计划外出的日子。你们一起外出的计划总会显示。",
+  "buddies_petSettingsTitle": "你的宠物",
+  "buddies_petVisits": "让同伴的宠物来拜访我的宠物",
+  "buddies_petVisitsInfo": "在你们一起外出传道的日子，同伴的宠物会来拜访你的宠物。",
   "buddies_alertsThisDevice": "仅限这台设备。",
   "buddies_buddySettings": "分享与提醒",
   "buddies_buddySettingsFollowsAll": "与“所有同伴”相同",
@@ -4396,7 +4402,7 @@
     },
     "streak": {
       "description": "你的传道连续记录",
-      "plans": "连续遵守计划的天数",
+      "plans": "已遵守计划，无一错过",
       "months": "连续月数",
       "none": "遵守几个计划日即可开始记录",
       "noneMonths": "本月参加传道工作即可开始记录"
@@ -4677,7 +4683,10 @@
         "pebble": "捡起小石子",
         "feather": "捡起羽毛",
         "lily": "捡起百合花"
-      }
+      },
+      "promptAnimalHint": "选择这只宠物",
+      "sceneWithVisitors": "{{name}}的小屋。来访：{{visitors}}",
+      "visitor": "{{pet}}，{{name}}的宠物"
     },
     "rename": {
       "title": "重命名宠物"
@@ -4691,8 +4700,8 @@
     "shareCard": {
       "share": "分享",
       "streakPlans": {
-        "one": "连续遵守计划的天数",
-        "other": "连续遵守计划的天数"
+        "one": "已遵守计划，无一错过",
+        "other": "已遵守计划，无一错过"
       },
       "streakMonths": {
         "one": "连续月数",
@@ -4919,7 +4928,15 @@
     "details": {
       "rename": "重命名",
       "change": "更换宠物",
-      "share": "分享"
+      "share": "分享",
+      "streakA11y": "连续记录：{{count}}",
+      "streakInfoTitle": "你的连续记录",
+      "streakInfoPlans": "你目前的连续记录是 {{count}}。每遵守一个计划（当天记录了任何时间），就会加 1，无论计划之间相隔多少天。错过一个，就会重新开始。在没有计划的日子记录的时间不计入。",
+      "streakInfoMonths": "你目前的连续记录是 {{count}}。它计算你连续参加传道工作的月数。",
+      "activeMonths": "活跃月数：{{count}}",
+      "activeMonthsInfoTitle": "活跃月数",
+      "activeMonthsInfo": "目前为止共有 {{count}} 个月。领养宠物后，只要你在某个月记录了时间，或保存了访问或计划，该月就会计入。这些月份不需要连续。",
+      "settings": "设置"
     },
     "intro": {
       "hearts": {
@@ -4953,6 +4970,35 @@
       "decorate": "装饰小屋",
       "trayHat": "新帽子：{{hat}}",
       "trayRoomDescription": "{{where}}。{{detail}}"
+    },
+    "visitor": {
+      "line": "和{{name}}一起来玩！",
+      "viewPlan": "查看计划",
+      "viewFollowUp": "查看跟进",
+      "viewBuddy": "查看{{name}}",
+      "hide": "隐藏{{name}}的宠物",
+      "hidden": "{{name}}的宠物不会再来拜访",
+      "todayTitle": "今日来访",
+      "summary": {
+        "one": "今天有 {{count}} 只宠物来访",
+        "other": "今天有 {{count}} 只宠物来访"
+      },
+      "withOne": "与{{name}}一起",
+      "withMore": {
+        "one": "与{{name}}及另外 {{count}} 人一起",
+        "other": "与{{name}}及另外 {{count}} 人一起"
+      },
+      "detail": "{{name}}的宠物 · {{activity}}",
+      "planAt": "{{time}} 的计划",
+      "followUpAt": "{{time}} 的跟进"
+    },
+    "settings": {
+      "title": "宠物设置",
+      "showOnHome": "在主页显示",
+      "buddiesTitle": "同伴的宠物",
+      "visits": "同伴的宠物来访",
+      "visitsInfo": "在你和同伴一起外出传道的日子，同伴的宠物会来拜访你的宠物。",
+      "noBuddyPets": "你的同伴还没有人分享宠物。"
     }
   },
   "handoff_newDoneSynced": "云同步正在把你的记录、联系人和笔记带到这部手机上，稍后就会出现。",

@@ -196,7 +196,7 @@
   "streak_howItWorks": "Hoe reeksen werken",
   "streakCelebration_started": "Je hebt een reeks!",
   "streakCelebration_grew": "Je reeks groeit!",
-  "streakCelebration_captionPlans": "Geplande dagen op rij nagekomen. Zet het voort op je volgende geplande dag.",
+  "streakCelebration_captionPlans": "Plannen nagekomen zonder er een te missen, hoe ver ook uit elkaar. Zet het voort op je volgende geplande dag.",
   "streakCelebration_captionMonths": "Maanden op rij in de bediening. Zet het volgende maand voort.",
   "countdownDaysHours": "{{days}}d {{hours}}u",
   "countdownHoursMinutes": "{{hours}}u {{minutes}}m",
@@ -445,6 +445,9 @@
   "ok": "OK",
   "noUpdateAvailable": "Momenteel geen update beschikbaar.",
   "update_error": "Fout bij ophalen van de nieuwste update.",
+  "pendingUpdateCard_title": "Update klaar",
+  "pendingUpdateCard_body": "Start WitnessWork opnieuw om de update af te ronden.",
+  "pendingUpdateCard_cta": "Nu bijwerken",
   "conductedBibleStudy": "Bijbelstudie geleid",
   "inactiveBibleStudiesDoNoCountTowardsMonthlyTotals": "Bijbelstudies dragen niet bij aan de maandtotalen, tenzij ze minstens één keer per lopende maand worden gehouden.",
   "bibleStudy": "Bijbel studie",
@@ -1320,6 +1323,9 @@
   "buddies_buddySeesTitle": "Hoe {{name}} jou ziet",
   "buddies_calendarSettingsTitle": "Je agenda",
   "buddies_showOnCalendarInfo": "Toont de dagen waarop buddy’s van plan zijn op pad te gaan in je agenda. Plannen waarop jullie samen op pad gaan zie je altijd.",
+  "buddies_petSettingsTitle": "Je huisdier",
+  "buddies_petVisits": "Hun huisdieren bezoeken het mijne",
+  "buddies_petVisitsInfo": "Op een dag dat jullie samen op pad gaan, komt het huisdier van een buddy bij dat van jou op bezoek.",
   "buddies_alertsThisDevice": "Alleen op dit apparaat.",
   "buddies_buddySettings": "Delen en meldingen",
   "buddies_buddySettingsFollowsAll": "Zelfde als Alle buddy’s",
@@ -4396,7 +4402,7 @@
     },
     "streak": {
       "description": "Je dienstreeks",
-      "plans": "geplande dagen op rij nagekomen",
+      "plans": "plannen nagekomen, geen gemist",
       "months": "maanden op rij",
       "none": "Kom een paar geplande dagen na om er een te starten",
       "noneMonths": "Besteed deze maand tijd aan de bediening om een reeks te starten"
@@ -4677,7 +4683,10 @@
         "pebble": "Pak het keitje op",
         "feather": "Pak de veer op",
         "lily": "Pak de lelie op"
-      }
+      },
+      "promptAnimalHint": "Kies dit huisdier",
+      "sceneWithVisitors": "De kamer van {{name}}. Op bezoek: {{visitors}}",
+      "visitor": "{{pet}}, het huisdier van {{name}}"
     },
     "rename": {
       "title": "Huisdier hernoemen"
@@ -4691,8 +4700,8 @@
     "shareCard": {
       "share": "Delen",
       "streakPlans": {
-        "one": "geplande dag op rij",
-        "other": "geplande dagen op rij"
+        "one": "plan nagekomen, geen gemist",
+        "other": "plannen nagekomen, geen gemist"
       },
       "streakMonths": {
         "one": "maand op rij",
@@ -4919,7 +4928,15 @@
     "details": {
       "rename": "Hernoemen",
       "change": "Huisdier wijzigen",
-      "share": "Delen"
+      "share": "Delen",
+      "streakA11y": "Reeks: {{count}}",
+      "streakInfoTitle": "Je reeks",
+      "streakInfoPlans": "Je reeks staat nu op {{count}}. Elk plan dat je nakomt (die dag tijd geregistreerd) telt 1 erbij, hoeveel dagen er ook tussen je plannen zitten. Mis je er een, dan begint hij opnieuw. Tijd op een dag zonder plan telt niet mee.",
+      "streakInfoMonths": "Je reeks staat nu op {{count}}. Hij telt de maanden op rij waarin je in de bediening was.",
+      "activeMonths": "Actieve maanden: {{count}}",
+      "activeMonthsInfoTitle": "Actieve maanden",
+      "activeMonthsInfo": "Je hebt er tot nu toe {{count}}. Een maand telt als je er tijd in registreert of een bezoek of plan in bewaart nadat je je huisdier hebt geadopteerd. De maanden hoeven niet op rij te zijn.",
+      "settings": "Instellingen"
     },
     "intro": {
       "hearts": {
@@ -4953,6 +4970,35 @@
       "decorate": "Kamer inrichten",
       "trayHat": "Nieuw hoedje: {{hat}}",
       "trayRoomDescription": "{{where}}. {{detail}}"
+    },
+    "visitor": {
+      "line": "Op bezoek met {{name}}!",
+      "viewPlan": "Plan bekijken",
+      "viewFollowUp": "Vervolgbezoek bekijken",
+      "viewBuddy": "{{name}} bekijken",
+      "hide": "Huisdier van {{name}} verbergen",
+      "hidden": "Het huisdier van {{name}} komt niet meer op bezoek",
+      "todayTitle": "Vandaag op bezoek",
+      "summary": {
+        "one": "{{count}} huisdier vandaag op bezoek",
+        "other": "{{count}} huisdieren vandaag op bezoek"
+      },
+      "withOne": "Met {{name}}",
+      "withMore": {
+        "one": "Met {{name}} en {{count}} ander",
+        "other": "Met {{name}} en {{count}} anderen"
+      },
+      "detail": "Huisdier van {{name}} · {{activity}}",
+      "planAt": "Plan om {{time}}",
+      "followUpAt": "Vervolgbezoek om {{time}}"
+    },
+    "settings": {
+      "title": "Huisdierinstellingen",
+      "showOnHome": "Tonen op Home",
+      "buddiesTitle": "Huisdieren van buddy's",
+      "visits": "Huisdieren van buddy's op bezoek",
+      "visitsInfo": "Op een dag dat je met een buddy op pad gaat, komt diens huisdier bij dat van jou op bezoek.",
+      "noBuddyPets": "Nog geen van je buddy's deelt een huisdier."
     }
   },
   "handoff_newDoneSynced": "Cloud Sync brengt je gegevens, contacten en notities naar deze telefoon. Ze verschijnen zo meteen.",

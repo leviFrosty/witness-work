@@ -196,7 +196,7 @@
   "streak_howItWorks": "So funktionieren Serien",
   "streakCelebration_started": "Sie haben eine Serie gestartet!",
   "streakCelebration_grew": "Ihre Serie wächst!",
-  "streakCelebration_captionPlans": "Geplante Tage in Folge eingehalten. Machen Sie an Ihrem nächsten geplanten Tag weiter.",
+  "streakCelebration_captionPlans": "Pläne eingehalten, keinen verpasst – egal wie weit auseinander. Machen Sie an Ihrem nächsten geplanten Tag weiter.",
   "streakCelebration_captionMonths": "Monate in Folge im Dienst. Machen Sie im nächsten Monat weiter.",
   "countdownDaysHours": "{{days}} T {{hours}} Std",
   "countdownHoursMinutes": "{{hours}} Std {{minutes}} Min",
@@ -445,6 +445,9 @@
   "ok": "OK",
   "noUpdateAvailable": "Derzeit ist kein Update verfügbar.",
   "update_error": "Fehler beim Abrufen des neuesten Updates.",
+  "pendingUpdateCard_title": "Update bereit",
+  "pendingUpdateCard_body": "Starten Sie WitnessWork neu, um das Update abzuschließen.",
+  "pendingUpdateCard_cta": "Jetzt aktualisieren",
   "conductedBibleStudy": "Bibelstudium durchgeführt",
   "inactiveBibleStudiesDoNoCountTowardsMonthlyTotals": "Bibelstudien tragen nicht zu den monatlichen Gesamtbeträgen bei, es sei denn, sie werden mindestens einmal im laufenden Monat durchgeführt.",
   "bibleStudy": "Bibelstudium",
@@ -1320,6 +1323,9 @@
   "buddies_buddySeesTitle": "So sieht {{name}} Sie",
   "buddies_calendarSettingsTitle": "Ihr Kalender",
   "buddies_showOnCalendarInfo": "Zeigt in Ihrem Kalender die Tage, an denen Buddies in den Dienst gehen wollen. Pläne, die Sie gemeinsam haben, werden immer angezeigt.",
+  "buddies_petSettingsTitle": "Ihr Haustier",
+  "buddies_petVisits": "Deren Haustiere besuchen meins",
+  "buddies_petVisitsInfo": "An einem Tag, an dem Sie gemeinsam in den Dienst gehen, besucht das Haustier eines Buddys Ihres.",
   "buddies_alertsThisDevice": "Nur auf diesem Gerät.",
   "buddies_buddySettings": "Teilen und Hinweise",
   "buddies_buddySettingsFollowsAll": "Wie bei Alle Buddies",
@@ -4396,7 +4402,7 @@
     },
     "streak": {
       "description": "Ihre Dienstserie",
-      "plans": "geplante Tage in Folge eingehalten",
+      "plans": "Pläne eingehalten, keinen verpasst",
       "months": "Monate in Folge",
       "none": "Halten Sie ein paar geplante Tage ein, um eine zu beginnen",
       "noneMonths": "Verbringen Sie in diesem Monat Zeit im Predigtdienst, um eine zu beginnen"
@@ -4677,7 +4683,10 @@
         "pebble": "Den Kieselstein aufheben",
         "feather": "Die Feder aufheben",
         "lily": "Die Lilie aufheben"
-      }
+      },
+      "promptAnimalHint": "Dieses Haustier wählen",
+      "sceneWithVisitors": "Zimmer von {{name}}. Zu Besuch: {{visitors}}",
+      "visitor": "{{pet}}, Haustier von {{name}}"
     },
     "rename": {
       "title": "Haustier umbenennen"
@@ -4691,8 +4700,8 @@
     "shareCard": {
       "share": "Teilen",
       "streakPlans": {
-        "one": "geplanter Tag in Folge",
-        "other": "geplante Tage in Folge"
+        "one": "Plan eingehalten, keinen verpasst",
+        "other": "Pläne eingehalten, keinen verpasst"
       },
       "streakMonths": {
         "one": "Monat in Folge",
@@ -4919,7 +4928,15 @@
     "details": {
       "rename": "Umbenennen",
       "change": "Haustier ändern",
-      "share": "Teilen"
+      "share": "Teilen",
+      "streakA11y": "Serie: {{count}}",
+      "streakInfoTitle": "Ihre Serie",
+      "streakInfoPlans": "Ihre Serie liegt gerade bei {{count}}. Jeder Plan, den Sie einhalten (an dem Tag ist irgendeine Zeit erfasst), zählt 1 dazu, egal wie viele Tage zwischen Ihren Plänen liegen. Verpassen Sie einen, beginnt sie von vorn. Zeit an einem Tag ohne Plan zählt nicht dazu.",
+      "streakInfoMonths": "Ihre Serie liegt gerade bei {{count}}. Sie zählt die Monate in Folge, in denen Sie im Predigtdienst waren.",
+      "activeMonths": "Aktive Monate: {{count}}",
+      "activeMonthsInfoTitle": "Aktive Monate",
+      "activeMonthsInfo": "Bisher sind es {{count}}. Ein Monat zählt, wenn Sie darin nach der Adoption Ihres Haustiers Zeit erfassen oder einen Besuch oder Plan speichern. Die Monate müssen nicht aufeinanderfolgen.",
+      "settings": "Einstellungen"
     },
     "intro": {
       "hearts": {
@@ -4953,6 +4970,35 @@
       "decorate": "Zimmer dekorieren",
       "trayHat": "Neuer Hut: {{hat}}",
       "trayRoomDescription": "{{where}}. {{detail}}"
+    },
+    "visitor": {
+      "line": "Zu Besuch mit {{name}}!",
+      "viewPlan": "Plan ansehen",
+      "viewFollowUp": "Folgebesuch ansehen",
+      "viewBuddy": "{{name}} ansehen",
+      "hide": "Haustier von {{name}} ausblenden",
+      "hidden": "Das Haustier von {{name}} kommt nicht mehr zu Besuch",
+      "todayTitle": "Heute zu Besuch",
+      "summary": {
+        "one": "{{count}} Haustier heute zu Besuch",
+        "other": "{{count}} Haustiere heute zu Besuch"
+      },
+      "withOne": "Mit {{name}}",
+      "withMore": {
+        "one": "Mit {{name}} und {{count}} weiteren Person",
+        "other": "Mit {{name}} und {{count}} weiteren Personen"
+      },
+      "detail": "Haustier von {{name}} · {{activity}}",
+      "planAt": "Plan um {{time}}",
+      "followUpAt": "Folgebesuch um {{time}}"
+    },
+    "settings": {
+      "title": "Haustier-Einstellungen",
+      "showOnHome": "Auf Home anzeigen",
+      "buddiesTitle": "Haustiere von Buddies",
+      "visits": "Haustiere von Buddies kommen zu Besuch",
+      "visitsInfo": "An einem Tag, an dem Sie mit einem Buddy in den Dienst gehen, besucht sein Haustier Ihres.",
+      "noBuddyPets": "Noch teilt keiner Ihrer Buddies ein Haustier."
     }
   },
   "handoff_newDoneSynced": "Cloud Sync bringt Ihre Aufzeichnungen, Kontakte und Notizen auf dieses Telefon. Sie erscheinen gleich.",

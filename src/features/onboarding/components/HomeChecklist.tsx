@@ -24,6 +24,7 @@ import { usePreferences } from '@/stores/preferences'
 import useServiceReport from '@/stores/serviceReport'
 import useContacts from '@/stores/contactsStore'
 import usePublisher from '@/hooks/usePublisher'
+import useLocalDay from '@/hooks/useLocalDay'
 import useFireworks from '@/hooks/useFireworks'
 import useAnimation from '@/hooks/useAnimation'
 import { CONFETTI_DELAY_MS } from '@/providers/AnimationViewProvider'
@@ -128,13 +129,13 @@ const HomeChecklist = () => {
   const hasAnyContact = contacts.length > 0
   const hasAnyPlan = dayPlans.length > 0 || recurringPlans.length > 0
 
-  const hasReportThisMonth = useMemo(
-    () =>
-      getMonthsReports(serviceReports, moment().month(), moment().year()).some(
-        isCountableEntry
-      ),
-    [serviceReports]
-  )
+  // Keyed on the day, so a new month starts unchecked at midnight.
+  const today = moment(useLocalDay(), 'YYYY-MM-DD')
+  const hasReportThisMonth = getMonthsReports(
+    serviceReports,
+    today.month(),
+    today.year()
+  ).some(isCountableEntry)
 
   const handleCheckOffMonth = useCallback(() => {
     if (hasReportThisMonth) return

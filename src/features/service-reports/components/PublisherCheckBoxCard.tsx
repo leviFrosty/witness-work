@@ -6,12 +6,13 @@ import {
 } from 'lucide-react-native'
 import * as Crypto from 'expo-crypto'
 import moment from 'moment'
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { View } from 'react-native'
 import Button from '@/components/ui/Button'
 import LucideIcon from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
 import useAnimation from '@/hooks/useAnimation'
+import useLocalDay from '@/hooks/useLocalDay'
 import usePublisher from '@/hooks/usePublisher'
 import useTheme from '@/contexts/theme'
 import Haptics from '@/lib/haptics'
@@ -46,37 +47,22 @@ export default function PublisherCheckBoxCard() {
       customCreditLimitHours: s.customCreditLimitHours,
     }))
   )
-  const monthReports = useMemo(
-    () => getMonthsReports(serviceReports, moment().month(), moment().year()),
-    [serviceReports]
-  )
+  // Keyed on the day, so the box clears for the new month at midnight.
+  const today = moment(useLocalDay(), 'YYYY-MM-DD')
+  const month = today.month()
+  const year = today.year()
+  const monthReports = getMonthsReports(serviceReports, month, year)
   const hasParticipated = monthReports.some(isCountableEntry)
   // A publisher who opted into Hours Logging sees their month total under the
   // checked state. Any logged entry also counts as "shared", so the checkbox
   // and the hours never disagree. A Time Rollover alone doesn't: it carries
   // last month's minutes, not ministry.
-  const loggedMinutes = useMemo(
-    () =>
-      showsTimeEntry
-        ? adjustedMinutesForSpecificMonth(
-            monthReports,
-            moment().month(),
-            moment().year(),
-            publisher,
-            {
-              enabled: overrideCreditLimit,
-              customLimitHours: customCreditLimitHours,
-            }
-          ).value
-        : 0,
-    [
-      showsTimeEntry,
-      monthReports,
-      publisher,
-      overrideCreditLimit,
-      customCreditLimitHours,
-    ]
-  )
+  const loggedMinutes = showsTimeEntry
+    ? adjustedMinutesForSpecificMonth(monthReports, month, year, publisher, {
+        enabled: overrideCreditLimit,
+        customLimitHours: customCreditLimitHours,
+      }).value
+    : 0
   const loggedTime = useFormattedMinutes(loggedMinutes)
 
   const handleSubmitDidService = () => {
@@ -132,10 +118,7 @@ export default function PublisherCheckBoxCard() {
               title: i18n.t('viewReport'),
               systemImage: 'doc.text',
               onPress: () =>
-                navigation.navigate('ServiceReportView', {
-                  month: moment().month(),
-                  year: moment().year(),
-                }),
+                navigation.navigate('ServiceReportView', { month, year }),
             },
           ]}
         >

@@ -1,6 +1,5 @@
-import { useEffect, useState } from 'react'
-import { AppState } from 'react-native'
 import useTheme from '@/contexts/theme'
+import useNow from '@/hooks/useNow'
 import usePublisher from '@/hooks/usePublisher'
 import useMonthlyGoal from '@/hooks/useMonthlyGoal'
 import i18n from '@/lib/locales'
@@ -19,7 +18,9 @@ import { useShallow } from 'zustand/react/shallow'
 /** A one-line welcome at the top of Home that reads the clock and progress. */
 const HomeGreeting = () => {
   const theme = useTheme()
-  const [now, setNow] = useState(() => new Date())
+  // The shared minute clock: a Home left open since morning doesn't still say
+  // "Good morning" in the evening, or last month's goal after midnight.
+  const now = new Date(useNow().now)
   const month = now.getMonth()
   const year = now.getFullYear()
   const { type: role, showsTimeEntry } = usePublisher({ month, year })
@@ -34,15 +35,6 @@ const HomeGreeting = () => {
     )
   const { serviceReports } = useServiceReport()
   const daily = useDailyMinutes()
-
-  // Re-read the clock on return so a Home left open since morning doesn't
-  // still say "Good morning" in the evening.
-  useEffect(() => {
-    const subscription = AppState.addEventListener('change', (state) => {
-      if (state === 'active') setNow(new Date())
-    })
-    return () => subscription.remove()
-  }, [])
 
   const goalReached =
     showsTimeEntry &&

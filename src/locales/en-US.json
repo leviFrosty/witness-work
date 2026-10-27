@@ -3396,7 +3396,7 @@
     },
     "journeyNext": "{{date}} · next",
     "nextVisit": "Next visit · {{date}}",
-    "seeUpNext": "see Up Next",
+    "seeUpNext": "details",
     "gapEarlier": "{{gap}} earlier",
     "sameDay": "Same day",
     "followUpUpcoming": "Follow-up scheduled",

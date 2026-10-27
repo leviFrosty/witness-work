@@ -1,5 +1,5 @@
 import { LocateFixed as LocateFixedIcon } from 'lucide-react-native'
-import { type RefObject, useEffect, useState } from 'react'
+import { type RefObject, useEffect, useRef, useState } from 'react'
 import {
   ActivityIndicator,
   Linking,
@@ -96,17 +96,16 @@ const LocationStatusControl = ({
   )
 }
 
+const suggestionLabel = (suggestion: PlaceSuggestion) =>
+  [suggestion.title, suggestion.subtitle].filter(Boolean).join(', ')
+
 const SuggestionRow = ({
   suggestion,
   isLast,
-  resolving,
-  disabled,
   onPress,
 }: {
   suggestion: PlaceSuggestion
   isLast: boolean
-  resolving: boolean
-  disabled: boolean
   onPress: () => void
 }) => {
   const theme = useTheme()
@@ -116,12 +115,7 @@ const SuggestionRow = ({
     <PointerHover onHoverChange={setHovered}>
       <TouchableOpacity
         accessibilityRole='button'
-        accessibilityLabel={
-          suggestion.subtitle
-            ? `${suggestion.title}, ${suggestion.subtitle}`
-            : suggestion.title
-        }
-        disabled={disabled}
+        accessibilityLabel={suggestionLabel(suggestion)}
         onPress={onPress}
         style={{
           minHeight: SUGGESTION_ROW_MIN_HEIGHT,
@@ -150,13 +144,6 @@ const SuggestionRow = ({
             </Text>
           )}
         </View>
-        {resolving && (
-          <ActivityIndicator
-            size='small'
-            color={theme.colors.textAlt}
-            accessibilityLabel={i18n.t('placeSearch_loadingPlace')}
-          />
-        )}
         <HoverTint visible={hovered} />
       </TouchableOpacity>
     </PointerHover>
@@ -213,7 +200,11 @@ export default function PlaceSearchInput({
   const [searchedQuery, setSearchedQuery] = useState<string>()
   const [error, setError] = useState<PlaceSearchFailure>()
   const [resolveError, setResolveError] = useState<PlaceSearchFailure>()
-  const [resolvingId, setResolvingId] = useState<string>()
+  // The suggestion being looked up. The pick shows at once, since the lookup
+  // is a network round trip that would otherwise read as a missed tap.
+  const [picked, setPicked] = useState<PlaceSuggestion>()
+  // Typing during a lookup drops its late answer.
+  const pickRun = useRef(0)
 
   const trimmed = query.trim()
   const latitude = location?.coords.latitude
@@ -277,22 +268,19 @@ export default function PlaceSearchInput({
   }, [trimmed, latitude, longitude, scope, searchEnabled])
 
   const select = async (suggestion: PlaceSuggestion) => {
-    setResolvingId(suggestion.id)
+    const run = ++pickRun.current
+    setPicked(suggestion)
     setResolveError(undefined)
     try {
       const resolved = await resolvePlace(suggestion)
+      if (run !== pickRun.current) return
       // Without a match, keep what the publisher picked as a plain address
       // rather than dropping their choice.
-      onSelect(
-        resolved ?? {
-          address: [suggestion.title, suggestion.subtitle]
-            .filter(Boolean)
-            .join(', '),
-        }
-      )
+      onSelect(resolved ?? { address: suggestionLabel(suggestion) })
       setSuggestions([])
     } catch (failure) {
-      // Keep the suggestions so they can pick again.
+      if (run !== pickRun.current) return
+      // Bring the suggestions back so they can pick again.
       if (isUnexpectedPlaceSearchError(failure)) {
         errorTracking.captureException(failure)
       }
@@ -300,8 +288,16 @@ export default function PlaceSearchInput({
         setResolveError(placeSearchFailure(failure))
       }
     } finally {
-      setResolvingId(undefined)
+      if (run === pickRun.current) setPicked(undefined)
     }
+  }
+
+  const changeQuery = (text: string) => {
+    if (picked) {
+      pickRun.current++
+      setPicked(undefined)
+    }
+    onChangeQuery(text)
   }
 
   const failure = resolveError ?? error
@@ -311,6 +307,7 @@ export default function PlaceSearchInput({
       : failure && i18n.t(FAILURE_MESSAGE_KEYS[failure])
 
   const showNoResults =
+    !picked &&
     !searching &&
     !error &&
     searchEnabled &&
@@ -332,8 +329,8 @@ export default function PlaceSearchInput({
               paddingHorizontal: 0,
             }),
           }}
-          value={query}
-          onChangeText={onChangeQuery}
+          value={picked ? suggestionLabel(picked) : query}
+          onChangeText={changeQuery}
           onFocus={onFocus}
           onBlur={onBlur}
           placeholder={placeholder}
@@ -350,17 +347,19 @@ export default function PlaceSearchInput({
               }
             : { returnKeyType: 'search' as const })}
         />
-        {searching && (
+        {(searching || !!picked) && (
           <ActivityIndicator
             size='small'
             color={theme.colors.textAlt}
             style={{ marginLeft: 8 }}
-            accessibilityLabel={i18n.t('placeSearch_searching')}
+            accessibilityLabel={i18n.t(
+              picked ? 'placeSearch_loadingPlace' : 'placeSearch_searching'
+            )}
           />
         )}
         <LocationStatusControl status={status} onRequest={requestLocation} />
       </View>
-      {suggestions.length > 0 && (
+      {!picked && suggestions.length > 0 && (
         <View
           style={{
             borderRadius: theme.numbers.borderRadiusMd,
@@ -374,8 +373,6 @@ export default function PlaceSearchInput({
               key={suggestion.id}
               suggestion={suggestion}
               isLast={index === suggestions.length - 1}
-              resolving={resolvingId === suggestion.id}
-              disabled={resolvingId !== undefined}
               onPress={() => select(suggestion)}
             />
           ))}

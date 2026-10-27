@@ -32,7 +32,7 @@ With VoiceOver or TalkBack on, a toast with something to press stays 60 s and an
 
 - **Bottom:** a dark bar above the tab bar, with an optional text button (Undo) that's a full 44 pt target.
 - **Top:** a card below the status bar. An unlock shows its art, an eyebrow, a title, a View pill, and a grabber that says it can be swiped.
-- **Stacking:** each edge stacks like Sonner. The newest toast is in front. Up to two more peek out behind it, 14 pt apart and 5% smaller each, blank. Tapping a toast behind the front one, or hovering the stack with a pointer, spreads it out. It folds back 4 s after the last touch.
+- **Stacking:** each edge stacks like Sonner. The newest toast is in front. Up to two more peek out above it, 10 pt apart and 5% smaller each, blank. On both edges older toasts sit above newer ones, so a top stack keeps its oldest by the status bar and grows down. Tapping a toast behind the front one, or hovering the stack with a pointer, spreads it out. It folds back 4 s after the last touch.
 - **Timing:** a toast's time pauses while the User touches the stack, hovers it, or has it spread out. Top toasts also wait while a takeover holds the screen.
 - **Dismissing:** swipe a toast away from its edge, or sideways. Tapping an unlock opens it. Undo is a button of its own.
 - **Reduce Motion:** toasts fade in and out without sliding.

@@ -107,6 +107,7 @@ import BuddiesTools from '@/app/navigation/tools/BuddiesTools'
 import BadgesTools from '@/app/navigation/tools/BadgesTools'
 import LayoutDirectionTools from '@/app/navigation/tools/LayoutDirectionTools'
 import StreakTools from '@/app/navigation/tools/StreakTools'
+import ToastTools from '@/app/navigation/tools/ToastTools'
 import ScribeTools from '@/app/dev-harness/ScribeTools'
 import {
   applyBadgeHistoryFixture,
@@ -1386,6 +1387,8 @@ export default function ToolsScreen() {
         </ToolSection>
 
         <StreakTools />
+
+        <ToastTools />
 
         <ToolSection
           title='Pet'

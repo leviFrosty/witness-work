@@ -115,6 +115,14 @@ type ToastsState = { toasts: Toast[] }
  */
 export const useToasts = create<ToastsState>(() => ({ toasts: [] }))
 
+/** Recent toasts kept for Developer Tools to replay. */
+const RECENT_TOASTS = 12
+
+/** The last toasts shown, newest first, in memory only (Developer Tools). */
+export const useRecentToasts = create<{ recent: Toast[] }>(() => ({
+  recent: [],
+}))
+
 let nextId = 0
 
 function close(id: number, reason: ToastCloseReason) {
@@ -147,6 +155,18 @@ function show(intent: ToastIntent, input: ToastInput): number {
     Math.max(0, samePlace.length - (MAX_TOASTS - 1))
   )
   useToasts.setState({ toasts: [...kept, created] })
+  // A replay moves to the front rather than listing twice.
+  useRecentToasts.setState(({ recent }) => ({
+    recent: [
+      created,
+      ...recent.filter(
+        (t) =>
+          t.intent !== intent ||
+          t.title !== input.title ||
+          t.message !== input.message
+      ),
+    ].slice(0, RECENT_TOASTS),
+  }))
   for (const old of [...replaced, ...overflow]) {
     if (useToasts.getState().toasts.some((t) => t.id === old.id)) {
       useToasts.setState(({ toasts }) => ({

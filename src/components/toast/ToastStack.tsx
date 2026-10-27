@@ -92,10 +92,20 @@ export default function ToastStack({
     offset += (heights[item.id] ?? 0) + TOAST_GAP
     return start
   })
+  const behind = Math.min(present.length - 1, VISIBLE_BEHIND)
   // Covers every toast, so Android delivers their touches.
   const span = expanded
     ? Math.max(0, offset - TOAST_GAP)
-    : frontHeight + TOAST_PEEK * Math.min(present.length - 1, VISIBLE_BEHIND)
+    : frontHeight + TOAST_PEEK * behind
+  // On both edges older toasts sit above newer ones, so the stack reads oldest
+  // to newest down the screen. A bottom stack grows up from its edge; a top
+  // one keeps its oldest at the edge and grows down.
+  const stackY = (index: number, id: number) => {
+    if (placement === 'bottom')
+      return -(expanded ? offsets[index] : index * TOAST_PEEK)
+    if (expanded) return span - offsets[index] - (heights[id] ?? 0)
+    return (behind - Math.min(index, behind)) * TOAST_PEEK
+  }
 
   return (
     <View
@@ -132,7 +142,7 @@ export default function ToastStack({
                 index={index}
                 expanded={expanded}
                 frontHeight={frontHeight}
-                offset={index === null ? 0 : offsets[index]}
+                y={index === null ? 0 : stackY(index, item.id)}
                 height={heights[item.id]}
                 hidden={hidden}
                 paused={expanded || touching || hovering}

@@ -18,7 +18,7 @@ import { toastDuration } from '@/lib/toastDuration'
 import type { Toast, ToastCloseReason, ToastPlacement } from '@/stores/toasts'
 
 /** How far each toast behind the front one peeks out (Sonner's gap). */
-export const TOAST_PEEK = 14
+export const TOAST_PEEK = 10
 /** Space between toasts while the stack is spread out. */
 export const TOAST_GAP = 10
 /** Toasts behind the front one that still show while collapsed. */
@@ -44,8 +44,8 @@ type Props = {
   expanded: boolean
   /** The front toast's height: every collapsed toast takes it. */
   frontHeight: number
-  /** Spread out, how far from the anchor this one starts. */
-  offset: number
+  /** Where the stack puts it, down from its anchor at the edge. */
+  y: number
   /** Its own height, once measured. */
   height: number | undefined
   /** Off screen for now (a takeover is up); its time doesn't run. */
@@ -75,7 +75,7 @@ export default function ToastView({
   index,
   expanded,
   frontHeight,
-  offset,
+  y: stackY,
   height,
   hidden,
   paused,
@@ -90,7 +90,7 @@ export default function ToastView({
 }: Props) {
   const theme = useTheme()
   const [hovered, setHovered] = useState(false)
-  // +1 pushes down, -1 up: toasts behind a top toast peek out below it.
+  // +1 pushes down, -1 up: the way back to its edge is -lift.
   const lift = placement === 'top' ? 1 : -1
   const measured = height !== undefined
   const front = index === 0
@@ -112,7 +112,7 @@ export default function ToastView({
   useEffect(() => {
     if (!measured || hidden || leaving || index === null) return
     const collapsedBehind = !expanded && index > 0
-    const targetY = lift * (expanded ? offset : index * TOAST_PEEK)
+    const targetY = stackY
     const targetScale = expanded ? 1 : 1 - 0.05 * index
     const targetHeight = collapsedBehind ? frontHeight : height
     const shown = expanded ? index <= 4 : index <= VISIBLE_BEHIND
@@ -137,7 +137,7 @@ export default function ToastView({
     leaving,
     index,
     expanded,
-    offset,
+    stackY,
     frontHeight,
     height,
     lift,
@@ -362,8 +362,8 @@ export default function ToastView({
             shadowRadius: 14,
             shadowOffset: { width: 0, height: 6 },
             elevation: Math.max(1, 8 - (index ?? 8)),
-            // Shrinks toward its far edge, so it peeks out exactly TOAST_PEEK.
-            transformOrigin: placement === 'top' ? 'bottom' : 'top',
+            // Shrinks toward its top, so it peeks out above exactly TOAST_PEEK.
+            transformOrigin: 'top',
           },
           cardStyle,
         ]}

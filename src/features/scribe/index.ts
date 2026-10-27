@@ -7,7 +7,7 @@ import { refreshStatus, refreshUsage } from '@/features/scribe/runtime/status'
 
 export * from '@/features/scribe/types'
 
-export { useScribeEnabled } from '@/hooks/useScribeEnabled'
+export { useScribeEnabled, useScribeOffered } from '@/hooks/useScribeEnabled'
 export { useScribeAvailability } from '@/features/scribe/hooks/useScribeAvailability'
 export { useScribeVoiceAvailability } from '@/features/scribe/hooks/useScribeVoiceAvailability'
 export { useScribeUsage } from '@/features/scribe/hooks/useScribeUsage'

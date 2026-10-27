@@ -49,6 +49,11 @@ import {
 } from '@/features/scribe/proposals/actions'
 import { useScribeConversations } from '@/features/scribe/stores/conversations'
 import { useScribeLedger } from '@/features/scribe/stores/ledger'
+import {
+  acceptScribeTerms,
+  markScribePrivacySeen,
+  useScribeConsent,
+} from '@/features/scribe/stores/consent'
 import { noteUsage, useScribeUsageStore } from '@/features/scribe/stores/usage'
 import { currentUsageSnapshot } from '@/features/scribe/lib/usageSnapshot'
 import {
@@ -66,6 +71,7 @@ import { MMKV } from 'react-native-mmkv'
 import useContacts from '@/stores/contactsStore'
 import useConversations from '@/stores/conversationStore'
 import useServiceReport from '@/stores/serviceReport'
+import { usePreferences } from '@/stores/preferences'
 import {
   setScribeMemoryEnabled,
   setScribeMemoryText,
@@ -264,7 +270,8 @@ export const scribeHarness = {
   /** What `useScribeAvailability` would return now. */
   availability: () =>
     scribeAvailability({
-      enabled: true,
+      // Assumes the `scribe-ai` flag is on; the Settings switch can still be off.
+      enabled: usePreferences.getState().scribeAiEnabled,
       status: useScribeStatusStore.getState().status,
       online: getOnline(),
       updateRequiredByServer:
@@ -340,7 +347,21 @@ export const scribeHarness = {
     setScribeMemoryEnabled(enabled)
     return useScribeMemory.getState()
   },
+  /** This device's consent: `{ termsAcceptedAt, privacySeenAt }`. */
+  consent: () => useScribeConsent.getState(),
+  /** Skips the first-open steps, as if this device had agreed. */
+  acceptConsent: () => {
+    acceptScribeTerms()
+    markScribePrivacySeen()
+    return useScribeConsent.getState()
+  },
+  /** Asks again on the next open, as a fresh install would. */
+  resetConsent: () => {
+    useScribeConsent.setState(useScribeConsent.getInitialState(), true)
+    return useScribeConsent.getState()
+  },
   stores: {
+    consent: useScribeConsent,
     conversations: useScribeConversations,
     ledger: useScribeLedger,
     memory: useScribeMemory,

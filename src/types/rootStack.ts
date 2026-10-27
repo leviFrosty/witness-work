@@ -46,6 +46,20 @@ export interface ScribeVoiceRouteParams {
   conversationId?: string
 }
 
+/**
+ * Scribe AI's one-time Terms of Use (and, opening it, Zero Data Retention)
+ * steps: `open` goes on to `next` afterwards; `enable` turns Scribe AI on from
+ * Settings once the terms are accepted.
+ */
+export type ScribeConsentRouteParams =
+  | {
+      mode: 'open'
+      next:
+        | { route: 'ScribeConversation'; params: ScribeConversationRouteParams }
+        | { route: 'ScribeVoice'; params: ScribeVoiceRouteParams }
+    }
+  | { mode: 'enable' }
+
 export type RootStackParamList = {
   Root: undefined
   /** The full-screen note editor; `sessionId` is from `startNoteEditorSession`. */
@@ -134,6 +148,7 @@ export type RootStackParamList = {
   ScribeUsage: undefined
   ScribeMemory: undefined
   ScribeOffline: undefined
+  ScribeConsent: ScribeConsentRouteParams
   PreferencesPublisher: undefined
   PreferencesConversation: undefined
   PreferencesCalendar: undefined

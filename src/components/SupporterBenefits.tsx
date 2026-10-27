@@ -12,7 +12,7 @@ import useTheme from '@/contexts/theme'
 import Text from '@/components/ui/MyText'
 import i18n from '@/lib/locales'
 import { tracking } from '@/lib/tracking'
-import { useScribeEnabled } from '@/hooks/useScribeEnabled'
+import { useScribeOffered } from '@/hooks/useScribeEnabled'
 
 const HeroCard = () => {
   const theme = useTheme()
@@ -127,7 +127,7 @@ interface Props {
 
 const SupporterBenefits = ({ compact }: Props) => {
   const theme = useTheme()
-  const scribeEnabled = useScribeEnabled()
+  const scribeOffered = useScribeOffered()
 
   return (
     <View style={{ gap: 16 }}>
@@ -144,7 +144,7 @@ const SupporterBenefits = ({ compact }: Props) => {
       </Text>
       {!compact && <HeroCard />}
       <View style={{ gap: 14 }}>
-        {scribeEnabled && (
+        {scribeOffered && (
           <PerkRow
             icon={SparklesIcon}
             title={i18n.t('supporterPerkAiTitle')}

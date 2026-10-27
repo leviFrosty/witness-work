@@ -4,6 +4,7 @@ Users tell Scribe AI what they did or plan to do, by voice or by typing. It read
 
 ## Sub-features
 
+- `scribe-consent`: once a device, the first entry shows "Before you start" (data stays private, AI can make mistakes, links to the Terms of Use and Privacy Policy, and "Agree"), then Zero Data Retention, then goes where the entry was going. There's no decline: swiping the sheet away leaves Scribe AI on and asks again next time. Only the Settings switch turns it off; turning it on before agreeing on this device opens "Before you start" first (swiping that away leaves it off). Offline entries only explain, without asking.
 - `scribe-entry` opens Scribe AI from the Home orb ("Speak an update with Scribe AI"), the center "Quick Action" menu ("Speak an update"), the iPad menu bar (File → Speak an update), and onboarding's "Pick up where you left off" step. With on-device speech it starts listening; without it, it opens the conversation with the keyboard. Offline, the orb shows the no-internet badge and tapping it explains.
 - `scribe-voice` listens on the device; the orb follows the voice and there's no live transcript. "Done" sends what was heard, "Discard" drops it (asking first after 15 s), and "Type instead" (the keyboard at the sheet's top left while listening, or the button under a message) opens the conversation with the keyboard, what was heard already in the composer. A call or leaving the app stops listening the same way: the text waits in the composer, unsent. Opened from a conversation (its microphone, Say a change), the sheet returns to that conversation.
 - `scribe-conversation` sends typed text ("Tell Scribe AI what you did or plan to do", then "Send"). While the model works, the conversation shows activity rows ("Looking at your plans…") and streamed text.
@@ -40,6 +41,7 @@ Scribe AI calls ww-api, and the worker calls the model only with a real OpenRout
 Preconditions:
 
 - `wwv seed pioneer`. Scribe AI's flag is on by default; `wwv flag scribe-ai off` hides every entry point, and `wwv flag scribe-ai clear` restores it.
+- A seed resets this device's consent, so the first entry opens the Terms of Use, then Zero Data Retention, before Scribe AI. To skip them, run `wwv eval '__WW_DEV__.scribe.acceptConsent()'`; `resetConsent()` asks again, and `consent()` reads `{ termsAcceptedAt, privacySeenAt }`.
 - `wwv eval '__WW_DEV__.scribe.state()'` shows `status.enabled: true` and `gate` all false. `__WW_DEV__.scribe.availability()` is `{ status: "available" }`.
 
 Steps (typing, iOS):

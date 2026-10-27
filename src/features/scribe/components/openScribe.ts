@@ -10,6 +10,7 @@ import {
   type ScribeVoiceAvailability,
   type ScribeVoiceParams,
 } from '@/features/scribe'
+import { scribeConsentPending } from '@/features/scribe/stores/consent'
 
 export type ScribeEntryState =
   | 'available'
@@ -71,6 +72,24 @@ export const scribeEntryTarget = (
 
 type Navigate = Pick<RootStackNavigation, 'navigate'>
 
+/**
+ * Goes to a Scribe AI screen, through the one-time Terms of Use and Zero Data
+ * Retention steps while this device hasn't seen them. Offline only explains, so
+ * it asks nothing.
+ */
+export const navigateToScribe = (
+  navigation: Navigate,
+  target: ScribeEntryTarget
+) => {
+  if (target.route === 'ScribeOffline')
+    return navigation.navigate('ScribeOffline')
+  if (scribeConsentPending())
+    return navigation.navigate('ScribeConsent', { mode: 'open', next: target })
+  if (target.route === 'ScribeVoice')
+    navigation.navigate('ScribeVoice', target.params)
+  else navigation.navigate('ScribeConversation', target.params)
+}
+
 /** Opens Scribe AI from an entry point and records the tap. */
 export const openScribe = (
   navigation: Navigate,
@@ -82,10 +101,7 @@ export const openScribe = (
   const state = scribeEntryState(availability, voice)
   if (!target || !state) return
   analytics.capture('scribe_entry_tapped', { entry, state })
-  if (target.route === 'ScribeOffline') navigation.navigate('ScribeOffline')
-  else if (target.route === 'ScribeVoice')
-    navigation.navigate('ScribeVoice', target.params)
-  else navigation.navigate('ScribeConversation', target.params)
+  navigateToScribe(navigation, target)
 }
 
 /** Availability for an entry point, and `open(entry)` to run it. */

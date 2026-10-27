@@ -1,13 +1,23 @@
 import {
   Gauge as GaugeIcon,
+  MessageSquareText as MessageSquareTextIcon,
   NotebookPen as NotebookPenIcon,
+  ShieldCheck as ShieldCheckIcon,
 } from 'lucide-react-native'
+import { useNavigation } from '@react-navigation/native'
 import i18n from '@/lib/locales'
-import { GroupedListRow, GroupedListSection } from '@/components/ui/GroupedList'
+import useTheme from '@/contexts/theme'
+import Text from '@/components/ui/MyText'
+import {
+  GroupedListRow,
+  GroupedListSection,
+  GroupedListSwitchRow,
+} from '@/components/ui/GroupedList'
 import { SettingsSectionProps } from '@/features/settings/screens/settingScreen'
+import { usePreferences } from '@/stores/preferences'
+import { useScribeOffered } from '@/hooks/useScribeEnabled'
 import {
   useScribeAvailability,
-  useScribeEnabled,
   useScribeMemoryEnabled,
   useScribeUsage,
 } from '@/features/scribe'
@@ -15,47 +25,95 @@ import {
   blockedStatusCopy,
   fullestWindow,
 } from '@/features/scribe/components/scribeCopy'
+import { trackScribeTurnedOnOff } from '@/features/scribe/analytics'
+import { pendingScribeConsent } from '@/features/scribe/stores/consent'
+import type { RootStackNavigation } from '@/types/rootStack'
 
 /**
- * Scribe AI's usage and memory, shown only where Scribe AI is on. The section
- * names Scribe AI, so its rows don't repeat it.
+ * Scribe AI's switch, usage, memory and privacy, shown only where Scribe AI is
+ * offered. Turned off, only the switch stays. The section names Scribe AI, so
+ * its other rows don't repeat it.
  */
 const ScribeSection = ({
   handleNavigate,
   selectedDestination,
-}: SettingsSectionProps) => {
-  const scribeEnabled = useScribeEnabled()
+  onZeroDataRetention,
+}: SettingsSectionProps & { onZeroDataRetention: () => void }) => {
+  const theme = useTheme()
+  const navigation = useNavigation<RootStackNavigation>()
+  const offered = useScribeOffered()
+  const turnedOn = usePreferences((s) => s.scribeAiEnabled)
+  const setPreferences = usePreferences((s) => s.set)
   const scribe = useScribeAvailability()
   // Shown in passing: never opens a session (and an account) to fill it in.
   const fullest = fullestWindow(useScribeUsage({ open: false }).usage)
   const memoryEnabled = useScribeMemoryEnabled()
-  if (!scribeEnabled) return null
+  if (!offered) return null
   return (
-    <GroupedListSection title={i18n.t('scribe_name')}>
-      <GroupedListRow
-        icon={GaugeIcon}
-        label={i18n.t('scribe_usageRow')}
-        sublabel={
-          scribe.status === 'offline'
-            ? i18n.t('scribe_offlineBadge')
-            : scribe.status === 'blocked'
-              ? i18n.t(blockedStatusCopy(scribe.reason))
-              : fullest
-                ? i18n.t('scribe_usagePercent', {
-                    percent: fullest.percentUsed,
-                  })
-                : undefined
-        }
-        onPress={() => handleNavigate('ScribeUsage')}
-        selected={selectedDestination === 'ScribeUsage'}
+    <GroupedListSection
+      title={i18n.t('scribe_name')}
+      footer={turnedOn ? undefined : i18n.t('scribe_turnedOffFooter')}
+    >
+      <GroupedListSwitchRow
+        icon={MessageSquareTextIcon}
+        label={i18n.t('scribe_enabledToggle')}
+        value={turnedOn}
+        onValueChange={(value) => {
+          // Not agreed to on this device yet: the sheet turns it on once they
+          // are (the root stack's, also from the wide Settings pane).
+          if (value && pendingScribeConsent().terms)
+            return navigation.navigate('ScribeConsent', { mode: 'enable' })
+          setPreferences({ scribeAiEnabled: value })
+          trackScribeTurnedOnOff(value)
+        }}
       />
-      <GroupedListRow
-        icon={NotebookPenIcon}
-        label={i18n.t('scribe_memoryRow')}
-        sublabel={memoryEnabled ? undefined : i18n.t('scribe_memoryOff')}
-        onPress={() => handleNavigate('ScribeMemory')}
-        selected={selectedDestination === 'ScribeMemory'}
-      />
+      {/* Each row a direct child: Android rounds the group's ends by them. */}
+      {turnedOn && (
+        <GroupedListRow
+          icon={GaugeIcon}
+          label={i18n.t('scribe_usageRow')}
+          sublabel={
+            scribe.status === 'offline'
+              ? i18n.t('scribe_offlineBadge')
+              : scribe.status === 'blocked'
+                ? i18n.t(blockedStatusCopy(scribe.reason))
+                : fullest
+                  ? i18n.t('scribe_usagePercent', {
+                      percent: fullest.percentUsed,
+                    })
+                  : undefined
+          }
+          onPress={() => handleNavigate('ScribeUsage')}
+          selected={selectedDestination === 'ScribeUsage'}
+        />
+      )}
+      {turnedOn && (
+        <GroupedListRow
+          icon={NotebookPenIcon}
+          label={i18n.t('scribe_memoryRow')}
+          sublabel={memoryEnabled ? undefined : i18n.t('scribe_memoryOff')}
+          onPress={() => handleNavigate('ScribeMemory')}
+          selected={selectedDestination === 'ScribeMemory'}
+        />
+      )}
+      {turnedOn && (
+        <GroupedListRow
+          icon={ShieldCheckIcon}
+          label={i18n.t('scribe_zdrRow')}
+          onPress={onZeroDataRetention}
+          accessory='none'
+          trailing={
+            <Text
+              style={{
+                fontSize: theme.fontSize('md'),
+                color: theme.colors.accent,
+              }}
+            >
+              {i18n.t('scribe_zdrLearnMore')}
+            </Text>
+          }
+        />
+      )}
     </GroupedListSection>
   )
 }

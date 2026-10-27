@@ -3,10 +3,11 @@ import { AppState, BackHandler } from 'react-native'
 import FullWindowOverlay from '@/components/ui/FullWindowOverlay'
 import { useTakeoverHold } from '@/hooks/useTakeoverTurn'
 import { useAppLockAvailability } from '@/hooks/useAppLockAvailability'
-import i18n from '@/lib/locales'
-import { authenticateAppLock, shouldRelock } from '@/lib/appLock'
+import { shouldRelock } from '@/lib/appLock'
 import { useAppLockSession, useAppLockSettings } from '@/stores/appLock'
 import AppLockScreen from '@/app/app-lock/AppLockScreen'
+import { promptUnlock, wasAskedAtLaunch } from '@/app/app-lock/unlock'
+import { setFirstScreenCovered } from '@/app/launch/useAfterLaunch'
 import { setAppSwitcherHidden } from '../../../modules/app-switcher-privacy'
 
 const unlock = () => useAppLockSession.setState({ locked: false })
@@ -25,22 +26,15 @@ export default function AppLockGate() {
   const backgroundedAt = useRef<number | null>(
     AppState.currentState === 'background' ? Date.now() : null
   )
-  const prompting = useRef(false)
   useTakeoverHold('appLock', enabled && locked)
 
   // The app switcher and Recents take their picture of the app as it leaves,
   // before the lock screen below can draw, so the platform hides it instead.
   useEffect(() => setAppSwitcherHidden(enabled), [enabled])
 
-  const promptUnlock = async () => {
-    if (prompting.current) return
-    prompting.current = true
-    const result = await authenticateAppLock(i18n.t('appLock_promptMessage'))
-    prompting.current = false
-    // A device without a passcode has nothing to unlock with; don't trap the
-    // user behind the lock.
-    if (result !== 'cancelled') unlock()
-  }
+  // Nothing under the lock can stutter, so launch work runs straight through
+  // while it's up, then gives the unlocked screen a moment to itself.
+  useEffect(() => setFirstScreenCovered(enabled && locked), [enabled, locked])
 
   useEffect(() => {
     if (!enabled) {
@@ -71,8 +65,14 @@ export default function AppLockGate() {
     return () => subscription.remove()
   }, [enabled])
 
-  // Locked while already in the foreground: at launch.
+  // Locked while already in the foreground: at launch. On iOS that prompt
+  // usually went up before the app drew (`promptUnlockAtLaunch`), so the lock
+  // screen doesn't ask again as it appears.
+  const mounting = useRef(true)
   useEffect(() => {
+    const launch = mounting.current
+    mounting.current = false
+    if (launch && wasAskedAtLaunch()) return
     if (enabled && locked && AppState.currentState === 'active') {
       promptUnlock()
     }

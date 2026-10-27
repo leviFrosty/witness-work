@@ -14,11 +14,14 @@ import { usePreferences } from '@/stores/preferences'
 import { registerAndroidSyncTransport } from '@/lib/syncTransport'
 import { googleDriveTransport } from '@/lib/syncTransport/googleDrive/googleDriveTransport'
 import { registerCloudSync } from '@/app/sync/cloudSync'
+import { promptUnlockAtLaunch } from '@/app/app-lock/unlock'
 import * as BuddiesKeychain from '../../modules/buddies-keychain'
 
 export function initializeApp() {
   perf.mark('initializeApp')
   installPerfProbe()
+  // First, so App Lock's Face ID runs while the first screen renders.
+  promptUnlockAtLaunch()
   configureLogger(() => usePreferences.getState().developerTools)
   // Before anything syncs: Android syncs through Google Drive (ADR 0019).
   // iOS keeps iCloud, and its copy keeps naming iCloud.

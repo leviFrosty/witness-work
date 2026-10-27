@@ -111,3 +111,68 @@ it('starts each idle piece in its own idle period', async () => {
   await fireIdle()
   expect(latest('secondIdle')).toBe(true)
 })
+
+it('runs idle work straight through while App Lock covers the screen', async () => {
+  const { setFirstScreenCovered } = await import('./useAfterLaunch')
+  setFirstScreenCovered(true)
+  await act(async () => {
+    renderer = create(<IdlePair />)
+  })
+  await act(async () => markLaunched())
+  await act(async () => {
+    vi.advanceTimersByTime(0)
+  })
+  expect(latest('idle')).toBe(true)
+  expect(latest('secondIdle')).toBe(false)
+  await act(async () => {
+    vi.advanceTimersByTime(10)
+  })
+  expect(latest('secondIdle')).toBe(true)
+  expect(idle.callbacks).toHaveLength(0)
+})
+
+it('gives the unlocked screen a moment before launch work goes on', async () => {
+  const { setFirstScreenCovered, UNCOVER_GRACE_MS } = await import(
+    './useAfterLaunch'
+  )
+  setFirstScreenCovered(true)
+  await act(async () => {
+    renderer = create(<Harness />)
+  })
+  setFirstScreenCovered(false)
+  await act(async () => markLaunched())
+  await act(async () => {
+    vi.advanceTimersByTime(UNCOVER_GRACE_MS - 1)
+  })
+  expect(latest('firstScreen')).toBe(true)
+  expect(latest('idle')).toBe(false)
+
+  await act(async () => {
+    vi.advanceTimersByTime(1)
+  })
+  await act(async () => idle.callbacks.forEach((callback) => callback()))
+  expect(latest('idle')).toBe(true)
+})
+
+it('holds work that comes due during the grace until it ends', async () => {
+  const { setFirstScreenCovered, UNCOVER_GRACE_MS } = await import(
+    './useAfterLaunch'
+  )
+  await act(async () => {
+    renderer = create(<Harness />)
+  })
+  await act(async () => markLaunched())
+  setFirstScreenCovered(true)
+  await act(async () => {
+    vi.advanceTimersByTime(1_500)
+  })
+  setFirstScreenCovered(false)
+  await act(async () => {
+    vi.advanceTimersByTime(500)
+  })
+  expect(latest('delayed')).toBe(false)
+  await act(async () => {
+    vi.advanceTimersByTime(UNCOVER_GRACE_MS - 500)
+  })
+  expect(latest('delayed')).toBe(true)
+})

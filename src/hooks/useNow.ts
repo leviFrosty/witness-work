@@ -10,6 +10,7 @@ const listeners = new Set<() => void>()
 let now = Date.now()
 let interval: ReturnType<typeof setInterval> | undefined
 let appState: NativeEventSubscription | undefined
+let away = false
 
 const tick = () => {
   now = Date.now()
@@ -23,12 +24,20 @@ const run = (on: boolean) => {
 
 function subscribe(listener: () => void) {
   if (!listeners.size) {
-    run(AppState.currentState !== 'background')
+    away = AppState.currentState === 'background'
+    run(!away)
     appState = AppState.addEventListener('change', (state) => {
-      if (state === 'active') {
+      if (state === 'background') {
+        away = true
+        run(false)
+      } else if (state === 'active' && away) {
+        // Face ID, Control Center and system sheets only make the app
+        // inactive, and the timer runs on through those: only a return from
+        // the background has time to catch up on.
+        away = false
         tick()
         run(true)
-      } else if (state === 'background') run(false)
+      }
     })
   }
   listeners.add(listener)

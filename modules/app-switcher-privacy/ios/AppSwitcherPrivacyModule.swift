@@ -5,6 +5,10 @@ import UIKit
 /// snapshots the app as it leaves the foreground, before React Native can draw
 /// its lock screen, so the cover goes up natively as the app resigns active and
 /// comes down when it's active again.
+///
+/// App Lock's own Face ID prompt resigns active too, and the app becomes active
+/// again only once the prompt's success animation ends. So a successful unlock
+/// takes the cover down itself (`reveal`), and the app shows straight away.
 public final class AppSwitcherPrivacyModule: Module {
   private var hidden = false
   private var observers: [NSObjectProtocol] = []
@@ -14,11 +18,19 @@ public final class AppSwitcherPrivacyModule: Module {
     Name("AppSwitcherPrivacy")
 
     Constant("appSwitcherPrivacyVersion") {
-      1
+      2
     }
 
     AsyncFunction("setHidden") { (hidden: Bool) in
       self.setHidden(hidden)
+    }.runOnQueue(.main)
+
+    // Version 2. The device owner just unlocked, so the app may show while the
+    // prompt finishes. Never in the background, where the app switcher's
+    // picture is taken.
+    AsyncFunction("reveal") {
+      guard UIApplication.shared.applicationState != .background else { return }
+      self.uncover()
     }.runOnQueue(.main)
 
     OnDestroy {

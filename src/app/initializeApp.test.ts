@@ -36,6 +36,8 @@ vi.mock('@/lib/syncTransport/googleDrive/googleDriveTransport', () => ({
   googleDriveTransport: {},
 }))
 vi.mock('@/app/sync/cloudSync', () => ({ registerCloudSync: vi.fn() }))
+const promptUnlockAtLaunch = vi.hoisted(() => vi.fn())
+vi.mock('@/app/app-lock/unlock', () => ({ promptUnlockAtLaunch }))
 vi.mock('../../modules/buddies-keychain', () => ({ isAvailable: () => false }))
 vi.mock('@/app/dev-harness/installDevHarness', () => ({
   installDevHarness: vi.fn(),
@@ -47,9 +49,15 @@ beforeEach(() => {
   vi.stubGlobal('__DEV__', false)
   state.reloadDue = false
   downloadUpdateOnLaunch.mockClear()
+  promptUnlockAtLaunch.mockClear()
 })
 
 describe('initializeApp', () => {
+  it('asks to unlock App Lock straight away', () => {
+    initializeApp()
+    expect(promptUnlockAtLaunch).toHaveBeenCalledTimes(1)
+  })
+
   it('downloads an update at launch', () => {
     initializeApp()
     expect(downloadUpdateOnLaunch).toHaveBeenCalledTimes(1)

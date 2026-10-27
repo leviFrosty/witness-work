@@ -47,3 +47,28 @@ it('never throws when the native call fails', async () => {
   })
   expect(() => setAppSwitcherHidden(false)).not.toThrow()
 })
+
+it('reveals the app after an unlock on iOS binaries that can', async () => {
+  const reveal = vi.fn()
+  runtime.platform = 'ios'
+  runtime.native = { appSwitcherPrivacyVersion: 2, setHidden: vi.fn(), reveal }
+  const { revealAfterUnlock } = await import('./index')
+  revealAfterUnlock()
+  expect(reveal).toHaveBeenCalledTimes(1)
+})
+
+it.each([
+  ['an older iOS binary', 'ios', 1],
+  ['Android', 'android', 2],
+])('leaves the cover alone on %s', async (_, platform, version) => {
+  const reveal = vi.fn()
+  runtime.platform = platform
+  runtime.native = {
+    appSwitcherPrivacyVersion: version,
+    setHidden: vi.fn(),
+    reveal,
+  }
+  const { revealAfterUnlock } = await import('./index')
+  revealAfterUnlock()
+  expect(reveal).not.toHaveBeenCalled()
+})

@@ -197,7 +197,7 @@ export default function NotificationsTray({
   return (
     <Popover
       contentWidth={Math.min(POPOVER_WIDTH, width - 24)}
-      contentStyle={{ padding: 0 }}
+      contentStyle={{ paddingHorizontal: 8, paddingVertical: 12 }}
       style={{ margin: -TRIGGER_PADDING }}
       renderTrigger={({ onPress }) => (
         <BellTrigger onPress={onPress} unread={unread} news={news} />

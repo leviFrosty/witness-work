@@ -78,6 +78,34 @@ describe('useNow', () => {
     expect(vi.getTimerCount()).toBe(1)
   })
 
+  it('stays put through an inactive blip, such as Face ID', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-10-21T10:00:00Z'))
+    act(() => {
+      root = create(<Probe />)
+    })
+    const renders = seen.length
+    vi.setSystemTime(new Date('2026-10-21T10:00:05Z'))
+    emit('inactive')
+    emit('active')
+    expect(seen).toHaveLength(renders)
+    expect(vi.getTimerCount()).toBe(1)
+  })
+
+  it('still catches up when a return passes through inactive', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-10-21T10:00:00Z'))
+    act(() => {
+      root = create(<Probe />)
+    })
+    emit('background')
+    vi.setSystemTime(new Date('2026-10-21T10:30:00Z'))
+    emit('inactive')
+    emit('active')
+    expect(seen.at(-1)).toBe(Date.now())
+    expect(vi.getTimerCount()).toBe(1)
+  })
+
   it('lets go of the clock when the last reader unmounts', () => {
     vi.useFakeTimers()
     act(() => {

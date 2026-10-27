@@ -15,6 +15,7 @@ import {
   refreshScribeStatus,
   useScribeAvailability,
   useScribeEnabled,
+  useScribeOffered,
 } from '@/features/scribe'
 import { useScribeConversations } from '@/features/scribe/stores/conversations'
 import { useScribeStatusStore } from '@/features/scribe/stores/status'
@@ -38,6 +39,7 @@ const when = (ms: number | null | undefined) =>
  * English only.
  */
 export default function ScribeTools() {
+  const offered = useScribeOffered()
   const enabled = useScribeEnabled()
   const availability = useScribeAvailability()
   const status = useScribeStatusStore((state) => state.status)
@@ -71,7 +73,8 @@ export default function ScribeTools() {
         info='GET /scribe/v1/status (no auth), read on launch, after 5 minutes away and on reconnecting. A failed read is fail-open. The device gate comes from the session client and earlier calls; nothing here opens a session.'
       />
       <ToolList>
-        <ToolRow label='Flag scribe-ai' value={String(enabled)} />
+        <ToolRow label='Flag scribe-ai' value={String(offered)} />
+        <ToolRow label='Enabled (flag and Settings)' value={String(enabled)} />
         <ToolRow label='Availability' value={availabilityText} />
         <ToolRow
           label='Server'

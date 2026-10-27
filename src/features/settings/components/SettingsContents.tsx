@@ -10,6 +10,7 @@ import AboutSection from '@/features/settings/components/sections/About'
 import AdvancedSection from '@/features/settings/components/sections/Advanced'
 import SupportSection from '@/features/settings/components/sections/Support'
 import ManageSubscriptionSheet from '@/features/supporter/components/ManageSubscriptionSheet'
+import ScribeZeroDataRetentionSheet from '@/features/scribe/components/ScribeZeroDataRetentionSheet'
 import { RootStackNavigation, RootStackParamList } from '@/types/rootStack'
 
 type Props = {
@@ -24,8 +25,9 @@ export default function SettingsContents({
   selectedDestination,
 }: Props) {
   const navigation = useNavigation<RootStackNavigation>()
-  // The sheet is React Native content, so it renders beside the native list.
+  // The sheets are React Native content, so they render beside the native list.
   const [manageSubscriptionOpen, setManageSubscriptionOpen] = useState(false)
+  const [zeroDataRetentionOpen, setZeroDataRetentionOpen] = useState(false)
   const handleNavigate = (destination: keyof RootStackParamList) => {
     if (onNavigate) return onNavigate(destination)
     // These sections supply settings destinations that take no required params.
@@ -40,7 +42,10 @@ export default function SettingsContents({
       <GroupedList title={i18n.t('settings')}>
         <PreferencesSection {...sectionProps} />
         <AppSection {...sectionProps} />
-        <ScribeSection {...sectionProps} />
+        <ScribeSection
+          {...sectionProps}
+          onZeroDataRetention={() => setZeroDataRetentionOpen(true)}
+        />
         <SupportSection
           {...sectionProps}
           onManageSubscription={() => setManageSubscriptionOpen(true)}
@@ -53,6 +58,10 @@ export default function SettingsContents({
         open={manageSubscriptionOpen}
         setOpen={setManageSubscriptionOpen}
         source='settings'
+      />
+      <ScribeZeroDataRetentionSheet
+        open={zeroDataRetentionOpen}
+        setOpen={setZeroDataRetentionOpen}
       />
     </>
   )

@@ -1,15 +1,19 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const runtime = vi.hoisted(() => ({ capture: vi.fn() }))
+const runtime = vi.hoisted(() => ({ capture: vi.fn(), consentPending: false }))
 
 vi.mock('@react-navigation/native', () => ({ useNavigation: () => ({}) }))
 vi.mock('@/lib/analytics', () => ({ analytics: { capture: runtime.capture } }))
+vi.mock('@/features/scribe/stores/consent', () => ({
+  scribeConsentPending: () => runtime.consentPending,
+}))
 vi.mock('@/features/scribe', () => ({
   useScribeAvailability: () => ({ status: 'offline' }),
   useScribeVoiceAvailability: () => 'available',
 }))
 
 import {
+  navigateToScribe,
   openScribe,
   scribeEntryState,
   scribeEntryTarget,
@@ -39,6 +43,7 @@ const limited: ScribeAvailability = {
 describe('Scribe AI entry points', () => {
   beforeEach(() => {
     runtime.capture.mockClear()
+    runtime.consentPending = false
   })
 
   it.each<[string, ScribeAvailability, ScribeVoiceAvailability, unknown]>([
@@ -113,6 +118,40 @@ describe('Scribe AI entry points', () => {
     expect(navigation.navigate).toHaveBeenLastCalledWith('ScribeConversation', {
       entry: 'home_orb',
     })
+  })
+
+  it('asks for consent first while this device has steps to see', () => {
+    runtime.consentPending = true
+    const navigation = { navigate: vi.fn() }
+    openScribe(navigation, 'home_orb', available, 'available')
+    expect(navigation.navigate).toHaveBeenCalledWith('ScribeConsent', {
+      mode: 'open',
+      next: { route: 'ScribeVoice', params: { entry: 'home_orb' } },
+    })
+    // The tap still counts.
+    expect(runtime.capture).toHaveBeenCalledWith('scribe_entry_tapped', {
+      entry: 'home_orb',
+      state: 'available',
+    })
+
+    navigateToScribe(navigation, {
+      route: 'ScribeConversation',
+      params: { entry: 'onboarding', focusComposer: true },
+    })
+    expect(navigation.navigate).toHaveBeenLastCalledWith('ScribeConsent', {
+      mode: 'open',
+      next: {
+        route: 'ScribeConversation',
+        params: { entry: 'onboarding', focusComposer: true },
+      },
+    })
+  })
+
+  it('explains offline without asking for consent', () => {
+    runtime.consentPending = true
+    const navigation = { navigate: vi.fn() }
+    openScribe(navigation, 'home_orb', offline, 'available')
+    expect(navigation.navigate).toHaveBeenCalledWith('ScribeOffline')
   })
 
   it('does nothing while Scribe AI is hidden', () => {

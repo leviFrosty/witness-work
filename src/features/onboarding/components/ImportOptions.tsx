@@ -14,6 +14,7 @@ import { analytics } from '@/lib/analytics'
 import { usesGoogleDriveSync } from '@/lib/syncTransport'
 import { useScribeAvailability, useScribePaperCapture } from '@/features/scribe'
 import { pickScribePaperPages } from '@/features/scribe/components/pickScribePaperPages'
+import { navigateToScribe } from '@/features/scribe/components/openScribe'
 import { accountKeyReplaceable } from '@/app/account/accountKey'
 import ImportOptionCard from '@/features/onboarding/components/ImportOptionCard'
 import type { RootStackNavigation } from '@/types/rootStack'
@@ -68,7 +69,10 @@ export default function ImportOptions({
   const fromPaper = async () => {
     const paperPages = await pickScribePaperPages()
     if (!paperPages) return
-    navigation.navigate('ScribeConversation', { entry: source, paperPages })
+    navigateToScribe(navigation, {
+      route: 'ScribeConversation',
+      params: { entry: source, paperPages },
+    })
   }
   const select = (importType: ImportType) => {
     analytics.capture('import_type_selected', {
@@ -81,9 +85,9 @@ export default function ImportOptions({
     if (importType === 'other_phone')
       navigation.navigate('Sign In With QR Code', { entry: source })
     else if (importType === 'notes')
-      navigation.navigate('ScribeConversation', {
-        entry: source,
-        focusComposer: true,
+      navigateToScribe(navigation, {
+        route: 'ScribeConversation',
+        params: { entry: source, focusComposer: true },
       })
     else if (importType === 'paper') void fromPaper()
     else onSelect(importType)

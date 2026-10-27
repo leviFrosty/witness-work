@@ -855,6 +855,13 @@ export const PREFERENCE_DEFAULTS = {
    */
   hapticsEnabled: true,
   /**
+   * When false, the User turned Scribe AI off in Settings: every entry point
+   * hides and nothing is sent to it. Read through `useScribeEnabled`, not
+   * directly. Syncable — choosing not to use Scribe AI is the User's, on every
+   * device.
+   */
+  scribeAiEnabled: true,
+  /**
    * Persistent bookkeeping for the image-sync uploader. Keyed by container
    * filename (e.g. `witness-work-img-contact-<id>.jpg`). Drives the
    * upload/retry loop across app restarts so an interrupted migration or a

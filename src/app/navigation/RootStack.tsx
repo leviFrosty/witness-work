@@ -235,6 +235,17 @@ const RootStackComponent = () => {
         />
         <RootStack.Screen
           options={{
+            presentation: 'transparentModal',
+            animation: 'fade',
+            headerShown: false,
+          }}
+          name='ScribeConsent'
+          getComponent={() =>
+            require('@/features/scribe/screens/ScribeConsentSheet').default
+          }
+        />
+        <RootStack.Screen
+          options={{
             header: () => (
               <Header buttonType='back' title={i18n.t('scribe_historyTitle')} />
             ),

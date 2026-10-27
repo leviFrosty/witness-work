@@ -166,6 +166,24 @@ export function trackMemorySaved(
   })
 }
 
+/** The User turned Scribe AI on or off in Settings. */
+export function trackScribeTurnedOnOff(enabled: boolean): void {
+  analytics.capture('scribe_setting_changed', { enabled })
+}
+
+/** How Scribe AI handles data was shown: Settings' sheet or the first open. */
+export function trackPrivacyViewed(surface: 'settings' | 'first_open'): void {
+  analytics.capture('scribe_privacy_viewed', { surface })
+}
+
+/** How the Terms of Use step ended, the first open or turning it on. */
+export function trackTermsResolved(
+  surface: 'first_open' | 'settings',
+  outcome: 'accepted' | 'dismissed'
+): void {
+  analytics.capture('scribe_terms_resolved', { surface, outcome })
+}
+
 /** The User changed the memory in Settings. */
 export function trackMemoryManaged(
   action: 'edited' | 'cleared' | 'turned_off' | 'turned_on',

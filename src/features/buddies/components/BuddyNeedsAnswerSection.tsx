@@ -51,6 +51,7 @@ export default function BuddyNeedsAnswerSection({
             <ShareAnswerButtons
               disabled={busy}
               onAnswer={(reply) => answer(item.shareKey, item.type, reply)}
+              plan={item.type === 'plan'}
             />
           </View>
         ) : null

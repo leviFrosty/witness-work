@@ -5,7 +5,7 @@ import {
 } from '@/lib/normalizeDate'
 import { sharedNoteFields } from '@/features/buddies/lib/sharedNotes'
 import { hasSharedEventEnded } from '@/features/buddies/lib/shareTiming'
-import type { BuddyShareRef, DayPlan } from '@/types/timeEntry'
+import type { BuddyShareRef, DayPlan, LinkedShare } from '@/types/timeEntry'
 import type { Visit } from '@/types/visit'
 import {
   incomingShareKey,
@@ -15,6 +15,10 @@ import {
 
 /** Planned minutes when a buddy's Plan has no duration. */
 const DEFAULT_LINKED_MINUTES = 60
+
+/** The hours the organizer planned for their Plan, in minutes. */
+export const organizerMinutes = (share: Pick<IncomingShare, 'details'>) =>
+  share.details.m ?? DEFAULT_LINKED_MINUTES
 
 export type LinkedPlanChanges = {
   add: DayPlan[]
@@ -47,8 +51,12 @@ const byKeepOrder = (id: string) => (a: DayPlan, b: DayPlan) => {
   return a.id < b.id ? -1 : 1
 }
 
-/** The Plan fields a linked Plan mirrors from the buddy's invitation. */
-function mirroredFields(share: IncomingShare) {
+/**
+ * The Plan fields a linked Plan mirrors from the buddy's invitation: all the
+ * organizer's, less the hours when the User set their own. Type and the
+ * reminder are never the organizer's.
+ */
+function mirroredFields(share: IncomingShare, ownMinutes: boolean) {
   const { details } = share
   const { noteDoc } = sharedNoteFields(details)
   return {
@@ -58,7 +66,7 @@ function mirroredFields(share: IncomingShare) {
     // An invitation with no start time is for an anytime Plan.
     startTimeInMinutes: details.s ?? DEFAULT_START_TIME_IN_MINUTES,
     anytime: details.s === undefined ? true : undefined,
-    minutes: details.m ?? DEFAULT_LINKED_MINUTES,
+    ...(ownMinutes ? {} : { minutes: organizerMinutes(share) }),
     title: details.title,
     location: details.location,
     note: details.note,
@@ -75,11 +83,22 @@ const differs = (
   storedDayKey(plan.date) !== share.details.d ||
   plan.startTimeInMinutes !== fields.startTimeInMinutes ||
   !!plan.anytime !== !!fields.anytime ||
-  plan.minutes !== fields.minutes ||
+  (fields.minutes !== undefined && plan.minutes !== fields.minutes) ||
   plan.title !== fields.title ||
   plan.note !== fields.note ||
   JSON.stringify(plan.noteDoc) !== JSON.stringify(fields.noteDoc) ||
   JSON.stringify(plan.location) !== JSON.stringify(fields.location)
+
+/** The tie to `share` once the Plan holds this version of its details. */
+const linkedTo = (
+  share: IncomingShare,
+  previous?: LinkedShare
+): LinkedShare => ({
+  from: share.from,
+  shareId: share.shareId,
+  rev: share.rev,
+  ...(previous?.ownMinutes ? { ownMinutes: true } : {}),
+})
 
 /**
  * Keeps the Plans added by answering "Going" in step with buddies' Plans: adds
@@ -87,6 +106,13 @@ const differs = (
  * removes it when they cancel or the User changes their answer. A Plan that has
  * happened (or whose share has lapsed) is left alone — it's history by then,
  * and may count toward the User's streak.
+ *
+ * Each linked Plan records the invitation `rev` it holds. A Plan holding a
+ * newer one than this device has (another of this User's devices followed a
+ * change this one hasn't synced yet) is left alone, so a device that's behind
+ * never puts back details the organizer already changed. One holding this `rev`
+ * with other details (an older build edited it, or brought back an older copy)
+ * gets the organizer's details again.
  *
  * A linked Plan whose id is in `deletedPlanIds` was deleted, here or on another
  * of this User's devices (which answered "Can't make it" there), so it's only
@@ -118,7 +144,6 @@ export function reconcileLinkedPlans(
     // Another of this User's devices may have said "Going" — the linked Plan
     // arrives through iCloud while this device still shows the invitation.
     if (share.status === 'pending' && linked.length === 0) continue
-    const fields = mirroredFields(share)
     const id = linkedPlanId(share)
     const [plan, ...duplicates] = [...linked].sort(byKeepOrder(id))
     for (const duplicate of duplicates) {
@@ -133,12 +158,22 @@ export function reconcileLinkedPlans(
         continue
       changes.add.push({
         id,
-        ...fields,
-        buddyShare: { from: share.from, shareId: share.shareId },
+        ...mirroredFields(share, false),
+        minutes: organizerMinutes(share),
+        buddyShare: linkedTo(share),
       })
-    } else if (differs(plan, share, fields)) {
-      changes.update.push({ id: plan.id, ...fields })
+      continue
     }
+    const held = plan.buddyShare?.rev
+    // Another of this User's devices already followed a newer change.
+    if (held !== undefined && held > share.rev) continue
+    const fields = mirroredFields(share, !!plan.buddyShare?.ownMinutes)
+    if (held !== share.rev || differs(plan, share, fields))
+      changes.update.push({
+        id: plan.id,
+        ...fields,
+        buddyShare: linkedTo(share, plan.buddyShare),
+      })
   }
   return changes
 }

@@ -6,7 +6,15 @@ import { describeRecurrence } from '@/lib/recurrenceText'
 import { planTypeLabel } from '@/lib/planTypeLabel'
 import useCategories from '@/stores/categories'
 import useServiceReport from '@/stores/serviceReport'
-import type { IncomingShare } from '@/features/buddies/lib/state'
+import { useFormattedMinutes } from '@/lib/minutes'
+import i18n from '@/lib/locales'
+import { buddyDisplayName } from '@/features/buddies/lib/buddyProfile'
+import { organizerMinutes } from '@/features/buddies/lib/linkedPlans'
+import {
+  incomingShareKey,
+  type IncomingShare,
+} from '@/features/buddies/lib/state'
+import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 import PlanDetailsBuddies from '@/features/plans/components/PlanDetailsBuddies'
 import InvitationAnswerSection, {
   type ShareAnswering,
@@ -23,6 +31,32 @@ const trackFor = (item: PlanListItem) => (action: PlanDetailsAction) =>
     kind: item.type,
     linked: item.type === 'day' && !!item.plan.buddyShare,
   })
+
+/**
+ * "Anna planned 3 Hrs" for a Plan that follows Anna's invitation while the User
+ * has set their own hours, else nothing.
+ */
+function useOrganizerHours(item: PlanListItem): string | undefined {
+  const link = item.type === 'day' ? item.plan.buddyShare : undefined
+  const invitation = useBuddies((state) =>
+    link?.ownMinutes
+      ? state.incomingShares[incomingShareKey(link.from, link.shareId)]
+      : undefined
+  )
+  const organizer = useBuddies((state) =>
+    link
+      ? state.buddies.find((buddy) => buddy.inboxId === link.from)
+      : undefined
+  )
+  const planned = invitation ? organizerMinutes(invitation) : undefined
+  const { formatted } = useFormattedMinutes(planned ?? 0)
+  if (planned === undefined || !organizer || planned === item.plan.minutes)
+    return undefined
+  return i18n.t('planForm_organizerPlanned', {
+    name: buddyDisplayName(organizer),
+    hours: formatted,
+  })
+}
 
 /**
  * Edit and More for the User's own Plan, in Plan Details' header or a day
@@ -74,6 +108,7 @@ export function OwnPlanDetailsBody({
   const updateDayPlan = useServiceReport((state) => state.updateDayPlan)
   const { plan } = item
   const { effective } = usePlanMenuActions(item)
+  const organizerHours = useOrganizerHours(item)
 
   return (
     <>
@@ -83,6 +118,7 @@ export function OwnPlanDetailsBody({
         startTimeInMinutes={effective.startTimeInMinutes}
         anytime={effective.anytime}
         minutes={effective.minutes}
+        minutesDescription={organizerHours}
         typeLabel={planTypeLabel(plan, categories)}
         repeats={
           item.type === 'recurring' ? describeRecurrence(item.plan) : undefined

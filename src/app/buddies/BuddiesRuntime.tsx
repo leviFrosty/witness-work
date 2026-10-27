@@ -83,9 +83,14 @@ let reconcilingLinkedPlans = false
 /**
  * Adds, updates, and removes the Plans that follow buddies' invitations.
  * `answered` holds the invitations just answered "Going" here, the only ones
- * whose deleted Plan comes back.
+ * whose deleted Plan comes back. With `updatesOnly` it only brings linked Plans
+ * up to the invitations this device has, adding and removing none: for Plans
+ * that just arrived from another device, whose answers may not have yet.
  */
-function syncLinkedPlans(answered?: ReadonlySet<string>) {
+function syncLinkedPlans(
+  answered?: ReadonlySet<string>,
+  { updatesOnly = false } = {}
+) {
   const report = useServiceReport.getState()
   const { add, update, remove } = reconcileLinkedPlans(
     report.dayPlans,
@@ -99,7 +104,7 @@ function syncLinkedPlans(answered?: ReadonlySet<string>) {
   reconcilingLinkedPlans = true
   try {
     // Only a Plan added for "Going" answered here is the User's own save.
-    for (const plan of add)
+    for (const plan of updatesOnly ? [] : add)
       report.addDayPlan(plan, {
         automatic: !(
           plan.buddyShare &&
@@ -109,7 +114,7 @@ function syncLinkedPlans(answered?: ReadonlySet<string>) {
         ),
       })
     for (const plan of update) report.updateDayPlan(plan, { automatic: true })
-    for (const id of remove) report.deleteDayPlan(id)
+    for (const id of updatesOnly ? [] : remove) report.deleteDayPlan(id)
   } finally {
     reconcilingLinkedPlans = false
   }
@@ -248,6 +253,7 @@ export default function BuddiesRuntime() {
     if (!running) return
     let publishTimer: ReturnType<typeof setTimeout> | null = null
     let replyTimer: ReturnType<typeof setTimeout> | null = null
+    let followTimer: ReturnType<typeof setTimeout> | null = null
     let stopTrayPoll: (() => void) | null = null
     let stopSuspendedCheck: (() => void) | null = null
     let lastPushCheck = 0
@@ -421,6 +427,13 @@ export default function BuddiesRuntime() {
           { dayPlans: previous.dayPlans, visits },
           { dayPlans: state.dayPlans, visits }
         )
+        // A linked Plan from another device may hold the organizer's details
+        // from before a change this device has; once the sync has applied,
+        // it gets this device's. One holding a newer change is kept.
+        followTimer ??= setTimeout(() => {
+          followTimer = null
+          syncLinkedPlans(undefined, { updatesOnly: true })
+        }, 0)
       } else declineDeletedLinkedPlans(previous.dayPlans, state.dayPlans)
       noteEdit()
       publishSharesChange()
@@ -550,6 +563,7 @@ export default function BuddiesRuntime() {
     )
     return () => {
       if (publishTimer) clearTimeout(publishTimer)
+      if (followTimer) clearTimeout(followTimer)
       stopTrayPoll?.()
       stopSuspendedCheck?.()
       if (replyTimer) clearTimeout(replyTimer)

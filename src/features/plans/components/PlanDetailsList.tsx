@@ -35,6 +35,11 @@ import type { NoteFields } from '@/types/richText'
 import type { PlanLocation } from '@/types/timeEntry'
 
 type Props = {
+  /**
+   * `hidden` for a Plan that follows a buddy's invitation: its title, place,
+   * and note are the organizer's, so only the User's own rows show.
+   */
+  organizerFields?: 'editable' | 'hidden'
   title: string
   setTitle: (title: string) => void
   /** Omitted when this binary has no place search. */
@@ -181,7 +186,9 @@ const LocationRow = (props: NonNullable<Props['location']>) => {
   )
 }
 
-const NotifyMeRow = (props: NonNullable<Props['notifyMe']>) => {
+const NotifyMeRow = (
+  props: NonNullable<Props['notifyMe']> & { first?: boolean }
+) => {
   const theme = useTheme()
   const layout = useDockedFormLayout()
   const row = useRef<View>(null)
@@ -189,6 +196,7 @@ const NotifyMeRow = (props: NonNullable<Props['notifyMe']>) => {
     <FormRow
       icon={BellIcon}
       containerRef={row}
+      first={props.first}
       trailing={
         // The native switch draws above its frame when centered in a taller
         // row; giving it the row's height keeps it level with the label.
@@ -257,23 +265,30 @@ const EndDateRow = (props: NonNullable<Props['end']>) => (
  * Type edit in place, Location searches in place, Note opens the note editor,
  * and Invite Buddies and Notify Me open under their row.
  */
-const PlanDetailsList = (props: Props) => (
-  <FormDetailsSection>
-    <TitleRow title={props.title} setTitle={props.setTitle} />
-    {props.location && <LocationRow {...props.location} />}
-    <NoteFormRow
-      note={props.note}
-      onChange={props.setNote}
-      surface='plan'
-      testID='plan-note'
-    />
-    {props.buddies && (
-      <InviteBuddiesFormRow {...props.buddies} testID='plan-buddies-row' />
-    )}
-    {props.notifyMe && <NotifyMeRow {...props.notifyMe} />}
-    {props.end && <EndDateRow {...props.end} />}
-    <TypeFormRow {...props.type} />
-  </FormDetailsSection>
-)
+const PlanDetailsList = (props: Props) => {
+  const organizer = props.organizerFields !== 'hidden'
+  return (
+    <FormDetailsSection>
+      {organizer && <TitleRow title={props.title} setTitle={props.setTitle} />}
+      {organizer && props.location && <LocationRow {...props.location} />}
+      {organizer && (
+        <NoteFormRow
+          note={props.note}
+          onChange={props.setNote}
+          surface='plan'
+          testID='plan-note'
+        />
+      )}
+      {props.buddies && (
+        <InviteBuddiesFormRow {...props.buddies} testID='plan-buddies-row' />
+      )}
+      {props.notifyMe && (
+        <NotifyMeRow {...props.notifyMe} first={!organizer && !props.buddies} />
+      )}
+      {props.end && <EndDateRow {...props.end} />}
+      <TypeFormRow {...props.type} />
+    </FormDetailsSection>
+  )
+}
 
 export default PlanDetailsList

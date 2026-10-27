@@ -1757,7 +1757,6 @@
   "planDetails_repeats": "Повторяется",
   "planDetails_changedForDate": "Изменено для этой даты",
   "planDetails_organizer": "Организатор",
-  "planDetails_yourAnswer": "Ваш ответ",
   "planDetails_askedToJoin": "Просьба присоединиться",
   "visitDetails_title": "Разговор",
   "visitDetails_pastConversation": "Вы поговорили с {{name}}",

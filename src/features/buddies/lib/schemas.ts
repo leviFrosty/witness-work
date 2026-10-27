@@ -270,6 +270,39 @@ export const shareDetailsSchema = z.object({
 })
 export type ShareDetails = z.infer<typeof shareDetailsSchema>
 
+/**
+ * Most people a Plan invitation lists as going: the organizer's other buddies,
+ * of five at most.
+ */
+export const MAX_SHARE_GUESTS = 5
+
+/** A guest list's photo: an emoji, or a thumbnail far smaller than a card's. */
+export const MAX_GUEST_AVATAR_CHARS = 4_000
+
+/**
+ * Someone else going to a buddy's Plan, as its organizer lists them for each
+ * person going: `t` (`guestTag`), the name they share (never the organizer's
+ * nickname for them), and their photo or emoji when they let it show.
+ */
+export const shareGuestSchema = z.object({
+  t: relayId,
+  n: displayName,
+  a: z
+    .discriminatedUnion('t', [
+      z.object({ t: z.literal('emoji'), v: z.string().min(1).max(16) }),
+      z.object({
+        t: z.literal('image'),
+        v: z
+          .string()
+          .max(MAX_GUEST_AVATAR_CHARS)
+          .regex(/^[A-Za-z0-9+/=]+$/),
+      }),
+    ])
+    .optional()
+    .catch(undefined),
+})
+export type ShareGuest = z.infer<typeof shareGuestSchema>
+
 /** `plan.invite` / `plan.update` / `followup.invite` / `followup.update`. */
 export const shareInviteSchema = z.object({
   v: z.literal(1),
@@ -285,6 +318,24 @@ export const shareInviteSchema = z.object({
    */
   keepUntil: z.number().optional(),
   details: shareDetailsSchema,
+  /**
+   * Plans, to someone going only: the others going who said they'd be listed.
+   * One this build can't read leaves the invitation, not the list.
+   */
+  people: z
+    .array(shareGuestSchema)
+    .min(1)
+    .max(MAX_SHARE_GUESTS)
+    .optional()
+    .catch(undefined),
+  /** How many more are going, unnamed: their app predates the list. */
+  more: z
+    .number()
+    .int()
+    .min(1)
+    .max(MAX_SHARE_GUESTS)
+    .optional()
+    .catch(undefined),
 })
 export type ShareInvite = z.infer<typeof shareInviteSchema>
 
@@ -310,6 +361,13 @@ export const shareReplySchema = z.object({
   id: relayId,
   rev: z.number(),
   status: z.enum(SHARE_REPLIES),
+  /**
+   * With "going": the replier's app tells them others going see their name, so
+   * the organizer lists them (by the name on their card).
+   */
+  listed: z.literal(true).optional().catch(undefined),
+  /** With `listed`: their photo or emoji shows too (All Buddies' Photo). */
+  photo: z.literal(true).optional().catch(undefined),
 })
 
 /**

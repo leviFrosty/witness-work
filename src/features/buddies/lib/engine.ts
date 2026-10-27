@@ -41,6 +41,7 @@ import {
   BuddyStreak,
   type BuddyPet,
   joinRequestSchema,
+  MAX_GUEST_AVATAR_CHARS,
   MAX_SHARED_PHOTOS,
   pairConfirmedSchema,
   PairingCard,
@@ -50,6 +51,7 @@ import {
   rosterSchema,
   ShareCancel,
   shareCancelSchema,
+  type ShareGuest,
   ShareInvite,
   shareInviteSchema,
   ShareReply,
@@ -105,6 +107,7 @@ import {
   type OutgoingInvite,
   OutgoingJoinRequest,
   OutgoingShare,
+  type ReceivedReply,
   incomingShareKey,
   initialBuddiesState,
   INVITE_TTL_MS,
@@ -135,6 +138,7 @@ import {
   shareEventExpiry,
 } from '@/features/buddies/lib/shares'
 import { hasSharedEventEnded } from '@/features/buddies/lib/shareTiming'
+import { guestTag } from '@/features/buddies/lib/guests'
 import { ANNOUNCE_ORDER, parseBadgeKey } from '@/lib/badges/catalog'
 import {
   atMinutesOfDay,
@@ -222,6 +226,11 @@ export type BuddiesEngineDeps = {
   getPet?: () => BuddyPet | undefined
   /** The Plans and Follow-ups this User has invited buddies to. */
   getShares?: () => OutgoingShareSpec[]
+  /**
+   * A buddy's card thumbnail (base64 JPEG) made small enough for a Plan's guest
+   * list, as base64 JPEG; without it guest lists carry no photos.
+   */
+  shrinkAvatar?: (jpegBase64: string) => Promise<string | undefined>
   /**
    * When a share that's left `getShares` stopped being one (by its spec key):
    * the Plan or Follow-up's deletion, or the change that took its buddies off.
@@ -1054,6 +1063,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       removedBuddies: endedPairing(state, inboxId, removedAt),
       cards: omitKey(state.cards, inboxId),
       publishedCardHashes: omitKey(state.publishedCardHashes, inboxId),
+      guestAvatars: omitKey(state.guestAvatars, inboxId),
       incomingShares: Object.fromEntries(
         Object.entries(state.incomingShares).filter(
           ([, share]) => share.from !== inboxId
@@ -2285,6 +2295,17 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     for (;;) {
       const over = json(fitted).length - MAX_EVENT_PLAINTEXT_BYTES
       if (over <= 0) return fitted
+      // Guests' photos go first, the last listed first: names still show.
+      const pictured = fitted.people?.findLastIndex((guest) => guest.a)
+      if (fitted.people && pictured !== undefined && pictured >= 0) {
+        fitted = {
+          ...fitted,
+          people: fitted.people.map((guest, index) =>
+            index === pictured ? { t: guest.t, n: guest.n } : guest
+          ),
+        }
+        continue
+      }
       const { photos, noteDoc, note } = fitted.details
       if (photos?.length) {
         withDetails({
@@ -2577,6 +2598,69 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     return outbox('shares', sendShares)
   }
 
+  /**
+   * Who's going to one of this User's Plans, for the guest list everyone
+   * invited gets: by the name on their card, with their photo or emoji when
+   * they let it show. Someone whose app doesn't list them (`listed`) is counted
+   * only.
+   */
+  async function guestList(
+    shareId: string,
+    going: string[],
+    replies: Record<string, ReceivedReply>
+  ): Promise<{ inboxId: string; guest?: ShareGuest }[]> {
+    const list: { inboxId: string; guest?: ShareGuest }[] = []
+    for (const inboxId of going) {
+      const buddy = store
+        .getState()
+        .buddies.find((b) => b.inboxId === inboxId && b.status === 'active')
+      const name = buddy?.name.trim().slice(0, 60)
+      if (!buddy || !name || !replies[inboxId]?.listed) {
+        list.push({ inboxId })
+        continue
+      }
+      const avatar = replies[inboxId].photo
+        ? await guestAvatar(buddy)
+        : undefined
+      list.push({
+        inboxId,
+        guest: {
+          t: guestTag(shareId, inboxId),
+          n: name,
+          ...(avatar ? { a: avatar } : {}),
+        },
+      })
+    }
+    // The same order on every device, whoever answered first.
+    return list.sort((a, b) =>
+      (a.guest?.n ?? '') + a.inboxId < (b.guest?.n ?? '') + b.inboxId ? -1 : 1
+    )
+  }
+
+  /**
+   * A buddy's photo for a guest list: their emoji as it is, or their card's
+   * thumbnail made small (`shrinkAvatar`), kept until that thumbnail changes so
+   * the list stays the same and isn't sent again.
+   */
+  async function guestAvatar(buddy: Buddy): Promise<ShareGuest['a']> {
+    const { avatar } = buddy
+    if (!avatar) return undefined
+    if (avatar.t === 'emoji') return { t: 'emoji', v: avatar.v }
+    if (!deps.shrinkAvatar) return undefined
+    const source = toB64u(sha256(utf8(avatar.v))).slice(0, 22)
+    const kept = store.getState().guestAvatars[buddy.inboxId]
+    if (kept?.source === source) return { t: 'image', v: kept.data }
+    const data = await deps.shrinkAvatar(avatar.v).catch(() => undefined)
+    if (!data || data.length > MAX_GUEST_AVATAR_CHARS) return undefined
+    store.setState((state) => ({
+      guestAvatars: {
+        ...state.guestAvatars,
+        [buddy.inboxId]: { source, data },
+      },
+    }))
+    return { t: 'image', v: data }
+  }
+
   async function sendShares() {
     if (!deps.getShares || !displayName()) return
     const now = deps.now()
@@ -2670,69 +2754,101 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
 
     for (const spec of specs) {
       const previous = store.getState().outgoingShares[spec.key]
+      const shareId = shareIdFor(me.inboxId, spec.key)
+      const recipients = new Set(spec.recipients.filter(activeBuddy))
+      const replies =
+        spec.type === 'plan' ? store.getState().shareReplies[shareId] : {}
+      // A Plan's guest list: everyone invited sees who else is going, so
+      // they know who'll be there before they answer.
+      const going = [...recipients].filter(
+        (inboxId) => replies?.[inboxId]?.status === 'going'
+      )
+      const listed = going.length > 0
       // Another device sent it, and nothing changed since (`adoptShares`).
+      // With anyone going, its guest lists may have.
       if (
         previous?.adopted !== undefined &&
-        previous.adopted === adoptionHash(spec, activeBuddy)
+        previous.adopted === adoptionHash(spec, activeBuddy) &&
+        !listed
       )
         continue
       // Once it has happened, a share is history: it goes on, quietly, only to
       // buddies who already have it, never to anyone new.
       const ended = spec.endsAt <= now
       if (ended && !Object.keys(previous?.sent ?? {}).length) continue
-      const shareId = shareIdFor(me.inboxId, spec.key)
       const prefix = SHARE_KIND_PREFIX[spec.type]
       const details = await sharedDetails(me, spec)
-      const hash = toB64u(
-        sha256(
-          json({
-            type: spec.type,
-            details,
-            expiresAt: spec.expiresAt,
-          })
-        )
+      const content = { type: spec.type, details, expiresAt: spec.expiresAt }
+      const hashOf = (value: unknown) => toB64u(sha256(json(value)))
+      const hash = hashOf(content)
+      const guests = listed
+        ? await guestList(shareId, going, replies ?? {})
+        : []
+      /** What `inboxId` gets: the others going, never themselves. */
+      const contentFor = (inboxId: string) => {
+        if (!listed) return content
+        const others = guests.filter((guest) => guest.inboxId !== inboxId)
+        const people = others.flatMap(({ guest }) => (guest ? [guest] : []))
+        const more = others.length - people.length
+        return {
+          ...content,
+          ...(people.length > 0 ? { people } : {}),
+          ...(more > 0 ? { more } : {}),
+        }
+      }
+      // A retry reuses its rev only while everyone's content is the same.
+      const revs = shareRevs(
+        previous,
+        listed
+          ? hashOf([...recipients].sort().map((id) => [id, contentFor(id)]))
+          : hash,
+        now,
+        spec.version
       )
-      const revs = shareRevs(previous, hash, now, spec.version)
       // Only a change to when or where pushes; a new title or note arrives
       // quietly, sparing the relay's daily push budget for what matters.
       const timing = shareTiming(details)
-      const recipients = new Set(spec.recipients.filter(activeBuddy))
       const sent = { ...previous?.sent }
       const sentTiming = { ...previous?.sentTiming }
       const unsent = store.getState().unsentShares[spec.key] ?? {}
       const unsentChanges: [string, string, UnsentShare | null][] = []
-      const body = fitEvent({
-        v: 1,
+      const body = {
+        v: 1 as const,
         id: shareId,
-        rev: revs.fresh,
         type: spec.type,
         ...shareEventExpiry(spec),
         details,
-      })
+      }
       for (const inboxId of recipients) {
-        if (sent[inboxId] === hash) continue
+        const theirs = contentFor(inboxId)
+        const theirHash = theirs === content ? hash : hashOf(theirs)
+        if (sent[inboxId] === theirHash) continue
         // Refused (suspended, or their inbox gone): never sent later as it
         // stands.
-        if (unsent[inboxId]?.hash === hash) continue
+        if (unsent[inboxId]?.hash === theirHash) continue
         const update = sent[inboxId] !== undefined
         if (ended && !update) continue
         const kind = `${prefix}.${update ? 'update' : 'invite'}`
         const push = !ended && (!update || sentTiming[inboxId] !== timing)
         const rev = revs.take(inboxId, kind, push)
+        const { people, more } = theirs as {
+          people?: ShareGuest[]
+          more?: number
+        }
         const outcome = await deliver(
           inboxId,
           kind,
-          { ...body, rev },
+          fitEvent({ ...body, rev, people, more }),
           push,
           (reason, name) =>
             unsentChanges.push([
               spec.key,
               inboxId,
-              { reason, name, hash, at: now },
+              { reason, name, hash: theirHash, at: now },
             ])
         )
         if (outcome === 'sent') {
-          sent[inboxId] = hash
+          sent[inboxId] = theirHash
           sentTiming[inboxId] = timing
           if (unsent[inboxId]) unsentChanges.push([spec.key, inboxId, null])
         } else if (outcome === 'retry') revs.leave(inboxId, kind, rev)
@@ -2898,6 +3014,8 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       receivedAt: deps.now(),
       status: reopened ? 'pending' : existing.status,
       unsentReplyRev: reopened ? undefined : existing.unsentReplyRev,
+      ...(invite.people ? { people: invite.people } : {}),
+      ...(invite.more ? { more: invite.more } : {}),
       alertSeqs: [...(existing?.alertSeqs ?? []), source.seq].slice(
         -MAX_ALERT_SEQS
       ),
@@ -2980,7 +3098,13 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
   function applyReply(
     buddy: Buddy,
     source: EventSource,
-    reply: { id: string; rev: number; status: ShareReply }
+    reply: {
+      id: string
+      rev: number
+      status: ShareReply
+      listed?: true
+      photo?: true
+    }
   ) {
     const previous = store.getState().shareReplies[reply.id]?.[buddy.inboxId]
     if (previous && previous.rev >= reply.rev) return
@@ -2996,6 +3120,9 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
             status: reply.status,
             rev: reply.rev,
             at: deps.now(),
+            ...(reply.status === 'going' && reply.listed
+              ? { listed: true, ...(reply.photo ? { photo: true } : {}) }
+              : {}),
           },
         },
       },
@@ -3130,7 +3257,20 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
           me,
           buddy,
           'share.reply',
-          { v: 1, id: share.shareId, rev, status: share.status },
+          {
+            v: 1,
+            id: share.shareId,
+            rev,
+            status: share.status,
+            // Going puts this User on the others' guest list, with their
+            // photo when All Buddies see it.
+            ...(share.status === 'going'
+              ? {
+                  listed: true,
+                  ...(store.getState().sharing.photo ? { photo: true } : {}),
+                }
+              : {}),
+          },
           true,
           // A retry of this answer is the same event: one alert, however sent.
           eventIdFor('reply', me.inboxId, buddy.inboxId, share.shareId, rev)

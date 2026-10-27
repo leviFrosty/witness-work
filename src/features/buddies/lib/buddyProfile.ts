@@ -111,6 +111,24 @@ export async function refreshBuddyAvatarThumbnail(): Promise<boolean> {
   return true
 }
 
+/** A guest list's photo: small, since five of them share one event. */
+const GUEST_THUMBNAIL_SIZE = 40
+
+/**
+ * A buddy's card thumbnail (base64 JPEG) made small enough for a Plan's guest
+ * list, as base64 JPEG.
+ */
+export async function shrinkGuestAvatar(
+  jpegBase64: string
+): Promise<string | undefined> {
+  const result = await ImageManipulator.manipulateAsync(
+    `data:image/jpeg;base64,${jpegBase64}`,
+    [{ resize: { width: GUEST_THUMBNAIL_SIZE, height: GUEST_THUMBNAIL_SIZE } }],
+    { compress: 0.6, format: ImageManipulator.SaveFormat.JPEG, base64: true }
+  )
+  return result.base64 ?? undefined
+}
+
 /**
  * A buddy's streak as it stands today: hidden once its last day has passed,
  * when their app hasn't run to publish what happened since.

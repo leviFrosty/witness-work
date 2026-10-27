@@ -3,6 +3,7 @@ import useNow from '@/hooks/useNow'
 import moment from 'moment'
 import { analytics } from '@/lib/analytics'
 import { logger } from '@/lib/logger'
+import useContacts from '@/stores/contactsStore'
 import useConversations from '@/stores/conversationStore'
 import { usePreferences } from '@/stores/preferences'
 import { storedDayKey } from '@/lib/normalizeDate'
@@ -27,7 +28,12 @@ import {
   isShownPlanShare,
 } from '@/features/buddies/lib/linkedPlans'
 import { holdsBadge, sharedBadgeKey } from '@/features/buddies/lib/sharedBadges'
-import { followUpShareKey, planShareKey } from '@/features/buddies/lib/shares'
+import {
+  followUpShareDetails,
+  followUpShareKey,
+  planShareDetails,
+  planShareKey,
+} from '@/features/buddies/lib/shares'
 import {
   awaitsAnswer,
   type BuddyNotification,
@@ -162,25 +168,44 @@ export default function useBuddyNotifications(): NotificationItem[] {
   const dayPlans = useServiceReport((state) => state.dayPlans)
   const recurringPlans = useServiceReport((state) => state.recurringPlans)
   const visits = useConversations((state) => state.conversations)
+  const contacts = useContacts((state) => state.contacts)
   const { now } = useNow()
   if (!enabled || !started) return []
 
-  /** A reply opens the Plan or Follow-up it's about. */
-  const replyTarget = (shareId: string) => {
+  /**
+   * The Plan or Follow-up a reply is about: what the bell shows of it (without
+   * its note), and opening it.
+   */
+  const replySubject = (shareId: string) => {
     const plan = dayPlans.find(
       (candidate) =>
         candidate.buddies?.length &&
         buddiesEngine.shareIdForKey(planShareKey(candidate.id)) === shareId
     )
     if (plan)
-      return () => navigation.navigate('Plan Details', { dayPlanId: plan.id })
+      return {
+        about: {
+          details: { ...planShareDetails(plan), note: undefined },
+          isFollowUp: false,
+        },
+        open: () => navigation.navigate('Plan Details', { dayPlanId: plan.id }),
+      }
     const visit = visits.find(
       (candidate) =>
         candidate.followUp?.buddies?.length &&
         buddiesEngine.shareIdForKey(followUpShareKey(candidate.id)) === shareId
     )
-    if (visit)
-      return () => navigation.navigate('Visit Details', { visitId: visit.id })
+    if (visit?.followUp)
+      return {
+        about: {
+          details: followUpShareDetails(
+            visit.followUp,
+            contacts.find((contact) => contact.id === visit.contact.id)
+          ),
+          isFollowUp: true,
+        },
+        open: () => navigation.navigate('Visit Details', { visitId: visit.id }),
+      }
     return undefined
   }
 
@@ -288,9 +313,13 @@ export default function useBuddyNotifications(): NotificationItem[] {
     const ownPlan = joinRequest
       ? findJoinRequestPlan(joinRequest, dayPlans, recurringPlans)
       : undefined
-    const target =
+    const reply =
       entry.kind === 'shareReply' && entry.shareKey
-        ? replyTarget(entry.shareKey)
+        ? replySubject(entry.shareKey)
+        : undefined
+    const target =
+      entry.kind === 'shareReply'
+        ? reply?.open
         : entry.kind === 'paired' && entry.from
           ? buddyTarget(entry.from)
           : joinRequest && ownPlan
@@ -343,6 +372,7 @@ export default function useBuddyNotifications(): NotificationItem[] {
           onDismiss={needsAnswer ? undefined : dismiss}
           onPress={target ? () => closeThen(target) : undefined}
           ownPlan={ownPlan?.plan}
+          replyTo={reply?.about}
           invited={invited}
           cantInvite={
             invite?.kind === 'linked'

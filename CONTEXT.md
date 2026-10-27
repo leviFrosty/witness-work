@@ -220,6 +220,14 @@ _Avoid_: "buddy request" for the link itself (the request is what the invitee se
 A User's request to be invited to a buddy's Plan they saw on that buddy's calendar. The buddy answers by inviting them through an ordinary Plan invitation, or chooses Not Now, which the asker is never told about; the request lapses when the Plan starts. "Ask to Join Alerts" is the per-device setting (all buddies, or one) for whether these requests alert.
 _Avoid_: "join request" in UI copy (internal term), "Buddy request" (that's pairing).
 
+**Linked Plan**:
+A Day Plan added when the User answers Going to a buddy's Plan invitation. It follows its organizer: the day, time, title, place, note, and hours come from the invitation and change with it. Type, the reminder, and the User's own hours are the User's; hours they change stay theirs ("Anna planned 3 Hrs" shows beside them) until they set the organizer's again. It goes away when the organizer cancels or the User says Can't Make It.
+_Avoid_: "copy", "synced Plan".
+
+**Who's Going**:
+On a buddy's Plan the User is invited to, the others going, as its organizer lists them, whether or not the User has answered: the User's own buddies as the User knows them, anyone else by the name and photo they share with All Buddies. Answering Going is what puts someone on it, for everyone invited to see ("Everyone invited sees who's going"); who's invited but hasn't answered, or can't make it, only the organizer sees. Someone on it who isn't the User's buddy can't be added from there: pairing stays a **Buddies Code** or **Buddies Invite**.
+_Avoid_: "attendees", "RSVPs", "guest list" in UI copy.
+
 **All Buddies**:
 The settings every buddy follows unless they have their own: what they see (photo, pioneer status, **Service Streak**, **Badges**, Plans and how precisely start times show), whether their Plans show on the User's calendar, and Ask to Join and Badge alerts on this device. **Buddies Settings** opens on it; breadcrumbs at the top ("All Buddies / Grace") switch to a buddy's settings. A buddy's own setting has a highlighted layers icon (which shows each level's value) and an undo arrow that has them follow All Buddies again. The pause is for All Buddies only.
 _Avoid_: "defaults", "global settings", "inherit" in UI copy; "custom" or "override" for a buddy's own setting; "Reset" wording (the undo arrow says it).

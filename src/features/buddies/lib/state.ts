@@ -9,6 +9,7 @@ import type {
   BuddyTenure,
   Roster,
   ShareDetails,
+  ShareGuest,
   ShareReply,
   ShareType,
 } from '@/features/buddies/lib/schemas'
@@ -674,6 +675,10 @@ export type IncomingShare = {
    * answer given before it was for the canceled invitation (`answerApplies`).
    */
   cancelledRev?: number
+  /** Plans this User is going to: the others going, as the organizer lists them. */
+  people?: ShareGuest[]
+  /** How many more are going whose apps don't list them. */
+  more?: number
 }
 
 /**
@@ -808,7 +813,15 @@ export const REPLY_HOLD_MS = 15 * 1000
 export const replyHoldMs = (reply: ShareReply) =>
   reply === 'declined' ? REPLY_HOLD_MS : 0
 
-export type ReceivedReply = { status: ShareReply; rev: number; at: number }
+export type ReceivedReply = {
+  status: ShareReply
+  rev: number
+  at: number
+  /** Going, and their app lists them for the others going (`listed`). */
+  listed?: true
+  /** Their photo or emoji shows on that list too. */
+  photo?: true
+}
 
 /** A buddy asking to be invited to one of this User's Plans. */
 export type IncomingJoinRequest = {
@@ -1087,6 +1100,12 @@ export type BuddiesState = {
   profilePhoto: UploadedProfilePhoto | null
   /** Buddies' replies to this User's shares: shareId → inboxId → reply. */
   shareReplies: Record<string, Record<string, ReceivedReply>>
+  /**
+   * Buddies' photos made small for the guest lists this User's Plans send, by
+   * inbox id, with the card thumbnail each came from (a hash), so one stays the
+   * same until its photo changes.
+   */
+  guestAvatars: Record<string, { source: string; data: string }>
   /** Invitations from buddies, by `incomingShareKey`. */
   incomingShares: Record<string, IncomingShare>
   /** Buddies asking to join this User's Plans, by `incomingJoinRequestKey`. */
@@ -1182,6 +1201,7 @@ export const initialBuddiesState: BuddiesState = {
   photosAvailable: false,
   profilePhoto: null,
   shareReplies: {},
+  guestAvatars: {},
   incomingShares: {},
   joinRequests: {},
   askedToJoin: {},

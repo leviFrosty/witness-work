@@ -13,7 +13,10 @@ import { currentServiceStreak } from '@/lib/currentServiceStreak'
 import { shownStreak, streakLastsThrough } from '@/lib/serviceStreak'
 import { alertSharesNotSent } from '@/features/buddies/lib/buddiesErrorAlert'
 import { buddiesFailureReason } from '@/features/buddies/lib/buddiesErrors'
-import { currentBuddyProfile } from '@/features/buddies/lib/buddyProfile'
+import {
+  currentBuddyProfile,
+  shrinkGuestAvatar,
+} from '@/features/buddies/lib/buddyProfile'
 import { fromB64u } from '@/features/buddies/lib/bytes'
 import { dismissBuddyAlerts } from '@/features/buddies/lib/dismissBuddyAlerts'
 import {
@@ -157,6 +160,7 @@ const engine = createBuddiesEngine({
   getProfile: currentBuddyProfile,
   getStreak: () => currentBuddyStreak(),
   getPet: currentBuddyPet,
+  shrinkAvatar: shrinkGuestAvatar,
   getShares: () =>
     buildOutgoingShares({
       dayPlans: useServiceReport.getState().dayPlans,

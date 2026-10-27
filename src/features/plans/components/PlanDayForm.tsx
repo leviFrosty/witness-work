@@ -68,6 +68,8 @@ import BuddyPicker from '@/features/buddies/components/BuddyPicker'
 import LinkedPlanBanner from '@/features/buddies/components/LinkedPlanBanner'
 import useShareReplies from '@/features/buddies/hooks/useShareReplies'
 import { planShareKey } from '@/features/buddies/lib/shares'
+import { organizerMinutes } from '@/features/buddies/lib/linkedPlans'
+import { incomingShareKey } from '@/features/buddies/lib/state'
 import useBuddiesAvailability from '@/features/buddies/hooks/useBuddiesAvailability'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 import { buddyDisplayName } from '@/features/buddies/lib/buddyProfile'
@@ -82,6 +84,7 @@ import PlanKindToggle from '@/features/plans/components/PlanKindToggle'
 import DockedFormLayout from '@/components/ui/layout/DockedFormLayout'
 import WhenDock from '@/components/WhenDock'
 import { noteUserAction } from '@/lib/userAction'
+import { useFormattedMinutes } from '@/lib/minutes'
 import { richTextImages } from '@/lib/richText/inspect'
 import { getNoteDoc, hasNote, noteFields } from '@/lib/richText/notes'
 import type { NoteFields } from '@/types/richText'
@@ -625,7 +628,28 @@ const PlanDayForm = ({
   const [invitedBuddies, setInvitedBuddies] = useState<string[]>(
     initialInvitedBuddies
   )
+  // A Plan that follows a buddy's invitation: the organizer sets its day,
+  // time, title, place, and note, so only the User's own fields show.
   const linkedShare = existingDayPlan?.buddyShare
+  const linkedInvitation = useBuddies((state) =>
+    linkedShare
+      ? state.incomingShares[
+          incomingShareKey(linkedShare.from, linkedShare.shareId)
+        ]
+      : undefined
+  )
+  const organizerName = useBuddies((state) => {
+    const organizer = linkedShare
+      ? state.buddies.find((buddy) => buddy.inboxId === linkedShare.from)
+      : undefined
+    return organizer ? buddyDisplayName(organizer) : undefined
+  })
+  const plannedByOrganizer = linkedInvitation
+    ? organizerMinutes(linkedInvitation)
+    : undefined
+  const { formatted: organizerHours } = useFormattedMinutes(
+    plannedByOrganizer ?? 0
+  )
   const shareReplies = useShareReplies(
     existingDayPlan?.buddies?.length
       ? planShareKey(existingDayPlan.id)
@@ -1038,7 +1062,34 @@ const PlanDayForm = ({
     // created from Plan Details (Duplicate, Invite) opens next.
     let detailsTarget: PlanDetailsTarget | undefined
     if (isEditMode) {
-      if (existingDayPlan) {
+      if (existingDayPlan && linkedShare) {
+        detailsTarget = { dayPlanId: existingDayPlan.id }
+        // The organizer's details come from their invitation, even one that
+        // arrived while the form was open: only the User's own fields save.
+        const current =
+          useServiceReport
+            .getState()
+            .dayPlans.find((plan) => plan.id === existingDayPlan.id)
+            ?.buddyShare ?? linkedShare
+        // Hours set to the organizer's follow theirs again.
+        const ownMinutes =
+          plannedByOrganizer !== undefined
+            ? plannedMinutes !== plannedByOrganizer
+            : !!current.ownMinutes || plannedMinutes !== existingDayPlan.minutes
+        const { ownMinutes: _own, ...link } = current
+        updateDayPlan({
+          id: existingDayPlan.id,
+          minutes: plannedMinutes,
+          categoryId: selectedCategoryId,
+          buddyShare: ownMinutes ? { ...link, ownMinutes: true } : link,
+          ...planReminderIntent(
+            existingDayPlan.id,
+            planDate,
+            startTimeInMinutes
+          ),
+        })
+        analytics.capture('buddy_linked_plan_saved', { own_hours: ownMinutes })
+      } else if (existingDayPlan) {
         detailsTarget = { dayPlanId: existingDayPlan.id }
         updateDayPlan({
           id: existingDayPlan.id,
@@ -1259,31 +1310,60 @@ const PlanDayForm = ({
         setHours(nextHours)
         setMinutes(nextMinutes)
       }}
-      timeSpan={{
-        anytime,
-        setWhen: (when) => {
-          setAnytime(when.anytime)
-          setHours(Math.floor(when.minutes / 60))
-          setMinutes(when.minutes % 60)
-          if (when.startTimeInMinutes !== undefined) {
-            const next = new Date(date)
-            next.setHours(0, when.startTimeInMinutes, 0, 0)
-            setDate(next)
-          }
-          setPreferences({ planTimeMode: when.anytime ? 'hours' : 'span' })
-        },
-      }}
-      durationLabel={i18n.t('planForm_duration')}
+      notice={
+        linkedShare &&
+        organizerName &&
+        plannedByOrganizer !== undefined &&
+        hours * 60 + minutes !== plannedByOrganizer ? (
+          <Text
+            style={{
+              color: theme.colors.textAlt,
+              fontSize: theme.fontSize('sm'),
+              textAlign: 'center',
+            }}
+          >
+            {i18n.t('planForm_organizerPlanned', {
+              name: organizerName,
+              hours: organizerHours,
+            })}
+          </Text>
+        ) : undefined
+      }
+      // Only the hours are the User's: the organizer sets when it is.
+      timeSpan={
+        linkedShare
+          ? undefined
+          : {
+              anytime,
+              setWhen: (when) => {
+                setAnytime(when.anytime)
+                setHours(Math.floor(when.minutes / 60))
+                setMinutes(when.minutes % 60)
+                if (when.startTimeInMinutes !== undefined) {
+                  const next = new Date(date)
+                  next.setHours(0, when.startTimeInMinutes, 0, 0)
+                  setDate(next)
+                }
+                setPreferences({
+                  planTimeMode: when.anytime ? 'hours' : 'span',
+                })
+              },
+            }
+      }
+      durationLabel={i18n.t(
+        linkedShare ? 'planForm_yourHours' : 'planForm_duration'
+      )}
       maxHours={23}
       minuteStep={5}
       saveButton={inline ? null : saveButton}
       inline={inline}
-      hideDate={inline}
+      hideDate={inline || !!linkedShare}
     />
   )
 
   const detailsList = (
     <PlanDetailsList
+      organizerFields={linkedShare ? 'hidden' : 'editable'}
       title={title}
       setTitle={setTitle}
       location={

@@ -432,7 +432,10 @@ const ContactDetailsContent = ({
                     highlightedVisitId={highlightedVisitId}
                     highlightedRef={highlightedRowRef}
                     onPressUpNext={() =>
-                      scrollViewRef.current?.scrollTo({ y: 0, animated: true })
+                      upNext &&
+                      navigation.navigate('Visit Details', {
+                        visitId: upNext.visit.id,
+                      })
                     }
                   />
                 </>

@@ -1,0 +1,28 @@
+# seed: pioneer
+# setup: __WW_DEV__.stores.profile.getState().set({name: 'Alex Example', avatar: {type: 'emoji', value: '\u{1F33B}'}})
+# assert: __WW_DEV__.stores.profileOverlay.getState().open === true
+# assert: __WW_DEV__.stores.profile.getState().avatar.value === '\u{1F33B}'
+appId: com.leviwilkerson.jwtimedev
+name: Expand and dismiss the profile avatar without closing the profile
+---
+- extendedWaitUntil:
+    visible: Home
+    timeout: 60000
+- tapOn: Account and settings
+- tapOn: Profile
+- tapOn: Profile picture
+- assertVisible:
+    id: avatar-viewer-close
+- tapOn:
+    id: avatar-viewer-close
+- assertNotVisible:
+    id: avatar-viewer-close
+- assertVisible: Alex Example
+- tapOn: Profile picture
+- assertVisible:
+    id: avatar-viewer-close
+- tapOn:
+    id: avatar-viewer-close
+- assertNotVisible:
+    id: avatar-viewer-close
+- assertVisible: Edit Profile

@@ -172,7 +172,7 @@ const ProfileCard = ({
     <ProfileCardLayout
       avatar={
         readOnly ? (
-          <Avatar avatar={avatar} name={trimmedName} size={44} />
+          <Avatar avatar={avatar} name={trimmedName} size={44} focusable />
         ) : (
           <AvatarPickerPopover
             value={avatar}

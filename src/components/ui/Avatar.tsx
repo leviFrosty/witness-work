@@ -8,13 +8,7 @@ import {
   useRef,
   useState,
 } from 'react'
-import {
-  Modal,
-  Pressable,
-  StatusBar,
-  useWindowDimensions,
-  View,
-} from 'react-native'
+import { Pressable, StatusBar, useWindowDimensions, View } from 'react-native'
 import { Image } from 'expo-image'
 import Animated, {
   interpolate,
@@ -27,6 +21,7 @@ import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import Text from '@/components/ui/MyText'
 import PointerHover from '@/components/ui/PointerHover'
+import FullWindowOverlay from '@/components/ui/FullWindowOverlay'
 import { ProfileAvatar } from '@/types/avatar'
 import { useAvatarGroupSize } from '@/components/ui/AvatarGroup'
 import { leftForPhysicalX } from '@/lib/direction'
@@ -281,64 +276,66 @@ const Avatar = ({
           </Pressable>
         </PointerHover>
       </View>
-      <Modal
-        visible={open}
-        transparent
-        statusBarTranslucent
-        animationType='none'
-        onRequestClose={close}
-      >
-        <Animated.View
-          style={[
-            {
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              backgroundColor: '#000',
-            },
-            backdropStyle,
-          ]}
-        >
-          <Pressable style={{ flex: 1 }} onPress={close} />
-        </Animated.View>
-        {anchor && (
+      {open && (
+        <FullWindowOverlay onClose={close}>
           <Animated.View
-            pointerEvents='none'
             style={[
               {
                 position: 'absolute',
-                // Measured in screen coordinates; `left` mirrors in RTL.
-                left: leftForPhysicalX(anchor.x, anchor.size, dims.width),
-                top: anchor.y,
-                width: anchor.size,
-                height: anchor.size,
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                backgroundColor: '#000',
               },
-              overlayStyle,
+              backdropStyle,
             ]}
           >
-            {inner}
-            {fullUri ? (
-              <Image
-                source={{ uri: fullUri }}
-                style={{
-                  position: 'absolute',
-                  width: size,
-                  height: size,
-                  borderRadius: size / 2,
-                }}
-                contentFit='cover'
-                // Drawn at the avatar's size and scaled up with the overlay,
-                // so keep every pixel instead of fitting it to the small size.
-                allowDownscaling={false}
-                transition={200}
-              />
-            ) : null}
+            <Pressable
+              testID='avatar-viewer-close'
+              accessibilityRole='button'
+              accessibilityLabel={i18n.t('close')}
+              style={{ flex: 1 }}
+              onPress={close}
+            />
           </Animated.View>
-        )}
-        <StatusBar translucent />
-      </Modal>
+          {anchor && (
+            <Animated.View
+              pointerEvents='none'
+              style={[
+                {
+                  position: 'absolute',
+                  // Measured in screen coordinates; `left` mirrors in RTL.
+                  left: leftForPhysicalX(anchor.x, anchor.size, dims.width),
+                  top: anchor.y,
+                  width: anchor.size,
+                  height: anchor.size,
+                },
+                overlayStyle,
+              ]}
+            >
+              {inner}
+              {fullUri ? (
+                <Image
+                  source={{ uri: fullUri }}
+                  style={{
+                    position: 'absolute',
+                    width: size,
+                    height: size,
+                    borderRadius: size / 2,
+                  }}
+                  contentFit='cover'
+                  // Drawn at the avatar's size and scaled up with the overlay,
+                  // so keep every pixel instead of fitting it to the small size.
+                  allowDownscaling={false}
+                  transition={200}
+                />
+              ) : null}
+            </Animated.View>
+          )}
+          <StatusBar translucent />
+        </FullWindowOverlay>
+      )}
     </>
   )
 }

@@ -24,6 +24,8 @@ export type PlanDetailsFields = {
   anytime?: boolean
   /** Unset for a buddy's invitation that gave no length. */
   minutes?: number
+  /** Under the length, e.g. the organizer's when the User set their own. */
+  minutesDescription?: string
   /** Own Plans only: a buddy's invitation carries no Type. */
   typeLabel?: string
   /** A Recurring Plan's pattern in words. */
@@ -53,6 +55,7 @@ export default function PlanDetailsSummary(props: PlanDetailsFields) {
     props.minutes !== undefined && {
       label: i18n.t('planDetails_duration'),
       value: duration.formatted,
+      description: props.minutesDescription,
     },
     props.typeLabel && { label: i18n.t('type'), value: props.typeLabel },
     props.repeats && {

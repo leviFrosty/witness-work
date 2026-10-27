@@ -141,6 +141,21 @@ export type BuddyShareRef = {
   shareId: string
 }
 
+/**
+ * A linked Plan's tie to the invitation it follows. The organizer's details
+ * (day, time, title, place, note, and hours) come from the invitation; Type,
+ * the reminder, and the User's own hours are theirs.
+ */
+export type LinkedShare = BuddyShareRef & {
+  /**
+   * The invitation's `rev` the Plan last took the organizer's details from. A
+   * device with an older copy of the invitation leaves the Plan as it is.
+   */
+  rev?: number
+  /** The User set their own hours; the organizer's changes leave them. */
+  ownMinutes?: true
+}
+
 export type DayPlan = {
   id: string
   date: Date
@@ -181,7 +196,7 @@ export type DayPlan = {
    * Set when this Plan was added by answering "Going" to a buddy's invitation.
    * It follows the buddy's changes and goes away if they cancel.
    */
-  buddyShare?: BuddyShareRef
+  buddyShare?: LinkedShare
   /**
    * Whether the user opted this plan into a local notification. Defaults false;
    * the global preference `planAlwaysNotify` flips the default for newly

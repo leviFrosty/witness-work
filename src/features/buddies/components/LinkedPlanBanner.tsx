@@ -1,6 +1,7 @@
 import { View } from 'react-native'
 import { useNavigation } from '@react-navigation/native'
 import ContextMenu from '@/components/ui/ContextMenu'
+import InfoPopover from '@/components/ui/InfoPopover'
 import Text from '@/components/ui/MyText'
 import XView from '@/components/ui/layout/XView'
 import useTheme from '@/contexts/theme'
@@ -12,8 +13,9 @@ import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 import { buddyDisplayName } from '@/features/buddies/lib/buddyProfile'
 
 /**
- * Tells the User a Plan follows a buddy's, so their edits may be replaced.
- * Long-press to view the buddy.
+ * Tells the User a Plan follows a buddy's: the form shows only the fields that
+ * are theirs, and the info button says which are the organizer's. Long-press to
+ * view the buddy.
  */
 export default function LinkedPlanBanner({ share }: { share: BuddyShareRef }) {
   const theme = useTheme()
@@ -22,6 +24,7 @@ export default function LinkedPlanBanner({ share }: { share: BuddyShareRef }) {
     state.buddies.find((candidate) => candidate.inboxId === share.from)
   )
   if (!buddy) return null
+  const name = buddyDisplayName(buddy)
 
   return (
     <ContextMenu
@@ -46,14 +49,21 @@ export default function LinkedPlanBanner({ share }: { share: BuddyShareRef }) {
       >
         <BuddyAvatar
           avatar={buddy.avatar}
-          name={buddyDisplayName(buddy)}
+          name={name}
           color={buddy}
           size={24}
         />
         <View style={{ flex: 1 }}>
           <Text style={{ color: theme.colors.text }}>
-            {i18n.t('buddies_sharedBy', { name: buddyDisplayName(buddy) })}
+            {i18n.t('buddies_sharedBy', { name })}
           </Text>
+        </View>
+        <View style={{ marginVertical: -10, marginRight: -14 }}>
+          <InfoPopover
+            centered
+            title={name}
+            description={i18n.t('buddies_linkedPlanFields', { name })}
+          />
         </View>
       </XView>
     </ContextMenu>

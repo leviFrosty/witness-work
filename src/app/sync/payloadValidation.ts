@@ -118,7 +118,14 @@ const plan = record.extend({
   title: z.string().optional(),
   note: z.string().optional(),
   buddies: z.array(z.string()).optional(),
-  buddyShare: z.object({ from: z.string(), shareId: z.string() }).optional(),
+  buddyShare: z
+    .object({
+      from: z.string(),
+      shareId: z.string(),
+      rev: z.number().finite().optional(),
+      ownMinutes: z.literal(true).optional(),
+    })
+    .optional(),
   location: location.optional(),
   source: z.enum(['manual', 'recommendation']).optional(),
   notifications: z.array(notification).optional(),

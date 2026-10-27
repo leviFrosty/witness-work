@@ -917,6 +917,18 @@ or dates are sent.
 | `buddy_invitation_answer_retried` | Try Again on an answer that reads Not sent yet, once the send settles. Shows how often answers fail to send and whether retrying gets them through. | `sent` (whether the answer reached the relay).                                                                    |
 | `buddy_customized`                | A nickname was saved or a color was chosen (Supporter-only).                                                                                        | `setting: nickname \| color`.                                                                                     |
 
+### Plans from a buddy's invitation
+
+A Plan the User joined by answering Going follows its organizer, and the User
+keeps their own hours, reminder, and Type. These answer whether people make
+those Plans their own, and whether seeing who's going leads people who meet on
+a Plan to pair. Never names, relay ids, Plan details, or how many are going.
+
+| Event                     | When                                                                                                                                                          | Properties                                                                                                                                                           |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `buddy_linked_plan_saved` | Save on the Edit form of a Plan that follows a buddy's invitation (hours, reminder, or Type).                                                                 | `own_hours`: the User's hours differ from the organizer's after saving.                                                                                              |
+| `buddy_guest_tapped`      | Someone on Who's Going who isn't the User's buddy was tapped (`opened`: the note on how to become buddies showed), or its Show My Buddies Code (`show_code`). | `action: opened \| show_code`. Pairings that follow show as `buddy_paired`; the Buddy Code screen's view has `previous_screen`. Tapping a buddy there sends nothing. |
+
 ### Buddies sharing
 
 `buddies_sharing_changed` answers what people withhold from buddies, and from

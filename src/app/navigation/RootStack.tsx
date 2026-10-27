@@ -291,6 +291,14 @@ const RootStackComponent = () => {
           }
         />
         <RootStack.Screen
+          // A sheet over the invitation it lists, like the invitation itself.
+          options={{ presentation: 'modal', header: () => null }}
+          name='Going List'
+          getComponent={() =>
+            require('@/features/buddies/screens/GoingListScreen').default
+          }
+        />
+        <RootStack.Screen
           options={({ route }) => {
             const params = route.params as RootStackParamList['PlanDay']
             let title = i18n.t('createPlan')

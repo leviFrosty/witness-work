@@ -32,7 +32,10 @@ import { useUpdateRevealStore } from '@/features/updates/stores/updateReveal'
 import { usePendingUpdate } from '@/features/updates/stores/pendingUpdate'
 import { useMilestoneRevealStore } from '@/features/milestones/stores/milestoneReveal'
 import { useCalendarPublishing, useCalendarSync } from '@/stores/calendarSync'
-import { checkBuddiesRelay } from '@/features/buddies/lib/buddiesService'
+import {
+  buddiesEngine,
+  checkBuddiesRelay,
+} from '@/features/buddies/lib/buddiesService'
 import { checkCryptoVectors } from '@/features/buddies/lib/testing/cryptoVectors'
 import apis from '@/constants/apis'
 import { SCENARIO_NAMES } from '@/app/dev-harness/scenarios'
@@ -331,6 +334,13 @@ export function installDevHarness() {
      * iOS or Android); `{ ok, checked, mismatches }`.
      */
     checkBuddiesCryptoVectors: () => checkCryptoVectors(),
+    /**
+     * The Buddies engine, to pair two devices and sync without tapping through
+     * Buddies: `createInvite()` here, `acceptInvite(link)` on the other device,
+     * then `confirmClaim(inviteId)` here. Calls return promises (eval doesn't
+     * await), so read the store back afterwards.
+     */
+    buddiesEngine,
     /**
      * Android: sync with a local fake Google Drive instead of Google, as the
      * account `account` (null switches back to real Google).

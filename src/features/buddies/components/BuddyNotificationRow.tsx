@@ -14,9 +14,12 @@ import { analytics } from '@/lib/analytics'
 import Haptics from '@/lib/haptics'
 import { formatRelative } from '@/lib/dates'
 import i18n from '@/lib/locales'
+import { usePreferences } from '@/stores/preferences'
 import { useServiceReport } from '@/stores/serviceReport'
 import BuddyAvatar from '@/features/buddies/components/BuddyAvatar'
-import SharedEventSummary from '@/features/buddies/components/SharedEventSummary'
+import SharedEventSummary, {
+  sharedEventText,
+} from '@/features/buddies/components/SharedEventSummary'
 import ShareAnswerButtons from '@/features/buddies/components/ShareAnswerButtons'
 import useReplyDelivery from '@/features/buddies/hooks/useReplyDelivery'
 import { buddiesEngine } from '@/features/buddies/lib/buddiesService'
@@ -24,7 +27,7 @@ import { alertBuddiesError } from '@/features/buddies/lib/buddiesErrorAlert'
 import offerReplaceOverlappingPlans from '@/features/buddies/lib/offerReplaceOverlappingPlans'
 import { effectiveShareStatus } from '@/features/buddies/lib/linkedPlans'
 import { notificationHeadline } from '@/features/buddies/lib/notificationText'
-import type { ShareReply } from '@/features/buddies/lib/schemas'
+import type { ShareDetails, ShareReply } from '@/features/buddies/lib/schemas'
 import { trackShareAnswer } from '@/features/buddies/lib/shareAnswerAnalytics'
 import {
   buddyAlertSettings,
@@ -61,6 +64,7 @@ export default function BuddyNotificationRow({
   onDismiss,
   onInvite,
   ownPlan,
+  replyTo,
   invited,
   cantInvite,
 }: {
@@ -74,6 +78,8 @@ export default function BuddyNotificationRow({
   onInvite?: () => void
   /** A request to join: this User's Plan it's about, for its title and place. */
   ownPlan?: Pick<DayPlan, 'title' | 'location'>
+  /** A reply: this User's Plan or Follow-up it answers. */
+  replyTo?: { details: ShareDetails; isFollowUp: boolean }
   /** A request to join: this User already invited them to a Plan that day. */
   invited?: boolean
   /**
@@ -106,6 +112,8 @@ export default function BuddyNotificationRow({
     entry.from ? state.buddies.find((b) => b.inboxId === entry.from) : undefined
   )
   const dayPlans = useServiceReport((state) => state.dayPlans)
+  const timeDisplayFormat = usePreferences((state) => state.timeDisplayFormat)
+  const dataProtectionMode = usePreferences((state) => state.dataProtectionMode)
   const status = share ? effectiveShareStatus(share, dayPlans) : undefined
   // A Plan or Follow-up that has happened can't be answered any more.
   const ended = !!share && hasSharedEventEnded(share, Date.now())
@@ -188,6 +196,30 @@ export default function BuddyNotificationRow({
     ...entry,
     name: buddy ? buddyDisplayName(buddy) : entry.name,
   })
+  // What it's about, under the headline: the User's Plan a request to join or
+  // a reply is about, or the buddy's invitation.
+  const summary = joinRequest
+    ? {
+        details: {
+          d: joinRequest.d,
+          s: joinRequest.s,
+          m: joinRequest.m,
+          title: ownPlan?.title,
+          location: ownPlan?.location,
+        },
+        isFollowUp: false,
+      }
+    : entry.kind === 'shareReply'
+      ? replyTo
+      : share
+        ? { details: share.details, isFollowUp: share.type === 'followUp' }
+        : undefined
+  const summaryText = summary
+    ? sharedEventText(summary.details, summary.isFollowUp, {
+        timeDisplayFormat,
+        dataProtectionMode,
+      })
+    : undefined
 
   return (
     <View style={{ gap: 10, paddingVertical: 12, paddingHorizontal: 14 }}>
@@ -195,7 +227,14 @@ export default function BuddyNotificationRow({
         <ContextMenu
           style={{ flex: 1 }}
           onPress={open}
-          accessibilityLabel={title}
+          accessibilityLabel={[
+            title,
+            summaryText?.title,
+            summaryText?.when,
+            summaryText?.place,
+          ]
+            .filter(Boolean)
+            .join(', ')}
           hoverRadius={theme.numbers.borderRadiusSm}
           actions={[
             open && {
@@ -262,30 +301,20 @@ export default function BuddyNotificationRow({
               </View>
             </XView>
 
-            {joinRequest ? (
-              <SharedEventSummary
-                details={{
-                  d: joinRequest.d,
-                  s: joinRequest.s,
-                  m: joinRequest.m,
-                  title: ownPlan?.title,
-                  location: ownPlan?.location,
-                }}
-                isFollowUp={false}
-              />
-            ) : entry.shareKey && entry.kind !== 'shareReply' ? (
-              share ? (
-                <View style={{ opacity: status === 'cancelled' ? 0.5 : 1 }}>
-                  <SharedEventSummary
-                    details={share.details}
-                    isFollowUp={share.type === 'followUp'}
-                  />
-                </View>
-              ) : (
-                <Text style={{ color: theme.colors.textAlt }}>
-                  {i18n.t('buddies_noLongerAvailable')}
-                </Text>
-              )
+            {summary ? (
+              <View style={{ opacity: status === 'cancelled' ? 0.5 : 1 }}>
+                <SharedEventSummary
+                  details={summary.details}
+                  isFollowUp={summary.isFollowUp}
+                  nested
+                />
+              </View>
+            ) : entry.shareKey &&
+              entry.kind !== 'shareReply' &&
+              !isJoinRequest ? (
+              <Text style={{ color: theme.colors.textAlt }}>
+                {i18n.t('buddies_noLongerAvailable')}
+              </Text>
             ) : null}
           </View>
         </ContextMenu>
@@ -301,7 +330,11 @@ export default function BuddyNotificationRow({
       </XView>
 
       {canAnswer ? (
-        <ShareAnswerButtons disabled={busy} onAnswer={reply} />
+        <ShareAnswerButtons
+          disabled={busy}
+          onAnswer={reply}
+          plan={share?.type === 'plan'}
+        />
       ) : share && (status === 'going' || status === 'declined') ? (
         <XView style={{ gap: 10, justifyContent: 'space-between' }}>
           <Text

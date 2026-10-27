@@ -1703,7 +1703,6 @@
   "planDetails_repeats": "반복",
   "planDetails_changedForDate": "이 날짜만 변경됨",
   "planDetails_organizer": "주최자",
-  "planDetails_yourAnswer": "내 답변",
   "planDetails_askedToJoin": "참여를 요청함",
   "visitDetails_title": "대화",
   "visitDetails_pastConversation": "{{name}} 님과 이야기했습니다",

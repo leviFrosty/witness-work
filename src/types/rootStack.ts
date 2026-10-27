@@ -162,6 +162,8 @@ export type RootStackParamList = {
   'Visit Details': { visitId: string }
   /** A buddy's Follow-up invitation, read-only, with the User's answer. */
   'Follow-Up Invitation': BuddyShareRef
+  /** Everyone going to a buddy's Plan or Follow-up, as the User can see them. */
+  'Going List': BuddyShareRef
   /**
    * One Plan, read-only: a one-time Plan, one date of a Recurring Plan, or a
    * buddy's Plan invitation (shown even after the User says they can't make it,

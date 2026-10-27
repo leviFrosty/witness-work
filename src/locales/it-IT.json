@@ -1703,7 +1703,6 @@
   "planDetails_repeats": "Si ripete",
   "planDetails_changedForDate": "Modificato per questa data",
   "planDetails_organizer": "Organizzatore",
-  "planDetails_yourAnswer": "La tua risposta",
   "planDetails_askedToJoin": "Ha chiesto di unirsi",
   "visitDetails_title": "Conversazione",
   "visitDetails_pastConversation": "Hai parlato con {{name}}",

@@ -27,6 +27,7 @@ import {
   Buddy,
   BuddyNotification,
   BuddySharing,
+  IncomingShare,
   incomingShareKey,
   listedNotifications,
   mergeSharing,
@@ -50,6 +51,7 @@ import {
   shareEndsAt,
   shareRecipientsKey,
 } from '@/features/buddies/lib/shares'
+import { guestTag, whosGoing } from '@/features/buddies/lib/guests'
 import {
   effectiveShareStatus,
   forgetBuddiesInData,
@@ -2389,6 +2391,117 @@ describe('shared Plans and Follow-ups', () => {
     ])
   })
 
+  it("lists who's going for everyone invited, answered or not", async () => {
+    const { fake, levi, anna, mom, advance } = await trio()
+    levi.setShares([planSpec([anna.inboxId, mom.inboxId])])
+    await levi.engine.publishShares()
+    await anna.engine.sync()
+    await mom.engine.sync()
+    const shareId = levi.engine.shareIdForKey(planShareKey('sat'))
+    const annaKey = Object.keys(anna.store.getState().incomingShares)[0]
+    const momKey = Object.keys(mom.store.getState().incomingShares)[0]
+    const people = (user: typeof anna, key: string) => {
+      const { people, more } = user.store.getState().incomingShares[key]
+      return { people, more }
+    }
+    const pushes = fake.pushes.length
+
+    await anna.engine.replyToShare(annaKey, 'going')
+    await levi.engine.sync()
+    // Her answer says she's listed, with her photo (All Buddies see it).
+    expect(
+      levi.store.getState().shareReplies[shareId][anna.inboxId]
+    ).toMatchObject({ status: 'going', listed: true, photo: true })
+    await anna.engine.sync()
+    await mom.engine.sync()
+    // Mom hasn't answered, and sees Anna by a tag only Anna's buddies can
+    // work out; Anna isn't listed for herself.
+    expect(people(mom, momKey)).toEqual({
+      people: [{ t: guestTag(shareId, anna.inboxId), n: 'Anna' }],
+    })
+    expect(people(anna, annaKey)).toEqual({})
+
+    await mom.engine.replyToShare(momKey, 'going')
+    await levi.engine.sync()
+    await anna.engine.sync()
+    await mom.engine.sync()
+    // Each sees the other.
+    expect(people(anna, annaKey)).toEqual({
+      people: [{ t: guestTag(shareId, mom.inboxId), n: 'Mom' }],
+    })
+    expect(people(mom, momKey)).toEqual({
+      people: [{ t: guestTag(shareId, anna.inboxId), n: 'Anna' }],
+    })
+    // Quietly: no alert, and no "changed a Plan" in the bell.
+    expect(
+      fake.pushes.slice(pushes).filter((push) => push.kind === 'plan.update')
+    ).toEqual([])
+    for (const user of [anna, mom])
+      expect(
+        user.store.getState().notifications.map((n) => n.kind)
+      ).not.toContain('shareUpdate')
+
+    // Can't Make It takes Mom off Anna's list; Mom still sees Anna.
+    advance(60_000)
+    await mom.engine.replyToShare(momKey, 'declined')
+    await levi.engine.sync()
+    await anna.engine.sync()
+    await mom.engine.sync()
+    expect(people(anna, annaKey)).toEqual({})
+    expect(people(mom, momKey)).toEqual({
+      people: [{ t: guestTag(shareId, anna.inboxId), n: 'Anna' }],
+    })
+  })
+
+  it("gives someone invited later the list of who's already going", async () => {
+    const { levi, anna, mom } = await trio()
+    levi.setShares([planSpec([anna.inboxId])])
+    await levi.engine.publishShares()
+    await anna.engine.sync()
+    const annaKey = Object.keys(anna.store.getState().incomingShares)[0]
+    await anna.engine.replyToShare(annaKey, 'going')
+    await levi.engine.sync()
+
+    levi.setShares([planSpec([anna.inboxId, mom.inboxId])])
+    await levi.engine.publishShares()
+    await mom.engine.sync()
+    const shareId = levi.engine.shareIdForKey(planShareKey('sat'))
+    const [invitation] = Object.values(mom.store.getState().incomingShares)
+    expect(invitation).toMatchObject({
+      status: 'pending',
+      people: [{ t: guestTag(shareId, anna.inboxId), n: 'Anna' }],
+    })
+  })
+
+  it('counts someone going whose app predates the list, unnamed', async () => {
+    const { levi, anna, mom } = await trio()
+    levi.setShares([planSpec([anna.inboxId, mom.inboxId])])
+    await levi.engine.publishShares()
+    await anna.engine.sync()
+    await mom.engine.sync()
+    const shareId = levi.engine.shareIdForKey(planShareKey('sat'))
+    const annaKey = Object.keys(anna.store.getState().incomingShares)[0]
+    const momKey = Object.keys(mom.store.getState().incomingShares)[0]
+    await anna.engine.replyToShare(annaKey, 'going')
+    await mom.engine.replyToShare(momKey, 'going')
+    await levi.engine.sync()
+    // As an older app answers: going, without `listed`.
+    levi.store.setState((state) => ({
+      shareReplies: {
+        ...state.shareReplies,
+        [shareId]: {
+          ...state.shareReplies[shareId],
+          [mom.inboxId]: { status: 'going', rev: 1, at: 1 },
+        },
+      },
+    }))
+    await levi.engine.publishShares()
+    await anna.engine.sync()
+    const { people, more } = anna.store.getState().incomingShares[annaKey]
+    expect(people).toBeUndefined()
+    expect(more).toBe(1)
+  })
+
   it('wipes invitations once they lapse and when the buddy is removed', async () => {
     const { levi, anna } = await trio()
     levi.setShares([planSpec([anna.inboxId])])
@@ -2871,7 +2984,7 @@ describe('reconcileLinkedPlans', () => {
         minutes: 90,
         startTimeInMinutes: 600,
         title: 'Cart',
-        buddyShare: { from: 'levi', shareId: 'share-1' },
+        buddyShare: { from: 'levi', shareId: 'share-1', rev: 1 },
       }),
     ])
     const plan = added.add[0]
@@ -2897,6 +3010,86 @@ describe('reconcileLinkedPlans', () => {
       []
     )
     expect(effectiveShareStatus(share('pending'), [plan])).toBe('going')
+  })
+
+  it("never puts back details a device that's behind has", () => {
+    const plan = reconcileLinkedPlans([], [share('going')], { now }).add[0]
+    const renamed = {
+      ...share('going'),
+      rev: 2,
+      details: { ...share('going').details, title: 'Cart :)' },
+    }
+    // The phone has the organizer's change and follows it.
+    const onPhone = {
+      ...plan,
+      ...reconcileLinkedPlans([plan], [renamed], { now }).update[0],
+    }
+    expect(onPhone).toMatchObject({
+      title: 'Cart :)',
+      buddyShare: { rev: 2 },
+    })
+    // The iPad gets the phone's Plan through iCloud before its own copy of
+    // the invitation catches up: it leaves the Plan as it is.
+    expect(reconcileLinkedPlans([onPhone], [share('going')], { now })).toEqual({
+      add: [],
+      update: [],
+      remove: [],
+    })
+    // Once it catches up, there's nothing to change.
+    expect(reconcileLinkedPlans([onPhone], [renamed], { now }).update).toEqual(
+      []
+    )
+  })
+
+  it('gives back the details an older copy brought back', () => {
+    const plan = reconcileLinkedPlans([], [share('going')], { now }).add[0]
+    // An older build (or an edit it allowed) changed the organizer's title
+    // under the same invitation.
+    const edited = { ...plan, title: 'My carts' }
+    expect(
+      reconcileLinkedPlans([edited], [share('going')], { now }).update[0]
+    ).toMatchObject({ id: plan.id, title: 'Cart' })
+    // A Plan from before linked Plans held a rev takes this one.
+    const { rev: _rev, ...unstamped } = plan.buddyShare!
+    expect(
+      reconcileLinkedPlans(
+        [{ ...plan, buddyShare: unstamped }],
+        [share('going')],
+        {
+          now,
+        }
+      ).update[0]
+    ).toMatchObject({ buddyShare: { rev: 1 } })
+  })
+
+  it("keeps the User's own hours through the organizer's changes", () => {
+    const plan = reconcileLinkedPlans([], [share('going')], { now }).add[0]
+    const ownHours = {
+      ...plan,
+      minutes: 60,
+      categoryId: 'ldc',
+      notifyMe: true,
+      buddyShare: { ...plan.buddyShare!, ownMinutes: true as const },
+    }
+    expect(
+      reconcileLinkedPlans([ownHours], [share('going')], { now }).update
+    ).toEqual([])
+    const changed = {
+      ...share('going'),
+      rev: 2,
+      details: { ...share('going').details, s: 660, m: 180 },
+    }
+    const [update] = reconcileLinkedPlans([ownHours], [changed], {
+      now,
+    }).update
+    expect(update).toMatchObject({
+      startTimeInMinutes: 660,
+      buddyShare: { rev: 2, ownMinutes: true },
+    })
+    // Hours, Type, and the reminder stay the User's.
+    expect(update).not.toHaveProperty('minutes')
+    expect(update).not.toHaveProperty('categoryId')
+    expect(update).not.toHaveProperty('notifyMe')
   })
 
   it('gives the Plan the same id on every device that answers "Going"', () => {
@@ -5177,5 +5370,60 @@ describe('a User’s devices stay in step', () => {
         incomingClaims: [],
       })
     ).toMatchObject({ answers: {}, read: {}, dismissed: {} })
+  })
+})
+
+describe('whosGoing', () => {
+  const buddy = (inboxId: string, name: string): Buddy => ({
+    inboxId,
+    name,
+    dhPub: 'pub',
+    inviteSecret: 'secret',
+    status: 'active',
+    pairedAt: 0,
+    colorIndex: 0,
+  })
+  const mike = buddy('mike-inbox', 'Mike')
+  const share = (type: 'plan' | 'followUp'): IncomingShare => ({
+    from: 'julia-inbox',
+    shareId: 'share-1',
+    type,
+    rev: 1,
+    details: { d: '2026-11-01' },
+    expiresAt: 0,
+    receivedAt: 0,
+    status: 'going',
+    people: [
+      { t: guestTag('share-1', mike.inboxId), n: 'Michael' },
+      { t: 'someone-else', n: 'MaCailah' },
+    ],
+    more: 2,
+  })
+
+  it("counts the organizer, the others going, and the User once they're going", () => {
+    const going = whosGoing(share('plan'), 'going', [mike])
+    expect(going.guests).toEqual([
+      { kind: 'buddy', buddy: mike },
+      { kind: 'guest', guest: { t: 'someone-else', n: 'MaCailah' } },
+    ])
+    expect(going.more).toBe(2)
+    expect(going.count).toBe(6)
+  })
+
+  it("shows the others going to someone who hasn't said Going", () => {
+    for (const status of ['pending', 'declined'] as const)
+      expect(whosGoing(share('plan'), status, [mike])).toMatchObject({
+        guests: [{ kind: 'buddy', buddy: mike }, { kind: 'guest' }],
+        more: 2,
+        count: 5,
+      })
+  })
+
+  it('lists no one else on a Follow-up', () => {
+    expect(whosGoing(share('followUp'), 'going', [mike])).toEqual({
+      guests: [],
+      more: 0,
+      count: 2,
+    })
   })
 })

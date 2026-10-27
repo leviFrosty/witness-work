@@ -103,6 +103,7 @@ import {
   type AttestationRepairReport,
 } from '@/lib/attestation'
 import AccountTools from '@/app/navigation/tools/AccountTools'
+import DangerZoneTools from '@/app/navigation/tools/DangerZoneTools'
 import BuddiesTools from '@/app/navigation/tools/BuddiesTools'
 import BadgesTools from '@/app/navigation/tools/BadgesTools'
 import LayoutDirectionTools from '@/app/navigation/tools/LayoutDirectionTools'
@@ -184,27 +185,22 @@ export default function ToolsScreen() {
     serviceReports,
     dayPlans,
     recurringPlans,
-    _WARNING_forceDeleteServiceReports,
     addServiceReport,
     addDayPlan,
     addRecurringPlan,
-    set: setServiceReports,
   } = useServiceReport()
   const { categories, addCategory } = useCategories()
   const {
     contacts,
     deletedContacts,
     customFieldDefs,
-    _WARNING_forceDeleteContacts,
-    _WARNING_clearDeleted,
     addContact,
     addCustomFieldDef,
     archiveCustomFieldDef,
     removeDeletedContact,
   } = useContacts()
   const { dailyMinutes, invalidateDailyMinutesCache } = useTimeCache()
-  const { conversations, addConversation, _WARNING_forceDeleteConversations } =
-    useConversations()
+  const { conversations, addConversation } = useConversations()
   const preferences = usePreferences()
   const {
     devSupporterOverride,
@@ -1017,33 +1013,6 @@ export default function ToolsScreen() {
     showDone(`Cleared ${key} from celebratedMilestones`)
   }
 
-  const deleteRows: { label: string; onConfirm: () => void }[] = [
-    {
-      label: i18n.t('forceDeleteContacts'),
-      onConfirm: _WARNING_forceDeleteContacts,
-    },
-    {
-      label: i18n.t('clearArchivedContacts'),
-      onConfirm: _WARNING_clearDeleted,
-    },
-    {
-      label: i18n.t('deleteAllConversations'),
-      onConfirm: _WARNING_forceDeleteConversations,
-    },
-    {
-      label: i18n.t('deleteReports'),
-      onConfirm: _WARNING_forceDeleteServiceReports,
-    },
-    {
-      label: i18n.t('deleteDayPlans'),
-      onConfirm: () => setServiceReports({ dayPlans: [] }),
-    },
-    {
-      label: i18n.t('deleteRecurringPlans'),
-      onConfirm: () => setServiceReports({ recurringPlans: [] }),
-    },
-  ]
-
   const onOff = (value: boolean) => (value ? 'On' : 'Off')
 
   return (
@@ -1269,28 +1238,7 @@ export default function ToolsScreen() {
           </ToolList>
         </ToolSection>
 
-        <ToolSection
-          title={i18n.t('dangerZone')}
-          icon={Trash2Icon}
-          tone='destructive'
-          info='Targeted deletes. Each asks for confirmation and cannot be undone. Use Reset all at the top for a full fresh-install wipe.'
-        >
-          <ToolList>
-            {deleteRows.map(({ label, onConfirm }) => (
-              <ToolRow
-                key={label}
-                label={label}
-                tone='destructive'
-                onPress={() =>
-                  confirmDevAction(label, () => {
-                    onConfirm()
-                    showDone(i18n.t('deleted'))
-                  })
-                }
-              />
-            ))}
-          </ToolList>
-        </ToolSection>
+        <DangerZoneTools />
 
         {/* ---- App state ---- */}
         <ToolSection

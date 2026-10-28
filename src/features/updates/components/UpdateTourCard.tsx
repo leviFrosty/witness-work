@@ -43,7 +43,7 @@ const UpdateTourCard = () => {
         alignItems: 'center',
         gap: 12,
         padding: 14,
-        marginBottom: 24,
+        marginBottom: 6,
         borderRadius: theme.numbers.borderRadiusLg,
         borderWidth: 1,
         borderColor: withAlpha(theme.colors.accent, 0x66),

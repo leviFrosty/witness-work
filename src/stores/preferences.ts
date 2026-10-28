@@ -846,9 +846,10 @@ export const PREFERENCE_DEFAULTS = {
   /**
    * When false, in-app sounds (e.g. the celebration chime) never play. Read
    * through `@/lib/audio`, not directly. Per-device (non-syncable) — muting a
-   * shared iPad shouldn't silence the user's phone.
+   * shared iPad shouldn't silence the user's phone. Off by default in dev
+   * builds so background verifier simulators stay quiet.
    */
-  audioEnabled: true,
+  audioEnabled: typeof __DEV__ === 'undefined' || !__DEV__,
   /**
    * When false, haptic feedback never plays. Read through `@/lib/haptics`, not
    * directly. Per-device (non-syncable), like `audioEnabled`.

@@ -49,6 +49,19 @@ describe('Audio setting', () => {
     expect(PREFERENCE_DEFAULTS.audioEnabled).toBe(true)
   })
 
+  it('is off by default in dev builds', async () => {
+    vi.resetModules()
+    vi.stubGlobal('__DEV__', true)
+    try {
+      const { PREFERENCE_DEFAULTS: devDefaults } = await import(
+        '@/stores/preferences'
+      )
+      expect(devDefaults.audioEnabled).toBe(false)
+    } finally {
+      vi.unstubAllGlobals()
+    }
+  })
+
   it('turns on for existing installs whose saved preferences predate it', async () => {
     vi.spyOn(MmkvStorage, 'getItem').mockReturnValueOnce(
       JSON.stringify({ state: { onboardingComplete: true }, version: 7 })

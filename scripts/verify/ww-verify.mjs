@@ -1305,6 +1305,66 @@ function bootIos(device) {
   run('xcrun', ['simctl', 'bootstatus', device.id, '-b'], {
     timeout: 300_000,
   })
+  if (posterBoardCrashLooping(device.id)) {
+    // A simulator killed mid-write can leave PosterBoard's store with a
+    // descriptor it asserts on at every launch, so it crash-loops and macOS
+    // shows "PosterBoard quit unexpectedly" each time. PosterBoard rebuilds
+    // the store from scratch, so drop it and boot again.
+    log(`${device.name}: PosterBoard keeps crashing; resetting its store`)
+    run('xcrun', ['simctl', 'shutdown', device.id], { check: false })
+    waitSimLeaves(device.id, ['Booted', 'Shutting Down'])
+    fs.rmSync(posterStore(device.id), { recursive: true, force: true })
+    run('xcrun', ['simctl', 'boot', device.id], { check: false })
+    run('xcrun', ['simctl', 'bootstatus', device.id, '-b'], {
+      timeout: 300_000,
+    })
+  }
+}
+
+const posterStore = (udid) =>
+  path.join(
+    os.homedir(),
+    'Library/Developer/CoreSimulator/Devices',
+    udid,
+    'data/Library/Application Support/PRBPosterExtensionDataStore'
+  )
+
+/**
+ * Whether PosterBoard crashed at least 3 times on this simulator in the last
+ * day, counting only crashes since its store was last rebuilt.
+ */
+function posterBoardCrashLooping(udid) {
+  const reports = path.join(os.homedir(), 'Library/Logs/DiagnosticReports')
+  let since = Date.now() - 24 * 60 * 60_000
+  try {
+    since = Math.max(since, fs.statSync(posterStore(udid)).birthtimeMs)
+  } catch {
+    return false
+  }
+  let entries
+  try {
+    entries = fs.readdirSync(reports, { withFileTypes: true })
+  } catch {
+    return false
+  }
+  let crashes = 0
+  for (const name of entries) {
+    // The name holds the crash time; macOS rewrites the mtime of old reports.
+    const at = name.name.match(
+      /^PosterBoard-(\d{4})-(\d\d)-(\d\d)-(\d\d)(\d\d)(\d\d)\.ips$/
+    )
+    if (!name.isFile() || !at) continue
+    const [, y, mo, d, h, mi, sec] = at.map(Number)
+    if (new Date(y, mo - 1, d, h, mi, sec).getTime() < since) continue
+    try {
+      const report = fs.readFileSync(path.join(reports, name.name), 'utf8')
+      if (!report.includes(`SimDevice.${udid}`)) continue
+    } catch {
+      continue
+    }
+    if (++crashes >= 3) return true
+  }
+  return false
 }
 
 function iosAppInstalled(udid) {

@@ -9,6 +9,7 @@ import {
 } from '@/features/pet/lib/roomOptions'
 import { priceOf } from '@/features/pet/lib/prices'
 import {
+  SHOP_TABS,
   shopItemState,
   type ShopItemState,
   type ShopTab,
@@ -67,6 +68,21 @@ export const isNewRoomItem = (
   entry.state === 'owned' &&
   !(STARTER_ROOM_ITEMS as readonly string[]).includes(entry.item) &&
   !picked(entry.item)
+
+/**
+ * Whether any owned Shop item says "New" (`isNewRoomItem`), so Home's pet card
+ * can say so too.
+ */
+export const hasNewShopItem = (
+  room: PetRoomSettings,
+  unlocked: ReadonlySet<string>,
+  picked: (item: string) => boolean
+): boolean =>
+  SHOP_TABS.some((tab) =>
+    shopEntries(tab, room, unlocked, 0).some(({ entries }) =>
+      entries.some((entry) => isNewRoomItem(entry, picked))
+    )
+  )
 
 /** The scene is 180 × 100 pixels. */
 const SCENE_W = 180

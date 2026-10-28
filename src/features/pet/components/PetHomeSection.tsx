@@ -6,6 +6,7 @@ import Card from '@/components/ui/Card'
 import HomeSectionMenu from '@/components/HomeSectionMenu'
 import { ChevronForwardIcon } from '@/components/ui/DirectionalIcon'
 import LucideIcon from '@/components/ui/LucideIcon'
+import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 import { analytics } from '@/lib/analytics'
 import i18n from '@/lib/locales'
@@ -38,7 +39,8 @@ const WALLET_ICON_PT = 2
  * rename it, change it, decorate its room or open its share card. Buddies' pets
  * visiting today sit in the room: once a pat's hearts float off, each says who
  * it came with, and a long press on one opens what the User does with its buddy
- * today. Renders nothing without a companion.
+ * today. A red "New" chip shows while an owned Shop item was never picked.
+ * Renders nothing without a companion.
  */
 export default function PetHomeSection({
   visits,
@@ -79,7 +81,11 @@ export default function PetHomeSection({
     <Card style={{ gap: 0, paddingVertical: 0, paddingHorizontal: 0 }}>
       <View ref={cardRef} collapsable={false}>
         <HomeSectionMenu
-          accessibilityLabel={name}
+          accessibilityLabel={
+            scene.hasNewItems
+              ? `${name}, ${i18n.t('pet.room.secret.new')}`
+              : name
+          }
           hoverRadius={theme.numbers.borderRadiusLg}
           onPress={() => openDetails('header')}
           actions={[
@@ -132,6 +138,26 @@ export default function PetHomeSection({
                 heartPulse={reveal.heart}
               />
             </View>
+            {scene.hasNewItems && (
+              <View
+                style={{
+                  paddingHorizontal: 8,
+                  paddingVertical: 2,
+                  borderRadius: 99,
+                  backgroundColor: theme.colors.error,
+                }}
+              >
+                <Text
+                  style={{
+                    fontSize: theme.fontSize('xs'),
+                    fontFamily: theme.fonts.semiBold,
+                    color: '#ffffff',
+                  }}
+                >
+                  {i18n.t('pet.room.secret.new')}
+                </Text>
+              </View>
+            )}
             <PetWalletCounts
               coins={reveal.shown.coins}
               pulse={reveal.coins}

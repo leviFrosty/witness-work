@@ -3,6 +3,7 @@ import { DEFAULT_ROOM } from '@/types/pet'
 import { SCENE_H, SCENE_W } from '@/features/pet/art'
 import { ROOM_THUMB_VIEWS } from '@/features/pet/lib/roomOptions'
 import {
+  hasNewShopItem,
   isNewRoomItem,
   shopEntries,
   shopPreviewView,
@@ -66,6 +67,23 @@ describe('isNewRoomItem', () => {
       false
     )
     expect(isNewRoomItem({ item: 'hat:cap', state: 'forSale' }, never)).toBe(
+      false
+    )
+  })
+})
+
+describe('hasNewShopItem', () => {
+  it('says so while an owned item was never picked', () => {
+    const never = () => false
+    const none = unlockedRoomItems([], [])
+    expect(hasNewShopItem(DEFAULT_ROOM, none, never)).toBe(false)
+    const bow = unlockedRoomItems(['hat:bow'], [])
+    expect(hasNewShopItem(DEFAULT_ROOM, bow, never)).toBe(true)
+    expect(
+      hasNewShopItem(DEFAULT_ROOM, bow, (item) => item === 'hat:bow')
+    ).toBe(false)
+    // Wearing it is no news either.
+    expect(hasNewShopItem({ ...DEFAULT_ROOM, hat: 'bow' }, bow, never)).toBe(
       false
     )
   })

@@ -4,7 +4,6 @@ import {
   BookUser as BookUserIcon,
   Plus as PlusIcon,
   Search as SearchIcon,
-  SlidersHorizontal as SlidersHorizontalIcon,
 } from 'lucide-react-native'
 import { ChevronForwardIcon } from '@/components/ui/DirectionalIcon'
 import LucideIcon from '@/components/ui/LucideIcon'
@@ -85,6 +84,12 @@ import {
 import { alignInput } from '@/lib/direction'
 
 /**
+ * The list's column beside a contact when wide: a phone's width, which the
+ * header's controls are laid out for.
+ */
+const LIST_COLUMN_WIDTH = 390
+
+/**
  * The search field. It alone follows the typed query, so a keystroke redraws
  * just the field; the list follows in a transition (`useContactsSorted`).
  */
@@ -127,22 +132,25 @@ const ContactsSearchInput = ({
 }
 
 /**
- * Tab-level Contacts screen with two workspaces, List and Map. The chosen one
- * is remembered, so people who come for the map return to it. Search lives
- * inline at the top of the list so it updates as the user types — search is the
+ * Tab-level Contacts screen with two workspaces, List and Map, switched by the
+ * labeled List | Map control under the title. The chosen one is remembered, so
+ * people who come for the map return to it. Search lives inline beside that
+ * switch at the top of the list so it updates as the user types — search is the
  * dominant action there, and round-tripping through a sheet would hide the very
  * results being searched. Sort and filter open the modal
- * `ContactsSortAndFilterScreen` from the header's sliders button, which shows
- * on both workspaces and badges the active filter count. Select mode (batch
- * actions on the rows shown) starts from the header's "…" menu, as in Notes and
- * Files, or from a row's long-press "Select". Filters and sort are shared: the
- * Map pins the contacts the List shows (it keeps its own search), and its
- * header carries the same Saved View and last-visit chips. On the Map the
- * header floats translucent over it so the map runs edge to edge, and compacts
- * (and the tab bar slides away) once the user starts exploring; swiping down on
- * the header, tapping the title, or bringing the map's cards back restores
- * both. On the List, scrolling down tucks the header, chips and tab bar away
- * and leaves search; scrolling up brings them back.
+ * `ContactsSortAndFilterScreen` from the Filters chip that starts the chip row
+ * (it counts the filters set there) or from the header's "…" menu, which always
+ * offers it. The header keeps two controls, that menu and Add Contact, so the
+ * title keeps its size. Select mode (batch actions on the rows shown) starts
+ * from the "…" menu, as in Notes and Files, or from a row's long-press
+ * "Select". Filters and sort are shared: the Map pins the contacts the List
+ * shows (it keeps its own search), and its header carries the same Saved View
+ * and last-visit chips. On the Map the header floats translucent over it so the
+ * map runs edge to edge, and compacts (and the tab bar slides away) once the
+ * user starts exploring; swiping down on the header, tapping the title, or
+ * bringing the map's cards back restores both. On the List, scrolling down
+ * tucks the header, chips and tab bar away and leaves search; scrolling up
+ * brings them back.
  */
 
 const ContactsScreen = ({
@@ -396,6 +404,12 @@ const ContactsScreen = ({
 
   const moreActions: ContextMenuEntries = [
     [
+      {
+        id: 'sort_and_filter',
+        title: i18n.t('contacts_sortAndFilter_title'),
+        systemImage: 'line.3.horizontal.decrease.circle',
+        onPress: () => navigation.navigate('Contacts Sort And Filter'),
+      },
       !showsMap &&
         listContacts.length > 0 && {
           id: 'select',
@@ -433,69 +447,21 @@ const ContactsScreen = ({
       />
     </>
   ) : (
-    // Four controls in the width the header's 24pt spacing gives three, so the
-    // title keeps its size on a phone. Each gap fits its neighbours' slops
-    // (toggle 10, sliders 4, add 10) and the menu's frame (11pt past its
-    // glyph, 13dp on Android) so no tap lands on the wrong one.
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
-      <ContactsViewToggle value={contactsView} onChange={changeView} />
-      {/* The menu hides itself when none of its actions apply. */}
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 13 }}>
-        <PointerTooltip
-          label={i18n.t('contacts_sortAndFilter_title')}
-          effect='none'
-        >
-          <View>
-            <IconButton
-              icon={SlidersHorizontalIcon}
-              size={22}
-              color={theme.colors.accent}
-              accessibilityLabel={i18n.t('contacts_sortAndFilter_title')}
-              onPress={() => navigation.navigate('Contacts Sort And Filter')}
-              hitSlop={4}
-            />
-            {hasActiveFilters && (
-              <View
-                pointerEvents='none'
-                style={{
-                  position: 'absolute',
-                  top: -8,
-                  right: -8,
-                  minWidth: 16,
-                  height: 16,
-                  paddingHorizontal: 4,
-                  borderRadius: 8,
-                  backgroundColor: theme.colors.accent,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <Text
-                  style={{
-                    color: theme.colors.textInverse,
-                    fontFamily: theme.fonts.semiBold,
-                    fontSize: theme.fontSize('xs'),
-                  }}
-                >
-                  {contactsFilters.length}
-                </Text>
-              </View>
-            )}
-          </View>
-        </PointerTooltip>
-        <PullDownMenu
-          accessibilityLabel={i18n.t('moreActions')}
-          triggerColor={theme.colors.accent}
-          triggerSize={22}
-          actions={moreActions}
-        />
-      </View>
-      {/* Beside the open contact's own "+ Add", this one needs its name. */}
+    <>
+      {/* Never empty: Sort & Filter is always in it. */}
+      <PullDownMenu
+        accessibilityLabel={i18n.t('moreActions')}
+        triggerColor={theme.colors.accent}
+        triggerSize={22}
+        actions={moreActions}
+      />
+      {/* Beside the open contact's own "Add Visit", this one needs its name. */}
       <PointerTooltip label={i18n.t('addContact')} effect='none'>
         <IconButton
           icon={PlusIcon}
           size='lg'
           accessibilityLabel={i18n.t('addContact')}
+          frame
           style={{
             backgroundColor: theme.colors.accentTranslucent,
             justifyContent: 'center',
@@ -505,7 +471,6 @@ const ContactsScreen = ({
             borderRadius: 20,
             borderWidth: 1,
             borderColor: theme.colors.accent,
-            marginLeft: 2,
           }}
           color={theme.colors.accent}
           onPress={() => {
@@ -521,7 +486,19 @@ const ContactsScreen = ({
           }}
         />
       </PointerTooltip>
-    </View>
+    </>
+  )
+
+  // Large text gets the switch its own row, so search keeps room to read.
+  const stacksViewToggle = fontScale > 1.3
+  const viewToggle = (
+    <ContactsViewToggle
+      value={contactsView}
+      onChange={changeView}
+      // Kept in place, so nothing moves while selecting.
+      disabled={selection.selecting}
+      style={stacksViewToggle ? { alignSelf: 'stretch' } : undefined}
+    />
   )
 
   const rowState = [selection.selected, isWide, selectedContact?.id] as const
@@ -533,19 +510,20 @@ const ContactsScreen = ({
     >
       {/* No side padding here: the staleness chips scroll edge to edge. */}
       <View style={{ paddingBottom: 12 }}>
-        {/* Search row. Inline TextInput so results update live as the user
-        types; its placeholder carries the contact count. */}
+        {/* Search, then the List | Map switch, as tall as each other. Search
+        is an inline TextInput so results update live as the user types; its
+        placeholder carries the contact count. */}
         <View
           style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            gap: 8,
+            flexDirection: stacksViewToggle ? 'column' : 'row',
+            alignItems: 'stretch',
+            gap: stacksViewToggle ? 10 : 8,
             paddingHorizontal: 12,
           }}
         >
           <View
             style={{
-              flex: 1,
+              flex: stacksViewToggle ? undefined : 1,
               flexDirection: 'row',
               alignItems: 'center',
               gap: 10,
@@ -576,6 +554,7 @@ const ContactsScreen = ({
               }
             />
           </View>
+          {viewToggle}
         </View>
 
         {showsSavedViews && (
@@ -822,6 +801,29 @@ const ContactsScreen = ({
             actions={headerActions}
             contentStyle={{ maxWidth: isWide ? 1200 : 720 }}
           >
+            {showsMap && (
+              // Where the list has it: at the end of the list's column, split
+              // as the list is so it meets iPhone Duo's fold too. Kept while
+              // the map is explored so the way back stays one tap away.
+              <FoldSplit
+                gap={0}
+                leadingWidth={isWide ? LIST_COLUMN_WIDTH : undefined}
+                leading={
+                  <View
+                    style={{
+                      alignItems: 'flex-end',
+                      paddingTop: 4,
+                      paddingBottom: headerCollapsed ? 8 : 10,
+                      paddingHorizontal: 12,
+                    }}
+                  >
+                    {viewToggle}
+                  </View>
+                }
+                // Where the contact would be.
+                trailing={isWide ? <View /> : undefined}
+              />
+            )}
             {showsMapFilters && (
               <Collapse collapsed={headerCollapsed}>
                 <View style={{ gap: 10, paddingBottom: 10 }}>
@@ -856,8 +858,7 @@ const ContactsScreen = ({
             alignSelf: 'center',
           }}
           gap={0}
-          // A phone's width, which the header's controls are laid out for.
-          leadingWidth={split ? 390 : undefined}
+          leadingWidth={split ? LIST_COLUMN_WIDTH : undefined}
           leading={
             <View style={{ flex: 1 }}>
               {header}

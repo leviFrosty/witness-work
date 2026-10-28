@@ -1,11 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import { pickGreeting } from '@/features/profile/lib/greeting'
-import { consecutiveDaysStreak } from '@/features/profile/lib/profileStats'
 
 // 2026-10-06 is a Tuesday: no weekday or new-month greeting applies.
 const tuesdayAt = (hour: number, day = 6) => new Date(2026, 9, day, hour, 30)
-const at = (now: Date, streakDays = 0, goalReached = false) =>
-  pickGreeting({ now, streakDays, goalReached })
+const at = (now: Date, streak = 0, goalReached = false) =>
+  pickGreeting({ now, streak, goalReached })
 
 describe('pickGreeting', () => {
   it.each([
@@ -42,12 +41,12 @@ describe('pickGreeting', () => {
     expect(at(new Date(2026, 10, 1, 8)).key).toBe('greetingNewMonth')
   })
 
-  it('cheers a streak of three days or more, with its length', () => {
+  it('cheers a streak of three or more, leaving its length to the badge', () => {
     expect(at(tuesdayAt(9), 2).key).toMatch(/GoodMorning|FreshStart|Going/)
     const short = at(tuesdayAt(9), 3)
     expect(short.key).toMatch(/BusyBee|OnARoll/)
-    expect(short.count).toBe(3)
-    expect(at(tuesdayAt(9), 7).key).toMatch(/LongStreak|LookAtYouGo/)
+    expect(short).not.toHaveProperty('count')
+    expect(at(tuesdayAt(9), 7).key).toMatch(/GoingStrong|LookAtYouGo/)
   })
 
   it('puts a streak ahead of the calendar', () => {
@@ -56,26 +55,5 @@ describe('pickGreeting', () => {
 
   it('puts a reached goal ahead of everything', () => {
     expect(at(tuesdayAt(2), 10, true).key).toMatch(/^greetingGoal/)
-  })
-})
-
-describe('consecutiveDaysStreak', () => {
-  const daily = (...days: [string, number][]) => new Map(days)
-  const now = new Date(2026, 9, 6, 12)
-
-  it('counts back from today', () => {
-    const d = daily(['2026-10-06', 30], ['2026-10-05', 60], ['2026-10-04', 15])
-    expect(consecutiveDaysStreak(d, now)).toBe(3)
-  })
-
-  it('keeps the streak alive before today is logged', () => {
-    const d = daily(['2026-10-05', 60], ['2026-10-04', 15])
-    expect(consecutiveDaysStreak(d, now)).toBe(2)
-  })
-
-  it('stops at a gap or an empty entry', () => {
-    const d = daily(['2026-10-06', 30], ['2026-10-05', 0], ['2026-10-04', 15])
-    expect(consecutiveDaysStreak(d, now)).toBe(1)
-    expect(consecutiveDaysStreak(daily(['2026-10-04', 15]), now)).toBe(0)
   })
 })

@@ -30,8 +30,14 @@ interface PillVariantProps<T extends string>
   /** Currently-selected option key. `null`/`undefined` means no selection. */
   value: T | null | undefined
   onChange: (key: T) => void
-  /** Compact sizing — used by paywall billing toggle. */
-  size?: 'sm' | 'md'
+  /**
+   * `sm` is compact (the paywall's billing toggle). `field` matches a text
+   * field's height, corners, and border, for a switch beside one.
+   */
+  size?: 'sm' | 'md' | 'field'
+  /** Sizes the control to its labels instead of the width it's given. */
+  fitContent?: boolean
+  disabled?: boolean
 }
 
 export type SegmentedControlProps<T extends string = string> =
@@ -45,8 +51,8 @@ export type SegmentedControlProps<T extends string = string> =
  *   and Material 3 segmented buttons on Android. Use it for every segmented
  *   choice it can draw.
  * - `pill`: hand-built, only for segments the native control can't show: inline
- *   secondary text (`subLabel`, like the paywall's "Save 20%") or a `trailing`
- *   badge.
+ *   secondary text (`subLabel`, like the paywall's "Save 20%"), a `trailing`
+ *   badge, or a text field's height (`size='field'`; iOS's is 32pt or 49pt).
  *
  * Many or long options (filter fields) belong in `ChoiceChips` instead.
  */
@@ -62,12 +68,20 @@ function PillSegmentedControl<T extends string>({
   value,
   onChange,
   size = 'md',
+  fitContent = false,
+  disabled = false,
   style,
   ...props
 }: PillVariantProps<T>) {
   const theme = useTheme()
-  const radius = size === 'sm' ? 999 : theme.numbers.borderRadiusXl
-  const labelFontSize = size === 'sm' ? 12 : 14
+  const field = size === 'field'
+  const radius = field
+    ? theme.numbers.borderRadiusMd
+    : size === 'sm'
+      ? 999
+      : theme.numbers.borderRadiusXl
+  const inset = size === 'sm' ? 2 : field ? 3 : 4
+  const labelFontSize = field ? theme.fontSize('md') : size === 'sm' ? 12 : 14
 
   return (
     <View
@@ -76,8 +90,14 @@ function PillSegmentedControl<T extends string>({
           flexDirection: 'row',
           backgroundColor: theme.colors.backgroundLighter,
           borderRadius: radius,
-          padding: size === 'sm' ? 2 : 4,
+          padding: inset,
           gap: size === 'sm' ? 2 : 4,
+          opacity: disabled ? 0.5 : 1,
+        },
+        field && {
+          minHeight: 44,
+          borderWidth: 1,
+          borderColor: theme.colors.border,
         },
         style,
       ]}
@@ -89,19 +109,27 @@ function PillSegmentedControl<T extends string>({
           <Button
             key={opt.key}
             onPress={() => onChange(opt.key)}
+            disabled={disabled}
             accessibilityRole='button'
-            accessibilityState={{ selected: active }}
+            accessibilityState={{ selected: active, disabled }}
             testID={opt.testID}
             style={{
-              flex: 1,
+              flex: fitContent ? undefined : 1,
               flexDirection: 'row',
               alignItems: 'center',
               justifyContent: 'center',
               gap: 6,
-              paddingVertical: size === 'sm' ? 4 : 10,
-              paddingHorizontal: size === 'sm' ? 10 : 16,
-              borderRadius: radius,
+              // A field's segments fill its height.
+              paddingVertical: field ? 0 : size === 'sm' ? 4 : 10,
+              paddingHorizontal: field ? 12 : size === 'sm' ? 10 : 16,
+              // Inside the field's border, matching its corners.
+              borderRadius: field ? radius - inset - 1 : radius,
               backgroundColor: active ? theme.colors.card : 'transparent',
+              // Outlined too, since the card barely differs from the track in
+              // dark mode, and Android draws no shadow.
+              borderWidth: field ? 1 : 0,
+              borderColor:
+                field && active ? theme.colors.border : 'transparent',
               shadowColor: active ? theme.colors.shadow : 'transparent',
               shadowOffset: { width: 0, height: 1 },
               shadowOpacity: active ? 0.15 : 0,

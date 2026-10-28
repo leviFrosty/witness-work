@@ -24,21 +24,24 @@ export type ContactDetailsNavigation = Pick<
 >
 
 /**
- * "+ Add": a pull-down of what to record — a conversation, or a not-at-home,
- * which logs right away with an Undo toast like Log Visit's. Data protection
- * mode drops not-at-home records, leaving one choice, so the button adds a
- * conversation directly.
+ * "+ Add" ("+ Add Visit" in the iPad pane): a pull-down of what to record — a
+ * conversation, or a not-at-home, which logs right away with an Undo toast like
+ * Log Visit's. Data protection mode drops not-at-home records, leaving one
+ * choice, so the button adds a conversation directly.
  */
 export function AddVisitMenu({
   contact,
   navigation,
   color,
   compact = false,
+  label = i18n.t('add'),
 }: {
   contact: Contact
   navigation: ContactDetailsNavigation
   color: string
   compact?: boolean
+  /** "Add" beside the history it adds to; elsewhere, say what it adds. */
+  label?: string
 }) {
   const theme = useTheme()
   const dataProtectionMode = usePreferences((s) => s.dataProtectionMode)
@@ -72,7 +75,7 @@ export function AddVisitMenu({
           fontSize: compact ? theme.fontSize('sm') : undefined,
         }}
       >
-        {i18n.t('add')}
+        {label}
       </Text>
     </View>
   )
@@ -98,7 +101,7 @@ export function AddVisitMenu({
 
   return (
     <PullDownMenu
-      accessibilityLabel={i18n.t('add')}
+      accessibilityLabel={label}
       actions={[
         {
           id: 'conversation',
@@ -200,7 +203,14 @@ export default function ContactDetailsActions({
         frame
         onPress={() => toggleFavoriteContact(contact.id)}
       />
-      <AddVisitMenu contact={contact} navigation={navigation} color={color} />
+      {/* In the iPad pane, beside the list's Add Contact and the tab bar's
+      Add, a bare "Add" doesn't say what it adds. */}
+      <AddVisitMenu
+        contact={contact}
+        navigation={navigation}
+        color={color}
+        label={embedded ? i18n.t('addVisit') : undefined}
+      />
     </View>
   )
 }

@@ -130,9 +130,6 @@
   "greetingGoalNicelyDone": "Місячну мету виконано. Чудово!",
   "greetingGoalWayToGo": "Ви досягли своєї мети. Так тримати!",
   "greetingBusyBee": "Привіт, працьовита бджілко",
-  "greetingOnARoll": "Так тримати: днів поспіль — {{count}}",
-  "greetingLongStreak": "Днів поспіль: {{count}}. Чудово!",
-  "greetingLookAtYouGo": "Ви молодець: днів поспіль — {{count}}",
   "profileGreetingNoName": "З поверненням!",
   "profileUsingFor": {
     "one": "З WitnessWork: {{days}} день",

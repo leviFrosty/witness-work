@@ -1,7 +1,6 @@
 import {
   Check as CheckIcon,
   FileText as FileTextIcon,
-  LayoutGrid as LayoutGridIcon,
   Plus as PlusIcon,
 } from 'lucide-react-native'
 import {
@@ -39,9 +38,7 @@ import ProgressMonthTab, {
   useDaysBeside,
 } from '@/features/progress/components/ProgressMonthTab'
 import ProgressYearTab from '@/features/progress/components/ProgressYearTab'
-import ProgressAllTimeTab, {
-  useAllTimeIsEmpty,
-} from '@/features/progress/components/ProgressAllTimeTab'
+import ProgressAllTimeTab from '@/features/progress/components/ProgressAllTimeTab'
 import OnboardingBackfillBanner from '@/features/service-reports/components/OnboardingBackfillBanner'
 import useRolloverPrompt from '@/features/service-reports/hooks/useRolloverPrompt'
 import useProgressCardEditing from '@/features/progress/hooks/useProgressCardEditing'
@@ -81,9 +78,6 @@ const ProgressScreen = ({ route, navigation }: Props) => {
   const daysBeside = useDaysBeside(month, year)
   const headerInColumn = activeTab === 'month' && daysBeside
   const { finish: finishEditing } = cardEditing
-  const allTimeIsEmpty = useAllTimeIsEmpty()
-  // All Time has no cards until there's time to sum.
-  const hasCards = activeTab !== 'allTime' || !allTimeIsEmpty
   // Leaving a tab ends its editing.
   const changeTab = (tab: ProgressTab) => {
     finishEditing()
@@ -202,27 +196,19 @@ const ProgressScreen = ({ route, navigation }: Props) => {
                 />
               </>
             ) : (
-              <>
-                {hasCards ? (
-                  <HeaderPillButton
-                    icon={LayoutGridIcon}
-                    label={i18n.t('progressCards.editCards')}
-                    onPress={() => cardEditing.start('header')}
-                    compact
-                  />
-                ) : null}
-                <HeaderPillButton
-                  icon={FileTextIcon}
-                  label={i18n.t('viewReport')}
-                  onPress={() => {
-                    rootNavigation.navigate('ServiceReportView', {
-                      month,
-                      year,
-                    })
-                  }}
-                  compact={isWide ? false : 'auto'}
-                />
-              </>
+              // Editing the cards starts from the button after them, or a
+              // long press on one, as on Home.
+              <HeaderPillButton
+                icon={FileTextIcon}
+                label={i18n.t('viewReport')}
+                onPress={() => {
+                  rootNavigation.navigate('ServiceReportView', {
+                    month,
+                    year,
+                  })
+                }}
+                compact={isWide ? false : 'auto'}
+              />
             )
           }
         />

@@ -126,9 +126,6 @@
   "greetingGoalNicelyDone": "월간 목표를 달성했어요. 잘하셨어요!",
   "greetingGoalWayToGo": "목표를 달성하셨네요. 훌륭해요!",
   "greetingBusyBee": "안녕하세요, 부지런한 일벌 님",
-  "greetingOnARoll": "기세가 좋아요: {{count}}일 연속",
-  "greetingLongStreak": "{{count}}일 연속. 대단해요!",
-  "greetingLookAtYouGo": "멋지네요: {{count}}일 연속",
   "profileGreetingNoName": "어서 오세요",
   "profileUsingFor": {
     "one": "WitnessWork 사용 {{days}}일째",

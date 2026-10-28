@@ -1,5 +1,6 @@
 import {
   Bell as BellIcon,
+  CircleUserRound as CircleUserRoundIcon,
   CloudUpload as CloudUploadIcon,
   Copy as CopyIcon,
   Crosshair as CrosshairIcon,
@@ -16,8 +17,9 @@ import {
 import { Platform } from 'react-native'
 export type DidYouKnowTip = {
   /**
-   * Stable identifier — never rename or reorder existing entries, since
-   * dismissals are persisted by id. New tips can be appended freely.
+   * Stable identifier — never rename existing entries, since dismissals are
+   * persisted by id. New tips can go anywhere: one put first shows next to
+   * everyone who hasn't dismissed it.
    */
   id: string
   icon: typeof CopyIcon
@@ -30,6 +32,9 @@ export type DidYouKnowTip = {
  * the marquee items already live in MilestoneShowcaseScreen.
  */
 export const DID_YOU_KNOW_TIPS: DidYouKnowTip[] = [
+  // First, so people who looked for Settings in the header learn where the
+  // rest of the account lives.
+  { id: 'accountMenu', icon: CircleUserRoundIcon },
   { id: 'longPressCopy', icon: CopyIcon },
   { id: 'swipeEditConvo', icon: SquarePenIcon },
   { id: 'dragMapPin', icon: MapPinIcon },

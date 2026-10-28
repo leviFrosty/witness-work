@@ -126,9 +126,6 @@
   "greetingGoalNicelyDone": "Mwafika ku ico mwapanga ukufikapo pa mweshi. Mwabomba bwino!",
   "greetingGoalWayToGo": "Mwafika ku ico mwapanga. Mwabomba bwino!",
   "greetingBusyBee": "Mwapoleni, mwe mulebomba sana",
-  "greetingOnARoll": "Mulefikapo: inshiku {{count}} ishikonkana",
-  "greetingLongStreak": "Inshiku {{count}} ishikonkana. Cawamya!",
-  "greetingLookAtYouGo": "Moneni ifyo mulebomba: inshiku {{count}} ishikonkana",
   "profileGreetingNoName": "Mwapokelelwe nakabili",
   "profileUsingFor": {
     "one": "Mulebomfya WitnessWork pa bushiku {{days}}",

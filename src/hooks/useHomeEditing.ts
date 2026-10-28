@@ -9,7 +9,7 @@ import {
   usePreferences,
 } from '@/stores/preferences'
 
-export type HomeEditSource = 'menu' | 'background'
+export type HomeEditSource = 'menu' | 'background' | 'footer'
 
 type Layout = { order: HomeScreenElementKey[]; hidden: HomeScreenElementKey[] }
 
@@ -27,9 +27,10 @@ const currentLayout = (): Layout => {
 
 /**
  * Edit mode for Home's sections, like the Home Screen's jiggle mode: from a
- * section's Edit Home Screen, or holding empty space. Changes save as they're
- * made; finishing reports what changed once (`home_screen_customized`). Pass
- * `lifecycle` from the screen only (see `useEditMode`).
+ * section's Edit Home Screen, the Edit Home Screen button after the sections,
+ * or holding empty space. Changes save as they're made; finishing reports what
+ * changed once (`home_screen_customized`). Pass `lifecycle` from the screen
+ * only (see `useEditMode`).
  */
 export default function useHomeEditing({
   lifecycle = false,

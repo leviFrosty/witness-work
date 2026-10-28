@@ -126,9 +126,6 @@
   "greetingGoalNicelyDone": "Objectif mensuel atteint. Bravo !",
   "greetingGoalWayToGo": "Vous avez atteint votre objectif. Bravo !",
   "greetingBusyBee": "Bonjour, petite abeille",
-  "greetingOnARoll": "Sur la bonne voie : {{count}} jours d’affilée",
-  "greetingLongStreak": "{{count}} jours d’affilée. Impressionnant !",
-  "greetingLookAtYouGo": "Quel élan : {{count}} jours de suite",
   "profileGreetingNoName": "Bienvenue à nouveau",
   "profileUsingFor": {
     "one": "Utilise WitnessWork depuis {{days}} jour",

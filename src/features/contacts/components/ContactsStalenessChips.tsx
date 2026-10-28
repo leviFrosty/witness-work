@@ -1,5 +1,9 @@
-import { Info as InfoIcon } from 'lucide-react-native'
-import LucideIcon from '@/components/ui/LucideIcon'
+import {
+  Info as InfoIcon,
+  SlidersHorizontal as SlidersHorizontalIcon,
+} from 'lucide-react-native'
+import { useNavigation } from '@react-navigation/native'
+import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
 import { touchTargetFrame } from '@/components/ui/touchTarget'
 import { View } from 'react-native'
 import useTheme from '@/contexts/theme'
@@ -21,6 +25,7 @@ import SortableChipRow from '@/components/ui/SortableChipRow'
 import Popover from '@/components/ui/Popover'
 import PointerTooltip from '@/components/ui/PointerTooltip'
 import StalenessColorKey from '@/components/StalenessColorKey'
+import { RootStackNavigation } from '@/types/rootStack'
 
 export type ContactsStalenessChipsProps = {
   /**
@@ -38,7 +43,8 @@ export type ContactsStalenessChipsProps = {
 }
 
 /**
- * Swipeable row of quick filters by time since the last visit: All, then each
+ * Swipeable row of quick filters by time since the last visit: Filters, which
+ * opens Sort & Filter and counts the filters set there, then All and each
  * staleness bucket with its count, most stale first until the User drags them
  * into their own order. A chip swaps any `pinStaleness` filter for its own and
  * leaves other filters alone, so the Sort & Filter sheet still shows (and can
@@ -52,6 +58,7 @@ const ContactsStalenessChips = ({
   surface,
 }: ContactsStalenessChipsProps) => {
   const theme = useTheme()
+  const navigation = useNavigation<RootStackNavigation>()
   const markerColors = useMarkerColors()
   const chipOrder = getEffectiveStalenessChipOrder(
     usePreferences((s) => s.stalenessChipOrder)
@@ -120,12 +127,22 @@ const ContactsStalenessChips = ({
       keyExtractor={(bucket) => bucket}
       onReorder={(next) => setPreferences({ stalenessChipOrder: next })}
       leading={
-        <StalenessChip
-          label={i18n.t('contacts_stalenessChip_all')}
-          count={contacts.length}
-          active={selected.size === 0}
-          onPress={() => select(undefined)}
-        />
+        <>
+          {/* Counts only what the row can't show itself. */}
+          <StalenessChip
+            label={i18n.t('contacts_filtersChip')}
+            icon={SlidersHorizontalIcon}
+            count={otherFilters.length > 0 ? otherFilters.length : undefined}
+            active={otherFilters.length > 0}
+            onPress={() => navigation.navigate('Contacts Sort And Filter')}
+          />
+          <StalenessChip
+            label={i18n.t('contacts_stalenessChip_all')}
+            count={contacts.length}
+            active={selected.size === 0}
+            onPress={() => select(undefined)}
+          />
+        </>
       }
       renderItem={(bucket) => (
         <StalenessChip
@@ -145,13 +162,17 @@ const StalenessChip = ({
   label,
   count,
   color,
+  icon,
   active,
   onPress,
 }: {
   label: string
-  count: number
+  /** Left out when there's nothing to count. */
+  count?: number
   /** Staleness dot; omitted for All. */
   color?: string
+  /** Leads the label instead of a dot. */
+  icon?: AppIcon
   active: boolean
   onPress: () => void
 }) => {
@@ -191,6 +212,13 @@ const StalenessChip = ({
           }}
         />
       )}
+      {icon && (
+        <LucideIcon
+          icon={icon}
+          size={theme.fontSize('sm')}
+          style={{ color: active ? theme.colors.accent : theme.colors.text }}
+        />
+      )}
       <Text
         numberOfLines={1}
         style={{
@@ -201,15 +229,17 @@ const StalenessChip = ({
       >
         {label}
       </Text>
-      <Text
-        style={{
-          fontSize: theme.fontSize('sm'),
-          fontFamily: theme.fonts.semiBold,
-          color: active ? theme.colors.accent : theme.colors.textAlt,
-        }}
-      >
-        {count}
-      </Text>
+      {count !== undefined && (
+        <Text
+          style={{
+            fontSize: theme.fontSize('sm'),
+            fontFamily: theme.fonts.semiBold,
+            color: active ? theme.colors.accent : theme.colors.textAlt,
+          }}
+        >
+          {count}
+        </Text>
+      )}
     </Button>
   )
 }

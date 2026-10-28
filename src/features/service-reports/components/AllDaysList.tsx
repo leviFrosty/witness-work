@@ -1,3 +1,7 @@
+import {
+  ChevronDown as ChevronDownIcon,
+  ChevronUp as ChevronUpIcon,
+} from 'lucide-react-native'
 import { ChevronForwardIcon } from '@/components/ui/DirectionalIcon'
 import { ReactElement, ReactNode, Ref, useMemo, useState } from 'react'
 import { ScrollView, useWindowDimensions, View } from 'react-native'
@@ -24,6 +28,7 @@ import type { RevealAboveSheet } from '@/hooks/useRevealAboveSheet'
 import useAccessibilityTextSize from '@/hooks/useAccessibilityTextSize'
 
 import Button from '@/components/ui/Button'
+import { MIN_TOUCH_TARGET } from '@/components/ui/touchTarget'
 import Text from '@/components/ui/MyText'
 import LucideIcon from '@/components/ui/LucideIcon'
 import type {
@@ -259,7 +264,8 @@ const DayRowItem = ({
 /**
  * Flat "ALL DAYS" list for the Month tab. One row per calendar day of the
  * selected month, most-recent first. In the current month, future days are
- * omitted. Tapping a row opens `SelectedDateSheet` for that date.
+ * omitted until its first row, "Show all days", brings them in above today.
+ * Tapping a row opens `SelectedDateSheet` for that date.
  *
  * Aggregation per day:
  *
@@ -507,21 +513,35 @@ const AllDaysList = ({
     </View>
   ))
 
+  // The list's own first row: the newest days come in right under it, where
+  // they can be seen, and it stays clear of what follows the list.
   const futureToggle = hasFutureDays ? (
     <Button
       onPress={() => setShowAllDays((v) => !v)}
+      accessibilityState={{ expanded: showAllDays }}
       style={{
-        alignSelf: 'center',
-        paddingVertical: 8,
-        paddingHorizontal: 12,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 6,
+        minHeight: MIN_TOUCH_TARGET,
+        paddingHorizontal: 15,
+        marginHorizontal: compact ? 0 : inset,
+        ...(compact
+          ? { borderBottomWidth: 1, borderBottomColor: theme.colors.border }
+          : {}),
       }}
     >
+      <LucideIcon
+        icon={showAllDays ? ChevronUpIcon : ChevronDownIcon}
+        size={theme.fontSize('sm')}
+        color={theme.colors.textAlt}
+      />
       <Text
         style={{
           color: theme.colors.textAlt,
           fontSize: theme.fontSize('sm'),
           fontFamily: theme.fonts.semiBold,
-          textDecorationLine: 'underline',
         }}
       >
         {showAllDays ? i18n.t('hideFutureDays') : i18n.t('showAllDays')}
@@ -547,17 +567,17 @@ const AllDaysList = ({
             nestedScrollEnabled
             // Grows with larger text so it still shows about four days.
             style={{ maxHeight: COMPACT_LIST_HEIGHT * Math.max(1, fontScale) }}
-            contentContainerStyle={{ paddingBottom: futureToggle ? 0 : 4 }}
+            contentContainerStyle={{ paddingBottom: 4 }}
           >
-            {rowItems}
             {futureToggle}
+            {rowItems}
           </ScrollView>
         </Card>
       ) : (
         <View style={{ gap: 6 }}>
           {header}
-          {rowItems}
           {futureToggle}
+          {rowItems}
         </View>
       )}
 

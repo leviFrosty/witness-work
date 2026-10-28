@@ -126,9 +126,6 @@
   "greetingGoalNicelyDone": "月間の目標を達成しました。お見事です!",
   "greetingGoalWayToGo": "目標を達成しました。すばらしいです!",
   "greetingBusyBee": "こんにちは、働き者さん",
-  "greetingOnARoll": "絶好調です。{{count}}日連続",
-  "greetingLongStreak": "{{count}}日連続。すばらしいです!",
-  "greetingLookAtYouGo": "その調子です。{{count}}日連続",
   "profileGreetingNoName": "おかえりなさい",
   "profileUsingFor": {
     "one": "WitnessWorkを使って{{days}}日",

@@ -4715,7 +4715,6 @@
       }
     },
     "room": {
-      "tabs": "Quarto e chapéu",
       "tab": {
         "hat": "Chapéu",
         "window": "Janela",
@@ -4886,23 +4885,14 @@
           "tam": "Tam"
         }
       },
-      "lockedA11y": "{{option}}, bloqueado. {{when}}",
-      "unlockNote": {
-        "secrets": "Alguns itens são segredos. Eles aparecem pelo caminho.",
-        "withSecrets": "{{note}} Alguns itens são segredos. Eles aparecem pelo caminho."
-      },
       "secret": {
         "label": "???",
-        "badge": "?",
         "a11y": "Item secreto, bloqueado",
-        "title": "Um segredo",
-        "body": "Uma surpresa, esperando a hora certa.",
         "new": "Novo",
         "newA11y": "{{option}}, novo"
       }
     },
     "details": {
-      "rename": "Renomear",
       "change": "Trocar de mascote",
       "share": "Compartilhar",
       "settings": "Configurações"

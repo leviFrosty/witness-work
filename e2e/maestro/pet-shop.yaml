@@ -1,0 +1,24 @@
+# seed: pioneer
+# A pet with coins to spend, its details open.
+# setup: (() => { __WW_DEV__.pet.release(); __WW_DEV__.pet.adopt('dog', 'gold', 'Biscuit'); __WW_DEV__.pet.override({ wallet: 40 }); __WW_DEV__.pet.seenNow(); __WW_DEV__.navigate('PetRoom'); return true })()
+# assert: __WW_DEV__.pet.state().unlocks.purchases.some((bought) => bought.item === 'hat:cap' && bought.price === 12)
+# assert: __WW_DEV__.pet.state().room.hat === 'cap'
+appId: com.leviwilkerson.jwtimedev
+name: Buy a hat in the Shop, then find it worn in the pet's room
+---
+# The pet's sprites redraw ten times a second, so assert text instead of
+# waiting for a still screen.
+- extendedWaitUntil:
+    visible: Biscuit
+    timeout: 60000
+# The details list only what's owned; the Shop sells the rest.
+- tapOn:
+    text: Shop
+    traits: button
+- assertVisible: Buy
+- tapOn: Cap, 12 coins
+- tapOn: Buy Cap for 12 coins
+- assertVisible: Cap bought
+# Back in the room, the cap is on and says what it cost.
+- tapOn: Back
+- assertVisible: 'Wearing: Cap'

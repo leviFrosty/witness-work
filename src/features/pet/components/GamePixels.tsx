@@ -17,13 +17,13 @@ import { createLru, type PixelBuffer } from '@/lib/pixelArt'
 import {
   cssColor,
   coinIcon,
-  shopFrame,
-  shopPaper,
+  gameFrame,
+  gamePaper,
   type CoinIconSize,
-  type ShopFrameKind,
-  type ShopPalette,
-} from '@/features/pet/art/shop'
-import { crispScale } from '@/features/pet/render/crispScale'
+  type GameFrameKind,
+  type GamePalette,
+} from '@/features/pet/art/gameUi'
+import { crispScale, pixelsIn } from '@/features/pet/render/crispScale'
 import { bufferToSkImage } from '@/features/pet/render/skiaImage'
 
 const SAMPLING = { filter: FilterMode.Nearest, mipmap: MipmapMode.None }
@@ -32,7 +32,7 @@ const SAMPLING = { filter: FilterMode.Nearest, mipmap: MipmapMode.None }
 const SHOP_PIXEL_PT = 2.4
 
 /** Points per Shop pixel, a whole number of device pixels. */
-export const shopPixelScale = (): number =>
+export const gamePixelScale = (): number =>
   crispScale(SHOP_PIXEL_PT, 1, PixelRatio.get())
 
 // Frames come in a few sizes per screen; icons and backgrounds in fewer.
@@ -43,10 +43,10 @@ const cachedImage = (key: string, make: () => PixelBuffer): SkImage | null =>
   images.getOrCreate(key, () => bufferToSkImage(make()))
 
 /** A pixel image drawn at the Shop's scale. */
-export function ShopPixelImage({
+export function GamePixelImage({
   cacheKey,
   make,
-  scale = shopPixelScale(),
+  scale = gamePixelScale(),
   style,
 }: {
   /** Names the image, so it's drawn once. */
@@ -87,7 +87,7 @@ export function CoinIcon({
   style?: StyleProp<ViewStyle>
 }) {
   return (
-    <ShopPixelImage
+    <GamePixelImage
       cacheKey={`coin|${size}`}
       make={() => coinIcon(size)}
       scale={scale}
@@ -101,8 +101,8 @@ function useMeasured(scale: number) {
   const [size, setSize] = useState({ w: 0, h: 0 })
   const onLayout = (event: LayoutChangeEvent) => {
     const { width, height } = event.nativeEvent.layout
-    const w = Math.floor(width / scale)
-    const h = Math.floor(height / scale)
+    const w = pixelsIn(width, scale)
+    const h = pixelsIn(height, scale)
     setSize((last) => (last.w === w && last.h === h ? last : { w, h }))
   }
   return { ...size, onLayout }
@@ -148,7 +148,7 @@ function Backdrop({
  * A view with pixel art behind its children, drawn by `make` to the view's size
  * whatever it is, the way a 9-slice frame stretches.
  */
-export function ShopArtBox({
+export function GameArtBox({
   cacheKey,
   make,
   style,
@@ -160,7 +160,7 @@ export function ShopArtBox({
   style?: StyleProp<ViewStyle>
   children?: ReactNode
 }) {
-  const scale = shopPixelScale()
+  const scale = gamePixelScale()
   const { w, h, onLayout } = useMeasured(scale)
   const image =
     w > 0 && h > 0
@@ -175,45 +175,45 @@ export function ShopArtBox({
 }
 
 /** A view with one of the Shop's pixel frames behind its children. */
-export function ShopFrame({
+export function GameFrame({
   kind,
   palette,
   style,
   children,
 }: {
-  kind: ShopFrameKind
-  palette: ShopPalette
+  kind: GameFrameKind
+  palette: GamePalette
   style?: StyleProp<ViewStyle>
   children?: ReactNode
 }) {
   return (
-    <ShopArtBox
+    <GameArtBox
       cacheKey={`frame|${kind}|${palette.dark ? 1 : 0}`}
-      make={(w, h) => shopFrame(palette, kind, w, h)}
+      make={(w, h) => gameFrame(palette, kind, w, h)}
       style={style}
     >
       {children}
-    </ShopArtBox>
+    </GameArtBox>
   )
 }
 
 /** The Shop's washi paper, filling the view behind its children. */
-export function ShopPaper({
+export function GamePaper({
   palette,
   style,
   children,
 }: {
-  palette: ShopPalette
+  palette: GamePalette
   style?: StyleProp<ViewStyle>
   children?: ReactNode
 }) {
-  const scale = shopPixelScale()
+  const scale = gamePixelScale()
   const { w, h, onLayout } = useMeasured(scale)
   // Covers the leftover sliver past the last whole pixel too.
   const image =
     w > 0 && h > 0
       ? cachedImage(`paper|${palette.dark ? 1 : 0}|${w + 1}|${h + 1}`, () =>
-          shopPaper(palette, w + 1, h + 1)
+          gamePaper(palette, w + 1, h + 1)
         )
       : null
   return (

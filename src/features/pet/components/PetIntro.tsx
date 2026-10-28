@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
 import { Platform, View } from 'react-native'
-import ActionButton from '@/components/ui/ActionButton'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 import useToday from '@/hooks/useToday'
@@ -8,7 +7,11 @@ import { analytics } from '@/lib/analytics'
 import i18n from '@/lib/locales'
 import type { PetRecord, RoomWindow } from '@/types/pet'
 import { resolveRoom, type PlayerInput } from '@/features/pet/art'
+import { cssColor } from '@/features/pet/art/gameUi'
+import { GameButton } from '@/features/pet/components/GameControls'
+import { GameFrame, gamePixelScale } from '@/features/pet/components/GamePixels'
 import PixelHearts from '@/features/pet/components/PixelHearts'
+import useGamePalette from '@/features/pet/hooks/useGamePalette'
 import usePetLife from '@/features/pet/hooks/usePetLife'
 import usePetSignData from '@/features/pet/hooks/usePetSignData'
 import usePetWindow from '@/features/pet/hooks/usePetWindow'
@@ -41,6 +44,7 @@ export default function PetIntro({
   onDone: () => void
 }) {
   const theme = useTheme()
+  const palette = useGamePalette()
   const state = usePetLife()
   const sign = usePetSignData(useToday())
   const liveNow = usePetWindow(LIVE)
@@ -105,16 +109,18 @@ export default function PetIntro({
   return (
     // Android shows it full screen: Next stays at the bottom.
     <View style={{ gap: 16, flex: Platform.OS === 'android' ? 1 : undefined }}>
-      <View
+      <GameFrame
+        kind='preview'
+        palette={palette}
         style={{
           width: '100%',
           maxWidth: PREVIEW_MAX_WIDTH,
           alignSelf: 'center',
+          padding: 2 * gamePixelScale(),
         }}
       >
         <PetSceneView
           input={input}
-          borderRadius={theme.numbers.borderRadiusMd}
           accessibilityLabel={
             step === 'shop'
               ? i18n.t('pet.intro.previewA11y', { name })
@@ -122,13 +128,14 @@ export default function PetIntro({
           }
           accessibilityHint={i18n.t('pet.a11y.patHint')}
         />
-      </View>
+      </GameFrame>
       <View style={{ gap: 6 }}>
         <Text
           accessibilityRole='header'
           style={{
             fontSize: theme.fontSize('lg'),
             fontFamily: theme.fonts.bold,
+            color: palette.ink,
           }}
         >
           {title}
@@ -139,9 +146,7 @@ export default function PetIntro({
             height={12}
           />
         )}
-        <Text style={{ color: theme.colors.textAlt, lineHeight: 21 }}>
-          {body}
-        </Text>
+        <Text style={{ color: palette.inkAlt, lineHeight: 21 }}>{body}</Text>
       </View>
       <View
         style={{
@@ -165,15 +170,17 @@ export default function PetIntro({
               style={{
                 width: i === index ? 18 : 7,
                 height: 7,
-                borderRadius: 4,
-                backgroundColor:
-                  i === index ? theme.colors.accent : theme.colors.border,
+                backgroundColor: cssColor(
+                  i === index ? palette.accent : palette.cardEdge
+                ),
               }}
             />
           ))}
         </View>
         <View style={{ flex: 1 }}>
-          <ActionButton
+          <GameButton
+            label={i18n.t(last ? 'pet.intro.done' : 'pet.intro.next')}
+            palette={palette}
             onPress={() => {
               if (!last) {
                 setIndex(index + 1)
@@ -183,9 +190,7 @@ export default function PetIntro({
               reached.current.finished = true
               onDone()
             }}
-          >
-            {i18n.t(last ? 'pet.intro.done' : 'pet.intro.next')}
-          </ActionButton>
+          />
         </View>
       </View>
     </View>

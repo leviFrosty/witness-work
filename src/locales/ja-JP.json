@@ -4715,7 +4715,6 @@
       }
     },
     "room": {
-      "tabs": "部屋と帽子",
       "tab": {
         "hat": "帽子",
         "window": "窓",
@@ -4886,23 +4885,14 @@
           "tam": "タム"
         }
       },
-      "lockedA11y": "{{option}}、ロック中。{{when}}",
-      "unlockNote": {
-        "secrets": "一部のアイテムはシークレットです。途中で現れます。",
-        "withSecrets": "{{note}} 一部のアイテムはシークレットです。途中で現れます。"
-      },
       "secret": {
         "label": "???",
-        "badge": "?",
         "a11y": "シークレットアイテム、ロック中",
-        "title": "シークレット",
-        "body": "ふさわしいときに現れるサプライズです。",
         "new": "新規",
         "newA11y": "{{option}}、新規"
       }
     },
     "details": {
-      "rename": "名前を変更",
       "change": "ペットを変更",
       "share": "共有",
       "settings": "設定"

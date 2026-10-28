@@ -1,36 +1,25 @@
 import { useState } from 'react'
-import { I18nManager, View } from 'react-native'
-import Button from '@/components/ui/Button'
+import { View } from 'react-native'
 import Text from '@/components/ui/MyText'
-import Popover from '@/components/ui/Popover'
 import { MIN_TOUCH_TARGET } from '@/components/ui/touchTarget'
 import useTheme from '@/contexts/theme'
-import { usePreferences } from '@/stores/preferences'
 import i18n from '@/lib/locales'
-import { formatNumber } from '@/lib/numbers'
 import { tracking } from '@/lib/tracking'
+import { norenSign, type GamePalette } from '@/features/pet/art/gameUi'
+import { GameIconButton } from '@/features/pet/components/GameControls'
 import {
-  norenSign,
-  shopBackIcon,
-  type ShopPalette,
-} from '@/features/pet/art/shop'
-import {
-  CoinIcon,
-  ShopArtBox,
-  ShopFrame,
-  ShopPixelImage,
-  shopPixelScale,
-} from '@/features/pet/components/ShopPixels'
-import { coinsText, currencyInfoText } from '@/features/pet/lib/roomLabels'
-
-const INFO_WIDTH = 280
+  GameArtBox,
+  gamePixelScale,
+} from '@/features/pet/components/GamePixels'
+import GameWallet from '@/features/pet/components/GameWallet'
+import type { GainPulse } from '@/features/pet/hooks/usePetReveal'
 
 /** The Shop's sign: its name on a noren, translated, sized to the word. */
-function ShopSign({ palette }: { palette: ShopPalette }) {
+function ShopSign({ palette }: { palette: GamePalette }) {
   const theme = useTheme()
-  const scale = shopPixelScale()
+  const scale = gamePixelScale()
   return (
-    <ShopArtBox
+    <GameArtBox
       cacheKey={`noren|${palette.dark ? 1 : 0}`}
       make={(w, h) => norenSign(palette, w, h)}
       style={{
@@ -53,88 +42,12 @@ function ShopSign({ palette }: { palette: ShopPalette }) {
       >
         {i18n.t('pet.shop.title')}
       </Text>
-    </ShopArtBox>
-  )
-}
-
-/** The wallet: coins left to spend. Tapping it says how they're earned. */
-export function ShopWallet({
-  palette,
-  wallet,
-  monthlyHearts,
-}: {
-  palette: ShopPalette
-  /** Coins left to spend. */
-  wallet: number
-  monthlyHearts: boolean
-}) {
-  const theme = useTheme()
-  const streaks = usePreferences((state) => state.showStreaks)
-  const scale = shopPixelScale()
-  const amount = (value: number) => (
-    <Text
-      style={{
-        fontSize: 15,
-        fontFamily: theme.fonts.bold,
-        color: palette.ink,
-        fontVariant: ['tabular-nums'],
-      }}
-    >
-      {formatNumber(value)}
-    </Text>
-  )
-  return (
-    <Popover
-      contentWidth={INFO_WIDTH}
-      renderTrigger={({ onPress }) => (
-        <Button
-          onPress={onPress}
-          accessibilityRole='button'
-          accessibilityLabel={coinsText(wallet)}
-          accessibilityHint={i18n.t('pet.currency.infoTitle')}
-          style={{ minHeight: MIN_TOUCH_TARGET, justifyContent: 'center' }}
-        >
-          <ShopFrame
-            kind='pill'
-            palette={palette}
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 5,
-              paddingVertical: 2 * scale,
-              paddingHorizontal: 4 * scale,
-            }}
-          >
-            <CoinIcon />
-            {amount(wallet)}
-          </ShopFrame>
-        </Button>
-      )}
-    >
-      <View style={{ gap: 4 }}>
-        <Text
-          style={{
-            fontSize: theme.fontSize('md'),
-            fontFamily: theme.fonts.semiBold,
-          }}
-        >
-          {i18n.t('pet.currency.infoTitle')}
-        </Text>
-        <Text
-          style={{
-            fontSize: theme.fontSize('sm'),
-            color: theme.colors.textAlt,
-          }}
-        >
-          {currencyInfoText({ monthlyHearts, streaks })}
-        </Text>
-      </View>
-    </Popover>
+    </GameArtBox>
   )
 }
 
 /** Pulls the back button's frame out past the screen's padding. */
-const BACK_PULL = 12
+const BACK_PULL = 4
 /** The least room between the sign and what's beside it. */
 const SIGN_GAP = 8
 
@@ -146,12 +59,15 @@ const SIGN_GAP = 8
 export default function ShopHeader({
   palette,
   wallet,
+  walletPulse,
   monthlyHearts,
   onBack,
 }: {
-  palette: ShopPalette
-  /** Coins left to spend. */
+  palette: GamePalette
+  /** Coins left to spend, as shown now. */
   wallet: number
+  /** What just changed: a purchase floats its "−N" over the count. */
+  walletPulse: GainPulse | null
   monthlyHearts: boolean
   onBack: () => void
 }) {
@@ -174,24 +90,14 @@ export default function ShopHeader({
         gap: centered ? 0 : SIGN_GAP,
       }}
     >
-      <Button
-        onPress={onBack}
-        accessibilityRole='button'
-        accessibilityLabel={i18n.t('pet.shop.back')}
-        style={{
-          width: MIN_TOUCH_TARGET,
-          height: MIN_TOUCH_TARGET,
-          marginStart: -BACK_PULL,
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        <ShopPixelImage
-          cacheKey={`back|${palette.ink}`}
-          make={() => shopBackIcon(palette.ink)}
-          style={I18nManager.isRTL ? { transform: [{ scaleX: -1 }] } : null}
+      <View style={{ marginStart: -BACK_PULL }}>
+        <GameIconButton
+          icon='back'
+          label={i18n.t('pet.shop.back')}
+          palette={palette}
+          onPress={onBack}
         />
-      </Button>
+      </View>
       <View
         pointerEvents='box-none'
         style={
@@ -211,9 +117,10 @@ export default function ShopHeader({
         onLayout={(event) => setWalletWidth(event.nativeEvent.layout.width)}
         style={{ marginStart: 'auto' }}
       >
-        <ShopWallet
+        <GameWallet
           palette={palette}
-          wallet={wallet}
+          coins={wallet}
+          pulse={walletPulse}
           monthlyHearts={monthlyHearts}
         />
       </View>

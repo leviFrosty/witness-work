@@ -9,7 +9,7 @@ import LucideIcon from '@/components/ui/LucideIcon'
 import useTheme from '@/contexts/theme'
 import { playRewardSample } from '@/lib/actionRewards'
 import { analytics } from '@/lib/analytics'
-import { playRewardSound } from '@/lib/audio'
+import { previewRewardSounds } from '@/lib/audio'
 import i18n from '@/lib/locales'
 import {
   rewardSoundSets,
@@ -23,9 +23,6 @@ const SOUND_LABELS: Record<RewardSoundSet, () => string> = {
   soft: () => i18n.t('rewardSounds_soft'),
   off: () => i18n.t('rewardSounds_off'),
 }
-
-/** Between a sound set's hit and its slam, when it's picked. */
-const PREVIEW_SLAM_MS = 280
 
 /**
  * Settings → Rewards: whether what the User earns plays as the reward stack,
@@ -41,8 +38,7 @@ export default function PreferencesRewardsScreen() {
   const chooseSounds = (sounds: RewardSoundSet) => {
     set({ rewardSounds: sounds })
     analytics.capture('reward_sounds_changed', { sounds })
-    playRewardSound('hit', { set: sounds })
-    setTimeout(() => playRewardSound('slam', { set: sounds }), PREVIEW_SLAM_MS)
+    previewRewardSounds(sounds)
   }
 
   return (

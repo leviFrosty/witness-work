@@ -4715,7 +4715,6 @@
       }
     },
     "room": {
-      "tabs": "Icyumba n'ingofero",
       "tab": {
         "hat": "Ingofero",
         "window": "Idirishya",
@@ -4886,23 +4885,14 @@
           "tam": "Tam"
         }
       },
-      "lockedA11y": "{{option}}, bikinze. {{when}}",
-      "unlockNote": {
-        "secrets": "Ibindi bintu ni ibanga. Bigaragara uko ugenda.",
-        "withSecrets": "{{note}} Ibindi bintu ni ibanga. Bigaragara uko ugenda."
-      },
       "secret": {
         "label": "???",
-        "badge": "?",
         "a11y": "Ikintu cy'ibanga, bikinze",
-        "title": "Ibanga",
-        "body": "Igitangaza gitegereje igihe cyacyo.",
         "new": "Gishya",
         "newA11y": "{{option}}, gishya"
       }
     },
     "details": {
-      "rename": "Hindura izina",
       "change": "Hindura itungo",
       "share": "Sangiza",
       "settings": "Igenamiterere"

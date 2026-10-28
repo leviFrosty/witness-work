@@ -4715,7 +4715,6 @@
       }
     },
     "room": {
-      "tabs": "방과 모자",
       "tab": {
         "hat": "모자",
         "window": "창문",
@@ -4886,23 +4885,14 @@
           "tam": "탐 모자"
         }
       },
-      "lockedA11y": "{{option}}, 잠김. {{when}}",
-      "unlockNote": {
-        "secrets": "일부 항목은 비밀입니다. 지내다 보면 나타납니다.",
-        "withSecrets": "{{note}} 일부 항목은 비밀입니다. 지내다 보면 나타납니다."
-      },
       "secret": {
         "label": "???",
-        "badge": "?",
         "a11y": "비밀 항목, 잠김",
-        "title": "비밀",
-        "body": "때가 되면 찾아오는 깜짝 선물입니다.",
         "new": "새로움",
         "newA11y": "{{option}}, 새로움"
       }
     },
     "details": {
-      "rename": "이름 변경",
       "change": "반려동물 변경",
       "share": "공유",
       "settings": "설정"

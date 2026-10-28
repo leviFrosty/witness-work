@@ -9,12 +9,13 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated'
 import { scheduleOnRN } from 'react-native-worklets'
-import ActionButton from '@/components/ui/ActionButton'
-import Button from '@/components/ui/Button'
 import FullWindowOverlay from '@/components/ui/FullWindowOverlay'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
+import { GameButton } from '@/features/pet/components/GameControls'
+import { GameFrame, gamePixelScale } from '@/features/pet/components/GamePixels'
 import PetUnlockArt from '@/features/pet/components/PetUnlockArt'
+import useGamePalette from '@/features/pet/hooks/useGamePalette'
 import { unlockText } from '@/features/pet/lib/unlockNews'
 import Haptics from '@/lib/haptics'
 import i18n from '@/lib/locales'
@@ -28,9 +29,10 @@ const ART_WIDTH = 240
 
 /**
  * The full-screen moment for a room item or hat, when the User taps its unlock
- * toast or tray item: a dimmed backdrop and the item in the pet's own room
- * springing in, with a success haptic. "Try it on" (a hat) or "Decorate Room"
- * opens Decorate Room at the item. Still under Reduce Motion.
+ * toast or tray item: a dimmed backdrop and, on a paper card in the pet
+ * screens' game look, the item in the pet's own room springing in, with a
+ * success haptic. "Try it on" (a hat) or "Decorate Room" opens the pet's
+ * details at the item. Still under Reduce Motion.
  */
 export default function PetUnlockReveal({
   item,
@@ -43,6 +45,8 @@ export default function PetUnlockReveal({
   onClose: (action: PetUnlockRevealAction) => void
 }) {
   const theme = useTheme()
+  const palette = useGamePalette()
+  const scale = gamePixelScale()
   const reduceMotion = useReducedMotion()
   const appear = useSharedValue(reduceMotion ? 1 : 0)
   const pop = useSharedValue(reduceMotion ? 1 : 0.6)
@@ -120,92 +124,90 @@ export default function PetUnlockReveal({
               {
                 width: '100%',
                 maxWidth: 360,
+                shadowColor: '#000',
+                shadowOpacity: 0.25,
+                shadowRadius: 24,
+                shadowOffset: { width: 0, height: 10 },
+              },
+              cardStyle,
+            ]}
+          >
+            <GameFrame
+              kind='panel'
+              palette={palette}
+              style={{
                 alignItems: 'center',
                 gap: 14,
                 paddingTop: 24,
                 paddingHorizontal: 24,
                 paddingBottom: 20,
-                borderRadius: 28,
-                borderCurve: 'continuous',
-                backgroundColor: theme.colors.card,
-                shadowColor: '#000',
-                shadowOpacity: 0.25,
-                shadowRadius: 24,
-                shadowOffset: { width: 0, height: 10 },
-                elevation: 12,
-              },
-              cardStyle,
-            ]}
-          >
-            <Animated.View
-              style={[
-                {
-                  borderRadius: 20,
-                  borderCurve: 'continuous',
-                  overflow: 'hidden',
-                  backgroundColor: theme.colors.backgroundLighter,
-                },
-                artStyle,
-              ]}
+              }}
             >
-              <PetUnlockArt item={item} size={ART_HEIGHT} width={ART_WIDTH} />
-            </Animated.View>
-            <View style={{ alignItems: 'center', gap: 6 }}>
-              <Text
-                style={{
-                  fontSize: 12,
-                  fontFamily: theme.fonts.semiBold,
-                  color: theme.colors.accent,
-                  textTransform: 'uppercase',
-                  letterSpacing: tracking(1),
-                }}
-              >
-                {text.eyebrow}
-              </Text>
-              <Text
-                accessibilityRole='header'
-                style={{
-                  fontSize: 21,
-                  lineHeight: 27,
-                  fontFamily: theme.fonts.bold,
-                  color: theme.colors.text,
-                  textAlign: 'center',
-                }}
-              >
-                {text.title}
-              </Text>
-              <Text
-                style={{
-                  fontSize: 14,
-                  color: theme.colors.textAlt,
-                  textAlign: 'center',
-                }}
-              >
-                {text.message}
-              </Text>
-            </View>
-            <View style={{ alignSelf: 'stretch', gap: 4, marginTop: 6 }}>
-              <ActionButton noTransform onPress={() => close('decorate')}>
-                {hat
-                  ? i18n.t('pet.unlock.tryOn')
-                  : i18n.t('pet.unlock.decorate')}
-              </ActionButton>
-              <Button
-                noTransform
-                onPress={() => close('done')}
-                style={{ alignItems: 'center', paddingVertical: 12 }}
-              >
+              <Animated.View style={artStyle}>
+                <GameFrame
+                  kind='preview'
+                  palette={palette}
+                  style={{ padding: 2 * scale }}
+                >
+                  <PetUnlockArt
+                    item={item}
+                    size={ART_HEIGHT}
+                    width={ART_WIDTH}
+                  />
+                </GameFrame>
+              </Animated.View>
+              <View style={{ alignItems: 'center', gap: 6 }}>
                 <Text
                   style={{
-                    fontSize: 15,
+                    fontSize: 12,
                     fontFamily: theme.fonts.semiBold,
-                    color: theme.colors.textAlt,
+                    color: palette.inkAlt,
+                    textTransform: 'uppercase',
+                    letterSpacing: tracking(1),
                   }}
                 >
-                  {i18n.t('done')}
+                  {text.eyebrow}
                 </Text>
-              </Button>
-            </View>
+                <Text
+                  accessibilityRole='header'
+                  style={{
+                    fontSize: 21,
+                    lineHeight: 27,
+                    fontFamily: theme.fonts.bold,
+                    color: palette.ink,
+                    textAlign: 'center',
+                  }}
+                >
+                  {text.title}
+                </Text>
+                <Text
+                  style={{
+                    fontSize: 14,
+                    color: palette.inkAlt,
+                    textAlign: 'center',
+                  }}
+                >
+                  {text.message}
+                </Text>
+              </View>
+              <View style={{ alignSelf: 'stretch', gap: 8, marginTop: 6 }}>
+                <GameButton
+                  label={
+                    hat
+                      ? i18n.t('pet.unlock.tryOn')
+                      : i18n.t('pet.unlock.decorate')
+                  }
+                  palette={palette}
+                  onPress={() => close('decorate')}
+                />
+                <GameButton
+                  label={i18n.t('done')}
+                  kind='soft'
+                  palette={palette}
+                  onPress={() => close('done')}
+                />
+              </View>
+            </GameFrame>
           </Animated.View>
         </View>
       </View>

@@ -1,13 +1,13 @@
 import { View } from 'react-native'
 import { useNavigation } from '@react-navigation/native'
 import ContextMenu from '@/components/ui/ContextMenu'
-import { ChevronForwardIcon } from '@/components/ui/DirectionalIcon'
-import LucideIcon from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 import { analytics } from '@/lib/analytics'
 import type { PetVisit } from '@/types/pet'
 import type { RootStackNavigation } from '@/types/rootStack'
+import type { GamePalette } from '@/features/pet/art/gameUi'
+import { GameIcon } from '@/features/pet/components/GameControls'
 import {
   openPetVisitActivity,
   petVisitDetail,
@@ -25,11 +25,13 @@ export default function PetVisitRow({
   visit,
   seed,
   onHideVisit,
+  palette,
 }: {
   visit: PetVisit
   /** Its idle timing, so neighbouring rows don't bob in step. */
   seed: number
   onHideVisit?: (visit: PetVisit) => void
+  palette: GamePalette
 }) {
   const theme = useTheme()
   const navigation = useNavigation<RootStackNavigation>()
@@ -67,24 +69,20 @@ export default function PetVisitRow({
           seed={seed}
         />
         <View style={{ flex: 1, gap: 2 }}>
-          <Text numberOfLines={1} style={{ fontFamily: theme.fonts.semiBold }}>
+          <Text
+            numberOfLines={1}
+            style={{ fontFamily: theme.fonts.semiBold, color: palette.ink }}
+          >
             {visitingPetName(visit)}
           </Text>
           <Text
             numberOfLines={1}
-            style={{
-              fontSize: theme.fontSize('sm'),
-              color: theme.colors.textAlt,
-            }}
+            style={{ fontSize: theme.fontSize('sm'), color: palette.inkAlt }}
           >
             {petVisitDetail(visit)}
           </Text>
         </View>
-        <LucideIcon
-          icon={ChevronForwardIcon}
-          size={16}
-          color={theme.colors.textAlt}
-        />
+        <GameIcon name='forward' color={palette.inkAlt} />
       </View>
     </ContextMenu>
   )

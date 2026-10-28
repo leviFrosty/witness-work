@@ -4,13 +4,10 @@ import {
   coinsText,
   currencyInfoText,
   gainedText,
-  lockedNoteText,
   priceText,
   roomOptionLabel,
   roomSectionLabel,
   roomTabLabel,
-  unlockPillText,
-  unlockRequirementText,
 } from '@/features/pet/lib/roomLabels'
 import { ROOM_TABS, type RoomChoicePart } from '@/features/pet/lib/roomOptions'
 
@@ -38,32 +35,6 @@ describe('Decorate Room labels', () => {
     )
     expect(currencyInfoText({ monthlyHearts: true, streaks: false })).toBe(
       'Earn at least 8 coins each month you share in the ministry. Spend them in the Shop.'
-    )
-  })
-
-  it('says what a locked item costs in the Shop', () => {
-    const price = 7
-    expect(unlockRequirementText({ by: 'price', price })).toBe(
-      'Costs 7 coins in the Shop.'
-    )
-    expect(unlockPillText({ by: 'price', price })).toBe('7')
-  })
-
-  it('never says how a secret opens up', () => {
-    expect(unlockRequirementText({ by: 'secret' })).toBe(
-      'A surprise, waiting in its own time.'
-    )
-    expect(unlockPillText({ by: 'secret' })).toBe('?')
-  })
-
-  it('adds the secrets to the locked note only while one is locked', () => {
-    const shop = 'Get the rest in the Shop with coins.'
-    const secrets = 'Some items are secrets. They show up along the way.'
-    expect(lockedNoteText({ regular: false, secret: false })).toBeNull()
-    expect(lockedNoteText({ regular: true, secret: false })).toBe(shop)
-    expect(lockedNoteText({ regular: false, secret: true })).toBe(secrets)
-    expect(lockedNoteText({ regular: true, secret: true })).toBe(
-      `${shop} ${secrets}`
     )
   })
 

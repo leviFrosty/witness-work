@@ -109,6 +109,12 @@ export default function PetHomeSection({
               onPress: () => openDetails('menu'),
             },
             {
+              id: 'pet_shop',
+              title: i18n.t('pet.menu.shop'),
+              systemImage: 'storefront',
+              onPress: () => navigation.navigate('PetShop', { from: 'menu' }),
+            },
+            {
               id: 'pet_share',
               title: i18n.t('pet.menu.share'),
               systemImage: 'square.and.arrow.up',

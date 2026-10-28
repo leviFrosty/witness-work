@@ -4715,7 +4715,6 @@
       }
     },
     "room": {
-      "tabs": "小屋和帽子",
       "tab": {
         "hat": "帽子",
         "window": "窗户",
@@ -4886,23 +4885,14 @@
           "tam": "塔姆帽"
         }
       },
-      "lockedA11y": "{{option}}，未解锁。{{when}}",
-      "unlockNote": {
-        "secrets": "有些物品是秘密，会在途中出现。",
-        "withSecrets": "{{note}}有些物品是秘密，会在途中出现。"
-      },
       "secret": {
         "label": "???",
-        "badge": "?",
         "a11y": "秘密物品，未解锁",
-        "title": "一个秘密",
-        "body": "一份惊喜，静待时机。",
         "new": "新",
         "newA11y": "{{option}}，新"
       }
     },
     "details": {
-      "rename": "重命名",
       "change": "更换宠物",
       "share": "分享",
       "settings": "设置"

@@ -4715,7 +4715,6 @@
       }
     },
     "room": {
-      "tabs": "Chambre et chapeau",
       "tab": {
         "hat": "Chapeau",
         "window": "Fenêtre",
@@ -4886,23 +4885,14 @@
           "tam": "Tam"
         }
       },
-      "lockedA11y": "{{option}}, verrouillé. {{when}}",
-      "unlockNote": {
-        "secrets": "Certains éléments sont secrets. Ils apparaissent en chemin.",
-        "withSecrets": "{{note}} Certains éléments sont secrets. Ils apparaissent en chemin."
-      },
       "secret": {
         "label": "???",
-        "badge": "?",
         "a11y": "Élément secret, verrouillé",
-        "title": "Un secret",
-        "body": "Une surprise, qui attend son heure.",
         "new": "Nouveau",
         "newA11y": "{{option}}, nouveau"
       }
     },
     "details": {
-      "rename": "Renommer",
       "change": "Changer d’animal",
       "share": "Partager",
       "settings": "Paramètres"

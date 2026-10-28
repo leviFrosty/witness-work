@@ -1,6 +1,6 @@
 import { Platform } from 'react-native'
 import { useDisplayRegions } from '@/stores/displayRegions'
-import { petShopOpensAsSheet } from '@/features/pet/lib/shopPresentation'
+import { petOpensAsSheet } from '@/features/pet/lib/petPresentation'
 import createSystemBackStackNavigator from '@/app/navigation/createSystemBackStackNavigator'
 import Header from '@/components/ui/layout/Header'
 import useTheme from '@/contexts/theme'
@@ -13,6 +13,27 @@ import { RootStackParamList } from '@/types/rootStack'
 
 // Pushed screens get the system's Back button in iPhone Duo's vertical bar.
 const RootStack = createSystemBackStackNavigator<RootStackParamList>()
+
+/**
+ * The pet's details and the Shop: a large sheet where the window is compact,
+ * full screen where it's regular width or on Android.
+ */
+const petLargeScreenOptions = () =>
+  petOpensAsSheet()
+    ? {
+        presentation: 'formSheet' as const,
+        sheetAllowedDetents: [1],
+        sheetGrabberVisible: true,
+        sheetCornerRadius: 18,
+        headerShown: false,
+      }
+    : {
+        presentation:
+          Platform.OS === 'ios'
+            ? ('fullScreenModal' as const)
+            : ('modal' as const),
+        headerShown: false,
+      }
 
 const RootStackComponent = () => {
   const onboardingComplete = usePreferences((s) => s.onboardingComplete)
@@ -608,20 +629,12 @@ const RootStackComponent = () => {
           }
         />
         <RootStack.Screen
-          // The pet's details: a large sheet with its name, the room on top
-          // and its hat and parts scrolling below. Full screen on Android.
-          // Choices save as they're made; pull it down.
-          options={
-            Platform.OS === 'ios'
-              ? {
-                  presentation: 'formSheet',
-                  sheetAllowedDetents: [1],
-                  sheetGrabberVisible: true,
-                  sheetCornerRadius: 18,
-                  headerShown: false,
-                }
-              : { presentation: 'modal', headerShown: false }
-          }
+          // The pet's details: a large sheet on iPhone with its name, the room
+          // on top and its hat and parts scrolling below; full screen where
+          // the window is regular width (iPad, iPhone Duo open), the room
+          // beside the items, like the Shop. Full screen on Android. Choices
+          // save as they're made.
+          options={petLargeScreenOptions}
           name='PetRoom'
           getComponent={() => require('@/app/pet/PetRoomRoute').default}
         />
@@ -630,21 +643,7 @@ const RootStackComponent = () => {
           // screen where the window is regular width (iPad, iPhone Duo open)
           // so the room and the items sit side by side. Full screen on
           // Android.
-          options={() => {
-            if (!petShopOpensAsSheet())
-              return {
-                presentation:
-                  Platform.OS === 'ios' ? 'fullScreenModal' : 'modal',
-                headerShown: false,
-              }
-            return {
-              presentation: 'formSheet',
-              sheetAllowedDetents: [1],
-              sheetGrabberVisible: true,
-              sheetCornerRadius: 18,
-              headerShown: false,
-            }
-          }}
+          options={petLargeScreenOptions}
           name='PetShop'
           getComponent={() =>
             require('@/features/pet/screens/PetShopScreen').default
@@ -669,12 +668,13 @@ const RootStackComponent = () => {
           }
         />
         <RootStack.Screen
-          // Sized to its rows on iOS, like Rename.
+          // A large sheet over the details on iOS, its sections scrolling;
+          // full screen on Android.
           options={
             Platform.OS === 'ios'
               ? {
                   presentation: 'formSheet',
-                  sheetAllowedDetents: 'fitToContents',
+                  sheetAllowedDetents: [1],
                   sheetGrabberVisible: true,
                   sheetCornerRadius: 18,
                   headerShown: false,

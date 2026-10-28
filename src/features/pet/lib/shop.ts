@@ -17,12 +17,17 @@ export const SHOP_TABS = [
 export type ShopTab = (typeof SHOP_TABS)[number]
 
 /**
- * The gap between tabs in a row `room` points wide: the least gap when they all
- * fit, else wide enough that the last one in view is cut about in half, a peek
- * that says the row scrolls, at any width.
+ * The gap between `count` tabs in a row `room` points wide: the least gap when
+ * they all fit, else wide enough that the last one in view is cut about in
+ * half, a peek that says the row scrolls, at any width.
  */
-export function tabGap(room: number, tab: number, minGap: number): number {
-  const all = SHOP_TABS.length * (tab + minGap) - minGap
+export function tabGap(
+  room: number,
+  tab: number,
+  minGap: number,
+  count: number = SHOP_TABS.length
+): number {
+  const all = count * (tab + minGap) - minGap
   if (room <= 0 || all <= room) return minGap
   const whole = Math.max(1, Math.floor((room - tab / 2) / (tab + minGap)))
   return Math.max(minGap, (room - (whole + 0.5) * tab) / whole)

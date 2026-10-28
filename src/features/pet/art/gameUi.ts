@@ -1,9 +1,9 @@
 /**
- * The Shop's pixel art (ADR 0035): the gold coin, the category icons, and its
- * frames, drawn to any size like the rest of the pet. The look is a modern
- * Japanese wooden shop in sumi ink: washi paper, hinoki frames, a noren curtain
- * for the sign. Dark mode turns it to ink-black paper with walnut, and what's
- * chosen turns paper white.
+ * The pet's game look, on every pet screen (ADR 0035): the gold coin, the
+ * category and button icons, and the frames, drawn to any size like the rest of
+ * the pet. It's a modern Japanese wooden shop in sumi ink: washi paper, hinoki
+ * frames and signs, a noren curtain over the Shop. Dark mode turns it to
+ * ink-black paper with walnut, and what's chosen turns paper white.
  */
 import {
   createBuffer,
@@ -37,7 +37,7 @@ function noise(x: number, y: number, seed: number): number {
 // --- Palettes ---------------------------------------------------------------
 
 /** One look of the Shop: its paper, wood and words, and the sumi accent. */
-export type ShopPalette = {
+export type GamePalette = {
   dark: boolean
   paper: Rgb
   fiber: Rgb
@@ -94,7 +94,7 @@ const DARK = rgbPalette({
 })
 
 /** The Shop's look in light or dark mode. */
-export const shopPalette = (dark: boolean): ShopPalette =>
+export const gamePalette = (dark: boolean): GamePalette =>
   dark
     ? {
         ...DARK,
@@ -166,54 +166,75 @@ export function drawBox(
 
 /** Washi: paper with a few fibres. */
 export const paperFill =
-  (p: ShopPalette) =>
+  (p: GamePalette) =>
   (x: number, y: number): Rgb =>
     noise(x, y, 11) > 0.96 ? p.fiber : p.paper
 
-/** The Shop's paper background, `w` × `h` pixels. */
-export function shopPaper(p: ShopPalette, w: number, h: number): PixelBuffer {
+/** The washi paper behind every pet screen, `w` × `h` pixels. */
+export function gamePaper(p: GamePalette, w: number, h: number): PixelBuffer {
   const b = createBuffer(w, h)
   drawBox(b, 0, 0, w, h, [], paperFill(p), -1)
   return b
 }
 
 /**
- * The frames the Shop draws behind its parts, by kind:
+ * The frames the pet screens draw behind their parts, by kind:
  *
  * - `card`: an item; `cardPicked` with the accent ring around it. Both leave room
  *   for the ring, so picking one doesn't move anything.
- * - `button`: the accent button; `buttonOff` when it can't be pressed.
+ * - `button`: the accent button; `buttonOff` when it can't be pressed;
+ *   `buttonSoft` the paper one beside it (icons, secondary actions).
  * - `pill`: the wallet.
  * - `preview`: the hinoki frame around the room.
  * - `tab`: the open category, a cloth tab hanging from its rod.
  * - `newTag`: the "New" tag, plain red so it stands out.
+ * - `panel`: a group of settings rows, edge to edge.
+ * - `plaque`: a hinoki sign board, a screen's title.
+ * - `field`: a text field; `fieldFocused` in the accent while typing.
+ * - `toggleOn` / `toggleOff`: a switch's track; `knob` its handle.
  */
-export type ShopFrameKind =
+export type GameFrameKind =
   | 'card'
   | 'cardPicked'
   | 'button'
   | 'buttonOff'
+  | 'buttonSoft'
   | 'pill'
   | 'preview'
   | 'tab'
   | 'newTag'
+  | 'panel'
+  | 'plaque'
+  | 'field'
+  | 'fieldFocused'
+  | 'toggleOn'
+  | 'toggleOff'
+  | 'knob'
 
 /** How far inside its edge each frame's content starts, in pixels. */
-export const SHOP_FRAME_INSET: Record<ShopFrameKind, number> = {
+export const GAME_FRAME_INSET: Record<GameFrameKind, number> = {
   card: 5,
   cardPicked: 5,
   button: 2,
   buttonOff: 2,
+  buttonSoft: 2,
   pill: 0,
   preview: 2,
   tab: 0,
   newTag: 0,
+  panel: 1,
+  plaque: 2,
+  field: 2,
+  fieldFocused: 2,
+  toggleOn: 1,
+  toggleOff: 1,
+  knob: 1,
 }
 
 /** One frame, `w` × `h` pixels, its middle filled unless it's a picture's. */
-export function shopFrame(
-  p: ShopPalette,
-  kind: ShopFrameKind,
+export function gameFrame(
+  p: GamePalette,
+  kind: GameFrameKind,
   w: number,
   h: number
 ): PixelBuffer {
@@ -241,6 +262,9 @@ export function shopFrame(
     case 'buttonOff':
       drawBox(b, 0, 0, w, h, [p.cardEdge], p.pill, 2)
       break
+    case 'buttonSoft':
+      drawBox(b, 0, 0, w, h, [p.cardEdge, [p.card, p.pill]], p.pill, 2)
+      break
     case 'pill':
       drawBox(b, 0, 0, w, h, [], p.pill, 2)
       break
@@ -262,6 +286,36 @@ export function shopFrame(
     case 'newTag':
       drawBox(b, 0, 0, w, h, [], p.newFill, 1)
       break
+    case 'panel':
+      drawBox(b, 0, 0, w, h, [p.cardEdge], p.card, 1)
+      break
+    case 'plaque':
+      drawBox(
+        b,
+        0,
+        0,
+        w,
+        h,
+        [p.woodEdge, [p.woodLight, p.wood]],
+        (_, y) => (y === h - 3 ? p.woodEdge : p.wood),
+        1
+      )
+      break
+    case 'field':
+      drawBox(b, 0, 0, w, h, [p.cardEdge, p.card], p.card, 1)
+      break
+    case 'fieldFocused':
+      drawBox(b, 0, 0, w, h, [p.accent, p.accent], p.card, 1)
+      break
+    case 'toggleOn':
+      drawBox(b, 0, 0, w, h, [p.accentDark], p.accent, 2)
+      break
+    case 'toggleOff':
+      drawBox(b, 0, 0, w, h, [p.cardEdge], p.pill, 2)
+      break
+    case 'knob':
+      drawBox(b, 0, 0, w, h, [p.cardEdge, [p.card, p.pill]], p.card, 1)
+      break
   }
   return b
 }
@@ -270,7 +324,7 @@ export function shopFrame(
  * The Shop's sign: a short noren hung from a hinoki rod, slit near its hem. The
  * word goes over it as text, so it's translated.
  */
-export function norenSign(p: ShopPalette, w: number, h: number): PixelBuffer {
+export function norenSign(p: GamePalette, w: number, h: number): PixelBuffer {
   const b = createBuffer(w, h)
   for (let x = 0; x < w; x++) {
     put(b, x, 0, p.wood)
@@ -372,8 +426,8 @@ export function coinIcon(size: CoinIconSize = 'small'): PixelBuffer {
   return icon
 }
 
-/** The Shop's category icons, 12 × 12, one colour. */
-export const SHOP_TAB_ICON_PX = 12
+/** The room's category icons, 12 × 12, one colour. */
+export const GAME_TAB_ICON_PX = 12
 const TAB_ICONS: Record<string, readonly string[]> = {
   hat: [
     '............',
@@ -459,6 +513,34 @@ const TAB_ICONS: Record<string, readonly string[]> = {
     '............',
     '............',
   ],
+  sign: [
+    '.....##.....',
+    '....#..#....',
+    '...#....#...',
+    '.##########.',
+    '.#........#.',
+    '.#.##..##.#.',
+    '.#........#.',
+    '.#.######.#.',
+    '.#........#.',
+    '.##########.',
+    '............',
+    '............',
+  ],
+  window: [
+    '............',
+    '.##########.',
+    '.#...##...#.',
+    '.#...##...#.',
+    '.#...##...#.',
+    '.##########.',
+    '.#...##...#.',
+    '.#...##...#.',
+    '.#...##...#.',
+    '.##########.',
+    '############',
+    '............',
+  ],
 }
 /** Back, pointing left. */
 const CHEVRON = [
@@ -483,14 +565,97 @@ function maskIcon(rows: readonly string[], color: string): PixelBuffer {
   return b
 }
 
-/** A Shop category's icon in `color` (`#rrggbb`). */
-export const shopTabIcon = (tab: string, color: string): PixelBuffer =>
+/** The buttons' icons, 10 × 10, one colour. */
+export const GAME_ICON_PX = 10
+const BUTTON_ICONS = {
+  settings: [
+    '....##....',
+    '.##.##.##.',
+    '.########.',
+    '..######..',
+    '####..####',
+    '####..####',
+    '..######..',
+    '.########.',
+    '.##.##.##.',
+    '....##....',
+  ],
+  share: [
+    '....##....',
+    '...####...',
+    '..######..',
+    '....##....',
+    '....##....',
+    '##..##..##',
+    '##......##',
+    '##......##',
+    '##########',
+    '##########',
+  ],
+  close: [
+    '##......##',
+    '###....###',
+    '.###..###.',
+    '..######..',
+    '...####...',
+    '...####...',
+    '..######..',
+    '.###..###.',
+    '###....###',
+    '##......##',
+  ],
+  shop: [
+    '.########.',
+    '##########',
+    '#.##..##.#',
+    '.#..##..#.',
+    '..........',
+    '.#......#.',
+    '.#.##...#.',
+    '.#.##...#.',
+    '.#.##...#.',
+    '##########',
+  ],
+  play: [
+    '..#.......',
+    '..##......',
+    '..###.....',
+    '..####....',
+    '..#####...',
+    '..#####...',
+    '..####....',
+    '..###.....',
+    '..##......',
+    '..#.......',
+  ],
+} as const satisfies Record<string, readonly string[]>
+export type GameIconName =
+  | keyof typeof BUTTON_ICONS
+  | 'back'
+  | 'forward'
+  | 'check'
+
+/** A room category's icon in `color` (`#rrggbb`). */
+export const gameTabIcon = (tab: string, color: string): PixelBuffer =>
   maskIcon(TAB_ICONS[tab] ?? TAB_ICONS.hat, color)
 
-/** The back chevron in `color`. */
-export const shopBackIcon = (color: string): PixelBuffer =>
-  maskIcon(CHEVRON, color)
+/** A button's icon in `color`: back and forward are the chevron. */
+export function gameIcon(name: GameIconName, color: string): PixelBuffer {
+  switch (name) {
+    case 'back':
+      return maskIcon(CHEVRON, color)
+    case 'forward':
+      return maskIcon(
+        CHEVRON.map((row) => [...row].reverse().join('')),
+        color
+      )
+    case 'check':
+      return maskIcon(CHECK, color)
+    default:
+      return maskIcon(BUTTON_ICONS[name], color)
+  }
+}
 
 /** The check beside "Wearing", in `color`. */
-export const shopCheckIcon = (color: string): PixelBuffer =>
+export const gameCheckIcon = (color: string): PixelBuffer =>
   maskIcon(CHECK, color)

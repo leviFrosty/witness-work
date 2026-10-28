@@ -1,32 +1,38 @@
 import { View } from 'react-native'
 import Button from '@/components/ui/Button'
-import useTheme from '@/contexts/theme'
+import { MIN_TOUCH_TARGET } from '@/components/ui/touchTarget'
 import type { PetSpecies } from '@/types/pet'
 import { SPECIES } from '@/features/pet/art'
+import { cssColor, type GamePalette } from '@/features/pet/art/gameUi'
+import { GameFrame, gamePixelScale } from '@/features/pet/components/GamePixels'
 import { coatName } from '@/features/pet/lib/names'
 
-const SIZE = 30
+/** A swatch's size, in pixels. */
+const SWATCH = 12
 
 /**
- * The species' coats as round swatches (patterned coats in slices). Nothing for
- * a one-coat species.
+ * The species' coats as square pixel swatches (patterned coats in slices), the
+ * chosen one ringed in the accent. Nothing for a one-coat species.
  */
 export default function PetCoatSwatches({
   species,
   coat,
   onSelect,
+  palette,
 }: {
   species: PetSpecies
   coat: string
   onSelect: (coat: string) => void
+  palette: GamePalette
 }) {
-  const theme = useTheme()
+  const scale = gamePixelScale()
+  const size = SWATCH * scale
   const { coatIds, coats } = SPECIES[species]
   if (coatIds.length < 2) return null
   return (
     <View
       accessibilityRole='radiogroup'
-      style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}
+      style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 2 }}
     >
       {coatIds.map((id) => {
         const selected = id === coat
@@ -39,27 +45,32 @@ export default function PetCoatSwatches({
             onPress={() => onSelect(id)}
             pointerEffect='highlight'
             style={{
-              padding: 2,
-              borderRadius: SIZE,
-              borderWidth: 2,
-              borderColor: selected ? theme.colors.accent : 'transparent',
+              width: Math.max(size + 4 * scale, MIN_TOUCH_TARGET),
+              height: Math.max(size + 4 * scale, MIN_TOUCH_TARGET),
+              alignItems: 'center',
+              justifyContent: 'center',
             }}
           >
-            <View
-              style={{
-                width: SIZE,
-                height: SIZE,
-                borderRadius: SIZE / 2,
-                overflow: 'hidden',
-                flexDirection: 'row',
-                borderWidth: 1,
-                borderColor: theme.colors.border,
-              }}
+            <GameFrame
+              kind={selected ? 'cardPicked' : 'card'}
+              palette={palette}
+              style={{ padding: 2 * scale }}
             >
-              {coats[id].swatch.map((color, i) => (
-                <View key={i} style={{ flex: 1, backgroundColor: color }} />
-              ))}
-            </View>
+              <View
+                style={{
+                  width: size - 2 * scale,
+                  height: size - 2 * scale,
+                  margin: scale,
+                  flexDirection: 'row',
+                  borderWidth: scale / 2,
+                  borderColor: cssColor(palette.cardEdge),
+                }}
+              >
+                {coats[id].swatch.map((color, i) => (
+                  <View key={i} style={{ flex: 1, backgroundColor: color }} />
+                ))}
+              </View>
+            </GameFrame>
           </Button>
         )
       })}

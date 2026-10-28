@@ -417,8 +417,12 @@ How what a save earned the Pet plays where the User is: a line for each source (
 _Avoid_: "combo meter", "loot", "jackpot".
 
 **Shop**:
-Where the User spends **Coins** on the Pet's hats and room items, from the Pet's details or a locked item. Each item is bought once and owned for good; **Secret items** are never sold. Nothing in it costs money.
+Where the User spends **Coins** on the Pet's hats and room items, from the **Locker** (its Shop button, or the More in Shop card that ends a part's items) or the Pet's Home card menu. It only sells: each item is bought once, put on at once, and owned for good, after which the Shop just marks it owned; **Secret items** are never sold. Nothing in it costs money.
 _Avoid_: "store" (that's the App Store or Play Store), "market", "loot", "gacha"; "unlock" for a purchase.
+
+**Locker**:
+The Pet's details, opened from its Home card: its name, **Hearts** and **Coins** beside the **Shop**, then its room and, part by part, only the hats and room items the User owns, put on with a tap. What's for sale or still secret never shows there; that's the Shop's. Its cog opens the Pet's settings. Like the Shop, every Pet screen past the Home card has the game look (washi paper, pixel frames).
+_Avoid_: "inventory" or "bag" in copy (the screen goes by the Pet's name; its menu item is "Hat & Room…"), "Decorate Room" for the whole screen.
 
 ### Update intros
 

@@ -9,7 +9,6 @@ import {
 } from '@/features/pet/lib/roomOptions'
 import { priceOf } from '@/features/pet/lib/prices'
 import {
-  SHOP_TABS,
   shopItemState,
   type ShopItemState,
   type ShopTab,
@@ -26,7 +25,11 @@ export type ShopEntry = {
   price: number | null
 }
 
-/** A Shop category's options, part by part (Wall has a colour and a pattern). */
+/**
+ * A Shop category's items, part by part (Wall has a colour and a pattern): all
+ * but the starters, which come with the room and are never sold. Owned ones
+ * stay, marked owned, so the shelf doesn't move as things are bought.
+ */
 export function shopEntries(
   tab: ShopTab,
   room: PetRoomSettings,
@@ -38,51 +41,35 @@ export function shopEntries(
     const current = selectedRoomOption(room, part)
     return {
       part,
-      entries: options.map((option) => {
-        const item = `${part}:${option}`
-        return {
-          part,
-          option,
-          item,
-          price: priceOf(item),
-          state: shopItemState({
+      entries: options
+        .filter(
+          (option) =>
+            !(STARTER_ROOM_ITEMS as readonly string[]).includes(
+              `${part}:${option}`
+            )
+        )
+        .map((option) => {
+          const item = `${part}:${option}`
+          return {
+            part,
+            option,
             item,
-            owned: isRoomChoiceUnlocked(part, option, unlocked),
-            current: option === current,
-            wallet,
-          }),
-        }
-      }),
+            price: priceOf(item),
+            state: shopItemState({
+              item,
+              owned: isRoomChoiceUnlocked(part, option, unlocked),
+              current: option === current,
+              wallet,
+            }),
+          }
+        }),
     }
   })
 }
 
-/**
- * Whether an owned `item` should say "New": not a starter, not in the room now,
- * and never picked on this install (`picked`).
- */
-export const isNewRoomItem = (
-  entry: Pick<ShopEntry, 'item' | 'state'>,
-  picked: (item: string) => boolean
-): boolean =>
-  entry.state === 'owned' &&
-  !(STARTER_ROOM_ITEMS as readonly string[]).includes(entry.item) &&
-  !picked(entry.item)
-
-/**
- * Whether any owned Shop item says "New" (`isNewRoomItem`), so Home's pet card
- * can say so too.
- */
-export const hasNewShopItem = (
-  room: PetRoomSettings,
-  unlocked: ReadonlySet<string>,
-  picked: (item: string) => boolean
-): boolean =>
-  SHOP_TABS.some((tab) =>
-    shopEntries(tab, room, unlocked, 0).some(({ entries }) =>
-      entries.some((entry) => isNewRoomItem(entry, picked))
-    )
-  )
+/** Whether the Shop sells `entry` now: it has a price and isn't owned. */
+export const isForSale = (entry: Pick<ShopEntry, 'state'>): boolean =>
+  entry.state === 'forSale' || entry.state === 'short'
 
 /** The scene is 180 × 100 pixels. */
 const SCENE_W = 180

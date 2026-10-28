@@ -10,8 +10,8 @@ import Animated, {
 } from 'react-native-reanimated'
 import type { Viewport } from '@/lib/pixelArt'
 import { petCenterIn } from '@/features/pet/art'
-import { COIN_ICON_PX } from '@/features/pet/art/shop'
-import { CoinIcon } from '@/features/pet/components/ShopPixels'
+import { COIN_ICON_PX } from '@/features/pet/art/gameUi'
+import { CoinIcon } from '@/features/pet/components/GamePixels'
 import {
   FLIGHT_MS,
   FLIGHT_STAGGER_MS,

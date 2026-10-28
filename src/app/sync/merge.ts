@@ -30,7 +30,12 @@ import type {
   VehicleSetup,
 } from '@/types/mileage'
 import type { PetRecord, PetRoomRecord, PetTombstone } from '@/types/pet'
-import { keptKeepsakes, keptRoomItems, keptWakes } from '@/lib/petHistory'
+import {
+  keptKeepsakes,
+  keptPurchases,
+  keptRoomItems,
+  keptWakes,
+} from '@/lib/petHistory'
 import { RecurringPlan } from '@/lib/serviceReport'
 import { momentStoredDate } from '@/lib/normalizeDate'
 import { mergePreferences } from '@/app/sync/preferencesMerge'
@@ -683,14 +688,23 @@ function mergePetHistory(
       ...(pet.earnedRoomItems ?? []),
       ...same.flatMap((copy) => copy.earnedRoomItems ?? []),
     ])
-    // A pet that never earned one keeps no list.
+    // Bought on any device: each item paid for once (ADR 0035).
+    const purchases = keptPurchases([
+      ...(pet.purchases ?? []),
+      ...same.flatMap((copy) => copy.purchases ?? []),
+    ])
+    // A pet that never earned or bought one keeps no list.
     const earnedUnchanged =
       earnedRoomItems.length === 0 ||
       canonicalJson(earnedRoomItems) === canonicalJson(pet.earnedRoomItems)
+    const purchasesUnchanged =
+      purchases.length === 0 ||
+      canonicalJson(purchases) === canonicalJson(pet.purchases)
     if (
       canonicalJson(wakes) === canonicalJson(pet.wakes) &&
       canonicalJson(keepsakes) === canonicalJson(pet.keepsakes) &&
-      earnedUnchanged
+      earnedUnchanged &&
+      purchasesUnchanged
     )
       return pet
     return {
@@ -698,6 +712,7 @@ function mergePetHistory(
       wakes,
       keepsakes,
       ...(earnedUnchanged ? {} : { earnedRoomItems }),
+      ...(purchasesUnchanged ? {} : { purchases }),
     }
   })
 }

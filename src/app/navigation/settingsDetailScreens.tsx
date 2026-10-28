@@ -123,6 +123,13 @@ export const settingsDetailScreens: SettingsDetailScreen[] = [
     title: () => i18n.t('audioAndHaptics'),
   },
   {
+    name: 'PreferencesRewards',
+    getComponent: () =>
+      require('@/features/settings/screens/preferences/screens/PreferencesRewardsScreen')
+        .default,
+    title: () => i18n.t('rewards'),
+  },
+  {
     name: 'PreferencesTabOrder',
     getComponent: () =>
       require('@/features/settings/screens/preferences/screens/PreferencesTabOrderScreen')

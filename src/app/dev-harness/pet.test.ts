@@ -14,6 +14,14 @@ vi.mock('react-native-mmkv', () => ({
   },
 }))
 vi.mock('@/lib/analytics', () => ({ analytics: { capture: vi.fn() } }))
+vi.mock('@/features/pet/components/PetRewardChip', () => ({
+  rewardIcon: () => null,
+}))
+vi.mock('@/stores/rewardStack', () => ({ startReward: vi.fn(() => 1) }))
+vi.mock('@/features/pet/lib/walletNow', () => ({ petEarningsNow: () => null }))
+vi.mock('@/features/profile/stores/streakCelebration', () => ({
+  useStreakCelebration: { setState: vi.fn() },
+}))
 vi.mock('@/stores/preferences', () => {
   const state = { petPromptDismissed: false, set: vi.fn() }
   return { usePreferences: { getState: () => state } }

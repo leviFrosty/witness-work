@@ -9,6 +9,7 @@ import {
   shownStreak,
   streakEndsSoon,
   streakLastsThrough,
+  streakHistory,
   streakReminderAt,
   type ServiceStreak,
   type StreakRecords,
@@ -391,5 +392,187 @@ describe('nextSeenStreak', () => {
         now
       )
     ).toEqual({ seen: seen('2026-10-05'), grew: false })
+  })
+})
+
+describe('streakHistory', () => {
+  const kept = (...keys: string[]) =>
+    entries(...keys.map((key): [string, number] => [key, 60]))
+  const planned = (...keys: string[]) => keys.map((key) => dayPlan(key))
+
+  it('lists planned days kept, oldest first, and skips days without a Plan', () => {
+    const history = streakHistory(
+      'plans',
+      records(
+        kept('2026-09-01', '2026-09-02', '2026-09-03'),
+        planned('2026-09-01', '2026-09-03')
+      ),
+      now
+    )
+    expect(history.kept).toEqual(['2026-09-01', '2026-09-03'])
+    expect(history.milestones).toEqual([])
+  })
+
+  it('reaches each milestone on the planned day kept that got there', () => {
+    const days = Array.from(
+      { length: 10 },
+      (_, i) => `2026-09-${String(i + 1).padStart(2, '0')}`
+    )
+    const history = streakHistory(
+      'plans',
+      records(kept(...days), planned(...days)),
+      now
+    )
+    expect(history.milestones).toEqual([
+      { count: 3, on: '2026-09-03' },
+      { count: 5, on: '2026-09-05' },
+      { count: 10, on: '2026-09-10' },
+    ])
+  })
+
+  it('starts over after a missed planned day, and reaches them again', () => {
+    const history = streakHistory(
+      'plans',
+      records(
+        kept(
+          '2026-09-01',
+          '2026-09-02',
+          '2026-09-03',
+          '2026-09-05',
+          '2026-09-06',
+          '2026-09-07'
+        ),
+        planned(
+          '2026-09-01',
+          '2026-09-02',
+          '2026-09-03',
+          '2026-09-04',
+          '2026-09-05',
+          '2026-09-06',
+          '2026-09-07'
+        )
+      ),
+      now
+    )
+    expect(history.milestones).toEqual([
+      { count: 3, on: '2026-09-03' },
+      { count: 3, on: '2026-09-07' },
+    ])
+  })
+
+  it('keeps a milestone reached the day after a missed planned day', () => {
+    // As of Oct 6, Oct 5 could still be kept: the streak was 3. It still is
+    // once Oct 5 has passed for good.
+    const history = streakHistory(
+      'plans',
+      records(
+        kept('2026-10-01', '2026-10-02', '2026-10-06', '2026-10-09'),
+        planned(
+          '2026-10-01',
+          '2026-10-02',
+          '2026-10-05',
+          '2026-10-06',
+          '2026-10-09'
+        )
+      ),
+      new Date(2026, 9, 20, 12)
+    )
+    expect(history.milestones).toEqual([{ count: 3, on: '2026-10-06' }])
+  })
+
+  it("doesn't end the streak for a planned day yesterday or today", () => {
+    const history = streakHistory(
+      'plans',
+      records(
+        kept('2026-10-01', '2026-10-02', '2026-10-06'),
+        planned('2026-10-01', '2026-10-02', '2026-10-05', '2026-10-06')
+      ),
+      now
+    )
+    expect(history.milestones).toEqual([{ count: 3, on: '2026-10-06' }])
+  })
+
+  it('counts recurring Plans', () => {
+    const weekly: RecurringPlan = {
+      id: 'tuesdays',
+      startDate: stored('2026-09-08'),
+      minutes: 120,
+      recurrence: {
+        frequency: RecurringPlanFrequencies.WEEKLY,
+        interval: 1,
+        endDate: null,
+      },
+    }
+    const history = streakHistory(
+      'plans',
+      records(kept('2026-09-08', '2026-09-15', '2026-09-22'), [], [weekly]),
+      now
+    )
+    expect(history.kept).toEqual(['2026-09-08', '2026-09-15', '2026-09-22'])
+    expect(history.milestones).toEqual([{ count: 3, on: '2026-09-22' }])
+  })
+
+  it("doesn't count time logged after now", () => {
+    const history = streakHistory(
+      'plans',
+      records(
+        kept('2026-10-06', '2026-10-07'),
+        planned('2026-10-06', '2026-10-07')
+      ),
+      now
+    )
+    expect(history.kept).toEqual(['2026-10-06'])
+  })
+
+  it('reaches a months milestone on each month out from the third', () => {
+    const history = streakHistory(
+      'months',
+      records(
+        entries(
+          ['2026-06-12', 0],
+          ['2026-07-03', 0],
+          ['2026-08-20', 0],
+          ['2026-08-02', 0],
+          ['2026-09-09', 0]
+        )
+      ),
+      now
+    )
+    expect(history.milestones).toEqual([
+      { count: 3, on: '2026-08-02' },
+      { count: 4, on: '2026-09-09' },
+    ])
+  })
+
+  it('keeps a months milestone reached the month after one without', () => {
+    const history = streakHistory(
+      'months',
+      records(entries(['2026-06-01', 0], ['2026-07-01', 0], ['2026-09-01', 0])),
+      new Date(2026, 11, 6, 12)
+    )
+    expect(history.milestones).toEqual([{ count: 3, on: '2026-09-01' }])
+  })
+
+  it('starts a months streak over once the month after one without has passed', () => {
+    const history = streakHistory(
+      'months',
+      records(
+        entries(
+          ['2026-03-01', 0],
+          ['2026-04-01', 0],
+          ['2026-05-01', 0],
+          ['2026-07-01', 0],
+          ['2026-08-01', 0],
+          ['2026-10-01', 0]
+        )
+      ),
+      now
+    )
+    // In July, June could still be shared: 4. By August it couldn't: 2.
+    expect(history.milestones).toEqual([
+      { count: 3, on: '2026-05-01' },
+      { count: 4, on: '2026-07-01' },
+      { count: 3, on: '2026-10-01' },
+    ])
   })
 })

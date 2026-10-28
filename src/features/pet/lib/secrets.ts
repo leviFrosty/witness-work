@@ -31,27 +31,29 @@ export function noteSecretFound(secret: PetSecret): void {
 }
 
 /**
- * Whether Decorate Room has shown `item`, a secret room item, since it opened
- * up on this install. Until it has, its cell says "New".
+ * Whether the User has picked `item`, a room item or hat, in Decorate Room or
+ * the Shop on this install. Until they have, an owned item says "New" (ADR
+ * 0035), so items earned before the Shop, and secrets as they're found, stand
+ * out until tried.
  */
-export function secretItemSeen(item: string): boolean {
+export function roomItemPicked(item: string): boolean {
   try {
-    return flags().getBoolean(`seen:${item}`) ?? false
+    return flags().getBoolean(`picked:${item}`) ?? false
   } catch {
     return true
   }
 }
 
-/** Notes that Decorate Room has shown these opened secret items. */
-export function markSecretItemsSeen(items: readonly string[]): void {
+/** Notes that the User picked `item`, so it no longer says "New". */
+export function noteRoomItemPicked(item: string): void {
   try {
-    for (const item of items) flags().set(`seen:${item}`, true)
+    flags().set(`picked:${item}`, true)
   } catch {
     // The "New" label shows again next time.
   }
 }
 
-/** Forgets which secrets were found and secret items shown (dev harness). */
+/** Forgets which secrets were found and items picked (dev harness). */
 export function forgetFoundSecrets(): void {
   try {
     flags().clearAll()

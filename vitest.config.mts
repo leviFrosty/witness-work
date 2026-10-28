@@ -2,8 +2,9 @@ import { defineConfig } from 'vitest/config'
 import { fileURLToPath } from 'node:url'
 
 export default defineConfig({
-  // Android drawables (`*.xml`) import as their paths, as Metro assets do.
-  assetsInclude: ['**/*.xml'],
+  // Android drawables (`*.xml`) and sounds import as their paths, as Metro
+  // assets do.
+  assetsInclude: ['**/*.xml', '**/*.mp3', '**/*.wav'],
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),

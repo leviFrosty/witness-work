@@ -3,7 +3,7 @@ import { DEFAULT_ROOM } from '@/types/pet'
 import {
   fullyUnlockedRoom,
   INTRO_HAT,
-  introStreakCopy,
+  INTRO_STEPS,
 } from '@/features/pet/lib/intro'
 
 describe('adoption intro', () => {
@@ -24,10 +24,7 @@ describe('adoption intro', () => {
     expect(INTRO_HAT).toBe('bow')
   })
 
-  it('explains the streak the way the User grows it', () => {
-    expect(introStreakCopy('streak', 'plans')).toBe('plans')
-    expect(introStreakCopy('streak', 'months')).toBe('months')
-    expect(introStreakCopy('months', 'plans')).toBe('noStreak')
-    expect(introStreakCopy('months', 'months')).toBe('noStreak')
+  it('walks through the hearts, the Shop, then decorating', () => {
+    expect(INTRO_STEPS).toEqual(['hearts', 'shop', 'decorate'])
   })
 })

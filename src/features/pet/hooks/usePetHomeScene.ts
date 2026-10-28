@@ -1,5 +1,7 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type RefObject } from 'react'
+import type { View } from 'react-native'
 import { useIsFocused } from '@react-navigation/native'
+import usePublisher from '@/hooks/usePublisher'
 import useToday from '@/hooks/useToday'
 import { analytics } from '@/lib/analytics'
 import Haptics from '@/lib/haptics'
@@ -7,7 +9,12 @@ import { createRng } from '@/lib/pixelArt'
 import usePet from '@/stores/pet'
 import type { PetRecord, PetVisit } from '@/types/pet'
 import type { PlayerInput } from '@/features/pet/art'
+import { lampLevel } from '@/features/pet/lib/lamp'
+import { sameShown, seenPetKey, shownBefore } from '@/features/pet/lib/reveal'
+import { rewardIcon } from '@/features/pet/components/PetRewardChip'
 import usePetLife from '@/features/pet/hooks/usePetLife'
+import usePetReveal, { type PetReveal } from '@/features/pet/hooks/usePetReveal'
+import useRevealVisible from '@/features/pet/hooks/useRevealVisible'
 import usePetSignData from '@/features/pet/hooks/usePetSignData'
 import usePetWindow from '@/features/pet/hooks/usePetWindow'
 import { shouldShowParadise, shouldShowStar } from '@/features/pet/lib/eggs'
@@ -15,17 +22,17 @@ import { moodMoment, petDisplayName } from '@/features/pet/lib/names'
 import {
   cardLife,
   petSceneInput,
+  withShownHearts,
   type PetCardLife,
   type PetVisitRoll,
 } from '@/features/pet/lib/sceneInput'
 import { noteSecretFound } from '@/features/pet/lib/secrets'
 import type { PetSceneHandle } from '@/features/pet/render/PetSceneView'
+import { usePetSeen } from '@/features/pet/stores/petSeen'
 import { usePetSession } from '@/features/pet/stores/petSession'
 
 /** Delay before the pet greets the User with its mood's sound. */
 const GREET_DELAY_MS = 700
-/** Delay before it cheers for hearts that went up (after the greeting). */
-const CHEER_DELAY_MS = 900
 /** Spacing of the dev harness's pats. */
 const DEV_PAT_MS = 120
 /** Spacing of the dev harness's rub steps. */
@@ -35,7 +42,10 @@ export type PetHomeScene = {
   pet: PetRecord
   /** Buddies' pets visiting, the dev override applied. */
   visits: readonly PetVisit[]
+  /** As the card shows it: the hearts follow the reveal. */
   life: PetCardLife
+  /** Hearts and wallet as the card shows them, and what's changing. */
+  reveal: PetReveal
   name: string
   input: PlayerInput
   sceneRef: React.RefObject<PetSceneHandle | null>
@@ -51,10 +61,14 @@ export type PetHomeScene = {
  * Everything the Home pet card draws and does: the replayed life (with the dev
  * override on top in dev builds), the room and sign, hidden moments rolled per
  * Home visit, entrances requested by the picker, and the dev harness's
- * commands. Null without a companion.
+ * commands. Hearts and the wallet show as this device last showed them until
+ * `revealRef` (the card's header) is in view, then play what changed
+ * (`usePetReveal`); the pet's mood and lamp follow the hearts shown, and it
+ * cheers once they've filled. Null without a companion.
  */
 export default function usePetHomeScene(
-  realVisits: readonly PetVisit[]
+  realVisits: readonly PetVisit[],
+  revealRef: RefObject<View | null>
 ): PetHomeScene | null {
   const state = usePetLife()
   const override = usePetSession((s) => (__DEV__ ? s.devOverride : null))
@@ -122,7 +136,29 @@ export default function usePetHomeScene(
   }, [command, focused])
 
   const pet = state.pet
-  const life = pet && state.life ? cardLife(state.life, override) : null
+  const realLife = pet && state.life ? cardLife(state.life, override) : null
+
+  const seenKey = pet ? seenPetKey(pet) : null
+  const now = { coins: state.wallet, hearts: realLife?.hearts ?? 0 }
+  const adoptedToday = pet?.adoptedOn === state.todayKey
+  const pending = usePetSeen(
+    ({ seen }) =>
+      seenKey !== null &&
+      !sameShown(shownBefore(seen, seenKey, now, adoptedToday), now)
+  )
+  const { streakKind } = usePublisher()
+  const reveal = usePetReveal({
+    pet: seenKey,
+    now,
+    earned: state.earnings,
+    adoptedToday,
+    visible: useRevealVisible(revealRef, pending),
+    flights: true,
+    stack: { streakKind, icon: rewardIcon },
+  })
+  const shownHearts = reveal.shown.hearts
+  const life = withShownHearts(realLife, shownHearts)
+
   const scene =
     pet && life
       ? petSceneInput({
@@ -130,7 +166,8 @@ export default function usePetHomeScene(
           life,
           room: state.room,
           window,
-          lampLevel: state.lampLevel,
+          // Follows the hearts shown, faked ones included.
+          lampLevel: lampLevel(life),
           sign,
           pendingGift: state.pendingGift,
           keepsakes: pet.keepsakes,
@@ -162,18 +199,13 @@ export default function usePetHomeScene(
     return () => clearTimeout(timer)
   }, [focused, hasPet])
 
-  // Hearts that went up since Home last showed them (the "shared" check, a
-  // visit or time saved here or elsewhere): the pet cheers.
-  const hearts = life?.hearts
-  const seenHearts = useRef(hearts)
+  // Once the hearts shown have filled up to now, the pet cheers.
+  const filled = reveal.heart?.up === true && shownHearts === realLife?.hearts
   useEffect(() => {
-    if (!focused || hearts === undefined) return
-    const before = seenHearts.current
-    seenHearts.current = hearts
-    if (before === undefined || hearts <= before) return
-    const timer = setTimeout(() => sceneRef.current?.cheer(), CHEER_DELAY_MS)
+    if (!filled) return
+    const timer = setTimeout(() => sceneRef.current?.cheer(), 150)
     return () => clearTimeout(timer)
-  }, [hearts, focused])
+  }, [filled])
 
   const shown = scene?.shown
   useEffect(() => {
@@ -185,7 +217,7 @@ export default function usePetHomeScene(
     if (shown.visitor) noteSecretFound('visitor')
   }, [shown, focused])
 
-  const { unlockedItems, unlockMode, streakKind } = state
+  const { unlockedItems, wallet } = state
   useEffect(() => {
     if (!__DEV__) return
     usePetSession.getState().setDevSnapshot(
@@ -199,24 +231,13 @@ export default function usePetHomeScene(
             roll,
             override,
             unlocks: {
-              mode: unlockMode,
-              streakKind,
+              wallet,
               unlocked: [...unlockedItems].sort(),
             },
           }
         : null
     )
-  }, [
-    scene,
-    life,
-    window,
-    sign,
-    roll,
-    override,
-    unlockedItems,
-    unlockMode,
-    streakKind,
-  ])
+  }, [scene, life, window, sign, roll, override, unlockedItems, wallet])
 
   useEffect(
     () => () => {
@@ -270,6 +291,7 @@ export default function usePetHomeScene(
     pet,
     visits,
     life,
+    reveal,
     name: petDisplayName(pet),
     // Until its entrance plays, the pet stays out of the room: it walks in,
     // rather than showing at rest first (behind the closing picker, say).

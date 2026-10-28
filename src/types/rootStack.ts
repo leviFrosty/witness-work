@@ -156,6 +156,7 @@ export type RootStackParamList = {
   PreferencesStreaksAndBadges: undefined
   PreferencesNavigation: undefined
   PreferencesAudioAndHaptics: undefined
+  PreferencesRewards: undefined
   PreferencesTabOrder: undefined
   PreferencesHomeScreen: undefined
   PreferencesScheduleScreen: undefined
@@ -313,6 +314,11 @@ export type RootStackParamList = {
   /** The pet's details: its hat and room parts, applied as they're picked. */
   /** `focus`: an unlocked item (`hat:beret`) whose tab opens first. */
   PetRoom: { focus?: string } | undefined
+  /**
+   * The pet's Shop (ADR 0035): `focus` picks an item (`part:option`) and its
+   * category; `from` is where it was opened, for analytics.
+   */
+  PetShop: { focus?: string; from?: 'room' | 'locked' } | undefined
   /** Rename the companion (an empty name shows the species name). */
   PetRename: undefined
   /** The pet's settings: shown on Home, and buddies' pets visiting. */

@@ -4886,30 +4886,8 @@
           "tam": "Gorro escocés"
         }
       },
-      "unlockMonthsMore": {
-        "one": "{{count}} mes más",
-        "other": "{{count}} meses más"
-      },
-      "unlockMonthsHow": {
-        "fromThisMonth": {
-          "one": "Se desbloquea cuando registres tiempo o guardes una visita o un plan este mes.",
-          "other": "Se desbloquea tras {{count}} meses en los que registres tiempo o guardes una visita o un plan, contando este mes."
-        },
-        "fromNextMonth": {
-          "one": "Se desbloquea el próximo mes en que registres tiempo o guardes una visita o un plan.",
-          "other": "Se desbloquea tras {{count}} meses más en los que registres tiempo o guardes una visita o un plan, a partir del mes que viene."
-        }
-      },
-      "unlockAtStreak": {
-        "one": "Con una racha de {{count}}",
-        "other": "Con una racha de {{count}}"
-      },
       "lockedA11y": "{{option}}, bloqueado. {{when}}",
       "unlockNote": {
-        "streakPlans": "Cada objeto se desbloquea cuando tu racha llega a su número. Planifica tu ministerio y cumple tus planes para aumentarla.",
-        "streakMonths": "Cada objeto se desbloquea cuando tu racha llega a su número. Participa en el ministerio cada mes para aumentarla.",
-        "months": "Se desbloquea uno más cada mes que registres tiempo o guardes una visita o un plan.",
-        "monthsHats": "Se desbloquean tres el primer mes que registres tiempo o guardes una visita o un plan, y luego uno más cada mes que lo hagas.",
         "secrets": "Algunos objetos son secretos. Aparecen por el camino.",
         "withSecrets": "{{note}} Algunos objetos son secretos. Aparecen por el camino."
       },
@@ -4927,13 +4905,6 @@
       "rename": "Cambiar nombre",
       "change": "Cambiar mascota",
       "share": "Compartir",
-      "streakA11y": "Racha: {{count}}",
-      "streakInfoTitle": "Tu racha",
-      "streakInfoPlans": "Tu racha ahora es de {{count}}. Cada plan que cumples (con tiempo registrado ese día) suma 1, sin importar cuántos días haya entre tus planes. Si fallas uno, vuelve a empezar. El tiempo registrado un día sin plan no suma.",
-      "streakInfoMonths": "Tu racha ahora es de {{count}}. Cuenta los meses seguidos en que participaste en el ministerio.",
-      "activeMonths": "Meses activos: {{count}}",
-      "activeMonthsInfoTitle": "Meses activos",
-      "activeMonthsInfo": "Llevas {{count}} hasta ahora. Un mes cuenta cuando, después de adoptar a tu mascota, registras tiempo o guardas una visita o un plan en él. No hace falta que los meses sean seguidos.",
       "settings": "Ajustes"
     },
     "intro": {
@@ -4941,12 +4912,6 @@
         "title": "Sal a predicar y llena sus corazones",
         "body": "Cada día que registras actividad de servicio suma un corazón. Si dejas de registrar, los corazones se van vaciando poco a poco.",
         "bodyMonths": "Cada mes que registras actividad de servicio llena todos sus corazones. Si te saltas un mes, se van vaciando poco a poco."
-      },
-      "streak": {
-        "title": "Aumenta tu racha",
-        "plans": "Planifica tu ministerio y cumple tus planes para aumentar tu racha de servicio. La lámpara brilla más y se desbloquean sombreros y objetos nuevos para la habitación.",
-        "months": "Participa en el ministerio cada mes para aumentar tu racha. La lámpara brilla más y se desbloquean sombreros y objetos nuevos para la habitación.",
-        "noStreak": "Cada mes que sales al ministerio se desbloquean sombreros y objetos nuevos para la habitación."
       },
       "decorate": {
         "title": "Hazla tuya",

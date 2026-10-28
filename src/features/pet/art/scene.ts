@@ -109,7 +109,7 @@ export interface SceneMoments {
 export interface SceneInput {
   readonly room: ResolvedRoom
   readonly sign: SignData
-  /** Lamp level 0–5 (the Service Streak). */
+  /** Lamp level 0–5 (the hearts, `lib/lamp.ts`). */
   readonly lampLevel: number
   readonly pet: ScenePet | null
   /** Buddies' pets visiting, in `VISITOR_SPOTS` order. */

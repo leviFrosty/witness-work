@@ -32,6 +32,16 @@ export const dayKeyFromNumber = (n: number): string =>
 export const addDays = (key: string, days: number): string =>
   dayKeyFromNumber(dayNumber(key) + days)
 
+/**
+ * The Monday that starts `key`'s week (Monday to Sunday, as ISO weeks run), so
+ * every device groups days into the same weeks whatever its locale.
+ */
+export function weekOfDayKey(key: string): string {
+  const n = dayNumber(key)
+  // 1970-01-01, day 0, was a Thursday: three days after a Monday.
+  return dayKeyFromNumber(n - ((((n + 3) % 7) + 7) % 7))
+}
+
 /** Whole days from `from` to `to` (negative when `to` is earlier). */
 export const daysBetween = (from: string, to: string): number =>
   dayNumber(to) - dayNumber(from)

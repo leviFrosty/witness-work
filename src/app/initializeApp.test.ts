@@ -38,6 +38,10 @@ vi.mock('@/lib/syncTransport/googleDrive/googleDriveTransport', () => ({
 vi.mock('@/app/sync/cloudSync', () => ({ registerCloudSync: vi.fn() }))
 const promptUnlockAtLaunch = vi.hoisted(() => vi.fn())
 vi.mock('@/app/app-lock/unlock', () => ({ promptUnlockAtLaunch }))
+vi.mock('@/features/pet/components/PetRewardChip', () => ({
+  petRewardProbe: vi.fn(),
+  playPetRewardSample: vi.fn(),
+}))
 vi.mock('../../modules/buddies-keychain', () => ({ isAvailable: () => false }))
 vi.mock('@/app/dev-harness/installDevHarness', () => ({
   installDevHarness: vi.fn(),

@@ -60,7 +60,7 @@ import type { SignData } from '@/features/pet/art'
 
 /** What the widget's text says during one entry. */
 export type PetWidgetEntryStatus = {
-  /** Lamp brightness, 0 to 5 (`lib/lamp.ts`). */
+  /** Lamp brightness, 0 to 5, from the hearts (`lib/lamp.ts`). */
   lampLevel: number
   /** Localized, e.g. "12 days kept". `null` when streaks are hidden or none. */
   lampDaysLabel: string | null
@@ -157,7 +157,7 @@ export type PetWidgetInput = {
   activeDays: ReadonlySet<string>
   /** Each month's hearts pace (`selectHeartsPace`). */
   heartsPace: (month: string) => HeartsPace
-  /** Wakes and the lamp replay "no new activity" from these records. */
+  /** The streak's label replays "no new activity" from these records. */
   streakAt: (at: Date) => Pick<ServiceStreak, 'kind' | 'count'>
   showStreaks: boolean
   /** The wall sign as of a day, with nothing new logged. */
@@ -184,7 +184,7 @@ export type PetWidgetState = {
 export type PetTimelineEntry = {
   date: number
   state: PetWidgetState
-  /** The lamp's streak then, for its label. */
+  /** The Service Streak then, for the label beside the lamp's flame. */
   streak: Pick<ServiceStreak, 'kind' | 'count'>
   /** The wall sign then; null with no sign on the wall. */
   sign: PetSignValues | null
@@ -324,7 +324,7 @@ function sparseRank(entry: PetTimelineEntry, before: PetTimelineEntry): number {
 
 /**
  * The pet's states ahead, assuming nothing new is logged: hearts replayed for
- * each upcoming day (same active days and wakes), the lamp's streak and the
+ * each upcoming day (same active days and wakes), the Service Streak and the
  * wall sign on that day, and the Live window's time and season. Identical
  * consecutive states are merged.
  *
@@ -366,7 +366,6 @@ export function petWidgetTimeline(
   const days = new Map<
     string,
     {
-      lamp: number
       streak: Pick<ServiceStreak, 'kind' | 'count'>
       sign: PetSignValues | null
     }
@@ -377,7 +376,6 @@ export function petWidgetTimeline(
     if (!day) {
       const streak = input.streakAt(at)
       day = {
-        lamp: lampLevel(streak, input.showStreaks),
         streak: { kind: streak.kind, count: streak.count },
         sign: room.sign === 'none' ? null : input.signAt(at),
       }
@@ -389,7 +387,7 @@ export function petWidgetTimeline(
   /** The entry from `at`, with the window as at `windowAt`. */
   const entryAt = (at: Date, windowAt: Date): PetTimelineEntry => {
     const life = lifeOn(localDayKey(at))
-    const { lamp, streak, sign } = dayValues(at)
+    const { streak, sign } = dayValues(at)
     const window = resolveWindow(room.window, windowAt, input.regionCode)
     return {
       date: at.getTime(),
@@ -399,7 +397,8 @@ export function petWidgetTimeline(
         gold: life.gold,
         mood: life.mood,
         asleep: life.asleep,
-        lampLevel: lamp,
+        // The lamp follows the hearts (ADR 0035).
+        lampLevel: lampLevel(life),
         time: window.time,
         season: window.season,
         rainbow: shouldShowRainbow(life, window),
@@ -561,8 +560,8 @@ export function petAccessibilityLabel(
 }
 
 /**
- * The lamp's streak, "12 days kept" or "3 months kept". Null with streaks
- * hidden or no streak.
+ * The Service Streak beside the lamp's flame, "12 days kept" or "3 months
+ * kept". Null with streaks hidden or no streak.
  */
 export function petLampDaysLabel(
   streak: Pick<ServiceStreak, 'kind' | 'count'>,

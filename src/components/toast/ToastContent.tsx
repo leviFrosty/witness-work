@@ -228,6 +228,11 @@ export default function ToastContent({
           </Text>
         ) : null}
       </View>
+      {toast.accessory ? (
+        <View importantForAccessibility='no-hide-descendants'>
+          {toast.accessory.render()}
+        </View>
+      ) : null}
       {toast.action ? (
         <Button
           noTransform

@@ -1,5 +1,6 @@
 import {
   Calendar1 as Calendar1Icon,
+  Coins as CoinsIcon,
   FileOutput as FileOutputIcon,
   Flame as FlameIcon,
   Globe as GlobeIcon,
@@ -16,6 +17,7 @@ import {
 import { Platform } from 'react-native'
 import i18n from '@/lib/locales'
 import { useNavigation } from '@react-navigation/native'
+import usePet from '@/stores/pet'
 import { RootStackNavigation } from '@/types/rootStack'
 import {
   GroupedList,
@@ -26,6 +28,8 @@ import { calendarSyncSupported } from '../../../../../modules/calendar-bridge'
 
 const PreferencesScreen = () => {
   const navigation = useNavigation<RootStackNavigation>()
+  // Rewards are what the pet earns: nothing to set without one.
+  const hasPet = usePet((state) => state.pet !== null)
 
   return (
     <GroupedList>
@@ -97,6 +101,13 @@ const PreferencesScreen = () => {
           label={i18n.t('audioAndHaptics')}
           onPress={() => navigation.navigate('PreferencesAudioAndHaptics')}
         />
+        {hasPet && (
+          <GroupedListRow
+            icon={CoinsIcon}
+            label={i18n.t('rewards')}
+            onPress={() => navigation.navigate('PreferencesRewards')}
+          />
+        )}
         {Platform.OS === 'ios' && (
           <GroupedListRow
             icon={LayoutGridIcon}

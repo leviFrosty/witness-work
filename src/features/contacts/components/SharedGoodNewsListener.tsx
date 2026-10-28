@@ -9,6 +9,7 @@ import useAnimation from '@/hooks/useAnimation'
 import { useIsTakingOver, useTakeoverHold } from '@/hooks/useTakeoverTurn'
 import Haptics from '@/lib/haptics'
 import { noteUserAction } from '@/lib/userAction'
+import { measureReward } from '@/lib/actionRewards'
 import { usePreferences } from '@/stores/preferences'
 import { CONFETTI_DELAY_MS } from '@/providers/AnimationViewProvider'
 import { getMonthsReports, isCountableEntry } from '@/lib/serviceReport'
@@ -93,7 +94,9 @@ export default function SharedGoodNewsListener() {
       id: Crypto.randomUUID(),
     }
     noteUserAction('checkbox')
+    const earned = measureReward('checkbox')
     useServiceReport.getState().addServiceReport(report)
+    earned()
     analytics.capture('time_entry_created', {
       source: 'widget',
       entry_mode: 'checkbox',

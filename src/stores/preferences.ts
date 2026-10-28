@@ -214,6 +214,10 @@ export const widgetAppointmentWindowOptions = [
 export type WidgetAppointmentWindow =
   (typeof widgetAppointmentWindowOptions)[number]
 
+/** The sounds a reward plays (`src/lib/rewardSounds.ts`), or none. */
+export const rewardSoundSets = ['punch', 'retro', 'soft', 'off'] as const
+export type RewardSoundSet = (typeof rewardSoundSets)[number]
+
 export type PrefillAddress = {
   /** Whether or not prefill address is enabled. */
   enabled: boolean
@@ -474,6 +478,16 @@ export const PREFERENCE_DEFAULTS = {
    * sharing it; the streak itself is derived, so nothing is lost. Syncable.
    */
   showStreaks: true,
+  /**
+   * Whether the coins a save earns play as a combo of hits that count into the
+   * pet's wallet (`RewardStack`). Off shows only the "+N". Syncable.
+   */
+  rewardAnimations: true,
+  /**
+   * The sounds those hits play, or `off`. Plays only while `audioEnabled` is
+   * on, on this device. Syncable.
+   */
+  rewardSounds: 'punch' as RewardSoundSet,
   /** The Schedule intro has been seen or closed; Schedule won't open it again. */
   scheduleIntroSeen: false,
   /**

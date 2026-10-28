@@ -67,6 +67,12 @@ export const toastSettlesUnlock = (reason: ToastCloseReason) =>
 
 export type ToastButton = { label: string; onPress: () => void }
 
+/**
+ * A small picture after a bottom toast's text, like what a save earned
+ * (`measureReward`). `label` is read out with the toast.
+ */
+export type ToastAccessory = { label: string; render: () => ReactNode }
+
 export type ToastInput = {
   title: string
   message?: string
@@ -74,6 +80,8 @@ export type ToastInput = {
   icon?: AppIcon
   /** A trailing text button, like Undo. */
   action?: ToastButton
+  /** Trails a bottom toast's text, before its button. */
+  accessory?: ToastAccessory
   /** An unlock's small heading, e.g. "New badge". */
   eyebrow?: string
   /** An unlock's picture, drawn `size` points square. */

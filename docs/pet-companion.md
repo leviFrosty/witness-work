@@ -1,7 +1,8 @@
 # Pet Companion
 
 An opt-in Home section with a small 8/16-bit pet that lives in a room. The pet stays happy when the
-publisher keeps going out in the ministry. The lamp in the room is the Service Streak. This doc is the
+publisher keeps going out in the ministry. Going out also earns gold coins to spend in the Shop on
+hats and room items. This doc is the
 contract for the feature: product rules, data model, module layout and rendering pipeline. Keep it
 current when behavior changes.
 
@@ -59,21 +60,76 @@ died `dead`. Transient moods used by motion: `joy`, `wide`.
 From five hearts with nothing logged: happy days 0–12, content 13–18, okay 19–24, misses you 25–30,
 weak 31–33, asleep 34–59, died 60+. A weekly publisher stays at five forever.
 
-### Lamp (Service Streak)
+### Lamp
 
-The lamp's brightness is the existing Service Streak (`useServiceStreak`, ADR 0003), using the raw
-count. Levels 0–5:
+The lamp follows the hearts (`lib/lamp.ts`, ADR 0035): a level for each whole heart, 0–5, and out
+when the pet died. It shows the same whether or not streaks are shown.
 
-| Level | `plans` streak (days) | `months` streak (Kingdom Publishers) |
-| ----- | --------------------- | ------------------------------------ |
-| 0     | 0                     | 0                                    |
-| 1     | 1–2                   | 1                                    |
-| 2     | 3–6                   | 2                                    |
-| 3     | 7–13                  | 3–5                                  |
-| 4     | 14–29                 | 6–11                                 |
-| 5     | 30+                   | 12+                                  |
+### Coins (Shop currency)
 
-When `showStreaks` is off the lamp still burns at level 3 and nothing shows a streak number.
+Room items and hats are bought in the **Shop** with one currency, gold **coins** (ADR 0035). Like
+hearts, they're **replayed from synced records** since the adoption day and never stored; only
+purchases are (`lib/currency.ts`).
+
+- **Coins**, since adoption (`petEarned`), a rule a line:
+  - **1** for each **day out** (`COINS_PER_DAY`): a local day with a Time Entry (a 0-minute
+    "shared" checkbox entry counts, a rollover doesn't) or a Visit the User logged (not one that came
+    with a shared Contact). Plans don't count: they're forecast, not service.
+  - **1 more** for each **planned day kept** (`COINS_PER_PLAN_KEPT`): a day with a Plan and time
+    logged, by the Service Streak's rule (`streakHistory().kept` in `src/lib/serviceStreak.ts`).
+  - **10** for each **Service Streak milestone** (`COINS_PER_MILESTONE`, `isStreakMilestone`), only
+    while streaks show. `streakHistory().milestones` replays them forward, each as the streak stood
+    the day it was reached (the day before can still be kept then), so a later miss doesn't take it
+    back; a streak that ends and starts over reaches its milestones again, as it celebrates them.
+  - A monthly-pace month (ADR 0031) with a Time Entry pays its days out at least **8**
+    (`SHARED_MONTH_COINS`), so a Kingdom Publisher's one "shared" check earns about what a day out
+    each week with its Plan does. In the adoption month, a check made before the adoption day counts
+    for that.
+  - Hearts earn nothing on their own: they already show how the pet is kept.
+- **Wallet** = earned − spent (`walletOf`), never below 0. Two devices buying offline can overspend;
+  then it reads 0 until earnings catch up. `Earned` keeps what earned it by kind, so a gain can say
+  where it came from (`rewardLines`).
+- **What a save earns plays where the User is: the reward stack** (`src/stores/rewardStack.ts`,
+  `src/components/reward-stack/`). Screens measure around the save with `measureReward(action)`
+  (`src/lib/actionRewards.ts`: Add Time, a visit, the "shared" checkbox on Home, the onboarding
+  checklist and the widget); the pet registers `petRewardProbe` at launch (`PetRewardChip.tsx`),
+  which reads `petEarningsNow()` before and after and, when the wallet really rose, starts the stack
+  with one line per kind (`rewardLines`): "+1 Time added" (or Visit added, Month shared), "+1
+  Planned day kept", "+10 Streak milestone · 10". Each line
+  stomps in above the save's toast (in from 2.9×, overshooting as it hits), with sparks, a shake, a
+  haptic (light, medium from 4, heavy for a milestone) and a hit that climbs 1.5 semitones a line;
+  gaps shorten as the combo builds (520 → 180 ms), three lines show at once and older ones fold
+  away. From the second line a total "= +N" climbs with them, then slams (success haptic) and drops
+  into the toast's tally (`RewardTally`: the wallet, dim until it lands), which counts up in rising
+  ticks and dings from 3. A single small line only rises, with one soft tick. A milestone the save
+  just reached waits (up to 3.2 s) for the streak celebration and stomps onto the stack inside it
+  (`claimRewardSlot`); the celebration stays until the total drops back into the toast. Saves made
+  while it stomps join the combo. **A tap anywhere skips the whole run** (and the celebration it
+  plays in); a single small line lets taps through. With no tally on screen (the toast left, a
+  checkbox has none) it lands in a tally of its own. The gain is marked seen
+  (`petSeen.markEarnedSeen`), so Home doesn't play it again.
+- **Settings → Preferences → Rewards** (`PreferencesRewardsScreen`, shown with a pet):
+  `rewardAnimations` (on by default; off, the toast shows a plain "+N" chip) and `rewardSounds`
+  (`punch` by default, `retro`, `soft`, `off`; each previews when picked), both synced, and a sample.
+  Sounds are CC0 clips in `src/assets/audio/reward/` played by `playRewardSound` (`src/lib/audio.ts`,
+  pitch with rate), only while Audio & Haptics allows sounds. A screen reader hears "Earned 12
+  coins" instead, and Reduce Motion skips the stack.
+- **Changes made elsewhere play when seen** (`usePetReveal`, `stores/petSeen.ts`). Each device keeps
+  the hearts and wallet it last showed, and what had earned them (`petSeen`, device-local, never
+  synced), and keeps showing them until the Home card's header is fully on screen and clear of
+  Home's header and the tab bar, or only the status bar once scrolling has tucked them away
+  (`useRevealVisible`), or Decorate Room or the Shop is in front. Then it plays the change and marks
+  it seen, so it plays once: each half heart pops in or crumbles (and the pet's mood and lamp follow
+  on Home, cheering once full), then on Home the reward stack over the pet's room, dimmed, totalled
+  by kind ("+3 Days out", "+2 Planned days kept", "+10 Streak milestone · 15"), dropping into the
+  card's coin count. Without what had earned them (seen before the stack), with the stack off, or in
+  Decorate Room and the Shop, the coins count to now under a "+N" that rises on a pill of the
+  surface's colour, with coins flying from the pet on Home (`revealTier`). Losses
+  (spending, deleted records) count down under a muted "−N", with no haptic. While any stack plays,
+  every wallet on screen counts along with it. Reduce Motion changes the numbers at once; VoiceOver
+  hears "Earned 20 coins". A pet adopted today starts from nothing, so its first coins play in; a pet this device never showed starts from now.
+- Never sold for money and never granted by Supporter status. The dev harness can fake what's been
+  earned (`override({ wallet })`, never stored); a purchase made with it is real.
 
 ### Room
 
@@ -92,29 +148,13 @@ Swappable parts, each a registry of options (`src/features/pet/art/room/`):
 
 - "Live" window: time of day from the device clock (night < 6, dawn < 9, day < 17, dusk < 20, night),
   season from the date and hemisphere (southern-hemisphere region codes flip the season).
-- Unlocks: every non-starter item has a place in `UNLOCK_ORDER` and a Service Streak number
-  (`STREAK_THRESHOLDS` in `lib/unlocks.ts`). It unlocks the first time the raw streak count reaches its
-  number, and stays unlocked after the streak ends:
-
-  | Kind                          | Numbers, in `UNLOCK_ORDER`                                      |
-  | ----------------------------- | --------------------------------------------------------------- |
-  | `plans` (planned days kept)   | 1, 2, 3, 5, 7, 10, 14, 20, 25, 30, 40, 50, 60, 75, 90, 105, 120 |
-  | `months` (Kingdom Publishers) | 1, 2, 2, 3, 3, 4, 4, 5, 6, 6, 7, 8, 9, 10, 11, 12, 12           |
-
-  With streaks hidden (`showStreaks` off), items unlock in months mode instead (a `plans` streak with
-  no Plans yet stays in streak mode, and the note above the grid says to plan): one item of `UNLOCK_ORDER` per **active month** since
-  adoption (a calendar month with at least one active day), as before. Months, not hours, so every
-  role unlocks at the same pace (same reasoning as ADR 0019 for badges). `unlockMode` picks the mode.
-
-- Hats: the pet wears one (or none). Every hat but `none` has a place in `HAT_UNLOCK_ORDER` and opens
-  up the same two ways on its own numbers (`HAT_THRESHOLDS`): three quick ones, then slower (one a
-  month in months mode). Earned hats are stored with the room items (`hat:bow`, …).
-
-  | Kind                          | Numbers, in `HAT_UNLOCK_ORDER` (bow, cap, beanie, flowers, bucket, beret, sunhat, hardhat, fedora, cowboy, safari, tophat) |
-  | ----------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-  | `plans` (planned days kept)   | 3, 5, 9, 14, 21, 30, 40, 50, 65, 80, 100, 120                                                                              |
-  | `months` (Kingdom Publishers) | 1, 1, 1, 2, 3, 4, 5, 6, 7, 8, 10, 12                                                                                       |
-  | months mode (active months)   | 1, 1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10                                                                                        |
+- Prices: every non-starter item and hat but `none` has a Shop price (`ITEM_PRICES` in
+  `lib/prices.ts`): 10–30 coins, rising along `UNLOCK_ORDER` and `HAT_UNLOCK_ORDER`, and six rare ones
+  at the top of their kind (trellis 22, cushion 22, stand 28, tile 30, safari 32, top hat 36). About
+  570 coins buy everything: about two and a half years for someone out once or twice a week who keeps
+  their Plans with streaks showing; longer without Plans. A purchase keeps what it cost, so prices can be retuned. Starters are free; secrets are found, never
+  sold.
+- Hats: the pet wears one (or none). Bought hats are stored with the room items (`hat:bow`, …).
 
   A hat sits on the head (`art/hats.ts`: a 24 × 20 picture whose brim row 17 lands on the species'
   `HAT_ANCHOR_Y`, following the head's bob, mirrored and greyed with the pet; the first twelve are
@@ -122,17 +162,39 @@ Swappable parts, each a registry of options (`src/features/pet/art/room/`):
   (rolling over, or one that died) has no hat. No party, holiday, halo or wizard hats (JW
   sensitivities below).
 
-- Earned items are stored on the pet (`earnedRoomItems`, written by `earnRoomItems` from an effect in
-  `usePetLife` when the current mode earns one that isn't stored), so nothing locks again when the
-  mode changes or a streak ends. Unlocked = starters ∪ stored ∪ earned now. A pet adopted on a long
-  streak gets its items at once. Secret items are earned and stored the same way.
-- The pet's details (route `PetRoom`) dims a locked item (a locked secret shows its silhouette instead) and can't
-  pick it; tapping it shows a tooltip (`Popover`) with how it opens up (`pet_room_locked_tapped`). Its badge says what opens it: in streak mode a
-  flame and the number ("At a streak of 7" to VoiceOver); in months mode the active months it still needs ("1 more month",
-  "3 more months"), never a date, since a skipped month doesn't count; its tooltip says what counts and
-  whether this month can be one of them. A note
-  above a tab's options, while any are locked, says how they open up, by mode and streak kind (hats have their own
-  months-mode note).
+- Owned = starters ∪ `earnedRoomItems` ∪ `purchases`. `earnedRoomItems` holds found secrets and
+  anything opened under the old streak and months rules before the Shop, which stays owned. An owned
+  item never locks again.
+- **The Shop** (route `PetShop`, `screens/PetShopScreen.tsx`): a washi-paper shop under a noren sign
+  in sumi ink, light and dark. Its header holds back, the sign and the wallet (tap: how coins are
+  earned). The room on top tries on the picked item; categories (Hat, Wall, Floor, Bed, Shelf,
+  Light, `SHOP_TABS`) scroll in a row whose last tab in view is cut about in half (`tabGap`), so the
+  row reads as scrollable. Items sit two to four to a row (`ShopItemCard`): picture, name, and the
+  price, "Wearing"/"In room", or nothing once owned; a locked secret shows its silhouette and `???`.
+  The picked item's button (`ShopBuyPanel`) buys it ("Buy" with the price), says what's missing
+  ("Need 3 more", disabled), wears or places an owned item, or says it's in use. Buying wears or
+  places it at once. A secret's panel only says it's found along the way.
+  - Layout by width: under 760 pt, one scroll view with the header, a strip of the room and the
+    categories pinned, the items below and the button in a bar at the bottom, clear of the home
+    indicator. From 760 pt (iPad, iPhone Duo open), `FoldSplit`: the counter (header, room, item
+    panel) leads, the categories and items trail, meeting at the fold when half-open. Picking a
+    category scrolls its items back to the top.
+  - Presentation (`petShopOpensAsSheet`): a full-height sheet where the window is compact (iPhone,
+    iPhone Duo closed); full screen where it's regular width, including narrower regular windows
+    such as iPad mini in portrait (744 pt), which get the narrow layout clear of the status bar; a
+    full-screen modal on Android. The paper bleeds under iPhone Duo's vertical bar.
+  - The sign sits in the middle of the header, or between back and the wallet where the middle has
+    no room for it (a narrow phone, a long translation, a big wallet).
+  - Owned items not picked yet on this install say **New** (white on black with a white outline;
+    inverted in dark), until picked in the Shop or Decorate Room (MMKV `pet-secrets`
+    `picked:<item>`). Whatever is in the room counts as picked, so an item chosen before picks were
+    noted never says "New" once swapped out.
+- The pet's details (route `PetRoom`) has a **Shop** button and shows the wallet. Decorate Room dims a
+  locked item (a locked secret shows its silhouette instead) and can't pick it. A locked regular
+  item's badge is its price beside a coin ("Costs 14 coins in the Shop." to VoiceOver);
+  tapping it opens the Shop at that item (`pet_room_locked_tapped`). A locked secret's tooltip says
+  only that it's a secret. A note above a tab's options, while any are locked, says to get the rest
+  in the Shop.
 - Wall sign: a small square sign on the right of the back wall in muted colors. Digits and icons only
   (no words), drawn with the pixel digit font, which also has Eastern Arabic digits for `ar`. Kingdom
   Publishers default to `shared`. Values: hours this month with goal progress, hours this service
@@ -145,21 +207,21 @@ Swappable parts, each a registry of options (`src/features/pet/art/room/`):
 Every unlockable part also has rarer **secret** options, listed after its regular ones
 (`SECRET_*_IDS` in `src/types/pet.ts`, `SECRET_ROOM_ITEMS`): 14 hats, 12 wall colours and 10 each
 of wall patterns, floors, beds, shelves and lights. They aren't in `UNLOCK_ORDER` or
-`HAT_UNLOCK_ORDER`; each opens up on its own rule (`SECRET_UNLOCKS` in `lib/secretUnlocks.ts`), in
-either unlock mode:
+`HAT_UNLOCK_ORDER` and never sold; each opens up on its own rule (`SECRET_UNLOCKS` in
+`lib/secretUnlocks.ts`):
 
-| Rule        | Opens when                                                                                                     |
-| ----------- | -------------------------------------------------------------------------------------------------------------- |
-| `badge`     | the User has earned that badge (`preferences.earnedBadges`; most secrets, Bronze to Pearl)                     |
-| `badges`    | the User has earned at least that many badges in all (3, 5, 8, 10, 12, 14, 16, 20)                             |
-| `keepsakes` | the pet holds at least that many keepsakes (1, 3, 5, 8, 10, 15)                                                |
-| `gold`      | the hearts are gold (the pineapple hat, the honeycomb pattern)                                                 |
-| `longRun`   | the raw Service Streak reaches a long count by its kind (150–365 days, 15–36 months), or as many active months |
+| Rule        | Opens when                                                                                  |
+| ----------- | ------------------------------------------------------------------------------------------- |
+| `badge`     | the User has earned that badge (`preferences.earnedBadges`; most secrets, Bronze to Pearl)  |
+| `badges`    | the User has earned at least that many badges in all (3, 5, 8, 10, 12, 14, 16, 20)          |
+| `keepsakes` | the pet holds at least that many keepsakes (1, 3, 5, 8, 10, 15)                             |
+| `gold`      | the hearts are gold (the pineapple hat, the honeycomb pattern)                              |
+| `longRun`   | that many calendar months with a day out since adoption (15, 18, 24, 36), whatever the role |
 
 Badges count months, never hours (ADR 0019), so no rule favours a role. No rule needs Buddies
 (`together`, `firstBuddy`), so every User can reach every secret, and none can be missed for good.
 A badge opens at most two secrets. Earned secrets are stored in `earnedRoomItems` like the rest, so a
-badge reset or a broken run never locks one again. `pet_room_item_unlocked` sends `by: 'secret'`.
+badge reset never locks one again. `pet_room_item_unlocked` sends `by: 'secret'`.
 
 **Unlock news** (ADR 0034, `docs/toasts.md`). An item or hat that opens up after the pet's first stored items is news on this device (`stores/petUnlockNews`). The first items are the room the pet starts with.
 
@@ -180,9 +242,8 @@ Decorate Room never shows how a secret opens or what it looks like until it does
 - Its badge is `?`, its name `???` (VoiceOver: "Secret item, locked"), and its tooltip says only "A
   secret. A surprise, waiting in its own time." The tab's unlock note adds "Some items are secrets.
   They show up along the way." while one is locked.
-- The first time a section shows a secret that opened up, its cell says "New" (per install, MMKV
-  `pet-secrets` `seen:<item>`; `forgetFoundSecrets` clears it). Secrets opened by the dev harness
-  say "New" without being noted as shown.
+- A found secret says "New" until it's picked, like any owned item (MMKV `pet-secrets`
+  `picked:<item>`; `forgetFoundSecrets` clears it).
 - The intro's fully unlocked room uses only `UNLOCK_ORDER` and `HAT_UNLOCK_ORDER`, so it never
   shows a secret.
 
@@ -243,8 +304,9 @@ changes, and when it wakes from having died. Choreography tables live in `src/fe
 `src/types/pet.ts`, store `src/stores/pet.ts` (zustand + persist, MMKV key `petCompanion`, version 1).
 Synced as the optional `petStore` payload slice using the mileage pattern (records with `id` +
 `updatedAt`, tombstones with `deletedAt`, `mergeById`). For copies of the same pet (same adoption
-day and seed), `wakes`, `keepsakes` and `earnedRoomItems` merge as unions so a concurrent edit on
-another device can't drop them; every other field is last-writer-wins.
+day and seed), `wakes`, `keepsakes`, `earnedRoomItems` and `purchases` merge as unions so a
+concurrent edit on another device can't drop them (`purchases` keeps one per item, the first
+bought: `keptPurchases`); every other field is last-writer-wins.
 
 ```ts
 type PetSpecies = 'lion' | 'dog' | 'cat' | 'donkey' | 'lamb'
@@ -257,7 +319,12 @@ interface PetRecord {
   seed?: number // random at adoption; picks the gift days
   wakes: string[] // day keys of wake taps; old ones trimmed only past 120 and 400 days (ADR 0030)
   keepsakes: { kind: GiftKind; on: string }[] // collected gifts, newest 20 kept
-  earnedRoomItems?: string[] // room items in UNLOCK_ORDER order, then hats and newer ids sorted; absent = none
+  earnedRoomItems?: string[] // found secrets, and items opened before the Shop; absent = none
+  purchases?: {
+    item: string
+    price: number // in coins
+    on: string
+  }[] // Shop buys, one per item; absent = none
   updatedAt: number
 }
 interface PetRoomRecord {
@@ -304,21 +371,22 @@ Feature tier `src/features/pet/`:
 - `art/particles.ts` — hearts, Zzz, sparkles, dust.
 - `motion/` — `Pose` type, entrance/trick/twirl/wake tables, `evaluateMotion(table, elapsedMs)`.
 - `lib/life.ts` — `simulateLife`, `moodOf`, gold, rainbow day, gift days; `lib/activity.ts` — active
-  day keys from stores; `lib/unlocks.ts` (unlock mode, streak numbers, earned items); `lib/lamp.ts`;
+  day keys from stores; `lib/unlocks.ts` (owned items); `lib/currency.ts` (coins, wallet); `lib/prices.ts`
+  (`ITEM_PRICES`); `lib/shop.ts` (categories, item states) and `lib/shopEntries.ts` (a category's cards); `lib/lamp.ts`;
   `lib/liveWindow.ts`; `lib/eggs.ts`.
 - `render/` — Skia: `skiaImage.ts` (pixel buffer → `SkImage` / PNG), `PetSceneView` (a scene player
   with the frame clock: 10 fps on the JS thread, paused when unfocused, backgrounded, at rest with
   Reduce Motion, or (Home card) scrolled fully off screen; frames reach the canvas through a shared value with nearest sampling; tap, rub and
   gift gestures; the sound bubble), `PetSpriteTile` (one idling sprite for the prompt and picker).
 - `components/`, `hooks/`, `screens/` — Home section, prompt card, picker (`PetPicker`, which shows
-  the adoption intro `PetIntro` after Adopt: hearts, the streak with a fully unlocked room from
-  `lib/intro.ts`, and tapping the card to decorate), the pet's details (`PetRoom`: name, hearts, what
-  items open up by (the streak's flame and count, or "Active months: N"), always shown, even at 0,
-  with an info popover saying what it counts and that it's the current value,
-  Share and Settings beside its name, Rename / Change pet, buddies' pets visiting today, the room,
-  and icon tabs for its hat and parts; `lib/roomOptions.ts`
+  the adoption intro `PetIntro` after Adopt: hearts, the Shop with a fully unlocked room from
+  `lib/intro.ts`, and tapping the card to decorate; the Home card's header also shows the wallet), the
+  pet's details (`PetRoom`: name, hearts, Share and Settings beside its name, the wallet, always
+  shown, even at 0, with an info popover saying how coins are earned, Shop / Rename / Change pet,
+  buddies' pets visiting today, the room, and icon tabs for its hat and parts; `lib/roomOptions.ts`
   holds its tabs, choices, thumbnail crops and unlock badges; `RoomOptionThumb` draws one crop of a
-  still room), Rename (`PetRename`), and Share… on the card's menu and in the details (`lib/share.ts`: the card's view at 4×, nearest scaling, written as a PNG to the cache folder
+  still room), the Shop (`PetShop`; its pixel frames, sign and icons are drawn to size in
+  `art/shop.ts` and `components/ShopPixels.tsx`), Rename (`PetRename`), and Share… on the card's menu and in the details (`lib/share.ts`: the card's view at 4×, nearest scaling, written as a PNG to the cache folder
   for the share sheet).
 
 App tier: `src/app/pet/` for cross-feature glue (visitors from buddies + Plans + Follow-ups, the
@@ -344,7 +412,7 @@ details route that hands them to `PetRoom`, Pet Settings with the buddies' switc
 ## Widgets (iOS only)
 
 Three sizes in one widget kind `PetWidget`: small (pet only), medium (compact row: pet, name, hearts,
-lamp days, one line for the sign value), large (the room with a slim name/hearts/lamp row). The app
+the streak's days, one line for the sign value), large (the room with a slim name/hearts/lamp row). The app
 renders a timeline of PNGs: every window time change for the next 48 hours, then each future midnight
 where hearts or mood change through the day the pet would die (at most 12 entries), and
 writes them with `WidgetBridge.writeFile`; the snapshot JSON lists `{ date, small, medium, large }`.
@@ -358,9 +426,10 @@ See `docs/analytics.md` → "Pet companion".
 
 Dev harness: `__WW_DEV__.pet` (`src/app/dev-harness/pet.ts`) adopts a pet, sets species/coat/room,
 fakes a life state and forces hidden moments (`override({ hearts, dead, gold, … })`), fakes the
-streak room unlocks read (`override({ streak: 12 })`, shown but never stored), opens every secret item
+earnings (`override({ wallet: 40 })`, coins, never stored; purchases made with it
+are), opens every secret item
 (`override({ secrets: true })`, shown but never stored), reads back the stored
-and current unlocks (`state().unlocks`), and plays any motion (`play`, `pat`),
+and current unlocks and purchases (`state().unlocks`), and plays any motion (`play`, `pat`),
 so every animation can be recorded in the app. See `.agents/skills/verify-witnesswork/features/pet.md`.
 
 PNG tools for drawing and reviewing art, skipped in normal test runs and written to `.verify/`

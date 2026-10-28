@@ -4886,30 +4886,8 @@
           "tam": "Mũ Tam"
         }
       },
-      "unlockMonthsMore": {
-        "one": "Còn {{count}} tháng nữa",
-        "other": "Còn {{count}} tháng nữa"
-      },
-      "unlockMonthsHow": {
-        "fromThisMonth": {
-          "one": "Mở khi bạn ghi thời gian hoặc lưu một lần thăm hay kế hoạch trong tháng này.",
-          "other": "Mở sau {{count}} tháng bạn ghi thời gian hoặc lưu một lần thăm hay kế hoạch, tính cả tháng này."
-        },
-        "fromNextMonth": {
-          "one": "Mở vào tháng tiếp theo bạn ghi thời gian hoặc lưu một lần thăm hay kế hoạch.",
-          "other": "Mở sau {{count}} tháng nữa bạn ghi thời gian hoặc lưu một lần thăm hay kế hoạch, bắt đầu từ tháng sau."
-        }
-      },
-      "unlockAtStreak": {
-        "one": "Ở chuỗi {{count}}",
-        "other": "Ở chuỗi {{count}}"
-      },
       "lockedA11y": "{{option}}, đã khóa. {{when}}",
       "unlockNote": {
-        "streakPlans": "Mỗi món mở ra khi chuỗi của bạn đạt đến số của nó. Hãy lên kế hoạch cho thánh chức và giữ đúng kế hoạch để chuỗi dài thêm.",
-        "streakMonths": "Mỗi món mở ra khi chuỗi của bạn đạt đến số của nó. Hãy tham gia thánh chức mỗi tháng để chuỗi dài thêm.",
-        "months": "Thêm một món được mở mỗi tháng bạn ghi thời gian hoặc lưu một lần thăm hay kế hoạch.",
-        "monthsHats": "Ba món được mở trong tháng đầu tiên bạn ghi thời gian hoặc lưu một lần thăm hay kế hoạch, rồi thêm một món mỗi tháng bạn làm vậy.",
         "secrets": "Một số món là bí mật. Chúng sẽ xuất hiện trong quá trình bạn sử dụng.",
         "withSecrets": "{{note}} Một số món là bí mật. Chúng sẽ xuất hiện trong quá trình bạn sử dụng."
       },
@@ -4927,13 +4905,6 @@
       "rename": "Đổi tên",
       "change": "Đổi thú cưng",
       "share": "Chia sẻ",
-      "streakA11y": "Chuỗi: {{count}}",
-      "streakInfoTitle": "Chuỗi của bạn",
-      "streakInfoPlans": "Chuỗi của bạn hiện là {{count}}. Mỗi kế hoạch bạn giữ (có ghi thời gian vào ngày đó) cộng thêm 1, dù các kế hoạch cách nhau bao nhiêu ngày. Bỏ lỡ một kế hoạch thì chuỗi bắt đầu lại. Thời gian ghi vào ngày không có kế hoạch không được cộng vào.",
-      "streakInfoMonths": "Chuỗi của bạn hiện là {{count}}. Chuỗi đếm số tháng liên tiếp bạn tham gia thánh chức.",
-      "activeMonths": "Tháng hoạt động: {{count}}",
-      "activeMonthsInfoTitle": "Tháng hoạt động",
-      "activeMonthsInfo": "Đến nay bạn có {{count}} tháng. Một tháng được tính khi bạn ghi thời gian hoặc lưu một lần thăm hay kế hoạch trong tháng đó sau khi nhận nuôi thú cưng. Các tháng không cần liên tiếp.",
       "settings": "Cài đặt"
     },
     "intro": {
@@ -4941,12 +4912,6 @@
         "title": "Đi rao giảng, làm đầy trái tim",
         "body": "Mỗi ngày bạn ghi hoạt động rao giảng sẽ thêm một trái tim. Nếu ngừng ghi, trái tim sẽ từ từ vơi đi.",
         "bodyMonths": "Mỗi tháng bạn ghi hoạt động rao giảng sẽ làm đầy tất cả trái tim. Bỏ một tháng, chúng sẽ từ từ vơi đi."
-      },
-      "streak": {
-        "title": "Làm chuỗi dài thêm",
-        "plans": "Hãy lên kế hoạch cho thánh chức và giữ đúng kế hoạch để chuỗi rao giảng dài thêm. Đèn sáng hơn, đồng thời mũ và đồ trong phòng mới được mở.",
-        "months": "Hãy tham gia thánh chức mỗi tháng để chuỗi dài thêm. Đèn sáng hơn, đồng thời mũ và đồ trong phòng mới được mở.",
-        "noStreak": "Mỗi tháng bạn đi rao giảng, mũ và đồ trong phòng mới sẽ được mở."
       },
       "decorate": {
         "title": "Làm cho nó thành của riêng bạn",

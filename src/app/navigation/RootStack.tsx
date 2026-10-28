@@ -1,5 +1,6 @@
 import { Platform } from 'react-native'
 import { useDisplayRegions } from '@/stores/displayRegions'
+import { petShopOpensAsSheet } from '@/features/pet/lib/shopPresentation'
 import createSystemBackStackNavigator from '@/app/navigation/createSystemBackStackNavigator'
 import Header from '@/components/ui/layout/Header'
 import useTheme from '@/contexts/theme'
@@ -623,6 +624,31 @@ const RootStackComponent = () => {
           }
           name='PetRoom'
           getComponent={() => require('@/app/pet/PetRoomRoute').default}
+        />
+        <RootStack.Screen
+          // The Shop, over the pet's details: a large sheet on iPhone, full
+          // screen where the window is regular width (iPad, iPhone Duo open)
+          // so the room and the items sit side by side. Full screen on
+          // Android.
+          options={() => {
+            if (!petShopOpensAsSheet())
+              return {
+                presentation:
+                  Platform.OS === 'ios' ? 'fullScreenModal' : 'modal',
+                headerShown: false,
+              }
+            return {
+              presentation: 'formSheet',
+              sheetAllowedDetents: [1],
+              sheetGrabberVisible: true,
+              sheetCornerRadius: 18,
+              headerShown: false,
+            }
+          }}
+          name='PetShop'
+          getComponent={() =>
+            require('@/features/pet/screens/PetShopScreen').default
+          }
         />
         <RootStack.Screen
           // Sized to its one field on iOS, like the picker.

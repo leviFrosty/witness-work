@@ -227,6 +227,8 @@ const pet = record.extend({
   seed: z.string().min(1).max(64).optional(),
   // Room item ids, kept even when this build doesn't know them.
   earnedRoomItems: z.array(z.string()).optional(),
+  // Shop purchases; the merge drops unreadable ones (`keptPurchases`).
+  purchases: z.array(z.unknown()).optional(),
   updatedAt: timestamp,
 })
 const petRoom = record.extend({
@@ -633,6 +635,9 @@ const preferenceShapes = z
     badgeLedger: z.array(z.string()).optional(),
     showBadges: z.boolean().optional(),
     showStreaks: z.boolean().optional(),
+    rewardAnimations: z.boolean().optional(),
+    // Any string: a set from a newer build plays the default here.
+    rewardSounds: z.string().optional(),
     mileageTrackingEnabled: z.boolean().optional(),
     distanceUnit: z.enum(['mi', 'km']).optional(),
     fuelEconomyUnit: z

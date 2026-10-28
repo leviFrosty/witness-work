@@ -2,6 +2,7 @@
 
 - Add e2e tests
 - Add a "pet" feature. To define later.
+- Pet item rarities: give every room item and hat a rarity tier, with a few top-tier items that take years to reach. Higher tiers could unlock special colours or effects per item; effects could also be secret unlocks earned by specific in-app actions. Earned on fixed rules, never by chance drops, and no "god", "halo", "mythic", "magic" or "lucky" naming or imagery (JW sensitivities).
 - Add year wrapped golden present.
 - Change backup messaging on @backupreminder to also mention "or turn on icloud sync"
 - Add a "this year, wrapped" spotify style animations and service "year end" card that shows their interesting stats, information, etc. Final card should be sharable as image for social media, etc. Also make sure we have app branding included in this polish UI.

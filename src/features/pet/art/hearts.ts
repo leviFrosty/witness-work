@@ -25,9 +25,12 @@ const CELLS: readonly (readonly [number, number])[] = [
   [2, 3],
 ]
 
+/** A full heart's main colour, red or gold, as CSS. */
+export const HEART_MAIN = { red: '#ff4f6d', gold: '#f2b632' } as const
+
 const EMPTY = rgb('#cfcfcf')
-const RED = { main: rgb('#ff4f6d'), light: rgb('#ff9aaa') }
-const GOLD = { main: rgb('#f2b632'), light: rgb('#fff0b0') }
+const RED = { main: rgb(HEART_MAIN.red), light: rgb('#ff9aaa') }
+const GOLD = { main: rgb(HEART_MAIN.gold), light: rgb('#fff0b0') }
 
 /** Heart icon size. */
 export const HEART_ICON_W = 5

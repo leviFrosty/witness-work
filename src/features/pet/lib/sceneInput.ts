@@ -148,3 +148,15 @@ export function petSceneInput(args: PetSceneArgs): {
     shown,
   }
 }
+
+/**
+ * `life` with the hearts a surface shows while it plays what changed
+ * (`usePetReveal`), and the mood they give.
+ */
+export function withShownHearts<Life extends PetCardLife | null>(
+  life: Life,
+  hearts: number
+): Life {
+  if (!life || life.dead || life.hearts === hearts) return life
+  return { ...life, hearts, mood: moodOf(hearts, false) }
+}

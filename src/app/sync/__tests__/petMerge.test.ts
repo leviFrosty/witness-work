@@ -243,6 +243,69 @@ describe('pet sync merge', () => {
     expect(plain).not.toHaveProperty('earnedRoomItems')
   })
 
+  it('keeps purchases from either side, each item paid for once', () => {
+    const bought = (item: string, on: string, price: number) => ({
+      item,
+      currency: 'thread' as const,
+      price,
+      on,
+    })
+    const local: PetRecord = {
+      ...companion,
+      seed: 'abc',
+      purchases: [
+        bought('hat:bow', '2026-10-02', 5),
+        bought('hat:cap', '2026-10-04', 6),
+      ],
+      updatedAt: 100,
+    }
+    // Offline, the other device bought the cap first, and a floor.
+    const peer: PetRecord = {
+      ...companion,
+      seed: 'abc',
+      name: 'Max',
+      purchases: [
+        bought('hat:cap', '2026-10-03', 6),
+        bought('floor:stone', '2026-10-03', 7),
+      ],
+      updatedAt: 200,
+    }
+    const result = mergePayload(
+      { ...emptyLocal(), pets: [local] },
+      remote({ ...emptyPet(), pets: [peer] })
+    )
+    expect(result.pets[0].name).toBe('Max')
+    expect(result.pets[0].purchases).toEqual([
+      bought('hat:bow', '2026-10-02', 5),
+      bought('floor:stone', '2026-10-03', 7),
+      bought('hat:cap', '2026-10-03', 6),
+    ])
+    expect(
+      mergePayload(
+        { ...emptyLocal(), pets: result.pets },
+        remote({ ...emptyPet(), pets: [peer] })
+      ).changed
+    ).toBe(false)
+    // A newer copy from a build before the Shop keeps the purchases.
+    const older = { ...companion, seed: 'abc', updatedAt: 300 }
+    expect(
+      mergePayload(
+        { ...emptyLocal(), pets: [local] },
+        remote({ ...emptyPet(), pets: [older] })
+      ).pets[0].purchases
+    ).toEqual(local.purchases)
+    // Neither side bought any: no list is added.
+    expect(
+      mergePayload(
+        { ...emptyLocal(), pets: [companion] },
+        remote({
+          ...emptyPet(),
+          pets: [{ ...companion, name: 'Max', updatedAt: 200 }],
+        })
+      ).pets[0]
+    ).not.toHaveProperty('purchases')
+  })
+
   it('caps the merged keepsakes at the newest 20', () => {
     const day = (n: number) =>
       `2026-0${1 + Math.floor(n / 28)}-${String(1 + (n % 28)).padStart(2, '0')}`

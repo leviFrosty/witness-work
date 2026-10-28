@@ -1,20 +1,19 @@
-import type { StreakKind } from '@/lib/serviceStreak'
 import type { BadgeKey } from '@/types/badges'
 import { SECRET_ROOM_ITEMS, type SecretRoomItemId } from '@/types/pet'
 
 /**
  * Secret room items and hats (`docs/pet-companion.md` → Secret items): rarer
- * options that don't follow the streak or the months. Each opens up on its own
- * milestone, and until it does Decorate Room shows only its silhouette and a
- * question mark, never what opens it.
+ * options the Shop never sells. Each opens up on its own milestone, and until
+ * it does Decorate Room and the Shop show only its silhouette and a question
+ * mark, never what opens it.
  *
  * - `badge`: the User has earned that badge (`preferences.earnedBadges`).
  * - `badges`: the User has earned at least this many badges in all.
  * - `keepsakes`: the pet holds at least this many keepsakes.
  * - `gold`: the hearts have turned gold.
- * - `longRun`: the raw Service Streak reaches `plans` or `months` (by its kind,
- *   while the streak can grow), or the pet has `activeMonths` active months
- *   since adoption, whichever comes first, so every User can get there.
+ * - `longRun`: this many calendar months with a day out since adoption
+ *   (`activeMonths` over `petDaysOut`), so every role gets there at the same
+ *   pace, whether it goes out daily or reports by month.
  *
  * Badges count months, never hours (ADR 0019), so no rule favours a role.
  */
@@ -23,7 +22,7 @@ export type SecretUnlock =
   | { by: 'badges'; count: number }
   | { by: 'keepsakes'; count: number }
   | { by: 'gold' }
-  | { by: 'longRun'; plans: number; months: number; activeMonths: number }
+  | { by: 'longRun'; months: number }
 
 /** What a secret item's rule reads. */
 export type SecretProgress = {
@@ -33,23 +32,13 @@ export type SecretProgress = {
   keepsakes: number
   /** The hearts are gold now. */
   gold: boolean
-  /** The raw Service Streak, while it can grow (streak mode); else null. */
-  streak: { kind: StreakKind; count: number } | null
-  /** Months with an active day since adoption. */
-  activeMonths: number
+  /** Calendar months with a day out since adoption. */
+  monthsOut: number
 }
 
 const badge = (key: BadgeKey): SecretUnlock => ({ by: 'badge', badge: key })
-/**
- * A streak of `plans` days (`plans` kind) or `months` months, or as many active
- * months.
- */
-const longRun = (plans: number, months: number): SecretUnlock => ({
-  by: 'longRun',
-  plans,
-  months,
-  activeMonths: months,
-})
+/** `months` calendar months with a day out since adoption. */
+const longRun = (months: number): SecretUnlock => ({ by: 'longRun', months })
 
 /**
  * Every secret item's rule. Most follow a badge, Bronze through Pearl, so the
@@ -72,7 +61,7 @@ export const SECRET_UNLOCKS: Readonly<Record<SecretRoomItemId, SecretUnlock>> =
     'hat:bowler': badge('reportSent.2'),
     'hat:straw': badge('nextTime.2'),
     'hat:fisherman': badge('returnVisits.2'),
-    'hat:bush': longRun(150, 15),
+    'hat:bush': longRun(15),
     'hat:tam': { by: 'badges', count: 12 },
     // Wall colours
     'wallColor:indigo': badge('monthsShared.3'),
@@ -86,7 +75,7 @@ export const SECRET_UNLOCKS: Readonly<Record<SecretRoomItemId, SecretUnlock>> =
     'wallColor:cocoa': badge('conversations.3'),
     'wallColor:peach': { by: 'badges', count: 5 },
     'wallColor:paprika': { by: 'badges', count: 8 },
-    'wallColor:glacier': longRun(200, 18),
+    'wallColor:glacier': longRun(18),
     // Wall patterns
     'wallPattern:waves': badge('returnVisits.1'),
     'wallPattern:chevron': badge('nextTime.3'),
@@ -119,7 +108,7 @@ export const SECRET_UNLOCKS: Readonly<Record<SecretRoomItemId, SecretUnlock>> =
     'bed:cheese': { by: 'badges', count: 10 },
     'bed:hammock': badge('keepingInTouch.1'),
     'bed:bread': badge('prepared.4'),
-    'bed:bathtub': longRun(365, 36),
+    'bed:bathtub': longRun(36),
     // Shelves
     'shelf:ship': badge('reportSent.1'),
     'shelf:dala': badge('yearRound.1'),
@@ -139,7 +128,7 @@ export const SECRET_UNLOCKS: Readonly<Record<SecretRoomItemId, SecretUnlock>> =
     'lamp:pearl': { by: 'badges', count: 14 },
     'lamp:cactus': { by: 'badges', count: 16 },
     'lamp:rocket': badge('monthsShared.4'),
-    'lamp:hurricane': longRun(250, 24),
+    'lamp:hurricane': longRun(24),
     'lamp:jellyfish': badge('returnVisits.4'),
     'lamp:lava': badge('conversations.4'),
   }
@@ -161,12 +150,8 @@ export function secretRuleMet(
       return progress.keepsakes >= rule.count
     case 'gold':
       return progress.gold
-    case 'longRun': {
-      if (progress.activeMonths >= rule.activeMonths) return true
-      const streak = progress.streak
-      if (!streak) return false
-      return streak.count >= rule[streak.kind]
-    }
+    case 'longRun':
+      return progress.monthsOut >= rule.months
   }
 }
 

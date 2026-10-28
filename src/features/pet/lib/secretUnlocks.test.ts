@@ -13,8 +13,7 @@ const NOTHING: SecretProgress = {
   badges: new Set(),
   keepsakes: 0,
   gold: false,
-  streak: null,
-  activeMonths: 0,
+  monthsOut: 0,
 }
 
 describe('secret room items', () => {
@@ -86,25 +85,10 @@ describe('secret room items', () => {
     expect(secretRuleMet({ by: 'gold' }, NOTHING)).toBe(false)
   })
 
-  it('opens a long run by the streak’s own kind, or by active months', () => {
-    const rule = {
-      by: 'longRun',
-      plans: 150,
-      months: 15,
-      activeMonths: 15,
-    } as const
-    const plans = (count: number) => ({
-      ...NOTHING,
-      streak: { kind: 'plans' as const, count },
-    })
-    expect(secretRuleMet(rule, plans(150))).toBe(true)
-    expect(secretRuleMet(rule, plans(149))).toBe(false)
-    expect(
-      secretRuleMet(rule, { ...NOTHING, streak: { kind: 'months', count: 15 } })
-    ).toBe(true)
-    // Months mode, or streaks hidden: active months still get there.
-    expect(secretRuleMet(rule, { ...NOTHING, activeMonths: 15 })).toBe(true)
-    expect(secretRuleMet(rule, { ...NOTHING, activeMonths: 14 })).toBe(false)
+  it('opens a long run after that many months with a day out', () => {
+    const rule = { by: 'longRun', months: 15 } as const
+    expect(secretRuleMet(rule, { ...NOTHING, monthsOut: 15 })).toBe(true)
+    expect(secretRuleMet(rule, { ...NOTHING, monthsOut: 14 })).toBe(false)
   })
 
   it('tells secrets from other items', () => {

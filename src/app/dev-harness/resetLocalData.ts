@@ -31,6 +31,7 @@ import { useScribeMemory } from '@/features/scribe/stores/memory'
 import { useScribeConsent } from '@/features/scribe/stores/consent'
 import { useScribeUsageStore } from '@/features/scribe/stores/usage'
 import { useNotificationsTray } from '@/features/notifications/stores/notificationsTray'
+import { usePetSeen } from '@/features/pet/stores/petSeen'
 import { usePetUnlockNews } from '@/features/pet/stores/petUnlockNews'
 import { forgetFoundSecrets } from '@/features/pet/lib/secrets'
 import { useStreakCelebration } from '@/features/profile/stores/streakCelebration'
@@ -57,6 +58,7 @@ export const RESET_STORES: readonly ResettableStore[] = [
   useGeocodeRetry,
   useNotificationsTray,
   usePetUnlockNews,
+  usePetSeen,
   useDevNotifications,
   useStreakCelebration,
   useSplitSheetPreferences,

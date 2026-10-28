@@ -68,6 +68,23 @@ describe('petSliceFromBackup', () => {
     ).toEqual(pet)
   })
 
+  it('restores Shop purchases, dropping the unreadable ones', () => {
+    const bow = {
+      item: 'hat:bow',
+      currency: 'thread',
+      price: 5,
+      on: '2026-10-02',
+    }
+    expect(
+      petSliceFromBackup({
+        pet: { ...pet, purchases: [bow, { item: 'hat:cap' }, 4] },
+      }).pet
+    ).toEqual({ ...pet, purchases: [bow] })
+    expect(
+      petSliceFromBackup({ pet: { ...pet, purchases: 'hat:bow' } }).pet
+    ).toEqual(pet)
+  })
+
   it('leaves out what it can’t read, so the local value stays', () => {
     expect(petSliceFromBackup({ pet: { ...pet, species: 'dragon' } })).toEqual(
       {}

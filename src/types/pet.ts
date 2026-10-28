@@ -322,11 +322,10 @@ export const STARTER_ROOM_ITEMS: readonly RoomItemId[] = [
 ]
 
 /**
- * Every non-starter item, in the order they unlock: at rising Service Streak
- * counts (`STREAK_THRESHOLDS` in `src/features/pet/lib/unlocks.ts`), or one per
- * active month since adoption while the User has no streak to grow. Parts take
- * turns so each unlock changes something different. Hats have their own order,
- * {@link HAT_UNLOCK_ORDER}.
+ * Every non-starter item, cheapest first in the Shop (`ITEM_PRICES` in
+ * `src/features/pet/lib/prices.ts`, ADR 0035); before the Shop, the order they
+ * unlocked in. Parts take turns so each step changes something different. Hats
+ * have their own order, {@link HAT_UNLOCK_ORDER}.
  */
 export const UNLOCK_ORDER: readonly RoomItemId[] = [
   'bed:hay',
@@ -349,9 +348,8 @@ export const UNLOCK_ORDER: readonly RoomItemId[] = [
 ]
 
 /**
- * Every hat but `none`, in the order they unlock, on their own counts
- * (`HAT_THRESHOLDS` in `src/features/pet/lib/unlocks.ts`): three come quickly,
- * the rest take longer.
+ * Every hat but `none`, cheapest first in the Shop (`ITEM_PRICES`); before the
+ * Shop, the order they unlocked in.
  */
 export const HAT_UNLOCK_ORDER: readonly RoomItemId[] = [
   'hat:bow',
@@ -408,6 +406,14 @@ export const PET_ROOM_RECORD_ID = 'room'
 
 export type PetKeepsake = { kind: GiftKind; on: string }
 
+/** A room item or hat bought in the Shop, at the price in coins it cost then. */
+export type PetPurchase = {
+  item: string
+  price: number
+  /** Local day key of the purchase. */
+  on: string
+}
+
 export interface PetRecord {
   /** Always `PET_RECORD_ID`: one companion per User. */
   id: string
@@ -435,6 +441,12 @@ export interface PetRecord {
    * before it existed: none.
    */
   earnedRoomItems?: string[]
+  /**
+   * Items bought in the Shop, once each, by day (`keptPurchases`). What they
+   * cost comes off the coins earned (ADR 0035). Absent until the first
+   * purchase.
+   */
+  purchases?: PetPurchase[]
   updatedAt: number
 }
 

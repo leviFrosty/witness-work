@@ -6,7 +6,12 @@ import {
   type PetRoomRecord,
   type PetTombstone,
 } from '@/types/pet'
-import { keptKeepsakes, keptRoomItems, keptWakes } from '@/lib/petHistory'
+import {
+  keptKeepsakes,
+  keptPurchases,
+  keptRoomItems,
+  keptWakes,
+} from '@/lib/petHistory'
 
 /**
  * The pet store's slice of a JSON backup file, checked before it's restored.
@@ -28,6 +33,7 @@ const petSchema = z
     wakes: z.array(z.unknown()).optional().catch(undefined),
     keepsakes: z.array(z.unknown()).optional().catch(undefined),
     earnedRoomItems: z.array(z.unknown()).optional().catch(undefined),
+    purchases: z.array(z.unknown()).optional().catch(undefined),
     seed: z.string().min(1).max(64).optional().catch(undefined),
     updatedAt: stamp,
   })
@@ -64,7 +70,9 @@ export function petSliceFromBackup(value: unknown): PetSlice {
   else {
     const parsed = petSchema.safeParse(slice.pet)
     if (parsed.success) {
-      const { wakes, keepsakes, earnedRoomItems, seed, ...rest } = parsed.data
+      const { wakes, keepsakes, earnedRoomItems, purchases, seed, ...rest } =
+        parsed.data
+      const bought = keptPurchases(purchases ?? [])
       // Ids from a newer build stay, like in sync.
       const earned = keptRoomItems(
         (earnedRoomItems ?? []).filter(
@@ -75,6 +83,7 @@ export function petSliceFromBackup(value: unknown): PetSlice {
         ...rest,
         ...(seed ? { seed } : {}),
         ...(earned.length > 0 ? { earnedRoomItems: earned } : {}),
+        ...(bought.length > 0 ? { purchases: bought } : {}),
         wakes: keptWakes(
           (wakes ?? []).filter(
             (day): day is string => dayKey.safeParse(day).success

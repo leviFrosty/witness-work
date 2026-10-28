@@ -318,7 +318,8 @@ describe('petWidgetTimeline after the 48 hours', () => {
 
   it('shows the 1st of the month with its own sign and lamp', () => {
     const now = at(25, 10)
-    // A pet that died in October: only the lamp and sign change.
+    // A pet that died in October: its lamp is out, and only the sign and the
+    // streak label change.
     const entries = petWidgetTimeline(
       input({
         pet: pet({ adoptedOn: '2026-08-01' }),
@@ -346,7 +347,7 @@ describe('petWidgetTimeline after the 48 hours', () => {
         e.state.dead,
       ])
     ).toEqual([
-      [at(25).getTime(), 2, 870, true],
+      [at(25).getTime(), 0, 870, true],
       [at(27).getTime(), 0, 870, true],
       [at(1, 0, 10).getTime(), 0, 0, true],
     ])
@@ -429,8 +430,9 @@ describe('planPetWidget', () => {
   it('carries each entry its own lamp, sign line and label', () => {
     const plan = planPetWidget(input({ room: FIXED_DAY }), at(18, 10))!
     const [now, later] = plan.entries
+    // The lamp follows the hearts (ADR 0035).
     expect(now.entry.status).toEqual({
-      lampLevel: 2,
+      lampLevel: 5,
       lampDaysLabel: '4 days kept',
       signLine: '14.5h of 30h',
       accessibilityLabel: expect.stringMatching(/, 5 of 5 hearts$/),
@@ -485,8 +487,9 @@ describe('buildPetWidget', () => {
     const named = new Set(entries.flatMap((e) => [e.small, e.large]))
     expect(new Set(files.map((f) => f.name))).toEqual(named)
     // Dawn, day, dusk and night at five hearts: four looks, two crops each;
-    // the days ahead add the pet asleep and the pet that died.
-    expect(named.size).toBe(12)
+    // the days ahead add the lamp dimming with the hearts, the pet asleep and
+    // the pet that died.
+    expect(named.size).toBe(14)
     expect(files.every((f) => f.base64.startsWith('png-'))).toBe(true)
     expect(encode.mock.calls.length).toBeLessThanOrEqual(
       2 * PET_TIMELINE_MAX_ENTRIES
@@ -569,7 +572,7 @@ describe('buildPetWidget', () => {
     expect(snapshot).toMatchObject({
       name: 'Biscuit',
       hearts: 5,
-      lampLevel: 2,
+      lampLevel: 5,
       lampDaysLabel: '4 days kept',
       signLine: '14.5h of 30h',
     })

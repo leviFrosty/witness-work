@@ -1,11 +1,12 @@
 {
-  "extends": "expo/tsconfig.base",
+  "extends": "expo/tsconfig.base.json",
   "compilerOptions": {
     "jsx": "react-jsx",
     "strict": true,
     "module": "ESNext",
     "paths": {
       "@/*": ["./src/*"]
-    }
+    },
+    "customConditions": ["react-native-legacy-deep-imports"]
   }
 }

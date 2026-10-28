@@ -1,9 +1,9 @@
 diff --git a/build/utils/Path.js b/build/utils/Path.js
-index 2b850281e84a35c349a44ab04aa99b7a83ef2aea..de8e9f0d1c343559a6f81b8861815ad39263d926 100644
+index 4e8dce85899220a2a6ddc5554169102238b332a5..02890dc33b5c4ead60834aebe7f998b8af13278f 100644
 --- a/build/utils/Path.js
 +++ b/build/utils/Path.js
-@@ -79,9 +79,9 @@ function isIgnoredPathWithMatchObjects(filePath, matchObjects) {
-         const normalizedFilePath = normalizeFilePath(filePath, { stripParentPrefix });
+@@ -136,9 +136,9 @@ function isIgnoredPathWithMatchObjects(filePath, matchObjects) {
+         });
          const currMatch = minimatchObj.match(normalizedFilePath);
          if (minimatchObj.negate && result && !currMatch) {
 -            // Special handler for negate (!pattern).

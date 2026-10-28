@@ -1,8 +1,8 @@
 diff --git a/apple/Handlers/RNHoverHandler.m b/apple/Handlers/RNHoverHandler.m
-index 320cb8cb2652bfcfe1ecc65ebd81a8d208e4260f..0241aabb6ea71b78598d460f1d05fb56793b4949 100644
+index b193768ebc033270d6308056aa8bc35301d69946..b3fe9d5ddf4ba40332dc6fabf6e0e30bc5773aa5 100644
 --- a/apple/Handlers/RNHoverHandler.m
 +++ b/apple/Handlers/RNHoverHandler.m
-@@ -75,13 +75,23 @@ - (void)reset
+@@ -60,13 +60,23 @@ - (void)reset
  - (UIPointerStyle *)pointerInteraction:(UIPointerInteraction *)interaction styleForRegion:(UIPointerRegion *)region
  {
    if (interaction.view != nil && _hoverEffect != RNGestureHandlerHoverEffectNone) {

@@ -242,11 +242,9 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       },
     },
     plugins: [
-      // Xcode 27 requires the scene lifecycle; SDK 57 opts in explicitly.
       [
         'expo-build-properties',
         {
-          ios: { enableSceneSupport: true },
           ...(PERF_PROBE && { android: { usesCleartextTraffic: true } }),
         },
       ],

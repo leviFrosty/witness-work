@@ -4,7 +4,7 @@ import {
   Star as StarIcon,
   X as XIcon,
 } from 'lucide-react-native'
-import { useEffect, useMemo } from 'react'
+import { type ReactNode, useEffect, useMemo } from 'react'
 import useDailyMinutes from '@/features/profile/hooks/useDailyMinutes'
 import {
   Pressable,
@@ -114,19 +114,30 @@ const Stat = ({
   )
 }
 
+type OverlayProps = {
+  /**
+   * The User's buddies, under their badges, composed in by the app tier; handed
+   * the close to run before it navigates.
+   */
+  renderBuddies?: (onBeforeNavigate: () => void) => ReactNode
+}
+
 /**
  * Profile, role, and stats, grown out of the header avatar. Opened from the
  * account menu; HomeTabStack mounts the single instance.
  */
-const ProfileDetailOverlay = () => {
+const ProfileDetailOverlay = ({ renderBuddies }: OverlayProps) => {
   const origin = useProfileOverlay((s) => s.origin)
   // The header hands over the origin once idle; until then the overlay can't
   // open, so its stats stay out of the first screen's render.
   if (!origin) return null
-  return <ProfileDetailSheet origin={origin} />
+  return <ProfileDetailSheet origin={origin} renderBuddies={renderBuddies} />
 }
 
-const ProfileDetailSheet = ({ origin }: { origin: OriginRect }) => {
+const ProfileDetailSheet = ({
+  origin,
+  renderBuddies,
+}: OverlayProps & { origin: OriginRect }) => {
   const { open, away, close: onClose, stepAway, hide } = useProfileOverlay()
   const theme = useTheme()
   const insets = useSafeAreaInsets()
@@ -314,6 +325,7 @@ const ProfileDetailSheet = ({ origin }: { origin: OriginRect }) => {
                 onBeforeNavigate={onClose}
                 onBeforeOpenBadge={stepAwayForBadge}
               />
+              {renderBuddies?.(onClose)}
 
               <View style={statRowStyle}>
                 <Stat

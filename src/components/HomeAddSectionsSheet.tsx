@@ -8,6 +8,7 @@ import {
   MessagesSquare as MessagesSquareIcon,
   PawPrint as PawPrintIcon,
   Timer as TimerIcon,
+  Users as UsersIcon,
 } from 'lucide-react-native'
 import type { AppIcon } from '@/components/ui/LucideIcon'
 import AddItemsSheet from '@/components/ui/reorderable/AddItemsSheet'
@@ -18,6 +19,7 @@ import type { HomeScreenElementKey } from '@/stores/preferences'
 
 const ICONS: Record<HomeScreenElementKey, AppIcon> = {
   approachingConversations: MessagesSquareIcon,
+  together: UsersIcon,
   tabletServiceYearSummary: FlagIcon,
   serviceReport: FileTextIcon,
   mileage: CarIcon,

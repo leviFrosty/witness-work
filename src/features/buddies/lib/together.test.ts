@@ -4,7 +4,10 @@ import type { DayPlan } from '@/types/timeEntry'
 import type { Visit } from '@/types/visit'
 import { followUpShareKey, planShareKey } from '@/features/buddies/lib/shares'
 import type { IncomingShare } from '@/features/buddies/lib/state'
-import { buildTogether } from '@/features/buddies/lib/together'
+import {
+  buildTogether,
+  buildTogetherWithBuddies,
+} from '@/features/buddies/lib/together'
 
 const today = new Date(2026, 9, 5, 9)
 
@@ -113,5 +116,52 @@ describe('buildTogether', () => {
       ['plan:later', 'going', 'outgoing'],
     ])
     expect(together[1].details.firstName).toBe('John')
+  })
+})
+
+describe('buildTogetherWithBuddies', () => {
+  it("merges every buddy's, soonest first, each with its buddy", () => {
+    const { needsAnswer, together } = buildTogetherWithBuddies({
+      buddies: [{ inboxId: 'maria' }, { inboxId: 'anna' }],
+      incomingShares: {
+        'maria|a': incoming('a', '2026-10-09', 'pending'),
+        'anna|b': incoming('b', '2026-10-07', 'pending', 'anna'),
+        'anna|c': incoming('c', '2026-10-06', 'declined', 'anna'),
+        'ben|d': incoming('d', '2026-10-06', 'pending', 'ben'),
+      },
+      dayPlans: [dayPlan('mine', '2026-10-08', { buddies: ['maria'] })],
+      visits: [],
+      contacts: [],
+      replyFor: (inboxId, key) =>
+        inboxId === 'maria' && key === planShareKey('mine')
+          ? { status: 'going', rev: 1, at: 0 }
+          : undefined,
+      today,
+    })
+    expect(needsAnswer.map((item) => [item.key, item.inboxId])).toEqual([
+      ['in:anna|b', 'anna'],
+      ['in:maria|a', 'maria'],
+    ])
+    expect(
+      together.map((item) => [item.key, item.inboxId, item.status])
+    ).toEqual([
+      ['in:anna|c', 'anna', 'declined'],
+      ['plan:mine', 'maria', 'going'],
+    ])
+  })
+
+  it('shows a Plan shared with several buddies once', () => {
+    const { together } = buildTogetherWithBuddies({
+      buddies: [{ inboxId: 'maria' }, { inboxId: 'anna' }],
+      incomingShares: {},
+      dayPlans: [dayPlan('mine', '2026-10-08', { buddies: ['anna', 'maria'] })],
+      visits: [],
+      contacts: [],
+      replyFor: () => undefined,
+      today,
+    })
+    expect(together.map((item) => [item.key, item.inboxId])).toEqual([
+      ['plan:mine', 'maria'],
+    ])
   })
 })

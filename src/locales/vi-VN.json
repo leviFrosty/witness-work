@@ -1238,7 +1238,6 @@
   "mytimeImport_invalidFile": "Điều này trông không giống như một bản sao lưu MyTime. Vui lòng chọn tệp .mytimedb MyTime đã tạo và thử lại.",
   "mytimeImport_error": "Đã xảy ra sự cố khi nhập tệp của bạn. Vui lòng thử lại.",
   "buddies_title": "Bạn đồng hành",
-  "buddies_requestsWaitingA11y": "Bạn đồng hành, có yêu cầu đang chờ",
   "buddies_unavailableA11y": "Bạn đồng hành, tạm thời không khả dụng",
   "Buddies": "Bạn đồng hành",
   "buddies_emptyTitle": "Cùng nhau lên kế hoạch thánh chức",

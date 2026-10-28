@@ -6,6 +6,7 @@ import {
   House as HouseIcon,
   Plus as PlusIcon,
   Settings as SettingsIcon,
+  Users as UsersIcon,
   Wrench as WrenchIcon,
 } from 'lucide-react-native'
 import { type ReactNode, useEffect, useRef, useState } from 'react'
@@ -137,8 +138,12 @@ const TabBar = ({
   const renderTab = (route: (typeof state.routes)[number], index: number) => {
     const { options } = descriptors[route.key]
     const label = route.name
-    const labelKey =
-      label === 'Settings' ? 'settings' : (label as TranslationKey)
+    const labelKey: TranslationKey =
+      label === 'Settings'
+        ? 'settings'
+        : label === 'Buddies'
+          ? 'buddies_title'
+          : (label as TranslationKey)
     const isFocused = state.index === index
     const isSettings = label === 'Settings'
     const shortcut = shortcutHints?.[route.key]
@@ -168,6 +173,8 @@ const TabBar = ({
           return CalendarDaysIcon
         case 'Settings':
           return SettingsIcon
+        case 'Buddies':
+          return UsersIcon
         default:
           return CircleQuestionMarkIcon
       }

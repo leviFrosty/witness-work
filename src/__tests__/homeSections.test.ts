@@ -28,6 +28,7 @@ import {
 } from '@/lib/homeSections'
 import {
   hideHomeSection,
+  isHomeSectionOn,
   isHomeSectionShown,
   moveHomeSectionTo,
   showHomeSection,
@@ -36,6 +37,7 @@ import usePet from '@/stores/pet'
 import {
   DEFAULT_HOME_SCREEN_ELEMENTS_ORDER,
   getEffectiveHomeScreenOrder,
+  type HomeScreenElementKey,
   PREFERENCE_DEFAULTS,
   usePreferences,
 } from '@/stores/preferences'
@@ -46,6 +48,7 @@ const phone = {
   hasAnnualGoal: true,
   showsTimer: true,
   mileageTrackingEnabled: true,
+  buddiesAvailable: true,
 }
 
 describe('Home sections', () => {
@@ -74,6 +77,10 @@ describe('Home sections', () => {
       })
     ).toBe(false)
     expect(isHomeSectionAvailable('thisWeek', phone)).toBe(true)
+    expect(isHomeSectionAvailable('together', phone)).toBe(true)
+    expect(
+      isHomeSectionAvailable('together', { ...phone, buddiesAvailable: false })
+    ).toBe(false)
   })
 
   it('always offers Quick Actions, whatever the device can do', () => {
@@ -84,6 +91,7 @@ describe('Home sections', () => {
         hasAnnualGoal: false,
         showsTimer: false,
         mileageTrackingEnabled: false,
+        buddiesAvailable: false,
       })
     ).toBe(true)
   })
@@ -140,6 +148,36 @@ describe('Home sections', () => {
       'timer',
       ...DEFAULT_HOME_SCREEN_ELEMENTS_ORDER.filter((k) => k !== 'timer'),
     ])
+  })
+
+  describe('Together', () => {
+    const shown = (
+      homeScreenElements: Partial<
+        Record<HomeScreenElementKey, boolean>
+      > = usePreferences.getState().homeScreenElements
+    ) =>
+      isHomeSectionShown('together', {
+        homeScreenElements,
+        petPromptDismissed: false,
+        hasPet: false,
+      })
+
+    it('waits for the User to add it', () => {
+      expect(shown()).toBe(false)
+      // A map saved before Together, or synced from an older build, lacks it.
+      expect(shown({ serviceReport: true })).toBe(false)
+      expect(isHomeSectionOn('timer', { serviceReport: true })).toBe(true)
+    })
+
+    it('shows at the top once added', () => {
+      showHomeSection('together')
+      expect(shown()).toBe(true)
+      expect(
+        getEffectiveHomeScreenOrder(
+          usePreferences.getState().homeScreenElementsOrder
+        )[0]
+      ).toBe('together')
+    })
   })
 
   describe('Pet before a companion', () => {

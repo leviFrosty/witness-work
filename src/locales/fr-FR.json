@@ -1238,7 +1238,6 @@
   "mytimeImport_invalidFile": "Ça ne ressemble pas à une sauvegarde MyTime. Veuillez choisir le fichier .mytimedb créé par MyTime et réessayer.",
   "mytimeImport_error": "Quelque chose a mal tourné lors de l’importation de votre fichier. Veuillez réessayer.",
   "buddies_title": "Compagnons",
-  "buddies_requestsWaitingA11y": "Compagnons, demandes en attente",
   "buddies_unavailableA11y": "Compagnons, momentanément indisponible",
   "Buddies": "Compagnons",
   "buddies_emptyTitle": "Planifiez votre ministère ensemble",

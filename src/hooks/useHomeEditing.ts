@@ -2,7 +2,7 @@ import useDevice from '@/hooks/useDevice'
 import useEditMode from '@/hooks/useEditMode'
 import usePublisher from '@/hooks/usePublisher'
 import { analytics } from '@/lib/analytics'
-import { isHomeSectionAvailable } from '@/lib/homeSections'
+import { isHomeSectionAvailable, isHomeSectionOn } from '@/lib/homeSections'
 import {
   getEffectiveHomeScreenOrder,
   type HomeScreenElementKey,
@@ -19,9 +19,7 @@ const currentLayout = (): Layout => {
   const order = getEffectiveHomeScreenOrder(homeScreenElementsOrder)
   return {
     order,
-    hidden: order.filter(
-      (key) => (homeScreenElements as Record<string, boolean>)[key] === false
-    ),
+    hidden: order.filter((key) => !isHomeSectionOn(key, homeScreenElements)),
   }
 }
 
@@ -30,11 +28,13 @@ const currentLayout = (): Layout => {
  * section's Edit Home Screen, the Edit Home Screen button after the sections,
  * or holding empty space. Changes save as they're made; finishing reports what
  * changed once (`home_screen_customized`). Pass `lifecycle` from the screen
- * only (see `useEditMode`).
+ * only (see `useEditMode`), and `buddiesAvailable` wherever editing can
+ * finish.
  */
 export default function useHomeEditing({
   lifecycle = false,
-}: { lifecycle?: boolean } = {}) {
+  buddiesAvailable = false,
+}: { lifecycle?: boolean; buddiesAvailable?: boolean } = {}) {
   const { isTablet } = useDevice()
   const { hasAnnualGoal, showsTimer } = usePublisher()
   // Sections this device and User can't show stay in the stored order.
@@ -44,6 +44,7 @@ export default function useHomeEditing({
       hasAnnualGoal,
       showsTimer,
       mileageTrackingEnabled: usePreferences.getState().mileageTrackingEnabled,
+      buddiesAvailable,
     })
 
   return useEditMode<HomeEditSource>('home', {

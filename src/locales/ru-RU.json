@@ -1282,7 +1282,6 @@
   "mytimeImport_invalidFile": "Это не похоже на резервную копию MyTime. Пожалуйста, выберите файл .mytimedb, созданный MyTime, и попробуйте снова.",
   "mytimeImport_error": "Что-то пошло не так при импорте вашего файла. Пожалуйста, попробуйте ещё раз.",
   "buddies_title": "Buddies",
-  "buddies_requestsWaitingA11y": "Buddies, есть запросы",
   "buddies_unavailableA11y": "Buddies, временно недоступно",
   "Buddies": "Buddies",
   "buddies_emptyTitle": "Планируйте служение вместе",

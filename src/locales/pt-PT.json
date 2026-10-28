@@ -2076,7 +2076,6 @@
   "mytimeImport_invalidFile": "Este ficheiro não parece ser uma cópia de segurança do MyTime. Escolha o ficheiro .mytimedb criado pelo MyTime e tente novamente.",
   "mytimeImport_error": "Ocorreu um problema ao importar o ficheiro. Tente novamente.",
   "buddies_title": "Companheiros",
-  "buddies_requestsWaitingA11y": "Companheiros, pedidos em espera",
   "buddies_unavailableA11y": "Companheiros, temporariamente indisponível",
   "Buddies": "Companheiros",
   "buddies_emptyTitle": "Planeiem o ministério em conjunto",

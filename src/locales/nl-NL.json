@@ -1238,7 +1238,6 @@
   "mytimeImport_invalidFile": "Dit lijkt geen MyTime-back-up. Kies alstublieft het .mytimedb-bestand dat MyTime heeft gemaakt en probeer het opnieuw.",
   "mytimeImport_error": "Er ging iets mis bij het importeren van je bestand. Probeer het alsjeblieft opnieuw.",
   "buddies_title": "Buddies",
-  "buddies_requestsWaitingA11y": "Buddies, verzoeken in afwachting",
   "buddies_unavailableA11y": "Buddies, tijdelijk niet beschikbaar",
   "Buddies": "Buddies",
   "buddies_emptyTitle": "Plan jullie bediening samen",

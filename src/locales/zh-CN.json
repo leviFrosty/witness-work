@@ -1238,7 +1238,6 @@
   "mytimeImport_invalidFile": "这看起来不像是 MyTime 备份。请选择 MyTime 创建的 .mytimedb 文件，再试一次。",
   "mytimeImport_error": "导入文件时出了点问题。请再试一次。",
   "buddies_title": "同伴",
-  "buddies_requestsWaitingA11y": "同伴，有待处理的请求",
   "buddies_unavailableA11y": "同伴，暂时不可用",
   "Buddies": "同伴",
   "buddies_emptyTitle": "一起计划传道",

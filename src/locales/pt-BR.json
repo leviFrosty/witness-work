@@ -1238,7 +1238,6 @@
   "mytimeImport_invalidFile": "Isso não parece um backup do MyTime. Por favor, escolha o arquivo .mytimedb criado pelo MyTime e tente novamente.",
   "mytimeImport_error": "Algo deu errado ao importar seu arquivo. Por favor, tente novamente.",
   "buddies_title": "Buddies",
-  "buddies_requestsWaitingA11y": "Buddies, solicitações aguardando",
   "buddies_unavailableA11y": "Buddies, temporariamente indisponível",
   "Buddies": "Buddies",
   "buddies_emptyTitle": "Planejem o ministério juntos",

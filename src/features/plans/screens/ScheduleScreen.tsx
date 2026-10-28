@@ -28,7 +28,7 @@ import { daySheetPlanDetails } from '@/features/plans/components/DaySheetPlanDet
 import SelectedDateSheet, {
   SelectedDateSheetState,
 } from '@/features/service-reports/components/SelectedDateSheet'
-import BuddiesHeaderButton from '@/features/buddies/components/BuddiesHeaderButton'
+import BuddiesEntryRow from '@/features/buddies/components/BuddiesEntryRow'
 import BuddyPlansForDay from '@/features/buddies/components/BuddyPlansForDay'
 import PlanBuddiesLine from '@/features/buddies/components/PlanBuddiesLine'
 import useBuddyCalendarMarkers from '@/features/buddies/hooks/useBuddyCalendarMarkers'
@@ -245,18 +245,18 @@ const ScheduleScreen = ({ route, navigation }: Props) => {
       <RootHeader
         title={i18n.t('Schedule')}
         actions={
-          <>
-            <ScheduleViewToggle
-              value={view}
-              onChange={(next) => changeView(next, 'toggle')}
-            />
-            {/* Phones show the label only where the title still fits beside
-                it; it's easy to miss as an icon. */}
-            <BuddiesHeaderButton compact={isWide ? false : 'auto'} />
-          </>
+          <ScheduleViewToggle
+            value={view}
+            onChange={(next) => changeView(next, 'toggle')}
+          />
         }
         contentStyle={isWide ? { paddingHorizontal: 0 } : { maxWidth: 720 }}
-      />
+      >
+        <BuddiesEntryRow
+          source='schedule_row'
+          style={{ marginHorizontal: 15, marginBottom: 8 }}
+        />
+      </RootHeader>
     </ScrollAwayHeader>
   )
 

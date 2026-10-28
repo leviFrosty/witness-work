@@ -17,6 +17,7 @@ import LucideIcon from '@/components/ui/LucideIcon'
 import PointerTooltip from '@/components/ui/PointerTooltip'
 import PullDownMenu from '@/components/ui/PullDownMenu'
 import Header from '@/components/ui/layout/Header'
+import RootHeader from '@/components/RootHeader'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import { logger } from '@/lib/logger'
@@ -38,15 +39,18 @@ import { syncReadInbox } from '@/features/buddies/lib/syncStatus'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 
 /**
- * Buddies, opened from Schedule's header: first-visit onboarding, then the
- * buddies list. The stack header carries the title, Back, and, once onboarded,
- * the buddies code.
+ * Buddies, opened from Home, Schedule, or the Profile: first-visit onboarding,
+ * then the buddies list. The stack header carries the title, Back, and, once
+ * onboarded, the buddies code; as the iPad sidebar's tab, a root header does.
  */
 export default function BuddiesScreen({
   profileEditor,
+  asTab = false,
 }: {
   /** The Profile editor for onboarding, composed in by the app tier. */
   profileEditor: (nameInvalid: boolean) => ReactNode
+  /** A destination of its own (the iPad sidebar), with no stack header. */
+  asTab?: boolean
 }) {
   const theme = useTheme()
   const insets = useSafeAreaInsets()
@@ -75,6 +79,7 @@ export default function BuddiesScreen({
   }
 
   useLayoutEffect(() => {
+    if (asTab) return
     const label = i18n.t('buddies_showCode')
     navigation.setOptions({
       header: () => (
@@ -102,7 +107,29 @@ export default function BuddiesScreen({
         />
       ),
     })
-  }, [navigation, needsOnboarding, theme.colors.text])
+  }, [asTab, navigation, needsOnboarding, theme.colors.text])
+
+  const rootHeader = asTab ? (
+    <RootHeader
+      title={i18n.t('buddies_title')}
+      actions={
+        needsOnboarding ? null : (
+          <PointerTooltip label={i18n.t('buddies_showCode')} effect='none'>
+            <IconButton
+              icon={QrCodeIcon}
+              size='xl'
+              color={theme.colors.text}
+              frame
+              accessibilityLabel={i18n.t('buddies_showCode')}
+              onPress={() =>
+                navigation.navigate('Buddy Code', { mode: 'code' })
+              }
+            />
+          </PointerTooltip>
+        )
+      }
+    />
+  ) : null
 
   useFocusEffect(
     useCallback(() => {
@@ -114,11 +141,18 @@ export default function BuddiesScreen({
   )
 
   if (needsOnboarding) {
-    return (
+    const onboarding = (
       <BuddiesOnboarding
         profileEditor={profileEditor}
         onDone={() => useBuddies.setState({ onboardingComplete: true })}
       />
+    )
+    if (!rootHeader) return onboarding
+    return (
+      <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
+        {rootHeader}
+        {onboarding}
+      </View>
     )
   }
 
@@ -135,6 +169,7 @@ export default function BuddiesScreen({
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
+      {rootHeader}
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={{

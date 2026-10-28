@@ -21,6 +21,7 @@ import useOpenSettings from '@/hooks/useOpenSettings'
 import i18n from '@/lib/locales'
 import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
 import { useUpdateRevealStore } from '@/features/updates/stores/updateReveal'
+import useBuddiesEnabled from '@/features/buddies/hooks/useBuddiesEnabled'
 
 // A single-screen stack keeps the route named `Dashboard`, which screen
 // analytics has always reported for Home.
@@ -39,8 +40,9 @@ const HomeNavigator = () => {
   // A visible sidebar or the iPhone Duo rail already holds Settings.
   const showsSettings = !(hasSidebar && sidebarVisible) && !navigationRail
   const requestUpdateReveal = useUpdateRevealStore((s) => s.request)
-  const homeEditing = useHomeEditing()
-  const { hidden } = useAvailableHomeSections()
+  const buddiesAvailable = useBuddiesEnabled()
+  const homeEditing = useHomeEditing({ buddiesAvailable })
+  const { hidden } = useAvailableHomeSections({ buddiesAvailable })
   const openSettings = useOpenSettings()
 
   // Dev-only reset for the update reveal. Long-press the header title to clear

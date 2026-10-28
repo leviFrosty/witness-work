@@ -53,6 +53,8 @@ import usePet from '@/stores/pet'
 import { hidePetVisits } from '@/app/pet/hidePetVisits'
 import usePetVisits from '@/app/pet/usePetVisits'
 import DidYouKnowTipCard from '@/features/updates/components/DidYouKnowTipCard'
+import BuddiesHomeSection from '@/features/buddies/components/BuddiesHomeSection'
+import useBuddiesEnabled from '@/features/buddies/hooks/useBuddiesEnabled'
 import NotificationHosts from '@/app/notifications/NotificationHosts'
 import { useServiceReport } from '@/stores/serviceReport'
 import useLocalDay from '@/hooks/useLocalDay'
@@ -69,6 +71,7 @@ import useHomeEditing from '@/hooks/useHomeEditing'
 import {
   hideHomeSection,
   homeSectionTitle,
+  isHomeSectionOn,
   moveHomeSectionTo,
   showHomeSection,
 } from '@/lib/homeSections'
@@ -162,13 +165,14 @@ export const HomeScreen = ({ header }: { header: ReactNode }) => {
   const [upgradeReportsSheet, setUpgradeReportSheet] = useState(false)
   const weekStrip = useRevealAboveSheet()
   // Home's jiggle mode: sections move, hide and come back.
-  const homeEditing = useHomeEditing({ lifecycle: true })
+  const buddiesAvailable = useBuddiesEnabled()
+  const homeEditing = useHomeEditing({ lifecycle: true, buddiesAvailable })
   const { editing } = homeEditing
   const [dragging, setDragging] = useState(false)
   const scroll = useReorderScroller(weekStrip.scrollRef, {
     obscuredBottom: hasBottomBar ? insets.bottom + TAB_BAR_HEIGHT : 0,
   })
-  const sections = useAvailableHomeSections()
+  const sections = useAvailableHomeSections({ buddiesAvailable })
   const shownSections = sections.available.filter(
     (key) => !sections.hidden.includes(key)
   )
@@ -336,6 +340,13 @@ export const HomeScreen = ({ header }: { header: ReactNode }) => {
                         headerAction={<TodayRouteAction />}
                       />
                     )
+                  case 'together':
+                    if (
+                      !buddiesAvailable ||
+                      !isHomeSectionOn('together', homeScreenElements)
+                    )
+                      return null
+                    return <BuddiesHomeSection key={key} />
                   case 'tabletServiceYearSummary':
                     if (
                       !isTablet ||

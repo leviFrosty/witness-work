@@ -7,6 +7,7 @@ export type ShareAnswerSource =
   | 'buddy_detail'
   | 'plan_details'
   | 'follow_up_details'
+  | 'home'
 
 export function trackShareAnswer(
   source: ShareAnswerSource,

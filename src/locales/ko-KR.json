@@ -1238,7 +1238,6 @@
   "mytimeImport_invalidFile": "이건 마이 타임 백업 같지 않아요. MyTime이 만든 .mytimedb 파일을 선택하고 다시 시도해 주세요.",
   "mytimeImport_error": "파일을 가져오는 과정에서 문제가 생긴 것 같습니다. 다시 시도해 주세요.",
   "buddies_title": "버디",
-  "buddies_requestsWaitingA11y": "버디, 대기 중인 요청 있음",
   "buddies_unavailableA11y": "버디, 일시적으로 사용할 수 없음",
   "Buddies": "버디",
   "buddies_emptyTitle": "함께 봉사를 계획하세요",

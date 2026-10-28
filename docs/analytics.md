@@ -916,13 +916,13 @@ A buddy's detail screen answers whether people plan together from it and make
 it their own. All properties are bounded enums; no names, nicknames, relay ids,
 or dates are sent.
 
-| Event                             | When                                                                                                                                                | Properties                                                                                                        |
-| --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| `buddy_plan_invite_opened`        | Invite to a Plan opened the Plan form with the buddy preselected.                                                                                   | `source: buddy_detail \| buddy_detail_day`. Saving still sends `plan_created` (`invited_buddies`).                |
-| `buddy_plan_same_time_opened`     | Plan the Same Time opened a prefilled Plan form.                                                                                                    | `source: buddy_detail \| buddy_plans_for_day`, `has_start_time`.                                                  |
-| `buddy_invitation_answered`       | The User answered or changed their answer to a buddy's Plan or Follow-up invitation.                                                                | `source: notifications \| buddy_detail \| plan_details \| follow_up_details`, `type: plan \| followUp`, `answer`. |
-| `buddy_invitation_answer_retried` | Try Again on an answer that reads Not sent yet, once the send settles. Shows how often answers fail to send and whether retrying gets them through. | `sent` (whether the answer reached the relay).                                                                    |
-| `buddy_customized`                | A nickname was saved or a color was chosen (Supporter-only).                                                                                        | `setting: nickname \| color`.                                                                                     |
+| Event                             | When                                                                                                                                                | Properties                                                                                                                |
+| --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `buddy_plan_invite_opened`        | Invite to a Plan opened the Plan form with the buddy preselected.                                                                                   | `source: buddy_detail \| buddy_detail_day`. Saving still sends `plan_created` (`invited_buddies`).                        |
+| `buddy_plan_same_time_opened`     | Plan the Same Time opened a prefilled Plan form.                                                                                                    | `source: buddy_detail \| buddy_plans_for_day`, `has_start_time`.                                                          |
+| `buddy_invitation_answered`       | The User answered or changed their answer to a buddy's Plan or Follow-up invitation.                                                                | `source: notifications \| buddy_detail \| plan_details \| follow_up_details \| home`, `type: plan \| followUp`, `answer`. |
+| `buddy_invitation_answer_retried` | Try Again on an answer that reads Not sent yet, once the send settles. Shows how often answers fail to send and whether retrying gets them through. | `sent` (whether the answer reached the relay).                                                                            |
+| `buddy_customized`                | A nickname was saved or a color was chosen (Supporter-only).                                                                                        | `setting: nickname \| color`.                                                                                             |
 
 ### Plans from a buddy's invitation
 
@@ -960,11 +960,17 @@ Settings' header.
 
 ### Buddies pairing
 
-`buddies_opened` (`source: schedule_header | plan_form | route_builder`,
-`has_requests`) counts the ways into Buddies. `plan_form` is Invite Buddies on a
+`buddies_opened` (`source: schedule_row | home_together | profile | sidebar |
+plan_form | route_builder`, `has_requests`) counts the ways into Buddies.
+`schedule_row` is the Buddies row under Schedule's title (before 1.46.0,
+`schedule_header` was its header button), `home_together` is the Together
+section Users can add to Home, `profile` is the Buddies row on the Profile, and
+`sidebar` is the iPad sidebar's Buddies tab. `plan_form` is Invite Buddies on a
 one-time Plan's form before any buddy is confirmed, and `route_builder` is
 Invite Buddies in the route builder's Details before then, so they show whether
-wanting to invite someone brings people to set Buddies up.
+wanting to invite someone brings people to set Buddies up. ADR 0036 makes
+Buddies a tab once the Buddies screen reaches 20% of weekly active Users;
+compare the sources to see which entry point brings them.
 
 `buddy_paired` answers which platform pairings complete: iPhone with iPhone,
 iPhone with Android, Android with Android. Each side records it once, when the

@@ -1336,7 +1336,6 @@
   "mytimeImport_invalidFile": "لا يبدو أن هذا الملف نسخة احتياطية من MyTime. يُرجى اختيار ملف ‎.mytimedb الذي أنشأه MyTime والمحاولة مرة أخرى.",
   "mytimeImport_error": "حدث خطأ أثناء استيراد ملفك. يُرجى المحاولة مرة أخرى.",
   "buddies_title": "الرفاق",
-  "buddies_requestsWaitingA11y": "الرفاق، توجد طلبات بانتظارك",
   "buddies_unavailableA11y": "الرفاق، غير متاح مؤقتًا",
   "Buddies": "الرفاق",
   "buddies_emptyTitle": "خطّطوا لخدمتكم معًا",

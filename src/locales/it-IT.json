@@ -1238,7 +1238,6 @@
   "mytimeImport_invalidFile": "Non sembra un backup MyTime. Scegli il file .mytimedb creato da MyTime e riprova.",
   "mytimeImport_error": "Qualcosa è andato storto nell'importare il tuo file. Per favore, riprova.",
   "buddies_title": "Compagni",
-  "buddies_requestsWaitingA11y": "Compagni, richieste in attesa",
   "buddies_unavailableA11y": "Compagni, temporaneamente non disponibile",
   "Buddies": "Compagni",
   "buddies_emptyTitle": "Pianificate il ministero insieme",

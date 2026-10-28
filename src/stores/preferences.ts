@@ -249,6 +249,7 @@ export type AppIconVariant =
  */
 export type HomeScreenElementKey =
   | 'approachingConversations'
+  | 'together'
   | 'tabletServiceYearSummary'
   | 'serviceReport'
   | 'mileage'
@@ -260,6 +261,7 @@ export type HomeScreenElementKey =
 
 export const DEFAULT_HOME_SCREEN_ELEMENTS_ORDER: HomeScreenElementKey[] = [
   'approachingConversations',
+  'together',
   'tabletServiceYearSummary',
   'serviceReport',
   'pet',
@@ -622,6 +624,8 @@ export const PREFERENCE_DEFAULTS = {
   scheduleScreenElementsOrder: DEFAULT_SCHEDULE_SCREEN_ELEMENTS_ORDER,
   homeScreenElements: {
     approachingConversations: true,
+    // Not shown until the User adds it (Add Sections or Settings).
+    together: false,
     monthlyRoutine: true,
     tabletServiceYearSummary: true,
     thisWeek: true,
@@ -1456,9 +1460,9 @@ export const migrateDropProgressBarDetailsPreference = (
  * merges shallowly, so an install's saved visibility map replaces the default
  * one whole and a section added later would otherwise read as hidden. An
  * explicit choice is kept. The stamp is left alone: nobody chose this, so a
- * real choice synced from another device still wins. Readers should still treat
- * a missing key as visible (`!== false`), since a device on an older build can
- * sync its map without the key.
+ * real choice synced from another device still wins. Readers should still read
+ * a missing key as the section's default (`isHomeSectionOn`), since a device on
+ * an older build can sync its map without the key.
  */
 const showMissingHomeSection = (
   state: unknown,

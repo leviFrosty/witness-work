@@ -24,6 +24,8 @@ export type HomeTabStackParamList = {
       }
     | undefined
   Settings: undefined
+  /** Beside the iPad sidebar only; elsewhere Buddies is a root stack page. */
+  Buddies: undefined
 }
 
 export type HomeTabStackNavigation =

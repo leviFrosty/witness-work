@@ -2,6 +2,7 @@ import i18n from '@/lib/locales'
 import {
   getEffectiveHomeScreenOrder,
   type HomeScreenElementKey,
+  PREFERENCE_DEFAULTS,
   usePreferences,
 } from '@/stores/preferences'
 import usePet from '@/stores/pet'
@@ -12,6 +13,8 @@ export const homeSectionTitle = (key: HomeScreenElementKey): string => {
   switch (key) {
     case 'approachingConversations':
       return i18n.t('approachingConversations')
+    case 'together':
+      return i18n.t('buddies_together')
     case 'tabletServiceYearSummary':
       return i18n.t('serviceYearSummary')
     case 'serviceReport':
@@ -36,6 +39,8 @@ export type HomeSectionCapabilities = {
   hasAnnualGoal: boolean
   showsTimer: boolean
   mileageTrackingEnabled: boolean | undefined
+  /** Buddies shows for this User (`useBuddiesEnabled`). */
+  buddiesAvailable: boolean
 }
 
 /**
@@ -50,11 +55,13 @@ export const isHomeSectionAvailable = (
     hasAnnualGoal,
     showsTimer,
     mileageTrackingEnabled,
+    buddiesAvailable,
   }: HomeSectionCapabilities
 ) => {
   if (key === 'tabletServiceYearSummary') return isTablet && hasAnnualGoal
   if (key === 'timer') return showsTimer
   if (key === 'mileage') return mileageTrackingEnabled === true
+  if (key === 'together') return buddiesAvailable
   return true
 }
 
@@ -77,6 +84,16 @@ export const moveHomeSection = (
 }
 
 /**
+ * Whether a section's switch is on: the User's choice, or the section's default
+ * if they haven't made one (a map saved before the section existed lacks it).
+ * Together starts off, so the User adds it; the rest start on.
+ */
+export const isHomeSectionOn = (
+  key: HomeScreenElementKey,
+  homeScreenElements: Partial<Record<HomeScreenElementKey, boolean>>
+) => homeScreenElements[key] ?? PREFERENCE_DEFAULTS.homeScreenElements[key]
+
+/**
  * Whether the User shows a section. Before there's a companion, Pet is the
  * offer to adopt one, which "Not now" hides too.
  */
@@ -92,7 +109,7 @@ export const isHomeSectionShown = (
     hasPet: boolean
   }
 ) =>
-  (homeScreenElements[key] ?? true) &&
+  isHomeSectionOn(key, homeScreenElements) &&
   !(key === 'pet' && !hasPet && petPromptDismissed)
 
 /**

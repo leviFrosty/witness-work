@@ -1238,7 +1238,6 @@
   "mytimeImport_invalidFile": "これはMyTimeのバックアップには見えません。MyTimeが作成した.mytimedbファイルを選択して、もう一度お試しください。",
   "mytimeImport_error": "ファイルのインポートで何か問題が起きました。もう一度お試しください。",
   "buddies_title": "バディ",
-  "buddies_requestsWaitingA11y": "バディ、承認待ちのリクエストあり",
   "buddies_unavailableA11y": "バディ、一時的に利用できません",
   "Buddies": "バディ",
   "buddies_emptyTitle": "宣教を一緒に計画しましょう",

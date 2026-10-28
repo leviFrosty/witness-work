@@ -129,3 +129,44 @@ export function buildTogether(input: {
     together: together.sort(byWhen),
   }
 }
+
+/** A `TogetherItem` with the buddy it's with. */
+export type BuddyTogetherItem = TogetherItem & { inboxId: string }
+
+/**
+ * What's planned with any of `buddies` from today on, soonest first, split as
+ * `buildTogether` does. A Plan or Follow-up shared with several buddies shows
+ * once, with the first of them.
+ */
+export function buildTogetherWithBuddies(
+  input: Omit<Parameters<typeof buildTogether>[0], 'inboxId' | 'replyFor'> & {
+    buddies: { inboxId: string }[]
+    /** A buddy's answer to one of this User's share keys. */
+    replyFor: (inboxId: string, shareKey: string) => ReceivedReply | undefined
+  }
+): { needsAnswer: BuddyTogetherItem[]; together: BuddyTogetherItem[] } {
+  const seen = new Set<string>()
+  const needsAnswer: BuddyTogetherItem[] = []
+  const together: BuddyTogetherItem[] = []
+  for (const { inboxId } of input.buddies) {
+    const own = buildTogether({
+      ...input,
+      inboxId,
+      replyFor: (shareKey) => input.replyFor(inboxId, shareKey),
+    })
+    for (const [from, to] of [
+      [own.needsAnswer, needsAnswer],
+      [own.together, together],
+    ] as const) {
+      for (const item of from) {
+        if (seen.has(item.key)) continue
+        seen.add(item.key)
+        to.push({ ...item, inboxId })
+      }
+    }
+  }
+  return {
+    needsAnswer: needsAnswer.sort(byWhen),
+    together: together.sort(byWhen),
+  }
+}

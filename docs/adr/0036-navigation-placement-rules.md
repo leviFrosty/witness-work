@@ -75,6 +75,11 @@ Applied in this release:
 - Edit Cards leaves Progress's header. "Edit Cards" and "Edit Home Screen" are
   labeled buttons after the cards and sections. "Show all days" is the Days
   list's first row, where the days it adds appear.
+- Buddies: a Buddies row under Schedule's title in place of its header button,
+  a Buddies row on the Profile, a Buddies tab in the iPad sidebar, and a
+  Together section (invitations to answer, then the next two weeks with
+  buddies) that Users can add to Home. Home doesn't add it for them: few have a
+  buddy yet.
 
 ### Map: when to bring the tab back
 
@@ -84,18 +89,20 @@ active User drop.
 
 ### Buddies: when it becomes a tab
 
-Buddies gets entry points where its work already is (Home, Schedule, Profile,
-the bell, the iPad sidebar) and becomes the fifth tab only when the Buddies
-screen reaches 20% of weekly active Users, and 10% of weekly active Users have
-an active buddy, for four weeks in a row. The default tab order is reviewed
-then; Schedule is the most-visited tab after Home.
+Buddies gets entry points where its work already is (Schedule, Profile, the
+bell, the iPad sidebar, and Home for Users who add Together) and becomes the
+fifth tab only when the Buddies screen reaches 20% of weekly active Users, and
+10% of weekly active Users have an active buddy, for four weeks in a row. The
+default tab order is reviewed then; Schedule is the most-visited tab after
+Home.
 
 ### Review
 
 Review on January 15, 2027, against: weekly Map reach; Sort & Filter reach
 (`Contacts Sort And Filter` screen views); Settings reach (`SettingsMenu` and
 `Settings` screen views); `progress_cards_customized` and
-`home_screen_customized` by `source`. The fallback for each change is the
+`home_screen_customized` by `source`; Buddies screen reach and
+`buddies_opened` by `source`. The fallback for each change is the
 layout it replaced.
 
 ## Consequences

@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { View } from 'react-native'
 import { useNavigation } from '@react-navigation/native'
 import moment from 'moment'
@@ -32,12 +33,18 @@ import type { TogetherItem } from '@/features/buddies/lib/together'
 export default function BuddyTogetherRow({
   item,
   buddyName,
+  avatar,
   last,
   busy,
   onAnswer,
 }: {
   item: TogetherItem
   buddyName: string
+  /**
+   * Among several buddies' Plans: this buddy's avatar, in place of the icon.
+   * Screen readers hear their name.
+   */
+  avatar?: ReactNode
   last: boolean
   busy: boolean
   onAnswer: (reply: ShareReply) => void
@@ -132,7 +139,13 @@ export default function BuddyTogetherRow({
           },
           ...changeAnswer,
         ]}
-        accessibilityLabel={[title, when, status, replyDelivery]
+        accessibilityLabel={[
+          avatar ? i18n.t('buddies_withName', { name: buddyName }) : undefined,
+          title,
+          when,
+          status,
+          replyDelivery,
+        ]
           .filter(Boolean)
           .join(', ')}
       >
@@ -144,11 +157,13 @@ export default function BuddyTogetherRow({
             paddingRight: item.direction === 'incoming' ? 0 : 15,
           }}
         >
-          <LucideIcon
-            icon={isFollowUp ? UserRoundIcon : CalendarDaysIcon}
-            size={18}
-            color={theme.colors.textAlt}
-          />
+          {avatar ?? (
+            <LucideIcon
+              icon={isFollowUp ? UserRoundIcon : CalendarDaysIcon}
+              size={18}
+              color={theme.colors.textAlt}
+            />
+          )}
           <View style={{ flex: 1, gap: 2 }}>
             <Text
               numberOfLines={1}
@@ -174,7 +189,13 @@ export default function BuddyTogetherRow({
             >
               {status}
               {replyDelivery ? (
-                <Text style={{ color: theme.colors.textAlt }}>
+                // Spans don't inherit the line's size.
+                <Text
+                  style={{
+                    color: theme.colors.textAlt,
+                    fontSize: theme.fontSize('sm'),
+                  }}
+                >
                   {` · ${replyDelivery}`}
                 </Text>
               ) : null}

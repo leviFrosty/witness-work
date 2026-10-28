@@ -74,6 +74,7 @@ describe('Home screen preferences', () => {
   it('puts Quick Actions directly above This Week by default', () => {
     expect(DEFAULT_HOME_SCREEN_ELEMENTS_ORDER).toEqual([
       'approachingConversations',
+      'together',
       'tabletServiceYearSummary',
       'serviceReport',
       'pet',
@@ -83,6 +84,18 @@ describe('Home screen preferences', () => {
       'timer',
       'didYouKnow',
     ])
+  })
+
+  it('places Together right after the Follow-ups for an existing order', () => {
+    const stored = DEFAULT_HOME_SCREEN_ELEMENTS_ORDER.filter(
+      (k) => k !== 'together'
+    )
+    const result = getEffectiveHomeScreenOrder(stored)
+
+    expect(result[result.indexOf('approachingConversations') + 1]).toBe(
+      'together'
+    )
+    expect(result).toEqual(DEFAULT_HOME_SCREEN_ELEMENTS_ORDER)
   })
 
   it('appends missing sections in default order', () => {

@@ -18,6 +18,7 @@ import XView from '@/components/ui/layout/XView'
 import useDevice from '@/hooks/useDevice'
 import ReorderControls from '@/components/ui/ReorderControls'
 import { reorderMenuActions } from '@/features/settings/components/shared/reorderMenuActions'
+import useBuddiesEnabled from '@/features/buddies/hooks/useBuddiesEnabled'
 import ContextMenu from '@/components/ui/ContextMenu'
 import { useMemo } from 'react'
 import {
@@ -72,6 +73,7 @@ const HomeElements = () => {
     set,
   } = usePreferences()
   const { showsTimer, hasAnnualGoal } = usePublisher()
+  const buddiesAvailable = useBuddiesEnabled()
   // Before a companion exists, Pet is the offer on Home (see
   // `isHomeSectionShown`).
   const hasPet = usePet((s) => s.pet !== null)
@@ -94,6 +96,7 @@ const HomeElements = () => {
           hasAnnualGoal,
           showsTimer,
           mileageTrackingEnabled,
+          buddiesAvailable,
         })
       ),
     [
@@ -102,6 +105,7 @@ const HomeElements = () => {
       hasAnnualGoal,
       showsTimer,
       mileageTrackingEnabled,
+      buddiesAvailable,
     ]
   )
 

@@ -6,6 +6,10 @@ import usePublisher from '@/hooks/usePublisher'
 import Constants from 'expo-constants'
 import { View } from 'react-native'
 import ProfileDetailOverlay from '@/features/profile/components/ProfileDetailOverlay'
+import BuddiesEntryRow from '@/features/buddies/components/BuddiesEntryRow'
+import useBuddiesEnabled from '@/features/buddies/hooks/useBuddiesEnabled'
+import { useBuddies } from '@/features/buddies/stores/buddiesStore'
+import { analytics } from '@/lib/analytics'
 import TakeoverEnvironment from '@/app/takeover/TakeoverEnvironment'
 import TakeoverHosts from '@/app/takeover/TakeoverHosts'
 import { useTakeover } from '@/stores/takeover'
@@ -116,6 +120,8 @@ const renderTabScreen = (name: TabOrderKey) => {
 
 const HomeTabStack = () => {
   const { hasSidebar, navigationRail } = useAdaptiveLayout()
+  const buddiesEnabled = useBuddiesEnabled()
+  const buddyRequests = useBuddies((state) => state.incomingClaims.length)
   const developerTools = usePreferences((s) => s.developerTools)
   const storedTabOrder = usePreferences((s) => s.tabOrder)
   const set = usePreferences((s) => s.set)
@@ -216,8 +222,28 @@ const HomeTabStack = () => {
       >
         {/* At most four destinations, in the user's order (Preferences →
             Tab Order). Features join an existing destination (Map in
-            Contacts, Buddies in Schedule) rather than adding tabs. */}
+            Contacts, Buddies in Schedule) rather than adding tabs; the iPad
+            sidebar, which has room, lists Buddies too (ADR 0036). */}
         {tabOrder.map(renderTabScreen)}
+        {hasSidebar && buddiesEnabled && (
+          <Tab.Screen
+            name='Buddies'
+            options={{
+              // Requests waiting for confirmation, as on the Buddies screen.
+              tabBarBadge: buddyRequests > 0 ? buddyRequests : undefined,
+            }}
+            listeners={{
+              tabPress: () =>
+                analytics.capture('buddies_opened', {
+                  source: 'sidebar',
+                  has_requests: buddyRequests > 0,
+                }),
+            }}
+            getComponent={() =>
+              require('@/app/buddies/BuddiesTabScreen').default
+            }
+          />
+        )}
         {developerTools && (
           <Tab.Screen
             name='Tools'
@@ -234,7 +260,15 @@ const HomeTabStack = () => {
         )}
       </Tab.Navigator>
       {/* One instance for every root header's account menu. */}
-      <ProfileDetailOverlay />
+      <ProfileDetailOverlay
+        renderBuddies={(onBeforeNavigate) => (
+          <BuddiesEntryRow
+            source='profile'
+            onBeforeNavigate={onBeforeNavigate}
+            stacked
+          />
+        )}
+      />
       {/* One takeover at a time, through the takeover arbiter (ADR 0021). */}
       <TakeoverHosts
         launchReveal={launch.action === 'update-reveal'}

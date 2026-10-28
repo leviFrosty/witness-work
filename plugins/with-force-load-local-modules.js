@@ -45,6 +45,7 @@ const LOCAL_MODULES = [
   { importName: 'DisplayRegions', className: 'DisplayRegionsModule' },
   { importName: 'SystemMenu', className: 'SystemMenuModule' },
   { importName: 'WindowControls', className: 'WindowControlsModule' },
+  { importName: 'SoundEffects', className: 'SoundEffectsModule' },
   {
     importName: 'AppSwitcherPrivacy',
     className: 'AppSwitcherPrivacyModule',

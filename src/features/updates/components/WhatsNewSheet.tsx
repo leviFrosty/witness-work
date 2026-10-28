@@ -20,6 +20,8 @@ import Constants from 'expo-constants'
 import Badge from '@/components/ui/Badge'
 import semver from 'semver'
 import { tracking } from '@/lib/tracking'
+import UpdateTourCard from '@/features/updates/components/UpdateTourCard'
+import { UPDATE_REVEAL_VERSION } from '@/features/updates/constants/updateReveal'
 
 interface Props {
   /** Its takeover turn (ADR 0021): open while the arbiter shows it. */
@@ -36,11 +38,14 @@ interface Props {
 export const WhatsNewContent = ({
   lastVersion,
   onlyNew,
+  showTourCard,
 }: {
   /** Releases newer than this get the "New" badge. */
   lastVersion: string
   /** List only the releases newer than `lastVersion`. */
   onlyNew?: boolean
+  /** Offer the update reveal's tour above the release that introduced it. */
+  showTourCard?: boolean
 }) => {
   const theme = useTheme()
 
@@ -59,6 +64,9 @@ export const WhatsNewContent = ({
         data={notes}
         renderItem={({ item }) => (
           <View style={{ gap: 10, minHeight: 5 }} key={item.date.toString()}>
+            {showTourCard && semver.eq(item.version, UPDATE_REVEAL_VERSION) && (
+              <UpdateTourCard />
+            )}
             {/* With large text the release's date wraps under its version and
             name instead of running off the edge ("13 days" over the pill). */}
             <View

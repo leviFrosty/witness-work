@@ -121,7 +121,10 @@ export default function FoldSplit({
         ? { width: '100%', flex: 0 }
         : { width: leadingSize.value, flex: 0 }
   )
-  const gapAnimatedStyle = useAnimatedStyle(() => ({ width: gapSize.value }))
+  // One column has no gap, from the first frame on.
+  const gapAnimatedStyle = useAnimatedStyle(() => ({
+    width: fill.value ? 0 : gapSize.value,
+  }))
 
   return (
     <View

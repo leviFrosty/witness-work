@@ -145,125 +145,47 @@ describe('Decorate Room options', () => {
     expect(isRoomChoiceUnlocked('hat', 'bow', none)).toBe(false)
   })
 
-  it('counts the active months a locked option still needs, and whether this month can be one', () => {
-    const months = (
-      activeMonths: number,
-      thisMonthActive: boolean
-    ): RoomUnlocks => ({
-      unlocked: unlockedRoomItems([], UNLOCK_ORDER.slice(0, activeMonths)),
-      mode: 'months',
-      streakKind: 'plans',
-      activeMonths,
-      thisMonthActive,
+  it('says what a locked option costs in the Shop', () => {
+    const unlocks = (stored: readonly string[] = []): RoomUnlocks => ({
+      unlocked: unlockedRoomItems(stored, []),
+      wallet: 0,
     })
-    // bed:hay is first: one active month away, maybe this one.
-    expect(unlockRequirement('bed', 'hay', months(0, true))).toEqual({
-      by: 'months',
-      monthsNeeded: 1,
-      thisMonthCounts: false,
+    expect(unlockRequirement('floor', 'stone', unlocks())).toEqual({
+      by: 'price',
+      price: 14,
     })
-    expect(unlockRequirement('bed', 'hay', months(0, false))).toEqual({
-      by: 'months',
-      monthsNeeded: 1,
-      thisMonthCounts: true,
+    expect(unlockRequirement('floor', 'tile', unlocks())).toEqual({
+      by: 'price',
+      price: 30,
     })
-    // The cushion is now one of the last.
-    expect(unlockRequirement('bed', 'cushion', months(0, true))).toEqual({
-      by: 'months',
-      monthsNeeded: 13,
-      thisMonthCounts: false,
+    expect(unlockRequirement('hat', 'bow', unlocks())).toEqual({
+      by: 'price',
+      price: 10,
     })
-    // The top hat takes ten active months.
-    expect(unlockRequirement('hat', 'tophat', months(2, true))).toEqual({
-      by: 'months',
-      monthsNeeded: 8,
-      thisMonthCounts: false,
-    })
-    // floor:stone is fifth.
-    expect(unlockRequirement('floor', 'stone', months(2, true))).toEqual({
-      by: 'months',
-      monthsNeeded: 3,
-      thisMonthCounts: false,
-    })
-    expect(unlockRequirement('floor', 'stone', months(2, false))).toEqual({
-      by: 'months',
-      monthsNeeded: 3,
-      thisMonthCounts: true,
-    })
-    // Free or already open: no badge.
-    expect(unlockRequirement('floor', 'stone', months(5, true))).toBeNull()
-    expect(unlockRequirement('floor', 'wood', months(0, true))).toBeNull()
-    expect(unlockRequirement('windowTime', 'night', months(0, true))).toBeNull()
-    expect(unlockRequirement('sign', 'plan', months(0, true))).toBeNull()
+    // Owned already, free, or always open: nothing to say.
+    expect(
+      unlockRequirement('floor', 'stone', unlocks(['floor:stone']))
+    ).toBeNull()
+    expect(unlockRequirement('floor', 'wood', unlocks())).toBeNull()
+    expect(unlockRequirement('hat', 'none', unlocks())).toBeNull()
+    expect(unlockRequirement('windowTime', 'night', unlocks())).toBeNull()
+    expect(unlockRequirement('sign', 'plan', unlocks())).toBeNull()
     expect(STARTER_ROOM_ITEMS).toContain('floor:wood')
   })
 
-  it('shows the streak count a locked option opens up at, by streak kind', () => {
-    const streak = (
-      streakKind: RoomUnlocks['streakKind'],
-      stored: readonly string[] = []
-    ): RoomUnlocks => ({
-      unlocked: unlockedRoomItems(stored, []),
-      mode: 'streak',
-      streakKind,
-      activeMonths: 0,
-      thisMonthActive: false,
-    })
-    // floor:stone is fifth: a 7-day or 3-month streak.
-    expect(unlockRequirement('floor', 'stone', streak('plans'))).toEqual({
-      by: 'streak',
-      count: 7,
-    })
-    expect(unlockRequirement('floor', 'stone', streak('months'))).toEqual({
-      by: 'streak',
-      count: 3,
-    })
-    expect(unlockRequirement('floor', 'tile', streak('plans'))).toEqual({
-      by: 'streak',
-      count: 120,
-    })
-    // Stored earlier, so open whatever the streak is now.
-    expect(
-      unlockRequirement('floor', 'stone', streak('plans', ['floor:stone']))
-    ).toBeNull()
-    expect(unlockRequirement('floor', 'wood', streak('plans'))).toBeNull()
-    expect(unlockRequirement('sign', 'plan', streak('plans'))).toBeNull()
-    // Hats: three quick ones, then longer.
-    expect(unlockRequirement('hat', 'bow', streak('plans'))).toEqual({
-      by: 'streak',
-      count: 3,
-    })
-    expect(unlockRequirement('hat', 'beanie', streak('plans'))).toEqual({
-      by: 'streak',
-      count: 9,
-    })
-    expect(unlockRequirement('hat', 'none', streak('plans'))).toBeNull()
-    expect(unlockRequirement('bed', 'cushion', streak('plans'))).toEqual({
-      by: 'streak',
-      count: 60,
-    })
-    expect(unlockRequirement('bed', 'hay', streak('plans'))).toEqual({
-      by: 'streak',
-      count: 1,
-    })
-  })
-
-  it('never says how a locked secret opens up, in either mode', () => {
-    const unlocks = (mode: RoomUnlocks['mode']): RoomUnlocks => ({
+  it('never says how a locked secret opens up, or prices it', () => {
+    const unlocks: RoomUnlocks = {
       unlocked: unlockedRoomItems([], []),
-      mode,
-      streakKind: 'plans',
-      activeMonths: 0,
-      thisMonthActive: false,
-    })
-    expect(unlockRequirement('hat', 'duck', unlocks('streak'))).toEqual({
+      wallet: 999,
+    }
+    expect(unlockRequirement('hat', 'duck', unlocks)).toEqual({
       by: 'secret',
     })
-    expect(unlockRequirement('floor', 'tatami', unlocks('months'))).toEqual({
+    expect(unlockRequirement('floor', 'tatami', unlocks)).toEqual({
       by: 'secret',
     })
     const open: RoomUnlocks = {
-      ...unlocks('streak'),
+      ...unlocks,
       unlocked: unlockedRoomItems(['hat:duck'], []),
     }
     expect(unlockRequirement('hat', 'duck', open)).toBeNull()

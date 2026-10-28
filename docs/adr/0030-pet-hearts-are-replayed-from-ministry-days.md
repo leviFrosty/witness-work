@@ -50,7 +50,9 @@ Publisher reports only whether they shared, and many people can't pioneer.
    hidden streaks switch to months; a `plans` streak with no Plans stays on
    the streak, and the Decorate Room note tells the User to plan.)
 5. **The lamp is the Service Streak** (ADR 0003), shown as brightness only; with
-   streaks hidden it burns at a fixed level.
+   streaks hidden it burns at a fixed level. (Decisions 4 and 5 are superseded
+   by ADR 0035: items are bought in the Shop with coins, and the lamp
+   follows the hearts. Items already earned under decision 4 stay owned.)
 
 ## Consequences
 

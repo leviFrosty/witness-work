@@ -3,11 +3,13 @@ import { AppState, Platform, StyleSheet, View } from 'react-native'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { useReducedMotion } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import RewardStackLayer from '@/components/reward-stack/RewardStackLayer'
 import FullWindowOverlay from '@/components/ui/FullWindowOverlay'
 import { TAB_BAR_HEIGHT } from '@/components/ui/TabBar'
 import ToastStack from '@/components/toast/ToastStack'
 import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
 import useScreenReaderEnabled from '@/hooks/useScreenReaderEnabled'
+import { useRewardStack } from '@/stores/rewardStack'
 import { useTabBarHidden } from '@/stores/tabBarVisibility'
 import { useTakeover } from '@/stores/takeover'
 import {
@@ -22,8 +24,13 @@ import {
  * User's own action answers at the bottom, above the tab bar; unlocks and news
  * stack at the top, below the status bar, and wait while a takeover holds the
  * screen. An unlock or news toast still showing when the app goes to the
- * background leaves, and its feature's tray item keeps it.
+ * background leaves, and its feature's tray item keeps it. What a save earned
+ * plays above the bottom toasts (`RewardStackLayer`), and what was earned
+ * elsewhere over the pet's card.
  */
+/** About a toast's height, plus room above it: where the reward stack sits. */
+const ABOVE_TOAST = 76
+
 export default function ToastHost() {
   const items = useToasts((s) => s.toasts)
   const takingOver = useTakeover((s) => s.arbiter.active !== null)
@@ -33,6 +40,7 @@ export default function ToastHost() {
   const insets = useSafeAreaInsets()
   const { hasBottomBar } = useAdaptiveLayout()
   const tabBarHidden = useTabBarHidden()
+  const rewarding = useRewardStack((s) => s.run !== null)
 
   useEffect(() => {
     const subscription = AppState.addEventListener('change', (state) => {
@@ -44,15 +52,17 @@ export default function ToastHost() {
     return () => subscription.remove()
   }, [])
 
-  // Mounted only while there's a toast: an idle window-level overlay can
-  // interfere with native sheets (see PointerTooltipLayer).
-  if (!items.length) return null
+  // Mounted only while there's a toast or a reward: an idle window-level
+  // overlay can interfere with native sheets (see PointerTooltipLayer).
+  if (!items.length && !rewarding) return null
 
   const top: Toast[] = []
   const bottom: Toast[] = []
   for (const item of items)
     (toastPlacement(item.intent) === 'top' ? top : bottom).push(item)
   const side = Math.max(insets.left, insets.right)
+  const bottomInset =
+    insets.bottom + (hasBottomBar && !tabBarHidden ? TAB_BAR_HEIGHT : 0) + 16
 
   const content = (
     <View
@@ -78,15 +88,20 @@ export default function ToastHost() {
           items={bottom}
           hidden={false}
           // Above the floating tab bar, when there is one.
-          inset={
-            insets.bottom +
-            (hasBottomBar && !tabBarHidden ? TAB_BAR_HEIGHT : 0) +
-            16
-          }
+          inset={bottomInset}
           reduceMotion={reduceMotion}
           screenReader={screenReader}
         />
       )}
+      <RewardStackLayer
+        slot='toast'
+        anchor={{ bottom: bottomInset + ABOVE_TOAST }}
+      />
+      <RewardStackLayer
+        slot='card'
+        anchor={{ top: insets.top + 120 }}
+        compact
+      />
     </View>
   )
   // Over the window on iOS, so it shows above sheets and the one that just

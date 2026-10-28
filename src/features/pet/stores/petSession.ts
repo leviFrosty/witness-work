@@ -27,10 +27,10 @@ export type PetDevOverride = {
   rainbow?: boolean
   lampLevel?: number
   /**
-   * The raw Service Streak count room unlocks read, as if the User had a streak
-   * to grow. Items it opens are shown, never stored.
+   * Coins earned, as if the User's records had earned them; what's bought with
+   * them is stored as usual and comes off.
    */
-  streak?: number
+  wallet?: number
   /** Every secret item opens up, shown, never stored. */
   secrets?: boolean
   window?: { time: TimeOfDay; season: Season }

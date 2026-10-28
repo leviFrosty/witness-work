@@ -4,12 +4,11 @@ import { useIsFocused } from '@react-navigation/native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import type { NativeStackScreenProps } from '@react-navigation/native-stack'
 import {
-  CalendarCheck as CalendarCheckIcon,
-  Flame as FlameIcon,
   PawPrint as PawPrintIcon,
   Pencil as PencilIcon,
   Settings as SettingsIcon,
   Share as ShareIcon,
+  Store as StoreIcon,
 } from 'lucide-react-native'
 import Button from '@/components/ui/Button'
 import IconButton from '@/components/ui/IconButton'
@@ -21,9 +20,9 @@ import { unlockedPart, unlockTab } from '@/features/pet/lib/unlockNews'
 import { settleAllPetUnlocks } from '@/features/pet/stores/petUnlockNews'
 import type { PetVisit, RoomItemId } from '@/types/pet'
 import useTheme from '@/contexts/theme'
+import { usePreferences } from '@/stores/preferences'
 import { analytics } from '@/lib/analytics'
 import i18n from '@/lib/locales'
-import { formatNumber } from '@/lib/numbers'
 import usePet from '@/stores/pet'
 import type { RootStackParamList } from '@/types/rootStack'
 import PetCardHeader from '@/features/pet/components/PetCardHeader'
@@ -31,9 +30,13 @@ import RoomLiveWindowRow from '@/features/pet/components/RoomLiveWindowRow'
 import RoomOptionGrid from '@/features/pet/components/RoomOptionGrid'
 import { ROOM_TAB_ICONS } from '@/features/pet/components/roomTabIcons'
 import usePetRoomScene from '@/features/pet/hooks/usePetRoomScene'
-import { lockedNoteText, roomTabLabel } from '@/features/pet/lib/roomLabels'
-import type { UnlockMode } from '@/features/pet/lib/unlocks'
-import type { StreakKind } from '@/lib/serviceStreak'
+import {
+  currencyInfoText,
+  lockedNoteText,
+  roomTabLabel,
+} from '@/features/pet/lib/roomLabels'
+import type { PetReveal } from '@/features/pet/hooks/usePetReveal'
+import PetWalletCounts from '@/features/pet/components/PetWalletCounts'
 import {
   isLiveWindow,
   isRoomChoiceUnlocked,
@@ -47,7 +50,7 @@ import {
   type RoomUnlocks,
 } from '@/features/pet/lib/roomOptions'
 import { isSecretItem } from '@/features/pet/lib/secretUnlocks'
-import { noteSecretFound } from '@/features/pet/lib/secrets'
+import { noteRoomItemPicked, noteSecretFound } from '@/features/pet/lib/secrets'
 import PetSceneView, {
   type PetSceneHandle,
 } from '@/features/pet/render/PetSceneView'
@@ -137,70 +140,30 @@ function CornerButton({
 }
 
 /**
- * What room items open up by, always shown, even at 0: the Service Streak's
- * flame and count, or the active months in months mode. The info says what it
- * counts and that it's the current value.
+ * The coins left to spend in the Shop, always shown, even at 0, counting to
+ * what's new (`usePetReveal`). The info says how they're earned (ADR 0035).
  */
-function UnlockCurrency({
-  mode,
-  streakKind,
-  streakCount,
-  activeMonths,
+function PetWallet({
+  reveal,
+  monthlyHearts,
 }: {
-  mode: UnlockMode
-  streakKind: StreakKind
-  streakCount: number
-  activeMonths: number
+  reveal: PetReveal
+  monthlyHearts: boolean
 }) {
   const theme = useTheme()
-  const streak = mode === 'streak'
-  const count = streak ? streakCount : activeMonths
-  const lit = streak && streakCount > 0
-  const color = lit ? theme.colors.orange : theme.colors.textAlt
-
+  const streaks = usePreferences((state) => state.showStreaks)
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-      <View
-        accessible
-        accessibilityLabel={
-          streak
-            ? i18n.t('pet.details.streakA11y', { count })
-            : i18n.t('pet.details.activeMonths', { count })
-        }
-        style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}
-      >
-        <LucideIcon
-          icon={streak ? FlameIcon : CalendarCheckIcon}
-          size={16}
-          color={color}
-          fill={lit ? color : undefined}
-        />
-        <Text
-          style={{
-            fontSize: theme.fontSize('md'),
-            fontFamily: theme.fonts.semiBold,
-            fontVariant: ['tabular-nums'],
-          }}
-        >
-          {streak
-            ? formatNumber(count)
-            : i18n.t('pet.details.activeMonths', { count })}
-        </Text>
-      </View>
+      <PetWalletCounts
+        coins={reveal.shown.coins}
+        pulse={reveal.coins}
+        fontSize={theme.fontSize('md')}
+        surface={theme.colors.sheet}
+      />
       <InfoPopover
         inline
-        title={
-          streak
-            ? i18n.t('pet.details.streakInfoTitle')
-            : i18n.t('pet.details.activeMonthsInfoTitle')
-        }
-        description={
-          streak
-            ? streakKind === 'plans'
-              ? i18n.t('pet.details.streakInfoPlans', { count })
-              : i18n.t('pet.details.streakInfoMonths', { count })
-            : i18n.t('pet.details.activeMonthsInfo', { count })
-        }
+        title={i18n.t('pet.currency.infoTitle')}
+        description={currencyInfoText({ monthlyHearts, streaks })}
       />
     </View>
   )
@@ -208,10 +171,10 @@ function UnlockCurrency({
 
 /**
  * The pet's details, opened from its Home card: its name and hearts with Share
- * and Settings beside them, what its room items open up by, Rename / Change
- * pet, buddies' pets visiting today, the room live with a tab per part (its hat
- * first), each part's options drawn from the room itself. A choice applies and
- * saves at once; pulling the sheet down closes it.
+ * and Settings beside them, the coins it has to spend, quick Shop / Rename /
+ * Change pet, buddies' pets visiting today, and the room live with a tab per
+ * part (its hat first), each part's options drawn from the room itself. A
+ * choice applies and saves at once; pulling the sheet down closes it.
  */
 export default function PetRoomScreen({
   navigation,
@@ -261,10 +224,7 @@ export default function PetRoomScreen({
   const room = state.room
   const unlocks: RoomUnlocks = {
     unlocked: state.unlockedItems,
-    mode: state.unlockMode,
-    streakKind: state.streakKind,
-    activeMonths: state.activeMonths,
-    thisMonthActive: state.thisMonthActive,
+    wallet: state.wallet,
   }
 
   const choose = (part: RoomChoicePart, option: string) => {
@@ -273,7 +233,8 @@ export default function PetRoomScreen({
     usePet
       .getState()
       .updateRoom(roomChoicePatch(room, part, option), state.roomDefaults)
-    analytics.capture('pet_room_changed', { part, option })
+    noteRoomItemPicked(`${part}:${option}`)
+    analytics.capture('pet_room_changed', { part, option, from: 'room' })
   }
 
   const setLive = (live: boolean) => {
@@ -283,6 +244,7 @@ export default function PetRoomScreen({
     analytics.capture('pet_room_changed', {
       part: 'window',
       option: live ? 'live' : 'fixed',
+      from: 'room',
     })
   }
 
@@ -295,7 +257,7 @@ export default function PetRoomScreen({
       )
       .map((option) => `${section.part}:${option}`)
   )
-  const lockedNote = lockedNoteText(unlocks.mode, unlocks.streakKind, tab, {
+  const lockedNote = lockedNoteText({
     regular: locked.some((item) => !isSecretItem(item)),
     secret: locked.some(isSecretItem),
   })
@@ -328,7 +290,12 @@ export default function PetRoomScreen({
             style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 12 }}
           >
             <View accessibilityRole='header' style={{ flex: 1 }}>
-              <PetCardHeader name={scene.name} life={scene.life} size='xl' />
+              <PetCardHeader
+                name={scene.name}
+                life={scene.shownLife}
+                size='xl'
+                heartPulse={scene.reveal.heart}
+              />
             </View>
             <View
               style={{
@@ -353,13 +320,16 @@ export default function PetRoomScreen({
               />
             </View>
           </View>
-          <UnlockCurrency
-            mode={unlocks.mode}
-            streakKind={unlocks.streakKind}
-            streakCount={state.streakCount}
-            activeMonths={unlocks.activeMonths}
+          <PetWallet
+            reveal={scene.reveal}
+            monthlyHearts={state.monthlyHearts}
           />
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+            <ActionPill
+              icon={StoreIcon}
+              label={i18n.t('pet.details.shop')}
+              onPress={() => navigation.navigate('PetShop', { from: 'room' })}
+            />
             <ActionPill
               icon={PencilIcon}
               label={i18n.t('pet.details.rename')}
@@ -447,6 +417,12 @@ export default function PetRoomScreen({
               thumbBase={scene.thumbBase}
               unlocks={unlocks}
               onSelect={(option) => choose(section.part, option)}
+              onLockedPress={(option) =>
+                navigation.navigate('PetShop', {
+                  focus: `${section.part}:${option}`,
+                  from: 'locked',
+                })
+              }
             />
           ))}
         </View>

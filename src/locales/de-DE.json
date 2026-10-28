@@ -4886,30 +4886,8 @@
           "tam": "Tam"
         }
       },
-      "unlockMonthsMore": {
-        "one": "{{count}} weiterer Monat",
-        "other": "{{count}} weitere Monate"
-      },
-      "unlockMonthsHow": {
-        "fromThisMonth": {
-          "one": "Wird freigeschaltet, sobald Sie in diesem Monat Zeit erfassen oder einen Besuch oder Plan speichern.",
-          "other": "Wird nach {{count}} Monaten freigeschaltet, in denen Sie Zeit erfassen oder einen Besuch oder Plan speichern, diesen Monat eingeschlossen."
-        },
-        "fromNextMonth": {
-          "one": "Wird in dem nächsten Monat freigeschaltet, in dem Sie Zeit erfassen oder einen Besuch oder Plan speichern.",
-          "other": "Wird nach {{count}} weiteren Monaten freigeschaltet, in denen Sie Zeit erfassen oder einen Besuch oder Plan speichern, beginnend mit dem nächsten Monat."
-        }
-      },
-      "unlockAtStreak": {
-        "one": "Bei einer Serie von {{count}}",
-        "other": "Bei einer Serie von {{count}}"
-      },
       "lockedA11y": "{{option}}, gesperrt. {{when}}",
       "unlockNote": {
-        "streakPlans": "Jeder Gegenstand wird freigeschaltet, wenn Ihre Serie seine Zahl erreicht. Planen Sie Ihren Predigtdienst und halten Sie Ihre Pläne ein, um sie zu verlängern.",
-        "streakMonths": "Jeder Gegenstand wird freigeschaltet, wenn Ihre Serie seine Zahl erreicht. Nehmen Sie jeden Monat am Predigtdienst teil, um sie zu verlängern.",
-        "months": "In jedem Monat, in dem Sie Zeit erfassen oder einen Besuch oder Plan speichern, wird ein weiterer freigeschaltet.",
-        "monthsHats": "Im ersten Monat, in dem Sie Zeit erfassen oder einen Besuch oder Plan speichern, werden drei freigeschaltet, danach in jedem weiteren Monat einer.",
         "secrets": "Manche Gegenstände sind Geheimnisse. Sie tauchen unterwegs auf.",
         "withSecrets": "{{note}} Manche Gegenstände sind Geheimnisse. Sie tauchen unterwegs auf."
       },
@@ -4927,13 +4905,6 @@
       "rename": "Umbenennen",
       "change": "Haustier ändern",
       "share": "Teilen",
-      "streakA11y": "Serie: {{count}}",
-      "streakInfoTitle": "Ihre Serie",
-      "streakInfoPlans": "Ihre Serie liegt gerade bei {{count}}. Jeder Plan, den Sie einhalten (an dem Tag ist irgendeine Zeit erfasst), zählt 1 dazu, egal wie viele Tage zwischen Ihren Plänen liegen. Verpassen Sie einen, beginnt sie von vorn. Zeit an einem Tag ohne Plan zählt nicht dazu.",
-      "streakInfoMonths": "Ihre Serie liegt gerade bei {{count}}. Sie zählt die Monate in Folge, in denen Sie im Predigtdienst waren.",
-      "activeMonths": "Aktive Monate: {{count}}",
-      "activeMonthsInfoTitle": "Aktive Monate",
-      "activeMonthsInfo": "Bisher sind es {{count}}. Ein Monat zählt, wenn Sie darin nach der Adoption Ihres Haustiers Zeit erfassen oder einen Besuch oder Plan speichern. Die Monate müssen nicht aufeinanderfolgen.",
       "settings": "Einstellungen"
     },
     "intro": {
@@ -4941,12 +4912,6 @@
         "title": "Gehen Sie hinaus, füllen Sie seine Herzen",
         "body": "Jeder Tag, an dem Sie Dienstaktivität erfassen, fügt ein Herz hinzu. Wenn Sie nichts mehr erfassen, leeren sich die Herzen langsam.",
         "bodyMonths": "Jeder Monat, in dem Sie Dienstaktivität erfassen, füllt alle Herzen. Lassen Sie einen Monat aus, leeren sie sich langsam."
-      },
-      "streak": {
-        "title": "Verlängern Sie Ihre Serie",
-        "plans": "Planen Sie Ihren Predigtdienst und halten Sie Ihre Pläne ein, um Ihre Dienstserie zu verlängern. Die Lampe brennt heller, und neue Hüte und Zimmergegenstände werden freigeschaltet.",
-        "months": "Nehmen Sie jeden Monat am Predigtdienst teil, um Ihre Serie zu verlängern. Die Lampe brennt heller, und neue Hüte und Zimmergegenstände werden freigeschaltet.",
-        "noStreak": "In jedem Monat, in dem Sie im Dienst sind, werden neue Hüte und Zimmergegenstände freigeschaltet."
       },
       "decorate": {
         "title": "Machen Sie es zu Ihrem",

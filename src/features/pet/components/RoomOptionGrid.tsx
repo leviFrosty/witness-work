@@ -1,14 +1,13 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { View } from 'react-native'
-import { Flame as FlameIcon } from 'lucide-react-native'
+import { useIsFocused } from '@react-navigation/native'
 import Button from '@/components/ui/Button'
-import LucideIcon from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
 import Popover from '@/components/ui/Popover'
 import useTheme from '@/contexts/theme'
 import { analytics } from '@/lib/analytics'
 import i18n from '@/lib/locales'
-import type { PetRoomSettings } from '@/types/pet'
+import { STARTER_ROOM_ITEMS, type PetRoomSettings } from '@/types/pet'
 import { resolveRoom, type SceneInput } from '@/features/pet/art'
 import type { ResolvedWindow } from '@/features/pet/lib/liveWindow'
 import {
@@ -30,9 +29,8 @@ import {
   type RoomUnlocks,
   type UnlockRequirement,
 } from '@/features/pet/lib/roomOptions'
-import { isSecretItem } from '@/features/pet/lib/secretUnlocks'
-import { markSecretItemsSeen, secretItemSeen } from '@/features/pet/lib/secrets'
-import { usePetSession } from '@/features/pet/stores/petSession'
+import { noteRoomItemPicked, roomItemPicked } from '@/features/pet/lib/secrets'
+import { CoinIcon } from '@/features/pet/components/ShopPixels'
 import RoomOptionThumb, {
   type ThumbSilhouette,
 } from '@/features/pet/components/RoomOptionThumb'
@@ -40,21 +38,24 @@ import RoomOptionThumb, {
 const GAP = 10
 const TOOLTIP_WIDTH = 240
 
-/** The secret options of `part` that are open but this install hasn't shown. */
-function unseenSecrets(
+/**
+ * Whether an owned `option` of `part` says "New": not a starter, not the one in
+ * the room, and never picked on this install (ADR 0035).
+ */
+function isNewOption(
   part: RoomChoicePart,
-  options: readonly string[],
-  unlocked: ReadonlySet<string>
-): Set<string> {
-  return new Set(
-    options.filter((option) => {
-      const item = `${part}:${option}`
-      return isSecretItem(item) && unlocked.has(item) && !secretItemSeen(item)
-    })
+  option: string,
+  selected: string
+): boolean {
+  const item = `${part}:${option}`
+  return (
+    option !== selected &&
+    !(STARTER_ROOM_ITEMS as readonly string[]).includes(item) &&
+    !roomItemPicked(item)
   )
 }
 
-/** The small pill over a cell's top corner: how it opens up, or "New". */
+/** The small pill over a cell's top corner: its price, a secret's "?", or "New". */
 function CornerPill({ children }: { children: ReactNode }) {
   return (
     <View
@@ -79,10 +80,9 @@ function CornerPill({ children }: { children: ReactNode }) {
 /**
  * One section of Decorate Room: its options as two columns of thumbnails drawn
  * from the room itself, the current one ringed. Locked options are dimmed with
- * how they open up (a flame and the streak count, or the month); a locked
- * secret shows only its silhouette and a question mark. Tapping a locked one
- * says how it opens up (a secret never says). A secret that opened up since
- * this install last showed it says "New".
+ * their Shop price, and tapping one opens it in the Shop; a locked secret shows
+ * only its silhouette and a question mark, and tapping it never says how it
+ * opens up. An owned item the User hasn't picked yet says "New".
  */
 export default function RoomOptionGrid({
   section,
@@ -91,6 +91,7 @@ export default function RoomOptionGrid({
   thumbBase,
   unlocks,
   onSelect,
+  onLockedPress,
 }: {
   section: RoomChoiceSection
   room: PetRoomSettings
@@ -99,6 +100,8 @@ export default function RoomOptionGrid({
   thumbBase: Omit<SceneInput, 'room'>
   unlocks: RoomUnlocks
   onSelect: (option: string) => void
+  /** A locked option with a price was tapped: show it in the Shop. */
+  onLockedPress: (option: string) => void
 }) {
   const theme = useTheme()
   const [width, setWidth] = useState(0)
@@ -108,22 +111,12 @@ export default function RoomOptionGrid({
   const heading = roomSectionLabel(part)
   const radius = theme.numbers.borderRadiusMd
 
-  // Worked out once, so "New" stays while the section is up. While the dev
-  // harness opens every secret (`override({ secrets: true })`), they say "New"
-  // without being noted as shown, so they say it again when they really open.
-  const fakedSecrets = usePetSession((s) =>
-    __DEV__ ? s.devOverride?.secrets === true : false
-  )
-  const [fresh] = useState(() => ({
-    options: unseenSecrets(part, options, unlocks.unlocked),
-    note: !fakedSecrets,
-  }))
+  // What's in the room was picked, even before picks were noted, so it never
+  // says "New" once swapped out. Read again on coming back from the Shop.
   useEffect(() => {
-    if (fresh.note && fresh.options.size)
-      markSecretItemsSeen(
-        [...fresh.options].map((option) => `${part}:${option}`)
-      )
-  }, [fresh, part])
+    noteRoomItemPicked(`${part}:${selected}`)
+  }, [part, selected])
+  useIsFocused()
 
   const sceneOf = (settings: PetRoomSettings): SceneInput => ({
     ...thumbBase,
@@ -177,7 +170,7 @@ export default function RoomOptionGrid({
             const requirement = unlockRequirement(part, option, unlocks)
             const open = requirement === null
             const secret = requirement?.by === 'secret'
-            const isNew = open && fresh.options.has(option)
+            const isNew = open && isNewOption(part, option, selected)
             const label = roomOptionLabel(part, option)
 
             let input: SceneInput
@@ -220,14 +213,7 @@ export default function RoomOptionGrid({
                 </Text>
                 {requirement && (
                   <CornerPill>
-                    {requirement.by === 'streak' && (
-                      <LucideIcon
-                        icon={FlameIcon}
-                        size={12}
-                        color={theme.colors.orange}
-                        fill={theme.colors.orange}
-                      />
-                    )}
+                    {requirement.by === 'price' && <CoinIcon />}
                     <Text
                       style={{
                         fontSize: theme.fontSize('xs'),
@@ -276,6 +262,28 @@ export default function RoomOptionGrid({
                       ? i18n.t('pet.room.secret.newA11y', { option: label })
                       : label
                   }
+                  style={cellStyle}
+                >
+                  {content}
+                </Button>
+              )
+
+            if (!secret)
+              return (
+                <Button
+                  key={option}
+                  onPress={() => {
+                    analytics.capture('pet_room_locked_tapped', {
+                      part,
+                      secret,
+                    })
+                    onLockedPress(option)
+                  }}
+                  accessibilityRole='button'
+                  accessibilityLabel={i18n.t('pet.room.lockedA11y', {
+                    option: label,
+                    when: unlockRequirementText(requirement),
+                  })}
                   style={cellStyle}
                 >
                   {content}

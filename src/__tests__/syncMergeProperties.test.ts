@@ -73,18 +73,23 @@ const ALL_LISTS: [keyof DeviceState, keyof DeviceState][] = [
 ]
 
 /**
- * `device` without its pet's wakes, keepsakes and earned items. Each merge
- * unions them only over the copies it sees of the companion that wins, newer
- * than any tombstone it sees (`mergePetHistory`). So a copy that first meets a
- * release, or another adoption that wins for now, adds nothing, while meeting
- * the eventual winner first adds its history: the result depends on the order
- * until that copy's file is pulled again.
+ * `device` without its pet's wakes, keepsakes, earned items and purchases. Each
+ * merge unions them only over the copies it sees of the companion that wins,
+ * newer than any tombstone it sees (`mergePetHistory`). So a copy that first
+ * meets a release, or another adoption that wins for now, adds nothing, while
+ * meeting the eventual winner first adds its history: the result depends on the
+ * order until that copy's file is pulled again.
  */
 const withoutPetHistory = (device: DeviceState): DeviceState => ({
   ...device,
   pets: device.pets.map(
-    ({ wakes: _w, keepsakes: _k, earnedRoomItems: _e, ...pet }) =>
-      pet as DeviceState['pets'][number]
+    ({
+      wakes: _w,
+      keepsakes: _k,
+      earnedRoomItems: _e,
+      purchases: _p,
+      ...pet
+    }) => pet as DeviceState['pets'][number]
   ),
 })
 

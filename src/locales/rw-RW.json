@@ -4886,30 +4886,8 @@
           "tam": "Tam"
         }
       },
-      "unlockMonthsMore": {
-        "one": "ukwezi {{count}} kurenzeho",
-        "other": "amezi {{count}} arenzeho"
-      },
-      "unlockMonthsHow": {
-        "fromThisMonth": {
-          "one": "Irakingurwa nyuma yo kwandika igihe cyangwa kubika gusura cyangwa gahunda muri uku kwezi.",
-          "other": "Irakingurwa nyuma y'amezi {{count}} wanditsemo igihe cyangwa ubitsemo gusura cyangwa gahunda, harimo n'uku kwezi."
-        },
-        "fromNextMonth": {
-          "one": "Irakingurwa mu kwezi gukurikira uzandikamo igihe cyangwa ugakoramo gusura cyangwa gahunda.",
-          "other": "Irakingurwa nyuma y'andi mezi {{count}} uzandikamo igihe cyangwa ugakoramo gusura cyangwa gahunda, uhereye ku kwezi gutaha."
-        }
-      },
-      "unlockAtStreak": {
-        "one": "Ku rukurikirane rwa {{count}}",
-        "other": "Ku rukurikirane rwa {{count}}"
-      },
       "lockedA11y": "{{option}}, bikinze. {{when}}",
       "unlockNote": {
-        "streakPlans": "Buri kintu gikingurwa urukurikirane rwawe rugeze ku mubare wacyo. Tegura umurimo wawe kandi ubahirize gahunda zawe kugira ngo urukure.",
-        "streakMonths": "Buri kintu gikingurwa urukurikirane rwawe rugeze ku mubare wacyo. Bwiriza buri kwezi kugira ngo urukure.",
-        "months": "Ikindi kimwe gikingurwa buri kwezi wandikamo igihe cyangwa ubitsemo gusura cyangwa gahunda.",
-        "monthsHats": "Bitatu bikingurwa mu kwezi kwa mbere wandikamo igihe cyangwa ubitsemo gusura cyangwa gahunda, hanyuma ikindi kimwe buri kwezi ubikoze.",
         "secrets": "Ibindi bintu ni ibanga. Bigaragara uko ugenda.",
         "withSecrets": "{{note}} Ibindi bintu ni ibanga. Bigaragara uko ugenda."
       },
@@ -4927,13 +4905,6 @@
       "rename": "Hindura izina",
       "change": "Hindura itungo",
       "share": "Sangiza",
-      "streakA11y": "Urukurikirane: {{count}}",
-      "streakInfoTitle": "Urukurikirane rwawe",
-      "streakInfoPlans": "Urukurikirane rwawe ubu ni {{count}}. Buri gahunda wubahirije (wanditse igihe icyo ari cyo cyose kuri uwo munsi) yongeraho 1, uko iminsi iri hagati ya gahunda zawe yaba ingana kose. Nusiba imwe, rwongera gutangira. Igihe wanditse ku munsi udafite gahunda ntikirwongera.",
-      "streakInfoMonths": "Urukurikirane rwawe ubu ni {{count}}. Rubara amezi akurikiranye wifatanyije mu murimo wo kubwiriza.",
-      "activeMonths": "Amezi wakoreyemo: {{count}}",
-      "activeMonthsInfoTitle": "Amezi wakoreyemo",
-      "activeMonthsInfo": "Kugeza ubu ufite {{count}}. Ukwezi kubarwa iyo wanditsemo igihe cyangwa ukabikamo gusura cyangwa gahunda nyuma yo gutora itungo ryawe. Si ngombwa ko amezi akurikirana.",
       "settings": "Igenamiterere"
     },
     "intro": {
@@ -4941,12 +4912,6 @@
         "title": "Genda kubwiriza, wuzuze imitima yaryo",
         "body": "Buri munsi wandikaho ibyo wakoze mu murimo wongera umutima umwe. Nureka kwandika, imitima igenda ishira buhoro.",
         "bodyMonths": "Buri kwezi wandikaho ibyo wakoze mu murimo wuzuza imitima yose. Nusiba ukwezi, igenda ishira buhoro."
-      },
-      "streak": {
-        "title": "Ongera urukurikirane rwawe",
-        "plans": "Tegura umurimo wawe kandi ubahirize gahunda zawe kugira ngo wongere Urukurikirane rw'umurimo. Itara rirarushaho kwaka, kandi ingofero n'ibintu bishya byo mu cyumba birakingurwa.",
-        "months": "Bwiriza buri kwezi kugira ngo wongere urukurikirane rwawe. Itara rirarushaho kwaka, kandi ingofero n'ibintu bishya byo mu cyumba birakingurwa.",
-        "noStreak": "Buri kwezi ugiye kubwiriza, ingofero n'ibintu bishya byo mu cyumba birakingurwa."
       },
       "decorate": {
         "title": "Rigire iryawe",

@@ -6,7 +6,9 @@ import {
 } from '@/lib/roleHistory'
 import {
   serviceStreak,
+  streakHistory,
   type ServiceStreak,
+  type StreakHistory,
   type StreakRecords,
 } from '@/lib/serviceStreak'
 import { usePreferences } from '@/stores/preferences'
@@ -21,6 +23,16 @@ export function serviceStreakFor(
 ): ServiceStreak {
   const role = roleForMonth(prefs.roleHistory, prefs.role, calendarMonthOf(now))
   return serviceStreak(getStreakKind(role), records, now)
+}
+
+/** The Service Streak's history (`streakHistory`), by this month's role. */
+export function streakHistoryFor(
+  prefs: { role: Publisher; roleHistory: RoleHistory | null },
+  records: StreakRecords,
+  now: Date = new Date()
+): StreakHistory {
+  const role = roleForMonth(prefs.roleHistory, prefs.role, calendarMonthOf(now))
+  return streakHistory(getStreakKind(role), records, now)
 }
 
 /**

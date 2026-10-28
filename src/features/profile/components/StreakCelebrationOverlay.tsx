@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { AccessibilityInfo, Pressable, StyleSheet, View } from 'react-native'
 import { Canvas, Circle, RadialGradient, vec } from '@shopify/react-native-skia'
 import { Flame as FlameIcon } from 'lucide-react-native'
@@ -14,7 +14,9 @@ import Animated, {
   withSpring,
   withTiming,
 } from 'react-native-reanimated'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { scheduleOnRN } from 'react-native-worklets'
+import RewardStackLayer from '@/components/reward-stack/RewardStackLayer'
 import FullWindowOverlay from '@/components/ui/FullWindowOverlay'
 import LucideIcon from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
@@ -23,6 +25,12 @@ import Haptics from '@/lib/haptics'
 import i18n from '@/lib/locales'
 import { formatNumber } from '@/lib/numbers'
 import { STREAK_MIN, type StreakKind } from '@/lib/serviceStreak'
+import {
+  claimRewardSlot,
+  rewardHoldsCelebration,
+  skipReward,
+  useRewardStack,
+} from '@/stores/rewardStack'
 
 /** The beats of the celebration, in ms from opening. */
 const T = {
@@ -37,6 +45,12 @@ const T = {
   exit: 320,
 }
 const STAGE = 220
+/** Room kept below the count for a reward stack playing here. */
+const STACK_ROOM = 190
+/** The least room under that stack, for a system bar the insets miss. */
+const STACK_FLOOR = 16
+/** How often it checks whether the stack is done with it, once it's time. */
+const HOLD_CHECK_MS = 400
 /** The soft light behind the flame. */
 const GLOW = 210
 const NUMBER_HEIGHT = 88
@@ -64,7 +78,9 @@ interface Props {
 /**
  * The Service Streak reaching a milestone: the flame flares, sparks fly, and
  * the count rolls over to its new number. Tap anywhere to move on; it leaves on
- * its own after a few seconds.
+ * its own after a few seconds. When the save that reached it earned the pet
+ * thread, the milestone's line stomps onto that reward stack here, and the
+ * celebration lifts as the total drops back into the toast.
  */
 export default function StreakCelebrationOverlay({
   count,
@@ -82,6 +98,12 @@ export default function StreakCelebrationOverlay({
   const title = useSharedValue(0)
   const caption = useSharedValue(0)
   const leaving = useRef(false)
+  const insets = useSafeAreaInsets()
+  // A reward line waits to play here: room for it below the count.
+  const [stacked] = useState(() => {
+    const { run } = useRewardStack.getState()
+    return !!run?.lines.slice(run.played).some((line) => line.celebration)
+  })
 
   const headline = i18n.t(
     count === STREAK_MIN
@@ -103,26 +125,31 @@ export default function StreakCelebrationOverlay({
     })
   }
 
+  const leaveNow = useRef(leave)
+  useEffect(() => {
+    leaveNow.current = leave
+  })
+  useEffect(() => claimRewardSlot(() => leaveNow.current()), [])
+
   useEffect(() => {
     AccessibilityInfo.announceForAccessibility(
       // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
       i18n.t('streakCelebrationAnnouncement', { headline, count })
     )
-    // In, then out on its own unless a tap sends it off sooner.
-    backdrop.value = withSequence(
-      withTiming(1, { duration: T.backdrop, easing: EASE_OUT }),
-      withDelay(
-        T.hold - T.backdrop,
-        withTiming(0, { duration: T.exit }, (finished) => {
-          if (finished) scheduleOnRN(onDone)
-        })
-      )
-    )
+    // In, then out on its own unless a tap sends it off sooner, or a reward
+    // stack playing here holds it until it drops back into the toast.
+    backdrop.value = withTiming(1, { duration: T.backdrop, easing: EASE_OUT })
     title.value = withDelay(T.title, withTiming(1, { duration: 420 }))
     caption.value = withDelay(T.caption, withTiming(1, { duration: 420 }))
     const timers = [
       setTimeout(() => void Haptics.success().catch(() => {}), 160),
     ]
+    const leaveWhenFree = () => {
+      if (rewardHoldsCelebration())
+        timers.push(setTimeout(leaveWhenFree, HOLD_CHECK_MS))
+      else leaveNow.current()
+    }
+    timers.push(setTimeout(leaveWhenFree, T.hold))
     if (!reduceMotion) {
       flame.value = withDelay(
         T.flame,
@@ -203,11 +230,18 @@ export default function StreakCelebrationOverlay({
       >
         <Pressable
           style={StyleSheet.absoluteFill}
-          onPress={leave}
+          onPress={() => {
+            // A tap skips everything, the reward dropping back included.
+            skipReward()
+            leave()
+          }}
           accessibilityRole='button'
           accessibilityLabel={i18n.t('close')}
         />
-        <View style={styles.content} pointerEvents='none'>
+        <View
+          style={[styles.content, stacked && { paddingBottom: STACK_ROOM }]}
+          pointerEvents='none'
+        >
           <View style={styles.stage}>
             {!reduceMotion && (
               <>
@@ -265,6 +299,11 @@ export default function StreakCelebrationOverlay({
             </Text>
           </Animated.View>
         </View>
+        <RewardStackLayer
+          slot='celebration'
+          // Android's modal reads no inset for its gesture bar: keep clear.
+          anchor={{ bottom: Math.max(insets.bottom, STACK_FLOOR) + 48 }}
+        />
       </Animated.View>
     </FullWindowOverlay>
   )

@@ -4886,30 +4886,8 @@
           "tam": "Tam"
         }
       },
-      "unlockMonthsMore": {
-        "one": "encore {{count}} mois",
-        "other": "encore {{count}} mois"
-      },
-      "unlockMonthsHow": {
-        "fromThisMonth": {
-          "one": "Se débloque après {{count}} mois où vous enregistrez du temps, une visite ou un plan, ce mois-ci inclus.",
-          "other": "Se débloque après {{count}} mois où vous enregistrez du temps, une visite ou un plan, ce mois-ci inclus."
-        },
-        "fromNextMonth": {
-          "one": "Se débloque après {{count}} autre mois où vous enregistrez du temps, une visite ou un plan, à partir du mois prochain.",
-          "other": "Se débloque après {{count}} autres mois où vous enregistrez du temps, une visite ou un plan, à partir du mois prochain."
-        }
-      },
-      "unlockAtStreak": {
-        "one": "À une série de {{count}}",
-        "other": "À une série de {{count}}"
-      },
       "lockedA11y": "{{option}}, verrouillé. {{when}}",
       "unlockNote": {
-        "streakPlans": "Chaque élément se débloque quand votre série atteint son numéro. Planifiez votre ministère et tenez vos plans pour l’allonger.",
-        "streakMonths": "Chaque élément se débloque quand votre série atteint son numéro. Participez au ministère chaque mois pour l’allonger.",
-        "months": "Un de plus se débloque chaque mois où vous enregistrez du temps, une visite ou un plan.",
-        "monthsHats": "Trois se débloquent le premier mois où vous enregistrez du temps, une visite ou un plan, puis un de plus chaque mois où vous le faites.",
         "secrets": "Certains éléments sont secrets. Ils apparaissent en chemin.",
         "withSecrets": "{{note}} Certains éléments sont secrets. Ils apparaissent en chemin."
       },
@@ -4927,13 +4905,6 @@
       "rename": "Renommer",
       "change": "Changer d’animal",
       "share": "Partager",
-      "streakA11y": "Série : {{count}}",
-      "streakInfoTitle": "Votre série",
-      "streakInfoPlans": "Votre série est actuellement de {{count}}. Chaque plan tenu (du temps enregistré ce jour-là) ajoute 1, quel que soit l’écart entre vos plans. Si vous en manquez un, elle repart de zéro. Le temps enregistré un jour sans plan ne compte pas.",
-      "streakInfoMonths": "Votre série est actuellement de {{count}}. Elle compte les mois d’affilée où vous avez participé au ministère.",
-      "activeMonths": "Mois actifs : {{count}}",
-      "activeMonthsInfoTitle": "Mois actifs",
-      "activeMonthsInfo": "Vous en avez {{count}} pour l’instant. Un mois compte quand vous y enregistrez du temps, une visite ou un plan après avoir adopté votre animal. Les mois n’ont pas besoin d’être consécutifs.",
       "settings": "Paramètres"
     },
     "intro": {
@@ -4941,12 +4912,6 @@
         "title": "Sortez, remplissez ses cœurs",
         "body": "Chaque jour où vous enregistrez une activité de service ajoute un cœur. Si vous arrêtez d’enregistrer, les cœurs se vident lentement.",
         "bodyMonths": "Chaque mois où vous enregistrez une activité de service remplit tous ses cœurs. Si vous sautez un mois, ils se vident lentement."
-      },
-      "streak": {
-        "title": "Allongez votre série",
-        "plans": "Planifiez votre ministère et tenez vos plans pour allonger votre série de service. La lampe brille plus fort, et de nouveaux chapeaux et éléments de chambre se débloquent.",
-        "months": "Participez au ministère chaque mois pour allonger votre série. La lampe brille plus fort, et de nouveaux chapeaux et éléments de chambre se débloquent.",
-        "noStreak": "Chaque mois où vous sortez, de nouveaux chapeaux et éléments de chambre se débloquent."
       },
       "decorate": {
         "title": "Personnalisez-le",

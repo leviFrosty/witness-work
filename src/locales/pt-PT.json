@@ -4886,30 +4886,8 @@
           "tam": "Tam"
         }
       },
-      "unlockMonthsMore": {
-        "one": "mais {{count}} mês",
-        "other": "mais {{count}} meses"
-      },
-      "unlockMonthsHow": {
-        "fromThisMonth": {
-          "one": "Abre quando registar tempo ou guardar uma visita ou um plano este mês.",
-          "other": "Abre após {{count}} meses em que registe tempo ou guarde uma visita ou um plano, incluindo este mês."
-        },
-        "fromNextMonth": {
-          "one": "Abre no próximo mês em que registar tempo ou guardar uma visita ou um plano.",
-          "other": "Abre após mais {{count}} meses em que registe tempo ou guarde uma visita ou um plano, a partir do próximo mês."
-        }
-      },
-      "unlockAtStreak": {
-        "one": "Com uma sequência de {{count}}",
-        "other": "Com uma sequência de {{count}}"
-      },
       "lockedA11y": "{{option}}, bloqueado. {{when}}",
       "unlockNote": {
-        "streakPlans": "Cada item abre quando a sua sequência chega ao respetivo número. Planeie o seu ministério e cumpra os seus planos para a aumentar.",
-        "streakMonths": "Cada item abre quando a sua sequência chega ao respetivo número. Participe no ministério todos os meses para a aumentar.",
-        "months": "Abre mais um por cada mês em que registar tempo ou guardar uma visita ou um plano.",
-        "monthsHats": "Abrem três no primeiro mês em que registar tempo ou guardar uma visita ou um plano, e depois mais um por cada mês em que o fizer.",
         "secrets": "Alguns itens são segredos. Aparecem pelo caminho.",
         "withSecrets": "{{note}} Alguns itens são segredos. Aparecem pelo caminho."
       },
@@ -4927,13 +4905,6 @@
       "rename": "Mudar o nome",
       "change": "Mudar de mascote",
       "share": "Partilhar",
-      "streakA11y": "Sequência: {{count}}",
-      "streakInfoTitle": "A sua sequência",
-      "streakInfoPlans": "A sua sequência está agora em {{count}}. Cada plano que cumpre (com algum tempo registado nesse dia) soma 1, independentemente de quantos dias separem os seus planos. Se falhar um, recomeça do zero. O tempo registado num dia sem plano não conta.",
-      "streakInfoMonths": "A sua sequência está agora em {{count}}. Conta os meses seguidos em que participou no ministério.",
-      "activeMonths": "Meses ativos: {{count}}",
-      "activeMonthsInfoTitle": "Meses ativos",
-      "activeMonthsInfo": "Tem {{count}} até agora. Um mês conta quando regista tempo ou guarda uma visita ou um plano nesse mês depois de adotar a sua mascote. Os meses não precisam de ser seguidos.",
       "settings": "Definições"
     },
     "intro": {
@@ -4941,12 +4912,6 @@
         "title": "Saia para o serviço e encha os seus corações",
         "body": "Cada dia em que registar atividade de serviço soma um coração. Se deixar de registar, os corações vão diminuindo aos poucos.",
         "bodyMonths": "Cada mês em que registar atividade de serviço enche todos os corações. Se falhar um mês, vão diminuindo aos poucos."
-      },
-      "streak": {
-        "title": "Aumente a sua sequência",
-        "plans": "Planeie o seu ministério e cumpra os seus planos para aumentar a sua Sequência de Serviço. A luz fica mais forte e abrem-se novos chapéus e itens para o quarto.",
-        "months": "Participe no ministério todos os meses para aumentar a sua sequência. A luz fica mais forte e abrem-se novos chapéus e itens para o quarto.",
-        "noStreak": "Em cada mês em que sair para o serviço, abrem-se novos chapéus e itens para o quarto."
       },
       "decorate": {
         "title": "Torne-o seu",

@@ -1,5 +1,4 @@
 import useMileage from '@/stores/mileage'
-import usePet from '@/stores/pet'
 import {
   Bell as BellIcon,
   BellRing as BellRingIcon,
@@ -15,7 +14,6 @@ import {
   HeartHandshake as HeartHandshakeIcon,
   KeyRound as KeyRoundIcon,
   PartyPopper as PartyPopperIcon,
-  PawPrint as PawPrintIcon,
   RefreshCcw as RefreshCcwIcon,
   RotateCw as RotateCwIcon,
   Smartphone as SmartphoneIcon,
@@ -107,6 +105,7 @@ import DangerZoneTools from '@/app/navigation/tools/DangerZoneTools'
 import BuddiesTools from '@/app/navigation/tools/BuddiesTools'
 import BadgesTools from '@/app/navigation/tools/BadgesTools'
 import LayoutDirectionTools from '@/app/navigation/tools/LayoutDirectionTools'
+import PetTools from '@/app/navigation/tools/PetTools'
 import StreakTools from '@/app/navigation/tools/StreakTools'
 import ToastTools from '@/app/navigation/tools/ToastTools'
 import ScribeTools from '@/app/dev-harness/ScribeTools'
@@ -229,7 +228,6 @@ export default function ToolsScreen() {
       ? `${semver.major(UPDATE_REVEAL_VERSION)}.${semver.minor(UPDATE_REVEAL_VERSION) - 1}.0`
       : `${semver.major(UPDATE_REVEAL_VERSION) - 1}.0.0`
   const mileage = useMileage()
-  const pet = usePet()
   // Profile-shaped fields live in the dedicated Profile store after wave-3.
   const { hasCompletedProfileSetup, name, set: setProfile } = useProfile()
   const celebrationQueue = useCelebrationQueue()
@@ -1338,55 +1336,7 @@ export default function ToolsScreen() {
 
         <ToastTools />
 
-        <ToolSection
-          title='Pet'
-          icon={PawPrintIcon}
-          summary={
-            pet.pet
-              ? `${pet.pet.species} · ${pet.pet.coat} · since ${pet.pet.adoptedOn}`
-              : 'No companion'
-          }
-        >
-          <ToolList>
-            <ToolRow
-              label='Prompt dismissed'
-              value={onOff(!!preferences.petPromptDismissed)}
-            />
-            <ToolRow
-              label='Reset opt-in prompt'
-              onPress={() => {
-                setPreferences({ petPromptDismissed: false })
-                showDone('Pet prompt reset')
-              }}
-            />
-            <ToolRow
-              label='Tombstones'
-              value={`${pet.deletedPetRecords.length}`}
-            />
-            <ToolRow
-              label='Release companion (synced)'
-              info='Same path as the in-app release: tombstones the pet and room so other devices remove them too.'
-              tone='destructive'
-              onPress={() =>
-                confirmDevAction('Release companion', () => {
-                  pet.releaseCompanion()
-                  showDone(i18n.t('deleted'))
-                })
-              }
-            />
-            <ToolRow
-              label='Wipe pet store (local)'
-              info='Clears the pet, room and tombstones on this device only. iCloud may restore them on next sync.'
-              tone='destructive'
-              onPress={() =>
-                confirmDevAction('Wipe pet store', () => {
-                  pet._WARNING_forceDeletePet()
-                  showDone(i18n.t('deleted'))
-                })
-              }
-            />
-          </ToolList>
-        </ToolSection>
+        <PetTools />
 
         <BuddiesTools />
 

@@ -1,12 +1,14 @@
 import { describe, expect, it, vi } from 'vitest'
 import { ROOM_PARTS } from '@/features/pet/art'
 import {
+  coinsText,
+  currencyInfoText,
+  gainedText,
   lockedNoteText,
+  priceText,
   roomOptionLabel,
   roomSectionLabel,
   roomTabLabel,
-  unlockBadgeText,
-  unlockNoteText,
   unlockPillText,
   unlockRequirementText,
 } from '@/features/pet/lib/roomLabels'
@@ -22,55 +24,29 @@ vi.mock('@/lib/locales', async () => {
 })
 
 describe('Decorate Room labels', () => {
-  it('counts the active months a locked item still needs', () => {
-    expect(unlockBadgeText(1)).toBe('1 more month')
-    expect(unlockBadgeText(2)).toBe('2 more months')
-    expect(unlockBadgeText(11)).toBe('11 more months')
+  it('says amounts of coins in words', () => {
+    expect(coinsText(1)).toBe('1 coin')
+    expect(coinsText(6)).toBe('6 coins')
+    expect(priceText(7)).toBe('7 coins')
+    expect(gainedText(3)).toBe('Earned 3 coins')
+    expect(gainedText(0)).toBeNull()
   })
 
-  it('says a locked item’s streak or months in words', () => {
-    expect(unlockRequirementText({ by: 'streak', count: 1 })).toBe(
-      'At a streak of 1'
+  it('says how coins are earned, with the real numbers', () => {
+    expect(currencyInfoText({ monthlyHearts: false, streaks: true })).toBe(
+      "Earn 1 coin each day you go out in the ministry (log time or a visit), and 1 more when it's a planned day you keep. Each streak milestone earns 10 coins more. Spend them in the Shop."
     )
-    expect(unlockRequirementText({ by: 'streak', count: 7 })).toBe(
-      'At a streak of 7'
-    )
-    const months = (monthsNeeded: number, thisMonthCounts: boolean) =>
-      unlockRequirementText({ by: 'months', monthsNeeded, thisMonthCounts })
-    expect(months(1, true)).toBe(
-      'Opens once you log time or save a visit or plan this month.'
-    )
-    expect(months(3, true)).toBe(
-      'Opens after 3 months in which you log time or save a visit or plan, this month included.'
-    )
-    expect(months(1, false)).toBe(
-      'Opens the next month you log time or save a visit or plan.'
-    )
-    expect(months(3, false)).toBe(
-      'Opens after 3 more months in which you log time or save a visit or plan, starting next month.'
+    expect(currencyInfoText({ monthlyHearts: true, streaks: false })).toBe(
+      'Earn at least 8 coins each month you share in the ministry. Spend them in the Shop.'
     )
   })
 
-  it('explains how locked items open up, by mode and streak kind', () => {
-    expect(unlockNoteText('streak', 'plans')).toBe(
-      'Each item opens up when your streak reaches its number. Plan your ministry and keep your plans to grow it.'
+  it('says what a locked item costs in the Shop', () => {
+    const price = 7
+    expect(unlockRequirementText({ by: 'price', price })).toBe(
+      'Costs 7 coins in the Shop.'
     )
-    expect(unlockNoteText('streak', 'months')).toBe(
-      'Each item opens up when your streak reaches its number. Share in the ministry each month to grow it.'
-    )
-    expect(unlockNoteText('months', 'plans')).toBe(
-      'One more opens up each month you log time or save a visit or plan.'
-    )
-    expect(unlockNoteText('months', 'months')).toBe(
-      unlockNoteText('months', 'plans')
-    )
-    // Hats keep their own pace in months mode.
-    expect(unlockNoteText('months', 'plans', 'hat')).toBe(
-      'Three open up the first month you log time or save a visit or plan, then one more each month you do.'
-    )
-    expect(unlockNoteText('streak', 'plans', 'hat')).toBe(
-      unlockNoteText('streak', 'plans')
-    )
+    expect(unlockPillText({ by: 'price', price })).toBe('7')
   })
 
   it('never says how a secret opens up', () => {
@@ -78,23 +54,16 @@ describe('Decorate Room labels', () => {
       'A surprise, waiting in its own time.'
     )
     expect(unlockPillText({ by: 'secret' })).toBe('?')
-    expect(unlockPillText({ by: 'streak', count: 7 })).toBe('7')
-    expect(
-      unlockPillText({ by: 'months', monthsNeeded: 1, thisMonthCounts: true })
-    ).toBe('1 more month')
   })
 
   it('adds the secrets to the locked note only while one is locked', () => {
-    const regular = unlockNoteText('streak', 'plans', 'bed')
-    const note = (locked: { regular: boolean; secret: boolean }) =>
-      lockedNoteText('streak', 'plans', 'bed', locked)
-    expect(note({ regular: false, secret: false })).toBeNull()
-    expect(note({ regular: true, secret: false })).toBe(regular)
-    expect(note({ regular: false, secret: true })).toBe(
-      'Some items are secrets. They show up along the way.'
-    )
-    expect(note({ regular: true, secret: true })).toBe(
-      `${regular} Some items are secrets. They show up along the way.`
+    const shop = 'Get the rest in the Shop with coins.'
+    const secrets = 'Some items are secrets. They show up along the way.'
+    expect(lockedNoteText({ regular: false, secret: false })).toBeNull()
+    expect(lockedNoteText({ regular: true, secret: false })).toBe(shop)
+    expect(lockedNoteText({ regular: false, secret: true })).toBe(secrets)
+    expect(lockedNoteText({ regular: true, secret: true })).toBe(
+      `${shop} ${secrets}`
     )
   })
 

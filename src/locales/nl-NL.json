@@ -4886,30 +4886,8 @@
           "tam": "Tam"
         }
       },
-      "unlockMonthsMore": {
-        "one": "nog {{count}} maand",
-        "other": "nog {{count}} maanden"
-      },
-      "unlockMonthsHow": {
-        "fromThisMonth": {
-          "one": "Gaat open zodra je deze maand tijd registreert of een bezoek of plan bewaart.",
-          "other": "Gaat open na {{count}} maanden waarin je tijd registreert of een bezoek of plan bewaart, deze maand meegerekend."
-        },
-        "fromNextMonth": {
-          "one": "Gaat open in de volgende maand waarin je tijd registreert of een bezoek of plan bewaart.",
-          "other": "Gaat open na nog {{count}} maanden waarin je tijd registreert of een bezoek of plan bewaart, te beginnen volgende maand."
-        }
-      },
-      "unlockAtStreak": {
-        "one": "Bij een reeks van {{count}}",
-        "other": "Bij een reeks van {{count}}"
-      },
       "lockedA11y": "{{option}}, vergrendeld. {{when}}",
       "unlockNote": {
-        "streakPlans": "Elk item gaat open zodra je reeks het bijbehorende getal bereikt. Plan je bediening en kom je plannen na om de reeks te laten groeien.",
-        "streakMonths": "Elk item gaat open zodra je reeks het bijbehorende getal bereikt. Neem elke maand deel aan de bediening om de reeks te laten groeien.",
-        "months": "Er gaat er elke maand een open waarin je tijd registreert of een bezoek of plan bewaart.",
-        "monthsHats": "Drie gaan open in de eerste maand waarin je tijd registreert of een bezoek of plan bewaart, daarna elke maand dat je dat doet er één.",
         "secrets": "Sommige items zijn geheim. Ze verschijnen onderweg.",
         "withSecrets": "{{note}} Sommige items zijn geheim. Ze verschijnen onderweg."
       },
@@ -4927,13 +4905,6 @@
       "rename": "Hernoemen",
       "change": "Huisdier wijzigen",
       "share": "Delen",
-      "streakA11y": "Reeks: {{count}}",
-      "streakInfoTitle": "Je reeks",
-      "streakInfoPlans": "Je reeks staat nu op {{count}}. Elk plan dat je nakomt (die dag tijd geregistreerd) telt 1 erbij, hoeveel dagen er ook tussen je plannen zitten. Mis je er een, dan begint hij opnieuw. Tijd op een dag zonder plan telt niet mee.",
-      "streakInfoMonths": "Je reeks staat nu op {{count}}. Hij telt de maanden op rij waarin je in de bediening was.",
-      "activeMonths": "Actieve maanden: {{count}}",
-      "activeMonthsInfoTitle": "Actieve maanden",
-      "activeMonthsInfo": "Je hebt er tot nu toe {{count}}. Een maand telt als je er tijd in registreert of een bezoek of plan in bewaart nadat je je huisdier hebt geadopteerd. De maanden hoeven niet op rij te zijn.",
       "settings": "Instellingen"
     },
     "intro": {
@@ -4941,12 +4912,6 @@
         "title": "Ga erop uit en vul zijn hartjes",
         "body": "Elke dag dat je velddienstactiviteit registreert, levert een hartje op. Als je stopt met registreren, lopen de hartjes langzaam leeg.",
         "bodyMonths": "Elke maand dat je velddienstactiviteit registreert, vult alle hartjes. Sla je een maand over, dan lopen ze langzaam leeg."
-      },
-      "streak": {
-        "title": "Laat je reeks groeien",
-        "plans": "Plan je bediening en kom je plannen na om je dienstreeks te laten groeien. De lamp brandt helderder en er gaan nieuwe hoedjes en kameritems open.",
-        "months": "Neem elke maand deel aan de bediening om je reeks te laten groeien. De lamp brandt helderder en er gaan nieuwe hoedjes en kameritems open.",
-        "noStreak": "Elke maand dat je erop uitgaat, gaan er nieuwe hoedjes en kameritems open."
       },
       "decorate": {
         "title": "Maak het eigen",

@@ -50,6 +50,8 @@ vi.mock('@/stores/conversationStore', async () => ({
 import { analytics } from '@/lib/analytics'
 import usePet from '@/stores/pet'
 import { usePreferences } from '@/stores/preferences'
+import { useServiceReport } from '@/stores/serviceReport'
+import type { TimeEntry } from '@/types/timeEntry'
 import { PET_RECORD_ID, SECRET_ROOM_ITEMS, type PetRecord } from '@/types/pet'
 import usePetLife, { type PetLifeState } from '@/features/pet/hooks/usePetLife'
 import { usePetSession } from '@/features/pet/stores/petSession'
@@ -62,6 +64,36 @@ const PET: PetRecord = {
   wakes: [],
   keepsakes: [],
   updatedAt: 1,
+}
+
+/** An hour logged every day of months `from` through `to`, by year and month. */
+const everyDay = (year: number, from: number, to: number) => {
+  const months: Record<number, TimeEntry[]> = {}
+  for (let month = from; month <= to; month++) {
+    const days = new Date(year, month + 1, 0).getDate()
+    months[month] = Array.from({ length: days }, (_, i) => ({
+      id: `${month}-${i}`,
+      hours: 1,
+      minutes: 0,
+      date: new Date(Date.UTC(year, month, i + 1, 12)),
+    }))
+  }
+  return { [year]: months }
+}
+
+/** An hour logged on the 3rd of months `from` through `to`, by year and month. */
+const oneDay = (year: number, from: number, to: number) => {
+  const months: Record<number, TimeEntry[]> = {}
+  for (let month = from; month <= to; month++)
+    months[month] = [
+      {
+        id: `${year}-${month}`,
+        hours: 1,
+        minutes: 0,
+        date: new Date(Date.UTC(year, month, 3, 12)),
+      },
+    ]
+  return { [year]: months }
 }
 
 let latest: PetLifeState | null = null
@@ -88,6 +120,7 @@ describe('usePetLife secret items', () => {
       devStreakOverride: null,
       showStreaks: true,
     })
+    useServiceReport.setState({ serviceReports: {} })
     usePetSession.setState({ devOverride: null })
     latest = null
     renders = 0
@@ -161,22 +194,58 @@ describe('usePetLife secret items', () => {
     expect(analytics.capture).not.toHaveBeenCalled()
   })
 
-  it('opens a long run by the streak only while streaks show', () => {
-    // Streaks hidden is months mode: the count is ignored.
-    usePreferences.setState({ showStreaks: false })
-    runtime.streak = { kind: 'plans', count: 150 }
+  it('opens a long run by months out, not by the streak', () => {
+    // A long streak alone opens nothing.
+    runtime.streak = { kind: 'plans', count: 400 }
+    usePet.setState({ pet: { ...PET, adoptedOn: '2025-06-01' }, room: null })
     mount()
     expect(stored()).not.toContain('hat:bush')
     act(() => renderer?.unmount())
-    // Shown, a days streak counts even with no Plans left to keep.
-    usePreferences.setState({ showStreaks: true })
-    mount()
-    expect(stored()).toContain('hat:bush')
-    act(() => renderer?.unmount())
-    usePet.setState({ pet: { ...PET }, room: null })
-    runtime.streak = { kind: 'months', count: 15 }
+    // One day out a month, June 2025 through October 2026: 17 months.
+    useServiceReport.setState({
+      serviceReports: {
+        ...oneDay(2025, 5, 11),
+        ...oneDay(2026, 0, 9),
+      },
+    })
     mount()
     expect(stored()).toContain('hat:bush')
     expect(stored()).not.toContain('wallColor:glacier')
+  })
+})
+
+describe('usePetLife wallet', () => {
+  beforeEach(() => {
+    usePet.setState({ pet: { ...PET }, room: null })
+    useServiceReport.setState({ serviceReports: {} })
+    usePetSession.setState({ devOverride: null })
+  })
+  afterEach(() => {
+    act(() => renderer?.unmount())
+    renderer = undefined
+  })
+
+  it('earns coins by days out and takes off what was spent', () => {
+    // October 1 through 21: 21 days out, a coin each. No Plans, so nothing
+    // more for keeping them, and no streak milestones.
+    useServiceReport.setState({ serviceReports: everyDay(2026, 9, 9) })
+    usePet.setState({
+      pet: {
+        ...PET,
+        purchases: [{ item: 'hat:bow', price: 10, on: '2026-10-05' }],
+      },
+    })
+    mount()
+    expect(latest?.earned).toBe(21)
+    expect(latest?.earnings).toMatchObject({ daysOut: 21, plansKept: 0 })
+    expect(latest?.wallet).toBe(11)
+    expect(latest?.unlockedItems.has('hat:bow')).toBe(true)
+  })
+
+  it('shows the dev harness wallet without storing it', () => {
+    usePetSession.setState({ devOverride: { wallet: 40 } })
+    mount()
+    expect(latest?.wallet).toBe(40)
+    expect(usePet.getState().pet?.purchases).toBeUndefined()
   })
 })

@@ -51,9 +51,9 @@ export function petActiveDays({
 }
 
 /**
- * How many calendar months have an active day on or after `sinceKey` (the
- * adoption day) and, when given, on or before `untilKey`. Room items unlock one
- * per active month.
+ * How many calendar months have one of `days` on or after `sinceKey` (the
+ * adoption day) and, when given, on or before `untilKey`. Long-run secret items
+ * count months with a day out (`secretUnlocks.ts`).
  */
 export function activeMonths(
   days: Iterable<string>,

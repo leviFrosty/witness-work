@@ -315,7 +315,12 @@ export default function ToastView({
 
   const surface = toastSurface(toast, theme)
   const unlock = toast.intent === 'unlock'
-  const accessibilityLabel = [toast.eyebrow, toast.title, toast.message]
+  const accessibilityLabel = [
+    toast.eyebrow,
+    toast.title,
+    toast.message,
+    toast.accessory?.label,
+  ]
     .filter(Boolean)
     .join(', ')
 

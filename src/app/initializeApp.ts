@@ -15,6 +15,11 @@ import { registerAndroidSyncTransport } from '@/lib/syncTransport'
 import { googleDriveTransport } from '@/lib/syncTransport/googleDrive/googleDriveTransport'
 import { registerCloudSync } from '@/app/sync/cloudSync'
 import { promptUnlockAtLaunch } from '@/app/app-lock/unlock'
+import { registerRewardProbe, registerRewardSample } from '@/lib/actionRewards'
+import {
+  petRewardProbe,
+  playPetRewardSample,
+} from '@/features/pet/components/PetRewardChip'
 import * as BuddiesKeychain from '../../modules/buddies-keychain'
 
 export function initializeApp() {
@@ -30,6 +35,9 @@ export function initializeApp() {
   // Cloud Sync (ADR 0030) needs the account key, so only binaries that can
   // hold one offer it.
   if (BuddiesKeychain.isAvailable()) registerCloudSync()
+  // What a save earns the pet rides on the toast that confirms it (ADR 0035).
+  registerRewardProbe(petRewardProbe)
+  registerRewardSample(playPetRewardSample)
 
   Notifications.setNotificationHandler({
     handleNotification: async (notification) =>

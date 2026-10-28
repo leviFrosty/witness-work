@@ -2,13 +2,25 @@ import { useEffect, useRef } from 'react'
 import { createAudioPlayer, useAudioPlayer, type AudioPlayer } from 'expo-audio'
 import { Asset } from 'expo-asset'
 import * as Speech from '../../modules/speech-transcription'
-import { usePreferences } from '@/stores/preferences'
-// @ts-expect-error MP3 doesn't export module
+import { usePreferences, type RewardSoundSet } from '@/stores/preferences'
 import successChime from '@/assets/audio/success-chime.mp3'
-// @ts-expect-error WAV doesn't export module
 import scribeVoiceStart from '@/assets/audio/scribe-voice-start.wav'
-// @ts-expect-error WAV doesn't export module
 import scribeVoiceEnd from '@/assets/audio/scribe-voice-end.wav'
+import punchHit from '@/assets/audio/reward/punch-hit.mp3'
+import punchHeavy from '@/assets/audio/reward/punch-heavy.mp3'
+import punchSlam from '@/assets/audio/reward/punch-slam.mp3'
+import punchTick from '@/assets/audio/reward/punch-tick.mp3'
+import punchLand from '@/assets/audio/reward/punch-land.mp3'
+import retroHit from '@/assets/audio/reward/retro-hit.mp3'
+import retroHeavy from '@/assets/audio/reward/retro-heavy.mp3'
+import retroSlam from '@/assets/audio/reward/retro-slam.mp3'
+import retroTick from '@/assets/audio/reward/retro-tick.mp3'
+import retroLand from '@/assets/audio/reward/retro-land.mp3'
+import softHit from '@/assets/audio/reward/soft-hit.mp3'
+import softHeavy from '@/assets/audio/reward/soft-heavy.mp3'
+import softSlam from '@/assets/audio/reward/soft-slam.mp3'
+import softTick from '@/assets/audio/reward/soft-tick.mp3'
+import softLand from '@/assets/audio/reward/soft-land.mp3'
 
 /**
  * Every sound the app can play. Callers reference sounds by name so the asset
@@ -82,6 +94,114 @@ const playFromStart = (
   playerRef.current.seekTo(0)
   playerRef.current.play()
 }
+
+/**
+ * What a reward plays: each hit, a milestone's heavier one, the total's slam,
+ * each tick of the count, and the ding it lands on.
+ */
+export type RewardSoundRole = 'hit' | 'heavy' | 'slam' | 'tick' | 'land'
+
+/** Every reward sound by set (`src/assets/audio/reward`, all CC0). */
+const REWARD_SOUNDS: Record<
+  Exclude<RewardSoundSet, 'off'>,
+  Record<RewardSoundRole, number>
+> = {
+  punch: {
+    hit: punchHit,
+    heavy: punchHeavy,
+    slam: punchSlam,
+    tick: punchTick,
+    land: punchLand,
+  },
+  retro: {
+    hit: retroHit,
+    heavy: retroHeavy,
+    slam: retroSlam,
+    tick: retroTick,
+    land: retroLand,
+  },
+  soft: {
+    hit: softHit,
+    heavy: softHeavy,
+    slam: softSlam,
+    tick: softTick,
+    land: softLand,
+  },
+}
+
+/** Players per reward sound, so quick hits overlap instead of cutting off. */
+const REWARD_POOL = 3
+const rewardPools = new Map<string, { players: AudioPlayer[]; next: number }>()
+
+/** The User's reward sounds, or none: a set from a newer build plays Punch. */
+export function rewardSoundSet(): RewardSoundSet {
+  const set = usePreferences.getState().rewardSounds
+  return set === 'off' || set in REWARD_SOUNDS ? set : 'punch'
+}
+
+/**
+ * Plays a reward sound from `set` (the User's by default). `rate` speeds it up
+ * and raises its pitch with it (1.5 semitones a hit, `semitones`), so a combo
+ * climbs. Silent with sounds off.
+ */
+export function playRewardSound(
+  role: RewardSoundRole,
+  {
+    rate = 1,
+    volume = 1,
+    set = rewardSoundSet(),
+  }: { rate?: number; volume?: number; set?: RewardSoundSet } = {}
+) {
+  if (!isAudioEnabled() || set === 'off') return
+  try {
+    const key = `${set}-${role}`
+    let pool = rewardPools.get(key)
+    if (!pool) {
+      pool = { players: [], next: 0 }
+      rewardPools.set(key, pool)
+    }
+    let player = pool.players[pool.next]
+    if (!player) {
+      player = createAudioPlayer(REWARD_SOUNDS[set][role])
+      // Speeding up raises the pitch too, like a tape.
+      player.shouldCorrectPitch = false
+      pool.players[pool.next] = player
+    }
+    pool.next = (pool.next + 1) % REWARD_POOL
+    player.volume = volume
+    player.setPlaybackRate(Math.min(2, Math.max(0.5, rate)))
+    player.seekTo(0)
+    player.play()
+  } catch {
+    // Silently fail if playback cannot start
+  }
+}
+
+/** Loads one player per sound of `set`, so its first hit isn't late. */
+export function prepareRewardSounds(set: RewardSoundSet = rewardSoundSet()) {
+  if (!isAudioEnabled() || set === 'off') return
+  try {
+    for (const role of Object.keys(REWARD_SOUNDS[set]) as RewardSoundRole[]) {
+      const key = `${set}-${role}`
+      if (rewardPools.get(key)?.players[0]) continue
+      const player = createAudioPlayer(REWARD_SOUNDS[set][role])
+      player.shouldCorrectPitch = false
+      rewardPools.set(key, { players: [player], next: 0 })
+    }
+  } catch {
+    // Silently fail; they load on first play instead
+  }
+}
+
+/** Lets every reward player go, a while after the last reward. */
+export function releaseRewardSounds() {
+  for (const { players } of rewardPools.values())
+    for (const player of players) player.remove()
+  rewardPools.clear()
+}
+
+/** A playback rate `semitones` higher. */
+export const semitones = (n: number) => 2 ** (n / 12)
 
 /**
  * Cues around recording. While the microphone is live iOS mutes app players,

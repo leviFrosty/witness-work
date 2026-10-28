@@ -1,8 +1,30 @@
+import moment from 'moment'
+import { keptKeepsakes, keptRoomItems } from '@/lib/petHistory'
+import { getStreakKind } from '@/lib/publisherCapabilities'
 import usePet from '@/stores/pet'
+import { startReward, type RewardLine } from '@/stores/rewardStack'
+import { useStreakCelebration } from '@/features/profile/stores/streakCelebration'
+import { rewardIcon } from '@/features/pet/components/PetRewardChip'
+import {
+  COINS_PER_DAY,
+  COINS_PER_MILESTONE,
+  COINS_PER_PLAN_KEPT,
+} from '@/features/pet/lib/currency'
+import { earnedCounts, type EarnedCounts } from '@/features/pet/lib/rewardLines'
+import { petEarningsNow } from '@/features/pet/lib/walletNow'
+import i18n, { type TranslationKey } from '@/lib/locales'
 import { petDisplayName } from '@/features/pet/lib/names'
 import { announcePetUnlocks } from '@/features/pet/lib/unlockAnnounce'
 import { usePetUnlockNews } from '@/features/pet/stores/petUnlockNews'
-import type { RoomItemId } from '@/types/pet'
+import {
+  GIFT_KINDS,
+  HAT_UNLOCK_ORDER,
+  PET_KEEPSAKES_KEPT,
+  SECRET_ROOM_ITEMS,
+  UNLOCK_ORDER,
+  type PetRecord,
+  type RoomItemId,
+} from '@/types/pet'
 import { usePreferences } from '@/stores/preferences'
 import {
   defaultCoatFor,
@@ -15,7 +37,9 @@ import {
   type PetVisitActivity,
 } from '@/types/pet'
 import { localDayKey } from '@/features/pet/lib/dayKeys'
+import { seenPetKey, type PetShown } from '@/features/pet/lib/reveal'
 import { forgetFoundSecrets } from '@/features/pet/lib/secrets'
+import { usePetSeen } from '@/features/pet/stores/petSeen'
 import {
   usePetSession,
   type PetDevOverride,
@@ -66,11 +90,49 @@ function playEntranceSoon(species: PetSpecies) {
   if (session.devSnapshot) session.send({ kind: 'entrance' })
 }
 
-/** Rejects a faked streak count the unlocks can't read. */
-const checkStreak = (streak: PetDevOverride['streak']) => {
-  if (streak === undefined) return
-  if (!Number.isInteger(streak) || streak < 0)
-    throw new Error(`Streak must be a whole number from 0, not "${streak}"`)
+/** Rejects a faked wallet the Shop can't read. */
+const checkWallet = (wallet: PetDevOverride['wallet']) => {
+  if (wallet === undefined) return
+  if (!Number.isInteger(wallet) || wallet < 0)
+    throw new Error(
+      `Wallet takes a whole number of coins from 0, not "${wallet}"`
+    )
+}
+
+/** Edits the companion as a real change would: restamped, so it syncs. */
+function editPet(change: (pet: PetRecord) => PetRecord) {
+  const { pet } = usePet.getState()
+  if (!pet) throw new Error('No pet: adopt one first')
+  usePet.setState({
+    pet: { ...change(pet), updatedAt: Math.max(Date.now(), pet.updatedAt + 1) },
+  })
+}
+
+/** Every item that can open up: the Shop's, then the secrets. */
+const EVERY_ITEM: readonly RoomItemId[] = [
+  ...UNLOCK_ORDER,
+  ...HAT_UNLOCK_ORDER,
+  ...SECRET_ROOM_ITEMS,
+]
+
+/** Lines for `reward()`, as real saves would make them. */
+const SAMPLE_LINES = {
+  time: (): RewardLine => ({
+    amount: COINS_PER_DAY,
+    label: i18n.t('pet.reward.timeAdded'),
+    tone: 'base',
+  }),
+  kept: (): RewardLine => ({
+    amount: COINS_PER_PLAN_KEPT,
+    label: i18n.t('pet.reward.plansKept' as TranslationKey, { count: 1 }),
+    tone: 'bonus',
+  }),
+  milestone: (count: number, celebration: boolean): RewardLine => ({
+    amount: COINS_PER_MILESTONE,
+    label: i18n.t('pet.reward.milestone', { count }),
+    tone: 'milestone',
+    celebration,
+  }),
 }
 
 /** What the store holds, plus what the Home card last drew. */
@@ -84,10 +146,12 @@ function state() {
     override: session.devOverride,
     pendingEntrance: session.entrance,
     unlocks: {
-      // Earned room items stored on the pet; they never lock again.
+      // Found secrets and items earned before the Shop, stored on the pet.
       stored: pet?.earnedRoomItems ?? [],
-      // `{ mode, streakKind, unlocked }` as the Home card last worked them out;
-      // null while it isn't mounted.
+      // Shop purchases, with what each cost.
+      purchases: pet?.purchases ?? [],
+      // `{ wallet, unlocked }` as the Home card last worked them out; null
+      // while it isn't mounted.
       current: session.devSnapshot?.unlocks ?? null,
     },
     // Null while the Home card isn't mounted (no pet, or Home not rendered).
@@ -149,12 +213,13 @@ export const petHarness = {
   /**
    * Fakes life and moments on top of the real ones, merged into any earlier
    * override: `hearts`, `dead`, `gold`, `goldStartedToday`, `rainbow`,
-   * `lampLevel`, `streak` (the count room unlocks read; shown, never stored),
-   * `secrets` (true opens every secret item; shown, never stored), `paradise`,
-   * `star`, `gift` (`olive`… or null), `sill`, `window` (`{ time, season }`),
-   * `visitors` (buddies' pets visiting in place of today's real ones: each `{
-   * species, coat?, name?, buddy?, activity? }`, made-up buddies and a made-up
-   * Plan filled in; `[]` for none, null for the real ones).
+   * `lampLevel`, `wallet` (coins earned, as if from records; what's bought
+   * still comes off and is stored), `secrets` (true opens every secret item;
+   * shown, never stored), `paradise`, `star`, `gift` (`olive`… or null),
+   * `sill`, `window` (`{ time, season }`), `visitors` (buddies' pets visiting
+   * in place of today's real ones: each `{ species, coat?, name?, buddy?,
+   * activity? }`, made-up buddies and a made-up Plan filled in; `[]` for none,
+   * null for the real ones).
    */
   override: (
     patch: Omit<PetDevOverride, 'visits'> & {
@@ -162,7 +227,7 @@ export const petHarness = {
     }
   ) => {
     checkWindow(patch.window)
-    checkStreak(patch.streak)
+    checkWallet(patch.wallet)
     const { visitors, ...rest } = patch
     const { devOverride, setDevOverride } = usePetSession.getState()
     setDevOverride({
@@ -212,7 +277,147 @@ export const petHarness = {
     announcePetUnlocks(items as RoomItemId[], petDisplayName(pet))
     return usePetUnlockNews.getState().unseen
   },
+  /**
+   * Fills the shelf with keepsakes, one a day back from today, every kind in
+   * turn (`on`), or empties it. Synced like collecting one.
+   */
+  keepsakes: (on: boolean) => {
+    const today = moment()
+    editPet((pet) => ({
+      ...pet,
+      keepsakes: on
+        ? keptKeepsakes(
+            Array.from({ length: PET_KEEPSAKES_KEPT }, (_, i) => ({
+              kind: GIFT_KINDS[i % GIFT_KINDS.length],
+              on: today.clone().subtract(i, 'days').format('YYYY-MM-DD'),
+            }))
+          )
+        : [],
+    }))
+    return usePet.getState().pet?.keepsakes.length ?? 0
+  },
+  /**
+   * Owns every hat and room item, secrets too, as earned so nothing is spent
+   * (`on`), or locks every one again: nothing earned or bought, only the
+   * starters. Synced.
+   */
+  items: (on: boolean) => {
+    editPet((pet) => ({
+      ...pet,
+      earnedRoomItems: on ? keptRoomItems(EVERY_ITEM) : [],
+      purchases: on ? pet.purchases : undefined,
+    }))
+    return usePet.getState().pet?.earnedRoomItems?.length ?? 0
+  },
+  /** Takes back every Shop purchase, so what they cost is to spend again. */
+  refund: () => {
+    editPet((pet) => ({ ...pet, purchases: undefined }))
+    return true
+  },
+  /**
+   * Plays the reward stack as a save would: `soft` (+1, nothing stomps), `save`
+   * (+1 Time added, +1 Planned day kept), `milestone` (those, then +10 in the
+   * streak celebration it opens). Nothing is earned.
+   */
+  reward: (kind: 'soft' | 'save' | 'milestone') => {
+    const wallet = petEarningsNow()?.wallet ?? 0
+    const lines =
+      kind === 'soft'
+        ? [SAMPLE_LINES.time()]
+        : kind === 'save'
+          ? [SAMPLE_LINES.time(), SAMPLE_LINES.kept()]
+          : [
+              SAMPLE_LINES.time(),
+              SAMPLE_LINES.kept(),
+              SAMPLE_LINES.milestone(10, true),
+            ]
+    const gain = lines.reduce((sum, line) => sum + line.amount, 0)
+    const run = startReward({
+      slot: 'toast',
+      lines,
+      count: { from: wallet, to: wallet + gain },
+      icon: rewardIcon,
+      announcement: `+${gain}`,
+    })
+    if (run !== null && kind === 'milestone') {
+      const { role } = usePreferences.getState()
+      useStreakCelebration.setState({
+        celebrating: { count: 10, kind: getStreakKind(role) },
+      })
+    }
+    return run
+  },
+  /**
+   * Makes the Home card play what was earned elsewhere the next time it shows:
+   * this device last saw `days` fewer days out, as many fewer planned days
+   * kept, and one milestone fewer when there is one (`back after a few days`).
+   */
+  awayFor: (days = 3) => {
+    const pet = usePet.getState().pet
+    const now = petEarningsNow()
+    if (!pet || !now) throw new Error('No pet: adopt one first')
+    const counts = earnedCounts(now.earned)
+    const before: EarnedCounts = {
+      ...counts,
+      daysOut: Math.max(0, counts.daysOut - days),
+      plansKept: Math.max(0, counts.plansKept - days),
+      milestones: Math.max(0, counts.milestones - 1),
+    }
+    const less =
+      (counts.daysOut - before.daysOut) * COINS_PER_DAY +
+      (counts.plansKept - before.plansKept) * COINS_PER_PLAN_KEPT +
+      (counts.milestones - before.milestones) * COINS_PER_MILESTONE
+    const { seen } = usePetSeen.getState()
+    usePetSeen.getState().markSeen({
+      pet: seenPetKey(pet),
+      coins: Math.max(0, now.wallet - less),
+      hearts: seen?.hearts ?? 5,
+      earned: before,
+    })
+    return usePetSeen.getState().seen
+  },
+  /**
+   * Marks the wallet and what earned it as shown on this device, so nothing
+   * plays until the next change. Hearts stay as they were seen.
+   */
+  seenNow: () => {
+    const pet = usePet.getState().pet
+    const now = petEarningsNow()
+    if (!pet || !now) throw new Error('No pet: adopt one first')
+    const { seen } = usePetSeen.getState()
+    usePetSeen.getState().markSeen({
+      pet: seenPetKey(pet),
+      coins: now.wallet,
+      hearts: seen?.hearts ?? 5,
+      earned: earnedCounts(now.earned),
+    })
+    return usePetSeen.getState().seen
+  },
   /** The unlock news the tray lists, oldest first. */
   unlockNews: () => usePetUnlockNews.getState().unseen,
+  /**
+   * What this device last showed of the pet's hearts and wallet (`petSeen`).
+   * Given values, sets them, so the next time the Home card, Decorate Room or
+   * the Shop is on screen it plays the change to now: `seen({ coins: 42,
+   * hearts: 3.5 })`. `null` forgets it (the next sight starts from now).
+   */
+  seen: (shown?: Partial<PetShown> | null) => {
+    const { seen, markSeen } = usePetSeen.getState()
+    if (shown === undefined) return seen
+    if (shown === null) {
+      usePetSeen.setState({ seen: null })
+      return null
+    }
+    const pet = usePet.getState().pet
+    if (!pet) throw new Error('No pet: adopt one first')
+    const key = seenPetKey(pet)
+    const base = seen?.pet === key ? seen : { coins: 0, hearts: 3 }
+    markSeen({
+      coins: shown.coins ?? base.coins,
+      hearts: shown.hearts ?? base.hearts,
+      pet: key,
+    })
+    return usePetSeen.getState().seen
+  },
   state,
 }

@@ -3056,6 +3056,16 @@
   "playSounds_descriptionAndroid": "Celebration chimes and reminder sounds while WitnessWork is open. Reminders that arrive while it's closed follow your device's notification settings.",
   "haptics": "Haptics",
   "haptics_description": "Vibration feedback when you tap, scrub charts, or reach a goal.",
+  "rewards": "Rewards",
+  "rewardAnimations": "Reward animations",
+  "rewardAnimations_description": "When you earn coins for your pet, each one hits the screen and counts into its wallet. Tap anywhere to skip.",
+  "rewardSounds": "Sounds",
+  "rewardSounds_punch": "Punch",
+  "rewardSounds_retro": "Retro",
+  "rewardSounds_soft": "Soft",
+  "rewardSounds_off": "Off",
+  "rewardSounds_audioOff": "Sounds are off in Audio & Haptics.",
+  "rewardSample": "Play a sample",
   "notifications": "Notifications",
   "remindersChannelName": "Reminders",
   "purchasesUnavailable": "Purchases are unavailable right now. Please try again later.",
@@ -4925,30 +4935,10 @@
           "tam": "Tam"
         }
       },
-      "unlockMonthsMore": {
-        "one": "{{count}} more month",
-        "other": "{{count}} more months"
-      },
-      "unlockMonthsHow": {
-        "fromThisMonth": {
-          "one": "Opens once you log time or save a visit or plan this month.",
-          "other": "Opens after {{count}} months in which you log time or save a visit or plan, this month included."
-        },
-        "fromNextMonth": {
-          "one": "Opens the next month you log time or save a visit or plan.",
-          "other": "Opens after {{count}} more months in which you log time or save a visit or plan, starting next month."
-        }
-      },
-      "unlockAtStreak": {
-        "one": "At a streak of {{count}}",
-        "other": "At a streak of {{count}}"
-      },
+      "unlockPrice": "Costs {{price}} in the Shop.",
       "lockedA11y": "{{option}}, locked. {{when}}",
       "unlockNote": {
-        "streakPlans": "Each item opens up when your streak reaches its number. Plan your ministry and keep your plans to grow it.",
-        "streakMonths": "Each item opens up when your streak reaches its number. Share in the ministry each month to grow it.",
-        "months": "One more opens up each month you log time or save a visit or plan.",
-        "monthsHats": "Three open up the first month you log time or save a visit or plan, then one more each month you do.",
+        "shop": "Get the rest in the Shop with coins.",
         "secrets": "Some items are secrets. They show up along the way.",
         "withSecrets": "{{note}} Some items are secrets. They show up along the way."
       },
@@ -4966,13 +4956,7 @@
       "rename": "Rename",
       "change": "Change pet",
       "share": "Share",
-      "streakA11y": "Streak: {{count}}",
-      "streakInfoTitle": "Your streak",
-      "streakInfoPlans": "Your streak is {{count}} right now. Each plan you keep (any time logged that day) adds 1, however many days apart your plans are. Miss one, and it starts over. Time logged on a day without a plan doesn't add to it.",
-      "streakInfoMonths": "Your streak is {{count}} right now. It counts months in a row that you shared in the ministry.",
-      "activeMonths": "Active months: {{count}}",
-      "activeMonthsInfoTitle": "Active months",
-      "activeMonthsInfo": "You have {{count}} so far. A month counts when you log time or save a visit or plan in it after adopting your pet. The months don't need to be in a row.",
+      "shop": "Shop",
       "settings": "Settings"
     },
     "intro": {
@@ -4981,17 +4965,15 @@
         "body": "Each day you log service activity adds a heart. If you stop logging, hearts slowly drain.",
         "bodyMonths": "Each month you log service activity fills all its hearts. Skip a month, and they slowly drain."
       },
-      "streak": {
-        "title": "Grow your streak",
-        "plans": "Plan your ministry and keep your plans to grow your Service Streak. The lamp burns brighter, and new hats and room items open up.",
-        "months": "Share in the ministry each month to grow your streak. The lamp burns brighter, and new hats and room items open up.",
-        "noStreak": "Each month you go out, new hats and room items open up."
+      "shop": {
+        "title": "Earn coins",
+        "body": "Each day you go out in the ministry earns gold coins. Spend them in the Shop on hats and room items."
       },
       "decorate": {
         "title": "Make it yours",
         "body": "Tap your pet to pat it. Tap anywhere else on its card to pick a hat and decorate."
       },
-      "previewA11y": "{{name}}'s room with everything opened up",
+      "previewA11y": "{{name}}'s room with every item",
       "next": "Next",
       "done": "Done",
       "step": "Step {{step}} of {{count}}"
@@ -5036,6 +5018,65 @@
       "visits": "Buddies' pets visit",
       "visitsInfo": "On a day you go out with a buddy, their pet visits yours.",
       "noBuddyPets": "None of your buddies share a pet yet."
+    },
+    "currency": {
+      "coin": {
+        "one": "{{count}} coin",
+        "other": "{{count}} coins"
+      },
+      "infoTitle": "Coins",
+      "infoDays": "Earn 1 coin each day you go out in the ministry (log time or a visit), and 1 more when it's a planned day you keep.",
+      "infoMonths": "Earn at least {{floor}} coins each month you share in the ministry.",
+      "infoStreak": "Each streak milestone earns {{amount}} more.",
+      "infoSpend": "Spend them in the Shop.",
+      "gain": "+{{amount}}",
+      "loss": "−{{amount}}",
+      "earnedA11y": "Earned {{amount}}"
+    },
+    "shop": {
+      "title": "Shop",
+      "back": "Back",
+      "categories": "Categories",
+      "buy": "Buy",
+      "buyA11y": "Buy {{item}} for {{price}}",
+      "needMore": {
+        "one": "Need {{count}} more",
+        "other": "Need {{count}} more"
+      },
+      "needMoreA11y": "You need {{price}} more for {{item}}",
+      "wear": "Wear",
+      "place": "Put in room",
+      "wearing": "Wearing",
+      "inRoom": "In room",
+      "owned": "Owned",
+      "leaves": "Leaves you {{price}}",
+      "earnCoins": "Coins come from days out",
+      "secretHint": "Found along the way, never sold",
+      "itemPrice": "{{item}}, {{price}}",
+      "itemNotEnough": "{{item}}, {{price}}, not enough yet",
+      "itemWearing": "{{item}}, wearing",
+      "itemInRoom": "{{item}}, in room",
+      "itemOwned": "{{item}}, owned",
+      "itemNew": "{{item}}, owned, new",
+      "previewA11y": "{{name}}'s room with {{item}}"
+    },
+    "reward": {
+      "timeAdded": "Time added",
+      "visitAdded": "Visit added",
+      "monthShared": "Month shared",
+      "daysOut": {
+        "one": "Day out",
+        "other": "Days out"
+      },
+      "plansKept": {
+        "one": "Planned day kept",
+        "other": "Planned days kept"
+      },
+      "milestone": "Streak milestone · {{count}}",
+      "milestoneMonths": {
+        "one": "Streak milestone · {{count}} month",
+        "other": "Streak milestone · {{count}} months"
+      }
     }
   },
   "handoff_newDoneSynced": "Cloud Sync is bringing your records, contacts, and notes to this phone. They appear in a moment.",

@@ -4,7 +4,12 @@ import { create } from 'zustand'
 import { combine, createJSONStorage } from 'zustand/middleware'
 import { persist } from '@/stores/persist'
 import { PersistStorage } from '@/stores/mmkv'
-import { keptKeepsakes, keptRoomItems, keptWakes } from '@/lib/petHistory'
+import {
+  keptKeepsakes,
+  keptPurchases,
+  keptRoomItems,
+  keptWakes,
+} from '@/lib/petHistory'
 import {
   DEFAULT_ROOM,
   PET_NAME_MAX_LENGTH,
@@ -16,6 +21,7 @@ import {
   type PetRoomRecord,
   type PetRoomSettings,
   type PetSpecies,
+  type PetPurchase,
   type PetTombstone,
   type RoomItemId,
 } from '@/types/pet'
@@ -180,6 +186,28 @@ export const usePet = create(
           }))
         )
         return added
+      },
+      /**
+       * Records buying `item` in the Shop for `price` of `currency` on `dayKey`
+       * (ADR 0035). Whether it's affordable is the caller's to check; an item
+       * already bought or earned isn't bought again. Returns whether it was.
+       */
+      buyRoomItem: (purchase: PetPurchase): boolean => {
+        const { pet } = get()
+        if (
+          !pet ||
+          !DAY_KEY.test(purchase.on) ||
+          pet.earnedRoomItems?.includes(purchase.item) ||
+          pet.purchases?.some((bought) => bought.item === purchase.item)
+        )
+          return false
+        set((state) =>
+          editPet(state, (pet) => ({
+            ...pet,
+            purchases: keptPurchases([...(pet.purchases ?? []), purchase]),
+          }))
+        )
+        return true
       },
       /**
        * Changes some of the room's choices. `defaults` fills the rest while the

@@ -4886,30 +4886,8 @@
           "tam": "Tam"
         }
       },
-      "unlockMonthsMore": {
-        "one": "umweshi {{count}} umbi",
-        "other": "imyeshi {{count}} imbi"
-      },
-      "unlockMonthsHow": {
-        "fromThisMonth": {
-          "one": "Ilatuntulwa ilyo mulelemba inshita nelyo mulesunga ulutandalilo nelyo ipange mu mweshi uno.",
-          "other": "Ilatuntulwa panuma ya myeshi {{count}} iyo mulelemba inshita nelyo mulesunga ulutandalilo nelyo ipange, pamo no mweshi uno."
-        },
-        "fromNextMonth": {
-          "one": "Ilatuntulwa mu mweshi ukonkapo uo mulelemba inshita nelyo mulesunga ulutandalilo nelyo ipange.",
-          "other": "Ilatuntulwa panuma ya myeshi {{count}} imbi iyo mulelemba inshita nelyo mulesunga ulutandalilo nelyo ipange, ukutendeka mu mweshi ukonkapo."
-        }
-      },
-      "unlockAtStreak": {
-        "one": "Pa kukonkana kwa {{count}}",
-        "other": "Pa kukonkana kwa {{count}}"
-      },
       "lockedA11y": "{{option}}, yatalikwa. {{when}}",
       "unlockNote": {
-        "streakPlans": "Icintu conse cilatuntulwa nga ukukonkana kwenu kufikapo pa nambala yaco. Pangeni umulimo wenu wa kushimikila no kukonkelela amapange yenu ukwingasha.",
-        "streakMonths": "Icintu conse cilatuntulwa nga ukukonkana kwenu kufikapo pa nambala yaco. Bombeni mu mulimo wa kushimikila umweshi onse ukwingasha.",
-        "months": "Icintu cimbi cilatuntulwa umweshi onse mulelemba inshita nelyo mulesunga ulutandalilo nelyo ipange.",
-        "monthsHats": "Itatu ilatuntulwa mu mweshi wa kubalilapo mulelemba inshita nelyo mulesunga ulutandalilo nelyo ipange, pa numa cimo umweshi onse.",
         "secrets": "Ifintu fimbi fyabela mfiselele. Fileisa pa nshita.",
         "withSecrets": "{{note}} Ifintu fimbi fyabela mfiselele. Fileisa pa nshita."
       },
@@ -4927,13 +4905,6 @@
       "rename": "Cinjeni Ishina",
       "change": "Cinjeni pet",
       "share": "Tumina",
-      "streakA11y": "Ukukonkana: {{count}}",
-      "streakInfoTitle": "Ukukonkana kwenu",
-      "streakInfoPlans": "Ukukonkana kwenu nomba ni {{count}}. Ubupange bonse mwakonka (inshita iili yonse mwalemba pali bulya bushiku) bulundapo 1, nangu inshiku shinga shapatulula ubupange bwenu. Nga mwalufyapo bumo, kulatendeka nakabili. Inshita mwalemba pa bushiku ubushaba ubupange tailundapo.",
-      "streakInfoMonths": "Ukukonkana kwenu nomba ni {{count}}. Kupenda imyeshi iikonkana iyo mwabombelemo mu mulimo wa kushimikila.",
-      "activeMonths": "Imyeshi mwabombelamo: {{count}}",
-      "activeMonthsInfoTitle": "Imyeshi mwabombelamo",
-      "activeMonthsInfo": "Mwakwata {{count}} ukufika nomba. Umweshi upendwa nga mwalemba inshita nelyo mwasunga intandalilo nelyo ubupange muli wene panuma ya kupokelela cinyama cenu. Imyeshi tayafwile ukukonkana.",
       "settings": "Ifyo Mwasala"
     },
     "intro": {
@@ -4941,12 +4912,6 @@
         "title": "Fumeni, mwisushe imitima yayo",
         "body": "Bushiku bonse mulemba ifyo mwabomba pa mulimo wa kushimikila bwongelapo umutima. Nga mwaleka ukulemba, imitima ilaleshala panono panono.",
         "bodyMonths": "Umweshi onse mulemba ifyo mwabomba pa mulimo wa kushimikila usuka imitima yonse. Nga mwaluba umweshi, ilaleshala panono panono."
-      },
-      "streak": {
-        "title": "Ingasheni ukukonkana kwenu",
-        "plans": "Pangeni umulimo wenu wa kushimikila no kukonkelela amapange yenu ukwingasha Service Streak yenu. Ilampa ilaengama, kabili amakofyo yapya ne fintu fya mu ng'anda fileuntulwa.",
-        "months": "Bombeni mu mulimo wa kushimikila umweshi onse ukwingasha ukukonkana kwenu. Ilampa ilaengama, kabili amakofyo yapya ne fintu fya mu ng'anda fileuntulwa.",
-        "noStreak": "Umweshi onse mulefuma, amakofyo yapya ne fintu fya mu ng'anda fileuntulwa."
       },
       "decorate": {
         "title": "Ipangeni yenu",

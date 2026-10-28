@@ -1,5 +1,4 @@
 import type { Viewport } from '@/lib/pixelArt'
-import type { StreakKind } from '@/lib/serviceStreak'
 import type {
   PetRoomSettings,
   RoomWindow,
@@ -8,12 +7,8 @@ import type {
 } from '@/types/pet'
 import { ROOM_PARTS, type SilhouetteStyle } from '@/features/pet/art'
 import { isSecretItem } from '@/features/pet/lib/secretUnlocks'
-import {
-  isRoomOptionUnlocked,
-  nextUnlockIn,
-  unlockStreakFor,
-  type UnlockMode,
-} from '@/features/pet/lib/unlocks'
+import { isRoomOptionUnlocked } from '@/features/pet/lib/unlocks'
+import { priceOf } from '@/features/pet/lib/prices'
 
 /**
  * The Decorate Room sheet's model: its tabs, the choices on each, what a choice
@@ -176,29 +171,21 @@ export function isRoomChoiceUnlocked(
 }
 
 /**
- * What Decorate Room needs to tell which options are open, and how the rest
- * open up.
+ * What Decorate Room and the Shop need to tell which options are open, and what
+ * the rest cost.
  */
 export type RoomUnlocks = {
   unlocked: ReadonlySet<string>
-  mode: UnlockMode
-  streakKind: StreakKind
-  /** Months with an active day since adoption (months mode). */
-  activeMonths: number
-  /** This month counts toward unlocks already (months mode). */
-  thisMonthActive: boolean
+  /** Coins left to spend. */
+  wallet: number
 }
 
 /**
- * What opens a locked option: the streak count it opens up at, or (months mode)
- * how many more active months it needs, and whether this month can still be one
- * of them (it has no active day yet). Skipped months don't count, so it never
- * says when. A secret item's never says (`secret`): it shows as a silhouette
- * and a question mark.
+ * What opens a locked option: its Shop price (ADR 0035), or nothing it says for
+ * a secret (`secret`): that shows as a silhouette and a question mark.
  */
 export type UnlockRequirement =
-  | { by: 'streak'; count: number }
-  | { by: 'months'; monthsNeeded: number; thisMonthCounts: boolean }
+  | { by: 'price'; price: number }
   | { by: 'secret' }
 
 /**
@@ -213,17 +200,8 @@ export function unlockRequirement(
   if (isRoomChoiceUnlocked(part, option, unlocks.unlocked)) return null
   const item = `${part}:${option}`
   if (isSecretItem(item)) return { by: 'secret' }
-  if (unlocks.mode === 'streak') {
-    const count = unlockStreakFor(item, unlocks.streakKind)
-    return count ? { by: 'streak', count } : null
-  }
-  const needed = nextUnlockIn(item, unlocks.activeMonths)
-  if (!needed) return null
-  return {
-    by: 'months',
-    monthsNeeded: needed,
-    thisMonthCounts: !unlocks.thisMonthActive,
-  }
+  const price = priceOf(item)
+  return price === null ? null : { by: 'price', price }
 }
 
 /**

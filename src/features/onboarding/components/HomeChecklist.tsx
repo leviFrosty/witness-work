@@ -1,5 +1,6 @@
 import { analytics } from '@/lib/analytics'
 import { noteUserAction } from '@/lib/userAction'
+import { measureReward } from '@/lib/actionRewards'
 import {
   Check as CheckIcon,
   CircleCheck as CircleCheckIcon,
@@ -146,7 +147,9 @@ const HomeChecklist = () => {
       id: Crypto.randomUUID(),
     }
     noteUserAction('checkbox')
+    const earned = measureReward('checkbox')
     addServiceReport(report)
+    earned()
     analytics.capture('time_entry_created', {
       source: 'onboarding_checklist',
       entry_mode: 'checkbox',

@@ -4886,30 +4886,8 @@
           "tam": "Tam"
         }
       },
-      "unlockMonthsMore": {
-        "one": "Ancora {{count}} mese",
-        "other": "Ancora {{count}} mesi"
-      },
-      "unlockMonthsHow": {
-        "fromThisMonth": {
-          "one": "Si sblocca appena registri del tempo o salvi una visita o un piano questo mese.",
-          "other": "Si sblocca dopo {{count}} mesi in cui registri del tempo o salvi una visita o un piano, compreso questo mese."
-        },
-        "fromNextMonth": {
-          "one": "Si sblocca il prossimo mese in cui registri del tempo o salvi una visita o un piano.",
-          "other": "Si sblocca dopo altri {{count}} mesi in cui registri del tempo o salvi una visita o un piano, a partire dal mese prossimo."
-        }
-      },
-      "unlockAtStreak": {
-        "one": "Con una serie di {{count}}",
-        "other": "Con una serie di {{count}}"
-      },
       "lockedA11y": "{{option}}, bloccato. {{when}}",
       "unlockNote": {
-        "streakPlans": "Ogni elemento si sblocca quando la tua serie raggiunge il suo numero. Pianifica il tuo ministero e rispetta i piani per farla crescere.",
-        "streakMonths": "Ogni elemento si sblocca quando la tua serie raggiunge il suo numero. Partecipa al ministero ogni mese per farla crescere.",
-        "months": "Se ne sblocca uno in più ogni mese in cui registri del tempo o salvi una visita o un piano.",
-        "monthsHats": "Se ne sbloccano tre il primo mese in cui registri del tempo o salvi una visita o un piano, poi uno in più ogni mese in cui lo fai.",
         "secrets": "Alcuni elementi sono segreti. Compaiono lungo il percorso.",
         "withSecrets": "{{note}} Alcuni elementi sono segreti. Compaiono lungo il percorso."
       },
@@ -4927,13 +4905,6 @@
       "rename": "Rinomina",
       "change": "Cambia animaletto",
       "share": "Condividi",
-      "streakA11y": "Serie: {{count}}",
-      "streakInfoTitle": "La tua serie",
-      "streakInfoPlans": "La tua serie ora è di {{count}}. Ogni piano che rispetti (con del tempo registrato quel giorno) aggiunge 1, a prescindere da quanti giorni ci siano tra un piano e l'altro. Se ne manchi uno, ricomincia da capo. Il tempo registrato in un giorno senza piano non la fa crescere.",
-      "streakInfoMonths": "La tua serie ora è di {{count}}. Conta i mesi di fila in cui hai partecipato al ministero.",
-      "activeMonths": "Mesi attivi: {{count}}",
-      "activeMonthsInfoTitle": "Mesi attivi",
-      "activeMonthsInfo": "Finora ne hai {{count}}. Un mese conta quando, dopo aver adottato il tuo animaletto, vi registri del tempo o salvi una visita o un piano. Non è necessario che i mesi siano di fila.",
       "settings": "Impostazioni"
     },
     "intro": {
@@ -4941,12 +4912,6 @@
         "title": "Esci in servizio, riempi i suoi cuori",
         "body": "Ogni giorno in cui registri attività di servizio aggiungi un cuore. Se smetti di registrare, i cuori si svuotano lentamente.",
         "bodyMonths": "Ogni mese in cui registri attività di servizio riempie tutti i suoi cuori. Se salti un mese, si svuotano lentamente."
-      },
-      "streak": {
-        "title": "Fai crescere la tua serie",
-        "plans": "Pianifica il tuo ministero e rispetta i piani per far crescere la tua Serie di servizio. La lampada brilla di più e si sbloccano nuovi cappelli ed elementi della stanza.",
-        "months": "Partecipa al ministero ogni mese per far crescere la tua serie. La lampada brilla di più e si sbloccano nuovi cappelli ed elementi della stanza.",
-        "noStreak": "Ogni mese in cui esci in servizio si sbloccano nuovi cappelli ed elementi della stanza."
       },
       "decorate": {
         "title": "Rendilo tuo",

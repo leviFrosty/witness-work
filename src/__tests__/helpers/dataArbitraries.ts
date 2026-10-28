@@ -1,7 +1,12 @@
 import fc from 'fast-check'
 import { canonicalJson } from '@/lib/canonicalJson'
 import { LDC_BUILTIN_CATEGORY_ID } from '@/constants/categories'
-import { keptKeepsakes, keptRoomItems, keptWakes } from '@/lib/petHistory'
+import {
+  keptKeepsakes,
+  keptPurchases,
+  keptRoomItems,
+  keptWakes,
+} from '@/lib/petHistory'
 import {
   GIFT_KINDS,
   HAT_IDS,
@@ -487,6 +492,14 @@ const petVersionArb = fc.record({
     'hat:tophat',
     'future:item',
   ]),
+  bought: fc.array(
+    fc.record({
+      item: fc.constantFrom('hat:bow', 'hat:cap', 'floor:stone', 'future:item'),
+      price: fc.integer({ min: 0, max: 15 }),
+      on: dayKeyArb,
+    }),
+    { maxLength: 4 }
+  ),
 })
 
 /**
@@ -507,26 +520,30 @@ export const petArb: fc.Arbitrary<PetRecord> = fc
     })
     return { ...version, adoptedOn, updatedAt: STAMP_BASE + step * 60_000 }
   })
-  .map(({ species, coatIndex, keepsakeDays, earned, wakes, ...pet }) => {
-    const coats = coatIdsFor(species)
-    const seed = pet.adoptedOn === '2026-03-08' ? 'seed-a' : undefined
-    const earnedRoomItems = keptRoomItems(earned)
-    return compact({
-      ...pet,
-      seed,
-      id: PET_RECORD_ID,
-      species,
-      coat: coats[coatIndex % coats.length],
-      wakes: keptWakes(wakes),
-      keepsakes: keptKeepsakes(
-        keepsakeDays.map((on) => ({
-          kind: giftKindOn(seed ?? pet.adoptedOn, on),
-          on,
-        }))
-      ),
-      earnedRoomItems: earnedRoomItems.length ? earnedRoomItems : undefined,
-    }) as PetRecord
-  })
+  .map(
+    ({ species, coatIndex, keepsakeDays, earned, bought, wakes, ...pet }) => {
+      const coats = coatIdsFor(species)
+      const seed = pet.adoptedOn === '2026-03-08' ? 'seed-a' : undefined
+      const earnedRoomItems = keptRoomItems(earned)
+      const purchases = keptPurchases(bought)
+      return compact({
+        ...pet,
+        seed,
+        id: PET_RECORD_ID,
+        species,
+        coat: coats[coatIndex % coats.length],
+        wakes: keptWakes(wakes),
+        keepsakes: keptKeepsakes(
+          keepsakeDays.map((on) => ({
+            kind: giftKindOn(seed ?? pet.adoptedOn, on),
+            on,
+          }))
+        ),
+        earnedRoomItems: earnedRoomItems.length ? earnedRoomItems : undefined,
+        purchases: purchases.length ? purchases : undefined,
+      }) as PetRecord
+    }
+  )
 
 export const petRoomArb: fc.Arbitrary<PetRoomRecord> = fc
   .record({

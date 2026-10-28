@@ -1,27 +1,12 @@
-import type { ServiceStreak } from '@/lib/serviceStreak'
+import { MAX_HEARTS } from '@/features/pet/lib/life'
 
 export type LampLevel = 0 | 1 | 2 | 3 | 4 | 5
 
-/** The level the lamp burns at when the User hides streaks. */
-export const LAMP_LEVEL_STREAKS_HIDDEN: LampLevel = 3
-
-/** Lowest count for levels 1–5, by streak kind (`docs/pet-companion.md`). */
-const THRESHOLDS: Record<ServiceStreak['kind'], readonly number[]> = {
-  plans: [1, 3, 7, 14, 30],
-  months: [1, 2, 3, 6, 12],
-}
-
 /**
- * The room lamp's brightness, 0–5, from the raw Service Streak count. With
- * streaks hidden it still burns, at 3.
+ * The room lamp's brightness, 0–5: it follows the hearts, a level for each
+ * whole heart, and goes out when the pet dies (ADR 0035).
  */
-export function lampLevel(
-  streak: Pick<ServiceStreak, 'kind' | 'count'>,
-  showStreaks: boolean
-): LampLevel {
-  if (!showStreaks) return LAMP_LEVEL_STREAKS_HIDDEN
-  const thresholds = THRESHOLDS[streak.kind]
-  let level = 0
-  for (const threshold of thresholds) if (streak.count >= threshold) level++
-  return level as LampLevel
+export function lampLevel(life: { hearts: number; dead: boolean }): LampLevel {
+  if (life.dead || !Number.isFinite(life.hearts)) return 0
+  return Math.max(0, Math.min(MAX_HEARTS, Math.floor(life.hearts))) as LampLevel
 }

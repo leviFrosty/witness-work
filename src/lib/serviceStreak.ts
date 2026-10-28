@@ -292,3 +292,165 @@ export function nextSeenStreak(
     grew: seen.latest !== null && recent && current.count >= STREAK_MIN,
   }
 }
+
+/** A streak reaching a milestone (`isStreakMilestone`). */
+export type StreakMilestone = {
+  count: number
+  /** The planned day kept that reached it, or the month's first day out. */
+  on: string
+}
+
+/** What a Service Streak's history holds, replayed from the records. */
+export type StreakHistory = {
+  /** Planned days kept, by the rules a `plans` streak counts, oldest first. */
+  kept: readonly string[]
+  /** Every milestone a streak of `kind` reached, oldest first. */
+  milestones: readonly StreakMilestone[]
+}
+
+const NO_HISTORY: StreakHistory = { kept: [], milestones: [] }
+
+const dayKeyOf = (date: Date) =>
+  `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+
+/**
+ * Counts a streak forward, as it stood at each period kept: the periods kept
+ * back to the last one missed before the period before it, since that one could
+ * still be kept then (as `plansStreak` and `monthsStreak` count back from now).
+ * So a milestone stays reached when a later miss ends the streak.
+ */
+function streakCounter() {
+  const kept: string[] = []
+  const missed: string[] = []
+  let breaks = 0
+  let start = 0
+  return {
+    miss: (period: string) => missed.push(period),
+    /** Counts `period` kept, the period before it `before`; its streak then. */
+    keep: (period: string, before: string): number => {
+      while (breaks < missed.length && missed[breaks] < before) breaks++
+      const ended = breaks ? missed[breaks - 1] : null
+      while (ended && start < kept.length && kept[start] < ended) start++
+      kept.push(period)
+      return kept.length - start
+    },
+    kept,
+  }
+}
+
+/** Every planned day from the first Plan through `now`, kept or missed. */
+function plansHistory(
+  records: StreakRecords,
+  now: Date,
+  milestones: boolean
+): StreakHistory {
+  const days = serviceDays(records.serviceReports)
+  const dayPlans = new Map<string, DayPlan[]>()
+  let earliest: string | null = null
+  for (const plan of records.dayPlans) {
+    const key = storedDayKey(plan.date)
+    dayPlans.set(key, [...(dayPlans.get(key) ?? []), plan])
+    if (!earliest || key < earliest) earliest = key
+  }
+  for (const plan of records.recurringPlans) {
+    const key = storedDayKey(plan.startDate)
+    if (!earliest || key < earliest) earliest = key
+  }
+  if (!earliest) return NO_HISTORY
+
+  const today = dayKeyOf(now)
+  const from = moment(earliest, DAY)
+  const cursor = new Date(from.year(), from.month(), from.date(), 12)
+  const streak = streakCounter()
+  const reached: StreakMilestone[] = []
+  let before = ''
+  for (
+    let i = 0;
+    i < MAX_LOOKBACK_DAYS;
+    i++, cursor.setDate(cursor.getDate() + 1)
+  ) {
+    const key = dayKeyOf(cursor)
+    if (key > today) break
+    const planned = resolvePlannedContributionsForDay(
+      cursor,
+      dayPlans.get(key) ?? [],
+      records.recurringPlans
+    ).some((contribution) => contribution.minutes > 0)
+    if (planned && (days.get(key) ?? 0) > 0) {
+      const count = streak.keep(key, before)
+      if (milestones && isStreakMilestone('plans', count))
+        reached.push({ count, on: key })
+    } else if (planned) streak.miss(key)
+    before = key
+  }
+  return { kept: streak.kept, milestones: reached }
+}
+
+/** Every month from the first one out through `now`'s, out or not. */
+function monthsMilestones(
+  records: StreakRecords,
+  now: Date
+): StreakMilestone[] {
+  const firstDays = new Map<string, string>()
+  for (const day of serviceDays(records.serviceReports).keys()) {
+    const month = `${day.slice(0, 7)}-01`
+    const first = firstDays.get(month)
+    if (!first || day < first) firstDays.set(month, day)
+  }
+  if (!firstDays.size) return []
+  const current = moment(now).startOf('month')
+  const cursor = moment([...firstDays.keys()].sort()[0], DAY)
+  const streak = streakCounter()
+  const reached: StreakMilestone[] = []
+  let before = ''
+  for (
+    let i = 0;
+    i < MAX_LOOKBACK_DAYS / 30 && !cursor.isAfter(current);
+    i++, cursor.add(1, 'month')
+  ) {
+    const month = cursor.format(DAY)
+    const first = firstDays.get(month)
+    if (first) {
+      const count = streak.keep(month, before)
+      if (isStreakMilestone('months', count)) reached.push({ count, on: first })
+    } else streak.miss(month)
+    before = month
+  }
+  return reached
+}
+
+let cachedHistory: {
+  kind: StreakKind
+  day: string
+  records: StreakRecords
+  history: StreakHistory
+} | null = null
+
+/**
+ * The planned days kept and the milestones a streak of `kind` reached, from the
+ * whole history through `now`. A streak that ends and starts over reaches its
+ * milestones again, as it celebrates them again. Kept like `serviceStreak`.
+ */
+export function streakHistory(
+  kind: StreakKind,
+  records: StreakRecords,
+  now: Date = new Date()
+): StreakHistory {
+  const day = moment(now).format(DAY)
+  if (
+    cachedHistory &&
+    cachedHistory.kind === kind &&
+    cachedHistory.day === day &&
+    cachedHistory.records.serviceReports === records.serviceReports &&
+    cachedHistory.records.dayPlans === records.dayPlans &&
+    cachedHistory.records.recurringPlans === records.recurringPlans
+  )
+    return cachedHistory.history
+  const plans = plansHistory(records, now, kind === 'plans')
+  const history =
+    kind === 'plans'
+      ? plans
+      : { kept: plans.kept, milestones: monthsMilestones(records, now) }
+  cachedHistory = { kind, day, records, history }
+  return history
+}

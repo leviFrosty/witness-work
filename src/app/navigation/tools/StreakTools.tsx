@@ -8,15 +8,14 @@ import { toAsciiDigits } from '@/lib/digits'
 import { usePreferences } from '@/stores/preferences'
 import { ToolList, ToolRow, ToolSection } from '@/app/navigation/tools/ToolsUI'
 
-/** Counts worth a tap (one row): the first hats, the lamp's top, all open. */
+/** Counts worth a tap (one row): milestones and long runs. */
 const PRESETS = ['off', '0', '3', '5', '9', '30', '120'] as const
 /** Longer than any streak the tools need to fake. */
 const MAX_DIGITS = 4
 
 /**
  * Developer Tools: sets the Service Streak count the app shows, for testing the
- * streak chip and card, the pet's lamp and which hats and room items are open,
- * without logging real days.
+ * streak chip and card without logging real days.
  */
 export default function StreakTools() {
   const theme = useTheme()
@@ -37,7 +36,7 @@ export default function StreakTools() {
     <ToolSection
       title='Streak'
       icon={FlameIcon}
-      info='Replaces the Service Streak count on Home, Progress, the profile and the pet: its lamp, and which hats and room items are open (none are stored as earned while it is on). Reminders, Buddy Cards and widgets keep the recorded streak. A hat or item picked while it is on stays picked after you turn it off. This device only.'
+      info='Replaces the Service Streak count on Home, Progress and the profile. The pet no longer reads it: its lamp follows its hearts, and the Shop sells its items. Reminders, Buddy Cards and widgets keep the recorded streak. This device only.'
       summary={
         override === null
           ? `${recorded.count} ${kind}`

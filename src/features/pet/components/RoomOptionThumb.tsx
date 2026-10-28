@@ -23,8 +23,9 @@ import { bufferToSkImage } from '@/features/pet/render/skiaImage'
 
 const SAMPLING = { filter: FilterMode.Nearest, mipmap: MipmapMode.None }
 
-// Every tab's thumbnails (about 130 with the secrets), and a few room changes.
-const thumbs = createLru<SkImage | null>(160)
+// Every tab's thumbnails in Decorate Room and the Shop (about 130 each, at
+// their own crops), and a few room changes.
+const thumbs = createLru<SkImage | null>(320)
 // The rooms locked secrets are compared with. A part's secrets share some of
 // them (the hatless room, the regular options), drawn once for all of them.
 const references = createLru<PixelBuffer>(24)

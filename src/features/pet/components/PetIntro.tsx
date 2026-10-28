@@ -16,7 +16,6 @@ import {
   fullyUnlockedRoom,
   INTRO_HAT,
   INTRO_STEPS,
-  introStreakCopy,
   type IntroStep,
 } from '@/features/pet/lib/intro'
 import { petDisplayName } from '@/features/pet/lib/names'
@@ -29,10 +28,10 @@ const PREVIEW_MAX_WIDTH = 420
 const NEW_PET_HEARTS = 3
 
 /**
- * The short intro right after adopting: how hearts fill, the streak lighting
- * the lamp and opening up items (with a room that has them all), and tapping
- * the card to decorate. Each step shows the new pet in its room; tapping it
- * pats it here too.
+ * The short intro right after adopting: how hearts fill, the coins that buy
+ * items in the Shop (with a room that has them all), and tapping the card to
+ * decorate. Each step shows the new pet in its room; tapping it pats it here
+ * too.
  */
 export default function PetIntro({
   pet,
@@ -68,7 +67,7 @@ export default function PetIntro({
     seed: 1000,
   }
   const input: PlayerInput =
-    step === 'streak'
+    step === 'shop'
       ? {
           room: resolveRoom(fullyUnlockedRoom(state.room), {
             time: 'dusk',
@@ -90,15 +89,14 @@ export default function PetIntro({
           pet: scenePet,
         }
 
-  const copy = introStreakCopy(state.unlockMode, state.streakKind)
   const title = i18n.t(`pet.intro.${step}.title`)
   const body =
-    step === 'streak'
-      ? i18n.t(`pet.intro.streak.${copy}`)
+    step === 'shop'
+      ? i18n.t('pet.intro.shop.body')
       : step === 'hearts'
         ? i18n.t(
             // Monthly reporters' hearts fill by the month (ADR 0031).
-            state.streakKind === 'months'
+            state.monthlyHearts
               ? 'pet.intro.hearts.bodyMonths'
               : 'pet.intro.hearts.body'
           )
@@ -118,7 +116,7 @@ export default function PetIntro({
           input={input}
           borderRadius={theme.numbers.borderRadiusMd}
           accessibilityLabel={
-            step === 'streak'
+            step === 'shop'
               ? i18n.t('pet.intro.previewA11y', { name })
               : i18n.t('pet.a11y.scene', { name })
           }

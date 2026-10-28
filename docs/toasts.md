@@ -30,7 +30,8 @@ With VoiceOver or TalkBack on, a toast with something to press stays 60 s and an
 
 ## How they look and move
 
-- **Bottom:** a dark bar above the tab bar, with an optional text button (Undo) that's a full 44 pt target.
+- **Bottom:** a dark bar above the tab bar, with an optional text button (Undo) that's a full 44 pt target. An `accessory` trails the text: what a save earned the pet, measured with `measureReward` from `src/lib/actionRewards.ts` around the save. Its `label` is read with the toast.
+- **The reward stack** (`src/stores/rewardStack.ts`, drawn by `RewardStackLayer`) is part of this system, not a layer of its own: what a save earned stomps in line by line just above the bottom toasts ("+1 Time added", "+1 Planned day kept"), its total slams, then drops into the toast's accessory (`RewardTally`, the pet's wallet) and counts up. `ToastHost` draws it (and stays mounted while it plays), a streak celebration draws it while a milestone line plays there, and it plays over the pet's Home card for what was earned elsewhere. A tap anywhere skips it. Settings → Rewards turns it off; the accessory is then a plain "+N" chip. See `docs/pet-companion.md`.
 - **Top:** a card below the status bar. An unlock shows its art, an eyebrow, a title, a View pill, and a grabber that says it can be swiped.
 - **Stacking:** each edge stacks like Sonner. The newest toast is in front. Up to two more peek out above it, 10 pt apart and 5% smaller each, blank. On both edges older toasts sit above newer ones, so a top stack keeps its oldest by the status bar and grows down. Tapping a toast behind the front one, or hovering the stack with a pointer, spreads it out. It folds back 4 s after the last touch.
 - **Timing:** a toast's time pauses while the User touches the stack, hovers it, or has it spread out. Top toasts also wait while a takeover holds the screen.
@@ -57,3 +58,4 @@ An unlock follows the action rule (ADR 0021):
 - `__WW_DEV__.toast.success('Copied')` (and the other intents) shows a toast.
 - `__WW_DEV__.noteUserAction()`, then `__WW_DEV__.badges.celebrate('yearRound.2')` or `__WW_DEV__.pet.unlock(['hat:beret'])`, shows unlock toasts. Without the action, the same calls go to the tray.
 - `__WW_DEV__.badges.moment(key)` opens a badge's full-screen celebration directly.
+- `__WW_DEV__.pet.reward('soft' | 'save' | 'milestone')` plays the reward stack; `__WW_DEV__.stores.rewardStack.getState().run` reads it back.

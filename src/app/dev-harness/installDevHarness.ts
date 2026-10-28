@@ -12,6 +12,7 @@ import useConversations from '@/stores/conversationStore'
 import useServiceReport from '@/stores/serviceReport'
 import useMileage from '@/stores/mileage'
 import usePet from '@/stores/pet'
+import { useRewardStack } from '@/stores/rewardStack'
 import useCategories from '@/stores/categories'
 import { usePreferences } from '@/stores/preferences'
 import { useProfile } from '@/stores/profile'
@@ -579,6 +580,9 @@ export function installDevHarness() {
       savedPlaces: useSavedPlaces,
       // The companion and room records (`pet`, `room`) and their tombstones.
       pet: usePet,
+      // The reward stack playing now (`run`: `slot`, `phase`, `lines`,
+      // `played`, `shown`), or null.
+      rewardStack: useRewardStack,
       categories: useCategories,
       buddies: useBuddies,
       buddiesDiagnostics: useBuddiesDiagnostics,

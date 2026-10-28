@@ -176,6 +176,37 @@ describe('pet store', () => {
     ])
   })
 
+  it('stores a purchase once per item, and none for an owned item', () => {
+    const purchase = {
+      item: 'hat:bow',
+      currency: 'thread',
+      price: 5,
+      on: '2026-10-02',
+    } as const
+    expect(usePet.getState().buyRoomItem(purchase)).toBe(false)
+
+    adopt()
+    const before = usePet.getState().pet!
+    expect(usePet.getState().buyRoomItem(purchase)).toBe(true)
+    const after = usePet.getState().pet!
+    expect(after.purchases).toEqual([purchase])
+    expect(after.updatedAt).toBeGreaterThan(before.updatedAt)
+    // Bought already, earned already, or on an unreadable day: nothing.
+    expect(usePet.getState().buyRoomItem({ ...purchase, price: 3 })).toBe(false)
+    usePet.getState().earnRoomItems([UNLOCK_ORDER[0]])
+    expect(
+      usePet.getState().buyRoomItem({ ...purchase, item: UNLOCK_ORDER[0] })
+    ).toBe(false)
+    expect(
+      usePet.getState().buyRoomItem({ ...purchase, item: 'hat:cap', on: 'now' })
+    ).toBe(false)
+    expect(usePet.getState().pet!.purchases).toEqual([purchase])
+
+    // Change Pet keeps what was bought.
+    usePet.getState().changeAppearance({ species: 'cat', coat: 'grey' })
+    expect(usePet.getState().pet!.purchases).toEqual([purchase])
+  })
+
   it('does nothing to a pet that was never adopted', () => {
     usePet.getState().rename('Rex')
     usePet.getState().recordWake('2026-01-01')

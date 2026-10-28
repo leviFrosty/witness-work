@@ -23,6 +23,7 @@ import { TimeEntry } from '@/types/timeEntry'
 import type { RichText } from '@/types/richText'
 import type { RootStackParamList } from '@/types/rootStack'
 import i18n from '@/lib/locales'
+import { measureReward } from '@/lib/actionRewards'
 import DockedFormLayout from '@/components/ui/layout/DockedFormLayout'
 import FormDetailsSection from '@/components/ui/inputs/FormDetailsSection'
 import Section from '@/components/ui/inputs/Section'
@@ -339,6 +340,7 @@ const TimeEntryForm = (props: Props) => {
 
     noteUserAction('time')
     const entry = savedEntry()
+    const earned = measureReward('time')
     addServiceReport(entry)
     analytics.capture('time_entry_created', {
       source: props.source,
@@ -346,7 +348,10 @@ const TimeEntryForm = (props: Props) => {
       has_category: !!entry.categoryId,
       ...noteAnalytics(entry),
     })
-    toast.success(progress.added, { message: progress.progress })
+    toast.success(progress.added, {
+      message: progress.progress,
+      accessory: earned(),
+    })
     props.onDone()
   }
 
@@ -354,6 +359,7 @@ const TimeEntryForm = (props: Props) => {
     if (!validation.validate()) return
     noteUserAction('time')
     const entry = savedEntry()
+    const earned = measureReward('time')
     updateServiceReport(entry)
     analytics.capture('time_entry_updated', {
       source: props.source,
@@ -363,6 +369,7 @@ const TimeEntryForm = (props: Props) => {
     })
     toast.success(i18n.t('success'), {
       message: i18n.t('updated'),
+      accessory: earned(),
     })
 
     props.onDone()

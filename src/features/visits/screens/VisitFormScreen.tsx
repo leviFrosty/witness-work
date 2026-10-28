@@ -25,6 +25,7 @@ import { getNoteDoc, hasNote, noteFields } from '@/lib/richText/notes'
 import moment from 'moment'
 import useConversations from '@/stores/conversationStore'
 import i18n from '@/lib/locales'
+import { measureReward } from '@/lib/actionRewards'
 import DateTimePicker, {
   type DateTimePickerEvent,
 } from '@/components/ui/DateTimePicker'
@@ -409,6 +410,7 @@ const VisitFormScreen = ({
 
     noteUserAction('visit')
     const visit = buildVisit()
+    const earned = measureReward('visit')
     if (params.visitToEditId) updateConversation(visit)
     else addConversation(visit)
     toast.success(i18n.t('success'), {
@@ -419,6 +421,7 @@ const VisitFormScreen = ({
             ? 'addedNotAtHome'
             : 'addedConversation'
       ),
+      accessory: earned(),
     })
     return Promise.resolve(visit)
   }, [

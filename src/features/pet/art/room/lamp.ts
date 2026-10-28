@@ -1,9 +1,9 @@
 /**
- * The lamp is the Service Streak: its flame grows with the streak level 0–5 and
- * an unlit lamp smokes. Each lamp is rasterized in its own small box and placed
- * at (ox, oy) in the scene; (fx, fy) is the wick in box pixels. Lamps with
- * `stool` stand on a stool that is part of the room base. Secret lamps without
- * a flame glow from (fx, fy) instead, dark at level 0 and brighter each level.
+ * The lamp follows the pet's hearts: its flame grows with the level 0–5 and an
+ * unlit lamp smokes. Each lamp is rasterized in its own small box and placed at
+ * (ox, oy) in the scene; (fx, fy) is the wick in box pixels. Lamps with `stool`
+ * stand on a stool that is part of the room base. Secret lamps without a flame
+ * glow from (fx, fy) instead, dark at level 0 and brighter each level.
  */
 import {
   createBuffer,
@@ -26,7 +26,7 @@ import { SCENE_H, SCENE_W } from '../layout'
 export { LAMP_IDS }
 export type { LampId }
 
-/** Streak level: 0 (unlit) to 5 (radiant). */
+/** Lamp level: 0 (unlit) to 5 (radiant). */
 export type LampLevel = 0 | 1 | 2 | 3 | 4 | 5
 
 /** Flame height and radius by level. */
@@ -776,7 +776,7 @@ const JAR_GINGHAM: readonly FeaturePixel[] = (() => {
   return px
 })()
 
-/** Firefly spots in the jar, lit one by one as the streak grows. */
+/** Firefly spots in the jar, lit one by one as the level grows. */
 const FIREFLIES: readonly Pt[] = [
   [8, 18],
   [12, 14],
@@ -1233,7 +1233,7 @@ const CACTUS = rgbPalette({
   centreLit: '#fff3a8',
 })
 
-/** Bloom radius by level: a closed bud at 0 that opens as the streak grows. */
+/** Bloom radius by level: a closed bud at 0 that opens as the level grows. */
 const BLOOM: readonly number[] = [0, 1.7, 2.2, 2.7, 3.2, 3.7]
 
 const cactus: LampDefinition = {

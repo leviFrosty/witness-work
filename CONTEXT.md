@@ -393,7 +393,7 @@ _Avoid_: "like", "comment", "kudos", "emoji reply".
 ### Pet
 
 **Pet** (Companion):
-The User's one opt-in Pet Companion on Home: a small pixel-art pet (lion cub, pup, kitten, donkey or lamb, in a chosen coat, and one hat or none) that lives in a room and stays happy while the User keeps going out in the ministry. "Change Pet" changes its species and coat but keeps the same companion: its name, **Hearts**, history, room and **Keepsakes**. Releasing it removes it from every synced device. Shared with buddies in the **Buddy Card** unless the User turns it off; on a day the User has a Plan with a buddy who shares one, that buddy's pet visits. Its room items open up as the **Service Streak** reaches each one's number (one per active month instead while streaks are hidden or there are no Plans to keep) and stay open after the streak ends. **Secret items** (hats and room items) open up on their own milestones instead, mostly **Badges**; until then they show only as a silhouette and a question mark, never saying what opens them. Pets never speak in words, and nothing about them is triggered by hours.
+The User's one opt-in Pet Companion on Home: a small pixel-art pet (lion cub, pup, kitten, donkey or lamb, in a chosen coat, and one hat or none) that lives in a room and stays happy while the User keeps going out in the ministry. "Change Pet" changes its species and coat but keeps the same companion: its name, **Hearts**, history, room and **Keepsakes**. Releasing it removes it from every synced device. Shared with buddies in the **Buddy Card** unless the User turns it off; on a day the User has a Plan with a buddy who shares one, that buddy's pet visits. Its room items and hats are bought in the **Shop** with **Coins** and stay owned for good (ADR 0035); items opened up before the Shop stay owned too. **Secret items** (hats and room items) open up on their own milestones instead, mostly **Badges**; until then they show only as a silhouette and a question mark, never saying what opens them. Pets never speak in words, and nothing about them is triggered by hours.
 _Avoid_: "avatar" (that's the **Profile** picture), "virtual pet"; ghost, halo, angel or "went to heaven" imagery for a pet that died.
 
 **Hearts**:
@@ -401,12 +401,24 @@ The Pet's wellbeing, ½ to 5 in half steps (0 once it died). Replayed day by day
 _Avoid_: "health", "lives", "HP", "score".
 
 **Lamp**:
-The lamp in the Pet's room, whose brightness (0–5) is the User's **Service Streak**, by its raw count. With streaks hidden it still burns at a middle level and no streak number shows.
+The lamp in the Pet's room, whose brightness (0–5) follows the Pet's **Hearts**, a level for each whole heart, and goes out when it died (ADR 0035).
 _Avoid_: "streak light"; showing a streak count next to it.
 
 **Keepsake**:
 A small gift (olive, fig, pebble, feather or lily) the Pet leaves on its rug on some days after 30 days in a row at five **Hearts**; the same days on every device. Tapping it keeps it; the newest few sit on the window sill. Distinct from **Badges**, which the app's own Badge copy also calls keepsakes in prose.
 _Avoid_: "reward", "loot", "collectible".
+
+**Coins**:
+The Pet's one currency, gold coins, earned since adoption: 1 for each day out (a Time Entry, the checkbox included, or a Visit the User logged; never a Plan or a Time Rollover), 1 more for each Planned day kept (a day with a Plan for some time and time logged), and 10 for each **Service Streak** milestone it reaches, only while streaks are shown. A month whose role reports only whether it shared earns at least 8 once it has a Time Entry. Replayed from records like **Hearts**, never stored; only what the Shop sold is (ADR 0035). Never sold for money, never granted by Supporter status.
+_Avoid_: "thread" or "dye" (earlier drafts' currencies), "points", "gems", "credits", "money".
+
+**Reward stack**:
+How what a save earned the Pet plays where the User is: a line for each source ("+1 Time added", "+1 Planned day kept", "+10 Streak milestone · 5") stomps in, the total slams and drops into the Pet's coins, which count up. It plays above the confirming toast, inside a streak celebration for a milestone, or over the Pet's Home card for what was earned elsewhere. A tap skips it; Settings → Rewards turns it and its sounds off.
+_Avoid_: "combo meter", "loot", "jackpot".
+
+**Shop**:
+Where the User spends **Coins** on the Pet's hats and room items, from the Pet's details or a locked item. Each item is bought once and owned for good; **Secret items** are never sold. Nothing in it costs money.
+_Avoid_: "store" (that's the App Store or Play Store), "market", "loot", "gacha"; "unlock" for a purchase.
 
 ### Update intros
 

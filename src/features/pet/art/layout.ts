@@ -23,6 +23,15 @@ export const PET_X = 52
 /** Pet sprite top-left y. */
 export const PET_Y = 52
 /**
+ * Where the pet's body sits in `viewport`, as fractions of its width and
+ * height: where what it earns flies out from.
+ */
+export const petCenterIn = (viewport: Viewport): [number, number] => [
+  (PET_X + SPRITE_SIZE / 2 - viewport[0]) / viewport[2],
+  (PET_Y + SPRITE_SIZE / 2 + 2 - viewport[1]) / viewport[3],
+]
+
+/**
  * Visiting pets' sprite top-lefts, in the order they take them: either side of
  * the pet, then rows further back around it, then outward. Every spot is behind
  * the pet ({@link PET_Y} or higher), so it stays in front, and the first ones

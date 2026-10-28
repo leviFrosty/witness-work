@@ -56,7 +56,14 @@ function isNewOption(
 }
 
 /** The small pill over a cell's top corner: its price, a secret's "?", or "New". */
-function CornerPill({ children }: { children: ReactNode }) {
+function CornerPill({
+  children,
+  color = 'rgba(0, 0, 0, 0.62)',
+}: {
+  children: ReactNode
+  /** Its fill; "New" is red so it stands out. */
+  color?: string
+}) {
   return (
     <View
       style={{
@@ -69,7 +76,7 @@ function CornerPill({ children }: { children: ReactNode }) {
         paddingHorizontal: 7,
         paddingVertical: 2,
         borderRadius: 99,
-        backgroundColor: 'rgba(0, 0, 0, 0.62)',
+        backgroundColor: color,
       }}
     >
       {children}
@@ -227,7 +234,7 @@ export default function RoomOptionGrid({
                   </CornerPill>
                 )}
                 {isNew && (
-                  <CornerPill>
+                  <CornerPill color={theme.colors.error}>
                     <Text
                       style={{
                         fontSize: theme.fontSize('xs'),

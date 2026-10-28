@@ -185,10 +185,11 @@ Swappable parts, each a registry of options (`src/features/pet/art/room/`):
     full-screen modal on Android. The paper bleeds under iPhone Duo's vertical bar.
   - The sign sits in the middle of the header, or between back and the wallet where the middle has
     no room for it (a narrow phone, a long translation, a big wallet).
-  - Owned items not picked yet on this install say **New** (white on black with a white outline;
-    inverted in dark), until picked in the Shop or Decorate Room (MMKV `pet-secrets`
-    `picked:<item>`). Whatever is in the room counts as picked, so an item chosen before picks were
-    noted never says "New" once swapped out.
+  - Owned items not picked yet on this install say **New** (white on red), until picked in the
+    Shop or Decorate Room (MMKV `pet-secrets` `picked:<item>`). Whatever is in the room counts as
+    picked, so an item chosen before picks were noted never says "New" once swapped out. Decorate Room's tag is red too, and Home's pet card
+    shows a red **New** chip beside the wallet while any owned Shop item says "New"
+    (`hasNewShopItem`).
 - The pet's details (route `PetRoom`) has a **Shop** button and shows the wallet. Decorate Room dims a
   locked item (a locked secret shows its silhouette instead) and can't pick it. A locked regular
   item's badge is its price beside a coin ("Costs 14 coins in the Shop." to VoiceOver);

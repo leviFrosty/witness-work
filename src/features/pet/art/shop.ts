@@ -57,9 +57,8 @@ export type ShopPalette = {
   accentDark: Rgb
   /** Words on the accent. */
   onAccent: string
-  /** The "New" tag: its fill, outline and words. */
+  /** The "New" tag: its fill and words. */
   newFill: Rgb
-  newOutline: Rgb
   newInk: string
 }
 
@@ -76,8 +75,7 @@ const LIGHT = rgbPalette({
   accent: '#3b3632',
   accentLight: '#5a524c',
   accentDark: '#211d1a',
-  newFill: '#1b1815',
-  newOutline: '#ffffff',
+  newFill: '#d30808',
 })
 const DARK = rgbPalette({
   paper: '#171513',
@@ -92,8 +90,7 @@ const DARK = rgbPalette({
   accent: '#ebe2d2',
   accentLight: '#fbf6ec',
   accentDark: '#b9ad9a',
-  newFill: '#ffffff',
-  newOutline: '#000000',
+  newFill: '#e5383b',
 })
 
 /** The Shop's look in light or dark mode. */
@@ -105,7 +102,7 @@ export const shopPalette = (dark: boolean): ShopPalette =>
         ink: '#f1e9da',
         inkAlt: '#9d9283',
         onAccent: '#1b1815',
-        newInk: '#1b1815',
+        newInk: '#ffffff',
       }
     : {
         ...LIGHT,
@@ -189,7 +186,7 @@ export function shopPaper(p: ShopPalette, w: number, h: number): PixelBuffer {
  * - `pill`: the wallet.
  * - `preview`: the hinoki frame around the room.
  * - `tab`: the open category, a cloth tab hanging from its rod.
- * - `newTag`: the "New" tag, outlined so it reads over any picture.
+ * - `newTag`: the "New" tag, plain red so it stands out.
  */
 export type ShopFrameKind =
   | 'card'
@@ -210,7 +207,7 @@ export const SHOP_FRAME_INSET: Record<ShopFrameKind, number> = {
   pill: 0,
   preview: 2,
   tab: 0,
-  newTag: 1,
+  newTag: 0,
 }
 
 /** One frame, `w` × `h` pixels, its middle filled unless it's a picture's. */
@@ -263,7 +260,7 @@ export function shopFrame(
       )
       break
     case 'newTag':
-      drawBox(b, 0, 0, w, h, [p.newOutline], p.newFill, 1)
+      drawBox(b, 0, 0, w, h, [], p.newFill, 1)
       break
   }
   return b

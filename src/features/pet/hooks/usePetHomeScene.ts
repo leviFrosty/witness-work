@@ -1,4 +1,10 @@
-import { useEffect, useRef, useState, type RefObject } from 'react'
+import {
+  useEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  type RefObject,
+} from 'react'
 import type { View } from 'react-native'
 import { useIsFocused } from '@react-navigation/native'
 import usePublisher from '@/hooks/usePublisher'
@@ -26,7 +32,12 @@ import {
   type PetCardLife,
   type PetVisitRoll,
 } from '@/features/pet/lib/sceneInput'
-import { noteSecretFound } from '@/features/pet/lib/secrets'
+import {
+  noteSecretFound,
+  roomItemsPickedSnapshot,
+  subscribeRoomItemsPicked,
+} from '@/features/pet/lib/secrets'
+import { hasNewShopItem } from '@/features/pet/lib/shopEntries'
 import type { PetSceneHandle } from '@/features/pet/render/PetSceneView'
 import { usePetSeen } from '@/features/pet/stores/petSeen'
 import { usePetSession } from '@/features/pet/stores/petSession'
@@ -47,6 +58,8 @@ export type PetHomeScene = {
   /** Hearts and wallet as the card shows them, and what's changing. */
   reveal: PetReveal
   name: string
+  /** An owned Shop item still says "New". */
+  hasNewItems: boolean
   input: PlayerInput
   sceneRef: React.RefObject<PetSceneHandle | null>
   /** Wakes a sleeping pet or one that died (the button or a tap). */
@@ -218,6 +231,12 @@ export default function usePetHomeScene(
   }, [shown, focused])
 
   const { unlockedItems, wallet } = state
+  // Re-checks "New" once an item is picked in Decorate Room or the Shop.
+  const picked = useSyncExternalStore(
+    subscribeRoomItemsPicked,
+    roomItemsPickedSnapshot
+  )
+  const hasNewItems = hasNewShopItem(state.room, unlockedItems, picked)
   useEffect(() => {
     if (!__DEV__) return
     usePetSession.getState().setDevSnapshot(
@@ -293,6 +312,7 @@ export default function usePetHomeScene(
     life,
     reveal,
     name: petDisplayName(pet),
+    hasNewItems,
     // Until its entrance plays, the pet stays out of the room: it walks in,
     // rather than showing at rest first (behind the closing picker, say).
     input: entrancePending ? { ...scene.input, pet: null } : scene.input,

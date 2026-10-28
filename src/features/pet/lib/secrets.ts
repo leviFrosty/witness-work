@@ -44,13 +44,38 @@ export function roomItemPicked(item: string): boolean {
   }
 }
 
+/** `roomItemPicked`, a new one whenever which items were picked changes. */
+let pickedNow = (item: string) => roomItemPicked(item)
+const pickedListeners = new Set<() => void>()
+const notePickedChanged = () => {
+  pickedNow = (item: string) => roomItemPicked(item)
+  for (const listener of pickedListeners) listener()
+}
+
+/** Calls `listener` when which items were picked changes. */
+export function subscribeRoomItemsPicked(listener: () => void): () => void {
+  pickedListeners.add(listener)
+  return () => {
+    pickedListeners.delete(listener)
+  }
+}
+
+/**
+ * `roomItemPicked` for `useSyncExternalStore`: a new function whenever which
+ * items were picked changes, so what reads it re-renders.
+ */
+export const roomItemsPickedSnapshot = (): ((item: string) => boolean) =>
+  pickedNow
+
 /** Notes that the User picked `item`, so it no longer says "New". */
 export function noteRoomItemPicked(item: string): void {
+  if (roomItemPicked(item)) return
   try {
     flags().set(`picked:${item}`, true)
   } catch {
     // The "New" label shows again next time.
   }
+  notePickedChanged()
 }
 
 /** Forgets which secrets were found and items picked (dev harness). */
@@ -60,4 +85,5 @@ export function forgetFoundSecrets(): void {
   } catch {
     // Nothing to forget.
   }
+  notePickedChanged()
 }

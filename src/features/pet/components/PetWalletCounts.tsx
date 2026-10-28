@@ -10,7 +10,7 @@ import Animated, {
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 import { formatNumber } from '@/lib/numbers'
-import { CoinIcon } from '@/features/pet/components/ShopPixels'
+import { CoinIcon } from '@/features/pet/components/GamePixels'
 import type { GainPulse } from '@/features/pet/hooks/usePetReveal'
 import usePetDark from '@/features/pet/hooks/usePetDark'
 import { coinsText, signedAmountText } from '@/features/pet/lib/roomLabels'
@@ -38,6 +38,7 @@ export default function PetWalletCounts({
   iconScale,
   iconRef,
   surface,
+  color,
 }: {
   coins: number
   pulse: GainPulse | null
@@ -47,6 +48,8 @@ export default function PetWalletCounts({
   iconRef?: RefObject<View | null>
   /** The card's colour by default. */
   surface?: string
+  /** The count's colour; the theme's text by default. */
+  color?: string
 }) {
   const theme = useTheme()
   const pop = useSharedValue(1)
@@ -79,6 +82,7 @@ export default function PetWalletCounts({
             fontSize,
             fontFamily: theme.fonts.semiBold,
             fontVariant: ['tabular-nums'],
+            color: color ?? theme.colors.text,
           }}
         >
           {formatNumber(coins)}

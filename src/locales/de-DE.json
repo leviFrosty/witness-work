@@ -4715,7 +4715,6 @@
       }
     },
     "room": {
-      "tabs": "Zimmer und Hut",
       "tab": {
         "hat": "Hut",
         "window": "Fenster",
@@ -4886,23 +4885,14 @@
           "tam": "Tam"
         }
       },
-      "lockedA11y": "{{option}}, gesperrt. {{when}}",
-      "unlockNote": {
-        "secrets": "Manche Gegenstände sind Geheimnisse. Sie tauchen unterwegs auf.",
-        "withSecrets": "{{note}} Manche Gegenstände sind Geheimnisse. Sie tauchen unterwegs auf."
-      },
       "secret": {
         "label": "???",
-        "badge": "?",
         "a11y": "Geheimer Gegenstand, gesperrt",
-        "title": "Ein Geheimnis",
-        "body": "Eine Überraschung, die zu ihrer Zeit auf Sie wartet.",
         "new": "Neu",
         "newA11y": "{{option}}, neu"
       }
     },
     "details": {
-      "rename": "Umbenennen",
       "change": "Haustier ändern",
       "share": "Teilen",
       "settings": "Einstellungen"

@@ -37,7 +37,7 @@ import {
   roomItemsPickedSnapshot,
   subscribeRoomItemsPicked,
 } from '@/features/pet/lib/secrets'
-import { hasNewShopItem } from '@/features/pet/lib/shopEntries'
+import { hasNewRoomItem } from '@/features/pet/lib/locker'
 import type { PetSceneHandle } from '@/features/pet/render/PetSceneView'
 import { usePetSeen } from '@/features/pet/stores/petSeen'
 import { usePetSession } from '@/features/pet/stores/petSession'
@@ -231,12 +231,12 @@ export default function usePetHomeScene(
   }, [shown, focused])
 
   const { unlockedItems, wallet } = state
-  // Re-checks "New" once an item is picked in Decorate Room or the Shop.
+  // Re-checks "New" once an item is picked in the pet's details.
   const picked = useSyncExternalStore(
     subscribeRoomItemsPicked,
     roomItemsPickedSnapshot
   )
-  const hasNewItems = hasNewShopItem(state.room, unlockedItems, picked)
+  const hasNewItems = hasNewRoomItem(state.room, unlockedItems, picked)
   useEffect(() => {
     if (!__DEV__) return
     usePetSession.getState().setDevSnapshot(

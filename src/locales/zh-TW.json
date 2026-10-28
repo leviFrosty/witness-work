@@ -4715,7 +4715,6 @@
       }
     },
     "room": {
-      "tabs": "房間與帽子",
       "tab": {
         "hat": "帽子",
         "window": "窗戶",
@@ -4886,23 +4885,14 @@
           "tam": "蘇格蘭貝雷帽"
         }
       },
-      "lockedA11y": "{{option}}，已鎖定。{{when}}",
-      "unlockNote": {
-        "secrets": "有些項目是秘密，會在過程中出現。",
-        "withSecrets": "{{note}}有些項目是秘密，會在過程中出現。"
-      },
       "secret": {
         "label": "？？？",
-        "badge": "？",
         "a11y": "秘密項目，已鎖定",
-        "title": "一個秘密",
-        "body": "一份驚喜，等待它的時機。",
         "new": "新",
         "newA11y": "{{option}}，新"
       }
     },
     "details": {
-      "rename": "重新命名",
       "change": "更換寵物",
       "share": "分享",
       "settings": "設定"

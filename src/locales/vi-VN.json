@@ -4715,7 +4715,6 @@
       }
     },
     "room": {
-      "tabs": "Phòng và mũ",
       "tab": {
         "hat": "Mũ",
         "window": "Cửa sổ",
@@ -4886,23 +4885,14 @@
           "tam": "Mũ Tam"
         }
       },
-      "lockedA11y": "{{option}}, đã khóa. {{when}}",
-      "unlockNote": {
-        "secrets": "Một số món là bí mật. Chúng sẽ xuất hiện trong quá trình bạn sử dụng.",
-        "withSecrets": "{{note}} Một số món là bí mật. Chúng sẽ xuất hiện trong quá trình bạn sử dụng."
-      },
       "secret": {
         "label": "???",
-        "badge": "?",
         "a11y": "Món bí mật, đã khóa",
-        "title": "Một bí mật",
-        "body": "Một điều bất ngờ, đang chờ đến lúc của nó.",
         "new": "Mới",
         "newA11y": "{{option}}, mới"
       }
     },
     "details": {
-      "rename": "Đổi tên",
       "change": "Đổi thú cưng",
       "share": "Chia sẻ",
       "settings": "Cài đặt"

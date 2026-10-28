@@ -3,8 +3,7 @@ import { DEFAULT_ROOM } from '@/types/pet'
 import { SCENE_H, SCENE_W } from '@/features/pet/art'
 import { ROOM_THUMB_VIEWS } from '@/features/pet/lib/roomOptions'
 import {
-  hasNewShopItem,
-  isNewRoomItem,
+  isForSale,
   shopEntries,
   shopPreviewView,
   shopThumbView,
@@ -19,10 +18,8 @@ describe('shopEntries', () => {
     const [hats] = shopEntries('hat', room, unlocked, 12)
     expect(hats.part).toBe('hat')
     const byItem = new Map(hats.entries.map((entry) => [entry.item, entry]))
-    expect(byItem.get('hat:none')).toMatchObject({
-      state: 'owned',
-      price: null,
-    })
+    // Starters come with the room and are never sold.
+    expect(byItem.has('hat:none')).toBe(false)
     expect(byItem.get('hat:bow')).toMatchObject({
       state: 'current',
       price: 10,
@@ -53,39 +50,19 @@ describe('shopEntries', () => {
   })
 })
 
-describe('isNewRoomItem', () => {
-  it('marks owned items never picked, but no starter or current one', () => {
-    const never = () => false
-    expect(isNewRoomItem({ item: 'hat:bow', state: 'owned' }, never)).toBe(true)
-    expect(isNewRoomItem({ item: 'hat:bow', state: 'owned' }, () => true)).toBe(
-      false
+describe('isForSale', () => {
+  it('is what has a price and isn’t owned, whatever the wallet', () => {
+    const [hats] = shopEntries(
+      'hat',
+      DEFAULT_ROOM,
+      unlockedRoomItems(['hat:bow'], []),
+      12
     )
-    expect(isNewRoomItem({ item: 'hat:bow', state: 'current' }, never)).toBe(
-      false
-    )
-    expect(isNewRoomItem({ item: 'hat:none', state: 'owned' }, never)).toBe(
-      false
-    )
-    expect(isNewRoomItem({ item: 'hat:cap', state: 'forSale' }, never)).toBe(
-      false
-    )
-  })
-})
-
-describe('hasNewShopItem', () => {
-  it('says so while an owned item was never picked', () => {
-    const never = () => false
-    const none = unlockedRoomItems([], [])
-    expect(hasNewShopItem(DEFAULT_ROOM, none, never)).toBe(false)
-    const bow = unlockedRoomItems(['hat:bow'], [])
-    expect(hasNewShopItem(DEFAULT_ROOM, bow, never)).toBe(true)
-    expect(
-      hasNewShopItem(DEFAULT_ROOM, bow, (item) => item === 'hat:bow')
-    ).toBe(false)
-    // Wearing it is no news either.
-    expect(hasNewShopItem({ ...DEFAULT_ROOM, hat: 'bow' }, bow, never)).toBe(
-      false
-    )
+    const forSale = hats.entries.filter(isForSale).map((entry) => entry.item)
+    expect(forSale).toContain('hat:cap')
+    expect(forSale).toContain('hat:tophat')
+    expect(forSale).not.toContain('hat:bow')
+    expect(forSale).not.toContain('hat:teapot')
   })
 })
 

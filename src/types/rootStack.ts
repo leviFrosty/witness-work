@@ -316,12 +316,17 @@ export type RootStackParamList = {
   PetRoom: { focus?: string } | undefined
   /**
    * The pet's Shop (ADR 0035): `focus` picks an item (`part:option`) and its
-   * category; `from` is where it was opened, for analytics.
+   * category; `from` is where it was opened, for analytics: the details' Shop
+   * button (`room`), a part's More in Shop card (`more`), or the Home card's
+   * menu (`menu`).
    */
-  PetShop: { focus?: string; from?: 'room' | 'locked' } | undefined
+  PetShop: { focus?: string; from?: 'room' | 'more' | 'menu' } | undefined
   /** Rename the companion (an empty name shows the species name). */
   PetRename: undefined
-  /** The pet's settings: shown on Home, and buddies' pets visiting. */
+  /**
+   * The pet's settings, from the cog in its details: its name and look, shown
+   * on Home, the reward animations and sounds, and buddies' pets visiting.
+   */
   PetSettings: undefined
   /** Every buddy's pet visiting today, in a scrolling list. */
   PetVisits: undefined

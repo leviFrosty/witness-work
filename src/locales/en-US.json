@@ -4710,6 +4710,7 @@
       "rename": "Rename…",
       "change": "Change Pet…",
       "decorate": "Hat & Room…",
+      "shop": "Shop…",
       "share": "Share…"
     },
     "picker": {
@@ -4764,7 +4765,6 @@
       }
     },
     "room": {
-      "tabs": "Room and hat",
       "tab": {
         "hat": "Hat",
         "window": "Window",
@@ -4935,29 +4935,32 @@
           "tam": "Tam"
         }
       },
-      "unlockPrice": "Costs {{price}} in the Shop.",
-      "lockedA11y": "{{option}}, locked. {{when}}",
-      "unlockNote": {
-        "shop": "Get the rest in the Shop with coins.",
-        "secrets": "Some items are secrets. They show up along the way.",
-        "withSecrets": "{{note}} Some items are secrets. They show up along the way."
-      },
       "secret": {
         "label": "???",
-        "badge": "?",
         "a11y": "Secret item, locked",
-        "title": "A secret",
-        "body": "A surprise, waiting in its own time.",
         "new": "New",
         "newA11y": "{{option}}, new"
       }
     },
     "details": {
-      "rename": "Rename",
       "change": "Change pet",
       "share": "Share",
       "shop": "Shop",
       "settings": "Settings"
+    },
+    "locker": {
+      "wearing": "Wearing: {{item}}",
+      "noHat": "No hat on",
+      "inRoom": "In room: {{item}}",
+      "current": "{{section}}: {{item}}",
+      "moreInShop": "More in Shop",
+      "moreCount": {
+        "one": "{{count}} to buy",
+        "other": "{{count}} to buy"
+      }
+    },
+    "hearts": {
+      "infoTitle": "Hearts"
     },
     "intro": {
       "hearts": {
@@ -5013,6 +5016,8 @@
     },
     "settings": {
       "title": "Pet Settings",
+      "petTitle": "Your Pet",
+      "name": "Name",
       "showOnHome": "Show on Home",
       "buddiesTitle": "Buddies' Pets",
       "visits": "Buddies' pets visit",
@@ -5044,20 +5049,20 @@
         "other": "Need {{count}} more"
       },
       "needMoreA11y": "You need {{price}} more for {{item}}",
-      "wear": "Wear",
-      "place": "Put in room",
       "wearing": "Wearing",
       "inRoom": "In room",
       "owned": "Owned",
+      "wearingNow": "Wearing it now",
+      "inRoomNow": "In the room now",
+      "ownedHint": "Yours to use in {{name}}'s room",
+      "boughtHat": "{{item}} bought. {{name}} is wearing it.",
+      "boughtRoom": "{{item}} bought. It's in {{name}}'s room.",
       "leaves": "Leaves you {{price}}",
       "earnCoins": "Coins come from days out",
       "secretHint": "Found along the way, never sold",
       "itemPrice": "{{item}}, {{price}}",
       "itemNotEnough": "{{item}}, {{price}}, not enough yet",
-      "itemWearing": "{{item}}, wearing",
-      "itemInRoom": "{{item}}, in room",
       "itemOwned": "{{item}}, owned",
-      "itemNew": "{{item}}, owned, new",
       "previewA11y": "{{name}}'s room with {{item}}"
     },
     "reward": {

@@ -10,8 +10,8 @@ import { calendarMonthOf, roleForMonth } from '@/lib/roleHistory'
 import usePet from '@/stores/pet'
 import { usePreferences } from '@/stores/preferences'
 import { startReward, type RewardLine } from '@/stores/rewardStack'
-import { COIN_ICON_PX } from '@/features/pet/art/shop'
-import { CoinIcon } from '@/features/pet/components/ShopPixels'
+import { COIN_ICON_PX } from '@/features/pet/art/gameUi'
+import { CoinIcon } from '@/features/pet/components/GamePixels'
 import {
   COINS_PER_DAY,
   COINS_PER_MILESTONE,

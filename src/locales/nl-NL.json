@@ -4715,7 +4715,6 @@
       }
     },
     "room": {
-      "tabs": "Kamer en hoedje",
       "tab": {
         "hat": "Hoedje",
         "window": "Raam",
@@ -4886,23 +4885,14 @@
           "tam": "Tam"
         }
       },
-      "lockedA11y": "{{option}}, vergrendeld. {{when}}",
-      "unlockNote": {
-        "secrets": "Sommige items zijn geheim. Ze verschijnen onderweg.",
-        "withSecrets": "{{note}} Sommige items zijn geheim. Ze verschijnen onderweg."
-      },
       "secret": {
         "label": "???",
-        "badge": "?",
         "a11y": "Geheim item, vergrendeld",
-        "title": "Een geheim",
-        "body": "Een verrassing die op haar tijd wacht.",
         "new": "Nieuw",
         "newA11y": "{{option}}, nieuw"
       }
     },
     "details": {
-      "rename": "Hernoemen",
       "change": "Huisdier wijzigen",
       "share": "Delen",
       "settings": "Instellingen"

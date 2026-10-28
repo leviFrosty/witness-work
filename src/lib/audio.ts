@@ -209,6 +209,15 @@ function rewardPool(
   return pool
 }
 
+/** Between a sound set's hit and its slam, when it's previewed. */
+const PREVIEW_SLAM_MS = 280
+
+/** Plays `set`'s hit, then its slam: what picking a sound set sounds like. */
+export function previewRewardSounds(set: RewardSoundSet) {
+  playRewardSound('hit', { set })
+  setTimeout(() => playRewardSound('slam', { set }), PREVIEW_SLAM_MS)
+}
+
 /** Loads every sound of `set`, so its first hit isn't late. */
 export function prepareRewardSounds(set: RewardSoundSet = rewardSoundSet()) {
   if (!isAudioEnabled() || set === 'off') return

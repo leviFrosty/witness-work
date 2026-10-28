@@ -4715,7 +4715,6 @@
       }
     },
     "room": {
-      "tabs": "Chumba na kofia",
       "tab": {
         "hat": "Kofia",
         "window": "Dirisha",
@@ -4886,23 +4885,14 @@
           "tam": "Tam"
         }
       },
-      "lockedA11y": "{{option}}, imefungwa. {{when}}",
-      "unlockNote": {
-        "secrets": "Vitu vingine ni siri. Huonekana njiani.",
-        "withSecrets": "{{note}} Vitu vingine ni siri. Huonekana njiani."
-      },
       "secret": {
         "label": "???",
-        "badge": "?",
         "a11y": "Kitu cha siri, kimefungwa",
-        "title": "Siri",
-        "body": "Zawadi ya kushtukiza, inayosubiri wakati wake.",
         "new": "Mpya",
         "newA11y": "{{option}}, mpya"
       }
     },
     "details": {
-      "rename": "Badilisha Jina",
       "change": "Badilisha kipenzi",
       "share": "Shiriki",
       "settings": "Mipangilio"

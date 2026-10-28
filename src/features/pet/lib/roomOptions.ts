@@ -8,7 +8,6 @@ import type {
 import { ROOM_PARTS, type SilhouetteStyle } from '@/features/pet/art'
 import { isSecretItem } from '@/features/pet/lib/secretUnlocks'
 import { isRoomOptionUnlocked } from '@/features/pet/lib/unlocks'
-import { priceOf } from '@/features/pet/lib/prices'
 
 /**
  * The Decorate Room sheet's model: its tabs, the choices on each, what a choice
@@ -168,40 +167,6 @@ export function isRoomChoiceUnlocked(
 ): boolean {
   if (part === 'windowTime' || part === 'windowSeason') return true
   return isRoomOptionUnlocked(part, option, unlocked)
-}
-
-/**
- * What Decorate Room and the Shop need to tell which options are open, and what
- * the rest cost.
- */
-export type RoomUnlocks = {
-  unlocked: ReadonlySet<string>
-  /** Coins left to spend. */
-  wallet: number
-}
-
-/**
- * What opens a locked option: its Shop price (ADR 0035), or nothing it says for
- * a secret (`secret`): that shows as a silhouette and a question mark.
- */
-export type UnlockRequirement =
-  | { by: 'price'; price: number }
-  | { by: 'secret' }
-
-/**
- * How a locked option opens up; null for one that's open already, always free,
- * or unknown to this build.
- */
-export function unlockRequirement(
-  part: RoomChoicePart,
-  option: string,
-  unlocks: RoomUnlocks
-): UnlockRequirement | null {
-  if (isRoomChoiceUnlocked(part, option, unlocks.unlocked)) return null
-  const item = `${part}:${option}`
-  if (isSecretItem(item)) return { by: 'secret' }
-  const price = priceOf(item)
-  return price === null ? null : { by: 'price', price }
 }
 
 /**

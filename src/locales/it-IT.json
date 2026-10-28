@@ -4715,7 +4715,6 @@
       }
     },
     "room": {
-      "tabs": "Stanza e cappello",
       "tab": {
         "hat": "Cappello",
         "window": "Finestra",
@@ -4886,23 +4885,14 @@
           "tam": "Tam"
         }
       },
-      "lockedA11y": "{{option}}, bloccato. {{when}}",
-      "unlockNote": {
-        "secrets": "Alcuni elementi sono segreti. Compaiono lungo il percorso.",
-        "withSecrets": "{{note}} Alcuni elementi sono segreti. Compaiono lungo il percorso."
-      },
       "secret": {
         "label": "???",
-        "badge": "?",
         "a11y": "Elemento segreto, bloccato",
-        "title": "Un segreto",
-        "body": "Una sorpresa, che aspetta il suo momento.",
         "new": "Nuovo",
         "newA11y": "{{option}}, nuovo"
       }
     },
     "details": {
-      "rename": "Rinomina",
       "change": "Cambia animaletto",
       "share": "Condividi",
       "settings": "Impostazioni"

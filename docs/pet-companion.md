@@ -118,12 +118,12 @@ purchases are (`lib/currency.ts`).
   the hearts and wallet it last showed, and what had earned them (`petSeen`, device-local, never
   synced), and keeps showing them until the Home card's header is fully on screen and clear of
   Home's header and the tab bar, or only the status bar once scrolling has tucked them away
-  (`useRevealVisible`), or Decorate Room or the Shop is in front. Then it plays the change and marks
+  (`useRevealVisible`), or the pet's details or the Shop is in front. Then it plays the change and marks
   it seen, so it plays once: each half heart pops in or crumbles (and the pet's mood and lamp follow
   on Home, cheering once full), then on Home the reward stack over the pet's room, dimmed, totalled
   by kind ("+3 Days out", "+2 Planned days kept", "+10 Streak milestone · 15"), dropping into the
   card's coin count. Without what had earned them (seen before the stack), with the stack off, or in
-  Decorate Room and the Shop, the coins count to now under a "+N" that rises on a pill of the
+  the pet's details and the Shop, the coins count to now under a "+N" that rises on a pill of the
   surface's colour, with coins flying from the pet on Home (`revealTier`). Losses
   (spending, deleted records) count down under a muted "−N", with no haptic. While any stack plays,
   every wallet on screen counts along with it. Reduce Motion changes the numbers at once; VoiceOver
@@ -165,37 +165,69 @@ Swappable parts, each a registry of options (`src/features/pet/art/room/`):
 - Owned = starters ∪ `earnedRoomItems` ∪ `purchases`. `earnedRoomItems` holds found secrets and
   anything opened under the old streak and months rules before the Shop, which stays owned. An owned
   item never locks again.
-- **The Shop** (route `PetShop`, `screens/PetShopScreen.tsx`): a washi-paper shop under a noren sign
-  in sumi ink, light and dark. Its header holds back, the sign and the wallet (tap: how coins are
-  earned). The room on top tries on the picked item; categories (Hat, Wall, Floor, Bed, Shelf,
-  Light, `SHOP_TABS`) scroll in a row whose last tab in view is cut about in half (`tabGap`), so the
-  row reads as scrollable. Items sit two to four to a row (`ShopItemCard`): picture, name, and the
-  price, "Wearing"/"In room", or nothing once owned; a locked secret shows its silhouette and `???`.
-  The picked item's button (`ShopBuyPanel`) buys it ("Buy" with the price), says what's missing
-  ("Need 3 more", disabled), wears or places an owned item, or says it's in use. Buying wears or
-  places it at once. A secret's panel only says it's found along the way.
+- **Locker and Shop.** Like a game's locker and its item shop, what the User owns and what's for
+  sale live on two screens that never overlap (ADR 0036):
+  - **The pet's details** (route `PetRoom`, `screens/PetRoomScreen.tsx`, "Hat & Room…" on the
+    card's menu) are the locker. Its header holds the name and hearts (tap the hearts: what they mean),
+    Share and the Settings cog (top right; Close after them where it's full screen), then the wallet
+    (tap: how coins are earned) beside the **Shop** button, and Visiting Today. The room and the
+    category tabs (`GameTabs`: Hat, Wall, Floor, Bed, Shelf, Light, Sign, Window) stay pinned under
+    it; a red dot marks a tab holding something new (`tabsWithNew`). Each tab lists only what's
+    owned (`lib/locker.ts`), starters and free choices included, as the Shop's cards
+    (`GameItemCard`): the one in use ringed with "Wearing"/"In room", and named over the cards
+    ("Wearing: Cap", "In room: Stone"). A tap puts an item on at once (`pet_room_changed`
+    `from: room`). A part the Shop still sells more of ends with a **More in Shop** card ("9 to buy") that
+    opens the Shop at the first of them (`pet_shop_opened`, `from: more`). Window has the Live
+    window switch above its grids. Locked items never show here. It opens like the Shop
+    (`petOpensAsSheet`): a sheet on iPhone, full screen on iPad, iPhone Duo open and Android. From
+    760 pt (`PET_WIDE_FROM`), `FoldSplit` puts the header and the room before the tabs and the
+    cards, meeting at the fold when half-open.
+  - **The Shop** (route `PetShop`, `screens/PetShopScreen.tsx`, also "Shop…" on the card's menu) is
+    only for buying: a washi-paper shop under a noren sign. Its header holds back, the sign and the
+    wallet (tap: how coins are earned; a purchase floats its "−N" over it). The room on top tries on
+    the picked item; it opens on the item it was opened for, else the first one still for sale.
+    Categories (Hat, Wall, Floor, Bed, Shelf, Light, `SHOP_TABS`) scroll in a row whose last tab in
+    view is cut about in half (`tabGap`), so the row reads as scrollable. Items sit two to four to a
+    row (`ShopItemCard`), starters left out (`shopEntries`): picture, name, and the price, or
+    "Owned" with a check once bought or found; a locked secret shows its silhouette and `???`. The
+    picked item's button (`ShopBuyPanel`) buys it ("Buy" with the price) or says what's missing
+    ("Need 3 more", disabled); an owned one's says "Owned" (disabled), with "Wearing it now", "In the
+    room now" or "Yours to use in <Name>'s room" under its name. Buying puts it on at once, with a
+    success haptic and a toast ("Cap bought. Biscuit is wearing it."). A secret's panel only says
+    it's found along the way.
   - Layout by width: under 760 pt, one scroll view with the header, a strip of the room and the
     categories pinned, the items below and the button in a bar at the bottom, clear of the home
     indicator. From 760 pt (iPad, iPhone Duo open), `FoldSplit`: the counter (header, room, item
     panel) leads, the categories and items trail, meeting at the fold when half-open. Picking a
     category scrolls its items back to the top.
-  - Presentation (`petShopOpensAsSheet`): a full-height sheet where the window is compact (iPhone,
-    iPhone Duo closed); full screen where it's regular width, including narrower regular windows
+  - Presentation (`petOpensAsSheet` in `lib/petPresentation.ts`, shared with the details): a
+    full-height sheet where the window is compact (iPhone, iPhone Duo closed); full screen where
+    it's regular width, including narrower regular windows
     such as iPad mini in portrait (744 pt), which get the narrow layout clear of the status bar; a
     full-screen modal on Android. The paper bleeds under iPhone Duo's vertical bar.
   - The sign sits in the middle of the header, or between back and the wallet where the middle has
     no room for it (a narrow phone, a long translation, a big wallet).
-  - Owned items not picked yet on this install say **New** (white on red), until picked in the
-    Shop or Decorate Room (MMKV `pet-secrets` `picked:<item>`). Whatever is in the room counts as
-    picked, so an item chosen before picks were noted never says "New" once swapped out. Decorate Room's tag is red too, and Home's pet card
-    shows a red **New** chip beside the wallet while any owned Shop item says "New"
-    (`hasNewShopItem`).
-- The pet's details (route `PetRoom`) has a **Shop** button and shows the wallet. Decorate Room dims a
-  locked item (a locked secret shows its silhouette instead) and can't pick it. A locked regular
-  item's badge is its price beside a coin ("Costs 14 coins in the Shop." to VoiceOver);
-  tapping it opens the Shop at that item (`pet_room_locked_tapped`). A locked secret's tooltip says
-  only that it's a secret. A note above a tab's options, while any are locked, says to get the rest
-  in the Shop.
+  - Owned items not picked yet on this install say **New** (white on red) in the pet's details, until
+    picked there (MMKV `pet-secrets` `picked:<item>`); free choices (the sign, the window) never do.
+    Whatever is in the room counts as picked, so an item chosen before picks were noted never says
+    "New" once swapped out, and a bought item goes on at once, so only found secrets and items
+    synced from another device do. Home's pet card shows a red **New** chip beside the wallet while
+    any item says "New" (`hasNewRoomItem`).
+- **Pet Settings** (route `PetSettings`, `src/app/pet/PetSettingsScreen.tsx`), from the cog in the
+  details: Name and Change pet (each showing its value; they open Rename and the picker), Show on
+  Home, Rewards (the reward animations switch, the sound sets in a row that previews each one, and
+  Play a sample; the same settings as Settings → Preferences → Rewards), and with Buddies,
+  Buddies' Pets (whether they visit, for everyone and per buddy).
+- **The game look.** Every pet screen past the Home card is game-themed, like the Shop: washi
+  paper, hinoki frames, sumi ink and pixel icons, light and dark (`art/gameUi.ts`,
+  `components/GamePixels.tsx`, `useGamePalette`). The pieces: `GameFrame` (cards, panels, buttons,
+  pills, text fields, switch tracks, the title's hinoki `plaque`), `GameButton` and
+  `GameIconButton` (`components/GameControls.tsx`, full touch targets), `GameToggle`, `GameTabs`,
+  `GameWallet`, `GameItemCard`, the settings rows (`GameSection`, `GameRow`, `GameSwitchRow`,
+  `GameChoiceRow` in `components/GameRows.tsx`), and `GameSheet` / `GameSheetHeader` (the paper
+  sheet with its title on a plaque, back before it or close after it on Android). The Home card
+  stays in the app's own look: it's the door in. The share card keeps its own look too, since it's
+  the picture that leaves the app.
 - Wall sign: a small square sign on the right of the back wall in muted colors. Digits and icons only
   (no words), drawn with the pixel digit font, which also has Eastern Arabic digits for `ar`. Kingdom
   Publishers default to `shared`. Values: hours this month with goal progress, hours this service
@@ -226,11 +258,12 @@ badge reset never locks one again. `pet_room_item_unlocked` sends `by: 'secret'`
 
 **Unlock news** (ADR 0034, `docs/toasts.md`). An item or hat that opens up after the pet's first stored items is news on this device (`stores/petUnlockNews`). The first items are the room the pet starts with.
 
-- **Right after the User's own action, in the foreground:** an unlock toast, one per item, drawn by `PetUnlockArt` in the pet's own room. Tapping it opens `PetUnlockReveal`. Its "Try it on" (or "Decorate Room") opens Decorate Room at the item's tab.
+- **Right after the User's own action, in the foreground:** an unlock toast, one per item, drawn by `PetUnlockArt` in the pet's own room. Tapping it opens `PetUnlockReveal`. Its "Try it on" (or "Decorate Room") opens the pet's details at the item's tab.
 - **Otherwise** (a new month at launch, another device, a toast nobody acted on): only the tray lists it (`usePetUnlockNotifications`).
-- Swiping a toast away, dismissing the tray item, closing the reveal, or opening Decorate Room settles it.
+- Swiping a toast away, dismissing the tray item, closing the reveal, or opening the pet's details settles it.
 
-Decorate Room never shows how a secret opens or what it looks like until it does:
+The Shop never shows how a secret opens or what it looks like until it does (the pet's details
+don't show it at all until it's found):
 
 - A locked secret's thumbnail is its **silhouette** (`art/silhouette.ts`), the option's own pixels
   in one flat shadow (hat, bed, shelf, light) or two shadow tones that keep a pattern's structure
@@ -382,16 +415,18 @@ Feature tier `src/features/pet/`:
 - `components/`, `hooks/`, `screens/` — Home section, prompt card, picker (`PetPicker`, which shows
   the adoption intro `PetIntro` after Adopt: hearts, the Shop with a fully unlocked room from
   `lib/intro.ts`, and tapping the card to decorate; the Home card's header also shows the wallet), the
-  pet's details (`PetRoom`: name, hearts, Share and Settings beside its name, the wallet, always
-  shown, even at 0, with an info popover saying how coins are earned, Shop / Rename / Change pet,
-  buddies' pets visiting today, the room, and icon tabs for its hat and parts; `lib/roomOptions.ts`
-  holds its tabs, choices, thumbnail crops and unlock badges; `RoomOptionThumb` draws one crop of a
-  still room), the Shop (`PetShop`; its pixel frames, sign and icons are drawn to size in
-  `art/shop.ts` and `components/ShopPixels.tsx`), Rename (`PetRename`), and Share… on the card's menu and in the details (`lib/share.ts`: the card's view at 4×, nearest scaling, written as a PNG to the cache folder
-  for the share sheet).
+  pet's details (`PetRoom`, the locker: name, hearts, Share and the Settings cog beside its name, the
+  wallet, always shown, even at 0, with an info popover saying how coins are earned, beside the
+  Shop button, buddies' pets visiting today, the room, and pixel tabs for its hat and parts;
+  `lib/roomOptions.ts` holds its tabs, choices and thumbnail crops, `lib/locker.ts` what's owned of
+  each; `RoomOptionThumb` draws one crop of a still room), the Shop (`PetShop`), Rename
+  (`PetRename`), and Share… on the card's menu and in the details (`lib/share.ts`: the card's view
+  at 4×, nearest scaling, written as a PNG to the cache folder for the share sheet). All of them
+  draw the game look (above).
 
 App tier: `src/app/pet/` for cross-feature glue (visitors from buddies + Plans + Follow-ups, the
-details route that hands them to `PetRoom`, Pet Settings with the buddies' switches, widget images),
+details route that hands them to `PetRoom`, Pet Settings with its rewards and buddies' switches,
+widget images),
 `src/app/widgets/petWidget*.ts` for the iOS widget snapshot.
 
 ## Rendering pipeline

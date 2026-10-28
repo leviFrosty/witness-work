@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { COIN_ICON_PX, coinIcon } from '@/features/pet/art/shop'
+import { COIN_ICON_PX, coinIcon } from '@/features/pet/art/gameUi'
 import type { PixelBuffer } from '@/lib/pixelArt'
 
 /** How many pixels wide each row of `b` is drawn. */

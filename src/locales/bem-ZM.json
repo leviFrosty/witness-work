@@ -4715,7 +4715,6 @@
       }
     },
     "room": {
-      "tabs": "Ng'anda ne kofyo",
       "tab": {
         "hat": "Ikofyo",
         "window": "Indaba",
@@ -4886,23 +4885,14 @@
           "tam": "Tam"
         }
       },
-      "lockedA11y": "{{option}}, yatalikwa. {{when}}",
-      "unlockNote": {
-        "secrets": "Ifintu fimbi fyabela mfiselele. Fileisa pa nshita.",
-        "withSecrets": "{{note}} Ifintu fimbi fyabela mfiselele. Fileisa pa nshita."
-      },
       "secret": {
         "label": "???",
-        "badge": "?",
         "a11y": "Icintu cabela ciselele, catalikwa",
-        "title": "Iciselele",
-        "body": "Ifyakusuka, ifilelolela inshita yafyo.",
         "new": "Cipya",
         "newA11y": "{{option}}, cipya"
       }
     },
     "details": {
-      "rename": "Cinjeni Ishina",
       "change": "Cinjeni pet",
       "share": "Tumina",
       "settings": "Ifyo Mwasala"

@@ -4,11 +4,7 @@ import {
   COINS_PER_MILESTONE,
   SHARED_MONTH_COINS,
 } from '@/features/pet/lib/currency'
-import type {
-  RoomChoicePart,
-  RoomTab,
-  UnlockRequirement,
-} from '@/features/pet/lib/roomOptions'
+import type { RoomChoicePart, RoomTab } from '@/features/pet/lib/roomOptions'
 
 /** A Decorate Room tab's name ("Window", "Light"). */
 export const roomTabLabel = (tab: RoomTab): string =>
@@ -72,40 +68,3 @@ export const currencyInfoText = ({
 
 /** A price in words: "12 coins". */
 export const priceText = (price: number): string => coinsText(price)
-
-/**
- * How a locked option opens up, in words for its accessibility label and its
- * tooltip: what it costs in the Shop. A secret never says.
- */
-export const unlockRequirementText = (
-  requirement: UnlockRequirement
-): string =>
-  requirement.by === 'price'
-    ? i18n.t('pet.room.unlockPrice', { price: priceText(requirement.price) })
-    : i18n.t('pet.room.secret.body')
-
-/**
- * A locked option's corner badge, beside a coin: the price, or a question mark
- * for a secret.
- */
-export const unlockPillText = (requirement: UnlockRequirement): string =>
-  requirement.by === 'price'
-    ? formatNumber(requirement.price)
-    : i18n.t('pet.room.secret.badge')
-
-/**
- * The note above a tab's options while any are locked: that the Shop sells the
- * regular ones, and that some are secrets while a secret is locked. Null with
- * nothing locked.
- */
-export function lockedNoteText(locked: {
-  regular: boolean
-  secret: boolean
-}): string | null {
-  if (!locked.regular)
-    return locked.secret ? i18n.t('pet.room.unlockNote.secrets') : null
-  const note = i18n.t('pet.room.unlockNote.shop')
-  return locked.secret
-    ? i18n.t('pet.room.unlockNote.withSecrets', { note })
-    : note
-}

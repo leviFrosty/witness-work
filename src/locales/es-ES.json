@@ -4715,7 +4715,6 @@
       }
     },
     "room": {
-      "tabs": "Habitación y sombrero",
       "tab": {
         "hat": "Sombrero",
         "window": "Ventana",
@@ -4886,23 +4885,14 @@
           "tam": "Gorro escocés"
         }
       },
-      "lockedA11y": "{{option}}, bloqueado. {{when}}",
-      "unlockNote": {
-        "secrets": "Algunos objetos son secretos. Aparecen por el camino.",
-        "withSecrets": "{{note}} Algunos objetos son secretos. Aparecen por el camino."
-      },
       "secret": {
         "label": "???",
-        "badge": "?",
         "a11y": "Objeto secreto, bloqueado",
-        "title": "Un secreto",
-        "body": "Una sorpresa que espera su momento.",
         "new": "Nuevo",
         "newA11y": "{{option}}, nuevo"
       }
     },
     "details": {
-      "rename": "Cambiar nombre",
       "change": "Cambiar mascota",
       "share": "Compartir",
       "settings": "Ajustes"

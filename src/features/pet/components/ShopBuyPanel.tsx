@@ -1,16 +1,10 @@
 import { View } from 'react-native'
-import Button from '@/components/ui/Button'
 import Text from '@/components/ui/MyText'
-import { MIN_TOUCH_TARGET } from '@/components/ui/touchTarget'
 import useTheme from '@/contexts/theme'
 import i18n, { type TranslationKey } from '@/lib/locales'
-import { formatNumber } from '@/lib/numbers'
-import type { ShopPalette } from '@/features/pet/art/shop'
-import {
-  CoinIcon,
-  ShopFrame,
-  shopPixelScale,
-} from '@/features/pet/components/ShopPixels'
+import type { GamePalette } from '@/features/pet/art/gameUi'
+import { GameButton } from '@/features/pet/components/GameControls'
+import { gamePixelScale } from '@/features/pet/components/GamePixels'
 import {
   coinsText,
   priceText,
@@ -22,6 +16,8 @@ import type { ShopEntry } from '@/features/pet/lib/shopEntries'
 /** What the button says and does for the picked item. */
 type Action = {
   label: string
+  /** A check before the label: it's owned. */
+  owned?: boolean
   /** A coin beside the label, and a number after it. */
   coin?: boolean
   amount?: number
@@ -30,29 +26,29 @@ type Action = {
 }
 
 /**
- * The picked item and what can be done with it: buy it (or what's missing),
- * wear it or put it in the room, or that it's already there. A secret only says
- * it's found, never sold.
+ * The picked item and what can be done with it here: buy it, or what's missing.
+ * An owned one says so and where it's used (the pet's details wear and place
+ * things); a secret only says it's found, never sold.
  */
 export default function ShopBuyPanel({
   entry,
   wallet,
+  petName,
   palette,
   onBuy,
-  onUse,
   layout,
 }: {
   entry: ShopEntry
   /** Coins left to spend. */
   wallet: number
-  palette: ShopPalette
+  petName: string
+  palette: GamePalette
   onBuy: () => void
-  onUse: () => void
   /** `row`: name beside the button (a bar); `stack`: the button under it. */
   layout: 'row' | 'stack'
 }) {
   const theme = useTheme()
-  const scale = shopPixelScale()
+  const scale = gamePixelScale()
   const hat = entry.part === 'hat'
   const secret = entry.state === 'secret'
   const name = secret
@@ -92,18 +88,17 @@ export default function ShopBuyPanel({
       break
     }
     case 'owned':
-      sub = i18n.t('pet.shop.owned')
-      action = {
-        label: hat ? i18n.t('pet.shop.wear') : i18n.t('pet.shop.place'),
-        a11y: hat ? i18n.t('pet.shop.wear') : i18n.t('pet.shop.place'),
-        onPress: onUse,
-      }
-      break
     case 'current':
-      sub = i18n.t('pet.shop.owned')
+      sub =
+        entry.state === 'current'
+          ? hat
+            ? i18n.t('pet.shop.wearingNow')
+            : i18n.t('pet.shop.inRoomNow')
+          : i18n.t('pet.shop.ownedHint', { name: petName })
       action = {
-        label: hat ? i18n.t('pet.shop.wearing') : i18n.t('pet.shop.inRoom'),
-        a11y: hat ? i18n.t('pet.shop.wearing') : i18n.t('pet.shop.inRoom'),
+        label: i18n.t('pet.shop.owned'),
+        owned: true,
+        a11y: i18n.t('pet.shop.itemOwned', { item: name }),
       }
       break
     case 'secret':
@@ -111,52 +106,19 @@ export default function ShopBuyPanel({
       break
   }
 
-  const enabled = !!action?.onPress
-  const ink = enabled ? palette.onAccent : palette.inkAlt
   const button = action && (
-    <Button
+    <GameButton
+      label={action.label}
+      icon={action.owned ? 'check' : undefined}
+      coin={action.coin}
+      amount={action.amount}
       onPress={action.onPress}
-      disabled={!enabled}
-      accessibilityRole='button'
       accessibilityLabel={action.a11y}
-      accessibilityState={{ disabled: !enabled }}
-      style={layout === 'row' ? { flexShrink: 0 } : null}
-    >
-      <ShopFrame
-        kind={enabled ? 'button' : 'buttonOff'}
-        palette={palette}
-        style={{
-          minHeight: Math.max(20 * scale, MIN_TOUCH_TARGET),
-          minWidth: layout === 'row' ? 60 * scale : undefined,
-          paddingHorizontal: 5 * scale,
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: 6,
-        }}
-      >
-        <Text
-          numberOfLines={1}
-          style={{ fontSize: 16, fontFamily: theme.fonts.bold, color: ink }}
-        >
-          {action.label}
-        </Text>
-        {action.coin && <CoinIcon />}
-        {action.amount !== undefined && (
-          <Text
-            style={{
-              fontSize: 16,
-              fontFamily: theme.fonts.bold,
-              fontVariant: ['tabular-nums'],
-              color: ink,
-              marginStart: -2,
-            }}
-          >
-            {formatNumber(action.amount)}
-          </Text>
-        )}
-      </ShopFrame>
-    </Button>
+      palette={palette}
+      style={
+        layout === 'row' ? { flexShrink: 0, minWidth: 60 * scale } : undefined
+      }
+    />
   )
 
   return (

@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest'
 import {
   DEFAULT_ROOM,
   ROOM_PART_OPTIONS,
-  STARTER_ROOM_ITEMS,
   UNLOCK_ORDER,
   type PetRoomSettings,
 } from '@/types/pet'
@@ -21,8 +20,6 @@ import {
   roomWithChoice,
   selectedRoomOption,
   thumbRoom,
-  unlockRequirement,
-  type RoomUnlocks,
 } from '@/features/pet/lib/roomOptions'
 
 const FIXED: PetRoomSettings = {
@@ -143,52 +140,6 @@ describe('Decorate Room options', () => {
     ).toBe(true)
     expect(isRoomChoiceUnlocked('hat', 'none', none)).toBe(true)
     expect(isRoomChoiceUnlocked('hat', 'bow', none)).toBe(false)
-  })
-
-  it('says what a locked option costs in the Shop', () => {
-    const unlocks = (stored: readonly string[] = []): RoomUnlocks => ({
-      unlocked: unlockedRoomItems(stored, []),
-      wallet: 0,
-    })
-    expect(unlockRequirement('floor', 'stone', unlocks())).toEqual({
-      by: 'price',
-      price: 14,
-    })
-    expect(unlockRequirement('floor', 'tile', unlocks())).toEqual({
-      by: 'price',
-      price: 30,
-    })
-    expect(unlockRequirement('hat', 'bow', unlocks())).toEqual({
-      by: 'price',
-      price: 10,
-    })
-    // Owned already, free, or always open: nothing to say.
-    expect(
-      unlockRequirement('floor', 'stone', unlocks(['floor:stone']))
-    ).toBeNull()
-    expect(unlockRequirement('floor', 'wood', unlocks())).toBeNull()
-    expect(unlockRequirement('hat', 'none', unlocks())).toBeNull()
-    expect(unlockRequirement('windowTime', 'night', unlocks())).toBeNull()
-    expect(unlockRequirement('sign', 'plan', unlocks())).toBeNull()
-    expect(STARTER_ROOM_ITEMS).toContain('floor:wood')
-  })
-
-  it('never says how a locked secret opens up, or prices it', () => {
-    const unlocks: RoomUnlocks = {
-      unlocked: unlockedRoomItems([], []),
-      wallet: 999,
-    }
-    expect(unlockRequirement('hat', 'duck', unlocks)).toEqual({
-      by: 'secret',
-    })
-    expect(unlockRequirement('floor', 'tatami', unlocks)).toEqual({
-      by: 'secret',
-    })
-    const open: RoomUnlocks = {
-      ...unlocks,
-      unlocked: unlockedRoomItems(['hat:duck'], []),
-    }
-    expect(unlockRequirement('hat', 'duck', open)).toBeNull()
   })
 
   it('compares a secret with a few rooms by day for its silhouette', () => {

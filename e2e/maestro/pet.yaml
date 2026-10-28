@@ -5,7 +5,7 @@
 # assert: __WW_DEV__.stores.pet.getState().pet?.name === 'Biscuit'
 # assert: __WW_DEV__.state().route.name === 'PetRoom'
 appId: com.leviwilkerson.jwtimedev
-name: Adopt a pet from Home, open its room, and rename it
+name: Adopt a pet from Home, open its room, and rename it from its settings
 ---
 # The pet's sprites redraw ten times a second, so taps here wait out --settle's
 # deadline; assert text instead of waiting for a still screen.
@@ -16,28 +16,36 @@ name: Adopt a pet from Home, open its room, and rename it
 # the button still below the fold.
 - scrollUntilVisible:
     element: Choose a pet
+# The offer's animals open the picker with that one chosen. (With the picker
+# open, the offer's own Kitten behind it would make the name ambiguous.)
 - tapOn:
-    text: Choose a pet
+    text: Kitten
     traits: button
-- tapOn: Kitten
 # Adopt without a name; the card then goes by the species.
+- assertVisible: Adopt
 - tapOn: Adopt
 - assertVisible: Go out, fill its hearts
 - tapOn: Next
-- assertVisible: Grow your streak
+- assertVisible: Earn coins
 - tapOn: Next
 - assertVisible: Make it yours
 - tapOn: Done
-# The card's header carries the pet's name (the species until it has one) and
-# opens its room.
-- tapOn: Kitten
-- assertVisible: Rename
-- tapOn: Rename
+# The card's header carries the pet's name (the species until it has one),
+# and ", New" while an item it owns is new (the seed's badges find secrets),
+# and opens its room; the cog there opens its settings, where Name renames it.
+- tapOn:
+    text: [Kitten, 'Kitten, New']
+- assertVisible: Shop
+- tapOn: Settings
+- assertVisible: Pet Settings
+- tapOn: Name, Kitten
 - assertVisible: Rename pet
 - tapOn:
     text: Name (optional)
     editable: true
 - inputText: Biscuit
 - tapOn: Save
-# The room's title follows the new name.
+# Settings shows the new name; back in the room, so does its title.
+- assertVisible: Biscuit
+- tapOn: Back
 - assertVisible: Biscuit

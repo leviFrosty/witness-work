@@ -6,6 +6,8 @@ import useAccessibilityTextSize, {
   FIT_ONE_LINE,
 } from '@/hooks/useAccessibilityTextSize'
 import { PET_SPECIES_IDS, type PetSpecies } from '@/types/pet'
+import { GAME_FRAME_INSET, type GamePalette } from '@/features/pet/art/gameUi'
+import { GameFrame, gamePixelScale } from '@/features/pet/components/GamePixels'
 import { speciesName } from '@/features/pet/lib/names'
 import type { PetChoice } from '@/features/pet/lib/pickerSave'
 import PetSpriteTile from '@/features/pet/render/PetSpriteTile'
@@ -13,16 +15,20 @@ import { defaultCoatFor } from '@/types/pet'
 
 /**
  * The five animals in a 3-column grid (2 at accessibility text sizes, where the
- * names shrink to their tile), each idling; the chosen one ringed.
+ * names shrink to their tile), each idling on a paper card; the chosen one
+ * ringed in the accent.
  */
 export default function PetSpeciesGrid({
   choice,
   onSelect,
+  palette,
 }: {
   choice: PetChoice
   onSelect: (species: PetSpecies) => void
+  palette: GamePalette
 }) {
   const theme = useTheme()
+  const scale = gamePixelScale()
   const largeText = useAccessibilityTextSize()
   return (
     <View style={{ flexDirection: 'row', flexWrap: 'wrap', rowGap: 10 }}>
@@ -33,7 +39,7 @@ export default function PetSpeciesGrid({
             key={species}
             style={{
               width: largeText ? '50%' : '33.333%',
-              paddingHorizontal: 5,
+              paddingHorizontal: 2,
             }}
           >
             <Button
@@ -41,35 +47,38 @@ export default function PetSpeciesGrid({
               accessibilityState={{ selected }}
               accessibilityLabel={speciesName(species)}
               onPress={() => onSelect(species)}
-              style={{
-                alignItems: 'center',
-                gap: 6,
-                paddingVertical: 10,
-                borderRadius: theme.numbers.borderRadiusMd,
-                borderWidth: 2,
-                borderColor: selected ? theme.colors.accent : 'transparent',
-                backgroundColor: theme.colors.backgroundLighter,
-              }}
+              pointerEffect='tint'
             >
-              <PetSpriteTile
-                species={species}
-                coat={selected ? choice.coat : defaultCoatFor(species)}
-                size={64}
-                mood={selected ? 'joy' : 'happy'}
-                seed={i * 700}
-              />
-              <Text
-                numberOfLines={1}
-                {...(largeText ? FIT_ONE_LINE : undefined)}
+              <GameFrame
+                kind={selected ? 'cardPicked' : 'card'}
+                palette={palette}
                 style={{
-                  fontSize: theme.fontSize('sm'),
-                  fontFamily: selected
-                    ? theme.fonts.semiBold
-                    : theme.fonts.regular,
+                  alignItems: 'center',
+                  gap: 6,
+                  padding: GAME_FRAME_INSET.card * scale,
                 }}
               >
-                {speciesName(species)}
-              </Text>
+                <PetSpriteTile
+                  species={species}
+                  coat={selected ? choice.coat : defaultCoatFor(species)}
+                  size={64}
+                  mood={selected ? 'joy' : 'happy'}
+                  seed={i * 700}
+                />
+                <Text
+                  numberOfLines={1}
+                  {...(largeText ? FIT_ONE_LINE : undefined)}
+                  style={{
+                    fontSize: theme.fontSize('sm'),
+                    fontFamily: selected
+                      ? theme.fonts.bold
+                      : theme.fonts.semiBold,
+                    color: selected ? palette.ink : palette.inkAlt,
+                  }}
+                >
+                  {speciesName(species)}
+                </Text>
+              </GameFrame>
             </Button>
           </View>
         )

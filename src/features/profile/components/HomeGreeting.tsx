@@ -1,8 +1,11 @@
+import { View } from 'react-native'
 import useTheme from '@/contexts/theme'
 import useNow from '@/hooks/useNow'
 import usePublisher from '@/hooks/usePublisher'
 import useMonthlyGoal from '@/hooks/useMonthlyGoal'
+import useServiceStreak from '@/hooks/useServiceStreak'
 import i18n from '@/lib/locales'
+import { shownStreak } from '@/lib/serviceStreak'
 import {
   adjustedMinutesForSpecificMonth,
   getMonthsReports,
@@ -10,12 +13,15 @@ import {
 import { usePreferences } from '@/stores/preferences'
 import { useServiceReport } from '@/stores/serviceReport'
 import Text from '@/components/ui/MyText'
-import useDailyMinutes from '@/features/profile/hooks/useDailyMinutes'
+import HomeStreakChip from '@/features/profile/components/HomeStreakChip'
 import { pickGreeting } from '@/features/profile/lib/greeting'
-import { consecutiveDaysStreak } from '@/features/profile/lib/profileStats'
 import { useShallow } from 'zustand/react/shallow'
 
-/** A one-line welcome at the top of Home that reads the clock and progress. */
+/**
+ * A one-line welcome at the top of Home that reads the clock and progress, with
+ * the Service Streak's badge at its end. The streak lives here rather than in
+ * the header: it's the User's own news, like the greeting.
+ */
 const HomeGreeting = () => {
   const theme = useTheme()
   // The shared minute clock: a Home left open since morning doesn't still say
@@ -34,7 +40,7 @@ const HomeGreeting = () => {
       }))
     )
   const { serviceReports } = useServiceReport()
-  const daily = useDailyMinutes()
+  const serviceStreak = useServiceStreak()
 
   const goalReached =
     showsTimeEntry &&
@@ -50,22 +56,32 @@ const HomeGreeting = () => {
 
   const greeting = pickGreeting({
     now,
-    streakDays: showStreaks ? consecutiveDaysStreak(daily, now) : 0,
+    streak: showStreaks ? shownStreak(serviceStreak) : 0,
     goalReached,
   })
 
   return (
-    <Text
+    <View
       style={{
-        fontFamily: theme.fonts.semiBold,
-        fontSize: theme.fontSize('lg'),
-        color: theme.colors.text,
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 12,
         marginHorizontal: 5,
         marginBottom: 15,
       }}
     >
-      {i18n.t(greeting.key, { count: greeting.count })}
-    </Text>
+      <Text
+        style={{
+          flex: 1,
+          fontFamily: theme.fonts.semiBold,
+          fontSize: theme.fontSize('lg'),
+          color: theme.colors.text,
+        }}
+      >
+        {i18n.t(greeting.key)}
+      </Text>
+      <HomeStreakChip streak={serviceStreak} />
+    </View>
   )
 }
 

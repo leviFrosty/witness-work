@@ -18,11 +18,15 @@ import LucideIcon from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
 import PointerTooltip from '@/components/ui/PointerTooltip'
 import useTheme from '@/contexts/theme'
+import { MIN_TOUCH_TARGET } from '@/components/ui/touchTarget'
 import useNow from '@/hooks/useNow'
-import useServiceStreak from '@/hooks/useServiceStreak'
 import { formatWeekdayMonthDayCompact } from '@/lib/dates'
 import i18n from '@/lib/locales'
-import { shownStreak, streakEndsSoon } from '@/lib/serviceStreak'
+import {
+  shownStreak,
+  streakEndsSoon,
+  type ServiceStreak,
+} from '@/lib/serviceStreak'
 import { logPlannedDayParams } from '@/lib/unloggedDayReminders'
 import useServiceReport from '@/stores/serviceReport'
 import { usePreferences } from '@/stores/preferences'
@@ -43,16 +47,21 @@ function timeLeft(at: Date, now: number): string {
 }
 
 /**
- * The Service Streak in Home's header, once it's long enough to show. When it's
- * about to end, a countdown shows how long is left to keep it. Tapping it
- * offers to log the day or month that's due, and links to the streak FAQ.
+ * The Service Streak at the end of Home's greeting, once it's long enough to
+ * show. When it's about to end, a countdown shows how long is left to keep it.
+ * Tapping it offers to log the day or month that's due, and links to the streak
+ * FAQ.
  */
-export default function HomeStreakChip() {
+export default function HomeStreakChip({
+  streak,
+}: {
+  /** From `useServiceStreak`, which the greeting reads too. */
+  streak: ServiceStreak
+}) {
   const theme = useTheme()
   const navigation = useNavigation<RootStackNavigation>()
   const { width } = useWindowDimensions()
   const insets = useSafeAreaInsets()
-  const streak = useServiceStreak()
   const { now } = useNow()
   const grewAt = useStreakCelebration((state) => state.grewAt)
   const showStreaks = usePreferences((state) => state.showStreaks)
@@ -118,10 +127,18 @@ export default function HomeStreakChip() {
         <PointerTooltip label={i18n.t('streak_title')}>
           <Pressable
             onPress={onPress}
-            hitSlop={10}
             accessibilityRole='button'
             accessibilityState={{ expanded }}
-            style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1 })}
+            // A full-size target, pulled back so the greeting's line keeps
+            // its height.
+            style={({ pressed }) => ({
+              minWidth: MIN_TOUCH_TARGET,
+              minHeight: MIN_TOUCH_TARGET,
+              marginVertical: -10,
+              alignItems: 'center',
+              justifyContent: 'center',
+              opacity: pressed ? 0.6 : 1,
+            })}
           >
             <Animated.View style={flareStyle}>
               <StreakBadge count={count} endsIn={endsIn} />

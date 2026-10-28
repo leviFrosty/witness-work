@@ -1,24 +1,25 @@
 /**
  * Picks Home's greeting. It never names the publisher (only a full name is
  * stored) and never reads absence ("long time no see") or holidays. In order:
- * monthly goal reached, a logging streak, a calendar moment, the time of day.
+ * monthly goal reached, a Service Streak, a calendar moment, the time of day.
+ * Streak greetings leave the number to the streak badge beside them, so Home
+ * shows one streak.
  */
 
 import type { TranslationKey } from '@/lib/locales'
+import { STREAK_MIN } from '@/lib/serviceStreak'
 
 export type GreetingContext = {
   now: Date
-  /** Consecutive days with logged time, ending today or yesterday. */
-  streakDays: number
+  /** The Service Streak as Home shows it; 0 while streaks are hidden. */
+  streak: number
   /** This month's Monthly Goal is set and met. */
   goalReached: boolean
 }
 
-/** `count` fills `{{count}}` in streak greetings. */
-export type Greeting = { key: TranslationKey; count?: number }
+export type Greeting = { key: TranslationKey }
 
-export const STREAK_MIN_DAYS = 3
-export const LONG_STREAK_DAYS = 7
+export const LONG_STREAK = 7
 
 type Period =
   | 'lateNight'
@@ -58,10 +59,10 @@ const GOAL_REACHED: TranslationKey[] = [
   'greetingGoalNicelyDone',
   'greetingGoalWayToGo',
 ]
-const STREAK: TranslationKey[] = ['greetingBusyBee', 'greetingOnARoll']
-const LONG_STREAK: TranslationKey[] = [
-  'greetingLongStreak',
-  'greetingLookAtYouGo',
+const STREAK: TranslationKey[] = ['greetingBusyBee', 'greetingStreakOnARoll']
+const LONG_STREAK_KEYS: TranslationKey[] = [
+  'greetingStreakGoingStrong',
+  'greetingStreakLookAtYouGo',
 ]
 
 const periodOf = (hour: number): Period => {
@@ -104,14 +105,13 @@ const ofTheDay = (keys: TranslationKey[], now: Date, salt: number) => {
 
 export function pickGreeting({
   now,
-  streakDays,
+  streak,
   goalReached,
 }: GreetingContext): Greeting {
   if (goalReached) return { key: ofTheDay(GOAL_REACHED, now, 0) }
-  if (streakDays >= LONG_STREAK_DAYS)
-    return { key: ofTheDay(LONG_STREAK, now, 0), count: streakDays }
-  if (streakDays >= STREAK_MIN_DAYS)
-    return { key: ofTheDay(STREAK, now, 0), count: streakDays }
+  if (streak >= LONG_STREAK) return { key: ofTheDay(LONG_STREAK_KEYS, now, 0) }
+  // Cheered from where the streak itself is celebrated.
+  if (streak >= STREAK_MIN) return { key: ofTheDay(STREAK, now, 0) }
   const period = periodOf(now.getHours())
   const calendar = calendarKey(now, period)
   if (calendar) return { key: calendar }

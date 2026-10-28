@@ -17,7 +17,7 @@ import {
 } from '@/lib/progressCards'
 import { usePreferences } from '@/stores/preferences'
 
-export type ProgressCardEditSource = 'header' | 'footer' | 'card' | 'add'
+export type ProgressCardEditSource = 'footer' | 'card' | 'add'
 
 /** Each tab edits on its own, so one tab's Done doesn't end another's. */
 const SURFACE: Record<ProgressCardScope, string> = {

@@ -1,11 +1,4 @@
-import {
-  createContext,
-  ReactNode,
-  useContext,
-  useEffect,
-  useRef,
-  useState,
-} from 'react'
+import { createContext, ReactNode, useContext, useState } from 'react'
 import {
   Platform,
   Pressable,
@@ -14,32 +7,19 @@ import {
   View,
   ViewStyle,
 } from 'react-native'
-import { useNavigation } from '@react-navigation/native'
 import { BlurView } from '@/components/ui/BlurView'
 import Animated from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import useTheme from '@/contexts/theme'
 import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
-import useUser from '@/hooks/useUser'
-
-import i18n from '@/lib/locales'
-import { usePreferences } from '@/stores/preferences'
-import { useProfile } from '@/stores/profile'
-import { useProfileOverlay } from '@/stores/profileOverlay'
-import Avatar from '@/components/ui/Avatar'
 import Text from '@/components/ui/MyText'
-import PullDownMenu from '@/components/ui/PullDownMenu'
-import PointerTooltip from '@/components/ui/PointerTooltip'
-import { RootStackNavigation } from '@/types/rootStack'
-import { HomeTabStackNavigation } from '@/types/homeStack'
+import AccountMenu from '@/components/AccountMenu'
 import SidebarToggle from '@/components/ui/SidebarToggle'
 import { isRtlLayout } from '@/lib/direction'
 import { transparentToScreenReaders } from '@/lib/screenReader'
 import WindowControlsInsetView, {
   NO_WINDOW_CONTROLS,
 } from '../../modules/window-controls'
-
-export const ROOT_HEADER_AVATAR_SIZE = 34
 
 /**
  * Room past a windowed iPad app's window controls. The system's inset ends
@@ -106,7 +86,8 @@ type Props = {
  * The shared header for every bottom-bar destination: account avatar, section
  * title, section actions. The avatar holds what used to be scattered across
  * Home's header — Profile, Settings, Support, and Help Center — so it reads the
- * same on every root.
+ * same on every root. While the iPad sidebar shows, the account sits at its
+ * foot instead.
  */
 export default function RootHeader({
   title,
@@ -124,7 +105,8 @@ export default function RootHeader({
   const [titleRoom, setTitleRoom] = useState<number>()
   const [titleWidth, setTitleWidth] = useState<number>()
   const [controls, setControls] = useState(NO_WINDOW_CONTROLS)
-  const { isWide, navigationRail } = useAdaptiveLayout()
+  const { isWide, navigationRail, hasSidebar, sidebarVisible } =
+    useAdaptiveLayout()
   const titleFit =
     titleRoom === undefined || titleWidth === undefined
       ? undefined
@@ -196,7 +178,8 @@ export default function RootHeader({
             }}
           >
             <SidebarToggle mode='show' />
-            <AccountMenu />
+            {/* A visible sidebar holds the account at its foot instead. */}
+            {hasSidebar && sidebarVisible ? null : <AccountMenu />}
             <Pressable
               onPress={onPressTitle}
               onLongPress={onLongPressTitle}
@@ -277,112 +260,5 @@ export default function RootHeader({
       </Animated.View>
       {children}
     </View>
-  )
-}
-
-function AccountMenu() {
-  const navigation = useNavigation<
-    RootStackNavigation & HomeTabStackNavigation
-  >()
-  const { hasSidebar } = useAdaptiveLayout()
-  const theme = useTheme()
-  const { name, avatar } = useUser()
-  const hideDonateHeart = usePreferences((s) => s.hideDonateHeart)
-  const hasCompletedProfileSetup = useProfile((s) => s.hasCompletedProfileSetup)
-  const setOverlayOrigin = useProfileOverlay((s) => s.setOrigin)
-  const showOverlay = useProfileOverlay((s) => s.show)
-  const avatarRef = useRef<View>(null)
-
-  // Hands the overlay its origin on idle so it can mount its heavy subtree
-  // before any tap — without this, the open spring snaps content in.
-  useEffect(() => {
-    if (!hasCompletedProfileSetup) return
-    const handle = requestIdleCallback(() => {
-      avatarRef.current?.measureInWindow((x, y, width, height) =>
-        setOverlayOrigin({ x, y, width, height })
-      )
-    })
-    return () => cancelIdleCallback(handle)
-  }, [hasCompletedProfileSetup, setOverlayOrigin])
-
-  const openProfile = () =>
-    avatarRef.current?.measureInWindow((x, y, width, height) =>
-      showOverlay({ x, y, width, height })
-    )
-
-  return (
-    // The avatar alone doesn't say it holds Settings and Help.
-    <PointerTooltip label={i18n.t('accountMenu')} effect='none'>
-      <PullDownMenu
-        accessibilityLabel={
-          hasCompletedProfileSetup
-            ? i18n.t('accountMenu')
-            : `${i18n.t('accountMenu')}, ${i18n.t('profileIncompleteTitle')}`
-        }
-        actions={[
-          [
-            hasCompletedProfileSetup
-              ? {
-                  id: 'profile',
-                  title: i18n.t('accountMenu_profile'),
-                  systemImage: 'person.crop.circle',
-                  onPress: openProfile,
-                }
-              : {
-                  id: 'profile_setup',
-                  title: i18n.t('profileIncompleteTitle'),
-                  systemImage: 'person.crop.circle.badge.plus',
-                  onPress: () => navigation.navigate('PreferencesPublisher'),
-                },
-            {
-              id: 'settings',
-              title: i18n.t('settings'),
-              systemImage: 'gearshape',
-              // Wide layouts keep Settings in the sidebar beside the open page.
-              onPress: () =>
-                hasSidebar
-                  ? navigation.navigate('Settings')
-                  : navigation.navigate('SettingsMenu'),
-            },
-          ],
-          [
-            !hideDonateHeart && {
-              id: 'support',
-              title: i18n.t('accountMenu_support'),
-              systemImage: 'heart',
-              onPress: () => {
-                navigation.navigate('Paywall', { source: 'account_menu' })
-              },
-            },
-            {
-              id: 'help_center',
-              title: i18n.t('helpCenter'),
-              systemImage: 'questionmark.circle',
-              onPress: () => navigation.navigate('FAQ'),
-            },
-          ],
-        ]}
-      >
-        <View ref={avatarRef} hitSlop={8} collapsable={false}>
-          <Avatar avatar={avatar} name={name} size={ROOT_HEADER_AVATAR_SIZE} />
-          {!hasCompletedProfileSetup && (
-            // Asks for profile setup until it's done.
-            <View
-              style={{
-                position: 'absolute',
-                top: -1,
-                right: -1,
-                width: 11,
-                height: 11,
-                borderRadius: 6,
-                borderWidth: 2,
-                borderColor: theme.colors.background,
-                backgroundColor: theme.colors.accent,
-              }}
-            />
-          )}
-        </View>
-      </PullDownMenu>
-    </PointerTooltip>
   )
 }

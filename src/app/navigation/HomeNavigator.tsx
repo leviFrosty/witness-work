@@ -2,6 +2,7 @@ import {
   Check as CheckIcon,
   Plus as PlusIcon,
   RefreshCw as RefreshCwIcon,
+  Settings as SettingsIcon,
 } from 'lucide-react-native'
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import { HomeScreen } from '@/features/home/screens/HomeScreen'
@@ -15,7 +16,8 @@ import { DevSettings, View } from 'react-native'
 import { triggerDevRemount } from '@/lib/devRemount'
 import { usePreferences } from '@/stores/preferences'
 import NotificationsBell from '@/app/notifications/NotificationsBell'
-import HomeStreakChip from '@/features/profile/components/HomeStreakChip'
+import PointerTooltip from '@/components/ui/PointerTooltip'
+import useOpenSettings from '@/hooks/useOpenSettings'
 import i18n from '@/lib/locales'
 import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
 import { useUpdateRevealStore } from '@/features/updates/stores/updateReveal'
@@ -27,10 +29,19 @@ const Stack = createNativeStackNavigator()
 const HomeNavigator = () => {
   const set = usePreferences((s) => s.set)
   const theme = useTheme()
-  const { isWide, contentMaxWidth } = useAdaptiveLayout()
+  const {
+    isWide,
+    contentMaxWidth,
+    hasSidebar,
+    sidebarVisible,
+    navigationRail,
+  } = useAdaptiveLayout()
+  // A visible sidebar or the iPhone Duo rail already holds Settings.
+  const showsSettings = !(hasSidebar && sidebarVisible) && !navigationRail
   const requestUpdateReveal = useUpdateRevealStore((s) => s.request)
   const homeEditing = useHomeEditing()
   const { hidden } = useAvailableHomeSections()
+  const openSettings = useOpenSettings()
 
   // Dev-only reset for the update reveal. Long-press the header title to clear
   // its state and play it again, launch version and all. Wired in __DEV__
@@ -87,7 +98,21 @@ const HomeNavigator = () => {
                   onLongPress={() => DevSettings.reload()}
                 />
               )}
-              <HomeStreakChip />
+              {/* App-wide controls live on Home: Settings here as well as in
+              the avatar's menu, where few look for it. */}
+              {showsSettings && (
+                <PointerTooltip label={i18n.t('settings')} effect='none'>
+                  <IconButton
+                    icon={SettingsIcon}
+                    size='xl'
+                    color={theme.colors.text}
+                    accessibilityLabel={i18n.t('settings')}
+                    frame
+                    onPress={openSettings}
+                    testID='home-settings'
+                  />
+                </PointerTooltip>
+              )}
               <NotificationsBell />
             </>
           )

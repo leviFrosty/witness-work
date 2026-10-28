@@ -126,9 +126,6 @@
   "greetingGoalNicelyDone": "Maanddoel gehaald. Goed gedaan!",
   "greetingGoalWayToGo": "Je hebt je doel gehaald. Top!",
   "greetingBusyBee": "Hallo daar, drukke bij",
-  "greetingOnARoll": "Lekker bezig: {{count}} dagen op rij",
-  "greetingLongStreak": "{{count}} dagen op rij. Geweldig!",
-  "greetingLookAtYouGo": "Kijk je gaan: {{count}} dagen achter elkaar",
   "profileGreetingNoName": "Welkom terug",
   "profileUsingFor": {
     "one": "Al {{days}} dag met WitnessWork",

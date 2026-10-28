@@ -20,7 +20,6 @@ import {
   serviceYearDayStatuses,
 } from '@/features/plans/lib/scheduleDayIndex'
 import {
-  consecutiveDaysStreak,
   daysLogged,
   flattenDailyMinutes,
   totalMinutes,
@@ -276,7 +275,6 @@ describe('days with only a Time Rollover entry', () => {
 
     expect(daily.has('2026-03-01')).toBe(false)
     expect(daily.get('2026-02-28')).toBe(20)
-    expect(consecutiveDaysStreak(daily)).toBe(2)
     expect(daysLogged(daily)).toBe(2)
     expect(totalMinutes(daily)).toBe(2 * 60 + 30)
   })

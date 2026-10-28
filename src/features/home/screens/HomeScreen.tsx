@@ -39,6 +39,7 @@ import {
 import { TimerSection } from '@/features/service-reports/components/TimerSection'
 import UpgradeLegacyTimeReportsSheet from '@/features/service-reports/components/UpgradeLegacyTimeReportsSheet'
 import HomeGreeting from '@/features/profile/components/HomeGreeting'
+import EditLayoutButton from '@/components/ui/EditLayoutButton'
 import HomeChecklist from '@/features/onboarding/components/HomeChecklist'
 import TodayRouteAction from '@/features/route-planning/components/TodayRouteAction'
 import TodayRouteEntry from '@/features/route-planning/components/TodayRouteEntry'
@@ -315,12 +316,6 @@ export const HomeScreen = ({ header }: { header: ReactNode }) => {
             bottomAnchorLast={
               isDidYouKnowLast && homeScreenElements.didYouKnow !== false
             }
-            style={{
-              paddingBottom:
-                insets.bottom * 2 +
-                (hasBottomBar ? 85 : 30) +
-                weekStrip.bottomInset,
-            }}
           >
             {!homeChecklistDismissed && (
               // Getting started stays put; holding it doesn't edit Home.
@@ -498,6 +493,25 @@ export const HomeScreen = ({ header }: { header: ReactNode }) => {
               )
             })}
           </AdaptiveColumns>
+          {/* Holding empty space or a section's menu is the shortcut; this
+          says it in words where the sections end. */}
+          {editing ? null : (
+            <View style={{ paddingTop: 32 }}>
+              <EditLayoutButton
+                label={i18n.t('homeEdit.editHomeScreen')}
+                onPress={() => homeEditing.start('footer')}
+                testID='home-edit'
+              />
+            </View>
+          )}
+          <View
+            style={{
+              height:
+                insets.bottom * 2 +
+                (hasBottomBar ? 85 : 30) +
+                weekStrip.bottomInset,
+            }}
+          />
         </ReorderableContainer>
         {anchorScroll.room}
       </KeyboardAwareScrollView>

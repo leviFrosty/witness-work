@@ -126,9 +126,6 @@
   "greetingGoalNicelyDone": "Alvo mensal cumprido. Muito bem!",
   "greetingGoalWayToGo": "Você atingiu seu alvo. Parabéns!",
   "greetingBusyBee": "Olá, abelhinha ocupada",
-  "greetingOnARoll": "Embalado: {{count}} dias seguidos",
-  "greetingLongStreak": "{{count}} dias seguidos. Incrível!",
-  "greetingLookAtYouGo": "Olha só você: {{count}} dias seguidos",
   "profileGreetingNoName": "Bem-vindo de volta",
   "profileUsingFor": {
     "one": "Usando o WitnessWork há {{days}} dia",

@@ -126,9 +126,6 @@
   "greetingGoalNicelyDone": "Đã đạt mục tiêu tháng. Làm tốt lắm!",
   "greetingGoalWayToGo": "Bạn đã đạt mục tiêu. Tuyệt vời!",
   "greetingBusyBee": "Chào bạn, ong chăm chỉ",
-  "greetingOnARoll": "Đang thuận lợi: {{count}} ngày liên tiếp",
-  "greetingLongStreak": "{{count}} ngày liên tiếp. Tuyệt vời!",
-  "greetingLookAtYouGo": "Bạn thật xuất sắc: {{count}} ngày liên tục",
   "profileGreetingNoName": "Chào mừng quay lại",
   "profileUsingFor": {
     "one": "Đã dùng WitnessWork được {{days}} ngày",

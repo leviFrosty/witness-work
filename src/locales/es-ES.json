@@ -126,9 +126,6 @@
   "greetingGoalNicelyDone": "Meta mensual cumplida. ¡Bien hecho!",
   "greetingGoalWayToGo": "Alcanzaste tu meta. ¡Así se hace!",
   "greetingBusyBee": "Hola, abejita laboriosa",
-  "greetingOnARoll": "En racha: {{count}} días seguidos",
-  "greetingLongStreak": "{{count}} días seguidos. ¡Increíble!",
-  "greetingLookAtYouGo": "Mira cómo vas: {{count}} días seguidos",
   "profileGreetingNoName": "Bienvenido",
   "profileUsingFor": {
     "one": "Usando WitnessWork desde hace {{days}} día",

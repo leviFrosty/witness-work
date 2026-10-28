@@ -126,9 +126,6 @@
   "greetingGoalNicelyDone": "每月目标已达成，做得好！",
   "greetingGoalWayToGo": "你达成了目标，真棒！",
   "greetingBusyBee": "你好，勤劳的小蜜蜂",
-  "greetingOnARoll": "势头正旺：连续 {{count}} 天",
-  "greetingLongStreak": "连续 {{count}} 天，太棒了！",
-  "greetingLookAtYouGo": "看你多棒：连续 {{count}} 天",
   "profileGreetingNoName": "欢迎回来",
   "profileUsingFor": {
     "one": "已使用 WitnessWork {{days}} 天",

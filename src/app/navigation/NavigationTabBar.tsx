@@ -2,6 +2,9 @@ import { useEffect, useState } from 'react'
 import { useIsFocused } from '@react-navigation/native'
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs'
 import TabBar from '@/components/ui/TabBar'
+import AccountMenu from '@/components/AccountMenu'
+import type { RootStackNavigation } from '@/types/rootStack'
+import type { HomeTabStackNavigation } from '@/types/homeStack'
 import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
 import ScribeQuickActionRow from '@/features/scribe/components/ScribeQuickActionRow'
 
@@ -78,6 +81,16 @@ export default function NavigationTabBar(props: BottomTabBarProps) {
       {...props}
       renderQuickActionLeading={(close) => (
         <ScribeQuickActionRow onAction={close} />
+      )}
+      renderSidebarAccount={(compact) => (
+        <AccountMenu
+          variant='sidebar'
+          compact={compact}
+          navigation={
+            props.navigation as unknown as RootStackNavigation &
+              HomeTabStackNavigation
+          }
+        />
       )}
       shortcutHints={
         isFocused && navigationVisible && commandPressed

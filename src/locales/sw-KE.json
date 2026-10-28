@@ -126,9 +126,6 @@
   "greetingGoalNicelyDone": "Lengo la mwezi limefikiwa. Hongera!",
   "greetingGoalWayToGo": "Umefikia lengo lako. Hongera sana!",
   "greetingBusyBee": "Hujambo, nyuki mwenye bidii",
-  "greetingOnARoll": "Unaendelea vizuri: siku {{count}} mfululizo",
-  "greetingLongStreak": "Siku {{count}} mfululizo. Hongera sana!",
-  "greetingLookAtYouGo": "Tazama unavyoendelea: siku {{count}} mfululizo",
   "profileGreetingNoName": "Karibu tena",
   "profileUsingFor": {
     "one": "Umetumia WitnessWork kwa siku {{days}}",

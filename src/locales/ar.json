@@ -138,9 +138,6 @@
   "greetingGoalNicelyDone": "تحقّق الهدف الشهري. أحسنت!",
   "greetingGoalWayToGo": "بلغت هدفك. أحسنت صنعًا!",
   "greetingBusyBee": "أهلًا أيها النشيط",
-  "greetingOnARoll": "في تقدّم مستمر: {{count}} من الأيام المتتالية",
-  "greetingLongStreak": "{{count}} من الأيام المتتالية. رائع!",
-  "greetingLookAtYouGo": "أداء مذهل: {{count}} من الأيام المتواصلة",
   "profileGreetingNoName": "مرحبًا بعودتك",
   "profileUsingFor": {
     "zero": "تستخدم WitnessWork منذ {{days}} يوم",

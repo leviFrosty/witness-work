@@ -25,6 +25,7 @@ vi.mock('@/hooks/useAdaptiveLayout', () => ({
   }),
 }))
 vi.mock('@/components/ui/TabBar', () => ({ default: () => null }))
+vi.mock('@/components/AccountMenu', () => ({ default: () => null }))
 vi.mock('@/features/scribe/components/ScribeQuickActionRow', () => ({
   default: () => null,
 }))

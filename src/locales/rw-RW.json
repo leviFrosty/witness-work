@@ -126,9 +126,6 @@
   "greetingGoalNicelyDone": "Intego y'ukwezi yagezweho. Wakoze neza!",
   "greetingGoalWayToGo": "Wagezeho intego yawe. Komereza aho!",
   "greetingBusyBee": "Muraho, wowe ukora cyane",
-  "greetingOnARoll": "Urakomeje: iminsi {{count}} ikurikiranye",
-  "greetingLongStreak": "Iminsi {{count}} ikurikiranye. Biratangaje!",
-  "greetingLookAtYouGo": "Reba aho ugeze: iminsi {{count}} ikurikiranye",
   "profileGreetingNoName": "Muraho!",
   "profileUsingFor": {
     "one": "Umaze umunsi {{days}} ukoresha WitnessWork",

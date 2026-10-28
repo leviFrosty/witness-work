@@ -1,10 +1,8 @@
 import { type ReactNode, useState } from 'react'
-import {
-  LayoutGrid as LayoutGridIcon,
-  Plus as PlusIcon,
-} from 'lucide-react-native'
+import { Plus as PlusIcon } from 'lucide-react-native'
 import { useWindowDimensions, View } from 'react-native'
 import Button from '@/components/ui/Button'
+import EditLayoutButton from '@/components/ui/EditLayoutButton'
 import LucideIcon from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
@@ -256,34 +254,15 @@ export default function ProgressCardGrid<
       ) : null}
 
       {!editing && items.length ? (
-        // Long press is invisible and the header button is an icon on a
-        // phone; this says it in words where the cards end.
-        <Button
-          onPress={() => onStartEditing('footer')}
-          style={{
-            alignSelf: 'center',
-            flexDirection: 'row',
-            alignItems: 'center',
-            gap: 6,
-            paddingVertical: 8,
-            paddingHorizontal: 12,
-          }}
-        >
-          <LucideIcon
-            icon={LayoutGridIcon}
-            size={14}
-            color={theme.colors.textAlt}
+        // Long press is invisible; this says it in words where the cards end.
+        // Well clear of the last card's own controls.
+        <View style={{ paddingTop: 12 }}>
+          <EditLayoutButton
+            label={i18n.t('progressCards.editCards')}
+            onPress={() => onStartEditing('footer')}
+            testID='progress-edit-cards'
           />
-          <Text
-            style={{
-              fontSize: theme.fontSize('sm'),
-              fontFamily: theme.fonts.semiBold,
-              color: theme.colors.textAlt,
-            }}
-          >
-            {i18n.t('progressCards.editCards')}
-          </Text>
-        </Button>
+        </View>
       ) : null}
 
       {editing && cards.isCustomized ? (

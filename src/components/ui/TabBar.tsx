@@ -76,6 +76,11 @@ type Props = BottomTabBarProps & {
    * function that closes the sheet or menu.
    */
   renderQuickActionLeading?: (close: () => void) => ReactNode
+  /**
+   * The account at the sidebar's foot, above Settings; `compact` while the
+   * sidebar shows icons only.
+   */
+  renderSidebarAccount?: (compact: boolean) => ReactNode
 }
 
 const TabBar = ({
@@ -83,6 +88,7 @@ const TabBar = ({
   descriptors,
   shortcutHints,
   renderQuickActionLeading,
+  renderSidebarAccount,
   ...props
 }: Props) => {
   const [sheetOpen, setSheetOpen] = useState(false)
@@ -500,9 +506,12 @@ const TabBar = ({
               )}
             </View>
             <View style={{ marginTop: 'auto', gap: 12 }}>
-              {state.routes.map((route, index) =>
-                route.name === 'Settings' ? renderTab(route, index) : null
-              )}
+              <View style={{ gap: 6 }}>
+                {renderSidebarAccount?.(sidebarCompact)}
+                {state.routes.map((route, index) =>
+                  route.name === 'Settings' ? renderTab(route, index) : null
+                )}
+              </View>
               <AnchoredPopover
                 // Wide enough that Speak an update's title, badge and subtitle
                 // each keep to one line at iPad text sizes.
@@ -667,6 +676,33 @@ const TabBar = ({
               {railTabs}
             </View>
           )}
+          {/* Settings has no tab here, as on a phone; the rail keeps it in
+          reach where the sidebar would. */}
+          <PointerTooltip
+            label={i18n.t('settings')}
+            placement={railTooltipPlacement}
+            effect='none'
+          >
+            <IconButton
+              icon={SettingsIcon}
+              size={22}
+              color={theme.colors.textAlt}
+              accessibilityLabel={i18n.t('settings')}
+              hitSlop={0}
+              style={{
+                width: RAIL_ITEM_SIZE,
+                height: RAIL_ITEM_SIZE,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+              onPress={() =>
+                hasSidebar
+                  ? rootNavigation.navigate('Settings')
+                  : rootNavigation.navigate('SettingsMenu')
+              }
+              testID='rail-settings'
+            />
+          </PointerTooltip>
           <PointerTooltip
             label={i18n.t('add')}
             placement={railTooltipPlacement}

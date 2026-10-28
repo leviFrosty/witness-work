@@ -130,9 +130,6 @@
   "greetingGoalNicelyDone": "Месячная цель выполнена. Отлично!",
   "greetingGoalWayToGo": "Вы достигли цели. Так держать!",
   "greetingBusyBee": "Здравствуйте, трудолюбивая пчёлка",
-  "greetingOnARoll": "Так держать: {{count}} дн. подряд",
-  "greetingLongStreak": "{{count}} дн. подряд. Потрясающе!",
-  "greetingLookAtYouGo": "Вот это темп: {{count}} дн. подряд",
   "profileGreetingNoName": "Добро пожаловать",
   "profileUsingFor": {
     "one": "С WitnessWork: {{days}} день",

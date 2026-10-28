@@ -57,7 +57,7 @@ interface ProgressAllTimeTabProps {
  * state. Spec also allows hiding when lifetime hours is exactly 0; falling back
  * to length keeps behavior defensive for both cases.
  */
-export const useAllTimeIsEmpty = () => {
+const useAllTimeIsEmpty = () => {
   const entries = useAllTimeEntries()
   return entries.length === 0 || getLifetimeHours(entries) === 0
 }

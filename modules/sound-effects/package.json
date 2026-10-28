@@ -1,0 +1,7 @@
+{
+  "name": "sound-effects",
+  "version": "0.1.0",
+  "description": "Local Expo module that plays short preloaded sounds with low latency.",
+  "main": "index.ts",
+  "private": true
+}

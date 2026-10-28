@@ -13,8 +13,16 @@ vi.mock('@/lib/locales', () => ({
   default: { t: (key: string) => key },
 }))
 
-const player = vi.hoisted(() => ({ seekTo: vi.fn(), play: vi.fn() }))
-vi.mock('expo-audio', () => ({ useAudioPlayer: () => player }))
+const player = vi.hoisted(() => ({
+  seekTo: vi.fn(),
+  play: vi.fn(),
+  setPlaybackRate: vi.fn(),
+  remove: vi.fn(),
+}))
+vi.mock('expo-audio', () => ({
+  useAudioPlayer: () => player,
+  createAudioPlayer: () => player,
+}))
 vi.mock('@/assets/audio/success-chime.mp3', () => ({ default: 1 }))
 vi.mock('@/assets/audio/scribe-voice-start.wav', () => ({ default: 2 }))
 vi.mock('@/assets/audio/scribe-voice-end.wav', () => ({ default: 3 }))
@@ -28,8 +36,23 @@ vi.mock('expo-asset', () => ({
 }))
 const speech = vi.hoisted(() => ({ playCue: vi.fn() }))
 vi.mock('../../modules/speech-transcription', () => speech)
+const effects = vi.hoisted(() => ({
+  available: true,
+  soundEffectsAvailable: () => effects.available,
+  loadSoundEffect: vi.fn(async () => true),
+  playSoundEffect: vi.fn(),
+}))
+vi.mock('../../modules/sound-effects', () => effects)
+vi.mock('@/assets/audio/reward/punch-hit.mp3', () => ({ default: 10 }))
 
-import { playCue, prepareCues, useSound } from '@/lib/audio'
+import {
+  playCue,
+  playRewardSound,
+  prepareCues,
+  prepareRewardSounds,
+  releaseRewardSounds,
+  useSound,
+} from '@/lib/audio'
 import { MmkvStorage } from '@/stores/mmkv'
 import {
   NON_SYNCABLE_PREFERENCE_KEYS,
@@ -42,6 +65,8 @@ describe('Audio setting', () => {
     player.seekTo.mockClear()
     player.play.mockClear()
     speech.playCue.mockClear()
+    effects.loadSoundEffect.mockClear()
+    effects.playSoundEffect.mockClear()
     usePreferences.getState().set({ audioEnabled: true })
   })
 
@@ -105,6 +130,44 @@ describe('Audio setting', () => {
     playCue('scribeVoiceEnd')
 
     expect(speech.playCue).not.toHaveBeenCalled()
+  })
+
+  it('plays loaded reward sounds natively, at their rate', async () => {
+    prepareRewardSounds('punch')
+    await vi.waitFor(() =>
+      expect(effects.loadSoundEffect).toHaveBeenCalledWith(
+        'punch-hit',
+        'file:///cues/10.wav'
+      )
+    )
+    await Promise.resolve()
+
+    playRewardSound('hit', { set: 'punch', rate: 3, volume: 0.6 })
+
+    expect(effects.playSoundEffect).toHaveBeenCalledWith('punch-hit', 2, 0.6)
+    expect(player.play).not.toHaveBeenCalled()
+  })
+
+  it('plays reward sounds through expo-audio on binaries without the module', () => {
+    releaseRewardSounds()
+    effects.available = false
+    try {
+      playRewardSound('hit', { set: 'retro' })
+
+      expect(effects.playSoundEffect).not.toHaveBeenCalled()
+      expect(player.play).toHaveBeenCalledOnce()
+    } finally {
+      effects.available = true
+    }
+  })
+
+  it('keeps reward sounds silent when the User turns audio off', () => {
+    usePreferences.getState().set({ audioEnabled: false })
+
+    playRewardSound('hit', { set: 'punch' })
+
+    expect(effects.playSoundEffect).not.toHaveBeenCalled()
+    expect(player.play).not.toHaveBeenCalled()
   })
 
   it('stays on this device instead of syncing', () => {

@@ -2,6 +2,11 @@ import { useEffect, useRef } from 'react'
 import { createAudioPlayer, useAudioPlayer, type AudioPlayer } from 'expo-audio'
 import { Asset } from 'expo-asset'
 import * as Speech from '../../modules/speech-transcription'
+import {
+  loadSoundEffect,
+  playSoundEffect,
+  soundEffectsAvailable,
+} from '../../modules/sound-effects'
 import { usePreferences, type RewardSoundSet } from '@/stores/preferences'
 import successChime from '@/assets/audio/success-chime.mp3'
 import scribeVoiceStart from '@/assets/audio/scribe-voice-start.wav'
@@ -129,9 +134,21 @@ const REWARD_SOUNDS: Record<
   },
 }
 
-/** Players per reward sound, so quick hits overlap instead of cutting off. */
+/**
+ * Reward sounds play through `modules/sound-effects`: decoded into memory once
+ * and started at once, so each lands on the hit it's timed to. Binaries from
+ * before it play through expo-audio, which starts each sound 50–100 ms late.
+ */
+const effects = new Map<string, 'loading' | 'loaded' | 'failed'>()
+
+/** Fallback players per reward sound, so quick hits overlap. */
 const REWARD_POOL = 3
 const rewardPools = new Map<string, { players: AudioPlayer[]; next: number }>()
+
+const rewardKey = (
+  set: Exclude<RewardSoundSet, 'off'>,
+  role: RewardSoundRole
+) => `${set}-${role}`
 
 /** The User's reward sounds, or none: a set from a newer build plays Punch. */
 export function rewardSoundSet(): RewardSoundSet {
@@ -154,22 +171,17 @@ export function playRewardSound(
 ) {
   if (!isAudioEnabled() || set === 'off') return
   try {
-    const key = `${set}-${role}`
-    let pool = rewardPools.get(key)
-    if (!pool) {
-      pool = { players: [], next: 0 }
-      rewardPools.set(key, pool)
-    }
-    let player = pool.players[pool.next]
-    if (!player) {
-      player = createAudioPlayer(REWARD_SOUNDS[set][role])
-      // Speeding up raises the pitch too, like a tape.
-      player.shouldCorrectPitch = false
-      pool.players[pool.next] = player
-    }
+    const key = rewardKey(set, role)
+    const clamped = Math.min(2, Math.max(0.5, rate))
+    if (effects.get(key) === 'loaded')
+      return playSoundEffect(key, clamped, volume)
+    // Not loaded yet: this one plays late, the next on time.
+    if (soundEffectsAvailable() && !effects.has(key)) prepareRewardSounds(set)
+    const pool = rewardPool(set, role)
+    const player = pool.players[pool.next]
     pool.next = (pool.next + 1) % REWARD_POOL
     player.volume = volume
-    player.setPlaybackRate(Math.min(2, Math.max(0.5, rate)))
+    player.setPlaybackRate(clamped)
     player.seekTo(0)
     player.play()
   } catch {
@@ -177,23 +189,64 @@ export function playRewardSound(
   }
 }
 
-/** Loads one player per sound of `set`, so its first hit isn't late. */
+/** The fallback players for one reward sound, created all at once. */
+function rewardPool(
+  set: Exclude<RewardSoundSet, 'off'>,
+  role: RewardSoundRole
+) {
+  const key = rewardKey(set, role)
+  let pool = rewardPools.get(key)
+  if (!pool) {
+    pool = { players: [], next: 0 }
+    for (let i = 0; i < REWARD_POOL; i++) {
+      const player = createAudioPlayer(REWARD_SOUNDS[set][role])
+      // Speeding up raises the pitch too, like a tape.
+      player.shouldCorrectPitch = false
+      pool.players.push(player)
+    }
+    rewardPools.set(key, pool)
+  }
+  return pool
+}
+
+/** Loads every sound of `set`, so its first hit isn't late. */
 export function prepareRewardSounds(set: RewardSoundSet = rewardSoundSet()) {
   if (!isAudioEnabled() || set === 'off') return
+  const roles = Object.keys(REWARD_SOUNDS[set]) as RewardSoundRole[]
+  if (soundEffectsAvailable()) {
+    for (const role of roles) void loadRewardEffect(set, role)
+    return
+  }
   try {
-    for (const role of Object.keys(REWARD_SOUNDS[set]) as RewardSoundRole[]) {
-      const key = `${set}-${role}`
-      if (rewardPools.get(key)?.players[0]) continue
-      const player = createAudioPlayer(REWARD_SOUNDS[set][role])
-      player.shouldCorrectPitch = false
-      rewardPools.set(key, { players: [player], next: 0 })
-    }
+    for (const role of roles) rewardPool(set, role)
   } catch {
     // Silently fail; they load on first play instead
   }
 }
 
-/** Lets every reward player go, a while after the last reward. */
+async function loadRewardEffect(
+  set: Exclude<RewardSoundSet, 'off'>,
+  role: RewardSoundRole
+) {
+  const key = rewardKey(set, role)
+  if (effects.has(key)) return
+  effects.set(key, 'loading')
+  let loaded = false
+  try {
+    const asset = Asset.fromModule(REWARD_SOUNDS[set][role])
+    await asset.downloadAsync()
+    loaded = !!asset.localUri && (await loadSoundEffect(key, asset.localUri))
+  } catch {
+    // Plays through expo-audio instead
+  }
+  effects.set(key, loaded ? 'loaded' : 'failed')
+}
+
+/**
+ * Lets the fallback players go, a while after the last reward. Loaded sounds
+ * stay (a few hundred KB a set) so the next reward's first hit is on time; the
+ * native player stops its engine on its own once quiet.
+ */
 export function releaseRewardSounds() {
   for (const { players } of rewardPools.values())
     for (const player of players) player.remove()

@@ -1,0 +1,9 @@
+{
+  "platforms": ["ios", "android"],
+  "ios": {
+    "modules": ["SoundEffectsModule"]
+  },
+  "android": {
+    "modules": ["expo.modules.soundeffects.SoundEffectsModule"]
+  }
+}

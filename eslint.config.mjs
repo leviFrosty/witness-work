@@ -12,6 +12,7 @@ const soundImports = {
     'expo-audio/*',
     'expo-av',
     'expo-av/*',
+    '**/modules/sound-effects',
     '*.mp3',
     '*.wav',
     '*.caf',

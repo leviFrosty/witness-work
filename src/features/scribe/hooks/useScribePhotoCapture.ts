@@ -4,6 +4,7 @@ import * as FileSystem from 'expo-file-system/legacy'
 import * as TextRecognition from '../../../../modules/text-recognition'
 import Haptics from '@/lib/haptics'
 import { logger } from '@/lib/logger'
+import useLibraryImagePicker from '@/hooks/useLibraryImagePicker'
 import type { ScribePhotoCapture } from '@/features/scribe/types'
 import { appLocale } from '@/features/scribe/lib/locale'
 import { layoutRecognizedPages } from '@/features/scribe/lib/recognizedTextLayout'
@@ -28,6 +29,7 @@ export function useScribePhotoCapture(): ScribePhotoCapture {
   const available = TextRecognition.isSupported()
   const [busy, setBusy] = useState(false)
   const running = useRef(false)
+  const library = useLibraryImagePicker('scribe_photo')
 
   const options = () => ({ languages: [appLocale()] })
 
@@ -59,7 +61,7 @@ export function useScribePhotoCapture(): ScribePhotoCapture {
   const choose = async (): Promise<string | null> => {
     let uris: string[] = []
     try {
-      const result = await ImagePicker.launchImageLibraryAsync({
+      const result = await library.pick({
         mediaTypes: ['images'],
         allowsMultipleSelection: true,
         selectionLimit: SCRIBE_PHOTO_MAX_IMAGES,
@@ -100,5 +102,5 @@ export function useScribePhotoCapture(): ScribePhotoCapture {
     }
   }
 
-  return { available, busy, capture }
+  return { available, busy, capture, picker: library.host }
 }

@@ -171,6 +171,10 @@ export default ({ config }: ConfigContext): ExpoConfig => {
         NSSpeechRecognitionUsageDescription:
           enUS.speechRecognitionPermissionPurpose,
         LSSupportsOpeningDocumentsInPlace: true,
+        // With limited photo access, the app's own picker shows only the
+        // photos the User shared and offers Manage, so iOS doesn't need to ask
+        // about selecting more on the first library read of each launch.
+        PHPhotoLibraryPreventAutomaticLimitedAccessAlert: true,
         // expo-background-fetch requires this permitted task identifier
         // to register the snapshot refresh task.
         BGTaskSchedulerPermittedIdentifiers: [

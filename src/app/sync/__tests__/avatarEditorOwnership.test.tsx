@@ -69,8 +69,14 @@ vi.mock('expo-image-picker', () => ({
 vi.mock('expo-sharing', () => ({ shareAsync: vi.fn() }))
 vi.mock('expo-media-library', () => ({
   requestPermissionsAsync: vi.fn(),
-  saveToLibraryAsync: vi.fn(),
+  Asset: { create: vi.fn() },
 }))
+vi.mock('@/hooks/useLibraryImagePicker', async () => {
+  const ImagePicker = await import('expo-image-picker')
+  return {
+    default: () => ({ pick: ImagePicker.launchImageLibraryAsync, host: null }),
+  }
+})
 vi.mock('@/lib/haptics', () => ({
   default: {
     selection: vi.fn(async () => {}),

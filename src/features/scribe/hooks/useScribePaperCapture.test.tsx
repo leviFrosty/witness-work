@@ -13,6 +13,9 @@ const mocks = vi.hoisted(() => ({
 }))
 
 vi.mock('expo-image-picker', () => ({}))
+vi.mock('@/hooks/useLibraryImagePicker', () => ({
+  default: () => ({ pick: vi.fn(), host: null }),
+}))
 vi.mock('expo-file-system/legacy', () => ({ deleteAsync: mocks.deleteAsync }))
 vi.mock('expo-image-manipulator', () => ({}))
 vi.mock('@/lib/analytics', () => ({ analytics: { capture: mocks.capture } }))

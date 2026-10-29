@@ -9,6 +9,7 @@ import {
 import { View } from 'react-native'
 import { useNavigation } from '@react-navigation/native'
 import useTheme from '@/contexts/theme'
+import useLibraryImagePicker from '@/hooks/useLibraryImagePicker'
 import type { TranslationKey } from '@/lib/locales'
 import { analytics } from '@/lib/analytics'
 import { usesGoogleDriveSync } from '@/lib/syncTransport'
@@ -65,9 +66,10 @@ export default function ImportOptions({
   const scribeShown = scribe.status !== 'hidden'
   const paper = useScribePaperCapture()
   const paperAvailable = scribeShown && paper.available
+  const library = useLibraryImagePicker('scribe_paper')
 
   const fromPaper = async () => {
-    const paperPages = await pickScribePaperPages()
+    const paperPages = await pickScribePaperPages(library.pick)
     if (!paperPages) return
     navigateToScribe(navigation, {
       route: 'ScribeConversation',
@@ -153,6 +155,7 @@ export default function ImportOptions({
         disabledNoteKey='onboardingPickUp_backupRestoring'
         onPress={() => select('backup_json')}
       />
+      {library.host}
     </View>
   )
 }

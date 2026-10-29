@@ -156,7 +156,7 @@ export default function useContactAvatarActions(
         )
         return
       }
-      await MediaLibrary.saveToLibraryAsync(stripCacheBuster(displayedUri))
+      await MediaLibrary.Asset.create(stripCacheBuster(displayedUri))
       Haptics.success().catch(() => {})
       toast.success(i18n.t('success'), {
         message: i18n.t('savedToPhotos'),

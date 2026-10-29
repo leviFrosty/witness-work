@@ -126,6 +126,9 @@
   "greetingGoalNicelyDone": "월간 목표를 달성했어요. 잘하셨어요!",
   "greetingGoalWayToGo": "목표를 달성하셨네요. 훌륭해요!",
   "greetingBusyBee": "안녕하세요, 부지런한 일벌 님",
+  "greetingStreakOnARoll": "기세가 좋아요",
+  "greetingStreakGoingStrong": "힘차게 이어 가고 있어요!",
+  "greetingStreakLookAtYouGo": "정말 대단해요!",
   "profileGreetingNoName": "어서 오세요",
   "profileUsingFor": {
     "one": "WitnessWork 사용 {{days}}일째",
@@ -191,6 +194,16 @@
   "streak_endingMonths": "연속 기록을 이어 가려면 {{month}}의 봉사를 기록하세요.",
   "streak_recordMonth": "봉사 기록",
   "streak_howItWorks": "연속 기록의 작동 방식",
+  "streak_unitPlans": {
+    "one": "계획한 날 연속으로 지킴",
+    "other": "계획한 날 연속으로 지킴"
+  },
+  "streak_unitMonths": {
+    "one": "개월 연속",
+    "other": "개월 연속"
+  },
+  "streak_started": "시작",
+  "streak_best": "최고 기록",
   "streakCelebration_started": "연속 기록이 시작되었어요!",
   "streakCelebration_grew": "연속 기록이 늘어나고 있어요!",
   "streakCelebration_captionPlans": "간격이 멀어도 계획을 한 번도 빠뜨리지 않고 지켰습니다. 다음 계획한 날에도 이어 가세요.",
@@ -392,6 +405,7 @@
   "save": "저장",
   "isBibleStudy": "성서 연구 여부",
   "add": "추가",
+  "addVisit": "방문 추가",
   "reminder_title": "방문 알림",
   "reminder_topicLine": "주제: {{topic}}",
   "addConversation": "방문 추가",
@@ -1110,6 +1124,11 @@
       "c6": "WitnessWork가 이제 아랍어로도 제공되며, 오른쪽에서 왼쪽으로 읽는 레이아웃을 지원합니다.",
       "c7": "홈과 진행 화면의 카드를 사용자 지정하고, 메모 서식을 지정하고 사진을 추가하며, 다음 방문으로 연락처를 걸러 보고, 매달 보고를 보낸 시점을 확인하세요.",
       "c8": "큰 글자 크기, 화면 읽기 프로그램, 굵은 글씨, 고대비에 대한 지원이 개선되었습니다."
+    },
+    "1460": {
+      "c1": "이제 봉사하러 나가는 날마다 반려동물이 금화를 받습니다. 새로운 상점에서 모자와 방 아이템을 사고, 가진 것은 모두 사물함에서 확인하세요.",
+      "c2": "홈에서 연속 기록을 탭하면 언제 시작했는지와 지금까지의 최고 기록을 볼 수 있습니다.",
+      "c3": "설정에서 Scribe AI를 끌 수 있으며, 처음 사용하기 전에 동의를 요청합니다."
     }
   },
   "installed": "설치됨",
@@ -1527,6 +1546,7 @@
   "buddies_followUp": "다음 방문",
   "buddies_noLongerAvailable": "더 이상 사용할 수 없음",
   "buddies_sharedBy": "{{name}} 님이 공유함. 변경 사항이 여기에 표시됩니다.",
+  "buddies_linkedPlanFields": "날짜, 시간, 제목, 장소, 메모는 {{name}} 님이 정하며 변경 사항이 여기에 표시됩니다. 내 시간, 알림, 유형은 직접 바꿀 수 있습니다.",
   "buddies_answeredGoing": "참석합니다",
   "buddies_answeredDeclined": "참석할 수 없습니다",
   "buddies_answerNotSent": "아직 전송되지 않음",
@@ -1551,6 +1571,8 @@
   "buddies_feedbackAttachmentFailed": "의견은 전송되었지만 진단 정보를 첨부하지 못했습니다.",
   "formDetails": "세부 정보",
   "planForm_duration": "기간",
+  "planForm_yourHours": "내 시간",
+  "planForm_organizerPlanned": "{{name}} 님 계획: {{hours}}",
   "planForm_howLong": "얼마나 오래?",
   "planForm_justHours": "시간만",
   "planForm_timeSpan": "시간 범위",
@@ -1640,6 +1662,8 @@
   "gotIt": "알았어요!",
   "hint": "힌트",
   "didYouKnow_kicker": "알고 있었어?",
+  "didYouKnow_accountMenu_title": "내 사진을 탭하면 계정이 열립니다",
+  "didYouKnow_accountMenu_body": "사진을 탭하면 프로필, 설정, 도움말 센터로 이동할 수 있습니다.",
   "didYouKnow_longPressCopy_title": "복사하기 위한 긴 프레스",
   "didYouKnow_longPressCopy_body": "연락처의 전화번호, 이메일 또는 주소를 터치하고 길게 누르면 즉시 클립보드에 복사할 수 있습니다.",
   "didYouKnow_swipeEditConvo_title": "대화를 빠르게 편집하려면 스와이프하세요",
@@ -1699,6 +1723,22 @@
   "planDetails_repeats": "반복",
   "planDetails_changedForDate": "이 날짜만 변경됨",
   "planDetails_organizer": "주최자",
+  "planDetails_invitedSeeWhosGoing": "초대받은 모든 사람이 누가 참석하는지 볼 수 있습니다.",
+  "planDetails_whosGoing": "참석자",
+  "planDetails_goingCount": {
+    "one": "{{count}}명 참석",
+    "other": "{{count}}명 참석"
+  },
+  "planDetails_organizedBy": "주최: {{name}}",
+  "planDetails_whosGoingHint": "참석하는 모든 사람을 표시합니다",
+  "planDetails_moreGoing": {
+    "one": "외 {{count}}명 참석",
+    "other": "외 {{count}}명 참석"
+  },
+  "planDetails_guestNotBuddyTitle": "{{name}} 님은 내 버디가 아닙니다",
+  "planDetails_guestNotBuddyBody": "버디가 되려면 함께 있을 때 서로의 버디 코드를 스캔하세요.",
+  "planDetails_guestShowCode": "내 버디 코드 표시",
+  "planDetails_guestNotBuddyHint": "버디가 되는 방법을 표시합니다",
   "planDetails_askedToJoin": "참여를 요청함",
   "visitDetails_title": "대화",
   "visitDetails_pastConversation": "{{name}} 님과 이야기했습니다",
@@ -1938,6 +1978,30 @@
   "forceDeleteContacts": "연락처 강제 삭제",
   "clearArchivedContacts": "보관된 연락처 지우기",
   "dangerZone": "위험 구역",
+  "toolsDangerZone_info": "항목별 삭제입니다. 각각 확인을 요청합니다. 새로 설치한 상태로 완전히 지우려면 맨 위의 Reset all을 사용하세요.",
+  "toolsDangerZone_confirm": "이 작업은 되돌릴 수 없습니다.",
+  "toolsDangerZone_categories": "사용자 지정 카테고리 삭제",
+  "toolsDangerZone_categoriesBody": "동기화된 모든 기기에서 사용자 지정 카테고리를 삭제합니다. 기본 제공 LDC 카테고리와 기존 시간 기록은 유지됩니다.",
+  "toolsDangerZone_contactFields": "연락처 사용자 지정 필드 삭제",
+  "toolsDangerZone_contactFieldsBody": "보관된 연락처를 포함해 모든 연락처 사용자 지정 필드와 그 값을 영구적으로 삭제합니다. 삭제 내용은 다른 기기에 동기화됩니다.",
+  "toolsDangerZone_visitFields": "방문 사용자 지정 필드 삭제",
+  "toolsDangerZone_visitFieldsBody": "모든 방문 사용자 지정 필드와 저장된 값을 영구적으로 삭제합니다. 삭제 내용은 다른 기기에 동기화됩니다.",
+  "toolsDangerZone_contactViews": "저장된 연락처 보기 지우기(로컬)",
+  "toolsDangerZone_localBody": "이 기기에서 저장된 보기와 현재 보기를 지웁니다. 동기화된 기기에서 다시 복원될 수 있습니다.",
+  "toolsDangerZone_mileage": "모든 주행 거리 삭제(동기화)",
+  "toolsDangerZone_mileageBody": "모든 차량, 연료, 가격, 운행 기록, 주행 기록계 수치를 삭제합니다. 삭제 내용은 다른 기기에 동기화됩니다.",
+  "toolsDangerZone_pet": "반려동물 떠나보내기(동기화)",
+  "toolsDangerZone_petBody": "반려동물을 떠나보내고 방을 비웁니다. 삭제 내용은 다른 기기에 동기화됩니다.",
+  "toolsDangerZone_badges": "배지 재설정",
+  "toolsDangerZone_badgesBody": "얻은 배지, 배지 기록, 대기 중인 축하를 지웁니다. 기존 기록으로 다시 얻을 수 있으며, 동기화로 복원될 수도 있습니다.",
+  "toolsDangerZone_scribe": "Scribe AI 기록 지우기",
+  "toolsDangerZone_scribeBody": "진행 중인 응답을 중지하고 이 기기의 대화, 제안, 실행 취소 기록, 캐시된 사용량을 지웁니다. 이미 추가된 기록은 남고, 메모리와 동의도 유지됩니다. 서버 사용 한도는 계속 적용됩니다.",
+  "toolsDangerZone_memory": "Scribe AI 메모리 지우기",
+  "toolsDangerZone_memoryBody": "이 기기의 메모리 메모를 지웁니다. 대화와 메모리 켜기/끄기 설정은 유지됩니다.",
+  "toolsDangerZone_routes": "저장된 경로 지우기",
+  "toolsDangerZone_places": "저장된 경로 장소 지우기",
+  "toolsDangerZone_notifications": "알림 트레이 재설정",
+  "toolsDangerZone_notificationsBody": "테스트 알림과 이 기기에서 확인하거나 닫은 기록을 지웁니다. 다른 기능의 항목이 다시 나타날 수 있습니다.",
   "contacts": "연락처",
   "serviceReports": "서비스 보고서",
   "servicePlans": "서비스 계획",
@@ -2212,6 +2276,8 @@
   "appIconUnsupported": "이 기기는 앱 아이콘 변경을 지원하지 않습니다.",
   "appIconChangeFailed": "앱 아이콘을 바꿀 수 없었어요. 잠시 후에 다시 시도해 보세요.",
   "appIconArtistCallTitle": "디자인 파트너를 찾고 있습니다",
+  "appIconArtistCallDetails": "재미있고 독특한 앱 아이콘을 함께 만들어 줄 아티스트나 그래픽 디자이너를 찾고 있습니다. 작은 개인 프로젝트라 큰 예산은 드릴 수 없지만, 감사의 뜻으로 소정의 사례비와 평생 무료 서포터 멤버십을 기꺼이 드리겠습니다.",
+  "appIconArtistCallContact": "관심이 있으신가요? 연락처:",
   "supporterAlwaysFreeNote": "모든 핵심 기능은 무료입니다. 지원은 선택 사항이며 지속적인 개발 자금을 지원합니다.",
   "supporterSheetTitle": "서포터 되기",
   "supporterSheetSubtitle": "여러분의 후원은 WitnessWork를 계속 운영하는 데 도움이 되며, 몇 가지 개인적인 손길을 더할 수 있게 해줍니다.",
@@ -2589,6 +2655,7 @@
   "contacts_pinStaleness_week": "이번 달",
   "contacts_pinStaleness_month": "Stale",
   "contacts_stalenessChip_all": "전체",
+  "contacts_filtersChip": "필터",
   "contacts_searchPlaceholder": {
     "one": "연락처 1개 검색",
     "other": "연락처 {{count}}개 검색"
@@ -2990,6 +3057,16 @@
   "playSounds_descriptionAndroid": "WitnessWork가 열려 있는 동안의 축하 효과음과 알림음입니다. 앱이 닫혀 있는 동안 도착하는 알림은 기기의 알림 설정을 따릅니다.",
   "haptics": "햅틱",
   "haptics_description": "탭하거나, 차트를 스크러빙하거나, 목표에 도달할 때의 진동 피드백입니다.",
+  "rewards": "보상",
+  "rewardAnimations": "보상 애니메이션",
+  "rewardAnimations_description": "반려동물을 위해 코인을 얻으면 코인 하나하나가 화면에 떨어지며 지갑에 더해집니다. 아무 곳이나 탭하면 건너뜁니다.",
+  "rewardSounds": "사운드",
+  "rewardSounds_punch": "펀치",
+  "rewardSounds_retro": "레트로",
+  "rewardSounds_soft": "부드럽게",
+  "rewardSounds_off": "끔",
+  "rewardSounds_audioOff": "사운드 및 햅틱에서 사운드가 꺼져 있습니다.",
+  "rewardSample": "샘플 재생",
   "notifications": "알림",
   "remindersChannelName": "알림",
   "purchasesUnavailable": "지금은 구매할 수 없습니다. 나중에 다시 시도해 주세요.",
@@ -3013,6 +3090,8 @@
   "buddies_planSameTime": "같은 시간으로 계획",
   "buddies_needsAnswer": "답변 필요",
   "buddies_together": "함께",
+  "buddies_requestsWaiting": "대기 중인 요청",
+  "buddies_nextTogether": "다음 함께하는 날: {{date}}",
   "buddies_seeAllCount": "모두 보기({{count}})",
   "buddies_showFewer": "간략히 보기",
   "buddies_plan": "계획",
@@ -3354,7 +3433,7 @@
     },
     "journeyNext": "{{date}} · 다음",
     "nextVisit": "다음 방문 · {{date}}",
-    "seeUpNext": "다음 일정 보기",
+    "seeUpNext": "자세히",
     "gapEarlier": "{{gap}} 전",
     "sameDay": "같은 날",
     "followUpUpcoming": "다음 방문 예정",
@@ -4265,6 +4344,7 @@
     "emptySection": "표시할 내용이 있을 때 나타납니다",
     "description": {
       "approachingConversations": "오늘의 다음 방문, 바로바로 기록하세요",
+      "together": "버디와 함께하는 계획과 재방문, 응답할 초대",
       "tabletServiceYearSummary": "목표 대비 봉사연도 현황",
       "serviceReport": "이번 달 시간과 연구",
       "mileage": "이번 달 이동 횟수와 거리",
@@ -4657,6 +4737,7 @@
       "rename": "이름 변경…",
       "change": "반려동물 변경…",
       "decorate": "모자 및 방…",
+      "shop": "상점…",
       "share": "공유…"
     },
     "picker": {
@@ -4891,7 +4972,22 @@
     "details": {
       "change": "반려동물 변경",
       "share": "공유",
+      "shop": "상점",
       "settings": "설정"
+    },
+    "locker": {
+      "wearing": "착용 중: {{item}}",
+      "noHat": "모자 없음",
+      "inRoom": "방에 있음: {{item}}",
+      "current": "{{section}}: {{item}}",
+      "moreInShop": "상점에서 더 보기",
+      "moreCount": {
+        "one": "구매 가능 {{count}}개",
+        "other": "구매 가능 {{count}}개"
+      }
+    },
+    "hearts": {
+      "infoTitle": "하트"
     },
     "intro": {
       "hearts": {
@@ -4899,11 +4995,15 @@
         "body": "봉사 활동을 기록한 날마다 하트가 하나씩 늘어납니다. 기록을 멈추면 하트가 서서히 줄어듭니다.",
         "bodyMonths": "봉사 활동을 기록한 달마다 하트가 모두 채워집니다. 한 달을 건너뛰면 서서히 줄어듭니다."
       },
+      "shop": {
+        "title": "코인 모으기",
+        "body": "봉사하러 나가는 날마다 금화를 받습니다. 상점에서 모자와 방 아이템을 사세요."
+      },
       "decorate": {
         "title": "나만의 방으로 꾸미세요",
         "body": "반려동물을 탭하면 쓰다듬을 수 있습니다. 카드의 다른 곳을 탭하면 모자를 고르고 꾸밀 수 있습니다."
       },
-      "previewA11y": "모든 것이 열린 {{name}}의 방",
+      "previewA11y": "모든 아이템이 있는 {{name}}의 방",
       "next": "다음",
       "done": "완료",
       "step": "{{count}}단계 중 {{step}}단계"
@@ -4943,11 +5043,73 @@
     },
     "settings": {
       "title": "반려동물 설정",
+      "petTitle": "내 반려동물",
+      "name": "이름",
       "showOnHome": "홈에 표시",
       "buddiesTitle": "버디의 반려동물",
       "visits": "버디의 반려동물이 찾아오기",
       "visitsInfo": "버디와 함께 봉사에 나간 날에는 버디의 반려동물이 내 반려동물을 찾아옵니다.",
       "noBuddyPets": "아직 반려동물을 공유하는 버디가 없습니다."
+    },
+    "currency": {
+      "coin": {
+        "one": "{{count}}코인",
+        "other": "{{count}}코인"
+      },
+      "infoTitle": "코인",
+      "infoDays": "봉사하러 나가는 날(시간이나 방문을 기록한 날)마다 코인 1개를 받고, 계획한 날을 지키면 1개를 더 받습니다.",
+      "infoMonths": "봉사에 참여한 달마다 최소 {{floor}}코인을 받습니다.",
+      "infoStreak": "연속 기록 이정표마다 {{amount}}을(를) 더 받습니다.",
+      "infoSpend": "상점에서 사용하세요.",
+      "gain": "+{{amount}}",
+      "loss": "−{{amount}}",
+      "earnedA11y": "{{amount}} 획득"
+    },
+    "shop": {
+      "title": "상점",
+      "back": "뒤로",
+      "categories": "카테고리",
+      "buy": "구매",
+      "buyA11y": "{{price}}에 {{item}} 구매",
+      "needMore": {
+        "one": "{{count}}개 더 필요",
+        "other": "{{count}}개 더 필요"
+      },
+      "needMoreA11y": "{{item}}을(를) 사려면 {{price}}이(가) 더 필요합니다",
+      "wearing": "착용 중",
+      "inRoom": "방에 있음",
+      "owned": "보유",
+      "allOwned": "모두 보유하고 있습니다",
+      "wearingNow": "지금 착용 중",
+      "inRoomNow": "지금 방에 있음",
+      "ownedHint": "{{name}}의 방에서 사용할 수 있습니다",
+      "boughtHat": "{{item}} 구매 완료. {{name}}이(가) 착용하고 있습니다.",
+      "boughtRoom": "{{item}} 구매 완료. {{name}}의 방에 있습니다.",
+      "leaves": "구매 후 {{price}} 남음",
+      "earnCoins": "코인은 봉사하러 나간 날 받습니다",
+      "secretHint": "길을 가다 발견하며, 판매하지 않습니다",
+      "itemPrice": "{{item}}, {{price}}",
+      "itemNotEnough": "{{item}}, {{price}}, 아직 부족함",
+      "itemOwned": "{{item}}, 보유",
+      "previewA11y": "{{item}}이(가) 있는 {{name}}의 방"
+    },
+    "reward": {
+      "timeAdded": "시간 추가됨",
+      "visitAdded": "방문 추가됨",
+      "monthShared": "봉사에 참여한 달",
+      "daysOut": {
+        "one": "봉사하러 나간 날",
+        "other": "봉사하러 나간 날"
+      },
+      "plansKept": {
+        "one": "계획한 날 지킴",
+        "other": "계획한 날 지킴"
+      },
+      "milestone": "연속 기록 이정표 · {{count}}",
+      "milestoneMonths": {
+        "one": "연속 기록 이정표 · {{count}}개월",
+        "other": "연속 기록 이정표 · {{count}}개월"
+      }
     }
   },
   "handoff_newDoneSynced": "클라우드 동기화가 기록, 연락처, 메모를 이 휴대폰으로 가져오고 있습니다. 잠시 후 표시됩니다.",
@@ -5198,6 +5360,29 @@
   "scribe_warning_overCreditCap": "이번 달 인정 시간 한도를 넘습니다.",
   "scribe_usageTitle": "Scribe AI 사용량",
   "scribe_memoryTitle": "Scribe AI 메모리",
+  "scribe_enabledToggle": "Scribe AI 사용",
+  "scribe_turnedOffFooter": "Scribe AI가 숨겨지며, 아무것도 전송되지 않습니다.",
+  "scribe_zdrRow": "데이터 무보존",
+  "scribe_zdrLearnMore": "자세히 알아보기",
+  "scribe_zdrTitle": "데이터 무보존",
+  "scribe_zdrIntro": "Scribe AI를 사용하면 말하거나 입력한 내용과 답하는 데 필요한 기록이 AI 모델로 전송되어 업데이트를 작성합니다. 그 데이터가 어떻게 처리되는지 알려 드립니다.",
+  "scribe_zdrNothingStoredTitle": "아무것도 보관하지 않습니다",
+  "scribe_zdrNothingStoredBody": "Scribe AI가 답하고 나면 보낸 내용은 사라집니다. WitnessWork 서버는 메시지, 이름, 메모, 사진 등 어떤 것도 저장하거나 기록하지 않습니다. 사용량만 계산합니다.",
+  "scribe_zdrNoTrainingTitle": "학습에 절대 사용하지 않습니다",
+  "scribe_zdrNoTrainingBody": "Scribe AI는 계약에 따라 데이터를 전혀 보관하지 않고 학습에도 절대 사용하지 않기로 동의한 AI 제공업체만 사용합니다.",
+  "scribe_zdrOnDeviceTitle": "기록은 내 기기에만 남습니다",
+  "scribe_zdrOnDeviceBody": "대화와 Scribe AI의 메모리는 이 기기에만 저장됩니다. 말할 때는 이 기기에서 음성이 텍스트로 변환되며, 녹음은 저장되지 않습니다.",
+  "scribe_zdrInControlTitle": "추가할 내용은 내가 정합니다",
+  "scribe_zdrInControlBody": "Scribe AI는 변경 사항을 제안할 뿐입니다. 추가를 탭하기 전에는 아무것도 추가되지 않으며, 설정에서 언제든지 Scribe AI를 끌 수 있습니다.",
+  "scribe_zdrPolicyLink": "OpenRouter의 데이터 무보존 정책 읽기",
+  "scribe_termsTitle": "시작하기 전에",
+  "scribe_termsPrivateTitle": "데이터는 비공개로 유지됩니다",
+  "scribe_termsPrivateBody": "Scribe AI는 보낸 내용을 업데이트 작성에만 사용합니다. 저장되지 않으며, AI 학습에도 절대 사용되지 않습니다.",
+  "scribe_termsMistakesTitle": "추가하기 전에 확인하세요",
+  "scribe_termsMistakesBody": "AI는 실수할 수 있습니다. 추가하기 전에 각 변경 사항을 검토하세요.",
+  "scribe_termsBody": "동의를 탭하면 WitnessWork의 이용약관 및 개인 정보 정책에 동의하게 됩니다.",
+  "scribe_termsAgree": "동의",
+  "scribe_consentContinue": "계속",
   "scribe_usageRow": "사용량",
   "scribe_memoryRow": "메모리",
   "scribe_memoryToggle": "메모리",

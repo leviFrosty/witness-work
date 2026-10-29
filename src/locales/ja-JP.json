@@ -126,6 +126,9 @@
   "greetingGoalNicelyDone": "月間の目標を達成しました。お見事です!",
   "greetingGoalWayToGo": "目標を達成しました。すばらしいです!",
   "greetingBusyBee": "こんにちは、働き者さん",
+  "greetingStreakOnARoll": "いい調子ですね",
+  "greetingStreakGoingStrong": "その調子です!",
+  "greetingStreakLookAtYouGo": "すばらしい勢いです!",
   "profileGreetingNoName": "おかえりなさい",
   "profileUsingFor": {
     "one": "WitnessWorkを使って{{days}}日",
@@ -191,6 +194,16 @@
   "streak_endingMonths": "連続記録を続けるには、{{month}}の奉仕を記録してください。",
   "streak_recordMonth": "奉仕を記録",
   "streak_howItWorks": "連続記録のしくみ",
+  "streak_unitPlans": {
+    "one": "日連続で予定を達成",
+    "other": "日連続で予定を達成"
+  },
+  "streak_unitMonths": {
+    "one": "か月連続",
+    "other": "か月連続"
+  },
+  "streak_started": "開始",
+  "streak_best": "最高記録",
   "streakCelebration_started": "連続記録が始まりました!",
   "streakCelebration_grew": "連続記録が伸びています!",
   "streakCelebration_captionPlans": "間隔が空いても、プランを一度も欠かさず守れています。次の予定日も続けましょう。",
@@ -392,6 +405,7 @@
   "save": "保存",
   "isBibleStudy": "聖書の勉強です",
   "add": "追加",
+  "addVisit": "訪問を追加",
   "reminder_title": "会話リマインダー",
   "reminder_topicLine": "トピック：{{topic}}",
   "addConversation": "会話を追加",
@@ -1110,6 +1124,11 @@
       "c6": "WitnessWorkがアラビア語に対応しました。右から左に読むレイアウトにも対応しています。",
       "c7": "ホームと進捗のカードをカスタマイズし、メモの書式設定や写真の追加、フォローアップによる連絡先の絞り込み、各月の報告をいつ送ったかの確認ができます。",
       "c8": "大きな文字サイズ、スクリーンリーダー、太字、コントラストの強化への対応を改善しました。"
+    },
+    "1460": {
+      "c1": "宣教に出かけた日ごとに、ペットが金貨を獲得するようになりました。新しいショップで帽子や部屋のアイテムに使い、持っているものはすべてロッカーで確認できます。",
+      "c2": "ホームの連続記録をタップすると、いつ始まったかとこれまでの最高記録を確認できます。",
+      "c3": "Scribe AIは設定でオフにできます。また、初めて使う前に同意を求めるようになりました。"
     }
   },
   "installed": "インストール済み",
@@ -1527,6 +1546,7 @@
   "buddies_followUp": "フォローアップ",
   "buddies_noLongerAvailable": "利用できなくなりました",
   "buddies_sharedBy": "{{name}}さんが共有しました。相手が行った変更はここに反映されます。",
+  "buddies_linkedPlanFields": "日付、時刻、タイトル、場所、メモは{{name}}さんが設定し、変更はここに反映されます。あなたの時間、リマインダー、タイプは自分で変更できます。",
   "buddies_answeredGoing": "参加します",
   "buddies_answeredDeclined": "参加できません",
   "buddies_answerNotSent": "未送信",
@@ -1551,6 +1571,8 @@
   "buddies_feedbackAttachmentFailed": "フィードバックは送信されましたが、診断情報を添付できませんでした。",
   "formDetails": "詳細",
   "planForm_duration": "所要時間",
+  "planForm_yourHours": "あなたの時間",
+  "planForm_organizerPlanned": "{{name}}さんの予定:{{hours}}",
   "planForm_howLong": "どのくらいですか?",
   "planForm_justHours": "時間数のみ",
   "planForm_timeSpan": "時間帯",
@@ -1640,6 +1662,8 @@
   "gotIt": "わかった！",
   "hint": "ヒント",
   "didYouKnow_kicker": "知ってた?",
+  "didYouKnow_accountMenu_title": "写真からアカウントを開けます",
+  "didYouKnow_accountMenu_body": "写真をタップすると、プロフィール、設定、ヘルプセンターを開けます。",
   "didYouKnow_longPressCopy_title": "長押しでコピー",
   "didYouKnow_longPressCopy_body": "連絡先の電話番号、メールアドレス、住所をタッチし長押しすると、すぐにクリップボードにコピーできます。",
   "didYouKnow_swipeEditConvo_title": "会話をスワイプしてクイック編集",
@@ -1699,6 +1723,22 @@
   "planDetails_repeats": "繰り返し",
   "planDetails_changedForDate": "この日付のみ変更",
   "planDetails_organizer": "主催者",
+  "planDetails_invitedSeeWhosGoing": "招待された全員に、参加する人が表示されます。",
+  "planDetails_whosGoing": "参加する人",
+  "planDetails_goingCount": {
+    "one": "{{count}}人が参加",
+    "other": "{{count}}人が参加"
+  },
+  "planDetails_organizedBy": "主催:{{name}}さん",
+  "planDetails_whosGoingHint": "参加する全員を表示します",
+  "planDetails_moreGoing": {
+    "one": "ほか{{count}}人が参加",
+    "other": "ほか{{count}}人が参加"
+  },
+  "planDetails_guestNotBuddyTitle": "{{name}}さんはバディではありません",
+  "planDetails_guestNotBuddyBody": "バディになるには、一緒にいるときにお互いのバディコードをスキャンしてください。",
+  "planDetails_guestShowCode": "自分のバディコードを表示",
+  "planDetails_guestNotBuddyHint": "バディになる方法を表示します",
   "planDetails_askedToJoin": "参加をリクエスト済み",
   "visitDetails_title": "会話",
   "visitDetails_pastConversation": "{{name}}さんと話しました",
@@ -1938,6 +1978,30 @@
   "forceDeleteContacts": "連絡先の強制削除",
   "clearArchivedContacts": "アーカイブされた連絡先の消去",
   "dangerZone": "危険ゾーン",
+  "toolsDangerZone_info": "個別に削除します。それぞれ確認を求めます。新規インストール状態に完全に戻すには、上部の「すべてリセット」を使ってください。",
+  "toolsDangerZone_confirm": "この操作は取り消せません。",
+  "toolsDangerZone_categories": "カスタムカテゴリーを削除",
+  "toolsDangerZone_categoriesBody": "同期しているデバイス全体でカスタムカテゴリーを削除します。組み込みのLDCカテゴリーと既存の時間の記録は残ります。",
+  "toolsDangerZone_contactFields": "連絡先のカスタムフィールドを削除",
+  "toolsDangerZone_contactFieldsBody": "アーカイブした連絡先も含め、連絡先のすべてのカスタムフィールドとその値を完全に削除します。削除はほかのデバイスにも同期されます。",
+  "toolsDangerZone_visitFields": "訪問のカスタムフィールドを削除",
+  "toolsDangerZone_visitFieldsBody": "訪問のすべてのカスタムフィールドと保存された値を完全に削除します。削除はほかのデバイスにも同期されます。",
+  "toolsDangerZone_contactViews": "保存した連絡先ビューを消去(ローカル)",
+  "toolsDangerZone_localBody": "このデバイスの保存したビューと現在のビューを消去します。同期しているデバイスから復元されることがあります。",
+  "toolsDangerZone_mileage": "走行距離をすべて削除(同期)",
+  "toolsDangerZone_mileageBody": "すべての車両、燃料、価格、移動、走行距離計の記録を削除します。削除はほかのデバイスにも同期されます。",
+  "toolsDangerZone_pet": "パートナーを手放す(同期)",
+  "toolsDangerZone_petBody": "パートナーを手放し、部屋を空にします。削除はほかのデバイスにも同期されます。",
+  "toolsDangerZone_badges": "バッジをリセット",
+  "toolsDangerZone_badgesBody": "獲得したバッジ、バッジの履歴、未表示のお祝いを消去します。既存の記録で再び獲得でき、同期によって復元されることもあります。",
+  "toolsDangerZone_scribe": "Scribe AIの履歴を消去",
+  "toolsDangerZone_scribeBody": "進行中のやり取りを止め、このデバイスの会話、提案、取り消し用の記録、キャッシュされた使用量を消去します。追加済みの記録、メモリー、同意はそのまま残ります。サーバーの使用量の上限は引き続き適用されます。",
+  "toolsDangerZone_memory": "Scribe AIのメモリーを消去",
+  "toolsDangerZone_memoryBody": "このデバイスのメモリーのメモを消去します。会話とメモリーのオン/オフ設定は残ります。",
+  "toolsDangerZone_routes": "保存したルートを消去",
+  "toolsDangerZone_places": "保存したルートの場所を消去",
+  "toolsDangerZone_notifications": "通知トレイをリセット",
+  "toolsDangerZone_notificationsBody": "テスト通知と、このデバイスの既読・非表示の履歴を消去します。ほかの機能の項目が再び表示されることがあります。",
   "contacts": "連絡先",
   "serviceReports": "サービス レポート",
   "servicePlans": "サービス プラン",
@@ -2212,6 +2276,8 @@
   "appIconUnsupported": "このデバイスはアプリのアイコン変更に対応していません。",
   "appIconChangeFailed": "アプリのアイコンは変更できませんでした。すぐにもう一度試してみて。",
   "appIconArtistCallTitle": "デザインパートナーを探しています",
+  "appIconArtistCallDetails": "アーティストやグラフィックデザイナーと組んで、楽しくユニークなアプリアイコンのバリエーションを作りたいと考えています。小さな個人プロジェクトなので大きな予算は出せませんが、感謝のしるしとして、ささやかな報酬と生涯サポーターの無料メンバーシップをご用意します。",
+  "appIconArtistCallContact": "ご興味のある方は、こちらまでご連絡ください:",
   "supporterAlwaysFreeNote": "すべてのコア機能は無料です。サポートはオプションで、継続的な開発資金になります。",
   "supporterSheetTitle": "サポーターになる",
   "supporterSheetSubtitle": "サポーターになると、WitnessWorkの継続的な運営と、いくつかの特典をご利用いただけます。",
@@ -2589,6 +2655,7 @@
   "contacts_pinStaleness_week": "今月",
   "contacts_pinStaleness_month": "古い",
   "contacts_stalenessChip_all": "すべて",
+  "contacts_filtersChip": "フィルター",
   "contacts_searchPlaceholder": {
     "one": "連絡先1件を検索",
     "other": "連絡先{{count}}件を検索"
@@ -2990,6 +3057,16 @@
   "playSounds_descriptionAndroid": "WitnessWorkを開いている間のお祝いのチャイムとリマインダーの音です。アプリを閉じている間に届くリマインダーは、端末の通知設定に従います。",
   "haptics": "触覚",
   "haptics_description": "タップしたり、グラフをなぞったり、目標に達したりしたときの振動によるフィードバックです。",
+  "rewards": "ごほうび",
+  "rewardAnimations": "ごほうびのアニメーション",
+  "rewardAnimations_description": "ペットのコインを獲得すると、1枚ずつ画面に現れて財布に加算されます。どこかをタップするとスキップできます。",
+  "rewardSounds": "サウンド",
+  "rewardSounds_punch": "パンチ",
+  "rewardSounds_retro": "レトロ",
+  "rewardSounds_soft": "ソフト",
+  "rewardSounds_off": "オフ",
+  "rewardSounds_audioOff": "「サウンドと触覚」でサウンドがオフになっています。",
+  "rewardSample": "サンプルを再生",
   "notifications": "通知",
   "remindersChannelName": "リマインダー",
   "purchasesUnavailable": "現在、購入を利用できません。後でもう一度お試しください。",
@@ -3013,6 +3090,8 @@
   "buddies_planSameTime": "同じ時間に計画する",
   "buddies_needsAnswer": "返答が必要",
   "buddies_together": "一緒に",
+  "buddies_requestsWaiting": "保留中のリクエスト",
+  "buddies_nextTogether": "次に一緒に出かける日:{{date}}",
   "buddies_seeAllCount": "すべて表示({{count}})",
   "buddies_showFewer": "表示を減らす",
   "buddies_plan": "プラン",
@@ -3354,7 +3433,7 @@
     },
     "journeyNext": "{{date}} · 次回",
     "nextVisit": "次の訪問 · {{date}}",
-    "seeUpNext": "「次の予定」を見る",
+    "seeUpNext": "詳細",
     "gapEarlier": "{{gap}}前",
     "sameDay": "同じ日",
     "followUpUpcoming": "フォローアップを予定",
@@ -4265,6 +4344,7 @@
     "emptySection": "表示する内容があるときに表示されます",
     "description": {
       "approachingConversations": "今日のフォローアップを、その場で記録できます",
+      "together": "バディとのプランやフォローアップ、返事が必要な招待",
       "tabletServiceYearSummary": "目標に対する今年度の奉仕",
       "serviceReport": "今月の時間と研究",
       "mileage": "今月の移動回数と距離",
@@ -4657,6 +4737,7 @@
       "rename": "名前を変更…",
       "change": "ペットを変更…",
       "decorate": "帽子と部屋…",
+      "shop": "ショップ…",
       "share": "共有…"
     },
     "picker": {
@@ -4891,7 +4972,22 @@
     "details": {
       "change": "ペットを変更",
       "share": "共有",
+      "shop": "ショップ",
       "settings": "設定"
+    },
+    "locker": {
+      "wearing": "着用中:{{item}}",
+      "noHat": "帽子なし",
+      "inRoom": "部屋に設置中:{{item}}",
+      "current": "{{section}}:{{item}}",
+      "moreInShop": "ショップでもっと見る",
+      "moreCount": {
+        "one": "購入できるもの:{{count}}個",
+        "other": "購入できるもの:{{count}}個"
+      }
+    },
+    "hearts": {
+      "infoTitle": "ハート"
     },
     "intro": {
       "hearts": {
@@ -4899,11 +4995,15 @@
         "body": "奉仕の活動を記録した日ごとに、ハートが1つ増えます。記録をやめると、ハートは少しずつ減ります。",
         "bodyMonths": "奉仕の活動を記録した月は、ハートがすべて満たされます。1か月記録しないと、少しずつ減ります。"
       },
+      "shop": {
+        "title": "コインを集めよう",
+        "body": "宣教に出かけた日ごとに金貨がもらえます。ショップで帽子や部屋のアイテムに使いましょう。"
+      },
       "decorate": {
         "title": "自分好みに",
         "body": "ペットをタップするとなでられます。カードのほかの部分をタップすると、帽子を選んだり飾りつけたりできます。"
       },
-      "previewA11y": "すべて開いた{{name}}の部屋",
+      "previewA11y": "すべてのアイテムがある{{name}}の部屋",
       "next": "次へ",
       "done": "完了",
       "step": "ステップ{{step}} / {{count}}"
@@ -4943,11 +5043,73 @@
     },
     "settings": {
       "title": "ペットの設定",
+      "petTitle": "あなたのペット",
+      "name": "名前",
       "showOnHome": "ホームに表示",
       "buddiesTitle": "バディのペット",
       "visits": "バディのペットが訪ねてくる",
       "visitsInfo": "バディと一緒に出かけた日は、バディのペットがあなたのペットを訪ねてきます。",
       "noBuddyPets": "ペットを共有しているバディはまだいません。"
+    },
+    "currency": {
+      "coin": {
+        "one": "{{count}}コイン",
+        "other": "{{count}}コイン"
+      },
+      "infoTitle": "コイン",
+      "infoDays": "宣教に出かけた日(時間または訪問を記録した日)ごとに1コイン、それが予定どおりに守った日ならさらに1コインもらえます。",
+      "infoMonths": "宣教に参加した月ごとに、少なくとも{{floor}}コインもらえます。",
+      "infoStreak": "連続記録の節目ごとに、さらに{{amount}}もらえます。",
+      "infoSpend": "ショップで使いましょう。",
+      "gain": "+{{amount}}",
+      "loss": "−{{amount}}",
+      "earnedA11y": "{{amount}}を獲得"
+    },
+    "shop": {
+      "title": "ショップ",
+      "back": "戻る",
+      "categories": "カテゴリー",
+      "buy": "購入",
+      "buyA11y": "{{item}}を{{price}}で購入",
+      "needMore": {
+        "one": "あと{{count}}必要",
+        "other": "あと{{count}}必要"
+      },
+      "needMoreA11y": "{{item}}にはあと{{price}}必要です",
+      "wearing": "着用中",
+      "inRoom": "部屋に設置中",
+      "owned": "所持済み",
+      "allOwned": "すべて持っています",
+      "wearingNow": "いま着用中",
+      "inRoomNow": "いま部屋にあります",
+      "ownedHint": "{{name}}の部屋で使えます",
+      "boughtHat": "{{item}}を購入しました。{{name}}がかぶっています。",
+      "boughtRoom": "{{item}}を購入しました。{{name}}の部屋にあります。",
+      "leaves": "残り{{price}}",
+      "earnCoins": "コインは出かけた日にもらえます",
+      "secretHint": "途中で見つかるもので、販売していません",
+      "itemPrice": "{{item}}、{{price}}",
+      "itemNotEnough": "{{item}}、{{price}}、まだ足りません",
+      "itemOwned": "{{item}}、所持済み",
+      "previewA11y": "{{item}}がある{{name}}の部屋"
+    },
+    "reward": {
+      "timeAdded": "時間を追加",
+      "visitAdded": "訪問を追加",
+      "monthShared": "宣教に参加した月",
+      "daysOut": {
+        "one": "出かけた日",
+        "other": "出かけた日"
+      },
+      "plansKept": {
+        "one": "予定どおりに守った日",
+        "other": "予定どおりに守った日"
+      },
+      "milestone": "連続記録の節目 · {{count}}",
+      "milestoneMonths": {
+        "one": "連続記録の節目 · {{count}}か月",
+        "other": "連続記録の節目 · {{count}}か月"
+      }
     }
   },
   "handoff_newDoneSynced": "クラウド同期で、記録、連絡先、メモをこの電話に取り込んでいます。まもなく表示されます。",
@@ -5198,6 +5360,29 @@
   "scribe_warning_overCreditCap": "今月のクレジット上限を超えます。",
   "scribe_usageTitle": "Scribe AIの使用状況",
   "scribe_memoryTitle": "Scribe AIのメモリー",
+  "scribe_enabledToggle": "Scribe AIを使う",
+  "scribe_turnedOffFooter": "Scribe AIは非表示になり、何も送信されません。",
+  "scribe_zdrRow": "データを保持しない(ZDR)",
+  "scribe_zdrLearnMore": "詳しく見る",
+  "scribe_zdrTitle": "データを保持しない(ZDR)",
+  "scribe_zdrIntro": "Scribe AIを使うと、話した内容や入力した内容と、回答に必要な記録がAIモデルに送られ、更新内容が作られます。そのデータがどう扱われるかをご説明します。",
+  "scribe_zdrNothingStoredTitle": "何も保存されません",
+  "scribe_zdrNothingStoredBody": "Scribe AIが回答すると、送った内容は消去されます。WitnessWorkのサーバーは、メッセージ、名前、メモ、写真を含め、それを保存することも記録に残すこともありません。数えるのは使用量だけです。",
+  "scribe_zdrNoTrainingTitle": "学習には使われません",
+  "scribe_zdrNoTrainingBody": "Scribe AIは、データを一切保持せず、学習にも使わないことを契約で約束しているAIプロバイダーだけを使います。",
+  "scribe_zdrOnDeviceTitle": "履歴はあなたの手元に",
+  "scribe_zdrOnDeviceBody": "会話とScribe AIのメモリーは、このデバイスにのみ保存されます。話した声はこのデバイス上でテキストに変換され、録音は保存されません。",
+  "scribe_zdrInControlTitle": "追加するかはあなたが決めます",
+  "scribe_zdrInControlBody": "Scribe AIは変更を提案するだけです。「追加」をタップするまで何も追加されません。また、Scribe AIはいつでも設定でオフにできます。",
+  "scribe_zdrPolicyLink": "OpenRouterのデータ非保持ポリシーを読む",
+  "scribe_termsTitle": "始める前に",
+  "scribe_termsPrivateTitle": "データは非公開のままです",
+  "scribe_termsPrivateBody": "Scribe AIは、送られた内容を更新内容を作るためだけに使います。保存されることはなく、AIの学習に使われることもありません。",
+  "scribe_termsMistakesTitle": "追加する前に確認を",
+  "scribe_termsMistakesBody": "AIは間違えることがあります。それぞれの変更を確認してから追加してください。",
+  "scribe_termsBody": "「同意する」をタップすると、WitnessWorkの利用規約とプライバシーポリシーに同意したことになります。",
+  "scribe_termsAgree": "同意する",
+  "scribe_consentContinue": "続ける",
   "scribe_usageRow": "使用状況",
   "scribe_memoryRow": "メモリー",
   "scribe_memoryToggle": "メモリー",

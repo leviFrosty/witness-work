@@ -11342,7 +11342,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Taper"
+            "value" : "Type"
           }
         },
         "it" : {
@@ -11420,7 +11420,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "类型"
+            "value" : "類型"
           }
         }
       }

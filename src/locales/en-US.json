@@ -1133,6 +1133,11 @@
       "c6": "WitnessWork is now available in Arabic, with layouts that read right to left.",
       "c7": "Customize the cards on Home and Progress, format notes and add photos, filter contacts by follow-up, and see when each month's report was sent.",
       "c8": "Better support for large text sizes, screen readers, bold text and higher contrast."
+    },
+    "1460": {
+      "c1": "Your pet now earns gold coins each day you go out in the ministry. Spend them in the new Shop on hats and room items, and find everything you own in its Locker.",
+      "c2": "Tap your streak on Home to see when it started and your best streak so far.",
+      "c3": "You can turn off Scribe AI in Settings, and it asks for your agreement before you use it the first time."
     }
   },
   "installed": "Installed",
@@ -1732,10 +1737,16 @@
   "planDetails_organizer": "Organizer",
   "planDetails_invitedSeeWhosGoing": "Everyone invited sees who's going.",
   "planDetails_whosGoing": "Who's Going",
-  "planDetails_goingCount": {"one": "{{count}} going", "other": "{{count}} going"},
+  "planDetails_goingCount": {
+    "one": "{{count}} going",
+    "other": "{{count}} going"
+  },
   "planDetails_organizedBy": "Organized by {{name}}",
   "planDetails_whosGoingHint": "Shows everyone going",
-  "planDetails_moreGoing": {"one": "{{count}} more going", "other": "{{count}} more going"},
+  "planDetails_moreGoing": {
+    "one": "{{count}} more going",
+    "other": "{{count}} more going"
+  },
   "planDetails_guestNotBuddyTitle": "{{name}} isn't your buddy",
   "planDetails_guestNotBuddyBody": "To become buddies, scan each other's Buddies Code when you're together.",
   "planDetails_guestShowCode": "Show My Buddies Code",

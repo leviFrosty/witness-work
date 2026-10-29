@@ -33,7 +33,7 @@
   <string name="timerStartAction" formatted="false">Démarrer le minuteur</string>
   <string name="today" formatted="false">Aujourd\'hui</string>
   <string name="tomorrow" formatted="false">Demain</string>
-  <string name="type" formatted="false">Taper</string>
+  <string name="type" formatted="false">Type</string>
   <string name="watchComplicationDescription" formatted="false">Le service de ce mois en un coup d’œil.</string>
   <string name="watchComplicationName" formatted="false">Progression mensuelle</string>
   <string name="watchDirectionsUnavailable" formatted="false">Plans n’a pas trouvé ce lieu.</string>

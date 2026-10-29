@@ -126,6 +126,9 @@
   "greetingGoalNicelyDone": "Maanddoel gehaald. Goed gedaan!",
   "greetingGoalWayToGo": "Je hebt je doel gehaald. Top!",
   "greetingBusyBee": "Hallo daar, drukke bij",
+  "greetingStreakOnARoll": "Je bent goed op dreef",
+  "greetingStreakGoingStrong": "Lekker bezig!",
+  "greetingStreakLookAtYouGo": "Kijk jou eens gaan!",
   "profileGreetingNoName": "Welkom terug",
   "profileUsingFor": {
     "one": "Al {{days}} dag met WitnessWork",
@@ -191,6 +194,16 @@
   "streak_endingMonths": "Leg je dienst voor {{month}} vast om je reeks vast te houden.",
   "streak_recordMonth": "Dienst vastleggen",
   "streak_howItWorks": "Hoe reeksen werken",
+  "streak_unitPlans": {
+    "one": "geplande dag nagekomen",
+    "other": "geplande dagen nagekomen"
+  },
+  "streak_unitMonths": {
+    "one": "maand op rij",
+    "other": "maanden op rij"
+  },
+  "streak_started": "Begonnen",
+  "streak_best": "Beste",
   "streakCelebration_started": "Je hebt een reeks!",
   "streakCelebration_grew": "Je reeks groeit!",
   "streakCelebration_captionPlans": "Plannen nagekomen zonder er een te missen, hoe ver ook uit elkaar. Zet het voort op je volgende geplande dag.",
@@ -392,6 +405,7 @@
   "save": "Opslaan",
   "isBibleStudy": "is bijbelstudie",
   "add": "Toevoegen",
+  "addVisit": "Bezoek toevoegen",
   "reminder_title": "Volgende gesprek",
   "reminder_topicLine": "Onderwerp: {{topic}}",
   "addConversation": "Gesprek toevoegen",
@@ -1110,6 +1124,11 @@
       "c6": "WitnessWork is nu beschikbaar in het Arabisch, met indelingen die van rechts naar links lezen.",
       "c7": "Pas de kaarten op Home en Voortgang aan, geef notities een opmaak en voeg foto’s toe, filter contacten op vervolgbezoek en zie wanneer het verslag van elke maand is verzonden.",
       "c8": "Betere ondersteuning voor grote tekstgroottes, schermlezers, vetgedrukte tekst en hoger contrast."
+    },
+    "1460": {
+      "c1": "Je huisdier verdient nu gouden munten op elke dag dat je in de velddienst gaat. Besteed ze in de nieuwe Winkel aan hoedjes en spullen voor de kamer, en vind alles wat je hebt in de Kast.",
+      "c2": "Tik op je reeks op Home om te zien wanneer die begon en wat je beste reeks tot nu toe is.",
+      "c3": "Je kunt Scribe AI uitzetten in Instellingen, en Scribe AI vraagt om je akkoord voordat je het de eerste keer gebruikt."
     }
   },
   "installed": "Geïnstalleerd",
@@ -1527,6 +1546,7 @@
   "buddies_followUp": "Vervolgbezoek",
   "buddies_noLongerAvailable": "Niet meer beschikbaar",
   "buddies_sharedBy": "Gedeeld door {{name}}. Wijzigingen die diegene maakt, verschijnen hier.",
+  "buddies_linkedPlanFields": "{{name}} bepaalt de dag, tijd, titel, plaats en opmerking, en die wijzigingen zie je hier. Je uren, herinnering en Type bepaal je zelf.",
   "buddies_answeredGoing": "Je gaat mee",
   "buddies_answeredDeclined": "Je kunt niet",
   "buddies_answerNotSent": "Nog niet verzonden",
@@ -1551,6 +1571,8 @@
   "buddies_feedbackAttachmentFailed": "Je feedback is verzonden, maar de diagnostiek kon niet worden toegevoegd.",
   "formDetails": "Details",
   "planForm_duration": "Duur",
+  "planForm_yourHours": "Jouw uren",
+  "planForm_organizerPlanned": "{{name}} heeft {{hours}} gepland",
   "planForm_howLong": "Hoe lang?",
   "planForm_justHours": "Alleen uren",
   "planForm_timeSpan": "Tijdsspanne",
@@ -1640,6 +1662,8 @@
   "gotIt": "Begrepen!",
   "hint": "Tip",
   "didYouKnow_kicker": "Wist je dat?",
+  "didYouKnow_accountMenu_title": "Je foto opent je account",
+  "didYouKnow_accountMenu_body": "Tik op je foto voor je profiel, Instellingen en het Helpcentrum.",
   "didYouKnow_longPressCopy_title": "Lang drukken om te kopiëren",
   "didYouKnow_longPressCopy_body": "Raak het telefoonnummer, e-mail of adres van een contact ingedrukt om het direct naar je klembord te kopiëren.",
   "didYouKnow_swipeEditConvo_title": "Veeg om snel een gesprek te bewerken",
@@ -1699,6 +1723,22 @@
   "planDetails_repeats": "Herhaalt",
   "planDetails_changedForDate": "Gewijzigd voor deze datum",
   "planDetails_organizer": "Organisator",
+  "planDetails_invitedSeeWhosGoing": "Iedereen die is uitgenodigd, ziet wie er gaat.",
+  "planDetails_whosGoing": "Wie er gaat",
+  "planDetails_goingCount": {
+    "one": "{{count}} gaat",
+    "other": "{{count}} gaan"
+  },
+  "planDetails_organizedBy": "Georganiseerd door {{name}}",
+  "planDetails_whosGoingHint": "Toont iedereen die gaat",
+  "planDetails_moreGoing": {
+    "one": "Nog {{count}} gaat",
+    "other": "Nog {{count}} gaan"
+  },
+  "planDetails_guestNotBuddyTitle": "{{name}} is niet je buddy",
+  "planDetails_guestNotBuddyBody": "Scan elkaars Buddies-code wanneer jullie samen zijn om buddy's te worden.",
+  "planDetails_guestShowCode": "Mijn Buddies-code tonen",
+  "planDetails_guestNotBuddyHint": "Toont hoe je buddy's wordt",
   "planDetails_askedToJoin": "Gevraagd om mee te gaan",
   "visitDetails_title": "Gesprek",
   "visitDetails_pastConversation": "Je sprak met {{name}}",
@@ -1938,6 +1978,30 @@
   "forceDeleteContacts": "Contacten geforceerd verwijderen",
   "clearArchivedContacts": "Gearchiveerde contacten wissen",
   "dangerZone": "Gevarenzone",
+  "toolsDangerZone_info": "Gerichte verwijderingen. Elke actie vraagt om bevestiging. Gebruik Alles resetten bovenaan om alles te wissen zoals bij een nieuwe installatie.",
+  "toolsDangerZone_confirm": "Dit kan niet ongedaan worden gemaakt.",
+  "toolsDangerZone_categories": "Aangepaste categorieën verwijderen",
+  "toolsDangerZone_categoriesBody": "Verwijdert aangepaste categorieën op alle gesynchroniseerde apparaten. De ingebouwde categorie PBA en bestaande tijdsregistraties blijven behouden.",
+  "toolsDangerZone_contactFields": "Aangepaste contactvelden verwijderen",
+  "toolsDangerZone_contactFieldsBody": "Verwijdert definitief elk aangepast contactveld en de waarden ervan, ook bij gearchiveerde contacten. Verwijderingen worden naar andere apparaten gesynchroniseerd.",
+  "toolsDangerZone_visitFields": "Aangepaste bezoekvelden verwijderen",
+  "toolsDangerZone_visitFieldsBody": "Verwijdert definitief elk aangepast bezoekveld en de opgeslagen waarden ervan. Verwijderingen worden naar andere apparaten gesynchroniseerd.",
+  "toolsDangerZone_contactViews": "Opgeslagen contactweergaven wissen (lokaal)",
+  "toolsDangerZone_localBody": "Wist opgeslagen weergaven en de actieve weergave op dit apparaat. Gesynchroniseerde apparaten kunnen ze herstellen.",
+  "toolsDangerZone_mileage": "Alle kilometers verwijderen (gesynchroniseerd)",
+  "toolsDangerZone_mileageBody": "Verwijdert alle voertuigen, brandstoffen, prijzen, ritten en kilometerstanden. Verwijderingen worden naar andere apparaten gesynchroniseerd.",
+  "toolsDangerZone_pet": "Huisdier vrijlaten (gesynchroniseerd)",
+  "toolsDangerZone_petBody": "Laat het huisdier vrij en maakt zijn kamer leeg. Verwijderingen worden naar andere apparaten gesynchroniseerd.",
+  "toolsDangerZone_badges": "Badges resetten",
+  "toolsDangerZone_badgesBody": "Vergeet verdiende badges, badgegeschiedenis en openstaande vieringen. Bestaande gegevens kunnen ze opnieuw verdienen; synchronisatie kan ze herstellen.",
+  "toolsDangerZone_scribe": "Geschiedenis van Scribe AI wissen",
+  "toolsDangerZone_scribeBody": "Stopt actieve beurten en wist gesprekken, voorstellen, gegevens om ongedaan te maken en het opgeslagen gebruik op dit apparaat. Al toegevoegde gegevens blijven staan; geheugen en toestemming blijven behouden. De gebruikslimieten van de server blijven gelden.",
+  "toolsDangerZone_memory": "Geheugen van Scribe AI wissen",
+  "toolsDangerZone_memoryBody": "Wist geheugennotities op dit apparaat. Gesprekken en de instelling om geheugen aan of uit te zetten blijven behouden.",
+  "toolsDangerZone_routes": "Opgeslagen routes wissen",
+  "toolsDangerZone_places": "Opgeslagen routeplaatsen wissen",
+  "toolsDangerZone_notifications": "Meldingenlade resetten",
+  "toolsDangerZone_notificationsBody": "Wist testmeldingen en de geschiedenis van geziene en gesloten meldingen op dit apparaat. Items van andere functies kunnen opnieuw verschijnen.",
   "contacts": "Contacten",
   "serviceReports": "Servicerapporten",
   "servicePlans": "Serviceplannen",
@@ -2212,6 +2276,8 @@
   "appIconUnsupported": "Dit apparaat ondersteunt het wijzigen van het app-icoon niet.",
   "appIconChangeFailed": "Het app-icoon kon niet veranderen. Probeer het zo opnieuw.",
   "appIconArtistCallTitle": "Op zoek naar een ontwerppartner",
+  "appIconArtistCallDetails": "Ik zou graag samenwerken met een kunstenaar of grafisch ontwerper om leuke en unieke varianten van het app-icoon te maken. Dit is een klein, onafhankelijk project, dus ik kan geen groot budget bieden — maar ik geef graag een bescheiden vergoeding plus een gratis levenslang Supporter-lidmaatschap als bedankje.",
+  "appIconArtistCallContact": "Interesse? Neem contact op via",
   "supporterAlwaysFreeNote": "Elke kernfunctie is gratis. Ondersteuning is optioneel en helpt om de doorlopende ontwikkeling te financieren.",
   "supporterSheetTitle": "Supporter worden",
   "supporterSheetSubtitle": "Jouw steun helpt WitnessWork draaiende te houden en maakt een paar persoonlijke dingen mogelijk.",
@@ -2589,6 +2655,7 @@
   "contacts_pinStaleness_week": "Deze maand",
   "contacts_pinStaleness_month": "Oud",
   "contacts_stalenessChip_all": "Alle",
+  "contacts_filtersChip": "Filters",
   "contacts_searchPlaceholder": {
     "one": "Zoek in 1 contact",
     "other": "Zoek in {{count}} contacten"
@@ -2990,6 +3057,16 @@
   "playSounds_descriptionAndroid": "Feestelijke klanken en herinneringsgeluiden terwijl WitnessWork open is. Herinneringen die binnenkomen terwijl de app gesloten is, volgen de meldingsinstellingen van je apparaat.",
   "haptics": "Haptiek",
   "haptics_description": "Trillingsfeedback wanneer je tikt, door grafieken scrubt of een doel bereikt.",
+  "rewards": "Beloningen",
+  "rewardAnimations": "Beloningsanimaties",
+  "rewardAnimations_description": "Als je munten verdient voor je huisdier, valt elke munt op het scherm en telt hij mee in zijn portemonnee. Tik ergens om over te slaan.",
+  "rewardSounds": "Geluiden",
+  "rewardSounds_punch": "Krachtig",
+  "rewardSounds_retro": "Retro",
+  "rewardSounds_soft": "Zacht",
+  "rewardSounds_off": "Uit",
+  "rewardSounds_audioOff": "Geluiden staan uit in Geluid en haptiek.",
+  "rewardSample": "Voorbeeld afspelen",
   "notifications": "Meldingen",
   "remindersChannelName": "Herinneringen",
   "purchasesUnavailable": "Aankopen zijn nu niet beschikbaar. Probeer het later opnieuw.",
@@ -3013,6 +3090,8 @@
   "buddies_planSameTime": "Plan op hetzelfde tijdstip",
   "buddies_needsAnswer": "Heeft jouw antwoord nodig",
   "buddies_together": "Samen",
+  "buddies_requestsWaiting": "Verzoeken in afwachting",
+  "buddies_nextTogether": "Volgende keer samen {{date}}",
   "buddies_seeAllCount": "Alles bekijken ({{count}})",
   "buddies_showFewer": "Minder tonen",
   "buddies_plan": "Plan",
@@ -3354,7 +3433,7 @@
     },
     "journeyNext": "{{date}} · volgende",
     "nextVisit": "Volgend bezoek · {{date}}",
-    "seeUpNext": "zie Hierna",
+    "seeUpNext": "details",
     "gapEarlier": "{{gap}} eerder",
     "sameDay": "Dezelfde dag",
     "followUpUpcoming": "Vervolgbezoek gepland",
@@ -4265,6 +4344,7 @@
     "emptySection": "Verschijnt zodra er iets te tonen is",
     "description": {
       "approachingConversations": "De vervolgbezoeken van vandaag, om onderweg te registreren",
+      "together": "Plannen en vervolgbezoeken met je buddy's, en uitnodigingen om te beantwoorden",
       "tabletServiceYearSummary": "Je dienstjaar ten opzichte van je doel",
       "serviceReport": "De tijd en studies van deze maand",
       "mileage": "De ritten en afstand van deze maand",
@@ -4657,6 +4737,7 @@
       "rename": "Hernoemen…",
       "change": "Huisdier wijzigen…",
       "decorate": "Hoedje en kamer…",
+      "shop": "Winkel…",
       "share": "Delen…"
     },
     "picker": {
@@ -4891,7 +4972,22 @@
     "details": {
       "change": "Huisdier wijzigen",
       "share": "Delen",
+      "shop": "Winkel",
       "settings": "Instellingen"
+    },
+    "locker": {
+      "wearing": "Draagt: {{item}}",
+      "noHat": "Geen hoedje op",
+      "inRoom": "In de kamer: {{item}}",
+      "current": "{{section}}: {{item}}",
+      "moreInShop": "Meer in de Winkel",
+      "moreCount": {
+        "one": "{{count}} te koop",
+        "other": "{{count}} te koop"
+      }
+    },
+    "hearts": {
+      "infoTitle": "Hartjes"
     },
     "intro": {
       "hearts": {
@@ -4899,11 +4995,15 @@
         "body": "Elke dag dat je velddienstactiviteit registreert, levert een hartje op. Als je stopt met registreren, lopen de hartjes langzaam leeg.",
         "bodyMonths": "Elke maand dat je velddienstactiviteit registreert, vult alle hartjes. Sla je een maand over, dan lopen ze langzaam leeg."
       },
+      "shop": {
+        "title": "Verdien munten",
+        "body": "Elke dag dat je in de velddienst gaat, levert gouden munten op. Besteed ze in de Winkel aan hoedjes en spullen voor de kamer."
+      },
       "decorate": {
         "title": "Maak het eigen",
         "body": "Tik op je huisdier om het te aaien. Tik ergens anders op de kaart om een hoedje te kiezen en de kamer in te richten."
       },
-      "previewA11y": "De kamer van {{name}} met alles geopend",
+      "previewA11y": "De kamer van {{name}} met alle spullen",
       "next": "Volgende",
       "done": "Klaar",
       "step": "Stap {{step}} van {{count}}"
@@ -4943,11 +5043,73 @@
     },
     "settings": {
       "title": "Huisdierinstellingen",
+      "petTitle": "Je huisdier",
+      "name": "Naam",
       "showOnHome": "Tonen op Home",
       "buddiesTitle": "Huisdieren van buddy's",
       "visits": "Huisdieren van buddy's op bezoek",
       "visitsInfo": "Op een dag dat je met een buddy op pad gaat, komt diens huisdier bij dat van jou op bezoek.",
       "noBuddyPets": "Nog geen van je buddy's deelt een huisdier."
+    },
+    "currency": {
+      "coin": {
+        "one": "{{count}} munt",
+        "other": "{{count}} munten"
+      },
+      "infoTitle": "Munten",
+      "infoDays": "Verdien 1 munt op elke dag dat je in de velddienst gaat (tijd of een bezoek registreren), en nog 1 als het een geplande dag is die je nakomt.",
+      "infoMonths": "Verdien minstens {{floor}} munten in elke maand dat je aan de bediening deelneemt.",
+      "infoStreak": "Elke mijlpaal in je reeks levert er {{amount}} extra op.",
+      "infoSpend": "Besteed ze in de Winkel.",
+      "gain": "+{{amount}}",
+      "loss": "−{{amount}}",
+      "earnedA11y": "{{amount}} verdiend"
+    },
+    "shop": {
+      "title": "Winkel",
+      "back": "Terug",
+      "categories": "Categorieën",
+      "buy": "Kopen",
+      "buyA11y": "{{item}} kopen voor {{price}}",
+      "needMore": {
+        "one": "Nog {{count}} nodig",
+        "other": "Nog {{count}} nodig"
+      },
+      "needMoreA11y": "Je hebt nog {{price}} nodig voor {{item}}",
+      "wearing": "Draagt",
+      "inRoom": "In de kamer",
+      "owned": "In bezit",
+      "allOwned": "Je hebt deze allemaal",
+      "wearingNow": "Draagt het nu",
+      "inRoomNow": "Staat nu in de kamer",
+      "ownedHint": "Van jou, te gebruiken in de kamer van {{name}}",
+      "boughtHat": "{{item}} gekocht. {{name}} draagt het.",
+      "boughtRoom": "{{item}} gekocht. Het staat in de kamer van {{name}}.",
+      "leaves": "Je houdt {{price}} over",
+      "earnCoins": "Munten verdien je met dagen in de dienst",
+      "secretHint": "Onderweg gevonden, nooit te koop",
+      "itemPrice": "{{item}}, {{price}}",
+      "itemNotEnough": "{{item}}, {{price}}, nog niet genoeg",
+      "itemOwned": "{{item}}, in bezit",
+      "previewA11y": "De kamer van {{name}} met {{item}}"
+    },
+    "reward": {
+      "timeAdded": "Tijd toegevoegd",
+      "visitAdded": "Bezoek toegevoegd",
+      "monthShared": "Maand deelgenomen",
+      "daysOut": {
+        "one": "Dag in de dienst",
+        "other": "Dagen in de dienst"
+      },
+      "plansKept": {
+        "one": "Geplande dag nagekomen",
+        "other": "Geplande dagen nagekomen"
+      },
+      "milestone": "Reeksmijlpaal · {{count}}",
+      "milestoneMonths": {
+        "one": "Reeksmijlpaal · {{count}} maand",
+        "other": "Reeksmijlpaal · {{count}} maanden"
+      }
     }
   },
   "handoff_newDoneSynced": "Cloud Sync brengt je gegevens, contacten en notities naar deze telefoon. Ze verschijnen zo meteen.",
@@ -5198,6 +5360,29 @@
   "scribe_warning_overCreditCap": "Hiermee overschrijd je je creditlimiet voor de maand.",
   "scribe_usageTitle": "Gebruik van Scribe AI",
   "scribe_memoryTitle": "Geheugen van Scribe AI",
+  "scribe_enabledToggle": "Scribe AI gebruiken",
+  "scribe_turnedOffFooter": "Scribe AI is verborgen en er wordt niets naartoe gestuurd.",
+  "scribe_zdrRow": "Zero Data Retention",
+  "scribe_zdrLearnMore": "Meer informatie",
+  "scribe_zdrTitle": "Zero Data Retention",
+  "scribe_zdrIntro": "Als je Scribe AI gebruikt, gaat wat je zegt of typt, samen met de gegevens die nodig zijn voor een antwoord, naar een AI-model dat je update uitwerkt. Zo wordt daarmee omgegaan.",
+  "scribe_zdrNothingStoredTitle": "Er wordt niets bewaard",
+  "scribe_zdrNothingStoredBody": "Zodra Scribe AI antwoordt, is wat je hebt gestuurd weg. De server van WitnessWork slaat het nooit op en logt het nooit: geen berichten, namen, notities of foto's. Hij telt alleen hoeveel je hebt gebruikt.",
+  "scribe_zdrNoTrainingTitle": "Nooit gebruikt voor training",
+  "scribe_zdrNoTrainingBody": "Scribe AI gebruikt alleen AI-aanbieders die contractueel afspreken niets van je gegevens te bewaren en er nooit op te trainen.",
+  "scribe_zdrOnDeviceTitle": "Je geschiedenis blijft bij jou",
+  "scribe_zdrOnDeviceBody": "Je gesprekken en het geheugen van Scribe AI worden alleen op dit apparaat bewaard. Als je spreekt, wordt je stem op dit apparaat omgezet in tekst en wordt de opname niet bewaard.",
+  "scribe_zdrInControlTitle": "Jij bepaalt wat er wordt toegevoegd",
+  "scribe_zdrInControlBody": "Scribe AI stelt alleen wijzigingen voor. Er wordt niets toegevoegd totdat je op Toevoegen tikt, en je kunt Scribe AI op elk moment uitzetten in Instellingen.",
+  "scribe_zdrPolicyLink": "Lees het zero-data-retentionbeleid van OpenRouter",
+  "scribe_termsTitle": "Voordat je begint",
+  "scribe_termsPrivateTitle": "Je gegevens blijven privé",
+  "scribe_termsPrivateBody": "Scribe AI gebruikt wat je stuurt alleen om je update uit te werken. Het wordt niet opgeslagen en nooit gebruikt om AI te trainen.",
+  "scribe_termsMistakesTitle": "Controleer voordat je toevoegt",
+  "scribe_termsMistakesBody": "AI kan fouten maken. Bekijk elke wijziging voordat je die toevoegt.",
+  "scribe_termsBody": "Door op Akkoord te tikken, ga je akkoord met de Gebruiksvoorwaarden en het Privacybeleid van WitnessWork.",
+  "scribe_termsAgree": "Akkoord",
+  "scribe_consentContinue": "Doorgaan",
   "scribe_usageRow": "Gebruik",
   "scribe_memoryRow": "Geheugen",
   "scribe_memoryToggle": "Geheugen",

@@ -126,6 +126,9 @@
   "greetingGoalNicelyDone": "Objetivo mensal cumprido. Parabéns!",
   "greetingGoalWayToGo": "Atingiu o seu objetivo. Muito bem!",
   "greetingBusyBee": "Olá, abelha trabalhadora",
+  "greetingStreakOnARoll": "Está imparável",
+  "greetingStreakGoingStrong": "Continue assim!",
+  "greetingStreakLookAtYouGo": "Que ritmo!",
   "profileGreetingNoName": "Bem-vindo de volta",
   "profileUsingFor": {
     "one": "A usar o WitnessWork há {{days}} dia",
@@ -191,6 +194,16 @@
   "streak_endingMonths": "Registe o serviço de {{month}} para manter a sua sequência.",
   "streak_recordMonth": "Registar serviço",
   "streak_howItWorks": "Como funcionam as sequências",
+  "streak_unitPlans": {
+    "one": "dia planeado cumprido",
+    "other": "dias planeados cumpridos"
+  },
+  "streak_unitMonths": {
+    "one": "mês seguido",
+    "other": "meses seguidos"
+  },
+  "streak_started": "Começou",
+  "streak_best": "Melhor",
   "streakCelebration_started": "Está numa sequência!",
   "streakCelebration_grew": "A sua sequência está a crescer!",
   "streakCelebration_captionPlans": "Planos cumpridos sem falhar nenhum, por mais afastados que estejam. Continue no próximo dia planeado.",
@@ -383,6 +396,7 @@
   "save": "Guardar",
   "isBibleStudy": "é estudo bíblico",
   "add": "Adicionar",
+  "addVisit": "Adicionar visita",
   "reminder_title": "Próxima Conversa",
   "reminder_topicLine": "Tópico: {{topic}}",
   "addConversation": "Adicionar Conversa",
@@ -963,6 +977,11 @@
       "c6": "O WitnessWork já está disponível em árabe, com disposições que se leem da direita para a esquerda.",
       "c7": "Personalize os cartões do Início e do Progresso, formate notas e adicione fotografias, filtre contactos por acompanhamento e veja quando o relatório de cada mês foi enviado.",
       "c8": "Melhor suporte para tamanhos de texto grandes, leitores de ecrã, texto a negrito e contraste mais elevado."
+    },
+    "1460": {
+      "c1": "A sua mascote agora ganha moedas de ouro por cada dia em que sai no ministério. Gaste-as na nova Loja em chapéus e itens para o quarto, e encontre tudo o que tem no Cacifo.",
+      "c2": "Toque na sua sequência no Início para ver quando começou e a sua melhor sequência até agora.",
+      "c3": "Pode desativar o Scribe AI nas Definições, e ele pede a sua concordância antes de o usar pela primeira vez."
     }
   },
   "installed": "Instalado",
@@ -1104,6 +1123,22 @@
   "planDetails_repeats": "Repete-se",
   "planDetails_changedForDate": "Alterado para esta data",
   "planDetails_organizer": "Organizador",
+  "planDetails_invitedSeeWhosGoing": "Todos os convidados veem quem vai.",
+  "planDetails_whosGoing": "Quem vai",
+  "planDetails_goingCount": {
+    "one": "{{count}} vai",
+    "other": "{{count}} vão"
+  },
+  "planDetails_organizedBy": "Organizado por {{name}}",
+  "planDetails_whosGoingHint": "Mostra todos os que vão",
+  "planDetails_moreGoing": {
+    "one": "Mais {{count}} vai",
+    "other": "Mais {{count}} vão"
+  },
+  "planDetails_guestNotBuddyTitle": "{{name}} não é seu companheiro",
+  "planDetails_guestNotBuddyBody": "Para se tornarem companheiros, leiam o código de Companheiros um do outro quando estiverem juntos.",
+  "planDetails_guestShowCode": "Mostrar o meu código de Companheiros",
+  "planDetails_guestNotBuddyHint": "Mostra como se tornarem companheiros",
   "planDetails_askedToJoin": "Pediu para participar",
   "visitDetails_title": "Conversa",
   "visitDetails_pastConversation": "Falou com {{name}}",
@@ -1262,6 +1297,30 @@
   "forceDeleteContacts": "Forçar Eliminação de Contactos",
   "clearArchivedContacts": "Limpar Contactos Arquivados",
   "dangerZone": "Zona de perigo",
+  "toolsDangerZone_info": "Eliminações específicas. Cada uma pede confirmação. Use Repor tudo no topo para limpar tudo como numa instalação nova.",
+  "toolsDangerZone_confirm": "Esta ação não pode ser anulada.",
+  "toolsDangerZone_categories": "Eliminar categorias personalizadas",
+  "toolsDangerZone_categoriesBody": "Elimina as categorias personalizadas em todos os dispositivos sincronizados. Mantém a categoria LDC predefinida e os registos de tempo existentes.",
+  "toolsDangerZone_contactFields": "Eliminar campos personalizados dos contactos",
+  "toolsDangerZone_contactFieldsBody": "Elimina permanentemente todos os campos personalizados dos contactos e os respetivos valores, incluindo os dos contactos arquivados. As eliminações são sincronizadas com os outros dispositivos.",
+  "toolsDangerZone_visitFields": "Eliminar campos personalizados das visitas",
+  "toolsDangerZone_visitFieldsBody": "Elimina permanentemente todos os campos personalizados das visitas e os valores guardados. As eliminações são sincronizadas com os outros dispositivos.",
+  "toolsDangerZone_contactViews": "Limpar vistas de contactos guardadas (local)",
+  "toolsDangerZone_localBody": "Limpa as vistas guardadas e a vista ativa neste dispositivo. Os dispositivos sincronizados podem restaurá-las.",
+  "toolsDangerZone_mileage": "Eliminar toda a quilometragem (sincronizado)",
+  "toolsDangerZone_mileageBody": "Elimina todos os carros, combustíveis, preços, viagens e leituras do conta-quilómetros. As eliminações são sincronizadas com os outros dispositivos.",
+  "toolsDangerZone_pet": "Libertar mascote (sincronizado)",
+  "toolsDangerZone_petBody": "Liberta a mascote e limpa o seu quarto. As eliminações são sincronizadas com os outros dispositivos.",
+  "toolsDangerZone_badges": "Repor crachás",
+  "toolsDangerZone_badgesBody": "Esquece os crachás obtidos, o histórico de crachás e as celebrações pendentes. Os registos existentes podem voltar a obtê-los; a sincronização pode restaurá-los.",
+  "toolsDangerZone_scribe": "Limpar histórico do Scribe AI",
+  "toolsDangerZone_scribeBody": "Interrompe as respostas em curso e limpa as conversas, propostas, registos para anular e a utilização em cache neste dispositivo. Os registos já adicionados ficam, tal como a memória e o consentimento. Os limites de utilização do servidor continuam a aplicar-se.",
+  "toolsDangerZone_memory": "Limpar memória do Scribe AI",
+  "toolsDangerZone_memoryBody": "Limpa as notas de memória neste dispositivo. Mantém as conversas e a definição de memória ativada/desativada.",
+  "toolsDangerZone_routes": "Limpar percursos guardados",
+  "toolsDangerZone_places": "Limpar locais de percurso guardados",
+  "toolsDangerZone_notifications": "Repor a lista de notificações",
+  "toolsDangerZone_notificationsBody": "Limpa as notificações de teste e o histórico de itens vistos e dispensados deste dispositivo. Itens de outras funcionalidades podem voltar a aparecer.",
   "contacts": "Contactos",
   "serviceReports": "Relatórios de Serviço",
   "servicePlans": "Programações de Serviço",
@@ -1795,6 +1854,7 @@
   "contacts_pinStaleness_week": "Este mês",
   "contacts_pinStaleness_month": "Velhos",
   "contacts_stalenessChip_all": "Todos",
+  "contacts_filtersChip": "Filtros",
   "contacts_searchPlaceholder": {
     "one": "Pesquisar 1 contacto",
     "other": "Pesquisar {{count}} contactos"
@@ -2365,6 +2425,7 @@
   "buddies_followUp": "Acompanhamento",
   "buddies_noLongerAvailable": "Já não está disponível",
   "buddies_sharedBy": "Partilhado por {{name}}. As alterações que essa pessoa fizer aparecem aqui.",
+  "buddies_linkedPlanFields": "{{name}} define o dia, a hora, o título, o local e a nota, e as alterações aparecem aqui. As suas horas, o lembrete e o Tipo pode alterá-los à vontade.",
   "buddies_answeredGoing": "Vai participar",
   "buddies_answeredDeclined": "Não pode ir",
   "buddies_answerNotSent": "Ainda não enviado",
@@ -2389,6 +2450,8 @@
   "buddies_feedbackAttachmentFailed": "Os seus comentários foram enviados, mas não foi possível anexar os diagnósticos.",
   "formDetails": "Detalhes",
   "planForm_duration": "Duração",
+  "planForm_yourHours": "As suas horas",
+  "planForm_organizerPlanned": "{{name}} planeou {{hours}}",
   "planForm_howLong": "Quanto tempo?",
   "planForm_justHours": "Só horas",
   "planForm_timeSpan": "Intervalo de tempo",
@@ -2468,6 +2531,8 @@
   "onboardingPickUp_otherPhone": "Do seu outro telemóvel",
   "onboardingPickUp_otherPhoneDesc": "Inicie sessão com um código QR para trazer a sua conta, companheiros e registos com cópia de segurança.",
   "didYouKnow_kicker": "Você sabia?",
+  "didYouKnow_accountMenu_title": "A sua fotografia abre a sua conta",
+  "didYouKnow_accountMenu_body": "Toque na sua fotografia para ver o perfil, as Definições e o Centro de Ajuda.",
   "didYouKnow_longPressCopy_title": "Pressionar longamente para copiar",
   "didYouKnow_longPressCopy_body": "Toque e segure o número de telefone, e-mail ou endereço de um contacto para copiá-lo instantaneamente na sua prancheta.",
   "didYouKnow_swipeEditConvo_title": "Deslize para editar rapidamente uma conversa",
@@ -2650,6 +2715,8 @@
   "appIconUnsupported": "Este dispositivo não permite alterar o ícone da aplicação.",
   "appIconChangeFailed": "Não foi possível alterar o ícone da aplicação. Tente novamente dentro de instantes.",
   "appIconArtistCallTitle": "Procura-se parceiro de design",
+  "appIconArtistCallDetails": "Gostaria muito de colaborar com um artista ou designer gráfico para criar variantes divertidas e únicas do ícone da aplicação. Este é um pequeno projeto independente, por isso não posso oferecer um grande orçamento — mas terei todo o gosto em oferecer um pagamento modesto e uma subscrição de Apoiante vitalícia gratuita como agradecimento.",
+  "appIconArtistCallContact": "Interessado? Contacte-me em",
   "supporterSheetSupportFrom": "Apoie a partir de {{price}}/mês",
   "paywallTitle": "Apoiar o WitnessWork",
   "paywallSocialProofRatingAverage": "Média de {{rating}} em {{ratings}} avaliações",
@@ -2998,6 +3065,16 @@
   "playSounds_descriptionAndroid": "Sons de celebração e de lembretes enquanto o WitnessWork está aberto. Os lembretes que chegam com a aplicação fechada seguem as definições de notificações do dispositivo.",
   "haptics": "Vibração",
   "haptics_description": "Feedback por vibração quando toca, desliza em gráficos ou atinge um objetivo.",
+  "rewards": "Recompensas",
+  "rewardAnimations": "Animações de recompensa",
+  "rewardAnimations_description": "Quando ganha moedas para a sua mascote, cada uma aparece no ecrã e é contada na carteira dela. Toque em qualquer lado para saltar.",
+  "rewardSounds": "Sons",
+  "rewardSounds_punch": "Impacto",
+  "rewardSounds_retro": "Retro",
+  "rewardSounds_soft": "Suave",
+  "rewardSounds_off": "Desligados",
+  "rewardSounds_audioOff": "Os sons estão desativados em Áudio e vibração.",
+  "rewardSample": "Ouvir um exemplo",
   "notifications": "Notificações",
   "remindersChannelName": "Lembretes",
   "purchasesUnavailable": "As compras estão indisponíveis neste momento. Tente novamente mais tarde.",
@@ -3021,6 +3098,8 @@
   "buddies_planSameTime": "Planear à mesma hora",
   "buddies_needsAnswer": "Precisa da sua resposta",
   "buddies_together": "Em conjunto",
+  "buddies_requestsWaiting": "Pedidos pendentes",
+  "buddies_nextTogether": "Próxima vez juntos: {{date}}",
   "buddies_seeAllCount": "Ver tudo ({{count}})",
   "buddies_showFewer": "Mostrar menos",
   "buddies_plan": "Plano",
@@ -3362,7 +3441,7 @@
     },
     "journeyNext": "{{date}} · seguinte",
     "nextVisit": "Próxima visita · {{date}}",
-    "seeUpNext": "ver A seguir",
+    "seeUpNext": "detalhes",
     "gapEarlier": "{{gap}} antes",
     "sameDay": "Mesmo dia",
     "followUpUpcoming": "Acompanhamento agendado",
@@ -4265,6 +4344,7 @@
     "emptySection": "Aparece quando houver algo para mostrar",
     "description": {
       "approachingConversations": "Os acompanhamentos de hoje, para registar à medida que avança",
+      "together": "Planos e acompanhamentos com os seus companheiros, e convites por responder",
       "tabletServiceYearSummary": "O seu ano de serviço face ao seu objetivo",
       "serviceReport": "O tempo e os estudos deste mês",
       "mileage": "As viagens e a distância deste mês",
@@ -4657,6 +4737,7 @@
       "rename": "Mudar o nome…",
       "change": "Mudar de mascote…",
       "decorate": "Chapéu e quarto…",
+      "shop": "Loja…",
       "share": "Partilhar…"
     },
     "picker": {
@@ -4891,7 +4972,22 @@
     "details": {
       "change": "Mudar de mascote",
       "share": "Partilhar",
+      "shop": "Loja",
       "settings": "Definições"
+    },
+    "locker": {
+      "wearing": "A usar: {{item}}",
+      "noHat": "Sem chapéu",
+      "inRoom": "No quarto: {{item}}",
+      "current": "{{section}}: {{item}}",
+      "moreInShop": "Mais na Loja",
+      "moreCount": {
+        "one": "{{count}} para comprar",
+        "other": "{{count}} para comprar"
+      }
+    },
+    "hearts": {
+      "infoTitle": "Corações"
     },
     "intro": {
       "hearts": {
@@ -4899,11 +4995,15 @@
         "body": "Cada dia em que registar atividade de serviço soma um coração. Se deixar de registar, os corações vão diminuindo aos poucos.",
         "bodyMonths": "Cada mês em que registar atividade de serviço enche todos os corações. Se falhar um mês, vão diminuindo aos poucos."
       },
+      "shop": {
+        "title": "Ganhe moedas",
+        "body": "Cada dia em que sai no ministério dá moedas de ouro. Gaste-as na Loja em chapéus e itens para o quarto."
+      },
       "decorate": {
         "title": "Torne-o seu",
         "body": "Toque na mascote para lhe fazer festas. Toque em qualquer outro ponto do cartão para escolher um chapéu e decorar."
       },
-      "previewA11y": "Quarto de {{name}} com tudo aberto",
+      "previewA11y": "Quarto de {{name}} com todos os itens",
       "next": "Seguinte",
       "done": "Concluído",
       "step": "Passo {{step}} de {{count}}"
@@ -4943,11 +5043,73 @@
     },
     "settings": {
       "title": "Definições da mascote",
+      "petTitle": "A sua mascote",
+      "name": "Nome",
       "showOnHome": "Mostrar na Página inicial",
       "buddiesTitle": "Mascotes dos companheiros",
       "visits": "Visitas das mascotes dos companheiros",
       "visitsInfo": "Nos dias em que sai com um companheiro, a mascote dele visita a sua.",
       "noBuddyPets": "Nenhum dos seus companheiros partilha uma mascote ainda."
+    },
+    "currency": {
+      "coin": {
+        "one": "{{count}} moeda",
+        "other": "{{count}} moedas"
+      },
+      "infoTitle": "Moedas",
+      "infoDays": "Ganhe 1 moeda por cada dia em que sai no ministério (registe tempo ou uma visita) e mais 1 quando é um dia planeado que cumpre.",
+      "infoMonths": "Ganhe pelo menos {{floor}} moedas por cada mês em que participa no ministério.",
+      "infoStreak": "Cada marco da sequência dá mais {{amount}}.",
+      "infoSpend": "Gaste-as na Loja.",
+      "gain": "+{{amount}}",
+      "loss": "−{{amount}}",
+      "earnedA11y": "Ganhou {{amount}}"
+    },
+    "shop": {
+      "title": "Loja",
+      "back": "Voltar",
+      "categories": "Categorias",
+      "buy": "Comprar",
+      "buyA11y": "Comprar {{item}} por {{price}}",
+      "needMore": {
+        "one": "Falta {{count}}",
+        "other": "Faltam {{count}}"
+      },
+      "needMoreA11y": "Precisa de mais {{price}} para {{item}}",
+      "wearing": "A usar",
+      "inRoom": "No quarto",
+      "owned": "Adquirido",
+      "allOwned": "Já tem todos estes",
+      "wearingNow": "A usar agora",
+      "inRoomNow": "No quarto agora",
+      "ownedHint": "Pode usá-lo no quarto de {{name}}",
+      "boughtHat": "{{item}} comprado. {{name}} já o está a usar.",
+      "boughtRoom": "{{item}} comprado. Já está no quarto de {{name}}.",
+      "leaves": "Fica com {{price}}",
+      "earnCoins": "As moedas vêm dos dias de serviço",
+      "secretHint": "Encontrado pelo caminho, nunca vendido",
+      "itemPrice": "{{item}}, {{price}}",
+      "itemNotEnough": "{{item}}, {{price}}, ainda não chega",
+      "itemOwned": "{{item}}, adquirido",
+      "previewA11y": "Quarto de {{name}} com {{item}}"
+    },
+    "reward": {
+      "timeAdded": "Tempo adicionado",
+      "visitAdded": "Visita adicionada",
+      "monthShared": "Participou no mês",
+      "daysOut": {
+        "one": "Dia de serviço",
+        "other": "Dias de serviço"
+      },
+      "plansKept": {
+        "one": "Dia planeado cumprido",
+        "other": "Dias planeados cumpridos"
+      },
+      "milestone": "Marco da sequência · {{count}}",
+      "milestoneMonths": {
+        "one": "Marco da sequência · {{count}} mês",
+        "other": "Marco da sequência · {{count}} meses"
+      }
     }
   },
   "handoff_newDoneSynced": "A Sincronização na Nuvem está a trazer os seus registos, contactos e notas para este telemóvel. Aparecem dentro de instantes.",
@@ -5198,6 +5360,29 @@
   "scribe_warning_overCreditCap": "Isto ultrapassa o seu limite de crédito do mês.",
   "scribe_usageTitle": "Utilização do Scribe AI",
   "scribe_memoryTitle": "Memória do Scribe AI",
+  "scribe_enabledToggle": "Usar o Scribe AI",
+  "scribe_turnedOffFooter": "O Scribe AI está oculto e nada lhe é enviado.",
+  "scribe_zdrRow": "Retenção zero de dados",
+  "scribe_zdrLearnMore": "Saber mais",
+  "scribe_zdrTitle": "Retenção zero de dados",
+  "scribe_zdrIntro": "Quando usa o Scribe AI, o que diz ou escreve, e os registos de que ele precisa para responder, vão para um modelo de IA que prepara a sua atualização. Eis o que lhes acontece.",
+  "scribe_zdrNothingStoredTitle": "Nada é guardado",
+  "scribe_zdrNothingStoredBody": "Assim que o Scribe AI responde, o que enviou desaparece. O servidor do WitnessWork nunca o guarda nem o regista: nem mensagens, nem nomes, nem notas, nem fotografias. Apenas conta quanto já usou.",
+  "scribe_zdrNoTrainingTitle": "Nunca usado para treino",
+  "scribe_zdrNoTrainingBody": "O Scribe AI só usa fornecedores de IA que se comprometem, por contrato, a não guardar nenhum dos seus dados e a nunca treinar com eles.",
+  "scribe_zdrOnDeviceTitle": "O seu histórico fica consigo",
+  "scribe_zdrOnDeviceBody": "As suas conversas e a memória do Scribe AI são guardadas apenas neste dispositivo. Quando fala, a sua voz é convertida em texto neste dispositivo e a gravação não é guardada.",
+  "scribe_zdrInControlTitle": "Decide o que é adicionado",
+  "scribe_zdrInControlBody": "O Scribe AI apenas sugere alterações. Nada é adicionado até tocar em Adicionar, e pode desativar o Scribe AI nas Definições em qualquer altura.",
+  "scribe_zdrPolicyLink": "Ler a política de retenção zero de dados da OpenRouter",
+  "scribe_termsTitle": "Antes de começar",
+  "scribe_termsPrivateTitle": "Os seus dados ficam privados",
+  "scribe_termsPrivateBody": "O Scribe AI só usa o que envia para preparar a sua atualização. Não é guardado e nunca é usado para treinar IA.",
+  "scribe_termsMistakesTitle": "Verifique antes de adicionar",
+  "scribe_termsMistakesBody": "A IA pode cometer erros. Reveja cada alteração antes de a adicionar.",
+  "scribe_termsBody": "Ao tocar em Aceitar, aceita os Termos de Uso e a Política de Privacidade do WitnessWork.",
+  "scribe_termsAgree": "Aceitar",
+  "scribe_consentContinue": "Continuar",
   "scribe_usageRow": "Utilização",
   "scribe_memoryRow": "Memória",
   "scribe_memoryToggle": "Memória",

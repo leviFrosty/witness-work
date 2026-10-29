@@ -126,6 +126,9 @@
   "greetingGoalNicelyDone": "每月目标已达成，做得好！",
   "greetingGoalWayToGo": "你达成了目标，真棒！",
   "greetingBusyBee": "你好，勤劳的小蜜蜂",
+  "greetingStreakOnARoll": "你状态正佳",
+  "greetingStreakGoingStrong": "势头正劲！",
+  "greetingStreakLookAtYouGo": "瞧你多带劲！",
   "profileGreetingNoName": "欢迎回来",
   "profileUsingFor": {
     "one": "已使用 WitnessWork {{days}} 天",
@@ -191,6 +194,16 @@
   "streak_endingMonths": "记录 {{month}} 的传道，以保持你的连续记录。",
   "streak_recordMonth": "记录传道",
   "streak_howItWorks": "连续记录的计算方式",
+  "streak_unitPlans": {
+    "one": "个已遵守的计划日",
+    "other": "个已遵守的计划日"
+  },
+  "streak_unitMonths": {
+    "one": "个月连续",
+    "other": "个月连续"
+  },
+  "streak_started": "开始于",
+  "streak_best": "最佳",
   "streakCelebration_started": "你开始了连续记录！",
   "streakCelebration_grew": "你的连续记录在增长！",
   "streakCelebration_captionPlans": "每个计划都已遵守，无论间隔多久。在下一个计划日继续保持。",
@@ -392,6 +405,7 @@
   "save": "保存",
   "isBibleStudy": "是圣经学习",
   "add": "添加",
+  "addVisit": "添加访问",
   "reminder_title": "即将到来的对话",
   "reminder_topicLine": "主题：{{topic}}",
   "addConversation": "添加对话",
@@ -1110,6 +1124,11 @@
       "c6": "WitnessWork 现已支持阿拉伯语，版面从右向左排列。",
       "c7": "自定义主页和进度上的卡片，为笔记设置格式并添加照片，按跟进筛选联系人，还能看到每个月的报告是何时发送的。",
       "c8": "对大字体、屏幕朗读器、粗体文字和更高对比度提供更好的支持。"
+    },
+    "1460": {
+      "c1": "你每天外出传道，宠物都会赚到金币。你可以在新的商店里用金币购买帽子和小屋物品，并在储物柜里找到你拥有的所有物品。",
+      "c2": "在主页上轻点你的连续记录，即可查看它从何时开始，以及你目前的最佳连续记录。",
+      "c3": "你可以在设置中关闭 Scribe AI。首次使用前，它会先征求你的同意。"
     }
   },
   "installed": "已安装",
@@ -1527,6 +1546,7 @@
   "buddies_followUp": "跟进",
   "buddies_noLongerAvailable": "已不可用",
   "buddies_sharedBy": "由 {{name}} 分享。对方所做的更改会显示在这里。",
+  "buddies_linkedPlanFields": "{{name}} 设定日期、时间、标题、地点和备注，对方的更改会显示在这里。你的时数、提醒和类型由你自己更改。",
   "buddies_answeredGoing": "你会参加",
   "buddies_answeredDeclined": "你无法参加",
   "buddies_answerNotSent": "尚未发送",
@@ -1551,6 +1571,8 @@
   "buddies_feedbackAttachmentFailed": "你的反馈已发送，但无法附上诊断信息。",
   "formDetails": "详情",
   "planForm_duration": "时长",
+  "planForm_yourHours": "你的时数",
+  "planForm_organizerPlanned": "{{name}} 计划了 {{hours}}",
   "planForm_howLong": "多长时间？",
   "planForm_justHours": "仅时数",
   "planForm_timeSpan": "时间段",
@@ -1640,6 +1662,8 @@
   "gotIt": "知道了！",
   "hint": "提示",
   "didYouKnow_kicker": "你知道吗？",
+  "didYouKnow_accountMenu_title": "轻点头像即可打开账户",
+  "didYouKnow_accountMenu_body": "轻点你的头像，可打开个人资料、设置和帮助中心。",
   "didYouKnow_longPressCopy_title": "长压机复印",
   "didYouKnow_longPressCopy_body": "触摸并长按联系人的电话号码、电子邮件或地址，即可立即复制到你的剪贴板上。",
   "didYouKnow_swipeEditConvo_title": "滑动以快速编辑对话",
@@ -1699,6 +1723,22 @@
   "planDetails_repeats": "重复",
   "planDetails_changedForDate": "此日期已更改",
   "planDetails_organizer": "组织者",
+  "planDetails_invitedSeeWhosGoing": "所有受邀的人都能看到谁会参加。",
+  "planDetails_whosGoing": "谁会参加",
+  "planDetails_goingCount": {
+    "one": "{{count}} 人参加",
+    "other": "{{count}} 人参加"
+  },
+  "planDetails_organizedBy": "由 {{name}} 组织",
+  "planDetails_whosGoingHint": "显示所有参加的人",
+  "planDetails_moreGoing": {
+    "one": "另有 {{count}} 人参加",
+    "other": "另有 {{count}} 人参加"
+  },
+  "planDetails_guestNotBuddyTitle": "{{name}} 不是你的同伴",
+  "planDetails_guestNotBuddyBody": "要成为同伴，请在你们见面时互相扫描对方的同伴码。",
+  "planDetails_guestShowCode": "显示我的同伴码",
+  "planDetails_guestNotBuddyHint": "显示如何成为同伴",
   "planDetails_askedToJoin": "请求加入",
   "visitDetails_title": "交谈",
   "visitDetails_pastConversation": "你与 {{name}} 交谈过",
@@ -1938,6 +1978,30 @@
   "forceDeleteContacts": "强制删除联系人",
   "clearArchivedContacts": "清除已存档联系人",
   "dangerZone": "危险区域",
+  "toolsDangerZone_info": "按项删除。每项都会先请你确认。如需像全新安装一样完全清除，请使用顶部的“Reset all”。",
+  "toolsDangerZone_confirm": "此操作无法撤销。",
+  "toolsDangerZone_categories": "删除自定义类别",
+  "toolsDangerZone_categoriesBody": "在所有同步的设备上删除自定义类别。保留内置的 LDC 类别和现有的时间条目。",
+  "toolsDangerZone_contactFields": "删除联系人自定义字段",
+  "toolsDangerZone_contactFieldsBody": "永久删除所有联系人自定义字段及其值，包括已归档的联系人。删除操作会同步到其他设备。",
+  "toolsDangerZone_visitFields": "删除访问自定义字段",
+  "toolsDangerZone_visitFieldsBody": "永久删除所有访问自定义字段及其已保存的值。删除操作会同步到其他设备。",
+  "toolsDangerZone_contactViews": "清除已保存的联系人视图（本机）",
+  "toolsDangerZone_localBody": "清除此设备上已保存的视图和当前视图。同步的设备可能会将其恢复。",
+  "toolsDangerZone_mileage": "删除所有里程（同步）",
+  "toolsDangerZone_mileageBody": "删除所有车辆、燃料、价格、行程和里程表读数。删除操作会同步到其他设备。",
+  "toolsDangerZone_pet": "放走小伙伴（同步）",
+  "toolsDangerZone_petBody": "放走小伙伴并清空它的小屋。删除操作会同步到其他设备。",
+  "toolsDangerZone_badges": "重置徽章",
+  "toolsDangerZone_badgesBody": "清除已获得的徽章、徽章历史记录和待播放的庆祝动画。现有记录可以再次获得徽章；同步可能会将其恢复。",
+  "toolsDangerZone_scribe": "清除 Scribe AI 历史记录",
+  "toolsDangerZone_scribeBody": "停止进行中的对话轮次，并清除此设备上的对话、建议、撤销记录和缓存的使用量。已添加的记录会保留；记忆和同意状态也会保留。服务器的使用限制仍然适用。",
+  "toolsDangerZone_memory": "清除 Scribe AI 记忆",
+  "toolsDangerZone_memoryBody": "清除此设备上的记忆笔记。保留对话和记忆的开关设置。",
+  "toolsDangerZone_routes": "清除已保存的路线",
+  "toolsDangerZone_places": "清除已保存的路线地点",
+  "toolsDangerZone_notifications": "重置通知栏",
+  "toolsDangerZone_notificationsBody": "清除测试通知以及此设备上已查看和已忽略的记录。其他功能的项目可能会再次出现。",
   "contacts": "联系人",
   "serviceReports": "服务报告",
   "servicePlans": "服务计划",
@@ -2212,6 +2276,8 @@
   "appIconUnsupported": "这台设备不支持更改应用图标。",
   "appIconChangeFailed": "无法更改应用图标。稍后再试。",
   "appIconArtistCallTitle": "寻找设计合作伙伴",
+  "appIconArtistCallDetails": "我很希望能与一位艺术家或平面设计师合作，打造有趣又独特的应用图标款式。这是一个小型独立项目，所以我无法提供很高的预算，但我很乐意支付一笔适度的报酬，并赠送终身免费的支持者会员资格以表谢意。",
+  "appIconArtistCallContact": "有兴趣吗？请联系",
   "supporterAlwaysFreeNote": "每个核心功能都是免费的。支持是可选的，有助于为持续开发提供资金。",
   "supporterSheetTitle": "成为支持者",
   "supporterSheetSubtitle": "您的支持有助于维持 WitnessWork 的运行，并可获得一些个人化服务。",
@@ -2589,6 +2655,7 @@
   "contacts_pinStaleness_week": "本月",
   "contacts_pinStaleness_month": "过期",
   "contacts_stalenessChip_all": "全部",
+  "contacts_filtersChip": "筛选",
   "contacts_searchPlaceholder": {
     "one": "搜索 1 位联系人",
     "other": "搜索 {{count}} 位联系人"
@@ -2990,6 +3057,16 @@
   "playSounds_descriptionAndroid": "WitnessWork 打开期间的庆祝提示音和提醒声音。应用关闭时收到的提醒遵循你设备的通知设置。",
   "haptics": "触感",
   "haptics_description": "点按、拖动图表或达成目标时的振动反馈。",
+  "rewards": "奖励",
+  "rewardAnimations": "奖励动画",
+  "rewardAnimations_description": "当你为宠物赚到金币时，每枚金币都会落到屏幕上，并计入它的钱包。轻点任意位置即可跳过。",
+  "rewardSounds": "声音",
+  "rewardSounds_punch": "有力",
+  "rewardSounds_retro": "复古",
+  "rewardSounds_soft": "柔和",
+  "rewardSounds_off": "关闭",
+  "rewardSounds_audioOff": "“声音与触感”中已关闭声音。",
+  "rewardSample": "播放示例",
   "notifications": "通知",
   "remindersChannelName": "提醒",
   "purchasesUnavailable": "目前无法购买。请稍后再试。",
@@ -3013,6 +3090,8 @@
   "buddies_planSameTime": "计划相同时间",
   "buddies_needsAnswer": "需要你回复",
   "buddies_together": "一起",
+  "buddies_requestsWaiting": "待处理的请求",
+  "buddies_nextTogether": "下次一起：{{date}}",
   "buddies_seeAllCount": "查看全部（{{count}}）",
   "buddies_showFewer": "收起",
   "buddies_plan": "计划",
@@ -3354,7 +3433,7 @@
     },
     "journeyNext": "{{date}} · 下一次",
     "nextVisit": "下次访问 · {{date}}",
-    "seeUpNext": "查看“接下来”",
+    "seeUpNext": "详情",
     "gapEarlier": "{{gap}}前",
     "sameDay": "同一天",
     "followUpUpcoming": "已安排跟进",
@@ -4265,6 +4344,7 @@
     "emptySection": "有内容时才会显示",
     "description": {
       "approachingConversations": "今天的跟进，边做边记录",
+      "together": "与同伴的计划和跟进，以及待回复的邀请",
       "tabletServiceYearSummary": "你的服务年度与目标对比",
       "serviceReport": "本月的时间和圣经研究",
       "mileage": "本月的行程和距离",
@@ -4657,6 +4737,7 @@
       "rename": "重命名…",
       "change": "更换宠物…",
       "decorate": "帽子和小屋…",
+      "shop": "商店…",
       "share": "分享…"
     },
     "picker": {
@@ -4891,7 +4972,22 @@
     "details": {
       "change": "更换宠物",
       "share": "分享",
+      "shop": "商店",
       "settings": "设置"
+    },
+    "locker": {
+      "wearing": "正在戴：{{item}}",
+      "noHat": "没戴帽子",
+      "inRoom": "小屋里：{{item}}",
+      "current": "{{section}}：{{item}}",
+      "moreInShop": "商店里还有更多",
+      "moreCount": {
+        "one": "{{count}} 件可购买",
+        "other": "{{count}} 件可购买"
+      }
+    },
+    "hearts": {
+      "infoTitle": "爱心"
     },
     "intro": {
       "hearts": {
@@ -4899,11 +4995,15 @@
         "body": "你每记录一天传道活动，就会增加一颗爱心。如果停止记录，爱心会慢慢减少。",
         "bodyMonths": "你每个月记录传道活动，就会填满所有爱心。漏掉一个月，爱心会慢慢减少。"
       },
+      "shop": {
+        "title": "赚取金币",
+        "body": "你每天外出传道都能赚到金币。你可以在商店里用金币购买帽子和小屋物品。"
+      },
       "decorate": {
         "title": "打造专属于你的",
         "body": "轻点宠物即可抚摸。轻点卡片上的其他位置可挑选帽子和装饰小屋。"
       },
-      "previewA11y": "{{name}}的小屋，所有物品均已解锁",
+      "previewA11y": "{{name}}的小屋，摆满了所有物品",
       "next": "下一步",
       "done": "完成",
       "step": "第 {{step}} 步，共 {{count}} 步"
@@ -4943,11 +5043,73 @@
     },
     "settings": {
       "title": "宠物设置",
+      "petTitle": "你的宠物",
+      "name": "名字",
       "showOnHome": "在主页显示",
       "buddiesTitle": "同伴的宠物",
       "visits": "同伴的宠物来访",
       "visitsInfo": "在你和同伴一起外出传道的日子，同伴的宠物会来拜访你的宠物。",
       "noBuddyPets": "你的同伴还没有人分享宠物。"
+    },
+    "currency": {
+      "coin": {
+        "one": "{{count}} 枚金币",
+        "other": "{{count}} 枚金币"
+      },
+      "infoTitle": "金币",
+      "infoDays": "你每天外出传道（记录时间或访问）都能赚到 1 枚金币；如果那天是你遵守的计划日，还能再多赚 1 枚。",
+      "infoMonths": "你每个月参加传道，都能至少赚到 {{floor}} 枚金币。",
+      "infoStreak": "每达到一个连续记录里程碑，都能再多赚 {{amount}}。",
+      "infoSpend": "可以在商店里花掉它们。",
+      "gain": "+{{amount}}",
+      "loss": "−{{amount}}",
+      "earnedA11y": "赚到了 {{amount}}"
+    },
+    "shop": {
+      "title": "商店",
+      "back": "返回",
+      "categories": "类别",
+      "buy": "购买",
+      "buyA11y": "用 {{price}} 购买{{item}}",
+      "needMore": {
+        "one": "还差 {{count}}",
+        "other": "还差 {{count}}"
+      },
+      "needMoreA11y": "你还需要 {{price}} 才能购买{{item}}",
+      "wearing": "正在戴",
+      "inRoom": "在小屋里",
+      "owned": "已拥有",
+      "allOwned": "这些你都已拥有",
+      "wearingNow": "正戴着",
+      "inRoomNow": "现在就在小屋里",
+      "ownedHint": "可以用在{{name}}的小屋里",
+      "boughtHat": "已购买{{item}}。{{name}}正戴着它。",
+      "boughtRoom": "已购买{{item}}。它已放进{{name}}的小屋。",
+      "leaves": "剩余 {{price}}",
+      "earnCoins": "外出传道的日子能赚到金币",
+      "secretHint": "在途中发现，从不出售",
+      "itemPrice": "{{item}}，{{price}}",
+      "itemNotEnough": "{{item}}，{{price}}，金币还不够",
+      "itemOwned": "{{item}}，已拥有",
+      "previewA11y": "{{name}}的小屋，摆着{{item}}"
+    },
+    "reward": {
+      "timeAdded": "已添加时间",
+      "visitAdded": "已添加访问",
+      "monthShared": "本月已参加传道",
+      "daysOut": {
+        "one": "外出传道的日子",
+        "other": "外出传道的日子"
+      },
+      "plansKept": {
+        "one": "已遵守的计划日",
+        "other": "已遵守的计划日"
+      },
+      "milestone": "连续记录里程碑 · {{count}}",
+      "milestoneMonths": {
+        "one": "连续记录里程碑 · {{count}} 个月",
+        "other": "连续记录里程碑 · {{count}} 个月"
+      }
     }
   },
   "handoff_newDoneSynced": "云同步正在把你的记录、联系人和笔记带到这部手机上，稍后就会出现。",
@@ -5198,6 +5360,29 @@
   "scribe_warning_overCreditCap": "这会超出你本月的认可时数上限。",
   "scribe_usageTitle": "Scribe AI 用量",
   "scribe_memoryTitle": "Scribe AI 记忆",
+  "scribe_enabledToggle": "使用 Scribe AI",
+  "scribe_turnedOffFooter": "Scribe AI 已隐藏，不会向它发送任何内容。",
+  "scribe_zdrRow": "零数据保留",
+  "scribe_zdrLearnMore": "了解更多",
+  "scribe_zdrTitle": "零数据保留",
+  "scribe_zdrIntro": "当你使用 Scribe AI 时，你说的话或输入的内容，以及它回答所需的记录，会发送给 AI 模型，以便整理出你的更新。以下是这些内容的去向。",
+  "scribe_zdrNothingStoredTitle": "不保留任何内容",
+  "scribe_zdrNothingStoredBody": "Scribe AI 一旦回答，你发送的内容就会消失。WitnessWork 的服务器从不存储或记录这些内容：没有消息、姓名、备注或照片。它只统计你的使用量。",
+  "scribe_zdrNoTrainingTitle": "绝不用于训练",
+  "scribe_zdrNoTrainingBody": "Scribe AI 只使用通过合同承诺不保留你的任何数据、也绝不用其进行训练的 AI 服务提供商。",
+  "scribe_zdrOnDeviceTitle": "你的历史记录只属于你",
+  "scribe_zdrOnDeviceBody": "你的对话和 Scribe AI 的记忆只保存在此设备上。你说话时，语音会在此设备上转换成文字，录音不会被保存。",
+  "scribe_zdrInControlTitle": "添加什么由你决定",
+  "scribe_zdrInControlBody": "Scribe AI 只会建议更改。在你轻点“添加”之前，不会添加任何内容；你也可以随时在设置中关闭 Scribe AI。",
+  "scribe_zdrPolicyLink": "阅读 OpenRouter 的零数据保留政策",
+  "scribe_termsTitle": "开始之前",
+  "scribe_termsPrivateTitle": "你的数据保持私密",
+  "scribe_termsPrivateBody": "Scribe AI 只会使用你发送的内容来整理你的更新。这些内容不会被存储，也绝不会用于训练 AI。",
+  "scribe_termsMistakesTitle": "添加前请检查",
+  "scribe_termsMistakesBody": "AI 可能会出错。添加每项更改之前，请先检查一遍。",
+  "scribe_termsBody": "轻点“同意”，即表示你接受 WitnessWork 的使用条款和隐私政策。",
+  "scribe_termsAgree": "同意",
+  "scribe_consentContinue": "继续",
   "scribe_usageRow": "用量",
   "scribe_memoryRow": "记忆",
   "scribe_memoryToggle": "记忆",

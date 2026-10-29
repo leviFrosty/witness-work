@@ -126,6 +126,9 @@
   "greetingGoalNicelyDone": "Lengo la mwezi limefikiwa. Hongera!",
   "greetingGoalWayToGo": "Umefikia lengo lako. Hongera sana!",
   "greetingBusyBee": "Hujambo, nyuki mwenye bidii",
+  "greetingStreakOnARoll": "Unaendelea vizuri mfululizo",
+  "greetingStreakGoingStrong": "Unaendelea kwa nguvu!",
+  "greetingStreakLookAtYouGo": "Tazama unavyosonga mbele!",
   "profileGreetingNoName": "Karibu tena",
   "profileUsingFor": {
     "one": "Umetumia WitnessWork kwa siku {{days}}",
@@ -191,6 +194,16 @@
   "streak_endingMonths": "Rekodi huduma ya {{month}} ili kuendeleza mfululizo wako.",
   "streak_recordMonth": "Rekodi Huduma",
   "streak_howItWorks": "Jinsi Mfululizo Unavyofanya Kazi",
+  "streak_unitPlans": {
+    "one": "siku iliyopangwa iliyotimizwa",
+    "other": "siku zilizopangwa zilizotimizwa"
+  },
+  "streak_unitMonths": {
+    "one": "mwezi mfululizo",
+    "other": "miezi mfululizo"
+  },
+  "streak_started": "Ilianza",
+  "streak_best": "Bora zaidi",
   "streakCelebration_started": "Umeanza mfululizo!",
   "streakCelebration_grew": "Mfululizo wako unakua!",
   "streakCelebration_captionPlans": "Mipango uliyotimiza bila kukosa hata mmoja, hata ikiwa imeachana kwa siku nyingi. Endelea siku yako inayofuata iliyopangwa.",
@@ -392,6 +405,7 @@
   "save": "Hifadhi",
   "isBibleStudy": "Je, ni jifunzo la Biblia?",
   "add": "Ongeza",
+  "addVisit": "Ongeza Ziara",
   "reminder_title": "Mazungumzo Yajayo",
   "reminder_topicLine": "Mada: {{topic}}",
   "addConversation": "Ongeza Mazungumzo",
@@ -1110,6 +1124,11 @@
       "c6": "WitnessWork sasa inapatikana kwa Kiarabu, ikiwa na mpangilio unaosomeka kutoka kulia kwenda kushoto.",
       "c7": "Rekebisha kadi kwenye Nyumbani na Maendeleo, panga muundo wa vidokezo na uongeze picha, chuja anwani kwa ufuatiliaji, na uone ripoti ya kila mwezi ilipotumwa.",
       "c8": "Usaidizi bora zaidi kwa ukubwa wa maandishi makubwa, visoma skrini, maandishi mazito na utofautishaji wa juu zaidi."
+    },
+    "1460": {
+      "c1": "Kipenzi chako sasa hupata sarafu za dhahabu kila siku unayotoka kuhubiri. Zitumie katika Duka jipya kununua kofia na vitu vya chumba, na upate vyote unavyomiliki katika Kabati lake.",
+      "c2": "Gusa mfululizo wako kwenye Nyumbani ili uone ulipoanza na mfululizo wako bora zaidi hadi sasa.",
+      "c3": "Unaweza kuzima Scribe AI katika Mipangilio, nayo huomba ukubali kabla ya kuitumia kwa mara ya kwanza."
     }
   },
   "installed": "Imesakinishwa",
@@ -1527,6 +1546,7 @@
   "buddies_followUp": "Ufuatiliaji",
   "buddies_noLongerAvailable": "Haipatikani tena",
   "buddies_sharedBy": "Imeshirikiwa na {{name}}. Mabadiliko anayofanya yanaonekana hapa.",
+  "buddies_linkedPlanFields": "{{name}} huweka siku, wakati, kichwa, mahali na kidokezo, na mabadiliko yake huonekana hapa. Saa zako, kikumbusho na Aina ni zako kubadilisha.",
   "buddies_answeredGoing": "Unakuja",
   "buddies_answeredDeclined": "Huwezi kuja",
   "buddies_answerNotSent": "Bado haijatumwa",
@@ -1551,6 +1571,8 @@
   "buddies_feedbackAttachmentFailed": "Maoni yako yametumwa, lakini uchunguzi wa hitilafu haukuweza kuambatishwa.",
   "formDetails": "Maelezo",
   "planForm_duration": "Muda",
+  "planForm_yourHours": "Saa Zako",
+  "planForm_organizerPlanned": "{{name}} amepanga {{hours}}",
   "planForm_howLong": "Kwa muda gani?",
   "planForm_justHours": "Saa tu",
   "planForm_timeSpan": "Mwanzo hadi mwisho",
@@ -1640,6 +1662,8 @@
   "gotIt": "Nimeelewa!",
   "hint": "Kidokezo",
   "didYouKnow_kicker": "Je, unajua?",
+  "didYouKnow_accountMenu_title": "Picha yako hufungua akaunti yako",
+  "didYouKnow_accountMenu_body": "Gusa picha yako ili kufikia wasifu wako, Mipangilio na Kituo cha Msaada.",
   "didYouKnow_longPressCopy_title": "Bonyeza kwa muda mrefu ili kunakili",
   "didYouKnow_longPressCopy_body": "Gusa na ushikilie nambari ya simu, barua pepe au anwani ya mwasiliani ili kuinakili papo hapo kwenye ubao wako wa kunakili.",
   "didYouKnow_swipeEditConvo_title": "Telezesha kidole ili kuhariri mazungumzo haraka",
@@ -1699,6 +1723,22 @@
   "planDetails_repeats": "Hujirudia",
   "planDetails_changedForDate": "Imebadilishwa kwa tarehe hii",
   "planDetails_organizer": "Mwandalizi",
+  "planDetails_invitedSeeWhosGoing": "Kila aliyealikwa huona wanaoenda.",
+  "planDetails_whosGoing": "Wanaoenda",
+  "planDetails_goingCount": {
+    "one": "{{count}} anaenda",
+    "other": "{{count}} wanaenda"
+  },
+  "planDetails_organizedBy": "Mwandalizi: {{name}}",
+  "planDetails_whosGoingHint": "Huonyesha wote wanaoenda",
+  "planDetails_moreGoing": {
+    "one": "Mwingine {{count}} anaenda",
+    "other": "Wengine {{count}} wanaenda"
+  },
+  "planDetails_guestNotBuddyTitle": "{{name}} si mwenzi wako",
+  "planDetails_guestNotBuddyBody": "Ili kuwa wenzi, changanueni Msimbo wa Wenzi wa kila mmoja mkiwa pamoja.",
+  "planDetails_guestShowCode": "Onyesha Msimbo Wangu wa Wenzi",
+  "planDetails_guestNotBuddyHint": "Huonyesha jinsi ya kuwa wenzi",
   "planDetails_askedToJoin": "Aliomba kujiunga",
   "visitDetails_title": "Mazungumzo",
   "visitDetails_pastConversation": "Ulizungumza na {{name}}",
@@ -1938,6 +1978,30 @@
   "forceDeleteContacts": "Lazimisha Kufuta Anwani",
   "clearArchivedContacts": "Futa Anwani Zilizohifadhiwa",
   "dangerZone": "Eneo la Hatari",
+  "toolsDangerZone_info": "Ufutaji unaolengwa. Kila mmoja huomba uthibitisho. Tumia Weka upya zote hapo juu ili kufuta kila kitu kama usakinishaji mpya.",
+  "toolsDangerZone_confirm": "Hili haliwezi kutenduliwa.",
+  "toolsDangerZone_categories": "Futa kategoria maalum",
+  "toolsDangerZone_categoriesBody": "Hufuta kategoria maalum kwenye vifaa vilivyosawazishwa. Huhifadhi kategoria ya LDC iliyojengwa ndani na maingizo ya muda yaliyopo.",
+  "toolsDangerZone_contactFields": "Futa sehemu maalum za anwani",
+  "toolsDangerZone_contactFieldsBody": "Hufuta kabisa kila sehemu maalum ya anwani na thamani zake, pamoja na anwani zilizohifadhiwa kwenye kumbukumbu. Ufutaji husawazishwa kwenye vifaa vingine.",
+  "toolsDangerZone_visitFields": "Futa sehemu maalum za ziara",
+  "toolsDangerZone_visitFieldsBody": "Hufuta kabisa kila sehemu maalum ya ziara na thamani zake zilizohifadhiwa. Ufutaji husawazishwa kwenye vifaa vingine.",
+  "toolsDangerZone_contactViews": "Futa mionekano ya anwani iliyohifadhiwa (kifaa hiki)",
+  "toolsDangerZone_localBody": "Hufuta mionekano iliyohifadhiwa na mwonekano unaotumika kwenye kifaa hiki. Vifaa vilivyosawazishwa vinaweza kuirejesha.",
+  "toolsDangerZone_mileage": "Futa umbali wote (husawazishwa)",
+  "toolsDangerZone_mileageBody": "Hufuta magari yote, mafuta, bei, safari na usomaji wa odomita. Ufutaji husawazishwa kwenye vifaa vingine.",
+  "toolsDangerZone_pet": "Achilia kipenzi (husawazishwa)",
+  "toolsDangerZone_petBody": "Humwachilia kipenzi na kufuta chumba chake. Ufutaji husawazishwa kwenye vifaa vingine.",
+  "toolsDangerZone_badges": "Weka upya beji",
+  "toolsDangerZone_badgesBody": "Husahau beji ulizopata, historia ya beji na sherehe zinazosubiri. Rekodi zilizopo zinaweza kuzipata tena; usawazishaji unaweza kuzirejesha.",
+  "toolsDangerZone_scribe": "Futa historia ya Scribe AI",
+  "toolsDangerZone_scribeBody": "Husimamisha zamu zinazoendelea na kufuta mazungumzo, mapendekezo, rekodi za kutendua na matumizi yaliyohifadhiwa kwenye kifaa hiki. Rekodi zilizokwisha kuongezwa hubaki; kumbukumbu na idhini hubaki. Vikomo vya matumizi vya seva bado vinatumika.",
+  "toolsDangerZone_memory": "Futa kumbukumbu ya Scribe AI",
+  "toolsDangerZone_memoryBody": "Hufuta madokezo ya kumbukumbu kwenye kifaa hiki. Huhifadhi mazungumzo na mpangilio wa kuwasha au kuzima kumbukumbu.",
+  "toolsDangerZone_routes": "Futa njia zilizohifadhiwa",
+  "toolsDangerZone_places": "Futa maeneo ya njia yaliyohifadhiwa",
+  "toolsDangerZone_notifications": "Weka upya trei ya arifa",
+  "toolsDangerZone_notificationsBody": "Hufuta arifa za majaribio na historia ya kifaa hiki ya arifa zilizoonwa na zilizoondolewa. Vipengee vya vipengele vingine vinaweza kuonekana tena.",
   "contacts": "Anwani",
   "serviceReports": "Ripoti za Huduma",
   "servicePlans": "Mipango ya Huduma",
@@ -2212,6 +2276,8 @@
   "appIconUnsupported": "Kifaa hiki hakitumii kubadilisha ikoni ya programu.",
   "appIconChangeFailed": "Haikuweza kubadilisha ikoni ya programu. Jaribu tena kwa muda mfupi.",
   "appIconArtistCallTitle": "Kutafuta mshirika wa kubuni",
+  "appIconArtistCallDetails": "Ningependa kushirikiana na msanii au mbunifu wa michoro ili kuunda aina za aikoni za programu zenye kuvutia na za kipekee. Huu ni mradi mdogo wa kujitegemea, kwa hivyo siwezi kutoa bajeti kubwa — lakini ningefurahi kutoa malipo ya kiasi pamoja na uanachama wa Mfadhili bila malipo maisha yote kama shukrani.",
+  "appIconArtistCallContact": "Una nia? Wasiliana kupitia",
   "supporterAlwaysFreeNote": "Kila kipengele cha msingi ni bure. Kufadhili ni hiari na kunasaidia kufadhili maendeleo yanayoendelea.",
   "supporterSheetTitle": "Kuwa mfadhili",
   "supporterSheetSubtitle": "Msaada wako unasaidia kuendesha WitnessWork na kufungua mambo machache ya kibinafsi.",
@@ -2589,6 +2655,7 @@
   "contacts_pinStaleness_week": "Mwezi huu",
   "contacts_pinStaleness_month": "Imepitwa",
   "contacts_stalenessChip_all": "Zote",
+  "contacts_filtersChip": "Vichujio",
   "contacts_searchPlaceholder": {
     "one": "Tafuta anwani 1",
     "other": "Tafuta anwani {{count}}"
@@ -2990,6 +3057,16 @@
   "playSounds_descriptionAndroid": "Milio ya sherehe na sauti za vikumbusho WitnessWork ikiwa imefunguliwa. Vikumbusho vinavyofika ikiwa imefungwa hufuata mipangilio ya arifa ya kifaa chako.",
   "haptics": "Mitetemo",
   "haptics_description": "Mtetemo wa mrejesho unapogusa, kusogeza chati, au kufikia lengo.",
+  "rewards": "Zawadi",
+  "rewardAnimations": "Uhuishaji wa zawadi",
+  "rewardAnimations_description": "Unapopata sarafu kwa ajili ya kipenzi chako, kila moja hugonga skrini na kuhesabiwa kwenye pochi yake. Gusa popote ili kuruka.",
+  "rewardSounds": "Sauti",
+  "rewardSounds_punch": "Kishindo",
+  "rewardSounds_retro": "Ya Zamani",
+  "rewardSounds_soft": "Laini",
+  "rewardSounds_off": "Zimezimwa",
+  "rewardSounds_audioOff": "Sauti zimezimwa katika Sauti na Mitetemo.",
+  "rewardSample": "Cheza sampuli",
   "notifications": "Arifa",
   "remindersChannelName": "Vikumbusho",
   "purchasesUnavailable": "Ununuzi haupatikani sasa hivi. Tafadhali jaribu tena baadaye.",
@@ -3013,6 +3090,8 @@
   "buddies_planSameTime": "Panga Wakati Ule Ule",
   "buddies_needsAnswer": "Inahitaji jibu lako",
   "buddies_together": "Pamoja",
+  "buddies_requestsWaiting": "Maombi yanayosubiri",
+  "buddies_nextTogether": "Mtakuwa pamoja tena {{date}}",
   "buddies_seeAllCount": "Ona Zote ({{count}})",
   "buddies_showFewer": "Onyesha Chache",
   "buddies_plan": "Mpango",
@@ -3354,7 +3433,7 @@
     },
     "journeyNext": "{{date}} · inayofuata",
     "nextVisit": "Ziara inayofuata · {{date}}",
-    "seeUpNext": "ona Inayofuata",
+    "seeUpNext": "maelezo",
     "gapEarlier": "{{gap}} mapema",
     "sameDay": "Siku ile ile",
     "followUpUpcoming": "Ufuatiliaji umepangwa",
@@ -4265,6 +4344,7 @@
     "emptySection": "Huonekana kukiwa na kitu cha kuonyesha",
     "description": {
       "approachingConversations": "Ufuatiliaji wa leo, wa kurekodi unapoendelea",
+      "together": "Mipango na ufuatiliaji pamoja na wenzi wako, na mialiko ya kujibu",
       "tabletServiceYearSummary": "Mwaka wako wa huduma ukilinganishwa na lengo lako",
       "serviceReport": "Muda na mafunzo ya mwezi huu",
       "mileage": "Safari na umbali wa mwezi huu",
@@ -4657,6 +4737,7 @@
       "rename": "Badilisha Jina…",
       "change": "Badilisha Kipenzi…",
       "decorate": "Kofia na Chumba…",
+      "shop": "Duka…",
       "share": "Shiriki…"
     },
     "picker": {
@@ -4891,7 +4972,22 @@
     "details": {
       "change": "Badilisha kipenzi",
       "share": "Shiriki",
+      "shop": "Duka",
       "settings": "Mipangilio"
+    },
+    "locker": {
+      "wearing": "Amevaa: {{item}}",
+      "noHat": "Hajavaa kofia",
+      "inRoom": "Chumbani: {{item}}",
+      "current": "{{section}}: {{item}}",
+      "moreInShop": "Zaidi Dukani",
+      "moreCount": {
+        "one": "Kitu {{count}} cha kununua",
+        "other": "Vitu {{count}} vya kununua"
+      }
+    },
+    "hearts": {
+      "infoTitle": "Mioyo"
     },
     "intro": {
       "hearts": {
@@ -4899,11 +4995,15 @@
         "body": "Kila siku unayorekodi shughuli ya huduma huongeza moyo mmoja. Ukiacha kurekodi, mioyo hupungua polepole.",
         "bodyMonths": "Kila mwezi unaorekodi shughuli ya huduma hujaza mioyo yake yote. Ukiruka mwezi, hupungua polepole."
       },
+      "shop": {
+        "title": "Pata sarafu",
+        "body": "Kila siku unayotoka kuhubiri hukupa sarafu za dhahabu. Zitumie Dukani kununua kofia na vitu vya chumba."
+      },
       "decorate": {
         "title": "Fanya kiwe chako",
         "body": "Gusa kipenzi chako ili kumbembeleza. Gusa mahali popote pengine kwenye kadi yake ili kuchagua kofia na kupamba."
       },
-      "previewA11y": "Chumba cha {{name}} huku kila kitu kikiwa kimefunguliwa",
+      "previewA11y": "Chumba cha {{name}} chenye kila kitu",
       "next": "Endelea",
       "done": "Imekamilika",
       "step": "Hatua ya {{step}} kati ya {{count}}"
@@ -4943,11 +5043,73 @@
     },
     "settings": {
       "title": "Mipangilio ya Kipenzi",
+      "petTitle": "Kipenzi Chako",
+      "name": "Jina",
       "showOnHome": "Onyesha kwenye Nyumbani",
       "buddiesTitle": "Vipenzi vya Wenzi",
       "visits": "Vipenzi vya wenzi vitembelee",
       "visitsInfo": "Siku unapotoka na mwenzi, kipenzi chake kinakitembelea chako.",
       "noBuddyPets": "Hakuna mwenzi wako ambaye ameshiriki kipenzi bado."
+    },
+    "currency": {
+      "coin": {
+        "one": "sarafu {{count}}",
+        "other": "sarafu {{count}}"
+      },
+      "infoTitle": "Sarafu",
+      "infoDays": "Pata sarafu 1 kila siku unayotoka kuhubiri (ukirekodi muda au ziara), na 1 zaidi ikiwa ni siku iliyopangwa unayoitimiza.",
+      "infoMonths": "Pata angalau sarafu {{floor}} kila mwezi unaoshiriki katika huduma.",
+      "infoStreak": "Kila hatua muhimu ya mfululizo hukupa {{amount}} zaidi.",
+      "infoSpend": "Zitumie Dukani.",
+      "gain": "+{{amount}}",
+      "loss": "−{{amount}}",
+      "earnedA11y": "Umepata {{amount}}"
+    },
+    "shop": {
+      "title": "Duka",
+      "back": "Rudi",
+      "categories": "Kategoria",
+      "buy": "Nunua",
+      "buyA11y": "Nunua {{item}} kwa {{price}}",
+      "needMore": {
+        "one": "Unahitaji {{count}} zaidi",
+        "other": "Unahitaji {{count}} zaidi"
+      },
+      "needMoreA11y": "Unahitaji {{price}} zaidi ili kupata {{item}}",
+      "wearing": "Amevaa",
+      "inRoom": "Chumbani",
+      "owned": "Unayo",
+      "allOwned": "Unamiliki vyote hivi",
+      "wearingNow": "Anaivaa sasa",
+      "inRoomNow": "Iko chumbani sasa",
+      "ownedHint": "Ni yako kutumia katika chumba cha {{name}}",
+      "boughtHat": "{{item}} imenunuliwa. {{name}} anaivaa.",
+      "boughtRoom": "{{item}} imenunuliwa. Iko katika chumba cha {{name}}.",
+      "leaves": "Utabaki na {{price}}",
+      "earnCoins": "Sarafu hutokana na siku za kuhubiri",
+      "secretHint": "Hupatikana njiani, haiuzwi kamwe",
+      "itemPrice": "{{item}}, {{price}}",
+      "itemNotEnough": "{{item}}, {{price}}, sarafu bado hazitoshi",
+      "itemOwned": "{{item}}, unayo",
+      "previewA11y": "Chumba cha {{name}} chenye {{item}}"
+    },
+    "reward": {
+      "timeAdded": "Muda umeongezwa",
+      "visitAdded": "Ziara imeongezwa",
+      "monthShared": "Mwezi wa huduma",
+      "daysOut": {
+        "one": "Siku ya kuhubiri",
+        "other": "Siku za kuhubiri"
+      },
+      "plansKept": {
+        "one": "Siku iliyopangwa imetimizwa",
+        "other": "Siku zilizopangwa zimetimizwa"
+      },
+      "milestone": "Hatua muhimu ya mfululizo · {{count}}",
+      "milestoneMonths": {
+        "one": "Hatua muhimu ya mfululizo · mwezi {{count}}",
+        "other": "Hatua muhimu ya mfululizo · miezi {{count}}"
+      }
     }
   },
   "handoff_newDoneSynced": "Usawazishaji wa Wingu unaleta rekodi, anwani, na madokezo yako kwenye simu hii. Vitaonekana baada ya muda mfupi.",
@@ -5198,6 +5360,29 @@
   "scribe_warning_overCreditCap": "Hii inazidi kikomo chako cha mkopo cha mwezi.",
   "scribe_usageTitle": "Matumizi ya Scribe AI",
   "scribe_memoryTitle": "Kumbukumbu ya Scribe AI",
+  "scribe_enabledToggle": "Tumia Scribe AI",
+  "scribe_turnedOffFooter": "Scribe AI imefichwa, na hakuna kinachotumwa kwake.",
+  "scribe_zdrRow": "Kutohifadhi Data Kabisa",
+  "scribe_zdrLearnMore": "Jifunze zaidi",
+  "scribe_zdrTitle": "Kutohifadhi Data Kabisa",
+  "scribe_zdrIntro": "Unapotumia Scribe AI, unachosema au kuandika, pamoja na rekodi inazohitaji kujibu, hutumwa kwa modeli ya AI ili kuandaa taarifa yako. Hiki ndicho kinachotokea kwa data hiyo.",
+  "scribe_zdrNothingStoredTitle": "Hakuna kinachohifadhiwa",
+  "scribe_zdrNothingStoredBody": "Scribe AI ikishajibu, ulichotuma hutoweka. Seva ya WitnessWork haikihifadhi wala kukirekodi kamwe: hakuna jumbe, majina, vidokezo wala picha. Huhesabu tu kiasi ulichotumia.",
+  "scribe_zdrNoTrainingTitle": "Haitumiki kamwe kufunza AI",
+  "scribe_zdrNoTrainingBody": "Scribe AI hutumia tu kampuni za AI zilizokubali, kwa mkataba, kutohifadhi data yako yoyote na kutoitumia kamwe kufunza AI.",
+  "scribe_zdrOnDeviceTitle": "Historia yako inabaki kwako",
+  "scribe_zdrOnDeviceBody": "Mazungumzo yako na kumbukumbu ya Scribe AI huhifadhiwa kwenye kifaa hiki tu. Unapozungumza, sauti yako hubadilishwa kuwa maandishi kwenye kifaa hiki, na rekodi ya sauti haihifadhiwi.",
+  "scribe_zdrInControlTitle": "Wewe huamua kinachoongezwa",
+  "scribe_zdrInControlBody": "Scribe AI hupendekeza mabadiliko tu. Hakuna kinachoongezwa hadi uguse Ongeza, na unaweza kuzima Scribe AI katika Mipangilio wakati wowote.",
+  "scribe_zdrPolicyLink": "Soma sera ya OpenRouter ya kutohifadhi data",
+  "scribe_termsTitle": "Kabla hujaanza",
+  "scribe_termsPrivateTitle": "Data yako inabaki ya faragha",
+  "scribe_termsPrivateBody": "Scribe AI hutumia tu unachotuma ili kuandaa taarifa yako. Hakihifadhiwi, na hakitumiki kamwe kufunza AI.",
+  "scribe_termsMistakesTitle": "Kagua kabla ya kuongeza",
+  "scribe_termsMistakesBody": "AI inaweza kukosea. Kagua kila badiliko kabla ya kuliongeza.",
+  "scribe_termsBody": "Kwa kugusa Kubali, unakubali Masharti ya Matumizi na Sera ya Faragha ya WitnessWork.",
+  "scribe_termsAgree": "Kubali",
+  "scribe_consentContinue": "Endelea",
   "scribe_usageRow": "Matumizi",
   "scribe_memoryRow": "Kumbukumbu",
   "scribe_memoryToggle": "Kumbukumbu",

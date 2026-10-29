@@ -126,6 +126,9 @@
   "greetingGoalNicelyDone": "Intego y'ukwezi yagezweho. Wakoze neza!",
   "greetingGoalWayToGo": "Wagezeho intego yawe. Komereza aho!",
   "greetingBusyBee": "Muraho, wowe ukora cyane",
+  "greetingStreakOnARoll": "Urakataje",
+  "greetingStreakGoingStrong": "Ukomeje neza cyane!",
+  "greetingStreakLookAtYouGo": "Erega urashoboye!",
   "profileGreetingNoName": "Muraho!",
   "profileUsingFor": {
     "one": "Umaze umunsi {{days}} ukoresha WitnessWork",
@@ -191,6 +194,16 @@
   "streak_endingMonths": "Andika umurimo wa {{month}} kugira ngo urukurikirane rwawe rukomeze.",
   "streak_recordMonth": "Andika umurimo",
   "streak_howItWorks": "Uko urukurikirane rukora",
+  "streak_unitPlans": {
+    "one": "umunsi wateganyijwe wubahirijwe",
+    "other": "iminsi yateganyijwe yubahirijwe"
+  },
+  "streak_unitMonths": {
+    "one": "ukwezi gukurikiranye",
+    "other": "amezi akurikiranye"
+  },
+  "streak_started": "Rwatangiye",
+  "streak_best": "Agahigo",
   "streakCelebration_started": "Urukurikirane rwawe rwatangiye!",
   "streakCelebration_grew": "Urukurikirane rwawe rurakura!",
   "streakCelebration_captionPlans": "Gahunda wubahirije nta n'imwe usibye, n'iyo zaba zitandukanyijwe n'iminsi myinshi. Komeza ku munsi ukurikira ufite gahunda.",
@@ -392,6 +405,7 @@
   "save": "Emeza",
   "isBibleStudy": "ni ikigisho cya Bibiliya",
   "add": "Ongera",
+  "addVisit": "Ongeraho gusura",
   "reminder_title": "Ikiganiro vuba aha",
   "reminder_topicLine": "Ingingo: {{topic}}",
   "addConversation": "Shyiraho ikiganiro",
@@ -1110,6 +1124,11 @@
       "c6": "WitnessWork ubu iboneka mu Cyarabu, ifite imiterere isomwa uhereye iburyo ujya ibumoso.",
       "c7": "Hindura amakarita yo ku Ahabanza no kuri Iterambere, shyira imiterere ku nyandiko kandi wongereho amafoto, shungura abantu ukurikije gusubirayo, kandi urebe igihe raporo y'ukwezi kose yoherejwe.",
       "c8": "Gushyigikira neza inyuguti nini, porogaramu zisoma ekara, inyuguti zibyibushye no gutandukanya amabara cyane."
+    },
+    "1460": {
+      "c1": "Ubu itungo ryawe ribona ibiceri bya zahabu buri munsi ugiye mu murimo wo kubwiriza. Bikoreshe mu Iduka rishya ugura ingofero n'ibintu byo mu cyumba, kandi ubone ibyo utunze byose mu Kabati karyo.",
+      "c2": "Kanda ku rukurikirane rwawe ku Ahabanza urebe igihe rwatangiriye n'agahigo kawe kugeza ubu.",
+      "c3": "Ushobora kuzimya Scribe AI mu Igenamiterere, kandi igusaba kubyemera mbere y'uko uyikoresha bwa mbere."
     }
   },
   "installed": "Yagiye mu gikoresho cyawe",
@@ -1527,6 +1546,7 @@
   "buddies_followUp": "Gusubirayo",
   "buddies_noLongerAvailable": "Ntikikiboneka",
   "buddies_sharedBy": "Yasangijwe na {{name}}. Impinduka akora zigaragara hano.",
+  "buddies_linkedPlanFields": "{{name}} ni we ugena umunsi, isaha, umutwe, aho bizabera n'icyitonderwa, kandi impinduka akora zigaragara hano. Amasaha yawe, urwibutso n'Ubwoko ni wowe ubihindura.",
   "buddies_answeredGoing": "Uragenda",
   "buddies_answeredDeclined": "Ntushobora",
   "buddies_answerNotSent": "Ntiharoherezwa",
@@ -1551,6 +1571,8 @@
   "buddies_feedbackAttachmentFailed": "Ibitekerezo byawe byoherejwe, ariko amakuru y'isuzuma ntiyashoboye gushyirwaho.",
   "formDetails": "Ibisobanuro",
   "planForm_duration": "Igihe kimara",
+  "planForm_yourHours": "Amasaha yawe",
+  "planForm_organizerPlanned": "{{name}} yateganyije {{hours}}",
   "planForm_howLong": "Bimara igihe kingana iki?",
   "planForm_justHours": "Amasaha gusa",
   "planForm_timeSpan": "Igihe cyuzuye",
@@ -1640,6 +1662,8 @@
   "gotIt": "Ndabyumva!",
   "hint": "Agatekerezo",
   "didYouKnow_kicker": "Wari ubizi?",
+  "didYouKnow_accountMenu_title": "Ifoto yawe ifungura konti yawe",
+  "didYouKnow_accountMenu_body": "Kanda ku ifoto yawe ubone umwirondoro wawe, Igenamiterere n'Ikigo cy'Ubufasha.",
   "didYouKnow_longPressCopy_title": "Bye Bye Copy",
   "didYouKnow_longPressCopy_body": "Kora kuri nimero ya telefone, imeyili, cyangwa aderesi y'umuntu ufite contact kugira ngo uyikope ako kanya kuri clipboard yawe.",
   "didYouKnow_swipeEditConvo_title": "Kanda hano wumve ikiganiro cyihuse",
@@ -1699,6 +1723,22 @@
   "planDetails_repeats": "Risubiramo",
   "planDetails_changedForDate": "Byahinduwe kuri iyi tariki",
   "planDetails_organizer": "Uwateguye",
+  "planDetails_invitedSeeWhosGoing": "Abatumiwe bose babona abazajyayo.",
+  "planDetails_whosGoing": "Abazajyayo",
+  "planDetails_goingCount": {
+    "one": "Abazajyayo: {{count}}",
+    "other": "Abazajyayo: {{count}}"
+  },
+  "planDetails_organizedBy": "Yateguwe na {{name}}",
+  "planDetails_whosGoingHint": "Yerekana abazajyayo bose",
+  "planDetails_moreGoing": {
+    "one": "Undi {{count}} uzajyayo",
+    "other": "Abandi {{count}} bazajyayo"
+  },
+  "planDetails_guestNotBuddyTitle": "{{name}} si mugenzi wawe",
+  "planDetails_guestNotBuddyBody": "Kugira ngo mube bagenzi, buri wese asikane kode ya Buddies y'undi igihe muri kumwe.",
+  "planDetails_guestShowCode": "Erekana kode yanjye ya Buddies",
+  "planDetails_guestNotBuddyHint": "Yerekana uko mwaba bagenzi",
   "planDetails_askedToJoin": "Yasabye kwifatanya",
   "visitDetails_title": "Ikiganiro",
   "visitDetails_pastConversation": "Waganiriye na {{name}}",
@@ -1938,6 +1978,30 @@
   "forceDeleteContacts": "Siba n'imbaraga aderesi",
   "clearArchivedContacts": "Hanagura aderesi ziri mu bubiko",
   "dangerZone": "Ahitonderwa!",
+  "toolsDangerZone_info": "Gusiba ibintu byihariye. Buri kimwe gisaba kwemeza. Koresha Reset all iri hejuru kugira ngo usibe byose nk'aho porogaramu ari bwo igishyirwamo.",
+  "toolsDangerZone_confirm": "Ibi ntibishobora gusubizwa inyuma.",
+  "toolsDangerZone_categories": "Siba ibyiciro wishyiriyeho",
+  "toolsDangerZone_categoriesBody": "Isiba ibyiciro wishyiriyeho ku bikoresho byose bihuzwa. Igumana icyiciro cya LDC gisanzwe n'inyandiko z'igihe zisanzweho.",
+  "toolsDangerZone_contactFields": "Siba imyanya yihariye y'abantu",
+  "toolsDangerZone_contactFieldsBody": "Isiba burundu buri mwanya wihariye w'abantu n'amakuru yawo, harimo n'abantu babitswe. Ibisibwe bihuzwa no ku bindi bikoresho.",
+  "toolsDangerZone_visitFields": "Siba imyanya yihariye yo gusura",
+  "toolsDangerZone_visitFieldsBody": "Isiba burundu buri mwanya wihariye wo gusura n'amakuru yawo yabitswe. Ibisibwe bihuzwa no ku bindi bikoresho.",
+  "toolsDangerZone_contactViews": "Siba uko abantu berekanwa byabitswe (kuri iki gikoresho)",
+  "toolsDangerZone_localBody": "Isiba uko berekanwa byabitswe n'uburyo bukoreshwa ubu kuri iki gikoresho. Ibikoresho bihuzwa bishobora kubigarura.",
+  "toolsDangerZone_mileage": "Siba ibirometero byose (bihuzwa)",
+  "toolsDangerZone_mileageBody": "Isiba imodoka zose, lisansi, ibiciro, ingendo n'ibipimo by'ibirometero. Ibisibwe bihuzwa no ku bindi bikoresho.",
+  "toolsDangerZone_pet": "Rekura itungo (bihuzwa)",
+  "toolsDangerZone_petBody": "Irekura itungo kandi igasiba icyumba cyaryo. Ibisibwe bihuzwa no ku bindi bikoresho.",
+  "toolsDangerZone_badges": "Subiza ibimenyetso uko byari biri",
+  "toolsDangerZone_badgesBody": "Yibagirwa ibimenyetso wabonye, amateka yabyo n'ibirori bitegerejwe. Inyandiko zisanzweho zishobora kongera kubibona; guhuza bishobora kubigarura.",
+  "toolsDangerZone_scribe": "Siba amateka ya Scribe AI",
+  "toolsDangerZone_scribeBody": "Ihagarika ibiri gukorwa kandi igasiba ibiganiro, ibyifuzo, inyandiko zo gusubiramo n'imibare y'ikoreshwa ibitswe kuri iki gikoresho. Inyandiko zamaze kongerwaho zigumaho; ibyibutswe n'uruhushya bigumaho. Imbibi z'ikoreshwa za seriveri ziracyakurikizwa.",
+  "toolsDangerZone_memory": "Siba ibyibutswe na Scribe AI",
+  "toolsDangerZone_memoryBody": "Isiba ibyibutswe kuri iki gikoresho. Igumana ibiganiro n'igenamiterere ryo gufungura cyangwa kuzimya kwibuka.",
+  "toolsDangerZone_routes": "Siba inzira zabitswe",
+  "toolsDangerZone_places": "Siba ahantu habitswe h'inzira",
+  "toolsDangerZone_notifications": "Subiza aho amamenyesha ari uko hari hari",
+  "toolsDangerZone_notificationsBody": "Isiba amamenyesha y'igerageza n'amateka y'ibyo iki gikoresho cyabonye n'ibyo cyakuyeho. Ibintu biva mu bindi bice bishobora kongera kugaragara.",
   "contacts": "Aderesi zose",
   "serviceReports": "Raporo z'umurimo",
   "servicePlans": "Igenamigambi z'umurimo",
@@ -2212,6 +2276,8 @@
   "appIconUnsupported": "Iki gikoresho ntigishyigikira guhindura indangamuntu ya app.",
   "appIconChangeFailed": "Cannot change the app icon. Ongera ugerageze nyuma y'akanya gato.",
   "appIconArtistCallTitle": "Gushaka umufatanyabikorwa w'umudepite",
+  "appIconArtistCallDetails": "Nifuza gufatanya n'umunyabugeni cyangwa umuhanzi w'amashusho kugira ngo dukore amashusho y'ikirango cya porogaramu ashimishije kandi yihariye. Uyu ni umushinga muto w'umuntu ku giti cye, bityo sinshobora gutanga amafaranga menshi — ariko nishimiye gutanga igihembo gito hamwe no kuba Umufasha ubuzima bwose ku buntu nko kugushimira.",
+  "appIconArtistCallContact": "Urabishaka? Twandikire kuri",
   "supporterAlwaysFreeNote": "Ibikorwa by'ingenzi bigumana ku buntu kuri bose.",
   "supporterSheetTitle": "Fasha Umurimo w'Umuhamya",
   "supporterSheetSubtitle": "Niba bigufasha, fasha gukomeza iyi App.",
@@ -2589,6 +2655,7 @@
   "contacts_pinStaleness_week": "Iyi week",
   "contacts_pinStaleness_month": "Uku kwezi",
   "contacts_stalenessChip_all": "Byose",
+  "contacts_filtersChip": "Imyunguruzi",
   "contacts_searchPlaceholder": {
     "one": "Shakisha umuntu 1",
     "other": "Shakisha mu bantu {{count}}"
@@ -2990,6 +3057,16 @@
   "playSounds_descriptionAndroid": "Amajwi y'ibyishimo n'ibyibutso mu gihe WitnessWork ifunguye. Ibyibutso bigeze ifunze bikurikiza igenamiterere ry'amamenyesha ry'igikoresho cyawe.",
   "haptics": "Ibinyeganyega",
   "haptics_description": "Ibinyeganyega iyo ukanda, unyuza urutoki ku makarita, cyangwa ugeze ku ntego.",
+  "rewards": "Ibihembo",
+  "rewardAnimations": "Animasiyo z'ibihembo",
+  "rewardAnimations_description": "Iyo ubonye ibiceri by'itungo ryawe, buri kimwe kigwa kuri ecran kikabarirwa mu gikapu cyaryo. Kanda aho ari ho hose ubisimbuke.",
+  "rewardSounds": "Amajwi",
+  "rewardSounds_punch": "Akomeye",
+  "rewardSounds_retro": "Ya kera",
+  "rewardSounds_soft": "Yoroheje",
+  "rewardSounds_off": "Bizimije",
+  "rewardSounds_audioOff": "Amajwi arazimije mu Amajwi n'Ibinyeganyega.",
+  "rewardSample": "Umva urugero",
   "notifications": "Amamenyesha",
   "remindersChannelName": "Inyibutsa",
   "purchasesUnavailable": "Kugura ntibishoboka ubu. Ongera ugerageze nyuma.",
@@ -3013,6 +3090,8 @@
   "buddies_planSameTime": "Teganya igihe kimwe",
   "buddies_needsAnswer": "Bikeneye igisubizo cyawe",
   "buddies_together": "Hamwe",
+  "buddies_requestsWaiting": "Ibisabwa bitegereje",
+  "buddies_nextTogether": "Ubutaha muri kumwe {{date}}",
   "buddies_seeAllCount": "Reba byose ({{count}})",
   "buddies_showFewer": "Erekana bike",
   "buddies_plan": "Gahunda",
@@ -3354,7 +3433,7 @@
     },
     "journeyNext": "{{date}} · ibikurikira",
     "nextVisit": "Gusura gukurikira · {{date}}",
-    "seeUpNext": "reba Ibikurikira",
+    "seeUpNext": "ibisobanuro",
     "gapEarlier": "{{gap}} mbere",
     "sameDay": "Umunsi umwe",
     "followUpUpcoming": "Gusubirayo guteganyijwe",
@@ -4265,6 +4344,7 @@
     "emptySection": "Kigaragara igihe hari icyo kwerekana",
     "description": {
       "approachingConversations": "Gusubirayo by'uyu munsi, kugira ngo ubyandike uko ugenda",
+      "together": "Gahunda no gusubirayo hamwe na bagenzi bawe, n'ubutumire bwo gusubiza",
       "tabletServiceYearSummary": "Umwaka w'umurimo wawe ugereranyije n'intego yawe",
       "serviceReport": "Igihe n'ibyigisho by'uku kwezi",
       "mileage": "Ingendo n'intera by'uku kwezi",
@@ -4657,6 +4737,7 @@
       "rename": "Hindura izina…",
       "change": "Hindura itungo…",
       "decorate": "Ingofero n'icyumba…",
+      "shop": "Iduka…",
       "share": "Sangiza…"
     },
     "picker": {
@@ -4891,7 +4972,22 @@
     "details": {
       "change": "Hindura itungo",
       "share": "Sangiza",
+      "shop": "Iduka",
       "settings": "Igenamiterere"
+    },
+    "locker": {
+      "wearing": "Yambaye: {{item}}",
+      "noHat": "Nta ngofero yambaye",
+      "inRoom": "Mu cyumba: {{item}}",
+      "current": "{{section}}: {{item}}",
+      "moreInShop": "Ibindi biri mu Iduka",
+      "moreCount": {
+        "one": "{{count}} cyo kugura",
+        "other": "{{count}} byo kugura"
+      }
+    },
+    "hearts": {
+      "infoTitle": "Imitima"
     },
     "intro": {
       "hearts": {
@@ -4899,11 +4995,15 @@
         "body": "Buri munsi wandikaho ibyo wakoze mu murimo wongera umutima umwe. Nureka kwandika, imitima igenda ishira buhoro.",
         "bodyMonths": "Buri kwezi wandikaho ibyo wakoze mu murimo wuzuza imitima yose. Nusiba ukwezi, igenda ishira buhoro."
       },
+      "shop": {
+        "title": "Bona ibiceri",
+        "body": "Buri munsi ugiye mu murimo wo kubwiriza uguhesha ibiceri bya zahabu. Bikoreshe mu Iduka ugura ingofero n'ibintu byo mu cyumba."
+      },
       "decorate": {
         "title": "Rigire iryawe",
         "body": "Kanda itungo ryawe kugira ngo urikorakore. Kanda ahandi hose ku ikarita yaryo kugira ngo uhitemo ingofero kandi urimbishe icyumba."
       },
-      "previewA11y": "Icyumba cya {{name}} gifite buri kintu cyakinguwe",
+      "previewA11y": "Icyumba cya {{name}} gifite buri kintu",
       "next": "Komeza",
       "done": "Byarangiye",
       "step": "Intambwe ya {{step}} kuri {{count}}"
@@ -4943,11 +5043,73 @@
     },
     "settings": {
       "title": "Igenamiterere ry'itungo",
+      "petTitle": "Itungo ryawe",
+      "name": "Izina",
       "showOnHome": "Erekana kuri Ahabanza",
       "buddiesTitle": "Amatungo ya bagenzi",
       "visits": "Amatungo ya bagenzi asura",
       "visitsInfo": "Ku munsi ujyanye kubwiriza na mugenzi wawe, itungo rye risura iryawe.",
       "noBuddyPets": "Nta mugenzi wawe urasangiza itungo."
+    },
+    "currency": {
+      "coin": {
+        "one": "Igiceri {{count}}",
+        "other": "Ibiceri {{count}}"
+      },
+      "infoTitle": "Ibiceri",
+      "infoDays": "Bona igiceri 1 buri munsi ugiye mu murimo wo kubwiriza (wanditse igihe cyangwa gusura), n'ikindi 1 iyo ari umunsi wateganyije ukawubahiriza.",
+      "infoMonths": "Bona nibura ibiceri {{floor}} buri kwezi wabwirijemo.",
+      "infoStreak": "Buri ntambwe y'ingenzi y'urukurikirane iguhesha ibindi {{amount}}.",
+      "infoSpend": "Bikoreshe mu Iduka.",
+      "gain": "+{{amount}}",
+      "loss": "−{{amount}}",
+      "earnedA11y": "Wabonye {{amount}}"
+    },
+    "shop": {
+      "title": "Iduka",
+      "back": "Subira inyuma",
+      "categories": "Ibyiciro",
+      "buy": "Gura",
+      "buyA11y": "Gura {{item}} ku {{price}}",
+      "needMore": {
+        "one": "Ukeneye {{count}} kindi",
+        "other": "Ukeneye {{count}} bindi"
+      },
+      "needMoreA11y": "Ukeneye ibindi {{price}} kugira ngo ugure {{item}}",
+      "wearing": "Yambaye",
+      "inRoom": "Mu cyumba",
+      "owned": "Urabifite",
+      "allOwned": "Ibi byose urabifite",
+      "wearingNow": "Arayambaye ubu",
+      "inRoomNow": "Kiri mu cyumba ubu",
+      "ownedHint": "Ni icyawe, ugikoreshe mu cyumba cya {{name}}",
+      "boughtHat": "{{item}} yaguzwe. {{name}} arayambaye.",
+      "boughtRoom": "{{item}} cyaguzwe. Kiri mu cyumba cya {{name}}.",
+      "leaves": "Usigarana {{price}}",
+      "earnCoins": "Ibiceri biva ku minsi wabwirijemo",
+      "secretHint": "Kiboneka uko ugenda, ntigicuruzwa",
+      "itemPrice": "{{item}}, {{price}}",
+      "itemNotEnough": "{{item}}, {{price}}, ntibirahagije",
+      "itemOwned": "{{item}}, uragifite",
+      "previewA11y": "Icyumba cya {{name}} kirimo {{item}}"
+    },
+    "reward": {
+      "timeAdded": "Igihe cyongeweho",
+      "visitAdded": "Gusura kwongeweho",
+      "monthShared": "Ukwezi wabwirijemo",
+      "daysOut": {
+        "one": "Umunsi wabwirijemo",
+        "other": "Iminsi wabwirijemo"
+      },
+      "plansKept": {
+        "one": "Umunsi wateganyijwe wubahirijwe",
+        "other": "Iminsi yateganyijwe yubahirijwe"
+      },
+      "milestone": "Intambwe y'urukurikirane · {{count}}",
+      "milestoneMonths": {
+        "one": "Intambwe y'urukurikirane · ukwezi {{count}}",
+        "other": "Intambwe y'urukurikirane · amezi {{count}}"
+      }
     }
   },
   "handoff_newDoneSynced": "Cloud Sync irimo kuzana inyandiko, abantu n'inyandiko zawe kuri iyi telefoni. Zigaragara mu kanya gato.",
@@ -5198,6 +5360,29 @@
   "scribe_warning_overCreditCap": "Ibi birenga urugero rw'indi mirimo rw'ukwezi.",
   "scribe_usageTitle": "Ikoreshwa rya Scribe AI",
   "scribe_memoryTitle": "Kwibuka kwa Scribe AI",
+  "scribe_enabledToggle": "Koresha Scribe AI",
+  "scribe_turnedOffFooter": "Scribe AI irahishe, kandi nta kintu na kimwe cyoherezwa kuri yo.",
+  "scribe_zdrRow": "Nta makuru abikwa",
+  "scribe_zdrLearnMore": "Menya byinshi",
+  "scribe_zdrTitle": "Nta makuru abikwa",
+  "scribe_zdrIntro": "Iyo ukoresheje Scribe AI, ibyo uvuga cyangwa wandika, n'inyandiko ikeneye kugira ngo isubize, byoherezwa kuri porogaramu y'ubwenge bw'ubukorano kugira ngo itegure amakuru yawe mashya. Dore uko bigenda.",
+  "scribe_zdrNothingStoredTitle": "Nta kintu kibikwa",
+  "scribe_zdrNothingStoredBody": "Scribe AI imaze gusubiza, ibyo wohereje biba bivuyeho. Seriveri ya WitnessWork ntiyigera ibibika cyangwa ngo ibyandike: nta butumwa, amazina, inyandiko cyangwa amafoto. Ibara gusa uko wayikoresheje.",
+  "scribe_zdrNoTrainingTitle": "Ntibikoreshwa mu gutoza AI",
+  "scribe_zdrNoTrainingBody": "Scribe AI ikoresha gusa abatanga serivisi z'ubwenge bw'ubukorano bemera, mu masezerano, kutagira amakuru yawe babika no kutayakoresha mu gutoza AI.",
+  "scribe_zdrOnDeviceTitle": "Amateka yawe agumana nawe",
+  "scribe_zdrOnDeviceBody": "Ibiganiro byawe n'ibyibutswe na Scribe AI bibikwa kuri iki gikoresho gusa. Iyo uvuze, ijwi ryawe rihindurwa inyandiko kuri iki gikoresho, kandi amajwi ntabikwa.",
+  "scribe_zdrInControlTitle": "Ni wowe uhitamo ibyongerwaho",
+  "scribe_zdrInControlBody": "Scribe AI itanga ibitekerezo by'impinduka gusa. Nta kintu cyongerwaho kugeza ukanze Ongeraho, kandi ushobora kuzimya Scribe AI mu Igenamiterere igihe cyose.",
+  "scribe_zdrPolicyLink": "Soma politiki ya OpenRouter yo kutabika amakuru",
+  "scribe_termsTitle": "Mbere yo gutangira",
+  "scribe_termsPrivateTitle": "Amakuru yawe akomeza kuba ibanga",
+  "scribe_termsPrivateBody": "Scribe AI ikoresha gusa ibyo wohereje kugira ngo itegure amakuru yawe mashya. Ntibibikwa, kandi ntibikoreshwa na rimwe mu gutoza AI.",
+  "scribe_termsMistakesTitle": "Banza ugenzure mbere yo kongeraho",
+  "scribe_termsMistakesBody": "AI ishobora kwibeshya. Suzuma buri mpinduka mbere yo kuyongeraho.",
+  "scribe_termsBody": "Ukanze Ndemera, uba wemeye Amabwiriza yo Gukoresha na Politiki y'Ibanga bya WitnessWork.",
+  "scribe_termsAgree": "Ndemera",
+  "scribe_consentContinue": "Komeza",
   "scribe_usageRow": "Ikoreshwa",
   "scribe_memoryRow": "Kwibuka",
   "scribe_memoryToggle": "Kwibuka",

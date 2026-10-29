@@ -33,7 +33,7 @@
   <string name="timerStartAction" formatted="false">開始計時</string>
   <string name="today" formatted="false">今天</string>
   <string name="tomorrow" formatted="false">明天</string>
-  <string name="type" formatted="false">类型</string>
+  <string name="type" formatted="false">類型</string>
   <string name="watchComplicationDescription" formatted="false">本月傳道概況。</string>
   <string name="watchComplicationName" formatted="false">每月進度</string>
   <string name="watchDirectionsUnavailable" formatted="false">「地圖」找不到這個地點。</string>

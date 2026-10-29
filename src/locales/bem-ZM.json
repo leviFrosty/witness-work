@@ -126,6 +126,9 @@
   "greetingGoalNicelyDone": "Mwafika ku ico mwapanga ukufikapo pa mweshi. Mwabomba bwino!",
   "greetingGoalWayToGo": "Mwafika ku ico mwapanga. Mwabomba bwino!",
   "greetingBusyBee": "Mwapoleni, mwe mulebomba sana",
+  "greetingStreakOnARoll": "Muleya bwino sana",
+  "greetingStreakGoingStrong": "Mulekosa!",
+  "greetingStreakLookAtYouGo": "Moneni ifyo muleya!",
   "profileGreetingNoName": "Mwapokelelwe nakabili",
   "profileUsingFor": {
     "one": "Mulebomfya WitnessWork pa bushiku {{days}}",
@@ -191,6 +194,16 @@
   "streak_endingMonths": "Lembeni umulimo wa {{month}} pa kusunga ukukonkana kwenu.",
   "streak_recordMonth": "Lemba Umulimo",
   "streak_howItWorks": "Ifyo Ukukonkana Kubomba",
+  "streak_unitPlans": {
+    "one": "ubushiku bwa bupange ubo mwakonkele",
+    "other": "inshiku sha bupange isho mwakonkele"
+  },
+  "streak_unitMonths": {
+    "one": "umweshi uukonkene",
+    "other": "imyeshi iikonkene"
+  },
+  "streak_started": "Kwatendeke",
+  "streak_best": "Ukwacilapo",
   "streakCelebration_started": "Mwatendeka ukukonkana!",
   "streakCelebration_grew": "Ukukonkana kwenu kulekula!",
   "streakCelebration_captionPlans": "Ubupange mwakonka ukwabula ukulufyapo, nangu bwapatukana shani. Leyeni pantanshi pa bushiku bwapangwa ubukonkapo.",
@@ -383,6 +396,7 @@
   "save": "Save",
   "isBibleStudy": "is bible study",
   "add": "Add",
+  "addVisit": "Ongeleni Ulutandalilo",
   "reminder_title": "Upcoming Conversation",
   "reminder_topicLine": "Umutwe: {{topic}}",
   "addConversation": "Add Conversation",
@@ -963,6 +977,11 @@
       "c6": "WitnessWork nomba ilipo mu Chiarabu, ne fipao fyabelengwa ukufuma ku kulyo ukuya ku kumoso.",
       "c7": "Cinjeni amakadi pa Ng'anda na pa Kukula, lungikeni amalembo no kulundako ifikope, sefyeni abantu ba kulanshanya ku kukonkapo, kabili mumone ilyo lipoti ya cila mweshi yatumiwe.",
       "c8": "Ukwafwa kwawama pa malembo yakulu, ifilanda-mashiwi, amalembo ya mafuta ne fyalubuka sana."
+    },
+    "1460": {
+      "c1": "Cinyama cenu nomba cilapokelela indalama sha golide ubushiku bonse ubo mwaya mu mulimo wa kushimikila. Shibomfyeni mu Sitolo ipya ukushita amakofyo ne fintu fya mu ng'anda, kabili mwakusanga fyonse ifyo mukwete mu Kabati kayo.",
+      "c2": "Tintani ukukonkana kwenu pa Home pa kumona ilyo kwatendeke no kukonkana kwenu ukwacilapo ukufika nomba.",
+      "c3": "Kuti mwashimya Scribe AI mu Settings, kabili ilamwipusha ukusumina kwenu ilyo mushilaibomfya umuku wa kubalilapo."
     }
   },
   "installed": "Installed",
@@ -1104,6 +1123,22 @@
   "planDetails_repeats": "Ukucita Nakabili",
   "planDetails_changedForDate": "Cacinja pa bushiku ubu",
   "planDetails_organizer": "Uwapanga",
+  "planDetails_invitedSeeWhosGoing": "Bonse abaitwa balamona abaleya.",
+  "planDetails_whosGoing": "Abaleya",
+  "planDetails_goingCount": {
+    "one": "{{count}} aleya",
+    "other": "{{count}} baleya"
+  },
+  "planDetails_organizedBy": "Yapangilwe na {{name}}",
+  "planDetails_whosGoingHint": "Ilanga bonse abaleya",
+  "planDetails_moreGoing": {
+    "one": "Na {{count}} umbi aleya",
+    "other": "Na {{count}} bambi baleya"
+  },
+  "planDetails_guestNotBuddyTitle": "{{name}} te munyina wenu",
+  "planDetails_guestNotBuddyBody": "Pa kuba banyina, sikeneni Buddies Code ya umo no munankwe ilyo muli pamo.",
+  "planDetails_guestShowCode": "Langeni Buddies Code Yandi",
+  "planDetails_guestNotBuddyHint": "Ilanga ifyo mwingaba banyina",
   "planDetails_askedToJoin": "Apempa ukuiba pamo",
   "visitDetails_title": "Ukulanshanya",
   "visitDetails_pastConversation": "Mwalanshanya na {{name}}",
@@ -1262,6 +1297,30 @@
   "forceDeleteContacts": "Force Delete Contacts",
   "clearArchivedContacts": "Clear Archived Contacts",
   "dangerZone": "Danger Zone",
+  "toolsDangerZone_info": "Ukufumyapo ifyasalwa. Cimo cimo cilepusha ukusuminisha. Bomfyeni Reset all pa muulu pa kufumyapo fyonse nga ilyo mwaingishe app umuku wa kubalilapo.",
+  "toolsDangerZone_confirm": "Ici tacingabweshiwa.",
+  "toolsDangerZone_categories": "Fumyeni ifiputulwa ifyo mwapangile",
+  "toolsDangerZone_categoriesBody": "Ifumyapo ifiputulwa ifyo mwapangile pa fibombelo fyonse ifyalinganishiwa. Isunga icipande ca LDC icaliko kale ne fyalembwa fya nshita ifyaliko.",
+  "toolsDangerZone_contactFields": "Fumyeni imisangwa yenu iya bakulanshanya",
+  "toolsDangerZone_contactFieldsBody": "Ifumyapo umuyayaya imisangwa yonse iyo mwapangile iya bakulanshanya ne fyalembwamo, ukusanshako na bakulanshanya abasungilwe. Ifyafumishiwapo filalinganishiwa ku fibombelo fimbi.",
+  "toolsDangerZone_visitFields": "Fumyeni imisangwa yenu iya ntandalilo",
+  "toolsDangerZone_visitFieldsBody": "Ifumyapo umuyayaya imisangwa yonse iyo mwapangile iya ntandalilo ne fyalembwamo. Ifyafumishiwapo filalinganishiwa ku fibombelo fimbi.",
+  "toolsDangerZone_contactViews": "Fumyeni ifyo mwasungile ifya kumona abakulanshanya (pa cibombelo ici)",
+  "toolsDangerZone_localBody": "Ifumyapo ifya kumona ifyasungwa ne ca kumona icilebomba pa cibombelo ici. Ifibombelo ifyalinganishiwa kuti fyafibwesha.",
+  "toolsDangerZone_mileage": "Fumyeni amalendo yonse (ayalinganishiwa)",
+  "toolsDangerZone_mileageBody": "Ifumyapo imotoka shonse, amafuta, imitengo, amalendo ne fyo mwabelenga pa odometer. Ifyafumishiwapo filalinganishiwa ku fibombelo fimbi.",
+  "toolsDangerZone_pet": "Lekeni cinyama (calinganishiwa)",
+  "toolsDangerZone_petBody": "Ileka cinyama no kufumyapo fyonse mu ng'anda yaco. Ifyafumishiwapo filalinganishiwa ku fibombelo fimbi.",
+  "toolsDangerZone_badges": "Bweshapo amabaji",
+  "toolsDangerZone_badgesBody": "Ilaba amabaji ayo mwapokele, ilyashi lya mabaji no kusekelela ukushilacitika. Ifyalembwa ifyaliko kuti fyapokelela kabili amabaji; ukulinganya kuti kwayabwesha.",
+  "toolsDangerZone_scribe": "Fumyeni ilyashi lya Scribe AI",
+  "toolsDangerZone_scribeBody": "Iimika ifilebomba no kufumyapo amalyashi, ifyo yasoka, ifyalembwa fya kubwesha ne fyo mwabomfya ifyasungwa pa cibombelo ici. Ifyaongelwa kale filashala; ukwibukisha no kusumina filashala. Impendwa sha kubomfya isha pa server shilabomba fye.",
+  "toolsDangerZone_memory": "Fumyeni ukwibukisha kwa Scribe AI",
+  "toolsDangerZone_memoryBody": "Ifumyapo ifilembwa fya kwibukisha pa cibombelo ici. Isunga amalyashi no kusala ukwa kushimya nelyo ukulisha ukwibukisha.",
+  "toolsDangerZone_routes": "Fumyeni inshila ishasungwa",
+  "toolsDangerZone_places": "Fumyeni incende sha nshila ishasungwa",
+  "toolsDangerZone_notifications": "Bweshapo ifyakwishibisha",
+  "toolsDangerZone_notificationsBody": "Ifumyapo ifyakwishibisha fya kweshesha ne fyo cibombelo ici camona no kufumyapo. Ifintu ifya mu fyakubomfya fimbi kuti fyamoneka kabili.",
   "contacts": "Contacts",
   "serviceReports": "Service Reports",
   "servicePlans": "Service Plans",
@@ -1795,6 +1854,7 @@
   "contacts_pinStaleness_week": "Uno Mweshi",
   "contacts_pinStaleness_month": "Cakokola",
   "contacts_stalenessChip_all": "Fyonse",
+  "contacts_filtersChip": "Imisalo",
   "contacts_searchPlaceholder": {
     "one": "Fwaya umuntu 1 wa kulanshanya",
     "other": "Fwaya abantu {{count}} ba kulanshanya"
@@ -2365,6 +2425,7 @@
   "buddies_followUp": "Ukukonkapo",
   "buddies_noLongerAvailable": "Tacili",
   "buddies_sharedBy": "Cisabankanishiwa na {{name}}. Ifyo acinja fimoneka pano.",
+  "buddies_linkedPlanFields": "{{name}} e usala ubushiku, inshita, umutwe, incende ne cilembwa, kabili ifyo acinja filamoneka pano. Amaawala yenu, ukukumbusha kwenu na Type ni fyenu ukucinja.",
   "buddies_answeredGoing": "Muleya",
   "buddies_answeredDeclined": "Tamwingaya",
   "buddies_answerNotSent": "Tacatumwa",
@@ -2389,6 +2450,8 @@
   "buddies_feedbackAttachmentFailed": "Ifyo mwamona fyatumwa, lelo ifya kupima tafyalundwako.",
   "formDetails": "Ifyebo",
   "planForm_duration": "Inshita Iyo Cimbila",
+  "planForm_yourHours": "Amaawala Yenu",
+  "planForm_organizerPlanned": "{{name}} apangile {{hours}}",
   "planForm_howLong": "Inshita ishinga?",
   "planForm_justHours": "Amaawala fye",
   "planForm_timeSpan": "Ukutendeka no kupwa",
@@ -2468,6 +2531,8 @@
   "onboardingPickUp_otherPhone": "Ukufuma pa foni yenu imbi",
   "onboardingPickUp_otherPhoneDesc": "Ingileni na QR code pa kuleta akaunti yenu, banyina, ne fyebo fyasungwa.",
   "didYouKnow_kicker": "acitile imwe ishiba?",
+  "didYouKnow_accountMenu_title": "Icikope cenu cisula akaunti yenu",
+  "didYouKnow_accountMenu_body": "Tintani icikope cenu pa kumona profile yenu, Settings na Help Center.",
   "didYouKnow_longPressCopy_title": "citali-tinikeni uku kopolola",
   "didYouKnow_longPressCopy_body": "Touch na hold contact's nambala ya foni, imelo, nelyo adiresi uku kopolola ici instantly uku yenu clipboard.",
   "didYouKnow_swipeEditConvo_title": "kokoleni uku bwangu-lungika ukulanshanya",
@@ -2650,6 +2715,8 @@
   "appIconUnsupported": "ici icibombelo doesn't ukwafwilisha changing cibombelo icishibilo.",
   "appIconChangeFailed": "Couldn't cinja cibombelo icishibilo. esheniko nakabili mu moment.",
   "appIconArtistCallTitle": "Ndefwaya uwa kubombela pamo pa kupanga ifikope",
+  "appIconArtistCallDetails": "Kuti natemwa ukubombela pamo na kalemba wa fikope nelyo uupanga ifikope pa kupanga ifishibilo fya app ifyalekanalekana kabili ifyawama. Uyu mulimo unono uo ndebomba neka, e ico nshingapeela indalama ishingi — lelo nalitemwa ukupeela indalama panono kabili na Supporter ya bumi bonse iya fye pa kutasha.",
+  "appIconArtistCallContact": "Mulefwaya? Twebeni pa",
   "supporterSheetSupportFrom": "Afwilisheni ukutampa pa {{price}}/mweshi",
   "paywallTitle": "ukwafwilisha WitnessWork",
   "paywallSocialProofRatingAverage": "{{rating}} pa kati ukufuma pa kupela {{ratings}}",
@@ -2998,6 +3065,16 @@
   "playSounds_descriptionAndroid": "Amaswi ya kusekelela na maswi ya kukumbusha ilyo WitnessWork yaisuka. Ukukumbusha ukwisa ilyo yafungwa kukonka ifyo mwasala fya fyakwishibisha fya cibombelo.",
   "haptics": "Kutenkana",
   "haptics_description": "Kutenkana ilyo mutinika, mukoka pa ncati, nelyo mufika ku co mwapanga.",
+  "rewards": "Ifilambu",
+  "rewardAnimations": "Ifilambu ifilenyenga",
+  "rewardAnimations_description": "Nga mwapokelela indalama sha cinyama cenu, imo imo ilaisa pa cilangililo no kubelengwa mu cikwama caco. Tintani ponse pa kupitapo.",
+  "rewardSounds": "Ifyunda",
+  "rewardSounds_punch": "Ifya maka",
+  "rewardSounds_retro": "Ifya kale",
+  "rewardSounds_soft": "Ifyanakila",
+  "rewardSounds_off": "Yashimishiwa",
+  "rewardSounds_audioOff": "Ifyunda fyashimishiwa mu Ifyunda no Kutenkana.",
+  "rewardSample": "Umfweni icakumwenako",
   "notifications": "Ifyakwishibisha",
   "remindersChannelName": "Ifibukisho",
   "purchasesUnavailable": "Ukushita tekubomba nomba line. Esheniko nakabili pa numa.",
@@ -3021,6 +3098,8 @@
   "buddies_planSameTime": "Pangeni Inshita Imo",
   "buddies_needsAnswer": "Ifwaya ukwasuka kwenu",
   "buddies_together": "Pamo",
+  "buddies_requestsWaiting": "Ifyo bapempa ifilelolela",
+  "buddies_nextTogether": "Pamo ukukonkapo {{date}}",
   "buddies_seeAllCount": "Mona Fyonse ({{count}})",
   "buddies_showFewer": "Langa Ifinono",
   "buddies_plan": "Ubupange",
@@ -3362,7 +3441,7 @@
     },
     "journeyNext": "{{date}} · ukukonkapo",
     "nextVisit": "Ulutandalilo ulukonkapo · {{date}}",
-    "seeUpNext": "mona Ukukonkapo",
+    "seeUpNext": "ifyebo",
     "gapEarlier": "{{gap}} pa ntanshi",
     "sameDay": "Pa bushiku bumo",
     "followUpUpcoming": "Ukukonkapo kwapangwa",
@@ -4265,6 +4344,7 @@
     "emptySection": "Cilemoneka nga kwaba icakulanda",
     "description": {
       "approachingConversations": "Ukukonkapo kwa lelo, ukulemba ilyo mulebomba",
+      "together": "Amapange no kukonkapo na banyina benu, ne fyo bamwita ifya kwasuka",
       "tabletServiceYearSummary": "Umwaka wenu wa mulimo ukulingana no calimo cenu",
       "serviceReport": "Inshita ne masambililo ya mweshi uno",
       "mileage": "Amalendo ne ntali ya mweshi uno",
@@ -4657,6 +4737,7 @@
       "rename": "Cinjeni Ishina…",
       "change": "Cinjeni Pet…",
       "decorate": "Ikofyo & Ng'anda…",
+      "shop": "Isitolo…",
       "share": "Tumina…"
     },
     "picker": {
@@ -4891,7 +4972,22 @@
     "details": {
       "change": "Cinjeni pet",
       "share": "Tumina",
+      "shop": "Isitolo",
       "settings": "Ifyo Mwasala"
+    },
+    "locker": {
+      "wearing": "Alenga: {{item}}",
+      "noHat": "Tafwele ikofyo",
+      "inRoom": "Mu ng'anda: {{item}}",
+      "current": "{{section}}: {{item}}",
+      "moreInShop": "Ifingi mu Sitolo",
+      "moreCount": {
+        "one": "{{count}} ica kushita",
+        "other": "{{count}} ifya kushita"
+      }
+    },
+    "hearts": {
+      "infoTitle": "Imitima"
     },
     "intro": {
       "hearts": {
@@ -4899,11 +4995,15 @@
         "body": "Bushiku bonse mulemba ifyo mwabomba pa mulimo wa kushimikila bwongelapo umutima. Nga mwaleka ukulemba, imitima ilaleshala panono panono.",
         "bodyMonths": "Umweshi onse mulemba ifyo mwabomba pa mulimo wa kushimikila usuka imitima yonse. Nga mwaluba umweshi, ilaleshala panono panono."
       },
+      "shop": {
+        "title": "Pokeleleni indalama",
+        "body": "Ubushiku bonse ubo mwaya mu mulimo wa kushimikila bulamupeela indalama sha golide. Shibomfyeni mu Sitolo ukushita amakofyo ne fintu fya mu ng'anda."
+      },
       "decorate": {
         "title": "Ipangeni yenu",
         "body": "Tintani pet yenu ukuilumbanya. Tintani pa ncende iyo yonse pa card yayo ukusala ikofyo no kukwafya."
       },
-      "previewA11y": "Ng'anda ya {{name}} ne fintu fyonse fyatuntulwa",
+      "previewA11y": "Ng'anda ya {{name}} ne fintu fyonse",
       "next": "Ukonkapo",
       "done": "Napwa",
       "step": "Icipande {{step}} pa {{count}}"
@@ -4943,11 +5043,73 @@
     },
     "settings": {
       "title": "Ifyo Mwasala fya Cinyama",
+      "petTitle": "Cinyama Cenu",
+      "name": "Ishina",
       "showOnHome": "Langeni pa Ng'anda",
       "buddiesTitle": "Ifinyama fya Banyina",
       "visits": "Ifinyama fya banyina fitandalila",
       "visitsInfo": "Pa bushiku mwaya na munyina, cinyama cakwe citandalila cinyama cenu.",
       "noBuddyPets": "Takuli munyina wenu nangu umo uwasabankanya cinyama."
+    },
+    "currency": {
+      "coin": {
+        "one": "indalama {{count}}",
+        "other": "indalama {{count}}"
+      },
+      "infoTitle": "Indalama",
+      "infoDays": "Pokeleleni indalama 1 ubushiku bonse ubo mwaya mu mulimo wa kushimikila (lembeni inshita nelyo ulutandalilo), na 1 na kabili nga bushiku bwa bupange ubo mwakonka.",
+      "infoMonths": "Pokeleleni indalama {{floor}} nelyo ukucila umweshi onse ubo mwabombako mu mulimo wa kushimikila.",
+      "infoStreak": "Icishinka conse ica kukonkana cilamupeela {{amount}} na kabili.",
+      "infoSpend": "Shibomfyeni mu Sitolo.",
+      "gain": "+{{amount}}",
+      "loss": "−{{amount}}",
+      "earnedA11y": "Mwapokelela {{amount}}"
+    },
+    "shop": {
+      "title": "Isitolo",
+      "back": "Bwelelapo",
+      "categories": "Ifiputulwa",
+      "buy": "Shiteni",
+      "buyA11y": "Shiteni {{item}} pa {{price}}",
+      "needMore": {
+        "one": "Mulekabila {{count}} na kabili",
+        "other": "Mulekabila {{count}} na kabili"
+      },
+      "needMoreA11y": "Mulekabila {{price}} na kabili pa {{item}}",
+      "wearing": "Alenga",
+      "inRoom": "Mu ng'anda",
+      "owned": "Ica kwenu",
+      "allOwned": "Fyonse ifi ni fyenu",
+      "wearingNow": "Alecilenga nomba",
+      "inRoomNow": "Cili mu ng'anda nomba",
+      "ownedHint": "Ica kwenu ukubomfya mu ng'anda ya {{name}}",
+      "boughtHat": "Mwashita {{item}}. {{name}} alecilenga.",
+      "boughtRoom": "Mwashita {{item}}. Cili mu ng'anda ya {{name}}.",
+      "leaves": "Mukashalwa na {{price}}",
+      "earnCoins": "Indalama shifuma ku nshiku mwaya mu mulimo",
+      "secretHint": "Cisangwa mu nshila, tacishitishiwa",
+      "itemPrice": "{{item}}, {{price}}",
+      "itemNotEnough": "{{item}}, {{price}}, indalama tashilakumana",
+      "itemOwned": "{{item}}, ica kwenu",
+      "previewA11y": "Ng'anda ya {{name}} na {{item}}"
+    },
+    "reward": {
+      "timeAdded": "Inshita yaongelwa",
+      "visitAdded": "Ulutandalilo lwaongelwa",
+      "monthShared": "Mwabombako umweshi",
+      "daysOut": {
+        "one": "Ubushiku mwaya mu mulimo",
+        "other": "Inshiku mwaya mu mulimo"
+      },
+      "plansKept": {
+        "one": "Ubushiku bwa bupange mwakonkele",
+        "other": "Inshiku sha bupange mwakonkele"
+      },
+      "milestone": "Icishinka ca kukonkana · {{count}}",
+      "milestoneMonths": {
+        "one": "Icishinka ca kukonkana · umweshi {{count}}",
+        "other": "Icishinka ca kukonkana · imyeshi {{count}}"
+      }
     }
   },
   "handoff_newDoneSynced": "Cloud Sync ileleta amalipoti yenu, abakulanshanya ne nsalu pa foni ino. Fileboneka panono.",
@@ -5198,6 +5360,29 @@
   "scribe_warning_overCreditCap": "Ici cipita pa mupaka wa credit uwa mweshi.",
   "scribe_usageTitle": "Ukubomfya Scribe AI",
   "scribe_memoryTitle": "Ukwibukisha kwa Scribe AI",
+  "scribe_enabledToggle": "Bomfyeni Scribe AI",
+  "scribe_turnedOffFooter": "Scribe AI yafiswa, kabili tapali ico batumako.",
+  "scribe_zdrRow": "Ukukanasunga Ifyebo",
+  "scribe_zdrLearnMore": "Sambilenipo",
+  "scribe_zdrTitle": "Ukukanasunga Ifyebo",
+  "scribe_zdrIntro": "Nga mwabomfya Scribe AI, ifyo mulanda nelyo ukulemba, ne fyalembwa ifyo ikabila pa kwasuka, filaya ku AI pa kupanga ifipya fyenu. Ifi e fyo ficitika kuli fyena.",
+  "scribe_zdrNothingStoredTitle": "Tapali icisungwa",
+  "scribe_zdrNothingStoredBody": "Ilyo Scribe AI yasuka, ifyo mwatumine filafumapo. Server ya WitnessWork taisunga nangu ukufilemba: te mashiwi, te mashina, te filembwa nangu ifikope. Ilapenda fye ifyo mwabomfya.",
+  "scribe_zdrNoTrainingTitle": "Tafibomfiwa nangu umuku umo ukusambilisha AI",
+  "scribe_zdrNoTrainingBody": "Scribe AI ibomfya fye abapeela AI abasumina mu cipangano ukukanasunga ifyebo fyenu nangu cimo no kukanafibomfya nangu umuku umo pa kusambilisha AI.",
+  "scribe_zdrOnDeviceTitle": "Ilyashi lyenu lishala na imwe",
+  "scribe_zdrOnDeviceBody": "Amalyashi yenu no kwibukisha kwa Scribe AI fisungwa fye pa cibombelo ici. Nga mwalanda, ishiwi lyenu lilulwa ku malembo pa cibombelo ici, kabili ifyo mwalanda tafisungwa.",
+  "scribe_zdrInControlTitle": "Imwe e musala ifyongelwa",
+  "scribe_zdrInControlBody": "Scribe AI isoka fye ifya kucinja. Tapali icongelwa mpaka mwatinta Ongeleni, kabili kuti mwashimya Scribe AI mu Settings inshita iili yonse.",
+  "scribe_zdrPolicyLink": "Belengeni amafunde ya OpenRouter aya kukanasunga ifyebo",
+  "scribe_termsTitle": "Ilyo mushilatendeka",
+  "scribe_termsPrivateTitle": "Ifyebo fyenu fishala fya nkama",
+  "scribe_termsPrivateBody": "Scribe AI ibomfya fye ifyo mwatuma pa kupanga ifipya fyenu. Tafisungwa, kabili tafibomfiwa nangu umuku umo pa kusambilisha AI.",
+  "scribe_termsMistakesTitle": "Moneni ilyo mushilaongela",
+  "scribe_termsMistakesBody": "AI kuti yalufyanya. Moneni ica kucinja conse ilyo mushilacongela.",
+  "scribe_termsBody": "Nga mwatinta Sumineni, mwasumina Terms of Use na Privacy Policy fya WitnessWork.",
+  "scribe_termsAgree": "Sumineni",
+  "scribe_consentContinue": "Twalilileni",
   "scribe_usageRow": "Ukubomfya",
   "scribe_memoryRow": "Ukwibukisha",
   "scribe_memoryToggle": "Ukwibukisha",

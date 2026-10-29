@@ -126,6 +126,9 @@
   "greetingGoalNicelyDone": "Đã đạt mục tiêu tháng. Làm tốt lắm!",
   "greetingGoalWayToGo": "Bạn đã đạt mục tiêu. Tuyệt vời!",
   "greetingBusyBee": "Chào bạn, ong chăm chỉ",
+  "greetingStreakOnARoll": "Bạn đang vào guồng rồi",
+  "greetingStreakGoingStrong": "Vẫn bền bỉ lắm!",
+  "greetingStreakLookAtYouGo": "Bạn giỏi quá!",
   "profileGreetingNoName": "Chào mừng quay lại",
   "profileUsingFor": {
     "one": "Đã dùng WitnessWork được {{days}} ngày",
@@ -191,6 +194,16 @@
   "streak_endingMonths": "Hãy ghi nhận thánh chức tháng {{month}} để giữ chuỗi của bạn.",
   "streak_recordMonth": "Ghi nhận thánh chức",
   "streak_howItWorks": "Chuỗi hoạt động thế nào",
+  "streak_unitPlans": {
+    "one": "ngày giữ đúng kế hoạch",
+    "other": "ngày giữ đúng kế hoạch"
+  },
+  "streak_unitMonths": {
+    "one": "tháng liên tiếp",
+    "other": "tháng liên tiếp"
+  },
+  "streak_started": "Bắt đầu",
+  "streak_best": "Kỷ lục",
   "streakCelebration_started": "Bạn đang có một chuỗi!",
   "streakCelebration_grew": "Chuỗi của bạn đang dài thêm!",
   "streakCelebration_captionPlans": "Bạn đã giữ mọi kế hoạch, không bỏ lỡ lần nào, dù cách nhau bao xa. Hãy tiếp tục vào ngày đã lên kế hoạch tiếp theo.",
@@ -392,6 +405,7 @@
   "save": "Lưu",
   "isBibleStudy": "là học viên kinh thánh",
   "add": "Thêm vào",
+  "addVisit": "Thêm lần thăm",
   "reminder_title": "Lời nhắc cho cuộc trò chuyện sắp tới",
   "reminder_topicLine": "Đề tài: {{topic}}",
   "addConversation": "Thêm cuộc trò chuyện",
@@ -1110,6 +1124,11 @@
       "c6": "WitnessWork nay có sẵn bằng tiếng Ả Rập, với bố cục đọc từ phải sang trái.",
       "c7": "Tùy chỉnh các thẻ trên Trang chủ và Tiến độ, định dạng ghi chú và thêm ảnh, lọc liên hệ theo lần thăm lại, và xem báo cáo của mỗi tháng đã được gửi khi nào.",
       "c8": "Hỗ trợ tốt hơn cho cỡ chữ lớn, trình đọc màn hình, chữ đậm và độ tương phản cao hơn."
+    },
+    "1460": {
+      "c1": "Giờ đây, thú cưng của bạn nhận được xu vàng mỗi ngày bạn đi rao giảng. Hãy dùng xu trong Cửa hàng mới để mua mũ và đồ dùng trong phòng, và xem mọi thứ bạn có trong Tủ đồ.",
+      "c2": "Chạm vào chuỗi của bạn trên Trang chủ để xem chuỗi bắt đầu khi nào và chuỗi dài nhất của bạn cho đến nay.",
+      "c3": "Bạn có thể tắt Scribe AI trong Cài đặt, và Scribe AI sẽ xin sự đồng ý của bạn trước khi bạn dùng lần đầu."
     }
   },
   "installed": "Cài đặt",
@@ -1527,6 +1546,7 @@
   "buddies_followUp": "Lần thăm lại",
   "buddies_noLongerAvailable": "Không còn khả dụng",
   "buddies_sharedBy": "Được chia sẻ bởi {{name}}. Những thay đổi họ thực hiện sẽ hiện ở đây.",
+  "buddies_linkedPlanFields": "{{name}} đặt ngày, giờ, tiêu đề, địa điểm và ghi chú, và các thay đổi của họ sẽ hiện ở đây. Số giờ, lời nhắc và Kiểu là của bạn, bạn có thể tự thay đổi.",
   "buddies_answeredGoing": "Bạn sẽ đi",
   "buddies_answeredDeclined": "Bạn không thể đi",
   "buddies_answerNotSent": "Chưa được gửi",
@@ -1551,6 +1571,8 @@
   "buddies_feedbackAttachmentFailed": "Phản hồi của bạn đã được gửi, nhưng không thể đính kèm dữ liệu chẩn đoán.",
   "formDetails": "Chi tiết",
   "planForm_duration": "Thời lượng",
+  "planForm_yourHours": "Số giờ của bạn",
+  "planForm_organizerPlanned": "{{name}} dự định {{hours}}",
   "planForm_howLong": "Bao lâu?",
   "planForm_justHours": "Chỉ số giờ",
   "planForm_timeSpan": "Khoảng thời gian",
@@ -1640,6 +1662,8 @@
   "gotIt": "Hiểu rồi!",
   "hint": "Gợi ý",
   "didYouKnow_kicker": "Bạn có biết?",
+  "didYouKnow_accountMenu_title": "Ảnh của bạn mở tài khoản",
+  "didYouKnow_accountMenu_body": "Chạm vào ảnh của bạn để mở hồ sơ, Cài đặt và Trung tâm trợ giúp.",
   "didYouKnow_longPressCopy_title": "Nhấn và giữ để sao chép",
   "didYouKnow_longPressCopy_body": "Chạm và giữ số điện thoại, email hoặc địa chỉ của liên hệ để sao chép ngay lập tức vào khay nhớ tạm của bạn.",
   "didYouKnow_swipeEditConvo_title": "Vuốt để chỉnh sửa nhanh cuộc hội thoại",
@@ -1699,6 +1723,22 @@
   "planDetails_repeats": "Lặp lại",
   "planDetails_changedForDate": "Đã thay đổi cho ngày này",
   "planDetails_organizer": "Người tổ chức",
+  "planDetails_invitedSeeWhosGoing": "Mọi người được mời đều thấy ai sẽ đi.",
+  "planDetails_whosGoing": "Ai sẽ đi",
+  "planDetails_goingCount": {
+    "one": "{{count}} người sẽ đi",
+    "other": "{{count}} người sẽ đi"
+  },
+  "planDetails_organizedBy": "Do {{name}} tổ chức",
+  "planDetails_whosGoingHint": "Hiện tất cả những người sẽ đi",
+  "planDetails_moreGoing": {
+    "one": "Thêm {{count}} người sẽ đi",
+    "other": "Thêm {{count}} người sẽ đi"
+  },
+  "planDetails_guestNotBuddyTitle": "{{name}} chưa là bạn đồng hành của bạn",
+  "planDetails_guestNotBuddyBody": "Để trở thành bạn đồng hành, hãy quét mã Bạn đồng hành của nhau khi gặp nhau.",
+  "planDetails_guestShowCode": "Hiện mã Bạn đồng hành của tôi",
+  "planDetails_guestNotBuddyHint": "Hiện cách trở thành bạn đồng hành",
   "planDetails_askedToJoin": "Đã xin tham gia",
   "visitDetails_title": "Cuộc trò chuyện",
   "visitDetails_pastConversation": "Bạn đã trò chuyện với {{name}}",
@@ -1860,7 +1900,7 @@
   "optional": "Lưu ý (Tùy chọn)",
   "addedConversation": "Đã thêm cuộc trò chuyện",
   "addedNotAtHome": "Đã thêm Không ở nhà",
-  "nwPublisher": "Nhà xuất bản Tây Bắc",
+  "nwPublisher": "NW Publisher",
   "nwPublisherOnlyAllowsLastMonth": "NW Publisher chỉ cho phép bạn gửi báo cáo của tháng trước.",
   "defaultExportMethod": "Phương thức gửi",
   "submitMonthsReport": "Gửi báo cáo của {{month}}",
@@ -1877,7 +1917,7 @@
   "deleteThisPlan": "Xóa kế hoạch này",
   "deleteThisAndFollowingPlans": "Xóa kế hoạch này và kế hoạch sau",
   "deleteAllPlans": "Xóa tất cả các kế hoạch",
-  "customField": "Danh mục tùy chỉnh",
+  "customField": "Trường tùy chỉnh",
   "customFields": "Trường tùy chỉnh",
   "customField_placeholder": "Nhập tên danh mục mới",
   "goesHere": "Nhập chi tiết",
@@ -1938,6 +1978,30 @@
   "forceDeleteContacts": "Buộc xóa liên hệ",
   "clearArchivedContacts": "Xóa liên hệ đã lưu trữ",
   "dangerZone": "Khu vực nguy hiểm",
+  "toolsDangerZone_info": "Xóa có chọn lọc. Mỗi mục đều yêu cầu xác nhận. Dùng Reset all ở trên cùng để xóa sạch như khi mới cài đặt.",
+  "toolsDangerZone_confirm": "Không thể hoàn tác thao tác này.",
+  "toolsDangerZone_categories": "Xóa danh mục tùy chỉnh",
+  "toolsDangerZone_categoriesBody": "Xóa các danh mục tùy chỉnh trên mọi thiết bị được đồng bộ. Giữ lại danh mục LDC có sẵn và các mục thời gian hiện có.",
+  "toolsDangerZone_contactFields": "Xóa trường tùy chỉnh của liên hệ",
+  "toolsDangerZone_contactFieldsBody": "Xóa vĩnh viễn mọi trường tùy chỉnh của liên hệ cùng các giá trị của chúng, kể cả ở liên hệ đã lưu trữ. Việc xóa sẽ được đồng bộ sang các thiết bị khác.",
+  "toolsDangerZone_visitFields": "Xóa trường tùy chỉnh của lần thăm",
+  "toolsDangerZone_visitFieldsBody": "Xóa vĩnh viễn mọi trường tùy chỉnh của lần thăm cùng các giá trị đã lưu. Việc xóa sẽ được đồng bộ sang các thiết bị khác.",
+  "toolsDangerZone_contactViews": "Xóa chế độ xem liên hệ đã lưu (cục bộ)",
+  "toolsDangerZone_localBody": "Xóa các chế độ xem đã lưu và chế độ xem đang dùng trên thiết bị này. Các thiết bị được đồng bộ có thể khôi phục chúng.",
+  "toolsDangerZone_mileage": "Xóa toàn bộ quãng đường (đồng bộ)",
+  "toolsDangerZone_mileageBody": "Xóa mọi phương tiện, nhiên liệu, giá, chuyến đi và số đọc công tơ mét. Việc xóa sẽ được đồng bộ sang các thiết bị khác.",
+  "toolsDangerZone_pet": "Thả thú cưng đồng hành (đồng bộ)",
+  "toolsDangerZone_petBody": "Thả thú cưng đồng hành và dọn sạch phòng của nó. Việc xóa sẽ được đồng bộ sang các thiết bị khác.",
+  "toolsDangerZone_badges": "Đặt lại huy hiệu",
+  "toolsDangerZone_badgesBody": "Quên các huy hiệu đã đạt, lịch sử huy hiệu và các lần chúc mừng đang chờ. Dữ liệu hiện có có thể giúp đạt lại chúng; đồng bộ có thể khôi phục chúng.",
+  "toolsDangerZone_scribe": "Xóa lịch sử Scribe AI",
+  "toolsDangerZone_scribeBody": "Dừng các lượt đang chạy và xóa cuộc trò chuyện, đề xuất, bản ghi hoàn tác và dữ liệu sử dụng đã lưu tạm trên thiết bị này. Các bản ghi đã thêm vẫn giữ nguyên; bộ nhớ và sự đồng ý cũng vậy. Giới hạn sử dụng trên máy chủ vẫn áp dụng.",
+  "toolsDangerZone_memory": "Xóa bộ nhớ Scribe AI",
+  "toolsDangerZone_memoryBody": "Xóa các ghi chú bộ nhớ trên thiết bị này. Giữ lại các cuộc trò chuyện và cài đặt bật/tắt bộ nhớ.",
+  "toolsDangerZone_routes": "Xóa lộ trình đã lưu",
+  "toolsDangerZone_places": "Xóa địa điểm lộ trình đã lưu",
+  "toolsDangerZone_notifications": "Đặt lại khay thông báo",
+  "toolsDangerZone_notificationsBody": "Xóa các thông báo thử nghiệm cùng lịch sử đã xem và đã bỏ qua trên thiết bị này. Các mục từ tính năng khác có thể xuất hiện lại.",
   "contacts": "Liên hệ",
   "serviceReports": "Báo cáo rao giảng",
   "servicePlans": "Kế hoạch thánh chức",
@@ -2212,6 +2276,8 @@
   "appIconUnsupported": "Thiết bị này không hỗ trợ thay đổi biểu tượng ứng dụng.",
   "appIconChangeFailed": "Không thể thay đổi biểu tượng ứng dụng. Hãy thử lại trong giây lát.",
   "appIconArtistCallTitle": "Tìm kiếm đối tác thiết kế",
+  "appIconArtistCallDetails": "Tôi rất muốn hợp tác với một họa sĩ hoặc nhà thiết kế đồ họa để tạo ra những biểu tượng ứng dụng vui nhộn và độc đáo. Đây là một dự án nhỏ độc lập nên tôi không thể đưa ra ngân sách lớn — nhưng tôi sẵn lòng trả một khoản thù lao khiêm tốn, kèm tư cách Người ủng hộ trọn đời miễn phí để thay lời cảm ơn.",
+  "appIconArtistCallContact": "Bạn quan tâm? Hãy liên hệ qua",
   "supporterAlwaysFreeNote": "Mọi tính năng cốt lõi đều miễn phí. Ủng hộ là tùy chọn và giúp tài trợ cho quá trình phát triển.",
   "supporterSheetTitle": "Trở thành người ủng hộ",
   "supporterSheetSubtitle": "Sự ủng hộ của bạn giúp WitnessWork tiếp tục hoạt động và mở khóa vài điểm cá nhân hóa.",
@@ -2589,6 +2655,7 @@
   "contacts_pinStaleness_week": "Tháng này",
   "contacts_pinStaleness_month": "Cũ",
   "contacts_stalenessChip_all": "Tất cả",
+  "contacts_filtersChip": "Bộ lọc",
   "contacts_searchPlaceholder": {
     "one": "Tìm trong 1 liên hệ",
     "other": "Tìm trong {{count}} liên hệ"
@@ -2990,6 +3057,16 @@
   "playSounds_descriptionAndroid": "Âm chúc mừng và âm lời nhắc khi WitnessWork đang mở. Các lời nhắc đến khi ứng dụng đóng theo cài đặt thông báo của thiết bị bạn.",
   "haptics": "Rung phản hồi",
   "haptics_description": "Phản hồi rung khi bạn chạm, lướt biểu đồ hoặc đạt mục tiêu.",
+  "rewards": "Phần thưởng",
+  "rewardAnimations": "Hiệu ứng phần thưởng",
+  "rewardAnimations_description": "Khi bạn nhận xu cho thú cưng, từng đồng xu sẽ bay ra màn hình và được cộng vào ví của nó. Chạm vào bất kỳ đâu để bỏ qua.",
+  "rewardSounds": "Âm thanh",
+  "rewardSounds_punch": "Mạnh",
+  "rewardSounds_retro": "Cổ điển",
+  "rewardSounds_soft": "Nhẹ",
+  "rewardSounds_off": "Tắt",
+  "rewardSounds_audioOff": "Âm thanh đang tắt trong Âm thanh & cảm ứng.",
+  "rewardSample": "Nghe thử",
   "notifications": "Thông báo",
   "remindersChannelName": "Lời nhắc",
   "purchasesUnavailable": "Hiện không thể mua hàng. Vui lòng thử lại sau.",
@@ -3013,6 +3090,8 @@
   "buddies_planSameTime": "Lên kế hoạch cùng giờ",
   "buddies_needsAnswer": "Cần câu trả lời của bạn",
   "buddies_together": "Cùng nhau",
+  "buddies_requestsWaiting": "Yêu cầu đang chờ",
+  "buddies_nextTogether": "Lần tới đi cùng nhau: {{date}}",
   "buddies_seeAllCount": "Xem tất cả ({{count}})",
   "buddies_showFewer": "Hiện ít hơn",
   "buddies_plan": "Kế hoạch",
@@ -3354,7 +3433,7 @@
     },
     "journeyNext": "{{date}} · tiếp theo",
     "nextVisit": "Lần thăm tiếp theo · {{date}}",
-    "seeUpNext": "xem Sắp tới",
+    "seeUpNext": "chi tiết",
     "gapEarlier": "trước đó {{gap}}",
     "sameDay": "Cùng ngày",
     "followUpUpcoming": "Đã hẹn thăm lại",
@@ -4265,6 +4344,7 @@
     "emptySection": "Hiện khi có nội dung để hiển thị",
     "description": {
       "approachingConversations": "Các lần thăm lại hôm nay, để ghi lại ngay khi đi",
+      "together": "Kế hoạch và lần thăm lại với bạn đồng hành, cùng các lời mời cần trả lời",
       "tabletServiceYearSummary": "Năm công tác của bạn so với mục tiêu",
       "serviceReport": "Thời gian và số học hỏi Kinh Thánh trong tháng này",
       "mileage": "Các chuyến đi và quãng đường tháng này",
@@ -4657,6 +4737,7 @@
       "rename": "Đổi tên…",
       "change": "Đổi thú cưng…",
       "decorate": "Mũ và phòng…",
+      "shop": "Cửa hàng…",
       "share": "Chia sẻ…"
     },
     "picker": {
@@ -4891,7 +4972,22 @@
     "details": {
       "change": "Đổi thú cưng",
       "share": "Chia sẻ",
+      "shop": "Cửa hàng",
       "settings": "Cài đặt"
+    },
+    "locker": {
+      "wearing": "Đang đội: {{item}}",
+      "noHat": "Không đội mũ",
+      "inRoom": "Trong phòng: {{item}}",
+      "current": "{{section}}: {{item}}",
+      "moreInShop": "Xem thêm trong Cửa hàng",
+      "moreCount": {
+        "one": "Còn {{count}} món để mua",
+        "other": "Còn {{count}} món để mua"
+      }
+    },
+    "hearts": {
+      "infoTitle": "Trái tim"
     },
     "intro": {
       "hearts": {
@@ -4899,11 +4995,15 @@
         "body": "Mỗi ngày bạn ghi hoạt động rao giảng sẽ thêm một trái tim. Nếu ngừng ghi, trái tim sẽ từ từ vơi đi.",
         "bodyMonths": "Mỗi tháng bạn ghi hoạt động rao giảng sẽ làm đầy tất cả trái tim. Bỏ một tháng, chúng sẽ từ từ vơi đi."
       },
+      "shop": {
+        "title": "Kiếm xu",
+        "body": "Mỗi ngày bạn đi rao giảng đều mang lại xu vàng. Hãy dùng xu trong Cửa hàng để mua mũ và đồ dùng trong phòng."
+      },
       "decorate": {
         "title": "Làm cho nó thành của riêng bạn",
         "body": "Chạm vào thú cưng để vỗ về. Chạm vào bất kỳ chỗ nào khác trên thẻ để chọn mũ và trang trí."
       },
-      "previewA11y": "Phòng của {{name}} với mọi thứ đã được mở",
+      "previewA11y": "Phòng của {{name}} với mọi món đồ",
       "next": "Tiếp",
       "done": "Xong",
       "step": "Bước {{step}} trên {{count}}"
@@ -4943,11 +5043,73 @@
     },
     "settings": {
       "title": "Cài đặt thú cưng",
+      "petTitle": "Thú cưng của bạn",
+      "name": "Tên",
       "showOnHome": "Hiện trên Trang chủ",
       "buddiesTitle": "Thú cưng của bạn đồng hành",
       "visits": "Thú cưng của bạn đồng hành đến thăm",
       "visitsInfo": "Vào ngày bạn đi rao giảng cùng một bạn đồng hành, thú cưng của họ sẽ đến thăm thú cưng của bạn.",
       "noBuddyPets": "Chưa có bạn đồng hành nào chia sẻ thú cưng."
+    },
+    "currency": {
+      "coin": {
+        "one": "{{count}} xu",
+        "other": "{{count}} xu"
+      },
+      "infoTitle": "Xu",
+      "infoDays": "Nhận 1 xu mỗi ngày bạn đi rao giảng (ghi thời gian hoặc một lần thăm), và thêm 1 xu nữa nếu đó là ngày đã lên kế hoạch mà bạn giữ đúng.",
+      "infoMonths": "Nhận ít nhất {{floor}} xu mỗi tháng bạn tham gia thánh chức.",
+      "infoStreak": "Mỗi cột mốc chuỗi được thêm {{amount}}.",
+      "infoSpend": "Hãy dùng xu trong Cửa hàng.",
+      "gain": "+{{amount}}",
+      "loss": "−{{amount}}",
+      "earnedA11y": "Đã nhận {{amount}}"
+    },
+    "shop": {
+      "title": "Cửa hàng",
+      "back": "Quay lại",
+      "categories": "Danh mục",
+      "buy": "Mua",
+      "buyA11y": "Mua {{item}} với giá {{price}}",
+      "needMore": {
+        "one": "Cần thêm {{count}}",
+        "other": "Cần thêm {{count}}"
+      },
+      "needMoreA11y": "Bạn cần thêm {{price}} để mua {{item}}",
+      "wearing": "Đang đội",
+      "inRoom": "Trong phòng",
+      "owned": "Đã có",
+      "allOwned": "Bạn đã có tất cả những món này",
+      "wearingNow": "Đang đội món này",
+      "inRoomNow": "Đang ở trong phòng",
+      "ownedHint": "Của bạn, dùng trong phòng của {{name}}",
+      "boughtHat": "Đã mua {{item}}. {{name}} đang đội nó.",
+      "boughtRoom": "Đã mua {{item}}. Món này đã ở trong phòng của {{name}}.",
+      "leaves": "Còn lại {{price}}",
+      "earnCoins": "Xu có được từ những ngày đi rao giảng",
+      "secretHint": "Tìm thấy dọc đường, không bán",
+      "itemPrice": "{{item}}, {{price}}",
+      "itemNotEnough": "{{item}}, {{price}}, chưa đủ xu",
+      "itemOwned": "{{item}}, đã có",
+      "previewA11y": "Phòng của {{name}} với {{item}}"
+    },
+    "reward": {
+      "timeAdded": "Đã thêm thời gian",
+      "visitAdded": "Đã thêm lần thăm",
+      "monthShared": "Tháng có tham gia thánh chức",
+      "daysOut": {
+        "one": "Ngày đi rao giảng",
+        "other": "Ngày đi rao giảng"
+      },
+      "plansKept": {
+        "one": "Ngày giữ đúng kế hoạch",
+        "other": "Ngày giữ đúng kế hoạch"
+      },
+      "milestone": "Cột mốc chuỗi · {{count}}",
+      "milestoneMonths": {
+        "one": "Cột mốc chuỗi · {{count}} tháng",
+        "other": "Cột mốc chuỗi · {{count}} tháng"
+      }
     }
   },
   "handoff_newDoneSynced": "Đồng bộ đám mây đang đưa dữ liệu, liên hệ và ghi chú của bạn vào điện thoại này. Chúng sẽ xuất hiện trong giây lát.",
@@ -5198,6 +5360,29 @@
   "scribe_warning_overCreditCap": "Việc này vượt giới hạn giờ tính thêm trong tháng của bạn.",
   "scribe_usageTitle": "Mức dùng Scribe AI",
   "scribe_memoryTitle": "Bộ nhớ Scribe AI",
+  "scribe_enabledToggle": "Dùng Scribe AI",
+  "scribe_turnedOffFooter": "Scribe AI đang ẩn và không có gì được gửi đến Scribe AI.",
+  "scribe_zdrRow": "Không lưu giữ dữ liệu",
+  "scribe_zdrLearnMore": "Tìm hiểu thêm",
+  "scribe_zdrTitle": "Không lưu giữ dữ liệu",
+  "scribe_zdrIntro": "Khi bạn dùng Scribe AI, những gì bạn nói hoặc nhập, cùng các bản ghi cần thiết để trả lời, sẽ được gửi đến một mô hình AI để soạn nội dung cập nhật cho bạn. Đây là điều xảy ra với chúng.",
+  "scribe_zdrNothingStoredTitle": "Không lưu lại gì",
+  "scribe_zdrNothingStoredBody": "Khi Scribe AI trả lời xong, những gì bạn gửi sẽ không còn nữa. Máy chủ của WitnessWork không bao giờ lưu hay ghi nhật ký những nội dung đó: không tin nhắn, tên, ghi chú hay ảnh. Máy chủ chỉ đếm mức bạn đã sử dụng.",
+  "scribe_zdrNoTrainingTitle": "Không bao giờ dùng để huấn luyện",
+  "scribe_zdrNoTrainingBody": "Scribe AI chỉ dùng những nhà cung cấp AI cam kết theo hợp đồng không lưu giữ dữ liệu nào của bạn và không bao giờ dùng dữ liệu đó để huấn luyện.",
+  "scribe_zdrOnDeviceTitle": "Lịch sử của bạn ở lại với bạn",
+  "scribe_zdrOnDeviceBody": "Các cuộc trò chuyện và bộ nhớ của Scribe AI chỉ được lưu trên thiết bị này. Khi bạn nói, giọng nói được chuyển thành văn bản ngay trên thiết bị này và bản ghi âm không được lưu.",
+  "scribe_zdrInControlTitle": "Bạn quyết định những gì được thêm",
+  "scribe_zdrInControlBody": "Scribe AI chỉ đề xuất thay đổi. Không có gì được thêm cho đến khi bạn chạm Thêm, và bạn có thể tắt Scribe AI trong Cài đặt bất cứ lúc nào.",
+  "scribe_zdrPolicyLink": "Đọc chính sách không lưu giữ dữ liệu của OpenRouter",
+  "scribe_termsTitle": "Trước khi bắt đầu",
+  "scribe_termsPrivateTitle": "Dữ liệu của bạn được giữ riêng tư",
+  "scribe_termsPrivateBody": "Scribe AI chỉ dùng những gì bạn gửi để soạn nội dung cập nhật. Dữ liệu này không được lưu và không bao giờ được dùng để huấn luyện AI.",
+  "scribe_termsMistakesTitle": "Kiểm tra trước khi thêm",
+  "scribe_termsMistakesBody": "AI có thể mắc lỗi. Hãy xem lại từng thay đổi trước khi thêm.",
+  "scribe_termsBody": "Khi chạm Đồng ý, bạn chấp nhận Điều khoản sử dụng và Chính sách bảo mật của WitnessWork.",
+  "scribe_termsAgree": "Đồng ý",
+  "scribe_consentContinue": "Tiếp tục",
   "scribe_usageRow": "Mức dùng",
   "scribe_memoryRow": "Bộ nhớ",
   "scribe_memoryToggle": "Bộ nhớ",

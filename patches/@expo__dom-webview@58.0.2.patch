@@ -52,6 +52,41 @@ index 790b2e05e333756a11a64712d64cc0ea8f872c38..e27e5fc934185e0c81cf02b510bbe77f
        OnViewDidUpdateProps { view: DomWebView ->
          view.reload()
        }
+diff --git a/build/DomWebView.js b/build/DomWebView.js
+index 9c61f8347f7bd96b51b5277df3e8bf3073aebc3f..c2d9713237c27f0e189e5bdc2a22659eeed72d97 100644
+--- a/build/DomWebView.js
++++ b/build/DomWebView.js
+@@ -10,7 +10,9 @@ const WebView = /*#__PURE__*/ React.forwardRef(({ containerStyle, style, injecte
+     React.useImperativeHandle(ref, ()=>({
+             scrollTo: (params)=>viewRef.current?.scrollTo(params),
+             injectJavaScript: (script)=>viewRef.current?.injectJavaScript(script),
+-            reload: ()=>viewRef.current?.reload()
++            reload: ()=>viewRef.current?.reload(),
++            requestFocus: ()=>viewRef.current?.requestFocus(),
++            setGestureExclusion: (rects)=>viewRef.current?.setGestureExclusion(rects)
+         }), []);
+     const webViewStyles = [
+         webviewStyles.container,
+diff --git a/build/DomWebView.types.d.ts b/build/DomWebView.types.d.ts
+index a098e177dfb7c6ecf1d5ff86bb8558060847cfbe..f072b5a798780361206bf8d7de7dd78da48df95e 100644
+--- a/build/DomWebView.types.d.ts
++++ b/build/DomWebView.types.d.ts
+@@ -254,6 +254,15 @@ export type DomWebViewRef = {
+      * Reloads the current page in the `WebView`.
+      */
+     reload: () => void;
++    /**
++     * Android: focuses the web view and shows the keyboard (WitnessWork patch).
++     */
++    requestFocus(): void;
++    /**
++     * Android: keeps the back gesture off these rects, `[x, y, width, height]`
++     * in CSS pixels (WitnessWork patch).
++     */
++    setGestureExclusion(rects: number[][]): void;
+ };
+ export interface DomWebViewSource {
+     /**
 diff --git a/src/DomWebView.tsx b/src/DomWebView.tsx
 index 3a07ac938325385dc7e314f0e6d557068bc6f622..945c3bc07db2314f6b265880591e000af88f82da 100644
 --- a/src/DomWebView.tsx

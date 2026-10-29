@@ -1,0 +1,32 @@
+diff --git a/dist/recyclerview/RecyclerView.js b/dist/recyclerview/RecyclerView.js
+index 6799c8a61bff4607633196097da35c7a6975f0b6..ee74a02c620a385f9cb231620652612080f93252 100644
+--- a/dist/recyclerview/RecyclerView.js
++++ b/dist/recyclerview/RecyclerView.js
+@@ -241,7 +241,10 @@ const RecyclerViewComponent = (props, ref) => {
+      */
+     const validateItemSize = useCallback((index, size) => {
+         var _a, _b, _c, _d;
+-        const layout = recyclerViewManager.getLayout(index);
++        const layout = recyclerViewManager.tryGetLayout(index);
++        if (!layout) {
++            return;
++        }
+         const width = Math.max(Math.min(layout.width, (_a = layout.maxWidth) !== null && _a !== void 0 ? _a : Infinity), (_b = layout.minWidth) !== null && _b !== void 0 ? _b : 0);
+         const height = Math.max(Math.min(layout.height, (_c = layout.maxHeight) !== null && _c !== void 0 ? _c : Infinity), (_d = layout.minHeight) !== null && _d !== void 0 ? _d : 0);
+         if (areDimensionsNotEqual(width, size.width) ||
+diff --git a/src/recyclerview/RecyclerView.tsx b/src/recyclerview/RecyclerView.tsx
+index 3c25e7e893004932b8a13072e01fe2a940d365d4..9c833bcd1fb34afb022f17f9a8c1dfc00b875eb9 100644
+--- a/src/recyclerview/RecyclerView.tsx
++++ b/src/recyclerview/RecyclerView.tsx
+@@ -374,7 +374,10 @@ const RecyclerViewComponent = <T,>(
+    */
+   const validateItemSize = useCallback(
+     (index: number, size: RVDimension) => {
+-      const layout = recyclerViewManager.getLayout(index);
++      const layout = recyclerViewManager.tryGetLayout(index);
++      if (!layout) {
++        return;
++      }
+       const width = Math.max(
+         Math.min(layout.width, layout.maxWidth ?? Infinity),
+         layout.minWidth ?? 0

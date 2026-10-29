@@ -8,7 +8,6 @@ import {
   Platform,
   Pressable,
   ScrollView,
-  StatusBar,
   StyleProp,
   useWindowDimensions,
   View,
@@ -522,7 +521,6 @@ const AnchoredPopover = ({
         }}
       >
         {overlay}
-        <StatusBar translucent />
       </Modal>
     </>
   )

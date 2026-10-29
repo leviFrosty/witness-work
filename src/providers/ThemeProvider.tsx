@@ -34,7 +34,7 @@ const ThemeProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
     'customAccentColor',
     { isSupporter }
   )
-  const scheme = colorScheme === 'unspecified' ? undefined : colorScheme
+  const scheme = colorScheme ?? undefined
   const resolvedScheme = theme ?? scheme
   // Every face is its own font family, so the system's bold text setting can't
   // embolden them; the theme swaps in heavier ones itself.

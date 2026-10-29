@@ -4,8 +4,14 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 
 const { rtl } = vi.hoisted(() => ({ rtl: { value: false } }))
 
-vi.mock('react-native', () => ({ View: 'View' }))
-vi.mock('react-native-gesture-handler', () => ({ Swipeable: 'Swipeable' }))
+vi.mock('react-native-reanimated', () => ({
+  default: { View: 'View' },
+  useAnimatedStyle: (style: () => object) => style(),
+}))
+vi.mock('react-native-gesture-handler/ReanimatedSwipeable', () => ({
+  default: 'Swipeable',
+  SwipeDirection: { LEFT: 'left', RIGHT: 'right' },
+}))
 vi.mock('@/lib/direction', () => ({ isRtlLayout: () => rtl.value }))
 
 import SwipeableRow from '@/components/ui/SwipeableRow'
@@ -29,11 +35,13 @@ const render = async () => {
   return root.root.findByType('Swipeable' as never).props
 }
 
-/** Renders one side's actions the way `Swipeable` would. */
-const actions = async (render: () => React.ReactNode) => {
+type Render = (progress: { value: number }) => React.ReactNode
+
+/** Renders one side's actions the way `Swipeable` would, part open. */
+const actions = async (render: Render, progress = 0.5) => {
   let side!: ReactTestRenderer
   await act(async () => {
-    side = create(<>{render()}</>)
+    side = create(<>{render({ value: progress })}</>)
   })
   return side.root
 }
@@ -54,6 +62,17 @@ describe('SwipeableRow', () => {
     ).toBe(true)
   })
 
+  it('shows the actions only once the row moves', async () => {
+    const props = await render()
+    const opacity = async (progress: number) => {
+      const left = await actions(props.renderLeftActions, progress)
+      const style = left.findByType('Leading' as never).parent!.props.style
+      return Object.assign({}, ...style).opacity
+    }
+    expect(await opacity(0)).toBe(0)
+    expect(await opacity(0.2)).toBe(1)
+  })
+
   it('puts the leading actions on the right in right-to-left layouts', async () => {
     rtl.value = true
     const props = await render()
@@ -61,6 +80,35 @@ describe('SwipeableRow', () => {
     expect(right.findAllByType('Leading' as never)).toHaveLength(1)
     const left = await actions(props.renderLeftActions)
     expect(left.findAllByType('Trailing' as never)).toHaveLength(1)
+  })
+
+  it('names the opened side by where its actions sit', async () => {
+    const opened = vi.fn()
+    const willOpen = vi.fn()
+    await act(async () => {
+      root = create(
+        <SwipeableRow onSwipeableOpen={opened} onSwipeableWillOpen={willOpen} />
+      )
+    })
+    const props = root.root.findByType('Swipeable' as never).props
+    // A row that moved right shows the left actions: leading, in LTR.
+    props.onSwipeableWillOpen('right')
+    props.onSwipeableWillOpen('left')
+    expect(willOpen.mock.calls).toEqual([['leading'], ['trailing']])
+    // Without a mounted row there's nothing to hand back, so no call.
+    props.onSwipeableOpen('right')
+    expect(opened).not.toHaveBeenCalled()
+  })
+
+  it('swaps the opened side in right-to-left layouts', async () => {
+    rtl.value = true
+    const willOpen = vi.fn()
+    await act(async () => {
+      root = create(<SwipeableRow onSwipeableWillOpen={willOpen} />)
+    })
+    const props = root.root.findByType('Swipeable' as never).props
+    props.onSwipeableWillOpen('right')
+    expect(willOpen).toHaveBeenCalledWith('trailing')
   })
 
   it('renders no side that has no actions', async () => {

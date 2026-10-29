@@ -8,7 +8,7 @@ import {
   useRef,
   useState,
 } from 'react'
-import { Pressable, StatusBar, useWindowDimensions, View } from 'react-native'
+import { Pressable, useWindowDimensions, View } from 'react-native'
 import { Image } from 'expo-image'
 import Animated, {
   interpolate,
@@ -333,7 +333,6 @@ const Avatar = ({
               ) : null}
             </Animated.View>
           )}
-          <StatusBar translucent />
         </FullWindowOverlay>
       )}
     </>

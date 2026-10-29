@@ -1,27 +1,8 @@
-diff --git a/android/src/main/java/expo/modules/ui/HostView.kt b/android/src/main/java/expo/modules/ui/HostView.kt
-index 94f57671a000634b77a48dc12aebd2ceb4242df7..d58b93dfcaaa706c0208d7734bd5337a3f5d6b21 100644
---- a/android/src/main/java/expo/modules/ui/HostView.kt
-+++ b/android/src/main/java/expo/modules/ui/HostView.kt
-@@ -232,7 +232,13 @@ internal class HostView(context: Context, appContext: AppContext) :
-         shadowNodeProxy.setStyleSize(styleWidth?.toDouble(), styleHeight?.toDouble())
-       }
- 
--      onLayoutContent(LayoutContentEvent(width.toDouble(), height.toDouble()))
-+      // `onSizeChanged` runs inside the Compose measure pass. Emitting the event here reaches
-+      // Fabric event listeners synchronously (e.g. reanimated's `onEventDispatch` hook), which
-+      // can flush mount items and re-enter `onMeasure` of a view that is mid-measure — Compose
-+      // then throws "performMeasureAndLayout called during measure layout" and takes down the
-+      // ReactHost. Post the dispatch so it runs after the measure pass completes.
-+      // See https://github.com/expo/expo/issues/47625.
-+      post { onLayoutContent(LayoutContentEvent(width.toDouble(), height.toDouble())) }
-     }
-   }
- 
 diff --git a/android/src/main/java/expo/modules/ui/ModifierRegistry.kt b/android/src/main/java/expo/modules/ui/ModifierRegistry.kt
-index 889374921a22844660f113e807f639c33320e575..57454534cf44d9a5a2e14d405a4f6f359977049a 100644
+index 68b3df6d42fd65a982c3926e5500f5e9e06e7a56..dcb2e2f9d4e916b5b7c3c74e8b367b88b02b6abf 100644
 --- a/android/src/main/java/expo/modules/ui/ModifierRegistry.kt
 +++ b/android/src/main/java/expo/modules/ui/ModifierRegistry.kt
-@@ -65,7 +65,9 @@ import androidx.compose.ui.platform.LocalDensity
+@@ -70,7 +70,9 @@ import androidx.compose.ui.platform.LocalDensity
  import androidx.compose.ui.semantics.Role
  import androidx.compose.ui.semantics.contentDescription
  import androidx.compose.ui.semantics.contentType
@@ -31,8 +12,8 @@ index 889374921a22844660f113e807f639c33320e575..57454534cf44d9a5a2e14d405a4f6f35
  import androidx.compose.ui.unit.DpOffset
  import androidx.compose.ui.unit.dp
  import androidx.compose.ui.zIndex
-@@ -660,12 +662,24 @@ object ModifierRegistry {
-       val params = recordFromMap<SemanticsParams>(map)
+@@ -709,12 +711,24 @@ object ModifierRegistry {
+       val params = recordFromMap<SemanticsParams>(map, appContext)
        val type = params.contentType.toContentType()
        val description = params.contentDescription
 -      if (type == null && description == null) {
@@ -73,10 +54,10 @@ index 6c36d1fcad46d12b693fe962b8594534b8fb2cbe..898007fff7fdd1a672f72eac23ea1844
  
  internal fun String?.toContentType(): ContentType? = when (this) {
 diff --git a/build/jetpack-compose/modifiers/index.d.ts b/build/jetpack-compose/modifiers/index.d.ts
-index a8ada54dcf7f463771dd31743a0db04d432e8b4a..c740eea7fca5faf3c6eb13febbc08b239f91df98 100644
+index 0decc53cc54b04316c0809b509df3b4a07d984b4..6152158fee3e78c517b6ac303b25affdc4ea2ccc 100644
 --- a/build/jetpack-compose/modifiers/index.d.ts
 +++ b/build/jetpack-compose/modifiers/index.d.ts
-@@ -315,6 +315,14 @@ export type SemanticsConfig = {
+@@ -340,6 +340,14 @@ export type SemanticsConfig = {
       * content does not read well aloud, as with an abbreviation or a glyph.
       */
      contentDescription?: string;
@@ -92,10 +73,10 @@ index a8ada54dcf7f463771dd31743a0db04d432e8b4a..c740eea7fca5faf3c6eb13febbc08b23
  /**
   * Applies semantic properties. Wraps `Modifier.semantics { ... }`.
 diff --git a/build/universal/Collapsible/types.d.ts b/build/universal/Collapsible/types.d.ts
-index 65e17099edd23f8980aded7e7890259922b2a949..83aae3d7838f3e7e7c7a8f0e140303f8097b63ec 100644
+index ef4fd921b6190b07784bfea3ed32bbacae3fc02f..0facae71579001ef8ac1cf0f42b974a184f93776 100644
 --- a/build/universal/Collapsible/types.d.ts
 +++ b/build/universal/Collapsible/types.d.ts
-@@ -24,5 +24,11 @@ export interface CollapsibleProps {
+@@ -24,4 +24,10 @@ export interface CollapsibleProps {
       * Content rendered when `isOpen` is `true`.
       */
      children?: React.ReactNode;
@@ -106,8 +87,6 @@ index 65e17099edd23f8980aded7e7890259922b2a949..83aae3d7838f3e7e7c7a8f0e140303f8
 +     */
 +    stateDescription?: string;
  }
- //# sourceMappingURL=types.d.ts.map
-\ No newline at end of file
 diff --git a/ios/DatePickerView.swift b/ios/DatePickerView.swift
 index 24db7b13b0eb4e935cacfdc5b34978d13a290246..801cfc52dd32db0c8cc726432ae535a1a05b33a2 100644
 --- a/ios/DatePickerView.swift
@@ -198,10 +177,10 @@ index 24db7b13b0eb4e935cacfdc5b34978d13a290246..801cfc52dd32db0c8cc726432ae535a1
      }
    }
 diff --git a/src/jetpack-compose/modifiers/index.ts b/src/jetpack-compose/modifiers/index.ts
-index aeddd1c065a3de77f64e52aa2fece7ad23fe68d8..e69f23425e24555dea10b4865425d2636896f6ef 100644
+index 9ab09f9867e129561e1563787a6898425df58b2c..c787fe8de1f7084ecfd705e1f98ecb9a5c11dd6c 100644
 --- a/src/jetpack-compose/modifiers/index.ts
 +++ b/src/jetpack-compose/modifiers/index.ts
-@@ -456,6 +456,14 @@ export type SemanticsConfig = {
+@@ -480,6 +480,14 @@ export type SemanticsConfig = {
     * content does not read well aloud, as with an abbreviation or a glyph.
     */
    contentDescription?: string;

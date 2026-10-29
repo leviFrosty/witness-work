@@ -14,12 +14,12 @@ onlyBuiltDependencies:
   - '@shopify/react-native-skia'
 overrides:
   # apple-targets 5.0.0 pins SDK 55's prebuild-config, which would displace
-  # SDK 57's hoisted copy. It only uses `writeContentsJsonAsync` from it.
-  '@bacons/apple-targets>@expo/prebuild-config': 57.0.16
-  expo-modules-autolinking: 57.0.6
+  # SDK 58's hoisted copy. It only uses `writeContentsJsonAsync` from it.
+  '@bacons/apple-targets>@expo/prebuild-config': 58.0.14
+  expo-modules-autolinking: 58.0.13
   react-native-safe-area-context: $react-native-safe-area-context
   axios: 1.20.0
-  '@expo/metro': 56.0.2
+  '@expo/metro': 58.0.0
   glob: '>=11.1.0'
   # Fix both critical Handlebars injection advisories in eslint-plugin-boundaries.
   handlebars: 4.7.10
@@ -34,11 +34,11 @@ overrides:
   fast-uri: 3.1.8
   'js-yaml@3': 3.15.2
   'js-yaml@4': 4.3.2
-  metro: 0.84.5
-  metro-config: 0.84.5
-  metro-core: 0.84.5
-  metro-runtime: 0.84.5
-  metro-source-map: 0.84.5
+  metro: 0.87.1
+  metro-config: 0.87.1
+  metro-core: 0.87.1
+  metro-runtime: 0.87.1
+  metro-source-map: 0.87.1
   'nanoid@3': '^3.3.18'
   shell-quote: '^1.11.0'
   'ws@8': '^8.21.3'
@@ -52,12 +52,13 @@ overrides:
   # GHSA-g7r4-m6w7-qqqr (Windows dev server); @tamagui/static pins ^0.27.
   esbuild: 0.28.2
 patchedDependencies:
-  '@expo/dom-webview@57.0.1': patches/@expo__dom-webview@57.0.1.patch
-  '@expo/fingerprint@0.20.13': patches/@expo__fingerprint.patch
-  '@expo/ui@57.0.21': patches/@expo__ui@57.0.21.patch
+  '@expo/dom-webview@58.0.2': patches/@expo__dom-webview@58.0.2.patch
+  '@expo/fingerprint@0.21.5': patches/@expo__fingerprint@0.21.5.patch
+  '@expo/ui@58.0.21': patches/@expo__ui@58.0.21.patch
+  '@shopify/flash-list@2.3.2': patches/@shopify__flash-list@2.3.2.patch
   expo-alternate-app-icons: patches/expo-alternate-app-icons.patch
-  expo@57.0.26: patches/expo@57.0.26.patch
+  expo@58.0.16: patches/expo@58.0.16.patch
   hot-updater@1.0.2: patches/hot-updater@1.0.2.patch
-  react-native-gesture-handler@2.32.0: patches/react-native-gesture-handler@2.32.0.patch
-  react-native-maps@1.27.2: patches/react-native-maps@1.27.2.patch
+  react-native-gesture-handler@3.3.0: patches/react-native-gesture-handler@3.3.0.patch
+  react-native-maps@1.29.11: patches/react-native-maps@1.29.11.patch
 enableGlobalVirtualStore: true

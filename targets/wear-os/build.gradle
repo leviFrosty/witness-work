@@ -79,6 +79,8 @@ android {
   buildFeatures {
     compose true
     buildConfig true
+    // For `app_name` above; AGP 9 turns custom resource values off by default.
+    resValues true
   }
 
   compileOptions {

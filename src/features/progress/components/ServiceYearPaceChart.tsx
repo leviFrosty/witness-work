@@ -8,7 +8,11 @@ import {
   Line as SkiaLine,
   vec,
 } from '@shopify/react-native-skia'
-import { Gesture, PointerType } from 'react-native-gesture-handler'
+import {
+  Gesture,
+  PointerType,
+  type ComposedGesture,
+} from 'react-native-gesture-handler'
 import {
   runOnJS,
   useAnimatedReaction,
@@ -237,7 +241,10 @@ const ServiceYearPaceChart = ({
             chartPressConfig={{
               pan: { activateAfterLongPress: SCRUB_LONG_PRESS_MS },
             }}
-            customGestures={hoverGesture}
+            // victory-native types this with Gesture Handler 3's
+            // `ComposedGesture`, but races it with its own pan through the
+            // builder API (`Gesture.Race`), which is what this is.
+            customGestures={hoverGesture as ComposedGesture | undefined}
             actionsRef={chartActions}
           >
             {({ points, chartBounds, yScale: chartYScale }) => (

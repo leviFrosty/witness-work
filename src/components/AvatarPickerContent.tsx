@@ -20,6 +20,7 @@ import { ACCENT_PRESETS } from '@/components/AccentColorPicker'
 import CustomColorSwatch from '@/components/CustomColorSwatch'
 import i18n from '@/lib/locales'
 import { logger } from '@/lib/logger'
+import { toast } from '@/stores/toasts'
 import {
   originalSiblingFileName,
   revisionImageFileName,
@@ -28,6 +29,7 @@ import {
 } from '@/lib/contactAvatarFiles'
 import ContactAvatarCropEditor from '@/components/ContactAvatarCropEditor'
 import { useAvatarDraftFiles } from '@/hooks/useAvatarDraftFiles'
+import useLibraryImagePicker from '@/hooks/useLibraryImagePicker'
 
 export type AvatarMetaCapture = {
   width: number
@@ -259,6 +261,7 @@ const AvatarPickerContent = ({
 }: Props) => {
   const theme = useTheme()
   const draftFiles = useAvatarDraftFiles()
+  const library = useLibraryImagePicker('avatar')
 
   /**
    * Pending pick that's awaiting user crop. Holds enough state to render the
@@ -306,12 +309,19 @@ const AvatarPickerContent = ({
         return
       }
     }
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
-      allowsEditing: false,
-      exif: true,
-      quality: 1,
-    })
+    let result: ImagePicker.ImagePickerResult
+    try {
+      result = await library.pick({
+        mediaTypes: ['images'],
+        allowsEditing: false,
+        exif: true,
+        quality: 1,
+      })
+    } catch (e) {
+      logger.error('Failed to pick an avatar image', e)
+      toast.error(i18n.t('photoPicker_failed'))
+      return
+    }
     if (result.canceled || !result.assets[0]) return
 
     const asset = result.assets[0]
@@ -454,6 +464,7 @@ const AvatarPickerContent = ({
           </Button>
         )}
       </View>
+      {library.host}
       {pendingPick && (
         <ContactAvatarCropEditor
           visible

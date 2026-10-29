@@ -29,6 +29,7 @@ import {
   type EditorSetup,
 } from '@/components/richText/editor/editorProtocol'
 import useTheme from '@/contexts/theme'
+import useLibraryImagePicker from '@/hooks/useLibraryImagePicker'
 import { relativeLuminance } from '@/lib/color'
 import { isRtlLayout } from '@/lib/direction'
 import i18n from '@/lib/locales'
@@ -76,6 +77,7 @@ const RichTextEditor = (props: {
   onLoad?: () => void
 }) => {
   const theme = useTheme()
+  const library = useLibraryImagePicker('note')
   const insets = useSafeAreaInsets()
   const fontSizeOffset = usePreferences((s) => s.fontSizeOffset)
   const { setEnabled } = useKeyboardController()
@@ -229,15 +231,24 @@ const RichTextEditor = (props: {
       quality: 1,
       exif: false,
     }
-    const result =
-      source === 'camera'
-        ? await ImagePicker.launchCameraAsync(options)
-        : await ImagePicker.launchImageLibraryAsync({
-            ...options,
-            allowsMultipleSelection: true,
-            selectionLimit: remaining,
-            orderedSelection: true,
-          })
+    let result: ImagePicker.ImagePickerResult
+    try {
+      result =
+        source === 'camera'
+          ? await ImagePicker.launchCameraAsync(options)
+          : await library.pick({
+              ...options,
+              allowsMultipleSelection: true,
+              selectionLimit: remaining,
+              orderedSelection: true,
+            })
+    } catch (error) {
+      logger.error('Failed to pick a photo for a note', error)
+      props.onPhotoFailed?.()
+      Alert.alert(i18n.t('error'), i18n.t('richText_photoFailed'))
+      run({ type: 'focus' })
+      return
+    }
     if (result.canceled) {
       run({ type: 'focus' })
       return
@@ -346,6 +357,7 @@ const RichTextEditor = (props: {
           run({ type: 'unsetLink' })
         }}
       />
+      {library.host}
     </View>
   )
 }

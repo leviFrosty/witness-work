@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import * as ImagePicker from 'expo-image-picker'
 import Haptics from '@/lib/haptics'
 import { logger } from '@/lib/logger'
+import useLibraryImagePicker from '@/hooks/useLibraryImagePicker'
 import type {
   ScribePaperCapture,
   ScribePaperError,
@@ -56,7 +57,10 @@ interface PaperBatch {
 }
 
 async function pick(
-  source: 'camera' | 'library'
+  source: 'camera' | 'library',
+  pickLibrary: (
+    options: ImagePicker.ImagePickerOptions
+  ) => Promise<ImagePicker.ImagePickerResult>
 ): Promise<ScribePaperPage[] | null> {
   if (source === 'camera') {
     let permission = await ImagePicker.getCameraPermissionsAsync()
@@ -72,7 +76,7 @@ async function pick(
   const result =
     source === 'camera'
       ? await ImagePicker.launchCameraAsync(options)
-      : await ImagePicker.launchImageLibraryAsync({
+      : await pickLibrary({
           ...options,
           allowsMultipleSelection: true,
           selectionLimit: SCRIBE_PAPER_MAX_PAGES,
@@ -109,6 +113,7 @@ export function useScribePaperCapture(): ScribePaperCapture {
   const [retryAt, setRetryAt] = useState<number | null>(null)
   const [unread, setUnread] = useState<ScribePaperCapture['unread']>(null)
   const running = useRef(false)
+  const library = useLibraryImagePicker('scribe_paper')
   const controller = useRef<AbortController | null>(null)
   // The batch waiting on Try again or Skip.
   const kept = useRef<PaperBatch | null>(null)
@@ -269,7 +274,7 @@ export function useScribePaperCapture(): ScribePaperCapture {
       const pages =
         source === 'pages'
           ? (given ?? []).slice(0, SCRIBE_PAPER_MAX_PAGES)
-          : await pick(source)
+          : await pick(source, library.pick)
       if (!pages?.length) return null
       // New pages end a kept batch; what it read goes in first.
       const held = kept.current ? finish(kept.current) : ''
@@ -316,6 +321,7 @@ export function useScribePaperCapture(): ScribePaperCapture {
 
   return {
     available: true,
+    picker: library.host,
     busy: progress !== null,
     progress,
     error,

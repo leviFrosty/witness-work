@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import type { SharedValue } from 'react-native-reanimated'
 
 /** Where the User started Scribe AI (analytics `entry`). */
@@ -537,6 +538,8 @@ export interface ScribePaperPage {
 /** On-device OCR of a scan or photos (iOS; `available` false elsewhere). */
 export interface ScribePhotoCapture {
   available: boolean
+  /** The limited-access photo picker; render it on the screen that captures. */
+  picker: ReactNode
   busy: boolean
   /** Text for the composer, or null when cancelled or nothing was read. */
   capture(): Promise<string | null>
@@ -548,6 +551,8 @@ export type ScribePaperError = ScribeErrorCode | 'page_limit'
 /** Paper pages read by ww-api (/scribe/v1/transcribe), metered. */
 export interface ScribePaperCapture {
   available: boolean
+  /** The limited-access photo picker; render it on the screen that captures. */
+  picker: ReactNode
   busy: boolean
   progress: { done: number; total: number } | null
   /** The last batch's failure; cleared when any new capture or send starts. */

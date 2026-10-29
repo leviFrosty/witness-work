@@ -167,6 +167,7 @@ export const analyticsEventNames = [
   'reward_stack_skipped',
   'note_photo_added',
   'note_photo_failed',
+  'photo_picker_limited_closed',
   'notification_opened',
   'pointer_hover_detected',
   'progress_cards_customized',

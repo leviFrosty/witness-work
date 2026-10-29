@@ -276,6 +276,8 @@ const Conversation = ({
           />
         }
       />
+      {photo.picker}
+      {paper.picker}
     </>
   )
 }

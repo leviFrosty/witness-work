@@ -26,6 +26,7 @@ import { RevealHeadline } from '@/features/updates/hooks/useRevealChoreography'
 import { RevealChip } from '@/features/updates/hooks/useRevealPages'
 import RevealChips from '@/features/updates/components/reveal/RevealChips'
 import { tracking } from '@/lib/tracking'
+import { useWindowFoldColumn } from '@/components/ui/layout/FoldPane'
 
 interface Props {
   palette: WelcomePalette
@@ -106,6 +107,9 @@ const RevealIntro = ({
     ],
   }))
   const linkStyle = useAnimatedStyle(() => ({ opacity: link.value }))
+  // The art stays centered on the window; the words and buttons keep clear of
+  // iPhone Duo's vertical bar and fold.
+  const foldColumn = useWindowFoldColumn(560)
 
   return (
     <View style={{ flex: 1 }}>
@@ -142,6 +146,7 @@ const RevealIntro = ({
               paddingHorizontal: 24,
               paddingBottom: 4,
             },
+            foldColumn,
             copyStyle,
           ]}
         >

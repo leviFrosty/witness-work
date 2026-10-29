@@ -19,6 +19,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import { leftForPhysicalX } from '@/lib/direction'
+import { useWindowFoldPane } from '@/components/ui/layout/FoldPane'
 
 export type ExpandingCardOrigin = {
   x: number
@@ -55,12 +56,18 @@ const ExpandingCardOverlay = ({
   const { width: windowWidth, height: windowHeight } = useWindowDimensions()
   const progress = useSharedValue(0)
 
-  const targetWidth = windowWidth - EXPANDED_MARGIN * 2
+  // Clear of iPhone Duo's vertical bar, and to one side of its fold.
+  const pane = useWindowFoldPane()
+  const targetWidth = pane.width - EXPANDED_MARGIN * 2
   const targetHeight = Math.min(
     expandedHeight,
     windowHeight - insets.top - insets.bottom - EXPANDED_MARGIN * 2
   )
-  const targetX = EXPANDED_MARGIN
+  const targetX = leftForPhysicalX(
+    pane.x + EXPANDED_MARGIN,
+    targetWidth,
+    windowWidth
+  )
   const targetY = Math.max(
     insets.top + EXPANDED_MARGIN,
     (windowHeight - targetHeight) / 2

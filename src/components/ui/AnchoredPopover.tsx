@@ -25,7 +25,10 @@ import useTheme from '@/contexts/theme'
 import { VisibilityViewportContext } from '@/contexts/visibilityViewport'
 import { useTakeoverHold } from '@/hooks/useTakeoverTurn'
 import { useToWindow } from '@/components/ui/sheetWindowFrame'
+import { useWindowSideInsets } from '@/components/ui/layout/HorizontalSafeArea'
 import { leftForPhysicalX } from '@/lib/direction'
+import { clampToFoldSide, type FoldDivision } from '@/lib/foldSplit'
+import { useDisplayRegions } from '@/stores/displayRegions'
 
 type AnchorRect = { x: number; y: number; width: number; height: number }
 
@@ -97,6 +100,7 @@ interface Props {
 }
 
 const ANIMATION_MS = 140
+const NO_FOLDS: FoldDivision[] = []
 const KEYBOARD_SETTLE_FALLBACK_MS = 600
 // While the keyboard animates there is no Modal backdrop yet. Keep rapid taps on
 // separate triggers from preparing two native popovers for the same hide event.
@@ -154,6 +158,8 @@ const AnchoredPopover = ({
   const navigation = useNavigation()
   const viewportRef = useRef<View>(null)
   const dims = useWindowDimensions()
+  const sideInsets = useWindowSideInsets()
+  const divisions = useDisplayRegions((s) => s.regions?.divisions ?? NO_FOLDS)
   const anchorRef = useRef<View>(null)
   // Inside a native sheet the anchor measures from the sheet, not the window.
   const toWindow = useToWindow()
@@ -388,7 +394,7 @@ const AnchoredPopover = ({
     return () => subscription.remove()
   }, [portal, open])
 
-  const positionStyle: {
+  const resolved: {
     top?: number
     bottom?: number
     left: number
@@ -406,6 +412,25 @@ const AnchoredPopover = ({
         contentWidth,
       })
     : { top: 0, left: 0 }
+  // Clear of iPhone Duo's vertical bar, and on the anchor's side of its fold.
+  const positionStyle = anchor
+    ? {
+        ...resolved,
+        left: leftForPhysicalX(
+          clampToFoldSide({
+            x: leftForPhysicalX(resolved.left, contentWidth, dims.width),
+            width: contentWidth,
+            anchorX: anchor.x + anchor.width / 2,
+            windowWidth: dims.width,
+            divisions,
+            insets: sideInsets,
+            margin: 12,
+          }),
+          contentWidth,
+          dims.width
+        ),
+      }
+    : resolved
 
   // When the resolver caps the height, the content scrolls inside the cap so it
   // never spills off-screen; padding/gap move onto the scroll content so the

@@ -28,6 +28,7 @@ import {
   useSplitSheetPreferences,
 } from '@/stores/splitSheet'
 import PointerStyleView from '../../../modules/pointer-style'
+import { useWindowFoldPane } from '@/components/ui/layout/FoldPane'
 
 /** Under Tamagui's modal sheets (100,000 and up), so theirs open over it. */
 const Z_INDEX = 50_000
@@ -93,9 +94,13 @@ export default function SplitSheet({
   const holdId = useId()
   const shown = open && !hidden
   useTakeoverHold(`split-sheet:${holdId}`, shown)
-  const { width: windowWidth, height: windowHeight } = useWindowDimensions()
+  const { height: windowHeight } = useWindowDimensions()
   const { sidebarWidth } = useAdaptiveLayout()
-  const areaWidth = windowWidth - sidebarWidth
+  // Beside the sidebar, clear of iPhone Duo's vertical bar, and on one side of
+  // its fold, as the system's sheets are.
+  const pane = useWindowFoldPane()
+  const areaStart = Math.max(sidebarWidth, pane.start)
+  const areaWidth = Math.max(0, pane.start + pane.width - areaStart)
   const sheetWidth = Math.min(areaWidth, MAX_WIDTH)
   const ratio = useSplitSheetPreferences((s) => s.ratio)
   const setRatio = useSplitSheetPreferences((s) => s.setRatio)
@@ -262,7 +267,7 @@ export default function SplitSheet({
         style={[
           {
             position: 'absolute',
-            left: sidebarWidth + (areaWidth - sheetWidth) / 2,
+            left: areaStart + (areaWidth - sheetWidth) / 2,
             width: sheetWidth,
             bottom: 0,
             borderTopStartRadius: RADIUS,

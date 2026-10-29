@@ -21,6 +21,7 @@ import {
   CONFETTI_DURATION,
 } from '@/providers/AnimationViewProvider'
 import Haptics from '@/lib/haptics'
+import { useFoldColumn } from '@/components/ui/layout/FoldPane'
 
 const PAYWALL_FIREWORKS_OPTS = {
   count: 36,
@@ -37,6 +38,8 @@ const PAYWALL_FIREWORKS_OPTS = {
 }
 
 const PaywallThankYouScreen = () => {
+  const foldColumn2 = useFoldColumn(680)
+  const foldColumn = useFoldColumn(640)
   const theme = useTheme()
   const insets = useSafeAreaInsets()
   const navigation = useNavigation<RootStackNavigation>()
@@ -98,7 +101,12 @@ const PaywallThankYouScreen = () => {
         }}
         showsVerticalScrollIndicator={false}
       >
-        <View style={{ width: '100%', maxWidth: 640, alignSelf: 'center' }}>
+        <View
+          style={[
+            { width: '100%', maxWidth: 640, alignSelf: 'center' },
+            foldColumn,
+          ]}
+        >
           <View
             style={{
               alignItems: 'center',
@@ -172,13 +180,16 @@ const PaywallThankYouScreen = () => {
         </View>
       </ScrollView>
       <View
-        style={{
-          width: '100%',
-          maxWidth: 680,
-          alignSelf: 'center',
-          paddingHorizontal: 20,
-          paddingBottom: insets.bottom + 16,
-        }}
+        style={[
+          {
+            width: '100%',
+            maxWidth: 680,
+            alignSelf: 'center',
+            paddingHorizontal: 20,
+            paddingBottom: insets.bottom + 16,
+          },
+          foldColumn2,
+        ]}
       >
         <ActionButton
           onPress={() => {

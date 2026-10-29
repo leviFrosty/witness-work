@@ -1,7 +1,13 @@
 import { Menu as MenuIcon, X as XIcon } from 'lucide-react-native'
 import { ChevronBackwardIcon } from '@/components/ui/DirectionalIcon'
 import type { AppIcon } from '@/components/ui/LucideIcon'
-import { type LayoutChangeEvent, Platform, Pressable, View } from 'react-native'
+import {
+  type LayoutChangeEvent,
+  Platform,
+  Pressable,
+  StyleSheet,
+  View,
+} from 'react-native'
 import useTheme from '@/contexts/theme'
 import useAccessibilityTextSize from '@/hooks/useAccessibilityTextSize'
 import useUnbrokenWords from '@/hooks/useUnbrokenWords'
@@ -20,7 +26,9 @@ import { cloneElement, isValidElement, useState } from 'react'
 import WindowControlsInsetView, {
   NO_WINDOW_CONTROLS,
 } from '../../../../modules/window-controls'
+import DisplayRegionsView from '../../../../modules/display-regions'
 import { useSystemBackButton } from '@/components/ui/layout/SystemBackButton'
+import { useLocalFoldPane } from '@/components/ui/layout/FoldPane'
 
 type Props = {
   backgroundColor?: string
@@ -90,6 +98,19 @@ const HeaderContent = ({
   // button's, or the end buttons' when the app and the system read in
   // different directions (Arabic on an English iPad, or the reverse).
   const [controls, setControls] = useState(NO_WINDOW_CONTROLS)
+  // While iPhone Duo is partly folded, the title and buttons keep to the
+  // leading side of the fold, above the content they belong to; the bar's
+  // background still spans the window.
+  const { onRegionsChange, pane } = useLocalFoldPane()
+  const rtl = isRtlLayout()
+  const startInset = Math.max(
+    rtl ? insets.right : insets.left,
+    (rtl ? pane?.right : pane?.left) ?? 0
+  )
+  const endInset = Math.max(
+    rtl ? insets.left : insets.right,
+    (rtl ? pane?.left : pane?.right) ?? 0
+  )
   // The buttons float over the header's ends. The title keeps clear of the
   // wider side on both sides, so it stays centered and a title that wraps
   // (large text, long translations) never runs under them.
@@ -161,6 +182,10 @@ const HeaderContent = ({
         borderBottomColor: theme.colors.border,
       }}
     >
+      <DisplayRegionsView
+        style={StyleSheet.absoluteFill}
+        onRegionsChange={onRegionsChange}
+      />
       <WindowControlsInsetView
         onInsetsChange={setControls}
         style={{
@@ -168,8 +193,8 @@ const HeaderContent = ({
           flexGrow: 1,
           // Stack headers sit outside the screen's horizontal safe area. Insets
           // are physical; React Native mirrors left and right margins in RTL.
-          marginLeft: 15 + (isRtlLayout() ? insets.right : insets.left),
-          marginRight: 15 + (isRtlLayout() ? insets.left : insets.right),
+          marginLeft: 15 + startInset,
+          marginRight: 15 + endInset,
           flexDirection: 'row',
           alignItems: 'center',
           justifyContent: 'center',

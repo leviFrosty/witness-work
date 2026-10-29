@@ -77,6 +77,8 @@ import PaywallPurchaseFooter, {
   PaywallLegalFooter,
 } from '@/features/supporter/components/PaywallPurchaseFooter'
 import { analytics } from '@/lib/analytics'
+import { useFoldColumn } from '@/components/ui/layout/FoldPane'
+import FoldSplit from '@/components/ui/layout/FoldSplit'
 
 type Tier = 'supporter' | 'tip'
 type SupporterBilling = 'monthly' | 'annual'
@@ -105,6 +107,7 @@ const PaywallScreen = ({
   /** Lists Scribe AI's limits in the comparison (when it's turned on). */
   scribeAi?: boolean
 }) => {
+  const foldColumn = useFoldColumn(680)
   const theme = useTheme()
   const { width, height, fontScale } = useWindowDimensions()
   const dockFooter = height >= 650 && fontScale <= 1.3
@@ -908,59 +911,63 @@ const PaywallScreen = ({
   return (
     <Wrapper insets='none' style={{ flex: 1 }}>
       {isWide ? (
-        <View
+        // Benefits beside the pricing, meeting iPhone Duo's fold when half-open.
+        <FoldSplit
           style={{
             flex: 1,
             width: '100%',
             maxWidth: 1100,
             alignSelf: 'center',
-            flexDirection: 'row',
-            gap: 24,
-            paddingHorizontal: 24,
             paddingTop: 24,
             paddingBottom: insets.bottom + 16,
           }}
-        >
-          <ScrollView
-            style={{ flex: 1 }}
-            contentContainerStyle={{ paddingBottom: 16 }}
-          >
-            {benefits}
-          </ScrollView>
-          <View
-            style={{
-              width: 420,
-              height: '100%',
-              maxHeight: 760,
-              alignSelf: 'flex-start',
-              backgroundColor: theme.colors.card,
-              borderRadius: theme.numbers.borderRadiusLg,
-              borderWidth: 1,
-              borderColor: theme.colors.border,
-              overflow: 'hidden',
-            }}
-          >
+          paddingHorizontal={24}
+          gap={24}
+          trailingWidth={420}
+          leading={
             <ScrollView
-              ref={pricingScrollViewRef}
               style={{ flex: 1 }}
-              contentContainerStyle={{ padding: 20, gap: 20 }}
+              contentContainerStyle={{ paddingBottom: 16 }}
             >
-              {pricing}
-              {!dockFooter && purchaseFooter}
+              {benefits}
             </ScrollView>
-            {dockFooter && (
-              <View
-                style={{
-                  padding: 20,
-                  borderTopWidth: 1,
-                  borderTopColor: theme.colors.border,
-                }}
+          }
+          trailing={
+            <View
+              style={{
+                width: '100%',
+                height: '100%',
+                maxHeight: 760,
+                alignSelf: 'flex-start',
+                backgroundColor: theme.colors.card,
+                borderRadius: theme.numbers.borderRadiusLg,
+                borderWidth: 1,
+                borderColor: theme.colors.border,
+                overflow: 'hidden',
+              }}
+            >
+              <ScrollView
+                ref={pricingScrollViewRef}
+                style={{ flex: 1 }}
+                contentContainerStyle={{ padding: 20, gap: 20 }}
               >
-                {purchaseFooter}
-              </View>
-            )}
-          </View>
-        </View>
+                {pricing}
+                {!dockFooter && purchaseFooter}
+              </ScrollView>
+              {dockFooter && (
+                <View
+                  style={{
+                    padding: 20,
+                    borderTopWidth: 1,
+                    borderTopColor: theme.colors.border,
+                  }}
+                >
+                  {purchaseFooter}
+                </View>
+              )}
+            </View>
+          }
+        />
       ) : (
         <>
           <ScrollView
@@ -969,13 +976,16 @@ const PaywallScreen = ({
             contentContainerStyle={{ paddingVertical: 20 }}
           >
             <View
-              style={{
-                width: '100%',
-                maxWidth: 680,
-                alignSelf: 'center',
-                paddingHorizontal: 15,
-                gap: 14,
-              }}
+              style={[
+                {
+                  width: '100%',
+                  maxWidth: 680,
+                  alignSelf: 'center',
+                  paddingHorizontal: 15,
+                  gap: 14,
+                },
+                foldColumn,
+              ]}
             >
               {benefits}
               {pricing}
@@ -984,14 +994,17 @@ const PaywallScreen = ({
           </ScrollView>
           {dockFooter && (
             <View
-              style={{
-                width: '100%',
-                maxWidth: 680,
-                alignSelf: 'center',
-                paddingHorizontal: 15,
-                paddingTop: 10,
-                paddingBottom: insets.bottom + 10,
-              }}
+              style={[
+                {
+                  width: '100%',
+                  maxWidth: 680,
+                  alignSelf: 'center',
+                  paddingHorizontal: 15,
+                  paddingTop: 10,
+                  paddingBottom: insets.bottom + 10,
+                },
+                foldColumn,
+              ]}
             >
               {purchaseFooter}
             </View>

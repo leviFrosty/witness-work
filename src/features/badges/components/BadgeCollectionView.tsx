@@ -18,6 +18,7 @@ import { useBadgeSession } from '@/stores/badgeSession'
 import { usePreferences } from '@/stores/preferences'
 import type { BadgeArtId, BadgeLevel } from '@/types/badges'
 import type { BadgeViewOrigin, RootStackNavigation } from '@/types/rootStack'
+import { useFoldColumn } from '@/components/ui/layout/FoldPane'
 
 /**
  * The User's own collection: the newest badge, every collection with its
@@ -52,17 +53,21 @@ export default function BadgeCollectionView({
       origin,
     })
 
+  const foldColumn = useFoldColumn(720)
   return (
     <ScrollView
       style={{ flex: 1, backgroundColor: theme.colors.background }}
-      contentContainerStyle={{
-        padding: 16,
-        paddingBottom: insets.bottom + 32,
-        gap: 16,
-        width: '100%',
-        maxWidth: 720,
-        alignSelf: 'center',
-      }}
+      contentContainerStyle={[
+        {
+          padding: 16,
+          paddingBottom: insets.bottom + 32,
+          gap: 16,
+          width: '100%',
+          maxWidth: 720,
+          alignSelf: 'center',
+        },
+        foldColumn,
+      ]}
     >
       <BadgesHero
         newest={newest}

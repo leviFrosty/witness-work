@@ -17,8 +17,10 @@ import { useFormattedMinutes } from '@/lib/minutes'
 import { tracking } from '@/lib/tracking'
 import { formatDisplay } from '@/lib/dates'
 import { isRtlLayout } from '@/lib/direction'
+import { useFoldColumn } from '@/components/ui/layout/FoldPane'
 
 const RolloverScreen = () => {
+  const foldColumn = useFoldColumn(680)
   const theme = useTheme()
   const navigation = useNavigation<RootStackNavigation>()
   const {
@@ -79,7 +81,12 @@ const RolloverScreen = () => {
         }}
         showsVerticalScrollIndicator={false}
       >
-        <View style={{ width: '100%', maxWidth: 680, alignSelf: 'center' }}>
+        <View
+          style={[
+            { width: '100%', maxWidth: 680, alignSelf: 'center' },
+            foldColumn,
+          ]}
+        >
           <Text
             style={{
               fontSize: 14,

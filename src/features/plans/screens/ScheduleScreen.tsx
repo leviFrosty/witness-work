@@ -43,12 +43,14 @@ import ScheduleViewToggle from '@/features/plans/components/ScheduleViewToggle'
 import useEditableMonthGoal from '@/features/plans/hooks/useEditableMonthGoal'
 import useScheduleCalendar from '@/features/plans/hooks/useScheduleCalendar'
 import useScheduleDayIndex from '@/features/plans/hooks/useScheduleDayIndex'
+import { useFoldColumn } from '@/components/ui/layout/FoldPane'
 
 type Props = BottomTabScreenProps<HomeTabStackParamList, 'Schedule'>
 
 const ScheduleScreen = ({ route, navigation }: Props) => {
   const theme = useTheme()
   const { isWide, hasBottomBar } = useAdaptiveLayout()
+  const foldColumn = useFoldColumn(isWide ? null : 720)
   const insets = useSafeAreaInsets()
   const tabBarHeight = useBottomTabBarHeight()
   const serviceReports = useServiceReport((s) => s.serviceReports)
@@ -250,12 +252,27 @@ const ScheduleScreen = ({ route, navigation }: Props) => {
             onChange={(next) => changeView(next, 'toggle')}
           />
         }
-        contentStyle={isWide ? { paddingHorizontal: 0 } : { maxWidth: 720 }}
+        contentStyle={
+          isWide ? { paddingHorizontal: 0 } : [{ maxWidth: 720 }, foldColumn]
+        }
       >
-        <BuddiesEntryRow
-          source='schedule_row'
-          style={{ marginHorizontal: 15, marginBottom: 8 }}
-        />
+        {/* In the header's column, which a single one caps and keeps to one
+            side of iPhone Duo's fold. */}
+        <View
+          style={
+            isWide
+              ? undefined
+              : [
+                  { width: '100%', maxWidth: 720, alignSelf: 'center' },
+                  foldColumn,
+                ]
+          }
+        >
+          <BuddiesEntryRow
+            source='schedule_row'
+            style={{ marginHorizontal: 15, marginBottom: 8 }}
+          />
+        </View>
       </RootHeader>
     </ScrollAwayHeader>
   )
@@ -283,12 +300,15 @@ const ScheduleScreen = ({ route, navigation }: Props) => {
               style={
                 isWide
                   ? { flex: 1 }
-                  : {
-                      flex: 1,
-                      width: '100%',
-                      maxWidth: 720,
-                      alignSelf: 'center',
-                    }
+                  : [
+                      {
+                        flex: 1,
+                        width: '100%',
+                        maxWidth: 720,
+                        alignSelf: 'center',
+                      },
+                      foldColumn,
+                    ]
               }
             >
               {stage}

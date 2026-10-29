@@ -43,6 +43,7 @@ import {
 } from '@/features/map/lib/geocodeContacts'
 import { skipPinLookups } from '@/features/map/stores/mapFindSkips'
 import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
+import { useFoldColumn } from '@/components/ui/layout/FoldPane'
 
 type FetchStatus = 'idle' | 'loading' | 'success' | 'error'
 
@@ -86,6 +87,7 @@ const LocationBenefit = ({
 }
 
 export default function MapOnboarding() {
+  const foldColumn = useFoldColumn(600)
   const { incrementGeocodeApiCallCount, set, dataProtectionMode } =
     usePreferences()
   const { contacts } = useContacts()
@@ -355,17 +357,20 @@ export default function MapOnboarding() {
   return (
     <Wrapper
       insets='none'
-      style={{
-        // Bounded to the pane so the step's list/scroll view scrolls instead
-        // of pushing the actions off a short window.
-        flex: 1,
-        paddingHorizontal: 20,
-        width: '100%',
-        maxWidth: 600,
-        alignSelf: 'center',
-        paddingTop: 24,
-        paddingBottom: tabBarHeight + 20,
-      }}
+      style={[
+        {
+          // Bounded to the pane so the step's list/scroll view scrolls instead
+          // of pushing the actions off a short window.
+          flex: 1,
+          paddingHorizontal: 20,
+          width: '100%',
+          maxWidth: 600,
+          alignSelf: 'center',
+          paddingTop: 24,
+          paddingBottom: tabBarHeight + 20,
+        },
+        foldColumn,
+      ]}
     >
       {step === 0 && (
         <View style={{ flex: 1, gap: 16 }}>

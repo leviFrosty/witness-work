@@ -56,6 +56,7 @@ import type {
   GroupedListSectionProps,
   GroupedListSwitchRowProps,
 } from '@/components/ui/GroupedList.types'
+import { useFoldColumn } from '@/components/ui/layout/FoldPane'
 
 const ICON_GAP = 12
 
@@ -120,6 +121,7 @@ function useRowStyle() {
  * fonts.
  */
 export function GroupedList({ children, title, testID }: GroupedListProps) {
+  const foldColumn = useFoldColumn(inputLayout.contentMaxWidth)
   const style = useRowStyle()
   const { theme } = style
   const colorScheme = usePreferences((s) => s.colorScheme)
@@ -127,12 +129,15 @@ export function GroupedList({ children, title, testID }: GroupedListProps) {
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <Host
-        style={{
-          flex: 1,
-          width: '100%',
-          maxWidth: inputLayout.contentMaxWidth,
-          alignSelf: 'center',
-        }}
+        style={[
+          {
+            flex: 1,
+            width: '100%',
+            maxWidth: inputLayout.contentMaxWidth,
+            alignSelf: 'center',
+          },
+          foldColumn,
+        ]}
         colorScheme={colorScheme}
         seedColor={theme.colors.accent}
       >

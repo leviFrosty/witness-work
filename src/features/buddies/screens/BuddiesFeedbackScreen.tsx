@@ -33,6 +33,7 @@ import {
 } from '@/lib/surveySdk'
 import { usePreferences } from '@/stores/preferences'
 import { RootStackNavigation, RootStackParamList } from '@/types/rootStack'
+import { useFoldColumn } from '@/components/ui/layout/FoldPane'
 import {
   BUDDIES_FEEDBACK_SURVEY_ID,
   createFeedbackId,
@@ -139,16 +140,20 @@ export default function BuddiesFeedbackScreen({ route }: Props) {
     navigation.goBack()
   }
 
+  const foldColumn = useFoldColumn(720)
   return (
     <Wrapper insets='bottom' style={{ flex: 1 }}>
       <ScrollView
-        contentContainerStyle={{
-          padding: 20,
-          gap: 20,
-          width: '100%',
-          maxWidth: 720,
-          alignSelf: 'center',
-        }}
+        contentContainerStyle={[
+          {
+            padding: 20,
+            gap: 20,
+            width: '100%',
+            maxWidth: 720,
+            alignSelf: 'center',
+          },
+          foldColumn,
+        ]}
       >
         <View style={{ gap: 10 }}>
           {/* At accessibility text sizes the info button and the Alpha pill

@@ -2,6 +2,7 @@ import type { PropsWithChildren } from 'react'
 import { Modal, Platform, StyleSheet, View } from 'react-native'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { FullWindowOverlay as IOSFullWindowOverlay } from 'react-native-screens'
+import { FoldHandled } from '@/components/ui/layout/FoldPane'
 import { useAppLockSession, useAppLockSettings } from '@/stores/appLock'
 
 type Props = PropsWithChildren<{
@@ -36,8 +37,9 @@ export default function FullWindowOverlay({
 
   if (!modal && (!open || appLocked)) return null
 
+  // Over the whole window, whatever kept the screen beside the fold.
   const content = modal ? (
-    children
+    <FoldHandled value={false}>{children}</FoldHandled>
   ) : (
     <View
       collapsable={false}
@@ -46,7 +48,7 @@ export default function FullWindowOverlay({
       importantForAccessibility={interactive ? 'auto' : 'no-hide-descendants'}
       style={[StyleSheet.absoluteFill, styles.decoration]}
     >
-      {children}
+      <FoldHandled value={false}>{children}</FoldHandled>
     </View>
   )
 

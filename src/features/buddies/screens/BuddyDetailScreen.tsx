@@ -19,6 +19,7 @@ import useBuddyTogether from '@/features/buddies/hooks/useBuddyTogether'
 import { confirmRemoveBuddy } from '@/features/buddies/lib/buddyConfirmations'
 import { buddyDisplayName } from '@/features/buddies/lib/buddyProfile'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
+import { useFoldColumn } from '@/components/ui/layout/FoldPane'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Buddy'>
 
@@ -37,6 +38,7 @@ export default function BuddyDetailScreen({ route, navigation }: Props) {
   )
   const card = useBuddies((state) => state.cards[inboxId])
   const { needsAnswer, together } = useBuddyTogether(inboxId)
+  const foldColumn = useFoldColumn(720)
 
   // Removed here, from the other side, or by delete-all. Opened with nothing
   // to go back to, it shows Buddies instead of an empty page.
@@ -54,14 +56,17 @@ export default function BuddyDetailScreen({ route, navigation }: Props) {
       <KeyboardAwareScrollView
         keyboardShouldPersistTaps='handled'
         enableResetScrollToCoords={false}
-        contentContainerStyle={{
-          gap: 24,
-          paddingVertical: 20,
-          paddingHorizontal: 15,
-          width: '100%',
-          maxWidth: 720,
-          alignSelf: 'center',
-        }}
+        contentContainerStyle={[
+          {
+            gap: 24,
+            paddingVertical: 20,
+            paddingHorizontal: 15,
+            width: '100%',
+            maxWidth: 720,
+            alignSelf: 'center',
+          },
+          foldColumn,
+        ]}
       >
         <BuddyProfileHeader buddy={buddy} />
         <BuddyAppearanceSection buddy={buddy} />

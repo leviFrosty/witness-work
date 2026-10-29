@@ -54,6 +54,7 @@ import {
   getUpNext,
   sortVisitsNewestFirst,
 } from '@/features/contacts/lib/visitTimeline'
+import { useFoldColumn } from '@/components/ui/layout/FoldPane'
 
 // The details stay readable on wide screens; the hero's color goes edge to edge.
 const CONTENT_MAX_WIDTH = 760
@@ -80,6 +81,9 @@ const ContactDetailsContent = ({
   const theme = useTheme()
   const insets = useSafeAreaInsets()
   const bleed = useHorizontalBleed()
+  // As its own screen, one side of iPhone Duo's fold; beside the list, the
+  // split already meets it.
+  const foldColumn = useFoldColumn(CONTENT_MAX_WIDTH)
   // Beside the list, the pane's end corner is a windowed iPad app's top corner
   // when the app reads right to left on a left-to-right system, or the reverse.
   const [controls, setControls] = useState(NO_WINDOW_CONTROLS)
@@ -221,6 +225,7 @@ const ContactDetailsContent = ({
     width: '100%',
     maxWidth: CONTENT_MAX_WIDTH,
     alignSelf: 'center',
+    ...foldColumn,
   } as const
 
   return (

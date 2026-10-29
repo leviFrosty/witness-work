@@ -28,6 +28,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import FoldPane from '@/components/ui/layout/FoldPane'
 
 /**
  * A keyboard at most this tall is a hardware keyboard's shortcut bar (or an
@@ -307,7 +308,8 @@ const DockedFormLayout = (props: {
 
   return (
     <DockedFormLayoutContext.Provider value={context}>
-      <View style={{ flex: 1 }}>
+      {/* A form keeps to one side of iPhone Duo's fold, as a sheet would. */}
+      <FoldPane pointerEvents='auto'>
         <Animated.View
           style={[{ flex: 1 }, areaStyle]}
           onLayout={(event) => {
@@ -354,7 +356,7 @@ const DockedFormLayout = (props: {
         >
           {props.dock}
         </Animated.View>
-      </View>
+      </FoldPane>
     </DockedFormLayoutContext.Provider>
   )
 }

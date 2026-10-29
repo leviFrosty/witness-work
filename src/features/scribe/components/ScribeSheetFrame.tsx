@@ -16,6 +16,7 @@ import useTheme from '@/contexts/theme'
 import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
 import { withAlpha } from '@/lib/color'
 import i18n from '@/lib/locales'
+import { useWindowFoldPane } from '@/components/ui/layout/FoldPane'
 
 interface Props {
   /** Fixed sheet height; omit to fit the content. */
@@ -76,6 +77,9 @@ const ScribeSheetFrame = ({
   const insets = useSafeAreaInsets()
   const { height: windowHeight, width: windowWidth } = useWindowDimensions()
   const { isWide } = useAdaptiveLayout()
+  // Clear of iPhone Duo's vertical bar, and on one side of its fold.
+  const pane = useWindowFoldPane()
+  const wideWidth = Math.min(WIDE_MAX_WIDTH, pane.width)
   const drag = useSharedValue(0)
   // Past the window's height, wherever the sheet starts.
   const away = windowHeight
@@ -142,10 +146,10 @@ const ScribeSheetFrame = ({
               position: 'absolute',
               bottom: isWide ? Math.max(insets.bottom, 24) : 0,
               left: isWide
-                ? Math.max(0, (windowWidth - WIDE_MAX_WIDTH) / 2)
-                : 0,
-              right: isWide ? undefined : 0,
-              width: isWide ? Math.min(WIDE_MAX_WIDTH, windowWidth) : undefined,
+                ? pane.start + (pane.width - wideWidth) / 2
+                : pane.start,
+              right: isWide ? undefined : windowWidth - pane.start - pane.width,
+              width: isWide ? wideWidth : undefined,
               height,
               maxHeight: windowHeight - insets.top - 12,
               backgroundColor: theme.colors.sheet,

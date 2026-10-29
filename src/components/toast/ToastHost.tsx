@@ -5,6 +5,7 @@ import { useReducedMotion } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import RewardStackLayer from '@/components/reward-stack/RewardStackLayer'
 import FullWindowOverlay from '@/components/ui/FullWindowOverlay'
+import FoldPane from '@/components/ui/layout/FoldPane'
 import { TAB_BAR_HEIGHT } from '@/components/ui/TabBar'
 import ToastStack from '@/components/toast/ToastStack'
 import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
@@ -60,43 +61,43 @@ export default function ToastHost() {
   const bottom: Toast[] = []
   for (const item of items)
     (toastPlacement(item.intent) === 'top' ? top : bottom).push(item)
-  const side = Math.max(insets.left, insets.right)
   const bottomInset =
     insets.bottom + (hasBottomBar && !tabBarHidden ? TAB_BAR_HEIGHT : 0) + 16
 
   const content = (
     <View
       pointerEvents='box-none'
-      style={[
-        StyleSheet.absoluteFill,
-        { zIndex: 1000, elevation: 1000, paddingHorizontal: side },
-      ]}
+      style={[StyleSheet.absoluteFill, { zIndex: 1000, elevation: 1000 }]}
     >
-      {top.length > 0 && (
-        <ToastStack
-          placement='top'
-          items={top}
-          hidden={takingOver}
-          inset={insets.top + 6}
-          reduceMotion={reduceMotion}
-          screenReader={screenReader}
+      {/* Clear of the vertical bar (the stacks are absolute, so a padding
+          wouldn't hold them), and to one side of a fold. */}
+      <FoldPane style={StyleSheet.absoluteFill}>
+        {top.length > 0 && (
+          <ToastStack
+            placement='top'
+            items={top}
+            hidden={takingOver}
+            inset={insets.top + 6}
+            reduceMotion={reduceMotion}
+            screenReader={screenReader}
+          />
+        )}
+        {bottom.length > 0 && (
+          <ToastStack
+            placement='bottom'
+            items={bottom}
+            hidden={false}
+            // Above the floating tab bar, when there is one.
+            inset={bottomInset}
+            reduceMotion={reduceMotion}
+            screenReader={screenReader}
+          />
+        )}
+        <RewardStackLayer
+          slot='toast'
+          anchor={{ bottom: bottomInset + ABOVE_TOAST }}
         />
-      )}
-      {bottom.length > 0 && (
-        <ToastStack
-          placement='bottom'
-          items={bottom}
-          hidden={false}
-          // Above the floating tab bar, when there is one.
-          inset={bottomInset}
-          reduceMotion={reduceMotion}
-          screenReader={screenReader}
-        />
-      )}
-      <RewardStackLayer
-        slot='toast'
-        anchor={{ bottom: bottomInset + ABOVE_TOAST }}
-      />
+      </FoldPane>
       <RewardStackLayer
         slot='card'
         anchor={{ top: insets.top + 120 }}

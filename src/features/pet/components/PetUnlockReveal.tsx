@@ -10,6 +10,7 @@ import Animated, {
 } from 'react-native-reanimated'
 import { scheduleOnRN } from 'react-native-worklets'
 import FullWindowOverlay from '@/components/ui/FullWindowOverlay'
+import FoldPane from '@/components/ui/layout/FoldPane'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 import { GameButton } from '@/features/pet/components/GameControls'
@@ -109,10 +110,8 @@ export default function PetUnlockReveal({
             importantForAccessibility='no'
           />
         </Animated.View>
-        <View
-          pointerEvents='box-none'
-          style={{
-            flex: 1,
+        <FoldPane
+          contentStyle={{
             alignItems: 'center',
             justifyContent: 'center',
             padding: 24,
@@ -209,7 +208,7 @@ export default function PetUnlockReveal({
               </View>
             </GameFrame>
           </Animated.View>
-        </View>
+        </FoldPane>
       </View>
     </FullWindowOverlay>
   )

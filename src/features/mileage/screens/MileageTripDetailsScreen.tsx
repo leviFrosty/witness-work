@@ -24,6 +24,7 @@ import type { RootStackParamList } from '@/types/rootStack'
 import RichNote from '@/components/RichNote'
 import { hasNote } from '@/lib/richText/notes'
 import { alignText } from '@/lib/direction'
+import { useFoldColumn } from '@/components/ui/layout/FoldPane'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'MileageTripDetails'>
 
@@ -57,6 +58,7 @@ export default function MileageTripDetailsScreen({ route, navigation }: Props) {
   const format = useMileageFormatter()
   const index = useMileageIndex()
   const actions = useTripActions()
+  const foldColumn = useFoldColumn(720)
   const trip = trips.find((t) => t.id === route.params.tripId)
 
   // Deleted here, from the edit form, or on another device.
@@ -155,14 +157,17 @@ export default function MileageTripDetailsScreen({ route, navigation }: Props) {
         }
       />
       <ScrollView
-        contentContainerStyle={{
-          padding: 15,
-          gap: 20,
-          paddingBottom: insets.bottom + 30,
-          width: '100%',
-          maxWidth: 720,
-          alignSelf: 'center',
-        }}
+        contentContainerStyle={[
+          {
+            padding: 15,
+            gap: 20,
+            paddingBottom: insets.bottom + 30,
+            width: '100%',
+            maxWidth: 720,
+            alignSelf: 'center',
+          },
+          foldColumn,
+        ]}
       >
         <Section>
           {rows.map((row, i) => (

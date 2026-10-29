@@ -22,6 +22,7 @@ import i18n from '@/lib/locales'
 import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
 import { useUpdateRevealStore } from '@/features/updates/stores/updateReveal'
 import useBuddiesEnabled from '@/features/buddies/hooks/useBuddiesEnabled'
+import { useFoldColumn } from '@/components/ui/layout/FoldPane'
 
 // A single-screen stack keeps the route named `Dashboard`, which screen
 // analytics has always reported for Home.
@@ -37,6 +38,7 @@ const HomeNavigator = () => {
     sidebarVisible,
     navigationRail,
   } = useAdaptiveLayout()
+  const foldColumn = useFoldColumn(isWide ? null : 720)
   // A visible sidebar or the iPhone Duo rail already holds Settings.
   const showsSettings = !(hasSidebar && sidebarVisible) && !navigationRail
   const requestUpdateReveal = useUpdateRevealStore((s) => s.request)
@@ -68,7 +70,10 @@ const HomeNavigator = () => {
       <RootHeader
         title={i18n.t('Home')}
         onLongPressTitle={onLongPressTitle}
-        contentStyle={{ maxWidth: isWide ? contentMaxWidth : 720 }}
+        contentStyle={[
+          { maxWidth: isWide ? contentMaxWidth : 720 },
+          foldColumn,
+        ]}
         actions={
           homeEditing.editing ? (
             // As on the Home Screen: add on one side, Done on the other.

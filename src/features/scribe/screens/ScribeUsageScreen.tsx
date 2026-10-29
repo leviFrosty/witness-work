@@ -13,6 +13,7 @@ import {
   ScribeSupporterNote,
   type RenderSupporterCta,
 } from '@/features/scribe/components/ScribeStateCards'
+import { useFoldColumn } from '@/components/ui/layout/FoldPane'
 
 interface Props {
   renderSupporterCta?: RenderSupporterCta
@@ -23,6 +24,7 @@ interface Props {
  * when it resets (never raw units), and the Supporter upsell for free.
  */
 const ScribeUsageScreen = ({ renderSupporterCta }: Props) => {
+  const foldColumn = useFoldColumn(640)
   const theme = useTheme()
   const navigation = useNavigation<RootStackNavigation>()
   const { usage, loading, failed } = useScribeUsage()
@@ -54,7 +56,10 @@ const ScribeUsageScreen = ({ renderSupporterCta }: Props) => {
       {/* Capped inside the content, not on it: in a right-to-left layout iOS
           pins a narrower content container to the right edge. */}
       <View
-        style={{ width: '100%', maxWidth: 640, alignSelf: 'center', gap: 18 }}
+        style={[
+          { width: '100%', maxWidth: 640, alignSelf: 'center', gap: 18 },
+          foldColumn,
+        ]}
       >
         {!usage ? (
           <View style={{ alignItems: 'center', paddingVertical: 40 }}>

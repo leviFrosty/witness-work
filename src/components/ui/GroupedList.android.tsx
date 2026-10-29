@@ -57,6 +57,7 @@ import arrowDropDownIcon from '@/assets/compose-icons/arrow_drop_down.xml'
 import checkIcon from '@/assets/icons/check.xml'
 import chevronRightIcon from '@/assets/compose-icons/chevron_right.xml'
 import openInNewIcon from '@/assets/compose-icons/open_in_new.xml'
+import { useFoldColumn } from '@/components/ui/layout/FoldPane'
 
 type Position = 'only' | 'first' | 'middle' | 'last'
 
@@ -102,6 +103,7 @@ function useRowStyle() {
  * colors and fonts.
  */
 export function GroupedList({ children, title, testID }: GroupedListProps) {
+  const foldColumn = useFoldColumn(inputLayout.contentMaxWidth)
   const style = useRowStyle()
   const { theme } = style
   const colorScheme = usePreferences((s) => s.colorScheme)
@@ -110,12 +112,15 @@ export function GroupedList({ children, title, testID }: GroupedListProps) {
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <Host
-        style={{
-          flex: 1,
-          width: '100%',
-          maxWidth: inputLayout.contentMaxWidth,
-          alignSelf: 'center',
-        }}
+        style={[
+          {
+            flex: 1,
+            width: '100%',
+            maxWidth: inputLayout.contentMaxWidth,
+            alignSelf: 'center',
+          },
+          foldColumn,
+        ]}
         colorScheme={colorScheme}
         seedColor={theme.colors.accent}
       >

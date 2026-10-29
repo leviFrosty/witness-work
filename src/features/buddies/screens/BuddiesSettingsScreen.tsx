@@ -26,6 +26,7 @@ import {
 } from '@/features/buddies/hooks/useBuddySettingsScope'
 import { buddiesEngine } from '@/features/buddies/lib/buddiesService'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
+import { useFoldColumn } from '@/components/ui/layout/FoldPane'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Buddies Settings'>
 
@@ -103,18 +104,22 @@ export default function BuddiesSettingsScreen({ route, navigation }: Props) {
     })
   }, [navigation])
 
+  const foldColumn = useFoldColumn(720)
   return (
     <Wrapper insets='bottom' style={{ flex: 1 }}>
       <ScrollView
         ref={scroll}
-        contentContainerStyle={{
-          gap: 24,
-          paddingVertical: 20,
-          paddingHorizontal: 15,
-          width: '100%',
-          maxWidth: 720,
-          alignSelf: 'center',
-        }}
+        contentContainerStyle={[
+          {
+            gap: 24,
+            paddingVertical: 20,
+            paddingHorizontal: 15,
+            width: '100%',
+            maxWidth: 720,
+            alignSelf: 'center',
+          },
+          foldColumn,
+        ]}
       >
         <BuddySettingsScopeBar
           buddy={buddy}

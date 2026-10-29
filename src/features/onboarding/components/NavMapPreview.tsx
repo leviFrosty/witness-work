@@ -28,6 +28,7 @@ import {
   fitAspectRatio,
   type Size,
 } from '@/features/onboarding/lib/fitAspectRatio'
+import { useFoldColumn } from '@/components/ui/layout/FoldPane'
 
 type ProviderKey = 'apple' | 'google' | 'waze'
 
@@ -150,11 +151,12 @@ const NavMapPreview = ({ provider }: Props) => {
   const [frame, setFrame] = useState<Size | null>(null)
   const size = frame && fitAspectRatio(frame, SVG_WIDTH / SVG_HEIGHT)
   const key: ProviderKey = (provider ?? 'apple') as ProviderKey
+  const foldColumn = useFoldColumn(inputLayout.contentMaxWidth)
 
   // One picture to a screen reader, not a dozen scattered labels.
   return (
     <View
-      style={styles.column}
+      style={[styles.column, foldColumn]}
       accessible
       accessibilityRole='image'
       accessibilityLabel={i18n.t('defaultNavPreview_accessibilityLabel', {

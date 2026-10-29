@@ -3,6 +3,7 @@ import { View } from 'react-native'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
 import FoldSplit from '@/components/ui/layout/FoldSplit'
+import { useFoldColumn } from '@/components/ui/layout/FoldPane'
 import useScrollAnchor from '@/hooks/useScrollAnchor'
 import type { RevealAboveSheet } from '@/hooks/useRevealAboveSheet'
 import type { HideBarsScrollProps } from '@/hooks/useHideBarsOnScroll'
@@ -79,6 +80,7 @@ export default function AdaptiveSplitScrollView({
       if (theirs) theirs.current = view
     }
   const anchor = useScrollAnchor(isWide)
+  const foldColumn = useFoldColumn(isWide ? null : 720)
 
   if (!isWide) {
     const scroll = anchor.scroll('single', singleRef, singleFrame)
@@ -124,15 +126,18 @@ export default function AdaptiveSplitScrollView({
         }
         style={{ flex: 1 }}
         keyboardShouldPersistTaps='handled'
-        contentContainerStyle={{
-          width: '100%',
-          maxWidth: 720,
-          alignSelf: 'center',
-          paddingTop,
-          paddingBottom: paddingBottom + (trailingReveal?.bottomInset ?? 0),
-          paddingHorizontal: compactPaddingHorizontal,
-          gap,
-        }}
+        contentContainerStyle={[
+          {
+            width: '100%',
+            maxWidth: 720,
+            alignSelf: 'center',
+            paddingTop,
+            paddingBottom: paddingBottom + (trailingReveal?.bottomInset ?? 0),
+            paddingHorizontal: compactPaddingHorizontal,
+            gap,
+          },
+          foldColumn,
+        ]}
       >
         {scroll.origin}
         {header ? (

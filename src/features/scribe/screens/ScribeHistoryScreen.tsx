@@ -13,6 +13,7 @@ import {
   ScribeLegacyImportRow,
 } from '@/features/scribe/components/ScribeHistoryRows'
 import { CONVERSATION_MAX_WIDTH } from '@/features/scribe/components/ScribeTimeline'
+import { useFoldColumn } from '@/components/ui/layout/FoldPane'
 
 const SectionHeader = ({ title }: { title: string }) => {
   const theme = useTheme()
@@ -50,6 +51,7 @@ const ScribeHistoryScreen = () => {
       entry: 'history',
     })
 
+  const foldColumn = useFoldColumn(CONVERSATION_MAX_WIDTH)
   return (
     <ScrollView
       style={{ flex: 1, backgroundColor: theme.colors.background }}
@@ -58,13 +60,16 @@ const ScribeHistoryScreen = () => {
       {/* Capped inside the content, not on it: in a right-to-left layout iOS
           pins a narrower content container to the right edge. */}
       <View
-        style={{
-          width: '100%',
-          maxWidth: CONVERSATION_MAX_WIDTH,
-          alignSelf: 'center',
-          paddingHorizontal: isWide ? 24 : 15,
-          gap: 8,
-        }}
+        style={[
+          {
+            width: '100%',
+            maxWidth: CONVERSATION_MAX_WIDTH,
+            alignSelf: 'center',
+            paddingHorizontal: isWide ? 24 : 15,
+            gap: 8,
+          },
+          foldColumn,
+        ]}
       >
         {history.conversations.length === 0 ? (
           <Text

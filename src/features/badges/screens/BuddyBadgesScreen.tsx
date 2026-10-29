@@ -10,6 +10,7 @@ import { badgeKey } from '@/lib/badges/catalog'
 import { buddyBadgeShelf } from '@/lib/badges/display'
 import type { BadgeArtId, BadgeLevel, SharedBadge } from '@/types/badges'
 import type { BadgeViewOrigin, RootStackNavigation } from '@/types/rootStack'
+import { useFoldColumn } from '@/components/ui/layout/FoldPane'
 
 /**
  * A buddy's whole collection, opened from See all on their page: every
@@ -47,17 +48,21 @@ export default function BuddyBadgesScreen({
       locked,
     })
 
+  const foldColumn = useFoldColumn(720)
   return (
     <ScrollView
       style={{ flex: 1, backgroundColor: theme.colors.background }}
-      contentContainerStyle={{
-        padding: 16,
-        paddingBottom: insets.bottom + 32,
-        gap: 16,
-        width: '100%',
-        maxWidth: 720,
-        alignSelf: 'center',
-      }}
+      contentContainerStyle={[
+        {
+          padding: 16,
+          paddingBottom: insets.bottom + 32,
+          gap: 16,
+          width: '100%',
+          maxWidth: 720,
+          alignSelf: 'center',
+        },
+        foldColumn,
+      ]}
     >
       <View style={{ gap: 12 }}>
         {shelf.collections.map(({ art, level }) => (

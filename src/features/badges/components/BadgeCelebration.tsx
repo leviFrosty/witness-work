@@ -18,6 +18,7 @@ import BadgeMedallion from '@/components/badges/BadgeMedallion'
 import ActionButton from '@/components/ui/ActionButton'
 import Button from '@/components/ui/Button'
 import FullWindowOverlay from '@/components/ui/FullWindowOverlay'
+import FoldPane from '@/components/ui/layout/FoldPane'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 import BadgeHistoryCluster from '@/features/badges/components/BadgeHistoryCluster'
@@ -174,10 +175,8 @@ export default function BadgeCelebration({
             importantForAccessibility='no'
           />
         </Animated.View>
-        <View
-          pointerEvents='box-none'
-          style={{
-            flex: 1,
+        <FoldPane
+          contentStyle={{
             alignItems: 'center',
             justifyContent: 'center',
             padding: 24,
@@ -303,7 +302,7 @@ export default function BadgeCelebration({
               </Button>
             </View>
           </Animated.View>
-        </View>
+        </FoldPane>
         <Confetti ref={confetti} />
       </View>
     </FullWindowOverlay>

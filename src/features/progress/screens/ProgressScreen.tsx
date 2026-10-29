@@ -44,6 +44,7 @@ import useRolloverPrompt from '@/features/service-reports/hooks/useRolloverPromp
 import useProgressCardEditing from '@/features/progress/hooks/useProgressCardEditing'
 import type { ProgressCardDestination } from '@/features/progress/components/cards/progressCardRegistry'
 import { formatDisplay } from '@/lib/dates'
+import { useFoldColumn } from '@/components/ui/layout/FoldPane'
 
 type Props = NativeStackScreenProps<HomeTabStackParamList, 'Progress'>
 
@@ -53,6 +54,7 @@ const ProgressScreen = ({ route, navigation }: Props) => {
   const theme = useTheme()
   useRolloverPrompt()
   const { isWide, contentMaxWidth } = useAdaptiveLayout()
+  const foldColumn = useFoldColumn(isWide ? null : 720)
   const rootNavigation = useNavigation<RootStackNavigation>()
   const now = moment()
   const currentYear = now.year()
@@ -173,10 +175,13 @@ const ProgressScreen = ({ route, navigation }: Props) => {
           contentStyle={
             inColumn
               ? { paddingHorizontal: 0 }
-              : {
-                  maxWidth: isWide ? contentMaxWidth : 720,
-                  paddingHorizontal: isWide ? 24 : 15,
-                }
+              : [
+                  {
+                    maxWidth: isWide ? contentMaxWidth : 720,
+                    paddingHorizontal: isWide ? 24 : 15,
+                  },
+                  foldColumn,
+                ]
           }
           actions={
             cardEditing.editing ? (
@@ -222,6 +227,7 @@ const ProgressScreen = ({ route, navigation }: Props) => {
           maxWidth: inColumn ? undefined : isWide ? contentMaxWidth : 720,
           alignSelf: 'center',
           gap: 6,
+          ...(inColumn ? null : foldColumn),
         }}
       >
         <SegmentedControl<ProgressTab>

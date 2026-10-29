@@ -51,6 +51,11 @@ iPhone Duo has a compact outer display and a regular-width inner one. On both, t
 
 - **Layout by size, never by device.** Use `useAdaptiveLayout` (`isWide`, `hasBottomBar`, `navigationRail`), not `Platform.isPad` or `isTablet`. When the vertical bar is present, tabs become a side rail; pad for the bottom bar only when `hasBottomBar` is true.
 - **Two columns go in `FoldSplit`.** It meets the fold when the device is half-open and springs there; never hand-roll a `flexDirection: 'row'` split.
+- **Nothing sits in the fold.** When the device is half-open, anything that isn't a `FoldSplit` keeps to the leading side of the fold, as system sheets do, so no text or control lands in the crease:
+  - Dialogs, takeovers, celebrations, toasts and docked forms go in `FoldPane`, which also keeps them clear of the vertical bar. An overlay or sheet that sizes itself by number uses `useWindowFoldPane()`.
+  - A single centered column (`width: '100%'`, `maxWidth`, `alignSelf: 'center'`) uses `ContentColumn`, or appends `useFoldColumn(maxWidth)` to its style when it spans the screen. Pass `null` when the layout is a split that meets the fold itself.
+  - Stack headers (`Header`) move their title and buttons with the content.
+- **Absolute positioning ignores padding.** Absolutely positioned content ignores its parent's padding, so pad it with insets of its own (`right: insets.right + 16`), not the container's.
 - **Controls sit above the content they affect.** In a master–detail split, the screen header goes in the leading column and the detail pane runs to the top (see Contacts, Schedule, Progress Month). A header spans both columns only when both hold the same kind of content (Home, Progress Year).
 - **Side safe areas.** Stack screens are already wrapped in `HorizontalSafeArea`. Hero backgrounds bleed under the bar with `useHorizontalBleed()`, while content stays inset.
 - **Back button.** On a stack screen, use `Header buttonType='back'`. On iPhone Duo the system draws the button in the vertical bar (`createSystemBackStackNavigator`). Custom `onPressLeftIcon` or `leftElement` keep the app's own button.

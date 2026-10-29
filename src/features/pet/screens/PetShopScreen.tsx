@@ -40,7 +40,8 @@ import {
   petOpensAsSheet,
 } from '@/features/pet/lib/petPresentation'
 import {
-  isForSale,
+  isOwned,
+  pickedEntry,
   shopEntries,
   shopPreviewView,
   type ShopEntry,
@@ -68,8 +69,9 @@ function tabOf(focus: string | undefined): ShopTab {
  * The Shop (ADR 0035): where hats and room items are bought with coins, kept
  * apart from the pet's details, which hold what's owned. The room on top tries
  * on whatever's picked; the categories and the items below it scroll, starters
- * left out, owned ones marked. The picked item's button buys it, which puts it
- * on at once. Side by side from 760 points wide, meeting at iPhone Duo's fold.
+ * left out, owned ones stamped with a check and not pickable. The picked item's
+ * button buys it, which puts it on at once. Side by side from 760 points wide,
+ * meeting at iPhone Duo's fold.
  */
 export default function PetShopScreen({ navigation, route }: Props) {
   const theme = useTheme()
@@ -116,10 +118,7 @@ export default function PetShopScreen({ navigation, route }: Props) {
   const sections = shopEntries(tab, room, state.unlockedItems, state.wallet)
   const entries = sections.flatMap((section) => section.entries)
   // What was picked, else the first thing still to buy.
-  const picked =
-    entries.find((entry) => entry.item === pickedItem) ??
-    entries.find(isForSale) ??
-    entries[0]
+  const picked = pickedEntry(entries, pickedItem)
 
   const tryOn =
     picked && picked.state !== 'secret'
@@ -135,7 +134,10 @@ export default function PetShopScreen({ navigation, route }: Props) {
     setPickedItem(null)
     itemsScroll.current?.scrollTo({ y: 0, animated: false })
   }
-  const pick = (entry: ShopEntry) => setPickedItem(entry.item)
+  // What's owned is worn and placed from the pet's details, not here.
+  const pick = (entry: ShopEntry) => {
+    if (!isOwned(entry)) setPickedItem(entry.item)
+  }
   // A bought item goes on at once, so it's never "New".
   const putOn = (entry: ShopEntry) => {
     usePet
@@ -262,17 +264,16 @@ export default function PetShopScreen({ navigation, route }: Props) {
         })}
     </View>
   )
-  const panel = (layout: 'row' | 'stack') =>
-    picked ? (
-      <ShopBuyPanel
-        entry={picked}
-        wallet={state.wallet}
-        petName={scene.name}
-        palette={palette}
-        onBuy={() => buy(picked)}
-        layout={layout}
-      />
-    ) : null
+  const panel = (layout: 'row' | 'stack') => (
+    <ShopBuyPanel
+      entry={picked ?? null}
+      wallet={state.wallet}
+      petName={scene.name}
+      palette={palette}
+      onBuy={() => picked && buy(picked)}
+      layout={layout}
+    />
+  )
 
   if (wide)
     return (

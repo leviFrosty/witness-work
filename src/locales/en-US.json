@@ -5068,6 +5068,7 @@
       "wearing": "Wearing",
       "inRoom": "In room",
       "owned": "Owned",
+      "allOwned": "You own all of these",
       "wearingNow": "Wearing it now",
       "inRoomNow": "In the room now",
       "ownedHint": "Yours to use in {{name}}'s room",

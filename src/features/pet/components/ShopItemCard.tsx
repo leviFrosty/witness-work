@@ -1,14 +1,13 @@
+import Text from '@/components/ui/MyText'
+import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import type { PetRoomSettings } from '@/types/pet'
 import type { SceneInput } from '@/features/pet/art'
 import type { GamePalette } from '@/features/pet/art/gameUi'
-import GameItemCard, {
-  CheckNote,
-  PriceNote,
-} from '@/features/pet/components/GameItemCard'
+import GameItemCard, { PriceNote } from '@/features/pet/components/GameItemCard'
 import type { ResolvedWindow } from '@/features/pet/lib/liveWindow'
 import { priceText, roomOptionLabel } from '@/features/pet/lib/roomLabels'
-import type { ShopEntry } from '@/features/pet/lib/shopEntries'
+import { isOwned, type ShopEntry } from '@/features/pet/lib/shopEntries'
 
 /** The words a screen reader says for a card. */
 function cardLabel(entry: ShopEntry, name: string): string {
@@ -32,9 +31,10 @@ function cardLabel(entry: ShopEntry, name: string): string {
 }
 
 /**
- * One item in the Shop: its picture from the room, its name, and its price, or
- * "Owned" once bought or found (it's worn and placed from the pet's details). A
- * secret not found yet is only a silhouette.
+ * One item in the Shop: its picture from the room, its name, and its price.
+ * Once bought or found it's stamped with a big check, says "Owned", and can't
+ * be picked (it's worn and placed from the pet's details). A secret not found
+ * yet is only a silhouette.
  */
 export default function ShopItemCard({
   entry,
@@ -56,7 +56,9 @@ export default function ShopItemCard({
   thumbBase: Omit<SceneInput, 'room'>
   onPress: () => void
 }) {
+  const theme = useTheme()
   const secret = entry.state === 'secret'
+  const owned = isOwned(entry)
   const name = secret
     ? i18n.t('pet.room.secret.label')
     : roomOptionLabel(entry.part, entry.option)
@@ -67,8 +69,18 @@ export default function ShopItemCard({
         short={entry.state === 'short'}
         palette={palette}
       />
-    ) : entry.state === 'owned' || entry.state === 'current' ? (
-      <CheckNote label={i18n.t('pet.shop.owned')} palette={palette} />
+    ) : owned ? (
+      <Text
+        numberOfLines={1}
+        style={{
+          flexShrink: 1,
+          fontSize: 12,
+          fontFamily: theme.fonts.bold,
+          color: palette.inkAlt,
+        }}
+      >
+        {i18n.t('pet.shop.owned')}
+      </Text>
     ) : null
   return (
     <GameItemCard
@@ -78,6 +90,7 @@ export default function ShopItemCard({
       name={name}
       note={note}
       picked={picked}
+      owned={owned}
       width={width}
       palette={palette}
       room={room}

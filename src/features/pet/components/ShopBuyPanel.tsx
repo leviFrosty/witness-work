@@ -27,8 +27,9 @@ type Action = {
 
 /**
  * The picked item and what can be done with it here: buy it, or what's missing.
- * An owned one says so and where it's used (the pet's details wear and place
- * things); a secret only says it's found, never sold.
+ * One just bought says it's owned and where it's used (the pet's details wear
+ * and place things); a secret only says it's found, never sold. With nothing
+ * picked, the category is all owned, and it says so.
  */
 export default function ShopBuyPanel({
   entry,
@@ -38,7 +39,8 @@ export default function ShopBuyPanel({
   onBuy,
   layout,
 }: {
-  entry: ShopEntry
+  /** Null once everything in the category is owned. */
+  entry: ShopEntry | null
   /** Coins left to spend. */
   wallet: number
   petName: string
@@ -49,61 +51,66 @@ export default function ShopBuyPanel({
 }) {
   const theme = useTheme()
   const scale = gamePixelScale()
-  const hat = entry.part === 'hat'
-  const secret = entry.state === 'secret'
-  const name = secret
-    ? i18n.t('pet.room.secret.label')
-    : roomOptionLabel(entry.part, entry.option)
-
+  let name: string
   let sub: string
   let action: Action | null = null
-  const price = entry.price
-  switch (entry.state) {
-    case 'forSale':
-      sub = i18n.t('pet.shop.leaves', { price: coinsText(wallet - price!) })
-      action = {
-        label: i18n.t('pet.shop.buy'),
-        coin: true,
-        amount: price!,
-        a11y: i18n.t('pet.shop.buyA11y', {
-          item: name,
-          price: priceText(price!),
-        }),
-        onPress: onBuy,
+  if (!entry) {
+    name = i18n.t('pet.shop.allOwned')
+    sub = i18n.t('pet.shop.ownedHint', { name: petName })
+  } else {
+    name =
+      entry.state === 'secret'
+        ? i18n.t('pet.room.secret.label')
+        : roomOptionLabel(entry.part, entry.option)
+    const hat = entry.part === 'hat'
+    const price = entry.price
+    switch (entry.state) {
+      case 'forSale':
+        sub = i18n.t('pet.shop.leaves', { price: coinsText(wallet - price!) })
+        action = {
+          label: i18n.t('pet.shop.buy'),
+          coin: true,
+          amount: price!,
+          a11y: i18n.t('pet.shop.buyA11y', {
+            item: name,
+            price: priceText(price!),
+          }),
+          onPress: onBuy,
+        }
+        break
+      case 'short': {
+        const missing = shortBy(price!, wallet)
+        sub = i18n.t('pet.shop.earnCoins')
+        action = {
+          label: i18n.t('pet.shop.needMore' as TranslationKey, {
+            count: missing,
+          }),
+          coin: true,
+          a11y: i18n.t('pet.shop.needMoreA11y', {
+            item: name,
+            price: coinsText(missing),
+          }),
+        }
+        break
       }
-      break
-    case 'short': {
-      const missing = shortBy(price!, wallet)
-      sub = i18n.t('pet.shop.earnCoins')
-      action = {
-        label: i18n.t('pet.shop.needMore' as TranslationKey, {
-          count: missing,
-        }),
-        coin: true,
-        a11y: i18n.t('pet.shop.needMoreA11y', {
-          item: name,
-          price: coinsText(missing),
-        }),
-      }
-      break
+      case 'owned':
+      case 'current':
+        sub =
+          entry.state === 'current'
+            ? hat
+              ? i18n.t('pet.shop.wearingNow')
+              : i18n.t('pet.shop.inRoomNow')
+            : i18n.t('pet.shop.ownedHint', { name: petName })
+        action = {
+          label: i18n.t('pet.shop.owned'),
+          owned: true,
+          a11y: i18n.t('pet.shop.itemOwned', { item: name }),
+        }
+        break
+      case 'secret':
+        sub = i18n.t('pet.shop.secretHint')
+        break
     }
-    case 'owned':
-    case 'current':
-      sub =
-        entry.state === 'current'
-          ? hat
-            ? i18n.t('pet.shop.wearingNow')
-            : i18n.t('pet.shop.inRoomNow')
-          : i18n.t('pet.shop.ownedHint', { name: petName })
-      action = {
-        label: i18n.t('pet.shop.owned'),
-        owned: true,
-        a11y: i18n.t('pet.shop.itemOwned', { item: name }),
-      }
-      break
-    case 'secret':
-      sub = i18n.t('pet.shop.secretHint')
-      break
   }
 
   const button = action && (

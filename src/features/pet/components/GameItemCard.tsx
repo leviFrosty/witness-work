@@ -7,11 +7,17 @@ import i18n, { type TranslationKey } from '@/lib/locales'
 import { formatNumber } from '@/lib/numbers'
 import type { PetRoomSettings } from '@/types/pet'
 import { resolveRoom, type SceneInput } from '@/features/pet/art'
-import { GAME_FRAME_INSET, type GamePalette } from '@/features/pet/art/gameUi'
+import {
+  cssColor,
+  GAME_FRAME_INSET,
+  ownedStamp,
+  type GamePalette,
+} from '@/features/pet/art/gameUi'
 import { GameIcon } from '@/features/pet/components/GameControls'
 import {
   CoinIcon,
   GameFrame,
+  GamePixelImage,
   gamePixelScale,
 } from '@/features/pet/components/GamePixels'
 import RoomOptionThumb, {
@@ -83,6 +89,43 @@ function NewTag({ palette }: { palette: GamePalette }) {
   )
 }
 
+/**
+ * Over an owned item's picture in the Shop: the picture faded under paper, and
+ * a big check stamped in the middle.
+ */
+function OwnedStamp({ palette }: { palette: GamePalette }) {
+  return (
+    <View
+      pointerEvents='none'
+      style={{
+        position: 'absolute',
+        top: 0,
+        start: 0,
+        end: 0,
+        bottom: 0,
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      <View
+        style={{
+          position: 'absolute',
+          top: 0,
+          start: 0,
+          end: 0,
+          bottom: 0,
+          backgroundColor: cssColor(palette.paper),
+          opacity: 0.6,
+        }}
+      />
+      <GamePixelImage
+        cacheKey={`ownedStamp|${palette.dark ? 1 : 0}`}
+        make={() => ownedStamp(palette)}
+      />
+    </View>
+  )
+}
+
 /** A card's note after its name: a check and a word ("Wearing", "Owned"). */
 export function CheckNote({
   label,
@@ -149,7 +192,8 @@ export function PriceNote({
  * One item as the pet screens show it, in the Shop and in the pet's details:
  * its picture from the room, its name, and a note after the name (its price, or
  * that it's worn). An owned item not picked yet says "New"; a secret not found
- * yet is only a silhouette.
+ * yet is only a silhouette. In the Shop, an owned one is stamped with a check
+ * and can't be pressed.
  */
 export default function GameItemCard({
   part,
@@ -159,6 +203,7 @@ export default function GameItemCard({
   note,
   picked,
   isNew = false,
+  owned = false,
   width,
   palette,
   room,
@@ -178,6 +223,8 @@ export default function GameItemCard({
   /** Ringed in the accent: picked in the Shop, or in use. */
   picked: boolean
   isNew?: boolean
+  /** In the Shop: already owned, so stamped with a check and off. */
+  owned?: boolean
   /** The card's width in points. */
   width: number
   palette: GamePalette
@@ -213,8 +260,9 @@ export default function GameItemCard({
   return (
     <Button
       onPress={onPress}
+      disabled={owned}
       accessibilityRole={accessibilityRole}
-      accessibilityState={accessibilityState}
+      accessibilityState={{ ...accessibilityState, disabled: owned }}
       accessibilityLabel={accessibilityLabel}
       pointerEffect='tint'
       style={{ width }}
@@ -231,6 +279,7 @@ export default function GameItemCard({
             width={view[2] * scale}
             silhouette={silhouette}
           />
+          {owned && <OwnedStamp palette={palette} />}
           {isNew && <NewTag palette={palette} />}
         </View>
         <View
@@ -249,7 +298,7 @@ export default function GameItemCard({
               flexShrink: 1,
               fontSize: 13,
               fontFamily: theme.fonts.semiBold,
-              color: secret ? palette.inkAlt : palette.ink,
+              color: secret || owned ? palette.inkAlt : palette.ink,
             }}
           >
             {name}

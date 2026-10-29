@@ -659,3 +659,39 @@ export function gameIcon(name: GameIconName, color: string): PixelBuffer {
 /** The check beside "Wearing", in `color`. */
 export const gameCheckIcon = (color: string): PixelBuffer =>
   maskIcon(CHECK, color)
+
+/** The owned stamp's size, in pixels. */
+export const OWNED_STAMP_PX = 22
+/** A round seal in the accent, a thick check through it. */
+const OWNED_STAMP = [
+  '........oooooo........',
+  '......ooffffffoo......',
+  '....ooffffffffffoo....',
+  '...offffffffffffffo...',
+  '..offffffffffffffffo..',
+  '..offffffffffffffffo..',
+  '.offffffffffffffffffo.',
+  '.offfffffffffffcccffo.',
+  'offfffffffffffcccffffo',
+  'offffffffffffcccfffffo',
+  'offfcccfffffcccffffffo',
+  'offffcccfffcccfffffffo',
+  'offfffcccfcccffffffffo',
+  'offffffcccccfffffffffo',
+  '.offffffcccfffffffffo.',
+  '.offfffffcffffffffffo.',
+  '..offffffffffffffffo..',
+  '..offffffffffffffffo..',
+  '...offffffffffffffo...',
+  '....ooffffffffffoo....',
+  '......ooffffffoo......',
+  '........oooooo........',
+]
+
+/** The stamp over an item the Shop no longer sells: it's owned. */
+export const ownedStamp = (p: GamePalette): PixelBuffer =>
+  toneIcon(OWNED_STAMP, {
+    o: cssColor(p.accentDark),
+    f: cssColor(p.accent),
+    c: p.onAccent,
+  })

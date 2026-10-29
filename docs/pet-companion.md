@@ -188,13 +188,15 @@ Swappable parts, each a registry of options (`src/features/pet/art/room/`):
     the picked item; it opens on the item it was opened for, else the first one still for sale.
     Categories (Hat, Wall, Floor, Bed, Shelf, Light, `SHOP_TABS`) scroll in a row whose last tab in
     view is cut about in half (`tabGap`), so the row reads as scrollable. Items sit two to four to a
-    row (`ShopItemCard`), starters left out (`shopEntries`): picture, name, and the price, or
-    "Owned" with a check once bought or found; a locked secret shows its silhouette and `???`. The
-    picked item's button (`ShopBuyPanel`) buys it ("Buy" with the price) or says what's missing
-    ("Need 3 more", disabled); an owned one's says "Owned" (disabled), with "Wearing it now", "In the
-    room now" or "Yours to use in <Name>'s room" under its name. Buying puts it on at once, with a
-    success haptic and a toast ("Cap bought. Biscuit is wearing it."). A secret's panel only says
-    it's found along the way.
+    row (`ShopItemCard`), starters left out (`shopEntries`): picture, name, and the price. Once
+    bought or found, the picture fades under a big check stamp (`ownedStamp`), the card says
+    "Owned", and it can't be picked: owned things are worn and placed from the details. A locked
+    secret shows its silhouette and `???`. The picked item's button (`ShopBuyPanel`) buys it ("Buy"
+    with the price) or says what's missing ("Need 3 more", disabled). Buying puts it on at once,
+    with a success haptic and a toast ("Cap bought. Biscuit is wearing it."); the bought card stays
+    picked, its button "Owned" (disabled) with "Wearing it now" or "In the room now" under its
+    name. A secret's panel only says it's found along the way. Once a category is all owned, the
+    panel says "You own all of these" (`pickedEntry`).
   - Layout by width: under 760 pt, one scroll view with the header, a strip of the room and the
     categories pinned, the items below and the button in a bar at the bottom, clear of the home
     indicator. From 760 pt (iPad, iPhone Duo open), `FoldSplit`: the counter (header, room, item

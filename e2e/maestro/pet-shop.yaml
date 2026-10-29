@@ -19,6 +19,10 @@ name: Buy a hat in the Shop, then find it worn in the pet's room
 - tapOn: Cap, 12 coins
 - tapOn: Buy Cap for 12 coins
 - assertVisible: Cap bought
+# Owned now: stamped, and off, so it can't be picked again.
+- assertVisible:
+    text: Cap, owned
+    traits: button
 # Back in the room, the cap is on and says what it cost.
 - tapOn: Back
 - assertVisible: 'Wearing: Cap'

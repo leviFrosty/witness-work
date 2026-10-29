@@ -71,6 +71,26 @@ export function shopEntries(
 export const isForSale = (entry: Pick<ShopEntry, 'state'>): boolean =>
   entry.state === 'forSale' || entry.state === 'short'
 
+/** Whether `entry` is owned already: bought or found, so it can't be picked. */
+export const isOwned = (entry: Pick<ShopEntry, 'state'>): boolean =>
+  entry.state === 'owned' || entry.state === 'current'
+
+/**
+ * The item the Shop's panel is about: `item` as picked (or just bought), else
+ * the first one still for sale, else a secret still to find. Never an owned one
+ * it wasn't asked for; undefined once a category is all owned.
+ */
+export function pickedEntry(
+  entries: readonly ShopEntry[],
+  item: string | null
+): ShopEntry | undefined {
+  return (
+    entries.find((entry) => entry.item === item) ??
+    entries.find(isForSale) ??
+    entries.find((entry) => entry.state === 'secret')
+  )
+}
+
 /** The scene is 180 × 100 pixels. */
 const SCENE_W = 180
 const SCENE_H = 100

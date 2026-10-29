@@ -1,5 +1,8 @@
 import { Pressable, View } from 'react-native'
 import { Bell as BellIcon, X as XIcon } from 'lucide-react-native'
+import UnlockArtTile, {
+  UNLOCK_ART_SIZE,
+} from '@/components/toast/UnlockArtTile'
 import Button from '@/components/ui/Button'
 import IconButton from '@/components/ui/IconButton'
 import { touchTargetFrame } from '@/components/ui/touchTarget'
@@ -41,10 +44,15 @@ function toneColors(theme: Theme, tone: NotificationTone = 'accent') {
   }
 }
 
+/** The round icon that leads a row without art. */
+const ICON_SIZE = 36
+/** Between the leading icon or art and the text. */
+const LEAD_GAP = 10
+
 /**
- * A standard tray entry: icon, title, when it came in, a dismiss button, an
- * optional description, and up to two actions. Tapping the row runs the first
- * action.
+ * A standard tray entry: icon (or an unlock's art), title, when it came in, a
+ * dismiss button, an optional description, and up to two actions. Tapping the
+ * row runs the first action.
  *
  * VoiceOver reads the row as one element, which hides the buttons inside it, so
  * the second action and Dismiss are its custom actions too.
@@ -67,6 +75,7 @@ export default function NotificationRow({
   const theme = useTheme()
   const { color, background } = toneColors(theme, item.tone)
   const [primary, secondary] = item.actions ?? []
+  const lead = item.art ? UNLOCK_ART_SIZE : ICON_SIZE
 
   return (
     <Pressable
@@ -91,20 +100,28 @@ export default function NotificationRow({
         opacity: pressed && primary ? 0.7 : 1,
       })}
     >
-      <XView style={{ gap: 10, alignItems: 'flex-start' }}>
+      <XView style={{ gap: LEAD_GAP, alignItems: 'flex-start' }}>
         <View>
-          <View
-            style={{
-              width: 36,
-              height: 36,
-              borderRadius: 18,
-              alignItems: 'center',
-              justifyContent: 'center',
-              backgroundColor: background,
-            }}
-          >
-            <LucideIcon icon={item.icon ?? BellIcon} size={18} color={color} />
-          </View>
+          {item.art ? (
+            <UnlockArtTile art={item.art} />
+          ) : (
+            <View
+              style={{
+                width: ICON_SIZE,
+                height: ICON_SIZE,
+                borderRadius: ICON_SIZE / 2,
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: background,
+              }}
+            >
+              <LucideIcon
+                icon={item.icon ?? BellIcon}
+                size={18}
+                color={color}
+              />
+            </View>
+          )}
           {unread && (
             <View
               accessibilityElementsHidden
@@ -154,7 +171,7 @@ export default function NotificationRow({
       </XView>
 
       {primary ? (
-        <XView style={{ gap: 8, paddingLeft: 46 }}>
+        <XView style={{ gap: 8, paddingLeft: lead + LEAD_GAP }}>
           <Button
             noTransform
             onPress={() => onAction(primary)}

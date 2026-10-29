@@ -9,12 +9,11 @@ import Text from '@/components/ui/MyText'
 import Button from '@/components/ui/Button'
 import LucideIcon from '@/components/ui/LucideIcon'
 import { HoverTint } from '@/components/ui/PointerHover'
+import UnlockArtTile from '@/components/toast/UnlockArtTile'
 import i18n from '@/lib/locales'
 import { tracking } from '@/lib/tracking'
 import { type Toast } from '@/stores/toasts'
 
-/** An unlock's picture, square. */
-export const UNLOCK_ART_SIZE = 52
 /** Room for the Undo button: a full 44 pt target. */
 const ACTION_TARGET = 44
 
@@ -67,20 +66,7 @@ export default function ToastContent({
         }}
       >
         {unlock && toast.art ? (
-          <View
-            style={{
-              width: UNLOCK_ART_SIZE,
-              height: UNLOCK_ART_SIZE,
-              borderRadius: 16,
-              borderCurve: 'continuous',
-              overflow: 'hidden',
-              alignItems: 'center',
-              justifyContent: 'center',
-              backgroundColor: theme.colors.backgroundLighter,
-            }}
-          >
-            {toast.art(UNLOCK_ART_SIZE)}
-          </View>
+          <UnlockArtTile art={toast.art} />
         ) : (
           <View
             style={{

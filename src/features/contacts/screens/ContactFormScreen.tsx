@@ -39,6 +39,7 @@ import { useGeocodeRetry } from '@/stores/geocodeRetry'
 import useDiscardChangesGuard from '@/hooks/useDiscardChangesGuard'
 import useDraftChanged from '@/hooks/useDraftChanged'
 import { contactDraftForChanges } from '@/features/contacts/lib/contactDraft'
+import { useFoldColumn } from '@/components/ui/layout/FoldPane'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Contact Form'>
 
@@ -51,6 +52,7 @@ type Props = NativeStackScreenProps<RootStackParamList, 'Contact Form'>
 const GEOCODE_NAV_TIMEOUT_MS = 4000
 
 const ContactFormScreen = ({ route, navigation }: Props) => {
+  const foldColumn = useFoldColumn(680)
   const theme = useTheme()
   const { addContact, contacts, updateContact, customFieldDefs } = useContacts()
   const {
@@ -654,14 +656,17 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
     >
       <Wrapper
         insets='none'
-        style={{
-          gap: 24,
-          marginTop: 8,
-          paddingHorizontal: 12,
-          alignSelf: 'center',
-          width: '100%',
-          maxWidth: 680,
-        }}
+        style={[
+          {
+            gap: 24,
+            marginTop: 8,
+            paddingHorizontal: 12,
+            alignSelf: 'center',
+            width: '100%',
+            maxWidth: 680,
+          },
+          foldColumn,
+        ]}
       >
         {dataProtectionMode && (
           <ContactConsentSection

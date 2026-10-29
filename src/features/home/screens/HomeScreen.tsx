@@ -77,6 +77,7 @@ import {
   showHomeSection,
 } from '@/lib/homeSections'
 import useAvailableHomeSections from '@/hooks/useAvailableHomeSections'
+import { useFoldColumn } from '@/components/ui/layout/FoldPane'
 
 const SECTION_GAP = 20
 
@@ -92,6 +93,8 @@ export const HomeScreen = ({ header }: { header: ReactNode }) => {
   const theme = useTheme()
   const insets = useSafeAreaInsets()
   const { isWide, hasBottomBar, contentMaxWidth } = useAdaptiveLayout()
+  // One column (large text) keeps to one side of iPhone Duo's fold.
+  const foldColumn = useFoldColumn(isWide ? null : 720)
   const {
     homeChecklistDismissed,
     iCloudSyncEnabled,
@@ -257,6 +260,7 @@ export const HomeScreen = ({ header }: { header: ReactNode }) => {
           // viewport when the user's home sections are short, which the tip
           // card's `marginTop: 'auto'` relies on to anchor to the bottom.
           flexGrow: 1,
+          ...foldColumn,
         }}
         automaticallyAdjustKeyboardInsets
         automaticallyAdjustsScrollIndicatorInsets={false}

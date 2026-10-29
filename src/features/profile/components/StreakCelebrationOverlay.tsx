@@ -18,6 +18,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { scheduleOnRN } from 'react-native-worklets'
 import RewardStackLayer from '@/components/reward-stack/RewardStackLayer'
 import FullWindowOverlay from '@/components/ui/FullWindowOverlay'
+import FoldPane from '@/components/ui/layout/FoldPane'
 import LucideIcon from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
@@ -238,8 +239,11 @@ export default function StreakCelebrationOverlay({
           accessibilityRole='button'
           accessibilityLabel={i18n.t('close')}
         />
-        <View
-          style={[styles.content, stacked && { paddingBottom: STACK_ROOM }]}
+        <FoldPane
+          contentStyle={[
+            styles.content,
+            stacked && { paddingBottom: STACK_ROOM },
+          ]}
           pointerEvents='none'
         >
           <View style={styles.stage}>
@@ -298,7 +302,7 @@ export default function StreakCelebrationOverlay({
               {detail}
             </Text>
           </Animated.View>
-        </View>
+        </FoldPane>
         <RewardStackLayer
           slot='celebration'
           // Android's modal reads no inset for its gesture bar: keep clear.

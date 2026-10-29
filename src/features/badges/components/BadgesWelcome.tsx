@@ -18,6 +18,7 @@ import { scheduleOnRN } from 'react-native-worklets'
 import ActionButton from '@/components/ui/ActionButton'
 import Button from '@/components/ui/Button'
 import FullWindowOverlay from '@/components/ui/FullWindowOverlay'
+import FoldPane from '@/components/ui/layout/FoldPane'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 import BadgeHistoryCluster from '@/features/badges/components/BadgeHistoryCluster'
@@ -134,84 +135,86 @@ export default function BadgesWelcome({
             contentStyle,
           ]}
         >
-          <View
-            style={{
-              flex: 1,
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 32,
-            }}
-          >
-            <BadgeHistoryCluster badges={best} scale={scale} />
-            <View style={{ alignItems: 'center', gap: 10, maxWidth: 360 }}>
-              <Text
-                style={{
-                  fontSize: 13,
-                  fontFamily: theme.fonts.semiBold,
-                  color: theme.colors.accent,
-                  textTransform: 'uppercase',
-                  letterSpacing: tracking(1.2),
-                }}
-              >
-                {i18n.t('badges_title')}
-              </Text>
-              <Text
-                accessibilityRole='header'
-                style={{
-                  fontSize: 30,
-                  lineHeight: 36,
-                  fontFamily: theme.fonts.bold,
-                  color: theme.colors.text,
-                  textAlign: 'center',
-                }}
-              >
-                {title}
-              </Text>
-              <Text
-                style={{
-                  fontSize: 18,
-                  lineHeight: 24,
-                  fontFamily: theme.fonts.semiBold,
-                  color: theme.colors.text,
-                  textAlign: 'center',
-                }}
-              >
-                {countLine}
-              </Text>
+          <FoldPane>
+            <View
+              style={{
+                flex: 1,
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 32,
+              }}
+            >
+              <BadgeHistoryCluster badges={best} scale={scale} />
+              <View style={{ alignItems: 'center', gap: 10, maxWidth: 360 }}>
+                <Text
+                  style={{
+                    fontSize: 13,
+                    fontFamily: theme.fonts.semiBold,
+                    color: theme.colors.accent,
+                    textTransform: 'uppercase',
+                    letterSpacing: tracking(1.2),
+                  }}
+                >
+                  {i18n.t('badges_title')}
+                </Text>
+                <Text
+                  accessibilityRole='header'
+                  style={{
+                    fontSize: 30,
+                    lineHeight: 36,
+                    fontFamily: theme.fonts.bold,
+                    color: theme.colors.text,
+                    textAlign: 'center',
+                  }}
+                >
+                  {title}
+                </Text>
+                <Text
+                  style={{
+                    fontSize: 18,
+                    lineHeight: 24,
+                    fontFamily: theme.fonts.semiBold,
+                    color: theme.colors.text,
+                    textAlign: 'center',
+                  }}
+                >
+                  {countLine}
+                </Text>
+              </View>
             </View>
-          </View>
-          <View
-            style={{
-              alignSelf: 'center',
-              width: '100%',
-              maxWidth: 400,
-              gap: 4,
-            }}
-          >
-            <ActionButton
-              noTransform
-              accessibilityRole='button'
-              onPress={() => close('look')}
+            <View
+              style={{
+                alignSelf: 'center',
+                width: '100%',
+                maxWidth: 400,
+                gap: 4,
+              }}
             >
-              {i18n.t('badges_welcomeLook')}
-            </ActionButton>
-            <Button
-              noTransform
-              accessibilityRole='button'
-              onPress={() => close('later')}
-              style={{ alignItems: 'center', paddingVertical: 12 }}
-            >
-              <Text
-                style={{
-                  fontSize: 15,
-                  fontFamily: theme.fonts.semiBold,
-                  color: theme.colors.textAlt,
-                }}
+              <ActionButton
+                noTransform
+                accessibilityRole='button'
+                onPress={() => close('look')}
               >
-                {i18n.t('badges_welcomeLater')}
-              </Text>
-            </Button>
-          </View>
+                {i18n.t('badges_welcomeLook')}
+              </ActionButton>
+              <Button
+                noTransform
+                accessibilityRole='button'
+                onPress={() => close('later')}
+                style={{ alignItems: 'center', paddingVertical: 12 }}
+              >
+                <Text
+                  style={{
+                    fontSize: 15,
+                    fontFamily: theme.fonts.semiBold,
+                    color: theme.colors.textAlt,
+                  }}
+                >
+                  {i18n.t('badges_welcomeLater')}
+                </Text>
+              </Button>
+            </View>
+          </FoldPane>
         </Animated.View>
         <Confetti ref={confetti} />
       </View>

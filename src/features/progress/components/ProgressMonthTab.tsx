@@ -29,6 +29,7 @@ import DaysCard from '@/features/progress/components/cards/DaysCard'
 import ProgressCardPressable from '@/features/progress/components/cards/ProgressCardPressable'
 import { PROGRESS_CARDS } from '@/features/progress/components/cards/progressCardRegistry'
 import type { ProgressCardDestination } from '@/features/progress/components/cards/progressCardRegistry'
+import { useFoldColumn } from '@/components/ui/layout/FoldPane'
 
 interface ProgressMonthTabProps {
   month: number
@@ -93,6 +94,7 @@ const ProgressMonthTab = ({
 
   const days = cards.shown.find((item) => item.id === 'days')
   const daysBeside = isWide && days !== undefined
+  const foldColumn = useFoldColumn(daysBeside ? null : 720)
   // With Days in the same column, revealing a picked day scrolls that column.
   const ownScrollRef = useRef<KeyboardAwareScrollView>(null)
   const leadingRef = daysBeside ? ownScrollRef : dayReveal.scrollRef
@@ -200,6 +202,7 @@ const ProgressMonthTab = ({
           width: '100%',
           maxWidth: daysBeside ? undefined : 720,
           alignSelf: 'center',
+          ...foldColumn,
           // Beside Days, just room for the edit buttons past the cards' edges.
           paddingHorizontal: daysBeside ? PROGRESS_CARD_GAP / 2 : 15,
           paddingTop: 15,

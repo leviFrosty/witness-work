@@ -39,6 +39,8 @@ import FAQTopics, {
 import { RootStackParamList } from '@/types/rootStack'
 import useFAQSearch from '@/features/updates/hooks/useFAQSearch'
 import useHelpCenter from '@/features/updates/hooks/useHelpCenter'
+import { useFoldColumn } from '@/components/ui/layout/FoldPane'
+import FoldSplit from '@/components/ui/layout/FoldSplit'
 
 /** Quiet time after the last layout change before scrolling to a category. */
 const LAYOUT_SETTLE_MS = 150
@@ -227,79 +229,86 @@ const FAQScreen = () => {
     </View>
   )
 
+  const foldColumn = useFoldColumn(720)
   return (
     <Wrapper insets='none' style={{ flex: 1 }}>
       {isWide ? (
-        <View
+        // Topics beside the answers, meeting iPhone Duo's fold when half-open.
+        <FoldSplit
           style={{
             flex: 1,
-            flexDirection: 'row',
             width: '100%',
             maxWidth: 1100,
             alignSelf: 'center',
             paddingTop: 20,
             paddingBottom: insets.bottom + 16,
-            paddingHorizontal: 20,
-            gap: 24,
           }}
-        >
-          <View
-            style={{
-              width: 280,
-              borderRadius: theme.numbers.borderRadiusLg,
-              backgroundColor: theme.colors.backgroundLighter,
-              borderWidth: 1,
-              borderColor: theme.colors.border,
-              overflow: 'hidden',
-            }}
-          >
-            <ScrollView
-              style={{ flex: 1 }}
-              keyboardShouldPersistTaps='handled'
-              contentContainerStyle={{ gap: 16, paddingVertical: 16 }}
-            >
-              <FAQIntro compact />
-              <FAQSearch search={search} setSearch={setSearch} />
-              <FAQTopics
-                categories={categories}
-                selected={isSearching ? undefined : selectedTopic}
-                onSelect={(topic) => {
-                  setSelectedTopic(topic)
-                  setSearch('')
-                }}
-              />
-            </ScrollView>
-          </View>
-          <ScrollView
-            ref={answersRef}
-            style={{ flex: 1 }}
-            keyboardShouldPersistTaps='handled'
-            contentContainerStyle={{ paddingBottom: 24 }}
-          >
+          paddingHorizontal={20}
+          gap={24}
+          leadingWidth={280}
+          leading={
             <View
               style={{
-                width: '100%',
-                maxWidth: 720,
-                alignSelf: 'center',
-                gap: 20,
+                flex: 1,
+                borderRadius: theme.numbers.borderRadiusLg,
+                backgroundColor: theme.colors.backgroundLighter,
+                borderWidth: 1,
+                borderColor: theme.colors.border,
+                overflow: 'hidden',
               }}
             >
-              <Text
-                accessibilityRole='header'
+              <ScrollView
+                style={{ flex: 1 }}
+                keyboardShouldPersistTaps='handled'
+                contentContainerStyle={{ gap: 16, paddingVertical: 16 }}
+              >
+                <FAQIntro compact />
+                <FAQSearch search={search} setSearch={setSearch} />
+                <FAQTopics
+                  categories={categories}
+                  selected={isSearching ? undefined : selectedTopic}
+                  onSelect={(topic) => {
+                    setSelectedTopic(topic)
+                    setSearch('')
+                  }}
+                />
+              </ScrollView>
+            </View>
+          }
+          trailing={
+            <ScrollView
+              ref={answersRef}
+              style={{ flex: 1 }}
+              keyboardShouldPersistTaps='handled'
+              contentContainerStyle={{ paddingBottom: 24 }}
+            >
+              <View
                 style={{
-                  paddingHorizontal: 15,
-                  fontSize: theme.fontSize('xl'),
-                  fontFamily: theme.fonts.bold,
+                  width: '100%',
+                  maxWidth: 720,
+                  alignSelf: 'center',
+                  gap: 20,
                 }}
               >
-                {isSearching
-                  ? i18n.t('faq_allHeader')
-                  : faqTopicTitle(selectedTopic, categories)}
-              </Text>
-              {!isSearching && selectedTopic === 'support' ? support : results}
-            </View>
-          </ScrollView>
-        </View>
+                <Text
+                  accessibilityRole='header'
+                  style={{
+                    paddingHorizontal: 15,
+                    fontSize: theme.fontSize('xl'),
+                    fontFamily: theme.fonts.bold,
+                  }}
+                >
+                  {isSearching
+                    ? i18n.t('faq_allHeader')
+                    : faqTopicTitle(selectedTopic, categories)}
+                </Text>
+                {!isSearching && selectedTopic === 'support'
+                  ? support
+                  : results}
+              </View>
+            </ScrollView>
+          }
+        />
       ) : (
         <KeyboardAwareScrollView
           style={{ flex: 1 }}
@@ -318,12 +327,15 @@ const FAQScreen = () => {
           }}
         >
           <View
-            style={{
-              width: '100%',
-              maxWidth: 720,
-              alignSelf: 'center',
-              gap: 25,
-            }}
+            style={[
+              {
+                width: '100%',
+                maxWidth: 720,
+                alignSelf: 'center',
+                gap: 25,
+              },
+              foldColumn,
+            ]}
           >
             <FAQIntro />
             <FAQSearch search={search} setSearch={setSearch} />

@@ -18,6 +18,7 @@ import {
   type RenderSupporterCta,
 } from '@/features/scribe/components/ScribeStateCards'
 import { CONVERSATION_MAX_WIDTH } from '@/features/scribe/components/ScribeTimeline'
+import { useFoldColumn } from '@/components/ui/layout/FoldPane'
 
 interface Props {
   controller: ScribeConversationController
@@ -43,6 +44,7 @@ const ScribeConversationFooter = ({
   onUpgrade,
   renderSupporterCta,
 }: Props) => {
+  const foldColumn = useFoldColumn(CONVERSATION_MAX_WIDTH)
   const theme = useTheme()
   const { isWide } = useAdaptiveLayout()
   const { run, budget, pendingProposalId } = controller
@@ -85,19 +87,22 @@ const ScribeConversationFooter = ({
 
   return (
     <View
-      style={{
-        // The composer's field shrinks before anything here is cut off.
-        flexShrink: 1,
-        width: '100%',
-        maxWidth: CONVERSATION_MAX_WIDTH,
-        alignSelf: 'center',
-        paddingHorizontal: isWide ? 24 : 12,
-        paddingTop: 8,
-        paddingBottom: 8,
-        gap: 10,
-        borderTopWidth: pendingProposalId ? 1 : 0,
-        borderTopColor: theme.colors.border,
-      }}
+      style={[
+        {
+          // The composer's field shrinks before anything here is cut off.
+          flexShrink: 1,
+          width: '100%',
+          maxWidth: CONVERSATION_MAX_WIDTH,
+          alignSelf: 'center',
+          paddingHorizontal: isWide ? 24 : 12,
+          paddingTop: 8,
+          paddingBottom: 8,
+          gap: 10,
+          borderTopWidth: pendingProposalId ? 1 : 0,
+          borderTopColor: theme.colors.border,
+        },
+        foldColumn,
+      ]}
     >
       {pendingProposalId ? (
         <ScribeReviewFooter proposalId={pendingProposalId} />

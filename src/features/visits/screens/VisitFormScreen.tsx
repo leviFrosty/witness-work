@@ -57,6 +57,7 @@ import confirmDestructive from '@/lib/confirmDestructive'
 import useDiscardChangesGuard from '@/hooks/useDiscardChangesGuard'
 import useDraftChanged from '@/hooks/useDraftChanged'
 import { newVisitIsBibleStudy, plannedFollowUpTopic } from '@/lib/conversations'
+import { useFoldColumn } from '@/components/ui/layout/FoldPane'
 
 /** Inputs for the Follow-up's buddy invitations, supplied by the app tier. */
 export type FollowUpBuddiesSlot = (props: {
@@ -160,6 +161,7 @@ const VisitFormScreen = ({
   navigation,
   renderFollowUpBuddies,
 }: Props) => {
+  const foldColumn = useFoldColumn(680)
   const theme = useTheme()
   const insets = useSafeAreaInsets()
   const {
@@ -597,14 +599,17 @@ const VisitFormScreen = ({
     >
       <Wrapper
         insets='none'
-        style={{
-          gap: 24,
-          marginTop: 4,
-          paddingHorizontal: 12,
-          alignSelf: 'center',
-          width: '100%',
-          maxWidth: 680,
-        }}
+        style={[
+          {
+            gap: 24,
+            marginTop: 4,
+            paddingHorizontal: 12,
+            alignSelf: 'center',
+            width: '100%',
+            maxWidth: 680,
+          },
+          foldColumn,
+        ]}
       >
         <View
           style={{

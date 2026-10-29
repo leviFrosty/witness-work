@@ -37,6 +37,7 @@ import useRevealChoreography, {
 import { UpdateRevealSource } from '@/features/updates/stores/updateReveal'
 import RevealIntro from '@/features/updates/components/reveal/RevealIntro'
 import RevealTour from '@/features/updates/components/reveal/RevealTour'
+import FoldPane from '@/components/ui/layout/FoldPane'
 
 /** How the reveal was closed. Bounded, safe as an analytics value. */
 type CloseMethod = 'later' | 'close' | 'done' | 'back'
@@ -263,21 +264,23 @@ const UpdateRevealOverlay = ({ source, onClosed }: Props) => {
         </>
       ) : (
         <Animated.View style={[{ flex: 1 }, tourStyle]}>
-          <RevealTour
-            pages={pages}
-            palette={palette}
-            time={time}
-            reduceMotion={reduceMotion}
-            onPageViewed={(id) => {
-              viewed.current.add(id)
-              lastPage.current = id
-            }}
-            finish={{
-              label: i18n.t('updateReveal_takeMeHome'),
-              onPress: () => finish('done'),
-            }}
-            exit={{ onPress: () => finish('close') }}
-          />
+          <FoldPane pointerEvents='auto'>
+            <RevealTour
+              pages={pages}
+              palette={palette}
+              time={time}
+              reduceMotion={reduceMotion}
+              onPageViewed={(id) => {
+                viewed.current.add(id)
+                lastPage.current = id
+              }}
+              finish={{
+                label: i18n.t('updateReveal_takeMeHome'),
+                onPress: () => finish('done'),
+              }}
+              exit={{ onPress: () => finish('close') }}
+            />
+          </FoldPane>
         </Animated.View>
       )}
       {splashVisible && (

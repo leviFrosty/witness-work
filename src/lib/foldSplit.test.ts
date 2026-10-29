@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import { getFoldSplit, type FoldSplitInput } from '@/lib/foldSplit'
+import {
+  clampToFoldSide,
+  getFoldColumn,
+  getFoldPane,
+  getFoldSplit,
+  type FoldDivision,
+  type FoldSplitInput,
+} from '@/lib/foldSplit'
 
 // iPhone Duo's inner display in portrait, folded like a book.
 const bookFold = { x: 314, y: 0, width: 40, height: 951, active: true }
@@ -71,6 +78,25 @@ describe('fold split', () => {
     ).toBe(314)
   })
 
+  it('gives a fixed trailing width the rest to the leading column', () => {
+    expect(
+      getFoldSplit({
+        ...base,
+        leading: { trailingWidth: 300 },
+        paddingHorizontal: 0,
+      }).leadingWidth
+    ).toBe(669 - 24 - 300)
+    // Folded, both still meet the fold.
+    expect(
+      getFoldSplit({
+        ...base,
+        leading: { trailingWidth: 300 },
+        paddingHorizontal: 0,
+        divisions: [bookFold],
+      }).leadingWidth
+    ).toBe(314)
+  })
+
   it('leaves a laptop-style fold to the scrolling columns', () => {
     expect(
       getFoldSplit({
@@ -89,5 +115,123 @@ describe('fold split', () => {
         divisions: [{ ...bookFold, x: 120 }],
       }).folded
     ).toBe(false)
+  })
+})
+
+describe('fold pane', () => {
+  it('fills the container while the display is flat', () => {
+    expect(getFoldPane({ width: 669, divisions: [], rtl: false })).toBeNull()
+    expect(
+      getFoldPane({
+        width: 669,
+        divisions: [{ ...bookFold, active: false }],
+        rtl: false,
+      })
+    ).toBeNull()
+  })
+
+  it('keeps to the leading side of a book fold', () => {
+    expect(
+      getFoldPane({ width: 669, divisions: [bookFold], rtl: false })
+    ).toEqual({ left: 0, right: 669 - 314 })
+  })
+
+  it('keeps to the right of the fold in right-to-left layouts', () => {
+    expect(
+      getFoldPane({ width: 669, divisions: [bookFold], rtl: true })
+    ).toEqual({ left: 314 + 40, right: 0 })
+  })
+
+  it('ignores a laptop-style fold', () => {
+    expect(
+      getFoldPane({
+        width: 951,
+        divisions: [{ x: 0, y: 314, width: 951, height: 40, active: true }],
+        rtl: false,
+      })
+    ).toBeNull()
+  })
+})
+
+describe('clamp to fold side', () => {
+  const base = {
+    width: 300,
+    windowWidth: 951,
+    divisions: [] as FoldDivision[],
+    insets: { left: 0, right: 84 },
+    margin: 12,
+  }
+  const fold = { x: 455.5, y: 0, width: 40, height: 669, active: true }
+
+  it('keeps clear of the vertical bar', () => {
+    expect(clampToFoldSide({ ...base, x: 640, anchorX: 900 })).toBe(
+      951 - 84 - 12 - 300
+    )
+  })
+
+  it('leaves content that fits alone', () => {
+    expect(clampToFoldSide({ ...base, x: 100, anchorX: 120 })).toBe(100)
+  })
+
+  it('keeps to the side of the fold its anchor is on', () => {
+    expect(
+      clampToFoldSide({ ...base, divisions: [fold], x: 300, anchorX: 400 })
+    ).toBe(455.5 - 12 - 300)
+    expect(
+      clampToFoldSide({ ...base, divisions: [fold], x: 300, anchorX: 520 })
+    ).toBe(455.5 + 40 + 12)
+  })
+
+  it('ignores an inactive fold', () => {
+    expect(
+      clampToFoldSide({
+        ...base,
+        divisions: [{ ...fold, active: false }],
+        x: 300,
+        anchorX: 400,
+      })
+    ).toBe(300)
+  })
+
+  it('leaves content too wide for its side where it was', () => {
+    expect(
+      clampToFoldSide({
+        ...base,
+        width: 600,
+        divisions: [fold],
+        x: 100,
+        anchorX: 400,
+      })
+    ).toBe(100)
+  })
+})
+
+describe('fold column', () => {
+  const pane = { left: 0, right: 951 - 455.5 }
+
+  it('stays centered while the display is flat', () => {
+    expect(
+      getFoldColumn({ width: 951, pane: null, maxWidth: 720, rtl: false })
+    ).toBeNull()
+  })
+
+  it('fills a pane narrower than the column', () => {
+    expect(
+      getFoldColumn({ width: 951, pane, maxWidth: 720, rtl: false })
+    ).toEqual({ width: 456, start: 0 })
+  })
+
+  it('centers a narrower column in the pane', () => {
+    expect(
+      getFoldColumn({ width: 951, pane, maxWidth: 400, rtl: false })
+    ).toEqual({ width: 400, start: 28 })
+  })
+
+  it('measures from the right in right-to-left layouts', () => {
+    // The leading pane is right of the fold.
+    const rtlPane = { left: 455.5 + 40, right: 0 }
+    expect(
+      getFoldColumn({ width: 951, pane: rtlPane, maxWidth: 400, rtl: true })
+    ).toEqual({ width: 400, start: 28 })
   })
 })

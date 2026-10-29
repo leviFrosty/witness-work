@@ -3,6 +3,7 @@ import { ScrollView, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Header from '@/components/ui/layout/Header'
 import useTheme from '@/contexts/theme'
+import { useFoldColumn } from '@/components/ui/layout/FoldPane'
 
 /**
  * A read-only details screen (Plan Details, Visit Details): its header, with
@@ -22,6 +23,7 @@ export default function DetailsLayout({
 }) {
   const theme = useTheme()
   const insets = useSafeAreaInsets()
+  const foldColumn = useFoldColumn(720)
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <Header
@@ -45,14 +47,17 @@ export default function DetailsLayout({
         }
       />
       <ScrollView
-        contentContainerStyle={{
-          padding: 15,
-          gap: 20,
-          paddingBottom: insets.bottom + 30,
-          width: '100%',
-          maxWidth: 720,
-          alignSelf: 'center',
-        }}
+        contentContainerStyle={[
+          {
+            padding: 15,
+            gap: 20,
+            paddingBottom: insets.bottom + 30,
+            width: '100%',
+            maxWidth: 720,
+            alignSelf: 'center',
+          },
+          foldColumn,
+        ]}
       >
         {children}
       </ScrollView>

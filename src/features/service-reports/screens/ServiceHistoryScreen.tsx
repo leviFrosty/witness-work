@@ -437,13 +437,10 @@ const ServiceHistoryScreen = ({ navigation, route }: Props) => {
         </ContentColumn>
       </KeyboardAwareScrollView>
 
-      <View
+      <ContentColumn
         style={{
           paddingHorizontal: inputLayout.horizontalPadding,
           paddingTop: 12,
-          width: '100%',
-          maxWidth: inputLayout.contentMaxWidth,
-          alignSelf: 'center',
         }}
       >
         {otherDirtyYears.length ? (
@@ -468,7 +465,7 @@ const ServiceHistoryScreen = ({ navigation, route }: Props) => {
         >
           {i18n.t('save')}
         </ActionButton>
-      </View>
+      </ContentColumn>
     </Wrapper>
   )
 }

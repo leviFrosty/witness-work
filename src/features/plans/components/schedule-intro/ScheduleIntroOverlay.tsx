@@ -21,6 +21,7 @@ import {
 } from 'lucide-react-native'
 import Button from '@/components/ui/Button'
 import FullWindowOverlay from '@/components/ui/FullWindowOverlay'
+import FoldPane from '@/components/ui/layout/FoldPane'
 import LucideIcon from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
@@ -218,16 +219,13 @@ export default function ScheduleIntroOverlay({
           { backgroundColor: palette.base },
           rootStyle,
         ]}
-        onLayout={(e: LayoutChangeEvent) =>
-          setWidth(e.nativeEvent.layout.width)
-        }
       >
-        <View
-          style={{
-            flex: 1,
+        <FoldPane
+          contentStyle={{
             paddingTop: insets.top + 8,
             paddingBottom: Math.max(insets.bottom, 20),
           }}
+          pointerEvents='auto'
         >
           <View
             style={{
@@ -278,9 +276,10 @@ export default function ScheduleIntroOverlay({
 
           <View
             style={{ flex: 1 }}
-            onLayout={(e: LayoutChangeEvent) =>
+            onLayout={(e: LayoutChangeEvent) => {
+              setWidth(e.nativeEvent.layout.width)
               setHeight(e.nativeEvent.layout.height)
-            }
+            }}
           >
             {width > 0 && height > 0 && (
               <Animated.ScrollView
@@ -353,7 +352,7 @@ export default function ScheduleIntroOverlay({
               </Button>
             </Animated.View>
           </View>
-        </View>
+        </FoldPane>
       </Animated.View>
     </FullWindowOverlay>
   )

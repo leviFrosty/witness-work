@@ -37,6 +37,7 @@ import { alertBuddiesError } from '@/features/buddies/lib/buddiesErrorAlert'
 import { refreshBuddyAvatarThumbnail } from '@/features/buddies/lib/buddyProfile'
 import { syncReadInbox } from '@/features/buddies/lib/syncStatus'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
+import { useFoldColumn } from '@/components/ui/layout/FoldPane'
 
 /**
  * Buddies, opened from Home, Schedule, or the Profile: first-visit onboarding,
@@ -60,6 +61,7 @@ export default function BuddiesScreen({
   const [refreshing, setRefreshing] = useState(false)
   const syncStatus = useBuddiesSyncStatus()
   const { invite, inviting } = useInviteAction()
+  const foldColumn = useFoldColumn(720)
 
   useLiveBuddiesSync()
 
@@ -172,15 +174,18 @@ export default function BuddiesScreen({
       {rootHeader}
       <ScrollView
         style={{ flex: 1 }}
-        contentContainerStyle={{
-          gap: 24,
-          paddingTop: 8,
-          paddingHorizontal: 15,
-          paddingBottom: insets.bottom + 40,
-          width: '100%',
-          maxWidth: 720,
-          alignSelf: 'center',
-        }}
+        contentContainerStyle={[
+          {
+            gap: 24,
+            paddingTop: 8,
+            paddingHorizontal: 15,
+            paddingBottom: insets.bottom + 40,
+            width: '100%',
+            maxWidth: 720,
+            alignSelf: 'center',
+          },
+          foldColumn,
+        ]}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}

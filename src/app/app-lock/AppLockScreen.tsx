@@ -6,6 +6,7 @@ import {
 import { StyleSheet, View } from 'react-native'
 import Text from '@/components/ui/MyText'
 import ActionButton from '@/components/ui/ActionButton'
+import FoldPane from '@/components/ui/layout/FoldPane'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import { AppLockMethod, appLockUnlockLabel } from '@/lib/appLock'
@@ -32,40 +33,44 @@ export default function AppLockScreen({ method, onUnlock }: Props) {
       style={[styles.container, { backgroundColor: theme.colors.background }]}
       accessibilityViewIsModal
     >
-      <View style={[styles.iconCircle, { backgroundColor: theme.colors.card }]}>
-        <LockIcon size={36} color={theme.colors.accent} />
-      </View>
-      <Text
-        accessibilityRole='header'
-        style={{
-          fontSize: theme.fontSize('xl'),
-          fontFamily: theme.fonts.bold,
-          textAlign: 'center',
-        }}
-      >
-        {i18n.t('appLock_lockedTitle')}
-      </Text>
-      <ActionButton onPress={onUnlock}>
-        <View style={styles.buttonContent}>
-          <Icon size={20} color={theme.colors.textInverse} />
-          <Text
-            style={{
-              fontSize: theme.fontSize('lg'),
-              color: theme.colors.textInverse,
-              fontFamily: theme.fonts.bold,
-            }}
-          >
-            {appLockUnlockLabel(method)}
-          </Text>
+      <FoldPane contentStyle={styles.content}>
+        <View
+          style={[styles.iconCircle, { backgroundColor: theme.colors.card }]}
+        >
+          <LockIcon size={36} color={theme.colors.accent} />
         </View>
-      </ActionButton>
+        <Text
+          accessibilityRole='header'
+          style={{
+            fontSize: theme.fontSize('xl'),
+            fontFamily: theme.fonts.bold,
+            textAlign: 'center',
+          }}
+        >
+          {i18n.t('appLock_lockedTitle')}
+        </Text>
+        <ActionButton onPress={onUnlock}>
+          <View style={styles.buttonContent}>
+            <Icon size={20} color={theme.colors.textInverse} />
+            <Text
+              style={{
+                fontSize: theme.fontSize('lg'),
+                color: theme.colors.textInverse,
+                fontFamily: theme.fonts.bold,
+              }}
+            >
+              {appLockUnlockLabel(method)}
+            </Text>
+          </View>
+        </ActionButton>
+      </FoldPane>
     </View>
   )
 }
 
 const styles = StyleSheet.create({
-  container: {
-    ...StyleSheet.absoluteFill,
+  container: StyleSheet.absoluteFill,
+  content: {
     alignItems: 'center',
     justifyContent: 'center',
     gap: 20,

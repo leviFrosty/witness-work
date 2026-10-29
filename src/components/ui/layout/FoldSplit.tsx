@@ -16,6 +16,7 @@ import DisplayRegionsView, {
   type DisplayDivision,
 } from '../../../../modules/display-regions'
 import { getFoldSplit } from '@/lib/foldSplit'
+import { FoldHandled, useFoldHandled } from '@/components/ui/layout/FoldPane'
 
 // Close to UIKit's default spring for layout changes, without overshoot.
 const FOLD_SPRING = { duration: 450, dampingRatio: 1 }
@@ -31,6 +32,8 @@ type Props = {
   leadingFraction?: number
   /** Or its fixed width while flat. */
   leadingWidth?: number
+  /** Or the trailing column's fixed width while flat. */
+  trailingWidth?: number
   paddingHorizontal?: number
   gap?: number
   minColumnWidth?: number
@@ -50,6 +53,7 @@ export default function FoldSplit({
   trailing,
   leadingFraction = 0.5,
   leadingWidth,
+  trailingWidth,
   paddingHorizontal = 0,
   gap = 20,
   minColumnWidth = 220,
@@ -59,6 +63,7 @@ export default function FoldSplit({
   leadingRef,
 }: Props) {
   const reduceMotion = useReducedMotion()
+  const handled = useFoldHandled()
   const [width, setWidth] = useState(0)
   const [divisions, setDivisions] = useState<DisplayDivision[]>([])
   const single =
@@ -77,7 +82,9 @@ export default function FoldSplit({
             leading:
               leadingWidth !== undefined
                 ? { width: leadingWidth }
-                : { fraction: leadingFraction },
+                : trailingWidth !== undefined
+                  ? { trailingWidth }
+                  : { fraction: leadingFraction },
             minColumnWidth,
             divisions,
             rtl: I18nManager.isRTL,
@@ -143,14 +150,17 @@ export default function FoldSplit({
             ? { flex: 1 }
             : leadingWidth !== undefined
               ? { width: leadingWidth }
-              : // Against the trailing column's flex 1, until the first layout.
-                { flex: leadingFraction / (1 - leadingFraction) },
+              : trailingWidth !== undefined
+                ? { flex: 1 }
+                : // Against the trailing column's flex 1, until the first layout.
+                  { flex: leadingFraction / (1 - leadingFraction) },
           { minWidth: 0 },
           leadingStyle,
           leadingAnimatedStyle,
         ]}
       >
-        {leading}
+        {/* Two columns already meet the fold; one fills the row as a screen. */}
+        <FoldHandled value={single ? handled : true}>{leading}</FoldHandled>
       </Animated.View>
       <Animated.View style={gapAnimatedStyle} />
       <View
@@ -159,7 +169,7 @@ export default function FoldSplit({
           trailingStyle,
         ]}
       >
-        {trailing}
+        <FoldHandled>{trailing}</FoldHandled>
       </View>
     </View>
   )

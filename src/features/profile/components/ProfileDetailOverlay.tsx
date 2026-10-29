@@ -54,6 +54,7 @@ import {
 import { useFormattedMinutes } from '@/lib/minutes'
 import { tracking } from '@/lib/tracking'
 import { leftForPhysicalX } from '@/lib/direction'
+import { useWindowFoldPane } from '@/components/ui/layout/FoldPane'
 import { formatDisplay } from '@/lib/dates'
 
 const SPRING = { damping: 20, stiffness: 180, mass: 0.7 }
@@ -181,9 +182,11 @@ const ProfileDetailSheet = ({
   const progress = useSharedValue(0)
   const vanish = useSharedValue(1)
 
-  const targetX = EXPANDED_MARGIN
+  // Clear of iPhone Duo's vertical bar, and to one side of its fold.
+  const pane = useWindowFoldPane()
   const targetY = insets.top + EXPANDED_MARGIN
-  const targetW = winW - EXPANDED_MARGIN * 2
+  const targetW = pane.width - EXPANDED_MARGIN * 2
+  const targetX = leftForPhysicalX(pane.x + EXPANDED_MARGIN, targetW, winW)
   const targetH = winH - insets.top - insets.bottom - EXPANDED_MARGIN * 2
 
   useEffect(() => {

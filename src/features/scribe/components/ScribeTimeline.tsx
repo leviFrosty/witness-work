@@ -14,6 +14,7 @@ import {
   ScribeRunRow,
   ScribeUserBubble,
 } from '@/features/scribe/components/ScribeTimelineItems'
+import { useFoldColumn } from '@/components/ui/layout/FoldPane'
 
 /** The conversation's column width on wide windows. */
 export const CONVERSATION_MAX_WIDTH = 720
@@ -57,6 +58,7 @@ interface Props {
  * scrolls.
  */
 const ScribeTimeline = ({ controller, onSayAChange }: Props) => {
+  const foldColumn = useFoldColumn(CONVERSATION_MAX_WIDTH)
   const { isWide } = useAdaptiveLayout()
   const scrollRef = useRef<ScrollView>(null)
   // The review block already scrolled into view, so choosing a chip or
@@ -108,14 +110,17 @@ const ScribeTimeline = ({ controller, onSayAChange }: Props) => {
           right-to-left layout iOS pins a narrower content container to the
           right edge (see ContentColumn). */}
       <View
-        style={{
-          flexGrow: 1,
-          width: '100%',
-          maxWidth: CONVERSATION_MAX_WIDTH,
-          alignSelf: 'center',
-          paddingHorizontal: isWide ? 24 : 15,
-          gap: 18,
-        }}
+        style={[
+          {
+            flexGrow: 1,
+            width: '100%',
+            maxWidth: CONVERSATION_MAX_WIDTH,
+            alignSelf: 'center',
+            paddingHorizontal: isWide ? 24 : 15,
+            gap: 18,
+          },
+          foldColumn,
+        ]}
       >
         {empty ? <ScribeEmptyState /> : null}
         {items.map((item, index) => (

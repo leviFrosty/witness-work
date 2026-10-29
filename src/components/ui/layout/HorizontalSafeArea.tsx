@@ -4,6 +4,7 @@ import {
   SafeAreaInsetsContext,
   useSafeAreaInsets,
 } from 'react-native-safe-area-context'
+import { FoldArea } from '@/components/ui/layout/FoldPane'
 import { isRtlLayout } from '@/lib/direction'
 
 const HorizontalBleedContext = createContext({ left: 0, right: 0 })
@@ -36,6 +37,12 @@ type Props = {
   covered?: 'left' | 'right' | null
   /** Fills the insets, so the vertical bar sits on the screen's own color. */
   backgroundColor?: string
+  /**
+   * Measures iPhone Duo's fold for the centered columns inside
+   * (`useFoldColumn`). Off for a form sheet, whose wrapper has to stay
+   * layout-only, and which the system keeps off the fold anyway.
+   */
+  measureFold?: boolean
 }
 
 /**
@@ -47,6 +54,7 @@ export default function HorizontalSafeArea({
   children,
   covered,
   backgroundColor,
+  measureFold = true,
 }: Props) {
   const insets = useSafeAreaInsets()
   const windowSides = useWindowSideInsets()
@@ -73,7 +81,7 @@ export default function HorizontalSafeArea({
           <SafeAreaInsetsContext.Provider
             value={{ ...insets, left: 0, right: 0 }}
           >
-            {children}
+            {measureFold ? <FoldArea>{children}</FoldArea> : children}
           </SafeAreaInsetsContext.Provider>
         </WindowSideInsetsContext.Provider>
       </HorizontalBleedContext.Provider>

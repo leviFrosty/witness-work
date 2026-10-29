@@ -35,6 +35,7 @@ import WelcomeConstellation from '@/features/onboarding/components/welcome/Welco
 import WelcomeCta from '@/features/onboarding/components/welcome/WelcomeCta'
 import WelcomeCurtain from '@/features/onboarding/components/welcome/WelcomeCurtain'
 import WelcomeHeadline from '@/features/onboarding/components/welcome/WelcomeHeadline'
+import { useFoldColumn } from '@/components/ui/layout/FoldPane'
 
 interface Props {
   onGetStarted: () => void
@@ -48,6 +49,7 @@ interface Props {
  * progress — while the matching card steps forward.
  */
 const WelcomeHero = ({ onGetStarted, onReturningUser }: Props) => {
+  const foldColumn = useFoldColumn(560)
   const theme = useTheme()
   const palette = getWelcomePalette(theme)
   const insets = useSafeAreaInsets()
@@ -184,13 +186,16 @@ const WelcomeHero = ({ onGetStarted, onReturningUser }: Props) => {
           }}
         />
         <View
-          style={{
-            width: '100%',
-            maxWidth: 560,
-            alignSelf: 'center',
-            paddingHorizontal: 24,
-            paddingBottom: 4,
-          }}
+          style={[
+            {
+              width: '100%',
+              maxWidth: 560,
+              alignSelf: 'center',
+              paddingHorizontal: 24,
+              paddingBottom: 4,
+            },
+            foldColumn,
+          ]}
         >
           <Animated.View style={headlineStyle}>
             <WelcomeHeadline

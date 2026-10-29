@@ -1,5 +1,40 @@
 import { vi } from 'vitest'
 
+// iPhone Duo's display regions: a native view that never reports, as on every
+// other device. Layout primitives (FoldPane, FoldSplit, Header) render it, and
+// the real module pulls in expo's runtime, which expects __DEV__.
+vi.mock('./modules/display-regions', () => ({
+  default: () => null,
+  supportsDisplayRegions: false,
+}))
+
+// The fold-aware layout primitives, as they behave on every device but a
+// half-open iPhone Duo: they pass their content through and move nothing. The
+// fold math they use is tested in src/lib/foldSplit.test.ts. Many component
+// tests mock react-native narrowly, which the real ones can't render with.
+vi.mock('@/components/ui/layout/FoldPane', async () => {
+  // Read when called: some tests' react-native mocks leave it out.
+  const reactNative = await import('react-native')
+  const passThrough = ({ children }: { children: unknown }) => children
+  return {
+    default: passThrough,
+    FoldArea: passThrough,
+    FoldHandled: passThrough,
+    useFoldHandled: () => false,
+    useLocalFoldPane: () => ({
+      onRegionsChange: () => {},
+      pane: null,
+      width: 0,
+    }),
+    useFoldColumn: () => null,
+    useWindowFoldColumn: () => null,
+    useWindowFoldPane: () => {
+      const { width } = reactNative.useWindowDimensions()
+      return { x: 0, width, start: 0 }
+    },
+  }
+})
+
 // Stub expo-notifications globally — several stores import it for
 // fire-and-forget OS calls (e.g., cancelling on delete) and the real module
 // pulls in expo's runtime which expects React Native's __DEV__ global.

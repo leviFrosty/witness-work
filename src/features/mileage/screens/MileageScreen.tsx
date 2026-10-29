@@ -41,6 +41,7 @@ import useMileageExport from '@/features/mileage/hooks/useMileageExport'
 import useLogTrip from '@/features/mileage/hooks/useLogTrip'
 import type { RootStackNavigation } from '@/types/rootStack'
 import type { MileagePeriodKind } from '@/types/mileage'
+import { useFoldColumn } from '@/components/ui/layout/FoldPane'
 
 /** Trip history and report for a Day, Week, Month, or Service Year. */
 export default function MileageScreen() {
@@ -81,6 +82,7 @@ export default function MileageScreen() {
     setAnchor(bucket.start)
   }
 
+  const foldColumn = useFoldColumn(720)
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <Header
@@ -143,14 +145,17 @@ export default function MileageScreen() {
         style={{ flex: 1 }}
       >
         <ScrollView
-          contentContainerStyle={{
-            padding: 15,
-            gap: 16,
-            paddingBottom: insets.bottom + Math.max(100, logTripHeight + 31),
-            width: '100%',
-            maxWidth: 720,
-            alignSelf: 'center',
-          }}
+          contentContainerStyle={[
+            {
+              padding: 15,
+              gap: 16,
+              paddingBottom: insets.bottom + Math.max(100, logTripHeight + 31),
+              width: '100%',
+              maxWidth: 720,
+              alignSelf: 'center',
+            },
+            foldColumn,
+          ]}
         >
           <PeriodNavigator
             period={period}

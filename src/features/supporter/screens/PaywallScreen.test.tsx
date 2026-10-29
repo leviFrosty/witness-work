@@ -21,6 +21,15 @@ const runtime = vi.hoisted(() => {
     beforeRemove: undefined as (() => void) | undefined,
   }
 })
+vi.mock('@/components/ui/layout/FoldSplit', () => ({
+  default: ({
+    leading,
+    trailing,
+  }: {
+    leading: React.ReactNode
+    trailing: React.ReactNode
+  }) => React.createElement(React.Fragment, null, leading, trailing),
+}))
 vi.mock('react-native', () => ({
   Alert: { alert: runtime.alert },
   Platform: {

@@ -21,6 +21,7 @@ import { useProfile } from '@/stores/profile'
 import BuddiesAccountNameHint from '@/features/buddies/components/BuddiesAccountNameHint'
 import BuddiesSharingSection from '@/features/buddies/components/BuddiesSharingSection'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
+import { useFoldColumn } from '@/components/ui/layout/FoldPane'
 
 const STEPS = ['intro', 'profile'] as const
 
@@ -70,6 +71,7 @@ export default function BuddiesOnboarding({
   /** The Profile editor, composed in by the app tier. */
   profileEditor: (nameInvalid: boolean) => ReactNode
 }) {
+  const foldColumn = useFoldColumn(560)
   const theme = useTheme()
   const insets = useSafeAreaInsets()
   const profileName = useProfile((state) => state.name.trim())
@@ -98,13 +100,17 @@ export default function BuddiesOnboarding({
       }}
     >
       <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          paddingHorizontal: 15,
-          minHeight: 40,
-        }}
+        style={[
+          {
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            paddingHorizontal: 15,
+            minHeight: 40,
+          },
+          // Over the content when it keeps to one side of iPhone Duo's fold.
+          foldColumn,
+        ]}
       >
         {step > 0 ? (
           <IconButton
@@ -134,13 +140,16 @@ export default function BuddiesOnboarding({
       </View>
       <ScrollView
         style={{ flex: 1 }}
-        contentContainerStyle={{
-          gap: 24,
-          padding: 20,
-          width: '100%',
-          maxWidth: 560,
-          alignSelf: 'center',
-        }}
+        contentContainerStyle={[
+          {
+            gap: 24,
+            padding: 20,
+            width: '100%',
+            maxWidth: 560,
+            alignSelf: 'center',
+          },
+          foldColumn,
+        ]}
         keyboardShouldPersistTaps='handled'
       >
         {current === 'intro' && (
@@ -195,14 +204,17 @@ export default function BuddiesOnboarding({
         )}
       </ScrollView>
       <View
-        style={{
-          gap: 12,
-          paddingHorizontal: 20,
-          paddingTop: 8,
-          width: '100%',
-          maxWidth: 560,
-          alignSelf: 'center',
-        }}
+        style={[
+          {
+            gap: 12,
+            paddingHorizontal: 20,
+            paddingTop: 8,
+            width: '100%',
+            maxWidth: 560,
+            alignSelf: 'center',
+          },
+          foldColumn,
+        ]}
       >
         {current === 'profile' && !hasName && (
           <Text style={{ color: theme.colors.textAlt, textAlign: 'center' }}>

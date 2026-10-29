@@ -51,6 +51,7 @@ const RootStackComponent = () => {
           children
         ) : (
           <HorizontalSafeArea
+            measureFold={options.presentation !== 'formSheet'}
             backgroundColor={
               options.presentation === 'transparentModal' ||
               options.presentation === 'containedTransparentModal' ||

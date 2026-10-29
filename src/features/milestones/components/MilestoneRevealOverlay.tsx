@@ -18,6 +18,7 @@ import useFireworks from '@/hooks/useFireworks'
 import ActionButton from '@/components/ui/ActionButton'
 import Button from '@/components/ui/Button'
 import FullWindowOverlay from '@/components/ui/FullWindowOverlay'
+import FoldPane from '@/components/ui/layout/FoldPane'
 import ConfettiProvider from '@/providers/ConfettiProvider'
 import { MILESTONE_UPDATE_VERSION } from '@/features/milestones/constants/milestoneUpdate'
 import { tracking } from '@/lib/tracking'
@@ -322,7 +323,10 @@ const MilestoneReveal = ({ onDismiss, onSeeWhatsNew }: Omit<Props, 'show'>) => {
         accessibilityLabel={i18n.t('skip')}
       />
 
-      <View style={[styles.content, { paddingTop: insets.top + 80 }]}>
+      <FoldPane
+        contentStyle={[styles.content, { paddingTop: insets.top + 80 }]}
+        pointerEvents='auto'
+      >
         <Animated.View style={welcomeStyle} pointerEvents='none'>
           <Text style={[styles.welcome, { fontFamily: theme.fonts.medium }]}>
             {i18n.t('milestoneReveal_welcomeBack')}
@@ -360,7 +364,7 @@ const MilestoneReveal = ({ onDismiss, onSeeWhatsNew }: Omit<Props, 'show'>) => {
             </Text>
           </Button>
         </Animated.View>
-      </View>
+      </FoldPane>
     </Animated.View>
   )
 }

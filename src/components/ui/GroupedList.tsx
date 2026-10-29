@@ -23,6 +23,7 @@ import type {
   GroupedListSectionProps,
   GroupedListSwitchRowProps,
 } from '@/components/ui/GroupedList.types'
+import { useFoldColumn } from '@/components/ui/layout/FoldPane'
 
 export type * from '@/components/ui/GroupedList.types'
 
@@ -34,19 +35,23 @@ export type * from '@/components/ui/GroupedList.types'
  * Native rows.
  */
 export function GroupedList({ children, title, testID }: GroupedListProps) {
+  const foldColumn = useFoldColumn(inputLayout.contentMaxWidth)
   const theme = useTheme()
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <ScrollView
         testID={testID}
-        contentContainerStyle={{
-          width: '100%',
-          maxWidth: inputLayout.contentMaxWidth,
-          alignSelf: 'center',
-          gap: 24,
-          padding: 16,
-        }}
+        contentContainerStyle={[
+          {
+            width: '100%',
+            maxWidth: inputLayout.contentMaxWidth,
+            alignSelf: 'center',
+            gap: 24,
+            padding: 16,
+          },
+          foldColumn,
+        ]}
       >
         {title ? (
           <Text

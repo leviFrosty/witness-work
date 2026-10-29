@@ -82,6 +82,7 @@ import {
   ContactsListItem,
 } from '@/features/contacts/lib/suggestedContactsList'
 import { alignInput } from '@/lib/direction'
+import { useFoldColumn } from '@/components/ui/layout/FoldPane'
 
 /**
  * The list's column beside a contact when wide: a phone's width, which the
@@ -175,6 +176,7 @@ const ContactsScreen = ({
 }) => {
   const theme = useTheme()
   const { isWide, hasBottomBar } = useAdaptiveLayout()
+  const foldColumn = useFoldColumn(isWide ? null : 720)
   const [selectedId, setSelectedId] = useState<string>()
   const insets = useSafeAreaInsets()
   const { height: windowHeight, fontScale } = useWindowDimensions()
@@ -799,7 +801,7 @@ const ContactsScreen = ({
                 : i18n.t('contacts_screen_title')
             }
             actions={headerActions}
-            contentStyle={{ maxWidth: isWide ? 1200 : 720 }}
+            contentStyle={[{ maxWidth: isWide ? 1200 : 720 }, foldColumn]}
           >
             {showsMap && (
               // Where the list has it: at the end of the list's column, split
@@ -866,13 +868,16 @@ const ContactsScreen = ({
                 style={
                   split
                     ? { flex: 1, paddingTop: 4 }
-                    : {
-                        flex: 1,
-                        paddingTop: 4,
-                        width: '100%',
-                        maxWidth: 720,
-                        alignSelf: 'center',
-                      }
+                    : [
+                        {
+                          flex: 1,
+                          paddingTop: 4,
+                          width: '100%',
+                          maxWidth: 720,
+                          alignSelf: 'center',
+                        },
+                        foldColumn,
+                      ]
                 }
               >
                 {listPane}

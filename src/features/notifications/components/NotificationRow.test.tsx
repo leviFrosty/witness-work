@@ -11,6 +11,10 @@ vi.mock('@/lib/locales', async () => {
 })
 vi.mock('react-native', () => ({ Pressable: 'Pressable', View: 'View' }))
 vi.mock('lucide-react-native', () => ({ Bell: 'Bell', X: 'X' }))
+vi.mock('@/components/toast/UnlockArtTile', () => ({
+  default: 'UnlockArtTile',
+  UNLOCK_ART_SIZE: 52,
+}))
 vi.mock('@/components/ui/Button', () => ({ default: 'Button' }))
 vi.mock('@/components/ui/IconButton', () => ({ default: 'IconButton' }))
 vi.mock('@/components/ui/touchTarget', () => ({ touchTargetFrame: () => ({}) }))
@@ -49,7 +53,7 @@ function render(item: NotificationItem) {
   const row = tree.root.findByType('Pressable' as never)
   const perform = (actionName: string) =>
     act(() => row.props.onAccessibilityAction({ nativeEvent: { actionName } }))
-  return { row, perform, onAction, onDismiss }
+  return { tree, row, perform, onAction, onDismiss }
 }
 
 const action = (id: string) => ({ id, label: id, onPress: vi.fn() })
@@ -88,5 +92,23 @@ describe('NotificationRow', () => {
     ])
     perform('dismiss')
     expect(onDismiss).toHaveBeenCalledTimes(1)
+  })
+  it("previews an unlock's art in place of the icon, as its toast did", () => {
+    const art = vi.fn(() => null)
+    const { tree } = render({
+      id: 'pet_unlock:hat:beret',
+      kind: 'pet_unlock',
+      title: 'New hat: Beret',
+      art,
+      actions: [action('View')],
+    })
+
+    expect(tree.root.findByType('UnlockArtTile' as never).props.art).toBe(art)
+    expect(tree.root.findAllByType('LucideIcon' as never)).toHaveLength(0)
+    // The actions line up with the text after the wider art.
+    const actions = tree.root
+      .findAllByType('XView' as never)
+      .find((view) => view.props.style?.paddingLeft !== undefined)
+    expect(actions?.props.style.paddingLeft).toBe(62)
   })
 })

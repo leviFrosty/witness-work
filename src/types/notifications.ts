@@ -70,6 +70,11 @@ export type NotificationItem = {
   /** When it came in (epoch ms). Omit to use when the tray first listed it. */
   at?: number
   icon?: AppIcon
+  /**
+   * An unlock's picture, drawn `size` points square in place of the icon: the
+   * same preview its unlock toast showed.
+   */
+  art?: (size: number) => ReactNode
   tone?: NotificationTone
   title: string
   description?: string

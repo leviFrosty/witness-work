@@ -43,7 +43,7 @@ With VoiceOver or TalkBack on, a toast with something to press stays 60 s and an
 An unlock follows the action rule (ADR 0021):
 
 - **Right after the User's own action, in the foreground:** an unlock toast, one per item. Tapping it opens the full-screen moment (the badge celebration, or `PetUnlockReveal`). Swiping it away settles it.
-- **Otherwise:** only the tray lists it. This covers launch, iCloud Sync, the Watch and Siri, and a new month. It also covers an unlock toast that timed out, waited behind a takeover past `CELEBRATION_WINDOW_MS`, or was showing when the app went to the background.
+- **Otherwise:** only the tray lists it. This covers launch, iCloud Sync, the Watch and Siri, and a new month. It also covers an unlock toast that timed out, waited behind a takeover past `CELEBRATION_WINDOW_MS`, or was showing when the app went to the background. Give its tray item the toast's `art` too, so the row previews the same picture (`UnlockArtTile`).
 
 `onClose(reason)` reports why a toast left. `toastAcknowledged(reason)` is true for `opened`, `swiped` and `action`; settle the news only then. The tray hook leaves out any key on screen as a toast (`toastKeys`), so nothing is listed twice.
 

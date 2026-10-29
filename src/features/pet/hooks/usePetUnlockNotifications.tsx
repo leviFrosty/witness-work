@@ -1,4 +1,5 @@
 import { useShallow } from 'zustand/react/shallow'
+import PetUnlockArt from '@/features/pet/components/PetUnlockArt'
 import { ROOM_TAB_ICONS } from '@/features/pet/components/roomTabIcons'
 import { petDisplayName } from '@/features/pet/lib/names'
 import {
@@ -44,6 +45,7 @@ export default function usePetUnlockNotifications(): NotificationItem[] {
         kind: 'pet_unlock',
         at,
         icon: ROOM_TAB_ICONS[unlockTab(unlockedPart(item).part)],
+        art: (size) => <PetUnlockArt item={item} size={size} />,
         tone: 'accent',
         title: text.title,
         description: text.description,

@@ -60,7 +60,7 @@ describe('petDaysOut', () => {
 })
 
 describe('petEarned', () => {
-  const NO_HISTORY: StreakHistory = { kept: [], milestones: [] }
+  const NO_HISTORY: StreakHistory = { kept: [], milestones: [], best: 0 }
   const earned = ({
     days = [] as string[],
     visitsOnly = [] as string[],
@@ -92,6 +92,7 @@ describe('petEarned', () => {
       history: {
         kept: ['2026-10-05', '2026-10-07', '2026-10-09'],
         milestones: [{ count: 3, on: '2026-10-09' }],
+        best: 3,
       },
     })
     expect(week).toMatchObject({ daysOut: 5, plansKept: 3, shared: 0 })
@@ -108,6 +109,7 @@ describe('petEarned', () => {
     const history: StreakHistory = {
       kept: ['2026-10-05'],
       milestones: [{ count: 3, on: '2026-10-05' }],
+      best: 3,
     }
     expect(
       earned({ days: ['2026-10-05'], history, streaks: false })
@@ -121,6 +123,7 @@ describe('petEarned', () => {
         { count: 3, on: '2026-10-02' },
         { count: 5, on: '2026-10-20' },
       ],
+      best: 5,
     }
     const days = ['2026-10-02', '2026-10-06', '2026-10-20']
     expect(
@@ -167,6 +170,7 @@ describe('petEarned', () => {
       history: {
         kept: ['2026-10-20'],
         milestones: [{ count: 4, on: '2026-10-20' }],
+        best: 4,
       },
     })
     expect(coinsOf(month)).toBe(8 + 1 + 10)

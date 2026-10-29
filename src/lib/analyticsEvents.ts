@@ -36,6 +36,7 @@ export const analyticsEventNames = [
   'service_report_handoff_confirmed',
   'service_report_marked_not_sent',
   'service_report_marked_sent',
+  'streak_details_opened',
   'streak_milestone_reached',
   'streak_reminders_changed',
   'streaks_setting_changed',

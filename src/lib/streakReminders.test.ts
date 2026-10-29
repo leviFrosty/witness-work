@@ -14,6 +14,7 @@ const streak = (overrides: Partial<ServiceStreak> = {}): ServiceStreak => ({
   kind: 'plans',
   count: 12,
   latest: '2026-10-03',
+  since: '2026-09-01',
   due: { period: '2026-10-05', endsAt: new Date(2026, 9, 7) },
   ...overrides,
 })

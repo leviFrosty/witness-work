@@ -1,3 +1,4 @@
+import type { ComponentProps } from 'react'
 import { View } from 'react-native'
 import useTheme from '@/contexts/theme'
 import useNow from '@/hooks/useNow'
@@ -22,7 +23,9 @@ import { useShallow } from 'zustand/react/shallow'
  * the Service Streak's badge at its end. The streak lives here rather than in
  * the header: it's the User's own news, like the greeting.
  */
-const HomeGreeting = () => {
+const HomeGreeting = ({
+  buddyStreaks,
+}: Pick<ComponentProps<typeof HomeStreakChip>, 'buddyStreaks'>) => {
   const theme = useTheme()
   // The shared minute clock: a Home left open since morning doesn't still say
   // "Good morning" in the evening, or last month's goal after midnight.
@@ -80,7 +83,7 @@ const HomeGreeting = () => {
       >
         {i18n.t(greeting.key)}
       </Text>
-      <HomeStreakChip streak={serviceStreak} />
+      <HomeStreakChip streak={serviceStreak} buddyStreaks={buddyStreaks} />
     </View>
   )
 }

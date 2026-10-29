@@ -92,7 +92,11 @@ describe('serviceStreak — plans', () => {
         [dayPlan('2026-10-03'), dayPlan('2026-10-01'), dayPlan('2026-09-29')]
       )
     )
-    expect(streak).toMatchObject({ count: 3, latest: '2026-10-03' })
+    expect(streak).toMatchObject({
+      count: 3,
+      latest: '2026-10-03',
+      since: '2026-09-29',
+    })
   })
 
   it('counts a day short of its Plan', () => {
@@ -151,6 +155,7 @@ describe('serviceStreak — plans', () => {
       kind: 'plans',
       count: 0,
       latest: null,
+      since: null,
       due: null,
     })
   })
@@ -209,6 +214,7 @@ describe('serviceStreak — months', () => {
       kind: 'months',
       count: 3,
       latest: '2026-10-01',
+      since: '2026-08-01',
       due: { period: '2026-11-01', endsAt: new Date(2027, 0, 1) },
     })
   })
@@ -235,6 +241,7 @@ const streak = (overrides: Partial<ServiceStreak>): ServiceStreak => ({
   kind: 'plans',
   count: 5,
   latest: '2026-10-05',
+  since: '2026-09-29',
   due: { period: '2026-10-05', endsAt: new Date(2026, 9, 7) },
   ...overrides,
 })
@@ -458,6 +465,31 @@ describe('streakHistory', () => {
       { count: 3, on: '2026-09-03' },
       { count: 3, on: '2026-09-07' },
     ])
+  })
+
+  it('keeps the longest streak as the best after it ends', () => {
+    const history = streakHistory(
+      'plans',
+      records(
+        kept('2026-09-01', '2026-09-02', '2026-09-03', '2026-09-08'),
+        planned(
+          '2026-09-01',
+          '2026-09-02',
+          '2026-09-03',
+          '2026-09-05',
+          '2026-09-08'
+        )
+      ),
+      now
+    )
+    expect(history.best).toBe(3)
+    expect(
+      streakHistory('months', records(kept('2026-07-02', '2026-10-01')), now)
+        .best
+    ).toBe(1)
+    expect(streakHistory('plans', records(kept('2026-09-01')), now).best).toBe(
+      0
+    )
   })
 
   it('keeps a milestone reached the day after a missed planned day', () => {

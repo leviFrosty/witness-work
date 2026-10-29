@@ -198,6 +198,16 @@
   "streak_endingMonths": "Record service for {{month}} to keep your streak.",
   "streak_recordMonth": "Record Service",
   "streak_howItWorks": "How Streaks Work",
+  "streak_unitPlans": {
+    "one": "planned day kept",
+    "other": "planned days kept"
+  },
+  "streak_unitMonths": {
+    "one": "month in a row",
+    "other": "months in a row"
+  },
+  "streak_started": "Started",
+  "streak_best": "Best",
   "streakCelebration_started": "You're on a streak!",
   "streakCelebration_grew": "Your streak is growing!",
   "streakCelebration_captionPlans": "Plans kept without a miss, however far apart. Keep it going on your next planned day.",

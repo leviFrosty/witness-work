@@ -602,6 +602,7 @@ describe.each(MIDNIGHT_TRANSITIONS)(
             kind: 'plans',
             count: 5,
             latest: key(endsDay - 3),
+            since: key(endsDay - 9),
             due: { period: key(endsDay - 1), endsAt: startOf(endsDay) },
           }
           const lastDay = startOf(endsDay - 1)

@@ -41,6 +41,8 @@ export type ServiceStreak = {
   count: number
   /** The newest counted day, or month's 1st (`YYYY-MM-DD`); null at 0. */
   latest: string | null
+  /** The oldest counted day, or month's 1st: where it started. Null at 0. */
+  since: string | null
   /**
    * The next planned day (or month) not kept yet, and when the streak ends
    * unless it's kept: the end of the day (or month) after it. Null with no Plan
@@ -88,7 +90,8 @@ function plansStreak(records: StreakRecords, now: Date): ServiceStreak {
     const key = storedDayKey(plan.startDate)
     if (!earliest || key < earliest) earliest = key
   }
-  if (!earliest) return { kind: 'plans', count: 0, latest: null, due: null }
+  if (!earliest)
+    return { kind: 'plans', count: 0, latest: null, since: null, due: null }
 
   const isPlanned = (day: moment.Moment) =>
     resolvePlannedContributionsForDay(
@@ -101,6 +104,7 @@ function plansStreak(records: StreakRecords, now: Date): ServiceStreak {
   const today = moment(now).startOf('day')
   let count = 0
   let latest: string | null = null
+  let since: string | null = null
   const cursor = today.clone()
   for (let i = 0; i < MAX_LOOKBACK_DAYS; i++, cursor.subtract(1, 'day')) {
     const key = cursor.format(DAY)
@@ -109,6 +113,7 @@ function plansStreak(records: StreakRecords, now: Date): ServiceStreak {
     if (isKept(key)) {
       count++
       latest ??= key
+      since = key
     } else if (i > 1) break
     // Today and yesterday can still be logged.
   }
@@ -126,7 +131,7 @@ function plansStreak(records: StreakRecords, now: Date): ServiceStreak {
     }
     break
   }
-  return { kind: 'plans', count, latest, due }
+  return { kind: 'plans', count, latest, since, due }
 }
 
 function monthsStreak(records: StreakRecords, now: Date): ServiceStreak {
@@ -138,6 +143,7 @@ function monthsStreak(records: StreakRecords, now: Date): ServiceStreak {
   const current = moment(now).startOf('month')
   let count = 0
   let latest: string | null = null
+  let since: string | null = null
   const cursor = current.clone()
   for (
     let i = 0;
@@ -147,6 +153,7 @@ function monthsStreak(records: StreakRecords, now: Date): ServiceStreak {
     if (has(cursor)) {
       count++
       latest ??= cursor.format(DAY)
+      since = cursor.format(DAY)
     } else if (i > 1) break
     // This month and last can still be recorded.
   }
@@ -161,7 +168,7 @@ function monthsStreak(records: StreakRecords, now: Date): ServiceStreak {
     }
     break
   }
-  return { kind: 'months', count, latest, due }
+  return { kind: 'months', count, latest, since, due }
 }
 
 let cached: {
@@ -306,9 +313,11 @@ export type StreakHistory = {
   kept: readonly string[]
   /** Every milestone a streak of `kind` reached, oldest first. */
   milestones: readonly StreakMilestone[]
+  /** The longest a streak of `kind` has been. */
+  best: number
 }
 
-const NO_HISTORY: StreakHistory = { kept: [], milestones: [] }
+const NO_HISTORY: StreakHistory = { kept: [], milestones: [], best: 0 }
 
 const dayKeyOf = (date: Date) =>
   `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
@@ -363,6 +372,7 @@ function plansHistory(
   const cursor = new Date(from.year(), from.month(), from.date(), 12)
   const streak = streakCounter()
   const reached: StreakMilestone[] = []
+  let best = 0
   let before = ''
   for (
     let i = 0;
@@ -378,30 +388,32 @@ function plansHistory(
     ).some((contribution) => contribution.minutes > 0)
     if (planned && (days.get(key) ?? 0) > 0) {
       const count = streak.keep(key, before)
+      best = Math.max(best, count)
       if (milestones && isStreakMilestone('plans', count))
         reached.push({ count, on: key })
     } else if (planned) streak.miss(key)
     before = key
   }
-  return { kept: streak.kept, milestones: reached }
+  return { kept: streak.kept, milestones: reached, best }
 }
 
 /** Every month from the first one out through `now`'s, out or not. */
-function monthsMilestones(
+function monthsHistory(
   records: StreakRecords,
   now: Date
-): StreakMilestone[] {
+): Omit<StreakHistory, 'kept'> {
   const firstDays = new Map<string, string>()
   for (const day of serviceDays(records.serviceReports).keys()) {
     const month = `${day.slice(0, 7)}-01`
     const first = firstDays.get(month)
     if (!first || day < first) firstDays.set(month, day)
   }
-  if (!firstDays.size) return []
+  if (!firstDays.size) return { milestones: [], best: 0 }
   const current = moment(now).startOf('month')
   const cursor = moment([...firstDays.keys()].sort()[0], DAY)
   const streak = streakCounter()
   const reached: StreakMilestone[] = []
+  let best = 0
   let before = ''
   for (
     let i = 0;
@@ -412,11 +424,12 @@ function monthsMilestones(
     const first = firstDays.get(month)
     if (first) {
       const count = streak.keep(month, before)
+      best = Math.max(best, count)
       if (isStreakMilestone('months', count)) reached.push({ count, on: first })
     } else streak.miss(month)
     before = month
   }
-  return reached
+  return { milestones: reached, best }
 }
 
 let cachedHistory: {
@@ -427,9 +440,10 @@ let cachedHistory: {
 } | null = null
 
 /**
- * The planned days kept and the milestones a streak of `kind` reached, from the
- * whole history through `now`. A streak that ends and starts over reaches its
- * milestones again, as it celebrates them again. Kept like `serviceStreak`.
+ * The planned days kept, the milestones a streak of `kind` reached, and its
+ * longest, from the whole history through `now`. A streak that ends and starts
+ * over reaches its milestones again, as it celebrates them again. Kept like
+ * `serviceStreak`.
  */
 export function streakHistory(
   kind: StreakKind,
@@ -450,7 +464,7 @@ export function streakHistory(
   const history =
     kind === 'plans'
       ? plans
-      : { kept: plans.kept, milestones: monthsMilestones(records, now) }
+      : { kept: plans.kept, ...monthsHistory(records, now) }
   cachedHistory = { kind, day, records, history }
   return history
 }

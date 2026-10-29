@@ -54,6 +54,7 @@ import { hidePetVisits } from '@/app/pet/hidePetVisits'
 import usePetVisits from '@/app/pet/usePetVisits'
 import DidYouKnowTipCard from '@/features/updates/components/DidYouKnowTipCard'
 import BuddiesHomeSection from '@/features/buddies/components/BuddiesHomeSection'
+import BuddyStreaks from '@/features/buddies/components/BuddyStreaks'
 import useBuddiesEnabled from '@/features/buddies/hooks/useBuddiesEnabled'
 import NotificationHosts from '@/app/notifications/NotificationHosts'
 import { useServiceReport } from '@/stores/serviceReport'
@@ -289,7 +290,11 @@ export const HomeScreen = ({ header }: { header: ReactNode }) => {
           importantForAccessibility='no'
         >
           <View pointerEvents={editing ? 'none' : 'auto'}>
-            <HomeGreeting />
+            <HomeGreeting
+              buddyStreaks={({ closeThen }) => (
+                <BuddyStreaks closeThen={closeThen} />
+              )}
+            />
           </View>
         </Pressable>
         {editing ? (

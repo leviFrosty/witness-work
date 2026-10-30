@@ -4,7 +4,6 @@ import {
   addressInput,
   emailInput,
   phoneInput,
-  PROTECTED_CREATE_ERROR,
   toAddress,
 } from '@/features/scribe/tools/shared'
 
@@ -20,7 +19,6 @@ export default defineWriteTool({
     email: emailInput,
   }),
   propose: (input, ctx) => {
-    if (ctx.dataProtection) return { ok: false, error: PROTECTED_CREATE_ERROR }
     const name = input.name.trim()
     if (!name) return { ok: false, error: 'name is empty.' }
     // A second mention of the same new person fills in the first.
@@ -37,6 +35,8 @@ export default defineWriteTool({
           phone: input.phone?.trim() || null,
           email: input.email?.trim() || null,
           askBetween: null,
+          // The householder's consent, confirmed on the card.
+          ...(ctx.dataProtection ? { needsConsent: true } : {}),
         },
       ],
     }

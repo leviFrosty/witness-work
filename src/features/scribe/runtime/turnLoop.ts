@@ -52,7 +52,11 @@ import {
 } from '@/features/scribe/runtime/runs'
 import type { ScribeTool } from '@/features/scribe/tools/types'
 import { TurnDraft } from '@/features/scribe/proposals/draft'
-import { buildCards, mergeCards } from '@/features/scribe/proposals/cards'
+import {
+  asksConsent,
+  buildCards,
+  mergeCards,
+} from '@/features/scribe/proposals/cards'
 import { outcomeBlock } from '@/features/scribe/proposals/apply'
 import type { StoredProposal } from '@/features/scribe/proposals/model'
 import {
@@ -249,6 +253,7 @@ function resolveSuperseded(proposal: StoredProposal): void {
     choiceCards: proposal.cards.filter(
       (card) => card.contact?.type === 'choice'
     ).length,
+    consentCards: proposal.cards.filter(asksConsent).length,
     kinds: proposal.effects.map((effect) => effect.draft.kind),
     tainted: proposal.tainted,
   })

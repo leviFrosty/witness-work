@@ -39,6 +39,8 @@ export function applyContactCreate(
     ...(draft.phone ? { phone: draft.phone } : {}),
     ...(draft.email ? { email: draft.email } : {}),
   }
+  const consentGivenAt = ctx.consents.get(draft.ref)
+  if (consentGivenAt) contact.consentGivenAt = consentGivenAt
   useContacts.getState().addContact(contact)
   ctx.bound.set(draft.ref, contact.id)
   lookUpAddress(contact, ctx)

@@ -36,6 +36,7 @@ import {
   proposalCounts,
   toScribeProposal,
   withCardToggled,
+  withConsent,
   withContactChosen,
 } from '@/features/scribe/proposals/cards'
 import type { StoredProposal } from '@/features/scribe/proposals/model'
@@ -133,6 +134,7 @@ describe('"which Maria?"', () => {
       selected: 1,
       ready: 0,
       needsChoice: 1,
+      needsConsent: 0,
     })
     expect(canAddProposal(proposal)).toBe(false)
 
@@ -191,9 +193,141 @@ describe('"which Maria?"', () => {
       selected: 0,
       ready: 0,
       needsChoice: 0,
+      needsConsent: 0,
     })
     const chosen = withContactChosen(unchecked, id, { type: 'new' })
     expect(chosen.cards[0].selected).toBe(true)
+  })
+})
+
+describe('a new householder’s consent (data protection mode)', () => {
+  const protectedFixture = () =>
+    fixtureContext(
+      fixtureStores({
+        preferences: { ...PREFERENCES, dataProtectionMode: true },
+      })
+    )
+  const AGREED_AT = new Date('2026-10-22T15:04:00Z')
+
+  it('blocks Add until the User confirms the person agreed', () => {
+    const fixture = protectedFixture()
+    propose(
+      fixture,
+      'visits_log',
+      visit({ newContact: { name: 'Ama', address: null, phone: null } })
+    )
+    propose(fixture, 'time_log', timeLog())
+    let proposal = proposalOf(fixture)
+    const [card] = proposal.cards
+    expect(card.consent).toEqual({ givenAt: null })
+    expect(proposal.cards[1].consent).toBeUndefined()
+    expect(proposalCounts(proposal)).toEqual({
+      selected: 2,
+      ready: 1,
+      needsChoice: 0,
+      needsConsent: 1,
+    })
+    expect(canAddProposal(proposal)).toBe(false)
+    expect(toScribeProposal(proposal, fixture.stores).cards[0]).toMatchObject({
+      consent: { given: false },
+      needsConsent: true,
+    })
+
+    proposal = withConsent(proposal, card.id, true, AGREED_AT)
+    expect(proposal.cards[0].consent).toEqual({
+      givenAt: '2026-10-22T15:04:00.000Z',
+    })
+    expect(canAddProposal(proposal)).toBe(true)
+    expect(toScribeProposal(proposal, fixture.stores).cards[0]).toMatchObject({
+      consent: { given: true },
+      needsConsent: false,
+    })
+
+    // Taken back: blocked again.
+    proposal = withConsent(proposal, card.id, false, AGREED_AT)
+    expect(canAddProposal(proposal)).toBe(false)
+  })
+
+  it('lets the User leave the person out and add the rest', () => {
+    const fixture = protectedFixture()
+    propose(fixture, 'contacts_create', {
+      name: 'Ama',
+      address: null,
+      phone: null,
+      email: null,
+    })
+    propose(fixture, 'time_log', timeLog())
+    const proposal = proposalOf(fixture)
+    const unchecked = withCardToggled(proposal, proposal.cards[0].id)
+    expect(proposalCounts(unchecked).needsConsent).toBe(0)
+    expect(canAddProposal(unchecked)).toBe(true)
+    // Agreeing checks the card again.
+    expect(
+      withConsent(unchecked, proposal.cards[0].id, true, AGREED_AT).cards[0]
+        .selected
+    ).toBe(true)
+  })
+
+  it('asks only when Add would create the Contact', () => {
+    const fixture = protectedFixture()
+    propose(
+      fixture,
+      'visits_log',
+      visit({ newContact: { name: 'ben okafor', address: null, phone: null } })
+    )
+    const proposal = proposalOf(fixture)
+    const id = proposal.cards[0].id
+    // Who it was comes first.
+    expect(proposalCounts(proposal)).toMatchObject({
+      needsChoice: 1,
+      needsConsent: 0,
+    })
+    expect(toScribeProposal(proposal, fixture.stores).cards[0].consent).toBe(
+      null
+    )
+    const existing = withContactChosen(proposal, id, {
+      type: 'existing',
+      contactId: 'contact-ben',
+    })
+    expect(canAddProposal(existing)).toBe(true)
+    const created = withContactChosen(proposal, id, { type: 'new' })
+    expect(canAddProposal(created)).toBe(false)
+    expect(toScribeProposal(created, fixture.stores).cards[0]).toMatchObject({
+      consent: { given: false },
+      needsConsent: true,
+    })
+  })
+
+  it('isn’t asked outside data protection mode', () => {
+    const fixture = fixtureContext()
+    propose(
+      fixture,
+      'visits_log',
+      visit({ newContact: { name: 'Ama', address: null, phone: null } })
+    )
+    const proposal = proposalOf(fixture)
+    expect(proposal.cards[0].consent).toBeUndefined()
+    expect(canAddProposal(proposal)).toBe(true)
+  })
+
+  it('keeps the agreement when a retried turn adds cards', () => {
+    const fixture = protectedFixture()
+    propose(
+      fixture,
+      'visits_log',
+      visit({ newContact: { name: 'Ama', address: null, phone: null } })
+    )
+    const agreed = withConsent(
+      proposalOf(fixture),
+      proposalOf(fixture).cards[0].id,
+      true,
+      AGREED_AT
+    )
+    propose(fixture, 'time_log', timeLog())
+    const merged = mergeCards(agreed.cards, proposalOf(fixture).cards)
+    expect(merged[0].consent).toEqual({
+      givenAt: '2026-10-22T15:04:00.000Z',
+    })
   })
 })
 

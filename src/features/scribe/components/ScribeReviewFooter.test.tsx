@@ -48,7 +48,7 @@ import ScribeReviewFooter from '@/features/scribe/components/ScribeReviewFooter'
 
 const setProposal = (
   status: ScribeProposalStatus,
-  counts = { selected: 3, ready: 3, needsChoice: 0 },
+  counts = { selected: 3, ready: 3, needsChoice: 0, needsConsent: 0 },
   result: ScribeApplyResult = {
     status: 'applied',
     appliedCards: 3,
@@ -67,10 +67,15 @@ const setProposal = (
       undoKept: 0,
     },
     counts,
-    canAdd: status === 'pending' && counts.selected > 0 && !counts.needsChoice,
+    canAdd:
+      status === 'pending' &&
+      counts.selected > 0 &&
+      !counts.needsChoice &&
+      !counts.needsConsent,
     canUndo: false,
     toggleCard: vi.fn(),
     chooseContact: vi.fn(),
+    setConsent: vi.fn(),
     add: vi.fn(async () => result),
     dismiss: vi.fn(),
   }
@@ -103,9 +108,26 @@ describe('ScribeReviewFooter', () => {
   })
 
   it('blocks Add until every person is picked', () => {
-    setProposal('pending', { selected: 3, ready: 2, needsChoice: 1 })
+    setProposal('pending', {
+      selected: 3,
+      ready: 2,
+      needsChoice: 1,
+      needsConsent: 0,
+    })
     const { texts, add } = render()
     expect(texts()[0]).toBe('scribe_addBlocked')
+    expect(add().props.disabled).toBe(true)
+  })
+
+  it('blocks Add until every new householder agreed', () => {
+    setProposal('pending', {
+      selected: 2,
+      ready: 1,
+      needsChoice: 0,
+      needsConsent: 1,
+    })
+    const { texts, add } = render()
+    expect(texts()[0]).toBe('scribe_addBlockedConsent')
     expect(add().props.disabled).toBe(true)
   })
 

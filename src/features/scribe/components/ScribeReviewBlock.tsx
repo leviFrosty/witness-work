@@ -159,6 +159,11 @@ const ScribeReviewBlock = ({ proposalId, onSayAChange }: Props) => {
           count: counts.needsChoice,
         })
       : null,
+    counts.needsConsent > 0
+      ? i18n.t('scribe_reviewNeedsConsent' as TranslationKey, {
+          count: counts.needsConsent,
+        })
+      : null,
   ]
     .filter(Boolean)
     .join(' · ')
@@ -264,6 +269,7 @@ const ScribeReviewBlock = ({ proposalId, onSayAChange }: Props) => {
               editable={proposal.status === 'pending'}
               onToggle={() => controller.toggleCard(card.id)}
               onChoose={(choice) => controller.chooseContact(card.id, choice)}
+              onConsent={(agreed) => controller.setConsent(card.id, agreed)}
               onOpen={target ? () => open(target) : undefined}
             />
           )

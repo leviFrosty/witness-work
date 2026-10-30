@@ -7,7 +7,11 @@ import {
   type StoredEffect,
   type StoredProposal,
 } from '@/features/scribe/proposals/model'
-import { needsChoice } from '@/features/scribe/proposals/cards'
+import {
+  asksConsent,
+  needsChoice,
+  needsConsent,
+} from '@/features/scribe/proposals/cards'
 import type {
   ApplyContext,
   ApplyOutcome,
@@ -156,13 +160,21 @@ export function applyProposal(
     now: deps.now,
     prefs: deps.prefs,
     bound: new Map(),
+    consents: new Map(),
     newId: deps.newId,
   }
 
   const selected = new Set<string>()
   for (const card of proposal.cards) {
-    if (!card.selected || needsChoice(card)) continue
+    if (!card.selected || needsChoice(card) || needsConsent(card)) continue
     for (const id of card.effectIds) selected.add(id)
+    const givenAt = asksConsent(card) ? card.consent?.givenAt : null
+    if (givenAt)
+      for (const id of card.effectIds) {
+        const { draft } = effects.get(id)!
+        if (draft.kind === 'contact.create')
+          ctx.consents.set(draft.ref, givenAt)
+      }
     if (
       card.contact?.type === 'choice' &&
       card.contact.chosen?.type === 'existing'

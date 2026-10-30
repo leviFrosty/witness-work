@@ -11,6 +11,7 @@ import {
   MessageCircle as MessageCircleIcon,
   PencilLine as PencilLineIcon,
   Plus as PlusIcon,
+  ShieldCheck as ShieldCheckIcon,
   Sparkles as SparklesIcon,
   Tag as TagIcon,
   Trash2 as Trash2Icon,
@@ -22,9 +23,11 @@ import {
 } from 'lucide-react-native'
 import Button from '@/components/ui/Button'
 import { ChevronForwardIcon } from '@/components/ui/DirectionalIcon'
+import InfoPopover from '@/components/ui/InfoPopover'
 import Text from '@/components/ui/MyText'
 import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
 import PointerHover, { HoverTint } from '@/components/ui/PointerHover'
+import Switch from '@/components/ui/Switch'
 import { MIN_TOUCH_TARGET } from '@/components/ui/touchTarget'
 import useTheme from '@/contexts/theme'
 import useAccessibilityTextSize from '@/hooks/useAccessibilityTextSize'
@@ -284,6 +287,72 @@ const ChoiceChip = ({
   )
 }
 
+/**
+ * Data protection mode: the householder agreed to be kept, recorded with the
+ * Contact form's switch, and what to ask them in its popover.
+ */
+const ConsentRow = ({
+  name,
+  given,
+  onChange,
+}: {
+  name: string
+  given: boolean
+  onChange: (agreed: boolean) => void
+}) => {
+  const theme = useTheme()
+  const label = i18n.t('scribe_consentLabel', { name })
+  return (
+    <View
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 10,
+        marginLeft: INDENT,
+        paddingTop: 8,
+        borderTopWidth: 1,
+        borderTopColor: theme.colors.border,
+      }}
+    >
+      <LucideIcon
+        icon={ShieldCheckIcon}
+        size={17}
+        color={given ? theme.colors.accent : theme.colors.warnText}
+      />
+      <View
+        style={{
+          flex: 1,
+          flexDirection: 'row',
+          alignItems: 'center',
+          minHeight: MIN_TOUCH_TARGET,
+        }}
+      >
+        <Text
+          style={{
+            flexShrink: 1,
+            fontSize: theme.fontSize('md'),
+            fontFamily: theme.fonts.medium,
+          }}
+        >
+          {label}
+        </Text>
+        <InfoPopover
+          title={i18n.t('dataProtectionConsentInfoTitle')}
+          description={i18n.t('dataProtectionConsentInfoDesc')}
+        />
+      </View>
+      {/* iOS's Switch aligns itself to the top; its own View centers it. */}
+      <View>
+        <Switch
+          accessibilityLabel={label}
+          value={given}
+          onValueChange={onChange}
+        />
+      </View>
+    </View>
+  )
+}
+
 const effectIcon = (effect: ScribeEffect, index: number): AppIcon | null => {
   const preview = effect.preview
   switch (preview.kind) {
@@ -304,20 +373,24 @@ interface Props {
   editable: boolean
   onToggle: () => void
   onChoose: (choice: ScribeContactChoice) => void
+  /** The householder agreed (or not), on a card that asks. */
+  onConsent: (agreed: boolean) => void
   /** Added: opens the record it wrote. */
   onOpen?: () => void
 }
 
 /**
  * One review card (V-A): a check, the kind tile, what will be added and where a
- * date came from, nested Visit and Follow-up rows for a contact, and the people
- * to pick between when a name matched more than one.
+ * date came from, nested Visit and Follow-up rows for a contact, the people to
+ * pick between when a name matched more than one, and in data protection mode
+ * the householder's agreement before a new Contact can be added.
  */
 const ScribeReviewCard = ({
   card,
   editable,
   onToggle,
   onChoose,
+  onConsent,
   onOpen,
 }: Props) => {
   const theme = useTheme()
@@ -444,7 +517,7 @@ const ScribeReviewCard = ({
           borderCurve: 'continuous',
           borderWidth: 1,
           borderColor:
-            editable && card.needsChoice
+            editable && (card.needsChoice || card.needsConsent)
               ? theme.colors.warn
               : theme.colors.border,
           paddingVertical: 10,
@@ -570,6 +643,13 @@ const ScribeReviewCard = ({
               onPress={() => onChoose({ type: 'new' })}
             />
           </View>
+        ) : null}
+        {card.consent && contact && editable ? (
+          <ConsentRow
+            name={contact.type === 'choice' ? contact.spokenName : contact.name}
+            given={card.consent.given}
+            onChange={onConsent}
+          />
         ) : null}
         {warnings.map(({ text, severity }) => {
           // Info (another plan that day) is worth knowing, not a problem.

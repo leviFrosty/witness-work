@@ -58,7 +58,10 @@ import {
   readScribeStores,
   type ScribeStores,
 } from '@/features/scribe/runtime/snapshot'
-import { addScribeProposal } from '@/features/scribe/proposals/actions'
+import {
+  addScribeProposal,
+  setProposalConsent,
+} from '@/features/scribe/proposals/actions'
 import { toScribeProposal } from '@/features/scribe/proposals/cards'
 import {
   getConversation,
@@ -781,7 +784,7 @@ describe('golden turns', () => {
     expect(result.proposal).toBeNull()
   })
 
-  it("a new person in data protection mode isn't proposed", async () => {
+  it('a new person in data protection mode is added once the User confirms they agreed', async () => {
     seed(
       evalStores({
         preferences: { ...PREFERENCES, dataProtectionMode: true },
@@ -820,20 +823,37 @@ describe('golden turns', () => {
               },
             ],
           ],
-        },
-        {
-          calls: [],
-          text: 'Data protection is on, so please add Ama in the contact form with her consent, then I can record the visit.',
+          text: 'Here’s the visit with Ama and Monday’s follow-up. Confirm Ama agreed to be kept, then add it.',
         },
       ],
       'I met a new person, Ama, at 5 Hill St, follow up Monday'
     )
     expect(result.bodies[0].context.contacts).toEqual([])
-    expect(result.results[0]).toMatchObject({
-      ok: false,
-      error: expect.stringContaining('contact form'),
+    // Writes only: one step, ending the turn for review.
+    expect(result.bodies).toHaveLength(1)
+    const proposal = result.proposal!
+    const [card] = proposal.cards
+    expect(card).toMatchObject({
+      contact: { type: 'new', name: 'Ama', addressLine: '5 Hill St' },
+      consent: { given: false },
+      needsConsent: true,
     })
-    expect(result.proposal).toBeNull()
+    expect(addScribeProposal(proposal.id, { now: NOW }).status).toBe('failed')
+    expect(
+      useContacts.getState().contacts.some((contact) => contact.name === 'Ama')
+    ).toBe(false)
+
+    setProposalConsent(proposal.id, card.id, true)
+    expect(addScribeProposal(proposal.id, { now: NOW }).status).toBe('applied')
+    const ama = useContacts
+      .getState()
+      .contacts.find((contact) => contact.name === 'Ama')!
+    expect(ama.consentGivenAt).toEqual(expect.any(String))
+    expect(
+      useConversations
+        .getState()
+        .conversations.some((visit) => visit.contact.id === ama.id)
+    ).toBe(true)
   })
 
   it('a visit logged after reading notes is marked tainted', async () => {

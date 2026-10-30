@@ -394,6 +394,9 @@ export function toAddress(input: AddressInput): Address | null {
 export const phoneInput = z.string().max(40).nullable()
 export const emailInput = z.string().max(120).nullable()
 
-/** Data protection mode needs the householder's consent, given in the form. */
-export const PROTECTED_CREATE_ERROR =
-  "Data protection mode is on, so new contacts need the householder's consent in the contact form. Tell the User to add this person there, then log the visit."
+/**
+ * Data protection mode keeps no Not at Home visits, as the Visit form doesn't:
+ * nobody was there to agree.
+ */
+export const PROTECTED_NOT_AT_HOME_ERROR =
+  "Data protection mode doesn't keep Not at Home visits. Tell the User in one sentence, and propose anything else they asked for."

@@ -20,7 +20,7 @@ In registry order. Each file's `description` is what the model reads; this is th
 | `time_log`          | write       | A Time Entry for today or earlier, in a new Category if named (minutes 0 marks "shared")      |
 | `plans_create`      | write       | A Day Plan, timed or anytime, in a new Category if named; names buddies, refuses repeats      |
 | `plans_update`      | write       | Changes to one Day Plan, by Ref or by its day; Recurring Plans can't be changed               |
-| `contacts_create`   | write       | A new Contact; returns a pending `n` ref                                                      |
+| `contacts_create`   | write       | A new Contact; returns a pending `n` ref. In data protection mode its card asks for consent   |
 | `contacts_update`   | write       | Changes to an existing Contact; can't delete                                                  |
 | `visits_log`        | write       | A Visit with an optional Follow-up, for a known Contact, a new one, or a choice among several |
 | `categories_create` | write       | A new Category on its own, credit or not; returns a pending `nk` ref                          |
@@ -43,6 +43,7 @@ Refs the tools take and return: `c` Contact, `n` pending new Contact, `p` Day Pl
    - Resolve Refs with `ctx.refs` or the `resolveContact` / `resolveCategory` helpers.
    - Neither may call a store setter; only the apply saga writes.
    - Text a person wrote (Visit notes) needs `returnsUntrustedText: true` and `trust: 'untrusted_text'`.
+   - A write that creates a Contact sets `needsConsent` on its `contact.create` in data protection mode. Its card then asks the User to confirm the householder agreed (the Contact form's switch, saved as `consentGivenAt`), and Add waits for it, as it does for a "Which Maria?" choice. Don't refuse the call or send the User to the form.
    - Anything that reads householder text gets `offInDataProtection: true`. The device refuses its calls in data protection mode, but the tool stays listed: every User shares the tool list as one cached prefix, and a shorter list in one mode would read it uncached. Say the mode in its description.
    - A write that needs a record the User names but that doesn't exist yet takes it as a nullable nested object (`visits_log` `newContact`, `time_log` and `plans_create` `newCategory`) and drafts both in one call. A separate create whose Ref the next step uses costs a step.
    - A write whose pending Ref is mostly for other calls (`categories_create`, in case the model uses it instead of `newCategory`) gets `refForLaterCalls: true`: when no other call in the step uses the Ref, its result adds `next` (use the Ref now; the User adds everything together) and the turn takes one more step.

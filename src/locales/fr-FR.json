@@ -3061,8 +3061,6 @@
   "rewardAnimations": "Animations de récompense",
   "rewardAnimations_description": "Quand vous gagnez des pièces pour votre animal, chacune apparaît à l’écran puis s’ajoute à son porte-monnaie. Touchez n’importe où pour passer.",
   "rewardSounds": "Sons",
-  "rewardSounds_punch": "Percutant",
-  "rewardSounds_retro": "Rétro",
   "rewardSounds_soft": "Doux",
   "rewardSounds_off": "Désactivés",
   "rewardSounds_audioOff": "Les sons sont désactivés dans Sons et vibrations.",

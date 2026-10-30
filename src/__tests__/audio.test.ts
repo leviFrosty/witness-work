@@ -43,7 +43,7 @@ const effects = vi.hoisted(() => ({
   playSoundEffect: vi.fn(),
 }))
 vi.mock('../../modules/sound-effects', () => effects)
-vi.mock('@/assets/audio/reward/punch-hit.mp3', () => ({ default: 10 }))
+vi.mock('@/assets/audio/reward/signature-hit.mp3', () => ({ default: 10 }))
 
 import {
   playCue,
@@ -51,6 +51,7 @@ import {
   prepareCues,
   prepareRewardSounds,
   releaseRewardSounds,
+  rewardSoundSet,
   useSound,
 } from '@/lib/audio'
 import { MmkvStorage } from '@/stores/mmkv'
@@ -58,6 +59,7 @@ import {
   NON_SYNCABLE_PREFERENCE_KEYS,
   PREFERENCE_DEFAULTS,
   usePreferences,
+  type RewardSoundSet,
 } from '@/stores/preferences'
 
 describe('Audio setting', () => {
@@ -133,18 +135,22 @@ describe('Audio setting', () => {
   })
 
   it('plays loaded reward sounds natively, at their rate', async () => {
-    prepareRewardSounds('punch')
+    prepareRewardSounds('signature')
     await vi.waitFor(() =>
       expect(effects.loadSoundEffect).toHaveBeenCalledWith(
-        'punch-hit',
+        'signature-hit',
         'file:///cues/10.wav'
       )
     )
     await Promise.resolve()
 
-    playRewardSound('hit', { set: 'punch', rate: 3, volume: 0.6 })
+    playRewardSound('hit', { set: 'signature', rate: 3, volume: 0.6 })
 
-    expect(effects.playSoundEffect).toHaveBeenCalledWith('punch-hit', 2, 0.6)
+    expect(effects.playSoundEffect).toHaveBeenCalledWith(
+      'signature-hit',
+      2,
+      0.6
+    )
     expect(player.play).not.toHaveBeenCalled()
   })
 
@@ -152,7 +158,7 @@ describe('Audio setting', () => {
     releaseRewardSounds()
     effects.available = false
     try {
-      playRewardSound('hit', { set: 'retro' })
+      playRewardSound('hit', { set: 'click' })
 
       expect(effects.playSoundEffect).not.toHaveBeenCalled()
       expect(player.play).toHaveBeenCalledOnce()
@@ -161,10 +167,20 @@ describe('Audio setting', () => {
     }
   })
 
+  it('plays the default set for a retired or unknown one', () => {
+    usePreferences
+      .getState()
+      .set({ rewardSounds: 'punch' as unknown as RewardSoundSet })
+    expect(rewardSoundSet()).toBe('signature')
+
+    usePreferences.getState().set({ rewardSounds: 'wood' })
+    expect(rewardSoundSet()).toBe('wood')
+  })
+
   it('keeps reward sounds silent when the User turns audio off', () => {
     usePreferences.getState().set({ audioEnabled: false })
 
-    playRewardSound('hit', { set: 'punch' })
+    playRewardSound('hit', { set: 'signature' })
 
     expect(effects.playSoundEffect).not.toHaveBeenCalled()
     expect(player.play).not.toHaveBeenCalled()

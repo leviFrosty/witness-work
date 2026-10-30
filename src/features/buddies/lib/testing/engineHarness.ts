@@ -151,6 +151,7 @@ export function setup() {
       | 'shareEndsAt'
       | 'account'
       | 'onSharesNotSent'
+      | 'paused'
     > = {}
   ) {
     const store = memoryStore({})

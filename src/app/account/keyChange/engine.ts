@@ -120,8 +120,11 @@ export type KeyChangeEngineDeps = {
     /** This device's label sealed under the new key, if any. */
     sealLabel?: (newKey: Uint8Array) => string | undefined
   }
-  /** Step 0: Cloud Sync pulls, merges and pushes; a backup when it's on. */
-  prepare: () => Promise<void>
+  /**
+   * Step 0, with K1 still the account's: Cloud Sync pulls, merges and pushes; a
+   * backup when it's on; Buddies' inbox is linked to the account.
+   */
+  prepare: (change: { oldKey: Uint8Array; accountId: string }) => Promise<void>
   /** Step 4 (`accountKey.adoptChangedKey`). */
   adopt: (
     oldKey: Uint8Array,
@@ -309,7 +312,7 @@ export function createKeyChangeEngine(deps: KeyChangeEngineDeps) {
       } catch {
         throw new KeyChangeError('history')
       }
-      await deps.prepare()
+      await deps.prepare({ oldKey, accountId: account.accountId })
       let newKey = deps.randomBytes(32)
       while (toB64u(newKey) === toB64u(oldKey)) newKey = deps.randomBytes(32)
       await save({

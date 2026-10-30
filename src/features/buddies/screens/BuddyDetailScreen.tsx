@@ -12,6 +12,7 @@ import BuddyBadgesSection from '@/features/buddies/components/BuddyBadgesSection
 import BuddyDetailActions from '@/features/buddies/components/BuddyDetailActions'
 import BuddyNeedsAnswerSection from '@/features/buddies/components/BuddyNeedsAnswerSection'
 import BuddyProfileHeader from '@/features/buddies/components/BuddyProfileHeader'
+import BuddyReconnectCard from '@/features/buddies/components/BuddyReconnectCard'
 import BuddySettingsLink from '@/features/buddies/components/BuddySettingsLink'
 import BuddyTogetherSection from '@/features/buddies/components/BuddyTogetherSection'
 import BuddyTwoWeekStrip from '@/features/buddies/components/BuddyTwoWeekStrip'
@@ -69,6 +70,7 @@ export default function BuddyDetailScreen({ route, navigation }: Props) {
         ]}
       >
         <BuddyProfileHeader buddy={buddy} />
+        <BuddyReconnectCard from={inboxId} />
         <BuddyAppearanceSection buddy={buddy} />
         <BuddyBadgesSection buddy={buddy} />
         <BuddyDetailActions inboxId={inboxId} />

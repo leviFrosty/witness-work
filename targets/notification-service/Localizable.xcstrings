@@ -3690,6 +3690,125 @@
         }
       }
     },
+    "buddies_notifReconnect" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "{{name}} asked to reconnect"
+          }
+        },
+        "bem" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "{{name}} asked to reconnect"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "{{name}} asked to reconnect"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "{{name}} asked to reconnect"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "{{name}} asked to reconnect"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "{{name}} asked to reconnect"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "{{name}} asked to reconnect"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "{{name}} asked to reconnect"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "{{name}} asked to reconnect"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "{{name}} asked to reconnect"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "{{name}} asked to reconnect"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "{{name}} asked to reconnect"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "{{name}} asked to reconnect"
+          }
+        },
+        "rw" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "{{name}} asked to reconnect"
+          }
+        },
+        "sw" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "{{name}} asked to reconnect"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "{{name}} asked to reconnect"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "{{name}} asked to reconnect"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "{{name}} asked to reconnect"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "{{name}} asked to reconnect"
+          }
+        }
+      }
+    },
     "buddies_notifReplyDeclined" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -4162,6 +4281,125 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "你們現在可以看到彼此已安排的傳道日期。"
+          }
+        }
+      }
+    },
+    "buddies_pushReconnectBody" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "They changed their account key. Reconnect to stay buddies."
+          }
+        },
+        "bem" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "They changed their account key. Reconnect to stay buddies."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "They changed their account key. Reconnect to stay buddies."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "They changed their account key. Reconnect to stay buddies."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "They changed their account key. Reconnect to stay buddies."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "They changed their account key. Reconnect to stay buddies."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "They changed their account key. Reconnect to stay buddies."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "They changed their account key. Reconnect to stay buddies."
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "They changed their account key. Reconnect to stay buddies."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "They changed their account key. Reconnect to stay buddies."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "They changed their account key. Reconnect to stay buddies."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "They changed their account key. Reconnect to stay buddies."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "They changed their account key. Reconnect to stay buddies."
+          }
+        },
+        "rw" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "They changed their account key. Reconnect to stay buddies."
+          }
+        },
+        "sw" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "They changed their account key. Reconnect to stay buddies."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "They changed their account key. Reconnect to stay buddies."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "They changed their account key. Reconnect to stay buddies."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "They changed their account key. Reconnect to stay buddies."
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "They changed their account key. Reconnect to stay buddies."
           }
         }
       }

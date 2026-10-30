@@ -519,7 +519,10 @@ describe('pairing on a flaky connection', () => {
   it('says when the relay holds as many open invites as it allows', async () => {
     const { user } = setup()
     const mom = user('Mom')
-    for (let i = 0; i < 3; i++) await mom.engine.createInvite()
+    // Another of Mom's devices made the rest, so this one has spots free.
+    const momsPad = user('Mom', undefined, mom.seed)
+    for (let i = 0; i < 3; i++) await momsPad.engine.createInvite()
+    for (let i = 0; i < 2; i++) await mom.engine.createInvite()
     await expect(mom.engine.createInvite()).rejects.toEqual(
       new BuddyInviteError('openInvites')
     )

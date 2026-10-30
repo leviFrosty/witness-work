@@ -165,6 +165,7 @@ export default function useBuddyNotifications(): NotificationItem[] {
   const incomingClaims = useBuddies((state) => state.incomingClaims)
   const incomingShares = useBuddies((state) => state.incomingShares)
   const joinRequests = useBuddies((state) => state.joinRequests)
+  const reconnectOffers = useBuddies((state) => state.reconnectOffers)
   const dayPlans = useServiceReport((state) => state.dayPlans)
   const recurringPlans = useServiceReport((state) => state.recurringPlans)
   const visits = useConversations((state) => state.conversations)
@@ -246,7 +247,9 @@ export default function useBuddyNotifications(): NotificationItem[] {
 
   // Entries keep the name they arrived with; a nickname given since applies.
   const buddyName = (entry: BuddyNotification) => {
-    const buddy = buddies.find((b) => b.inboxId === entry.from)
+    const buddy =
+      buddies.find((b) => b.inboxId === entry.from) ??
+      (entry.reconnect ? reconnectOffers[entry.reconnect] : undefined)
     return buddy ? buddyDisplayName(buddy) : entry.name
   }
 

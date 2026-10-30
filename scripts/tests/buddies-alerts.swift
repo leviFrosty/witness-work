@@ -39,7 +39,7 @@ import Foundation
     return try! JSONSerialization.jsonObject(with: data) as! [String: Any]
   }
 
-  static func main() throws {
+  static func main() async throws {
     let arguments = CommandLine.arguments
     guard arguments.count == 4 else {
       fatalError("usage: buddies-alerts <cryptoVectors.json> <alertVectors.json> <en-US.json>")
@@ -51,6 +51,7 @@ import Foundation
     try primitives(crypto)
     vectors(alerts, english: english)
     wording(english)
+    await refusedOwnerKey(crypto)
 
     print("\(checks - failures)/\(checks) checks passed")
     if failures > 0 { exit(1) }
@@ -132,6 +133,62 @@ import Foundation
       "fetch body is the envelope")
   }
 
+  /// After an account key change elsewhere, the relay refuses the old key's
+  /// owner-signed `inbox/sync` (401 `key_changed`): the extension sends it
+  /// once, keeps the template, and never signs for that inbox again.
+  static func refusedOwnerKey(_ v: [String: String]) async {
+    let suite = "buddies-alerts-test-\(UUID().uuidString)"
+    let defaults = UserDefaults(suiteName: suite)!
+    defer { defaults.removePersistentDomain(forName: suite) }
+    let configuration = URLSessionConfiguration.ephemeral
+    configuration.protocolClasses = [StubRelay.self]
+    let session = URLSession(configuration: configuration)
+    let context = try! JSONDecoder().decode(
+      AlertContext.self,
+      from: Data(
+        """
+        {"v":1,"inboxId":"\(v["identity.inboxId"]!)",
+         "ownerSeed":"\(B64U.encode(fromHex(v["identity.ownerSeed"]!)))",
+         "buddies":[],"invites":[],"myShares":{},"badgeAlerts":true,"joinAlerts":true,
+         "catalog":{"order":[],"oneTime":[]},"relay":"https://relay.example"}
+        """.utf8))
+    let fetch = { () async -> Error? in
+      do {
+        _ = try await InboxFetch.event(seq: 3, context: context, refused: defaults, session: session)
+        return nil
+      } catch {
+        return error
+      }
+    }
+
+    StubRelay.answer = (
+      401, Data(#"{"ok":false,"error":"unauthorized","reason":"key_changed"}"#.utf8))
+    StubRelay.requests = 0
+    let first = await fetch()
+    check(first as? InboxFetch.Failure == .keyChanged, "a refused owner key is named")
+    check(StubRelay.requests == 1, "a refused owner key isn't sent again")
+    check(InboxFetch.refusedInboxes(in: defaults) == [context.inboxId], "the refused inbox is kept")
+    let second = await fetch()
+    check(second as? InboxFetch.Failure == .keyChanged, "the next push names it too")
+    check(StubRelay.requests == 1, "the next push sends nothing")
+
+    // Any other 401 is only this fetch's failure: the next push tries again.
+    let other = UserDefaults(suiteName: suite + ".other")!
+    defer { other.removePersistentDomain(forName: suite + ".other") }
+    StubRelay.answer = (401, Data(#"{"ok":false,"error":"unauthorized"}"#.utf8))
+    StubRelay.requests = 0
+    let plain = await {
+      do {
+        _ = try await InboxFetch.event(seq: 3, context: context, refused: other, session: session)
+        return nil as Error?
+      } catch {
+        return error
+      }
+    }()
+    check(plain as? InboxFetch.Failure == .rejected, "another 401 is a rejection")
+    check(InboxFetch.refusedInboxes(in: other).isEmpty, "another 401 refuses nothing")
+  }
+
   /// English strings, from the app's source of truth.
   static func lookup(_ english: [String: Any]) -> (String) -> String {
     { key in english[key] as? String ?? key }
@@ -209,6 +266,7 @@ import Foundation
       switch alert {
       case .claimed(let name): body = ["type": "claimed", "name": name]
       case .paired(let name): body = ["type": "paired", "name": name]
+      case .reconnect(let name): body = ["type": "reconnect", "name": name]
       case .share(let action, let shareType, let name, let w):
         body = ["type": "share", "action": action, "shareType": shareType, "name": name]
           .merging(when(w)) { a, _ in a }
@@ -225,4 +283,23 @@ import Foundation
       return ["alert": body]
     }
   }
+}
+
+/// Answers every request with `answer`, counting them.
+final class StubRelay: URLProtocol {
+  nonisolated(unsafe) static var answer: (Int, Data) = (200, Data())
+  nonisolated(unsafe) static var requests = 0
+
+  override class func canInit(with request: URLRequest) -> Bool { true }
+  override class func canonicalRequest(for request: URLRequest) -> URLRequest { request }
+  override func startLoading() {
+    Self.requests += 1
+    let response = HTTPURLResponse(
+      url: request.url!, statusCode: Self.answer.0, httpVersion: nil,
+      headerFields: ["content-type": "application/json"])!
+    client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
+    client?.urlProtocol(self, didLoad: Self.answer.1)
+    client?.urlProtocolDidFinishLoading(self)
+  }
+  override func stopLoading() {}
 }

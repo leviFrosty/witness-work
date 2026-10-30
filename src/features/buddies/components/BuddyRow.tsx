@@ -10,6 +10,8 @@ import i18n from '@/lib/locales'
 import { RootStackNavigation } from '@/types/rootStack'
 import BuddyAvatar from '@/features/buddies/components/BuddyAvatar'
 import BuddyListRow from '@/features/buddies/components/BuddyListRow'
+import ReconnectButtons from '@/features/buddies/components/ReconnectButtons'
+import useReconnect from '@/features/buddies/hooks/useReconnect'
 import { buddiesEngine } from '@/features/buddies/lib/buddiesService'
 import {
   confirmRemoveBuddy,
@@ -27,7 +29,8 @@ import { usePreferences } from '@/stores/preferences'
 /**
  * An active buddy opens their detail screen; long-press for its calendar toggle
  * and removal. One still `awaitingConfirm` (I accepted their invite) is muted,
- * with a menu to withdraw the request.
+ * with a menu to withdraw the request. One who changed their account key and
+ * asked to reconnect says so, with Reconnect and Dismiss.
  */
 export default function BuddyRow({
   buddy,
@@ -45,6 +48,8 @@ export default function BuddyRow({
   const shownOnCalendar = useBuddies(
     (state) => buddySettings(state.sharing, buddy).settings.showOnCalendar
   )
+  const asked = useReconnect(buddy.inboxId)
+  const reconnecting = !awaiting && asked.offer !== null
 
   const withdraw: ContextMenuEntries = [
     {
@@ -58,6 +63,25 @@ export default function BuddyRow({
 
   // Everything here is also on the buddy's detail screen.
   const actions: ContextMenuEntries = [
+    ...(reconnecting && !asked.busy
+      ? ([
+          [
+            {
+              id: 'reconnect',
+              title: i18n.t('buddies_reconnect'),
+              systemImage: 'person.2',
+              onPress: () => void asked.reconnect(),
+            },
+            {
+              id: 'dismiss_reconnect',
+              title: i18n.t('dismiss'),
+              systemImage: 'xmark.circle',
+              destructive: true,
+              onPress: asked.dismiss,
+            },
+          ],
+        ] satisfies ContextMenuEntries)
+      : []),
     [
       {
         id: 'view',
@@ -106,14 +130,17 @@ export default function BuddyRow({
       subtitle={
         awaiting
           ? i18n.t('buddies_awaitingConfirm', { name: buddyDisplayName(buddy) })
-          : buddy.tenure
-            ? buddyTenureLabel(buddy.tenure)
-            : i18n.t('buddies_sharingPlans')
+          : reconnecting
+            ? i18n.t('buddies_reconnectAsked')
+            : buddy.tenure
+              ? buddyTenureLabel(buddy.tenure)
+              : i18n.t('buddies_sharingPlans')
       }
       onPress={awaiting ? undefined : open}
       actions={awaiting ? withdraw : actions}
+      // Room for Reconnect and Dismiss; the row still opens the buddy.
       accessory={
-        awaiting ? undefined : (
+        awaiting || reconnecting ? undefined : (
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
             {streak > 0 && <StreakBadge count={streak} size='sm' />}
             <LucideIcon
@@ -135,6 +162,8 @@ export default function BuddyRow({
             })}
             triggerSize={16}
           />
+        ) : reconnecting ? (
+          <ReconnectButtons from={buddy.inboxId} />
         ) : undefined
       }
     />

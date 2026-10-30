@@ -45,21 +45,21 @@ The meta is `b64u(0x01 ‖ nonce[24] ‖ XChaCha20-Poly1305(photoKey, nonce, UTF
   - **Names never change.** If the account already has a live photo with that name, nothing is written and the answer is `existed: true` with the stored photo's `size`, `sha256` and `createdAt`, whatever the body.
   - **A deleted name comes back.** A put for a name deleted within the last 30 days stores the new blob under a new object and makes the name live again; it counts toward storage again. The purge deletes only the deleted put's object, so it can't take the photo that came back.
   - **Storage full.** A put that would take the account's live photos over `usage.limit` is **429 `storage_full`**, without `Retry-After` (only the User freeing space fixes it), with `usage` in the body, and stores nothing. The limit is checked when the put starts, against live photos plus the space other uploads have reserved, and again when it commits. A reservation lapses if its commit doesn't come within 2 minutes.
-  - **Races.** A put whose name is deleted while it uploads is 409 `conflict`, and nothing is stored. A put on an account that has no slot is 409 `no_slot`: photos exist only for Cloud Sync's devices, and the engine publishes its snapshot before its photos.
+  - **Races.** A put whose name is deleted while it uploads is 409 `conflict`, and so is a put whose upload outlives its 2-minute reservation; nothing is stored. A put of a name deleted while another put of it uploads is 429 `rate_limited` until that put ends. A put on an account that has no slot is 409 `no_slot`, also when the account's last slot goes while it uploads: photos exist only for Cloud Sync's devices, and the engine publishes its snapshot before its photos.
   - `createdAt` is the server's time (epoch ms) the photo became live: the transport's `modifiedAt` for it.
 - **`photos/list`** gives live photos only, ordered by name, at most 1,000 a page. `cursor` is opaque; pass it back for the next page, and it's `null` on the last. Every page carries the current `usage`.
 - **`photos/get`** answers with the blob exactly as put, `ETag: "<sha256>"`, `x-ww-created-at`, and `Cache-Control: no-store`. A deleted, purged or unknown name is `not_found`.
 - **`photos/delete`** is idempotent: unknown and already deleted names are `ok`. A deleted photo stops counting at once, is no longer listed or served, and its R2 object is purged 30 days later. `{ all: true }` deletes every live photo of the account and needs a live session (`requireLiveSession`), as deleting every slot does.
-- **Change notices.** A `photos/put` that stores a photo, and a `photos/delete` that deletes one, advance the account's `seq` and send `changed` on the live socket like `sync/put` does. The socket of the slot in `x-ww-slot-id` (the writing device's own) isn't told. Every pull runs the engine's photo pass, so another device fetches a photo as soon as it's there.
+- **Change notices.** A `photos/put` that stores a photo, and a `photos/delete` that deletes one, advance the account's `seq` and send `changed` on the live socket like `sync/put` does. The socket of the slot in `x-ww-slot-id` (the writing device's own) isn't told; a malformed `x-ww-slot-id` is `bad_request`. Every pull runs the engine's photo pass, so another device fetches a photo as soon as it's there.
 - **Every slot.** `sync/delete` without `slotId` (Delete Buddies on the account's last device) deletes every photo too. An account with no slot for a day (every device left Cloud Sync, or retention deleted their slots) has its photos deleted the same way by the daily alarm, which checks again just before deleting. A slot put restarts that day. Photos are there for Cloud Sync's devices; a device that comes back uploads its photos again.
 
 ### Switches and limits
 
 - `photos/put`, `photos/list` and `photos/get` are 503 `disabled` while Cloud Sync's kill switch is off, and 403 `supporter_required` when the account isn't entitled, exactly as `sync/put` is. `photos/delete` and `photos/usage` always work.
-- **Photos' own switch:** KV `sync:photos` (`on` or `off`; absent or unreadable, the `SYNC_PHOTOS` var, else on), edge-cached for 60 seconds. While it's off, or when the worker has no photo bucket, `photos/put` is 503 `photos_disabled` with `Retry-After`. The other photo ops keep working while the switch is off, so devices can still read and delete what's stored. `photos_disabled` never pauses the rest of Cloud Sync.
+- **Photos' own switch:** KV `sync:photos` (`on` or `off`; absent or unreadable, the `SYNC_PHOTOS` var, else on), edge-cached for 60 seconds. While it's off, `photos/put` is 503 `photos_disabled` with `Retry-After`, and the other photo ops keep working, so devices can still read and delete what's stored. Without the photo bucket, `photos/put` and `photos/get` are `photos_disabled`, and list, delete and usage keep working. `photos_disabled` never pauses the rest of Cloud Sync.
 - **Storage:** 2,000,000,000 bytes (2 GB) of live photo blobs an account. The `SYNC_PHOTO_LIMIT_BYTES` var overrides it, for tests and for trying the full state on a local or dev worker.
 - **One photo:** 25 MiB a blob (`too_large`, 413, refused from `Content-Length` before the body is read). 20,000 live photos an account (`limit`, 429 without `Retry-After`, for a new name only).
-- **Rates:** one put a name at a time; 20,000 puts and 4 GiB of stored puts an account a rolling day (an `existed` put counts as a put but adds no bytes); 50,000 gets an account a rolling day (`rate_limited`, 429, with `Retry-After`). `photos/put` counts against the Buddies photo-upload edge tier, the rest against the read tier.
+- **Rates:** one put a name at a time; 20,000 puts and 4 GiB of stored puts an account a rolling day (stored and `existed` puts count toward the 20,000, refused ones don't, and only stored puts add bytes); 50,000 gets an account a rolling day (`rate_limited`, 429, with `Retry-After`). `photos/put` counts against the Buddies photo-upload edge tier, the rest against the read tier.
 - **Retention:** a live photo stays while its account uses Cloud Sync; R2 has no age rule for photos, because they're written once. Deleted photos are purged by the `AccountSync` Durable Object's alarm 30 days after deletion.
 - A suspended account keeps syncing its photos.
 - `disabled` (503) without the accounts database, as for the rest of Cloud Sync.
@@ -92,8 +92,9 @@ The web works only with Cloud Sync (ADR 0037). When a browser signs in to an acc
 | `POST /accounts/v1/sync/request` | `{ requested: true, payload, signature }`, or `{ requested: false }` | `{ ok, requestedAt }` |
 
 - `requested: true` records the request and answers its time (epoch ms). It's Bearer **and** a self-signed envelope (op `sync/request`; payload `accountPub`, `ts`, `nonce`) whose account must be the token's, as `backup/delete` is: a leaked access token alone can't move the User's phones. It needs Cloud Sync's kill switch on (503 `disabled`) and an entitled account (403 `supporter_required`). Asking again while a request stands keeps its `requestedAt` and restarts its 30 days.
+- Each envelope is good once: a reused nonce is 409 `replay`, so a captured one can't raise a withdrawn request again.
 - `requested: false` withdraws it (`requestedAt: null`). Bearer only; always works, and is idempotent.
-- **It clears itself** once every live phone session of the account (platform `ios`, `android` or `dev`) has written a slot since `requestedAt`, or 30 days after it was last asked for. Phones never clear it, so one phone switching doesn't strand another on iCloud or Google Drive.
+- **It clears itself** once every live phone session of the account (platform `ios`, `android` or `dev`) has written a slot since `requestedAt`, or 30 days after it was last asked for. An account with no live phone session has nothing to wait for, so the request clears at once. Phones never clear it, so one phone switching doesn't strand another on iCloud or Google Drive.
 - Stored in the account's `AccountSync` Durable Object. Not in the activity log: it changes no one's access.
 
 `GET /accounts/v1/sync` adds two fields to the account's status:
@@ -105,6 +106,8 @@ Each slot in a `sync/list` answer adds:
 
 - `platform`: the platform of the session that last wrote it (`ios`, `android`, `dev`, or `web`);
 - `live`: whether that session is still live.
+
+`platform` is `null` for a slot written before platforms were kept whose session is gone; `live` is `true` when the server couldn't read the sessions.
 
 ### The app
 

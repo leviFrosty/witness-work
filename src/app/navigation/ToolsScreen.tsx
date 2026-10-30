@@ -108,6 +108,7 @@ import LayoutDirectionTools from '@/app/navigation/tools/LayoutDirectionTools'
 import PetTools from '@/app/navigation/tools/PetTools'
 import StreakTools from '@/app/navigation/tools/StreakTools'
 import ToastTools from '@/app/navigation/tools/ToastTools'
+import WebCloudSyncTools from '@/app/navigation/tools/WebCloudSyncTools'
 import ScribeTools from '@/app/dev-harness/ScribeTools'
 import {
   applyBadgeHistoryFixture,
@@ -1970,6 +1971,8 @@ export default function ToolsScreen() {
         </ToolSection>
 
         <ScribeTools />
+
+        <WebCloudSyncTools />
 
         <ToolSection title='Attestation' icon={KeyRoundIcon}>
           <ToolSubheading

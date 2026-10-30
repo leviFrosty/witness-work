@@ -4,6 +4,7 @@ import useIsSupporter from '@/hooks/useIsSupporter'
 import { usePreferences } from '@/stores/preferences'
 import { iCloudSync } from '@/app/sync/iCloudSync'
 import { prepareCloudSync } from '@/app/sync/cloudSync'
+import { withSyncOptionLock } from '@/app/sync/syncOptionLock'
 import { analytics } from '@/lib/analytics'
 import { hasSyncTransport } from '@/lib/syncTransport'
 import {
@@ -80,49 +81,7 @@ export default function CloudSyncDefault() {
       }
       running = true
       try {
-        const prepared = await prepareCloudSync()
-        if (settled) return
-        if (prepared.outcome !== 'ready') {
-          report(prepared.outcome)
-          // Offline, or attesting failed for now: try again on return. So
-          // does a Supporter the server can't confirm yet (RevenueCat down,
-          // or the purchase not linked to the account yet).
-          if (
-            prepared.outcome === 'no_session' ||
-            (prepared.outcome === 'not_entitled' && isSupporter)
-          )
-            retryLater()
-          else settle()
-          return
-        }
-        const decision = await iCloudSync.resolveInitialEnable()
-        if (settled) return
-        report(decision.outcome)
-        switch (decision.outcome) {
-          case 'seed':
-            settle()
-            usePreferences.setState({ syncProvider: 'cloud' })
-            await iCloudSync.applySeedEnable('supporter_default')
-            return
-          case 'pull':
-            settle()
-            usePreferences.setState({ syncProvider: 'cloud' })
-            iCloudSync.applyPullEnable(decision.remote, 'supporter_default')
-            return
-          case 'incomplete':
-            retryLater()
-            return
-          case 'conflict':
-            usePreferences.getState().set({
-              syncProvider: 'cloud',
-              iCloudSyncNeedsResolution: true,
-            })
-            settle()
-            return
-          case 'unavailable':
-            retryLater()
-            return
-        }
+        await withSyncOptionLock(decide)
       } catch {
         report('failed')
         settle()
@@ -132,6 +91,59 @@ export default function CloudSyncDefault() {
           again = false
           void attempt()
         }
+      }
+    }
+    // Under the lock, so a switch (the account's Cloud Sync request, Settings)
+    // never runs beside it; one that ran first may have chosen already.
+    const decide = async () => {
+      if (settled) return
+      const live = usePreferences.getState()
+      if (live.iCloudSyncEnabled || live.iCloudSyncSetByUser) {
+        settle()
+        return
+      }
+      const prepared = await prepareCloudSync()
+      if (settled) return
+      if (prepared.outcome !== 'ready') {
+        report(prepared.outcome)
+        // Offline, or attesting failed for now: try again on return. So
+        // does a Supporter the server can't confirm yet (RevenueCat down,
+        // or the purchase not linked to the account yet).
+        if (
+          prepared.outcome === 'no_session' ||
+          (prepared.outcome === 'not_entitled' && isSupporter)
+        )
+          retryLater()
+        else settle()
+        return
+      }
+      const decision = await iCloudSync.resolveInitialEnable()
+      if (settled) return
+      report(decision.outcome)
+      switch (decision.outcome) {
+        case 'seed':
+          settle()
+          usePreferences.setState({ syncProvider: 'cloud' })
+          await iCloudSync.applySeedEnable('supporter_default')
+          return
+        case 'pull':
+          settle()
+          usePreferences.setState({ syncProvider: 'cloud' })
+          iCloudSync.applyPullEnable(decision.remote, 'supporter_default')
+          return
+        case 'incomplete':
+          retryLater()
+          return
+        case 'conflict':
+          usePreferences.getState().set({
+            syncProvider: 'cloud',
+            iCloudSyncNeedsResolution: true,
+          })
+          settle()
+          return
+        case 'unavailable':
+          retryLater()
+          return
       }
     }
     void attempt()

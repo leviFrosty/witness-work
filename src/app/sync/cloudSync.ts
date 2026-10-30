@@ -177,6 +177,19 @@ export function registerCloudSync(): void {
   registerCloudSyncTransport(cloudSyncTransport)
 }
 
+const statusListeners = new Set<(status: SyncStatus) => void>()
+
+/**
+ * Calls `listener` with each status read that worked: at launch, on return to
+ * the foreground, and whenever something forces one. Returns an unsubscribe.
+ */
+export const onCloudSyncStatus = (
+  listener: (status: SyncStatus) => void
+): (() => void) => {
+  statusListeners.add(listener)
+  return () => statusListeners.delete(listener)
+}
+
 let statusInFlight: Promise<SyncStatus | null> | null = null
 let statusReadAt = -Infinity
 /** The server's answer changes with purchases and switches; not by the second. */
@@ -226,6 +239,7 @@ export function refreshCloudSyncStatus({
           : {}),
       })
       cloudSyncTransport.notifyAvailabilityChange()
+      for (const listener of statusListeners) listener(status)
       return status
     } catch (error) {
       logger.warn('[cloudSync] status unavailable', error)

@@ -847,6 +847,13 @@ export const PREFERENCE_DEFAULTS = {
    */
   cloudSyncPhotos: null as boolean | null,
   /**
+   * The account's Cloud Sync request (its `requestedAt`) this device last acted
+   * on: it switched, was already on Cloud Sync, or the User moved it elsewhere
+   * while it switched. A device acts once per request, so a User who moves it
+   * back afterwards isn't overruled. Per-device.
+   */
+  cloudSyncRequestAnswered: null as number | null,
+  /**
    * Data protection mode (EU/EEA, UK, Switzerland). When true the app hides and
    * disables householder-data features that CJEU C-25/17 and GDPR make risky
    * without consent: see `docs/gdpr-mode-research.md` section 11. Per-device

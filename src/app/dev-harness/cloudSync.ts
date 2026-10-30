@@ -14,6 +14,10 @@ import {
 import { syncProvider } from '@/lib/syncTransport/provider'
 import { slotIdForFilename } from '@/lib/syncTransport/server/serverTransport'
 import { checkAppConfig } from '@/lib/appUpdate'
+import { accountKey } from '@/app/account/accountKey'
+import { bearerOptions } from '@/lib/serverAccount'
+import { withdrawSyncRequest } from '@/lib/syncTransport/server/syncClient'
+import { createWebCloudSyncClient } from '@/app/web-cloud-sync'
 import { usePreferences } from '@/stores/preferences'
 import useContacts from '@/stores/contactsStore'
 import * as FileSystem from 'expo-file-system/legacy'
@@ -26,6 +30,12 @@ import { useCloudSyncPhotoUsage } from '@/lib/syncTransport/server/photoUsage'
 import { refreshCloudSyncPhotoUsage } from '@/app/sync/cloudSync'
 
 let cloudSyncLast: unknown = null
+
+const peekAccountKey = async () => {
+  const key = await accountKey.peek()
+  if (!key) throw new Error('No account key on this device')
+  return key
+}
 
 /** Starts `work`; its result (or `{ error }`) lands in `cloudSync.last`. */
 const tracked = (work: () => Promise<unknown>) => {
@@ -58,6 +68,7 @@ export const cloudSyncHarness = {
       entitled: prefs.cloudSyncEntitled,
       config: prefs.cloudSyncConfig,
       offer: prefs.cloudSyncOffer,
+      requestAnswered: prefs.cloudSyncRequestAnswered,
       canSync: iCloudSync.canSync(),
       needsResolution: prefs.iCloudSyncNeedsResolution,
       pendingPush: prefs.iCloudSyncPendingPush,
@@ -94,6 +105,23 @@ export const cloudSyncHarness = {
       }))
     }),
   switchTo: (to: SyncOption) => tracked(() => switchSyncOption(to, 'tools')),
+  /**
+   * Asks the account's phones to turn Cloud Sync on, as the web's Turn On does
+   * (Bearer and the account key's envelope), or with `false` withdraws it;
+   * `last` gets `{ requestedAt }`. A phone answers at its next status read
+   * (`refresh`, or a foreground a minute after the last read), once per
+   * request; the server clears it once every live phone has written a slot.
+   */
+  request: (requested = true) =>
+    tracked(async () => {
+      const key = await peekAccountKey()
+      if (requested)
+        return {
+          requestedAt: await createWebCloudSyncClient(key).requestCloudSync(),
+        }
+      await withdrawSyncRequest(bearerOptions(key))
+      return { requestedAt: null }
+    }),
   /** Pull then push, as Sync now does. */
   syncNow: () =>
     tracked(async () => ({

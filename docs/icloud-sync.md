@@ -382,6 +382,13 @@ switching, `components/CloudSyncDefault.tsx`).
   devices, joins their newest reset generation, merges ("Merge both"), and
   pushes. A switch that can't happen (not entitled, offline, unreadable)
   changes nothing.
+- The account's Cloud Sync request (ADR 0040 §5, set by a browser): with
+  one standing in the status read at launch or on return to the foreground, a
+  phone not on Cloud Sync switches through `switchSyncOption` (source
+  `account_request`) and shows a toast, once onboarding is done
+  (`cloudSyncRequest.ts`). It acts once per `requestedAt`
+  (`cloudSyncRequestAnswered`), never clears the request (ww-api does), and
+  tries again next time only when the switch couldn't happen yet.
 - Leaving Cloud Sync deletes this device's slot. Leaving iCloud or Drive leaves
   this device's file there: it holds nothing newer than the switch, and
   tombstones win over anything not strictly newer, so it can't bring back a

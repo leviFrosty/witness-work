@@ -127,10 +127,18 @@ async function device(
       return ok ? { outcome: 'ready' } : { outcome: 'not_entitled' }
     },
     deleteOwnCloudSyncSlot: () => runtimeHolder.leave?.(),
+    onCloudSyncStatus: () => () => {},
+  }))
+  vi.doMock('@/lib/serverAccount', () => ({
+    accountSessions: { snapshot: () => ({ accountId: `acct-${account}` }) },
   }))
 
   const sync = await import('@/app/sync/iCloudSync')
   const syncOption = await import('@/app/sync/syncOption')
+  const cloudSyncRequest = await import('@/app/sync/cloudSyncRequest')
+  const { fetchSyncStatus } = await import(
+    '@/lib/syncTransport/server/syncClient'
+  )
   const provider = await import('@/lib/syncTransport/provider')
   const identity = await import('@/lib/iCloudIdentity')
   const { registerAndroidSyncTransport } = await import('@/lib/syncTransport')
@@ -244,6 +252,14 @@ async function device(
     ...sync,
     ...syncOption,
     ...provider,
+    ...cloudSyncRequest,
+    /** The account's status as ww-api answers it now. */
+    status: () =>
+      fetchSyncStatus({
+        baseUrl: 'https://api.test',
+        authorize: (run) => run(`Bearer ${account}`),
+        fetchImpl: server.fetch,
+      }),
     name,
     account,
     cloudTransport,
@@ -705,6 +721,70 @@ describe('Switching between Cloud Sync and Google Drive', () => {
     expect(await phone.switchSyncOption('cloud', 'offer')).toEqual({
       outcome: 'failed',
       reason: 'disabled',
+    })
+    expect(phone.currentSyncOption()).toBe('platform')
+  })
+})
+
+describe('The account’s Cloud Sync request', () => {
+  it('moves a phone on Drive with records to Cloud Sync, merging with a device already there', async () => {
+    const phone = await device('phone', { os: 'android', option: 'platform' })
+    phone.useContacts.setState({
+      contacts: [
+        contact('c1', 'Ada', NOW - 10_000),
+        contact('c2', 'Ben', NOW - 10_000),
+      ] as never,
+    })
+    const tablet = await device('tablet', { os: 'android', option: 'platform' })
+    await sync(phone, tablet)
+    // A device on Cloud Sync already: what a browser that seeded would hold.
+    const laptop = await device('laptop', { os: 'ios', option: 'cloud' })
+    laptop.useContacts.setState({
+      contacts: [contact('c9', 'Dee', NOW - 5_000)] as never,
+    })
+    await sync(laptop)
+    const driveBefore = driveNames()
+
+    // The browser asks; the phone reads it at its next foreground.
+    server.state.now = NOW
+    const { askSyncRequest } = await import(
+      '@/lib/syncTransport/server/syncClient'
+    )
+    const { deriveAccountSigningKey } = await import('@/lib/serverAccount/keys')
+    await askSyncRequest({
+      baseUrl: 'https://api.test',
+      authorize: (run) => run('Bearer family'),
+      fetchImpl: server.fetch,
+      sign: {
+        baseUrl: 'https://api.test',
+        key: deriveAccountSigningKey(new Uint8Array(32).fill(6)),
+        now: () => NOW,
+        randomBytes: (length) => new Uint8Array(length).fill(7),
+        fetchImpl: server.fetch,
+      },
+    })
+    phone.usePreferences.setState({ onboardingComplete: true })
+    expect(await phone.answerCloudSyncRequest(await phone.status())).toEqual({
+      outcome: 'switched',
+    })
+    expect(phone.currentSyncOption()).toBe('cloud')
+    expect(phone.contactNames()).toEqual(['Ada', 'Ben', 'Dee'])
+    // Phones never clear it: the server does once every live phone wrote.
+    expect(server.requestedAt('family')).toBe(NOW)
+    // Nothing on Drive was touched; the tablet still syncs there.
+    expect(driveNames()).toEqual(driveBefore)
+    expect(tablet.currentSyncOption()).toBe('platform')
+
+    // The laptop gets the phone's records.
+    await sync(laptop)
+    expect(laptop.contactNames()).toEqual(['Ada', 'Ben', 'Dee'])
+
+    // The next foreground acts no more, even after the User moves it back.
+    expect(await phone.switchSyncOption('platform', 'settings')).toMatchObject({
+      outcome: 'switched',
+    })
+    expect(await phone.answerCloudSyncRequest(await phone.status())).toEqual({
+      outcome: 'skipped',
     })
     expect(phone.currentSyncOption()).toBe('platform')
   })

@@ -7,6 +7,8 @@ const runtime = vi.hoisted(() => ({
   cloudSyncEntitled: null as boolean | null,
   setState: vi.fn(),
   appStateListeners: [] as Array<(state: string) => void>,
+  /** The store as it is now, past what the render read. */
+  live: {} as { iCloudSyncEnabled?: boolean },
 }))
 
 vi.mock('react-native', () => ({
@@ -37,7 +39,10 @@ vi.mock('@/stores/preferences', () => ({
       cloudSyncEntitled: runtime.cloudSyncEntitled,
       onboardingComplete: true,
     }),
-    { setState: runtime.setState, getState: () => ({ set: vi.fn() }) }
+    {
+      setState: runtime.setState,
+      getState: () => ({ set: vi.fn(), ...runtime.live }),
+    }
   ),
 }))
 vi.mock('@/app/sync/iCloudSync', () => ({
@@ -62,6 +67,7 @@ beforeEach(() => {
   runtime.isSupporter = true
   runtime.cloudSyncEntitled = null
   runtime.appStateListeners = []
+  runtime.live = {}
 })
 
 afterEach(() => {
@@ -78,6 +84,7 @@ const notEntitled = {
     supporter: false,
     supporterCheckFailed: true,
     photos: true,
+    requestedAt: null,
   },
 } as const
 
@@ -102,6 +109,39 @@ describe('CloudSyncDefault', () => {
     })
     expect(runtime.setState).toHaveBeenCalledWith({ syncProvider: 'cloud' })
     expect(iCloudSync.applySeedEnable).toHaveBeenCalledWith('supporter_default')
+  })
+
+  it('waits for a running switch, then leaves the option it chose alone', async () => {
+    const { default: CloudSyncDefault } = await import('./CloudSyncDefault')
+    const { prepareCloudSync } = await import('@/app/sync/cloudSync')
+    const { withSyncOptionLock } = await import('@/app/sync/syncOptionLock')
+    vi.mocked(prepareCloudSync).mockResolvedValue({
+      outcome: 'ready',
+      status: notEntitled.status,
+    })
+    let finishSwitch = () => {}
+    // The account's request is switching this device to Cloud Sync.
+    const switching = withSyncOptionLock(
+      () =>
+        new Promise<void>((resolve) => {
+          finishSwitch = () => {
+            runtime.live = { iCloudSyncEnabled: true }
+            resolve()
+          }
+        })
+    )
+
+    await act(async () => {
+      renderer = create(<CloudSyncDefault />)
+    })
+    expect(prepareCloudSync).not.toHaveBeenCalled()
+
+    await act(async () => {
+      finishSwitch()
+      await switching
+    })
+    expect(prepareCloudSync).not.toHaveBeenCalled()
+    expect(runtime.setState).not.toHaveBeenCalled()
   })
 
   it('stops asking when a device that isn’t a Supporter isn’t entitled', async () => {

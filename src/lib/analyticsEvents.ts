@@ -210,6 +210,11 @@ export const analyticsEventNames = [
   'cloud_sync_photo_transfer_failed',
   'cloud_sync_photos_storage_full',
   'cloud_sync_switch_failed',
+  // The account's Cloud Sync request (ADR 0040 §5): phones answering it, and
+  // the web's screen that asks for it.
+  'cloud_sync_request_answered',
+  'cloud_sync_web_gate_state',
+  'cloud_sync_web_gate_action',
   // Supporter cloud sync (iCloud; Google Drive on Android) adoption and recovery.
   'icloud_account_changed',
   'icloud_restore_images_prompted',

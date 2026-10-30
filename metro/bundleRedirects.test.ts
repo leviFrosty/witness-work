@@ -1,10 +1,10 @@
-import { readFileSync, globSync } from 'node:fs'
+import { existsSync, readFileSync, globSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import path from 'node:path'
 import { describe, expect, it } from 'vitest'
 
 const require = createRequire(import.meta.url)
-const { bundleRedirect, commonJsPackages, nativeStubs } =
+const { bundleRedirect, commonJsPackages, nativeStubs, webStubs } =
   require('./bundleRedirects') as typeof import('./bundleRedirects')
 
 const root = path.resolve(__dirname, '..')
@@ -42,6 +42,19 @@ describe('bundleRedirect', () => {
     expect(bundleRedirect('./LogoSVG', qrCode, 'web')).toBeNull()
   })
 
+  it('swaps packages the web can’t load for web stand-ins, on the web only', () => {
+    for (const { request } of webStubs) {
+      expect(bundleRedirect(request, app, 'web')?.stub).toMatch(
+        /src[\\/]vendor[\\/]web[\\/]/
+      )
+      for (const platform of ['ios', 'android'])
+        expect(bundleRedirect(request, app, platform)).toBeNull()
+    }
+    expect(
+      bundleRedirect('expo-notifications/build/Notifications.types', app, 'web')
+    ).toBeNull()
+  })
+
   it('points at modules that exist', () => {
     for (const name of commonJsPackages) {
       const manifest = JSON.parse(
@@ -56,6 +69,8 @@ describe('bundleRedirect', () => {
       expect(() =>
         require.resolve(path.join(__dirname, 'stubs', stub))
       ).not.toThrow()
+    for (const { stub } of webStubs)
+      expect(existsSync(path.join(root, 'src/vendor/web', stub))).toBe(true)
     expect(
       readFileSync(
         path.join(root, 'node_modules/react-native-qrcode-svg/src/index.js'),

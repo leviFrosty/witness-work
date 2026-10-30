@@ -1,4 +1,4 @@
-import { Platform } from 'react-native'
+import { hasCapability } from '@/lib/platformCapabilities'
 
 /**
  * Whether this platform has a cloud sync transport: iCloud on iOS, Google Drive
@@ -6,5 +6,5 @@ import { Platform } from 'react-native'
  * platform.
  */
 export function hasSyncTransport(): boolean {
-  return Platform.OS === 'ios' || Platform.OS === 'android'
+  return hasCapability('iCloudSync') || hasCapability('googleDriveSync')
 }

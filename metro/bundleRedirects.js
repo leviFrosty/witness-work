@@ -36,6 +36,18 @@ const nativeStubs = [
   },
 ]
 
+/**
+ * Packages the web build can't load, swapped for the web stand-ins in
+ * `src/vendor/web` (ADR 0037). Each stand-in says what it keeps.
+ */
+const webStubs = [
+  { request: 'lottie-react-native', stub: 'lottieView.tsx' },
+  { request: 'react-native-maps', stub: 'mapView.tsx' },
+  { request: 'expo-notifications', stub: 'notifications.ts' },
+  // Metro's `import()` runtime (`asyncRequireModulePath`).
+  { request: 'expo/internal/async-require-module', stub: 'asyncRequire.ts' },
+]
+
 const isPackageRequest = (request, name) =>
   request === name || request.startsWith(`${name}/`)
 
@@ -46,6 +58,12 @@ const isPackageRequest = (request, name) =>
 function bundleRedirect(request, originModulePath, platform) {
   if (commonJsPackages.some((name) => isPackageRequest(request, name)))
     return { commonJs: true }
+  if (platform === 'web') {
+    const stub = webStubs.find((entry) => entry.request === request)
+    return stub
+      ? { stub: path.join(__dirname, '..', 'src', 'vendor', 'web', stub.stub) }
+      : null
+  }
   if (platform !== 'ios' && platform !== 'android') return null
   const stub = nativeStubs.find(
     (entry) =>
@@ -55,4 +73,4 @@ function bundleRedirect(request, originModulePath, platform) {
   return stub ? { stub: path.join(__dirname, 'stubs', stub.stub) } : null
 }
 
-module.exports = { bundleRedirect, commonJsPackages, nativeStubs }
+module.exports = { bundleRedirect, commonJsPackages, nativeStubs, webStubs }

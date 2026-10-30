@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { AppState, Platform } from 'react-native'
+import { AppState } from 'react-native'
 import useCustomer from '@/hooks/useCustomer'
 import useIsSupporter from '@/hooks/useIsSupporter'
 import { usePreferences } from '@/stores/preferences'
@@ -8,6 +8,7 @@ import {
   determineHemisphere,
   resolvePluginIcon,
 } from '@/features/settings/lib/appIcon'
+import { hasCapability } from '@/lib/platformCapabilities'
 
 // Wait for RevenueCat to avoid a false lapse on launch. Reapply on foreground
 // to pick up seasonal changes and lapses; applyAppIcon skips unchanged icons.
@@ -18,7 +19,7 @@ export default function AppIconSync() {
   const supporterStatusKnown = customer !== null
 
   useEffect(() => {
-    if (Platform.OS !== 'ios') return
+    if (!hasCapability('alternateAppIcons')) return
     if (!supporterStatusKnown) return
 
     let cancelled = false

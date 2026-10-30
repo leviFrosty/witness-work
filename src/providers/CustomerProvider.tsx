@@ -72,6 +72,9 @@ const CustomerProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
         )
         return
       }
+      // Web builds never carry a store key (`scripts/web.mjs`); web purchases
+      // come with RevenueCat Web Billing (ADR 0041).
+      if (Platform.OS === 'web') return
       // Empty key means the EAS env var was never inlined into the bundle —
       // typically caused by missing `EXPO_PUBLIC_` prefix or `secret`
       // visibility. Report loudly so TestFlight regressions don't ship

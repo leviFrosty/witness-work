@@ -14,7 +14,6 @@ import {
   Platform,
   ScrollView,
   StyleProp,
-  TextInput,
   View,
   ViewStyle,
 } from 'react-native'
@@ -29,6 +28,7 @@ import Animated, {
 } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import FoldPane from '@/components/ui/layout/FoldPane'
+import { focusedInput } from '@/lib/focusedInput'
 
 /**
  * A keyboard at most this tall is a hardware keyboard's shortcut bar (or an
@@ -140,7 +140,7 @@ const scrollIntoView = (
 
 const revealFocusedField = (handles: LayoutHandles) => {
   requestAnimationFrame(() => {
-    const input = TextInput.State.currentlyFocusedInput()
+    const input = focusedInput()
     const content = handles.content.current
     if (!input || !content || !handles.state.current.keyboardOverlap) return
     const target = handles.state.current.revealContainer?.current ?? input

@@ -17,6 +17,7 @@ import PointerTooltip from '@/components/ui/PointerTooltip'
 import StreakBadge from '@/components/StreakBadge'
 import { RootStackNavigation } from '@/types/rootStack'
 import { HomeTabStackNavigation } from '@/types/homeStack'
+import { whenIdle } from '@/lib/whenIdle'
 
 export const ROOT_HEADER_AVATAR_SIZE = 34
 const SIDEBAR_AVATAR_SIZE = 32
@@ -61,12 +62,11 @@ export default function AccountMenu({
   // before any tap — without this, the open spring snaps content in.
   useEffect(() => {
     if (!hasCompletedProfileSetup) return
-    const handle = requestIdleCallback(() => {
+    return whenIdle(() => {
       avatarRef.current?.measureInWindow((x, y, width, height) =>
         setOverlayOrigin({ x, y, width, height })
       )
     })
-    return () => cancelIdleCallback(handle)
   }, [hasCompletedProfileSetup, setOverlayOrigin])
 
   const openProfile = () =>

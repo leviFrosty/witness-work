@@ -171,6 +171,31 @@ avdmanager create avd -n WW_Wear_OS_6 -d wearos_large_round \
 emulator -avd WW_Wear_OS_6 -no-window -no-audio -no-boot-anim
 ```
 
+## Web
+
+The web app is this codebase built with react-native-web (ADR 0037).
+
+```bash
+pnpm web                         # dev server against your local ww-api (.env)
+pnpm web:build                   # static export in dist/, dev profile
+pnpm web:build --env beta        # local | dev | beta | production
+pnpm web:test                    # browser smoke tests of dist/ (e2e/web/README.md)
+```
+
+`config/web-environments.json` names each profile's ww-api and host. Public
+values such as PostHog's come from the matching native env files; the web
+build always clears the dev bypass, the RevenueCat store keys, the OTA key and
+the Android Maps key, and `web:build` fails if any of them reaches `dist/`.
+Packages the web can't load are swapped for stand-ins in `src/vendor/web`
+(`metro/bundleRedirects.js`), and platform features with no web version are
+hidden through `src/lib/platformCapabilities.ts`.
+
+The host takes files up to 25 MiB, and `web:build` fails on a bigger one. Keep
+large data out of the entry chunk with `import()`, as the translations other
+than English and the Help Center snapshots do (each is its own chunk, loaded
+when its language is shown). On the web, `import()` downloads the chunk before
+requiring the module (`src/vendor/web/asyncRequire.ts`).
+
 ## Native changes
 
 - To regenerate `ios/` from scratch, run `APP_VARIANT=development pnpm run prebuild`.

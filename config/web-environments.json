@@ -1,0 +1,22 @@
+{
+  "local": {
+    "variant": "development",
+    "apiBaseURL": null,
+    "host": "localhost"
+  },
+  "dev": {
+    "variant": "development",
+    "apiBaseURL": "https://api-dev.witnesswork.app",
+    "host": "app-dev.witnesswork.app"
+  },
+  "beta": {
+    "variant": "beta",
+    "apiBaseURL": "https://api.witnesswork.app",
+    "host": "beta.app.witnesswork.app"
+  },
+  "production": {
+    "variant": "production",
+    "apiBaseURL": "https://api.witnesswork.app",
+    "host": "app.witnesswork.app"
+  }
+}

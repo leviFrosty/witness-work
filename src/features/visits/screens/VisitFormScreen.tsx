@@ -58,6 +58,7 @@ import useDiscardChangesGuard from '@/hooks/useDiscardChangesGuard'
 import useDraftChanged from '@/hooks/useDraftChanged'
 import { newVisitIsBibleStudy, plannedFollowUpTopic } from '@/lib/conversations'
 import { useFoldColumn } from '@/components/ui/layout/FoldPane'
+import { hasCapability } from '@/lib/platformCapabilities'
 
 /** Inputs for the Follow-up's buddy invitations, supplied by the app tier. */
 export type FollowUpBuddiesSlot = (props: {
@@ -740,15 +741,17 @@ const VisitFormScreen = ({
                       },
                     }),
                 })}
-              <NotificationSection
-                conversation={conversation}
-                notificationsAllowed={notificationsAllowed}
-                turnOnNotifications={turnOnNotifications}
-                notifyMeOffset={notifyMeOffset}
-                setConversation={setConversation}
-                setNotifyMeOffset={setNotifyMeOffset}
-                lastInSection
-              />
+              {hasCapability('deviceNotifications') && (
+                <NotificationSection
+                  conversation={conversation}
+                  notificationsAllowed={notificationsAllowed}
+                  turnOnNotifications={turnOnNotifications}
+                  notifyMeOffset={notifyMeOffset}
+                  setConversation={setConversation}
+                  setNotifyMeOffset={setNotifyMeOffset}
+                  lastInSection
+                />
+              )}
             </>
           )}
         </Section>

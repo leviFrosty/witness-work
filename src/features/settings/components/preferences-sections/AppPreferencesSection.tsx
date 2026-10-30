@@ -12,6 +12,7 @@ import { requestOrOfferLocationSettings } from '@/lib/locationPermission'
 import { useEffect, useState } from 'react'
 import * as Location from 'expo-location'
 import useNotifications from '@/hooks/notifications'
+import { hasCapability } from '@/lib/platformCapabilities'
 
 const AppPreferencesSection = () => {
   const notifications = useNotifications()
@@ -55,21 +56,23 @@ const AppPreferencesSection = () => {
 
   return (
     <GroupedListSection>
-      <GroupedListRow
-        icon={notifications.allowed ? BellIcon : BellOffIcon}
-        label={
-          notifications.allowed
-            ? i18n.t('pushNotificationsEnabled')
-            : i18n.t('pushNotificationsDisabled')
-        }
-        onPress={
-          notifications.allowed
-            ? undefined
-            : notifications.canAskAgain
-              ? () => void notifications.register()
-              : askToTakeToSettings
-        }
-      />
+      {hasCapability('deviceNotifications') && (
+        <GroupedListRow
+          icon={notifications.allowed ? BellIcon : BellOffIcon}
+          label={
+            notifications.allowed
+              ? i18n.t('pushNotificationsEnabled')
+              : i18n.t('pushNotificationsDisabled')
+          }
+          onPress={
+            notifications.allowed
+              ? undefined
+              : notifications.canAskAgain
+                ? () => void notifications.register()
+                : askToTakeToSettings
+          }
+        />
+      )}
       <GroupedListRow
         icon={locationEnabled ? NavigationIcon : LocateFixedIcon}
         label={

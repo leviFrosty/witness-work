@@ -30,6 +30,8 @@ process.env.EXPO_PUBLIC_COMMIT_HASH = execSync('git rev-parse --short HEAD')
 // may replace the bundle under test, and Android must reach the local API over
 // plain HTTP. Without the probe the resolved config is unchanged.
 const PERF_PROBE = IS_DEV && process.env.EXPO_PUBLIC_PERF_PROBE === '1'
+// `scripts/web.mjs` builds the web app, which has no OTA updates (ADR 0037).
+const WEB_BUILD = process.env.WW_WEB_BUILD === '1'
 
 // App Group and iCloud container ids derive from the bundle id; the widget's
 // SnapshotLoader relies on `group.<host bundle id>`.
@@ -72,7 +74,11 @@ const APP_LANGUAGES = readdirSync(path.join(__dirname, 'src', 'locales'))
   .sort((a, b) => Number(b === 'en') - Number(a === 'en') || a.localeCompare(b))
 
 export default ({ config }: ConfigContext): ExpoConfig => {
-  if (!IS_DEV && !process.env.EXPO_PUBLIC_HOT_UPDATER_API_KEY?.trim())
+  if (
+    !IS_DEV &&
+    !WEB_BUILD &&
+    !process.env.EXPO_PUBLIC_HOT_UPDATER_API_KEY?.trim()
+  )
     throw new Error(
       'EXPO_PUBLIC_HOT_UPDATER_API_KEY is required for this build'
     )
@@ -89,6 +95,18 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     icon: IS_BETA ? './src/assets/icon-beta.png' : './src/assets/icon.png',
     userInterfaceStyle: 'automatic',
     assetBundlePatterns: ['**/*'],
+    // Only in web builds, so the config iOS and Android hash for their native
+    // fingerprints stays the same.
+    ...(WEB_BUILD && {
+      web: {
+        bundler: 'metro',
+        output: 'single',
+        favicon: './src/assets/icon.png',
+        name: APP_NAME,
+        shortName: 'WitnessWork',
+        themeColor: '#4BD27C',
+      },
+    }),
     android: {
       // Avatar selection uses Android's system photo picker. Saving a photo
       // does not need broad access to the user's media library.

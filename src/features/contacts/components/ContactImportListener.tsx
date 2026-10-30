@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Alert } from 'react-native'
-import * as Linking from 'expo-linking'
-import { launchURL } from '@/lib/launchLinks'
+import { addLinkListener, launchURL } from '@/lib/launchLinks'
 import { toast } from '@/stores/toasts'
 import {
   ImportHandlerCallbacks,
@@ -60,7 +59,7 @@ export default function ContactImportListener() {
           logger.error('[ContactImportListener] getInitialURL error:', error)
         })
     }
-    const sub = Linking.addEventListener('url', ({ url }) => {
+    const sub = addLinkListener((url) => {
       logger.log(
         '[ContactImportListener] url event fired, url =',
         redactLink(url)

@@ -2,7 +2,10 @@ import { create } from 'zustand'
 import { analytics } from '@/lib/analytics'
 import { errorTracking } from '@/lib/errorTracking'
 import { logger } from '@/lib/logger'
-import { readSnapshot } from '@/features/updates/lib/helpCenter/snapshot'
+import {
+  loadSnapshot,
+  readSnapshot,
+} from '@/features/updates/lib/helpCenter/snapshot'
 import { readCachedBundle } from '@/features/updates/lib/helpCenter/storage'
 import { refreshHelpBundle } from '@/features/updates/lib/helpCenter/refresh'
 import type {
@@ -67,6 +70,12 @@ export const useHelpCenterStore = create<HelpCenterStore>((set, get) => ({
       return
     }
     const run = (async () => {
+      // The web downloads a language's snapshot the first time it's shown;
+      // until it can, English's stands in.
+      await loadSnapshot(locale).catch((error: unknown) =>
+        logger.debug('[HelpCenter] Snapshot not downloaded', error)
+      )
+      show(readSnapshot(locale), 'snapshot')
       const newest = await newestLocal(locale)
       if (newest.hash !== readSnapshot(locale).hash) show(newest, 'cache')
       // Compared with this language's newest copy, not whatever is on screen.

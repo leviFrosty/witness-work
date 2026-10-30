@@ -41,6 +41,8 @@ export interface StepShowIfContext {
   buddiesAvailable: boolean
   /** The binary has the native calendar module. */
   calendarAvailable: boolean
+  /** The platform has device notifications (not the web). */
+  notificationsAvailable: boolean
 }
 
 export interface StepDef {
@@ -91,7 +93,11 @@ export const onboardingSteps: StepDef[] = [
     // Needs the Buddies key module and the rollout flag (iOS and Android).
     showIf: ({ buddiesAvailable }) => buddiesAvailable,
   },
-  { id: 'notifications', countsTowardProgress: true },
+  {
+    id: 'notifications',
+    countsTowardProgress: true,
+    showIf: ({ notificationsAvailable }) => notificationsAvailable,
+  },
   {
     id: 'calendarSync',
     countsTowardProgress: true,

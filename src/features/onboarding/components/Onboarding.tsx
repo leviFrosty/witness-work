@@ -47,6 +47,7 @@ import {
 } from '@/features/onboarding/components/OnboardingProgressContext'
 import { useProfile } from '@/stores/profile'
 import { analytics } from '@/lib/analytics'
+import { hasCapability } from '@/lib/platformCapabilities'
 
 interface StepProps {
   goBack: () => void
@@ -99,7 +100,9 @@ const OnBoarding = () => {
       userSpecifiedHasAnnualGoal,
       hasCatchUpReports: hasReportsInCatchUpWindow(serviceReports, installedOn),
       buddiesAvailable,
-      calendarAvailable: calendarBridgeAvailable,
+      calendarAvailable:
+        hasCapability('calendarBridge') && calendarBridgeAvailable,
+      notificationsAvailable: hasCapability('deviceNotifications'),
     }),
     [
       role,

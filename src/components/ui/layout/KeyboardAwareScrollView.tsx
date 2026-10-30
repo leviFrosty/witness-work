@@ -6,9 +6,10 @@ import {
   useRef,
   useState,
 } from 'react'
-import { Keyboard, Platform, StyleSheet, TextInput } from 'react-native'
+import { Keyboard, Platform, StyleSheet } from 'react-native'
 import { KeyboardAwareScrollView as BaseScrollView } from 'react-native-keyboard-aware-scroll-view'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { focusedInput } from '@/lib/focusedInput'
 
 /** Room left between the focused field and the keyboard's top edge. */
 const REVEAL_MARGIN = 16
@@ -41,7 +42,7 @@ type RevealHandles = {
 const revealFocusedField = (handles: RevealHandles) =>
   requestAnimationFrame(() => {
     const top = handles.keyboardTop.current
-    const input = TextInput.State.currentlyFocusedInput()
+    const input = focusedInput()
     if (top === null || !input) return
     input.measureInWindow((_x, y, _width, height) => {
       const covered = y + height + REVEAL_MARGIN - top

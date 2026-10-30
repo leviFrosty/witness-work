@@ -190,13 +190,15 @@ the Set Up Another Device QR for a new phone to scan.
 
 - **CORS:**
   - Allowed origins: an exact allow-list of the app's origins.
-  - Allowed headers: `authorization` and `x-ww-*`.
-  - Exposed headers: `ETag` and `Retry-After`.
+  - Allowed and exposed headers: the lists in
+    [`passkeys-protocol.md`](../passkeys-protocol.md#cors).
   - Preflight requests aren't rate limited.
-- **Live sockets:** they accept the access token as a WebSocket subprotocol
-  (`bearer.<token>`, next to `ww.v1`). The Worker checks it, together with the
-  Origin allow-list, before the Durable Object sees the socket, and echoes
-  `ww.v1` back.
+- **Live sockets:** a browser can't set headers on a WebSocket, so it offers a
+  short-lived socket ticket as a subprotocol (`ticket.<ticket>`, next to
+  `ww.v1`), minted with its access token. The access token itself never goes
+  in the subprotocol, since request logs record it. The Worker checks the
+  Origin allow-list and the ticket before the Durable Object sees the socket,
+  and echoes `ww.v1` back.
 
 ### 11. The old sign-in method goes away
 

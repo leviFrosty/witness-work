@@ -13,7 +13,7 @@ A passkey is a credential of an existing server account, never an identity of it
 | dev        | `localhost`               | `http://localhost:8081`, `http://localhost:8082`, `http://localhost:19006`, `http://localhost:4173`, `http://localhost:5173` |
 
 - **Pairs.** ww-api checks a response's origin and RP ID as a pair from this table, never as two separate lists, and checks the authenticator data's `rpIdHash` against the RP ID its challenge was issued for.
-- **Android origins** (`android:apk-key-hash:<b64u(SHA-256(signing certificate))>`) pair with the env's first RP ID: production the Play app signing key and the upload key of `com.leviwilkerson.jwtime`; dev the debug key of `com.leviwilkerson.jwtimedev`, and the upload key. The pairs are vars (`PASSKEY_RP_IDS`, `PASSKEY_ORIGINS`), so a key can be added without code.
+- **Android origins** (`android:apk-key-hash:<b64u(SHA-256(signing certificate))>`) pair with the env's first RP ID: production the two release keys of `com.leviwilkerson.jwtime` (Play app signing and upload); dev those two and the debug key of `com.leviwilkerson.jwtimedev`. The pairs are vars (`PASSKEY_RP_IDS`, `PASSKEY_ORIGINS`), so a key can be added without code.
 - iOS sends `https://<RP ID>` as its origin, like the web.
 - **The key boundary.** Any page on the RP ID or under it can ask for PRF output, so whatever runs there can unwrap account keys. For production that's the web app and its beta (`beta.app.witnesswork.app`), and the Beta iOS app. Nothing else is ever hosted under `app.witnesswork.app`: no other subdomain, no wildcard DNS record, no preview URL. Beta deploys are held to the same bar as beta OTA updates (ADR 0037 §4).
 - **The RP ID never changes** once the first passkey exists.
@@ -76,22 +76,22 @@ Both are stateless: a payload MAC'd under their own Worker secret (never the acc
 
 ## Routes
 
-`{BASE}/accounts/v1/…`, with the error envelope and codes of [`accounts-protocol.md`](./accounts-protocol.md#requests). **Bearer** means an access token from a session; **signed** means the account key's self-signed envelope (`{ payload, signature }`, op as named), whose `accountPub` must be the token's account when both are required. **Step-up** means a web session must have passed a [step-up](#step-up-on-the-web) in the last 5 minutes (`step_up_required` otherwise); phone sessions are exempt, since they attested and check Face ID on the device.
+`{BASE}/accounts/v1/…`, with the error envelope and codes of [`accounts-protocol.md`](./accounts-protocol.md#requests). **Bearer** means an access token from a session; **signed** means the account key's self-signed envelope (`{ payload, signature }`, op as named), whose `accountPub` must be the token's account when both are required. **Signed envelopes work once:** every signed op here, and `backup/delete`, records its `nonce` for the envelope's 5 minutes, so the same envelope again is 409 `replay`; a retry signs a new one. **Step-up** means a web session must have passed a [step-up](#step-up-on-the-web) in the last 5 minutes (`step_up_required` otherwise); phone sessions are exempt, since they attested and check Face ID on the device.
 
 New error codes:
 
-| Status | Code               | When                                                                                                                                                                 |
-| ------ | ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 403    | `passkey_failed`   | A ceremony didn't verify. `reason`: `challenge`, `unknown_credential`, `user_handle`, `origin`, `rp_id`, `user_verification`, `signature`, `counter`, `registration` |
-| 403    | `ticket_invalid`   | A ticket that's malformed, expired, used, or for another account                                                                                                     |
-| 403    | `turnstile_failed` | Turnstile's Siteverify refused the token. `reason`: Turnstile's first error code                                                                                     |
-| 403    | `step_up_required` | A web session hasn't passed a step-up in the last 5 minutes                                                                                                          |
-| 403    | `key_retired`      | A session open with a retired account key ([account-key-change.md](./account-key-change.md#retired-keys))                                                            |
-| 403    | `session_too_new`  | A web session less than 24 hours old asks to change the account key ([account-key-change.md](./account-key-change.md#codes))                                         |
+| Status | Code               | When                                                                                                                                                                                                                                                                          |
+| ------ | ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 403    | `passkey_failed`   | A ceremony didn't verify. `reason`: `challenge`, `unknown_credential`, `user_handle`, `origin`, `rp_id`, `user_presence`, `user_verification`, `signature`, `counter`, `registration`. A response from the other ceremony is `signature` (sign-in) or `registration` (adding) |
+| 403    | `ticket_invalid`   | A ticket that's malformed, expired, used, or for another account                                                                                                                                                                                                              |
+| 403    | `turnstile_failed` | Turnstile's Siteverify refused the token. `reason`: Turnstile's first error code                                                                                                                                                                                              |
+| 403    | `step_up_required` | A web session hasn't passed a step-up in the last 5 minutes                                                                                                                                                                                                                   |
+| 403    | `key_retired`      | A session open with a retired account key ([account-key-change.md](./account-key-change.md#retired-keys))                                                                                                                                                                     |
+| 403    | `session_too_new`  | A web session less than 24 hours old asks to change the account key ([account-key-change.md](./account-key-change.md#codes))                                                                                                                                                  |
 
 ### Signing in with a passkey
 
-**`POST /passkeys/challenge`**, no auth: `{ purpose: "sign-in", rpId? }` → `{ ok, challengeToken, options }`, `options` being `PublicKeyCredentialRequestOptionsJSON` with an empty `allowCredentials`. `rpId` defaults to the env's first; one the env doesn't list is `bad_request`. Counts against the read edge tier.
+**`POST /passkeys/challenge`**, no auth: `{ purpose: "sign-in", rpId? }` → `{ ok, challengeToken, options }`, `options` being `PublicKeyCredentialRequestOptionsJSON` with an empty `allowCredentials`. `rpId` defaults to the RP ID the request's `Origin` pairs with, else the env's first; one the env doesn't list is `bad_request`. The same default applies to every route that takes `rpId`. Counts against the read edge tier.
 
 **`POST /passkeys/assert`**, no auth: `{ challengeToken, response }` → `{ ok, accountId, accountPub, status, keyEpoch, credentialId, userHandle, wraps: [{ wrapId, wrap, keyEpoch }], ticket?, ticketExpiresAt? }`.
 
@@ -106,22 +106,23 @@ New error codes:
 **`POST /web/recovery`**, signed (op `web/recovery`): `{ accountPub, ts, nonce, turnstileToken }` → `{ ok, accountId, ticket, ticketExpiresAt }`.
 
 - The browser asks for it right after the User enters the recovery key (the Turnstile widget solves while they type), and opens its session at once.
-- Turnstile as for [sign-up](#web-sign-up) (action `web-recovery`), and 10 per IP a rolling day. The sign-up kill switch doesn't apply.
+- Turnstile as for [sign-up](#web-sign-up) (action `web-recovery`), and `WEB_RECOVERY_PER_IP_DAY` (default 10) per IP a rolling day, taken only once Siteverify passes. The sign-up kill switch doesn't apply.
 - An `accountPub` without an account is 404 `unknown_account`: the web doesn't create accounts from a recovery key, and a phone that holds the key creates it.
 
 ### Web sessions: `POST /sessions`
 
 The route of [Opening a session](./accounts-protocol.md#opening-a-session-post-accountsv1sessions), signed as op `session/open`, with `ticket` in place of `attestation`:
 
-| Payload                                                         | Response (201)                     |
-| --------------------------------------------------------------- | ---------------------------------- |
-| `accountPub`, `ts`, `nonce`, `ticket`, `device`?, `appVersion`? | As for phones; `platform` is `web` |
+| Payload                                                                          | Response (201)                     |
+| -------------------------------------------------------------------------------- | ---------------------------------- |
+| `accountPub`, `ts`, `nonce`, `ticket`, `device`?, `appVersion`?, `capabilities`? | As for phones; `platform` is `web` |
 
 - The ticket's account must be `accountPub`'s, and it must exist: a ticket never creates an account (`ticket_invalid`). Both `ticket` and `attestation` is `bad_request`.
-- **A lost response:** the same signed request (same `nonce` and ticket) again, within the ticket's 2 minutes, gets the same session with a fresh token pair; the first pair's refresh token is replaced.
+- **A lost response:** the same signed request (same `nonce` and ticket) again, within the ticket's 2 minutes, gets the same session and the same refresh token with a new access token. The first answer's refresh token keeps working; it never counts as reused.
 - **Lifetime:** sliding. Every refresh moves `sessionExpiresAt` to **180 days** after it, with no absolute limit. A web session ends after 180 days without use, on sign-out, or when revoked.
-- **Cap:** at most **3** web sessions per account, apart from the phones' 10. Opening a fourth ends the least recently active one (`session.replaced`). That browser loses edits it hasn't synced (see [Signed out by the server](#signed-out-by-the-server)).
+- **Cap:** at most **3** web sessions per account, apart from the phones' 10. Opening a fourth ends the least recently active one (`session.replaced`). That browser shows the sign-in screen and keeps its local data; edits it hadn't synced sync once it signs in again as the same account (see [Signed out by the server](#signed-out-by-the-server)).
 - The access token's `platform` claim is `web`.
+- **`capabilities`:** as for phones, on opening and on every refresh. The web app sends `["sync-everyone"]` on every path that opens a session (a passkey's or an approval's ticket, a recovery key's ticket, and `web/signup`), or a User without Supporter gets no Cloud Sync.
 - Counts against the same 20 opens per account key a rolling day as phones.
 
 ### Session fields
@@ -150,7 +151,7 @@ A server-checked passkey tap for sensitive actions.
 | ---------------------------------------------------------------------------- | ---------------------- |
 | `accountPub`, `ts`, `nonce`, `challengeToken`, `response`, `wrap`?, `label`? | `{ ok, credentialId }` |
 
-- `response` is the registration. `label` is the creating device's label, sealed like a session's `device` (at most 512 characters). `wrap`, with its `wrapId`, is optional.
+- `response` is the registration. `label` is the creating device's label, sealed like a session's `device` (at most 512 characters). `wrap` is optional, and comes with its `wrapId` and `keyEpoch` as in [`passkeys/wrap`](#wraps-post-passkeyswrap).
 - The challenge's user handle must still be the account's (`passkey_failed`, `registration`).
 - At most **10** passkeys per account (`limit`, 429). A credential already stored for this account is `ok` with its `credentialId` (a lost response); for another account, `conflict`.
 - Logs `passkey.added`.
@@ -166,7 +167,7 @@ A server-checked passkey tap for sensitive actions.
 
 Bearer **and** signed (op `passkey/wrap`): `{ accountPub, ts, nonce, credentialId, wrapId, keyEpoch, wrap }` → `{ ok }`.
 
-- `wrapId` is 16 random bytes, `b64u`, made once per wrap; repeating a `wrapId` is `ok` and stores nothing new.
+- `wrapId` is 16 random bytes, `b64u`, made once per wrap and unique per credential; repeating a `wrapId` is `ok` and stores nothing new.
 - A `keyEpoch` that isn't the account's is `conflict`, so a device still holding a replaced key can't save a wrap for it.
 - A fifth wrap replaces the oldest. A credential of another account, or none, is `not_found`. Not logged.
 
@@ -193,24 +194,24 @@ Bearer **and** signed (op `passkey/remove`), Step-up: `{ accountPub, ts, nonce, 
 
 **`POST /web/signup/options`**, no auth: `{ turnstileToken, rpId? }` → `{ ok, accountId, challengeToken, options, userHandle }`.
 
-- In order: 503 `disabled` while the kill switch is off; the caps (below), checked only; then `turnstileToken` through Siteverify. Nothing else happens before Siteverify answers.
+- In order: 503 `disabled` while the kill switch is off; the caps (below), checked only; then `turnstileToken` through Siteverify (one over 2,048 characters is `bad_request`). Nothing else happens before Siteverify answers.
 - Mints the new account's id and user handle and binds both to the challenge. Nothing is stored yet.
 
 **`POST /web/signup`**, signed (op `web/signup`):
 
-| Payload                                                                                                           | Response (201)                                               |
-| ----------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
-| `accountPub`, `ts`, `nonce`, `challengeToken`, `response`, `wrapId`?, `wrap`?, `label`?, `device`?, `appVersion`? | The session's answer (`platform: "web"`), and `credentialId` |
+| Payload                                                                                                                            | Response (201)                                               |
+| ---------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| `accountPub`, `ts`, `nonce`, `challengeToken`, `response`, `wrapId`?, `wrap`?, `label`?, `device`?, `appVersion`?, `capabilities`? | The session's answer (`platform: "web"`), and `credentialId` |
 
 - The browser makes the account key and stores it sealed (below) first, derives `accountPub`, creates the passkey with the options, confirms PRF with a get as when [adding a passkey](#adding-a-passkey), and wraps the key for `accountId` at epoch `0`.
 - The caps are taken atomically in their Durable Object before the D1 batch, and given back if the batch fails.
 - One batch: the account (with its user handle, made on the web), the passkey, its wrap, a web session, and `account.created`, `passkey.added` and `session.opened` (`method: "signup"`).
-- An `accountPub` that already has an account is `conflict`. **A lost response:** after `conflict` for its own `accountPub`, or a challenge already used, the browser signs in with the passkey it just made (it holds the key, so a sign-in-only passkey is enough).
+- An `accountPub` that already has an account is `conflict`. **A lost response:** after `conflict` for its own `accountPub`, `replay`, or a challenge already used, the browser signs in with the passkey it just made (it holds the key, so a sign-in-only passkey is enough).
 
 **Controls** (no device integrity on the web, ADR 0038 §5):
 
 - **Turnstile:** managed mode, actions `web-signup` and `web-recovery`, the env's web hosts (Cloudflare's test keys skip the host check). Siteverify gets `remoteip` and an `idempotency_key`. The site key comes from `GET /app/v1/config` (`webSignup.turnstileSiteKey`). The dev and local workers use Cloudflare's test keys unless a dev widget's are set.
-- **Caps** (a Durable Object): `WEB_SIGNUP_PER_IP_DAY` (default 3) per IP a rolling day, IPv6 by /64, and `WEB_SIGNUP_PER_ASN_HOUR` (default 30) per network (ASN) a rolling hour. Over either is 429 `rate_limited` with `Retry-After`. Counts are keyed by an HMAC of the IP or ASN under a secret that rotates daily, never the IP.
+- **Caps** (a Durable Object): `WEB_SIGNUP_PER_IP_DAY` (default 3) per IP a rolling day, IPv6 by /64, and `WEB_SIGNUP_PER_ASN_HOUR` (default 30) per network (ASN) a rolling hour. Over either is 429 `rate_limited` with `Retry-After`. If the counter can't be reached, `web/signup` is 503 `unavailable` with `Retry-After`. Counts are keyed by an HMAC of the IP or ASN under a secret that rotates daily, never the IP.
 - **Kill switch:** KV `accounts:web-signup`, `on` when absent (then the `WEB_SIGNUP` var). `off` refuses both sign-up routes with 503 `disabled`; a failed KV read counts as `on`, since Turnstile and the caps still apply. `GET /app/v1/config` says `webSignup.enabled`, and the web says sign-up is paused.
 
 `GET /app/v1/config` adds `webSignup: { enabled, turnstileSiteKey }`.
@@ -262,7 +263,7 @@ Blobs use the Buddies `seal` format (`0x01 ‖ nonce[12] ‖ ChaCha20-Poly1305`)
 | `approval/cancel`  | Either  | Bearer (the claiming session), or `browserToken` | `channelId` (+ `browserToken`)                      | `{ ok }`; deletes every blob                                                   |
 
 - `status` is `open`, `claimed`, `sent`, `done`, or `cancelled`. An expired or unknown channel is 404 `not_found`.
-- **Lifetimes:** an unclaimed channel lives **75 seconds**. While its page shows the code, the browser opens a new channel every 60 seconds, at most 10 in a row, then offers Show a New Code. It keeps polling the previous channel until that one expires, and once any channel is claimed it stops rotating and cancels the others. A claimed channel lives **5 minutes** from the claim. `done`, `cancel`, and expiry delete everything.
+- **Lifetimes:** an unclaimed channel lives **75 seconds**. While its page shows the code, the browser opens a new channel every 60 seconds, at most 10 in a row, then offers Show a New Code. It keeps polling the previous channel until that one expires, and once any channel is claimed it stops rotating and cancels the others. A claimed channel lives **5 minutes** from the claim. `done` and `cancel` delete every blob, the location, the ticket and the account; the channel keeps only its status, the token verifiers, and a hash of the claiming session (so the phone can still read `status`) until it expires, when everything goes. A wrong token after `done` doesn't count against the channel.
 - **Polling:** the browser reads `status` every 1.5 seconds while the code shows, and `receive` every 1.5 seconds once it's claimed.
 - **Works once:** the first valid claim wins; repeating it with the same body gets `ok` again; any other claim is `conflict`, and the phone says another device already scanned this code.
 - **Phones only:** a `web` session's claim is 403 `forbidden`. Only the session that claimed can read its status, send, or cancel as the phone (`forbidden` otherwise). The account must exist; a suspended account can still approve.
@@ -294,21 +295,25 @@ New [activity](./accounts-protocol.md#reading-activity-get-accountsv1activity) k
 
 ## Live sockets on the web
 
-A browser can't set headers on a WebSocket, so it sends the token and the ids the native app sends in headers as **subprotocols**:
+A browser can't set headers on a WebSocket, and Cloudflare's request logs record `Sec-WebSocket-Protocol` in full, so a browser never sends its access token on a socket. It mints a short ticket and offers that as a **subprotocol**.
 
-| Socket                       | `Sec-WebSocket-Protocol` entries                                |
-| ---------------------------- | --------------------------------------------------------------- |
-| `GET /accounts/v1/sync/live` | `ww.v1`, `bearer.<access token>`, `slot.<slotId>`               |
-| `GET /buddies/v1/inbox/live` | `ww.v1`, `bearer.<access token>`, `payload.<x-buddies-payload>` |
+**`POST /accounts/v1/live/ticket`**, Bearer: `{ socket: "sync" | "buddies", id }` (`id` is this device's slot id, or its inbox id) → `{ ok, ticket, expiresAt }`. The ticket is opaque (`[A-Za-z0-9_.-]`, about 350 to 420 characters): its claims (the env, account, session, platform, socket kind, id, and the access token's expiry) are encrypted and MAC'd under keys from its own Worker secret (`LIVE_TICKET_SECRET`), so neither the token nor any id can be read from it. It lasts **30 seconds**, or until the access token expires if that's sooner. The session must still be live (401 after sign-out or revoke, and when the token has under a second left). Only the id's shape is checked here (`bad_request`); everything else when the socket opens. Other errors: 429 `rate_limited`, 503 `disabled`.
 
-- The Worker checks the `Origin` against the env's web origins, then the token, exactly as it checks the `Authorization` header, before the Durable Object sees the socket. It answers `Sec-WebSocket-Protocol: ww.v1`.
-- A socket opened this way closes with **`4004 "expired"`** when its token expires; the app reconnects at once with a fresh token. Sockets opened with headers (the native apps) are unchanged.
-- Ids never go in the URL. `Sec-WebSocket-Protocol` carries a credential, so ww-api never logs it, like `Authorization`.
+| Socket                       | `Sec-WebSocket-Protocol` entries |
+| ---------------------------- | -------------------------------- |
+| `GET /accounts/v1/sync/live` | `ww.v1`, `ticket.<ticket>`       |
+| `GET /buddies/v1/inbox/live` | `ww.v1`, `ticket.<ticket>`       |
+
+- The Worker checks, in order and before the Durable Object sees the socket: the `Origin` against the env's web origins (403 `forbidden`); the offer (`ww.v1`, at most one `ticket.`, nothing else, no `Authorization` header; 400 `bad_request`); the feature's switch and the edge tier; the ticket and its socket kind (401 `unauthorized`); then the same checks the native socket runs. It answers `Sec-WebSocket-Protocol: ww.v1`.
+- **One socket per ticket at a time:** a second socket with a ticket whose socket is still open is 409 `conflict`. Once that socket closes, the ticket (within its 30 seconds) can open it again.
+- **Reconnecting:** a browser never sees a refused handshake's status, only a close, so it mints a fresh ticket for every connect (refreshing its access token if the mint answers 401) and reconnects with backoff.
+- A socket opened this way closes with **`4004 "expired"`** when the access token the ticket was minted with expires; the app mints a ticket with a fresh token and reconnects at once. Sockets opened with headers (the native apps) are unchanged.
+- Ids never go in the URL.
 
 ## CORS
 
 - **Origins:** each env's exact list of web origins (`WEB_APP_ORIGINS`): production `https://app.witnesswork.app` and `https://beta.app.witnesswork.app`; dev `https://app-dev.witnesswork.app` and the localhost ports above. No wildcards. `Vary: Origin`.
-- **Allowed request headers:** `authorization`, `content-type`, `if-match`, `if-none-match`, `x-ww-*` and `x-buddies-*` except `x-ww-admin-token` (and `x-ww-dev-bypass` outside dev), `sentry-trace`, `baggage`.
+- **Allowed request headers:** `authorization`, `content-type`, `if-match`, `if-none-match`, `x-ww-*` and `x-buddies-*` except `x-ww-admin-token` (and `x-ww-dev-bypass` on a worker without the dev bypass token, so outside dev), `sentry-trace`, `baggage`.
 - **Exposed response headers:** `ETag`, `Retry-After`, `Date`, `WWW-Authenticate`, `x-ww-updated-at`.
 - Every response to an allowed origin carries them, errors included. No cookies (`Access-Control-Allow-Credentials` is never sent). Preflights (`Access-Control-Max-Age: 7200`) are answered before any rate limit and never count against one.
 
@@ -373,5 +378,5 @@ One utility asks for a fresh check before showing the recovery key, setting up o
 
 - **Passkeys:** the credential id, its public key, counter, transports, backup flags, AAGUID, RP ID, the platform that created it, the sealed label, and times. The user handle is random and names no one. PRF output and the account key never reach the server; wraps are ciphertext under keys only the passkey can make.
 - **Turnstile** sees the request's IP for sign-up and recovery sign-ins. The caps keep counts per HMAC'd IP and network for at most a day.
-- **Approvals:** the channel's Durable Object keeps the browser's coarse location (city, region, country, and Cloudflare's latitude and longitude) for at most 5 minutes, and never an IP.
+- **Approvals:** the channel's Durable Object keeps the browser's coarse location (city, region, country, and Cloudflare's latitude and longitude) for the channel's lifetime (at most 75 seconds unclaimed plus 5 minutes once claimed), drops it at `done` or `cancel`, and never keeps an IP.
 - **Tickets and challenges** are kept only as used ids, until they expire.

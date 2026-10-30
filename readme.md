@@ -176,17 +176,16 @@ sealed sync slot per device`")]
     subgraph HELP["Help Center search"]
       S_HELPS["`**ww-help-search Worker**
 GET /v1/search, cron content sync`"]
-      AIS[("`**Cloudflare AI Search**
-answers by locale, keyword + meaning`")]
+      AIS[("`**Workers AI + KV**
+embeddings, keyword index by locale`")]
     end
+    S_SITE["`**ww-marketing (witnesswork.app)**
+static site: Help Center pages + JSON bundles`"]
     DO_RPQ[("`**RoutePlanningQuota DO**
 route and directions quotas per account`")]
     KV[("`**Workers KV: NOTES_KV**
 switches, limits, tokens, ratings`")]
   end
-
-  S_SITE["`**leviwilkerson.com (Vercel)**
-Help Center pages + JSON bundles`"]
 
   subgraph EXTERNAL["External services"]
     S_GPI["`**Play Integrity API (Google)**
@@ -282,7 +281,7 @@ analytics, flags, surveys, errors`"]
   S_RC -.->|"webhook events"| R_RCHOOK
   WORKER -->|"usage events"| S_PH
   WORKER -->|"errors + traces"| S_SENTRY
-  S_HELPS -->|"retrieval"| AIS
+  S_HELPS -->|"embeddings + index"| AIS
   S_HELPS -.->|"pulls changed answers"| S_SITE
 
   classDef device fill:#99e9f2,stroke:#0c8599,color:#1e1e1e
@@ -296,9 +295,9 @@ analytics, flags, surveys, errors`"]
   class A_CORE,A_BUDDIES,A_ACCOUNT,A_SYNC,A_SCRIBE,A_ROUTE,A_CONTACTS,A_LINKS,A_SUPPORTER,A_SHELL,A_HELP app
   class A_LOCAL local
   class P_CAL,P_SEED,P_SYNC,P_ATTEST,P_MAPS,P_PUSH,P_STORE,S_GPI platform
-  class R_BUD,R_ACC,R_RCHOOK,R_ATTEST,R_APPCFG,R_SCRIBE,R_ROUTE,R_PLACES,R_LINKS,R_RATINGS,CRON,S_HELPS worker
+  class R_BUD,R_ACC,R_RCHOOK,R_ATTEST,R_APPCFG,R_SCRIBE,R_ROUTE,R_PLACES,R_LINKS,R_RATINGS,CRON,S_HELPS,S_SITE worker
   class DO_REGQ,DO_INV,DO_INBOX,R2,D_ACC,DO_HANDOFF,R2_BACKUP,DO_SYNC,R2_SYNC,DO_AA,DO_PI,DO_METER,DO_RPQ,KV,AIS state
-  class S_OR,S_LLM,S_HERE,S_SENTRY,S_RC,S_STRIPE,S_PH,S_EAS,S_SITE external
+  class S_OR,S_LLM,S_HERE,S_SENTRY,S_RC,S_STRIPE,S_PH,S_EAS external
 ```
 
 - ww-api runs as one Cloudflare Worker, `ww-proxy`, at `ww-proxy.leviwilkerson.com`. The dev Worker, `ww-proxy-dev`, has its own KV namespace, Durable Objects, and R2 buckets.
@@ -307,7 +306,7 @@ analytics, flags, surveys, errors`"]
 - Each device syncs through one option ([ADR 0030](./docs/adr/0030-cloud-sync-through-ww-api.md)). Cloud Sync, the default, works across iOS and Android: each device's snapshot is sealed with the account's sync key before it reaches ww-api, and the account's sync socket tells its other devices to pull. iCloud and Google Drive sync stay available, and devices sync only with devices on the same option ([docs/icloud-sync.md](./docs/icloud-sync.md)).
 - Scribe AI reaches its model through OpenRouter, pinned to zero-data-retention hosts ([ADR 0008](./docs/adr/0008-notes-import-third-party-llm-zero-retention.md)). Its tools run on the phone: each model step is one bearer request on the account's attested session ([ADR 0027](./docs/adr/0027-account-sessions-attest-once-then-bearer-tokens.md)) carrying the conversation, and ww-api keeps only usage records ([ADR 0032](./docs/adr/0032-scribe-ai-agent-harness.md), [docs/scribe-ai-protocol.md](./docs/scribe-ai-protocol.md)). The old `/notes-import/...` routes answer 426 Update Required, except the status probe older app versions still read.
 - Supporter status lives on the server account ([ADR 0029](./docs/adr/0029-supporter-status-on-the-server-account.md)): the app names the RevenueCat customer it's logged in as, ww-api reads that customer from RevenueCat itself, and RevenueCat's webhook keeps the record current. Legacy route planning still asks RevenueCat about the id it sends.
-- The Help Center's content lives in the website repo (portfolio-v2) and is published at `leviwilkerson.com/witness-work/help-center` ([ADR 0033](./docs/adr/0033-help-center-on-the-website.md)). The app ships a snapshot, downloads a newer bundle when the Help Center opens, and searches on the device when the `help-search.leviwilkerson.com` Worker can't answer. Search requests carry the typed query, language, platform and app version, and no account or device identifier.
+- The Help Center's content lives in this repo's website, `services/marketing`, a static site on Workers Static Assets published at `witnesswork.app/help` ([ADR 0033](./docs/adr/0033-help-center-on-the-website.md), [ADR 0042](./docs/adr/0042-witnesswork-app-domain.md), [docs/help-center.md](./docs/help-center.md)); the old `leviwilkerson.com/witness-work/…` addresses shipped builds use redirect there. The app ships a snapshot, downloads a newer bundle when the Help Center opens, and searches on the device when the `help-search` Worker (`services/help-search`) can't answer. Search requests carry the typed query, language, platform and app version, and no account or device identifier.
 - Left out: `GET /health` (the app checks its clock against it), the admin reset route, the private CloudKit record that picks which iPhone publishes Follow-ups to the calendar, link previews the device fetches for URLs in notes, and the build and release pipeline.
 
 When a change adds, removes, or reroutes one of these connections, update the diagram in the same pull request.

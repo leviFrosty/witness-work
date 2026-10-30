@@ -22,6 +22,8 @@ export default defineConfig({
       '**/dist/**',
       '**/.{idea,git,cache,output,temp}/**',
       '**/.claude/**',
+      // Its own workspace and tests (services/README.md).
+      'services/**',
     ],
   },
 })

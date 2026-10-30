@@ -1,0 +1,23 @@
+{
+  "helpCenter": "Kituo cha Msaada",
+  "intro": "Pata majibu ya haraka kwa maswali ya kawaida kuhusu Kazi ya Ushahidi. Huwezi kupata unachohitaji? Fikia - maoni yako yanaunda programu.",
+  "searchPlaceholder": "Maswali ya utafutaji",
+  "topQuestions": "Maswali ya juu",
+  "allQuestions": "Maswali yote",
+  "noMatches": "Hakuna inayolingana",
+  "noResults": "Hakuna maswali yanayolingana na utafutaji wako.",
+  "searching": "Inatafuta…",
+  "clearSearch": "Futa utafutaji",
+  "stillNeedHelp": "Bado unahitaji msaada?",
+  "emailUs": "Wasiliana kwa faragha kwa barua pepe kwa",
+  "bugReport": "Ripoti Hitilafu",
+  "featureRequest": "Ombi la Kipengele",
+  "device": "Kifaa",
+  "language": "Lugha",
+  "all": "Zote",
+  "copyLink": "Nakili Kiungo",
+  "iosOnly": "iOS pekee",
+  "androidOnly": "Android pekee",
+  "notTranslated": "Jibu hili bado halijatafsiriwa, kwa hiyo linaonyeshwa kwa Kiingereza.",
+  "stillNeedHelpDescription": "Tutumie barua pepe kwa msaada wa faragha, au ripoti hitilafu au omba kipengele kwenye GitHub. Taja ulichojaribu, kifaa chako na toleo lako la WitnessWork. Usiweke maelezo ya mawasiliano, maelezo ya faragha wala vitambulisho vya akaunti kwenye ripoti za umma."
+}

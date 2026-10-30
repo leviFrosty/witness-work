@@ -3,11 +3,17 @@
  * Copies the Help Center's published bundles into the app as its offline
  * snapshot (`src/assets/help-center/<locale>.json`). The app shows the snapshot
  * until it has downloaded a newer bundle, so run this before every release
- * build. The content itself lives in portfolio-v2 (`content/help/`).
+ * build. The content itself lives in `services/marketing/content/help/`; the
+ * bundles' contract is docs/help-center.md.
  *
- * Usage: pnpm sync:help # from https://leviwilkerson.com pnpm sync:help
- * --from<dir> # from a local site build's bundle directory #
- * (portfolio-v2/dist/public/witness-work/help-center/bundle)
+ * Usage:
+ *
+ *     pnpm sync:help             # from https://witnesswork.app/help/bundle/manifest.json
+ *     pnpm sync:help --from <dir>  # from a local site build's bundle folder:
+ *                                  # services/marketing/dist/production/client/help/bundle
+ *
+ * The manifest lists each bundle by absolute URL (a site path also works); with
+ * `--from`, a URL under /help/bundle/ reads the same file in <dir>.
  *
  * Snapshots are compacted, since they ship in the JavaScript bundle: no
  * `plainText` or `url` (the app derives them from `doc` and the contract's URL
@@ -18,8 +24,8 @@
 import fs from 'node:fs'
 import path from 'node:path'
 
-const SITE = 'https://leviwilkerson.com'
-const MANIFEST_PATH = '/witness-work/help-center/bundle/manifest.json'
+const MANIFEST_URL = 'https://witnesswork.app/help/bundle/manifest.json'
+const BUNDLE_PATH = '/help/bundle/'
 const OUT_DIR = 'src/assets/help-center'
 // Every app language (src/lib/locales.ts), by locale file name.
 const LOCALES = [
@@ -51,32 +57,44 @@ if (fromIndex !== -1 && !fromDir) {
   process.exit(1)
 }
 
-/** Reads `sitePath` (`/witness-work/help-center/bundle/x.json`) as JSON. */
-async function read(sitePath) {
-  if (fromDir) {
-    const file = path.join(fromDir, path.basename(sitePath))
-    return JSON.parse(fs.readFileSync(file, 'utf8'))
-  }
-  const response = await fetch(new URL(sitePath, SITE), {
-    headers: { 'Cache-Control': 'no-cache' },
-  })
-  if (!response.ok) throw new Error(`${sitePath}: HTTP ${response.status}`)
-  return response.json()
-}
-
 const fail = (message) => {
   console.error(`sync:help: ${message}`)
   process.exit(1)
 }
 
-const manifest = await read(MANIFEST_PATH)
+/** Reads a bundle file's URL as JSON, from the site or from `--from`. */
+async function read(url) {
+  if (fromDir) {
+    if (!url.pathname.startsWith(BUNDLE_PATH))
+      fail(`${url.href} isn't in the build's ${BUNDLE_PATH} folder`)
+    const file = path.join(fromDir, url.pathname.slice(BUNDLE_PATH.length))
+    return JSON.parse(fs.readFileSync(file, 'utf8'))
+  }
+  const response = await fetch(url, {
+    headers: { 'Cache-Control': 'no-cache' },
+  })
+  if (!response.ok) throw new Error(`${url.href}: HTTP ${response.status}`)
+  return response.json()
+}
+
+const manifestUrl = new URL(MANIFEST_URL)
+const manifest = await read(manifestUrl)
 if (manifest?.schemaVersion !== 1) fail('manifest is not schema version 1')
 
 const snapshots = []
 for (const locale of LOCALES) {
   const published = manifest.locales?.[locale]
   if (!published) fail(`the manifest has no ${locale} bundle`)
-  const bundle = await read(published.path)
+  let bundleUrl
+  try {
+    bundleUrl = new URL(published.path, manifestUrl)
+  } catch {
+    fail(`${locale}: the manifest's path isn't a URL`)
+  }
+  // Only the site's own bundles, never another host's (or a dev build's).
+  if (bundleUrl.origin !== manifestUrl.origin)
+    fail(`${locale}: ${bundleUrl.href} isn't on ${manifestUrl.origin}`)
+  const bundle = await read(bundleUrl)
   if (bundle?.schemaVersion !== 1 || bundle.locale !== locale)
     fail(`${locale}: not a schema-1 bundle for this locale`)
   if (!Array.isArray(bundle.entries) || bundle.entries.length === 0)

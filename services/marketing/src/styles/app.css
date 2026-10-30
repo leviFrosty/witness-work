@@ -1,0 +1,24 @@
+@import 'tailwindcss';
+@import '@fontsource/jetbrains-mono/400.css';
+@import '@fontsource/jetbrains-mono/500.css';
+@import '../components/landing/landing.css';
+@import '../components/landing/sections.css';
+
+/* Every page is the WitnessWork canvas (landing.css), including overscroll.
+   The scrollbar's space stays reserved, so opening an answer that makes the
+   page scroll doesn't shift it sideways. */
+html {
+  scrollbar-gutter: stable;
+}
+html,
+body {
+  background-color: #030604;
+}
+
+/* --- Help Center device filter. The page HTML holds every answer; the device
+   choice on <html data-ww-platform> (public/help-platform.js,
+   platform-filter.tsx) hides the ones for the other platform. --- */
+html[data-ww-platform='ios'] [data-ww-platforms='android'],
+html[data-ww-platform='android'] [data-ww-platforms='ios'] {
+  display: none;
+}

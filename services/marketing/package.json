@@ -1,0 +1,50 @@
+{
+  "name": "marketing",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite dev --port 3000",
+    "build": "pnpm run check:locales && vite build && vite build -c vite.islands.config.ts && node scripts/postbuild.mjs",
+    "build:dev": "WW_SITE_ENV=dev pnpm run build",
+    "preview": "wrangler dev --port 8899",
+    "test": "vitest run && pnpm run check:locales && pnpm run help:validate",
+    "typecheck": "tsc --noEmit",
+    "lint": "oxlint --deny-warnings src scripts tests",
+    "e2e": "playwright test",
+    "help:validate": "node scripts/help-center/validate.ts",
+    "check:locales": "node scripts/landing/check-landing-locales.mjs"
+  },
+  "dependencies": {
+    "@tanstack/react-router": "1.170.46",
+    "@tanstack/react-start": "1.169.4",
+    "clsx": "2.1.1",
+    "fuse.js": "7.5.0",
+    "lucide-react": "1.61.0",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "tailwind-merge": "3.7.0"
+  },
+  "devDependencies": {
+    "@fontsource/jetbrains-mono": "5.2.8",
+    "@playwright/test": "1.64.1",
+    "@tailwindcss/vite": "4.3.3",
+    "@types/js-yaml": "4.0.9",
+    "@types/mdast": "4.0.4",
+    "@types/node": "26.6.5",
+    "@types/qrcode": "1.5.6",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@vitejs/plugin-react": "6.1.2",
+    "js-yaml": "4.3.2",
+    "mdast-util-from-markdown": "2.1.0",
+    "mdast-util-gfm-strikethrough": "2.0.1",
+    "micromark-extension-gfm-strikethrough": "2.1.0",
+    "oxlint": "1.89.0",
+    "qrcode": "1.5.4",
+    "tailwindcss": "4.3.3",
+    "typescript": "6.0.3",
+    "vite": "8.3.5",
+    "vitest": "5.0.5",
+    "wrangler": "4.152.0"
+  }
+}

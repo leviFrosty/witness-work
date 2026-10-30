@@ -1,0 +1,35 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  // The website (README.md): static files on Workers Static Assets, no Worker
+  // code. Build first: `pnpm build` (production) or `pnpm build:dev`.
+  //
+  // ww-api serves a few exact paths on the same hosts through its own Workers
+  // routes (/.well-known/apple-app-site-association, /.well-known/assetlinks.json,
+  // /accounts/handoff, /contacts, /buddies/invite); the site has no pages
+  // there (scripts/postbuild.mjs checks).
+  "name": "ww-marketing",
+  "compatibility_date": "2026-10-01",
+  "workers_dev": false,
+  "preview_urls": false,
+  "routes": [{ "pattern": "witnesswork.app", "custom_domain": true }],
+  "assets": {
+    "directory": "./dist/production/client",
+    // Pages are <path>.html; /help/time and /help/time/ both serve help/time.html,
+    // and links and canonicals never end in a slash.
+    "html_handling": "drop-trailing-slash",
+    "not_found_handling": "404-page",
+  },
+  "env": {
+    // The staging site, built with WW_SITE_ENV=dev: noindex everywhere, and
+    // its search box uses the dev help-search Worker.
+    "dev": {
+      "name": "ww-marketing-dev",
+      "routes": [{ "pattern": "dev.witnesswork.app", "custom_domain": true }],
+      "assets": {
+        "directory": "./dist/dev/client",
+        "html_handling": "drop-trailing-slash",
+        "not_found_handling": "404-page",
+      },
+    },
+  },
+}

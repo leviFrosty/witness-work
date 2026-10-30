@@ -5,6 +5,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 const runtime = vi.hoisted(() => ({
   isSupporter: true,
   cloudSyncEntitled: null as boolean | null,
+  entitlement: 'supporter' as 'supporter' | 'everyone',
+  installedBeforeFreeSync: true,
   setState: vi.fn(),
   appStateListeners: [] as Array<(state: string) => void>,
   /** The store as it is now, past what the render read. */
@@ -35,9 +37,10 @@ vi.mock('@/stores/preferences', () => ({
       iCloudSyncEnabled: false,
       iCloudSyncSetByUser: false,
       syncProvider: null,
-      cloudSyncConfig: { enabled: true, entitlement: 'supporter' },
+      cloudSyncConfig: { enabled: true, entitlement: runtime.entitlement },
       cloudSyncEntitled: runtime.cloudSyncEntitled,
       onboardingComplete: true,
+      installedBeforeFreeSync: runtime.installedBeforeFreeSync,
     }),
     {
       setState: runtime.setState,
@@ -66,6 +69,8 @@ beforeEach(() => {
   vi.clearAllMocks()
   runtime.isSupporter = true
   runtime.cloudSyncEntitled = null
+  runtime.entitlement = 'supporter'
+  runtime.installedBeforeFreeSync = true
   runtime.appStateListeners = []
   runtime.live = {}
 })
@@ -157,5 +162,63 @@ describe('CloudSyncDefault', () => {
     })
     expect(prepareCloudSync).toHaveBeenCalledTimes(1)
     expect(runtime.appStateListeners).toHaveLength(0)
+  })
+
+  describe('while Cloud Sync is for everyone (ADR 0040 §2)', () => {
+    const ready = {
+      outcome: 'ready',
+      status: {
+        ...notEntitled.status,
+        entitled: true,
+        entitlement: 'everyone',
+      },
+    } as const
+
+    it('turns it on for a new install that isn’t a Supporter', async () => {
+      runtime.isSupporter = false
+      runtime.entitlement = 'everyone'
+      runtime.installedBeforeFreeSync = false
+      const { default: CloudSyncDefault } = await import('./CloudSyncDefault')
+      const { prepareCloudSync } = await import('@/app/sync/cloudSync')
+      const { iCloudSync } = await import('@/app/sync/iCloudSync')
+      vi.mocked(prepareCloudSync).mockResolvedValueOnce(ready)
+
+      await act(async () => {
+        renderer = create(<CloudSyncDefault />)
+      })
+      expect(runtime.setState).toHaveBeenCalledWith({ syncProvider: 'cloud' })
+      expect(iCloudSync.applySeedEnable).toHaveBeenCalledWith(
+        'supporter_default'
+      )
+    })
+
+    it('leaves an existing install that isn’t a Supporter off', async () => {
+      runtime.isSupporter = false
+      runtime.entitlement = 'everyone'
+      runtime.cloudSyncEntitled = true
+      const { default: CloudSyncDefault } = await import('./CloudSyncDefault')
+      const { prepareCloudSync } = await import('@/app/sync/cloudSync')
+
+      await act(async () => {
+        renderer = create(<CloudSyncDefault />)
+      })
+      expect(prepareCloudSync).not.toHaveBeenCalled()
+      expect(runtime.setState).not.toHaveBeenCalled()
+    })
+
+    it('still turns it on for an existing Supporter install', async () => {
+      runtime.entitlement = 'everyone'
+      const { default: CloudSyncDefault } = await import('./CloudSyncDefault')
+      const { prepareCloudSync } = await import('@/app/sync/cloudSync')
+      const { iCloudSync } = await import('@/app/sync/iCloudSync')
+      vi.mocked(prepareCloudSync).mockResolvedValueOnce(ready)
+
+      await act(async () => {
+        renderer = create(<CloudSyncDefault />)
+      })
+      expect(iCloudSync.applySeedEnable).toHaveBeenCalledWith(
+        'supporter_default'
+      )
+    })
   })
 })

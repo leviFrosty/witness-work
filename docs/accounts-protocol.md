@@ -65,6 +65,14 @@ Plain JSON, no envelope: `{ refreshToken }` → `{ ok, accessToken, accessExpire
 - A session lasts 90 days from opening. Refreshing doesn't extend it.
 - Counts against the Buddies read edge limit.
 
+### Capabilities
+
+`capabilities` (optional) is a list of names a build can take, sent in the `session/open` and `web/signup` payloads and in the refresh body (`{ refreshToken, appVersion?, capabilities? }`). The session stores it. On refresh, a list that's sent replaces the stored one, and leaving it out keeps it, so the app sends its list on every refresh and a session an older build opened gains it after the update. Unknown names are ignored; a malformed list is `bad_request`. ww-api caches a session's capabilities for 60 seconds, so a change can take that long to apply. `GET /app/v1/config` takes the same names as `?capabilities=`, comma-separated.
+
+- `sync-everyone`: the build turns Cloud Sync on by itself only for a new install (ADR 0040 §2), so `entitlement: everyone` applies to it. Without it, Cloud Sync for everyone stays a Supporter benefit for that session, web sessions included.
+
+The app's list is `SESSION_CAPABILITIES` (`src/lib/serverAccount/capabilities.ts`).
+
 ### Closing: `DELETE /accounts/v1/sessions/current`
 
 **Bearer**, no body → `{ ok }`. Ends the token's session; repeating it is `ok`. The app calls it on sign out, before replacing the account key, and before Delete Buddies.
@@ -341,6 +349,8 @@ Every op is **Bearer**. Ids travel in bodies and headers, never URLs.
 
 `GET /app/v1/config` carries the switches for devices without a session: `sync: { enabled, entitlement }`.
 
+`entitlement: everyone` applies only to a session whose capabilities include `sync-everyone`, and to a config request with `?capabilities=sync-everyone` (see [Capabilities](#capabilities)). Anyone else is answered as if the entitlement were `supporter`, everywhere above.
+
 ### The app
 
 - **One option.** A device syncs through Cloud Sync, iCloud (iOS) or Google Drive (Android), or not at all (`syncProvider` in device-local preferences). The engine runs on that one transport (`activeSyncTransport()`); devices on different options don't see each other.
@@ -419,7 +429,7 @@ The account key and the first 2 bytes of its SHA-256, 34 bytes, in Crockford bas
 
 ## Updates and the legacy switch
 
-`GET {BASE}/app/v1/config` (no authentication) → `{ ok, minAppVersion? }`. `minAppVersion` is `major.minor.patch`, from KV `app:min-version` (`{"minVersion":"…"}`), then the `APP_MIN_VERSION` var, else absent. The app reads it at launch and when it returns to the foreground; below it, the app shows a blocking Update Required screen with a store link. Edge-cached for 60 seconds.
+`GET {BASE}/app/v1/config[?capabilities=…]` (no authentication) → `{ ok, minAppVersion?, sync? }`. `minAppVersion` is `major.minor.patch`, from KV `app:min-version` (`{"minVersion":"…"}`), then the `APP_MIN_VERSION` var, else absent. The app reads it at launch and when it returns to the foreground; below it, the app shows a blocking Update Required screen with a store link. Edge-cached for 60 seconds.
 
 KV `auth:legacy` (`on` when absent, then the `AUTH_LEGACY` var): while on, every converted route (accounts, backup, handoff, Buddies, and the old Notes Import routes while `scribe:legacy-notes-import` re-allows them) also accepts the way it authenticated before sessions. Set to `off`, those requests are refused with **426 `upgrade_required`** (`Retry-After` absent; updating is the fix), and the app shows Update Required. Edge-cached for 60 seconds. Raising `app:min-version` first means current app versions show the update screen before any request is refused.
 

@@ -518,10 +518,8 @@ function setPrefsIfChanged(partial: Partial<PreferencesState>): void {
 }
 
 /**
- * Whether the user has opted into iCloud sync AND is currently entitled to it
- * AND iCloud is actually usable. The supporter check is a runtime gate: if the
- * subscription lapses between syncs, push/pull immediately stop even before the
- * lapse-flip effect in `App.tsx` clears `iCloudSyncEnabled`.
+ * Whether the user has opted into sync AND this device is entitled to it AND
+ * the transport is actually usable.
  *
  * Also the Apple Account gate: every read and write checks here first, so a
  * device signed into another account turns sync off before touching that
@@ -547,14 +545,14 @@ const cloudSyncWaitsForUpdate = () =>
 
 /**
  * Whether this device may sync on its transport right now. iCloud and Drive
- * sync are a Supporter benefit by RevenueCat's client-side answer; Cloud Sync
- * asks the server, which applies its own entitlement switch
- * (`sync:entitlement`) to the account (ADR 0030).
+ * sync are free for everyone (ADR 0040 §1); Cloud Sync asks the server, which
+ * applies its own entitlement switch (`sync:entitlement`) to the account (ADR
+ * 0030).
  */
 export function syncEntitled(): boolean {
   if (usesCloudSync())
     return usePreferences.getState().cloudSyncEntitled === true
-  return useSupporter.getState().isSupporter
+  return true
 }
 
 /**
@@ -1094,7 +1092,7 @@ async function readRemotePeek(account: ICloudAccount): Promise<RemotePeek> {
  *   destructively replace local with remote + enable.
  * - `conflict` — both sides populated. Caller must ask the user to resolve
  *   (Settings renders `FirstEnableSheet`; headless callers like
- *   `SupporterSyncDefault` should leave sync disabled and defer to Settings),
+ *   `PlatformSyncDefault` should leave sync disabled and defer to Settings),
  *   and apply the choice only while `confirmICloudAccount(account)` holds.
  */
 export type InitialEnableDecision =
@@ -2034,7 +2032,7 @@ function schedulePush() {
   editGeneration++
   setPrefsIfChanged({ iCloudSyncPendingPush: true })
   if (!canSync()) {
-    // Most often an edit at cold launch, before supporter status loads.
+    // Most often an edit at cold launch, before the transport is ready.
     // `catchUp` pushes it once sync is ready instead of waiting for the
     // next edit.
     return
@@ -2924,9 +2922,8 @@ export function installiCloudSync(): () => void {
     debouncedRemotePull()
   })
 
-  // Sync often becomes ready after launch: supporter status loads
-  // asynchronously (and flips again when this device adopts another device's
-  // account), and iCloud can sign back in. `canSync` dropped any foreground
+  // Sync often becomes ready after launch: Cloud Sync's entitlement arrives
+  // asynchronously, and iCloud can sign back in. `canSync` dropped any foreground
   // or remote-change events before then — and a cold launch usually delivers
   // no foreground event at all — so catch up here or nothing pulls until the
   // user taps Sync. Deliberately not keyed on `iCloudSyncEnabled`: enable
@@ -2938,11 +2935,6 @@ export function installiCloudSync(): () => void {
     lastForegroundCatchUpAt = Date.now()
     void catchUp(reason)
   }
-  const unsubSupporter = useSupporter.subscribe((state, prev) => {
-    if (state.isSupporter && !prev.isSupporter) {
-      catchUpIfActive('supporter-ready')
-    }
-  })
   // Cloud Sync's entitlement is the server's answer, recorded as it arrives.
   const unsubEntitled = usePreferences.subscribe((state, prev) => {
     if (state.cloudSyncEntitled && !prev.cloudSyncEntitled && usesCloudSync())
@@ -2969,7 +2961,6 @@ export function installiCloudSync(): () => void {
     unsubLocalData()
     unsubAccountClaim()
     unsubPhotoRoom()
-    unsubSupporter()
     unsubEntitled()
     unsubUpdateRequired()
     appStateSub.remove()

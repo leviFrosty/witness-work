@@ -1,11 +1,15 @@
 import { describe, it, expect } from 'vitest'
-import { evaluateFeatureAccess, type FeatureKey } from '@/lib/featureAccess'
+import {
+  evaluateFeatureAccess,
+  FEATURES,
+  type FeatureKey,
+} from '@/lib/featureAccess'
 
 const allFeatures: FeatureKey[] = [
   'customAccentColor',
-  'iCloudSync',
   'customAppIcon',
   'routePlanning',
+  'buddyColor',
 ]
 
 describe('evaluateFeatureAccess', () => {
@@ -25,5 +29,10 @@ describe('evaluateFeatureAccess', () => {
         })
       }
     )
+  })
+
+  // ADR 0040 §1: nothing sync-related is a Supporter benefit.
+  it('gates no sync feature', () => {
+    expect(Object.keys(FEATURES).sort()).toEqual([...allFeatures].sort())
   })
 })

@@ -86,7 +86,7 @@ describe('buildICloudStatus', () => {
     expect(text({ needsResolution: true, uploadIssue: 'icloud-full' })).toBe(
       'iCloudStatusNeedsResolution'
     )
-    expect(text({ paused: true })).toBe('iCloudStatusSupporterPaused')
+    expect(text({ paused: true })).toBe('iCloudStatusCloudSyncPaused')
     expect(text({ enabled: false })).toBe('iCloudStatusDisabled')
     expect(text({ available: false })).toBe('iCloudStatusUnavailable')
     expect(text({ issue: 'invalid-file' })).toBe('iCloudStatusInvalidFile')

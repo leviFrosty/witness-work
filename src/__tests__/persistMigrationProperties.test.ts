@@ -339,6 +339,8 @@ const preferencesArb = fc
     if (!('contactSortDirection' in timestamps)) p.contactSortDirection = 'desc'
     return disk({
       ...PREFERENCE_DEFAULTS,
+      // Every migrated store is an install from before sync was free.
+      installedBeforeFreeSync: true,
       ...p,
       ...(startOfWeek === undefined ? {} : { startOfWeek }),
       tenureStartDate:
@@ -376,6 +378,10 @@ const downgradePreferences = (
   let blob: Record<string, unknown> = disk(prefs)
   let stamps: Record<string, unknown> = { ...prefs.preferenceUpdatedAt }
   const home = { ...prefs.homeScreenElements }
+  if (version < 16) {
+    delete blob.installedBeforeFreeSync
+    blob.iCloudSyncPausedForLapse = extras.retiredFlag
+  }
   if (version < 14) {
     blob.displayDetailsOnProgressBarHomeScreen = extras.retiredFlag
     stamps.displayDetailsOnProgressBarHomeScreen = 1
@@ -435,11 +441,11 @@ const downgradePreferences = (
   return { ...blob, preferenceUpdatedAt: stamps }
 }
 
-describe('preferences store migrate (v14)', () => {
+describe('preferences store migrate (v16)', () => {
   it('is a no-op on current data', () => {
     fc.assert(
       fc.property(preferencesArb, (prefs) => {
-        same(migratePreferencesPersistedState(disk(prefs), 14), prefs)
+        same(migratePreferencesPersistedState(disk(prefs), 16), prefs)
       }),
       runs
     )
@@ -449,7 +455,7 @@ describe('preferences store migrate (v14)', () => {
     fc.assert(
       fc.property(
         preferencesArb,
-        fc.integer({ min: 0, max: 13 }),
+        fc.integer({ min: 0, max: 15 }),
         fc.boolean(),
         fc.boolean(),
         (prefs, version, retiredFlag, dropShown) => {
@@ -468,7 +474,7 @@ describe('preferences store migrate (v14)', () => {
     fc.assert(
       fc.property(
         preferencesArb,
-        fc.integer({ min: 0, max: 13 }),
+        fc.integer({ min: 0, max: 15 }),
         (prefs, version) => {
           const once = migratePreferencesPersistedState(
             downgradePreferences(prefs, version, {
@@ -477,7 +483,7 @@ describe('preferences store migrate (v14)', () => {
             }),
             version
           )
-          same(migratePreferencesPersistedState(disk(once), 14), once)
+          same(migratePreferencesPersistedState(disk(once), 16), once)
         }
       ),
       runs

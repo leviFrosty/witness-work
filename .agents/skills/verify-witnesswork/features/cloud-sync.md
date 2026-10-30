@@ -1,6 +1,6 @@
 # Cloud sync (Cloud Sync, iCloud on iOS, Google Drive on Android)
 
-Each device syncs through one option (ADR 0030): Cloud Sync (end-to-end encrypted through ww-api, iOS and Android together, the default), iCloud/Google Drive, or off. Devices on different options don't sync with each other. With iCloud or Drive, Supporters keep their devices in step: each device that turns sync on shares its contacts, visits, time, plans, categories, mileage, profile and shared preferences with the user's other devices of the same platform, and can restore them on a new install. iOS syncs through iCloud; Android syncs through the hidden Google Drive folder of a Google Account the user connects. Cloud Sync always carries photos (sealed per photo, 2 GB per account); iCloud and Drive carry them only on devices that opt in.
+Each device syncs through one option (ADR 0030): Cloud Sync (end-to-end encrypted through ww-api, iOS and Android together, the default), iCloud/Google Drive, or off. Devices on different options don't sync with each other. With iCloud or Drive, users keep their devices in step: each device that turns sync on shares its contacts, visits, time, plans, categories, mileage, profile and shared preferences with the user's other devices of the same platform, and can restore them on a new install. iOS syncs through iCloud; Android syncs through the hidden Google Drive folder of a Google Account the user connects. Cloud Sync always carries photos (sealed per photo, 2 GB per account); iCloud and Drive carry them only on devices that opt in.
 
 ## Sub-features
 
@@ -13,14 +13,13 @@ Each device syncs through one option (ADR 0030): Cloud Sync (end-to-end encrypte
 - `sync-transfer` sends edits to the cloud a few seconds after they're made and brings other devices' edits in on foreground, on "Sync now", and (Android, while open) within about a minute.
 - `sync-first-enable` asks how to combine ("Keep this device's data", "Restore from …", "Merge both") when both this device and the cloud have records.
 - `sync-restore` restores during onboarding: "Pick up where you left off" → "From iCloud backup" / "From Google Drive".
-- `sync-lapse` pauses transfer while Supporter access is gone ("Paused until Supporter access returns") and resumes on its own.
 - `sync-account` (Android) shows the connected Google Account state, "Use a different Google Account", "Disconnect Google Drive", and "Reconnect" after Google withdraws access.
 - `sync-photos` uploads and downloads photos: always on Cloud Sync, and on iCloud/Drive when "Include images in sync" is on. On Cloud Sync, a photo the account has no room for shows "Not synced: storage full", and Settings → Account shows the photo storage.
 - `sync-devices` lists and removes other devices' copies (Settings → … → "Devices").
 
 ## How to get to it (user POV)
 
-- Settings → App → "iCloud Sync" (iOS) / "Google Drive Sync" (Android). Non-Supporters see the Supporter paywall there.
+- Settings → App → "iCloud Sync" (iOS) / "Google Drive Sync" (Android). Sync is free (ADR 0040): no Supporter gate on any option.
 - Onboarding → "Pick up where you left off" → the cloud option.
 - The notification bell, after another device rebuilt the data or when a choice is needed.
 
@@ -44,7 +43,8 @@ The status is cached about a minute per device; `__WW_DEV__.cloudSync.refresh()`
 - **Switching.** Settings → Sync → "Sync With" → iCloud / Google Drive, confirm; `state().option` is `platform`, and `list()` from the other device no longer shows this slot. Back to Cloud Sync, confirm: no duplicates (contact counts), nothing deleted comes back.
 - **Upgraded device.** `__WW_DEV__.cloudSync.simulateUpgradedPlatformDevice()`, then `remount()` and open Settings → Sync: the offer card (`cloud-sync-offer`) shows once; "Not Now" (`cloud-sync-offer-dismiss`) hides it for good.
 - **Photos.** `cloudSync.photoState()` (bookkeeping, usage, `fullAt`), `cloudSync.photos()` (the account's listed photos), `cloudSync.photoUsage()`. Add a contact or note photo on one device, then read it back on the other with `photoState()` and the screen. Full storage: start the worker with a tiny limit (`node scripts/verify/dev.mjs down`, then `up --photo-limit-bytes <N>` from the ww-api checkout, before `wwv up`); the photo shows "Not synced: storage full" and Settings → Account says "Storage full". `cloudSync.photoBenchmark(10)` seals and uploads a 10 MB photo and reports the timings. A slot must exist before photos (`no_slot` otherwise): let the first sync finish.
-- **Default.** `__WW_DEV__.cloudSync.forgetChoice()`, then `remount()`: with the entitlement open, Cloud Sync turns on by itself (`cloud_sync_default_outcome` in the Metro log).
+- **Default.** `__WW_DEV__.cloudSync.forgetChoice()`, then `remount()`: with the entitlement open, Cloud Sync turns on by itself (`cloud_sync_default_outcome` in the Metro log). A seed makes the device a new install; that's the case that gets it whatever its Supporter status.
+- **Existing install.** `__WW_DEV__.cloudSync.setInstalledBeforeFreeSync(true)` makes the device one from before sync was free (`state().installedBeforeFreeSync`). With `forgetChoice()`, `setSupporter(false)` and `remount()`, sync stays off even with the entitlement `everyone`; as a Supporter it still turns on.
 - **The account's Cloud Sync request** (ADR 0040 §5; `cloud-sync-request`). `__WW_DEV__.cloudSync.request()` asks as the web's Turn On does (`false` withdraws it); `cloudSync.last` has `{ requestedAt }`. The phone answers at its next status read: `cloudSync.refresh()`, or a return to the foreground at least a minute after the last read. A phone on iCloud/Drive or Off switches and shows "Cloud Sync is on"; one already on Cloud Sync does nothing. `state().requestAnswered` is the request it acted on; it acts once per request. ww-api clears the request itself once every live phone session has written a slot since (`refresh()`, then `last.requestedAt`).
 - **The web's Cloud Sync screen** on a phone: Tools → Web Cloud Sync. "Turn on", "Waiting" and "Update your phone" each hold one state; "Live" reads this phone's account as a browser with no slot would, so Turn On sets the real request and the wait ends (an `onReady` toast) once a live phone session's slot is there.
 
@@ -59,7 +59,6 @@ Preconditions:
   node scripts/verify/fake-google-drive-server.mjs 8795 &
   adb -s <serial> reverse tcp:8795 tcp:8795
   wwv eval '__WW_DEV__.fakeGoogleDrive({ origin: "http://localhost:8795", account: "family" })'
-  wwv eval '__WW_DEV__.setSupporter(true)'
   ```
 
   The fake setting persists across launches and seeds. Inspect what's stored with `curl localhost:8795/__fake/files?account=family`.
@@ -77,7 +76,7 @@ Steps:
 - **Transfer.** Add a contact through the UI on device A, wait ~6 s, then on device B open Settings → "Sync now" (or relaunch). Read the contact back on B from Contacts.
 - **Conflict merge.** Edit the same contact on A and B while the other is stopped, then open each in turn and read both edits back.
 - **Opt-out.** Turn the switch off on B ("Pause on this device"); A's next edit doesn't reach B, and the fake file list shows B's file unchanged.
-- **Lapse.** `wwv eval '__WW_DEV__.setSupporter(false)'`; the status reads "Paused until Supporter access returns"; set it back and the status returns to "Last synced …".
+- **No lapse.** `wwv eval '__WW_DEV__.setSupporter(false)'`; sync keeps going and the status still reads "Last synced …".
 - **Restore.** `wwv seed fresh` on a new user/device, choose "From Google Drive", then "Connect Google Drive" and "Restore from Google Drive". The restored contacts appear on Home.
 - **Proof.** `wwv shot <label>` for each screen and `wwv errors`.
 - **Scripted.** With `sync:entitlement everyone` on the local worker, run `wwv flow e2e/maestro/_cloud-sync.yaml` (Settings → Sync → Cloud Sync → "Last synced"). Delete the key afterwards.

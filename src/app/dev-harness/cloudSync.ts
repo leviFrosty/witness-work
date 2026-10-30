@@ -69,6 +69,7 @@ export const cloudSyncHarness = {
       config: prefs.cloudSyncConfig,
       offer: prefs.cloudSyncOffer,
       requestAnswered: prefs.cloudSyncRequestAnswered,
+      installedBeforeFreeSync: prefs.installedBeforeFreeSync,
       canSync: iCloudSync.canSync(),
       needsResolution: prefs.iCloudSyncNeedsResolution,
       pendingPush: prefs.iCloudSyncPendingPush,
@@ -219,6 +220,14 @@ export const cloudSyncHarness = {
       await FileSystem.deleteAsync(path, { idempotent: true })
       return { megabytes, readMs, sealMs, longestMs, uploadMs }
     }),
+  /**
+   * This device as an install from before sync was free (ADR 0040 §2), which
+   * keeps its old sync defaults, or as a new one. A seed makes it new.
+   */
+  setInstalledBeforeFreeSync: (value = true) => {
+    usePreferences.setState({ installedBeforeFreeSync: value })
+    return cloudSyncHarness.state()
+  },
   get last() {
     return cloudSyncLast
   },

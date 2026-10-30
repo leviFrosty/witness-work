@@ -118,7 +118,6 @@ export const COPIED_DEVICE_RESET = {
  */
 export const ACCOUNT_CHANGE_RESET = {
   iCloudSyncEnabled: false,
-  iCloudSyncPausedForLapse: false,
   iCloudSyncNeedsResolution: false,
   iCloudSyncPendingPush: false,
   iCloudSyncIssue: null,

@@ -6,7 +6,6 @@ export type SupporterGateSurface =
   | 'avatar_background'
   | 'contact_background'
   | 'app_icon'
-  | 'icloud_sync'
   | 'today_route'
   | 'buddy_color'
 

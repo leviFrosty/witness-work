@@ -14,9 +14,11 @@ and writes only through a `SyncTransport` (`src/lib/syncTransport/types.ts`):
 `activeSyncTransport()` (`src/lib/syncTransport/provider.ts`) is the option's.
 Everything below applies to all three except where a section says otherwise.
 Devices on different options don't sync with each other, so an iPhone and an
-Android device sync only through Cloud Sync. iCloud and Google Drive need
-Supporter access; Cloud Sync needs what the server's `sync:entitlement` says
-(a Supporter, or everyone). Every option needs this device's opt-in.
+Android device sync only through Cloud Sync. Sync is free for everyone
+([ADR 0040](./adr/0040-sync-is-free-and-cloud-sync-carries-photos.md)): iCloud
+and Google Drive have no Supporter gate, and Cloud Sync needs what the server's
+`sync:entitlement` says (`everyone`, or a Supporter while it's `supporter`).
+Every option needs this device's opt-in.
 
 ## Data and identity
 
@@ -179,11 +181,14 @@ offline or Google Drive needs reconnecting instead of trying, and is disabled
 while a sync runs. A local coordinated write is still not confirmation that
 Apple uploaded it.
 
-A supporter lapse pauses transfer and preserves the user’s enable choice.
-Access returning resumes an enabled device. Auto-enable conflicts set a visible
-notifications-tray prompt; they do not silently overwrite data. An explicit off
-choice stays off. Restart onboarding is local; Set up fresh disables sync until
-the user explicitly enables it again.
+Supporter status never pauses sync. A device an older version paused for a
+Supporter lapse resumes: the preferences store's v16 migration drops
+`iCloudSyncPausedForLapse`, and the enable choice was kept. Auto-enable
+conflicts set a visible notifications-tray prompt; they do not silently
+overwrite data. An explicit off choice stays off. Restart onboarding is local;
+Set up fresh disables sync until the user explicitly enables it again. On a new
+install whose sync never ran, skipping the restore in onboarding isn't that
+choice: the default turns sync on after onboarding (`freshSetupPreferences`).
 
 Restore/replacement and JSON imports suppress Buddies declines for missing linked
 plans. User-initiated plan deletion still declines. Reminders are rebuilt from
@@ -321,7 +326,7 @@ switching, `components/CloudSyncDefault.tsx`).
 - **Gate.** `canSync` uses `cloudSyncEntitled` (from `GET /accounts/v1/sync`)
   instead of the device's Supporter status. A 503 `disabled` or 403
   `supporter_required` records itself and pauses sync; the choice is kept, so
-  it resumes when the server allows it again. Settings keeps the option rows for a device on Cloud Sync while the kill switch is off, so it can still move to iCloud, Google Drive, or Off, and its status says Cloud Sync is paused. While the server offers Cloud Sync to everyone, Settings → Sync isn't behind the Supporter gate; iCloud and Google Drive still are.
+  it resumes when the server allows it again. Settings keeps the option rows for a device on Cloud Sync while the kill switch is off, so it can still move to iCloud, Google Drive, or Off, and its status says Cloud Sync is paused. Settings → Sync and its Devices list have no Supporter gate.
 - **Identity.** The namespace is the server account: `cloudSyncAccountToken`
   holds a hash of its id. Moving to another account (a QR code or recovery key)
   flushes, deletes this device's slot, resets the namespace bookkeeping, and
@@ -374,6 +379,16 @@ switching, `components/CloudSyncDefault.tsx`).
 - A device that never chose gets Cloud Sync while the server offers it, once
   onboarding is done and it's entitled (`CloudSyncDefault`): it seeds an empty
   account, pulls into a device without records, or asks Merge or Replace.
+  While Cloud Sync isn't offered, it gets iCloud or Drive the same way
+  (`PlatformSyncDefault`).
+- **New and existing installs** (ADR 0040 §2). Those defaults apply to every
+  new install. An install from before sync was free isn't switched: it keeps
+  the rule it had, where only a Supporter got sync without choosing, so one
+  that isn't a Supporter and never chose stays off until the User turns sync
+  on. `installedBeforeFreeSync` (device-local) tells them apart: the
+  preferences store's v16 persist migration sets it on any store saved by an
+  older version, and a new install's store keeps the default, false. The
+  decisions are `src/app/sync/syncDefaults.ts`.
 - A device already syncing through iCloud or Drive keeps it, and Settings →
   Sync offers the switch once, with the security reason (`cloudSyncOffer`).
 - `switchSyncOption` flushes the old option's pending edits, stops, resets the

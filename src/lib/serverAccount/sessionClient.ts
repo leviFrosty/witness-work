@@ -10,6 +10,7 @@ import {
   type SignedAccountOptions,
   sendSignedAccountOp,
 } from '@/lib/serverAccount/client'
+import { SESSION_CAPABILITIES } from '@/lib/serverAccount/capabilities'
 
 /**
  * The wire half of account sessions (docs/accounts-protocol.md, "Sessions"):
@@ -112,6 +113,7 @@ export async function sendSessionOpen(
       ...(proof.kind === 'attestation' && { attestation: proof.fields }),
       ...(device !== undefined && { device }),
       ...(isSessionAppVersion(appVersion) && { appVersion }),
+      capabilities: SESSION_CAPABILITIES,
     },
     options,
     {
@@ -145,9 +147,9 @@ export function parseOpenedSession(
 
 /**
  * `POST /accounts/v1/sessions/refresh`: replaces the refresh token, and tells
- * the session this build's version. A 401 means the session ended or expired
- * (its `reason` says which), and a new one has to be opened. Failures throw
- * `HttpError`.
+ * the session this build's version and `SESSION_CAPABILITIES`. A 401 means the
+ * session ended or expired (its `reason` says which), and a new one has to be
+ * opened. Failures throw `HttpError`.
  */
 export async function refreshSession(
   refreshToken: string,
@@ -159,6 +161,8 @@ export async function refreshSession(
     json: {
       refreshToken,
       ...(isSessionAppVersion(appVersion) && { appVersion }),
+      // Every time, so a session an older build opened gains them.
+      capabilities: SESSION_CAPABILITIES,
     },
     timeoutMs: ACCOUNT_TIMEOUT_MS,
     signal: options.signal,

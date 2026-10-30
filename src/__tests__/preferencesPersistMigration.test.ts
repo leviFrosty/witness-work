@@ -23,6 +23,7 @@ vi.mock('@/lib/locales', () => ({
 
 import {
   migrateDropProgressBarDetailsPreference,
+  migrateMarkInstalledBeforeFreeSync,
   migratePreferencesPersistedState,
   migrateShowPetHomeSection,
   migrateShowQuickActionsHomeSection,
@@ -32,6 +33,18 @@ import {
 import { mergePreferences } from '@/app/sync/preferencesMerge'
 import { NON_SYNCABLE_PREFERENCE_KEYS } from '@/lib/syncPreferencePolicy'
 
+/**
+ * The steps before v16, as each describe below tests them: v16 marks every
+ * migrated store as an install from before sync was free, tested on its own.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const migrateBefore16 = (state: any, version: number) => {
+  const migrated = migratePreferencesPersistedState(state, version)
+  if (!migrated || typeof migrated !== 'object') return migrated
+  const { installedBeforeFreeSync: _marker, ...rest } = migrated
+  return rest
+}
+
 describe('preferences persist migrate v0 → v1 (excluded/meeting weekdays → offDays/meetingDays)', () => {
   it('renames excludedWeekdays → offDays preserving the array', () => {
     const v0State = {
@@ -39,7 +52,7 @@ describe('preferences persist migrate v0 → v1 (excluded/meeting weekdays → o
       meetingWeekdays: [3],
     }
 
-    const migrated = migratePreferencesPersistedState(v0State, 0)
+    const migrated = migrateBefore16(v0State, 0)
 
     expect(migrated.offDays).toEqual([0, 6])
     expect(migrated.meetingDays).toEqual([3])
@@ -58,7 +71,7 @@ describe('preferences persist migrate v0 → v1 (excluded/meeting weekdays → o
       },
     }
 
-    const migrated = migratePreferencesPersistedState(v0State, 0)
+    const migrated = migrateBefore16(v0State, 0)
 
     expect(migrated.preferenceUpdatedAt.offDays).toBe(1700000000000)
     expect(migrated.preferenceUpdatedAt.meetingDays).toBe(1700000001000)
@@ -68,7 +81,7 @@ describe('preferences persist migrate v0 → v1 (excluded/meeting weekdays → o
   })
 
   it('fills sensible defaults when the old fields were missing entirely', () => {
-    const migrated = migratePreferencesPersistedState({}, 0)
+    const migrated = migrateBefore16({}, 0)
 
     expect(migrated).not.toHaveProperty('excludedWeekdays')
     expect(migrated).not.toHaveProperty('meetingWeekdays')
@@ -81,8 +94,8 @@ describe('preferences persist migrate v0 → v1 (excluded/meeting weekdays → o
       excludedWeekdays: [0, 6],
       meetingWeekdays: [3],
     }
-    const v1State = migratePreferencesPersistedState(v0State, 0)
-    const v1Again = migratePreferencesPersistedState(v1State, 1)
+    const v1State = migrateBefore16(v0State, 0)
+    const v1Again = migrateBefore16(v1State, 1)
 
     expect(JSON.stringify(v1Again)).toEqual(JSON.stringify(v1State))
   })
@@ -97,7 +110,7 @@ describe('preferences persist migrate v0 → v1 (excluded/meeting weekdays → o
       meetingDays: [6],
     }
 
-    const migrated = migratePreferencesPersistedState(mixedState, 0)
+    const migrated = migrateBefore16(mixedState, 0)
 
     expect(migrated.offDays).toEqual([4, 5])
     expect(migrated.meetingDays).toEqual([6])
@@ -113,7 +126,7 @@ describe('preferences persist migrate v1 → v2 (publisher → role)', () => {
       offDays: [0, 6],
     }
 
-    const migrated = migratePreferencesPersistedState(v1State, 1)
+    const migrated = migrateBefore16(v1State, 1)
 
     expect(migrated.role).toBe('regularPioneer')
     expect(migrated).not.toHaveProperty('publisher')
@@ -126,7 +139,7 @@ describe('preferences persist migrate v1 → v2 (publisher → role)', () => {
       publisher: 'publisher',
     }
 
-    const migrated = migratePreferencesPersistedState(v1State, 1)
+    const migrated = migrateBefore16(v1State, 1)
 
     expect(migrated.role).toBe('publisher')
     expect(migrated).not.toHaveProperty('publisher')
@@ -141,7 +154,7 @@ describe('preferences persist migrate v1 → v2 (publisher → role)', () => {
       },
     }
 
-    const migrated = migratePreferencesPersistedState(v1State, 1)
+    const migrated = migrateBefore16(v1State, 1)
 
     expect(migrated.preferenceUpdatedAt.role).toBe(1700000000000)
     expect(migrated.preferenceUpdatedAt.otherKey).toBe(1700000002000)
@@ -153,8 +166,8 @@ describe('preferences persist migrate v1 → v2 (publisher → role)', () => {
       publisher: 'specialPioneer',
       preferenceUpdatedAt: { publisher: 1700000000000 },
     }
-    const v2State = migratePreferencesPersistedState(v1State, 1)
-    const v2Again = migratePreferencesPersistedState(v2State, 2)
+    const v2State = migrateBefore16(v1State, 1)
+    const v2Again = migrateBefore16(v2State, 2)
 
     expect(JSON.stringify(v2Again)).toEqual(JSON.stringify(v2State))
   })
@@ -171,7 +184,7 @@ describe('preferences persist migrate v1 → v2 (publisher → role)', () => {
       },
     }
 
-    const migrated = migratePreferencesPersistedState(mixedState, 1)
+    const migrated = migrateBefore16(mixedState, 1)
 
     expect(migrated.role).toBe('specialPioneer')
     expect(migrated).not.toHaveProperty('publisher')
@@ -187,7 +200,7 @@ describe('preferences persist migrate v1 → v2 (publisher → role)', () => {
       publisher: 'regularPioneer',
     }
 
-    const migrated = migratePreferencesPersistedState(v0State, 0)
+    const migrated = migrateBefore16(v0State, 0)
 
     expect(migrated.offDays).toEqual([0, 6])
     expect(migrated.meetingDays).toEqual([3])
@@ -198,7 +211,7 @@ describe('preferences persist migrate v1 → v2 (publisher → role)', () => {
   })
 
   it('fills sensible defaults when the publisher field was missing entirely', () => {
-    const migrated = migratePreferencesPersistedState({}, 1)
+    const migrated = migrateBefore16({}, 1)
 
     expect(migrated).not.toHaveProperty('publisher')
     // The `role` default is filled at hydration time by combine(), so absence
@@ -222,7 +235,7 @@ describe('preferences persist migrate v2 → v3 (Profile extraction marker)', ()
       monthlyGoalOverride: 50,
     }
 
-    const migrated = migratePreferencesPersistedState(v2State, 2)
+    const migrated = migrateBefore16(v2State, 2)
 
     expect(migrated.name).toBe('Alice')
     expect(migrated.avatar).toEqual({ type: 'image', value: 'avatar://x' })
@@ -237,8 +250,8 @@ describe('preferences persist migrate v2 → v3 (Profile extraction marker)', ()
       role: 'regularPioneer',
       name: 'Alice',
     }
-    const v3State = migratePreferencesPersistedState(v2State, 2)
-    const v3Again = migratePreferencesPersistedState(v3State, 3)
+    const v3State = migrateBefore16(v2State, 2)
+    const v3Again = migrateBefore16(v3State, 3)
 
     expect(JSON.stringify(v3Again)).toEqual(JSON.stringify(v3State))
   })
@@ -252,7 +265,7 @@ describe('preferences persist migrate v2 → v3 (Profile extraction marker)', ()
       avatar: { type: 'image', value: 'avatar://x' },
     }
 
-    const migrated = migratePreferencesPersistedState(v0State, 0)
+    const migrated = migrateBefore16(v0State, 0)
 
     expect(migrated.offDays).toEqual([0, 6])
     expect(migrated.meetingDays).toEqual([3])
@@ -271,7 +284,7 @@ describe('preferences persist migrate v3 → v4 (pioneerStartDate → tenureStar
       pioneerStartDate: '2020-01-01T00:00:00.000Z',
     }
 
-    const migrated = migratePreferencesPersistedState(v3State, 3)
+    const migrated = migrateBefore16(v3State, 3)
 
     expect(migrated.tenureStartDate).toBe('2020-01-01T00:00:00.000Z')
     expect(migrated).not.toHaveProperty('pioneerStartDate')
@@ -283,7 +296,7 @@ describe('preferences persist migrate v3 → v4 (pioneerStartDate → tenureStar
       'specialPioneer',
       'circuitOverseer',
     ] as const) {
-      const migrated = migratePreferencesPersistedState(
+      const migrated = migrateBefore16(
         { role, pioneerStartDate: '2021-06-15T00:00:00.000Z' },
         3
       )
@@ -292,7 +305,7 @@ describe('preferences persist migrate v3 → v4 (pioneerStartDate → tenureStar
   })
 
   it('keeps the value for regularAuxiliary (Auxiliary Pioneer tenure)', () => {
-    const migrated = migratePreferencesPersistedState(
+    const migrated = migrateBefore16(
       {
         role: 'regularAuxiliary',
         pioneerStartDate: '2024-03-01T00:00:00.000Z',
@@ -311,7 +324,7 @@ describe('preferences persist migrate v3 → v4 (pioneerStartDate → tenureStar
       pioneerStartDate: '2020-01-01T00:00:00.000Z',
     }
 
-    const migrated = migratePreferencesPersistedState(v3State, 3)
+    const migrated = migrateBefore16(v3State, 3)
 
     expect(migrated.tenureStartDate).toBeNull()
     expect(migrated).not.toHaveProperty('pioneerStartDate')
@@ -323,7 +336,7 @@ describe('preferences persist migrate v3 → v4 (pioneerStartDate → tenureStar
       pioneerStartDate: '2020-01-01T00:00:00.000Z',
     }
 
-    const migrated = migratePreferencesPersistedState(v3State, 3)
+    const migrated = migrateBefore16(v3State, 3)
 
     expect(migrated.tenureStartDate).toBeNull()
     expect(migrated).not.toHaveProperty('pioneerStartDate')
@@ -339,7 +352,7 @@ describe('preferences persist migrate v3 → v4 (pioneerStartDate → tenureStar
       },
     }
 
-    const migrated = migratePreferencesPersistedState(v3State, 3)
+    const migrated = migrateBefore16(v3State, 3)
 
     expect(migrated.preferenceUpdatedAt.tenureStartDate).toBe(1700000000000)
     expect(migrated.preferenceUpdatedAt.otherKey).toBe(1700000001000)
@@ -356,7 +369,7 @@ describe('preferences persist migrate v3 → v4 (pioneerStartDate → tenureStar
       },
     }
 
-    const migrated = migratePreferencesPersistedState(v3State, 3)
+    const migrated = migrateBefore16(v3State, 3)
 
     expect(migrated.preferenceUpdatedAt).not.toHaveProperty('pioneerStartDate')
     expect(migrated.preferenceUpdatedAt).not.toHaveProperty('tenureStartDate')
@@ -368,8 +381,8 @@ describe('preferences persist migrate v3 → v4 (pioneerStartDate → tenureStar
       role: 'regularPioneer',
       pioneerStartDate: '2020-01-01T00:00:00.000Z',
     }
-    const v4State = migratePreferencesPersistedState(v3State, 3)
-    const v4Again = migratePreferencesPersistedState(v4State, 4)
+    const v4State = migrateBefore16(v3State, 3)
+    const v4Again = migrateBefore16(v4State, 4)
 
     expect(JSON.stringify(v4Again)).toEqual(JSON.stringify(v4State))
   })
@@ -381,7 +394,7 @@ describe('preferences persist migrate v3 → v4 (pioneerStartDate → tenureStar
       tenureStartDate: '2022-05-15T00:00:00.000Z',
     }
 
-    const migrated = migratePreferencesPersistedState(mixedState, 3)
+    const migrated = migrateBefore16(mixedState, 3)
 
     expect(migrated.tenureStartDate).toBe('2022-05-15T00:00:00.000Z')
     expect(migrated).not.toHaveProperty('pioneerStartDate')
@@ -394,7 +407,7 @@ describe('preferences persist migrate v3 → v4 (pioneerStartDate → tenureStar
       pioneerStartDate: '2020-01-01T00:00:00.000Z',
     }
 
-    const migrated = migratePreferencesPersistedState(v0State, 0)
+    const migrated = migrateBefore16(v0State, 0)
 
     expect(migrated.role).toBe('regularPioneer')
     expect(migrated.tenureStartDate).toBe('2020-01-01T00:00:00.000Z')
@@ -409,14 +422,14 @@ describe('preferences persist migrate v3 → v4 (pioneerStartDate → tenureStar
       role: 'regularPioneer',
       pioneerStartDate: null,
     }
-    const migrated = migratePreferencesPersistedState(v3State, 3)
+    const migrated = migrateBefore16(v3State, 3)
     expect(migrated.tenureStartDate).toBeNull()
     expect(migrated).not.toHaveProperty('pioneerStartDate')
   })
 
   it('leaves a payload without pioneerStartDate untouched (no synthesized field)', () => {
     const v3State = { role: 'regularPioneer' }
-    const migrated = migratePreferencesPersistedState(v3State, 3)
+    const migrated = migrateBefore16(v3State, 3)
     expect(migrated).not.toHaveProperty('pioneerStartDate')
     // The field default is filled at hydration time by combine(); the
     // migration doesn't need to introduce the new key when no legacy value
@@ -432,7 +445,7 @@ describe('preferences persist migrate v4 → v5 (startOfWeek 0 → Auto)', () =>
       preferenceUpdatedAt: { startOfWeek: 1700000000000, role: 1700000001000 },
     }
 
-    const migrated = migratePreferencesPersistedState(v4State, 4)
+    const migrated = migrateBefore16(v4State, 4)
 
     expect(migrated).not.toHaveProperty('startOfWeek')
     // The timestamp is dropped too so iCloud LWW lets an explicit value from
@@ -447,22 +460,22 @@ describe('preferences persist migrate v4 → v5 (startOfWeek 0 → Auto)', () =>
       preferenceUpdatedAt: { startOfWeek: 1700000000000 },
     }
 
-    const migrated = migratePreferencesPersistedState(v4State, 4)
+    const migrated = migrateBefore16(v4State, 4)
 
     expect(migrated.startOfWeek).toBe(1)
     expect(migrated.preferenceUpdatedAt.startOfWeek).toBe(1700000000000)
   })
 
   it('leaves a payload without startOfWeek untouched', () => {
-    const migrated = migratePreferencesPersistedState({ role: 'publisher' }, 4)
+    const migrated = migrateBefore16({ role: 'publisher' }, 4)
     expect(migrated).not.toHaveProperty('startOfWeek')
     expect(migrated.role).toBe('publisher')
   })
 
   it('is idempotent — re-running on an already-v5 state is a no-op', () => {
     const v4State = { startOfWeek: 0 }
-    const v5State = migratePreferencesPersistedState(v4State, 4)
-    const v5Again = migratePreferencesPersistedState(v5State, 5)
+    const v5State = migrateBefore16(v4State, 4)
+    const v5Again = migrateBefore16(v5State, 5)
     expect(JSON.stringify(v5Again)).toEqual(JSON.stringify(v5State))
   })
 
@@ -473,7 +486,7 @@ describe('preferences persist migrate v4 → v5 (startOfWeek 0 → Auto)', () =>
       startOfWeek: 0,
     }
 
-    const migrated = migratePreferencesPersistedState(v0State, 0)
+    const migrated = migrateBefore16(v0State, 0)
 
     expect(migrated).not.toHaveProperty('startOfWeek')
     expect(migrated.role).toBe('regularPioneer')
@@ -483,7 +496,7 @@ describe('preferences persist migrate v4 → v5 (startOfWeek 0 → Auto)', () =>
 
 describe('preferences persist migrate v5 → v6 (Monthly Goal overrides)', () => {
   it('converts serialized Date entries to YYYY-MM keys and preserves decimal hours', () => {
-    const migrated = migratePreferencesPersistedState(
+    const migrated = migrateBefore16(
       {
         oneOffGoalHours: [
           { month: '2026-11-01T00:00:00.000Z', hours: 60.5 },
@@ -501,7 +514,7 @@ describe('preferences persist migrate v5 → v6 (Monthly Goal overrides)', () =>
   })
 
   it('uses the last valid duplicate for a month and filters malformed, negative, and nonfinite entries', () => {
-    const migrated = migratePreferencesPersistedState(
+    const migrated = migrateBefore16(
       {
         oneOffGoalHours: [
           { month: '2026-11-01T00:00:00.000Z', hours: 55 },
@@ -519,7 +532,7 @@ describe('preferences persist migrate v5 → v6 (Monthly Goal overrides)', () =>
   })
 
   it('also supports an in-memory Date value', () => {
-    const migrated = migratePreferencesPersistedState(
+    const migrated = migrateBefore16(
       {
         oneOffGoalHours: [{ month: new Date(2026, 6, 15), hours: 30.5 }],
       },
@@ -530,7 +543,7 @@ describe('preferences persist migrate v5 → v6 (Monthly Goal overrides)', () =>
   })
 
   it('renames the iCloud LWW timestamp key', () => {
-    const migrated = migratePreferencesPersistedState(
+    const migrated = migrateBefore16(
       {
         oneOffGoalHours: [],
         preferenceUpdatedAt: {
@@ -549,7 +562,7 @@ describe('preferences persist migrate v5 → v6 (Monthly Goal overrides)', () =>
   })
 
   it('prefers and sanitizes the canonical map when both shapes coexist', () => {
-    const migrated = migratePreferencesPersistedState(
+    const migrated = migrateBefore16(
       {
         oneOffGoalHours: [{ month: '2026-11-01T00:00:00.000Z', hours: 60 }],
         monthlyGoalOverrides: {
@@ -574,14 +587,14 @@ describe('preferences persist migrate v5 → v6 (Monthly Goal overrides)', () =>
     const v5State = {
       oneOffGoalHours: [{ month: '2026-11-01T00:00:00.000Z', hours: 60 }],
     }
-    const v6State = migratePreferencesPersistedState(v5State, 5)
-    const v6Again = migratePreferencesPersistedState(v6State, 6)
+    const v6State = migrateBefore16(v5State, 5)
+    const v6Again = migrateBefore16(v6State, 6)
 
     expect(JSON.stringify(v6Again)).toEqual(JSON.stringify(v6State))
   })
 
   it('chains cleanly from v0 through all preference migrations', () => {
-    const migrated = migratePreferencesPersistedState(
+    const migrated = migrateBefore16(
       {
         publisher: 'regularPioneer',
         excludedWeekdays: [0, 6],
@@ -599,7 +612,7 @@ describe('preferences persist migrate v5 → v6 (Monthly Goal overrides)', () =>
 
 describe('preferences persist migrate v6 → v7 (remove Profile Card shader)', () => {
   it('drops the retired shader preferences and their iCloud timestamps', () => {
-    const migrated = migratePreferencesPersistedState(
+    const migrated = migrateBefore16(
       {
         profileCardShaderEnabled: true,
         profileCardShaderId: 'holographic',
@@ -627,13 +640,13 @@ describe('preferences persist migrate v6 → v7 (remove Profile Card shader)', (
 
   it('is idempotent on an already-v7 state', () => {
     const v7State = { role: 'publisher' }
-    expect(migratePreferencesPersistedState(v7State, 7)).toBe(v7State)
+    expect(migrateBefore16(v7State, 7)).toEqual(v7State)
   })
 })
 
 describe('preferences persist migrate v7 → v8 (remove Milestone reveal flags)', () => {
   it('drops the retired reveal flags', () => {
-    const migrated = migratePreferencesPersistedState(
+    const migrated = migrateBefore16(
       {
         seenMilestoneUpdateReveal: true,
         dismissedMilestoneRevealOnce: false,
@@ -649,13 +662,13 @@ describe('preferences persist migrate v7 → v8 (remove Milestone reveal flags)'
 
   it('is idempotent on an already-v8 state', () => {
     const v8State = { role: 'publisher' }
-    expect(migratePreferencesPersistedState(v8State, 8)).toBe(v8State)
+    expect(migrateBefore16(v8State, 8)).toEqual(v8State)
   })
 })
 
 describe('preferences persist migrate v8 → v9 (remove Founding Supporter reveal flag)', () => {
   it('drops the never-set reveal flag', () => {
-    const migrated = migratePreferencesPersistedState(
+    const migrated = migrateBefore16(
       { seenFoundingSupporterReveal: false, role: 'regularPioneer' },
       8
     )
@@ -666,13 +679,13 @@ describe('preferences persist migrate v8 → v9 (remove Founding Supporter revea
 
   it('is idempotent on an already-v9 state', () => {
     const v9State = { role: 'publisher' }
-    expect(migratePreferencesPersistedState(v9State, 9)).toBe(v9State)
+    expect(migrateBefore16(v9State, 9)).toEqual(v9State)
   })
 })
 
 describe('preferences persist migrate v9 → v10 (remove onboarding intents)', () => {
   it('drops the intents and their iCloud timestamp', () => {
-    const migrated = migratePreferencesPersistedState(
+    const migrated = migrateBefore16(
       {
         onboardingIntents: ['trackTime', 'planWeek'],
         role: 'regularPioneer',
@@ -692,13 +705,13 @@ describe('preferences persist migrate v9 → v10 (remove onboarding intents)', (
 
   it('is idempotent on an already-v10 state', () => {
     const v10State = { role: 'publisher' }
-    expect(migratePreferencesPersistedState(v10State, 10)).toBe(v10State)
+    expect(migrateBefore16(v10State, 10)).toEqual(v10State)
   })
 })
 
 describe('preferences persist migrate v10 → v11 (unchosen Recent Visit sort → Suggested)', () => {
   it('moves a never-chosen recentConversation sort to suggested, descending', () => {
-    const migrated = migratePreferencesPersistedState(
+    const migrated = migrateBefore16(
       {
         contactSort: 'recentConversation',
         contactSortDirection: 'desc',
@@ -713,7 +726,7 @@ describe('preferences persist migrate v10 → v11 (unchosen Recent Visit sort �
 
   it('leaves the timestamps alone, so a real choice elsewhere still wins', () => {
     const timestamps = { role: 1700000002000 }
-    const migrated = migratePreferencesPersistedState(
+    const migrated = migrateBefore16(
       { contactSort: 'recentConversation', preferenceUpdatedAt: timestamps },
       10
     )
@@ -738,7 +751,7 @@ describe('preferences persist migrate v10 → v11 (unchosen Recent Visit sort �
       preferenceUpdatedAt: { contactSort: 1700000000000 },
     }
 
-    expect(migratePreferencesPersistedState(state, 10)).toBe(state)
+    expect(migrateBefore16(state, 10)).toEqual(state)
   })
 
   it('keeps the sort when only its direction was set', () => {
@@ -748,19 +761,19 @@ describe('preferences persist migrate v10 → v11 (unchosen Recent Visit sort �
       preferenceUpdatedAt: { contactSortDirection: 1700000000000 },
     }
 
-    expect(migratePreferencesPersistedState(state, 10)).toBe(state)
+    expect(migrateBefore16(state, 10)).toEqual(state)
   })
 
   it('leaves every other sort alone', () => {
     for (const contactSort of ['az', 'suggested', 'pinStaleness']) {
       const state = { contactSort, contactSortDirection: 'asc' }
-      expect(migratePreferencesPersistedState(state, 10)).toBe(state)
+      expect(migrateBefore16(state, 10)).toEqual(state)
     }
   })
 
   it('is idempotent on an already-v11 state', () => {
     const v11State = { contactSort: 'recentConversation' }
-    expect(migratePreferencesPersistedState(v11State, 11)).toBe(v11State)
+    expect(migrateBefore16(v11State, 11)).toEqual(v11State)
   })
 
   it("can't be undone by a sync from a device that hasn't migrated", () => {
@@ -807,7 +820,7 @@ describe('preferences persist migrate v10 → v11 (unchosen Recent Visit sort �
 
 describe('preferences persist migrate v11 → v12 (Pet Home section starts visible)', () => {
   it('adds pet to a saved visibility map that lacks it', () => {
-    const migrated = migratePreferencesPersistedState(
+    const migrated = migrateBefore16(
       {
         homeScreenElements: { mileage: false, timer: true },
         preferenceUpdatedAt: { homeScreenElements: 1700000000000 },
@@ -831,13 +844,13 @@ describe('preferences persist migrate v11 → v12 (Pet Home section starts visib
     const hidden = {
       homeScreenElements: { pet: false, thisWeek: true, quickActions: true },
     }
-    expect(migratePreferencesPersistedState(hidden, 11)).toEqual(hidden)
+    expect(migrateBefore16(hidden, 11)).toEqual(hidden)
     const once = migrateShowPetHomeSection({ homeScreenElements: {} })
     expect(migrateShowPetHomeSection(once)).toEqual(once)
   })
 
   it('leaves a blob without a visibility map to the defaults', () => {
-    expect(migratePreferencesPersistedState({}, 11)).toEqual({})
+    expect(migrateBefore16({}, 11)).toEqual({})
     expect(migrateShowPetHomeSection(null)).toBeNull()
   })
 
@@ -845,14 +858,14 @@ describe('preferences persist migrate v11 → v12 (Pet Home section starts visib
     const v12 = {
       homeScreenElements: { timer: true, thisWeek: false, quickActions: true },
     }
-    expect(migratePreferencesPersistedState(v12, 12)).toEqual(v12)
+    expect(migrateBefore16(v12, 12)).toEqual(v12)
   })
 })
 
 describe('preferences persist migrate v12 → v13 (This Week starts visible)', () => {
   it('adds This Week to a visibility map saved before it existed', () => {
     // An April 2026 install: every section it knew about, no `thisWeek`.
-    const migrated = migratePreferencesPersistedState(
+    const migrated = migrateBefore16(
       {
         homeScreenElements: {
           approachingConversations: true,
@@ -881,25 +894,25 @@ describe('preferences persist migrate v12 → v13 (This Week starts visible)', (
     const hidden = {
       homeScreenElements: { thisWeek: false, quickActions: true },
     }
-    expect(migratePreferencesPersistedState(hidden, 12)).toEqual(hidden)
+    expect(migrateBefore16(hidden, 12)).toEqual(hidden)
     const once = migrateShowThisWeekHomeSection({ homeScreenElements: {} })
     expect(migrateShowThisWeekHomeSection(once)).toEqual(once)
   })
 
   it('leaves a blob without a visibility map to the defaults', () => {
-    expect(migratePreferencesPersistedState({}, 12)).toEqual({})
+    expect(migrateBefore16({}, 12)).toEqual({})
     expect(migrateShowThisWeekHomeSection(undefined)).toBeUndefined()
   })
 
   it('does not run for a v13 blob', () => {
     const v13 = { homeScreenElements: { timer: true, quickActions: true } }
-    expect(migratePreferencesPersistedState(v13, 13)).toEqual(v13)
+    expect(migrateBefore16(v13, 13)).toEqual(v13)
   })
 })
 
 describe('preferences persist migrate v13 → v14 (remove progress bar details)', () => {
   it('drops the unused preference and its iCloud timestamp', () => {
-    const migrated = migratePreferencesPersistedState(
+    const migrated = migrateBefore16(
       {
         displayDetailsOnProgressBarHomeScreen: true,
         role: 'regularPioneer',
@@ -925,14 +938,14 @@ describe('preferences persist migrate v13 → v14 (remove progress bar details)'
 
   it('is idempotent on an already-v14 state', () => {
     const v14State = { role: 'publisher', preferenceUpdatedAt: { role: 1 } }
-    expect(migratePreferencesPersistedState(v14State, 14)).toBe(v14State)
+    expect(migrateBefore16(v14State, 14)).toEqual(v14State)
     expect(migrateDropProgressBarDetailsPreference(v14State)).toBe(v14State)
   })
 })
 
 describe('preferences persist migrate v14 → v15 (Quick Actions starts visible)', () => {
   it('adds Quick Actions to a saved visibility map that lacks it', () => {
-    const migrated = migratePreferencesPersistedState(
+    const migrated = migrateBefore16(
       {
         homeScreenElements: { pet: true, thisWeek: false, timer: true },
         preferenceUpdatedAt: { homeScreenElements: 1700000000000 },
@@ -953,18 +966,64 @@ describe('preferences persist migrate v14 → v15 (Quick Actions starts visible)
 
   it('keeps a hidden Quick Actions and is idempotent', () => {
     const hidden = { homeScreenElements: { quickActions: false } }
-    expect(migratePreferencesPersistedState(hidden, 14)).toEqual(hidden)
+    expect(migrateBefore16(hidden, 14)).toEqual(hidden)
     const once = migrateShowQuickActionsHomeSection({ homeScreenElements: {} })
     expect(migrateShowQuickActionsHomeSection(once)).toEqual(once)
   })
 
   it('leaves a blob without a visibility map to the defaults', () => {
-    expect(migratePreferencesPersistedState({}, 14)).toEqual({})
+    expect(migrateBefore16({}, 14)).toEqual({})
     expect(migrateShowQuickActionsHomeSection(null)).toBeNull()
   })
 
   it('does not run for a v15 blob', () => {
     const v15 = { homeScreenElements: { timer: true } }
-    expect(migratePreferencesPersistedState(v15, 15)).toEqual(v15)
+    expect(migrateBefore16(v15, 15)).toEqual(v15)
+  })
+})
+
+describe('preferences persist migrate v15 → v16 (installed before sync was free)', () => {
+  it('marks a store saved by an older version as an existing install', () => {
+    const migrated = migratePreferencesPersistedState(
+      { onboardingComplete: false, iCloudSyncEnabled: false },
+      15
+    )
+    // The key is missing from the old blob; it must not read as the default.
+    expect(migrated.installedBeforeFreeSync).toBe(true)
+  })
+
+  it('marks every older version, onboarded or not', () => {
+    for (const version of [0, 5, 14])
+      expect(
+        migratePreferencesPersistedState({}, version).installedBeforeFreeSync
+      ).toBe(true)
+  })
+
+  it('clears the Supporter lapse pause once', () => {
+    const migrated = migratePreferencesPersistedState(
+      {
+        iCloudSyncEnabled: true,
+        iCloudSyncPausedForLapse: true,
+        preferenceUpdatedAt: { iCloudSyncPausedForLapse: 1700000000000 },
+      },
+      15
+    )
+    expect(migrated).not.toHaveProperty('iCloudSyncPausedForLapse')
+    expect(migrated.preferenceUpdatedAt).toEqual({})
+    // The User's choice to sync stands, so sync resumes.
+    expect(migrated.iCloudSyncEnabled).toBe(true)
+  })
+
+  it('is idempotent and never syncs', () => {
+    const once = migrateMarkInstalledBeforeFreeSync({ a: 1 })
+    expect(migrateMarkInstalledBeforeFreeSync(once)).toEqual(once)
+    expect(migrateMarkInstalledBeforeFreeSync(null)).toBeNull()
+    expect(NON_SYNCABLE_PREFERENCE_KEYS.has('installedBeforeFreeSync')).toBe(
+      true
+    )
+  })
+
+  it('does not run for a v16 blob', () => {
+    expect(migratePreferencesPersistedState({}, 16)).toEqual({})
   })
 })

@@ -4,6 +4,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 const runtime = vi.hoisted(() => ({
   setPreferences: vi.fn(),
+  isSupporter: true,
+  installedBeforeFreeSync: true,
   remoteChangeListeners: [] as Array<() => void>,
   appStateListeners: [] as Array<(state: string) => void>,
 }))
@@ -24,13 +26,14 @@ vi.mock('react-native', () => ({
   },
 }))
 vi.mock('@/hooks/useIsSupporter', () => ({
-  default: () => ({ isSupporter: true }),
+  default: () => ({ isSupporter: runtime.isSupporter }),
 }))
 vi.mock('@/stores/preferences', () => ({
   usePreferences: Object.assign(
     () => ({
       iCloudSyncEnabled: false,
       iCloudSyncSetByUser: false,
+      installedBeforeFreeSync: runtime.installedBeforeFreeSync,
     }),
     { getState: () => ({ set: runtime.setPreferences }) }
   ),
@@ -62,6 +65,8 @@ let renderer: ReactTestRenderer | null = null
 
 beforeEach(() => {
   vi.clearAllMocks()
+  runtime.isSupporter = true
+  runtime.installedBeforeFreeSync = true
   runtime.remoteChangeListeners = []
   runtime.appStateListeners = []
 })
@@ -71,10 +76,10 @@ afterEach(() => {
   renderer = null
 })
 
-describe('SupporterSyncDefault', () => {
+describe('PlatformSyncDefault', () => {
   it('waits for a backup still downloading instead of seeding', async () => {
-    const { default: SupporterSyncDefault } = await import(
-      './SupporterSyncDefault'
+    const { default: PlatformSyncDefault } = await import(
+      './PlatformSyncDefault'
     )
     const { iCloudSync } = await import('@/app/sync/iCloudSync')
     vi.mocked(iCloudSync.resolveInitialEnable)
@@ -82,7 +87,7 @@ describe('SupporterSyncDefault', () => {
       .mockResolvedValueOnce({ outcome: 'pull', remote } as never)
 
     await act(async () => {
-      renderer = create(<SupporterSyncDefault />)
+      renderer = create(<PlatformSyncDefault />)
     })
     expect(iCloudSync.applySeedEnable).not.toHaveBeenCalled()
     expect(iCloudSync.applyPullEnable).not.toHaveBeenCalled()
@@ -103,8 +108,8 @@ describe('SupporterSyncDefault', () => {
   })
 
   it('decides again at the next foreground', async () => {
-    const { default: SupporterSyncDefault } = await import(
-      './SupporterSyncDefault'
+    const { default: PlatformSyncDefault } = await import(
+      './PlatformSyncDefault'
     )
     const { iCloudSync } = await import('@/app/sync/iCloudSync')
     // A slow initial scan of an empty container: no file will land to report.
@@ -113,7 +118,7 @@ describe('SupporterSyncDefault', () => {
       .mockResolvedValueOnce({ outcome: 'seed' })
 
     await act(async () => {
-      renderer = create(<SupporterSyncDefault />)
+      renderer = create(<PlatformSyncDefault />)
     })
     expect(iCloudSync.applySeedEnable).not.toHaveBeenCalled()
 
@@ -126,20 +131,48 @@ describe('SupporterSyncDefault', () => {
 })
 
 it('shows a persistent resolution prompt instead of silently giving up on a conflict', async () => {
-  const { default: SupporterSyncDefault } = await import(
-    './SupporterSyncDefault'
-  )
+  const { default: PlatformSyncDefault } = await import('./PlatformSyncDefault')
   const { iCloudSync } = await import('@/app/sync/iCloudSync')
   vi.mocked(iCloudSync.resolveInitialEnable).mockResolvedValueOnce({
     outcome: 'conflict',
     remote,
   } as never)
   await act(async () => {
-    renderer = create(<SupporterSyncDefault />)
+    renderer = create(<PlatformSyncDefault />)
   })
   expect(runtime.setPreferences).toHaveBeenCalledWith({
     iCloudSyncNeedsResolution: true,
   })
   expect(iCloudSync.applySeedEnable).not.toHaveBeenCalled()
   expect(iCloudSync.applyPullEnable).not.toHaveBeenCalled()
+})
+
+describe('who gets it (ADR 0040 §2)', () => {
+  it('turns sync on for a new install that isn’t a Supporter', async () => {
+    runtime.isSupporter = false
+    runtime.installedBeforeFreeSync = false
+    const { default: PlatformSyncDefault } = await import(
+      './PlatformSyncDefault'
+    )
+    const { iCloudSync } = await import('@/app/sync/iCloudSync')
+    vi.mocked(iCloudSync.resolveInitialEnable).mockResolvedValueOnce({
+      outcome: 'seed',
+    })
+    await act(async () => {
+      renderer = create(<PlatformSyncDefault />)
+    })
+    expect(iCloudSync.applySeedEnable).toHaveBeenCalledWith('supporter_default')
+  })
+
+  it('leaves an existing install that isn’t a Supporter as it was', async () => {
+    runtime.isSupporter = false
+    const { default: PlatformSyncDefault } = await import(
+      './PlatformSyncDefault'
+    )
+    const { iCloudSync } = await import('@/app/sync/iCloudSync')
+    await act(async () => {
+      renderer = create(<PlatformSyncDefault />)
+    })
+    expect(iCloudSync.resolveInitialEnable).not.toHaveBeenCalled()
+  })
 })

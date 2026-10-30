@@ -264,9 +264,13 @@ _Avoid_: "meeting weekday", "Kingdom Hall day".
 
 ### Sync
 
+**Cloud Sync**:
+Cross-device replication of the User's data through ww-api, end-to-end encrypted, across iPhone, Android and the web (ADR 0030). The default for a new install. Each device syncs through one option: Cloud Sync, **iCloud Sync**, or off. All sync is free for everyone (ADR 0040).
+_Avoid_: "cloud sync" in lower case for iCloud or Google Drive.
+
 **iCloud Sync**:
-Cross-device replication of the User's data via Apple's iCloud (CloudKit / ubiquity container). A **Supporter** feature, available on iOS only; Android has no cross-device sync and moves data with backup files.
-_Avoid_: "cloud sync" (use iCloud Sync; iCloud is the only sync the app has).
+Cross-device replication of the User's data via Apple's iCloud (ubiquity container) on iOS, or a hidden Google Drive folder on Android (ADR 0019). Free for everyone; it syncs only with devices of the same platform on the same option.
+_Avoid_: calling it a Supporter feature (ADR 0040 §1).
 
 **Image Sync**:
 A separable, opt-in subsystem that replicates avatar binaries (the User's profile avatar and per-Contact avatars) through the iCloud ubiquity container. Distinct from iCloud Sync of structured data — Image Sync can be turned off independently, and a sender disabling Image Sync leaves receivers with iCloud Markers that never resolve.
@@ -293,7 +297,7 @@ _Avoid_: "cluster" in user copy.
 ### Monetization
 
 **Supporter**:
-A User with an active subscription (monthly, annual, or a promotional grant) or a manually gifted Lifetime Supporter grant. Tips never count. The exact rule, shared by the app and ww-api, is ADR 0014. Unlocks the features gated in `src/lib/featureAccess.ts` — **iCloud Sync**, **Route Planning** (which ww-api also refuses to non-Supporters), custom accent color (which also covers avatar and Contact background colors), and custom app icon — plus Scribe AI's larger **Usage Windows**, which ww-api enforces. Turning off renewal does not end paid access; Supporter status ends when no qualifying entitlement remains active.
+A User with an active subscription (monthly, annual, or a promotional grant) or a manually gifted Lifetime Supporter grant. Tips never count. The exact rule, shared by the app and ww-api, is ADR 0014. Unlocks the features gated in `src/lib/featureAccess.ts` — **Route Planning** (which ww-api also refuses to non-Supporters), custom accent color (which also covers avatar and Contact background colors), custom app icon, and buddy color — plus Scribe AI's larger **Usage Windows**, which ww-api enforces. Turning off renewal does not end paid access; Supporter status ends when no qualifying entitlement remains active.
 _Avoid_: "subscriber", "premium user", "paid user" (Supporter is the canonical, donation-framed term used throughout the UI).
 
 **Subscription Cancellation**:
@@ -301,8 +305,8 @@ Turning off renewal of a Supporter subscription. Paid access can continue until 
 _Avoid_: treating cancellation as immediate loss of Supporter access.
 
 **Supporter Pause**:
-A break from paying that a Supporter chooses in Manage Subscription instead of cancelling. It starts when the current period ends and resumes automatically. On iOS it is a free App Store promotional offer for 1, 3, or 6 months, at most once per 12 months; Supporter features, including iCloud Sync, stay on. On Android it is Google Play's native pause for 1–3 months, during which Supporter features pause too. See ADR 0016.
-_Avoid_: confusing it with iCloud sync "pausing" when Supporter access lapses; calling the iOS version a pause of access.
+A break from paying that a Supporter chooses in Manage Subscription instead of cancelling. It starts when the current period ends and resumes automatically. On iOS it is a free App Store promotional offer for 1, 3, or 6 months, at most once per 12 months; Supporter features stay on. On Android it is Google Play's native pause for 1–3 months, during which Supporter features pause too. See ADR 0016.
+_Avoid_: calling the iOS version a pause of access. Sync never pauses with Supporter access (ADR 0040).
 
 **Subscription Lapse**:
 The end of access provided by a Supporter subscription, including expiration after billing trouble. Lapse feedback applies within 30 days of confirmed expiration, including any billing grace period, and excludes refunds and free trials. Resubscribing removes lapse-feedback eligibility. See ADR 0013.
@@ -478,7 +482,7 @@ _Avoid_: "time display format" (legacy label; the persisted key `timeDisplayForm
 - A **Plan** is forecast; a **Time Entry** is history. They are not joined by data.
 - The **Assistant** produces **Recommendations**; an accepted Recommendation becomes one or more **Day Plans**.
 - An **Off Day** is a hard exclusion for the **Assistant**; a **Meeting Day** is a soft cap. If a day is both, **Off Day** wins.
-- **iCloud Sync** is one of the **Supporter**-gated features (see **Supporter** for the full set). **Image Sync** is opt-in within iCloud Sync and toggles independently per device.
+- **Cloud Sync**, **iCloud Sync** and Google Drive Sync are for everyone, never **Supporter**-gated, and never pause when Supporter access lapses (ADR 0040 §1). **Image Sync** is opt-in within iCloud Sync and toggles independently per device.
 - A **User** can independently be a **Supporter**, a **Donor**, both, or neither. Donor status comes from one or more **Tips**; Supporter status comes from an active subscription or a Lifetime Supporter grant (ADR 0014).
 - A **Publisher** maps to at most one **Tenure Type**. **Full-Time Service** covers regular pioneer, special pioneer, and circuit overseer. **Auxiliary Pioneer** covers only regularAuxiliary. Regular Publisher and Custom map to no Tenure Type.
 - The **Tenure Start Date** persists across Publisher changes within the same Tenure Type and resets across Tenure Type changes.
@@ -508,7 +512,7 @@ _Avoid_: "time display format" (legacy label; the persisted key `timeDisplayForm
 >
 > **Dev:** A User sends a **Tip** from the **Paywall**. Are they a **Supporter**?
 >
-> **Domain expert:** They're a **Donor** — gets the heart icon. Tips don't grant Supporter features. Supporter status comes from an active subscription (or a gifted Lifetime grant) and unlocks **iCloud Sync** and personalization.
+> **Domain expert:** They're a **Donor** — gets the heart icon. Tips don't grant Supporter features. Supporter status comes from an active subscription (or a gifted Lifetime grant) and unlocks **Route Planning**, higher Scribe AI limits and personalization. Sync is for everyone.
 
 ## Flagged ambiguities
 

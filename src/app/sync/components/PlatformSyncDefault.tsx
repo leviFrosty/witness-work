@@ -4,6 +4,7 @@ import useIsSupporter from '@/hooks/useIsSupporter'
 import { usePreferences } from '@/stores/preferences'
 import { iCloudSync } from '@/app/sync/iCloudSync'
 import { analytics } from '@/lib/analytics'
+import { platformSyncDefaultApplies } from '@/app/sync/syncDefaults'
 import { hasSyncTransport, syncTransport } from '@/lib/syncTransport'
 import { registeredCloudSyncTransport } from '@/lib/syncTransport/provider'
 
@@ -22,23 +23,29 @@ export const cloudSyncDecidesDefault = (state: {
 
 // Auto-enable only before an explicit user choice. Conflicts stay disabled
 // until the user resolves them in Settings through FirstEnableSheet. Without
-// Cloud Sync (its switch off on the server), iCloud or Drive, as before it.
-export default function SupporterSyncDefault() {
+// Cloud Sync (its switch off on the server), iCloud or Drive: for every new
+// install, and for an older install's Supporter, as before (ADR 0040 §2).
+export default function PlatformSyncDefault() {
   const { isSupporter } = useIsSupporter()
   const {
     iCloudSyncEnabled,
     iCloudSyncSetByUser,
     syncProvider,
     cloudSyncConfig,
+    installedBeforeFreeSync,
   } = usePreferences()
   const cloudDecides = cloudSyncDecidesDefault({
     syncProvider,
     cloudSyncConfig,
   })
+  const applies = platformSyncDefaultApplies({
+    installedBeforeFreeSync,
+    isSupporter,
+  })
 
   useEffect(() => {
     if (!hasSyncTransport()) return
-    if (!isSupporter) return
+    if (!applies) return
     if (iCloudSyncSetByUser) return
     if (iCloudSyncEnabled) return
     if (cloudDecides) return
@@ -118,7 +125,7 @@ export default function SupporterSyncDefault() {
     void attempt()
 
     return settle
-  }, [isSupporter, iCloudSyncSetByUser, iCloudSyncEnabled, cloudDecides])
+  }, [applies, iCloudSyncSetByUser, iCloudSyncEnabled, cloudDecides])
 
   return null
 }

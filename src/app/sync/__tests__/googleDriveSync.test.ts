@@ -325,7 +325,8 @@ describe('Google Drive sync between Android devices', () => {
     expect(drive.files('family')).toHaveLength(1)
   })
 
-  it('pauses on a Supporter lapse and resumes when access returns', async () => {
+  // Sync is free (ADR 0040 §1): a lapse changes nothing.
+  it('keeps syncing when Supporter access lapses', async () => {
     const phone = await device('phone')
     const tablet = await device('tablet')
     phone.useContacts.setState({
@@ -334,12 +335,6 @@ describe('Google Drive sync between Android devices', () => {
     await phone.iCloudSync.push('manual')
 
     tablet.useSupporter.getState().setSupporter(false)
-    expect(await tablet.iCloudSync.pullAndMerge('manual')).toBe(false)
-    expect(tablet.contactNames()).toEqual([])
-    // The choice is kept, so sync resumes on its own.
-    expect(tablet.usePreferences.getState().iCloudSyncEnabled).toBe(true)
-
-    tablet.useSupporter.getState().setSupporter(true)
     expect(await tablet.iCloudSync.pullAndMerge('manual')).toBe(true)
     expect(tablet.contactNames()).toEqual(['Ada'])
   })

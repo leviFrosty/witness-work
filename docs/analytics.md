@@ -430,15 +430,14 @@ interaction and close, offering failures, purchase cancellation/failure, and
 restore outcomes. It stays attached to the paywall route, so later screens do
 not overwrite the original screen. Direct paywall entry has no gate attribution.
 
-| Feature             | `gate_surface`       | Placement                                                                    |
-| ------------------- | -------------------- | ---------------------------------------------------------------------------- |
-| `customAccentColor` | `accent_color`       | Accent picker in `PreferencesPersonalization`.                               |
-| `customAccentColor` | `avatar_background`  | Avatar picker, attributed to the route hosting it.                           |
-| `customAccentColor` | `contact_background` | Contact background editor, attributed to the route hosting it.               |
-| `customAppIcon`     | `app_icon`           | Icon picker in `PreferencesAppIcon` (iOS only).                              |
-| `iCloudSync`        | `icloud_sync`        | Sync gates in `PreferencesiCloud` and `PreferencesiCloudDevices` (both OSs). |
-| `routePlanning`     | `today_route`        | Supporter card in place of Find Shortest Route on `TodayRoute` (preview).    |
-| `buddyColor`        | `buddy_color`        | Color picker on a buddy's detail screen (`Buddy`).                           |
+| Feature             | `gate_surface`       | Placement                                                                 |
+| ------------------- | -------------------- | ------------------------------------------------------------------------- |
+| `customAccentColor` | `accent_color`       | Accent picker in `PreferencesPersonalization`.                            |
+| `customAccentColor` | `avatar_background`  | Avatar picker, attributed to the route hosting it.                        |
+| `customAccentColor` | `contact_background` | Contact background editor, attributed to the route hosting it.            |
+| `customAppIcon`     | `app_icon`           | Icon picker in `PreferencesAppIcon` (iOS only).                           |
+| `routePlanning`     | `today_route`        | Supporter card in place of Find Shortest Route on `TodayRoute` (preview). |
+| `buddyColor`        | `buddy_color`        | Color picker on a buddy's detail screen (`Buddy`).                        |
 
 Impressions are sent once per visible placement visit. Scrolling or rerendering
 does not repeat them; returning focus starts a new visit. A tap before the first
@@ -518,10 +517,17 @@ Google Account was connected. Drive adds three events of its own:
 No account ids, emails, or hashes are sent.
 
 Retain committed enable/disable transitions (`icloud_sync_enabled_changed`) and
-bounded `source`: settings, supporter default/lapse, or onboarding restore.
+bounded `source`: settings, supporter default, or onboarding restore.
+`supporter_default` is the name of any automatic enable for a device that never
+chose; since ADR 0040 it includes new installs that aren't Supporters.
+`icloud_sync_paused` (its only `source` was `supporter_lapse`) is no longer
+sent: Supporter status doesn't pause sync. The `iCloudSync` feature and its `icloud_sync` gate
+surface are gone from the `supporter_gate_*` events, and
+`icloud_restore_replace_confirmed` no longer carries `merge_offered` (Merge is
+always offered).
 Unchanged values, hydration, and developer resets do not emit transitions.
-`icloud_sync_enable_deferred` keeps the bounded incomplete-read reason; paused,
-upload failed/recovered, and account-changed outcomes remain.
+`icloud_sync_enable_deferred` keeps the bounded incomplete-read reason;
+upload failed/recovered and account-changed outcomes remain.
 
 First-enable viewed/chosen/outcome/dismissed describes conflict resolution. Manual
 sync and reset retain started/outcome; reset adoption remains.

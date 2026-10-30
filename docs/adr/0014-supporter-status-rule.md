@@ -25,6 +25,8 @@ A User is a Supporter when at least one active RevenueCat entitlement is either:
 
 An entitlement unlocked by a non-subscription purchase (a Tip or any other one-time product) never counts, whatever it is called. No other entitlement name matters. "Active" means a missing or future expiry, as RevenueCat reports it.
 
+A RevenueCat Billing sandbox subscription (a test purchase on the web, store `RC_BILLING`) counts only in development builds and on the development worker. App Store and Google Play sandbox purchases count as before, so TestFlight and Play testing keep working ([`web-purchases.md`](../web-purchases.md)).
+
 |                                  | App (`CustomerInfo`)                                                        | Server (REST v1 `GET /subscribers/{id}`)                                                           |
 | -------------------------------- | --------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
 | Active entitlement               | in `entitlements.active`                                                    | in `subscriber.entitlements`, `expires_date` null or future                                        |

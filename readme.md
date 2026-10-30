@@ -202,7 +202,9 @@ purchases, App Store ratings`"]
     S_SENTRY["`**Sentry**
 Worker errors + traces`"]
     S_RC["`**RevenueCat**
-Supporter entitlements`"]
+Supporter entitlements, web checkout pages`"]
+    S_STRIPE["`**Stripe**
+card payments for web checkout`"]
     S_PH["`**PostHog**
 analytics, flags, surveys, errors`"]
   end
@@ -235,7 +237,7 @@ analytics, flags, surveys, errors`"]
   A_CONTACTS -->|"address lookup"| R_PLACES
   A_LINKS -->|"/c, /b and /h links"| R_LINKS
   A_SUPPORTER -->|"paywall ratings"| R_RATINGS
-  A_SUPPORTER -->|"purchases, RevenueCat SDK"| S_RC
+  A_SUPPORTER -->|"purchases, RevenueCat SDK, web checkout links"| S_RC
   A_SHELL -->|"events, flags, surveys, errors"| S_PH
   A_HELP -->|"manifest + locale bundle"| S_SITE
   A_HELP -->|"search query, locale, platform"| S_HELPS
@@ -275,6 +277,7 @@ analytics, flags, surveys, errors`"]
   R_PLACES -->|"geocode, autocomplete"| S_HERE
   CRON -->|"ratings lookup"| P_STORE
   S_RC -->|"store receipts"| P_STORE
+  S_RC -->|"web payments (RevenueCat Billing)"| S_STRIPE
   WORKER -->|"reads customers (REST)"| S_RC
   S_RC -.->|"webhook events"| R_RCHOOK
   WORKER -->|"usage events"| S_PH
@@ -295,7 +298,7 @@ analytics, flags, surveys, errors`"]
   class P_CAL,P_SEED,P_SYNC,P_ATTEST,P_MAPS,P_PUSH,P_STORE,S_GPI platform
   class R_BUD,R_ACC,R_RCHOOK,R_ATTEST,R_APPCFG,R_SCRIBE,R_ROUTE,R_PLACES,R_LINKS,R_RATINGS,CRON,S_HELPS worker
   class DO_REGQ,DO_INV,DO_INBOX,R2,D_ACC,DO_HANDOFF,R2_BACKUP,DO_SYNC,R2_SYNC,DO_AA,DO_PI,DO_METER,DO_RPQ,KV,AIS state
-  class S_OR,S_LLM,S_HERE,S_SENTRY,S_RC,S_PH,S_EAS,S_SITE external
+  class S_OR,S_LLM,S_HERE,S_SENTRY,S_RC,S_STRIPE,S_PH,S_EAS,S_SITE external
 ```
 
 - ww-api runs as one Cloudflare Worker, `ww-proxy`, at `ww-proxy.leviwilkerson.com`. The dev Worker, `ww-proxy-dev`, has its own KV namespace, Durable Objects, and R2 buckets.

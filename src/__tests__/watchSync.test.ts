@@ -83,7 +83,8 @@ vi.mock('react-native', () => ({
     get OS() {
       return platform.OS
     },
-    select: (options: { ios?: unknown }) => options.ios,
+    select: (options: Record<string, unknown>) =>
+      platform.OS in options ? options[platform.OS] : options.default,
   },
 }))
 // The real preferences and contact stores reach expo modules that need

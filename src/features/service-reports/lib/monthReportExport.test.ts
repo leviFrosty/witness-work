@@ -5,7 +5,12 @@ const mocks = vi.hoisted(() => ({
   setString: vi.fn(async () => true),
   share: vi.fn(async () => ({ action: 'sharedAction' })),
   openURL: vi.fn(async () => true),
-  platform: { OS: 'ios' },
+  platform: {
+    OS: 'ios',
+    select(specifics: Record<string, unknown>) {
+      return this.OS in specifics ? specifics[this.OS] : specifics.default
+    },
+  },
   offline: false,
   alert: vi.fn(),
   foreground: new Set<() => void>(),

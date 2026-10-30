@@ -26,7 +26,12 @@ vi.mock('react-native-reanimated', async () => {
 })
 vi.mock('react-native', () => ({
   Keyboard: { isVisible: () => false, dismiss: vi.fn() },
-  Platform: { OS: 'ios' },
+  Platform: {
+    OS: 'ios',
+    select(specifics: Record<string, unknown>) {
+      return this.OS in specifics ? specifics[this.OS] : specifics.default
+    },
+  },
   View: 'View',
 }))
 vi.mock('react-native-safe-area-context', () => ({

@@ -15,6 +15,7 @@ import {
   Type as TypeIcon,
 } from 'lucide-react-native'
 import { Platform } from 'react-native'
+import { hasCapability } from '@/lib/platformCapabilities'
 export type DidYouKnowTip = {
   /**
    * Stable identifier — never rename existing entries, since dismissals are
@@ -44,7 +45,9 @@ export const DID_YOU_KNOW_TIPS: DidYouKnowTip[] = [
   { id: 'fontSizeOffset', icon: TypeIcon },
   { id: 'hideHomeSections', icon: EyeIcon },
   { id: 'followUpOffset', icon: HistoryIcon },
-  { id: 'planNotifications', icon: BellIcon },
+  ...(hasCapability('deviceNotifications')
+    ? [{ id: 'planNotifications', icon: BellIcon }]
+    : []),
   { id: 'backupCadence', icon: CloudUploadIcon },
   ...(Platform.OS === 'ios'
     ? [{ id: 'widgetSort', icon: SlidersHorizontalIcon }]

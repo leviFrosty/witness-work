@@ -139,7 +139,7 @@ export default function BuddiesTools() {
     session: { syncing, failure, relayDisabled },
     lastManualSync,
     push: {
-      service: Platform.OS === 'android' ? 'fcm' : 'apns',
+      service: Platform.select({ android: 'fcm', default: 'apns' }),
       notificationsEnabled,
       registeredAt: pushRegisteredAt
         ? new Date(pushRegisteredAt).toISOString()

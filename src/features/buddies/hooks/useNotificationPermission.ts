@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
-import { AppState, Linking } from 'react-native'
+import { AppState } from 'react-native'
 import * as Notifications from 'expo-notifications'
+import { openAppSettings } from '@/lib/openAppSettings'
 import { logger } from '@/lib/logger'
 import { registerForPushNotificationsAsync } from '@/lib/notifications'
 import { registerBuddiesPush } from '@/features/buddies/lib/pushRegistration'
@@ -35,7 +36,7 @@ export default function useNotificationPermission() {
 
   const turnOn = async () => {
     if (status && !status.canAskAgain) {
-      await Linking.openSettings()
+      await openAppSettings()
       return
     }
     // Android 13+ asks only once the app has a notification channel.

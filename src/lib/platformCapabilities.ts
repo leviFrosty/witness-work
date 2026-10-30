@@ -30,6 +30,14 @@ export type PlatformCapability =
   | 'deviceNotifications'
   /** The App Store or Play rating prompt. */
   | 'storeReview'
+  /** Links to the App Store and Google Play listings of the phone apps. */
+  | 'storeListings'
+  /** Haptic feedback; browsers have no reliable vibration. */
+  | 'haptics'
+  /** App Lock: Face ID, Touch ID or the device passcode. */
+  | 'appLock'
+  /** Saving a picture to the phone's photo library. */
+  | 'photoLibrarySave'
   /** Hot Updater updates; each web page load runs the newest deploy. */
   | 'otaUpdates'
 
@@ -46,6 +54,10 @@ const capabilities: Record<PlatformCapability, readonly OS[]> = {
   calendarBridge: ['ios', 'android'],
   deviceNotifications: ['ios', 'android'],
   storeReview: ['ios', 'android'],
+  storeListings: ['ios', 'android'],
+  haptics: ['ios', 'android'],
+  appLock: ['ios', 'android'],
+  photoLibrarySave: ['ios', 'android'],
   otaUpdates: ['ios', 'android'],
 }
 

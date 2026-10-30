@@ -22,9 +22,11 @@ export const blockedCopy = (reason: BlockedReason): TranslationKey => {
     case 'update_required':
       return 'scribe_blockedUpdate'
     case 'device_ineligible':
-      return Platform.OS === 'android'
-        ? 'scribe_blockedDeviceAndroid'
-        : 'scribe_blockedDevice'
+      return Platform.select<TranslationKey>({
+        android: 'scribe_blockedDeviceAndroid',
+        web: 'scribe_blockedDeviceWeb',
+        default: 'scribe_blockedDevice',
+      })
     case 'attestation_unavailable':
       return 'scribe_blockedAttestation'
     case 'suspended':

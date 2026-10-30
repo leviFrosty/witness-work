@@ -12,7 +12,12 @@ const runtime = vi.hoisted(() => ({
 }))
 
 vi.mock('react-native', () => ({
-  Platform: { OS: 'ios' },
+  Platform: {
+    OS: 'ios',
+    select(specifics: Record<string, unknown>) {
+      return this.OS in specifics ? specifics[this.OS] : specifics.default
+    },
+  },
   AppState: { currentState: 'active', addEventListener: vi.fn() },
 }))
 vi.mock('expo-device', () => ({

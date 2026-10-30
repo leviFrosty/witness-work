@@ -8,6 +8,7 @@ import Wrapper from '@/components/ui/layout/Wrapper'
 import useTheme from '@/contexts/theme'
 import { analytics } from '@/lib/analytics'
 import i18n from '@/lib/locales'
+import { hasCapability } from '@/lib/platformCapabilities'
 import { logger } from '@/lib/logger'
 import { RootStackParamList } from '@/types/rootStack'
 import BuddiesPetVisitsSection from '@/features/buddies/components/BuddiesPetVisitsSection'
@@ -136,7 +137,9 @@ export default function BuddiesSettingsScreen({ route, navigation }: Props) {
           <BuddiesPlansSharingSection />
           <BuddiesCalendarSettingsSection />
           <BuddiesPetVisitsSection />
-          <BuddiesNotificationsSection />
+          {hasCapability('deviceNotifications') && (
+            <BuddiesNotificationsSection />
+          )}
         </BuddySettingsScope>
         {!buddy && (
           <>

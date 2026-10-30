@@ -1,8 +1,8 @@
-import { AppState, Platform } from 'react-native'
-import * as Device from 'expo-device'
+import { AppState } from 'react-native'
 import { getRandomBytes } from 'expo-crypto'
 import { sha256 } from '@noble/hashes/sha2.js'
 import * as BuddiesKeychain from '../../../modules/buddies-keychain'
+import { deviceName, devicePlatform } from '@/lib/devicePlatform'
 import apis from '@/constants/apis'
 import { fromB64u, toB64u, utf8 } from '@/lib/bytes'
 import {
@@ -125,9 +125,8 @@ export const cloudSyncTransport = createServerTransport({
     return session ? accountToken(session.accountId) : null
   },
   randomBytes: getRandomBytes,
-  deviceName: () =>
-    Device.modelName ?? (Platform.OS === 'android' ? 'Android' : 'iPhone'),
-  platform: Platform.OS === 'android' ? 'android' : 'ios',
+  deviceName,
+  platform: devicePlatform(),
   now: syncNow,
   files: photoFiles,
   photoSwitch: () => usePreferences.getState().cloudSyncPhotos,

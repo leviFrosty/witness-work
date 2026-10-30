@@ -141,7 +141,8 @@ export default function RootHeader({
               StyleSheet.absoluteFill,
               {
                 backgroundColor:
-                  theme.colors.card + (Platform.OS === 'android' ? 'e6' : '99'),
+                  theme.colors.card +
+                  Platform.select({ android: 'e6', default: '99' }),
               },
             ]}
           />

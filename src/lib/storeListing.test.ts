@@ -13,7 +13,7 @@ vi.mock('@/lib/links', () => ({ openURL: mocks.openURL }))
 vi.mock('@/lib/locales', () => ({ default: { t: (key: string) => key } }))
 
 import links from '@/constants/links'
-import { openStoreListing } from '@/lib/storeListing'
+import { openAppUpdate, openStoreListing } from '@/lib/storeListing'
 
 beforeEach(() => {
   mocks.openURL.mockReset()
@@ -56,5 +56,26 @@ describe('openStoreListing', () => {
       links.playStoreApp,
       expect.anything()
     )
+  })
+})
+
+describe('openAppUpdate', () => {
+  it('opens the store on a phone', () => {
+    mocks.os = 'android'
+    void openAppUpdate()
+    expect(mocks.openURL).toHaveBeenCalledWith(
+      links.playStoreApp,
+      expect.anything()
+    )
+  })
+
+  it('reloads the page on the web, which has no store listing', () => {
+    mocks.os = 'web'
+    const reload = vi.fn()
+    vi.stubGlobal('window', { location: { reload } })
+    void openAppUpdate()
+    expect(reload).toHaveBeenCalledOnce()
+    expect(mocks.openURL).not.toHaveBeenCalled()
+    vi.unstubAllGlobals()
   })
 })

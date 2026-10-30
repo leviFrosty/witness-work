@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
-import { Linking, View } from 'react-native'
+import { View } from 'react-native'
 import { CameraView, useCameraPermissions } from 'expo-camera'
+import { openAppSettings } from '@/lib/openAppSettings'
 import ActionButton from '@/components/ui/ActionButton'
 import Card from '@/components/ui/Card'
 import Text from '@/components/ui/MyText'
@@ -64,7 +65,7 @@ export default function HandoffScanPanel({
         <Text style={{ color: theme.colors.textAlt }}>
           {i18n.t('handoff_cameraDeniedBody')}
         </Text>
-        <ActionButton onPress={() => void Linking.openSettings()}>
+        <ActionButton onPress={() => void openAppSettings()}>
           {i18n.t('buddies_openSettings')}
         </ActionButton>
       </Card>

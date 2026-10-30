@@ -11,6 +11,7 @@ import usePublisher from '@/hooks/usePublisher'
 import { analytics } from '@/lib/analytics'
 import { earnedBadgeCount } from '@/lib/badges/display'
 import i18n, { TranslationKey } from '@/lib/locales'
+import { hasCapability } from '@/lib/platformCapabilities'
 import { usePreferences } from '@/stores/preferences'
 import type { RootStackNavigation } from '@/types/rootStack'
 
@@ -55,9 +56,9 @@ const StreaksAndBadgesPreferencesSection = () => {
           info={i18n.t('streaks_showSetting_info')}
           value={showStreaks}
           onValueChange={handleShowStreaksChange}
-          lastInSection={!showStreaks}
+          lastInSection={!showStreaks || !hasCapability('deviceNotifications')}
         />
-        {showStreaks && (
+        {showStreaks && hasCapability('deviceNotifications') && (
           <InputRowSwitch
             label={i18n.t('streakReminders')}
             info={i18n.t(

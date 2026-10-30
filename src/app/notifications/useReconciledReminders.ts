@@ -194,7 +194,7 @@ function reminderRequest(
     trigger: {
       type: Notifications.SchedulableTriggerInputTypes.DATE,
       date: reminder.date,
-      ...(Platform.OS === 'android' ? { channelId: REMINDER_CHANNEL_ID } : {}),
+      ...(Platform.OS === 'android' && { channelId: REMINDER_CHANNEL_ID }),
     },
   }
 }

@@ -9,6 +9,7 @@ import {
 import * as BuddiesKeychain from '../../../../../modules/buddies-keychain'
 import { GroupedListRow, GroupedListSection } from '@/components/ui/GroupedList'
 import i18n from '@/lib/locales'
+import { hasCapability } from '@/lib/platformCapabilities'
 import { SettingsSectionProps } from '@/features/settings/screens/settingScreen'
 import LanguageSelector from '@/features/settings/components/sections/LanguageSelector'
 import useDeviceSyncAvailable from '@/features/settings/hooks/useDeviceSyncAvailable'
@@ -60,12 +61,14 @@ const PreferencesSection = ({
           onPress={() => handleNavigate('Preferences')}
           selected={selectedDestination === 'Preferences'}
         />
-        <GroupedListRow
-          icon={LockIcon}
-          label={i18n.t('security')}
-          onPress={() => handleNavigate('Security')}
-          selected={selectedDestination === 'Security'}
-        />
+        {hasCapability('appLock') && (
+          <GroupedListRow
+            icon={LockIcon}
+            label={i18n.t('security')}
+            onPress={() => handleNavigate('Security')}
+            selected={selectedDestination === 'Security'}
+          />
+        )}
       </GroupedListSection>
     </>
   )

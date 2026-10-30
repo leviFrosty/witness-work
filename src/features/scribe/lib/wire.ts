@@ -5,6 +5,8 @@
  * the app reads.
  */
 
+import type { DevicePlatform } from '@/lib/devicePlatform'
+
 export const SCRIBE_PROTOCOL = 1
 
 // ---------------------------------------------------------------- tools
@@ -138,7 +140,7 @@ export interface StepRequest {
   conversationId: string
   turnId: string
   step: number
-  app: { version: string; platform: 'ios' | 'android'; locale: string }
+  app: { version: string; platform: DevicePlatform; locale: string }
   tools: ToolDefinitionWire[]
   context: ScribeContextWire
   messages: WireMessage[]

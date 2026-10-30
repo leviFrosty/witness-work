@@ -33,7 +33,7 @@ export default function LogVisitHeader({
       onPress={onBack}
       accessibilityLabel={i18n.t('goBack')}
     />
-  ) : Platform.OS === 'android' ? (
+  ) : Platform.OS === 'android' || Platform.OS === 'web' ? (
     <IconButton
       icon={XIcon}
       size={20}
@@ -49,7 +49,10 @@ export default function LogVisitHeader({
         styles.bar,
         {
           // Android presents this modal full-screen, edge-to-edge.
-          paddingTop: Platform.OS === 'android' ? insets.top + 12 : 18,
+          paddingTop: Platform.select({
+            android: insets.top + 12,
+            default: 18,
+          }),
           borderBottomColor: theme.colors.border,
         },
       ]}

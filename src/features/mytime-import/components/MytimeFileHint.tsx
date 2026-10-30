@@ -4,7 +4,7 @@ import LucideIcon from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
 import XView from '@/components/ui/layout/XView'
 import useTheme from '@/contexts/theme'
-import i18n from '@/lib/locales'
+import i18n, { type TranslationKey } from '@/lib/locales'
 
 /**
  * Where the `.mytimedb` file comes from, shown beside the button that opens the
@@ -29,9 +29,11 @@ const MytimeFileHint = () => {
         }}
       >
         {i18n.t(
-          Platform.OS === 'android'
-            ? 'mytimeImport_fileHintAndroid'
-            : 'mytimeImport_fileHint'
+          Platform.select<TranslationKey>({
+            android: 'mytimeImport_fileHintAndroid',
+            web: 'mytimeImport_fileHintWeb',
+            default: 'mytimeImport_fileHint',
+          })
         )}
       </Text>
     </XView>

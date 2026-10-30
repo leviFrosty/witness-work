@@ -123,7 +123,7 @@ export const getOrCreateInstallId = (): string => {
     return existing
   }
   const created =
-    (Platform.OS === 'android' ? androidSeededInstallId() : null) ??
+    (Platform.OS === 'android' && androidSeededInstallId()) ||
     Crypto.randomUUID()
   store.set(FALLBACK_KEY, created)
   _cached = created

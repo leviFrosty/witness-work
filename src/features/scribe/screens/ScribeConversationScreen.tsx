@@ -301,7 +301,7 @@ const ScribeConversationScreen = ({ renderSupporterCta }: Props) => {
   // the keyboard moves there, its height counts only if it's really showing.
   // (iOS starts every subscriber closed, and may report only OPEN.)
   const trustKeyboard = useSharedValue(
-    Platform.OS !== 'android' || Keyboard.isVisible()
+    Platform.select({ android: Keyboard.isVisible(), default: true })
   )
   useAnimatedReaction(
     () => keyboard.state.value,

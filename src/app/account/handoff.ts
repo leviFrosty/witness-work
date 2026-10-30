@@ -2,6 +2,7 @@ import { Platform } from 'react-native'
 import * as Application from 'expo-application'
 import { getRandomBytes } from 'expo-crypto'
 import * as Device from 'expo-device'
+import { deviceName, devicePlatform } from '@/lib/devicePlatform'
 import { create } from 'zustand'
 import apis from '@/constants/apis'
 import {
@@ -253,8 +254,10 @@ export async function approveHandoff(
 export function handoffHello(): HandoffHello {
   const model = Device.modelName ?? ''
   return {
-    deviceName: model || (Platform.OS === 'ios' ? 'iPhone' : 'Android'),
-    platform: Platform.OS === 'ios' ? 'ios' : 'android',
+    deviceName: deviceName(),
+    // The hello knows phones only (docs/accounts-protocol.md): a browser signs
+    // in with a passkey and never takes part in a handoff (ADR 0038).
+    platform: devicePlatform() === 'ios' ? 'ios' : 'android',
     model,
     appVersion: Application.nativeApplicationVersion ?? '',
   }

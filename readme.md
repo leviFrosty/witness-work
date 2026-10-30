@@ -100,6 +100,8 @@ sync files + photos`"]
 proves a genuine app`"]
     P_MAPS["`**MapKit / Google Maps SDK**
 maps, place search, iOS directions`"]
+    P_PASSKEY["`**ASAuthorization / Credential Manager**
+passkeys + PRF (WebAuthn in the browser)`"]
   end
 
   P_PUSH["`**APNs / FCM**
@@ -129,6 +131,9 @@ status, usage, step SSE, transcribe`"]
 coordinates only`"]
       R_PLACES["`**GET /geocode, /autocomplete**
 HERE proxy, key stays server-side`"]
+      R_PASSKEY["`**/accounts/v1/passkeys, /web, /approval**
+passkeys + PRF wraps, web sign-up,
+approve a browser from a phone`"]
       R_ACC["`**/accounts/v1/...**
 attested sessions, bearer ops,
 handoff relay, encrypted backups,
@@ -182,6 +187,10 @@ sync sockets, limits, photo purge`")]
 sealed sync slot per device`")]
       R2_PHOTOS[("`**R2: ww-account-photos**
 sealed Cloud Sync photos, up to 2 GB an account`")]
+      DO_APPROVAL[("`**AccountApproval DO**
+one per browser approval, sealed key`")]
+      DO_RATE[("`**AccountRateCounter DO**
+rolling caps per hashed IP`")]
     end
     subgraph HELP["Help Center search"]
       S_HELPS["`**ww-help-search Worker**
@@ -192,6 +201,8 @@ embeddings, keyword index by locale`")]
     end
     S_SITE["`**ww-marketing (witnesswork.app)**
 static site: Help Center pages + JSON bundles`"]
+    S_WEB["`**Web app host (app.witnesswork.app)**
+/.well-known passkey association files`"]
     DO_RPQ[("`**RoutePlanningQuota DO**
 route and directions quotas per account`")]
     KV[("`**Workers KV: NOTES_KV**
@@ -217,6 +228,8 @@ Supporter entitlements, web checkout pages`"]
 card payments for web checkout`"]
     S_PH["`**PostHog**
 analytics, flags, surveys, errors`"]
+    S_TURNSTILE["`**Cloudflare Turnstile**
+bot check for web sign-up + recovery`"]
   end
 
   C_WIDGETS --> A_LOCAL
@@ -239,6 +252,9 @@ analytics, flags, surveys, errors`"]
   A_ACCOUNT -->|"account key"| P_SEED
   A_ACCOUNT -->|"open session, sealed handoff, sealed backup, RevenueCat id"| R_ACC
   A_ACCOUNT -->|"status, key setup, session challenge"| R_ATTEST
+  A_ACCOUNT -->|"create, sign in"| P_PASSKEY
+  A_ACCOUNT -->|"bearer: passkeys, approve a browser"| R_PASSKEY
+  P_PASSKEY -->|"association files (Apple, Google)"| S_WEB
   A_SHELL -->|"minimum version"| R_APPCFG
   A_SCRIBE -->|"account session"| A_ACCOUNT
   A_SCRIBE -->|"bearer: conversation + tools, SSE per step"| R_SCRIBE
@@ -267,6 +283,10 @@ analytics, flags, surveys, errors`"]
   R_ACC -->|"sync photos"| R2_PHOTOS
   DO_SYNC -.->|"photo purge"| R2_PHOTOS
   R_ACC -->|"iOS assertion"| DO_AA
+  R_PASSKEY -->|"credentials, wraps"| D_ACC
+  R_PASSKEY -->|"approval channel"| DO_APPROVAL
+  R_PASSKEY -->|"sign-up + sign-in caps"| DO_RATE
+  R_PASSKEY -->|"Siteverify"| S_TURNSTILE
   R_ACC -->|"Android verdict"| S_GPI
   R_ATTEST -->|"iOS keys, challenges"| DO_AA
   R_ATTEST -->|"Android challenge"| DO_PI
@@ -308,10 +328,10 @@ analytics, flags, surveys, errors`"]
   class C_WIDGETS,C_SIRI,C_WATCH,C_WEAR,C_NSE device
   class A_CORE,A_BUDDIES,A_ACCOUNT,A_SYNC,A_SCRIBE,A_ROUTE,A_CONTACTS,A_LINKS,A_SUPPORTER,A_SHELL,A_HELP app
   class A_LOCAL local
-  class P_CAL,P_SEED,P_SYNC,P_ATTEST,P_MAPS,P_PUSH,P_STORE,S_GPI platform
-  class R_BUD,R_ACC,R_RCHOOK,R_ATTEST,R_APPCFG,R_SCRIBE,R_ROUTE,R_PLACES,R_LINKS,R_RATINGS,CRON,S_HELPS,S_SITE worker
-  class DO_REGQ,DO_INV,DO_INBOX,R2,D_ACC,DO_HANDOFF,R2_BACKUP,DO_SYNC,R2_SYNC,DO_AA,DO_PI,DO_METER,DO_RPQ,KV,AIS state
-  class S_OR,S_LLM,S_HERE,S_SENTRY,S_RC,S_STRIPE,S_PH,S_EAS external
+  class P_CAL,P_SEED,P_SYNC,P_ATTEST,P_MAPS,P_PASSKEY,P_PUSH,P_STORE,S_GPI platform
+  class R_BUD,R_ACC,R_PASSKEY,R_RCHOOK,R_ATTEST,R_APPCFG,R_SCRIBE,R_ROUTE,R_PLACES,R_LINKS,R_RATINGS,CRON,S_HELPS,S_SITE,S_WEB worker
+  class DO_REGQ,DO_INV,DO_INBOX,R2,D_ACC,DO_HANDOFF,R2_BACKUP,DO_SYNC,R2_SYNC,DO_APPROVAL,DO_RATE,DO_AA,DO_PI,DO_METER,DO_RPQ,KV,AIS state
+  class S_OR,S_LLM,S_HERE,S_SENTRY,S_RC,S_STRIPE,S_PH,S_TURNSTILE,S_EAS external
 ```
 
 - ww-api runs as one Cloudflare Worker, `ww-proxy`, at `api.witnesswork.app`, and at `ww-proxy.leviwilkerson.com` for builds shipped before [ADR 0042](./docs/adr/0042-witnesswork-app-domain.md). It also serves the link pages and association files on `witnesswork.app`, through exact-path routes ([docs/app-links.md](./docs/app-links.md)). The dev Worker, `ww-proxy-dev` (`api-dev.witnesswork.app`), has its own KV namespace, Durable Objects, and R2 buckets.

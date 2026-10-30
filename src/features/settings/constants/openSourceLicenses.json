@@ -1074,6 +1074,12 @@
     "author": "Shopify Inc."
   },
   {
+    "name": "@simplewebauthn/browser",
+    "version": "14.0.0",
+    "license": "MIT",
+    "author": "Matthew Miller"
+  },
+  {
     "name": "@sinclair/typebox",
     "version": "0.27.8",
     "license": "MIT",

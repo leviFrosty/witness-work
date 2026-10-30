@@ -41,6 +41,7 @@ const LOCAL_MODULES = [
   { importName: 'RouteDirections', className: 'RouteDirectionsModule' },
   { importName: 'WatchBridge', className: 'WatchBridgeModule' },
   { importName: 'DeviceSecrets', className: 'DeviceSecretsModule' },
+  { importName: 'Passkeys', className: 'PasskeysModule' },
   { importName: 'PointerStyle', className: 'PointerStyleModule' },
   { importName: 'DisplayRegions', className: 'DisplayRegionsModule' },
   { importName: 'SystemMenu', className: 'SystemMenuModule' },

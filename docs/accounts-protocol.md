@@ -13,6 +13,7 @@ The server account is not ADR 0011's account id. That one is the RevenueCat iden
 | `accountPub`        | The signing key's public key, `b64u` (43 chars)                       | The server's `accounts.account_pub`                                      |
 | `accountId`         | 16 random bytes, `b64u` (22 chars), minted by the server              | The server, and each device's MMKV                                       |
 | Backup key          | `HKDF-SHA256(accountKey, "", "ww-account/v1/backup", 32)`             | Derived on each device; never stored                                     |
+| Backup file key     | `HKDF-SHA256(accountKey, "", "ww-account/v1/backup-file", 32)`        | Derived on each device; never stored ([backup files](./backup-files.md)) |
 | Recovery key        | The account key for people (see [Recovery key](#recovery-key))        | Wherever the User keeps it                                               |
 | Backup slot id      | 16 random bytes, `b64u`, one per install                              | The device's MMKV, and the server's R2 object key                        |
 | Access token        | JWT, 15 minutes (see [Sessions](#sessions))                           | The app's memory only                                                    |

@@ -7,11 +7,7 @@ import ActionButton from '@/components/ui/ActionButton'
 import Text from '@/components/ui/MyText'
 import Wrapper from '@/components/ui/layout/Wrapper'
 import i18n from '@/lib/locales'
-import { usePreferences } from '@/stores/preferences'
-import * as FileSystem from 'expo-file-system/legacy'
-import { errorTracking } from '@/lib/errorTracking'
-import * as Sharing from 'expo-sharing'
-import { Alert, Platform } from 'react-native'
+import { Platform } from 'react-native'
 import useTheme from '@/contexts/theme'
 import Card from '@/components/ui/Card'
 import Divider from '@/components/ui/Divider'
@@ -21,26 +17,24 @@ import InfoPopover from '@/components/ui/InfoPopover'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import IconButton from '@/components/ui/IconButton'
 import SettingsInputLayout from '@/features/settings/components/shared/SettingsInputLayout'
-import { analytics } from '@/lib/analytics'
 import { RouteProp, useRoute } from '@react-navigation/native'
 import { RootStackParamList } from '@/types/rootStack'
-import { createBackupFile } from '@/lib/backupFile'
-import { BACKUP_EXPORT_FILE_NAME } from '@/lib/temporaryCopies'
 import { useBackupImport } from '@/app/sync/useBackupImport'
 import DeviceSyncLinkSection from '@/features/settings/components/sync/DeviceSyncLinkSection'
+import CreateBackupSheet from '@/features/settings/components/backup/CreateBackupSheet'
+import useBackupExport from '@/features/settings/hooks/useBackupExport'
 
 const ImportAndExportScreen = () => {
   const route = useRoute<RouteProp<RootStackParamList, 'Import and Export'>>()
   const entryPoint = route.params?.source ?? 'settings'
-  const preferencesStore = usePreferences()
-  const { importing, importBackup } = useBackupImport({
+  const { importing, importBackup, unlockSheet } = useBackupImport({
     source: 'settings',
     entryPoint,
   })
 
-  const [loading, setLoading] = useState(false)
+  const exporter = useBackupExport(entryPoint)
+  const [protecting, setProtecting] = useState(false)
   const [successfulImport, setSuccessfulImport] = useState(false)
-  const exportFileUri = FileSystem.cacheDirectory + BACKUP_EXPORT_FILE_NAME
   const theme = useTheme()
 
   const handleImport = async () => {
@@ -48,64 +42,9 @@ const ImportAndExportScreen = () => {
     if (await importBackup()) setSuccessfulImport(true)
   }
 
-  const handleExport = async () => {
-    const startedAt = Date.now()
-    let stage = 'sharing_availability'
-    const properties = {
-      source: 'settings',
-      entry_point: entryPoint,
-      destination: 'share_sheet',
-    }
-    analytics.capture('backup_export_started', properties)
-    const data = createBackupFile()
-    setLoading(true)
-
-    try {
-      if (!(await Sharing.isAvailableAsync())) {
-        setLoading(false)
-        analytics.capture('backup_export_failed', {
-          ...properties,
-          stage,
-          elapsed_ms: Date.now() - startedAt,
-          error_code: 'sharing_unavailable',
-        })
-        Alert.alert(i18n.t('sharingIsNotAvailable'))
-        return
-      }
-
-      preferencesStore.set({ lastBackupDate: new Date() })
-
-      stage = 'write_file'
-      await FileSystem.writeAsStringAsync(exportFileUri, JSON.stringify(data))
-        .then(async () => {
-          stage = 'share_sheet'
-
-          await Sharing.shareAsync(exportFileUri)
-          // Expo resolves on both sharing and cancellation; this is not proof
-          // that the user saved a backup outside the app.
-          analytics.capture('backup_exported', {
-            ...properties,
-            outcome: 'unknown',
-            elapsed_ms: Date.now() - startedAt,
-          })
-        })
-        .finally(() => {
-          setLoading(false)
-        })
-    } catch (error) {
-      analytics.capture('backup_export_failed', {
-        ...properties,
-        stage,
-        elapsed_ms: Date.now() - startedAt,
-        error_code: 'unexpected',
-      })
-      errorTracking.captureException(error)
-      setLoading(false)
-      Alert.alert(
-        i18n.t('errorExporting'),
-        i18n.t('errorExporting_description')
-      )
-    }
+  const handleExport = () => {
+    exporter.start()
+    setProtecting(true)
   }
 
   return (
@@ -131,9 +70,10 @@ const ImportAndExportScreen = () => {
           </XView>
           <Card>
             <ActionButton
-              disabled={importing}
-              loading={loading}
+              disabled={importing || protecting}
+              loading={exporter.sharing}
               onPress={handleExport}
+              testID='backup-create-open'
             >
               <XView>
                 <IconButton
@@ -169,7 +109,7 @@ const ImportAndExportScreen = () => {
               )}
             </Text>
             <ActionButton
-              disabled={loading}
+              disabled={exporter.sharing || protecting}
               loading={importing}
               onPress={handleImport}
             >
@@ -195,6 +135,14 @@ const ImportAndExportScreen = () => {
             {i18n.t('backupReasoning')}
           </Text>
         </KeyboardAwareScrollView>
+        <CreateBackupSheet
+          open={protecting}
+          lock={exporter.lock}
+          onCancel={exporter.cancel}
+          onCreated={(file) => void exporter.share(file)}
+          onClose={() => setProtecting(false)}
+        />
+        {unlockSheet}
       </Wrapper>
     </SettingsInputLayout>
   )

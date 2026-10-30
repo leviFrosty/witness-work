@@ -54,6 +54,7 @@ export const analyticsEventNames = [
   'week_plan_reminder_changed',
   'visit_field_suggestion_used',
   // Import and backup outcomes.
+  'backup_export_cancelled',
   'backup_export_failed',
   'backup_export_started',
   'backup_exported',

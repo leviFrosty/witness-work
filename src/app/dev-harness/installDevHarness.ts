@@ -65,6 +65,7 @@ import {
   backupHarness,
   handoffHarness,
 } from '@/app/dev-harness/account'
+import { backupFileHarness } from '@/app/dev-harness/backupFile'
 import i18n, { _i18n, type TranslationKey } from '@/lib/locales'
 import { isDevForceRtl, setDevForceRtl, syncLayoutDirection } from '@/lib/rtl'
 import { iCloudSync } from '@/app/sync/iCloudSync'
@@ -467,6 +468,13 @@ export function installDevHarness() {
      * `offerRestore()`, `deleteAll()`, then `backup.last`.
      */
     backup: backupHarness,
+    /**
+     * Locked backup files: `backupFile.bench()` (Argon2id's time here),
+     * `lock('account' | 'password', password)`, `unlock(password)`,
+     * `save(kind)` or `share(kind)` (`locked`, `plain`, `otherAccount`), then
+     * `backupFile.last`.
+     */
+    backupFile: backupFileHarness,
     /**
      * Cloud Sync (ADR 0030): `cloudSync.state()`; `checkConfig()`, `refresh()`,
      * `prepare()`, `list()` (the account's slots), `switchTo('cloud' |

@@ -52,8 +52,12 @@ vi.mock('@/features/buddies/lib/engine', () => ({
   BuddyRemovalPendingError: class extends Error {},
 }))
 
-import { completeClaimHandoff } from './handoff'
-import type { ClaimSession } from '@/lib/serverAccount/handoffSession'
+import { approveHandoff, completeClaimHandoff } from './handoff'
+import { analytics } from '@/lib/analytics'
+import type {
+  ClaimSession,
+  OfferSession,
+} from '@/lib/serverAccount/handoffSession'
 
 const ACCOUNT_ID = 'account-1'
 
@@ -145,4 +149,73 @@ describe('completeClaimHandoff', () => {
       expect(session.fail).toHaveBeenCalledWith(reason)
     }
   )
+})
+
+// The old phone: Allow sends the account key only once the device's owner
+// confirms it, so someone holding the unlocked phone can't sign theirs in.
+describe('approveHandoff', () => {
+  const offer = () => {
+    const session = { approve: vi.fn(async () => undefined) }
+    return {
+      session,
+      approve: (confirmOwner: () => Promise<string>) =>
+        approveHandoff(session as unknown as OfferSession, {
+          confirmOwner: confirmOwner as never,
+        }),
+    }
+  }
+
+  it.each([
+    ['confirmed', 'device'],
+    ['noLock', 'none'],
+  ] as const)(
+    'sends the key once the owner check is %s',
+    async (check, auth) => {
+      const { session, approve } = offer()
+      const confirmOwner = vi.fn(async () => check)
+      expect(await approve(confirmOwner)).toBe('sent')
+      expect(confirmOwner).toHaveBeenCalledOnce()
+      expect(session.approve).toHaveBeenCalledOnce()
+      expect(analytics.capture).toHaveBeenCalledWith('handoff_answered', {
+        answer: 'allow',
+        auth,
+      })
+    }
+  )
+
+  it.each(['cancelled', 'failed'] as const)(
+    'keeps the key when the owner check is %s',
+    async (check) => {
+      const { session, approve } = offer()
+      expect(await approve(async () => check)).toBe(check)
+      expect(session.approve).not.toHaveBeenCalled()
+      expect(analytics.capture).toHaveBeenCalledWith('handoff_answered', {
+        answer: 'allow',
+        auth: check,
+      })
+    }
+  )
+
+  it('keeps the key when asking the owner throws', async () => {
+    const { session, approve } = offer()
+    const outcome = await approve(async () => {
+      throw new Error('LocalAuthentication unavailable')
+    })
+    expect(outcome).toBe('failed')
+    expect(session.approve).not.toHaveBeenCalled()
+  })
+
+  it('asks again after a cancel, and not again after a confirmed Allow', async () => {
+    const { session, approve } = offer()
+    const confirmOwner = vi
+      .fn<() => Promise<string>>()
+      .mockResolvedValueOnce('cancelled')
+      .mockResolvedValueOnce('confirmed')
+    expect(await approve(confirmOwner)).toBe('cancelled')
+    expect(await approve(confirmOwner)).toBe('sent')
+    // A send that didn't get through: tapping Allow again doesn't ask again.
+    expect(await approve(confirmOwner)).toBe('sent')
+    expect(confirmOwner).toHaveBeenCalledTimes(2)
+    expect(session.approve).toHaveBeenCalledTimes(2)
+  })
 })

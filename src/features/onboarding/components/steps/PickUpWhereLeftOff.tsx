@@ -88,7 +88,9 @@ const PickUpWhereLeftOff = ({ goBack, goNext }: StepProps) => {
   const scribeShown = scribe.status !== 'hidden'
   const paper = useScribePaperCapture()
   const paperAvailable = scribeShown && paper.available
-  const { importing, importBackup } = useBackupImport({ source: 'onboarding' })
+  const { importing, importBackup, unlockSheet } = useBackupImport({
+    source: 'onboarding',
+  })
   const hasImportedData = useHasImportedData()
 
   useEffect(() => {
@@ -135,6 +137,7 @@ const PickUpWhereLeftOff = ({ goBack, goNext }: StepProps) => {
       }}
     >
       <OnboardingNav goBack={goBack} />
+      {unlockSheet}
       <KeyboardAwareScrollView
         style={{ flex: 1 }}
         contentContainerStyle={{

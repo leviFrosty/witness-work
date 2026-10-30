@@ -577,6 +577,27 @@ describe('Switching between Cloud Sync and Google Drive', () => {
     // The pending edit reached Drive first, so devices still there get it.
     // Drive's files are all still there: other devices' and this one's.
     expect(driveNames()).toEqual(driveBefore)
+    // On Cloud Sync, the tray's one-time offer of it is answered for good.
+    expect(phone.usePreferences.getState().cloudSyncTrayOffer).toBe('answered')
+  })
+
+  it('switches from the tray’s offer the same way, merging both sides', async () => {
+    const { phone, tablet } = await driveFleet()
+    phone.useContacts.setState({
+      contacts: [contact('c1', 'Ada', NOW - 10_000)] as never,
+    })
+    tablet.useContacts.setState({
+      contacts: [contact('c2', 'Ben', NOW - 10_000)] as never,
+    })
+    expect((await tablet.switchSyncOption('cloud', 'tray')).outcome).toBe(
+      'switched'
+    )
+    expect((await phone.switchSyncOption('cloud', 'tray')).outcome).toBe(
+      'switched'
+    )
+    await tablet.iCloudSync.pullAndMerge('manual')
+    expect(phone.contactNames()).toEqual(['Ada', 'Ben'])
+    expect(tablet.contactNames()).toEqual(['Ada', 'Ben'])
   })
 
   it('never brings back a record deleted on a device still on Drive', async () => {
@@ -716,6 +737,7 @@ describe('Switching between Cloud Sync and Google Drive', () => {
       reason: 'not_entitled',
     })
     expect(phone.currentSyncOption()).toBe('platform')
+    expect(phone.usePreferences.getState().cloudSyncTrayOffer).toBeNull()
     expect(server.slotIds('family')).toEqual([])
     server.state.enabled = false
     expect(await phone.switchSyncOption('cloud', 'offer')).toEqual({

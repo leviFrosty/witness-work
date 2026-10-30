@@ -21,7 +21,7 @@ import Text from '@/components/ui/MyText'
 import Badge from '@/components/ui/Badge'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
-import { optionSyncKey, platformSyncKey, syncKey } from '@/lib/syncCopy'
+import { platformSyncKey, syncKey } from '@/lib/syncCopy'
 import { usePreferences } from '@/stores/preferences'
 import { dismissICloudAccountChangeNotice } from '@/lib/iCloudIdentity'
 import {
@@ -66,9 +66,9 @@ import {
   dismissCloudSyncOffer,
   showsCloudSyncOffer,
   switchSyncOption,
-  type SwitchFailure,
   type SyncOption,
 } from '@/app/sync/syncOption'
+import { switchFailureMessage } from '@/app/sync/switchFailureMessage'
 import SyncOptionSection, {
   useOtherDevicesSignedIn,
 } from '@/features/settings/components/sync/SyncOptionSection'
@@ -84,30 +84,6 @@ async function accountHasOtherDevices(): Promise<boolean> {
   if (!accountSessions.snapshot()) return false
   const seed = await BuddiesKeychain.peekRootSeed().catch(() => null)
   return seed ? signedInElsewhere(fromB64u(seed)) : false
-}
-
-/**
- * What to tell the User when a switch to `to` or Cloud Sync's turn-on can't
- * happen. Worded for `to`: the device is back on the option it left.
- */
-const switchFailureMessage = (reason: SwitchFailure, to: SyncOption) => {
-  const option = to === 'cloud' ? 'cloud' : 'platform'
-  switch (reason) {
-    case 'not_entitled':
-      return i18n.t('cloudSyncNotEntitled')
-    case 'disabled':
-      return i18n.t('cloudSyncDisabled')
-    case 'no_session':
-      return i18n.t('cloudSyncNoSession')
-    case 'offline':
-      return i18n.t('iCloudSyncNowOffline_description')
-    case 'incomplete':
-      return i18n.t(optionSyncKey('iCloudRemoteNotReady_description', option))
-    case 'unavailable':
-      return i18n.t(optionSyncKey('iCloudUnavailable_description', option))
-    case 'account_changed':
-      return i18n.t('syncOption_accountChanged')
-  }
 }
 
 /** Cloud Sync paused by the server, said calmly: nothing failed here. */

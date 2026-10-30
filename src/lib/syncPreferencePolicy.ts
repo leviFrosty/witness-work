@@ -16,6 +16,7 @@ export const NON_SYNCABLE_PREFERENCE_KEYS = new Set<string>([
   'iCloudSyncSetByUser',
   'syncProvider',
   'installedBeforeFreeSync',
+  'cloudSyncTrayOffer',
   'cloudSyncOffer',
   'cloudSyncAccountToken',
   'cloudSyncConfig',

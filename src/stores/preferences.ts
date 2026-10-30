@@ -307,6 +307,12 @@ export function getEffectiveHomeScreenOrder(
   return out
 }
 
+/**
+ * The tray's one-time Cloud Sync offer on this device (ADR 0040 §4): null until
+ * it was on screen, then `shown`, then `answered` for good.
+ */
+export type CloudSyncTrayOfferState = 'shown' | 'answered' | null
+
 export const PREFERENCE_DEFAULTS = {
   role: 'publisher' as Publisher,
   publisherHours: publisherHours,
@@ -822,6 +828,13 @@ export const PREFERENCE_DEFAULTS = {
    * switched to Cloud Sync. Per-device (non-syncable); never written again.
    */
   installedBeforeFreeSync: false,
+  /**
+   * The notifications tray's one-time Cloud Sync offer to an install from
+   * before sync was free (ADR 0040 §4): `shown` once it was on screen,
+   * `answered` once the User turned it on or dismissed it, or the device moved
+   * to Cloud Sync another way. Never offered again after that. Per-device.
+   */
+  cloudSyncTrayOffer: null as CloudSyncTrayOfferState,
   /**
    * The one-time offer to move a device already on iCloud/Drive to Cloud Sync:
    * `pending` until the User switches or dismisses it. Per-device.

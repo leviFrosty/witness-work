@@ -391,6 +391,18 @@ switching, `components/CloudSyncDefault.tsx`).
   decisions are `src/app/sync/syncDefaults.ts`.
 - A device already syncing through iCloud or Drive keeps it, and Settings →
   Sync offers the switch once, with the security reason (`cloudSyncOffer`).
+- **The tray offer** (ADR 0040 §4, `useCloudSyncTrayOffer`): an install from
+  before sync was free, onboarded, not on Cloud Sync (iCloud, Drive, or off,
+  chosen or not), while Cloud Sync is offered, gets one notifications-tray
+  item. A Supporter gets a thank-you ("Thank you for supporting WitnessWork",
+  Turn On Cloud Sync); anyone else gets "Cloud Sync is now free" (Turn On), and
+  only while the entitlement is `everyone`. It waits until RevenueCat and
+  ww-api's Supporter answer for the account (ADR 0040 §7) are in, so a
+  Supporter never sees the other one. Turn On switches in place
+  (`switchSyncOption('cloud', 'tray')`); a failure says why in an error toast
+  and the item stays. Turning it on, dismissing it, or moving to Cloud Sync any
+  other way answers it for good (`cloudSyncTrayOffer: 'answered'`), even if the
+  device leaves Cloud Sync later.
 - `switchSyncOption` flushes the old option's pending edits, stops, resets the
   namespace bookkeeping (photo bookkeeping keeps only what it knows of local
   files, so each photo is checked against the new option), reads the new option's

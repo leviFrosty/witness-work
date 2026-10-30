@@ -5,6 +5,8 @@ import type { AppIcon } from '@/components/ui/LucideIcon'
 export type NotificationKind =
   | 'backup'
   | 'icloud_sync'
+  /** The one-time offer of Cloud Sync to an existing install (ADR 0040 §4). */
+  | 'cloud_sync'
   | 'previous_report'
   | 'rollover'
   | 'missed_follow_up'

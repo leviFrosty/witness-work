@@ -109,6 +109,7 @@ export type SwitchOutcome =
 export type SwitchSource =
   | 'settings'
   | 'offer'
+  | 'tray'
   | 'tools'
   /** The account's Cloud Sync request, set by a browser (`cloudSyncRequest`). */
   | 'account_request'
@@ -249,11 +250,14 @@ async function runSwitch(
   usePreferences.setState({ iCloudSyncEnabled: true, iCloudFreshSetup: false })
   if (peek.status === 'found') await iCloudSync.pullAndMerge('switch')
   const pushed = await iCloudSync.push('switch')
+  // On Cloud Sync, the tray's offer of it is answered for good (ADR 0040 §4).
+  if (to === 'cloud')
+    usePreferences.setState({ cloudSyncTrayOffer: 'answered' })
   analytics.capture('cloud_sync_option_changed', { from, to, source })
   if (from === 'off')
     analytics.capture('icloud_sync_enabled_changed', {
       enabled: true,
-      source: 'settings',
+      source: source === 'tray' ? 'tray' : 'settings',
     })
   return { outcome: 'switched', pending: !pushed }
 }

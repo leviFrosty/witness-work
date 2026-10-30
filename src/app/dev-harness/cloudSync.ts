@@ -19,6 +19,8 @@ import { bearerOptions } from '@/lib/serverAccount'
 import { withdrawSyncRequest } from '@/lib/syncTransport/server/syncClient'
 import { createWebCloudSyncClient } from '@/app/web-cloud-sync'
 import { usePreferences } from '@/stores/preferences'
+import { showCloudSyncTrayOffer } from '@/app/notifications/devNotifications'
+import type { CloudSyncTrayOfferVariant } from '@/app/sync/cloudSyncTrayOffer'
 import useContacts from '@/stores/contactsStore'
 import * as FileSystem from 'expo-file-system/legacy'
 import { photoFiles } from '@/lib/syncTransport/server/photoFiles'
@@ -70,6 +72,7 @@ export const cloudSyncHarness = {
       offer: prefs.cloudSyncOffer,
       requestAnswered: prefs.cloudSyncRequestAnswered,
       installedBeforeFreeSync: prefs.installedBeforeFreeSync,
+      trayOffer: prefs.cloudSyncTrayOffer,
       canSync: iCloudSync.canSync(),
       needsResolution: prefs.iCloudSyncNeedsResolution,
       pendingPush: prefs.iCloudSyncPendingPush,
@@ -226,6 +229,11 @@ export const cloudSyncHarness = {
    */
   setInstalledBeforeFreeSync: (value = true) => {
     usePreferences.setState({ installedBeforeFreeSync: value })
+    return cloudSyncHarness.state()
+  },
+  /** Lists the tray's Cloud Sync offer again, as the Tools rows do. */
+  showTrayOffer: (variant: CloudSyncTrayOfferVariant) => {
+    showCloudSyncTrayOffer(variant)
     return cloudSyncHarness.state()
   },
   get last() {

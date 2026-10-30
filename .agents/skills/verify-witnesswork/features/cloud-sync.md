@@ -8,6 +8,7 @@ Each device syncs through one option (ADR 0030): Cloud Sync (end-to-end encrypte
 - `cloud-sync-offer` is the one-time "Switch to Cloud Sync?" card on a device that already used iCloud/Drive.
 - `cloud-sync-default` turns Cloud Sync on by itself for a device that never chose, after onboarding.
 - `cloud-sync-request` switches a phone to Cloud Sync, once, when a browser on its account asked (the web's "Turn on Cloud Sync" screen).
+- `cloud-sync-tray-offer` is the one-time notifications-tray item offering Cloud Sync to an existing install ("Cloud Sync is now free", or the Supporter "Thank you for supporting WitnessWork"), with Turn On.
 - `cloud-sync-live` pulls within seconds of another device's change through the account's sync socket, in the foreground.
 - `sync-enable` turns sync on from Settings ("iCloud Sync" / "Google Drive Sync" → "Sync with iCloud" / "Sync with Google Drive"). On Android it first shows Google's account picker and consent screen.
 - `sync-transfer` sends edits to the cloud a few seconds after they're made and brings other devices' edits in on foreground, on "Sync now", and (Android, while open) within about a minute.
@@ -47,6 +48,7 @@ The status is cached about a minute per device; `__WW_DEV__.cloudSync.refresh()`
 - **Existing install.** `__WW_DEV__.cloudSync.setInstalledBeforeFreeSync(true)` makes the device one from before sync was free (`state().installedBeforeFreeSync`). With `forgetChoice()`, `setSupporter(false)` and `remount()`, sync stays off even with the entitlement `everyone`; as a Supporter it still turns on.
 - **The account's Cloud Sync request** (ADR 0040 §5; `cloud-sync-request`). `__WW_DEV__.cloudSync.request()` asks as the web's Turn On does (`false` withdraws it); `cloudSync.last` has `{ requestedAt }`. The phone answers at its next status read: `cloudSync.refresh()`, or a return to the foreground at least a minute after the last read. A phone on iCloud/Drive or Off switches and shows "Cloud Sync is on"; one already on Cloud Sync does nothing. `state().requestAnswered` is the request it acted on; it acts once per request. ww-api clears the request itself once every live phone session has written a slot since (`refresh()`, then `last.requestedAt`).
 - **The web's Cloud Sync screen** on a phone: Tools → Web Cloud Sync. "Turn on", "Waiting" and "Update your phone" each hold one state; "Live" reads this phone's account as a browser with no slot would, so Turn On sets the real request and the wait ends (an `onReady` toast) once a live phone session's slot is there.
+- **Tray offer.** Off Cloud Sync (`cloudSync.switchTo('off')` or `simulateUpgradedPlatformDevice()`), run `__WW_DEV__.cloudSync.showTrayOffer('free')` (or `'thanks'` for the Supporter version; also in Tools → Notifications → Tray), then open the Home bell. Turn On switches in place and shows "This device now uses Cloud Sync"; `state().trayOffer` reads `answered` afterwards. Swiping it away answers it too.
 
 ### iCloud and Google Drive
 

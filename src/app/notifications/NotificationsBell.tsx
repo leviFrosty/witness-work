@@ -1,5 +1,6 @@
 import { useSyncResolutionNotification } from '@/app/sync/useSyncResolutionNotification'
 import { useSyncResetNotification } from '@/app/sync/useSyncResetNotification'
+import { useCloudSyncTrayOffer } from '@/app/sync/useCloudSyncTrayOffer'
 import useCalendarSyncNotification from '@/app/calendar/useCalendarSyncNotification'
 import useCalendarSyncPausedNotification from '@/app/calendar/useCalendarSyncPausedNotification'
 import type { NotificationItem } from '@/types/notifications'
@@ -45,6 +46,7 @@ export default function NotificationsBell() {
     useBackupNotification(now),
     useSyncResolutionNotification(),
     useSyncResetNotification(),
+    useCloudSyncTrayOffer(),
     useCalendarSyncPausedNotification(now),
     useDataProtectionRetentionNotification(now),
     ...useReminderNotifications(now),

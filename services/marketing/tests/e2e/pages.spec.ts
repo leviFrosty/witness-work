@@ -111,10 +111,13 @@ test('a landing page opened at #support moves on to the support page', async ({
   await expect.poll(path).toBe(supportPath('de-DE'))
   await page.goto('/ar#support')
   await expect.poll(path).toBe(supportPath('ar'))
-  // Other pages keep the anchor.
-  await page.goto('/get#support')
-  await page.waitForLoadState('load')
-  expect(path()).toBe('/get#support')
+  // Other pages that run landing.js keep the anchor. (Not `/get`: it doesn't
+  // run landing.js, and it sends phones to the store.)
+  await page.goto('/privacy#support')
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText(
+    'Privacy Policy'
+  )
+  expect(path()).toBe('/privacy#support')
 })
 
 test('support page in Arabic, right to left', async ({ page }) => {

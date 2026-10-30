@@ -33,12 +33,34 @@ const sections = [
     ),
   },
   {
+    title: 'Supporter purchases',
+    body: (
+      <p>
+        Purchases in the App Store or Google Play follow Apple's or Google's
+        terms. On the web, we sell Supporter subscriptions and Tips through
+        RevenueCat Billing, with payments processed by Stripe on our own Stripe
+        account. Web prices are in US dollars, with taxes included or added
+        where required. Subscriptions renew automatically each month or year
+        until you cancel. To cancel, use Manage subscription in WitnessWork on
+        the web, or the link in any receipt email. Cancelling stops the next
+        renewal; Supporter access lasts until the end of the period you paid
+        for. For refunds, email support; a refund ends the access it paid for.
+        Web purchases are not offered in, or with a card or billing address
+        from, the European Union, the United Kingdom, the Isle of Man, Monaco,
+        Åland, French Guiana, Guadeloupe, Martinique, Mayotte, Réunion, or Saint
+        Martin (French part); there, buy in the WitnessWork app from the App
+        Store or Google Play, where available.
+      </p>
+    ),
+  },
+  {
     title: 'Availability and liability',
     body: (
       <p>
-        WitnessWork is provided as is and may change or become unavailable. Back
-        up important records. To the extent allowed by law, Levi Wilkerson is
-        not responsible for losses from using the app.
+        WitnessWork, in the apps and on the web, is provided as is and may
+        change or become unavailable. Back up important records. To the extent
+        allowed by law, Levi Wilkerson is not responsible for losses from using
+        the app.
       </p>
     ),
   },
@@ -51,7 +73,7 @@ export default function WitnessWorkTerms() {
       eyebrow='Terms'
       title='Terms of Use'
       description='Rules and responsibilities for using WitnessWork.'
-      updated='Updated October 27, 2026'
+      updated='Updated October 30, 2026'
       sections={sections}
     >
       Questions? Email{' '}

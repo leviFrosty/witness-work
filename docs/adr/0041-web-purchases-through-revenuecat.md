@@ -51,8 +51,9 @@ The web reads RevenueCat's customer info, with ww-api's answer as a fallback.
 
 ### 6. Email
 
-Checkout asks for an email for the receipt. Stripe and RevenueCat keep it; we
-never do. The privacy policy says so.
+Checkout asks for an email for the receipt. It stays in our Stripe and
+RevenueCat accounts, linked to the purchase, and never reaches WitnessWork's
+servers or the app. The privacy policy says so.
 
 ## Considered options
 

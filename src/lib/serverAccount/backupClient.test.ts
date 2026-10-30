@@ -6,6 +6,7 @@ import { HttpError } from '@/lib/http/request'
 import {
   deleteBackup,
   getBackup,
+  getBackupSlot,
   listBackups,
   putBackup,
 } from '@/lib/serverAccount/backupClient'
@@ -93,11 +94,46 @@ describe('backup client', () => {
     expect(request.body).toBe(blob)
   })
 
+  it('puts only over the bytes it read, with a strong quoted If-Match', async () => {
+    const blob = new Uint8Array([1, 2, 3])
+    const { seen, options } = fakeFetch(() =>
+      json(200, { ok: true, uploadedAt: 42, etag: 'next' })
+    )
+    await putBackup(options, SLOT, blob, { ifMatch: '0123abcd' })
+    expect(seen[0]!.headers['if-match']).toBe('"0123abcd"')
+    // Without one, as before: older apps' puts.
+    await putBackup(options, SLOT, blob)
+    expect(seen[1]!.headers).not.toHaveProperty('if-match')
+  })
+
+  it('gets a slot with the etag of the bytes it read', async () => {
+    const blob = new Uint8Array([7, 8, 9])
+    let etag: string | null = '"0123abcd"'
+    const { options } = fakeFetch(
+      () =>
+        new Response(blob, {
+          status: 200,
+          headers: {
+            'content-type': 'application/octet-stream',
+            ...(etag && { etag }),
+          },
+        })
+    )
+    expect(await getBackupSlot(options, SLOT)).toEqual({
+      blob,
+      etag: '0123abcd',
+    })
+    // A weak or missing one promises nothing about the bytes.
+    for (etag of ['W/"0123abcd"', null])
+      expect((await getBackupSlot(options, SLOT)).etag).toBeNull()
+  })
+
   it('surfaces the server’s codes', async () => {
     for (const [status, code] of [
       [413, 'too_large'],
       [429, 'limit'],
       [429, 'rate_limited'],
+      [412, 'precondition_failed'],
       [503, 'disabled'],
     ] as const) {
       const { options } = fakeFetch(() => json(status, { ok: false, code }))

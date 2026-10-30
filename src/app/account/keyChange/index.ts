@@ -59,11 +59,15 @@ import {
   prepareBuddiesForKeyChange,
   resetBuddiesForKeyChange,
 } from '@/features/buddies/lib/buddiesService'
+import { navigationRef } from '@/features/contacts/lib/linking'
+import i18n from '@/lib/locales'
+import { toast } from '@/stores/toasts'
 import { usePreferences } from '@/stores/preferences'
 import { createKeyChangeEventGate } from './analytics'
 import { createKeyChangeEngine } from './engine'
 import { createResealStep } from './reseal'
 import { createKeyRetiredHandler } from './retired'
+import { useKeyChangeStatus } from './status'
 import { keyChangeStep, registerKeyChangeStep } from './steps'
 
 /**
@@ -163,6 +167,14 @@ export const keyChange = createKeyChangeEngine({
   },
 })
 
+keyChange.onStage((stage) => useKeyChangeStatus.setState({ stage }))
+
+/** Opens Change Account Key, to continue the change under way. */
+function openToContinue(): void {
+  if (navigationRef.isReady())
+    navigationRef.navigate('Change Account Key', { entry: 'resume' })
+}
+
 /**
  * At launch, before anything reads the account key: a change record decides
  * which key is this device's (docs/account-key-change.md, "The record wins at
@@ -177,9 +189,21 @@ export function resumeKeyChangeAtLaunch(): void {
       resolved = resolve
     })
   )
-  void keyChange.resume(resolved).catch((error: unknown) => {
-    logger.warn('[keyChange] resuming failed', error)
-  })
+  void keyChange
+    .resume(resolved)
+    .then((result) => {
+      // A change the User left before it went through: tapping it opens
+      // Change Account Key to continue (Settings → Account offers Continue
+      // and Discard too). A top toast has no button of its own.
+      if (result.state === 'awaiting')
+        toast.news(i18n.t('accountKeyChange_resumeToast'), {
+          message: i18n.t('accountKeyChange_resumeToastDetail'),
+          onOpen: openToContinue,
+        })
+    })
+    .catch((error: unknown) => {
+      logger.warn('[keyChange] resuming failed', error)
+    })
 }
 
 /** The server refused a key as retired (`retired.ts`). */
@@ -284,6 +308,12 @@ export function installKeyChange(): void {
     await resetBuddiesForKeyChange(step)
   })
   resumeKeyChangeAtLaunch()
+  void keyChange
+    .current()
+    .then((current) =>
+      useKeyChangeStatus.setState({ stage: current?.stage ?? null })
+    )
+    .catch(() => undefined)
   // Leaving the old pairings goes on after the step, whether or not Buddies
   // is running.
   carryOnBuddiesKeyChange()

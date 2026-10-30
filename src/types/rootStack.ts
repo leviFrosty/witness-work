@@ -264,6 +264,10 @@ export type RootStackParamList = {
   Account: undefined
   /** Set Up Another Device: this phone shows a QR code for a new one. */
   'Set Up Another Device': { entry?: 'settings' | 'tools' } | undefined
+  /** Change Account Key (ADR 0039): a new key for the same account. */
+  'Change Account Key':
+    | { entry?: 'settings' | 'device_signed_out' | 'resume' }
+    | undefined
   /** The account's signed-in devices (ADR 0028). */
   'Account Devices': undefined
   'Account Passkeys': undefined

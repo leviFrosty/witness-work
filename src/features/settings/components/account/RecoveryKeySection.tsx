@@ -1,6 +1,10 @@
 import { useState } from 'react'
 import { Alert, Platform, View } from 'react-native'
-import { KeyRound as KeyRoundIcon } from 'lucide-react-native'
+import { useNavigation } from '@react-navigation/native'
+import {
+  KeyRound as KeyRoundIcon,
+  RotateCcwKey as RotateCcwKeyIcon,
+} from 'lucide-react-native'
 import { LogInIcon } from '@/components/ui/DirectionalIcon'
 import Section from '@/components/ui/inputs/Section'
 import InputRowButton from '@/components/ui/inputs/InputRowButton'
@@ -9,6 +13,8 @@ import SectionFooter from '@/features/settings/components/account/SectionFooter'
 import RecoveryKeySheet from '@/features/settings/components/account/RecoveryKeySheet'
 import UseRecoveryKeySheet from '@/features/settings/components/account/UseRecoveryKeySheet'
 import { accountKey } from '@/app/account/accountKey'
+import { useKeyChangeStatus } from '@/app/account/keyChange/status'
+import { useKeyChangedElsewhere } from '@/lib/accountKey/keyChangedElsewhere'
 import { analytics } from '@/lib/analytics'
 import { encodeRecoveryKey } from '@/lib/accountKey/recoveryKey'
 import { confirmSensitiveStepUp } from '@/lib/confirmSensitive'
@@ -16,6 +22,7 @@ import { type SensitiveCheck, stopsQuietly } from '@/lib/sensitiveCheck'
 import type { StepUpResult } from '@/lib/serverAccount/stepUp'
 import i18n from '@/lib/locales'
 import { logger } from '@/lib/logger'
+import type { RootStackNavigation } from '@/types/rootStack'
 
 const isWeb = Platform.OS === 'web'
 
@@ -38,15 +45,24 @@ const recoveryKeyAuth = (
 /**
  * Show Recovery Key (after the shared check before sensitive actions: the
  * device's own authentication on phones, creating the account key if there's
- * none yet; a step-up on the web) and, on phones, Use a Recovery Key. A browser
- * signs in with a recovery key on its sign-in screen instead.
+ * none yet; a step-up on the web), Change Account Key, and, on phones, Use a
+ * Recovery Key. A browser signs in with a recovery key on its sign-in screen
+ * instead. Signed out after a key change elsewhere, or while this device's own
+ * change is unfinished, only Use a Recovery Key.
  */
 export default function RecoveryKeySection({
   onAccountChanged,
+  canChangeKey,
 }: {
   /** The account key was created or replaced: check the account again. */
   onAccountChanged: () => void
+  /** The account is set up, and this device may use it. */
+  canChangeKey: boolean
 }) {
+  const navigation = useNavigation<RootStackNavigation>()
+  const changing = useKeyChangeStatus((state) => state.stage !== null)
+  const signedOut = useKeyChangedElsewhere((state) => state.signedOut !== null)
+  const ownKey = !changing && !signedOut
   const [recoveryKey, setRecoveryKey] = useState<string | null>(null)
   const [showing, setShowing] = useState(false)
   const [entering, setEntering] = useState(false)
@@ -93,6 +109,9 @@ export default function RecoveryKeySection({
     }
   }
 
+  // A browser has nothing else here: it signs in from the sign-in screen.
+  if (isWeb && !ownKey) return null
+
   return (
     <View style={{ gap: 5 }}>
       <SectionTitle
@@ -103,13 +122,26 @@ export default function RecoveryKeySection({
         alignWithIcons
       />
       <Section>
-        <InputRowButton
-          leftIcon={KeyRoundIcon}
-          label={i18n.t('account_showRecoveryKey')}
-          onPress={() => void show()}
-          disabled={opening}
-          lastInSection={isWeb}
-        />
+        {ownKey && (
+          <InputRowButton
+            leftIcon={KeyRoundIcon}
+            label={i18n.t('account_showRecoveryKey')}
+            onPress={() => void show()}
+            disabled={opening}
+            lastInSection={isWeb}
+          />
+        )}
+        {/* The web needs its passkey step-up wired first. */}
+        {ownKey && canChangeKey && !isWeb && (
+          <InputRowButton
+            leftIcon={RotateCcwKeyIcon}
+            label={i18n.t('accountKeyChange_row')}
+            sublabel={i18n.t('accountKeyChange_rowSublabel')}
+            onPress={() =>
+              navigation.navigate('Change Account Key', { entry: 'settings' })
+            }
+          />
+        )}
         {!isWeb && (
           <InputRowButton
             leftIcon={LogInIcon}

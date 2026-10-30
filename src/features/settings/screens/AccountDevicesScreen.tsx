@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
-import { Alert, RefreshControl, ScrollView, View } from 'react-native'
-import { useIsFocused } from '@react-navigation/native'
+import { Alert, Platform, RefreshControl, ScrollView, View } from 'react-native'
+import { useIsFocused, useNavigation } from '@react-navigation/native'
 import moment from 'moment'
 import {
   Globe as GlobeIcon,
@@ -44,6 +44,7 @@ import {
 } from '@/lib/dates'
 import i18n from '@/lib/locales'
 import { logger } from '@/lib/logger'
+import type { RootStackNavigation } from '@/types/rootStack'
 
 type Loaded = { devices: AccountDevice[]; context: AccountActivityContext }
 
@@ -94,6 +95,7 @@ function signedIn(
  */
 const AccountDevicesScreen = () => {
   const theme = useTheme()
+  const navigation = useNavigation<RootStackNavigation>()
   const [loaded, setLoaded] = useState<Loaded | null>(null)
   const [loading, setLoading] = useState(true)
   const [failure, setFailure] = useState<LoadFailure | null>(null)
@@ -149,6 +151,24 @@ const AccountDevicesScreen = () => {
 
   const refresh = () => setReloads((count) => count + 1)
 
+  // A lost device may still have the key: changing it stops the old one
+  // working anywhere (ADR 0039 §1).
+  const offerKeyChange = () =>
+    Alert.alert(
+      i18n.t('accountKeyChange_afterSignOutTitle'),
+      i18n.t('accountKeyChange_afterSignOutBody'),
+      [
+        { text: i18n.t('accountKeyChange_notNow'), style: 'cancel' },
+        {
+          text: i18n.t('accountKeyChange_row'),
+          onPress: () =>
+            navigation.navigate('Change Account Key', {
+              entry: 'device_signed_out',
+            }),
+        },
+      ]
+    )
+
   const signOut = (device: AccountDevice, name: string) =>
     Alert.alert(
       i18n.t('accountDevices_signOutTitle', { device: name }),
@@ -164,12 +184,14 @@ const AccountDevicesScreen = () => {
           style: 'destructive',
           onPress: () =>
             void signOutAccountDevice(device.sessionId)
-              .then(() =>
+              .then(() => {
                 analytics.capture('account_device_signed_out', {
                   outcome: 'ok',
                   platform: device.platform ?? 'unknown',
                 })
-              )
+                // The web needs its passkey step-up wired first.
+                if (Platform.OS !== 'web') offerKeyChange()
+              })
               .catch((error: unknown) => {
                 logger.warn('[account] signing out a device failed', error)
                 analytics.capture('account_device_signed_out', {

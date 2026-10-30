@@ -32,7 +32,7 @@
 ;(function () {
   if (location.hash !== '#support') return
   var landing = location.pathname.replace(/\/+$/, '')
-  // `/`, `/ar` or `/<ll>-<RR>` (`/de-DE`, `/bem-ZM`), never `/get` or `/help`.
+  // `/`, `/ar` or `/<ll>-<RR>` (`/de-DE`, `/bem-ZM`), never `/privacy` or `/help`.
   if (/^(\/ar|\/[a-z]{2,3}-[A-Z]{2})?$/.test(landing)) {
     location.replace(landing + '/support')
   }

@@ -1097,7 +1097,8 @@ Mistyped keys send nothing: the form refuses them before they can be used.
 
 These answer whether people who start Change Account Key finish it, and where
 it stops when it doesn't (ADR 0039; docs/account-key-change.md). A change is
-rare: one of each per change at most. A change stopped at a step retries on
+rare: one of each per change at most; `opened` and `discarded` show how many
+who open it leave before the key changes. A change stopped at a step retries on
 every launch and foreground, so its `resumed` and `failed` events are sent at
 most once a day per stage.
 
@@ -1107,6 +1108,8 @@ most once a day per stage.
 | `account_key_change_completed` | Every step finished and the old key was deleted.                                                          | `platform`.                                                                                                                                                                                                                                                                                                                   |
 | `account_key_change_resumed`   | A launch found a change the server committed and carried it on (after a crash or a lost answer).          | `platform`, `stage: committed \| stored \| resealed \| buddies-reset` (where it picked up).                                                                                                                                                                                                                                   |
 | `account_key_change_failed`    | The change stopped: another device changed the key first, storing the key failed, or a later step failed. | `platform`, `stage` (the last stage recorded), `reason: conflict \| key_retired \| store \| step` (`conflict` and `key_retired`: another device changed the key first, and this device's new key was discarded; `store`: the platform store refused the key; `step`: re-sealing or the Buddies reset stopped, to be retried). |
+| `account_key_change_opened`    | Change Account Key opened.                                                                                | `entry: settings \| device_signed_out \| resume` (Settings → Account, the offer after signing out a device, or Continue on an unfinished change).                                                                                                                                                                             |
+| `account_key_change_discarded` | The User left a change before it went through, and its new key was deleted.                               | `stage: pending \| confirmed` (leaving the new recovery key, or Discard New Key on an unfinished change).                                                                                                                                                                                                                     |
 
 Never a key, the recovery key, `accountPub`, the account id, slot or photo
 ids, or a device name.

@@ -63,9 +63,12 @@ export async function devicesTooOldForKeyChange(
   signal?: AbortSignal
 ): Promise<AccountDevice[]> {
   const devices = await readAccountDevices(accountKey, signal)
-  return devices.filter((device) => {
-    if (device.current) return false
-    const version = semver.valid(device.appVersion)
-    return !version || semver.lt(version, KEY_CHANGE_MIN_APP_VERSION)
-  })
+  return devices.filter(isTooOldForKeyChange)
+}
+
+/** Another device whose app can't sign back in after a key change. */
+export function isTooOldForKeyChange(device: AccountDevice): boolean {
+  if (device.current) return false
+  const version = semver.valid(device.appVersion)
+  return !version || semver.lt(version, KEY_CHANGE_MIN_APP_VERSION)
 }

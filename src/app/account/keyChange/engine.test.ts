@@ -523,6 +523,49 @@ describe('key change engine', () => {
   })
 })
 
+describe('key change engine, for the screens', () => {
+  it('gives back the new key of a change not yet confirmed, and only that', async () => {
+    const { engine } = setup()
+    expect(await engine.pendingKey()).toBeNull()
+    const { newKey } = await engine.start()
+    expect(await engine.pendingKey()).toEqual(newKey)
+    await engine.confirm()
+    expect(await engine.pendingKey()).toBeNull()
+  })
+
+  it('tells listeners each stage it records, then null once it’s done', async () => {
+    const { engine } = setup()
+    const seen: (string | null)[] = []
+    engine.onStage((stage) => seen.push(stage))
+    await engine.start()
+    await engine.confirm()
+    await engine.commit()
+    expect(seen).toEqual([
+      'pending',
+      'confirmed',
+      'committed',
+      'stored',
+      'resealed',
+      'buddies-reset',
+      null,
+    ])
+    const other = setup()
+    const after: unknown[] = []
+    other.engine.onStage((stage) => after.push(stage))()
+    await other.engine.start()
+    expect(after).toEqual([])
+  })
+
+  it('tells listeners when a change is discarded', async () => {
+    const { engine } = setup()
+    const seen: (string | null)[] = []
+    engine.onStage((stage) => seen.push(stage))
+    await engine.start()
+    await engine.discard()
+    expect(seen).toEqual(['pending', null])
+  })
+})
+
 describe('key change engine at launch', () => {
   const recordAt = async (
     stage: KeyChangeRecord['stage'],

@@ -86,7 +86,8 @@ New error codes:
 | 403    | `ticket_invalid`   | A ticket that's malformed, expired, used, or for another account                                                                                                     |
 | 403    | `turnstile_failed` | Turnstile's Siteverify refused the token. `reason`: Turnstile's first error code                                                                                     |
 | 403    | `step_up_required` | A web session hasn't passed a step-up in the last 5 minutes                                                                                                          |
-| 403    | `key_retired`      | Reserved for ADR 0039: a session open with a retired account key                                                                                                     |
+| 403    | `key_retired`      | A session open with a retired account key ([account-key-change.md](./account-key-change.md#retired-keys))                                                            |
+| 403    | `session_too_new`  | A web session less than 24 hours old asks to change the account key ([account-key-change.md](./account-key-change.md#codes))                                         |
 
 ### Signing in with a passkey
 
@@ -280,11 +281,12 @@ Blobs use the Buddies `seal` format (`0x01 ‖ nonce[12] ‖ ChaCha20-Poly1305`)
 
 New [activity](./accounts-protocol.md#reading-activity-get-accountsv1activity) kinds. Clients skip kinds they don't know.
 
-| `kind`            | `session`                                           | Also           |
-| ----------------- | --------------------------------------------------- | -------------- |
-| `passkey.added`   | The session that added it (the new one, at sign-up) | `credentialId` |
-| `passkey.removed` | The session that removed it                         | `credentialId` |
-| `device.approved` | The phone's session that approved a browser         | —              |
+| `kind`                | `session`                                                                                   | Also           |
+| --------------------- | ------------------------------------------------------------------------------------------- | -------------- |
+| `passkey.added`       | The session that added it (the new one, at sign-up)                                         | `credentialId` |
+| `passkey.removed`     | The session that removed it                                                                 | `credentialId` |
+| `device.approved`     | The phone's session that approved a browser                                                 | —              |
+| `account.key_changed` | The session that changed the account key ([account-key-change.md](./account-key-change.md)) | —              |
 
 - `session.opened` adds `method`: `attestation`, `dev`, `passkey`, `approval`, `recovery`, or `signup`. An `approval` one has `actor`: the phone's session.
 - `session.replaced` also covers the web cap: a fourth web session ended the least recently active one.

@@ -4,6 +4,8 @@ status: proposed
 
 # Cloud Sync: end-to-end encrypted, realtime sync through ww-api
 
+> Amended by [ADR 0040](./0040-sync-is-free-and-cloud-sync-carries-photos.md): sync is free for everyone (replacing §6's entitlement) and Cloud Sync carries photos (replacing §9's photo phase).
+
 ## Context
 
 Sync today runs on the User's own cloud: the iCloud container on iOS and the

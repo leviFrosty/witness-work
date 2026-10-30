@@ -4,6 +4,8 @@ status: accepted
 
 # The Help Center lives on the website
 
+> Amended by [ADR 0042](./0042-witnesswork-app-domain.md): the Help Center moves to `witnesswork.app/help`, built from `services/marketing` in this repo and deployed by CI.
+
 ## Context
 
 The Help Center's questions and answers lived in the app: their order and

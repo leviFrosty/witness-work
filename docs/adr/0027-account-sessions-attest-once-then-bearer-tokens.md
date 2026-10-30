@@ -4,6 +4,8 @@ status: proposed
 
 # Account sessions: attest once, then bearer tokens
 
+> Amended by [ADR 0038](./0038-passkeys-and-web-accounts.md): browsers open sessions with a passkey or a device approval instead of attestation, and the legacy sign-in method is turned off.
+
 ## Context
 
 ADR 0024 gave each User an anonymous server account, and ADR 0026 hung

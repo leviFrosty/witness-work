@@ -1,4 +1,5 @@
 import fs from 'node:fs'
+import os from 'node:os'
 import path from 'node:path'
 import { spawnSync } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
@@ -48,6 +49,64 @@ export function deploymentPlan(
     databaseId: target.databaseId,
     dryRun,
     message,
+  }
+}
+
+/** The 1Password item holding a channel's private signing key, as its note. */
+export const signingKeyItem = (channel) =>
+  `WitnessWork OTA signing (${channel})`
+
+/**
+ * How `op` reads a channel's signing key. Production goes through the 1Password
+ * app, never the agents' service account, so a person approves each read, and
+ * its item can live in a vault the service account can't open. Beta and dev
+ * read from Agents, so /beta-build stays hands-free.
+ */
+export function signingKeyRead(channel, inherited = process.env) {
+  const env = { ...inherited }
+  const args = ['item', 'get', signingKeyItem(channel)]
+  if (channel === 'production') delete env.OP_SERVICE_ACCOUNT_TOKEN
+  else args.push('--vault', 'Agents')
+  args.push('--fields', 'notesPlain', '--format', 'json', '--reveal')
+  return { args, env }
+}
+
+/**
+ * Runs `run` with the channel's signing key in a private temporary file, then
+ * deletes it. The key is never kept on disk between publishes.
+ */
+function withSigningKey(channel, run) {
+  const { args, env } = signingKeyRead(channel)
+  const read = spawnSync('op', args, {
+    env,
+    encoding: 'utf8',
+    stdio: ['ignore', 'pipe', 'inherit'],
+  })
+  let pem
+  try {
+    pem = JSON.parse(read.stdout).value?.trim()
+  } catch {
+    pem = undefined
+  }
+  if (read.status !== 0 || !pem?.startsWith('-----BEGIN '))
+    throw new Error(
+      channel === 'production'
+        ? `Couldn't read "${signingKeyItem(channel)}" through the 1Password app; approve the prompt on this Mac (see docs/ota-updates.md)`
+        : `Couldn't read "${signingKeyItem(channel)}" from the Agents vault`
+    )
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'ww-ota-key-'))
+  // An interrupted publish still reaches `finally` and deletes the key.
+  const interrupted = () => (process.exitCode = 130)
+  process.on('SIGINT', interrupted)
+  process.on('SIGTERM', interrupted)
+  try {
+    const file = path.join(directory, 'private-key.pem')
+    fs.writeFileSync(file, `${pem}\n`, { mode: 0o600 })
+    return run(file)
+  } finally {
+    fs.rmSync(directory, { recursive: true, force: true })
+    process.off('SIGINT', interrupted)
+    process.off('SIGTERM', interrupted)
   }
 }
 
@@ -115,40 +174,39 @@ function main() {
     throw new Error(
       'The build client key does not match the selected update service'
     )
-  const signingKey = findPrivateFile(
-    `.env.hotupdater-keys/${plan.channel}/private-key.pem`
-  )
-  if (!signingKey)
-    throw new Error('Missing OTA signing key; restore it from the Agents vault')
-  env.HOT_UPDATER_SIGNING_KEY_PATH = signingKey
   env.WW_OTA_DEPLOY = '1'
   env.EXPO_PUBLIC_COMMIT_HASH = spawnSync(
     'git',
     ['rev-parse', '--short', 'HEAD'],
     { cwd: root, encoding: 'utf8' }
   ).stdout.trim()
-  const fingerprint = spawnSync(
-    process.execPath,
-    [path.join(root, 'scripts/ota-fingerprint.mjs'), '--write'],
-    { cwd: root, env, stdio: 'inherit' }
-  )
-  if (fingerprint.error) throw fingerprint.error
-  if (fingerprint.status !== 0)
-    throw new Error('Could not prepare the selected environment fingerprint')
-  const result = spawnSync(
-    path.join(root, 'node_modules/.bin/hot-updater'),
-    [
-      'deploy',
-      '--platform',
-      platform,
-      '--channel',
-      plan.channel,
-      '--bundle-output-path',
-      'dist/hot-updater',
-      ...(plan.message ? ['--message', plan.message] : []),
-    ],
-    { cwd: root, env, stdio: 'inherit' }
-  )
+  // Hot Updater's config wants the key path whenever it loads for a deploy,
+  // the fingerprint step included.
+  const result = withSigningKey(plan.channel, (signingKey) => {
+    const signing = { ...env, HOT_UPDATER_SIGNING_KEY_PATH: signingKey }
+    const fingerprint = spawnSync(
+      process.execPath,
+      [path.join(root, 'scripts/ota-fingerprint.mjs'), '--write'],
+      { cwd: root, env: signing, stdio: 'inherit' }
+    )
+    if (fingerprint.error) throw fingerprint.error
+    if (fingerprint.status !== 0)
+      throw new Error('Could not prepare the selected environment fingerprint')
+    return spawnSync(
+      path.join(root, 'node_modules/.bin/hot-updater'),
+      [
+        'deploy',
+        '--platform',
+        platform,
+        '--channel',
+        plan.channel,
+        '--bundle-output-path',
+        'dist/hot-updater',
+        ...(plan.message ? ['--message', plan.message] : []),
+      ],
+      { cwd: root, env: signing, stdio: 'inherit' }
+    )
+  })
   if (result.error) throw result.error
   process.exitCode = result.status ?? 1
   if (result.status === 0 && env.POSTHOG_CLI_API_KEY?.trim()) {

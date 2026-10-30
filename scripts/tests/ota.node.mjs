@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { deploymentPlan } from '../ota.mjs'
+import { deploymentPlan, signingKeyItem, signingKeyRead } from '../ota.mjs'
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
@@ -242,6 +242,26 @@ test('channel and compatibility overrides cannot bypass the environment plan', (
       /Unknown OTA argument/
     )
   assert.throws(() => deploymentPlan('preview', 'ios', [], {}), /Usage/)
+})
+
+test('the production signing key is read through the 1Password app, never the service account', () => {
+  const inherited = { OP_SERVICE_ACCOUNT_TOKEN: 'ops_token', PATH: '/bin' }
+  const production = signingKeyRead('production', inherited)
+  assert.equal(production.env.OP_SERVICE_ACCOUNT_TOKEN, undefined)
+  assert.equal(production.env.PATH, '/bin')
+  assert.ok(!production.args.includes('--vault'))
+  assert.equal(production.args[2], signingKeyItem('production'))
+  assert.equal(inherited.OP_SERVICE_ACCOUNT_TOKEN, 'ops_token')
+  for (const channel of ['beta', 'dev']) {
+    const read = signingKeyRead(channel, inherited)
+    assert.equal(read.env.OP_SERVICE_ACCOUNT_TOKEN, 'ops_token')
+    assert.deepEqual(read.args.slice(3, 5), ['--vault', 'Agents'])
+  }
+})
+
+test('publishing never reads a signing key kept on disk', () => {
+  const script = fs.readFileSync(new URL('../ota.mjs', import.meta.url), 'utf8')
+  assert.ok(!script.includes('.env.hotupdater-keys'))
 })
 
 test('publishing does not inject OTA fingerprints into existing native projects', () => {

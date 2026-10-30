@@ -111,13 +111,26 @@ environment. Keep secrets in the 1Password Agents vault; never commit these
 files. Metro blocks `.env*` files/directories and `.verify/` from its module
 contexts, including Expo DOM contexts.
 
-Each private RSA key is stored in Agents as `WitnessWork OTA signing (<channel>)`.
-Restore it privately to `.env.hotupdater-keys/<channel>/private-key.pem`, mode 600. The publishing script looks in the worktree first, then the main checkout,
-and passes the absolute key path to the CLI. Native builds read only the public
-key. Rotate a signing key only with a new native build; existing clients keep
-their old trust anchor. For client-key rotation, register a new key, ship it to
-clients, then revoke the old key after those clients have migrated. Updating a
-local file does not update installed binaries.
+Each private RSA key lives only in 1Password, as the note of a Secure Note
+named `WitnessWork OTA signing (<channel>)`. Never save one to disk: the
+publishing script reads the key with `op` right before it signs, writes it to
+a mode 600 file in a fresh temporary directory, and deletes that directory
+when the deploy ends, interrupted or not. Native builds read only the public
+key.
+
+- **Beta and dev** keys are in the Agents vault and read through the agents'
+  service account, so `/beta-build` publishes without anyone at the Mac.
+- **Production** is read through the 1Password app, never the service account
+  (the script drops `OP_SERVICE_ACCOUNT_TOKEN` for that read), so a person
+  approves each publish with Touch ID or the account password. Keep its item in
+  a vault the service account can't open, such as Private, never in Agents: a
+  production signing key can ship code to every install, so no agent session
+  may read it unattended. On the Mac that publishes, turn on 1Password →
+  Settings → Developer → Integrate with 1Password CLI, and keep the app
+  unlocked during a release. Rotate a signing key only with a new native build; existing clients keep
+  their old trust anchor. For client-key rotation, register a new key, ship it to
+  clients, then revoke the old key after those clients have migrated. Updating a
+  local file does not update installed binaries.
 
 ## Publish
 

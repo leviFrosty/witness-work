@@ -2,11 +2,15 @@ import { describe, it, expect } from 'vitest'
 import type {
   CustomerInfo,
   PurchasesEntitlementInfo,
+  PurchasesSubscriptionInfo,
 } from 'react-native-purchases'
 import {
   LIFETIME_SUPPORTER_ENTITLEMENT,
   supporterSinceDate,
 } from '@/lib/supporterSince'
+
+// The tests below that pass no variant run as a production build
+// (vitest.setup.ts).
 
 const entitlement = (
   overrides: Partial<PurchasesEntitlementInfo> &
@@ -28,9 +32,32 @@ const entitlement = (
     ...overrides,
   }) as PurchasesEntitlementInfo
 
+const subscription = (
+  overrides: Partial<PurchasesSubscriptionInfo> &
+    Pick<PurchasesSubscriptionInfo, 'productIdentifier'>
+): PurchasesSubscriptionInfo =>
+  ({
+    purchaseDate: '2026-01-01T00:00:00Z',
+    originalPurchaseDate: '2026-01-01T00:00:00Z',
+    expiresDate: '2099-01-01T00:00:00Z',
+    store: 'APP_STORE',
+    unsubscribeDetectedAt: null,
+    isSandbox: false,
+    billingIssuesDetectedAt: null,
+    gracePeriodExpiresDate: null,
+    ownershipType: 'PURCHASED',
+    periodType: 'NORMAL',
+    refundedAt: null,
+    storeTransactionId: null,
+    isActive: true,
+    willRenew: true,
+    ...overrides,
+  }) as PurchasesSubscriptionInfo
+
 const customer = (overrides: {
   active?: Record<string, PurchasesEntitlementInfo>
   activeSubscriptions?: string[]
+  subscriptions?: PurchasesSubscriptionInfo[]
 }): CustomerInfo =>
   ({
     entitlements: {
@@ -38,6 +65,9 @@ const customer = (overrides: {
       all: overrides.active ?? {},
     },
     activeSubscriptions: overrides.activeSubscriptions ?? [],
+    subscriptionsByProductIdentifier: Object.fromEntries(
+      (overrides.subscriptions ?? []).map((s) => [s.productIdentifier, s])
+    ),
   }) as unknown as CustomerInfo
 
 describe('supporterSinceDate', () => {
@@ -241,5 +271,213 @@ describe('supporterSinceDate', () => {
       })
     )
     expect(result).toBeNull()
+  })
+
+  describe('RevenueCat Billing sandbox purchases', () => {
+    const webSandboxMonthly = (
+      overrides: Partial<PurchasesEntitlementInfo> = {}
+    ) =>
+      customer({
+        active: {
+          'Monthly Donator': entitlement({
+            identifier: 'Monthly Donator',
+            productIdentifier: 'web_jwtime_399_1mo',
+            store: 'RC_BILLING',
+            isSandbox: true,
+            originalPurchaseDate: '2026-10-01T00:00:00Z',
+            ...overrides,
+          }),
+        },
+        activeSubscriptions: ['web_jwtime_399_1mo'],
+      })
+
+    it('does not count a web sandbox subscription in production or Beta', () => {
+      expect(supporterSinceDate(webSandboxMonthly(), 'production')).toBeNull()
+      expect(supporterSinceDate(webSandboxMonthly(), 'beta')).toBeNull()
+    })
+
+    it('does not count one by default in a production build', () => {
+      expect(supporterSinceDate(webSandboxMonthly())).toBeNull()
+    })
+
+    it('counts a web sandbox subscription in development', () => {
+      expect(
+        supporterSinceDate(webSandboxMonthly(), 'development')?.toISOString()
+      ).toBe('2026-10-01T00:00:00.000Z')
+    })
+
+    it('counts a live web subscription everywhere', () => {
+      for (const variant of ['production', 'beta', 'development'] as const) {
+        expect(
+          supporterSinceDate(
+            webSandboxMonthly({ isSandbox: false }),
+            variant
+          )?.toISOString()
+        ).toBe('2026-10-01T00:00:00.000Z')
+      }
+    })
+
+    it('still counts an App Store sandbox subscription everywhere', () => {
+      for (const variant of ['production', 'beta', 'development'] as const) {
+        expect(
+          supporterSinceDate(
+            webSandboxMonthly({ store: 'APP_STORE', isSandbox: true }),
+            variant
+          )?.toISOString()
+        ).toBe('2026-10-01T00:00:00.000Z')
+      }
+    })
+
+    it('leaves Lifetime Supporter unchanged', () => {
+      const lifetime = customer({
+        active: {
+          [LIFETIME_SUPPORTER_ENTITLEMENT]: entitlement({
+            identifier: LIFETIME_SUPPORTER_ENTITLEMENT,
+            productIdentifier: 'rc_promo_lifetime_supporter_lifetime',
+            store: 'PROMOTIONAL',
+            originalPurchaseDate: '2026-05-19T12:00:00Z',
+          }),
+        },
+      })
+      for (const variant of ['production', 'beta', 'development'] as const) {
+        expect(supporterSinceDate(lifetime, variant)?.toISOString()).toBe(
+          '2026-05-19T12:00:00.000Z'
+        )
+      }
+    })
+
+    it('keeps the live subscription when a sandbox one sits beside it', () => {
+      const both = customer({
+        active: {
+          'Monthly Donator': entitlement({
+            identifier: 'Monthly Donator',
+            productIdentifier: 'web_jwtime_399_1mo',
+            store: 'RC_BILLING',
+            isSandbox: true,
+            originalPurchaseDate: '2026-01-01T00:00:00Z',
+          }),
+          'Annual Donator': entitlement({
+            identifier: 'Annual Donator',
+            productIdentifier: 'jwtime_2899_1yr',
+            store: 'APP_STORE',
+            isSandbox: false,
+            originalPurchaseDate: '2026-06-01T00:00:00Z',
+          }),
+        },
+        activeSubscriptions: ['web_jwtime_399_1mo', 'jwtime_2899_1yr'],
+      })
+      expect(supporterSinceDate(both, 'production')?.toISOString()).toBe(
+        '2026-06-01T00:00:00.000Z'
+      )
+    })
+
+    // RevenueCat names one product per entitlement, the one ending last, and
+    // monthly and annual both unlock `Monthly Donator`. A sandbox web
+    // subscription named there mustn't hide a real one behind it.
+    const sandboxNamingMonthlyDonator = (behind: PurchasesSubscriptionInfo) =>
+      customer({
+        active: {
+          'Monthly Donator': entitlement({
+            identifier: 'Monthly Donator',
+            productIdentifier: 'web_jwtime_2899_1yr',
+            store: 'RC_BILLING',
+            isSandbox: true,
+            originalPurchaseDate: '2026-10-01T00:00:00Z',
+          }),
+        },
+        activeSubscriptions: [
+          'web_jwtime_2899_1yr',
+          ...(behind.isActive ? [behind.productIdentifier] : []),
+        ],
+        subscriptions: [
+          subscription({
+            productIdentifier: 'web_jwtime_2899_1yr',
+            store: 'RC_BILLING',
+            isSandbox: true,
+            originalPurchaseDate: '2026-10-01T00:00:00Z',
+            expiresDate: '2027-10-01T00:00:00Z',
+          }),
+          behind,
+        ],
+      })
+
+    it('counts an App Store subscription behind a sandbox one on the same entitlement', () => {
+      const result = supporterSinceDate(
+        sandboxNamingMonthlyDonator(
+          subscription({
+            productIdentifier: 'jwtime_399_1mo',
+            store: 'APP_STORE',
+            originalPurchaseDate: '2025-02-01T00:00:00Z',
+            expiresDate: '2026-11-01T00:00:00Z',
+          })
+        ),
+        'production'
+      )
+      // Since when that subscription first started, not the sandbox one.
+      expect(result?.toISOString()).toBe('2025-02-01T00:00:00.000Z')
+    })
+
+    it('does not count an expired App Store subscription behind a sandbox one', () => {
+      const result = supporterSinceDate(
+        sandboxNamingMonthlyDonator(
+          subscription({
+            productIdentifier: 'jwtime_399_1mo',
+            store: 'APP_STORE',
+            originalPurchaseDate: '2025-02-01T00:00:00Z',
+            expiresDate: '2026-02-01T00:00:00Z',
+            isActive: false,
+          })
+        ),
+        'production'
+      )
+      expect(result).toBeNull()
+    })
+
+    it('does not count another sandbox web subscription behind a sandbox one', () => {
+      const result = supporterSinceDate(
+        sandboxNamingMonthlyDonator(
+          subscription({
+            productIdentifier: 'web_jwtime_399_1mo',
+            store: 'RC_BILLING',
+            isSandbox: true,
+          })
+        ),
+        'production'
+      )
+      expect(result).toBeNull()
+    })
+
+    it('counts a Play subscription behind a sandbox one, listed with its base plan', () => {
+      const result = supporterSinceDate(
+        customer({
+          active: {
+            'Monthly Donator': entitlement({
+              identifier: 'Monthly Donator',
+              productIdentifier: 'web_jwtime_2899_1yr',
+              store: 'RC_BILLING',
+              isSandbox: true,
+            }),
+          },
+          activeSubscriptions: [
+            'web_jwtime_2899_1yr',
+            'witnesswork_supporter:monthly-399',
+          ],
+          subscriptions: [
+            subscription({
+              productIdentifier: 'web_jwtime_2899_1yr',
+              store: 'RC_BILLING',
+              isSandbox: true,
+            }),
+            subscription({
+              productIdentifier: 'witnesswork_supporter',
+              store: 'PLAY_STORE',
+              originalPurchaseDate: '2025-07-01T00:00:00Z',
+            }),
+          ],
+        }),
+        'production'
+      )
+      expect(result?.toISOString()).toBe('2025-07-01T00:00:00.000Z')
+    })
   })
 })

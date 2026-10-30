@@ -9,14 +9,16 @@ import DeviceSyncLinkSection from '@/features/settings/components/sync/DeviceSyn
 import CloudSyncPhotoStorageSection from '@/features/settings/components/account/CloudSyncPhotoStorageSection'
 import HandoffSection from '@/features/settings/components/account/HandoffSection'
 import AccountSecuritySection from '@/features/settings/components/account/AccountSecuritySection'
+import KeyChangeSection from '@/features/settings/components/account/keyChange/KeyChangeSection'
 import useAccountOverview from '@/features/settings/hooks/useAccountOverview'
 import useBackupSlots from '@/features/settings/hooks/useBackupSlots'
 
 /**
  * Settings → Account: the anonymous server account (ADR 0024), its end-to-end
  * encrypted backup, moving it to another phone, its recovery key (ADR 0026),
- * once it's set up, its devices and activity (ADR 0028), a way into Device
- * Sync, and its Cloud Sync photo storage (ADR 0040 §6).
+ * once it's set up, its devices and activity (ADR 0028), changing its key (ADR
+ * 0039), a way into Device Sync, and its Cloud Sync photo storage (ADR 0040
+ * §6).
  */
 const AccountScreen = () => {
   const { overview, refresh } = useAccountOverview()
@@ -31,6 +33,7 @@ const AccountScreen = () => {
         <ScrollView
           contentContainerStyle={{ gap: 30, paddingTop: 30, paddingBottom: 30 }}
         >
+          <KeyChangeSection />
           <AccountStatusSection
             overview={overview}
             onRetry={() => void refresh({ retry: true })}
@@ -45,7 +48,15 @@ const AccountScreen = () => {
           <DeviceSyncLinkSection />
           <CloudSyncPhotoStorageSection />
           {overview.state !== 'notSetUp' && <AccountSecuritySection />}
-          <RecoveryKeySection onAccountChanged={changed} />
+          <RecoveryKeySection
+            onAccountChanged={changed}
+            canChangeKey={
+              overview.state === 'active' ||
+              overview.state === 'suspended' ||
+              overview.state === 'offline' ||
+              overview.state === 'unreachable'
+            }
+          />
         </ScrollView>
       </Wrapper>
     </SettingsInputLayout>

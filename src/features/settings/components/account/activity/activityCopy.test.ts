@@ -130,6 +130,19 @@ describe('activityTitle', () => {
     )
   })
 
+  it('names the device that changed the account key', () => {
+    const session = { sessionId: 'me', platform: 'ios' as const, device: null }
+    expect(
+      activityTitle(entry({ kind: 'account.key_changed', session }), context)
+    ).toBe('Account key changed on this device')
+    expect(activityTitle(entry({ kind: 'account.key_changed' }), context)).toBe(
+      'Account key changed'
+    )
+    expect(activityDetail(entry({ kind: 'account.key_changed' }))).toMatch(
+      /signed out/
+    )
+  })
+
   it('flags a reused refresh token and explains it', () => {
     const reused = entry({
       kind: 'session.refresh_reused',

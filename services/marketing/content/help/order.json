@@ -82,6 +82,7 @@
     "webSignUp",
     "webSignOut",
     "lostDevice",
+    "changeAccountKey",
     "lostAccess",
     "badgesOverview",
     "badgesView",

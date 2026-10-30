@@ -208,9 +208,21 @@ export function createKeyChangeEngine(deps: KeyChangeEngineDeps) {
     extra: { stage?: KeyChangeStage; reason?: KeyChangeFailedReason } = {}
   ) => deps.track(event, { platform: deps.platform, ...extra })
 
+  const listeners = new Set<(stage: KeyChangeStage | null) => void>()
+  const notify = (stage: KeyChangeStage | null) => {
+    for (const listener of listeners) listener(stage)
+  }
+
   const save = async (record: KeyChangeRecord) => {
     await deps.records.write(record)
+    notify(record.stage)
     return record
+  }
+
+  /** Deletes the record, and with it the new key or the old one. */
+  const remove = async () => {
+    await deps.records.remove()
+    notify(null)
   }
 
   const keysOf = (record: KeyChangeRecord) => ({
@@ -223,7 +235,7 @@ export function createKeyChangeEngine(deps: KeyChangeEngineDeps) {
     record: KeyChangeRecord,
     reason: KeyChangeFailedReason
   ): Promise<void> {
-    await deps.records.remove()
+    await remove()
     track('account_key_change_failed', { stage: record.stage, reason })
   }
 
@@ -266,7 +278,7 @@ export function createKeyChangeEngine(deps: KeyChangeEngineDeps) {
       }
       record = await save({ ...record, stage: NEXT[stage]! })
     }
-    await deps.records.remove()
+    await remove()
     track('account_key_change_completed')
   }
 
@@ -355,7 +367,7 @@ export function createKeyChangeEngine(deps: KeyChangeEngineDeps) {
           throw new KeyChangeError('committed')
         }
       }
-      await deps.records.remove()
+      await remove()
     })
   }
 
@@ -600,7 +612,33 @@ export function createKeyChangeEngine(deps: KeyChangeEngineDeps) {
     return record ? { stage: record.stage, startedAt: record.startedAt } : null
   }
 
-  return { start, confirm, discard, commit, resume, current }
+  /**
+   * The new key of a change waiting for "I've saved it", to show its recovery
+   * key again; null otherwise.
+   */
+  const pendingKey = async (): Promise<Uint8Array | null> => {
+    const record = await deps.records.read()
+    return record?.stage === 'pending' ? fromB64u(record.newKey) : null
+  }
+
+  /** Each stage the change records, then null once it's gone. */
+  const onStage = (listener: (stage: KeyChangeStage | null) => void) => {
+    listeners.add(listener)
+    return () => {
+      listeners.delete(listener)
+    }
+  }
+
+  return {
+    start,
+    confirm,
+    discard,
+    commit,
+    resume,
+    current,
+    pendingKey,
+    onStage,
+  }
 }
 
 export type KeyChangeEngine = ReturnType<typeof createKeyChangeEngine>

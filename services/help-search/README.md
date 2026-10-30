@@ -43,9 +43,8 @@ pnpm typecheck
 pnpm build                         # wrangler deploy --dry-run (bundles into dist/)
 pnpm dev                           # local Worker (ADMIN_TOKEN in .dev.vars); Workers AI is remote, KV local, so sync first
 
-# CI deploys on merge to main (production) and from branches (dev); the
-# workflow lands right after the move here. By hand, with a token that can
-# edit Workers, Workers AI and KV:
+# CI deploys on merge to main (production) and from branches (dev); see
+# ../README.md. By hand, with a token that can edit Workers, Workers AI and KV:
 pnpm exec wrangler deploy               # production
 pnpm exec wrangler deploy --env dev     # dev
 

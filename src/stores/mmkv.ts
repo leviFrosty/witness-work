@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { errorTracking } from '@/lib/errorTracking'
 import { captureExceptionThrottled } from '@/lib/throttledErrorReport'
+import { mayHoldLegacyAsyncStorage } from '@/stores/legacyAsyncStorage'
 import { MMKV } from 'react-native-mmkv'
 import { StateStorage } from 'zustand/middleware'
 
@@ -87,6 +88,7 @@ export const isLockedLaunchSimulated = () => devLockedLaunch
 const MIGRATED_FROM_ASYNC_STORAGE_KEY = 'hasMigratedFromAsyncStorage'
 
 export const hasMigratedFromAsyncStorage = () =>
+  !mayHoldLegacyAsyncStorage ||
   mmkvStorage.getBoolean(MIGRATED_FROM_ASYNC_STORAGE_KEY)
 
 /**
@@ -152,6 +154,10 @@ async function copyAsyncStorageKeysToMmkv(
  * clients on the splash screen ("app context has been lost").
  */
 export async function migrateFromAsyncStorage(): Promise<boolean> {
+  if (!mayHoldLegacyAsyncStorage) {
+    mmkvStorage.set(MIGRATED_FROM_ASYNC_STORAGE_KEY, true)
+    return false
+  }
   let asyncStorageKeys: readonly string[]
   try {
     asyncStorageKeys = await AsyncStorage.getAllKeys()

@@ -32,6 +32,15 @@ export function adoptLaunchLink(url: string) {
   startupLink ??= url
 }
 
+/**
+ * Calls `listener` with each link opened while the app runs. Use it in place of
+ * `Linking.addEventListener('url', …)`; the web build has none
+ * (`launchLinks.web.ts`).
+ */
+export function addLinkListener(listener: (url: string) => void) {
+  return Linking.addEventListener('url', ({ url }) => listener(url))
+}
+
 /** The newest link that came while the app was starting, if any. */
 export function linkSinceLaunch(): string | null {
   return startupLink

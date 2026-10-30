@@ -17,6 +17,7 @@ import i18n from '@/lib/locales'
 import { StackActions, useNavigation } from '@react-navigation/native'
 import { RootStackNavigation, RootStackParamList } from '@/types/rootStack'
 import { fetchUpdate } from '@/features/updates/lib/updates'
+import { hasCapability } from '@/lib/platformCapabilities'
 import { usePreferences } from '@/stores/preferences'
 import {
   importContactFromFile,
@@ -118,17 +119,19 @@ const MoreScreen = () => {
           label={i18n.t('importContact')}
           onPress={handleImportContact}
         />
-        <GroupedListRow
-          icon={DownloadIcon}
-          label={i18n.t('checkForUpdate')}
-          onPress={checkForUpdate}
-          accessory={checkingUpdate ? 'none' : 'chevron'}
-          trailing={
-            checkingUpdate ? (
-              <Spinner size='small' label={i18n.t('update_checking')} />
-            ) : undefined
-          }
-        />
+        {hasCapability('otaUpdates') && (
+          <GroupedListRow
+            icon={DownloadIcon}
+            label={i18n.t('checkForUpdate')}
+            onPress={checkForUpdate}
+            accessory={checkingUpdate ? 'none' : 'chevron'}
+            trailing={
+              checkingUpdate ? (
+                <Spinner size='small' label={i18n.t('update_checking')} />
+              ) : undefined
+            }
+          />
+        )}
         <GroupedListRow
           icon={SproutIcon}
           label={i18n.t('restartOnboarding')}

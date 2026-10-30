@@ -24,6 +24,8 @@ export default defineConfig({
       '**/.claude/**',
       // Its own workspace and tests (services/README.md).
       'services/**',
+      // Playwright's, run by `pnpm web:test`.
+      'e2e/web/**',
     ],
   },
 })

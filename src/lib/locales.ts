@@ -1,5 +1,6 @@
 import { I18n, TranslateOptions } from 'i18n-js'
 import enUS from '@/locales/en-US.json'
+import { translationLoaders } from '@/lib/translationLoaders'
 import { getLocales } from 'expo-localization'
 import { applyFormatRegion, type DateOrder, type TimeFormat } from '@/lib/dates'
 import { readBootPreferences } from '@/stores/bootPreferences'
@@ -7,31 +8,6 @@ import * as cardinals from 'make-plural/cardinals'
 import { createPluralizer, type CardinalRule } from '@/lib/plurals'
 import { digitSystemFor, localizeNumeral } from '@/lib/digits'
 
-type Translations = typeof enUS
-
-// English is the fallback for every missing key, so it always loads. The
-// others (about 3 MB together) load when they become the active language.
-const translationLoaders = {
-  'en-us': () => enUS,
-  'de-de': () => require('../locales/de-DE.json'),
-  'es-es': () => require('../locales/es-ES.json'),
-  'fr-fr': () => require('../locales/fr-FR.json'),
-  'it-it': () => require('../locales/it-IT.json'),
-  'ja-jp': () => require('../locales/ja-JP.json'),
-  'ko-kr': () => require('../locales/ko-KR.json'),
-  'nl-nl': () => require('../locales/nl-NL.json'),
-  'pt-br': () => require('../locales/pt-BR.json'),
-  'pt-pt': () => require('../locales/pt-PT.json'),
-  'ru-ru': () => require('../locales/ru-RU.json'),
-  'vi-vn': () => require('../locales/vi-VN.json'),
-  'zh-hant-tw': () => require('../locales/zh-TW.json'), // Traditional
-  'zh-hans-cn': () => require('../locales/zh-CN.json'), // Simplified
-  'sw-ke': () => require('../locales/sw-KE.json'),
-  'uk-ua': () => require('../locales/uk-UA.json'),
-  'bem-zm': () => require('../locales/bem-ZM.json'), // Bemba
-  'rw-rw': () => require('../locales/rw-RW.json'),
-  ar: () => require('../locales/ar.json'), // One Arabic for every country
-} as const satisfies Record<string, () => Partial<Translations>>
 export type TranslatedLocale = keyof typeof translationLoaders
 
 export const translatedLocales = Object.keys(
@@ -113,15 +89,27 @@ _i18n.interpolate = (i18n, message, options) => {
 }
 
 const loadedLocales = new Set<TranslatedLocale>([DEFAULT_LOCALE])
+const loading: Promise<void>[] = []
 
-/** Makes `locale` the language `i18n.t` answers in, loading it if needed. */
+/**
+ * Makes `locale` the language `i18n.t` answers in, loading it if needed. On the
+ * web its translations arrive later; see `translationsLoaded`.
+ */
 export function setI18nLocale(locale: TranslatedLocale): void {
   if (!loadedLocales.has(locale)) {
-    _i18n.store({ [locale]: translationLoaders[locale]() })
     loadedLocales.add(locale)
+    const translations = translationLoaders[locale]()
+    if (translations instanceof Promise)
+      loading.push(
+        translations.then((loaded) => _i18n.store({ [locale]: loaded }))
+      )
+    else _i18n.store({ [locale]: translations })
   }
   _i18n.locale = locale
 }
+
+/** Settles once every language asked for so far has loaded (web only). */
+export const translationsLoaded = () => Promise.all(loading)
 
 // Set up the language and date conventions before anything renders, and for
 // runtimes that never mount the app (widget refresh, background tasks).

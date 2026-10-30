@@ -1,4 +1,5 @@
 import { I18nManager } from 'react-native'
+import { applyDocumentDirection } from '@/lib/documentDirection'
 import { logger } from '@/lib/logger'
 import { mmkvStorage } from '@/stores/mmkv'
 
@@ -74,13 +75,15 @@ export function isRtlLayoutFor(locale: string): boolean {
  * `allowRTL(false)` keeps an English UI unmirrored on a phone set to Arabic.
  *
  * The new direction applies from the next JS load: `needsReload` says whether
- * the running app was laid out the other way.
+ * the running app was laid out the other way. The web applies it at once.
  */
 export function syncLayoutDirection(locale: string): {
   rtl: boolean
   needsReload: boolean
 } {
   const rtl = isRtlLayoutFor(locale)
+  if (applyDocumentDirection(rtl ? 'rtl' : 'ltr', locale))
+    return { rtl, needsReload: false }
   I18nManager.allowRTL(rtl)
   I18nManager.forceRTL(rtl)
   return { rtl, needsReload: I18nManager.isRTL !== rtl }

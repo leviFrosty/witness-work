@@ -7,6 +7,8 @@ node_modules/
 .expo/
 dist/
 web-build/
+# Skia's CanvasKit, copied in by scripts/web.mjs
+/public/canvaskit.wasm
 
 # Native
 *.orig.*

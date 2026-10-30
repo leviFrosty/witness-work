@@ -10,6 +10,7 @@ import useIsSupporter from '@/hooks/useIsSupporter'
 import { isFoundingSupporter } from '@/lib/foundingSupporter'
 import useTheme from '@/contexts/theme'
 import { openStoreListing } from '@/lib/storeListing'
+import { hasCapability } from '@/lib/platformCapabilities'
 import { useNavigation } from '@react-navigation/native'
 import { RootStackNavigation } from '@/types/rootStack'
 import { SettingsSectionProps } from '@/features/settings/screens/settingScreen'
@@ -80,12 +81,14 @@ const SupportSection = ({
         onPress={() => handleNavigate('ShareApp')}
         selected={selectedDestination === 'ShareApp'}
       />
-      <GroupedListRow
-        icon={MedalIcon}
-        label={i18n.t('rateWitnessWorkOnAppStore')}
-        accessory='external'
-        onPress={() => openStoreListing({ review: true })}
-      />
+      {hasCapability('storeReview') && (
+        <GroupedListRow
+          icon={MedalIcon}
+          label={i18n.t('rateWitnessWorkOnAppStore')}
+          accessory='external'
+          onPress={() => openStoreListing({ review: true })}
+        />
+      )}
     </GroupedListSection>
   )
 }

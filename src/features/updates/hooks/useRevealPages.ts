@@ -16,6 +16,7 @@ import {
   REVEAL_PAGES,
   RevealChipSpec,
 } from '@/features/updates/constants/updateRevealPages'
+import { hasCapability } from '@/lib/platformCapabilities'
 
 /** One page of a tour (the update's, or onboarding's). */
 export interface RevealPage {
@@ -46,6 +47,10 @@ export interface RevealMoreTile {
 export const onThisPlatform = (platform?: 'ios' | 'android') =>
   !platform || platform === Platform.OS
 
+/** Whether this device can pair a watch that runs the WitnessWork watch app. */
+export const canPairWatch = () =>
+  hasCapability('watchApps') && WatchBridge.getStatus().isSupported
+
 /** Whether this device runs at least iOS `minIos`, when one is required. */
 export const meetsIos = (minIos?: number) =>
   !minIos ||
@@ -64,7 +69,7 @@ const useRevealPages = () => {
   const { hasAnnualGoal, showsTimeEntry } = usePublisher()
   const { isTablet } = useDevice()
   const buddiesEnabled = useBuddiesEnabled()
-  const watchSupported = WatchBridge.getStatus().isSupported
+  const watchSupported = canPairWatch()
 
   const moreTiles: RevealMoreTile[] = REVEAL_MORE_ITEMS.filter(
     (item) =>
@@ -84,6 +89,7 @@ const useRevealPages = () => {
       (!page.annualGoalOnly || hasAnnualGoal) &&
       (!page.buddiesOnly || buddiesEnabled) &&
       (!page.watchOnly || watchSupported) &&
+      (!page.siriPhraseKey || hasCapability('siriShortcuts')) &&
       (!page.timeEntryOnly || showsTimeEntry)
   ).map((page) => {
     const captionKey =

@@ -48,6 +48,7 @@ export const toastDuration = async (
           : SCREEN_READER_TOAST_MS
       )
     : base
-  // Android answers 0 when it can't read the setting.
+  // The web has no such setting. Android answers 0 when it can't read it.
+  if (!AccessibilityInfo.getRecommendedTimeoutMillis) return ms
   return Math.max(ms, await AccessibilityInfo.getRecommendedTimeoutMillis(ms))
 }

@@ -27,6 +27,7 @@ const ctx = (
   hasCatchUpReports: false,
   buddiesAvailable: true,
   calendarAvailable: true,
+  notificationsAvailable: true,
   ...overrides,
 })
 
@@ -94,6 +95,17 @@ describe('visibleOnboardingSteps', () => {
     expect(
       ids(ctx('regularPioneer', { installedOn: new Date(2026, 8, 3) }))
     ).not.toContain('onboardingBackfill')
+  })
+})
+
+describe('the notifications step', () => {
+  it('shows only where the device has notifications', () => {
+    const ids = (available: boolean) =>
+      visibleOnboardingSteps(
+        ctx('publisher', { notificationsAvailable: available })
+      ).map((step) => step.id)
+    expect(ids(true)).toContain('notifications')
+    expect(ids(false)).not.toContain('notifications')
   })
 })
 

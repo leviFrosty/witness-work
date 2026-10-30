@@ -11,6 +11,7 @@ const mocks = vi.hoisted(() => ({
 }))
 
 vi.mock('@/features/updates/lib/helpCenter/snapshot', () => ({
+  loadSnapshot: () => Promise.resolve(),
   readSnapshot: mocks.readSnapshot,
 }))
 vi.mock('@/features/updates/lib/helpCenter/storage', () => ({

@@ -1,3 +1,5 @@
+import { sha256 } from '@noble/hashes/sha2.js'
+import { concatBytes, toB64u } from '@/lib/bytes'
 import { HttpError } from '@/lib/http/request'
 import type { BearerAccountOptions } from '@/lib/serverAccount/client'
 import {
@@ -77,6 +79,13 @@ export type ServerSyncAccess = {
    * newest first), for a slot a key change didn't re-seal.
    */
   olderSyncKeys?: readonly Uint8Array[]
+  /**
+   * The photo keys of the account's older account keys (the key history's,
+   * newest first), for a photo a key change didn't re-seal yet: it's listed,
+   * found and deleted under their names, and opened with their keys. Uploads
+   * always use `photoKeys`.
+   */
+  olderPhotoKeys?: readonly PhotoKeys[]
   options: BearerAccountOptions
 }
 
@@ -150,6 +159,19 @@ export const SERVER_WRITE_TIMEOUT_MS = BLOB_TIMEOUT_MS + 30_000
 
 /** The engine's wait for a photo: its own request's, plus sealing it. */
 export const SERVER_BINARY_TIMEOUT_MS = PHOTO_TIMEOUT_MS + 30_000
+
+/** A hash of every key `access` opens with, to see when they change. */
+const keysFingerprint = (access: ServerSyncAccess) =>
+  toB64u(
+    sha256(
+      concatBytes(
+        access.syncKey,
+        ...(access.olderSyncKeys ?? []),
+        access.photoKeys.nameKey,
+        ...(access.olderPhotoKeys ?? []).map(({ nameKey }) => nameKey)
+      )
+    )
+  )
 
 const PREFIX = 'witness-work-'
 const SUFFIX = '.json'
@@ -248,8 +270,12 @@ export function createServerTransport(
   let seq = 0
   /** The filename each listed photo's meta opened to, by name: both immutable. */
   let photoFilenames = new Map<string, string | null>()
+  /** The older keys a listed photo's meta opened with, by name. */
+  let olderKeysByName = new Map<string, PhotoKeys>()
   /** The listed name of each filename, used rather than computing it again. */
   let listedNames = new Map<string, string>()
+  /** The keys the slot cache and photo maps were filled under, hashed. */
+  let openedWith: string | null = null
   /** The account's photo storage as last heard, for a refusal without it. */
   let lastUsage: SyncPhotoUsage | null = null
   const pause = deps.pause ?? (async () => {})
@@ -268,10 +294,22 @@ export function createServerTransport(
     if (cacheAccount !== current.accountId) {
       cache = new Map()
       photoFilenames = new Map()
+      olderKeysByName = new Map()
       listedNames = new Map()
       lastUsage = null
       cacheAccount = current.accountId
       seq = 0
+    }
+    // What a slot or a listed photo opened to holds for these keys only: an
+    // account key change in the same account (or a key history read since)
+    // opens them differently, so one that didn't open is read again.
+    const keysId = keysFingerprint(current)
+    if (openedWith !== keysId) {
+      cache = new Map()
+      photoFilenames = new Map()
+      olderKeysByName = new Map()
+      listedNames = new Map()
+      openedWith = keysId
     }
     return current
   }
@@ -351,6 +389,33 @@ export function createServerTransport(
     return { current, address }
   }
   const slotId = () => deps.slotId?.() ?? null
+
+  /**
+   * A photo under another name its keys give it than `tried` (the current
+   * key's, then each older key's), with those keys; null under none.
+   */
+  const findUnderOtherName = async (
+    current: ServerSyncAccess,
+    filename: string,
+    tried: string
+  ) => {
+    for (const keys of [current.photoKeys, ...(current.olderPhotoKeys ?? [])]) {
+      const name = photoName(keys.nameKey, filename)
+      if (name === tried) continue
+      const target = {
+        accountId: current.accountId,
+        name,
+      }
+      try {
+        const got = await getSyncPhoto(current.options, target.name)
+        return { target, keys, got }
+      } catch (error) {
+        if (!(error instanceof HttpError && error.serverCode === 'not_found'))
+          throw error
+      }
+    }
+    return null
+  }
 
   const transport: ServerTransport = {
     kind: 'cloud',
@@ -459,8 +524,13 @@ export function createServerTransport(
         throw new SyncTransportError('unknown', 'not a Cloud Sync photo name')
       if (deps.photoSwitch?.() === false)
         throw new SyncTransportError('server-error', 'photos_disabled')
-      const { current, address } = await photoAccess()
-      const target = address(filename)
+      const { current } = await photoAccess()
+      // Always the current key's name, even when the photo was listed under
+      // an older key's: that name is the older key's to open, never this one's.
+      const target = {
+        accountId: current.accountId,
+        name: photoName(current.photoKeys.nameKey, filename),
+      }
       // Sized before it's read: a photo over the cap isn't loaded at all.
       const size = await deps.files.size(sourcePath)
       if (size > MAX_PHOTO_FILE_BYTES)
@@ -502,6 +572,7 @@ export function createServerTransport(
           slotId()
         )
         photoFilenames.set(target.name, filename)
+        olderKeysByName.delete(target.name)
         listedNames.set(filename, target.name)
         usage(put.usage, 'put')
         return put.createdAt
@@ -513,21 +584,27 @@ export function createServerTransport(
     async readBinary(filename, destinationPath) {
       if (!deps.files) throw new SyncTransportError('unknown', 'no photo files')
       const { current, address } = await photoAccess()
-      const target = address(filename)
+      let target = address(filename)
+      let keys = olderKeysByName.get(target.name) ?? current.photoKeys
       let got: Awaited<ReturnType<typeof getSyncPhoto>>
       try {
         got = await getSyncPhoto(current.options, target.name)
       } catch (error) {
-        return photoFail(error, 'download')
+        // Not under that name: a photo a key change didn't re-seal yet is
+        // under an older key's, and one it re-sealed since it was listed
+        // under the current key's (docs/account-key-change.md).
+        const found =
+          error instanceof HttpError && error.serverCode === 'not_found'
+            ? await findUnderOtherName(current, filename, target.name).catch(
+                (older: unknown) => photoFail(older, 'download')
+              )
+            : null
+        if (!found) return photoFail(error, 'download')
+        ;({ target, keys, got } = found)
       }
       let bytes: Uint8Array
       try {
-        bytes = await openPhoto(
-          current.photoKeys.photoKey,
-          got.blob,
-          target,
-          pause
-        )
+        bytes = await openPhoto(keys.photoKey, got.blob, target, pause)
       } catch (error) {
         // Another key's, damaged, or moved: a bad file, never written here.
         if (error instanceof PhotoOpenError)
@@ -561,17 +638,41 @@ export function createServerTransport(
           let filename = photoFilenames.get(photo.name)
           if (filename === undefined) {
             // Unreadable (another key's, damaged, newer) or not the name it's
-            // listed under: skipped, as if it weren't there.
+            // listed under: skipped, as if it weren't there. One a key change
+            // didn't re-seal yet opens with an older key's, newest first.
+            const address = { accountId: current.accountId, name: photo.name }
             filename = openPhotoMeta(
               photoKey,
               photo.meta,
-              { accountId: current.accountId, name: photo.name },
+              address,
               nameKey,
               isCloudSyncPhotoFilename
             )
+            for (const older of current.olderPhotoKeys ?? []) {
+              if (filename) break
+              filename = openPhotoMeta(
+                older.photoKey,
+                photo.meta,
+                address,
+                older.nameKey,
+                isCloudSyncPhotoFilename
+              )
+              if (filename) olderKeysByName.set(photo.name, older)
+            }
             photoFilenames.set(photo.name, filename)
           }
           if (!filename) continue
+          // Under two keys while a change re-seals it: one file, preferring
+          // the current key's copy.
+          const seen = names.get(filename)
+          if (seen !== undefined) {
+            if (olderKeysByName.has(photo.name) || !olderKeysByName.has(seen))
+              continue
+            files.splice(
+              files.findIndex((file) => file.filename === filename),
+              1
+            )
+          }
           names.set(filename, photo.name)
           files.push({ filename, modifiedAt: photo.createdAt })
         }
@@ -579,7 +680,10 @@ export function createServerTransport(
         cursor = page.cursor
       } while (cursor)
       for (const name of photoFilenames.keys())
-        if (!listed.has(name)) photoFilenames.delete(name)
+        if (!listed.has(name)) {
+          photoFilenames.delete(name)
+          olderKeysByName.delete(name)
+        }
       listedNames = names
       usage(last, 'list')
       return files
@@ -587,14 +691,27 @@ export function createServerTransport(
 
     async deleteBinaryFile(filename) {
       const { current, address } = await photoAccess()
-      const { name } = address(filename)
+      // Every name it may be under: listed, the current key's, and each older
+      // key's, so a copy a key change didn't re-seal yet goes too.
+      const names = [
+        ...new Set([
+          address(filename).name,
+          photoName(current.photoKeys.nameKey, filename),
+          ...(current.olderPhotoKeys ?? []).map((older) =>
+            photoName(older.nameKey, filename)
+          ),
+        ]),
+      ].slice(0, 100)
       try {
         const deleted = await deleteSyncPhotos(
           current.options,
-          { names: [name] },
+          { names },
           slotId()
         )
-        photoFilenames.delete(name)
+        for (const name of names) {
+          photoFilenames.delete(name)
+          olderKeysByName.delete(name)
+        }
         listedNames.delete(filename)
         usage(deleted.usage, 'delete')
       } catch (error) {
@@ -611,6 +728,7 @@ export function createServerTransport(
           slotId()
         )
         photoFilenames = new Map()
+        olderKeysByName = new Map()
         listedNames = new Map()
         usage(deleted.usage, 'delete')
       } catch (error) {
@@ -645,7 +763,9 @@ export function createServerTransport(
     reset() {
       cache = new Map()
       photoFilenames = new Map()
+      olderKeysByName = new Map()
       listedNames = new Map()
+      openedWith = null
       cacheAccount = null
       seq = 0
     },

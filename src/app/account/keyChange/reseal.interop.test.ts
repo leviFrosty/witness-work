@@ -28,8 +28,19 @@ import {
   interopSessions,
 } from '@/lib/serverAccount/testing/interopSessions'
 import {
+  derivePhotoKeys,
+  openPhoto,
+  openPhotoMeta,
+  photoName,
+  sealPhoto,
+  sealPhotoMeta,
+} from '@/lib/syncTransport/server/photoCrypto'
+import {
+  getSyncPhoto,
   getSyncSlot,
+  listSyncPhotos,
   listSyncSlots,
+  putSyncPhoto,
   putSyncSlot,
 } from '@/lib/syncTransport/server/syncClient'
 import {
@@ -37,7 +48,7 @@ import {
   openSyncBlob,
   sealSyncBlob,
 } from '@/lib/syncTransport/server/syncCrypto'
-import { createResealStep } from './reseal'
+import { createResealStep, resealPhotoApi } from './reseal'
 
 vi.mock('@/lib/logger', () => import('@/__tests__/mocks/logger'))
 vi.mock('@/lib/http/online', () => ({ isKnownOffline: () => false }))
@@ -54,6 +65,12 @@ const pub = (key: Uint8Array) => deriveAccountSigningKey(key).publicKey
 const pause = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 const slotId = () => `slot-${Buffer.from(random(9)).toString('base64url')}`
 
+const PHOTOS = [
+  'witness-work-img-contact-c1--r1.jpg',
+  'witness-work-note-note0001.jpg',
+]
+const photoFile = (index: number) => new Uint8Array(2_000 + index).fill(index)
+
 const plaintext = (deviceName: string) => ({
   v: 1,
   deviceName,
@@ -63,7 +80,7 @@ const plaintext = (deviceName: string) => ({
 })
 
 describe.skipIf(!interopEnabled)('re-sealing against a real worker', () => {
-  it('moves every slot to the new key, other devices’ too, with If-Match and x-ww-reseal', async () => {
+  it('moves every slot and photo to the new key, other devices’ too, with If-Match and x-ww-reseal', async () => {
     // This phone, and a tablet signed in to the same account.
     const phone = await interopAccount(random)
     const K1 = phone.accountKey
@@ -114,6 +131,25 @@ describe.skipIf(!interopEnabled)('re-sealing against a real worker', () => {
         random(24)
       )
     )
+    // The tablet's photos, under K1's names.
+    const k1Photos = derivePhotoKeys(K1)
+    for (const [index, filename] of PHOTOS.entries()) {
+      const address = { accountId, name: photoName(k1Photos.nameKey, filename) }
+      await putSyncPhoto(
+        tabletOptions,
+        {
+          name: address.name,
+          meta: sealPhotoMeta(k1Photos.photoKey, filename, address, random(24)),
+          blob: await sealPhoto(
+            k1Photos.photoKey,
+            photoFile(index),
+            address,
+            random(24)
+          ),
+        },
+        theirs
+      )
+    }
     const before = (await listSyncSlots(phone.bearer)).slots
 
     // The change itself (steps 3 and 4).
@@ -144,6 +180,7 @@ describe.skipIf(!interopEnabled)('re-sealing against a real worker', () => {
     }
 
     let wroteRaced = false
+    let photosLeft: string | null = 'not set'
     const refusals: string[] = []
     const waits: number[] = []
     const step = createResealStep({
@@ -174,8 +211,16 @@ describe.skipIf(!interopEnabled)('re-sealing against a real worker', () => {
           await putBackup(options, id, blob, putOptions)
         },
       }),
+      photos: () => resealPhotoApi(options, () => own),
       ownSyncSlotId: () => own,
       olderKeys: async () => [],
+      olderPhotoKeys: async () => [],
+      photosLeft: {
+        get: () => photosLeft,
+        set: (id) => {
+          photosLeft = id
+        },
+      },
       randomBytes: random,
       sleep: async (ms) => {
         waits.push(ms)
@@ -227,6 +272,24 @@ describe.skipIf(!interopEnabled)('re-sealing against a real worker', () => {
     ).toBe('backup')
     // The backup was put under a minute ago: the step waited it out.
     expect(waits.some((ms) => ms > 30_000)).toBe(true)
+    // Every photo under K2's name only, opening to the same file.
+    const k2Photos = derivePhotoKeys(K2)
+    const listed = (await listSyncPhotos(options)).photos
+    expect(listed.map((photo) => photo.name).sort()).toEqual(
+      PHOTOS.map((filename) => photoName(k2Photos.nameKey, filename)).sort()
+    )
+    for (const [index, filename] of PHOTOS.entries()) {
+      const address = { accountId, name: photoName(k2Photos.nameKey, filename) }
+      const meta = listed.find((photo) => photo.name === address.name)!.meta
+      expect(
+        openPhotoMeta(k2Photos.photoKey, meta, address, k2Photos.nameKey)
+      ).toBe(filename)
+      const { blob } = await getSyncPhoto(options, address.name)
+      expect(await openPhoto(k2Photos.photoKey, blob, address)).toEqual(
+        photoFile(index)
+      )
+    }
+    expect(photosLeft).toBeNull()
     expect(record.reseal).toEqual({
       syncSlots: expect.arrayContaining([own, theirs, raced]),
       photos: [],

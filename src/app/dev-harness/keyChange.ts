@@ -7,6 +7,7 @@ import {
   accountSessions,
   bearerOptions,
   olderAccountKeys,
+  olderPhotoKeys,
 } from '@/lib/serverAccount'
 import { getBackup, listBackups } from '@/lib/serverAccount/backupClient'
 import {
@@ -15,8 +16,15 @@ import {
   resealBlob,
 } from '@/lib/serverAccount/backupCrypto'
 import { accountPubOf } from '@/lib/serverAccount/keys'
+import { isCloudSyncPhotoFilename } from '@/lib/syncTransport/imageNames'
+import {
+  derivePhotoKeys,
+  openPhotoMeta,
+  type PhotoKeys,
+} from '@/lib/syncTransport/server/photoCrypto'
 import {
   getSyncSlot,
+  listSyncPhotos,
   listSyncSlots,
 } from '@/lib/syncTransport/server/syncClient'
 import { deriveSyncKey, syncAad } from '@/lib/syncTransport/server/syncCrypto'
@@ -56,8 +64,8 @@ const opensWith = (
 /**
  * Change Account Key (ADR 0039) for the verify harness: `state()` reads the
  * change under way and the signed-out state; `inspect()` reads every Cloud Sync
- * and backup slot of the account and says which key each opens with, then
- * `keyChange.last`. Never keys or contents.
+ * slot, Cloud Sync photo and backup slot of the account and says which key each
+ * opens with, then `keyChange.last`. Never keys, names or contents.
  */
 export const keyChangeHarness = {
   state: () => ({
@@ -114,10 +122,41 @@ export const keyChangeHarness = {
             olderBackup
           ),
         })
+      // Each photo's meta, opened with this key's photo keys or the history's
+      // for the name it's listed under.
+      const currentPhotos = derivePhotoKeys(key)
+      const olderPhotos: PhotoKeys[] = (await olderPhotoKeys(accountId)).map(
+        ({ name, photo }) => ({ nameKey: name, photoKey: photo })
+      )
+      const opens = (keys: PhotoKeys, name: string, meta: string) =>
+        openPhotoMeta(
+          keys.photoKey,
+          meta,
+          { accountId, name },
+          keys.nameKey,
+          isCloudSyncPhotoFilename
+        ) !== null
+      const photos = { current: 0, older: 0, none: 0 }
+      let cursor: string | null = null
+      do {
+        const page: Awaited<ReturnType<typeof listSyncPhotos>> | null =
+          await listSyncPhotos(options, cursor).catch(() => null)
+        if (!page) break
+        for (const { name, meta } of page.photos)
+          photos[
+            opens(currentPhotos, name, meta)
+              ? 'current'
+              : olderPhotos.some((older) => opens(older, name, meta))
+                ? 'older'
+                : 'none'
+          ]++
+        cursor = page.cursor
+      } while (cursor)
       return {
         accountId,
         accountPub: accountPubOf(key),
         syncSlots,
+        photos,
         backupSlots,
       }
     }),

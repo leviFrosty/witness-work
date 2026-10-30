@@ -210,6 +210,26 @@ describe('serverTransport', () => {
     expect(files.map((f) => f.json)).toEqual(['{"a":1}'])
   })
 
+  it('reads a slot again once this device’s key changes, under the same account', async () => {
+    // Another device re-sealed its slot under the new key (2) before this one,
+    // still on the old key (1), learned of the change.
+    const { transport: other, server } = setup({}, 2)
+    await other.write(filenameForSlot(OTHER), '{"a":1}')
+    let key = 1
+    const { transport } = setup(
+      { access: async () => accessFor(key, server.fetch) },
+      1,
+      server
+    )
+    const before = await transport.readFiles(everything)
+    expect(before.files.map((f) => f.json)).toEqual([''])
+
+    // Signed back in with the new key: the same account, the slot unchanged.
+    key = 2
+    const after = await transport.readFiles(everything)
+    expect(after.files.map((f) => f.json)).toEqual(['{"a":1}'])
+  })
+
   it('maps the server’s refusals the way the engine reads them', async () => {
     const { server, transport, onRefused } = setup()
     server.state.enabled = false
@@ -649,6 +669,166 @@ describe('serverTransport photos', () => {
     await transport.deleteAllBinaries()
     expect(server.photoNames('family')).toEqual([])
     expect(await transport.listBinaryFiles()).toEqual([])
+  })
+
+  describe('after a key change', () => {
+    const K1 = derivePhotoKeys(new Uint8Array(32).fill(1))
+    const K2 = derivePhotoKeys(new Uint8Array(32).fill(2))
+    /** This device holds K2; the key history has K1's photo keys. */
+    const changed = (server: FakeSyncServer) =>
+      photoSetup(
+        {
+          access: async () => ({
+            ...accessFor(2, server.fetch),
+            olderPhotoKeys: [K1],
+          }),
+        },
+        2,
+        server
+      )
+
+    it('lists and downloads a photo not yet re-sealed, with the history’s keys', async () => {
+      const server = createFakeSyncServer()
+      const old = await photoSetup({}, 1, server)
+      old.files.set('file:///a/c1.jpg', photoBytes(3))
+      const at = await old.transport.writeBinary(CONTACT, 'file:///a/c1.jpg')
+
+      const { transport, files } = await changed(server)
+      expect(await transport.listBinaryFiles()).toEqual([
+        { filename: CONTACT, modifiedAt: at },
+      ])
+      expect(await transport.readBinary(CONTACT, 'file:///b/c1.jpg')).toBe(at)
+      expect(files.get('file:///b/c1.jpg')).toEqual(photoBytes(3))
+    })
+
+    it('finds a photo under the history’s name without listing first', async () => {
+      const server = createFakeSyncServer()
+      const old = await photoSetup({}, 1, server)
+      old.files.set('file:///a/n1.jpg', photoBytes(4))
+      await old.transport.writeBinary(NOTE, 'file:///a/n1.jpg')
+
+      const { transport, files } = await changed(server)
+      await transport.readBinary(NOTE, 'file:///b/n1.jpg')
+      expect(files.get('file:///b/n1.jpg')).toEqual(photoBytes(4))
+      // Only under the history's name: a photo neither name holds is missing.
+      await expect(
+        transport.readBinary(PROFILE, 'file:///b/p.jpg')
+      ).rejects.toMatchObject({ code: 'not-found' })
+    })
+
+    it('lists a photo held under both keys once, by its new name', async () => {
+      const server = createFakeSyncServer()
+      const old = await photoSetup({}, 1, server)
+      old.files.set('file:///a/c1.jpg', photoBytes(3))
+      await old.transport.writeBinary(CONTACT, 'file:///a/c1.jpg')
+      const { transport, files } = await changed(server)
+      // Listed under the history's name first: an upload still goes under
+      // the new key's name, never the old one.
+      await transport.listBinaryFiles()
+      files.set('file:///b/c1.jpg', photoBytes(3))
+      const at = await transport.writeBinary(CONTACT, 'file:///b/c1.jpg')
+      expect(server.photoNames('family').sort()).toEqual(
+        [photoName(K1.nameKey, CONTACT), photoName(K2.nameKey, CONTACT)].sort()
+      )
+      expect(await transport.listBinaryFiles()).toEqual([
+        { filename: CONTACT, modifiedAt: at },
+      ])
+      expect(await transport.readBinary(CONTACT, 'file:///b/again.jpg')).toBe(
+        at
+      )
+    })
+
+    it('finds a photo re-sealed since it was listed under the history’s name', async () => {
+      const server = createFakeSyncServer()
+      const old = await photoSetup({}, 1, server)
+      old.files.set('file:///a/c1.jpg', photoBytes(3))
+      await old.transport.writeBinary(CONTACT, 'file:///a/c1.jpg')
+      const { transport, files } = await changed(server)
+      await transport.listBinaryFiles()
+      // The changing device puts it under the new name, then deletes the old.
+      const resealer = await changed(server)
+      resealer.files.set('file:///c/c1.jpg', photoBytes(3))
+      const at = await resealer.transport.writeBinary(
+        CONTACT,
+        'file:///c/c1.jpg'
+      )
+      await old.transport.deleteBinaryFile(CONTACT)
+      expect(server.photoNames('family')).toEqual([
+        photoName(K2.nameKey, CONTACT),
+      ])
+
+      expect(await transport.readBinary(CONTACT, 'file:///b/c1.jpg')).toBe(at)
+      expect(files.get('file:///b/c1.jpg')).toEqual(photoBytes(3))
+    })
+
+    /** One transport whose account key changes from K1 to K2 mid-process. */
+    const switching = async (server: FakeSyncServer) => {
+      let key: 1 | 2 = 1
+      const device = await photoSetup(
+        {
+          access: async () =>
+            key === 1
+              ? accessFor(1, server.fetch)
+              : { ...accessFor(2, server.fetch), olderPhotoKeys: [K1] },
+        },
+        1,
+        server
+      )
+      return {
+        ...device,
+        changeKey: () => {
+          key = 2
+        },
+      }
+    }
+
+    it('reads what it listed under the old key once the key changed', async () => {
+      const server = createFakeSyncServer()
+      const device = await switching(server)
+      device.files.set('file:///a/c1.jpg', photoBytes(3))
+      const at = await device.transport.writeBinary(CONTACT, 'file:///a/c1.jpg')
+      await device.transport.listBinaryFiles()
+
+      device.changeKey()
+      expect(await device.transport.listBinaryFiles()).toEqual([
+        { filename: CONTACT, modifiedAt: at },
+      ])
+      expect(
+        await device.transport.readBinary(CONTACT, 'file:///a/again.jpg')
+      ).toBe(at)
+      expect(device.files.get('file:///a/again.jpg')).toEqual(photoBytes(3))
+    })
+
+    it('lists a new key’s photo it couldn’t open before the key changed', async () => {
+      const server = createFakeSyncServer()
+      const device = await switching(server)
+      // Another device, already on K2.
+      const other = await changed(server)
+      other.files.set('file:///b/c1.jpg', photoBytes(3))
+      const at = await other.transport.writeBinary(CONTACT, 'file:///b/c1.jpg')
+      expect(await device.transport.listBinaryFiles()).toEqual([])
+
+      device.changeKey()
+      expect(await device.transport.listBinaryFiles()).toEqual([
+        { filename: CONTACT, modifiedAt: at },
+      ])
+    })
+
+    it('deletes a photo under every name the keys give it', async () => {
+      const server = createFakeSyncServer()
+      const old = await photoSetup({}, 1, server)
+      old.files.set('file:///a/c1.jpg', photoBytes(3))
+      await old.transport.writeBinary(CONTACT, 'file:///a/c1.jpg')
+      const { transport, files } = await changed(server)
+      files.set('file:///b/c1.jpg', photoBytes(3))
+      await transport.writeBinary(CONTACT, 'file:///b/c1.jpg')
+      await transport.listBinaryFiles()
+      await transport.deleteBinaryFile(CONTACT)
+      expect(server.photoNames('family')).toEqual([])
+      expect(photoName(K2.nameKey, CONTACT)).not.toBe(
+        photoName(K1.nameKey, CONTACT)
+      )
+    })
   })
 
   it('reads photos under the account they were written in only', async () => {

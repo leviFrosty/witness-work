@@ -177,6 +177,12 @@ export const settingsDetailScreens: SettingsDetailScreen[] = [
     title: () => i18n.t('handoff_setUp'),
   },
   {
+    name: 'Change Account Key',
+    getComponent: () =>
+      require('@/features/settings/screens/ChangeAccountKeyScreen').default,
+    title: () => i18n.t('accountKeyChange_row'),
+  },
+  {
     name: 'Account Devices',
     getComponent: () =>
       require('@/features/settings/screens/AccountDevicesScreen').default,

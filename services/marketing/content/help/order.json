@@ -230,6 +230,7 @@
     "webInstall",
     "webOffline",
     "webStorage",
+    "webTabs",
     "webUpdates",
     "dataPrivacy",
     "photoAccess"

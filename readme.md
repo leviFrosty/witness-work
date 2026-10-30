@@ -105,6 +105,9 @@ maps, place search, iOS directions`"]
   P_PUSH["`**APNs / FCM**
 push delivery`"]
 
+  W_BROWSER["`**WitnessWork on the web**
+the same app in a browser`"]
+
   subgraph CF["Cloudflare"]
     S_OTA["`**Hot Updater Workers**
 separate dev / beta / prod`"]
@@ -112,6 +115,9 @@ separate dev / beta / prod`"]
 release catalogs + operational reports`")]
     B_OTA[("`**Private R2 buckets**
 signed JavaScript + assets`")]
+    S_WEB["`**Web app Workers**
+static files, headers, CSP reports
+separate dev / beta / prod`"]
     S_OTA --> D_OTA
     S_OTA -->|"signed downloads"| B_OTA
     subgraph WORKER["ww-api Worker"]
@@ -224,6 +230,7 @@ analytics, flags, surveys, errors`"]
   A_ACCOUNT -->|"attest device"| P_ATTEST
   A_CONTACTS -->|"maps, place search"| P_MAPS
   A_SHELL -->|"fingerprint-compatible OTA"| S_OTA
+  W_BROWSER -->|"app files, CSP reports"| S_WEB
 
   A_BUDDIES -->|"signed ops, WebSocket"| R_BUD
   A_ACCOUNT -->|"account key"| P_SEED

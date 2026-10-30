@@ -26,7 +26,7 @@ EAS preview builds don't run automatically (they're expensive) — kick one off 
 
 ## Cutting a release
 
-Use `/cut-release` for the complete main → local iOS build → local Android build → App Store and Google Play review workflow. It is explicitly user-invoked; its source is `.agents/skills/cut-release/SKILL.md`. Production steps also need the user to type the go-ahead keyword `SHIP-PROD-X.Y.Z` for the exact version. `.husky/pre-push` refuses a `v*` tag push, `build:prod-auto-submit` refuses to build, and `update:production` refuses to publish a production OTA (`docs/ota-updates.md`), unless `WW_RELEASE_CONFIRM` holds that keyword (`scripts/release-confirm.mjs`). Android builds immediately after the iOS build/upload from the same tagged commit and marketing version. Both stores must finish upload/processing and pass metadata/preflight checks before either review submission; a failure on either platform blocks both. The workflow reuses the exact localized ASC store notes for Play and configures automatic release after approval on both stores.
+Use `/cut-release` for the complete main → local iOS build → local Android build → App Store and Google Play review workflow. It is explicitly user-invoked; its source is `.agents/skills/cut-release/SKILL.md`. Production steps also need the user to type the go-ahead keyword `SHIP-PROD-X.Y.Z` for the exact version. `.husky/pre-push` refuses a `v*` tag push, `build:prod-auto-submit` refuses to build, `update:production` refuses to publish a production OTA (`docs/ota-updates.md`), and `web:deploy:production` refuses to deploy the web app (`docs/web-hosting.md`), unless `WW_RELEASE_CONFIRM` holds that keyword (`scripts/release-confirm.mjs`). Android builds immediately after the iOS build/upload from the same tagged commit and marketing version. Both stores must finish upload/processing and pass metadata/preflight checks before either review submission; a failure on either platform blocks both. The workflow reuses the exact localized ASC store notes for Play and configures automatic release after approval on both stores.
 
 `scripts/bump-version.js` is a deterministic preparation tool. The invoking agent writes notes and translations; the script does not call a model or Azure.
 
@@ -60,6 +60,18 @@ draft first, verifies review acceptance, then submits ASC; upload or draft succe
 alone does not complete a release. See `docs/build.md` for Play credentials,
 shared-note locale/length handling, Console-only setup and automatic publishing,
 and `../cut-release/recovery.md` for per-platform checkpoints and partial failures.
+
+## Web app
+
+The web app (`app.witnesswork.app`) deploys at the cut, together with ww-api and the production OTA update, because a web deploy is a release (ADR 0037 §4). From the tagged release commit on `main`, with the keyword the user typed:
+
+```bash
+export WW_RELEASE_CONFIRM=SHIP-PROD-X.Y.Z # typed by the user
+pnpm web:deploy:production --dry-run      # plan only, reads no credential
+pnpm web:deploy:production
+```
+
+It refuses without the keyword for this exact version, outside `origin/main`, or unless `vX.Y.Z` points at `HEAD`. Its Cloudflare token is read through the 1Password app, so a person approves it on this Mac. Never deploy it from CI. Beta deploys the web beta with every Beta build (`../beta-build/SKILL.md`). Each web release must work alongside the previous native version, which may still be in review. Hosts, headers and gates: `docs/web-hosting.md`.
 
 ## Backend first (ww-api)
 

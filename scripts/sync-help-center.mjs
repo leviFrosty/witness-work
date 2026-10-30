@@ -11,6 +11,9 @@
  *     pnpm sync:help             # from https://witnesswork.app/help/bundle/manifest.json
  *     pnpm sync:help --from <dir>  # from a local site build's bundle folder:
  *                                  # services/marketing/dist/production/client/help/bundle
+ *     pnpm sync:help --manifest https://dev.witnesswork.app/help/bundle/manifest.json
+ *                                  # from another copy of the site: web builds
+ *                                  # use their profile's (config/web-environments.json)
  *
  * The manifest lists each bundle by absolute URL (a site path also works); with
  * `--from`, a URL under /help/bundle/ reads the same file in <dir>.
@@ -56,6 +59,19 @@ if (fromIndex !== -1 && !fromDir) {
   console.error('--from needs the bundle directory')
   process.exit(1)
 }
+const manifestIndex = process.argv.indexOf('--manifest')
+const manifestArg =
+  manifestIndex === -1 ? MANIFEST_URL : process.argv[manifestIndex + 1]
+if (
+  !URL.canParse(manifestArg ?? '') ||
+  new URL(manifestArg).protocol !== 'https:' ||
+  new URL(manifestArg).pathname !== `${BUNDLE_PATH}manifest.json`
+) {
+  console.error(
+    `--manifest needs an https URL ending ${BUNDLE_PATH}manifest.json`
+  )
+  process.exit(1)
+}
 
 const fail = (message) => {
   console.error(`sync:help: ${message}`)
@@ -77,7 +93,7 @@ async function read(url) {
   return response.json()
 }
 
-const manifestUrl = new URL(MANIFEST_URL)
+const manifestUrl = new URL(manifestArg)
 const manifest = await read(manifestUrl)
 if (manifest?.schemaVersion !== 1) fail('manifest is not schema version 1')
 

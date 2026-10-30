@@ -158,6 +158,7 @@ export default tseslint.config(
       '.expo/**',
       '.hot-updater/**',
       '.verify/**',
+      '**/.wrangler/**',
       '.tamagui/**',
       'ios/**',
       'android/**',

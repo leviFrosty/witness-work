@@ -36,6 +36,12 @@ saved in IndexedDB on its first load, while no tab of the app is open
 (`fixtures.ts`), and fails on any uncaught page error. `storage.spec.ts` covers
 where the data lives (`docs/web-storage.md`).
 
+`ui-primitives.spec.ts` drives the web versions of the UI primitives
+(`src/components/ui/*.web.tsx`): date and time fields, menus, popovers,
+tooltips, sheets and the focus ring, by mouse and by keyboard. Firefox in the
+container reaches the host by name, so `playwright.config.ts` lists that host
+as a secure context for it (the app needs `crypto.randomUUID`).
+
 Install the browsers once for the pinned Playwright version with
 `pnpm exec playwright install chromium webkit firefox`.
 
@@ -62,3 +68,19 @@ on `0.0.0.0`; stop it when the run ends. Start Xvfb yourself as above:
 `xvfb-run` can hang waiting for the server. Docker on a Mac shares only your
 home folder, so point `WW_WEB_SHOTS` inside the worktree (for example
 `/work/.verify/web-shots`).
+
+Not everything that needs a secure context treats `http://host.docker.internal`
+as one (WebCrypto's `crypto.subtle`, the IndexedDB key wrap, service workers),
+so those fail there. Reach the server as `http://localhost:<port>` instead,
+which is: forward the served port to `localhost` inside the container (a
+`socat` or a small TCP relay to `host.docker.internal:<port>` started before the
+tests), then run with `E2E_HOST=localhost E2E_PORT=<port> E2E_EXTERNAL=1`. The
+last one keeps Playwright from starting a server of its own on that port. A
+local runner script can do the forwarding for you; this one takes
+`PW_FORWARD_PORTS="8765"` and runs the same command:
+
+```bash
+PW_FORWARD_PORTS="8765" E2E_HOST=localhost E2E_PORT=8765 E2E_EXTERNAL=1 \
+  <runner> . -- pnpm exec playwright test --config e2e/web/playwright.config.ts \
+  --project firefox-desktop --project firefox-phone
+```

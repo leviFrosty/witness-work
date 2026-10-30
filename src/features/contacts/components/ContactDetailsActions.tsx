@@ -5,6 +5,7 @@ import IconButton from '@/components/ui/IconButton'
 import LucideIcon from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
 import PointerHover from '@/components/ui/PointerHover'
+import PointerTooltip from '@/components/ui/PointerTooltip'
 import PullDownMenu from '@/components/ui/PullDownMenu'
 import { MIN_TOUCH_TARGET } from '@/components/ui/touchTarget'
 import useTheme from '@/contexts/theme'
@@ -171,38 +172,47 @@ export default function ContactDetailsActions({
         gap: MIN_TOUCH_TARGET - (MORE_SIZE + theme.fontSize()) / 2,
       }}
     >
-      <PullDownMenu
-        accessibilityLabel={i18n.t('moreActions')}
-        triggerColor={color}
-        triggerSize={MORE_SIZE}
-        actions={[
-          [
-            share && {
-              id: 'share',
-              title: i18n.t('shareEllipsis'),
-              systemImage: 'square.and.arrow.up',
-              onPress: share,
-            },
-            {
-              id: 'edit',
-              title: i18n.t('edit'),
-              systemImage: 'pencil',
-              onPress: edit,
-            },
-          ],
-          [!isContactDismissed(contact) && dismiss, archive, remove],
-        ]}
-      />
-      <IconButton
-        icon={StarIcon}
-        color={color}
-        fill={contact.isFavorite ? color : 'none'}
-        accessibilityLabel={i18n.t(
+      <PointerTooltip label={i18n.t('moreActions')} effect='none'>
+        <PullDownMenu
+          accessibilityLabel={i18n.t('moreActions')}
+          triggerColor={color}
+          triggerSize={MORE_SIZE}
+          actions={[
+            [
+              share && {
+                id: 'share',
+                title: i18n.t('shareEllipsis'),
+                systemImage: 'square.and.arrow.up',
+                onPress: share,
+              },
+              {
+                id: 'edit',
+                title: i18n.t('edit'),
+                systemImage: 'pencil',
+                onPress: edit,
+              },
+            ],
+            [!isContactDismissed(contact) && dismiss, archive, remove],
+          ]}
+        />
+      </PointerTooltip>
+      <PointerTooltip
+        label={i18n.t(
           contact.isFavorite ? 'removeFromFavorites' : 'addToFavorites'
         )}
-        frame
-        onPress={() => toggleFavoriteContact(contact.id)}
-      />
+        effect='none'
+      >
+        <IconButton
+          icon={StarIcon}
+          color={color}
+          fill={contact.isFavorite ? color : 'none'}
+          accessibilityLabel={i18n.t(
+            contact.isFavorite ? 'removeFromFavorites' : 'addToFavorites'
+          )}
+          frame
+          onPress={() => toggleFavoriteContact(contact.id)}
+        />
+      </PointerTooltip>
       {/* In the iPad pane, beside the list's Add Contact and the tab bar's
       Add, a bare "Add" doesn't say what it adds. */}
       <AddVisitMenu

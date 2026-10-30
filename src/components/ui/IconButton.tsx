@@ -4,6 +4,7 @@ import { X as XIcon } from 'lucide-react-native'
 import i18n from '@/lib/locales'
 import {
   Insets,
+  Platform,
   StyleProp,
   StyleSheet,
   TextStyle,
@@ -68,6 +69,75 @@ const minTargetSlop = (
   return horizontal === vertical
     ? vertical
     : { top: vertical, bottom: vertical, left: horizontal, right: horizontal }
+}
+
+/** What places a button among its neighbors, not what it looks like. */
+const PLACEMENT_KEYS = [
+  'position',
+  'top',
+  'right',
+  'bottom',
+  'left',
+  'start',
+  'end',
+  'zIndex',
+  'alignSelf',
+  'flex',
+  'flexGrow',
+  'flexShrink',
+  'flexBasis',
+] as const
+const MARGIN_KEYS = [
+  'margin',
+  'marginHorizontal',
+  'marginVertical',
+  'marginTop',
+  'marginBottom',
+  'marginLeft',
+  'marginRight',
+  'marginStart',
+  'marginEnd',
+] as const
+
+/**
+ * Splits a style for the web's framed button: the frame takes the placement
+ * (and the margins, added to the frame's own), the glyph's box takes the rest.
+ */
+const splitForFrame = (style: ViewStyle | undefined, frame: ViewStyle) => {
+  const placement: Record<string, unknown> = {}
+  const look: Record<string, unknown> = { ...style }
+  for (const key of PLACEMENT_KEYS) {
+    if (style?.[key] !== undefined) {
+      placement[key] = style[key]
+      delete look[key]
+    }
+  }
+  for (const key of MARGIN_KEYS) delete look[key]
+  const side = (
+    specific: 'marginTop' | 'marginBottom' | 'marginLeft' | 'marginRight',
+    axis: 'marginHorizontal' | 'marginVertical'
+  ) =>
+    toNumber(style?.[specific]) ??
+    toNumber(style?.[axis]) ??
+    toNumber(style?.margin) ??
+    0
+  const [horizontal, vertical] = [
+    toNumber(frame.marginHorizontal) ?? 0,
+    toNumber(frame.marginVertical) ?? 0,
+  ]
+  return {
+    outer: {
+      ...frame,
+      ...placement,
+      marginTop: vertical + side('marginTop', 'marginVertical'),
+      marginBottom: vertical + side('marginBottom', 'marginVertical'),
+      marginLeft: horizontal + side('marginLeft', 'marginHorizontal'),
+      marginRight: horizontal + side('marginRight', 'marginHorizontal'),
+      marginHorizontal: undefined,
+      marginVertical: undefined,
+    } satisfies ViewStyle,
+    inner: look as ViewStyle,
+  }
 }
 
 type Props = {
@@ -137,9 +207,19 @@ const IconButton = ({
   ] satisfies StyleProp<TextStyle>
   const iconColor = StyleSheet.flatten(iconStyleWithFallback)?.color
   const look = boxSize(size, StyleSheet.flatten(style))
-  const frameStyle = frame
-    ? [touchTargetFrame(look.width, look.height), { borderRadius: 999 }]
+  // react-native-web ignores `hitSlop`, so a small button there gets a frame of
+  // the minimum size instead, laid out as it was (unless it asks for no slop).
+  const smallOnWeb =
+    Platform.OS === 'web' &&
+    hitSlop !== 0 &&
+    (look.width < MIN_TARGET || look.height < MIN_TARGET)
+  const framed = touchTargetFrame(look.width, look.height)
+  const webFrame = smallOnWeb
+    ? splitForFrame(StyleSheet.flatten(style), framed)
     : undefined
+  const frameStyle = frame
+    ? [framed, { borderRadius: 999 }]
+    : webFrame && [webFrame.outer, { borderRadius: 999 }]
   const box = frameStyle ? boxSize(size, StyleSheet.flatten(frameStyle)) : look
   const glyph = (
     <Icon
@@ -166,7 +246,11 @@ const IconButton = ({
       loadingColor={typeof iconColor === 'string' ? iconColor : undefined}
       testID={testID}
     >
-      {frameStyle ? <View style={style}>{glyph}</View> : glyph}
+      {frameStyle ? (
+        <View style={webFrame && !frame ? webFrame.inner : style}>{glyph}</View>
+      ) : (
+        glyph
+      )}
     </Button>
   )
 }

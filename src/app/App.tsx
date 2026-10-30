@@ -62,6 +62,7 @@ import { linking, navigationRef } from '@/features/contacts/lib/linking'
 import { stopRecordingLaunchLinks } from '@/lib/launchLinks'
 import { analytics } from '@/lib/analytics'
 import { PointerTooltipLayer } from '@/components/ui/PointerTooltip'
+import WebFocusStyles from '@/components/ui/WebFocusStyles'
 import { PopoverTouchShield } from '@/components/ui/popoverTouchShield'
 import ToastHost from '@/components/toast/ToastHost'
 import WebStorageNotices from '@/app/launch/WebStorageNotices'
@@ -196,6 +197,7 @@ function UnlockedApp() {
                             <ToastHost />
                             <WebStorageNotices />
                             <PointerTooltipLayer />
+                            <WebFocusStyles />
                             <UpdateRequiredGate />
                             {/* Last, so it covers everything else. */}
                             <AppLockGate />

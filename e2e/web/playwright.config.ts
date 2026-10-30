@@ -1,7 +1,8 @@
 import { defineConfig, devices } from '@playwright/test'
 
 // Where the app is served. A run starts its own server on 127.0.0.1; with
-// another host (a browser in a container reaching yours), serve it yourself.
+// another host (a browser in a container reaching yours), or `E2E_EXTERNAL=1`
+// (a port forwarded to `localhost`), serve it yourself.
 const host = process.env.E2E_HOST ?? '127.0.0.1'
 const port = Number(process.env.E2E_PORT ?? 8765)
 const baseURL = `http://${host}:${port}`
@@ -45,20 +46,30 @@ export default defineConfig({
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
   },
-  webServer: ['127.0.0.1', 'localhost'].includes(host)
-    ? {
-        command: worker
-          ? `node scripts/web-host.mjs serve ${worker} --port ${port}`
-          : `node e2e/web/serve.mjs dist ${port}`,
-        cwd: '../..',
-        url: `${baseURL}/index.html`,
-        reuseExistingServer: false,
-      }
-    : undefined,
+  webServer:
+    !process.env.E2E_EXTERNAL && ['127.0.0.1', 'localhost'].includes(host)
+      ? {
+          command: worker
+            ? `node scripts/web-host.mjs serve ${worker} --port ${port}`
+            : `node e2e/web/serve.mjs dist ${port}`,
+          cwd: '../..',
+          url: `${baseURL}/index.html`,
+          reuseExistingServer: false,
+        }
+      : undefined,
   projects: Object.entries(browsers).flatMap(([browser, device]) =>
     Object.entries(sizes).map(([size, viewport]) => ({
       name: `${browser}-${size}`,
-      use: { ...device, viewport },
+      use: {
+        ...device,
+        viewport,
+        // A container's Firefox reaches the host by its name, which isn't a
+        // secure context without this; the app needs one (`crypto.randomUUID`).
+        launchOptions:
+          browser === 'firefox'
+            ? { firefoxUserPrefs: { 'dom.securecontext.allowlist': host } }
+            : undefined,
+      },
     }))
   ),
 })

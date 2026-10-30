@@ -39,6 +39,12 @@ export type SheetProps = {
   dismissible?: boolean
   /** The sheet's background. Defaults to the theme's sheet color. */
   backgroundColor?: string
+  /**
+   * What a screen reader calls the sheet, where the platform asks for one (the
+   * web's dialogs). Without it the web names a sheet after its first heading or
+   * line of text.
+   */
+  accessibilityLabel?: string
   testID?: string
   children: ReactNode
 }
@@ -55,6 +61,7 @@ export type NativeSheetProps = {
   backgroundColor: string
   /** The app's appearance; follows the device when unset. */
   colorScheme?: 'light' | 'dark'
+  accessibilityLabel?: string
   testID?: string
   children: ReactNode
 }

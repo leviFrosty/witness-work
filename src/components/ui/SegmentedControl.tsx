@@ -8,6 +8,8 @@ import type {
   NativeSegmentedControlProps,
   NativeSegmentedOption,
 } from '@/components/ui/NativeSegmentedControl.types'
+import { MIN_TOUCH_TARGET } from '@/components/ui/touchTarget'
+import { toggleState } from '@/lib/toggleState'
 import { tracking } from '@/lib/tracking'
 
 export interface SegmentedOption<T extends string = string>
@@ -111,10 +113,11 @@ function PillSegmentedControl<T extends string>({
             onPress={() => onChange(opt.key)}
             disabled={disabled}
             accessibilityRole='button'
-            accessibilityState={{ selected: active, disabled }}
+            {...toggleState(active, disabled)}
             testID={opt.testID}
             style={{
               flex: fitContent ? undefined : 1,
+              minHeight: size === 'md' ? MIN_TOUCH_TARGET : undefined,
               flexDirection: 'row',
               alignItems: 'center',
               justifyContent: 'center',

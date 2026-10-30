@@ -71,7 +71,21 @@ const blobs = (page: Page) =>
  */
 async function openContacts(page: Page) {
   await page.goto('/')
-  await page.getByRole('button', { name: 'Contacts', exact: true }).click()
+  const tab = page.getByRole('button', { name: 'Contacts', exact: true })
+  // Imported records can earn badges, whose welcome covers the tab bar when it
+  // arrives, however late: dismiss it as often as it gets in the way.
+  for (let attempt = 0; attempt < 4; attempt++) {
+    try {
+      await tab.click({ timeout: 6000 })
+      return
+    } catch {
+      await page
+        .getByText(en.badges_welcomeLater, { exact: true })
+        .click({ timeout: 3000 })
+        .catch(() => undefined)
+    }
+  }
+  await tab.click()
 }
 
 const bytes = (text: string) => Buffer.from(text)
@@ -84,13 +98,7 @@ async function openProfilePhotoMenu(page: Page) {
   if (!(await picture.isVisible()))
     await page.getByText('Profile', { exact: true }).first().click()
   await picture.click()
-  // Popovers have no web version yet (web-ui-primitives): nothing to choose.
-  const shown = await page
-    .getByText(en.choosePhoto)
-    .waitFor({ timeout: 3000 })
-    .then(() => true)
-    .catch(() => false)
-  test.skip(!shown, "the avatar's popover has no web version on this base yet")
+  await expect(page.getByText(en.choosePhoto)).toBeVisible()
 }
 
 test.describe('photos', () => {
@@ -126,15 +134,7 @@ test.describe('photos', () => {
     await app.getByRole('button', { name: en.addContact }).first().click()
     await app.getByPlaceholder(en.name_placeholder).fill('Maria Santos')
     await app.getByRole('button', { name: en.profilePicture }).last().click()
-    const shown = await app
-      .getByText(en.choosePhoto)
-      .waitFor({ timeout: 3000 })
-      .then(() => true)
-      .catch(() => false)
-    test.skip(
-      !shown,
-      "the avatar's popover has no web version on this base yet"
-    )
+    await expect(app.getByText(en.choosePhoto)).toBeVisible()
     await chooseFiles(app, () => app.getByText(en.choosePhoto).click(), [
       {
         name: 'maria.png',
@@ -395,10 +395,22 @@ test.describe('MyTime import', () => {
     await confirm.click()
     await expect(app.getByText(en.mytimeImport_success)).toBeVisible()
     // Imported records can earn badges, which the app celebrates over the
-    // tab bar until it's dismissed.
-    const celebration = app.getByText(/Your records already include/)
-    if (await celebration.isVisible({ timeout: 3000 }).catch(() => false))
-      await app.getByText(en.done, { exact: true }).click()
+    // tab bar until it's dismissed: "Your badges are here" with Later, or
+    // "Your records already include" with Done.
+    const celebration = app
+      .getByText(en.badges_welcomeTitle)
+      .or(app.getByText(/Your records already include/))
+    const celebrated = await celebration
+      .first()
+      .waitFor({ state: 'visible', timeout: 8000 })
+      .then(() => true)
+      .catch(() => false)
+    if (celebrated)
+      await app
+        .getByText(en.badges_welcomeLater, { exact: true })
+        .or(app.getByText(en.done, { exact: true }))
+        .first()
+        .click()
     await openContacts(app)
     await expect(app.getByText('Maria Santos').first()).toBeVisible()
     await expect(app.getByText('Daniel Okafor').first()).toBeVisible()

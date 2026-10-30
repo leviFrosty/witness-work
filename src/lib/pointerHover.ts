@@ -8,6 +8,9 @@ import { analytics } from '@/lib/analytics'
 export const supportsPointerHover =
   Platform.OS === 'android' || (Platform.OS === 'ios' && Platform.isPad)
 
+/** A browser's mouse hovers, with no system effects: Buttons tint it. */
+export const supportsWebHover = Platform.OS === 'web'
+
 /** System pointer effects are UIKit-only. */
 export const supportsPointerEffects = Platform.OS === 'ios' && Platform.isPad
 

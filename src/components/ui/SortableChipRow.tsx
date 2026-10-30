@@ -17,6 +17,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated'
 import { scheduleOnRN, scheduleOnUI } from 'react-native-worklets'
+import HorizontalWheel from '@/components/ui/HorizontalWheel'
 import Haptics from '@/lib/haptics'
 import { forwardSign } from '@/lib/direction'
 import {
@@ -213,53 +214,55 @@ export default function SortableChipRow<T>({
     : null
 
   return (
-    <Animated.ScrollView
-      ref={scrollRef}
-      horizontal
-      showsHorizontalScrollIndicator={false}
-      keyboardShouldPersistTaps='handled'
-      onLayout={(e) => {
-        viewportWidth.value = e.nativeEvent.layout.width
-      }}
-      onContentSizeChange={(width) => {
-        contentWidth.value = width
-      }}
-      style={{ flexGrow: 0 }}
-      contentContainerStyle={{
-        paddingHorizontal: 12,
-        gap: GAP,
-        alignItems: 'center',
-      }}
-    >
-      {leading}
-      <Animated.View
+    <HorizontalWheel>
+      <Animated.ScrollView
+        ref={scrollRef}
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        keyboardShouldPersistTaps='handled'
         onLayout={(e) => {
-          rowStart.value = e.nativeEvent.layout.x
+          viewportWidth.value = e.nativeEvent.layout.width
         }}
-        style={[{ flexDirection: 'row', gap: GAP }, placedStyle]}
+        onContentSizeChange={(width) => {
+          contentWidth.value = width
+        }}
+        style={{ flexGrow: 0 }}
+        contentContainerStyle={{
+          paddingHorizontal: 12,
+          gap: GAP,
+          alignItems: 'center',
+        }}
       >
-        {data.map((item) => {
-          const key = keyExtractor(item)
-          return (
-            <SortableChip
-              key={key}
-              itemKey={key}
-              row={row}
-              enabled={sortEnabled && measured && keys.length > 1}
-              longPressMenus={longPressMenus}
-              scrollOffset={scrollOffset}
-              onMeasure={measure}
-              onDragStarted={dragStarted}
-              onDragEnded={dragEnded}
-              onOrderChanged={() => void Haptics.selection()}
-            >
-              {renderItem(item)}
-            </SortableChip>
-          )
-        })}
-      </Animated.View>
-      {trailing}
-    </Animated.ScrollView>
+        {leading}
+        <Animated.View
+          onLayout={(e) => {
+            rowStart.value = e.nativeEvent.layout.x
+          }}
+          style={[{ flexDirection: 'row', gap: GAP }, placedStyle]}
+        >
+          {data.map((item) => {
+            const key = keyExtractor(item)
+            return (
+              <SortableChip
+                key={key}
+                itemKey={key}
+                row={row}
+                enabled={sortEnabled && measured && keys.length > 1}
+                longPressMenus={longPressMenus}
+                scrollOffset={scrollOffset}
+                onMeasure={measure}
+                onDragStarted={dragStarted}
+                onDragEnded={dragEnded}
+                onOrderChanged={() => void Haptics.selection()}
+              >
+                {renderItem(item)}
+              </SortableChip>
+            )
+          })}
+        </Animated.View>
+        {trailing}
+      </Animated.ScrollView>
+    </HorizontalWheel>
   )
 }
 

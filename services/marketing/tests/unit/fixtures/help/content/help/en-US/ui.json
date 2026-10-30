@@ -16,8 +16,11 @@
   "language": "Language",
   "all": "All",
   "copyLink": "Copy Link",
+  "web": "Web",
   "iosOnly": "iOS only",
   "androidOnly": "Android only",
+  "webOnly": "Web only",
+  "appsOnly": "iOS and Android only",
   "notTranslated": "This answer hasn't been translated yet, so it's shown in English.",
   "stillNeedHelpDescription": "Email for private support, or report a bug or request a feature on GitHub. Include what you tried, your device, and your WitnessWork version. Leave contact details, private notes, and account IDs out of public reports."
 }

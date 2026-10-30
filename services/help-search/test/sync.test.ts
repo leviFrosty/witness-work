@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { EMBEDDING_MODEL } from '../src/embed'
-import type { StoredIndex } from '../src/searchIndex'
+import { INDEX_VERSION, type StoredIndex } from '../src/searchIndex'
 import { hashEntry, runSync, withRetry } from '../src/sync'
 import { bundle, entry } from './fixtures/bundle'
 import { mockAi, mockKv } from './mocks'
@@ -29,7 +29,7 @@ describe('runSync', () => {
     })
     const index = stored()
     expect(index).toMatchObject({
-      version: 1,
+      version: INDEX_VERSION,
       model: EMBEDDING_MODEL,
       bundleHash: 'aaaa',
     })
@@ -41,7 +41,13 @@ describe('runSync', () => {
     expect(index.entries[1]).toMatchObject({
       ios: true,
       android: false,
+      web: false,
       minAppVersion: 0,
+    })
+    expect(index.entries[0]).toMatchObject({
+      ios: true,
+      android: true,
+      web: true,
     })
     expect(index.entries[2].minAppVersion).toBe(4_012_000)
     expect(index.entries[0].terms).toMatchObject({ partial: 2, hour: 2 })
@@ -92,6 +98,21 @@ describe('runSync', () => {
       embedded: 0,
       reused: 3,
     })
+    expect(ai.run).not.toHaveBeenCalled()
+  })
+
+  it('rebuilds an index from an older index version without re-embedding', async () => {
+    await runSync(env(), { bundles: [bundle()] })
+    const index = stored() as unknown as Record<string, unknown>
+    index.version = 1
+    kv.store.set('index:en-US', JSON.stringify(index))
+    ai.run.mockClear()
+    const summary = await runSync(env(), { bundles: [bundle()] })
+    expect(summary.locales['en-US']).toMatchObject({
+      status: 'synced',
+      embedded: 0,
+    })
+    expect(stored().version).toBe(INDEX_VERSION)
     expect(ai.run).not.toHaveBeenCalled()
   })
 

@@ -17,7 +17,7 @@ export function helpEntry(
     id,
     slug,
     category: 'general',
-    platforms: ['ios', 'android'],
+    platforms: ['ios', 'android', 'web'],
     pinned: false,
     related: [],
     question,

@@ -2,12 +2,18 @@
 import { LoaderCircle, Search as SearchIcon, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { searchLocal, searchRemote } from '@/lib/help-center/search'
-import type {
-  HelpBundle,
-  HelpEntry,
-  HelpPlatform,
-} from '@/lib/help-center/types'
+import {
+  platformNoteKey,
+  type PlatformNoteKey,
+} from '@/lib/help-center/platforms'
+import type { HelpBundle, HelpEntry } from '@/lib/help-center/types'
 import { currentPlatform } from './platform-filter'
+
+/** " · iOS only" after a result's category, for an answer about some platforms. */
+function noteLabel(entry: HelpEntry, labels: Record<PlatformNoteKey, string>) {
+  const key = platformNoteKey(entry.platforms)
+  return key && ` · ${labels[key]}`
+}
 
 const bundles = new Map<string, Promise<HelpBundle>>()
 
@@ -54,7 +60,7 @@ export default function HelpSearch({
   searching: string
   clearLabel: string
   categoryTitles: Record<string, string>
-  onlyLabels: Record<HelpPlatform, string>
+  onlyLabels: Record<PlatformNoteKey, string>
 }) {
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<Results | null>(null)
@@ -184,8 +190,7 @@ export default function HelpSearch({
                   >
                     <span className='text-[13px] text-[var(--ww-muted)]'>
                       {categoryTitles[entry.category] ?? entry.category}
-                      {entry.platforms.length === 1 &&
-                        ` · ${onlyLabels[entry.platforms[0]!]}`}
+                      {noteLabel(entry, onlyLabels)}
                     </span>
                     <span className='font-semibold text-[var(--ww-ink)]'>
                       {entry.question}

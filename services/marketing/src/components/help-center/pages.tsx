@@ -18,6 +18,7 @@ import {
   type HelpLocale,
 } from '@/lib/help-center/locales'
 import { bundlePath, helpPageUrl, SITE_URL } from '@/lib/help-center/paths'
+import { platformAttr, platformNoteKey } from '@/lib/help-center/platforms'
 import type { HelpEntry } from '@/lib/help-center/types'
 import { uiString, type UiKey } from './data'
 import { RichText } from './rich-text'
@@ -33,8 +34,9 @@ const t = ({ center, locale }: Ctx, key: UiKey) => uiString(center, locale, key)
 const absolute = (path: string) => new URL(path, SITE_URL).href
 
 /** Marks content for one platform so the device filter can hide it. */
-function platformAttr(platforms: HelpEntry['platforms']) {
-  return platforms.length === 1 ? { 'data-ww-platforms': platforms[0] } : {}
+function platformProps(platforms: HelpEntry['platforms']) {
+  const value = platformAttr(platforms)
+  return value ? { 'data-ww-platforms': value } : {}
 }
 
 function categoryPlatforms(center: HelpCenter, category: string) {
@@ -46,10 +48,10 @@ function categoryPlatforms(center: HelpCenter, category: string) {
   return [...all] as HelpEntry['platforms']
 }
 
-/** "iOS only" or "Android only", for an answer about one platform. */
+/** "iOS only", "Web only" and the like, for an answer about some platforms. */
 function platformNote(ctx: Ctx, entry: HelpEntry) {
-  if (entry.platforms.length !== 1) return null
-  return t(ctx, entry.platforms[0] === 'ios' ? 'iosOnly' : 'androidOnly')
+  const key = platformNoteKey(entry.platforms)
+  return key && t(ctx, key)
 }
 
 function PlatformNote({ ctx, entry }: { ctx: Ctx; entry: HelpEntry }) {
@@ -131,7 +133,11 @@ function DeviceFilter({ ctx }: { ctx: Ctx }) {
   return (
     <Island
       name='platform'
-      props={{ label: t(ctx, 'device'), allLabel: t(ctx, 'all') }}
+      props={{
+        label: t(ctx, 'device'),
+        allLabel: t(ctx, 'all'),
+        webLabel: t(ctx, 'web'),
+      }}
     />
   )
 }
@@ -224,7 +230,7 @@ function StillNeedHelp({ ctx }: { ctx: Ctx }) {
 
 function QuestionLink({ ctx, entry }: { ctx: Ctx; entry: HelpEntry }) {
   return (
-    <li {...platformAttr(entry.platforms)}>
+    <li {...platformProps(entry.platforms)}>
       <a
         href={helpPageUrl(ctx.locale, entry.category, entry.slug)}
         className='ww-q-row group'
@@ -286,8 +292,10 @@ export function HomePage({ ctx }: { ctx: Ctx }) {
               clearLabel: t(ctx, 'clearSearch'),
               categoryTitles: categoryTitles(ctx),
               onlyLabels: {
-                ios: t(ctx, 'iosOnly'),
-                android: t(ctx, 'androidOnly'),
+                iosOnly: t(ctx, 'iosOnly'),
+                androidOnly: t(ctx, 'androidOnly'),
+                webOnly: t(ctx, 'webOnly'),
+                appsOnly: t(ctx, 'appsOnly'),
               },
             }}
           />
@@ -299,7 +307,7 @@ export function HomePage({ ctx }: { ctx: Ctx }) {
         <h2 className='ww-h3'>{t(ctx, 'topQuestions')}</h2>
         <ul className='grid gap-3 sm:grid-cols-2'>
           {pinned.map((entry) => (
-            <li key={entry.id} {...platformAttr(entry.platforms)}>
+            <li key={entry.id} {...platformProps(entry.platforms)}>
               <a
                 href={helpPageUrl(locale, entry.category, entry.slug)}
                 className='ww-topic group'
@@ -333,7 +341,7 @@ export function HomePage({ ctx }: { ctx: Ctx }) {
                 id={category}
                 className='flex scroll-mt-24 flex-col gap-3 pb-14'
                 data-category={category}
-                {...platformAttr(categoryPlatforms(center, category))}
+                {...platformProps(categoryPlatforms(center, category))}
               >
                 <h3>
                   <a
@@ -414,7 +422,7 @@ export function CategoryPage({
               key={entry.id}
               className='ww-faq-item group'
               data-question={entry.id}
-              {...platformAttr(entry.platforms)}
+              {...platformProps(entry.platforms)}
             >
               <summary className='flex cursor-pointer list-none items-center justify-between gap-6 py-5 text-start text-[17px] font-semibold tracking-tight [&::-webkit-details-marker]:hidden'>
                 <span className='flex flex-col gap-0.5'>

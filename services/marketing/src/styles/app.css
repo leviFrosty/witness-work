@@ -17,8 +17,13 @@ body {
 
 /* --- Help Center device filter. The page HTML holds every answer; the device
    choice on <html data-ww-platform> (public/help-platform.js,
-   platform-filter.tsx) hides the ones for the other platform. --- */
-html[data-ww-platform='ios'] [data-ww-platforms='android'],
-html[data-ww-platform='android'] [data-ww-platforms='ios'] {
+   platform-filter.tsx) hides the ones that aren't for it. data-ww-platforms
+   lists the platforms an answer is for, and is absent when it's for all. --- */
+html[data-ww-platform='ios']
+  [data-ww-platforms]:not([data-ww-platforms~='ios']),
+html[data-ww-platform='android']
+  [data-ww-platforms]:not([data-ww-platforms~='android']),
+html[data-ww-platform='web']
+  [data-ww-platforms]:not([data-ww-platforms~='web']) {
   display: none;
 }

@@ -119,8 +119,11 @@ export const UI_KEYS = [
   'language',
   'all',
   'copyLink',
+  'web',
   'iosOnly',
   'androidOnly',
+  'webOnly',
+  'appsOnly',
   'notTranslated',
 ] as const
 
@@ -315,7 +318,7 @@ export async function loadHelpCenter(
         !value.every((p) => HELP_PLATFORMS.includes(p as HelpPlatform))
       ) {
         problems.push(
-          `${file}: "platforms" must be a list of ios and/or android`
+          `${file}: "platforms" must be a list of ios, android and/or web`
         )
       } else {
         platforms = HELP_PLATFORMS.filter((p) => value.includes(p))

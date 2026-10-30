@@ -28,7 +28,7 @@ Categories: `time`, `contacts`, `plans`, `notes`, `scribe`, `streaks`, `buddies`
 id: timeRollover
 title: Does my time automatically roll over to the next month?
 category: time
-platforms: [ios] # optional: omit when it applies to both
+platforms: [ios] # optional: any of ios, android, web; omit when it applies to all three
 pinned: true # optional: listed under Top Questions
 related: [196] # optional: GitHub issue numbers
 minAppVersion: '4.12.0' # optional, quoted: hidden in older app versions
@@ -40,7 +40,7 @@ Partial hours carry over to the next month. Open **Settings → Time** to …
 - **`id`** is camelCase and never changes (the app and analytics key on it). The file name is its kebab case: `timeRollover` → `time-rollover.mdx`, `iCloudSync` → `icloud-sync.mdx`.
 - Add the `id` to `questions` in `content/help/order.json` where it should appear.
 - **The answer** is plain Markdown in the subset the app renders: paragraphs, `#` and `##` headings, bold, italic, `~~strike~~`, links, line breaks, and lists. No images, tables, code, quotes or HTML. Links are `https:`, `mailto:`, or a path on this site (`/privacy`, `/help/time/time-rollover`), which becomes an absolute link.
-- Write it to stand on its own: name the screen path (Settings → Sync), say which platforms it applies to, and set `platforms` when it's iOS- or Android-only. Set `minAppVersion` when it describes behavior that isn't released yet: the site deploys on merge, before the app reaches anyone.
+- Write it to stand on its own: name the screen path (Settings → Sync), say which platforms it applies to, and set `platforms` when it isn't true on all of iOS, Android and the web. Omitting it means all three, so set it for anything that doesn't apply on the web: widgets, Siri and Shortcuts, notifications, Live Activities, the watch apps, iCloud or Google Drive sync, and purchases through the app stores. Set `minAppVersion` when it describes behavior that isn't released yet: the site deploys on merge, before the app reaches anyone.
 - **English only.** A language without a translation shows the English answer, marked as not translated yet. Translations (`content/help/<locale>/<category>/<slug>.mdx`, front matter `id` and `title` only) are done separately in this repo, with the app's [`translate-locales`](../../.agents/skills/translate-locales/SKILL.md) glossary. When an English answer changes meaningfully, update or delete its translations.
 
 More detail, including retiring a question: [`docs/help-center.md`](../../docs/help-center.md#working-on-content).

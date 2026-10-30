@@ -18,6 +18,7 @@ import {
   MANIFEST_PATH,
   SITE_URL,
 } from './paths.ts'
+import { platformScope, platformScopeShort } from './platforms.ts'
 import type { HelpBundle, HelpManifest } from './types.ts'
 
 /**
@@ -57,10 +58,8 @@ function questionMarkdown(
   const question = center.questions[index]!
   const own = question.translations[locale]
   const text = own ?? question.translations[DEFAULT_LOCALE]!
-  const platforms =
-    question.platforms.length === 1
-      ? `\n\nApplies to: ${question.platforms[0] === 'ios' ? 'iOS (iPhone and iPad)' : 'Android'}`
-      : ''
+  const scope = platformScope(question.platforms)
+  const platforms = scope ? `\n\nApplies to: ${scope}` : ''
   return `# ${text.question}\n\n${text.markdown}${platforms}\n`
 }
 
@@ -93,10 +92,8 @@ function llmsIndex(center: HelpCenter): string {
       .filter((q) => q.category === category)
       .map((q) => {
         const text = q.translations[DEFAULT_LOCALE]!
-        const scope =
-          q.platforms.length === 1
-            ? ` (${q.platforms[0] === 'ios' ? 'iOS' : 'Android'} only)`
-            : ''
+        const only = platformScopeShort(q.platforms)
+        const scope = only ? ` (${only})` : ''
         return `- [${text.question}](${SITE_URL}${helpPageUrl(DEFAULT_LOCALE, q.category, q.slug)}.md)${scope}`
       })
     return `### ${categoryTitle(center, DEFAULT_LOCALE, category)}\n\n${lines.join('\n')}`

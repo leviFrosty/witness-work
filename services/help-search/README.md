@@ -9,14 +9,14 @@ It moved here from the portfolio repo (`workers/help-search`) with the website (
 | production  | `ww-help-search`     | `help-search.witnesswork.app`, `help-search.leviwilkerson.com` (kept for shipped app versions) | `https://witnesswork.app`     |
 | `dev`       | `ww-help-search-dev` | `help-search-dev.witnesswork.app`                                                              | `https://dev.witnesswork.app` |
 
-- `GET https://help-search.witnesswork.app/v1/search?q=…&locale=…&platform=…&appVersion=…&limit=…` → `{ results: { slug, score }[] }`
+- `GET https://help-search.witnesswork.app/v1/search?q=…&locale=…&platform=…&appVersion=…&limit=…` → `{ results: { slug, score }[] }`. `platform` is `ios`, `android` or `web` and keeps only answers for it; the web app sends no `appVersion`, so no version floor applies there.
 - `GET /v1/health`
 - `POST /v1/admin/sync` (bearer `ADMIN_TOKEN`): sync now. Optional JSON body: `{ "origin": "https://preview.example", "bundles": [HelpBundle…], "force": true, "budget": 5000 }`.
 - `POST /v1/admin/explain?q=…&locale=…` (bearer): a search's results plus every answer's raw vector and keyword scores, for tuning (`pnpm eval` uses it).
 
 ## How it works
 
-- **Index**: one per locale in KV (`SYNC_STATE`, key `index:<locale>`, about 1 MB): each answer's platforms, minimum app version, keyword counts, and embedding (`@cf/google/embeddinggemma-300m` on Workers AI, 768 dimensions, multilingual). Shape and loading in `src/searchIndex.ts`.
+- **Index**: one per locale in KV (`SYNC_STATE`, key `index:<locale>`, about 1 MB): each answer's platforms (`ios`, `android`, `web`; an index built before `web` existed has no `web`, and `loadIndex` reads it as true for answers that were for both phones), minimum app version, keyword counts, and embedding (`@cf/google/embeddinggemma-300m` on Workers AI, 768 dimensions, multilingual). Shape and loading in `src/searchIndex.ts`.
 - **Sync** runs every 15 minutes (cron) and on `POST /v1/admin/sync`. It reads `<HELP_CENTER_ORIGIN>/help/bundle/manifest.json`, follows each locale's bundle URL (absolute; a relative one resolves on the origin), skips locales whose bundle hash is unchanged, and rebuilds the rest. An answer keeps its embedding while its text is unchanged, and untranslated (fallback) answers share English's, so a content change embeds only what changed. A full rebuild of every locale embeds about 2,500 answers in under a minute. A failed build keeps the previous index.
 - **Search** checks the edge cache (5 min, keyed on normalized params), rate-limits per IP (60/min), then embeds the query (Workers AI, about 125 ms) while it loads the locale's index (kept in the isolate's memory, refreshed from KV every 5 minutes). It scores every answer the platform and app-version filters allow, by cosine similarity and by BM25 over answers containing every query token, and merges the two rankings (reciprocal rank fusion). Answers below the relevance floors in `src/search.ts` are dropped, so an unrelated query returns nothing. If the embedding misses its 400 ms deadline or fails, the search answers from keywords alone and isn't cached.
 - **Tokens** (`src/text.ts`): lowercased words without accents or Arabic diacritics, Porter-stemmed when ASCII; Chinese, Japanese and Korean as overlapping character pairs.

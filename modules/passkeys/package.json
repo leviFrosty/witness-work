@@ -1,0 +1,7 @@
+{
+  "name": "passkeys",
+  "version": "0.1.0",
+  "description": "Local Expo module wrapping iOS platform passkeys (ASAuthorization, PRF from iOS 18) and Android Credential Manager, with WebAuthn JSON in and out.",
+  "main": "index.ts",
+  "private": true
+}

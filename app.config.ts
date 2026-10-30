@@ -247,7 +247,15 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       // and Set Up Another Device. ww-api serves each host's AASA file, which
       // lists every bundle id, so each associated domain works across build
       // variants.
-      associatedDomains: APP_LINK_DOMAINS,
+      // Passkeys (ADR 0038): the RP ID's host serves `public/.well-known`. Dev
+      // builds use the dev RP ID, and `mode=developer` fetches it straight
+      // from the host instead of Apple's CDN.
+      associatedDomains: [
+        ...APP_LINK_DOMAINS,
+        IS_DEV
+          ? 'webcredentials:app-dev.witnesswork.app?mode=developer'
+          : 'webcredentials:app.witnesswork.app',
+      ],
       entitlements: {
         'com.apple.security.application-groups': [`group.${BUNDLE_ID}`],
         // App Attest (account sessions — ADR 0007, ADR 0027). The environment
@@ -306,6 +314,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       './plugins/with-wear-os',
       ['./plugins/with-android-locale-config', { locales: APP_LANGUAGES }],
       './plugins/with-android-text-input-direction',
+      './plugins/with-passkey-domains',
       './plugins/with-posthog-symbols-last',
       [
         'react-native-maps',

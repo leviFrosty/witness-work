@@ -33,6 +33,7 @@ import { revenueCatLink } from '@/lib/serverAccount/revenueCatLinkRuntime'
 import { deriveAccountSigningKey } from '@/lib/serverAccount/keys'
 import HandoffTools from '@/app/navigation/tools/HandoffTools'
 import BackupTools from '@/app/navigation/tools/BackupTools'
+import PasskeyTools from '@/app/navigation/tools/PasskeyTools'
 import JsonViewer from '@/features/contacts/components/JsonViewer'
 import { deriveIdentity } from '@/features/buddies/lib/keys'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
@@ -446,6 +447,7 @@ export default function AccountTools() {
 
       <HandoffTools />
       <BackupTools />
+      <PasskeyTools />
     </ToolSection>
   )
 }

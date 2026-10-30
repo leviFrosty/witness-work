@@ -2,6 +2,7 @@ import { xchacha20poly1305 } from '@noble/ciphers/chacha.js'
 import { hkdf } from '@noble/hashes/hkdf.js'
 import { sha256 } from '@noble/hashes/sha2.js'
 import { concatBytes, fromB64u, toB64u, utf8 } from '@/lib/bytes'
+import { PRF_SALT } from '@/lib/passkeys/prf'
 import { deriveAccountSigningKey } from '@/lib/serverAccount/keys'
 
 /**
@@ -13,7 +14,7 @@ import { deriveAccountSigningKey } from '@/lib/serverAccount/keys'
  */
 
 /** `UTF-8("ww-account/v1/passkey-prf")`, evaluated as `prf.eval.first`. */
-export const PASSKEY_PRF_SALT = utf8('ww-account/v1/passkey-prf')
+export const PASSKEY_PRF_SALT = PRF_SALT
 /** The salt as Android Credential Manager's request JSON carries it. */
 export const PASSKEY_PRF_SALT_B64U = toB64u(PASSKEY_PRF_SALT)
 

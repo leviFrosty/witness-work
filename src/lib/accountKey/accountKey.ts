@@ -1,4 +1,7 @@
 import { fromB64u, sameBytes, toB64u } from '@/lib/bytes'
+import type { RekeyedTokens } from '@/lib/serverAccount/session'
+
+export type { RekeyedTokens }
 
 /**
  * The account key (ADR 0026): the User's one secret, 32 random bytes that every
@@ -56,7 +59,10 @@ export type AccountKeyServiceDeps = {
    * open, so none is ever opened for the old key in between.
    */
   account: {
-    ensure: (accountKey: Uint8Array) => Promise<{ accountId: string } | null>
+    ensure: (
+      accountKey: Uint8Array,
+      call?: { accountId?: string }
+    ) => Promise<{ accountId: string } | null>
     changeKey: (
       swap: () => Promise<void>,
       keys: { from: Uint8Array | null; to: Uint8Array }
@@ -67,6 +73,30 @@ export type AccountKeyServiceDeps = {
      * deleted on a guess.
      */
     signedInElsewhere: () => Promise<boolean>
+    /**
+     * The account this device was last on (`serverAccount.lastAccountId`): a
+     * key for it is a rejoin, not another account.
+     */
+    lastAccountId?: () => string | null
+    /**
+     * The account kept this device's session through a key change made here
+     * (`serverAccount.rekeyed`): the cached account and session move to the new
+     * key.
+     */
+    rekeyed?: (
+      from: Uint8Array,
+      to: Uint8Array,
+      call: { accountId: string; tokens?: RekeyedTokens }
+    ) => Promise<void>
+    /**
+     * Opens a session for a key that isn't this device's yet, only into
+     * `accountId` (`AccountSessions.openDetached`). Throws when the key isn't
+     * that account's current one.
+     */
+    openDetached?: (
+      accountKey: Uint8Array,
+      call: { accountId: string }
+    ) => Promise<SameAccountSession>
   }
   /**
    * Buddies, whose identity derives from the key. Before the key changes,
@@ -95,6 +125,12 @@ export type AccountKeyServiceDeps = {
  */
 export type OpenedAccountSession = { adopt: () => Promise<void> }
 
+/** A session opened for a key into the account this device was on. */
+export type SameAccountSession = OpenedAccountSession & {
+  accountId: string
+  close: () => Promise<void>
+}
+
 export type ReplaceAccountKeyResult =
   | { outcome: 'unchanged' }
   | {
@@ -102,6 +138,11 @@ export type ReplaceAccountKeyResult =
       loss: AccountKeyLoss
       /** Null while the server can't be reached or has accounts off. */
       accountId: string | null
+      /**
+       * The key is the account this device was last on (its key changed
+       * elsewhere): nothing was left or released.
+       */
+      sameAccount: boolean
     }
 
 /**
@@ -132,11 +173,21 @@ export function createAccountKeyService(deps: AccountKeyServiceDeps) {
     return fromB64u(await deps.store.getOrCreate())
   }
 
+  /** `accountId` is the account this device was last on. */
+  const isSameAccount = (accountId: string | undefined) =>
+    accountId !== undefined &&
+    accountId === (deps.account.lastAccountId?.() ?? null)
+
   /**
    * What replacing the key with `newKey` would take from this device: nothing
-   * when it's the same key, or when there's no key yet.
+   * when it's the same key, when there's no key yet, or when `accountId` (the
+   * new key's account, when known) is the account this device was on.
    */
-  async function lossIfReplaced(newKey?: Uint8Array): Promise<AccountKeyLoss> {
+  async function lossIfReplaced(
+    newKey?: Uint8Array,
+    { accountId }: { accountId?: string } = {}
+  ): Promise<AccountKeyLoss> {
+    if (isSameAccount(accountId)) return NO_LOSS
     const current = await peek()
     if (!current || (newKey && sameBytes(current, newKey))) return NO_LOSS
     return currentLoss()
@@ -149,13 +200,47 @@ export function createAccountKeyService(deps: AccountKeyServiceDeps) {
     return { ...loss, keptElsewhere: await deps.account.signedInElsewhere() }
   }
 
+  /**
+   * The same account under a new key (docs/account-key-change.md, "Rejoining
+   * the same account"): no Buddies loss to confirm or release, and no Cloud
+   * Sync leave, so its bookkeeping and the backup slot carry on. Buddies drops
+   * the old key's identity, and resets its local data on its next sync.
+   */
+  async function rejoin(
+    current: Uint8Array | null,
+    newKey: Uint8Array,
+    accountId: string,
+    session: OpenedAccountSession | undefined
+  ): Promise<ReplaceAccountKeyResult> {
+    await deps.account.changeKey(
+      async () => {
+        await deps.store.replace(toB64u(newKey))
+        deps.buddies.forget()
+        await session?.adopt()
+      },
+      { from: current, to: newKey }
+    )
+    const account = await deps.account
+      .ensure(newKey, { accountId })
+      .catch(() => null)
+    return {
+      outcome: 'replaced',
+      loss: NO_LOSS,
+      accountId: account?.accountId ?? null,
+      sameAccount: true,
+    }
+  }
+
   async function run(
     newKey: Uint8Array,
     confirmedLoss: boolean,
-    session: OpenedAccountSession | undefined
+    session: OpenedAccountSession | undefined,
+    accountId: string | undefined
   ): Promise<ReplaceAccountKeyResult> {
     const current = await peek()
     if (current && sameBytes(current, newKey)) return { outcome: 'unchanged' }
+    if (isSameAccount(accountId))
+      return rejoin(current, newKey, accountId!, session)
     // Read again: Buddies is deleted for good only when this is still the
     // account's last device.
     const loss = current ? await currentLoss() : NO_LOSS
@@ -177,7 +262,12 @@ export function createAccountKeyService(deps: AccountKeyServiceDeps) {
       { from: current, to: newKey }
     )
     const account = await deps.account.ensure(newKey).catch(() => null)
-    return { outcome: 'replaced', loss, accountId: account?.accountId ?? null }
+    return {
+      outcome: 'replaced',
+      loss,
+      accountId: account?.accountId ?? null,
+      sameAccount: false,
+    }
   }
 
   /**
@@ -189,21 +279,28 @@ export function createAccountKeyService(deps: AccountKeyServiceDeps) {
    * it ends the old key's session, stores the key, forgets the old Buddies
    * identity, and adopts `session` (with no session opened for either key in
    * between), and opens the new account's session if it has none. One at a
-   * time.
+   * time. `accountId`, the new key's account when the caller knows it (a
+   * handoff's), makes it a rejoin when it's the account this device was on:
+   * nothing is lost, released or left.
    */
   function replace(
     newKey: Uint8Array,
     {
       confirmedLoss = false,
       session,
-    }: { confirmedLoss?: boolean; session?: OpenedAccountSession } = {}
+      accountId,
+    }: {
+      confirmedLoss?: boolean
+      session?: OpenedAccountSession
+      accountId?: string
+    } = {}
   ): Promise<ReplaceAccountKeyResult> {
     if (newKey.length !== KEY_BYTES)
       return Promise.reject(new Error('Account key must be 32 bytes'))
     const previous = replacing ?? Promise.resolve()
     const next = previous
       .catch(() => undefined)
-      .then(() => run(newKey, confirmedLoss, session))
+      .then(() => run(newKey, confirmedLoss, session, accountId))
     replacing = next
     void next
       .catch(() => undefined)
@@ -213,7 +310,54 @@ export function createAccountKeyService(deps: AccountKeyServiceDeps) {
     return next
   }
 
-  return { peek, getOrCreate, lossIfReplaced, replace }
+  /**
+   * When `newKey` (a recovery key, a passkey's) is the current key of the
+   * account this device was on, a session for it, opened into that account:
+   * replacing with it and this session is a rejoin. Null for another account's
+   * key, or when this device was never on one; never creates an account.
+   */
+  async function sameAccountSession(
+    newKey: Uint8Array
+  ): Promise<SameAccountSession | null> {
+    const accountId = deps.account.lastAccountId?.() ?? null
+    if (!accountId || !deps.account.openDetached) return null
+    try {
+      return await deps.account.openDetached(newKey, { accountId })
+    } catch {
+      return null
+    }
+  }
+
+  /**
+   * Step 4 of a key change made on this device (docs/account-key-change.md):
+   * the account moved to `newKey` and kept this device's session, so the
+   * session and cached account move with it (`rekeyed`), then the key is
+   * stored, and Buddies drops the old key's identity. Nothing is left or
+   * released. Throws when the store refuses it; running it again is safe.
+   */
+  async function adoptChangedKey(
+    oldKey: Uint8Array,
+    newKey: Uint8Array,
+    call: { accountId: string; tokens?: RekeyedTokens }
+  ): Promise<void> {
+    if (newKey.length !== KEY_BYTES)
+      throw new Error('Account key must be 32 bytes')
+    if (!deps.account.rekeyed) throw new Error('Key changes need rekeyed')
+    await deps.account.rekeyed(oldKey, newKey, call)
+    // Always written: what this device reads (`peek`) is already the new key
+    // once the change committed, whatever the platform store holds.
+    await deps.store.replace(toB64u(newKey))
+    deps.buddies.forget()
+  }
+
+  return {
+    peek,
+    getOrCreate,
+    lossIfReplaced,
+    replace,
+    adoptChangedKey,
+    sameAccountSession,
+  }
 }
 
 export type AccountKeyService = ReturnType<typeof createAccountKeyService>

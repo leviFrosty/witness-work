@@ -346,6 +346,120 @@ describe('createServerAccount', () => {
   })
 })
 
+describe('serverAccount across a key change', () => {
+  const lastAccount = () => {
+    let value: string | null = null
+    return {
+      get: () => value,
+      set: (id: string) => {
+        value = id
+      },
+    }
+  }
+
+  it('remembers the last account it was on through key changes', async () => {
+    const { sessions } = fakeSessions()
+    const last = lastAccount()
+    const account = createServerAccount({
+      sessions,
+      storage: memoryStorage(),
+      lastAccount: last,
+      now: () => 0,
+    })
+    expect(account.lastAccountId()).toBeNull()
+    await account.ensure(random(32))
+    expect(account.lastAccountId()).toBe(ACCOUNT_ID)
+    await account.changeKey(async () => undefined)
+    account.forget()
+    expect(account.lastAccountId()).toBe(ACCOUNT_ID)
+  })
+
+  it('records the last account whenever a connect works, even when the cache already matched', async () => {
+    const { sessions } = fakeSessions()
+    const key = random(32)
+    const storage = memoryStorage()
+    // An upgraded device: its cache predates the last account.
+    storage.set({
+      accountPub: deriveAccountSigningKey(key).publicKey,
+      accountId: ACCOUNT_ID,
+      status: 'active',
+    })
+    const last = lastAccount()
+    const account = createServerAccount({
+      sessions,
+      storage,
+      lastAccount: { get: last.get, set: vi.fn(last.set) },
+      now: () => 0,
+    })
+    last.set('stale')
+    await account.ensure(key)
+    expect(account.lastAccountId()).toBe(ACCOUNT_ID)
+  })
+
+  it('seeds the last account from the cached one at launch, before anything forgets it', () => {
+    const storage = memoryStorage()
+    storage.set({ accountPub: 'pub', accountId: ACCOUNT_ID, status: 'active' })
+    const account = createServerAccount({
+      sessions: fakeSessions().sessions,
+      storage,
+      lastAccount: lastAccount(),
+      now: () => 0,
+    })
+    account.forget()
+    expect(account.lastAccountId()).toBe(ACCOUNT_ID)
+  })
+
+  it('moves the cached account to the new key, keeping its id and session', async () => {
+    const { sessions } = fakeSessions()
+    const repoint = vi.fn(async () => true)
+    const storage = memoryStorage()
+    const onKeyChanged = vi.fn()
+    const account = createServerAccount({
+      sessions: { ...sessions, repoint },
+      storage,
+      lastAccount: lastAccount(),
+      now: () => 0,
+      onKeyChanged,
+    })
+    const K1 = random(32)
+    const K2 = random(32)
+    await account.ensure(K1)
+    const tokens = { accessToken: 'at', accessExpiresAt: 5 }
+
+    await account.rekeyed(K1, K2, { accountId: ACCOUNT_ID, tokens })
+
+    expect(repoint).toHaveBeenCalledWith(
+      deriveAccountSigningKey(K1).publicKey,
+      deriveAccountSigningKey(K2).publicKey,
+      tokens
+    )
+    expect(account.cached(K1)).toBeNull()
+    expect(account.cached(K2)).toEqual({
+      accountPub: deriveAccountSigningKey(K2).publicKey,
+      accountId: ACCOUNT_ID,
+      status: 'active',
+    })
+    expect(account.lastAccountId()).toBe(ACCOUNT_ID)
+    // The same account: nothing that keys on the account starts over.
+    expect(onKeyChanged).not.toHaveBeenCalled()
+    expect(sessions.forget).not.toHaveBeenCalled()
+  })
+
+  it('opens into the account it knows when asked', async () => {
+    const { sessions } = fakeSessions()
+    const account = createServerAccount({
+      sessions,
+      storage: memoryStorage(),
+      now: () => 0,
+    })
+    const key = random(32)
+    await account.connect(key, { accountId: ACCOUNT_ID })
+    expect(sessions.ensure).toHaveBeenCalledWith(key, {
+      accountId: ACCOUNT_ID,
+    })
+  })
+})
+
 describe('serverAccount.check', () => {
   const info = (status: 'active' | 'suspended' = 'active') =>
     vi.fn(

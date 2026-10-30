@@ -17,6 +17,10 @@ function setup({
   accountId = 'account-id' as string | null,
   /** Another device signed in to the account, or the error reading it. */
   elsewhere = false as boolean | Error,
+  /** The account this device was last on. */
+  lastAccountId = null as string | null,
+  /** A key the server knows as `lastAccountId`'s current key. */
+  sameAccountKey = null as string | null,
 } = {}) {
   const log: string[] = []
   let stored = key ? toB64u(key) : null
@@ -52,6 +56,30 @@ function setup({
       if (elsewhere instanceof Error) throw elsewhere
       return elsewhere
     }),
+    lastAccountId: () => lastAccountId,
+    openDetached: vi.fn(
+      async (accountKey: Uint8Array, call: { accountId: string }) => {
+        log.push(`account.openDetached:${call.accountId}`)
+        if (toB64u(accountKey) !== sameAccountKey)
+          throw Object.assign(new Error('unknown_account'), {
+            serverCode: 'unknown_account',
+          })
+        return {
+          accountId: call.accountId,
+          adopt: vi.fn(async () => undefined),
+          close: vi.fn(async () => undefined),
+        }
+      }
+    ),
+    rekeyed: vi.fn(
+      async (
+        _from: Uint8Array,
+        _to: Uint8Array,
+        _call: { accountId: string; tokens?: unknown }
+      ) => {
+        log.push('account.rekeyed')
+      }
+    ),
   }
   const buddies = {
     loss: vi.fn(() => buddiesLoss),
@@ -65,8 +93,9 @@ function setup({
       log.push('buddies.forget')
     }),
   }
-  const service = createAccountKeyService({ store, account, buddies })
-  return { service, store, account, buddies, log, stored: () => stored }
+  const sync = { leave: vi.fn(async () => undefined) }
+  const service = createAccountKeyService({ store, account, buddies, sync })
+  return { service, store, account, buddies, sync, log, stored: () => stored }
 }
 
 describe('account key service', () => {
@@ -107,6 +136,7 @@ describe('account key service', () => {
       outcome: 'replaced',
       loss: NO_LOSS,
       accountId: 'account-id',
+      sameAccount: false,
     })
     expect(stored()).toBe(toB64u(newKey))
     expect(buddies.release).not.toHaveBeenCalled()
@@ -164,6 +194,7 @@ describe('account key service', () => {
       outcome: 'replaced',
       loss: { ...loss, keptElsewhere: false },
       accountId: 'account-id',
+      sameAccount: false,
     })
     expect(stored()).toBe(toB64u(newKey))
     expect(log).toEqual([
@@ -190,6 +221,7 @@ describe('account key service', () => {
       outcome: 'replaced',
       loss: kept,
       accountId: 'account-id',
+      sameAccount: false,
     })
     expect(stored()).toBe(toB64u(newKey))
     expect(log[0]).toBe('buddies.release:device')
@@ -321,5 +353,116 @@ describe('account key service', () => {
       'store.replace:slow',
       'store.replace',
     ])
+  })
+})
+
+describe('account key service, same account', () => {
+  const ACCOUNT = 'A'.repeat(22)
+  const loss = {
+    buddies: 2,
+    buddyNames: ['Ana', 'Ben'],
+    inboxRegistered: true,
+  }
+
+  it('rejoins the account it was on without asking, leaving or releasing anything', async () => {
+    const oldKey = random()
+    const newKey = random()
+    const { service, buddies, sync, account, log, stored } = setup({
+      key: oldKey,
+      loss,
+      accountId: ACCOUNT,
+      lastAccountId: ACCOUNT,
+    })
+    expect(
+      await service.lossIfReplaced(newKey, { accountId: ACCOUNT })
+    ).toEqual(NO_LOSS)
+    const result = await service.replace(newKey, { accountId: ACCOUNT })
+    expect(result).toEqual({
+      outcome: 'replaced',
+      loss: NO_LOSS,
+      accountId: ACCOUNT,
+      sameAccount: true,
+    })
+    expect(buddies.release).not.toHaveBeenCalled()
+    expect(sync.leave).not.toHaveBeenCalled()
+    expect(account.signedInElsewhere).not.toHaveBeenCalled()
+    expect(stored()).toBe(toB64u(newKey))
+    expect(log).toEqual([
+      'account.close',
+      'store.replace',
+      'buddies.forget',
+      'account.unblock',
+      `account.ensure:${toB64u(newKey)}`,
+    ])
+    expect(account.ensure).toHaveBeenCalledWith(newKey, { accountId: ACCOUNT })
+  })
+
+  it('treats another account as another account', async () => {
+    const { service, sync } = setup({
+      key: random(),
+      loss,
+      lastAccountId: ACCOUNT,
+    })
+    await expect(
+      service.replace(random(), { accountId: 'B'.repeat(22) })
+    ).rejects.toBeInstanceOf(AccountKeyLossError)
+    expect(
+      (await service.lossIfReplaced(random(), { accountId: 'B'.repeat(22) }))
+        .buddies
+    ).toBe(2)
+    expect(sync.leave).not.toHaveBeenCalled()
+  })
+
+  it('takes the new key of a change made here, keeping the session', async () => {
+    const oldKey = random()
+    const newKey = random()
+    const { service, account, sync, buddies, log, stored } = setup({
+      key: oldKey,
+      loss,
+      lastAccountId: ACCOUNT,
+    })
+    const tokens = { accessToken: 'at', accessExpiresAt: 1 }
+    await service.adoptChangedKey(oldKey, newKey, {
+      accountId: ACCOUNT,
+      tokens,
+    })
+    expect(account.rekeyed).toHaveBeenCalledWith(oldKey, newKey, {
+      accountId: ACCOUNT,
+      tokens,
+    })
+    expect(account.changeKey).not.toHaveBeenCalled()
+    expect(sync.leave).not.toHaveBeenCalled()
+    expect(buddies.release).not.toHaveBeenCalled()
+    expect(stored()).toBe(toB64u(newKey))
+    expect(log).toEqual(['account.rekeyed', 'store.replace', 'buddies.forget'])
+  })
+})
+
+describe('account key service, finding the same account', () => {
+  const ACCOUNT = 'A'.repeat(22)
+
+  it('opens a recovery key’s session only into the account this device was on', async () => {
+    const newKey = random()
+    const { service, account } = setup({
+      key: random(),
+      lastAccountId: ACCOUNT,
+      sameAccountKey: toB64u(newKey),
+    })
+    const session = await service.sameAccountSession(newKey)
+    expect(session?.accountId).toBe(ACCOUNT)
+    expect(account.openDetached).toHaveBeenCalledWith(newKey, {
+      accountId: ACCOUNT,
+    })
+  })
+
+  it('finds none for another account’s key', async () => {
+    const { service } = setup({ key: random(), lastAccountId: ACCOUNT })
+    expect(await service.sameAccountSession(random())).toBeNull()
+  })
+
+  it('opens nothing on a device that was never on an account', async () => {
+    const { service, account } = setup({ key: random() })
+    expect(await service.sameAccountSession(random())).toBeNull()
+    expect(account.openDetached).not.toHaveBeenCalled()
   })
 })

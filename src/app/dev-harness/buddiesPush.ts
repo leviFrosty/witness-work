@@ -1,7 +1,7 @@
 import * as Application from 'expo-application'
 import * as Notifications from 'expo-notifications'
-import * as BuddiesKeychain from '../../../modules/buddies-keychain'
 import apis from '@/constants/apis'
+import { deviceAccountKey } from '@/lib/accountKey'
 import { accountSessions } from '@/lib/serverAccount'
 import {
   deriveAccountSigningKey,
@@ -38,7 +38,7 @@ export function prepareBuddiesPush({
     try {
       if (useBuddies.getState().registeredInboxId === null)
         throw new Error('Buddies has not started on this device')
-      const seed = fromB64u(await BuddiesKeychain.getOrCreateRootSeed())
+      const seed = fromB64u(await deviceAccountKey.getOrCreate())
       const me = deriveIdentity(seed)
       const relay = createRelayClient({
         baseUrl: apis.buddies,

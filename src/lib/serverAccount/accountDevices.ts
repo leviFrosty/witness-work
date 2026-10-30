@@ -1,3 +1,4 @@
+import semver from 'semver'
 import apis from '@/constants/apis'
 import { accountSessions, isThisDeviceSession } from '@/lib/serverAccount'
 import {
@@ -44,4 +45,27 @@ export async function signedInElsewhere(
   return devices.some(
     (device) => !device.current && !isThisDeviceSession(device.sessionId)
   )
+}
+
+/**
+ * The first version that asks a signed-out device to sign back in after the
+ * account key changes; older ones show an error (ADR 0039 §10).
+ */
+export const KEY_CHANGE_MIN_APP_VERSION = '1.47.0'
+
+/**
+ * The account's other signed-in devices whose app is older than
+ * `KEY_CHANGE_MIN_APP_VERSION`, or didn't say: the key change warns about them
+ * before it commits. Throws when the list can't be read.
+ */
+export async function devicesTooOldForKeyChange(
+  accountKey: Uint8Array,
+  signal?: AbortSignal
+): Promise<AccountDevice[]> {
+  const devices = await readAccountDevices(accountKey, signal)
+  return devices.filter((device) => {
+    if (device.current) return false
+    const version = semver.valid(device.appVersion)
+    return !version || semver.lt(version, KEY_CHANGE_MIN_APP_VERSION)
+  })
 }

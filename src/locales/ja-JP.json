@@ -3061,8 +3061,6 @@
   "rewardAnimations": "ごほうびのアニメーション",
   "rewardAnimations_description": "ペットのコインを獲得すると、1枚ずつ画面に現れて財布に加算されます。どこかをタップするとスキップできます。",
   "rewardSounds": "サウンド",
-  "rewardSounds_punch": "パンチ",
-  "rewardSounds_retro": "レトロ",
   "rewardSounds_soft": "ソフト",
   "rewardSounds_off": "オフ",
   "rewardSounds_audioOff": "「サウンドと触覚」でサウンドがオフになっています。",

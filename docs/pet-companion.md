@@ -110,9 +110,11 @@ purchases are (`lib/currency.ts`).
   (`petSeen.markEarnedSeen`), so Home doesn't play it again.
 - **Settings → Preferences → Rewards** (`PreferencesRewardsScreen`, shown with a pet):
   `rewardAnimations` (on by default; off, the toast shows a plain "+N" chip) and `rewardSounds`
-  (`punch` by default, `retro`, `soft`, `off`; each previews when picked), both synced, and a sample.
-  Sounds are CC0 clips in `src/assets/audio/reward/` played by `playRewardSound` (`src/lib/audio.ts`,
-  pitch with rate), only while Audio & Haptics allows sounds. A screen reader hears "Earned 12
+  (Hex's sound sets: `signature` by default, `classic`, `click`, `soft`, `wood`, `analog`, `thock`,
+  or `off`; each previews when picked, and a retired or unknown set plays the default), both synced,
+  and a sample. Sounds are clips in `src/assets/audio/reward/`, made from the MIT-licensed Hex app's
+  feedback sounds by `scripts/reward-sounds/generate.py`, played by `playRewardSound`
+  (`src/lib/audio.ts`, pitch with rate), only while Audio & Haptics allows sounds. A screen reader hears "Earned 12
   coins" instead, and Reduce Motion skips the stack.
 - **Changes made elsewhere play when seen** (`usePetReveal`, `stores/petSeen.ts`). Each device keeps
   the hearts and wallet it last showed, and what had earned them (`petSeen`, device-local, never
@@ -217,7 +219,7 @@ Swappable parts, each a registry of options (`src/features/pet/art/room/`):
     any item says "New" (`hasNewRoomItem`).
 - **Pet Settings** (route `PetSettings`, `src/app/pet/PetSettingsScreen.tsx`), from the cog in the
   details: Name and Change pet (each showing its value; they open Rename and the picker), Show on
-  Home, Rewards (the reward animations switch, the sound sets in a row that previews each one, and
+  Home, Rewards (the reward animations switch, the sound sets in a two-column grid that previews each one, and
   Play a sample; the same settings as Settings → Preferences → Rewards), and with Buddies,
   Buddies' Pets (whether they visit, for everyone and per buddy).
 - **The game look.** Every pet screen past the Home card is game-themed, like the Shop: washi

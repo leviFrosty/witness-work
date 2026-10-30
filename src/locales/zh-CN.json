@@ -3061,8 +3061,6 @@
   "rewardAnimations": "奖励动画",
   "rewardAnimations_description": "当你为宠物赚到金币时，每枚金币都会落到屏幕上，并计入它的钱包。轻点任意位置即可跳过。",
   "rewardSounds": "声音",
-  "rewardSounds_punch": "有力",
-  "rewardSounds_retro": "复古",
   "rewardSounds_soft": "柔和",
   "rewardSounds_off": "关闭",
   "rewardSounds_audioOff": "“声音与触感”中已关闭声音。",

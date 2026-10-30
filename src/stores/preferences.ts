@@ -214,9 +214,32 @@ export const widgetAppointmentWindowOptions = [
 export type WidgetAppointmentWindow =
   (typeof widgetAppointmentWindowOptions)[number]
 
-/** The sounds a reward plays (`src/lib/rewardSounds.ts`), or none. */
-export const rewardSoundSets = ['punch', 'retro', 'soft', 'off'] as const
+/**
+ * The sounds a reward plays (`playRewardSound` in `src/lib/audio.ts`), or none:
+ * Hex's sound sets, in the order Settings lists them.
+ */
+export const rewardSoundSets = [
+  'signature',
+  'classic',
+  'click',
+  'soft',
+  'wood',
+  'analog',
+  'thock',
+  'off',
+] as const
 export type RewardSoundSet = (typeof rewardSoundSets)[number]
+
+export const DEFAULT_REWARD_SOUND_SET: RewardSoundSet = 'signature'
+
+/**
+ * `set` when this build has it, else the default: the sets before Hex's
+ * (`punch`, `retro`) and any from a newer build.
+ */
+export const knownRewardSoundSet = (set: string): RewardSoundSet =>
+  (rewardSoundSets as readonly string[]).includes(set)
+    ? (set as RewardSoundSet)
+    : DEFAULT_REWARD_SOUND_SET
 
 export type PrefillAddress = {
   /** Whether or not prefill address is enabled. */
@@ -489,7 +512,7 @@ export const PREFERENCE_DEFAULTS = {
    * The sounds those hits play, or `off`. Plays only while `audioEnabled` is
    * on, on this device. Syncable.
    */
-  rewardSounds: 'punch' as RewardSoundSet,
+  rewardSounds: DEFAULT_REWARD_SOUND_SET as RewardSoundSet,
   /** The Schedule intro has been seen or closed; Schedule won't open it again. */
   scheduleIntroSeen: false,
   /**

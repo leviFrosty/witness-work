@@ -1,31 +1,37 @@
 # Reward sounds
 
 The hits, slam and count-up a reward plays (`playRewardSound` in
-`src/lib/audio.ts`), in three sets the User picks in Settings → Rewards. Every
-source is CC0 (public domain): no attribution is required.
+`src/lib/audio.ts`), in seven sets the User picks in Settings → Rewards. They
+are Hex's feedback sound sets (github.com/anomalyco/hex, MIT, © 2026
+Christopher Langton; license in `scripts/reward-sounds/LICENSE-hex`), recut for
+a reward's five roles.
 
-- **Juhani Junkala**, "The Essential Retro Video Game Sound Effects
-  Collection" (OpenGameArt, CC0).
-- **Kenney**, "Interface Sounds" (kenney.nl, CC0).
+Don't edit these by hand. `scripts/reward-sounds/generate.py` makes all of
+them from Hex's own synthesis script (`hex_synth.py`, copied unchanged), Hex's
+Classic tones (`classic/`) and its Thock key take (`thock/`):
 
-| File          | Made from                                                            |
-| ------------- | -------------------------------------------------------------------- |
-| `punch-hit`   | Junkala `impact6`, with a synthesized sub thump (150 → 48 Hz)        |
-| `punch-heavy` | Junkala `impact15`, a sub thump (190 → 40 Hz) and Kenney `bong_001`  |
-| `punch-slam`  | Junkala `impact12`, a sub thump (200 → 38 Hz) and Kenney `glass_001` |
-| `punch-tick`  | Kenney `pluck_001`                                                   |
-| `punch-land`  | Kenney `confirmation_002`                                            |
-| `retro-hit`   | Junkala `impact7`                                                    |
-| `retro-heavy` | Junkala `impact12`                                                   |
-| `retro-slam`  | Junkala `impact15` and `powerup15`                                   |
-| `retro-tick`  | Junkala `menu_move4`                                                 |
-| `retro-land`  | Junkala `sound_bling`                                                |
-| `soft-hit`    | Kenney `drop_001`                                                    |
-| `soft-heavy`  | Kenney `bong_001` and `drop_002`                                     |
-| `soft-slam`   | Kenney `maximize_006`                                                |
-| `soft-tick`   | Kenney `tick_004`                                                    |
-| `soft-land`   | Kenney `glass_001`                                                   |
+```sh
+uv run scripts/reward-sounds/generate.py
+```
 
-Each is mono, 44.1 kHz, 64 kbps, trimmed with a short fade, and levelled with
-ffmpeg (`volume`, then `alimiter`) so the sets play about as loud as each other
-at the same player volume.
+| Role    | Plays                              | Made from                                      |
+| ------- | ---------------------------------- | ---------------------------------------------- |
+| `hit`   | each line, a step higher each time | Hex's start sound                              |
+| `heavy` | a milestone's line                 | Hex's done sound (Thock, Click: a heavier key) |
+| `slam`  | the total                          | the chord Hex's success lands on, no run-up    |
+| `tick`  | each step of the count             | one short note or click of the set's voice     |
+| `land`  | the ding the count lands on        | the set's top note, left to ring               |
+
+| Set         | Sounds like                        |
+| ----------- | ---------------------------------- |
+| `signature` | a kalimba motif in D major         |
+| `classic`   | the tones Hex first shipped with   |
+| `click`     | mechanical key clicks              |
+| `soft`      | warm sine blips in A major         |
+| `wood`      | marimba and hollow wood blocks     |
+| `analog`    | a mellow analogue synth in F major |
+| `thock`     | one deep mechanical keyboard key   |
+
+Each is mono, 44.1 kHz, 64 kbps, and levelled to its role's loudness (the
+same in every set, matching the sets these replaced), with at most 4 dB of
+soft limiting, so clicks and keys keep their attack and play a little quieter.

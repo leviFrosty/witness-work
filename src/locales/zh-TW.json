@@ -3061,8 +3061,6 @@
   "rewardAnimations": "獎勵動畫",
   "rewardAnimations_description": "當你為寵物賺到金幣時，每枚金幣都會落在畫面上，並計入牠的錢包。輕點任意處即可略過。",
   "rewardSounds": "音效",
-  "rewardSounds_punch": "有力",
-  "rewardSounds_retro": "復古",
   "rewardSounds_soft": "柔和",
   "rewardSounds_off": "關閉",
   "rewardSounds_audioOff": "已在「聲音與觸覺回饋」中關閉音效。",

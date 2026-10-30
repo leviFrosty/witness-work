@@ -7,25 +7,49 @@ import {
   playSoundEffect,
   soundEffectsAvailable,
 } from '../../modules/sound-effects'
-import { usePreferences, type RewardSoundSet } from '@/stores/preferences'
+import {
+  knownRewardSoundSet,
+  usePreferences,
+  type RewardSoundSet,
+} from '@/stores/preferences'
 import successChime from '@/assets/audio/success-chime.mp3'
 import scribeVoiceStart from '@/assets/audio/scribe-voice-start.wav'
 import scribeVoiceEnd from '@/assets/audio/scribe-voice-end.wav'
-import punchHit from '@/assets/audio/reward/punch-hit.mp3'
-import punchHeavy from '@/assets/audio/reward/punch-heavy.mp3'
-import punchSlam from '@/assets/audio/reward/punch-slam.mp3'
-import punchTick from '@/assets/audio/reward/punch-tick.mp3'
-import punchLand from '@/assets/audio/reward/punch-land.mp3'
-import retroHit from '@/assets/audio/reward/retro-hit.mp3'
-import retroHeavy from '@/assets/audio/reward/retro-heavy.mp3'
-import retroSlam from '@/assets/audio/reward/retro-slam.mp3'
-import retroTick from '@/assets/audio/reward/retro-tick.mp3'
-import retroLand from '@/assets/audio/reward/retro-land.mp3'
+import signatureHit from '@/assets/audio/reward/signature-hit.mp3'
+import signatureHeavy from '@/assets/audio/reward/signature-heavy.mp3'
+import signatureSlam from '@/assets/audio/reward/signature-slam.mp3'
+import signatureTick from '@/assets/audio/reward/signature-tick.mp3'
+import signatureLand from '@/assets/audio/reward/signature-land.mp3'
+import classicHit from '@/assets/audio/reward/classic-hit.mp3'
+import classicHeavy from '@/assets/audio/reward/classic-heavy.mp3'
+import classicSlam from '@/assets/audio/reward/classic-slam.mp3'
+import classicTick from '@/assets/audio/reward/classic-tick.mp3'
+import classicLand from '@/assets/audio/reward/classic-land.mp3'
+import clickHit from '@/assets/audio/reward/click-hit.mp3'
+import clickHeavy from '@/assets/audio/reward/click-heavy.mp3'
+import clickSlam from '@/assets/audio/reward/click-slam.mp3'
+import clickTick from '@/assets/audio/reward/click-tick.mp3'
+import clickLand from '@/assets/audio/reward/click-land.mp3'
 import softHit from '@/assets/audio/reward/soft-hit.mp3'
 import softHeavy from '@/assets/audio/reward/soft-heavy.mp3'
 import softSlam from '@/assets/audio/reward/soft-slam.mp3'
 import softTick from '@/assets/audio/reward/soft-tick.mp3'
 import softLand from '@/assets/audio/reward/soft-land.mp3'
+import woodHit from '@/assets/audio/reward/wood-hit.mp3'
+import woodHeavy from '@/assets/audio/reward/wood-heavy.mp3'
+import woodSlam from '@/assets/audio/reward/wood-slam.mp3'
+import woodTick from '@/assets/audio/reward/wood-tick.mp3'
+import woodLand from '@/assets/audio/reward/wood-land.mp3'
+import analogHit from '@/assets/audio/reward/analog-hit.mp3'
+import analogHeavy from '@/assets/audio/reward/analog-heavy.mp3'
+import analogSlam from '@/assets/audio/reward/analog-slam.mp3'
+import analogTick from '@/assets/audio/reward/analog-tick.mp3'
+import analogLand from '@/assets/audio/reward/analog-land.mp3'
+import thockHit from '@/assets/audio/reward/thock-hit.mp3'
+import thockHeavy from '@/assets/audio/reward/thock-heavy.mp3'
+import thockSlam from '@/assets/audio/reward/thock-slam.mp3'
+import thockTick from '@/assets/audio/reward/thock-tick.mp3'
+import thockLand from '@/assets/audio/reward/thock-land.mp3'
 
 /**
  * Every sound the app can play. Callers reference sounds by name so the asset
@@ -106,24 +130,34 @@ const playFromStart = (
  */
 export type RewardSoundRole = 'hit' | 'heavy' | 'slam' | 'tick' | 'land'
 
-/** Every reward sound by set (`src/assets/audio/reward`, all CC0). */
+/**
+ * Every reward sound by set (`src/assets/audio/reward`), made from Hex's
+ * feedback sounds by `scripts/reward-sounds/generate.py`.
+ */
 const REWARD_SOUNDS: Record<
   Exclude<RewardSoundSet, 'off'>,
   Record<RewardSoundRole, number>
 > = {
-  punch: {
-    hit: punchHit,
-    heavy: punchHeavy,
-    slam: punchSlam,
-    tick: punchTick,
-    land: punchLand,
+  signature: {
+    hit: signatureHit,
+    heavy: signatureHeavy,
+    slam: signatureSlam,
+    tick: signatureTick,
+    land: signatureLand,
   },
-  retro: {
-    hit: retroHit,
-    heavy: retroHeavy,
-    slam: retroSlam,
-    tick: retroTick,
-    land: retroLand,
+  classic: {
+    hit: classicHit,
+    heavy: classicHeavy,
+    slam: classicSlam,
+    tick: classicTick,
+    land: classicLand,
+  },
+  click: {
+    hit: clickHit,
+    heavy: clickHeavy,
+    slam: clickSlam,
+    tick: clickTick,
+    land: clickLand,
   },
   soft: {
     hit: softHit,
@@ -131,6 +165,27 @@ const REWARD_SOUNDS: Record<
     slam: softSlam,
     tick: softTick,
     land: softLand,
+  },
+  wood: {
+    hit: woodHit,
+    heavy: woodHeavy,
+    slam: woodSlam,
+    tick: woodTick,
+    land: woodLand,
+  },
+  analog: {
+    hit: analogHit,
+    heavy: analogHeavy,
+    slam: analogSlam,
+    tick: analogTick,
+    land: analogLand,
+  },
+  thock: {
+    hit: thockHit,
+    heavy: thockHeavy,
+    slam: thockSlam,
+    tick: thockTick,
+    land: thockLand,
   },
 }
 
@@ -150,10 +205,12 @@ const rewardKey = (
   role: RewardSoundRole
 ) => `${set}-${role}`
 
-/** The User's reward sounds, or none: a set from a newer build plays Punch. */
+/**
+ * The User's reward sounds, or none. A set this build doesn't have (from a
+ * newer build, or one since retired) plays the default.
+ */
 export function rewardSoundSet(): RewardSoundSet {
-  const set = usePreferences.getState().rewardSounds
-  return set === 'off' || set in REWARD_SOUNDS ? set : 'punch'
+  return knownRewardSoundSet(usePreferences.getState().rewardSounds)
 }
 
 /**

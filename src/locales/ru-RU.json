@@ -3169,8 +3169,6 @@
   "rewardAnimations": "Анимация наград",
   "rewardAnimations_description": "Когда вы получаете монеты для питомца, каждая вылетает на экран и зачисляется в его кошелёк. Коснитесь экрана, чтобы пропустить.",
   "rewardSounds": "Звуки",
-  "rewardSounds_punch": "Яркий",
-  "rewardSounds_retro": "Ретро",
   "rewardSounds_soft": "Мягкий",
   "rewardSounds_off": "Выкл.",
   "rewardSounds_audioOff": "Звуки выключены в разделе «Звук и тактильные сигналы».",

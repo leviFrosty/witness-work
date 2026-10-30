@@ -189,12 +189,15 @@ export function GameChoiceRow<Choice extends string>({
   choices,
   value,
   onChange,
+  columns,
   palette,
 }: {
   label: string
   choices: readonly { key: Choice; label: string }[]
   value: Choice
   onChange: (choice: Choice) => void
+  /** Wraps the choices into rows this many wide; one row when unset. */
+  columns?: number
   palette: GamePalette
 }) {
   const theme = useTheme()
@@ -213,7 +216,7 @@ export function GameChoiceRow<Choice extends string>({
       <View
         accessibilityRole='radiogroup'
         accessibilityLabel={label}
-        style={{ flexDirection: 'row', gap: 4 }}
+        style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 4 }}
       >
         {choices.map((choice) => {
           const on = choice.key === value
@@ -225,7 +228,11 @@ export function GameChoiceRow<Choice extends string>({
               accessibilityState={{ checked: on }}
               accessibilityLabel={choice.label}
               testID={`game-choice-${choice.key}`}
-              style={{ flex: 1 }}
+              style={
+                columns
+                  ? { flexBasis: `${100 / columns - 4}%`, flexGrow: 1 }
+                  : { flex: 1 }
+              }
             >
               <GameFrame
                 kind={on ? 'tab' : 'pill'}

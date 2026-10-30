@@ -244,10 +244,17 @@ describe('useManageSubscription', () => {
     expect(runtime.revalidate).toHaveBeenCalled()
   })
 
-  it('falls back to the management URL when the system sheet fails', async () => {
+  it('falls back to the App Store page, never the management URL, when the system sheet fails', async () => {
+    // A web subscription's management URL is RevenueCat's customer portal,
+    // which an iOS app must never open (docs/web-purchases.md).
+    runtime.customer = {
+      ...customer(),
+      managementURL: 'https://pay.rev.cat/customer-portal/abc',
+    }
     runtime.showManageSubscriptions.mockRejectedValue(new Error('no scene'))
     await render()
     await act(() => hook.openStore('cancel'))
+    expect(runtime.openURL).toHaveBeenCalledTimes(1)
     expect(runtime.openURL).toHaveBeenCalledWith(
       'https://apps.apple.com/account/subscriptions'
     )

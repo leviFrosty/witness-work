@@ -51,6 +51,17 @@ vi.mock('expo-notifications', () => ({
   SchedulableTriggerInputTypes: { DATE: 'date' },
 }))
 
+// Every test runs as a production build: the Supporter rule and web purchase
+// links read the build's variant, and the real module reads it through
+// expo-constants, which needs React Native. Tests that care pass a variant;
+// `src/lib/appVariant.test.ts` checks the real module.
+vi.mock('@/lib/appVariant', async () => ({
+  ...(await vi.importActual<typeof import('@/lib/toAppVariant')>(
+    '@/lib/toAppVariant'
+  )),
+  appVariant: 'production',
+}))
+
 // Stub expo-localization globally: the date and number helpers in
 // `src/lib/dates.ts` read the device's locale through it, and the real module
 // needs React Native. A US-English device; tests that care mock it themselves.

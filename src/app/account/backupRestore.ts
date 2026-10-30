@@ -112,15 +112,17 @@ export function simulateCorruptDownload() {
 
 /** Decrypts and validates one downloaded blob. */
 export function readSlotBlob(
-  access: Pick<BackupAccess, 'accountKey' | 'accountId'>,
+  access: Pick<BackupAccess, 'accountKey' | 'accountId' | 'olderBackupKeys'>,
   slot: BackupSlot,
   blob: Uint8Array
 ): DownloadedSlot {
   try {
-    const plaintext = openBackup(deriveBackupKey(access.accountKey), blob, {
-      accountId: access.accountId,
-      slotId: slot.slotId,
-    })
+    const plaintext = openBackup(
+      deriveBackupKey(access.accountKey),
+      blob,
+      { accountId: access.accountId, slotId: slot.slotId },
+      access.olderBackupKeys
+    )
     const read = readBackupPayload(plaintext, slot.uploadedAt)
     if (!read.ok) return { ...slot, ok: false, problem: read.problem }
     return {

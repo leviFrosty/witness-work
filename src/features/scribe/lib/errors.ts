@@ -141,6 +141,7 @@ function fromSessionError(error: AccountSessionError): ScribeClientError {
     case 'rateLimited':
       return new ScribeClientError('rate_limited', details)
     case 'unavailable':
+    case 'keyRetired':
     case 'server':
     case 'signedOut':
       return new ScribeClientError('unavailable', details)

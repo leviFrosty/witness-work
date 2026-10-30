@@ -50,6 +50,7 @@ export type SignedAccountOp =
   | 'web/signup'
   | 'web/recovery'
   | 'sync/request'
+  | 'account/rekey'
 
 const SIGNED_PATHS: Record<SignedAccountOp, string> = {
   'session/open': 'sessions',
@@ -60,6 +61,7 @@ const SIGNED_PATHS: Record<SignedAccountOp, string> = {
   'web/signup': 'web/signup',
   'web/recovery': 'web/recovery',
   'sync/request': 'sync/request',
+  'account/rekey': 'account/rekey',
 }
 
 /** A signed op's envelope, as sent. */
@@ -81,6 +83,11 @@ export type SignedAccountTransport = {
   signed?: SignedRequest
   /** Each envelope as it's signed. */
   onSigned?: (signed: SignedRequest) => void
+  /**
+   * More signatures over the same payload bytes, each by its own key in its own
+   * context (`account/rekey`'s `newSignature`), sent beside `signature`.
+   */
+  cosign?: { field: string; op: string; key: AccountSigningKey }[]
 }
 
 /**
@@ -106,6 +113,12 @@ export async function sendSignedAccountOp<T>(
     const signed = {
       payload: toB64u(payload),
       signature: signAccountRequest(op, payload, options.key),
+      ...Object.fromEntries(
+        (transport.cosign ?? []).map(({ field, op: context, key }) => [
+          field,
+          signAccountRequest(context, payload, key),
+        ])
+      ),
     }
     transport.onSigned?.(signed)
     return signed
@@ -151,6 +164,7 @@ export type BearerAccountOptions = {
 /** Ops that take the session's bearer token. */
 export type BearerAccountOp =
   | 'account/info'
+  | 'account/key-history'
   | 'handoff/open'
   | 'handoff/status'
   | 'handoff/send'
@@ -187,6 +201,7 @@ const BEARER_ROUTES: Partial<
   Record<BearerAccountOp, { method: 'GET'; path: string }>
 > = {
   'account/info': { method: 'GET', path: 'account' },
+  'account/key-history': { method: 'GET', path: 'account/key-history' },
   sync: { method: 'GET', path: 'sync' },
   'sync/photos/usage': { method: 'GET', path: 'sync/photos/usage' },
   passkeys: { method: 'GET', path: 'passkeys' },
@@ -258,14 +273,18 @@ export async function sendBearerSignedAccountOp(
   op: SignedAccountOp,
   fields: Record<string, unknown>,
   options: BearerSignedAccountOptions,
-  transport: Pick<SignedAccountTransport, 'idempotent'> = {}
+  transport: Pick<SignedAccountTransport, 'idempotent' | 'cosign'> = {}
 ): Promise<AccountAnswer> {
   const response = await options.authorize((authorization) =>
     sendSignedAccountOp<AccountAnswer['data']>(
       op,
       fields,
       { ...options.sign, signal: options.signal },
-      { headers: { authorization }, idempotent: transport.idempotent }
+      {
+        headers: { authorization },
+        idempotent: transport.idempotent,
+        cosign: transport.cosign,
+      }
     )
   )
   return { status: response.status, data: response.data ?? null }
@@ -378,24 +397,18 @@ export async function fetchAccountInfo(
     { idempotent: true }
   )
   const data = response.data ?? {}
-  const {
-    accountId,
-    accountPub,
-    keyEpoch,
-    status,
-    createdAt,
-    inboxIds,
-    statusChanges,
-  } = data
+  const { accountId, accountPub, status, createdAt, inboxIds, statusChanges } =
+    data
+  // Servers before key changes didn't send it: every account was at 0.
+  const keyEpoch = data.keyEpoch ?? 0
   if (
     data.ok !== true ||
+    typeof keyEpoch !== 'number' ||
+    !Number.isSafeInteger(keyEpoch) ||
+    keyEpoch < 0 ||
     typeof accountId !== 'string' ||
     !RELAY_ID_PATTERN.test(accountId) ||
     typeof accountPub !== 'string' ||
-    (keyEpoch !== undefined &&
-      (typeof keyEpoch !== 'number' ||
-        !Number.isSafeInteger(keyEpoch) ||
-        keyEpoch < 0)) ||
     !isAccountStatus(status) ||
     typeof createdAt !== 'number' ||
     !Array.isArray(inboxIds) ||
@@ -410,7 +423,7 @@ export async function fetchAccountInfo(
   return {
     accountId,
     accountPub,
-    keyEpoch: (keyEpoch as number | undefined) ?? 0,
+    keyEpoch,
     status,
     createdAt,
     inboxIds,

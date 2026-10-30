@@ -92,19 +92,25 @@ function parseTokens(
  * Opens a session (`POST /accounts/v1/sessions`, answered 201): the account
  * key's self-signed envelope (op `session/open`) with the attestation (or, in
  * dev builds, the bypass header) and the sealed device label. Creates the
- * account when the key has none. Failures throw `HttpError`.
+ * account when the key has none, unless `accountId` names the account the
+ * device knows: then it opens only when the key is that account's current one,
+ * and is 404 `unknown_account` otherwise (docs/account-key-change.md). A
+ * retired key is 403 `key_retired`. Failures throw `HttpError`.
  */
 export async function sendSessionOpen(
   {
     proof,
     device,
     appVersion,
+    accountId,
   }: {
     proof: AttestationProof
     /** `sealDeviceLabel`'s output. */
     device?: string
     /** This build's `major.minor.patch`; the session keeps the latest. */
     appVersion?: string
+    /** The account this key should be the current key of. */
+    accountId?: string
   },
   options: SignedAccountOptions
 ): Promise<OpenedSession> {
@@ -115,6 +121,7 @@ export async function sendSessionOpen(
       ...(device !== undefined && { device }),
       ...(isSessionAppVersion(appVersion) && { appVersion }),
       capabilities: SESSION_CAPABILITIES,
+      ...(accountId !== undefined && { accountId }),
     },
     options,
     {

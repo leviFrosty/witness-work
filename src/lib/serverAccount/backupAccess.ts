@@ -1,7 +1,11 @@
 import { getRandomBytes } from 'expo-crypto'
 import apis from '@/constants/apis'
 import { HttpError } from '@/lib/http/request'
-import { bearerOptions, serverAccount } from '@/lib/serverAccount'
+import {
+  bearerOptions,
+  olderAccountKeys,
+  serverAccount,
+} from '@/lib/serverAccount'
 import { deriveAccountSigningKey } from '@/lib/serverAccount/keys'
 import {
   type BackupClientOptions,
@@ -24,6 +28,11 @@ import { syncNow } from '@/lib/syncClock'
 export type BackupAccess = {
   accountKey: Uint8Array
   accountId: string
+  /**
+   * The backup keys of the account's older account keys, newest first, for a
+   * slot sealed before the key changed.
+   */
+  olderBackupKeys?: readonly Uint8Array[]
   options: BackupClientOptions
 }
 
@@ -43,6 +52,7 @@ export async function backupAccessFor(
   return {
     accountKey,
     accountId,
+    olderBackupKeys: await olderAccountKeys(accountId, 'backup'),
     options: {
       ...bearerOptions(accountKey),
       sign: {

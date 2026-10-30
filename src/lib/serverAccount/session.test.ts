@@ -123,6 +123,9 @@ function fakeWorker(clock: { now: number }) {
         if (!payload.attestation && !headers['x-ww-dev-bypass'])
           return failure(403, 'attestation_failed', { reason: 'missing' })
         let accountId = accounts.get(payload.accountPub)
+        // Into a known account only while the key is its current one.
+        if (payload.accountId !== undefined && accountId !== payload.accountId)
+          return failure(404, 'unknown_account')
         if (!accountId) {
           accountId = `acct${String(accounts.size).padStart(18, '0')}`
           accounts.set(payload.accountPub, accountId)
@@ -1258,5 +1261,203 @@ describe('account sessions', () => {
     await expect(cancelled).rejects.toMatchObject({ failure: 'cancelled' })
     await expect(other).resolves.toMatchObject({ sessionId: 'sid-1' })
     expect(worker.opsCalled('session/open')).toHaveLength(1)
+  })
+})
+
+describe('account sessions across a key change on this device', () => {
+  /** The worker's side of `account/rekey`: the session's account moves to B. */
+  const rekeyOnWorker = (worker: ReturnType<typeof fakeWorker>) => {
+    const accountId = worker.accounts.get(PUB_A)!
+    worker.accounts.delete(PUB_A)
+    worker.accounts.set(PUB_B, accountId)
+    const session = worker.sessions[0]
+    session.accessTokens.add('at-rekeyed')
+    return accountId
+  }
+
+  it('re-points its own session at the new key, keeping the session', async () => {
+    const device = { key: KEY_A }
+    const { worker, store, sessions, info, clock } = setup({ device })
+    await info()
+    const refreshToken = JSON.parse(store.value!).refreshToken
+    const accountId = rekeyOnWorker(worker)
+
+    await sessions.repoint(PUB_A, PUB_B, {
+      accessToken: 'at-rekeyed',
+      accessExpiresAt: clock.now + ACCESS_LIFETIME_MS,
+    })
+    device.key = KEY_B
+
+    const response = await info()
+    expect(response.data.accountId).toBe(accountId)
+    expect(worker.opsCalled('session/open')).toHaveLength(1)
+    expect(worker.opsCalled('session/close')).toHaveLength(0)
+    expect(worker.calls.at(-1)!.headers.authorization).toBe('Bearer at-rekeyed')
+    expect(JSON.parse(store.value!)).toMatchObject({
+      accountPub: PUB_B,
+      accountId,
+      sessionId: 'sid-1',
+      refreshToken,
+    })
+    expect(sessions.snapshot()).toMatchObject({ accountPub: PUB_B })
+    // Nothing opens or refreshes for the old key again.
+    await expect(info(KEY_A)).rejects.toMatchObject({ failure: 'cancelled' })
+  })
+
+  it('re-points a stored session it hasn’t used yet, and refreshes it next', async () => {
+    const first = setup()
+    await first.info()
+    const accountId = rekeyOnWorker(first.worker)
+    const { sessions, info, worker } = setup({
+      store: nextLaunchStore(first.store),
+      worker: first.worker,
+      clock: first.clock,
+      device: { key: KEY_B },
+    })
+    expect(await sessions.repoint(PUB_A, PUB_B)).toBe(true)
+    expect((await info()).data.accountId).toBe(accountId)
+    expect(worker.opsCalled('session/open')).toHaveLength(1)
+    expect(worker.opsCalled('session/refresh')).toHaveLength(1)
+  })
+
+  it('re-points nothing when its session is another key’s', async () => {
+    const { sessions, info, store } = setup()
+    await info()
+    const before = store.value
+    const pubC = deriveAccountSigningKey(new Uint8Array(32).fill(3)).publicKey
+    expect(await sessions.repoint(PUB_B, pubC)).toBe(false)
+    expect(store.value).toBe(before)
+  })
+
+  it('waits for a refresh in flight, so the rotated refresh token is kept', async () => {
+    const device = { key: KEY_A }
+    const { worker, store, sessions, info, clock } = setup({ device })
+    await info()
+    clock.now += ACCESS_LIFETIME_MS
+    let release!: () => void
+    worker.override.set('session/refresh', async () => {
+      await new Promise<void>((resolve) => {
+        release = resolve
+      })
+      return null
+    })
+    const refreshing = info()
+    await new Promise((resolve) => setTimeout(resolve, 5))
+    rekeyOnWorker(worker)
+    const repointing = sessions.repoint(PUB_A, PUB_B)
+    release()
+    await refreshing
+    await repointing
+    expect(JSON.parse(store.value!)).toMatchObject({
+      accountPub: PUB_B,
+      refreshToken: worker.sessions[0].refreshToken,
+    })
+  })
+})
+
+describe('account sessions for a retired key', () => {
+  it('fails as keyRetired with when it changed, and opens nothing more for it', async () => {
+    const onKeyRetired = vi.fn()
+    const { worker, info } = setup({ deps: { onKeyRetired } })
+    worker.override.set('session/open', () =>
+      failure(403, 'key_retired', { changedAt: 1_234 })
+    )
+    const error = await info().catch((failed: unknown) => failed)
+    expect(error).toMatchObject({
+      failure: 'keyRetired',
+      changedAt: 1_234,
+      serverCode: 'key_retired',
+    })
+    expect(onKeyRetired).toHaveBeenCalledWith(PUB_A, 1_234)
+    await expect(info()).rejects.toMatchObject({ failure: 'keyRetired' })
+    await expect(info()).rejects.toMatchObject({ failure: 'keyRetired' })
+    expect(worker.opsCalled('session/open')).toHaveLength(1)
+  })
+
+  it('ends a session the server revoked, then reads the key as retired', async () => {
+    const onKeyRetired = vi.fn()
+    const { worker, info, clock } = setup({ deps: { onKeyRetired } })
+    await info()
+    worker.sessions[0].ended = true
+    clock.now += ACCESS_LIFETIME_MS
+    worker.override.set('session/open', () =>
+      failure(403, 'key_retired', { changedAt: 9 })
+    )
+    await expect(info()).rejects.toMatchObject({ failure: 'keyRetired' })
+    expect(onKeyRetired).toHaveBeenCalledWith(PUB_A, 9)
+  })
+})
+
+describe('account sessions into a known account', () => {
+  it('names the account it reopens', async () => {
+    const { worker, info, clock } = setup()
+    const accountId = (await info()).data.accountId
+    worker.sessions[0].ended = true
+    clock.now += ACCESS_LIFETIME_MS
+    await info()
+    expect(openPayload(worker, 0)).not.toHaveProperty('accountId')
+    expect(openPayload(worker, 1).accountId).toBe(accountId)
+  })
+
+  it('names the account the caller knows on a first open, and on a detached one', async () => {
+    const { worker, sessions } = setup()
+    await sessions.ensure(KEY_A, { accountId: 'acct-known' }).catch(() => null)
+    expect(openPayload(worker, 0).accountId).toBe('acct-known')
+    // Never created: the key isn't that account's.
+    expect(worker.accounts.size).toBe(0)
+    await sessions
+      .openDetached(KEY_B, { accountId: 'acct-b' })
+      .catch(() => null)
+    expect(openPayload(worker, 1).accountId).toBe('acct-b')
+  })
+
+  it('opens a key that replaced the stored one underneath into the same account', async () => {
+    const onKeySwitched = vi.fn()
+    const device = { key: KEY_A }
+    const { worker, info } = setup({ device, deps: { onKeySwitched } })
+    const accountId = (await info()).data.accountId
+    // The account moved to B on another device; iCloud Keychain brought B.
+    worker.accounts.delete(PUB_A)
+    worker.accounts.set(PUB_B, accountId)
+    device.key = KEY_B
+    expect((await info()).data.accountId).toBe(accountId)
+    expect(openPayload(worker, 1)).toMatchObject({
+      accountPub: PUB_B,
+      accountId,
+    })
+    expect(onKeySwitched).toHaveBeenCalledWith(PUB_A, PUB_B)
+  })
+
+  it('opens another account’s key as before when it isn’t the old account’s', async () => {
+    const device = { key: KEY_A }
+    const { worker, info } = setup({ device })
+    const accountId = (await info()).data.accountId
+    device.key = KEY_B
+    const other = (await info()).data.accountId
+    expect(other).not.toBe(accountId)
+    expect(openPayload(worker, 1).accountId).toBe(accountId)
+    expect(openPayload(worker, 2)).not.toHaveProperty('accountId')
+  })
+
+  it('reads unknown_account as the key not being that account’s', async () => {
+    const { worker, sessions } = setup()
+    worker.override.set('session/open', () => failure(404, 'unknown_account'))
+    await expect(
+      sessions.openDetached(KEY_B, { accountId: 'acct-b' })
+    ).rejects.toMatchObject({ serverCode: 'unknown_account' })
+  })
+})
+
+describe('account sessions for a call that must not run twice', () => {
+  it('throws a 401 as it is, without refreshing and running it again', async () => {
+    const { sessions, info } = setup()
+    await info()
+    const run = vi.fn(async () => {
+      throw new HttpError('client', 401, 'unauthorized')
+    })
+    await expect(
+      sessions.withSession(run, { retryUnauthorized: false })
+    ).rejects.toMatchObject({ status: 401 })
+    expect(run).toHaveBeenCalledTimes(1)
   })
 })

@@ -333,7 +333,9 @@ export async function completeClaimHandoff(
   // for the same accountId.
   let opened: DetachedSession
   try {
-    opened = await accountSessions.openDetached(newKey)
+    // Only into the account the old phone named: a key that isn't its
+    // current one is refused, and never creates an account.
+    opened = await accountSessions.openDetached(newKey, { accountId })
   } catch (error) {
     const reason = handoffFailureFor(error, 'session/open')
     if (RETRYABLE_OPEN_FAILURES.has(reason))
@@ -354,7 +356,7 @@ export async function completeClaimHandoff(
       current.some((byte, i) => byte !== newKey[i]))
   let loss: AccountKeyLoss
   try {
-    loss = await accountKey.lossIfReplaced(newKey)
+    loss = await accountKey.lossIfReplaced(newKey, { accountId })
   } catch (error) {
     // Whether the account's other devices keep its buddies decides what this
     // phone deletes; nothing is, without knowing.
@@ -364,9 +366,12 @@ export async function completeClaimHandoff(
     return { outcome: 'failed', reason: 'replace_failed' }
   }
   // On iOS the key reaches every Apple device on the same iCloud Keychain,
-  // so replacing one there always asks, as with a recovery key.
+  // so replacing one there always asks, as with a recovery key. Signing back
+  // in to the account this phone was on (its key changed) asks nothing.
+  const rejoining = accountId === serverAccount.lastAccountId()
   if (
     differs &&
+    !rejoining &&
     (losesSomething(loss) || Platform.OS === 'ios') &&
     !(await confirmReplace(loss))
   ) {
@@ -380,6 +385,7 @@ export async function completeClaimHandoff(
       source: 'handoff',
       confirmedLoss: true,
       session: opened,
+      accountId,
     })
     if (result.outcome === 'replaced' && result.accountId !== accountId)
       logger.warn('[handoff] the new account opened under another id')

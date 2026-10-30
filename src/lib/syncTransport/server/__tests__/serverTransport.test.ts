@@ -187,6 +187,29 @@ describe('serverTransport', () => {
     )
   })
 
+  it('opens a slot an older account key sealed with the key history', async () => {
+    const { transport: writer, server } = setup({}, 2)
+    await writer.write(filenameForSlot(OTHER), '{"a":1}')
+    const { transport } = setup({
+      access: async () => ({
+        accountId: ACCOUNT_ID,
+        syncKey: deriveSyncKey(new Uint8Array(32).fill(1)),
+        photoKeys: derivePhotoKeys(new Uint8Array(32).fill(1)),
+        olderSyncKeys: [
+          deriveSyncKey(new Uint8Array(32).fill(3)),
+          deriveSyncKey(new Uint8Array(32).fill(2)),
+        ],
+        options: {
+          baseUrl: 'https://api.test',
+          authorize: (run) => run('Bearer family'),
+          fetchImpl: server.fetch,
+        },
+      }),
+    })
+    const { files } = await transport.readFiles(everything)
+    expect(files.map((f) => f.json)).toEqual(['{"a":1}'])
+  })
+
   it('maps the server’s refusals the way the engine reads them', async () => {
     const { server, transport, onRefused } = setup()
     server.state.enabled = false

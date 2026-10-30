@@ -85,6 +85,11 @@ export type AccountSessionFailure =
   /** `attestation_failed`, or this device can't attest at all. */
   | 'attestation'
   | 'rateLimited'
+  /**
+   * 403 `key_retired`: the account key was changed on another device, and this
+   * one is retired for good (docs/account-key-change.md).
+   */
+  | 'keyRetired'
   | 'server'
   /**
    * A browser has no session, or the server ended it (`ended` says why): it
@@ -99,6 +104,7 @@ const KIND: Record<AccountSessionFailure, HttpError['kind']> = {
   upgrade: 'client',
   attestation: 'client',
   rateLimited: 'rateLimited',
+  keyRetired: 'client',
   server: 'server',
   signedOut: 'client',
 }
@@ -115,6 +121,8 @@ export class AccountSessionError extends HttpError {
   readonly reason: string | null
   /** Set for a refused refresh (401): why the session ended. */
   readonly ended: SessionEndReason | null
+  /** Set for `keyRetired`: when the key changed (epoch ms), if said. */
+  readonly changedAt: number | null
 
   constructor(
     failure: AccountSessionFailure,
@@ -125,6 +133,7 @@ export class AccountSessionError extends HttpError {
       attestation?: AttestationProblem
       reason?: string | null
       ended?: SessionEndReason
+      changedAt?: number | null
     } = {}
   ) {
     super(
@@ -140,6 +149,7 @@ export class AccountSessionError extends HttpError {
       failure === 'attestation' ? (details.attestation ?? 'failed') : null
     this.reason = details.reason ?? null
     this.ended = details.ended ?? null
+    this.changedAt = details.changedAt ?? null
   }
 }
 
@@ -266,6 +276,7 @@ function fromHttp(
     serverCode: string | null
     retryAfterMs: number | null
     reason: string | null
+    changedAt?: number | null
   },
   refresh: boolean
 ): AccountSessionError {
@@ -274,6 +285,8 @@ function fromHttp(
     return new AccountSessionError('upgrade', details)
   if (serverCode === 'disabled')
     return new AccountSessionError('unavailable', details)
+  if (serverCode === 'key_retired')
+    return new AccountSessionError('keyRetired', details)
   if (serverCode === 'attestation_failed')
     return new AccountSessionError('attestation', {
       ...details,
@@ -328,13 +341,14 @@ export function toAccountSessionError(
     if (error.kind === 'cancelled') return new AccountSessionError('cancelled')
     if (error.kind === 'offline' || error.kind === 'timeout')
       return new AccountSessionError('offline', { status: error.status })
-    const reason = (error.body as { reason?: unknown } | null)?.reason
+    const body = error.body as { reason?: unknown; changedAt?: unknown } | null
     return fromHttp(
       {
         status: error.status,
         serverCode: error.serverCode,
         retryAfterMs: error.retryAfterMs,
-        reason: typeof reason === 'string' ? reason : null,
+        reason: typeof body?.reason === 'string' ? body.reason : null,
+        changedAt: typeof body?.changedAt === 'number' ? body.changedAt : null,
       },
       refresh
     )
@@ -517,6 +531,18 @@ export type AccountSessionDeps = {
   /** The account's status as this device knows it changed (`noteStatus`). */
   onStatusChange?: (accountPub: string, status: AccountStatus) => void
   /**
+   * A session open was refused as `key_retired`: the account key was changed on
+   * another device (docs/account-key-change.md, "Other devices"). No session
+   * opens for `accountPub` again in this launch.
+   */
+  onKeyRetired?: (accountPub: string, changedAt: number | null) => void
+  /**
+   * The account key changed outside `changeKey` (another device's key arrived
+   * through iCloud Keychain): the session for `fromPub` ended, and one for
+   * `toPub` opens next.
+   */
+  onKeySwitched?: (fromPub: string, toPub: string) => void
+  /**
    * A call worked while this device thinks the account is suspended: it may
    * have been reinstated, so the account is worth reading again.
    */
@@ -652,6 +678,24 @@ function raceSignal<T>(promise: Promise<T>, signal?: AbortSignal): Promise<T> {
   })
 }
 
+/**
+ * The access token `account/rekey` answered with, for the session the change
+ * kept (`repoint`). Epoch ms, the server's clock.
+ */
+export type RekeyedTokens = { accessToken: string; accessExpiresAt: number }
+
+/** How one `session/open` is asked for. */
+type OpenCall = {
+  signal?: AbortSignal
+  current?: () => boolean
+  /**
+   * The account this device knows the key belongs to: the session opens only
+   * when the key is that account's current one (else `unknown_account`), and
+   * never creates one.
+   */
+  accountId?: string
+}
+
 export function createAccountSessions(deps: AccountSessionDeps) {
   const localNow = deps.localNow ?? Date.now
   let live: Live | null = null
@@ -672,6 +716,8 @@ export function createAccountSessions(deps: AccountSessionDeps) {
   let keyChanges = 0
   /** Public keys this device replaced: no session opens for them again. */
   const retired = new Set<string>()
+  /** Public keys the server retired (`key_retired`), with its refusal. */
+  const retiredByServer = new Map<string, AccountSessionError>()
   /** Per account key, until when `session/open` is rate limited (device clock). */
   const openLimitedUntil = new Map<string, number>()
   let lastFailure: {
@@ -889,15 +935,27 @@ export function createAccountSessions(deps: AccountSessionDeps) {
     accountKey: Uint8Array,
     key: AccountSigningKey,
     reason: SessionOpenReason,
-    call: { signal?: AbortSignal; current?: () => boolean } = {}
+    call: OpenCall = {}
   ): Promise<OpenedSession> {
     const pub = key.publicKey
     const limited = openRateLimit(pub)
     if (limited) throw limited
+    const refused = retiredByServer.get(pub)
+    if (refused) throw refused
+    const seen: { changedAt: number | null } = { changedAt: null }
     try {
-      return await attestAndOpen(accountKey, key, reason, call)
+      return await attestAndOpen(accountKey, key, reason, call, seen)
     } catch (error) {
-      const failure = toAccountSessionError(error)
+      let failure = toAccountSessionError(error)
+      if (failure.failure === 'keyRetired') {
+        failure = new AccountSessionError('keyRetired', {
+          status: failure.status,
+          serverCode: 'key_retired',
+          changedAt: failure.changedAt ?? seen.changedAt,
+        })
+        retiredByServer.set(pub, failure)
+        deps.onKeyRetired?.(pub, failure.changedAt)
+      }
       if (failure.failure === 'rateLimited') {
         const wait = Math.min(
           Math.max(failure.retryAfterMs ?? OPEN_RATE_LIMIT_DEFAULT_MS, 1_000),
@@ -913,7 +971,8 @@ export function createAccountSessions(deps: AccountSessionDeps) {
     accountKey: Uint8Array,
     key: AccountSigningKey,
     reason: SessionOpenReason,
-    call: { signal?: AbortSignal; current?: () => boolean }
+    call: OpenCall,
+    seen: { changedAt: number | null }
   ): Promise<OpenedSession> {
     const hash = sessionAttestationHash(key.publicKey)
     const device = deviceLabelFor(accountKey, key.publicKey)
@@ -931,7 +990,12 @@ export function createAccountSessions(deps: AccountSessionDeps) {
               throw new AttestationHttpError({ kind: 'cancelled' })
             try {
               return await sendSessionOpen(
-                { proof, device, appVersion: appVersion() },
+                {
+                  proof,
+                  device,
+                  appVersion: appVersion(),
+                  accountId: call.accountId,
+                },
                 {
                   ...clientOptions(attemptSignal),
                   key,
@@ -940,6 +1004,16 @@ export function createAccountSessions(deps: AccountSessionDeps) {
                 }
               )
             } catch (error) {
+              // The attestation's error keeps only stable codes.
+              if (
+                error instanceof HttpError &&
+                error.serverCode === 'key_retired'
+              ) {
+                const changedAt = (error.body as { changedAt?: unknown } | null)
+                  ?.changedAt
+                seen.changedAt =
+                  typeof changedAt === 'number' ? changedAt : null
+              }
               throw toAttestationHttpError(error)
             }
           },
@@ -1222,7 +1296,12 @@ export function createAccountSessions(deps: AccountSessionDeps) {
   async function acquire(
     accountKey: Uint8Array,
     key: AccountSigningKey,
-    call: { rejected?: string; retry?: boolean; signal?: AbortSignal }
+    call: {
+      rejected?: string
+      retry?: boolean
+      signal?: AbortSignal
+      accountId?: string
+    }
   ): Promise<Live> {
     const pub = key.publicKey
     refuseWhilePaused()
@@ -1245,8 +1324,15 @@ export function createAccountSessions(deps: AccountSessionDeps) {
       if (current?.accountPub === pub && accessUsable(current, call.rejected))
         return current
       let reason: SessionOpenReason = discardedStale ? 'unsaved' : 'new'
+      // A session for this key named its account: a new one names it too.
+      // A session for this key, or the one its key replaced, named its
+      // account: a new one names it too.
+      const knownAccount = call.accountId ?? current?.accountId
       if (current && current.accountPub !== pub) {
-        // Another account key's session: end it rather than leave it behind.
+        // The stored key changed outside `changeKey` (iCloud Keychain brought
+        // another device's key): end the old session rather than leave it
+        // behind, and say so, so what derives from the old key is dropped.
+        deps.onKeySwitched?.(current.accountPub, pub)
         live = null
         void save(null)
         void closeTokens({ ...current, accessUsable: accessUsable(current) })
@@ -1293,7 +1379,23 @@ export function createAccountSessions(deps: AccountSessionDeps) {
       if (!unchanged()) throw new AccountSessionError('cancelled')
       let opened: OpenedSession
       try {
-        opened = await open(accountKey, key, reason, { current: unchanged })
+        try {
+          opened = await open(accountKey, key, reason, {
+            current: unchanged,
+            accountId: knownAccount,
+          })
+        } catch (error) {
+          // Not the old session's account: another account's key, opened as
+          // before. A caller's own `accountId` is never dropped.
+          if (
+            call.accountId !== undefined ||
+            knownAccount === undefined ||
+            !(error instanceof HttpError) ||
+            error.serverCode !== 'unknown_account'
+          )
+            throw error
+          opened = await open(accountKey, key, reason, { current: unchanged })
+        }
       } catch (error) {
         const failure = toAccountSessionError(error)
         if (failure.failure === 'attestation')
@@ -1357,7 +1459,7 @@ export function createAccountSessions(deps: AccountSessionDeps) {
    */
   async function ensure(
     accountKey?: Uint8Array,
-    call: { retry?: boolean; signal?: AbortSignal } = {}
+    call: { retry?: boolean; signal?: AbortSignal; accountId?: string } = {}
   ): Promise<AccountSessionInfo> {
     const { bytes, key } = await keyFor(accountKey)
     await load()
@@ -1381,6 +1483,11 @@ export function createAccountSessions(deps: AccountSessionDeps) {
       accountKey?: Uint8Array
       signal?: AbortSignal
       renew?: boolean
+      /**
+       * False for a call that must not run twice (`account/rekey`): a 401 is
+       * thrown as it is, and the caller checks what happened.
+       */
+      retryUnauthorized?: boolean
     } = {}
   ): Promise<T> {
     const { bytes, key } = await keyFor(call.accountKey)
@@ -1409,7 +1516,11 @@ export function createAccountSessions(deps: AccountSessionDeps) {
           throw toAccountSessionError(error)
         }
         if (refusedAsSuspended(error)) noteStatus(key.publicKey, 'suspended')
-        if (attempt === 0 && isUnauthorized(error)) {
+        if (
+          attempt === 0 &&
+          call.retryUnauthorized !== false &&
+          isUnauthorized(error)
+        ) {
           rejected = token
           continue
         }
@@ -1463,12 +1574,13 @@ export function createAccountSessions(deps: AccountSessionDeps) {
    */
   async function openDetached(
     accountKey: Uint8Array,
-    call: { signal?: AbortSignal } = {}
+    call: { signal?: AbortSignal; accountId?: string } = {}
   ): Promise<DetachedSession> {
     refuseWhilePaused()
     const key = deriveAccountSigningKey(accountKey)
     const opened = await open(accountKey, key, 'handoff', {
       signal: call.signal,
+      accountId: call.accountId,
     })
     let settled = false
     return {
@@ -1573,6 +1685,53 @@ export function createAccountSessions(deps: AccountSessionDeps) {
   }
 
   /**
+   * The account key changed on this device, and the account kept this device's
+   * session (`account/rekey`; docs/account-key-change.md step 4): the session,
+   * live or stored, moves from `fromPub` to `toPub` in place, with the new
+   * access token when there is one, instead of ending. Waits out a refresh in
+   * flight first, so its rotated refresh token is the one kept. Afterwards no
+   * session opens for `fromPub` in this launch. False when this device's
+   * session isn't `fromPub`'s (none, or already moved).
+   */
+  async function repoint(
+    fromPub: string,
+    toPub: string,
+    tokens?: RekeyedTokens
+  ): Promise<boolean> {
+    await keySettled()
+    let done!: () => void
+    keyChange = new Promise<void>((resolve) => {
+      done = resolve
+    })
+    keyChanges++
+    try {
+      await load()
+      while (flight) await flight.promise.catch(() => undefined)
+      retired.add(fromPub)
+      retired.delete(toPub)
+      if (live?.accountPub !== fromPub) return live?.accountPub === toPub
+      const next: Live = {
+        ...live,
+        accountPub: toPub,
+        ...(tokens
+          ? {
+              accessToken: tokens.accessToken,
+              accessExpiresAt: accessExpiry(tokens.accessExpiresAt),
+            }
+          : { accessToken: null, accessExpiresAt: 0 }),
+      }
+      live = next
+      lastFailure = null
+      // Kept for this launch even when the keystore fails.
+      await save(stored(next), () => live === next)
+      return true
+    } finally {
+      keyChange = null
+      done()
+    }
+  }
+
+  /**
    * The server said the account's status: reading the account (`GET
    * /accounts/v1/account`), or refusing a call as `suspended`.
    */
@@ -1623,6 +1782,7 @@ export function createAccountSessions(deps: AccountSessionDeps) {
     close,
     forget,
     changeKey,
+    repoint,
     noteStatus,
     snapshot,
     lastOpenFailure,

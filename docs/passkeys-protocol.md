@@ -372,7 +372,7 @@ One utility asks for a fresh check before showing the recovery key, setting up o
 ### Signed-in devices and new sign-ins
 
 - **Devices** lists browsers ("Chrome on macOS") with their app version.
-- **Notices:** when the app comes to the foreground (at most every 15 minutes) and when Settings → Account opens, it reads the newest activity and puts each `session.opened`, `passkey.added` and `device.approved` that isn't this device's, newer than the last one it saw, in the notifications tray, linking to Devices or Passkeys. The first read after this device signs in only sets where it starts.
+- **Notices:** when the app comes to the foreground (at most every 15 minutes) and when Settings → Account opens, it reads the newest activity and puts each `session.opened`, `passkey.added` and `device.approved` that isn't this device's, newer than the last one it saw, in the notifications tray, linking to Devices or Passkeys. The first read after this device signs in only sets where it starts. **Not built yet; a follow-up.** Until then, Settings → Account → Account Activity is where the User sees new sign-ins.
 
 ## Privacy
 

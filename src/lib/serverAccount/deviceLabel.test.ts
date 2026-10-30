@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { toB64u } from '@/lib/bytes'
+import { toB64u, utf8 } from '@/lib/bytes'
+import { seal } from '@/lib/sealedBlob'
 import {
   deriveDeviceLabelKey,
   normalizeDeviceLabel,
@@ -38,6 +39,37 @@ describe('device label', () => {
     const otherKey = new Uint8Array(32).fill(9)
     expect(() => openDeviceLabel(otherKey, ACCOUNT_PUB, SEALED)).toThrow()
     expect(() => openDeviceLabel(ACCOUNT_KEY, 'B'.repeat(43), SEALED)).toThrow()
+  })
+
+  it('opens a browser’s label, which has no model', () => {
+    const web = { name: 'Chrome on macOS', platform: 'web' as const, model: '' }
+    const sealed = sealDeviceLabel(ACCOUNT_KEY, ACCOUNT_PUB, web, NONCE)
+    expect(openDeviceLabel(ACCOUNT_KEY, ACCOUNT_PUB, sealed)).toEqual(web)
+  })
+
+  it('refuses a platform it doesn’t know', () => {
+    const odd = { ...LABEL, platform: 'tv' } as unknown as typeof LABEL
+    const sealed = sealDeviceLabel(ACCOUNT_KEY, ACCOUNT_PUB, odd, NONCE)
+    expect(() => openDeviceLabel(ACCOUNT_KEY, ACCOUNT_PUB, sealed)).toThrow()
+  })
+
+  it('clamps the names of a label another client sealed too long', () => {
+    const wide = {
+      name: `${'n'.repeat(100)}`,
+      platform: 'android',
+      model: '🙂'.repeat(100),
+    }
+    const sealed = seal(
+      deriveDeviceLabelKey(ACCOUNT_KEY),
+      utf8(JSON.stringify(wide)),
+      `ww-account/v1/device\n${ACCOUNT_PUB}`,
+      NONCE
+    )
+    expect(openDeviceLabel(ACCOUNT_KEY, ACCOUNT_PUB, sealed)).toEqual({
+      name: 'n'.repeat(64),
+      platform: 'android',
+      model: '🙂'.repeat(64),
+    })
   })
 
   it('keeps names within the server limits', () => {

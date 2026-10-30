@@ -1131,7 +1131,7 @@ whether signing a device out works.
 | --------------------------- | ----------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
 | `account_devices_viewed`    | Signed-In Devices listed the account's devices. Once per session. | `devices` (count).                                                                                       |
 | `account_activity_viewed`   | Account Activity showed its first page. Once per session.         | `entries` (count on the first page, at most 50), `suspicious` (the page has a `session.refresh_reused`). |
-| `account_device_signed_out` | The User confirmed Sign Out on another device.                    | `outcome: ok \| failed`, `platform: ios \| android \| dev` (the signed-out device's).                    |
+| `account_device_signed_out` | The User confirmed Sign Out on another device.                    | `outcome: ok \| failed`, `platform: ios \| android \| web \| dev \| unknown` (the signed-out device's).  |
 
 Never session ids, device names or labels, entry contents, or the account id.
 

@@ -1,4 +1,12 @@
-import { HttpError } from '@/lib/http/request'
+import {
+  CHANNEL_POLL_FAILURE_LIMIT,
+  type ChannelEvent,
+  type ChannelFailure,
+  channelFailureFor,
+  type ChannelSessionDeps,
+  createCore,
+  createPollFailures,
+} from '@/lib/serverAccount/channelSession'
 import {
   buildHandoffLink,
   createHandoffKeyPair,
@@ -27,10 +35,6 @@ import {
   sendHandoffKey,
 } from '@/lib/serverAccount/handoffClient'
 import type { AccountAuthorize } from '@/lib/serverAccount/client'
-import {
-  AccountSessionError,
-  attestationProblemFor,
-} from '@/lib/serverAccount/session'
 
 /**
  * One Set Up Another Device attempt on each phone (docs/accounts-protocol.md,
@@ -43,45 +47,9 @@ import {
 export type HandoffRole = 'offer' | 'claim'
 
 /** Why a handoff stopped, as the screens explain it. */
-export type HandoffFailure =
-  /** No connection, or the request timed out. */
-  | 'offline'
-  /** Accounts are off on the server (`disabled`). */
-  | 'unavailable'
-  /** The channel expired or never existed (`not_found`). */
-  | 'expired'
-  /** Another phone already claimed this code (`conflict` on claim). */
-  | 'used'
-  /** An op in the wrong state (`conflict`). */
-  | 'conflict'
-  /** The other phone stopped, or five wrong tokens burned the channel. */
-  | 'cancelled'
-  /** The claim token was refused (`bad_signature`). */
-  | 'badToken'
-  /** A blob didn't open, or the account didn't match: keys were swapped. */
-  | 'tampered'
-  /** The server doesn't know this phone's account, or it isn't the opener's. */
-  | 'noAccount'
-  /** This phone couldn't prove it's WitnessWork, so it has no session. */
-  | 'unverified'
-  /** The same, but only for now: Apple's or Google's check was unavailable. */
-  | 'verifyLater'
-  /** Ww-api needs a newer app version (426). */
-  | 'updateRequired'
-  | 'rateLimited'
-  /** Anything else the server said. */
-  | 'server'
+export type HandoffFailure = ChannelFailure
 
-export type HandoffEvent = {
-  at: number
-  op: string
-  /** `ok`, the server's code, or the client's own (`offline`, `tampered`). */
-  outcome: string
-  httpStatus?: number | null
-  /** The channel's status, when the answer carried one. */
-  status?: HandoffStatus
-  ms?: number
-}
+export type HandoffEvent = ChannelEvent<HandoffStatus>
 
 /** What the developer Tools show; never a key, secret, token, or blob. */
 export type HandoffDebugSnapshot = {
@@ -97,148 +65,13 @@ export type HandoffDebugSnapshot = {
   events: HandoffEvent[]
 }
 
-export function handoffFailureFor(error: unknown, op: string): HandoffFailure {
-  if (error instanceof AccountSessionError && error.failure === 'attestation')
-    return error.attestation === 'temporary' ? 'verifyLater' : 'unverified'
-  if (!(error instanceof HttpError)) return 'server'
-  if (error.status === 426 || error.serverCode === 'upgrade_required')
-    return 'updateRequired'
-  if (error.serverCode === 'attestation_failed') {
-    const reason = (error.body as { reason?: unknown } | null)?.reason
-    return attestationProblemFor(
-      null,
-      typeof reason === 'string' ? reason : null
-    ) === 'temporary'
-      ? 'verifyLater'
-      : 'unverified'
-  }
-  if (
-    error.kind === 'offline' ||
-    error.kind === 'timeout' ||
-    error.kind === 'cancelled'
-  )
-    return 'offline'
-  switch (error.serverCode) {
-    case 'disabled':
-      return 'unavailable'
-    case 'not_found':
-      return 'expired'
-    case 'conflict':
-      return op === 'handoff/claim' ? 'used' : 'conflict'
-    case 'bad_signature':
-      return 'badToken'
-    case 'unknown_account':
-    case 'forbidden':
-      return 'noAccount'
-    case 'rate_limited':
-      return 'rateLimited'
-  }
-  return error.kind === 'rateLimited' ? 'rateLimited' : 'server'
-}
+export const handoffFailureFor = (error: unknown, op: string): HandoffFailure =>
+  channelFailureFor(error, { claim: op === 'handoff/claim' })
 
-/**
- * Failed status checks in a row, from a busy or restarting server (5xx) or a
- * rate limit, before the attempt fails. Polls run every couple of seconds, so
- * one bad answer mustn't lose a code that's good for minutes.
- */
-export const HANDOFF_POLL_FAILURE_LIMIT = 5
+/** See `CHANNEL_POLL_FAILURE_LIMIT`. */
+export const HANDOFF_POLL_FAILURE_LIMIT = CHANNEL_POLL_FAILURE_LIMIT
 
-/**
- * Whether a failed status check ends the attempt. A lost connection never does
- * (the next tick tries again); a server error or rate limit does only after
- * `HANDOFF_POLL_FAILURE_LIMIT` in a row; anything else does at once.
- */
-function createPollFailures() {
-  let inARow = 0
-  return {
-    succeeded() {
-      inARow = 0
-    },
-    endsAttempt(reason: HandoffFailure) {
-      if (reason === 'offline') return false
-      if (reason !== 'server' && reason !== 'rateLimited') return true
-      inARow += 1
-      return inARow >= HANDOFF_POLL_FAILURE_LIMIT
-    },
-  }
-}
-
-const outcomeOf = (error: unknown) =>
-  error instanceof HttpError ? (error.serverCode ?? error.kind) : 'error'
-
-type Listener = () => void
-
-type SessionDeps = {
-  baseUrl: string
-  /** Request timestamps (`syncNow` in the app); also the expiry clock. */
-  now: () => number
-  randomBytes: (length: number) => Uint8Array
-  fetchImpl?: typeof fetch
-  /** Every request's outcome, as it happens. */
-  onEvent?: (event: HandoffEvent) => void
-}
-
-/** Keeps the event log and tells subscribers about state changes. */
-function createCore<State extends { step: string }>(
-  role: HandoffRole,
-  initial: State,
-  deps: SessionDeps
-) {
-  let state = initial
-  const listeners = new Set<Listener>()
-  const events: HandoffEvent[] = []
-  const core = {
-    get state() {
-      return state
-    },
-    set(next: State) {
-      state = next
-      for (const listener of listeners) listener()
-    },
-    subscribe(listener: Listener) {
-      listeners.add(listener)
-      return () => {
-        listeners.delete(listener)
-      }
-    },
-    events,
-    log(event: Omit<HandoffEvent, 'at'>) {
-      const full = { at: Date.now(), ...event }
-      events.push(full)
-      if (events.length > 200) events.shift()
-      deps.onEvent?.(full)
-      for (const listener of listeners) listener()
-    },
-    /** Runs one request, logging its outcome. */
-    async call<T>(
-      op: string,
-      run: () => Promise<T>,
-      statusOf?: (value: T) => HandoffStatus | undefined
-    ): Promise<T> {
-      const started = Date.now()
-      try {
-        const value = await run()
-        core.log({
-          op,
-          outcome: 'ok',
-          status: statusOf?.(value),
-          ms: Date.now() - started,
-        })
-        return value
-      } catch (error) {
-        core.log({
-          op,
-          outcome: outcomeOf(error),
-          httpStatus: error instanceof HttpError ? error.status : null,
-          ms: Date.now() - started,
-        })
-        throw error
-      }
-    },
-    role,
-  }
-  return core
-}
+type SessionDeps = ChannelSessionDeps<HandoffStatus>
 
 // --- The old phone ----------------------------------------------------------
 
@@ -283,7 +116,11 @@ export type OfferSession = ReturnType<typeof createOfferSession>
  * account key once the User allows it and wait for `done`.
  */
 export function createOfferSession(account: OfferAccount, deps: SessionDeps) {
-  const core = createCore<OfferState>('offer', { step: 'idle' }, deps)
+  const core = createCore<OfferState, HandoffStatus, HandoffRole>(
+    'offer',
+    { step: 'idle' },
+    deps
+  )
   const created = createHandoffOffer(deps.randomBytes)
   const offer: HandoffOffer = created.offer
   const verifier = deriveVerifier(
@@ -549,7 +386,11 @@ export function createClaimSession(
   hello: HandoffHello,
   deps: SessionDeps
 ) {
-  const core = createCore<ClaimState>('claim', { step: 'idle' }, deps)
+  const core = createCore<ClaimState, HandoffStatus, HandoffRole>(
+    'claim',
+    { step: 'idle' },
+    deps
+  )
   const keyPair = createHandoffKeyPair(deps.randomBytes)
   const claimToken = deriveClaimToken(offer.secret, offer.channelId)
   const keys = deriveHandoffKeys({

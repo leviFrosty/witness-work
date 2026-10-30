@@ -20,7 +20,9 @@ import {
   OPEN_RETRY_AFTER_MS,
   type SessionStore,
   STORE_ATTEMPTS,
+  sessionEndWipes,
   staleTokenHash,
+  toAccountSessionError,
 } from '@/lib/serverAccount/session'
 import { sessionAttestationHash } from '@/lib/serverAccount/sessionClient'
 
@@ -428,6 +430,90 @@ describe('account sessions', () => {
       reason: 'ended',
       outcome: 'ok',
     })
+  })
+
+  it('says why the server refused a refresh', async () => {
+    const { worker, clock, info, events } = setup()
+    await info()
+    clock.now += ACCESS_LIFETIME_MS
+    worker.override.set('session/refresh', () =>
+      failure(401, 'unauthorized', { reason: 'revoked' })
+    )
+
+    await info()
+
+    expect(events).toContainEqual(
+      expect.objectContaining({
+        op: 'session/refresh',
+        outcome: 'server',
+        serverReason: 'revoked',
+      })
+    )
+    expect(events.at(-1)).toMatchObject({ op: 'session/open', reason: 'ended' })
+  })
+
+  it('reads the refused refresh reason into the error', () => {
+    const httpError = (body: Record<string, unknown>, status = 401) =>
+      new HttpError(
+        'client',
+        status,
+        String(body.error ?? '') || null,
+        null,
+        undefined,
+        body
+      )
+    const ended = (body: Record<string, unknown>, status = 401) =>
+      toAccountSessionError(httpError(body, status), { refresh: true }).ended
+    expect(ended({ error: 'unauthorized', reason: 'revoked' })).toBe('revoked')
+    expect(ended({ error: 'unauthorized', reason: 'reused' })).toBe('reused')
+    expect(ended({ error: 'unauthorized', reason: 'replaced' })).toBe(
+      'replaced'
+    )
+    expect(ended({ error: 'unauthorized', reason: 'expired' })).toBe('expired')
+    expect(ended({ error: 'unauthorized', reason: 'later' })).toBe('unknown')
+    expect(ended({ error: 'unauthorized' })).toBe('unknown')
+    expect(ended({ error: 'forbidden' }, 403)).toBeNull()
+    // Only a refused refresh ended the session; any other 401 didn't.
+    expect(
+      toAccountSessionError(
+        httpError({ error: 'unauthorized', reason: 'revoked' })
+      ).ended
+    ).toBeNull()
+    expect(sessionEndWipes('revoked')).toBe(true)
+    expect(sessionEndWipes('reused')).toBe(true)
+    expect(sessionEndWipes('expired')).toBe(false)
+    expect(sessionEndWipes('replaced')).toBe(false)
+    expect(sessionEndWipes(null)).toBe(false)
+  })
+
+  it('sends the app version on open and refresh', async () => {
+    const { worker, clock, info } = setup({
+      deps: { appVersion: () => '3.12.0' },
+    })
+    await info()
+    clock.now += ACCESS_LIFETIME_MS
+    await info()
+
+    expect(openPayload(worker).appVersion).toBe('3.12.0')
+    expect(worker.opsCalled('session/refresh')[0].body).toEqual({
+      refreshToken: expect.any(String),
+      appVersion: '3.12.0',
+    })
+  })
+
+  it('leaves out an app version the server would refuse', async () => {
+    for (const version of ['3.12', '3.12.0 (412)', `${'1'.repeat(31)}.0.0`]) {
+      const { worker, clock, info } = setup({
+        deps: { appVersion: () => version },
+      })
+      await info()
+      clock.now += ACCESS_LIFETIME_MS
+      await info()
+      expect(openPayload(worker)).not.toHaveProperty('appVersion')
+      expect(worker.opsCalled('session/refresh')[0].body).not.toHaveProperty(
+        'appVersion'
+      )
+    }
   })
 
   it('renews the access token first when asked, signing a signed-out device back in', async () => {

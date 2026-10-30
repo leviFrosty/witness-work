@@ -11,10 +11,11 @@ import {
 } from '@/lib/serverAccount/keys'
 
 /**
- * Client for `/accounts/v1/*` (docs/accounts-protocol.md). Most ops are
- * **Bearer**: they carry the attested session's access token (`session.ts`).
- * `session/open` and `backup/delete` are signed by the account key instead
- * (`backup/delete` by both). Signed envelopes are `{ payload, signature }`.
+ * Client for `/accounts/v1/*` (docs/accounts-protocol.md,
+ * docs/passkeys-protocol.md). Most ops are **Bearer**: they carry the attested
+ * session's access token (`session.ts`). `session/open`, `web/signup` and
+ * `web/recovery` are signed by the account key instead, and `backup/delete` and
+ * the `passkey/*` ops by both. Signed envelopes are `{ payload, signature }`.
  */
 
 export const ACCOUNT_TIMEOUT_MS = 15 * 1000
@@ -39,11 +40,23 @@ export type SignedAccountOptions = {
  * Ops signed by the account key (docs/accounts-protocol.md). The op name is the
  * signature's context; the route is its own.
  */
-export type SignedAccountOp = 'session/open' | 'backup/delete'
+export type SignedAccountOp =
+  | 'session/open'
+  | 'backup/delete'
+  | 'passkey/add'
+  | 'passkey/wrap'
+  | 'passkey/remove'
+  | 'web/signup'
+  | 'web/recovery'
 
 const SIGNED_PATHS: Record<SignedAccountOp, string> = {
   'session/open': 'sessions',
   'backup/delete': 'backup/delete',
+  'passkey/add': 'passkeys',
+  'passkey/wrap': 'passkeys/wrap',
+  'passkey/remove': 'passkeys/remove',
+  'web/signup': 'web/signup',
+  'web/recovery': 'web/recovery',
 }
 
 /** How one signed op travels, past the default JSON envelope and answer. */
@@ -131,6 +144,14 @@ export type BearerAccountOp =
   | 'sync/list'
   | 'sync/get'
   | 'sync/delete'
+  | 'passkeys'
+  | 'passkeys/challenge'
+  | 'passkeys/assert'
+  | 'passkeys/register/options'
+  | 'approval/claim'
+  | 'approval/status'
+  | 'approval/send'
+  | 'approval/cancel'
 
 /**
  * `GET /accounts/v1/account` reads the account; the rest are `POST
@@ -141,6 +162,7 @@ const BEARER_ROUTES: Partial<
 > = {
   'account/info': { method: 'GET', path: 'account' },
   sync: { method: 'GET', path: 'sync' },
+  passkeys: { method: 'GET', path: 'passkeys' },
 }
 
 /** How one bearer op travels, past the default JSON body and answer. */
@@ -191,6 +213,114 @@ export function sendBearerAccountOp<T>(
     })
   )
 }
+
+/** Bearer ops, and the account key's signature for the ones that need both. */
+export type BearerSignedAccountOptions = BearerAccountOptions & {
+  sign: SignedAccountOptions
+}
+
+/**
+ * Sends a signed op with the session's bearer token too, so a leaked token
+ * alone can't run it: the token's account must be the key's. Failures throw
+ * `HttpError`.
+ */
+export async function sendBearerSignedAccountOp(
+  op: SignedAccountOp,
+  fields: Record<string, unknown>,
+  options: BearerSignedAccountOptions,
+  transport: Pick<SignedAccountTransport, 'idempotent'> = {}
+): Promise<AccountAnswer> {
+  const response = await options.authorize((authorization) =>
+    sendSignedAccountOp<AccountAnswer['data']>(
+      op,
+      fields,
+      { ...options.sign, signal: options.signal },
+      { headers: { authorization }, idempotent: transport.idempotent }
+    )
+  )
+  return { status: response.status, data: response.data ?? null }
+}
+
+/** Ops sent as plain JSON: no session yet, or authorized by their own token. */
+export type PlainAccountOp =
+  | 'handoff/claim'
+  | 'handoff/receive'
+  | 'handoff/done'
+  | 'handoff/cancel'
+  | 'approval/open'
+  | 'approval/status'
+  | 'approval/receive'
+  | 'approval/done'
+  | 'approval/cancel'
+  | 'passkeys/challenge'
+  | 'passkeys/assert'
+  | 'web/signup/options'
+
+/** No session: signing in or up, a new phone, a browser approving. */
+export type PlainAccountOptions = {
+  baseUrl: string
+  fetchImpl?: typeof fetch
+  signal?: AbortSignal
+}
+
+/** A JSON answer: its HTTP status and its body, `null` without one. */
+export type AccountAnswer = {
+  status: number
+  data: Record<string, unknown> | null
+}
+
+/** Sends a plain JSON op. Failures throw `HttpError`. */
+export async function sendPlainAccountOp(
+  op: PlainAccountOp,
+  json: Record<string, unknown>,
+  options: PlainAccountOptions
+): Promise<AccountAnswer> {
+  const response = await request<AccountAnswer['data']>({
+    url: `${options.baseUrl}/accounts/v1/${op}`,
+    json,
+    timeoutMs: ACCOUNT_TIMEOUT_MS,
+    signal: options.signal,
+    fetchImpl: options.fetchImpl,
+  })
+  return { status: response.status, data: response.data ?? null }
+}
+
+/** `sendBearerAccountOp` for a JSON answer. */
+export async function sendBearerAccountJson(
+  op: BearerAccountOp,
+  fields: Record<string, unknown> | null,
+  options: BearerAccountOptions,
+  transport: Pick<BearerAccountTransport, 'idempotent'> = {}
+): Promise<AccountAnswer> {
+  const response = await sendBearerAccountOp<AccountAnswer['data']>(
+    op,
+    fields,
+    options,
+    transport
+  )
+  return { status: response.status, data: response.data ?? null }
+}
+
+/** An answer this client can't read. */
+export const unexpectedResponse = (status: number) =>
+  new HttpError('server', status, 'unexpected_response')
+
+/** Throws unless the answer is `{ ok: true }`. */
+export function okOnly(response: AccountAnswer): void {
+  if (response.data?.ok !== true) throw unexpectedResponse(response.status)
+}
+
+/** The answer's `expiresAt`, epoch ms; throws unless it's `ok` with one. */
+export function expiresAtOf(response: AccountAnswer): number {
+  const value = response.data?.expiresAt
+  if (response.data?.ok !== true || typeof value !== 'number' || value <= 0)
+    throw unexpectedResponse(response.status)
+  return value
+}
+
+/** A non-empty string, or `undefined`. */
+export const optionalString = (value: unknown) =>
+  typeof value === 'string' && value.length > 0 ? value : undefined
 
 /** What the server holds for this device's own account (`account/info`). */
 export type ServerAccountInfo = {

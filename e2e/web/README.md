@@ -26,9 +26,10 @@ Trusted Types violations its pages report there, and
 a container, serve the Worker yourself with
 `pnpm web:serve dev --port <port> --ip 0.0.0.0`.
 
-Each test seeds the app past onboarding in a separate tab, by editing the
-preferences the app saved on its first load (`fixtures.ts`), and fails on any
-uncaught page error.
+Each test seeds the app past onboarding by editing the preferences the app
+saved in IndexedDB on its first load, while no tab of the app is open
+(`fixtures.ts`), and fails on any uncaught page error. `storage.spec.ts` covers
+where the data lives (`docs/web-storage.md`).
 
 Install the browsers once for the pinned Playwright version with
 `pnpm exec playwright install chromium webkit firefox`.

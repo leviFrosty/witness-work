@@ -2,7 +2,8 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { expect, test as base, type Page } from '@playwright/test'
 
-const PREFERENCES_KEY = 'mmkv.default\\preferences'
+/** The preferences store's row in the store database (docs/web-storage.md). */
+const PREFERENCES = ['mmkv.default', 'preferences'] as const
 
 /**
  * Past onboarding and the Schedule's intro, so a run opens on Home. The
@@ -38,10 +39,76 @@ export const strings = (language: string): Record<string, string> =>
 type Fixtures = {
   /** The app's language, by its `src/locales` file name. */
   language: string
+  /** Saved preferences on top of the seed, e.g. a role. */
+  preferences: Record<string, unknown>
   /** The app on Home, seeded past onboarding. */
   app: Page
   /** Saves a screenshot to `$WW_WEB_SHOTS/<name>-<project>.png`, if set. */
   shot: (name: string) => Promise<void>
+}
+
+/**
+ * A row of the app's store database, read in `page` (any page of the app's
+ * origin). Undefined when it isn't there, or the database doesn't exist yet,
+ * which this never creates.
+ */
+export const readStoreRow = (page: Page, id: string, key: string) =>
+  page.evaluate(
+    ([id, key]) =>
+      new Promise<unknown>((resolve, reject) => {
+        const request = indexedDB.open('witnesswork-stores')
+        request.onupgradeneeded = () => request.transaction?.abort()
+        request.onerror = () => resolve(undefined)
+        request.onsuccess = () => {
+          const db = request.result
+          if (!db.objectStoreNames.contains('entries')) {
+            db.close()
+            return resolve(undefined)
+          }
+          const get = db
+            .transaction('entries')
+            .objectStore('entries')
+            .get([id, key])
+          get.onsuccess = () => {
+            db.close()
+            resolve(get.result)
+          }
+          get.onerror = () => reject(get.error)
+        }
+      }),
+    [id, key] as const
+  )
+
+/** Writes a row of the store database while no tab of the app is open. */
+const writeStoreRow = (page: Page, id: string, key: string, value: string) =>
+  page.evaluate(
+    ([id, key, value]) =>
+      new Promise<void>((resolve, reject) => {
+        const request = indexedDB.open('witnesswork-stores')
+        request.onerror = () => reject(request.error)
+        request.onsuccess = () => {
+          const db = request.result
+          const tx = db.transaction('entries', 'readwrite')
+          tx.objectStore('entries').put(value, [id, key])
+          tx.oncomplete = () => {
+            db.close()
+            resolve()
+          }
+          tx.onerror = () => reject(tx.error)
+        }
+      }),
+    [id, key, value] as const
+  )
+
+/**
+ * Opens a blank page on the app's origin, without the app, to read or write its
+ * storage while no tab of it runs.
+ */
+export async function openBlankOnOrigin(page: Page) {
+  await page.route('**/__blank', (route) =>
+    route.fulfill({ contentType: 'text/html', body: '<!doctype html>' })
+  )
+  await page.goto('/__blank')
 }
 
 export const test = base.extend<Fixtures>({
@@ -110,32 +177,26 @@ export const test = base.extend<Fixtures>({
     expect(errors, 'uncaught errors on the page').toEqual([])
   },
   language: ['en-US', { option: true }],
-  app: async ({ page, language }, provide) => {
+  preferences: [{}, { option: true }],
+  app: async ({ page, language, preferences }, provide) => {
     // A first load in a tab of its own saves the app's preferences, which
-    // get the seed on top. Leaving it, rather than reloading, keeps the
-    // requests it cancels (which WebKit reports as page errors) out of the
-    // tab under test.
+    // get the seed on top once that tab is closed (it would save over them).
+    // Leaving it, rather than reloading, keeps the requests it cancels (which
+    // WebKit reports as page errors) out of the tab under test.
     const seeding = await page.context().newPage()
     await seeding.goto('/')
-    await seeding.waitForFunction(
-      (key) => localStorage.getItem(key) !== null,
-      PREFERENCES_KEY
-    )
-    await seeding.evaluate(
-      ([key, seen]) => {
-        const saved = JSON.parse(localStorage.getItem(key)!)
-        Object.assign(saved.state, seen)
-        localStorage.setItem(key, JSON.stringify(saved))
-      },
-      [
-        PREFERENCES_KEY,
-        {
-          ...SEEN,
-          locale: language === 'en-US' ? undefined : language.toLowerCase(),
-        },
-      ] as const
-    )
+    await expect
+      .poll(() => readStoreRow(seeding, ...PREFERENCES), { timeout: 60_000 })
+      .toBeDefined()
     await seeding.close()
+    await openBlankOnOrigin(page)
+    const saved = JSON.parse(
+      (await readStoreRow(page, ...PREFERENCES)) as string
+    )
+    Object.assign(saved.state, SEEN, preferences, {
+      locale: language === 'en-US' ? undefined : language.toLowerCase(),
+    })
+    await writeStoreRow(page, ...PREFERENCES, JSON.stringify(saved))
     await page.goto('/')
     await expect(
       page.getByRole('button', { name: strings(language).quickAction })

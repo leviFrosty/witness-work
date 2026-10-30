@@ -247,6 +247,9 @@ export const analyticsEventNames = [
   // App-wide Update Required (ADR 0027 §6).
   'update_required_shown',
   'update_required_store_opened',
+  // The web's local data (ADR 0037 §6): saving failures and tab takeovers.
+  'web_storage_failed',
+  'web_tab_taken_over',
   // A downloaded OTA update applied from the tray instead of the next launch.
   'pending_update_applied',
   // Expected device state kept out of error tracking.

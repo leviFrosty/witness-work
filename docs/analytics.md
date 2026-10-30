@@ -58,6 +58,7 @@ automatic events are discarded. Touch/text autocapture and session replay stay o
 | `recovery_key_viewed`                                                             | Once per session; reach of the recovery key, not repeat views.                                                                                                                                                                     |
 | `account_backup_failed`                                                           | Once per UTC day and reason; which failures affect people, not how often a phone retries.                                                                                                                                          |
 | `account_session_failed`                                                          | Once per UTC day and reason; which devices can't open an account session, not how often one retries.                                                                                                                               |
+| `web_storage_failed`                                                              | Once per UTC day and reason; which browsers can't save, not how often one retries.                                                                                                                                                 |
 | `device_storage_full`                                                             | Once per UTC day; how many devices run out of storage, not how often writes fail.                                                                                                                                                  |
 | `update_required_shown`                                                           | Once per session and source; reach of Update Required, not every return to the foreground.                                                                                                                                         |
 | `help_center_search_completed`                                                    | Once per session per source and outcome; reach of the search service and of searches that find nothing, not every search.                                                                                                          |
@@ -1144,6 +1145,16 @@ and whether they go update.
 | ------------------------------ | ------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `update_required_shown`        | Update Required covered the app. Once per session and source. | `source: config \| server` (`config`: below `minAppVersion` from `GET /app/v1/config`; `server`: ww-api answered 426), `min_version` (when known). |
 | `update_required_store_opened` | The User tapped Update WitnessWork.                           | `source`.                                                                                                                                          |
+
+### Web local data
+
+These answer how often a browser can't save WitnessWork's data (ADR 0037 §6),
+and how often people open it in more than one tab. Saves that work send nothing.
+
+| Event                | When                                                                           | Properties                                                                                                                                                             |
+| -------------------- | ------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `web_storage_failed` | The browser couldn't save, and the User was told. Once per UTC day and reason. | `reason: unavailable \| quotaExceeded \| writeFailed` (`unavailable`: IndexedDB couldn't be opened, so the tab runs from memory), `persisted` (storage is persistent). |
+| `web_tab_taken_over` | The User chose Use Here in a tab while WitnessWork was open in another one.    | None.                                                                                                                                                                  |
 
 ### Account backup
 

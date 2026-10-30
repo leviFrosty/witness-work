@@ -65,6 +65,7 @@ import { analytics } from '@/lib/analytics'
 import { PointerTooltipLayer } from '@/components/ui/PointerTooltip'
 import { PopoverTouchShield } from '@/components/ui/popoverTouchShield'
 import ToastHost from '@/components/toast/ToastHost'
+import WebStorageNotices from '@/app/launch/WebStorageNotices'
 import AppLockGate from '@/app/app-lock/AppLockGate'
 import UpdateRequiredGate from '@/app/update-required/UpdateRequiredGate'
 
@@ -195,6 +196,7 @@ function UnlockedApp() {
                             <SystemMenu language={loadedLocale} />
                             <RootStackComponent />
                             <ToastHost />
+                            <WebStorageNotices />
                             <PointerTooltipLayer />
                             <UpdateRequiredGate />
                             {/* Last, so it covers everything else. */}

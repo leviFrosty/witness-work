@@ -1,0 +1,21 @@
+---
+id: passkeysOverview
+title: What is a passkey, and how do I save one for WitnessWork?
+category: account
+minAppVersion: "1.47.0"
+---
+
+A passkey lets you sign in with Face ID, your fingerprint, or your device passcode or screen lock, with no password. Your phone, your computer, or a password manager keeps it. For WitnessWork it's another way into your same account, not a second account, and you don't need one: without a passkey, everything works as before.
+
+A passkey can do two things:
+
+- **Sign you in** on any phone or in a browser.
+- **Unlock your account** when it supports it, which brings your account key to a new device with no other device and no recovery key needed. A passkey that can unlock is enough on its own.
+
+**Save one:** on a new install, onboarding offers Save a Passkey (tap Not Now to skip). Anytime, go to Settings → Account → Passkeys → Add a Passkey. If you have none, WitnessWork may offer one gentle reminder after you turn on Cloud Sync or Backup or set up another device; Not Now waits 30 days. On the web, creating an account saves one, and a signed-in browser can add one in Settings → Account → Passkeys. You can have up to 10.
+
+**Sign in:** on the web and on a new phone ("I already use WitnessWork"), WitnessWork offers three ways, in this order: sign in with a passkey, use my phone (a QR code), and use a recovery key. The QR code and the recovery key always stay available as fallbacks.
+
+Passkeys on phones need iOS 16 or later, or Android with Google's Credential Manager. On iPhone, unlocking needs iOS 18; on earlier versions a passkey signs in only. See [How do I tell my passkeys apart, and how do I remove one?](/help/account/passkeys-manage).
+
+WitnessWork's server stores each passkey's public key and details such as when it was added and last used and which password manager holds it. If the passkey can unlock your account, it also stores your account key sealed so only that passkey can open it. Your Face ID, fingerprint, and passcode checks stay on your device.

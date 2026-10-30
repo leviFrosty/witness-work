@@ -15,8 +15,10 @@ import { RefRegistry } from '@/features/scribe/runtime/refs'
 import { readScribeStores } from '@/features/scribe/runtime/snapshot'
 import { changeDrafting } from '@/features/scribe/runtime/runs'
 import {
+  asksConsent,
   canAddProposal,
   withCardToggled,
+  withConsent,
   withContactChosen,
 } from '@/features/scribe/proposals/cards'
 import {
@@ -89,6 +91,15 @@ export const chooseProposalContact = (
     withContactChosen(proposal, cardId, choice)
   )
 
+export const setProposalConsent = (
+  proposalId: string,
+  cardId: string,
+  agreed: boolean
+) =>
+  changeProposal(proposalId, (proposal) =>
+    withConsent(proposal, cardId, agreed, new Date())
+  )
+
 function resolvedProps(proposal: StoredProposal, before: StoredProposal) {
   return {
     cards: proposal.cards.length,
@@ -98,6 +109,7 @@ function resolvedProps(proposal: StoredProposal, before: StoredProposal) {
     deselectedCards: before.cards.filter((card) => !card.selected).length,
     choiceCards: before.cards.filter((card) => card.contact?.type === 'choice')
       .length,
+    consentCards: before.cards.filter(asksConsent).length,
     kinds: proposal.effects.map((effect) => effect.draft.kind),
     tainted: proposal.tainted,
   }

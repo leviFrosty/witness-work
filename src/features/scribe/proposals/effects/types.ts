@@ -83,6 +83,11 @@ export interface ApplyContext {
   prefs: ScribePreferences
   /** Pending Refs bound to the records created so far in this apply. */
   bound: Map<string, string>
+  /**
+   * New Contacts' pending Refs, to when the User confirmed on the card that the
+   * householder agreed (data protection mode).
+   */
+  consents: Map<string, string>
   newId: () => string
 }
 

@@ -78,6 +78,7 @@ import {
   buildCards,
   toScribeProposal,
   withCardToggled,
+  withConsent,
   withContactChosen,
 } from '@/features/scribe/proposals/cards'
 import type { StoredProposal } from '@/features/scribe/proposals/model'
@@ -541,6 +542,48 @@ describe('the apply saga', () => {
     ])
     expect(run.proposal.cards[0].status).toBe('applied')
     expect(run.result.status).toBe('applied')
+  })
+
+  it('saves when the householder agreed with a Contact created in data protection mode', () => {
+    usePreferences.setState({ dataProtectionMode: true })
+    const fixture = fixtureContext(readScribeStores())
+    propose(
+      fixture,
+      'visits_log',
+      visit({
+        newContact: {
+          name: 'Ama Mensah',
+          address: {
+            line1: '5 Hill St',
+            city: null,
+            state: null,
+            zip: null,
+            country: null,
+          },
+          phone: null,
+        },
+      })
+    )
+    const proposal = proposalOf(fixture)
+    const prefs = readScribeStores().preferences
+    // Not without it, even if Add were reached.
+    const blocked = applyProposal(proposal, { now: NOW, prefs, newId })
+    expect(blocked.applied).toEqual([])
+    expect(
+      useContacts.getState().contacts.some((c) => c.name === 'Ama Mensah')
+    ).toBe(false)
+
+    const agreedAt = new Date('2026-10-22T15:04:00Z')
+    const agreed = withConsent(proposal, proposal.cards[0].id, true, agreedAt)
+    const run = applyProposal(agreed, { now: NOW, prefs, newId })
+    expect(run.result.status).toBe('applied')
+    const contact = useContacts
+      .getState()
+      .contacts.find((c) => c.name === 'Ama Mensah')!
+    expect(contact.consentGivenAt).toBe('2026-10-22T15:04:00.000Z')
+    expect(useConversations.getState().conversations.at(-1)!.contact.id).toBe(
+      contact.id
+    )
   })
 
   it('skips an update whose record changed, or is gone, since it was proposed', () => {
@@ -1220,7 +1263,13 @@ describe('a date-only time entry far east', () => {
           note: null,
           spoken: { date: null, time: null },
         },
-        { now: NOW, prefs: PREFERENCES, bound: new Map(), newId }
+        {
+          now: NOW,
+          prefs: PREFERENCES,
+          bound: new Map(),
+          consents: new Map(),
+          newId,
+        }
       )
       expect(outcome.status).toBe('applied')
       const aug = useServiceReport.getState().serviceReports[2026]?.[7] ?? []
@@ -1242,7 +1291,13 @@ describe('a date-only time entry far east', () => {
     ]) {
       process.env.TZ = tz
       seed()
-      const ctx = { now: NOW, prefs: PREFERENCES, bound: new Map(), newId }
+      const ctx = {
+        now: NOW,
+        prefs: PREFERENCES,
+        bound: new Map(),
+        consents: new Map(),
+        newId,
+      }
       applyPlanCreate(
         {
           kind: 'plan.create',

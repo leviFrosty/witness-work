@@ -378,7 +378,9 @@ interface ScribeContextWire {
   buddies: string[]
   /**
    * Data protection mode is on: no contact index, and the device refuses
-   * visits_read_notes (still listed, so the tool list stays the same).
+   * visits_read_notes (still listed, so the tool list stays the same) and Not
+   * at Home visits. A new Contact is still proposed; its review card asks the
+   * User to confirm the householder agreed before it can be added.
    */
   dataProtection: boolean
   /**

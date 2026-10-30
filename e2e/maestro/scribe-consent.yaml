@@ -1,0 +1,19 @@
+# seed: pioneer
+# setup: __WW_DEV__.stores.preferences.setState({ dataProtectionMode: true, dataProtectionModeSetByUser: true })
+# setup: __WW_DEV__.scribe.acceptConsent()
+# setup: __WW_DEV__.navigate('ScribeConversation', { entry: 'home_orb', conversationId: __WW_DEV__.scribe.injectProposal('visitMaria', 'I met Maria today') })
+# assert: !!__WW_DEV__.stores.contacts.getState().contacts.find((c) => c.name === 'Maria')?.consentGivenAt
+appId: com.leviwilkerson.jwtimedev
+name: Scribe AI asks for a new householder's consent in data protection mode
+---
+# The fake proposes a Visit with a new "Maria" (no contact index in this mode).
+- extendedWaitUntil:
+    visible: Maria agreed I may keep their details
+    timeout: 30000
+- assertVisible: Confirm they agreed or uncheck it to continue
+- tapOn:
+    text: Maria agreed I may keep their details
+    role: switch
+- assertNotVisible: Confirm they agreed or uncheck it to continue
+- tapOn: Add 1
+- assertVisible: Added 1

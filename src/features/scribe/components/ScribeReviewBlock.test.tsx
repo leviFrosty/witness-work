@@ -63,7 +63,7 @@ const card = (
 const setProposal = (
   status: ScribeProposalStatus,
   overrides: Partial<ScribeProposal> = {},
-  counts = { selected: 2, ready: 2, needsChoice: 0 },
+  counts = { selected: 2, ready: 2, needsChoice: 0, needsConsent: 0 },
   canUndo = status === 'applied' || status === 'partially_applied'
 ) => {
   runtime.controller = {
@@ -79,10 +79,11 @@ const setProposal = (
       ...overrides,
     },
     counts,
-    canAdd: counts.needsChoice === 0,
+    canAdd: counts.needsChoice === 0 && counts.needsConsent === 0,
     canUndo,
     toggleCard: vi.fn(),
     chooseContact: vi.fn(),
+    setConsent: vi.fn(),
     add: vi.fn(),
     dismiss: vi.fn(),
   }
@@ -129,12 +130,27 @@ describe('ScribeReviewBlock', () => {
   })
 
   it('counts what is ready and what needs a choice', () => {
-    setProposal('pending', {}, { selected: 3, ready: 2, needsChoice: 1 })
+    setProposal(
+      'pending',
+      {},
+      { selected: 3, ready: 2, needsChoice: 1, needsConsent: 0 }
+    )
     const { texts, cards } = render()
     expect(texts()).toContain(
       'scribe_reviewReady {"count":2} · scribe_reviewNeedsChoice {"count":1}'
     )
     expect(cards().map((c) => c.props.editable)).toEqual([true, true])
+  })
+
+  it('counts what needs a householder’s agreement', () => {
+    setProposal(
+      'pending',
+      {},
+      { selected: 2, ready: 1, needsChoice: 0, needsConsent: 1 }
+    )
+    expect(render().texts()).toContain(
+      'scribe_reviewReady {"count":1} · scribe_reviewNeedsConsent {"count":1}'
+    )
   })
 
   it('leaves out the needs-choice count when nothing needs one', () => {

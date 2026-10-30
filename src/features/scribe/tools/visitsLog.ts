@@ -6,7 +6,7 @@ import {
   day,
   optionalRef,
   phoneInput,
-  PROTECTED_CREATE_ERROR,
+  PROTECTED_NOT_AT_HOME_ERROR,
   ref,
   resolveContact,
   spoken,
@@ -69,6 +69,8 @@ export default defineWriteTool({
         ok: false,
         error: `${input.date} is after today (${ctx.today}). Log visits that happened; plan a return visit with followUp.`,
       }
+    if (input.notAtHome && ctx.dataProtection)
+      return { ok: false, error: PROTECTED_NOT_AT_HOME_ERROR }
     if (input.notAtHome && input.bibleStudy)
       return { ok: false, error: "A Not at Home visit can't be a Bible study." }
     if (input.followUp) {
@@ -95,8 +97,6 @@ export default defineWriteTool({
       contact = resolved.target
       contactRef = input.contactRef
     } else if (input.newContact) {
-      if (ctx.dataProtection)
-        return { ok: false, error: PROTECTED_CREATE_ERROR }
       const name = input.newContact.name.trim()
       if (!name) return { ok: false, error: 'newContact.name is empty.' }
       contactRef = ctx.draft.pendingContactRef(name) ?? ctx.draft.mintRef('n')
@@ -108,6 +108,8 @@ export default defineWriteTool({
         phone: input.newContact.phone?.trim() || null,
         email: null,
         askBetween: null,
+        // The householder's consent, confirmed on the card.
+        ...(ctx.dataProtection ? { needsConsent: true } : {}),
       })
       contact = { type: 'pending', ref: contactRef }
     } else {

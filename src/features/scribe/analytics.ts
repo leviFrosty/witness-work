@@ -75,6 +75,7 @@ export function trackProposalResolved(props: {
   appliedCards: number
   deselectedCards: number
   choiceCards: number
+  consentCards: number
   kinds: readonly string[]
   tainted: boolean
 }): void {
@@ -84,6 +85,7 @@ export function trackProposalResolved(props: {
     applied_cards: props.appliedCards,
     deselected_cards: props.deselectedCards,
     choice_cards: props.choiceCards,
+    consent_cards: props.consentCards,
     kinds: [...new Set(props.kinds)].sort().join(','),
     tainted: props.tainted,
   })

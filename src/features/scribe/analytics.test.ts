@@ -66,6 +66,7 @@ describe('Scribe AI analytics', () => {
       appliedCards: 2,
       deselectedCards: 0,
       choiceCards: 1,
+      consentCards: 1,
       kinds: ['visit.create', 'contact.create', 'visit.create'],
       tainted: false,
     })
@@ -106,6 +107,7 @@ describe('Scribe AI analytics', () => {
           applied_cards: 2,
           deselected_cards: 0,
           choice_cards: 1,
+          consent_cards: 1,
           kinds: 'contact.create,visit.create',
           tainted: false,
         },

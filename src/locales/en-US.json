@@ -5323,6 +5323,10 @@
     "one": "{{count}} needs a choice",
     "other": "{{count}} need a choice"
   },
+  "scribe_reviewNeedsConsent": {
+    "one": "{{count}} needs their agreement",
+    "other": "{{count}} need their agreement"
+  },
   "scribe_reviewInvalid": {
     "one": "{{count}} change couldn’t be prepared",
     "other": "{{count}} changes couldn’t be prepared"
@@ -5334,6 +5338,7 @@
     "other": "Add {{count}}"
   },
   "scribe_addBlocked": "Pick an option or uncheck it to continue",
+  "scribe_addBlockedConsent": "Confirm they agreed or uncheck it to continue",
   "scribe_added": {
     "one": "Added {{count}}",
     "other": "Added {{count}}"
@@ -5355,6 +5360,7 @@
   "scribe_newContact": "New contact",
   "scribe_whichContact": "Which {{name}}?",
   "scribe_choiceNew": "New",
+  "scribe_consentLabel": "{{name}} agreed I may keep their details",
   "scribe_fromSpoken": "from “{{phrase}}”",
   "scribe_cardTime": "{{duration}} field service",
   "scribe_cardTimeCategory": "{{duration}} · {{category}}",

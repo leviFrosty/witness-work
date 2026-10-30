@@ -22,6 +22,7 @@ vi.mock('lucide-react-native', () => ({
   MessageCircle: 'MessageCircle',
   PencilLine: 'PencilLine',
   Plus: 'Plus',
+  ShieldCheck: 'ShieldCheck',
   Sparkles: 'Sparkles',
   Tag: 'Tag',
   TriangleAlert: 'TriangleAlert',
@@ -35,6 +36,8 @@ vi.mock('@/components/ui/DirectionalIcon', () => ({
   ChevronForwardIcon: 'ChevronForward',
 }))
 vi.mock('@/components/ui/MyText', () => ({ default: 'Text' }))
+vi.mock('@/components/ui/Switch', () => ({ default: 'Switch' }))
+vi.mock('@/components/ui/InfoPopover', () => ({ default: 'InfoPopover' }))
 vi.mock('@/components/ui/LucideIcon', () => ({ default: () => null }))
 vi.mock('@/components/ui/PointerHover', () => ({
   default: ({ children }: { children?: ReactNode }) => children,
@@ -43,7 +46,8 @@ vi.mock('@/components/ui/PointerHover', () => ({
 vi.mock('@/components/ui/touchTarget', () => ({ MIN_TOUCH_TARGET: 44 }))
 vi.mock('@/contexts/theme', () => ({
   default: () => ({
-    colors: new Proxy({}, { get: () => '#000' }),
+    // Each color reads as its name, so a test can tell them apart.
+    colors: new Proxy({}, { get: (_, name) => String(name) }),
     fonts: new Proxy({}, { get: () => 'Font' }),
     fontSize: () => 14,
   }),
@@ -119,6 +123,8 @@ const timeCard = (overrides: Partial<Card> = {}): Card => ({
   ],
   selected: true,
   needsChoice: false,
+  consent: null,
+  needsConsent: false,
   status: 'pending',
   target: null,
   ...overrides,
@@ -141,6 +147,8 @@ const choice = (
   effects: [visit],
   selected: true,
   needsChoice: chosen === null,
+  consent: null,
+  needsConsent: false,
   status: 'pending',
   target: null,
 })
@@ -148,6 +156,7 @@ const choice = (
 const render = (card: Card, editable = true, onOpen?: () => void) => {
   const onToggle = vi.fn()
   const onChoose = vi.fn()
+  const onConsent = vi.fn()
   let renderer!: ReactTestRenderer
   act(() => {
     renderer = create(
@@ -156,6 +165,7 @@ const render = (card: Card, editable = true, onOpen?: () => void) => {
         editable={editable}
         onToggle={onToggle}
         onChoose={onChoose}
+        onConsent={onConsent}
         onOpen={onOpen}
       />
     )
@@ -178,7 +188,18 @@ const render = (card: Card, editable = true, onOpen?: () => void) => {
     root
       .findAllByType('Button' as never)
       .filter((node) => node.props.accessibilityRole === 'radio')
-  return { root, texts, check, opener, chips, onToggle, onChoose }
+  const consentSwitch = () => root.findAllByType('Switch' as never)[0]
+  return {
+    root,
+    texts,
+    check,
+    opener,
+    chips,
+    consentSwitch,
+    onToggle,
+    onChoose,
+    onConsent,
+  }
 }
 
 const press = (node: ReactTestInstance) => act(() => node.props.onPress())
@@ -333,6 +354,8 @@ describe('ScribeReviewCard', () => {
       ],
       selected: true,
       needsChoice: false,
+      consent: null,
+      needsConsent: false,
       status: 'pending',
       target: null,
     })
@@ -367,6 +390,8 @@ describe('ScribeReviewCard', () => {
       ],
       selected: true,
       needsChoice: false,
+      consent: null,
+      needsConsent: false,
       status: 'pending',
       target: null,
     })
@@ -464,6 +489,8 @@ describe('ScribeReviewCard', () => {
       ],
       selected: true,
       needsChoice: false,
+      consent: null,
+      needsConsent: false,
       status: 'pending',
       target: null,
     })
@@ -472,5 +499,73 @@ describe('ScribeReviewCard', () => {
       'scribe_cardChange {"field":"scribe_field_phone","before":"555-0100","after":"555-0199"}'
     )
     expect(texts().join(' ')).not.toContain('scribe_cardContactUpdate')
+  })
+
+  describe('data protection mode', () => {
+    const newPerson = (
+      given: boolean,
+      overrides: Partial<Card> = {}
+    ): Card => ({
+      id: 'okoro',
+      kind: 'contact',
+      contact: {
+        type: 'new',
+        name: 'Daniel Okoro',
+        addressLine: '14 Birch Lane',
+      },
+      effects: [visit],
+      selected: true,
+      needsChoice: false,
+      consent: { given },
+      needsConsent: !given,
+      status: 'pending',
+      target: null,
+      ...overrides,
+    })
+
+    it('asks whether a new householder agreed, with what to ask them', () => {
+      const { root, consentSwitch, onConsent, onToggle } = render(
+        newPerson(false)
+      )
+      const label = 'scribe_consentLabel {"name":"Daniel Okoro"}'
+      expect(consentSwitch().props).toMatchObject({
+        value: false,
+        accessibilityLabel: label,
+      })
+      expect(root.findByType('InfoPopover' as never).props.description).toBe(
+        'dataProtectionConsentInfoDesc'
+      )
+      act(() => consentSwitch().props.onValueChange(true))
+      expect(onConsent).toHaveBeenCalledWith(true)
+      // The row is its own control; it doesn't toggle the card.
+      expect(onToggle).not.toHaveBeenCalled()
+    })
+
+    it('flags the card until they agreed', () => {
+      const border = (card: Card) =>
+        render(card).root.findAllByType('View' as never)[0].props.style
+          .borderColor
+      expect(border(newPerson(false))).toBe('warn')
+      expect(border(newPerson(true))).toBe('border')
+      expect(render(newPerson(true)).consentSwitch().props.value).toBe(true)
+    })
+
+    it('names the person the User picked New for', () => {
+      const card: Card = {
+        ...choice({ type: 'new' }),
+        consent: { given: false },
+        needsConsent: true,
+      }
+      expect(render(card).consentSwitch().props.accessibilityLabel).toBe(
+        'scribe_consentLabel {"name":"Maria"}'
+      )
+    })
+
+    it('leaves the agreement off settled cards and cards that don’t ask', () => {
+      expect(
+        render(newPerson(true, { status: 'applied' }), false).consentSwitch()
+      ).toBeUndefined()
+      expect(render(timeCard()).consentSwitch()).toBeUndefined()
+    })
   })
 })

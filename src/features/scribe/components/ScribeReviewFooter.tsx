@@ -13,7 +13,8 @@ const FOOTER_FONT_SCALE_CAP = 1.4
 
 /**
  * Add N and the disclaimer, pinned above the composer while a Proposal waits
- * for review. Disabled until every checked "Which …?" card has its person.
+ * for review. Disabled until every checked "Which …?" card has its person, and
+ * every checked new householder's agreement is confirmed.
  */
 const ScribeReviewFooter = ({ proposalId }: { proposalId: string }) => {
   const theme = useTheme()
@@ -26,6 +27,12 @@ const ScribeReviewFooter = ({ proposalId }: { proposalId: string }) => {
   )
     return null
   const applying = proposal.status === 'applying'
+  const blocked =
+    counts.needsChoice > 0
+      ? i18n.t('scribe_addBlocked')
+      : counts.needsConsent > 0
+        ? i18n.t('scribe_addBlockedConsent')
+        : null
 
   const add = async () => {
     const result = await controller.add()
@@ -46,7 +53,7 @@ const ScribeReviewFooter = ({ proposalId }: { proposalId: string }) => {
 
   return (
     <View style={{ gap: 8 }}>
-      {counts.needsChoice > 0 ? (
+      {blocked ? (
         <Text
           accessibilityLiveRegion='polite'
           allowFontScaling={false}
@@ -57,7 +64,7 @@ const ScribeReviewFooter = ({ proposalId }: { proposalId: string }) => {
             color: theme.colors.warnText,
           }}
         >
-          {i18n.t('scribe_addBlocked')}
+          {blocked}
         </Text>
       ) : null}
       <Button

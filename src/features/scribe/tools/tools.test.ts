@@ -50,7 +50,7 @@ const {
   reportsOf,
 } = await import('@/features/scribe/tools/__fixtures__/stores')
 const { SCRIBE_TOOLS, scribeTool } = await import('@/features/scribe/tools')
-const { PROTECTED_CREATE_ERROR } = await import(
+const { PROTECTED_NOT_AT_HOME_ERROR } = await import(
   '@/features/scribe/tools/shared'
 )
 
@@ -1494,12 +1494,21 @@ describe('contacts_create', () => {
     ).toBe('name is empty.')
   })
 
-  it("needs the householder's consent in data protection mode", () => {
+  it("asks for the householder's consent in data protection mode", () => {
     expect(
-      errorOf(
+      effectsOf(
         propose('contacts_create', VALID.contacts_create, protectedContext())
       )
-    ).toBe(PROTECTED_CREATE_ERROR)
+    ).toEqual([
+      expect.objectContaining({
+        kind: 'contact.create',
+        name: 'Ana Silva',
+        needsConsent: true,
+      }),
+    ])
+    expect(
+      effectsOf(propose('contacts_create', VALID.contacts_create))[0]
+    ).not.toHaveProperty('needsConsent')
   })
 })
 
@@ -1775,10 +1784,10 @@ describe('visits_log', () => {
     ).toBe(message)
   })
 
-  it('in data protection mode: no new Contacts, and no asking between', async () => {
+  it('in data protection mode: new Contacts ask for consent, and no asking between or Not at Home', async () => {
     const fx = protectedContext()
     expect(
-      errorOf(
+      effectsOf(
         propose(
           'visits_log',
           visit({
@@ -1788,7 +1797,27 @@ describe('visits_log', () => {
           fx
         )
       )
-    ).toBe(PROTECTED_CREATE_ERROR)
+    ).toEqual([
+      expect.objectContaining({
+        kind: 'contact.create',
+        name: 'Ana',
+        needsConsent: true,
+      }),
+      expect.objectContaining({ kind: 'visit.create' }),
+    ])
+    expect(
+      errorOf(
+        propose(
+          'visits_log',
+          visit({
+            contactRef: null,
+            newContact: { name: 'Ana', address: null, phone: null },
+            notAtHome: true,
+          }),
+          fx
+        )
+      )
+    ).toBe(PROTECTED_NOT_AT_HOME_ERROR)
     const { matches } = dataOf<{ matches: string[] }>(
       await read('contacts_search', { query: 'maria', limit: null }, fx)
     )

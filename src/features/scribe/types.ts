@@ -359,6 +359,13 @@ export interface ScribeReviewCard {
   selected: boolean
   /** Selected && contact is an unresolved choice. Blocks Add. */
   needsChoice: boolean
+  /**
+   * Data protection mode, and Add would create the card's Contact: the User
+   * confirms the householder agreed. Null otherwise.
+   */
+  consent: { given: boolean } | null
+  /** Selected && consent asked but not given. Blocks Add. */
+  needsConsent: boolean
   status:
     | 'pending'
     | 'applied'
@@ -427,14 +434,21 @@ export interface ScribeUndoResult {
 
 export interface ScribeProposalController {
   proposal: ScribeProposal | null
-  counts: { selected: number; ready: number; needsChoice: number }
-  /** Status pending && selected > 0 && needsChoice === 0. */
+  counts: {
+    selected: number
+    ready: number
+    needsChoice: number
+    needsConsent: number
+  }
+  /** Status pending && selected > 0 && needsChoice === needsConsent === 0. */
   canAdd: boolean
   /** Added, and its undo record is still within the undo window. */
   canUndo: boolean
   toggleCard(cardId: string): void
   /** Also selects the card. */
   chooseContact(cardId: string, choice: ScribeContactChoice): void
+  /** The householder agreed (or not) to be kept; agreeing selects the card. */
+  setConsent(cardId: string, agreed: boolean): void
   add(): Promise<ScribeApplyResult>
   dismiss(): void
 }

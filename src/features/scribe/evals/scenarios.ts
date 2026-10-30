@@ -1013,6 +1013,8 @@ export const SCENARIOS: EvalScenario[] = [
     ],
   },
   {
+    // A new person's card asks the User to confirm they agreed to be kept;
+    // the model just proposes it.
     id: 'visit-data-protection',
     group: 'visits',
     stores: dataProtection,
@@ -1020,9 +1022,40 @@ export const SCENARIOS: EvalScenario[] = [
       {
         text: 'I met a new person, Ama, at 5 Hill St, follow up Monday',
         checks: [
-          noWrites,
-          says(/form|consent|contact/i, 'use the contact form'),
+          write('visits_log', {
+            newContact: { name: /Ama/, address: { line1: /5 Hill/i } },
+            followUp: { date: '2026-10-26' },
+          }),
+          onlyWrites('visits_log'),
+          doesntSay(/contact form/i, 'to use the contact form'),
         ],
+      },
+    ],
+  },
+  {
+    id: 'contact-data-protection',
+    group: 'visits',
+    stores: dataProtection,
+    turns: [
+      {
+        text: 'add Kwame Mensah as a new contact, his number is 555 0142',
+        checks: [
+          write('contacts_create', { name: /Kwame Mensah/, phone: /0142/ }),
+          onlyWrites('contacts_create'),
+          doesntSay(/contact form/i, 'to use the contact form'),
+        ],
+      },
+    ],
+  },
+  {
+    // The Visit form keeps no Not at Home visits in data protection mode.
+    id: 'visit-data-protection-not-home',
+    group: 'visits',
+    stores: dataProtection,
+    turns: [
+      {
+        text: "Esther Nwosu wasn't home today",
+        checks: [noWrites, says(/not at home|data protection/i, 'why not')],
       },
     ],
   },

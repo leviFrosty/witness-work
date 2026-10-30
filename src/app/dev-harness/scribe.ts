@@ -44,6 +44,7 @@ import {
   chooseProposalContact,
   dismissScribeProposal,
   findProposal,
+  setProposalConsent,
   toggleProposalCard,
   undoScribeProposalNow,
 } from '@/features/scribe/proposals/actions'
@@ -321,6 +322,11 @@ export const scribeHarness = {
   },
   choose: (proposalId: string, cardId: string, choice: ScribeContactChoice) => {
     chooseProposalContact(proposalId, cardId, choice)
+    return scribeHarness.proposal(proposalId)
+  },
+  /** A new householder's agreement on a card (data protection mode). */
+  agree: (proposalId: string, cardId: string, agreed = true) => {
+    setProposalConsent(proposalId, cardId, agreed)
     return scribeHarness.proposal(proposalId)
   },
   add: (proposalId: string) => addScribeProposal(proposalId),

@@ -131,13 +131,18 @@ export function buildCards(
     })
   }
   // The Contact's own create or update leads its card, then its Visits.
-  const rank = (id: string) => {
-    const kind = effects.find((effect) => effect.id === id)?.draft.kind
-    return kind === 'visit.create' ? 1 : 0
+  const draftOf = (id: string) =>
+    effects.find((effect) => effect.id === id)?.draft
+  const rank = (id: string) => (draftOf(id)?.kind === 'visit.create' ? 1 : 0)
+  for (const card of cards) {
+    if (card.kind !== 'contact') continue
+    card.effectIds = [...card.effectIds].sort((a, b) => rank(a) - rank(b))
+    const needsConsent = card.effectIds.some((id) => {
+      const draft = draftOf(id)
+      return draft?.kind === 'contact.create' && !!draft.needsConsent
+    })
+    if (needsConsent) card.consent = { givenAt: null }
   }
-  for (const card of cards)
-    if (card.kind === 'contact')
-      card.effectIds = [...card.effectIds].sort((a, b) => rank(a) - rank(b))
   return cards
 }
 
@@ -156,6 +161,7 @@ export function mergeCards(
     return {
       ...card,
       selected: old.selected,
+      ...(card.consent && old.consent ? { consent: old.consent } : {}),
       contact:
         card.contact?.type === 'choice' && old.contact?.type === 'choice'
           ? { ...card.contact, chosen: old.contact.chosen }
@@ -169,28 +175,53 @@ export const needsChoice = (card: StoredCard): boolean =>
   card.contact?.type === 'choice' &&
   card.contact.chosen === null
 
+/**
+ * Asks the User to confirm the householder's consent: proposed in data
+ * protection mode, and Add would create its Contact (it's new, or the User
+ * picked New over an existing one).
+ */
+export const asksConsent = (card: StoredCard): boolean =>
+  !!card.consent &&
+  (card.contact?.type === 'new' ||
+    (card.contact?.type === 'choice' && card.contact.chosen?.type === 'new'))
+
+export const needsConsent = (card: StoredCard): boolean =>
+  card.selected && asksConsent(card) && !card.consent?.givenAt
+
 export function proposalCounts(proposal: StoredProposal): {
   selected: number
   ready: number
   needsChoice: number
+  needsConsent: number
 } {
   let selected = 0
-  let blocked = 0
+  let choice = 0
+  let consent = 0
   for (const card of proposal.cards) {
     if (!card.selected || card.status !== 'pending') continue
     selected++
-    if (needsChoice(card)) blocked++
+    if (needsChoice(card)) choice++
+    else if (needsConsent(card)) consent++
   }
-  return { selected, ready: selected - blocked, needsChoice: blocked }
+  return {
+    selected,
+    ready: selected - choice - consent,
+    needsChoice: choice,
+    needsConsent: consent,
+  }
 }
 
-/** Status pending, something selected, and no unresolved choice. */
+/**
+ * Status pending, something selected, no unresolved choice, and the consent of
+ * every new householder confirmed.
+ */
 export const canAddProposal = (proposal: StoredProposal): boolean => {
   const counts = proposalCounts(proposal)
   return (
     proposal.status === 'pending' &&
     counts.selected > 0 &&
-    counts.needsChoice === 0
+    counts.needsChoice === 0 &&
+    counts.needsConsent === 0
   )
 }
 
@@ -229,6 +260,31 @@ export function withContactChosen(
         contact: { ...card.contact, chosen: choice },
       }
     }),
+  }
+}
+
+/**
+ * Records that the householder agreed (or takes it back) on a card that asks,
+ * as the Contact form's switch does. Agreeing selects the card.
+ */
+export function withConsent(
+  proposal: StoredProposal,
+  cardId: string,
+  agreed: boolean,
+  now: Date
+): StoredProposal {
+  if (proposal.status !== 'pending') return proposal
+  return {
+    ...proposal,
+    cards: proposal.cards.map((card) =>
+      card.id === cardId && card.consent
+        ? {
+            ...card,
+            selected: agreed || card.selected,
+            consent: { givenAt: agreed ? now.toISOString() : null },
+          }
+        : card
+    ),
   }
 }
 
@@ -560,6 +616,8 @@ export function toScribeProposal(
       .map((effect) => publicEffect(effect, stores, proposal.effects)),
     selected: card.selected,
     needsChoice: needsChoice(card),
+    consent: asksConsent(card) ? { given: !!card.consent?.givenAt } : null,
+    needsConsent: needsConsent(card),
     status: card.status,
     target: cardTarget(card, undos, stores),
   }))

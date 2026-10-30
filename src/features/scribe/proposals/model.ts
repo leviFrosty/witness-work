@@ -124,6 +124,12 @@ export type DraftEffect =
        * meant; this record is the New option.
        */
       askBetween: string[] | null
+      /**
+       * Proposed in data protection mode: its card asks the User to confirm the
+       * householder agreed before it can be added. Absent on Proposals from
+       * before it.
+       */
+      needsConsent?: boolean
     }
   | {
       kind: 'contact.update'
@@ -194,6 +200,12 @@ export interface StoredCard {
   effectIds: string[]
   selected: boolean
   status: ScribeReviewCard['status']
+  /**
+   * Set when the card's new Contact needs the householder's consent (data
+   * protection mode): `givenAt` is when the User confirmed it on the card,
+   * saved as the Contact's `consentGivenAt`.
+   */
+  consent?: { givenAt: string | null }
 }
 
 export interface StoredProposal {

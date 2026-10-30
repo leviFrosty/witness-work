@@ -19,7 +19,7 @@ App: bundled snapshot → cached bundle → background refresh; Fuse.js offline,
 
 Hosts: production is `witnesswork.app` with `help-search.witnesswork.app`; the staging site is `dev.witnesswork.app` (never indexed) with `help-search-dev.witnesswork.app`. The old `leviwilkerson.com/witness-work/…` URLs, including the bundles, 301 to the matching `witnesswork.app` page (ADR 0042 §5), so shipped app versions keep working.
 
-Publishing: answers ship in the same pull request as the app change they describe. `services.yml` deploys the site and the search Worker on merge to `main`, and the staging site (`dev.witnesswork.app`) from every other branch that touches `services/`; the app picks up the new bundle the next time someone opens the Help Center, and search catches up on its own: the `ww-help-search` Worker pulls the manifest every 15 minutes and re-embeds only changed answers, which are searchable within about 20 minutes of the deploy. No Worker deploy is needed for content changes.
+Publishing: answers ship in the same pull request as the app change they describe. `services.yml` deploys the site and the search Worker on merge to `main`, and only checks and builds other branches (the staging site, `dev.witnesswork.app`, follows the web launch's integration branch until launch; see [`services/README.md`](../services/README.md#deploying)); the app picks up the new bundle the next time someone opens the Help Center, and search catches up on its own: the `ww-help-search` Worker pulls the manifest every 15 minutes and re-embeds only changed answers, which are searchable within about 20 minutes of the deploy. No Worker deploy is needed for content changes.
 
 ## Contract (v1)
 

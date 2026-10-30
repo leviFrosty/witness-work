@@ -45,7 +45,7 @@ and how it's verified.
     - the OG images.
   - **`services/help-search`:** the search Worker, moved here.
   - **CI:** deploys both services on merge to `main`, and a staging copy for
-    branches. CI never deploys the app.
+    the integration branch. CI never deploys the app.
 - **ww-api:**
   - `api.witnesswork.app` and `api-dev.witnesswork.app`;
   - exact-path apex routes for the association files and the link pages,

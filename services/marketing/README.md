@@ -58,7 +58,7 @@ pnpm build && pnpm preview   # the production build, served the way Cloudflare s
 
 ### How it ships
 
-Merging to `main` deploys the site from CI (branches deploy the staging site at `dev.witnesswork.app`, which search engines never index). The app downloads the new bundle the next time someone opens its Help Center, and search indexes the change within about 20 minutes. Release prep refreshes the app's offline copy with `pnpm sync:help` at the repo root.
+Merging to `main` deploys the site from CI. A push to a feature branch runs its lint, typecheck, tests and build without deploying; to see a change before it merges, run `pnpm dev`, or `pnpm build` then `pnpm preview`. The staging site at `dev.witnesswork.app` (never indexed) follows the web launch's integration branch until launch, then deploys only when someone runs the Services workflow by hand ([`services/README.md`](../README.md#deploying)). The app downloads the new bundle the next time someone opens its Help Center, and search indexes the change within about 20 minutes. Release prep refreshes the app's offline copy with `pnpm sync:help` at the repo root.
 
 ## How the site is built
 

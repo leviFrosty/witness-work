@@ -33,17 +33,18 @@ From `services/`, each runs in every package:
 
 ## Deploying
 
-[`.github/workflows/services.yml`](../.github/workflows/services.yml) deploys both Workers:
+[`.github/workflows/services.yml`](../.github/workflows/services.yml) checks branch pushes that touch these paths and deploys both Workers:
 
-| Trigger                                               | Deploys                                                                       | Environment           |
-| ----------------------------------------------------- | ----------------------------------------------------------------------------- | --------------------- |
-| Push to `main` touching `services/**` or the workflow | Production: `witnesswork.app`, `help-search.witnesswork.app`                  | `services-production` |
-| Push to any other branch touching the same paths      | Staging: `dev.witnesswork.app` (`noindex`), `help-search-dev.witnesswork.app` | `services-staging`    |
-| `workflow_dispatch` on any ref (even `main`)          | Staging only                                                                  | `services-staging`    |
+| Trigger                                                                 | Deploys                                                                       | Environment           |
+| ----------------------------------------------------------------------- | ----------------------------------------------------------------------------- | --------------------- |
+| Push to `main` touching `services/**` or the workflow                   | Production: `witnesswork.app`, `help-search.witnesswork.app`                  | `services-production` |
+| Push to `feat/web-device-sign-in` touching the same paths, until launch | Staging: `dev.witnesswork.app` (`noindex`), `help-search-dev.witnesswork.app` | `services-staging`    |
+| `workflow_dispatch` on any ref (even `main`)                            | Staging only                                                                  | `services-staging`    |
+| Push to any other branch touching the same paths                        | Nothing: lint, typecheck, unit tests and the production build only            | none                  |
 
-Production only ever comes from a push to `main`. Each run installs with the frozen lockfile, runs lint, typecheck and unit tests, builds, deploys with `wrangler`, then curls the deployed hosts (the home page, the Help Center manifest's absolute paths, a search) until they answer. The Playwright suite doesn't run in CI; run it locally, or against staging with `E2E_BASE_URL=https://dev.witnesswork.app WW_SITE_ENV=dev pnpm e2e`.
+Production only ever comes from a push to `main`. Every run installs with the frozen lockfile, runs lint, typecheck and unit tests, and builds. Deploy runs then deploy with `wrangler` and curl the deployed hosts (the home page, the Help Center manifest's absolute paths, a search) until they answer. The Playwright suite doesn't run in CI; run it locally, or against staging with `E2E_BASE_URL=https://dev.witnesswork.app WW_SITE_ENV=dev pnpm e2e`.
 
-- **Staging is last push wins.** One staging site serves every branch, so a push to an older branch rolls `dev.witnesswork.app` back to it.
+- **Staging follows the web launch's integration branch,** `feat/web-device-sign-in`, until the web launch; then it deploys only from `workflow_dispatch`. A rebase pulls `services/` changes into a branch's push, so other branches only check: one staging site can't serve them all. To see a change before it merges, run it locally: `pnpm dev` in its package, or `pnpm build` then `pnpm preview` in `marketing`. A `workflow_dispatch` on another ref replaces staging until the next deploy; to put the integration branch back, run the workflow on it.
 - **The Cloudflare token only reaches the deploy steps,** not installs, tests or builds. It can still edit every Worker in the account: Cloudflare can't limit a token to some Workers, so the `services-production` branch policy (only `main`) stops mistakes, not a workflow edited on a branch. Anyone who can push a branch can change this workflow; keep it that way only for people and agents you trust with the Cloudflare account.
 - **Smoke checks:** production must not say `noindex`, must return search results, and checks the old search host (`help-search.leviwilkerson.com`) too. Only staging accepts search's `503 search_unavailable` (a brand-new Worker has no index until its first sync).
 

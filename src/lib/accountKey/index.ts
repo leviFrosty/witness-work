@@ -2,9 +2,10 @@ import { Platform } from 'react-native'
 import { MMKV } from 'react-native-mmkv'
 import * as BuddiesKeychain from '../../../modules/buddies-keychain'
 import { createDeviceAccountKey } from '@/lib/accountKey/deviceAccountKey'
-import type {
-  KeyChangeRecord,
-  KeyChangeRecordStore,
+import {
+  isUnfinished,
+  type KeyChangeRecord,
+  type KeyChangeRecordStore,
 } from '@/lib/accountKey/keyChangeRecord'
 import {
   keyChangedElsewhere,
@@ -121,3 +122,13 @@ export const deviceAccountKey = createDeviceAccountKey({
   sharedStore: Platform.OS === 'ios',
   signedOut: () => keyChangedElsewhere() !== null,
 })
+
+/**
+ * The account key change on this device while it's unfinished (`isUnfinished`),
+ * else null. Throws while the record can't be read: nothing is deleted on a
+ * guess.
+ */
+export async function unfinishedKeyChange(): Promise<KeyChangeRecord | null> {
+  const record = await keyChangeRecords.read()
+  return isUnfinished(record) ? record : null
+}

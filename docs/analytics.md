@@ -996,13 +996,33 @@ the invitee when that confirmation arrives (`role: invitee`). Count
 `role: inviter` for pairings; compare both roles to see confirmations that
 never reached the other side. The User's own platform is the event's `$os`.
 
-| Event          | When                         | Properties                                                                                                                                                             |
-| -------------- | ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `buddy_paired` | A Buddies pairing completed. | `role: inviter \| invitee`, `buddy_platform: ios \| android \| unknown` (`unknown` when the buddy's build predates the field). No names, relay ids, or invite details. |
+| Event          | When                         | Properties                                                                                                                                                                                                                                                                             |
+| -------------- | ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `buddy_paired` | A Buddies pairing completed. | `role: inviter \| invitee`, `buddy_platform: ios \| android \| unknown` (`unknown` when the buddy's build predates the field), `reconnect` (a former buddy came back after an account key change; leave these out when counting new pairings). No names, relay ids, or invite details. |
 
 The buddy's platform travels inside the end-to-end encrypted invite card, claim,
 and `pair.confirmed` (see `docs/buddies-protocol.md`); the relay never sees it,
 and the app never shows it.
+
+### Buddies after an account key change
+
+When the User changes their account key, Buddies moves to a new inbox and
+invites each buddy back ([Reconnect invites](./buddies-protocol.md#reconnect-invites)).
+These events answer how many buddies come back: compare `buddy_reconnect_claimed`
+with `buddy_reconnect_sent`. `buddy_reconnect_skipped` counts changes that
+could send no invites at all, and `buddy_reconnect_not_sent` buddies who got
+none. Buddies on a version from before reconnect
+invites never send `buddy_reconnect_claimed`; they see the User leave. Each
+event fires at most once per buddy per key change, so volume stays tiny.
+
+| Event                      | When                                                                                                                                                               | Properties                                                                                                                                                                                                        |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `buddy_reconnect_sent`     | On the device that changed the key: one buddy's reconnect invite reached the relay.                                                                                | None.                                                                                                                                                                                                             |
+| `buddy_reconnect_claimed`  | On a buddy's device: they tapped Reconnect and this device's claim landed on the new inbox. Not sent when another of their devices claimed it first.               | None.                                                                                                                                                                                                             |
+| `buddy_reconnect_skipped`  | On the device that changed the key: the old inbox couldn't name the new one as its successor, so no buddy was invited and every pairing was left. Once per change. | `reason`, as the relay answered: `forbidden` (the old inbox isn't this account's), `conflict` (refused the new inbox twice), `suspended` (for 7 days), or `noSuccessor` (gone without one).                       |
+| `buddy_reconnect_not_sent` | On the device that changed the key: one buddy got no reconnect invite, and their old slot was sealed and left without one.                                         | `reason`: `sealed` (the slot was already sealed, by someone else who holds the old key), `failed` (the relay refused the invite 3 times), or `noRoom` (the new inbox had no room for it, which shouldn't happen). |
+
+No names, relay ids, keys, or invite details.
 
 ### Buddies on another device
 
@@ -1039,9 +1059,9 @@ Extension in the App Group, and by the Android push task. The app sends the
 counts once when it next comes to the foreground with Buddies running, then
 clears them. The User's platform is the event's `$os`.
 
-| Event                  | When                                                       | Properties                                                                                                                                                                                                                                                            |
-| ---------------------- | ---------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `buddies_alerts_shown` | Buddies alerts arrived since the last report (foreground). | `named`, `fallback`, `quiet` (counts; `quiet` is a push muted on this device), `fallback_reasons` (comma-separated, sorted: `noContext`, `noEvent`, `unknownSender`, `unreadable`, `unknownKind`, `fetch`, `timeout`, `error`). No kinds, names, relay ids, or dates. |
+| Event                  | When                                                       | Properties                                                                                                                                                                                                                                                                                                                                                |
+| ---------------------- | ---------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `buddies_alerts_shown` | Buddies alerts arrived since the last report (foreground). | `named`, `fallback`, `quiet` (counts; `quiet` is a push muted on this device), `fallback_reasons` (comma-separated, sorted: `noContext`, `noEvent`, `unknownSender`, `unreadable`, `unknownKind`, `fetch`, `keyChanged` (the relay refused the inbox's owner key after an account key change), `timeout`, `error`). No kinds, names, relay ids, or dates. |
 
 ### Buddies Alpha feedback
 

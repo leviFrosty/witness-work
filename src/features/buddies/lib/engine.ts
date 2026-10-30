@@ -44,6 +44,7 @@ import {
   MAX_GUEST_AVATAR_CHARS,
   MAX_SHARED_PHOTOS,
   pairConfirmedSchema,
+  pairReconnectSchema,
   PairingCard,
   pairingCardSchema,
   type ProfilePhoto,
@@ -110,6 +111,8 @@ import {
   type ReceivedReply,
   incomingShareKey,
   initialBuddiesState,
+  MAX_RECONNECT_INVITES,
+  MAX_REFUSED_INBOXES,
   INVITE_TTL_MS,
   MAX_BUDDIES,
   mergeAnswerMarks,
@@ -127,6 +130,7 @@ import {
   OutgoingShareSpec,
   pairingEnded,
   PendingRemoval,
+  type ReconnectInvite,
   SentBadgeReaction,
   type UnsentShare,
   type UnsentShareReason,
@@ -155,6 +159,7 @@ import {
   deriveAccountSigningKey,
   signInboxLink,
 } from '@/lib/serverAccount/keys'
+import { logger } from '@/lib/logger'
 import type { RichTextImageAttrs } from '@/types/richText'
 import { mapRichTextImages, richTextImages } from '@/lib/richText/inspect'
 import {
@@ -251,6 +256,12 @@ export type BuddiesEngineDeps = {
    */
   onPaired?: (pairing: BuddyPairing) => void
   /**
+   * An account key change is between storing the new key and resetting Buddies
+   * (docs/account-key-change.md, steps 4 to 6): syncs wait, since one would
+   * find the seed changed and let go of the buddies the reset invites.
+   */
+  paused?: () => Promise<boolean>
+  /**
    * The User's master Badges switch (on when absent). Off, no badges are shared
    * or announced, buddies' badge news isn't listed, and reactions are neither
    * sent nor kept.
@@ -345,7 +356,15 @@ export type BuddyPairing = {
   role: 'inviter' | 'invitee'
   /** Absent when the buddy's build doesn't send it. */
   buddyPlatform?: BuddyPlatform
+  /** A former buddy came back after an account key changed. */
+  reconnect?: true
 }
+
+/** A buddy changed their account key; see `pairReconnectSchema`. */
+export const RECONNECT_KIND = 'pair.reconnect'
+
+/** What `ownerKeyRefused` did; see there. */
+export type OwnerKeyRefusedOutcome = 'moved' | 'retired' | 'later' | 'ignored'
 
 export type BuddyInviteErrorReason =
   | 'invalid'
@@ -356,6 +375,11 @@ export type BuddyInviteErrorReason =
   /** The relay's cap on unclaimed invites (`MAX_OPEN_INVITES`). */
   | 'openInvites'
   | 'nameRequired'
+  /**
+   * A buddy's invite to a new inbox the relay doesn't name as their old inbox's
+   * successor yet: kept, to try again later.
+   */
+  | 'reconnectUnverified'
 
 export class BuddyInviteError extends Error {
   constructor(readonly reason: BuddyInviteErrorReason) {
@@ -387,6 +411,7 @@ export const BUDDY_PUSH_KINDS = [
   'followup.update',
   'followup.cancel',
   'share.reply',
+  'pair.reconnect',
 ] as const
 export type BuddyPushKind = (typeof BUDDY_PUSH_KINDS)[number]
 
@@ -545,6 +570,7 @@ function rosterSignature(roster: Omit<Roster, 'v' | 'version'>) {
       .sort(),
     Object.keys(roster.read).sort(),
     Object.keys(roster.dismissed).sort(),
+    Object.keys(roster.reconnects).sort(),
     // An older app's roster has none, so a device with one writes it back.
     roster.card ? [roster.card.name, roster.card.updatedAt] : null,
   ])
@@ -691,8 +717,12 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
    * device's seed may have replaced it through iCloud Keychain.
    */
   function identity({ fresh = false } = {}): Promise<BuddyIdentity> {
-    if (!fresh && cachedIdentity)
-      return Promise.resolve(cachedIdentity.identity)
+    if (!fresh && cachedIdentity) {
+      const { inboxId } = cachedIdentity.identity
+      return store.getState().refusedInboxIds.includes(inboxId)
+        ? Promise.reject(new RelayError('cancelled', 0))
+        : Promise.resolve(cachedIdentity.identity)
+    }
     identityLoad ??= (async () => {
       try {
         const seed = await deps.getRootSeed()
@@ -702,7 +732,11 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
           accountKeys.set(cachedIdentity.identity, seed)
           pairCache.clear()
         }
-        if (leftInboxes.has(cachedIdentity.identity.inboxId))
+        const { inboxId } = cachedIdentity.identity
+        if (
+          leftInboxes.has(inboxId) ||
+          store.getState().refusedInboxIds.includes(inboxId)
+        )
           throw new RelayError('cancelled', 0)
         return cachedIdentity.identity
       } finally {
@@ -981,13 +1015,14 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       // Photos would overflow the roster cap; each device gets them, and
       // streaks and pets, from cards. `showOnCalendar` is for older apps, which read
       // and write that alone.
-      buddies: state.buddies.map(({ streak, pet, overrides, ...buddy }) =>
-        compactProfile({
-          ...buddy,
-          showOnCalendar: buddySettings(state.sharing, { overrides }).settings
-            .showOnCalendar,
-          overrides: overrides ?? {},
-        })
+      buddies: state.buddies.map(
+        ({ streak, pet, overrides, reconnect, ...buddy }) =>
+          compactProfile({
+            ...buddy,
+            showOnCalendar: buddySettings(state.sharing, { overrides }).settings
+              .showOnCalendar,
+            overrides: overrides ?? {},
+          })
       ),
       outgoingInvites: state.outgoingInvites,
       incomingClaims: state.incomingClaims.map(compactProfile),
@@ -998,6 +1033,16 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       read: marks.read,
       dismissed: marks.dismissed,
       ...(cardName().name ? { card: cardName() } : {}),
+      // The nickname, color, and settings they come back with stay on the
+      // device that made the invites; the roster has no room for them.
+      reconnects: Object.fromEntries(
+        Object.entries(state.reconnectInvites).map(
+          ([inviteId, { inboxId, dhPub, expiresAt }]) => [
+            inviteId,
+            { inboxId, dhPub, expiresAt },
+          ]
+        )
+      ),
     }
   }
 
@@ -1199,6 +1244,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       incomingClaims: state.incomingClaims.filter(
         (claim) => claim.inviteId !== inviteId
       ),
+      reconnectInvites: omitKey(state.reconnectInvites, inviteId),
       notifications: state.notifications.filter((n) => n.inviteId !== inviteId),
     }))
   }
@@ -1327,7 +1373,14 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     await saveRoster(me)
   }
 
-  async function readInvite(link: string) {
+  /**
+   * `replacing`: a buddy this invite takes the place of (a reconnect), whose
+   * spot it may use.
+   */
+  async function readInvite(
+    link: string,
+    { replacing }: { replacing?: string } = {}
+  ) {
     const secret = parseInviteSecret(link)
     if (!secret) throw new BuddyInviteError('invalid')
     const invite = deriveInvite(secret)
@@ -1351,7 +1404,13 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     }
 
     const me = await identity()
-    const state = store.getState()
+    const current = store.getState()
+    const state = replacing
+      ? {
+          ...current,
+          buddies: current.buddies.filter((b) => b.inboxId !== replacing),
+        }
+      : current
     if (card.inboxId === me.inboxId) throw new BuddyInviteError('own')
     if (state.buddies.some((buddy) => buddy.inboxId === card.inboxId))
       throw new BuddyInviteError('alreadyBuddies')
@@ -1375,7 +1434,28 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
   /** Accepting shares nothing until the inviter confirms. */
   async function acceptInvite(link: string) {
     requireName()
-    const { secret, invite, card, expiresAt } = await readInvite(link)
+    return acceptRead(await readInvite(link))
+  }
+
+  /**
+   * `carried`: what a reconnect keeps from the pairing it replaces;
+   * `replacing`: that pairing, whose spot in this inbox it takes.
+   */
+  async function acceptRead(
+    { secret, invite, card, expiresAt }: Awaited<ReturnType<typeof readInvite>>,
+    carried: Partial<
+      Pick<
+        Buddy,
+        | 'nickname'
+        | 'color'
+        | 'colorIndex'
+        | 'overrides'
+        | 'prefsAt'
+        | 'reconnect'
+      >
+    > = {},
+    replacing?: PairParty
+  ) {
     const me = await ensureInbox()
     const party: PairParty = {
       inboxId: card.inboxId,
@@ -1383,19 +1463,36 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       inviteSecret: toB64u(secret),
     }
     const { incoming } = pairKeys(me, party)
-    await addSlot(me, incoming)
-    const claim = seal(
-      invite.inviteKey,
-      json(pairingCard(me)),
-      aad.claim(invite.inviteId),
-      nonce()
-    )
+    // A full list can reconnect: the old pairing's slot makes room first.
+    if (replacing)
+      await relay
+        .removeSlot(ownerAuth(me), pairKeys(me, replacing).incoming.slotId)
+        .catch((error) => {
+          if (!isRelayError(error, 'not_found') && !isRelayError(error, 'gone'))
+            throw error
+        })
     try {
-      await claimOnce(invite.inviteId, invite.claimSecret, claim)
+      await addSlot(me, incoming)
+      const claim = seal(
+        invite.inviteKey,
+        json(pairingCard(me)),
+        aad.claim(invite.inviteId),
+        nonce()
+      )
+      try {
+        await claimOnce(invite.inviteId, invite.claimSecret, claim)
+      } catch (error) {
+        await relay.removeSlot(ownerAuth(me), incoming.slotId).catch(() => {})
+        if (isRelayError(error, 'conflict') || isRelayError(error, 'not_found'))
+          throw new BuddyInviteError('unavailable')
+        throw error
+      }
     } catch (error) {
-      await relay.removeSlot(ownerAuth(me), incoming.slotId).catch(() => {})
-      if (isRelayError(error, 'conflict') || isRelayError(error, 'not_found'))
-        throw new BuddyInviteError('unavailable')
+      // Its slot here is gone, so the old pairing ends either way.
+      if (replacing) {
+        queueRemoval([replacing], deps.now())
+        await saveRoster(me).catch(() => {})
+      }
       throw error
     }
     const colorIndex = nextColorIndex()
@@ -1411,6 +1508,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
           pairedAt: newPairedAt(state, card.inboxId, deps.now()),
           colorIndex,
           expiresAt,
+          ...carried,
         },
       ],
       // Pairing again on purpose lifts an earlier removal.
@@ -1466,6 +1564,9 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     }
     requireName()
     const me = await ensureInbox()
+    // A former buddy keeps what this User had for them.
+    const returning = reconnectFor(inviteId, claim)
+    const used = new Set(state.buddies.map((b) => b.colorIndex))
     const buddy: Buddy = {
       inboxId: claim.inboxId,
       name: claim.name,
@@ -1475,7 +1576,11 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       inviteSecret: claim.secret,
       status: 'active',
       pairedAt: newPairedAt(state, claim.inboxId, deps.now()),
-      colorIndex: nextColorIndex(),
+      colorIndex:
+        returning?.colorIndex !== undefined && !used.has(returning.colorIndex)
+          ? returning.colorIndex
+          : nextColorIndex(used),
+      ...(returning && carriedPrefs(returning)),
     }
     const { incoming, outgoing } = pairKeys(me, buddy)
     await addSlot(me, incoming)
@@ -1513,7 +1618,11 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       removedBuddies: omitKey(current.removedBuddies, buddy.inboxId),
     }))
     dropInvite(inviteId)
-    deps.onPaired?.({ role: 'inviter', buddyPlatform: claim.platform })
+    deps.onPaired?.({
+      role: 'inviter',
+      buddyPlatform: claim.platform,
+      ...(returning ? { reconnect: true as const } : {}),
+    })
     await relay.deleteInvite(ownerAuth(me), inviteId).catch(() => {})
     await saveRoster(me)
     addCardEdits(new Set([buddy.inboxId]))
@@ -1532,6 +1641,417 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       if (!isRelayError(error, 'not_found')) throw error
     }
     dropInvite(inviteId)
+    await saveRoster(me)
+  }
+
+  /**
+   * The reconnect invite `inviteId` names, when `claim` comes from the former
+   * buddy it was for.
+   */
+  function reconnectFor(
+    inviteId: string,
+    claim: Pick<PairingCard, 'inboxId' | 'dhPub'>
+  ): ReconnectInvite | undefined {
+    const returning = store.getState().reconnectInvites[inviteId]
+    return returning?.inboxId === claim.inboxId &&
+      returning.dhPub === claim.dhPub
+      ? returning
+      : undefined
+  }
+
+  /** The nickname, color, and settings a former buddy comes back with. */
+  function carriedPrefs(
+    from: Pick<ReconnectInvite, 'nickname' | 'color' | 'overrides'>
+  ): Partial<Buddy> {
+    const { nickname, color, overrides } = from
+    return nickname || color || overrides
+      ? {
+          ...(nickname ? { nickname } : {}),
+          ...(color ? { color } : {}),
+          ...(overrides ? { overrides } : {}),
+          prefsAt: deps.now(),
+        }
+      : {}
+  }
+
+  /**
+   * Confirms former buddies' claims on reconnect invites. One that fails stays
+   * listed and is tried on the next sync.
+   */
+  async function confirmReconnects() {
+    for (const claim of store.getState().incomingClaims) {
+      if (!reconnectFor(claim.inviteId, claim)) continue
+      await confirmClaim(claim.inviteId).catch(() => {
+        // Retried on the next sync.
+      })
+    }
+  }
+
+  /**
+   * The rotating device's half of a key change: an invite to this (new) inbox
+   * for a former buddy, from the secret the key change saved, so a retry after
+   * a lost answer is the same invite. `limit` when the relay holds no more open
+   * invites; one leaves when a claim is confirmed.
+   */
+  async function createReconnectInvite(
+    secret: Uint8Array,
+    former: Omit<ReconnectInvite, 'expiresAt'>
+  ): Promise<{ created: false } | { created: true; expiresAt: number }> {
+    const me = await ensureInbox()
+    const invite = deriveInvite(secret)
+    const known = store
+      .getState()
+      .outgoingInvites.find((i) => i.inviteId === invite.inviteId)
+    const createdAt = known?.createdAt ?? deps.now()
+    const expiresAt = known?.expiresAt ?? createdAt + INVITE_TTL_MS
+    if (!known) {
+      try {
+        await relay.createInvite(ownerAuth(me), {
+          inviteId: invite.inviteId,
+          claimVerifier: invite.claimVerifier,
+          blob: seal(
+            invite.inviteKey,
+            json(pairingCard(me)),
+            aad.inviteCard(invite.inviteId),
+            nonce()
+          ),
+          expiresAt,
+        })
+      } catch (error) {
+        if (isRelayError(error, 'limit')) return { created: false }
+        // Made by an earlier try whose answer was lost.
+        if (!isRelayError(error, 'conflict')) throw error
+      }
+    }
+    store.setState((state) => ({
+      outgoingInvites: state.outgoingInvites.some(
+        (i) => i.inviteId === invite.inviteId
+      )
+        ? state.outgoingInvites
+        : [
+            ...state.outgoingInvites,
+            {
+              inviteId: invite.inviteId,
+              secret: toB64u(secret),
+              createdAt,
+              expiresAt,
+            },
+          ],
+      reconnectInvites: {
+        ...state.reconnectInvites,
+        [invite.inviteId]: { ...former, expiresAt },
+      },
+    }))
+    await saveRoster(me)
+    return { created: true, expiresAt }
+  }
+
+  /**
+   * After the account key changed, starts this device on the new key's inbox,
+   * letting go of the old inbox's data here (the key change keeps what it
+   * needs). Throws while the stored key isn't the new one yet.
+   */
+  async function startNewInbox(inboxId: string, call?: RelayCallOptions) {
+    const me = await currentIdentity()
+    if (me.inboxId !== inboxId)
+      throw new Error('Buddies: the new account key is not stored yet')
+    await ensureInbox(call)
+  }
+
+  /**
+   * The pairings this device holds for `inboxId`: its buddies and the removals
+   * it still owes. Null when this device's Buddies data is another inbox's.
+   */
+  function knownPairings(
+    inboxId: string
+  ): { buddies: Buddy[]; pendingRemovals: PendingRemoval[] } | null {
+    const { registeredInboxId, buddies, pendingRemovals } = store.getState()
+    return registeredInboxId === inboxId ? { buddies, pendingRemovals } : null
+  }
+
+  /**
+   * Nothing on this device acts for this inbox again (a sync started with the
+   * old key, say): the key change leaves it and deletes it.
+   */
+  function retireInbox(inboxId: string) {
+    leftInboxes.add(inboxId)
+  }
+
+  /**
+   * The relay refused `inboxId`'s owner key (401 `key_changed`, to a relay call
+   * here or the iOS extension's fetch): the account's key changed since the old
+   * key linked it. The refusal is for good: re-linking doesn't lift it. As when
+   * another seed replaced this one, what's kept for it goes, and this device
+   * never registers or signs for it again, after a relaunch too
+   * (`refusedInboxIds`). `moved`: this device holds the new key, whose inbox
+   * the next sync starts. `retired`: it holds the old one, so it's signed out
+   * of the account. `later`: a key change here still needs the pairings.
+   * `ignored`: this device already moved on.
+   */
+  async function ownerKeyRefused(
+    inboxId: string
+  ): Promise<OwnerKeyRefusedOutcome> {
+    if (store.getState().registeredInboxId !== inboxId) return 'ignored'
+    if (await deps.paused?.()) return 'later'
+    await syncInFlight?.catch(() => undefined)
+    if (store.getState().registeredInboxId !== inboxId) return 'ignored'
+    cachedIdentity = null
+    pairCache.clear()
+    await resetLocalState()
+    const me = await identity({ fresh: true })
+    if (me.inboxId !== inboxId) return 'moved'
+    store.setState(({ refusedInboxIds }) => ({
+      refusedInboxIds: [
+        ...refusedInboxIds.filter((id) => id !== inboxId),
+        inboxId,
+      ].slice(-MAX_REFUSED_INBOXES),
+    }))
+    return 'retired'
+  }
+
+  /**
+   * A buddy changed their account key and invited this User to their new inbox.
+   * Taken only from an active buddy, through their pairing, and only to an
+   * inbox that's new to this User.
+   */
+  async function applyReconnectEvent(
+    me: BuddyIdentity,
+    event: RelaySyncResponse['events'][number]
+  ) {
+    const buddy = senderOf(me, event.slotId)
+    if (!buddy) return
+    const state = store.getState()
+    if (
+      event.eventId in state.notificationMarks.dismissed ||
+      Object.values(state.reconnectOffers).some((offer) =>
+        offer.invites.some((invite) => invite.eventId === event.eventId)
+      )
+    )
+      return
+    let body: ReturnType<typeof pairReconnectSchema.parse>
+    try {
+      body = pairReconnectSchema.parse(openEvent(me, buddy, event))
+    } catch {
+      return
+    }
+    const now = deps.now()
+    if (
+      body.expiresAt <= now ||
+      body.inboxId === buddy.inboxId ||
+      body.inboxId === me.inboxId ||
+      state.buddies.some((b) => b.inboxId === body.inboxId)
+    )
+      return
+    const invite = {
+      inboxId: body.inboxId,
+      secret: body.secret,
+      // No longer than an invite lasts.
+      expiresAt: Math.min(body.expiresAt, now + INVITE_TTL_MS),
+      eventId: event.eventId,
+    }
+    // Anyone with their old key could send one too, so a few are kept, one
+    // per inbox, and Reconnect takes the one the relay vouches for.
+    const known = state.reconnectOffers[buddy.inboxId]
+    if (known) {
+      if (known.invites.some((other) => other.inboxId === invite.inboxId))
+        return
+      let invites = [...known.invites, invite]
+      // Full (someone with their old key may have filled it first): once the
+      // relay names a successor, only the invite to it stays, and the real one
+      // always comes after the change. Before that, the newest stay.
+      if (invites.length > MAX_RECONNECT_INVITES) {
+        const successor = await relay
+          .inboxSuccessor(buddy.inboxId)
+          .catch(() => null)
+        invites =
+          successor === null
+            ? invites.slice(-MAX_RECONNECT_INVITES)
+            : invites.filter((other) => other.inboxId === successor)
+      }
+      if (invites.length === 0) {
+        dropReconnect(buddy.inboxId)
+        return
+      }
+      store.setState((current) => ({
+        reconnectOffers: {
+          ...current.reconnectOffers,
+          [buddy.inboxId]: {
+            ...known,
+            invites,
+            expiresAt: Math.max(...invites.map((other) => other.expiresAt)),
+          },
+        },
+      }))
+      return
+    }
+    store.setState((current) => ({
+      reconnectOffers: {
+        ...current.reconnectOffers,
+        [buddy.inboxId]: {
+          invites: [invite],
+          expiresAt: invite.expiresAt,
+          name: buddy.name,
+          avatar: buddy.avatar,
+          nickname: buddy.nickname,
+          color: buddy.color,
+          colorIndex: buddy.colorIndex,
+          overrides: buddy.overrides,
+        },
+      },
+    }))
+    notify({
+      id: event.eventId,
+      kind: 'reconnect',
+      name: buddy.name,
+      reconnect: buddy.inboxId,
+      seq: event.seq,
+    })
+  }
+
+  /** Forgets a reconnect invite this User got, and its tray entry. */
+  function dropReconnect(from: string) {
+    store.setState((state) => ({
+      reconnectOffers: omitKey(state.reconnectOffers, from),
+      notifications: state.notifications.filter((n) => n.reconnect !== from),
+    }))
+  }
+
+  /**
+   * Ends the pairing with `inboxId` from this side, as removing them does but
+   * quietly: forgotten here, and their slot leaves this inbox (and this User's
+   * theirs) on the next sync. For a pairing only an old account key still
+   * writes to, so that write window closes as soon as this app acts.
+   */
+  function endPairing(inboxId: string, { quiet = true } = {}) {
+    const buddy = store.getState().buddies.find((b) => b.inboxId === inboxId)
+    if (!buddy) return
+    if (!quiet) forgetBuddy(inboxId)
+    queueRemoval([buddy], deps.now())
+  }
+
+  /**
+   * A write found their side of the pairing gone: their slot (`gone`) or their
+   * whole inbox (`not_found`: deleted, wiped, or replaced after their account
+   * key changed). Or this User's slot there is sealed (`sealed`: this User's
+   * account key changed on another device, which sealed it), so it writes no
+   * more. The pairing ends here too, so nothing more comes through it. True
+   * when that's what happened.
+   */
+  function endedByWrite(error: unknown, inboxId: string): boolean {
+    if (
+      !isRelayError(error, 'gone') &&
+      !isRelayError(error, 'not_found') &&
+      !isRelayError(error, 'sealed')
+    )
+      return false
+    endPairing(inboxId, { quiet: false })
+    return true
+  }
+
+  /**
+   * Buddies whose reconnect invites lapsed unanswered: when the relay names a
+   * successor for their old inbox, their account key changed, and only the old
+   * key still writes through the old pairing, so it ends. None named, it stays.
+   * Asked again on a later sync while the relay can't answer.
+   */
+  async function endLapsedReconnects() {
+    for (const from of Object.keys(store.getState().lapsedReconnects)) {
+      const buddy = store.getState().buddies.find((b) => b.inboxId === from)
+      let successor: string | null = null
+      if (buddy) {
+        try {
+          successor = await relay.inboxSuccessor(from)
+        } catch {
+          continue
+        }
+        if (successor !== null) endPairing(from)
+      }
+      store.setState((state) => ({
+        lapsedReconnects: omitKey(state.lapsedReconnects, from),
+      }))
+    }
+  }
+
+  /**
+   * Reconnect: accepts the buddy's invite to their new inbox, keeping their
+   * nickname, color, and settings, and ends the pairing it replaces (their old
+   * key can't write here any more). They confirm without asking. Taken only
+   * when the relay names the offered inbox as the old one's successor, which
+   * only the account's new key can record. `claimed: false` when another of
+   * this User's devices already accepted it.
+   */
+  async function acceptReconnect(from: string): Promise<{ claimed: boolean }> {
+    const offer = store.getState().reconnectOffers[from]
+    if (!offer || offer.expiresAt <= deps.now()) {
+      dropReconnect(from)
+      throw new BuddyInviteError('unavailable')
+    }
+    requireName()
+    const successor = await relay.inboxSuccessor(from)
+    if (successor === null) throw new BuddyInviteError('reconnectUnverified')
+    const invite = offer.invites.find(
+      (candidate) =>
+        candidate.inboxId === successor && candidate.expiresAt > deps.now()
+    )
+    if (!invite) {
+      logger.warn('[buddies] reconnect: not the successor')
+      // A real one may still come through the pairing.
+      dropReconnect(from)
+      throw new BuddyInviteError('invalid')
+    }
+    let read: Awaited<ReturnType<typeof readInvite>>
+    try {
+      read = await readInvite(buildInviteLink(fromB64u(invite.secret)), {
+        replacing: from,
+      })
+    } catch (error) {
+      if (
+        error instanceof BuddyInviteError &&
+        error.reason === 'alreadyBuddies'
+      ) {
+        // Accepted on another of this User's devices.
+        await finishReconnect(from)
+        return { claimed: false }
+      }
+      if (
+        error instanceof BuddyInviteError &&
+        (error.reason === 'unavailable' || error.reason === 'invalid')
+      )
+        dropReconnect(from)
+      throw error
+    }
+    // It leads where the buddy said, or nowhere.
+    if (read.card.inboxId !== invite.inboxId) {
+      dropReconnect(from)
+      throw new BuddyInviteError('invalid')
+    }
+    try {
+      await acceptRead(
+        read,
+        {
+          colorIndex: offer.colorIndex,
+          ...carriedPrefs(offer),
+          reconnect: true,
+        },
+        store.getState().buddies.find((b) => b.inboxId === from)
+      )
+    } catch (error) {
+      if (error instanceof BuddyInviteError && error.reason === 'unavailable')
+        dropReconnect(from)
+      throw error
+    }
+    await finishReconnect(from)
+    return { claimed: true }
+  }
+
+  async function finishReconnect(from: string) {
+    dropReconnect(from)
+    const old = store.getState().buddies.find((b) => b.inboxId === from)
+    const me = await ensureInbox()
+    if (old) {
+      queueRemoval([old], deps.now())
+      await flushRemovals(me, { force: true })
+    }
     await saveRoster(me)
   }
 
@@ -1922,8 +2442,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
           },
         }))
       } catch (error) {
-        if (!isRelayError(error, 'gone')) throw error
-        forgetBuddy(buddy.inboxId)
+        if (!endedByWrite(error, buddy.inboxId)) throw error
       }
     }
   }
@@ -2088,6 +2607,9 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       state.buddies.some((buddy) => buddy.inboxId === card.inboxId)
     )
       return
+    // A former buddy coming back after this User's key changed: confirmed
+    // after the sync reads the inbox (`confirmReconnects`), without asking.
+    const returning = reconnectFor(invite.inviteId, card) !== undefined
     store.setState((current) => ({
       incomingClaims: [
         ...current.incomingClaims,
@@ -2105,6 +2627,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
         },
       ],
     }))
+    if (returning) return
     notify({
       id: event.eventId,
       kind: 'claim',
@@ -2147,6 +2670,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
                 tenure: body.tenure,
                 status: 'active',
                 expiresAt: undefined,
+                reconnect: undefined,
               }
             : b
         ),
@@ -2158,7 +2682,11 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
         name: body.name,
         seq: event.seq,
       })
-      deps.onPaired?.({ role: 'invitee', buddyPlatform: body.platform })
+      deps.onPaired?.({
+        role: 'invitee',
+        buddyPlatform: body.platform,
+        ...(buddy.reconnect ? { reconnect: true as const } : {}),
+      })
       // Their first card from this User; the sync publishes it.
       addCardEdits(new Set([buddy.inboxId]))
       return true
@@ -2717,19 +3245,20 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
         return 'sent'
       } catch (error) {
         // Says so itself when an invitation never reached them.
-        if (isRelayError(error, 'gone')) {
-          forgetBuddy(inboxId)
+        if (isRelayError(error, 'gone') || isRelayError(error, 'sealed')) {
+          endedByWrite(error, inboxId)
           return 'dropped'
         }
         const name = buddy.nickname ?? buddy.name
-        // Their inbox is gone (they deleted their Buddies data, or the relay
-        // wiped it), so nothing sent there arrives; the pairing ends here
-        // once their slot leaves this inbox.
+        // Their inbox is gone (they deleted their Buddies data, the relay
+        // wiped it, or their account key changed), so nothing sent there
+        // arrives, and the pairing ends here too.
         if (isRelayError(error, 'not_found')) {
           if (refused) {
             refused('gone', name)
             notSent.gone.add(name)
           }
+          endPairing(inboxId)
           return 'dropped'
         }
         failure ??= error
@@ -3278,8 +3807,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
         spendShareBudget(buddy.inboxId)
         markSent(key, rev)
       } catch (error) {
-        if (isRelayError(error, 'gone')) forgetBuddy(buddy.inboxId)
-        else failure ??= error
+        if (!endedByWrite(error, buddy.inboxId)) failure ??= error
       }
     }
     if (failure) throw failure
@@ -3497,8 +4025,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
         spendShareBudget(buddy.inboxId)
         markSent(request.id, request.rev)
       } catch (error) {
-        if (isRelayError(error, 'gone')) forgetBuddy(buddy.inboxId)
-        else failure ??= error
+        if (!endedByWrite(error, buddy.inboxId)) failure ??= error
       }
     }
     if (failure) throw failure
@@ -3850,8 +4377,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
           spendShareBudget(inboxId)
           update(id, (a) => ({ sent: { ...a.sent, [inboxId]: true } }))
         } catch (error) {
-          if (isRelayError(error, 'gone')) forgetBuddy(inboxId)
-          else failure ??= error
+          if (!endedByWrite(error, inboxId)) failure ??= error
         }
       }
     }
@@ -4118,8 +4644,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
           current.rev === rev ? { sentRev: rev } : {}
         )
       } catch (error) {
-        if (isRelayError(error, 'gone')) forgetBuddy(inboxId)
-        else failure ??= error
+        if (!endedByWrite(error, inboxId)) failure ??= error
       }
     }
     if (failure) throw failure
@@ -4247,10 +4772,28 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       dismissJoinRequest(entry.shareKey)
       return
     }
+    if (entry.kind === 'reconnect' && entry.reconnect)
+      dismissReconnect(entry.reconnect)
     store.setState((current) => ({
       notifications: current.notifications.filter((n) => n.id !== id),
     }))
     markNotifications([id], 'dismissed')
+  }
+
+  /**
+   * Passes over a buddy's reconnect, from the bell, the Buddies list, or their
+   * screen: the offer and its bell entry go, on this User's other devices too,
+   * and their old pairing ends here, since only their old key writes through it
+   * now.
+   */
+  function dismissReconnect(from: string) {
+    const ids = store
+      .getState()
+      .notifications.filter((n) => n.reconnect === from)
+      .map((n) => n.id)
+    dropReconnect(from)
+    endPairing(from)
+    if (ids.length > 0) markNotifications(ids, 'dismissed')
   }
 
   /**
@@ -4381,6 +4924,15 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
           isOpen(claim) && !buddies.some((b) => b.inboxId === claim.inboxId)
       ),
       closedInviteIds,
+      reconnectInvites: Object.fromEntries(
+        Object.entries({
+          ...remote.reconnects,
+          ...state.reconnectInvites,
+        }).filter(
+          ([inviteId, invite]) =>
+            !(inviteId in closedInviteIds) && invite.expiresAt > now
+        )
+      ),
       // A tombstone a newer pairing replaced has done its job.
       removedBuddies: Object.fromEntries(
         Object.entries(removedBuddies).filter(
@@ -4600,6 +5152,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
 
   async function readAndSend(call: RelayCallOptions, onRead: () => void) {
     perf.count('buddies:sync')
+    if (await deps.paused?.()) throw new RelayError('cancelled', 0)
     expireLocal()
     const firstSync = store.getState().lastSyncAt === 0
     // Read again each sync: another device's seed may have synced in.
@@ -4649,6 +5202,8 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
         applyBadgeEvent(me, event, firstSync)
       } else if (event.kind === BADGE_REACTION_PUSH_KIND) {
         applyBadgeReactionEvent(me, event, firstSync)
+      } else if (event.kind === RECONNECT_KIND) {
+        await applyReconnectEvent(me, event)
       }
     }
     for (const card of response.cards) applyCard(me, card)
@@ -4676,7 +5231,9 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     // The relay answered: whatever it asked to wait for is over.
     coolDownUntil = 0
     cancelled(call)
+    await endLapsedReconnects()
     await flushRemovals(me)
+    await confirmReconnects()
     if (await confirmUnsureInvites()) rosterChanged = true
     await deliverReplies().catch(() => {
       // Retried on the next sync.
@@ -4969,6 +5526,8 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     const me = await identity({ fresh: true })
     const registered = store.getState().registeredInboxId
     if (registered !== null && registered !== me.inboxId) {
+      // A key change hasn't saved what it needs from that data yet.
+      if (await deps.paused?.()) throw new RelayError('cancelled', 0)
       await syncInFlight?.catch(() => undefined)
       await resetLocalState()
     }
@@ -5055,7 +5614,10 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     await resetLocalState()
   }
 
-  /** Forgets everything Buddies kept on this device, but its choices. */
+  /**
+   * Forgets everything Buddies kept on this device, but its choices and
+   * refusals.
+   */
   async function resetLocalState() {
     shareSends.clear()
     lastAlertSentAt.clear()
@@ -5073,9 +5635,11 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       joinRequestNotifications,
       badgeNotifications,
       sharing,
+      refusedInboxIds,
     } = store.getState()
     store.setState({
       ...initialBuddiesState,
+      refusedInboxIds,
       devOverride,
       flagLastKnown,
       onboardingComplete,
@@ -5096,6 +5660,12 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     acceptInvite,
     confirmClaim,
     rejectClaim,
+    acceptReconnect,
+    createReconnectInvite,
+    startNewInbox,
+    retireInbox,
+    ownerKeyRefused,
+    knownPairings,
     removeBuddy,
     setShowOnCalendar,
     setPetVisits,
@@ -5129,6 +5699,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     markNotificationsRead,
     markNotificationRead,
     dismissNotification,
+    dismissReconnect,
     sync,
     coolingDown,
     /** Reads the seed (off the JS thread) so `alertContext` can answer. */

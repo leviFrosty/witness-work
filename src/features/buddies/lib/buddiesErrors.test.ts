@@ -6,6 +6,7 @@ import {
 } from '@/features/buddies/lib/buddiesErrors'
 import { BuddyInviteError } from '@/features/buddies/lib/engine'
 import { RelayError } from '@/features/buddies/lib/relay'
+import { KeyChangeUnfinishedError } from '@/lib/accountKey/keyChangeRecord'
 
 vi.mock('@/lib/locales', () => ({
   default: { t: (key: string) => key },
@@ -18,6 +19,12 @@ describe('Buddies errors', () => {
     const timeout = new RelayError('timeout', 0)
     expect(buddiesErrorMessage(timeout)).toBe('buddies_errorTimeout')
     expect(buddiesFailureReason(timeout)).toBe('offline')
+  })
+
+  it('says to wait while an account key change finishes', () => {
+    const error = new KeyChangeUnfinishedError()
+    expect(buddiesErrorMessage(error)).toBe('account_keyChangeUnfinished')
+    expect(isRetryableBuddiesError(error)).toBe(false)
   })
 
   it("names the relay's cap on open invites", () => {
@@ -33,6 +40,8 @@ describe('Buddies errors', () => {
       true
     )
     expect(isRetryableBuddiesError(new RelayError('unknown', 500))).toBe(true)
+    // A sealed pairing writes no more, whoever tries.
+    expect(isRetryableBuddiesError(new RelayError('sealed', 403))).toBe(false)
     expect(isRetryableBuddiesError(new Error('boom'))).toBe(true)
     expect(isRetryableBuddiesError(new RelayError('disabled', 503))).toBe(false)
     expect(isRetryableBuddiesError(new BuddyInviteError('unavailable'))).toBe(

@@ -5,6 +5,8 @@ import { create } from 'zustand'
 import { createJSONStorage } from 'zustand/middleware'
 import { keepPersistedState, persist } from '@/stores/persist'
 import { MmkvStorage } from '@/stores/mmkv'
+import { usePreferences } from '@/stores/preferences'
+import type { CloudSyncTrayOfferVariant } from '@/app/sync/cloudSyncTrayOffer'
 import type { NotificationItem } from '@/types/notifications'
 import { navigationRef } from '@/features/contacts/lib/linking'
 import {
@@ -67,6 +69,25 @@ export function clearDevNotifications() {
     dismissed: withoutDev(dismissed),
     seen: withoutDev(seen),
   }))
+}
+
+/**
+ * Lists the tray's one-time Cloud Sync offer again (ADR 0040 §4): this device
+ * becomes an install from before sync was free whose offer wasn't answered, and
+ * `thanks` makes it a Supporter through the developer override (`free` clears
+ * the override). It shows only while the device isn't on Cloud Sync and the
+ * server offers it; `free` also needs `sync:entitlement everyone`.
+ */
+export function showCloudSyncTrayOffer(variant: CloudSyncTrayOfferVariant) {
+  usePreferences.setState({
+    installedBeforeFreeSync: true,
+    cloudSyncTrayOffer: null,
+    devSupporterOverride: variant === 'thanks' ? new Date() : null,
+  })
+  useNotificationsTray.setState(({ dismissed }) => {
+    const { cloud_sync_offer: _dismissed, ...rest } = dismissed
+    return { dismissed: rest }
+  })
 }
 
 /** Switches to Home and opens the bell, like a tapped Buddies push. */

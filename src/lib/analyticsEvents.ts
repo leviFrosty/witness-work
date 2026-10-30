@@ -210,6 +210,8 @@ export const analyticsEventNames = [
   'cloud_sync_photo_transfer_failed',
   'cloud_sync_photos_storage_full',
   'cloud_sync_switch_failed',
+  'cloud_sync_tray_offer_answered',
+  'cloud_sync_tray_offer_shown',
   // The account's Cloud Sync request (ADR 0040 §5): phones answering it, and
   // the web's screen that asks for it.
   'cloud_sync_request_answered',

@@ -52,6 +52,10 @@ const pushTemplates = (): Record<BuddyPushKind, PushTemplate> => ({
     title: i18n.t('buddies_pushShareReplyTitle'),
     body: i18n.t('buddies_pushShareReplyBody'),
   },
+  'pair.reconnect': {
+    title: i18n.t('buddies_pushReconnectTitle'),
+    body: i18n.t('buddies_pushReconnectBody'),
+  },
 })
 
 /**

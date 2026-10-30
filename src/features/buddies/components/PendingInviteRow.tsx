@@ -9,13 +9,15 @@ import { RootStackNavigation } from '@/types/rootStack'
 import BuddyListRow from '@/features/buddies/components/BuddyListRow'
 import useInviteLinkActions from '@/features/buddies/hooks/useInviteLinkActions'
 import type { OutgoingInvite } from '@/features/buddies/lib/state'
+import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 import { formatRelative } from '@/lib/dates'
 
 const AVATAR_SIZE = 44
 
 /**
  * An invite nobody has used yet: a link, not a person. Tap shows its Buddies
- * Code, which also has Copy, Share, and Cancel; long-press for the same.
+ * Code, which also has Copy, Share, and Cancel; long-press for the same. One a
+ * former buddy got after this User's account key changed names them.
  */
 export default function PendingInviteRow({
   invite,
@@ -27,6 +29,9 @@ export default function PendingInviteRow({
   const theme = useTheme()
   const navigation = useNavigation<RootStackNavigation>()
   const { copy, share, cancel } = useInviteLinkActions(invite.inviteId)
+  const reconnecting = useBuddies(
+    (state) => state.reconnectInvites[invite.inviteId]?.name
+  )
 
   const showCode = () =>
     navigation.navigate('Buddy Code', {
@@ -54,7 +59,11 @@ export default function PendingInviteRow({
           <LucideIcon icon={LinkIcon} size={18} color={theme.colors.textAlt} />
         </View>
       }
-      title={i18n.t('buddies_inviteRowTitle')}
+      title={
+        reconnecting
+          ? i18n.t('buddies_reconnectInviteRowTitle', { name: reconnecting })
+          : i18n.t('buddies_inviteRowTitle')
+      }
       subtitle={i18n.t('buddies_inviteRowSubtitle', {
         time: formatRelative(invite.expiresAt),
       })}

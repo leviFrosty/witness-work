@@ -84,6 +84,10 @@ struct AlertWording {
       return AlertText(
         title: t("buddies_notifPaired", ["name": name]),
         body: t("buddies_pushPairConfirmedBody"))
+    case .reconnect(let name):
+      return AlertText(
+        title: t("buddies_notifReconnect", ["name": name]),
+        body: t("buddies_pushReconnectBody"))
     case .share(let action, let shareType, let name, let when):
       let titles =
         shareType == "plan"

@@ -38,6 +38,24 @@ export const stageIndex = (stage: KeyChangeStage) =>
 export const reached = (record: KeyChangeRecord, stage: KeyChangeStage) =>
   stageIndex(record.stage) >= stageIndex(stage)
 
+/**
+ * A change that stored the new key and hasn't finished resetting Buddies, which
+ * still needs the old inbox's data and the new inbox: Buddies data can't be
+ * deleted, nor the account key replaced, until it's done.
+ */
+export const isUnfinished = (record: KeyChangeRecord | null) =>
+  record !== null &&
+  reached(record, 'stored') &&
+  !reached(record, 'buddies-reset')
+
+/** Refused while the account key change on this device is unfinished. */
+export class KeyChangeUnfinishedError extends Error {
+  constructor() {
+    super('The account key change on this device is unfinished')
+    this.name = 'KeyChangeUnfinishedError'
+  }
+}
+
 /** From here on the account's key is K2, whatever the platform store holds. */
 export const isCommitted = (record: KeyChangeRecord) =>
   reached(record, 'committed')

@@ -48,6 +48,11 @@ interface BuddiesKeychainNative {
    * last call (counts by outcome), then forgets them.
    */
   takeAlertOutcomes?(): Record<string, number>
+  /**
+   * On iOS: inboxes whose owner key the relay refused to the extension after an
+   * account key change. Binaries before it don't have it.
+   */
+  refusedInboxes?(): string[]
 }
 
 const native =
@@ -149,4 +154,13 @@ export function setAlertContext(json: string | null): void {
 export function takeAlertOutcomes(): Record<string, number> {
   if (!isAlertContextAvailable() || !native!.takeAlertOutcomes) return {}
   return native!.takeAlertOutcomes()
+}
+
+/**
+ * On iOS, inboxes whose owner key the relay refused to the Notification Service
+ * Extension (401 `key_changed`); it never signs for them again.
+ */
+export function refusedInboxes(): string[] {
+  if (!isAlertContextAvailable() || !native!.refusedInboxes) return []
+  return native!.refusedInboxes()
 }

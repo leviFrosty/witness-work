@@ -67,6 +67,7 @@
     "buddiesMissingPlans",
     "buddiesNotSent",
     "buddiesRemove",
+    "buddiesReconnect",
     "buddiesSuspended",
     "accountOverview",
     "accountHandoff",

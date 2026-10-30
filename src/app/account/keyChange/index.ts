@@ -42,11 +42,16 @@ import { AccountSessionError } from '@/lib/serverAccount/session'
 import { useBackupState } from '@/lib/serverAccount/backupStore'
 import { usesCloudSync } from '@/lib/syncTransport/provider'
 import { syncNow } from '@/lib/syncClock'
-import { buddiesEngine } from '@/features/buddies/lib/buddiesService'
+import {
+  buddiesEngine,
+  carryOnBuddiesKeyChange,
+  prepareBuddiesForKeyChange,
+  resetBuddiesForKeyChange,
+} from '@/features/buddies/lib/buddiesService'
 import { createKeyChangeEventGate } from './analytics'
 import { createKeyChangeEngine } from './engine'
 import { createKeyRetiredHandler } from './retired'
-import { keyChangeStep } from './steps'
+import { keyChangeStep, registerKeyChangeStep } from './steps'
 
 /**
  * Change Account Key on this device (ADR 0039), and what this device does when
@@ -71,13 +76,20 @@ async function openInto(
   }
 }
 
-/** Step 0: what's on this device is on the server under the old key too. */
-async function prepare(): Promise<void> {
+/**
+ * Step 0: what's on this device is on the server under the old key too, and
+ * Buddies' inbox is linked to the account while the old key can still do it.
+ */
+async function prepare(change: {
+  oldKey: Uint8Array
+  accountId: string
+}): Promise<void> {
   if (usesCloudSync() && iCloudSync.canSync()) {
     await iCloudSync.pullAndMerge('key-change')
     await iCloudSync.push('key-change')
   }
   if (useBackupState.getState().enabled) await backUpNow('key_change')
+  await prepareBuddiesForKeyChange(change)
 }
 
 let _store: MMKV | null = null
@@ -214,7 +226,15 @@ let installed = false
 export function installKeyChange(): void {
   if (installed || !BuddiesKeychain.isAvailable()) return
   installed = true
+  // Step 6 (Buddies' reconnect invites); it resolves once the old inbox is
+  // gone, and Buddies leaves the rest as they reconnect.
+  registerKeyChangeStep('buddies-reset', async (step) => {
+    await resetBuddiesForKeyChange(step)
+  })
   resumeKeyChangeAtLaunch()
+  // Leaving the old pairings goes on after the step, whether or not Buddies
+  // is running.
+  carryOnBuddiesKeyChange()
   onKeyRetired((accountPub, changedAt) => {
     void handleKeyRetired(accountPub, changedAt).catch((error: unknown) => {
       logger.warn('[keyChange] handling a retired key failed', error)
@@ -232,6 +252,7 @@ export function installKeyChange(): void {
     void keyChange.resume().catch((error: unknown) => {
       logger.warn('[keyChange] resuming failed', error)
     })
+    carryOnBuddiesKeyChange()
     void rejoinWithSyncedKey()
   })
   void rejoinWithSyncedKey()

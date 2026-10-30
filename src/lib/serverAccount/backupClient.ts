@@ -52,11 +52,16 @@ const isSlot = (value: unknown): value is BackupSlot => {
   )
 }
 
-/** Replaces this slot's blob. Resolves the server's upload time. */
+/**
+ * Replaces this slot's blob. Resolves the server's upload time. With `ifMatch`
+ * (the etag `getBackupSlot` read), only while the slot still holds those bytes:
+ * other bytes or no slot is 412 `precondition_failed`, nothing written.
+ */
 export async function putBackup(
   options: BearerAccountOptions,
   slotId: string,
-  blob: Uint8Array
+  blob: Uint8Array,
+  { ifMatch }: { ifMatch?: string } = {}
 ): Promise<{ uploadedAt: number }> {
   // `size` is the body's Content-Length.
   const response = await sendBearerAccountOp<{
@@ -67,6 +72,7 @@ export async function putBackup(
     headers: {
       'x-ww-slot-id': slotId,
       'x-ww-sha256': await backupBlobDigest(blob),
+      ...(ifMatch && { 'if-match': `"${ifMatch}"` }),
     },
     timeoutMs: BLOB_TIMEOUT_MS,
   })
@@ -103,13 +109,25 @@ export async function getBackup(
   options: BearerAccountOptions,
   slotId: string
 ): Promise<Uint8Array> {
+  return (await getBackupSlot(options, slotId)).blob
+}
+
+/**
+ * `getBackup`, with the etag of the bytes read (from a strong `ETag`; null
+ * without one), for a `putBackup` only over them.
+ */
+export async function getBackupSlot(
+  options: BearerAccountOptions,
+  slotId: string
+): Promise<{ blob: Uint8Array; etag: string | null }> {
   const response = await sendBearerAccountOp<Uint8Array>(
     'backup/get',
     { slotId },
     options,
     { responseType: 'bytes', timeoutMs: BLOB_TIMEOUT_MS, idempotent: true }
   )
-  return response.data
+  const etag = /^"([^"]+)"$/.exec(response.headers.get('etag') ?? '')
+  return { blob: response.data, etag: etag?.[1] ?? null }
 }
 
 /**

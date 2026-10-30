@@ -1,6 +1,6 @@
 # Server account protocol
 
-The wire contract for the server account between the WitnessWork app (`src/lib/serverAccount`) and ww-api (`ww-api/src/accounts`). Why it exists is in [ADR 0024](./adr/0024-anonymous-server-accounts.md); moving it, recovering it, and backing up to it are in [ADR 0026](./adr/0026-move-and-recover-the-server-account.md); attested sessions and bearer tokens are in [ADR 0027](./adr/0027-account-sessions-attest-once-then-bearer-tokens.md); the activity log and device list are in [ADR 0028](./adr/0028-account-activity-log.md); Supporter status on the account is in [ADR 0029](./adr/0029-supporter-status-on-the-server-account.md); Cloud Sync is in [ADR 0030](./adr/0030-cloud-sync-through-ww-api.md). Passkeys, web sessions, web sign-up, and approving a browser from a phone ([ADR 0038](./adr/0038-passkeys-and-web-accounts.md)) are in [`passkeys-protocol.md`](./passkeys-protocol.md).
+The wire contract for the server account between the WitnessWork app (`src/lib/serverAccount`) and ww-api (`ww-api/src/accounts`). Why it exists is in [ADR 0024](./adr/0024-anonymous-server-accounts.md); moving it, recovering it, and backing up to it are in [ADR 0026](./adr/0026-move-and-recover-the-server-account.md); attested sessions and bearer tokens are in [ADR 0027](./adr/0027-account-sessions-attest-once-then-bearer-tokens.md); the activity log and device list are in [ADR 0028](./adr/0028-account-activity-log.md); Supporter status on the account is in [ADR 0029](./adr/0029-supporter-status-on-the-server-account.md); Cloud Sync is in [ADR 0030](./adr/0030-cloud-sync-through-ww-api.md). Passkeys, web sessions, web sign-up, and approving a browser from a phone ([ADR 0038](./adr/0038-passkeys-and-web-accounts.md)) are in [`passkeys-protocol.md`](./passkeys-protocol.md). Changing the account key while keeping the account ([ADR 0039](./adr/0039-change-the-account-key.md)) is in [`account-key-change.md`](./account-key-change.md).
 
 The server account is not ADR 0011's account id. That one is the RevenueCat identity, shared through a file in iCloud Drive. This one is a row ww-api owns, so it can suspend someone for abuse. The account links the RevenueCat customers its devices use (see [Supporter status](#supporter-status)).
 
@@ -98,11 +98,11 @@ A JWT (`HS256`, with `kid`) the app treats as opaque. Claims: `sub` (`accountId`
 
 ### Reading the account: `GET /accounts/v1/account`
 
-| Request         | Response                                                                    |
-| --------------- | --------------------------------------------------------------------------- |
-| None (`Bearer`) | `{ ok, accountId, accountPub, status, createdAt, inboxIds, statusChanges }` |
+| Request         | Response                                                                              |
+| --------------- | ------------------------------------------------------------------------------------- |
+| None (`Bearer`) | `{ ok, accountId, accountPub, keyEpoch, status, createdAt, inboxIds, statusChanges }` |
 
-- **Bearer**, no body: the token's account. Read-only.
+- **Bearer**, no body: the token's account. Read-only. `keyEpoch` is the account's [key epoch](./account-key-change.md).
 - Before sessions it was `POST /accounts/v1/account/info`, self-signed like `account/register` (payload `accountPub`, `ts`, `nonce`) under op `account/info`. That route stays only for older app versions while the legacy switch is on; there an unregistered key is `unknown_account` (404).
 - `createdAt` and each `statusChanges[].createdAt` are epoch milliseconds. Status changes carry `status` only; their reason codes stay with moderation.
 - Settings → Account reads the account's status with it each time the screen opens, and the developer Tools show the whole record. Counts against the Buddies read edge limit.

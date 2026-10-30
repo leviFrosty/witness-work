@@ -148,4 +148,24 @@ describe('sprites', () => {
       petSprite('lion', 'default', pose)
     )
   })
+
+  it('draw the pup with its mouth half shut on its way closed', () => {
+    const hash = (
+      species: 'dog' | 'cat',
+      face: 'happy' | 'joy',
+      closing = false
+    ) =>
+      hashBuffer(
+        petSprite(species, SPECIES[species].defaultCoat, {
+          ...idlePose(face, 0, 1000),
+          mouthClosing: closing,
+        })
+      )
+    const closing = hash('dog', 'happy', true)
+    expect(closing).not.toBe(hash('dog', 'happy'))
+    expect(closing).not.toBe(hash('dog', 'joy'))
+    // An open mouth stays open; species without one ignore it.
+    expect(hash('dog', 'joy', true)).toBe(hash('dog', 'joy'))
+    expect(hash('cat', 'happy', true)).toBe(hash('cat', 'happy'))
+  })
 })

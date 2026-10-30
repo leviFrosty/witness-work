@@ -4,7 +4,7 @@
  * in the fur, dot eyes and nose, floppy ears, a light ruff down the chest and a
  * plumed tail.
  *
- * Each part is a grid of tone keys (`.` is empty) painted in the coat's
+ * Each part is a grid of palette keys (`.` is empty) painted in the coat's
  * colours: the tail (swayed by the wag), the body, the head (moved down by the
  * bob), then the face for the mood.
  */
@@ -12,7 +12,7 @@ import { rgbPalette, type FeaturePixel, type Rgb } from '@/lib/pixelArt'
 
 import { SPRITE_SIZE } from '../layout'
 import type { PetFace } from '../types'
-import { defineSpecies } from './define'
+import { defineSpecies, type SpritePose } from './define'
 
 /**
  * Tone keys in the grids: fur from deep shade to highlight (`D` `S` `M` `L`
@@ -26,11 +26,15 @@ interface DogCoat extends Readonly<Record<Tone, Rgb>> {
   readonly k: Rgb
   /** Nose. */
   readonly n: Rgb
+  /** Inside of the open mouth. */
+  readonly m: Rgb
   /** Tongue. */
   readonly t: Rgb
+  /** Tongue tip, in shade. */
+  readonly T: Rgb
 }
 
-/** Rows of tone keys from sprite row `top`, each 32 wide. */
+/** Rows of palette keys from sprite row `top`, each 32 wide. */
 interface Grid {
   readonly top: number
   readonly rows: readonly string[]
@@ -105,6 +109,44 @@ const EYE_Y = 8
 /** The nose's top row. */
 const NOSE_Y = 12
 
+/**
+ * The open mouth for a face, under the nose: the jaw drops two rows to show the
+ * dark mouth. Joy grins, its corners up, with the tongue hanging past the chin;
+ * surprise gapes, the tongue resting on the jaw.
+ */
+const MOUTH: Partial<Record<PetFace, Grid>> = {
+  joy: {
+    top: 13,
+    rows: [
+      '.............m....m.............',
+      '..............mmmm..............',
+      '..............mttm..............',
+      '.............ScttcS.............',
+      '..............SttS..............',
+      '...............TT...............',
+    ],
+  },
+  wide: {
+    top: 14,
+    rows: [
+      '..............mmmm..............',
+      '..............mmmm..............',
+      '.............ScttcS.............',
+      '..............STTS..............',
+    ],
+  },
+}
+
+/** The mouth half shut, the jaw a row up, the frame after it was open. */
+const MOUTH_CLOSING: Grid = {
+  top: 14,
+  rows: [
+    '..............mmmm..............',
+    '.............ScttcS.............',
+    '..............STTS..............',
+  ],
+}
+
 /** `grid`'s pixels in coat `C`, moved down `dy` and across by `dx(y)`. */
 function paint(
   grid: Grid,
@@ -117,7 +159,7 @@ function paint(
     const y = grid.top + i
     for (let x = 0; x < row.length; x++) {
       const key = row[x]
-      if (key !== '.') out.push([x + dx(y), y + dy, C[key as Tone]])
+      if (key !== '.') out.push([x + dx(y), y + dy, C[key as keyof DogCoat]])
     }
   })
   return out
@@ -167,22 +209,20 @@ function eyes(
   return out
 }
 
-/** The nose on row `y`, and the tongue out below it when joyful or surprised. */
-function nose(face: PetFace, y: number, C: DogCoat): FeaturePixel[] {
-  const out: FeaturePixel[] = [
+/**
+ * The nose and, when joyful or surprised, the open mouth (half shut the frame
+ * after), moved down by the bob.
+ */
+function muzzle(st: SpritePose, C: DogCoat): FeaturePixel[] {
+  const y = NOSE_Y + st.bob
+  const mouth = MOUTH[st.face] ?? (st.mouthClosing ? MOUTH_CLOSING : null)
+  return [
     [15, y, C.n],
     [16, y, C.n],
     [15, y + 1, C.n],
     [16, y + 1, C.n],
+    ...(mouth ? paint(mouth, C, st.bob) : []),
   ]
-  if (face === 'joy' || face === 'wide')
-    out.push(
-      [15, y + 2, C.t],
-      [16, y + 2, C.t],
-      [15, y + 3, C.t],
-      [16, y + 3, C.t]
-    )
-  return out
 }
 
 export const dog = defineSpecies<'dog', DogCoat>({
@@ -201,7 +241,9 @@ export const dog = defineSpecies<'dog', DogCoat>({
         e: '#a87a26',
         k: '#24160e',
         n: '#1e1612',
+        m: '#5a2326',
         t: '#f07a86',
+        T: '#d65c6c',
       }),
       swatch: ['#d4a23a'],
     },
@@ -218,7 +260,9 @@ export const dog = defineSpecies<'dog', DogCoat>({
         e: '#bfa477',
         k: '#2a1f1a',
         n: '#3a2620',
+        m: '#6a2a2c',
         t: '#f07a86',
+        T: '#d65c6c',
       }),
       swatch: ['#efe0bd'],
     },
@@ -235,7 +279,9 @@ export const dog = defineSpecies<'dog', DogCoat>({
         e: '#5e2e18',
         k: '#1a0e0a',
         n: '#24120c',
+        m: '#3e1414',
         t: '#e8707c',
+        T: '#cc5464',
       }),
       swatch: ['#8c4b2b'],
     },
@@ -252,7 +298,9 @@ export const dog = defineSpecies<'dog', DogCoat>({
         e: '#1c1919',
         k: '#0a0808',
         n: '#0a0808',
+        m: '#4a1c20',
         t: '#e8707c',
+        T: '#cc5464',
       }),
       swatch: ['#3a3434'],
     },
@@ -269,7 +317,7 @@ export const dog = defineSpecies<'dog', DogCoat>({
         ...paint(BODY, C),
         ...paint(HEAD, C, b),
         ...eyes(st.face, st.blink, EYE_Y + b, C),
-        ...nose(st.face, NOSE_Y + b, C),
+        ...muzzle(st, C),
       ],
     }
   },

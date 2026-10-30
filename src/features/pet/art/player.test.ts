@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { hashBuffer } from '@/lib/pixelArt'
+import { crop, hashBuffer } from '@/lib/pixelArt'
 
 import { ENTRANCES, TWIRL, WAKE } from '../motion'
 import { createScenePlayer, DEMO_SIGN_DATA, type PlayerInput } from '.'
@@ -120,6 +120,21 @@ describe('scene player', () => {
     p.playEntrance('lion', 0)
     expect(p.isBusy()).toBe(false)
     expect(p.frame(INPUT, 0).say).toBe('hi')
+  })
+
+  it('eases the mouth shut over one frame when the joy ends', () => {
+    // Reduce Motion holds the pose still, so only the face changes.
+    const p = createScenePlayer({ reduceMotion: true })
+    p.pat(0, 'happy')
+    const mouth = (t: number) =>
+      hashBuffer(crop(p.frame(INPUT, t).buffer, [62, 64, 12, 8]))
+    const shapes = [1300, 1400, 1500, 1600, 1700].map(mouth)
+    // Open until the joy ends at 1.5 s, half shut for a frame, then closed.
+    expect(shapes[0]).toBe(shapes[1])
+    expect(shapes[2]).not.toBe(shapes[1])
+    expect(shapes[3]).not.toBe(shapes[2])
+    expect(shapes[3]).not.toBe(shapes[1])
+    expect(shapes[4]).toBe(shapes[3])
   })
 
   it('skips the twirl with Reduce Motion but is still happy', () => {

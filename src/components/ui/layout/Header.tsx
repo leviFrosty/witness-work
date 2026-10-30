@@ -70,8 +70,10 @@ const Header = (props: Props) => {
 
   // The nested provider measures the header's own safe area, so a screen pushed
   // inside an iOS modal sheet gets no status-bar inset instead of the window's.
+  // Sized by its content: on the web the provider's flex basis is 0%, which
+  // collapses the header under the screen below it, and that covers its buttons.
   return (
-    <SafeAreaProvider style={{ flex: 0 }}>
+    <SafeAreaProvider style={{ flexGrow: 0, flexShrink: 0, flexBasis: 'auto' }}>
       <HeaderContent {...props} systemBack={false} />
     </SafeAreaProvider>
   )

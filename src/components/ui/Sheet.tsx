@@ -31,6 +31,7 @@ function SheetRoot({
   snapPoints,
   dismissible = true,
   backgroundColor,
+  accessibilityLabel,
   testID,
   children,
 }: SheetProps) {
@@ -54,6 +55,7 @@ function SheetRoot({
       dismissible={dismissible}
       backgroundColor={backgroundColor ?? theme.colors.sheet}
       colorScheme={colorScheme}
+      accessibilityLabel={accessibilityLabel}
       testID={testID}
     >
       <FitsContentContext.Provider value={!snapPoints?.length}>

@@ -40,17 +40,7 @@ async function addTwoHours(page: Page) {
     .getByRole('button', { name: 'Add Time' })
     .click()
   await page.getByTestId('time-entry-duration-pill').click()
-  // Scroll the hours wheel two rows, as a finger or trackpad would.
-  await page.evaluate(() => {
-    const wheel = [...document.querySelectorAll<HTMLElement>('*')].find(
-      (el) =>
-        el.scrollHeight > el.clientHeight + 100 &&
-        /^0\s*1\s*2/.test(el.textContent ?? '')
-    )!
-    wheel.scrollTop = (wheel.scrollHeight / 100) * 2
-    wheel.dispatchEvent(new Event('scroll'))
-  })
-  await page.waitForTimeout(1000)
+  await page.getByRole('listbox', { name: 'Hours' }).selectOption('2')
   await page.getByRole('button', { name: 'Done' }).click()
   await page.getByRole('button', { name: 'Submit' }).click()
   await expect(page.getByRole('heading', { name: 'Add Time' })).toBeHidden()

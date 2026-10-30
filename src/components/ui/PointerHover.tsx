@@ -1,12 +1,10 @@
 import type { ReactElement } from 'react'
-import { StyleSheet, View, type ViewStyle } from 'react-native'
 import {
   Gesture,
   GestureDetector,
   HoverEffect,
   PointerType,
 } from 'react-native-gesture-handler'
-import useTheme from '@/contexts/theme'
 import {
   notePointerHover,
   supportsPointerEffects,
@@ -31,6 +29,8 @@ type Props = {
    */
   effect?: PointerEffect
   onHoverChange?: (hovered: boolean) => void
+  /** The web's keyboard focus (`:focus-visible`); nothing elsewhere. */
+  onFocusVisibleChange?: (focused: boolean) => void
   /** Pauses hover without remounting the children. */
   enabled?: boolean
 }
@@ -63,34 +63,4 @@ export default function PointerHover({
   return <GestureDetector gesture={hover}>{children}</GestureDetector>
 }
 
-/**
- * Hover feedback for large surfaces (rows, cards): a faint overlay, without the
- * scale that would push into neighbours. Render it last inside the hovered
- * view.
- */
-export function HoverTint({
-  visible,
-  borderRadius,
-  borderCurve,
-}: {
-  visible: boolean
-  borderRadius?: ViewStyle['borderRadius']
-  borderCurve?: ViewStyle['borderCurve']
-}) {
-  const theme = useTheme()
-  if (!visible) return null
-  return (
-    <View
-      pointerEvents='none'
-      style={[
-        StyleSheet.absoluteFill,
-        {
-          borderRadius,
-          borderCurve,
-          backgroundColor: theme.colors.text,
-          opacity: 0.06,
-        },
-      ]}
-    />
-  )
-}
+export { default as HoverTint } from '@/components/ui/HoverTint'

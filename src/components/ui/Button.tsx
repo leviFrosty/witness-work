@@ -33,7 +33,7 @@ import PointerHover, {
   HoverTint,
   type PointerEffect,
 } from '@/components/ui/PointerHover'
-import { supportsPointerEffects } from '@/lib/pointerHover'
+import { supportsPointerEffects, supportsWebHover } from '@/lib/pointerHover'
 
 export interface ButtonProps extends PressableProps {
   onPress?: (event: GestureResponderEvent) => void
@@ -141,6 +141,14 @@ export interface ButtonProps extends PressableProps {
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable)
 
+/** A small opaque button's hover on the web: raised, not scaled. */
+const WEB_LIFT_STYLE: ViewStyle = {
+  shadowColor: '#000',
+  shadowOpacity: 0.22,
+  shadowRadius: 6,
+  shadowOffset: { width: 0, height: 2 },
+}
+
 // Bigger than a control: scaling it would crowd what's around it.
 const LARGE_WIDTH = 200
 const LARGE_HEIGHT = 72
@@ -233,10 +241,15 @@ const useButtonPointer = (
   const [large, setLarge] = useState(false)
   const [hovered, setHovered] = useState(false)
   const requested = pointerEffect ?? 'auto'
-  if (!supportsPointerEffects || requested === 'none' || disabled) {
+  if (
+    !(supportsPointerEffects || supportsWebHover) ||
+    requested === 'none' ||
+    disabled
+  ) {
     return {
       wrap: (pressable: ReactElement) => pressable,
       overlay: null,
+      style: undefined,
       onLayout: onLayoutProp,
     }
   }
@@ -248,22 +261,34 @@ const useButtonPointer = (
         : isOpaque(surfaceStyle.backgroundColor)
           ? 'lift'
           : 'highlight'
+  // The iPad's system draws highlight and lift; a browser's mouse has no such
+  // effects, so they're drawn here: a rounder, firmer tint behind a small clear
+  // control, a raised shadow under a small opaque one, and a faint tint over a
+  // large surface. Nothing scales into a neighbour.
+  const drawn = supportsWebHover
+  const tracksHover = drawn ? true : effect === 'tint'
   return {
     wrap: (pressable: ReactElement) => (
       <PointerHover
-        effect={effect === 'tint' ? 'none' : effect}
-        onHoverChange={effect === 'tint' ? setHovered : undefined}
+        effect={drawn || effect === 'tint' ? 'none' : effect}
+        onHoverChange={tracksHover ? setHovered : undefined}
       >
         {pressable}
       </PointerHover>
     ),
     overlay: (
       <HoverTint
-        visible={effect === 'tint' && hovered}
-        borderRadius={surfaceStyle.borderRadius}
+        visible={hovered && (drawn ? effect !== 'lift' : effect === 'tint')}
+        borderRadius={
+          effect === 'highlight' && drawn
+            ? Math.max(Number(surfaceStyle.borderRadius) || 0, 10)
+            : surfaceStyle.borderRadius
+        }
         borderCurve={surfaceStyle.borderCurve}
+        strong={drawn && effect === 'highlight'}
       />
     ),
+    style: drawn && effect === 'lift' && hovered ? WEB_LIFT_STYLE : undefined,
     onLayout: (event: LayoutChangeEvent) => {
       onLayoutProp?.(event)
       const { width, height } = event.nativeEvent.layout
@@ -361,6 +386,7 @@ const PlainButton: React.FC<PropsWithChildren<ButtonProps>> = ({
         baseStyle,
         { opacity: pressed ? 0.7 : 1 },
         style as ViewStyle,
+        pointer.style,
       ]}
       {...props}
     >
@@ -460,7 +486,7 @@ const AnimatedButton: React.FC<PropsWithChildren<ButtonProps>> = ({
       onPress={onPress ? _onPress : undefined}
       onLongPress={onLongPress ? _onLongPress : undefined}
       onLayout={pointer.onLayout}
-      style={[[baseStyle, animatedStyle], [style]]}
+      style={[[baseStyle, animatedStyle], [style], pointer.style]}
       {...props}
     >
       {isGlass && (

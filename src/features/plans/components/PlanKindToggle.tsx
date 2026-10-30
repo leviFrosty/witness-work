@@ -6,11 +6,13 @@ import {
 import Button from '@/components/ui/Button'
 import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
+import { MIN_TOUCH_TARGET } from '@/components/ui/touchTarget'
 import useTheme from '@/contexts/theme'
 import useAccessibilityTextSize, {
   FIT_ONE_LINE,
 } from '@/hooks/useAccessibilityTextSize'
 import i18n from '@/lib/locales'
+import { toggleState } from '@/lib/toggleState'
 
 /** One Time / Recurring, at the top of the Plan form's dock. */
 const PlanKindToggle = (props: {
@@ -30,7 +32,7 @@ const PlanKindToggle = (props: {
         onPress={() => props.setOneTime(oneTime)}
         accessibilityRole='button'
         accessibilityLabel={label}
-        accessibilityState={{ selected: active }}
+        {...toggleState(active)}
         testID={oneTime ? 'plan-kind-one-time' : 'plan-kind-recurring'}
         style={{
           flex: 1,
@@ -38,7 +40,7 @@ const PlanKindToggle = (props: {
           alignItems: 'center',
           justifyContent: 'center',
           gap: 6,
-          minHeight: 40,
+          minHeight: MIN_TOUCH_TARGET,
           borderRadius: 999,
           backgroundColor: active ? theme.colors.accentTranslucent : undefined,
           borderWidth: active ? 1 : 0,
@@ -62,7 +64,7 @@ const PlanKindToggle = (props: {
         flexDirection: 'row',
         backgroundColor: theme.colors.background,
         borderRadius: 999,
-        padding: 4,
+        padding: 2,
       }}
     >
       {option(true, Calendar1Icon, i18n.t('oneTime'))}

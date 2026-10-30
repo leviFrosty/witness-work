@@ -17,6 +17,7 @@ import i18n from '@/lib/locales'
 import { hasCapability } from '@/lib/platformCapabilities'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
+import useWideOnWeb from '@/hooks/useWideOnWeb'
 import Button from '@/components/ui/Button'
 import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
 import PointerHover, { HoverTint } from '@/components/ui/PointerHover'
@@ -419,6 +420,7 @@ const PlanDayForm = ({
   layout = 'docked',
   draftRef,
 }: Props) => {
+  const wideOnWeb = useWideOnWeb()
   const navigation = useNavigation<RootStackNavigation>()
   const defaultDate = planDayFromRouteDate(params.date)
   const defaultStoredDate = storedDateFor(defaultDate)
@@ -1459,8 +1461,9 @@ const PlanDayForm = ({
         contentContainerStyle={{
           flexGrow: 1,
           // The details sit just above the dock, near the thumb, rather
-          // than at the top of a tall screen.
-          justifyContent: 'flex-end',
+          // than at the top of a tall screen. A wide window on the web has
+          // no thumb to be near: they start at the top.
+          justifyContent: wideOnWeb ? 'flex-start' : 'flex-end',
           gap: 12,
           paddingTop: 10,
           paddingBottom: 16,

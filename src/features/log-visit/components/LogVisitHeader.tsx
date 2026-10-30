@@ -11,8 +11,8 @@ import PointerTooltip from '@/components/ui/PointerTooltip'
 /**
  * "Log Visit" over both steps. Picking: New Contact on the trailing side.
  * Choosing an outcome: a back chevron to the list. The sheet itself closes the
- * picker on iOS; Android presents it full screen, so it gets a close button
- * too.
+ * picker on iOS; Android and the web present it full screen, so they get a
+ * close button too.
  */
 export default function LogVisitHeader({
   onBack,
@@ -33,7 +33,7 @@ export default function LogVisitHeader({
       onPress={onBack}
       accessibilityLabel={i18n.t('goBack')}
     />
-  ) : Platform.OS === 'android' ? (
+  ) : Platform.OS !== 'ios' ? (
     <IconButton
       icon={XIcon}
       size={20}

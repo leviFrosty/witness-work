@@ -17,6 +17,7 @@ vi.mock('react-native', () => ({
   Platform: { OS: 'ios' },
   View: 'View',
 }))
+vi.mock('@/hooks/useWideOnWeb', () => ({ default: () => false }))
 vi.mock('expo-crypto', () => ({ randomUUID: () => 'new-entry' }))
 vi.mock('@/contexts/theme', () => ({
   default: () => ({ colors: {}, fonts: {}, fontSize: () => 16 }),

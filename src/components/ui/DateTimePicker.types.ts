@@ -16,6 +16,8 @@ export type DateTimePickerProps = {
   iOSMode?: DateTimePickerMode
   /** On iOS, `inline` shows the whole calendar instead of compact pills. */
   display?: 'compact' | 'inline'
+  /** The web's Enter in a date field: confirms, as the picker's Done does. */
+  onSubmit?: () => void
   testID?: string
 }
 

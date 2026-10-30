@@ -1,4 +1,4 @@
-import * as BuddiesKeychain from '../../../modules/buddies-keychain'
+import { deviceAccountKey } from '@/lib/accountKey'
 import { canSync } from '@/app/sync/iCloudSync'
 import { analytics } from '@/lib/analytics'
 import { fromB64u } from '@/lib/bytes'
@@ -53,7 +53,7 @@ async function join(reason: JoinBuddiesReason): Promise<boolean> {
     (usePreferences.getState().lastiCloudPulledAt === null || !canSync())
   )
     return false
-  const seed = await BuddiesKeychain.peekRootSeed()
+  const seed = await deviceAccountKey.peek()
   if (!seed || started()) return false
   if (reason === 'handoff' && !(await usesBuddiesElsewhere(fromB64u(seed))))
     return false

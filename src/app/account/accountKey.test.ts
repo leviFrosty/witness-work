@@ -13,6 +13,10 @@ vi.mock('../../../modules/buddies-keychain', () => ({
   isReplaceAvailable: () => true,
 }))
 vi.mock('@/stores/preferences', () => ({ usePreferences: {} }))
+vi.mock('@/lib/accountKey', () => ({
+  deviceAccountKey: {},
+  keyChangeRecords: {},
+}))
 vi.mock('@/app/buddies/joinBuddiesHere', () => ({
   joinBuddiesHere: vi.fn(async () => {}),
 }))

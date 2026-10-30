@@ -48,9 +48,13 @@ export const sealSyncBlob = (
   nonce: Uint8Array
 ) => sealPlaintext(syncKey, plaintext, syncAad(address), nonce)
 
-/** Throws `BackupOpenError`; the payload inside is still unvalidated. */
+/**
+ * With the sync key, then each of `olderKeys` (the key history's, newest
+ * first). Throws `BackupOpenError`; the payload inside is still unvalidated.
+ */
 export const openSyncBlob = (
   syncKey: Uint8Array,
   blob: Uint8Array,
-  address: SyncAddress
-) => openPlaintext(syncKey, blob, syncAad(address))
+  address: SyncAddress,
+  olderKeys: readonly Uint8Array[] = []
+) => openPlaintext(syncKey, blob, syncAad(address), olderKeys)

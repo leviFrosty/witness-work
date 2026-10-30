@@ -1,5 +1,5 @@
 import { Alert, Platform } from 'react-native'
-import * as BuddiesKeychain from '../../../../modules/buddies-keychain'
+import { deviceAccountKey } from '@/lib/accountKey'
 import Button from '@/components/ui/Button'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
@@ -59,7 +59,7 @@ function PhoneBuddiesDeleteDataButton() {
   const hadSlots = useBackupState((state) => (state.slots?.length ?? 0) > 0)
 
   const deleteAll = async () => {
-    const seed = await BuddiesKeychain.peekRootSeed().catch(() => null)
+    const seed = await deviceAccountKey.peek().catch(() => null)
     if (seed) {
       try {
         await deleteBackupsBeforeKeyLoss(fromB64u(seed))

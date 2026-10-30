@@ -89,8 +89,24 @@ export function openDeviceLabel(
   accountPub: string,
   sealed: string
 ): DeviceLabel {
+  return openDeviceLabelWith(
+    deriveDeviceLabelKey(accountKey),
+    accountPub,
+    sealed
+  )
+}
+
+/**
+ * `openDeviceLabel` with the label key itself: an older account key's, from the
+ * key history, with that key's public key.
+ */
+export function openDeviceLabelWith(
+  labelKey: Uint8Array,
+  accountPub: string,
+  sealed: string
+): DeviceLabel {
   const value = JSON.parse(
-    fromUtf8(open(deriveDeviceLabelKey(accountKey), sealed, aad(accountPub)))
+    fromUtf8(open(labelKey, sealed, aad(accountPub)))
   ) as Partial<DeviceLabel> | null
   if (
     typeof value?.name !== 'string' ||

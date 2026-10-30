@@ -72,6 +72,11 @@ export type ServerSyncAccess = {
   syncKey: Uint8Array
   /** Derived from the account key with the sync key (`derivePhotoKeys`). */
   photoKeys: PhotoKeys
+  /**
+   * The sync keys of the account's older account keys (the key history's,
+   * newest first), for a slot a key change didn't re-seal.
+   */
+  olderSyncKeys?: readonly Uint8Array[]
   options: BearerAccountOptions
 }
 
@@ -288,10 +293,12 @@ export function createServerTransport(
     }
     let json: string
     try {
-      const plaintext = openSyncBlob(current.syncKey, blob, {
-        accountId: current.accountId,
-        slotId: slot.slotId,
-      })
+      const plaintext = openSyncBlob(
+        current.syncKey,
+        blob,
+        { accountId: current.accountId, slotId: slot.slotId },
+        current.olderSyncKeys
+      )
       json = JSON.stringify(plaintext.payload)
     } catch (error) {
       // Unreadable (another key's, or damaged) or from a newer version: the

@@ -2,6 +2,11 @@ import { randomBytes as nodeRandomBytes } from 'node:crypto'
 import { describe, expect, it } from 'vitest'
 import { fromB64u } from '@/lib/bytes'
 import {
+  appendKeyHistory,
+  historyKeys,
+  keyHistoryEntry,
+} from '@/lib/serverAccount/keyHistory'
+import {
   BackupUnlockError,
   type BackupUnlockProblem,
   isLockedBackupFile,
@@ -59,6 +64,36 @@ describe('locked backup files', () => {
     expect(
       await problem(() =>
         unlockWithAccountKey(file, new Uint8Array(32).fill(8))
+      )
+    ).toBe('key')
+  })
+
+  it('opens a file locked to an older account key through the key history', async () => {
+    const oldKey = new Uint8Array(32).fill(5)
+    const file = readLockedBackupFile(
+      roundTrip(lockWithAccountKey(backup, oldKey, options))
+    )
+    const history = appendKeyHistory(
+      appendKeyHistory(null, keyHistoryEntry(oldKey, 0, 1)),
+      keyHistoryEntry(new Uint8Array(32).fill(6), 1, 2)
+    )
+    expect(await problem(() => unlockWithAccountKey(file, accountKey))).toBe(
+      'key'
+    )
+    expect(
+      unlockWithAccountKey(file, accountKey, historyKeys(history, 'backupFile'))
+    ).toEqual({ ...origin, file: backup })
+    // Another account's history doesn't help.
+    expect(
+      await problem(() =>
+        unlockWithAccountKey(
+          file,
+          accountKey,
+          historyKeys(
+            appendKeyHistory(null, keyHistoryEntry(accountKey, 0, 1)),
+            'backupFile'
+          )
+        )
       )
     ).toBe('key')
   })

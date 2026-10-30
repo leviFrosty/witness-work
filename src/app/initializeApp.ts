@@ -14,6 +14,7 @@ import { usePreferences } from '@/stores/preferences'
 import { registerAndroidSyncTransport } from '@/lib/syncTransport'
 import { googleDriveTransport } from '@/lib/syncTransport/googleDrive/googleDriveTransport'
 import { registerCloudSync } from '@/app/sync/cloudSync'
+import { installKeyChange } from '@/app/account/keyChange'
 import { promptUnlockAtLaunch } from '@/app/app-lock/unlock'
 import { registerRewardProbe, registerRewardSample } from '@/lib/actionRewards'
 import {
@@ -29,6 +30,9 @@ export function initializeApp() {
   // First, so App Lock's Face ID runs while the first screen renders.
   promptUnlockAtLaunch()
   configureLogger(() => usePreferences.getState().developerTools)
+  // Before anything reads the account key: a key change this device was making
+  // decides which key is its own (ADR 0039 §4).
+  installKeyChange()
   // Before anything syncs: Android syncs through Google Drive (ADR 0019).
   // iOS keeps iCloud, and its copy keeps naming iCloud.
   if (Platform.OS === 'android')

@@ -37,6 +37,11 @@ vi.mock('expo-crypto', () => ({ getRandomBytes: vi.fn() }))
 vi.mock('../../../../modules/buddies-keychain', () => ({
   peekRootSeed: async () => 'AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE',
 }))
+vi.mock('@/lib/accountKey', () => ({
+  deviceAccountKey: {
+    peek: async () => 'AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE',
+  },
+}))
 vi.mock('@/lib/serverAccount', () => ({
   accountSessions: {
     ready: async () => {},
@@ -50,6 +55,7 @@ vi.mock('@/lib/serverAccount', () => ({
     runtime.accountListener = listener
     return () => {}
   },
+  olderAccountKeys: async () => [],
   serverAccount: { connect: vi.fn() },
 }))
 vi.mock('@/lib/serverAccount/revenueCatLinkRuntime', () => ({

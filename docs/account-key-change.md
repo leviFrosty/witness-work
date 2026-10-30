@@ -32,15 +32,15 @@ A key change keeps the `accountId`. It replaces `account_pub` and raises the acc
 - `signature` covers `UTF-8("ww-account/v1\naccount/rekey\n")` followed by the payload bytes, as every self-signed op.
 - `newSignature` covers `UTF-8("ww-account/v1\naccount/rekey/new\n")` followed by the same payload bytes, under the key for `newAccountPub`. Nobody can move an account to a key they don't hold.
 
-| Payload field   | What it is                                                                                                                                                                                                  |
-| --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `accountPub`    | K1's; must be the token's account's current key. A key this account already retired is 409 `conflict` with `keyEpoch`; another account's is `forbidden`                                                     |
-| `newAccountPub` | K2's; the same as `accountPub` is `bad_request`; any account's key or a retired key is `conflict`                                                                                                           |
-| `keyEpoch`      | The epoch the device read; the swap happens only while it's still the account's                                                                                                                             |
-| `ts`, `nonce`   | As every envelope; each envelope works once (409 `replay`)                                                                                                                                                  |
-| `device`?       | The caller's label re-sealed under K2 (AAD `"ww-account/v1/device\n" + newAccountPub`)                                                                                                                      |
-| `history`       | The new [key history](#the-key-history-blob) blob, sealed under K2's history key; at most 65,536 characters                                                                                                 |
-| `passkeyWrap`?  | `{ credentialId, wrapId, wrap }`: a wrap of K2 for the new epoch, from the passkey of the session's step-up; another credential, or any from a phone session (which has no step-up passkey), is `not_found` |
+| Payload field   | What it is                                                                                                                                                                                                 |
+| --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `accountPub`    | K1's; must be the token's account's current key. A key this account already retired is 409 `conflict` with `keyEpoch`; another account's is `forbidden`                                                    |
+| `newAccountPub` | K2's; the same as `accountPub` is `bad_request`; any account's key or a retired key is `conflict`                                                                                                          |
+| `keyEpoch`      | The epoch the device read; the swap happens only while it's still the account's                                                                                                                            |
+| `ts`, `nonce`   | As every envelope; each envelope works once (409 `replay`)                                                                                                                                                 |
+| `device`?       | The caller's label re-sealed under K2 (AAD `"ww-account/v1/device\n" + newAccountPub`)                                                                                                                     |
+| `history`       | The new [key history](#the-key-history-blob) blob, sealed under K2's history key; at most 65,536 characters                                                                                                |
+| `passkeyWrap`?  | `{ credentialId, wrapId, wrap }`: a wrap of K2 for the new epoch, from the passkey of the session's step-up; another credential, or none (a phone session normally has no step-up passkey), is `not_found` |
 
 Response 200: `{ ok, keyEpoch, accessToken, accessExpiresAt }`, where `keyEpoch` is the new epoch and the access token carries it. The refresh token is unchanged; its next refresh carries the new epoch too.
 
@@ -81,17 +81,17 @@ After the batch, every Cloud Sync socket of the account closes with `4005 "key_c
 
 ### Re-sealing another device's slot
 
-A `sync/put` with `x-ww-reseal: 1` keeps the slot's recorded session and platform, so a signed-out device's slot is still swept on its own schedule and the put doesn't count as the caller's write. It keeps the slot's `updatedAt` too. It's allowed only within 7 days of the account's last key change (`forbidden` otherwise); it needs a quoted-ETag `If-Match` (`bad_request` without one), so it never writes over a newer put; a slot that doesn't exist is 412, and any other header value is `bad_request`.
+A `sync/put` with `x-ww-reseal: 1` keeps the slot's recorded session and platform, so a signed-out device's slot is still swept on its own schedule and the put doesn't count as the caller's write. It keeps the slot's `updatedAt` too. It's allowed only within 7 days of the account's last key change (`forbidden` otherwise); it needs a strong, quoted-ETag `If-Match` (`bad_request` without one), so it never writes over a newer put; a slot that doesn't exist is 412, and any other header value is `bad_request`.
 
 ### Reading the key history: `GET /accounts/v1/account/key-history`
 
-Bearer → `{ ok, keyEpoch, history }`: the blob stored with the last change, or `null` for an account whose key never changed. Not logged.
+Bearer with a live session → `{ ok, keyEpoch, history }`: the blob stored with the last change, or `null` for an account whose key never changed. Not logged.
 
 `GET /accounts/v1/account` adds `keyEpoch`.
 
 ### Supporter links (ADR 0039 §9)
 
-In the same batch, every RevenueCat customer linked to the account is unlinked from every **other** account that first linked it later than this account did. For 90 days, an account not already linked to it can't link it (409 `conflict`, `reason: "customer_locked"`); the lock follows RevenueCat's original app user id, so an alias can't get around it. The account's own links, and older links of other accounts, stay. A link made at the same moment as the changing account's counts as older. Any account still linked to the customer may relink it. Customers are matched by their original app user id, anonymous ones included, as well as the id sent.
+In the same batch, every RevenueCat customer linked to the account is unlinked from every **other** account that first linked it later than this account did. Unless another account still links it from earlier, it's also locked for 90 days: an account not already linked to it can't link it (409 `conflict`, `reason: "customer_locked"`); the lock follows RevenueCat's original app user id, so an alias can't get around it. The account's own links, and older links of other accounts, stay. A link made at the same moment as the changing account's counts as older. Any account still linked to the customer may relink it. Customers are matched by their original app user id, anonymous ones included, as well as the id sent.
 
 ### Older app versions (ADR 0039 §10)
 
@@ -99,13 +99,14 @@ In the same batch, every RevenueCat customer linked to the account is unlinked f
 
 ### Codes
 
-| Status | Code / value                | When                                                                    |
-| ------ | --------------------------- | ----------------------------------------------------------------------- |
-| 403    | `session_too_new`           | A web session less than 24 hours old asks to change the key             |
-| 403    | `key_retired`               | A session open (or sign-up, or `account/register`) with a retired key   |
-| 401    | `reason: "key_changed"`     | A token from before the change, on a route that needs a live session    |
-| 409    | `reason: "customer_locked"` | Linking a RevenueCat customer locked to another account by a key change |
-| Close  | `4005 "key_changed"`        | Every Cloud Sync socket of the account, after a change                  |
+| Status | Code / value                        | When                                                                                                             |
+| ------ | ----------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| 403    | `session_too_new`                   | A web session less than 24 hours old asks to change the key                                                      |
+| 403    | `key_retired`                       | A session open (or sign-up, or `account/register`) with a retired key                                            |
+| 401    | `reason: "key_changed"`             | A token from before the change, on a route that needs a live session                                             |
+| 401    | `reason: "replaced"` or `"revoked"` | The caller's own session ended during `account/rekey`; nothing changed, so the device checks before trying again |
+| 409    | `reason: "customer_locked"`         | Linking a RevenueCat customer locked to another account by a key change                                          |
+| Close  | `4005 "key_changed"`                | Every Cloud Sync socket of the account, after a change                                                           |
 
 Activity adds `account.key_changed` (`session`: the session that changed it). Clients skip kinds they don't know.
 

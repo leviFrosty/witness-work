@@ -56,8 +56,12 @@ export function createFakeSyncServer() {
     photoPageSize: 1000,
     /** Photo puts and deletes, with the slot each said it came from. */
     photoWrites: [] as Array<{ op: string; slotId: string | null }>,
-    /** Fails the next photo op with this code and status, once. */
-    photoFailure: null as { code: string; status: number } | null,
+    /** Fails the next photo op (`op`'s, when set) with this code, once. */
+    photoFailure: null as {
+      code: string
+      status: number
+      op?: string
+    } | null,
     /** The account's key changed more than 7 days ago: re-seals are refused. */
     resealForbidden: false,
     /**
@@ -161,7 +165,11 @@ export function createFakeSyncServer() {
     }
     const slots = slotsOf(account)
     const photos = photosOf(account)
-    if (op.startsWith('sync/photos/') && state.photoFailure) {
+    if (
+      op.startsWith('sync/photos/') &&
+      state.photoFailure &&
+      (state.photoFailure.op ?? op) === op
+    ) {
       const { code, status } = state.photoFailure
       state.photoFailure = null
       return json(

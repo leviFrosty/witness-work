@@ -158,7 +158,7 @@ type KeyChangeRecord = {
     | 'resealed'
     | 'buddies-reset'
   startedAt: number
-  reseal?: { syncSlots: string[]; photos: string[]; backupSlots: string[] } // done ids
+  reseal?: { syncSlots: string[]; photos: string[]; backupSlots: string[] } // done ids; photos: only those left as they are
 }
 ```
 
@@ -183,12 +183,17 @@ type KeyChangeRecord = {
   - A put refused while another put of the slot is in flight (`rate_limited`, up to about 2 minutes) waits a few seconds at a time and reads the slot again.
   - When the key history can't be read, a slot K1 doesn't open isn't recorded: the step stops, to try again later.
 - **Re-sealing photos:** K2's name key gives each photo a new name, so `photos/put` the new blob, then `photos/delete` the old name. The payloads' references are filenames, which don't change. A photo refused with `storage_full`, the photo-count `limit`, or `rate_limited` stays under K1, where the history still opens it, and is retried on later launches; it doesn't hold up steps 6 and 7.
+  - A listed photo whose meta opens with K1 or a history entry, and whose filename hashes to its name under that entry's name key, is downloaded, opened, and sealed again under K2's photo key for K2's name. The old name is deleted only once the new one is live (`existed: true` counts). A photo whose meta opens with K2 is already done.
+  - The listing is the photos' progress: a photo already under K2 is skipped without a download, and one whose new name is already listed (a try that stopped before the delete) only has its old name deleted. So the record lists only photos left as they are for good (damaged), not every photo moved, which keeps the secret-storage record small.
+  - One that doesn't fit by the listing's usage isn't downloaded, nor, for the rest of the launch, one the server refused with `storage_full`. `storage_full` or `conflict` leaves that photo and goes on with the rest; `limit`, `rate_limited`, `no_slot`, `photos_disabled`, or any other failure leaves the rest. A meta no key opens is left as it is; when the history can't be read, it waits for a later try.
+  - Photos left under an older key are noted on the device (the account's id, in device-local storage, no key). Once a launch, with a session open and no change under way, the device moves them again with the history's photo keys (K1 is gone by then), and clears the note when none is left. An account that isn't a Supporter (`supporter_required`) can't put photos: the change notes nothing, and an earlier note waits for the account to be one.
+  - Until then, Cloud Sync reads them under the old names: a photo the listing shows under a history entry's name opens with that entry's photo key, a reference not under its current name is looked up under each entry's name (and under the current name when listed under an old one since moved), and deleting a photo deletes every name the keys give it. Uploads always use K2's name. When both names are listed mid-move, the K2 copy is the one.
 
 ## Other devices
 
 - **Signed out.** Every other session ends. Their next refresh is 401 `revoked`, and reopening with K1 is `key_retired`.
 - **On `key_retired`** a device stops Cloud Sync, backup and Buddies, keeps its local data, and reads the stored key again. If its public key is the account's current one (an Apple device that received K2 through iCloud Keychain), it opens a session with it and rejoins. Otherwise it forgets the key on this device only: on Android and the web it deletes the stored key only when its public key is the retired one, and on iOS it never deletes the synchronizable item. It then shows that the key changed and how to sign back in: a passkey (one that was used for the change, or since used on a device holding K2), a QR code from a signed-in device, or the new recovery key. It never opens a new account.
-- **Rejoining the same account.** A device that signs back in and finds the same `accountId` keeps its Cloud Sync bookkeeping and backup slot id (no Merge or Replace prompt, no Cloud Sync leave), resets only Buddies' local data, and pushes its offline edits through the normal merge. It remembers the last `accountId` in device-local storage for this.
+- **Rejoining the same account.** A device that signs back in and finds the same `accountId` keeps its Cloud Sync bookkeeping and backup slot id (no Merge or Replace prompt, no Cloud Sync leave), resets only Buddies' local data, and pushes its offline edits through the normal merge. Cloud Sync's slots and photos are read again then: what this device opened, or couldn't open, under the retired key isn't reused. It remembers the last `accountId` in device-local storage for this.
 - **Apple devices on the same Apple Account** receive K2 through iCloud Keychain, notice the key changed, and rejoin the same account without asking (ADR 0039 §8).
 - **Passkeys** keep signing in. Each one saves a new wrap the next time it's used on a device holding K2 (ADR 0039 §7).
 

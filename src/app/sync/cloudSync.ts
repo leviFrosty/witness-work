@@ -19,6 +19,7 @@ import {
   accountSessions,
   bearerOptions,
   olderAccountKeys,
+  olderPhotoKeys,
   onAccountChange,
   serverAccount,
 } from '@/lib/serverAccount'
@@ -105,6 +106,9 @@ async function cloudSyncAccess(): Promise<ServerSyncAccess> {
     syncKey,
     photoKeys,
     olderSyncKeys: await olderAccountKeys(accountId, 'sync'),
+    olderPhotoKeys: (await olderPhotoKeys(accountId)).map(
+      ({ name, photo }) => ({ nameKey: name, photoKey: photo })
+    ),
     options: bearerOptions(accountKey),
   }
 }

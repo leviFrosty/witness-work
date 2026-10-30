@@ -9,12 +9,20 @@ import {
   type RevenueCatLinkOutcome,
   type RevenueCatLinkReason,
 } from '@/lib/serverAccount/revenueCatLink'
+import { createServerSupporter } from '@/lib/serverAccount/serverSupporter'
+import { addForegroundListener } from '@/lib/appLifecycle'
+import {
+  setServerSupporterAccount,
+  setServerSupporterEntry,
+  useServerSupporter,
+} from '@/stores/serverSupporter'
 
 /**
  * This device's RevenueCat link to its server account (ADR 0029), wired to the
  * session client, RevenueCat's SDK, and device-local MMKV. Imported by
  * `CustomerProvider`, which drives the RevenueCat triggers; a session opening
- * or the account key changing triggers it from here.
+ * or the account key changing triggers it from here. Also keeps the server's
+ * answer for `useIsSupporter`'s fallback (`serverSupporter`, ADR 0040 §7).
  */
 
 let _store: MMKV | null = null
@@ -127,3 +135,39 @@ onAccountChange((change) => {
       : { force: true, reason: 'account_changed' }
   )
 })
+
+/**
+ * The account's Supporter status as ww-api answers it, for `useIsSupporter`
+ * when RevenueCat doesn't say Supporter. Read on the existing session only.
+ */
+export const serverSupporter = createServerSupporter({
+  currentAccount: async () => {
+    await accountSessions.ready()
+    return accountSessions.snapshot()?.accountId ?? null
+  },
+  link: (reason) => revenueCatLink.ensure({ reason }),
+  fetchStatus: () => revenueCatLink.fetchStatus(),
+  store: {
+    entry: () => useServerSupporter.getState().entry,
+    setEntry: setServerSupporterEntry,
+    setAccount: setServerSupporterAccount,
+  },
+  now: Date.now,
+})
+
+onRevenueCatLinked((status) => {
+  const accountId = accountSessions.snapshot()?.accountId
+  if (accountId) serverSupporter.record(accountId, status)
+})
+
+onAccountChange((change) => {
+  // Registered after the link's listener, so the read joins that link.
+  if (change === 'key_changed') void serverSupporter.accountChanged()
+  else void serverSupporter.refresh({ force: true, reason: 'session_opened' })
+})
+
+// At most every few hours (the answer remembers when it was read).
+addForegroundListener(
+  () => void serverSupporter.refresh({ reason: 'foreground' })
+)
+void serverSupporter.refresh({ reason: 'launch' })

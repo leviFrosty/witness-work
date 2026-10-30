@@ -48,6 +48,54 @@ already holds the User's Buddies key, because its Plans (and so its Buddy Card)
 match the User's other devices. See "Another of the User's devices" in
 [buddies-protocol.md](./buddies-protocol.md).
 
+### One RevenueCat customer per account
+
+Each payload carries its writer's RevenueCat **claim** in the optional
+top-level `revenueCat` (ADR 0040 §7): `{ appUserId, entitled, claimedAt }`, the
+RevenueCat app user id the device is logged in as (ADR 0011's account id),
+whether it's a Supporter under it, and when that id was first claimed. On Cloud
+Sync it's inside the encrypted slot with the rest. Older versions drop the
+unknown key and read the payload as before; a claim this version can't read
+(an anonymous id, a missing field) is dropped on its own, never the file. The
+id is never shown, logged, or reported (ADR 0029 §2). The account backup leaves
+it out.
+
+`AccountProvider` reconciles over every claim the device can see, its peers'
+payloads on its sync transport, the account file on iCloud or Drive, and its
+own, with `decideAccountReconcile` (`src/lib/accountClaim.ts`):
+
+- **The winner** is the same on every device: entitled beats un-entitled, then
+  the earliest `claimedAt`, then the smaller id. Claims are taken per id first:
+  an id is entitled when any claim for it says so, and claimed at its earliest.
+- **An un-entitled device adopts the winner** (`Purchases.logIn`,
+  `adoptAccountId`, then the ADR 0029 link as `adopted`). The adopted id keeps
+  the winner's `claimedAt`, so a later device can't out-date it.
+- **An entitled device never gives up its id**; two entitled ids both stay.
+- **The account file** keeps ADR 0011's handling: claimed when missing, claimed
+  over by an entitled device, refreshed when its flag disagrees. A device whose
+  claim beats an un-entitled file takes the file over, so devices that read
+  only the file (older versions) follow. The file adds `claimedAt`; older
+  writers drop it and it reads as `updatedAt`.
+- **Without RevenueCat** (Android without an SDK key), a device still adopts
+  the id and publishes its claim (never entitled), so it's the right customer
+  once RevenueCat is there. A device that signs in to an account later adopts
+  that account's earlier id by the same rule.
+
+A claim from a device that stopped syncing stays until it's removed from the
+Devices list. If it's stale-entitled, un-entitled devices stay on its id; the
+account's Supporter status on ww-api (below) still unlocks them.
+
+`useIsSupporter` also accepts ww-api's answer for the account (`GET
+/accounts/v1/supporter`, and what each link answers) when RevenueCat doesn't
+say Supporter, until its `expiresAt` (or with no end). The answer is kept in
+device-local MMKV with a hash of the account it was read for: another account
+key, or no session, doesn't count it, and offline keeps the last one. It's read
+when a session opens, after a link, and otherwise at most every 4 hours on
+launch or foreground, or sooner once it has expired
+(`src/lib/serverAccount/serverSupporter.ts`). `since` stays RevenueCat's date,
+so it's null on the server's answer alone: Settings shows "You're a supporter"
+without a year. The dev override still wins in dev builds.
+
 The account backup ([accounts-protocol.md](./accounts-protocol.md#backup))
 uploads the same payload, end-to-end encrypted, to ww-api, without its
 `resetEpoch`. Its restore validates each slot with `parsePayload`, folds with

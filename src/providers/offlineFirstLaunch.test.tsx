@@ -65,10 +65,16 @@ vi.mock('@/lib/installId', () => {
 vi.mock('@/lib/account', () => ({
   getOrCreateAccountId: () => 'install-a',
   adoptAccountId: vi.fn(),
+  getOwnAccountClaim: (entitled: boolean) => ({
+    appUserId: 'install-a',
+    entitled,
+    claimedAt: 1,
+  }),
   readAccountFile: vi.fn(),
   writeAccountFile: vi.fn(),
 }))
 vi.mock('@/lib/iCloudIdentity', () => ({ checkICloudIdentity: () => true }))
+vi.mock('@/lib/analytics', () => ({ analytics: { capture: vi.fn() } }))
 vi.mock('@/lib/logger', () => import('@/__tests__/mocks/logger'))
 vi.mock('@/lib/errorTracking', () => ({
   errorTracking: { captureException: vi.fn(), addBreadcrumb: vi.fn() },

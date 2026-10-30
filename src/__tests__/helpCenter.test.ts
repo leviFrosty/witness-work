@@ -17,6 +17,10 @@ import {
   isEntryVisible,
   visibleEntries,
 } from '@/features/updates/lib/helpCenter/visibility'
+import {
+  isLegacyEntryVisible,
+  parseLegacyHelpBundle,
+} from '@/__tests__/helpers/legacyHelpCenterParser'
 import { helpLocaleFor } from '@/features/updates/lib/helpCenter/locale'
 import {
   RefreshDeps,
@@ -139,11 +143,29 @@ describe('parseHelpBundle', () => {
 
   it('keeps only known platforms', () => {
     const entry = helpEntry('a', 'Q?', 'A.', {
-      platforms: ['android', 'web' as never],
+      platforms: ['android', 'tv' as never],
     })
     expect(
       parseHelpBundle(helpBundle({}, [entry]))?.entries[0].platforms
     ).toEqual(['android'])
+  })
+
+  it('accepts web as a platform, in a stable order', () => {
+    const web = helpEntry('a', 'Q?', 'A.', { platforms: ['web'] })
+    const mixed = helpEntry('b', 'Q2?', 'B.', {
+      platforms: ['web', 'ios' as const],
+    })
+    const platforms = parseHelpBundle(
+      helpBundle({}, [web, mixed])
+    )?.entries.map((entry) => entry.platforms)
+    expect(platforms).toEqual([['web'], ['ios', 'web']])
+  })
+
+  it('reads a missing platforms field as every platform', () => {
+    const { platforms: _, ...entry } = helpEntry('a', 'Q?', 'A.')
+    expect(
+      parseHelpBundle(helpBundle({}, [entry as never]))?.entries[0].platforms
+    ).toEqual(['ios', 'android', 'web'])
   })
 
   it('downgrades unsafe links in answers to text', () => {
@@ -216,6 +238,27 @@ describe('visibility', () => {
     )
   })
 
+  it('shows web answers on the web and hides phone-only ones', () => {
+    const bundle = helpBundle({}, [
+      helpEntry('everywhere', 'Q1?', 'A.'),
+      helpEntry('webOnly', 'Q2?', 'A.', { platforms: ['web'] }),
+      helpEntry('phones', 'Q3?', 'A.', { platforms: ['ios', 'android'] }),
+    ])
+    expect(visibleEntries(bundle, 'web', null).map((e) => e.id)).toEqual([
+      'everywhere',
+      'webOnly',
+    ])
+    expect(visibleEntries(bundle, 'ios', '4.0.0').map((e) => e.id)).toEqual([
+      'everywhere',
+      'phones',
+    ])
+  })
+
+  it('applies no version floor on the web, which has no app version', () => {
+    const entry = helpEntry('a', 'Q?', 'A.', { minAppVersion: '99.0.0' })
+    expect(isEntryVisible(entry, 'web', null)).toBe(true)
+  })
+
   it('lists only categories with shown entries, in bundle order', () => {
     const bundle = helpBundle()
     const android = visibleEntries(bundle, 'android', '4.0.0')
@@ -223,6 +266,55 @@ describe('visibility', () => {
       'time',
       'general',
     ])
+  })
+})
+
+describe('apps released before web was a platform', () => {
+  // The site always writes an explicit `platforms` array, so these are the
+  // entries those apps receive from the current bundle.
+  const bundle = helpBundle({}, [
+    helpEntry('everywhere', 'Q1?', 'A.', {
+      platforms: ['ios', 'android', 'web'],
+    }),
+    helpEntry('webOnly', 'Q2?', 'A.', { platforms: ['web'] }),
+    helpEntry('iosWeb', 'Q3?', 'A.', { platforms: ['ios', 'web'] }),
+    helpEntry('phones', 'Q4?', 'A.', { platforms: ['ios', 'android'] }),
+  ])
+  const legacy = parseLegacyHelpBundle(JSON.parse(JSON.stringify(bundle)))
+
+  it('still accepts the bundle', () => {
+    expect(legacy?.entries.map((entry) => entry.id)).toEqual([
+      'everywhere',
+      'webOnly',
+      'iosWeb',
+      'phones',
+    ])
+  })
+
+  it('reads an all-platform answer as both phones', () => {
+    expect(legacy?.entries[0].platforms).toEqual(['ios', 'android'])
+    for (const platform of ['ios', 'android']) {
+      expect(isLegacyEntryVisible(legacy!.entries[0], platform, '4.0.0')).toBe(
+        true
+      )
+    }
+  })
+
+  it('hides a web-only answer, which reaches them with no platforms', () => {
+    expect(legacy?.entries[1].platforms).toEqual([])
+    for (const platform of ['ios', 'android']) {
+      expect(isLegacyEntryVisible(legacy!.entries[1], platform, '4.0.0')).toBe(
+        false
+      )
+    }
+  })
+
+  it('keeps the phone platform of a mixed answer', () => {
+    expect(legacy?.entries[2].platforms).toEqual(['ios'])
+    expect(isLegacyEntryVisible(legacy!.entries[2], 'ios', '4.0.0')).toBe(true)
+    expect(isLegacyEntryVisible(legacy!.entries[2], 'android', '4.0.0')).toBe(
+      false
+    )
   })
 })
 
@@ -369,6 +461,17 @@ describe('searchHelpRemote', () => {
     platform: 'ios',
     appVersion: '4.12.0',
   }
+
+  it('asks for web answers on the web, without an app version', async () => {
+    const fetch = vi.fn(async () => json({ results: [] }))
+    await searchHelpRemote(
+      { ...params, platform: 'web', appVersion: null },
+      { fetch: fetch as unknown as typeof globalThis.fetch }
+    )
+    const url = new URL(String((fetch.mock.calls[0] as unknown[])[0]))
+    expect(url.searchParams.get('platform')).toBe('web')
+    expect(url.searchParams.has('appVersion')).toBe(false)
+  })
 
   it('sends the query and returns slugs best first', async () => {
     const fetch = vi.fn(async () =>

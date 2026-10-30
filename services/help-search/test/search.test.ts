@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import type { Platform } from '../src/contract'
 import { EMBEDDING_MODEL, normalize } from '../src/embed'
 import {
   cacheKeyUrl,
@@ -41,12 +42,20 @@ describe('parseSearchParams', () => {
       },
     })
   })
+  it('accepts every platform', () => {
+    for (const platform of ['ios', 'android', 'web']) {
+      expect(parse(`q=a&platform=${platform}`)).toMatchObject({
+        ok: true,
+        params: { platform },
+      })
+    }
+  })
   it.each([
     ['', 'q is required'],
     ['q=%20%20', 'q is required'],
     [`q=${'a'.repeat(201)}`, 'q must be at most 200 characters'],
     ['q=a&locale=xx', 'unknown locale'],
-    ['q=a&platform=web', 'platform must be ios or android'],
+    ['q=a&platform=desktop', 'platform must be ios, android or web'],
     ['q=a&appVersion=latest', 'appVersion must look like x.y.z'],
     ['q=a&limit=0', 'limit must be 1–50'],
     ['q=a&limit=51', 'limit must be 1–50'],
@@ -66,7 +75,7 @@ function index(
     slug: string
     score?: number
     text?: string
-    platforms?: ('ios' | 'android')[]
+    platforms?: Platform[]
     minAppVersion?: string
   }[],
   model = EMBEDDING_MODEL
@@ -83,7 +92,7 @@ function index(
             slug,
             question: text ?? 'unrelated words',
             plainText: '',
-            platforms: platforms ?? ['ios', 'android'],
+            platforms: platforms ?? ['ios', 'android', 'web'],
             minAppVersion,
           }),
           slug,
@@ -192,6 +201,53 @@ describe('rank', () => {
     expect(
       slugs(rank(answers, params({ appVersion: 4_012_000 }), query))
     ).toEqual(['ios', 'new', 'all'])
+  })
+
+  it('filters by the web platform', () => {
+    const answers = index([
+      { slug: 'ios', score: 0.9, platforms: ['ios'] },
+      { slug: 'web-only', score: 0.8, platforms: ['web'] },
+      { slug: 'phones', score: 0.75, platforms: ['ios', 'android'] },
+      { slug: 'all', score: 0.7 },
+    ])
+    expect(slugs(rank(answers, params({ platform: 'web' }), query))).toEqual([
+      'web-only',
+      'all',
+    ])
+    expect(slugs(rank(answers, params({ platform: 'ios' }), query))).toEqual([
+      'ios',
+      'phones',
+      'all',
+    ])
+  })
+
+  it('reads an index built before web existed as web for both-phone answers', () => {
+    const stored = (slug: string, platforms: Platform[]) => {
+      const { web: _web, ...old } = storedEntry(
+        entry({ slug, platforms }),
+        slug,
+        normalize([0.9, Math.sqrt(1 - 0.81), 0])
+      )
+      return old
+    }
+    const answers = loadIndex({
+      version: 1,
+      model: EMBEDDING_MODEL,
+      bundleHash: 'old',
+      builtAt: '',
+      entries: [
+        stored('both-phones', ['ios', 'android']),
+        stored('ios-only', ['ios']),
+        stored('android-only', ['android']),
+      ],
+    })
+    expect(slugs(rank(answers, params({ platform: 'web' }), query))).toEqual([
+      'both-phones',
+    ])
+    expect(slugs(rank(answers, params({ platform: 'ios' }), query))).toEqual([
+      'both-phones',
+      'ios-only',
+    ])
   })
 
   it('stops at the limit', () => {

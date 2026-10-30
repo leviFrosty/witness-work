@@ -7,6 +7,7 @@ import {
 } from './contract'
 import { documentText, embed, EMBED_BATCH, EMBEDDING_MODEL } from './embed'
 import {
+  INDEX_VERSION,
   indexKey,
   storedEntry,
   type StoredEntry,
@@ -177,7 +178,8 @@ export async function runSync(
       if (
         !options.force &&
         stored?.bundleHash === source.hash &&
-        stored.model === EMBEDDING_MODEL
+        stored.model === EMBEDDING_MODEL &&
+        stored.version === INDEX_VERSION
       )
         continue
       for (const entry of stored?.entries ?? [])
@@ -224,7 +226,7 @@ export async function runSync(
         storedEntry(entry, hash, vectors.get(hash)!)
       )
       const index: StoredIndex = {
-        version: 1,
+        version: INDEX_VERSION,
         model: EMBEDDING_MODEL,
         bundleHash: source.hash,
         builtAt: new Date().toISOString(),

@@ -8,23 +8,28 @@ const STORAGE_KEY = 'ww-help-platform'
 
 /*
  * public/help-platform.js runs before the page paints: it applies the saved
- * device choice (this key), or guesses it from the user agent, as
- * `data-ww-platform` on <html>. CSS in app.css hides answers for the other
- * platform; the page HTML always contains all of them.
+ * device choice (this key: ios, android, web or all), or guesses it from the
+ * user agent (iOS and Android phones; anything else is "all"), as
+ * `data-ww-platform` on <html>. CSS in app.css hides answers that aren't for
+ * that platform; the page HTML always contains all of them.
  */
 
 export function currentPlatform(): PlatformChoice {
   if (typeof document === 'undefined') return 'all'
   const value = document.documentElement.getAttribute('data-ww-platform')
-  return value === 'ios' || value === 'android' ? value : 'all'
+  return value === 'ios' || value === 'android' || value === 'web'
+    ? value
+    : 'all'
 }
 
 export default function PlatformFilter({
   label,
   allLabel,
+  webLabel,
 }: {
   label: string
   allLabel: string
+  webLabel: string
 }) {
   const [platform, setPlatform] = useState<PlatformChoice | null>(null)
   useEffect(() => setPlatform(currentPlatform()), [])
@@ -41,6 +46,7 @@ export default function PlatformFilter({
     { value: 'all', label: allLabel },
     { value: 'ios', label: 'iOS' },
     { value: 'android', label: 'Android' },
+    { value: 'web', label: webLabel },
   ]
 
   return (

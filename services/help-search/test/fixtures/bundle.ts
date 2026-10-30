@@ -4,7 +4,7 @@ export const entry = (overrides: Partial<HelpEntry> = {}): HelpEntry => ({
   id: 'timeRollover',
   slug: 'time-rollover',
   category: 'time',
-  platforms: ['ios', 'android'],
+  platforms: ['ios', 'android', 'web'],
   pinned: true,
   related: [196],
   question: 'Can partial hours carry over to the next month?',

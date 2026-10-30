@@ -25,6 +25,10 @@ Publishing: answers ship in the same pull request as the app change they describ
 
 Everything below is consumed by other systems (the app, the search Worker). Changing it is a breaking change: bump `schemaVersion` and keep serving v1 until the app versions that read it are gone.
 
+**Adding `web` to `platforms` did not bump `schemaVersion`; it's additive.** Apps released before it parse each entry with the old `validate.ts`: from the `platforms` array they keep only `ios` and `android`, and read a missing field as both phones. They never reject a bundle over an unknown platform, so nothing breaks, and they filter correctly: an all-platform entry (`["ios","android","web"]`) reaches them as `["ios","android"]` and shows, and a web-only entry (`["web"]`) reaches them as `[]` and is hidden on every phone. An entry for `ios` and `web` reaches them as `["ios"]`. This is why the bundle always writes `platforms` explicitly: a reader that doesn't know `web` can't infer it from an omitted field. A test keeps a frozen copy of the old parser (`src/__tests__/helpers/legacyHelpCenterParser.ts`) and feeds current bundles through it. The same goes for the Worker: `platform=web` is new. An index built before it (no `web` on its entries) reads as web for answers that were for both phones, and the index version went to 2, so the first sync after the deploy rebuilds every index from its stored embeddings.
+
+On the web, `Application.nativeApplicationVersion` is `null`, so the version floor (`minAppVersion`) hides nothing there, and an unknown version shows every answer. The site deploys on merge while web app releases wait for the release cut, so an answer about unreleased behavior can show on the web early; say "From version x.y.z" in such answers. The app's bundled snapshot (`src/assets/help-center/`) holds explicit `["ios","android"]` arrays from before `web` existed, so a web build made from it shows no answers until it downloads a bundle that lists `web`, which it does in the background on first open (offline, it stays empty). Release prep runs `pnpm sync:help`, which fixes the snapshot; run it before any web deploy, beta included.
+
 ### Locales
 
 The app's locale codes, used verbatim: `en-US` (default), `ar`, `bem-ZM`, `de-DE`, `es-ES`, `fr-FR`, `it-IT`, `ja-JP`, `ko-KR`, `nl-NL`, `pt-BR`, `pt-PT`, `ru-RU`, `rw-RW`, `sw-KE`, `uk-UA`, `vi-VN`, `zh-CN`, `zh-TW`.
@@ -41,11 +45,13 @@ The app's locale codes, used verbatim: `en-US` (default), `ar`, `bem-ZM`, `de-DE
 id: timeRollover # required, stable
 title: Can partial hours…? # required: the question
 category: time # required: a category id
-platforms: [ios, android] # optional; omit = both
+platforms: [ios, android, web] # optional; any non-empty subset; omit = all three
 pinned: true # optional; "Top questions"
 related: [196, 226] # optional; GitHub issue numbers
 minAppVersion: '4.12.0' # optional; applies to app ≥ this version
 ```
+
+`platforms` is where an answer applies: `ios`, `android` (the phone apps) and `web` (WitnessWork on the web, [ADR 0037](adr/0037-witnesswork-on-the-web.md)). Leave it out for an answer that holds on all three. Set it for one that doesn't apply on the web (widgets, Siri and Shortcuts, notifications, Live Activities, the watch apps, iCloud or Google Drive sync, purchases through the app stores) or that's only for the web. Lists are normalized to the order `ios`, `android`, `web`.
 
 Translations (`content/help/<locale>/…`) set only `id` and `title`; everything else comes from the English file.
 
@@ -91,7 +97,7 @@ type HelpEntry = {
   id: string
   slug: string
   category: string
-  platforms: ('ios' | 'android')[] // both when it applies to both
+  platforms: ('ios' | 'android' | 'web')[] // never empty; the site always writes it, all three when the front matter omits it
   pinned: boolean
   related: number[]
   minAppVersion?: string // "x.y.z"
@@ -135,9 +141,9 @@ indexing every eligible page is ultimately Google's decision.
 
 ### Search API
 
-`GET https://help-search.witnesswork.app/v1/search?q=<text>&locale=<code>&platform=ios|android&appVersion=x.y.z&limit=20`
+`GET https://help-search.witnesswork.app/v1/search?q=<text>&locale=<code>&platform=ios|android|web&appVersion=x.y.z&limit=20`
 
-- `q` required (1–200 chars); `locale` defaults to `en-US`; `platform` optional (omit = both); `appVersion` optional (omit = no version filter); `limit` 1–50, default 20.
+- `q` required (1–200 chars); `locale` defaults to `en-US`; `platform` optional (omit = no platform filter); `appVersion` optional (omit = no version filter; the web app has no app version and omits it); `limit` 1–50, default 20.
 - `200 { results: { slug: string; score: number }[] }`, best first. Clients map `slug` to the entry in their bundle and drop unknown slugs. Scores are relative to the query (the best is often 1); the Worker already drops weak matches, so clients don't filter on them.
 - `400` bad params, `429` rate limited, `503` search unavailable. Clients treat any non-200 or a timeout as "use local search".
 - Latency is about 130 ms in the Worker (p90 about 210 ms) plus the network, ~30 ms for a cached repeat. Clients show local (Fuse.js) results at once, query the Worker after a ~600 ms typing pause (never per keystroke: the Worker rate-limits each IP to 60 searches a minute), and swap in the remote order if it arrives while the query is unchanged. Both clients wait up to 8 s; the website shows a spinner meanwhile. When the local results are empty, both show "Searching…" instead of "no results" until the Worker answers (offline, "no results" shows at once). An empty or failed remote result keeps the local results.
@@ -168,7 +174,7 @@ The answer is the Markdown body under the front matter, in the subset above. Pag
 1. Create `content/help/en-US/<category>/<slug>.mdx`, where `slug` is the kebab-case `id` (`timeRollover` → `time-rollover`; a single leading lowercase letter stays attached: `iCloudSync` → `icloud-sync`). `pnpm help:validate` tells you the expected file name.
 2. Add the `id` to `questions` in `content/help/order.json` where it should appear. Order is global: categories show their questions in this order, and "Top questions" lists pinned ones in this order.
 3. Run `pnpm help:validate`. It fails on unsupported Markdown, unknown categories, duplicate ids or slugs, files in the wrong folder, a missing `order.json` entry, or a malformed `minAppVersion`. `pnpm build` runs the same checks.
-4. Write the answer to stand on its own: someone lands on it from a search engine or an AI assistant. Name the screen path (Settings → Sync), say which platforms it applies to, and set `platforms` when it's iOS- or Android-only.
+4. Write the answer to stand on its own: someone lands on it from a search engine or an AI assistant. Name the screen path (Settings → Sync), say which platforms it applies to, and set `platforms` when it isn't true on all of iOS, Android and the web.
 
 Edit a question by editing its English file. **Never change an `id`**: the app and analytics key on it. To retire a question, delete its files in every locale and remove it from `order.json`.
 

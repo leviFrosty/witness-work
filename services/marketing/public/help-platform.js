@@ -4,7 +4,7 @@
 ;(function () {
   try {
     var p = localStorage.getItem('ww-help-platform')
-    if (p !== 'ios' && p !== 'android' && p !== 'all') {
+    if (p !== 'ios' && p !== 'android' && p !== 'web' && p !== 'all') {
       var u = navigator.userAgent
       p =
         /iPhone|iPad|iPod/.test(u) ||

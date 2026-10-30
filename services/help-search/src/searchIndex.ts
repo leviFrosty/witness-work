@@ -7,8 +7,14 @@ import { encodeVersion } from './version'
  * One locale's search index, as sync writes it to KV (`index:<locale>`): every
  * answer's filters, keyword counts and embedding. About 1 MB.
  */
+/**
+ * Bumped when stored entries gain a field, so the next sync rebuilds every
+ * index even when its bundle is unchanged. 2 added `web`.
+ */
+export const INDEX_VERSION = 2
+
 export type StoredIndex = {
-  version: 1
+  version: number
   model: string
   /** The bundle this index was built from. */
   bundleHash: string
@@ -22,6 +28,8 @@ export type StoredEntry = {
   hash: string
   ios: boolean
   android: boolean
+  /** Absent from indexes built before the web was a platform. */
+  web?: boolean
   /** `encodeVersion(minAppVersion)`, 0 when unset. */
   minAppVersion: number
   /** Token count of the question and answer. */
@@ -44,6 +52,7 @@ export function storedEntry(
     hash,
     ios: entry.platforms.includes('ios'),
     android: entry.platforms.includes('android'),
+    web: entry.platforms.includes('web'),
     minAppVersion:
       (entry.minAppVersion && encodeVersion(entry.minAppVersion)) || 0,
     length: tokens.length,
@@ -52,7 +61,8 @@ export function storedEntry(
   }
 }
 
-export type LoadedEntry = Omit<StoredEntry, 'vector' | 'hash'> & {
+export type LoadedEntry = Omit<StoredEntry, 'vector' | 'hash' | 'web'> & {
+  web: boolean
   vector: Float32Array
 }
 
@@ -72,7 +82,14 @@ export function loadIndex(stored: StoredIndex): LoadedIndex {
     for (const term in entry.terms)
       documentFrequency.set(term, (documentFrequency.get(term) ?? 0) + 1)
     totalLength += entry.length
-    return { ...entry, vector: decodeVector(vector) }
+    return {
+      ...entry,
+      // An index from before the web was a platform has no `web`. Answers for
+      // both phones were its unscoped ones, so they stay in web results; the
+      // next sync rewrites the index from the bundle.
+      web: entry.web ?? (entry.ios && entry.android),
+      vector: decodeVector(vector),
+    }
   })
   return {
     model: stored.model,

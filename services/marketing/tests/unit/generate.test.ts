@@ -102,6 +102,27 @@ describe('Markdown alternates and llms.txt', () => {
     )
   })
 
+  test('an answer for every platform has no "Applies to" line', async () => {
+    const { read } = await generate()
+    expect(await read('help/time/time-rollover.md')).not.toContain('Applies to')
+  })
+
+  test('llms.txt marks an answer that is not for every platform', async () => {
+    const { read } = await generate()
+    const index = await read('llms.txt')
+    expect(index).toContain('contact-support.md) (Android only)')
+    expect(index).not.toContain('time-rollover.md) (')
+  })
+
+  test('every bundle entry lists its platforms explicitly', async () => {
+    const { json } = await generate()
+    const english = await json<HelpBundle>('help/bundle/en-US.json')
+    expect(english.entries.map((entry) => entry.platforms)).toEqual([
+      ['ios', 'android', 'web'],
+      ['android'],
+    ])
+  })
+
   test('llms.txt indexes the answers on the new site', async () => {
     const { read } = await generate()
     const index = await read('llms.txt')

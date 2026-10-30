@@ -10,7 +10,10 @@ const HOME = '/help'
 const ORIGIN = SITE.origin
 const SEARCH_WORKER = `${SITE.helpSearchOrigin}/**`
 
-async function choosePlatform(page: Page, platform: 'all' | 'ios' | 'android') {
+async function choosePlatform(
+  page: Page,
+  platform: 'all' | 'ios' | 'android' | 'web'
+) {
   await page.locator(`[data-platform-option="${platform}"]`).click()
   await expect(page.locator('html')).toHaveAttribute(
     'data-ww-platform',
@@ -145,6 +148,51 @@ test('device filter hides other-platform answers and is remembered', async ({
   await choosePlatform(page, 'android')
   await expect(ios).toBeHidden()
   await expect(android).toBeVisible()
+})
+
+test('device filter has a Web choice that hides phone-only answers', async ({
+  page,
+}) => {
+  await page.goto(HOME)
+  await expect(page.locator('[data-platform-option]')).toHaveText([
+    'All',
+    'iOS',
+    'Android',
+    'Web',
+  ])
+  const everywhere = page
+    .locator(
+      '[data-section="categories"] [data-question]:not([data-ww-platforms])'
+    )
+    .first()
+  const ios = page
+    .locator('[data-section="categories"] [data-ww-platforms="ios"]')
+    .first()
+  const android = page
+    .locator('[data-section="categories"] [data-ww-platforms="android"]')
+    .first()
+
+  const phones = page
+    .locator('[data-section="categories"] [data-ww-platforms="ios android"]')
+    .first()
+
+  await choosePlatform(page, 'web')
+  await expect(page.locator('[data-platform-option="web"]')).toHaveAttribute(
+    'aria-checked',
+    'true'
+  )
+  await expect(ios).toBeHidden()
+  await expect(android).toBeHidden()
+  await expect(phones).toBeHidden()
+  await expect(everywhere).toBeVisible()
+
+  await choosePlatform(page, 'ios')
+  await expect(phones).toBeVisible()
+  await choosePlatform(page, 'web')
+
+  await page.reload()
+  await expect(page.locator('html')).toHaveAttribute('data-ww-platform', 'web')
+  await expect(ios).toBeHidden()
 })
 
 test('device filter defaults from the user agent @android', async ({

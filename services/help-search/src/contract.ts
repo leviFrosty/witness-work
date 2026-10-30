@@ -1,7 +1,10 @@
 // Types and constants from the Help Center contract (v1). The source of truth
 // is docs/help-center.md in this repo; keep this file in step with it.
 
-export type Platform = 'ios' | 'android'
+export type Platform = 'ios' | 'android' | 'web'
+
+export const isPlatform = (value: string): value is Platform =>
+  value === 'ios' || value === 'android' || value === 'web'
 
 export const LOCALES = [
   'en-US',

@@ -86,6 +86,11 @@ test('bundles follow the contract and every locale has every entry @api', async 
       expect(entry.id).toMatch(/^[a-z][a-zA-Z0-9]*$/)
       expect(entry.slug).toMatch(/^[a-z0-9]+(-[a-z0-9]+)*$/)
       expect(entry.platforms.length).toBeGreaterThan(0)
+      // Always explicit, in this order: apps that predate `web` keep only
+      // ios and android of it (docs/help-center.md).
+      expect(
+        ['ios', 'android', 'web'].filter((p) => entry.platforms.includes(p))
+      ).toEqual(entry.platforms)
       expect(typeof entry.pinned).toBe('boolean')
       expect(Array.isArray(entry.related)).toBe(true)
       expect(entry.question.length).toBeGreaterThan(0)

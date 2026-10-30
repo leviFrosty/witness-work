@@ -1,4 +1,4 @@
-import { isLocale, type Locale, type Platform } from './contract'
+import { isLocale, isPlatform, type Locale, type Platform } from './contract'
 import { EMBEDDING_MODEL } from './embed'
 import type { LoadedEntry, LoadedIndex } from './searchIndex'
 import { tokenize } from './text'
@@ -32,8 +32,8 @@ export function parseSearchParams(url: URL): Parsed {
   if (!isLocale(locale)) return { ok: false, error: 'unknown locale' }
 
   const platform = get('platform') || undefined
-  if (platform !== undefined && platform !== 'ios' && platform !== 'android')
-    return { ok: false, error: 'platform must be ios or android' }
+  if (platform !== undefined && !isPlatform(platform))
+    return { ok: false, error: 'platform must be ios, android or web' }
 
   let appVersion: number | undefined
   const rawVersion = get('appVersion')

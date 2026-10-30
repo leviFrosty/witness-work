@@ -53,9 +53,10 @@ export type RichTextBlock =
 
 export type RichTextDoc = { type: 'doc'; content: RichTextBlock[] }
 
-export type HelpPlatform = 'ios' | 'android'
+export type HelpPlatform = 'ios' | 'android' | 'web'
 
-export const HELP_PLATFORMS: HelpPlatform[] = ['ios', 'android']
+/** Every platform, in the order bundles list them. */
+export const HELP_PLATFORMS: HelpPlatform[] = ['ios', 'android', 'web']
 
 /** One question in one locale, as shipped in bundles (contract v1). */
 export type HelpEntry = {

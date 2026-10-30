@@ -22,7 +22,7 @@ const ImportDataScreen = () => {
   const theme = useTheme()
   const navigation = useNavigation<RootStackNavigation>()
   const deviceSyncAvailable = useDeviceSyncAvailable()
-  const { importing, importBackup } = useBackupImport({
+  const { importing, importBackup, unlockSheet } = useBackupImport({
     source: 'settings',
     entryPoint: 'import_data',
   })
@@ -59,6 +59,7 @@ const ImportDataScreen = () => {
             onSelect={select}
           />
         </ScrollView>
+        {unlockSheet}
       </Wrapper>
     </SettingsInputLayout>
   )

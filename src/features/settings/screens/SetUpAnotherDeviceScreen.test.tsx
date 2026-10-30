@@ -35,6 +35,9 @@ vi.mock('@/app/account/attestationCopy', () => ({
   platformKey: (ios: string) => ios,
 }))
 vi.mock('@/app/account/handoff', () => ({ approveHandoff: vi.fn() }))
+vi.mock('@/lib/deviceOwner', () => ({ confirmDeviceOwner: vi.fn() }))
+vi.mock('@/lib/logger', () => import('@/__tests__/mocks/logger'))
+vi.mock('@/stores/toasts', () => ({ toast: { error: vi.fn() } }))
 vi.mock('@/lib/locales', () => ({ default: { t: (key: string) => key } }))
 vi.mock(
   '@/features/settings/components/account/handoff/HandoffQrPanel',

@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { ScrollView } from 'react-native'
 import {
   useNavigation,
@@ -12,7 +13,11 @@ import {
 import Wrapper from '@/components/ui/layout/Wrapper'
 import { platformKey } from '@/app/account/attestationCopy'
 import { approveHandoff, type OfferStartProblem } from '@/app/account/handoff'
+import { confirmDeviceOwner } from '@/lib/deviceOwner'
 import i18n, { type TranslationKey } from '@/lib/locales'
+import { logger } from '@/lib/logger'
+import type { OfferSession } from '@/lib/serverAccount/handoffSession'
+import { toast } from '@/stores/toasts'
 import type { RootStackNavigation, RootStackParamList } from '@/types/rootStack'
 import HandoffQrPanel from '@/features/settings/components/account/handoff/HandoffQrPanel'
 import HandoffApproval from '@/features/settings/components/account/handoff/HandoffApproval'
@@ -52,6 +57,24 @@ const SetUpAnotherDeviceScreen = () => {
   )
   // The other phone gets the account's buddies only when there are any.
   const hasBuddies = useBuddies((state) => state.buddies.length > 0)
+  // Allow asks the device's owner first; the key goes only once they confirm.
+  const [confirming, setConfirming] = useState(false)
+
+  const allow = async (offer: OfferSession, device: string) => {
+    if (confirming) return
+    setConfirming(true)
+    try {
+      const outcome = await approveHandoff(offer, {
+        confirmOwner: () =>
+          confirmDeviceOwner(i18n.t('handoff_unlockPrompt', { device })),
+      })
+      if (outcome === 'failed') toast.error(i18n.t('handoff_unlockFailed'))
+    } catch (error) {
+      logger.warn('[handoff] allowing failed', error)
+    } finally {
+      setConfirming(false)
+    }
+  }
 
   const newCodeAction = {
     label: i18n.t('handoff_newCode'),
@@ -99,9 +122,9 @@ const SetUpAnotherDeviceScreen = () => {
           <HandoffApproval
             hello={state.hello}
             code={state.code}
-            sending={state.step === 'sending'}
+            sending={state.step === 'sending' || confirming}
             sendFailed={state.step === 'confirm' && state.sendFailed}
-            onAllow={() => void approveHandoff(session)}
+            onAllow={() => void allow(session, state.hello.deviceName)}
             onDecline={() => void session.decline()}
           />
         )

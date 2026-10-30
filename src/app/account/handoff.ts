@@ -17,6 +17,7 @@ import {
   losesSomething,
 } from '@/lib/accountKey/accountKey'
 import { analytics } from '@/lib/analytics'
+import type { DeviceOwnerCheck } from '@/lib/deviceOwner'
 import { logger } from '@/lib/logger'
 import { accountSessions, serverAccount } from '@/lib/serverAccount'
 import { useBackupState } from '@/lib/serverAccount/backupStore'
@@ -214,10 +215,38 @@ export async function startOfferHandoff(
   return { ok: true, session }
 }
 
-/** Allow: sends the account key to the new phone. */
-export function approveHandoff(session: OfferSession): Promise<void> {
-  analytics.capture('handoff_answered', { answer: 'allow' })
-  return session.approve()
+/** Offers whose Allow the device's owner already confirmed, and how. */
+const ownerChecks = new WeakMap<OfferSession, 'confirmed' | 'noLock'>()
+
+/**
+ * Allow: sends the account key to the new phone once the device's owner
+ * confirms it (Face ID, Touch ID, fingerprint, passcode or screen lock), so
+ * someone holding the unlocked phone can't sign their own phone in. Tapping
+ * Allow again after a send that didn't get through doesn't ask again.
+ */
+export async function approveHandoff(
+  session: OfferSession,
+  { confirmOwner }: { confirmOwner: () => Promise<DeviceOwnerCheck> }
+): Promise<'sent' | 'cancelled' | 'failed'> {
+  let owner = ownerChecks.get(session)
+  if (!owner) {
+    const check = await confirmOwner().catch((error: unknown) => {
+      logger.warn("[handoff] couldn't confirm the device's owner", error)
+      return 'failed' as const
+    })
+    if (check === 'cancelled' || check === 'failed') {
+      analytics.capture('handoff_answered', { answer: 'allow', auth: check })
+      return check
+    }
+    owner = check
+    ownerChecks.set(session, owner)
+  }
+  analytics.capture('handoff_answered', {
+    answer: 'allow',
+    auth: owner === 'confirmed' ? 'device' : 'none',
+  })
+  await session.approve()
+  return 'sent'
 }
 
 /** What the new phone tells the old one about itself. */

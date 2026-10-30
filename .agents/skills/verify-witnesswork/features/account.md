@@ -8,7 +8,7 @@ Settings → Account shows the User's anonymous server account (its number and w
 - `recovery-key-show` is Show Recovery Key and its sheet (Copy, Share, the warning and its info popover).
 - `recovery-key-use` is Use a Recovery Key: the entry sheet, its live validation line, the replace confirmation, and the result alert.
 - `account-tools` is Tools → Account: key facts, cached account, `account/info`, Register now, Forget, the inbox link, a recovery key validator, Copy (dev), and Replace with a random key.
-- `handoff-offer` is Set Up Another Device on the phone with the account: the QR code with its countdown and Make a New Code, then "Allow … to sign in?" with the six-digit code, Allow / Don't Allow, and the result.
+- `handoff-offer` is Set Up Another Device on the phone with the account: the QR code with its countdown and Make a New Code, then "Allow … to sign in?" with the six-digit code, NO / YES side by side at the bottom (`handoff-decline`, `handoff-allow`), and the result.
 - `handoff-claim` is Sign In with QR Code on the new phone: the scanner (or an opened `/h` link), the code to compare, the replace warning when this phone has Buddies data, and "Signed in". Use a Recovery Key Instead sits under it.
 - `handoff-tools` is Tools → Account → Handoff: the current or last session with its request log, Copy QR link (dev), Simulate expiry or cancel, Show a QR code, Open the scanner, Run self-test, and a link parser with Sign in with this link.
 - `backup-settings` is Settings → Account → Backup: the WitnessWork Backup switch (off by default), Last Backup with its size or failure, Back Up Now, and the photos `InfoPopover`.
@@ -47,8 +47,8 @@ Simulators and emulators can't scan a real camera. The old phone shows the QR, a
 - **New phone.** `wwv link '<that link>' --platform <other>`: the route is `Sign In With QR Code` and it shows "Confirm on your other phone" with a code (`handoff-code`).
   - On iOS, `wwv link` (`simctl openurl`) opens the app only for paths in the production host's `apple-app-site-association`. Until a ww-api with `/h` in it is deployed, the link opens Safari instead; hand the link to the screen with `wwv nav "Sign In With QR Code" '{"entry":"onboarding","link":"<link>"}'` (what `HandoffLinkListener` does) or Tools → Account → Handoff → paste → Sign in with this link. Android's `wwv link` goes through the app's own intent filter either way.
 - **Compare.** Within 1.5 s the old phone shows "Allow … to sign in?" with the same code. `wwv eval '__WW_DEV__.handoff.state()'` on each phone gives `role`, `step`, `status`, `code`, and the request log.
-- **Allow.** The new phone asks first when it has Buddies data ("Sign in with this account?", naming the buddies). Confirm: "Signed in", and the old phone shows "… is signed in". `__WW_DEV__.account.read()` then `account.last` on both: the same `accountPub` and `inboxId`, and the new phone's `registeredInboxId` is that inbox once Buddies started (only when the account had Buddies).
-- **Don't Allow** on the old phone: the new phone says "Your other phone stopped or didn't allow it". Declining the new phone's warning cancels: the old phone says "Your other phone stopped signing in".
+- **YES** (`handoff-allow`; it asks for Face ID or the passcode first). The new phone asks first when it has Buddies data ("Sign in with this account?", naming the buddies). Confirm: "Signed in", and the old phone shows "… is signed in". `__WW_DEV__.account.read()` then `account.last` on both: the same `accountPub` and `inboxId`, and the new phone's `registeredInboxId` is that inbox once Buddies started (only when the account had Buddies).
+- **NO** (`handoff-decline`) on the old phone: the new phone says "Your other phone stopped or didn't allow it". Declining the new phone's warning cancels: the old phone says "Your other phone stopped signing in".
 - **Expiry and cancel.** Tools → Account → Handoff → Simulate expiry or Simulate cancel (server). Make a New Code cancels the old one.
 - **Self-test.** `wwv eval '__WW_DEV__.handoff.selfTest()'`, then `__WW_DEV__.handoff.selfTestResult`: every step `ok`, ending with `Status → done (old)`.
 - **A buddy to lose or keep.** A headless Buddies engine on the local relay (see `relay.interop.test.ts` for the setup) can create an invite: open it with `wwv link`, Accept, then have the engine confirm.
@@ -63,6 +63,15 @@ Needs the backup ops on the local worker (`WW_API_DIR=<ww-api checkout>` until t
 - **A corrupt slot.** `__WW_DEV__.backup.simulateCorruptDownload()` before the restore: it restores the rest and says one couldn't be read.
 - **Delete Backup.** The Backups list → Delete Backup → confirm: `list()` from either phone is `[]` and backup is off.
 - **Delete Buddies.** With backup on, Buddies Settings → Delete My Buddies Data says the backup is deleted and the recovery key changes. After it, the old account's `list()` is `[]` (check from another phone on that account), the log says `deleted every slot before the account key changed`, and within about a minute the phone uploads under a new `accountPub`.
+
+### Backup files
+
+Settings → Backup (`wwv nav "Import and Export"`) → Create Backup opens the protection sheet (`create-backup-sheet`: My Account / Password, `backup-password`, `backup-password-confirm`, `backup-create`); Restore From Backup opens `unlock-backup-sheet` for a password file (`unlock-backup-password`, `unlock-backup-submit`, `unlock-backup-wrong`). Format and cost: [`docs/backup-files.md`](../../../../docs/backup-files.md).
+
+- **Without the UI.** `__WW_DEV__.backupFile.lock('password', 'correct horse')` (or `'account'`), `unlock('…')`, `bench()` (Argon2id's time on this device), then `backupFile.last`. A password lock takes about 3.5 s on an iOS simulator and 4.5 s on an emulator.
+- **Files to restore.** `__WW_DEV__.backupFile.share(kind)` opens the share sheet with `ww-verify-<kind>.json` (`locked`, the last `lock()`; `plain`, an unlocked file as older versions wrote; `otherAccount`, locked to a random key). On iOS, Save to Files → On My iPhone; the picker's Browse tab finds it. The share sheet and picker aren't in the accessibility tree: tap by points, and a first tap on Save to Files is sometimes lost.
+- **Android picker.** `ad` commands reopen the app first, which closes the system file picker, so drive it with raw `adb` (from the main agent, not a subagent): `save(kind)`, then `adb exec-out run-as com.leviwilkerson.jwtimedev cat cache/ww-verify-<kind>.json` to the Mac, `adb push` it to `/sdcard/Download/`, and tap the picker by coordinates from `adb exec-out screencap -p` (`uiautomator dump` fails while agent-device holds the UI). Type into the password sheet with `adb shell input text`, and submit with `KEYCODE_ENTER`.
+- An alert with only the system OK (Locked to another account, Sign in first) stays in `__WW_DEV__.alerts()` after it's dismissed.
 
 ## Gotchas
 

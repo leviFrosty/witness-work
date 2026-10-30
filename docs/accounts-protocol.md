@@ -298,6 +298,8 @@ Each device keeps its own encrypted slot in R2, at `v1/<accountId>/<slotId>`. A 
 
 Cloud Sync ([ADR 0030](./adr/0030-cloud-sync-through-ww-api.md)): each device on it keeps one end-to-end encrypted snapshot of its data in a slot of the account, and every device merges the others' with the sync engine ([icloud-sync.md](./icloud-sync.md)). One `AccountSync` Durable Object per account holds the slots' metadata and the live sockets; R2 holds the ciphertext at `v1/<accountId>/<slotId>`.
 
+Photos over Cloud Sync, and the account's request to turn Cloud Sync on, are in [cloud-sync-photos.md](./cloud-sync-photos.md) ([ADR 0040](./adr/0040-sync-is-free-and-cloud-sync-carries-photos.md)).
+
 ### The blob
 
 The backup's format under its own key and AAD:

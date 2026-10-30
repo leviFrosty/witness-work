@@ -69,8 +69,8 @@ Ordered, and resumable after a crash:
 2. Show the new recovery key and require "I've saved it".
 3. Commit on the server.
 4. Store the key in iCloud Keychain, Block Store, or the browser.
-5. Re-encrypt every Cloud Sync slot and backup slot under the new key,
-   including other devices' slots.
+5. Re-encrypt every Cloud Sync slot, Cloud Sync photo (ADR 0040 §6) and
+   backup slot under the new key, including other devices' slots.
 6. Reset Buddies with reconnect invites (§5).
 7. Delete the old key.
 

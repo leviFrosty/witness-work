@@ -790,7 +790,6 @@ export const PREFERENCE_DEFAULTS = {
    * Settings Devices list. Device-local: see `src/lib/syncDevices.ts`.
    */
   iCloudSyncDevices: {} as SyncDeviceFiles,
-  iCloudSyncPausedForLapse: false,
   iCloudFreshSetup: false,
   hasReconciledSyncDefinitions: false,
   iCloudSyncEnabled: false,
@@ -816,6 +815,13 @@ export const PREFERENCE_DEFAULTS = {
    * to Cloud Sync. Per-device (non-syncable).
    */
   syncProvider: null as 'cloud' | 'platform' | null,
+  /**
+   * True on an install from before sync was free (ADR 0040 §2), set once by the
+   * v16 persist migration: a store that hadn't been saved yet (a new install)
+   * keeps false. An older install keeps the sync defaults it had, and isn't
+   * switched to Cloud Sync. Per-device (non-syncable); never written again.
+   */
+  installedBeforeFreeSync: false,
   /**
    * The one-time offer to move a device already on iCloud/Drive to Cloud Sync:
    * `pending` until the User switches or dismisses it. Per-device.
@@ -1383,6 +1389,9 @@ export { NON_SYNCABLE_PREFERENCE_KEYS } from '@/lib/syncPreferencePolicy'
  *   timestamp (see {@link migrateDropProgressBarDetailsPreference}).
  * - V14 → v15: the new Quick Actions Home section starts visible (see
  *   {@link migrateShowQuickActionsHomeSection}).
+ * - V15 → v16: marks the install as one from before sync was free, and drops the
+ *   retired Supporter lapse pause (see
+ *   {@link migrateMarkInstalledBeforeFreeSync}).
  *
  * Exported for unit testing. Idempotent — re-running on an already-migrated
  * blob is a no-op.
@@ -1438,6 +1447,39 @@ export const migratePreferencesPersistedState = (
   }
   if (version < 15) {
     next = migrateShowQuickActionsHomeSection(next)
+  }
+  if (version < 16) {
+    next = migrateMarkInstalledBeforeFreeSync(next)
+  }
+  return next
+}
+
+/**
+ * V15 → v16: any store saved before this version is an existing install (ADR
+ * 0040 §2), so it keeps its sync defaults. Persist runs migrations only on a
+ * saved store, so a new install keeps the default (false). Also drops
+ * `iCloudSyncPausedForLapse`: sync no longer pauses when Supporter access
+ * lapses, so a device an older version paused resumes.
+ */
+export const migrateMarkInstalledBeforeFreeSync = (state: unknown): unknown => {
+  if (!state || typeof state !== 'object') return state
+  const { iCloudSyncPausedForLapse: _paused, ...rest } = state as Record<
+    string,
+    unknown
+  >
+  const next: Record<string, unknown> = {
+    ...rest,
+    installedBeforeFreeSync: true,
+  }
+  const timestamps = next.preferenceUpdatedAt
+  if (
+    timestamps &&
+    typeof timestamps === 'object' &&
+    'iCloudSyncPausedForLapse' in timestamps
+  ) {
+    const { iCloudSyncPausedForLapse: _stamp, ...restTimestamps } =
+      timestamps as Record<string, unknown>
+    next.preferenceUpdatedAt = restTimestamps
   }
   return next
 }
@@ -2371,7 +2413,7 @@ export const usePreferences = create(
     {
       name: 'preferences',
       storage: createPreferencesStorage(),
-      version: 15,
+      version: 16,
       migrate: (persistedState, version) =>
         migratePreferencesPersistedState(persistedState, version),
     }

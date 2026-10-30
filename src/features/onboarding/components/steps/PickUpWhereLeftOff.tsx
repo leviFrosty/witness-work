@@ -3,7 +3,7 @@ import { useProfile } from '@/stores/profile'
 import { useContacts } from '@/stores/contactsStore'
 import { useConversations } from '@/stores/conversationStore'
 import { useServiceReport } from '@/stores/serviceReport'
-import { FRESH_SETUP_PREFERENCES } from '@/lib/syncPreferencePolicy'
+import { freshSetupPreferences } from '@/lib/syncPreferencePolicy'
 import { analytics } from '@/lib/analytics'
 import { View } from 'react-native'
 import { useIsFocused } from '@react-navigation/native'
@@ -209,7 +209,9 @@ const PickUpWhereLeftOff = ({ goBack, goNext }: StepProps) => {
               step_id: 'pickUpWhereLeftOff',
             })
           // Not a restore either way, so sync starts off as on a fresh setup.
-          usePreferences.getState().set(FRESH_SETUP_PREFERENCES)
+          usePreferences
+            .getState()
+            .set(freshSetupPreferences(usePreferences.getState()))
           goNext()
         }}
       >

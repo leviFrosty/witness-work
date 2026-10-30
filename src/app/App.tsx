@@ -36,9 +36,8 @@ import SilentForegroundAlerts from '@/app/notifications/SilentForegroundAlerts'
 import SystemMenu from '@/app/menu-bar/SystemMenu'
 import { ScribeRoot } from '@/features/scribe'
 import SupporterStoreSync from '@/features/supporter/components/SupporterStoreSync'
-import SupporterSyncDefault from '@/app/sync/components/SupporterSyncDefault'
+import PlatformSyncDefault from '@/app/sync/components/PlatformSyncDefault'
 import CloudSyncDefault from '@/app/sync/components/CloudSyncDefault'
-import SupporterSyncLapseGate from '@/app/sync/components/SupporterSyncLapseGate'
 import AppIconSync from '@/features/settings/components/AppIconSync'
 import { FeatureFlagsRuntime } from '@/lib/featureFlags'
 import '@/lib/analyticsConsent'
@@ -130,9 +129,8 @@ function UnlockedApp() {
         <FeatureFlagsRuntime />
         <ScribeRoot />
         <SupporterStoreSync />
-        <SupporterSyncDefault />
+        <PlatformSyncDefault />
         <CloudSyncDefault />
-        <SupporterSyncLapseGate />
         <AppIconSync />
         <ThemeProvider>
           <SafeAreaProvider>

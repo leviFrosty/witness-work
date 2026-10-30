@@ -8,8 +8,8 @@ import {
 
 /**
  * Per-feature access gate. Use this when you're deciding whether to render or
- * enable a specific feature. For raw subscription state (badges, upgrade CTAs,
- * sync mirroring) keep using `useIsSupporter` — that's a different question.
+ * enable a specific feature. For raw subscription state (badges, upgrade CTAs)
+ * keep using `useIsSupporter` — that's a different question.
  */
 const useFeatureAccess = (feature: FeatureKey): FeatureAccess => {
   const { isSupporter } = useIsSupporter()

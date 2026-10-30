@@ -363,7 +363,9 @@ describe('account sessions', () => {
     await info()
 
     expect(worker.opsCalled('session/refresh')).toEqual([
-      expect.objectContaining({ body: { refreshToken: 'rt-1' } }),
+      expect.objectContaining({
+        body: { refreshToken: 'rt-1', capabilities: ['sync-everyone'] },
+      }),
     ])
     expect(JSON.parse(store.value!).refreshToken).toBe('rt-3')
     clock.now += ACCESS_LIFETIME_MS
@@ -371,6 +373,7 @@ describe('account sessions', () => {
     // Each refresh sends the newest token, never a replaced one.
     expect(worker.opsCalled('session/refresh')[1].body).toEqual({
       refreshToken: 'rt-3',
+      capabilities: ['sync-everyone'],
     })
     expect(worker.opsCalled('session/open')).toHaveLength(1)
   })
@@ -498,7 +501,26 @@ describe('account sessions', () => {
     expect(worker.opsCalled('session/refresh')[0].body).toEqual({
       refreshToken: expect.any(String),
       appVersion: '3.12.0',
+      capabilities: ['sync-everyone'],
     })
+  })
+
+  it('asks for Cloud Sync for everyone on open and on every refresh', async () => {
+    // ww-api gives everyone's Cloud Sync only to a session that says it can
+    // take it (ADR 0040 §2). Every refresh repeats it, so a session an older
+    // app opened gains it after the update.
+    const { worker, clock, info } = setup()
+    await info()
+    clock.now += ACCESS_LIFETIME_MS
+    await info()
+    clock.now += ACCESS_LIFETIME_MS
+    await info()
+
+    expect(openPayload(worker).capabilities).toEqual(['sync-everyone'])
+    const refreshes = worker.opsCalled('session/refresh')
+    expect(refreshes.length).toBeGreaterThanOrEqual(2)
+    for (const refresh of refreshes)
+      expect(refresh.body).toMatchObject({ capabilities: ['sync-everyone'] })
   })
 
   it('leaves out an app version the server would refuse', async () => {
@@ -692,7 +714,7 @@ describe('account sessions', () => {
     // rt-1 is never presented again: a new session, attested.
     expect(
       first.worker.opsCalled('session/refresh').map((call) => call.body)
-    ).toEqual([{ refreshToken: 'rt-1' }])
+    ).toEqual([{ refreshToken: 'rt-1', capabilities: ['sync-everyone'] }])
     expect(relaunched.attestation.assert).toHaveBeenCalledTimes(1)
     expect(relaunched.events).toEqual([
       expect.objectContaining({
@@ -726,6 +748,7 @@ describe('account sessions', () => {
     expect(relaunched.attestation.assert).not.toHaveBeenCalled()
     expect(first.worker.opsCalled('session/refresh').at(-1)?.body).toEqual({
       refreshToken: 'rt-5',
+      capabilities: ['sync-everyone'],
     })
   })
 
@@ -772,6 +795,7 @@ describe('account sessions', () => {
     expect(relaunched.attestation.assert).not.toHaveBeenCalled()
     expect(first.worker.opsCalled('session/refresh')[0].body).toEqual({
       refreshToken: 'rt-1',
+      capabilities: ['sync-everyone'],
     })
   })
 

@@ -477,6 +477,7 @@ describe('web sign-up and recovery', () => {
       label: 'l',
       device: 'd',
       appVersion: '3.1.0',
+      capabilities: ['sync-everyone'],
     })
     expect(JSON.stringify(payload)).not.toContain(PRF)
   })

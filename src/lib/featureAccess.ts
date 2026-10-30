@@ -5,13 +5,12 @@
  * without grepping every call site.
  *
  * The supporter check itself still lives in `useIsSupporter` for non-gating
- * uses (badge dates, upgrade CTAs, sync mirroring) — this module only owns the
- * per-feature gating decision.
+ * uses (badge dates, upgrade CTAs) — this module only owns the per-feature
+ * gating decision. Sync is free for everyone and has no gate (ADR 0040 §1).
  */
 
 export type FeatureKey =
   | 'customAccentColor'
-  | 'iCloudSync'
   | 'customAppIcon'
   | 'routePlanning'
   | 'buddyColor'
@@ -20,7 +19,6 @@ type GateRule = { gate: 'supporter-only' }
 
 export const FEATURES: Record<FeatureKey, GateRule> = {
   customAccentColor: { gate: 'supporter-only' },
-  iCloudSync: { gate: 'supporter-only' },
   customAppIcon: { gate: 'supporter-only' },
   // Also enforced server-side: ww-api refuses to optimize for non-Supporters.
   routePlanning: { gate: 'supporter-only' },

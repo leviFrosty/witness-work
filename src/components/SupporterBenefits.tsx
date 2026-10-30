@@ -1,7 +1,6 @@
 import {
   Palette as PaletteIcon,
   Plus as PlusIcon,
-  RefreshCw as RefreshCwIcon,
   Route as RouteIcon,
   Shapes as ShapesIcon,
   Sparkles as SparklesIcon,
@@ -13,68 +12,6 @@ import Text from '@/components/ui/MyText'
 import i18n from '@/lib/locales'
 import { tracking } from '@/lib/tracking'
 import { useScribeOffered } from '@/hooks/useScribeEnabled'
-
-const HeroCard = () => {
-  const theme = useTheme()
-  return (
-    <View
-      style={{
-        borderRadius: theme.numbers.borderRadiusLg,
-        backgroundColor: theme.colors.supporterTranslucent,
-        borderWidth: 1,
-        borderColor: theme.colors.supporter,
-        padding: 16,
-        gap: 12,
-      }}
-    >
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-        <View
-          style={{
-            width: 40,
-            height: 40,
-            borderRadius: 20,
-            backgroundColor: theme.colors.supporter,
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <LucideIcon
-            icon={RefreshCwIcon}
-            size={18}
-            color={theme.colors.textInverse}
-          />
-        </View>
-        <View style={{ flex: 1 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-            <Text
-              style={{
-                fontSize: theme.fontSize('lg'),
-                fontFamily: theme.fonts.bold,
-                color: theme.colors.text,
-              }}
-            >
-              {i18n.t('supporterHeroTitle')}
-            </Text>
-          </View>
-          <Text
-            style={{
-              fontSize: 13,
-              color: theme.colors.textAlt,
-              marginTop: 2,
-              lineHeight: 18,
-            }}
-          >
-            {i18n.t(
-              Platform.OS === 'android'
-                ? 'supporterHeroDescAndroid'
-                : 'supporterHeroDesc'
-            )}
-          </Text>
-        </View>
-      </View>
-    </View>
-  )
-}
 
 type PerkProps = { icon: AppIcon; title: string; desc: string }
 
@@ -120,12 +57,7 @@ const PerkRow = ({ icon, title, desc }: PerkProps) => {
   )
 }
 
-interface Props {
-  /** Hides the hero (device sync) row. Useful in narrow contexts. */
-  compact?: boolean
-}
-
-const SupporterBenefits = ({ compact }: Props) => {
+const SupporterBenefits = () => {
   const theme = useTheme()
   const scribeOffered = useScribeOffered()
 
@@ -142,7 +74,6 @@ const SupporterBenefits = ({ compact }: Props) => {
       >
         {i18n.t('supportersUnlock')}
       </Text>
-      {!compact && <HeroCard />}
       <View style={{ gap: 14 }}>
         {scribeOffered && (
           <PerkRow

@@ -12,9 +12,8 @@ export const UPLOAD_GRACE_MS = 30_000
 export type ICloudStatusInput = {
   enabled: boolean
   available: boolean
+  /** Cloud Sync paused by the server: its switch, or the account's answer. */
   paused: boolean
-  /** Cloud Sync paused by the server's switch, not by Supporter access. */
-  pausedBySwitch?: boolean
   needsResolution: boolean
   issue: string | null
   uploadIssue: 'icloud-full' | 'upload-failed' | null
@@ -42,16 +41,16 @@ export type ICloudStatusInput = {
 export type ICloudStatusDisplay = { text: string; subtitle?: string }
 
 /**
- * Same order on iOS and Android: what blocks sync entirely (a choice, lapse,
- * off, reconnect, signed out), then no connection, a full account, throttling,
- * read and upload problems, pending edits, and finally when it last synced.
+ * Same order on iOS and Android: what blocks sync entirely (a choice, Cloud
+ * Sync paused, off, reconnect, signed out), then no connection, a full account,
+ * throttling, read and upload problems, pending edits, and finally when it last
+ * synced.
  */
 
 export function buildICloudStatus({
   enabled,
   available,
   paused,
-  pausedBySwitch = false,
   needsResolution,
   issue,
   uploadIssue,
@@ -69,14 +68,7 @@ export function buildICloudStatus({
 }: ICloudStatusInput): ICloudStatusDisplay {
   if (needsResolution)
     return { text: i18n.t(syncKey('iCloudStatusNeedsResolution')) }
-  if (paused)
-    return {
-      text: i18n.t(
-        pausedBySwitch
-          ? 'iCloudStatusCloudSyncPaused'
-          : syncKey('iCloudStatusSupporterPaused')
-      ),
-    }
+  if (paused) return { text: i18n.t('iCloudStatusCloudSyncPaused') }
   if (!enabled) return { text: i18n.t(syncKey('iCloudStatusDisabled')) }
   if (needsReconnect) return { text: i18n.t('googleDriveStatusNeedsReconnect') }
   if (!available) return { text: i18n.t(syncKey('iCloudStatusUnavailable')) }

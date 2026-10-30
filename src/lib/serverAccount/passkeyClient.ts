@@ -16,6 +16,7 @@ import {
   sendSignedAccountOp,
   unexpectedResponse,
 } from '@/lib/serverAccount/client'
+import { SESSION_CAPABILITIES } from '@/lib/serverAccount/capabilities'
 import {
   type PasskeyWrap,
   withoutPrfResults,
@@ -437,7 +438,11 @@ export async function webSignup(
   if (isSessionAppVersion(appVersion)) fields.appVersion = appVersion
   const response = await signed(
     'web/signup',
-    { ...fields, response: posted(credential) },
+    {
+      ...fields,
+      capabilities: SESSION_CAPABILITIES,
+      response: posted(credential),
+    },
     options
   )
   const session = parseOpenedSession(response.data, response.status)

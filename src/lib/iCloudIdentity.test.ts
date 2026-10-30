@@ -215,7 +215,6 @@ describe('checkICloudIdentity', () => {
     iCloudIdentityToken: 'account-a',
     iCloudSyncPendingPush: true,
     iCloudSyncNeedsResolution: true,
-    iCloudSyncPausedForLapse: true,
     iCloudImageSync: {
       'witness-work-img-profile.jpg': { localMtime: 1, uploadedMtime: 1 },
     },
@@ -301,7 +300,6 @@ describe('checkICloudIdentity', () => {
       iCloudIdentityToken: 'account-b',
       iCloudSyncPendingPush: false,
       iCloudSyncNeedsResolution: false,
-      iCloudSyncPausedForLapse: false,
       iCloudImageSync: {},
       lastiCloudPushedAt: null,
       // Uploads to the previous account's iCloud say nothing about this one.

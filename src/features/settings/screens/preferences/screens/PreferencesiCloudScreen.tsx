@@ -19,9 +19,6 @@ import InputRowContainer from '@/components/ui/inputs/InputRowContainer'
 import InputRowButton from '@/components/ui/inputs/InputRowButton'
 import Text from '@/components/ui/MyText'
 import Badge from '@/components/ui/Badge'
-import SyncSupporterGate from '@/features/settings/components/sync/SyncSupporterGate'
-import SupporterInfoSheet from '@/components/SupporterInfoSheet'
-import useIsSupporter from '@/hooks/useIsSupporter'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import { optionSyncKey, platformSyncKey, syncKey } from '@/lib/syncCopy'
@@ -148,7 +145,6 @@ const PreferencesiCloudScreenInner = () => {
     iCloudSyncIssue,
     iCloudSyncErrorCode,
     iCloudSyncPendingPush,
-    iCloudSyncPausedForLapse,
     iCloudSyncNeedsResolution,
     iCloudAccountChangedAt,
     googleDriveNeedsReconnect,
@@ -170,10 +166,6 @@ const PreferencesiCloudScreenInner = () => {
   const offer = usePreferences(showsCloudSyncOffer)
   const [switchingTo, setSwitchingTo] = useState<SyncOption | null>(null)
   const otherDevicesSignedIn = useOtherDevicesSignedIn(accountHasOtherDevices)
-  // With Cloud Sync open to everyone the screen isn't gated, but iCloud and
-  // Google Drive sync still are.
-  const { isSupporter } = useIsSupporter()
-  const [platformGateOpen, setPlatformGateOpen] = useState(false)
   // Android syncs through the connected Google Account's Drive (ADR 0019).
   const googleDrive = usesGoogleDriveSync() && syncProvider !== 'cloud'
   const [syncing, setSyncing] = useState(false)
@@ -518,10 +510,6 @@ const PreferencesiCloudScreenInner = () => {
     source: 'settings' | 'offer' = 'settings'
   ) => {
     if (syncing || switchingTo || next === option) return
-    if (next === 'platform' && !isSupporter) {
-      setPlatformGateOpen(true)
-      return
-    }
     if (source === 'offer')
       analytics.capture('cloud_sync_offer_answered', { choice: 'switch' })
     if (option === 'off') {
@@ -732,9 +720,11 @@ const PreferencesiCloudScreenInner = () => {
   const status = buildICloudStatus({
     enabled: iCloudSyncEnabled,
     available,
-    // Cloud Sync's entitlement is the server's (ADR 0030).
-    paused: onCloud ? cloudSyncEntitled === false : iCloudSyncPausedForLapse,
-    pausedBySwitch: onCloud && cloudSyncConfig?.enabled === false,
+    // Only Cloud Sync pauses: the server's switch or its entitlement
+    // (ADR 0030). iCloud and Google Drive sync are free (ADR 0040).
+    paused:
+      onCloud &&
+      (cloudSyncEntitled === false || cloudSyncConfig?.enabled === false),
     needsResolution: iCloudSyncNeedsResolution,
     issue: iCloudSyncIssue,
     uploadIssue: iCloudUploadIssue,
@@ -1355,20 +1345,13 @@ const PreferencesiCloudScreenInner = () => {
         remote={pendingRemote}
         onChoose={handleFirstEnableChoice}
       />
-      <SupporterInfoSheet
-        open={platformGateOpen}
-        setOpen={setPlatformGateOpen}
-        featureKey='iCloudSync'
-      />
     </Wrapper>
   )
 }
 
 const PreferencesiCloudScreen = () => (
   <SettingsInputLayout>
-    <SyncSupporterGate>
-      <PreferencesiCloudScreenInner />
-    </SyncSupporterGate>
+    <PreferencesiCloudScreenInner />
   </SettingsInputLayout>
 )
 

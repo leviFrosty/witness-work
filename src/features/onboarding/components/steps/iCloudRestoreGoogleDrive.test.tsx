@@ -8,7 +8,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 const runtime = vi.hoisted(() => ({
   remoteChangeListeners: [] as Array<() => void>,
   preferencesSet: vi.fn(),
-  isSupporter: false,
   connected: false,
   connectResult: true,
 }))
@@ -145,9 +144,6 @@ vi.mock('@/stores/preferences', () => ({
   }),
 }))
 vi.mock('@/stores/profile', () => ({ useProfile: () => ({ set: vi.fn() }) }))
-vi.mock('@/hooks/useFeatureAccess', () => ({
-  default: () => ({ hasAccess: runtime.isSupporter }),
-}))
 
 let renderer: ReactTestRenderer | null = null
 
@@ -164,7 +160,6 @@ beforeEach(() => {
   vi.clearAllMocks()
   vi.stubGlobal('requestAnimationFrame', (callback: () => void) => callback())
   runtime.remoteChangeListeners = []
-  runtime.isSupporter = false
   runtime.connected = false
   runtime.connectResult = true
 })
@@ -218,7 +213,7 @@ describe('onboarding Google Drive restore', () => {
     })
     expect(iCloudSync.peekRemotePayload).toHaveBeenCalledOnce()
     expect(texts()).toContain('iCloudRestoreFoundTitle')
-    expect(actions()[0].props.children).toBe('iCloudRestoreActionAndroid')
+    expect(actions()[0].props.children).toBe('iCloudRestoreActionWithSync')
 
     await act(async () => {
       await actions()[0].props.onPress()

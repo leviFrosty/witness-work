@@ -236,7 +236,6 @@ export const analyticsEventNames = [
   'icloud_sync_images_outcome',
   'icloud_sync_manual_outcome',
   'icloud_sync_manual_started',
-  'icloud_sync_paused',
   'icloud_sync_reset_adopted',
   'icloud_sync_reset_outcome',
   'icloud_sync_reset_started',

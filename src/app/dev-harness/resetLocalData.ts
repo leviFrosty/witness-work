@@ -96,7 +96,7 @@ export function resetLocalData() {
   void AsyncStorage.clear()
   const setPreferences = usePreferences.getState().set
   // Lock iCloud sync off + mark setByUser BEFORE wiping local data, otherwise
-  // SupporterSyncDefault (App.tsx) sees a supporter with no local records and
+  // PlatformSyncDefault (App.tsx) sees a device with no local records and
   // setByUser=false, calls resolveInitialEnable(), gets `pull`, and restores
   // everything from iCloud — kicking the user back to home instead of
   // onboarding. Re-applied after the defaults reset so the flag survives.

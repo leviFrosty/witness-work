@@ -27,7 +27,7 @@ RevenueCat customer id in the URL, so:
 - the return page strips it before analytics or session replay can see it;
 - the app sends no referrer.
 
-### 3. We are the merchant of record, so no EU or UK sales for now
+### 3. We are the merchant of record, so no sales where tax applies from the first sale
 
 RevenueCat Billing runs on our own Stripe account; RevenueCat isn't the
 seller. EU and UK VAT apply from the first sale, and we aren't registering for
@@ -37,7 +37,11 @@ either yet. So the web doesn't sell to buyers there:
   points EU and UK visitors to the app stores instead.
 - Stripe blocks EU and UK card and billing countries.
 
-We review other countries' tax thresholds before we reach them.
+Countries that tax digital sales from the first sale are blocked the same
+way, and all of Canada until the web can see provinces (Manitoba and
+Saskatchewan tax from the first sale). Countries with a registration threshold
+stay open; we review sales against those thresholds and register or block
+before reaching one.
 
 ### 4. The same customer everywhere
 
@@ -68,9 +72,11 @@ servers or the app. The privacy policy says so.
 
 ## Consequences
 
-- EU and UK Users support WitnessWork through the app stores for now.
-- We owe sales tax only where we reach a country's threshold, and nothing in
-  the EU or UK, because we don't sell there on the web.
+- Users in the EU, the UK, the other first-sale countries and Canada support
+  WitnessWork through the app stores for now.
+- We owe sales tax only where we reach a country's threshold, and nothing
+  where tax applies from the first sale, because we don't sell there on the
+  web.
 - RevenueCat's dashboard holds web products next to the store products. Its
   hosted portal handles subscription changes and cancelling for web
   purchases. Refunds go through support, from the dashboard.

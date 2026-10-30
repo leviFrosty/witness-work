@@ -1,7 +1,10 @@
 import { Contact } from '@/types/contact'
 import { ProfileAvatar } from '@/types/avatar'
 import { AvatarSource, DownloadedAvatar } from '@/app/sync/imageSync'
-import { parseContactMarker, isProfileMarker } from '@/app/sync/imageNames'
+import {
+  parseContactMarker,
+  isProfileMarker,
+} from '@/lib/syncTransport/imageNames'
 import { isManagedAvatarPath } from '@/lib/avatarFilePolicy'
 
 /**

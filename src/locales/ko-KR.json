@@ -5158,7 +5158,6 @@
   "cloudSyncTurnOff_title": "클라우드 동기화를 끌까요?",
   "cloudSyncTurnOff_description": "이 기기는 동기화를 중단하고 이 기기의 사본은 WitnessWork 서버에서 삭제됩니다. 데이터는 이 기기에 그대로 있고, 다른 기기들은 이미 동기화된 내용을 유지합니다.",
   "cloudSyncTurnOff_action": "끄기",
-  "cloudSyncPhotosNote": "클라우드 동기화에서는 연락처, 프로필, 메모 사진이 아직 추가한 기기에만 남습니다. 다른 기기에는 이니셜이나 대체 이미지가 표시됩니다.",
   "iCloudSyncCloud": "클라우드 동기화",
   "iCloudSync_summaryCloud": "iPhone과 Android 간 종단 간 암호화 동기화.",
   "iCloudSync_descriptionCloud": "WitnessWork 서버를 통해 연락처, 방문, 봉사 보고, 환경설정을 iPhone과 Android 기기 간에 종단 간 암호화로 동기화합니다.",

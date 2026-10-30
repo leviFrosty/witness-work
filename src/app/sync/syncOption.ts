@@ -1,3 +1,4 @@
+import { bookkeepingForNewTransport } from '@/app/sync/imageSync'
 import { iCloudSync } from '@/app/sync/iCloudSync'
 import {
   deleteOwnCloudSyncSlot,
@@ -29,8 +30,10 @@ export const currentSyncOption = (): SyncOption =>
  * Bookkeeping that belongs to one transport's namespace: its reset generation,
  * the devices seen in it, the last remote write, upload status. A switch starts
  * the new namespace fresh, then joins its newest generation when it reads it.
- * Photo bookkeeping stays: Cloud Sync never touches it, and iCloud/Drive
- * re-checks each photo against what's actually in the cloud.
+ * Photo bookkeeping keeps what it knows of this device's files and drops what
+ * it saw of the old cloud (`bookkeepingForNewTransport`): each photo is checked
+ * against the new one's listing, and a failure there (a full account) doesn't
+ * show on the new one.
  */
 const NAMESPACE_RESET = {
   iCloudSyncPendingPush: true,
@@ -52,6 +55,7 @@ const NAMESPACE_RESET = {
 
 type RestoredKey =
   | keyof typeof NAMESPACE_RESET
+  | 'iCloudImageSync'
   | 'syncProvider'
   | 'iCloudSyncEnabled'
   | 'iCloudSyncSetByUser'
@@ -61,6 +65,7 @@ type RestoredKey =
 /** The keys a failed switch puts back. */
 const RESTORED_KEYS: RestoredKey[] = [
   ...(Object.keys(NAMESPACE_RESET) as Array<keyof typeof NAMESPACE_RESET>),
+  'iCloudImageSync',
   'syncProvider',
   'iCloudSyncEnabled',
   'iCloudSyncSetByUser',
@@ -193,6 +198,9 @@ async function runSwitch(
 
   usePreferences.setState({
     ...NAMESPACE_RESET,
+    iCloudImageSync: bookkeepingForNewTransport(
+      usePreferences.getState().iCloudImageSync ?? {}
+    ),
     syncProvider: to,
     iCloudSyncSetByUser: true,
     iCloudSyncNeedsResolution: false,

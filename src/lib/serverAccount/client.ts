@@ -144,6 +144,11 @@ export type BearerAccountOp =
   | 'sync/list'
   | 'sync/get'
   | 'sync/delete'
+  | 'sync/photos/put'
+  | 'sync/photos/list'
+  | 'sync/photos/get'
+  | 'sync/photos/delete'
+  | 'sync/photos/usage'
   | 'passkeys'
   | 'passkeys/challenge'
   | 'passkeys/assert'
@@ -162,12 +167,16 @@ const BEARER_ROUTES: Partial<
 > = {
   'account/info': { method: 'GET', path: 'account' },
   sync: { method: 'GET', path: 'sync' },
+  'sync/photos/usage': { method: 'GET', path: 'sync/photos/usage' },
   passkeys: { method: 'GET', path: 'passkeys' },
 }
 
 /** How one bearer op travels, past the default JSON body and answer. */
 export type BearerAccountTransport = {
-  /** Sent as the raw body (`backup/put`, `sync/put`), with these headers. */
+  /**
+   * Sent as the raw body (`backup/put`, `sync/put`, `sync/photos/put`), with
+   * these headers.
+   */
   rawBody?: Uint8Array
   headers?: Record<string, string>
   responseType?: RequestOptions['responseType']

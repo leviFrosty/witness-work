@@ -113,6 +113,7 @@ async function device(
     deleteAsync: vi.fn(async (path: string) => {
       files.delete(path)
     }),
+    makeDirectoryAsync: vi.fn(async () => {}),
   }))
   // The app's Cloud Sync runtime, reduced to what a switch calls: the account
   // is ready when the server says so, and leaving deletes this device's slot.
@@ -146,9 +147,17 @@ async function device(
   const { deriveSyncKey } = await import(
     '@/lib/syncTransport/server/syncCrypto'
   )
+  const { derivePhotoKeys } = await import(
+    '@/lib/syncTransport/server/photoCrypto'
+  )
+  const photoUsage = await import('@/lib/syncTransport/server/photoUsage')
   const { useSupporter } = await import('@/features/supporter/stores/supporter')
   const { usePreferences } = await import('@/stores/preferences')
   const { default: useContacts } = await import('@/stores/contactsStore')
+  const { default: useConversations } = await import(
+    '@/stores/conversationStore'
+  )
+  const { useProfile } = await import('@/stores/profile')
   const { useUpdateRequired } = await import('@/lib/appUpdate/updateRequired')
 
   const driveTransport = createGoogleDriveTransport({
@@ -180,6 +189,7 @@ async function device(
     access: async () => ({
       accountId,
       syncKey: deriveSyncKey(accountKey),
+      photoKeys: derivePhotoKeys(accountKey),
       options: {
         baseUrl: 'https://api.test',
         authorize: (run) => run(`Bearer ${account}`),
@@ -192,7 +202,23 @@ async function device(
     deviceName: () => name,
     platform: os,
     now: () => Date.now(),
-    onRefused: () => usePreferences.setState({ cloudSyncEntitled: false }),
+    onRefused: (refusal) =>
+      refusal !== 'photos_disabled' &&
+      usePreferences.setState({ cloudSyncEntitled: false }),
+    files: {
+      size: async (path) => files.get(path)?.length ?? 0,
+      read: async (path) => {
+        const bytes = files.get(path)
+        if (!bytes) throw new Error(`no file at ${path}`)
+        return bytes
+      },
+      write: async (path, bytes) => {
+        files.set(path, bytes.slice())
+      },
+    },
+    photoSwitch: () => usePreferences.getState().cloudSyncPhotos,
+    slotId: () => identity.ensureSyncDeviceId(),
+    onPhotoUsage: photoUsage.recordPhotoUsage,
   })
   provider.registerCloudSyncTransport(cloudTransport)
   runtimeHolder.leave = () =>
@@ -205,6 +231,7 @@ async function device(
     iCloudSyncEnabled: option !== 'off',
     cloudSyncConfig: { enabled: true, entitlement: 'supporter' },
     cloudSyncEntitled: entitled,
+    cloudSyncPhotos: true,
     hasMigratedToSyncSchema: true,
     hasReconciledSyncDefinitions: true,
   })
@@ -220,8 +247,12 @@ async function device(
     name,
     account,
     cloudTransport,
+    files,
+    photoUsage,
     usePreferences,
     useContacts,
+    useConversations,
+    useProfile,
     useUpdateRequired,
     slotId: () => usePreferences.getState().iCloudDeviceId!,
     contactNames: () =>
@@ -713,5 +744,461 @@ describe('Choosing an option', () => {
     await phone.switchSyncOption('cloud', 'offer')
     expect(phone.showsCloudSyncOffer()).toBe(false)
     expect(phone.usePreferences.getState().cloudSyncOffer).toBe('dismissed')
+  })
+})
+
+const DOCS = 'file:///test/Documents/'
+const picked = (id: string, revision: string) =>
+  `${DOCS}contact-${id}-avatar-picked-${revision}.jpg`
+const withPhoto = (
+  record: ReturnType<typeof contact>,
+  revision: string | undefined,
+  value = picked(record.id, revision ?? 'legacy')
+) => ({
+  ...record,
+  avatar: { type: 'image', value, ...(revision ? { revision } : {}) },
+})
+const noteWithPhoto = (photoId: string) => ({
+  v: 1,
+  textHash: 'h',
+  doc: {
+    type: 'doc',
+    content: [
+      { type: 'image', attrs: { id: photoId, width: 400, height: 300 } },
+    ],
+  },
+})
+const visit = (id: string, photoId: string | null, updatedAt = NOW) => ({
+  id,
+  contact: { id: 'c1' },
+  date: '2026-05-01T12:00:00.000Z',
+  note: 'Visit',
+  ...(photoId ? { noteDoc: noteWithPhoto(photoId) } : {}),
+  updatedAt,
+})
+const notePath = (id: string) => `${DOCS}note-images/${id}.jpg`
+
+/** Pushes, then waits for the photo work it started. */
+const publish = async (d: Device) => {
+  expect(await d.iCloudSync.push('manual')).toBe(true)
+  await d.iCloudSync.imageWorkSettled()
+}
+
+describe('Photos over Cloud Sync', () => {
+  it('carries contact, profile and note photos both ways, without “Include photos”', async () => {
+    const iphone = await device('iphone', { os: 'ios' })
+    expect(iphone.usePreferences.getState().iCloudSyncIncludeImages).toBe(false)
+    expect(iphone.iCloudSync.photosTravel()).toBe(true)
+    iphone.files.set(picked('c1', 'r1'), new Uint8Array([1, 1, 1]))
+    iphone.files.set(notePath('photo-0001'), new Uint8Array([2, 2]))
+    iphone.useContacts.setState({
+      contacts: [withPhoto(contact('c1', 'Ada', NOW), 'r1')] as never,
+    })
+    iphone.useConversations.setState({
+      conversations: [visit('v1', 'photo-0001')] as never,
+    })
+    await publish(iphone)
+    expect(server.photoNames('family')).toHaveLength(2)
+
+    const android = await device('android', { os: 'android' })
+    await android.iCloudSync.pullAndMerge('manual')
+    const avatar = android.useContacts.getState().contacts[0].avatar!
+    const local = avatar.value.split('?')[0]
+    expect(local).toBe(`${DOCS}contact-c1-avatar-synced-r1.jpg`)
+    expect([...android.files.get(local)!]).toEqual([1, 1, 1])
+    expect([...android.files.get(notePath('photo-0001'))!]).toEqual([2, 2])
+
+    // And back: a profile photo added on Android.
+    const profilePath = `${DOCS}profile-avatar-picked-p1.jpg`
+    android.files.set(profilePath, new Uint8Array([3]))
+    android.useProfile
+      .getState()
+      .setAvatar({ type: 'image', value: profilePath, revision: 'p1' })
+    await publish(android)
+    await iphone.iCloudSync.pullAndMerge('manual')
+    const profile = iphone.useProfile.getState().avatar!
+    expect(profile.value.split('?')[0]).toBe(
+      `${DOCS}profile-avatar-synced-p1.jpg`
+    )
+    expect([
+      ...iphone.files.get(`${DOCS}profile-avatar-synced-p1.jpg`)!,
+    ]).toEqual([3])
+    // The server only ever saw ciphertext.
+    for (const name of server.photoNames('family'))
+      expect(server.photoBytes('family', name)![0]).toBe(1)
+  })
+
+  it('keeps Google Drive behind “Include photos”, unchanged', async () => {
+    const phone = await device('phone', { option: 'platform' })
+    phone.files.set(picked('c1', 'r1'), new Uint8Array([1]))
+    phone.useContacts.setState({
+      contacts: [withPhoto(contact('c1', 'Ada', NOW), 'r1')] as never,
+    })
+    expect(phone.iCloudSync.photosTravel()).toBe(false)
+    await publish(phone)
+    expect(driveNames().some((name) => name.includes('-img-'))).toBe(false)
+
+    phone.usePreferences.setState({ iCloudSyncIncludeImages: true })
+    await publish(phone)
+    expect(driveNames()).toContain('witness-work-img-contact-c1--r1.jpg')
+    expect(server.photoNames('family')).toEqual([])
+  })
+
+  it('gives a legacy avatar a revision before its photo travels', async () => {
+    const phone = await device('phone')
+    const legacy = `${DOCS}contact-c1-avatar.jpg`
+    phone.files.set(legacy, new Uint8Array([4]))
+    phone.useContacts.setState({
+      contacts: [
+        withPhoto(contact('c1', 'Ada', NOW), undefined, legacy),
+      ] as never,
+    })
+    await publish(phone)
+    // Not under the legacy name, ever.
+    expect(server.photoNames('family')).toEqual([])
+    const revised = phone.useContacts.getState().contacts[0]
+    const revision = revised.avatar?.revision
+    expect(revision).toMatch(/^[a-z0-9]{10,}$/)
+    expect(revised.updatedAt).toBeGreaterThan(NOW)
+    // The record edit publishes, then the photo follows.
+    await publish(phone)
+    expect(server.photoNames('family')).toHaveLength(1)
+
+    const tablet = await device('tablet')
+    await tablet.iCloudSync.pullAndMerge('manual')
+    expect([
+      ...tablet.files.get(`${DOCS}contact-c1-avatar-synced-${revision}.jpg`)!,
+    ]).toEqual([4])
+  })
+
+  it('keeps a photo on its device when storage is full, and retries only on foreground or room', async () => {
+    const phone = await device('phone')
+    // One sealed 20-byte photo (61 bytes) fits; two don't.
+    server.state.photoLimitBytes = 100
+    phone.files.set(picked('c1', 'r1'), new Uint8Array(20))
+    phone.files.set(picked('c2', 'r2'), new Uint8Array(20))
+    phone.useContacts.setState({
+      contacts: [
+        withPhoto(contact('c1', 'Ada', NOW), 'r1'),
+        withPhoto(contact('c2', 'Bo', NOW), 'r2'),
+      ] as never,
+    })
+    await publish(phone)
+    const stuck = 'witness-work-img-contact-c2--r2.jpg'
+    const { photoStuckOnFullStorage } = await import(
+      '@/lib/syncTransport/photoSyncStatus'
+    )
+    expect(server.photoNames('family')).toHaveLength(1)
+    expect(
+      phone.usePreferences.getState().iCloudImageSync[stuck]
+    ).toMatchObject({ errorCode: 'storage-full' })
+    expect(photoStuckOnFullStorage(stuck)).toBe(true)
+    expect(photoStuckOnFullStorage('witness-work-img-contact-c1--r1.jpg')).toBe(
+      false
+    )
+    // The rest of sync goes on.
+    expect(phone.usePreferences.getState().iCloudSyncIssue).toBeNull()
+
+    // An edit doesn't retry it.
+    server.state.log.length = 0
+    phone.useContacts.getState().updateContact({ id: 'c1', name: 'Ada R.' })
+    await publish(phone)
+    expect(server.state.log).not.toContain('POST sync/photos/put')
+
+    // Room frees on another device; the change notice's usage read retries.
+    const uninstall = phone.installiCloudSync()
+    server.state.photoLimitBytes = 200
+    phone.photoUsage.recordPhotoUsage(
+      { bytes: 0, count: 0, limit: 200 },
+      'usage'
+    )
+    await phone.iCloudSync.imageWorkSettled()
+    expect(server.photoNames('family')).toHaveLength(2)
+    expect(photoStuckOnFullStorage(stuck)).toBe(false)
+    uninstall()
+  })
+
+  it('retries a full account when the app returns to the foreground', async () => {
+    const phone = await device('phone')
+    server.state.photoLimitBytes = 10
+    phone.files.set(picked('c1', 'r1'), new Uint8Array(20))
+    phone.useContacts.setState({
+      contacts: [withPhoto(contact('c1', 'Ada', NOW), 'r1')] as never,
+    })
+    await publish(phone)
+    expect(server.photoNames('family')).toEqual([])
+    server.state.photoLimitBytes = 1000
+    // A foreground push retries it at once, whatever the failure backoff.
+    await phone.iCloudSync.pushImagesIfEnabled()
+    expect(server.photoNames('family')).toHaveLength(1)
+  })
+
+  it('deletes a replaced or removed photo once the snapshot without it is out', async () => {
+    const phone = await device('phone')
+    phone.files.set(picked('c1', 'r1'), new Uint8Array([1]))
+    phone.files.set(picked('c2', 'r2'), new Uint8Array([2]))
+    phone.files.set(notePath('photo-0001'), new Uint8Array([3]))
+    phone.useContacts.setState({
+      contacts: [
+        withPhoto(contact('c1', 'Ada', NOW), 'r1'),
+        withPhoto(contact('c2', 'Bo', NOW), 'r2'),
+      ] as never,
+    })
+    phone.useConversations.setState({
+      conversations: [visit('v1', 'photo-0001')] as never,
+    })
+    await publish(phone)
+    expect(server.photoNames('family')).toHaveLength(3)
+
+    // Replace c1's photo, take the photo out of the note, delete contact c2.
+    phone.files.set(picked('c1', 'r9'), new Uint8Array([9]))
+    phone.useContacts
+      .getState()
+      .updateContact(withPhoto(contact('c1', 'Ada', NOW), 'r9') as never)
+    phone.useConversations.setState({
+      conversations: [visit('v1', null, NOW + 1)] as never,
+    })
+    phone.useContacts.getState().deleteContact('c2')
+    await publish(phone)
+
+    const tablet = await device('tablet')
+    const listed = (await tablet.cloudTransport.listBinaryFiles())
+      .map((file) => file.filename)
+      .sort()
+    expect(listed).toEqual([
+      'witness-work-img-contact-c1--r9.jpg',
+      // A deleted contact can be restored, so its photo stays.
+      'witness-work-img-contact-c2--r2.jpg',
+    ])
+    const usage = phone.photoUsage.useCloudSyncPhotoUsage.getState().usage
+    expect(usage?.count).toBe(2)
+
+    // Days later, orphan cleanup still keeps it while c2 can be restored.
+    const later = vi
+      .spyOn(Date, 'now')
+      .mockReturnValue(NOW + 2 * 24 * 60 * 60_000)
+    try {
+      await phone.iCloudSync.gcImagesIfEnabled()
+    } finally {
+      later.mockRestore()
+    }
+    expect(
+      (await tablet.cloudTransport.listBinaryFiles()).map((f) => f.filename)
+    ).toContain('witness-work-img-contact-c2--r2.jpg')
+  })
+
+  describe('deletes nothing a wholesale change replaced', () => {
+    const r1 = 'witness-work-img-contact-c1--r1.jpg'
+    const r2 = 'witness-work-img-contact-c1--r2.jpg'
+    const listed = async (d: Device) =>
+      (await d.cloudTransport.listBinaryFiles()).map((f) => f.filename).sort()
+
+    /** On r1, published; then the User moves to r2, which deletes r1. */
+    const onR2WithOlderCopy = async () => {
+      const phone = await device('phone')
+      const { parsePayload } = await import('@/app/sync/payload')
+      const { restoreBackupFile } = await import('@/app/sync/backupFileRestore')
+      phone.files.set(picked('c1', 'r1'), new Uint8Array([1]))
+      phone.useContacts.setState({
+        contacts: [withPhoto(contact('c1', 'Ada', NOW), 'r1')] as never,
+      })
+      await publish(phone)
+      // Its only slot: the copy a restore would bring back.
+      const { files } = await phone.cloudTransport.readFiles(() => true)
+      expect(files).toHaveLength(1)
+      const older = parsePayload(files[0].json)!
+      phone.files.set(picked('c1', 'r2'), new Uint8Array([2]))
+      phone.useContacts
+        .getState()
+        .updateContact(withPhoto(contact('c1', 'Ada', NOW), 'r2') as never)
+      await publish(phone)
+      expect(await listed(phone)).toEqual([r2])
+      return { phone, older, restoreBackupFile }
+    }
+
+    it('a restore from an older slot or sync', async () => {
+      const { phone, older } = await onR2WithOlderCopy()
+      // Restore or Replace from a slot, iCloud, Google Drive or onboarding.
+      phone.iCloudSync.replaceLocalWithRemote(older)
+      await publish(phone)
+      expect(await listed(phone)).toContain(r2)
+    })
+
+    it('a backup file restored over this device', async () => {
+      const { phone, older, restoreBackupFile } = await onR2WithOlderCopy()
+      expect(
+        restoreBackupFile({
+          contactStore: older.contactStore as never,
+          preferencesStore: {},
+        }).ok
+      ).toBe(true)
+      expect(phone.useContacts.getState().contacts[0].avatar?.revision).toBe(
+        'r1'
+      )
+      await publish(phone)
+      expect(await listed(phone)).toContain(r2)
+    })
+
+    it('a publish a wholesale change overtook', async () => {
+      const phone = await device('phone')
+      const published = {
+        ...(await import('@/app/sync/publishedPhotos')),
+        ...(await import('@/app/sync/photoBaseline')),
+      }
+      const onRevision = (revision: string) =>
+        phone.useContacts.setState({
+          contacts: [withPhoto(contact('c1', 'Ada', NOW), revision)] as never,
+        })
+      /** References read as a publish starts, recorded once it's out. */
+      const publishing = (between?: () => void) => {
+        const mark = published.publishedPhotosMark()
+        const references = published.currentPhotoReferences()
+        between?.()
+        return published.takeReplacedPhotos(
+          'account',
+          references,
+          mark,
+          published.currentPhotoReferences
+        )
+      }
+      onRevision('r1')
+      expect(publishing()).toEqual([])
+      // The User moves to r2, but a restore back to r1 lands while that
+      // publish is out: it deletes nothing, and the restore is the baseline.
+      onRevision('r2')
+      expect(
+        publishing(() => {
+          onRevision('r1')
+          published.rebasePublishedPhotos()
+        })
+      ).toEqual([])
+      expect(publishing()).toEqual([])
+      // A User's edit after it still frees the old photo.
+      onRevision('r3')
+      expect(publishing()).toEqual([r1])
+    })
+
+    it('a merge, either way: the device that replaced it deletes it', async () => {
+      const phone = await device('phone')
+      phone.files.set(picked('c1', 'r1'), new Uint8Array([1]))
+      phone.useContacts.setState({
+        contacts: [withPhoto(contact('c1', 'Ada', NOW), 'r1')] as never,
+      })
+      await publish(phone)
+      // A tablet's later edit carries r2.
+      const tablet = await device('tablet')
+      tablet.files.set(picked('c1', 'r2'), new Uint8Array([2]))
+      tablet.useContacts.setState({
+        contacts: [
+          withPhoto(contact('c1', 'Ada', NOW + 60_000), 'r2'),
+        ] as never,
+      })
+      await publish(tablet)
+      await phone.iCloudSync.pullAndMerge('manual')
+      expect(phone.useContacts.getState().contacts[0].avatar?.revision).toBe(
+        'r2'
+      )
+      await publish(phone)
+      // A third device with a later edit on r1 may still swing it back.
+      expect(await listed(phone)).toEqual([r1, r2])
+
+      // And back: a later edit elsewhere still on r1 wins the merge.
+      const laptop = await device('laptop')
+      laptop.files.set(picked('c1', 'r1'), new Uint8Array([1]))
+      laptop.useContacts.setState({
+        contacts: [
+          withPhoto(contact('c1', 'Ada R.', NOW + 120_000), 'r1'),
+        ] as never,
+      })
+      await publish(laptop)
+      await phone.iCloudSync.pullAndMerge('manual')
+      expect(phone.useContacts.getState().contacts[0].avatar?.revision).toBe(
+        'r1'
+      )
+      await publish(phone)
+      expect(await listed(phone)).toEqual([r1, r2])
+    })
+  })
+
+  it('downloads a photo once, even after its listing time is forgotten', async () => {
+    const phone = await device('phone')
+    phone.files.set(picked('c1', 'r1'), new Uint8Array([1]))
+    phone.useContacts.setState({
+      contacts: [withPhoto(contact('c1', 'Ada', NOW), 'r1')] as never,
+    })
+    await publish(phone)
+    const tablet = await device('tablet')
+    await tablet.iCloudSync.pullAndMerge('manual')
+    const { bookkeepingForNewTransport } = await import('@/app/sync/imageSync')
+    tablet.usePreferences.setState({
+      iCloudImageSync: bookkeepingForNewTransport(
+        tablet.usePreferences.getState().iCloudImageSync
+      ),
+    })
+    server.state.log.length = 0
+    await tablet.iCloudSync.pullAndMerge('manual')
+    expect(server.state.log).not.toContain('POST sync/photos/get')
+  })
+
+  it('moves photos from Google Drive to Cloud Sync, uploading them there', async () => {
+    const phone = await device('phone', { option: 'platform' })
+    phone.usePreferences.setState({ iCloudSyncIncludeImages: true })
+    phone.files.set(picked('c1', 'r1'), new Uint8Array([1]))
+    phone.useContacts.setState({
+      contacts: [withPhoto(contact('c1', 'Ada', NOW), 'r1')] as never,
+    })
+    await publish(phone)
+    expect(driveNames()).toContain('witness-work-img-contact-c1--r1.jpg')
+
+    expect((await phone.switchSyncOption('cloud', 'settings')).outcome).toBe(
+      'switched'
+    )
+    await phone.iCloudSync.imageWorkSettled()
+    // Uploaded to Drive isn't uploaded to Cloud Sync.
+    expect(server.photoNames('family')).toHaveLength(1)
+    const entry =
+      phone.usePreferences.getState().iCloudImageSync[
+        'witness-work-img-contact-c1--r1.jpg'
+      ]
+    expect(entry.containerMtime).toBeGreaterThan(0)
+  })
+
+  it('cleans up photos nothing refers to on Keep This Device’s Data', async () => {
+    const phone = await device('phone')
+    phone.files.set(picked('c1', 'r1'), new Uint8Array([1]))
+    phone.files.set(picked('c2', 'r2'), new Uint8Array([2]))
+    phone.useContacts.setState({
+      contacts: [
+        withPhoto(contact('c1', 'Ada', NOW), 'r1'),
+        withPhoto(contact('c2', 'Bo', NOW), 'r2'),
+      ] as never,
+    })
+    await publish(phone)
+    const tablet = await device('tablet')
+    tablet.useContacts.setState({
+      contacts: [contact('c3', 'Cy', NOW)] as never,
+    })
+    await tablet.iCloudSync.overwriteRemoteWithLocal()
+    expect(server.photoNames('family')).toEqual([])
+  })
+
+  it('waits on photos’ switch, and holds none on a server without photos', async () => {
+    const phone = await device('phone')
+    phone.files.set(picked('c1', 'r1'), new Uint8Array([1]))
+    phone.useContacts.setState({
+      contacts: [withPhoto(contact('c1', 'Ada', NOW), 'r1')] as never,
+    })
+    phone.usePreferences.setState({ cloudSyncPhotos: false })
+    await publish(phone)
+    expect(server.photoNames('family')).toEqual([])
+    expect(phone.usePreferences.getState().iCloudSyncIssue).toBeNull()
+    // Waiting, not failing: no backoff holds it once the switch is back.
+    expect(phone.usePreferences.getState().iCloudImageSync).toEqual({})
+
+    phone.usePreferences.setState({ cloudSyncPhotos: null })
+    expect(phone.iCloudSync.photosTravel()).toBe(false)
+    phone.usePreferences.setState({ cloudSyncPhotos: true })
+    await phone.iCloudSync.pushImagesIfEnabled()
+    expect(server.photoNames('family')).toHaveLength(1)
   })
 })

@@ -1,10 +1,13 @@
 import {
   filenameForNoteImage,
   noteImageIdFromFilename,
-} from '@/app/sync/imageNames'
+} from '@/lib/syncTransport/imageNames'
 import {
+  type ImagePushTrigger,
+  waitsOnFullAccount,
   type ImageSyncBookkeeping,
   type ImageSyncDeps,
+  isTooLarge,
   uploadBackoffMs,
 } from '@/app/sync/imageSync'
 import { syncTransportErrorCode } from '@/lib/syncTransport/types'
@@ -29,6 +32,8 @@ export async function pushNoteImages(
     ids: Iterable<string>
     bookkeeping: ImageSyncBookkeeping
     deps: ImageSyncDeps
+    /** As `pushAllImages`'s: a store edit never retries a full account. */
+    trigger?: ImagePushTrigger
   }
 ): Promise<{
   bookkeeping: ImageSyncBookkeeping
@@ -51,13 +56,17 @@ export async function pushNoteImages(
     // Another device's photo that hasn't downloaded here; it uploads it.
     if (localMtime == null) continue
     const entry = bookkeeping[filename]
+    if (isTooLarge(entry, localMtime)) continue
     if (
       entry?.lastError &&
-      deps.now() - (entry.failedAt ?? 0) < uploadBackoffMs(entry.failures ?? 1)
+      (waitsOnFullAccount(deps, entry, args.trigger ?? 'store-edit') ??
+        deps.now() - (entry.failedAt ?? 0) <
+          uploadBackoffMs(entry.failures ?? 1))
     ) {
       continue
     }
     try {
+      if (deps.canUpload && !deps.canUpload()) break
       const containerMtime = await deps.bridge.writeBinary(filename, path)
       bookkeeping[filename] = {
         localMtime,

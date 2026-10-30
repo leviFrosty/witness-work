@@ -5158,7 +5158,6 @@
   "cloudSyncTurnOff_title": "クラウド同期をオフにしますか?",
   "cloudSyncTurnOff_description": "このデバイスは同期を停止し、そのコピーはWitnessWorkのサーバから削除されます。データはこのデバイスに残り、ほかのデバイスは、すでに同期した内容を保持します。",
   "cloudSyncTurnOff_action": "オフにする",
-  "cloudSyncPhotosNote": "クラウド同期では現在、連絡先、プロフィール、メモの写真は、追加したデバイスにのみ残ります。ほかのデバイスではイニシャルまたは代替の画像が表示されます。",
   "iCloudSyncCloud": "クラウド同期",
   "iCloudSync_summaryCloud": "iPhoneとAndroidの間で、エンドツーエンド暗号化で同期します。",
   "iCloudSync_descriptionCloud": "連絡先、訪問、奉仕報告、環境設定を、WitnessWorkのサーバ経由で、iPhoneとAndroidのデバイス間でエンドツーエンド暗号化により同期します。",

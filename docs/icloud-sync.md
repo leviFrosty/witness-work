@@ -228,7 +228,9 @@ same 90-day retention window. Redaction or permanent erasure removes their local
 files, including abandoned draft revisions; photo replacements remove superseded
 files. Data-protection erasure received from another device also removes local bytes.
 
-Turning off photo transfer pauses this device. “Remove iCloud photos” is a
+On iCloud and Google Drive, photos travel only with “Include photos” on; on
+Cloud Sync they always do (see [Cloud Sync](#cloud-sync)). Turning off photo
+transfer pauses this device. “Remove iCloud photos” is a
 separate explicit cleanup of uploaded files; local copies remain. Other enabled
 devices can upload them again, so the confirmation asks the user to pause photo
 sync on those devices first. Rebuild removes obsolete binaries before uploading
@@ -236,7 +238,8 @@ the current photos when enabled.
 
 ### Note photos
 
-Photos in notes (ADR 0022) sync behind the same setting under their own names,
+Photos in notes (ADR 0022) sync like avatars (behind the same setting on iCloud
+and Drive) under their own names,
 `witness-work-note-<id>.jpg`, which builds from before note photos ignore, so
 their cleanup can't delete them. A note stores only the photo's id and size; the
 file is `Documents/note-images/<id>.jpg` on every device. Photos never change
@@ -326,12 +329,45 @@ switching, `components/CloudSyncDefault.tsx`).
   account, and switching to it records the current one, so an account changed
   while the device was on iCloud, Drive or Off isn't taken for a change on Cloud
   Sync.
-- **Photos** aren't transferred yet: binaries list empty and photo passes skip
-  Cloud Sync. Settings says so.
+- **Photos** travel too, end-to-end encrypted, without “Include photos” (ADR
+  0040 §6; the wire contract is [cloud-sync-photos.md](./cloud-sync-photos.md)).
+  The engine's photo passes run as on iCloud and Drive; the binary methods put
+  each photo file sealed under a keyed name, and list photos through their
+  sealed filenames. A device downloads only photos its records refer to.
+  Settings → Sync shows no “Include photos” toggle on Cloud Sync.
+  - Only revisioned names travel: a legacy avatar gets a revision (a record
+    edit) before its photo is put.
+  - Names are immutable, so a revision this device already has a file for is
+    current whatever the listing's time (`immutableNames`).
+  - After a publish, the photos the User replaced or removed since the last
+    one (a contact's or the profile photo, a photo taken out of a note) are
+    deleted at once, freeing their space. A deleted contact's photo stays while
+    it can be restored; other cleanup keeps its one-day grace.
+  - Only the User's edits count as replacing. A restore or Replace (from a
+    slot, iCloud, Google Drive, a backup or a backup file), a merge of other
+    devices' records, and a dev reset or seed make the new state the baseline
+    (`rebasePublishedPhotos`): another device may still use the revision they
+    moved away from, and under last-writer-wins a merge can swing a record
+    back. A publish such a change overtakes deletes nothing.
+  - **Storage full** (2 GB an account): the photo stays on this device, its
+    bookkeeping entry says `storage-full`, and it shows “Not synced: storage
+    full” (contact, profile and note photos); Settings → Account shows
+    “Storage full” and the usage. It retries on foreground and when the
+    account's usage drops (a delete here, or a change notice), never on an edit
+    (`fullRetriesOnSignal`).
+  - The server's photo switch (`photos` in `GET /accounts/v1/sync`,
+    `cloudSyncPhotos`) off pauses uploads only (`binaryWritesPaused`); downloads,
+    deletes and the rest of Cloud Sync go on. A server that doesn't say holds no
+    photos (`supportsBinaries` false).
+  - Rebuild and Keep This Device's Data delete the photos the published data
+    doesn't refer to, as on iCloud. The server deletes every photo when the
+    account's last slot goes.
 - **Errors.** `too_large` and `limit` read as storage full (20 MB a snapshot,
   20 devices an account), 429 as rate limited, network as offline, and 5xx as
   `server-error`: retried the same way as offline, with the status saying sync
-  needs another attempt rather than waiting for a connection.
+  needs another attempt rather than waiting for a connection. For photos,
+  `storage_full` and `limit` read as storage full; a photo's `too_large` marks
+  only that photo; `photos_disabled`, `conflict` and `no_slot` retry later.
 
 ### Choosing and switching
 
@@ -341,7 +377,8 @@ switching, `components/CloudSyncDefault.tsx`).
 - A device already syncing through iCloud or Drive keeps it, and Settings →
   Sync offers the switch once, with the security reason (`cloudSyncOffer`).
 - `switchSyncOption` flushes the old option's pending edits, stops, resets the
-  namespace bookkeeping (photo bookkeeping stays), reads the new option's
+  namespace bookkeeping (photo bookkeeping keeps only what it knows of local
+  files, so each photo is checked against the new option), reads the new option's
   devices, joins their newest reset generation, merges ("Merge both"), and
   pushes. A switch that can't happen (not entitled, offline, unreadable)
   changes nothing.
@@ -355,21 +392,21 @@ switching, `components/CloudSyncDefault.tsx`).
 
 ## Files and validation
 
-| Path                                                                            | Responsibility                                              |
-| ------------------------------------------------------------------------------- | ----------------------------------------------------------- |
-| `src/app/sync/iCloudSync.ts`                                                    | Runtime, retries, initial enable, restore, image sequencing |
-| `src/lib/syncTransport/`                                                        | Transport interface; iCloud and Google Drive transports     |
-| `modules/google-drive-auth/`                                                    | Android Drive authorization (access tokens only)            |
-| `src/app/sync/payload.ts`, `payloadValidation.ts`                               | Wire boundary, legacy normalization, known setting types    |
-| `src/app/sync/merge.ts`, `preferencesMerge.ts`                                  | Record/tombstone and per-entry preference merge             |
-| `src/app/sync/foldRemotePayloads.ts`                                            | Fold foreign snapshots for restore                          |
-| `src/app/sync/mergeIntoLocal.ts`, `localChanges.ts`                             | Merge payloads into the stores; the shared change trigger   |
-| `src/app/sync/definitionReconciliation.ts`, `src/lib/contactRetention.ts`       | Legacy repair and deleted-detail expiry                     |
-| `src/app/sync/imageSync.ts`, `imageSources.ts`, `imageNames.ts`                 | Photo transfer, reference guards, cleanup policy            |
-| `src/app/notifications/useReconciledReminders.ts`                               | Local reminder reconciliation on iOS and Android            |
-| `src/features/settings/screens/preferences/screens/PreferencesiCloudScreen.tsx` | Settings and recovery controls                              |
-| `src/features/onboarding/components/steps/iCloudRestore.tsx`                    | Onboarding one-shot restore                                 |
-| `modules/icloud-bridge/ios/ICloudBridgeModule.swift`                            | Coordinated iCloud IO and metadata query                    |
+| Path                                                                                  | Responsibility                                              |
+| ------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| `src/app/sync/iCloudSync.ts`                                                          | Runtime, retries, initial enable, restore, image sequencing |
+| `src/lib/syncTransport/`                                                              | Transport interface; iCloud and Google Drive transports     |
+| `modules/google-drive-auth/`                                                          | Android Drive authorization (access tokens only)            |
+| `src/app/sync/payload.ts`, `payloadValidation.ts`                                     | Wire boundary, legacy normalization, known setting types    |
+| `src/app/sync/merge.ts`, `preferencesMerge.ts`                                        | Record/tombstone and per-entry preference merge             |
+| `src/app/sync/foldRemotePayloads.ts`                                                  | Fold foreign snapshots for restore                          |
+| `src/app/sync/mergeIntoLocal.ts`, `localChanges.ts`                                   | Merge payloads into the stores; the shared change trigger   |
+| `src/app/sync/definitionReconciliation.ts`, `src/lib/contactRetention.ts`             | Legacy repair and deleted-detail expiry                     |
+| `src/app/sync/imageSync.ts`, `imageSources.ts`, `src/lib/syncTransport/imageNames.ts` | Photo transfer, reference guards, cleanup policy            |
+| `src/app/notifications/useReconciledReminders.ts`                                     | Local reminder reconciliation on iOS and Android            |
+| `src/features/settings/screens/preferences/screens/PreferencesiCloudScreen.tsx`       | Settings and recovery controls                              |
+| `src/features/onboarding/components/steps/iCloudRestore.tsx`                          | Onboarding one-shot restore                                 |
+| `modules/icloud-bridge/ios/ICloudBridgeModule.swift`                                  | Coordinated iCloud IO and metadata query                    |
 
 Swift and Kotlin changes require a native rebuild. Pure merge, validation,
 photo, clock, backup, and store regressions live in `src/app/sync/__tests__` and

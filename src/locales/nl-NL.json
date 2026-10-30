@@ -5158,7 +5158,6 @@
   "cloudSyncTurnOff_title": "Cloud Sync uitschakelen?",
   "cloudSyncTurnOff_description": "Dit apparaat stopt met synchroniseren en de kopie ervan wordt van de server van WitnessWork verwijderd. Je gegevens blijven op dit apparaat staan en je andere apparaten houden wat ze er al van hebben gesynchroniseerd.",
   "cloudSyncTurnOff_action": "Uitschakelen",
-  "cloudSyncPhotosNote": "Foto's van contacten, profielen en notities blijven met Cloud Sync voorlopig op het apparaat dat ze heeft toegevoegd; andere apparaten tonen initialen of een plaatsvervanger.",
   "iCloudSyncCloud": "Cloud Sync",
   "iCloudSync_summaryCloud": "Synchroniseer op iPhone en Android, end-to-end versleuteld.",
   "iCloudSync_descriptionCloud": "Synchroniseert contacten, bezoeken, velddienstverslagen en voorkeuren op je iPhone- en Android-apparaten via de server van WitnessWork, end-to-end versleuteld.",

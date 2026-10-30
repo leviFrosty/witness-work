@@ -207,6 +207,8 @@ export const analyticsEventNames = [
   'cloud_sync_default_outcome',
   'cloud_sync_offer_answered',
   'cloud_sync_option_changed',
+  'cloud_sync_photo_transfer_failed',
+  'cloud_sync_photos_storage_full',
   'cloud_sync_switch_failed',
   // Supporter cloud sync (iCloud; Google Drive on Android) adoption and recovery.
   'icloud_account_changed',

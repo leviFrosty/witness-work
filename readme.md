@@ -126,7 +126,7 @@ HERE proxy, key stays server-side`"]
       R_ACC["`**/accounts/v1/...**
 attested sessions, bearer ops,
 handoff relay, encrypted backups,
-Cloud Sync slots + live WebSocket,
+Cloud Sync slots + photos + live WebSocket,
 RevenueCat link + Supporter status`"]
       R_RCHOOK["`**POST /revenuecat/v1/webhook**
 keeps Supporter status current`"]
@@ -168,10 +168,12 @@ one per handoff, 10 minutes`")]
       R2_BACKUP[("`**R2: ww-account-backups**
 sealed slot per device, 400 days idle`")]
       DO_SYNC[("`**AccountSync DO**
-one per account: slot index,
-sync sockets, limits`")]
+one per account: slot and photo index,
+sync sockets, limits, photo purge`")]
       R2_SYNC[("`**R2: ww-account-sync**
 sealed sync slot per device`")]
+      R2_PHOTOS[("`**R2: ww-account-photos**
+sealed Cloud Sync photos, up to 2 GB an account`")]
     end
     subgraph HELP["Help Center search"]
       S_HELPS["`**ww-help-search Worker**
@@ -218,7 +220,7 @@ analytics, flags, surveys, errors`"]
   A_BUDDIES -->|"root seed"| P_SEED
   A_SYNC -->|"iCloud / Drive: sync files + photos"| P_SYNC
   A_SYNC -->|"Cloud Sync: account session"| A_ACCOUNT
-  A_SYNC -->|"Cloud Sync: bearer: sealed snapshots, WebSocket"| R_ACC
+  A_SYNC -->|"Cloud Sync: bearer: sealed snapshots + photos, WebSocket"| R_ACC
   A_ACCOUNT -->|"attest device"| P_ATTEST
   A_CONTACTS -->|"maps, place search"| P_MAPS
   A_SHELL -->|"fingerprint-compatible OTA"| S_OTA
@@ -252,6 +254,8 @@ analytics, flags, surveys, errors`"]
   R_ACC -->|"sync index, WebSocket"| DO_SYNC
   R_ACC -->|"sync slots"| R2_SYNC
   DO_SYNC -.->|"retention sweep"| R2_SYNC
+  R_ACC -->|"sync photos"| R2_PHOTOS
+  DO_SYNC -.->|"photo purge"| R2_PHOTOS
   R_ACC -->|"iOS assertion"| DO_AA
   R_ACC -->|"Android verdict"| S_GPI
   R_ATTEST -->|"iOS keys, challenges"| DO_AA

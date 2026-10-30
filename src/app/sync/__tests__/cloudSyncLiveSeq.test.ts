@@ -6,6 +6,7 @@ import {
   filenameForSlot,
 } from '@/lib/syncTransport/server/serverTransport'
 import { deriveSyncKey } from '@/lib/syncTransport/server/syncCrypto'
+import { derivePhotoKeys } from '@/lib/syncTransport/server/photoCrypto'
 import { createFakeSyncServer } from '@/lib/syncTransport/server/__tests__/fakeSyncServer'
 
 // Cloud Sync's live socket (ADR 0030 §8) against the transport's `lastSeq`:
@@ -25,6 +26,7 @@ function fleet() {
       access: async () => ({
         accountId: ACCOUNT_ID,
         syncKey: deriveSyncKey(new Uint8Array(32).fill(1)),
+        photoKeys: derivePhotoKeys(new Uint8Array(32).fill(1)),
         options: {
           baseUrl: 'https://api.test',
           authorize: (run) => run('Bearer family'),

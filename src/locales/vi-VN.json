@@ -5158,7 +5158,6 @@
   "cloudSyncTurnOff_title": "Tắt Đồng bộ đám mây?",
   "cloudSyncTurnOff_description": "Thiết bị này sẽ ngừng đồng bộ và bản sao của nó bị xóa khỏi máy chủ của WitnessWork. Dữ liệu vẫn nằm trên thiết bị này, và các thiết bị khác của bạn giữ những gì đã đồng bộ từ nó.",
   "cloudSyncTurnOff_action": "Tắt",
-  "cloudSyncPhotosNote": "Hiện tại với Đồng bộ đám mây, ảnh liên hệ, ảnh hồ sơ và ảnh ghi chú vẫn nằm trên thiết bị đã thêm chúng; các thiết bị khác hiển thị chữ cái đầu hoặc ảnh giữ chỗ.",
   "iCloudSyncCloud": "Đồng bộ đám mây",
   "iCloudSync_summaryCloud": "Đồng bộ giữa iPhone và Android, mã hóa đầu cuối.",
   "iCloudSync_descriptionCloud": "Đồng bộ liên hệ, lần thăm, báo cáo rao giảng và tùy chọn giữa các thiết bị iPhone và Android của bạn thông qua máy chủ của WitnessWork, được mã hóa đầu cuối.",

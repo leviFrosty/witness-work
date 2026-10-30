@@ -5158,7 +5158,6 @@
   "cloudSyncTurnOff_title": "Desativar a Sincronização na nuvem?",
   "cloudSyncTurnOff_description": "Este dispositivo para de sincronizar, e a cópia dele é removida do servidor do WitnessWork. Seus dados continuam neste dispositivo, e seus outros dispositivos mantêm o que já sincronizaram dele.",
   "cloudSyncTurnOff_action": "Desativar",
-  "cloudSyncPhotosNote": "Por enquanto, na Sincronização na nuvem, as fotos de contatos, de perfil e de anotações ficam no dispositivo que as adicionou; os outros dispositivos mostram iniciais ou uma imagem provisória.",
   "iCloudSyncCloud": "Sincronização na nuvem",
   "iCloudSync_summaryCloud": "Sincronize entre iPhone e Android, com criptografia de ponta a ponta.",
   "iCloudSync_descriptionCloud": "Sincroniza contatos, visitas, Relatórios de serviço e preferências entre seus dispositivos iPhone e Android pelo servidor do WitnessWork, com criptografia de ponta a ponta.",

@@ -1,7 +1,7 @@
 // Every endpoint lives on ww-api. Override the base URL to target a dev/staging
 // worker (so the App Attest dev-bypass never touches production).
-const BASE_URL =
-  process.env.EXPO_PUBLIC_API_BASE_URL || 'https://ww-proxy.leviwilkerson.com'
+export const PRODUCTION_API_BASE_URL = 'https://ww-proxy.leviwilkerson.com'
+const BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || PRODUCTION_API_BASE_URL
 
 export default {
   geocode: `${BASE_URL}/geocode`,

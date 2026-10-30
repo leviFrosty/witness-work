@@ -1,4 +1,5 @@
 import { Platform } from 'react-native'
+import * as Application from 'expo-application'
 import { getRandomBytes } from 'expo-crypto'
 import * as Device from 'expo-device'
 import { MMKV } from 'react-native-mmkv'
@@ -232,6 +233,8 @@ export const accountSessions = createAccountSessions({
       model,
     }
   },
+  // Devices shows it; `major.minor.patch` only.
+  appVersion: () => Application.nativeApplicationVersion,
   onUpgradeRequired: updateRequiredByServer,
   // Sync, backup, Buddies and Notes Import all wait for the update.
   paused: () => useUpdateRequired.getState().required !== null,

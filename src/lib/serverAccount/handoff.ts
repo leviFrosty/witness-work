@@ -210,21 +210,24 @@ export function deriveHandoffKeys({
   const prk = extract(sha256, shared, secret)
   const transcript = `${channelId}\n${offerPub}\n${claimPub}`
   const info = (purpose: string) => utf8(`${LABEL}/${purpose}\n${transcript}`)
-  const codeBytes = expand(sha256, prk, info('code'), 4)
-  const value =
-    ((codeBytes[0] << 24) |
-      (codeBytes[1] << 16) |
-      (codeBytes[2] << 8) |
-      codeBytes[3]) >>>
-    0
   return {
     helloKey: expand(sha256, prk, info('hello'), 32),
     keyKey: expand(sha256, prk, info('key'), 32),
-    code: String(value % 10 ** HANDOFF_CODE_DIGITS).padStart(
-      HANDOFF_CODE_DIGITS,
-      '0'
-    ),
+    code: sixDigitCode(expand(sha256, prk, info('code'), 4)),
   }
+}
+
+/**
+ * Four bytes as a big-endian `uint32 mod 1,000,000`, six digits with leading
+ * zeros: the code both sides show. Approving a browser shares it.
+ */
+export function sixDigitCode(bytes: Uint8Array): string {
+  const value =
+    ((bytes[0] << 24) | (bytes[1] << 16) | (bytes[2] << 8) | bytes[3]) >>> 0
+  return String(value % 10 ** HANDOFF_CODE_DIGITS).padStart(
+    HANDOFF_CODE_DIGITS,
+    '0'
+  )
 }
 
 /** `123 456`. */
@@ -235,7 +238,7 @@ const helloAad = (channelId: string) => `${LABEL}/hello\n${channelId}`
 const keyAad = (channelId: string) => `${LABEL}/key\n${channelId}`
 
 /** Cuts to `max` characters without splitting one. */
-const cut = (value: string, max: number) =>
+export const cut = (value: string, max: number) =>
   Array.from(value).slice(0, max).join('')
 
 /** The hello as sent: strings trimmed and cut to the protocol's limits. */

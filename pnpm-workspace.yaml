@@ -9,9 +9,11 @@ allowBuilds:
   '@shopify/react-native-skia': true
   esbuild: true
   unrs-resolver: true
+  workerd: true
 onlyBuiltDependencies:
   - esbuild
   - '@shopify/react-native-skia'
+  - workerd
 overrides:
   # apple-targets 5.0.0 pins SDK 55's prebuild-config, which would displace
   # SDK 58's hoisted copy. It only uses `writeContentsJsonAsync` from it.

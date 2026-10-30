@@ -11,6 +11,21 @@ const PREFERENCES_KEY = 'mmkv.default\\preferences'
  */
 const SEEN = { onboardingComplete: true, scheduleIntroSeen: true }
 
+/** A CSP or Trusted Types violation, as the page's event reports it. */
+type Violation = {
+  directive: string
+  blocked: string
+  source: string
+  sample: string
+}
+
+/**
+ * With `WW_WEB_CSP` set to a folder, each test saves the violations its pages
+ * report there, by project, for `csp-summary.mjs`. Only a server that sends a
+ * CSP (the web host's Worker, `E2E_WORKER`) has any to report.
+ */
+const cspFolder = process.env.WW_WEB_CSP
+
 /** A language's app strings, by its `src/locales` file name. */
 export const strings = (language: string): Record<string, string> =>
   JSON.parse(
@@ -30,7 +45,7 @@ type Fixtures = {
 }
 
 export const test = base.extend<Fixtures>({
-  page: async ({ page, baseURL }, provide) => {
+  page: async ({ page, baseURL }, provide, testInfo) => {
     // Nothing a smoke run does reaches a real service: everything but the
     // app's own server answers 503 here, as a service that's down would.
     const app = new URL(baseURL!).host
@@ -53,7 +68,45 @@ export const test = base.extend<Fixtures>({
     )
     const errors: string[] = []
     page.on('pageerror', (error) => errors.push(error.stack ?? error.message))
+    const violations: Violation[] = []
+    if (cspFolder) {
+      // Every page in the test's context, across reloads. Report-only
+      // violations fire the same event as enforced ones.
+      await page
+        .context()
+        .exposeBinding('__wwCspViolation', (_source, violation: Violation) => {
+          violations.push(violation)
+        })
+      await page.context().addInitScript(() =>
+        document.addEventListener('securitypolicyviolation', (event) =>
+          (
+            window as unknown as {
+              __wwCspViolation: (violation: Violation) => void
+            }
+          ).__wwCspViolation({
+            directive: event.effectiveDirective,
+            blocked: event.blockedURI,
+            source: event.sourceFile
+              ? `${event.sourceFile}:${event.lineNumber}:${event.columnNumber}`
+              : '',
+            // Trusted Types samples start with the sink's name.
+            sample: event.sample.split('|')[0] ?? '',
+          })
+        )
+      )
+    }
     await provide(page)
+    if (cspFolder) {
+      const folder = path.join(cspFolder, testInfo.project.name)
+      fs.mkdirSync(folder, { recursive: true })
+      fs.writeFileSync(
+        path.join(
+          folder,
+          `${testInfo.titlePath.slice(1).join(' ').replace(/\W+/g, '-')}.json`
+        ),
+        JSON.stringify(violations, null, 2)
+      )
+    }
     expect(errors, 'uncaught errors on the page').toEqual([])
   },
   language: ['en-US', { option: true }],

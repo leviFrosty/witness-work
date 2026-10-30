@@ -18,6 +18,14 @@ A run serves `dist/` on `127.0.0.1:$E2E_PORT` (8765 by default). With
 `E2E_HOST` set to another host, it opens the app there and starts no server:
 serve it yourself with `E2E_LISTEN=0.0.0.0 node e2e/web/serve.mjs dist <port>`.
 
+`E2E_WORKER=<profile>` serves `dist/` through the web host's Worker instead
+(`pnpm web:serve <profile>`, `docs/web-hosting.md`), with that profile's
+headers and CSP. With `WW_WEB_CSP=<folder>`, each test saves the CSP and
+Trusted Types violations its pages report there, and
+`node e2e/web/csp-summary.mjs <folder>…` sums them up by browser and size. For
+a container, serve the Worker yourself with
+`pnpm web:serve dev --port <port> --ip 0.0.0.0`.
+
 Each test seeds the app past onboarding in a separate tab, by editing the
 preferences the app saved on its first load (`fixtures.ts`), and fails on any
 uncaught page error.

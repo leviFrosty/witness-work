@@ -5,6 +5,10 @@ import { defineConfig, devices } from '@playwright/test'
 const host = process.env.E2E_HOST ?? '127.0.0.1'
 const port = Number(process.env.E2E_PORT ?? 8765)
 const baseURL = `http://${host}:${port}`
+// A web profile (`config/web-environments.json`) serves `dist/` through the
+// web host's Worker (`pnpm web:serve`), with its headers and CSP, instead of
+// the plain server.
+const worker = process.env.E2E_WORKER
 
 const browsers = {
   chromium: devices['Desktop Chrome'],
@@ -36,7 +40,9 @@ export default defineConfig({
   },
   webServer: ['127.0.0.1', 'localhost'].includes(host)
     ? {
-        command: `node e2e/web/serve.mjs dist ${port}`,
+        command: worker
+          ? `node scripts/web-host.mjs serve ${worker} --port ${port}`
+          : `node e2e/web/serve.mjs dist ${port}`,
         cwd: '../..',
         url: `${baseURL}/index.html`,
         reuseExistingServer: false,

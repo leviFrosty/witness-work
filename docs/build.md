@@ -182,15 +182,26 @@ pnpm web:build --env beta        # local | dev | beta | production
 pnpm web:test                    # browser smoke tests of dist/ (e2e/web/README.md)
 ```
 
-`config/web-environments.json` names each profile's ww-api and host. Public
-values such as PostHog's come from the matching native env files; the web
-build always clears the dev bypass, the RevenueCat store keys, the OTA key and
-the Android Maps key, and `web:build` fails if any of them reaches `dist/`.
-Packages the web can't load are swapped for stand-ins in `src/vendor/web`
-(`metro/bundleRedirects.js`), and platform features with no web version are
-hidden through `src/lib/platformCapabilities.ts`.
+`config/web-environments.json` is the one list of web profiles: each one's
+native env files (`variant`), host, Worker, ww-api, PostHog and maps origins,
+and CSP mode. `web:build`, the web host's deploys and its Worker
+(`docs/web-hosting.md`) all read it. `local` takes its ww-api from `.env`
+(`apiFromEnv`). Public values such as PostHog's come from the matching native
+env files; the web build always clears the dev bypass, the RevenueCat store
+keys, the OTA key and the Android Maps key, and `web:build` fails if any of
+them, or this checkout's dev bypass, reaches `dist/`.
 
-The host takes files up to 25 MiB, and `web:build` fails on a bigger one. Keep
+Every `web:build` runs `pnpm sync:help` first, from its profile's
+`helpManifest` (the dev website for `local` and `dev`, `witnesswork.app` for
+`beta` and `production`), so the bundled Help Center snapshot
+(`src/assets/help-center/`) is current; the committed snapshot can predate the
+web and show nothing offline. Without a connection the build fails rather than
+ship an older snapshot. The fetched snapshot goes into `dist/` only: the
+build puts `src/assets/help-center/` back as it was afterwards, since the
+native apps' snapshot changes at release prep.
+
+The host takes files up to 25 MiB, and 20,000 files, and `web:build` fails on
+more (source maps don't count; they aren't uploaded). Keep
 large data out of the entry chunk with `import()`, as the translations other
 than English and the Help Center snapshots do (each is its own chunk, loaded
 when its language is shown). On the web, `import()` downloads the chunk before

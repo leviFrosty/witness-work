@@ -86,12 +86,13 @@ function siteBuild(pathFor) {
   return bundleDir
 }
 
-function sync(bundleDir) {
+function sync(bundleDir, args = []) {
   const cwd = fixture()
-  const result = spawnSync(process.execPath, [script, '--from', bundleDir], {
-    cwd,
-    encoding: 'utf8',
-  })
+  const result = spawnSync(
+    process.execPath,
+    [script, '--from', bundleDir, ...args],
+    { cwd, encoding: 'utf8' }
+  )
   const snapshot = (locale) =>
     JSON.parse(
       fs.readFileSync(
@@ -128,4 +129,28 @@ test('refuses a bundle URL outside the build it reads', () => {
   const { result } = sync(bundleDir)
   assert.notEqual(result.status, 0)
   assert.match(result.stderr, /de-DE/)
+})
+
+test('reads another copy of the site, such as the dev website, by its manifest', () => {
+  const manifest = [
+    '--manifest',
+    'https://dev.witnesswork.app/help/bundle/manifest.json',
+  ]
+  const dev = siteBuild(
+    (locale) => `https://dev.witnesswork.app/help/bundle/${locale}.json`
+  )
+  const { result, snapshot } = sync(dev, manifest)
+  assert.equal(result.status, 0, result.stderr)
+  assert.equal(snapshot('en-US').locale, 'en-US')
+  // Its bundles must be on its own host too.
+  const apex = siteBuild(
+    (locale) => `https://witnesswork.app/help/bundle/${locale}.json`
+  )
+  assert.match(sync(apex, manifest).result.stderr, /isn't on https:\/\/dev\./)
+  for (const url of [
+    'http://dev.witnesswork.app/help/bundle/manifest.json',
+    'https://dev.witnesswork.app/manifest.json',
+    'not a url',
+  ])
+    assert.match(sync(dev, ['--manifest', url]).result.stderr, /--manifest/)
 })

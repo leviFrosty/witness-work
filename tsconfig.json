@@ -10,7 +10,8 @@
     "customConditions": ["react-native-legacy-deep-imports"]
   },
   // expo/tsconfig.base.json's list (an `exclude` here replaces it), plus
-  // services/, which has its own workspace and tsconfigs.
+  // services/, which has its own workspace and tsconfigs, and the web host
+  // Worker, which has its own runtime types (web/host/tsconfig.json).
   "exclude": [
     "node_modules",
     "babel.config.js",
@@ -18,6 +19,7 @@
     "jest.config.js",
     "android",
     "ios",
-    "services"
+    "services",
+    "web/host"
   ]
 }

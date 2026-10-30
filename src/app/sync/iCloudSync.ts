@@ -87,6 +87,11 @@ import { usePreferences } from '@/stores/preferences'
 import { useProfile } from '@/stores/profile'
 import { useSupporter } from '@/features/supporter/stores/supporter'
 import {
+  onOwnAccountClaimChange,
+  setPeerAccountClaims,
+} from '@/lib/accountClaimRegistry'
+import type { AccountClaim } from '@/lib/accountClaim'
+import {
   buildPayload,
   isNewerPayloadVersion,
   parsePayload,
@@ -2094,6 +2099,7 @@ async function pullAndMergeInner(reason: string): Promise<PullOutcome> {
   })
 
   if (files.length === 0) {
+    setPeerAccountClaims([])
     usePreferences.getState().set({
       lastiCloudPulledAt: Date.now(),
       iCloudSyncIssue: issue,
@@ -2166,6 +2172,14 @@ async function pullAndMergeInner(reason: string): Promise<PullOutcome> {
       legacyFilenames.push(file.filename)
     }
   }
+
+  // The peers' RevenueCat claims (ADR 0040 §7), for `AccountProvider`. Every
+  // device that wrote one counts, whatever its reset generation.
+  setPeerAccountClaims(
+    remotePayloads
+      .map((r) => r.payload.revenueCat)
+      .filter((claim): claim is AccountClaim => claim !== undefined)
+  )
 
   // Reset generations: a newer one replaces local data; an older one is a
   // snapshot a reset replaced, and stays out of the merge. Neither makes the
@@ -2686,6 +2700,9 @@ export function installiCloudSync(): () => void {
     if (store === 'contacts' && materializingImages) return
     schedulePush()
   })
+  // Peers learn this device's RevenueCat claim (an adopted id, a purchase)
+  // from its payload.
+  const unsubAccountClaim = onOwnAccountClaimChange(() => schedulePush())
 
   // A real return from the background, not an iOS `inactive` blip (Control
   // Center, Face ID, system sheets). Returns within `FOREGROUND_CATCH_UP_MS` of
@@ -2819,6 +2836,7 @@ export function installiCloudSync(): () => void {
 
   return () => {
     unsubLocalData()
+    unsubAccountClaim()
     unsubSupporter()
     unsubEntitled()
     unsubUpdateRequired()

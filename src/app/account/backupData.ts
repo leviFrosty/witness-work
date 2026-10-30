@@ -29,13 +29,15 @@ import { usePreferences } from '@/stores/preferences'
  * makes it, `parsePayload` validates it (and applies its migrations), and the
  * sync merge folds and applies it. Nothing here forks those.
  *
- * Two things differ from iCloud and Google Drive sync:
+ * Three things differ from iCloud and Google Drive sync:
  *
  * - **Reset generations stay out.** `resetEpoch` belongs to one cloud's sync
  *   history. A backup leaves it out, and a restore ignores it: folding slots
  *   from devices with different sync histories would otherwise drop every slot
  *   but the newest generation's, and adopting one would make this device's own
  *   sync ignore its cloud's files, or replace the restore with them.
+ * - **The RevenueCat claim stays out.** It names a device's RevenueCat customer
+ *   for its peers in sync (ADR 0040 §7); a backup is data, not a device.
  * - **Sync's own bookkeeping stays this device's.** A restore keeps this device's
  *   reset generation and its "last pulled" and remote-device fields, so its
  *   sync's next pull merges the restored data with its cloud, as it would any
@@ -52,7 +54,11 @@ export function buildBackupPlaintext({
   platform: BackupPlatform
   now: number
 }): BackupPlaintext {
-  const { resetEpoch: _resetEpoch, ...payload } = buildPayload({
+  const {
+    resetEpoch: _resetEpoch,
+    revenueCat: _revenueCat,
+    ...payload
+  } = buildPayload({
     deviceId: ensureSyncDeviceId(),
     deviceName,
   })
@@ -106,7 +112,11 @@ export function readBackupPayload(
   if (isNewerPayloadVersion(json)) return { ok: false, problem: 'newer' }
   const parsed = parsePayload(json)
   if (!parsed) return { ok: false, problem: 'unreadable' }
-  const { resetEpoch: _resetEpoch, ...payload } = parsed
+  const {
+    resetEpoch: _resetEpoch,
+    revenueCat: _revenueCat,
+    ...payload
+  } = parsed
   return { ok: true, payload: alignPayloadClock(payload, uploadedAt) }
 }
 

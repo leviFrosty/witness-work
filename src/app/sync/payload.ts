@@ -34,6 +34,8 @@ import {
   sanitizeContactAvatar,
   sanitizeProfileAvatar,
 } from '@/app/sync/avatarPayload'
+import { type AccountClaim, parseAccountClaim } from '@/lib/accountClaim'
+import { ownAccountClaim } from '@/lib/accountClaimRegistry'
 
 /**
  * Bumped whenever the payload shape changes in a breaking way. Consumers reject
@@ -59,6 +61,13 @@ export type SyncPayload = {
    * See `src/lib/syncResetEpoch.ts`.
    */
   resetEpoch?: ResetEpoch
+  /**
+   * The writer's RevenueCat claim (ADR 0040 §7, `@/lib/accountClaim`), so all
+   * of an account's devices become one RevenueCat customer. Inside Cloud Sync's
+   * encrypted slot like the rest. Additive: older builds drop the key. Never
+   * shown, logged, or reported (ADR 0029 §2).
+   */
+  revenueCat?: AccountClaim
   contactStore: {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     contacts: any[]
@@ -202,6 +211,7 @@ export function buildPayload(args: {
   const prefs = usePreferences.getState()
   const profile = useProfile.getState()
 
+  const revenueCat = ownAccountClaim()
   const includeImages = prefs.iCloudSyncIncludeImages === true
   const avatarOpts = { includeImages }
 
@@ -244,6 +254,7 @@ export function buildPayload(args: {
     deviceId,
     deviceName,
     ...(prefs.iCloudResetEpoch ? { resetEpoch: prefs.iCloudResetEpoch } : {}),
+    ...(revenueCat && { revenueCat }),
     contactStore: {
       contacts: contacts.contacts.map((c) =>
         sanitizeContactAvatar(c, avatarOpts)
@@ -397,6 +408,12 @@ export function parsePayload(
       return null
     }
     const d = result.data
+    step = 'revenuecat'
+    // A claim this build can't read is left out, never a reason to drop the
+    // file.
+    const revenueCat = parseAccountClaim(d.revenueCat)
+    if (revenueCat) d.revenueCat = revenueCat
+    else delete d.revenueCat
     step = 'field-names'
     normalizeLegacyPayloadFieldNames(d)
     step = 'follow-ups'

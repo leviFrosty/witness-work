@@ -77,6 +77,7 @@ import {
 import { localPetSnapshot } from '@/app/sync/petStoreSync'
 import { localMileageSnapshot } from '@/app/sync/mileageStoreSync'
 import { canonicalJson } from '@/lib/canonicalJson'
+import { setOwnAccountClaim } from '@/lib/accountClaimRegistry'
 import useCategories from '@/stores/categories'
 import useContacts from '@/stores/contactsStore'
 import useConversations from '@/stores/conversationStore'
@@ -363,6 +364,24 @@ describe('account backup', () => {
     if (!read.ok) throw new Error(`slot unreadable: ${read.problem}`)
     return read.payload
   }
+
+  it("leaves this device's RevenueCat claim out", () => {
+    setOwnAccountClaim({
+      appUserId: '0f8e7c1a-5b2d-4e3f-9a6b-1c2d3e4f5a6b',
+      entitled: true,
+      claimedAt: 1,
+    })
+    try {
+      const plaintext = buildBackupPlaintext({
+        deviceName: 'iPhone',
+        platform: 'ios',
+        now: Date.now(),
+      })
+      expect(plaintext.payload).not.toHaveProperty('revenueCat')
+    } finally {
+      setOwnAccountClaim(null)
+    }
+  })
 
   it('a slot read back folds to every record it was built from', () => {
     fc.assert(

@@ -16,11 +16,11 @@ const readLastKnown = (): boolean => {
  * iCloud sync gate, etc.) can read supporter status synchronously without
  * round-tripping through `CustomerContext` or recomputing from RevenueCat.
  *
- * Starts from the last status RevenueCat reported, kept in MMKV, so launch,
- * widget refreshes and background tasks don't treat a supporter as lapsed while
+ * Starts from the last status reported, kept in MMKV, so launch, widget
+ * refreshes and background tasks don't treat a supporter as lapsed while
  * RevenueCat hasn't answered yet. `SupporterStoreSync` overwrites it as soon as
- * RevenueCat answers. Purchase gates keep reading `useIsSupporter`, never this
- * cache.
+ * RevenueCat answers, or ww-api's answer says Supporter. Purchase gates keep
+ * reading `useIsSupporter`, never this cache.
  */
 type SupporterState = {
   isSupporter: boolean

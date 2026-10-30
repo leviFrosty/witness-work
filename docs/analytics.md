@@ -1105,6 +1105,20 @@ and why they can't. A device opens one when its account first connects, after
 Never the account id, `accountPub`, session ids, tokens, the device label, or
 the attestation itself.
 
+### One RevenueCat customer per account
+
+This answers whether a device joins the account's RevenueCat customer through
+the sync data, which ADR 0040 §7 adds, or still only through the account file,
+and how often a device without RevenueCat does so ahead of it. Adoptions are
+rare: one when a device joins, and one when a purchase elsewhere moves the
+account to another id.
+
+| Event                | When                                                                                                               | Properties                                                                                                                                                                             |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `account_id_adopted` | This device adopted another device's RevenueCat id ([sync](./icloud-sync.md#one-revenuecat-customer-per-account)). | `source: account_file \| sync` (where the winning claim was seen), `revenuecat`: whether RevenueCat is set up on this device (false: Android without an SDK key; the id waits for it). |
+
+Never the RevenueCat id, the account id, or the claim's time.
+
 ### Account devices and activity
 
 These answer whether people look at their signed-in devices and account

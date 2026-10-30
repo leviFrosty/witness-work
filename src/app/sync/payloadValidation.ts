@@ -264,6 +264,8 @@ export const payloadSchema = z.object({
       deviceName: z.string().optional(),
     })
     .optional(),
+  // The writer's RevenueCat claim, read by `parseAccountClaim`.
+  revenueCat: z.unknown().optional(),
   contactStore: z.object({
     contacts: z.array(contact),
     deletedContacts: z.array(contact),

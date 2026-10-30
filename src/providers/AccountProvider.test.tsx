@@ -18,6 +18,8 @@ const runtime = vi.hoisted(() => ({
   links: [] as unknown[],
   /** The Keychain is locked: the install id can't be read yet. */
   keychainLocked: false,
+  /** False: RevenueCat has no SDK key on this device. */
+  revenueCat: true,
 }))
 
 vi.mock('react-native', () => ({
@@ -49,11 +51,16 @@ vi.mock('react-native-purchases', () => ({
 }))
 vi.mock('react-native-mmkv', () => ({
   MMKV: class {
-    private values = new Map<string, string>()
+    private values = new Map<string, string | number>()
     getString(key: string) {
-      return this.values.get(key)
+      const value = this.values.get(key)
+      return typeof value === 'string' ? value : undefined
     }
-    set(key: string, value: string) {
+    getNumber(key: string) {
+      const value = this.values.get(key)
+      return typeof value === 'number' ? value : undefined
+    }
+    set(key: string, value: string | number) {
       this.values.set(key, value)
     }
     delete(key: string) {
@@ -64,11 +71,20 @@ vi.mock('react-native-mmkv', () => ({
 vi.mock('@/hooks/useCustomer', () => ({
   // Known, un-entitled customer: this device adopts a foreign claim, and
   // claims when there is none.
-  default: () => ({
-    customer: { entitlements: { active: {} } },
-    ready: true,
-    setCustomer: runtime.setCustomer,
-  }),
+  default: () =>
+    runtime.revenueCat
+      ? {
+          customer: { entitlements: { active: {} } },
+          ready: true,
+          unavailable: false,
+          setCustomer: runtime.setCustomer,
+        }
+      : {
+          customer: null,
+          ready: false,
+          unavailable: true,
+          setCustomer: runtime.setCustomer,
+        },
 }))
 vi.mock('@/lib/installId', () => {
   class InstallIdUnavailableError extends Error {}
@@ -91,6 +107,7 @@ vi.mock('@/lib/iCloudIdentity', () => ({
   },
 }))
 vi.mock('expo-device', () => ({ modelName: 'iPad' }))
+vi.mock('@/lib/analytics', () => ({ analytics: { capture: vi.fn() } }))
 vi.mock('@/lib/logger', () => import('@/__tests__/mocks/logger'))
 vi.mock('@/lib/errorTracking', () => ({
   errorTracking: { captureException: vi.fn(), addBreadcrumb: vi.fn() },
@@ -138,6 +155,7 @@ beforeEach(() => {
   runtime.remoteChangeListeners = []
   runtime.appleAccountChange = null
   runtime.keychainLocked = false
+  runtime.revenueCat = true
 })
 
 afterEach(() => {
@@ -184,7 +202,7 @@ describe('account reconcile while iCloud is downloading', () => {
 
   it('returns to this device’s own id after an Apple Account change', async () => {
     const account = await import('@/lib/account')
-    account.adoptAccountId('phone')
+    account.adoptAccountId('phone', 1)
     runtime.appleAccountChange = account.clearAdoptedAccountId
     const { AccountProvider, bridge, Purchases } = await load()
 
@@ -226,5 +244,102 @@ describe('account reconcile while iCloud is downloading', () => {
       expect(bridge.write).toHaveBeenCalledWith(ACCOUNT_FILE, ownClaim)
     )
     expect(Purchases.logIn).toHaveBeenCalledWith('ipad')
+  })
+})
+
+describe('RevenueCat claims in the sync data (ADR 0040 §7)', () => {
+  const PEER = 'aaaaaaaa-0000-4000-8000-00000000000a'
+
+  const loadClaims = async () => {
+    const registry = await import('@/lib/accountClaimRegistry')
+    const account = await import('@/lib/account')
+    const { analytics } = await import('@/lib/analytics')
+    return { registry, account, analytics }
+  }
+
+  it("publishes this device's claim for its sync payload", async () => {
+    const { AccountProvider } = await load()
+    const { registry } = await loadClaims()
+
+    await mount(AccountProvider)
+
+    await vi.waitFor(() =>
+      expect(registry.ownAccountClaim()).toMatchObject({
+        appUserId: 'ipad',
+        entitled: false,
+      })
+    )
+  })
+
+  it("adopts a peer's earlier claim from the sync data", async () => {
+    const { AccountProvider, Purchases } = await load()
+    const { registry, account, analytics } = await loadClaims()
+    // Claimed before the account file's id.
+    registry.setPeerAccountClaims([
+      { appUserId: PEER, entitled: false, claimedAt: 0 },
+    ])
+    runtime.files = [
+      {
+        ...phoneClaim,
+        json: JSON.stringify({
+          v: 1,
+          accountId: 'phone',
+          entitled: false,
+          updatedAt: 5,
+        }),
+      },
+    ]
+
+    await mount(AccountProvider)
+
+    await vi.waitFor(() => expect(Purchases.logIn).toHaveBeenCalledWith(PEER))
+    expect(account.getOrCreateAccountId()).toBe(PEER)
+    expect(Purchases.logIn).not.toHaveBeenCalledWith('phone')
+    expect(analytics.capture).toHaveBeenCalledWith('account_id_adopted', {
+      source: 'sync',
+      revenuecat: true,
+    })
+    // The adopted id keeps the time of the claim it adopted.
+    await vi.waitFor(() =>
+      expect(registry.ownAccountClaim()).toEqual({
+        appUserId: PEER,
+        entitled: false,
+        claimedAt: 0,
+      })
+    )
+  })
+
+  it('adopts when a claim arrives later', async () => {
+    const { AccountProvider, Purchases } = await load()
+    const { registry } = await loadClaims()
+
+    await mount(AccountProvider)
+    await vi.waitFor(() => expect(registry.ownAccountClaim()).not.toBeNull())
+
+    await act(async () => {
+      registry.setPeerAccountClaims([
+        { appUserId: PEER, entitled: true, claimedAt: 9e12 },
+      ])
+    })
+
+    await vi.waitFor(() => expect(Purchases.logIn).toHaveBeenCalledWith(PEER))
+  })
+
+  it('adopts the id without RevenueCat', async () => {
+    runtime.revenueCat = false
+    const { AccountProvider, Purchases } = await load()
+    const { registry, account, analytics } = await loadClaims()
+    registry.setPeerAccountClaims([
+      { appUserId: PEER, entitled: true, claimedAt: 0 },
+    ])
+
+    await mount(AccountProvider)
+
+    await vi.waitFor(() => expect(account.getOrCreateAccountId()).toBe(PEER))
+    expect(Purchases.logIn).not.toHaveBeenCalled()
+    expect(analytics.capture).toHaveBeenCalledWith('account_id_adopted', {
+      source: 'sync',
+      revenuecat: false,
+    })
   })
 })

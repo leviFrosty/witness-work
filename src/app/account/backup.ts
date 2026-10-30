@@ -1,4 +1,5 @@
 import { AppState, Platform } from 'react-native'
+import { keyChangedElsewhere } from '@/lib/accountKey/keyChangedElsewhere'
 import { getRandomBytes } from 'expo-crypto'
 import * as Device from 'expo-device'
 import { accountKey, accountKeyAvailable } from '@/app/account/accountKey'
@@ -87,7 +88,10 @@ const scheduler = createBackupScheduler({
   now: Date.now,
   setTimer: (run, ms) => setTimeout(run, ms),
   clearTimer: (timer) => clearTimeout(timer as ReturnType<typeof setTimeout>),
-  isEnabled: () => useBackupState.getState().enabled,
+  // Signed out after a key change elsewhere: backup waits for the sign-in,
+  // keeping its setting and slot.
+  isEnabled: () =>
+    useBackupState.getState().enabled && keyChangedElsewhere() === null,
   prepare: async () => {
     const key = await readAccountKey(true)
     const access = await backupAccessFor(key!)

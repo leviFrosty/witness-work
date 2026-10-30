@@ -1,5 +1,6 @@
 import { Platform } from 'react-native'
 import * as BuddiesKeychain from '../../../../modules/buddies-keychain'
+import { deviceAccountKey } from '@/lib/accountKey'
 import apis from '@/constants/apis'
 import { analytics } from '@/lib/analytics'
 import { refreshSyncClock, syncNow } from '@/lib/syncClock'
@@ -142,12 +143,11 @@ const engine = createBuddiesEngine({
   // Revs, expiries, and lastSyncAt stay on the device clock, as before: a
   // calibration mid-session must never make a newer rev look older.
   now: Date.now,
-  getRootSeed: async () =>
-    fromB64u(await BuddiesKeychain.getOrCreateRootSeed()),
+  getRootSeed: async () => fromB64u(await deviceAccountKey.getOrCreate()),
   // The seed is the account key: its session ends first, and none opens for
   // it while it's deleted (ADR 0027).
   deleteRootSeed: async () => {
-    const seed = await BuddiesKeychain.peekRootSeed()
+    const seed = await deviceAccountKey.peek()
     await serverAccount.changeKey(() => BuddiesKeychain.deleteRootSeed(), {
       from: seed ? fromB64u(seed) : null,
     })

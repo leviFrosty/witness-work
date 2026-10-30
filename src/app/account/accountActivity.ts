@@ -1,5 +1,9 @@
 import { accountKey } from '@/app/account/accountKey'
-import { isThisDeviceSession } from '@/lib/serverAccount'
+import {
+  isThisDeviceSession,
+  keyHistoryCache,
+  serverAccount,
+} from '@/lib/serverAccount'
 import {
   activityOptions,
   readAccountDevices,
@@ -41,7 +45,12 @@ export class AccountNotSetUpError extends Error {
 async function connect(signal?: AbortSignal) {
   const key = await accountKey.peek()
   if (!key) throw new AccountNotSetUpError()
-  const readLabel = createDeviceLabelReader(key)
+  // Labels sealed before the account key changed open with the key history.
+  const accountId = serverAccount.cached(key)?.accountId
+  const history = accountId
+    ? await keyHistoryCache.read(accountId).catch(() => null)
+    : null
+  const readLabel = createDeviceLabelReader(key, history)
   const options = activityOptions(key, signal)
   const context = (): AccountActivityContext => ({
     isThisDevice: isThisDeviceSession,

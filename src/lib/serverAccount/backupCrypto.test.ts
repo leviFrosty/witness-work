@@ -84,6 +84,32 @@ describe('backup blob', () => {
     expect(problem(() => openBackup(other, blob, address))).toBe('decrypt')
   })
 
+  it('opens a blob an older account key sealed with the keys it’s given', () => {
+    const oldKey = new Uint8Array(32).fill(5)
+    const blob = sealBackup(
+      deriveBackupKey(oldKey),
+      plaintext,
+      address,
+      random(24)
+    )
+    expect(
+      problem(() => openBackup(deriveBackupKey(accountKey), blob, address))
+    ).toBe('decrypt')
+    expect(
+      openBackup(deriveBackupKey(accountKey), blob, address, [
+        deriveBackupKey(new Uint8Array(32).fill(6)),
+        deriveBackupKey(oldKey),
+      ])
+    ).toEqual(plaintext)
+    expect(
+      problem(() =>
+        openBackup(deriveBackupKey(accountKey), blob, address, [
+          deriveBackupKey(new Uint8Array(32).fill(6)),
+        ])
+      )
+    ).toBe('decrypt')
+  })
+
   it('refuses a blob moved to another slot or another account', () => {
     const key = deriveBackupKey(accountKey)
     const blob = sealBackup(key, plaintext, address, random(24))

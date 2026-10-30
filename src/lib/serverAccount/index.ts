@@ -3,9 +3,9 @@ import * as Application from 'expo-application'
 import { getRandomBytes } from 'expo-crypto'
 import * as Device from 'expo-device'
 import { MMKV } from 'react-native-mmkv'
-import * as BuddiesKeychain from '../../../modules/buddies-keychain'
 import * as DeviceSecrets from '../../../modules/device-secrets'
 import apis from '@/constants/apis'
+import { deviceAccountKey } from '@/lib/accountKey'
 import { analytics } from '@/lib/analytics'
 import { updateRequiredByServer, useUpdateRequired } from '@/lib/appUpdate'
 import { deviceAttestation } from '@/lib/attestation'
@@ -19,6 +19,7 @@ import {
   fetchAccountInfo,
   type ServerAccountInfo,
 } from '@/lib/serverAccount/client'
+import type { DeviceLabel } from '@/lib/serverAccount/deviceLabel'
 import {
   AccountSessionError,
   type AccountSessionEvent,
@@ -30,6 +31,13 @@ import {
   createServerAccount,
   type ServerAccountStorage,
 } from '@/lib/serverAccount/serverAccount'
+import { fetchKeyHistory } from '@/lib/serverAccount/keyChangeClient'
+import {
+  historyKeys,
+  historyPhotoKeys,
+  type KeyHistoryKind,
+} from '@/lib/serverAccount/keyHistory'
+import { createKeyHistoryCache } from '@/lib/serverAccount/keyHistoryCache'
 
 let _store: MMKV | null = null
 // Device-local MMKV, like ADR 0011's account id: never in the sync payload.
@@ -205,6 +213,43 @@ function reportSessionEvent(event: AccountSessionEvent) {
   })
 }
 
+/** This device as its sealed label names it (`session/open`'s `device`). */
+export function thisDeviceLabel(): DeviceLabel {
+  const model = Device.modelName ?? ''
+  return {
+    name: model || (Platform.OS === 'ios' ? 'iPhone' : 'Android'),
+    platform: Platform.OS === 'android' ? 'android' : 'ios',
+    model,
+  }
+}
+
+const keySwitchedListeners = new Set<() => void>()
+
+/**
+ * Calls `listener` when the account key changed under this device's session
+ * (iCloud Keychain brought another device's key). Returns an unsubscribe.
+ */
+export const onAccountKeySwitched = (listener: () => void): (() => void) => {
+  keySwitchedListeners.add(listener)
+  return () => keySwitchedListeners.delete(listener)
+}
+
+const keyRetiredListeners = new Set<
+  (accountPub: string, changedAt: number | null) => void
+>()
+
+/**
+ * Calls `listener` when a session open is refused as `key_retired`: the account
+ * key changed on another device (`app/account/keyChange` handles it). Returns
+ * an unsubscribe.
+ */
+export const onKeyRetired = (
+  listener: (accountPub: string, changedAt: number | null) => void
+): (() => void) => {
+  keyRetiredListeners.add(listener)
+  return () => keyRetiredListeners.delete(listener)
+}
+
 /**
  * This device's attested account sessions (ADR 0027). Every user-scoped ww-api
  * call goes through `accountSessions.request` or `withSession`.
@@ -217,7 +262,7 @@ export const accountSessions = createAccountSessions({
   store: sessionStore,
   accountKey: async () => {
     try {
-      return fromB64u(await BuddiesKeychain.getOrCreateRootSeed())
+      return fromB64u(await deviceAccountKey.getOrCreate())
     } catch (error) {
       logger.warn('[account] no account key', error)
       throw new AccountSessionError('unavailable', {
@@ -225,14 +270,7 @@ export const accountSessions = createAccountSessions({
       })
     }
   },
-  deviceLabel: () => {
-    const model = Device.modelName ?? ''
-    return {
-      name: model || (Platform.OS === 'ios' ? 'iPhone' : 'Android'),
-      platform: Platform.OS === 'android' ? 'android' : 'ios',
-      model,
-    }
-  },
+  deviceLabel: thisDeviceLabel,
   // Devices shows it; `major.minor.patch` only.
   appVersion: () => Application.nativeApplicationVersion,
   onUpgradeRequired: updateRequiredByServer,
@@ -257,6 +295,24 @@ export const accountSessions = createAccountSessions({
   },
   // Reinstated, maybe: the account's own record says.
   onSucceededWhileSuspended: recheckStatus,
+  onKeySwitched: () => {
+    for (const listener of keySwitchedListeners) {
+      try {
+        listener()
+      } catch (error) {
+        errorTracking.captureException(error)
+      }
+    }
+  },
+  onKeyRetired: (accountPub, changedAt) => {
+    for (const listener of keyRetiredListeners) {
+      try {
+        listener(accountPub, changedAt)
+      } catch (error) {
+        errorTracking.captureException(error)
+      }
+    }
+  },
 })
 
 /** Bearer ops as one account key's session. */
@@ -272,11 +328,18 @@ export const fetchServerAccountInfo = (
   accountKey: Uint8Array
 ): Promise<ServerAccountInfo> => fetchAccountInfo(bearerOptions(accountKey))
 
+const LAST_ACCOUNT_KEY = 'last-account-id'
+
 /** This device's server account (ADR 0024), through its session. */
 export const serverAccount = createServerAccount({
   sessions: accountSessions,
   info: fetchServerAccountInfo,
   storage,
+  // Kept through sign-outs and key changes, for rejoining the same account.
+  lastAccount: {
+    get: () => store().getString(LAST_ACCOUNT_KEY) ?? null,
+    set: (accountId) => store().set(LAST_ACCOUNT_KEY, accountId),
+  },
   now: Date.now,
   onKeyChanged: () => notifyAccountChange('key_changed'),
 })
@@ -291,7 +354,7 @@ export const cachedServerAccount = (): CachedServerAccount | null =>
  * Never creates one.
  */
 export const hasAccountKey = async (): Promise<boolean> =>
-  (await BuddiesKeychain.peekRootSeed().catch(() => null)) != null
+  (await deviceAccountKey.peek().catch(() => null)) != null
 
 /**
  * Whether this device's account is suspended, so a feature can say so before
@@ -303,7 +366,54 @@ export const hasAccountKey = async (): Promise<boolean> =>
 export async function accountSuspended(): Promise<boolean> {
   await accountSessions.ready()
   if (accountSessions.snapshot()?.status !== 'suspended') return false
-  const seed = await BuddiesKeychain.peekRootSeed().catch(() => null)
+  const seed = await deviceAccountKey.peek().catch(() => null)
   if (seed) await serverAccount.check(fromB64u(seed))
   return accountSessions.snapshot()?.status === 'suspended'
 }
+
+const KEY_HISTORY_SECRET = 'account-key-history'
+// A binary without the module keeps it for this launch only.
+let memoryKeyHistory: string | null = null
+
+/**
+ * The account's key history, opened and kept on this device (derived keys, so
+ * in the platform keystore, never synced): what older account keys sealed still
+ * opens after a key change (docs/account-key-change.md).
+ */
+export const keyHistoryCache = createKeyHistoryCache({
+  store: {
+    read: async () =>
+      DeviceSecrets.isAvailable()
+        ? DeviceSecrets.read(KEY_HISTORY_SECRET)
+        : memoryKeyHistory,
+    write: async (value) => {
+      if (!DeviceSecrets.isAvailable()) {
+        memoryKeyHistory = value
+        return
+      }
+      if (value) await DeviceSecrets.write(KEY_HISTORY_SECRET, value)
+      else await DeviceSecrets.remove(KEY_HISTORY_SECRET)
+    },
+  },
+  fetchHistory: (accountKey) => fetchKeyHistory(bearerOptions(accountKey)),
+})
+
+/**
+ * One kind of key from the account's older account keys, newest first: none
+ * when its key never changed, or before this device read its history.
+ */
+export const olderAccountKeys = async (
+  accountId: string,
+  kind: KeyHistoryKind
+): Promise<Uint8Array[]> =>
+  historyKeys(await keyHistoryCache.read(accountId).catch(() => null), kind)
+
+/**
+ * Cloud Sync photo keys from the account's older account keys, newest first: a
+ * photo whose name under the current name key isn't on the server is looked up
+ * under each `name` key and opened with its `photo` key.
+ */
+export const olderPhotoKeys = async (
+  accountId: string
+): Promise<{ name: Uint8Array; photo: Uint8Array }[]> =>
+  historyPhotoKeys(await keyHistoryCache.read(accountId).catch(() => null))

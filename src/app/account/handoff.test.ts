@@ -37,7 +37,7 @@ vi.mock('@/lib/analytics', () => ({ analytics: { capture: vi.fn() } }))
 vi.mock('@/lib/logger', () => import('@/__tests__/mocks/logger'))
 vi.mock('@/lib/serverAccount', () => ({
   accountSessions: { openDetached: fake.openDetached },
-  serverAccount: {},
+  serverAccount: { lastAccountId: () => null },
 }))
 vi.mock('@/lib/serverAccount/backupStore', () => ({
   useBackupState: { getState: () => ({ enabled: false }) },

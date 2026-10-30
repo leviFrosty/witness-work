@@ -637,6 +637,9 @@ function relayErrorFromSession(error: AccountSessionError): RelayError {
       )
     case 'rateLimited':
       return new RelayError('rate_limited', status || 429, error.retryAfterMs)
+    // Signed out after a key change elsewhere: Buddies waits for a sign-in.
+    case 'keyRetired':
+      return new RelayError('cancelled', 0)
     case 'server':
       return new RelayError(
         status === 401 ? 'unauthorized' : 'unknown',

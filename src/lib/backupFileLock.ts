@@ -274,13 +274,26 @@ function open(key: Uint8Array, file: LockedBackupFile): UnlockedBackupFile {
   }
 }
 
-/** Opens an `account` file with this device's account key. */
+/**
+ * Opens an `account` file with this device's account key, then each of
+ * `olderFileKeys`: the key history's `backupFile` keys, newest first, for a
+ * file locked before the account key changed.
+ */
 export function unlockWithAccountKey(
   file: LockedBackupFile,
-  accountKey: Uint8Array
+  accountKey: Uint8Array,
+  olderFileKeys: readonly Uint8Array[] = []
 ): UnlockedBackupFile {
   if (file.lock !== 'account') throw new BackupUnlockError('format')
-  return open(deriveBackupFileKey(accountKey), file)
+  for (const key of [deriveBackupFileKey(accountKey), ...olderFileKeys]) {
+    try {
+      return open(key, file)
+    } catch (error) {
+      if (!(error instanceof BackupUnlockError) || error.problem !== 'key')
+        throw error
+    }
+  }
+  throw new BackupUnlockError('key')
 }
 
 /** Opens a `password` file. A wrong password is `BackupUnlockError('key')`. */

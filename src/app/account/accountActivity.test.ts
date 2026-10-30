@@ -14,6 +14,8 @@ vi.mock('@/app/account/accountKey', () => ({
 vi.mock('@/lib/serverAccount', () => ({
   accountSessions: { request: mocks.request },
   isThisDeviceSession: (sessionId: string) => sessionId === 'me',
+  serverAccount: { cached: () => null },
+  keyHistoryCache: { read: async () => null },
 }))
 vi.mock('@/lib/serverAccount/activityLabels', () => ({
   createDeviceLabelReader: () => () => null,

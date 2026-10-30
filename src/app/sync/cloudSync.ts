@@ -2,7 +2,7 @@ import { AppState, Platform } from 'react-native'
 import * as Device from 'expo-device'
 import { getRandomBytes } from 'expo-crypto'
 import { sha256 } from '@noble/hashes/sha2.js'
-import * as BuddiesKeychain from '../../../modules/buddies-keychain'
+import { deviceAccountKey } from '@/lib/accountKey'
 import apis from '@/constants/apis'
 import { fromB64u, toB64u, utf8 } from '@/lib/bytes'
 import {
@@ -18,6 +18,7 @@ import {
 import {
   accountSessions,
   bearerOptions,
+  olderAccountKeys,
   onAccountChange,
   serverAccount,
 } from '@/lib/serverAccount'
@@ -68,7 +69,7 @@ import { bookkeepingForNewTransport } from '@/app/sync/imageSync'
 
 /** The account key on this device, without creating one. */
 async function peekAccountKey(): Promise<Uint8Array | null> {
-  const seed = await BuddiesKeychain.peekRootSeed().catch(() => null)
+  const seed = await deviceAccountKey.peek().catch(() => null)
   return seed ? fromB64u(seed) : null
 }
 
@@ -102,6 +103,7 @@ async function cloudSyncAccess(): Promise<ServerSyncAccess> {
     accountId,
     syncKey,
     photoKeys,
+    olderSyncKeys: await olderAccountKeys(accountId, 'sync'),
     options: bearerOptions(accountKey),
   }
 }

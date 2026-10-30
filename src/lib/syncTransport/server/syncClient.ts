@@ -104,12 +104,18 @@ export async function fetchSyncStatus(
   }
 }
 
-/** Replaces this device's slot. Resolves its new ETag and server time. */
+/**
+ * Replaces this device's slot. Resolves its new ETag and server time.
+ *
+ * `reseal` re-seals any of the account's slots under a new account key (ADR
+ * 0039): the slot keeps its writer and time. It needs `ifMatch` with the ETag
+ * read, and is refused (`forbidden`) once the key change is 7 days old.
+ */
 export async function putSyncSlot(
   options: BearerAccountOptions,
   slotId: string,
   blob: Uint8Array,
-  { ifMatch }: { ifMatch?: string } = {}
+  { ifMatch, reseal }: { ifMatch?: string; reseal?: boolean } = {}
 ): Promise<{ etag: string; updatedAt: number; seq: number }> {
   const response = await sendBearerAccountOp<Record<string, unknown>>(
     'sync/put',
@@ -121,6 +127,7 @@ export async function putSyncSlot(
         'x-ww-slot-id': slotId,
         'x-ww-sha256': await syncBlobDigest(blob),
         ...(ifMatch && { 'if-match': ifMatch === '*' ? '*' : `"${ifMatch}"` }),
+        ...(reseal && { 'x-ww-reseal': '1' }),
       },
       timeoutMs: BLOB_TIMEOUT_MS,
     }

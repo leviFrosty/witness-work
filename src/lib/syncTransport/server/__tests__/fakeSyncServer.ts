@@ -43,6 +43,16 @@ export function createFakeSyncServer() {
     photoWrites: [] as Array<{ op: string; slotId: string | null }>,
     /** Fails the next photo op with this code and status, once. */
     photoFailure: null as { code: string; status: number } | null,
+    /** The account's key changed more than 7 days ago: re-seals are refused. */
+    resealForbidden: false,
+    /**
+     * The next this many puts are refused as too soon after the last, or (with
+     * a longer `putRetryAfterSec`) while another put of the slot is in flight.
+     */
+    rateLimitedPuts: 0,
+    putRetryAfterSec: 2,
+    /** Runs before a put lands (another device writing in between). */
+    beforePut: null as ((slotId: string) => void) | null,
     /** Every request, as `<method> <op>` (no ids), for assertions. */
     log: [] as string[],
   }
@@ -235,7 +245,37 @@ export function createFakeSyncServer() {
           return refuse('bad_request', 400)
         if (state.putDelayMs)
           await new Promise((resolve) => setTimeout(resolve, state.putDelayMs))
-        const updatedAt = (clock = Math.max(clock + 1, Date.now()))
+        // As the worker: a quoted ETag or `*`, and a re-seal needs the ETag.
+        const ifMatch = headers.get('if-match')
+        const reseal = headers.get('x-ww-reseal')
+        const quoted = ifMatch?.match(/^"([A-Za-z0-9_-]+)"$/)?.[1]
+        if (
+          (ifMatch !== null && ifMatch !== '*' && !quoted) ||
+          (reseal !== null && (reseal !== '1' || !quoted))
+        )
+          return refuse('bad_request', 400)
+        if (reseal && state.resealForbidden) return refuse('forbidden', 403)
+        if (state.rateLimitedPuts > 0) {
+          state.rateLimitedPuts--
+          return new Response(
+            JSON.stringify({ ok: false, code: 'rate_limited' }),
+            {
+              status: 429,
+              headers: { 'retry-after': String(state.putRetryAfterSec) },
+            }
+          )
+        }
+        state.beforePut?.(slotId)
+        const existing = slots.get(slotId)
+        if (
+          (ifMatch !== null && !existing) ||
+          (quoted && existing?.etag !== quoted)
+        )
+          return refuse('precondition_failed', 412)
+        // A re-seal keeps the slot's time.
+        const updatedAt = reseal
+          ? existing!.updatedAt
+          : (clock = Math.max(clock + 1, Date.now()))
         slots.set(slotId, { bytes, etag, updatedAt })
         return json({
           ok: true,
@@ -287,5 +327,18 @@ export function createFakeSyncServer() {
     putPhoto: (account: string, name: string, photo: Photo) =>
       photosOf(account).set(name, photo),
     photoUsage: usageOf,
+    /** Puts a slot as another device would, without a request. */
+    seed: (account: string, slotId: string, bytes: Uint8Array) => {
+      const updatedAt = (clock = Math.max(clock + 1, Date.now()))
+      slotsOf(account).set(slotId, {
+        bytes,
+        etag: toB64u(sha256(bytes)),
+        updatedAt,
+      })
+      seq++
+    },
+    /** A slot's time, as the listing has it. */
+    slotUpdatedAt: (account: string, slotId: string) =>
+      slotsOf(account).get(slotId)?.updatedAt ?? null,
   }
 }

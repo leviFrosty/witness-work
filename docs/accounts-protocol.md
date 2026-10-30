@@ -348,7 +348,7 @@ Every op is **Bearer**. Ids travel in bodies and headers, never URLs.
 
 ## Supporter status
 
-ww-api answers whether an account is a Supporter from its own record, which RevenueCat's webhook keeps current ([ADR 0029](./adr/0029-supporter-status-on-the-server-account.md)). Who counts is still [ADR 0014](./adr/0014-supporter-status-rule.md)'s rule. The app keeps logging in to RevenueCat with ADR 0011's shared id and links that customer to its account.
+ww-api answers whether an account is a Supporter from its own record, which RevenueCat's webhook keeps current ([ADR 0029](./adr/0029-supporter-status-on-the-server-account.md)). Who counts is still [ADR 0014](./adr/0014-supporter-status-rule.md)'s rule. The app keeps logging in to RevenueCat with ADR 0011's shared id and links that customer to its account. How the web sells, and which customer it uses, is in [`web-purchases.md`](./web-purchases.md).
 
 ### Linking a customer: `POST /accounts/v1/revenuecat-customers`
 

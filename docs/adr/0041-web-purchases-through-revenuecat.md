@@ -33,8 +33,8 @@ RevenueCat Billing runs on our own Stripe account; RevenueCat isn't the
 seller. EU and UK VAT apply from the first sale, and we aren't registering for
 either yet. So the web doesn't sell to buyers there:
 
-- The web paywall checks the visitor's country, using Cloudflare's country
-  header, and points EU and UK visitors to the app stores instead.
+- The web paywall checks the visitor's country, as Cloudflare sees it, and
+  points EU and UK visitors to the app stores instead.
 - Stripe blocks EU and UK card and billing countries.
 
 We review other countries' tax thresholds before we reach them.
@@ -71,4 +71,6 @@ never do. The privacy policy says so.
 - We owe sales tax only where we reach a country's threshold, and nothing in
   the EU or UK, because we don't sell there on the web.
 - RevenueCat's dashboard holds web products next to the store products. Its
-  hosted portal handles subscription changes and refunds for web purchases.
+  hosted portal handles subscription changes and cancelling for web
+  purchases. Refunds go through support, from the dashboard.
+- The contract is [`web-purchases.md`](../web-purchases.md).

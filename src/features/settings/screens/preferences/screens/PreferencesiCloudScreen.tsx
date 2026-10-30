@@ -47,7 +47,7 @@ import {
   UPLOAD_GRACE_MS,
 } from '@/features/settings/lib/iCloudStatus'
 import { alignText } from '@/lib/direction'
-import * as BuddiesKeychain from '../../../../../../modules/buddies-keychain'
+import { deviceAccountKey } from '@/lib/accountKey'
 import { fromB64u } from '@/lib/bytes'
 import { accountSessions } from '@/lib/serverAccount'
 import { signedInElsewhere } from '@/lib/serverAccount/accountDevices'
@@ -85,7 +85,7 @@ const formatOrDash = (ts: number | null): string =>
  */
 async function accountHasOtherDevices(): Promise<boolean> {
   if (!accountSessions.snapshot()) return false
-  const seed = await BuddiesKeychain.peekRootSeed().catch(() => null)
+  const seed = await deviceAccountKey.peek().catch(() => null)
   return seed ? signedInElsewhere(fromB64u(seed)) : false
 }
 

@@ -180,6 +180,28 @@ function RecoveryKeyForm({
         current !== null &&
         (current.length !== newKey.length ||
           current.some((byte, i) => byte !== newKey[i]))
+      // The account this device was on, under its changed key: a rejoin,
+      // with nothing to lose or leave.
+      const rejoin =
+        current === null || differs
+          ? await accountKey.sameAccountSession(newKey)
+          : null
+      if (rejoin) {
+        try {
+          const result = await replaceAccountKey(newKey, {
+            source: 'recovery_key',
+            confirmedLoss: true,
+            session: rejoin,
+            accountId: rejoin.accountId,
+          })
+          analytics.capture('recovery_key_used', { outcome: result.outcome })
+          onFinished(result.outcome)
+        } finally {
+          // Adopted by then; closing an adopted session does nothing.
+          await rejoin.close()
+        }
+        return
+      }
       const loss = await accountKey.lossIfReplaced(newKey)
       // On iOS the key reaches every Apple device on the same iCloud
       // Keychain, so replacing one there always asks.

@@ -3,6 +3,7 @@ import * as Device from 'expo-device'
 import { Platform } from 'react-native'
 import { accountKey, accountKeyAvailable } from '@/app/account/accountKey'
 import { createBackupFile } from '@/lib/backupFile'
+import { olderAccountKeys, serverAccount } from '@/lib/serverAccount'
 import {
   type LockedBackupFile,
   lockWithAccountKey,
@@ -54,5 +55,12 @@ export async function unlockWithThisAccount(
 ): Promise<UnlockedBackupFile | null> {
   if (!accountLockAvailable()) return null
   const key = await accountKey.peek()
-  return key ? unlockWithAccountKey(file, key) : null
+  if (!key) return null
+  // Files locked before the account key changed open with the key history.
+  const accountId = serverAccount.cached(key)?.accountId
+  return unlockWithAccountKey(
+    file,
+    key,
+    accountId ? await olderAccountKeys(accountId, 'backupFile') : []
+  )
 }

@@ -30,7 +30,9 @@ const {
   }
 })
 
-vi.mock('../../../modules/buddies-keychain', () => ({ peekRootSeed }))
+vi.mock('@/lib/accountKey', () => ({
+  deviceAccountKey: { peek: peekRootSeed },
+}))
 vi.mock('@/app/sync/iCloudSync', () => ({ canSync }))
 vi.mock('@/lib/analytics', () => ({ analytics: { capture } }))
 vi.mock('@/stores/preferences', () => ({

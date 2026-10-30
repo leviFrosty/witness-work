@@ -158,6 +158,7 @@ import {
   takeReplacedPhotos,
 } from '@/app/sync/photoBaseline'
 import { onPhotoRoom } from '@/lib/syncTransport/server/photoUsage'
+import { keyChangedElsewhere } from '@/lib/accountKey/keyChangedElsewhere'
 import { referencedNoteImageIds } from '@/stores/noteImages'
 
 const PUSH_DEBOUNCE_MS = 5000
@@ -533,6 +534,9 @@ export function canSync(): boolean {
   if (!iCloudSyncEnabled) return false
   if (!syncEntitled()) return false
   if (cloudSyncWaitsForUpdate()) return false
+  // Signed out after a key change elsewhere: Cloud Sync waits for the
+  // sign-in, keeping its bookkeeping (docs/account-key-change.md).
+  if (usesCloudSync() && keyChangedElsewhere()) return false
   if (!syncTransport().isAvailable()) return false
   return checkICloudIdentity('can_sync')
 }

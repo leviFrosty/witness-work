@@ -104,19 +104,42 @@ export function sealPlaintext(
 }
 
 /**
- * Decrypts and reads a slot's blob. Throws `BackupOpenError`; the payload
- * inside is still unvalidated.
+ * Decrypts and reads a slot's blob, with the backup key, then each of
+ * `olderKeys` (the key history's, newest first). Throws `BackupOpenError`; the
+ * payload inside is still unvalidated.
  */
 export function openBackup(
   backupKey: Uint8Array,
   blob: Uint8Array,
-  address: BackupAddress
+  address: BackupAddress,
+  olderKeys: readonly Uint8Array[] = []
 ): BackupPlaintext {
-  return openPlaintext(backupKey, blob, backupAad(address))
+  return openPlaintext(backupKey, blob, backupAad(address), olderKeys)
 }
 
-/** `openBackup` under any key and AAD (see `sealPlaintext`). */
+/**
+ * `openBackup` under any key and AAD (see `sealPlaintext`). A key that doesn't
+ * decrypt tries the next of `olderKeys`; one that does decides.
+ */
 export function openPlaintext(
+  key: Uint8Array,
+  blob: Uint8Array,
+  aad: Uint8Array,
+  olderKeys: readonly Uint8Array[] = []
+): BackupPlaintext {
+  for (const older of olderKeys) {
+    try {
+      return openPlaintextWith(key, blob, aad)
+    } catch (error) {
+      if (!(error instanceof BackupOpenError) || error.problem !== 'decrypt')
+        throw error
+      key = older
+    }
+  }
+  return openPlaintextWith(key, blob, aad)
+}
+
+function openPlaintextWith(
   key: Uint8Array,
   blob: Uint8Array,
   aad: Uint8Array

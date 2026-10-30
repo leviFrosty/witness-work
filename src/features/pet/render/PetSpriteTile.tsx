@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { PixelRatio } from 'react-native'
 import {
   Canvas,
@@ -11,7 +11,10 @@ import { useReducedMotion, useSharedValue } from 'react-native-reanimated'
 import { createLru } from '@/lib/pixelArt'
 import type { PetSpecies } from '@/types/pet'
 import {
+  faceOf,
   idlePose,
+  MOUTH_CLOSING_MS,
+  mouthOpen,
   petSprite,
   spriteKey,
   SPRITE_SIZE,
@@ -88,12 +91,23 @@ export default function PetSpriteTile({
   const image = useSharedValue<SkImage | null>(
     spriteImage(species, coat, frameKey(mood, 0, seed))
   )
+  const shownMood = useRef(mood)
 
   useEffect(() => {
-    image.set(spriteImage(species, coat, frameKey(mood, 0, seed)))
+    // An open mouth closing (deselected) shows half shut for a frame first.
+    const closing =
+      !reduceMotion &&
+      active &&
+      mouthOpen(faceOf(shownMood.current)) &&
+      !mouthOpen(faceOf(mood))
+    shownMood.current = mood
+    const still = frameKey(mood, 0, seed)
+    image.set(spriteImage(species, coat, { ...still, mouthClosing: closing }))
     if (reduceMotion || !active) return
+    const closingUntil = closing ? performance.now() + MOUTH_CLOSING_MS : 0
     let last = ''
     return subscribe((tMs) => {
+      if (tMs < closingUntil) return
       const key = frameKey(mood, tMs, seed)
       const id = spriteKey(species, coat, key)
       if (id === last) return

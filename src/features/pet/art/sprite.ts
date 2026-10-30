@@ -38,6 +38,17 @@ export function faceOf(mood: PetMood): PetFace {
   return FACE_OF[mood]
 }
 
+/** Whether `face` has the mouth open (the tongue out). */
+export function mouthOpen(face: PetFace): boolean {
+  return face === 'joy' || face === 'wide'
+}
+
+/**
+ * How long the mouth shows half shut after an open mouth ends: one frame of the
+ * 10 fps clock, so it eases closed instead of snapping.
+ */
+export const MOUTH_CLOSING_MS = 100
+
 /** Idle bob period (ms per frame) by mood; others use 560. */
 const BOB_MS: Partial<Record<PetMood, number>> = {
   nap: 1400,
@@ -125,6 +136,7 @@ export function spriteKey(
     pose.bob,
     pose.tail,
     pose.blink ? 1 : 0,
+    pose.mouthClosing ? 1 : 0,
     pose.flip ? 1 : 0,
     pose.lie ? 1 : 0,
     pose.grey ?? 'none',

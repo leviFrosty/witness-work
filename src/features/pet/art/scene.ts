@@ -55,7 +55,13 @@ import {
   type ResolvedRoom,
   type SignData,
 } from './room'
-import { greyModeFor, idlePose, petSprite, type SpriteKey } from './sprite'
+import {
+  greyModeFor,
+  idlePose,
+  MOUTH_CLOSING_MS,
+  petSprite,
+  type SpriteKey,
+} from './sprite'
 import type { GreyMode, PetMood, PetSpeciesId } from './types'
 import { drawParadiseWalkers, drawShootingStar } from './windowExtras'
 
@@ -303,11 +309,13 @@ function drawVisitor(
   reduceMotion: boolean,
   subject: PixelMask
 ): void {
-  const joy = visitor.joyUntilMs !== undefined && tMs < visitor.joyUntilMs
+  const until = visitor.joyUntilMs
+  const joy = until !== undefined && tMs < until
   const idle = idlePose(joy ? 'joy' : 'happy', reduceMotion ? 0 : tMs, seed)
   const sprite = petSprite(visitor.species, visitor.coat, {
     ...idle,
     blink: reduceMotion ? false : idle.blink,
+    mouthClosing: until !== undefined && !joy && tMs < until + MOUTH_CLOSING_MS,
     flip: true,
     lie: false,
   })

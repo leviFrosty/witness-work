@@ -8,7 +8,7 @@
 /**
  * FNV-1a hashes of every species × coat × mood sprite at t = 0 (idle pose, seed
  * 1000). Changed on purpose since the port: the pup is redrawn by hand as a
- * golden retriever.
+ * golden retriever, and drops its jaw when it sticks its tongue out.
  */
 export const SPRITE_HASHES: Readonly<Record<string, string>> = {
   'lion/default/happy': 'ac26fd80',
@@ -27,8 +27,8 @@ export const SPRITE_HASHES: Readonly<Record<string, string>> = {
   'dog/gold/weak': 'a6c20e0b',
   'dog/gold/nap': 'a2cb378e',
   'dog/gold/dead': '2b30926f',
-  'dog/gold/joy': '3eb9a11f',
-  'dog/gold/wide': '5b20a3c5',
+  'dog/gold/joy': '698dc05b',
+  'dog/gold/wide': '7156f05',
   'dog/white/happy': 'fc67b3b8',
   'dog/white/content': 'fc67b3b8',
   'dog/white/ok': 'fc67b3b8',
@@ -36,8 +36,8 @@ export const SPRITE_HASHES: Readonly<Record<string, string>> = {
   'dog/white/weak': '70196601',
   'dog/white/nap': 'a5258ed7',
   'dog/white/dead': 'e61b7429',
-  'dog/white/joy': '98672aed',
-  'dog/white/wide': '287d2803',
+  'dog/white/joy': 'c9b3773e',
+  'dog/white/wide': '21385057',
   'dog/liver/happy': 'c77b4591',
   'dog/liver/content': 'c77b4591',
   'dog/liver/ok': 'c77b4591',
@@ -45,8 +45,8 @@ export const SPRITE_HASHES: Readonly<Record<string, string>> = {
   'dog/liver/weak': '2f1ba663',
   'dog/liver/nap': '4919e46a',
   'dog/liver/dead': '5f033ff6',
-  'dog/liver/joy': '35be1b92',
-  'dog/liver/wide': '192541ec',
+  'dog/liver/joy': '63c8aca9',
+  'dog/liver/wide': 'da20e2f0',
   'dog/black/happy': '1be017dc',
   'dog/black/content': '1be017dc',
   'dog/black/ok': '1be017dc',
@@ -54,8 +54,8 @@ export const SPRITE_HASHES: Readonly<Record<string, string>> = {
   'dog/black/weak': '56ba714d',
   'dog/black/nap': 'c354b268',
   'dog/black/dead': 'e40f2546',
-  'dog/black/joy': '1b74fd00',
-  'dog/black/wide': '88da4d9f',
+  'dog/black/joy': 'dd830ccc',
+  'dog/black/wide': 'b1efe04f',
   'cat/orange/happy': '5ea9d65d',
   'cat/orange/content': '5ea9d65d',
   'cat/orange/ok': '2e744b8d',

@@ -19,6 +19,12 @@ export interface SpritePose {
   /** Tail frame, 0 or 1. */
   readonly tail: number
   readonly blink: boolean
+  /**
+   * The mouth is half shut on its way closed: the frame after an open mouth
+   * (`joy`, `wide`) gives way to `face`. Species that don't open the mouth wide
+   * ignore it.
+   */
+  readonly mouthClosing?: boolean
 }
 
 /** What every coat carries besides its palette. */

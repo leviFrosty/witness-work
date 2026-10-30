@@ -32,6 +32,7 @@ import {
   type SceneInput,
   type ScenePet,
 } from './scene'
+import { MOUTH_CLOSING_MS, mouthOpen } from './sprite'
 import type { PetMoment, PetMood, PetSpeciesId } from './types'
 
 /** Kinds of motion a player can play. */
@@ -127,6 +128,10 @@ export function createScenePlayer(
   let squishUntilMs = 0
   let pendingSay: PetMoment | null = null
   let reduceMotion = opts.reduceMotion ?? false
+  // The pet's mouth was open last frame, and when it last closed: the frames
+  // just after show it half shut.
+  let mouthWasOpen = false
+  let mouthClosedAtMs = -Infinity
 
   const start = (kind: MotionKind, table: MotionTable, tMs: number) => {
     playing = { kind, table, startMs: tMs, said: false }
@@ -222,7 +227,16 @@ export function createScenePlayer(
           ended = current.kind
         }
       }
-      const petNow = pet ? petFrame(pet, tMs, reduceMotion) : null
+      let petNow = pet ? petFrame(pet, tMs, reduceMotion) : null
+      if (petNow) {
+        const open = mouthOpen(petNow.sprite.face)
+        if (mouthWasOpen && !open) mouthClosedAtMs = tMs
+        mouthWasOpen = open
+        if (!open && tMs < mouthClosedAtMs + MOUTH_CLOSING_MS) {
+          const sprite = { ...petNow.sprite, mouthClosing: true }
+          petNow = { ...petNow, sprite }
+        }
+      }
       particles = step(particles, tMs, petNow?.mood ?? 'happy', {
         gold: input.moments?.gold,
       })
@@ -247,6 +261,8 @@ export function createScenePlayer(
       patUntilMs = 0
       squishUntilMs = 0
       pendingSay = null
+      mouthWasOpen = false
+      mouthClosedAtMs = -Infinity
       particles = createParticles(opts.seed ?? 1)
     },
   }

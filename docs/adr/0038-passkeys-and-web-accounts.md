@@ -97,9 +97,10 @@ ADR 0027's "no integrity, no account" still holds for phones. Browsers get an
 exception:
 
 - **Opening a web session** takes a short-lived ticket plus the account key's
-  signature, as phone sessions are signed today. The ticket comes from either
-  a passkey assertion or an approval from a signed-in device (§7). The
-  session's platform is `web`.
+  signature, as phone sessions are signed today. The ticket comes from a
+  passkey assertion, an approval from a signed-in device (§7), or, for a
+  recovery key entered in the browser, a Turnstile check. The session's
+  platform is `web`.
 - **Accounts can be created on the web.** Sign-up is protected by Cloudflare
   Turnstile, verified in the Worker before registration starts. There are
   also per-IP and per-network caps, and a kill switch.
@@ -162,13 +163,16 @@ the Set Up Another Device QR for a new phone to scan.
 - **App Lock** is available on the web, off by default, and unlocks with the
   passkey.
 - **Sensitive actions** ask for a fresh check: Face ID on phones, a passkey
-  tap on the web. They are:
+  tap on the web that ww-api verifies. They are:
   - showing the recovery key;
-  - setting up or approving a device;
+  - setting up or approving a device, and adding or removing a passkey;
   - changing the account key;
   - deleting data.
 
-  One shared account utility does this on both platforms.
+  One shared account utility does this on both platforms. ww-api refuses the
+  server-side ones (adding or removing a passkey, deleting backups, changing
+  the account key) from a web session without a recent check, so someone at
+  an unlocked browser can't skip it.
 
 ### 9. Phones
 

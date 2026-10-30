@@ -35,6 +35,7 @@ const labels: Record<string, DeviceLabel> = {
     model: 'Pixel Tablet',
   },
   iphoneNamedIpad: { name: 'iPad', platform: 'ios', model: 'iPhone 17' },
+  chrome: { name: 'Chrome on macOS', platform: 'web', model: '' },
 }
 const context = {
   isThisDevice: (sessionId: string) =>
@@ -50,6 +51,7 @@ const entry = (overrides: Partial<ActivityEntry>): ActivityEntry => ({
   session: null,
   actor: null,
   slotId: null,
+  method: null,
   ...overrides,
 })
 
@@ -142,6 +144,133 @@ describe('activityTitle', () => {
   })
 })
 
+describe('browsers', () => {
+  const chrome = { sessionId: 'w', platform: 'web' as const, device: 'chrome' }
+  const bareBrowser = { ...chrome, device: null }
+  const iphone = { sessionId: 'p', platform: 'ios' as const, device: 'iphone' }
+  const opened = (
+    method: ActivityEntry['method'],
+    session: ActivityEntry['session'] = chrome,
+    actor: ActivityEntry['actor'] = null
+  ) =>
+    activityTitle(
+      entry({ kind: 'session.opened', method, session, actor }),
+      context
+    )
+
+  it('names a browser by its label, else as a web browser', () => {
+    expect(deviceTitle({ platform: 'web', device: 'chrome' }, context)).toBe(
+      'Chrome on macOS'
+    )
+    expect(deviceTitle({ platform: 'web', device: null }, context)).toBe(
+      'Web browser'
+    )
+    expect(deviceTitle({ platform: 'web', device: 'bad' }, context)).toBe(
+      'Web browser'
+    )
+    expect(opened(null, bareBrowser)).toBe('Signed in on a web browser')
+  })
+
+  it('shows a browser with the browser icon whatever its label says', () => {
+    expect(deviceKind({ platform: 'web', device: 'chrome' }, context)).toBe(
+      'browser'
+    )
+    expect(deviceKind({ platform: 'web', device: null }, context)).toBe(
+      'browser'
+    )
+  })
+
+  it('says how a session opened', () => {
+    expect(opened('passkey')).toBe(
+      'Signed in on Chrome on macOS with a passkey'
+    )
+    expect(opened('passkey', bareBrowser)).toBe(
+      'Signed in on a web browser with a passkey'
+    )
+    expect(opened('recovery')).toBe(
+      'Signed in on Chrome on macOS with a recovery key'
+    )
+    expect(opened('signup')).toBe('Signed up on Chrome on macOS')
+    expect(opened('approval', chrome, iphone)).toBe(
+      'Signed in on Chrome on macOS, approved from iPhone 17'
+    )
+    expect(opened('approval', chrome, { ...iphone, sessionId: 'me' })).toBe(
+      'Signed in on Chrome on macOS, approved from this device'
+    )
+  })
+
+  it('reads a method-less or phone sign-in as before', () => {
+    expect(opened(null)).toBe('Signed in on Chrome on macOS')
+    expect(opened('attestation', iphone)).toBe('Signed in on iPhone 17')
+    expect(opened('dev', iphone)).toBe('Signed in on iPhone 17')
+    // An approval without its phone still says it was approved.
+    expect(opened('approval')).toBe(
+      'Signed in on Chrome on macOS, approved from another device'
+    )
+  })
+
+  it('titles passkey and approval entries', () => {
+    const title = (
+      kind: ActivityEntry['kind'],
+      session = iphone as ActivityEntry['session']
+    ) => activityTitle(entry({ kind, session }), context)
+    expect(title('passkey.added', chrome)).toBe(
+      'Passkey added on Chrome on macOS'
+    )
+    expect(title('passkey.removed')).toBe('Passkey removed on iPhone 17')
+    expect(title('passkey.added', null)).toBe('A passkey was added')
+    expect(title('passkey.removed', null)).toBe('A passkey was removed')
+    expect(title('device.approved')).toBe('Browser approved from iPhone 17')
+    expect(title('device.approved', { ...iphone, sessionId: 'me' })).toBe(
+      'Browser approved from this device'
+    )
+    expect(title('device.approved', null)).toBe('A browser was approved')
+  })
+
+  it('says a browser signed out by the cap leaves room for three', () => {
+    const replaced = entry({
+      kind: 'session.replaced',
+      session: chrome,
+      actor: { ...chrome, sessionId: 'w2' },
+    })
+    expect(activityTitle(replaced, context)).toBe(
+      'Signed out Chrome on macOS when Chrome on macOS signed in'
+    )
+    expect(activityDetail(replaced)).toBe(
+      'Your account stays signed in on up to 3 browsers.'
+    )
+    expect(
+      activityDetail(entry({ kind: 'session.replaced', session: iphone }))
+    ).toBe('Your account stays signed in on up to 10 devices.')
+  })
+
+  it('picks the cap from the session’s platform, else the actor’s, else says nothing', () => {
+    const detail = (
+      session: ActivityEntry['session'],
+      actor: ActivityEntry['actor']
+    ) => activityDetail(entry({ kind: 'session.replaced', session, actor }))
+    const unknown = { sessionId: 'u', platform: null, device: null }
+    const browsers = 'Your account stays signed in on up to 3 browsers.'
+    expect(detail(chrome, iphone)).toBe(browsers)
+    expect(detail(unknown, chrome)).toBe(browsers)
+    expect(detail(null, chrome)).toBe(browsers)
+    expect(detail(unknown, iphone)).toBeNull()
+    expect(detail(unknown, unknown)).toBeNull()
+    expect(detail(unknown, null)).toBeNull()
+    expect(detail(null, null)).toBeNull()
+  })
+
+  it('titles a key change', () => {
+    const changed = (session: ActivityEntry['session']) =>
+      activityTitle(entry({ kind: 'account.key_changed', session }), context)
+    expect(changed(iphone)).toBe('Account key changed on iPhone 17')
+    expect(changed({ ...iphone, sessionId: 'me' })).toBe(
+      'Account key changed on this device'
+    )
+    expect(changed(null)).toBe('Account key changed')
+  })
+})
+
 describe('deviceTitle', () => {
   it('uses the label’s name, else the platform', () => {
     expect(deviceTitle({ platform: 'android', device: 'pixel' }, context)).toBe(
@@ -152,6 +281,17 @@ describe('deviceTitle', () => {
     )
     expect(deviceTitle({ platform: 'dev', device: 'bad' }, context)).toBe(
       'Development build'
+    )
+  })
+})
+
+describe('a device of a platform this version doesn’t know', () => {
+  it('is a generic device with a generic icon', () => {
+    expect(deviceTitle({ platform: null, device: null }, context)).toBe(
+      'Device'
+    )
+    expect(deviceKind({ platform: null, device: null }, context)).toBe(
+      'unknown'
     )
   })
 })
@@ -179,7 +319,6 @@ describe('deviceKind', () => {
     expect(kind('pixel', 'dev')).toBe('phone')
     expect(kind(null, 'ios')).toBe('phone')
     expect(kind('bad', 'android')).toBe('phone')
-    expect(kind(null, null)).toBe('phone')
   })
 
   it('is a computer for a development build without a label', () => {

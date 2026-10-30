@@ -19,6 +19,8 @@ export function platformDeviceName(platform: SessionPlatform | null): string {
       return i18n.t('accountActivity_deviceIos')
     case 'android':
       return i18n.t('accountActivity_deviceAndroid')
+    case 'web':
+      return i18n.t('accountActivity_deviceWeb')
     case 'dev':
       return i18n.t('accountActivity_deviceDev')
     default:
@@ -36,21 +38,27 @@ export function deviceTitle(
 }
 
 /** What a device row's icon shows. */
-export type DeviceKind = 'phone' | 'tablet' | 'computer'
+export type DeviceKind = 'phone' | 'tablet' | 'computer' | 'browser' | 'unknown'
 
 const TABLET_MODEL = /\b(iPad|tablet)\b/i
 
 /**
- * An iPad or an Android tablet ("Pixel Tablet") by its label's model, or its
- * name when the model is blank; a development build without a label is a
- * computer; anything else is a phone.
+ * A browser session is a browser, whatever its label says. An iPad or an
+ * Android tablet ("Pixel Tablet") by its label's model, or its name when the
+ * model is blank; a development build without a label is a computer; a session
+ * of a platform this version doesn't know, without a label, is a generic
+ * device; anything else is a phone.
  */
 export function deviceKind(
   device: { platform: SessionPlatform | null; device: string | null },
   context: Pick<AccountActivityContext, 'readLabel'>
 ): DeviceKind {
+  if (device.platform === 'web') return 'browser'
   const label = context.readLabel(device.device)
-  if (!label) return device.platform === 'dev' ? 'computer' : 'phone'
+  if (!label) {
+    if (device.platform === 'dev') return 'computer'
+    return device.platform === null ? 'unknown' : 'phone'
+  }
   const model = label.model.trim() || label.name
   return TABLET_MODEL.test(model) ? 'tablet' : 'phone'
 }
@@ -69,6 +77,8 @@ function deviceInSentence(
       return i18n.t('accountActivity_anIos')
     case 'android':
       return i18n.t('accountActivity_anAndroid')
+    case 'web':
+      return i18n.t('accountActivity_aWeb')
     case 'dev':
       return i18n.t('accountActivity_aDev')
     default:
@@ -133,9 +143,22 @@ export function activityTitle(
     case 'account.reinstated':
       return i18n.t('accountActivity_reinstated')
     case 'session.opened':
-      return device
-        ? i18n.t('accountActivity_signedIn', { device })
-        : i18n.t('accountActivity_signedInUnknown')
+      if (!device) return i18n.t('accountActivity_signedInUnknown')
+      switch (entry.method) {
+        case 'passkey':
+          return i18n.t('accountActivity_signedInPasskey', { device })
+        case 'recovery':
+          return i18n.t('accountActivity_signedInRecovery', { device })
+        case 'signup':
+          return i18n.t('accountActivity_signedUp', { device })
+        case 'approval':
+          return i18n.t('accountActivity_signedInApproved', {
+            device,
+            actor: actor ?? i18n.t('accountActivity_anotherDevice'),
+          })
+        default:
+          return i18n.t('accountActivity_signedIn', { device })
+      }
     case 'session.signed_out':
       return device
         ? i18n.t('accountActivity_signedOut', { device })
@@ -174,6 +197,22 @@ export function activityTitle(
       return device
         ? i18n.t('accountActivity_buddiesDeleted', { device })
         : i18n.t('accountActivity_buddiesDeletedUnknown')
+    case 'passkey.added':
+      return device
+        ? i18n.t('accountActivity_passkeyAdded', { device })
+        : i18n.t('accountActivity_passkeyAddedUnknown')
+    case 'passkey.removed':
+      return device
+        ? i18n.t('accountActivity_passkeyRemoved', { device })
+        : i18n.t('accountActivity_passkeyRemovedUnknown')
+    case 'device.approved':
+      return device
+        ? i18n.t('accountActivity_deviceApproved', { device })
+        : i18n.t('accountActivity_deviceApprovedUnknown')
+    case 'account.key_changed':
+      return device
+        ? i18n.t('accountActivity_keyChanged', { device })
+        : i18n.t('accountActivity_keyChangedUnknown')
     case 'backup.downloaded':
       if (count > 1)
         return device
@@ -190,8 +229,15 @@ export function activityDetail(entry: ActivityEntry): string | null {
   switch (entry.kind) {
     case 'session.refresh_reused':
       return i18n.t('accountActivity_reusedDetail')
-    case 'session.replaced':
-      return i18n.t('accountActivity_replacedDetail')
+    case 'session.replaced': {
+      // The cap is by the ended session's platform. When that isn't known, a
+      // browser that replaced it still means the browser cap; otherwise no
+      // limit is named rather than guessing the phones'.
+      const platform = entry.session?.platform
+      if (platform === 'web' || (!platform && entry.actor?.platform === 'web'))
+        return i18n.t('accountActivity_replacedWebDetail')
+      return platform ? i18n.t('accountActivity_replacedDetail') : null
+    }
     case 'account.suspended':
       return i18n.t('accountActivity_suspendedDetail')
     default:

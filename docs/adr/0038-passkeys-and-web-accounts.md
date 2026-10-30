@@ -183,7 +183,8 @@ the Set Up Another Device QR for a new phone to scan.
     another device. It backs off for 30 days and is never forced.
   - Without a passkey, everything works as it does today.
 - **New sign-ins:** each one, phone or browser, is recorded in the activity
-  log (ADR 0028) and shown in the other devices' notifications trays.
+  log (ADR 0028) and shown in the other devices' notifications trays. The
+  tray notices aren't built yet; they're a follow-up.
 - **Signed-in devices:** the list includes browsers.
 
 ### 10. Web plumbing in ww-api

@@ -115,15 +115,17 @@ The account's security history and its signed-in devices ([ADR 0028](./adr/0028-
 
 → `{ ok, sessions: [Session] }`, the account's live sessions, newest first:
 
-| Field          | What                                                                      |
-| -------------- | ------------------------------------------------------------------------- |
-| `sessionId`    | The session's id (the access token's `sid`)                               |
-| `platform`     | `ios`, `android`, or `dev`                                                |
-| `device`?      | The sealed device label from `POST /accounts/v1/sessions`, as sent        |
-| `current`      | `true` for the session the token belongs to                               |
-| `createdAt`    | When it opened, epoch ms                                                  |
-| `lastActiveAt` | Its last refresh (or `createdAt`), epoch ms; accurate to about 15 minutes |
-| `expiresAt`    | 90 days after it opened, epoch ms                                         |
+| Field          | What                                                                                                                          |
+| -------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `sessionId`    | The session's id (the access token's `sid`)                                                                                   |
+| `platform`     | `ios`, `android`, `web`, or `dev`                                                                                             |
+| `device`?      | The sealed device label from `POST /accounts/v1/sessions`, as sent                                                            |
+| `appVersion`?  | The app version the session last reported; absent when unknown                                                                |
+| `method`       | How it opened, as in [`session.opened`](./passkeys-protocol.md#activity)                                                      |
+| `current`      | `true` for the session the token belongs to                                                                                   |
+| `createdAt`    | When it opened, epoch ms                                                                                                      |
+| `lastActiveAt` | Its last refresh (or `createdAt`), epoch ms; accurate to about 15 minutes                                                     |
+| `expiresAt`    | 90 days after it opened, epoch ms; a web session's slides ([web sessions](./passkeys-protocol.md#web-sessions-post-sessions)) |
 
 ### Signing a device out: `POST /accounts/v1/sessions/revoke`
 
@@ -135,30 +137,31 @@ Revoking ends the session, not the device's account key: a device that still has
 
 Query: `limit` (1–100, default 50) and `before` (the previous page's `nextCursor`). → `{ ok, activity: [Entry], nextCursor }`, newest first; `nextCursor` is `null` on the last page. A malformed `limit` or `before` is 400 `bad_request`.
 
-| Field       | What                                                                                 |
-| ----------- | ------------------------------------------------------------------------------------ |
-| `id`        | Opaque, unique within the account; also a cursor                                     |
-| `kind`      | Below                                                                                |
-| `createdAt` | Epoch ms                                                                             |
-| `session`?  | The session the entry is about, or that did it: `{ sessionId, platform, device? }`   |
-| `actor`?    | For `session.revoked` and `session.replaced`, the session that ended it (same shape) |
-| `slotId`?   | `backup.deleted` (absent when every slot was deleted) and `backup.downloaded`        |
+| Field       | What                                                                                                                                                 |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`        | Opaque, unique within the account; also a cursor                                                                                                     |
+| `kind`      | Below                                                                                                                                                |
+| `createdAt` | Epoch ms                                                                                                                                             |
+| `session`?  | The session the entry is about, or that did it: `{ sessionId, platform, device? }`                                                                   |
+| `actor`?    | For `session.revoked` and `session.replaced`, the session that ended it; for an `approval` `session.opened`, the phone that approved it (same shape) |
+| `slotId`?   | `backup.deleted` (absent when every slot was deleted) and `backup.downloaded`                                                                        |
 
-| `kind`                   | `session`                                                                                     | `actor`             |
-| ------------------------ | --------------------------------------------------------------------------------------------- | ------------------- |
-| `account.created`        | —                                                                                             | —                   |
-| `session.opened`         | The new session                                                                               | —                   |
-| `session.signed_out`     | The session that ended itself                                                                 | —                   |
-| `session.revoked`        | The session signed out                                                                        | The one that did it |
-| `session.replaced`       | The oldest session, ended by the cap                                                          | The new session     |
-| `session.refresh_reused` | The session ended: a refresh token was reused after its grace minute                          | —                   |
-| `handoff.sent`           | The old phone's session (absent before sessions)                                              | —                   |
-| `backup.deleted`         | The session that deleted (absent before sessions)                                             | —                   |
-| `backup.downloaded`      | The session that downloaded (absent before sessions); at most once per slot, session, and day | —                   |
-| `account.suspended`      | —                                                                                             | —                   |
-| `account.reinstated`     | —                                                                                             | —                   |
-| `buddies.inbox_linked`   | The session that linked the account's inbox (absent before sessions)                          | —                   |
-| `buddies.deleted`        | The session that deleted the account's Buddies inbox (absent before sessions)                 | —                   |
+| `kind`                                                                       | `session`                                                                                     | `actor`             |
+| ---------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- | ------------------- |
+| `account.created`                                                            | —                                                                                             | —                   |
+| `session.opened`                                                             | The new session                                                                               | —                   |
+| `session.signed_out`                                                         | The session that ended itself                                                                 | —                   |
+| `session.revoked`                                                            | The session signed out                                                                        | The one that did it |
+| `session.replaced`                                                           | The oldest session, ended by the cap                                                          | The new session     |
+| `session.refresh_reused`                                                     | The session ended: a refresh token was reused after its grace minute                          | —                   |
+| `handoff.sent`                                                               | The old phone's session (absent before sessions)                                              | —                   |
+| `backup.deleted`                                                             | The session that deleted (absent before sessions)                                             | —                   |
+| `backup.downloaded`                                                          | The session that downloaded (absent before sessions); at most once per slot, session, and day | —                   |
+| `account.suspended`                                                          | —                                                                                             | —                   |
+| `account.reinstated`                                                         | —                                                                                             | —                   |
+| `buddies.inbox_linked`                                                       | The session that linked the account's inbox (absent before sessions)                          | —                   |
+| `buddies.deleted`                                                            | The session that deleted the account's Buddies inbox (absent before sessions)                 | —                   |
+| `passkey.added`, `passkey.removed`, `device.approved`, `account.key_changed` | See [passkeys-protocol.md](./passkeys-protocol.md#activity)                                   | —                   |
 
 - `device` is the label as the session sent it, copied onto the entry, so it outlives the session. Open it with the device label key (see [Opening a session](#opening-a-session-post-accountsv1sessions)). A label that's absent or won't open shows the platform instead.
 - Buddies entries name only the account's own inbox being linked or deleted; writer ops are never logged.
@@ -167,7 +170,7 @@ Query: `limit` (1–100, default 50) and `before` (the previous page's `nextCurs
 
 ### The app
 
-Settings → Account → **Devices** lists the sessions, marks the one whose `sessionId` is this device's as "This device", shows when each signed in (with the time when two of the same name signed in the same day, as a wiped phone and its new install do), and offers Sign Out on the others. A list with no `current` session means this device was signed out while its access token still worked: the app refreshes its token, which opens a new session, and lists again. Settings → Account → **Activity** pages through the log 50 at a time and flags `session.refresh_reused`. A restore logs one `backup.downloaded` per slot, and nothing in them tells the slots apart for the User, so one session's downloads within 5 minutes of each other show as one row ("2 backups downloaded on this device"). It names as "this device" every session this install has had: their ids (at most 20, not secret) are kept in device-local MMKV, so entries from before a sign-out still read as this device. Both decrypt labels on the device.
+Settings → Account → **Devices** lists the sessions (a browser reads as its label, "Chrome on macOS", or "Web browser", with a globe icon and its app version; signing one out says it clears its data, and anything it hasn't synced is lost; a session of a platform the app doesn't know reads as "Device" and can still be signed out), marks the one whose `sessionId` is this device's as "This device", shows when each signed in (with the time when two of the same name signed in the same day, as a wiped phone and its new install do), and offers Sign Out on the others. A list with no `current` session means this device was signed out while its access token still worked: the app refreshes its token, which opens a new session, and lists again. Settings → Account → **Activity** pages through the log 50 at a time and flags `session.refresh_reused`, and says how a sign-in opened (`method`: with a passkey, with a recovery key, approved from a phone) and what a passkey was added or removed on. A restore logs one `backup.downloaded` per slot, and nothing in them tells the slots apart for the User, so one session's downloads within 5 minutes of each other show as one row ("2 backups downloaded on this device"). It names as "this device" every session this install has had: their ids (at most 20, not secret) are kept in device-local MMKV, so entries from before a sign-out still read as this device. Both decrypt labels on the device.
 
 ## Linking a Buddies inbox
 

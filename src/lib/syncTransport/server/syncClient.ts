@@ -2,6 +2,8 @@ import { HttpError } from '@/lib/http/request'
 import {
   type BearerAccountOptions,
   sendBearerAccountOp,
+  sendSignedAccountOp,
+  type SignedAccountOptions,
 } from '@/lib/serverAccount/client'
 import { SYNC_PHOTO_NAME_PATTERN } from '@/lib/syncTransport/server/photoCrypto'
 import {
@@ -47,7 +49,18 @@ export type SyncStatus = {
   supporterCheckFailed: boolean
   /** Photos' own switch; null from a server that doesn't know photos. */
   photos: boolean | null
+  /**
+   * The account's standing Cloud Sync request (epoch ms): a browser asked its
+   * phones to turn Cloud Sync on (docs/cloud-sync-photos.md). Null without one,
+   * and from servers that predate it.
+   */
+  requestedAt: number | null
 }
+
+/** A session's platform; `dev` is a development build. */
+export type SyncSlotPlatform = 'ios' | 'android' | 'dev' | 'web'
+
+const SLOT_PLATFORMS: readonly unknown[] = ['ios', 'android', 'dev', 'web']
 
 export type SyncSlot = {
   slotId: string
@@ -56,6 +69,10 @@ export type SyncSlot = {
   size: number
   /** Epoch ms of the slot's last put, the server's clock. */
   updatedAt: number
+  /** The platform of the session that last wrote it; null from older servers. */
+  platform: SyncSlotPlatform | null
+  /** Whether that session is still live; false when the server doesn't say. */
+  live: boolean
 }
 
 export type SyncListing = {
@@ -64,8 +81,13 @@ export type SyncListing = {
   slots: SyncSlot[]
 }
 
-const isSlot = (value: unknown): value is SyncSlot => {
-  const slot = value as Partial<SyncSlot> | null
+type ListedSlot = Pick<SyncSlot, 'slotId' | 'etag' | 'size' | 'updatedAt'> & {
+  platform?: unknown
+  live?: unknown
+}
+
+const isSlot = (value: unknown): value is ListedSlot => {
+  const slot = value as Partial<ListedSlot> | null
   return (
     typeof slot?.slotId === 'string' &&
     SYNC_SLOT_ID_PATTERN.test(slot.slotId) &&
@@ -101,7 +123,47 @@ export async function fetchSyncStatus(
     supporter: data.supporter === true,
     supporterCheckFailed: data.supporterCheckFailed === true,
     photos: typeof data.photos === 'boolean' ? data.photos : null,
+    requestedAt: typeof data.requestedAt === 'number' ? data.requestedAt : null,
   }
+}
+
+/**
+ * Asks the account's phones to turn Cloud Sync on (the web's Turn On): Bearer
+ * and the account key's envelope, so a leaked access token alone can't move the
+ * User's phones. Resolves the request's time; asking again while it stands
+ * keeps it. Needs Cloud Sync on and the account entitled (`disabled`,
+ * `supporter_required`). Phones never clear it; the server does.
+ */
+export async function askSyncRequest(
+  options: BearerAccountOptions & { sign: SignedAccountOptions }
+): Promise<number> {
+  const response = await options.authorize((authorization) =>
+    sendSignedAccountOp<Record<string, unknown>>(
+      'sync/request',
+      {},
+      { ...options.sign, signal: options.signal },
+      // Each envelope works once (409 `replay`), so a lost answer isn't
+      // resent; asking again signs a fresh one.
+      { headers: { authorization }, body: { requested: true } }
+    )
+  )
+  const { ok, requestedAt } = response.data ?? {}
+  if (ok !== true || typeof requestedAt !== 'number')
+    throw unexpected(response.status)
+  return requestedAt
+}
+
+/** Withdraws the account's Cloud Sync request. Bearer; always works. */
+export async function withdrawSyncRequest(
+  options: BearerAccountOptions
+): Promise<void> {
+  const response = await sendBearerAccountOp<Record<string, unknown>>(
+    'sync/request',
+    { requested: false },
+    options,
+    { idempotent: true }
+  )
+  if (response.data?.ok !== true) throw unexpected(response.status)
 }
 
 /** Replaces this device's slot. Resolves its new ETag and server time. */
@@ -152,12 +214,18 @@ export async function listSyncSlots(
   // A slot this version can't name is skipped rather than failing the list.
   return {
     seq,
-    slots: slots.filter(isSlot).map(({ slotId, etag, size, updatedAt }) => ({
-      slotId,
-      etag,
-      size,
-      updatedAt,
-    })),
+    slots: slots
+      .filter(isSlot)
+      .map(({ slotId, etag, size, updatedAt, platform, live }) => ({
+        slotId,
+        etag,
+        size,
+        updatedAt,
+        platform: SLOT_PLATFORMS.includes(platform)
+          ? (platform as SyncSlotPlatform)
+          : null,
+        live: live === true,
+      })),
   }
 }
 

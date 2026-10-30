@@ -1,5 +1,6 @@
 import { bookkeepingForNewTransport } from '@/app/sync/imageSync'
 import { iCloudSync } from '@/app/sync/iCloudSync'
+import { withSyncOptionLock } from '@/app/sync/syncOptionLock'
 import {
   deleteOwnCloudSyncSlot,
   prepareCloudSync,
@@ -105,7 +106,12 @@ export type SwitchOutcome =
     }
   | { outcome: 'failed'; reason: SwitchFailure }
 
-export type SwitchSource = 'settings' | 'offer' | 'tools'
+export type SwitchSource =
+  | 'settings'
+  | 'offer'
+  | 'tools'
+  /** The account's Cloud Sync request, set by a browser (`cloudSyncRequest`). */
+  | 'account_request'
 
 /** Longest a switch waits to send the old option this device's last edits. */
 const FLUSH_WAIT_MS = 15_000
@@ -128,7 +134,9 @@ const prepareFailure = (
 let switching: Promise<SwitchOutcome> | null = null
 
 /**
- * Moves this device to `to`. One switch at a time; a second call joins it.
+ * Moves this device to `to`. One switch at a time; a second call joins it, and
+ * a switch waits for Cloud Sync's default to finish deciding
+ * (`withSyncOptionLock`).
  *
  * 1. Gets the new option ready first (Cloud Sync's session and entitlement, or
  *    iCloud/Drive being available), so a switch that can't happen changes
@@ -146,7 +154,7 @@ export function switchSyncOption(
   to: SyncOption,
   source: SwitchSource
 ): Promise<SwitchOutcome> {
-  switching ??= runSwitch(to, source).finally(() => {
+  switching ??= withSyncOptionLock(() => runSwitch(to, source)).finally(() => {
     switching = null
   })
   return switching

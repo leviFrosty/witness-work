@@ -9,7 +9,16 @@ import { toB64u } from '@/lib/bytes'
  */
 export type FakeSyncServer = ReturnType<typeof createFakeSyncServer>
 
-type Slot = { bytes: Uint8Array; etag: string; updatedAt: number }
+type SlotPlatform = 'ios' | 'android' | 'dev' | 'web'
+
+type Slot = {
+  bytes: Uint8Array
+  etag: string
+  updatedAt: number
+  /** The platform of the session that last wrote it. */
+  platform: SlotPlatform
+}
+
 type Photo = {
   bytes: Uint8Array
   sha256: string
@@ -23,6 +32,12 @@ const MAX_PHOTO_BLOB = 25 * 1024 * 1024
 export function createFakeSyncServer() {
   const accounts = new Map<string, Map<string, Slot>>()
   const photoAccounts = new Map<string, Map<string, Photo>>()
+  /** Each account's standing Cloud Sync request (epoch ms). */
+  const requests = new Map<string, number>()
+  /** Signed request payloads already used. */
+  const usedEnvelopes = new Set<unknown>()
+  /** Accounts whose writing sessions have all ended. */
+  const ended = new Set<string>()
   let seq = 0
   let clock = 0
   const state = {
@@ -45,6 +60,17 @@ export function createFakeSyncServer() {
     photoFailure: null as { code: string; status: number } | null,
     /** Every request, as `<method> <op>` (no ids), for assertions. */
     log: [] as string[],
+    /** The server's time for a new Cloud Sync request; `Date.now()` when null. */
+    now: null as number | null,
+    /** The platform of the session a put comes from. */
+    platform: 'ios' as SlotPlatform,
+    /**
+     * The next `sync/request` is taken, then its answer lost (a dropped
+     * connection).
+     */
+    dropNextAnswer: false,
+    /** `sync/request` bodies, with the bearer token they came with. */
+    requestBodies: [] as Array<Record<string, unknown>>,
   }
 
   const slotsOf = (account: string) => {
@@ -92,7 +118,37 @@ export function createFakeSyncServer() {
         entitlement: state.entitlement,
         supporter: state.supporters.has(account),
         photos: state.photos,
+        requestedAt: requests.get(account) ?? null,
       })
+    if (op === 'sync/request') {
+      const body = JSON.parse(String(init?.body)) as Record<string, unknown>
+      state.requestBodies.push({
+        ...body,
+        authorization: headers.get('authorization'),
+      })
+      const { requested } = body
+      if (!requested) {
+        requests.delete(account)
+        return json({ ok: true, requestedAt: null })
+      }
+      // Asking is signed by the account key too (not checked here).
+      if (
+        typeof body.payload !== 'string' ||
+        typeof body.signature !== 'string'
+      )
+        return refuse('bad_request', 400)
+      // Each envelope works once.
+      if (usedEnvelopes.has(body.payload)) return refuse('replay', 409)
+      usedEnvelopes.add(body.payload)
+      if (state.dropNextAnswer) {
+        state.dropNextAnswer = false
+        throw new TypeError('Network request failed')
+      }
+      if (!state.enabled) return refuse('disabled', 503)
+      if (!entitled) return refuse('supporter_required', 403)
+      if (!requests.has(account)) requests.set(account, state.now ?? Date.now())
+      return json({ ok: true, requestedAt: requests.get(account) })
+    }
     const slots = slotsOf(account)
     const photos = photosOf(account)
     if (op.startsWith('sync/photos/') && state.photoFailure) {
@@ -236,7 +292,8 @@ export function createFakeSyncServer() {
         if (state.putDelayMs)
           await new Promise((resolve) => setTimeout(resolve, state.putDelayMs))
         const updatedAt = (clock = Math.max(clock + 1, Date.now()))
-        slots.set(slotId, { bytes, etag, updatedAt })
+        slots.set(slotId, { bytes, etag, updatedAt, platform: state.platform })
+        ended.delete(account)
         return json({
           ok: true,
           etag,
@@ -254,6 +311,8 @@ export function createFakeSyncServer() {
             etag: slot.etag,
             size: slot.bytes.length,
             updatedAt: slot.updatedAt,
+            platform: slot.platform,
+            live: !ended.has(account),
           })),
         })
       case 'sync/get': {
@@ -273,6 +332,10 @@ export function createFakeSyncServer() {
     fetch: fetchImpl,
     /** The account change sequence, as the live socket's `hello` says it. */
     seq: () => seq,
+    /** Ends every session that wrote an account's slots (`live: false`). */
+    endSessions: (account: string) => ended.add(account),
+    /** An account's standing Cloud Sync request, or null. */
+    requestedAt: (account: string) => requests.get(account) ?? null,
     /** The slot ids an account holds. */
     slotIds: (account: string) => [...slotsOf(account).keys()].sort(),
     /** What a slot holds, as the server sees it: ciphertext. */

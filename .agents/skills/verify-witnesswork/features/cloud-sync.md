@@ -7,6 +7,7 @@ Each device syncs through one option (ADR 0030): Cloud Sync (end-to-end encrypte
 - `cloud-sync-option` is Settings → Sync's "Sync With" rows (Cloud Sync, iCloud / Google Drive, Off), the security footer, and the switch confirmations.
 - `cloud-sync-offer` is the one-time "Switch to Cloud Sync?" card on a device that already used iCloud/Drive.
 - `cloud-sync-default` turns Cloud Sync on by itself for a device that never chose, after onboarding.
+- `cloud-sync-request` switches a phone to Cloud Sync, once, when a browser on its account asked (the web's "Turn on Cloud Sync" screen).
 - `cloud-sync-live` pulls within seconds of another device's change through the account's sync socket, in the foreground.
 - `sync-enable` turns sync on from Settings ("iCloud Sync" / "Google Drive Sync" → "Sync with iCloud" / "Sync with Google Drive"). On Android it first shows Google's account picker and consent screen.
 - `sync-transfer` sends edits to the cloud a few seconds after they're made and brings other devices' edits in on foreground, on "Sync now", and (Android, while open) within about a minute.
@@ -44,6 +45,8 @@ The status is cached about a minute per device; `__WW_DEV__.cloudSync.refresh()`
 - **Upgraded device.** `__WW_DEV__.cloudSync.simulateUpgradedPlatformDevice()`, then `remount()` and open Settings → Sync: the offer card (`cloud-sync-offer`) shows once; "Not Now" (`cloud-sync-offer-dismiss`) hides it for good.
 - **Photos.** `cloudSync.photoState()` (bookkeeping, usage, `fullAt`), `cloudSync.photos()` (the account's listed photos), `cloudSync.photoUsage()`. Add a contact or note photo on one device, then read it back on the other with `photoState()` and the screen. Full storage: start the worker with a tiny limit (`node scripts/verify/dev.mjs down`, then `up --photo-limit-bytes <N>` from the ww-api checkout, before `wwv up`); the photo shows "Not synced: storage full" and Settings → Account says "Storage full". `cloudSync.photoBenchmark(10)` seals and uploads a 10 MB photo and reports the timings. A slot must exist before photos (`no_slot` otherwise): let the first sync finish.
 - **Default.** `__WW_DEV__.cloudSync.forgetChoice()`, then `remount()`: with the entitlement open, Cloud Sync turns on by itself (`cloud_sync_default_outcome` in the Metro log).
+- **The account's Cloud Sync request** (ADR 0040 §5; `cloud-sync-request`). `__WW_DEV__.cloudSync.request()` asks as the web's Turn On does (`false` withdraws it); `cloudSync.last` has `{ requestedAt }`. The phone answers at its next status read: `cloudSync.refresh()`, or a return to the foreground at least a minute after the last read. A phone on iCloud/Drive or Off switches and shows "Cloud Sync is on"; one already on Cloud Sync does nothing. `state().requestAnswered` is the request it acted on; it acts once per request. ww-api clears the request itself once every live phone session has written a slot since (`refresh()`, then `last.requestedAt`).
+- **The web's Cloud Sync screen** on a phone: Tools → Web Cloud Sync. "Turn on", "Waiting" and "Update your phone" each hold one state; "Live" reads this phone's account as a browser with no slot would, so Turn On sets the real request and the wait ends (an `onReady` toast) once a live phone session's slot is there.
 
 ### iCloud and Google Drive
 

@@ -157,6 +157,7 @@
     "accountBackupRestore",
     "accountBackupDelete",
     "cloudSync",
+    "cloudSyncFromWeb",
     "cloudSyncDefault",
     "cloudSyncPrivacy",
     "cloudSyncSwitch",

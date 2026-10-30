@@ -83,6 +83,7 @@ const status = (overrides: Partial<SyncStatus> = {}): SyncStatus => ({
   supporter: true,
   supporterCheckFailed: false,
   photos: true,
+  requestedAt: null,
   ...overrides,
 })
 

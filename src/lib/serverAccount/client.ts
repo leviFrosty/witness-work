@@ -14,8 +14,9 @@ import {
  * Client for `/accounts/v1/*` (docs/accounts-protocol.md,
  * docs/passkeys-protocol.md). Most ops are **Bearer**: they carry the attested
  * session's access token (`session.ts`). `session/open`, `web/signup` and
- * `web/recovery` are signed by the account key instead, and `backup/delete` and
- * the `passkey/*` ops by both. Signed envelopes are `{ payload, signature }`.
+ * `web/recovery` are signed by the account key instead, and `backup/delete`,
+ * `sync/request` (asking) and the `passkey/*` ops by both. Signed envelopes are
+ * `{ payload, signature }`.
  */
 
 export const ACCOUNT_TIMEOUT_MS = 15 * 1000
@@ -48,6 +49,7 @@ export type SignedAccountOp =
   | 'passkey/remove'
   | 'web/signup'
   | 'web/recovery'
+  | 'sync/request'
 
 const SIGNED_PATHS: Record<SignedAccountOp, string> = {
   'session/open': 'sessions',
@@ -57,6 +59,7 @@ const SIGNED_PATHS: Record<SignedAccountOp, string> = {
   'passkey/remove': 'passkeys/remove',
   'web/signup': 'web/signup',
   'web/recovery': 'web/recovery',
+  'sync/request': 'sync/request',
 }
 
 /** How one signed op travels, past the default JSON envelope and answer. */
@@ -66,6 +69,8 @@ export type SignedAccountTransport = {
   timeoutMs?: number
   /** Repeating it can't do anything twice, so a lost answer is retried once. */
   idempotent?: boolean
+  /** Sent beside the envelope, outside what's signed (`requested: true`). */
+  body?: Record<string, unknown>
 }
 
 /**
@@ -92,6 +97,7 @@ export async function sendSignedAccountOp<T>(
       url: `${options.baseUrl}/accounts/v1/${SIGNED_PATHS[op]}`,
       method: 'POST',
       json: {
+        ...transport.body,
         payload: toB64u(payload),
         signature: signAccountRequest(op, payload, options.key),
       },
@@ -143,6 +149,7 @@ export type BearerAccountOp =
   | 'sync/put'
   | 'sync/list'
   | 'sync/get'
+  | 'sync/request'
   | 'sync/delete'
   | 'sync/photos/put'
   | 'sync/photos/list'

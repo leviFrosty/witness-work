@@ -33,7 +33,23 @@ From `services/`, each runs in every package:
 
 ## Deploying
 
-CI deploys on merge to `main` (production) and from branches (staging); the workflow lands right after this move. The commands it runs, from each package's folder, with a Cloudflare token that can edit Workers (and Workers AI and KV for help-search):
+[`.github/workflows/services.yml`](../.github/workflows/services.yml) deploys both Workers:
+
+| Trigger                                               | Deploys                                                                       | Environment           |
+| ----------------------------------------------------- | ----------------------------------------------------------------------------- | --------------------- |
+| Push to `main` touching `services/**` or the workflow | Production: `witnesswork.app`, `help-search.witnesswork.app`                  | `services-production` |
+| Push to any other branch touching the same paths      | Staging: `dev.witnesswork.app` (`noindex`), `help-search-dev.witnesswork.app` | `services-staging`    |
+| `workflow_dispatch` on any ref (even `main`)          | Staging only                                                                  | `services-staging`    |
+
+Production only ever comes from a push to `main`. Each run installs with the frozen lockfile, runs lint, typecheck and unit tests, builds, deploys with `wrangler`, then curls the deployed hosts (the home page, the Help Center manifest's absolute paths, a search) until they answer. The Playwright suite doesn't run in CI; run it locally, or against staging with `E2E_BASE_URL=https://dev.witnesswork.app WW_SITE_ENV=dev pnpm e2e`.
+
+- **Staging is last push wins.** One staging site serves every branch, so a push to an older branch rolls `dev.witnesswork.app` back to it.
+- **The Cloudflare token only reaches the deploy steps,** not installs, tests or builds. It can still edit every Worker in the account: Cloudflare can't limit a token to some Workers, so the `services-production` branch policy (only `main`) stops mistakes, not a workflow edited on a branch. Anyone who can push a branch can change this workflow; keep it that way only for people and agents you trust with the Cloudflare account.
+- **Smoke checks:** production must not say `noindex`, must return search results, and checks the old search host (`help-search.leviwilkerson.com`) too. Only staging accepts search's `503 search_unavailable` (a brand-new Worker has no index until its first sync).
+
+The first staging deploy creates `ww-marketing-dev`, `ww-help-search-dev` and their custom domains. Set the search Worker's `ADMIN_TOKEN` secret once per environment (not CI's job; see [`help-search`](./help-search/README.md)).
+
+Break-glass, from each package's folder, with a Cloudflare token that can edit Workers (and Workers AI and KV for help-search):
 
 ```sh
 # marketing

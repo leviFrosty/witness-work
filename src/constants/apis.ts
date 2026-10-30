@@ -1,7 +1,22 @@
-// Every endpoint lives on ww-api. Override the base URL to target a dev/staging
-// worker (so the App Attest dev-bypass never touches production).
-export const PRODUCTION_API_BASE_URL = 'https://ww-proxy.leviwilkerson.com'
-const BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || PRODUCTION_API_BASE_URL
+import { forBuild } from '@/constants/buildVariant'
+
+// Every endpoint lives on ww-api: the dev Worker (`ww-proxy-dev`) for
+// development builds, production for the rest. Shipped builds before this one
+// call `ww-proxy.leviwilkerson.com`, which keeps serving the same Worker (ADR
+// 0042). Override the base URL to target a local or other worker (so the App
+// Attest dev-bypass never touches production).
+export const PRODUCTION_API_BASE_URL = 'https://api.witnesswork.app'
+/** Both hosts of the production Worker: the new one and the old one. */
+export const PRODUCTION_API_BASE_URLS: readonly string[] = [
+  PRODUCTION_API_BASE_URL,
+  'https://ww-proxy.leviwilkerson.com',
+]
+const BASE_URL =
+  process.env.EXPO_PUBLIC_API_BASE_URL ||
+  forBuild({
+    development: 'https://api-dev.witnesswork.app',
+    release: PRODUCTION_API_BASE_URL,
+  })
 
 export default {
   geocode: `${BASE_URL}/geocode`,

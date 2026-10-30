@@ -1,10 +1,9 @@
 import type { RichTextDoc } from '@/types/richText'
 
 /**
- * The Help Center's content, published by the website
- * (`leviwilkerson.com/witness-work/help-center`) as one JSON bundle per locale.
- * The contract lives in portfolio-v2's `docs/help-center.md`; this mirrors
- * schema version 1.
+ * The Help Center's content, published by the website (`witnesswork.app/help`,
+ * ADR 0042) as one JSON bundle per locale. The contract lives in the website's
+ * `docs/help-center.md`; this mirrors schema version 1.
  */
 
 export const HELP_SCHEMA_VERSION = 1

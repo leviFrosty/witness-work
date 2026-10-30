@@ -23,6 +23,16 @@ describe('shouldForwardToSystem', () => {
       'https://WW-PROXY.leviwilkerson.com/c#abc',
       'https://ww-proxy.leviwilkerson.com/c/abc',
       'https://ww-proxy.leviwilkerson.com',
+      'https://ww-proxy.leviwilkerson.com/buddies/invite#1AAAAAAAAAAAAAAAAAAAAA',
+      'https://ww-proxy.leviwilkerson.com/contacts#abc',
+      'https://witnesswork.app/buddies/invite#1AAAAAAAAAAAAAAAAAAAAA',
+      'https://witnesswork.app/buddies/invite/#1AAAAAAAAAAAAAAAAAAAAA',
+      'https://witnesswork.app/accounts/handoff/#1abc',
+      'https://witnesswork.app/buddies/invite',
+      'https://WITNESSWORK.app/contacts#abc',
+      'https://witnesswork.app/accounts/handoff#1abc',
+      'https://dev.witnesswork.app/buddies/invite#1AAAAAAAAAAAAAAAAAAAAA',
+      'https://dev.witnesswork.app/contacts#abc',
       'witnesswork://shared-good-news',
     ])
       expect(shouldForwardToSystem(url)).toBe(false)
@@ -32,5 +42,17 @@ describe('shouldForwardToSystem', () => {
     expect(
       shouldForwardToSystem('https://ww-proxy.leviwilkerson.com.example.org/b')
     ).toBe(true)
+    expect(
+      shouldForwardToSystem('https://witnesswork.app.example.org/contacts#abc')
+    ).toBe(true)
+  })
+
+  it('forwards the website and the web app, which the app never claims', () => {
+    for (const url of [
+      'https://witnesswork.app/privacy',
+      'https://witnesswork.app/help/time/time-rollover',
+      'https://app.witnesswork.app/contacts',
+    ])
+      expect(shouldForwardToSystem(url)).toBe(true)
   })
 })

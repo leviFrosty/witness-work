@@ -21,7 +21,7 @@ Settings → Account shows the User's anonymous server account (its number and w
 - Settings → Account (the row under Profile), on compact and wide layouts. Hidden on binaries whose Buddies Keychain module is older than version 3.
 - Settings → Account → Devices: Set Up Another Device, and Sign In with QR Code.
 - Onboarding: "I already use WitnessWork" → From your other phone opens Sign In with QR Code.
-- A `https://ww-proxy.leviwilkerson.com/h#1…` link (the QR code's) opens Sign In with QR Code, during onboarding too.
+- A `https://ww-proxy.leviwilkerson.com/h#1…` link (the QR code's), or the same fragment on `https://witnesswork.app/accounts/handoff`, opens Sign In with QR Code, during onboarding too.
 - Tools → Account.
 - Settings → Account → Backup.
 

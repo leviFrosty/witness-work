@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 
 vi.mock('react-native', () => ({
   Alert: { alert: vi.fn() },
@@ -19,6 +19,11 @@ vi.mock('@/lib/locales', () => ({
   default: { t: (key: string) => key },
 }))
 
+vi.mock(
+  '@/constants/appLinkSwitch',
+  () => import('@/__tests__/helpers/appLinkSwitch')
+)
+
 import {
   buildContactShareLink,
   isContactShareLink,
@@ -27,6 +32,7 @@ import {
 } from '@/features/contacts/lib/contactShareLink'
 import { validateContactImport } from '@/features/contacts/lib/contactImport'
 import { logger } from '@/lib/logger'
+import { setLinksOnNewHost } from '@/__tests__/helpers/appLinkSwitch'
 import { Contact } from '@/types/contact'
 import { Visit } from '@/types/visit'
 
@@ -117,8 +123,10 @@ describe('contactShareLink round-trip', () => {
 describe('isContactShareLink / parseContactShareLink URL matching', () => {
   const { url: sampleUrl } = buildContactShareLink(makeContact(), [])
   const samplePayload = new URL(sampleUrl).hash.slice(1)
-  const { ORIGIN_PROD, PATH, LEGACY_PATH_PREFIX, SCHEME_HOST } =
-    CONTACT_SHARE_LINK
+  const ORIGIN_PROD = 'https://ww-proxy.leviwilkerson.com'
+  const PATH = '/c'
+  const LEGACY_PATH_PREFIX = '/c/'
+  const { SCHEME_HOST } = CONTACT_SHARE_LINK
 
   it('keeps the payload in the fragment, out of the path and query', () => {
     const url = new URL(sampleUrl)
@@ -217,10 +225,86 @@ describe('isContactShareLink / parseContactShareLink URL matching', () => {
     for (const corrupt of [
       `${ORIGIN_PROD}${PATH}#not-valid-base64-or-gzip`,
       `${ORIGIN_PROD}${LEGACY_PATH_PREFIX}not-valid-base64-or-gzip`,
+      `https://witnesswork.app/contacts#not-valid-base64-or-gzip`,
     ]) {
       expect(isContactShareLink(corrupt)).toBe(true)
       expect(parseContactShareLink(corrupt)).toBeNull()
     }
+  })
+
+  describe('on the new hosts', () => {
+    const NEW_ORIGINS = [
+      'https://witnesswork.app',
+      'https://dev.witnesswork.app',
+    ]
+
+    afterEach(() => setLinksOnNewHost(false))
+
+    it('makes apex links once the switch flips', () => {
+      setLinksOnNewHost(true)
+      const { url } = buildContactShareLink(makeContact(), [])
+      expect(url).toMatch(/^https:\/\/witnesswork\.app\/contacts#H4sI/)
+      expect(parseContactShareLink(url)).toMatchObject({
+        contact: { id: 'contact-1', name: 'Joe Shmoe' },
+      })
+    })
+
+    it('reads /contacts with the payload in the fragment', () => {
+      for (const origin of NEW_ORIGINS)
+        for (const url of [
+          `${origin}/contacts#${samplePayload}`,
+          `${origin}/contacts?utm_source=share#${samplePayload}`,
+          `${origin.toUpperCase()}/contacts#${samplePayload}`,
+          `Https://${origin.slice('https://'.length)}/contacts#${samplePayload}`,
+          `${origin}/contacts/#${samplePayload}`,
+        ]) {
+          expect(isContactShareLink(url)).toBe(true)
+          expect(parseContactShareLink(url)).toEqual(
+            parseContactShareLink(sampleUrl)
+          )
+        }
+    })
+
+    it('never reads the old short paths there', () => {
+      for (const origin of NEW_ORIGINS)
+        for (const bad of [
+          `${origin}${PATH}#${samplePayload}`,
+          `${origin}${LEGACY_PATH_PREFIX}${samplePayload}`,
+          `${origin}/contacts/${samplePayload}`,
+          `${origin}/contactsfoo#${samplePayload}`,
+          `${origin}/contacts`,
+          `${origin}/contacts#`,
+        ]) {
+          expect(isContactShareLink(bad)).toBe(false)
+          expect(parseContactShareLink(bad)).toBeNull()
+        }
+    })
+
+    it('reads full words on the old host too', () => {
+      for (const url of [
+        `${ORIGIN_PROD}/contacts#${samplePayload}`,
+        `${ORIGIN_PROD}/contacts?utm_source=share#${samplePayload}`,
+        `${ORIGIN_PROD.toUpperCase()}/contacts/#${samplePayload}`,
+      ]) {
+        expect(isContactShareLink(url)).toBe(true)
+        expect(parseContactShareLink(url)).toEqual(
+          parseContactShareLink(sampleUrl)
+        )
+      }
+    })
+
+    it('never reads other subdomains, plain http, or a re-cased path', () => {
+      for (const bad of [
+        `https://app.witnesswork.app/contacts#${samplePayload}`,
+        `http://witnesswork.app/contacts#${samplePayload}`,
+        `https://witnesswork.app/Contacts#${samplePayload}`,
+        `${ORIGIN_PROD}/contacts/${samplePayload}`,
+        `see ${ORIGIN_PROD}/contacts#${samplePayload}`,
+      ]) {
+        expect(isContactShareLink(bad)).toBe(false)
+        expect(parseContactShareLink(bad)).toBeNull()
+      }
+    })
   })
 })
 
@@ -291,7 +375,7 @@ describe('buildContactShareLink trimming', () => {
     expect(includedConversations).toBeGreaterThan(0)
     expect(includedConversations).toBeLessThan(convs.length)
     expect(url.length).toBeLessThanOrEqual(CONTACT_SHARE_LINK.MAX_URL_BYTES)
-    expect(new URL(url).pathname).toBe(CONTACT_SHARE_LINK.PATH)
+    expect(new URL(url).pathname).toBe('/c')
     const parsed = parseContactShareLink(url) as { conversations: Visit[] }
     expect(parsed.conversations.map((c) => c.id)).toEqual(
       convs

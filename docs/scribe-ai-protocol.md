@@ -35,7 +35,7 @@ sequenceDiagram
 
 ## Routes
 
-`{BASE}` is the app's `apis` base (`https://ww-proxy.leviwilkerson.com`; `EXPO_PUBLIC_API_BASE_URL` overrides it).
+`{BASE}` is the app's `apis` base (`https://api.witnesswork.app`, `https://api-dev.witnesswork.app` in development builds, and `https://ww-proxy.leviwilkerson.com` in builds before ADR 0042; `EXPO_PUBLIC_API_BASE_URL` overrides it).
 
 | Method | Path                     | Auth   | Purpose                                                       | Rate-limit family                        |
 | ------ | ------------------------ | ------ | ------------------------------------------------------------- | ---------------------------------------- |

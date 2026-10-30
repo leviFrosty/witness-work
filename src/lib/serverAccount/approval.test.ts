@@ -35,13 +35,27 @@ const hkdf = (ikm: Uint8Array, info: string, length: number) =>
   )
 
 describe('approval origins', () => {
-  it('are the production web app for the production API', () => {
+  it.each([
+    'https://api.witnesswork.app',
+    'https://api.witnesswork.app/',
+    'https://API.witnesswork.app',
+    'https://api.witnesswork.app:443',
+    'https://ww-proxy.leviwilkerson.com',
+  ])(
+    'are the production web app for the production API at %s',
+    (apiBaseUrl) => {
+      expect(approvalOriginsFor({ apiBaseUrl, dev: false })).toEqual(PROD)
+      expect(approvalOriginsFor({ apiBaseUrl, dev: true })).toEqual(PROD)
+    }
+  )
+
+  it('are the dev web app for the dev API', () => {
     expect(
       approvalOriginsFor({
-        apiBaseUrl: 'https://ww-proxy.leviwilkerson.com',
-        dev: false,
+        apiBaseUrl: 'https://api-dev.witnesswork.app',
+        dev: true,
       })
-    ).toEqual(PROD)
+    ).toEqual(['https://app-dev.witnesswork.app', ...APPROVAL_LOCAL_ORIGINS])
   })
 
   it('are the dev web app for any other API', () => {

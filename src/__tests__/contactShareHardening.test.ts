@@ -912,10 +912,11 @@ describe('real shares still import intact', () => {
     const payload = new URL(
       buildContactShareLink(makeLargeContact(1, 10), []).url
     ).hash.slice(1)
-    const { ORIGIN_PROD, PATH, LEGACY_PATH_PREFIX } = CONTACT_SHARE_LINK
     for (const url of [
-      `${ORIGIN_PROD}${PATH}#${payload}`,
-      `${ORIGIN_PROD}${LEGACY_PATH_PREFIX}${payload}`,
+      `https://ww-proxy.leviwilkerson.com/c#${payload}`,
+      `https://ww-proxy.leviwilkerson.com/c/${payload}`,
+      `https://witnesswork.app/contacts#${payload}`,
+      `https://dev.witnesswork.app/contacts#${payload}`,
       `${SCHEME}${payload}`,
     ]) {
       expect((await importContactFromIncomingUrl(url))?.success).toBe(true)

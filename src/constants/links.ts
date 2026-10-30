@@ -1,9 +1,16 @@
+import { forBuild } from '@/constants/buildVariant'
+
 const itunesItemId = 6469723047
 const androidPackage = 'com.leviwilkerson.jwtime'
 const githubRepo = 'https://github.com/leviFrosty/witness-work'
+/** The website (ADR 0042); development builds use its staging deploy. */
+const site = forBuild({
+  development: 'https://dev.witnesswork.app',
+  release: 'https://witnesswork.app',
+})
 
 export default {
-  privacyPolicy: 'https://leviwilkerson.com/witness-work/privacy',
+  privacyPolicy: `${site}/privacy`,
   appStore: `https://apps.apple.com/us/app/jw-time/id${itunesItemId}`,
   appStoreReview: `itms-apps://itunes.apple.com/app/viewContentsUserReviews/id${itunesItemId}?action=write-review`,
   playStore: `https://play.google.com/store/apps/details?id=${androidPackage}`,
@@ -17,11 +24,13 @@ export default {
   bugReport: `${githubRepo}/issues/new?assignees=&labels=bug&projects=&template=bug_report.md&title=%5BBUG%5D`,
   featureRequest: `${githubRepo}/issues/new?assignees=&labels=enhancement&projects=&template=feature_request.md&title=%5BFEATURE%5D`,
   donate: 'https://ko-fi.com/leviwilkerson',
-  termsOfUse: 'https://leviwilkerson.com/witness-work/terms',
-  helpCenterSite: 'https://leviwilkerson.com',
-  helpCenterManifest:
-    'https://leviwilkerson.com/witness-work/help-center/bundle/manifest.json',
-  helpCenterSearch: 'https://help-search.leviwilkerson.com/v1/search',
+  termsOfUse: `${site}/terms`,
+  helpCenterSite: site,
+  helpCenterManifest: `${site}/help/bundle/manifest.json`,
+  helpCenterSearch: forBuild({
+    development: 'https://help-search-dev.witnesswork.app/v1/search',
+    release: 'https://help-search.witnesswork.app/v1/search',
+  }),
   nwpublisherSubmitReport: 'https://nwpublisher.com/report/',
   openRouterZdr: 'https://openrouter.ai/docs/guides/features/zdr',
 }

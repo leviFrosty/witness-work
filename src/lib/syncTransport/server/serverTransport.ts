@@ -6,12 +6,32 @@ import {
   type BackupPlatform,
 } from '@/lib/serverAccount/backupCrypto'
 import {
+  MAX_PHOTO_FILE_BYTES,
+  openPhoto,
+  openPhotoMeta,
+  type Pause,
+  PhotoOpenError,
+  type PhotoKeys,
+  photoName,
+  sealedPhotoBytes,
+  sealPhoto,
+  sealPhotoMeta,
+} from '@/lib/syncTransport/server/photoCrypto'
+import { isCloudSyncPhotoFilename } from '@/lib/syncTransport/imageNames'
+import {
   BLOB_TIMEOUT_MS,
+  deleteSyncPhotos,
   deleteSyncSlot,
+  getSyncPhoto,
   getSyncSlot,
+  listSyncPhotos,
   listSyncSlots,
+  parsePhotoUsage,
+  PHOTO_TIMEOUT_MS,
+  putSyncPhoto,
   putSyncSlot,
   SYNC_LIMITS,
+  type SyncPhotoUsage,
   type SyncSlot,
 } from '@/lib/syncTransport/server/syncClient'
 import {
@@ -20,9 +40,11 @@ import {
   SYNC_SLOT_ID_PATTERN,
 } from '@/lib/syncTransport/server/syncCrypto'
 import {
+  type BinaryFileInfo,
   type SyncFile,
   type SyncTransport,
   SyncTransportError,
+  type SyncTransportErrorCode,
   type TransportSubscription,
 } from '@/lib/syncTransport/types'
 
@@ -38,18 +60,41 @@ import {
  * - Writes seal the payload and put it; the server has it when they resolve.
  * - Remote changes come from the live socket (`notifyRemoteChange`), wired by the
  *   app, never by polling.
- * - Photos aren't transferred (phase 1): binaries list empty and refuse writes.
+ * - Photo binaries are the account's photos (docs/cloud-sync-photos.md): each one
+ *   sealed under a keyed name, listed through its sealed filename. They travel
+ *   once the server says it has photos (`supportsBinaries`); while its photo
+ *   switch is off, uploads wait and the rest goes on.
  */
 
-/** What a call needs: the account, its sync key, and the session's options. */
+/** What a call needs: the account, its keys, and the session's options. */
 export type ServerSyncAccess = {
   accountId: string
   syncKey: Uint8Array
+  /** Derived from the account key with the sync key (`derivePhotoKeys`). */
+  photoKeys: PhotoKeys
   options: BearerAccountOptions
 }
 
-/** A server refusal the app records (the kill switch, or not entitled). */
-export type ServerSyncRefusal = 'disabled' | 'supporter_required'
+/**
+ * A server refusal the app records: the kill switch, not entitled, or photos'
+ * own switch.
+ */
+export type ServerSyncRefusal =
+  | 'disabled'
+  | 'supporter_required'
+  | 'photos_disabled'
+
+/** What told the app the account's photo storage. */
+export type PhotoUsageSource = 'put' | 'list' | 'delete' | 'usage' | 'full'
+
+/** Reads and writes photo files on this device. */
+export type PhotoFiles = {
+  /** The file's size in bytes, without reading it. */
+  size: (path: string) => Promise<number>
+  read: (path: string) => Promise<Uint8Array>
+  /** Replaces the file at `path` with `bytes` whole, never part of them. */
+  write: (path: string, bytes: Uint8Array) => Promise<void>
+}
 
 export type ServerTransportDeps = {
   /**
@@ -70,6 +115,24 @@ export type ServerTransportDeps = {
   ) => TransportSubscription
   /** The server refused a call; the app updates what it knows. */
   onRefused?: (refusal: ServerSyncRefusal) => void
+  /** Photo files on this device; without them, photos don't travel. */
+  files?: PhotoFiles
+  /**
+   * The server's photo switch as last recorded: null until a server that has
+   * photos said so. Off, uploads wait; reads and deletes go on.
+   */
+  photoSwitch?: () => boolean | null
+  /** This device's slot, sent with photo writes so its own socket isn't told. */
+  slotId?: () => string | null
+  /** Between chunks of sealing or opening a photo. */
+  pause?: Pause
+  /** The server said how much photo storage the account uses. */
+  onPhotoUsage?: (usage: SyncPhotoUsage, source: PhotoUsageSource) => void
+  /** A photo didn't upload or download, classified (for analytics). */
+  onPhotoFailure?: (
+    direction: 'upload' | 'download',
+    code: SyncTransportErrorCode
+  ) => void
 }
 
 /**
@@ -79,6 +142,9 @@ export type ServerTransportDeps = {
  * the server refuses (429) while the first is uploading.
  */
 export const SERVER_WRITE_TIMEOUT_MS = BLOB_TIMEOUT_MS + 30_000
+
+/** The engine's wait for a photo: its own request's, plus sealing it. */
+export const SERVER_BINARY_TIMEOUT_MS = PHOTO_TIMEOUT_MS + 30_000
 
 const PREFIX = 'witness-work-'
 const SUFFIX = '.json'
@@ -114,6 +180,17 @@ export function toServerTransportError(
     case 'supporter_required':
       onRefused?.('supporter_required')
       return new SyncTransportError('unauthorized', message)
+    // Photos' own switch is off for now: the rest of sync goes on, and the
+    // photo waits for it as for a server failure.
+    case 'photos_disabled':
+      onRefused?.('photos_disabled')
+      return new SyncTransportError('server-error', message, error.retryAfterMs)
+    // A photo's name was deleted while it uploaded, or the account has no slot
+    // yet (the snapshot publishes first): a race the next try settles.
+    case 'conflict':
+    case 'no_slot':
+      return new SyncTransportError('server-error', message, error.retryAfterMs)
+    case 'storage_full':
     case 'too_large':
     case 'limit':
       return new SyncTransportError('storage-full', message)
@@ -164,6 +241,13 @@ export function createServerTransport(
   let cache = new Map<string, { etag: string; json: string }>()
   let cacheAccount: string | null = null
   let seq = 0
+  /** The filename each listed photo's meta opened to, by name: both immutable. */
+  let photoFilenames = new Map<string, string | null>()
+  /** The listed name of each filename, used rather than computing it again. */
+  let listedNames = new Map<string, string>()
+  /** The account's photo storage as last heard, for a refusal without it. */
+  let lastUsage: SyncPhotoUsage | null = null
+  const pause = deps.pause ?? (async () => {})
 
   const fail = (error: unknown): never => {
     throw toServerTransportError(error, deps.onRefused)
@@ -178,6 +262,9 @@ export function createServerTransport(
     }
     if (cacheAccount !== current.accountId) {
       cache = new Map()
+      photoFilenames = new Map()
+      listedNames = new Map()
+      lastUsage = null
       cacheAccount = current.accountId
       seq = 0
     }
@@ -218,11 +305,57 @@ export function createServerTransport(
     return json
   }
 
+  const usage = (value: SyncPhotoUsage | null, source: PhotoUsageSource) => {
+    if (!value) return
+    lastUsage = value
+    deps.onPhotoUsage?.(value, source)
+  }
+
+  /** A photo call's failure, with the account's usage when it's full. */
+  const photoFail = (
+    error: unknown,
+    direction?: 'upload' | 'download'
+  ): never => {
+    let failure: SyncTransportError
+    if (error instanceof HttpError && error.serverCode === 'too_large')
+      // A photo over the server's cap never fits; it isn't the account full.
+      failure = new SyncTransportError('too-large', 'too_large')
+    else {
+      // Full by bytes or by count: either way, room is what it waits for.
+      if (
+        error instanceof HttpError &&
+        (error.serverCode === 'storage_full' || error.serverCode === 'limit')
+      )
+        usage(parsePhotoUsage(error.body) ?? lastUsage, 'full')
+      failure = toServerTransportError(error, deps.onRefused)
+    }
+    if (direction) deps.onPhotoFailure?.(direction, failure.code)
+    throw failure
+  }
+
+  const photoAccess = async () => {
+    const current = await access()
+    const address = (filename: string) => ({
+      accountId: current.accountId,
+      name:
+        listedNames.get(filename) ??
+        photoName(current.photoKeys.nameKey, filename),
+    })
+    return { current, address }
+  }
+  const slotId = () => deps.slotId?.() ?? null
+
   const transport: ServerTransport = {
     kind: 'cloud',
     writeConfirmsUpload: true,
-    supportsBinaries: false,
+    get supportsBinaries() {
+      return Boolean(deps.files) && (deps.photoSwitch?.() ?? null) !== null
+    },
+    get binaryWritesPaused() {
+      return deps.photoSwitch?.() === false
+    },
     writeTimeoutMs: SERVER_WRITE_TIMEOUT_MS,
+    binaryTimeoutMs: SERVER_BINARY_TIMEOUT_MS,
     isAvailable: deps.isAvailable,
     identityToken: deps.identityToken,
     identityTokenMatches: (stored) => {
@@ -311,15 +444,172 @@ export function createServerTransport(
       cache = new Map()
     },
 
-    writeBinary: async () => {
-      throw new SyncTransportError('not-found', 'Cloud Sync has no photos yet')
+    async writeBinary(filename, sourcePath) {
+      if (!deps.files) throw new SyncTransportError('unknown', 'no photo files')
+      // Legacy avatar names were last-writer-wins; the engine gives the photo
+      // a revision before it comes here.
+      if (!isCloudSyncPhotoFilename(filename))
+        throw new SyncTransportError('unknown', 'not a Cloud Sync photo name')
+      if (deps.photoSwitch?.() === false)
+        throw new SyncTransportError('server-error', 'photos_disabled')
+      const { current, address } = await photoAccess()
+      const target = address(filename)
+      // Sized before it's read: a photo over the cap isn't loaded at all.
+      const size = await deps.files.size(sourcePath)
+      if (size > MAX_PHOTO_FILE_BYTES)
+        return photoFail(
+          new SyncTransportError('too-large', 'too_large'),
+          'upload'
+        )
+      // Known not to fit: refused here, not sent whole for a 429, so retrying
+      // a full account doesn't upload every stuck photo again.
+      if (
+        lastUsage &&
+        lastUsage.bytes + sealedPhotoBytes(size) > lastUsage.limit
+      ) {
+        usage(lastUsage, 'full')
+        return photoFail(
+          new SyncTransportError('storage-full', 'storage_full'),
+          'upload'
+        )
+      }
+      const bytes = await deps.files.read(sourcePath)
+      const { photoKey } = current.photoKeys
+      const blob = await sealPhoto(
+        photoKey,
+        bytes,
+        target,
+        deps.randomBytes(24),
+        pause
+      )
+      const meta = sealPhotoMeta(
+        photoKey,
+        filename,
+        target,
+        deps.randomBytes(24)
+      )
+      try {
+        const put = await putSyncPhoto(
+          current.options,
+          { name: target.name, meta, blob },
+          slotId()
+        )
+        photoFilenames.set(target.name, filename)
+        listedNames.set(filename, target.name)
+        usage(put.usage, 'put')
+        return put.createdAt
+      } catch (error) {
+        return photoFail(error, 'upload')
+      }
     },
-    readBinary: async () => {
-      throw new SyncTransportError('not-found', 'Cloud Sync has no photos yet')
+
+    async readBinary(filename, destinationPath) {
+      if (!deps.files) throw new SyncTransportError('unknown', 'no photo files')
+      const { current, address } = await photoAccess()
+      const target = address(filename)
+      let got: Awaited<ReturnType<typeof getSyncPhoto>>
+      try {
+        got = await getSyncPhoto(current.options, target.name)
+      } catch (error) {
+        return photoFail(error, 'download')
+      }
+      let bytes: Uint8Array
+      try {
+        bytes = await openPhoto(
+          current.photoKeys.photoKey,
+          got.blob,
+          target,
+          pause
+        )
+      } catch (error) {
+        // Another key's, damaged, or moved: a bad file, never written here.
+        if (error instanceof PhotoOpenError)
+          return photoFail(
+            new SyncTransportError('unknown', `photo ${error.problem}`),
+            'download'
+          )
+        throw error
+      }
+      await deps.files.write(destinationPath, bytes)
+      return got.createdAt ?? deps.now()
     },
-    listBinaryFiles: async () => [],
-    deleteBinaryFile: async () => {},
-    deleteAllBinaries: async () => {},
+
+    async listBinaryFiles() {
+      const { current } = await photoAccess()
+      const { photoKey, nameKey } = current.photoKeys
+      const files: BinaryFileInfo[] = []
+      const listed = new Set<string>()
+      const names = new Map<string, string>()
+      let cursor: string | null = null
+      let last: SyncPhotoUsage | null = null
+      do {
+        let page: Awaited<ReturnType<typeof listSyncPhotos>>
+        try {
+          page = await listSyncPhotos(current.options, cursor)
+        } catch (error) {
+          return photoFail(error)
+        }
+        for (const photo of page.photos) {
+          listed.add(photo.name)
+          let filename = photoFilenames.get(photo.name)
+          if (filename === undefined) {
+            // Unreadable (another key's, damaged, newer) or not the name it's
+            // listed under: skipped, as if it weren't there.
+            filename = openPhotoMeta(
+              photoKey,
+              photo.meta,
+              { accountId: current.accountId, name: photo.name },
+              nameKey,
+              isCloudSyncPhotoFilename
+            )
+            photoFilenames.set(photo.name, filename)
+          }
+          if (!filename) continue
+          names.set(filename, photo.name)
+          files.push({ filename, modifiedAt: photo.createdAt })
+        }
+        last = page.usage ?? last
+        cursor = page.cursor
+      } while (cursor)
+      for (const name of photoFilenames.keys())
+        if (!listed.has(name)) photoFilenames.delete(name)
+      listedNames = names
+      usage(last, 'list')
+      return files
+    },
+
+    async deleteBinaryFile(filename) {
+      const { current, address } = await photoAccess()
+      const { name } = address(filename)
+      try {
+        const deleted = await deleteSyncPhotos(
+          current.options,
+          { names: [name] },
+          slotId()
+        )
+        photoFilenames.delete(name)
+        listedNames.delete(filename)
+        usage(deleted.usage, 'delete')
+      } catch (error) {
+        photoFail(error)
+      }
+    },
+
+    async deleteAllBinaries() {
+      const { current } = await photoAccess()
+      try {
+        const deleted = await deleteSyncPhotos(
+          current.options,
+          { all: true },
+          slotId()
+        )
+        photoFilenames = new Map()
+        listedNames = new Map()
+        usage(deleted.usage, 'delete')
+      } catch (error) {
+        photoFail(error)
+      }
+    },
 
     addRemoteChangeListener(listener) {
       remoteListeners.add(listener)
@@ -347,6 +637,8 @@ export function createServerTransport(
     lastSeq: () => seq,
     reset() {
       cache = new Map()
+      photoFilenames = new Map()
+      listedNames = new Map()
       cacheAccount = null
       seq = 0
     },

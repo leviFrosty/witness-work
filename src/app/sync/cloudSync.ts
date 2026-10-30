@@ -33,11 +33,21 @@ import {
   type ServerSyncAccess,
 } from '@/lib/syncTransport/server/serverTransport'
 import { deriveSyncKey } from '@/lib/syncTransport/server/syncCrypto'
+import { derivePhotoKeys } from '@/lib/syncTransport/server/photoCrypto'
+import { photoFiles } from '@/lib/syncTransport/server/photoFiles'
 import {
+  recordPhotoUsage,
+  resetPhotoUsage,
+  useCloudSyncPhotoUsage,
+} from '@/lib/syncTransport/server/photoUsage'
+import {
+  fetchSyncPhotoUsage,
   fetchSyncStatus,
   listSyncSlots,
+  type SyncPhotoUsage,
   type SyncStatus,
 } from '@/lib/syncTransport/server/syncClient'
+import { analytics } from '@/lib/analytics'
 import {
   createLiveInbox,
   type LiveEvent,
@@ -46,6 +56,7 @@ import type { LiveSocket } from '@/features/buddies/lib/relay'
 import { useSupporter } from '@/features/supporter/stores/supporter'
 import { useUpdateRequired } from '@/lib/appUpdate/updateRequired'
 import { usePreferences } from '@/stores/preferences'
+import { bookkeepingForNewTransport } from '@/app/sync/imageSync'
 
 /**
  * Cloud Sync's runtime (ADR 0030; docs/accounts-protocol.md, "Sync"): the
@@ -61,11 +72,20 @@ async function peekAccountKey(): Promise<Uint8Array | null> {
   return seed ? fromB64u(seed) : null
 }
 
-let derived: { seed: string; key: Uint8Array } | null = null
-const syncKeyFor = (accountKey: Uint8Array) => {
+let derived: {
+  seed: string
+  syncKey: Uint8Array
+  photoKeys: ReturnType<typeof derivePhotoKeys>
+} | null = null
+const keysFor = (accountKey: Uint8Array) => {
   const seed = toB64u(accountKey)
-  if (derived?.seed !== seed) derived = { seed, key: deriveSyncKey(accountKey) }
-  return derived.key
+  if (derived?.seed !== seed)
+    derived = {
+      seed,
+      syncKey: deriveSyncKey(accountKey),
+      photoKeys: derivePhotoKeys(accountKey),
+    }
+  return derived
 }
 
 /**
@@ -77,12 +97,21 @@ async function cloudSyncAccess(): Promise<ServerSyncAccess> {
   const accountKey = await peekAccountKey()
   if (!accountKey) throw new Error('No account key on this device')
   const { accountId } = await serverAccount.connect(accountKey)
+  const { syncKey, photoKeys } = keysFor(accountKey)
   return {
     accountId,
-    syncKey: syncKeyFor(accountKey),
+    syncKey,
+    photoKeys,
     options: bearerOptions(accountKey),
   }
 }
+
+/** The account's photo count, coarsely, for analytics. */
+const photoCountBucket = (count: number) =>
+  count < 100 ? '<100' : count < 1000 ? '<1000' : '1000+'
+
+/** Between chunks of sealing or opening a photo: a frame can render. */
+const yieldToUi = () => new Promise<void>((resolve) => setTimeout(resolve, 0))
 
 /** A hash of the account id, so the stored identity names no account. */
 const accountToken = (accountId: string) =>
@@ -100,8 +129,33 @@ export const cloudSyncTransport = createServerTransport({
     Device.modelName ?? (Platform.OS === 'android' ? 'Android' : 'iPhone'),
   platform: Platform.OS === 'android' ? 'android' : 'ios',
   now: syncNow,
+  files: photoFiles,
+  photoSwitch: () => usePreferences.getState().cloudSyncPhotos,
+  slotId: ensureSyncDeviceId,
+  pause: yieldToUi,
+  onPhotoUsage: (usage, source) => {
+    recordPhotoUsage(usage, source)
+    // At most once a day a device (`analyticsFrequency`).
+    if (source === 'full')
+      analytics.capture('cloud_sync_photos_storage_full', {
+        photos: photoCountBucket(usage.count),
+      })
+  },
+  onPhotoFailure: (direction, code) => {
+    // Its own event above; offline is the phone's, not Cloud Sync's.
+    if (code === 'storage-full' || code === 'network') return
+    analytics.capture('cloud_sync_photo_transfer_failed', {
+      source: direction,
+      reason: code,
+    })
+  },
   onRefused: (refusal) => {
     logger.warn(`[cloudSync] refused: ${refusal}`)
+    // Photos' own switch: uploads wait, the rest of Cloud Sync goes on.
+    if (refusal === 'photos_disabled') {
+      usePreferences.setState({ cloudSyncPhotos: false })
+      return
+    }
     usePreferences.setState(
       refusal === 'disabled'
         ? {
@@ -160,6 +214,7 @@ export function refreshCloudSyncStatus({
         cloudSyncEntitled: supporterUnknown
           ? prefs.cloudSyncEntitled
           : status.entitled,
+        cloudSyncPhotos: status.photos,
         ...(prefs.cloudSyncConfig?.enabled !== status.enabled ||
         prefs.cloudSyncConfig?.entitlement !== status.entitlement
           ? {
@@ -208,6 +263,27 @@ export async function recheckCloudSyncPause(): Promise<CloudSyncPause | null> {
   if (!usesCloudSync()) return null
   await refreshCloudSyncStatus({ force: true })
   return cloudSyncPause()
+}
+
+/**
+ * Reads the account's photo storage (`photos/usage`) and records it, for
+ * Settings → Account. Null without a session, off Cloud Sync, or when it can't
+ * be read.
+ */
+export async function refreshCloudSyncPhotoUsage(): Promise<SyncPhotoUsage | null> {
+  if (!usesCloudSync() || !usePreferences.getState().iCloudSyncEnabled)
+    return null
+  await accountSessions.ready()
+  if (!accountSessions.snapshot()) return null
+  try {
+    const { options } = await cloudSyncAccess()
+    const usage = await fetchSyncPhotoUsage(options)
+    recordPhotoUsage(usage, 'usage')
+    return usage
+  } catch (error) {
+    logger.warn('[cloudSync] photo usage unavailable', error)
+    return null
+  }
 }
 
 export type PrepareCloudSyncOutcome =
@@ -360,7 +436,13 @@ export function installCloudSyncRuntime(canSync: () => boolean): () => void {
   const live = createLiveInbox({
     open: openSyncSocket,
     syncedSeq: () => cloudSyncTransport.lastSeq(),
-    onChange: () => cloudSyncTransport.notifyRemoteChange(),
+    onChange: () => {
+      cloudSyncTransport.notifyRemoteChange()
+      // Another device may have deleted a photo: a full account retries once
+      // its usage drops (`onPhotoRoom`).
+      if (useCloudSyncPhotoUsage.getState().fullAt)
+        void refreshCloudSyncPhotoUsage()
+    },
     // After a refused handshake: a bearer call's 401 refreshes the token.
     verify: () => refreshCloudSyncStatus({ force: true }),
     onEvent: recordLiveEvent,
@@ -397,7 +479,16 @@ export function installCloudSyncRuntime(canSync: () => boolean): () => void {
   const gate = useUpdateRequired.subscribe((state, previous) => {
     if (Boolean(state.required) !== Boolean(previous.required)) update()
   })
-  const account = onAccountChange(() => {
+  const account = onAccountChange((change) => {
+    resetPhotoUsage()
+    // Another account's photos: each is checked against its listing, and a
+    // full account there doesn't show here (ADR 0030 §7).
+    if (change === 'key_changed' && usesCloudSync())
+      usePreferences.setState((state) => ({
+        iCloudImageSync: bookkeepingForNewTransport(
+          state.iCloudImageSync ?? {}
+        ),
+      }))
     cloudSyncTransport.notifyAvailabilityChange()
     void refreshCloudSyncStatus({ force: true }).then(update)
   })

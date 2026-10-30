@@ -740,3 +740,132 @@ describe('gcOrphanImages', () => {
     expect(result.deleted).toEqual([])
   })
 })
+
+describe('Cloud Sync’s photo rules', () => {
+  const source = {
+    kind: 'contact' as const,
+    id: 'c1',
+    revision: 'r1',
+    localPath: 'file:///docs/contact-c1-avatar-picked-r1.jpg',
+  }
+  const filename = 'witness-work-img-contact-c1--r1.jpg'
+  const full = {
+    localMtime: 500,
+    uploadedMtime: null,
+    lastError: 'storage_full',
+    errorCode: 'storage-full',
+    failedAt: 0,
+    failures: 1,
+  }
+
+  it('retries a full account on foreground or room, even inside the backoff', async () => {
+    const deps = makeDeps({ fullRetriesOnSignal: true, now: () => 1_000 })
+    const edit = await pushAllImages({
+      sources: [source],
+      bookkeeping: { [filename]: full },
+      deps,
+      trigger: 'store-edit',
+    })
+    expect(edit.skipped).toBe(1)
+    expect(deps.bridge.writeBinary).not.toHaveBeenCalled()
+
+    const foreground = await pushAllImages({
+      sources: [source],
+      bookkeeping: { [filename]: full },
+      deps,
+      trigger: 'foreground',
+    })
+    expect(foreground.uploaded).toBe(1)
+    expect(foreground.bookkeeping[filename].errorCode).toBeUndefined()
+  })
+
+  it('never retries a photo too large for the transport until it changes', async () => {
+    const deps = makeDeps({ fullRetriesOnSignal: true, now: () => 10 ** 9 })
+    const tooLarge = {
+      [filename]: { ...full, errorCode: 'too-large', lastError: 'too_large' },
+    }
+    const result = await pushAllImages({
+      sources: [source],
+      bookkeeping: tooLarge,
+      deps,
+      trigger: 'foreground',
+    })
+    expect(result.skipped).toBe(1)
+    expect(deps.bridge.writeBinary).not.toHaveBeenCalled()
+  })
+
+  it('stops uploading, without failures, once the transport pauses uploads', async () => {
+    let open = true
+    const deps = makeDeps({ canUpload: () => open })
+    vi.mocked(deps.bridge.writeBinary).mockImplementationOnce(async () => {
+      open = false
+      throw new SyncTransportError('server-error', 'photos_disabled')
+    })
+    const result = await pushAllImages({
+      sources: [
+        source,
+        { ...source, id: 'c2', localPath: 'file:///docs/c2.jpg' },
+      ],
+      bookkeeping: {},
+      deps,
+      trigger: 'foreground',
+    })
+    expect(deps.bridge.writeBinary).toHaveBeenCalledOnce()
+    expect(result.failed).toBe(1)
+    expect(Object.keys(result.bookkeeping)).toEqual([filename])
+  })
+
+  it('keeps iCloud and Drive on the backoff, as before', async () => {
+    const deps = makeDeps({ now: () => 1_000 })
+    const result = await pushAllImages({
+      sources: [source],
+      bookkeeping: { [filename]: full },
+      deps,
+      trigger: 'foreground',
+    })
+    expect(result.skipped).toBe(1)
+    expect(deps.bridge.writeBinary).not.toHaveBeenCalled()
+  })
+
+  it('takes a revision it already has as current, whatever the listing time', async () => {
+    const expected = {
+      kind: 'contact' as const,
+      id: 'c1',
+      revision: 'r1',
+      localPath: 'file:///docs/contact-c1-avatar-synced-r1.jpg',
+    }
+    const listing = vi.fn(async () => [{ filename, modifiedAt: 9_999 }])
+    const cloud = makeDeps({ immutableNames: true })
+    cloud.bridge.listBinaryFiles = listing
+    const onCloud = await pullMissingImages({
+      expectedSources: [expected],
+      bookkeeping: { [filename]: { localMtime: 1, uploadedMtime: 1 } },
+      deps: cloud,
+    })
+    expect(cloud.bridge.readBinary).not.toHaveBeenCalled()
+    expect(onCloud.downloaded).toHaveLength(1)
+
+    // iCloud and Drive still re-download a file whose time moved.
+    const platform = makeDeps()
+    platform.bridge.listBinaryFiles = listing
+    await pullMissingImages({
+      expectedSources: [expected],
+      bookkeeping: { [filename]: { localMtime: 1, uploadedMtime: 1 } },
+      deps: platform,
+    })
+    expect(platform.bridge.readBinary).toHaveBeenCalledOnce()
+  })
+
+  it('drops what a device saw of the old cloud when it switches', async () => {
+    const { bookkeepingForNewTransport } = await import('@/app/sync/imageSync')
+    expect(
+      bookkeepingForNewTransport({
+        [filename]: { ...full, containerMtime: 5 },
+        other: { localMtime: 2, uploadedMtime: 2, containerMtime: 7 },
+      })
+    ).toEqual({
+      [filename]: { localMtime: 500, uploadedMtime: null },
+      other: { localMtime: 2, uploadedMtime: 2 },
+    })
+  })
+})

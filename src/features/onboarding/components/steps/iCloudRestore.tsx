@@ -34,6 +34,7 @@ import { SyncPayload } from '@/app/sync/payload'
 import { usePreferences } from '@/stores/preferences'
 import { FRESH_SETUP_PREFERENCES } from '@/lib/syncPreferencePolicy'
 import { payloadReferencesPhotos } from '@/app/sync/photoReferences'
+import { usesCloudSync } from '@/lib/syncTransport/provider'
 import { useProfile } from '@/stores/profile'
 import useFeatureAccess from '@/hooks/useFeatureAccess'
 
@@ -420,8 +421,12 @@ const ICloudRestore = ({ goBack, goNext }: Props) => {
     // If the restored payload references images via iCloud markers, prompt
     // the user to also pull those photos down. Per-device consent means we
     // can't silently flip `iCloudSyncIncludeImages` on — the user must opt
-    // in explicitly. See Q9 in docs/icloud-image-sync-plan.md.
-    if (payloadReferencesPhotos(remote)) {
+    // in explicitly. See Q9 in docs/icloud-image-sync-plan.md. Cloud Sync
+    // carries photos without asking (ADR 0040 §6).
+    const referencesPhotos = payloadReferencesPhotos(remote)
+    if (referencesPhotos && usesCloudSync()) {
+      void iCloudSync.pullImagesIfEnabled()
+    } else if (referencesPhotos) {
       analytics.capture('icloud_restore_images_prompted', {
         source: 'onboarding',
       })

@@ -298,7 +298,9 @@ const PreferencesiCloudScreenInner = () => {
         case 'useRemote':
           if (pendingRemote) {
             iCloudSync.replaceLocalWithRemote(pendingRemote)
-            shouldPromptForImages = payloadReferencesPhotos(pendingRemote)
+            // Cloud Sync carries photos without asking (ADR 0040 §6).
+            shouldPromptForImages =
+              !usesCloudSync() && payloadReferencesPhotos(pendingRemote)
             toast.success(i18n.t(syncKey('iCloudEnabledToastRestored')))
           }
           break
@@ -1242,14 +1244,6 @@ const PreferencesiCloudScreenInner = () => {
               </View>
             </InputRowButton>
           </Section>
-        )}
-
-        {iCloudSyncEnabled && onCloud && (
-          <View>
-            <Text style={{ fontSize: 12, color: theme.colors.textAlt }}>
-              {i18n.t('cloudSyncPhotosNote')}
-            </Text>
-          </View>
         )}
 
         {iCloudSyncEnabled && !onCloud && (

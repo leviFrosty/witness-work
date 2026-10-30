@@ -10,7 +10,7 @@
  *
  * - JSON sync files: `witness-work-<deviceId>.json`, the account file
  *   (`witness-work-account.json`), and on iOS legacy `witness-work*.json`.
- * - Photo binaries: `witness-work-img-*.jpg`.
+ * - Photo binaries: `witness-work-img-*.jpg` and `witness-work-note-*.jpg`.
  *
  * Names are unique within the namespace, as filenames are in a folder. A
  * transport whose storage allows duplicate names (Drive) presents the newest
@@ -68,6 +68,8 @@ export type SyncTransportErrorCode =
    */
   | 'server-error'
   | 'not-found'
+  /** One file is over the service's size limit; it never fits as it is. */
+  | 'too-large'
   | 'unknown'
 
 /**
@@ -100,10 +102,23 @@ export interface SyncTransport {
    */
   readonly writeConfirmsUpload: boolean
   /**
-   * False when the transport can't hold photo binaries (Cloud Sync, phase 1):
-   * photo references still travel, their bytes don't. Absent means it can.
+   * False when the transport can't hold photo binaries (Cloud Sync on a server
+   * that doesn't say it has photos): photo references still travel, their bytes
+   * don't. Absent means it can.
    */
   readonly supportsBinaries?: boolean
+  /**
+   * True while the transport takes no photo uploads for now (Cloud Sync's photo
+   * switch is off): uploads wait without counting as failures; downloads and
+   * deletes go on. Absent means false.
+   */
+  readonly binaryWritesPaused?: boolean
+  /**
+   * Longest the engine waits for `writeBinary` or `readBinary`, when a photo
+   * can take longer than `TRANSPORT_TIMEOUT_MS` (Cloud Sync's 25 MiB blobs).
+   * Absent means `TRANSPORT_TIMEOUT_MS`.
+   */
+  readonly binaryTimeoutMs?: number
   /**
    * Longest the engine waits for `write`, when the transport's own requests can
    * take longer than `TRANSPORT_TIMEOUT_MS` (Cloud Sync's upload). Absent means

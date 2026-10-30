@@ -5158,7 +5158,6 @@
   "cloudSyncTurnOff_title": "Bushe mulefwaya ukwimya Cloud Sync?",
   "cloudSyncTurnOff_description": "Device ino yaleka ukusync, kabili ikopi yayo ifumishiwa pa server ya WitnessWork. Ifyalembwa fyenu fyashala pa device ino, kabili ama device yenu yambi yasunga ifyo yasync kale ukufuma ku yo.",
   "cloudSyncTurnOff_action": "Imya",
-  "cloudSyncPhotosNote": "Ifikope fya bakulanshanya, fya profile ne fya nsalu fishala pa device iyaficilembele na Cloud Sync pa nshita ino; ama device yambi yalelanga fye inkalata sha kubalilapo nelyo icishibilo.",
   "iCloudSyncCloud": "Cloud Sync",
   "iCloudSync_summaryCloud": "Sync pa iPhone na Android, ifyasokelwa ukufuma ku ntanshi ukufika ku mpela.",
   "iCloudSync_descriptionCloud": "Isync abakulanshanya, ulutandalilo, Amalipoti ya Mulimo ne fyo mwasala pa ma device yenu ya iPhone na Android pa server ya WitnessWork, ifyasokelwa ukufuma ku ntanshi ukufika ku mpela.",

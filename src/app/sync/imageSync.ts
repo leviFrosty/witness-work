@@ -1,4 +1,7 @@
-import { filenameForContact, filenameForProfile } from '@/app/sync/imageNames'
+import {
+  filenameForContact,
+  filenameForProfile,
+} from '@/lib/syncTransport/imageNames'
 import { syncTransportErrorCode } from '@/lib/syncTransport/types'
 import { isStorageFullError } from '@/lib/errorTrackingPolicy'
 
@@ -21,6 +24,22 @@ export type ImageSyncDeps = {
   now: () => number
   /** Recheck consent/access before starting each operation, after awaits. */
   canTransfer?: () => boolean
+  /**
+   * The transport never changes a name's bytes (Cloud Sync): a revision this
+   * device already has a file for is current, whatever the listing's time.
+   */
+  immutableNames?: boolean
+  /**
+   * Rechecked before each upload: false while the transport takes none for now
+   * (Cloud Sync's photo switch off), so the rest wait without failing.
+   */
+  canUpload?: () => boolean
+  /**
+   * The transport says when a full account has room again (Cloud Sync): a full
+   * account is retried only on foreground and when room frees, never on the
+   * failure backoff's timer.
+   */
+  fullRetriesOnSignal?: boolean
 }
 
 /**
@@ -104,6 +123,50 @@ function isQuotaFailure(entry: { lastError?: string; errorCode?: string }) {
   )
 }
 
+/**
+ * What started a photo upload pass: a push after an edit, or a foreground (or,
+ * on Cloud Sync, freed room), which may retry a full account.
+ */
+export type ImagePushTrigger = 'store-edit' | 'foreground'
+
+/**
+ * Whether a failed upload waits rather than retrying now, decided by the full
+ * account rule alone: on a transport that signals room (`fullRetriesOnSignal`),
+ * a full account retries on a foreground push or freed room and never on a
+ * store edit, whatever the backoff. Null when the rule doesn't apply (another
+ * failure, or another transport), so the backoff decides.
+ */
+export function waitsOnFullAccount(
+  deps: ImageSyncDeps,
+  entry: { lastError?: string; errorCode?: string },
+  trigger: ImagePushTrigger
+): boolean | null {
+  if (!deps.fullRetriesOnSignal || !isQuotaFailure(entry)) return null
+  return trigger === 'store-edit'
+}
+
+/** A photo over the transport's size limit never fits until it changes. */
+export const isTooLarge = (
+  entry: { errorCode?: string; localMtime: number } | undefined,
+  localMtime: number
+) => entry?.errorCode === 'too-large' && entry.localMtime === localMtime
+
+/**
+ * The bookkeeping a device takes to another transport: what it knows about its
+ * local files. What it saw of the old cloud (listing times, failures there)
+ * says nothing about the new one, so it doesn't come along.
+ */
+export function bookkeepingForNewTransport(
+  bookkeeping: ImageSyncBookkeeping
+): ImageSyncBookkeeping {
+  return Object.fromEntries(
+    Object.entries(bookkeeping).map(([filename, entry]) => [
+      filename,
+      { localMtime: entry.localMtime, uploadedMtime: entry.uploadedMtime },
+    ])
+  )
+}
+
 /** Waits after 1, 2, 3… failed uploads of one file: 30 s, 2 min, 8 min… 1 h. */
 export function uploadBackoffMs(failures: number): number {
   return Math.min(30_000 * 4 ** Math.max(0, failures - 1), 60 * 60_000)
@@ -124,7 +187,7 @@ export async function pushAllImages(args: {
   sources: AvatarSource[]
   bookkeeping: ImageSyncBookkeeping
   deps: ImageSyncDeps
-  trigger: 'store-edit' | 'foreground'
+  trigger: ImagePushTrigger
 }): Promise<PushImagesResult> {
   const { sources, deps } = args
   const bookkeeping: ImageSyncBookkeeping = { ...args.bookkeeping }
@@ -153,17 +216,25 @@ export async function pushAllImages(args: {
     // picked a new photo. A full account retries only on foreground: routine
     // store-edit pushes mustn't spam the network, and by then the user may
     // have freed up space.
+    if (isTooLarge(entry, localMtime)) {
+      skipped++
+      continue
+    }
     if (entry?.lastError && entry.localMtime === localMtime) {
+      const full = waitsOnFullAccount(deps, entry, args.trigger)
       const waiting =
-        deps.now() - (entry.failedAt ?? 0) <
-        uploadBackoffMs(entry.failures ?? 1)
-      if (waiting || (args.trigger === 'store-edit' && isQuotaFailure(entry))) {
+        full ??
+        (deps.now() - (entry.failedAt ?? 0) <
+          uploadBackoffMs(entry.failures ?? 1) ||
+          (args.trigger === 'store-edit' && isQuotaFailure(entry)))
+      if (waiting) {
         skipped++
         continue
       }
     }
     try {
       if (deps.canTransfer && !deps.canTransfer()) break
+      if (deps.canUpload && !deps.canUpload()) break
       const containerMtime = await deps.bridge.writeBinary(
         filename,
         source.localPath
@@ -294,7 +365,8 @@ export async function pullMissingImages(args: {
     if (
       localMtime != null &&
       (containerMtime == null ||
-        bookkeeping[filename]?.containerMtime === containerMtime)
+        bookkeeping[filename]?.containerMtime === containerMtime ||
+        (deps.immutableNames && source.revision !== undefined))
     ) {
       downloaded.push(
         source.kind === 'profile'

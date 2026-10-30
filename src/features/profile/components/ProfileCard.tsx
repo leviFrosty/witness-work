@@ -2,6 +2,7 @@ import {
   Clock as ClockIcon,
   Heart as HeartIcon,
   Star as StarIcon,
+  CloudOff as CloudOffIcon,
 } from 'lucide-react-native'
 import type { AppIcon } from '@/components/ui/LucideIcon'
 import { InputProps } from 'tamagui'
@@ -25,6 +26,11 @@ import { formatNumber } from '@/lib/numbers'
 import MyTextInput from '@/components/ui/TextInput'
 import { profileBadges } from '@/lib/badges/display'
 import ProfileCardBadges from '@/features/profile/components/ProfileCardBadges'
+import { profilePhotoFilename } from '@/lib/syncTransport/imageNames'
+import {
+  PHOTO_SYNC_PROBLEM_LABEL,
+  usePhotoSyncProblem,
+} from '@/lib/syncTransport/photoSyncStatus'
 import { useShallow } from 'zustand/react/shallow'
 
 const daysSince = (from: Date): number =>
@@ -114,6 +120,8 @@ const ProfileCard = ({
   // ProfileCard reads + writes both stores because the card is the editing
   // surface for Profile while tenure remains a Preference.
   const { name, avatar, customAvatarBackground, set: setProfile } = useProfile()
+  // The card's detail lines, rather than the photo badge, fit its layout.
+  const photoProblem = usePhotoSyncProblem(profilePhotoFilename(avatar))
   const { name: profileName } = useUser()
   const showsOtherName = shownName !== undefined && !nameEdited
   const fieldName = showsOtherName ? shownName : name
@@ -226,6 +234,15 @@ const ProfileCard = ({
             tenure.tone === 'supporter' || tenure.tone === 'foundingSupporter',
           text: tenure.text,
         },
+        ...(photoProblem
+          ? [
+              {
+                icon: CloudOffIcon,
+                tint: theme.colors.warnText,
+                text: i18n.t(PHOTO_SYNC_PROBLEM_LABEL[photoProblem]),
+              },
+            ]
+          : []),
       ]}
       footer={
         badges.length > 0 ? <ProfileCardBadges badges={badges} /> : undefined

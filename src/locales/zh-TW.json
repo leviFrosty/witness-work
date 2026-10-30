@@ -5158,7 +5158,6 @@
   "cloudSyncTurnOff_title": "要關閉雲端同步嗎？",
   "cloudSyncTurnOff_description": "這個裝置將停止同步，其副本也會從 WitnessWork 的伺服器上移除。你的資料會留在這個裝置上，你的其他裝置會保留已從它同步的內容。",
   "cloudSyncTurnOff_action": "關閉",
-  "cloudSyncPhotosNote": "目前使用雲端同步時，聯絡人、個人檔案和筆記的照片只會留在新增它們的裝置上；其他裝置會顯示姓名縮寫或預設圖示。",
   "iCloudSyncCloud": "雲端同步",
   "iCloudSync_summaryCloud": "在 iPhone 和 Android 之間同步，採端對端加密。",
   "iCloudSync_descriptionCloud": "透過 WitnessWork 的伺服器，在你的 iPhone 和 Android 裝置之間同步聯絡人、探訪、傳道報告和偏好設定，並採端對端加密。",

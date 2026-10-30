@@ -5691,7 +5691,6 @@
   "cloudSyncTurnOff_title": "إيقاف المزامنة السحابية؟",
   "cloudSyncTurnOff_description": "يتوقف هذا الجهاز عن المزامنة، وتُزال نسخته من خادم WitnessWork. تبقى بياناتك على هذا الجهاز، وتحتفظ أجهزتك الأخرى بما زامنته منه.",
   "cloudSyncTurnOff_action": "إيقاف",
-  "cloudSyncPhotosNote": "تبقى صور جهات الاتصال والملف الشخصي والملاحظات في الوقت الحالي على الجهاز الذي أضافها عند استخدام المزامنة السحابية؛ وتعرض الأجهزة الأخرى الأحرف الأولى أو صورة بديلة.",
   "iCloudSyncCloud": "المزامنة السحابية",
   "iCloudSync_summaryCloud": "مزامنة بين iPhone وAndroid بتشفير من طرف إلى طرف.",
   "iCloudSync_descriptionCloud": "تزامن جهات الاتصال والزيارات وتقارير الخدمة والإعدادات بين أجهزة iPhone وAndroid عبر خادم WitnessWork، بتشفير من طرف إلى طرف.",

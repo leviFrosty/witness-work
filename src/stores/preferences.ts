@@ -770,6 +770,7 @@ export const PREFERENCE_DEFAULTS = {
     | 'rate-limited'
     | 'server-error'
     | 'not-found'
+    | 'too-large'
     | 'unknown'
     | null,
   iCloudSyncNeedsResolution: false,
@@ -839,6 +840,12 @@ export const PREFERENCE_DEFAULTS = {
    * /accounts/v1/sync`); null until it answered. Per-device.
    */
   cloudSyncEntitled: null as boolean | null,
+  /**
+   * Cloud Sync photos' own switch as the server last said (`GET
+   * /accounts/v1/sync`'s `photos`): null until a server that has photos
+   * answered. While it's off, photo uploads wait. Per-device (non-syncable).
+   */
+  cloudSyncPhotos: null as boolean | null,
   /**
    * Data protection mode (EU/EEA, UK, Switzerland). When true the app hides and
    * disables householder-data features that CJEU C-25/17 and GDPR make risky

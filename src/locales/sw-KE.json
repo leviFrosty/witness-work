@@ -5158,7 +5158,6 @@
   "cloudSyncTurnOff_title": "Uzime Usawazishaji wa Wingu?",
   "cloudSyncTurnOff_description": "Kifaa hiki huacha kusawazisha, na nakala yake huondolewa kwenye seva ya WitnessWork. Data yako hubaki kwenye kifaa hiki, na vifaa vyako vingine hubaki na kile ambacho tayari vimesawazisha kutoka kwake.",
   "cloudSyncTurnOff_action": "Zima",
-  "cloudSyncPhotosNote": "Kwa sasa, picha za anwani, wasifu, na madokezo hubaki kwenye kifaa kilichozipakia kwenye Usawazishaji wa Wingu; vifaa vingine huonyesha herufi za kwanza au kishikilia nafasi.",
   "iCloudSyncCloud": "Usawazishaji wa Wingu",
   "iCloudSync_summaryCloud": "Sawazisha kwenye iPhone na Android, kwa usimbaji fiche wa mwanzo hadi mwisho.",
   "iCloudSync_descriptionCloud": "Husawazisha anwani, ziara, Ripoti za Huduma, na mapendeleo kwenye vifaa vyako vya iPhone na Android kupitia seva ya WitnessWork, kwa usimbaji fiche wa mwanzo hadi mwisho.",

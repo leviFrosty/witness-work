@@ -77,6 +77,7 @@ const notEntitled = {
     entitlement: 'supporter',
     supporter: false,
     supporterCheckFailed: true,
+    photos: true,
   },
 } as const
 

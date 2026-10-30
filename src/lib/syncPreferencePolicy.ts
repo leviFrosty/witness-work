@@ -20,6 +20,7 @@ export const NON_SYNCABLE_PREFERENCE_KEYS = new Set<string>([
   'cloudSyncAccountToken',
   'cloudSyncConfig',
   'cloudSyncEntitled',
+  'cloudSyncPhotos',
   'iCloudSyncIncludeImages',
   'dataProtectionMode',
   'dataProtectionModeSetByUser',

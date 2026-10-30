@@ -1,6 +1,6 @@
 # Cloud sync (Cloud Sync, iCloud on iOS, Google Drive on Android)
 
-Each device syncs through one option (ADR 0030): Cloud Sync (end-to-end encrypted through ww-api, iOS and Android together, the default), iCloud/Google Drive, or off. Devices on different options don't sync with each other. With iCloud or Drive, Supporters keep their devices in step: each device that turns sync on shares its contacts, visits, time, plans, categories, mileage, profile and shared preferences with the user's other devices of the same platform, and can restore them on a new install. iOS syncs through iCloud; Android syncs through the hidden Google Drive folder of a Google Account the user connects. Photos sync only on devices that opt in.
+Each device syncs through one option (ADR 0030): Cloud Sync (end-to-end encrypted through ww-api, iOS and Android together, the default), iCloud/Google Drive, or off. Devices on different options don't sync with each other. With iCloud or Drive, Supporters keep their devices in step: each device that turns sync on shares its contacts, visits, time, plans, categories, mileage, profile and shared preferences with the user's other devices of the same platform, and can restore them on a new install. iOS syncs through iCloud; Android syncs through the hidden Google Drive folder of a Google Account the user connects. Cloud Sync always carries photos (sealed per photo, 2 GB per account); iCloud and Drive carry them only on devices that opt in.
 
 ## Sub-features
 
@@ -14,7 +14,7 @@ Each device syncs through one option (ADR 0030): Cloud Sync (end-to-end encrypte
 - `sync-restore` restores during onboarding: "Pick up where you left off" → "From iCloud backup" / "From Google Drive".
 - `sync-lapse` pauses transfer while Supporter access is gone ("Paused until Supporter access returns") and resumes on its own.
 - `sync-account` (Android) shows the connected Google Account state, "Use a different Google Account", "Disconnect Google Drive", and "Reconnect" after Google withdraws access.
-- `sync-photos` uploads and downloads photos when "Include images in sync" is on.
+- `sync-photos` uploads and downloads photos: always on Cloud Sync, and on iCloud/Drive when "Include images in sync" is on. On Cloud Sync, a photo the account has no room for shows "Not synced: storage full", and Settings → Account shows the photo storage.
 - `sync-devices` lists and removes other devices' copies (Settings → … → "Devices").
 
 ## How to get to it (user POV)
@@ -42,6 +42,7 @@ The status is cached about a minute per device; `__WW_DEV__.cloudSync.refresh()`
 - **Realtime.** Add a contact through the UI on one device, then `wwv ad wait text "<name>"` on the other's Contacts tab without touching it. `liveEvents` shows `changed`.
 - **Switching.** Settings → Sync → "Sync With" → iCloud / Google Drive, confirm; `state().option` is `platform`, and `list()` from the other device no longer shows this slot. Back to Cloud Sync, confirm: no duplicates (contact counts), nothing deleted comes back.
 - **Upgraded device.** `__WW_DEV__.cloudSync.simulateUpgradedPlatformDevice()`, then `remount()` and open Settings → Sync: the offer card (`cloud-sync-offer`) shows once; "Not Now" (`cloud-sync-offer-dismiss`) hides it for good.
+- **Photos.** `cloudSync.photoState()` (bookkeeping, usage, `fullAt`), `cloudSync.photos()` (the account's listed photos), `cloudSync.photoUsage()`. Add a contact or note photo on one device, then read it back on the other with `photoState()` and the screen. Full storage: start the worker with a tiny limit (`node scripts/verify/dev.mjs down`, then `up --photo-limit-bytes <N>` from the ww-api checkout, before `wwv up`); the photo shows "Not synced: storage full" and Settings → Account says "Storage full". `cloudSync.photoBenchmark(10)` seals and uploads a 10 MB photo and reports the timings. A slot must exist before photos (`no_slot` otherwise): let the first sync finish.
 - **Default.** `__WW_DEV__.cloudSync.forgetChoice()`, then `remount()`: with the entitlement open, Cloud Sync turns on by itself (`cloud_sync_default_outcome` in the Metro log).
 
 ### iCloud and Google Drive

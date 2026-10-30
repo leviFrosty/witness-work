@@ -9,7 +9,8 @@ import {
   isValidImageFilename,
   filenameForNoteImage,
   noteImageIdFromFilename,
-} from '@/app/sync/imageNames'
+  isCloudSyncPhotoFilename,
+} from '@/lib/syncTransport/imageNames'
 
 describe('imageNames', () => {
   describe('filenameForContact', () => {
@@ -129,5 +130,21 @@ describe('imageNames', () => {
       expect(isValidImageFilename('witness-work-note-.jpg')).toBe(false)
       expect(isValidImageFilename('witness-work-note-a/b.jpg')).toBe(false)
     })
+  })
+
+  it('carries only revisioned avatars and note photos on Cloud Sync', () => {
+    expect(isCloudSyncPhotoFilename(filenameForContact('c-1', 'r_1'))).toBe(
+      true
+    )
+    expect(isCloudSyncPhotoFilename(filenameForProfile('r1'))).toBe(true)
+    expect(isCloudSyncPhotoFilename(filenameForNoteImage('n1abcdefg'))).toBe(
+      true
+    )
+    expect(isCloudSyncPhotoFilename(filenameForContact('c-1'))).toBe(false)
+    expect(isCloudSyncPhotoFilename(filenameForProfile())).toBe(false)
+    expect(
+      isCloudSyncPhotoFilename('witness-work-img-contact-a/b--r.jpg')
+    ).toBe(false)
+    expect(isCloudSyncPhotoFilename('witness-work-1.json')).toBe(false)
   })
 })

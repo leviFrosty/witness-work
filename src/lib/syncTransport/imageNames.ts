@@ -132,3 +132,33 @@ export function isValidImageFilename(name: string): boolean {
   if (middle.length === 0) return false
   return true
 }
+
+/**
+ * The photo filenames Cloud Sync carries (docs/cloud-sync-photos.md, "Keys and
+ * names"): revisioned avatars and note photos. A legacy avatar name without a
+ * revision was last-writer-wins on iCloud, so it never travels there.
+ */
+export function isCloudSyncPhotoFilename(name: string): boolean {
+  if (!isValidImageFilename(name)) return false
+  if (noteImageIdFromFilename(name) !== null) return true
+  return /^witness-work-img-(?:contact-.+|profile)--[A-Za-z0-9_-]+\.jpg$/.test(
+    name
+  )
+}
+
+type PhotoAvatar = { type: string; revision?: string } | undefined
+
+/**
+ * The filename a contact's photo travels under, or null when it has no photo
+ * with a revision.
+ */
+export const contactPhotoFilename = (id: string, avatar: PhotoAvatar) =>
+  avatar?.type === 'image' && avatar.revision
+    ? filenameForContact(id, avatar.revision)
+    : null
+
+/** `contactPhotoFilename` for the profile photo. */
+export const profilePhotoFilename = (avatar: PhotoAvatar) =>
+  avatar?.type === 'image' && avatar.revision
+    ? filenameForProfile(avatar.revision)
+    : null

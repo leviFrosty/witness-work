@@ -7,6 +7,8 @@ import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import { useNoteImageUri } from '@/lib/richText/noteImageRevision'
+import { filenameForNoteImage } from '@/lib/syncTransport/imageNames'
+import PhotoNotSyncedBadge from '@/components/PhotoNotSyncedBadge'
 import type { RichTextImageAttrs } from '@/types/richText'
 
 const MAX_HEIGHT = 360
@@ -71,15 +73,21 @@ const NoteImage = (props: {
   }
 
   const image = (
-    <Image
-      source={{ uri }}
-      style={{ width: '100%', height: '100%' }}
-      contentFit='cover'
-      recyclingKey={props.image.id}
-      transition={120}
-      onError={() => setFailedUri(uri)}
-      accessibilityIgnoresInvertColors
-    />
+    <>
+      <Image
+        source={{ uri }}
+        style={{ width: '100%', height: '100%' }}
+        contentFit='cover'
+        recyclingKey={props.image.id}
+        transition={120}
+        onError={() => setFailedUri(uri)}
+        accessibilityIgnoresInvertColors
+      />
+      <PhotoNotSyncedBadge
+        filename={filenameForNoteImage(props.image.id)}
+        variant='overlay'
+      />
+    </>
   )
 
   if (!props.onPress) {

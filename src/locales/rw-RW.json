@@ -5158,7 +5158,6 @@
   "cloudSyncTurnOff_title": "Kuzimya Cloud Sync?",
   "cloudSyncTurnOff_description": "Iki gikoresho kireka guhuza, kandi kopi yacyo ikurwa kuri seriveri ya WitnessWork. Amakuru yawe aguma kuri iki gikoresho, kandi ibindi bikoresho byawe bigumana ibyo byamaze guhuza biturutse kuri cyo.",
   "cloudSyncTurnOff_action": "Zimya",
-  "cloudSyncPhotosNote": "Amafoto y'abantu, y'umwirondoro n'ay'inyandiko aguma ku gikoresho cyayongeyeho, kuri Cloud Sync, kuri ubu; ibindi bikoresho byerekana inyuguti za mbere cyangwa ikimenyetso gisimbura.",
   "iCloudSyncCloud": "Cloud Sync",
   "iCloudSync_summaryCloud": "Huza kuri iPhone na Android, irinzwe n'ibanga impande zombi.",
   "iCloudSync_descriptionCloud": "Ihuza abantu, gusura, raporo z'umurimo n'amahitamo ku bikoresho byawe bya iPhone na Android binyuze kuri seriveri ya WitnessWork, irinzwe n'ibanga impande zombi.",

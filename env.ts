@@ -19,6 +19,12 @@ const envVariables = z.object({
     .describe(
       'Set to `development` when working locally, targets the eas build to create the `WitnessWork Dev` bundle instead of production `WitnessWork`'
     ),
+  EXPO_PUBLIC_APP_VARIANT: z
+    .string()
+    .optional()
+    .describe(
+      'Set by app.config.ts from APP_VARIANT; never set it yourself. Development builds use the dev API, website and Help Center search.'
+    ),
   EXPO_PUBLIC_SILENT: z
     .string()
     .optional()

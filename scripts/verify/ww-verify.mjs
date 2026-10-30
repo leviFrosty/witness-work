@@ -2395,7 +2395,7 @@ function envApiUrl() {
       'node',
       '--input-type=module',
       '-e',
-      "import('./scripts/with-local-env.mjs').then(({ loadLocalEnv }) => console.log(loadLocalEnv(process.cwd(), 'development').env.EXPO_PUBLIC_API_BASE_URL || 'https://ww-proxy.leviwilkerson.com'))",
+      "import('./scripts/with-local-env.mjs').then(({ loadLocalEnv, defaultApiBaseUrl }) => console.log(loadLocalEnv(process.cwd(), 'development').env.EXPO_PUBLIC_API_BASE_URL || defaultApiBaseUrl('development')))",
     ],
     { cwd: ROOT, check: false }
   )

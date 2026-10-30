@@ -120,7 +120,7 @@ static files, headers, CSP reports
 separate dev / beta / prod`"]
     S_OTA --> D_OTA
     S_OTA -->|"signed downloads"| B_OTA
-    subgraph WORKER["ww-api Worker"]
+    subgraph WORKER["ww-api Worker, api.witnesswork.app"]
       R_BUD["`**/buddies/v1/...**
 signed ops, live WebSocket, photos`"]
       R_SCRIBE["`**/scribe/v1/...**
@@ -141,7 +141,9 @@ status, challenges, App Attest key setup`"]
       R_APPCFG["`**GET /app/v1/config**
 minimum app version, sync switches`"]
       R_LINKS["`**GET /c, /b, /h, /.well-known**
-link pages, Universal + App Links`"]
+link pages, Universal + App Links;
+on witnesswork.app: /contacts,
+/buddies/invite, /accounts/handoff`"]
       R_RATINGS["`**GET /app-store/ratings**
 paywall social proof`"]
       CRON["`**Hourly cron**
@@ -183,6 +185,7 @@ sealed Cloud Sync photos, up to 2 GB an account`")]
     end
     subgraph HELP["Help Center search"]
       S_HELPS["`**ww-help-search Worker**
+help-search.witnesswork.app (services/help-search):
 GET /v1/search, cron content sync`"]
       AIS[("`**Workers AI + KV**
 embeddings, keyword index by locale`")]
@@ -243,7 +246,7 @@ analytics, flags, surveys, errors`"]
   A_ROUTE -->|"bearer: today's stops"| R_ROUTE
   A_ROUTE -->|"directions (iOS)"| P_MAPS
   A_CONTACTS -->|"address lookup"| R_PLACES
-  A_LINKS -->|"/c, /b and /h links"| R_LINKS
+  A_LINKS -->|"old-host and apex links"| R_LINKS
   A_SUPPORTER -->|"paywall ratings"| R_RATINGS
   A_SUPPORTER -->|"purchases, RevenueCat SDK, web checkout links"| S_RC
   A_SHELL -->|"events, flags, surveys, errors"| S_PH
@@ -311,13 +314,13 @@ analytics, flags, surveys, errors`"]
   class S_OR,S_LLM,S_HERE,S_SENTRY,S_RC,S_STRIPE,S_PH,S_EAS external
 ```
 
-- ww-api runs as one Cloudflare Worker, `ww-proxy`, at `ww-proxy.leviwilkerson.com`. The dev Worker, `ww-proxy-dev`, has its own KV namespace, Durable Objects, and R2 buckets.
+- ww-api runs as one Cloudflare Worker, `ww-proxy`, at `api.witnesswork.app`, and at `ww-proxy.leviwilkerson.com` for builds shipped before [ADR 0042](./docs/adr/0042-witnesswork-app-domain.md). It also serves the link pages and association files on `witnesswork.app`, through exact-path routes ([docs/app-links.md](./docs/app-links.md)). The dev Worker, `ww-proxy-dev` (`api-dev.witnesswork.app`), has its own KV namespace, Durable Objects, and R2 buckets.
 - Buddies cards, events, and photos are sealed on the device before they reach the relay. [docs/buddies-protocol.md](./docs/buddies-protocol.md) lists what the relay can see.
 - Account backups are sealed on the device with a key only the User's devices can derive; the server keeps each device's ciphertext, its size and upload time ([docs/accounts-protocol.md](./docs/accounts-protocol.md#backup)).
 - Each device syncs through one option ([ADR 0030](./docs/adr/0030-cloud-sync-through-ww-api.md)). Cloud Sync, the default, works across iOS and Android: each device's snapshot is sealed with the account's sync key before it reaches ww-api, and the account's sync socket tells its other devices to pull. iCloud and Google Drive sync stay available, and devices sync only with devices on the same option ([docs/icloud-sync.md](./docs/icloud-sync.md)).
 - Scribe AI reaches its model through OpenRouter, pinned to zero-data-retention hosts ([ADR 0008](./docs/adr/0008-notes-import-third-party-llm-zero-retention.md)). Its tools run on the phone: each model step is one bearer request on the account's attested session ([ADR 0027](./docs/adr/0027-account-sessions-attest-once-then-bearer-tokens.md)) carrying the conversation, and ww-api keeps only usage records ([ADR 0032](./docs/adr/0032-scribe-ai-agent-harness.md), [docs/scribe-ai-protocol.md](./docs/scribe-ai-protocol.md)). The old `/notes-import/...` routes answer 426 Update Required, except the status probe older app versions still read.
 - Supporter status lives on the server account ([ADR 0029](./docs/adr/0029-supporter-status-on-the-server-account.md)): the app names the RevenueCat customer it's logged in as, ww-api reads that customer from RevenueCat itself, and RevenueCat's webhook keeps the record current. Legacy route planning still asks RevenueCat about the id it sends.
-- The Help Center's content lives in this repo's website, `services/marketing`, a static site on Workers Static Assets published at `witnesswork.app/help` ([ADR 0033](./docs/adr/0033-help-center-on-the-website.md), [ADR 0042](./docs/adr/0042-witnesswork-app-domain.md), [docs/help-center.md](./docs/help-center.md)); the old `leviwilkerson.com/witness-work/…` addresses shipped builds use redirect there. The app ships a snapshot, downloads a newer bundle when the Help Center opens, and searches on the device when the `help-search` Worker (`services/help-search`) can't answer. Search requests carry the typed query, language, platform and app version, and no account or device identifier.
+- The website and the Help Center's content are built from this repo's `services/marketing`, a static site on Workers Static Assets published at `witnesswork.app` and `witnesswork.app/help` ([ADR 0033](./docs/adr/0033-help-center-on-the-website.md), [ADR 0042](./docs/adr/0042-witnesswork-app-domain.md), [docs/help-center.md](./docs/help-center.md)); development builds use the staging site, `dev.witnesswork.app`, and the old `leviwilkerson.com/witness-work/…` addresses shipped builds use redirect there. The app ships a snapshot, downloads a newer bundle when the Help Center opens, and searches on the device when the `help-search.witnesswork.app` Worker (`services/help-search`) can't answer. Search requests carry the typed query, language, platform and app version, and no account or device identifier.
 - Left out: `GET /health` (the app checks its clock against it), the admin reset route, the private CloudKit record that picks which iPhone publishes Follow-ups to the calendar, link previews the device fetches for URLs in notes, and the build and release pipeline.
 
 When a change adds, removes, or reroutes one of these connections, update the diagram in the same pull request.

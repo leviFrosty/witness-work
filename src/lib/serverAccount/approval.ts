@@ -1,6 +1,6 @@
 import { expand, extract, hkdf } from '@noble/hashes/hkdf.js'
 import { sha256 } from '@noble/hashes/sha2.js'
-import { PRODUCTION_API_BASE_URL } from '@/constants/apis'
+import { PRODUCTION_API_BASE_URLS } from '@/constants/apis'
 import {
   concatBytes,
   fromB64u,
@@ -49,11 +49,20 @@ export const APPROVAL_LOCAL_ORIGINS = [
   'http://localhost:5173',
 ]
 
+/** `url`'s origin, as `URL` writes it (lower-case host, no default port). */
+function originOf(url: string): string {
+  try {
+    return new URL(url.trim()).origin
+  } catch {
+    return url
+  }
+}
+
 /**
  * The web app origins whose codes a build accepts: the production web app's for
- * the production API, the dev web app's for any other, and a local web build's
- * too in a dev build that isn't on the production API. `approvalRuntime.ts` has
- * this build's.
+ * the production API (either of its hosts), the dev web app's for any other,
+ * and a local web build's too in a dev build that isn't on the production API.
+ * `approvalRuntime.ts` has this build's.
  */
 export function approvalOriginsFor({
   apiBaseUrl,
@@ -62,7 +71,7 @@ export function approvalOriginsFor({
   apiBaseUrl: string
   dev: boolean
 }): string[] {
-  if (apiBaseUrl.replace(/\/+$/, '') === PRODUCTION_API_BASE_URL)
+  if (PRODUCTION_API_BASE_URLS.includes(originOf(apiBaseUrl)))
     return [...APPROVAL_PRODUCTION_ORIGINS]
   return dev
     ? [...APPROVAL_DEV_ORIGINS, ...APPROVAL_LOCAL_ORIGINS]

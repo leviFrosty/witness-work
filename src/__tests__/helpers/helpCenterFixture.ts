@@ -23,7 +23,7 @@ export function helpEntry(
     question,
     doc: { type: 'doc', content: [paragraph(answer)] },
     plainText: answer,
-    url: `https://leviwilkerson.com/witness-work/help-center/general/${slug}`,
+    url: `https://witnesswork.app/help/general/${slug}`,
     ...extra,
   }
 }

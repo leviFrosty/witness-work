@@ -37,14 +37,10 @@ describe('bundled Help Center snapshot', () => {
 
   it('restores URLs by the contract pattern', () => {
     const entry = english.entries.find((e) => e.id === 'timeRollover')
-    expect(entry?.url).toBe(
-      'https://leviwilkerson.com/witness-work/help-center/time/time-rollover'
-    )
+    expect(entry?.url).toBe('https://witnesswork.app/help/time/time-rollover')
     expect(
       readSnapshot('pt-BR').entries.find((e) => e.id === 'timeRollover')?.url
-    ).toBe(
-      'https://leviwilkerson.com/witness-work/help-center/pt-BR/time/time-rollover'
-    )
+    ).toBe('https://witnesswork.app/help/pt-BR/time/time-rollover')
   })
 
   it('fills untranslated entries from English, marked as fallback', () => {

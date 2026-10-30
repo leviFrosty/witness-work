@@ -58,9 +58,7 @@ describe('fetchRouteDirections', () => {
       legs: [leg],
     })
     const [url, init] = mocks.fetch.mock.calls[0]! as [string, RequestInit]
-    expect(url).toBe(
-      'https://ww-proxy.leviwilkerson.com/route-planning/directions'
-    )
+    expect(url).toBe('https://api.witnesswork.app/route-planning/directions')
     expect(new Headers(init.headers).get('authorization')).toBe('Bearer at-1')
     expect(JSON.parse(init.body as string)).toEqual({
       points: [

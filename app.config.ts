@@ -5,6 +5,7 @@ import { execSync } from 'child_process'
 import { readdirSync } from 'fs'
 import path from 'path'
 import { ExpoConfig, ConfigContext } from 'expo/config'
+import appLinks from './src/constants/appLinks.json'
 /**
  * Passed in from `env` property in profile `./eas.json` to eas build.
  *
@@ -26,6 +27,8 @@ const IS_BETA = APP_VARIANT === 'beta'
 process.env.EXPO_PUBLIC_COMMIT_HASH = execSync('git rev-parse --short HEAD')
   .toString()
   .trim()
+// Picks the API and website hosts (`src/constants/buildVariant.ts`).
+process.env.EXPO_PUBLIC_APP_VARIANT = APP_VARIANT
 // scripts/perf profiles a Release build of the development app: no OTA update
 // may replace the bundle under test, and Android must reach the local API over
 // plain HTTP. Without the probe the resolved config is unchanged.
@@ -40,6 +43,52 @@ const BUNDLE_ID = {
   beta: 'com.leviwilkerson.jwtimebeta',
   production: 'com.leviwilkerson.jwtime',
 }[APP_VARIANT]
+
+/**
+ * App links (ADR 0042, docs/app-links.md), from the file
+ * `src/constants/appLinks.json` that the app's parsers read too. Every build
+ * claims the old host: its short paths, the older contact form with the payload
+ * in the path, and the full-word paths ww-api serves there too. The apex claims
+ * only the full words; only development builds claim the dev apex, in developer
+ * mode, which fetches its AASA directly instead of through Apple's CDN.
+ */
+const APP_LINK_FULL_PATHS = Object.values(appLinks.paths)
+const APP_LINK_LEGACY_HOST_DATA = [
+  { path: appLinks.legacyPaths.contact },
+  { pathPrefix: appLinks.legacyContactPathPrefix },
+  { path: appLinks.legacyPaths.buddyInvite },
+  { path: appLinks.legacyPaths.handoff },
+  ...APP_LINK_FULL_PATHS.map((path) => ({ path })),
+]
+const APP_LINK_APEX_HOSTS = IS_DEV
+  ? [appLinks.host, appLinks.devHost]
+  : [appLinks.host]
+const APP_LINK_DOMAINS = [
+  `applinks:${appLinks.legacyHost}`,
+  ...APP_LINK_APEX_HOSTS.map((host) =>
+    host === appLinks.devHost
+      ? `applinks:${host}?mode=developer`
+      : `applinks:${host}`
+  ),
+]
+/**
+ * One `autoVerify` filter per host. Paths match exactly (`path`, not
+ * `pathPrefix`) so the website's other pages stay in the browser. Fragments
+ * (contact payloads, invite and handoff secrets) aren't matched; Android hands
+ * them to the app with the rest of the link.
+ */
+const APP_LINK_INTENT_FILTERS = [
+  { host: appLinks.legacyHost, data: APP_LINK_LEGACY_HOST_DATA },
+  ...APP_LINK_APEX_HOSTS.map((host) => ({
+    host,
+    data: APP_LINK_FULL_PATHS.map((path) => ({ path })),
+  })),
+].map(({ host, data }) => ({
+  action: 'VIEW',
+  autoVerify: true,
+  category: ['BROWSABLE', 'DEFAULT'],
+  data: data.map((match) => ({ scheme: 'https', host, ...match })),
+}))
 
 const APP_NAME = {
   development: 'WitnessWork Dev',
@@ -132,37 +181,11 @@ export default ({ config }: ConfigContext): ExpoConfig => {
         // Match the standard icon's light surface so the green mark has contrast.
         backgroundColor: '#F8F9FA',
       },
+      // App Links (docs/app-links.md). On Android 11 and lower the app is the
+      // default handler only if every autoVerify host verifies, so a new
+      // host's assetlinks.json must be live before a build claiming it ships.
       intentFilters: [
-        {
-          action: 'VIEW',
-          autoVerify: true,
-          category: ['BROWSABLE', 'DEFAULT'],
-          data: [
-            {
-              scheme: 'https',
-              host: 'ww-proxy.leviwilkerson.com',
-              path: '/c',
-            },
-            {
-              scheme: 'https',
-              host: 'ww-proxy.leviwilkerson.com',
-              pathPrefix: '/c/',
-            },
-            // Buddy invites (`/b#1<secret>`); the secret stays in the fragment,
-            // which Android hands to the app with the rest of the link.
-            {
-              scheme: 'https',
-              host: 'ww-proxy.leviwilkerson.com',
-              path: '/b',
-            },
-            // Set Up Another Device (`/h#1<channel, key, secret>`), likewise.
-            {
-              scheme: 'https',
-              host: 'ww-proxy.leviwilkerson.com',
-              path: '/h',
-            },
-          ],
-        },
+        ...APP_LINK_INTENT_FILTERS,
         {
           action: 'VIEW',
           category: ['BROWSABLE', 'DEFAULT'],
@@ -220,12 +243,11 @@ export default ({ config }: ConfigContext): ExpoConfig => {
           },
         ],
       },
-      // Universal Links for shared contact URLs
-      // (https://ww-proxy.leviwilkerson.com/c#<payload>, plus the legacy
-      // /c/<payload> form). The ww-proxy worker serves
-      // the AASA file that lists both dev and prod bundle IDs, so a single
-      // associated domain works across both build variants.
-      associatedDomains: ['applinks:ww-proxy.leviwilkerson.com'],
+      // Universal Links (docs/app-links.md): contact shares, Buddies invites
+      // and Set Up Another Device. ww-api serves each host's AASA file, which
+      // lists every bundle id, so each associated domain works across build
+      // variants.
+      associatedDomains: APP_LINK_DOMAINS,
       entitlements: {
         'com.apple.security.application-groups': [`group.${BUNDLE_ID}`],
         // App Attest (account sessions — ADR 0007, ADR 0027). The environment

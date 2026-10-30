@@ -38,12 +38,12 @@ const manifest = (hash = 'bbbbbbbbbbbbbbbb') => ({
     'en-US': {
       hash,
       count: 5,
-      path: '/witness-work/help-center/bundle/en-US.json',
+      path: '/help/bundle/en-US.json',
     },
     'de-DE': {
       hash: 'dddddddddddddddd',
       count: 5,
-      path: '/witness-work/help-center/bundle/de-DE.json',
+      path: '/help/bundle/de-DE.json',
     },
   },
 })
@@ -75,8 +75,8 @@ function deps(
   return { ...result, fetchMock: fetch }
 }
 
-const MANIFEST = '/witness-work/help-center/bundle/manifest.json'
-const EN = '/witness-work/help-center/bundle/en-US.json'
+const MANIFEST = '/help/bundle/manifest.json'
+const EN = '/help/bundle/en-US.json'
 
 describe('parseHelpBundle', () => {
   it('reads a schema-1 bundle', () => {
@@ -344,6 +344,22 @@ describe('refreshHelpBundle', () => {
     expect(d.writeManifest).toHaveBeenCalledWith('"m1"', expect.any(String))
   })
 
+  it('downloads from an absolute bundle path', async () => {
+    const absolute = manifest()
+    absolute.locales['en-US'].path =
+      'https://witnesswork.app/help/bundle/en-US.json'
+    const d = deps({
+      [MANIFEST]: () => json(absolute),
+      [EN]: () => json(helpBundle({ hash: 'bbbbbbbbbbbbbbbb' })),
+    })
+    const result = await refreshHelpBundle('en-US', 'aaaaaaaaaaaaaaaa', d)
+    expect(result.outcome).toBe('updated')
+    expect(d.fetchMock.mock.calls.map(([url]) => String(url))).toEqual([
+      'https://witnesswork.app/help/bundle/manifest.json',
+      'https://witnesswork.app/help/bundle/en-US.json',
+    ])
+  })
+
   it('skips the download when the hash matches', async () => {
     const d = deps({ [MANIFEST]: () => json(manifest('aaaaaaaaaaaaaaaa')) })
     const result = await refreshHelpBundle('en-US', 'aaaaaaaaaaaaaaaa', d)
@@ -488,7 +504,7 @@ describe('searchHelpRemote', () => {
     expect(slugs).toEqual(['time-rollover', 'submit-report'])
     const url = new URL(String((fetch.mock.calls[0] as unknown[])[0]))
     expect(url.origin + url.pathname).toBe(
-      'https://help-search.leviwilkerson.com/v1/search'
+      'https://help-search.witnesswork.app/v1/search'
     )
     expect(Object.fromEntries(url.searchParams)).toEqual({
       q: 'carry over hours',

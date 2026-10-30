@@ -1,0 +1,17 @@
+{
+  "legacyHost": "ww-proxy.leviwilkerson.com",
+  "host": "witnesswork.app",
+  "devHost": "dev.witnesswork.app",
+  "webAppHost": "app.witnesswork.app",
+  "paths": {
+    "contact": "/contacts",
+    "buddyInvite": "/buddies/invite",
+    "handoff": "/accounts/handoff"
+  },
+  "legacyPaths": {
+    "contact": "/c",
+    "buddyInvite": "/b",
+    "handoff": "/h"
+  },
+  "legacyContactPathPrefix": "/c/"
+}

@@ -194,10 +194,12 @@ The phone with the account (the **old** phone) shows a QR code; the **new** phon
 https://ww-proxy.leviwilkerson.com/h#1<b64u(channelId[16] ‖ offerPub[32] ‖ secret[16])>
 ```
 
+The app also reads the same fragment on `https://witnesswork.app/accounts/handoff#1…`; see [App links](./app-links.md).
+
 - `channelId`: 16 random bytes; the only part the server learns.
 - `offerPub`: the old phone's temporary X25519 public key, made for this handoff and forgotten after it.
 - `secret`: 16 random bytes.
-- The fragment never reaches a server. `GET /h` serves a page telling someone without the app to install it, and the app claims `/h` as a universal link and Android app link.
+- The fragment never reaches a server. `GET /h` (and `/accounts/handoff` on `witnesswork.app`) serves a page telling someone without the app to install it, and the app claims both as universal links and Android app links.
 
 ### Keys
 

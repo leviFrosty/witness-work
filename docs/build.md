@@ -231,10 +231,18 @@ Development uses `com.leviwilkerson.jwtimedev`; production uses
   Local commands require the platform SDK key so a configuration gap is caught
   before launch. The app itself still handles missing keys gracefully.
 
-Contact URL intent filters cover `ww-proxy.leviwilkerson.com/c#<payload>` and
-legacy `/c/<payload>` links, and Buddies invites `/b#1<secret>`.
-Automatic Android App Links additionally require the backend's
-`/.well-known/assetlinks.json` to list each package and signing certificate.
+App Link intent filters cover two hosts ([`app-links.md`](./app-links.md)):
+`ww-proxy.leviwilkerson.com` (contacts `/c#<payload>` and legacy
+`/c/<payload>`, Buddies invites `/b`, handoffs `/h`) and `witnesswork.app`
+(exactly `/contacts`, `/buddies/invite` and `/accounts/handoff`). Development
+builds also claim `dev.witnesswork.app`. Automatic Android App Links
+additionally require each host's `/.well-known/assetlinks.json` to list each
+package and signing certificate. On Android 11 and lower, the app becomes the
+default handler only if every `autoVerify` host verifies, so a new host's
+`assetlinks.json` must be live before a build that claims it ships. Check what
+a device verified with
+`adb shell pm get-app-links com.leviwilkerson.jwtime`, and re-run verification
+with `adb shell pm verify-app-links --re-verify com.leviwilkerson.jwtime`.
 Contact attachments use the `application/witnesswork+json` MIME type and are
 validated and confirmed before import, including opaque Android content URIs.
 
@@ -251,9 +259,10 @@ production and dev packages) is checked in: every APK carries it, and it holds
 no secrets. Alerts need Google Play services, so use an emulator image with
 Google APIs; the sending key lives in ww-api (`FCM_SERVICE_ACCOUNT_JSON`).
 Development builds don't verify App Links (the debug key isn't in
-`assetlinks.json`), so let the emulator open them with
-`adb shell pm set-app-links-user-selection --user cur --package com.leviwilkerson.jwtimedev true ww-proxy.leviwilkerson.com`,
-or drive invites with `wwv link`.
+`assetlinks.json`), so let the emulator open them, for each host, with
+`adb shell pm set-app-links-user-selection --user cur --package com.leviwilkerson.jwtimedev true ww-proxy.leviwilkerson.com witnesswork.app dev.witnesswork.app`
+(check with `adb shell pm get-app-links com.leviwilkerson.jwtimedev`), or
+drive invites with `wwv link`.
 
 Account sessions (ADR 0027) keep their refresh token in `modules/device-secrets`
 on both platforms: a non-synchronizable, this-device-only Keychain item on iOS,

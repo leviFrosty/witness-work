@@ -308,8 +308,8 @@ The root seed is 32 random bytes. Everything below derives from it, so it is the
 
 ### Invite link and secrets
 
-- Secret `s`: 16 random bytes. Link: `https://ww-proxy.leviwilkerson.com/b#1{b64u(s)}` — the leading `1` is the link version. Nothing identifying is in the path.
-- The link opens the app through iOS universal links (the AASA's `/b` component) and Android App Links (an auto-verified `/b` intent filter; the host's `assetlinks.json` covers every path). Both hand the app the whole URL, fragment included. Without the app, `GET /b` is a static page with App Store and Google Play buttons and a Copy button; the User installs, then taps the link again or pastes it in Buddies.
+- Secret `s`: 16 random bytes. Link: `https://ww-proxy.leviwilkerson.com/b#1{b64u(s)}` — the leading `1` is the link version. Nothing identifying is in the path. The app also reads `https://witnesswork.app/buddies/invite#1{b64u(s)}` ([app-links.md](./app-links.md)).
+- The link opens the app through iOS universal links (the AASA's `/b` component, `/buddies/invite` on the apex) and Android App Links (an auto-verified intent filter for that path; the host's `assetlinks.json` covers every path). Both hand the app the whole URL, fragment included. Without the app, `GET /b` is a static page with App Store and Google Play buttons and a Copy button; the User installs, then taps the link again or pastes it in Buddies.
 - `inviteId = b64u(HKDF(s, "", "ww-buddies/v1/invite/id", 16))`
 - `inviteKey = HKDF(s, "", "ww-buddies/v1/invite/key", 32)`
 - `claimSecret = HKDF(s, "", "ww-buddies/v1/invite/claim", 32)`; `claimVerifier = b64u(SHA-256(claimSecret))`

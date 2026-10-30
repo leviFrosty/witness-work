@@ -80,9 +80,7 @@ describe('optimizeRoute', () => {
     })
     const [url, init] = mocks.fetch.mock.calls[0]! as [string, RequestInit]
     const body = JSON.parse(init.body as string)
-    expect(url).toBe(
-      'https://ww-proxy.leviwilkerson.com/route-planning/optimize'
-    )
+    expect(url).toBe('https://api.witnesswork.app/route-planning/optimize')
     expect(new Headers(init.headers).get('authorization')).toBe('Bearer at-1')
     expect(mocks.links).toBe(1)
     expect(body).toEqual({

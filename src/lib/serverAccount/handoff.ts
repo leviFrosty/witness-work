@@ -8,6 +8,7 @@ import {
   toB64u,
   utf8,
 } from '@/lib/bytes'
+import { appLinkBase, appLinkFragment } from '@/constants/appLinks'
 import { curve25519 } from '@/lib/curve25519'
 import { open, seal } from '@/lib/sealedBlob'
 
@@ -24,7 +25,6 @@ import { open, seal } from '@/lib/sealedBlob'
  * gets a different code and blobs that won't open.
  */
 
-export const HANDOFF_LINK_BASE = 'https://ww-proxy.leviwilkerson.com/h'
 /** The fragment's version; a newer one asks the User to update. */
 const LINK_VERSION = '1'
 const CHANNEL_BYTES = 16
@@ -104,7 +104,8 @@ export function createHandoffOffer(
 
 /**
  * `https://ww-proxy.leviwilkerson.com/h#1<b64u(channelId ‖ offerPub ‖
- * secret)>`.
+ * secret)>`, or `https://witnesswork.app/accounts/handoff#1…` once new links
+ * move to the apex (`CREATE_LINKS_ON_NEW_HOST`).
  */
 export function buildHandoffLink(offer: HandoffOffer): string {
   const bytes = concatBytes(
@@ -114,7 +115,7 @@ export function buildHandoffLink(offer: HandoffOffer): string {
   )
   if (bytes.length !== CHANNEL_BYTES + PUBLIC_KEY_BYTES + SECRET_BYTES)
     throw new Error('Malformed handoff offer')
-  return `${HANDOFF_LINK_BASE}#${LINK_VERSION}${toB64u(bytes)}`
+  return `${appLinkBase('handoff')}#${LINK_VERSION}${toB64u(bytes)}`
 }
 
 export type ParsedHandoffLink =
@@ -125,17 +126,17 @@ export type ParsedHandoffLink =
    */
   | { ok: false; problem: 'notHandoff' | 'version' | 'damaged' }
 
-const LINK_PATTERN =
-  /^https:\/\/ww-proxy\.leviwilkerson\.com\/h\/?(?:\?[^#]*)?(?:#(.*))?$/i
-
-/** Whether `text` is a Set Up Another Device link at all, valid or not. */
-export const isHandoffLink = (text: string) => LINK_PATTERN.test(text.trim())
+/**
+ * Whether `text` is a Set Up Another Device link at all, valid or not: the old
+ * host's `/h`, or `/accounts/handoff` on any host (`appLinkFragment`).
+ */
+export const isHandoffLink = (text: string) =>
+  appLinkFragment(text, 'handoff') !== null
 
 /** Reads a scanned or opened link. */
 export function parseHandoffLink(text: string): ParsedHandoffLink {
-  const match = LINK_PATTERN.exec(text.trim())
-  if (!match) return { ok: false, problem: 'notHandoff' }
-  const fragment = match[1] ?? ''
+  const fragment = appLinkFragment(text, 'handoff')
+  if (fragment === null) return { ok: false, problem: 'notHandoff' }
   if (!fragment) return { ok: false, problem: 'damaged' }
   if (!fragment.startsWith(LINK_VERSION))
     return { ok: false, problem: /^\d/.test(fragment) ? 'version' : 'damaged' }

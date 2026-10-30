@@ -26,7 +26,7 @@ export const helpEntryURL = (
   category: string,
   slug: string
 ) =>
-  `${links.helpCenterSite}/witness-work/help-center/${
+  `${links.helpCenterSite}/help/${
     locale === DEFAULT_HELP_LOCALE ? '' : `${locale}/`
   }${category}/${slug}`
 

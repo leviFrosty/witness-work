@@ -19,7 +19,8 @@ import { usePreferences } from '@/stores/preferences'
 /**
  * Handles two kinds of incoming contact URLs:
  *
- * 1. `https://ww-proxy.leviwilkerson.com/c#<payload>` — Universal Link from a
+ * 1. `https://ww-proxy.leviwilkerson.com/c#<payload>` or
+ *    `https://witnesswork.app/contacts#<payload>` — Universal Link from a
  *    shared contact (decoded via `parseContactShareLink`, which also accepts
  *    the legacy `/c/<payload>` and `witnesswork://import-contact/<payload>`
  *    forms).

@@ -3,6 +3,7 @@ import {
   createNavigationContainerRef,
 } from '@react-navigation/native'
 import * as Linking from 'expo-linking'
+import { APP_LINK_HOSTS } from '@/constants/appLinks'
 import { launchURL, linkSinceLaunch } from '@/lib/launchLinks'
 import { usePreferences } from '@/stores/preferences'
 import { afterTakeovers } from '@/stores/takeover'
@@ -45,11 +46,11 @@ export const linking: LinkingOptions<RootStackParamList> = {
   prefixes: [
     Linking.createURL('/'),
     'witnesswork://',
-    // Universal Links for shared contact URLs. The /c/:payload path is
-    // handled imperatively by ContactImportListener (it needs to decode,
-    // confirm with the user, then navigate) — not via React Navigation's
-    // declarative `screens` config.
-    'https://ww-proxy.leviwilkerson.com',
+    // Universal Links on every app-link host (contact shares, invites,
+    // handoffs). Their own listeners handle them imperatively (they need to
+    // decode, confirm with the user, then navigate) — not React Navigation's
+    // declarative `screens` config, none of which match their paths.
+    ...APP_LINK_HOSTS.map((host) => `https://${host}`),
   ],
   config: {
     // Always seed the stack with `Root` so deep-linked screens (Contact

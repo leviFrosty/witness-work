@@ -69,6 +69,7 @@ import {
   passkeyPromptHarness,
 } from '@/app/dev-harness/account'
 import { backupFileHarness } from '@/app/dev-harness/backupFile'
+import { buddiesKeyChangeHarness } from '@/app/dev-harness/buddiesKeyChange'
 import i18n, { _i18n, type TranslationKey } from '@/lib/locales'
 import { isDevForceRtl, setDevForceRtl, syncLayoutDirection } from '@/lib/rtl'
 import { iCloudSync } from '@/app/sync/iCloudSync'
@@ -459,6 +460,13 @@ export function installDevHarness() {
      * `account.last`; `account.randomRecoveryKey()` for a valid key to enter.
      */
     account: accountHarness,
+    /**
+     * Step 6 of an account key change (Buddies' reconnect invites):
+     * `prepare()`, then swap the account's key in the local ww-api, then
+     * `store()` and `run()`; `progress()`, `clear()`. Results land in
+     * `buddiesKeyChange.last`.
+     */
+    buddiesKeyChange: buddiesKeyChangeHarness,
     /**
      * Set Up Another Device: `handoff.state()` (role, step, status, code, the
      * request log), `handoff.link()` (the QR link while one shows), and

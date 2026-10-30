@@ -153,6 +153,16 @@ describe.skipIf(!interopEnabled)('buddies relay interop', () => {
     await ann.engine.deleteEverything()
   })
 
+  it('holds 5 open invites in an inbox with no buddies, as a key change needs', async () => {
+    const ann = user('Ann')
+    for (let index = 0; index < 5; index++) await ann.engine.createInvite()
+    expect(ann.store.getState().outgoingInvites).toHaveLength(5)
+    await expect(ann.engine.createInvite()).rejects.toMatchObject({
+      reason: 'limit',
+    })
+    await ann.engine.deleteEverything()
+  })
+
   it('links an inbox registered before sessions when an owner op says not_linked', async () => {
     const ann = user('Ann')
     // Registered the legacy way: an owner envelope and no token.
@@ -331,7 +341,7 @@ describe.skipIf(!interopEnabled)('buddies relay interop', () => {
     const anna = user('Anna')
     await pair(mom, anna)
     const templates = allTemplates(anna.engine)
-    expect(Object.keys(templates)).toHaveLength(16)
+    expect(Object.keys(templates)).toHaveLength(17)
     await expect(
       anna.engine.registerPush({
         apnsToken: 'ab'.repeat(32),

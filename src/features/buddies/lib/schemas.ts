@@ -214,6 +214,19 @@ export const pairConfirmedSchema = z.object({
 })
 
 /**
+ * A buddy changed their account key: a fresh invite to their new inbox, sent
+ * through the pairing it replaces (docs/buddies-protocol.md, Reconnect
+ * invites). `secret` is the invite link's secret.
+ */
+export const pairReconnectSchema = z.object({
+  v: z.literal(1),
+  inboxId: relayId,
+  secret: z.string().regex(/^[A-Za-z0-9_-]{22}$/),
+  expiresAt: z.number(),
+})
+export type PairReconnect = z.infer<typeof pairReconnectSchema>
+
+/**
  * Shared Plans and Follow-ups (invitations). `details` is everything the
  * invited buddy sees; a Follow-up carries only minimal householder data.
  */
@@ -602,5 +615,14 @@ export const rosterSchema = z.object({
     .object({ name: z.string().max(120), updatedAt: z.number() })
     .optional()
     .catch(undefined),
+  /**
+   * Invites to former buddies after an account key change, by inviteId: a claim
+   * from that buddy (`inboxId` and `dhPub`) is confirmed without asking. Absent
+   * from older builds' rosters.
+   */
+  reconnects: lenientRecord(
+    relayId,
+    z.object({ inboxId: relayId, dhPub: b64uKey, expiresAt: z.number() })
+  ),
 })
 export type Roster = z.infer<typeof rosterSchema>

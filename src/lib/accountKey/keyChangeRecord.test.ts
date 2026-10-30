@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { toB64u } from '@/lib/bytes'
 import {
   isCommitted,
+  isUnfinished,
   type KeyChangeRecord,
   KeyChangeStage,
   memoryKeyChangeRecordStore,
@@ -45,6 +46,13 @@ describe('key change record', () => {
       JSON.stringify({ ...record, oldKeyEpoch: -1 }),
     ])
       expect(parseKeyChangeRecord(broken)).toBeNull()
+  })
+
+  it('knows when Buddies still needs the old and new inbox', () => {
+    expect(isUnfinished(null)).toBe(false)
+    expect(
+      KeyChangeStage.filter((stage) => isUnfinished({ ...record, stage }))
+    ).toEqual(['stored', 'resealed'])
   })
 
   it('knows which stages come after the server committed', () => {

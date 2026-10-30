@@ -13,12 +13,15 @@ import BuddiesSection from '@/features/buddies/components/BuddiesSection'
 import BuddyRequestRow from '@/features/buddies/components/BuddyRequestRow'
 import BuddyRow from '@/features/buddies/components/BuddyRow'
 import PendingInviteRow from '@/features/buddies/components/PendingInviteRow'
-import { MAX_BUDDIES } from '@/features/buddies/lib/state'
+import ReconnectRequestRow from '@/features/buddies/components/ReconnectRequestRow'
+import { MAX_BUDDIES, pendingReconnects } from '@/features/buddies/lib/state'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 
 /**
- * Requests that need my OK first, then buddies, then requests I'm waiting on,
- * then unused invite links. Empty sections are hidden.
+ * Requests that need my OK first (a reconnect whose old pairing is already gone
+ * among them; one still paired shows on the buddy's row), then buddies, then
+ * requests I'm waiting on, then unused invite links. Empty sections are
+ * hidden.
  */
 export default function BuddiesList({
   onInvite,
@@ -36,14 +39,16 @@ export default function BuddiesList({
   const incomingClaims = useBuddies((state) => state.incomingClaims)
   const buddies = useBuddies((state) => state.buddies)
   const outgoingInvites = useBuddies((state) => state.outgoingInvites)
+  const reconnectOffers = useBuddies((state) => state.reconnectOffers)
+  const unpaired = pendingReconnects(
+    { reconnectOffers, buddies },
+    Date.now()
+  ).filter((pending) => !pending.buddy)
+  const requests = incomingClaims.length + unpaired.length
   const active = buddies.filter((buddy) => buddy.status === 'active')
   const waiting = buddies.filter((buddy) => buddy.status !== 'active')
 
-  if (
-    buddies.length === 0 &&
-    incomingClaims.length === 0 &&
-    outgoingInvites.length === 0
-  ) {
+  if (buddies.length === 0 && requests === 0 && outgoingInvites.length === 0) {
     if (loading)
       return (
         <ActivityIndicator
@@ -104,13 +109,20 @@ export default function BuddiesList({
 
   return (
     <View style={{ gap: 24 }}>
-      {incomingClaims.length > 0 && (
+      {requests > 0 && (
         <BuddiesSection title={i18n.t('buddies_requestsSection')}>
+          {unpaired.map(({ from }, index) => (
+            <ReconnectRequestRow
+              key={from}
+              from={from}
+              last={index === requests - 1}
+            />
+          ))}
           {incomingClaims.map((claim, index) => (
             <BuddyRequestRow
               key={claim.inviteId}
               claim={claim}
-              last={index === incomingClaims.length - 1}
+              last={unpaired.length + index === requests - 1}
             />
           ))}
         </BuddiesSection>

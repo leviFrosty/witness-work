@@ -168,6 +168,11 @@ describe('key change engine', () => {
     const { engine, deps, records, events } = setup()
     const { newKey } = await engine.start()
     expect(deps.prepare).toHaveBeenCalledTimes(1)
+    // With K1 and the account, while K1 is still its key.
+    expect(deps.prepare).toHaveBeenCalledWith({
+      oldKey: K1,
+      accountId: ACCOUNT,
+    })
     expect(newKey).toHaveLength(32)
     expect(await records.read()).toEqual({
       v: 1,

@@ -158,9 +158,9 @@ describe('registerBuddiesPush', () => {
     )
     await registerBuddiesPush()
     const { templates } = registerPush.mock.calls[0][0]
-    // Nine fixed kinds, five join kinds, and the two badge kinds.
-    expect(BUDDY_PUSH_KINDS).toHaveLength(9)
-    expect(Object.keys(templates)).toHaveLength(16)
+    // Ten fixed kinds, five join kinds, and the two badge kinds.
+    expect(BUDDY_PUSH_KINDS).toHaveLength(10)
+    expect(Object.keys(templates)).toHaveLength(17)
     expect(Object.keys(templates).length).toBeLessThanOrEqual(32)
   })
 

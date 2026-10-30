@@ -22,7 +22,7 @@ import { hasSharedEventEnded } from '@/features/buddies/lib/shareTiming'
 export const MAX_BUDDIES = 5
 export const INVITE_TTL_MS = 7 * 24 * 60 * 60 * 1000
 /** The relay keeps at most this many unclaimed invites open per inbox. */
-export const MAX_OPEN_INVITES = 3
+export const MAX_OPEN_INVITES = 5
 
 /** What this User shares about themself, read from Profile and Preferences. */
 export type BuddyProfile = {
@@ -442,6 +442,11 @@ export type Buddy = {
   /** Only for `awaitingConfirm`: when the unconfirmed request lapses. */
   expiresAt?: number
   /**
+   * Only for `awaitingConfirm`: this pairing reconnects with a buddy who
+   * changed their account key. Analytics only; never in the roster.
+   */
+  reconnect?: true
+  /**
    * The badges they share, from their latest Buddy Card (plus news of a new one
    * until the next card). Earned badges only; never progress or counts.
    */
@@ -458,6 +463,64 @@ export type OutgoingInvite = {
   secret: string
   createdAt: number
   expiresAt: number
+}
+
+/**
+ * An invite to a former buddy after this User's account key changed (by
+ * inviteId in `reconnectInvites`): their claim is confirmed without asking, and
+ * they keep the nickname, color, and settings they had.
+ */
+export type ReconnectInvite = {
+  inboxId: string
+  dhPub: string
+  expiresAt: number
+  /** How this User knew them; not in the roster. */
+  name?: string
+  nickname?: string
+  color?: string
+  colorIndex?: number
+  overrides?: BuddyOverrides
+}
+
+/** One invite to a new inbox that came through a buddy's old pairing. */
+export type ReconnectInvitation = {
+  /** The new inbox the invite leads to. */
+  inboxId: string
+  /** The invite link's secret (base64url). */
+  secret: string
+  expiresAt: number
+  /** The event that brought it. */
+  eventId: string
+}
+
+/** How long a lapsed reconnect invite's pairing is checked for a successor. */
+const LAPSED_RECONNECT_CHECK_MS = 30 * 24 * 60 * 60 * 1000
+
+/** Invites kept per pairing; Reconnect takes the one the relay vouches for. */
+export const MAX_RECONNECT_INVITES = 3
+
+/**
+ * A buddy changed their account key and invited this User to their new inbox
+ * (by their old inboxId in `reconnectOffers`). Kept after their old pairing
+ * ends, until it's accepted, passed over, or lapses.
+ */
+export type ReconnectOffer = {
+  /**
+   * The invites that came through the pairing, one per inbox, oldest first, up
+   * to `MAX_RECONNECT_INVITES` (when more arrive, the one to the inbox the
+   * relay names as the old one's successor, else the newest): anyone with their
+   * old key could send one, so Reconnect takes the one the relay names.
+   */
+  invites: ReconnectInvitation[]
+  /** When the last of them lapses. */
+  expiresAt: number
+  /** The buddy as this User knew them, carried over to the new pairing. */
+  name: string
+  avatar?: BuddyAvatar
+  nickname?: string
+  color?: string
+  colorIndex: number
+  overrides?: BuddyOverrides
 }
 
 /** Someone claimed one of my invites; they become a buddy once I confirm. */
@@ -976,6 +1039,7 @@ export type BuddyNotificationKind =
   | 'joinRequest'
   | 'badge'
   | 'badgeReaction'
+  | 'reconnect'
 
 /** One entry in the Home notification queue. Holds references, not content. */
 export type BuddyNotification = {
@@ -1004,6 +1068,11 @@ export type BuddyNotification = {
   badges?: SharedBadge[]
   /** `badgeReaction`: the reaction they sent. */
   reaction?: BadgeReactionEmoji
+  /**
+   * `reconnect`: the buddy's old inboxId, the `reconnectOffers` key. Not
+   * `from`, so the entry outlives their old pairing.
+   */
+  reconnect?: string
   /** The relay event's inbox sequence; absent for restored entries. */
   seq?: number
 }
@@ -1047,6 +1116,25 @@ export type BuddiesState = {
    */
   unconfirmedInvites: OutgoingInvite[]
   incomingClaims: IncomingClaim[]
+  /**
+   * Invites to former buddies after an account key change, by inviteId. In the
+   * roster, so each of this User's devices confirms their claims.
+   */
+  reconnectInvites: Record<string, ReconnectInvite>
+  /** Buddies' invites to their new inbox, by their old inboxId. Per device. */
+  reconnectOffers: Record<string, ReconnectOffer>
+  /**
+   * Buddies whose reconnect invites lapsed unanswered (old inboxId → when): the
+   * next sync asks the relay whether their old inbox has a successor, and if it
+   * does, ends the old pairing, which only their old key still writes to.
+   */
+  lapsedReconnects: Record<string, number>
+  /**
+   * Inboxes whose owner key the relay refused for good after an account key
+   * change (401 `key_changed`): this device never registers or signs for one
+   * again. Kept through a reset of Buddies' data.
+   */
+  refusedInboxIds: string[]
   /**
    * Invites cancelled, rejected, or confirmed (inviteId → expiresAt), so a
    * stale roster from another device can't bring them back. Pruned on expiry.
@@ -1186,6 +1274,10 @@ export const initialBuddiesState: BuddiesState = {
   outgoingInvites: [],
   unconfirmedInvites: [],
   incomingClaims: [],
+  reconnectInvites: {},
+  reconnectOffers: {},
+  lapsedReconnects: {},
+  refusedInboxIds: [],
   closedInviteIds: {},
   removedBuddies: {},
   rosterVersion: 0,
@@ -1253,6 +1345,9 @@ type ExpiringState = Pick<
   BuddiesState,
   | 'outgoingInvites'
   | 'incomingClaims'
+  | 'reconnectInvites'
+  | 'reconnectOffers'
+  | 'lapsedReconnects'
   | 'closedInviteIds'
   | 'incomingShares'
   | 'shareReplies'
@@ -1282,9 +1377,35 @@ export function withoutExpired(
     )
   )
   const recent = (at: number) => at + NOTIFICATION_TTL_MS > now
+  const unlapsed = <T extends { expiresAt: number }>(
+    entries: Record<string, T>
+  ) =>
+    Object.fromEntries(
+      Object.entries(entries).filter(([, entry]) => entry.expiresAt > now)
+    )
+  const reconnectOffers: Record<string, ReconnectOffer> = {}
+  const lapsedReconnects = { ...state.lapsedReconnects }
+  for (const [from, offer] of Object.entries(state.reconnectOffers)) {
+    const invites = offer.invites.filter((invite) => invite.expiresAt > now)
+    if (invites.length > 0)
+      reconnectOffers[from] = {
+        ...offer,
+        invites,
+        expiresAt: Math.max(...invites.map((invite) => invite.expiresAt)),
+      }
+    else lapsedReconnects[from] ??= now
+  }
   return {
     outgoingInvites: state.outgoingInvites.filter((i) => i.expiresAt > now),
     incomingClaims,
+    reconnectInvites: unlapsed(state.reconnectInvites),
+    reconnectOffers,
+    // Given up on after a month without an answer from the relay.
+    lapsedReconnects: Object.fromEntries(
+      Object.entries(lapsedReconnects).filter(
+        ([, at]) => at + LAPSED_RECONNECT_CHECK_MS > now
+      )
+    ),
     closedInviteIds: Object.fromEntries(
       Object.entries(state.closedInviteIds).filter(
         ([, expiresAt]) => expiresAt > now
@@ -1319,7 +1440,10 @@ export function withoutExpired(
           : n.kind === 'shareReply' ||
             !n.shareKey ||
             n.shareKey in incomingShares) &&
-        (!n.inviteId || incomingClaims.some((c) => c.inviteId === n.inviteId))
+        (!n.inviteId ||
+          incomingClaims.some((c) => c.inviteId === n.inviteId)) &&
+        (n.kind !== 'reconnect' ||
+          (!!n.reconnect && n.reconnect in reconnectOffers))
     ),
   }
 }
@@ -1347,21 +1471,39 @@ export function awaitsAnswer(
 
 /**
  * Holds the queue to `MAX_NOTIFICATIONS`, dropping the oldest entries first but
- * never one that still awaits an answer.
+ * never one that still awaits an answer, or a buddy's reconnect still on
+ * offer.
  */
 export function cappedQueue(
   notifications: BuddyNotification[],
-  state: AnswerState,
+  state: AnswerState & Partial<Pick<BuddiesState, 'reconnectOffers'>>,
   now: number
 ): BuddyNotification[] {
   if (notifications.length <= MAX_NOTIFICATIONS) return notifications
-  const room =
-    MAX_NOTIFICATIONS -
-    notifications.filter((n) => awaitsAnswer(n, state, now)).length
-  let kept = 0
-  return notifications.filter(
-    (n) => awaitsAnswer(n, state, now) || kept++ < room
-  )
+  const kept = (n: BuddyNotification) =>
+    awaitsAnswer(n, state, now) ||
+    (n.kind === 'reconnect' &&
+      n.reconnect !== undefined &&
+      n.reconnect in (state.reconnectOffers ?? {}))
+  const room = MAX_NOTIFICATIONS - notifications.filter(kept).length
+  let others = 0
+  return notifications.filter((n) => kept(n) || others++ < room)
+}
+
+/**
+ * Buddies' reconnects still on offer (old inbox → offer), with the pairing they
+ * replace while it lasts: the old key may have left it already.
+ */
+export function pendingReconnects(
+  state: Pick<BuddiesState, 'reconnectOffers' | 'buddies'>,
+  now: number
+): { from: string; offer: ReconnectOffer; buddy?: Buddy }[] {
+  return Object.entries(state.reconnectOffers)
+    .filter(([, offer]) => offer.expiresAt > now)
+    .map(([from, offer]) => {
+      const buddy = state.buddies.find((b) => b.inboxId === from)
+      return buddy ? { from, offer, buddy } : { from, offer }
+    })
 }
 
 /** Queue id for an invitation listed again after its entry was lost. */
@@ -1369,12 +1511,13 @@ export const pendingInviteNotificationId = (shareKey: string) =>
   `pending|${shareKey}`
 
 /**
- * The queue with every unanswered invitation listed. The tray is where
- * invitations are answered, so one whose entry was lost (dismissed before
- * dismissal was blocked, say) is listed again.
+ * The queue with every unanswered invitation and every reconnect on offer
+ * listed. The tray is where they're answered, so one whose entry was lost
+ * (dismissed before dismissal was blocked, or evicted, say) is listed again.
  */
 export function withPendingInvitesQueued(
-  state: Pick<BuddiesState, 'notifications' | 'incomingShares' | 'buddies'>,
+  state: Pick<BuddiesState, 'notifications' | 'incomingShares' | 'buddies'> &
+    Partial<Pick<BuddiesState, 'reconnectOffers'>>,
   now: number
 ): BuddyNotification[] {
   const listed = new Set(
@@ -1403,8 +1546,29 @@ export function withPendingInvitesQueued(
       ]
     }
   )
-  if (missing.length === 0) return state.notifications
-  return [...state.notifications, ...missing].sort((a, b) => b.at - a.at)
+  const reconnecting = new Set(state.notifications.map((n) => n.reconnect))
+  const reconnects = pendingReconnects(
+    { buddies: state.buddies, reconnectOffers: state.reconnectOffers ?? {} },
+    now
+  ).flatMap(({ from, offer }): BuddyNotification[] =>
+    reconnecting.has(from) || offer.invites.length === 0
+      ? []
+      : [
+          {
+            // The id its first invite was listed under.
+            id: offer.invites[0].eventId,
+            kind: 'reconnect',
+            at: now,
+            read: false,
+            name: offer.name,
+            reconnect: from,
+          },
+        ]
+  )
+  if (missing.length + reconnects.length === 0) return state.notifications
+  return [...state.notifications, ...missing, ...reconnects].sort(
+    (a, b) => b.at - a.at
+  )
 }
 
 /**
@@ -1422,3 +1586,6 @@ export function listedNotifications(
         (n) => n.kind !== 'badge' && n.kind !== 'badgeReaction'
       )
 }
+
+/** How many refused inboxes are kept; one per key change is plenty. */
+export const MAX_REFUSED_INBOXES = 4

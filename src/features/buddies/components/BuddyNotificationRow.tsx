@@ -21,6 +21,7 @@ import SharedEventSummary, {
   sharedEventText,
 } from '@/features/buddies/components/SharedEventSummary'
 import ShareAnswerButtons from '@/features/buddies/components/ShareAnswerButtons'
+import useReconnect from '@/features/buddies/hooks/useReconnect'
 import useReplyDelivery from '@/features/buddies/hooks/useReplyDelivery'
 import { buddiesEngine } from '@/features/buddies/lib/buddiesService'
 import { alertBuddiesError } from '@/features/buddies/lib/buddiesErrorAlert'
@@ -46,7 +47,8 @@ import { noteUserAction } from '@/lib/userAction'
  * the answer buttons stay outside the long-press target. An invitation or claim
  * still waiting on an answer can't be dismissed: answering is what clears it. A
  * request to join can: Not Now is dismissing it, and Invite turns into a check
- * once the buddy is invited. Buddies' news has its own row (`BuddyNewsRow`).
+ * once the buddy is invited. A buddy who changed their account key offers
+ * Reconnect. Buddies' news has its own row (`BuddyNewsRow`).
  */
 /**
  * The dismiss X's frame, centered on the glyph 10pt down, level with the first
@@ -111,6 +113,13 @@ export default function BuddyNotificationRow({
   const buddy = useBuddies((state) =>
     entry.from ? state.buddies.find((b) => b.inboxId === entry.from) : undefined
   )
+  // A buddy who changed their account key, as this User knew them.
+  const reconnectFrom = entry.reconnect
+  const reconnect = useBuddies((state) =>
+    reconnectFrom ? state.reconnectOffers[reconnectFrom] : undefined
+  )
+  // Reconnect as from their row or screen; Dismiss is the bell's own.
+  const asked = useReconnect(reconnectFrom ?? '')
   const dayPlans = useServiceReport((state) => state.dayPlans)
   const timeDisplayFormat = usePreferences((state) => state.timeDisplayFormat)
   const dataProtectionMode = usePreferences((state) => state.dataProtectionMode)
@@ -132,7 +141,11 @@ export default function BuddyNotificationRow({
       setBusy(false)
     }
   }
-  const askerName = buddy ? buddyDisplayName(buddy) : entry.name
+  const askerName = buddy
+    ? buddyDisplayName(buddy)
+    : reconnect
+      ? buddyDisplayName(reconnect)
+      : entry.name
   // Nothing to turn off when this buddy's requests already can't alert.
   const mutedJoinRequests = useBuddies((state) =>
     state.notificationsEnabled && entry.from
@@ -192,10 +205,7 @@ export default function BuddyNotificationRow({
     status !== 'cancelled' &&
     (status === 'pending' || changing)
 
-  const title = notificationHeadline({
-    ...entry,
-    name: buddy ? buddyDisplayName(buddy) : entry.name,
-  })
+  const title = notificationHeadline({ ...entry, name: askerName })
   // What it's about, under the headline: the User's Plan a request to join or
   // a reply is about, or the buddy's invitation.
   const summary = joinRequest
@@ -264,9 +274,9 @@ export default function BuddyNotificationRow({
             <XView style={{ gap: 10, alignItems: 'center' }}>
               <View>
                 <BuddyAvatar
-                  avatar={buddy?.avatar ?? claim?.avatar}
-                  name={buddy ? buddyDisplayName(buddy) : entry.name}
-                  color={buddy}
+                  avatar={buddy?.avatar ?? claim?.avatar ?? reconnect?.avatar}
+                  name={askerName}
+                  color={buddy ?? reconnect}
                   size={36}
                 />
                 {unread && (
@@ -418,6 +428,20 @@ export default function BuddyNotificationRow({
               </Button>
             ) : null}
           </XView>
+        </View>
+      ) : null}
+
+      {entry.kind === 'reconnect' && reconnectFrom && reconnect ? (
+        <View style={{ gap: 6 }}>
+          <Text style={{ color: theme.colors.textAlt }}>
+            {i18n.t('buddies_reconnectBody', { name: askerName })}
+          </Text>
+          <ActionButton
+            disabled={busy || asked.busy}
+            onPress={() => void asked.reconnect()}
+          >
+            {i18n.t('buddies_reconnect')}
+          </ActionButton>
         </View>
       ) : null}
 

@@ -363,6 +363,28 @@ export function computeAlertVectors(): AlertVectors {
       event: event(22, 'plan.invite', { v: 2, id: zoePlan }),
     },
     { name: 'not JSON', event: event(23, 'badge.new', 'not json') },
+    {
+      name: 'reconnect after an account key change',
+      event: event(24, 'pair.reconnect', {
+        v: 1,
+        inboxId: sam.inboxId,
+        secret: toB64u(counting(16, 0xd0)),
+        expiresAt: 1_900_000_000_000,
+      }),
+    },
+    {
+      name: 'reconnect without its invite',
+      event: event(25, 'pair.reconnect', { v: 1, inboxId: sam.inboxId }),
+    },
+    {
+      name: 'reconnect of another version',
+      event: event(26, 'pair.reconnect', {
+        v: 2,
+        inboxId: sam.inboxId,
+        secret: toB64u(counting(16, 0xd0)),
+        expiresAt: 1_900_000_000_000,
+      }),
+    },
   ]
 
   return {

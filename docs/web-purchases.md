@@ -213,10 +213,11 @@ link had.
    - **A forwarded return** has no `app_user_id`, so it skips this check and
      confirms from customer info alone.
 
-## No EU or UK sales
+## Countries the web doesn't sell to
 
-We're the merchant of record, and EU and UK VAT apply from the first sale, so
-the web doesn't sell there (ADR 0041 §3). It checks twice: the paywall checks
+We're the merchant of record, and EU and UK VAT apply from the first sale, as
+do other countries' taxes on digital sales, so the web doesn't sell there
+(ADR 0041 §3). It checks twice: the paywall checks
 the visitor's country, and Stripe checks the card and billing country.
 
 - **The paywall.** Visitors whose country is in the list see a notice instead
@@ -229,6 +230,8 @@ the visitor's country, and Stripe checks the card and billing country.
   build can force a country to test the notice.
 - **An unknown country** (no answer, Tor's `T1`, or Cloudflare's `XX`) gets
   the prices. Stripe's check still stands behind it.
+- **Countries with a registration threshold** stay open. We review sales
+  against those thresholds and register or block before reaching one.
 - **Stripe** blocks payments whose card country or billing country is in the
   list. It uses a Radar country list and two block rules, on the Stripe
   account behind each RevenueCat Billing config. Custom Radar rules need
@@ -236,20 +239,33 @@ the visitor's country, and Stripe checks the card and billing country.
   full billing address, so the billing country is known. A blocked checkout
   fails at payment, before any charge. Setup checks in the sandbox that the
   rules also stop a renewal, and a card changed in the customer portal.
-- **The list** is one constant in the app, mirrored by the Radar list. Change
-  both together. It holds:
+- **The list** is one constant in the app, mirrored by the Radar list and by
+  the terms page's list (`services/marketing/src/lib/noWebSaleCountries.ts`).
+  Change all three together, and bump the Terms' Updated date. Tests in the
+  app and in `services/marketing` (which services CI runs before the site
+  deploys) fail when the two lists differ. It holds:
   - the EU-27: `AT BE BG HR CY CZ DK EE FI FR DE GR HU IE IT LV LT LU MT NL PL
 PT RO SK SI ES SE`;
   - the UK, `GB`;
   - `IM` and `MC`, which are inside the UK and French VAT areas;
   - the EU regions with their own codes, `AX GF GP MQ MF RE YT`. They're
-    outside the EU VAT area, but blocking them keeps the rule simple.
+    outside the EU VAT area, but blocking them keeps the rule simple;
+  - the countries that tax digital sales from the first sale: `AL AO AM AW BS
+BH BD CM CL CO GE GH GN IN CI KZ KE KG LA MR MX MD ME MA MK OM PE RU SA SN
+RS KR TJ TZ TR AE UY UZ VN`;
+  - Canada, `CA`, for now. Manitoba and Saskatchewan tax from the first
+    sale, and the web's country signal has no province, so all of Canada is
+    blocked.
 
   Jersey (`JE`) and Guernsey (`GG`) are outside the UK VAT area, and aren't
   in the list.
 
-- **Other countries** that tax digital sales from the first sale are reviewed
-  before production. The answer goes into the same list.
+- **Stripe can't block a province:** Radar blocks card and billing countries
+  only. The web blocks all of Canada until it can see the visitor's province
+  (for example from a same-origin Worker path, or ww-api's app config, reading
+  Cloudflare's `regionCode`), then only Manitoba and Saskatchewan.
+- **The terms page** names the list from that module: the EU-27 as "the
+  European Union", the rest alphabetically.
 
 ## Supporter status and managing on the web
 

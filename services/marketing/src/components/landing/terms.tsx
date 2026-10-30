@@ -1,5 +1,11 @@
 import { PolicyPage } from '@/components/landing/policy-page'
+import { noWebSaleNames } from '@/lib/noWebSaleNames'
 import { TERMS_PATH } from '@/lib/paths'
+
+const noWebSalePlaces = new Intl.ListFormat('en', {
+  style: 'long',
+  type: 'conjunction',
+}).format(noWebSaleNames())
 
 const sections = [
   {
@@ -46,9 +52,7 @@ const sections = [
         renewal; Supporter access lasts until the end of the period you paid
         for. For refunds, email support; a refund ends the access it paid for.
         Web purchases are not offered in, or with a card or billing address
-        from, the European Union, the United Kingdom, the Isle of Man, Monaco,
-        Åland, French Guiana, Guadeloupe, Martinique, Mayotte, Réunion, or Saint
-        Martin (French part); there, buy in the WitnessWork app from the App
+        from, {noWebSalePlaces}; there, buy in the WitnessWork app from the App
         Store or Google Play, where available.
       </p>
     ),

@@ -1,7 +1,7 @@
 /**
  * The visitor's country as Cloudflare sees it: `loc=` in the app origin's
- * `/cdn-cgi/trace` (docs/web-purchases.md "No EU or UK sales"). The web paywall
- * and session replay's EU and UK opt-in both read it.
+ * `/cdn-cgi/trace` (docs/web-purchases.md "Countries the web doesn't sell to").
+ * The web paywall and session replay's EU and UK opt-in both read it.
  */
 
 const COUNTRY = /^[A-Za-z]{2}$/

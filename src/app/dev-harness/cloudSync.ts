@@ -30,6 +30,8 @@ import {
 } from '@/lib/syncTransport/server/photoCrypto'
 import { useCloudSyncPhotoUsage } from '@/lib/syncTransport/server/photoUsage'
 import { refreshCloudSyncPhotoUsage } from '@/app/sync/cloudSync'
+import { localAvatarPathForContact } from '@/app/sync/imageSources'
+import { fromB64u } from '@/lib/bytes'
 
 let cloudSyncLast: unknown = null
 
@@ -268,6 +270,31 @@ export const cloudSyncHarness = {
     showCloudSyncTrayOffer(variant)
     return cloudSyncHarness.state()
   },
+  /**
+   * Gives the first `count` contacts a photo, the way the avatar picker saves
+   * one, so Cloud Sync uploads them on its next push. Returns their ids.
+   */
+  addContactPhotos: (count = 2) =>
+    tracked(async () => {
+      const directory = FileSystem.documentDirectory ?? ''
+      const contacts = useContacts.getState().contacts.slice(0, count)
+      for (const contact of contacts) {
+        const path = localAvatarPathForContact(directory, contact.id)
+        await photoFiles.write(
+          path,
+          fromB64u(
+            SAMPLE_PHOTO.replace(/\+/g, '-')
+              .replace(/\//g, '_')
+              .replace(/=+$/, '')
+          )
+        )
+        useContacts.getState().updateContact({
+          ...contact,
+          avatar: { type: 'image', value: `${path}?t=${Date.now()}` },
+        })
+      }
+      return contacts.map(({ id }) => id)
+    }),
   get last() {
     return cloudSyncLast
   },

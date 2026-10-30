@@ -19,8 +19,24 @@ import {
   openSyncBlob,
   sealSyncBlob,
 } from '@/lib/syncTransport/server/syncCrypto'
-import { createFakeSyncServer } from '@/lib/syncTransport/server/__tests__/fakeSyncServer'
-import { createResealStep, type ResealStepDeps } from './reseal'
+import {
+  derivePhotoKeys,
+  openPhoto,
+  openPhotoMeta,
+  photoName,
+  sealPhoto,
+  sealPhotoMeta,
+} from '@/lib/syncTransport/server/photoCrypto'
+import {
+  createFakeSyncServer,
+  type FakeSyncServer,
+} from '@/lib/syncTransport/server/__tests__/fakeSyncServer'
+import {
+  createPhotoResealRetry,
+  createResealStep,
+  resealPhotoApi,
+  type ResealStepDeps,
+} from './reseal'
 import type { KeyChangeStepContext } from './steps'
 
 vi.mock('@/lib/http/online', () => ({ isKnownOffline: () => false }))
@@ -65,6 +81,57 @@ const sealBackupSlot = (key: Uint8Array, slotId: string, name = slotId) =>
     { accountId: ACCOUNT, slotId },
     randomBytes(24)
   )
+
+const CONTACT = 'witness-work-img-contact-c1--r1.jpg'
+const PROFILE = 'witness-work-img-profile--r1.jpg'
+const NOTE = 'witness-work-note-note0001.jpg'
+
+const photoFile = (size: number, fill: number) =>
+  new Uint8Array(size).fill(fill)
+
+/** Puts a photo as a device holding `key` would have. */
+async function seedPhoto(
+  server: FakeSyncServer,
+  key: Uint8Array,
+  filename: string,
+  bytes: Uint8Array
+): Promise<string> {
+  const { photoKey, nameKey } = derivePhotoKeys(key)
+  const name = photoName(nameKey, filename)
+  const address = { accountId: ACCOUNT, name }
+  const blob = await sealPhoto(photoKey, bytes, address, randomBytes(24))
+  server.putPhoto(BEARER, name, {
+    bytes: blob,
+    sha256: toB64u(sha256(blob)),
+    createdAt: 1,
+    meta: sealPhotoMeta(photoKey, filename, address, randomBytes(24)),
+  })
+  return name
+}
+
+/** The photo `key`'s name for `filename` holds, opened with `key`. */
+async function photoUnder(
+  server: FakeSyncServer,
+  key: Uint8Array,
+  filename: string
+): Promise<Uint8Array | null> {
+  const { photoKey, nameKey } = derivePhotoKeys(key)
+  const name = photoName(nameKey, filename)
+  const address = { accountId: ACCOUNT, name }
+  const blob = server.photoBytes(BEARER, name)
+  if (!blob) return null
+  const listed = await resealPhotoApi(optionsFor(server), () => null).list()
+  const meta = listed.photos.find((photo) => photo.name === name)!.meta
+  expect(openPhotoMeta(photoKey, meta, address, nameKey)).toBe(filename)
+  return openPhoto(photoKey, blob, address)
+}
+
+const optionsFor = (server: FakeSyncServer) => ({
+  baseUrl: 'https://api.test',
+  authorize: <T>(run: (authorization: string) => Promise<T>) =>
+    run(`Bearer ${BEARER}`),
+  fetchImpl: server.fetch,
+})
 
 const openBackupSlot = (key: Uint8Array, slotId: string, blob: Uint8Array) =>
   openBackup(deriveBackupKey(key), blob, { accountId: ACCOUNT, slotId })
@@ -140,13 +207,9 @@ function setup(overrides: Partial<ResealStepDeps> = {}) {
   const sleep = vi.fn(async (ms: number) => {
     backups.state.now += ms
   })
-  const options = {
-    baseUrl: 'https://api.test',
-    authorize: <T>(run: (authorization: string) => Promise<T>) =>
-      run(`Bearer ${BEARER}`),
-    fetchImpl: server.fetch,
-  }
+  const options = optionsFor(server)
   const sessionKeys: Uint8Array[] = []
+  const photosLeft = { accountId: null as string | null }
   const step = createResealStep({
     sync: (accountKey) => {
       sessionKeys.push(accountKey)
@@ -162,10 +225,21 @@ function setup(overrides: Partial<ResealStepDeps> = {}) {
       sessionKeys.push(accountKey)
       return backups.api
     },
+    photos: (accountKey) => {
+      sessionKeys.push(accountKey)
+      return resealPhotoApi(options, () => OWN)
+    },
     ownSyncSlotId: () => OWN,
     olderKeys: async (_accountId, kind) => [
       kind === 'sync' ? deriveSyncKey(K0) : deriveBackupKey(K0),
     ],
+    olderPhotoKeys: async () => [derivePhotoKeys(K0)],
+    photosLeft: {
+      get: () => photosLeft.accountId,
+      set: (accountId) => {
+        photosLeft.accountId = accountId
+      },
+    },
     randomBytes,
     sleep,
     ...overrides,
@@ -200,6 +274,7 @@ function setup(overrides: Partial<ResealStepDeps> = {}) {
     backups,
     sleep,
     run,
+    photosLeft,
     saved,
     sessionKeys,
     syncGets,
@@ -543,5 +618,396 @@ describe('the re-seal step', () => {
     })
     await run()
     expect(record().reseal?.photos).toEqual(['photo-a'])
+  })
+})
+
+describe('the re-seal step, for Cloud Sync photos', () => {
+  /** Photos are there for Cloud Sync's devices: the account has a slot. */
+  const withPhotos = (overrides: Partial<ResealStepDeps> = {}) => {
+    const context = setup(overrides)
+    context.server.seed(BEARER, OWN, sealSync(K1, OWN))
+    return context
+  }
+  const photoOps = (server: FakeSyncServer) =>
+    server.state.photoWrites.map(({ op }) => op)
+  const photoGets = (server: FakeSyncServer) =>
+    server.state.log.filter((entry) => entry === 'POST sync/photos/get').length
+
+  it('moves every photo to the new key’s name, then deletes the old', async () => {
+    const { server, run, record, photosLeft, sessionKeys } = withPhotos()
+    const contact = await seedPhoto(server, K1, CONTACT, photoFile(300, 3))
+    // An older key's, through the key history.
+    const note = await seedPhoto(server, K0, NOTE, photoFile(200, 4))
+
+    await run()
+
+    expect(server.photoNames(BEARER)).toEqual(
+      [
+        photoName(derivePhotoKeys(K2).nameKey, CONTACT),
+        photoName(derivePhotoKeys(K2).nameKey, NOTE),
+      ].sort()
+    )
+    expect(await photoUnder(server, K2, CONTACT)).toEqual(photoFile(300, 3))
+    expect(await photoUnder(server, K2, NOTE)).toEqual(photoFile(200, 4))
+    // Each new one live before its old name goes.
+    expect(photoOps(server)).toEqual(['put', 'delete', 'put', 'delete'])
+    // The listing shows they've moved: the record keeps no list of them.
+    expect(record().reseal?.photos ?? []).toEqual([])
+    expect([contact, note]).not.toContain(server.photoNames(BEARER)[0])
+    expect(photosLeft.accountId).toBeNull()
+    expect(sessionKeys.every((key) => key === K2)).toBe(true)
+  })
+
+  it('leaves photos already under the new key', async () => {
+    const { server, run } = withPhotos()
+    const name = await seedPhoto(server, K2, CONTACT, photoFile(100, 1))
+    const before = server.photoBytes(BEARER, name)
+    await run()
+    expect(server.photoBytes(BEARER, name)).toBe(before)
+    expect(photoOps(server)).toEqual([])
+    expect(photoGets(server)).toBe(0)
+  })
+
+  it('only deletes the old name when the new one is already there', async () => {
+    const { server, run } = withPhotos()
+    // A try that put the new one, then stopped before the delete.
+    const old = await seedPhoto(server, K1, CONTACT, photoFile(100, 1))
+    const name = await seedPhoto(server, K2, CONTACT, photoFile(100, 1))
+    const before = server.photoBytes(BEARER, name)
+    await run()
+    expect(server.photoNames(BEARER)).toEqual([name])
+    expect(server.photoBytes(BEARER, name)).toBe(before)
+    expect(photoOps(server)).toEqual(['delete'])
+    expect(photoGets(server)).toBe(0)
+    expect(server.photoNames(BEARER)).not.toContain(old)
+  })
+
+  it('skips the damaged photos the record lists', async () => {
+    const { server, run, record, setRecord } = withPhotos()
+    const done = await seedPhoto(server, K1, CONTACT, photoFile(100, 1))
+    await seedPhoto(server, K1, NOTE, photoFile(100, 2))
+    setRecord({
+      ...record(),
+      reseal: { syncSlots: [], photos: [done], backupSlots: [] },
+    })
+    await run()
+    expect(server.photoNames(BEARER)).toContain(done)
+    expect(await photoUnder(server, K2, NOTE)).toEqual(photoFile(100, 2))
+  })
+
+  it('leaves a photo that doesn’t fit under the old key, and moves the rest', async () => {
+    const { server, backups, run, photosLeft } = withPhotos()
+    const big = await seedPhoto(server, K1, PROFILE, photoFile(5_000, 9))
+    await seedPhoto(server, K1, CONTACT, photoFile(100, 1))
+    backups.slots.set('backup-own', {
+      bytes: sealBackupSlot(K1, 'backup-own'),
+      uploadedAt: 0,
+    })
+    // Room for the small one's new copy, not the big one's.
+    server.state.photoLimitBytes = server.photoUsage(BEARER).bytes + 1_000
+
+    await run()
+
+    expect(server.photoNames(BEARER)).toContain(big)
+    expect(await photoUnder(server, K2, CONTACT)).toEqual(photoFile(100, 1))
+    // Known not to fit from the listing: not downloaded.
+    expect(photoGets(server)).toBe(1)
+    expect(photosLeft.accountId).toBe(ACCOUNT)
+    // Photos never hold up the rest of the change.
+    expect(
+      openBackupSlot(K2, 'backup-own', backups.slots.get('backup-own')!.bytes)
+    ).toBe('backup-own')
+  })
+
+  it('leaves a photo the server says is over storage, and goes on', async () => {
+    const { server, run, photosLeft } = withPhotos()
+    await seedPhoto(server, K1, CONTACT, photoFile(100, 1))
+    await seedPhoto(server, K1, NOTE, photoFile(100, 2))
+    server.state.photoFailure = {
+      code: 'storage_full',
+      status: 429,
+      op: 'sync/photos/put',
+    }
+    await run()
+    expect(photoOps(server)).toEqual(['put', 'delete'])
+    expect(server.photoNames(BEARER)).toHaveLength(2)
+    expect(photosLeft.accountId).toBe(ACCOUNT)
+  })
+
+  it.each([
+    ['limit', 429],
+    ['rate_limited', 429],
+    ['photos_disabled', 503],
+    ['no_slot', 409],
+  ])(
+    'stops the photos for a later launch on %s, and the change goes on',
+    async (code, status) => {
+      const { server, backups, run, photosLeft, record } = withPhotos()
+      const contact = await seedPhoto(server, K1, CONTACT, photoFile(100, 1))
+      const note = await seedPhoto(server, K1, NOTE, photoFile(100, 2))
+      backups.slots.set('backup-own', {
+        bytes: sealBackupSlot(K1, 'backup-own'),
+        uploadedAt: 0,
+      })
+      server.state.photoFailure = { code, status, op: 'sync/photos/put' }
+
+      await expect(run()).resolves.toBeUndefined()
+
+      expect(server.photoNames(BEARER)).toEqual([contact, note].sort())
+      expect(photoOps(server)).toEqual([])
+      expect(photosLeft.accountId).toBe(ACCOUNT)
+      expect(record().reseal?.photos ?? []).toEqual([])
+      expect(record().reseal?.backupSlots).toEqual(['backup-own'])
+    }
+  )
+
+  it('leaves the photos for later when they can’t be listed', async () => {
+    const { server, run, photosLeft } = withPhotos()
+    await seedPhoto(server, K1, CONTACT, photoFile(100, 1))
+    server.state.photoFailure = {
+      code: 'bad_request',
+      status: 400,
+      op: 'sync/photos/list',
+    }
+    await expect(run()).resolves.toBeUndefined()
+    expect(photosLeft.accountId).toBe(ACCOUNT)
+  })
+
+  it('notes nothing for an account that isn’t a Supporter, and keeps an earlier note', async () => {
+    const { server, run, photosLeft } = withPhotos()
+    server.state.supporters.delete(BEARER)
+    await expect(run()).resolves.toBeUndefined()
+    expect(photosLeft.accountId).toBeNull()
+
+    // Photos an earlier change left wait for the account to be a Supporter.
+    const again = withPhotos()
+    again.server.state.supporters.delete(BEARER)
+    again.photosLeft.accountId = ACCOUNT
+    await again.run()
+    expect(again.photosLeft.accountId).toBe(ACCOUNT)
+  })
+
+  it('leaves the rest when deleting an old name fails, and notes them', async () => {
+    const { server, run, photosLeft } = withPhotos()
+    const contact = await seedPhoto(server, K1, CONTACT, photoFile(100, 1))
+    const note = await seedPhoto(server, K1, NOTE, photoFile(100, 2))
+    server.state.photoFailure = {
+      code: 'bad_request',
+      status: 400,
+      op: 'sync/photos/delete',
+    }
+    await expect(run()).resolves.toBeUndefined()
+    // One new copy beside its old name; nothing else touched.
+    expect(photoOps(server)).toEqual(['put'])
+    expect(server.photoNames(BEARER)).toEqual(
+      expect.arrayContaining([contact, note])
+    )
+    expect(server.photoNames(BEARER)).toHaveLength(3)
+    expect(photosLeft.accountId).toBe(ACCOUNT)
+  })
+
+  it('deletes the old name when the new one turns out already live', async () => {
+    const real = (server: FakeSyncServer) =>
+      resealPhotoApi(optionsFor(server), () => OWN)
+    let raced: Uint8Array | null = null
+    const context = withPhotos({
+      photos: () => {
+        const api = real(context.server)
+        return {
+          ...api,
+          // Another device holding K2 put it after the listing.
+          put: async (photo) => {
+            raced = photo.blob.slice()
+            context.server.putPhoto(BEARER, photo.name, {
+              bytes: raced,
+              sha256: toB64u(sha256(raced)),
+              createdAt: 2,
+              meta: photo.meta,
+            })
+            return api.put(photo)
+          },
+        }
+      },
+    })
+    const { server, run } = context
+    const old = await seedPhoto(server, K1, CONTACT, photoFile(100, 1))
+    await run()
+    const name = photoName(derivePhotoKeys(K2).nameKey, CONTACT)
+    expect(server.photoNames(BEARER)).toEqual([name])
+    expect(server.photoNames(BEARER)).not.toContain(old)
+    expect(server.photoBytes(BEARER, name)).toEqual(raced)
+  })
+
+  it('skips a photo the server said didn’t fit for the rest of the launch', async () => {
+    const { server, run, photosLeft } = withPhotos()
+    const name = await seedPhoto(server, K1, CONTACT, photoFile(100, 1))
+    server.state.photoFailure = {
+      code: 'storage_full',
+      status: 429,
+      op: 'sync/photos/put',
+    }
+    await run()
+    expect(photoGets(server)).toBe(1)
+    // The step runs again (a resume): not downloaded again this launch.
+    await run()
+    expect(photoGets(server)).toBe(1)
+    expect(server.photoNames(BEARER)).toEqual([name])
+    expect(photosLeft.accountId).toBe(ACCOUNT)
+  })
+
+  it('leaves a photo only the unreadable key history might open for later', async () => {
+    const { server, run, photosLeft } = withPhotos({
+      olderPhotoKeys: async () => null,
+    })
+    const older = await seedPhoto(server, K0, NOTE, photoFile(100, 2))
+    await seedPhoto(server, K1, CONTACT, photoFile(100, 1))
+    await run()
+    expect(server.photoNames(BEARER)).toContain(older)
+    expect(await photoUnder(server, K2, CONTACT)).toEqual(photoFile(100, 1))
+    expect(photosLeft.accountId).toBe(ACCOUNT)
+  })
+
+  it('leaves a damaged photo as it is, without retrying it', async () => {
+    const { server, run, photosLeft, record } = withPhotos()
+    const name = await seedPhoto(server, K1, CONTACT, photoFile(100, 1))
+    const damaged = server.photoBytes(BEARER, name)!.slice()
+    damaged[40] ^= 1
+    server.putPhoto(BEARER, name, {
+      bytes: damaged,
+      sha256: toB64u(sha256(damaged)),
+      createdAt: 1,
+      meta: (await resealPhotoApi(optionsFor(server), () => null).list())
+        .photos[0]!.meta,
+    })
+    await run()
+    expect(server.photoBytes(BEARER, name)).toEqual(damaged)
+    expect(photoOps(server)).toEqual([])
+    expect(record().reseal?.photos).toEqual([name])
+    expect(photosLeft.accountId).toBeNull()
+  })
+
+  it('ignores a photo whose meta isn’t for the name it’s under', async () => {
+    const { server, run } = withPhotos()
+    const name = await seedPhoto(server, K1, CONTACT, photoFile(100, 1))
+    const meta = (await resealPhotoApi(optionsFor(server), () => null).list())
+      .photos[0]!.meta
+    // The contact's meta, moved under the note's name.
+    const moved = photoName(derivePhotoKeys(K1).nameKey, NOTE)
+    server.putPhoto(BEARER, moved, {
+      bytes: server.photoBytes(BEARER, name)!,
+      sha256: 'x',
+      createdAt: 1,
+      meta,
+    })
+    await run()
+    expect(server.photoNames(BEARER)).toContain(moved)
+  })
+})
+
+describe('the photo re-seal on a later launch', () => {
+  /** The device with an open session for `ACCOUNT`, holding K2. */
+  const retrying = (
+    server: FakeSyncServer,
+    {
+      left = ACCOUNT as string | null,
+      session = ACCOUNT as string | null,
+      underWay = false,
+      key = K2 as Uint8Array | null,
+    } = {}
+  ) => {
+    const note = { value: left }
+    const retry = createPhotoResealRetry({
+      photos: () => resealPhotoApi(optionsFor(server), () => OWN),
+      olderPhotoKeys: async () => [derivePhotoKeys(K1)],
+      photosLeft: {
+        get: () => note.value,
+        set: (accountId) => {
+          note.value = accountId
+        },
+      },
+      randomBytes,
+      sessionAccountId: () => session,
+      changeUnderWay: async () => underWay,
+      accountKey: async () => key,
+    })
+    return { retry, note }
+  }
+  const withSlot = () => {
+    const server = createFakeSyncServer()
+    server.state.supporters.add(BEARER)
+    server.seed(BEARER, OWN, sealSync(K2, OWN))
+    return server
+  }
+
+  it('moves the photos a change left under an older key, then stops', async () => {
+    const server = withSlot()
+    await seedPhoto(server, K1, CONTACT, photoFile(100, 1))
+    const { retry, note } = retrying(server)
+
+    await retry()
+
+    expect(await photoUnder(server, K2, CONTACT)).toEqual(photoFile(100, 1))
+    expect(server.photoNames(BEARER)).toHaveLength(1)
+    expect(note.value).toBeNull()
+  })
+
+  it('keeps waiting while a photo still doesn’t fit', async () => {
+    const server = withSlot()
+    await seedPhoto(server, K1, CONTACT, photoFile(100, 1))
+    server.state.photoLimitBytes = server.photoUsage(BEARER).bytes
+    const { retry, note } = retrying(server)
+    await retry()
+    expect(note.value).toBe(ACCOUNT)
+  })
+
+  it('tries once a launch, and never twice at once', async () => {
+    const server = withSlot()
+    await seedPhoto(server, K1, CONTACT, photoFile(100, 1))
+    server.state.photoLimitBytes = server.photoUsage(BEARER).bytes
+    const { retry } = retrying(server)
+    await Promise.all([retry(), retry()])
+    await retry()
+    expect(
+      server.state.log.filter((entry) => entry === 'POST sync/photos/list')
+    ).toHaveLength(1)
+  })
+
+  it.each([
+    ['no photos left', { left: null }],
+    ['photos left for another account', { left: 'B'.repeat(22) }],
+    ['no session open', { session: null }],
+    ['a change under way', { underWay: true }],
+    ['no account key on the device', { key: null }],
+  ])('does nothing with %s', async (_, options) => {
+    const server = withSlot()
+    server.state.log.length = 0
+    const { retry } = retrying(server, options)
+    await retry()
+    expect(server.state.log).toEqual([])
+  })
+
+  it('tries again later in the launch once a session opens', async () => {
+    const server = withSlot()
+    await seedPhoto(server, K1, CONTACT, photoFile(100, 1))
+    let session: string | null = null
+    const note = { value: ACCOUNT as string | null }
+    const retry = createPhotoResealRetry({
+      photos: () => resealPhotoApi(optionsFor(server), () => OWN),
+      olderPhotoKeys: async () => [derivePhotoKeys(K1)],
+      photosLeft: {
+        get: () => note.value,
+        set: (accountId) => {
+          note.value = accountId
+        },
+      },
+      randomBytes,
+      sessionAccountId: () => session,
+      changeUnderWay: async () => false,
+      accountKey: async () => K2,
+    })
+    await retry()
+    session = ACCOUNT
+    await retry()
+    expect(note.value).toBeNull()
   })
 })

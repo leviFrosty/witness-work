@@ -56,6 +56,7 @@ vi.mock('@/lib/serverAccount', () => ({
     return () => {}
   },
   olderAccountKeys: async () => [],
+  olderPhotoKeys: async () => [],
   serverAccount: { connect: vi.fn() },
 }))
 vi.mock('@/lib/serverAccount/revenueCatLinkRuntime', () => ({

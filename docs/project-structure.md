@@ -13,6 +13,7 @@ For the tier rules (shared / feature / app) and how they're enforced by `eslint-
 - [`patches`](/patches) Patch files applied to dependencies via [`patch-package`](https://github.com/ds300/patch-package).
 - [`plugins`](/plugins) Local Expo config plugins.
 - [`scripts`](/scripts) Repo-level CLI scripts (see also `src/scripts/`).
+- [`services`](/services) Non-app services, in their own pnpm workspace with their own lockfile ([`services/README.md`](/services/README.md)): [`marketing`](/services/marketing) is the website at witnesswork.app (TanStack Start, prerendered to static files) with the Help Center's content and bundles, and [`help-search`](/services/help-search) is the Help Center search Worker. The app's tooling leaves it alone: `tsconfig.json`, ESLint, Vitest and Metro all exclude it, and it has its own build, tests, typecheck and lint.
 - [`targets`](/targets) Native widget extension sources (iOS).
 - [`eslint.config.mjs`](/eslint.config.mjs) ESLint 10 flat config — includes the boundaries plugin that enforces the shared/feature/app tiers.
 

@@ -19,3 +19,10 @@ pnpm-lock.yaml
 
 # Upgrade fixtures: the exact bytes each release wrote (docs/upgrade-fixtures.md).
 src/__tests__/__data__/releases/**/*.json
+
+# services/ (its own workspace). Help Center answers and their test fixtures
+# are content: authors and the translation step own their bytes. TanStack
+# Router writes routeTree.gen.ts on every build.
+services/marketing/content/**
+services/marketing/tests/unit/fixtures/**
+services/marketing/src/routeTree.gen.ts

@@ -1,0 +1,107 @@
+{
+  "android-home": {
+    "width": 1080,
+    "height": 2400,
+    "widths": [420, 760]
+  },
+  "duo-closed-home": {
+    "width": 1398,
+    "height": 2034,
+    "widths": [700, 1300]
+  },
+  "duo-open-contacts": {
+    "width": 2853,
+    "height": 2007,
+    "widths": [700, 1300]
+  },
+  "ipad-progress": {
+    "width": 2752,
+    "height": 2064,
+    "widths": [800, 1500]
+  },
+  "ipad-schedule": {
+    "width": 2752,
+    "height": 2064,
+    "widths": [800, 1500]
+  },
+  "iphone-badges": {
+    "width": 1125,
+    "height": 2436,
+    "widths": [420, 760]
+  },
+  "iphone-buddy": {
+    "width": 1125,
+    "height": 2436,
+    "widths": [420, 760]
+  },
+  "iphone-contact": {
+    "width": 1125,
+    "height": 2436,
+    "widths": [420, 760]
+  },
+  "iphone-contacts": {
+    "width": 1125,
+    "height": 2436,
+    "widths": [420, 760]
+  },
+  "iphone-home": {
+    "width": 1125,
+    "height": 2436,
+    "widths": [420, 760]
+  },
+  "iphone-map": {
+    "width": 1125,
+    "height": 2436,
+    "widths": [420, 760]
+  },
+  "iphone-pet": {
+    "width": 1125,
+    "height": 2436,
+    "widths": [420, 760]
+  },
+  "iphone-plan": {
+    "width": 1125,
+    "height": 2436,
+    "widths": [420, 760]
+  },
+  "iphone-progress": {
+    "width": 1125,
+    "height": 2436,
+    "widths": [420, 760]
+  },
+  "iphone-route": {
+    "width": 1125,
+    "height": 2436,
+    "widths": [420, 760]
+  },
+  "iphone-schedule": {
+    "width": 1125,
+    "height": 2436,
+    "widths": [420, 760]
+  },
+  "iphone-scribe": {
+    "width": 1125,
+    "height": 2436,
+    "widths": [420, 760]
+  },
+  "iphone-year": {
+    "width": 1125,
+    "height": 2436,
+    "widths": [420, 760]
+  },
+  "watch-home": {
+    "width": 416,
+    "height": 496,
+    "widths": [280, 416]
+  },
+  "watch-upnext": {
+    "width": 416,
+    "height": 496,
+    "widths": [280, 416]
+  },
+  "widget-calendar": {
+    "width": 1003,
+    "height": 471,
+    "widths": [500, 1000]
+  }
+}

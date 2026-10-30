@@ -28,7 +28,7 @@
     "bump-version": "node ./scripts/bump-version.js",
     "prepare": "husky",
     "test": "vitest",
-    "test:release-tools": "node --test scripts/tests/release-tools.node.mjs",
+    "test:release-tools": "node --test scripts/tests/release-tools.node.mjs scripts/tests/sync-help-center.node.mjs",
     "test:calendar-native": "node --test scripts/tests/calendar-native.node.mjs",
     "test:buddies-alerts-native": "node --test scripts/tests/buddies-alerts.node.mjs",
     "test:watch-native": "node --test scripts/tests/watch-*.node.mjs",

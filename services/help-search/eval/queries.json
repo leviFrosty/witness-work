@@ -1,0 +1,305 @@
+{
+  "about": "Labeled queries for tuning search (pnpm eval). `expect` lists the answers that count as right; the first of them in the top 3 is a hit. An empty `expect` is an unrelated query, which should return nothing.",
+  "queries": [
+    { "locale": "en-US", "q": "dark mode", "expect": ["dark-mode"] },
+    {
+      "locale": "en-US",
+      "q": "how are bible studies counted",
+      "expect": ["bible-studies"]
+    },
+    {
+      "locale": "en-US",
+      "q": "how do I count a study",
+      "expect": ["bible-studies"]
+    },
+    {
+      "locale": "en-US",
+      "q": "my partial hours went into next month",
+      "expect": ["time-rollover"]
+    },
+    {
+      "locale": "en-US",
+      "q": "am I on track for my goal",
+      "expect": ["goal-pacing", "daily-pace", "remaining-hours"]
+    },
+    {
+      "locale": "en-US",
+      "q": "hours left this month",
+      "expect": ["remaining-hours"]
+    },
+    {
+      "locale": "en-US",
+      "q": "move my data to a new iphone",
+      "expect": [
+        "account-handoff",
+        "account-backup-restore",
+        "account-recovery-key-use"
+      ]
+    },
+    {
+      "locale": "en-US",
+      "q": "switch from iphone to android",
+      "expect": ["account-handoff"]
+    },
+    {
+      "locale": "en-US",
+      "q": "lost my recovery key",
+      "expect": ["account-recovery-key", "account-recovery-key-use"]
+    },
+    { "locale": "en-US", "q": "face id lock", "expect": ["app-lock"] },
+    { "locale": "en-US", "q": "export mileage", "expect": ["mileage-share"] },
+    { "locale": "en-US", "q": "kilometers", "expect": ["mileage-units"] },
+    {
+      "locale": "en-US",
+      "q": "gas price estimate",
+      "expect": ["mileage-cost"]
+    },
+    {
+      "locale": "en-US",
+      "q": "plan a route",
+      "expect": ["route-planning", "map-plan-route"]
+    },
+    {
+      "locale": "en-US",
+      "q": "open route in waze",
+      "expect": ["route-planning-navigation"]
+    },
+    {
+      "locale": "en-US",
+      "q": "import from mytime",
+      "expect": ["import-other-apps", "mytime-trouble"]
+    },
+    {
+      "locale": "en-US",
+      "q": "the file is not a database",
+      "expect": ["mytime-trouble"]
+    },
+    {
+      "locale": "en-US",
+      "q": "apple watch",
+      "expect": ["apple-watch", "apple-watch-sync", "apple-watch-up-next"]
+    },
+    {
+      "locale": "en-US",
+      "q": "widget on home screen",
+      "expect": ["widgets", "pet-widget"]
+    },
+    {
+      "locale": "en-US",
+      "q": "how do I add a friend",
+      "expect": ["buddies-add"]
+    },
+    {
+      "locale": "en-US",
+      "q": "what can my buddies see",
+      "expect": ["buddies-privacy", "pet-sync", "badges-buddies"]
+    },
+    {
+      "locale": "en-US",
+      "q": "stop sharing my location when I go out",
+      "expect": ["buddies-pause"]
+    },
+    {
+      "locale": "en-US",
+      "q": "invite expired",
+      "expect": ["buddies-invite-trouble"]
+    },
+    {
+      "locale": "en-US",
+      "q": "my devices aren't syncing",
+      "expect": ["sync-troubleshooting", "google-drive-sync-troubleshooting"]
+    },
+    {
+      "locale": "en-US",
+      "q": "is cloud sync private",
+      "expect": ["cloud-sync-privacy", "cloud-sync"]
+    },
+    {
+      "locale": "en-US",
+      "q": "back up my data",
+      "expect": ["backup-restore", "account-backup"]
+    },
+    {
+      "locale": "en-US",
+      "q": "delete my backup",
+      "expect": ["account-backup-delete"]
+    },
+    {
+      "locale": "en-US",
+      "q": "timer rounded to 5 minutes",
+      "expect": ["timer-rounding"]
+    },
+    { "locale": "en-US", "q": "LDC hours", "expect": ["ldc-credit-cap"] },
+    {
+      "locale": "en-US",
+      "q": "does the app send my report",
+      "expect": ["submit-report", "hourglass-setup"]
+    },
+    { "locale": "en-US", "q": "hourglass", "expect": ["hourglass-setup"] },
+    {
+      "locale": "en-US",
+      "q": "change to auxiliary pioneer",
+      "expect": ["switching-pioneer"]
+    },
+    {
+      "locale": "en-US",
+      "q": "recurring plan skip one day",
+      "expect": ["edit-recurring-plan", "away-day"]
+    },
+    {
+      "locale": "en-US",
+      "q": "week starts on monday",
+      "expect": ["week-start"]
+    },
+    {
+      "locale": "en-US",
+      "q": "1h 30m instead of decimals",
+      "expect": ["time-format"]
+    },
+    { "locale": "en-US", "q": "turn off vibration", "expect": ["haptics"] },
+    { "locale": "en-US", "q": "mute sounds", "expect": ["sound-effects"] },
+    {
+      "locale": "en-US",
+      "q": "red number on the icon",
+      "expect": ["app-icon-badge"]
+    },
+    {
+      "locale": "en-US",
+      "q": "contacts I haven't visited in a while",
+      "expect": ["contact-staleness-filter"]
+    },
+    {
+      "locale": "en-US",
+      "q": "pin is in the wrong spot on the map",
+      "expect": ["manual-pin"]
+    },
+    {
+      "locale": "en-US",
+      "q": "how do I use scribe",
+      "expect": ["scribe-start", "scribe-what-it-does"]
+    },
+    { "locale": "en-US", "q": "scribe limits", "expect": ["scribe-usage"] },
+    { "locale": "en-US", "q": "my pet's hearts", "expect": ["pet-hearts"] },
+    { "locale": "en-US", "q": "hats", "expect": ["pet-hats", "pet-secrets"] },
+    { "locale": "en-US", "q": "my streak ended", "expect": ["streak-ends"] },
+    {
+      "locale": "en-US",
+      "q": "badges count months",
+      "expect": ["badges-months"]
+    },
+    { "locale": "en-US", "q": "is it free", "expect": ["still-free"] },
+    {
+      "locale": "en-US",
+      "q": "cancel my subscription",
+      "expect": ["stop-supporting", "pause-support"]
+    },
+    {
+      "locale": "en-US",
+      "q": "I paid but supporter is missing",
+      "expect": ["restore-supporter"]
+    },
+    {
+      "locale": "en-US",
+      "q": "update required",
+      "expect": ["update-required"]
+    },
+    { "locale": "en-US", "q": "change language", "expect": ["translations"] },
+    { "locale": "en-US", "q": "report a bug", "expect": ["report-bug"] },
+    {
+      "locale": "en-US",
+      "q": "calendar events missing",
+      "expect": ["calendar-troubleshooting"]
+    },
+    {
+      "locale": "en-US",
+      "q": "travel time zone",
+      "expect": ["timezone-shift"]
+    },
+    {
+      "locale": "en-US",
+      "q": "special pioneer annual goal",
+      "expect": ["special-pioneer-annual"]
+    },
+    { "locale": "en-US", "q": "how are", "expect": [] },
+    { "locale": "en-US", "q": "pizza recipe", "expect": [] },
+    { "locale": "en-US", "q": "what's the weather tomorrow", "expect": [] },
+    { "locale": "en-US", "q": "asdfgh", "expect": [] },
+    { "locale": "en-US", "q": "the", "expect": [] },
+    { "locale": "en-US", "q": "who won the football game", "expect": [] },
+    { "locale": "es-ES", "q": "modo oscuro", "expect": ["dark-mode"] },
+    {
+      "locale": "es-ES",
+      "q": "cómo cuento un estudio bíblico",
+      "expect": ["bible-studies"]
+    },
+    {
+      "locale": "es-ES",
+      "q": "pasar a un teléfono nuevo",
+      "expect": [
+        "account-handoff",
+        "account-backup-restore",
+        "account-recovery-key-use"
+      ]
+    },
+    { "locale": "es-ES", "q": "kilómetros", "expect": ["mileage-units"] },
+    { "locale": "es-ES", "q": "receta de pizza", "expect": [] },
+    { "locale": "de-DE", "q": "dunkler Modus", "expect": ["dark-mode"] },
+    {
+      "locale": "de-DE",
+      "q": "Bibelstudien zählen",
+      "expect": ["bible-studies"]
+    },
+    {
+      "locale": "de-DE",
+      "q": "Route planen",
+      "expect": ["route-planning", "map-plan-route"]
+    },
+    { "locale": "de-DE", "q": "Pizzarezept", "expect": [] },
+    { "locale": "fr-FR", "q": "mode sombre", "expect": ["dark-mode"] },
+    {
+      "locale": "fr-FR",
+      "q": "sauvegarder mes données",
+      "expect": ["backup-restore", "account-backup"]
+    },
+    { "locale": "pt-BR", "q": "modo escuro", "expect": ["dark-mode"] },
+    { "locale": "pt-BR", "q": "mudar de idioma", "expect": ["translations"] },
+    { "locale": "ru-RU", "q": "тёмная тема", "expect": ["dark-mode"] },
+    { "locale": "ja-JP", "q": "ダークモード", "expect": ["dark-mode"] },
+    { "locale": "ja-JP", "q": "聖書研究の数え方", "expect": ["bible-studies"] },
+    {
+      "locale": "ja-JP",
+      "q": "新しいスマホに移行",
+      "expect": [
+        "account-handoff",
+        "account-backup-restore",
+        "account-recovery-key-use"
+      ]
+    },
+    {
+      "locale": "ja-JP",
+      "q": "ルート",
+      "expect": [
+        "route-planning",
+        "map-plan-route",
+        "route-planning-navigation",
+        "route-planning-places",
+        "route-planning-buddies"
+      ]
+    },
+    { "locale": "ja-JP", "q": "ピザのレシピ", "expect": [] },
+    { "locale": "ko-KR", "q": "다크 모드", "expect": ["dark-mode"] },
+    { "locale": "zh-CN", "q": "深色模式", "expect": ["dark-mode"] },
+    {
+      "locale": "zh-TW",
+      "q": "備份資料",
+      "expect": ["backup-restore", "account-backup"]
+    },
+    { "locale": "ar", "q": "الوضع الداكن", "expect": ["dark-mode"] },
+    {
+      "locale": "ar",
+      "q": "كيف أحسب درس الكتاب المقدس",
+      "expect": ["bible-studies"]
+    },
+    { "locale": "ar", "q": "وصفة بيتزا", "expect": [] }
+  ]
+}

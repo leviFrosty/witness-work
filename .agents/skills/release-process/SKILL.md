@@ -77,6 +77,6 @@ The backend goes live before store review and stays live for older app versions,
 | File                     | Trigger                                         | Does                                                                           |
 | ------------------------ | ----------------------------------------------- | ------------------------------------------------------------------------------ |
 | `pr-preview-build.yml`   | manual (`workflow_dispatch`)                    | lint/typecheck/test/deps, then EAS iOS preview build                           |
-| `tests.yml`              | push → `main`                                   | lint/typecheck/test/deps                                                       |
+| `tests.yml`              | push → `main`, or manual (`workflow_dispatch`)  | lint/typecheck/test/deps                                                       |
 | `production-release.yml` | tag push `v*.*.*`                               | locale completeness/lint/typecheck/test/deps, GitHub Release (no build/upload) |
 | `claude.yml`             | `@claude` mention on issue/PR comment or review | Claude Code responds inline                                                    |

@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - main
+  # Run on demand against any branch, e.g. an integration branch before it
+  # lands on main: `gh workflow run tests.yml --ref <branch>`.
+  workflow_dispatch:
 
 permissions:
   contents: read

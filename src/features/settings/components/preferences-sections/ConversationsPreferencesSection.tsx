@@ -2,6 +2,7 @@ import { View } from 'react-native'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 import i18n, { TranslationKey } from '@/lib/locales'
+import { hasCapability } from '@/lib/platformCapabilities'
 import Section from '@/components/ui/inputs/Section'
 import InputRowContainer from '@/components/ui/inputs/InputRowContainer'
 import InputRowSwitch from '@/components/ui/inputs/InputRowSwitch'
@@ -98,63 +99,67 @@ const ConversationsPreferencesSection = () => {
           </View>
         </InputRowContainer>
 
-        <InputRowContainer
-          label={i18n.t('notificationOffset')}
-          description={i18n.t('notificationOffset_description')}
-          controlWidth='full'
-          lastInSection
-          style={{
-            flexDirection: 'column',
-            gap: 10,
-            alignItems: 'flex-start',
-          }}
-        >
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 10,
-            }}
-          >
-            <View style={{ flex: 1 }}>
-              <Select
-                data={amountOptions}
-                onChange={({ value }) =>
-                  set({
-                    returnVisitNotificationOffset: {
-                      amount: value,
-                      unit: currentNotifUnit,
-                    },
-                  })
-                }
-                value={currentNotifAmount}
-              />
-            </View>
+        {hasCapability('deviceNotifications') && (
+          <>
+            <InputRowContainer
+              label={i18n.t('notificationOffset')}
+              description={i18n.t('notificationOffset_description')}
+              controlWidth='full'
+              lastInSection
+              style={{
+                flexDirection: 'column',
+                gap: 10,
+                alignItems: 'flex-start',
+              }}
+            >
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 10,
+                }}
+              >
+                <View style={{ flex: 1 }}>
+                  <Select
+                    data={amountOptions}
+                    onChange={({ value }) =>
+                      set({
+                        returnVisitNotificationOffset: {
+                          amount: value,
+                          unit: currentNotifUnit,
+                        },
+                      })
+                    }
+                    value={currentNotifAmount}
+                  />
+                </View>
 
-            <View style={{ flex: 1 }}>
-              <Select
-                data={unitOptions}
-                onChange={({ value }) =>
-                  set({
-                    returnVisitNotificationOffset: {
-                      amount: currentNotifAmount,
-                      unit: value,
-                    },
-                  })
-                }
-                value={currentNotifUnit}
-              />
-            </View>
-            <Text style={{ color: theme.colors.textAlt }}>
-              {i18n.t('before')}
-            </Text>
-          </View>
-        </InputRowContainer>
-        <InputRowSwitch
-          label={i18n.t('alwaysNotify')}
-          value={returnVisitAlwaysNotify}
-          onValueChange={(value) => set({ returnVisitAlwaysNotify: value })}
-        />
+                <View style={{ flex: 1 }}>
+                  <Select
+                    data={unitOptions}
+                    onChange={({ value }) =>
+                      set({
+                        returnVisitNotificationOffset: {
+                          amount: currentNotifAmount,
+                          unit: value,
+                        },
+                      })
+                    }
+                    value={currentNotifUnit}
+                  />
+                </View>
+                <Text style={{ color: theme.colors.textAlt }}>
+                  {i18n.t('before')}
+                </Text>
+              </View>
+            </InputRowContainer>
+            <InputRowSwitch
+              label={i18n.t('alwaysNotify')}
+              value={returnVisitAlwaysNotify}
+              onValueChange={(value) => set({ returnVisitAlwaysNotify: value })}
+            />
+          </>
+        )}
         <InputRowSwitch
           label={i18n.t('autoFillAddressFromLastContact')}
           info={i18n.t('autoFillAddressFromLastContact_description')}

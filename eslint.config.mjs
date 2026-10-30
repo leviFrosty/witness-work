@@ -5,6 +5,7 @@ import reactHooks from 'eslint-plugin-react-hooks'
 import reactCompiler from 'eslint-plugin-react-compiler'
 import boundaries from 'eslint-plugin-boundaries'
 import globals from 'globals'
+import witnessworkPlugin from './eslint-rules/witnesswork.mjs'
 
 const soundImports = {
   group: [
@@ -449,6 +450,27 @@ export default tseslint.config(
         },
       ],
     },
+  },
+  // Platform checks: see `platformMessage`. UI primitives get their web
+  // versions in their own change (ADR 0037 §8), and the account session and
+  // purchases are being built on the web by other changes; they join this rule
+  // when those land.
+  {
+    files: ['src/**/*.{js,jsx,ts,tsx}', 'modules/**/*.{js,jsx,ts,tsx}'],
+    ignores: [
+      '**/*.{ios,android,native}.{js,jsx,ts,tsx}',
+      '**/*.test.{ts,tsx}',
+      'src/__tests__/**',
+      'src/components/ui/**',
+      'src/lib/attestation/**',
+      'src/app/account/attestationCopy.ts',
+      'src/lib/serverAccount/index.ts',
+      'src/providers/CustomerProvider.tsx',
+      'src/features/supporter/**',
+      'src/components/SupporterBenefits.tsx',
+    ],
+    plugins: { witnesswork: witnessworkPlugin },
+    rules: { 'witnesswork/platform-android-choice': 'error' },
   },
   {
     files: ['src/**/*.{js,jsx,ts,tsx}', 'App.tsx', 'env.ts'],

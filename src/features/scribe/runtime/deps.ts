@@ -1,4 +1,4 @@
-import { Platform } from 'react-native'
+import { devicePlatform } from '@/lib/devicePlatform'
 import { appVersion } from '@/lib/appUpdate'
 import { scribeClient } from '@/features/scribe/lib/defaultClient'
 import { appLocale, deviceTimeZone } from '@/features/scribe/lib/locale'
@@ -20,7 +20,7 @@ export const scribeRuntime = (): ScribeRuntimeDeps => ({
   ulid: () => ulid(),
   app: () => ({
     version: appVersion() ?? '0.0.0',
-    platform: Platform.OS === 'android' ? 'android' : 'ios',
+    platform: devicePlatform(),
     locale: appLocale(),
   }),
   tz: deviceTimeZone,

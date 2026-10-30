@@ -1,3 +1,4 @@
+import { openAppSettings } from '@/lib/openAppSettings'
 import { payloadReferencesPhotos } from '@/app/sync/photoReferences'
 import { analytics } from '@/lib/analytics'
 import InfoPopover from '@/components/ui/InfoPopover'
@@ -726,7 +727,7 @@ const PreferencesiCloudScreenInner = () => {
   }
 
   const handleOpenSettings = () => {
-    void Linking.openSettings()
+    void openAppSettings()
   }
 
   const status = buildICloudStatus({

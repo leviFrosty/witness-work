@@ -5,7 +5,7 @@ import {
   Navigation as NavigationIcon,
 } from 'lucide-react-native'
 import { Alert, AppState } from 'react-native'
-import * as Linking from 'expo-linking'
+import { openAppSettings } from '@/lib/openAppSettings'
 import i18n from '@/lib/locales'
 import { GroupedListRow, GroupedListSection } from '@/components/ui/GroupedList'
 import { requestOrOfferLocationSettings } from '@/lib/locationPermission'
@@ -48,7 +48,7 @@ const AppPreferencesSection = () => {
         {
           text: i18n.t('yes'),
           style: 'default',
-          onPress: () => Linking.openSettings(),
+          onPress: () => openAppSettings(),
         },
       ]
     )

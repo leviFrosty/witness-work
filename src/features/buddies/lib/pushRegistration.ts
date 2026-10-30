@@ -4,6 +4,7 @@ import * as Device from 'expo-device'
 import * as Notifications from 'expo-notifications'
 import { analytics } from '@/lib/analytics'
 import i18n from '@/lib/locales'
+import { hasCapability } from '@/lib/platformCapabilities'
 import type {
   BadgePushKind,
   BuddyPushKind,
@@ -98,6 +99,8 @@ export async function ensureBuddiesNewsChannel(): Promise<void> {
 
 /** APNs on iOS; FCM, through Google Play services, on Android. */
 async function pushAddress(): Promise<PushAddress> {
+  if (!hasCapability('deviceNotifications'))
+    throw new Error('Push needs a phone')
   const token = await Notifications.getDevicePushTokenAsync()
   if (Platform.OS === 'android') {
     await ensureBuddiesNewsChannel()
@@ -202,7 +205,9 @@ export function registerBuddiesPush(): Promise<void> {
 
 async function register(signal: AbortSignal) {
   const { registeredInboxId, notificationsEnabled } = useBuddies.getState()
-  if (registeredInboxId === null) return
+  // A browser has no push address to give the relay (ADR 0037 §1).
+  if (registeredInboxId === null || !hasCapability('deviceNotifications'))
+    return
   const permission = await Notifications.getPermissionsAsync()
   if (!permission.granted) {
     analytics.capture('buddies_push_registration', {

@@ -120,11 +120,13 @@ const PreferencesScreen = () => {
           label={i18n.t('privacy')}
           onPress={() => navigation.navigate('PreferencesPrivacy')}
         />
-        <GroupedListRow
-          icon={FileOutputIcon}
-          label={i18n.t('backups')}
-          onPress={() => navigation.navigate('PreferencesBackups')}
-        />
+        {hasCapability('deviceNotifications') && (
+          <GroupedListRow
+            icon={FileOutputIcon}
+            label={i18n.t('backups')}
+            onPress={() => navigation.navigate('PreferencesBackups')}
+          />
+        )}
       </GroupedListSection>
     </GroupedList>
   )

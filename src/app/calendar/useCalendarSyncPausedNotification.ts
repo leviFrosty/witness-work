@@ -1,7 +1,8 @@
-import { Linking, Platform } from 'react-native'
+import { Platform } from 'react-native'
 import { CalendarX as CalendarXIcon } from 'lucide-react-native'
 import { useNavigation } from '@react-navigation/native'
 import { calendarBridgeAvailable } from '../../../modules/calendar-bridge'
+import { openAppSettings } from '@/lib/openAppSettings'
 import { calendarRecovery } from '@/app/calendar/calendarRecovery'
 import { confirmDisconnectCalendar } from '@/app/calendar/confirmDisconnectCalendar'
 import { useCalendarPublishing, useCalendarSync } from '@/stores/calendarSync'
@@ -105,12 +106,13 @@ export default function useCalendarSyncPausedNotification(
         ? {
             id: 'open_settings',
             label: i18n.t(
-              Platform.OS === 'android'
-                ? 'calendarOpenSettingsAndroid'
-                : 'calendarOpenSettings'
+              Platform.select<TranslationKey>({
+                android: 'calendarOpenSettingsAndroid',
+                default: 'calendarOpenSettings',
+              })
             ),
             onPress: () => {
-              void Linking.openSettings()
+              void openAppSettings()
             },
           }
         : {

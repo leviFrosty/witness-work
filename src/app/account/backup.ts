@@ -1,6 +1,6 @@
-import { AppState, Platform } from 'react-native'
+import { AppState } from 'react-native'
 import { getRandomBytes } from 'expo-crypto'
-import * as Device from 'expo-device'
+import { deviceName, devicePlatform } from '@/lib/devicePlatform'
 import { accountKey, accountKeyAvailable } from '@/app/account/accountKey'
 import {
   backupPlaintextHash,
@@ -49,12 +49,6 @@ import {
  * `backupRestore.ts`.
  */
 
-/** The name a restore shows for this device; only inside the ciphertext. */
-const deviceName = () =>
-  Device.modelName || (Platform.OS === 'ios' ? 'iPhone' : 'Android')
-
-const platform = () => (Platform.OS === 'android' ? 'android' : 'ios')
-
 /** The account key, created when `create` (backup on); `BackupError` else. */
 async function readAccountKey(create: boolean): Promise<Uint8Array | null> {
   if (!accountKeyAvailable()) throw new BackupError('key')
@@ -95,7 +89,7 @@ const scheduler = createBackupScheduler({
     const address = { accountId: access.accountId, slotId }
     const plaintext = buildBackupPlaintext({
       deviceName: deviceName(),
-      platform: platform(),
+      platform: devicePlatform(),
       now: Date.now(),
     })
     return {

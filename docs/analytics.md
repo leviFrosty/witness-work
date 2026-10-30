@@ -997,9 +997,9 @@ the invitee when that confirmation arrives (`role: invitee`). Count
 `role: inviter` for pairings; compare both roles to see confirmations that
 never reached the other side. The User's own platform is the event's `$os`.
 
-| Event          | When                         | Properties                                                                                                                                                             |
-| -------------- | ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `buddy_paired` | A Buddies pairing completed. | `role: inviter \| invitee`, `buddy_platform: ios \| android \| unknown` (`unknown` when the buddy's build predates the field). No names, relay ids, or invite details. |
+| Event          | When                         | Properties                                                                                                                                                                    |
+| -------------- | ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `buddy_paired` | A Buddies pairing completed. | `role: inviter \| invitee`, `buddy_platform: ios \| android \| web \| unknown` (`unknown` when the buddy's build predates the field). No names, relay ids, or invite details. |
 
 The buddy's platform travels inside the end-to-end encrypted invite card, claim,
 and `pair.confirmed` (see `docs/buddies-protocol.md`); the relay never sees it,
@@ -1141,10 +1141,10 @@ Never session ids, device names or labels, entry contents, or the account id.
 These answer how many people an app version floor or a 426 from ww-api blocks,
 and whether they go update.
 
-| Event                          | When                                                          | Properties                                                                                                                                         |
-| ------------------------------ | ------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `update_required_shown`        | Update Required covered the app. Once per session and source. | `source: config \| server` (`config`: below `minAppVersion` from `GET /app/v1/config`; `server`: ww-api answered 426), `min_version` (when known). |
-| `update_required_store_opened` | The User tapped Update WitnessWork.                           | `source`.                                                                                                                                          |
+| Event                          | When                                                                                    | Properties                                                                                                                                         |
+| ------------------------------ | --------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `update_required_shown`        | Update Required covered the app. Once per session and source.                           | `source: config \| server` (`config`: below `minAppVersion` from `GET /app/v1/config`; `server`: ww-api answered 426), `min_version` (when known). |
+| `update_required_store_opened` | The User tapped Update WitnessWork (Reload WitnessWork on the web, which has no store). | `source`.                                                                                                                                          |
 
 ### Web local data
 

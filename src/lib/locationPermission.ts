@@ -1,5 +1,6 @@
-import { Alert, Linking } from 'react-native'
+import { Alert } from 'react-native'
 import * as Location from 'expo-location'
+import { openAppSettings } from '@/lib/openAppSettings'
 import i18n from '@/lib/locales'
 
 /** Explains that location is off and offers this app's page in Settings. */
@@ -11,7 +12,7 @@ export const offerLocationSettings = () =>
       { text: i18n.t('cancel'), style: 'cancel' },
       {
         text: i18n.t('locationDisabled_callToAction'),
-        onPress: () => void Linking.openSettings(),
+        onPress: () => void openAppSettings(),
       },
     ]
   )

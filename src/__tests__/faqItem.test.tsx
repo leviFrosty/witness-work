@@ -20,6 +20,9 @@ vi.mock('react-native', () => ({
     get OS() {
       return native.os
     },
+    select(specifics: Record<string, unknown>) {
+      return this.OS in specifics ? specifics[this.OS] : specifics.default
+    },
   },
   AccessibilityInfo: { announceForAccessibility: native.announce },
 }))

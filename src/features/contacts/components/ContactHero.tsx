@@ -18,6 +18,7 @@ import GenderIcon from '@/components/GenderIcon'
 import useContactAvatarActions from '@/features/contacts/hooks/useContactAvatarActions'
 import { Contact } from '@/types/contact'
 import { Visit } from '@/types/visit'
+import { hasCapability } from '@/lib/platformCapabilities'
 import moment from 'moment'
 
 type Props = {
@@ -105,7 +106,7 @@ const ContactHero = ({
                   systemImage: 'crop',
                   onPress: () => void photo.edit(),
                 },
-                {
+                hasCapability('photoLibrarySave') && {
                   id: 'save',
                   title: i18n.t('saveToPhotos'),
                   systemImage: 'square.and.arrow.down',

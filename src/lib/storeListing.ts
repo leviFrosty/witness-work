@@ -2,6 +2,7 @@ import { Platform } from 'react-native'
 import links from '@/constants/links'
 import { openURL } from '@/lib/links'
 import i18n from '@/lib/locales'
+import { hasCapability } from '@/lib/platformCapabilities'
 
 /**
  * Opens WitnessWork in this platform's store: Google Play on Android, the App
@@ -33,4 +34,14 @@ export const openStoreListing = (options?: {
       ),
     },
   })
+}
+
+/**
+ * Gets the newest version of the app: the store listing on a phone, and on the
+ * web a reload, since each page load runs the newest deploy (ADR 0037).
+ */
+export const openAppUpdate = (options?: { title?: string }) => {
+  if (hasCapability('storeListings')) return openStoreListing(options)
+  window.location.reload()
+  return Promise.resolve()
 }

@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
-import { AppState, Linking } from 'react-native'
+import { AppState } from 'react-native'
 import { useSharedValue } from 'react-native-reanimated'
 import type { EventSubscription } from 'expo-modules-core'
 import * as Speech from '../../../../modules/speech-transcription'
+import { openAppSettings } from '@/lib/openAppSettings'
 import useContacts from '@/stores/contactsStore'
 import Haptics from '@/lib/haptics'
 import { playCue, prepareCues } from '@/lib/audio'
@@ -367,6 +368,6 @@ export function useScribeVoiceCapture(
     done: () => void stopWith('done'),
     switchToKeyboard: () => void stopWith('typed'),
     discard,
-    openSettings: () => void Linking.openSettings(),
+    openSettings: () => void openAppSettings(),
   }
 }

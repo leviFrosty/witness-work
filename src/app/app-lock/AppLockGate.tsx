@@ -4,6 +4,7 @@ import FullWindowOverlay from '@/components/ui/FullWindowOverlay'
 import { useTakeoverHold } from '@/hooks/useTakeoverTurn'
 import { useAppLockAvailability } from '@/hooks/useAppLockAvailability'
 import { shouldRelock } from '@/lib/appLock'
+import { hasCapability } from '@/lib/platformCapabilities'
 import { useAppLockSession, useAppLockSettings } from '@/stores/appLock'
 import AppLockScreen from '@/app/app-lock/AppLockScreen'
 import { promptUnlock, wasAskedAtLaunch } from '@/app/app-lock/unlock'
@@ -18,6 +19,11 @@ const unlock = () => useAppLockSession.setState({ locked: false })
  * screen; navigation, deep links and sync keep running underneath.
  */
 export default function AppLockGate() {
+  // The web has no device owner to prove, whatever a synced setting says.
+  return hasCapability('appLock') ? <DeviceAppLockGate /> : null
+}
+
+function DeviceAppLockGate() {
   const enabled = useAppLockSettings((s) => s.enabled)
   const locked = useAppLockSession((s) => s.locked)
   const availability = useAppLockAvailability()

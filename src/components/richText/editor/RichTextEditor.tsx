@@ -1,5 +1,5 @@
 import { useEffect, useImperativeHandle, useRef, useState } from 'react'
-import { Alert, Linking, Platform, View } from 'react-native'
+import { Alert, Platform, View } from 'react-native'
 import * as ImagePicker from 'expo-image-picker'
 import {
   useKeyboardController,
@@ -11,6 +11,7 @@ import Animated, {
 } from 'react-native-reanimated'
 import { scheduleOnRN } from 'react-native-worklets'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { openAppSettings } from '@/lib/openAppSettings'
 import LinkSheet from '@/components/richText/editor/LinkSheet'
 import RichTextEditorDom, {
   type BridgeValue,
@@ -220,7 +221,7 @@ const RichTextEditor = (props: {
           { text: i18n.t('cancel'), style: 'cancel' },
           {
             text: i18n.t('richText_openSettings'),
-            onPress: () => void Linking.openSettings(),
+            onPress: () => void openAppSettings(),
           },
         ]
       )

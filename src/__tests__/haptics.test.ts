@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
+const platform = vi.hoisted(() => ({ OS: 'ios' }))
+vi.mock('react-native', () => ({ Platform: platform }))
 vi.mock('@/stores/mmkv', () => import('@/__tests__/mocks/mmkv'))
 vi.mock('expo-constants', () => ({
   default: { expoConfig: { version: '1.0.0' } },
@@ -36,6 +38,7 @@ import {
 
 describe('Haptics setting', () => {
   beforeEach(() => {
+    platform.OS = 'ios'
     Object.values(expoHaptics).forEach((fn) => fn.mockClear())
     usePreferences.getState().set({ hapticsEnabled: true })
   })
@@ -67,6 +70,16 @@ describe('Haptics setting', () => {
     expect(expoHaptics.notificationAsync).toHaveBeenCalledWith('success')
     expect(expoHaptics.performAndroidHapticsAsync).toHaveBeenCalledWith(
       'long-press'
+    )
+  })
+
+  it('stays still on the web, which has no haptics to play', async () => {
+    platform.OS = 'web'
+
+    await Promise.all(Object.values(Haptics).map((play) => play()))
+
+    Object.values(expoHaptics).forEach((fn) =>
+      expect(fn).not.toHaveBeenCalled()
     )
   })
 

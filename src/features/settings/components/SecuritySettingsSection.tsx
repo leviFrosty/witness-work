@@ -8,7 +8,7 @@ import Section from '@/components/ui/inputs/Section'
 import InputRowContainer from '@/components/ui/inputs/InputRowContainer'
 import InputRowSelect from '@/components/ui/inputs/InputRowSelect'
 import Switch from '@/components/ui/Switch'
-import i18n from '@/lib/locales'
+import i18n, { type TranslationKey } from '@/lib/locales'
 import { analytics } from '@/lib/analytics'
 import {
   appLockRequireLabel,
@@ -100,7 +100,10 @@ const SecuritySettingsSection = () => {
         leftIcon={METHOD_ICONS[method]}
         label={label}
         info={i18n.t(
-          Platform.OS === 'android' ? 'appLock_infoAndroid' : 'appLock_info'
+          Platform.select<TranslationKey>({
+            android: 'appLock_infoAndroid',
+            default: 'appLock_info',
+          })
         )}
         controlWidth='auto'
         lastInSection={!enabled}

@@ -9,7 +9,7 @@ import {
 } from '@/lib/hotUpdater'
 import { analytics } from '@/lib/analytics'
 import { usePendingUpdate } from '@/features/updates/stores/pendingUpdate'
-import i18n from '@/lib/locales'
+import i18n, { type TranslationKey } from '@/lib/locales'
 import { errorTracking } from '@/lib/errorTracking'
 import { isConnectivityError } from '@/lib/http/networkError'
 import { isKnownOffline } from '@/lib/http/online'
@@ -111,9 +111,10 @@ export const fetchUpdate = async (
     if (isConnectivityError(error)) return offline()
     Alert.alert(
       i18n.t(
-        Platform.OS === 'android'
-          ? 'updateViaTheStoreAndroid'
-          : 'updateViaTheStore'
+        Platform.select<TranslationKey>({
+          android: 'updateViaTheStoreAndroid',
+          default: 'updateViaTheStore',
+        })
       ),
       i18n.t('update_error')
     )

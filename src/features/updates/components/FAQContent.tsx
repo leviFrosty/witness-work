@@ -77,9 +77,9 @@ const ReportLinks = () => {
 }
 
 // Compose's Collapsible pads its own header and content (16dp each side).
-const CARD_PADDING = Platform.OS === 'android' ? 4 : 20
+const CARD_PADDING = Platform.select({ android: 4, default: 20 })
 const CONTENT_INSET =
-  2 + CARD_PADDING * 2 + (Platform.OS === 'android' ? 32 : 0)
+  2 + CARD_PADDING * 2 + Platform.select({ android: 32, default: 0 })
 
 export const FAQItem = ({ entry }: { entry: HelpEntry }) => {
   const theme = useTheme()

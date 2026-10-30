@@ -145,9 +145,9 @@ export function logBackup(level: BackupLogEntry['level'], message: string) {
  */
 function installBinding(): string | null {
   try {
-    return Platform.OS === 'android'
-      ? androidDeviceInstallId()
-      : getOrCreateInstallId()
+    // The web keeps its own random id, as an iPhone without a Keychain one does.
+    if (Platform.OS === 'android') return androidDeviceInstallId()
+    return getOrCreateInstallId()
   } catch {
     return null
   }

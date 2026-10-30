@@ -2,12 +2,12 @@ import { LocateFixed as LocateFixedIcon } from 'lucide-react-native'
 import { type RefObject, useEffect, useRef, useState } from 'react'
 import {
   ActivityIndicator,
-  Linking,
   TextInput,
   TouchableOpacity,
   View,
 } from 'react-native'
 import * as Location from 'expo-location'
+import { openAppSettings } from '@/lib/openAppSettings'
 import Text from '@/components/ui/MyText'
 import Empty from '@/components/ui/Empty'
 import MyTextInput from '@/components/ui/TextInput'
@@ -75,7 +75,7 @@ const LocationStatusControl = ({
   return (
     <PointerTooltip label={label} style={{ borderRadius: 22 }}>
       <TouchableOpacity
-        onPress={denied ? () => Linking.openSettings() : onRequest}
+        onPress={denied ? () => openAppSettings() : onRequest}
         activeOpacity={0.7}
         accessibilityRole='button'
         accessibilityLabel={label}

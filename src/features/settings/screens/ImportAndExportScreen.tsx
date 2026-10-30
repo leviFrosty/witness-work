@@ -6,7 +6,7 @@ import { useState } from 'react'
 import ActionButton from '@/components/ui/ActionButton'
 import Text from '@/components/ui/MyText'
 import Wrapper from '@/components/ui/layout/Wrapper'
-import i18n from '@/lib/locales'
+import i18n, { type TranslationKey } from '@/lib/locales'
 import { Platform } from 'react-native'
 import useTheme from '@/contexts/theme'
 import Card from '@/components/ui/Card'
@@ -103,9 +103,11 @@ const ImportAndExportScreen = () => {
             )}
             <Text style={{ color: theme.colors.textAlt }}>
               {i18n.t(
-                Platform.OS === 'android'
-                  ? 'restoreFromBackup_hintAndroid'
-                  : 'restoreFromBackup_hint'
+                Platform.select<TranslationKey>({
+                  android: 'restoreFromBackup_hintAndroid',
+                  web: 'restoreFromBackup_hintWeb',
+                  default: 'restoreFromBackup_hint',
+                })
               )}
             </Text>
             <ActionButton

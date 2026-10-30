@@ -17,6 +17,9 @@ vi.mock('react-native', () => ({
     get OS() {
       return runtime.platform
     },
+    select(specifics: Record<string, unknown>) {
+      return this.OS in specifics ? specifics[this.OS] : specifics.default
+    },
   },
 }))
 vi.mock('@/lib/hotUpdater', () => ({

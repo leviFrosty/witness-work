@@ -175,9 +175,9 @@ function generateDeviceId(): string {
  */
 function readInstallId(): string | null {
   try {
-    return Platform.OS === 'android'
-      ? androidDeviceInstallId()
-      : getOrCreateInstallId()
+    // The web keeps its own random id, as an iPhone without a Keychain one does.
+    if (Platform.OS === 'android') return androidDeviceInstallId()
+    return getOrCreateInstallId()
   } catch (error) {
     logger.warn('[iCloudIdentity] install id unavailable', error)
     return null

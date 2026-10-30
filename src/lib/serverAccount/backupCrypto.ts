@@ -139,6 +139,63 @@ export function openPlaintext(
   return openPlaintextWith(key, blob, aad)
 }
 
+/** What `resealBlob` did with a blob. */
+export type ResealResult =
+  | { outcome: 'resealed'; blob: Uint8Array }
+  /** It already opens with the new key. */
+  | { outcome: 'current' }
+  /** None of the keys open it: it's left as it is. */
+  | { outcome: 'unopened' }
+
+/**
+ * Moves a sealed blob (a backup or Cloud Sync slot) to a new account key's
+ * derived key (docs/account-key-change.md, step 5): opens it with the first of
+ * `from` that does (the old key's, then the key history's) and seals the same
+ * compressed bytes under `to` with `nonce`. The plaintext isn't read, so what a
+ * newer app wrote is kept exactly.
+ */
+export function resealBlob(
+  blob: Uint8Array,
+  aad: Uint8Array,
+  {
+    from,
+    to,
+    nonce,
+  }: { from: readonly Uint8Array[]; to: Uint8Array; nonce: Uint8Array }
+): ResealResult {
+  if (nonce.length !== NONCE_LENGTH) throw new Error('Nonce must be 24 bytes')
+  if (decryptWith(to, blob, aad)) return { outcome: 'current' }
+  for (const key of from) {
+    const compressed = decryptWith(key, blob, aad)
+    if (!compressed) continue
+    const ciphertext = xchacha20poly1305(to, nonce, aad).encrypt(compressed)
+    return {
+      outcome: 'resealed',
+      blob: concatBytes(new Uint8Array([BLOB_VERSION]), nonce, ciphertext),
+    }
+  }
+  return { outcome: 'unopened' }
+}
+
+/** The sealed bytes, or null when `key` doesn't open the blob. */
+function decryptWith(
+  key: Uint8Array,
+  blob: Uint8Array,
+  aad: Uint8Array
+): Uint8Array | null {
+  if (blob.length < 1 + NONCE_LENGTH + TAG_LENGTH || blob[0] !== BLOB_VERSION)
+    return null
+  try {
+    return xchacha20poly1305(
+      key,
+      blob.subarray(1, 1 + NONCE_LENGTH),
+      aad
+    ).decrypt(blob.subarray(1 + NONCE_LENGTH))
+  } catch {
+    return null
+  }
+}
+
 function openPlaintextWith(
   key: Uint8Array,
   blob: Uint8Array,

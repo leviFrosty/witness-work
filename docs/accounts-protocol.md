@@ -274,13 +274,14 @@ Each device keeps its own encrypted slot in R2, at `v1/<accountId>/<slotId>`. A 
 
 | Op              | Request                         | Response                                                      |
 | --------------- | ------------------------------- | ------------------------------------------------------------- |
-| `backup/put`    | `slotId`, `size`, `sha256`      | `{ ok, uploadedAt }`                                          |
-| `backup/list`   |                                 | `{ ok, slots: [{ slotId, size, uploadedAt }] }`               |
+| `backup/put`    | `slotId`, `size`, `sha256`      | `{ ok, uploadedAt, etag }`                                    |
+| `backup/list`   |                                 | `{ ok, slots: [{ slotId, size, uploadedAt, etag }] }`         |
 | `backup/get`    | `slotId`                        | The blob, `application/octet-stream`; `not_found` without one |
 | `backup/delete` | `slotId`, or none for all slots | `{ ok }`                                                      |
 
 - `backup/put` sends the blob as the raw body (`application/octet-stream`) with `slotId` in `x-ww-slot-id` and `sha256` (b64u of the body's SHA-256) in `x-ww-sha256`; `size` is `Content-Length`. Before sessions it sent a self-signed envelope with all three in headers (`x-ww-payload`/`x-ww-signature`, or the legacy `x-ww-p`/`x-ww-s` that shipped builds send). A body that doesn't match them is `bad_request`. Every other op sends its fields as the JSON body.
-- `backup/get` answers with the bytes exactly as put, `Cache-Control: no-store`.
+- `backup/get` answers with the bytes exactly as put, `Cache-Control: no-store`, and the slot's `ETag: "<etag>"`.
+- Each slot has an `etag` (R2's own, opaque). An optional strong quoted `If-Match: "<etag>"` on `backup/put` writes only while the slot still holds those bytes: other bytes or no slot is 412 `precondition_failed`, with nothing written and no slot made. A weak, unquoted, `*` or list value is `bad_request`. The minute limit is checked first. A key change's re-seal sends it ([account-key-change.md](./account-key-change.md)); a backup without it is unchanged.
 - `backup/delete` is idempotent: a missing slot is `ok`.
 - Limits: 20 MiB a blob (`too_large`, 413, refused from `Content-Length` before the body is read), 8 slots an account (`limit`, 429, for a new slot only), and one `backup/put` a slot a minute (`rate_limited`, 429, with `Retry-After` for the rest of the minute). `backup/put` counts against the Buddies photo-upload edge tier, the rest against the read tier.
 - In the envelope form, an unregistered `accountPub` is `unknown_account` (404). A suspended account can still back up.

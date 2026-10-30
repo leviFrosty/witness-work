@@ -32,21 +32,34 @@ import {
   serverAccount,
   thisDeviceLabel,
 } from '@/lib/serverAccount'
+import {
+  getBackupSlot,
+  listBackups,
+  putBackup,
+} from '@/lib/serverAccount/backupClient'
 import { sealDeviceLabel } from '@/lib/serverAccount/deviceLabel'
 import {
   fetchKeyHistory,
   rekeyAccount,
 } from '@/lib/serverAccount/keyChangeClient'
+import { historyKeys } from '@/lib/serverAccount/keyHistory'
 import { accountPubOf } from '@/lib/serverAccount/keys'
 import { AccountSessionError } from '@/lib/serverAccount/session'
 import { useBackupState } from '@/lib/serverAccount/backupStore'
 import { usesCloudSync } from '@/lib/syncTransport/provider'
 import { syncNow } from '@/lib/syncClock'
+import {
+  getSyncSlot,
+  listSyncSlots,
+  putSyncSlot,
+} from '@/lib/syncTransport/server/syncClient'
 import { buddiesEngine } from '@/features/buddies/lib/buddiesService'
+import { usePreferences } from '@/stores/preferences'
 import { createKeyChangeEventGate } from './analytics'
 import { createKeyChangeEngine } from './engine'
+import { createResealStep } from './reseal'
 import { createKeyRetiredHandler } from './retired'
-import { keyChangeStep } from './steps'
+import { keyChangeStep, registerKeyChangeStep } from './steps'
 
 /**
  * Change Account Key on this device (ADR 0039), and what this device does when
@@ -205,6 +218,44 @@ async function noteSignedIn(): Promise<void> {
       .catch(() => undefined)
 }
 
+/** Step 5: the account's Cloud Sync and backup slots, under the new key. */
+const resealStep = createResealStep({
+  sync: (accountKey) => {
+    const options = bearerOptions(accountKey)
+    return {
+      list: async () => (await listSyncSlots(options)).slots,
+      get: (slotId) => getSyncSlot(options, slotId),
+      put: async (slotId, blob, put) => {
+        await putSyncSlot(options, slotId, blob, put)
+      },
+    }
+  },
+  backup: (accountKey) => {
+    const options = bearerOptions(accountKey)
+    return {
+      list: () => listBackups(options),
+      get: (slotId) => getBackupSlot(options, slotId),
+      put: async (slotId, blob, put) => {
+        await putBackup(options, slotId, blob, put)
+      },
+    }
+  },
+  // An install that never synced has no slot of its own.
+  ownSyncSlotId: () => usePreferences.getState().iCloudDeviceId ?? null,
+  // The history this device kept, else the server's; null when neither can be
+  // read, so a slot only the history might open waits for a later try.
+  olderKeys: async (accountId, kind, accountKey) => {
+    const history =
+      (await keyHistoryCache.read(accountId).catch(() => null)) ??
+      (await keyHistoryCache
+        .refresh(accountKey, accountId)
+        .catch(() => undefined))
+    return history === undefined ? null : historyKeys(history, kind)
+  },
+  randomBytes: getRandomBytes,
+  sleep: (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
+})
+
 let installed = false
 
 /**
@@ -214,6 +265,7 @@ let installed = false
 export function installKeyChange(): void {
   if (installed || !BuddiesKeychain.isAvailable()) return
   installed = true
+  registerKeyChangeStep('reseal', resealStep)
   resumeKeyChangeAtLaunch()
   onKeyRetired((accountPub, changedAt) => {
     void handleKeyRetired(accountPub, changedAt).catch((error: unknown) => {

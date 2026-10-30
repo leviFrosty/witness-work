@@ -115,9 +115,11 @@ from their Apple Account. The flow adds no step of its own for this.
 
 The old key reveals the account's RevenueCat id, which travels in the
 encrypted sync data (ADR 0040 §7). Another account could link that id to claim
-Supporter status. So on a key change, ww-api unlinks the account's RevenueCat
-customers from every other account, and refuses links to them from other
-accounts for 90 days.
+Supporter status. So on a key change, ww-api unlinks each of the account's
+RevenueCat customers from every other account that first linked it later than
+this account did, and refuses new links to it from other accounts for 90 days.
+Accounts that linked it earlier keep their links, so changing a key can't take
+Supporter status from the customer's first owner.
 
 ### 10. Older app versions
 

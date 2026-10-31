@@ -206,6 +206,14 @@ describe('first enable on a fresh install', () => {
       '@/stores/migrations/categories'
     )
     const { useCategories } = await import('@/stores/categories')
+    const { runTagsToCategoriesMigration } = await import(
+      '@/stores/migrations/categories'
+    )
+    const { runCustomFieldsMigration } = await import(
+      '@/features/contacts/lib/runCustomFieldsMigration'
+    )
+    runCustomFieldsMigration()
+    runTagsToCategoriesMigration()
     runLdcCategoryMigration()
     runtime.files = [payloadFile(PHONE_FILE, 'phone')]
     return { resolveInitialEnable, hasMeaningfulLocalData, useCategories }
@@ -256,6 +264,73 @@ describe('first enable on a fresh install', () => {
       outcome: 'conflict',
     })
   })
+  it.each([
+    ['a remote that has its own LDC builtin', true],
+    ['a remote from a writer without categories', false],
+  ])('pulls in %s with one LDC builtin', async (_, remoteHasCategories) => {
+    const { resolveInitialEnable, useCategories } = await freshInstall()
+    const { applyPullEnable } = await import('@/app/sync/iCloudSync')
+    const file = runtime.files[0]
+    runtime.files = [
+      {
+        ...file,
+        json: JSON.stringify({
+          ...JSON.parse(file.json),
+          ...(remoteHasCategories && {
+            categoryStore: {
+              categories: [{ ...makeLdcBuiltinCategory(0), updatedAt: 5 }],
+              deletedCategories: [],
+            },
+          }),
+        }),
+      },
+    ]
+    const decision = await resolveInitialEnable()
+    if (decision.outcome !== 'pull') throw new Error(decision.outcome)
+
+    applyPullEnable(decision.remote)
+
+    expect(useCategories.getState().categories.map((c) => c.id)).toEqual([
+      LDC_BUILTIN_CATEGORY_ID,
+    ])
+  })
+
+  it.each([
+    [
+      'a custom field the user made',
+      async () => {
+        const { default: contacts } = await import('@/stores/contactsStore')
+        contacts.getState().addCustomFieldDef('Language')
+      },
+    ],
+    [
+      'a deleted custom field',
+      async () => {
+        const { default: contacts } = await import('@/stores/contactsStore')
+        const def = contacts.getState().addCustomFieldDef('Language')!
+        contacts.getState().purgeCustomFieldDef(def.id)
+      },
+    ],
+    [
+      'a visit field the user made',
+      async () => {
+        const { default: conversations } = await import(
+          '@/stores/conversationStore'
+        )
+        conversations.getState().addConversationFieldDef('Publication')
+      },
+    ],
+  ])('asks before replacing %s', async (_, change) => {
+    const { resolveInitialEnable, hasMeaningfulLocalData } =
+      await freshInstall()
+    await change()
+
+    expect(hasMeaningfulLocalData()).toBe(true)
+    expect(await resolveInitialEnable()).toMatchObject({
+      outcome: 'conflict',
+    })
+  })
+
   it.each([
     ['an adopted pet', () => {}],
     [

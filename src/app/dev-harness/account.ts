@@ -1,4 +1,5 @@
 import { getRandomBytes } from 'expo-crypto'
+import * as BuddiesKeychain from '../../../modules/buddies-keychain'
 import { accountKey } from '@/app/account/accountKey'
 import {
   backUpNow,
@@ -22,9 +23,14 @@ import {
   type SelfTestStep,
 } from '@/app/account/handoffSelfTest'
 import { encodeRecoveryKey } from '@/lib/accountKey/recoveryKey'
-import { cachedServerAccount } from '@/lib/serverAccount'
+import { toB64u, utf8 } from '@/lib/bytes'
+import apis from '@/constants/apis'
+import { accountSessions, cachedServerAccount } from '@/lib/serverAccount'
 import { useBackupState } from '@/lib/serverAccount/backupStore'
-import { deriveAccountSigningKey } from '@/lib/serverAccount/keys'
+import {
+  deriveAccountSigningKey,
+  signAccountRequest,
+} from '@/lib/serverAccount/keys'
 import { deriveIdentity } from '@/features/buddies/lib/keys'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 import { navigationRef } from '@/features/contacts/lib/linking'
@@ -69,6 +75,86 @@ export const accountHarness = {
   },
   /** A valid recovery key for a new random account key, to type or paste. */
   randomRecoveryKey: () => encodeRecoveryKey(getRandomBytes(32)),
+  /**
+   * Replaces the account key in the Keychain without the app's key change, as
+   * iCloud Keychain brings a key replaced on another of the User's devices: the
+   * stored session stays the old key's. `last` says when it's done.
+   */
+  replaceKeyBehindApp: () => {
+    last = null
+    void BuddiesKeychain.replaceRootSeed(toB64u(getRandomBytes(32))).then(
+      () => (last = 'replaced'),
+      (error: unknown) => (last = { error: String(error) })
+    )
+    return 'started'
+  },
+  /**
+   * Another of the User's devices changes the account key (ADR 0039): the same
+   * account under a new key on the server, which iCloud Keychain then brings
+   * here behind the app, leaving the old key's session stored. Commits through
+   * this device's session, so it isn't signed out the way another device's
+   * change would sign it out. `last` says when it's done.
+   */
+  changeKeyElsewhere: () => {
+    last = null
+    void changeKeyElsewhere().then(
+      (value) => (last = value),
+      (error: unknown) => (last = { error: String(error) })
+    )
+    return 'started'
+  },
+}
+
+async function changeKeyElsewhere() {
+  const oldKey = await accountKey.peek()
+  if (!oldKey) throw new Error('No account key')
+  const newKey = getRandomBytes(32)
+  const oldSigning = deriveAccountSigningKey(oldKey)
+  const newSigning = deriveAccountSigningKey(newKey)
+  const send = (keyEpoch: number) => {
+    const bytes = utf8(
+      JSON.stringify({
+        accountPub: oldSigning.publicKey,
+        ts: Date.now(),
+        nonce: toB64u(getRandomBytes(16)),
+        newAccountPub: newSigning.publicKey,
+        keyEpoch,
+        history: toB64u(getRandomBytes(64)),
+      })
+    )
+    return accountSessions.request<{ keyEpoch?: number }>({
+      url: `${apis.accounts}/accounts/v1/account/rekey`,
+      method: 'POST',
+      json: {
+        payload: toB64u(bytes),
+        signature: signAccountRequest('account/rekey', bytes, oldSigning),
+        newSignature: signAccountRequest(
+          'account/rekey/new',
+          bytes,
+          newSigning
+        ),
+      },
+      timeoutMs: 15_000,
+    })
+  }
+  // The epoch isn't kept here: try the first few.
+  let failure: unknown = null
+  for (const keyEpoch of [0, 1, 2, 3, 4]) {
+    try {
+      await send(keyEpoch)
+      failure = null
+      break
+    } catch (error) {
+      failure = error
+    }
+  }
+  if (failure) throw failure
+  await BuddiesKeychain.replaceRootSeed(toB64u(newKey))
+  return {
+    changed: true,
+    oldAccountPub: oldSigning.publicKey.slice(0, 12),
+    newAccountPub: newSigning.publicKey.slice(0, 12),
+  }
 }
 
 let selfTest: { passed: boolean | null; steps: SelfTestStep[] } | null = null

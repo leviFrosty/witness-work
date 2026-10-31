@@ -14,6 +14,7 @@ import { toPurchasesError } from '@/lib/purchasesError'
 import { logger } from '@/lib/logger'
 import { isOfflineError } from '@/lib/offlineError'
 import { getOrCreateAccountId } from '@/lib/account'
+import { noteRevenueCatAppUserId } from '@/lib/revenueCatIdentity'
 import { InstallIdUnavailableError } from '@/lib/installId'
 import { Platform } from 'react-native'
 import { addForegroundListener } from '@/lib/appLifecycle'
@@ -159,6 +160,7 @@ const CustomerProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
           logger.log('[CustomerProvider] Purchases.logIn completed', {
             created,
           })
+          noteRevenueCatAppUserId(accountId)
           seedCustomer(customerInfo)
         })
       : Purchases.getCustomerInfo().then(seedCustomer)
@@ -172,10 +174,18 @@ const CustomerProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
       } else {
         logger.warn('[CustomerProvider] initial customer info failed', error)
       }
-      // Last-resort fall back to whatever CustomerInfo the SDK has cached.
+      // Last-resort fall back to whatever CustomerInfo the SDK has cached:
+      // whoever it's logged in as from before, which `useIsSupporter` checks.
       if (accountId) {
         Purchases.getCustomerInfo()
-          .then(seedCustomer)
+          .then(async (info) => {
+            try {
+              noteRevenueCatAppUserId(await Purchases.getAppUserID())
+            } catch {
+              // Unknown: counted as this device's own, as before.
+            }
+            seedCustomer(info)
+          })
           .catch(() => {})
       }
     })

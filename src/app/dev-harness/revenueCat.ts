@@ -2,8 +2,22 @@ import Purchases from 'react-native-purchases'
 import { sha256 } from '@noble/hashes/sha2.js'
 import { bytesToHex } from '@noble/hashes/utils.js'
 import { utf8 } from '@/lib/bytes'
-import { getOrCreateAccountId } from '@/lib/account'
-import { ownAccountClaim, peerAccountClaims } from '@/lib/accountClaimRegistry'
+import {
+  boundSupporterAccount,
+  devStagedAccountFile,
+  getOrCreateAccountId,
+  stageDevAccountFile,
+} from '@/lib/account'
+import {
+  revenueCatIsOwn,
+  setDevRevenueCatLogInsFail,
+} from '@/lib/revenueCatIdentity'
+import { simulateOffline } from '@/lib/http/online'
+import {
+  ownAccountClaim,
+  peerAccountClaims,
+  setPeerAccountClaims,
+} from '@/lib/accountClaimRegistry'
 import type { AccountClaim } from '@/lib/accountClaim'
 import {
   ensureRevenueCatLinked,
@@ -15,11 +29,20 @@ import { useSupporter } from '@/stores/supporterStatus'
 /** A RevenueCat id as evidence can show it: never the id itself. */
 const fingerprint = (id: string) => bytesToHex(sha256(utf8(id))).slice(0, 12)
 
+/** A server account fingerprint as evidence shows it. */
+const short = (account: string | null | undefined) =>
+  account ? account.slice(0, 12) : null
+
 const claim = (c: AccountClaim) => ({
   id: fingerprint(c.appUserId),
   entitled: c.entitled,
   claimedAt: c.claimedAt,
+  account: short(c.account),
 })
+
+/** `'bound'` is the account bound now; null says none. */
+const accountOf = (account: string | null) =>
+  account === 'bound' ? boundSupporterAccount() : account
 
 let revenueCatLast: unknown = null
 
@@ -39,8 +62,19 @@ export const revenueCatHarness = {
     }
     const own = ownAccountClaim()
     const server = useServerSupporter.getState()
+    const file = devStagedAccountFile()
     return {
       accountId: accountId && fingerprint(accountId),
+      /** RevenueCat is logged in as `accountId` (`revenueCatIdentity`). */
+      revenueCatIsOwn: revenueCatIsOwn(),
+      accountFile:
+        file === undefined
+          ? 'not staged'
+          : file && {
+              id: fingerprint(file.accountId),
+              entitled: file.entitled,
+              account: short(file.account),
+            },
       ownClaim: own && claim(own),
       peers: peerAccountClaims().map(claim),
       server: {
@@ -50,6 +84,9 @@ export const revenueCatHarness = {
         readAt: server.entry?.readAt ?? null,
         forThisAccount:
           server.entry !== null && server.entry.account === server.account,
+        /** The session's account (fingerprint), and the one bound before. */
+        account: server.account && server.account.slice(0, 12),
+        bound: boundSupporterAccount()?.slice(0, 12) ?? null,
       },
       mirror: useSupporter.getState().isSupporter,
     }
@@ -86,6 +123,72 @@ export const revenueCatHarness = {
       (outcome) => (revenueCatLast = outcome)
     )
     return 'started'
+  },
+  /**
+   * Another of the account's devices published `appUserId` in the sync data
+   * (ADR 0040 §7), as a pull would read it, made under `account` (an
+   * `accountFingerprint`, `'bound'` for this device's, or null for an older
+   * version's untagged claim).
+   */
+  peerClaim: (
+    appUserId: string,
+    entitled: boolean,
+    account: string | null = 'bound'
+  ) => {
+    const tag = accountOf(account)
+    setPeerAccountClaims([
+      tag
+        ? { appUserId, entitled, claimedAt: 0, account: tag }
+        : { appUserId, entitled, claimedAt: 0 },
+    ])
+    return 'ok'
+  },
+  /**
+   * The Apple Account's account file (ADR 0011), which simulators can't read
+   * from iCloud: claims `appUserId` under `account` (as `peerClaim`). `null`
+   * stages no file; `unstage()` reads the transport again.
+   */
+  accountFile: (
+    appUserId: string | null,
+    entitled = true,
+    account: string | null = 'bound'
+  ) => {
+    const tag = accountOf(account)
+    stageDevAccountFile(
+      appUserId
+        ? {
+            v: 1,
+            accountId: appUserId,
+            entitled,
+            updatedAt: Date.now(),
+            claimedAt: 0,
+            ...(tag ? { account: tag } : {}),
+          }
+        : null
+    )
+    return 'ok'
+  },
+  unstageAccountFile: () => {
+    stageDevAccountFile(undefined)
+    return 'ok'
+  },
+  /**
+   * The bound account's full fingerprint, to stage its claims after a
+   * reinstall.
+   */
+  boundAccount: () => boundSupporterAccount(),
+  /**
+   * RevenueCat can't be reached (`true`): its logins fail as offline, while
+   * ww-api still answers. False lets them through and reports the connection
+   * coming back, which retries.
+   */
+  revenueCatUnreachable: (unreachable: boolean) => {
+    setDevRevenueCatLogInsFail(unreachable)
+    if (!unreachable) {
+      simulateOffline(true)
+      simulateOffline(false)
+    }
+    return 'ok'
   },
   get last() {
     return revenueCatLast

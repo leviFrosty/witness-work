@@ -7,6 +7,9 @@ const runtime = vi.hoisted(() => ({
   customer: null as unknown,
   unavailable: false,
   override: null as string | null,
+  /** The id this device should be logged in to RevenueCat as. */
+  accountId: 'ipad',
+  idListeners: [] as Array<() => void>,
 }))
 
 vi.mock('@/stores/mmkv', () => import('@/__tests__/mocks/mmkv'))
@@ -15,6 +18,13 @@ vi.mock('@/hooks/useCustomer', () => ({
     customer: runtime.customer,
     unavailable: runtime.unavailable,
   }),
+}))
+vi.mock('@/lib/account', () => ({
+  getOrCreateAccountId: () => runtime.accountId,
+  onAccountIdChange: (listener: () => void) => {
+    runtime.idListeners.push(listener)
+    return () => {}
+  },
 }))
 vi.mock('@/stores/preferences', () => ({
   usePreferences: (select: (s: unknown) => unknown) =>
@@ -48,6 +58,7 @@ const load = async () => {
     '@/lib/serverAccount/serverSupporter'
   )
   const { useSupporter } = await import('@/stores/supporterStatus')
+  const { noteRevenueCatAppUserId } = await import('@/lib/revenueCatIdentity')
   const answer = (
     supporter: boolean,
     expiresAt: number | null,
@@ -63,7 +74,14 @@ const load = async () => {
     store.setServerSupporterAccount(
       account === null ? null : accountFingerprint(account)
     )
-  return { useIsSupporter, SupporterStoreSync, answer, signInAs, useSupporter }
+  return {
+    useIsSupporter,
+    SupporterStoreSync,
+    answer,
+    signInAs,
+    useSupporter,
+    noteRevenueCatAppUserId,
+  }
 }
 
 let renderer: ReactTestRenderer | null = null
@@ -95,6 +113,8 @@ beforeEach(() => {
   runtime.customer = notEntitled
   runtime.unavailable = false
   runtime.override = null
+  runtime.accountId = 'ipad'
+  runtime.idListeners = []
   status = null
 })
 
@@ -194,5 +214,83 @@ describe("useIsSupporter's fallback to ww-api's answer", () => {
     m.answer(true, null)
     await render(m.useIsSupporter, m.SupporterStoreSync)
     expect(m.useSupporter.getState().isSupporter).toBe(true)
+  })
+
+  it("the mirror doesn't take an answer before the session says whose", async () => {
+    runtime.customer = null
+    const m = await load()
+    m.answer(true, null)
+    await render(m.useIsSupporter, m.SupporterStoreSync)
+    expect(m.useSupporter.getState().isSupporter).toBe(false)
+
+    await act(async () => m.signInAs(ACCOUNT))
+    expect(m.useSupporter.getState().isSupporter).toBe(true)
+  })
+
+  it('the mirror reads again for a new account', async () => {
+    runtime.customer = entitled
+    const m = await load()
+    m.signInAs(ACCOUNT)
+    await render(m.useIsSupporter, m.SupporterStoreSync)
+    expect(m.useSupporter.getState().isSupporter).toBe(true)
+
+    // The switch drops the previous account's mirror (`onAccountSwitched`).
+    await act(async () => {
+      m.useSupporter.getState().setSupporter(false)
+      m.signInAs('acct_two')
+    })
+    expect(m.useSupporter.getState().isSupporter).toBe(true)
+  })
+})
+
+describe("RevenueCat's customer while it's another account's", () => {
+  // Another account signed in: the id adopted for the previous one is gone,
+  // and RevenueCat can't log in as this device's own yet (offline).
+  it("isn't a Supporter, and the mirror stays off", async () => {
+    runtime.customer = entitled
+    const m = await load()
+    m.noteRevenueCatAppUserId('phone')
+    m.signInAs('acct_two')
+    await render(m.useIsSupporter, m.SupporterStoreSync)
+    expect(status).toEqual({ isSupporter: false, since: null })
+    expect(m.useSupporter.getState().isSupporter).toBe(false)
+  })
+
+  it("lets the new account's answer decide", async () => {
+    runtime.customer = entitled
+    const m = await load()
+    m.noteRevenueCatAppUserId('phone')
+    m.signInAs(ACCOUNT)
+    m.answer(true, null)
+    await render(m.useIsSupporter, m.SupporterStoreSync)
+    expect(status).toEqual({ isSupporter: true, since: null })
+  })
+
+  it('counts again once RevenueCat is on its own id', async () => {
+    runtime.customer = entitled
+    const m = await load()
+    m.noteRevenueCatAppUserId('phone')
+    await render(m.useIsSupporter, m.SupporterStoreSync)
+    expect(status?.isSupporter).toBe(false)
+
+    await act(async () => m.noteRevenueCatAppUserId('ipad'))
+    expect(status).toEqual({ isSupporter: true, since: new Date(SINCE) })
+    expect(m.useSupporter.getState().isSupporter).toBe(true)
+  })
+
+  it('follows the id this device should be', async () => {
+    // The adopted id was dropped while RevenueCat stayed on it.
+    runtime.accountId = 'phone'
+    runtime.customer = entitled
+    const m = await load()
+    m.noteRevenueCatAppUserId('phone')
+    await render(m.useIsSupporter, m.SupporterStoreSync)
+    expect(status?.isSupporter).toBe(true)
+
+    await act(async () => {
+      runtime.accountId = 'ipad'
+      runtime.idListeners.forEach((listener) => listener())
+    })
+    expect(status?.isSupporter).toBe(false)
   })
 })

@@ -51,6 +51,12 @@ export type AccountFile = {
    * `updatedAt` then.
    */
   claimedAt?: number
+  /**
+   * The server account (`accountFingerprint`) the claim was made under: another
+   * account's devices leave the file alone (`decideAccountReconcile`). Absent
+   * from files older versions wrote.
+   */
+  account?: string
   deviceName?: string
 }
 
@@ -70,6 +76,11 @@ export const parseAccountFile = (json: string): AccountFile | null => {
       typeof candidate.claimedAt !== 'number'
     )
       delete candidate.claimedAt
+    if (
+      candidate.account !== undefined &&
+      typeof candidate.account !== 'string'
+    )
+      return null
     return candidate as AccountFile
   } catch {
     return null

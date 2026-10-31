@@ -92,16 +92,17 @@ const setup = (
     link?: RevenueCatLinkOutcome
     status?: () => Promise<{ supporter: boolean; expiresAt: number | null }>
     stored?: ServerSupporterEntry | null
+    bound?: string | null
     now?: number
   } = {}
 ) => {
   let stored = options.stored ?? null
+  let bound = options.bound === undefined ? null : options.bound
   let account: string | null | undefined = undefined
+  let current = options.account === undefined ? ACCOUNT : options.account
   let now = options.now ?? 10 * HOUR
   const deps = {
-    currentAccount: vi.fn(async () =>
-      options.account === undefined ? ACCOUNT : options.account
-    ),
+    currentAccount: vi.fn(async () => current),
     link: vi.fn(
       async (): Promise<RevenueCatLinkOutcome> =>
         options.link ?? { result: 'skipped' }
@@ -117,7 +118,12 @@ const setup = (
       setAccount: vi.fn((fp: string | null) => {
         account = fp
       }),
+      bound: () => bound,
+      bind: vi.fn((fp: string) => {
+        bound = fp
+      }),
     },
+    onAccountSwitched: vi.fn(),
     now: () => now,
   }
   const supporter = createServerSupporter(deps)
@@ -126,6 +132,8 @@ const setup = (
     deps,
     stored: () => stored,
     account: () => account,
+    bound: () => bound,
+    signInAs: (id: string | null) => (current = id),
     advance: (ms: number) => (now += ms),
   }
 }
@@ -142,7 +150,12 @@ describe('createServerSupporter', () => {
 
   it("takes the link's answer without asking again", async () => {
     const { supporter, deps, stored } = setup({
-      link: { result: 'linked', supporter: true, expiresAt: 99 * HOUR },
+      link: {
+        result: 'linked',
+        supporter: true,
+        expiresAt: 99 * HOUR,
+        accountId: ACCOUNT,
+      },
     })
     await supporter.refresh({ reason: 'launch' })
     expect(deps.fetchStatus).not.toHaveBeenCalled()
@@ -170,7 +183,7 @@ describe('createServerSupporter', () => {
     expect(deps.fetchStatus).toHaveBeenCalledOnce()
   })
 
-  it('never opens a session, and drops the answer without one', async () => {
+  it('never opens a session, and hides the answer without one', async () => {
     const { supporter, deps, stored, account } = setup({
       account: null,
       stored: entry(),
@@ -178,8 +191,10 @@ describe('createServerSupporter', () => {
     await supporter.refresh({ reason: 'launch' })
     expect(deps.link).not.toHaveBeenCalled()
     expect(deps.fetchStatus).not.toHaveBeenCalled()
-    expect(stored()).toBeNull()
     expect(account()).toBeNull()
+    // Kept for the account: a key changed on another device (ADR 0039) leaves
+    // a session for the old key until one opens for the new key.
+    expect(stored()).toEqual(entry())
   })
 
   it("reads again for another account, even when it's fresh", async () => {
@@ -216,20 +231,177 @@ describe('createServerSupporter', () => {
     expect(stored()).toEqual(entry())
   })
 
-  it('records a link answered elsewhere for its account', () => {
+  it('records a link answered elsewhere for its account', async () => {
     const { supporter, stored } = setup()
-    supporter.record(ACCOUNT, { supporter: true, expiresAt: 7 })
+    await supporter.record(ACCOUNT, { supporter: true, expiresAt: 7 })
     expect(stored()).toEqual(entry({ expiresAt: 7, readAt: 10 * HOUR }))
   })
 
-  it('drops the answer when the account key changes, then reads', async () => {
+  it('reads again when the account key changes', async () => {
     const { supporter, deps, stored } = setup({
       stored: entry(),
       status: async () => ({ supporter: false, expiresAt: null }),
     })
-    const done = supporter.accountChanged()
-    expect(deps.store.setEntry).toHaveBeenCalledWith(null)
-    await done
+    await supporter.accountChanged()
+    expect(deps.fetchStatus).toHaveBeenCalledOnce()
     expect(stored()).toMatchObject({ supporter: false })
+  })
+
+  it('keeps the answer through a key change on the same account', async () => {
+    // ADR 0039: the new key's session isn't open yet, then it opens for the
+    // same account.
+    const { supporter, deps, stored, account, signInAs } = setup({
+      account: null,
+      bound: accountFingerprint(ACCOUNT),
+      stored: entry({ readAt: 10 * HOUR }),
+    })
+    await supporter.accountChanged()
+    expect(account()).toBeNull()
+    expect(stored()).toEqual(entry({ readAt: 10 * HOUR }))
+
+    signInAs(ACCOUNT)
+    await supporter.refresh({ reason: 'session_opened' })
+    expect(deps.onAccountSwitched).not.toHaveBeenCalled()
+    expect(account()).toBe(accountFingerprint(ACCOUNT))
+    expect(stored()).toEqual(entry({ readAt: 10 * HOUR }))
+  })
+
+  it('reads on the account it confirmed', async () => {
+    const { supporter, deps } = setup()
+    await supporter.refresh({ reason: 'launch' })
+    expect(deps.fetchStatus).toHaveBeenCalledWith(ACCOUNT)
+  })
+
+  it('runs one forced read after the one under way, however many ask', async () => {
+    let release!: () => void
+    const { supporter, deps } = setup({
+      status: () =>
+        new Promise((resolve) => {
+          release = () => resolve({ supporter: true, expiresAt: null })
+        }),
+    })
+    const first = supporter.refresh({ reason: 'launch' })
+    await vi.waitFor(() => expect(deps.fetchStatus).toHaveBeenCalledOnce())
+    const forced = [1, 2, 3].map(() =>
+      supporter.refresh({ force: true, reason: 'session_opened' })
+    )
+    release()
+    await first
+    await vi.waitFor(() => expect(deps.fetchStatus).toHaveBeenCalledTimes(2))
+    release()
+    await Promise.all(forced)
+    expect(deps.fetchStatus).toHaveBeenCalledTimes(2)
+  })
+
+  describe('keeps each answer with its account', () => {
+    it("doesn't record a late answer for the previous account", async () => {
+      const { supporter, stored, account } = setup({ account: OTHER })
+      await supporter.record(ACCOUNT, { supporter: true, expiresAt: null })
+      expect(stored()).toBeNull()
+      expect(account()).not.toBe(accountFingerprint(ACCOUNT))
+    })
+
+    it("doesn't take a link made for another account", async () => {
+      const { supporter, deps, stored } = setup({
+        account: OTHER,
+        link: {
+          result: 'linked',
+          supporter: true,
+          expiresAt: null,
+          accountId: ACCOUNT,
+        },
+        status: async () => ({ supporter: false, expiresAt: null }),
+      })
+      await supporter.refresh({ reason: 'launch' })
+      expect(deps.fetchStatus).toHaveBeenCalledOnce()
+      expect(stored()).toMatchObject({
+        account: accountFingerprint(OTHER),
+        supporter: false,
+      })
+    })
+
+    it("doesn't record a read the account changed under", async () => {
+      const { supporter, stored, signInAs } = setup({
+        status: async () => {
+          // The request opened the new key's session on the way.
+          signInAs(OTHER)
+          return { supporter: true, expiresAt: null }
+        },
+      })
+      await supporter.refresh({ reason: 'launch' })
+      expect(stored()).toBeNull()
+    })
+
+    it('reads again when forced while a read is under way', async () => {
+      let answer!: (s: { supporter: boolean; expiresAt: null }) => void
+      const { supporter, deps, stored, signInAs } = setup({
+        status: () => new Promise((resolve) => (answer = resolve)),
+      })
+      const first = supporter.refresh({ reason: 'launch' })
+      await vi.waitFor(() => expect(deps.fetchStatus).toHaveBeenCalledOnce())
+      signInAs(OTHER)
+      const forced = supporter.refresh({
+        force: true,
+        reason: 'session_opened',
+      })
+      answer({ supporter: true, expiresAt: null })
+      await first
+      await vi.waitFor(() => expect(deps.fetchStatus).toHaveBeenCalledTimes(2))
+      answer({ supporter: false, expiresAt: null })
+      await forced
+      expect(stored()).toMatchObject({
+        account: accountFingerprint(OTHER),
+        supporter: false,
+      })
+    })
+
+    it('binds the first account it sees', async () => {
+      const { supporter, deps, bound } = setup()
+      await supporter.refresh({ reason: 'launch' })
+      expect(bound()).toBe(accountFingerprint(ACCOUNT))
+      expect(deps.onAccountSwitched).not.toHaveBeenCalled()
+    })
+
+    it('leaves the same account alone', async () => {
+      const { supporter, deps, stored } = setup({
+        bound: accountFingerprint(ACCOUNT),
+        stored: entry({ readAt: 10 * HOUR }),
+      })
+      await supporter.refresh({ reason: 'launch' })
+      expect(deps.onAccountSwitched).not.toHaveBeenCalled()
+      expect(stored()).toEqual(entry({ readAt: 10 * HOUR }))
+    })
+
+    it('drops what the previous account left when another signs in', async () => {
+      const { supporter, deps, stored, bound } = setup({
+        account: OTHER,
+        bound: accountFingerprint(ACCOUNT),
+        stored: entry({ readAt: 10 * HOUR }),
+        link: { result: 'offline' },
+      })
+      await supporter.refresh({ reason: 'launch' })
+      expect(deps.onAccountSwitched).toHaveBeenCalledOnce()
+      expect(stored()).toBeNull()
+      expect(bound()).toBe(accountFingerprint(OTHER))
+    })
+
+    it("treats an older install's answer for another account as a switch", async () => {
+      const { supporter, deps } = setup({
+        account: OTHER,
+        stored: entry({ readAt: 10 * HOUR }),
+      })
+      await supporter.refresh({ reason: 'launch' })
+      expect(deps.onAccountSwitched).toHaveBeenCalledOnce()
+    })
+
+    it('keeps the binding without a session', async () => {
+      const { supporter, deps, bound } = setup({
+        account: null,
+        bound: accountFingerprint(ACCOUNT),
+      })
+      await supporter.refresh({ reason: 'launch' })
+      expect(bound()).toBe(accountFingerprint(ACCOUNT))
+      expect(deps.onAccountSwitched).not.toHaveBeenCalled()
+    })
   })
 })

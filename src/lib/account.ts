@@ -28,63 +28,172 @@ import type { AccountClaim } from '@/lib/accountClaim'
 let _store: MMKV | null = null
 const store = (): MMKV => (_store ??= new MMKV({ id: 'account' }))
 const ADOPTED_KEY = 'adoptedAccountId'
+/** The server account (`accountFingerprint`) the adopted id belongs to. */
+const ADOPTED_ACCOUNT_KEY = 'adoptedFor'
 /** When this device's account id was first claimed (`@/lib/accountClaim`). */
 const CLAIMED_AT_KEY = 'claimedAt'
+/** The server account this device's Supporter state belongs to. */
+const BOUND_KEY = 'supporterAccount'
 
-let _cached: string | null = null
+/** The last answer, and the server account it was for. */
+let _cached: { id: string; bound: string | null } | null = null
+
+const idListeners = new Set<() => void>()
+const notifyIdChange = () => {
+  for (const listener of idListeners) listener()
+}
 
 /**
- * The identity this app presents everywhere: RevenueCat app user id and the
- * ww-proxy (Notes-Import) uuid. Resolves to the adopted shared account id when
- * this device has joined another device's claim, else the install id.
+ * Calls `listener` when the id `getOrCreateAccountId` answers may have changed:
+ * an id adopted or dropped, or another server account bound. Returns the
+ * unsubscribe.
  */
-export const getOrCreateAccountId = (): string => {
-  if (_cached) return _cached
-  const adopted = store().getString(ADOPTED_KEY)
-  if (adopted) {
-    _cached = adopted
-    return adopted
+export const onAccountIdChange = (listener: () => void): (() => void) => {
+  idListeners.add(listener)
+  return () => {
+    idListeners.delete(listener)
   }
-  const installId = getOrCreateInstallId()
-  _cached = installId
-  return installId
 }
 
 /**
- * Persist a foreign claim as this device's account id, keeping the time of the
- * claim it adopted.
+ * The server account (`accountFingerprint`) this device's Supporter state
+ * belongs to: the last one a session confirmed (`confirmSupporterAccount`).
+ * Kept through sign-outs; null until one is confirmed.
  */
-export const adoptAccountId = (accountId: string, claimedAt: number): void => {
-  store().set(ADOPTED_KEY, accountId)
-  store().set(CLAIMED_AT_KEY, claimedAt)
-  _cached = accountId
+export const boundSupporterAccount = (): string | null => {
+  try {
+    return store().getString(BOUND_KEY) ?? null
+  } catch {
+    return null
+  }
 }
 
-/**
- * Drop the adopted id so the device falls back to its install id on next
- * resolution, as a new claim: the paywall's dev "Reset purchases", and a
- * different Apple Account.
- */
-export const clearAdoptedAccountId = (): void => {
+export const bindSupporterAccount = (account: string): void => {
+  try {
+    store().set(BOUND_KEY, account)
+  } catch {
+    // Unbound until the next confirmation writes it again.
+  }
+  notifyIdChange()
+}
+
+const forgetAdopted = () => {
   store().delete(ADOPTED_KEY)
+  store().delete(ADOPTED_ACCOUNT_KEY)
   store().delete(CLAIMED_AT_KEY)
   _cached = null
 }
 
 /**
- * This device's RevenueCat claim (ADR 0040 §7): its account id, whether it's
- * entitled under it, and when the id was first claimed. A device that never
- * recorded a claim time (a first launch, or one from before claims) claims now.
- * Throws when the account id can't be read.
+ * The identity this app presents everywhere: RevenueCat app user id and the
+ * ww-proxy (Notes-Import) uuid. Resolves to the adopted shared account id when
+ * this device has joined another device's claim, else the install id. An id
+ * adopted for another server account than the bound one is dropped: it's that
+ * account's customer (a reconcile that finished after the switch, or a claim
+ * adopted before this device had an account).
  */
-export const getOwnAccountClaim = (entitled: boolean): AccountClaim => {
+export const getOrCreateAccountId = (): string => {
+  const bound = boundSupporterAccount()
+  if (_cached && _cached.bound === bound) return _cached.id
+  const adopted = store().getString(ADOPTED_KEY)
+  const adoptedFor = store().getString(ADOPTED_ACCOUNT_KEY) ?? null
+  if (
+    adopted &&
+    (adoptedFor === null || bound === null || adoptedFor === bound)
+  ) {
+    _cached = { id: adopted, bound }
+    return adopted
+  }
+  if (adopted) forgetAdopted()
+  const installId = getOrCreateInstallId()
+  _cached = { id: installId, bound }
+  return installId
+}
+
+/**
+ * Persist a foreign claim as this device's account id, keeping the time of the
+ * claim it adopted and the server account it belongs to (null when neither this
+ * device nor the claim says).
+ */
+export const adoptAccountId = (
+  accountId: string,
+  claimedAt: number,
+  account: string | null
+): void => {
+  store().set(ADOPTED_KEY, accountId)
+  if (account) store().set(ADOPTED_ACCOUNT_KEY, account)
+  else store().delete(ADOPTED_ACCOUNT_KEY)
+  store().set(CLAIMED_AT_KEY, claimedAt)
+  _cached = null
+  notifyIdChange()
+}
+
+/**
+ * Drop the adopted id so the device falls back to its install id on next
+ * resolution, as a new claim: the paywall's dev "Reset purchases", a different
+ * Apple Account, and another server account.
+ */
+export const clearAdoptedAccountId = (): void => {
+  forgetAdopted()
+  notifyIdChange()
+}
+
+/**
+ * This device's RevenueCat claim (ADR 0040 §7): its account id, whether it's
+ * entitled under it, when the id was first claimed, and the server account it's
+ * made under: `account`, or while this device has none, the account its adopted
+ * id belongs to, so rewriting the account file keeps that account's claim its
+ * own. A device that never recorded a claim time (a first launch, or one from
+ * before claims) claims now. Throws when the account id can't be read.
+ */
+export const getOwnAccountClaim = (
+  entitled: boolean,
+  account: string | null = null
+): AccountClaim => {
   const appUserId = getOrCreateAccountId()
   let claimedAt = store().getNumber(CLAIMED_AT_KEY)
   if (claimedAt === undefined) {
     claimedAt = Date.now()
     store().set(CLAIMED_AT_KEY, claimedAt)
   }
-  return { appUserId, entitled, claimedAt }
+  const tag =
+    account ??
+    (store().getString(ADOPTED_KEY) === appUserId
+      ? (store().getString(ADOPTED_ACCOUNT_KEY) ?? null)
+      : null)
+  return tag
+    ? { appUserId, entitled, claimedAt, account: tag }
+    : { appUserId, entitled, claimedAt }
+}
+
+/**
+ * Dev harness only: an account file in place of the transport's, since
+ * simulators have no iCloud or Drive. Undefined reads the transport.
+ */
+let devAccountFile: AccountFile | null | undefined
+const devAccountFileListeners = new Set<() => void>()
+
+/** Dev harness only: stages the account file (`undefined` unstages it). */
+export const stageDevAccountFile = (file: AccountFile | null | undefined) => {
+  if (!__DEV__) return
+  devAccountFile = file
+  for (const listener of devAccountFileListeners) listener()
+}
+
+/** Whether the dev harness staged the account file. */
+export const devAccountFileStaged = (): boolean =>
+  __DEV__ && devAccountFile !== undefined
+
+/** The staged account file as written so far, for the harness. */
+export const devStagedAccountFile = (): AccountFile | null | undefined =>
+  __DEV__ ? devAccountFile : undefined
+
+/** Calls `listener` when the harness stages the account file. */
+export const onDevAccountFileChange = (listener: () => void): (() => void) => {
+  devAccountFileListeners.add(listener)
+  return () => {
+    devAccountFileListeners.delete(listener)
+  }
 }
 
 export type AccountRead = {
@@ -108,6 +217,8 @@ export type AccountRead = {
  * the app) — callers treat that as "sharing unavailable", not an error.
  */
 export const readAccountFile = async (): Promise<AccountRead> => {
+  if (devAccountFileStaged())
+    return { file: devAccountFile ?? null, pending: false }
   const read = await syncTransport().readFiles(isAccountFilename)
   // `pending: null` is a binary that can't tell (see `readFiles`). Treat its
   // read as complete, as before `pending` existed: refusing would stop claims
@@ -158,7 +269,12 @@ export const writeAccountFile = async (claim: AccountClaim): Promise<void> => {
     entitled: claim.entitled,
     updatedAt: Date.now(),
     claimedAt: claim.claimedAt,
+    ...(claim.account ? { account: claim.account } : {}),
     deviceName: Device.modelName ?? undefined,
+  }
+  if (devAccountFileStaged()) {
+    devAccountFile = payload
+    return
   }
   await syncTransport().write(ACCOUNT_FILENAME, JSON.stringify(payload))
 }
@@ -174,7 +290,9 @@ export const reclaimAccountFile = async (entitled: boolean): Promise<void> => {
   if (!hasSyncTransport()) return
   if (!syncTransport().isAvailable()) return
   try {
-    await writeAccountFile(getOwnAccountClaim(entitled))
+    await writeAccountFile(
+      getOwnAccountClaim(entitled, boundSupporterAccount())
+    )
   } catch (e) {
     logger.warn('[Account] reclaim after remote wipe failed', e)
   }

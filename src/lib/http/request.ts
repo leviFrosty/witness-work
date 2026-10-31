@@ -34,6 +34,11 @@ export type RetryPolicy = {
   baseDelayMs?: number
   /** Cap for one wait, including a server's Retry-After. */
   maxDelayMs?: number
+  /**
+   * Whether a timeout is retried (default true). Off for a request whose own
+   * timeout is long, where a second try would wait as long again.
+   */
+  retryTimeouts?: boolean
 }
 
 export type RequestOptions = {
@@ -96,7 +101,8 @@ export async function request<T = unknown>(
       const failure = toHttpError(error)
       const retryable =
         failure.kind === 'offline' ||
-        failure.kind === 'timeout' ||
+        (failure.kind === 'timeout' &&
+          options.retry?.retryTimeouts !== false) ||
         failure.kind === 'rateLimited' ||
         (failure.kind === 'server' && failure.status !== 501)
       if (attempt >= retries || !retryable || options.signal?.aborted)

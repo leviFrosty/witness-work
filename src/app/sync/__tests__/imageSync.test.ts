@@ -659,6 +659,134 @@ describe('pullMissingImages', () => {
   })
 })
 
+describe('a slow link', () => {
+  const MIB = 1024 * 1024
+  const avatar = (id: string) => ({
+    kind: 'contact' as const,
+    id,
+    localPath: `file:///docs/contact-${id}-avatar.jpg`,
+    revision: 'r1',
+  })
+  const file = (id: string) => `witness-work-img-contact-${id}--r1.jpg`
+
+  it('ends an upload pass at a file that timed out, and the next pass takes the next', async () => {
+    let now = 1_000
+    const writeBinary = vi
+      .fn()
+      .mockRejectedValue(new SyncTransportError('network', 'timeout'))
+    const deps = makeDeps({
+      bridge: {
+        writeBinary,
+        readBinary: vi.fn(),
+        listBinaryFiles: vi.fn(async () => []),
+        deleteBinaryFile: vi.fn(),
+      },
+      now: () => now,
+    })
+    const sources = ['a', 'b', 'c'].map(avatar)
+
+    const first = await pushAllImages({
+      sources,
+      bookkeeping: {},
+      deps,
+      trigger: 'foreground',
+    })
+    expect(writeBinary).toHaveBeenCalledTimes(1)
+    expect(first.failed).toBe(1)
+    expect(first.bookkeeping[file('a')]).toMatchObject({
+      errorCode: 'network',
+      failures: 1,
+      failedAt: 1_000,
+    })
+    expect(first.bookkeeping).not.toHaveProperty(file('b'))
+
+    // A: backing off. B: attempted, and ends the pass in its turn.
+    now += 5_000
+    const second = await pushAllImages({
+      sources,
+      bookkeeping: first.bookkeeping,
+      deps,
+      trigger: 'foreground',
+    })
+    expect(writeBinary).toHaveBeenCalledTimes(2)
+    expect(writeBinary).toHaveBeenLastCalledWith(
+      file('b'),
+      sources[1].localPath
+    )
+    expect(second.bookkeeping[file('b')]).toMatchObject({
+      errorCode: 'network',
+    })
+    expect(second.bookkeeping).not.toHaveProperty(file('c'))
+  })
+
+  it('goes on past a failure that is not the link', async () => {
+    const writeBinary = vi
+      .fn()
+      .mockRejectedValueOnce(new SyncTransportError('too-large', 'too_large'))
+      .mockResolvedValue(2000)
+    const deps = makeDeps({
+      bridge: {
+        writeBinary,
+        readBinary: vi.fn(),
+        listBinaryFiles: vi.fn(async () => []),
+        deleteBinaryFile: vi.fn(),
+      },
+    })
+    const result = await pushAllImages({
+      sources: ['a', 'b'].map(avatar),
+      bookkeeping: {},
+      deps,
+      trigger: 'foreground',
+    })
+    expect(writeBinary).toHaveBeenCalledTimes(2)
+    expect(result).toMatchObject({ failed: 1, uploaded: 1 })
+  })
+
+  it('downloads large photos one at a time, small ones together', async () => {
+    const events: string[] = []
+    const readBinary = vi.fn(async (filename: string) => {
+      events.push(`start ${filename}`)
+      await new Promise((resolve) => setTimeout(resolve, 1))
+      events.push(`end ${filename}`)
+      return 3000
+    })
+    const sizes: Record<string, number> = {
+      a: 10 * MIB,
+      b: 10 * MIB,
+      c: 100_000,
+      d: 100_000,
+      e: 100_000,
+    }
+    const deps = makeDeps({
+      bridge: {
+        writeBinary: vi.fn(),
+        readBinary,
+        listBinaryFiles: vi.fn(async () =>
+          Object.entries(sizes).map(([id, size]) => ({
+            filename: file(id),
+            modifiedAt: 3000,
+            size,
+          }))
+        ),
+        deleteBinaryFile: vi.fn(),
+      },
+      fs: { getModifiedAt: vi.fn(async () => null) },
+    })
+    const result = await pullMissingImages({
+      expectedSources: Object.keys(sizes).map(avatar),
+      bookkeeping: {},
+      deps,
+    })
+    expect(result.downloaded).toHaveLength(5)
+    const at = (event: string) => events.indexOf(event)
+    // A large photo has the link to itself: it ends before the next starts.
+    expect(at(`end ${file('a')}`)).toBeLessThan(at(`start ${file('b')}`))
+    expect(at(`end ${file('b')}`)).toBeLessThan(at(`start ${file('c')}`))
+    // The small ones share it.
+    expect(at(`start ${file('e')}`)).toBeLessThan(at(`end ${file('c')}`))
+  })
+})
+
 describe('gcOrphanImages', () => {
   it('deletes a container binary whose contact is no longer active', async () => {
     const deleteBinaryFile = vi.fn(async () => {})

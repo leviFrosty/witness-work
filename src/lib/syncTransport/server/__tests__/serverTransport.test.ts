@@ -7,6 +7,7 @@ import {
   toServerTransportError,
   type ServerTransportDeps,
 } from '@/lib/syncTransport/server/serverTransport'
+import { photoUploadTimeoutMs } from '@/lib/syncTransport/server/syncClient'
 import {
   deriveSyncKey,
   sealSyncBlob,
@@ -15,6 +16,7 @@ import {
 import {
   derivePhotoKeys,
   photoName,
+  sealedPhotoBytes,
   sealPhoto,
 } from '@/lib/syncTransport/server/photoCrypto'
 import { createFakeSyncServer, type FakeSyncServer } from './fakeSyncServer'
@@ -369,6 +371,111 @@ describe('serverTransport photos', () => {
     expect(transport.binaryTimeoutMs).toBeGreaterThan(120_000)
   })
 
+  it('waits for the largest photo longer than its own upload can take', async () => {
+    const { transport } = await photoSetup()
+    expect(transport.binaryTimeoutMs).toBeGreaterThan(
+      photoUploadTimeoutMs(25 * 1024 * 1024) + 20_000
+    )
+  })
+
+  it('reports a photo’s transfer to the engine after sealing and before opening', async () => {
+    const events: string[] = []
+    const { transport, files } = await photoSetup({
+      pause: async () => {
+        events.push('crypto')
+      },
+    })
+    const phases = {
+      start: () => events.push('start'),
+      end: () => events.push('end'),
+    }
+    files.set('file:///a/one.jpg', photoBytes(1, 300_000))
+    await transport.writeBinary(CONTACT, 'file:///a/one.jpg', phases)
+    // Sealing is over before the put starts.
+    expect(events.at(0)).toBe('crypto')
+    expect(events.slice(-2)).toEqual(['start', 'end'])
+    expect(events.indexOf('start')).toBeGreaterThan(
+      events.lastIndexOf('crypto')
+    )
+
+    await transport.listBinaryFiles()
+    events.length = 0
+    await transport.readBinary(CONTACT, 'file:///b/one.jpg', phases)
+    // Opening starts after the get has ended.
+    expect(events.slice(0, 2)).toEqual(['start', 'end'])
+    expect(events.at(-1)).toBe('crypto')
+    expect(transport.binarySetupTimeoutMs).toBeGreaterThan(120_000)
+  })
+
+  it('uploads a large original over a slow link, and fails a slower one as a network error', async () => {
+    vi.useFakeTimers()
+    try {
+      const { transport, server, files } = await photoSetup()
+      files.set('file:///a/big.jpg', photoBytes(9, 20 * 1024 * 1024))
+      server.state.photoUploadBytesPerSecond = 120 * 1024
+      const uploaded = transport.writeBinary(CONTACT, 'file:///a/big.jpg')
+      await vi.advanceTimersByTimeAsync(11 * 60_000)
+      await expect(uploaded).resolves.toBeGreaterThan(0)
+      expect(server.photoUsage('family').count).toBe(1)
+
+      // A link too slow for any window: a network failure, which the engine
+      // backs off from and retries (never a refusal that marks the photo failed
+      // for good).
+      files.set('file:///a/other.jpg', photoBytes(8, 20 * 1024 * 1024))
+      server.state.photoUploadBytesPerSecond = 30 * 1024
+      const stalled = transport
+        .writeBinary(NOTE, 'file:///a/other.jpg')
+        .catch((error: unknown) => error)
+      await vi.advanceTimersByTimeAsync(11 * 60_000)
+      expect(await stalled).toMatchObject({ code: 'network' })
+      expect(server.photoUsage('family').count).toBe(1)
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('downloads a large original over a slow link, by the size it listed', async () => {
+    vi.useFakeTimers()
+    try {
+      const { transport, server, files } = await photoSetup()
+      files.set('file:///a/big.jpg', photoBytes(9, 20 * 1024 * 1024))
+      await transport.writeBinary(CONTACT, 'file:///a/big.jpg')
+      await transport.listBinaryFiles()
+      server.state.photoDownloadBytesPerSecond = 120 * 1024
+      server.state.log.length = 0
+      const downloaded = transport.readBinary(CONTACT, 'file:///b/big.jpg')
+      await vi.advanceTimersByTimeAsync(11 * 60_000)
+      await expect(downloaded).resolves.toBeGreaterThan(0)
+      expect(files.get('file:///b/big.jpg')).toHaveLength(20 * 1024 * 1024)
+      expect(
+        server.state.log.filter((line) => line.endsWith('sync/photos/get'))
+      ).toHaveLength(1)
+
+      // A link too slow for the window: a network failure, tried once.
+      server.state.photoDownloadBytesPerSecond = 30 * 1024
+      server.state.log.length = 0
+      const stalled = transport
+        .readBinary(CONTACT, 'file:///c/big.jpg')
+        .catch((error: unknown) => error)
+      await vi.advanceTimersByTimeAsync(11 * 60_000)
+      expect(await stalled).toMatchObject({ code: 'network' })
+      expect(
+        server.state.log.filter((line) => line.endsWith('sync/photos/get'))
+      ).toHaveLength(1)
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('lists each photo with its size, so the engine can pace downloads', async () => {
+    const { transport, files } = await photoSetup()
+    files.set('file:///a/one.jpg', photoBytes(1, 3_000))
+    await transport.writeBinary(CONTACT, 'file:///a/one.jpg')
+    expect(await transport.listBinaryFiles()).toMatchObject([
+      { filename: CONTACT, size: sealedPhotoBytes(3_000) },
+    ])
+  })
+
   it('uploads a sealed photo under its keyed name and lists it back', async () => {
     const { transport, server, files, onPhotoUsage } = await photoSetup()
     files.set('file:///doc/contact-c1.jpg', photoBytes(5))
@@ -390,7 +497,7 @@ describe('serverTransport photos', () => {
     )
 
     expect(await transport.listBinaryFiles()).toEqual([
-      { filename: CONTACT, modifiedAt: at },
+      { filename: CONTACT, modifiedAt: at, size: stored.length },
     ])
     expect(onPhotoUsage).toHaveBeenLastCalledWith(
       expect.objectContaining({ count: 1 }),
@@ -406,7 +513,7 @@ describe('serverTransport photos', () => {
 
     const tablet = await photoSetup({}, 1, server)
     expect(await tablet.transport.listBinaryFiles()).toEqual([
-      { filename: NOTE, modifiedAt: at },
+      { filename: NOTE, modifiedAt: at, size: sealedPhotoBytes(300_000) },
     ])
     expect(await tablet.transport.readBinary(NOTE, 'file:///b/n1.jpg')).toBe(at)
     expect(tablet.files.get('file:///b/n1.jpg')).toEqual(photoBytes(9, 300_000))
@@ -674,6 +781,8 @@ describe('serverTransport photos', () => {
   describe('after a key change', () => {
     const K1 = derivePhotoKeys(new Uint8Array(32).fill(1))
     const K2 = derivePhotoKeys(new Uint8Array(32).fill(2))
+    /** A `photoBytes` photo as stored: re-sealing doesn't change its size. */
+    const SEALED = sealedPhotoBytes(2_000)
     /** This device holds K2; the key history has K1's photo keys. */
     const changed = (server: FakeSyncServer) =>
       photoSetup(
@@ -695,7 +804,7 @@ describe('serverTransport photos', () => {
 
       const { transport, files } = await changed(server)
       expect(await transport.listBinaryFiles()).toEqual([
-        { filename: CONTACT, modifiedAt: at },
+        { filename: CONTACT, modifiedAt: at, size: SEALED },
       ])
       expect(await transport.readBinary(CONTACT, 'file:///b/c1.jpg')).toBe(at)
       expect(files.get('file:///b/c1.jpg')).toEqual(photoBytes(3))
@@ -731,7 +840,7 @@ describe('serverTransport photos', () => {
         [photoName(K1.nameKey, CONTACT), photoName(K2.nameKey, CONTACT)].sort()
       )
       expect(await transport.listBinaryFiles()).toEqual([
-        { filename: CONTACT, modifiedAt: at },
+        { filename: CONTACT, modifiedAt: at, size: SEALED },
       ])
       expect(await transport.readBinary(CONTACT, 'file:///b/again.jpg')).toBe(
         at
@@ -791,7 +900,7 @@ describe('serverTransport photos', () => {
 
       device.changeKey()
       expect(await device.transport.listBinaryFiles()).toEqual([
-        { filename: CONTACT, modifiedAt: at },
+        { filename: CONTACT, modifiedAt: at, size: SEALED },
       ])
       expect(
         await device.transport.readBinary(CONTACT, 'file:///a/again.jpg')
@@ -810,7 +919,7 @@ describe('serverTransport photos', () => {
 
       device.changeKey()
       expect(await device.transport.listBinaryFiles()).toEqual([
-        { filename: CONTACT, modifiedAt: at },
+        { filename: CONTACT, modifiedAt: at, size: SEALED },
       ])
     })
 

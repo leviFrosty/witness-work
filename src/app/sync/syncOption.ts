@@ -1,3 +1,4 @@
+import { endPhotoPasses } from '@/lib/syncTransport/photoEpoch'
 import { earnPasskeyPrompt } from '@/app/account/passkeyPrompt'
 import { bookkeepingForNewTransport } from '@/app/sync/imageSync'
 import { iCloudSync } from '@/app/sync/iCloudSync'
@@ -188,6 +189,8 @@ async function runSwitch(
   }
   const previous = snapshot()
   usePreferences.setState({ iCloudSyncEnabled: false })
+  // Photo passes outlive the sync idle wait; the old option's must not write.
+  endPhotoPasses()
   await iCloudSync.waitForSyncIdle()
   if (from === 'cloud') {
     await deleteOwnCloudSyncSlot()

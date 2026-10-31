@@ -8,6 +8,8 @@ import {
   type ImageSyncBookkeeping,
   type ImageSyncDeps,
   deletedElsewhere,
+  downloadWaves,
+  isLinkFailure,
   isTooLarge,
   uploadBackoffMs,
 } from '@/app/sync/imageSync'
@@ -23,7 +25,6 @@ import { syncTransportErrorCode } from '@/lib/syncTransport/types'
 
 /** A cloud photo no note refers to is kept this long first. */
 export const NOTE_IMAGE_CLOUD_GRACE_MS = 24 * 60 * 60_000
-const DOWNLOAD_CONCURRENCY = 4
 
 type Paths = { localPath: (id: string) => string }
 
@@ -106,6 +107,7 @@ export async function pushNoteImages(
         failures: entry?.lastError ? (entry.failures ?? 1) + 1 : 1,
       }
       failed++
+      if (isLinkFailure(error)) break
     }
   }
   // Untouched, it's the bookkeeping passed in.
@@ -143,8 +145,11 @@ export async function pullNoteImages(
     }
   }
   if (!wanted.length) return { downloaded: [], failed: 0, seen }
-  const container = new Set(
-    (await deps.bridge.listBinaryFiles()).map((file) => file.filename)
+  const container = new Map(
+    (await deps.bridge.listBinaryFiles()).map((file) => [
+      file.filename,
+      file.size,
+    ])
   )
   // Not uploaded (yet): its device has photo sync off, or is still uploading.
   const available = wanted.filter((id) =>
@@ -154,10 +159,13 @@ export async function pullNoteImages(
   await args.prepare()
   const downloaded: string[] = []
   let failed = 0
-  for (let start = 0; start < available.length; start += DOWNLOAD_CONCURRENCY) {
+  const waves = downloadWaves(available, (id) =>
+    container.get(filenameForNoteImage(id))
+  )
+  for (const wave of waves) {
     if (deps.canTransfer && !deps.canTransfer()) break
     await Promise.all(
-      available.slice(start, start + DOWNLOAD_CONCURRENCY).map(async (id) => {
+      wave.map(async (id) => {
         try {
           const filename = filenameForNoteImage(id)
           const containerMtime = await deps.bridge.readBinary(

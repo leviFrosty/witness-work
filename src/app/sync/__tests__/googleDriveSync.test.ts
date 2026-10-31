@@ -409,6 +409,7 @@ describe('Google Drive sync between Android devices', () => {
     const tablet = await device('tablet')
     tablet.usePreferences.setState({ iCloudSyncIncludeImages: true })
     await tablet.iCloudSync.pullAndMerge('manual')
+    await tablet.iCloudSync.imageWorkSettled()
     const avatar = tablet.useContacts.getState().contacts[0].avatar
     expect(avatar?.type).toBe('image')
     const local = avatar!.value.split('?')[0]

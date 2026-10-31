@@ -1,3 +1,4 @@
+import { endPhotoPasses } from '@/lib/syncTransport/photoEpoch'
 import { AppState, Platform } from 'react-native'
 import { getRandomBytes } from 'expo-crypto'
 import { sha256 } from '@noble/hashes/sha2.js'
@@ -401,6 +402,7 @@ export async function leaveCloudSyncAccount(flush: () => Promise<unknown>) {
     LEAVE_WAIT_MS
   )
   await deleteOwnCloudSyncSlot()
+  endPhotoPasses()
   usePreferences.setState({
     ...CLOUD_ACCOUNT_CHANGE_RESET,
     cloudSyncAccountToken: null,
@@ -506,12 +508,14 @@ export function installCloudSyncRuntime(canSync: () => boolean): () => void {
     resetPhotoUsage()
     // Another account's photos: each is checked against its listing, and a
     // full account there doesn't show here (ADR 0030 §7).
-    if (change === 'key_changed' && usesCloudSync())
+    if (change === 'key_changed' && usesCloudSync()) {
+      endPhotoPasses()
       usePreferences.setState((state) => ({
         iCloudImageSync: bookkeepingForNewTransport(
           state.iCloudImageSync ?? {}
         ),
       }))
+    }
     cloudSyncTransport.notifyAvailabilityChange()
     void refreshCloudSyncStatus({ force: true }).then(update)
   })

@@ -49,6 +49,8 @@ export type UploadStatus = {
 export type BinaryFileInfo = {
   filename: string
   modifiedAt: number
+  /** The stored size in bytes, when the transport's listing gives it. */
+  size?: number
 }
 
 export type TransportSubscription = { remove: () => void }
@@ -93,6 +95,13 @@ export const syncTransportErrorCode = (
 ): SyncTransportErrorCode | null =>
   error instanceof SyncTransportError ? error.code : null
 
+/**
+ * What a transport tells the engine about a photo transfer it's waiting on:
+ * `start` as the request goes out, `end` once its answer is in. Sealing before
+ * a put and opening after a get are local work, not the link.
+ */
+export type TransferPhases = { start(): void; end(): void }
+
 export interface SyncTransport {
   readonly kind: SyncTransportKind
   /**
@@ -114,11 +123,20 @@ export interface SyncTransport {
    */
   readonly binaryWritesPaused?: boolean
   /**
-   * Longest the engine waits for `writeBinary` or `readBinary`, when a photo
-   * can take longer than `TRANSPORT_TIMEOUT_MS` (Cloud Sync's 25 MiB blobs).
-   * Absent means `TRANSPORT_TIMEOUT_MS`.
+   * Longest the engine waits for the transfer in `writeBinary` or `readBinary`
+   * (the request, between the transport's `start` and `end`), when a photo can
+   * take longer than `TRANSPORT_TIMEOUT_MS` (Cloud Sync's 25 MiB blobs). Absent
+   * means `TRANSPORT_TIMEOUT_MS`. A transport that never reports its transfer
+   * gets this for the whole call.
    */
   readonly binaryTimeoutMs?: number
+  /**
+   * Longest the engine waits for the rest of `writeBinary` or `readBinary`,
+   * around the transfer (the session, reading, sealing, opening, writing the
+   * file): a backstop against a hang, not a budget for the link. Absent means
+   * `binaryTimeoutMs`.
+   */
+  readonly binarySetupTimeoutMs?: number
   /**
    * Longest the engine waits for `write`, when the transport's own requests can
    * take longer than `TRANSPORT_TIMEOUT_MS` (Cloud Sync's upload). Absent means
@@ -159,9 +177,17 @@ export interface SyncTransport {
   /** Deletes every JSON sync file, including the account file. */
   deleteAll(): Promise<void>
   /** Uploads a local file as a photo binary; resolves to its mtime. */
-  writeBinary(filename: string, sourcePath: string): Promise<number>
+  writeBinary(
+    filename: string,
+    sourcePath: string,
+    phases?: TransferPhases
+  ): Promise<number>
   /** Downloads a photo binary to a local path; resolves to its cloud mtime. */
-  readBinary(filename: string, destinationPath: string): Promise<number>
+  readBinary(
+    filename: string,
+    destinationPath: string,
+    phases?: TransferPhases
+  ): Promise<number>
   listBinaryFiles(): Promise<BinaryFileInfo[]>
   deleteBinaryFile(filename: string): Promise<void>
   deleteAllBinaries(): Promise<void>

@@ -222,6 +222,8 @@ export type BearerAccountTransport = {
   responseType?: RequestOptions['responseType']
   timeoutMs?: number
   idempotent?: boolean
+  /** An idempotent op retries a timeout once; off when its timeout is long. */
+  retryTimeouts?: boolean
 }
 
 /**
@@ -256,7 +258,9 @@ export function sendBearerAccountOp<T>(
       responseType: transport.responseType,
       timeoutMs: transport.timeoutMs ?? ACCOUNT_TIMEOUT_MS,
       idempotent: transport.idempotent,
-      retry: transport.idempotent ? { retries: 1 } : undefined,
+      retry: transport.idempotent
+        ? { retries: 1, retryTimeouts: transport.retryTimeouts }
+        : undefined,
       signal: options.signal,
       fetchImpl: options.fetchImpl,
     })

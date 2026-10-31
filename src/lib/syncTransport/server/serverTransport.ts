@@ -29,7 +29,8 @@ import {
   listSyncPhotos,
   listSyncSlots,
   parsePhotoUsage,
-  PHOTO_TIMEOUT_MS,
+  PHOTO_MAX_DOWNLOAD_TIMEOUT_MS,
+  PHOTO_MAX_UPLOAD_TIMEOUT_MS,
   putSyncPhoto,
   putSyncSlot,
   SYNC_LIMITS,
@@ -157,8 +158,24 @@ export type ServerTransportDeps = {
  */
 export const SERVER_WRITE_TIMEOUT_MS = BLOB_TIMEOUT_MS + 30_000
 
-/** The engine's wait for a photo: its own request's, plus sealing it. */
-export const SERVER_BINARY_TIMEOUT_MS = PHOTO_TIMEOUT_MS + 30_000
+/**
+ * The engine's wait for a photo: its own request's (the longest an upload's or
+ * a download's is), plus sealing or opening it. A backstop; the put and the get
+ * time out on their own. A session refresh (401, then `withSession` sends the
+ * request again) can run past it; that's harmless, as the next try finds the
+ * photo already there (`existed: true`).
+ */
+export const SERVER_BINARY_TIMEOUT_MS =
+  Math.max(PHOTO_MAX_DOWNLOAD_TIMEOUT_MS, PHOTO_MAX_UPLOAD_TIMEOUT_MS) + 30_000
+
+/**
+ * The engine's wait around a photo's transfer: opening the session, reading,
+ * sealing or opening 25 MiB, writing the file. Local work that takes as long as
+ * the phone is slow (55 to 113 seconds for 24 MiB on an emulator's dev build),
+ * so it doesn't count against `SERVER_BINARY_TIMEOUT_MS`; this only keeps a
+ * hang from holding the photo pass forever.
+ */
+export const SERVER_BINARY_SETUP_TIMEOUT_MS = 5 * 60_000
 
 /** A hash of every key `access` opens with, to see when they change. */
 const keysFingerprint = (access: ServerSyncAccess) =>
@@ -272,8 +289,11 @@ export function createServerTransport(
   let photoFilenames = new Map<string, string | null>()
   /** The older keys a listed photo's meta opened with, by name. */
   let olderKeysByName = new Map<string, PhotoKeys>()
-  /** The listed name of each filename, used rather than computing it again. */
-  let listedNames = new Map<string, string>()
+  /**
+   * The listed name and blob size of each filename: the name is used rather
+   * than computing it again, the size sets how long a download waits.
+   */
+  let listedPhotos = new Map<string, { name: string; size: number }>()
   /** The keys the slot cache and photo maps were filled under, hashed. */
   let openedWith: string | null = null
   /** The account's photo storage as last heard, for a refusal without it. */
@@ -295,7 +315,7 @@ export function createServerTransport(
       cache = new Map()
       photoFilenames = new Map()
       olderKeysByName = new Map()
-      listedNames = new Map()
+      listedPhotos = new Map()
       lastUsage = null
       cacheAccount = current.accountId
       seq = 0
@@ -308,7 +328,7 @@ export function createServerTransport(
       cache = new Map()
       photoFilenames = new Map()
       olderKeysByName = new Map()
-      listedNames = new Map()
+      listedPhotos = new Map()
       openedWith = keysId
     }
     return current
@@ -383,8 +403,9 @@ export function createServerTransport(
     const address = (filename: string) => ({
       accountId: current.accountId,
       name:
-        listedNames.get(filename) ??
+        listedPhotos.get(filename)?.name ??
         photoName(current.photoKeys.nameKey, filename),
+      size: listedPhotos.get(filename)?.size,
     })
     return { current, address }
   }
@@ -397,17 +418,16 @@ export function createServerTransport(
   const findUnderOtherName = async (
     current: ServerSyncAccess,
     filename: string,
-    tried: string
+    tried: string,
+    size: number | undefined
   ) => {
     for (const keys of [current.photoKeys, ...(current.olderPhotoKeys ?? [])]) {
       const name = photoName(keys.nameKey, filename)
       if (name === tried) continue
-      const target = {
-        accountId: current.accountId,
-        name,
-      }
+      // Re-sealing keeps the photo's size, so the listed one sets the wait.
+      const target = { accountId: current.accountId, name, size }
       try {
-        const got = await getSyncPhoto(current.options, target.name)
+        const got = await getSyncPhoto(current.options, target.name, size)
         return { target, keys, got }
       } catch (error) {
         if (!(error instanceof HttpError && error.serverCode === 'not_found'))
@@ -428,6 +448,7 @@ export function createServerTransport(
     },
     writeTimeoutMs: SERVER_WRITE_TIMEOUT_MS,
     binaryTimeoutMs: SERVER_BINARY_TIMEOUT_MS,
+    binarySetupTimeoutMs: SERVER_BINARY_SETUP_TIMEOUT_MS,
     isAvailable: deps.isAvailable,
     identityToken: deps.identityToken,
     identityTokenMatches: (stored) => {
@@ -516,7 +537,7 @@ export function createServerTransport(
       cache = new Map()
     },
 
-    async writeBinary(filename, sourcePath) {
+    async writeBinary(filename, sourcePath, phases) {
       if (!deps.files) throw new SyncTransportError('unknown', 'no photo files')
       // Legacy avatar names were last-writer-wins; the engine gives the photo
       // a revision before it comes here.
@@ -566,14 +587,17 @@ export function createServerTransport(
         deps.randomBytes(24)
       )
       try {
+        // Sealed: from here the engine's wait is the put's.
+        phases?.start()
         const put = await putSyncPhoto(
           current.options,
           { name: target.name, meta, blob },
           slotId()
         )
+        phases?.end()
         photoFilenames.set(target.name, filename)
         olderKeysByName.delete(target.name)
-        listedNames.set(filename, target.name)
+        listedPhotos.set(filename, { name: target.name, size: blob.length })
         usage(put.usage, 'put')
         return put.createdAt
       } catch (error) {
@@ -581,23 +605,28 @@ export function createServerTransport(
       }
     },
 
-    async readBinary(filename, destinationPath) {
+    async readBinary(filename, destinationPath, phases) {
       if (!deps.files) throw new SyncTransportError('unknown', 'no photo files')
       const { current, address } = await photoAccess()
       let target = address(filename)
       let keys = olderKeysByName.get(target.name) ?? current.photoKeys
       let got: Awaited<ReturnType<typeof getSyncPhoto>>
       try {
-        got = await getSyncPhoto(current.options, target.name)
+        phases?.start()
+        got = await getSyncPhoto(current.options, target.name, target.size)
+        phases?.end()
       } catch (error) {
         // Not under that name: a photo a key change didn't re-seal yet is
         // under an older key's, and one it re-sealed since it was listed
         // under the current key's (docs/account-key-change.md).
         const found =
           error instanceof HttpError && error.serverCode === 'not_found'
-            ? await findUnderOtherName(current, filename, target.name).catch(
-                (older: unknown) => photoFail(older, 'download')
-              )
+            ? await findUnderOtherName(
+                current,
+                filename,
+                target.name,
+                target.size
+              ).catch((older: unknown) => photoFail(older, 'download'))
             : null
         if (!found) return photoFail(error, 'download')
         ;({ target, keys, got } = found)
@@ -623,7 +652,7 @@ export function createServerTransport(
       const { photoKey, nameKey } = current.photoKeys
       const files: BinaryFileInfo[] = []
       const listed = new Set<string>()
-      const names = new Map<string, string>()
+      const names = new Map<string, { name: string; size: number }>()
       let cursor: string | null = null
       let last: SyncPhotoUsage | null = null
       do {
@@ -666,15 +695,22 @@ export function createServerTransport(
           // the current key's copy.
           const seen = names.get(filename)
           if (seen !== undefined) {
-            if (olderKeysByName.has(photo.name) || !olderKeysByName.has(seen))
+            if (
+              olderKeysByName.has(photo.name) ||
+              !olderKeysByName.has(seen.name)
+            )
               continue
             files.splice(
               files.findIndex((file) => file.filename === filename),
               1
             )
           }
-          names.set(filename, photo.name)
-          files.push({ filename, modifiedAt: photo.createdAt })
+          names.set(filename, { name: photo.name, size: photo.size })
+          files.push({
+            filename,
+            modifiedAt: photo.createdAt,
+            size: photo.size,
+          })
         }
         last = page.usage ?? last
         cursor = page.cursor
@@ -684,7 +720,7 @@ export function createServerTransport(
           photoFilenames.delete(name)
           olderKeysByName.delete(name)
         }
-      listedNames = names
+      listedPhotos = names
       usage(last, 'list')
       return files
     },
@@ -712,7 +748,7 @@ export function createServerTransport(
           photoFilenames.delete(name)
           olderKeysByName.delete(name)
         }
-        listedNames.delete(filename)
+        listedPhotos.delete(filename)
         usage(deleted.usage, 'delete')
       } catch (error) {
         photoFail(error)
@@ -729,7 +765,7 @@ export function createServerTransport(
         )
         photoFilenames = new Map()
         olderKeysByName = new Map()
-        listedNames = new Map()
+        listedPhotos = new Map()
         usage(deleted.usage, 'delete')
       } catch (error) {
         photoFail(error)
@@ -764,7 +800,7 @@ export function createServerTransport(
       cache = new Map()
       photoFilenames = new Map()
       olderKeysByName = new Map()
-      listedNames = new Map()
+      listedPhotos = new Map()
       openedWith = null
       cacheAccount = null
       seq = 0

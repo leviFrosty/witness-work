@@ -74,18 +74,15 @@ import { RESET_STORES, resetLocalData } from '@/app/dev-harness/resetLocalData'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 import { initialBuddiesState } from '@/features/buddies/lib/state'
 import useCategories from '@/stores/categories'
+import useContacts from '@/stores/contactsStore'
+import useConversations from '@/stores/conversationStore'
+import useServiceReport from '@/stores/serviceReport'
+import useMileage from '@/stores/mileage'
+import usePet from '@/stores/pet'
 import { LDC_BUILTIN_CATEGORY_ID } from '@/constants/categories'
 
 /** Persisted stores a reset clears through their own actions, not RESET_STORES. */
-const RESET_BY_ACTIONS = [
-  'contacts',
-  'conversations',
-  'serviceReports',
-  'mileage',
-  'petCompanion',
-  'preferences',
-  'profile',
-]
+const RESET_BY_ACTIONS = ['preferences', 'profile']
 
 /** MMKV instances a reset clears, besides the default one. */
 const CLEARED_MMKV = [
@@ -189,6 +186,33 @@ describe('resetLocalData', () => {
     resetLocalData()
     // Categories get the builtin LDC Category back; see below.
     for (const store of RESET_STORES.filter((s) => s !== useCategories))
+      expect((store as unknown as { getState: () => unknown }).getState()).toBe(
+        store.getInitialState()
+      )
+  })
+
+  it('leaves no record behind, field definitions and deletions included', () => {
+    const stores = [
+      useContacts,
+      useConversations,
+      useServiceReport,
+      useMileage,
+      usePet,
+    ]
+    useContacts.setState({
+      customFieldDefs: [{ id: 'field', label: 'Field' } as never],
+      deletedCustomFieldDefs: [{ id: 'gone', deletedAt: 1 }],
+      deletedContacts: [{ id: 'gone-contact' } as never],
+    })
+    useConversations.setState({
+      conversationFieldDefs: [{ id: 'field', label: 'Field' } as never],
+      deletedConversationFieldDefs: [{ id: 'gone', deletedAt: 1 }],
+    })
+    useServiceReport.setState({
+      deletedServiceReports: [{ id: 'gone', deletedAt: 1 } as never],
+    })
+    resetLocalData()
+    for (const store of stores)
       expect((store as unknown as { getState: () => unknown }).getState()).toBe(
         store.getInitialState()
       )

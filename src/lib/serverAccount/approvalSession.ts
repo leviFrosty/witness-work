@@ -351,6 +351,8 @@ export function createBrowserApproval(deps: BrowserApprovalDeps) {
         continue
       }
       if (terminal() || claimed) return
+      // This page ended the channel while the poll was out (Show a New Code).
+      if (!channels.includes(channel)) continue
       // Claimed, or claimed and sent already between two polls: `receive`
       // picks the key up next.
       if (
@@ -358,7 +360,11 @@ export function createBrowserApproval(deps: BrowserApprovalDeps) {
         view.phonePub
       )
         return claim(channel, view.phonePub, view.expiresAt)
-      // Burned by wrong tokens, or ended elsewhere: show a fresh one.
+      // This page only polls channels it hasn't ended, so a phone said No (or
+      // wrong tokens burned it) before a poll saw the claim. Ending drops the
+      // phone's key, so it reads like any other cancel: say so rather than
+      // quietly showing a new code.
+      if (view.status === 'cancelled') return fail('cancelled')
       if (view.status !== 'open' && view.status !== 'claimed') drop(channel)
     }
   }
@@ -718,7 +724,12 @@ export function createPhoneApproval(
     } catch (error) {
       if (terminal()) return
       const reason = approvalFailureFor(error)
-      if (reason !== 'offline' && reason !== 'conflict') return fail(reason)
+      if (reason !== 'offline' && reason !== 'conflict') {
+        // End the channel too, so the browser stops showing its code and a
+        // key that landed anyway is dropped.
+        fail(reason)
+        return void cancelOnServer()
+      }
       await settleSend(asked, reason)
     }
   }
@@ -752,7 +763,10 @@ export function createPhoneApproval(
     else if (view === 'cancelled') fail('cancelled')
     else if (view === 'claimed' && reason === 'offline')
       core.set({ ...asked, step: 'confirm', sendFailed: true })
-    else fail(reason)
+    else {
+      fail(reason)
+      void cancelOnServer()
+    }
   }
 
   /** While asking: notices the browser leaving or the channel expiring. */
@@ -789,9 +803,9 @@ export function createPhoneApproval(
     await cancelOnServer()
   }
 
-  /** The screen closed. */
+  /** The screen closed. While a send is out, its answer decides instead. */
   async function cancel(): Promise<void> {
-    if (terminal()) return
+    if (terminal() || core.state.step === 'sending') return
     core.set({ step: 'cancelled' })
     await cancelOnServer()
   }

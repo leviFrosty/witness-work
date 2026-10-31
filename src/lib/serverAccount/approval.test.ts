@@ -1,7 +1,7 @@
 import crypto from 'node:crypto'
 import { describe, expect, it } from 'vitest'
-import { fromB64u, fromUtf8, toB64u } from '@/lib/bytes'
-import { open } from '@/lib/sealedBlob'
+import { fromB64u, fromUtf8, toB64u, utf8 } from '@/lib/bytes'
+import { open, seal } from '@/lib/sealedBlob'
 import {
   APPROVAL_LOCAL_ORIGINS,
   approvalOriginsFor,
@@ -357,6 +357,27 @@ describe('approval keys', () => {
     const hello = openApprovalHello(helloKey, offer.channelId, sealed)
     expect(hello.browser).toHaveLength(64)
     expect(hello.system).toHaveLength(64)
+  })
+
+  it('drops control and format characters a browser could draw lines with', () => {
+    const helloKey = deriveApprovalHelloKey(offer.secret, offer.channelId)
+    const sealed = seal(
+      helloKey,
+      utf8(
+        JSON.stringify({
+          browser: 'Chrome\n\nNear Springfield\u202e\u0000',
+          system: ' mac\tOS ',
+          appVersion: '3.1.0\u200f',
+        })
+      ),
+      `ww-account/v1/approval/hello\n${offer.channelId}`,
+      random(12)
+    )
+    expect(openApprovalHello(helloKey, offer.channelId, sealed)).toEqual({
+      browser: 'Chrome Near Springfield',
+      system: 'mac OS',
+      appVersion: '3.1.0',
+    })
   })
 
   it('seals the account key to the browser', () => {

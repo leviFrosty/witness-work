@@ -228,7 +228,7 @@ https://app.witnesswork.app/approve#1<b64u(channelId[16] ‖ browserPub[32] ‖ 
 
 - The host is the web app's (`app-dev.witnesswork.app` on dev; a localhost origin from the dev list on a local web build), never an app link. Opened in a browser, `/approve` explains how to scan it from the app.
 - `browserPub` is the browser's temporary X25519 public key. `secret` is 16 random bytes. The fragment never reaches a server.
-- The phone accepts a code only from its own scanner (Settings → Account → Sign In on a Computer, or the existing scanner), and only for its env's hosts.
+- The phone accepts a code only from its own scanner (Settings → Account → Sign In on a Computer), and only for its env's hosts. Sign In with QR Code's scanner doesn't claim one; it says to scan it from Sign In on a Computer.
 
 #### Keys
 
@@ -276,7 +276,7 @@ Blobs use the Buddies `seal` format (`0x01 ‖ nonce[12] ‖ ChaCha20-Poly1305`)
 #### On each side
 
 - **The phone:** scan → claim → the screen shows the browser and system from the hello, where it is, the six-digit code, and a warning (not a block) when `far` → **Yes** or **No** → the [shared check](#the-shared-check-before-sensitive-actions) → `send`. No cancels the channel. A `send` that fails without an answer reads `status` before saying anything, like handoff's Allow.
-- **The browser:** shows the same code once `status` is `claimed`. Once the key arrives it opens its web session with the ticket, checks the answer's `accountId` is the sealed one (or closes the session and starts over), stores the key, and calls `done`. It then shows "Approved by _deviceName_", with **That Wasn't Me**, which signs out and wipes; and offers to add a passkey on this computer.
+- **The browser:** shows the same code once `status` is `claimed`. A channel it still polls that reads `cancelled` ends the attempt instead of making a new code: ending a channel drops `phonePub`, so a phone that claimed and said No between two polls looks like any other cancel. Once the key arrives it opens its web session with the ticket, checks the answer's `accountId` is the sealed one (or closes the session and starts over), stores the key, and calls `done`. It then shows "Approved by _deviceName_", with **That Wasn't Me**, which signs out and wipes; and offers to add a passkey on this computer.
 
 ## Activity
 

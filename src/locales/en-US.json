@@ -1268,6 +1268,8 @@
   "noPurchasesFound": "No Purchases Found",
   "noPurchasesFound_body": "We couldn't find a WitnessWork purchase for the Apple Account on this device. Make sure it's the Apple Account you bought with, then try again. Still missing? Contact support from the Help Center.",
   "noPurchasesFound_bodyAndroid": "We couldn't find a WitnessWork purchase for the Google Account in Google Play on this device. Make sure it's the Google Account you bought with, then try again. Still missing? Contact support from the Help Center.",
+  "supporterStoreAccountNotReady": "Purchases Aren't Ready Yet",
+  "supporterStoreAccountNotReady_body": "Check your connection, then try again.",
   "errorCheckingOut": "Something went wrong while checking out. Please try again.",
   "storeError_purchaseFailedTitle": "Purchase Didn't Go Through",
   "storeError_offline": "Connect to the internet, then try again.",

@@ -88,6 +88,10 @@ subscription.
   account id ships (old three-field signatures stay accepted, not vice versa).
 - The dev "Reset purchases" tool clears the adopted id, else reconcile would
   immediately re-adopt it.
+- With server accounts (ADR 0040 §7), the account file also records the
+  account fingerprint it was claimed under, and a file without one that names
+  the device's own id is rewritten with it. A device on another account leaves
+  that account's file alone, and an account switch drops the adopted id.
 - Free Notes-Import credits are per-person: the meter keys on the account id
   (falling back to the install id for pre-account clients), so a two-device
   free user shares one pool instead of getting two.

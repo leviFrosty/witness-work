@@ -7,6 +7,7 @@ import {
   toServerTransportError,
   type ServerTransportDeps,
 } from '@/lib/syncTransport/server/serverTransport'
+import { photoUploadTimeoutMs } from '@/lib/syncTransport/server/syncClient'
 import {
   deriveSyncKey,
   sealSyncBlob,
@@ -324,6 +325,39 @@ describe('serverTransport photos', () => {
       (await photoSetup({ files: undefined })).transport.supportsBinaries
     ).toBe(false)
     expect(transport.binaryTimeoutMs).toBeGreaterThan(120_000)
+  })
+
+  it('waits for the largest photo longer than its own upload can take', async () => {
+    const { transport } = await photoSetup()
+    expect(transport.binaryTimeoutMs).toBeGreaterThan(
+      photoUploadTimeoutMs(25 * 1024 * 1024) + 20_000
+    )
+  })
+
+  it('uploads a large original over a slow link, and backs off from a slower one', async () => {
+    vi.useFakeTimers()
+    try {
+      const { transport, server, files } = await photoSetup()
+      files.set('file:///a/big.jpg', photoBytes(9, 20 * 1024 * 1024))
+      server.state.photoUploadBytesPerSecond = 120 * 1024
+      const uploaded = transport.writeBinary(CONTACT, 'file:///a/big.jpg')
+      await vi.advanceTimersByTimeAsync(11 * 60_000)
+      await expect(uploaded).resolves.toBeGreaterThan(0)
+      expect(server.photoUsage('family').count).toBe(1)
+
+      // A link too slow for any window: a network failure to retry later, not
+      // a refusal that marks the photo failed for good.
+      files.set('file:///a/other.jpg', photoBytes(8, 20 * 1024 * 1024))
+      server.state.photoUploadBytesPerSecond = 30 * 1024
+      const stalled = transport
+        .writeBinary(NOTE, 'file:///a/other.jpg')
+        .catch((error: unknown) => error)
+      await vi.advanceTimersByTimeAsync(11 * 60_000)
+      expect(await stalled).toMatchObject({ code: 'network' })
+      expect(server.photoUsage('family').count).toBe(1)
+    } finally {
+      vi.useRealTimers()
+    }
   })
 
   it('uploads a sealed photo under its keyed name and lists it back', async () => {

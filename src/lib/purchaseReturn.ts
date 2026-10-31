@@ -36,6 +36,12 @@ const ALL_RETURN_KEYS: ReadonlySet<string> = new Set<ReturnKey>([
 /** Params that carry the RevenueCat customer, removed on every path. */
 const ID_PARAMS: ReadonlySet<string> = new Set(['app_user_id', 'redeem_url'])
 
+/**
+ * Marks a return the web entry forwarded from another origin, for analytics
+ * only. Removed on every path, like the ids.
+ */
+const FORWARDED_PARAM = 'forwarded'
+
 const CHECKOUT_HOST = 'pay.rev.cat'
 const REDACTED_CHECKOUT_URL = `https://${CHECKOUT_HOST}/`
 
@@ -89,6 +95,7 @@ const mentionsCheckout = (rawValue: string): boolean =>
 
 const isPurchaseParam = ({ name, value }: Param): boolean =>
   ID_PARAMS.has(name) ||
+  name === FORWARDED_PARAM ||
   (name === 'utm_content' && returnKeyOf(value) !== null) ||
   mentionsCheckout(value)
 
@@ -209,6 +216,8 @@ export type PurchaseReturn = {
   tier: PurchaseTier | null
   /** The return page on the origin checkout started from, or null. */
   forwardTo: string | null
+  /** This is the return page, forwarded here from another origin. */
+  forwarded: boolean
 }
 
 /**
@@ -225,22 +234,20 @@ export const scrubPurchaseReturn = (
   const tier = toTier(agreedValue(query, 'tier'))
   const key = agreedValue(query, 'utm_content', returnKeyOf) as ReturnKey | null
   const here = toOrigin(origin)
+  let current: URL | null = null
+  try {
+    current = new URL(href)
+  } catch {
+    // Not an address this page could have; nothing to forward or read.
+  }
+  const onReturnPage =
+    !!here && current?.origin === here && isReturnPath(current.pathname)
   let forwardTo: string | null = null
-  if (key && here) {
-    let current: URL | null = null
-    try {
-      current = new URL(href)
-    } catch {
-      // Not an address this page could have; nothing to forward.
-    }
+  if (key && onReturnPage) {
     const target = RETURN_KEYS[variant]?.[key]
-    if (
-      current?.origin === here &&
-      isReturnPath(current.pathname) &&
-      target &&
-      target !== here
-    ) {
-      forwardTo = `${target}${PURCHASE_RETURN_PATH}${tier ? `?tier=${tier}` : ''}`
+    if (target && target !== here) {
+      const query = [...(tier ? [`tier=${tier}`] : []), `${FORWARDED_PARAM}=1`]
+      forwardTo = `${target}${PURCHASE_RETURN_PATH}?${query.join('&')}`
     }
   }
   return {
@@ -248,6 +255,8 @@ export const scrubPurchaseReturn = (
     appUserId: agreedValue(query, 'app_user_id'),
     tier,
     forwardTo,
+    forwarded:
+      !forwardTo && onReturnPage && agreedValue(query, FORWARDED_PARAM) === '1',
   }
 }
 

@@ -23,8 +23,9 @@ script ever runs on the app's origin (ADR 0037 §5).
   `connect-src` allows.
 - **Never `purchasePackage` on the web.** In browser mode it renders Stripe's
   checkout inside the app. Buy opens the Web Purchase Link instead. The CSP's
-  `script-src` doesn't allow Stripe, so a mistaken call fails without loading
-  anything.
+  `script-src` doesn't allow Stripe. Once the CSP is enforced, a mistaken call
+  fails without loading anything; until then the rule is: never call it. Today
+  every profile's CSP is report-only (W2's staged rollout).
 - **Store-only calls** throw "not supported on web platform", so the web never
   makes them:
   - `syncPurchases`;
@@ -101,11 +102,21 @@ shows on the web.
 - **Where the id comes from.** A web-only account creates the id, and a
   browser joining an account adopts the one in its sync data, under the same
   rule as phones (ADR 0040 §7, ADR 0011).
-- **Buy waits for a settled id.** Buy is enabled only once the web has pulled
-  the account's sync data and settled its RevenueCat id, so it buys as the
-  customer the account's devices agree on. The id must also be one ww-api
-  accepts (`toRevenueCatAppUserId`), never RevenueCat's anonymous
+- **Buy waits for a settled id.** Buy is enabled only once this browser has an
+  account session, and the web has pulled the account's sync data and settled
+  its RevenueCat id, so it buys as the customer the account's devices agree
+  on, and only as that id: a browser still logged in to RevenueCat as another
+  customer waits. Until then, the price says why ("Sign in to buy on the web",
+  or that buying isn't available for the account yet) in place of a working
+  Buy. Until the web pulls sync data, nothing settles the id, so Beta and
+  production have no working Buy. The id must also be one
+  ww-api accepts (`toRevenueCatAppUserId`), never RevenueCat's anonymous
   `$RCAnonymousID:…`: Web Purchase Links need an identified customer.
+  - **Development builds** (localhost and `app-dev`) skip both checks and buy
+    as the customer the browser is logged in as, so sandbox checkout stays
+    testable before web sync. Beta and production never skip them. On
+    localhost, `?dev_buy_gate=1` keeps both checks, so the web specs can see
+    the production gate.
 - **The web links its customer to the account** (ADR 0029), as phones do, and
   again after every checkout return.
 - **The id is never taken from a URL.** The return page's `app_user_id` is
@@ -135,8 +146,9 @@ URL-encoded; package ids can hold spaces (`One Time`).
   { "Monthly $3.99": "<link>", "One Time $4.99": "<link>" }
   ```
 
-  A sandbox link is `sandbox/<token>`. A price whose offering has no link gets
-  no Buy button.
+  A sandbox link is `sandbox/<token>`. The web hides every price whose
+  offering has no link. When a view (Monthly, Annual or Tips) has none left,
+  it says so, as when there are no offerings.
 
 - **Where checkout returns.** Each config's links return to one host: the
   sandbox config to `app-dev.witnesswork.app`, the production config to
@@ -184,7 +196,8 @@ link had.
      known-id trade-off ADR 0029 §2 accepts.
 2. **It forwards a checkout that started elsewhere.** When `utm_content` is a
    return key, the web entry replaces the page with the return page on that
-   key's origin, carrying only `tier`, before the app mounts. The keys are a
+   key's origin, carrying only `tier` and `forwarded=1` (which that origin's
+   entry removes, and analytics counts), before the app mounts. The keys are a
    fixed list in the app, never an origin read from the URL:
    - `beta` → `https://beta.app.witnesswork.app`, in Beta and production
      builds;
@@ -199,9 +212,17 @@ link had.
      records only the time and the tier on the device; no id.
 
    Until then, it retries a few times and then says the purchase is still
-   being confirmed, with Retry. It never suggests buying again.
+   being confirmed, with Retry. It never suggests buying again. It forgets
+   the device's checkout record once it confirms.
+   - **No tier it can name** (missing or unknown): it never claims a purchase.
+     It confirms only what customer info shows, a Supporter or a web Tip from
+     after checkout opened, and names that. Otherwise, signed out or not, it
+     says it couldn't find a purchase here, with Back.
 
-4. **Another customer, or none.** The page never switches customers.
+4. **Another customer, or none.** The page never switches customers. A
+   purchase the first check confirms, for this browser's customer (or with no
+   `app_user_id` to compare), is confirmed whatever the account link says;
+   these apply only otherwise.
    - **Signed out or locked** (an installed web app whose checkout returned in
      the browser, which has its own storage): it says the purchase is
      complete, and to go back to WitnessWork to see it. The installed app

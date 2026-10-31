@@ -1,5 +1,5 @@
 import { RefreshCw as RefreshCwIcon } from 'lucide-react-native'
-import { View } from 'react-native'
+import { Platform, View } from 'react-native'
 import { errorTracking } from '@/lib/errorTracking'
 import Purchases, {
   CustomerInfo,
@@ -22,6 +22,7 @@ import Spinner from '@/components/ui/Spinner'
 import useCustomer from '@/hooks/useCustomer'
 import { isConnectivityError } from '@/lib/http/networkError'
 import { LIFETIME_SUPPORTER_ENTITLEMENT } from '@/lib/supporterSince'
+import { invalidateCustomerInfoCache } from '@/lib/revenueCatBrowser'
 import {
   billingKind,
   matchStoreProduct,
@@ -72,7 +73,10 @@ const usePurchasedProducts = (customer: CustomerInfo) => {
   useEffect(() => {
     let current = true
     const ids = JSON.parse(idsKey) as string[]
-    Purchases.getProducts(ids)
+    // Store products only; the web's browser mode has none to look up.
+    const lookup =
+      Platform.OS === 'web' ? Promise.resolve([]) : Purchases.getProducts(ids)
+    lookup
       .then((found) => {
         if (!current) return
         setProducts(found)
@@ -113,7 +117,7 @@ const PreviousDonations = ({ customer }: PreviousDonationsProps) => {
     setRefreshing(true)
     setRefreshError(null)
     try {
-      await Purchases.invalidateCustomerInfoCache()
+      await invalidateCustomerInfoCache()
       setCustomer(await Purchases.getCustomerInfo())
       prices.retry()
     } catch (error) {

@@ -21,7 +21,7 @@ export default function HandoffLinkListener() {
   useTakeoverHold('handoff-link', pendingLink !== null && onboarded)
 
   useEffect(() => {
-    void launchURL().then((url) => {
+    void launchURL('handoff').then((url) => {
       if (url && isHandoffLink(url)) setPendingLink(url)
     })
     const subscription = addLinkListener((url) => {

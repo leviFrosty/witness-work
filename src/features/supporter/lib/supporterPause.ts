@@ -13,7 +13,7 @@ import type {
  * to Google Play's native pause, which also pauses access.
  */
 
-export type StorePlatform = 'ios' | 'android'
+export type StorePlatform = 'ios' | 'android' | 'web'
 export type BillingKind = 'monthly' | 'annual' | 'other'
 export type PauseMonths = 1 | 3 | 6
 
@@ -28,10 +28,14 @@ export const PAUSE_COOLDOWN_MONTHS = 12
  */
 const PAUSE_OFFER_ID = /^supporter_pause_(\d+)m(?:_.+)?$/
 
-const STORE_FOR_PLATFORM = {
-  ios: 'APP_STORE',
-  android: 'PLAY_STORE',
-} as const
+/** The stores each platform manages, the first preferred. */
+const STORES_FOR_PLATFORM: Record<StorePlatform, readonly string[]> = {
+  ios: ['APP_STORE'],
+  android: ['PLAY_STORE'],
+  // The web's own subscription (RevenueCat Billing), else a store's, whose
+  // `managementURL` opens that store's page (docs/web-purchases.md).
+  web: ['RC_BILLING', 'APP_STORE', 'PLAY_STORE'],
+}
 
 /** The App Store reports `P1M`/`P1Y`; the paywall only sells those two. */
 export const billingKind = (
@@ -67,24 +71,29 @@ export const matchStoreProduct = (
 const manageableSubscriptions = (
   customer: CustomerInfo | null,
   platform: StorePlatform
-): PurchasesSubscriptionInfo[] =>
-  Object.values(customer?.subscriptionsByProductIdentifier ?? {})
+): PurchasesSubscriptionInfo[] => {
+  const stores = STORES_FOR_PLATFORM[platform]
+  return Object.values(customer?.subscriptionsByProductIdentifier ?? {})
     .filter(
       (sub) =>
         sub.isActive &&
-        sub.store === STORE_FOR_PLATFORM[platform] &&
+        stores.includes(sub.store) &&
         !sub.refundedAt &&
         sub.ownershipType !== 'FAMILY_SHARED'
     )
     .sort((a, b) => {
+      const store = stores.indexOf(a.store) - stores.indexOf(b.store)
+      if (store !== 0) return store
       if (a.willRenew !== b.willRenew) return a.willRenew ? -1 : 1
       return moment(b.expiresDate).diff(a.expiresDate)
     })
+}
 
 /**
  * The subscription this device can manage: active, bought in this platform's
  * store, and owned by the user. Excludes dashboard grants, refunds, Family
- * Sharing, and the other platform's store.
+ * Sharing, and the other platform's store. Phones never manage a web
+ * subscription; the web manages its own first, then a store's.
  */
 export const manageableSubscription = (
   customer: CustomerInfo | null,
@@ -219,6 +228,8 @@ const pauseAvailability = ({
     reason,
   })
   if (sub.billingIssuesDetectedAt) return unavailable('billing_issue')
+  // Supporter Pause is a store feature, offered only in the store's app.
+  if (platform === 'web') return unavailable('unsupported_plan')
   if (sub.periodType !== 'NORMAL') return unavailable('not_normal_period')
   const renewing = manageableSubscriptions(customer, platform).filter(
     (s) => s.willRenew

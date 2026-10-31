@@ -286,4 +286,89 @@ describe('useManageSubscription', () => {
     await act(async () => runtime.appStateListener?.('active'))
     expect(runtime.revalidate).toHaveBeenCalled()
   })
+
+  describe('on the web', () => {
+    const open = vi.fn()
+    const renderWeb = async () => {
+      runtime.platform = 'web'
+      vi.resetModules()
+      const module = await import(
+        '@/features/supporter/hooks/useManageSubscription'
+      )
+      const WebHarness = () => {
+        capture(module.default(true, 'settings'))
+        status = module.useSubscriptionStatus()
+        return null
+      }
+      await act(async () => {
+        create(<WebHarness />)
+      })
+    }
+    let status: { canManage: boolean; state: { kind: string } }
+    beforeEach(() => {
+      open.mockReset()
+      vi.stubGlobal('window', { open })
+    })
+    afterEach(() => {
+      vi.unstubAllGlobals()
+      vi.stubGlobal('__DEV__', false)
+    })
+
+    it('manages the web subscription in the customer portal, in a new tab', async () => {
+      runtime.customer = {
+        ...customer('RC_BILLING', 'web_jwtime_499_1mo'),
+        managementURL: 'https://billing.revenuecat.com/portal/abc',
+      }
+      await renderWeb()
+      expect(runtime.getProducts).not.toHaveBeenCalled()
+      expect(hook.canManage).toBe(true)
+      expect(status.canManage).toBe(true)
+      expect(hook.state).toMatchObject({
+        kind: 'renewing',
+        pause: { kind: 'unavailable', reason: 'unsupported_plan' },
+      })
+      await act(() => hook.openStore('cancel'))
+      expect(open).toHaveBeenCalledExactlyOnceWith(
+        'https://billing.revenuecat.com/portal/abc',
+        '_blank',
+        'noopener,noreferrer'
+      )
+      expect(runtime.showManageSubscriptions).not.toHaveBeenCalled()
+      expect(runtime.openURL).not.toHaveBeenCalled()
+      expect(runtime.invalidateCustomerInfoCache).not.toHaveBeenCalled()
+      await act(async () => runtime.appStateListener?.('active'))
+      expect(runtime.revalidate).toHaveBeenCalled()
+      expect(runtime.invalidateCustomerInfoCache).not.toHaveBeenCalled()
+    })
+
+    it('opens a store subscription’s own page from the web', async () => {
+      runtime.customer = customer()
+      await renderWeb()
+      await act(() => hook.openStore('cancel'))
+      expect(open).toHaveBeenCalledWith(
+        'https://apps.apple.com/account/subscriptions',
+        '_blank',
+        'noopener,noreferrer'
+      )
+    })
+
+    it.each([
+      null,
+      'http://billing.revenuecat.com/portal/abc',
+      'javascript:alert(1)',
+    ])(
+      'hides Manage when there’s no https page to open (%s)',
+      async (managementURL) => {
+        runtime.customer = {
+          ...customer('RC_BILLING', 'web_jwtime_499_1mo'),
+          managementURL,
+        }
+        await renderWeb()
+        expect(hook.canManage).toBe(false)
+        expect(status.canManage).toBe(false)
+        await act(() => hook.openStore('cancel'))
+        expect(open).not.toHaveBeenCalled()
+      }
+    )
+  })
 })

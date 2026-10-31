@@ -1,5 +1,5 @@
 import * as Notifications from 'expo-notifications'
-import { adoptLaunchLink, launchURL } from '@/lib/launchLinks'
+import { adoptLaunchLink, pendingLaunchURL } from '@/lib/launchLinks'
 import { logger } from '@/lib/logger'
 import { mmkvStorage } from '@/stores/mmkv'
 
@@ -25,7 +25,7 @@ let handedOffResponse: Notifications.NotificationResponse | null = null
 /** Saves what launched the app for the launch after the coming reload. */
 export async function handOffLaunchBeforeReload(): Promise<void> {
   const [link, response] = await Promise.all([
-    launchURL(),
+    pendingLaunchURL(),
     Promise.resolve()
       .then(() => Notifications.getLastNotificationResponse())
       .catch(() => null),

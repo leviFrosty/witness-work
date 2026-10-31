@@ -64,6 +64,25 @@ function nativeEnvFiles() {
   return root
 }
 
+test("every web profile keeps RevenueCat Billing's key and purchase links", () => {
+  const root = nativeEnvFiles()
+  const links = '{"Monthly $3.99":"sandbox/abc123"}'
+  for (const file of ['.env', '.env.beta', '.env.production'])
+    fs.appendFileSync(
+      path.join(root, file),
+      `\nEXPO_PUBLIC_REVENUECAT_WEB_API_KEY=rcb_test_key\nEXPO_PUBLIC_REVENUECAT_WEB_PURCHASE_LINKS='${links}'\n`
+    )
+  for (const profile of ['local', 'dev', 'beta', 'production']) {
+    const { env, excluded } = loadWebEnv(root, profile, {
+      PATH: process.env.PATH,
+    })
+    assert.equal(env.EXPO_PUBLIC_REVENUECAT_WEB_API_KEY, 'rcb_test_key')
+    assert.equal(env.EXPO_PUBLIC_REVENUECAT_WEB_PURCHASE_LINKS, links)
+    // A public key the web needs; the export check mustn't refuse it.
+    assert.ok(!excluded.includes('rcb_test_key'))
+  }
+})
+
 test('every web profile drops the dev bypass, store keys, OTA key and Maps key', () => {
   const root = nativeEnvFiles()
   for (const profile of ['local', 'dev', 'beta', 'production']) {

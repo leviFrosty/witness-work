@@ -19,6 +19,7 @@ import { Platform } from 'react-native'
 import { addForegroundListener } from '@/lib/appLifecycle'
 import { addReconnectListener } from '@/lib/http/online'
 import { ensureRevenueCatLinked } from '@/lib/serverAccount/revenueCatLinkRuntime'
+import { forgetBrowserAppUserId } from '@/lib/revenueCatBrowser'
 
 interface Props {}
 
@@ -60,7 +61,9 @@ const CustomerProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
     const apiKey =
       Platform.OS === 'android'
         ? process.env.EXPO_PUBLIC_REVENUECAT_GOOGLE_API_KEY
-        : process.env.EXPO_PUBLIC_REVENUECAT_APPLE_API_KEY
+        : Platform.OS === 'web'
+          ? process.env.EXPO_PUBLIC_REVENUECAT_WEB_API_KEY
+          : process.env.EXPO_PUBLIC_REVENUECAT_APPLE_API_KEY
     logger.log('[CustomerProvider] init')
 
     if (!apiKey) {
@@ -72,8 +75,8 @@ const CustomerProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
         )
         return
       }
-      // Web builds never carry a store key (`scripts/web.mjs`); web purchases
-      // come with RevenueCat Web Billing (ADR 0041).
+      // A web build without RevenueCat Billing's key sells nothing, which is
+      // a valid build (ADR 0041).
       if (Platform.OS === 'web') return
       // Empty key means the EAS env var was never inlined into the bundle —
       // typically caused by missing `EXPO_PUBLIC_` prefix or `secret`
@@ -113,7 +116,16 @@ const CustomerProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
       // configure({ appUserID }) would leave those anonymous purchases stranded.
       // logIn is idempotent (a no-op once accountId is already the active user),
       // so running it on every launch is safe.
-      Purchases.configure({ apiKey })
+      //
+      // The web has no anonymous purchases to carry over, so it configures as
+      // the account id: otherwise every browser would leave an anonymous
+      // customer behind in RevenueCat.
+      Purchases.configure(
+        Platform.OS === 'web' && accountId
+          ? { apiKey, appUserID: accountId }
+          : { apiKey }
+      )
+      forgetBrowserAppUserId()
       logger.log('[CustomerProvider] Purchases.configure completed')
       setReady(true)
     } catch (error) {

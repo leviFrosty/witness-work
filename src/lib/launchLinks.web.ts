@@ -1,3 +1,5 @@
+import type { LaunchLinkReader } from '@/lib/launchLinkReader'
+
 /**
  * The web app has no launch links. The page's own address is what a native
  * launch link would be, and React Navigation reads it itself; expo-linking
@@ -11,11 +13,19 @@ export function stopRecordingLaunchLinks() {}
 
 export function adoptLaunchLink(_url: string) {}
 
-export function linkSinceLaunch(): string | null {
+export type { LaunchLinkReader }
+
+export function linkSinceLaunch(_reader: LaunchLinkReader): string | null {
   return null
 }
 
-export async function launchURL(): Promise<string | null> {
+export async function launchURL(
+  _reader: LaunchLinkReader
+): Promise<string | null> {
+  return null
+}
+
+export async function pendingLaunchURL(): Promise<string | null> {
   return null
 }
 

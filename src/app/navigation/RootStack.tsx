@@ -280,7 +280,15 @@ const RootStackComponent = () => {
         />
         <RootStack.Screen
           options={{
-            header: () => <Header buttonType='back' title={i18n.t('donate')} />,
+            header: () => (
+              <Header
+                buttonType='back'
+                // Web copy never says donate (docs/web-purchases.md).
+                title={i18n.t(
+                  Platform.OS === 'web' ? 'paywallTitle' : 'donate'
+                )}
+              />
+            ),
           }}
           name='Paywall'
           getComponent={() =>
@@ -297,6 +305,16 @@ const RootStackComponent = () => {
               .default
           }
         />
+        {Platform.OS === 'web' && (
+          <RootStack.Screen
+            options={{ header: () => null }}
+            name='Web Purchase Return'
+            getComponent={() =>
+              require('@/features/supporter/screens/WebPurchaseReturnScreen')
+                .default
+            }
+          />
+        )}
         <RootStack.Screen
           options={{
             presentation: 'modal',

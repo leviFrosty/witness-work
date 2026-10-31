@@ -189,7 +189,13 @@ and CSP mode. `web:build`, the web host's deploys and its Worker
 (`apiFromEnv`). Public values such as PostHog's come from the matching native
 env files; the web build always clears the dev bypass, the RevenueCat store
 keys, the OTA key and the Android Maps key, and `web:build` fails if any of
-them, or this checkout's dev bypass, reaches `dist/`.
+them, or this checkout's dev bypass, reaches `dist/`. Web purchases need
+RevenueCat Billing's public key and links from the same files,
+`EXPO_PUBLIC_REVENUECAT_WEB_API_KEY` and
+`EXPO_PUBLIC_REVENUECAT_WEB_PURCHASE_LINKS` (`docs/web-purchases.md`); for
+development, the sandbox values are in the 1Password Agents item "RevenueCat
+web billing sandbox (W6)", for `.env.local`. Without the key the web sells
+nothing.
 
 Every `web:build` runs `pnpm sync:help` first, from its profile's
 `helpManifest` (the dev website for `local` and `dev`, `witnesswork.app` for

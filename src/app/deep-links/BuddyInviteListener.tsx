@@ -24,7 +24,7 @@ export default function BuddyInviteListener() {
   useTakeoverHold('invite-link', pendingLink !== null && enabled)
 
   useEffect(() => {
-    void launchURL().then((url) => {
+    void launchURL('buddy-invite').then((url) => {
       if (url && isInviteLink(url)) setPendingLink(url)
     })
     const subscription = addLinkListener((url) => {

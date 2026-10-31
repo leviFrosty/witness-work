@@ -139,6 +139,8 @@ export type RootStackParamList = {
       }
     | undefined
   'Thank You': { purchaseTier?: 'supporter' | 'tip' } | undefined
+  /** Web only: where web checkout returns (docs/web-purchases.md). */
+  'Web Purchase Return': { tier?: string } | undefined
   'Import and Export': { source: 'backup_reminder' } | undefined
   'Import Data': undefined
   MytimeImport: undefined

@@ -25,6 +25,7 @@ describe('scrubPurchaseReturn', () => {
       appUserId: ID,
       tier: 'supporter',
       forwardTo: null,
+      forwarded: false,
     })
   })
 
@@ -35,6 +36,7 @@ describe('scrubPurchaseReturn', () => {
       appUserId: null,
       tier: null,
       forwardTo: null,
+      forwarded: false,
     })
   })
 
@@ -161,13 +163,45 @@ describe('scrubPurchaseReturn', () => {
   })
 
   describe('forwarding', () => {
+    it('marks a forwarded return, and removes the mark', () => {
+      const result = scrubPurchaseReturn(
+        `${BETA}/supporter/thank-you?tier=tip&forwarded=1`,
+        { variant: 'beta', origin: BETA }
+      )
+      expect(result).toEqual({
+        url: `${BETA}/supporter/thank-you?tier=tip`,
+        appUserId: null,
+        tier: 'tip',
+        forwardTo: null,
+        forwarded: true,
+      })
+    })
+
+    it('forwards a return without a tier with only the mark', () => {
+      expect(
+        scrubPurchaseReturn(
+          `${PROD}/supporter/thank-you?utm_content=beta&app_user_id=${ID}`,
+          production
+        ).forwardTo
+      ).toBe(`${BETA}/supporter/thank-you?forwarded=1`)
+    })
+
+    it('reads the mark only on the return page, and removes it anywhere', () => {
+      const result = scrubPurchaseReturn(
+        `${PROD}/schedule?forwarded=1`,
+        production
+      )
+      expect(result.forwarded).toBe(false)
+      expect(result.url).toBe(`${PROD}/schedule`)
+    })
+
     it('forwards a beta return from production with only the tier', () => {
       const result = scrubPurchaseReturn(
         `${PROD}/supporter/thank-you?tier=supporter&app_user_id=${ID}&utm_content=beta&utm_source=x`,
         production
       )
       expect(result.forwardTo).toBe(
-        `${BETA}/supporter/thank-you?tier=supporter`
+        `${BETA}/supporter/thank-you?tier=supporter&forwarded=1`
       )
       expect(result.url).toBe(
         `${PROD}/supporter/thank-you?tier=supporter&utm_source=x`
@@ -183,7 +217,7 @@ describe('scrubPurchaseReturn', () => {
             origin: PROD,
           }
         ).forwardTo
-      ).toBe(`${BETA}/supporter/thank-you?tier=tip`)
+      ).toBe(`${BETA}/supporter/thank-you?tier=tip&forwarded=1`)
     })
 
     it('forwards a local return in a development build', () => {
@@ -192,7 +226,7 @@ describe('scrubPurchaseReturn', () => {
           `${DEV}/supporter/thank-you?tier=tip&utm_content=local`,
           { variant: 'development', origin: DEV }
         ).forwardTo
-      ).toBe(`${LOCAL}/supporter/thank-you?tier=tip`)
+      ).toBe(`${LOCAL}/supporter/thank-you?tier=tip&forwarded=1`)
     })
 
     it('never forwards to localhost from a production or beta build', () => {
@@ -236,7 +270,7 @@ describe('scrubPurchaseReturn', () => {
           `${PROD}/supporter/thank-you?tier=tip&UTM_CONTENT=%42eta`,
           production
         ).forwardTo
-      ).toBe(`${BETA}/supporter/thank-you?tier=tip`)
+      ).toBe(`${BETA}/supporter/thank-you?tier=tip&forwarded=1`)
     })
 
     it('does not forward when duplicated keys disagree', () => {
@@ -287,7 +321,7 @@ describe('scrubPurchaseReturn', () => {
           `${PROD}/supporter/thank-you?tier=evil&utm_content=beta`,
           production
         ).forwardTo
-      ).toBe(`${BETA}/supporter/thank-you`)
+      ).toBe(`${BETA}/supporter/thank-you?forwarded=1`)
     })
 
     it('does not forward from an address on another origin', () => {

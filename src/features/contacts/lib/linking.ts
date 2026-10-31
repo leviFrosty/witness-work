@@ -5,6 +5,7 @@ import {
 import * as Linking from 'expo-linking'
 import { APP_LINK_HOSTS } from '@/constants/appLinks'
 import { launchURL, linkSinceLaunch } from '@/lib/launchLinks'
+import { webLinkingScreens } from '@/lib/webLinkingScreens'
 import { usePreferences } from '@/stores/preferences'
 import { afterTakeovers } from '@/stores/takeover'
 import { RootStackParamList } from '@/types/rootStack'
@@ -76,13 +77,14 @@ export const linking: LinkingOptions<RootStackParamList> = {
       // "+" button on the Calendar widget lands here with no date to start
       // a fresh plan; the in-app schedule UI owns per-date plan editing.
       PlanDay: 'day',
+      ...webLinkingScreens,
     },
   },
   // The link that launched the app, or one tapped while it was starting. One
   // that comes during onboarding names screens that don't exist yet, so it
   // waits for `subscribe` to open it once onboarding is done.
   async getInitialURL() {
-    const url = await launchURL()
+    const url = await launchURL('navigation')
     openedAtLaunch = url
     if (url && !usePreferences.getState().onboardingComplete) {
       heldAtLaunch = url
@@ -111,7 +113,7 @@ export const linking: LinkingOptions<RootStackParamList> = {
     )
     // A link tapped after the launch link was read but before this listener
     // was up, or the launch link held for onboarding.
-    const missed = linkSinceLaunch()
+    const missed = linkSinceLaunch('navigation')
     const pending = missed && missed !== openedAtLaunch ? missed : heldAtLaunch
     heldAtLaunch = null
     if (pending) deliver(pending)

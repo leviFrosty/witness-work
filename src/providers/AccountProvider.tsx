@@ -8,6 +8,7 @@ import {
 } from 'react'
 import { addForegroundListener } from '@/lib/appLifecycle'
 import { addReconnectListener } from '@/lib/http/online'
+import { invalidateCustomerInfoCache } from '@/lib/revenueCatBrowser'
 import Purchases from 'react-native-purchases'
 import { errorTracking } from '@/lib/errorTracking'
 import { toPurchasesError } from '@/lib/purchasesError'
@@ -288,7 +289,7 @@ const AccountProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
             // The file disagrees with our cached entitlement for our own id —
             // another device purchased or lapsed. Fetch the truth, then
             // correct the file only if IT was the stale side.
-            Purchases.invalidateCustomerInfoCache()
+            void invalidateCustomerInfoCache()
             const info = await Purchases.getCustomerInfo()
             setCustomer(info)
             const entitledNow = supporterSinceDate(info) !== null

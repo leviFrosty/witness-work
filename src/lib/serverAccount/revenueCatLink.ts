@@ -48,6 +48,8 @@ export type RevenueCatLinkReason =
   /** The server refused a paid call as not a Supporter. */
   | 'refused'
   | 'tools'
+  /** Web checkout returned (docs/web-purchases.md "The return page"). */
+  | 'purchase_return'
 
 export type RevenueCatLinkOutcome =
   /** Linked; the account's status as the server answered. */

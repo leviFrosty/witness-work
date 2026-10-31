@@ -4,7 +4,7 @@ import {
   Heart as HeartIcon,
 } from 'lucide-react-native'
 import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
-import { View } from 'react-native'
+import { Platform, View } from 'react-native'
 import Spinner from '@/components/ui/Spinner'
 import Sheet from '@/components/ui/Sheet'
 import { ReactNode } from 'react'
@@ -78,14 +78,22 @@ export const TierSwitchCard = ({
         </Text>
         <Button
           onPress={onPress}
-          style={{
-            paddingVertical: 6,
-            paddingHorizontal: 9,
-            borderRadius: theme.numbers.borderRadiusSm,
-            borderWidth: 1,
-            borderColor: isSupporter ? tint : theme.colors.border,
-            backgroundColor: ctaBackground,
-          }}
+          style={[
+            {
+              paddingVertical: 6,
+              paddingHorizontal: 9,
+              borderRadius: theme.numbers.borderRadiusSm,
+              borderWidth: 1,
+              borderColor: isSupporter ? tint : theme.colors.border,
+              backgroundColor: ctaBackground,
+            },
+            // React Native Web ignores `hitSlop`; 44pt there.
+            Platform.OS === 'web' && {
+              minHeight: 44,
+              minWidth: 44,
+              justifyContent: 'center',
+            },
+          ]}
         >
           <Text
             style={{

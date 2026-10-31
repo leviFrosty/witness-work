@@ -112,6 +112,8 @@ const KEPT_MMKV: Record<string, string> = {
   'app-store-ratings': 'cached App Store totals for the paywall',
   'help-center': "the website's Help Center manifest, never the User's",
   'analytics-frequency': 'analytics throttling, never shown',
+  'web-checkout':
+    "web only: an open checkout's tier and start time, for its return page",
 }
 
 /** Every zustand `persist` store name and MMKV instance id in the app. */

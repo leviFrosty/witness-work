@@ -19,6 +19,13 @@ const runtime = vi.hoisted(() => {
     foreground: new Set<() => void>(),
     reconnect: new Set<() => void>(),
     beforeRemove: undefined as (() => void) | undefined,
+    webCheckout: null as null | {
+      region: 'loading' | 'allowed' | 'blocked'
+      sells: ReturnType<typeof vi.fn>
+      waitingFor: 'session' | 'settled_id' | null
+      canBuy: ReturnType<typeof vi.fn>
+      open: ReturnType<typeof vi.fn>
+    },
   }
 })
 vi.mock('@/components/ui/layout/FoldSplit', () => ({
@@ -138,6 +145,15 @@ vi.mock('@/features/supporter/components/PaywallOptions', () => ({
   DevPillButton: 'DevPillButton',
   AllOptionsSheet: 'AllOptionsSheet',
 }))
+vi.mock('@/features/supporter/hooks/useWebCheckout', () => ({
+  default: () => runtime.webCheckout,
+}))
+vi.mock('@/features/supporter/components/WebRegionNotice', () => ({
+  default: 'WebRegionNotice',
+}))
+vi.mock('@/lib/revenueCatBrowser', () => ({
+  invalidateCustomerInfoCache: vi.fn(async () => {}),
+}))
 vi.mock('@/features/supporter/components/PaywallPurchaseFooter', () => ({
   default: 'PaywallPurchaseFooter',
   PaywallLegalFooter: 'PaywallLegalFooter',
@@ -191,6 +207,7 @@ beforeEach(() => {
     gateAttribution: attribution,
   }
   runtime.beforeRemove = undefined
+  runtime.webCheckout = null
   runtime.foreground.clear()
   runtime.reconnect.clear()
   runtime.purchase.mockResolvedValue({
@@ -416,5 +433,147 @@ describe('restore', () => {
       'noPurchasesFound_body'
     )
     expect(events('supporter_restore_empty')).toHaveLength(1)
+  })
+})
+
+describe('on the web', () => {
+  const web = (region: 'loading' | 'allowed' | 'blocked' = 'allowed') => {
+    runtime.platform = 'web'
+    runtime.webCheckout = {
+      region,
+      sells: vi.fn(() => true),
+      waitingFor: null,
+      canBuy: vi.fn(() => true),
+      open: vi.fn(async () => true),
+    }
+    return runtime.webCheckout
+  }
+  const footer = () => renderer!.root.findAllByType(PaywallPurchaseFooter)
+
+  it('opens the hosted checkout, never the in-app purchase', async () => {
+    const checkout = web()
+    await render()
+    expect(footer()[0].props.selected).toBe(true)
+    await purchase()
+    expect(runtime.purchase).not.toHaveBeenCalled()
+    expect(checkout.open).toHaveBeenCalledExactlyOnceWith(
+      expect.objectContaining({ identifier: 'annual' }),
+      'supporter'
+    )
+    expect(events('supporter_web_checkout_opened')[0][1]).toEqual({
+      source: 'feature_gate',
+      ...attribution,
+      tier: 'supporter',
+      billing: 'annual',
+      product_id: 'annual',
+      package_id: 'annual',
+      price: 10,
+      currency: 'USD',
+    })
+    expect(events('supporter_purchase_started')).toHaveLength(0)
+    expect(runtime.replace).not.toHaveBeenCalled()
+  })
+
+  it('offers no Restore Purchases', async () => {
+    web()
+    await render()
+    expect(
+      renderer!.root.findByType(PaywallLegalFooter).props.showRestore
+    ).toBe(false)
+  })
+
+  it('has no Buy until checkout can open', async () => {
+    const checkout = web()
+    checkout.canBuy.mockReturnValue(false)
+    await render()
+    expect(footer()[0].props.selected).toBe(false)
+    await purchase()
+    expect(checkout.open).not.toHaveBeenCalled()
+    expect(events('supporter_web_checkout_opened')).toHaveLength(0)
+  })
+
+  it.each([
+    ['session', 'paywallSignInToBuyWeb'],
+    ['settled_id', 'paywallBuyUnavailableForAccountWeb'],
+  ] as const)(
+    'says why Buy waits for the %s, instead of a dead button',
+    async (waitingFor, reason) => {
+      const checkout = web()
+      checkout.waitingFor = waitingFor
+      checkout.canBuy.mockReturnValue(false)
+      await render()
+      expect(footer()[0].props).toMatchObject({
+        selected: false,
+        unavailableReason: reason,
+      })
+    }
+  )
+
+  it('gives no reason once Buy can open checkout', async () => {
+    web()
+    await render()
+    expect(footer()[0].props.unavailableReason).toBeUndefined()
+  })
+
+  it('hides prices whose offering has no link', async () => {
+    const checkout = web()
+    checkout.sells.mockImplementation((offering) => offering !== 'tip')
+    await render()
+    await act(async () => {
+      renderer!.root.findByType(TierSwitchCard).props.onPress()
+    })
+    expect(renderer!.root.findAllByType('PriceOption' as never)).toHaveLength(0)
+    expect(
+      renderer!.root
+        .findAllByType('InlineNotice' as never)
+        .map((notice) => notice.props.message)
+    ).toEqual(['thereAreNoOfferingsWeb'])
+  })
+
+  it('shows the empty state when no offering has a link', async () => {
+    const checkout = web()
+    checkout.sells.mockReturnValue(false)
+    await render()
+    expect(footer()).toHaveLength(0)
+    expect(renderer!.root.findAllByType('PriceOption' as never)).toHaveLength(0)
+    expect(renderer!.root.findByType('Empty' as never).props.description).toBe(
+      'thereAreNoOfferingsWeb'
+    )
+  })
+
+  it('waits for the visitor’s country before showing prices', async () => {
+    web('loading')
+    await render()
+    expect(footer()).toHaveLength(0)
+    expect(renderer!.root.findAllByType('Spinner' as never)).toHaveLength(1)
+  })
+
+  it('shows the region notice instead of prices and Buy, keeping the benefits', async () => {
+    web('blocked')
+    runtime.getOfferings.mockRejectedValueOnce(new Error('network error'))
+    await render()
+    expect(
+      renderer!.root.findAllByType('WebRegionNotice' as never)
+    ).toHaveLength(1)
+    expect(footer()).toHaveLength(0)
+    expect(renderer!.root.findAllByType('PriceOption' as never)).toHaveLength(0)
+    expect(renderer!.root.findAllByType('FounderLetter' as never)).toHaveLength(
+      1
+    )
+    expect(
+      renderer!.root.findAllByType('ComparisonChart' as never)
+    ).toHaveLength(1)
+    expect(events('supporter_web_region_notice_viewed')[0][1]).toEqual({
+      source: 'feature_gate',
+      ...attribution,
+    })
+  })
+
+  it('shows no region notice on a phone', async () => {
+    await render()
+    expect(
+      renderer!.root.findAllByType('WebRegionNotice' as never)
+    ).toHaveLength(0)
+    expect(events('supporter_web_region_notice_viewed')).toHaveLength(0)
   })
 })

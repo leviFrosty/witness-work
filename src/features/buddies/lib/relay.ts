@@ -1,15 +1,12 @@
 import {
-  HttpError,
   type HttpResponse,
   request,
   type RequestOptions,
 } from '@/lib/http/request'
+import { type LiveSocket, openHeaderSocket } from '@/lib/liveSignal'
 import { logger } from '@/lib/logger'
-import {
-  AccountSessionError,
-  type AttestationProblem,
-  OPEN_RETRY_AFTER_MS,
-} from '@/lib/serverAccount/session'
+import { bearerFailure } from '@/lib/serverAccount/bearerFailure'
+import type { AttestationProblem } from '@/lib/serverAccount/session'
 import { concatBytes, toB64u, utf8 } from '@/features/buddies/lib/bytes'
 import { ed25519Sign } from '@/features/buddies/lib/crypto'
 
@@ -172,15 +169,8 @@ export type BlobUpload = {
   readTokenHash: string
 }
 
-/** The part of a WebSocket the live signal uses. */
-export type LiveSocket = {
-  send(data: string): void
-  close(code?: number, reason?: string): void
-  onopen: (() => void) | null
-  onmessage: ((event: { data?: unknown }) => void) | null
-  onerror: ((event: unknown) => void) | null
-  onclose: ((event: { code?: number; reason?: string }) => void) | null
-}
+// The live signal's socket moved to the shared tier (Shared Cars use it too).
+export type { LiveSocket }
 
 /**
  * Runs `run` with this User's attested account session: the `Authorization`
@@ -217,16 +207,6 @@ export type RelayDeps = {
   /** React Native's WebSocket, which can send headers, by default. */
   openSocket?: (url: string, headers: Record<string, string>) => LiveSocket
 }
-
-/** React Native's WebSocket takes headers; the DOM typings don't know it. */
-type HeaderWebSocket = new (
-  url: string,
-  protocols: null,
-  options: { headers: Record<string, string> }
-) => LiveSocket
-
-const openSocket = (url: string, headers: Record<string, string>) =>
-  new (WebSocket as unknown as HeaderWebSocket)(url, null, { headers })
 
 /** What one request sends besides its URL, method, and session. */
 type RelayRequest = Pick<RequestOptions, 'headers' | 'json' | 'body'>
@@ -510,7 +490,7 @@ export function createRelayClient(deps: RelayDeps) {
       try {
         return await deps.authorize(
           async (authorization) =>
-            (deps.openSocket ?? openSocket)(
+            (deps.openSocket ?? openHeaderSocket)(
               `${deps.baseUrl.replace(/^http/, 'ws')}/buddies/v1/inbox/live`,
               {
                 authorization,
@@ -608,62 +588,14 @@ export function createRelayClient(deps: RelayDeps) {
 
 export type RelayClient = ReturnType<typeof createRelayClient>
 
-/** No session to send with, as the relay error Buddies shows for it. */
-function relayErrorFromSession(error: AccountSessionError): RelayError {
-  const status = error.status ?? 0
-  switch (error.failure) {
-    case 'offline':
-      return new RelayError('network', 0)
-    case 'cancelled':
-      return new RelayError('cancelled', 0)
-    case 'attestation': {
-      // The session waits this long before attesting again by itself.
-      const problem = error.attestation ?? 'failed'
-      return new RelayError(
-        'unverified',
-        status,
-        OPEN_RETRY_AFTER_MS[problem],
-        problem
-      )
-    }
-    case 'upgrade':
-      return new RelayError('upgrade_required', status || 426)
-    case 'unavailable':
-      // Accounts are off on the server, and Buddies needs one.
-      return new RelayError(
-        error.serverCode === 'disabled' ? 'disabled' : 'unknown',
-        status,
-        error.retryAfterMs
-      )
-    case 'rateLimited':
-      return new RelayError('rate_limited', status || 429, error.retryAfterMs)
-    case 'server':
-      return new RelayError(
-        status === 401 ? 'unauthorized' : 'unknown',
-        status,
-        error.retryAfterMs
-      )
-  }
-}
-
 /** A failed `request()`, or no session for it, as the relay's own error. */
 function relayErrorFrom(error: unknown): RelayError {
   if (error instanceof RelayError) return error
-  if (error instanceof AccountSessionError) return relayErrorFromSession(error)
-  if (!(error instanceof HttpError)) return new RelayError('network', 0)
-  switch (error.kind) {
-    case 'offline':
-      return new RelayError('network', 0)
-    case 'timeout':
-      // A 408 is the server's; anything else never got an answer.
-      return new RelayError('timeout', error.status ?? 0)
-    case 'cancelled':
-      return new RelayError('cancelled', 0)
-  }
-  const code = RELAY_ERROR_CODES.find((known) => known === error.serverCode)
+  const failure = bearerFailure(error, RELAY_ERROR_CODES)
   return new RelayError(
-    code ?? (error.status === 429 ? 'rate_limited' : 'unknown'),
-    error.status ?? 0,
-    error.retryAfterMs
+    failure.code,
+    failure.status,
+    failure.retryAfterMs,
+    failure.attestation
   )
 }

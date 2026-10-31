@@ -10,7 +10,8 @@ import {
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import { formatDate } from '@/lib/dates'
-import useMileage from '@/stores/mileage'
+import { useMileageView } from '@/stores/mileageView'
+import { saveTrip } from '@/stores/mileageWrites'
 import Header from '@/components/ui/layout/Header'
 import Section from '@/components/ui/inputs/Section'
 import InputRowContainer from '@/components/ui/inputs/InputRowContainer'
@@ -20,6 +21,8 @@ import { estimateTrip, fromDateKey } from '@/lib/mileage/calc'
 import useMileageFormatter from '@/features/mileage/hooks/useMileageFormatter'
 import useMileageIndex from '@/features/mileage/hooks/useMileageIndex'
 import useTripActions from '@/features/mileage/hooks/useTripActions'
+import { useMileagePeople } from '@/features/mileage/hooks/useMileageSharing'
+import { personLabel } from '@/features/mileage/lib/personLabel'
 import type { RootStackParamList } from '@/types/rootStack'
 import RichNote from '@/components/RichNote'
 import { hasNote } from '@/lib/richText/notes'
@@ -50,14 +53,18 @@ function DetailRow({
   )
 }
 
-/** One trip, with Edit, Share, and Delete. */
+/**
+ * One trip, with Edit, Share, and Delete. On a Shared Car, who logged it and,
+ * when it's someone else, who last changed it.
+ */
 export default function MileageTripDetailsScreen({ route, navigation }: Props) {
   const theme = useTheme()
   const insets = useSafeAreaInsets()
-  const { trips, vehicles, fuels, saveTrip } = useMileage()
+  const { trips, vehicles, fuels } = useMileageView()
   const format = useMileageFormatter()
   const index = useMileageIndex()
   const actions = useTripActions()
+  const people = useMileagePeople()
   const foldColumn = useFoldColumn(720)
   const trip = trips.find((t) => t.id === route.params.tripId)
 
@@ -72,6 +79,8 @@ export default function MileageTripDetailsScreen({ route, navigation }: Props) {
   const vehicle = vehicles.find((v) => v.id === trip.vehicleId)
   const fuel = fuels.find((f) => f.id === estimate.fuelId)
   const odometer = trip.odometerEndMiles !== undefined
+  const loggedBy = people.loggedBy(trip)
+  const editedBy = people.editedBy(trip)
   const rows = [
     { label: i18n.t('date'), value: formatDate(fromDateKey(trip.date)) },
     {
@@ -82,6 +91,15 @@ export default function MileageTripDetailsScreen({ route, navigation }: Props) {
           : vehicle.name
         : i18n.t('mileage.unknownCar'),
     },
+    loggedBy && {
+      label: i18n.t('mileage.loggedBy'),
+      value: personLabel(loggedBy),
+    },
+    editedBy &&
+      editedBy.key !== loggedBy?.key && {
+        label: i18n.t('mileage.editedBy'),
+        value: personLabel(editedBy),
+      },
     {
       label: i18n.t('mileage.distance'),
       value: trip.roundTrip

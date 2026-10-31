@@ -10,6 +10,7 @@ import {
   initialBuddiesState,
   migrateLegacySettings,
   withoutExpired,
+  withoutStoredInviteSecrets,
   withPendingInvitesQueued,
 } from '@/features/buddies/lib/state'
 
@@ -25,7 +26,8 @@ export const useBuddies = create<BuddiesState>()(
     migrate: keepPersistedState,
     storage: createJSONStorage(() => MmkvStorage),
     // Lapsed shares are wiped before anything restored is shown, even offline,
-    // and every invitation still to answer is listed.
+    // and every invitation still to answer is listed. Car invitations' secrets
+    // are never saved here (`deviceInviteSecrets`); an earlier build's go.
     merge: (persisted, current) => {
       const now = Date.now()
       // Undefined on a fresh install.
@@ -39,7 +41,8 @@ export const useBuddies = create<BuddiesState>()(
         // default.
         sharing: { ...current.sharing, ...restored.sharing },
       }
-      const unexpired = { ...merged, ...withoutExpired(merged, now) }
+      const kept = { ...merged, ...withoutStoredInviteSecrets(merged) }
+      const unexpired = { ...kept, ...withoutExpired(kept, now) }
       return {
         ...unexpired,
         notifications: withPendingInvitesQueued(unexpired, now),

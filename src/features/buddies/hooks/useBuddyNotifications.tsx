@@ -37,6 +37,7 @@ import {
 import {
   awaitsAnswer,
   type BuddyNotification,
+  isCarNotification,
   listedNotifications,
 } from '@/features/buddies/lib/state'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
@@ -250,7 +251,10 @@ export default function useBuddyNotifications(): NotificationItem[] {
     return buddy ? buddyDisplayName(buddy) : entry.name
   }
 
-  const listed = listedNotifications(queue, { showBadges })
+  // Shared Cars' entries are the app's to list (`useSharedCarNotifications`).
+  const listed = listedNotifications(queue, { showBadges }).filter(
+    (entry) => !isCarNotification(entry)
+  )
 
   // Buddies' news opens the badge it's about: theirs, or the one of this
   // User's they reacted to. "New" while the row was unread.

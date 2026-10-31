@@ -17,7 +17,18 @@ import {
   createMileageFormatter,
   resolveMileageUnits,
 } from '@/features/mileage/lib/format'
-import { buildReportText, buildTripText } from '@/features/mileage/lib/report'
+import {
+  buildReportCsv,
+  buildReportText,
+  buildTripText,
+} from '@/features/mileage/lib/report'
+import {
+  buildMileagePeople,
+  EVERYONE,
+  ME,
+  tripsByPerson,
+} from '@/lib/mileage/people'
+import { peopleFixture } from '@/lib/mileage/testing/peopleFixture'
 import type { Trip, Vehicle } from '@/types/mileage'
 
 const format = createMileageFormatter({
@@ -109,5 +120,197 @@ describe('mileage report text', () => {
     expect(
       buildTripText(trip('b', 'van', '2026-03-02', 1), vehicles, index, format)
     ).toBe('Mar 2 · Van\nDistance: 1 mi')
+  })
+})
+
+describe('mileage reports on Shared Cars', () => {
+  const shared = () => {
+    const fixture = peopleFixture()
+    const people = buildMileagePeople(fixture.cars, fixture.buddies)
+    // Newest first, as the Mileage screen hands them over.
+    const trips = [
+      fixture.trips.mazdaAna,
+      fixture.trips.vanCal,
+      fixture.trips.vanAna,
+      fixture.trips.vanMine,
+      fixture.trips.mine,
+    ]
+    return { ...fixture, people, trips }
+  }
+  const csvRows = (csv: string) =>
+    csv.split('\r\n').map((row) => row.split(','))
+
+  it('adds a Logged By column after the car once a trip is on a Shared Car', () => {
+    const { people, trips, vehicles } = shared()
+    const rows = csvRows(
+      buildReportCsv({
+        period,
+        trips,
+        vehicles,
+        fuels: [],
+        index,
+        format,
+        sharing: { people, ownName: 'Levi W.', filter: EVERYONE },
+      })
+    )
+    expect(rows[0].slice(1, 3)).toEqual(['Car', 'Logged By'])
+    expect(rows.slice(1).map((row) => row.slice(1, 3))).toEqual([
+      ['Civic', 'Levi W.'],
+      ['Family Minivan', 'Levi W.'],
+      ['Family Minivan', 'Annie'],
+      ['Family Minivan', 'Cal'],
+      ['Mazda CX-5', 'Annie'],
+    ])
+  })
+
+  it('leaves the column out when every trip is on the User’s own cars', () => {
+    const { people, trips, vehicles } = shared()
+    const header = csvRows(
+      buildReportCsv({
+        period,
+        trips: [trips[4]],
+        vehicles,
+        fuels: [],
+        index,
+        format,
+        sharing: { people, ownName: 'Levi W.', filter: ME },
+      })
+    )[0]
+    expect(header).not.toContain('Logged By')
+    expect(header[2]).toBe('Odometer Start')
+  })
+
+  it('names others’ trips when showing everyone’s', () => {
+    const { people, trips, vehicles } = shared()
+    const text = buildReportText({
+      period,
+      trips,
+      vehicles,
+      fuels: [],
+      index,
+      format,
+      sharing: { people, ownName: 'Levi W.', filter: EVERYONE },
+    })
+    const lines = text.split('\n')
+    expect(lines[2]).toBe('')
+    expect(lines.slice(lines.indexOf('Trips:') + 1)).toEqual([
+      'Mar 2 · 10 mi · Civic',
+      'Mar 2 · 20 mi · Family Minivan',
+      'Mar 2 · 30 mi · Family Minivan · Annie',
+      'Mar 2 · 50 mi · Family Minivan · Cal',
+      'Mar 2 · 60 mi · Mazda CX-5 · Annie',
+    ])
+  })
+
+  it('says whose trips a filtered report holds', () => {
+    const { people, trips, vehicles } = shared()
+    const anas = tripsByPerson(trips, 'buddy:inbox-ana', people)
+    const lines = buildReportText({
+      period,
+      trips: anas,
+      vehicles,
+      fuels: [],
+      index,
+      format,
+      sharing: { people, filter: 'buddy:inbox-ana' },
+    }).split('\n')
+    expect(lines.slice(0, 4)).toEqual([
+      'Mileage Report',
+      'March 2026',
+      'Logged by: Annie',
+      '',
+    ])
+    expect(lines).toContain('Distance: 90 mi')
+    expect(lines.slice(lines.indexOf('Trips:') + 1)).toEqual([
+      'Mar 2 · 30 mi · Family Minivan',
+      'Mar 2 · 60 mi · Mazda CX-5',
+    ])
+  })
+
+  it('says a report filtered to Me holds the User’s trips, by their own name', () => {
+    const { people, trips, vehicles } = shared()
+    const mine = (ownName?: string) =>
+      buildReportText({
+        period,
+        trips: tripsByPerson(trips, ME, people),
+        vehicles,
+        fuels: [],
+        index,
+        format,
+        sharing: { people, ownName, filter: ME },
+      }).split('\n')
+
+    expect(mine('Levi W.').slice(0, 4)).toEqual([
+      'Mileage Report',
+      'March 2026',
+      'Logged by: Levi W.',
+      '',
+    ])
+    expect(mine('Levi W.')).toContain('Distance: 30 mi')
+    // Without a Buddy Card name, the one they share on their cars.
+    expect(mine()[2]).toBe('Logged by: Levi')
+  })
+
+  it('names the User the same way on every row of theirs in the CSV', () => {
+    const { people, trips, vehicles, cars, VAN, MAZDA } = shared()
+    const loggedBy = (
+      sharing: Parameters<typeof buildReportCsv>[0]['sharing']
+    ) =>
+      csvRows(
+        buildReportCsv({
+          period,
+          trips,
+          vehicles,
+          fuels: [],
+          index,
+          format,
+          sharing,
+        })
+      )
+        .slice(1)
+        .map((row) => row[2])
+
+    // With no Buddy Card name, their own car's trip and their trip on a
+    // Shared Car both read as the name they share on their cars.
+    expect(loggedBy({ people, ownName: '', filter: EVERYONE })).toEqual([
+      'Levi',
+      'Levi',
+      'Annie',
+      'Cal',
+      'Annie',
+    ])
+    // Before their own member record has synced anywhere: "Me" throughout.
+    const unnamed = Object.fromEntries(
+      Object.entries(cars).map(([spaceId, car]) => [
+        spaceId,
+        {
+          ...car,
+          members: car.members.filter((m) => m.memberId !== car.myMemberId),
+          memberRecords: car.memberRecords.filter(
+            (m) => m.memberId !== car.myMemberId
+          ),
+        },
+      ])
+    )
+    const withoutMe = buildMileagePeople(unnamed, [])
+    expect(withoutMe.person(VAN, `me-${VAN}`)).toBeUndefined()
+    expect(withoutMe.person(MAZDA, `me-${MAZDA}`)).toBeUndefined()
+    expect(
+      loggedBy({ people: withoutMe, ownName: '', filter: EVERYONE }).slice(0, 2)
+    ).toEqual(['Me', 'Me'])
+  })
+
+  it('says who logged a shared trip in its share text', () => {
+    const { people, trips, vehicles } = shared()
+    const sharing = { people, ownName: 'Levi W.' }
+    expect(
+      buildTripText(trips[2], vehicles, index, format, sharing).split('\n')
+    ).toEqual(['Mar 2 · Family Minivan', 'Distance: 30 mi', 'Logged by: Annie'])
+    expect(buildTripText(trips[3], vehicles, index, format, sharing)).toContain(
+      'Logged by: Levi W.'
+    )
+    expect(
+      buildTripText(trips[4], vehicles, index, format, sharing)
+    ).not.toContain('Logged by')
   })
 })

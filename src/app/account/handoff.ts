@@ -284,8 +284,11 @@ export type ClaimCompletion =
   | {
       outcome: 'failed'
       reason: HandoffFailure | 'replace_failed'
-      /** Delete Buddies is still waiting to tell a buddy. */
-      removalPending?: boolean
+      /**
+       * Delete Buddies is still waiting to tell a buddy, or to take the User
+       * off a Shared Car; its message (`buddiesErrorMessage`) says which.
+       */
+      removalPending?: BuddyRemovalPendingError
       /**
        * Opening the account's session failed for now: the key is still here and
        * the channel open, so `completeClaimHandoff` can run again.
@@ -392,7 +395,9 @@ export async function completeClaimHandoff(
     return {
       outcome: 'failed',
       reason: 'replace_failed',
-      removalPending: error instanceof BuddyRemovalPendingError,
+      ...(error instanceof BuddyRemovalPendingError && {
+        removalPending: error,
+      }),
     }
   }
 

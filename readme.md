@@ -66,6 +66,8 @@ time, reports, plans, Assistant
 progress, badges, mileage`"]
     A_BUDDIES["`**Buddies**
 end-to-end encrypted sharing`"]
+    A_CARS["`**Shared Cars**
+end-to-end encrypted mileage spaces`"]
     A_ACCOUNT["`**Account**
 anonymous account, recovery key,
 Set Up Another Device, backup`"]
@@ -117,6 +119,8 @@ signed JavaScript + assets`")]
     subgraph WORKER["ww-api Worker"]
       R_BUD["`**/buddies/v1/...**
 signed ops, live WebSocket, photos`"]
+      R_SPACES["`**/spaces/v1/...**
+bearer ops on sealed records, live WebSocket`"]
       R_SCRIBE["`**/scribe/v1/...**
 status, usage, step SSE, transcribe`"]
       R_ROUTE["`**POST /route-planning/optimize, /directions**
@@ -157,6 +161,9 @@ attested key per iOS install`")]
       DO_PI[("`**PlayIntegrityChallenges DO**
 one-time Android challenges`")]
     end
+    DO_SPACE[("`**SharedSpace DO**
+one per shared car: sealed records,
+members, wraps, invites`")]
     DO_METER[("`**ScribeMeter DO**
 usage windows per account`")]
     subgraph ACC_STATE["Account state"]
@@ -228,6 +235,8 @@ analytics, flags, surveys, errors`"]
   A_ACCOUNT -->|"status, key setup, session challenge"| R_ATTEST
   A_SHELL -->|"minimum version"| R_APPCFG
   A_SCRIBE -->|"account session"| A_ACCOUNT
+  A_CARS -->|"account session"| A_ACCOUNT
+  A_CARS -->|"bearer: sealed records, WebSocket"| R_SPACES
   A_SCRIBE -->|"bearer: conversation + tools, SSE per step"| R_SCRIBE
   A_ROUTE -->|"account session"| A_ACCOUNT
   A_ROUTE -->|"bearer: today's stops"| R_ROUTE
@@ -258,6 +267,7 @@ analytics, flags, surveys, errors`"]
   DO_INBOX <-->|"invites"| DO_INV
   DO_INBOX -->|"photo writes"| R2
   R_SCRIBE -->|"usage windows"| DO_METER
+  R_SPACES -->|"RPC + WebSocket"| DO_SPACE
   R_ROUTE -->|"daily quota"| DO_RPQ
   R_ROUTE -->|"Supporter status"| D_ACC
   R_SCRIBE -->|"Supporter status"| D_ACC
@@ -290,11 +300,11 @@ analytics, flags, surveys, errors`"]
   classDef state fill:#ffc078,stroke:#d9480f,color:#1e1e1e
   classDef external fill:#d0bfff,stroke:#6741d9,color:#1e1e1e
   class C_WIDGETS,C_SIRI,C_WATCH,C_WEAR,C_NSE device
-  class A_CORE,A_BUDDIES,A_ACCOUNT,A_SYNC,A_SCRIBE,A_ROUTE,A_CONTACTS,A_LINKS,A_SUPPORTER,A_SHELL,A_HELP app
+  class A_CORE,A_BUDDIES,A_CARS,A_ACCOUNT,A_SYNC,A_SCRIBE,A_ROUTE,A_CONTACTS,A_LINKS,A_SUPPORTER,A_SHELL,A_HELP app
   class A_LOCAL local
   class P_CAL,P_SEED,P_SYNC,P_ATTEST,P_MAPS,P_PUSH,P_STORE,S_GPI platform
-  class R_BUD,R_ACC,R_RCHOOK,R_ATTEST,R_APPCFG,R_SCRIBE,R_ROUTE,R_PLACES,R_LINKS,R_RATINGS,CRON,S_HELPS worker
-  class DO_REGQ,DO_INV,DO_INBOX,R2,D_ACC,DO_HANDOFF,R2_BACKUP,DO_SYNC,R2_SYNC,DO_AA,DO_PI,DO_METER,DO_RPQ,KV,AIS state
+  class R_BUD,R_SPACES,R_ACC,R_RCHOOK,R_ATTEST,R_APPCFG,R_SCRIBE,R_ROUTE,R_PLACES,R_LINKS,R_RATINGS,CRON,S_HELPS worker
+  class DO_REGQ,DO_INV,DO_INBOX,R2,D_ACC,DO_HANDOFF,R2_BACKUP,DO_SYNC,R2_SYNC,DO_AA,DO_PI,DO_METER,DO_SPACE,DO_RPQ,KV,AIS state
   class S_OR,S_LLM,S_HERE,S_SENTRY,S_RC,S_PH,S_EAS,S_SITE external
 ```
 

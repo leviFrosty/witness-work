@@ -240,6 +240,20 @@ _Avoid_: "profile" (the **Profile** is the User's own identity data; a Buddy Car
 A system notification about something a buddy did: accepted an invite, invited the User to a Plan or Follow-up, changed or canceled one, answered, asked to join, earned a **Badge**, or reacted to one. It names the buddy (by the User's nickname for them, if any) and gives the day and time or the Badge, never a householder's details or a Plan's text. The device words it from the encrypted event the push carries; the relay only has a generic template, which shows when the device can't read the event.
 _Avoid_: "push" in UI copy.
 
+### Mileage
+
+**Car**:
+A vehicle the User logs **Trips** for, named by them ("Mazda CX-5"), with its fuel and fuel economy over time. Archived cars stay in reports. Either the User's own or a **Shared Car**.
+_Avoid_: "vehicle" in UI copy (the code's type is `Vehicle`).
+
+**Trip**:
+One drive in a **Car**: a date, a distance (or odometer start and end), whether it was a round trip, and an optional note. Its estimated cost is worked out when shown, never stored.
+_Avoid_: "trip" for a **Route** or its legs.
+
+**Shared Car**:
+A **Car** the User shares with buddies, up to 10 people in all, so everyone on it sees its whole history and can add, edit and delete its **Trips**, fuel setups and prices. Anyone on it can invite their own buddies, so the people on a car needn't all be each other's buddies. The person who shared it removes people and can Stop Sharing. Each Trip shows who logged it; totals count everyone's, and the Mileage screen can show one person's. Leaving, being removed, or Stop Sharing leaves each person a copy. End-to-end encrypted on ww-api (ADR 0037).
+_Avoid_: "carpool", "shared vehicle", or "members" in UI copy (say "people on this car").
+
 ### Assistant
 
 **Assistant**:
@@ -487,6 +501,8 @@ _Avoid_: "time display format" (legacy label; the persisted key `timeDisplayForm
 - A **Badge Collection** has four **Badge Levels**; a **Badge** is one earned level or a **One-time Badge**. Badges only accumulate: deleting records never removes one.
 - A **Buddy Card** carries the highest earned **Badge Level** per Badge Collection and earned One-time Badges (never counts, dates, or progress); turning off badge sharing in Buddies Settings leaves them off.
 - A buddy has at most one **Badge Reaction** per **Badge** of the User's; a newer one replaces it, and it goes when that buddy does.
+- A **Trip** belongs to one **Car**; on a **Shared Car** it names who logged it.
+- Sharing a **Car** takes **Buddies**, but people stay on a **Shared Car** when they stop being buddies.
 
 ## Example dialogue
 

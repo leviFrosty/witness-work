@@ -61,7 +61,9 @@ automatic events are discarded. Touch/text autocapture and session replay stay o
 | `device_storage_full`                                                             | Once per UTC day; how many devices run out of storage, not how often writes fail.                                                                                                                                                  |
 | `update_required_shown`                                                           | Once per session and source; reach of Update Required, not every return to the foreground.                                                                                                                                         |
 | `help_center_search_completed`                                                    | Once per session per source and outcome; reach of the search service and of searches that find nothing, not every search.                                                                                                          |
+| `mileage_person_filter_used`                                                      | Once per session; reach of the Mileage screen's person filter on Shared Cars, not every switch.                                                                                                                                    |
 | `help_center_refreshed`                                                           | Once per UTC day per outcome and reason; whether new Help Center content reaches devices, not every open.                                                                                                                          |
+| `shared_car_sync_failed`                                                          | Once per UTC day and reason; which Shared Car failures reach people, not how often a phone retries.                                                                                                                                |
 | Supporter gate, purchase, and core outcome events                                 | Every meaningful occurrence; placement visits and `gate_flow_id` attribution remain intact.                                                                                                                                        |
 | `$feature_flag_called`                                                            | Once per UTC day and flag/value, with SDK experiment metadata.                                                                                                                                                                     |
 
@@ -1016,12 +1018,13 @@ or from the key a handoff just brought (`via: handoff`).
 
 ### Invitations not sent
 
-`buddies_share_not_sent` answers how often a Plan or Follow-up invitation
-never reaches a buddy, and why: refused while the User's account is suspended
-(it isn't held for later), or the pairing had ended before it went (found by a
-send or a sync, or the buddy's inbox was gone). Sent once per reason for a burst
-of them (half a second), from the device that tried; the User sees an alert and
-a "Not sent" row on the Plan.
+`buddies_share_not_sent` answers how often a Plan, Follow-up, or Shared Car
+invitation never reaches a buddy, and why: refused while the User's account is
+suspended (it isn't held for later), or the pairing had ended before it went
+(found by a send or a sync, or the buddy's inbox was gone). Sent once per reason
+for a burst of them (half a second), from the device that tried; the User sees
+an alert, and a Plan also shows a "Not sent" row. A Shared Car invitation that
+didn't go stays open on the car until it lapses.
 
 | Event                    | When                                                            | Properties                                                                                         |
 | ------------------------ | --------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
@@ -1073,6 +1076,56 @@ session-only property:
 
 Backups hold Contacts, Notes, and ministry records: open them only to debug that
 report, and delete local copies afterwards.
+
+### Shared Cars
+
+Shared Cars (ADR 0037, behind the `shared-cars` flag) answers whether people
+share a car's mileage with others, whether the people they invite join, and how
+shared cars end. `shared_car_shared` is sent once a car's whole history has
+reached the server and the car has moved out of the User's own store; `resumed`
+says the share stopped part-way (the app closed or went offline) and finished
+later, which shows whether seeding a large history is reliable.
+`shared_car_joined` is sent when an invitation's join works, with how many
+people are on the car then. `shared_car_ended` is sent by each device the car
+ends on, except a device following another of the User's devices that left it
+(`left_elsewhere`), which already counted. Invitations go to buddies through
+Buddies: `shared_car_invite_sent` counts each one, `shared_car_invite_answered`
+how the buddy answered it (with `shared_car_invite_sent` it gives the share of
+invitations that are answered, and how; a Join doesn't count when the User was
+on the car already, since another of their devices joined it and counted it),
+and `shared_car_invite_canceled` the ones the inviter took back or that closed
+because the buddy stopped being one. An invitation a rekey sends again counts
+once. Rekeys, syncs and live signals send nothing, except
+`shared_car_sync_failed`: a car's sync (or a share's resumption) that failed,
+by reason, once a day per reason, which shows whether syncing works for people
+and why not. Being offline, a timeout, and a cancel
+send nothing. The key check reasons say how often a car waits for its key on a
+device, and how often something offered a key nobody vouches for (ADR 0037). `shared_car_share_started` and `shared_car_share_failed`, with
+`shared_car_shared`, show how often sharing a car finishes and why it doesn't
+(a share that failed part-way may still finish on a later sync, which then
+sends `shared_car_shared` with `resumed`). `shared_car_member_removed` counts
+the owner removing someone; leaving and Stop Sharing are `shared_car_ended`.
+`mileage_person_filter_used` answers whether people on Shared Cars look at one
+person's trips; it's sent once a session at most. Joining a car turns Mileage
+Tracking on when it was off: `mileage_tracking_changed` with `source:
+shared_car_joined`.
+
+| Event                        | When                                                                                                                                                               | Properties                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `shared_car_shared`          | One of the User's own cars became a Shared Car.                                                                                                                    | `resumed` (boolean).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| `shared_car_joined`          | The User joined a Shared Car from an invitation.                                                                                                                   | `people` (2–10): how many are on the car with them.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| `shared_car_ended`           | A Shared Car ended for the User, who kept its copy.                                                                                                                | `reason: left \| stopped \| last_member \| gone`: they left, they stopped sharing it, everyone else had left (the owner's car became their own again), or the server said the car is gone (they were removed, or its owner stopped sharing).                                                                                                                                                                                                                                                                                                                                        |
+| `shared_car_invite_sent`     | The User invited a buddy to a Shared Car.                                                                                                                          | None.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| `shared_car_invite_answered` | The User answered a buddy's invitation to their Shared Car, on the device they answered on.                                                                        | `answer: joined \| declined`. A join also sends `shared_car_joined`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| `shared_car_invite_canceled` | An invitation the User sent closed before it was answered.                                                                                                         | `reason: user \| buddy_gone`: they canceled it, or the buddy was removed or left Buddies (counted by each of the User's devices that learns it).                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| `shared_car_share_started`   | The User tapped Share Car… on one of their own cars (they have a buddy to invite).                                                                                 | None.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| `shared_car_share_failed`    | Sharing a car stopped with an error the User saw, or a share that stopped part-way gave up for good in the background (the User is told; the car stays their own). | `reason`: the failure's code, such as `network`, `suspended`, `disabled`, `limit`, `too_large`, `bad_request`, `no_account_key` or `not_found`.                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| `shared_car_sync_failed`     | A car's sync, or a share's resumption, failed. Once per UTC day per reason; offline, timed out and cancelled syncs send nothing.                                   | `reason`: the failure's code, such as `forbidden`, `rate_limited`, `disabled`, `suspended`, `upgrade_required`, `bad_request`, `not_ready`, `no_account_key` or `unknown`. Also the key checks: `key_unverified` (nothing vouches for the car's current key on this device yet, so the car waits), `key_mismatch` (a wrap or the key chain offered another key for an epoch this device already trusts; it kept its own), and `member_unverified` (the owner's device didn't rekey because someone on the car has no member record it can vouch for). Never ids, names, or amounts. |
+| `shared_car_member_removed`  | The owner removed someone from a Shared Car.                                                                                                                       | None.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| `mileage_person_filter_used` | The Mileage screen showed one person's trips (Me, or someone on a Shared Car). Once per session.                                                                   | `filter: me \| person`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+
+None carries names, space or member ids, car names, trips, distances, or
+invitation details.
 
 ## Account and recovery key
 

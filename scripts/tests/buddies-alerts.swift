@@ -221,6 +221,8 @@ import Foundation
         body = ["type": "badge", "name": name, "badges": badges.map(badge)]
       case .badgeReaction(let name, let reaction, let b):
         body = ["type": "badgeReaction", "name": name, "reaction": reaction, "badge": badge(b)]
+      case .carInvite(let name): body = ["type": "carInvite", "name": name]
+      case .carJoined(let name): body = ["type": "carJoined", "name": name]
       }
       return ["alert": body]
     }

@@ -11,7 +11,7 @@ import { View } from 'react-native'
 import * as Crypto from 'expo-crypto'
 import usePublisher from '@/hooks/usePublisher'
 import { usePreferences } from '@/stores/preferences'
-import useMileage from '@/stores/mileage'
+import { useMileageView } from '@/stores/mileageView'
 import useTheme from '@/contexts/theme'
 import i18n, { TranslationKey } from '@/lib/locales'
 
@@ -43,7 +43,9 @@ export default function QuickActionMenu({
 }: Props) {
   const { showsTimer } = usePublisher()
   const tracksMileage = usePreferences((s) => s.mileageTrackingEnabled === true)
-  const hasActiveCar = useMileage((s) => s.vehicles.some((v) => !v.archived))
+  const hasActiveCar = useMileageView((view) =>
+    view.vehicles.some((v) => !v.archived)
+  )
   const handleQuickAction = (action: QuickActionOption) => {
     onAction()
     switch (action) {

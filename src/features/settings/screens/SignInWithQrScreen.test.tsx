@@ -77,6 +77,7 @@ vi.mock('@/features/buddies/stores/buddiesStore', () => ({
 }))
 
 import SignInWithQrScreen from './SignInWithQrScreen'
+import { BuddyRemovalPendingError } from '@/features/buddies/lib/engine'
 import HandoffStatus from '@/features/settings/components/account/handoff/HandoffStatus'
 import { completeOnboardingFromRestore } from '@/features/settings/lib/completeOnboardingFromRestore'
 
@@ -302,5 +303,37 @@ it.each([
     ;(done.props.primary as Action).onPress()
     expect(completeOnboardingFromRestore).toHaveBeenCalledTimes(completions)
     expect(mocks.goBack).toHaveBeenCalledTimes(1)
+  }
+)
+
+it.each<[string, BuddyRemovalPendingError | undefined, string]>([
+  ['nothing waiting', undefined, 'account_replaceFailedBody'],
+  [
+    'a buddy',
+    new BuddyRemovalPendingError('everything'),
+    'buddies_deleteAllPending',
+  ],
+  [
+    'a Shared Car',
+    new BuddyRemovalPendingError('everything', ['Mazda CX-5']),
+    'buddies_deleteAllCarPending',
+  ],
+  [
+    'several Shared Cars',
+    new BuddyRemovalPendingError('everything', ['Mazda CX-5', 'Civic']),
+    'buddies_deleteAllCarsPending',
+  ],
+])(
+  'says what Delete Buddies still waits on when replacing the account fails (%s)',
+  async (_case, removalPending, body) => {
+    mocks.claim = {
+      ...completionFailed('replace_failed'),
+      completion: {
+        outcome: 'failed',
+        reason: 'replace_failed',
+        ...(removalPending && { removalPending }),
+      },
+    }
+    expect((await actionsOf()).body).toBe(body)
   }
 )

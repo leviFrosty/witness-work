@@ -20,6 +20,7 @@ import {
 } from '@/lib/accountKey/recoveryKey'
 import i18n from '@/lib/locales'
 import { logger } from '@/lib/logger'
+import { buddiesErrorMessage } from '@/features/buddies/lib/buddiesErrors'
 import { BuddyRemovalPendingError } from '@/features/buddies/lib/engine'
 import { RECOVERY_KEY_FONT } from '@/features/settings/components/account/recoveryKeyFont'
 import { confirmAccountReplace } from '@/features/settings/components/account/confirmAccountReplace'
@@ -202,8 +203,9 @@ function RecoveryKeyForm({
       analytics.capture('recovery_key_used', { outcome: 'failed' })
       Alert.alert(
         i18n.t('account_replaceFailedTitle'),
+        // Says what Delete Buddies still waits on: a buddy, or a Shared Car.
         error instanceof BuddyRemovalPendingError
-          ? i18n.t('buddies_deleteAllPending')
+          ? buddiesErrorMessage(error)
           : i18n.t('account_replaceFailedBody')
       )
     } finally {

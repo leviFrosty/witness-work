@@ -13,7 +13,8 @@ import {
 
 /**
  * The JSON backup file. Any new stores should be added to this type to be
- * included in the import/export.
+ * included in the import/export. Shared Cars (`@/stores/sharedCars`) stay out:
+ * each lives in its space on ww-api (`docs/shared-cars-protocol.md`).
  */
 export type BackupFile = {
   serviceReportStore?: unknown

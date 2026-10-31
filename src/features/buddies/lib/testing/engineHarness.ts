@@ -15,6 +15,10 @@ import {
 import { createFakeRelay } from '@/features/buddies/lib/testing/fakeRelay'
 import type { AttestedRequest } from '@/lib/attestation/appAttest'
 import {
+  createInviteSecretStore,
+  memoryInviteSecretStorage,
+} from '@/lib/sharedSpaces/deviceInviteSecrets'
+import {
   deriveAccountSigningKey,
   signInboxLink,
 } from '@/lib/serverAccount/keys'
@@ -114,8 +118,14 @@ export function ownerAuthFor(seed: Uint8Array): OwnerAuth {
   }
 }
 
-export function setup() {
-  let clock = Date.parse('2026-09-23T15:00:00Z')
+/**
+ * `start`: when the shared clock starts. Tests whose engines run beside others
+ * on the device clock (Shared Cars, say) start it at `Date.now()`.
+ */
+export function setup({
+  start = Date.parse('2026-09-23T15:00:00Z'),
+}: { start?: number } = {}) {
+  let clock = start
   const now = () => clock
   const fake = createFakeRelay(now)
   /** Ops that fail as if the device were offline. */
@@ -151,6 +161,8 @@ export function setup() {
       | 'shareEndsAt'
       | 'account'
       | 'onSharesNotSent'
+      | 'cars'
+      | 'inviteSecrets'
     > = {}
   ) {
     const store = memoryStore({})
@@ -181,6 +193,10 @@ export function setup() {
     const timers: { run: () => void; ms: number }[] = []
     /** Seqs whose system alerts the engine took back, per call. */
     const dismissed: number[][] = []
+    /** This device's keystore for car invitations' secrets, unless given. */
+    const inviteSecretStorage = memoryInviteSecretStorage()
+    const inviteSecrets =
+      extra.inviteSecrets ?? createInviteSecretStore(inviteSecretStorage)
     const engine = createBuddiesEngine({
       relay,
       store,
@@ -206,6 +222,7 @@ export function setup() {
         dismissed.push(seqs)
       },
       ...extra,
+      inviteSecrets,
     })
     return {
       engine,
@@ -241,6 +258,10 @@ export function setup() {
       },
       timers,
       dismissed,
+      /** Where car invitations' secrets are kept on this device. */
+      inviteSecrets,
+      /** What its keystore holds of them, unless `inviteSecrets` was given. */
+      inviteSecretStorage,
     }
   }
 

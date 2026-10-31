@@ -2262,6 +2262,244 @@
         }
       }
     },
+    "buddies_alertCarInvite" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "{{name}} shared a car with you"
+          }
+        },
+        "bem" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "{{name}} shared a car with you"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "{{name}} shared a car with you"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "{{name}} shared a car with you"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "{{name}} shared a car with you"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "{{name}} shared a car with you"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "{{name}} shared a car with you"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "{{name}} shared a car with you"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "{{name}} shared a car with you"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "{{name}} shared a car with you"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "{{name}} shared a car with you"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "{{name}} shared a car with you"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "{{name}} shared a car with you"
+          }
+        },
+        "rw" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "{{name}} shared a car with you"
+          }
+        },
+        "sw" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "{{name}} shared a car with you"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "{{name}} shared a car with you"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "{{name}} shared a car with you"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "{{name}} shared a car with you"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "{{name}} shared a car with you"
+          }
+        }
+      }
+    },
+    "buddies_alertCarJoined" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "{{name}} joined a shared car"
+          }
+        },
+        "bem" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "{{name}} joined a shared car"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "{{name}} joined a shared car"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "{{name}} joined a shared car"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "{{name}} joined a shared car"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "{{name}} joined a shared car"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "{{name}} joined a shared car"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "{{name}} joined a shared car"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "{{name}} joined a shared car"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "{{name}} joined a shared car"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "{{name}} joined a shared car"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "{{name}} joined a shared car"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "{{name}} joined a shared car"
+          }
+        },
+        "rw" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "{{name}} joined a shared car"
+          }
+        },
+        "sw" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "{{name}} joined a shared car"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "{{name}} joined a shared car"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "{{name}} joined a shared car"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "{{name}} joined a shared car"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "{{name}} joined a shared car"
+          }
+        }
+      }
+    },
     "buddies_alertClaimed" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -3924,6 +4162,244 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "{{name}} 會參加"
+          }
+        }
+      }
+    },
+    "buddies_pushCarInviteBody" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Open Mileage to join."
+          }
+        },
+        "bem" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Open Mileage to join."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Open Mileage to join."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open Mileage to join."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Open Mileage to join."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Open Mileage to join."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Open Mileage to join."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Open Mileage to join."
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Open Mileage to join."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Open Mileage to join."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Open Mileage to join."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Open Mileage to join."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Open Mileage to join."
+          }
+        },
+        "rw" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Open Mileage to join."
+          }
+        },
+        "sw" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Open Mileage to join."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Open Mileage to join."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Open Mileage to join."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Open Mileage to join."
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Open Mileage to join."
+          }
+        }
+      }
+    },
+    "buddies_pushCarJoinedBody" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Open Mileage to see it."
+          }
+        },
+        "bem" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Open Mileage to see it."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Open Mileage to see it."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open Mileage to see it."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Open Mileage to see it."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Open Mileage to see it."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Open Mileage to see it."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Open Mileage to see it."
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Open Mileage to see it."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Open Mileage to see it."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Open Mileage to see it."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Open Mileage to see it."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Open Mileage to see it."
+          }
+        },
+        "rw" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Open Mileage to see it."
+          }
+        },
+        "sw" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Open Mileage to see it."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Open Mileage to see it."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Open Mileage to see it."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Open Mileage to see it."
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Open Mileage to see it."
           }
         }
       }

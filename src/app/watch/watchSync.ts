@@ -8,7 +8,9 @@ import { usePreferences } from '@/stores/preferences'
 import { useConversations } from '@/stores/conversationStore'
 import useContacts from '@/stores/contactsStore'
 import useCategories from '@/stores/categories'
-import useMileage from '@/stores/mileage'
+import { getMileageView, subscribeMileageView } from '@/stores/mileageView'
+import { saveTrip } from '@/stores/mileageWrites'
+import useSharedCars from '@/stores/sharedCars'
 import { mmkvStorage } from '@/stores/mmkv'
 import { analytics } from '@/lib/analytics'
 import type { AnalyticsEventName } from '@/lib/analyticsEvents'
@@ -22,6 +24,7 @@ import {
 } from '@/lib/roleHistory'
 import { tracksHours } from '@/lib/publisherCapabilities'
 import { timeEntryMode } from '@/lib/serviceReport'
+import { tripsLoggedByMe } from '@/lib/mileage/people'
 import { resolveMileageUnits } from '@/features/mileage/lib/format'
 import { buildWatchSnapshot } from '@/app/watch/buildWatchSnapshot'
 import { _i18n } from '@/lib/locales'
@@ -103,7 +106,7 @@ export function pushWatchSnapshot(
   try {
     const sr = useServiceReport.getState()
     const prefs = watchPreferences(usePreferences.getState())
-    const mileage = useMileage.getState()
+    const mileage = getMileageView()
     // The watch shows this month, so it uses this month's role (Role History).
     const month = calendarMonthOf()
     const publisher = roleForMonth(prefs.roleHistory, prefs.role, month)
@@ -133,8 +136,9 @@ export function pushWatchSnapshot(
       categories: useCategories.getState().categories,
       mileageTrackingEnabled: prefs.mileageTrackingEnabled,
       distanceUnit: resolveMileageUnits(prefs).distanceUnit,
+      // Shared Cars' too, first the car the User last logged a trip on.
       vehicles: mileage.vehicles,
-      trips: mileage.trips,
+      trips: tripsLoggedByMe(mileage.trips, useSharedCars.getState().cars),
       reflectedEntryIds,
       nativeLocale: nativeLocale(_i18n.locale),
     })
@@ -210,11 +214,16 @@ function drainInbox(): void {
       handled.push(...plans.map((plan) => plan.id))
     }
     if (tripDrafts.length) {
-      const mileage = useMileage.getState()
-      const plans = planWatchTrips(tripDrafts, mileage)
+      // Shared Cars too: a trip on one goes to its space, logged by the User.
+      const view = getMileageView()
+      const plans = planWatchTrips(tripDrafts, {
+        ...view,
+        ownTrips: tripsLoggedByMe(view.trips, useSharedCars.getState().cars),
+      })
       for (const plan of plans) {
-        if (plan.status !== 'add') continue
-        mileage.saveTrip(plan.trip)
+        // `saveTrip` refuses a car that's in neither store; only saved
+        // trips count.
+        if (plan.status !== 'add' || !saveTrip(plan.trip)) continue
         analytics.capture('mileage_trip_added', {
           entry_mode: 'distance',
           round_trip: !!plan.trip.roundTrip,
@@ -308,7 +317,7 @@ export function installWatchSync(): () => void {
         debouncedPush()
     }),
     useCategories.subscribe(() => debouncedPush()),
-    useMileage.subscribe(() => debouncedPush()),
+    subscribeMileageView(() => debouncedPush()),
     // Up Next shows Follow-ups and their Contacts.
     useConversations.subscribe(() => debouncedPush()),
     useContacts.subscribe(() => debouncedPush()),

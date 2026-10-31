@@ -4,9 +4,11 @@ import * as Device from 'expo-device'
 import * as Notifications from 'expo-notifications'
 import { analytics } from '@/lib/analytics'
 import i18n from '@/lib/locales'
+import { useSharedCarsSession } from '@/stores/sharedCarsSession'
 import type {
   BadgePushKind,
   BuddyPushKind,
+  CarPushKind,
   JoinRequestPushKind,
 } from '@/features/buddies/lib/engine'
 import type { PushAddress, PushTemplate } from '@/features/buddies/lib/relay'
@@ -148,6 +150,25 @@ const badgeTemplates = (): Partial<Record<BadgePushKind, PushTemplate>> => {
 }
 
 /**
+ * A buddy shared a car, and a buddy joined one of this User's, while Shared
+ * Cars runs here (its flag on, with Buddies). Generic, like every template:
+ * never a name, and never the car's.
+ */
+const carTemplates = (): Partial<Record<CarPushKind, PushTemplate>> =>
+  useSharedCarsSession.getState().running
+    ? {
+        'car.invite': {
+          title: i18n.t('buddies_pushCarInviteTitle'),
+          body: i18n.t('buddies_pushCarInviteBody'),
+        },
+        'car.reply': {
+          title: i18n.t('buddies_pushCarJoinedTitle'),
+          body: i18n.t('buddies_pushCarJoinedBody'),
+        },
+      }
+    : {}
+
+/**
  * Every template this device registers while Buddies notifications are on: the
  * relay's alert text, which the app replaces with a named alert.
  */
@@ -155,6 +176,7 @@ export const buddiesPushTemplates = async () => ({
   ...pushTemplates(),
   ...(await joinRequestTemplates()),
   ...badgeTemplates(),
+  ...carTemplates(),
 })
 
 /**
@@ -189,8 +211,8 @@ function withTimeout(work: (signal: AbortSignal) => Promise<void>) {
  * system allows notifications. With Buddies notifications off here, it
  * registers no templates, so the relay sends this device nothing. An unchanged
  * registration is only re-sent once a day, so calling this often is cheap. Call
- * it again when buddies, join request mutes, badge alerts, or the push token
- * change.
+ * it again when buddies, join request mutes, badge alerts, Shared Cars running,
+ * or the push token change.
  */
 export function registerBuddiesPush(): Promise<void> {
   const run = registration.then(() => withTimeout(register))

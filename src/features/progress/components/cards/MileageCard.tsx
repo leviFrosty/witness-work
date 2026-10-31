@@ -7,7 +7,7 @@ import {
   summarizeTrips,
   tripsInPeriod,
 } from '@/lib/mileage/calc'
-import useMileage from '@/stores/mileage'
+import { useMileageView } from '@/stores/mileageView'
 import useMileageFormatter from '@/features/mileage/hooks/useMileageFormatter'
 import useMileageIndex from '@/features/mileage/hooks/useMileageIndex'
 import StatCard from '@/features/progress/components/cards/StatCard'
@@ -32,7 +32,7 @@ export function MileageStatCard({
   period?: MileagePeriod
   size: ProgressCardSize
 }) {
-  const { vehicles, trips } = useMileage()
+  const { vehicles, trips } = useMileageView()
   const index = useMileageIndex()
   const format = useMileageFormatter()
   const shown = period ? tripsInPeriod(trips, period) : trips

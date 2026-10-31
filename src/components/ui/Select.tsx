@@ -1,13 +1,18 @@
 import { ChevronDown as ChevronDownIcon } from 'lucide-react-native'
 import LucideIcon from '@/components/ui/LucideIcon'
 import { StyleProp, useWindowDimensions, View, ViewStyle } from 'react-native'
-import SelectMenu from '@/components/ui/SelectMenu'
+import SelectMenu, { type SelectMenuItem } from '@/components/ui/SelectMenu'
 import useTheme from '@/contexts/theme'
 import Text from '@/components/ui/MyText'
 import WholeWordsText from '@/components/ui/WholeWordsText'
 import { inputLayout } from '@/components/ui/inputs/InputLayout'
 
-export type SelectDataItem<T> = { label: string; value: T }
+export type SelectDataItem<T> = {
+  label: string
+  value: T
+  /** Beside the option in the menu only (an SF Symbol; see `SelectMenu`). */
+  systemImage?: SelectMenuItem['systemImage']
+}
 export type SelectData<T> = SelectDataItem<T>[]
 
 export interface SelectProps<T> {
@@ -53,6 +58,7 @@ const Select = <T,>({
     id: String(item.value),
     label: item.label,
     selected: isSelected(item.value),
+    systemImage: item.systemImage,
   }))
 
   return (

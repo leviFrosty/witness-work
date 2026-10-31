@@ -10,7 +10,13 @@ import useTheme from '@/contexts/theme'
 import i18n, { type TranslationKey } from '@/lib/locales'
 import { analytics } from '@/lib/analytics'
 import confirmDestructive from '@/lib/confirmDestructive'
-import useMileage from '@/stores/mileage'
+import { useMileageView } from '@/stores/mileageView'
+import {
+  deleteFuel,
+  deleteFuelPrice,
+  saveFuel,
+  saveFuelPrice,
+} from '@/stores/mileageWrites'
 import Wrapper from '@/components/ui/layout/Wrapper'
 import Section from '@/components/ui/inputs/Section'
 import TextInputRow from '@/components/ui/inputs/TextInputRow'
@@ -35,20 +41,24 @@ import useMileageFormatter from '@/features/mileage/hooks/useMileageFormatter'
 import useMileageIndex from '@/features/mileage/hooks/useMileageIndex'
 import HistoryChangeRow from '@/features/mileage/components/HistoryChangeRow'
 import HistoryList from '@/features/mileage/components/HistoryList'
+import { fuelCarName } from '@/features/mileage/lib/fuelLabel'
 import type { RootStackParamList } from '@/types/rootStack'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'MileageFuelForm'>
 
-/** Add or edit a fuel and its effective-dated price. */
+/**
+ * Add or edit a fuel and its effective-dated price. A Shared Car's fuel says
+ * its changes reach everyone on the car.
+ */
 export default function MileageFuelFormScreen({ route, navigation }: Props) {
   const theme = useTheme()
   const insets = useSafeAreaInsets()
-  const { fuels, vehicleSetups, saveFuel, deleteFuel, saveFuelPrice } =
-    useMileage()
-  const deleteFuelPrice = useMileage((s) => s.deleteFuelPrice)
+  const view = useMileageView()
+  const { fuels, vehicleSetups } = view
   const format = useMileageFormatter()
   const index = useMileageIndex()
   const existing = fuels.find((f) => f.id === route.params?.fuelId)
+  const sharedCar = existing && fuelCarName(existing, view)
   const history = existing ? (index.pricesByFuel.get(existing.id) ?? []) : []
   const today = toDateKey(new Date())
   const current = effectiveEntry(history, today)
@@ -132,6 +142,12 @@ export default function MileageFuelFormScreen({ route, navigation }: Props) {
             <TextInputRow
               label={i18n.t('name')}
               required
+              // Its name and price are everyone's on the car.
+              description={
+                sharedCar
+                  ? i18n.t('mileage.fuelOnSharedCar', { car: sharedCar })
+                  : undefined
+              }
               textInputProps={{
                 invalid: validation.invalid('name'),
                 value: name,

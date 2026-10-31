@@ -1774,6 +1774,8 @@ describe('removed buddies stay removed', () => {
       answers: {},
       read: {},
       dismissed: {},
+      cars: {},
+      leftCars: {},
     }
     const plaintext = utf8(JSON.stringify(rosterSchema.parse(roster)))
     // The relay's 32 KB roster cap, less the seal's version, nonce, and tag.
@@ -5335,6 +5337,9 @@ describe('a User’s devices stay in step', () => {
           at,
         ])
       ),
+      // Shared Cars take what room is left (`rosterSharedCarMemberships`).
+      cars: {},
+      leftCars: {},
     }
     const plaintext = utf8(JSON.stringify(rosterSchema.parse(roster)))
     // The relay's 32 KB roster cap, less the seal's version, nonce, and tag.

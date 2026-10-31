@@ -41,6 +41,8 @@ describe('named alert vectors', () => {
       [
         'badge',
         'badgeReaction',
+        'carInvite',
+        'carJoined',
         'claimed',
         'joinRequest',
         'paired',

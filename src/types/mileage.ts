@@ -67,6 +67,13 @@ export type Trip = {
   note?: string
   /** The note with formatting, when it has any; see `src/lib/richText/notes.ts`. */
   noteDoc?: RichText
+  /**
+   * The `memberId` of the person who logged it. Only on a Shared Car's trips
+   * (`docs/shared-cars-protocol.md`).
+   */
+  loggedBy?: string
+  /** The `memberId` of the last person to change it, on a Shared Car only. */
+  editedBy?: string
   /** Epoch ms. */
   createdAt: number
   updatedAt?: number
@@ -88,6 +95,25 @@ export type MileageCollections = {
 
 export type MileageSnapshot = MileageCollections & {
   deletedMileageRecords: MileageTombstone[]
+}
+
+/** A car in the mileage view: one of the User's own, or a Shared Car. */
+export type MileageVehicle = Vehicle & {
+  /** The space a Shared Car lives in; absent on the User's own cars. */
+  spaceId?: string
+}
+
+/**
+ * The one view of mileage every reader goes through (`@/stores/mileageView`):
+ * the User's own cars and every Shared Car's, in the same collections.
+ */
+export type MileageView = Omit<MileageSnapshot, 'vehicles'> & {
+  vehicles: MileageVehicle[]
+  /**
+   * The space of every record that lives on a Shared Car, by id. Records
+   * missing from it are the User's own.
+   */
+  sharedRecordSpaces: ReadonlyMap<string, string>
 }
 
 export type DistanceUnit = 'mi' | 'km'

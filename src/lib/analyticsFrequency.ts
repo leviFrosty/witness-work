@@ -15,6 +15,7 @@ const dailyEvents = new Set([
   'account_session_failed',
   'device_storage_full',
   'help_center_refreshed',
+  'shared_car_sync_failed',
 ])
 const sessionEvents = new Set([
   'timer_action_completed',
@@ -34,6 +35,7 @@ const sessionEvents = new Set([
   'account_devices_viewed',
   'update_required_shown',
   'help_center_search_completed',
+  'mileage_person_filter_used',
 ])
 
 let storage: MMKV | undefined

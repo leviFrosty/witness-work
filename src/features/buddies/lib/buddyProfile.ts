@@ -8,6 +8,7 @@ import { usePreferences } from '@/stores/preferences'
 import { useProfile } from '@/stores/profile'
 import type { Publisher } from '@/types/publisher'
 import {
+  type BuddyAvatar,
   type BuddyStreak,
   BuddyTenure,
   BuddyTenureKind,
@@ -47,6 +48,21 @@ export function buddyTenureFor(
 const isLocalImage = (value: string) => value.startsWith('file://')
 
 /**
+ * The Profile's emoji, or its photo as the thumbnail Buddy Cards carry, once
+ * that exists (`refreshBuddyAvatarThumbnail`); before the User chose whether to
+ * share it.
+ */
+export function currentBuddyAvatar(): BuddyAvatar | undefined {
+  const { avatar } = useProfile.getState()
+  const thumbnail = useBuddies.getState().avatarThumbnail
+  if (avatar.type === 'emoji' && avatar.value)
+    return { t: 'emoji', v: avatar.value }
+  if (avatar.type === 'image' && thumbnail?.source === avatar.value)
+    return { t: 'image', v: thumbnail.data }
+  return undefined
+}
+
+/**
  * The Profile name, avatar, Tenure, and earned badges buddies can see, before
  * the engine drops whatever the User chose not to share. A photo is shared only
  * once its thumbnail exists (`refreshBuddyAvatarThumbnail`); badges only while
@@ -61,15 +77,9 @@ export function currentBuddyProfile(): BuddyProfile {
     earnedBadges,
     dataProtectionMode,
   } = usePreferences.getState()
-  const thumbnail = useBuddies.getState().avatarThumbnail
   return {
     name: name.trim().slice(0, MAX_NAME_LENGTH),
-    avatar:
-      avatar.type === 'emoji' && avatar.value
-        ? { t: 'emoji', v: avatar.value }
-        : avatar.type === 'image' && thumbnail?.source === avatar.value
-          ? { t: 'image', v: thumbnail.data }
-          : undefined,
+    avatar: currentBuddyAvatar(),
     tenure: buddyTenureFor(role, tenureStartDate),
     badges: showBadges
       ? buddyCardBadges(earnedBadges, { dataProtectionMode })

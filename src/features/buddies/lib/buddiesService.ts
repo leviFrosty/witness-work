@@ -58,6 +58,10 @@ import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 import { useBuddiesDiagnostics } from '@/features/buddies/stores/buddiesDiagnostics'
 import { useBuddiesSession } from '@/features/buddies/stores/buddiesSession'
 import type { UnsentShareReason } from '@/features/buddies/lib/state'
+import { createBuddiesCarsLink } from '@/features/buddies/lib/sharedCarsLink'
+import { deviceInviteSecrets } from '@/lib/sharedSpaces/deviceInviteSecrets'
+import { deviceSpaceKeyring } from '@/lib/sharedSpaces/deviceKeyring'
+import useSharedCars from '@/stores/sharedCars'
 
 /** How long reports of invitations not sent gather before the User is told. */
 const NOT_SENT_ALERT_DELAY_MS = 500
@@ -120,6 +124,18 @@ export function currentBuddyPet(): BuddyPet | undefined {
     ...(pet.name ? { name: pet.name } : {}),
   }
 }
+
+/** What this device's Buddies engine knows of its Shared Cars. */
+const carsLink = createBuddiesCarsLink(useSharedCars, {
+  now: Date.now,
+  forgetKeys: () => deviceSpaceKeyring.forgetAll(),
+})
+
+/**
+ * The Shared Cars engine's side of `car.*` events and the roster's cars, set by
+ * the app (`carInvitationsService`).
+ */
+export const setBuddiesCarsHandler = carsLink.setHandler
 
 const engine = createBuddiesEngine({
   relay: createRelayClient({
@@ -203,6 +219,8 @@ const engine = createBuddiesEngine({
   keepBuddyPhotos,
   dismissAlerts: (seqs) => void dismissBuddyAlerts(seqs),
   onSharesNotSent: (notSent) => sharesNotSent.add(notSent),
+  cars: carsLink.deps,
+  inviteSecrets: deviceInviteSecrets,
 })
 
 /**

@@ -4,6 +4,10 @@ import useContacts from '@/stores/contactsStore'
 import useConversations from '@/stores/conversationStore'
 import useServiceReport from '@/stores/serviceReport'
 import useMileage from '@/stores/mileage'
+import useSharedCars from '@/stores/sharedCars'
+import { useSharedCarsSession } from '@/stores/sharedCarsSession'
+import { forgetDeviceInviteSecrets } from '@/lib/sharedSpaces/deviceInviteSecrets'
+import { forgetDeviceSpaceKeys } from '@/lib/sharedSpaces/deviceKeyring'
 import usePet from '@/stores/pet'
 import { PREFERENCE_DEFAULTS, usePreferences } from '@/stores/preferences'
 import { useProfile, PROFILE_DEFAULTS } from '@/stores/profile'
@@ -51,6 +55,9 @@ type ResettableStore = {
  */
 export const RESET_STORES: readonly ResettableStore[] = [
   useBuddies,
+  // This device's copy of each Shared Car; the car itself stays on ww-api.
+  useSharedCars,
+  useSharedCarsSession,
   useCategories,
   useSavedPlaces,
   useSavedRoutes,
@@ -125,5 +132,9 @@ export function resetLocalData() {
   useProfile.getState().set({ ...PROFILE_DEFAULTS })
   clearLegacyLedger()
   forgetFoundSecrets()
+  // The space keys go with the cars; the member's wraps open them again.
+  forgetDeviceSpaceKeys()
+  // And car invitations' secrets with the invitations, in the Buddies store.
+  forgetDeviceInviteSecrets()
   void Stopwatch.reset()
 }

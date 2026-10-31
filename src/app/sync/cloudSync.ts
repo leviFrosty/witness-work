@@ -2,13 +2,13 @@ import { AppState, Platform } from 'react-native'
 import * as Device from 'expo-device'
 import { getRandomBytes } from 'expo-crypto'
 import { sha256 } from '@noble/hashes/sha2.js'
-import * as BuddiesKeychain from '../../../modules/buddies-keychain'
 import apis from '@/constants/apis'
-import { fromB64u, toB64u, utf8 } from '@/lib/bytes'
+import { toB64u, utf8 } from '@/lib/bytes'
 import {
   addBackgroundListener,
   addForegroundListener,
 } from '@/lib/appLifecycle'
+import { type LiveSocket, openHeaderSocket } from '@/lib/liveSignal'
 import { logger } from '@/lib/logger'
 import { syncNow } from '@/lib/syncClock'
 import {
@@ -19,6 +19,7 @@ import {
   accountSessions,
   bearerOptions,
   onAccountChange,
+  peekAccountKey,
   serverAccount,
 } from '@/lib/serverAccount'
 import { ensureRevenueCatLinked } from '@/lib/serverAccount/revenueCatLinkRuntime'
@@ -42,7 +43,6 @@ import {
   createLiveInbox,
   type LiveEvent,
 } from '@/features/buddies/lib/liveInbox'
-import type { LiveSocket } from '@/features/buddies/lib/relay'
 import { useSupporter } from '@/features/supporter/stores/supporter'
 import { useUpdateRequired } from '@/lib/appUpdate/updateRequired'
 import { usePreferences } from '@/stores/preferences'
@@ -54,12 +54,6 @@ import { usePreferences } from '@/stores/preferences'
  * another device wrote. The engine itself (`iCloudSync.ts`) decides everything
  * else.
  */
-
-/** The account key on this device, without creating one. */
-async function peekAccountKey(): Promise<Uint8Array | null> {
-  const seed = await BuddiesKeychain.peekRootSeed().catch(() => null)
-  return seed ? fromB64u(seed) : null
-}
 
 let derived: { seed: string; key: Uint8Array } | null = null
 const syncKeyFor = (accountKey: Uint8Array) => {
@@ -312,27 +306,14 @@ export async function leaveCloudSyncAccount(flush: () => Promise<unknown>) {
   cloudSyncTransport.reset()
 }
 
-/** React Native's WebSocket takes headers; the DOM typings don't know it. */
-type HeaderWebSocket = new (
-  url: string,
-  protocols: null,
-  options: { headers: Record<string, string> }
-) => LiveSocket
-
 async function openSyncSocket(): Promise<LiveSocket> {
   const accountKey = await peekAccountKey()
   if (!accountKey) throw new Error('No account key on this device')
   return accountSessions.withSession(
     async (authorization) =>
-      new (WebSocket as unknown as HeaderWebSocket)(
+      openHeaderSocket(
         `${apis.accounts.replace(/^http/, 'ws')}/accounts/v1/sync/live`,
-        null,
-        {
-          headers: {
-            authorization,
-            'x-ww-slot-id': ensureSyncDeviceId(),
-          },
-        }
+        { authorization, 'x-ww-slot-id': ensureSyncDeviceId() }
       ),
     { accountKey }
   )

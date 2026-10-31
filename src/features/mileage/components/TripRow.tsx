@@ -17,16 +17,21 @@ import useAccessibilityTextSize from '@/hooks/useAccessibilityTextSize'
 import type { RootStackNavigation } from '@/types/rootStack'
 import type { Trip } from '@/types/mileage'
 import RichNote from '@/components/RichNote'
+import Avatar from '@/components/ui/Avatar'
 import { hasNote } from '@/lib/richText/notes'
+import type { CarPerson } from '@/lib/mileage/people'
+import { personLabel } from '@/features/mileage/lib/personLabel'
 
 type Props = {
   trip: Trip
   /** Shown when the user has more than one car. */
   vehicleName?: string
+  /** Who logged it, when that's someone else on a Shared Car. */
+  loggedBy?: CarPerson
 }
 
 /** Tap for details, long-press for actions, swipe to delete. */
-export default function TripRow({ trip, vehicleName }: Props) {
+export default function TripRow({ trip, vehicleName, loggedBy }: Props) {
   const theme = useTheme()
   const cardStyle = useCardStyle()
   const navigation = useNavigation<RootStackNavigation>()
@@ -34,7 +39,9 @@ export default function TripRow({ trip, vehicleName }: Props) {
   const format = useMileageFormatter()
   const cost = estimateTrip(trip, useMileageIndex()).cost
   const largeText = useAccessibilityTextSize()
+  const author = loggedBy && personLabel(loggedBy)
   const subtitle = [
+    author,
     vehicleName,
     trip.roundTrip && i18n.t('mileage.roundTrip'),
   ].filter(Boolean)
@@ -61,7 +68,13 @@ export default function TripRow({ trip, vehicleName }: Props) {
         onPress={() =>
           navigation.navigate('MileageTripDetails', { tripId: trip.id })
         }
-        accessibilityLabel={`${formatDate(fromDateKey(trip.date))}, ${format.distance(trip.distanceMiles)}`}
+        accessibilityLabel={[
+          formatDate(fromDateKey(trip.date)),
+          format.distance(trip.distanceMiles),
+          author && i18n.t('mileage.loggedByA11y', { name: author }),
+        ]
+          .filter(Boolean)
+          .join(', ')}
       >
         {/* At accessibility sizes the date and details take the row's width,
             wrapping between words, and the distance and cost sit under them. */}
@@ -80,15 +93,30 @@ export default function TripRow({ trip, vehicleName }: Props) {
               {formatDate(fromDateKey(trip.date), { style: 'medium' })}
             </Text>
             {subtitle.length > 0 && (
-              <Text
-                style={{
-                  color: theme.colors.textAlt,
-                  fontSize: theme.fontSize('sm'),
-                }}
-                numberOfLines={largeText ? undefined : 1}
+              // Who logged it leads, with their photo, so a glance tells
+              // whose trip it is.
+              <View
+                style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}
               >
-                {subtitle.join(' · ')}
-              </Text>
+                {loggedBy && (
+                  <Avatar
+                    avatar={loggedBy.avatar}
+                    name={loggedBy.name}
+                    background={loggedBy.color}
+                    size={18}
+                  />
+                )}
+                <Text
+                  style={{
+                    flexShrink: 1,
+                    color: theme.colors.textAlt,
+                    fontSize: theme.fontSize('sm'),
+                  }}
+                  numberOfLines={largeText ? undefined : 1}
+                >
+                  {subtitle.join(' · ')}
+                </Text>
+              </View>
             )}
             {hasNote(trip) ? (
               <RichNote

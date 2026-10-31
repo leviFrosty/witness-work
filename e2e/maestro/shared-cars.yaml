@@ -1,0 +1,90 @@
+# seed: pioneer
+# Shared Cars on one device: a made-up Shared Car, the Family Minivan, that the
+# User shared with Ana Pereira (`__WW_DEV__.sharedCars.addLocalCar`), next to
+# their own Civic. Ana logged 30 mi on it and the User 20 mi; the Civic has a
+# 12 mi trip. With both flags on, Mileage shows sharing, and Buddies, never
+# started after the seed, keeps the Shared Cars runtime off, so nothing syncs
+# the made-up car away. Being offline is simulated (`__WW_DEV__.network`) for
+# two short stretches, and set back first in case an earlier run stopped in
+# one. Two people on two devices: features/shared-cars.md.
+# setup: (() => { __WW_DEV__.network.offline(false); __WW_DEV__.stores.preferences.setState({ homeChecklistDismissed: true, petPromptDismissed: true, mileageTrackingEnabled: true }); __WW_DEV__.setFlag('buddies', true); __WW_DEV__.setFlag('shared-cars', true); return true })()
+# setup: (() => { const d = new Date(); const today = [d.getFullYear(), String(d.getMonth() + 1).padStart(2, '0'), String(d.getDate()).padStart(2, '0')].join('-'); const mileage = __WW_DEV__.stores.mileage.getState(); mileage.saveVehicle({ id: 'verify-civic', name: 'Civic', createdAt: 1 }); mileage.saveTrip({ id: 'verify-civic-trip', vehicleId: 'verify-civic', date: today, distanceMiles: 12, createdAt: 1 }); __WW_DEV__.sharedCars.addLocalCar({ name: 'Family Minivan', people: ['Ana Pereira'], trips: [{ by: 'Ana Pereira', distanceMiles: 30, note: 'Territory 12' }, { by: 'me', distanceMiles: 20 }] }); __WW_DEV__.navigate('Mileage'); return true })()
+# assert: __WW_DEV__.stores.buddies.getState().registeredInboxId === null
+# assert: (() => { const cars = Object.values(__WW_DEV__.stores.sharedCars.getState().cars); return cars.length === 1 && cars[0].vehicles[0].name === 'Family Minivan' && cars[0].trips.length === 2 && cars[0].vehicles[0].archived !== true })()
+# assert: (() => { const [car] = Object.values(__WW_DEV__.stores.sharedCars.getState().cars); const anas = car.trips.find((t) => t.loggedBy === 'person-0'); return anas?.editedBy === 'me' && anas.distanceMiles === 30 })()
+# assert: __WW_DEV__.stores.mileage.getState().vehicles.some((v) => v.id === 'verify-civic' && !v.archived)
+# assert: __WW_DEV__.network.state() !== false
+appId: com.leviwilkerson.jwtimedev
+name: Filter Mileage by person, see who logged and edited a trip and when changes wait, and find no Delete on a Shared Car
+---
+- extendedWaitUntil:
+    visible:
+      id: mileage-person-filter
+    timeout: 60000
+# Everyone's trips: 12 + 30 + 20 mi.
+- assertVisible: 62 mi
+# Only the User's: the Civic's and theirs on the minivan.
+- tapOn:
+    id: mileage-person-filter
+- tapOn: Me
+- assertVisible: 32 mi
+- tapOn:
+    id: mileage-person-filter
+- tapOn: Everyone
+- assertVisible: 62 mi
+# Offline, a slim notice says changes to shared cars wait, and it goes once
+# the connection's back.
+- evalScript: >-
+    (() => { __WW_DEV__.network.offline(true); return true })()
+- assertVisible: Changes to shared cars will be shared
+- evalScript: >-
+    (() => { __WW_DEV__.network.offline(false); return true })()
+- assertNotVisible: Changes to shared cars will be shared
+# A trip someone else logged names them; its details say so too. The rows'
+# accessible names read "<date>, 30 mi, Logged by Ana Pereira".
+- scroll
+- tapOn:
+    text: Ana Pereira
+    index: 0
+- assertVisible: Logged By
+- assertVisible: Ana Pereira
+- assertNotVisible: Edited By
+# Saving it here makes the User its last editor, and Ana still logged it.
+- tapOn:
+    text: Edit
+    traits: button
+- assertVisible: Territory 12
+- tapOn:
+    text: Save
+    traits: button
+- assertVisible: Edited By
+- assertVisible: Logged By
+- assertVisible: Ana Pereira
+# The header's own back button: an iPhone has no system back to press.
+- tapOn:
+    text: Go Back
+    traits: button
+# The car's form lists its people, says when its changes wait, and offers
+# archiving but never Delete.
+- tapOn: Mileage Settings
+- tapOn:
+    text: Family Minivan
+    index: 0
+- assertVisible: People
+- assertVisible: Owner
+- assertVisible: Ana Pereira
+- assertVisible: Invite Buddy…
+- evalScript: >-
+    (() => { __WW_DEV__.network.offline(true); return true })()
+- assertVisible: Changes to shared cars will be shared
+- evalScript: >-
+    (() => { __WW_DEV__.network.offline(false); return true })()
+- scrollUntilVisible:
+    element: Archive…
+- assertNotVisible: Archive or Delete…
+- assertNotVisible: Delete…
+# The flag overrides last until a reload, so the flows after this one get the
+# remote values back.
+- evalScript: >-
+    (() => { __WW_DEV__.setFlag('shared-cars', undefined);
+    __WW_DEV__.setFlag('buddies', undefined); return true })()

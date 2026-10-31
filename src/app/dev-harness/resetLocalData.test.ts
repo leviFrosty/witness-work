@@ -9,6 +9,8 @@ const native = vi.hoisted(() => {
     /** The default MMKV instance: what the stores saved. */
     saved: new Map<string, string>(),
     stopwatchReset: vi.fn(async () => undefined),
+    /** This device's keystore (`modules/device-secrets`), by name. */
+    secrets: new Map<string, string>(),
   }
 })
 
@@ -44,6 +46,13 @@ vi.mock('react-native-mmkv', () => ({
 }))
 vi.mock('../../../modules/stopwatch-bridge', () => ({
   reset: native.stopwatchReset,
+}))
+vi.mock('../../../modules/device-secrets', () => ({
+  isAvailable: () => true,
+  read: async (name: string) => native.secrets.get(name) ?? null,
+  write: async (name: string, value: string) =>
+    void native.secrets.set(name, value),
+  remove: async (name: string) => void native.secrets.delete(name),
 }))
 vi.mock('@/lib/analytics', () => ({ analytics: { capture: vi.fn() } }))
 vi.mock('react-native', () => ({
@@ -218,12 +227,25 @@ describe('resetLocalData', () => {
     expect(saved('buddies')).toMatchObject({ buddies: [] })
   })
 
-  it('clears the Notes Import ledger, pet secrets and the stopwatch', () => {
+  it('clears the Notes Import ledger, pet secrets, space keys, invitation secrets and the stopwatch', async () => {
+    native.secrets.set('shared-spaces-keyring', '{"space":{"1":"key"}}')
+    native.secrets.set(
+      'shared-spaces-invites',
+      '{"sent|invite":{"joinSecret":"secret","key":"key"}}'
+    )
     resetLocalData()
     expect(native.cleared).toEqual(
       expect.arrayContaining(['default', 'notes-import-ledger', 'pet-secrets'])
     )
     expect(native.stopwatchReset).toHaveBeenCalled()
+    // The keyring and car invitations' secrets live in the keystore, which
+    // the reset empties too.
+    await vi.waitFor(() =>
+      expect(native.secrets.has('shared-spaces-keyring')).toBe(false)
+    )
+    await vi.waitFor(() =>
+      expect(native.secrets.has('shared-spaces-invites')).toBe(false)
+    )
   })
 
   it('forgets Scribe AI conversations, undo records and memory', async () => {

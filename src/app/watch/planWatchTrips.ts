@@ -14,10 +14,16 @@ export type WatchTripPlan =
   | { id: string; status: 'noVehicle' }
   | { id: string; status: 'invalid' }
 
+/** The mileage view (`getMileageView`): the User's own cars and Shared Cars. */
 type Existing = {
   trips: Trip[]
   vehicles: Vehicle[]
   deletedMileageRecords: MileageTombstone[]
+  /**
+   * The trips the User logged (`tripsLoggedByMe`), which pick the car a trip
+   * without one goes to; all of `trips` without it.
+   */
+  ownTrips?: Trip[]
 }
 
 /** Siri's distance limit, doubled for a round trip. */
@@ -55,7 +61,10 @@ export function planWatchTrips(
   const savedIds = new Set(existing.trips.map((trip) => trip.id))
   const deletedIds = new Set(existing.deletedMileageRecords.map((t) => t.id))
   const vehicleIds = new Set(existing.vehicles.map((vehicle) => vehicle.id))
-  const fallbackId = defaultVehicleId(existing.trips, existing.vehicles)
+  const fallbackId = defaultVehicleId(
+    existing.ownTrips ?? existing.trips,
+    existing.vehicles
+  )
 
   return drafts.map((draft): WatchTripPlan => {
     if (!isValidDraft(draft)) return { id: String(draft.id), status: 'invalid' }

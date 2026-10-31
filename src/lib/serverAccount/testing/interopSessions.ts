@@ -15,15 +15,16 @@ export const interopEnabled = Boolean(interopRelayUrl && interopDevBypass)
 /**
  * Account sessions against the interop worker, opened with the dev bypass
  * instead of an attestation, and kept in memory. `accountKey` is the one calls
- * without their own use.
+ * without their own use; `baseUrl` another worker than the relay's.
  */
 export function interopSessions(
   randomBytes: (length: number) => Uint8Array,
-  accountKey = randomBytes(32)
+  accountKey = randomBytes(32),
+  baseUrl = interopRelayUrl!
 ) {
   let stored: string | null = null
   return createAccountSessions({
-    baseUrl: interopRelayUrl!,
+    baseUrl,
     now: Date.now,
     randomBytes,
     attestation: {

@@ -16,7 +16,11 @@ import { addForegroundListener } from '@/lib/appLifecycle'
 import { getOnline, useOnline } from '@/lib/http/online'
 
 // Add future flag keys to this union so call sites stay type-checked.
-export type FeatureFlag = 'buddies' | 'announcement' | 'scribe-ai'
+export type FeatureFlag =
+  | 'buddies'
+  | 'announcement'
+  | 'scribe-ai'
+  | 'shared-cars'
 type FlagValues = Partial<Record<FeatureFlag, boolean | string>>
 type FlagPayloads = Partial<Record<FeatureFlag, JsonType>>
 

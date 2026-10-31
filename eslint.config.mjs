@@ -51,6 +51,29 @@ const persistImports = {
     "Use persist from @/stores/persist, which never writes over saved data it couldn't load.",
 }
 
+const mileageStoreImports = {
+  group: ['@/stores/mileage'],
+  message:
+    'Read mileage through @/stores/mileageView and write it through @/stores/mileageWrites, which include Shared Cars.',
+}
+// The files that use the User's own mileage store directly: the view and
+// write seam, note photo references, sync and backups (which carry only the
+// User's own records), and dev tools.
+const mileageStoreFiles = [
+  'src/stores/mileageView.ts',
+  'src/stores/mileageWrites.ts',
+  'src/stores/noteImages.ts',
+  'src/app/sync/**',
+  // The Shared Cars engine's wiring: sharing moves a car out of the User's
+  // own store, and an ending leaves its copy there.
+  'src/app/sharedCars/sharedCarsService.ts',
+  'src/lib/backupFile.ts',
+  'src/app/dev-harness/**',
+  'src/app/navigation/ToolsScreen.tsx',
+  'src/**/__tests__/**',
+  'src/**/*.test.{ts,tsx}',
+]
+
 // Icons that point along the reading direction mirror in right-to-left
 // layouts; `@/components/ui/DirectionalIcon` has a reading-order name for each
 // one the app uses (add one there before using a new name). Not listed, so not
@@ -316,11 +339,79 @@ export default tseslint.config(
   // Sounds and haptics go through `@/lib/audio` and `@/lib/haptics` so the
   // Audio & Haptics settings can't be bypassed, and sheets through
   // `@/components/ui/Sheet` so they hold takeovers, and stores persist through
-  // `@/stores/persist` so they keep saved data they couldn't load. Flat config replaces
-  // (rather than merges) a rule's options, so each file gets one combined list.
+  // `@/stores/persist` so they keep saved data they couldn't load. Mileage goes
+  // through its view and write seam so Shared Cars aren't left out. Flat config
+  // replaces (rather than merges) a rule's options, so each file gets one
+  // combined list.
   ...[
     {
-      file: undefined,
+      files: undefined,
+      patterns: [
+        soundImports,
+        hapticImports,
+        ...sheetImports,
+        directionalIconImports,
+        directionalIconFiles,
+        persistImports,
+        mileageStoreImports,
+      ],
+    },
+    {
+      files: ['src/lib/audio.ts'],
+      patterns: [
+        hapticImports,
+        ...sheetImports,
+        directionalIconImports,
+        directionalIconFiles,
+        persistImports,
+        mileageStoreImports,
+      ],
+    },
+    {
+      files: ['src/lib/haptics.ts'],
+      patterns: [
+        soundImports,
+        ...sheetImports,
+        directionalIconImports,
+        directionalIconFiles,
+        persistImports,
+        mileageStoreImports,
+      ],
+    },
+    {
+      files: ['src/components/ui/NativeSheet*.tsx'],
+      patterns: [
+        soundImports,
+        hapticImports,
+        directionalIconImports,
+        directionalIconFiles,
+        persistImports,
+        mileageStoreImports,
+      ],
+    },
+    {
+      files: ['src/components/ui/DirectionalIcon.tsx'],
+      patterns: [
+        soundImports,
+        hapticImports,
+        ...sheetImports,
+        persistImports,
+        mileageStoreImports,
+      ],
+    },
+    {
+      files: ['src/stores/persist.ts'],
+      patterns: [
+        soundImports,
+        hapticImports,
+        ...sheetImports,
+        directionalIconImports,
+        directionalIconFiles,
+        mileageStoreImports,
+      ],
+    },
+    {
+      files: mileageStoreFiles,
       patterns: [
         soundImports,
         hapticImports,
@@ -330,60 +421,18 @@ export default tseslint.config(
         persistImports,
       ],
     },
-    {
-      file: 'src/lib/audio.ts',
-      patterns: [
-        hapticImports,
-        ...sheetImports,
-        directionalIconImports,
-        directionalIconFiles,
-        persistImports,
-      ],
-    },
-    {
-      file: 'src/lib/haptics.ts',
-      patterns: [
-        soundImports,
-        ...sheetImports,
-        directionalIconImports,
-        directionalIconFiles,
-        persistImports,
-      ],
-    },
-    {
-      file: 'src/components/ui/NativeSheet*.tsx',
-      patterns: [
-        soundImports,
-        hapticImports,
-        directionalIconImports,
-        directionalIconFiles,
-        persistImports,
-      ],
-    },
-    {
-      file: 'src/components/ui/DirectionalIcon.tsx',
-      patterns: [soundImports, hapticImports, ...sheetImports, persistImports],
-    },
-    {
-      file: 'src/stores/persist.ts',
-      patterns: [
-        soundImports,
-        hapticImports,
-        ...sheetImports,
-        directionalIconImports,
-        directionalIconFiles,
-      ],
-    },
-  ].map(({ file, patterns }) => ({
-    files: [file ?? 'src/**/*.{js,jsx,ts,tsx}'],
-    ignores: file
-      ? []
+  ].map(({ files, patterns }) => ({
+    files: files ?? ['src/**/*.{js,jsx,ts,tsx}'],
+    // `src/__tests__` takes none of these rules.
+    ignores: files
+      ? ['src/__tests__/**']
       : [
           'src/lib/audio.ts',
           'src/lib/haptics.ts',
           'src/components/ui/NativeSheet*.tsx',
           'src/components/ui/DirectionalIcon.tsx',
           'src/stores/persist.ts',
+          ...mileageStoreFiles,
           'src/__tests__/**',
         ],
     rules: { 'no-restricted-imports': ['error', { patterns }] },

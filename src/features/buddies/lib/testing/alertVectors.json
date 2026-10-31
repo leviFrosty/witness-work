@@ -554,6 +554,181 @@
       "outcome": {
         "failed": "unreadable"
       }
+    },
+    {
+      "name": "shares a car, never naming it",
+      "event": {
+        "eventId": "oKGio6SlpqeoqaqrrK2urw",
+        "kind": "car.invite",
+        "blob": "ARkaGxwdHh8gISIjJCZLVa1Xvjdq62FDEfQGqiPwZL-6pNqBi2Z9Odx6rk2BHJxxPgvx693UviuaYBdjhchF3_jSYO6P_PlIN0l6XsWD5JgU5CelLPfahp4ct7Rsu6qJ4-FJs2hfIouCRP7oMRWAgNEjnJKzW7PKH5pHoNP7Xf5KofyOTEbsWtV7Zy8cW4MITgEXsy5FuXAER-PWCfqIOTyqzHVoxWSwCB1wWy0i-CRlOMfxX2kS5bW83DuoitYigXo4XV_INpylJp92tUHMNguJs0lqg8gkNoBsBv_lNPuMgSZIZHdZf5JQZJw-G0ZC4DmdqE2ipxVeCwQdmRIPiRcamAfBKFq2yrDsooZ0SpAYg2MojKu4Av4upKIK2l5rgK9awFk9Za7g4ewV"
+      },
+      "outcome": {
+        "alert": {
+          "type": "carInvite",
+          "name": "Zoë 王"
+        }
+      },
+      "text": {
+        "title": "Zoë 王 shared a car with you",
+        "body": "Open Mileage to join."
+      }
+    },
+    {
+      "name": "car invitation without its key",
+      "event": {
+        "eventId": "oaKjpKWmp6ipqqusra6vsA",
+        "kind": "car.invite",
+        "blob": "ARobHB0eHyAhIiMkJSBlu0dzhM8D4i6mM9a6ZGiFV2TJg6_vwP-FghJmQL4hAZWf_bPhDCusLKU1TFgpkSxbPa38A_J775OhHycyvxTQmsQ8xww3pE4oT5ZcSj76yM3-PK34GAGcufcgEK1Yo7c0mB_1ss-3JWxa-KPNkoYs4usw5NUtggYUZd5Bh-_0sFQwAfuQVCycnrmHqsVCCmqp3Icj98gk9hYB-VpBDoIVZ_XRewNtxDasV__E2mx-17YRJR5CV4lEQ6QUp0jntEsY-65t-KbM0FEwxGftG10oS0UstZ3wlE99aPyTrfow5NFHkfbTljs4ByhV4rwMQUz2yYZJC2iJ7w"
+      },
+      "outcome": {
+        "failed": "unreadable"
+      }
+    },
+    {
+      "name": "takes back a car invitation",
+      "event": {
+        "eventId": "oqOkpaanqKmqq6ytrq-wsQ",
+        "kind": "car.cancel",
+        "blob": "ARscHR4fICEiIyQlJkArDt3bpnvxKLk3toPu3_dfy47COqyfWaBHzOMT8eFxY6sNM84Sdo4ceNFrdE43Jr4XuH_i4OUUUEWk6_MzYGy6qmdW7_-yMmN74P0_7h7WBSo5aZtfMt-KJe71whoyLzHxwDL-aeqprZyyE_o"
+      },
+      "outcome": {
+        "quiet": true
+      }
+    },
+    {
+      "name": "joined your shared car",
+      "event": {
+        "eventId": "o6SlpqeoqaqrrK2ur7Cxsg",
+        "kind": "car.reply",
+        "blob": "ARwdHh8gISIjJCUmJyI7865ZRlG8UZyS2a0p5ejBOGSPvY2RAfMdNqAU4gfWC4R5pR-UFx-_ALdNrdDthxaaMEvVros9B2TQ5vNC3Yiay-ZjWEdhlQhcRI1Wko8NGEnzWktGi_PMZmfEdnbpLuNg0felb6MBFhHIs_JhOtT8edLV5ChMLB4vwXgaE0A"
+      },
+      "outcome": {
+        "alert": {
+          "type": "carJoined",
+          "name": "Sam"
+        }
+      },
+      "text": {
+        "title": "Sam joined a shared car",
+        "body": "Open Mileage to see it."
+      }
+    },
+    {
+      "name": "declined your shared car",
+      "event": {
+        "eventId": "pKWmp6ipqqusra6vsLGysw",
+        "kind": "car.reply",
+        "blob": "AR0eHyAhIiMkJSYnKIAqPDdPJo5odLmkfmrVaY20FAs60CYy3g2HmXkSfxna2M1VskS84s2ISDdX0NFLpJ4G2T1QRfuBMepJmdXwQJWJzgd1MJZ6t0kTfqdlbeWBMLbTc2bQEC5XuuzcNT9zS6XRbRtaQ6AbIKdBzWqow2oYaoeevJrORxqn-3gvAP52yw"
+      },
+      "outcome": {
+        "quiet": true
+      }
+    },
+    {
+      "name": "car answer this build does not know",
+      "event": {
+        "eventId": "paanqKmqq6ytrq-wsbKztA",
+        "kind": "car.reply",
+        "blob": "AR4fICEiIyQlJicoKSRxAKooEA7AssHuwnP-kGlirIXOybYxlP0tCqA38tgZjRKBX2YPdJhQtZoMyxYWn85_v7Yhkcp_nvutyW7alnjspF9sWLTnHf6NloIq-V6ZO2HOjAccpwj86mwew3TKri_sTWoB_pmUb8gbfAXUXrIQJgRfcCwvUaNSHkR4Gg"
+      },
+      "outcome": {
+        "failed": "unreadable"
+      }
+    },
+    {
+      "name": "car invitation from a newer version",
+      "event": {
+        "eventId": "pqeoqaqrrK2ur7CxsrO0tQ",
+        "kind": "car.invite",
+        "blob": "AR8gISIjJCUmJygpKsnKO7VMboqENYs-mnDmXw5gshXry7WxLIqXvvKoPiEkwGOwpO5_Ne4Q1tCG091-3oUOifc-l50nRHWouU64OA26g0-OpJZA5LlAHaLbXerOz8WrfNrCzxdFeXLHOeUbwriKNYUoNEtWG423QHyh9MyHkNvXFKxAusMG0xeSGWkpH1RTRq0axzDkUvCBux3cMg3G4Izej6f5I5Oswsq-Zbl0loFcVKyLgCstBPhvvKjyoegQsZhN0Bk9OZNGZMzL64k17waV_Squ0fKgHILe4pj_aJfIYdNPexJdc0G-4-srglM-K9YtjQ3aT3If-qfwMiSflwH2y27m1-SMLwOyvlmmnEBX0IScoH4eXdtqsEEEHqmOtqgocbjH8r-Dy2_G"
+      },
+      "outcome": {
+        "failed": "unreadable"
+      }
+    },
+    {
+      "name": "car invitation with a fractional epoch",
+      "event": {
+        "eventId": "p6ipqqusra6vsLGys7S1tg",
+        "kind": "car.invite",
+        "blob": "ASAhIiMkJSYnKCkqK2rDNk2SLfI3Av4tOqZ4wcapDTQ3MXWZvFEnCrv-TLYRMoWVhiX1Zj58boMi8TWp_jsjqyzukkhGode7gme_6O-R6hrou0DfSCYaFWyRLWr-7Qswv7DVVVbYSd9MLoj318hao6MuQqA10TTeNTUifSbz5XQlE4bWlKMPtWAGLsMv4DwSubC8lXzyB5PELkBNmsiQykTT_JubF7YvlPAsXHb2eEg0il5N3uX4qxL0dW_28Ia-oSgqcw3xnNGQ-bLvClnlu93AVK4Mt0txSkv4-pIyCfrO-qko9cpHt5da85HsuGlUzcz1sNjU8f8QCfRZJUpp-3Ub7ox6y3ubzgohlF0i9-52tmJUqKSmAkYy1a1bm1IBXl1ZKpIRMYsy3Q7wsrU"
+      },
+      "outcome": {
+        "failed": "unreadable"
+      }
+    },
+    {
+      "name": "car invitation with a fractional number of people",
+      "event": {
+        "eventId": "qKmqq6ytrq-wsbKztLW2tw",
+        "kind": "car.invite",
+        "blob": "ASEiIyQlJicoKSorLKKRHBDGzHxPVJ1Q6GLaxSZ_61qkfvsTO1rwCOVTDi1PEEwuP924t9VtzL2p3WlXgQxQa0ToA_fyBzrEjVQnoCQHF0TVlVySg_ouJ8thcitTdIU2yHfUlVanMJwUoxyo1WmCEJsFYgCfDzFjMbKqrDmj1A9rAN9ZYNZx_8J1YTZSkIOUFvkLmwz-Olg3ssO4E20wmoewmLBNwrYZlLP7FDHC-eqFSNP5zmZrJEeSo5vr75Pqn-W6YMzuNIX17agpkzg7Y3Db4l9Kw8BhvfPpJceJXRw4RKuAPUlu6IMAUkZ72sPjQrLkoD3QeC78hsFVGgnlMStAodGVmXQc-R8jQVRiYlRAwqis4-nj7iMjC261E2gFupBMEPS30QSvdwMDo_Q"
+      },
+      "outcome": {
+        "failed": "unreadable"
+      }
+    },
+    {
+      "name": "car invitation with a negative number of people",
+      "event": {
+        "eventId": "qaqrrK2ur7CxsrO0tba3uA",
+        "kind": "car.invite",
+        "blob": "ASIjJCUmJygpKissLTeVsfdXNDGKqZqNe1A1jMPQak4Ke-ZZswFzYaSCGzyTNyTTAkbIN14-7oYlO5YY4xHUxU8QaqdvIs1CO-EFQVWP65EMsXze8fiOTOCakPuZIBnD5nleJWOylhn2fEqiYcnAbKZqie8fgCUBECwePPjDhJZvFZcur51ZYLyaVdNPZO2OL0kVu5wTliwHuLP0eCc0Q1p-SrmqP_1D5mv_yj1d6LLgNzIzGlxxTrCrSm249QFk_1UY7TWMtT8iL6_-FUv69J2C21SNH54hW3N2R1s0ibgRHDdX06vQtZOiqGVOZv-2oAc1M5ocGzoJ9AdKRrNhqURrjZwsQroRQA824_PCFELCzdGt3S7N-Bo-sfaL81ax6LGOR6mf-G0an_o91A"
+      },
+      "outcome": {
+        "failed": "unreadable"
+      }
+    },
+    {
+      "name": "car invitation with no people at all",
+      "event": {
+        "eventId": "qqusra6vsLGys7S1tre4uQ",
+        "kind": "car.invite",
+        "blob": "ASMkJSYnKCkqKywtLnS7BEO7emB7tjt7RBLC9Xjd9Oq7-sLuLwa1n9QIvyLDeJmtvFBHkQSAfOFlDM5pjTA6nHTu4r2Qj028G4RLJ9S-Ny4ugQrp6zPvhHBwGRfpbFohZrYyN8S0XSPrSRTg9Pqd5SJ8-ooQSYyw4rAJc6_oOMdCRRQ0QQc7WXZbzpoE6eY2tbzR-lAeo_nv2KZ5CcjxNaMHWpCsCMCBIgdUjYJcpY1KxrnpdDZmchw9RSBhf_Kq-sP2eluVvykcZgtV5YN2v_Qc8fOanm-XHWI0GWo-KOFBMslV4WdRvLbxMm7U0IH7BWv0uWLhrVIbReXZ9upNEMr0I-AVfBdVffwbqtOmKvCbqEw4se_B6SuYOg-p9C6vMFqZgGAiGF6gMOFc"
+      },
+      "outcome": {
+        "alert": {
+          "type": "carInvite",
+          "name": "Zoë 王"
+        }
+      },
+      "text": {
+        "title": "Zoë 王 shared a car with you",
+        "body": "Open Mileage to join."
+      }
+    },
+    {
+      "name": "car invitation without the car’s name",
+      "event": {
+        "eventId": "q6ytrq-wsbKztLW2t7i5ug",
+        "kind": "car.invite",
+        "blob": "ASQlJicoKSorLC0uLwFJiN5mEhXcq8M_Wg-k9h4rzxMNxQy767vyT4YsRayrrIxRKsyXUVSyx4snejwZv5ClKNiiKEofs603Yb_Z6AEQjrlxvBQqAe7V9Uj6aFBh_85q2Nhcm5m5YZhN9JCFj9ENxAjmjgFFJ3PpiwBoAFaLk0YGtrJ321Y_V2kRwCdT73Pu42t_38PlLmfs3L0uqmRaBtID9JHw_IC3XBH33cicrB3saz-RpH48pIBw_BJ2YdyWxYwcoIDNJyXhGiPg5VGvbMvUa9bM1fI7VHm_LUrGQaexPi6QX2ImQaMcrbTmDzBo0wzasn1XOzAZqY8wsYzNc3taf5m7RV3xB2gyU5Yzb817mTR-LUgjzg"
+      },
+      "outcome": {
+        "failed": "unreadable"
+      }
+    },
+    {
+      "name": "car answer without its invitation",
+      "event": {
+        "eventId": "rK2ur7CxsrO0tba3uLm6uw",
+        "kind": "car.reply",
+        "blob": "ASUmJygpKissLS4vMFScq7MKNujLivOHAdQaMCPqbd00WH0Dor-REmDeFHSDxjea98dxxIhLkIXrz3fpQDt-IIYbUlrzWW50D8YYidBuOFs2giy82fXTO8klPUrUypym-OGorjAfHDg"
+      },
+      "outcome": {
+        "failed": "unreadable"
+      }
+    },
+    {
+      "name": "car answer from a newer version",
+      "event": {
+        "eventId": "ra6vsLGys7S1tre4ubq7vA",
+        "kind": "car.reply",
+        "blob": "ASYnKCkqKywtLi8wMdBY1G_SzxmLsIDDrkPF6_jwyROPR_tQQ1h6aWcliFq7fMYogM36tb5JLPiIZo-zCmDRlue0s61Hroy6IiMh2HHkHv87NCwGktiXICkY6Pa_rKisFb-Z6Pd_Fdeu6-e4VJsbJKENdlQuAwfOEw79TuRgsVsK1ZYD7LW88iHd9Ik"
+      },
+      "outcome": {
+        "failed": "unreadable"
+      }
     }
   ]
 }

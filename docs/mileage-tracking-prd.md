@@ -1,6 +1,6 @@
 # Mileage Tracking — PRD
 
-Status: v1 in progress · Owner: Levi · Last updated: 2026-10-03
+Status: v1 in progress, Shared Cars built behind the `shared-cars` flag · Owner: Levi · Last updated: 2026-10-30
 
 ## Problem
 
@@ -16,7 +16,8 @@ a few taps and hand off a monthly figure without mental math.
 - See distance, trip count, and an estimated fuel cost for any day, week, month,
   or service year.
 - Share a report as text (copy / share sheet) or export a CSV.
-- Stay isolated: no Buddies, Calendar, Plans, or Service Report integration.
+- Stay isolated from Calendar, Plans, and Service Reports. Buddies is used
+  only to share a car ([Shared Cars](#shared-cars)).
 
 ## Non-goals (v1)
 
@@ -144,6 +145,81 @@ Delete warns that cars using the fuel stop showing an estimated cost.
 Hides the Home section, prompt, quick action, and screens. Data stays and keeps
 syncing. Turning it back on restores everything.
 
+## Shared Cars
+
+Proposed in [ADR 0037](./adr/0037-shared-cars-are-encrypted-record-spaces.md);
+wire contract in [shared-cars-protocol.md](./shared-cars-protocol.md).
+
+Couples, families, and pioneer partners often drive one car. A **Shared Car**
+gives everyone on it one history.
+
+- **Who:** the User shares a car with buddies. Anyone on the car can invite
+  their own buddies, so the people on a car needn't all be each other's
+  buddies. Up to 10 people per car, counting open invites. Needs Buddies on
+  every phone. Free.
+- **Share Car** (car form → People): sharing an existing car takes its whole
+  history along, then the User picks buddies to invite. With no buddies yet,
+  the form points to Buddies and nothing is shared. The buddy gets a Buddies
+  Alert and a bell entry with **Join** and **Decline**. An invite expires after
+  7 days. Joining turns Mileage Tracking on, and the owner's "joined" bell entry
+  opens the car's People.
+- **Everyone on the car** adds, edits, and deletes its trips, fuel setups, fuels,
+  and prices, and can rename or archive it. Trip notes are shared with the car.
+- **The person who shared it** removes people and can **Stop Sharing**. When
+  they leave, the person who joined first takes over.
+- **Totals count everyone's trips** on Home, Progress, and the Mileage screen.
+  Once the User is on a shared car, the Mileage screen has a person filter, a
+  menu (Everyone, Me, or anyone on a shared car), that its summary, charts, trip
+  list, report text, and CSV follow. A report filtered to one person says whose
+  trips it holds. Trip rows show who logged someone else's trip, Trip Details
+  shows **Logged By** (and **Edited By** when someone else changed it), a trip's
+  share text says who logged it, and the CSV gains a **Logged By** column when
+  any exported trip is on a shared car. Pull to refresh syncs shared cars, and a
+  slim notice says when changes can't be shared right now (offline, suspended,
+  switched off, Update Required, a clock far ahead, a change too large, or a car
+  not ready on this device yet).
+- **People** list on the car form: each person by the name and photo they share
+  in Buddies (a buddy by the User's nickname), the owner marked, plus open
+  invites with their expiry. Each row's menu has Remove (owner only); the
+  User's own row has Leave, and Stop Sharing for the owner; an invite has Cancel
+  Invitation for the owner or whoever sent it. Each one confirms first.
+- **Leaving, being removed, or Stop Sharing** leaves each person a copy of the
+  car and its trips in their own cars. Trips someone logged stay on the car
+  after they leave. Removing a buddy doesn't change any car. Being removed, or
+  the owner stopping sharing, tells the User once ("You're no longer on Mazda
+  CX-5"), and so does everyone else leaving (the car is the User's own again).
+- **Fuels:** a shared car has its own fuels, so everyone sees the same estimated
+  cost. Sharing copies the fuels the car uses; the User's other cars keep their
+  own. Mileage Settings names a shared car's fuels with the car ("Gasoline ·
+  Family Minivan").
+- **Delete Car** isn't offered on a shared car; the owner uses Stop Sharing
+  first. Anyone on it can archive it, for everyone. **Delete All Mileage Data**
+  deletes the User's own mileage and leaves their shared cars, keeping a copy of
+  each, instead of deleting them for everyone; its confirmation says so.
+- **Car rows** show a shared icon and how many people are on the car. The trip
+  form's note says it's shared and takes no photos there, since note photos stay
+  on the device that took them; photos a trip already had stay, marked as not
+  shared.
+- **Default car:** a new trip (in the app, on the watch, and from Siri) starts
+  on the car the User last logged a trip on, not the one someone else drove
+  last.
+- **Watch and Siri:** Log Trip works on shared cars.
+- **Flag off:** Shared Cars sits behind the `shared-cars` remote flag. With it
+  off, a shared car still on the device is still the User's data. It lists with
+  its people, its trips say who logged them, the person filter and exports work,
+  and Leave, Stop Sharing, and Delete All Mileage Data still take the User off
+  it. Nothing new is shared and nothing syncs, and a notice says shared cars
+  aren't available right now.
+- **Security:** the server can't read a car or pick its key; a device trusts
+  only keys it made, an invitation brought, the key chain ties to one it trusts,
+  or the User's own key check vouches for. A car whose key nothing vouches for
+  yet waits, with a notice ("A shared car isn't ready on this device yet").
+- **Analytics** (in `docs/analytics.md`): sharing a car, invites sent and
+  answered, leaving (left, removed, stopped), and sync failures by reason. No
+  names, cars, notes, or amounts.
+- **Help Center:** sharing a car, inviting and joining, what everyone on a car
+  can do and see, leaving and what you keep, why a car stopped syncing.
+
 ## Data model
 
 New shared-tier store `src/stores/mileage.ts` (`mileage` persist key) and types in
@@ -171,6 +247,8 @@ Home key: `mileage`.
 - Optional `mileageStore` slice on the iCloud payload (no version bump; older
   builds ignore it, newer builds default it to empty).
 - Merge: `mergeById` LWW per collection + shared tombstones (`applyTombstones`).
+- Shared Cars sync through their own encrypted space on ww-api, never through
+  this payload or backups (ADR 0037).
 - Wired through `payload.ts`, `payloadValidation.ts`, `merge.ts`,
   `foldRemotePayloads.ts`, `iCloudSync.ts`, and `backupFile.ts`.
 

@@ -91,6 +91,7 @@ describe('createWebStepUp', () => {
       via: 'passkey',
       rpId: RP_ID,
       credentialIds: [CREDENTIAL],
+      credentialId: CREDENTIAL,
       assertion,
       challenge: 'Y2hhbGxlbmdl',
       // On the page's own clock, from just before the server's check.
@@ -302,6 +303,12 @@ describe('createWebStepUp', () => {
     it('always asks for the passkey to turn App Lock on, whose get it keeps', async () => {
       const { deps, stepUp } = withWindow(NOW + 3 * 60_000)
       expect((await stepUp.prepare('app_lock')).status).toBe('ready')
+      expect(deps.sessionWindow).not.toHaveBeenCalled()
+    })
+
+    it('always asks for the passkey to change the account key, whose PRF wraps the new key', async () => {
+      const { deps, stepUp } = withWindow(NOW + 3 * 60_000)
+      expect((await stepUp.prepare('change_account_key')).status).toBe('ready')
       expect(deps.sessionWindow).not.toHaveBeenCalled()
     })
   })

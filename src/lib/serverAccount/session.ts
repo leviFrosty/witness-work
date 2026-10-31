@@ -156,14 +156,16 @@ export class AccountSessionError extends HttpError {
 /**
  * Why the server refused a refresh (docs/passkeys-protocol.md, "Session
  * fields"): `revoked` (another device signed it out), `replaced` (a session
- * cap), `expired`, `reused` (a replaced refresh token came back), or
- * `unknown`.
+ * cap), `expired`, `reused` (a replaced refresh token came back), `key_changed`
+ * (the account key changed on another device while it was live; ADR 0039), or
+ * `unknown`. A phone opens a new session for any of them.
  */
 export type SessionEndReason =
   | 'revoked'
   | 'replaced'
   | 'expired'
   | 'reused'
+  | 'key_changed'
   | 'unknown'
 
 const SESSION_END_REASONS: readonly SessionEndReason[] = [
@@ -171,11 +173,14 @@ const SESSION_END_REASONS: readonly SessionEndReason[] = [
   'replaced',
   'expired',
   'reused',
+  'key_changed',
 ]
 
 /**
  * Whether an ended session means someone else ended it on purpose: a browser
  * wipes itself then, and keeps its data for `expired` and `replaced`.
+ * `key_changed` keeps it only once the browser confirms its key was retired
+ * (`webAccount`).
  */
 export const sessionEndWipes = (reason: SessionEndReason | null) =>
   reason === 'revoked' || reason === 'reused'
@@ -439,9 +444,20 @@ export type WebSessionDeps = {
   /** Tells the other tabs (a `BroadcastChannel`); they pass it to `receive`. */
   publish: (message: SessionTabMessage) => void
   /**
-   * The session is over: the server refused a refresh (in this tab, or
-   * `fromTab` another), or it reached its expiry. `sessionEndWipes` says
-   * whether the browser wipes or shows the sign-in screen.
+   * The session is over, in this tab: before the stored session is cleared,
+   * stores what the browser will do about it (a wipe marked pending, or the
+   * retired key noted for `key_changed`), so a tab that closes partway does it
+   * at the next launch. `changedAt` comes with `key_changed`.
+   */
+  decide?: (
+    reason: SessionEndReason,
+    ending: { accountPub: string; changedAt: number | null }
+  ) => Promise<void>
+  /**
+   * The session is over: the server refused a refresh (in this tab, after
+   * `decide`, or `fromTab` another), or it reached its expiry.
+   * `sessionEndWipes` says whether the browser wipes or shows the sign-in
+   * screen.
    */
   onEnded: (reason: SessionEndReason, from: { fromTab: boolean }) => void
   /**
@@ -1230,14 +1246,20 @@ export function createAccountSessions(deps: AccountSessionDeps) {
    * A browser's session is over: forgotten here and in the other tabs, and the
    * app wipes or asks the User to sign in again (`onEnded`).
    */
-  function endWebSession(
+  async function endWebSession(
     current: Live,
-    reason: SessionEndReason
-  ): AccountSessionError {
+    reason: SessionEndReason,
+    changedAt: number | null = null
+  ): Promise<AccountSessionError> {
     generation++
     lastFailure = null
     live = null
-    // First, so a wipe is marked pending before the other tabs hear of it.
+    // First, so what the browser does about it is stored before the session
+    // is cleared or the other tabs hear of it. A decision that couldn't be
+    // stored is a wipe (`webAccount`).
+    await deps.web
+      ?.decide?.(reason, { accountPub: current.accountPub, changedAt })
+      .catch(() => undefined)
     deps.web?.onEnded(reason, { fromTab: false })
     void save(null)
     deps.web?.publish({
@@ -1353,6 +1375,12 @@ export function createAccountSessions(deps: AccountSessionDeps) {
       // A session for this key, or the one its key replaced, named its
       // account: a new one names it too.
       const knownAccount = call.accountId ?? current?.accountId
+      // A browser's key changes only with a sign-in, which brings its own
+      // session, or its own key change, which moves the session (`repoint`):
+      // a call with the new key just before the move is `cancelled`, rather
+      // than ending the session it's about to keep.
+      if (deps.web && current && current.accountPub !== pub)
+        throw new AccountSessionError('cancelled')
       if (current && current.accountPub !== pub) {
         // The stored key changed outside `changeKey` (iCloud Keychain brought
         // another device's key): end the old session rather than leave it
@@ -1385,14 +1413,19 @@ export function createAccountSessions(deps: AccountSessionDeps) {
             )
           )
             throw error
-          if (deps.web) throw endWebSession(current, error.ended ?? 'unknown')
+          if (deps.web)
+            throw await endWebSession(
+              current,
+              error.ended ?? 'unknown',
+              error.changedAt
+            )
           reason = 'ended'
         }
       }
       // A browser can't attest: the User signs in again.
       if (deps.web) {
         if (current && reason === 'expired')
-          throw endWebSession(current, 'expired')
+          throw await endWebSession(current, 'expired')
         throw new AccountSessionError('signedOut')
       }
       if (

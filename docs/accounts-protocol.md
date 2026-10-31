@@ -63,7 +63,8 @@ The answer is `challenge` and `expiresAt`. An install whose App Attest key isn't
 Plain JSON, no envelope: `{ refreshToken }` → `{ ok, accessToken, accessExpiresAt, refreshToken, sessionExpiresAt }`.
 
 - Every refresh replaces the refresh token. Sending the one just replaced within 60 seconds (a lost response) gets a new pair; sending any older one ends the session.
-- An ended or expired session is 401 `unauthorized`, and the app opens a new one, attesting again, without asking the User.
+- An ended or expired session is 401 `unauthorized`, and the app opens a new one, attesting again, without asking the User. The refusal's `reason` says why: `revoked`, `replaced`, `expired`, `reused`, `key_changed` (with `changedAt`), or `unknown`.
+- `key_changed` means two things, by where it comes. On a call, the access token is from before the session's own key change, so the app refreshes and sends it again. On a refresh, the session is over because the account key changed on another device while it was live ([account-key-change.md](./account-key-change.md)). A session signed out before the change stays `revoked`, and one already expired, `expired`.
 - A session lasts 90 days from opening. Refreshing doesn't extend it.
 - Counts against the Buddies read edge limit.
 

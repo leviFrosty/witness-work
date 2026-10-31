@@ -14,6 +14,7 @@ import {
 } from '@/lib/serverAccount/sessionClient'
 import {
   createWebAccount,
+  type KeyRetiredPending,
   type WebAccount,
 } from '@/lib/serverAccount/webAccount'
 import { webDeviceLabel } from '@/lib/serverAccount/webDeviceLabel'
@@ -40,6 +41,7 @@ import { secureKv } from '@/lib/webStorage/secureKv'
 const SESSION_SECRET = 'session'
 const STALE_SESSION_KEY = 'session-stale'
 const REFRESH_IN_FLIGHT_KEY = 'session-refresh-in-flight'
+const KEY_RETIRED_PENDING_KEY = 'key-retired-pending'
 
 /** A plain `secureKv` entry: a hash or an id, never a secret. */
 const kvEntry = <T>(key: string) => ({
@@ -72,13 +74,15 @@ export const webRuntime: WebRuntime | null = {
   sessionDeps: {
     exclusive: sessionTabs.exclusive,
     publish: sessionTabs.publish,
+    decide: async (reason, ending) => account?.decide(reason, ending),
     onEnded: (reason, from) => account?.ended(reason, from),
     inFlight: kvEntry<string>(REFRESH_IN_FLIGHT_KEY),
   },
   deviceLabel: () => webDeviceLabel(),
   accountKey: webAccountKey,
-  bind: (sessions) =>
+  bind: (sessions, hooks) =>
     (account ??= createWebAccount({
+      ...hooks,
       sessions,
       accountKey: webAccountKey,
       tabs: sessionTabs,
@@ -98,6 +102,7 @@ export const webRuntime: WebRuntime | null = {
           )
         },
       }),
+      keyRetiredPending: kvEntry<KeyRetiredPending>(KEY_RETIRED_PENDING_KEY),
       hasLocalData: webStorageBoot.hasLocalData,
       open: (ticket, accountKey, signed) => {
         const key = deriveAccountSigningKey(accountKey)

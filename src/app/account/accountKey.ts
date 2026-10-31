@@ -109,6 +109,10 @@ export async function replaceAccountKey(
     accountId?: string
   }
 ): Promise<ReplaceAccountKeyResult> {
+  // A browser stores a new key only from a key change; another account signs
+  // in after a wipe instead (`webAccount`).
+  if (!accountKeyReplaceable())
+    throw new Error('This device can’t replace its account key')
   const result = await holdCloudSyncDefault(() =>
     accountKey.replace(newKey, { confirmedLoss, session, accountId })
   )

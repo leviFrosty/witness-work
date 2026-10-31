@@ -1,12 +1,16 @@
 import React from 'react'
 import { act, create, type ReactTestRenderer } from 'react-test-renderer'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 const largeText = vi.hoisted(() => ({ value: false }))
 
 vi.mock('react-native', () => ({
+  Platform: { OS: 'web' },
   Pressable: 'Pressable',
-  StyleSheet: { flatten: (style: unknown) => style },
+  StyleSheet: {
+    absoluteFill: { position: 'absolute' },
+    flatten: (style: unknown) => style,
+  },
   View: 'View',
 }))
 vi.mock('@/contexts/theme', () => {
@@ -26,6 +30,10 @@ vi.mock('@/components/ui/WholeWordsText', () => ({ default: 'Text' }))
 vi.mock('@/components/ui/InfoPopover', () => ({ default: 'InfoPopover' }))
 vi.mock('@/components/ui/LucideIcon', () => ({ default: 'LucideIcon' }))
 vi.mock('@/components/ui/Switch', () => ({ default: 'Switch' }))
+vi.mock('@/components/ui/PointerHover', () => ({
+  default: ({ children }: { children: React.ReactNode }) => children,
+  HoverTint: () => null,
+}))
 
 import InputRowContainer from '@/components/ui/inputs/InputRowContainer'
 
@@ -171,5 +179,57 @@ describe('InputRowContainer', () => {
         'no-hide-descendants'
       )
     })
+  })
+})
+
+describe('InputRowContainer with onRowPress', () => {
+  let renderer: ReactTestRenderer | undefined
+
+  afterEach(() => {
+    act(() => renderer?.unmount())
+    renderer = undefined
+  })
+
+  const render = (
+    props: Partial<React.ComponentProps<typeof InputRowContainer>>
+  ) => {
+    act(() => {
+      renderer = create(
+        <InputRowContainer
+          label='Saved it'
+          description='Somewhere safe'
+          {...props}
+        >
+          {React.createElement('Switch')}
+        </InputRowContainer>
+      )
+    })
+    return renderer!.root
+  }
+
+  it('presses from a target behind the whole row', () => {
+    const onRowPress = vi.fn()
+    const target = render({ onRowPress }).findByType('Pressable' as never)
+    expect(target.props.style).toContainEqual({ position: 'absolute' })
+    expect(target.props.tabIndex).toBe(-1)
+    act(() => target.props.onPress())
+    expect(onRowPress).toHaveBeenCalledOnce()
+  })
+
+  it('lets taps on the text through, and keeps the controls on top', () => {
+    const root = render({ onRowPress: vi.fn(), info: 'More' })
+    for (const text of root.findAllByType('Text' as never))
+      expect(text.props.pointerEvents ?? text.parent?.props.pointerEvents).toBe(
+        'none'
+      )
+    // Neither the switch nor the info button sits inside the target.
+    const target = root.findByType('Pressable' as never)
+    expect(target.findAllByType('Switch' as never)).toHaveLength(0)
+    expect(target.findAllByType('InfoPopover' as never)).toHaveLength(0)
+    expect(root.findAllByType('InfoPopover' as never)).toHaveLength(1)
+  })
+
+  it('has no row target without onRowPress', () => {
+    expect(render({}).findAllByType('Pressable' as never)).toHaveLength(0)
   })
 })

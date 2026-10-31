@@ -52,7 +52,7 @@ const REASONS: Record<SensitiveAction, TranslationKey> = {
   app_lock: 'stepUp_reasonAppLock',
   set_up_device: 'stepUp_reasonOther',
   approve_device: 'stepUp_reasonOther',
-  change_account_key: 'stepUp_reasonOther',
+  change_account_key: 'stepUp_reasonChangeAccountKey',
 }
 
 const FAILURES: Record<StepUpFailure, TranslationKey> = {

@@ -4,7 +4,6 @@ import { webAccountKey } from '@/lib/accountKey/webAccountKey'
 import { analytics } from '@/lib/analytics'
 import { appVersion } from '@/lib/appUpdate'
 import { createPasskey, getPasskey } from '@/lib/passkeys'
-import { HttpError } from '@/lib/http/request'
 import { syncNow } from '@/lib/syncClock'
 import { bearerOptions, webAccount } from '@/lib/serverAccount'
 import { createBrowserApproval } from '@/lib/serverAccount/approvalSession'
@@ -15,12 +14,14 @@ import {
   startPasskeySignIn,
   webRecovery,
 } from '@/lib/serverAccount/passkeyClient'
+import type { PasskeyAddResult } from '@/lib/serverAccount/passkeyFlow'
 import {
-  addPasskeyFlow,
-  type PasskeyAddResult,
-} from '@/lib/serverAccount/passkeyFlow'
+  addWebPasskey,
+  type WebPasskeyStepUp,
+} from '@/lib/serverAccount/webPasskeyAdd'
 import {
   accountPasskeyDeps,
+  type PasskeyAddSource,
   reportPasskeyAdd,
 } from '@/lib/serverAccount/passkeyServer'
 import { browserAndSystem } from '@/lib/serverAccount/webDeviceLabel'
@@ -119,30 +120,34 @@ export function webSignIn(): WebSignIn {
  * as the step-up for 5 minutes, so the passkey tap is the only check. Past it
  * the server would refuse a passkey the authenticator already made, so nothing
  * is created then. Without PRF it's added Sign-in only.
+ *
+ * Elsewhere (after a key change) `stepUp` is that one's instead.
  */
-export async function addPasskeyHere(): Promise<PasskeyAddResult> {
+export async function addPasskeyHere(
+  context: { source?: PasskeyAddSource; stepUp?: WebPasskeyStepUp } = {}
+): Promise<PasskeyAddResult> {
   const accountKey = await webAccountKey.peek()
   if (!accountKey)
     return { status: 'failed', step: 'options', reason: 'failed' }
-  const flow = webSignIn()
-  analytics.capture('passkey_add_started', {
-    kind: 'add',
-    source: 'approved_by',
-  })
   const { options: _, ...account } = accountPasskeyDeps(accountKey)
-  const result = await addPasskeyFlow({
-    ...account,
-    ceremonies: {
-      create: (options) =>
-        flow.addPasskeyAllowed()
-          ? createPasskey(options)
-          : Promise.reject(new HttpError('server', 403, 'step_up_required')),
-      get: getPasskey,
+  return addWebPasskey(
+    {
+      ...account,
+      ceremonies: { create: createPasskey, get: getPasskey },
+      randomBytes: getRandomBytes,
     },
-    confirmOwner: async () =>
-      flow.addPasskeyAllowed() ? 'confirmed' : 'failed',
-    randomBytes: getRandomBytes,
-  })
-  reportPasskeyAdd('add', 'approved_by', result)
-  return result
+    {
+      stepUp: context.stepUp ?? {
+        holds: () => webSignIn().addPasskeyAllowed(),
+        confirm: async () =>
+          webSignIn().addPasskeyAllowed() ? 'confirmed' : 'failed',
+      },
+      source: context.source ?? 'approved_by',
+      track: {
+        started: (source) =>
+          analytics.capture('passkey_add_started', { kind: 'add', source }),
+        finished: (source, result) => reportPasskeyAdd('add', source, result),
+      },
+    }
+  )
 }

@@ -20,14 +20,22 @@ import type { ResumeResult } from './engine'
  *    only this device holds it), Cloud Sync, backup and Buddies wait, and local
  *    data stays.
  *
- * Only for a key this device holds: its change's old key, its stored key, or
- * its account's. Any other (a recovery key typed in, refused before it's used)
- * is the caller's to say, and leaves this device as it is.
+ * Only for a key this device holds: its change's old key, its stored key, its
+ * account's, or one the caller says it held (`held`: a browser forgets the key
+ * before it tells). Any other (a recovery key typed in, refused before it's
+ * used) is the caller's to say, and leaves this device as it is.
+ *
+ * A held key is the browser's own session's, ended by the change: the server
+ * keeps the session that makes a change, so a change of the browser's own that
+ * wasn't committed lost, without asking (a browser can't open a session with
+ * its keys to check, as a phone does).
  */
 export type KeyRetiredDeps = {
   record: () => Promise<KeyChangeRecord | null>
   resume: () => Promise<ResumeResult>
   discard: () => Promise<void>
+  /** Deletes a change not committed, asking nothing (`engine.lose`). */
+  lose: () => Promise<void>
   lastAccountId: () => string | null
   /** The platform store's key, as stored (b64u), ignoring retired keys. */
   storedKey: () => Promise<string | null>
@@ -52,7 +60,8 @@ export type KeyRetiredOutcome =
 export function createKeyRetiredHandler(deps: KeyRetiredDeps) {
   return async function handleKeyRetired(
     accountPub: string,
-    changedAt: number | null
+    changedAt: number | null,
+    { held = false }: { held?: boolean } = {}
   ): Promise<KeyRetiredOutcome> {
     // Unreadable, it throws: nothing is signed out or deleted on a guess.
     const record = await deps.record()
@@ -60,6 +69,7 @@ export function createKeyRetiredHandler(deps: KeyRetiredDeps) {
       record !== null && accountPubOf(fromB64u(record.oldKey)) === accountPub
     const stored = await deps.storedKey().catch(() => null)
     if (
+      !held &&
       !ownChange &&
       deps.accountPub() !== accountPub &&
       (!stored || accountPubOf(fromB64u(stored)) !== accountPub)
@@ -67,7 +77,8 @@ export function createKeyRetiredHandler(deps: KeyRetiredDeps) {
       return 'ignored'
     if (record && ownChange) {
       if (isCommitted(record)) return 'ownChange'
-      if (record.stage === 'confirmed') {
+      if (held) await deps.lose()
+      else if (record.stage === 'confirmed') {
         const resumed = await deps.resume()
         if (resumed.state === 'done') return 'ownChange'
         // Its K2 may be the account's: nothing is signed out or deleted

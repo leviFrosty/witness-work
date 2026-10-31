@@ -24,7 +24,11 @@ import {
   type PasskeyWrap,
   wrapAccountKey,
 } from '@/lib/serverAccount/passkeys'
-import type { SessionEndReason } from '@/lib/serverAccount/session'
+import { HttpError } from '@/lib/http/request'
+import {
+  AccountSessionError,
+  type SessionEndReason,
+} from '@/lib/serverAccount/session'
 import { type WebAccount, WebSignInError } from '@/lib/serverAccount/webAccount'
 import type {
   WebSignInMark,
@@ -108,6 +112,8 @@ export type WebSignInProblem = {
   retryAfterMs: number | null
   /** `otherAccount`: the account Sign In Again needs. */
   account?: string
+  /** `keyRetired`: when a key change replaced the key (epoch ms), if said. */
+  changedAt?: number | null
 }
 
 export type WebSignInState = {
@@ -253,12 +259,23 @@ const INITIAL: WebSignInState = {
   ended: null,
 }
 
+/** When the server says a key change retired the key (`key_retired`). */
+function retiredAt(error: unknown): number | null {
+  if (error instanceof AccountSessionError && error.changedAt !== null)
+    return error.changedAt
+  if (!(error instanceof HttpError)) return null
+  const changedAt = (error.body as { changedAt?: unknown } | null)?.changedAt
+  return typeof changedAt === 'number' ? changedAt : null
+}
+
 /** A thrown error as the screen explains it. */
 export function webSignInFailureFor(error: unknown): {
   failure: WebSignInFailure
   retryAfterMs: number | null
   /** For analytics: the finer reason, when there is one. */
   reason: WebSignInFailureReason
+  /** `keyRetired`: when the key was replaced, if the server said. */
+  changedAt?: number | null
 } {
   const plain = (
     failure: WebSignInFailure,
@@ -294,8 +311,9 @@ export function webSignInFailureFor(error: unknown): {
     case 'rateLimited':
     case 'turnstileFailed':
     case 'unknownAccount':
-    case 'keyRetired':
       return result(failure)
+    case 'keyRetired':
+      return { ...result(failure), changedAt: retiredAt(error) }
     case 'passkeyFailed':
       return result(
         reason === 'unknown_credential' || reason === 'user_handle'
@@ -355,14 +373,18 @@ export function createWebSignIn(deps: WebSignInDeps) {
       : { method, failure, retryAfterMs }
 
   function failed(method: WebSignInMethod, error: unknown) {
-    const { failure, retryAfterMs, reason } = webSignInFailureFor(error)
+    const { failure, retryAfterMs, reason, changedAt } =
+      webSignInFailureFor(error)
     emit({ type: 'failed', method, reason })
     set({
       busy: null,
       problem:
         failure === 'cancelled'
           ? null
-          : problemOf(method, failure, retryAfterMs),
+          : {
+              ...problemOf(method, failure, retryAfterMs),
+              ...(changedAt != null && { changedAt }),
+            },
     })
   }
 

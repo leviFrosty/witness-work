@@ -51,6 +51,10 @@ import {
   createInstallCheck,
   type InstallCheck,
 } from '@/lib/serverAccount/installToken'
+import {
+  createKeyRetiredHub,
+  type KeyRetiredListener,
+} from '@/lib/serverAccount/keyRetiredHub'
 
 let _store: MMKV | null = null
 // Device-local MMKV, like ADR 0011's account id: never in the sync payload.
@@ -309,21 +313,20 @@ export const onAccountKeySwitched = (listener: () => void): (() => void) => {
   return () => keySwitchedListeners.delete(listener)
 }
 
-const keyRetiredListeners = new Set<
-  (accountPub: string, changedAt: number | null) => void
->()
+const keyRetiredHub = createKeyRetiredHub((error) =>
+  errorTracking.captureException(error)
+)
 
 /**
- * Calls `listener` when a session open is refused as `key_retired`: the account
- * key changed on another device (`app/account/keyChange` handles it). Returns
- * an unsubscribe.
+ * Calls `listener` when a session open is refused as `key_retired`, or a
+ * browser signed out finds its key retired: the account key changed on another
+ * device (`app/account/keyChange` handles it). A browser waits for what it
+ * returns. One that heard of it at launch, before anything listened, keeps it
+ * for the first listener: `start()` goes on meanwhile, and deletes its note
+ * once that listener has handled it. Returns an unsubscribe.
  */
-export const onKeyRetired = (
-  listener: (accountPub: string, changedAt: number | null) => void
-): (() => void) => {
-  keyRetiredListeners.add(listener)
-  return () => keyRetiredListeners.delete(listener)
-}
+export const onKeyRetired = (listener: KeyRetiredListener): (() => void) =>
+  keyRetiredHub.subscribe(listener)
 
 /**
  * This device's attested account sessions (ADR 0027). Every user-scoped ww-api
@@ -382,13 +385,7 @@ export const accountSessions = createAccountSessions({
     }
   },
   onKeyRetired: (accountPub, changedAt) => {
-    for (const listener of keyRetiredListeners) {
-      try {
-        listener(accountPub, changedAt)
-      } catch (error) {
-        errorTracking.captureException(error)
-      }
-    }
+    void keyRetiredHub.emit(accountPub, changedAt, { held: false })
   },
 })
 
@@ -397,7 +394,18 @@ export const accountSessions = createAccountSessions({
  * out, and the server ending the session (`webAccount.ts`). Null on phones.
  */
 export const webAccount: WebAccount | null =
-  webRuntime?.bind(accountSessions) ?? null
+  webRuntime?.bind(accountSessions, {
+    // Ended by a key change on another device (`key_changed`): the retired
+    // key goes, the stores stay (ADR 0039).
+    // The browser forgot the key itself first: it held it.
+    onKeyRetired: (accountPub, changedAt) =>
+      keyRetiredHub.emit(accountPub, changedAt, { held: true }),
+    onSignedIn: (accountKey) => {
+      // Remembers the account, as a phone's sign-in does.
+      void serverAccount.connect(accountKey).catch(() => undefined)
+      notifyAccountChange('session_opened')
+    },
+  }) ?? null
 
 /**
  * This device's session's account, without opening one: null without a session,
@@ -419,9 +427,13 @@ export async function currentSessionAccount(
   let seed: string | null
   try {
     // As every feature reads it: a committed change's new key, never a
-    // retired one (ADR 0039 §4).
+    // retired one (ADR 0039 §4). A confirmed change found at launch holds this
+    // read until it resolves (`holdAccountKeyUntil`), so reconcile and
+    // Supporter status wait for it too.
     seed = await deviceAccountKey.peek()
   } catch {
+    // The key or the change record can't be read: the session's account,
+    // which is right either way, since a key change keeps the account id.
     return session.accountId
   }
   const accountId = sessionAccountForKey(session, seed ? fromB64u(seed) : null)

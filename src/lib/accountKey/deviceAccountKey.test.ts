@@ -146,4 +146,25 @@ describe('device account key', () => {
     await key.replace(K1)
     expect(await key.peek()).toBe(K1)
   })
+
+  it('reads the stored key without the change record, a retired one as none', async () => {
+    const { key, native } = setup({ record: record('committed') })
+    const recordless = createDeviceAccountKey({
+      native,
+      // The launch hold: never settles while `resume` decides.
+      record: () => new Promise(() => {}),
+      retired: {
+        has: (value) => value === pub(K2),
+        add: () => {},
+        delete: () => {},
+      },
+      sharedStore: false,
+      signedOut: () => false,
+    })
+    expect(await recordless.peekStored()).toBe(K1)
+    // Not the committed change's new key: only what the store holds.
+    expect(await key.peekStored()).toBe(K1)
+    native.value = K2
+    expect(await recordless.peekStored()).toBeNull()
+  })
 })

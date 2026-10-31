@@ -15,6 +15,7 @@ const passkey: StepUpResult = {
   via: 'passkey',
   rpId: 'app.witnesswork.app',
   credentialIds: ['Y3JlZA'],
+  credentialId: 'Y3JlZA',
   assertion: {
     response: {
       id: 'Y3JlZA',

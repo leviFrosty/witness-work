@@ -1,4 +1,5 @@
 import i18n, { type TranslationKey } from '@/lib/locales'
+import { formatDate } from '@/lib/dates'
 import { localizeAppDigits } from '@/lib/numbers'
 import type { ApprovalFailure } from '@/lib/serverAccount/approvalSession'
 import type { SessionEndReason } from '@/lib/serverAccount/session'
@@ -58,6 +59,10 @@ export function signInProblemText(
     return i18n.t('webSignIn_problemRateLimited', {
       time: waitFor(retryAfterMs),
     })
+  if (failure === 'keyRetired' && problem.changedAt)
+    return i18n.t('webSignIn_problemKeyRetiredOn', {
+      date: formatDate(problem.changedAt),
+    })
   if (failure === 'wrongAccount' && afterPasskey)
     return i18n.t('webSignIn_problemWrongAccount')
   if (failure === 'otherAccount') return i18n.t('webSignIn_problemOtherAccount')
@@ -116,11 +121,27 @@ const APPROVAL: Partial<Record<ApprovalFailure, LocaleKey>> = {
 export const approvalProblemText = (reason: ApprovalFailure) =>
   i18n.t(APPROVAL[reason] ?? 'webSignIn_problemFailed')
 
-/** Why the server signed this browser out, in one line; null for none. */
-export function endedText(reason: SessionEndReason | null): string | null {
+/**
+ * Why the server signed this browser out; null for none. A key change on
+ * another device says when (`changedAt`, if the server said) and how to sign
+ * back in.
+ */
+export function endedText(
+  reason: SessionEndReason | null,
+  changedAt: number | null = null
+): string | null {
   switch (reason) {
     case null:
       return null
+    case 'key_changed':
+      return [
+        changedAt
+          ? i18n.t('accountKeyChange_elsewhereBody', {
+              date: formatDate(changedAt),
+            })
+          : i18n.t('accountKeyChange_elsewhereBodyNoDate'),
+        i18n.t('accountKeyChange_elsewhereHowWeb'),
+      ].join(' ')
     case 'replaced':
       return i18n.t('webSignIn_endedReplaced')
     case 'revoked':

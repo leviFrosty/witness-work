@@ -59,13 +59,20 @@ export type KeyChangeEvent =
 /**
  * Why `account_key_change_failed` was sent: another device changed the key
  * first (`conflict`, `key_retired`), the platform store refused the key
- * (`store`), or a later step stopped (`step`).
+ * (`store`), or a later step stopped (`step`). The web's: the browser's session
+ * is younger than a day (`session_too_new`), the account has no passkey to
+ * confirm with (`no_passkey`), the browser has no Web Locks (`unsupported`), or
+ * the passkey check didn't pass (`step_up`).
  */
 export type KeyChangeFailedReason =
   | 'conflict'
   | 'key_retired'
   | 'store'
   | 'step'
+  | 'session_too_new'
+  | 'no_passkey'
+  | 'unsupported'
+  | 'step_up'
 
 export type KeyChangeFailureReason =
   | 'offline'
@@ -79,11 +86,26 @@ export type KeyChangeFailureReason =
   /** The server can't say yet whether a change committed. */
   | 'unresolved'
   | 'server'
+  /** The web: this browser's session is younger than a day. */
+  | 'session_too_new'
+  /** The web: the account has no passkey to confirm with. */
+  | 'no_passkey'
+  /** The web: the browser has no Web Locks to keep its tabs apart. */
+  | 'unsupported'
+  /** The web: the passkey check was cancelled or didn't pass. */
+  | 'step_up'
 
 export class KeyChangeError extends Error {
-  constructor(readonly reason: KeyChangeFailureReason) {
+  /** `session_too_new`: when the browser may change the key (epoch ms). */
+  readonly availableAt?: number
+
+  constructor(
+    readonly reason: KeyChangeFailureReason,
+    detail: { availableAt?: number } = {}
+  ) {
     super(`Key change failed: ${reason}`)
     this.name = 'KeyChangeError'
+    if (detail.availableAt !== undefined) this.availableAt = detail.availableAt
   }
 }
 
@@ -96,12 +118,27 @@ export type KeyChangeAccount = {
 
 export type KeyChangeEngineDeps = {
   records: KeyChangeRecordStore
+  /**
+   * Runs one operation while no other tab runs one (the web's
+   * `navigator.locks.request("ww-account-key-change")`), so two tabs never
+   * carry the same change on at once. Phones have one engine and skip it.
+   */
+  exclusive?: <T>(run: () => Promise<T>) => Promise<T>
+  /** The change finished and its record is gone (the web reloads its tabs). */
+  finished?: () => void
   now: () => number
   randomBytes: (length: number) => Uint8Array
   /** For analytics. */
   platform: string
   /** This device's account key, without creating one. */
   deviceKey: () => Promise<Uint8Array | null>
+  /**
+   * The key the platform store holds (a retired one reads as none), without the
+   * change record: `resume` runs while the launch holds every read of the
+   * account key until the record decides (`holdAccountKeyUntil`), and
+   * `deviceKey` would wait for it.
+   */
+  heldKey: () => Promise<Uint8Array | null>
   isOnline: () => boolean
   server: {
     /** `GET /account` with `key`'s session. */
@@ -114,7 +151,12 @@ export type KeyChangeEngineDeps = {
      * on), and whether it holds a session there to ask with; null when it was
      * never on one.
      */
-    deviceAccount: () => Promise<{ accountId: string; session: boolean } | null>
+    deviceAccount: () => Promise<{
+      accountId: string
+      session: boolean
+      /** The public key of the session's account key, while it holds one. */
+      accountPub?: string | null
+    } | null>
     /**
      * Opens a session with `key` only into `accountId`, never creating an
      * account, and without touching this device's own session: `unknownAccount`
@@ -128,6 +170,13 @@ export type KeyChangeEngineDeps = {
     /** This device's label sealed under the new key, if any. */
     sealLabel?: (newKey: Uint8Array) => string | undefined
   }
+  /**
+   * Before step 0, whether this device may change the key at all; throws a
+   * `KeyChangeError` when it may not. The web checks its session's age and that
+   * the account has a passkey, so the User never saves a recovery key the
+   * server would refuse.
+   */
+  precheck?: (oldKey: Uint8Array) => Promise<void>
   /**
    * Step 0, with K1 still the account's: Cloud Sync pulls, merges and pushes; a
    * backup when it's on; Buddies' inbox is linked to the account.
@@ -147,9 +196,15 @@ export type KeyChangeEngineDeps = {
   step: (name: KeyChangeStepName) => KeyChangeStep
   /**
    * The web's step-up, right after "I've saved it"; its passkey wraps the new
-   * key. Phones check Face ID before starting instead.
+   * key for the epoch the change makes (`keyEpoch`). Throws a `KeyChangeError`
+   * (`step_up`) when it doesn't pass. Phones check Face ID before starting
+   * instead.
    */
-  stepUp?: (newKey: Uint8Array) => Promise<{ passkeyWrap?: RekeyPasskeyWrap }>
+  stepUp?: (change: {
+    newKey: Uint8Array
+    accountId: string
+    keyEpoch: number
+  }) => Promise<{ passkeyWrap?: RekeyPasskeyWrap }>
   track: (
     event: KeyChangeEvent,
     properties: {
@@ -208,18 +263,22 @@ const isOffline = (error: unknown) => {
 }
 
 /**
- * Checking found this device signed out of the account: its session revoked by
- * the winner's change, or K1 reopening as retired.
+ * Checking found this device signed out of the account: its session ended by
+ * the winner's change (`key_changed`; `revoked` from servers before it), or K1
+ * reopening as retired.
  */
 const isLost = (error: unknown) =>
   (error instanceof HttpError && error.serverCode === 'key_retired') ||
-  (error instanceof AccountSessionError && error.ended === 'revoked')
+  (error instanceof AccountSessionError &&
+    (error.ended === 'key_changed' || error.ended === 'revoked'))
 
 export function createKeyChangeEngine(deps: KeyChangeEngineDeps) {
   let queue: Promise<unknown> = Promise.resolve()
-  /** One operation at a time. */
+  const exclusive = deps.exclusive ?? (<T>(run: () => Promise<T>) => run())
+  /** One operation at a time, in this tab and across the browser's tabs. */
   const serially = <T>(run: () => Promise<T>): Promise<T> => {
-    const next = queue.then(run, run)
+    const locked = () => exclusive(run)
+    const next = queue.then(locked, locked)
     queue = next.catch(() => undefined)
     return next
   }
@@ -301,6 +360,52 @@ export function createKeyChangeEngine(deps: KeyChangeEngineDeps) {
     }
     await remove()
     track('account_key_change_completed')
+    deps.finished?.()
+  }
+
+  /** `deps.precheck`, its refusals tracked. */
+  async function precheck(oldKey: Uint8Array): Promise<void> {
+    try {
+      await deps.precheck?.(oldKey)
+    } catch (error) {
+      if (!(error instanceof KeyChangeError))
+        throw new KeyChangeError(
+          isConnectivityError(error) ? 'offline' : 'server'
+        )
+      if (
+        error.reason === 'session_too_new' ||
+        error.reason === 'no_passkey' ||
+        error.reason === 'unsupported'
+      )
+        track('account_key_change_failed', { reason: error.reason })
+      throw error
+    }
+  }
+
+  /** The web's step-up for `record`'s new key and epoch, if any. */
+  async function stepUp(
+    record: KeyChangeRecord
+  ): Promise<RekeyPasskeyWrap | undefined> {
+    if (!deps.stepUp) return undefined
+    try {
+      const passed = await deps.stepUp({
+        newKey: keysOf(record).newKey,
+        accountId: record.accountId,
+        keyEpoch: record.oldKeyEpoch + 1,
+      })
+      return passed.passkeyWrap
+    } catch (error) {
+      if (!(error instanceof KeyChangeError))
+        throw new KeyChangeError(
+          isConnectivityError(error) ? 'offline' : 'server'
+        )
+      if (error.reason === 'step_up')
+        track('account_key_change_failed', {
+          stage: record.stage,
+          reason: 'step_up',
+        })
+      throw error
+    }
   }
 
   /** Steps 0 and 1. Returns K2, for its recovery key. */
@@ -312,6 +417,7 @@ export function createKeyChangeEngine(deps: KeyChangeEngineDeps) {
       if (existing) throw new KeyChangeError('in_progress')
       const oldKey = await deps.deviceKey()
       if (!oldKey) throw new KeyChangeError('no_key')
+      await precheck(oldKey)
       let account: KeyChangeAccount
       let stored: StoredKeyHistory
       try {
@@ -472,8 +578,14 @@ export function createKeyChangeEngine(deps: KeyChangeEngineDeps) {
     return { outcome: 'done' }
   }
 
-  /** Step 3, then the rest. */
-  function commit(): Promise<CommitResult> {
+  /**
+   * Step 3, then the rest. `onStepUp` hears when the web's step-up starts
+   * (`true`, its passkey prompt up) and ends (`false`), before anything is
+   * sent.
+   */
+  function commit(
+    hooks: { onStepUp?: (waiting: boolean) => void } = {}
+  ): Promise<CommitResult> {
     return serially(async () => {
       const owned = await ownRecord()
       if (owned === 'unresolved') throw new KeyChangeError('offline')
@@ -498,8 +610,13 @@ export function createKeyChangeEngine(deps: KeyChangeEngineDeps) {
         await proceed(record)
         return { outcome: 'done' }
       }
-      const { newKey } = keysOf(record)
-      const passkeyWrap = (await deps.stepUp?.(newKey))?.passkeyWrap
+      if (deps.stepUp) hooks.onStepUp?.(true)
+      let passkeyWrap: RekeyPasskeyWrap | undefined
+      try {
+        passkeyWrap = await stepUp(record)
+      } finally {
+        if (deps.stepUp) hooks.onStepUp?.(false)
+      }
 
       // A lost answer is read from the account; the envelope is never sent
       // twice. Not committed means a new one (fresh ts and nonce).
@@ -548,6 +665,14 @@ export function createKeyChangeEngine(deps: KeyChangeEngineDeps) {
             continue
           }
           default:
+            // The web's refusals: still confirmed, under the old key.
+            track('account_key_change_failed', {
+              stage: record.stage,
+              reason:
+                result.outcome === 'sessionTooNew'
+                  ? 'session_too_new'
+                  : 'step_up',
+            })
             return { outcome: result.outcome }
         }
       }
@@ -602,7 +727,8 @@ export function createKeyChangeEngine(deps: KeyChangeEngineDeps) {
     const record = await deps.records.read()
     if (!record || isCommitted(record)) return record
     const device = await deps.server.deviceAccount()
-    if (!device || device.accountId === record.accountId) return record
+    if (!device || device.accountId === record.accountId)
+      return replacedKey(record, device)
     if (record.stage === 'confirmed') {
       const resolved = await resolveConfirmed(record)
       if (resolved === 'unresolved') return 'unresolved'
@@ -611,6 +737,50 @@ export function createKeyChangeEngine(deps: KeyChangeEngineDeps) {
     }
     await remove()
     return null
+  }
+
+  /**
+   * A change not committed, once the store holds another key than the change's
+   * old one (a browser signed back in after another device changed the key): it
+   * can never commit from here. Told from what the store holds (`heldKey`),
+   * without asking the server.
+   *
+   * - Pending: deleted whenever another key is held, even one iCloud Keychain
+   *   brought from another account. Its K2 was never sent, so nothing is lost.
+   * - Confirmed: holding its K2 means it committed. Another key deletes it only
+   *   while this device's session is that key's, since only that shows the
+   *   account took the key after K2 was sent, if it ever was.
+   */
+  async function replacedKey(
+    record: KeyChangeRecord,
+    device: Awaited<ReturnType<KeyChangeEngineDeps['server']['deviceAccount']>>
+  ): Promise<KeyChangeRecord | null> {
+    const held = await deps.heldKey().catch(() => null)
+    if (!held) return record
+    const heldPub = accountPubOf(held)
+    const { oldKey, newKey } = keysOf(record)
+    if (heldPub === accountPubOf(oldKey)) return record
+    if (record.stage === 'confirmed') {
+      if (heldPub === accountPubOf(newKey))
+        return save({ ...record, stage: 'committed' })
+      if (!device?.session || device.accountPub !== heldPub) return record
+    }
+    await lostRace(record, 'key_retired')
+    return null
+  }
+
+  /**
+   * This device's session ended because another device changed the key, and
+   * this device says a change of its own can't have done it (`held`: a browser
+   * changes the key only through that session, which the server keeps for the
+   * change it makes). A change not committed is lost: its new key is deleted,
+   * with nothing asked. A committed one stays.
+   */
+  function lose(): Promise<void> {
+    return serially(async () => {
+      const record = await deps.records.read()
+      if (record && !isCommitted(record)) await lostRace(record, 'key_retired')
+    })
   }
 
   /**
@@ -659,9 +829,20 @@ export function createKeyChangeEngine(deps: KeyChangeEngineDeps) {
   const current = async (): Promise<{
     stage: KeyChangeStage
     startedAt: number
+    /**
+     * The store holds another key than the change's old one (signed back in
+     * after a change elsewhere): the old one doesn't keep working.
+     */
+    otherKeyHeld: boolean
   } | null> => {
     const record = await deps.records.read()
-    return record ? { stage: record.stage, startedAt: record.startedAt } : null
+    if (!record) return null
+    const held = await deps.heldKey().catch(() => null)
+    return {
+      stage: record.stage,
+      startedAt: record.startedAt,
+      otherKeyHeld: held !== null && toB64u(held) !== record.oldKey,
+    }
   }
 
   /**
@@ -688,6 +869,7 @@ export function createKeyChangeEngine(deps: KeyChangeEngineDeps) {
     start,
     confirm,
     discard,
+    lose,
     commit,
     resume,
     current,

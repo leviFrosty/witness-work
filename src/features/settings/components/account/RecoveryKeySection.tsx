@@ -128,11 +128,10 @@ export default function RecoveryKeySection({
             label={i18n.t('account_showRecoveryKey')}
             onPress={() => void show()}
             disabled={opening}
-            lastInSection={isWeb}
+            lastInSection={isWeb && !canChangeKey}
           />
         )}
-        {/* The web needs its passkey step-up wired first. */}
-        {ownKey && canChangeKey && !isWeb && (
+        {ownKey && canChangeKey && (
           <InputRowButton
             leftIcon={RotateCcwKeyIcon}
             label={i18n.t('accountKeyChange_row')}
@@ -140,6 +139,7 @@ export default function RecoveryKeySection({
             onPress={() =>
               navigation.navigate('Change Account Key', { entry: 'settings' })
             }
+            lastInSection={isWeb}
           />
         )}
         {!isWeb && (

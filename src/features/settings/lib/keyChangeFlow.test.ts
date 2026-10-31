@@ -7,7 +7,10 @@ import {
 } from './keyChangeFlow'
 
 class FakeKeyChangeError extends Error {
-  constructor(readonly reason: string) {
+  constructor(
+    readonly reason: string,
+    readonly availableAt?: number
+  ) {
     super(reason)
   }
 }
@@ -42,7 +45,9 @@ function setup(
       return { outcome: 'done' as const }
     }),
     discard: vi.fn(async () => setStage(null)),
-    current: vi.fn(async () => (stage ? { stage, startedAt: 1 } : null)),
+    current: vi.fn(async () =>
+      stage ? { stage, startedAt: 1, otherKeyHeld: false } : null
+    ),
     pendingKey: vi.fn(async () => (stage === 'pending' ? K2 : null)),
     onStage: (listener) => {
       listeners.add(listener)
@@ -55,6 +60,8 @@ function setup(
     encodeRecoveryKey: () => 'WW1-NEW',
     failureReason: (error) =>
       error instanceof FakeKeyChangeError ? error.reason : null,
+    availableAt: (error) =>
+      error instanceof FakeKeyChangeError ? error.availableAt : undefined,
     track: vi.fn(),
     ...overrides,
   }
@@ -143,6 +150,24 @@ describe('the Change Account Key flow', () => {
       'resealed',
       'buddies-reset',
     ])
+    expect(flow.state()).toEqual({ step: 'done' })
+  })
+
+  it('says it waits for the passkey until the step-up returns', async () => {
+    const { flow, engine, states } = setup()
+    vi.mocked(engine.commit).mockImplementationOnce(async (hooks) => {
+      hooks?.onStepUp?.(true)
+      hooks?.onStepUp?.(false)
+      return { outcome: 'done' as const }
+    })
+    await flow.begin()
+    flow.setSaved(true)
+    await flow.change()
+    expect(
+      states
+        .filter((state) => state.step === 'changing')
+        .map((state) => state.step === 'changing' && state.confirming === true)
+    ).toEqual([false, false, true, false])
     expect(flow.state()).toEqual({ step: 'done' })
   })
 
@@ -389,5 +414,59 @@ describe('the Change Account Key flow', () => {
     await flow.change()
     expect(engine.confirm).not.toHaveBeenCalled()
     expect(engine.commit).not.toHaveBeenCalled()
+  })
+
+  it('says why a browser can’t change the key yet, before any new key', async () => {
+    const { flow, engine } = setup()
+    vi.mocked(engine.start).mockRejectedValueOnce(
+      new FakeKeyChangeError('session_too_new', 1_800_000_000_000)
+    )
+    await flow.begin()
+    expect(flow.state()).toEqual({
+      step: 'problem',
+      problem: 'sessionTooNew',
+      at: 'start',
+      availableAt: 1_800_000_000_000,
+    })
+
+    const noPasskey = setup()
+    vi.mocked(noPasskey.engine.start).mockRejectedValueOnce(
+      new FakeKeyChangeError('no_passkey')
+    )
+    await noPasskey.flow.begin()
+    expect(noPasskey.flow.state()).toEqual({
+      step: 'problem',
+      problem: 'noPasskey',
+      at: 'start',
+    })
+
+    const noLocks = setup()
+    vi.mocked(noLocks.engine.start).mockRejectedValueOnce(
+      new FakeKeyChangeError('unsupported')
+    )
+    await noLocks.flow.begin()
+    expect(noLocks.flow.state()).toEqual({
+      step: 'problem',
+      problem: 'unsupported',
+      at: 'start',
+    })
+  })
+
+  it('asks for the passkey again when its check didn’t pass', async () => {
+    const { flow, engine } = setup()
+    vi.mocked(engine.commit).mockRejectedValueOnce(
+      new FakeKeyChangeError('step_up')
+    )
+    await flow.begin()
+    flow.setSaved(true)
+    await flow.change()
+    expect(flow.state()).toEqual({
+      step: 'problem',
+      problem: 'stepUpRequired',
+      at: 'commit',
+    })
+    await flow.retry()
+    expect(engine.commit).toHaveBeenCalledTimes(2)
+    expect(flow.state()).toEqual({ step: 'done' })
   })
 })

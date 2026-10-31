@@ -6,7 +6,6 @@ import {
   Settings as SettingsIcon,
   User as UserIcon,
 } from 'lucide-react-native'
-import { Platform } from 'react-native'
 import * as BuddiesKeychain from '../../../../../modules/buddies-keychain'
 import { GroupedListRow, GroupedListSection } from '@/components/ui/GroupedList'
 import i18n from '@/lib/locales'
@@ -14,12 +13,14 @@ import { hasCapability } from '@/lib/platformCapabilities'
 import { SettingsSectionProps } from '@/features/settings/screens/settingScreen'
 import LanguageSelector from '@/features/settings/components/sections/LanguageSelector'
 import useDeviceSyncAvailable from '@/features/settings/hooks/useDeviceSyncAvailable'
+import useWebAccountShown from '@/features/settings/hooks/useWebAccountShown'
 
 const PreferencesSection = ({
   handleNavigate,
   selectedDestination,
 }: SettingsSectionProps) => {
   const deviceSyncAvailable = useDeviceSyncAvailable()
+  const webAccountShown = useWebAccountShown()
   return (
     <>
       <GroupedListSection>
@@ -33,8 +34,8 @@ const PreferencesSection = ({
           selected={selectedDestination === 'PreferencesPublisher'}
         />
         {/* Binaries before the recovery key can't replace the account key.
-            A browser never replaces it, but it's always signed in. */}
-        {(Platform.OS === 'web' || BuddiesKeychain.isReplaceAvailable()) && (
+            A browser shows it once it has an account. */}
+        {(BuddiesKeychain.isReplaceAvailable() || webAccountShown) && (
           <GroupedListRow
             icon={KeyRoundIcon}
             label={i18n.t('account_title')}

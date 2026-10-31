@@ -26,17 +26,22 @@ const ORDER: KeyChangeStage[] = [
   'buddies-reset',
 ]
 
-/** Steps 3 to 6, as the change records each one. */
+/**
+ * Steps 3 to 6, as the change records each one. `confirming` while the web's
+ * passkey prompt waits: nothing runs until it's confirmed.
+ */
 export default function KeyChangeProgress({
   stage,
+  confirming = false,
 }: {
   stage: KeyChangeStage | null
+  confirming?: boolean
 }) {
   const theme = useTheme()
   const reached = stage ? ORDER.indexOf(stage) : -1
-  const running = STEPS.findIndex(
-    (step) => ORDER.indexOf(step.doneAt) > reached
-  )
+  const running = confirming
+    ? -2
+    : STEPS.findIndex((step) => ORDER.indexOf(step.doneAt) > reached)
   return (
     <View style={{ gap: 20 }} testID='key-change-progress'>
       <View style={{ alignItems: 'center', gap: 8 }}>
@@ -48,15 +53,24 @@ export default function KeyChangeProgress({
             textAlign: 'center',
           }}
         >
-          {i18n.t('accountKeyChange_changing')}
+          {i18n.t(
+            confirming
+              ? 'accountKeyChange_confirming'
+              : 'accountKeyChange_changing'
+          )}
         </Text>
         <Text style={{ textAlign: 'center', color: theme.colors.textAlt }}>
-          {i18n.t('accountKeyChange_changingDetail')}
+          {i18n.t(
+            confirming
+              ? 'accountKeyChange_confirmingDetail'
+              : 'accountKeyChange_changingDetail'
+          )}
         </Text>
       </View>
       <View style={{ gap: 14 }}>
         {STEPS.map((step, index) => {
-          const done = running === -1 || index < running
+          // -1: every step done; -2: none started yet.
+          const done = running === -1 || (running >= 0 && index < running)
           const active = index === running
           return (
             <View

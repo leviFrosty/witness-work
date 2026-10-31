@@ -1,4 +1,4 @@
-import { Alert, View } from 'react-native'
+import { Platform, View } from 'react-native'
 import { useNavigation } from '@react-navigation/native'
 import {
   RotateCcwKey as RotateCcwKeyIcon,
@@ -16,6 +16,7 @@ import { useKeyChangedElsewhere } from '@/lib/accountKey/keyChangedElsewhere'
 import { analytics } from '@/lib/analytics'
 import { formatDate } from '@/lib/dates'
 import i18n from '@/lib/locales'
+import { showAlert } from '@/lib/alert'
 import { logger } from '@/lib/logger'
 import { toast } from '@/stores/toasts'
 import type { RootStackNavigation } from '@/types/rootStack'
@@ -23,15 +24,16 @@ import type { RootStackNavigation } from '@/types/rootStack'
 /**
  * Settings → Account's note about the account key, when there's one to make: a
  * change this device left unfinished (Continue or Discard), one finishing in
- * the background, or this device signed out because the key changed on another
- * one, with the ways back in.
+ * the background, or (phones) this device signed out because the key changed on
+ * another one, with the ways back in. A browser signed out sees the sign-in
+ * screen, which says so, instead.
  */
 export default function KeyChangeSection() {
   const navigation = useNavigation<RootStackNavigation>()
   const stage = useKeyChangeStatus((state) => state.stage)
   const signedOut = useKeyChangedElsewhere((state) => state.signedOut)
 
-  if (signedOut && !stage)
+  if (signedOut && !stage && Platform.OS !== 'web')
     return (
       <View style={{ gap: 5 }} testID='key-changed-elsewhere'>
         <SectionTitle
@@ -43,7 +45,9 @@ export default function KeyChangeSection() {
             leftIcon={ScanQrCodeIcon}
             label={i18n.t('handoff_signIn')}
             onPress={() =>
-              navigation.navigate('Sign In With QR Code', { entry: 'settings' })
+              navigation.navigate('Sign In With QR Code', {
+                entry: 'settings',
+              })
             }
             lastInSection
           />
@@ -62,10 +66,17 @@ export default function KeyChangeSection() {
     )
 
   if (stage === 'pending' || stage === 'confirmed') {
-    const discard = () =>
-      Alert.alert(
+    const discard = async () => {
+      // Once this device holds another key (signed back in after a change
+      // elsewhere), its old one doesn't keep working.
+      const current = await keyChange.current().catch(() => null)
+      showAlert(
         i18n.t('accountKeyChange_discardTitle'),
-        i18n.t('accountKeyChange_discardBody'),
+        i18n.t(
+          current?.otherKeyHeld
+            ? 'accountKeyChange_discardBodyReplaced'
+            : 'accountKeyChange_discardBody'
+        ),
         [
           { text: i18n.t('cancel'), style: 'cancel' },
           {
@@ -101,6 +112,7 @@ export default function KeyChangeSection() {
           },
         ]
       )
+    }
     return (
       <View style={{ gap: 5 }} testID='key-change-unfinished'>
         <SectionTitle
@@ -118,7 +130,7 @@ export default function KeyChangeSection() {
           <InputRowButton
             leftIcon={Trash2Icon}
             label={i18n.t('accountKeyChange_resumeDiscard')}
-            onPress={discard}
+            onPress={() => void discard()}
             lastInSection
           />
         </Section>

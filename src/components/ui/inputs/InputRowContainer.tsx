@@ -4,8 +4,16 @@ import React, {
   isValidElement,
   PropsWithChildren,
   ReactNode,
+  useState,
 } from 'react'
-import { Pressable, StyleProp, View, ViewStyle } from 'react-native'
+import {
+  Platform,
+  Pressable,
+  StyleProp,
+  StyleSheet,
+  View,
+  ViewStyle,
+} from 'react-native'
 import useTheme from '@/contexts/theme'
 import useAccessibilityTextSize from '@/hooks/useAccessibilityTextSize'
 import Text from '@/components/ui/MyText'
@@ -13,6 +21,7 @@ import WholeWordsText from '@/components/ui/WholeWordsText'
 import InfoPopover from '@/components/ui/InfoPopover'
 import LucideIcon from '@/components/ui/LucideIcon'
 import Switch from '@/components/ui/Switch'
+import PointerHover, { HoverTint } from '@/components/ui/PointerHover'
 import { inputLayout } from '@/components/ui/inputs/InputLayout'
 import { hiddenFromScreenReaders } from '@/lib/screenReader'
 
@@ -46,6 +55,13 @@ export interface InputRowContainerProps {
    * accessibility label: screen readers skip the label's text.
    */
   onLabelPress?: () => void
+  /**
+   * Makes the whole row a shortcut to its control (a switch), with the control
+   * itself, the info button, and `labelTrailing` still taking their own taps.
+   * The control must read the label and description, as with
+   * `labelReadByControl` and `descriptionReadByControl`.
+   */
+  onRowPress?: () => void
   /**
    * The control carries `label` as its own accessibility label (a switch), so
    * screen readers skip the label's text instead of reading the name twice.
@@ -90,6 +106,7 @@ const InputRowContainer: React.FC<
   required,
   style,
   onLabelPress,
+  onRowPress,
   labelReadByControl = !!onLabelPress,
   descriptionReadByControl,
   controlStyle,
@@ -97,6 +114,11 @@ const InputRowContainer: React.FC<
   inlineAtLargeText,
 }: InputRowContainerProps) => {
   const theme = useTheme()
+  const [hovered, setHovered] = useState(false)
+  // Text lets taps through to the row's press target underneath; the views
+  // around it do too, while the controls inside them keep their own taps.
+  const passThrough = onRowPress && ({ pointerEvents: 'none' } as const)
+  const boxNone = onRowPress && ({ pointerEvents: 'box-none' } as const)
   const hasInfo = Boolean(label && (info || labelTrailing))
   const hasLabelContent = Boolean(label || leftIcon || description)
   // At accessibility text sizes a field, picker or value beside the label
@@ -112,6 +134,7 @@ const InputRowContainer: React.FC<
   const labelCluster = (leftIcon || label) && (
     <View
       {...(labelReadByControl && hiddenFromScreenReaders)}
+      {...passThrough}
       style={{
         alignItems: 'center',
         gap: inputLayout.labelGap,
@@ -156,7 +179,7 @@ const InputRowContainer: React.FC<
 
   const labelTitle =
     labelCluster &&
-    (onLabelPress ? (
+    (onLabelPress && !onRowPress ? (
       <Pressable
         onPress={onLabelPress}
         style={hasInfo ? { flexShrink: 1 } : undefined}
@@ -174,6 +197,7 @@ const InputRowContainer: React.FC<
     <>
       {label && (info || labelTrailing) ? (
         <View
+          {...boxNone}
           style={{ flexDirection: 'row', alignItems: 'center', flexShrink: 1 }}
         >
           {labelTitle}
@@ -187,6 +211,7 @@ const InputRowContainer: React.FC<
       {description && (
         <Text
           {...(descriptionReadByControl && hiddenFromScreenReaders)}
+          {...passThrough}
           style={{
             fontSize: theme.fontSize('sm'),
             color: theme.colors.textAlt,
@@ -198,7 +223,7 @@ const InputRowContainer: React.FC<
     </>
   )
 
-  return (
+  const row = (
     <View
       style={[
         {
@@ -222,8 +247,23 @@ const InputRowContainer: React.FC<
         style,
       ]}
     >
+      {onRowPress && (
+        <Pressable
+          onPress={onRowPress}
+          // The whole row, behind its content: at least the row's 68pt.
+          style={[
+            StyleSheet.absoluteFill,
+            Platform.OS === 'web' && { cursor: 'pointer' },
+          ]}
+          // A shortcut to the control, which screen readers and the keyboard
+          // reach instead (a web Pressable is a tab stop unless told).
+          {...hiddenFromScreenReaders}
+          tabIndex={-1}
+        />
+      )}
       {hasLabelContent ? (
         <View
+          {...boxNone}
           style={{
             flex: 1,
             gap: inputLayout.descriptionGap,
@@ -236,6 +276,7 @@ const InputRowContainer: React.FC<
         labelContent
       )}
       <View
+        {...boxNone}
         style={[
           {
             width:
@@ -263,7 +304,14 @@ const InputRowContainer: React.FC<
       >
         {children}
       </View>
+      {onRowPress && <HoverTint visible={hovered} />}
     </View>
+  )
+
+  return onRowPress ? (
+    <PointerHover onHoverChange={setHovered}>{row}</PointerHover>
+  ) : (
+    row
   )
 }
 

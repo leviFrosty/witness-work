@@ -1,14 +1,29 @@
+import { getRandomBytes } from 'expo-crypto'
+import apis from '@/constants/apis'
 import { keyChange } from '@/app/account/keyChange'
 import { useKeyChangeStatus } from '@/app/account/keyChange/status'
 import { deviceAccountKey } from '@/lib/accountKey'
 import { keyChangedElsewhere } from '@/lib/accountKey/keyChangedElsewhere'
-import { fromB64u } from '@/lib/bytes'
+import { fromB64u, toB64u } from '@/lib/bytes'
+import { createPasskey, getPasskey } from '@/lib/passkeys'
+import type { PublicKeyCredentialCreationOptionsJSON } from '@/lib/passkeys/types'
+import { syncNow } from '@/lib/syncClock'
 import {
   accountSessions,
   bearerOptions,
+  fetchServerAccountInfo,
   olderAccountKeys,
   olderPhotoKeys,
 } from '@/lib/serverAccount'
+import { deriveAccountSigningKey } from '@/lib/serverAccount/keys'
+import {
+  addPasskey,
+  listPasskeys,
+  passkeyRegistrationOptions,
+  type PasskeyResponseJSON,
+  savePasskeyWrap,
+} from '@/lib/serverAccount/passkeyClient'
+import { newPasskeyWrapId, wrapAccountKey } from '@/lib/serverAccount/passkeys'
 import { getBackup, listBackups } from '@/lib/serverAccount/backupClient'
 import {
   backupAad,
@@ -30,6 +45,12 @@ import {
 import { deriveSyncKey, syncAad } from '@/lib/syncTransport/server/syncCrypto'
 
 let keyChangeLast: unknown = null
+
+const harnessKey = async () => {
+  const seed = await deviceAccountKey.peek()
+  if (!seed) throw new Error('no account key')
+  return fromB64u(seed)
+}
 
 const tracked = (work: () => Promise<unknown>) => {
   keyChangeLast = null
@@ -82,6 +103,76 @@ export const keyChangeHarness = {
     return keyChangeLast
   },
   resume: () => tracked(() => keyChange.resume()),
+  /** The account's passkeys: id and whether each unlocks this key epoch. */
+  passkeys: () =>
+    tracked(async () => {
+      const key = await harnessKey()
+      const { passkeys } = await listPasskeys(bearerOptions(key))
+      return passkeys.map(({ credentialId, canUnlock }) => ({
+        credentialId,
+        canUnlock,
+      }))
+    }),
+  /**
+   * The web: adds a passkey from this browser's authenticator (Playwright's
+   * virtual one) and wraps the key with its PRF output, as the passkeys screens
+   * will. Needs a step-up: a session opened in the last 5 minutes.
+   */
+  addPasskey: () =>
+    tracked(async () => {
+      const key = await harnessKey()
+      const options = {
+        ...bearerOptions(key),
+        sign: {
+          baseUrl: apis.accounts,
+          key: deriveAccountSigningKey(key),
+          now: syncNow,
+          randomBytes: getRandomBytes,
+        },
+      }
+      const registration = await passkeyRegistrationOptions({}, options)
+      const created = await createPasskey(
+        registration.options as unknown as PublicKeyCredentialCreationOptionsJSON
+      )
+      const { credentialId } = await addPasskey(
+        {
+          challengeToken: registration.challengeToken,
+          response: created.response as unknown as PasskeyResponseJSON,
+        },
+        options
+      )
+      const prf =
+        created.prf.first ??
+        (
+          await getPasskey({
+            challenge: toB64u(getRandomBytes(32)),
+            allowCredentials: [{ id: credentialId, type: 'public-key' }],
+            userVerification: 'required',
+          })
+        ).prf
+      if (!prf) return { credentialId, canUnlock: false }
+      const session = accountSessions.snapshot()
+      const { keyEpoch } = await fetchServerAccountInfo(key)
+      await savePasskeyWrap(
+        {
+          credentialId,
+          wrapId: newPasskeyWrapId(getRandomBytes),
+          keyEpoch,
+          wrap: wrapAccountKey(
+            {
+              accountId: session!.accountId,
+              credentialId,
+              keyEpoch,
+              prfOutput: prf,
+              accountKey: key,
+            },
+            getRandomBytes(24)
+          ),
+        },
+        options
+      )
+      return { credentialId, canUnlock: true }
+    }),
   inspect: () =>
     tracked(async () => {
       const seed = await deviceAccountKey.peek()

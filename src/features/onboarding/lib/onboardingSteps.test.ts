@@ -26,6 +26,7 @@ const ctx = (
   userSpecifiedHasAnnualGoal: 'default',
   hasCatchUpReports: false,
   buddiesAvailable: true,
+  passkeysAvailable: false,
   calendarAvailable: true,
   notificationsAvailable: true,
   ...overrides,
@@ -43,6 +44,20 @@ describe('visibleOnboardingSteps', () => {
       'hoursLogging',
       'dataProtection',
       'buddies',
+      'notifications',
+      'calendarSync',
+      'defaultNav',
+      'profileSetup',
+      'founderNote',
+    ])
+  })
+
+  it('offers Save a Passkey after Buddies only where one can be saved', () => {
+    expect(ids(ctx('publisher'))).not.toContain('passkeys')
+    const offered = ids(ctx('publisher', { passkeysAvailable: true }))
+    expect(offered.slice(offered.indexOf('buddies'))).toEqual([
+      'buddies',
+      'passkeys',
       'notifications',
       'calendarSync',
       'defaultNav',
@@ -171,6 +186,27 @@ describe('retired step ids', () => {
 
   it('counts a saved defaultExportMethod as past Buddies, so its answer holds', () => {
     expect(reachedStep('defaultExportMethod', 'buddies', false)).toBe(true)
+  })
+
+  it('counts a relaunch at or after Save a Passkey as reached, and before it as not', () => {
+    expect(reachedStep('passkeys', 'passkeys', false)).toBe(true)
+    expect(reachedStep('notifications', 'passkeys', false)).toBe(true)
+    expect(reachedStep('founderNote', 'passkeys', true)).toBe(true)
+    expect(reachedStep('buddies', 'passkeys', false)).toBe(false)
+    expect(reachedStep(null, 'passkeys', false)).toBe(false)
+  })
+
+  it('resumes on Save a Passkey when it was offered, and after it when not', () => {
+    const offered = visibleOnboardingSteps(
+      ctx('publisher', { passkeysAvailable: true })
+    )
+    expect(offered[resumeStepIndex('passkeys', offered, false)]?.id).toBe(
+      'passkeys'
+    )
+    const skipped = visibleOnboardingSteps(ctx('publisher'))
+    expect(skipped[resumeStepIndex('passkeys', skipped, false)]?.id).toBe(
+      'notifications'
+    )
   })
 
   it.each(['privacyFirst', 'intentPicker', 'yourPlanPreview'])(

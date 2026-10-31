@@ -1,4 +1,5 @@
 import { Platform } from 'react-native'
+import { earnPasskeyPrompt } from '@/app/account/passkeyPrompt'
 import * as Application from 'expo-application'
 import { getRandomBytes } from 'expo-crypto'
 import * as Device from 'expo-device'
@@ -123,9 +124,12 @@ function track(
       (session.role === 'claim' && state.step === 'waiting')
     )
       analytics.capture('handoff_claimed', { role })
-    else if (state.step === 'done')
+    else if (state.step === 'done') {
       analytics.capture('handoff_completed', { role })
-    else if (state.step === 'failed')
+      // The phone that set up another device: a moment for the gentle passkey
+      // prompt. The new phone is the one being set up, not the one asked.
+      if (role === 'old') earnPasskeyPrompt('device')
+    } else if (state.step === 'failed')
       analytics.capture('handoff_failed', { role, reason: state.reason })
     else if (state.step === 'declined')
       analytics.capture('handoff_answered', { answer: 'decline' })

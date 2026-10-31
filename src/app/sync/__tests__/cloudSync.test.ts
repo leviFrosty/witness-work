@@ -579,6 +579,10 @@ describe('Switching between Cloud Sync and Google Drive', () => {
     expect(driveNames()).toEqual(driveBefore)
     // On Cloud Sync, the tray's one-time offer of it is answered for good.
     expect(phone.usePreferences.getState().cloudSyncTrayOffer).toBe('answered')
+    // Turning it on is a moment for the gentle passkey prompt (ADR 0038 §9).
+    expect(phone.usePreferences.getState().passkeyPrompt.earned).toMatchObject({
+      reason: 'cloud_sync',
+    })
   })
 
   it('switches from the tray’s offer the same way, merging both sides', async () => {
@@ -738,6 +742,7 @@ describe('Switching between Cloud Sync and Google Drive', () => {
     })
     expect(phone.currentSyncOption()).toBe('platform')
     expect(phone.usePreferences.getState().cloudSyncTrayOffer).toBeNull()
+    expect(phone.usePreferences.getState().passkeyPrompt.earned).toBeNull()
     expect(server.slotIds('family')).toEqual([])
     server.state.enabled = false
     expect(await phone.switchSyncOption('cloud', 'offer')).toEqual({

@@ -7,6 +7,7 @@ import { AccountSessionError } from '@/lib/serverAccount/session'
 const fake = vi.hoisted(() => ({
   openDetached: vi.fn(),
   replaceAccountKey: vi.fn(),
+  connect: vi.fn(),
 }))
 
 vi.mock('react-native', () => ({ Platform: { OS: 'android' } }))
@@ -22,11 +23,13 @@ vi.mock('@/constants/apis', () => ({
 vi.mock('@/app/account/accountKey', () => ({
   accountKey: {
     peek: async () => null,
+    getOrCreate: async () => new Uint8Array(32).fill(5),
     lossIfReplaced: async () => ({ buddies: 0, buddyNames: [] }),
   },
   accountKeyAvailable: () => true,
   replaceAccountKey: fake.replaceAccountKey,
 }))
+vi.mock('@/app/account/passkeyPrompt', () => ({ earnPasskeyPrompt: vi.fn() }))
 vi.mock('@/app/account/backup', () => ({ backUpNow: vi.fn() }))
 vi.mock('@/app/account/backupRestore', () => ({
   offerRestore: async () => ({ outcome: 'none' }),
@@ -37,7 +40,7 @@ vi.mock('@/lib/analytics', () => ({ analytics: { capture: vi.fn() } }))
 vi.mock('@/lib/logger', () => import('@/__tests__/mocks/logger'))
 vi.mock('@/lib/serverAccount', () => ({
   accountSessions: { openDetached: fake.openDetached },
-  serverAccount: {},
+  serverAccount: { connect: fake.connect },
 }))
 vi.mock('@/lib/serverAccount/backupStore', () => ({
   useBackupState: { getState: () => ({ enabled: false }) },
@@ -52,8 +55,18 @@ vi.mock('@/features/buddies/lib/engine', () => ({
   BuddyRemovalPendingError: class extends Error {},
 }))
 
-import { approveHandoff, completeClaimHandoff } from './handoff'
+import {
+  approveHandoff,
+  completeClaimHandoff,
+  startClaimHandoff,
+  startOfferHandoff,
+} from './handoff'
+import { earnPasskeyPrompt } from '@/app/account/passkeyPrompt'
 import { analytics } from '@/lib/analytics'
+import {
+  createClaimSession,
+  createOfferSession,
+} from '@/lib/serverAccount/handoffSession'
 import type {
   ClaimSession,
   OfferSession,
@@ -217,5 +230,63 @@ describe('approveHandoff', () => {
     expect(await approve(confirmOwner)).toBe('sent')
     expect(confirmOwner).toHaveBeenCalledTimes(2)
     expect(session.approve).toHaveBeenCalledTimes(2)
+  })
+})
+
+describe('the gentle passkey prompt after a handoff', () => {
+  /** A session that reports each step it reaches, as the real ones do. */
+  function stepping(role: 'offer' | 'claim') {
+    const listeners = new Set<() => void>()
+    const session = {
+      role,
+      state: { step: 'waiting' as string },
+      subscribe: (listener: () => void) => {
+        listeners.add(listener)
+        return () => listeners.delete(listener)
+      },
+      open: vi.fn(async () => undefined),
+      claim: vi.fn(async () => undefined),
+      reach: (step: string) => {
+        session.state = { step }
+        listeners.forEach((listener) => listener())
+      },
+    }
+    return session
+  }
+
+  it('is earned by the phone that set up another device', async () => {
+    const session = stepping('offer')
+    vi.mocked(createOfferSession).mockReturnValueOnce(session as never)
+    fake.connect.mockResolvedValueOnce({ accountId: ACCOUNT_ID })
+    await startOfferHandoff('settings')
+    session.reach('done')
+    expect(earnPasskeyPrompt).toHaveBeenCalledWith('device')
+  })
+
+  it('is not earned by the new phone, which is the one being set up', () => {
+    const session = stepping('claim')
+    vi.mocked(createClaimSession).mockReturnValueOnce(session as never)
+    startClaimHandoff({} as never, 'link')
+    session.reach('done')
+    expect(earnPasskeyPrompt).not.toHaveBeenCalled()
+  })
+
+  it('is not earned by a handoff that failed or was declined', async () => {
+    const session = stepping('offer')
+    vi.mocked(createOfferSession).mockReturnValueOnce(session as never)
+    fake.connect.mockResolvedValueOnce({ accountId: ACCOUNT_ID })
+    await startOfferHandoff('settings')
+    session.reach('failed')
+    session.reach('declined')
+    expect(earnPasskeyPrompt).not.toHaveBeenCalled()
+  })
+
+  it('is not earned by a handoff the app started quietly', async () => {
+    const session = stepping('offer')
+    vi.mocked(createOfferSession).mockReturnValueOnce(session as never)
+    fake.connect.mockResolvedValueOnce({ accountId: ACCOUNT_ID })
+    await startOfferHandoff('onboarding', { quiet: true })
+    session.reach('done')
+    expect(earnPasskeyPrompt).not.toHaveBeenCalled()
   })
 })

@@ -17,6 +17,9 @@ import {
 } from '@/app/account/backupRestore'
 import { useApprovalDebug } from '@/app/account/approval'
 import { useHandoffDebug } from '@/app/account/handoff'
+import { readPasskeyOffer } from '@/app/account/passkeyOffer'
+import { phonePasskeySupport, simulatePasskeyAdd } from '@/app/account/passkeys'
+import { earnPasskeyPrompt } from '@/app/account/passkeyPrompt'
 import {
   runHandoffSelfTest,
   type SelfTestStep,
@@ -28,6 +31,11 @@ import { deriveAccountSigningKey } from '@/lib/serverAccount/keys'
 import { deriveIdentity } from '@/features/buddies/lib/keys'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 import { navigationRef } from '@/features/contacts/lib/linking'
+import {
+  PASSKEY_PROMPT_INITIAL,
+  type PasskeyPromptReason,
+} from '@/lib/passkeys/promptRules'
+import { usePreferences } from '@/stores/preferences'
 
 let last: unknown = null
 
@@ -188,5 +196,50 @@ export const backupHarness = {
   },
   get last() {
     return backupLast
+  },
+}
+
+let passkeyOffer: unknown = null
+
+/**
+ * The gentle passkey prompt for the verify harness: `state()` is its stored
+ * state, `earn(reason)` starts over and earns it (as turning on Cloud Sync or
+ * backup, or setting up another device, would), `reset()` clears it, and
+ * `readOffer()` then `offer` a moment later gives the verdict and this phone's
+ * passkey support. `mockAdd('added' | 'failed')` makes the next Add a Passkey
+ * end that way without the system's sheet; `mockAdd(null)` clears it.
+ */
+export const passkeyPromptHarness = {
+  state: () => usePreferences.getState().passkeyPrompt,
+  earn: (reason: PasskeyPromptReason = 'backup') => {
+    usePreferences.setState({ passkeyPrompt: PASSKEY_PROMPT_INITIAL })
+    earnPasskeyPrompt(reason)
+    return usePreferences.getState().passkeyPrompt
+  },
+  reset: () => {
+    usePreferences.setState({ passkeyPrompt: PASSKEY_PROMPT_INITIAL })
+    return PASSKEY_PROMPT_INITIAL
+  },
+  mockAdd: (result: 'added' | 'failed' | null) => {
+    simulatePasskeyAdd(
+      result === 'added'
+        ? { status: 'added', credentialId: 'verify-passkey', canUnlock: true }
+        : result === 'failed'
+          ? { status: 'failed', step: 'create', reason: 'failed' }
+          : null
+    )
+    return result
+  },
+  readOffer: () => {
+    passkeyOffer = null
+    void Promise.all([readPasskeyOffer(), phonePasskeySupport()]).then(
+      ([offer, support]) => {
+        passkeyOffer = { offer, support }
+      }
+    )
+    return 'started'
+  },
+  get offer() {
+    return passkeyOffer
   },
 }

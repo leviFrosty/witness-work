@@ -41,6 +41,7 @@ vi.mock('@/lib/serverAccount/approvalSession', async (importOriginal) => ({
 }))
 vi.mock('@/lib/syncClock', () => ({ syncNow: () => Date.now() }))
 // `handoff.ts` comes along for its shared helpers.
+vi.mock('@/app/account/passkeyPrompt', () => ({ earnPasskeyPrompt: vi.fn() }))
 vi.mock('@/app/account/backup', () => ({ backUpNow: vi.fn() }))
 vi.mock('@/app/account/backupRestore', () => ({ offerRestore: vi.fn() }))
 vi.mock('@/app/buddies/joinBuddiesHere', () => ({ joinBuddiesHere: vi.fn() }))

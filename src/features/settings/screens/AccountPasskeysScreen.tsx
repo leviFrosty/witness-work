@@ -119,7 +119,11 @@ const AccountPasskeysScreen = () => {
               busy={busy}
               onAdd={() =>
                 void act(() =>
-                  addPasskeyWithToasts({ count: passkeys.length, support })
+                  addPasskeyWithToasts({
+                    count: passkeys.length,
+                    support,
+                    source: 'settings',
+                  })
                 )
               }
               onLetUnlock={(passkey: Passkey) =>

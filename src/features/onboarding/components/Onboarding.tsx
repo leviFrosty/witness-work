@@ -24,7 +24,9 @@ import FounderNote from '@/features/onboarding/components/steps/FounderNote'
 import FeatureTour from '@/features/onboarding/components/steps/FeatureTour'
 import PlanMonth from '@/features/onboarding/components/steps/PlanMonth'
 import Buddies from '@/features/onboarding/components/steps/Buddies'
+import SavePasskey from '@/features/onboarding/components/steps/SavePasskey'
 import useOnboardingBuddiesAvailable from '@/features/onboarding/hooks/useOnboardingBuddiesAvailable'
+import useOnboardingPasskeysAvailable from '@/features/onboarding/hooks/useOnboardingPasskeysAvailable'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 import OnboardingBackfill from '@/features/onboarding/components/steps/OnboardingBackfill'
 import { hasReportsInCatchUpWindow } from '@/features/service-reports/components/OnboardingBackfillForm'
@@ -45,6 +47,7 @@ import {
   OnboardingProgress,
   OnboardingProgressContext,
 } from '@/features/onboarding/components/OnboardingProgressContext'
+import { completeGuidedOnboarding } from '@/features/onboarding/lib/completeGuidedOnboarding'
 import { useProfile } from '@/stores/profile'
 import { analytics } from '@/lib/analytics'
 import { hasCapability } from '@/lib/platformCapabilities'
@@ -54,6 +57,8 @@ interface StepProps {
   goNext: () => void
   /** Whether Buddies is part of this onboarding, held once its step is reached. */
   buddiesAvailable: boolean
+  /** The app relaunched on this step. */
+  resumed: boolean
 }
 
 const STEP_COMPONENTS: Record<StepId, ComponentType<StepProps>> = {
@@ -66,6 +71,7 @@ const STEP_COMPONENTS: Record<StepId, ComponentType<StepProps>> = {
   planMonth: PlanMonth,
   dataProtection: DataProtection,
   buddies: Buddies,
+  passkeys: SavePasskey,
   notifications: StepThree,
   calendarSync: CalendarSync,
   defaultNav: StepDefaultNav,
@@ -90,6 +96,9 @@ const OnBoarding = () => {
   const buddiesAvailable = useOnboardingBuddiesAvailable(
     reachedStep(onboardingStepId, 'buddies', hasCompletedProfileSetup)
   )
+  const passkeysAvailable = useOnboardingPasskeysAvailable(
+    reachedStep(onboardingStepId, 'passkeys', hasCompletedProfileSetup)
+  )
 
   const showIfCtx: StepShowIfContext = useMemo(
     () => ({
@@ -100,6 +109,7 @@ const OnBoarding = () => {
       userSpecifiedHasAnnualGoal,
       hasCatchUpReports: hasReportsInCatchUpWindow(serviceReports, installedOn),
       buddiesAvailable,
+      passkeysAvailable,
       calendarAvailable:
         hasCapability('calendarBridge') && calendarBridgeAvailable,
       notificationsAvailable: hasCapability('deviceNotifications'),
@@ -112,6 +122,7 @@ const OnBoarding = () => {
       userSpecifiedHasAnnualGoal,
       serviceReports,
       buddiesAvailable,
+      passkeysAvailable,
     ]
   )
 
@@ -215,12 +226,11 @@ const OnBoarding = () => {
         : {}),
     })
     if (stepIndex >= visibleSteps.length - 1) {
-      set({ onboardingComplete: true, onboardingStepId: null })
-      analytics.capture('onboarding_completed', { completion_method: 'guided' })
+      completeGuidedOnboarding()
       return
     }
     setStepIndex(stepIndex + 1)
-  }, [stepIndex, visibleSteps, set])
+  }, [stepIndex, visibleSteps])
 
   const goBack = useCallback(() => {
     setStepIndex((idx) => (idx === 0 ? 0 : idx - 1))
@@ -261,6 +271,7 @@ const OnBoarding = () => {
               goBack={goBack}
               goNext={goNext}
               buddiesAvailable={buddiesAvailable}
+              resumed={initialStepId.current === current.id}
             />
           )}
         </View>

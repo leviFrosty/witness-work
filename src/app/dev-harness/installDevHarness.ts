@@ -66,6 +66,7 @@ import {
   backupHarness,
   handoffHarness,
   approvalHarness,
+  passkeyPromptHarness,
 } from '@/app/dev-harness/account'
 import { backupFileHarness } from '@/app/dev-harness/backupFile'
 import i18n, { _i18n, type TranslationKey } from '@/lib/locales'
@@ -470,6 +471,12 @@ export function installDevHarness() {
      * screen with a computer's code as if its scanner read it.
      */
     approval: approvalHarness,
+    /**
+     * The gentle passkey prompt: `passkeyPrompt.state()`, `.earn(reason)`,
+     * `.reset()`, `.mockAdd('added' | 'failed' | null)`, and `.readOffer()`
+     * then `.offer`.
+     */
+    passkeyPrompt: passkeyPromptHarness,
     /**
      * The account backup: `backup.state()`; `enable()`, `uploadNow()`,
      * `list()`, `inspect()` (decrypted slots as counts), `dryRun()`,

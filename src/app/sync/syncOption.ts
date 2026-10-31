@@ -1,4 +1,5 @@
 import { bookkeepingForNewTransport } from '@/app/sync/imageSync'
+import { earnPasskeyPrompt } from '@/app/account/passkeyPrompt'
 import { iCloudSync } from '@/app/sync/iCloudSync'
 import { withSyncOptionLock } from '@/app/sync/syncOptionLock'
 import {
@@ -251,8 +252,11 @@ async function runSwitch(
   if (peek.status === 'found') await iCloudSync.pullAndMerge('switch')
   const pushed = await iCloudSync.push('switch')
   // On Cloud Sync, the tray's offer of it is answered for good (ADR 0040 §4).
-  if (to === 'cloud')
+  if (to === 'cloud') {
     usePreferences.setState({ cloudSyncTrayOffer: 'answered' })
+    // The User turned it on: a moment for the gentle passkey prompt.
+    earnPasskeyPrompt('cloud_sync')
+  }
   analytics.capture('cloud_sync_option_changed', { from, to, source })
   if (from === 'off')
     analytics.capture('icloud_sync_enabled_changed', {

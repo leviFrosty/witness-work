@@ -78,6 +78,7 @@ import {
   type RoleHistory,
 } from '@/lib/roleHistory'
 import type { ScheduleIntroPageId } from '@/stores/scheduleIntro'
+import { PASSKEY_PROMPT_INITIAL } from '@/lib/passkeys/promptRules'
 
 export type { MarkerColors }
 
@@ -836,6 +837,11 @@ export const PREFERENCE_DEFAULTS = {
    */
   cloudSyncTrayOffer: null as CloudSyncTrayOfferState,
   /**
+   * The gentle prompt to save a passkey (ADR 0038 §9): what earned it, the last
+   * Not Now, and whether it stopped for good. Per-device.
+   */
+  passkeyPrompt: PASSKEY_PROMPT_INITIAL,
+  /**
    * The one-time offer to move a device already on iCloud/Drive to Cloud Sync:
    * `pending` until the User switches or dismisses it. Per-device.
    */
@@ -1068,6 +1074,13 @@ export const PREFERENCE_DEFAULTS = {
    * onboarding completes or is reset.
    */
   onboardingStepId: null as string | null,
+  /**
+   * Whether onboarding offered its Save a Passkey step, decided once the flow
+   * reached its place. A relaunch past the step uses it instead of guessing
+   * (`useOnboardingPasskeysAvailable`). Null until decided and once onboarding
+   * completes or restarts.
+   */
+  onboardingPasskeysOffered: null as boolean | null,
   /**
    * Resolution state for the one-time Onboarding Backfill prompt shown to
    * annual-goal publishers who installed mid-service-year. (Field name kept as

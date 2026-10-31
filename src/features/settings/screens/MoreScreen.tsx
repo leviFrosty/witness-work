@@ -136,7 +136,11 @@ const MoreScreen = () => {
           icon={SproutIcon}
           label={i18n.t('restartOnboarding')}
           onPress={() =>
-            set({ onboardingComplete: false, onboardingStepId: null })
+            set({
+              onboardingComplete: false,
+              onboardingStepId: null,
+              onboardingPasskeysOffered: null,
+            })
           }
         />
       </GroupedListSection>

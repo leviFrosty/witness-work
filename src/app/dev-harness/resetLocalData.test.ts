@@ -77,15 +77,7 @@ import useCategories from '@/stores/categories'
 import { LDC_BUILTIN_CATEGORY_ID } from '@/constants/categories'
 
 /** Persisted stores a reset clears through their own actions, not RESET_STORES. */
-const RESET_BY_ACTIONS = [
-  'contacts',
-  'conversations',
-  'serviceReports',
-  'mileage',
-  'petCompanion',
-  'preferences',
-  'profile',
-]
+const RESET_BY_ACTIONS = ['preferences', 'profile']
 
 /** MMKV instances a reset clears, besides the default one. */
 const CLEARED_MMKV = [

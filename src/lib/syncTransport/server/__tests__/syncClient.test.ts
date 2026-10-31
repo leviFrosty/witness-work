@@ -1,11 +1,14 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { fromB64u } from '@/lib/bytes'
 import { deriveAccountSigningKey } from '@/lib/serverAccount/keys'
 import {
   askSyncRequest,
   fetchSyncStatus,
   listSyncSlots,
+  photoUploadTimeoutMs,
+  putSyncPhoto,
   putSyncSlot,
+  type SyncPhotoPut,
   withdrawSyncRequest,
 } from '@/lib/syncTransport/server/syncClient'
 import { createFakeSyncServer } from './fakeSyncServer'
@@ -199,5 +202,62 @@ describe('sync/list', () => {
       platform: null,
       live: false,
     })
+  })
+})
+
+describe('a photo over a slow link', () => {
+  const NAME = 'a'.repeat(43)
+  const KB = 1024
+  const MIB = 1024 * KB
+
+  afterEach(() => vi.useRealTimers())
+
+  const upload = async (bytes: number, bytesPerSecond: number) => {
+    vi.useFakeTimers()
+    const { server, options } = setup()
+    server.state.photoUploadBytesPerSecond = bytesPerSecond
+    await putSyncSlot(options, SLOT, new Uint8Array([1]))
+    const blob = new Uint8Array(bytes).fill(7)
+    const putting = putSyncPhoto(options, { name: NAME, meta: 'bWV0YQ', blob })
+    const outcome = putting.then(
+      (put): { put?: SyncPhotoPut; error?: unknown } => ({ put }),
+      (error: unknown): { put?: SyncPhotoPut; error?: unknown } => ({ error })
+    )
+    await vi.advanceTimersByTimeAsync(11 * 60_000)
+    return { server, ...(await outcome) }
+  }
+
+  it('uploads 20 MiB at 120 KB/s, which takes about three minutes', async () => {
+    const { put, error, server } = await upload(20 * MIB, 120 * KB)
+    expect(error).toBeUndefined()
+    expect(put).toMatchObject({ size: 20 * MIB, existed: false })
+    expect(server.state.photoWrites).toHaveLength(1)
+  })
+
+  it('uploads the largest photo at the slowest link it allows for', async () => {
+    const { put, error } = await upload(25 * MIB, 50 * KB)
+    expect(error).toBeUndefined()
+    expect(put).toMatchObject({ size: 25 * MIB })
+  })
+
+  it('gives up on a link slower than that, as a timeout the engine retries', async () => {
+    const { put, error, server } = await upload(25 * MIB, 40 * KB)
+    expect(put).toBeUndefined()
+    expect(error).toMatchObject({ kind: 'timeout' })
+    expect(server.state.photoWrites).toHaveLength(0)
+  })
+
+  it('times out before the server lets the reservation lapse', () => {
+    for (const bytes of [1, MIB, 5 * MIB, 20 * MIB, 25 * MIB]) {
+      const window = Math.min(
+        10 * 60_000,
+        Math.max(2 * 60_000, 60_000 + (bytes / (50 * KB)) * 1000)
+      )
+      expect(photoUploadTimeoutMs(bytes)).toBeLessThan(window)
+    }
+  })
+
+  it('waits at least as long for a small photo as it always has', () => {
+    expect(photoUploadTimeoutMs(100 * KB)).toBeGreaterThanOrEqual(100_000)
   })
 })

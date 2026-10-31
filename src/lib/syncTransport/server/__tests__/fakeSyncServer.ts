@@ -29,6 +29,31 @@ type Photo = {
 const PHOTO_NAME = /^[A-Za-z0-9_-]{43}$/
 const MAX_PHOTO_BLOB = 25 * 1024 * 1024
 
+/**
+ * The server's reservation for a photo put of this many bytes: a minute of
+ * setup plus the body at 50 KiB/s, from 2 to 10 minutes.
+ */
+const photoReservationMs = (bytes: number) =>
+  Math.min(
+    10 * 60_000,
+    Math.max(2 * 60_000, 60_000 + (bytes / (50 * 1024)) * 1000)
+  )
+
+/** Resolves after `ms`, or rejects the way `fetch` does when `signal` aborts. */
+const arrive = (ms: number, signal?: AbortSignal | null) =>
+  new Promise<void>((resolve, reject) => {
+    const onAbort = () => {
+      clearTimeout(timer)
+      reject(new DOMException('aborted', 'AbortError'))
+    }
+    const timer = setTimeout(() => {
+      signal?.removeEventListener('abort', onAbort)
+      resolve()
+    }, ms)
+    if (signal?.aborted) onAbort()
+    else signal?.addEventListener('abort', onAbort)
+  })
+
 export function createFakeSyncServer() {
   const accounts = new Map<string, Map<string, Slot>>()
   const photoAccounts = new Map<string, Map<string, Photo>>()
@@ -46,6 +71,13 @@ export function createFakeSyncServer() {
     supporters: new Set<string>(),
     /** How long a put takes to upload (a slow connection). */
     putDelayMs: 0,
+    /**
+     * How fast a photo put's body arrives (a slow link), in bytes a second; 0
+     * is instant. The put is 409 `conflict` when its upload outlives the
+     * server's reservation (docs/cloud-sync-photos.md, "Races"), and the body
+     * stops arriving when the client gives up.
+     */
+    photoUploadBytesPerSecond: 0,
     /** Photos' own switch (`sync:photos`). */
     photos: true,
     /** The account's photo storage (`SYNC_PHOTO_LIMIT_BYTES`). */
@@ -206,6 +238,12 @@ export function createFakeSyncServer() {
           return refuse('bad_request', 400)
         const bytes = new Uint8Array(init!.body as Uint8Array)
         if (bytes.length > MAX_PHOTO_BLOB) return refuse('too_large', 413)
+        if (state.photoUploadBytesPerSecond) {
+          const took = (bytes.length / state.photoUploadBytesPerSecond) * 1000
+          await arrive(took, init?.signal)
+          if (took > photoReservationMs(bytes.length))
+            return refuse('conflict', 409)
+        }
         const live = photos.get(name)
         if (live)
           return json({

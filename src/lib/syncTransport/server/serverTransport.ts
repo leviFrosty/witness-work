@@ -27,6 +27,7 @@ import {
   listSyncPhotos,
   listSyncSlots,
   parsePhotoUsage,
+  PHOTO_MAX_UPLOAD_TIMEOUT_MS,
   PHOTO_TIMEOUT_MS,
   putSyncPhoto,
   putSyncSlot,
@@ -143,8 +144,12 @@ export type ServerTransportDeps = {
  */
 export const SERVER_WRITE_TIMEOUT_MS = BLOB_TIMEOUT_MS + 30_000
 
-/** The engine's wait for a photo: its own request's, plus sealing it. */
-export const SERVER_BINARY_TIMEOUT_MS = PHOTO_TIMEOUT_MS + 30_000
+/**
+ * The engine's wait for a photo: its own request's (the longest an upload's
+ * is), plus sealing it. A backstop; the put and the get time out on their own.
+ */
+export const SERVER_BINARY_TIMEOUT_MS =
+  Math.max(PHOTO_TIMEOUT_MS, PHOTO_MAX_UPLOAD_TIMEOUT_MS) + 30_000
 
 const PREFIX = 'witness-work-'
 const SUFFIX = '.json'

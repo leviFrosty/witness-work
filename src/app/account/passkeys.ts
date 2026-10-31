@@ -31,6 +31,7 @@ import {
 import { passkeyName } from '@/lib/serverAccount/passkeys'
 import {
   accountPasskeyDeps,
+  type PasskeyAddSource,
   reportPasskeyAdd,
 } from '@/lib/serverAccount/passkeyServer'
 
@@ -121,17 +122,35 @@ export async function loadPasskeys(): Promise<LoadedPasskeys> {
 export const phonePasskeySupport = (): Promise<PasskeySupport> =>
   passkeySupport()
 
+export type { PasskeyAddSource }
+
+/**
+ * Tools and the verify harness: the next Add a Passkey ends with this result
+ * instead of opening the system's sheet. Cleared once used.
+ */
+let simulatedAdd: PasskeyAddResult | null = null
+export function simulatePasskeyAdd(result: PasskeyAddResult | null) {
+  simulatedAdd = result
+}
+
 /** Add a Passkey, start to end. */
 export async function addPhonePasskey(context: {
   count: number
   support: PasskeySupport | null
+  source: PasskeyAddSource
 }): Promise<PasskeyAddResult> {
-  analytics.capture('passkey_add_started', { kind: 'add' })
-  const result = await addPasskeyFlow(deps(await requireKey()), {
-    count: context.count,
-    support: context.support ?? undefined,
+  analytics.capture('passkey_add_started', {
+    kind: 'add',
+    source: context.source,
   })
-  reportPasskeyAdd('add', result)
+  const result =
+    simulatedAdd ??
+    (await addPasskeyFlow(deps(await requireKey()), {
+      count: context.count,
+      support: context.support ?? undefined,
+    }))
+  simulatedAdd = null
+  reportPasskeyAdd('add', context.source, result)
   return result
 }
 
@@ -139,12 +158,15 @@ export async function addPhonePasskey(context: {
 export async function letPhonePasskeyUnlock(
   credentialId: string
 ): Promise<PasskeyUnlockResult> {
-  analytics.capture('passkey_add_started', { kind: 'upgrade' })
+  analytics.capture('passkey_add_started', {
+    kind: 'upgrade',
+    source: 'settings',
+  })
   const result = await letPasskeyUnlockFlow(
     deps(await requireKey()),
     credentialId
   )
-  reportPasskeyAdd('upgrade', result)
+  reportPasskeyAdd('upgrade', 'settings', result)
   return result
 }
 

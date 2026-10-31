@@ -125,7 +125,10 @@ export async function addPasskeyHere(): Promise<PasskeyAddResult> {
   if (!accountKey)
     return { status: 'failed', step: 'options', reason: 'failed' }
   const flow = webSignIn()
-  analytics.capture('passkey_add_started', { kind: 'add' })
+  analytics.capture('passkey_add_started', {
+    kind: 'add',
+    source: 'approved_by',
+  })
   const { options: _, ...account } = accountPasskeyDeps(accountKey)
   const result = await addPasskeyFlow({
     ...account,
@@ -140,6 +143,6 @@ export async function addPasskeyHere(): Promise<PasskeyAddResult> {
       flow.addPasskeyAllowed() ? 'confirmed' : 'failed',
     randomBytes: getRandomBytes,
   })
-  reportPasskeyAdd('add', result)
+  reportPasskeyAdd('add', 'approved_by', result)
   return result
 }

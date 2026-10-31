@@ -177,7 +177,10 @@ the Set Up Another Device QR for a new phone to scan.
 
 ### 9. Phones
 
-- **New installs** offer "Save a passkey" in onboarding, with Not Now.
+- **New installs** offer "Save a passkey" in onboarding, with Not Now, once an
+  account exists. A new install's account only appears when onboarding ends, so
+  finishing onboarding earns the gentle prompt below instead; the onboarding step
+  reaches accounts that already exist (a restore, a QR sign-in, an invite).
 - **Existing Users:**
   - They see a Passkeys section in Settings → Account.
   - They get one gentle prompt after turning on sync or backup, or setting up

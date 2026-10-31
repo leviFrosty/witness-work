@@ -17,6 +17,7 @@ export type StepId =
   | 'planMonth'
   | 'dataProtection'
   | 'buddies'
+  | 'passkeys'
   | 'notifications'
   | 'calendarSync'
   | 'defaultNav'
@@ -39,6 +40,8 @@ export interface StepShowIfContext {
   hasCatchUpReports: boolean
   /** Buddies shows on this device; see `useOnboardingBuddiesAvailable`. */
   buddiesAvailable: boolean
+  /** Save a Passkey is offered: see `useOnboardingPasskeysAvailable`. */
+  passkeysAvailable: boolean
   /** The binary has the native calendar module. */
   calendarAvailable: boolean
   /** The platform has device notifications (not the web). */
@@ -92,6 +95,12 @@ export const onboardingSteps: StepDef[] = [
     countsTowardProgress: true,
     // Needs the Buddies key module and the rollout flag (iOS and Android).
     showIf: ({ buddiesAvailable }) => buddiesAvailable,
+  },
+  {
+    id: 'passkeys',
+    countsTowardProgress: true,
+    // Phones that make passkeys, once the account exists and has none.
+    showIf: ({ passkeysAvailable }) => passkeysAvailable,
   },
   {
     id: 'notifications',

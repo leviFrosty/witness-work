@@ -1,9 +1,11 @@
 import { Alert } from 'react-native'
 import {
   addPhonePasskey,
+  type PasskeyAddSource,
   letPhonePasskeyUnlock,
   removePhonePasskey,
 } from '@/app/account/passkeys'
+import { stopPasskeyPrompt } from '@/app/account/passkeyPrompt'
 import {
   passkeyFailureMessage,
   signInOnlyMessage,
@@ -26,17 +28,23 @@ const unexpected = (title: string) => (error: unknown) => {
   toast.error(title, { message: i18n.t('passkeys_failed') })
 }
 
+/**
+ * Add a Passkey from Settings, onboarding's step or the tray's prompt. Resolves
+ * whether a passkey was added. An added passkey ends the gentle prompt for
+ * good, wherever the User added it from.
+ */
 export async function addPasskeyWithToasts(context: {
   count: number
   support: PasskeySupport | null
-}): Promise<void> {
+  source: PasskeyAddSource
+}): Promise<boolean> {
   const title = i18n.t('passkeys_addFailed')
-  await addPhonePasskey(context)
+  return addPhonePasskey(context)
     .then((result) => {
-      if (result.status === 'cancelled') return
+      if (result.status === 'cancelled') return false
       if (result.status === 'failed') {
         toast.error(title, { message: passkeyFailureMessage(result.reason) })
-        return
+        return false
       }
       if (result.canUnlock)
         toast.success(i18n.t('passkeys_addedCanUnlock'), {
@@ -46,8 +54,13 @@ export async function addPasskeyWithToasts(context: {
         toast.info(i18n.t('passkeys_addedSignInOnly'), {
           message: signInOnlyMessage(result.signInOnly),
         })
+      stopPasskeyPrompt()
+      return true
     })
-    .catch(unexpected(title))
+    .catch((error: unknown) => {
+      unexpected(title)(error)
+      return false
+    })
 }
 
 export async function letUnlockWithToasts(passkey: Passkey): Promise<void> {

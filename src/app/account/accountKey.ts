@@ -1,6 +1,6 @@
 import * as BuddiesKeychain from '../../../modules/buddies-keychain'
 import { usePreferences } from '@/stores/preferences'
-import { deviceAccountKey } from '@/lib/accountKey'
+import { deviceAccountKey, keyChangeRecords } from '@/lib/accountKey'
 import { joinBuddiesHere } from '@/app/buddies/joinBuddiesHere'
 import { analytics } from '@/lib/analytics'
 import {
@@ -64,6 +64,7 @@ export const accountKey = createAccountKeyService({
         : buddiesEngine.deleteEverything(),
     forget: () => buddiesEngine.dropIdentity(),
   },
+  keyChangeUnfinished: async () => (await keyChangeRecords.read()) !== null,
   sync: {
     leave: () =>
       leaveCloudSyncAccount(async () => {

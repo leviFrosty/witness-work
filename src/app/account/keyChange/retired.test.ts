@@ -17,6 +17,8 @@ function setup(
     resume?: ResumeResult
     connects?: boolean
     lastAccountId?: string | null
+    /** The account this device holds, by its public key. */
+    accountPub?: string | null
   } = {}
 ) {
   const deps = {
@@ -34,6 +36,8 @@ function setup(
     }),
     forgetRetired: vi.fn(async () => undefined),
     signOut: vi.fn(),
+    accountPub: () =>
+      options.accountPub === undefined ? pub(K1) : options.accountPub,
   }
   return { deps, handle: createKeyRetiredHandler(deps) }
 }
@@ -120,7 +124,33 @@ describe('a retired key', () => {
   it('ignores a change record for another key', async () => {
     const { deps, handle } = setup({ record: record('committed') })
     const other = pub(new Uint8Array(32).fill(5))
-    expect(await handle(other, 1)).toBe('signedOut')
-    expect(deps.forgetRetired).toHaveBeenCalledWith(other)
+    expect(await handle(other, 1)).toBe('ignored')
+    expect(deps.resume).not.toHaveBeenCalled()
+    expect(deps.signOut).not.toHaveBeenCalled()
+  })
+
+  it('leaves a signed-in device as it is when a key it doesn’t hold is refused (a recovery key typed in)', async () => {
+    const K3 = new Uint8Array(32).fill(3)
+    const { deps, handle } = setup({ stored: K3, accountPub: pub(K3) })
+    expect(await handle(pub(K1), 1)).toBe('ignored')
+    expect(deps.signOut).not.toHaveBeenCalled()
+    expect(deps.forgetRetired).not.toHaveBeenCalled()
+    expect(deps.connect).not.toHaveBeenCalled()
+  })
+
+  it('never says “signed out” on a device that was never signed in', async () => {
+    const { deps, handle } = setup({
+      stored: null,
+      accountPub: null,
+      lastAccountId: null,
+    })
+    expect(await handle(pub(K1), 1)).toBe('ignored')
+    expect(deps.signOut).not.toHaveBeenCalled()
+  })
+
+  it('acts on its own stored key even before an account was cached', async () => {
+    const { deps, handle } = setup({ accountPub: null })
+    expect(await handle(pub(K1), 1)).toBe('signedOut')
+    expect(deps.signOut).toHaveBeenCalled()
   })
 })

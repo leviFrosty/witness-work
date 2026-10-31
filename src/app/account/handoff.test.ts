@@ -7,6 +7,8 @@ import { AccountSessionError } from '@/lib/serverAccount/session'
 const fake = vi.hoisted(() => ({
   openDetached: vi.fn(),
   replaceAccountKey: vi.fn(),
+  offerRestore: vi.fn(),
+  lastAccountId: null as string | null,
 }))
 
 vi.mock('react-native', () => ({ Platform: { OS: 'android' } }))
@@ -29,7 +31,7 @@ vi.mock('@/app/account/accountKey', () => ({
 }))
 vi.mock('@/app/account/backup', () => ({ backUpNow: vi.fn() }))
 vi.mock('@/app/account/backupRestore', () => ({
-  offerRestore: async () => ({ outcome: 'none' }),
+  offerRestore: fake.offerRestore,
 }))
 vi.mock('@/app/buddies/joinBuddiesHere', () => ({ joinBuddiesHere: vi.fn() }))
 vi.mock('@/lib/accountKey/accountKey', () => ({ losesSomething: () => false }))
@@ -37,7 +39,7 @@ vi.mock('@/lib/analytics', () => ({ analytics: { capture: vi.fn() } }))
 vi.mock('@/lib/logger', () => import('@/__tests__/mocks/logger'))
 vi.mock('@/lib/serverAccount', () => ({
   accountSessions: { openDetached: fake.openDetached },
-  serverAccount: { lastAccountId: () => null },
+  serverAccount: { lastAccountId: () => fake.lastAccountId },
 }))
 vi.mock('@/lib/serverAccount/backupStore', () => ({
   useBackupState: { getState: () => ({ enabled: false }) },
@@ -92,6 +94,8 @@ const opened = () => ({
 
 beforeEach(() => {
   vi.clearAllMocks()
+  fake.lastAccountId = null
+  fake.offerRestore.mockResolvedValue({ outcome: 'none' })
   fake.replaceAccountKey.mockResolvedValue({
     outcome: 'replaced',
     accountId: ACCOUNT_ID,
@@ -120,6 +124,27 @@ describe('completeClaimHandoff', () => {
       expect(session.finish).toHaveBeenCalledTimes(1)
     }
   )
+
+  it('offers the backup on a phone new to the account, never on one signing back in', async () => {
+    fake.openDetached.mockResolvedValue(opened())
+    expect(await complete(received())).toMatchObject({
+      outcome: 'done',
+      restore: { outcome: 'none' },
+      rejoined: false,
+    })
+    expect(fake.offerRestore).toHaveBeenCalledTimes(1)
+
+    // Its key changed elsewhere: back on the same account, its own records
+    // (offline edits too) stay, and Cloud Sync merges them.
+    fake.offerRestore.mockClear()
+    fake.lastAccountId = ACCOUNT_ID
+    expect(await complete(received())).toMatchObject({
+      outcome: 'done',
+      restore: { outcome: 'skipped' },
+      rejoined: true,
+    })
+    expect(fake.offerRestore).not.toHaveBeenCalled()
+  })
 
   it('keeps the key when verifying this phone fails for now', async () => {
     const session = received()

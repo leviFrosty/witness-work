@@ -24,6 +24,7 @@ import { logger } from '@/lib/logger'
 import {
   accountSessions,
   bearerOptions,
+  cachedServerAccount,
   fetchServerAccountInfo,
   keyHistoryCache,
   onAccountChange,
@@ -76,13 +77,18 @@ import { keyChangeStep, registerKeyChangeStep } from './steps'
  * the session, the stores and Cloud Sync and backup. The screens come later.
  */
 
-/** Opens this device's session with `key`, only into `accountId`. */
+/**
+ * Whether `key` opens a session into `accountId`, asked apart from this
+ * device's own session, which may be another account's: the session is closed
+ * again, and the change's next step opens its own.
+ */
 async function openInto(
   key: Uint8Array,
   accountId: string
 ): Promise<'opened' | 'unknownAccount' | 'keyRetired'> {
   try {
-    await serverAccount.connect(key, { accountId, retry: true })
+    const opened = await accountSessions.openDetached(key, { accountId })
+    await opened.close()
     return 'opened'
   } catch (error) {
     if (error instanceof AccountSessionError) {
@@ -133,9 +139,12 @@ export const keyChange = createKeyChangeEngine({
         now: syncNow,
         randomBytes: getRandomBytes,
       }),
-    hasSession: async () => {
+    deviceAccount: async () => {
       await accountSessions.ready()
-      return accountSessions.snapshot() !== null
+      const session = accountSessions.snapshot()
+      if (session) return { accountId: session.accountId, session: true }
+      const last = serverAccount.lastAccountId()
+      return last ? { accountId: last, session: false } : null
     },
     openInto,
     sealLabel: (newKey) => {
@@ -216,6 +225,10 @@ export const handleKeyRetired = createKeyRetiredHandler({
     setKeyChangedElsewhere({ accountId, changedAt })
     serverAccount.forget()
   },
+  accountPub: () =>
+    cachedServerAccount()?.accountPub ??
+    accountSessions.snapshot()?.accountPub ??
+    null,
 })
 
 /**

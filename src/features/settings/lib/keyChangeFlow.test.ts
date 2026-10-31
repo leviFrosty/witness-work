@@ -353,6 +353,34 @@ describe('the Change Account Key flow', () => {
     expect(engine.discard).toHaveBeenCalledTimes(1)
   })
 
+  it('starts fresh when the screen is opened again after a change ended', async () => {
+    const { flow, setStage } = setup()
+    await flow.begin()
+    flow.setSaved(true)
+    await flow.change()
+    expect(flow.state()).toEqual({ step: 'done' })
+    expect(flow.restart()).toBe(true)
+    expect(flow.state()).toEqual({ step: 'intro' })
+    // Mid-change, nothing is reset.
+    setStage('pending')
+    await flow.begin()
+    expect(flow.restart()).toBe(false)
+    expect(flow.state().step).toBe('recoveryKey')
+  })
+
+  it('starts a new change when the one under way turns out to be another account’s', async () => {
+    const { flow, engine, setStage } = setup({}, { resuming: true })
+    setStage('pending')
+    // The engine deletes it when asked for its key.
+    vi.mocked(engine.pendingKey).mockImplementationOnce(async () => {
+      setStage(null)
+      return null
+    })
+    await flow.resume()
+    expect(flow.state()).toEqual({ step: 'intro' })
+    expect(engine.commit).not.toHaveBeenCalled()
+  })
+
   it('doesn’t change the key after the User left', async () => {
     const { flow, engine } = setup()
     await flow.begin()

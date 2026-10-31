@@ -146,6 +146,8 @@ export function createKeyChangeFlow(
     }
     const key = await deps.engine.pendingKey()
     if (key) showRecoveryKey(key)
+    // Another account's, deleted by asking: none under way after all.
+    else if (!(await deps.engine.current())) return false
     else await commit()
     return true
   }
@@ -220,6 +222,22 @@ export function createKeyChangeFlow(
         set({ step: 'intro' })
         await this.begin()
       } else if (state.step === 'finishing') await commit()
+    },
+
+    /**
+     * The screen was opened anew after a change ended (done, lost, finishing,
+     * or a problem): it starts from the explanation, never the last visit's
+     * outcome. True when it's at the explanation now; mid-change it stays.
+     */
+    restart(): boolean {
+      if (
+        state.step === 'done' ||
+        state.step === 'lostRace' ||
+        state.step === 'finishing' ||
+        state.step === 'problem'
+      )
+        set({ step: 'intro' })
+      return state.step === 'intro'
     },
 
     /** Continue a change from an earlier visit or launch. */

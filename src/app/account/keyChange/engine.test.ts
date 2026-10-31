@@ -46,6 +46,8 @@ function fakeServer() {
     retired: new Set([pub(K0)]),
     /** This device still holds a session. */
     session: true,
+    /** The account this device is on now. */
+    deviceAccountId: ACCOUNT,
     requests: [] as RekeyRequest[],
     /** The next rekey commits, but its answer is lost. */
     loseAnswer: false,
@@ -97,12 +99,15 @@ function fakeServer() {
       history: server.history,
     })),
     rekey,
-    hasSession: vi.fn(async () => server.session),
+    deviceAccount: vi.fn(async () => ({
+      accountId: server.deviceAccountId,
+      session: server.session,
+    })),
+    // Detached: this device's own session is left as it is.
     openInto: vi.fn(async (key: Uint8Array, accountId: string) => {
       expect(accountId).toBe(ACCOUNT)
       if (server.retired.has(pub(key))) return 'keyRetired' as const
       if (server.accountPub !== pub(key)) return 'unknownAccount' as const
-      server.session = true
       return 'opened' as const
     }),
   }
@@ -227,6 +232,30 @@ describe('key change engine', () => {
       reason: 'unresolved',
     })
     expect((await offline.records.read())?.stage).toBe('confirmed')
+  })
+
+  it('says offline only without a connection: a refused or cancelled check is the server’s', async () => {
+    const { engine, records, fake } = setup()
+    await engine.start()
+    await engine.confirm()
+    // K1's session refused on this device (its key retired here).
+    fake.deps.readAccount.mockRejectedValue(
+      new AccountSessionError('cancelled')
+    )
+    fake.deps.openInto.mockRejectedValue(
+      new AccountSessionError('server', { status: 500 })
+    )
+    await expect(engine.discard()).rejects.toMatchObject({ reason: 'server' })
+    await expect(engine.commit()).rejects.toMatchObject({ reason: 'server' })
+    expect((await records.read())?.stage).toBe('confirmed')
+
+    // The account still answers through the K1 open: discarded.
+    fake.deps.openInto.mockReset()
+    fake.deps.openInto.mockImplementation(async (key: Uint8Array) =>
+      pub(key) === pub(K1) ? 'opened' : 'unknownAccount'
+    )
+    await engine.discard()
+    expect(await records.read()).toBeNull()
   })
 
   it('checks the account before sending, so an earlier send that committed isn’t sent again', async () => {
@@ -638,6 +667,69 @@ describe('key change engine at launch', () => {
     const { engine } = setup({ records, server })
     expect(await engine.resume()).toEqual({ state: 'unresolved' })
     expect((await records.read())?.stage).toBe('confirmed')
+  })
+
+  it('deletes a change that never committed once this device is on another account', async () => {
+    for (const stage of ['pending', 'confirmed'] as const) {
+      const { records, server, newKey } = await recordAt(stage)
+      server.server.deviceAccountId = 'B'.repeat(22)
+      server.deps.readAccount.mockClear()
+      const { engine, fake, deps } = setup({ records, server })
+      expect(await engine.resume()).toEqual({ state: 'none' })
+      expect(await records.read()).toBeNull()
+      // Never asked through the other account's session.
+      expect(fake.deps.readAccount).not.toHaveBeenCalled()
+      expect(fake.deps.rekey).not.toHaveBeenCalled()
+      expect(deps.adopt).not.toHaveBeenCalled()
+      expect(fake.deps.openInto.mock.calls).toEqual(
+        stage === 'confirmed'
+          ? [
+              [newKey, ACCOUNT],
+              [K1, ACCOUNT],
+            ]
+          : []
+      )
+    }
+  })
+
+  it('keeps a change that committed in its own account, whichever account this device is on', async () => {
+    const { records, server, newKey } = await recordAt('confirmed')
+    server.server.accountPub = pub(newKey)
+    server.server.deviceAccountId = 'B'.repeat(22)
+    server.deps.readAccount.mockClear()
+    const { engine, fake, deps } = setup({ records, server })
+    expect(await engine.resume()).toEqual({ state: 'done' })
+    expect(fake.deps.readAccount).not.toHaveBeenCalled()
+    expect(fake.deps.openInto).toHaveBeenCalledWith(newKey, ACCOUNT)
+    expect(deps.adopt).toHaveBeenCalledWith(K1, newKey, { accountId: ACCOUNT })
+  })
+
+  it('leaves another account’s confirmed change for later when its account can’t be asked', async () => {
+    const { records, server } = await recordAt('confirmed')
+    server.server.deviceAccountId = 'B'.repeat(22)
+    server.deps.openInto.mockRejectedValueOnce(
+      new HttpError('offline', null, null)
+    )
+    const { engine } = setup({ records, server })
+    expect(await engine.resume()).toEqual({ state: 'unresolved' })
+    expect((await records.read())?.stage).toBe('confirmed')
+  })
+
+  it('never shows or continues another account’s new key, and starts this account’s own', async () => {
+    const { records, server } = await recordAt('pending')
+    server.server.deviceAccountId = 'B'.repeat(22)
+    const { engine } = setup({ records, server })
+    expect(await engine.pendingKey()).toBeNull()
+    expect(await records.read()).toBeNull()
+
+    const again = await recordAt('confirmed')
+    again.server.server.deviceAccountId = 'B'.repeat(22)
+    const second = setup({ records: again.records, server: again.server })
+    await expect(second.engine.commit()).rejects.toMatchObject({
+      reason: 'no_change',
+    })
+    expect(second.fake.deps.rekey).not.toHaveBeenCalled()
+    expect(await again.records.read()).toBeNull()
   })
 
   it('has nothing to do without a record', async () => {

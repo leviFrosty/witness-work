@@ -161,8 +161,11 @@ export type OfferStartProblem =
   /** The account couldn't be reached: offline or the server failed. */
   | 'offline'
 
-/** Why the account's session couldn't be opened, for the old phone. */
-function offerStartProblem(error: unknown): OfferStartProblem {
+/**
+ * Why the account's session couldn't be opened, for the phone with the account
+ * (Set Up Another Device, or approving a browser).
+ */
+export function offerStartProblem(error: unknown): OfferStartProblem {
   const failure = toAccountSessionError(error)
   switch (failure.failure) {
     case 'unavailable':

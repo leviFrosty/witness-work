@@ -201,6 +201,12 @@ export const settingsDetailScreens: SettingsDetailScreen[] = [
     title: () => i18n.t('handoff_signIn'),
   },
   {
+    name: 'Sign In on a Computer',
+    getComponent: () =>
+      require('@/features/settings/screens/SignInOnComputerScreen').default,
+    title: () => i18n.t('approval_signIn'),
+  },
+  {
     name: 'PreferencesPersonalization',
     getComponent: () =>
       require('@/features/settings/screens/preferences/screens/PreferencesPersonalizationScreen')

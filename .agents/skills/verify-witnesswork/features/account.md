@@ -10,6 +10,7 @@ Settings → Account shows the User's anonymous server account (its number and w
 - `account-tools` is Tools → Account: key facts, cached account, `account/info`, Register now, Forget, the inbox link, a recovery key validator, Copy (dev), and Replace with a random key.
 - `handoff-offer` is Set Up Another Device on the phone with the account: the QR code with its countdown and Make a New Code, then "Allow … to sign in?" with the six-digit code, NO / YES side by side at the bottom (`handoff-decline`, `handoff-allow`), and the result.
 - `handoff-claim` is Sign In with QR Code on the new phone: the scanner (or an opened `/h` link), the code to compare, the replace warning when this phone has Buddies data, and "Signed in". Use a Recovery Key Instead sits under it.
+- `approve-browser` is Sign In on a Computer on the phone with the account: the scanner (codes from the env's web app hosts only), "Allow this computer to sign in?" with the browser and system, roughly where it is, the far-away warning, the six-digit code, NO / YES (`approval-decline`, `approval-allow`), then Approved, Not approved, or what went wrong with Scan Again.
 - `handoff-tools` is Tools → Account → Handoff: the current or last session with its request log, Copy QR link (dev), Simulate expiry or cancel, Show a QR code, Open the scanner, Run self-test, and a link parser with Sign in with this link.
 - `backup-settings` is Settings → Account → Backup: the WitnessWork Backup switch (off by default), Last Backup with its size or failure, Back Up Now, and the photos `InfoPopover`.
 - `backup-slots` is the Backups list under it: "This phone" / "Another device" rows with date and size, deleting one, Restore from Backup, and Delete Backup.
@@ -19,7 +20,7 @@ Settings → Account shows the User's anonymous server account (its number and w
 ## How to get to it (user POV)
 
 - Settings → Account (the row under Profile), on compact and wide layouts. Hidden on binaries whose Buddies Keychain module is older than version 3.
-- Settings → Account → Devices: Set Up Another Device, and Sign In with QR Code.
+- Settings → Account → Devices: Set Up Another Device, Sign In with QR Code, and Sign In on a Computer (phones only; hidden on the web).
 - Onboarding: "I already use WitnessWork" → From your other phone opens Sign In with QR Code.
 - A `https://ww-proxy.leviwilkerson.com/h#1…` link (the QR code's), or the same fragment on `https://witnesswork.app/accounts/handoff`, opens Sign In with QR Code, during onboarding too.
 - Tools → Account.
@@ -52,6 +53,16 @@ Simulators and emulators can't scan a real camera. The old phone shows the QR, a
 - **Expiry and cancel.** Tools → Account → Handoff → Simulate expiry or Simulate cancel (server). Make a New Code cancels the old one.
 - **Self-test.** `wwv eval '__WW_DEV__.handoff.selfTest()'`, then `__WW_DEV__.handoff.selfTestResult`: every step `ok`, ending with `Status → done (old)`.
 - **A buddy to lose or keep.** A headless Buddies engine on the local relay (see `relay.interop.test.ts` for the setup) can create an invite: open it with `wwv link`, Accept, then have the engine confirm.
+
+### Sign In on a Computer (a phone approves a browser)
+
+Needs the `approval/*` ops on the local worker (`WW_API_DIR=<ww-api checkout>` until they're on `origin/main`). Simulators can't scan, and `https://app.witnesswork.app/approve#1…` is never an app link, so a development build hands the code to the screen instead: `wwv eval '__WW_DEV__.approval.scan("<link>")'` opens Sign In on a Computer with it, as its scanner would (the screen ignores a handed-in `link` outside development builds).
+
+- **Play the browser.** `MODE=approve BUDDIES_RELAY_URL=<api url> pnpm exec vitest run .verify/browser.approval.test.ts` (a gitignored script you write with `createBrowserApproval` from `approvalSession.ts`; `http://localhost:8081` is a local web origin a dev build accepts). It writes the current link to a file, rotates every 60 s like the web, and once the key arrives opens a web session with the ticket (`session/open` signed with the received key, `ticket` in place of `attestation`) and calls `done`.
+- **Claim.** `approval.scan(<link>)`: "Allow this computer to sign in?" with "Chrome on macOS", the place (a local worker knows none: "Location unknown"), and the code (`handoff-code`), which matches the browser's. `wwv eval '__WW_DEV__.approval.state()'` gives `step`, `status`, `code`, and the request log.
+- **YES** (`approval-allow`) asks for Face ID or the passcode when the device has one: enroll Face ID with `xcrun simctl spawn <udid> notifyutil -s com.apple.BiometricKit.enrollmentChanged 1` + `notifyutil -p com.apple.BiometricKit.enrollmentChanged`, then answer the prompt with `notifyutil -p com.apple.BiometricKit_Sim.pearl.match` (or `.nomatch`). Then "Approved", and the browser's session opens for the phone's `accountPub`.
+- **NO** (`approval-decline`): "Not approved", and the browser fails `cancelled`.
+- **Expired.** Scan a code more than 75 s after it opened (a channel nobody polls): "This code expired."
 
 ### WitnessWork Backup
 

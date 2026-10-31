@@ -126,7 +126,8 @@ approve. The QR and recovery-key options stay permanently as fallbacks.
   secret in the fragment. The code changes about every 60 seconds and works
   once.
 - **The phone scans it inside the app only:** from Settings → Account → Sign
-  in on a computer, or the existing scanner. The QR's URL isn't an app link.
+  In on a Computer. The QR's URL isn't an app link, and the Sign In with QR
+  Code scanner only points to that screen.
 - **The phone confirms before sending:**
   - It shows the browser and system name, roughly where the browser is, and
     the six-digit code.

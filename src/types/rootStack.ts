@@ -271,6 +271,13 @@ export type RootStackParamList = {
   'Sign In With QR Code':
     | { entry?: 'settings' | 'onboarding' | 'link' | 'tools'; link?: string }
     | undefined
+  /**
+   * Sign In on a Computer: scan the web app's code and approve the browser.
+   * `link` is honored only in development builds, standing in for the camera.
+   */
+  'Sign In on a Computer':
+    | { entry?: 'settings' | 'tools'; link?: string }
+    | undefined
   OpenSourceLicenses: undefined
   More: undefined
   ServiceReportView: { month: number; year: number }

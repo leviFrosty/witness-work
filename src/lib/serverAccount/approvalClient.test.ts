@@ -177,6 +177,25 @@ describe('approval client: the phone', () => {
     })
   })
 
+  it('keeps place names to one short line', async () => {
+    const { phone } = fakeFetch(() => ({
+      ok: true,
+      expiresAt: 300,
+      hello: 'h',
+      location: {
+        city: 'L'.repeat(5_000),
+        region: 'A\nB\u202e',
+        country: '\u0000',
+      },
+      far: false,
+    }))
+    const result = await claimApproval(
+      { channelId: CHANNEL, claimToken: 'ct', phonePub: 'pp' },
+      phone
+    )
+    expect(result.location).toEqual({ city: 'L'.repeat(64), region: 'A B' })
+  })
+
   it('reads a claim without a location as near', async () => {
     const { phone } = fakeFetch(() => ({
       ok: true,

@@ -242,6 +242,19 @@ const keyAad = (channelId: string) => `${LABEL}/key\n${channelId}`
 export const cut = (value: string, max: number) =>
   Array.from(value).slice(0, max).join('')
 
+/**
+ * One plain line, cut to `max`: control and format characters (newlines, bidi
+ * overrides) go, so text from the other side can't draw extra lines on screen.
+ */
+export const plainLine = (text: string, max: number) =>
+  cut(
+    text
+      .replace(/[\p{Cc}\p{Cf}]+/gu, ' ')
+      .replace(/\s+/g, ' ')
+      .trim(),
+    max
+  )
+
 /** The hello as sent: strings trimmed and cut to the protocol's limits. */
 export function normalizeHello(hello: HandoffHello): HandoffHello {
   return {

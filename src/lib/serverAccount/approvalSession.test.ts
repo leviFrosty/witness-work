@@ -168,9 +168,16 @@ function fakeRelay() {
           return error(409, 'conflict')
         channel.status = 'done'
         channel.key = undefined
+        channel.phonePub = undefined
         return [200, { ok: true }]
       case 'approval/cancel':
-        if (channel.status !== 'done') channel.status = 'cancelled'
+        // Ending a channel drops everything but its status, the phone's key
+        // too, as the Durable Object does.
+        if (channel.status !== 'done') {
+          channel.status = 'cancelled'
+          channel.key = undefined
+          channel.phonePub = undefined
+        }
         return [200, { ok: true }]
     }
     return error(400, 'bad_request')
@@ -357,6 +364,49 @@ describe('the browser', () => {
     browser.dispose()
   })
 
+  it('keeps the new code when a poll of a code it just ended answers late', async () => {
+    const { relay, browser } = setup()
+    await browser.start()
+    for (let code = 0; code < APPROVAL_MAX_CODES; code++)
+      await vi.advanceTimersByTimeAsync(APPROVAL_ROTATE_MS)
+    expect(browser.state.step).toBe('expired')
+    // Hold the next status poll of the last code, still alive.
+    const fetchMock = relay.fetchImpl as unknown as Mock<typeof fetch>
+    const original = fetchMock.getMockImplementation()!
+    let release!: () => void
+    const held = new Promise<void>((resolve) => (release = resolve))
+    let holding = true
+    fetchMock.mockImplementation((async (url: string, init: RequestInit) => {
+      if (holding && url.endsWith('approval/status')) {
+        holding = false
+        await held
+      }
+      return original(url, init)
+    }) as never)
+    await vi.advanceTimersByTimeAsync(APPROVAL_POLL_MS)
+    expect(holding).toBe(false)
+    // Show a New Code ends the old channels while that poll is out.
+    await browser.restart()
+    release()
+    await vi.advanceTimersByTimeAsync(0)
+    expect(browser.state).toMatchObject({ step: 'showing', codes: 1 })
+    browser.dispose()
+  })
+
+  it('cancels the channel when the send fails outright', async () => {
+    const { relay, browser, phoneFor } = setup()
+    await browser.start()
+    const phone = phoneFor(linkOf(browser))
+    await phone.claim()
+    relay.fails.set('approval/send', { status: 500, error: 'internal' })
+    await phone.approve()
+    expect(phone.state.step).toBe('failed')
+    await vi.advanceTimersByTimeAsync(0)
+    expect(relay.calls.map((c) => c.op)).toContain('approval/cancel')
+    expect(relay.channels.get(phone.channelId!)?.status).toBe('cancelled')
+    browser.dispose()
+  })
+
   it('cancels every channel on dispose', async () => {
     const { relay, browser } = setup()
     await browser.start()
@@ -380,6 +430,16 @@ describe('the browser', () => {
     await vi.advanceTimersByTimeAsync(APPROVAL_POLL_MS)
     await phone.decline()
     expect(phone.state.step).toBe('declined')
+    await vi.advanceTimersByTimeAsync(APPROVAL_POLL_MS)
+    expect(browser.state).toEqual({ step: 'failed', reason: 'cancelled' })
+  })
+
+  it('fails when the phone says No before the page saw the claim', async () => {
+    const { browser, phoneFor } = setup()
+    await browser.start()
+    const phone = phoneFor(linkOf(browser))
+    await phone.claim()
+    await phone.decline()
     await vi.advanceTimersByTimeAsync(APPROVAL_POLL_MS)
     expect(browser.state).toEqual({ step: 'failed', reason: 'cancelled' })
   })
@@ -656,6 +716,29 @@ describe('the phone', () => {
     expect(phone.state.step).toBe('done')
     expect(sent).toHaveLength(2)
     expect(sent[0]).toBe(sent[1])
+    browser.dispose()
+  })
+
+  it('lets a send that is out decide when the screen closes', async () => {
+    const { relay, browser, phoneFor } = setup()
+    await browser.start()
+    const phone = phoneFor(linkOf(browser))
+    await phone.claim()
+    const fetchMock = relay.fetchImpl as unknown as Mock<typeof fetch>
+    const original = fetchMock.getMockImplementation()!
+    let release!: () => void
+    const held = new Promise<void>((resolve) => (release = resolve))
+    fetchMock.mockImplementation((async (url: string, init: RequestInit) => {
+      if (url.endsWith('approval/send')) await held
+      return original(url, init)
+    }) as never)
+    const approving = phone.approve()
+    await vi.advanceTimersByTimeAsync(0)
+    await phone.cancel()
+    release()
+    await approving
+    expect(phone.state.step).toBe('done')
+    expect(relay.calls.map((c) => c.op)).not.toContain('approval/cancel')
     browser.dispose()
   })
 

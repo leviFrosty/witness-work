@@ -66,6 +66,30 @@ test('Help Center opens offline from its bundled snapshot', async ({
   await shot('help-center')
 })
 
+test('a signed-out browser opens on the sign-in screen', async ({
+  browser,
+  baseURL,
+}) => {
+  // A context of its own: the fixture's skips the sign-in screen.
+  const context = await browser.newContext()
+  const app = new URL(baseURL!).host
+  await context.route(
+    (url) => url.host !== app,
+    (route) => route.fulfill({ status: 503 })
+  )
+  const page = await context.newPage()
+  const en = strings('en-US')
+  await page.goto('/')
+  await expect(page.getByText(en.webSignIn_title)).toBeVisible()
+  for (const label of [
+    en.webSignIn_passkey,
+    en.webSignIn_phone,
+    en.webSignIn_recoveryKey,
+  ])
+    await expect(page.getByRole('button', { name: label })).toBeVisible()
+  await context.close()
+})
+
 test('onboarding starts fresh', async ({ page, shot }) => {
   // The welcome intro plays before its buttons respond; Reduce Motion skips it.
   await page.emulateMedia({ reducedMotion: 'reduce' })

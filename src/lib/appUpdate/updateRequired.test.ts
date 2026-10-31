@@ -151,6 +151,41 @@ describe('fetchAppConfig', () => {
     })
   })
 
+  it("reads web sign-up's switch and Turnstile's site key", async () => {
+    await expect(
+      fetchAppConfig(
+        'https://api.test/app/v1/config',
+        answer({
+          ok: true,
+          webSignup: {
+            enabled: true,
+            turnstileSiteKey: '1x00000000000000000000AA',
+          },
+        }) as unknown as typeof fetch
+      )
+    ).resolves.toEqual({
+      minAppVersion: null,
+      sync: null,
+      webSignup: {
+        enabled: true,
+        turnstileSiteKey: '1x00000000000000000000AA',
+      },
+    })
+    await expect(
+      fetchAppConfig(
+        'https://api.test/app/v1/config',
+        answer({
+          ok: true,
+          webSignup: { enabled: false, turnstileSiteKey: '' },
+        }) as unknown as typeof fetch
+      )
+    ).resolves.toEqual({
+      minAppVersion: null,
+      sync: null,
+      webSignup: { enabled: false, turnstileSiteKey: null },
+    })
+  })
+
   it('asks for Cloud Sync for everyone', async () => {
     // ww-api answers `everyone` only to an app that says it can take it (ADR
     // 0040 §2); an older app reads `supporter`.

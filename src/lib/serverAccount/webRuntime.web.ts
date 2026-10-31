@@ -17,6 +17,10 @@ import {
   type WebAccount,
 } from '@/lib/serverAccount/webAccount'
 import { webDeviceLabel } from '@/lib/serverAccount/webDeviceLabel'
+import {
+  webSignInLater,
+  webSignInMark,
+} from '@/lib/serverAccount/webSignInMark'
 import type { WebRuntime } from '@/lib/serverAccount/webRuntime'
 import { reloadPage, sessionTabs } from '@/lib/serverAccount/webTabs'
 import {
@@ -102,9 +106,18 @@ export const webRuntime: WebRuntime | null = {
       closeOpened: (accessToken) =>
         closeSession(accessToken, { baseUrl: apis.accounts }),
       markWipePending,
-      wipe: clearAllWebData,
+      wipe: () => {
+        webSignInLater.clear()
+        return clearAllWebData()
+      },
       reload: reloadPage,
-      onEnded: (reason, outcome) =>
-        analytics.capture('web_session_ended', { reason, outcome }),
+      onEnded: (reason, outcome, { fromTab }) => {
+        if (!fromTab)
+          analytics.capture('web_session_ended', { reason, outcome })
+        // Signed out: the app no longer opens without signing in.
+        webSignInLater.clear()
+        // The sign-in screen after the wipe's reload says why, in every tab.
+        if (outcome === 'wiped') webSignInMark.write({ ended: reason })
+      },
     })),
 }

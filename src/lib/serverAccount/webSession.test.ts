@@ -528,7 +528,13 @@ describe('web sessions', () => {
       expect(error).toBeInstanceOf(AccountSessionError)
       expect(error).toMatchObject({ failure: 'signedOut', ended: reason })
       expect(one.wipe).toHaveBeenCalledTimes(1)
-      expect(one.onEnded).toHaveBeenCalledWith(reason, 'wiped')
+      expect(one.onEnded).toHaveBeenCalledWith(reason, 'wiped', {
+        fromTab: false,
+      })
+      // The other tab hears why too, so its sign-in screen can say so.
+      expect(two.onEnded).toHaveBeenCalledWith(reason, 'wiped', {
+        fromTab: true,
+      })
       expect(disk.secrets.size).toBe(0)
       expect(disk.session).toBeNull()
       expect(one.reload).toHaveBeenCalled()
@@ -672,8 +678,12 @@ describe('web sessions', () => {
       const signIn = { status: 'signedOut', ended: reason, keptData: true }
       expect(one.account.state()).toEqual(signIn)
       expect(two.account.state()).toEqual(signIn)
-      expect(one.onEnded).toHaveBeenCalledWith(reason, 'signIn')
-      expect(two.onEnded).not.toHaveBeenCalled()
+      expect(one.onEnded).toHaveBeenCalledWith(reason, 'signIn', {
+        fromTab: false,
+      })
+      expect(two.onEnded).toHaveBeenCalledWith(reason, 'signIn', {
+        fromTab: true,
+      })
       // Nothing more goes out until the User signs in.
       await expect(two.info()).rejects.toMatchObject({ failure: 'signedOut' })
 
@@ -758,6 +768,41 @@ describe('web sessions', () => {
     expect((await reloaded.info()).data.accountId).toBe(
       'acct000000000000000002'
     )
+  })
+
+  it('runs onStored once the new key is stored, before any tab reloads', async () => {
+    const { tab, disk } = browser()
+    const one = tab()
+    await one.account.start()
+    await one.account.openWebSessionWithTicket('ticket-a', KEY_A)
+    disk.stores.set('contacts', 'A')
+    const seen: { key: Uint8Array | undefined; reloaded: boolean }[] = []
+
+    await one.account.openWebSessionWithTicket('ticket-b', KEY_B, {
+      onStored: async () => {
+        seen.push({
+          key: disk.secrets.get('account-key') as Uint8Array | undefined,
+          reloaded: one.reload.mock.calls.length > 0,
+        })
+      },
+    })
+
+    expect(seen).toEqual([{ key: KEY_B, reloaded: false }])
+    expect(one.reload).toHaveBeenCalled()
+  })
+
+  it('reloads anyway when onStored hangs', async () => {
+    const { tab, disk } = browser()
+    const one = tab()
+    await one.account.start()
+    await one.account.openWebSessionWithTicket('ticket-a', KEY_A)
+    disk.stores.set('contacts', 'A')
+
+    await one.account.openWebSessionWithTicket('ticket-b', KEY_B, {
+      onStored: () => new Promise<void>(() => {}),
+    })
+
+    expect(one.reload).toHaveBeenCalled()
   })
 
   it.each([

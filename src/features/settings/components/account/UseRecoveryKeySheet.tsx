@@ -13,15 +13,11 @@ import {
   losesSomething,
   type ReplaceAccountKeyResult,
 } from '@/lib/accountKey/accountKey'
-import {
-  normalizeRecoveryKey,
-  parseRecoveryKey,
-  RECOVERY_KEY_LENGTH,
-} from '@/lib/accountKey/recoveryKey'
 import i18n from '@/lib/locales'
 import { logger } from '@/lib/logger'
 import { BuddyRemovalPendingError } from '@/features/buddies/lib/engine'
 import { RECOVERY_KEY_FONT } from '@/features/settings/components/account/recoveryKeyFont'
+import { recoveryKeyStatus } from '@/features/settings/components/account/recoveryKeyStatus'
 import { confirmAccountReplace } from '@/features/settings/components/account/confirmAccountReplace'
 import useAttestationSupport from '@/features/settings/hooks/useAttestationSupport'
 
@@ -137,8 +133,10 @@ function RecoveryKeyForm({
   const support = useAttestationSupport()
   const [value, setValue] = useState('')
   const input = useRef<RNTextInput>(null)
-  const parsed = parseRecoveryKey(value)
-  const typed = normalizeRecoveryKey(value).length
+  const { parsed, status } = recoveryKeyStatus(
+    value,
+    i18n.t('account_enterHint')
+  )
 
   // Android can't focus a field in a sheet that's still opening.
   useEffect(() => {
@@ -146,29 +144,6 @@ function RecoveryKeyForm({
     const timer = setTimeout(() => input.current?.focus(), 300)
     return () => clearTimeout(timer)
   }, [])
-
-  const status: { text: string; tone: 'hint' | 'error' | 'ok' } = parsed.ok
-    ? { text: i18n.t('account_enterValid'), tone: 'ok' }
-    : parsed.problem === 'empty'
-      ? { text: i18n.t('account_enterHint'), tone: 'hint' }
-      : parsed.problem === 'incomplete'
-        ? {
-            text: i18n.t('account_enterProgress', {
-              count: typed,
-              total: RECOVERY_KEY_LENGTH,
-            }),
-            tone: 'hint',
-          }
-        : {
-            text: i18n.t(
-              parsed.problem === 'character'
-                ? 'account_enterCharacter'
-                : parsed.problem === 'tooLong'
-                  ? 'account_enterTooLong'
-                  : 'account_enterChecksum'
-            ),
-            tone: 'error',
-          }
 
   const submit = async () => {
     if (!parsed.ok || busy) return

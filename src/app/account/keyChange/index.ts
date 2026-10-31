@@ -42,7 +42,7 @@ import {
   fetchKeyHistory,
   rekeyAccount,
 } from '@/lib/serverAccount/keyChangeClient'
-import { historyKeys } from '@/lib/serverAccount/keyHistory'
+import { historyKeys, historyPhotoKeys } from '@/lib/serverAccount/keyHistory'
 import { accountPubOf } from '@/lib/serverAccount/keys'
 import { AccountSessionError } from '@/lib/serverAccount/session'
 import { useBackupState } from '@/lib/serverAccount/backupStore'
@@ -60,7 +60,12 @@ import { toast } from '@/stores/toasts'
 import { usePreferences } from '@/stores/preferences'
 import { createKeyChangeEventGate } from './analytics'
 import { createKeyChangeEngine } from './engine'
-import { createResealStep } from './reseal'
+import {
+  createPhotoResealRetry,
+  createResealStep,
+  type PhotosLeftStore,
+  resealPhotoApi,
+} from './reseal'
 import { createKeyRetiredHandler } from './retired'
 import { useKeyChangeStatus } from './status'
 import { keyChangeStep, registerKeyChangeStep } from './steps'
@@ -242,8 +247,50 @@ async function noteSignedIn(): Promise<void> {
       .catch(() => undefined)
 }
 
-/** Step 5: the account's Cloud Sync and backup slots, under the new key. */
+/**
+ * The history this device kept, else the server's; undefined when neither can
+ * be read.
+ */
+const readHistory = async (accountId: string, accountKey: Uint8Array) =>
+  (await keyHistoryCache.read(accountId).catch(() => null)) ??
+  (await keyHistoryCache.refresh(accountKey, accountId).catch(() => undefined))
+
+// An install that never synced has no slot of its own.
+const ownSyncSlotId = () => usePreferences.getState().iCloudDeviceId ?? null
+
+const PHOTOS_LEFT = 'key-change-photos-left'
+const photosLeft: PhotosLeftStore = {
+  get: () => store().getString(PHOTOS_LEFT) ?? null,
+  set: (accountId) => {
+    if (accountId) store().set(PHOTOS_LEFT, accountId)
+    else store().delete(PHOTOS_LEFT)
+  },
+}
+
+const photoDeps = {
+  photos: (accountKey: Uint8Array) =>
+    resealPhotoApi(bearerOptions(accountKey), ownSyncSlotId),
+  olderPhotoKeys: async (accountId: string, accountKey: Uint8Array) => {
+    const history = await readHistory(accountId, accountKey)
+    return history === undefined
+      ? null
+      : historyPhotoKeys(history).map(({ name, photo }) => ({
+          nameKey: name,
+          photoKey: photo,
+        }))
+  },
+  photosLeft,
+  randomBytes: getRandomBytes,
+  // Between chunks of a photo: a frame can render.
+  pause: () => new Promise<void>((resolve) => setTimeout(resolve, 0)),
+}
+
+/**
+ * Step 5: the account's Cloud Sync slots and photos, and its backup slots,
+ * under the new key.
+ */
 const resealStep = createResealStep({
+  ...photoDeps,
   sync: (accountKey) => {
     const options = bearerOptions(accountKey)
     return {
@@ -264,21 +311,39 @@ const resealStep = createResealStep({
       },
     }
   },
-  // An install that never synced has no slot of its own.
-  ownSyncSlotId: () => usePreferences.getState().iCloudDeviceId ?? null,
-  // The history this device kept, else the server's; null when neither can be
-  // read, so a slot only the history might open waits for a later try.
+  ownSyncSlotId,
+  // Null when the history can't be read, so a slot only it might open waits
+  // for a later try.
   olderKeys: async (accountId, kind, accountKey) => {
-    const history =
-      (await keyHistoryCache.read(accountId).catch(() => null)) ??
-      (await keyHistoryCache
-        .refresh(accountKey, accountId)
-        .catch(() => undefined))
+    const history = await readHistory(accountId, accountKey)
     return history === undefined ? null : historyKeys(history, kind)
   },
   randomBytes: getRandomBytes,
   sleep: (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
 })
+
+// Photos a change left under an older key move to this key's names: once a
+// launch, with a session open and no change under way (`reseal.ts`).
+const retryPhotoReseal = createPhotoResealRetry({
+  ...photoDeps,
+  sessionAccountId: () => accountSessions.snapshot()?.accountId ?? null,
+  changeUnderWay: async () =>
+    (await keyChange.current().catch(() => null)) !== null,
+  accountKey: async () => {
+    const seed = await deviceAccountKey.peek().catch(() => null)
+    return seed ? fromB64u(seed) : null
+  },
+})
+
+/** `retryPhotoReseal`, never throwing. */
+function retryPhotosLeft(): void {
+  void retryPhotoReseal().catch((error: unknown) => {
+    logger.warn(
+      '[keyChange] moving photos left under an older key failed',
+      error
+    )
+  })
+}
 
 let installed = false
 
@@ -308,6 +373,7 @@ export function installKeyChange(): void {
     const signedOut = keyChangedElsewhere()
     if (change === 'session_opened' || (change === 'key_changed' && signedOut))
       void noteSignedIn()
+    if (change === 'session_opened') retryPhotosLeft()
   })
   addForegroundListener(() => {
     // A change that couldn't be resolved, or a step that stopped, tries again.
@@ -315,6 +381,8 @@ export function installKeyChange(): void {
       logger.warn('[keyChange] resuming failed', error)
     })
     void rejoinWithSyncedKey()
+    retryPhotosLeft()
   })
   void rejoinWithSyncedKey()
+  retryPhotosLeft()
 }

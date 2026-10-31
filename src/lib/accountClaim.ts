@@ -25,7 +25,17 @@ export type AccountClaim = {
    * the claim it adopted, so the time belongs to the id, not the device.
    */
   claimedAt: number
+  /**
+   * The server account (`accountFingerprint`) the claim was made under. Only
+   * that account's devices take it: the account file and a platform sync's
+   * payloads are shared by everyone on the Apple Account or Google Account,
+   * whichever server account they're on. Absent from older versions' claims.
+   */
+  account?: string
 }
+
+/** An `accountFingerprint`. */
+const ACCOUNT_FINGERPRINT = /^[0-9a-f]{64}$/
 
 /**
  * What ww-api accepts as an app user id; RevenueCat's anonymous ids never
@@ -36,7 +46,10 @@ const APP_USER_ID = /^[A-Za-z0-9_-]{8,64}$/
 /** A peer's claim, or null when it's missing or malformed. */
 export const parseAccountClaim = (value: unknown): AccountClaim | null => {
   if (typeof value !== 'object' || value === null) return null
-  const { appUserId, entitled, claimedAt } = value as Record<string, unknown>
+  const { appUserId, entitled, claimedAt, account } = value as Record<
+    string,
+    unknown
+  >
   if (typeof appUserId !== 'string' || !APP_USER_ID.test(appUserId)) return null
   if (typeof entitled !== 'boolean') return null
   if (
@@ -45,7 +58,11 @@ export const parseAccountClaim = (value: unknown): AccountClaim | null => {
     claimedAt < 0
   )
     return null
-  return { appUserId, entitled, claimedAt }
+  // A claim that doesn't say whose it is can't be told from another account's.
+  if (account === undefined) return { appUserId, entitled, claimedAt }
+  if (typeof account !== 'string' || !ACCOUNT_FINGERPRINT.test(account))
+    return null
+  return { appUserId, entitled, claimedAt, account }
 }
 
 /** The account file as a claim. Older versions wrote no claim time. */
@@ -53,6 +70,7 @@ export const accountFileClaim = (file: AccountFile): AccountClaim => ({
   appUserId: file.accountId,
   entitled: file.entitled,
   claimedAt: file.claimedAt ?? file.updatedAt,
+  ...(file.account !== undefined ? { account: file.account } : {}),
 })
 
 /**
@@ -74,6 +92,9 @@ export const pickWinningClaim = (
             appUserId: claim.appUserId,
             entitled: seen.entitled || claim.entitled,
             claimedAt: Math.min(seen.claimedAt, claim.claimedAt),
+            ...(seen.account !== undefined || claim.account !== undefined
+              ? { account: seen.account ?? claim.account }
+              : {}),
           }
         : claim
     )
@@ -91,14 +112,38 @@ const beats = (a: AccountClaim, b: AccountClaim): boolean => {
   return a.appUserId < b.appUserId
 }
 
+/**
+ * An id this device dropped when another server account signed in, kept with
+ * the account it was dropped from (`@/lib/account`).
+ */
+export type DroppedAccountId = { appUserId: string; account: string }
+
 export type AccountReconcileAction =
   | Exclude<AccountAction, { type: 'adopt' }>
+  /**
+   * The account file is untagged (an older version's, or a device's without an
+   * account) and names this device's id: rewrite it with this device's claim,
+   * so it says its account.
+   */
+  | { type: 'tag' }
   | {
       type: 'adopt'
       accountId: string
       claimedAt: number
       /** Where the winning claim came from, for analytics. */
       source: 'account_file' | 'sync'
+      /**
+       * The server account the adopted id belongs to: this device's, or the
+       * claim's when this device has none. Null when neither says.
+       */
+      account: string | null
+      /**
+       * Whether the winning claim said its account. An untagged one (an older
+       * version's) may be another account's on the same Apple Account, so the
+       * id is kept here but its claim doesn't say this account's either
+       * (`getOwnAccountClaim`), and it never tags the file.
+       */
+      tagged: boolean
     }
 
 /**
@@ -113,24 +158,54 @@ export type AccountReconcileAction =
  *
  * `fileRead` is false when there's no account file to consult: no platform
  * transport (Android without Drive, the web), or it couldn't be read.
+ *
+ * `account` is the server account this device is on (`accountFingerprint`), or
+ * null without one. A claim made under another account doesn't count, and an
+ * account file another account claimed is left alone: taking it over would have
+ * that account's devices take it back, over and over. An untagged claim (an
+ * older version's, or a device's without an account) counts, unless it names an
+ * id this device `dropped` for another account: it can't say it's that
+ * account's, so the id can't come back through it.
  */
 export const decideAccountReconcile = (input: {
   own: AccountClaim
   file: AccountFile | null
   fileRead: boolean
   peers: readonly AccountClaim[]
+  account?: string | null
+  dropped?: readonly DroppedAccountId[]
 }): AccountReconcileAction => {
-  const { own, file, fileRead, peers } = input
-  const fileClaim = fileRead && file ? accountFileClaim(file) : null
+  const { own, file } = input
+  const account = input.account ?? null
+  const dropped = input.dropped ?? []
+  const counts = (claim: AccountClaim) => {
+    if (claim.account !== undefined)
+      return account === null || claim.account === account
+    return !dropped.some(
+      (entry) =>
+        entry.appUserId === claim.appUserId && entry.account !== account
+    )
+  }
+  const fileClaim = input.fileRead && file ? accountFileClaim(file) : null
+  const fileRead = input.fileRead && (!fileClaim || counts(fileClaim))
+  const peers = input.peers.filter(counts)
   const winner =
-    pickWinningClaim([own, ...(fileClaim ? [fileClaim] : []), ...peers]) ?? own
+    pickWinningClaim([
+      own,
+      ...(fileRead && fileClaim ? [fileClaim] : []),
+      ...peers,
+    ]) ?? own
   if (!own.entitled && winner.appUserId !== own.appUserId) {
     return {
       type: 'adopt',
       accountId: winner.appUserId,
       claimedAt: winner.claimedAt,
       source:
-        fileClaim?.appUserId === winner.appUserId ? 'account_file' : 'sync',
+        fileRead && fileClaim?.appUserId === winner.appUserId
+          ? 'account_file'
+          : 'sync',
+      account: account ?? winner.account ?? null,
+      tagged: winner.account !== undefined,
     }
   }
   if (!fileRead) return { type: 'none' }
@@ -141,5 +216,18 @@ export const decideAccountReconcile = (input: {
   })
   // Only reachable when our claim beat the file's: it's un-entitled and loses.
   if (action.type === 'adopt') return { type: 'claim' }
+  // An untagged file naming this device stays so otherwise, and would bring
+  // the id back for whichever account signs in next. Only a claim that says
+  // this account tags it: the install id's, an id adopted from this account's
+  // claim, or one the released app adopted. An id adopted from an untagged
+  // claim may be another account's, and tagging it would hand it to this one.
+  if (
+    action.type === 'none' &&
+    account !== null &&
+    own.account === account &&
+    file?.account === undefined &&
+    file?.accountId === own.appUserId
+  )
+    return { type: 'tag' }
   return action
 }

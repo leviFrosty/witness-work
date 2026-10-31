@@ -67,6 +67,11 @@ vi.mock('@/lib/account', async () => {
       return 'install-a'
     },
     adoptAccountId: vi.fn(),
+    boundSupporterAccount: () => null,
+    onAccountIdChange: () => () => {},
+    devAccountFileStaged: () => false,
+    droppedAccountIds: () => [],
+    onDevAccountFileChange: () => () => {},
     getOwnAccountClaim: (entitled: boolean) => ({
       appUserId: 'install-a',
       entitled,
@@ -98,6 +103,8 @@ vi.mock('@/lib/serverAccount/revenueCatLinkRuntime', () => ({
   ensureRevenueCatLinked: async (options: unknown) => {
     runtime.links.push(options)
   },
+  onSupporterAccountSwitched: () => () => {},
+  currentSupporterAccount: async () => null,
 }))
 
 const foreground = async () => {

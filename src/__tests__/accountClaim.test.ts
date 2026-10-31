@@ -11,6 +11,9 @@ import {
 const ID_A = 'aaaaaaaa-0000-4000-8000-000000000001'
 const ID_B = 'bbbbbbbb-0000-4000-8000-000000000002'
 const ID_C = 'cccccccc-0000-4000-8000-000000000003'
+/** Server accounts, as `accountFingerprint`. */
+const ACCT_A = 'a'.repeat(64)
+const ACCT_B = 'b'.repeat(64)
 
 const claim = (
   appUserId: string,
@@ -55,6 +58,17 @@ describe('parseAccountClaim', () => {
       claim(ID_A, 5)
     )
   })
+
+  it('reads the server account it was made under', () => {
+    expect(parseAccountClaim({ ...claim(ID_A, 5), account: ACCT_A })).toEqual({
+      ...claim(ID_A, 5),
+      account: ACCT_A,
+    })
+  })
+
+  it("drops a claim whose account can't be read", () => {
+    expect(parseAccountClaim({ ...claim(ID_A, 5), account: 'x' })).toBeNull()
+  })
 })
 
 describe('accountFileClaim', () => {
@@ -66,6 +80,13 @@ describe('accountFileClaim', () => {
 
   it('falls back to when an older version wrote it', () => {
     expect(accountFileClaim(file(ID_A, 9))).toEqual(claim(ID_A, 9))
+  })
+
+  it('keeps the server account it was made under', () => {
+    expect(accountFileClaim({ ...file(ID_A, 9), account: ACCT_A })).toEqual({
+      ...claim(ID_A, 9),
+      account: ACCT_A,
+    })
   })
 })
 
@@ -137,6 +158,8 @@ describe('decideAccountReconcile', () => {
         accountId: ID_A,
         claimedAt: 1,
         source: 'sync',
+        account: null,
+        tagged: false,
       })
     })
 
@@ -222,6 +245,8 @@ describe('decideAccountReconcile', () => {
         accountId: ID_A,
         claimedAt: 9,
         source: 'account_file',
+        account: null,
+        tagged: false,
       })
     })
 
@@ -291,6 +316,291 @@ describe('decideAccountReconcile', () => {
         })
       ).toMatchObject({ type: 'adopt', accountId: ID_B })
     })
+  })
+
+  describe('claims made under another server account', () => {
+    const tagged = (c: AccountClaim, account: string): AccountClaim => ({
+      ...c,
+      account,
+    })
+
+    it("ignores a peer's claim from another account", () => {
+      expect(
+        decideAccountReconcile({
+          own: own(ID_B, 2),
+          file: null,
+          fileRead: false,
+          peers: [tagged(claim(ID_A, 1, true), ACCT_A)],
+          account: ACCT_B,
+        })
+      ).toEqual({ type: 'none' })
+    })
+
+    it("adopts a peer's claim from this account, keeping the account", () => {
+      expect(
+        decideAccountReconcile({
+          own: own(ID_B, 2),
+          file: null,
+          fileRead: false,
+          peers: [tagged(claim(ID_A, 1, true), ACCT_B)],
+          account: ACCT_B,
+        })
+      ).toMatchObject({ type: 'adopt', accountId: ID_A, account: ACCT_B })
+    })
+
+    it("leaves another account's file alone: no adopting, no claiming", () => {
+      expect(
+        decideAccountReconcile({
+          own: own(ID_B, 2),
+          file: { ...file(ID_A, 1, true), account: ACCT_A },
+          fileRead: true,
+          peers: [],
+          account: ACCT_B,
+        })
+      ).toEqual({ type: 'none' })
+      // Entitled, it would otherwise claim over an un-entitled file.
+      expect(
+        decideAccountReconcile({
+          own: own(ID_B, 2, true),
+          file: { ...file(ID_A, 1), account: ACCT_A },
+          fileRead: true,
+          peers: [],
+          account: ACCT_B,
+        })
+      ).toEqual({ type: 'none' })
+    })
+
+    it("adopts this account's file", () => {
+      expect(
+        decideAccountReconcile({
+          own: own(ID_B, 2),
+          file: { ...file(ID_A, 1, true), account: ACCT_B },
+          fileRead: true,
+          peers: [],
+          account: ACCT_B,
+        })
+      ).toMatchObject({
+        type: 'adopt',
+        accountId: ID_A,
+        source: 'account_file',
+        account: ACCT_B,
+      })
+    })
+
+    it('takes an untagged file as before', () => {
+      expect(
+        decideAccountReconcile({
+          own: own(ID_B, 2),
+          file: file(ID_A, 1, true),
+          fileRead: true,
+          peers: [],
+          account: ACCT_B,
+        })
+      ).toMatchObject({ type: 'adopt', accountId: ID_A, account: ACCT_B })
+    })
+
+    it("without an account, adopts a tagged claim as that account's", () => {
+      // The id stays that account's: another account signing in drops it.
+      expect(
+        decideAccountReconcile({
+          own: own(ID_B, 2),
+          file: { ...file(ID_A, 1, true), account: ACCT_A },
+          fileRead: true,
+          peers: [],
+          account: null,
+        })
+      ).toMatchObject({ type: 'adopt', accountId: ID_A, account: ACCT_A })
+    })
+  })
+
+  describe("an older version's untagged account file", () => {
+    it('tags the file when it names this device on its account', () => {
+      expect(
+        decideAccountReconcile({
+          own: { ...own(ID_A, 1, true), account: ACCT_A },
+          file: file(ID_A, 1, true),
+          fileRead: true,
+          peers: [],
+          account: ACCT_A,
+        })
+      ).toEqual({ type: 'tag' })
+    })
+
+    it('refreshes first when the entitlement disagrees', () => {
+      expect(
+        decideAccountReconcile({
+          own: { ...own(ID_A, 1), account: ACCT_A },
+          file: file(ID_A, 1, true),
+          fileRead: true,
+          peers: [],
+          account: ACCT_A,
+        })
+      ).toEqual({ type: 'refresh' })
+    })
+
+    it('leaves a tagged file alone', () => {
+      expect(
+        decideAccountReconcile({
+          own: { ...own(ID_A, 1, true), account: ACCT_A },
+          file: { ...file(ID_A, 1, true), account: ACCT_A },
+          fileRead: true,
+          peers: [],
+          account: ACCT_A,
+        })
+      ).toEqual({ type: 'none' })
+    })
+
+    it('leaves it untagged without an account', () => {
+      expect(
+        decideAccountReconcile({
+          own: own(ID_A, 1, true),
+          file: file(ID_A, 1, true),
+          fileRead: true,
+          peers: [],
+          account: null,
+        })
+      ).toEqual({ type: 'none' })
+    })
+
+    it("doesn't rewrite a file another account tagged, even with its id", () => {
+      // Two accounts on one Apple Account: once one tagged it, the other
+      // leaves it, so they don't take turns rewriting it.
+      expect(
+        decideAccountReconcile({
+          own: { ...own(ID_A, 1, true), account: ACCT_B },
+          file: { ...file(ID_A, 1, true), account: ACCT_A },
+          fileRead: true,
+          peers: [],
+          account: ACCT_B,
+        })
+      ).toEqual({ type: 'none' })
+    })
+  })
+
+  describe('two server accounts on one Apple Account', () => {
+    it("adopts an untagged file, and doesn't tag it as this account's", () => {
+      // Account A's devices on an older version wrote the file untagged. A
+      // device on B that never held ID_A can't tell whose it is.
+      const legacy = file(ID_A, 1)
+      expect(
+        decideAccountReconcile({
+          own: { ...own(ID_B, 2), account: ACCT_B },
+          file: legacy,
+          fileRead: true,
+          peers: [],
+          account: ACCT_B,
+        })
+      ).toMatchObject({
+        type: 'adopt',
+        accountId: ID_A,
+        account: ACCT_B,
+        tagged: false,
+      })
+      // Its next pass: an id adopted from an untagged claim makes an untagged
+      // claim (`getOwnAccountClaim`), so the file isn't rewritten as B's.
+      expect(
+        decideAccountReconcile({
+          own: own(ID_A, 1),
+          file: legacy,
+          fileRead: true,
+          peers: [],
+          account: ACCT_B,
+        })
+      ).toEqual({ type: 'none' })
+    })
+
+    it('adopts a claim tagged with this account as tagged', () => {
+      expect(
+        decideAccountReconcile({
+          own: { ...own(ID_B, 2), account: ACCT_B },
+          file: null,
+          fileRead: false,
+          peers: [{ ...claim(ID_A, 1), account: ACCT_B }],
+          account: ACCT_B,
+        })
+      ).toMatchObject({ type: 'adopt', accountId: ID_A, tagged: true })
+    })
+  })
+
+  describe('ids dropped when another account signed in', () => {
+    const dropped = [{ appUserId: ID_A, account: ACCT_A }]
+
+    it("doesn't adopt an untagged file naming the previous account's id", () => {
+      expect(
+        decideAccountReconcile({
+          own: { ...own(ID_B, 2), account: ACCT_B },
+          file: file(ID_A, 1, true),
+          fileRead: true,
+          peers: [],
+          account: ACCT_B,
+          dropped,
+        })
+      ).toEqual({ type: 'none' })
+    })
+
+    it("doesn't adopt an untagged peer claim naming it", () => {
+      expect(
+        decideAccountReconcile({
+          own: { ...own(ID_B, 2), account: ACCT_B },
+          file: null,
+          fileRead: false,
+          peers: [claim(ID_A, 1, true)],
+          account: ACCT_B,
+          dropped,
+        })
+      ).toEqual({ type: 'none' })
+    })
+
+    it('still takes it back on the account it was dropped for', () => {
+      expect(
+        decideAccountReconcile({
+          own: { ...own(ID_B, 2), account: ACCT_A },
+          file: file(ID_A, 1, true),
+          fileRead: true,
+          peers: [],
+          account: ACCT_A,
+          dropped,
+        })
+      ).toMatchObject({ type: 'adopt', accountId: ID_A, account: ACCT_A })
+    })
+
+    it('still takes a claim tagged with this account', () => {
+      expect(
+        decideAccountReconcile({
+          own: { ...own(ID_B, 2), account: ACCT_B },
+          file: null,
+          fileRead: false,
+          peers: [{ ...claim(ID_A, 1, true), account: ACCT_B }],
+          account: ACCT_B,
+          dropped,
+        })
+      ).toMatchObject({ type: 'adopt', accountId: ID_A, account: ACCT_B })
+    })
+  })
+
+  it('a legacy file is tagged, then a switch to another account adopts nothing', () => {
+    // The released app adopted ID_A on account A and wrote the file untagged.
+    let accountFile: AccountFile = file(ID_A, 1, true)
+    const onA = decideAccountReconcile({
+      own: { ...own(ID_A, 1, true), account: ACCT_A },
+      file: accountFile,
+      fileRead: true,
+      peers: [],
+      account: ACCT_A,
+    })
+    expect(onA).toEqual({ type: 'tag' })
+    accountFile = { ...accountFile, account: ACCT_A }
+    // Another account signs in: the adopted id is dropped.
+    expect(
+      decideAccountReconcile({
+        own: { ...own(ID_B, 3), account: ACCT_B },
+        file: accountFile,
+        fileRead: true,
+        peers: [],
+        account: ACCT_B,
+        dropped: [{ appUserId: ID_A, account: ACCT_A }],
+      })
+    ).toEqual({ type: 'none' })
   })
 })
 

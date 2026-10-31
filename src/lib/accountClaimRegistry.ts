@@ -9,7 +9,9 @@ import type { AccountClaim } from '@/lib/accountClaim'
  */
 
 const claimKey = (c: AccountClaim | null) =>
-  c ? `${c.appUserId}|${c.entitled ? 1 : 0}|${c.claimedAt}` : ''
+  c
+    ? `${c.appUserId}|${c.entitled ? 1 : 0}|${c.claimedAt}|${c.account ?? ''}`
+    : ''
 
 const claimsKey = (claims: readonly AccountClaim[]) =>
   claims.map(claimKey).sort().join('\n')

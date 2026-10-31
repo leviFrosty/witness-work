@@ -98,6 +98,13 @@ RevenueCat customer:
 - A web-only account creates the id.
 - A phone that signs in later adopts it, following ADR 0011's adoption rule.
 
+Each claim says which server account it was made under (its account
+fingerprint), and a device takes only its own account's claims, plus older
+versions' untagged ones. When another account signs in, the device drops the
+id it adopted and logs RevenueCat back in as its own id. It remembers the
+dropped id as the previous account's, so an untagged claim naming it counts
+only on that account.
+
 `useIsSupporter` also accepts ww-api's answer (ADR 0029) as a fallback.
 Purchases are in ADR 0041.
 

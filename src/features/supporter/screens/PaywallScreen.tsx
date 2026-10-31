@@ -61,7 +61,10 @@ import {
   storeErrorOutcome,
   type StoreErrorOutcome,
 } from '@/features/supporter/lib/purchaseErrors'
-import { clearAdoptedAccountId } from '@/lib/account'
+import { clearAdoptedAccountId, getOrCreateAccountId } from '@/lib/account'
+import { revenueCatIsOwn } from '@/lib/revenueCatIdentity'
+import { logInRevenueCat } from '@/lib/revenueCatLogIn'
+import { toast } from '@/stores/toasts'
 import {
   FounderLetter,
   SocialProofRow,
@@ -565,9 +568,34 @@ const PaywallScreen = ({
     )
   }
 
+  /**
+   * Puts RevenueCat on this device's own id before the store is asked. After
+   * another account signs in, it can still be on the previous account's id (its
+   * login waits for a connection), and a purchase or restore would then land on
+   * that account's customer. False, having said so, when it can't yet.
+   */
+  const revenueCatOnOwnId = async (): Promise<boolean> => {
+    if (revenueCatIsOwn()) return true
+    try {
+      const { customerInfo } = await logInRevenueCat(getOrCreateAccountId())
+      setCustomer(customerInfo)
+      return true
+    } catch (error) {
+      logger.warn('[Paywall] RevenueCat not on this device id yet', error)
+      toast.error(i18n.t('supporterStoreAccountNotReady'), {
+        message: i18n.t('supporterStoreAccountNotReady_body'),
+      })
+      return false
+    }
+  }
+
   const handleRestore = async () => {
     if (purchasing || restoring) return
     setRestoring(true)
+    if (!(await revenueCatOnOwnId())) {
+      setRestoring(false)
+      return
+    }
     analytics.capture('supporter_restore_started', {
       source,
       ...gateAttribution,
@@ -639,6 +667,10 @@ const PaywallScreen = ({
       return
     }
     setPurchasing(true)
+    if (!(await revenueCatOnOwnId())) {
+      setPurchasing(false)
+      return
+    }
     analytics.capture('supporter_purchase_started', purchaseProperties)
     try {
       const { productIdentifier, customerInfo } =

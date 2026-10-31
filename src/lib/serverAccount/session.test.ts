@@ -19,6 +19,7 @@ import {
   OPEN_RATE_LIMIT_DEFAULT_MS,
   OPEN_RETRY_AFTER_MS,
   type SessionStore,
+  sessionAccountForKey,
   STORE_ATTEMPTS,
   sessionEndWipes,
   staleTokenHash,
@@ -1258,5 +1259,48 @@ describe('account sessions', () => {
     await expect(cancelled).rejects.toMatchObject({ failure: 'cancelled' })
     await expect(other).resolves.toMatchObject({ sessionId: 'sid-1' })
     expect(worker.opsCalled('session/open')).toHaveLength(1)
+  })
+})
+
+describe('sessionAccountForKey', () => {
+  const session = { accountId: 'acct_a', accountPub: PUB_A }
+
+  it("is the session's account for its own key", () => {
+    expect(sessionAccountForKey(session, KEY_A)).toBe('acct_a')
+  })
+
+  it('is no account once the key is another', () => {
+    expect(sessionAccountForKey(session, KEY_B)).toBeNull()
+  })
+
+  it('is no account without a key or a session', () => {
+    expect(sessionAccountForKey(session, null)).toBeNull()
+    expect(sessionAccountForKey(null, KEY_A)).toBeNull()
+  })
+})
+
+describe('a request pinned to an account', () => {
+  const pinned = (sessions: ReturnType<typeof setup>['sessions'], id: string) =>
+    sessions.request<{ accountId: string }>(
+      { url: `${BASE}/accounts/v1/account`, method: 'GET', timeoutMs: 5_000 },
+      { accountId: id }
+    )
+
+  it("runs on that account's session", async () => {
+    const { sessions, info } = setup()
+    const { data } = await info()
+    await expect(pinned(sessions, data.accountId)).resolves.toBeTruthy()
+  })
+
+  it("isn't sent on another account's session", async () => {
+    // The key changed after the caller confirmed its account.
+    const { sessions, worker, info } = setup()
+    await info()
+    const error = await pinned(sessions, 'acct_previous').catch(
+      (caught: unknown) => caught
+    )
+    expect(error).toBeInstanceOf(AccountSessionError)
+    expect((error as AccountSessionError).failure).toBe('cancelled')
+    expect(worker.opsCalled('account/info')).toHaveLength(1)
   })
 })

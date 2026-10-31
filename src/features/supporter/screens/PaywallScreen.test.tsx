@@ -16,6 +16,10 @@ const runtime = vi.hoisted(() => {
     replace: vi.fn(),
     alert: vi.fn(),
     captureException: vi.fn(),
+    /** RevenueCat is on this device's own id (`revenueCatIsOwn`). */
+    revenueCatIsOwn: true,
+    logIn: vi.fn(),
+    toastError: vi.fn(),
     foreground: new Set<() => void>(),
     reconnect: new Set<() => void>(),
     beforeRemove: undefined as (() => void) | undefined,
@@ -99,7 +103,15 @@ vi.mock('@/lib/logger', () => ({
   logger: { log: () => {}, warn: () => {}, error: () => {} },
 }))
 vi.mock('@/lib/offlineError', () => ({ isOfflineError: () => false }))
-vi.mock('@/lib/account', () => ({ clearAdoptedAccountId: () => {} }))
+vi.mock('@/lib/account', () => ({
+  clearAdoptedAccountId: () => {},
+  getOrCreateAccountId: () => 'install-a',
+}))
+vi.mock('@/lib/revenueCatIdentity', () => ({
+  revenueCatIsOwn: () => runtime.revenueCatIsOwn,
+}))
+vi.mock('@/lib/revenueCatLogIn', () => ({ logInRevenueCat: runtime.logIn }))
+vi.mock('@/stores/toasts', () => ({ toast: { error: runtime.toastError } }))
 vi.mock('@/lib/errorTracking', () => ({
   errorTracking: { captureException: runtime.captureException },
 }))
@@ -208,6 +220,10 @@ beforeEach(() => {
   }
   runtime.beforeRemove = undefined
   runtime.webCheckout = null
+  runtime.revenueCatIsOwn = true
+  runtime.logIn.mockResolvedValue({
+    customerInfo: { entitlements: { active: {} } },
+  })
   runtime.foreground.clear()
   runtime.reconnect.clear()
   runtime.purchase.mockResolvedValue({
@@ -575,5 +591,53 @@ describe('on the web', () => {
       renderer!.root.findAllByType('WebRegionNotice' as never)
     ).toHaveLength(0)
     expect(events('supporter_web_region_notice_viewed')).toHaveLength(0)
+  })
+})
+
+describe("RevenueCat still on the previous account's id", () => {
+  // Another account signed in, and RevenueCat hasn't logged in again yet: a
+  // purchase or restore now would land on the previous account's customer.
+  beforeEach(() => {
+    runtime.revenueCatIsOwn = false
+  })
+
+  it("logs in as this device's own id before buying", async () => {
+    await render()
+    await purchase()
+    expect(runtime.logIn).toHaveBeenCalledWith('install-a')
+    expect(runtime.purchase).toHaveBeenCalledOnce()
+    expect(runtime.logIn.mock.invocationCallOrder[0]).toBeLessThan(
+      runtime.purchase.mock.invocationCallOrder[0]
+    )
+  })
+
+  it("doesn't buy when that login fails, and says so", async () => {
+    runtime.logIn.mockRejectedValue(new Error('offline'))
+    await render()
+    await purchase()
+    expect(runtime.purchase).not.toHaveBeenCalled()
+    expect(runtime.toastError).toHaveBeenCalledWith(
+      'supporterStoreAccountNotReady',
+      { message: 'supporterStoreAccountNotReady_body' }
+    )
+    expect(events('supporter_purchase_started')).toHaveLength(0)
+  })
+
+  it("doesn't restore when that login fails", async () => {
+    runtime.logIn.mockRejectedValue(new Error('offline'))
+    await render()
+    await act(async () => {
+      await renderer!.root.findByType(PaywallLegalFooter).props.onRestore()
+    })
+    expect(runtime.restore).not.toHaveBeenCalled()
+    expect(runtime.toastError).toHaveBeenCalledOnce()
+  })
+
+  it("doesn't log in when RevenueCat is already this device's own", async () => {
+    runtime.revenueCatIsOwn = true
+    await render()
+    await purchase()
+    expect(runtime.logIn).not.toHaveBeenCalled()
+    expect(runtime.purchase).toHaveBeenCalledOnce()
   })
 })

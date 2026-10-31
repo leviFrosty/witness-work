@@ -48,7 +48,7 @@ export default function ContactImportListener() {
     }
     if (!handledInitialUrl.current) {
       handledInitialUrl.current = true
-      launchURL()
+      launchURL('contact-import')
         .then((initial) => {
           logger.log(
             '[ContactImportListener] getInitialURL resolved =',

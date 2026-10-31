@@ -77,6 +77,9 @@ import PaywallPurchaseFooter, {
   PaywallLegalFooter,
 } from '@/features/supporter/components/PaywallPurchaseFooter'
 import { analytics } from '@/lib/analytics'
+import { invalidateCustomerInfoCache } from '@/lib/revenueCatBrowser'
+import useWebCheckout from '@/features/supporter/hooks/useWebCheckout'
+import WebRegionNotice from '@/features/supporter/components/WebRegionNotice'
 import { useFoldColumn } from '@/components/ui/layout/FoldPane'
 import FoldSplit from '@/components/ui/layout/FoldSplit'
 
@@ -90,6 +93,14 @@ type OfferingsTrigger = 'initial' | 'retry' | 'foreground' | 'reconnect'
 type OfferingsLoad = { force: boolean; trigger: OfferingsTrigger }
 
 const storePlatform = Platform.OS === 'android' ? 'android' : 'ios'
+/** The billing toggle's track, so its segments are 44pt tall on the web. */
+const WEB_TOGGLE = { minHeight: 48 } as const
+
+/** Why web Buy can't open checkout yet, shown in its place. */
+const WEB_BUY_WAITING_KEYS = {
+  session: 'paywallSignInToBuyWeb',
+  settled_id: 'paywallBuyUnavailableForAccountWeb',
+} as const
 
 const totalPackages = (offerings: PurchasesOfferings) =>
   Object.values(offerings.all).reduce(
@@ -130,6 +141,14 @@ const PaywallScreen = ({
     ready,
     unavailable,
   } = useCustomer()
+  // Null on phones. On the web, Buy opens the hosted checkout instead of the
+  // store, and Restore Purchases isn't offered: purchases follow the account.
+  const webCheckout = useWebCheckout()
+  const regionBlocked = webCheckout?.region === 'blocked'
+  // Web copy never says donate (docs/web-purchases.md).
+  const noOfferingsKey = webCheckout
+    ? 'thereAreNoOfferingsWeb'
+    : 'thereAreNoOfferings'
   const [tier, setTier] = useState<Tier>(initialTier)
   // Annual-first anchors the better value; monthly stays one tap away.
   const [supporterBilling, setSupporterBilling] =
@@ -143,6 +162,14 @@ const PaywallScreen = ({
       initial_tier: initialTier,
     })
   }, [source, feature, gateAttribution, initialTier])
+
+  useEffect(() => {
+    if (!regionBlocked) return
+    analytics.capture('supporter_web_region_notice_viewed', {
+      source,
+      ...gateAttribution,
+    })
+  }, [regionBlocked, source, gateAttribution])
 
   useEffect(
     () =>
@@ -201,33 +228,51 @@ const PaywallScreen = ({
   // FAQ lives in the header as a "?" icon instead of an inline text link —
   // keeps the pricing column focused on a single decision.
   useLayoutEffect(() => {
+    const openFaq = () => {
+      navigation.navigate('FAQ', { scrollToCategory: 'supporter' })
+    }
     navigation.setOptions({
       header: () => (
         <Header
           buttonType='back'
           title={i18n.t('paywallTitle')}
           rightElement={
-            <IconButton
-              style={{ position: 'absolute', right: 0 }}
-              icon={CircleQuestionMarkIcon}
-              size='xl'
-              accessibilityLabel={i18n.t('paywallLearnMore')}
-              onPress={() => {
-                navigation.navigate('FAQ', { scrollToCategory: 'supporter' })
-              }}
-            />
+            Platform.OS === 'web' ? (
+              // React Native Web ignores `hitSlop`, so the web gets a real
+              // 44pt frame; the glyph stays where it is.
+              <View style={{ position: 'absolute', right: 0 }}>
+                <IconButton
+                  frame
+                  icon={CircleQuestionMarkIcon}
+                  size='xl'
+                  accessibilityLabel={i18n.t('paywallLearnMore')}
+                  onPress={openFaq}
+                />
+              </View>
+            ) : (
+              <IconButton
+                style={{ position: 'absolute', right: 0 }}
+                icon={CircleQuestionMarkIcon}
+                size='xl'
+                accessibilityLabel={i18n.t('paywallLearnMore')}
+                onPress={openFaq}
+              />
+            )
           }
         />
       ),
     })
   }, [navigation, source, gateAttribution])
 
-  const allOfferings = useMemo(() => {
-    if (!currentOfferings) return []
-    return Object.keys(currentOfferings.all).map(
-      (key) => currentOfferings.all[key]
-    )
-  }, [currentOfferings])
+  // The web shows only offerings with a Web Purchase Link
+  // (docs/web-purchases.md "Links").
+  const allOfferings = useMemo(
+    () =>
+      Object.values(currentOfferings?.all ?? {}).filter(
+        (offering) => !webCheckout || webCheckout.sells(offering.identifier)
+      ),
+    [currentOfferings, webCheckout]
+  )
 
   const monthlyPackages = useMemo(() => {
     return allOfferings
@@ -418,7 +463,7 @@ const PaywallScreen = ({
     if (isRefreshing) return
     setIsRefreshing(true)
     try {
-      Purchases.invalidateCustomerInfoCache()
+      void invalidateCustomerInfoCache()
       await fetchOfferings({ force: true, trigger: 'retry' })
       await revalidate()
     } catch {
@@ -457,7 +502,7 @@ const PaywallScreen = ({
               logger.log('[Paywall] dev reset — logging in as', { freshId })
               const { customerInfo } = await Purchases.logIn(freshId)
               setCustomer(customerInfo)
-              Purchases.invalidateCustomerInfoCache()
+              void invalidateCustomerInfoCache()
               await fetchOfferings({ force: true, trigger: 'retry' })
               await revalidate()
             } catch (error) {
@@ -581,6 +626,18 @@ const PaywallScreen = ({
       price: selectedPackage.product.price,
       currency: selectedPackage.product.currencyCode,
     }
+    if (webCheckout) {
+      setPurchasing(true)
+      try {
+        if (!webCheckout.canBuy(selectedPackage)) return
+        // Sent before leaving; the queue is saved with the page's stores.
+        analytics.capture('supporter_web_checkout_opened', purchaseProperties)
+        await webCheckout.open(selectedPackage, tier)
+      } finally {
+        setPurchasing(false)
+      }
+      return
+    }
     setPurchasing(true)
     analytics.capture('supporter_purchase_started', purchaseProperties)
     try {
@@ -630,8 +687,22 @@ const PaywallScreen = ({
     return i18n.t('paywallCtaSupporterMonthly', { price })
   }, [selectedPackage, tier, supporterBilling])
 
-  if (!currentOfferings || missingOfferings) {
-    const empty = !!currentOfferings && !offeringsError
+  // On the web, prices wait for the visitor's country; where the web doesn't
+  // sell, the notice shows whatever the offerings do.
+  const awaitingRegion = webCheckout?.region === 'loading'
+  // On the web, offerings without a link don't count.
+  const nothingForSale =
+    !!currentOfferings &&
+    !missingOfferings &&
+    allOfferings.every((offering) => offering.availablePackages.length === 0)
+  if (
+    !regionBlocked &&
+    (!currentOfferings || missingOfferings || nothingForSale || awaitingRegion)
+  ) {
+    const empty =
+      !!currentOfferings &&
+      (missingOfferings || nothingForSale) &&
+      !offeringsError
     return (
       <Wrapper
         style={{
@@ -677,7 +748,7 @@ const PaywallScreen = ({
             }
             description={
               empty
-                ? i18n.t('thereAreNoOfferings')
+                ? i18n.t(noOfferingsKey)
                 : offeringsError === 'offline'
                   ? i18n.t('paywall_offline')
                   : i18n.t('paywall_offeringsError')
@@ -744,7 +815,7 @@ const PaywallScreen = ({
     <View style={{ gap: 16 }}>
       <FounderLetter spacious={isWide} />
       {Platform.OS === 'ios' && <SocialProofRow />}
-      {tier === 'supporter' && (
+      {(tier === 'supporter' || regionBlocked) && (
         <View
           onLayout={(event) =>
             handleTierSectionLayout('supporter', event.nativeEvent.layout.y)
@@ -755,7 +826,26 @@ const PaywallScreen = ({
       )}
     </View>
   )
-  const pricing = (
+  const regionNotice = (
+    <View style={{ gap: 14 }}>
+      {isWide && (
+        <Text
+          style={{
+            fontFamily: theme.fonts.bold,
+            fontSize: theme.fontSize('xl'),
+          }}
+        >
+          {i18n.t('becomeSupporter')}
+        </Text>
+      )}
+      <WebRegionNotice />
+      <Divider />
+      <PaywallLegalFooter onRestore={handleRestore} showRestore={false} />
+    </View>
+  )
+  const pricing = regionBlocked ? (
+    regionNotice
+  ) : (
     <View
       style={{ gap: 14 }}
       onLayout={(event) => {
@@ -827,7 +917,8 @@ const PaywallScreen = ({
           onChange={(billing) => {
             setSupporterBilling(billing)
           }}
-          style={{ alignSelf: 'center' }}
+          // React Native Web ignores `hitSlop`: 44pt segments there.
+          style={[{ alignSelf: 'center' }, Platform.OS === 'web' && WEB_TOGGLE]}
           options={[
             { key: 'monthly', label: i18n.t('paywallBillingMonthly') },
             {
@@ -841,7 +932,7 @@ const PaywallScreen = ({
 
       <View style={{ gap: 6 }}>
         {activePackages.length === 0 && (
-          <InlineNotice tone='info' message={i18n.t('thereAreNoOfferings')} />
+          <InlineNotice tone='info' message={i18n.t(noOfferingsKey)} />
         )}
         {(isWide && showAllOptions ? activePackages : visiblePackages).map(
           (pkg) => renderPriceOption(pkg)
@@ -891,16 +982,25 @@ const PaywallScreen = ({
       <PaywallLegalFooter
         onRestore={handleRestore}
         restoring={restoring}
-        showRestore={!hasPurchasedBefore}
+        showRestore={!hasPurchasedBefore && !webCheckout}
       />
-      {hasPurchasedBefore && customer && (
+      {/* The web manages purchases from Settings → Manage subscription. */}
+      {hasPurchasedBefore && customer && !webCheckout && (
         <PreviousDonations customer={customer} />
       )}
     </View>
   )
-  const purchaseFooter = (
+  const purchaseFooter = regionBlocked ? null : (
     <PaywallPurchaseFooter
-      selected={!!selectedPackage}
+      selected={
+        !!selectedPackage &&
+        (!webCheckout || webCheckout.canBuy(selectedPackage))
+      }
+      unavailableReason={
+        selectedPackage && webCheckout?.waitingFor
+          ? i18n.t(WEB_BUY_WAITING_KEYS[webCheckout.waitingFor])
+          : undefined
+      }
       tier={tier}
       ctaLabel={ctaLabel}
       onPurchase={handlePurchase}
@@ -954,7 +1054,7 @@ const PaywallScreen = ({
                 {pricing}
                 {!dockFooter && purchaseFooter}
               </ScrollView>
-              {dockFooter && (
+              {dockFooter && purchaseFooter && (
                 <View
                   style={{
                     padding: 20,
@@ -992,7 +1092,7 @@ const PaywallScreen = ({
               {!dockFooter && purchaseFooter}
             </View>
           </ScrollView>
-          {dockFooter && (
+          {dockFooter && purchaseFooter && (
             <View
               style={[
                 {

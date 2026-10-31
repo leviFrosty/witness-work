@@ -5,6 +5,11 @@ web host does (`serve.mjs`: files as they are, `index.html` for app routes, a
 real 404 for a missing chunk) and open the app in Chromium, WebKit and Firefox,
 at desktop (1280×900) and phone (390×844) sizes. Every request that isn't to
 the app's own server is blocked, so a run never reaches a real service.
+RevenueCat's API is answered by a mock instead (`revenueCat.ts`), with no
+prices unless a spec sets `revenueCatCatalog`, so a build with RevenueCat
+Billing's key behaves as it does with RevenueCat up. `purchases.spec.ts` covers
+web purchases and needs such a build (`.env.local` with the sandbox key and
+links, `docs/web-purchases.md`); without the key it skips.
 
 ```bash
 pnpm web:build                  # dist/ for the dev profile (--env local|dev|beta|production)

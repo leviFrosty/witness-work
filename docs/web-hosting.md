@@ -60,7 +60,8 @@ set into `dist/_headers` for everything Cloudflare serves directly.
   - `style-src 'self' 'unsafe-inline'`, because react-native-web writes styles
     into `<style>` tags at runtime;
   - `connect-src`: the profile's ww-api (`https` and `wss`), PostHog, the
-    website and Help Center search hosts, old and new;
+    website and Help Center search hosts, old and new, and RevenueCat's API
+    and SDK events (`api.revenuecat.com`, `e.revenue.cat`) for web purchases;
   - `frame-src`: the maps frame only;
   - `frame-ancestors 'none'`, `base-uri 'none'`, `object-src 'none'`,
     `form-action 'self'`, `worker-src 'self'`;

@@ -33,6 +33,16 @@ export const SITE_ORIGINS = [
   'https://help-search.leviwilkerson.com',
 ]
 
+/**
+ * RevenueCat's API in browser mode: prices, customer info, and the SDK's own
+ * events (ADR 0041). Checkout runs on RevenueCat's page, so no RevenueCat or
+ * Stripe script runs here and `script-src` stays `'self'`.
+ */
+export const REVENUECAT_ORIGINS = [
+  'https://api.revenuecat.com',
+  'https://e.revenue.cat',
+]
+
 const socketOrigin = (origin: string) => origin.replace(/^http/, 'ws')
 
 export function contentSecurityPolicy(profile: WebProfile): string {
@@ -52,6 +62,7 @@ export function contentSecurityPolicy(profile: WebProfile): string {
       socketOrigin(profile.apiOrigin),
       profile.posthogOrigin,
       ...SITE_ORIGINS,
+      ...REVENUECAT_ORIGINS,
     ],
     ['frame-src', profile.mapsOrigin],
     ['worker-src', "'self'"],

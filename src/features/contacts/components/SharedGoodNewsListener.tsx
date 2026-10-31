@@ -62,7 +62,7 @@ export default function SharedGoodNewsListener() {
     }
 
     // Cold start: widget tap launched the app.
-    launchURL().then(handle)
+    launchURL('shared-good-news').then(handle)
 
     // Warm start: widget tap foregrounded an already-running app.
     const sub = addLinkListener(handle)

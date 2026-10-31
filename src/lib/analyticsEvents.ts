@@ -311,6 +311,9 @@ export const analyticsEventNames = [
   'supporter_restore_empty',
   'supporter_restore_failed',
   'supporter_restore_started',
+  'supporter_web_checkout_opened',
+  'supporter_web_purchase_returned',
+  'supporter_web_region_notice_viewed',
 ] as const
 
 export type AnalyticsEventName = (typeof analyticsEventNames)[number]

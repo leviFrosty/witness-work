@@ -12,6 +12,8 @@ const site = forBuild({
 export default {
   privacyPolicy: `${site}/privacy`,
   appStore: `https://apps.apple.com/us/app/jw-time/id${itunesItemId}`,
+  /** The App Store page without a storefront, so it opens in the visitor's. */
+  appStoreAnyStorefront: `https://apps.apple.com/app/id${itunesItemId}`,
   appStoreReview: `itms-apps://itunes.apple.com/app/viewContentsUserReviews/id${itunesItemId}?action=write-review`,
   playStore: `https://play.google.com/store/apps/details?id=${androidPackage}`,
   /** Opens the Play Store app itself; `playStore` is the fallback. */

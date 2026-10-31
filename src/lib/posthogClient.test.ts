@@ -478,6 +478,42 @@ describe('PostHog volume and privacy policy', () => {
     expect(JSON.stringify(events)).not.toContain('private-secret')
   })
 
+  it.each(['capture', 'restored queue'])(
+    'drops web checkout ids from every URL it sends (%s)',
+    async (path) => {
+      const id = 'ww_buyer_0123456789'
+      const properties = {
+        $current_url: `https://app.witnesswork.app/supporter/thank-you?tier=tip&app_user_id=${id}`,
+        $referrer: `https://pay.rev.cat/sandbox/abc/${id}?package_id=x`,
+        $set_once: {
+          $initial_current_url: `https://app.witnesswork.app/?app_user_id=${id}`,
+        },
+      }
+      if (path === 'restored queue')
+        seed({
+          [P.AnonymousId]: 'anonymous-installation',
+          [P.Queue]: [
+            {
+              message: {
+                event: 'survey sent',
+                distinct_id: 'anonymous-installation',
+                properties,
+              },
+            },
+          ],
+        })
+      const sdk = await start()
+      if (path === 'capture') sdk.capture('$exception', properties)
+      await sdk.flush()
+      const sent = sentEvents()
+      expect(sent.length).toBeGreaterThan(0)
+      expect(JSON.stringify(mocks.fetch.mock.calls)).not.toContain(id)
+      expect(JSON.stringify(sent)).toContain(
+        'https://app.witnesswork.app/supporter/thank-you?tier=tip'
+      )
+    }
+  )
+
   it.each(['development', 'beta', 'unknown'])(
     'keeps flags and surveys available in %s without usage ingestion',
     async (variant) => {

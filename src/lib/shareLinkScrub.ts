@@ -5,6 +5,7 @@ import {
   LEGACY_CONTACT_PATH_PREFIX,
   WEB_APP_HOST,
 } from '@/constants/appLinks'
+import { redactPurchaseEventProperties } from '@/lib/purchaseReturn'
 
 /**
  * `char` as written or percent-encoded, once or more (a link inside another
@@ -68,12 +69,18 @@ export function scrubShareLinkProperties<T>(
   )
 }
 
-/** Also applied on delivery: restored queues bypass the SDK capture hook. */
+/**
+ * Also applied on delivery: restored queues bypass the SDK capture hook. Web
+ * checkout's ids come out of every URL too (docs/web-purchases.md "The return
+ * page"); native events carry none, so that changes nothing there.
+ */
 export function scrubAnalyticsEventProperties<T>(
   event: string,
   properties: Record<string, T> = {}
 ): Record<string, T | string> {
-  const scrubbed = scrubShareLinkProperties(properties)
+  const scrubbed = scrubShareLinkProperties(
+    redactPurchaseEventProperties(properties)
+  )
   // All launch URLs may contain private route IDs, query data or secrets.
   if (event === 'Application Opened') delete scrubbed.url
   return scrubbed

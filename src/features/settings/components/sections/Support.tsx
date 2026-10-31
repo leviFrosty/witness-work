@@ -67,7 +67,7 @@ const SupportSection = ({
           navigation.navigate('Paywall', { source: 'settings_support' })
         }}
       />
-      {subscription.state.kind !== 'none' && (
+      {subscription.canManage && (
         <GroupedListRow
           icon={CalendarClockIcon}
           label={i18n.t('manageSubscription')}

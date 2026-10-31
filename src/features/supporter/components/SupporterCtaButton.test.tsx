@@ -21,7 +21,7 @@ const runtime = vi.hoisted(() => ({
   time: undefined as { value: number } | undefined,
 }))
 
-vi.mock('react-native', () => ({ View: 'View' }))
+vi.mock('react-native', () => ({ Platform: { OS: 'ios' }, View: 'View' }))
 vi.mock('@shopify/react-native-skia', () => ({
   Canvas: 'Canvas',
   RoundedRect: 'RoundedRect',

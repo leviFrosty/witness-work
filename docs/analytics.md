@@ -409,6 +409,20 @@ paywall shows no prices). `paywall_offerings_empty` fires when a load succeeds
 with no packages at all (a store or dashboard configuration problem), with the
 same `trigger`. Compare failures by trigger to see whether users recover.
 
+### Web purchases
+
+The web sells through RevenueCat's hosted checkout (`docs/web-purchases.md`).
+Its paywall sends the same `paywall_viewed`, `paywall_closed` and offering
+events, which PostHog marks with the web platform, but not the store purchase
+or restore events. Events never carry the app user id, a checkout link or an
+email.
+
+| Event                                | Meaning                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `supporter_web_checkout_opened`      | Buy left for the hosted checkout. The same properties as `supporter_purchase_started`: `tier`, `billing`, `product_id`, `package_id`, `price`, `currency`, `source` and any gate attribution. Checkout can still be abandoned; compare with `supporter_web_purchase_returned`.                                                                                                                                                                                                                                                                                                                                                      |
+| `supporter_web_purchase_returned`    | The return page finished checking. `tier` (the confirmed tier, else the address's, or `unknown` when it named none), `outcome` (`confirmed`, `pending` after its retries, `other_customer` when checkout came back for another customer, `signed_out` when this browser has no account session, `not_found` when the address named no tier and customer info shows no purchase), `return_kind` (`returned`: checkout's `app_user_id` came back; `forwarded`: the web entry forwarded the return from another origin, which drops the id; `direct`: neither, as when the page is opened by hand) and `retry` (the User chose Retry). |
+| `supporter_web_region_notice_viewed` | The paywall showed the notice in place of web prices, because the web doesn't sell in the visitor's country. `source` and any gate attribution.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+
 ### Supporter feature conversions
 
 All `IsSupporter` placements use the same ordered journey:

@@ -1,4 +1,7 @@
 import * as Linking from 'expo-linking'
+import type { LaunchLinkReader } from '@/lib/launchLinkReader'
+
+export type { LaunchLinkReader }
 
 /**
  * A link tapped while the app is still starting (a widget day, a shared
@@ -9,6 +12,16 @@ import * as Linking from 'expo-linking'
  */
 let startupLink: string | null = null
 let recording: { remove(): void } | null = null
+
+/** The launch link each reader was last handed. */
+const handedOut = new Map<LaunchLinkReader, string>()
+
+/** `url` for `reader` unless it already had it. */
+function handOut(reader: LaunchLinkReader, url: string | null): string | null {
+  if (!url || handedOut.get(reader) === url) return null
+  handedOut.set(reader, url)
+  return url
+}
 
 /** Starts keeping links that come while the app starts. Call once, first. */
 export function recordLaunchLinks() {
@@ -41,9 +54,12 @@ export function addLinkListener(listener: (url: string) => void) {
   return Linking.addEventListener('url', ({ url }) => listener(url))
 }
 
-/** The newest link that came while the app was starting, if any. */
-export function linkSinceLaunch(): string | null {
-  return startupLink
+/**
+ * The newest link that came while the app was starting, if any, unless `reader`
+ * already had it.
+ */
+export function linkSinceLaunch(reader: LaunchLinkReader): string | null {
+  return handOut(reader, startupLink)
 }
 
 /**
@@ -55,8 +71,19 @@ const LAUNCH_URL_TIMEOUT_MS = 2_000
 /**
  * The link the app should open at launch: one tapped while it was starting,
  * else the one that launched it. Use it in place of `Linking.getInitialURL`.
+ * `reader` gets each launch link once; later calls answer null.
  */
-export async function launchURL(): Promise<string | null> {
+export async function launchURL(
+  reader: LaunchLinkReader
+): Promise<string | null> {
+  return handOut(reader, await pendingLaunchURL())
+}
+
+/**
+ * The launch link, without handing it to anyone: for carrying it across a
+ * reload.
+ */
+export async function pendingLaunchURL(): Promise<string | null> {
   const link = startupLink
   if (link) return link
   let timer: ReturnType<typeof setTimeout> | undefined

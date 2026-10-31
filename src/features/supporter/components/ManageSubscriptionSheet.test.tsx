@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 const runtime = vi.hoisted(() => {
   vi.stubGlobal('__DEV__', false)
   return {
-    platform: 'ios' as 'ios' | 'android',
+    platform: 'ios' as 'ios' | 'android' | 'web',
     hook: {} as Record<string, unknown>,
     pause: vi.fn(),
     openStore: vi.fn(),
@@ -43,6 +43,7 @@ vi.mock('@/features/supporter/hooks/useManageSubscription', () => ({
     return runtime.platform
   },
   default: () => ({
+    canManage: true,
     pausingMonths: null,
     productLoaded: true,
     pause: runtime.pause,
@@ -248,5 +249,88 @@ describe('ManageSubscriptionSheet', () => {
     sheet().props.onOpenChange(false)
     await act(async () => sheet().props.onClosed())
     expect(runtime.openStore).not.toHaveBeenCalled()
+  })
+
+  describe('on the web', () => {
+    beforeEach(() => {
+      runtime.platform = 'web'
+    })
+    const webSub = { ...sub, productIdentifier: 'web_jwtime_499_1mo' }
+
+    it('says Manage, opens the page from the press itself, and offers no pause', async () => {
+      runtime.hook = {
+        managementUrl: 'https://pay.rev.cat/manage/abc',
+        state: {
+          kind: 'renewing',
+          sub: { ...webSub, store: 'RC_BILLING' },
+          renewsAt: new Date('2026-11-01'),
+          pause: { kind: 'unavailable', reason: 'unsupported_plan' },
+        },
+      }
+      await render()
+      expect(texts()).toContain('manageSupport_manageWeb')
+      expect(texts()).toContain('manageSupport_storeHintWeb')
+      expect(texts()).not.toContain('manageSupport_pauseTitle')
+      act(() => footer().props.onPress())
+      // Before the sheet closes, or the browser blocks the new tab.
+      expect(runtime.openStore).toHaveBeenCalledWith('cancel')
+      expect(runtime.setOpen).toHaveBeenCalledWith(false)
+    })
+
+    it.each([
+      [
+        'https://apps.apple.com/account/subscriptions',
+        'manageSupport_storeHint',
+        'manageSupport_billingIssue',
+      ],
+      [
+        'https://play.google.com/store/account/subscriptions',
+        'manageSupport_storeHintAndroid',
+        'manageSupport_billingIssueAndroid',
+      ],
+      [
+        'https://pay.rev.cat/manage/abc',
+        'manageSupport_storeHintWeb',
+        'manageSupport_billingIssueWeb',
+      ],
+    ])(
+      'names the page %s opens, whatever the subscription’s store',
+      async (managementUrl, hint, billingIssue) => {
+        runtime.hook = {
+          managementUrl,
+          state: {
+            kind: 'renewing',
+            // RevenueCat sends the store's page for a store subscription; the
+            // copy follows the page, not this field.
+            sub: { ...sub, store: 'RC_BILLING', billingIssuesDetectedAt: 1 },
+            renewsAt: new Date('2026-11-01'),
+            pause: { kind: 'unavailable', reason: 'billing_issue' },
+          },
+        }
+        await render()
+        expect(texts()).toContain('manageSupport_manageWeb')
+        expect(texts()).toContain(hint)
+        expect(texts()).toContain(billingIssue)
+      }
+    )
+
+    it('hides Manage when there’s no page to open', async () => {
+      runtime.hook = {
+        canManage: false,
+        state: {
+          kind: 'ending',
+          sub: { ...webSub, store: 'RC_BILLING' },
+          endsAt: new Date('2026-11-01'),
+        },
+      }
+      await render()
+      expect(
+        tree.root.findAll(
+          (node) =>
+            (node.type as unknown) === 'Button' &&
+            node.props.variant === 'outline'
+        )
+      ).toHaveLength(0)
+    })
   })
 })

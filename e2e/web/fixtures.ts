@@ -1,6 +1,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { expect, test as base, type Page } from '@playwright/test'
+import { mockRevenueCat, type Catalog, type CustomerKind } from './revenueCat'
 
 /** The preferences store's row in the store database (docs/web-storage.md). */
 const PREFERENCES = ['mmkv.default', 'preferences'] as const
@@ -41,6 +42,10 @@ type Fixtures = {
   language: string
   /** Saved preferences on top of the seed, e.g. a role. */
   preferences: Record<string, unknown>
+  /** RevenueCat's offerings (`revenueCat.ts`); none by default. */
+  revenueCatCatalog: Catalog
+  /** What RevenueCat's customer info shows (`revenueCat.ts`); free by default. */
+  revenueCatCustomer: CustomerKind
   /** The app on Home, seeded past onboarding. */
   app: Page
   /** Saves a screenshot to `$WW_WEB_SHOTS/<name>-<project>.png`, if set. */
@@ -112,7 +117,11 @@ export async function openBlankOnOrigin(page: Page) {
 }
 
 export const test = base.extend<Fixtures>({
-  page: async ({ page, baseURL }, provide, testInfo) => {
+  page: async (
+    { page, baseURL, revenueCatCatalog, revenueCatCustomer },
+    provide,
+    testInfo
+  ) => {
     // Nothing a smoke run does reaches a real service: everything but the
     // app's own server answers 503 here, as a service that's down would.
     const app = new URL(baseURL!).host
@@ -129,6 +138,8 @@ export const test = base.extend<Fixtures>({
           },
         })
     )
+    // A build with RevenueCat Billing's key sees a working RevenueCat.
+    await mockRevenueCat(page.context(), revenueCatCatalog, revenueCatCustomer)
     await page.context().routeWebSocket(
       (url) => !isApp(url),
       (socket) => socket.close()
@@ -178,6 +189,8 @@ export const test = base.extend<Fixtures>({
   },
   language: ['en-US', { option: true }],
   preferences: [{}, { option: true }],
+  revenueCatCatalog: [{}, { option: true }],
+  revenueCatCustomer: ['free', { option: true }],
   app: async ({ page, language, preferences }, provide) => {
     // A first load in a tab of its own saves the app's preferences, which
     // get the seed on top once that tab is closed (it would save over them).

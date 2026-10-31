@@ -13,6 +13,11 @@ interface Props {
   onPurchase: () => unknown
   /** A purchase is running; the CTA shows a spinner and can't be pressed. */
   purchasing?: boolean
+  /**
+   * Why Buy can't be pressed for the selected price (web only), shown under the
+   * CTA in place of the reassurance line.
+   */
+  unavailableReason?: string
 }
 
 export default function PaywallPurchaseFooter({
@@ -21,6 +26,7 @@ export default function PaywallPurchaseFooter({
   ctaLabel,
   onPurchase,
   purchasing = false,
+  unavailableReason,
 }: Props) {
   const theme = useTheme()
   const labelColor = tier === 'supporter' ? '#343232' : theme.colors.textInverse
@@ -45,17 +51,30 @@ export default function PaywallPurchaseFooter({
           {ctaLabel}
         </Text>
       </SupporterCtaButton>
-      <Text
-        style={{
-          fontSize: 12,
-          color: theme.colors.textAlt,
-          textAlign: 'center',
-        }}
-      >
-        {tier === 'supporter'
-          ? i18n.t('paywallCtaReassuranceSupporter')
-          : i18n.t('paywallCtaReassuranceTip')}
-      </Text>
+      {unavailableReason ? (
+        <Text
+          style={{
+            fontSize: theme.fontSize('sm'),
+            fontFamily: theme.fonts.semiBold,
+            color: theme.colors.text,
+            textAlign: 'center',
+          }}
+        >
+          {unavailableReason}
+        </Text>
+      ) : (
+        <Text
+          style={{
+            fontSize: 12,
+            color: theme.colors.textAlt,
+            textAlign: 'center',
+          }}
+        >
+          {tier === 'supporter'
+            ? i18n.t('paywallCtaReassuranceSupporter')
+            : i18n.t('paywallCtaReassuranceTip')}
+        </Text>
+      )}
     </View>
   )
 }

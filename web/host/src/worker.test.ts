@@ -116,11 +116,16 @@ describe('files the app loads by URL', () => {
 })
 
 describe('headers', () => {
-  it('limits connections to the profile’s API, PostHog and the website', () => {
+  it('limits connections to the profile’s API, PostHog, the website and RevenueCat', () => {
     const csp = contentSecurityPolicy(dev)
     expect(csp).toContain(
       "connect-src 'self' https://api-dev.witnesswork.app wss://api-dev.witnesswork.app https://ww-api-r.leviwilkerson.com https://witnesswork.app https://help-search.witnesswork.app"
     )
+    // Browser mode's API and its events; never a RevenueCat or Stripe script.
+    expect(csp).toMatch(
+      /connect-src [^;]* https:\/\/api\.revenuecat\.com https:\/\/e\.revenue\.cat;/
+    )
+    expect(csp).not.toMatch(/script-src [^;]*(revenuecat|rev\.cat|stripe)/)
     expect(csp).toContain('frame-src https://maps-dev.witnesswork.app;')
     expect(csp).toContain("script-src 'self' 'wasm-unsafe-eval';")
     expect(csp).toContain("require-trusted-types-for 'script'")

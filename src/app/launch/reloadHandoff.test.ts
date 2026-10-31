@@ -79,7 +79,7 @@ it('carries the link that launched the app across the reload', async () => {
   runtime.initialURL = null
   const reloaded = await launch()
   reloaded.handoff.restoreLaunchAfterReload()
-  await expect(reloaded.links.launchURL()).resolves.toBe(
+  await expect(reloaded.links.launchURL('navigation')).resolves.toBe(
     'witnesswork://schedule/2026-10-23'
   )
   expect(reloaded.handoff.takeHandedOffNotificationResponse()).toBeNull()
@@ -95,7 +95,7 @@ it('carries a link that brought a background launch to the front', async () => {
 
   const reloaded = await launch()
   reloaded.handoff.restoreLaunchAfterReload()
-  await expect(reloaded.links.launchURL()).resolves.toBe(
+  await expect(reloaded.links.launchURL('navigation')).resolves.toBe(
     'witnesswork://schedule/2026-10-23'
   )
 })
@@ -108,9 +108,11 @@ it('keeps a link tapped after the reload over the handed-off one', async () => {
   const reloaded = await launch()
   reloaded.links.recordLaunchLinks()
   reloaded.handoff.restoreLaunchAfterReload()
-  expect(reloaded.links.linkSinceLaunch()).toBe('witnesswork://add-time')
+  expect(reloaded.links.linkSinceLaunch('navigation')).toBe(
+    'witnesswork://add-time'
+  )
   runtime.urlListener?.({ url: 'witnesswork://schedule/2026-10-23' })
-  await expect(reloaded.links.launchURL()).resolves.toBe(
+  await expect(reloaded.links.launchURL('navigation')).resolves.toBe(
     'witnesswork://schedule/2026-10-23'
   )
 })
@@ -134,7 +136,7 @@ it('saves nothing when nothing launched the app', async () => {
   const reloaded = await launch()
   reloaded.handoff.restoreLaunchAfterReload()
   expect(reloaded.handoff.takeHandedOffNotificationResponse()).toBeNull()
-  await expect(reloaded.links.launchURL()).resolves.toBeNull()
+  await expect(reloaded.links.launchURL('navigation')).resolves.toBeNull()
 })
 
 it('drops a handoff from a reload that never happened', async () => {

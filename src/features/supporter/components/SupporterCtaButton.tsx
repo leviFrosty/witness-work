@@ -5,7 +5,7 @@ import {
   useRef,
   useState,
 } from 'react'
-import { LayoutChangeEvent, View, ViewStyle } from 'react-native'
+import { LayoutChangeEvent, Platform, View, ViewStyle } from 'react-native'
 import { useIsFocused } from '@react-navigation/native'
 import {
   Canvas,
@@ -139,6 +139,37 @@ const ShimmerCta: React.FC<PropsWithChildren<Omit<Props, 'shimmer'>>> = ({
     theme.colors.supporter,
   ]
 
+  const rimFrame = size && {
+    position: 'absolute' as const,
+    left: -CANVAS_INSET,
+    top: -CANVAS_INSET,
+    width: size.w + CANVAS_INSET * 2,
+    height: size.h + CANVAS_INSET * 2,
+  }
+  const rim = size && !disabled && (
+    <Canvas
+      pointerEvents='none'
+      style={Platform.OS === 'web' ? { flex: 1 } : rimFrame}
+    >
+      <RoundedRect
+        x={CANVAS_INSET}
+        y={CANVAS_INSET}
+        width={size.w}
+        height={size.h}
+        r={BORDER_RADIUS}
+        style='stroke'
+        strokeWidth={STROKE_WIDTH}
+      >
+        <SweepGradient
+          c={origin}
+          colors={gradientColors}
+          origin={origin}
+          transform={transform}
+        />
+      </RoundedRect>
+    </Canvas>
+  )
+
   return (
     <View ref={rimRef}>
       <View onLayout={handleLayout}>
@@ -158,35 +189,16 @@ const ShimmerCta: React.FC<PropsWithChildren<Omit<Props, 'shimmer'>>> = ({
           {children}
         </Button>
       </View>
-      {size && !disabled && (
-        <Canvas
-          pointerEvents='none'
-          style={{
-            position: 'absolute',
-            left: -CANVAS_INSET,
-            top: -CANVAS_INSET,
-            width: size.w + CANVAS_INSET * 2,
-            height: size.h + CANVAS_INSET * 2,
-          }}
-        >
-          <RoundedRect
-            x={CANVAS_INSET}
-            y={CANVAS_INSET}
-            width={size.w}
-            height={size.h}
-            r={BORDER_RADIUS}
-            style='stroke'
-            strokeWidth={STROKE_WIDTH}
-          >
-            <SweepGradient
-              c={origin}
-              colors={gradientColors}
-              origin={origin}
-              transform={transform}
-            />
-          </RoundedRect>
-        </Canvas>
-      )}
+      {rim &&
+        // Skia's web canvas ignores `pointerEvents`, so the rim would take
+        // the button's clicks; a View passes them through.
+        (Platform.OS === 'web' ? (
+          <View pointerEvents='none' style={rimFrame}>
+            {rim}
+          </View>
+        ) : (
+          rim
+        ))}
     </View>
   )
 }

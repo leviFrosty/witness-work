@@ -220,6 +220,9 @@ const HeaderContent = ({
                 icon={iconName()}
                 accessibilityLabel={buttonLabel()}
                 hitSlop={24}
+                // React Native Web ignores `hitSlop`; a real frame keeps the
+                // 44pt target there without moving the glyph.
+                frame={Platform.OS === 'web'}
                 iconStyle={{
                   color:
                     foregroundColor ??

@@ -21,6 +21,7 @@ const mocks = vi.hoisted(() => ({
   reset: vi.fn(),
   buddies: 0,
   onboarded: true,
+  keyChangeStage: null as string | null,
 }))
 vi.mock('react-native', () => ({ ScrollView: 'ScrollView', View: 'View' }))
 vi.mock('@react-navigation/native', () => ({
@@ -37,6 +38,10 @@ vi.mock('@/components/ui/MyText', () => ({ default: 'Text' }))
 vi.mock('@/contexts/theme', () => ({ default: () => ({}) }))
 vi.mock('@/app/account/attestationCopy', () => ({
   platformKey: (ios: string) => ios,
+}))
+vi.mock('@/app/account/keyChange/status', () => ({
+  useKeyChangeStatus: (select: (state: { stage: string | null }) => unknown) =>
+    select({ stage: mocks.keyChangeStage }),
 }))
 vi.mock('@/lib/analytics', () => ({ analytics: { capture: vi.fn() } }))
 vi.mock('@/lib/locales', () => ({ default: { t: (key: string) => key } }))
@@ -139,6 +144,56 @@ beforeEach(() => {
   vi.clearAllMocks()
   mocks.buddies = 0
   mocks.onboarded = true
+  mocks.keyChangeStage = null
+})
+
+it.each([
+  ['pending', 'accountKeyChange_unfinishedSwitchBody'],
+  ['confirmed', 'accountKeyChange_unfinishedSwitchBody'],
+  ['stored', 'accountKeyChange_finishingBody'],
+])(
+  'won’t sign in to another account while a %s key change is unfinished here',
+  async (stage, body) => {
+    mocks.keyChangeStage = stage
+    mocks.claim = {
+      session: null,
+      state: null,
+      linkProblem: null,
+      completion: 'idle',
+      scanned: vi.fn(),
+      reset: mocks.reset,
+    }
+    const { body: said, primary } = await actionsOf(
+      'handoff-key-change-unfinished'
+    )
+    expect(said).toBe(body)
+    primary!.onPress()
+    expect(mocks.goBack).toHaveBeenCalled()
+  }
+)
+
+it('says a phone signed back in to its account keeps its records', async () => {
+  mocks.claim = {
+    session: {},
+    state: { step: 'done' },
+    linkProblem: null,
+    completion: {
+      outcome: 'done',
+      buddiesStarted: false,
+      restore: { outcome: 'skipped' },
+      rejoined: true,
+    },
+    scanned: vi.fn(),
+    reset: mocks.reset,
+  }
+  let root!: ReturnType<typeof create>
+  await act(async () => {
+    root = create(<SignInWithQrScreen />)
+  })
+  const done = root.root
+    .findAllByType(HandoffStatus)
+    .find((node) => node.props.testID === 'handoff-new-done')!
+  expect(done.props.detail).toBe('handoff_newDoneRejoined')
 })
 
 it.each([

@@ -16,7 +16,6 @@ vi.mock('@/stores/preferences', () => ({ usePreferences: {} }))
 vi.mock('@/lib/accountKey', () => ({
   deviceAccountKey: {},
   keyChangeRecords: {},
-  unfinishedKeyChange: async () => false,
 }))
 vi.mock('@/app/buddies/joinBuddiesHere', () => ({
   joinBuddiesHere: vi.fn(async () => {}),

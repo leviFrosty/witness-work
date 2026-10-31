@@ -1,7 +1,6 @@
 import * as BuddiesKeychain from '../../../modules/buddies-keychain'
 import { usePreferences } from '@/stores/preferences'
-import { deviceAccountKey, unfinishedKeyChange } from '@/lib/accountKey'
-import { KeyChangeUnfinishedError } from '@/lib/accountKey/keyChangeRecord'
+import { deviceAccountKey, keyChangeRecords } from '@/lib/accountKey'
 import { joinBuddiesHere } from '@/app/buddies/joinBuddiesHere'
 import { analytics } from '@/lib/analytics'
 import {
@@ -66,6 +65,7 @@ export const accountKey = createAccountKeyService({
         : buddiesEngine.deleteEverything(),
     forget: () => buddiesEngine.dropIdentity(),
   },
+  keyChangeUnfinished: async () => (await keyChangeRecords.read()) !== null,
   sync: {
     leave: () =>
       leaveCloudSyncAccount(async () => {
@@ -107,9 +107,6 @@ export async function replaceAccountKey(
     accountId?: string
   }
 ): Promise<ReplaceAccountKeyResult> {
-  // Buddies' reset still needs this key's data: nothing is released or left
-  // until the change on this device is done.
-  if (await unfinishedKeyChange()) throw new KeyChangeUnfinishedError()
   const result = await holdCloudSyncDefault(() =>
     accountKey.replace(newKey, { confirmedLoss, session, accountId })
   )

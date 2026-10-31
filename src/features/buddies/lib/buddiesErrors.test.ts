@@ -6,7 +6,7 @@ import {
 } from '@/features/buddies/lib/buddiesErrors'
 import { BuddyInviteError } from '@/features/buddies/lib/engine'
 import { RelayError } from '@/features/buddies/lib/relay'
-import { KeyChangeUnfinishedError } from '@/lib/accountKey/keyChangeRecord'
+import { KeyChangeUnfinishedError } from '@/lib/accountKey/accountKey'
 
 vi.mock('@/lib/locales', () => ({
   default: { t: (key: string) => key },

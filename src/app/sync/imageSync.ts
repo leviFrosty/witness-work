@@ -40,6 +40,13 @@ export type ImageSyncDeps = {
    * failure backoff's timer.
    */
   fullRetriesOnSignal?: boolean
+  /**
+   * Cloud Sync: a photo this device saw there (bookkeeping's `containerMtime`)
+   * that the listing no longer has was deleted by another device, and a put
+   * would bring it back (docs/cloud-sync-photos.md). Whether to put it again
+   * now; without it, a missing photo is put again at once.
+   */
+  putsAgain?: (filename: string) => boolean
 }
 
 /**
@@ -167,6 +174,19 @@ export function bookkeepingForNewTransport(
   )
 }
 
+/**
+ * A photo missing from the listing that this device saw there, which
+ * `putsAgain` says waits: another device deleted it.
+ */
+export const deletedElsewhere = (
+  deps: ImageSyncDeps,
+  filename: string,
+  entry: { containerMtime?: number } | undefined
+) =>
+  entry?.containerMtime !== undefined &&
+  !!deps.putsAgain &&
+  !deps.putsAgain(filename)
+
 /** Waits after 1, 2, 3… failed uploads of one file: 30 s, 2 min, 8 min… 1 h. */
 export function uploadBackoffMs(failures: number): number {
   return Math.min(30_000 * 4 ** Math.max(0, failures - 1), 60 * 60_000)
@@ -195,8 +215,11 @@ export async function pushAllImages(args: {
   let failed = 0
   let skipped = 0
 
-  const containerFiles = new Set(
-    (await deps.bridge.listBinaryFiles()).map((file) => file.filename)
+  const containerFiles = new Map(
+    (await deps.bridge.listBinaryFiles()).map((file) => [
+      file.filename,
+      file.modifiedAt,
+    ])
   )
   for (const source of sources) {
     if (deps.canTransfer && !deps.canTransfer()) break
@@ -204,10 +227,21 @@ export async function pushAllImages(args: {
     const localMtime = await deps.fs.getModifiedAt(source.localPath)
     if (localMtime == null) continue
     const entry = bookkeeping[filename]
+    const containerMtime = containerFiles.get(filename)
     if (
       entry &&
       entry.uploadedMtime === localMtime &&
-      containerFiles.has(filename)
+      containerMtime !== undefined
+    ) {
+      // Seen there, so a later absence means another device deleted it.
+      if (deps.putsAgain && entry.containerMtime === undefined)
+        bookkeeping[filename] = { ...entry, containerMtime }
+      skipped++
+      continue
+    }
+    if (
+      containerMtime === undefined &&
+      deletedElsewhere(deps, filename, entry)
     ) {
       skipped++
       continue

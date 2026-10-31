@@ -64,8 +64,10 @@ import {
   type SyncTransportErrorCode,
   type UploadStatus,
 } from '@/lib/syncTransport'
+import { photoEpoch } from '@/lib/syncTransport/photoEpoch'
 import {
   TRANSPORT_READ_TIMEOUT_MS,
+  withTransferTimeout,
   withTransportTimeout,
 } from '@/lib/syncTransport/timeout'
 import {
@@ -334,6 +336,12 @@ let completePull = 0
  * runs (see `pull`).
  */
 let gcInFlight: Promise<void> | null = null
+/**
+ * Whether the GC in flight has begun judging orphans. One still queued behind a
+ * photo transfer hasn't read anything yet, so a pull needn't wait for it: it
+ * reads the stores when it starts, after the merge.
+ */
+let gcStarted = false
 /** Set by a pull waiting on GC; GC stops before its next delete. */
 let gcStopRequested = false
 /** Longest a pull waits for a stopping GC's current delete. */
@@ -1198,26 +1206,38 @@ export function applyPullEnable(
  * upload/download bookkeeping testable without react-native mocks; this is the
  * production adapter.
  */
-function buildImageSyncDeps(oneShot = false): ImageSyncDeps {
+function buildImageSyncDeps(
+  oneShot = false,
+  epoch = photoEpoch()
+): ImageSyncDeps {
   return {
+    // Stops, file by file, once the setup the pass began under has ended.
     canTransfer: () =>
-      photosTravel() && syncTransport().isAvailable() && (oneShot || canSync()),
+      epoch === photoEpoch() &&
+      photosTravel() &&
+      syncTransport().isAvailable() &&
+      (oneShot || canSync()),
     canUpload: () => !syncTransport().binaryWritesPaused,
     immutableNames: syncTransport().kind === 'cloud',
     fullRetriesOnSignal: syncTransport().kind === 'cloud',
     ...(syncTransport().kind === 'cloud' && { putsAgain }),
     bridge: {
+      // The wait covers the transfer itself; sealing or opening a large photo
+      // on a slow phone is local work the link's wait mustn't pay for.
       writeBinary: (filename, sourcePath) =>
-        withTransportTimeout(
+        withTransferTimeout(
           'photo upload',
-          syncTransport().writeBinary(filename, sourcePath),
-          syncTransport().binaryTimeoutMs
+          (phases) => syncTransport().writeBinary(filename, sourcePath, phases),
+          syncTransport().binaryTimeoutMs,
+          syncTransport().binarySetupTimeoutMs
         ),
       readBinary: (filename, destinationPath) =>
-        withTransportTimeout(
+        withTransferTimeout(
           'photo download',
-          syncTransport().readBinary(filename, destinationPath),
-          syncTransport().binaryTimeoutMs
+          (phases) =>
+            syncTransport().readBinary(filename, destinationPath, phases),
+          syncTransport().binaryTimeoutMs,
+          syncTransport().binarySetupTimeoutMs
         ),
       listBinaryFiles: () =>
         withTransportTimeout('photo list', syncTransport().listBinaryFiles()),
@@ -1423,6 +1443,7 @@ async function pushNoteImagesInner(
   trigger: ImagePushTrigger,
   published: boolean
 ): Promise<void> {
+  const epoch = photoEpoch()
   const prefs = usePreferences.getState()
   if (!photosTravel() || !canSync()) return
   if (syncTransport().binaryWritesPaused) return
@@ -1435,9 +1456,11 @@ async function pushNoteImagesInner(
       ids,
       localPath: noteImagePath,
       bookkeeping: prefs.iCloudImageSync ?? {},
-      deps: buildImageSyncDeps(),
+      deps: buildImageSyncDeps(false, epoch),
       trigger,
     })
+    // The setup it ran under has ended; its results are not the new one's.
+    if (epoch !== photoEpoch()) return
     setPrefsIfChanged({ iCloudImageSync: result.bookkeeping })
     if (!result.uploaded && !result.failed) return
     logger.log(`${tag()} note photo push`, {
@@ -1455,7 +1478,8 @@ async function pullNoteImagesInner(oneShot: boolean): Promise<void> {
   if (!photosTravel()) return
   if (!hasSyncTransport()) return
   if (!oneShot && !canSync()) return
-  const deps = buildImageSyncDeps(oneShot)
+  const epoch = photoEpoch()
+  const deps = buildImageSyncDeps(oneShot, epoch)
   const ids: string[] = []
   for (const id of referencedNoteImageIds()) {
     if (isNoteImageKnownLocal(id)) continue
@@ -1473,6 +1497,7 @@ async function pullNoteImagesInner(oneShot: boolean): Promise<void> {
       deps,
       prepare: ensureNoteImageDirectory,
     })
+    if (epoch !== photoEpoch()) return
     markNoteImagesLocal(result.downloaded)
     if (Object.keys(result.seen).length)
       setPrefsIfChanged({
@@ -1497,6 +1522,7 @@ async function pushImagesInner(
   trigger: ImagePushTrigger,
   publishedSources?: AvatarSource[]
 ): Promise<void> {
+  const epoch = photoEpoch()
   const prefs = usePreferences.getState()
   if (!photosTravel() || !canSync()) return
   // Cloud Sync's photo switch is off: uploads wait for it, not on a backoff.
@@ -1520,13 +1546,14 @@ async function pushImagesInner(
       ? sources.filter((source) => source.revision)
       : sources
     if (uploadable.length === 0) return
-    const deps = buildImageSyncDeps()
+    const deps = buildImageSyncDeps(false, epoch)
     const result = await pushAllImages({
       sources: uploadable,
       bookkeeping: prefs.iCloudImageSync ?? {},
       deps,
       trigger,
     })
+    if (epoch !== photoEpoch()) return
     setPrefsIfChanged({ iCloudImageSync: result.bookkeeping })
     // Surface the first failure's error message — lossy when there are many,
     // but keeps the log from exploding and tells the operator exactly why
@@ -1561,7 +1588,40 @@ function pullImagesIfEnabled(oneShot = false): Promise<void> {
     await pullNoteImagesInner(oneShot)
   })
 }
+
+/**
+ * The photo downloads a pull started. Like the upload job, a pull only starts
+ * it: the pull has read, merged and published the records by then, so a photo
+ * on a slow link (up to ten minutes for 25 MiB) never holds another device's
+ * edit back. The job reads the stores when it runs, so it sees the merge that
+ * asked for it, and applies what it downloads to whatever the records are by
+ * then. One job runs at a time and one more waits behind it: pulls that land
+ * meanwhile are covered by that one pass, which lists the account's photos once
+ * instead of once for each pull.
+ */
+let imagePullJob: Promise<void> | null = null
+let imagePullQueued = false
+function startImagePull(): void {
+  if (imagePullJob) {
+    imagePullQueued = true
+    return
+  }
+  imagePullJob = pullImagesIfEnabled()
+    .catch((e) => logger.warn(`${tag()} image pull job failed`, e))
+    .finally(() => {
+      imagePullJob = null
+      if (!imagePullQueued) return
+      imagePullQueued = false
+      startImagePull()
+    })
+}
+
+/** Resolves once the photo downloads started by pulls so far have finished. */
+async function imagePullsSettled(): Promise<void> {
+  while (imagePullJob) await imagePullJob
+}
 async function pullImagesInner(oneShot = false): Promise<void> {
+  const epoch = photoEpoch()
   const prefs = usePreferences.getState()
   if (!photosTravel()) return
   if (!hasSyncTransport()) return
@@ -1579,12 +1639,15 @@ async function pullImagesInner(oneShot = false): Promise<void> {
         ? expected.filter((source) => source.revision)
         : expected
     if (sources.length === 0) return
-    const deps = buildImageSyncDeps(oneShot)
+    const deps = buildImageSyncDeps(oneShot, epoch)
     const result = await pullMissingImages({
       expectedSources: sources,
       bookkeeping: prefs.iCloudImageSync ?? {},
       deps,
     })
+    // The setup it ran under has ended: nothing it found or fetched belongs to
+    // the new one's records or bookkeeping.
+    if (epoch !== photoEpoch()) return
     if (result.failed > 0) {
       logger.warn(`${tag()} image pull: downloads failed`, {
         failed: result.failed,
@@ -1676,8 +1739,10 @@ function gcImagesIfEnabled(): Promise<void> {
   if (gcInFlight) return gcInFlight
   if (pullInFlight) return Promise.resolve()
   gcStopRequested = false
+  gcStarted = false
   gcInFlight = serializeImages(gcImages).finally(() => {
     gcInFlight = null
+    gcStarted = false
   })
   return gcInFlight
 }
@@ -1688,6 +1753,12 @@ const sameIds = (a: Set<string>, b: Set<string>) =>
 async function gcImages(): Promise<void> {
   if (!photosTravel()) return
   if (!hasSyncTransport()) return
+  // Queued behind a long transfer, it starts whenever that ends, perhaps while
+  // a pull is between its read and its merge. Not now: the next catch-up runs
+  // it again.
+  if (pullInFlight) return
+  gcStopRequested = false
+  gcStarted = true
   try {
     const { contacts, deletedContacts } = useContacts.getState()
     const { avatar } = useProfile.getState()
@@ -1700,7 +1771,8 @@ async function gcImages(): Promise<void> {
     if (avatar?.type === 'image') {
       active.push({ kind: 'profile', revision: avatar.revision })
     }
-    const deps = buildImageSyncDeps()
+    const epoch = photoEpoch()
+    const deps = buildImageSyncDeps(false, epoch)
     const result = await gcOrphanImages({
       activeIdentities: active,
       deletions: [
@@ -1748,7 +1820,7 @@ async function gcImages(): Promise<void> {
             gcStopRequested || !sameIds(referencedNoteImageIds(), referenced),
         })
     const deletedFiles = [...result.deleted, ...notes.deleted]
-    if (deletedFiles.length > 0) {
+    if (deletedFiles.length > 0 && epoch === photoEpoch()) {
       // Strip the deleted filenames from bookkeeping so we don't keep stale
       // entries forever. Read it fresh: image uploads and downloads may have
       // updated it during the sweep.
@@ -2164,7 +2236,7 @@ function pull(reason: string): Promise<PullOutcome> {
       // alongside it could delete the photo of a contact this pull brings in.
       // Stop it before its next delete and let it finish first — within
       // reason, so a coordinated delete that hangs can't stall every pull.
-      if (gcInFlight) {
+      if (gcInFlight && gcStarted) {
         gcStopRequested = true
         await Promise.race([
           gcInFlight,
@@ -2499,10 +2571,9 @@ async function pullAndMergeInner(reason: string): Promise<PullOutcome> {
     // - Another device re-uploaded a binary whose mtime advanced without
     //   changing the JSON record (e.g. user re-picked the same image).
     //
-    // `pullImagesIfEnabled` is cheap and idempotent, so run it
-    // unconditionally on every pull cycle and let its own bookkeeping
-    // skip no-op downloads.
-    await pullImagesIfEnabled()
+    // The photo job is cheap and idempotent, so start it on every pull cycle
+    // and let its own bookkeeping skip no-op downloads.
+    startImagePull()
     return { changed: false, complete, ownFile }
   }
 
@@ -2526,11 +2597,11 @@ async function pullAndMergeInner(reason: string): Promise<PullOutcome> {
   })
 
   // A merge that changed anything may have introduced new avatar markers for
-  // contacts whose images we haven't downloaded yet. Fire-and-forget — the
-  // helper handles its own error reporting and is a no-op when image sync
-  // is disabled. Wait on it so `pullAndMerge` callers can sequence their
-  // own UI refresh after images land.
-  await pullImagesIfEnabled()
+  // contacts whose images we haven't downloaded yet. The photo job fetches
+  // them and points the records at the files, without holding this pull: the
+  // records are already merged and shown, and the avatars follow as each
+  // photo arrives. The job is a no-op when image sync is disabled.
+  startImagePull()
 
   return { changed: true, complete, ownFile }
 }
@@ -2711,7 +2782,7 @@ async function adoptResetEpoch(
     level: 'info',
   })
   await push('reset-adopted')
-  await pullImagesIfEnabled()
+  startImagePull()
   return { changed: true, complete }
 }
 
@@ -2853,7 +2924,9 @@ async function catchUp(reason: string): Promise<void> {
     // follow-up, and remote-change pulls may have run meanwhile. Let every
     // queued pull land so GC judges the newest read.
     while (pullInFlight) await pullInFlight
-    if (scanned && lastPullComplete) await gcImagesIfEnabled()
+    // Not awaited: the cleanup queues behind any photo transfer, and the next
+    // catch-up mustn't wait for either.
+    if (scanned && lastPullComplete) void gcImagesIfEnabled()
     else logger.log(`${tag()} image gc skipped`, { reason, scanned })
   } finally {
     catchUpInFlight = false
@@ -3105,7 +3178,11 @@ export const iCloudSync = {
   imagePushesSettled,
   /** Resolves once photo work queued so far (uploads, deletes) has run. */
   imageWorkSettled: async () => {
-    await imagePushesSettled()
+    // A pull's photo job can start an upload, and an upload a pull.
+    while (imagePushJob || imagePullJob) {
+      await imagePushesSettled()
+      await imagePullsSettled()
+    }
     await serializeImages(async () => {})
   },
   photosTravel,

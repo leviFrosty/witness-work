@@ -1,4 +1,7 @@
-import { SyncTransportError } from '@/lib/syncTransport/types'
+import {
+  SyncTransportError,
+  type TransferPhases,
+} from '@/lib/syncTransport/types'
 
 /**
  * Longest the engine waits for one transport write, delete or photo transfer.
@@ -32,6 +35,49 @@ export function withTransportTimeout<T>(
         resolve(value)
       },
       (error) => {
+        clearTimeout(timer)
+        reject(error)
+      }
+    )
+  })
+}
+
+/**
+ * Like `withTransportTimeout`, but the wait for the transfer itself (`ms`) runs
+ * only between the transport's `start` and `end`. Around it (opening the
+ * session, reading, sealing, opening, writing the file) the wait is `setupMs`,
+ * a backstop against a hang rather than a budget for the link, so a slow phone
+ * sealing 25 MiB can't eat the transfer's wait. A transport that never calls
+ * `start` gets `setupMs` for the whole operation, which is `ms` unless a caller
+ * says otherwise.
+ */
+export function withTransferTimeout<T>(
+  label: string,
+  run: (phases: TransferPhases) => Promise<T>,
+  ms: number = TRANSPORT_TIMEOUT_MS,
+  setupMs: number = ms
+): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    let timer: ReturnType<typeof setTimeout> | undefined
+    // Once the wait has ended, an abandoned transfer's late reports arm nothing.
+    let settled = false
+    const arm = (wait: number) => {
+      if (settled) return
+      clearTimeout(timer)
+      timer = setTimeout(() => {
+        settled = true
+        reject(new SyncTransportError('network', `${label} timed out`))
+      }, wait)
+    }
+    arm(setupMs)
+    run({ start: () => arm(ms), end: () => arm(setupMs) }).then(
+      (value) => {
+        settled = true
+        clearTimeout(timer)
+        resolve(value)
+      },
+      (error) => {
+        settled = true
         clearTimeout(timer)
         reject(error)
       }

@@ -32,8 +32,63 @@ export const SYNC_LIMITS = {
 /** A blob of up to 20 MiB, on a phone connection. */
 export const BLOB_TIMEOUT_MS = 90_000
 
-/** A photo blob of up to 25 MiB, on a phone connection. */
+/** A photo blob's download of unknown size, on a phone connection. */
 export const PHOTO_TIMEOUT_MS = 120_000
+
+/**
+ * A photo put's upload window (docs/cloud-sync-photos.md, `photos/put`): the
+ * server holds the put's reservation this long from when it starts, and it
+ * mirrors the numbers below. A minute of setup plus the body at the slowest
+ * link it waits for (50 KiB/s, about 400 kbit/s), from 2 minutes (a small
+ * photo, as before) to 10 at most; a 25 MiB blob gets about 9½.
+ */
+const PHOTO_PUT_MIN_WINDOW_MS = 120_000
+const PHOTO_PUT_MAX_WINDOW_MS = 600_000
+const PHOTO_PUT_SETUP_MS = 60_000
+const PHOTO_PUT_MARGIN_MS = 10_000
+const PHOTO_PUT_MIN_BYTES_PER_SECOND = 50 * 1024
+
+/**
+ * How long the server's reservation for a put of `bytes` lasts (the table in
+ * docs/cloud-sync-photos.md; a test holds both to it).
+ */
+export const photoPutWindowMs = (bytes: number) =>
+  Math.min(
+    PHOTO_PUT_MAX_WINDOW_MS,
+    Math.max(
+      PHOTO_PUT_MIN_WINDOW_MS,
+      PHOTO_PUT_SETUP_MS + (bytes / PHOTO_PUT_MIN_BYTES_PER_SECOND) * 1000
+    )
+  )
+
+/**
+ * How long the app waits on a put of `bytes`: its window less a margin, so the
+ * app gives up (and retries later) rather than finishing an upload the server
+ * would refuse with 409 `conflict`.
+ */
+export const photoUploadTimeoutMs = (bytes: number) =>
+  photoPutWindowMs(bytes) - PHOTO_PUT_MARGIN_MS
+
+/**
+ * How long the app waits on a download of a `bytes` blob (the size its listing
+ * gave): the same window, for the same slowest link. Without a size, the
+ * two-minute floor. Several downloads share the link, so the engine paces them
+ * by size (`downloadWaves`).
+ */
+export const photoDownloadTimeoutMs = (bytes?: number) =>
+  bytes === undefined
+    ? PHOTO_TIMEOUT_MS
+    : Math.max(PHOTO_TIMEOUT_MS, photoPutWindowMs(bytes))
+
+/** The longest `photoUploadTimeoutMs` is: the largest blob's (25 MiB). */
+export const PHOTO_MAX_UPLOAD_TIMEOUT_MS = photoUploadTimeoutMs(
+  25 * 1024 * 1024
+)
+
+/** The longest `photoDownloadTimeoutMs` is: the largest blob's (25 MiB). */
+export const PHOTO_MAX_DOWNLOAD_TIMEOUT_MS = photoDownloadTimeoutMs(
+  25 * 1024 * 1024
+)
 
 export type SyncEntitlement = 'supporter' | 'everyone'
 
@@ -333,7 +388,7 @@ export async function putSyncPhoto(
         'x-ww-photo-meta': photo.meta,
         ...(slotId && { 'x-ww-slot-id': slotId }),
       },
-      timeoutMs: PHOTO_TIMEOUT_MS,
+      timeoutMs: photoUploadTimeoutMs(photo.blob.length),
     }
   )
   const data = response.data ?? {}
@@ -387,16 +442,27 @@ export async function listSyncPhotos(
   }
 }
 
-/** One photo's blob, exactly as put; `not_found` without it. */
+/**
+ * One photo's blob, exactly as put; `not_found` without it. `size` is the
+ * blob's size from the listing, which sets how long to wait. A timeout isn't
+ * retried here: the engine backs off per file, and a second try would wait past
+ * its own limit.
+ */
 export async function getSyncPhoto(
   options: BearerAccountOptions,
-  name: string
+  name: string,
+  size?: number
 ): Promise<{ blob: Uint8Array; createdAt: number | null }> {
   const response = await sendBearerAccountOp<Uint8Array>(
     'sync/photos/get',
     { name },
     options,
-    { responseType: 'bytes', timeoutMs: PHOTO_TIMEOUT_MS, idempotent: true }
+    {
+      responseType: 'bytes',
+      timeoutMs: photoDownloadTimeoutMs(size),
+      idempotent: true,
+      retryTimeouts: false,
+    }
   )
   const createdAt = Number(response.headers.get('x-ww-created-at'))
   return {

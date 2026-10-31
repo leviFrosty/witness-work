@@ -1,3 +1,4 @@
+import { endPhotoPasses } from '@/lib/syncTransport/photoEpoch'
 import * as BuddiesKeychain from '../../../modules/buddies-keychain'
 import { usePreferences } from '@/stores/preferences'
 import { deviceAccountKey, keyChangeRecords } from '@/lib/accountKey'
@@ -74,6 +75,7 @@ export const accountKey = createAccountKeyService({
           await iCloudSync.push('leave-account')
         // Nothing may start against the old account from here.
         usePreferences.setState({ iCloudSyncEnabled: false })
+        endPhotoPasses()
         await iCloudSync.waitForSyncIdle()
       }),
   },

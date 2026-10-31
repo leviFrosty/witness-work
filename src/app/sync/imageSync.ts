@@ -14,7 +14,9 @@ export type ImageSyncDeps = {
   bridge: {
     writeBinary(filename: string, sourcePath: string): Promise<number>
     readBinary(filename: string, destinationPath: string): Promise<number>
-    listBinaryFiles(): Promise<Array<{ filename: string; modifiedAt: number }>>
+    listBinaryFiles(): Promise<
+      Array<{ filename: string; modifiedAt: number; size?: number }>
+    >
     deleteBinaryFile(filename: string): Promise<void>
   }
   fs: {
@@ -187,6 +189,52 @@ export const deletedElsewhere = (
   !!deps.putsAgain &&
   !deps.putsAgain(filename)
 
+/**
+ * Whether a failed upload says the link is the trouble (timed out, offline). A
+ * big photo that timed out has used its whole window, and every photo after it
+ * on the same link would too: the pass ends there and the rest wait for the
+ * next, so a pull isn't held for N windows.
+ */
+export const isLinkFailure = (error: unknown) =>
+  syncTransportErrorCode(error) === 'network'
+
+/**
+ * The most bytes downloaded at once: a wave of photos that, even at the slowest
+ * link a download's window allows for (50 KiB/s), finishes inside the shortest
+ * window (2 minutes). A bigger photo downloads alone, with the whole link.
+ */
+const DOWNLOAD_WAVE_BYTES = 4 * 1024 * 1024
+const DOWNLOAD_WAVE_FILES = 4
+
+/**
+ * Splits downloads into waves that run together: up to four files, and at most
+ * `DOWNLOAD_WAVE_BYTES` between them, so photos sharing a link each still
+ * finish inside their window. A size unknown counts as small.
+ */
+export function downloadWaves<T>(
+  items: T[],
+  sizeOf: (item: T) => number | undefined
+): T[][] {
+  const waves: T[][] = []
+  let bytes = 0
+  for (const item of items) {
+    const size = sizeOf(item) ?? 0
+    const wave = waves[waves.length - 1]
+    if (
+      wave &&
+      wave.length < DOWNLOAD_WAVE_FILES &&
+      bytes + size <= DOWNLOAD_WAVE_BYTES
+    ) {
+      wave.push(item)
+      bytes += size
+    } else {
+      waves.push([item])
+      bytes = size
+    }
+  }
+  return waves
+}
+
 /** Waits after 1, 2, 3… failed uploads of one file: 30 s, 2 min, 8 min… 1 h. */
 export function uploadBackoffMs(failures: number): number {
   return Math.min(30_000 * 4 ** Math.max(0, failures - 1), 60 * 60_000)
@@ -294,6 +342,7 @@ export async function pushAllImages(args: {
             : 1,
       }
       failed++
+      if (isLinkFailure(e)) break
     }
   }
 
@@ -370,8 +419,10 @@ export async function pullMissingImages(args: {
   let failed = 0
 
   const containerIndex = new Map<string, number>()
+  const containerSizes = new Map<string, number>()
   for (const entry of await deps.bridge.listBinaryFiles()) {
     containerIndex.set(entry.filename, entry.modifiedAt)
+    if (entry.size !== undefined) containerSizes.set(entry.filename, entry.size)
   }
 
   const downloadOne = async (source: AvatarSource) => {
@@ -455,9 +506,12 @@ export async function pullMissingImages(args: {
     )
   }
 
-  for (let start = 0; start < expectedSources.length; start += 4) {
+  const waves = downloadWaves(expectedSources, (source) =>
+    containerSizes.get(filenameForSource(source))
+  )
+  for (const wave of waves) {
     if (deps.canTransfer && !deps.canTransfer()) break
-    await Promise.all(expectedSources.slice(start, start + 4).map(downloadOne))
+    await Promise.all(wave.map(downloadOne))
   }
 
   return { downloaded, missing, failed, bookkeeping }

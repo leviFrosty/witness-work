@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
+import { SyncTransportError } from '@/lib/syncTransport/types'
 import type { ImageSyncDeps } from '@/app/sync/imageSync'
 import {
   gcNoteImages,
@@ -12,7 +13,7 @@ const B = 'bbbbbbbb-0000-4000-8000-000000000002'
 const path = (id: string) => `file:///docs/note-images/${id}.jpg`
 
 const makeDeps = (
-  files: { filename: string; modifiedAt: number }[] = [],
+  files: { filename: string; modifiedAt: number; size?: number }[] = [],
   local: Record<string, number> = {},
   overrides: Partial<ImageSyncDeps> = {}
 ): ImageSyncDeps => ({
@@ -144,6 +145,100 @@ describe('pushNoteImages', () => {
       deps,
     })
     expect(deps.bridge.writeBinary).toHaveBeenCalledOnce()
+  })
+})
+
+describe('pushNoteImages on a slow link', () => {
+  const C = 'cccccccc-0000-4000-8000-000000000003'
+  const note = (id: string) => `witness-work-note-${id}.jpg`
+
+  it('ends the pass at a photo that timed out, and the next pass takes the next', async () => {
+    let now = 1_000
+    const deps = makeDeps(
+      [],
+      { [path(A)]: 500, [path(B)]: 500, [path(C)]: 500 },
+      { now: () => now }
+    )
+    vi.mocked(deps.bridge.writeBinary).mockRejectedValue(
+      new SyncTransportError('network', 'timeout')
+    )
+
+    const first = await pushNoteImages({
+      ids: [A, B, C],
+      localPath: path,
+      bookkeeping: {},
+      deps,
+    })
+    expect(deps.bridge.writeBinary).toHaveBeenCalledTimes(1)
+    expect(first.failed).toBe(1)
+    expect(first.bookkeeping[note(A)]).toMatchObject({
+      errorCode: 'network',
+      failures: 1,
+      failedAt: 1_000,
+    })
+    expect(first.bookkeeping).not.toHaveProperty(note(B))
+
+    // A: backing off. B: attempted, and ends the pass in its turn.
+    now += 5_000
+    const second = await pushNoteImages({
+      ids: [A, B, C],
+      localPath: path,
+      bookkeeping: first.bookkeeping,
+      deps,
+    })
+    expect(deps.bridge.writeBinary).toHaveBeenCalledTimes(2)
+    expect(deps.bridge.writeBinary).toHaveBeenLastCalledWith(note(B), path(B))
+    expect(second.bookkeeping[note(B)]).toMatchObject({ errorCode: 'network' })
+    expect(second.bookkeeping).not.toHaveProperty(note(C))
+  })
+
+  it('goes on past a failure that is not the link', async () => {
+    const deps = makeDeps([], { [path(A)]: 500, [path(B)]: 500 })
+    vi.mocked(deps.bridge.writeBinary).mockRejectedValueOnce(
+      new SyncTransportError('too-large', 'too_large')
+    )
+    const result = await pushNoteImages({
+      ids: [A, B],
+      localPath: path,
+      bookkeeping: {},
+      deps,
+    })
+    expect(deps.bridge.writeBinary).toHaveBeenCalledTimes(2)
+    expect(result).toMatchObject({ failed: 1, uploaded: 1 })
+  })
+})
+
+describe('pullNoteImages on a slow link', () => {
+  const MIB = 1024 * 1024
+  const ids = [0, 1, 2, 3].map((n) => `dddddddd-0000-4000-8000-00000000000${n}`)
+  const note = (id: string) => `witness-work-note-${id}.jpg`
+
+  it('downloads large photos one at a time, small ones together', async () => {
+    const events: string[] = []
+    const sizes = [10 * MIB, 100_000, 100_000, 100_000]
+    const deps = makeDeps(
+      ids.map((id, n) => ({
+        filename: note(id),
+        modifiedAt: 1,
+        size: sizes[n],
+      }))
+    )
+    vi.mocked(deps.bridge.readBinary).mockImplementation(async (filename) => {
+      events.push(`start ${filename}`)
+      await new Promise((resolve) => setTimeout(resolve, 1))
+      events.push(`end ${filename}`)
+      return 1000
+    })
+    const result = await pullNoteImages({
+      ids,
+      localPath: path,
+      deps,
+      prepare: async () => {},
+    })
+    expect(result.downloaded).toHaveLength(4)
+    const at = (event: string) => events.indexOf(event)
+    expect(at(`end ${note(ids[0])}`)).toBeLessThan(at(`start ${note(ids[1])}`))
+    expect(at(`start ${note(ids[3])}`)).toBeLessThan(at(`end ${note(ids[1])}`))
   })
 })
 

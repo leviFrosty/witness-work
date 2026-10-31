@@ -190,13 +190,20 @@ export const cloudSyncHarness = {
    * Gives a contact a new photo revision, as picking one does, without the
    * picker; `last` gets its revision.
    */
-  setContactPhoto: (id: string) =>
+  setContactPhoto: (id: string, megabytes?: number) =>
     tracked(async () => {
       const revision = Date.now().toString(36)
       const value = `${FileSystem.documentDirectory}contact-${id}-avatar-picked-${revision}.jpg`
-      await FileSystem.writeAsStringAsync(value, SAMPLE_PHOTO, {
-        encoding: FileSystem.EncodingType.Base64,
-      })
+      if (megabytes) {
+        // A large original, to try the photo passes over a slow link.
+        const bytes = new Uint8Array(megabytes * 1024 * 1024)
+        for (let i = 0; i < bytes.length; i++) bytes[i] = (i * 31) & 0xff
+        await photoFiles.write(value, bytes)
+      } else {
+        await FileSystem.writeAsStringAsync(value, SAMPLE_PHOTO, {
+          encoding: FileSystem.EncodingType.Base64,
+        })
+      }
       useContacts
         .getState()
         .updateContact({ id, avatar: { type: 'image', value, revision } })
@@ -219,8 +226,9 @@ export const cloudSyncHarness = {
   /** `photos/usage` now. */
   photoUsage: () => tracked(() => refreshCloudSyncPhotoUsage()),
   /**
-   * Seals a `megabytes` photo file and uploads it, timing each step and the
-   * longest the JS thread went without a break while sealing; then deletes it.
+   * Seals a `megabytes` photo file and uploads it, then lists and downloads it,
+   * timing each step and the longest the JS thread went without a break while
+   * sealing; then deletes it.
    */
   photoBenchmark: (megabytes = 10) =>
     tracked(async () => {
@@ -253,9 +261,16 @@ export const cloudSyncHarness = {
       let uploadMs = Date.now()
       await cloudSyncTransport.writeBinary(filename, path)
       uploadMs = Date.now() - uploadMs
+      // As the engine's download does: the listing gives the size.
+      await cloudSyncTransport.listBinaryFiles()
+      const downloadPath = `${path}.download`
+      let downloadMs = Date.now()
+      await cloudSyncTransport.readBinary(filename, downloadPath)
+      downloadMs = Date.now() - downloadMs
       await cloudSyncTransport.deleteBinaryFile(filename)
       await FileSystem.deleteAsync(path, { idempotent: true })
-      return { megabytes, readMs, sealMs, longestMs, uploadMs }
+      await FileSystem.deleteAsync(downloadPath, { idempotent: true })
+      return { megabytes, readMs, sealMs, longestMs, uploadMs, downloadMs }
     }),
   /**
    * This device as an install from before sync was free (ADR 0040 §2), which

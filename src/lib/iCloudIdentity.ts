@@ -1,3 +1,4 @@
+import { endPhotoPasses } from '@/lib/syncTransport/photoEpoch'
 import { Platform } from 'react-native'
 import { usePreferences } from '@/stores/preferences'
 import { clearAdoptedAccountId } from '@/lib/account'
@@ -206,6 +207,7 @@ function settleDeviceBinding(): { id: string; verified: boolean } {
   if (decision === 'rebind') {
     logger.warn('[iCloudIdentity] copied device id replaced')
   }
+  if (decision === 'rebind') endPhotoPasses()
   usePreferences.setState({
     ...(decision === 'rebind' ? COPIED_DEVICE_RESET : {}),
     iCloudDeviceId: id,
@@ -284,6 +286,7 @@ export function checkICloudIdentity(source: IdentityCheckSource): boolean {
       return true
     case 'changed': {
       const wasEnabled = prefs.iCloudSyncEnabled
+      endPhotoPasses()
       if (cloud) {
         usePreferences.setState({
           ...CLOUD_ACCOUNT_CHANGE_RESET,

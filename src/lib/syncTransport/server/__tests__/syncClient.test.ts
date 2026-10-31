@@ -1,11 +1,19 @@
-import { describe, expect, it } from 'vitest'
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { fromB64u } from '@/lib/bytes'
 import { deriveAccountSigningKey } from '@/lib/serverAccount/keys'
 import {
   askSyncRequest,
   fetchSyncStatus,
+  getSyncPhoto,
   listSyncSlots,
+  photoDownloadTimeoutMs,
+  photoPutWindowMs,
+  photoUploadTimeoutMs,
+  putSyncPhoto,
   putSyncSlot,
+  type SyncPhotoPut,
   withdrawSyncRequest,
 } from '@/lib/syncTransport/server/syncClient'
 import { createFakeSyncServer } from './fakeSyncServer'
@@ -199,5 +207,155 @@ describe('sync/list', () => {
       platform: null,
       live: false,
     })
+  })
+})
+
+describe('a photo over a slow link', () => {
+  const NAME = 'a'.repeat(43)
+  const KIB = 1024
+  const MIB = 1024 * KIB
+
+  afterEach(() => vi.useRealTimers())
+
+  const upload = async (bytes: number, bytesPerSecond: number) => {
+    vi.useFakeTimers()
+    const { server, options } = setup()
+    server.state.photoUploadBytesPerSecond = bytesPerSecond
+    await putSyncSlot(options, SLOT, new Uint8Array([1]))
+    const blob = new Uint8Array(bytes).fill(7)
+    const putting = putSyncPhoto(options, { name: NAME, meta: 'bWV0YQ', blob })
+    const outcome = putting.then(
+      (put): { put?: SyncPhotoPut; error?: unknown } => ({ put }),
+      (error: unknown): { put?: SyncPhotoPut; error?: unknown } => ({ error })
+    )
+    await vi.advanceTimersByTimeAsync(11 * 60_000)
+    return { server, ...(await outcome) }
+  }
+
+  it('uploads 20 MiB at 120 KIB/s, which takes about three minutes', async () => {
+    const { put, error, server } = await upload(20 * MIB, 120 * KIB)
+    expect(error).toBeUndefined()
+    expect(put).toMatchObject({ size: 20 * MIB, existed: false })
+    expect(server.state.photoWrites).toHaveLength(1)
+  })
+
+  it('uploads the largest photo at the slowest link it allows for', async () => {
+    const { put, error } = await upload(25 * MIB, 50 * KIB)
+    expect(error).toBeUndefined()
+    expect(put).toMatchObject({ size: 25 * MIB })
+  })
+
+  it('gives up on a link slower than that, as a timeout the engine retries', async () => {
+    const { put, error, server } = await upload(25 * MIB, 40 * KIB)
+    expect(put).toBeUndefined()
+    expect(error).toMatchObject({ kind: 'timeout' })
+    expect(server.state.photoWrites).toHaveLength(0)
+  })
+
+  it('times out before the server lets the reservation lapse', () => {
+    for (const bytes of [1, MIB, 5 * MIB, 20 * MIB, 25 * MIB]) {
+      expect(photoUploadTimeoutMs(bytes)).toBeLessThan(photoPutWindowMs(bytes))
+    }
+  })
+
+  it('waits at least as long for a small photo as it always has', () => {
+    expect(photoUploadTimeoutMs(100 * KIB)).toBeGreaterThanOrEqual(100_000)
+  })
+
+  it('waits the same window for a download, from the listed size', async () => {
+    expect(photoDownloadTimeoutMs(20 * MIB)).toBe(photoPutWindowMs(20 * MIB))
+    // Size unknown (not listed yet): the two-minute floor it always had.
+    expect(photoDownloadTimeoutMs(undefined)).toBe(120_000)
+  })
+
+  const download = async (
+    bytes: number,
+    bytesPerSecond: number,
+    sizeKnown: boolean
+  ) => {
+    vi.useFakeTimers()
+    const { server, options } = setup()
+    await putSyncSlot(options, SLOT, new Uint8Array([1]))
+    await putSyncPhoto(options, {
+      name: NAME,
+      meta: 'bWV0YQ',
+      blob: new Uint8Array(bytes).fill(7),
+    })
+    server.state.photoDownloadBytesPerSecond = bytesPerSecond
+    server.state.log.length = 0
+    const getting = getSyncPhoto(
+      options,
+      NAME,
+      sizeKnown ? bytes : undefined
+    ).then(
+      (got): { got?: { blob: Uint8Array }; error?: unknown } => ({ got }),
+      (error: unknown): { got?: { blob: Uint8Array }; error?: unknown } => ({
+        error,
+      })
+    )
+    await vi.advanceTimersByTimeAsync(25 * 60_000)
+    return { server, ...(await getting) }
+  }
+
+  it('downloads 20 MiB at 120 KiB/s, which takes about three minutes', async () => {
+    const { got, error } = await download(20 * MIB, 120 * KIB, true)
+    expect(error).toBeUndefined()
+    expect(got?.blob).toHaveLength(20 * MIB)
+  })
+
+  it('downloads the largest photo at the slowest link the window allows for', async () => {
+    const { got, error } = await download(25 * MIB, 50 * KIB, true)
+    expect(error).toBeUndefined()
+    expect(got?.blob).toHaveLength(25 * MIB)
+  })
+
+  it('keeps the two-minute floor for a photo of unknown size', async () => {
+    const { got, error } = await download(20 * MIB, 120 * KIB, false)
+    expect(got).toBeUndefined()
+    expect(error).toMatchObject({ kind: 'timeout' })
+  })
+
+  it('tries a download that timed out once, leaving the retry to the engine', async () => {
+    const { server, error } = await download(25 * MIB, 40 * KIB, true)
+    expect(error).toMatchObject({ kind: 'timeout' })
+    expect(
+      server.state.log.filter((line) => line.endsWith('sync/photos/get'))
+    ).toHaveLength(1)
+  })
+})
+
+// docs/cloud-sync-photos.md, "Slow links": the app's window and ww-api's
+// reservation are the same formula, so both repos assert this table.
+describe('the put window table in docs/cloud-sync-photos.md', () => {
+  const unit = { B: 1, KiB: 1024, MiB: 1024 * 1024 } as const
+  const rows = readFileSync(
+    join(__dirname, '../../../../../docs/cloud-sync-photos.md'),
+    'utf8'
+  )
+    .split('\n')
+    .flatMap((line) => {
+      const row =
+        /^\|\s*(\d+) (B|KiB|MiB)\s*\|\s*(\d+)\s*\|\s*(\d+)\s*\|$/.exec(line)
+      return row
+        ? [
+            {
+              bytes: Number(row[1]) * unit[row[2] as keyof typeof unit],
+              window: Number(row[3]),
+              timeout: Number(row[4]),
+            },
+          ]
+        : []
+    })
+
+  it('lists the sizes, and the window and put timeout for each', () => {
+    expect(rows.map(({ bytes }) => bytes)).toEqual([
+      1,
+      5 * 1024 ** 2,
+      25 * 1024 ** 2,
+    ])
+    for (const { bytes, window, timeout } of rows) {
+      expect(photoPutWindowMs(bytes)).toBe(window)
+      expect(photoUploadTimeoutMs(bytes)).toBe(timeout)
+    }
   })
 })

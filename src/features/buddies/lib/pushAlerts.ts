@@ -10,6 +10,8 @@ import type { BadgeReactionEmoji } from '@/features/buddies/lib/badgeReactions'
 import {
   badgeNewSchema,
   badgeReactionSchema,
+  carInviteEventSchema,
+  carReplyEventSchema,
   joinRequestSchema,
   pairConfirmedSchema,
   pairingCardSchema,
@@ -185,6 +187,9 @@ export type BuddyAlert =
       reaction: BadgeReactionEmoji
       badge: SharedBadge
     }
+  /** Never the car's name: it's the User's own words. */
+  | { type: 'carInvite'; name: string }
+  | { type: 'carJoined'; name: string }
 
 /**
  * Why a push keeps its template text: nothing to open it with (`noContext`), no
@@ -259,6 +264,8 @@ type Handler =
   | 'quiet'
   | 'badge'
   | 'badgeReaction'
+  | 'carInvite'
+  | 'carReply'
 
 function handlerOf(kind: string): Handler | null {
   if (kind === 'pair.confirmed') return 'paired'
@@ -269,6 +276,10 @@ function handlerOf(kind: string): Handler | null {
   if (kind === 'join.cancel') return 'quiet'
   if (kind === 'badge.new') return 'badge'
   if (kind === 'badge.reaction') return 'badgeReaction'
+  if (kind === 'car.invite') return 'carInvite'
+  if (kind === 'car.reply') return 'carReply'
+  // A canceled car invitation just goes away.
+  if (kind === 'car.cancel') return 'quiet'
   return null
 }
 
@@ -401,6 +412,18 @@ export function describeBuddyEvent(
       return {
         alert: { type: 'badgeReaction', name, reaction: reaction.e, badge },
       }
+    }
+    case 'carInvite':
+      return parsed(carInviteEventSchema, body)
+        ? { alert: { type: 'carInvite', name } }
+        : failed('unreadable')
+    case 'carReply': {
+      const reply = parsed(carReplyEventSchema, body)
+      if (!reply) return failed('unreadable')
+      // Declining never alerts.
+      return reply.status === 'joined'
+        ? { alert: { type: 'carJoined', name } }
+        : { quiet: true }
     }
   }
 }

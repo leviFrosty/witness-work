@@ -1,8 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { useSharedCarsSession } from '@/stores/sharedCarsSession'
 import {
   BADGE_PUSH_KIND,
   BADGE_REACTION_PUSH_KIND,
   BUDDY_PUSH_KINDS,
+  CAR_PUSH_KINDS,
 } from '@/features/buddies/lib/engine'
 import {
   BUDDIES_NEWS_CHANNEL_ID,
@@ -86,6 +88,7 @@ describe('registerBuddiesPush', () => {
     app.isDevice = true
     platform.OS = 'ios'
     setChannel.mockClear()
+    useSharedCarsSession.setState({ running: false })
   })
 
   it('registers a localized template for every Buddies push kind', async () => {
@@ -162,6 +165,43 @@ describe('registerBuddiesPush', () => {
     expect(BUDDY_PUSH_KINDS).toHaveLength(9)
     expect(Object.keys(templates)).toHaveLength(16)
     expect(Object.keys(templates).length).toBeLessThanOrEqual(32)
+  })
+
+  it('stays within 18 of the relay’s 32 templates with five buddies, badge alerts, and Shared Cars', async () => {
+    useSharedCarsSession.setState({ running: true })
+    joinKinds.current = ['a', 'b', 'c', 'd', 'e'].map(
+      (tag) => `join.request.${tag.repeat(12)}`
+    )
+    await registerBuddiesPush()
+    const { templates } = registerPush.mock.calls[0][0]
+    // Nine fixed kinds, five join kinds, two badge kinds, two car kinds.
+    expect(Object.keys(templates)).toHaveLength(18)
+  })
+
+  it('registers generic, name-free templates for shared cars only while Shared Cars runs', async () => {
+    await registerBuddiesPush()
+    for (const kind of CAR_PUSH_KINDS)
+      expect(registerPush.mock.calls[0][0].templates).not.toHaveProperty(kind)
+
+    useSharedCarsSession.setState({ running: true })
+    await registerBuddiesPush()
+    const { templates } = registerPush.mock.calls[1][0]
+    expect(templates['car.invite']).toEqual({
+      title: 'buddies_pushCarInviteTitle',
+      body: 'buddies_pushCarInviteBody',
+    })
+    // Only a join alerts; a decline is quiet, so needs no text of its own.
+    expect(templates['car.reply']).toEqual({
+      title: 'buddies_pushCarJoinedTitle',
+      body: 'buddies_pushCarJoinedBody',
+    })
+    // The cancel is never pushed.
+    expect(templates).not.toHaveProperty('car.cancel')
+
+    // Buddies notifications off here: none at all.
+    buddiesState.notificationsEnabled = false
+    await registerBuddiesPush()
+    expect(registerPush.mock.calls[2][0].templates).toEqual({})
   })
 
   it('registers generic, name-free templates for new badges and reactions only while badge alerts are on', async () => {

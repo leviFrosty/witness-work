@@ -283,6 +283,16 @@ export const cachedServerAccount = (): CachedServerAccount | null =>
   storage.get()
 
 /**
+ * The account key on this device (the Buddies root seed), without creating one;
+ * null when there's none. Features that derive their own keys from it (Cloud
+ * Sync, Shared Cars) read it here rather than from Buddies.
+ */
+export async function peekAccountKey(): Promise<Uint8Array | null> {
+  const seed = await BuddiesKeychain.peekRootSeed().catch(() => null)
+  return seed ? fromB64u(seed) : null
+}
+
+/**
  * Whether this device already has the account key (iCloud Keychain brings it to
  * the User's other Apple devices; a handoff or recovery key to any phone).
  * Never creates one.

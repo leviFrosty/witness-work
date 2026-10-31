@@ -1,5 +1,5 @@
 import { Platform } from 'react-native'
-import i18n from '@/lib/locales'
+import i18n, { type TranslationKey } from '@/lib/locales'
 import {
   BuddyInviteError,
   BuddyRemovalPendingError,
@@ -28,10 +28,19 @@ export function buddiesErrorMessage(error: unknown): string {
         return i18n.t('buddies_nameRequired')
     }
   }
-  if (error instanceof BuddyRemovalPendingError)
-    return error.scope === 'buddy'
-      ? i18n.t('buddies_removePending')
-      : i18n.t('buddies_deleteAllPending')
+  if (error instanceof BuddyRemovalPendingError) {
+    if (error.scope === 'buddy') return i18n.t('buddies_removePending')
+    // Still on a Shared Car the server hasn't heard them leave: named when
+    // it's one car that has a name.
+    const [car, ...more] = error.cars
+    if (car !== undefined)
+      return car && more.length === 0
+        ? i18n.t('buddies_deleteAllCarPending', { car })
+        : i18n.t('buddies_deleteAllCarsPending' as TranslationKey, {
+            count: error.cars.length,
+          })
+    return i18n.t('buddies_deleteAllPending')
+  }
   if (isRelayError(error, 'unverified'))
     return error.attestation === 'temporary'
       ? i18n.t('buddies_errorVerifyLater')

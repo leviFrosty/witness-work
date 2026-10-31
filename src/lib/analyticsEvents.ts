@@ -139,11 +139,25 @@ export const analyticsEventNames = [
   'home_screen_customized',
   'mileage_data_deleted',
   'mileage_fuel_added',
+  'mileage_person_filter_used',
   'mileage_report_export_failed',
   'mileage_report_exported',
   'mileage_tracking_changed',
   'mileage_trip_added',
   'mileage_vehicle_added',
+  // Shared Cars: a car shared (started, failed, done), joined, someone
+  // removed, and how each one ends; invitations through Buddies sent,
+  // answered, and canceled (no names, ids, or car details).
+  'shared_car_ended',
+  'shared_car_invite_answered',
+  'shared_car_invite_canceled',
+  'shared_car_invite_sent',
+  'shared_car_joined',
+  'shared_car_member_removed',
+  'shared_car_share_failed',
+  'shared_car_share_started',
+  'shared_car_shared',
+  'shared_car_sync_failed',
   // Pet Companion adoption, its intro, decorating, unlocks, sharing and its
   // hidden moments (no names).
   'pet_adopted',

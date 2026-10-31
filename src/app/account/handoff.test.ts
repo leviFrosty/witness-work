@@ -54,6 +54,7 @@ vi.mock('@/features/buddies/lib/engine', () => ({
 
 import { approveHandoff, completeClaimHandoff } from './handoff'
 import { analytics } from '@/lib/analytics'
+import { BuddyRemovalPendingError } from '@/features/buddies/lib/engine'
 import type {
   ClaimSession,
   OfferSession,
@@ -149,6 +150,29 @@ describe('completeClaimHandoff', () => {
       expect(session.fail).toHaveBeenCalledWith(reason)
     }
   )
+})
+
+describe('a replacement that fails', () => {
+  it('hands over what Delete Buddies still waits on, for its message', async () => {
+    const pending = new BuddyRemovalPendingError('everything', ['Mazda CX-5'])
+    fake.openDetached.mockResolvedValueOnce(opened())
+    fake.replaceAccountKey.mockRejectedValueOnce(pending)
+    const failed = await complete(received())
+    expect(failed).toEqual({
+      outcome: 'failed',
+      reason: 'replace_failed',
+      removalPending: pending,
+    })
+  })
+
+  it('says nothing waits when it failed for another reason', async () => {
+    fake.openDetached.mockResolvedValueOnce(opened())
+    fake.replaceAccountKey.mockRejectedValueOnce(new Error('keychain'))
+    expect(await complete(received())).toEqual({
+      outcome: 'failed',
+      reason: 'replace_failed',
+    })
+  })
 })
 
 // The old phone: Allow sends the account key only once the device's owner

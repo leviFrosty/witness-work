@@ -13,7 +13,7 @@ import i18n from '@/lib/locales'
 import useCategories from '@/stores/categories'
 import useContacts from '@/stores/contactsStore'
 import useConversations from '@/stores/conversationStore'
-import useMileage from '@/stores/mileage'
+import { deleteAllMileageData } from '@/stores/mileageWrites'
 import usePet from '@/stores/pet'
 import { usePreferences } from '@/stores/preferences'
 import useServiceReport from '@/stores/serviceReport'
@@ -91,7 +91,7 @@ export default function DangerZoneTools() {
     {
       label: i18n.t('toolsDangerZone_mileage'),
       description: i18n.t('toolsDangerZone_mileageBody'),
-      clear: () => useMileage.getState().deleteAllMileageData(),
+      clear: deleteAllMileageData,
     },
     {
       label: i18n.t('toolsDangerZone_pet'),

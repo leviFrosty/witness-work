@@ -124,6 +124,14 @@ struct AlertWording {
           "buddies_alertBadgeReaction",
           ["name": name, "emoji": Self.reactionEmoji[reaction] ?? ""]),
         body: self.badge(badge))
+    case .carInvite(let name):
+      return AlertText(
+        title: t("buddies_alertCarInvite", ["name": name]),
+        body: t("buddies_pushCarInviteBody"))
+    case .carJoined(let name):
+      return AlertText(
+        title: t("buddies_alertCarJoined", ["name": name]),
+        body: t("buddies_pushCarJoinedBody"))
     }
   }
 }

@@ -588,8 +588,7 @@ const RootStackComponent = () => {
           })}
           name='MileageVehicleForm'
           getComponent={() =>
-            require('@/features/mileage/screens/MileageVehicleFormScreen')
-              .default
+            require('@/app/mileage/MileageVehicleFormRoute').default
           }
         />
         <RootStack.Screen

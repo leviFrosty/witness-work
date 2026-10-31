@@ -5,11 +5,13 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { toast } from '@/stores/toasts'
 import { Plus as PlusIcon } from 'lucide-react-native'
 import useTheme from '@/contexts/theme'
-import i18n from '@/lib/locales'
+import i18n, { type TranslationKey } from '@/lib/locales'
 import { analytics } from '@/lib/analytics'
 import confirmDestructive from '@/lib/confirmDestructive'
 import { usePreferences } from '@/stores/preferences'
-import useMileage from '@/stores/mileage'
+import { useMileageView } from '@/stores/mileageView'
+import { deleteAllMileageData } from '@/stores/mileageWrites'
+import useSharedCars from '@/stores/sharedCars'
 import Section from '@/components/ui/inputs/Section'
 import InputRowSelect from '@/components/ui/inputs/InputRowSelect'
 import { inputLayout } from '@/components/ui/inputs/InputLayout'
@@ -24,8 +26,20 @@ import {
 import useMileageFormatter from '@/features/mileage/hooks/useMileageFormatter'
 import useMileageIndex from '@/features/mileage/hooks/useMileageIndex'
 import MileageLinkRow from '@/features/mileage/components/MileageLinkRow'
+import useMileageSharing, {
+  useMileagePeople,
+} from '@/features/mileage/hooks/useMileageSharing'
+import {
+  deleteAllMileage,
+  hasSharedCarsToLeave,
+} from '@/features/mileage/lib/deleteAllMileage'
+import { fuelLabel } from '@/features/mileage/lib/fuelLabel'
 import type { RootStackNavigation } from '@/types/rootStack'
-import type { DistanceUnit, FuelEconomyUnit, Vehicle } from '@/types/mileage'
+import type {
+  DistanceUnit,
+  FuelEconomyUnit,
+  MileageVehicle,
+} from '@/types/mileage'
 
 const AUTO = 'auto'
 
@@ -49,7 +63,10 @@ export default function MileageSettingsScreen() {
   const theme = useTheme()
   const insets = useSafeAreaInsets()
   const navigation = useNavigation<RootStackNavigation>()
-  const { vehicles, fuels, deleteAllMileageData } = useMileage()
+  const { vehicles, fuels, sharedRecordSpaces } = useMileageView()
+  const people = useMileagePeople()
+  const sharing = useMileageSharing()
+  const hasSharedCars = useSharedCars(hasSharedCarsToLeave)
   const { distanceUnit, fuelEconomyUnit, set } = usePreferences()
   const format = useMileageFormatter()
   const index = useMileageIndex()
@@ -58,7 +75,7 @@ export default function MileageSettingsScreen() {
   const active = vehicles.filter((v) => !v.archived)
   const archived = vehicles.filter((v) => v.archived)
 
-  const carSummary = (vehicle: Vehicle, f: MileageFormatter) => {
+  const carSummary = (vehicle: MileageVehicle, f: MileageFormatter) => {
     const setup = effectiveEntry(index.setupsByVehicle.get(vehicle.id), today)
     return [
       fuels.find((fuel) => fuel.id === setup?.fuelId)?.name,
@@ -68,12 +85,17 @@ export default function MileageSettingsScreen() {
       .join(' · ')
   }
 
-  const carRows = (list: Vehicle[], withAdd: boolean) =>
+  const carRows = (list: MileageVehicle[], withAdd: boolean) =>
     list.map((vehicle, i) => (
       <MileageLinkRow
         key={vehicle.id}
         label={vehicle.name}
         value={carSummary(vehicle, format)}
+        people={
+          vehicle.spaceId === undefined
+            ? undefined
+            : people.onCar(vehicle.spaceId).length
+        }
         onPress={() =>
           navigation.navigate('MileageVehicleForm', {
             vehicleId: vehicle.id,
@@ -89,18 +111,44 @@ export default function MileageSettingsScreen() {
   const economyLabel = (unit: FuelEconomyUnit) =>
     i18n.t(`mileage.unitNames.${unit}`)
 
+  // Leaving each Shared Car syncs it first, so it can take a moment: the toast
+  // says it's going, then how it went.
+  const deleteAll = async () => {
+    const key = 'mileage-delete-all'
+    if (hasSharedCars) toast.info(i18n.t('mileage.deletingAll'), { key })
+    const left = deleteAllMileage({
+      deleteOwn: deleteAllMileageData,
+      leaveSharedCars: sharing.leaveAll,
+      hasSharedCars,
+    })
+    analytics.capture('mileage_data_deleted')
+    const { notLeft } = await left
+    if (notLeft.length === 0) {
+      toast.success(i18n.t('success'), { key, message: i18n.t('deleted') })
+      return
+    }
+    // Named when it's one car that has a name.
+    const [car, ...more] = notLeft.map(({ name }) => name)
+    toast.error(
+      car && more.length === 0
+        ? i18n.t('mileage.deleteAllCarNotLeft', { car })
+        : i18n.t('mileage.deleteAllCarsNotLeft' as TranslationKey, {
+            count: notLeft.length,
+          }),
+      { key, message: i18n.t('mileage.deleteAllNotLeft_message') }
+    )
+  }
+
   const requestDeleteAll = () =>
     confirmDestructive({
       title: i18n.t('mileage.deleteAll_title'),
-      description: i18n.t('mileage.deleteAll_description'),
+      description: i18n.t(
+        hasSharedCars
+          ? 'mileage.deleteAll_descriptionShared'
+          : 'mileage.deleteAll_description'
+      ),
       confirmLabel: i18n.t('mileage.deleteAll'),
-      onConfirm: () => {
-        deleteAllMileageData()
-        analytics.capture('mileage_data_deleted')
-        toast.success(i18n.t('success'), {
-          message: i18n.t('deleted'),
-        })
-      },
+      onConfirm: () => void deleteAll(),
     })
 
   return (
@@ -147,7 +195,7 @@ export default function MileageSettingsScreen() {
               return (
                 <MileageLinkRow
                   key={fuel.id}
-                  label={fuel.name}
+                  label={fuelLabel(fuel, { vehicles, sharedRecordSpaces })}
                   value={price ? format.price(price.pricePerGallon) : undefined}
                   onPress={() =>
                     navigation.navigate('MileageFuelForm', { fuelId: fuel.id })

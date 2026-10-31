@@ -174,6 +174,28 @@ export function computeAlertVectors(): AlertVectors {
     details: d,
   })
 
+  const carSpace = toB64u(counting(16, 0xd0))
+  const carInvite = toB64u(counting(16, 0xe0))
+  const car = {
+    v: 1,
+    id: carSpace,
+    rev: 1_790_000_000_000,
+    inviteId: carInvite,
+    joinSecret: toB64u(counting(32, 0x11)),
+    epoch: 2,
+    key: toB64u(counting(32, 0x33)),
+    name: 'Mazda CX-5',
+    people: 2,
+    expiresAt: 1_900_000_000_000,
+  }
+  const carReply = (status: string) => ({
+    v: 1,
+    id: carSpace,
+    rev: 1_790_000_000_001,
+    inviteId: carInvite,
+    status,
+  })
+
   const tampered = event(30, 'plan.invite', share('plan', details))
   const bytes = fromB64u(tampered.blob)
   bytes[bytes.length - 1] ^= 1
@@ -363,6 +385,71 @@ export function computeAlertVectors(): AlertVectors {
       event: event(22, 'plan.invite', { v: 2, id: zoePlan }),
     },
     { name: 'not JSON', event: event(23, 'badge.new', 'not json') },
+    {
+      name: 'shares a car, never naming it',
+      event: event(32, 'car.invite', car),
+    },
+    {
+      name: 'car invitation without its key',
+      event: event(33, 'car.invite', { ...car, key: 'short' }),
+    },
+    {
+      name: 'takes back a car invitation',
+      event: event(34, 'car.cancel', {
+        v: 1,
+        id: carSpace,
+        rev: 1_790_000_000_002,
+        inviteId: carInvite,
+      }),
+    },
+    {
+      name: 'joined your shared car',
+      event: event(35, 'car.reply', carReply('joined'), fromSam),
+    },
+    {
+      name: 'declined your shared car',
+      event: event(36, 'car.reply', carReply('declined')),
+    },
+    {
+      name: 'car answer this build does not know',
+      event: event(37, 'car.reply', carReply('maybe')),
+    },
+    {
+      name: 'car invitation from a newer version',
+      event: event(38, 'car.invite', { ...car, v: 2 }),
+    },
+    {
+      name: 'car invitation with a fractional epoch',
+      event: event(39, 'car.invite', { ...car, epoch: 1.5 }),
+    },
+    {
+      name: 'car invitation with a fractional number of people',
+      event: event(40, 'car.invite', { ...car, people: 2.5 }),
+    },
+    {
+      name: 'car invitation with a negative number of people',
+      event: event(41, 'car.invite', { ...car, people: -1 }),
+    },
+    {
+      name: 'car invitation with no people at all',
+      event: event(42, 'car.invite', { ...car, people: 0 }),
+    },
+    {
+      name: 'car invitation without the car’s name',
+      event: event(43, 'car.invite', (({ name: _name, ...rest }) => rest)(car)),
+    },
+    {
+      name: 'car answer without its invitation',
+      event: event(
+        44,
+        'car.reply',
+        (({ inviteId: _inviteId, ...rest }) => rest)(carReply('joined'))
+      ),
+    },
+    {
+      name: 'car answer from a newer version',
+      event: event(45, 'car.reply', { ...carReply('joined'), v: 2 }),
+    },
   ]
 
   return {

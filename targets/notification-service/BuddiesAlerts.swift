@@ -143,6 +143,9 @@ enum Alert: Equatable {
   case joinRequest(name: String, when: AlertWhen)
   case badge(name: String, badges: [SharedBadge])
   case badgeReaction(name: String, reaction: String, badge: SharedBadge)
+  /// Never the car's name: it's the User's own words.
+  case carInvite(name: String)
+  case carJoined(name: String)
 }
 
 /// `alert`: word it. `quiet`: muted on this device (an alert can't be dropped
@@ -271,10 +274,26 @@ func knownBadges(_ badges: [SharedBadge], catalog: AlertContext.Catalog) -> [Sha
 
 private let reactionIds: Set<String> = ["party", "confetti", "fire", "clap", "thumbsUp", "raisedHands"]
 
+/// JavaScript's largest safe integer, the bound of the app's `.safe()` numbers.
+private let maxSafeInteger = 9_007_199_254_740_991
+
+/// `carInviteEventSchema`: everything joining a Shared Car takes.
+private func isCarInvite(_ body: [String: Any]) -> Bool {
+  relayId(body["id"]) != nil
+    && number(body["rev"]) != nil
+    && relayId(body["inviteId"]) != nil
+    && (body["joinSecret"] as? String).map { matches($0, keyPattern) } == true
+    && integer(body["epoch"], 1...maxSafeInteger) != nil
+    && (body["key"] as? String).map { matches($0, keyPattern) } == true
+    && body["name"] is String
+    && integer(body["people"], 0...maxSafeInteger) != nil
+    && number(body["expiresAt"]) != nil
+}
+
 // MARK: - Describing an event
 
 private enum Handler {
-  case paired, share, reply, joinRequest, quiet, badge, badgeReaction
+  case paired, share, reply, joinRequest, quiet, badge, badgeReaction, carInvite, carReply
 }
 
 private func handler(of kind: String) -> Handler? {
@@ -286,6 +305,10 @@ private func handler(of kind: String) -> Handler? {
   if kind == "join.cancel" { return .quiet }
   if kind == "badge.new" { return .badge }
   if kind == "badge.reaction" { return .badgeReaction }
+  if kind == "car.invite" { return .carInvite }
+  if kind == "car.reply" { return .carReply }
+  // A canceled car invitation just goes away.
+  if kind == "car.cancel" { return .quiet }
   return nil
 }
 
@@ -395,6 +418,19 @@ func describe(context: AlertContext, event: SealedEvent) -> AlertOutcome {
       return .failed("unreadable")
     }
     return .alert(.badgeReaction(name: name, reaction: reaction, badge: known))
+
+  case .carInvite:
+    return isCarInvite(body) ? .alert(.carInvite(name: name)) : .failed("unreadable")
+
+  case .carReply:
+    guard
+      relayId(body["id"]) != nil,
+      number(body["rev"]) != nil,
+      relayId(body["inviteId"]) != nil,
+      let status = body["status"] as? String, status == "joined" || status == "declined"
+    else { return .failed("unreadable") }
+    // Declining never alerts.
+    return status == "joined" ? .alert(.carJoined(name: name)) : .quiet
 
   case .quiet:
     return .quiet

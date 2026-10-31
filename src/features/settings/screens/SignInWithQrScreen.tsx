@@ -29,6 +29,7 @@ import useAttestationSupport from '@/features/settings/hooks/useAttestationSuppo
 import useClaimHandoff from '@/features/settings/hooks/useClaimHandoff'
 import { completeOnboardingFromRestore } from '@/features/settings/lib/completeOnboardingFromRestore'
 import { usePreferences } from '@/stores/preferences'
+import { buddiesErrorMessage } from '@/features/buddies/lib/buddiesErrors'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 
 const LINK_PROBLEM = {
@@ -206,13 +207,11 @@ const SignInWithQrScreen = () => {
           tone='error'
           title={i18n.t('handoff_failedTitle')}
           body={
-            completion.reason === 'replace_failed'
-              ? i18n.t(
-                  completion.removalPending
-                    ? 'buddies_deleteAllPending'
-                    : 'account_replaceFailedBody'
-                )
-              : handoffFailureMessage('new', completion.reason)
+            completion.reason !== 'replace_failed'
+              ? handoffFailureMessage('new', completion.reason)
+              : completion.removalPending
+                ? buddiesErrorMessage(completion.removalPending)
+                : i18n.t('account_replaceFailedBody')
           }
           {...failureActions(completion.reason)}
           testID='handoff-failed'

@@ -11,6 +11,7 @@ import { useHelpCenterStore } from '@/features/updates/stores/helpCenter'
 import useConversations from '@/stores/conversationStore'
 import useServiceReport from '@/stores/serviceReport'
 import useMileage from '@/stores/mileage'
+import useSharedCars from '@/stores/sharedCars'
 import usePet from '@/stores/pet'
 import { useRewardStack } from '@/stores/rewardStack'
 import useCategories from '@/stores/categories'
@@ -38,6 +39,8 @@ import {
   checkBuddiesRelay,
 } from '@/features/buddies/lib/buddiesService'
 import { checkCryptoVectors } from '@/features/buddies/lib/testing/cryptoVectors'
+import { checkSpaceVectors } from '@/lib/sharedSpaces/testing/spaceVectors'
+import { sharedCarsHarness } from '@/app/dev-harness/sharedCars'
 import apis from '@/constants/apis'
 import { SCENARIO_NAMES } from '@/app/dev-harness/scenarios'
 import { buildTodayRouteFixture } from '@/app/dev-fixtures/todayRoute'
@@ -337,6 +340,18 @@ export function installDevHarness() {
      */
     checkBuddiesCryptoVectors: () => checkCryptoVectors(),
     /**
+     * Runs the Shared Spaces known-answer vectors in this runtime (Hermes on
+     * iOS or Android); `{ ok, checked, mismatches }`.
+     */
+    checkSharedSpacesCryptoVectors: () => checkSpaceVectors(),
+    /**
+     * Shared Cars on the app's engine: `state()`, then `shareCar`,
+     * `createInvite`, `joinCar`, `sync`, `leaveCar`, `removeMember`,
+     * `stopSharing`, and `live()` for each car's live signal. Calls return
+     * promises (eval doesn't await); `last()` holds the latest result.
+     */
+    sharedCars: sharedCarsHarness,
+    /**
      * The Buddies engine, to pair two devices and sync without tapping through
      * Buddies: `createInvite()` here, `acceptInvite(link)` on the other device,
      * then `confirmClaim(inviteId)` here. Calls return promises (eval doesn't
@@ -583,6 +598,8 @@ export function installDevHarness() {
       conversations: useConversations,
       serviceReports: useServiceReport,
       mileage: useMileage,
+      // This device's copy of each Shared Car, by `spaceId` (`cars`).
+      sharedCars: useSharedCars,
       // Route builder routes by day (`routes['YYYY-MM-DD']`), device-local.
       savedRoutes: useSavedRoutes,
       savedPlaces: useSavedPlaces,

@@ -154,6 +154,8 @@ vi.mock('expo-localization', () => ({
 import { flushWatchSnapshot, installWatchSync } from '@/app/watch/watchSync'
 import useServiceReport from '@/stores/serviceReport'
 import useMileage from '@/stores/mileage'
+import useSharedCars from '@/stores/sharedCars'
+import { carMember, sharedCar } from '@/lib/mileage/testing/sharedCars'
 import { getMonthsReports } from '@/lib/serviceReport'
 import { counters } from '@/lib/perf'
 import { normalizeDateForStorage } from '@/lib/normalizeDate'
@@ -202,6 +204,7 @@ describe('watch sync', () => {
       trips: [],
       deletedMileageRecords: [],
     })
+    useSharedCars.setState({ cars: {} })
     platform.OS = 'ios'
     bridge.isPaired = true
     bridge.activeComplications = null
@@ -649,5 +652,89 @@ describe('watch sync', () => {
     expect(captureException.mock.calls[0][0]).toEqual(
       new Error('[watchBridge] publish: WCErrorDomain 7007')
     )
+  })
+
+  describe('on Shared Cars', () => {
+    const SPACE = 'van-space'
+    const me = `me-${SPACE}`
+    beforeEach(() => {
+      useMileage.setState({
+        trips: [
+          {
+            id: 'mine',
+            vehicleId: 'car-1',
+            date: '2026-10-01',
+            distanceMiles: 3,
+            createdAt: 10,
+          },
+        ],
+      })
+      const members = [
+        carMember(SPACE, 'ana', 'Ana', { joinedAt: 1 }),
+        carMember(SPACE, me, 'Levi', { joinedAt: 2 }),
+      ]
+      useSharedCars.setState({
+        cars: {
+          [SPACE]: sharedCar(SPACE, {
+            seq: 4,
+            ownerId: 'ana',
+            members,
+            memberRecords: members,
+            vehicles: [{ id: 'van', name: 'Family Minivan', createdAt: 2 }],
+            // Ana drove it after the User's last trip.
+            trips: [
+              {
+                id: 'anas',
+                vehicleId: 'van',
+                date: '2026-10-03',
+                distanceMiles: 8,
+                loggedBy: 'ana',
+                createdAt: 20,
+              },
+            ],
+          }),
+        },
+      })
+    })
+
+    it('sends them with the User’s cars, the one they last drove first', () => {
+      teardown = installWatchSync()
+
+      const snapshot = JSON.parse(bridge.snapshots.at(-1)!)
+      expect(snapshot.mileage.vehicles).toEqual([
+        { id: 'car-1', name: 'Mazda' },
+        { id: 'van', name: 'Family Minivan' },
+      ])
+    })
+
+    it('logs a Siri trip on one to the car, as the User', () => {
+      bridge.pendingTrips = [tripDraft({ vehicleId: 'van' })]
+
+      teardown = installWatchSync()
+
+      expect(useSharedCars.getState().cars[SPACE].trips).toContainEqual(
+        expect.objectContaining({
+          id: 'trip-1',
+          vehicleId: 'van',
+          distanceMiles: 12.5,
+          loggedBy: me,
+        })
+      )
+      expect(useMileage.getState().trips.map((trip) => trip.id)).toEqual([
+        'mine',
+      ])
+      expect(bridge.resolved).toEqual([['trip-1']])
+    })
+
+    it('puts a trip without a car on the one the User last drove', () => {
+      bridge.pendingTrips = [tripDraft({ vehicleId: 'gone' })]
+
+      teardown = installWatchSync()
+
+      expect(
+        useMileage.getState().trips.find((trip) => trip.id === 'trip-1')
+      ).toMatchObject({ vehicleId: 'car-1' })
+      expect(useMileage.getState().trips[0]).not.toHaveProperty('loggedBy')
+    })
   })
 })

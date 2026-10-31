@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ScrollView, View } from 'react-native'
+import { RefreshControl, ScrollView, View } from 'react-native'
 import { useNavigation } from '@react-navigation/native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import {
@@ -9,9 +9,10 @@ import {
 } from 'lucide-react-native'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
+import { analytics } from '@/lib/analytics'
 
 import useStartOfWeek from '@/hooks/useStartOfWeek'
-import useMileage from '@/stores/mileage'
+import { useMileageView } from '@/stores/mileageView'
 import Header from '@/components/ui/layout/Header'
 import Card from '@/components/ui/Card'
 import IconButton from '@/components/ui/IconButton'
@@ -28,6 +29,13 @@ import {
   toDateKey,
   tripsInPeriod,
 } from '@/lib/mileage/calc'
+import {
+  currentPersonFilter,
+  EVERYONE,
+  ME,
+  tripsByPerson,
+  type PersonFilter,
+} from '@/lib/mileage/people'
 import PeriodNavigator from '@/features/mileage/components/PeriodNavigator'
 import MileageSummary from '@/features/mileage/components/MileageSummary'
 import MileagePeriodChart from '@/features/mileage/components/MileagePeriodChart'
@@ -39,16 +47,25 @@ import useMileageFormatter from '@/features/mileage/hooks/useMileageFormatter'
 import useMileageIndex from '@/features/mileage/hooks/useMileageIndex'
 import useMileageExport from '@/features/mileage/hooks/useMileageExport'
 import useLogTrip from '@/features/mileage/hooks/useLogTrip'
+import useMileageSharing, {
+  useMileagePeople,
+} from '@/features/mileage/hooks/useMileageSharing'
+import MileagePersonFilter from '@/features/mileage/components/MileagePersonFilter'
+import SharedCarsNotice from '@/features/mileage/components/SharedCarsNotice'
 import type { RootStackNavigation } from '@/types/rootStack'
 import type { MileagePeriodKind } from '@/types/mileage'
 import { useFoldColumn } from '@/components/ui/layout/FoldPane'
 
-/** Trip history and report for a Day, Week, Month, or Service Year. */
+/**
+ * Trip history and report for a Day, Week, Month, or Service Year. On Shared
+ * Cars it can show one person's trips, says who logged each, and pulls to sync
+ * them.
+ */
 export default function MileageScreen() {
   const theme = useTheme()
   const insets = useSafeAreaInsets()
   const navigation = useNavigation<RootStackNavigation>()
-  const { vehicles, fuels, trips } = useMileage()
+  const { vehicles, fuels, trips } = useMileageView()
   const index = useMileageIndex()
   const format = useMileageFormatter()
   const startOfWeek = useStartOfWeek()
@@ -59,12 +76,35 @@ export default function MileageScreen() {
   // room to scroll its last row clear of it.
   const [logTripHeight, setLogTripHeight] = useState(0)
   const [anchor, setAnchor] = useState(() => toDateKey(new Date()))
+  const sharing = useMileageSharing()
+  const people = useMileagePeople()
+  // A Shared Car on the device shows who logged its trips, and can be
+  // filtered, even while Shared Cars is off here; only syncing waits.
+  const shared = people.shared
+  const [chosenFilter, setChosenFilter] = useState<PersonFilter>(EVERYONE)
+  // Back to Everyone once the person shown has left every car.
+  const personFilter = currentPersonFilter(chosenFilter, people)
+  const [refreshing, setRefreshing] = useState(false)
 
   const period = periodContaining(kind, fromDateKey(anchor), startOfWeek)
   const isCurrent = periodContainsDate(period, toDateKey(new Date()))
-  const periodTrips = tripsInPeriod(trips, period)
+  const periodTrips = tripsByPerson(
+    tripsInPeriod(trips, period),
+    personFilter,
+    people
+  )
   const summary = summarizeTrips(periodTrips, index, vehicles)
-  const report = { period, trips: periodTrips, vehicles, fuels, index, format }
+  const report = {
+    period,
+    trips: periodTrips,
+    vehicles,
+    fuels,
+    index,
+    format,
+    sharing: shared
+      ? { people, ownName: sharing.ownName, filter: personFilter }
+      : undefined,
+  }
   const showCarNames = vehicles.length > 1
   const vehicleColors = getVehicleChartColors(
     theme.colors,
@@ -75,6 +115,25 @@ export default function MileageScreen() {
     setAnchor(toDateKey(shiftPeriod(period, delta, startOfWeek).start))
 
   const openSettings = () => navigation.navigate('MileageSettings')
+
+  const choosePerson = (filter: PersonFilter) => {
+    setChosenFilter(filter)
+    // Once a session (`analyticsFrequency`): reach, not every switch.
+    if (filter !== EVERYONE)
+      analytics.capture('mileage_person_filter_used', {
+        filter: filter === ME ? 'me' : 'person',
+      })
+  }
+
+  // A pull is a deliberate ask: every Shared Car syncs now.
+  const refresh = async () => {
+    setRefreshing(true)
+    try {
+      await sharing.sync()
+    } finally {
+      setRefreshing(false)
+    }
+  }
 
   // A bar opens its day (Week, Month) or month (Service Year).
   const openBucket = (bucket: MileageBucket) => {
@@ -145,6 +204,15 @@ export default function MileageScreen() {
         style={{ flex: 1 }}
       >
         <ScrollView
+          refreshControl={
+            shared && sharing.enabled ? (
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={() => void refresh()}
+                tintColor={theme.colors.accent}
+              />
+            ) : undefined
+          }
           contentContainerStyle={[
             {
               padding: 15,
@@ -157,6 +225,7 @@ export default function MileageScreen() {
             foldColumn,
           ]}
         >
+          <SharedCarsNotice hasSharedCars={shared} />
           <PeriodNavigator
             period={period}
             isCurrent={isCurrent}
@@ -168,6 +237,14 @@ export default function MileageScreen() {
             <MileageEmptyState />
           ) : (
             <>
+              {shared && (
+                <MileagePersonFilter
+                  value={personFilter}
+                  onChange={choosePerson}
+                  people={people}
+                  vehicles={vehicles}
+                />
+              )}
               <Card>
                 <MileageSummary
                   summary={summary}
@@ -195,17 +272,22 @@ export default function MileageScreen() {
                 <MileageEmptyState variant='noTrips' />
               ) : (
                 <View style={{ gap: 8 }}>
-                  {periodTrips.map((trip) => (
-                    <TripRow
-                      key={trip.id}
-                      trip={trip}
-                      vehicleName={
-                        showCarNames
-                          ? vehicles.find((v) => v.id === trip.vehicleId)?.name
-                          : undefined
-                      }
-                    />
-                  ))}
+                  {periodTrips.map((trip) => {
+                    const author = people.loggedBy(trip)
+                    return (
+                      <TripRow
+                        key={trip.id}
+                        trip={trip}
+                        vehicleName={
+                          showCarNames
+                            ? vehicles.find((v) => v.id === trip.vehicleId)
+                                ?.name
+                            : undefined
+                        }
+                        loggedBy={author && !author.me ? author : undefined}
+                      />
+                    )
+                  })}
                 </View>
               )}
             </>

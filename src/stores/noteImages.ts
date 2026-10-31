@@ -1,5 +1,6 @@
 import useConversations from '@/stores/conversationStore'
 import useMileage from '@/stores/mileage'
+import useSharedCars from '@/stores/sharedCars'
 import useServiceReport from '@/stores/serviceReport'
 import { richTextImages } from '@/lib/richText/inspect'
 import { deleteNoteImages } from '@/lib/richText/noteImages'
@@ -55,7 +56,12 @@ export function referencedNoteImageIds(): Set<string> {
     addImages(ids, plan)
     for (const override of plan.overrides ?? []) addImages(ids, override)
   }
+  // Every trip in both stores, not the mileage view: a trip of the User's own
+  // that a Shared Car hides still holds its photos.
   for (const trip of useMileage.getState().trips) addImages(ids, trip)
+  for (const car of Object.values(useSharedCars.getState().cars)) {
+    for (const trip of car.trips) addImages(ids, trip)
+  }
   return ids
 }
 

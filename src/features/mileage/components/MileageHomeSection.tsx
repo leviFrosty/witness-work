@@ -9,7 +9,7 @@ import {
 import { ChevronForwardIcon } from '@/components/ui/DirectionalIcon'
 import useTheme from '@/contexts/theme'
 import i18n, { type TranslationKey } from '@/lib/locales'
-import useMileage from '@/stores/mileage'
+import { useMileageView } from '@/stores/mileageView'
 import Card from '@/components/ui/Card'
 import InfoPopover from '@/components/ui/InfoPopover'
 import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
@@ -65,7 +65,7 @@ function Fact({
 export default function MileageHomeSection() {
   const theme = useTheme()
   const navigation = useNavigation<RootStackNavigation>()
-  const { vehicles, trips } = useMileage()
+  const { vehicles, trips } = useMileageView()
   const index = useMileageIndex()
   const format = useMileageFormatter()
   const logTrip = useLogTrip('home_section')

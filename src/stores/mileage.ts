@@ -1,13 +1,21 @@
-import { syncTimestamp } from '@/lib/syncClock'
-import { stampPastTombstone, withoutTombstones } from '@/lib/syncTombstones'
 import { create } from 'zustand'
 import { combine, createJSONStorage } from 'zustand/middleware'
 import { keepPersistedState, persist } from '@/stores/persist'
 import { PersistStorage } from '@/stores/mmkv'
+import {
+  matchEverything,
+  matchFuel,
+  matchRecord,
+  matchVehicle,
+  mergeMileageRecords,
+  removeMileageRecords,
+  upsertMileageRecord,
+  type MileageMatch,
+} from '@/lib/mileage/records'
 import type {
   Fuel,
   FuelPrice,
-  MileageCollections,
+  MileageSnapshot,
   MileageTombstone,
   Trip,
   Vehicle,
@@ -27,131 +35,63 @@ const initialState = {
   deletedMileageRecords: [] as MileageTombstone[],
 }
 
-type Collection = keyof MileageCollections
-type State = typeof initialState
-type WithId = { id: string; updatedAt?: number }
+/** Removes the matching records and tombstones them. */
+const remove = (state: MileageSnapshot, match: MileageMatch) =>
+  removeMileageRecords(state, match).changes
 
 /**
- * The store changes that insert or replace `record` in `key` by id, stamping
- * `updatedAt` for last-writer-wins merge. A new record is stamped past any
- * tombstone for its id, which other devices keep, and the tombstone is
- * dropped.
- */
-function upsert<K extends Collection>(
-  state: State,
-  key: K,
-  record: State[K][number]
-): Partial<State> {
-  const records = state[key] as WithId[]
-  const existing = records.find((r) => r.id === record.id)
-  if (existing) {
-    const stamped = { ...record, updatedAt: syncTimestamp(existing.updatedAt) }
-    return {
-      [key]: records.map((r) => (r.id === record.id ? stamped : r)),
-    }
-  }
-  return {
-    [key]: [
-      ...records,
-      {
-        ...record,
-        updatedAt: stampPastTombstone(state.deletedMileageRecords, record.id),
-      },
-    ],
-    deletedMileageRecords: withoutTombstones(
-      state.deletedMileageRecords,
-      new Set([record.id])
-    ),
-  }
-}
-
-/** Removes the matching records from each collection and tombstones them. */
-function removeWhere(
-  state: State,
-  match: Partial<{ [K in Collection]: (record: State[K][number]) => boolean }>
-): Partial<State> {
-  const tombstones: MileageTombstone[] = []
-  const next: Partial<State> = {}
-  for (const key of Object.keys(match) as Collection[]) {
-    const predicate = match[key] as (record: WithId) => boolean
-    const records = state[key] as WithId[]
-    const kept = records.filter((record) => {
-      if (!predicate(record)) return true
-      tombstones.push({
-        id: record.id,
-        deletedAt: syncTimestamp(record.updatedAt),
-      })
-      return false
-    })
-    if (kept.length !== records.length) Object.assign(next, { [key]: kept })
-  }
-  if (tombstones.length === 0) return {}
-  const deletedIds = new Set(tombstones.map((t) => t.id))
-  return {
-    ...next,
-    deletedMileageRecords: [
-      ...state.deletedMileageRecords.filter((t) => !deletedIds.has(t.id)),
-      ...tombstones,
-    ],
-  }
-}
-
-/**
- * Persisted store for Mileage Tracking: cars, fuels, their effective-dated
- * price/setup histories, and trips. Sync-aware like `categories`: every
- * mutation stamps `updatedAt`, and deletions leave tombstones.
+ * Persisted store for Mileage Tracking: the User's own cars, fuels, their
+ * effective-dated price/setup histories, and trips. Sync-aware like
+ * `categories`: every mutation stamps `updatedAt`, and deletions leave
+ * tombstones (`@/lib/mileage/records`).
+ *
+ * Only sync, backups, and dev tools use it directly. Everything else reads
+ * through `@/stores/mileageView` and writes through `@/stores/mileageWrites`,
+ * which add the User's Shared Cars.
  */
 export const useMileage = create(
   persist(
     combine(initialState, (set) => ({
       set,
       saveVehicle: (vehicle: Vehicle) =>
-        set((state) => upsert(state, 'vehicles', vehicle)),
+        set((state) => upsertMileageRecord(state, 'vehicles', vehicle)),
       /** Deletes the car with its fuel setups and trips. */
       deleteVehicle: (id: string) =>
-        set((state) =>
-          removeWhere(state, {
-            vehicles: (v) => v.id === id,
-            vehicleSetups: (s) => s.vehicleId === id,
-            trips: (t) => t.vehicleId === id,
-          })
-        ),
-      saveFuel: (fuel: Fuel) => set((state) => upsert(state, 'fuels', fuel)),
+        set((state) => remove(state, matchVehicle(id))),
+      saveFuel: (fuel: Fuel) =>
+        set((state) => upsertMileageRecord(state, 'fuels', fuel)),
       /**
        * Deletes the fuel and its prices. Car setups keep the dangling id and
        * simply stop producing an estimated cost.
        */
-      deleteFuel: (id: string) =>
-        set((state) =>
-          removeWhere(state, {
-            fuels: (f) => f.id === id,
-            fuelPrices: (p) => p.fuelId === id,
-          })
-        ),
+      deleteFuel: (id: string) => set((state) => remove(state, matchFuel(id))),
       saveFuelPrice: (price: FuelPrice) =>
-        set((state) => upsert(state, 'fuelPrices', price)),
+        set((state) => upsertMileageRecord(state, 'fuelPrices', price)),
       deleteFuelPrice: (id: string) =>
-        set((state) => removeWhere(state, { fuelPrices: (p) => p.id === id })),
+        set((state) => remove(state, matchRecord('fuelPrices', id))),
       saveVehicleSetup: (setup: VehicleSetup) =>
-        set((state) => upsert(state, 'vehicleSetups', setup)),
+        set((state) => upsertMileageRecord(state, 'vehicleSetups', setup)),
       deleteVehicleSetup: (id: string) =>
-        set((state) =>
-          removeWhere(state, { vehicleSetups: (s) => s.id === id })
-        ),
-      saveTrip: (trip: Trip) => set((state) => upsert(state, 'trips', trip)),
+        set((state) => remove(state, matchRecord('vehicleSetups', id))),
+      saveTrip: (trip: Trip) =>
+        set((state) => upsertMileageRecord(state, 'trips', trip)),
       deleteTrip: (id: string) =>
-        set((state) => removeWhere(state, { trips: (t) => t.id === id })),
+        set((state) => remove(state, matchRecord('trips', id))),
+      /**
+       * Adds records and tombstones exactly as given, stamps included, by the
+       * per-record merge rule (`mergeMileageRecords`): a Shared Car's personal
+       * copy, which every device of the User makes with the same ids and
+       * stamps, and the deletions of records a Shared Car took over.
+       */
+      mergeRecords: (records: Partial<MileageSnapshot>) =>
+        set((state) => {
+          const changes = mergeMileageRecords(state, records)
+          // Nothing newer: no write, so subscribers (and sync) aren't woken.
+          return Object.keys(changes).length > 0 ? changes : state
+        }),
       /** Tombstones every mileage record, on every synced device. */
       deleteAllMileageData: () =>
-        set((state) =>
-          removeWhere(state, {
-            vehicles: () => true,
-            fuels: () => true,
-            fuelPrices: () => true,
-            vehicleSetups: () => true,
-            trips: () => true,
-          })
-        ),
+        set((state) => remove(state, matchEverything)),
       _WARNING_forceDeleteMileage: () => set(initialState),
     })),
     {

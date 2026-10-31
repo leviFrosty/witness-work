@@ -39,6 +39,7 @@ Each feature file starts with an H1 and one paragraph of user-visible behavior, 
 - [Schedule and plans](./schedule-plans.md) covers the month calendar and its resizable day sheet, creating a plan, Plan Details and the `day` deep link.
 - [Progress and goals](./progress-goals.md) covers the Month, Year and All-time tabs, pace and projection for pioneers, and the checkbox report for publishers.
 - [Buddies](./buddies.md) covers the flagged feature, which needs the local ww-api relay, two-device invites, and the onboarding entry point.
+- [Shared Cars](./shared-cars.md) covers sharing a car through Buddies on two devices (iOS and Android) plus a headless third person, the car form's People, the Mileage person filter, Logged By, endings with their copies, and a single-device made-up car (`__WW_DEV__.sharedCars.addLocalCar`, `e2e/maestro/shared-cars.yaml`).
 - [Service Streaks](./streaks.md) covers the Home streak chip and countdown, the milestone celebration, streak reminders, buddies' streaks over the local relay, and the Schedule intro.
 - [Calendar Sync](./calendar-sync.md) covers connecting a calendar, publishing Follow-ups, disconnecting, and Android's calendar provider read-back.
 - [Cloud sync](./cloud-sync.md) covers Cloud Sync between iOS and Android on the local worker (realtime, switching, the offer and the default), iCloud Sync screens on iOS and Google Drive Sync on Android through a local fake Drive, including two Android users as two devices.

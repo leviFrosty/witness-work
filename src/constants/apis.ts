@@ -24,6 +24,9 @@ export default {
   buddies: BASE_URL,
   // Base for the server account's `/accounts/v1/*` ops (docs/accounts-protocol.md).
   accounts: BASE_URL,
+  // Base for Shared Spaces' `/spaces/v1/*` ops, Shared Cars' end-to-end
+  // encrypted records (docs/shared-cars-protocol.md).
+  spaces: BASE_URL,
   // Device attestation for the whole API (App Attest key setup, challenges).
   // Status is the App Attest and Play Integrity capabilities, no auth.
   attestationStatus: `${BASE_URL}/attestation/v1/status`,

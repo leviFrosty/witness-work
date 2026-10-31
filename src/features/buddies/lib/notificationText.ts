@@ -3,8 +3,14 @@ import i18n, { type TranslationKey } from '@/lib/locales'
 import { badgeReactionEmoji } from '@/features/buddies/lib/badgeReactions'
 import type { BuddyNotification } from '@/features/buddies/lib/state'
 
-/** A queue entry's line in the bell, naming the buddy as `entry.name`. */
-export function notificationHeadline(entry: BuddyNotification): string {
+/**
+ * A queue entry's line in the bell, naming the buddy as `entry.name`, and for a
+ * Shared Car the car as `car` (without it, "a car").
+ */
+export function notificationHeadline(
+  entry: BuddyNotification,
+  { car }: { car?: string } = {}
+): string {
   const name = { name: entry.name }
   const followUp = entry.shareType === 'followUp'
   switch (entry.kind) {
@@ -46,6 +52,14 @@ export function notificationHeadline(entry: BuddyNotification): string {
         badge: badge ? badgeTitle(badge.c, badge.l ?? null) : '',
       })
     }
+    case 'carInvite':
+      return car
+        ? i18n.t('buddies_notifCarInvite', { ...name, car })
+        : i18n.t('buddies_alertCarInvite', name)
+    case 'carJoined':
+      return car
+        ? i18n.t('buddies_notifCarJoined', { ...name, car })
+        : i18n.t('buddies_alertCarJoined', name)
   }
 }
 

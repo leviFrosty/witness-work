@@ -37,6 +37,7 @@ vi.mock('@/lib/serverAccount', () => ({
   },
   bearerOptions: () => ({}),
   onAccountChange: () => () => {},
+  peekAccountKey: async () => new Uint8Array(32).fill(1),
   serverAccount: { connect: vi.fn() },
 }))
 vi.mock('@/lib/serverAccount/revenueCatLinkRuntime', () => ({

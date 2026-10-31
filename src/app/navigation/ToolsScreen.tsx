@@ -1,4 +1,5 @@
 import useMileage from '@/stores/mileage'
+import { deleteAllMileageData } from '@/stores/mileageWrites'
 import {
   Bell as BellIcon,
   BellRing as BellRingIcon,
@@ -1313,7 +1314,7 @@ export default function ToolsScreen() {
               tone='destructive'
               onPress={() =>
                 confirmDevAction('Delete all mileage', () => {
-                  mileage.deleteAllMileageData()
+                  deleteAllMileageData()
                   showDone(i18n.t('deleted'))
                 })
               }

@@ -10,6 +10,7 @@ import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
 import LucideIcon from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
+import { MIN_TOUCH_TARGET } from '@/components/ui/touchTarget'
 import type { RootStackNavigation } from '@/types/rootStack'
 import { useShallow } from 'zustand/react/shallow'
 import useAccessibilityTextSize from '@/hooks/useAccessibilityTextSize'
@@ -47,7 +48,7 @@ export default function MileagePromptCard() {
 
   const buttonStyle = {
     flex: largeText ? undefined : 1,
-    minHeight: 44,
+    minHeight: MIN_TOUCH_TARGET,
     alignItems: 'center' as const,
     justifyContent: 'center' as const,
     borderRadius: theme.numbers.borderRadiusMd,

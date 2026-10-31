@@ -6,21 +6,37 @@ import i18n from '@/lib/locales'
 import Haptics from '@/lib/haptics'
 
 import confirmDestructive from '@/lib/confirmDestructive'
-import useMileage from '@/stores/mileage'
+import { buildMileageIndex } from '@/lib/mileage/calc'
+import { getMileageView } from '@/stores/mileageView'
+import { deleteTrip } from '@/stores/mileageWrites'
 import { buildTripText } from '@/features/mileage/lib/report'
 import useMileageFormatter from '@/features/mileage/hooks/useMileageFormatter'
-import useMileageIndex from '@/features/mileage/hooks/useMileageIndex'
+import useMileageSharing, {
+  currentMileagePeople,
+} from '@/features/mileage/hooks/useMileageSharing'
 import type { ContextMenuEntries } from '@/components/ui/ContextMenu'
 import type { RootStackNavigation } from '@/types/rootStack'
 import type { Trip } from '@/types/mileage'
 
-/** Edit, Log Again, Share, Copy, and Delete for one trip — row and details. */
+/**
+ * Edit, Log Again, Share, Copy, and Delete for one trip — row and details. The
+ * share text is built when it's asked for, from the mileage and people as they
+ * are then, so a row doesn't draw again each time a Shared Car syncs.
+ */
 export default function useTripActions() {
   const navigation = useNavigation<RootStackNavigation>()
-  const deleteTrip = useMileage((s) => s.deleteTrip)
-  const vehicles = useMileage((s) => s.vehicles)
-  const index = useMileageIndex()
   const format = useMileageFormatter()
+  const { buddies, ownName } = useMileageSharing()
+  const text = (trip: Trip) => {
+    const view = getMileageView()
+    return buildTripText(
+      trip,
+      view.vehicles,
+      buildMileageIndex(view.vehicleSetups, view.fuelPrices),
+      format,
+      { people: currentMileagePeople(buddies), ownName }
+    )
+  }
 
   const edit = (trip: Trip) =>
     navigation.navigate('MileageTripForm', { tripId: trip.id })
@@ -29,13 +45,11 @@ export default function useTripActions() {
     navigation.navigate('MileageTripForm', { duplicateOf: trip.id })
 
   const share = async (trip: Trip) => {
-    await Share.share({
-      message: buildTripText(trip, vehicles, index, format),
-    })
+    await Share.share({ message: text(trip) })
   }
 
   const copy = async (trip: Trip) => {
-    await Clipboard.setStringAsync(buildTripText(trip, vehicles, index, format))
+    await Clipboard.setStringAsync(text(trip))
     Haptics.success().catch(() => {})
     toast.success(i18n.t('copied'), { durationMs: 2000 })
   }

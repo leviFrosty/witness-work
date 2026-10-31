@@ -41,6 +41,15 @@ Buddies. The flag gates the Settings row, invite-link handling, calendar
 overlays, and the background runtime. The relay enforces its own kill switch
 (`buddies:enabled`); see `docs/buddies-protocol.md`.
 
+Shared Cars uses the `shared-cars` flag (create it in PostHog before rollout;
+it starts off). It gates the background runtime (`SharedCarsRuntime`), which
+also waits for Buddies to be running, since Shared Cars builds on the Buddies
+root seed and inbox, and syncs only while an account session exists. The
+server's own kill switch is `spaces:enabled`; while it's off every op but
+`leave`, `member/remove` and `delete` answers `disabled`, and the app backs off
+(see `docs/shared-cars-protocol.md`). Dev builds:
+`__WW_DEV__.setFlag('shared-cars', true)`.
+
 ## Announcements
 
 The `announcement` flag posts a notice to the Home notifications tray without a

@@ -108,5 +108,15 @@ export function buddyAlertText(alert: BuddyAlert): {
         }),
         body: badgeText(alert.badge),
       }
+    case 'carInvite':
+      return {
+        title: i18n.t('buddies_alertCarInvite', { name }),
+        body: i18n.t('buddies_pushCarInviteBody'),
+      }
+    case 'carJoined':
+      return {
+        title: i18n.t('buddies_alertCarJoined', { name }),
+        body: i18n.t('buddies_pushCarJoinedBody'),
+      }
   }
 }

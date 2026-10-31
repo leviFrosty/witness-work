@@ -1,8 +1,20 @@
 import type { ReactElement } from 'react'
 import PullDownMenu from '@/components/ui/PullDownMenu'
+import type { ContextMenuAction } from '@/components/ui/ContextMenu.types'
+
+export type SelectMenuItem = {
+  id: string
+  label: string
+  selected: boolean
+  /**
+   * An SF Symbol beside the option; Android shows it where `androidMenuIcons`
+   * maps it.
+   */
+  systemImage?: ContextMenuAction['systemImage']
+}
 
 export interface SelectMenuProps {
-  items: { id: string; label: string; selected: boolean }[]
+  items: SelectMenuItem[]
   onSelect: (id: string) => void
   accessibilityLabel?: string
   accessibilityValue: string
@@ -27,6 +39,7 @@ export default function SelectMenu({
         id: item.id,
         title: item.label,
         checked: item.selected,
+        systemImage: item.systemImage,
         onPress: () => onSelect(item.id),
       }))}
       accessibilityLabel={accessibilityLabel ?? accessibilityValue}

@@ -814,9 +814,13 @@
       "id": "shortcut.log-trip",
       "area": "Shortcuts",
       "title": "Log a mileage trip by voice",
-      "description": "\"Log a trip\" / \"Log a round trip in WitnessWork\" logs a trip for today in the user's distance unit with the default or chosen car; a round trip asks for the one-way distance and doubles it.",
+      "description": "\"Log a trip\" / \"Log a round trip in WitnessWork\" logs a trip for today in the user's distance unit with the default or chosen car; a round trip asks for the one-way distance and doubles it. Shared Cars work too: the snapshot lists them with the user's own cars, the default is the car the user last logged a trip on (not the one someone else last drove), and a trip on a Shared Car goes to its space, logged by the user (loggedBy).",
       "shared": [
-        "src/app/watch/planWatchTrips.ts#export function planWatchTrips"
+        "src/app/watch/planWatchTrips.ts#export function planWatchTrips",
+        "src/app/watch/watchSync.ts#tripsLoggedByMe",
+        "src/lib/mileage/people.ts#export const tripsLoggedByMe",
+        "src/stores/mileageView.ts#export function getMileageView",
+        "src/stores/mileageWrites.ts#export function saveTrip"
       ],
       "watchos": {
         "status": "implemented",
@@ -828,14 +832,14 @@
       },
       "wearos": {
         "status": "gap",
-        "notes": "Wear OS has no voice actions for other apps, and the Apple Watch has no trip screen to port, so trips can't be logged from a Wear OS watch. The phone side (ADD_TRIP) is ready if a surface is added."
+        "notes": "Wear OS has no voice actions for other apps, and the Apple Watch has no trip screen to port, so trips can't be logged from a Wear OS watch. The phone side (ADD_TRIP) is ready, Shared Cars included, if a surface is added."
       }
     },
     {
       "id": "shortcut.parameters",
       "area": "Shortcuts",
       "title": "Siri parameters",
-      "description": "Siri offers the user's Types and cars as parameters, read from the stored snapshot even before the app runs.",
+      "description": "Siri offers the user's Types and cars (their Shared Cars too) as parameters, read from the stored snapshot even before the app runs.",
       "watchos": {
         "status": "implemented",
         "paths": [

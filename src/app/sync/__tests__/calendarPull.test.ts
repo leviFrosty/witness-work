@@ -36,6 +36,7 @@ vi.mock('@/stores/conversationStore', () => ({ default: {} }))
 vi.mock('@/stores/serviceReport', () => ({ default: {} }))
 vi.mock('@/stores/categories', () => ({ default: {} }))
 vi.mock('@/stores/mileage', () => ({ default: {} }))
+vi.mock('@/stores/sharedCars', () => ({ default: {} }))
 vi.mock('@/stores/pet', () => ({ default: {} }))
 vi.mock('@/stores/profile', () => ({ useProfile: {} }))
 vi.mock('@/app/sync/payload', () => ({

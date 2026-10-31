@@ -1,5 +1,5 @@
 import useFormValidation from '@/hooks/useFormValidation'
-import { useState } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import ContentColumn from '@/components/ui/layout/ContentColumn'
 import { Alert, type AlertButton, View } from 'react-native'
 import * as Crypto from 'expo-crypto'
@@ -10,7 +10,15 @@ import { toast } from '@/stores/toasts'
 import useTheme from '@/contexts/theme'
 import i18n, { type TranslationKey } from '@/lib/locales'
 import { analytics } from '@/lib/analytics'
-import useMileage from '@/stores/mileage'
+import { useMileageView } from '@/stores/mileageView'
+import {
+  deleteVehicle,
+  deleteVehicleSetup,
+  saveFuel,
+  saveFuelPrice,
+  saveVehicle,
+  saveVehicleSetup,
+} from '@/stores/mileageWrites'
 import Wrapper from '@/components/ui/layout/Wrapper'
 import Section from '@/components/ui/inputs/Section'
 import TextInputRow from '@/components/ui/inputs/TextInputRow'
@@ -25,6 +33,7 @@ import {
   toDateKey,
   type HistoryChangeMode,
 } from '@/lib/mileage/calc'
+import { fuelsForVehicle } from '@/lib/mileage/view'
 import {
   displayToPricePerGallon,
   economyToMpg,
@@ -37,31 +46,57 @@ import useMileageFormatter from '@/features/mileage/hooks/useMileageFormatter'
 import useMileageIndex from '@/features/mileage/hooks/useMileageIndex'
 import HistoryChangeRow from '@/features/mileage/components/HistoryChangeRow'
 import HistoryList from '@/features/mileage/components/HistoryList'
+import SharedCarsNotice from '@/features/mileage/components/SharedCarsNotice'
+import { carRemoval } from '@/features/mileage/lib/carRemoval'
 import type { RootStackParamList } from '@/types/rootStack'
 
-type Props = NativeStackScreenProps<RootStackParamList, 'MileageVehicleForm'>
+/**
+ * The car form's People section: who's on a Shared Car, or Share Car… for one
+ * of the User's own. Shared Cars lives in the app tier, which supplies it.
+ */
+export type CarPeopleSlot = (props: { vehicleId: string }) => ReactNode
+
+type Props = NativeStackScreenProps<
+  RootStackParamList,
+  'MileageVehicleForm'
+> & {
+  renderPeople?: CarPeopleSlot
+}
 
 const NO_FUEL = '__none__'
 const NEW_FUEL = '__new__'
 
-/** Add or edit a car: name, fuel, and effective-dated fuel economy. */
-export default function MileageVehicleFormScreen({ route, navigation }: Props) {
+/**
+ * Add or edit a car: name, the people on it (`renderPeople`), fuel, and
+ * effective-dated fuel economy. On a Shared Car, says when its changes aren't
+ * being shared, and offers archiving but never deleting.
+ */
+export default function MileageVehicleFormScreen({
+  route,
+  navigation,
+  renderPeople,
+}: Props) {
   const theme = useTheme()
   const insets = useSafeAreaInsets()
-  const {
-    vehicles,
-    fuels,
-    trips,
-    saveVehicle,
-    deleteVehicle,
-    saveFuel,
-    saveFuelPrice,
-    saveVehicleSetup,
-    deleteVehicleSetup,
-  } = useMileage()
+  const view = useMileageView()
+  const { vehicles, trips } = view
   const format = useMileageFormatter()
   const index = useMileageIndex()
   const existing = vehicles.find((v) => v.id === route.params?.vehicleId)
+  const editing = route.params?.vehicleId !== undefined
+
+  // Deleted here or on another device, or a Shared Car that ended (left,
+  // stopped, removed): its copy has another id, so this form has nothing to
+  // edit. This is also how the form's own Delete closes it, so it closes once.
+  const gone = editing && !existing
+  useEffect(() => {
+    if (!gone) return
+    if (navigation.canGoBack()) navigation.goBack()
+    // Opened on its own (from a link, say): the cars, not an empty form.
+    else navigation.replace('MileageSettings')
+  }, [gone, navigation])
+  // A Shared Car's setups name its own fuels; the User's cars, theirs.
+  const fuels = fuelsForVehicle(view, existing?.id)
   const history = existing ? (index.setupsByVehicle.get(existing.id) ?? []) : []
   const today = toDateKey(new Date())
   const current = effectiveEntry(history, today)
@@ -74,15 +109,27 @@ export default function MileageVehicleFormScreen({ route, navigation }: Props) {
       ? current.fuelId
       : NO_FUEL
 
-  const [name, setName] = useState(existing?.name ?? '')
-  const [fuel, setFuel] = useState(() =>
-    existing ? currentFuel : (fuels[0]?.id ?? NEW_FUEL)
-  )
+  // What the User typed or picked, null until they do: until then each field
+  // shows the car as it is now, so Save doesn't write back what changed
+  // meanwhile. Someone else on a Shared Car may rename it or change its fuel,
+  // and Share Car… moves its setups onto the car's own copies of its fuels.
+  const [typedName, setName] = useState<string | null>(null)
+  const [pickedFuel, setFuel] = useState<string | null>(null)
+  const [typedEconomy, setEconomy] = useState<string | null>(null)
   const [newFuelName, setNewFuelName] = useState('')
   const [newFuelPrice, setNewFuelPrice] = useState('')
-  const [economy, setEconomy] = useState(() =>
-    toEconomyInput(current?.milesPerGallon)
-  )
+  const name = typedName ?? existing?.name ?? ''
+  // A fuel picked before Share Car… isn't one the car can name anymore.
+  const fuel =
+    pickedFuel !== null &&
+    (pickedFuel === NO_FUEL ||
+      pickedFuel === NEW_FUEL ||
+      fuels.some((f) => f.id === pickedFuel))
+      ? pickedFuel
+      : existing
+        ? currentFuel
+        : (fuels[0]?.id ?? NEW_FUEL)
+  const economy = typedEconomy ?? toEconomyInput(current?.milesPerGallon)
   const [changeMode, setChangeMode] = useState<HistoryChangeMode>('starting')
   const [changeDate, setChangeDate] = useState(() => new Date())
 
@@ -118,7 +165,10 @@ export default function MileageVehicleFormScreen({ route, navigation }: Props) {
     let fuelId = fuel === NO_FUEL || fuel === NEW_FUEL ? undefined : fuel
     if (creatingFuel) {
       fuelId = Crypto.randomUUID()
-      saveFuel({ id: fuelId, name: newFuelName.trim(), createdAt: Date.now() })
+      saveFuel(
+        { id: fuelId, name: newFuelName.trim(), createdAt: Date.now() },
+        { vehicleId }
+      )
       const price = parseDecimal(newFuelPrice)
       if (price !== undefined)
         saveFuelPrice({
@@ -184,18 +234,30 @@ export default function MileageVehicleFormScreen({ route, navigation }: Props) {
     navigation.goBack()
   }
 
+  // The form closes as the car goes (`gone`).
   const remove = () => {
-    if (!existing) return
-    deleteVehicle(existing.id)
-
-    navigation.goBack()
+    if (existing) deleteVehicle(existing.id)
   }
 
+  const removal = existing ? carRemoval(existing) : null
+
   const requestRemove = () => {
-    if (!existing) return
+    if (!existing || !removal) return
+    // A Shared Car is everyone's: it can be archived for all, not deleted.
+    if (!removal.delete) {
+      Alert.alert(
+        i18n.t('mileage.archiveSharedCar_title'),
+        i18n.t('mileage.archiveSharedCar_description'),
+        [
+          { text: i18n.t('cancel'), style: 'cancel' },
+          { text: i18n.t('archive'), onPress: () => setArchived(true) },
+        ]
+      )
+      return
+    }
     const buttons: (AlertButton | false)[] = [
       { text: i18n.t('cancel'), style: 'cancel' },
-      !existing.archived && {
+      removal.archive && {
         text: i18n.t('archive'),
         onPress: () => setArchived(true),
       },
@@ -232,6 +294,10 @@ export default function MileageVehicleFormScreen({ route, navigation }: Props) {
             gap: 20,
           }}
         >
+          {existing?.spaceId !== undefined && (
+            <SharedCarsNotice hasSharedCars spaceId={existing.spaceId} />
+          )}
+
           <Section>
             <TextInputRow
               label={i18n.t('name')}
@@ -247,6 +313,8 @@ export default function MileageVehicleFormScreen({ route, navigation }: Props) {
               }}
             />
           </Section>
+
+          {existing && renderPeople?.({ vehicleId: existing.id })}
 
           <View style={{ gap: 8 }}>
             <Section>
@@ -354,22 +422,30 @@ export default function MileageVehicleFormScreen({ route, navigation }: Props) {
                 </Text>
               </Button>
             )}
-            {existing && (
+            {removal && (removal.archive || removal.delete) && (
               <Button
                 noTransform
                 accessibilityRole='button'
                 onPress={requestRemove}
                 style={{ alignItems: 'center', paddingVertical: 12 }}
               >
+                {/* Archiving a Shared Car takes nothing away from anyone, so
+                    only the choice that can delete reads as destructive. */}
                 <Text
                   style={{
-                    color: theme.colors.error,
+                    color: removal.delete
+                      ? theme.colors.error
+                      : theme.colors.accent,
                     fontFamily: theme.fonts.semiBold,
                     fontSize: theme.fontSize('md'),
                   }}
                 >
                   {i18n.t(
-                    existing.archived ? 'deleteEllipsis' : 'mileage.removeCar'
+                    !removal.delete
+                      ? 'mileage.archiveCarEllipsis'
+                      : removal.archive
+                        ? 'mileage.removeCar'
+                        : 'deleteEllipsis'
                   )}
                 </Text>
               </Button>

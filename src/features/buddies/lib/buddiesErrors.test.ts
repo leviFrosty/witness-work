@@ -4,12 +4,14 @@ import {
   buddiesFailureReason,
   isRetryableBuddiesError,
 } from '@/features/buddies/lib/buddiesErrors'
-import { BuddyInviteError } from '@/features/buddies/lib/engine'
+import {
+  BuddyInviteError,
+  BuddyRemovalPendingError,
+} from '@/features/buddies/lib/engine'
 import { RelayError } from '@/features/buddies/lib/relay'
 
-vi.mock('@/lib/locales', () => ({
-  default: { t: (key: string) => key },
-}))
+const t = vi.hoisted(() => vi.fn((key: string, _options?: object) => key))
+vi.mock('@/lib/locales', () => ({ default: { t } }))
 const platform = vi.hoisted(() => ({ OS: 'ios' }))
 vi.mock('react-native', () => ({ Platform: platform }))
 
@@ -18,6 +20,33 @@ describe('Buddies errors', () => {
     const timeout = new RelayError('timeout', 0)
     expect(buddiesErrorMessage(timeout)).toBe('buddies_errorTimeout')
     expect(buddiesFailureReason(timeout)).toBe('offline')
+  })
+
+  it('says why Delete My Buddies Data stopped, naming one car it couldn’t leave', () => {
+    const message = (cars?: string[]) => {
+      buddiesErrorMessage(new BuddyRemovalPendingError('everything', cars))
+      return t.mock.lastCall
+    }
+    expect(message()).toEqual(['buddies_deleteAllPending'])
+    expect(message(['Mazda CX-5'])).toEqual([
+      'buddies_deleteAllCarPending',
+      { car: 'Mazda CX-5' },
+    ])
+    // One that never synced here has no name; two are counted.
+    expect(message([''])).toEqual([
+      'buddies_deleteAllCarsPending',
+      { count: 1 },
+    ])
+    expect(message(['Mazda CX-5', ''])).toEqual([
+      'buddies_deleteAllCarsPending',
+      { count: 2 },
+    ])
+    expect(buddiesErrorMessage(new BuddyRemovalPendingError('buddy'))).toBe(
+      'buddies_removePending'
+    )
+    expect(
+      isRetryableBuddiesError(new BuddyRemovalPendingError('everything', ['']))
+    ).toBe(false)
   })
 
   it("names the relay's cap on open invites", () => {

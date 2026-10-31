@@ -226,6 +226,8 @@
     "buddies_alertBadgeEarned",
     "buddies_alertBadgeReaction",
     "buddies_alertBadgesEarned",
+    "buddies_alertCarInvite",
+    "buddies_alertCarJoined",
     "buddies_alertClaimed",
     "buddies_alertYourFollowUp",
     "buddies_alertYourPlan",
@@ -240,6 +242,8 @@
     "buddies_notifPlanUpdate",
     "buddies_notifReplyDeclined",
     "buddies_notifReplyGoing",
+    "buddies_pushCarInviteBody",
+    "buddies_pushCarJoinedBody",
     "buddies_pushInviteClaimedBody",
     "buddies_pushPairConfirmedBody"
   ]

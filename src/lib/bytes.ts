@@ -66,6 +66,10 @@ export function fromUtf8(bytes: Uint8Array): string {
   return strFromU8(bytes)
 }
 
+/** Whether two byte arrays hold the same bytes. Not constant-time. */
+export const sameBytes = (a: Uint8Array, b: Uint8Array) =>
+  a.length === b.length && a.every((byte, i) => byte === b[i])
+
 export function concatBytes(...parts: Uint8Array[]): Uint8Array {
   const out = new Uint8Array(parts.reduce((sum, part) => sum + part.length, 0))
   let offset = 0

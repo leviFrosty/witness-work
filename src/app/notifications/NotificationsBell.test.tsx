@@ -89,6 +89,9 @@ vi.mock('@/features/buddies/hooks/useBuddyNotifications', () => ({
   syncBuddyNotifications: () => {},
   useBuddyTraySyncStatus: () => ({ state: 'idle', retry: () => {} }),
 }))
+vi.mock('@/app/sharedCars/useSharedCarNotifications', () => ({
+  default: () => [],
+}))
 vi.mock('@/features/updates/lib/updates', () => ({
   applyPendingUpdate: tray.applyPendingUpdate,
 }))

@@ -49,6 +49,7 @@ import {
   seedScenario,
 } from '@/app/dev-harness/seedScenario'
 import { petHarness } from '@/app/dev-harness/pet'
+import { keyChangeHarness } from '@/app/dev-harness/keyChange'
 import { cloudSyncHarness } from '@/app/dev-harness/cloudSync'
 import { revenueCatHarness } from '@/app/dev-harness/revenueCat'
 import { appUpdateHarness } from '@/app/dev-harness/appUpdate'
@@ -484,6 +485,12 @@ export function installDevHarness() {
      * default and the one-time offer.
      */
     cloudSync: cloudSyncHarness,
+    /**
+     * Change Account Key (ADR 0039): `keyChange.state()` (stage, signed-out
+     * state, session); `inspect()` (which key each Cloud Sync and backup slot
+     * opens with) or `resume()`, then `keyChange.last`.
+     */
+    keyChange: keyChangeHarness,
     /**
      * One RevenueCat customer per account (ADR 0040 §7): `revenueCat.state()`
      * (this device's id, claims and the server's Supporter answer, ids as

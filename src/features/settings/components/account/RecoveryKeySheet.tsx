@@ -61,7 +61,16 @@ export default function RecoveryKeySheet({
   )
 }
 
-function RecoveryKeyContent({ recoveryKey }: { recoveryKey: string }) {
+/** The key with Copy and Share; also Change Account Key's new key. */
+export function RecoveryKeyContent({
+  recoveryKey,
+  title = i18n.t('account_recoveryKeyTitle'),
+  padding = 20,
+}: {
+  recoveryKey: string
+  title?: string
+  padding?: number
+}) {
   const theme = useTheme()
 
   const copy = async () => {
@@ -112,7 +121,7 @@ function RecoveryKeyContent({ recoveryKey }: { recoveryKey: string }) {
   )
 
   return (
-    <View style={{ padding: 20, gap: 16 }}>
+    <View style={{ padding, gap: 16 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center' }}>
         <Text
           accessibilityRole='header'
@@ -122,7 +131,7 @@ function RecoveryKeyContent({ recoveryKey }: { recoveryKey: string }) {
             fontFamily: theme.fonts.bold,
           }}
         >
-          {i18n.t('account_recoveryKeyTitle')}
+          {title}
         </Text>
         <InfoPopover
           title={i18n.t('account_recoveryKeyTitle')}

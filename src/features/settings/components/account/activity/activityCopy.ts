@@ -240,6 +240,8 @@ export function activityDetail(entry: ActivityEntry): string | null {
     }
     case 'account.suspended':
       return i18n.t('accountActivity_suspendedDetail')
+    case 'account.key_changed':
+      return i18n.t('accountActivity_keyChangedDetail')
     default:
       return null
   }

@@ -9,6 +9,7 @@ dist/
 web-build/
 # Skia's CanvasKit, copied in by scripts/web.mjs
 /public/canvaskit.wasm
+/public/sql-wasm-browser.wasm
 
 # wrangler dev state for the web host (web/host)
 .wrangler/

@@ -1,3 +1,4 @@
+import { Platform } from 'react-native'
 import * as FileSystem from 'expo-file-system/legacy'
 import * as ImageManipulator from 'expo-image-manipulator'
 import { logger } from '@/lib/logger'
@@ -66,22 +67,52 @@ export function originalAvatarPath(
  * filesystem APIs. `<Image>` keeps the buster; `FileSystem` cannot.
  */
 export function stripCacheBuster(uri: string): string {
+  if (isInlineImage(uri)) return uri
   const q = uri.indexOf('?')
   return q === -1 ? uri : uri.slice(0, q)
 }
 
 export function withCacheBuster(path: string): string {
-  return `${path}?t=${Date.now()}`
+  // Inline images (the web's) can't take a query, and never share a URI.
+  return isInlineImage(path) ? path : `${path}?t=${Date.now()}`
 }
+
+/** A `data:` or `blob:` URL, which holds its own bytes instead of naming a file. */
+const isInlineImage = (uri: string) =>
+  uri.startsWith('data:') || uri.startsWith('blob:')
 
 export async function originalExists(
   contactId: string,
   revision?: string
 ): Promise<boolean> {
+  // The web keeps no originals beside the avatar (ADR 0040 §6 will carry them).
+  if (Platform.OS === 'web') return false
   const info = await FileSystem.getInfoAsync(
     originalAvatarPath(contactId, revision)
   )
   return info.exists
+}
+
+/** The longest side of a web avatar; it's shown small, and stored in the record. */
+const WEB_AVATAR_MAX_SIDE = 1024
+const WEB_AVATAR_QUALITY = 0.85
+
+/**
+ * The web has no files to write to: the cropped, downscaled JPEG is the
+ * avatar's value, a `data:` URL the record carries (and Cloud Sync's photo pass
+ * takes from, docs/web-files.md).
+ */
+async function cropAvatarInBrowser(
+  srcUri: string,
+  rect: CropRect
+): Promise<{ path: string; width: number; height: number }> {
+  const { renderJpeg, blobToDataUrl } = await import('@/lib/files/webImages')
+  const { blob, width, height } = await renderJpeg(stripCacheBuster(srcUri), {
+    crop: rect,
+    maxSide: WEB_AVATAR_MAX_SIDE,
+    quality: WEB_AVATAR_QUALITY,
+  })
+  return { path: await blobToDataUrl(blob), width, height }
 }
 
 export interface CropRect {
@@ -110,6 +141,7 @@ export async function cropAndSaveImage(
   rect: CropRect,
   source: { width: number; height: number }
 ): Promise<{ path: string; width: number; height: number }> {
+  if (Platform.OS === 'web') return cropAvatarInBrowser(srcUri, rect)
   const safeRect: CropRect = {
     originX: Math.max(0, Math.min(rect.originX, source.width - 1)),
     originY: Math.max(0, Math.min(rect.originY, source.height - 1)),

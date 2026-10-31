@@ -13,7 +13,14 @@ const worker = process.env.E2E_WORKER
 const browsers = {
   chromium: devices['Desktop Chrome'],
   webkit: devices['Desktop Safari'],
-  firefox: devices['Desktop Firefox'],
+  firefox: {
+    ...devices['Desktop Firefox'],
+    // A container reaches the app by a host name that isn't a secure context
+    // (no `crypto.randomUUID`), unlike localhost; production is https.
+    launchOptions: {
+      firefoxUserPrefs: { 'dom.securecontext.allowlist': host },
+    },
+  },
 }
 const sizes = {
   desktop: { width: 1280, height: 900 },

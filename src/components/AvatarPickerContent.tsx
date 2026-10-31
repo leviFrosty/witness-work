@@ -30,6 +30,7 @@ import {
 import ContactAvatarCropEditor from '@/components/ContactAvatarCropEditor'
 import { useAvatarDraftFiles } from '@/hooks/useAvatarDraftFiles'
 import useLibraryImagePicker from '@/hooks/useLibraryImagePicker'
+import { photoFailedMessage } from '@/lib/photoLibrary/photoFailedMessage'
 
 export type AvatarMetaCapture = {
   width: number
@@ -319,13 +320,27 @@ const AvatarPickerContent = ({
       })
     } catch (e) {
       logger.error('Failed to pick an avatar image', e)
-      toast.error(i18n.t('photoPicker_failed'))
+      toast.error(photoFailedMessage(e))
       return
     }
     if (result.canceled || !result.assets[0]) return
 
     const asset = result.assets[0]
     const revision = Crypto.randomUUID()
+    if (Platform.OS === 'web') {
+      // No files: the crop editor reads the picked photo's object URL, and the
+      // cropped JPEG becomes the avatar's value (`cropAndSaveImage`).
+      setPendingPick({
+        revision,
+        sourceUri: asset.uri,
+        destPath: '',
+        sourceWidth: asset.width,
+        sourceHeight: asset.height,
+        fileSize: asset.fileSize,
+        capturedAt: pickCapturedAt(asset.exif),
+      })
+      return
+    }
     const originalPath = `${FileSystem.documentDirectory}${originalSiblingFileName(imageFileName, revision)}`
     const destPath = `${FileSystem.documentDirectory}${revisionImageFileName(imageFileName, revision)}`
     const paths = [originalPath, destPath]
@@ -361,6 +376,7 @@ const AvatarPickerContent = ({
   }) => {
     if (!pendingPick) return
     if (
+      Platform.OS !== 'web' &&
       !draftFiles.commit([pendingPick.sourceUri, stripCacheBuster(next.path)])
     )
       return

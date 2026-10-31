@@ -1,5 +1,5 @@
 import { Fragment } from 'react'
-import { ScrollView, View } from 'react-native'
+import { Platform, ScrollView, View } from 'react-native'
 import {
   Bold as BoldIcon,
   Heading1 as Heading1Icon,
@@ -30,6 +30,7 @@ import {
   type EditorFormatState,
 } from '@/components/richText/editor/editorProtocol'
 import useTheme from '@/contexts/theme'
+import { canCapturePhotos } from '@/lib/files/pickWebImages'
 import i18n from '@/lib/locales'
 
 export const TOOLBAR_HEIGHT = 48
@@ -234,7 +235,8 @@ const RichTextToolbar = (props: {
       accessibilityLabel={i18n.t('richText_addPhoto')}
       testID='note-editor-photo'
       actions={[
-        {
+        // A desktop browser has no camera to open; it would show a file dialog.
+        !(Platform.OS === 'web' && !canCapturePhotos()) && {
           id: 'camera',
           title: i18n.t('richText_takePhoto'),
           systemImage: 'camera',

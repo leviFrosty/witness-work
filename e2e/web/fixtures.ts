@@ -116,7 +116,10 @@ export const test = base.extend<Fixtures>({
     // Nothing a smoke run does reaches a real service: everything but the
     // app's own server answers 503 here, as a service that's down would.
     const app = new URL(baseURL!).host
-    const isApp = (url: URL) => url.host === app
+    // A `blob:` URL is the page's own object (a picked file, a download), which
+    // WebKit reports to the router with no host.
+    const isApp = (url: URL) =>
+      url.host === app || url.protocol === 'blob:' || url.protocol === 'data:'
     await page.context().route(
       (url) => !isApp(url),
       (route) =>

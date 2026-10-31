@@ -20,6 +20,7 @@ vi.mock('expo-image-manipulator', () => ({
 // `../lib/logger` chains through to the preferences store which imports the
 // react-native MMKV module — not parseable in node. Stub it out for these
 // pure-function tests.
+vi.mock('react-native', () => ({ Platform: { OS: 'ios' } }))
 vi.mock('@/lib/logger', () => import('@/__tests__/mocks/logger'))
 
 import {

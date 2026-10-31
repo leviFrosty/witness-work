@@ -103,9 +103,11 @@ const ImportAndExportScreen = () => {
             )}
             <Text style={{ color: theme.colors.textAlt }}>
               {i18n.t(
-                Platform.OS === 'android'
-                  ? 'restoreFromBackup_hintAndroid'
-                  : 'restoreFromBackup_hint'
+                Platform.select({
+                  android: 'restoreFromBackup_hintAndroid',
+                  web: 'restoreFromBackup_hintWeb',
+                  default: 'restoreFromBackup_hint',
+                })
               )}
             </Text>
             <ActionButton

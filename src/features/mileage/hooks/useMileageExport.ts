@@ -1,11 +1,14 @@
 import { Share } from 'react-native'
 import * as Clipboard from 'expo-clipboard'
-import * as FileSystem from 'expo-file-system/legacy'
-import * as Sharing from 'expo-sharing'
 import { toast } from '@/stores/toasts'
 import i18n from '@/lib/locales'
 import Haptics from '@/lib/haptics'
 import { analytics } from '@/lib/analytics'
+import {
+  canExportFiles,
+  deliverExport,
+  prepareExport,
+} from '@/lib/files/exportFile'
 import { logger } from '@/lib/logger'
 import { toDateKey } from '@/lib/mileage/calc'
 import {
@@ -41,7 +44,7 @@ export default function useMileageExport() {
           analytics.capture('mileage_report_exported', properties)
         return
       }
-      if (!(await Sharing.isAvailableAsync())) {
+      if (!(await canExportFiles())) {
         toast.error(i18n.t('mileage.csvUnavailable'))
         analytics.capture('mileage_report_export_failed', {
           ...properties,
@@ -49,15 +52,19 @@ export default function useMileageExport() {
         })
         return
       }
-      const uri = `${FileSystem.cacheDirectory}${i18n
+      const fileName = `${i18n
         .t('mileage.csvFileName')
         .replace(/[^\w-]+/g, '-')}-${toDateKey(input.period.start)}.csv`
-      await FileSystem.writeAsStringAsync(uri, buildReportCsv(input))
-      await Sharing.shareAsync(uri, {
-        mimeType: 'text/csv',
-        UTI: 'public.comma-separated-values-text',
-        dialogTitle: i18n.t('mileage.exportCsv'),
-      })
+      await deliverExport(
+        await prepareExport({
+          fileName,
+          mimeType: 'text/csv',
+          uti: 'public.comma-separated-values-text',
+          dialogTitle: i18n.t('mileage.exportCsv'),
+          text: buildReportCsv(input),
+          purpose: 'save',
+        })
+      )
       analytics.capture('mileage_report_exported', properties)
     } catch (error) {
       logger.error('Mileage export failed', error)

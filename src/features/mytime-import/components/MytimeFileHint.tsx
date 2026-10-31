@@ -29,9 +29,11 @@ const MytimeFileHint = () => {
         }}
       >
         {i18n.t(
-          Platform.OS === 'android'
-            ? 'mytimeImport_fileHintAndroid'
-            : 'mytimeImport_fileHint'
+          Platform.select({
+            android: 'mytimeImport_fileHintAndroid',
+            web: 'mytimeImport_fileHintWeb',
+            default: 'mytimeImport_fileHint',
+          })
         )}
       </Text>
     </XView>

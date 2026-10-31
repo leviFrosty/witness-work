@@ -8,7 +8,7 @@ import {
   useRef,
   useState,
 } from 'react'
-import { Pressable, useWindowDimensions, View } from 'react-native'
+import { Platform, Pressable, useWindowDimensions, View } from 'react-native'
 import { Image } from 'expo-image'
 import Animated, {
   interpolate,
@@ -43,6 +43,9 @@ import { leftForPhysicalX } from '@/lib/direction'
 export function isRenderableImageValue(value: string): boolean {
   if (!value) return false
   if (value.startsWith('icloud://')) return false
+  // A browser can't open a phone's file paths (a restored backup's, say), and
+  // loading one would only fail: those show initials, like markers.
+  if (Platform.OS === 'web') return /^(data|blob|https?):/i.test(value)
   return true
 }
 

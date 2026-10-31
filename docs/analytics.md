@@ -324,9 +324,10 @@ person opened Device Sync.
 
 Export/restore retains
 bounded `entry_point` (`settings`, `backup_reminder`, or `import_data`), failure stage/error code,
-and wall-clock elapsed time. `backup_exported` means Expo's sharing call resolved;
-`outcome: unknown` covers both sharing and cancellation and cannot establish that
-a backup was saved. Reminder dismissal snoozes without changing `lastBackupDate`.
+and wall-clock elapsed time. `backup_exported` means Expo's sharing call resolved
+(or, on the web, the browser download started; `destination: download` rather
+than `share_sheet`); `outcome: unknown` covers both sharing and cancellation and
+cannot establish that a backup was saved. Reminder dismissal snoozes without changing `lastBackupDate`.
 
 Restore probe status is `probing`, `found`, `noBackup`, `unavailable`, or
 `incomplete`; each distinct status survives the session cap. Photo consent does

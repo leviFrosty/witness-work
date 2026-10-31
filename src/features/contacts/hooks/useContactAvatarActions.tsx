@@ -1,6 +1,6 @@
 import * as Crypto from 'expo-crypto'
 import { useEffect, useState } from 'react'
-import { Alert, Image as RNImage } from 'react-native'
+import { Alert, Image as RNImage, Platform } from 'react-native'
 import { shareAsync } from 'expo-sharing'
 import * as MediaLibrary from 'expo-media-library'
 import Haptics from '@/lib/haptics'
@@ -19,6 +19,7 @@ import {
 } from '@/lib/contactAvatarFiles'
 import i18n from '@/lib/locales'
 import { logger } from '@/lib/logger'
+import { downloadAvatar, shareAvatar } from '@/lib/files/webAvatar'
 import useContacts from '@/stores/contactsStore'
 import type { Contact } from '@/types/contact'
 import { useAvatarDraftFiles } from '@/hooks/useAvatarDraftFiles'
@@ -115,17 +116,21 @@ export default function useContactAvatarActions(
     const revision = Crypto.randomUUID()
     const uri = originalAvatarPath(contact.id, revision)
     const paths = [uri, croppedAvatarPath(contact.id, revision)]
-    if (!draftFiles.claim(paths)) return
+    // The web has no files to copy: the editor crops the displayed image.
+    const web = Platform.OS === 'web'
+    if (!web && !draftFiles.claim(paths)) return
     try {
       // The editor owns this source until it commits or is cancelled. A remote
       // replacement can safely remove the previously saved photo meanwhile.
-      await FileSystem.copyAsync({ from: editableSource.uri, to: uri })
-      if (!draftFiles.owns(paths)) {
-        draftFiles.release(paths)
-        return
+      if (!web) {
+        await FileSystem.copyAsync({ from: editableSource.uri, to: uri })
+        if (!draftFiles.owns(paths)) {
+          draftFiles.release(paths)
+          return
+        }
       }
       setEditSource({
-        uri,
+        uri: web ? editableSource.uri : uri,
         ...d,
         revision,
         avatarMeta: {
@@ -146,6 +151,7 @@ export default function useContactAvatarActions(
 
   const save = async () => {
     if (!displayedUri || busy) return
+    if (Platform.OS === 'web') return downloadAvatar(displayedUri, contact.name)
     setBusy(true)
     try {
       const perm = await MediaLibrary.requestPermissionsAsync(true)
@@ -172,6 +178,7 @@ export default function useContactAvatarActions(
   const share = async () => {
     if (!displayedUri) return
     Haptics.selection().catch(() => {})
+    if (Platform.OS === 'web') return shareAvatar(displayedUri, contact.name)
     try {
       await shareAsync(stripCacheBuster(displayedUri), {
         dialogTitle: contact.name,
@@ -251,7 +258,10 @@ export default function useContactAvatarActions(
     height: number
   }) => {
     if (!editSource) return
-    if (!draftFiles.commit([editSource.uri, stripCacheBuster(next.path)]))
+    if (
+      Platform.OS !== 'web' &&
+      !draftFiles.commit([editSource.uri, stripCacheBuster(next.path)])
+    )
       return
     updateContact({
       id: contact.id,

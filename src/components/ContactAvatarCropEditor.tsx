@@ -157,12 +157,12 @@ const ContactAvatarCropEditor = ({
   // re-reads from disk instead of returning a stale cached bitmap. Using
   // state + effect (vs `useMemo` with `Date.now()`) keeps the render pure and
   // satisfies the React Compiler ESLint plugin.
-  const [displayUri, setDisplayUri] = useState(
-    () => `${stripCacheBuster(sourceUri)}?t=${Date.now()}`
+  const [displayUri, setDisplayUri] = useState(() =>
+    withCacheBuster(stripCacheBuster(sourceUri))
   )
   useEffect(() => {
     if (!visible) return
-    setDisplayUri(`${stripCacheBuster(sourceUri)}?t=${Date.now()}`)
+    setDisplayUri(withCacheBuster(stripCacheBuster(sourceUri)))
   }, [visible, sourceUri])
 
   const scale = useSharedValue(baseScale)

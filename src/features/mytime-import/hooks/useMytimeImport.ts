@@ -136,7 +136,7 @@ export const useMytimeImport = ({
       }
 
       setStatus('parsing')
-      const tables = await readMytimeDb(assets[0].uri)
+      const tables = await readMytimeDb(assets[0].uri, assets[0].file)
       const mapped = mapMytimeData(tables, new Date())
       mappedRef.current = mapped
       setPreview(buildPreview(mapped))

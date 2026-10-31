@@ -208,6 +208,22 @@ export function copyCanvasKit(root) {
   return target
 }
 
+/**
+ * SQLite's wasm for MyTime import (`readMytimeSqlite`), served from the web
+ * root like CanvasKit so no third-party origin is involved. The 0.7 MB file is
+ * copied from the installed `sql.js`, not checked in.
+ */
+export function copySqlWasm(root) {
+  const sqlJs = createRequire(
+    path.join(root, 'node_modules/sql.js/package.json')
+  )
+  const source = sqlJs.resolve('sql.js/dist/sql-wasm-browser.wasm')
+  const target = path.join(root, 'public', 'sql-wasm-browser.wasm')
+  fs.mkdirSync(path.dirname(target), { recursive: true })
+  fs.copyFileSync(source, target)
+  return target
+}
+
 /** Where `sync:help` writes the Help Center snapshot the export bundles. */
 export const HELP_SNAPSHOT = 'src/assets/help-center'
 
@@ -261,6 +277,7 @@ function main() {
     `[web] ${profile}: ${files.map((file) => path.relative(root, file)).join(', ')}; API: ${api.origin}; host: ${host}`
   )
   copyCanvasKit(root)
+  copySqlWasm(root)
   const spawn = (executable, argv) => {
     const result = spawnSync(executable, argv, {
       cwd: root,

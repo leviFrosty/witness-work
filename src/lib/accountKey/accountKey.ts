@@ -1,4 +1,4 @@
-import { fromB64u, toB64u } from '@/lib/bytes'
+import { fromB64u, sameBytes, toB64u } from '@/lib/bytes'
 
 /**
  * The account key (ADR 0026): the User's one secret, 32 random bytes that every
@@ -117,9 +117,6 @@ export class AccountKeyLossError extends Error {
 }
 
 const KEY_BYTES = 32
-
-const sameBytes = (a: Uint8Array, b: Uint8Array) =>
-  a.length === b.length && a.every((byte, i) => byte === b[i])
 
 export function createAccountKeyService(deps: AccountKeyServiceDeps) {
   let replacing: Promise<ReplaceAccountKeyResult> | null = null

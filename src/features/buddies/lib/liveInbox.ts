@@ -1,4 +1,5 @@
 import type { LiveSocket } from '@/features/buddies/lib/relay'
+import { LIVE_CLOSE_EXPIRED } from '@/lib/serverAccount/liveTicket'
 
 /** Keepalive: answered by the relay without waking the inbox. */
 const PING_INTERVAL_MS = 25 * 1000
@@ -13,6 +14,8 @@ const CHANGE_DEBOUNCE_MS = 300
 const CLOSE_GONE = 4001
 /** The relay closed the socket because the inbox's account is suspended. */
 const CLOSE_SUSPENDED = 4003
+/** At most one immediate reconnect for an expired token this often. */
+const EXPIRED_RECONNECT_MS = 10 * 1000
 
 type LiveMessage = { type: 'hello' | 'changed'; seq: number }
 
@@ -93,6 +96,7 @@ export function createLiveInbox(deps: LiveInboxDeps) {
    */
   let refused = false
   let failures = 0
+  let expiredReconnectAt = -Infinity
   let reconnectTimer: ReturnType<typeof setTimeout> | null = null
   let pingTimer: ReturnType<typeof setInterval> | null = null
   let pongTimer: ReturnType<typeof setTimeout> | null = null
@@ -221,6 +225,16 @@ export function createLiveInbox(deps: LiveInboxDeps) {
       // suspension, which keeps this off until a sync works again.
       if (event.code === CLOSE_SUSPENDED) {
         if (running) sync()
+        return
+      }
+      // Backs off as usual if it keeps happening (a clock that's off).
+      if (
+        event.code === LIVE_CLOSE_EXPIRED &&
+        heard &&
+        now() - expiredReconnectAt > EXPIRED_RECONNECT_MS
+      ) {
+        expiredReconnectAt = now()
+        connect()
         return
       }
       scheduleReconnect()

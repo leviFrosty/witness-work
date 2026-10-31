@@ -3,7 +3,8 @@ import * as BuddiesKeychain from '../../../../modules/buddies-keychain'
 import apis from '@/constants/apis'
 import { analytics } from '@/lib/analytics'
 import { refreshSyncClock, syncNow } from '@/lib/syncClock'
-import { accountSessions, serverAccount } from '@/lib/serverAccount'
+import { accountSessions, serverAccount, webAccount } from '@/lib/serverAccount'
+import { openTicketedSocket } from '@/lib/serverAccount/liveTicket'
 import useContacts from '@/stores/contactsStore'
 import useConversations from '@/stores/conversationStore'
 import { usePet } from '@/stores/pet'
@@ -136,6 +137,17 @@ const engine = createBuddiesEngine({
     // Reinstated: the notice clears and the live signal comes back now, not
     // on the next sync.
     onAccountActive: () => useBuddiesSession.setState(accountActiveStatus),
+    // A browser can't send headers on a socket: it offers a ticket.
+    ...(Platform.OS === 'web' && {
+      openTicketedSocket: (url: string, inboxId: string) =>
+        openTicketedSocket(
+          { url, socket: 'buddies', id: inboxId },
+          {
+            baseUrl: apis.accounts,
+            authorize: (run) => accountSessions.withSession(run),
+          }
+        ),
+    }),
   }),
   store: useBuddies,
   randomBytes,
@@ -145,8 +157,10 @@ const engine = createBuddiesEngine({
   getRootSeed: async () =>
     fromB64u(await BuddiesKeychain.getOrCreateRootSeed()),
   // The seed is the account key: its session ends first, and none opens for
-  // it while it's deleted (ADR 0027).
+  // it while it's deleted (ADR 0027). A browser without it is signed out, so
+  // it signs out, wiping the rest with it, and reloads.
   deleteRootSeed: async () => {
+    if (webAccount) return webAccount.signOut()
     const seed = await BuddiesKeychain.peekRootSeed()
     await serverAccount.changeKey(() => BuddiesKeychain.deleteRootSeed(), {
       from: seed ? fromB64u(seed) : null,

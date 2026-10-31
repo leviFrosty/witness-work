@@ -21,6 +21,7 @@ import {
   onAccountChange,
   serverAccount,
 } from '@/lib/serverAccount'
+import { openTicketedSocket } from '@/lib/serverAccount/liveTicket'
 import { ensureRevenueCatLinked } from '@/lib/serverAccount/revenueCatLinkRuntime'
 import {
   cloudSyncOffered,
@@ -412,18 +413,21 @@ type HeaderWebSocket = new (
 async function openSyncSocket(): Promise<LiveSocket> {
   const accountKey = await peekAccountKey()
   if (!accountKey) throw new Error('No account key on this device')
+  const url = `${apis.accounts.replace(/^http/, 'ws')}/accounts/v1/sync/live`
+  // A browser offers a ticket instead of headers.
+  if (Platform.OS === 'web')
+    return openTicketedSocket(
+      { url, socket: 'sync', id: ensureSyncDeviceId() },
+      bearerOptions(accountKey)
+    )
   return accountSessions.withSession(
     async (authorization) =>
-      new (WebSocket as unknown as HeaderWebSocket)(
-        `${apis.accounts.replace(/^http/, 'ws')}/accounts/v1/sync/live`,
-        null,
-        {
-          headers: {
-            authorization,
-            'x-ww-slot-id': ensureSyncDeviceId(),
-          },
-        }
-      ),
+      new (WebSocket as unknown as HeaderWebSocket)(url, null, {
+        headers: {
+          authorization,
+          'x-ww-slot-id': ensureSyncDeviceId(),
+        },
+      }),
     { accountKey }
   )
 }

@@ -1212,6 +1212,19 @@ and how often people open it in more than one tab. Saves that work send nothing.
 | `web_storage_failed` | The browser couldn't save, and the User was told. Once per UTC day and reason. | `reason: unavailable \| quotaExceeded \| writeFailed` (`unavailable`: IndexedDB couldn't be opened, so the tab runs from memory), `persisted` (storage is persistent). |
 | `web_tab_taken_over` | The User chose Use Here in a tab while WitnessWork was open in another one.    | None.                                                                                                                                                                  |
 
+### Web sessions
+
+This answers how often the server ends a browser's account session, and why
+(ADR 0038 §8): mostly whether the cap of 3 web sessions per account
+(`replaced`) or 180 days without use (`expired`) signs people out. Opening and
+refreshing a web session send nothing here.
+
+| Event               | When                                                                                 | Properties                                                                                                                                                                                                                                                                                                                        |
+| ------------------- | ------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `web_session_ended` | A refresh was refused, or the session reached its expiry, in the tab that found out. | `reason: revoked \| replaced \| expired \| reused \| unknown` (`expired` also covers a `reused` answer for a token this browser had sent before and never stored the answer to), `outcome: wiped \| signIn` (`wiped`: `revoked` or `reused`, so the browser deleted its data; `signIn`: it kept it and shows the sign-in screen). |
+
+Never the account id, session ids, or tokens.
+
 ### Account backup
 
 These answer whether people turn on the end-to-end encrypted backup (ADR 0026

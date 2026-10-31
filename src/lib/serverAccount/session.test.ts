@@ -1160,6 +1160,23 @@ describe('account sessions', () => {
     expect(worker.sessions[1].ended).toBe(false)
   })
 
+  it('never brings back a replaced key by adopting a handoff’s session late', async () => {
+    const device = { key: KEY_A }
+    const { sessions, info } = setup({ device })
+    await info()
+    const late = await sessions.openDetached(KEY_A)
+    await sessions.changeKey(
+      async () => {
+        device.key = KEY_B
+      },
+      { from: KEY_A, to: KEY_B }
+    )
+
+    await late.adopt()
+
+    await expect(info(KEY_A)).rejects.toMatchObject({ failure: 'cancelled' })
+  })
+
   it('forgets the old session even when the server can’t be told, waiting only so long', async () => {
     vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
     try {

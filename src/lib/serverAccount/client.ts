@@ -62,6 +62,9 @@ const SIGNED_PATHS: Record<SignedAccountOp, string> = {
   'sync/request': 'sync/request',
 }
 
+/** A signed op's envelope, as sent. */
+export type SignedRequest = { payload: string; signature: string }
+
 /** How one signed op travels, past the default JSON envelope and answer. */
 export type SignedAccountTransport = {
   /** Sent too: the dev bypass, or the bearer token of a step-up op. */
@@ -71,6 +74,13 @@ export type SignedAccountTransport = {
   idempotent?: boolean
   /** Sent beside the envelope, outside what's signed (`requested: true`). */
   body?: Record<string, unknown>
+  /**
+   * An envelope signed earlier for the same op, sent again as it is (an
+   * `idempotent` op the User retries after its answer was lost).
+   */
+  signed?: SignedRequest
+  /** Each envelope as it's signed. */
+  onSigned?: (signed: SignedRequest) => void
 }
 
 /**
@@ -84,7 +94,7 @@ export async function sendSignedAccountOp<T>(
   options: SignedAccountOptions,
   transport: SignedAccountTransport = {}
 ) {
-  const send = async (ts: number) => {
+  const sign = (ts: number): SignedRequest => {
     const payload = utf8(
       JSON.stringify({
         ...fields,
@@ -93,14 +103,18 @@ export async function sendSignedAccountOp<T>(
         nonce: toB64u(options.randomBytes(16)),
       })
     )
-    return request<T>({
+    const signed = {
+      payload: toB64u(payload),
+      signature: signAccountRequest(op, payload, options.key),
+    }
+    transport.onSigned?.(signed)
+    return signed
+  }
+  const send = async (signed: SignedRequest) =>
+    request<T>({
       url: `${options.baseUrl}/accounts/v1/${SIGNED_PATHS[op]}`,
       method: 'POST',
-      json: {
-        ...transport.body,
-        payload: toB64u(payload),
-        signature: signAccountRequest(op, payload, options.key),
-      },
+      json: { ...transport.body, ...signed },
       headers: transport.headers,
       timeoutMs: transport.timeoutMs ?? ACCOUNT_TIMEOUT_MS,
       idempotent: transport.idempotent,
@@ -108,13 +122,12 @@ export async function sendSignedAccountOp<T>(
       signal: options.signal,
       fetchImpl: options.fetchImpl,
     })
-  }
   try {
-    return await send(options.now())
+    return await send(transport.signed ?? sign(options.now()))
   } catch (error) {
     const serverTime = staleServerTime(error)
     if (serverTime === null) throw error
-    return send(serverTime)
+    return send(sign(serverTime))
   }
 }
 
@@ -164,6 +177,7 @@ export type BearerAccountOp =
   | 'approval/status'
   | 'approval/send'
   | 'approval/cancel'
+  | 'live/ticket'
 
 /**
  * `GET /accounts/v1/account` reads the account; the rest are `POST

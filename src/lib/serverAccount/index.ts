@@ -7,7 +7,11 @@ import * as BuddiesKeychain from '../../../modules/buddies-keychain'
 import * as DeviceSecrets from '../../../modules/device-secrets'
 import apis from '@/constants/apis'
 import { analytics } from '@/lib/analytics'
-import { updateRequiredByServer, useUpdateRequired } from '@/lib/appUpdate'
+import {
+  appVersion,
+  updateRequiredByServer,
+  useUpdateRequired,
+} from '@/lib/appUpdate'
 import { deviceAttestation } from '@/lib/attestation'
 import { errorTracking } from '@/lib/errorTracking'
 import { fromB64u } from '@/lib/bytes'
@@ -31,6 +35,8 @@ import {
   createServerAccount,
   type ServerAccountStorage,
 } from '@/lib/serverAccount/serverAccount'
+import type { WebAccount } from '@/lib/serverAccount/webAccount'
+import { webRuntime } from '@/lib/serverAccount/webRuntime'
 
 let _store: MMKV | null = null
 // Device-local MMKV, like ADR 0011's account id: never in the sync payload.
@@ -81,6 +87,8 @@ const sessionStore: SessionStore = {
         : store().delete(STALE_SESSION_KEY),
   },
 }
+
+const isWeb = Platform.OS === 'web'
 
 /** A session opened for this device, or its account key changed. */
 export type AccountChange = 'session_opened' | 'key_changed'
@@ -206,8 +214,9 @@ function reportSessionEvent(event: AccountSessionEvent) {
   })
 }
 
-/** What a session or a new passkey says this phone is, sealed. */
+/** What a session or a new passkey says this device is, sealed. */
 export function thisDeviceLabel(): DeviceLabel {
+  if (webRuntime) return webRuntime.deviceLabel()
   const model = Device.modelName ?? ''
   return {
     name: model || (Platform.OS === 'ios' ? 'iPhone' : 'Android'),
@@ -225,7 +234,7 @@ export const accountSessions = createAccountSessions({
   now: syncNow,
   randomBytes: getRandomBytes,
   attestation: deviceAttestation,
-  store: sessionStore,
+  store: webRuntime?.sessionStore ?? sessionStore,
   accountKey: async () => {
     try {
       return fromB64u(await BuddiesKeychain.getOrCreateRootSeed())
@@ -238,7 +247,8 @@ export const accountSessions = createAccountSessions({
   },
   deviceLabel: thisDeviceLabel,
   // Devices shows it; `major.minor.patch` only.
-  appVersion: () => Application.nativeApplicationVersion,
+  appVersion: () =>
+    isWeb ? appVersion() : Application.nativeApplicationVersion,
   onUpgradeRequired: updateRequiredByServer,
   // Sync, backup, Buddies and Notes Import all wait for the update.
   paused: () => useUpdateRequired.getState().required !== null,
@@ -261,7 +271,15 @@ export const accountSessions = createAccountSessions({
   },
   // Reinstated, maybe: the account's own record says.
   onSucceededWhileSuspended: recheckStatus,
+  ...(webRuntime && { web: webRuntime.sessionDeps }),
 })
+
+/**
+ * This browser's account: signing in with a ticket, sign-up's session, signing
+ * out, and the server ending the session (`webAccount.ts`). Null on phones.
+ */
+export const webAccount: WebAccount | null =
+  webRuntime?.bind(accountSessions) ?? null
 
 /** Bearer ops as one account key's session. */
 export const bearerOptions = (

@@ -1,3 +1,4 @@
+import { Platform } from 'react-native'
 import * as FileSystem from 'expo-file-system/legacy'
 import * as ImageManipulator from 'expo-image-manipulator'
 import { randomUUID } from 'expo-crypto'
@@ -6,6 +7,7 @@ import {
   markNoteImagesLocal,
   noteImagePath,
 } from '@/lib/richText/noteImages'
+import { putWebPhoto } from '@/lib/files/webPhotoStore'
 import type { RichTextImageAttrs } from '@/types/richText'
 
 /** Long edge, in pixels. Keeps sync transfers inside iCloud's read deadline. */
@@ -20,6 +22,7 @@ export async function saveNoteImage(
   sourceUri: string,
   size?: { width: number; height: number }
 ): Promise<RichTextImageAttrs> {
+  if (Platform.OS === 'web') return saveWebNoteImage(sourceUri)
   await ensureNoteImageDirectory()
   const resize =
     size && Math.max(size.width, size.height) > NOTE_IMAGE_MAX_SIDE
@@ -36,4 +39,19 @@ export async function saveNoteImage(
   await FileSystem.moveAsync({ from: result.uri, to: noteImagePath(id) })
   markNoteImagesLocal([id])
   return { id, width: result.width, height: result.height }
+}
+
+/** The web keeps the downscaled JPEG in memory (`webPhotoStore`), not a file. */
+async function saveWebNoteImage(
+  sourceUri: string
+): Promise<RichTextImageAttrs> {
+  const { renderJpeg } = await import('@/lib/files/webImages')
+  const { blob, width, height } = await renderJpeg(sourceUri, {
+    maxSide: NOTE_IMAGE_MAX_SIDE,
+    quality: JPEG_QUALITY,
+  })
+  const id = randomUUID()
+  putWebPhoto(id, blob)
+  markNoteImagesLocal([id])
+  return { id, width, height }
 }

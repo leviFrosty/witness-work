@@ -227,6 +227,7 @@
     "shareApp",
     "android",
     "webApp",
+    "webFiles",
     "webBrowsers",
     "webInstall",
     "webOffline",

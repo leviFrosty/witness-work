@@ -1,4 +1,11 @@
+import { Platform } from 'react-native'
 import * as FileSystem from 'expo-file-system/legacy'
+import {
+  deleteWebPhoto,
+  getWebPhotoUrl,
+  hasWebPhoto,
+  listWebPhotos,
+} from '@/lib/files/webPhotoStore'
 import { isImageId } from '@/lib/richText/parse'
 
 /**
@@ -15,6 +22,8 @@ export const noteImageDirectory = () =>
 
 export function noteImagePath(id: string): string {
   if (!isImageId(id)) throw new Error('Invalid note image id')
+  // The web has no files: an object URL, or '' for a photo this page lacks.
+  if (Platform.OS === 'web') return getWebPhotoUrl(id)
   return `${noteImageDirectory()}${id}.jpg`
 }
 
@@ -37,6 +46,7 @@ export function markNoteImagesLocal(ids: Iterable<string>) {
 let ensured: Promise<void> | undefined
 /** Makes the photos folder (also for sync downloads into it). */
 export function ensureNoteImageDirectory(): Promise<void> {
+  if (Platform.OS === 'web') return Promise.resolve()
   ensured ??= FileSystem.makeDirectoryAsync(noteImageDirectory(), {
     intermediates: true,
   }).catch((error: unknown) => {
@@ -48,11 +58,19 @@ export function ensureNoteImageDirectory(): Promise<void> {
 
 export async function noteImageExists(id: string): Promise<boolean> {
   if (!isImageId(id)) return false
+  if (Platform.OS === 'web') return hasWebPhoto(id)
   const info = await FileSystem.getInfoAsync(noteImagePath(id))
   return info.exists
 }
 
 export async function deleteNoteImages(ids: Iterable<string>): Promise<void> {
+  if (Platform.OS === 'web') {
+    for (const id of ids) {
+      knownLocal.delete(id)
+      deleteWebPhoto(id)
+    }
+    return
+  }
   await Promise.all(
     [...ids].filter(isImageId).map((id) => {
       knownLocal.delete(id)
@@ -67,6 +85,7 @@ export async function deleteNoteImages(ids: Iterable<string>): Promise<void> {
 export async function listNoteImageFiles(): Promise<
   { id: string; modifiedAt: number }[]
 > {
+  if (Platform.OS === 'web') return listWebPhotos()
   const directory = noteImageDirectory()
   const info = await FileSystem.getInfoAsync(directory)
   if (!info.exists) return []

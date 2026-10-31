@@ -1,6 +1,4 @@
 import { Alert } from 'react-native'
-import { shareAsync } from 'expo-sharing'
-import * as FileSystem from 'expo-file-system/legacy'
 import moment from 'moment'
 import { toast } from '@/stores/toasts'
 
@@ -10,6 +8,7 @@ import {
 } from '@/features/contacts/lib/contactShareLink'
 import { buildContactShareFile } from '@/features/contacts/lib/contactShareFormat'
 import i18n from '@/lib/locales'
+import { deliverExport, prepareExport } from '@/lib/files/exportFile'
 import { logger } from '@/lib/logger'
 import { redactLink } from '@/lib/redactLink'
 import { shareUrl } from '@/lib/share'
@@ -30,19 +29,18 @@ const shareContactAsFile = async (
   const sanitizedName = contact.name.replace(/[^a-zA-Z0-9]/g, '_')
   const timestamp = moment().format('YYYY-MM-DD')
   const fileName = `${sanitizedName}_${timestamp}.witnesswork`
-  // Cache dir (not document dir): iOS share-sheet attachments are passed by
-  // reference, so we can't delete the file immediately after `Share.share`
-  // resolves without blanking the iMessage attachment. Cache is purged by
-  // the OS when needed.
-  const fileUri = `${FileSystem.cacheDirectory}${fileName}`
 
   try {
-    await FileSystem.writeAsStringAsync(fileUri, jsonString)
-    await shareAsync(fileUri, {
-      mimeType: 'application/witnesswork+json',
-      UTI: 'com.leviwilkerson.witnesswork.contact',
-      dialogTitle: i18n.t('exportContact'),
-    })
+    await deliverExport(
+      await prepareExport({
+        fileName,
+        mimeType: 'application/witnesswork+json',
+        uti: 'com.leviwilkerson.witnesswork.contact',
+        dialogTitle: i18n.t('exportContact'),
+        text: jsonString,
+        purpose: 'send',
+      })
+    )
   } catch (error) {
     logger.error('Error sharing contact file:', error)
     Alert.alert(

@@ -31,9 +31,11 @@ import {
 import useTheme from '@/contexts/theme'
 import useLibraryImagePicker from '@/hooks/useLibraryImagePicker'
 import { relativeLuminance } from '@/lib/color'
+import { pickWebImages } from '@/lib/files/pickWebImages'
 import { isRtlLayout } from '@/lib/direction'
 import i18n from '@/lib/locales'
 import { logger } from '@/lib/logger'
+import { photoFailedMessage } from '@/lib/photoLibrary/photoFailedMessage'
 import { richTextImages } from '@/lib/richText/inspect'
 import { MAX_NOTE_IMAGES } from '@/lib/richText/noteImages'
 import { saveNoteImage } from '@/lib/richText/saveNoteImage'
@@ -235,7 +237,9 @@ const RichTextEditor = (props: {
     try {
       result =
         source === 'camera'
-          ? await ImagePicker.launchCameraAsync(options)
+          ? Platform.OS === 'web'
+            ? await pickWebImages(options, 'camera')
+            : await ImagePicker.launchCameraAsync(options)
           : await library.pick({
               ...options,
               allowsMultipleSelection: true,
@@ -245,7 +249,10 @@ const RichTextEditor = (props: {
     } catch (error) {
       logger.error('Failed to pick a photo for a note', error)
       props.onPhotoFailed?.()
-      Alert.alert(i18n.t('error'), i18n.t('richText_photoFailed'))
+      Alert.alert(
+        i18n.t('error'),
+        photoFailedMessage(error, 'richText_photoFailed')
+      )
       run({ type: 'focus' })
       return
     }

@@ -1,3 +1,4 @@
+import { Platform } from 'react-native'
 import * as FileSystem from 'expo-file-system/legacy'
 import * as ImageManipulator from 'expo-image-manipulator'
 import { Asset } from 'expo-asset'
@@ -17,6 +18,14 @@ import { noteImagePath } from '@/lib/richText/noteImages'
 const IMAGE_SIDE = 1200
 
 async function inlineImage(id: string): Promise<string> {
+  if (Platform.OS === 'web') {
+    const { blobToDataUrl, renderJpeg } = await import('@/lib/files/webImages')
+    const { blob } = await renderJpeg(noteImagePath(id), {
+      maxSide: IMAGE_SIDE,
+      quality: 0.7,
+    })
+    return blobToDataUrl(blob)
+  }
   const scaled = await ImageManipulator.manipulateAsync(
     noteImagePath(id),
     [{ resize: { width: IMAGE_SIDE } }],

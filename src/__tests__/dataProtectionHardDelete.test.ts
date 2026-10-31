@@ -7,6 +7,7 @@ vi.mock(
   '@react-native-async-storage/async-storage',
   () => import('@/__tests__/mocks/asyncStorage')
 )
+vi.mock('react-native', () => ({ Platform: { OS: 'ios' } }))
 vi.mock('@/lib/logger', () => import('@/__tests__/mocks/logger'))
 // `householderData` evicts avatar files through `lib/contactAvatarFiles`, whose
 // expo imports need expo-modules-core's `__DEV__`.

@@ -56,9 +56,15 @@ export class MytimeImportError extends Error {
   }
 }
 
-/** SQLite's result code 26 (`SQLITE_NOTADB`), as `expo-sqlite` reports it. */
+/**
+ * SQLite's result code 26 (`SQLITE_NOTADB`) or a database it calls malformed
+ * (11, `SQLITE_CORRUPT`: a truncated or damaged copy), as `expo-sqlite` and
+ * `sql.js` report them.
+ */
 const isNotADatabaseError = (e: unknown): boolean =>
-  /file is not a database|error code 26\b/i.test(String(e))
+  /file is not a database|error code 26\b|database disk image is malformed|error code 11\b/i.test(
+    String(e)
+  )
 
 const notADatabase = (e: unknown) =>
   new MytimeImportError(

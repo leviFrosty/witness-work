@@ -1,6 +1,13 @@
-import { Modal, StatusBar, useWindowDimensions, View } from 'react-native'
+import {
+  Modal,
+  Platform,
+  StatusBar,
+  useWindowDimensions,
+  View,
+} from 'react-native'
 import { Image } from 'expo-image'
 import * as Sharing from 'expo-sharing'
+import shareWebPhoto from '@/lib/files/shareWebPhoto'
 import {
   Gesture,
   GestureDetector,
@@ -148,6 +155,8 @@ const NoteImageViewer = (props: {
           <FloatingGlassButton
             icon={ShareIcon}
             onPress={() => {
+              if (Platform.OS === 'web')
+                return void shareWebPhoto(props.image.id)
               void Sharing.shareAsync(sharePath, {
                 mimeType: 'image/jpeg',
               }).catch(() => {})

@@ -1,12 +1,15 @@
 import { useRef, useState } from 'react'
-import { Alert } from 'react-native'
-import * as FileSystem from 'expo-file-system/legacy'
-import * as Sharing from 'expo-sharing'
+import { Alert, Platform } from 'react-native'
 import {
   type BackupFileLockChoice,
   createLockedBackupFile,
 } from '@/app/sync/lockedBackupFile'
 import { analytics } from '@/lib/analytics'
+import {
+  canExportFiles,
+  deliverExport,
+  prepareExport,
+} from '@/lib/files/exportFile'
 import type { BackupFileLock, LockedBackupFile } from '@/lib/backupFileLock'
 import { errorTracking } from '@/lib/errorTracking'
 import i18n from '@/lib/locales'
@@ -26,7 +29,7 @@ export default function useBackupExport(entryPoint: string) {
   const properties = () => ({
     source: 'settings',
     entry_point: entryPoint,
-    destination: 'share_sheet',
+    destination: Platform.OS === 'web' ? 'download' : 'share_sheet',
     ...(run.current.protection ? { protection: run.current.protection } : {}),
   })
   const elapsed = () => Date.now() - run.current.startedAt
@@ -75,19 +78,23 @@ export default function useBackupExport(entryPoint: string) {
 
   const share = async (file: LockedBackupFile) => {
     let stage = 'sharing_availability'
-    const uri = FileSystem.cacheDirectory + BACKUP_EXPORT_FILE_NAME
     setSharing(true)
     try {
-      if (!(await Sharing.isAvailableAsync())) {
+      if (!(await canExportFiles())) {
         fail(stage, 'sharing_unavailable')
         Alert.alert(i18n.t('sharingIsNotAvailable'))
         return
       }
       usePreferences.getState().set({ lastBackupDate: new Date() })
       stage = 'write_file'
-      await FileSystem.writeAsStringAsync(uri, JSON.stringify(file))
+      const prepared = await prepareExport({
+        fileName: BACKUP_EXPORT_FILE_NAME,
+        mimeType: 'application/json',
+        text: JSON.stringify(file),
+        purpose: 'save',
+      })
       stage = 'share_sheet'
-      await Sharing.shareAsync(uri)
+      await deliverExport(prepared)
       // Expo resolves on both sharing and cancellation; this is not proof
       // that the user saved a backup outside the app.
       analytics.capture('backup_exported', {

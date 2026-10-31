@@ -12,7 +12,7 @@ import {
 
 export * from '@/features/mytime-import/lib/readMytimeTables'
 
-/** Whether this build can read a MyTime backup; the web can't yet. */
+/** Whether this build can read a MyTime backup. */
 export const canReadMytimeDb = true
 
 /** Adapts an open `expo-sqlite` database to the reader's table source. */
@@ -85,7 +85,10 @@ const readFileKind = async (path: string): Promise<MytimeFileKind> => {
  *
  * Requires a dev-client rebuild (`pnpm run ios`) — `expo-sqlite` is native.
  */
-export async function readMytimeDb(uri: string): Promise<MytimeRawTables> {
+export async function readMytimeDb(
+  uri: string,
+  _file?: Blob
+): Promise<MytimeRawTables> {
   await copyIntoSqliteDir(uri)
 
   let db: SQLite.SQLiteDatabase | undefined

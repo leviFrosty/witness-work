@@ -59,6 +59,28 @@ describe('bundleRedirect', () => {
     expect(bundleRedirect(asyncStorage, app, 'android')).toBeNull()
   })
 
+  it('swaps react-native-web’s Share and Alert for the app’s, on the web only', () => {
+    const rnw = path.join(root, 'node_modules/react-native-web/dist/index.js')
+    expect(bundleRedirect('./exports/Share', rnw, 'web')?.stub).toBe(
+      path.join(root, 'src/vendor/web/share.ts')
+    )
+    expect(bundleRedirect('./exports/Alert', rnw, 'web')?.stub).toBe(
+      path.join(root, 'src/vendor/web/alert.ts')
+    )
+    // Expo's Babel preset imports them by their deep paths.
+    for (const name of ['Share', 'Alert'])
+      expect(
+        bundleRedirect(`react-native-web/dist/exports/${name}`, app, 'web')
+          ?.stub
+      ).toMatch(
+        new RegExp(
+          `src[\\\\/]vendor[\\\\/]web[\\\\/]${name.toLowerCase()}\\.ts$`
+        )
+      )
+    expect(bundleRedirect('./exports/Share', rnw, 'ios')).toBeNull()
+    expect(bundleRedirect('./exports/Share', app, 'web')).toBeNull()
+  })
+
   it('swaps packages the web can’t load for web stand-ins, on the web only', () => {
     for (const { request } of webStubs) {
       expect(bundleRedirect(request, app, 'web')?.stub).toMatch(

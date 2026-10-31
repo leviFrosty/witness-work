@@ -49,10 +49,12 @@ const webStubs = [
 ]
 
 /**
- * Modules the web build swaps for the app's own, because theirs save to
- * `localStorage`: react-native-mmkv's storage and AsyncStorage go to the
- * IndexedDB-backed store database instead (docs/web-storage.md).
+ * Modules the web build swaps for the app's own. Theirs save to `localStorage`:
+ * react-native-mmkv's storage and AsyncStorage go to the IndexedDB-backed store
+ * database instead (docs/web-storage.md). Or they do nothing the app can rely
+ * on: react-native-web's `Share` and `Alert`.
  */
+const reactNativeWeb = `${path.sep}react-native-web${path.sep}`
 const webModules = [
   {
     request: './createMMKV',
@@ -63,6 +65,25 @@ const webModules = [
     request: '@react-native-async-storage/async-storage',
     module: 'src/lib/webStorage/webAsyncStorage.ts',
   },
+  // Theirs resolves nothing and rejects without a browser share sheet; ours
+  // shares on phones and copies elsewhere. Expo's Babel preset points the app's
+  // `import { Share } from 'react-native'` at the deep path; packages go
+  // through react-native-web's barrel.
+  ...['react-native-web/dist/exports/Share', './exports/Share'].map(
+    (request) => ({
+      request,
+      ...(request.startsWith('.') && { from: reactNativeWeb }),
+      module: 'src/vendor/web/share.ts',
+    })
+  ),
+  // Theirs does nothing, so every error and confirmation went unseen.
+  ...['react-native-web/dist/exports/Alert', './exports/Alert'].map(
+    (request) => ({
+      request,
+      ...(request.startsWith('.') && { from: reactNativeWeb }),
+      module: 'src/vendor/web/alert.ts',
+    })
+  ),
 ]
 
 const matches = (entry, request, originModulePath) =>

@@ -17,5 +17,6 @@ export function noteImagesArrived() {
 export function useNoteImageUri(id: string): string {
   const revision = useNoteImageRevision((state) => state.revision)
   const path = noteImagePath(id)
-  return revision ? `${path}?r=${revision}` : path
+  // An object URL (the web's) takes no query.
+  return revision && !path.startsWith('blob:') ? `${path}?r=${revision}` : path
 }

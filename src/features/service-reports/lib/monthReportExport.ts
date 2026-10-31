@@ -179,9 +179,10 @@ export const exportMonthReport = async (
       shared ? 'service_report_exported' : 'service_report_export_dismissed',
       { method: 'share', source, report_month }
     )
-    // Android resolves `sharedAction` even when the sheet is dismissed, so a
-    // share there leaves the month unmarked; Mark as Sent records it.
-    return shared && Platform.OS !== 'android'
+    // Android resolves `sharedAction` even when the sheet is dismissed, and the
+    // web copies the text instead of sharing it, so a share there leaves the
+    // month unmarked; Mark as Sent records it.
+    return shared && Platform.OS === 'ios'
   }
 
   // NW Publisher has a separate credit field, so its default remark only

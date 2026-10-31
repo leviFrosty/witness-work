@@ -1,5 +1,8 @@
 import { Platform } from 'react-native'
 import * as ImagePicker from 'expo-image-picker'
+import { pickWebImages } from '@/lib/files/pickWebImages'
+import { photoFailedMessage } from '@/lib/photoLibrary/photoFailedMessage'
+import { toast } from '@/stores/toasts'
 
 /** What the limited-access picker is asked for. */
 export type SharedPhotoRequest = {
@@ -25,6 +28,17 @@ export async function pickLibraryImages(
   options: ImagePicker.ImagePickerOptions,
   chooseShared: ChooseSharedPhotos
 ): Promise<ImagePicker.ImagePickerResult> {
+  // A file input; the browser has no photo library to limit.
+  if (Platform.OS === 'web') {
+    try {
+      return await pickWebImages(options)
+    } catch (error) {
+      // Native pickers only hand back photos; on the web none of the files may
+      // be one. Say so here, so no caller has to know the picker can throw.
+      toast.error(photoFailedMessage(error))
+      return { canceled: true, assets: null }
+    }
+  }
   if (Platform.OS === 'ios') {
     const permission = await ImagePicker.getMediaLibraryPermissionsAsync()
     if (permission.accessPrivileges === 'limited') {

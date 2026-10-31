@@ -16,6 +16,8 @@ const runtime = vi.hoisted(() => ({
   /** Runs once as the next identity check's detected Apple Account change. */
   appleAccountChange: null as (() => void) | null,
   links: [] as unknown[],
+  /** `onSupporterAccountSwitched` listeners. */
+  switched: [] as Array<() => void>,
   /** The Keychain is locked: the install id can't be read yet. */
   keychainLocked: false,
   /** False: RevenueCat has no SDK key on this device. */
@@ -116,6 +118,12 @@ vi.mock('@/lib/serverAccount/revenueCatLinkRuntime', () => ({
   ensureRevenueCatLinked: async (options: unknown) => {
     runtime.links.push(options)
   },
+  onSupporterAccountSwitched: (listener: () => void) => {
+    runtime.switched.push(listener)
+    return () => {
+      runtime.switched = runtime.switched.filter((l) => l !== listener)
+    }
+  },
 }))
 
 const ACCOUNT_FILE = 'witness-work-account.json'
@@ -151,6 +159,7 @@ beforeEach(() => {
   vi.clearAllMocks()
   runtime.files = []
   runtime.links = []
+  runtime.switched = []
   runtime.pending = []
   runtime.remoteChangeListeners = []
   runtime.appleAccountChange = null
@@ -341,5 +350,26 @@ describe('RevenueCat claims in the sync data (ADR 0040 §7)', () => {
       source: 'sync',
       revenuecat: false,
     })
+  })
+})
+
+describe('another server account signs in', () => {
+  it("returns RevenueCat to this device's own id", async () => {
+    const account = await import('@/lib/account')
+    account.adoptAccountId('phone', 1)
+    const { AccountProvider, Purchases } = await load()
+
+    await mount(AccountProvider)
+    await vi.waitFor(() => expect(runtime.switched).toHaveLength(1))
+    runtime.links = []
+
+    // The runtime dropped the id adopted for the previous account.
+    await act(async () => {
+      account.clearAdoptedAccountId()
+      runtime.switched.forEach((listener) => listener())
+    })
+
+    await vi.waitFor(() => expect(Purchases.logIn).toHaveBeenCalledWith('ipad'))
+    expect(runtime.links).toContainEqual({ force: true, reason: 'adopted' })
   })
 })

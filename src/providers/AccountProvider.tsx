@@ -33,7 +33,10 @@ import {
 } from '@/lib/account'
 import { analytics } from '@/lib/analytics'
 import { logger } from '@/lib/logger'
-import { ensureRevenueCatLinked } from '@/lib/serverAccount/revenueCatLinkRuntime'
+import {
+  ensureRevenueCatLinked,
+  onSupporterAccountSwitched,
+} from '@/lib/serverAccount/revenueCatLinkRuntime'
 import { isOfflineError } from '@/lib/offlineError'
 import { checkICloudIdentity } from '@/lib/iCloudIdentity'
 import { InstallIdUnavailableError } from '@/lib/installId'
@@ -343,6 +346,13 @@ const AccountProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
   useEffect(() => {
     void reconcile('customer-state')
   }, [reconcile, ready, unavailable, customerKnown, entitled])
+
+  // Another server account signed in, and the id adopted for the previous one
+  // is gone: log RevenueCat in as this device's own again.
+  useEffect(
+    () => onSupporterAccountSwitched(() => void reconcile('account-switched')),
+    [reconcile]
+  )
 
   // Another device's claim arrived in the sync data (ADR 0040 §7).
   useEffect(() => {

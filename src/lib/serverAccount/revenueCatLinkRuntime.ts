@@ -3,19 +3,34 @@ import { MMKV } from 'react-native-mmkv'
 import apis from '@/constants/apis'
 import { errorTracking } from '@/lib/errorTracking'
 import { logger } from '@/lib/logger'
-import { accountSessions, onAccountChange } from '@/lib/serverAccount'
+import {
+  accountSessions,
+  currentSessionAccount,
+  onAccountChange,
+} from '@/lib/serverAccount'
 import {
   createRevenueCatLink,
   type RevenueCatLinkOutcome,
   type RevenueCatLinkReason,
 } from '@/lib/serverAccount/revenueCatLink'
-import { createServerSupporter } from '@/lib/serverAccount/serverSupporter'
-import { addForegroundListener } from '@/lib/appLifecycle'
 import {
+  confirmSupporterAccount,
+  createServerSupporter,
+} from '@/lib/serverAccount/serverSupporter'
+import { addForegroundListener } from '@/lib/appLifecycle'
+import { clearAdoptedAccountId, getOrCreateAccountId } from '@/lib/account'
+import {
+  setOwnAccountClaim,
+  setPeerAccountClaims,
+} from '@/lib/accountClaimRegistry'
+import {
+  bindSupporterAccount,
+  boundSupporterAccount,
   setServerSupporterAccount,
   setServerSupporterEntry,
   useServerSupporter,
 } from '@/stores/serverSupporter'
+import { useSupporter } from '@/stores/supporterStatus'
 
 /**
  * This device's RevenueCat link to its server account (ADR 0029), wired to the
@@ -36,6 +51,8 @@ export const PAID_CALL_LINK_WAIT_MS = 5_000
 type LinkedListener = (status: {
   supporter: boolean
   expiresAt: number | null
+  /** The account it answered for. */
+  accountId: string
 }) => void
 
 const linkedListeners = new Set<LinkedListener>()
@@ -52,19 +69,83 @@ export const onRevenueCatLinked = (listener: LinkedListener): (() => void) => {
   }
 }
 
+const accountSwitchedListeners = new Set<() => void>()
+
+/**
+ * Calls `listener` after another server account than the last one signed in
+ * here, once the previous account's Supporter state is dropped: the RevenueCat
+ * id adopted for it is gone, so `AccountProvider` logs in again. Returns the
+ * unsubscribe.
+ */
+export const onSupporterAccountSwitched = (
+  listener: () => void
+): (() => void) => {
+  accountSwitchedListeners.add(listener)
+  return () => {
+    accountSwitchedListeners.delete(listener)
+  }
+}
+
+/**
+ * Another account signed in: nothing the previous one left says Supporter here.
+ * Its RevenueCat id travelled in its sync data (ADR 0040 §7), so this device
+ * goes back to its own until the new account's claims (or the account file, ADR
+ * 0011) say otherwise.
+ */
+const dropPreviousAccount = () => {
+  logger.log('[account] another account: dropping its Supporter state')
+  useSupporter.getState().setSupporter(false)
+  setPeerAccountClaims([])
+  setOwnAccountClaim(null)
+  clearAdoptedAccountId()
+  for (const listener of accountSwitchedListeners) {
+    try {
+      listener()
+    } catch (error) {
+      errorTracking.captureException(error)
+    }
+  }
+}
+
+/** Where the account this device's Supporter state belongs to is kept. */
+const supporterAccount = {
+  store: {
+    entry: () => useServerSupporter.getState().entry,
+    setEntry: setServerSupporterEntry,
+    setAccount: setServerSupporterAccount,
+    bound: boundSupporterAccount,
+    bind: bindSupporterAccount,
+  },
+  onAccountSwitched: dropPreviousAccount,
+}
+
+/** The session's account, confirmed before it's linked or read for. */
+const confirmed = (accountId: string | null): string | null => {
+  if (accountId) confirmSupporterAccount(supporterAccount, accountId)
+  return accountId
+}
+
 export const revenueCatLink = createRevenueCatLink({
   baseUrl: apis.accounts,
   request: (options) => accountSessions.request(options),
-  currentAccount: async () => {
-    await accountSessions.ready()
-    return accountSessions.snapshot()?.accountId ?? null
+  currentAccount: async () => confirmed(await currentSessionAccount()),
+  openAccount: async () => {
+    const { accountId } = await accountSessions.ensure()
+    confirmed(accountId)
+    return accountId
   },
-  openAccount: async () => (await accountSessions.ensure()).accountId,
   appUserId: async () => {
     // Before `Purchases.configure` (or without an SDK key) there's no
     // customer to link.
     if (!(await Purchases.isConfigured())) return null
-    return Purchases.getAppUserID()
+    const appUserId = await Purchases.getAppUserID()
+    // RevenueCat is still another id than this device's (another account's,
+    // until `AccountProvider` logs in again): nothing to link yet.
+    try {
+      return appUserId === getOrCreateAccountId() ? appUserId : null
+    } catch {
+      return null
+    }
   },
   storage: {
     get: () => store().getString(KEY) ?? null,
@@ -76,7 +157,11 @@ export const revenueCatLink = createRevenueCatLink({
       logger.debug(`[account] revenuecat link (${reason}): ${outcome.result}`)
     if (outcome.result === 'linked')
       for (const listener of linkedListeners)
-        listener({ supporter: outcome.supporter, expiresAt: outcome.expiresAt })
+        listener({
+          supporter: outcome.supporter,
+          expiresAt: outcome.expiresAt,
+          accountId: outcome.accountId,
+        })
   },
   onError: (error) => errorTracking.captureException(error),
 })
@@ -141,24 +226,16 @@ onAccountChange((change) => {
  * when RevenueCat doesn't say Supporter. Read on the existing session only.
  */
 export const serverSupporter = createServerSupporter({
-  currentAccount: async () => {
-    await accountSessions.ready()
-    return accountSessions.snapshot()?.accountId ?? null
-  },
+  currentAccount: currentSessionAccount,
   link: (reason) => revenueCatLink.ensure({ reason }),
   fetchStatus: () => revenueCatLink.fetchStatus(),
-  store: {
-    entry: () => useServerSupporter.getState().entry,
-    setEntry: setServerSupporterEntry,
-    setAccount: setServerSupporterAccount,
-  },
+  ...supporterAccount,
   now: Date.now,
 })
 
-onRevenueCatLinked((status) => {
-  const accountId = accountSessions.snapshot()?.accountId
-  if (accountId) serverSupporter.record(accountId, status)
-})
+onRevenueCatLinked(
+  ({ accountId, ...status }) => void serverSupporter.record(accountId, status)
+)
 
 onAccountChange((change) => {
   // Registered after the link's listener, so the read joins that link.

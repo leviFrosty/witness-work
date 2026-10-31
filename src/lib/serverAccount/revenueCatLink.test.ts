@@ -75,6 +75,7 @@ describe('ensure', () => {
       result: 'linked',
       supporter: true,
       expiresAt: null,
+      accountId: ACCOUNT,
     })
     expect(requests).toEqual([
       expect.objectContaining({
@@ -131,6 +132,21 @@ describe('ensure', () => {
     appUserId = '$RCAnonymousID:0123456789abcdef'
     const link = createRevenueCatLink(deps)
     await expect(link.ensure({ reason: 'launch' })).resolves.toEqual({
+      result: 'no_customer',
+    })
+    expect(requests).toHaveLength(0)
+  })
+
+  it('reads the RevenueCat id once the account is confirmed', async () => {
+    // Confirming another account drops the id adopted for the previous one.
+    const link = createRevenueCatLink({
+      ...deps,
+      currentAccount: async () => {
+        appUserId = null
+        return account
+      },
+    })
+    await expect(link.ensure({ reason: 'account_changed' })).resolves.toEqual({
       result: 'no_customer',
     })
     expect(requests).toHaveLength(0)
@@ -219,9 +235,26 @@ describe('ensure', () => {
       reason: 'session_opened',
     })
     expect(onOutcome).toHaveBeenCalledWith(
-      { result: 'linked', supporter: true, expiresAt: null },
+      {
+        result: 'linked',
+        supporter: true,
+        expiresAt: null,
+        accountId: ACCOUNT,
+      },
       'session_opened'
     )
+  })
+
+  it("doesn't answer for an account that changed during the link", async () => {
+    // The stored session was another key's: the request opened this key's.
+    answer = async () => {
+      account = 'BBBBBBBBBBBBBBBBBBBBBB'
+      return { ok: true, supporter: true, expiresAt: null }
+    }
+    await expect(
+      createRevenueCatLink(deps).ensure({ reason: 'launch' })
+    ).resolves.toEqual({ result: 'failed' })
+    expect(stored).toBeNull()
   })
 })
 

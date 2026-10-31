@@ -84,7 +84,10 @@ export const nextServerSupporterChange = (
     : null
 
 export type ServerSupporterDeps = {
-  /** This device's existing session's account, without opening one. */
+  /**
+   * This device's existing session's account, without opening one: null without
+   * a session, or with one that isn't the account key's.
+   */
   currentAccount: () => Promise<string | null>
   /** `ensureRevenueCatLinked`, unforced: it may answer the status itself. */
   link: (reason: RevenueCatLinkReason) => Promise<RevenueCatLinkOutcome>
@@ -94,7 +97,19 @@ export type ServerSupporterDeps = {
     entry: () => ServerSupporterEntry | null
     setEntry: (entry: ServerSupporterEntry | null) => void
     setAccount: (account: string | null) => void
+    /**
+     * The account this device's Supporter state belongs to (fingerprint): the
+     * last one a session confirmed. Kept through sign-outs.
+     */
+    bound: () => string | null
+    bind: (account: string) => void
   }
+  /**
+   * A session confirmed an account other than the bound one: drop what the
+   * previous account left on this device (the mirror, the RevenueCat id it
+   * adopted). The stored answer is already dropped.
+   */
+  onAccountSwitched: () => void
   now: () => number
 }
 
@@ -105,10 +120,58 @@ const UNREACHABLE: ReadonlySet<RevenueCatLinkOutcome['result']> = new Set([
   'unavailable',
 ])
 
+export type SupporterAccountBinding = Pick<
+  ServerSupporterDeps,
+  'onAccountSwitched'
+> & {
+  store: Pick<
+    ServerSupporterDeps['store'],
+    'entry' | 'setEntry' | 'setAccount' | 'bound' | 'bind'
+  >
+}
+
+/**
+ * The session's account is `accountId`: every answer is only for it from here,
+ * and another account than the bound one drops what the previous one left. An
+ * install from before the binding has only its stored answer to tell. Every
+ * link confirms its account this way before it names a RevenueCat customer, so
+ * an id adopted for the previous account is gone by then. Returns the account's
+ * fingerprint.
+ */
+export function confirmSupporterAccount(
+  deps: SupporterAccountBinding,
+  accountId: string
+): string {
+  const account = accountFingerprint(accountId)
+  const previous = deps.store.bound() ?? deps.store.entry()?.account ?? null
+  if (previous !== null && previous !== account) {
+    deps.store.setEntry(null)
+    deps.onAccountSwitched()
+  }
+  if (deps.store.bound() !== account) deps.store.bind(account)
+  deps.store.setAccount(account)
+  return account
+}
+
 export function createServerSupporter(deps: ServerSupporterDeps) {
-  const record = (accountId: string, status: ServerSupporterStatus) => {
-    const account = accountFingerprint(accountId)
-    deps.store.setAccount(account)
+  const confirm = (accountId: string | null): string | null => {
+    if (!accountId) {
+      // Signed out, or never signed in: no account to be a Supporter for.
+      deps.store.setAccount(null)
+      deps.store.setEntry(null)
+      return null
+    }
+    return confirmSupporterAccount(deps, accountId)
+  }
+
+  /**
+   * Keeps `status` as `accountId`'s answer while that's still the session's
+   * account; a late answer for a previous account is dropped.
+   */
+  async function record(accountId: string, status: ServerSupporterStatus) {
+    if ((await deps.currentAccount()) !== accountId) return
+    const account = confirm(accountId)
+    if (!account) return
     deps.store.setEntry({
       account,
       supporter: status.supporter,
@@ -124,14 +187,8 @@ export function createServerSupporter(deps: ServerSupporterDeps) {
     reason: RevenueCatLinkReason
   }) {
     const accountId = await deps.currentAccount()
-    if (!accountId) {
-      // Signed out, or never signed in: no account to be a Supporter for.
-      deps.store.setAccount(null)
-      deps.store.setEntry(null)
-      return
-    }
-    const account = accountFingerprint(accountId)
-    deps.store.setAccount(account)
+    const account = confirm(accountId)
+    if (!accountId || !account) return
     const entry = deps.store.entry()
     // An answer that has expired is due now: the subscription may have renewed.
     if (
@@ -142,13 +199,14 @@ export function createServerSupporter(deps: ServerSupporterDeps) {
     )
       return
     const outcome = await deps.link(options.reason)
-    if (outcome.result === 'linked') {
-      record(accountId, outcome)
+    // A link already under way may have been for the previous account.
+    if (outcome.result === 'linked' && outcome.accountId === accountId) {
+      await record(accountId, outcome)
       return
     }
     if (UNREACHABLE.has(outcome.result)) return
     try {
-      record(accountId, await deps.fetchStatus())
+      await record(accountId, await deps.fetchStatus())
     } catch {
       // Offline or failed: the last answer stands until the next read.
     }
@@ -156,13 +214,16 @@ export function createServerSupporter(deps: ServerSupporterDeps) {
 
   /**
    * Reads the account's status when the last answer is old, for another
-   * account, or `force`d. One at a time. Never throws.
+   * account, or `force`d. One at a time: a forced read waits for the one under
+   * way, which may be for the previous account, then reads again. Never
+   * throws.
    */
   function refresh(options: {
     force?: boolean
     reason: RevenueCatLinkReason
   }): Promise<void> {
-    if (flight) return flight
+    if (flight)
+      return options.force ? flight.then(() => refresh(options)) : flight
     const current = run({
       force: options.force ?? false,
       reason: options.reason,
@@ -174,10 +235,9 @@ export function createServerSupporter(deps: ServerSupporterDeps) {
     return current
   }
 
-  /** The account key changed: the answer was another account's. */
+  /** The account key changed: the answer was another key's. */
   async function accountChanged(): Promise<void> {
     deps.store.setEntry(null)
-    await flight
     await refresh({ force: true, reason: 'account_changed' })
   }
 

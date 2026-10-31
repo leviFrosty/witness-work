@@ -83,6 +83,7 @@ vi.mock('@/lib/serverAccount/revenueCatLinkRuntime', () => ({
   ensureRevenueCatLinked: async (options: unknown) => {
     runtime.links.push(options)
   },
+  onSupporterAccountSwitched: () => () => {},
 }))
 
 const settle = () => act(() => new Promise((resolve) => setTimeout(resolve, 0)))

@@ -28,6 +28,7 @@ import {
   AccountSessionError,
   type AccountSessionEvent,
   createAccountSessions,
+  sessionAccountForKey,
   type SessionStore,
 } from '@/lib/serverAccount/session'
 import {
@@ -280,6 +281,26 @@ export const accountSessions = createAccountSessions({
  */
 export const webAccount: WebAccount | null =
   webRuntime?.bind(accountSessions) ?? null
+
+/**
+ * This device's session's account, without opening one: null without a session,
+ * or when the stored session is another key's (the key was replaced elsewhere,
+ * and no call has opened the new key's session yet). While the key can't be
+ * read (a locked Keychain), the session's.
+ */
+export async function currentSessionAccount(): Promise<string | null> {
+  await accountSessions.ready()
+  const session = accountSessions.snapshot()
+  if (!session || !BuddiesKeychain.isAvailable())
+    return session?.accountId ?? null
+  let seed: string | null
+  try {
+    seed = await BuddiesKeychain.peekRootSeed()
+  } catch {
+    return session.accountId
+  }
+  return sessionAccountForKey(session, seed ? fromB64u(seed) : null)
+}
 
 /** Bearer ops as one account key's session. */
 export const bearerOptions = (

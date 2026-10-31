@@ -45,12 +45,20 @@ type ResettableStore = {
 }
 
 /**
- * Device-local stores a reset puts back to their initial state, in memory as
- * well: clearing MMKV alone leaves the live state, and the store's next write
- * saves it again (a seed kept another run's buddies, and with them a badge).
+ * Stores a reset puts back to their initial state, in memory as well: clearing
+ * MMKV alone leaves the live state, and the store's next write saves it again
+ * (a seed kept another run's buddies, and with them a badge).
  * `resetLocalData.test.ts` lists the persisted stores a reset keeps, and why.
  */
 export const RESET_STORES: readonly ResettableStore[] = [
+  // The records, with their field definitions and deletions: a reset that
+  // kept any would leave a "fresh" device with records of its own, and Cloud
+  // Sync would ask to merge or replace them.
+  useContacts,
+  useConversations,
+  useServiceReport,
+  useMileage,
+  usePet,
   useBuddies,
   useCategories,
   useSavedPlaces,
@@ -101,18 +109,6 @@ export function resetLocalData() {
   // everything from iCloud — kicking the user back to home instead of
   // onboarding. Re-applied after the defaults reset so the flag survives.
   setPreferences({ iCloudSyncEnabled: false, iCloudSyncSetByUser: true })
-  useContacts.getState()._WARNING_forceDeleteContacts()
-  useContacts.getState()._WARNING_clearDeleted()
-  useServiceReport.getState()._WARNING_forceDeleteServiceReports()
-  useServiceReport.getState().set({
-    dayPlans: [],
-    recurringPlans: [],
-    deletedDayPlans: [],
-    deletedRecurringPlans: [],
-  })
-  useConversations.getState()._WARNING_forceDeleteConversations()
-  useMileage.getState()._WARNING_forceDeleteMileage()
-  usePet.getState()._WARNING_forceDeletePet()
   abortAllTurns()
   for (const store of RESET_STORES)
     store.setState(store.getInitialState() as never, true)

@@ -33,6 +33,10 @@ import { refreshCloudSyncPhotoUsage } from '@/app/sync/cloudSync'
 
 let cloudSyncLast: unknown = null
 
+/** A 48×48 JPEG, for a contact photo without the picker. */
+const SAMPLE_PHOTO =
+  '/9j/4AAQSkZJRgABAQAASABIAAD/4QBMRXhpZgAATU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAA6ABAAMAAAABAAEAAKACAAQAAAABAAAAMKADAAQAAAABAAAAMAAAAAD/7QA4UGhvdG9zaG9wIDMuMAA4QklNBAQAAAAAAAA4QklNBCUAAAAAABDUHYzZjwCyBOmACZjs+EJ+/8AAEQgAMAAwAwEiAAIRAQMRAf/EAB8AAAEFAQEBAQEBAAAAAAAAAAABAgMEBQYHCAkKC//EALUQAAIBAwMCBAMFBQQEAAABfQECAwAEEQUSITFBBhNRYQcicRQygZGhCCNCscEVUtHwJDNicoIJChYXGBkaJSYnKCkqNDU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6g4SFhoeIiYqSk5SVlpeYmZqio6Slpqeoqaqys7S1tre4ubrCw8TFxsfIycrS09TV1tfY2drh4uPk5ebn6Onq8fLz9PX29/j5+v/EAB8BAAMBAQEBAQEBAQEAAAAAAAABAgMEBQYHCAkKC//EALURAAIBAgQEAwQHBQQEAAECdwABAgMRBAUhMQYSQVEHYXETIjKBCBRCkaGxwQkjM1LwFWJy0QoWJDThJfEXGBkaJicoKSo1Njc4OTpDREVGR0hJSlNUVVZXWFlaY2RlZmdoaWpzdHV2d3h5eoKDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uLj5OXm5+jp6vLz9PX29/j5+v/bAEMACQkJCQkJEAkJEBYQEBAWHhYWFhYeJh4eHh4eJi4mJiYmJiYuLi4uLi4uLjc3Nzc3N0BAQEBASEhISEhISEhISP/bAEMBCwwMEhESHxERH0szKjNLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS//dAAQAA//aAAwDAQACEQMRAD8AwljqysdSLHVhY696UzzKNQjWOrKx1IsdWFjrnlM9ejUI1jqysdSLHVhY655TPXo1D//QjWOrKx1IsdWFjr0pTPnaNQjWOrKx1IsdWFjrnlM9ejUI1jqysdSLHVhY6wlM9ijUP//R1VjqysdSLHVhY63lM+Po1CNY6srHUix1YWOueUz16NQjWOrKx1IsdWFjrnlM9ejUP//Z'
+
 const peekAccountKey = async () => {
   const key = await accountKey.peek()
   if (!key) throw new Error('No account key on this device')
@@ -180,6 +184,34 @@ export const cloudSyncHarness = {
       ),
     }
   },
+  /**
+   * Gives a contact a new photo revision, as picking one does, without the
+   * picker; `last` gets its revision.
+   */
+  setContactPhoto: (id: string) =>
+    tracked(async () => {
+      const revision = Date.now().toString(36)
+      const value = `${FileSystem.documentDirectory}contact-${id}-avatar-picked-${revision}.jpg`
+      await FileSystem.writeAsStringAsync(value, SAMPLE_PHOTO, {
+        encoding: FileSystem.EncodingType.Base64,
+      })
+      useContacts
+        .getState()
+        .updateContact({ id, avatar: { type: 'image', value, revision } })
+      return { revision }
+    }),
+  /** Removes a contact's photo, as the avatar editor's Remove does. */
+  removeContactPhoto: (id: string) => {
+    useContacts
+      .getState()
+      .updateContact({ id, avatar: { type: 'none', value: '' } })
+    return useContacts.getState().contacts.find((c) => c.id === id)?.avatar
+  },
+  /**
+   * The photo upload pass on this device's current records, without a pull
+   * first: what a foreground return or freed room on a full account runs.
+   */
+  photoPass: () => tracked(() => iCloudSync.pushImagesIfEnabled()),
   /** The account's photos as this device lists them: filenames and times. */
   photos: () => tracked(() => cloudSyncTransport.listBinaryFiles()),
   /** `photos/usage` now. */

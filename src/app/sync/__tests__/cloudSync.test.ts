@@ -1222,6 +1222,138 @@ describe('Photos over Cloud Sync', () => {
     })
   })
 
+  describe('keeps a photo deleted on another device deleted', () => {
+    const r1 = 'witness-work-img-contact-c1--r1.jpg'
+    const p1 = 'witness-work-img-profile--p1.jpg'
+    const note = 'witness-work-note-photo-0001.jpg'
+    const profilePath = `${DOCS}profile-avatar-picked-p1.jpg`
+    const listed = async (d: Device) =>
+      (await d.cloudTransport.listBinaryFiles()).map((f) => f.filename).sort()
+
+    /**
+     * A phone and a tablet with Ada's, the profile's and a note's photo, both
+     * synced. The phone then removes all three, which deletes them. The tablet
+     * has only downloaded them, unless it published since.
+     */
+    const removedOnPhone = async ({ tabletPublished = true } = {}) => {
+      const phone = await device('phone')
+      phone.files.set(picked('c1', 'r1'), new Uint8Array([1]))
+      phone.files.set(profilePath, new Uint8Array([2]))
+      phone.files.set(notePath('photo-0001'), new Uint8Array([3]))
+      phone.useContacts.setState({
+        contacts: [withPhoto(contact('c1', 'Ada', NOW), 'r1')] as never,
+      })
+      phone.useProfile
+        .getState()
+        .setAvatar({ type: 'image', value: profilePath, revision: 'p1' })
+      phone.useConversations.setState({
+        conversations: [visit('v1', 'photo-0001')] as never,
+      })
+      await publish(phone)
+      const tablet = await device('tablet', { os: 'android' })
+      await tablet.iCloudSync.pullAndMerge('manual')
+      if (tabletPublished) await publish(tablet)
+      expect(await listed(tablet)).toEqual([r1, p1, note].sort())
+
+      phone.useContacts
+        .getState()
+        .updateContact({ id: 'c1', avatar: undefined } as never)
+      phone.useProfile.getState().setAvatar({ type: 'none', value: '' })
+      phone.useConversations.setState({
+        conversations: [visit('v1', null, NOW + 1)] as never,
+      })
+      await publish(phone)
+      expect(await listed(phone)).toEqual([])
+      return { phone, tablet }
+    }
+
+    /** The tablet catches up, publishes, and the phone reads it. */
+    const converge = async ({ phone, tablet }: Record<string, Device>) => {
+      await tablet.iCloudSync.pullAndMerge('manual')
+      await publish(tablet)
+      await phone.iCloudSync.pullAndMerge('manual')
+      await publish(phone)
+      for (const d of [phone, tablet]) {
+        expect(d.useContacts.getState().contacts[0].avatar).toBeUndefined()
+        expect(d.useProfile.getState().avatar.type).toBe('none')
+        expect(
+          d.useConversations.getState().conversations[0].noteDoc
+        ).toBeUndefined()
+      }
+    }
+
+    it('when the other device publishes before it reads the deletion', async () => {
+      const { phone, tablet } = await removedOnPhone()
+      // An edit on the tablet goes out before its pull: its snapshot still
+      // refers to the photos, but nothing puts them back.
+      tablet.useContacts
+        .getState()
+        .addContact(contact('c2', 'Bo', NOW) as never)
+      await publish(tablet)
+      expect(await listed(tablet)).toEqual([])
+      await converge({ phone, tablet })
+      expect(await listed(phone)).toEqual([])
+      expect(
+        phone.photoUsage.useCloudSyncPhotoUsage.getState().usage?.count
+      ).toBe(0)
+    })
+
+    it('when the other device’s photo pass runs before it reads the deletion', async () => {
+      const { phone, tablet } = await removedOnPhone({ tabletPublished: false })
+      // A foreground, or room freeing on a full account, uploads what's
+      // missing from the tablet's current state.
+      await tablet.iCloudSync.pushImagesIfEnabled()
+      expect(await listed(tablet)).toEqual([])
+      await converge({ phone, tablet })
+      expect(await listed(phone)).toEqual([])
+    })
+
+    it('unless a newer edit on the other device keeps it', async () => {
+      const { phone, tablet } = await removedOnPhone()
+      // Edited after the removal: the tablet's Ada, still on r1, wins.
+      tablet.useContacts.getState().updateContact({
+        id: 'c1',
+        name: 'Ada R.',
+        updatedAt: Date.now() + 60_000,
+      } as never)
+      await publish(tablet)
+      expect(await listed(tablet)).toEqual([])
+      // Once it has read the removal, the merge keeps r1, so it goes back.
+      await tablet.iCloudSync.pullAndMerge('manual')
+      await tablet.iCloudSync.imageWorkSettled()
+      expect(tablet.useContacts.getState().contacts[0].avatar?.revision).toBe(
+        'r1'
+      )
+      expect(await listed(tablet)).toEqual([r1])
+      await phone.iCloudSync.pullAndMerge('manual')
+      const avatar = phone.useContacts.getState().contacts[0].avatar!
+      expect(avatar.revision).toBe('r1')
+      expect(phone.files.has(avatar.value.split('?')[0])).toBe(true)
+    })
+
+    it('puts a new photo at once, and every photo back after the account’s are all deleted', async () => {
+      const { tablet } = await removedOnPhone()
+      // A new revision is a new name: nothing deleted it.
+      tablet.files.set(picked('c1', 'r5'), new Uint8Array([5]))
+      tablet.useContacts
+        .getState()
+        .updateContact(
+          withPhoto(contact('c1', 'Ada', Date.now() + 60_000), 'r5') as never
+        )
+      await publish(tablet)
+      const r5 = 'witness-work-img-contact-c1--r5.jpg'
+      expect(await listed(tablet)).toEqual([r5])
+
+      // Every photo of the account deleted at once (the account had no slot
+      // for a day): the devices that still refer to them put them back.
+      await tablet.cloudTransport.deleteAllBinaries()
+      await publish(tablet)
+      await tablet.iCloudSync.pullAndMerge('manual')
+      await tablet.iCloudSync.imageWorkSettled()
+      expect(await listed(tablet)).toEqual([r5])
+    })
+  })
+
   it('downloads a photo once, even after its listing time is forgotten', async () => {
     const phone = await device('phone')
     phone.files.set(picked('c1', 'r1'), new Uint8Array([1]))

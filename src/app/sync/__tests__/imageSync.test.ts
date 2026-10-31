@@ -779,6 +779,49 @@ describe('Cloud Sync’s photo rules', () => {
     expect(foreground.bookkeeping[filename].errorCode).toBeUndefined()
   })
 
+  it('asks before putting back a photo it saw there that another device deleted', async () => {
+    const putsAgain = vi.fn(() => false)
+    const deps = makeDeps({ putsAgain })
+    const listing = vi.mocked(deps.bridge.listBinaryFiles)
+    listing.mockResolvedValue([{ filename, modifiedAt: 7 }])
+    const uploaded = { localMtime: 500, uploadedMtime: 500 }
+    // Seen there: recorded, so its absence later reads as a deletion.
+    const seen = await pushAllImages({
+      sources: [source],
+      bookkeeping: { [filename]: uploaded },
+      deps,
+      trigger: 'store-edit',
+    })
+    expect(seen.bookkeeping[filename].containerMtime).toBe(7)
+
+    listing.mockResolvedValue([])
+    const gone = await pushAllImages({
+      sources: [source, { ...source, id: 'c2', revision: 'r2' }],
+      bookkeeping: seen.bookkeeping,
+      deps,
+      trigger: 'store-edit',
+    })
+    // A photo it never saw there (new, or from another transport) goes at once.
+    expect(putsAgain).toHaveBeenCalledExactlyOnceWith(filename)
+    expect(deps.bridge.writeBinary).toHaveBeenCalledExactlyOnceWith(
+      'witness-work-img-contact-c2--r2.jpg',
+      source.localPath
+    )
+    expect(gone.skipped).toBe(1)
+
+    putsAgain.mockReturnValue(true)
+    await pushAllImages({
+      sources: [source],
+      bookkeeping: gone.bookkeeping,
+      deps,
+      trigger: 'store-edit',
+    })
+    expect(deps.bridge.writeBinary).toHaveBeenLastCalledWith(
+      filename,
+      source.localPath
+    )
+  })
+
   it('never retries a photo too large for the transport until it changes', async () => {
     const deps = makeDeps({ fullRetriesOnSignal: true, now: () => 10 ** 9 })
     const tooLarge = {

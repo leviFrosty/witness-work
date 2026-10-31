@@ -7,6 +7,7 @@ import {
   waitsOnFullAccount,
   type ImageSyncBookkeeping,
   type ImageSyncDeps,
+  deletedElsewhere,
   isTooLarge,
   uploadBackoffMs,
 } from '@/app/sync/imageSync'
@@ -44,18 +45,38 @@ export async function pushNoteImages(
   const bookkeeping: ImageSyncBookkeeping = { ...args.bookkeeping }
   let uploaded = 0
   let failed = 0
-  const container = new Set(
-    (await deps.bridge.listBinaryFiles()).map((file) => file.filename)
+  let recorded = 0
+  const container = new Map(
+    (await deps.bridge.listBinaryFiles()).map((file) => [
+      file.filename,
+      file.modifiedAt,
+    ])
   )
   for (const id of args.ids) {
     if (deps.canTransfer && !deps.canTransfer()) break
     const filename = filenameForNoteImage(id)
-    if (container.has(filename)) continue
+    const entry = bookkeeping[filename]
+    const containerMtime = container.get(filename)
+    if (containerMtime !== undefined) {
+      // Seen there, so a later absence means another device deleted it.
+      if (deps.putsAgain && entry?.containerMtime === undefined) {
+        const localMtime = await deps.fs.getModifiedAt(args.localPath(id))
+        if (localMtime != null) {
+          bookkeeping[filename] = {
+            localMtime,
+            uploadedMtime: localMtime,
+            containerMtime,
+          }
+          recorded++
+        }
+      }
+      continue
+    }
     const path = args.localPath(id)
     const localMtime = await deps.fs.getModifiedAt(path)
     // Another device's photo that hasn't downloaded here; it uploads it.
     if (localMtime == null) continue
-    const entry = bookkeeping[filename]
+    if (deletedElsewhere(deps, filename, entry)) continue
     if (isTooLarge(entry, localMtime)) continue
     if (
       entry?.lastError &&
@@ -87,10 +108,20 @@ export async function pushNoteImages(
       failed++
     }
   }
-  return { bookkeeping, uploaded, failed }
+  // Untouched, it's the bookkeeping passed in.
+  return {
+    bookkeeping:
+      uploaded || failed || recorded ? bookkeeping : args.bookkeeping,
+    uploaded,
+    failed,
+  }
 }
 
-/** Downloads the referenced photos this device doesn't have. */
+/**
+ * Downloads the referenced photos this device doesn't have. With `putsAgain`
+ * (Cloud Sync), `seen` is their bookkeeping, so a later absence reads as
+ * deleted.
+ */
 export async function pullNoteImages(
   args: Paths & {
     ids: Iterable<string>
@@ -98,15 +129,20 @@ export async function pullNoteImages(
     /** Makes the folder downloads land in. */
     prepare: () => Promise<void>
   }
-): Promise<{ downloaded: string[]; failed: number }> {
+): Promise<{
+  downloaded: string[]
+  failed: number
+  seen: ImageSyncBookkeeping
+}> {
   const { deps } = args
+  const seen: ImageSyncBookkeeping = {}
   const wanted: string[] = []
   for (const id of args.ids) {
     if ((await deps.fs.getModifiedAt(args.localPath(id))) == null) {
       wanted.push(id)
     }
   }
-  if (!wanted.length) return { downloaded: [], failed: 0 }
+  if (!wanted.length) return { downloaded: [], failed: 0, seen }
   const container = new Set(
     (await deps.bridge.listBinaryFiles()).map((file) => file.filename)
   )
@@ -114,7 +150,7 @@ export async function pullNoteImages(
   const available = wanted.filter((id) =>
     container.has(filenameForNoteImage(id))
   )
-  if (!available.length) return { downloaded: [], failed: 0 }
+  if (!available.length) return { downloaded: [], failed: 0, seen }
   await args.prepare()
   const downloaded: string[] = []
   let failed = 0
@@ -123,11 +159,21 @@ export async function pullNoteImages(
     await Promise.all(
       available.slice(start, start + DOWNLOAD_CONCURRENCY).map(async (id) => {
         try {
-          await deps.bridge.readBinary(
-            filenameForNoteImage(id),
+          const filename = filenameForNoteImage(id)
+          const containerMtime = await deps.bridge.readBinary(
+            filename,
             args.localPath(id)
           )
           downloaded.push(id)
+          const localMtime = deps.putsAgain
+            ? await deps.fs.getModifiedAt(args.localPath(id))
+            : null
+          if (localMtime != null)
+            seen[filename] = {
+              localMtime,
+              uploadedMtime: localMtime,
+              containerMtime,
+            }
         } catch {
           // One unreadable photo mustn't strand the rest; the next pull tries
           // it again.
@@ -136,7 +182,7 @@ export async function pullNoteImages(
       })
     )
   }
-  return { downloaded, failed }
+  return { downloaded, failed, seen }
 }
 
 /**

@@ -19,6 +19,7 @@ import {
   fetchAccountInfo,
   type ServerAccountInfo,
 } from '@/lib/serverAccount/client'
+import type { DeviceLabel } from '@/lib/serverAccount/deviceLabel'
 import {
   AccountSessionError,
   type AccountSessionEvent,
@@ -205,6 +206,16 @@ function reportSessionEvent(event: AccountSessionEvent) {
   })
 }
 
+/** What a session or a new passkey says this phone is, sealed. */
+export function thisDeviceLabel(): DeviceLabel {
+  const model = Device.modelName ?? ''
+  return {
+    name: model || (Platform.OS === 'ios' ? 'iPhone' : 'Android'),
+    platform: Platform.OS === 'android' ? 'android' : 'ios',
+    model,
+  }
+}
+
 /**
  * This device's attested account sessions (ADR 0027). Every user-scoped ww-api
  * call goes through `accountSessions.request` or `withSession`.
@@ -225,14 +236,7 @@ export const accountSessions = createAccountSessions({
       })
     }
   },
-  deviceLabel: () => {
-    const model = Device.modelName ?? ''
-    return {
-      name: model || (Platform.OS === 'ios' ? 'iPhone' : 'Android'),
-      platform: Platform.OS === 'android' ? 'android' : 'ios',
-      model,
-    }
-  },
+  deviceLabel: thisDeviceLabel,
   // Devices shows it; `major.minor.patch` only.
   appVersion: () => Application.nativeApplicationVersion,
   onUpgradeRequired: updateRequiredByServer,

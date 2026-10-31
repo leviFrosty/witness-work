@@ -136,7 +136,7 @@ The route of [Opening a session](./accounts-protocol.md#opening-a-session-post-a
 
 A server-checked passkey tap for sensitive actions.
 
-- **`POST /passkeys/challenge`**, Bearer: `{ purpose: "step-up" }` → `{ ok, challengeToken, options }`, `allowCredentials` listing the account's passkeys.
+- **`POST /passkeys/challenge`**, Bearer: `{ purpose: "step-up", rpId? }` → `{ ok, challengeToken, options }`, `allowCredentials` listing the account's passkeys.
 - **`POST /passkeys/assert`**, Bearer, with that `challengeToken` → `{ ok, credentialId, stepUpAt }`, and the session records `stepUpAt` and the credential. No ticket.
 - Opening a web session counts as a step-up at its creation, so a browser that just signed in (with a passkey, a phone, or a recovery key) can add its first passkey.
 - Required (Step-up) for web sessions on: adding or removing a passkey, `backup/delete`, and ADR 0039's key change. The app also asks for one on the web before showing the recovery key and before setting up or approving a device.
@@ -347,7 +347,7 @@ Turnstile → `web/signup/options` → make the account key and store it sealed 
 
 - `modules/passkeys`: iOS `ASAuthorizationPlatformPublicKeyCredentialProvider` (passkeys from iOS 16, PRF from iOS 18; below that, sign-in only), Android Credential Manager (the request JSON passed through, `prf` included).
 - **Onboarding** offers Save a Passkey, with Not Now.
-- **Settings → Account → Passkeys:** the list, the account's `WitnessWork <tag>`, each passkey's "Can unlock your account" or "Sign-in only", its provider and date, Add a Passkey, and Remove. Removing says the passkey also has to be deleted from the password manager, and warns before removing the last passkey that can unlock when no phone is signed in. The web asks Chromium browsers to forget it (`PublicKeyCredential.signalUnknownCredential`); Apple platforms aren't asked until WebKit's bug that drops other accounts' passkeys is fixed.
+- **Settings → Account → Passkeys:** the list, the account's `WitnessWork <tag>`, each passkey's "Can unlock your account" or "Sign-in only", its provider and date, Add a Passkey, and Remove. Removing says the passkey also has to be deleted from the password manager, and warns before removing the last passkey that can unlock (a computer then needs the recovery key or a phone to sign in). The web asks Chromium browsers to forget it (`PublicKeyCredential.signalUnknownCredential`); Apple platforms aren't asked until WebKit's bug that drops other accounts' passkeys is fixed.
 - **One gentle prompt** to save a passkey, when the account has none, after turning on Cloud Sync or backup or after setting up another device. Not Now backs it off for 30 days. It's never forced, and without a passkey everything works as before.
 
 ### On the web

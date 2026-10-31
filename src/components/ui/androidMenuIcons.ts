@@ -23,6 +23,7 @@ import brushIcon from '@/assets/android-menu-icons/ww_menu_brush.xml'
 import customizeIcon from '@/assets/android-menu-icons/ww_menu_customize.xml'
 import hideIcon from '@/assets/android-menu-icons/ww_menu_hide.xml'
 import storeIcon from '@/assets/android-menu-icons/ww_menu_store.xml'
+import lockOpenIcon from '@/assets/android-menu-icons/ww_menu_lock_open.xml'
 
 /**
  * Material icons for the SF Symbols menus use, so Android menus show the same
@@ -55,6 +56,7 @@ const androidMenuIcons: Partial<Record<string, ImageSourcePropType>> = {
   'square.grid.2x2': customizeIcon,
   'eye.slash': hideIcon,
   storefront: storeIcon,
+  'lock.open': lockOpenIcon,
 }
 
 export default androidMenuIcons

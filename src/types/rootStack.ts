@@ -264,6 +264,7 @@ export type RootStackParamList = {
   'Set Up Another Device': { entry?: 'settings' | 'tools' } | undefined
   /** The account's signed-in devices (ADR 0028). */
   'Account Devices': undefined
+  'Account Passkeys': undefined
   /** The account's security history (ADR 0028). */
   'Account Activity': undefined
   /** Sign In with QR Code: scan, or open, another phone's handoff link. */

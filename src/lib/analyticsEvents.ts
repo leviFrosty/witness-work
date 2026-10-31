@@ -145,6 +145,10 @@ export const analyticsEventNames = [
   'mileage_tracking_changed',
   'mileage_trip_added',
   'mileage_vehicle_added',
+  'passkey_add_failed',
+  'passkey_add_started',
+  'passkey_added',
+  'passkey_removed',
   // Pet Companion adoption, its intro, decorating, unlocks, sharing and its
   // hidden moments (no names).
   'pet_adopted',

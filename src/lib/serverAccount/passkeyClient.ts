@@ -225,14 +225,19 @@ export async function finishPasskeySignIn(
 
 // --- Step-up ----------------------------------------------------------------
 
-/** A step-up's challenge, for the session's account's passkeys. */
+/**
+ * A step-up's challenge, for the session's account's passkeys on `rpId`
+ * (default: the RP ID the request's `Origin` pairs with, else the env's
+ * first).
+ */
 export async function startPasskeyStepUp(
+  { rpId }: { rpId?: string },
   options: BearerAccountOptions
 ): Promise<PasskeyChallenge> {
   return challenge(
     await sendBearerAccountJson(
       'passkeys/challenge',
-      { purpose: 'step-up' },
+      { purpose: 'step-up', ...(rpId && { rpId }) },
       options
     )
   )

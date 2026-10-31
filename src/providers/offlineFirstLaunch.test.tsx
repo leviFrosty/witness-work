@@ -43,6 +43,7 @@ vi.mock('react-native-purchases', () => ({
         created: false,
       }
     }),
+    getAppUserID: vi.fn(async () => 'install-a'),
     getCustomerInfo: vi.fn(async () => {
       if (runtime.offline && !runtime.cached) throw offlineError()
       return { entitlements: { active: {} } }
@@ -65,6 +66,9 @@ vi.mock('@/lib/installId', () => {
 vi.mock('@/lib/account', () => ({
   getOrCreateAccountId: () => 'install-a',
   adoptAccountId: vi.fn(),
+  onAccountIdChange: () => () => {},
+  devAccountFileStaged: () => false,
+  onDevAccountFileChange: () => () => {},
   getOwnAccountClaim: (entitled: boolean) => ({
     appUserId: 'install-a',
     entitled,
@@ -83,6 +87,8 @@ vi.mock('@/lib/serverAccount/revenueCatLinkRuntime', () => ({
   ensureRevenueCatLinked: async (options: unknown) => {
     runtime.links.push(options)
   },
+  onSupporterAccountSwitched: () => () => {},
+  currentSupporterAccount: async () => null,
 }))
 
 const settle = () => act(() => new Promise((resolve) => setTimeout(resolve, 0)))

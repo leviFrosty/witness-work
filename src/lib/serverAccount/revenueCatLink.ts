@@ -1,8 +1,11 @@
 import { sha256 } from '@noble/hashes/sha2.js'
 import { bytesToHex } from '@noble/hashes/utils.js'
 import { utf8 } from '@/lib/bytes'
-import { HttpError } from '@/lib/http/request'
-import type { AuthorizedRequest } from '@/lib/serverAccount/activityClient'
+import {
+  type HttpResponse,
+  HttpError,
+  type RequestOptions,
+} from '@/lib/http/request'
 import { ACCOUNT_TIMEOUT_MS } from '@/lib/serverAccount/client'
 import { AccountSessionError } from '@/lib/serverAccount/session'
 
@@ -53,7 +56,13 @@ export type RevenueCatLinkReason =
 
 export type RevenueCatLinkOutcome =
   /** Linked; the account's status as the server answered. */
-  | { result: 'linked'; supporter: boolean; expiresAt: number | null }
+  | {
+      result: 'linked'
+      supporter: boolean
+      expiresAt: number | null
+      /** The account it answered for. */
+      accountId: string
+    }
   /** The same link was made within a day. */
   | { result: 'skipped' }
   /** No session on this device, and the caller didn't ask for one. */
@@ -74,11 +83,22 @@ export type SupporterStatus = {
 
 export type RevenueCatLinkDeps = {
   baseUrl: string
-  /** `accountSessions.request`. */
-  request: AuthorizedRequest
-  /** This device's existing session's account, without opening one. */
-  currentAccount: () => Promise<string | null>
-  /** Opens this device's session when there's none; its account. */
+  /**
+   * `accountSessions.request`. With `accountId`, sent only on that account's
+   * session: otherwise it throws `AccountSessionError` `cancelled`.
+   */
+  request: <T>(
+    options: RequestOptions,
+    accountId?: string
+  ) => Promise<HttpResponse<T>>
+  /**
+   * This device's existing session's account, without opening one, confirmed
+   * (`confirmSupporterAccount`) so the RevenueCat id read next is its own.
+   */
+  confirmAccount: () => Promise<string | null>
+  /** The existing session's account, only read: nothing confirmed or opened. */
+  sessionAccount: () => Promise<string | null>
+  /** Opens this device's session when there's none; its account, confirmed. */
   openAccount: () => Promise<string>
   /** The RevenueCat app user id this device is logged in as, or null. */
   appUserId: () => Promise<string | null>
@@ -159,12 +179,16 @@ export function createRevenueCatLink(deps: RevenueCatLinkDeps) {
     if (options.reason !== 'tools' && deps.now() < backoffUntil)
       return { result: 'backoff' }
     try {
-      const appUserId = toRevenueCatAppUserId(await deps.appUserId())
-      if (!appUserId) return { result: 'no_customer' }
+      if (!toRevenueCatAppUserId(await deps.appUserId()))
+        return { result: 'no_customer' }
       const accountId = options.open
         ? await deps.openAccount()
-        : await deps.currentAccount()
+        : await deps.confirmAccount()
       if (!accountId) return { result: 'no_session' }
+      // Read again: confirming another account than the last one drops the
+      // RevenueCat id adopted for that one (`serverSupporter`).
+      const appUserId = toRevenueCatAppUserId(await deps.appUserId())
+      if (!appUserId) return { result: 'no_customer' }
 
       const key = linkKey(accountId, appUserId)
       const stored = readStored()
@@ -175,20 +199,30 @@ export function createRevenueCatLink(deps: RevenueCatLinkDeps) {
       )
         return { result: 'skipped' }
 
-      const response = await deps.request<Record<string, unknown> | null>({
-        url: `${deps.baseUrl}/accounts/v1/revenuecat-customers`,
-        method: 'POST',
-        json: { appUserId },
-        timeoutMs: ACCOUNT_TIMEOUT_MS,
-      })
+      // Sent on the confirmed account's session only: the key can change
+      // while this waits, and the id is this account's customer.
+      const response = await deps.request<Record<string, unknown> | null>(
+        {
+          url: `${deps.baseUrl}/accounts/v1/revenuecat-customers`,
+          method: 'POST',
+          json: { appUserId },
+          timeoutMs: ACCOUNT_TIMEOUT_MS,
+        },
+        accountId
+      )
       const data = response.data
       if (!isRecord(data) || typeof data.supporter !== 'boolean')
+        return { result: 'failed' }
+      // Another account signed in while it answered: the answer is for the
+      // previous one.
+      if ((await deps.sessionAccount()) !== accountId)
         return { result: 'failed' }
       deps.storage.set(JSON.stringify({ key, at: deps.now() }))
       return {
         result: 'linked',
         supporter: data.supporter,
         expiresAt: parseExpiry(data.expiresAt),
+        accountId,
       }
     } catch (error) {
       return failureOf(error)
@@ -228,15 +262,18 @@ export function createRevenueCatLink(deps: RevenueCatLinkDeps) {
 
   /**
    * The account's Supporter status as ww-api answers it (`GET
-   * /accounts/v1/supporter`), for the developer Tools. Opens a session when
-   * there's none. Throws.
+   * /accounts/v1/supporter`), on `accountId`'s session when given. Opens a
+   * session when there's none. Throws.
    */
-  async function fetchStatus(): Promise<SupporterStatus> {
-    const response = await deps.request<Record<string, unknown> | null>({
-      url: `${deps.baseUrl}/accounts/v1/supporter`,
-      method: 'GET',
-      timeoutMs: ACCOUNT_TIMEOUT_MS,
-    })
+  async function fetchStatus(accountId?: string): Promise<SupporterStatus> {
+    const response = await deps.request<Record<string, unknown> | null>(
+      {
+        url: `${deps.baseUrl}/accounts/v1/supporter`,
+        method: 'GET',
+        timeoutMs: ACCOUNT_TIMEOUT_MS,
+      },
+      accountId
+    )
     const data = response.data
     if (
       !isRecord(data) ||

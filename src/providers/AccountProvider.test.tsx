@@ -2,6 +2,8 @@ import React from 'react'
 import { act, create, type ReactTestRenderer } from 'react-test-renderer'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
+vi.stubGlobal('__DEV__', false)
+
 // Drives the account reconcile loop (ADR 0011) against a fake bridge to cover
 // what a claim may overwrite while iCloud is still downloading.
 
@@ -16,10 +18,14 @@ const runtime = vi.hoisted(() => ({
   /** Runs once as the next identity check's detected Apple Account change. */
   appleAccountChange: null as (() => void) | null,
   links: [] as unknown[],
+  /** `onSupporterAccountSwitched` listeners. */
+  switched: [] as Array<() => void>,
   /** The Keychain is locked: the install id can't be read yet. */
   keychainLocked: false,
   /** False: RevenueCat has no SDK key on this device. */
   revenueCat: true,
+  /** The server account this device is on (`currentSupporterAccount`). */
+  account: null as string | null,
 }))
 
 vi.mock('react-native', () => ({
@@ -113,8 +119,15 @@ vi.mock('@/lib/errorTracking', () => ({
   errorTracking: { captureException: vi.fn(), addBreadcrumb: vi.fn() },
 }))
 vi.mock('@/lib/serverAccount/revenueCatLinkRuntime', () => ({
+  currentSupporterAccount: async () => runtime.account,
   ensureRevenueCatLinked: async (options: unknown) => {
     runtime.links.push(options)
+  },
+  onSupporterAccountSwitched: (listener: () => void) => {
+    runtime.switched.push(listener)
+    return () => {
+      runtime.switched = runtime.switched.filter((l) => l !== listener)
+    }
   },
 }))
 
@@ -151,11 +164,13 @@ beforeEach(() => {
   vi.clearAllMocks()
   runtime.files = []
   runtime.links = []
+  runtime.switched = []
   runtime.pending = []
   runtime.remoteChangeListeners = []
   runtime.appleAccountChange = null
   runtime.keychainLocked = false
   runtime.revenueCat = true
+  runtime.account = null
 })
 
 afterEach(() => {
@@ -202,7 +217,7 @@ describe('account reconcile while iCloud is downloading', () => {
 
   it('returns to this device’s own id after an Apple Account change', async () => {
     const account = await import('@/lib/account')
-    account.adoptAccountId('phone', 1)
+    account.adoptAccountId('phone', 1, null)
     runtime.appleAccountChange = account.clearAdoptedAccountId
     const { AccountProvider, bridge, Purchases } = await load()
 
@@ -341,5 +356,181 @@ describe('RevenueCat claims in the sync data (ADR 0040 §7)', () => {
       source: 'sync',
       revenuecat: false,
     })
+  })
+})
+
+describe('another server account signs in', () => {
+  const ACCT_A = 'a'.repeat(64)
+  const ACCT_B = 'b'.repeat(64)
+
+  it("returns RevenueCat to this device's own id", async () => {
+    const account = await import('@/lib/account')
+    runtime.account = ACCT_A
+    account.bindSupporterAccount(ACCT_A)
+    account.adoptAccountId('phone', 1, ACCT_A)
+    const { AccountProvider, Purchases } = await load()
+
+    await mount(AccountProvider)
+    await vi.waitFor(() => expect(runtime.switched).toHaveLength(1))
+    runtime.links = []
+
+    // The runtime bound the new account and dropped the id adopted for the
+    // previous one.
+    await act(async () => {
+      runtime.account = ACCT_B
+      account.bindSupporterAccount(ACCT_B)
+      account.clearAdoptedAccountId()
+      runtime.switched.forEach((listener) => listener())
+    })
+
+    await vi.waitFor(() => expect(Purchases.logIn).toHaveBeenCalledWith('ipad'))
+    expect(runtime.links).toContainEqual({ force: true, reason: 'adopted' })
+  })
+
+  it("leaves the previous account's account file alone", async () => {
+    // A reinstall keeps the session (Keychain) but not the device's state;
+    // the Apple Account's file still names the previous account's id.
+    runtime.account = ACCT_B
+    runtime.files = [
+      {
+        ...phoneClaim,
+        json: JSON.stringify({
+          v: 1,
+          accountId: 'phone',
+          entitled: true,
+          updatedAt: 1,
+          account: ACCT_A,
+        }),
+      },
+    ]
+    const { AccountProvider, bridge, Purchases } = await load()
+    const account = await import('@/lib/account')
+
+    await mount(AccountProvider)
+    await vi.waitFor(() => expect(bridge.readFiles).toHaveBeenCalled())
+    await act(() => new Promise((resolve) => setTimeout(resolve, 0)))
+
+    expect(Purchases.logIn).not.toHaveBeenCalledWith('phone')
+    expect(account.getOrCreateAccountId()).toBe('ipad')
+    // Claiming over it would have that account's devices take it back.
+    expect(bridge.write).not.toHaveBeenCalled()
+  })
+
+  it("adopts its own account's file, and claims with its account", async () => {
+    runtime.account = ACCT_B
+    runtime.files = [
+      {
+        ...phoneClaim,
+        json: JSON.stringify({
+          v: 1,
+          accountId: 'phone',
+          entitled: true,
+          updatedAt: 1,
+          account: ACCT_B,
+        }),
+      },
+    ]
+    const { AccountProvider, Purchases } = await load()
+    const registry = await import('@/lib/accountClaimRegistry')
+
+    await mount(AccountProvider)
+
+    await vi.waitFor(() =>
+      expect(Purchases.logIn).toHaveBeenCalledWith('phone')
+    )
+    await vi.waitFor(() =>
+      expect(registry.ownAccountClaim()).toMatchObject({
+        appUserId: 'phone',
+        account: ACCT_B,
+      })
+    )
+  })
+
+  it("writes the account file's claim with its account", async () => {
+    runtime.account = ACCT_B
+    const { AccountProvider, bridge } = await load()
+
+    await mount(AccountProvider)
+
+    await vi.waitFor(() =>
+      expect(bridge.write).toHaveBeenCalledWith(
+        ACCOUNT_FILE,
+        expect.stringContaining(`"account":"${ACCT_B}"`)
+      )
+    )
+  })
+
+  it("ignores the previous account's claims from a platform sync", async () => {
+    runtime.account = ACCT_B
+    const { AccountProvider, Purchases } = await load()
+    const registry = await import('@/lib/accountClaimRegistry')
+    registry.setPeerAccountClaims([
+      {
+        appUserId: 'phone-0000',
+        entitled: true,
+        claimedAt: 0,
+        account: ACCT_A,
+      },
+    ])
+
+    await mount(AccountProvider)
+    await vi.waitFor(() => expect(registry.ownAccountClaim()).not.toBeNull())
+    await act(() => new Promise((resolve) => setTimeout(resolve, 0)))
+
+    expect(Purchases.logIn).not.toHaveBeenCalledWith('phone-0000')
+  })
+
+  it("doesn't keep an id adopted while the account switched", async () => {
+    runtime.account = ACCT_A
+    const account = await import('@/lib/account')
+    account.bindSupporterAccount(ACCT_A)
+    const { AccountProvider, Purchases } = await load()
+    const registry = await import('@/lib/accountClaimRegistry')
+    let finishLogIn!: () => void
+    vi.mocked(Purchases.logIn).mockImplementation(async (id: string) => {
+      if (id === 'phone-0000')
+        await new Promise<void>((resolve) => (finishLogIn = resolve))
+      return { customerInfo: { entitlements: {} } } as never
+    })
+    registry.setPeerAccountClaims([
+      {
+        appUserId: 'phone-0000',
+        entitled: true,
+        claimedAt: 0,
+        account: ACCT_A,
+      },
+    ])
+
+    await mount(AccountProvider)
+    await vi.waitFor(() =>
+      expect(Purchases.logIn).toHaveBeenCalledWith('phone-0000')
+    )
+
+    // Account B signs in while the login for A's id is under way.
+    await act(async () => {
+      runtime.account = ACCT_B
+      account.bindSupporterAccount(ACCT_B)
+      account.clearAdoptedAccountId()
+      registry.setPeerAccountClaims([])
+      runtime.switched.forEach((listener) => listener())
+    })
+    vi.mocked(Purchases.logIn).mockClear()
+    await act(async () => finishLogIn())
+
+    await vi.waitFor(() => expect(Purchases.logIn).toHaveBeenCalledWith('ipad'))
+    expect(account.getOrCreateAccountId()).toBe('ipad')
+  })
+
+  it('logs in again when RevenueCat stayed on the previous id', async () => {
+    // The launch's login failed offline: RevenueCat is still on the id the
+    // previous account adopted, though this device's id is its own.
+    const identity = await import('@/lib/revenueCatIdentity')
+    identity.noteRevenueCatAppUserId('phone')
+    const { AccountProvider, Purchases } = await load()
+
+    await mount(AccountProvider)
+
+    await vi.waitFor(() => expect(Purchases.logIn).toHaveBeenCalledWith('ipad'))
+    expect(identity.revenueCatIsOwn()).toBe(true)
   })
 })

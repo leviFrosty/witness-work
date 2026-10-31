@@ -24,10 +24,14 @@ vi.mock('react-native-purchases', () => ({
       throw new Error('The Internet connection appears to be offline.')
     }),
     getCustomerInfo: vi.fn(),
+    getAppUserID: vi.fn(async () => 'install-a'),
   },
   LOG_LEVEL: { DEBUG: 'DEBUG' },
 }))
-vi.mock('@/lib/account', () => ({ getOrCreateAccountId: () => 'install-a' }))
+vi.mock('@/lib/account', () => ({
+  getOrCreateAccountId: () => 'install-a',
+  onAccountIdChange: () => () => {},
+}))
 vi.mock('@/lib/installId', () => ({
   InstallIdUnavailableError: class extends Error {},
 }))
@@ -109,6 +113,23 @@ it('refreshes the customer when the connection comes back after an offline launc
 
   expect(Purchases.getCustomerInfo).toHaveBeenCalledTimes(2)
   expect(runtime.customer).toEqual(lapsed)
+})
+
+it('notes whose cached customer an offline launch shows', async () => {
+  // RevenueCat is still on the id the previous server account adopted.
+  vi.mocked(Purchases.getCustomerInfo).mockResolvedValueOnce(supporter as never)
+  vi.mocked(Purchases.getAppUserID).mockResolvedValueOnce('phone-0000')
+  const { revenueCatIsOwn } = await import('@/lib/revenueCatIdentity')
+  await act(async () => {
+    renderer = create(
+      <CustomerProvider>
+        <Reader />
+      </CustomerProvider>
+    )
+  })
+  await settle()
+  expect(runtime.customer).toEqual(supporter)
+  expect(revenueCatIsOwn()).toBe(false)
 })
 
 const mount = async () => {

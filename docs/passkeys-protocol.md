@@ -138,12 +138,14 @@ A server-checked passkey tap for sensitive actions.
 
 - **`POST /passkeys/challenge`**, Bearer: `{ purpose: "step-up", rpId? }` → `{ ok, challengeToken, options }`, `allowCredentials` listing the account's passkeys.
 - **`POST /passkeys/assert`**, Bearer, with that `challengeToken` → `{ ok, credentialId, stepUpAt }`, and the session records `stepUpAt` and the credential. No ticket.
-- Opening a web session counts as a step-up at its creation, so a browser that just signed in (with a passkey, a phone, or a recovery key) can add its first passkey.
+- Opening a web session counts as a step-up at its creation, so a browser that just signed in (with a passkey, a phone, or a recovery key) can add its first passkey. The app offers Add a Passkey after "Approved by" only until a minute before those 5 minutes end, timed from just before it opened the session, and never starts the authenticator's create past them: `POST /passkeys` would refuse a credential the authenticator had already saved.
 - Required (Step-up) for web sessions on: adding or removing a passkey, `backup/delete`, and ADR 0039's key change. The app also asks for one on the web before showing the recovery key and before setting up or approving a device.
 
 ### Adding a passkey
 
 **`POST /passkeys/register/options`**, Bearer: `{ rpId? }` → `{ ok, challengeToken, options, userHandle }`. `options` is `PublicKeyCredentialCreationOptionsJSON` with the account's user handle, the name, and the account's passkeys in `excludeCredentials`. Mints the user handle the first time.
+
+The web sends no `rpId` here or anywhere else, so the RP ID is the one its origin pairs with (`beta.app.witnesswork.app`'s is `app.witnesswork.app`, not its own host); the get that confirms PRF after adding uses the `rp.id` these options name. Phones send their build's RP ID.
 
 **`POST /passkeys`**, Bearer **and** signed (op `passkey/add`), live session, Step-up:
 
@@ -334,7 +336,9 @@ Every sign-in screen, on the web and in a new phone's "Already use WitnessWork?"
    - **It unlocks:** the account key is here. A browser opens its web session with the ticket. A phone shows the replace-key warning a handoff shows, then opens its own attested session and adopts the key like a handoff (restore offer, Buddies).
    - **It signs in but can't unlock** (no wraps, or none opens): the screen says so and offers the next two, keeping the PRF output (if any) and the credential id in memory. Once the key arrives another way and a session is open, the device saves a wrap for this passkey (`passkeys/wrap`), so it unlocks next time.
 2. **Use my phone** (a browser): the approval QR. **From your other phone** (a phone): Set Up Another Device's QR.
-3. **Use a recovery key.** A browser asks for a `recovery` ticket right after the key is entered.
+3. **Use a recovery key.** A browser asks for a `recovery` ticket right after the key is entered, with Turnstile's token.
+   - **After a passkey that signed in but couldn't unlock,** while that passkey's ticket has more than 5 seconds left, the browser opens its session with the passkey's ticket instead, and shows no security check. That's safe: the ticket came from a verified passkey assertion for that account, and the key entered must derive the account's `accountPub` or the browser refuses it before sending anything. The session's `method` is then `passkey`, since the ticket is the passkey's. As the ticket runs out, the screen shows Turnstile and the next try asks for a `recovery` ticket.
+   - A page that loaded Turnstile's script reloads once signed in, so Cloudflare's code doesn't stay in the signed-in app; the sign-in finishes after the reload.
 
 ### Signing up on the web
 

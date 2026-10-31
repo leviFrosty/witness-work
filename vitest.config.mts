@@ -26,6 +26,9 @@ export default defineConfig({
       'services/**',
       // Playwright's, run by `pnpm web:test`.
       'e2e/web/**',
+      // Agents' gitignored verify drivers, which need a local ww-api: only
+      // when a driver asks (`WW_VERIFY_TESTS=1`).
+      ...(process.env.WW_VERIFY_TESTS ? [] : ['.verify/**']),
     ],
   },
 })

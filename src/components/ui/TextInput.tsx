@@ -187,9 +187,29 @@ const TextInput = forwardRef<InputRef, TextInputProps>((props, ref) => {
     innerStyle.minHeight = typeof min === 'number' ? Math.max(min, fit) : fit
   }
 
+  // Tamagui's web input drops `spellCheck`, and never names the element:
+  // set both on it.
+  const webAttributes =
+    Platform.OS === 'web'
+      ? {
+          spellcheck:
+            rest.spellCheck === undefined ? undefined : String(rest.spellCheck),
+          'aria-label': accessibleLabel,
+        }
+      : null
+  const setRef = (node: InputRef | null) => {
+    if (typeof ref === 'function') ref(node)
+    else if (ref) ref.current = node
+    const element = node as unknown as Partial<HTMLElement> | null
+    if (!webAttributes || typeof element?.setAttribute !== 'function') return
+    for (const [name, value] of Object.entries(webAttributes))
+      if (value === undefined) element.removeAttribute?.(name)
+      else element.setAttribute(name, value)
+  }
+
   const input = (
     <Component
-      ref={ref}
+      ref={setRef}
       unstyled
       style={resolvedStyle}
       placeholderTextColor={

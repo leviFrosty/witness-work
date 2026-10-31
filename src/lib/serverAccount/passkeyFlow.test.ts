@@ -101,6 +101,26 @@ beforeEach(() => {
 })
 
 describe('addPasskeyFlow', () => {
+  it('on the web, unlocks on the RP ID the server registered it for', async () => {
+    // The web sends none: the server picks it from the page's origin.
+    const { deps, server } = setup({ rpId: undefined })
+    server.registrationOptions.mockResolvedValueOnce({
+      challengeToken: 'token',
+      userHandle: 'AAEC',
+      options: {
+        challenge: 'Y2hhbGxlbmdl',
+        rp: { id: 'app.witnesswork.app', name: 'WitnessWork' },
+        user: { id: 'AAEC', name: 'WitnessWork KVW7' },
+      },
+    })
+    native.create.mockResolvedValue(registration({ enabled: true }))
+    native.get.mockResolvedValue(assertion(PRF))
+
+    expect(await addPasskeyFlow(deps)).toMatchObject({ canUnlock: true })
+    const request = JSON.parse(native.get.mock.calls[0][0] as string)
+    expect(request.rpId).toBe('app.witnesswork.app')
+  })
+
   it('adds the passkey at once, then wraps the key with the PRF output', async () => {
     const { deps, server } = setup()
     native.create.mockResolvedValue(registration({ enabled: true }))

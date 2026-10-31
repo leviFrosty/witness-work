@@ -124,7 +124,15 @@ export type WebAccountDeps = {
   /** Deletes all local data, the pending mark last: `clearAllWebData`. */
   wipe: () => Promise<void>
   reload: () => void
-  onEnded?: (reason: SessionEndReason, outcome: 'wiped' | 'signIn') => void
+  /**
+   * The server ended the session: in the tab whose refresh it refused, and
+   * (`fromTab`) in each tab that heard of it.
+   */
+  onEnded?: (
+    reason: SessionEndReason,
+    outcome: 'wiped' | 'signIn',
+    from: { fromTab: boolean }
+  ) => void
   now?: () => number
   /** `WEB_CLOSE_WAIT_MS` by default. */
   closeWaitMs?: number
@@ -182,13 +190,13 @@ export function createWebAccount(deps: WebAccountDeps) {
   /** `WebSessionDeps.onEnded`: the server ended the session. */
   function ended(reason: SessionEndReason, { fromTab }: { fromTab: boolean }) {
     if (sessionEndWipes(reason)) {
-      if (!fromTab) deps.onEnded?.(reason, 'wiped')
+      deps.onEnded?.(reason, 'wiped', { fromTab })
       // Every tab that hears of it wipes: the one whose refresh was refused
       // may close first.
       void wipeAndReload()
       return
     }
-    if (!fromTab) deps.onEnded?.(reason, 'signIn')
+    deps.onEnded?.(reason, 'signIn', { fromTab })
     void signedOut(reason)
   }
 
@@ -230,7 +238,8 @@ export function createWebAccount(deps: WebAccountDeps) {
    */
   async function keep(
     accountKey: Uint8Array,
-    opened: OpenedSession
+    opened: OpenedSession,
+    onStored?: () => Promise<void>
   ): Promise<WebSignIn> {
     lastOpen = null
     const switching = await othersData(opened.accountId)
@@ -258,6 +267,14 @@ export function createWebAccount(deps: WebAccountDeps) {
         deps.reload()
       }
       throw new WebSignInError('storage', { cause: error })
+    }
+    if (onStored) {
+      let timer: ReturnType<typeof setTimeout> | undefined
+      await Promise.race([
+        onStored().catch(() => undefined),
+        new Promise((resolve) => (timer = setTimeout(resolve, closeWaitMs))),
+      ])
+      clearTimeout(timer)
     }
     const signedIn = {
       accountId: opened.accountId,
@@ -305,12 +322,18 @@ export function createWebAccount(deps: WebAccountDeps) {
      * With `reload` true, every tab is already reloading: the sign-in flow
      * stops there, and the page that loads is signed in (`start`). Whatever the
      * flow shows after signing in comes from that state, or from a mark the
-     * flow kept before calling (the sign-up gate's).
+     * flow kept before calling (the sign-up gate's). `onStored` runs once the
+     * key and session are stored, before any tab reloads (waiting at most
+     * `WEB_CLOSE_WAIT_MS`): an approval's `done`, which a reload would cut
+     * off.
      */
     async openWebSessionWithTicket(
       ticket: string,
       accountKey: Uint8Array,
-      { expectAccountId }: { expectAccountId?: string } = {}
+      {
+        expectAccountId,
+        onStored,
+      }: { expectAccountId?: string; onStored?: () => Promise<void> } = {}
     ): Promise<WebSignIn> {
       const retry =
         lastOpen?.ticket === ticket &&
@@ -334,7 +357,7 @@ export function createWebAccount(deps: WebAccountDeps) {
         void deps.closeOpened(opened.accessToken).catch(() => undefined)
         throw new WebSignInError('wrongAccount')
       }
-      return keep(accountKey, opened)
+      return keep(accountKey, opened, onStored)
     },
     /**
      * Keeps the web session `web/signup` answered with, for the key sign-up

@@ -70,8 +70,9 @@ set into `dist/_headers` for everything Cloudflare serves directly.
   profile, no profile allows another's hosts (`worker.test.ts`), and the
   deploy refuses a build that never calls them, so the app and its CSP can't
   drift apart unnoticed:
-  - `script-src 'self' 'wasm-unsafe-eval'`, for CanvasKit and SQLite's wasm;
-    no inline script and no `eval`;
+  - `script-src 'self' 'wasm-unsafe-eval'`, for CanvasKit and SQLite's wasm,
+    plus Cloudflare Turnstile (`challenges.cloudflare.com`), the check before a
+    recovery key signs a browser in (ADR 0038); no inline script and no `eval`;
   - `style-src 'self' 'unsafe-inline'`, because react-native-web writes styles
     into `<style>` tags at runtime;
   - `connect-src`: the profile's ww-api (`https` and `wss`), PostHog's
@@ -81,12 +82,13 @@ set into `dist/_headers` for everything Cloudflare serves directly.
     (`api.revenuecat.com`, `e.revenue.cat`) for web purchases;
   - `media-src 'self' blob:`, for the app's sounds and Scribe AI playing back
     a voice recording;
-  - `frame-src`: the profile's maps frame only. MapKit JS loads inside that
-    frame's own origin, never in the app;
+  - `frame-src`: the profile's maps frame and Turnstile's widget. MapKit JS
+    loads inside that frame's own origin, never in the app;
   - `frame-ancestors 'none'`, `base-uri 'none'`, `object-src 'none'`,
     `form-action 'self'`, `worker-src 'self'`;
   - Trusted Types: `require-trusted-types-for 'script'` and
-    `trusted-types ww-chunks ProseMirrorClipboard`, each created once. There's
+    `trusted-types ww-chunks ProseMirrorClipboard ww-turnstile`, each created
+    once. There's
     no `default` policy, so every other sink refuses a string.
     - `ww-chunks`: the web entry creates it first
       (`src/app/launch/hardenWeb.web.ts`). It takes only this origin's
@@ -95,6 +97,8 @@ set into `dist/_headers` for everything Cloudflare serves directly.
     - `ProseMirrorClipboard`: the note editor creates it on the first paste
       of HTML, to parse it in a detached document that never renders or runs
       it.
+    - `ww-turnstile`: the sign-in screen creates it to load Turnstile's one
+      script URL (`src/app/web-sign-in/components/Turnstile.tsx`).
     - The entry also turns on zod's `jitless` mode, so zod never builds
       functions from strings, and the note editor gives Tiptap JSON only and
       writes its styles itself (`RichTextEditorDom.tsx`).

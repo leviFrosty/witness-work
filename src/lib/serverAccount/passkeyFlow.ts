@@ -69,8 +69,12 @@ export type PasskeyFlowDeps = {
   /** Face ID, Touch ID, fingerprint or passcode (`confirmDeviceOwner`). */
   confirmOwner: () => Promise<DeviceOwnerCheck>
   accountKey: Uint8Array
-  /** The RP ID this build's passkeys are for. */
-  rpId: string
+  /**
+   * The RP ID this build's passkeys are for. None on the web: the server picks
+   * the one the page's origin pairs with, and a new passkey unlocks on the RP
+   * ID its registration options name.
+   */
+  rpId?: string
   randomBytes: (length: number) => Uint8Array
   /** This device's label, sealed like a session's. */
   label?: () => string | undefined
@@ -182,10 +186,11 @@ const isConflict = (error: unknown) =>
 /** A get for one credential, with a challenge of its own. */
 function unlockRequest(
   deps: PasskeyFlowDeps,
-  credentialId: string
+  credentialId: string,
+  rpId: string | undefined
 ): PublicKeyCredentialRequestOptionsJSON {
   return {
-    rpId: deps.rpId,
+    ...(rpId && { rpId }),
     challenge: toB64u(deps.randomBytes(32)),
     allowCredentials: [{ id: credentialId, type: 'public-key' }],
     userVerification: 'required',
@@ -244,7 +249,8 @@ async function saveWrap(
 /** The confirming sign-in, then the wrap. */
 async function unlockWith(
   deps: PasskeyFlowDeps,
-  credentialId: string
+  credentialId: string,
+  rpId = deps.rpId
 ): Promise<
   | { status: 'saved' }
   | { status: 'signInOnly'; signInOnly: SignInOnlyReason }
@@ -252,7 +258,9 @@ async function unlockWith(
 > {
   let assertion: PasskeyAssertion
   try {
-    assertion = await deps.ceremonies.get(unlockRequest(deps, credentialId))
+    assertion = await deps.ceremonies.get(
+      unlockRequest(deps, credentialId, rpId)
+    )
   } catch (error) {
     deps.onError?.('get', error)
     const failure = passkeyFlowFailure(error)
@@ -337,7 +345,12 @@ export async function addPasskeyFlow(
   if (created.prf.enabled === false || context.support?.prf === 'no')
     return signInOnly('no_prf')
 
-  const unlocked = await unlockWith(deps, credentialId)
+  const registered = (options.options as { rp?: { id?: unknown } }).rp?.id
+  const unlocked = await unlockWith(
+    deps,
+    credentialId,
+    deps.rpId ?? (typeof registered === 'string' ? registered : undefined)
+  )
   if (unlocked.status === 'saved')
     return { status: 'added', credentialId, canUnlock: true }
   // It's added either way; a failed sign-in only leaves it Sign-in only.

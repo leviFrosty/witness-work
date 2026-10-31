@@ -1,6 +1,5 @@
 import { AppState } from 'react-native'
 import { getRandomBytes } from 'expo-crypto'
-import apis from '@/constants/apis'
 import { accountKey } from '@/app/account/accountKey'
 import { analytics } from '@/lib/analytics'
 import { confirmDeviceOwner } from '@/lib/deviceOwner'
@@ -13,28 +12,12 @@ import {
   type PasskeySupport,
 } from '@/lib/passkeys'
 import { PASSKEY_RP_ID } from '@/lib/passkeys/rpId'
-import { syncNow } from '@/lib/syncClock'
-import {
-  bearerOptions,
-  fetchServerAccountInfo,
-  thisDeviceLabel,
-} from '@/lib/serverAccount'
-import { sealDeviceLabel } from '@/lib/serverAccount/deviceLabel'
-import { deriveAccountSigningKey } from '@/lib/serverAccount/keys'
+import { bearerOptions } from '@/lib/serverAccount'
 import {
   createDeviceLabelReader,
   type DeviceLabelReader,
 } from '@/lib/serverAccount/activityLabels'
-import {
-  addPasskey,
-  listPasskeys,
-  type Passkey,
-  type PasskeyClientOptions,
-  passkeyRegistrationOptions,
-  type PasskeyResponseJSON,
-  removePasskey,
-  savePasskeyWrap,
-} from '@/lib/serverAccount/passkeyClient'
+import { listPasskeys, type Passkey } from '@/lib/serverAccount/passkeyClient'
 import {
   addPasskeyFlow,
   letPasskeyUnlockFlow,
@@ -46,6 +29,10 @@ import {
   removePasskeyFlow,
 } from '@/lib/serverAccount/passkeyFlow'
 import { passkeyName } from '@/lib/serverAccount/passkeys'
+import {
+  accountPasskeyDeps,
+  reportPasskeyAdd,
+} from '@/lib/serverAccount/passkeyServer'
 
 /**
  * Settings → Account → Passkeys on phones (ADR 0038 §9): the account's
@@ -99,49 +86,16 @@ const ceremonies: PasskeyCeremonies = {
 }
 
 function deps(key: Uint8Array): PasskeyFlowDeps {
-  const signing = deriveAccountSigningKey(key)
-  const options: PasskeyClientOptions = {
-    ...bearerOptions(key),
-    sign: {
-      baseUrl: apis.accounts,
-      key: signing,
-      now: syncNow,
-      randomBytes: getRandomBytes,
-    },
-  }
+  const { options: _, ...account } = accountPasskeyDeps(key, {
+    rpId: PASSKEY_RP_ID,
+  })
   return {
-    server: {
-      registrationOptions: () =>
-        passkeyRegistrationOptions({ rpId: PASSKEY_RP_ID }, options),
-      add: ({ response, ...args }) =>
-        addPasskey(
-          { ...args, response: response as unknown as PasskeyResponseJSON },
-          options
-        ),
-      wrap: (args) => savePasskeyWrap(args, options),
-      remove: (credentialId) => removePasskey(credentialId, options),
-      account: () => fetchServerAccountInfo(key),
-    },
+    ...account,
     ceremonies,
     confirmOwner: () => confirmDeviceOwner(i18n.t('passkeys_unlockPrompt')),
-    accountKey: key,
-    rpId: PASSKEY_RP_ID,
     randomBytes: getRandomBytes,
     // PasskeyError carries the platform's message; never secrets.
     onError: (step, error) => logger.warn(`[passkeys] ${step} failed`, error),
-    label: () => {
-      try {
-        return sealDeviceLabel(
-          key,
-          signing.publicKey,
-          thisDeviceLabel(),
-          getRandomBytes(12)
-        )
-      } catch {
-        // A label is optional; never fail adding a passkey over it.
-        return undefined
-      }
-    },
   }
 }
 
@@ -167,35 +121,6 @@ export async function loadPasskeys(): Promise<LoadedPasskeys> {
 export const phonePasskeySupport = (): Promise<PasskeySupport> =>
   passkeySupport()
 
-type AddKind = 'add' | 'upgrade'
-
-function reportAdd(
-  kind: AddKind,
-  result: PasskeyAddResult | PasskeyUnlockResult
-) {
-  if (result.status === 'added' || result.status === 'unlocks') {
-    analytics.capture('passkey_added', {
-      kind,
-      can_unlock: result.status === 'unlocks' || result.canUnlock,
-      ...(result.status === 'added' &&
-        !result.canUnlock && { sign_in_only: result.signInOnly }),
-    })
-    return
-  }
-  analytics.capture('passkey_add_failed', {
-    kind,
-    step: result.status === 'signInOnly' ? 'save' : result.step,
-    reason:
-      result.status === 'cancelled'
-        ? 'cancelled'
-        : result.status === 'signInOnly'
-          ? result.signInOnly
-          : result.reason,
-  })
-  if (result.status === 'failed')
-    logger.warn(`[passkeys] ${kind} failed at ${result.step}: ${result.reason}`)
-}
-
 /** Add a Passkey, start to end. */
 export async function addPhonePasskey(context: {
   count: number
@@ -206,7 +131,7 @@ export async function addPhonePasskey(context: {
     count: context.count,
     support: context.support ?? undefined,
   })
-  reportAdd('add', result)
+  reportPasskeyAdd('add', result)
   return result
 }
 
@@ -219,7 +144,7 @@ export async function letPhonePasskeyUnlock(
     deps(await requireKey()),
     credentialId
   )
-  reportAdd('upgrade', result)
+  reportPasskeyAdd('upgrade', result)
   return result
 }
 

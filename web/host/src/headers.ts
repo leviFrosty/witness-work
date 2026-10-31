@@ -29,13 +29,19 @@ export const REPORT_PATH = '/_csp-report'
 /**
  * RevenueCat's API in browser mode: prices, customer info, and the SDK's own
  * events (ADR 0041). Every profile uses the same hosts. Checkout runs on
- * RevenueCat's page, so no RevenueCat or Stripe script runs here and
- * `script-src` stays `'self'`.
+ * RevenueCat's page, so no RevenueCat or Stripe script runs here.
  */
 export const REVENUECAT_ORIGINS = [
   'https://api.revenuecat.com',
   'https://e.revenue.cat',
 ]
+
+/**
+ * Cloudflare Turnstile, the check before a recovery key signs this browser in
+ * (ADR 0038): its script, and the frame it renders the widget in. Every profile
+ * uses the same host.
+ */
+export const TURNSTILE_ORIGIN = 'https://challenges.cloudflare.com'
 
 /**
  * The Trusted Types policies the page may create, each only once:
@@ -45,10 +51,16 @@ export const REVENUECAT_ORIGINS = [
  * - `ProseMirrorClipboard`, which the note editor creates the first time HTML is
  *   pasted, to parse it in a detached document that never renders or runs it;
  *   the editor keeps only the nodes its schema knows.
+ * - `ww-turnstile`, which the sign-in screen creates to load Turnstile's one
+ *   script URL (`src/app/web-sign-in/components/Turnstile.tsx`).
  *
  * No `default` policy, so every other sink still refuses a string.
  */
-export const TRUSTED_TYPES_POLICIES = ['ww-chunks', 'ProseMirrorClipboard']
+export const TRUSTED_TYPES_POLICIES = [
+  'ww-chunks',
+  'ProseMirrorClipboard',
+  'ww-turnstile',
+]
 
 const socketOrigin = (origin: string) => origin.replace(/^http/, 'ws')
 
@@ -71,8 +83,8 @@ export function connectOrigins(profile: WebProfile): string[] {
 export function contentSecurityPolicy(profile: WebProfile): string {
   const directives: [string, ...string[]][] = [
     ['default-src', "'self'"],
-    // CanvasKit compiles its wasm at runtime.
-    ['script-src', "'self'", "'wasm-unsafe-eval'"],
+    // CanvasKit compiles its wasm at runtime; Turnstile's script, on sign-in.
+    ['script-src', "'self'", "'wasm-unsafe-eval'", TURNSTILE_ORIGIN],
     // react-native-web writes its styles into <style> tags at runtime, and
     // Expo's index.html carries an inline reset.
     ['style-src', "'self'", "'unsafe-inline'"],
@@ -83,8 +95,9 @@ export function contentSecurityPolicy(profile: WebProfile): string {
     ['connect-src', "'self'", ...connectOrigins(profile)],
     // Scribe AI plays back the voice it just recorded from a `blob:` URL.
     ['media-src', "'self'", 'blob:'],
-    // MapKit JS runs only inside this frame, on its own origin.
-    ['frame-src', profile.mapsOrigin],
+    // MapKit JS runs only inside this frame, on its own origin; Turnstile's
+    // widget in its own.
+    ['frame-src', profile.mapsOrigin, TURNSTILE_ORIGIN],
     ['worker-src', "'self'"],
     ['frame-ancestors', "'none'"],
     ['base-uri', "'none'"],

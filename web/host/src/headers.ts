@@ -36,12 +36,18 @@ export const SITE_ORIGINS = [
 /**
  * RevenueCat's API in browser mode: prices, customer info, and the SDK's own
  * events (ADR 0041). Checkout runs on RevenueCat's page, so no RevenueCat or
- * Stripe script runs here and `script-src` stays `'self'`.
+ * Stripe script runs here.
  */
 export const REVENUECAT_ORIGINS = [
   'https://api.revenuecat.com',
   'https://e.revenue.cat',
 ]
+
+/**
+ * Cloudflare Turnstile, the check before a recovery key signs this browser in
+ * (ADR 0038): its script, and the frame it renders the widget in.
+ */
+export const TURNSTILE_ORIGIN = 'https://challenges.cloudflare.com'
 
 const socketOrigin = (origin: string) => origin.replace(/^http/, 'ws')
 
@@ -49,7 +55,7 @@ export function contentSecurityPolicy(profile: WebProfile): string {
   const directives: [string, ...string[]][] = [
     ['default-src', "'self'"],
     // CanvasKit compiles its wasm at runtime.
-    ['script-src', "'self'", "'wasm-unsafe-eval'"],
+    ['script-src', "'self'", "'wasm-unsafe-eval'", TURNSTILE_ORIGIN],
     // react-native-web writes its styles into <style> tags at runtime, and
     // Expo's index.html carries an inline reset.
     ['style-src', "'self'", "'unsafe-inline'"],
@@ -64,7 +70,7 @@ export function contentSecurityPolicy(profile: WebProfile): string {
       ...SITE_ORIGINS,
       ...REVENUECAT_ORIGINS,
     ],
-    ['frame-src', profile.mapsOrigin],
+    ['frame-src', profile.mapsOrigin, TURNSTILE_ORIGIN],
     ['worker-src', "'self'"],
     ['frame-ancestors', "'none'"],
     ['base-uri', "'none'"],

@@ -47,10 +47,18 @@ export type AppSyncConfig = {
   entitlement: 'supporter' | 'everyone'
 }
 
+/** Web sign-up's switch and Turnstile's site key (docs/passkeys-protocol.md). */
+export type AppWebSignupConfig = {
+  enabled: boolean
+  turnstileSiteKey: string | null
+}
+
 export type AppConfig = {
   minAppVersion: string | null
   /** Null from a worker before Cloud Sync. */
   sync: AppSyncConfig | null
+  /** Absent from a worker before web accounts. */
+  webSignup?: AppWebSignupConfig
 }
 
 /**
@@ -66,6 +74,7 @@ export async function fetchAppConfig(
     ok?: unknown
     minAppVersion?: unknown
     sync?: { enabled?: unknown; entitlement?: unknown } | null
+    webSignup?: { enabled?: unknown; turnstileSiteKey?: unknown } | null
   } | null>({
     url: `${url}?capabilities=${SESSION_CAPABILITIES.join(',')}`,
     timeoutMs: 8_000,
@@ -73,7 +82,7 @@ export async function fetchAppConfig(
   })
   if (response.data?.ok !== true)
     throw new HttpError('server', response.status, 'unexpected_response')
-  const { minAppVersion, sync } = response.data
+  const { minAppVersion, sync, webSignup } = response.data
   return {
     minAppVersion: typeof minAppVersion === 'string' ? minAppVersion : null,
     sync:
@@ -84,6 +93,17 @@ export async function fetchAppConfig(
               sync.entitlement === 'everyone' ? 'everyone' : 'supporter',
           }
         : null,
+    ...(webSignup &&
+      typeof webSignup.enabled === 'boolean' && {
+        webSignup: {
+          enabled: webSignup.enabled,
+          turnstileSiteKey:
+            typeof webSignup.turnstileSiteKey === 'string' &&
+            webSignup.turnstileSiteKey
+              ? webSignup.turnstileSiteKey
+              : null,
+        },
+      }),
   }
 }
 

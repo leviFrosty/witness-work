@@ -29,6 +29,13 @@ export const checkAppConfig = createAppConfigCheck({
   },
 })
 
+/**
+ * Web sign-up's switch and Turnstile's site key, read now: the sign-in screen's
+ * recovery key needs the key. Null from a worker before web accounts.
+ */
+export const fetchWebSignupConfig = async () =>
+  (await fetchAppConfig(apis.appConfig)).webSignup ?? null
+
 /** Ww-api refused a request with 426 `upgrade_required`. */
 export const updateRequiredByServer = () =>
   requireUpdateFromServer(appVersion())
@@ -38,6 +45,7 @@ export {
   useUpdateRequired,
 } from '@/lib/appUpdate/updateRequired'
 export type {
+  AppWebSignupConfig,
   UpdateRequired,
   UpdateRequiredSource,
 } from '@/lib/appUpdate/updateRequired'

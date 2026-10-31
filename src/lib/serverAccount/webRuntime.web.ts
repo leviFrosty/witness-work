@@ -17,6 +17,7 @@ import {
   type WebAccount,
 } from '@/lib/serverAccount/webAccount'
 import { webDeviceLabel } from '@/lib/serverAccount/webDeviceLabel'
+import { webSignInMark } from '@/lib/serverAccount/webSignInMark'
 import type { WebRuntime } from '@/lib/serverAccount/webRuntime'
 import { reloadPage, sessionTabs } from '@/lib/serverAccount/webTabs'
 import {
@@ -104,7 +105,10 @@ export const webRuntime: WebRuntime | null = {
       markWipePending,
       wipe: clearAllWebData,
       reload: reloadPage,
-      onEnded: (reason, outcome) =>
-        analytics.capture('web_session_ended', { reason, outcome }),
+      onEnded: (reason, outcome) => {
+        analytics.capture('web_session_ended', { reason, outcome })
+        // The sign-in screen after the wipe's reload says why.
+        if (outcome === 'wiped') webSignInMark.write({ ended: reason })
+      },
     })),
 }

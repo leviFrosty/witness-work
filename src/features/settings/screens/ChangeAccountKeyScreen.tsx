@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Alert, ScrollView } from 'react-native'
 import {
   useNavigation,
@@ -8,20 +8,26 @@ import {
 } from '@react-navigation/native'
 import {
   CircleAlert as CircleAlertIcon,
-  CircleCheckBig as CircleCheckIcon,
   Clock as ClockIcon,
   WifiOff as WifiOffIcon,
 } from 'lucide-react-native'
 import ContentColumn from '@/components/ui/layout/ContentColumn'
 import Wrapper from '@/components/ui/layout/Wrapper'
 import HandoffStatus from '@/features/settings/components/account/handoff/HandoffStatus'
+import KeyChangeDone from '@/features/settings/components/account/keyChange/KeyChangeDone'
 import KeyChangeIntro from '@/features/settings/components/account/keyChange/KeyChangeIntro'
 import KeyChangeNewKey from '@/features/settings/components/account/keyChange/KeyChangeNewKey'
 import KeyChangeProgress from '@/features/settings/components/account/keyChange/KeyChangeProgress'
 import useDevicesTooOldForKeyChange from '@/features/settings/hooks/useDevicesTooOldForKeyChange'
 import useKeyChangeFlow from '@/features/settings/hooks/useKeyChangeFlow'
+import {
+  passkeyStepUpAfterChange,
+  passkeyUnlocksAfterChange,
+} from '@/app/account/keyChange'
+import { addPasskeyWithToasts } from '@/app/web-sign-in/addPasskeyWithToasts'
 import type { KeyChangeProblem } from '@/features/settings/lib/keyChangeFlow'
 import { analytics } from '@/lib/analytics'
+import { formatDateTime } from '@/lib/dates'
 import i18n, { type TranslationKey } from '@/lib/locales'
 import type { RootStackNavigation, RootStackParamList } from '@/types/rootStack'
 
@@ -30,13 +36,17 @@ const PROBLEM: Record<KeyChangeProblem, TranslationKey> = {
   server: 'accountKeyChange_problemServer',
   mismatch: 'accountKeyChange_problemMismatch',
   sessionTooNew: 'accountKeyChange_problemSessionTooNew',
+  noPasskey: 'accountKeyChange_problemNoPasskey',
   stepUpRequired: 'accountKeyChange_problemStepUp',
+  unsupported: 'accountKeyChange_problemUnsupported',
 }
 
 /** Nothing to try again: the screen only closes. */
 const FINAL: ReadonlySet<KeyChangeProblem> = new Set([
   'mismatch',
   'sessionTooNew',
+  'noPasskey',
+  'unsupported',
 ])
 
 /**
@@ -96,6 +106,18 @@ const ChangeAccountKeyScreen = () => {
       void flow.resume().catch(() => undefined)
   }, [flow, params])
 
+  // A browser whose step-up gave no PRF output has no passkey that unlocks
+  // with the new key: it offers to add one.
+  const [passkeyUnlocks, setPasskeyUnlocks] = useState<boolean | null>(null)
+  const checkPasskeys = () =>
+    passkeyUnlocksAfterChange?.()
+      .then(setPasskeyUnlocks)
+      .catch(() => setPasskeyUnlocks(null))
+  const isDone = state.step === 'done'
+  useEffect(() => {
+    if (isDone) void checkPasskeys()
+  }, [isDone])
+
   const done = {
     label: i18n.t('done'),
     onPress: () => navigation.goBack(),
@@ -133,16 +155,25 @@ const ChangeAccountKeyScreen = () => {
           />
         )
       case 'changing':
-        return <KeyChangeProgress stage={state.stage} />
+        return (
+          <KeyChangeProgress
+            stage={state.stage}
+            confirming={state.confirming === true}
+          />
+        )
       case 'done':
         return (
-          <HandoffStatus
-            icon={CircleCheckIcon}
-            tone='success'
-            title={i18n.t('accountKeyChange_doneTitle')}
-            body={i18n.t('accountKeyChange_doneBody')}
-            primary={done}
-            testID='key-change-done-status'
+          <KeyChangeDone
+            passkeyUnlocks={passkeyUnlocks}
+            onDone={done.onPress}
+            onAddPasskey={() =>
+              void addPasskeyWithToasts({
+                source: 'key_change',
+                ...(passkeyStepUpAfterChange && {
+                  stepUp: passkeyStepUpAfterChange(),
+                }),
+              }).then((added) => added && void checkPasskeys())
+            }
           />
         )
       case 'finishing':
@@ -176,7 +207,15 @@ const ChangeAccountKeyScreen = () => {
           <HandoffStatus
             icon={state.problem === 'offline' ? WifiOffIcon : CircleAlertIcon}
             tone='error'
-            body={i18n.t(PROBLEM[state.problem])}
+            body={
+              state.problem === 'sessionTooNew' && state.availableAt
+                ? i18n.t('accountKeyChange_problemSessionTooNewUntil', {
+                    time: formatDateTime(state.availableAt, {
+                      style: 'medium',
+                    }),
+                  })
+                : i18n.t(PROBLEM[state.problem])
+            }
             primary={
               FINAL.has(state.problem)
                 ? done

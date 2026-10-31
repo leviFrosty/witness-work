@@ -86,6 +86,8 @@ export type PasskeyAddSource =
   | 'onboarding'
   | 'prompt'
   | 'approved_by'
+  /** The web's Change Account Key, done. */
+  | 'key_change'
 
 /** Analytics for Add a Passkey (`add`) or Let It Unlock (`upgrade`). */
 export function reportPasskeyAdd(

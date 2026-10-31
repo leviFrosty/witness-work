@@ -111,6 +111,15 @@ describe('fetchAccountInfo', () => {
     })
   })
 
+  it('refuses a key epoch the server sent as null', async () => {
+    const fetchImpl = vi.fn(async () =>
+      Response.json({ ...record, keyEpoch: null })
+    )
+    await expect(fetchAccountInfo(options(fetchImpl))).rejects.toBeInstanceOf(
+      HttpError
+    )
+  })
+
   it('throws the server code, and on a bad shape', async () => {
     const unknown = vi.fn(async () =>
       Response.json(

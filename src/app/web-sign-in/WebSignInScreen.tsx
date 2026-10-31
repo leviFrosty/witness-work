@@ -32,6 +32,7 @@ export default function WebSignInScreen({
   signUp,
   signUpState,
   ended,
+  changedAt = null,
   keptData,
   canSignUp,
   notice,
@@ -42,6 +43,8 @@ export default function WebSignInScreen({
   signUp: WebSignUp
   signUpState: WebSignUpState
   ended: SessionEndReason | null
+  /** With `ended: 'key_changed'`: when the key changed, if the server said. */
+  changedAt?: number | null
   keptData: boolean
   /** Create an Account; never while this browser keeps an account's data. */
   canSignUp: boolean
@@ -174,7 +177,7 @@ export default function WebSignInScreen({
       return (
         <SignInChoices
           state={state}
-          ended={notice ?? endedText(ended)}
+          ended={notice ?? endedText(ended, changedAt)}
           keptData={keptData}
           onPasskey={() => void flow.signInWithPasskey()}
           onPhone={startPhone}

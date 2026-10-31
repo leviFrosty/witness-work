@@ -127,6 +127,7 @@ describe('createWebAppLock', () => {
     via: 'passkey',
     rpId: RP_ID,
     credentialIds: [CREDENTIAL, OTHER],
+    credentialId: CREDENTIAL,
     assertion,
     challenge: 'c2VydmVy',
     until: 1,

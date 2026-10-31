@@ -25,6 +25,7 @@ function setup(
     record: vi.fn(async () => options.record ?? null),
     resume: vi.fn(async () => options.resume ?? ({ state: 'none' } as const)),
     discard: vi.fn(async () => undefined),
+    lose: vi.fn(async () => undefined),
     lastAccountId: () =>
       options.lastAccountId === undefined ? ACCOUNT : options.lastAccountId,
     storedKey: vi.fn(async () =>
@@ -145,6 +146,42 @@ describe('a retired key', () => {
       lastAccountId: null,
     })
     expect(await handle(pub(K1), 1)).toBe('ignored')
+    expect(deps.signOut).not.toHaveBeenCalled()
+  })
+
+  it('acts on a key this browser says it held, already forgotten and with nothing cached', async () => {
+    // A browser's launch: its account forgot the retired key first, and the
+    // cached account may hold nothing.
+    const { deps, handle } = setup({ stored: null, accountPub: null })
+    expect(await handle(pub(K1), 1, { held: true })).toBe('signedOut')
+    expect(deps.forgetRetired).toHaveBeenCalledWith(pub(K1))
+    expect(deps.signOut).toHaveBeenCalledWith(ACCOUNT, 1)
+  })
+
+  it('deletes a browser’s own change another device beat, asking nothing', async () => {
+    // A browser changes the key only through the session the change ended.
+    for (const stage of ['pending', 'confirmed'] as const) {
+      const { deps, handle } = setup({
+        record: record(stage),
+        stored: null,
+        accountPub: null,
+      })
+      expect(await handle(pub(K1), 1, { held: true })).toBe('signedOut')
+      expect(deps.lose).toHaveBeenCalledTimes(1)
+      expect(deps.resume).not.toHaveBeenCalled()
+      expect(deps.discard).not.toHaveBeenCalled()
+      expect(deps.signOut).toHaveBeenCalledWith(ACCOUNT, 1)
+    }
+  })
+
+  it('keeps a browser’s own committed change when its session ends', async () => {
+    const { deps, handle } = setup({
+      record: record('committed'),
+      stored: null,
+      accountPub: null,
+    })
+    expect(await handle(pub(K1), 1, { held: true })).toBe('ownChange')
+    expect(deps.lose).not.toHaveBeenCalled()
     expect(deps.signOut).not.toHaveBeenCalled()
   })
 

@@ -203,6 +203,7 @@ export default function WebSignInGate({ children }: PropsWithChildren) {
         signUp={signUp}
         signUpState={signUpState}
         ended={accountState.ended ?? state.ended}
+        changedAt={accountState.changedAt ?? null}
         keptData={accountState.keptData}
         canSignUp={offer.offered}
       />

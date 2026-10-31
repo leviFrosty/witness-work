@@ -407,8 +407,9 @@ export async function fetchAccountInfo(
   const data = response.data ?? {}
   const { accountId, accountPub, status, createdAt, inboxIds, statusChanges } =
     data
-  // Servers before key changes didn't send it: every account was at 0.
-  const keyEpoch = data.keyEpoch ?? 0
+  // Servers before key changes didn't send it: every account was at 0. A
+  // `null` is malformed, not missing.
+  const keyEpoch = data.keyEpoch === undefined ? 0 : data.keyEpoch
   if (
     data.ok !== true ||
     typeof keyEpoch !== 'number' ||

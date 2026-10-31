@@ -6,16 +6,20 @@ import {
   signInOnlyMessage,
 } from '@/features/settings/components/account/passkeys/passkeyCopy'
 import { addPasskeyHere } from '@/app/web-sign-in/webSignInRuntime'
+import type { WebPasskeyStepUp } from '@/lib/serverAccount/webPasskeyAdd'
+import type { PasskeyAddSource } from '@/lib/serverAccount/passkeyServer'
 
 /**
- * Add a Passkey after "Approved by …", saying how it went as Settings →
- * Passkeys does. Resolves true once a passkey was added; a cancel says
- * nothing.
+ * Add a Passkey after "Approved by …" (or, with its `stepUp`, after a key
+ * change), saying how it went as Settings → Passkeys does. Resolves true once a
+ * passkey was added; a cancel says nothing.
  */
-export async function addPasskeyWithToasts(): Promise<boolean> {
+export async function addPasskeyWithToasts(
+  context: { source?: PasskeyAddSource; stepUp?: WebPasskeyStepUp } = {}
+): Promise<boolean> {
   const title = i18n.t('passkeys_addFailed')
   try {
-    const result = await addPasskeyHere()
+    const result = await addPasskeyHere(context)
     if (result.status === 'cancelled') return false
     if (result.status === 'failed') {
       toast.error(title, { message: passkeyFailureMessage(result.reason) })

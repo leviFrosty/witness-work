@@ -96,6 +96,8 @@ export type StepUpPasskey = {
   via: 'passkey'
   rpId: string | null
   credentialIds: string[]
+  /** The passkey the server verified (`POST /passkeys/assert`). */
+  credentialId: string
   /** The get the server verified, for checks of its own (App Lock). */
   assertion: PasskeyAssertion
   /** The challenge it signed, `b64u`. */
@@ -140,6 +142,16 @@ export type WebStepUpDeps = {
  * challenge expires it counts as stale.
  */
 export const SESSION_STEP_UP_MARGIN_MS = 30_000
+
+/**
+ * Actions that always ask for the passkey, whatever the server's window: App
+ * Lock keeps the get, and Change Account Key wraps the new key with the
+ * passkey's PRF output (ADR 0039 §2).
+ */
+const PASSKEY_ONLY: ReadonlySet<SensitiveAction> = new Set([
+  'app_lock',
+  'change_account_key',
+])
 
 /** How long a step-up challenge lasts on the server. */
 const CHALLENGE_LIFETIME_MS = 5 * 60_000
@@ -203,12 +215,12 @@ export function createWebStepUp(deps: WebStepUpDeps) {
 
   /**
    * Before the User taps: online; inside the server's window; else the
-   * challenge, for which passkeys. App Lock always asks for the passkey: it
-   * keeps the get.
+   * challenge, for which passkeys. App Lock and Change Account Key always ask
+   * for the passkey (`PASSKEY_ONLY`).
    */
   async function prepare(action: SensitiveAction): Promise<StepUpPrepared> {
     if (!deps.online()) return { status: 'offline' }
-    if (action !== 'app_lock') {
+    if (!PASSKEY_ONLY.has(action)) {
       let window: { until: number } | null
       try {
         window = await serverWindow()
@@ -257,11 +269,12 @@ export function createWebStepUp(deps: WebStepUpDeps) {
     if (!deps.online()) return { status: 'offline' }
     // The server records the step-up no sooner than this.
     const sentAt = deps.elapsed()
+    let credentialId: string
     try {
-      await deps.assert({
+      ;({ credentialId } = await deps.assert({
         challengeToken: ready.challengeToken,
         response: assertion.response as unknown as PasskeyResponseJSON,
-      })
+      }))
     } catch (error) {
       return serverFailure(error)
     }
@@ -270,6 +283,7 @@ export function createWebStepUp(deps: WebStepUpDeps) {
       via: 'passkey',
       rpId: ready.rpId,
       credentialIds: ready.credentialIds,
+      credentialId,
       assertion,
       challenge: ready.options.challenge,
       until: sentAt + STEP_UP_WINDOW_MS - SESSION_STEP_UP_MARGIN_MS,

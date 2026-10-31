@@ -27,6 +27,7 @@ export default function InputRowSwitch({
       // The switch is the row's one stop for screen readers.
       labelReadByControl
       descriptionReadByControl
+      onRowPress={() => onValueChange(!value)}
       controlStyle={{ width: 'auto', flexShrink: 0 }}
     >
       <Switch

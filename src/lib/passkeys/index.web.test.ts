@@ -204,6 +204,15 @@ describe('createPasskey', () => {
 })
 
 describe('getPasskey', () => {
+  it('opens the browser’s prompt before it awaits anything, so a tap’s user activation reaches it', async () => {
+    credentials.get.mockResolvedValue(credential(authentication, {}))
+    const pending = getPasskey(request)
+    // Synchronously, before any microtask: Safari keeps a tap's activation
+    // only briefly.
+    expect(credentials.get).toHaveBeenCalledTimes(1)
+    await pending
+  })
+
   it('sends the salt and returns the PRF output apart from the response', async () => {
     credentials.get.mockResolvedValue(
       credential(authentication, {

@@ -3,5 +3,6 @@
   "version": "0.1.0",
   "description": "Local Expo module for small secrets that stay on this device: a this-device-only, non-synchronizable Keychain item on iOS, an Android Keystore-sealed file outside Auto Backup on Android.",
   "main": "index.ts",
+  "browser": "index.web.ts",
   "private": true
 }

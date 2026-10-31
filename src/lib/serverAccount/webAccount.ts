@@ -39,6 +39,14 @@ import { SIGNED_OUT_DATA } from '@/lib/webStorage/boot'
  *   wipes at once, like signing out, in every tab that hears of it. `expired`,
  *   `replaced` (and any other reason) keep the sealed key and the stores and
  *   show the sign-in screen.
+ * - **The key changed on another device** (ADR 0039) while this session was live:
+ *   the refresh is refused as `key_changed` (only the server labels a session
+ *   so). The tab it was refused to notes the retired key before the session is
+ *   cleared (`decide`), forgets only that key, keeps the stores, shows how to
+ *   sign back in, and tells the other tabs, which reload. A launch finishes
+ *   what a closed tab started, and a wipe wins. A browser signed out before the
+ *   change reads `revoked`, and wipes. Signing in again as the same account,
+ *   with its new key, picks up where it was (`owner`).
  *
  * A wipe is marked pending (`markWipePending`) before any tab hears of it, so
  * the next launch finishes one every tab closed in the middle of.
@@ -60,11 +68,13 @@ export type WebAccountState =
   /**
    * The sign-in screen. `ended` says why the session ended, when the server
    * ended it; `keptData` when this browser still holds an account's data, which
-   * signing in as that account picks up.
+   * signing in as that account picks up. With `ended: 'key_changed'`,
+   * `changedAt` is when the key changed, if the server said.
    */
   | {
       status: 'signedOut'
       ended: SessionEndReason | null
+      changedAt?: number | null
       keptData: boolean
     }
 
@@ -107,11 +117,20 @@ export type WebSignIn = {
   reload: boolean
 }
 
+/** A retired key a closed tab hadn't forgotten yet (`keyRetiredPending`). */
+export type KeyRetiredPending = { accountPub: string; changedAt: number | null }
+
 export type WebAccountDeps = {
-  sessions: Pick<AccountSessions, 'adopt' | 'close' | 'receive' | 'ready'> & {
+  sessions: Pick<
+    AccountSessions,
+    'adopt' | 'close' | 'forget' | 'receive' | 'ready'
+  > & {
     snapshot: () => { accountId: string } | null
   }
-  accountKey: Pick<WebAccountKey, 'load' | 'peek' | 'save' | 'seal' | 'forget'>
+  accountKey: Pick<
+    WebAccountKey,
+    'load' | 'peek' | 'save' | 'seal' | 'forget' | 'retire'
+  >
   tabs: Pick<SessionTabs, 'publish' | 'subscribe'>
   /**
    * The account id the local data belongs to, in `secureKv`: written when a
@@ -158,9 +177,25 @@ export type WebAccountDeps = {
    */
   onEnded?: (
     reason: SessionEndReason,
-    outcome: 'wiped' | 'signIn',
+    outcome: 'wiped' | 'signIn' | 'keyChanged',
     from: { fromTab: boolean }
   ) => void
+  /**
+   * A key a key change on another device retired, noted (in `secureKv`) before
+   * the session is cleared and deleted once the key is forgotten, so a launch
+   * finishes what a closed tab started. The wipe deletes it.
+   */
+  keyRetiredPending: {
+    read: () => Promise<KeyRetiredPending | null>
+    write: (value: KeyRetiredPending | null) => Promise<void>
+  }
+  /**
+   * The key was retired by a key change on another device: the app forgets it
+   * (only while it's still that key) and shows how to sign back in.
+   */
+  onKeyRetired?: (accountPub: string, changedAt: number | null) => Promise<void>
+  /** A session for `accountId` is this browser's now. */
+  onSignedIn?: (accountKey: Uint8Array, accountId: string) => void
   now?: () => number
   /** `WEB_CLOSE_WAIT_MS` by default. */
   closeWaitMs?: number
@@ -206,17 +241,111 @@ export function createWebAccount(deps: WebAccountDeps) {
     return wiping
   }
 
-  const signedOut = async (ended: SessionEndReason | null) =>
+  const signedOut = async (
+    ended: SessionEndReason | null,
+    changedAt?: number | null
+  ) =>
     set({
       status: 'signedOut',
       ended,
+      ...(ended === 'key_changed' && { changedAt: changedAt ?? null }),
       keptData: ![null, SIGNED_OUT_DATA].includes(
         await deps.owner.read().catch(() => null)
       ),
     })
 
+  /**
+   * `WebSessionDeps.decide`, before the stored session is cleared: a
+   * `key_changed` session notes its retired key (the stores stay), any reason
+   * that wipes marks the wipe pending. A tab that closes partway, the next
+   * launch finishes it.
+   */
+  async function decide(
+    reason: SessionEndReason,
+    ending: { accountPub: string; changedAt: number | null }
+  ): Promise<void> {
+    if (reason === 'key_changed') await deps.keyRetiredPending.write(ending)
+    else if (sessionEndWipes(reason)) await deps.markWipePending()
+  }
+
+  /**
+   * Forgets the noted retired key alone, keeping the stores:
+   *
+   * - `kept`: the key is gone (now, or before a tab closed) and the data stays;
+   *   the note is deleted.
+   * - `wipe`: a wipe has started, or there's no account's data to keep (`owner`).
+   * - `stale`: another key is stored (a sign-in with the new key came after the
+   *   note), so the note no longer applies.
+   *
+   * `wipe` and `stale` leave the note: the wipe deletes it with everything else
+   * (`clearAllWebData`), so a tab that closes before the wipe is marked pending
+   * still wipes at the next launch, and `start` deletes a stale one itself.
+   *
+   * At launch the app's handling (`onKeyRetired`) loads after `start`, so
+   * `start` doesn't wait for it: the note stays until it has handled the key,
+   * and a launch that ends before then handles it again.
+   */
+  async function forgetRetiredKey(
+    pending: KeyRetiredPending,
+    { atLaunch = false }: { atLaunch?: boolean } = {}
+  ): Promise<'kept' | 'wipe' | 'stale'> {
+    const clear = () =>
+      deps.keyRetiredPending.write(null).catch(() => undefined)
+    const owner = await deps.owner.read().catch(() => null)
+    if (wiping || [null, SIGNED_OUT_DATA].includes(owner)) return 'wipe'
+    if (
+      !(await deps.accountKey.retire(pending.accountPub)) &&
+      (await deps.accountKey.peek()) !== null
+    )
+      return 'stale'
+    const handled = Promise.resolve(
+      deps.onKeyRetired?.(pending.accountPub, pending.changedAt)
+    )
+    if (atLaunch) {
+      void handled.then(clear, () => undefined)
+      return 'kept'
+    }
+    // A live tab's handling is installed (`listenForRetiredKeys`, before the
+    // app had a key), so the hub settles once it has run.
+    await handled
+    await clear()
+    return wiping ? 'wipe' : 'kept'
+  }
+
+  /**
+   * Ended by a key change on another device (`key_changed`) while this session
+   * was live, in the tab whose refresh was refused: the retired key goes, the
+   * stores stay, and the other tabs reload signed out. Anything short of that
+   * (no note from `decide`, no data to keep, another key stored) wipes, so the
+   * tab never stays signed in without a session.
+   */
+  async function keyChanged(): Promise<void> {
+    const pending = await deps.keyRetiredPending.read()
+    const outcome = pending ? await forgetRetiredKey(pending) : 'wipe'
+    if (outcome !== 'kept') {
+      if (wiping) return wiping
+      deps.onEnded?.('key_changed', 'wiped', { fromTab: false })
+      return wipeAndReload()
+    }
+    deps.tabs.publish({ type: 'keyRetired' })
+    await signedOut('key_changed', pending?.changedAt)
+    deps.onEnded?.('key_changed', 'keyChanged', { fromTab: false })
+  }
+
   /** `WebSessionDeps.onEnded`: the server ended the session. */
   function ended(reason: SessionEndReason, { fromTab }: { fromTab: boolean }) {
+    if (reason === 'key_changed') {
+      // The tab whose refresh was refused decides, and says what it did
+      // (`keyRetired` or `wiped`); the others wait for it, signed out.
+      if (fromTab) void signedOut(reason)
+      else
+        void keyChanged().catch(() => {
+          if (wiping) return
+          deps.onEnded?.('key_changed', 'wiped', { fromTab: false })
+          return wipeAndReload()
+        })
+      return
+    }
     if (sessionEndWipes(reason)) {
       deps.onEnded?.(reason, 'wiped', { fromTab })
       // Every tab that hears of it wipes: the one whose refresh was refused
@@ -242,6 +371,15 @@ export function createWebAccount(deps: WebAccountDeps) {
       case 'signedIn':
         if (state.status !== 'signedIn' || deps.sessions.snapshot() === null)
           deps.reload()
+        return
+      case 'keyRetired':
+        // Another tab forgot the retired key and kept the data.
+        deps.accountKey.forget()
+        deps.reload()
+        return
+      case 'rekeyed':
+        // Another tab changed the account key and stored the new one.
+        deps.reload()
     }
   }
 
@@ -319,6 +457,11 @@ export function createWebAccount(deps: WebAccountDeps) {
       )
       if (adopted === 'failed')
         throw new Error('The session could not be saved')
+      // Signed in again: a retired key noted before no longer applies. Only
+      // once the new key and session are kept: until then the note still
+      // explains why this browser is signed out (and one left beside the new
+      // key changes nothing at launch).
+      await deps.keyRetiredPending.write(null).catch(() => undefined)
     } catch (error) {
       void deps.closeOpened(opened.accessToken).catch(() => undefined)
       // No session was kept: the data isn't this account's.
@@ -350,6 +493,7 @@ export function createWebAccount(deps: WebAccountDeps) {
     }
     deps.tabs.publish({ type: 'signedIn', sessionId: opened.sessionId })
     set({ status: 'signedIn', accountId: opened.accountId })
+    deps.onSignedIn?.(accountKey, opened.accountId)
     return signedIn
   }
 
@@ -364,6 +508,39 @@ export function createWebAccount(deps: WebAccountDeps) {
         deps.tabs.subscribe(receive)
         await deps.accountKey.load()
         await deps.sessions.ready()
+        // A key change on another device that a closed tab hadn't finished.
+        let pending: KeyRetiredPending | null
+        try {
+          pending = await deps.keyRetiredPending.read()
+        } catch {
+          // Whether the session still stands can't be told: sign-in, and the
+          // note stays for the next launch.
+          await signedOut(null)
+          return state
+        }
+        if (pending) {
+          const outcome = await forgetRetiredKey(pending, {
+            atLaunch: true,
+          }).catch(() => 'wipe' as const)
+          if (outcome === 'wipe') {
+            if (!wiping)
+              deps.onEnded?.('key_changed', 'wiped', { fromTab: false })
+            void wipeAndReload()
+            return state
+          }
+          if (outcome === 'stale')
+            await deps.keyRetiredPending.write(null).catch(() => undefined)
+          if (outcome === 'kept') {
+            // The session the change ended, which no refresh may replay.
+            // `forget` saves its `null` in the background, maybe after the
+            // note's delete lands. A launch in between finds no note and that
+            // session stored without a key: it shows sign-in, and signing in
+            // replaces the session.
+            deps.sessions.forget()
+            await signedOut('key_changed', pending.changedAt)
+            return state
+          }
+        }
         const session = deps.sessions.snapshot()
         if (session && (await deps.accountKey.peek()))
           set({ status: 'signedIn', accountId: session.accountId })
@@ -447,7 +624,15 @@ export function createWebAccount(deps: WebAccountDeps) {
       await deps.sessions.close({ waitMs: closeWaitMs })
       await wipeAndReload()
     },
+    decide,
     ended,
+    /**
+     * This browser changed its account key and stored the new one (step 4): the
+     * other tabs reload onto it.
+     */
+    rekeyed(): void {
+      deps.tabs.publish({ type: 'rekeyed' })
+    },
     state: (): WebAccountState => state,
     subscribe(listener: () => void): () => void {
       listeners.add(listener)

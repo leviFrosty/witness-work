@@ -25,9 +25,9 @@ const isWeb = Platform.OS === 'web'
  * 0039), a way into Device Sync, and its Cloud Sync photo storage (ADR 0040
  * §6).
  *
- * On the web: Show Recovery Key behind a step-up (docs/passkeys-protocol.md,
- * "The shared check before sensitive actions"), and Sign Out. Backup and moving
- * the account stay on phones.
+ * On the web: Show Recovery Key and Change Account Key behind a step-up
+ * (docs/passkeys-protocol.md, "The shared check before sensitive actions"), and
+ * Sign Out. Backup and moving the account stay on phones.
  */
 const AccountScreen = () => {
   const { overview, refresh } = useAccountOverview()
@@ -74,6 +74,7 @@ const AccountScreen = () => {
               overview.state === 'unreachable'
             }
           />
+          {/* A browser signed out sees the sign-in screen, never this one. */}
           {isWeb && <WebSignOutSection />}
         </ScrollView>
       </Wrapper>

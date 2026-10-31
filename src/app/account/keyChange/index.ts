@@ -32,6 +32,7 @@ import {
   onKeyRetired,
   serverAccount,
   thisDeviceLabel,
+  webAccount,
 } from '@/lib/serverAccount'
 import {
   getBackupSlot,
@@ -54,6 +55,15 @@ import {
   listSyncSlots,
   putSyncSlot,
 } from '@/lib/syncTransport/server/syncClient'
+import { webAccountKey } from '@/lib/accountKey/webAccountKey'
+import { readAccountDevices } from '@/lib/serverAccount/accountDevices'
+import { listPasskeys } from '@/lib/serverAccount/passkeyClient'
+import {
+  pageClock,
+  requestContinue,
+  requestStepUp,
+  webStepUp,
+} from '@/lib/serverAccount/stepUpPrompt'
 import {
   buddiesEngine,
   carryOnBuddiesKeyChange,
@@ -65,7 +75,7 @@ import i18n from '@/lib/locales'
 import { toast } from '@/stores/toasts'
 import { usePreferences } from '@/stores/preferences'
 import { createKeyChangeEventGate } from './analytics'
-import { createKeyChangeEngine } from './engine'
+import { createKeyChangeEngine, KeyChangeError } from './engine'
 import {
   createPhotoResealRetry,
   createResealStep,
@@ -73,8 +83,12 @@ import {
   resealPhotoApi,
 } from './reseal'
 import { createKeyRetiredHandler } from './retired'
+import { createRetiredKeyListener } from './retiredListener'
+import { createSignedInNote } from './signedIn'
 import { useKeyChangeStatus } from './status'
 import { keyChangeStep, registerKeyChangeStep } from './steps'
+import type { WebPasskeyStepUp } from '@/lib/serverAccount/webPasskeyAdd'
+import { createWebKeyChange } from './web'
 
 /**
  * Change Account Key on this device (ADR 0039), and what this device does when
@@ -123,6 +137,59 @@ async function prepare(change: {
 let _store: MMKV | null = null
 // Device-local, beside the cached account: when each event was last sent.
 const store = (): MMKV => (_store ??= new MMKV({ id: 'server-account' }))
+/** The browser's key, for its session's calls before the change commits. */
+const sessionKey = async () => {
+  const key = await accountKey.peek()
+  if (!key) throw new KeyChangeError('no_key')
+  return bearerOptions(key)
+}
+
+/** The Web Lock a browser's tabs take to carry a key change on. */
+const KEY_CHANGE_LOCK = 'ww-account-key-change'
+
+// A browser needs a day-old session and a passkey the server checks (ADR 0039
+// §2); phones check Face ID before starting.
+const web =
+  Platform.OS === 'web'
+    ? createWebKeyChange({
+        now: syncNow,
+        randomBytes: getRandomBytes,
+        devices: async () => {
+          const key = await accountKey.peek()
+          if (!key) throw new KeyChangeError('no_key')
+          return readAccountDevices(key)
+        },
+        passkeys: async () => listPasskeys(await sessionKey()),
+        canLockTabs: () =>
+          typeof navigator !== 'undefined' && !!navigator.locks,
+        elapsed: pageClock,
+        wallNow: Date.now,
+        // Which passkeys this page's RP ID has, before any key is made.
+        prepare: (action) => webStepUp().prepare(action),
+        // The step-up sheet: the passkey prompt runs from its own tap, which
+        // Safari asks for, and it records the check (`web_step_up`) and tells
+        // App Lock and Passkeys of it.
+        requestStepUp,
+        requestContinue,
+      })
+    : null
+
+/**
+ * The web, after a change: whether a passkey unlocks the account with the new
+ * key (only the step-up's, when it gave PRF output). Null on phones.
+ */
+export const passkeyUnlocksAfterChange: (() => Promise<boolean>) | null = web
+  ? () => web.passkeyUnlocks()
+  : null
+
+/**
+ * The web, after a change: a new Add a Passkey's owner check, on the change's
+ * own step-up while it holds, and the gate before its create. Null on phones.
+ */
+export const passkeyStepUpAfterChange: (() => WebPasskeyStepUp) | null = web
+  ? () => web.addPasskeyStepUp()
+  : null
+
 const sendEvent = createKeyChangeEventGate({
   get: (key) => store().getNumber(`key-change-event:${key}`) ?? null,
   set: (key, at) => store().set(`key-change-event:${key}`, at),
@@ -135,6 +202,11 @@ export const keyChange = createKeyChangeEngine({
   randomBytes: getRandomBytes,
   platform: Platform.OS,
   deviceKey: () => accountKey.peek(),
+  // Without the record, which the launch hold keeps until `resume` decides.
+  heldKey: async () => {
+    const key = await deviceAccountKey.peekStored()
+    return key ? fromB64u(key) : null
+  },
   isOnline: () => getOnline() !== false,
   server: {
     readAccount: fetchServerAccountInfo,
@@ -154,7 +226,12 @@ export const keyChange = createKeyChangeEngine({
     deviceAccount: async () => {
       await accountSessions.ready()
       const session = accountSessions.snapshot()
-      if (session) return { accountId: session.accountId, session: true }
+      if (session)
+        return {
+          accountId: session.accountId,
+          session: true,
+          accountPub: session.accountPub,
+        }
       const last = serverAccount.lastAccountId()
       return last ? { accountId: last, session: false } : null
     },
@@ -172,6 +249,16 @@ export const keyChange = createKeyChangeEngine({
       }
     },
   },
+  ...(web && { precheck: web.precheck, stepUp: web.stepUp }),
+  // A browser's tabs carry a change on one at a time, and reload onto the new
+  // key once it's done.
+  ...(Platform.OS === 'web' &&
+    typeof navigator !== 'undefined' &&
+    navigator.locks && {
+      exclusive: <T>(run: () => Promise<T>) =>
+        navigator.locks.request(KEY_CHANGE_LOCK, run),
+    }),
+  ...(webAccount && { finished: () => webAccount?.rekeyed() }),
   prepare,
   adopt: accountKey.adoptChangedKey,
   saveHistory: keyHistoryCache.save,
@@ -225,6 +312,7 @@ export const handleKeyRetired = createKeyRetiredHandler({
   record: keyChangeRecords.read,
   resume: () => keyChange.resume(),
   discard: () => keyChange.discard(),
+  lose: () => keyChange.lose(),
   lastAccountId: serverAccount.lastAccountId,
   // As stored: the account key the rest of the app reads ignores this key.
   storedKey: BuddiesKeychain.peekRootSeed,
@@ -259,18 +347,19 @@ async function rejoinWithSyncedKey(): Promise<void> {
     .catch(() => undefined)
 }
 
-/** A session opened again: a sign-in after a change elsewhere is done. */
-async function noteSignedIn(): Promise<void> {
-  const session = accountSessions.snapshot()
-  if (!session) return
-  if (keyChangedElsewhere()) setKeyChangedElsewhere(null)
-  // The account's history opens what older keys sealed here.
-  const seed = await deviceAccountKey.peek().catch(() => null)
-  if (seed)
-    await keyHistoryCache
-      .refresh(fromB64u(seed), session.accountId)
-      .catch(() => undefined)
-}
+/** A session opened again (`signedIn.ts`). */
+const noteSignedIn = createSignedInNote({
+  sessionAccountId: () => accountSessions.snapshot()?.accountId ?? null,
+  signedOutElsewhere: () => keyChangedElsewhere() !== null,
+  clearSignedOut: () => setKeyChangedElsewhere(null),
+  resume: () => keyChange.resume(),
+  storedKey: async () => {
+    const seed = await deviceAccountKey.peek()
+    return seed ? fromB64u(seed) : null
+  },
+  refreshHistory: (key, accountId) => keyHistoryCache.refresh(key, accountId),
+  warn: (message, error) => logger.warn(message, error),
+})
 
 /**
  * The history this device kept, else the server's; undefined when neither can
@@ -371,13 +460,34 @@ function retryPhotosLeft(): void {
 }
 
 let installed = false
+let waitingForKey = false
+
+/** Before anything waits for a key (`retiredListener.ts`). */
+const listenForRetiredKeys = createRetiredKeyListener({
+  onKeyRetired,
+  handle: handleKeyRetired,
+  warn: (message, error) => logger.warn(message, error),
+})
 
 /**
  * Once, at launch: resolves a change in progress, and listens for retired keys
- * and sign-ins.
+ * and sign-ins. A browser signed out has no key yet: it installs when one
+ * arrives with a sign-in.
  */
 export function installKeyChange(): void {
-  if (installed || !BuddiesKeychain.isAvailable()) return
+  listenForRetiredKeys()
+  if (installed) return
+  if (!BuddiesKeychain.isAvailable()) {
+    if (Platform.OS === 'web' && !waitingForKey) {
+      waitingForKey = true
+      const stop = webAccountKey.subscribe(() => {
+        if (!BuddiesKeychain.isAvailable()) return
+        stop()
+        installKeyChange()
+      })
+    }
+    return
+  }
   installed = true
   registerKeyChangeStep('reseal', resealStep)
   // Step 6 (Buddies' reconnect invites); it resolves once the old inbox is
@@ -395,11 +505,6 @@ export function installKeyChange(): void {
   // Leaving the old pairings goes on after the step, whether or not Buddies
   // is running.
   carryOnBuddiesKeyChange()
-  onKeyRetired((accountPub, changedAt) => {
-    void handleKeyRetired(accountPub, changedAt).catch((error: unknown) => {
-      logger.warn('[keyChange] handling a retired key failed', error)
-    })
-  })
   // Buddies' identity came from the old key; it derives the new one next.
   onAccountKeySwitched(() => buddiesEngine.dropIdentity())
   onAccountChange((change) => {

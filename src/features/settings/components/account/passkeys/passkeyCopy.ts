@@ -1,8 +1,8 @@
+import { Platform } from 'react-native'
 import type {
   PasskeyFlowFailure,
   SignInOnlyReason,
 } from '@/lib/serverAccount/passkeyFlow'
-import { Platform } from 'react-native'
 import i18n from '@/lib/locales'
 import { PASSKEYS_MAX } from '@/lib/serverAccount/passkeyFlow'
 
@@ -10,10 +10,12 @@ import { PASSKEYS_MAX } from '@/lib/serverAccount/passkeyFlow'
 export function passkeyFailureMessage(reason: PasskeyFlowFailure): string {
   switch (reason) {
     case 'owner_failed':
+      // A browser confirms it's you with a passkey, not the phone's lock.
       return i18n.t(
-        Platform.OS === 'web'
-          ? 'passkeys_failedOwnerWeb'
-          : 'passkeys_failedOwner'
+        Platform.select({
+          web: 'passkeys_failedOwnerWeb',
+          default: 'passkeys_failedOwner',
+        })
       )
     case 'not_supported':
       return i18n.t('passkeys_failedNotSupported')

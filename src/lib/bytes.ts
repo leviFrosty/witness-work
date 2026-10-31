@@ -75,3 +75,7 @@ export function concatBytes(...parts: Uint8Array[]): Uint8Array {
   }
   return out
 }
+
+/** Whether two byte arrays hold the same bytes. Not constant-time. */
+export const sameBytes = (a: Uint8Array, b: Uint8Array) =>
+  a.length === b.length && a.every((byte, i) => byte === b[i])

@@ -361,6 +361,11 @@ export function createStoreDatabase({
     keys(id: string): string[] {
       return [...(memory.get(id)?.keys() ?? [])]
     },
+    /** Whether any store holds a key. */
+    hasEntries(): boolean {
+      for (const entries of memory.values()) if (entries.size) return true
+      return false
+    },
     clear(id: string) {
       memory.get(id)?.clear()
       if (mode === 'stopped' || mode === 'memoryOnly') return

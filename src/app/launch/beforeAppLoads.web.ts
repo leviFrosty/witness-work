@@ -1,5 +1,6 @@
 import { LoadSkiaWeb } from '@shopify/react-native-skia/lib/module/web'
 import { registerRootComponent } from 'expo'
+import type { WebTabMessage } from '@/lib/serverAccount/webTabs'
 import { webStorageBoot } from '@/lib/webStorage/boot'
 
 /**
@@ -13,6 +14,8 @@ import { webStorageBoot } from '@/lib/webStorage/boot'
  *   (`translationLoaders.web.ts`), so the first screen is already translated.
  * - Its Help Center snapshot and English's (`snapshots.web.ts`), so the Help
  *   Center opens offline.
+ * - The account key and session, sealed in IndexedDB, so the app knows whether
+ *   the browser is signed in.
  *
  * While WitnessWork is open in another tab, this tab shows that instead.
  */
@@ -35,8 +38,22 @@ export function beforeAppLoads(loadApp: () => void) {
       return loadSnapshot(helpLocaleFor(_i18n.locale)).catch(() => {})
     })
     .then(() => storage)
-    .then(({ activeTab }) => {
-      if (activeTab) return loadApp()
+    .then(async ({ activeTab }) => {
+      // Verification hooks; Metro drops the branch from release bundles.
+      if (__DEV__)
+        require('@/app/dev-harness/webSession').installWebSessionHarness()
+      if (activeTab) {
+        await require('@/lib/serverAccount')
+          .webAccount?.start()
+          .catch(() => undefined)
+        return loadApp()
+      }
+      // Wiped in the active tab: this one's copy is gone too.
+      const { reloadPage, sessionTabs } =
+        require('@/lib/serverAccount/webTabs') as typeof import('@/lib/serverAccount/webTabs')
+      sessionTabs.subscribe((message: WebTabMessage) => {
+        if (message.type === 'wiped') reloadPage()
+      })
       registerRootComponent(
         require('@/app/launch/OpenInAnotherTabRoot').default
       )

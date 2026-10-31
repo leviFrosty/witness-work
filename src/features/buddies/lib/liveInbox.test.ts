@@ -186,6 +186,29 @@ describe('createLiveInbox', () => {
     expect(onChange).toHaveBeenCalledTimes(1)
   })
 
+  it('reconnects at once when a ticketed socket’s token expires', async () => {
+    const { live, sockets, message, events } = setup()
+    live.start()
+    await vi.advanceTimersByTimeAsync(0)
+    sockets[0].onopen?.()
+    message(sockets[0], { type: 'hello', seq: 5 })
+    sockets[0].onclose?.({ code: 4004, reason: 'expired' })
+    await vi.advanceTimersByTimeAsync(0)
+    // A fresh open (a new ticket), with no backoff and no session check.
+    expect(sockets).toHaveLength(2)
+    expect(events.map((event) => event.type)).not.toContain('verify')
+    expect(events.map((event) => event.type)).not.toContain(
+      'reconnectScheduled'
+    )
+
+    // Again straight away: backs off instead of looping.
+    sockets[1].onopen?.()
+    sockets[1].onclose?.({ code: 4004, reason: 'expired' })
+    await vi.advanceTimersByTimeAsync(0)
+    expect(sockets).toHaveLength(2)
+    expect(events.at(-1)?.type).toBe('reconnectScheduled')
+  })
+
   it('stops reconnecting when the relay closes for a suspended account', async () => {
     const { live, sockets, onChange } = setup()
     live.start()

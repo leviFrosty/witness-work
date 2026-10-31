@@ -362,6 +362,9 @@ Turnstile → `web/signup/options` → make the account key and store it sealed 
 
 A refresh refused with `revoked` or `reused` wipes the browser at once, as signing out does. `expired` and `replaced` keep the sealed account key and the local stores and show the sign-in screen. Signing in again as the same account picks up where it was and syncs. Another account wipes first.
 
+- **A refresh whose answer was lost.** Before presenting a refresh token, the browser stores a hash of it as in flight, and clears it once the replacing token is stored. If the server rotated the token but its answer never arrived or wasn't stored (a tab closed, a timeout, a lost connection), the next refresh presents the old one and gets `reused`. A browser that says it's offline sends no refresh at all. When the token presented is still marked in flight, the browser knows it caused that: it keeps its data and shows the sign-in screen, as for `expired` (the server has ended the session anyway).
+- **Whose data it is.** The browser records the account id its local data belongs to when it keeps a session. Signing in keeps the data only for that account. Anything else, including data with no recorded owner, is wiped first, whether or not the old account key can still be read. Another account then closes the old session, wipes, stores the new key and session, and reloads every tab before anything uses the new key.
+
 ### The shared check before sensitive actions
 
 One utility asks for a fresh check before showing the recovery key, setting up or approving a device, adding or removing a passkey, changing the account key, and deleting data:

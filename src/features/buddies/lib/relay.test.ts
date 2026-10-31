@@ -273,6 +273,27 @@ describe('requests with a session', () => {
     expect(h.fake.sessions.size).toBe(1)
   })
 
+  it('opens a browser’s live signal with a ticket, sending no token', async () => {
+    const h = setup()
+    const ann = h.user('Ann')
+    const openSocket = vi.fn()
+    const openTicketedSocket = vi.fn(async () => ({}) as LiveSocket)
+    const client = createRelayClient({
+      baseUrl: RELAY_URL,
+      randomBytes: random,
+      authorize: (run, { signal }) => ann.sessions.withSession(run, { signal }),
+      fetchImpl: h.fetchImpl,
+      openSocket,
+      openTicketedSocket,
+    })
+    await client.openLive(ownerAuthFor(ann.seed))
+    expect(openTicketedSocket).toHaveBeenCalledWith(
+      'wss://relay.test/buddies/v1/inbox/live',
+      ann.inboxId
+    )
+    expect(openSocket).not.toHaveBeenCalled()
+  })
+
   it('re-signs a writer op sent again after its token was refused', async () => {
     const { h, mom, anna, outgoing } = await paired()
     h.fake.expireAccessTokens()

@@ -21,6 +21,7 @@ import {
   playPetRewardSample,
 } from '@/features/pet/components/PetRewardChip'
 import * as BuddiesKeychain from '../../modules/buddies-keychain'
+import { webRuntime } from '@/lib/serverAccount/webRuntime'
 
 export function initializeApp() {
   perf.mark('initializeApp')
@@ -33,8 +34,16 @@ export function initializeApp() {
   if (Platform.OS === 'android')
     registerAndroidSyncTransport(googleDriveTransport)
   // Cloud Sync (ADR 0030) needs the account key, so only binaries that can
-  // hold one offer it.
+  // hold one offer it. A browser has one once it's signed in, which may be
+  // later (ADR 0038 §8).
   if (BuddiesKeychain.isAvailable()) registerCloudSync()
+  else if (webRuntime) {
+    const stop = webRuntime.accountKey.subscribe((key) => {
+      if (!key) return
+      stop()
+      registerCloudSync()
+    })
+  }
   // What a save earns the pet rides on the toast that confirms it (ADR 0035).
   registerRewardProbe(petRewardProbe)
   registerRewardSample(playPetRewardSample)

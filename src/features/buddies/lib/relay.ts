@@ -216,6 +216,11 @@ export type RelayDeps = {
   onAccountActive?: () => void
   /** React Native's WebSocket, which can send headers, by default. */
   openSocket?: (url: string, headers: Record<string, string>) => LiveSocket
+  /**
+   * A browser's live socket: it can't send headers, so it mints a ticket for
+   * the inbox and offers that instead (`openTicketedSocket`).
+   */
+  openTicketedSocket?: (url: string, inboxId: string) => Promise<LiveSocket>
 }
 
 /** React Native's WebSocket takes headers; the DOM typings don't know it. */
@@ -507,16 +512,16 @@ export function createRelayClient(deps: RelayDeps) {
      * that sync's 401 refreshes it.
      */
     openLive: async (auth: OwnerAuth): Promise<LiveSocket> => {
+      const url = `${deps.baseUrl.replace(/^http/, 'ws')}/buddies/v1/inbox/live`
       try {
+        if (deps.openTicketedSocket)
+          return await deps.openTicketedSocket(url, auth.inboxId)
         return await deps.authorize(
           async (authorization) =>
-            (deps.openSocket ?? openSocket)(
-              `${deps.baseUrl.replace(/^http/, 'ws')}/buddies/v1/inbox/live`,
-              {
-                authorization,
-                'x-buddies-payload': encodeFields({ inboxId: auth.inboxId }),
-              }
-            ),
+            (deps.openSocket ?? openSocket)(url, {
+              authorization,
+              'x-buddies-payload': encodeFields({ inboxId: auth.inboxId }),
+            }),
           {}
         )
       } catch (error) {
@@ -643,6 +648,9 @@ function relayErrorFromSession(error: AccountSessionError): RelayError {
         status,
         error.retryAfterMs
       )
+    case 'signedOut':
+      // A browser that has to sign in again.
+      return new RelayError('unauthorized', status || 401)
   }
 }
 

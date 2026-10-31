@@ -8,6 +8,7 @@ import {
   type AccountStatus,
   isAccountStatus,
   type SignedAccountOptions,
+  type SignedAccountTransport,
   sendSignedAccountOp,
 } from '@/lib/serverAccount/client'
 import { SESSION_CAPABILITIES } from '@/lib/serverAccount/capabilities'
@@ -190,4 +191,40 @@ export async function closeSession(
     fetchImpl: options.fetchImpl,
   })
   if (response.data?.ok !== true) throw unexpected(response.status)
+}
+
+/**
+ * Opens a browser's web session (`POST /accounts/v1/sessions` with a sign-in
+ * `ticket` in place of attestation; docs/passkeys-protocol.md, "Web sessions").
+ * The ticket's account must be the key's. A lost answer is sent again as the
+ * same signed request, which the server answers with the same session within
+ * the ticket's 2 minutes; so is `signed.signed`, one the User retries
+ * (`onSigned` hands each one out). Failures throw `HttpError`.
+ */
+export async function sendWebSessionOpen(
+  {
+    ticket,
+    device,
+    appVersion,
+  }: {
+    ticket: string
+    /** `sealDeviceLabel`'s output. */
+    device?: string
+    appVersion?: string
+  },
+  options: SignedAccountOptions,
+  signed: Pick<SignedAccountTransport, 'signed' | 'onSigned'> = {}
+): Promise<OpenedSession> {
+  const response = await sendSignedAccountOp<Record<string, unknown>>(
+    'session/open',
+    {
+      ticket,
+      ...(device !== undefined && { device }),
+      ...(isSessionAppVersion(appVersion) && { appVersion }),
+      capabilities: SESSION_CAPABILITIES,
+    },
+    options,
+    { idempotent: true, ...signed }
+  )
+  return parseOpenedSession(response.data ?? null, response.status)
 }

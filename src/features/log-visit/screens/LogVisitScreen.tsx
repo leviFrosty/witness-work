@@ -152,7 +152,6 @@ export default function LogVisitScreen({ navigation }: Props) {
       <LogVisitHeader
         onClose={close}
         onBack={picked ? () => setPicked(null) : undefined}
-        onNewContact={picked ? undefined : () => addContact()}
       />
       {picked && pickedContact ? (
         <LogVisitOutcome

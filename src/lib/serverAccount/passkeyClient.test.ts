@@ -184,13 +184,21 @@ describe('signing in with a passkey', () => {
 })
 
 describe('step-up', () => {
+  it('sends the RP ID when given', async () => {
+    const { seen, bearer } = fakeFetch(() =>
+      json(200, { ok: true, challengeToken: 'ct', options: OPTIONS })
+    )
+    await startPasskeyStepUp({ rpId: 'localhost' }, bearer)
+    expect(seen[0].body).toEqual({ purpose: 'step-up', rpId: 'localhost' })
+  })
+
   it('asks for and answers a challenge with the session', async () => {
     const { seen, bearer, authorize } = fakeFetch((_, index) =>
       index === 0
         ? json(200, { ok: true, challengeToken: 'ct', options: OPTIONS })
         : json(200, { ok: true, credentialId: 'cred', stepUpAt: 5 })
     )
-    expect(await startPasskeyStepUp(bearer)).toEqual({
+    expect(await startPasskeyStepUp({}, bearer)).toEqual({
       challengeToken: 'ct',
       options: OPTIONS,
     })

@@ -343,6 +343,8 @@ export type ServerAccountInfo = {
   accountId: string
   status: AccountStatus
   accountPub: string
+  /** The account key's epoch (ADR 0039); `0` from servers that predate it. */
+  keyEpoch: number
   createdAt: number
   inboxIds: string[]
   statusChanges: { status: AccountStatus; createdAt: number }[]
@@ -362,13 +364,24 @@ export async function fetchAccountInfo(
     { idempotent: true }
   )
   const data = response.data ?? {}
-  const { accountId, accountPub, status, createdAt, inboxIds, statusChanges } =
-    data
+  const {
+    accountId,
+    accountPub,
+    keyEpoch,
+    status,
+    createdAt,
+    inboxIds,
+    statusChanges,
+  } = data
   if (
     data.ok !== true ||
     typeof accountId !== 'string' ||
     !RELAY_ID_PATTERN.test(accountId) ||
     typeof accountPub !== 'string' ||
+    (keyEpoch !== undefined &&
+      (typeof keyEpoch !== 'number' ||
+        !Number.isSafeInteger(keyEpoch) ||
+        keyEpoch < 0)) ||
     !isAccountStatus(status) ||
     typeof createdAt !== 'number' ||
     !Array.isArray(inboxIds) ||
@@ -383,6 +396,7 @@ export async function fetchAccountInfo(
   return {
     accountId,
     accountPub,
+    keyEpoch: (keyEpoch as number | undefined) ?? 0,
     status,
     createdAt,
     inboxIds,

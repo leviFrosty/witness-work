@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import Constants from 'expo-constants'
 import { getRandomBytes } from 'expo-crypto'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
@@ -18,13 +17,9 @@ import {
   passkeysLinked,
   type PasskeySupport,
 } from '@/lib/passkeys'
+import { PASSKEY_RP_ID } from '@/lib/passkeys/rpId'
 
-/** The RP ID this build claims (`app.config.ts` associated domains). */
-const RP_ID =
-  (Constants.expoConfig?.extra as { appVariant?: string } | undefined)
-    ?.appVariant === 'development'
-    ? 'app-dev.witnesswork.app'
-    : 'app.witnesswork.app'
+const RP_ID = PASSKEY_RP_ID
 
 type Outcome = { title: string; detail: string }
 type Ceremony = 'create' | 'signIn'

@@ -78,6 +78,7 @@ describe('fetchAccountInfo', () => {
     ok: true,
     accountId: ACCOUNT_ID,
     accountPub: key.publicKey,
+    keyEpoch: 2,
     status: 'suspended',
     createdAt: 500,
     inboxIds: ['inbox'],
@@ -100,6 +101,14 @@ describe('fetchAccountInfo', () => {
     expect(fetchImpl.mock.calls[0][0]).toBe(
       'https://api.test/accounts/v1/account'
     )
+  })
+
+  it('reads an account from before key epochs as epoch 0', async () => {
+    const { keyEpoch: _epoch, ...older } = record
+    const fetchImpl = vi.fn(async () => Response.json(older))
+    await expect(fetchAccountInfo(options(fetchImpl))).resolves.toMatchObject({
+      keyEpoch: 0,
+    })
   })
 
   it('throws the server code, and on a bad shape', async () => {
@@ -343,6 +352,7 @@ describe('serverAccount.check', () => {
       async (): Promise<ServerAccountInfo> => ({
         accountId: ACCOUNT_ID,
         accountPub: '',
+        keyEpoch: 0,
         status,
         createdAt: 0,
         inboxIds: [],

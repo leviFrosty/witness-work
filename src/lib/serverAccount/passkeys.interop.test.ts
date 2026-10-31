@@ -1,6 +1,12 @@
 import { randomBytes as nodeRandomBytes } from 'node:crypto'
 import { describe, expect, it, vi } from 'vitest'
 import { HttpError } from '@/lib/http/request'
+import { toCreatedPasskey, toPasskeyAssertion } from '@/lib/passkeys/prf'
+import type {
+  AuthenticationResponseJSON,
+  RegistrationResponseJSON,
+} from '@/lib/passkeys/types'
+import { fetchAccountInfo } from '@/lib/serverAccount/client'
 import { deriveAccountSigningKey } from '@/lib/serverAccount/keys'
 import {
   addPasskey,
@@ -15,7 +21,14 @@ import {
   webRecovery,
   webSignup,
   webSignupOptions,
+  type PasskeyCeremonyOptions,
+  type PasskeyResponseJSON,
 } from '@/lib/serverAccount/passkeyClient'
+import {
+  addPasskeyFlow,
+  type PasskeyFlowDeps,
+  removePasskeyFlow,
+} from '@/lib/serverAccount/passkeyFlow'
 import {
   newPasskeyWrapId,
   openPasskeyWraps,
@@ -66,6 +79,58 @@ async function signedIn() {
 }
 
 describe.skipIf(!interopEnabled)('passkeys against a real worker', () => {
+  it('adds a passkey as a phone does, can unlock, and removes it', async () => {
+    const { accountKey, bearer, both } = await signedIn()
+    const passkey = createSoftwarePasskey(random, RP)
+    const deps: PasskeyFlowDeps = {
+      server: {
+        registrationOptions: () =>
+          passkeyRegistrationOptions({ rpId: RP.rpId }, bearer),
+        add: ({ response, ...args }) =>
+          addPasskey(
+            { ...args, response: response as unknown as PasskeyResponseJSON },
+            both
+          ),
+        wrap: (args) => savePasskeyWrap(args, both),
+        remove: (credentialId) => removePasskey(credentialId, both),
+        account: () => fetchAccountInfo(bearer),
+      },
+      // The software passkey answers PRF only at sign-in, as some platforms do.
+      ceremonies: {
+        create: async (options) =>
+          toCreatedPasskey(
+            passkey.create(
+              options as unknown as PasskeyCeremonyOptions
+            ) as unknown as RegistrationResponseJSON
+          ),
+        get: async (options) =>
+          toPasskeyAssertion(
+            passkey.get(
+              options as unknown as PasskeyCeremonyOptions
+            ) as unknown as AuthenticationResponseJSON
+          ),
+      },
+      confirmOwner: async () => 'confirmed',
+      accountKey,
+      rpId: RP.rpId,
+      randomBytes: random,
+    }
+
+    expect(await addPasskeyFlow(deps, { count: 0 })).toEqual({
+      status: 'added',
+      credentialId: passkey.credentialId,
+      canUnlock: true,
+    })
+    expect((await listPasskeys(bearer)).passkeys).toMatchObject([
+      { credentialId: passkey.credentialId, canUnlock: true },
+    ])
+
+    expect(await removePasskeyFlow(deps, passkey.credentialId)).toEqual({
+      status: 'removed',
+    })
+    expect((await listPasskeys(bearer)).passkeys).toEqual([])
+  })
+
   it('adds a passkey, wraps the key, signs in and unlocks, and removes it', async () => {
     const { accountKey, accountId, bearer, both } = await signedIn()
     const passkey = createSoftwarePasskey(random, RP)
@@ -150,7 +215,7 @@ describe.skipIf(!interopEnabled)('passkeys against a real worker', () => {
     ).toBe('403 passkey_failed')
 
     // A step-up on this session lists its passkeys.
-    const stepUp = await startPasskeyStepUp(bearer)
+    const stepUp = await startPasskeyStepUp({ rpId: RP.rpId }, bearer)
     expect(stepUp.options.allowCredentials).toMatchObject([
       { id: credentialId },
     ])

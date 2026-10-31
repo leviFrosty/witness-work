@@ -183,6 +183,12 @@ export const settingsDetailScreens: SettingsDetailScreen[] = [
     title: () => i18n.t('accountSecurity_devices'),
   },
   {
+    name: 'Account Passkeys',
+    getComponent: () =>
+      require('@/features/settings/screens/AccountPasskeysScreen').default,
+    title: () => i18n.t('accountSecurity_passkeys'),
+  },
+  {
     name: 'Account Activity',
     getComponent: () =>
       require('@/features/settings/screens/AccountActivityScreen').default,

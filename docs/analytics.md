@@ -1160,6 +1160,23 @@ whether signing a device out works.
 
 Never session ids, device names or labels, entry contents, or the account id.
 
+### Passkeys
+
+These answer whether people add passkeys on their phones (ADR 0038 §9), how
+often a new passkey can unlock the account or only sign in (and why), where
+adding one fails or is abandoned, and whether Let It Unlock and removing work.
+They're rare: one per action the User starts in Settings → Account → Passkeys.
+
+| Event                 | When                                                                          | Properties                                                                                                                                                                                                                                                                                                                                                                            |
+| --------------------- | ----------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `passkey_add_started` | The User chose Add a Passkey, or Let It Unlock on a Sign-in-only passkey.     | `kind: add \| upgrade` (`upgrade`: Let It Unlock).                                                                                                                                                                                                                                                                                                                                    |
+| `passkey_added`       | A passkey was added, or Let It Unlock saved its wrap.                         | `kind: add \| upgrade`, `can_unlock` (a wrap at the account's key epoch was saved), `sign_in_only: no_prf \| cancelled \| key_changed \| not_saved` when it can't unlock (`no_prf`: the password manager gave no PRF output; `cancelled`: the User cancelled the confirming sign-in; `key_changed`: the account key changed meanwhile; `not_saved`: the wrap didn't get through).     |
+| `passkey_add_failed`  | Adding or Let It Unlock ended without a passkey that can do more than before. | `kind: add \| upgrade`, `step: owner \| options \| create \| save \| get`, `reason`: `cancelled` (at that step), a `sign_in_only` reason for Let It Unlock, or `owner_failed`, `not_supported`, `domain_not_associated`, `already_registered`, `no_credentials`, `limit`, `offline`, `timeout`, `update_required`, `unverified`, `unavailable`, `rate_limited`, `conflict`, `failed`. |
+| `passkey_removed`     | The User confirmed Remove and the server removed it.                          | `can_unlock` (the removed passkey could), `last_unlocking` (it was the account's only passkey that could unlock).                                                                                                                                                                                                                                                                     |
+
+Never credential ids, the user handle or tag, AAGUIDs or provider names, device
+labels, PRF output, wraps, or the account id.
+
 ### Update Required
 
 These answer how many people an app version floor or a 426 from ww-api blocks,

@@ -1,5 +1,5 @@
 import { Alert } from 'react-native'
-import { deviceAccountKey } from '@/lib/accountKey'
+import { deviceAccountKey, unfinishedKeyChange } from '@/lib/accountKey'
 import Button from '@/components/ui/Button'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
@@ -28,6 +28,20 @@ export default function BuddiesDeleteDataButton() {
   const hadSlots = useBackupState((state) => (state.slots?.length ?? 0) > 0)
 
   const deleteAll = async () => {
+    // An account key change still needs this data: nothing is deleted, the
+    // backup and Cloud Sync included, until it's done.
+    try {
+      if (await unfinishedKeyChange()) {
+        Alert.alert(
+          i18n.t('buddies_errorDeleteAllTitle'),
+          i18n.t('account_keyChangeUnfinished')
+        )
+        return
+      }
+    } catch (error) {
+      alertBuddiesError(i18n.t('buddies_errorDeleteAllTitle'), error)
+      return
+    }
     const seed = await deviceAccountKey.peek().catch(() => null)
     if (seed) {
       try {

@@ -43,6 +43,11 @@ export function buddyAlertText(alert: BuddyAlert): {
         title: i18n.t('buddies_notifPaired', { name }),
         body: i18n.t('buddies_pushPairConfirmedBody'),
       }
+    case 'reconnect':
+      return {
+        title: i18n.t('buddies_notifReconnect', { name }),
+        body: i18n.t('buddies_pushReconnectBody'),
+      }
     case 'share': {
       const plan = alert.shareType === 'plan'
       const titles = {

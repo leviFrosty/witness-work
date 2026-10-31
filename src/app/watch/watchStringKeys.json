@@ -238,9 +238,11 @@
     "buddies_notifPlanCancel",
     "buddies_notifPlanInvite",
     "buddies_notifPlanUpdate",
+    "buddies_notifReconnect",
     "buddies_notifReplyDeclined",
     "buddies_notifReplyGoing",
     "buddies_pushInviteClaimedBody",
-    "buddies_pushPairConfirmedBody"
+    "buddies_pushPairConfirmedBody",
+    "buddies_pushReconnectBody"
   ]
 }

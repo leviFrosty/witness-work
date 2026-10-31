@@ -138,6 +138,7 @@ struct SharedBadge: Equatable {
 enum Alert: Equatable {
   case claimed(name: String)
   case paired(name: String)
+  case reconnect(name: String)
   case share(action: String, shareType: String, name: String, when: AlertWhen?)
   case reply(reply: String, name: String, shareType: String?, when: AlertWhen?)
   case joinRequest(name: String, when: AlertWhen)
@@ -274,11 +275,12 @@ private let reactionIds: Set<String> = ["party", "confetti", "fire", "clap", "th
 // MARK: - Describing an event
 
 private enum Handler {
-  case paired, share, reply, joinRequest, quiet, badge, badgeReaction
+  case paired, reconnect, share, reply, joinRequest, quiet, badge, badgeReaction
 }
 
 private func handler(of kind: String) -> Handler? {
   if kind == "pair.confirmed" { return .paired }
+  if kind == "pair.reconnect" { return .reconnect }
   if kind == "share.reply" { return .reply }
   if matches(kind, "^(plan|followup)\\.(invite|update|cancel)$") { return .share }
   if matches(kind, "^join\\.request\\.[0-9a-f]{12}$") { return .joinRequest }
@@ -329,6 +331,12 @@ func describe(context: AlertContext, event: SealedEvent) -> AlertOutcome {
   switch handler {
   case .paired:
     return displayName(body["name"]) != nil ? .alert(.paired(name: name)) : .failed("unreadable")
+
+  case .reconnect:
+    guard isVersion1(body), relayId(body["inboxId"]) != nil,
+      relayId(body["secret"]) != nil, number(body["expiresAt"]) != nil
+    else { return .failed("unreadable") }
+    return .alert(.reconnect(name: name))
 
   case .share:
     let parts = event.kind.split(separator: ".").map(String.init)

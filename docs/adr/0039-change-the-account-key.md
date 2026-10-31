@@ -72,7 +72,8 @@ Ordered, and resumable after a crash:
 5. Re-encrypt every Cloud Sync slot, Cloud Sync photo (ADR 0040 §6) and
    backup slot under the new key, including other devices' slots.
 6. Reset Buddies with reconnect invites (§5).
-7. Delete the old key.
+7. Delete the old key. The keys derived from it for each old Buddies pairing
+   stay, in this device's own secret storage, until every pairing is left.
 
 Two devices changing the key at once can't both win, because of the epoch
 check.
@@ -80,14 +81,43 @@ check.
 ### 5. Buddies reset, with reconnect invites
 
 Anyone with the old key can write to every buddy as the User and read their
-inbox. So before leaving, the app:
+inbox. Before the change, while the old key is still the account's, the app
+links the old inbox to the account if it isn't yet. Then it:
 
-1. Sends each buddy a sealed reconnect invite.
-2. Leaves every buddy and deletes the old inbox.
-3. Creates a new inbox linked to the same account.
+1. Creates a new inbox from the new key, and links it to the same account.
+2. Deletes the old inbox, naming the new one as its successor. The server
+   records it only for an inbox of the same account linked under the
+   account's current key, so only the new key can name one.
+3. Sends each buddy a sealed reconnect invite through the old pairing, then
+   seals that pairing's slot in their inbox (`slot/seal`) right away. After
+   that, nothing more can be written there with the old key, whoever signs.
+4. Leaves each buddy once they claim it, or 24 hours after their invite.
+   Leaving a sealed slot keeps the invite for them to read.
 
-Buddies on a current version reconnect with one tap. Others see the User
-leave.
+A buddy gets no invite if someone with the old key sealed the slot first,
+or if the server keeps refusing the invite. The app seals the slot anyway
+and leaves it at once.
+
+If the server can't record the successor, the app still deletes the old
+inbox, sends no invites, and leaves every buddy at once, so the change always
+ends.
+
+A buddy accepts a reconnect invite only when the server names its inbox as
+the old inbox's successor. Buddies on a current version reconnect with one
+tap. Others see the User leave.
+
+The old key's writes to a buddy end at the seal, right after their invite.
+The new inbox has room for an invite to every buddy (at most 5) at once, so
+every slot is sealed right away. If the changing
+device stops before a seal, the buddy's app still ends the pairing: when they
+reconnect or dismiss the invite, when a write to the User finds the old inbox
+gone, or when the invite lapses (7 days) and the server names a successor.
+
+Someone who kept the old key can still deny a buddy their reconnect. They can
+seal or leave the slot before the invite is written, or use up its request
+budget so the invite keeps failing. They can't impersonate the User: a buddy
+takes only the invite to the successor the server names. The buddy and the
+User can pair again by hand.
 
 ### 6. Key history
 
@@ -147,4 +177,11 @@ old to rejoin, and `minAppVersion` rises one release after this ships.
 - A copied key stops working everywhere, except on Apple devices that still
   receive iCloud Keychain.
 - Buddies have to reconnect after a change.
+- The old key can write to a buddy until that pairing ends (§5): at worst
+  until the buddy's app next runs.
+- The successor check protects buddies only after the change, and only when
+  the old inbox was linked to the account first. If someone holding the old
+  key linked an inbox from before accounts to their own account before the
+  change, they can name its successor at any time. The change only detects
+  it and leaves every buddy without inviting them.
 - Delete Buddies can later reuse the same operation to keep the account.

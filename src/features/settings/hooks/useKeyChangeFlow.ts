@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Platform } from 'react-native'
 import { keyChange } from '@/app/account/keyChange'
 import { KeyChangeError } from '@/app/account/keyChange/engine'
 import { encodeRecoveryKey } from '@/lib/accountKey/recoveryKey'
@@ -25,14 +26,19 @@ export default function useKeyChangeFlow(resume: boolean): {
     createKeyChangeFlow(
       {
         engine: keyChange,
+        // A browser's check is the passkey the server asks for at the commit.
         confirmOwner: () =>
-          confirmDeviceOwner(i18n.t('accountKeyChange_unlockPrompt')),
+          Platform.OS === 'web'
+            ? Promise.resolve('noLock' as const)
+            : confirmDeviceOwner(i18n.t('accountKeyChange_unlockPrompt')),
         encodeRecoveryKey,
         failureReason: (error) => {
           if (error instanceof KeyChangeError) return error.reason
           logger.warn('[keyChange] the change stopped', error)
           return null
         },
+        availableAt: (error) =>
+          error instanceof KeyChangeError ? error.availableAt : undefined,
         track: (event, properties) => analytics.capture(event, properties),
       },
       { resuming: resume }

@@ -130,7 +130,7 @@ The route of [Opening a session](./accounts-protocol.md#opening-a-session-post-a
 - `POST /sessions` (every platform) and `POST /sessions/refresh` take an optional `appVersion` (`major.minor.patch`, at most 32 characters; anything else is `bad_request`); the session keeps the latest.
 - Each session row also records how it opened (`method`, as in [Activity](#activity)), the account's `keyEpoch` then, and `stepUpAt`. ADR 0039 reads the session's age and method.
 - `GET /sessions` adds `appVersion` (absent when unknown), `method`, and `platform: "web"`; a web session's `expiresAt` is its sliding expiry.
-- A refused refresh (401 `unauthorized`) now carries `reason`: `revoked` (another device signed it out), `replaced` (the cap), `expired`, `reused` (a replaced refresh token came back), or `unknown`.
+- A refused refresh (401 `unauthorized`) now carries `reason`: `revoked` (another device signed it out), `replaced` (the cap), `expired`, `reused` (a replaced refresh token came back), `key_changed` (the account key changed on another session while this one was live; [account-key-change.md](./account-key-change.md)), or `unknown`. Phones open a new session for any of them.
 
 ### Step-up on the web
 
@@ -361,6 +361,8 @@ Turnstile → `web/signup/options` → make the account key and store it sealed 
 #### Signed out by the server
 
 A refresh refused with `revoked` or `reused` wipes the browser at once, as signing out does. `expired` and `replaced` keep the sealed account key and the local stores and show the sign-in screen. Signing in again as the same account picks up where it was and syncs. Another account wipes first.
+
+A key change on another device ends the browser's session as `key_changed` when it was still live ([account-key-change.md](./account-key-change.md#other-devices)). The tab whose refresh was refused then sends its key's `session/open` with no ticket, into the last account it was signed in to (else the data's owner). `key_retired` means the key changed: the browser forgets only that key, keeps its stores, shows that the key changed and how to sign back in, and tells its other tabs, which reload. Without an account id, or without an answer twice, or with any other answer, it wipes, and the other tabs follow it. A browser signed out before the change (a lost device signed out first, then the key changed) reads `revoked`, and wipes. Signing back in with the new key is the same account, so its data stays (see **Whose data it is** below).
 
 - **A refresh whose answer was lost.** Before presenting a refresh token, the browser stores a hash of it as in flight, and clears it once the replacing token is stored. If the server rotated the token but its answer never arrived or wasn't stored (a tab closed, a timeout, a lost connection), the next refresh presents the old one and gets `reused`. A browser that says it's offline sends no refresh at all. When the token presented is still marked in flight, the browser knows it caused that: it keeps its data and shows the sign-in screen, as for `expired` (the server has ended the session anyway).
 - **Whose data it is.** The browser records the account id its local data belongs to when it keeps a session. Signing in keeps the data only for that account. Anything else, including data with no recorded owner, is wiped first, whether or not the old account key can still be read. Another account then closes the old session, wipes, stores the new key and session, and reloads every tab before anything uses the new key.

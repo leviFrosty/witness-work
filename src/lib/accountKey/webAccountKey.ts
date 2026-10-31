@@ -1,4 +1,5 @@
 import { sameBytes } from '@/lib/bytes'
+import { accountPubOf } from '@/lib/serverAccount/keys'
 import {
   type SealedSecrets,
   sealedSecrets,
@@ -18,9 +19,15 @@ export const WEB_ACCOUNT_KEY_NAME = 'account-key'
 type Deps = {
   secrets: Pick<SealedSecrets, 'read' | 'write'>
   randomBytes: (length: number) => Uint8Array
+  /** The key's `accountPub` (`deriveAccountSigningKey`). */
+  publicKeyOf: (key: Uint8Array) => string
 }
 
-export function createWebAccountKey({ secrets, randomBytes }: Deps) {
+export function createWebAccountKey({
+  secrets,
+  randomBytes,
+  publicKeyOf,
+}: Deps) {
   let key: Uint8Array | null = null
   let loading: Promise<Uint8Array | null> | null = null
   const listeners = new Set<(key: Uint8Array | null) => void>()
@@ -94,6 +101,20 @@ export function createWebAccountKey({ secrets, randomBytes }: Deps) {
     },
     /** Forgets the key in memory, after the browser was wiped. */
     forget,
+    /**
+     * Deletes the sealed key alone when it's still `accountPub`'s, which the
+     * server retired, as a key change on another device does (ADR 0039): read
+     * again from the store, so a newer key another tab stored stays. The data
+     * stays for the same account's new key (`webAccount`'s `owner`); any other
+     * sign-out wipes instead. Whether it deleted it.
+     */
+    async retire(accountPub: string): Promise<boolean> {
+      const stored = await secrets.read(WEB_ACCOUNT_KEY_NAME)
+      if (!stored || publicKeyOf(stored) !== accountPub) return false
+      await secrets.write(WEB_ACCOUNT_KEY_NAME, null)
+      forget()
+      return true
+    },
     /** Calls `listener` when the key arrives or goes. Returns an unsubscribe. */
     subscribe(listener: (key: Uint8Array | null) => void): () => void {
       listeners.add(listener)
@@ -109,4 +130,5 @@ export const webAccountKey = createWebAccountKey({
   secrets: sealedSecrets,
   randomBytes: (length) =>
     globalThis.crypto.getRandomValues(new Uint8Array(length)),
+  publicKeyOf: accountPubOf,
 })

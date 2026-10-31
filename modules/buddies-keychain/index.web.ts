@@ -62,3 +62,8 @@ export function setAlertContext(_json: string | null): void {}
 export function takeAlertOutcomes(): Record<string, number> {
   return {}
 }
+
+/** No Notification Service Extension: no inbox is refused behind the app. */
+export function refusedInboxes(): string[] {
+  return []
+}

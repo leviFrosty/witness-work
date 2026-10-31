@@ -22,11 +22,14 @@ import i18n from '@/lib/locales'
 import { logger } from '@/lib/logger'
 import type { RootStackNavigation } from '@/types/rootStack'
 
+const isWeb = Platform.OS === 'web'
+
 /**
  * Show Recovery Key (after the device's own authentication, creating the
  * account key if there's none yet), Change Account Key, and Use a Recovery Key.
  * Signed out after a key change elsewhere, or while this device's own change is
- * unfinished, only Use a Recovery Key.
+ * unfinished, only Use a Recovery Key. A browser shows only Change Account
+ * Key.
  */
 export default function RecoveryKeySection({
   onAccountChanged,
@@ -79,15 +82,22 @@ export default function RecoveryKeySection({
     }
   }
 
+  // A browser has only Change Account Key here, once it may.
+  if (isWeb && !(ownKey && canChangeKey)) return null
+
   return (
     <View style={{ gap: 5 }}>
       <SectionTitle
         text={i18n.t('account_recoveryKeySection')}
-        info={i18n.t('account_recoveryKeyInfo')}
+        info={i18n.t(
+          isWeb ? 'account_recoveryKeyInfoWeb' : 'account_recoveryKeyInfo'
+        )}
         alignWithIcons
       />
       <Section>
-        {ownKey && (
+        {/* A browser shows its recovery key behind a passkey check, and
+            signs in with one from the sign-in screen (ADR 0038 §8). */}
+        {ownKey && !isWeb && (
           <InputRowButton
             leftIcon={KeyRoundIcon}
             label={i18n.t('account_showRecoveryKey')}
@@ -95,8 +105,7 @@ export default function RecoveryKeySection({
             disabled={opening}
           />
         )}
-        {/* The web needs its passkey step-up wired first. */}
-        {ownKey && canChangeKey && Platform.OS !== 'web' && (
+        {ownKey && canChangeKey && (
           <InputRowButton
             leftIcon={RotateCcwKeyIcon}
             label={i18n.t('accountKeyChange_row')}
@@ -104,14 +113,17 @@ export default function RecoveryKeySection({
             onPress={() =>
               navigation.navigate('Change Account Key', { entry: 'settings' })
             }
+            lastInSection={isWeb}
           />
         )}
-        <InputRowButton
-          leftIcon={LogInIcon}
-          label={i18n.t('account_useRecoveryKey')}
-          onPress={() => setEntering(true)}
-          lastInSection
-        />
+        {!isWeb && (
+          <InputRowButton
+            leftIcon={LogInIcon}
+            label={i18n.t('account_useRecoveryKey')}
+            onPress={() => setEntering(true)}
+            lastInSection
+          />
+        )}
       </Section>
       <SectionFooter text={i18n.t('account_recoveryKeyFooter')} />
       <RecoveryKeySheet

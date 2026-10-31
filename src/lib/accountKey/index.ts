@@ -1,6 +1,7 @@
 import { Platform } from 'react-native'
 import { MMKV } from 'react-native-mmkv'
 import * as BuddiesKeychain from '../../../modules/buddies-keychain'
+import { fromB64u } from '@/lib/bytes'
 import { createDeviceAccountKey } from '@/lib/accountKey/deviceAccountKey'
 import type {
   KeyChangeRecord,
@@ -12,13 +13,18 @@ import {
   useKeyChangedElsewhere,
 } from '@/lib/accountKey/keyChangedElsewhere'
 import { nativeKeyChangeRecordStore } from '@/lib/accountKey/nativeKeyChangeRecordStore'
+import { webAccountKey } from '@/lib/accountKey/webAccountKey'
+import { webKeyChangeRecordStore } from '@/lib/accountKey/webKeyChangeRecordStore'
 
 /**
  * This device's account key as every feature reads it (`deviceAccountKey.ts`),
- * wired to the native stores. Features read the key here, never from
- * `modules/buddies-keychain` directly, so a committed key change and a retired
- * key apply everywhere.
+ * wired to the native stores, or the browser's sealed IndexedDB. Features read
+ * the key here, never from `modules/buddies-keychain` directly, so a committed
+ * key change and a retired key apply everywhere.
  */
+
+const isWeb = Platform.OS === 'web'
+const recordStore = isWeb ? webKeyChangeRecordStore : nativeKeyChangeRecordStore
 
 let cachedRecord: Promise<KeyChangeRecord | null> | null = null
 
@@ -28,24 +34,27 @@ let cachedRecord: Promise<KeyChangeRecord | null> | null = null
  */
 export const keyChangeRecords: KeyChangeRecordStore = {
   read: () =>
-    (cachedRecord ??= nativeKeyChangeRecordStore.read().catch((error) => {
+    (cachedRecord ??= recordStore.read().catch((error) => {
       cachedRecord = null
       throw error
     })),
   write: async (record) => {
-    await nativeKeyChangeRecordStore.write(record)
+    await recordStore.write(record)
     cachedRecord = Promise.resolve(record)
   },
   remove: async () => {
-    await nativeKeyChangeRecordStore.remove()
+    await recordStore.remove()
     cachedRecord = Promise.resolve(null)
   },
 }
 
-/** Whether this binary can keep a change record (and so change the key). */
+/**
+ * Whether this binary can keep a change record (and so change the key). A
+ * browser stores the new key itself (`replace` below); it doesn't replace its
+ * key any other way.
+ */
 export const keyChangeAvailable = () =>
-  nativeKeyChangeRecordStore.isAvailable() &&
-  BuddiesKeychain.isReplaceAvailable()
+  recordStore.isAvailable() && (isWeb || BuddiesKeychain.isReplaceAvailable())
 
 let launchHold: Promise<unknown> = Promise.resolve()
 
@@ -89,8 +98,18 @@ export const deviceAccountKey = createDeviceAccountKey({
   native: {
     peek: BuddiesKeychain.peekRootSeed,
     getOrCreate: BuddiesKeychain.getOrCreateRootSeed,
-    replace: BuddiesKeychain.replaceRootSeed,
-    remove: BuddiesKeychain.deleteRootSeed,
+    // Only a key change replaces a browser's key; a sign-in as another
+    // account wipes the browser first (`webAccount`).
+    replace: isWeb
+      ? (key) => webAccountKey.save(fromB64u(key))
+      : BuddiesKeychain.replaceRootSeed,
+    // Only a retired key: a browser drops its key alone for no other reason,
+    // and checks the stored one is still it.
+    remove: isWeb
+      ? async (accountPub) => {
+          await webAccountKey.retire(accountPub)
+        }
+      : () => BuddiesKeychain.deleteRootSeed(),
   },
   record: async () => {
     await launchHold

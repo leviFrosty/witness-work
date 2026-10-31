@@ -9,14 +9,17 @@ import type { DeviceOwnerCheck } from '@/lib/deviceOwner'
  */
 
 /**
- * Why the change couldn't go on, as the screen says it. `sessionTooNew` and
- * `stepUpRequired` are the web's refusals; the change stays confirmed.
+ * Why the change couldn't go on, as the screen says it. `sessionTooNew`,
+ * `noPasskey` and `stepUpRequired` are the web's: a browser checks the first
+ * two before any new key, and the server can refuse the first and last at the
+ * commit, where the change stays confirmed.
  */
 export type KeyChangeProblem =
   | 'offline'
   | 'server'
   | 'mismatch'
   | 'sessionTooNew'
+  | 'noPasskey'
   | 'stepUpRequired'
 
 export type KeyChangeFlowState =
@@ -33,7 +36,13 @@ export type KeyChangeFlowState =
   | { step: 'finishing' }
   /** Another device changed the key first. */
   | { step: 'lostRace' }
-  | { step: 'problem'; problem: KeyChangeProblem; at: 'start' | 'commit' }
+  | {
+      step: 'problem'
+      problem: KeyChangeProblem
+      at: 'start' | 'commit'
+      /** `sessionTooNew`: when the browser may change the key, if known. */
+      availableAt?: number
+    }
 
 export type KeyChangeFlowDeps = {
   engine: Pick<
@@ -50,6 +59,8 @@ export type KeyChangeFlowDeps = {
   encodeRecoveryKey: (key: Uint8Array) => string
   /** The engine's `KeyChangeError` reason, or null for any other error. */
   failureReason: (error: unknown) => string | null
+  /** `session_too_new`'s time the browser may change the key, if any. */
+  availableAt?: (error: unknown) => number | undefined
   track: (
     event: 'account_key_change_discarded',
     properties: { stage: KeyChangeStage }
@@ -61,6 +72,9 @@ const START_PROBLEMS: Record<string, KeyChangeProblem> = {
   unresolved: 'offline',
   account_mismatch: 'mismatch',
   no_key: 'mismatch',
+  session_too_new: 'sessionTooNew',
+  no_passkey: 'noPasskey',
+  step_up: 'stepUpRequired',
 }
 
 export function createKeyChangeFlow(
@@ -80,6 +94,16 @@ export function createKeyChangeFlow(
 
   const problemOf = (error: unknown) =>
     START_PROBLEMS[deps.failureReason(error) ?? ''] ?? 'server'
+
+  const showProblem = (error: unknown, at: 'start' | 'commit') => {
+    const availableAt = deps.availableAt?.(error)
+    set({
+      step: 'problem',
+      problem: problemOf(error),
+      at,
+      ...(availableAt !== undefined && { availableAt }),
+    })
+  }
 
   const showRecoveryKey = (key: Uint8Array) =>
     set({
@@ -116,7 +140,7 @@ export function createKeyChangeFlow(
         current.stage !== 'pending' &&
         current.stage !== 'confirmed'
       if (committed) set({ step: 'finishing' })
-      else set({ step: 'problem', problem: problemOf(error), at: 'commit' })
+      else showProblem(error, 'commit')
     } finally {
       stop()
     }
@@ -162,7 +186,7 @@ export function createKeyChangeFlow(
         (await continueChange(true).catch(() => false))
       )
         return
-      set({ step: 'problem', problem: problemOf(error), at: 'start' })
+      showProblem(error, 'start')
     }
   }
 

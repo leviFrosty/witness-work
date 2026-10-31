@@ -122,6 +122,16 @@ secrets in `secureKv`, sealed by
   the access token stays in memory. A value that won't open (a lost wrap key,
   or tampering) reads as missing and is reported to error tracking by name
   only.
+- `sealed:account-key-change`: while the browser changes its account key (ADR
+  0039), the change record, which holds the old key and the new one
+  ([`webKeyChangeRecordStore.ts`](../src/lib/accountKey/webKeyChangeRecordStore.ts)).
+  It's deleted when the change is done, and a wipe takes it too.
+- `sealed:device.<name>`: what phones keep in `modules/device-secrets` (this
+  device only, never synced), sealed the same way by its web build
+  ([`modules/device-secrets/web.ts`](../modules/device-secrets/web.ts)): the
+  account's key history while a key change re-seals
+  (`device.account-key-history`), and Buddies' progress through a key change
+  (`device.buddies.key-change`). A wipe takes them.
 
 Beside them, in the clear, never a secret:
 
@@ -148,7 +158,9 @@ The code that reads and writes them is
 key into memory before the first render (`beforeAppLoads.web.ts`), so
 `modules/buddies-keychain`'s web version can answer `isAvailable()` (signed
 in) synchronously. The browser never makes a key by itself: it arrives with a
-sign-in, or web sign-up makes it.
+sign-in, or web sign-up makes it. Only its own key change replaces it
+(`lib/accountKey`, step 4); a sign-in as another account wipes the browser
+first.
 
 [`webAccount.ts`](../src/lib/serverAccount/webAccount.ts) signs in with a
 ticket (`openWebSessionWithTicket`), keeps web sign-up's session, and signs

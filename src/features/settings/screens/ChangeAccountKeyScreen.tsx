@@ -22,6 +22,7 @@ import useDevicesTooOldForKeyChange from '@/features/settings/hooks/useDevicesTo
 import useKeyChangeFlow from '@/features/settings/hooks/useKeyChangeFlow'
 import type { KeyChangeProblem } from '@/features/settings/lib/keyChangeFlow'
 import { analytics } from '@/lib/analytics'
+import { formatDateTime } from '@/lib/dates'
 import i18n, { type TranslationKey } from '@/lib/locales'
 import type { RootStackNavigation, RootStackParamList } from '@/types/rootStack'
 
@@ -30,6 +31,7 @@ const PROBLEM: Record<KeyChangeProblem, TranslationKey> = {
   server: 'accountKeyChange_problemServer',
   mismatch: 'accountKeyChange_problemMismatch',
   sessionTooNew: 'accountKeyChange_problemSessionTooNew',
+  noPasskey: 'accountKeyChange_problemNoPasskey',
   stepUpRequired: 'accountKeyChange_problemStepUp',
 }
 
@@ -37,6 +39,7 @@ const PROBLEM: Record<KeyChangeProblem, TranslationKey> = {
 const FINAL: ReadonlySet<KeyChangeProblem> = new Set([
   'mismatch',
   'sessionTooNew',
+  'noPasskey',
 ])
 
 /**
@@ -147,7 +150,15 @@ const ChangeAccountKeyScreen = () => {
           <HandoffStatus
             icon={state.problem === 'offline' ? WifiOffIcon : CircleAlertIcon}
             tone='error'
-            body={i18n.t(PROBLEM[state.problem])}
+            body={
+              state.problem === 'sessionTooNew' && state.availableAt
+                ? i18n.t('accountKeyChange_problemSessionTooNewUntil', {
+                    time: formatDateTime(state.availableAt, {
+                      style: 'medium',
+                    }),
+                  })
+                : i18n.t(PROBLEM[state.problem])
+            }
             primary={
               FINAL.has(state.problem)
                 ? done

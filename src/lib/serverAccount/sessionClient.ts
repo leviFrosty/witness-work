@@ -134,6 +134,37 @@ export async function sendSessionOpen(
   return parseOpenedSession(response.data ?? null, response.status)
 }
 
+/**
+ * Whether the server retired this key (a key change on another device): a
+ * browser can't open a session by itself, so it asks `session/open` without a
+ * ticket, which answers 403 `key_retired` (with `changedAt`) before it looks
+ * for one (docs/account-key-change.md, "Retired keys"). Any other refusal means
+ * not retired. Connection failures throw.
+ */
+export async function probeRetiredKey(
+  { accountId }: { accountId?: string },
+  options: SignedAccountOptions
+): Promise<{ changedAt: number | null } | null> {
+  try {
+    await sendSignedAccountOp(
+      'session/open',
+      { ...(accountId !== undefined && { accountId }) },
+      options
+    )
+  } catch (error) {
+    if (!(error instanceof HttpError) || error.status === null) throw error
+    if (error.serverCode !== 'key_retired') return null
+    const changedAt = (error.body as { changedAt?: unknown } | null)?.changedAt
+    return {
+      changedAt:
+        typeof changedAt === 'number' && Number.isFinite(changedAt)
+          ? changedAt
+          : null,
+    }
+  }
+  return null
+}
+
 /** `session/open`'s answer, which `web/signup` shares. */
 export function parseOpenedSession(
   data: Record<string, unknown> | null,

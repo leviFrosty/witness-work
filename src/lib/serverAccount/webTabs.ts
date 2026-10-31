@@ -20,6 +20,13 @@ export type WebTabMessage =
   | { type: 'wiped' }
   /** This browser signed in (again): reload to pick it up. */
   | { type: 'signedIn'; sessionId: string }
+  /**
+   * The account key changed on another device, and the tab whose refresh was
+   * refused forgot the retired key and kept the data: reload, signed out.
+   */
+  | { type: 'keyRetired' }
+  /** This browser changed its account key and stored the new one: reload. */
+  | { type: 'rekeyed' }
 
 const isString = (value: unknown): value is string =>
   typeof value === 'string' && value.length > 0
@@ -45,6 +52,10 @@ function parse(data: unknown): WebTabMessage | null {
       return isString(message.sessionId)
         ? { type: 'signedIn', sessionId: message.sessionId }
         : null
+    case 'keyRetired':
+      return { type: 'keyRetired' }
+    case 'rekeyed':
+      return { type: 'rekeyed' }
   }
   return null
 }

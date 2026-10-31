@@ -44,6 +44,8 @@ import {
   type KeyHistoryKind,
 } from '@/lib/serverAccount/keyHistory'
 import { createKeyHistoryCache } from '@/lib/serverAccount/keyHistoryCache'
+import { deriveAccountSigningKey } from '@/lib/serverAccount/keys'
+import { probeRetiredKey } from '@/lib/serverAccount/sessionClient'
 
 let _store: MMKV | null = null
 // Device-local MMKV, like ADR 0011's account id: never in the sync payload.
@@ -243,18 +245,20 @@ export const onAccountKeySwitched = (listener: () => void): (() => void) => {
   return () => keySwitchedListeners.delete(listener)
 }
 
-const keyRetiredListeners = new Set<
-  (accountPub: string, changedAt: number | null) => void
->()
+type KeyRetiredListener = (
+  accountPub: string,
+  changedAt: number | null
+) => void | Promise<void>
+
+const keyRetiredListeners = new Set<KeyRetiredListener>()
 
 /**
- * Calls `listener` when a session open is refused as `key_retired`: the account
- * key changed on another device (`app/account/keyChange` handles it). Returns
- * an unsubscribe.
+ * Calls `listener` when a session open is refused as `key_retired`, or a
+ * browser signed out finds its key retired: the account key changed on another
+ * device (`app/account/keyChange` handles it). A browser waits for what it
+ * returns. Returns an unsubscribe.
  */
-export const onKeyRetired = (
-  listener: (accountPub: string, changedAt: number | null) => void
-): (() => void) => {
+export const onKeyRetired = (listener: KeyRetiredListener): (() => void) => {
   keyRetiredListeners.add(listener)
   return () => keyRetiredListeners.delete(listener)
 }
@@ -316,22 +320,49 @@ export const accountSessions = createAccountSessions({
     }
   },
   onKeyRetired: (accountPub, changedAt) => {
-    for (const listener of keyRetiredListeners) {
+    void keyRetired(accountPub, changedAt)
+  },
+})
+
+/** Tells every `onKeyRetired` listener, once each has settled. */
+async function keyRetired(accountPub: string, changedAt: number | null) {
+  await Promise.all(
+    [...keyRetiredListeners].map(async (listener) => {
       try {
-        listener(accountPub, changedAt)
+        await listener(accountPub, changedAt)
       } catch (error) {
         errorTracking.captureException(error)
       }
-    }
-  },
-})
+    })
+  )
+}
 
 /**
  * This browser's account: signing in with a ticket, sign-up's session, signing
  * out, and the server ending the session (`webAccount.ts`). Null on phones.
  */
 export const webAccount: WebAccount | null =
-  webRuntime?.bind(accountSessions) ?? null
+  webRuntime?.bind(accountSessions, {
+    // Ended by a key change on another device (`key_changed`): the stores stay
+    // once the server says the key is retired (ADR 0039).
+    retiredKey: (accountKey, accountId) =>
+      probeRetiredKey(
+        { accountId },
+        {
+          baseUrl: apis.accounts,
+          key: deriveAccountSigningKey(accountKey),
+          now: syncNow,
+          randomBytes: getRandomBytes,
+        }
+      ),
+    lastAccountId: () => serverAccount.lastAccountId(),
+    onKeyRetired: keyRetired,
+    onSignedIn: (accountKey) => {
+      // Remembers the account, as a phone's sign-in does.
+      void serverAccount.connect(accountKey).catch(() => undefined)
+      notifyAccountChange('session_opened')
+    },
+  }) ?? null
 
 /** Bearer ops as one account key's session. */
 export const bearerOptions = (

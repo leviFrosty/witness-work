@@ -19,6 +19,7 @@ function setup(saved: Uint8Array | null = null) {
   const accountKey = createWebAccountKey({
     secrets,
     randomBytes: (length) => new Uint8Array(length).fill(9),
+    publicKeyOf: (stored) => `pub-${stored[0]}`,
   })
   return { accountKey, secrets, store }
 }
@@ -84,5 +85,28 @@ describe('web account key', () => {
     expect(accountKey.current()).toBeNull()
     expect(await accountKey.peek()).toBeNull()
     expect(listener).toHaveBeenCalledWith(null)
+  })
+
+  it('deletes a retired key alone, and tells listeners', async () => {
+    const { accountKey, store } = setup(key(4))
+    store.set('session', key(5))
+    await accountKey.load()
+    const listener = vi.fn()
+    accountKey.subscribe(listener)
+    expect(await accountKey.retire('pub-4')).toBe(true)
+    expect(store.has(WEB_ACCOUNT_KEY_NAME)).toBe(false)
+    expect(store.get('session')).toEqual(key(5))
+    expect(accountKey.current()).toBeNull()
+    expect(await accountKey.peek()).toBeNull()
+    expect(listener).toHaveBeenCalledWith(null)
+  })
+
+  it('keeps a stored key that isn’t the retired one, whatever is in memory', async () => {
+    const { accountKey, store } = setup(key(4))
+    await accountKey.load()
+    // Another tab stored a newer key since this one loaded.
+    store.set(WEB_ACCOUNT_KEY_NAME, key(6))
+    expect(await accountKey.retire('pub-4')).toBe(false)
+    expect(store.get(WEB_ACCOUNT_KEY_NAME)).toEqual(key(6))
   })
 })

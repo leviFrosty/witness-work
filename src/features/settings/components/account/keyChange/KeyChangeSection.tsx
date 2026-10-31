@@ -1,4 +1,4 @@
-import { Alert, View } from 'react-native'
+import { Platform, View } from 'react-native'
 import { useNavigation } from '@react-navigation/native'
 import {
   RotateCcwKey as RotateCcwKeyIcon,
@@ -16,6 +16,7 @@ import { useKeyChangedElsewhere } from '@/lib/accountKey/keyChangedElsewhere'
 import { analytics } from '@/lib/analytics'
 import { formatDate } from '@/lib/dates'
 import i18n from '@/lib/locales'
+import { showAlert } from '@/lib/alert'
 import { logger } from '@/lib/logger'
 import { toast } from '@/stores/toasts'
 import type { RootStackNavigation } from '@/types/rootStack'
@@ -38,16 +39,21 @@ export default function KeyChangeSection() {
           text={i18n.t('accountKeyChange_elsewhereTitle')}
           alignWithIcons
         />
-        <Section>
-          <InputRowButton
-            leftIcon={ScanQrCodeIcon}
-            label={i18n.t('handoff_signIn')}
-            onPress={() =>
-              navigation.navigate('Sign In With QR Code', { entry: 'settings' })
-            }
-            lastInSection
-          />
-        </Section>
+        {/* A browser signs back in from the web's sign-in screen. */}
+        {Platform.OS !== 'web' && (
+          <Section>
+            <InputRowButton
+              leftIcon={ScanQrCodeIcon}
+              label={i18n.t('handoff_signIn')}
+              onPress={() =>
+                navigation.navigate('Sign In With QR Code', {
+                  entry: 'settings',
+                })
+              }
+              lastInSection
+            />
+          </Section>
+        )}
         <SectionFooter
           text={[
             signedOut.changedAt
@@ -55,7 +61,9 @@ export default function KeyChangeSection() {
                   date: formatDate(signedOut.changedAt),
                 })
               : i18n.t('accountKeyChange_elsewhereBodyNoDate'),
-            i18n.t('accountKeyChange_elsewhereHow'),
+            Platform.OS === 'web'
+              ? i18n.t('accountKeyChange_elsewhereHowWeb')
+              : i18n.t('accountKeyChange_elsewhereHow'),
           ].join(' ')}
         />
       </View>
@@ -63,7 +71,7 @@ export default function KeyChangeSection() {
 
   if (stage === 'pending' || stage === 'confirmed') {
     const discard = () =>
-      Alert.alert(
+      showAlert(
         i18n.t('accountKeyChange_discardTitle'),
         i18n.t('accountKeyChange_discardBody'),
         [

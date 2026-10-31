@@ -56,13 +56,18 @@ export type KeyChangeEvent =
 /**
  * Why `account_key_change_failed` was sent: another device changed the key
  * first (`conflict`, `key_retired`), the platform store refused the key
- * (`store`), or a later step stopped (`step`).
+ * (`store`), or a later step stopped (`step`). The web's: the browser's session
+ * is younger than a day (`session_too_new`), the account has no passkey to
+ * confirm with (`no_passkey`), or the passkey check didn't pass (`step_up`).
  */
 export type KeyChangeFailedReason =
   | 'conflict'
   | 'key_retired'
   | 'store'
   | 'step'
+  | 'session_too_new'
+  | 'no_passkey'
+  | 'step_up'
 
 export type KeyChangeFailureReason =
   | 'offline'
@@ -76,11 +81,24 @@ export type KeyChangeFailureReason =
   /** The server can't say yet whether a change committed. */
   | 'unresolved'
   | 'server'
+  /** The web: this browser's session is younger than a day. */
+  | 'session_too_new'
+  /** The web: the account has no passkey to confirm with. */
+  | 'no_passkey'
+  /** The web: the passkey check was cancelled or didn't pass. */
+  | 'step_up'
 
 export class KeyChangeError extends Error {
-  constructor(readonly reason: KeyChangeFailureReason) {
+  /** `session_too_new`: when the browser may change the key (epoch ms). */
+  readonly availableAt?: number
+
+  constructor(
+    readonly reason: KeyChangeFailureReason,
+    detail: { availableAt?: number } = {}
+  ) {
     super(`Key change failed: ${reason}`)
     this.name = 'KeyChangeError'
+    if (detail.availableAt !== undefined) this.availableAt = detail.availableAt
   }
 }
 
@@ -120,6 +138,13 @@ export type KeyChangeEngineDeps = {
     /** This device's label sealed under the new key, if any. */
     sealLabel?: (newKey: Uint8Array) => string | undefined
   }
+  /**
+   * Before step 0, whether this device may change the key at all; throws a
+   * `KeyChangeError` when it may not. The web checks its session's age and that
+   * the account has a passkey, so the User never saves a recovery key the
+   * server would refuse.
+   */
+  precheck?: (oldKey: Uint8Array) => Promise<void>
   /** Step 0: Cloud Sync pulls, merges and pushes; a backup when it's on. */
   prepare: () => Promise<void>
   /** Step 4 (`accountKey.adoptChangedKey`). */
@@ -136,9 +161,15 @@ export type KeyChangeEngineDeps = {
   step: (name: KeyChangeStepName) => KeyChangeStep
   /**
    * The web's step-up, right after "I've saved it"; its passkey wraps the new
-   * key. Phones check Face ID before starting instead.
+   * key for the epoch the change makes (`keyEpoch`). Throws a `KeyChangeError`
+   * (`step_up`) when it doesn't pass. Phones check Face ID before starting
+   * instead.
    */
-  stepUp?: (newKey: Uint8Array) => Promise<{ passkeyWrap?: RekeyPasskeyWrap }>
+  stepUp?: (change: {
+    newKey: Uint8Array
+    accountId: string
+    keyEpoch: number
+  }) => Promise<{ passkeyWrap?: RekeyPasskeyWrap }>
   track: (
     event: KeyChangeEvent,
     properties: {
@@ -282,6 +313,47 @@ export function createKeyChangeEngine(deps: KeyChangeEngineDeps) {
     track('account_key_change_completed')
   }
 
+  /** `deps.precheck`, its refusals tracked. */
+  async function precheck(oldKey: Uint8Array): Promise<void> {
+    try {
+      await deps.precheck?.(oldKey)
+    } catch (error) {
+      if (!(error instanceof KeyChangeError))
+        throw new KeyChangeError(
+          isConnectivityError(error) ? 'offline' : 'server'
+        )
+      if (error.reason === 'session_too_new' || error.reason === 'no_passkey')
+        track('account_key_change_failed', { reason: error.reason })
+      throw error
+    }
+  }
+
+  /** The web's step-up for `record`'s new key and epoch, if any. */
+  async function stepUp(
+    record: KeyChangeRecord
+  ): Promise<RekeyPasskeyWrap | undefined> {
+    if (!deps.stepUp) return undefined
+    try {
+      const passed = await deps.stepUp({
+        newKey: keysOf(record).newKey,
+        accountId: record.accountId,
+        keyEpoch: record.oldKeyEpoch + 1,
+      })
+      return passed.passkeyWrap
+    } catch (error) {
+      if (!(error instanceof KeyChangeError))
+        throw new KeyChangeError(
+          isConnectivityError(error) ? 'offline' : 'server'
+        )
+      if (error.reason === 'step_up')
+        track('account_key_change_failed', {
+          stage: record.stage,
+          reason: 'step_up',
+        })
+      throw error
+    }
+  }
+
   /** Steps 0 and 1. Returns K2, for its recovery key. */
   function start(): Promise<{ newKey: Uint8Array }> {
     return serially(async () => {
@@ -289,6 +361,7 @@ export function createKeyChangeEngine(deps: KeyChangeEngineDeps) {
       if (await deps.records.read()) throw new KeyChangeError('in_progress')
       const oldKey = await deps.deviceKey()
       if (!oldKey) throw new KeyChangeError('no_key')
+      await precheck(oldKey)
       let account: KeyChangeAccount
       let stored: StoredKeyHistory
       try {
@@ -475,8 +548,7 @@ export function createKeyChangeEngine(deps: KeyChangeEngineDeps) {
         await proceed(record)
         return { outcome: 'done' }
       }
-      const { newKey } = keysOf(record)
-      const passkeyWrap = (await deps.stepUp?.(newKey))?.passkeyWrap
+      const passkeyWrap = await stepUp(record)
 
       // A lost answer is read from the account; the envelope is never sent
       // twice. Not committed means a new one (fresh ts and nonce).
@@ -527,6 +599,14 @@ export function createKeyChangeEngine(deps: KeyChangeEngineDeps) {
             continue
           }
           default:
+            // The web's refusals: still confirmed, under the old key.
+            track('account_key_change_failed', {
+              stage: record.stage,
+              reason:
+                result.outcome === 'sessionTooNew'
+                  ? 'session_too_new'
+                  : 'step_up',
+            })
             return { outcome: result.outcome }
         }
       }

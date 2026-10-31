@@ -156,14 +156,16 @@ export class AccountSessionError extends HttpError {
 /**
  * Why the server refused a refresh (docs/passkeys-protocol.md, "Session
  * fields"): `revoked` (another device signed it out), `replaced` (a session
- * cap), `expired`, `reused` (a replaced refresh token came back), or
- * `unknown`.
+ * cap), `expired`, `reused` (a replaced refresh token came back), `key_changed`
+ * (the account key changed on another device while it was live; ADR 0039), or
+ * `unknown`. A phone opens a new session for any of them.
  */
 export type SessionEndReason =
   | 'revoked'
   | 'replaced'
   | 'expired'
   | 'reused'
+  | 'key_changed'
   | 'unknown'
 
 const SESSION_END_REASONS: readonly SessionEndReason[] = [
@@ -171,11 +173,14 @@ const SESSION_END_REASONS: readonly SessionEndReason[] = [
   'replaced',
   'expired',
   'reused',
+  'key_changed',
 ]
 
 /**
  * Whether an ended session means someone else ended it on purpose: a browser
  * wipes itself then, and keeps its data for `expired` and `replaced`.
+ * `key_changed` keeps it only once the browser confirms its key was retired
+ * (`webAccount`).
  */
 export const sessionEndWipes = (reason: SessionEndReason | null) =>
   reason === 'revoked' || reason === 'reused'
@@ -1328,6 +1333,12 @@ export function createAccountSessions(deps: AccountSessionDeps) {
       // A session for this key, or the one its key replaced, named its
       // account: a new one names it too.
       const knownAccount = call.accountId ?? current?.accountId
+      // A browser's key changes only with a sign-in, which brings its own
+      // session, or its own key change, which moves the session (`repoint`):
+      // a call with the new key just before the move is `cancelled`, rather
+      // than ending the session it's about to keep.
+      if (deps.web && current && current.accountPub !== pub)
+        throw new AccountSessionError('cancelled')
       if (current && current.accountPub !== pub) {
         // The stored key changed outside `changeKey` (iCloud Keychain brought
         // another device's key): end the old session rather than leave it

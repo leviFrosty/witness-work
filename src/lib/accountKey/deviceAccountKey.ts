@@ -24,7 +24,8 @@ export type DeviceAccountKeyDeps = {
     peek: () => Promise<string | null>
     getOrCreate: () => Promise<string>
     replace: (key: string) => Promise<void>
-    remove: () => Promise<void>
+    /** Deletes the stored key, which is `accountPub`'s, a retired key. */
+    remove: (accountPub: string) => Promise<void>
   }
   /** The change record, if a key change is under way on this device. */
   record: () => Promise<KeyChangeRecord | null>
@@ -120,7 +121,7 @@ export function createDeviceAccountKey(deps: DeviceAccountKeyDeps) {
       deps.retired.add(accountPub)
       if (deps.sharedStore) return
       const key = await deps.native.peek()
-      if (key && pubOf(key) === accountPub) await deps.native.remove()
+      if (key && pubOf(key) === accountPub) await deps.native.remove(accountPub)
     },
 
     isRetired: (accountPub: string) => deps.retired.has(accountPub),

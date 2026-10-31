@@ -141,6 +141,16 @@ export const test = base.extend<Fixtures>({
           },
         })
     )
+    // Until web sign-up, a run opens the app without an account, as the
+    // sign-in screen's Create an Account does (`WebSignInGate.web.tsx`).
+    // `signedOut` specs open their own context.
+    await page.context().addInitScript(() => {
+      try {
+        sessionStorage.setItem('ww-web-sign-in-later', '1')
+      } catch {
+        // No session storage: the sign-in screen shows.
+      }
+    })
     // A build with RevenueCat Billing's key sees a working RevenueCat.
     await mockRevenueCat(page.context(), revenueCatCatalog, revenueCatCustomer)
     await page.context().routeWebSocket(

@@ -56,13 +56,16 @@ set into `dist/_headers` for everything Cloudflare serves directly.
 
 - **CSP**, in report-only mode until an environment's `csp` is switched to
   `enforce` in `config/web-environments.json`:
-  - `script-src 'self' 'wasm-unsafe-eval'`, for CanvasKit;
+  - `script-src 'self' 'wasm-unsafe-eval'`, for CanvasKit, plus Cloudflare
+    Turnstile (`challenges.cloudflare.com`), the check before a recovery key
+    signs a browser in (ADR 0038). The page loads its script through the
+    `ww-turnstile` Trusted Types policy;
   - `style-src 'self' 'unsafe-inline'`, because react-native-web writes styles
     into `<style>` tags at runtime;
   - `connect-src`: the profile's ww-api (`https` and `wss`), PostHog, the
     website and Help Center search hosts, old and new, and RevenueCat's API
     and SDK events (`api.revenuecat.com`, `e.revenue.cat`) for web purchases;
-  - `frame-src`: the maps frame only;
+  - `frame-src`: the maps frame and Turnstile's widget;
   - `frame-ancestors 'none'`, `base-uri 'none'`, `object-src 'none'`,
     `form-action 'self'`, `worker-src 'self'`;
   - Trusted Types: `require-trusted-types-for 'script'`.

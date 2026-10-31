@@ -126,8 +126,12 @@ describe('headers', () => {
       /connect-src [^;]* https:\/\/api\.revenuecat\.com https:\/\/e\.revenue\.cat;/
     )
     expect(csp).not.toMatch(/script-src [^;]*(revenuecat|rev\.cat|stripe)/)
-    expect(csp).toContain('frame-src https://maps-dev.witnesswork.app;')
-    expect(csp).toContain("script-src 'self' 'wasm-unsafe-eval';")
+    expect(csp).toContain(
+      'frame-src https://maps-dev.witnesswork.app https://challenges.cloudflare.com;'
+    )
+    expect(csp).toContain(
+      "script-src 'self' 'wasm-unsafe-eval' https://challenges.cloudflare.com;"
+    )
     expect(csp).toContain("require-trusted-types-for 'script'")
     expect(csp).toMatch(/; report-uri \/_csp-report$/)
     expect(csp).not.toContain('report-to')
@@ -137,7 +141,9 @@ describe('headers', () => {
     for (const profile of ['beta', 'production'] as const) {
       const policy = contentSecurityPolicy(environments[profile] as WebProfile)
       expect(policy).toContain('https://api.witnesswork.app wss://')
-      expect(policy).toContain('frame-src https://maps.witnesswork.app;')
+      expect(policy).toContain(
+        'frame-src https://maps.witnesswork.app https://challenges.cloudflare.com;'
+      )
     }
   })
 

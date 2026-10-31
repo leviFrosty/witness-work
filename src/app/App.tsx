@@ -67,6 +67,7 @@ import ToastHost from '@/components/toast/ToastHost'
 import WebStorageNotices from '@/app/launch/WebStorageNotices'
 import AppLockGate from '@/app/app-lock/AppLockGate'
 import UpdateRequiredGate from '@/app/update-required/UpdateRequiredGate'
+import WebSignInGate from '@/app/web-sign-in/WebSignInGate'
 
 initializeApp()
 
@@ -100,7 +101,11 @@ export default function App() {
   // Before the device's first unlock, nothing past the splash may read or
   // write the User's data.
   if (!useStorageUnlock()) return <LaunchSplash />
-  return <UnlockedApp />
+  return (
+    <WebSignInGate>
+      <UnlockedApp />
+    </WebSignInGate>
+  )
 }
 
 function UnlockedApp() {

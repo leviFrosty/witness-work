@@ -1,0 +1,642 @@
+import { PasskeyError } from '@/lib/passkeys/errors'
+import type {
+  PasskeyAssertion,
+  PublicKeyCredentialRequestOptionsJSON,
+} from '@/lib/passkeys/types'
+import type {
+  ApprovalFailure,
+  BrowserApproval,
+} from '@/lib/serverAccount/approvalSession'
+import { deriveAccountSigningKey } from '@/lib/serverAccount/keys'
+import {
+  type PasskeyChallenge,
+  passkeyFailureFor,
+  type PasskeyResponseJSON,
+  type PasskeySignIn,
+  type WebTicket,
+} from '@/lib/serverAccount/passkeyClient'
+import {
+  newPasskeyWrapId,
+  openPasskeyWraps,
+  type PasskeyUnlockProblem,
+  type PasskeyWrap,
+  wrapAccountKey,
+} from '@/lib/serverAccount/passkeys'
+import type { SessionEndReason } from '@/lib/serverAccount/session'
+import { type WebAccount, WebSignInError } from '@/lib/serverAccount/webAccount'
+import type {
+  WebSignInMark,
+  WebSignInMarkStore,
+} from '@/lib/serverAccount/webSignInMark'
+
+/**
+ * A browser's sign-in screen (docs/passkeys-protocol.md, "The app" → "Signing
+ * in"; ADR 0038 §6), as a state machine the screen drives. Three ways, in this
+ * order:
+ *
+ * 1. **A passkey:** `passkeys/challenge`, the browser's get with PRF,
+ *    `passkeys/assert`, then the wraps. One that opens to the account's key
+ *    signs in with the passkey's ticket. One that signs in but can't unlock
+ *    keeps the account, its ticket, the credential and the PRF output in
+ *    memory, and the next two finish: the key they bring must be that
+ *    account's, and once the session is open the browser saves a wrap for this
+ *    passkey (`passkeys/wrap`), so it unlocks next time.
+ * 2. **Use my phone:** the approval QR (`approvalSession.ts`). Once the key
+ *    arrives, the session opens with its ticket for the sealed account, the
+ *    channel is done, and the screen shows "Approved by …" with That Wasn't Me
+ *    until the User continues.
+ * 3. **A recovery key,** checked locally first, then `web/recovery` with the
+ *    Turnstile token. A passkey's ticket still within its 2 minutes opens the
+ *    session instead, with no check.
+ *
+ * Signing in as another account than this browser's data wipes and reloads
+ * every tab (`webAccount`). What must outlive that (a wrap to save, "Approved
+ * by") is written to the tab's mark first, and `resume` finishes it after the
+ * reload.
+ */
+
+export type WebSignInMethod = 'passkey' | 'phone' | 'recovery'
+
+/** Why a sign-in didn't finish, as the screen explains it. */
+export type WebSignInFailure =
+  /** The User closed the browser's passkey prompt. Shown as nothing. */
+  | 'cancelled'
+  /** This browser can't use passkeys. */
+  | 'notSupported'
+  /** No passkey here, or one the account no longer has. */
+  | 'noPasskey'
+  /** The passkey didn't verify. */
+  | 'passkeyFailed'
+  /** The key is another account's than the one signing in. */
+  | 'wrongAccount'
+  /** No account has this recovery key: the web doesn't create one from it. */
+  | 'unknownAccount'
+  /** The account key changed since (ADR 0039): this one no longer signs in. */
+  | 'keyRetired'
+  /** The security check (Turnstile) refused. */
+  | 'turnstileFailed'
+  /** Too many tries: `retryAfterMs` says when to try again, when known. */
+  | 'rateLimited'
+  /** The sign-in took too long and its ticket expired. */
+  | 'expired'
+  | 'offline'
+  /** Accounts are off on the server. */
+  | 'unavailable'
+  | 'updateRequired'
+  /** This browser couldn't store the key or the session. */
+  | 'storage'
+  | 'failed'
+
+export type WebSignInProblem = {
+  method: WebSignInMethod
+  failure: WebSignInFailure
+  retryAfterMs: number | null
+}
+
+export type WebSignInState = {
+  /** The way that's running. */
+  busy: WebSignInMethod | null
+  problem: WebSignInProblem | null
+  /**
+   * A passkey signed in but can't unlock this account here: the phone or the
+   * recovery key finishes. `prf` when it gave PRF output, so finishing lets it
+   * unlock next time.
+   */
+  cantUnlock: { reason: PasskeyUnlockProblem; prf: boolean } | null
+  /** Signed in by this phone: "Approved by …" until the User continues. */
+  approvedBy: string | null
+  /**
+   * Signed in on this page (or a reload ago): the web's Cloud Sync screen
+   * checks the account before the app opens (ADR 0040 §5).
+   */
+  cloudSync: boolean
+  /** Whether the passkey that couldn't unlock now can, once known. */
+  wrapSaved: boolean | null
+  /** Why the server signed this browser out, when it wiped (a reload ago). */
+  ended: SessionEndReason | null
+}
+
+/** What analytics records; no ids, keys or names. */
+export type WebSignInEvent =
+  | { type: 'started'; method: WebSignInMethod }
+  | {
+      type: 'succeeded'
+      method: WebSignInMethod
+      /** A passkey signed in first but couldn't unlock. */
+      afterPasskey: boolean
+      /** `pending`: saved after every tab reloads into the account. */
+      wrap: 'saved' | 'failed' | 'none' | 'pending'
+    }
+  | { type: 'failed'; method: WebSignInMethod; reason: string }
+  | { type: 'cantUnlock'; reason: PasskeyUnlockProblem; prf: boolean }
+  | { type: 'thatWasntMe' }
+
+export type WebSignInDeps = {
+  account: Pick<WebAccount, 'openWebSessionWithTicket' | 'signOut'>
+  passkeys: {
+    /** `passkeys/challenge` for a sign-in. */
+    challenge: () => Promise<PasskeyChallenge>
+    /** The browser's get, with the PRF salt (`@/lib/passkeys`). */
+    get: (
+      options: PublicKeyCredentialRequestOptionsJSON
+    ) => Promise<PasskeyAssertion>
+    /** `passkeys/assert`. */
+    assert: (args: {
+      challengeToken: string
+      response: PasskeyResponseJSON
+    }) => Promise<PasskeySignIn>
+    /** `passkeys/wrap`, as the session `accountKey` just opened. */
+    saveWrap: (
+      accountKey: Uint8Array,
+      wrap: PasskeyWrap & { credentialId: string }
+    ) => Promise<void>
+  }
+  /** `web/recovery`, signed by the key, with Turnstile's token. */
+  recovery: (
+    accountKey: Uint8Array,
+    turnstileToken: string
+  ) => Promise<WebTicket>
+  /** A new browser approval (`createBrowserApproval`), not started. */
+  createApproval: () => BrowserApproval
+  /** This browser's account key once signed in, for `resume`. */
+  accountKey: () => Promise<Uint8Array | null>
+  mark: WebSignInMarkStore
+  randomBytes: (length: number) => Uint8Array
+  now: () => number
+  onEvent?: (event: WebSignInEvent) => void
+}
+
+/** A passkey's ticket this close to expiring isn't worth trying. */
+const TICKET_MARGIN_MS = 5_000
+
+/** The passkey that signed in but can't unlock, until the key arrives. */
+type Pending = {
+  accountId: string
+  accountPub: string
+  credentialId: string
+  keyEpoch: number
+  prf: Uint8Array | null
+  ticket: string | null
+  ticketExpiresAt: number
+}
+
+const INITIAL: WebSignInState = {
+  busy: null,
+  problem: null,
+  cantUnlock: null,
+  approvedBy: null,
+  cloudSync: false,
+  wrapSaved: null,
+  ended: null,
+}
+
+/** A thrown error as the screen explains it. */
+export function webSignInFailureFor(error: unknown): {
+  failure: WebSignInFailure
+  retryAfterMs: number | null
+  /** For analytics: the finer reason, when there is one. */
+  reason: string
+} {
+  const plain = (failure: WebSignInFailure, reason: string = failure) => ({
+    failure,
+    retryAfterMs: null,
+    reason,
+  })
+  if (error instanceof PasskeyError)
+    switch (error.code) {
+      case 'cancelled':
+      case 'timeout':
+        return plain('cancelled', error.code)
+      case 'not_supported':
+        return plain('notSupported')
+      case 'no_credentials':
+        return plain('noPasskey', 'no_credentials')
+      default:
+        return plain('passkeyFailed', error.code)
+    }
+  if (error instanceof WebSignInError) return plain(error.reason)
+  const { failure, reason, retryAfterMs } = passkeyFailureFor(error)
+  const result = (mapped: WebSignInFailure) => ({
+    failure: mapped,
+    retryAfterMs,
+    reason: reason ? `${failure}:${reason}` : failure,
+  })
+  switch (failure) {
+    case 'offline':
+    case 'unavailable':
+    case 'updateRequired':
+    case 'rateLimited':
+    case 'turnstileFailed':
+    case 'unknownAccount':
+    case 'keyRetired':
+      return result(failure)
+    case 'passkeyFailed':
+      return result(
+        reason === 'unknown_credential' || reason === 'user_handle'
+          ? 'noPasskey'
+          : 'passkeyFailed'
+      )
+    case 'ticketInvalid':
+      return result('expired')
+    default:
+      return result('failed')
+  }
+}
+
+export function createWebSignIn(deps: WebSignInDeps) {
+  let state: WebSignInState = INITIAL
+  const listeners = new Set<() => void>()
+  let pending: Pending | null = null
+  let approval: BrowserApproval | null = null
+  let stopApproval: (() => void) | null = null
+
+  const set = (next: Partial<WebSignInState>) => {
+    state = { ...state, ...next }
+    for (const listener of listeners) listener()
+  }
+
+  const emit = (event: WebSignInEvent) => {
+    try {
+      deps.onEvent?.(event)
+    } catch {
+      // Analytics never stops a sign-in.
+    }
+  }
+
+  function begin(method: WebSignInMethod): boolean {
+    if (state.busy) return false
+    set({ busy: method, problem: null })
+    emit({ type: 'started', method })
+    return true
+  }
+
+  function failed(method: WebSignInMethod, error: unknown) {
+    const { failure, retryAfterMs, reason } = webSignInFailureFor(error)
+    emit({ type: 'failed', method, reason })
+    set({
+      busy: null,
+      problem:
+        failure === 'cancelled' ? null : { method, failure, retryAfterMs },
+    })
+  }
+
+  function refuse(method: WebSignInMethod, failure: WebSignInFailure) {
+    emit({ type: 'failed', method, reason: failure })
+    set({ busy: null, problem: { method, failure, retryAfterMs: null } })
+  }
+
+  /** The key the phone or recovery key brought must be the passkey's account's. */
+  const othersKey = (accountKey: Uint8Array) =>
+    pending !== null &&
+    deriveAccountSigningKey(accountKey).publicKey !== pending.accountPub
+
+  /** The pending passkey's wrap of `accountKey`, when it gave PRF output. */
+  function pendingWrap(
+    accountKey: Uint8Array,
+    accountId: string
+  ): WebSignInMark['wrap'] | undefined {
+    if (!pending?.prf || pending.accountId !== accountId) return undefined
+    const { credentialId, keyEpoch } = pending
+    return {
+      accountId,
+      credentialId,
+      keyEpoch,
+      wrapId: newPasskeyWrapId(deps.randomBytes),
+      wrap: wrapAccountKey(
+        {
+          prfOutput: pending.prf,
+          accountKey,
+          accountId,
+          credentialId,
+          keyEpoch,
+        },
+        deps.randomBytes(24)
+      ),
+    }
+  }
+
+  /** Saves the marked wrap, once the session is open; then forgets it. */
+  async function saveMarkedWrap(
+    accountKey: Uint8Array
+  ): Promise<'saved' | 'failed' | 'none'> {
+    const mark = deps.mark.read()
+    const wrap = mark?.wrap
+    if (!wrap) return 'none'
+    let outcome: 'saved' | 'failed'
+    try {
+      const { accountId: _, ...saved } = wrap
+      await deps.passkeys.saveWrap(accountKey, saved)
+      outcome = 'saved'
+    } catch {
+      // The passkey stays Sign-in only; it signs in all the same.
+      outcome = 'failed'
+    }
+    const { wrap: __, ...rest } = deps.mark.read() ?? {}
+    deps.mark.write(rest)
+    set({ wrapSaved: outcome === 'saved' })
+    return outcome
+  }
+
+  /**
+   * Opens the session with a ticket. Returns false when every tab is reloading
+   * into the new account: the flow stops, and `resume` finishes it.
+   */
+  async function open(
+    method: WebSignInMethod,
+    ticket: string,
+    accountKey: Uint8Array,
+    accountId: string,
+    approvedBy?: string
+  ): Promise<boolean> {
+    const afterPasskey = pending !== null && method !== 'passkey'
+    const wrap = pendingWrap(accountKey, accountId)
+    deps.mark.write({
+      ...(approvedBy !== undefined && { approvedBy }),
+      ...(wrap && { wrap }),
+      cloudSync: true,
+    })
+    let reload: boolean
+    try {
+      ;({ reload } = await deps.account.openWebSessionWithTicket(
+        ticket,
+        accountKey,
+        { expectAccountId: accountId }
+      ))
+    } catch (error) {
+      deps.mark.write(null)
+      throw error
+    }
+    pending = null
+    if (reload) {
+      emit({
+        type: 'succeeded',
+        method,
+        afterPasskey,
+        wrap: wrap ? 'pending' : 'none',
+      })
+      return false
+    }
+    const saved = await saveMarkedWrap(accountKey)
+    emit({ type: 'succeeded', method, afterPasskey, wrap: saved })
+    set({
+      busy: null,
+      cantUnlock: null,
+      approvedBy: approvedBy ?? null,
+      cloudSync: true,
+    })
+    return true
+  }
+
+  // --- A passkey ------------------------------------------------------------
+
+  async function signInWithPasskey(): Promise<void> {
+    if (!begin('passkey')) return
+    try {
+      const challenge = await deps.passkeys.challenge()
+      const assertion = await deps.passkeys.get(
+        challenge.options as unknown as PublicKeyCredentialRequestOptionsJSON
+      )
+      const signIn = await deps.passkeys.assert({
+        challengeToken: challenge.challengeToken,
+        response: assertion.response as unknown as PasskeyResponseJSON,
+      })
+      if (!signIn.ticket) throw new Error('No ticket for a browser')
+      const unlock = openPasskeyWraps({
+        prfOutput: assertion.prf,
+        accountId: signIn.accountId,
+        accountPub: signIn.accountPub,
+        credentialId: signIn.credentialId,
+        keyEpoch: signIn.keyEpoch,
+        wraps: signIn.wraps,
+      })
+      if (unlock.ok) {
+        pending = null
+        await open(
+          'passkey',
+          signIn.ticket,
+          unlock.accountKey,
+          signIn.accountId
+        )
+        return
+      }
+      pending = {
+        accountId: signIn.accountId,
+        accountPub: signIn.accountPub,
+        credentialId: signIn.credentialId,
+        keyEpoch: signIn.keyEpoch,
+        prf: assertion.prf,
+        ticket: signIn.ticket,
+        ticketExpiresAt: signIn.ticketExpiresAt ?? 0,
+      }
+      emit({
+        type: 'cantUnlock',
+        reason: unlock.reason,
+        prf: assertion.prf !== null,
+      })
+      set({
+        busy: null,
+        cantUnlock: { reason: unlock.reason, prf: assertion.prf !== null },
+      })
+    } catch (error) {
+      failed('passkey', error)
+    }
+  }
+
+  // --- A recovery key -------------------------------------------------------
+
+  /** A pending passkey's ticket, while it still has time left. */
+  const pendingTicket = () =>
+    pending?.ticket && deps.now() < pending.ticketExpiresAt - TICKET_MARGIN_MS
+      ? { ticket: pending.ticket, accountId: pending.accountId }
+      : null
+
+  /**
+   * Whether the recovery key needs the security check: not while a passkey's
+   * ticket can open the session.
+   */
+  const recoveryNeedsCheck = () => pendingTicket() === null
+
+  /**
+   * Signs in with a recovery key the screen already checked
+   * (`parseRecoveryKey`). `turnstileToken` is used once; the screen resets its
+   * widget after any attempt that didn't sign in.
+   */
+  async function signInWithRecoveryKey(
+    accountKey: Uint8Array,
+    turnstileToken: string | null
+  ): Promise<void> {
+    if (!begin('recovery')) return
+    if (othersKey(accountKey)) return refuse('recovery', 'wrongAccount')
+    try {
+      const fromPasskey = pendingTicket()
+      if (fromPasskey)
+        try {
+          await open(
+            'recovery',
+            fromPasskey.ticket,
+            accountKey,
+            fromPasskey.accountId
+          )
+          return
+        } catch (error) {
+          // Expired meanwhile: the security check's ticket still can.
+          if (
+            webSignInFailureFor(error).failure !== 'expired' ||
+            !turnstileToken
+          )
+            throw error
+        }
+      if (!turnstileToken) throw new Error('No security check')
+      const { ticket, accountId } = await deps.recovery(
+        accountKey,
+        turnstileToken
+      )
+      if (pending && accountId !== pending.accountId)
+        return refuse('recovery', 'wrongAccount')
+      await open('recovery', ticket, accountKey, accountId)
+    } catch (error) {
+      failed('recovery', error)
+    }
+  }
+
+  // --- Use my phone ---------------------------------------------------------
+
+  async function received(current: BrowserApproval) {
+    const step = current.state
+    if (step.step !== 'received' || approval !== current) return
+    const { accountKey, accountId, deviceName, ticket } = step.received
+    set({ busy: 'phone', problem: null })
+    if (othersKey(accountKey) || (pending && pending.accountId !== accountId)) {
+      void current.cancel()
+      return refuse('phone', 'wrongAccount')
+    }
+    try {
+      const signedIn = await open(
+        'phone',
+        ticket,
+        accountKey,
+        accountId,
+        deviceName
+      )
+      // The key is stored: the server can drop it.
+      await current.finish()
+      if (!signedIn) return
+    } catch (error) {
+      current.fail(
+        error instanceof WebSignInError && error.reason === 'wrongAccount'
+          ? 'tampered'
+          : 'server'
+      )
+      failed('phone', error)
+    }
+  }
+
+  function approvalFailed(current: BrowserApproval) {
+    const step = current.state
+    if (step.step !== 'failed' || approval !== current || state.busy) return
+    emit({ type: 'failed', method: 'phone', reason: step.reason })
+  }
+
+  /** Use my phone: a new approval, started; the screen shows its state. */
+  function startPhone(): BrowserApproval {
+    if (approval && !['cancelled', 'failed'].includes(approval.state.step))
+      return approval
+    stopPhone()
+    const next = deps.createApproval()
+    approval = next
+    let last = next.state.step
+    stopApproval = next.subscribe(() => {
+      if (next.state.step === last) return
+      last = next.state.step
+      if (last === 'received') void received(next)
+      if (last === 'failed') approvalFailed(next)
+    })
+    emit({ type: 'started', method: 'phone' })
+    void next.start()
+    return next
+  }
+
+  /** The User left the phone's code: its channels end. */
+  function stopPhone() {
+    stopApproval?.()
+    stopApproval = null
+    const current = approval
+    approval = null
+    // Never while the session opens with its key.
+    if (current && current.state.step !== 'received') current.dispose()
+  }
+
+  // --- After signing in -----------------------------------------------------
+
+  /**
+   * After a launch: a reload's sign-in finishes (the wrap, "Approved by"), and
+   * the reason the server signed this browser out shows once.
+   */
+  async function resume(signedIn: boolean): Promise<void> {
+    const mark = deps.mark.read()
+    if (!mark) return
+    if (!signedIn) {
+      deps.mark.write(null)
+      set({ ended: mark.ended ?? null })
+      return
+    }
+    if (mark.ended) {
+      const { ended: _, ...rest } = mark
+      deps.mark.write(rest)
+    }
+    if (mark.approvedBy !== undefined) set({ approvedBy: mark.approvedBy })
+    if (mark.cloudSync) set({ cloudSync: true })
+    if (mark.wrap) {
+      const accountKey = await deps.accountKey()
+      if (accountKey) await saveMarkedWrap(accountKey)
+    }
+  }
+
+  /** Past "Approved by …": into the app. */
+  function dismissApproved() {
+    const { approvedBy: _, ...rest } = deps.mark.read() ?? {}
+    deps.mark.write(rest)
+    set({ approvedBy: null })
+  }
+
+  /** The Cloud Sync screen let the app open. */
+  function cloudSyncChecked() {
+    const { cloudSync: _, ...rest } = deps.mark.read() ?? {}
+    deps.mark.write(rest)
+    set({ cloudSync: false })
+  }
+
+  /** That Wasn't Me: signs out and erases this browser. */
+  async function thatWasntMe(): Promise<void> {
+    emit({ type: 'thatWasntMe' })
+    deps.mark.write(null)
+    await deps.account.signOut()
+  }
+
+  /** The User went back: the problem shown goes. */
+  const clearProblem = () => set({ problem: null })
+
+  return {
+    state: (): WebSignInState => state,
+    subscribe(listener: () => void): () => void {
+      listeners.add(listener)
+      return () => listeners.delete(listener)
+    },
+    signInWithPasskey,
+    signInWithRecoveryKey,
+    recoveryNeedsCheck,
+    startPhone,
+    stopPhone,
+    /** The phone's approval while its page shows, for the developer harness. */
+    currentApproval: (): BrowserApproval | null => approval,
+    resume,
+    dismissApproved,
+    cloudSyncChecked,
+    thatWasntMe,
+    clearProblem,
+  }
+}
+
+export type WebSignIn = ReturnType<typeof createWebSignIn>
+
+export type { ApprovalFailure }

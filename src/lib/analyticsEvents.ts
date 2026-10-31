@@ -259,6 +259,12 @@ export const analyticsEventNames = [
   'update_required_store_opened',
   // The server ended a browser's account session (ADR 0038 §8).
   'web_session_ended',
+  'web_sign_in_failed',
+  'web_sign_in_passkey_cant_unlock',
+  'web_sign_in_started',
+  'web_sign_in_succeeded',
+  'web_sign_in_that_wasnt_me',
+  'web_signed_out',
   // The web's local data (ADR 0037 §6): saving failures and tab takeovers.
   'web_storage_failed',
   'web_tab_taken_over',

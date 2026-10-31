@@ -1,7 +1,7 @@
 import { defineConfig, devices } from '@playwright/test'
 
 // Where the app is served. A run starts its own server on 127.0.0.1; with
-// another host (a browser in a container reaching yours), or `E2E_EXTERNAL=1`
+// `E2E_HOST` set (a browser in a container reaching yours), or `E2E_EXTERNAL=1`
 // (a port forwarded to `localhost`), serve it yourself.
 const host = process.env.E2E_HOST ?? '127.0.0.1'
 const port = Number(process.env.E2E_PORT ?? 8765)
@@ -47,7 +47,7 @@ export default defineConfig({
     screenshot: 'only-on-failure',
   },
   webServer:
-    !process.env.E2E_EXTERNAL && ['127.0.0.1', 'localhost'].includes(host)
+    !process.env.E2E_HOST && !process.env.E2E_EXTERNAL
       ? {
           command: worker
             ? `node scripts/web-host.mjs serve ${worker} --port ${port}`

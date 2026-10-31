@@ -192,7 +192,14 @@ test('each environment deploys its own Worker to its own host', () => {
     assert.equal(config.preview_urls, target === 'dev')
     assert.equal(config.vars.WW_WEB_PROFILE, target)
     assert.equal(config.assets.not_found_handling, 'single-page-application')
-    for (const pattern of ['/_expo/*', '/assets/*', '/*.wasm', '/_csp-report'])
+    // `/.well-known/*` too: a missing file there must never be the app.
+    for (const pattern of [
+      '/_expo/*',
+      '/assets/*',
+      '/*.wasm',
+      '/.well-known/*',
+      '/_csp-report',
+    ])
       assert.ok(config.assets.run_worker_first.includes(pattern), pattern)
   }
   assert.equal(workers.size, 3)
@@ -284,17 +291,30 @@ test('the export gets the profile’s headers and skips source maps', () => {
   assert.throws(() => prepareAssets(fixture(), 'dev'), /index\.html is missing/)
 })
 
-test('a build must call the ww-api and PostHog origins its CSP allows', () => {
+test('a build must call the ww-api, PostHog and Help Center origins its CSP allows', () => {
   const { dir, write } = exportFixture()
   const chunk = '_expo/static/js/web/index-8ee1e5e4af138582a02721ff781b6161.js'
   assert.deepEqual(missingOrigins(dir, 'beta'), [
     profiles.beta.apiOrigin,
     profiles.beta.posthogOrigin,
+    'https://witnesswork.app',
+    profiles.beta.helpSearchOrigin,
   ])
   write(
     chunk,
-    `a="${profiles.dev.apiOrigin}";b="${profiles.dev.posthogOrigin}"`
+    [
+      profiles.dev.apiOrigin,
+      profiles.dev.posthogOrigin,
+      profiles.dev.helpManifest,
+      `${profiles.dev.helpSearchOrigin}/v1/search`,
+    ]
+      .map((url) => `"${url}"`)
+      .join(';')
   )
   assert.deepEqual(missingOrigins(dir, 'dev'), [])
-  assert.deepEqual(missingOrigins(dir, 'beta'), [profiles.beta.apiOrigin])
+  assert.deepEqual(missingOrigins(dir, 'beta'), [
+    profiles.beta.apiOrigin,
+    'https://witnesswork.app',
+    profiles.beta.helpSearchOrigin,
+  ])
 })

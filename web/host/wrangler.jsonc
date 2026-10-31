@@ -35,6 +35,7 @@
       "/*.woff2",
       "/*.ttf",
       "/*.txt",
+      "/.well-known/*",
       "/_csp-report",
     ],
   },

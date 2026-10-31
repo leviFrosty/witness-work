@@ -239,13 +239,17 @@ export function prepareAssets(dir, target) {
  * so a build pointed elsewhere would have its requests reported or blocked.
  */
 export function missingOrigins(dir, target) {
-  const { apiOrigin, posthogOrigin } = profiles[target]
+  const { apiOrigin, posthogOrigin, helpManifest, helpSearchOrigin } =
+    profiles[target]
   const scripts = servedFiles(dir)
     .filter((file) => file.endsWith('.js'))
     .map((file) => fs.readFileSync(path.join(dir, file)))
-  return [apiOrigin, posthogOrigin].filter(
-    (origin) => !scripts.some((bytes) => bytes.includes(origin))
-  )
+  return [
+    apiOrigin,
+    posthogOrigin,
+    new URL(helpManifest).origin,
+    helpSearchOrigin,
+  ].filter((origin) => !scripts.some((bytes) => bytes.includes(origin)))
 }
 
 function run(command, args, options = {}) {
@@ -317,7 +321,7 @@ function deploy(target, args) {
   const missing = missingOrigins(dist, target)
   if (missing.length)
     throw new Error(
-      `The ${target} build never calls ${missing.join(' or ')}, which its CSP expects; check its profile in config/web-environments.json`
+      `The ${target} build never calls ${missing.join(' or ')}, which its CSP allows; check its profile in config/web-environments.json`
     )
   const token = target === 'production' ? readProductionToken() : undefined
   const status = run(wrangler, wranglerArgs(target, { ...plan }), {

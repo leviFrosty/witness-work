@@ -12,7 +12,10 @@ import {
 import worker, { type Env } from './worker'
 
 const CHUNK = '/_expo/static/js/web/index-8ee1e5e4af138582a02721ff781b6161.js'
-const FILES: Record<string, [string, string]> = {
+// Expo's URL for it has a bare `@`; the asset server names it `%40`.
+const FONT =
+  '/assets/node_modules/@expo-google-fonts/inter/Inter_400Regular.079af0e2936ccb99b391ddc0bbb73dcb.ttf'
+const FILES: Record<string, [string | null, string]> = {
   '/index.html': ['text/html; charset=utf-8', '<!doctype html>'],
   [CHUNK]: ['text/javascript; charset=utf-8', 'console.log(1)'],
   '/canvaskit.wasm': ['application/wasm', '\0asm'],
@@ -20,22 +23,32 @@ const FILES: Record<string, [string, string]> = {
     'image/png',
     'png',
   ],
+  [FONT.replace('@', '%40')]: ['font/ttf', 'ttf'],
+  // The asset server can't type a file without an extension.
+  '/.well-known/apple-app-site-association': [null, '{"applinks":{}}'],
+  '/.well-known/assetlinks.json': ['application/json', '[]'],
 }
 
 // Behaves like Cloudflare's asset binding in single-page-application mode:
-// anything it doesn't have comes back as index.html with a 200.
+// anything it doesn't have comes back as index.html with a 200, and a path
+// spelled other than its encoded form redirects there.
 const assets = {
   fetch: async (input: Request | string) => {
     const request = typeof input === 'string' ? new Request(input) : input
     const { pathname } = new URL(request.url)
+    const encoded = pathname
+      .split('/')
+      .map((segment) => encodeURIComponent(decodeURIComponent(segment)))
+      .join('/')
+    if (encoded !== pathname)
+      return new Response(null, { status: 307, headers: { Location: encoded } })
     const [type, body] = FILES[pathname] ?? FILES['/index.html']
-    return new Response(request.method === 'HEAD' ? null : body, {
-      headers: {
-        'Content-Type': type,
-        'Cache-Control': REVALIDATE,
-        ETag: '"etag"',
-      },
+    const headers = new Headers({
+      'Cache-Control': REVALIDATE,
+      ETag: '"etag"',
     })
+    if (type) headers.set('Content-Type', type)
+    return new Response(request.method === 'HEAD' ? null : body, { headers })
   },
 } as unknown as Fetcher
 
@@ -92,6 +105,16 @@ describe('files the app loads by URL', () => {
     expect(response.headers.get('Cache-Control')).toBe(REVALIDATE)
   })
 
+  it('serves assets whose URL has an `@`, as Expo’s package assets do', async () => {
+    for (const path of [FONT, FONT.replace('@', '%40')]) {
+      const response = await call(path)
+      expect(response.status).toBe(200)
+      expect(response.headers.get('Content-Type')).toBe('font/ttf')
+      expect(response.headers.get('Cache-Control')).toBe(IMMUTABLE)
+      expect(await response.text()).toBe('ttf')
+    }
+  })
+
   it('caches hashed assets for good', async () => {
     const response = await call(
       '/assets/src/assets/icon.19556d01c4098119ac9127ac2681a68d.png'
@@ -115,42 +138,173 @@ describe('files the app loads by URL', () => {
   })
 })
 
+describe('/.well-known', () => {
+  for (const method of ['GET', 'HEAD']) {
+    it(`serves Apple's app site association as JSON (${method})`, async () => {
+      const response = await call('/.well-known/apple-app-site-association', {
+        method,
+      })
+      expect(response.status).toBe(200)
+      expect(response.headers.get('Content-Type')).toBe('application/json')
+      expect(response.headers.get('Location')).toBeNull()
+      expect(await response.text()).toBe(
+        method === 'GET' ? '{"applinks":{}}' : ''
+      )
+      expectSecurityHeaders(response)
+    })
+
+    it(`serves Android's asset links as JSON (${method})`, async () => {
+      const response = await call('/.well-known/assetlinks.json', { method })
+      expect(response.status).toBe(200)
+      expect(response.headers.get('Content-Type')).toBe('application/json')
+    })
+
+    it(`gives a missing file a real 404, never the app (${method})`, async () => {
+      for (const path of [
+        '/.well-known/webauthn',
+        '/.well-known/missing',
+        '/.well-known/',
+      ]) {
+        const response = await call(path, { method })
+        expect(response.status).toBe(404)
+        expect(response.headers.get('Content-Type')).toBe(
+          'text/plain; charset=utf-8'
+        )
+        expect(response.headers.get('Cache-Control')).toBe('no-store')
+        expect(await response.text()).toBe(
+          method === 'GET' ? 'Not found\n' : ''
+        )
+      }
+    })
+  }
+
+  it('serves the WebAuthn related origins as JSON once the export has them', async () => {
+    FILES['/.well-known/webauthn'] = [null, '{"origins":[]}']
+    try {
+      const response = await call('/.well-known/webauthn')
+      expect(response.status).toBe(200)
+      expect(response.headers.get('Content-Type')).toBe('application/json')
+    } finally {
+      delete FILES['/.well-known/webauthn']
+    }
+  })
+})
+
 describe('headers', () => {
-  it('limits connections to the profile’s API, PostHog, the website and RevenueCat', () => {
-    const csp = contentSecurityPolicy(dev)
-    expect(csp).toContain(
-      "connect-src 'self' https://api-dev.witnesswork.app wss://api-dev.witnesswork.app https://ww-api-r.leviwilkerson.com https://witnesswork.app https://help-search.witnesswork.app"
+  const policy = (name: keyof typeof environments) =>
+    contentSecurityPolicy(environments[name] as WebProfile)
+  const directive = (csp: string, name: string) =>
+    csp
+      .split('; ')
+      .find((entry) => entry.startsWith(`${name} `))
+      ?.split(' ')
+      .slice(1)
+
+  it('allows each profile only its own ww-api, PostHog, Help Center and maps', () => {
+    expect(directive(policy('dev'), 'connect-src')).toEqual([
+      "'self'",
+      'https://api-dev.witnesswork.app',
+      'wss://api-dev.witnesswork.app',
+      'https://ww-api-r.leviwilkerson.com',
+      'https://dev.witnesswork.app',
+      'https://help-search-dev.witnesswork.app',
+      'https://api.revenuecat.com',
+      'https://e.revenue.cat',
+    ])
+    expect(directive(policy('dev'), 'frame-src')).toEqual([
+      'https://maps-dev.witnesswork.app',
+    ])
+    for (const name of ['beta', 'production'] as const) {
+      expect(directive(policy(name), 'connect-src')).toEqual([
+        "'self'",
+        'https://api.witnesswork.app',
+        'wss://api.witnesswork.app',
+        'https://ww-api-r.leviwilkerson.com',
+        'https://witnesswork.app',
+        'https://help-search.witnesswork.app',
+        'https://api.revenuecat.com',
+        'https://e.revenue.cat',
+      ])
+      expect(directive(policy(name), 'frame-src')).toEqual([
+        'https://maps.witnesswork.app',
+      ])
+    }
+    expect(directive(policy('local'), 'connect-src')).toContain(
+      'ws://localhost:8787'
     )
-    // Browser mode's API and its events; never a RevenueCat or Stripe script.
-    expect(csp).toMatch(
-      /connect-src [^;]* https:\/\/api\.revenuecat\.com https:\/\/e\.revenue\.cat;/
-    )
-    expect(csp).not.toMatch(/script-src [^;]*(revenuecat|rev\.cat|stripe)/)
-    expect(csp).toContain('frame-src https://maps-dev.witnesswork.app;')
-    expect(csp).toContain("script-src 'self' 'wasm-unsafe-eval';")
-    expect(csp).toContain("require-trusted-types-for 'script'")
-    expect(csp).toMatch(/; report-uri \/_csp-report$/)
-    expect(csp).not.toContain('report-to')
-    expect(csp).not.toMatch(/ 'unsafe-eval'|\*/)
-    const local = contentSecurityPolicy(environments.local as WebProfile)
-    expect(local).toContain('http://localhost:8787 ws://localhost:8787')
-    for (const profile of ['beta', 'production'] as const) {
-      const policy = contentSecurityPolicy(environments[profile] as WebProfile)
-      expect(policy).toContain('https://api.witnesswork.app wss://')
-      expect(policy).toContain('frame-src https://maps.witnesswork.app;')
+  })
+
+  it('keeps every profile’s hosts out of the other environment’s CSP', () => {
+    // PostHog's ingestion proxy and RevenueCat serve every environment.
+    const shared = new Set([
+      "'self'",
+      'https://ww-api-r.leviwilkerson.com',
+      'https://api.revenuecat.com',
+      'https://e.revenue.cat',
+    ])
+    const hosts = (name: keyof typeof environments) =>
+      ['connect-src', 'frame-src']
+        .flatMap((name2) => directive(policy(name), name2) ?? [])
+        .filter((host) => !shared.has(host))
+    const production = hosts('production')
+    for (const host of hosts('dev')) {
+      expect(production).not.toContain(host)
+      expect(host).toMatch(/-dev\.witnesswork\.app$|^https:\/\/dev\./)
+    }
+    for (const host of production) expect(hosts('dev')).not.toContain(host)
+    expect(hosts('beta')).toEqual(production)
+    // Hosts the app moved off (ADR 0042) are gone everywhere.
+    for (const name of Object.keys(
+      environments
+    ) as (keyof typeof environments)[])
+      for (const old of [
+        'https://leviwilkerson.com',
+        'help-search.leviwilkerson.com',
+        'ww-proxy.leviwilkerson.com',
+      ])
+        expect(policy(name)).not.toContain(old)
+  })
+
+  it('runs only the app’s own code', () => {
+    for (const name of Object.keys(
+      environments
+    ) as (keyof typeof environments)[]) {
+      const csp = policy(name)
+      expect(directive(csp, 'default-src')).toEqual(["'self'"])
+      expect(directive(csp, 'script-src')).toEqual([
+        "'self'",
+        "'wasm-unsafe-eval'",
+      ])
+      expect(directive(csp, 'worker-src')).toEqual(["'self'"])
+      expect(directive(csp, 'media-src')).toEqual(["'self'", 'blob:'])
+      expect(directive(csp, 'require-trusted-types-for')).toEqual(["'script'"])
+      // Named policies, each created once; no `default` policy, no duplicates.
+      expect(directive(csp, 'trusted-types')).toEqual([
+        'ww-chunks',
+        'ProseMirrorClipboard',
+      ])
+      expect(directive(csp, 'frame-ancestors')).toEqual(["'none'"])
+      expect(directive(csp, 'object-src')).toEqual(["'none'"])
+      expect(directive(csp, 'base-uri')).toEqual(["'none'"])
+      expect(csp).toMatch(/; report-uri \/_csp-report$/)
+      expect(csp).not.toContain('report-to')
+      expect(csp).not.toMatch(
+        /'unsafe-eval'|\*|revenuecat[^;]*script|stripe|posthog\.com/
+      )
     }
   })
 
-  it('reports violations until an environment switches to enforce', () => {
-    for (const profile of Object.values(environments))
-      expect(profile.csp).toBe('report-only')
-    expect(securityHeaders(dev)).toHaveProperty(
-      'Content-Security-Policy-Report-Only'
-    )
-    expect(securityHeaders(dev)).not.toHaveProperty('Content-Security-Policy')
-    const enforced = securityHeaders({ ...dev, csp: 'enforce' })
-    expect(enforced['Content-Security-Policy']).toBe(contentSecurityPolicy(dev))
-    expect(enforced).not.toHaveProperty('Content-Security-Policy-Report-Only')
+  it('enforces in every deployed environment', () => {
+    // Switching one back to report-only is an emergency measure
+    // (docs/web-hosting.md, "CSP enforcement"), so it changes this test too.
+    for (const name of ['dev', 'beta', 'production'] as const) {
+      const headers = securityHeaders(environments[name] as WebProfile)
+      expect(headers['Content-Security-Policy']).toBe(policy(name))
+      expect(headers).not.toHaveProperty('Content-Security-Policy-Report-Only')
+    }
+    const reporting = securityHeaders({ ...dev, csp: 'report-only' })
+    expect(reporting['Content-Security-Policy-Report-Only']).toBe(policy('dev'))
+    expect(reporting).not.toHaveProperty('Content-Security-Policy')
   })
 
   it('hardens the origin without cross-origin isolation', () => {

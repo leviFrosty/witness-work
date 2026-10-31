@@ -174,19 +174,23 @@ describe('scrubAddress', () => {
 })
 
 describe('the web entry', () => {
-  // `src/index.js` runs the scrub before it requires anything else, and
-  // requires everything else only when the page isn't leaving.
+  // `src/index.js` first sets up what the CSP needs (`hardenWeb.web.ts`, which
+  // loads nothing that reads the address; see the test below), then runs the
+  // scrub before it requires anything else, and requires everything else only
+  // when the page isn't leaving.
   const entry = parse(
     fs.readFileSync(path.join(__dirname, '../../index.js'), 'utf8'),
     { sourceType: 'script' }
   ).program.body
 
   it('scrubs the address before any other module loads', () => {
-    expect(entry).toHaveLength(2)
-    const [first, second] = entry
+    expect(entry).toHaveLength(3)
+    const [harden, first, second] = entry
     expect(
       fs.readFileSync(path.join(__dirname, '../../index.js'), 'utf8')
     ).not.toMatch(/^import /m)
+    expect(harden.type).toBe('ExpressionStatement')
+    expect(JSON.stringify(harden)).toContain('"value":"./app/launch/hardenWeb"')
     expect(first.type).toBe('VariableDeclaration')
     const source = JSON.stringify(first)
     expect(source).toContain('"value":"./app/launch/scrubLaunchAddress"')
@@ -283,5 +287,14 @@ describe('the scrub’s imports', () => {
       expect(file).not.toMatch(/analytics|posthog|errorTracking|sentry/i)
     for (const name of packages)
       expect(name).not.toMatch(/posthog|sentry|analytics/i)
+  })
+
+  it('runs only zod and the Trusted Types policy before the scrub', () => {
+    const { files, packages } = graph(path.join(__dirname, 'hardenWeb.web.ts'))
+    expect(files.sort()).toEqual([
+      'app/launch/hardenWeb.web.ts',
+      'vendor/web/trustedTypes.ts',
+    ])
+    expect(packages).toEqual(['zod/v4'])
   })
 })

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { Platform } from 'react-native'
 import * as Font from 'expo-font'
 import { Kalam_400Regular, Kalam_700Bold } from '@expo-google-fonts/kalam'
 import { fonts } from '@/constants/theme'
@@ -52,8 +53,13 @@ const REMOTE_FONTS: Record<string, string> = {
 
 type FontPair = { regular: string; bold: string }
 
-/** The handwriting face a locale wants, ignoring whether it's loaded yet. */
+/**
+ * The handwriting face a locale wants, ignoring whether it's loaded yet. The
+ * web loads fonts from its own origin only (ADR 0037 §5), so it keeps the
+ * bundled face and the browser's own for other scripts.
+ */
 function targetFontsFor(locale: string): FontPair {
+  if (Platform.OS === 'web') return { regular: FALLBACK, bold: FALLBACK_BOLD }
   const lower = locale.toLowerCase()
   if (lower.startsWith('ko'))
     return { regular: 'Gaegu_400Regular', bold: 'Gaegu_700Bold' }

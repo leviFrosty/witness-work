@@ -14,6 +14,7 @@ import {
   oversizedFiles,
   restoringFiles,
   runBuildSteps,
+  unservedReferences,
 } from '../web.mjs'
 
 const directories = []
@@ -22,8 +23,10 @@ function fixture() {
   directories.push(root)
   return root
 }
-const write = (root, name, contents) =>
+const write = (root, name, contents) => {
+  fs.mkdirSync(path.dirname(path.join(root, name)), { recursive: true })
   fs.writeFileSync(path.join(root, name), contents)
+}
 afterEach(() =>
   directories
     .splice(0)
@@ -164,6 +167,17 @@ test('every profile names its host, origins and CSP mode; deployed ones a Worker
       environments[name].helpManifest,
       'https://dev.witnesswork.app/help/bundle/manifest.json'
     )
+  // Its search runs next to that website (src/constants/links.ts).
+  for (const name of ['beta', 'production'])
+    assert.equal(
+      environments[name].helpSearchOrigin,
+      'https://help-search.witnesswork.app'
+    )
+  for (const name of ['local', 'dev'])
+    assert.equal(
+      environments[name].helpSearchOrigin,
+      'https://help-search-dev.witnesswork.app'
+    )
 })
 
 test('a build refreshes the Help Center snapshot before it exports', () => {
@@ -289,4 +303,44 @@ test('the export check finds served files over the host limits', () => {
   checkExport(root, [], { maxFiles: 2 })
   write(root, '_expo/other.js', '')
   assert.throws(() => checkExport(root, [], { maxFiles: 2 }), /allows 2$/)
+})
+
+test('the export check finds files the export loads but the host would not serve', () => {
+  const root = fixture()
+  const font =
+    'assets/node_modules/@expo-google-fonts/inter/Inter_400Regular.079af0e2936ccb99b391ddc0bbb73dcb.ttf'
+  const chunk = '_expo/static/js/web/es-4f2b3c1d0e9a8b7c6d5e4f3a2b1c0d9e.js'
+  write(
+    root,
+    'index.html',
+    '<script src="/_expo/static/js/web/index.js"></script>'
+  )
+  write(
+    root,
+    '_expo/static/js/web/index.js',
+    `a={uri:"/${font}"};b={"7":"/${chunk}"};c="/assets/icon.png?platform=web";d="/_expo/static/js/web/"`
+  )
+  write(root, font, 'ttf')
+  write(root, chunk, '')
+  write(root, 'assets/icon.png', 'png')
+  write(root, 'style.css', 'a{background:url(/assets/icon.png)}')
+  assert.deepEqual(unservedReferences(root), [])
+  checkExport(root, [])
+  // Missing, or left out of the upload.
+  fs.rmSync(path.join(root, font))
+  write(root, `${chunk}.map`, '{}')
+  fs.rmSync(path.join(root, chunk))
+  write(root, 'other.css', 'a{background:url(/assets/gone.png)}')
+  assert.deepEqual(unservedReferences(root), [
+    `/${chunk}`,
+    '/assets/gone.png',
+    `/${font}`,
+  ])
+  assert.throws(() => checkExport(root, []), /wouldn't serve: \/_expo/)
+  // Referenced with its `@` encoded is the same file.
+  write(root, font, 'ttf')
+  write(root, chunk, '')
+  fs.rmSync(path.join(root, 'other.css'))
+  write(root, 'other.js', `"/${font.replace('@', '%40')}"`)
+  assert.deepEqual(unservedReferences(root), [])
 })

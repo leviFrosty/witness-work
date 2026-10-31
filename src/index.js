@@ -1,4 +1,8 @@
-// First, before any other module loads: on the web, checkout's ids leave the
+// First, on the web: the Trusted Types policy and zod's setting the CSP needs
+// (`hardenWeb.web.ts`), before any other module loads.
+require('./app/launch/hardenWeb').hardenWeb()
+
+// Then, before the app loads: on the web, checkout's ids leave the
 // address before anything could read it, and a checkout return meant for
 // another origin goes there without loading the app (docs/web-purchases.md
 // "The return page"). Native apps go straight on. Everything else is required

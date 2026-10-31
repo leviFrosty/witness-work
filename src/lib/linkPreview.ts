@@ -1,3 +1,4 @@
+import { Platform } from 'react-native'
 import { mmkvStorage } from '@/stores/mmkv'
 import { isHttpUrl } from '@/lib/linkDetection'
 
@@ -335,10 +336,12 @@ const inFlight = new Map<string, Promise<LinkPreview | null>>()
  * Fetches and caches OpenGraph metadata for `url`. Resolves `null` when the
  * page can't be fetched or has no usable metadata. Never rejects. Pages without
  * metadata and 4xx answers are cached as failures for a day; 408, 429 and 5xx
- * answers for five minutes.
+ * answers for five minutes. The web never fetches: its CSP lets it reach only
+ * WitnessWork's own services (ADR 0037 §5), and most sites refuse a browser's
+ * cross-origin read anyway, so links show their host name.
  */
 export function fetchLinkPreview(url: string): Promise<LinkPreview | null> {
-  if (!isHttpUrl(url)) return Promise.resolve(null)
+  if (Platform.OS === 'web' || !isHttpUrl(url)) return Promise.resolve(null)
 
   const cached = getCachedLinkPreview(url)
   if (cached) return Promise.resolve(cached.preview)

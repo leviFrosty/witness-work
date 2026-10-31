@@ -7,6 +7,7 @@
     "posthogOrigin": "https://ww-api-r.leviwilkerson.com",
     "mapsOrigin": "https://maps-dev.witnesswork.app",
     "helpManifest": "https://dev.witnesswork.app/help/bundle/manifest.json",
+    "helpSearchOrigin": "https://help-search-dev.witnesswork.app",
     "csp": "report-only"
   },
   "dev": {
@@ -17,7 +18,8 @@
     "posthogOrigin": "https://ww-api-r.leviwilkerson.com",
     "mapsOrigin": "https://maps-dev.witnesswork.app",
     "helpManifest": "https://dev.witnesswork.app/help/bundle/manifest.json",
-    "csp": "report-only"
+    "helpSearchOrigin": "https://help-search-dev.witnesswork.app",
+    "csp": "enforce"
   },
   "beta": {
     "variant": "beta",
@@ -27,7 +29,8 @@
     "posthogOrigin": "https://ww-api-r.leviwilkerson.com",
     "mapsOrigin": "https://maps.witnesswork.app",
     "helpManifest": "https://witnesswork.app/help/bundle/manifest.json",
-    "csp": "report-only"
+    "helpSearchOrigin": "https://help-search.witnesswork.app",
+    "csp": "enforce"
   },
   "production": {
     "variant": "production",
@@ -37,6 +40,7 @@
     "posthogOrigin": "https://ww-api-r.leviwilkerson.com",
     "mapsOrigin": "https://maps.witnesswork.app",
     "helpManifest": "https://witnesswork.app/help/bundle/manifest.json",
-    "csp": "report-only"
+    "helpSearchOrigin": "https://help-search.witnesswork.app",
+    "csp": "enforce"
   }
 }

@@ -135,10 +135,40 @@ export function filesContaining(directory, values) {
   })
 }
 
+// A file the export's code loads by URL: Expo's assets and script chunks, in
+// quotes or a CSS `url()`.
+const REFERENCED =
+  /(?:["'`]|url\()(\/(?:assets|_expo\/static)\/[^"'`?#\s)]*\.[A-Za-z0-9]+)(?=["'`?#)])/g
+
+/**
+ * Files the export's scripts, styles and HTML load by URL but the host wouldn't
+ * serve: missing, or left out of the upload like source maps. URLs are compared
+ * decoded, as the host matches them.
+ */
+export function unservedReferences(directory) {
+  const served = new Set(servedFiles(directory).map((file) => `/${file}`))
+  const missing = new Set()
+  for (const file of served) {
+    if (!/\.(js|css|html)$/.test(file)) continue
+    const text = fs.readFileSync(path.join(directory, file), 'utf8')
+    for (const [, url] of text.matchAll(REFERENCED)) {
+      let decoded = url
+      try {
+        decoded = url.split('/').map(decodeURIComponent).join('/')
+      } catch {
+        // Kept as written, so it's reported.
+      }
+      if (!served.has(decoded)) missing.add(url)
+    }
+  }
+  return [...missing].sort()
+}
+
 /**
  * Refuses an export that carries a value web builds must not (`excluded`, from
- * `loadWebEnv`), or that the host can't serve. `web:build` runs it after each
- * export, and the web host's deploys again right before uploading.
+ * `loadWebEnv`), that the host can't serve, or that loads a file it wouldn't
+ * upload. `web:build` runs it after each export, and the web host's deploys
+ * again right before uploading.
  */
 export function checkExport(
   directory,
@@ -159,6 +189,11 @@ export function checkExport(
   if (oversized.length > 0)
     throw new Error(
       `Over the host's ${(maxBytes / 1024 / 1024).toFixed(0)} MiB file limit: ${oversized.join(', ')}`
+    )
+  const unserved = unservedReferences(directory)
+  if (unserved.length > 0)
+    throw new Error(
+      `The export loads files the host wouldn't serve: ${unserved.slice(0, 5).join(', ')}`
     )
 }
 

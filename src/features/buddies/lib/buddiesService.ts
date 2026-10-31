@@ -1,10 +1,17 @@
 import { Platform } from 'react-native'
 import * as BuddiesKeychain from '../../../../modules/buddies-keychain'
-import { deviceAccountKey } from '@/lib/accountKey'
+import * as DeviceSecrets from '../../../../modules/device-secrets'
+import { deviceAccountKey, unfinishedKeyChange } from '@/lib/accountKey'
+import { KeyChangeUnfinishedError } from '@/lib/accountKey/keyChangeRecord'
+import { logger } from '@/lib/logger'
 import apis from '@/constants/apis'
 import { analytics } from '@/lib/analytics'
 import { refreshSyncClock, syncNow } from '@/lib/syncClock'
-import { accountSessions, serverAccount } from '@/lib/serverAccount'
+import {
+  accountSessions,
+  fetchServerAccountInfo,
+  serverAccount,
+} from '@/lib/serverAccount'
 import useContacts from '@/stores/contactsStore'
 import useConversations from '@/stores/conversationStore'
 import { usePet } from '@/stores/pet'
@@ -29,6 +36,10 @@ import type {
   BuddyStreak,
   ProfilePhoto,
 } from '@/features/buddies/lib/schemas'
+import {
+  type BuddiesKeyChangeOutcome,
+  createBuddiesKeyChange,
+} from '@/features/buddies/lib/keyChange'
 import { randomBytes } from '@/features/buddies/lib/random'
 import { createRelayClient, isRelayError } from '@/features/buddies/lib/relay'
 import { runRelayCheck } from '@/features/buddies/lib/relayCheck'
@@ -122,22 +133,23 @@ export function currentBuddyPet(): BuddyPet | undefined {
   }
 }
 
+const relay = createRelayClient({
+  baseUrl: apis.buddies,
+  randomBytes,
+  // Every relay call carries the account session (ADR 0027); its account
+  // key is the root seed, read from the Keychain as the engine reads it.
+  authorize: (run, { signal }) => accountSessions.withSession(run, { signal }),
+  // The relay refuses a signed call more than 5 minutes off its clock, so a
+  // device clock that's wrong would otherwise fail every call for good.
+  now: syncNow,
+  recalibrate: () => refreshSyncClock({ force: true }),
+  // Reinstated: the notice clears and the live signal comes back now, not
+  // on the next sync.
+  onAccountActive: () => useBuddiesSession.setState(accountActiveStatus),
+})
+
 const engine = createBuddiesEngine({
-  relay: createRelayClient({
-    baseUrl: apis.buddies,
-    randomBytes,
-    // Every relay call carries the account session (ADR 0027); its account
-    // key is the root seed, read from the Keychain as the engine reads it.
-    authorize: (run, { signal }) =>
-      accountSessions.withSession(run, { signal }),
-    // The relay refuses a signed call more than 5 minutes off its clock, so a
-    // device clock that's wrong would otherwise fail every call for good.
-    now: syncNow,
-    recalibrate: () => refreshSyncClock({ force: true }),
-    // Reinstated: the notice clears and the live signal comes back now, not
-    // on the next sync.
-    onAccountActive: () => useBuddiesSession.setState(accountActiveStatus),
-  }),
+  relay,
   store: useBuddies,
   randomBytes,
   // Revs, expiries, and lastSyncAt stay on the device clock, as before: a
@@ -185,11 +197,22 @@ const engine = createBuddiesEngine({
     }),
   platform: Platform.OS === 'android' ? 'android' : 'ios',
   // One per completed pairing on each side; `role: inviter` counts pairings.
-  onPaired: ({ role, buddyPlatform }) =>
+  onPaired: ({ role, buddyPlatform, reconnect }) =>
     analytics.capture('buddy_paired', {
       role,
       buddy_platform: buddyPlatform ?? 'unknown',
+      reconnect: reconnect ?? false,
     }),
+  // Between storing the new account key and the reset saving the old inbox's
+  // pairings, a sync (or Delete Buddies, or signing out) would let go of the
+  // buddies the reset invites (docs/account-key-change.md).
+  paused: async () => {
+    const record = await unfinishedKeyChange().catch(() => null)
+    return (
+      record !== null &&
+      !(await keyChangeReset.capturedFor(fromB64u(record.oldKey)))
+    )
+  },
   showBadges: () => usePreferences.getState().showBadges,
   isEnabled: () => useBuddiesSession.getState().running,
   later: (run, ms) => {
@@ -204,6 +227,122 @@ const engine = createBuddiesEngine({
   dismissAlerts: (seqs) => void dismissBuddyAlerts(seqs),
   onSharesNotSent: (notSent) => sharesNotSent.add(notSent),
 })
+
+/** Before deleting Buddies data here: not while a key change is unfinished. */
+async function refuseWhileKeyChanges() {
+  if (await unfinishedKeyChange()) throw new KeyChangeUnfinishedError()
+}
+
+/** The reset's progress: it holds the old pairings' keys, so it's a secret. */
+const KEY_CHANGE_PROGRESS = 'buddies.key-change'
+
+const keyChangeReset = createBuddiesKeyChange({
+  relay,
+  engine,
+  progress: {
+    read: () => DeviceSecrets.read(KEY_CHANGE_PROGRESS),
+    write: (value) => DeviceSecrets.write(KEY_CHANGE_PROGRESS, value),
+    remove: () => DeviceSecrets.remove(KEY_CHANGE_PROGRESS),
+  },
+  randomBytes,
+  now: Date.now,
+  onReconnectSent: () => analytics.capture('buddy_reconnect_sent'),
+  onInvitesSkipped: (reason) =>
+    analytics.capture('buddy_reconnect_skipped', { reason }),
+  onReconnectNotSent: (reason) =>
+    analytics.capture('buddy_reconnect_not_sent', { reason }),
+})
+
+/** A reset may still be waiting on buddies; false once one found none. */
+let keyChangeWaiting = true
+/** Goes on when the next buddy is due to be left, whether or not Buddies runs. */
+let keyChangeTimer: ReturnType<typeof setTimeout> | null = null
+
+function noteKeyChange(outcome: BuddiesKeyChangeOutcome) {
+  if (keyChangeTimer) clearTimeout(keyChangeTimer)
+  keyChangeTimer = null
+  keyChangeWaiting = !outcome.done
+  if (!outcome.done)
+    keyChangeTimer = setTimeout(
+      carryOnBuddiesKeyChange,
+      Math.max(0, outcome.retryAt - Date.now())
+    )
+}
+
+/**
+ * Step 0 of changing the account key: Buddies' old inbox is linked to the
+ * account while the old key is still its key, so no one else can name a
+ * successor for it. Throws only while the relay can't be reached.
+ */
+export async function prepareBuddiesForKeyChange(
+  change: Parameters<typeof keyChangeReset.prepare>[0]
+) {
+  const linked = await keyChangeReset.prepare(change)
+  if (linked === 'otherAccount')
+    logger.warn('[buddies] key change: the old inbox is another account’s')
+}
+
+/**
+ * Step 6 of changing the account key (docs/account-key-change.md): Buddies
+ * moves to the new key's inbox and invites every buddy to it. Called with K1,
+ * K2, and the account; see `keyChange.ts`.
+ */
+export async function resetBuddiesForKeyChange(
+  input: Parameters<typeof keyChangeReset.reset>[0]
+) {
+  keyChangeWaiting = true
+  const outcome = await keyChangeReset.reset(input)
+  noteKeyChange(outcome)
+  return outcome
+}
+
+/**
+ * Goes on with a reset still waiting on buddies: invites and seals that failed
+ * for now, and leaving those who reconnected or waited a day. After every sync,
+ * at launch and on returning to the app, and when the next one is due: the old
+ * key can write to buddies as the User until they're left.
+ */
+export function carryOnBuddiesKeyChange() {
+  if (!keyChangeWaiting) return
+  keyChangeReset
+    .carryOn()
+    .then(noteKeyChange)
+    .catch((error: unknown) => {
+      logger.warn('[buddies] key change reset', error)
+    })
+}
+
+/**
+ * The relay refused this inbox's owner key for good after an account key change
+ * (401 `key_changed` to the iOS extension's owner-signed fetch; the app's own
+ * relay calls are bearer, where that answer is a token to refresh). Buddies
+ * drops what it kept for the inbox, then starts the new key's inbox, or, when
+ * this device's key is the old one, the account signs it out.
+ */
+function ownerKeyRefused(inboxId: string) {
+  engine
+    .ownerKeyRefused(inboxId)
+    .then(async (outcome) => {
+      if (outcome === 'moved') await buddiesEngine.sync({ automatic: true })
+      if (outcome !== 'retired') return
+      // Any session call finds the key retired (`onKeyRetired` signs out).
+      const seed = await deviceAccountKey.peek()
+      if (seed)
+        await fetchServerAccountInfo(fromB64u(seed)).catch(() => undefined)
+    })
+    .catch((error: unknown) => {
+      logger.warn('[buddies] refused owner key', error)
+    })
+}
+
+/**
+ * At launch and on returning to the app: inboxes the iOS extension found
+ * refused for their owner key since the account key changed.
+ */
+export function dropRefusedInboxes() {
+  for (const inboxId of BuddiesKeychain.refusedInboxes())
+    ownerKeyRefused(inboxId)
+}
 
 /**
  * A buddy's Profile photo at full size, as the file it's kept in: downloaded
@@ -252,9 +391,9 @@ function sending<Args extends unknown[]>(
  */
 export const buddiesEngine: typeof engine = {
   ...engine,
-  sync: (options?: BuddiesSyncOptions) =>
+  sync: async (options?: BuddiesSyncOptions) => {
     // Waiting out the relay's back-off isn't a sync, and says nothing new.
-    options?.automatic && engine.coolingDown()
+    const outcome = await (options?.automatic && engine.coolingDown()
       ? engine.sync(options)
       : trackSync(() => engine.sync(options), {
           update: (change) => useBuddiesSession.setState(change),
@@ -263,7 +402,25 @@ export const buddiesEngine: typeof engine = {
           failureReason: buddiesFailureReason,
           skipped: (outcome) => outcome === 'skipped',
           cancelled: (error) => isRelayError(error, 'cancelled'),
-        }),
+        }))
+    // Claims it confirmed end a key change's reset.
+    if (outcome === 'synced') carryOnBuddiesKeyChange()
+    return outcome
+  },
+  // Until a key change's reset is done, the new inbox stays (the relay names
+  // it as the old one's successor only while it's there). After it, the old
+  // pairings it still holds are left at once, not as buddies reconnect, and
+  // no invite goes out from a device that let go of Buddies.
+  deleteEverything: async () => {
+    await refuseWhileKeyChanges()
+    await keyChangeReset.leaveNow()
+    await engine.deleteEverything()
+  },
+  leaveThisDevice: async () => {
+    await refuseWhileKeyChanges()
+    await keyChangeReset.leaveNow()
+    await engine.leaveThisDevice()
+  },
   replyToShare: sending(engine.replyToShare),
   deliverReplies: sending(engine.deliverReplies),
   sendHeldReplies: sending(engine.sendHeldReplies),

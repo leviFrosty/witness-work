@@ -27,6 +27,7 @@ const RELAY_ERROR_CODES = [
   'not_found',
   'conflict',
   'gone',
+  'sealed',
   'limit',
   'rate_limited',
   'disabled',
@@ -146,7 +147,12 @@ export type PushAddress =
 
 export type RelaySyncResponse = {
   seq: number
-  slots: { slotId: string; createdAt: number }[]
+  /**
+   * Every slot, open or `sealed` (its writer sealed it: that pairing writes no
+   * more, but its card and events stay). A slot left after sealing is missing,
+   * and its events are still listed.
+   */
+  slots: { slotId: string; createdAt: number; sealed?: boolean }[]
   cards: { slotId: string; blob: string; seq: number; updatedAt: number }[]
   events: {
     eventId: string
@@ -531,7 +537,28 @@ export function createRelayClient(deps: RelayDeps) {
         call,
         since === 0 ? RELAY_FULL_SYNC_TIMEOUT_MS : RELAY_TIMEOUT_MS
       ),
-    deleteInbox: (auth: OwnerAuth) => owner('inbox/delete', auth, {}),
+    /**
+     * `successor`: the account's inbox that takes this one's place after an
+     * account key change, which the relay keeps for `inboxSuccessor`. It's
+     * refused (`conflict`, nothing deleted) unless that inbox is the same
+     * account's, linked under the account's key now.
+     */
+    deleteInbox: (
+      auth: OwnerAuth,
+      { successor }: { successor?: string } = {}
+    ) => owner('inbox/delete', auth, successor ? { successor } : {}),
+    /**
+     * The inbox a deleted one named as its successor (for 90 days), or null.
+     * Any session may ask: a buddy checks a reconnect invite with it.
+     */
+    inboxSuccessor: async (inboxId: string, call?: RelayCallOptions) => {
+      const response = await post<{ ok: true; successor?: string | null }>(
+        'inbox/successor',
+        () => ({ json: { inboxId } }),
+        call
+      )
+      return typeof response.successor === 'string' ? response.successor : null
+    },
     registerDevice: (
       auth: OwnerAuth,
       device: PushAddress & {
@@ -574,6 +601,12 @@ export function createRelayClient(deps: RelayDeps) {
       event: { eventId: string; kind: string; blob: string; push: boolean }
     ) => writer<{ seq: number }>('event/put', auth, event),
     leaveSlot: (auth: WriterAuth) => writer('slot/leave', auth, {}),
+    /**
+     * Seals this User's slot in a buddy's inbox for good: every writer op from
+     * it but leaving is then `sealed`, whoever signs it. Leaving a sealed slot
+     * keeps its events for the buddy to read.
+     */
+    sealSlot: (auth: WriterAuth) => writer('slot/seal', auth, {}),
     /**
      * Stores an encrypted shared photo under this inbox. Putting the same blob
      * again only extends its expiry.

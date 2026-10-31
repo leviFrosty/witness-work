@@ -5,6 +5,7 @@ import {
   BuddyRemovalPendingError,
 } from '@/features/buddies/lib/engine'
 import { isRelayError } from '@/features/buddies/lib/relay'
+import { KeyChangeUnfinishedError } from '@/lib/accountKey/keyChangeRecord'
 import { MAX_BUDDIES, MAX_OPEN_INVITES } from '@/features/buddies/lib/state'
 import type { BuddySyncFailureReason } from '@/features/buddies/lib/syncStatus'
 
@@ -26,8 +27,12 @@ export function buddiesErrorMessage(error: unknown): string {
         return i18n.t('buddies_openInvitesLimit', { max: MAX_OPEN_INVITES })
       case 'nameRequired':
         return i18n.t('buddies_nameRequired')
+      case 'reconnectUnverified':
+        return i18n.t('buddies_reconnectUnverified')
     }
   }
+  if (error instanceof KeyChangeUnfinishedError)
+    return i18n.t('account_keyChangeUnfinished')
   if (error instanceof BuddyRemovalPendingError)
     return error.scope === 'buddy'
       ? i18n.t('buddies_removePending')
@@ -62,6 +67,7 @@ export function buddiesErrorMessage(error: unknown): string {
 export function isRetryableBuddiesError(error: unknown): boolean {
   if (error instanceof BuddyInviteError) return false
   if (error instanceof BuddyRemovalPendingError) return false
+  if (error instanceof KeyChangeUnfinishedError) return false
   if (isRelayError(error, 'unverified'))
     return error.attestation === 'temporary'
   return !(
@@ -70,6 +76,7 @@ export function isRetryableBuddiesError(error: unknown): boolean {
     isRelayError(error, 'suspended') ||
     isRelayError(error, 'not_found') ||
     isRelayError(error, 'gone') ||
+    isRelayError(error, 'sealed') ||
     isRelayError(error, 'conflict') ||
     isRelayError(error, 'limit')
   )

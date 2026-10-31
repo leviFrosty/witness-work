@@ -21,6 +21,7 @@ import {
 import i18n from '@/lib/locales'
 import { logger } from '@/lib/logger'
 import { BuddyRemovalPendingError } from '@/features/buddies/lib/engine'
+import { KeyChangeUnfinishedError } from '@/lib/accountKey/keyChangeRecord'
 import { RECOVERY_KEY_FONT } from '@/features/settings/components/account/recoveryKeyFont'
 import { confirmAccountReplace } from '@/features/settings/components/account/confirmAccountReplace'
 import useAttestationSupport from '@/features/settings/hooks/useAttestationSupport'
@@ -226,7 +227,9 @@ function RecoveryKeyForm({
         i18n.t('account_replaceFailedTitle'),
         error instanceof BuddyRemovalPendingError
           ? i18n.t('buddies_deleteAllPending')
-          : i18n.t('account_replaceFailedBody')
+          : error instanceof KeyChangeUnfinishedError
+            ? i18n.t('account_keyChangeUnfinished')
+            : i18n.t('account_replaceFailedBody')
       )
     } finally {
       setBusy(false)

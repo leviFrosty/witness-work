@@ -20,6 +20,9 @@ public class BuddiesKeychainModule: Module {
   static let alertAccount = "context"
   /// Where the extension counts how its alerts turned out, in the App Group.
   static let alertOutcomesKey = "buddiesAlertOutcomes"
+  /// Where the extension keeps inboxes whose owner key the relay refused after
+  /// an account key change (`InboxFetch.refusedKey`), in the App Group.
+  static let refusedInboxesKey = "buddiesRefusedInboxes"
 
   public func definition() -> ModuleDefinition {
     Name("BuddiesKeychain")
@@ -70,6 +73,14 @@ public class BuddiesKeychainModule: Module {
       let counts = defaults.dictionary(forKey: Self.alertOutcomesKey) as? [String: Int] ?? [:]
       defaults.removeObject(forKey: Self.alertOutcomesKey)
       return counts
+    }
+
+    Function("refusedInboxes") { () -> [String] in
+      guard
+        let bundleId = Bundle.main.bundleIdentifier,
+        let defaults = UserDefaults(suiteName: "group.\(bundleId)")
+      else { return [] }
+      return defaults.stringArray(forKey: Self.refusedInboxesKey) ?? []
     }
 
     Function("deleteRootSeed") { () throws in

@@ -335,6 +335,44 @@ describe('an inbox from before accounts', () => {
   })
 })
 
+describe('a token from before an account key change', () => {
+  it('is refreshed, and the request sent once more, for 401 key_changed', async () => {
+    const h = setup()
+    const ann = h.user('Ann')
+    await ann.engine.ensureInbox()
+    // The app's relay calls are bearer: there, `key_changed` is a token the
+    // change outdated, not the extension's refused owner key.
+    let refused = false
+    const client = createRelayClient({
+      baseUrl: RELAY_URL,
+      randomBytes: random,
+      authorize: (run, { signal }) => ann.sessions.withSession(run, { signal }),
+      fetchImpl: (async (url: string, init?: RequestInit) => {
+        if (!refused && String(url).endsWith('/inbox/sync')) {
+          refused = true
+          return new Response(
+            JSON.stringify({
+              ok: false,
+              error: 'unauthorized',
+              reason: 'key_changed',
+            }),
+            { status: 401 }
+          )
+        }
+        return h.fetchImpl(url, init)
+      }) as typeof fetch,
+    })
+    const before = h.fake.requests.length
+    await expect(
+      client.syncInbox(ownerAuthFor(ann.seed), 0)
+    ).resolves.toMatchObject({ ok: true })
+    expect(h.fake.requests.slice(before).map((request) => request.op)).toEqual([
+      'inbox/sync',
+    ])
+    expect(refused).toBe(true)
+  })
+})
+
 describe('without a session', () => {
   const failing = (error: AccountSessionError) => {
     const fetchImpl = vi.fn()
@@ -385,5 +423,58 @@ describe('without a session', () => {
       await expect(client.openLive(owner)).rejects.toEqual(expected)
       expect(fetchImpl).not.toHaveBeenCalled()
     }
+  })
+})
+
+describe('an inbox’s successor', () => {
+  /** Two inboxes of one account: the old key's, and the new key's. */
+  async function moved() {
+    const h = setup()
+    const ann = h.user('Ann')
+    await ann.engine.ensureInbox()
+    const accountId = accountIdOf(h, ann.seed)!
+    const newSeed = random(32)
+    h.fake.accounts.get(accountId)!.accountPub =
+      deriveAccountSigningKey(newSeed).publicKey
+    ann.setRootSeed(newSeed)
+    await ann.relay.registerInbox(ownerAuthFor(newSeed))
+    return { h, ann, accountId, newInboxId: deriveIdentity(newSeed).inboxId }
+  }
+
+  it('names it when deleting the old inbox, with the session', async () => {
+    const { h, ann, newInboxId } = await moved()
+    await ann.relay.deleteInbox(ownerAuthFor(ann.seed), {
+      successor: newInboxId,
+    })
+    const { headers, body } = lastRequest(h, 'inbox/delete')
+    expect(headers.authorization).toMatch(/^Bearer access-/)
+    expect(body).toEqual({ inboxId: ann.inboxId, successor: newInboxId })
+    expect(h.fake.inboxes.has(ann.inboxId)).toBe(false)
+  })
+
+  it('reads it back from any account’s session', async () => {
+    const { h, ann, newInboxId } = await moved()
+    const bea = h.user('Bea')
+    expect(await bea.relay.inboxSuccessor(ann.inboxId)).toBeNull()
+    await ann.relay.deleteInbox(ownerAuthFor(ann.seed), {
+      successor: newInboxId,
+    })
+    expect(await bea.relay.inboxSuccessor(ann.inboxId)).toBe(newInboxId)
+    const { headers, body } = lastRequest(h, 'inbox/successor')
+    expect(headers.authorization).toMatch(/^Bearer access-/)
+    expect(body).toEqual({ inboxId: ann.inboxId })
+  })
+
+  it('is refused, and nothing deleted, for an inbox not linked under the account’s key now', async () => {
+    const { h, ann, accountId, newInboxId } = await moved()
+    // The key moved on again after the new inbox was linked.
+    h.fake.accounts.get(accountId)!.accountPub = deriveAccountSigningKey(
+      random(32)
+    ).publicKey
+    await expect(
+      ann.relay.deleteInbox(ownerAuthFor(ann.seed), { successor: newInboxId })
+    ).rejects.toMatchObject({ code: 'conflict' })
+    expect(h.fake.inboxes.has(ann.inboxId)).toBe(true)
+    expect(await ann.relay.inboxSuccessor(ann.inboxId)).toBeNull()
   })
 })

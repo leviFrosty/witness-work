@@ -88,7 +88,15 @@ export default function KeyChangeSection() {
                     return
                   }
                   logger.warn('[keyChange] discarding failed', error)
-                  toast.error(i18n.t('accountKeyChange_discardOffline'))
+                  // Only a missing connection says to connect.
+                  toast.error(
+                    i18n.t(
+                      error instanceof KeyChangeError &&
+                        error.reason === 'unresolved'
+                        ? 'accountKeyChange_discardOffline'
+                        : 'accountKeyChange_discardServer'
+                    )
+                  )
                 }),
           },
         ]

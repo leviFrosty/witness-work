@@ -278,6 +278,11 @@ export type ClaimCompletion =
       buddiesStarted: boolean
       /** What came of offering the account's backup. */
       restore: RestoreOutcome
+      /**
+       * Signed back in to the account this phone was on: its records are that
+       * account's already, so no backup was offered.
+       */
+      rejoined: boolean
     }
   /** The User declined the replacement warning; the channel is cancelled. */
   | { outcome: 'declined' }
@@ -409,8 +414,12 @@ export async function completeClaimHandoff(
         return false
       })
     : false
-  const restore = await offerRestoreAfterHandoff()
-  return { outcome: 'done', buddiesStarted, restore }
+  // Back on its own account, this phone's records carry on as they are, its
+  // offline edits included: Cloud Sync merges them, and nothing replaces them.
+  const restore: RestoreOutcome = rejoining
+    ? { outcome: 'skipped' }
+    : await offerRestoreAfterHandoff()
+  return { outcome: 'done', buddiesStarted, restore, rejoined: rejoining }
 }
 
 /**

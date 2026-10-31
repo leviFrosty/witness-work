@@ -1,5 +1,8 @@
 import { fromB64u, toB64u } from '@/lib/bytes'
-import type { RekeyedTokens } from '@/lib/serverAccount/session'
+import {
+  AccountSessionError,
+  type RekeyedTokens,
+} from '@/lib/serverAccount/session'
 
 export type { RekeyedTokens }
 
@@ -89,13 +92,14 @@ export type AccountKeyServiceDeps = {
       call: { accountId: string; tokens?: RekeyedTokens }
     ) => Promise<void>
     /**
-     * Opens a session for a key that isn't this device's yet, only into
-     * `accountId` (`AccountSessions.openDetached`). Throws when the key isn't
-     * that account's current one.
+     * Opens a session for a key that isn't this device's yet
+     * (`AccountSessions.openDetached`): only into `accountId` when it's given,
+     * throwing when the key isn't that account's current one; otherwise into
+     * the key's own account, made when it has none.
      */
     openDetached?: (
       accountKey: Uint8Array,
-      call: { accountId: string }
+      call: { accountId?: string }
     ) => Promise<SameAccountSession>
   }
   /**
@@ -117,6 +121,11 @@ export type AccountKeyServiceDeps = {
    * devices keep everything. Bounded, and never throws.
    */
   sync?: { leave: () => Promise<void> }
+  /**
+   * A key change on this device isn't finished (its change record): the key
+   * stays until it's finished or discarded.
+   */
+  keyChangeUnfinished?: () => Promise<boolean>
 }
 
 /**
@@ -156,6 +165,35 @@ export class AccountKeyLossError extends Error {
     this.name = 'AccountKeyLossError'
   }
 }
+
+/**
+ * A key change on this device isn't finished, so its key can't be replaced:
+ * finish or discard it first (docs/account-key-change.md, "The record belongs
+ * to its account").
+ */
+export class KeyChangeUnfinishedError extends Error {
+  constructor() {
+    super('A key change on this device is not finished')
+    this.name = 'KeyChangeUnfinishedError'
+  }
+}
+
+/**
+ * The server retired this key when the account's key changed (`key_retired`):
+ * it never signs in again. `changedAt` is when, if the server said.
+ */
+export class AccountKeyRetiredError extends Error {
+  constructor(readonly changedAt: number | null) {
+    super('The account key was retired by a key change')
+    this.name = 'AccountKeyRetiredError'
+  }
+}
+
+/** `key_retired` as `AccountKeyRetiredError`; anything else as it was. */
+const retiredOr = (error: unknown) =>
+  error instanceof AccountSessionError && error.failure === 'keyRetired'
+    ? new AccountKeyRetiredError(error.changedAt)
+    : error
 
 const KEY_BYTES = 32
 
@@ -242,6 +280,7 @@ export function createAccountKeyService(deps: AccountKeyServiceDeps) {
   ): Promise<ReplaceAccountKeyResult> {
     const current = await peek()
     if (current && sameBytes(current, newKey)) return { outcome: 'unchanged' }
+    if (await deps.keyChangeUnfinished?.()) throw new KeyChangeUnfinishedError()
     if (isSameAccount(accountId))
       return rejoin(current, newKey, accountId!, session)
     // Read again: Buddies is deleted for good only when this is still the
@@ -317,7 +356,11 @@ export function createAccountKeyService(deps: AccountKeyServiceDeps) {
    * When `newKey` (a recovery key, a passkey's) is the current key of the
    * account this device was on, a session for it, opened into that account:
    * replacing with it and this session is a rejoin. Null for another account's
-   * key, or when this device was never on one; never creates an account.
+   * key (`unknown_account`), while the server has accounts off, or when this
+   * device was never on one; never creates an account. Throws
+   * `AccountKeyRetiredError` for a key a key change retired, whichever account
+   * it was, and any other failure as it was: one it couldn't ask isn't another
+   * account.
    */
   async function sameAccountSession(
     newKey: Uint8Array
@@ -326,10 +369,37 @@ export function createAccountKeyService(deps: AccountKeyServiceDeps) {
     if (!accountId || !deps.account.openDetached) return null
     try {
       return await deps.account.openDetached(newKey, { accountId })
-    } catch {
-      return null
+    } catch (error) {
+      if (
+        (error as { serverCode?: unknown } | null)?.serverCode ===
+          'unknown_account' ||
+        (error instanceof AccountSessionError &&
+          error.failure === 'unavailable')
+      )
+        return null
+      throw retiredOr(error)
     }
   }
+
+  /**
+   * A session for `newKey` in its own account (made when it has none, as
+   * replacing with it would), to adopt when replacing, so a key the server
+   * refuses changes nothing. Throws `AccountKeyRetiredError` for a key a key
+   * change retired; other failures as they were.
+   */
+  async function openSession(newKey: Uint8Array): Promise<SameAccountSession> {
+    if (!deps.account.openDetached)
+      throw new Error('Sessions need openDetached')
+    try {
+      return await deps.account.openDetached(newKey, {})
+    } catch (error) {
+      throw retiredOr(error)
+    }
+  }
+
+  /** A key change on this device isn't finished. */
+  const keyChangeUnfinished = async () =>
+    (await deps.keyChangeUnfinished?.()) ?? false
 
   /**
    * Step 4 of a key change made on this device (docs/account-key-change.md):
@@ -360,6 +430,8 @@ export function createAccountKeyService(deps: AccountKeyServiceDeps) {
     replace,
     adoptChangedKey,
     sameAccountSession,
+    openSession,
+    keyChangeUnfinished,
   }
 }
 

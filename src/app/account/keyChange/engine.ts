@@ -25,7 +25,10 @@ import {
   AccountSessionError,
   type RekeyedTokens,
 } from '@/lib/serverAccount/session'
-import { isConnectivityError } from '@/lib/http/networkError'
+import {
+  classifyNetworkError,
+  isConnectivityError,
+} from '@/lib/http/networkError'
 import type { KeyChangeStep, KeyChangeStepName } from './steps'
 
 /**
@@ -106,12 +109,17 @@ export type KeyChangeEngineDeps = {
     /** `GET /account/key-history` with `key`'s session. */
     readHistory: (key: Uint8Array) => Promise<StoredKeyHistory>
     rekey: (request: RekeyRequest) => Promise<RekeyResult>
-    /** Whether this device holds a session (for the old key) to ask with. */
-    hasSession: () => Promise<boolean>
     /**
-     * Opens this device's session with `key`, only into `accountId` (never
-     * creating an account): `unknownAccount` when `key` isn't its current key,
-     * `keyRetired` when it was retired. Other failures throw.
+     * The account this device is on (its session's, else the last one it was
+     * on), and whether it holds a session there to ask with; null when it was
+     * never on one.
+     */
+    deviceAccount: () => Promise<{ accountId: string; session: boolean } | null>
+    /**
+     * Opens a session with `key` only into `accountId`, never creating an
+     * account, and without touching this device's own session: `unknownAccount`
+     * when `key` isn't its current key, `keyRetired` when it was retired. Other
+     * failures throw.
      */
     openInto: (
       key: Uint8Array,
@@ -185,6 +193,16 @@ const answerLost = (error: unknown) =>
   (error instanceof HttpError &&
     error.status !== null &&
     (error.status === 401 || error.status >= 500))
+
+/**
+ * No connection, or no answer in time. A call the session layer cancelled (its
+ * key retired on this device, or replaced meanwhile) isn't offline: saying so
+ * would leave the User waiting for a connection they have.
+ */
+const isOffline = (error: unknown) => {
+  const kind = classifyNetworkError(error)
+  return kind === 'offline' || kind === 'timeout'
+}
 
 /**
  * Checking found this device signed out of the account: its session revoked by
@@ -286,7 +304,9 @@ export function createKeyChangeEngine(deps: KeyChangeEngineDeps) {
   function start(): Promise<{ newKey: Uint8Array }> {
     return serially(async () => {
       if (!deps.isOnline()) throw new KeyChangeError('offline')
-      if (await deps.records.read()) throw new KeyChangeError('in_progress')
+      const existing = await ownRecord()
+      if (existing === 'unresolved') throw new KeyChangeError('offline')
+      if (existing) throw new KeyChangeError('in_progress')
       const oldKey = await deps.deviceKey()
       if (!oldKey) throw new KeyChangeError('no_key')
       let account: KeyChangeAccount
@@ -298,9 +318,7 @@ export function createKeyChangeEngine(deps: KeyChangeEngineDeps) {
         stored = await deps.server.readHistory(oldKey)
       } catch (error) {
         if (error instanceof KeyChangeError) throw error
-        throw new KeyChangeError(
-          isConnectivityError(error) ? 'offline' : 'server'
-        )
+        throw new KeyChangeError(isOffline(error) ? 'offline' : 'server')
       }
       // The history this change appends to must open, and still fit with
       // this key's entry, now rather than at step 3.
@@ -341,7 +359,8 @@ export function createKeyChangeEngine(deps: KeyChangeEngineDeps) {
   /** Step 2: the User saved the new recovery key. */
   function confirm(): Promise<void> {
     return serially(async () => {
-      const record = await deps.records.read()
+      const record = await ownRecord()
+      if (record === 'unresolved') throw new KeyChangeError('offline')
       if (!record) throw new KeyChangeError('no_change')
       if (record.stage === 'pending')
         await save({ ...record, stage: 'confirmed' })
@@ -356,7 +375,8 @@ export function createKeyChangeEngine(deps: KeyChangeEngineDeps) {
    */
   function discard(): Promise<void> {
     return serially(async () => {
-      const record = await deps.records.read()
+      const record = await ownRecord()
+      if (record === 'unresolved') throw new KeyChangeError('unresolved')
       if (!record) return
       if (isCommitted(record)) throw new KeyChangeError('committed')
       if (record.stage === 'confirmed') {
@@ -424,9 +444,7 @@ export function createKeyChangeEngine(deps: KeyChangeEngineDeps) {
       account = await deps.server.readAccount(oldKey)
     } catch (error) {
       if (isLost(error)) return 'lost'
-      throw new KeyChangeError(
-        isConnectivityError(error) ? 'offline' : 'server'
-      )
+      throw new KeyChangeError(isOffline(error) ? 'offline' : 'server')
     }
     if (account.accountPub === accountPubOf(newKey)) return 'committed'
     if (account.accountPub === accountPubOf(oldKey)) return 'notCommitted'
@@ -454,8 +472,10 @@ export function createKeyChangeEngine(deps: KeyChangeEngineDeps) {
   /** Step 3, then the rest. */
   function commit(): Promise<CommitResult> {
     return serially(async () => {
-      let record = await deps.records.read()
-      if (!record) throw new KeyChangeError('no_change')
+      const owned = await ownRecord()
+      if (owned === 'unresolved') throw new KeyChangeError('offline')
+      if (!owned) throw new KeyChangeError('no_change')
+      let record = owned
       if (isCommitted(record)) {
         await proceed(record)
         return { outcome: 'done' }
@@ -489,9 +509,7 @@ export function createKeyChangeEngine(deps: KeyChangeEngineDeps) {
         } catch (error) {
           if (!answerLost(error) || attempt > 0) {
             if (error instanceof KeyChangeError) throw error
-            throw new KeyChangeError(
-              isConnectivityError(error) ? 'offline' : 'server'
-            )
+            throw new KeyChangeError(isOffline(error) ? 'offline' : 'server')
           }
           const checked = await afterUnknown(record)
           if (checked === 'resend') continue
@@ -535,32 +553,61 @@ export function createKeyChangeEngine(deps: KeyChangeEngineDeps) {
 
   /**
    * Whether a confirmed change committed (docs/account-key-change.md, "The
-   * record wins at launch"): with a session, the account says; without one,
-   * opening with K2 into the account does, then K1.
+   * record wins at launch"), always in the record's own account: with a session
+   * there, the account says; otherwise (none, or another account's) opening
+   * with K2 into the record's account does, then K1. `unresolved` only without
+   * a connection; any other failure throws `server`.
    */
   async function resolveConfirmed(
     record: KeyChangeRecord
   ): Promise<'committed' | 'notCommitted' | 'lost' | 'unresolved'> {
     const { oldKey, newKey } = keysOf(record)
     try {
-      if (await deps.server.hasSession()) {
+      const device = await deps.server.deviceAccount()
+      if (device?.session && device.accountId === record.accountId) {
         try {
           const account = await deps.server.readAccount(oldKey)
           if (account.accountPub === accountPubOf(newKey)) return 'committed'
           if (account.accountPub === accountPubOf(oldKey)) return 'notCommitted'
           return 'lost'
         } catch (error) {
-          if (isConnectivityError(error)) return 'unresolved'
-          // The session ended: ask as a device without one.
+          if (isOffline(error)) return 'unresolved'
+          // The session ended, or K1's was refused here: ask as a device
+          // without one.
         }
       }
       if ((await deps.server.openInto(newKey, record.accountId)) === 'opened')
         return 'committed'
       const old = await deps.server.openInto(oldKey, record.accountId)
       return old === 'opened' ? 'notCommitted' : 'lost'
-    } catch {
-      return 'unresolved'
+    } catch (error) {
+      if (isOffline(error)) return 'unresolved'
+      if (error instanceof KeyChangeError) throw error
+      throw new KeyChangeError('server')
     }
+  }
+
+  /**
+   * The record, when it's still this device's account's
+   * (docs/account-key-change.md, "The record belongs to its account"). Once
+   * this device is on another account, a change that never committed is deleted
+   * (`null`): its K2 never became a key. A confirmed one is checked in its own
+   * account first; if it committed, it's kept and finishes, since its K2 is
+   * that account's only key (`unresolved` while that can't be told).
+   */
+  async function ownRecord(): Promise<KeyChangeRecord | null | 'unresolved'> {
+    const record = await deps.records.read()
+    if (!record || isCommitted(record)) return record
+    const device = await deps.server.deviceAccount()
+    if (!device || device.accountId === record.accountId) return record
+    if (record.stage === 'confirmed') {
+      const resolved = await resolveConfirmed(record)
+      if (resolved === 'unresolved') return 'unresolved'
+      if (resolved === 'committed')
+        return save({ ...record, stage: 'committed' })
+    }
+    await remove()
+    return null
   }
 
   /**
@@ -581,8 +628,10 @@ export function createKeyChangeEngine(deps: KeyChangeEngineDeps) {
 
   async function resumeRecord(onResolved?: () => void): Promise<ResumeResult> {
     {
-      let record = await deps.records.read()
-      if (!record) return { state: 'none' }
+      const owned = await ownRecord()
+      if (owned === 'unresolved') return { state: 'unresolved' }
+      if (!owned) return { state: 'none' }
+      let record = owned
       if (record.stage === 'pending')
         return { state: 'awaiting', stage: 'pending' }
       if (record.stage === 'confirmed') {
@@ -614,12 +663,15 @@ export function createKeyChangeEngine(deps: KeyChangeEngineDeps) {
 
   /**
    * The new key of a change waiting for "I've saved it", to show its recovery
-   * key again; null otherwise.
+   * key again; null otherwise, and for another account's.
    */
-  const pendingKey = async (): Promise<Uint8Array | null> => {
-    const record = await deps.records.read()
-    return record?.stage === 'pending' ? fromB64u(record.newKey) : null
-  }
+  const pendingKey = (): Promise<Uint8Array | null> =>
+    serially(async () => {
+      const record = await ownRecord()
+      return record !== 'unresolved' && record?.stage === 'pending'
+        ? fromB64u(record.newKey)
+        : null
+    })
 
   /** Each stage the change records, then null once it's gone. */
   const onStage = (listener: (stage: KeyChangeStage | null) => void) => {

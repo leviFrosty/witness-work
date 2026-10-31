@@ -410,6 +410,7 @@ export function createFakeSyncServer() {
         bytes,
         etag: toB64u(sha256(bytes)),
         updatedAt,
+        platform: state.platform,
       })
       seq++
     },

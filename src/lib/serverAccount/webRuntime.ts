@@ -5,7 +5,16 @@ import type {
   SessionStore,
   WebSessionDeps,
 } from '@/lib/serverAccount/session'
-import type { WebAccount } from '@/lib/serverAccount/webAccount'
+import type {
+  WebAccount,
+  WebAccountDeps,
+} from '@/lib/serverAccount/webAccount'
+
+/** What the app does around a browser's account, past its storage. */
+export type WebAccountHooks = Pick<
+  WebAccountDeps,
+  'retiredKey' | 'onKeyRetired' | 'onSignedIn'
+>
 
 /**
  * A browser's account plumbing (docs/passkeys-protocol.md, "On the web"): the
@@ -23,7 +32,7 @@ export type WebRuntime = {
   /** This browser's account key. */
   accountKey: WebAccountKey
   /** Makes the page's account, once, from the session engine. */
-  bind: (sessions: AccountSessions) => WebAccount
+  bind: (sessions: AccountSessions, hooks?: WebAccountHooks) => WebAccount
 }
 
 export const webRuntime: WebRuntime | null = null

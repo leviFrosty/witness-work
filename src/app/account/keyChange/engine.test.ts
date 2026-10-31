@@ -645,3 +645,116 @@ describe('key change engine at launch', () => {
     expect(await engine.resume()).toEqual({ state: 'none' })
   })
 })
+
+describe('key change engine on the web', () => {
+  it('refuses to start when the browser can’t change the key yet', async () => {
+    for (const reason of ['session_too_new', 'no_passkey'] as const) {
+      const { engine, deps, records, events } = setup()
+      deps.precheck = vi.fn(async () => {
+        throw new KeyChangeError(reason)
+      })
+      const refused = createKeyChangeEngine(deps)
+      await expect(refused.start()).rejects.toMatchObject({ reason })
+      expect(deps.precheck).toHaveBeenCalledWith(K1)
+      expect(deps.prepare).not.toHaveBeenCalled()
+      expect(await records.read()).toBeNull()
+      expect(events).toEqual([
+        ['account_key_change_failed', { platform: 'ios', reason }],
+      ])
+      void engine
+    }
+  })
+
+  it('reads a check that fails to answer as offline or a server problem', async () => {
+    const { deps } = setup()
+    deps.precheck = vi.fn(async () => {
+      throw new HttpError('offline', null, null)
+    })
+    await expect(createKeyChangeEngine(deps).start()).rejects.toMatchObject({
+      reason: 'offline',
+    })
+    deps.precheck = vi.fn(async () => {
+      throw new HttpError('server', 500, 'internal')
+    })
+    await expect(createKeyChangeEngine(deps).start()).rejects.toMatchObject({
+      reason: 'server',
+    })
+  })
+
+  it('steps up for the new epoch, and sends the passkey’s wrap with the change', async () => {
+    const { deps, fake, records } = setup()
+    const wrap = {
+      credentialId: 'cred',
+      wrapId: 'wrap-id',
+      wrap: 'w'.repeat(98),
+    }
+    deps.stepUp = vi.fn(async () => ({ passkeyWrap: wrap }))
+    const engine = createKeyChangeEngine(deps)
+    await engine.start()
+    const newKey = await newKeyOf(records)
+    await engine.confirm()
+    expect(deps.stepUp).not.toHaveBeenCalled()
+    expect(await engine.commit()).toEqual({ outcome: 'done' })
+    expect(deps.stepUp).toHaveBeenCalledWith({
+      newKey,
+      accountId: ACCOUNT,
+      keyEpoch: 2,
+    })
+    expect(fake.server.requests[0].passkeyWrap).toEqual(wrap)
+  })
+
+  it('keeps the change confirmed when the step-up doesn’t pass', async () => {
+    const { deps, fake, records, events } = setup()
+    deps.stepUp = vi.fn(async () => {
+      throw new KeyChangeError('step_up')
+    })
+    const engine = createKeyChangeEngine(deps)
+    await engine.start()
+    await engine.confirm()
+    await expect(engine.commit()).rejects.toMatchObject({ reason: 'step_up' })
+    expect(fake.deps.rekey).not.toHaveBeenCalled()
+    expect((await records.read())?.stage).toBe('confirmed')
+    expect(events.at(-1)).toEqual([
+      'account_key_change_failed',
+      { platform: 'ios', stage: 'confirmed', reason: 'step_up' },
+    ])
+
+    // Try Again asks again.
+    deps.stepUp = vi.fn(async () => ({}))
+    expect(await createKeyChangeEngine(deps).commit()).toEqual({
+      outcome: 'done',
+    })
+  })
+
+  it('reads a step-up that can’t reach the server as offline', async () => {
+    const { deps, records } = setup()
+    deps.stepUp = vi.fn(async () => {
+      throw new HttpError('offline', null, null)
+    })
+    const engine = createKeyChangeEngine(deps)
+    await engine.start()
+    await engine.confirm()
+    await expect(engine.commit()).rejects.toMatchObject({ reason: 'offline' })
+    expect((await records.read())?.stage).toBe('confirmed')
+  })
+
+  it('tracks the server’s web refusals', async () => {
+    const { engine, fake, events } = setup()
+    await engine.start()
+    await engine.confirm()
+    fake.deps.rekey.mockResolvedValueOnce({ outcome: 'sessionTooNew' })
+    expect(await engine.commit()).toEqual({ outcome: 'sessionTooNew' })
+    fake.deps.rekey.mockResolvedValueOnce({ outcome: 'stepUpRequired' })
+    expect(await engine.commit()).toEqual({ outcome: 'stepUpRequired' })
+    expect(events.slice(-2)).toEqual([
+      [
+        'account_key_change_failed',
+        { platform: 'ios', stage: 'confirmed', reason: 'session_too_new' },
+      ],
+      [
+        'account_key_change_failed',
+        { platform: 'ios', stage: 'confirmed', reason: 'step_up' },
+      ],
+    ])
+  })
+})

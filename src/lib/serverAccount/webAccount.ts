@@ -7,6 +7,7 @@ import {
   sessionEndWipes,
 } from '@/lib/serverAccount/session'
 import type { WebAccountKey } from '@/lib/accountKey/webAccountKey'
+import { accountPubOf } from '@/lib/serverAccount/keys'
 import type { SessionTabs, WebTabMessage } from '@/lib/serverAccount/webTabs'
 import { SIGNED_OUT_DATA } from '@/lib/webStorage/boot'
 
@@ -34,6 +35,11 @@ import { SIGNED_OUT_DATA } from '@/lib/webStorage/boot'
  *   wipes at once, like signing out, in every tab that hears of it. `expired`,
  *   `replaced` (and any other reason) keep the sealed key and the stores and
  *   show the sign-in screen.
+ * - **The key changed on another device** (ADR 0039): its change revokes this
+ *   session too. Before wiping, a `revoked` browser asks whether its key was
+ *   retired; then it forgets only that key, keeps the stores, and shows how to
+ *   sign back in. Signing in again as the same account, with its new key, picks
+ *   up where it was (`owner`).
  *
  * A wipe is marked pending (`markWipePending`) before any tab hears of it, so
  * the next launch finishes one every tab closed in the middle of.
@@ -124,7 +130,24 @@ export type WebAccountDeps = {
   /** Deletes all local data, the pending mark last: `clearAllWebData`. */
   wipe: () => Promise<void>
   reload: () => void
-  onEnded?: (reason: SessionEndReason, outcome: 'wiped' | 'signIn') => void
+  onEnded?: (
+    reason: SessionEndReason,
+    outcome: 'wiped' | 'signIn' | 'keyChanged'
+  ) => void
+  /**
+   * Whether the server retired this key: `probeRetiredKey`. Null when it
+   * didn't; throws when it can't say.
+   */
+  retiredKey?: (
+    accountKey: Uint8Array
+  ) => Promise<{ changedAt: number | null } | null>
+  /**
+   * The key was retired by a key change on another device: the app forgets it
+   * (only while it's still that key) and shows how to sign back in.
+   */
+  onKeyRetired?: (accountPub: string, changedAt: number | null) => Promise<void>
+  /** A session for `accountId` is this browser's now. */
+  onSignedIn?: (accountKey: Uint8Array, accountId: string) => void
   now?: () => number
   /** `WEB_CLOSE_WAIT_MS` by default. */
   closeWaitMs?: number
@@ -179,8 +202,30 @@ export function createWebAccount(deps: WebAccountDeps) {
       ),
     })
 
+  /**
+   * Revoked: a key change on another device keeps the stores and forgets the
+   * retired key; any other sign-out wipes, as does a key that can't be
+   * checked. Every tab that hears of it checks, so none wipes what another
+   * kept.
+   */
+  async function revoked(fromTab: boolean): Promise<void> {
+    const key = await deps.accountKey.peek().catch(() => null)
+    const retired = key ? await deps.retiredKey!(key).catch(() => null) : null
+    if (!key || !retired) {
+      if (!fromTab) deps.onEnded?.('revoked', 'wiped')
+      return wipeAndReload()
+    }
+    if (!fromTab) deps.onEnded?.('revoked', 'keyChanged')
+    await deps.onKeyRetired?.(accountPubOf(key), retired.changedAt)
+    await signedOut('revoked')
+  }
+
   /** `WebSessionDeps.onEnded`: the server ended the session. */
   function ended(reason: SessionEndReason, { fromTab }: { fromTab: boolean }) {
+    if (reason === 'revoked' && deps.retiredKey) {
+      void revoked(fromTab).catch(() => wipeAndReload())
+      return
+    }
     if (sessionEndWipes(reason)) {
       if (!fromTab) deps.onEnded?.(reason, 'wiped')
       // Every tab that hears of it wipes: the one whose refresh was refused
@@ -272,6 +317,7 @@ export function createWebAccount(deps: WebAccountDeps) {
     }
     deps.tabs.publish({ type: 'signedIn', sessionId: opened.sessionId })
     set({ status: 'signedIn', accountId: opened.accountId })
+    deps.onSignedIn?.(accountKey, opened.accountId)
     return signedIn
   }
 

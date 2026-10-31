@@ -12,12 +12,14 @@ import i18n from '@/lib/locales'
 import { SettingsSectionProps } from '@/features/settings/screens/settingScreen'
 import LanguageSelector from '@/features/settings/components/sections/LanguageSelector'
 import useDeviceSyncAvailable from '@/features/settings/hooks/useDeviceSyncAvailable'
+import useWebAccountShown from '@/features/settings/hooks/useWebAccountShown'
 
 const PreferencesSection = ({
   handleNavigate,
   selectedDestination,
 }: SettingsSectionProps) => {
   const deviceSyncAvailable = useDeviceSyncAvailable()
+  const webAccountShown = useWebAccountShown()
   return (
     <>
       <GroupedListSection>
@@ -30,8 +32,9 @@ const PreferencesSection = ({
           onPress={() => handleNavigate('PreferencesPublisher')}
           selected={selectedDestination === 'PreferencesPublisher'}
         />
-        {/* Binaries before the recovery key can't replace the account key. */}
-        {BuddiesKeychain.isReplaceAvailable() && (
+        {/* Binaries before the recovery key can't replace the account key.
+            A browser shows it once it has an account. */}
+        {(BuddiesKeychain.isReplaceAvailable() || webAccountShown) && (
           <GroupedListRow
             icon={KeyRoundIcon}
             label={i18n.t('account_title')}

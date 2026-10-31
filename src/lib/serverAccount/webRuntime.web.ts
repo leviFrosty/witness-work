@@ -68,8 +68,9 @@ export const webRuntime: WebRuntime | null = {
   },
   deviceLabel: () => webDeviceLabel(),
   accountKey: webAccountKey,
-  bind: (sessions) =>
+  bind: (sessions, hooks) =>
     (account ??= createWebAccount({
+      ...hooks,
       sessions,
       accountKey: webAccountKey,
       tabs: sessionTabs,

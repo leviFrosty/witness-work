@@ -1,4 +1,4 @@
-import { ScrollView } from 'react-native'
+import { Platform, ScrollView } from 'react-native'
 import Wrapper from '@/components/ui/layout/Wrapper'
 import SettingsInputLayout from '@/features/settings/components/shared/SettingsInputLayout'
 import AccountStatusSection from '@/features/settings/components/account/AccountStatusSection'
@@ -12,6 +12,9 @@ import AccountSecuritySection from '@/features/settings/components/account/Accou
 import KeyChangeSection from '@/features/settings/components/account/keyChange/KeyChangeSection'
 import useAccountOverview from '@/features/settings/hooks/useAccountOverview'
 import useBackupSlots from '@/features/settings/hooks/useBackupSlots'
+import { useKeyChangedElsewhere } from '@/lib/accountKey/keyChangedElsewhere'
+
+const isWeb = Platform.OS === 'web'
 
 /**
  * Settings → Account: the anonymous server account (ADR 0024), its end-to-end
@@ -22,6 +25,7 @@ import useBackupSlots from '@/features/settings/hooks/useBackupSlots'
  */
 const AccountScreen = () => {
   const { overview, refresh } = useAccountOverview()
+  const signedOut = useKeyChangedElsewhere((state) => state.signedOut !== null)
   const backups = useBackupSlots()
   const changed = () => {
     void refresh()
@@ -34,20 +38,34 @@ const AccountScreen = () => {
           contentContainerStyle={{ gap: 30, paddingTop: 30, paddingBottom: 30 }}
         >
           <KeyChangeSection />
-          <AccountStatusSection
-            overview={overview}
-            onRetry={() => void refresh({ retry: true })}
-          />
-          <BackupSection accountState={overview.state} onChanged={changed} />
-          <BackupSlotsSection
-            slots={backups.slots}
-            mySlotId={backups.mySlotId}
-            onChanged={changed}
-          />
-          <HandoffSection />
-          <DeviceSyncLinkSection />
-          <CloudSyncPhotoStorageSection />
-          {overview.state !== 'notSetUp' && <AccountSecuritySection />}
+          {!(isWeb && signedOut) && (
+            <AccountStatusSection
+              overview={overview}
+              onRetry={() => void refresh({ retry: true })}
+            />
+          )}
+          {/* A browser's backup, handoff and sync screens come with its
+              account screens (ADR 0038 §8); until then it has the account,
+              its devices and activity, and changing its key. */}
+          {!isWeb && (
+            <>
+              <BackupSection
+                accountState={overview.state}
+                onChanged={changed}
+              />
+              <BackupSlotsSection
+                slots={backups.slots}
+                mySlotId={backups.mySlotId}
+                onChanged={changed}
+              />
+              <HandoffSection />
+              <DeviceSyncLinkSection />
+              <CloudSyncPhotoStorageSection />
+            </>
+          )}
+          {overview.state !== 'notSetUp' && !(isWeb && signedOut) && (
+            <AccountSecuritySection />
+          )}
           <RecoveryKeySection
             onAccountChanged={changed}
             canChangeKey={

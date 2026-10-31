@@ -53,13 +53,21 @@ import {
   listSyncSlots,
   putSyncSlot,
 } from '@/lib/syncTransport/server/syncClient'
+import { getPasskey } from '@/lib/passkeys'
+import { webAccountKey } from '@/lib/accountKey/webAccountKey'
+import { readAccountDevices } from '@/lib/serverAccount/accountDevices'
+import {
+  finishPasskeyStepUp,
+  listPasskeys,
+  startPasskeyStepUp,
+} from '@/lib/serverAccount/passkeyClient'
 import { buddiesEngine } from '@/features/buddies/lib/buddiesService'
 import { navigationRef } from '@/features/contacts/lib/linking'
 import i18n from '@/lib/locales'
 import { toast } from '@/stores/toasts'
 import { usePreferences } from '@/stores/preferences'
 import { createKeyChangeEventGate } from './analytics'
-import { createKeyChangeEngine } from './engine'
+import { createKeyChangeEngine, KeyChangeError } from './engine'
 import {
   createPhotoResealRetry,
   createResealStep,
@@ -69,6 +77,7 @@ import {
 import { createKeyRetiredHandler } from './retired'
 import { useKeyChangeStatus } from './status'
 import { keyChangeStep, registerKeyChangeStep } from './steps'
+import { createWebKeyChange } from './web'
 
 /**
  * Change Account Key on this device (ADR 0039), and what this device does when
@@ -105,6 +114,33 @@ async function prepare(): Promise<void> {
 let _store: MMKV | null = null
 // Device-local, beside the cached account: when each event was last sent.
 const store = (): MMKV => (_store ??= new MMKV({ id: 'server-account' }))
+/** The browser's key, for its session's calls before the change commits. */
+const sessionKey = async () => {
+  const key = await accountKey.peek()
+  if (!key) throw new KeyChangeError('no_key')
+  return bearerOptions(key)
+}
+
+// A browser needs a day-old session and a passkey the server checks (ADR 0039
+// §2); phones check Face ID before starting.
+const web =
+  Platform.OS === 'web'
+    ? createWebKeyChange({
+        now: syncNow,
+        randomBytes: getRandomBytes,
+        devices: async () => {
+          const key = await accountKey.peek()
+          if (!key) throw new KeyChangeError('no_key')
+          return readAccountDevices(key)
+        },
+        passkeys: async () => listPasskeys(await sessionKey()),
+        startStepUp: async () => startPasskeyStepUp({}, await sessionKey()),
+        getPasskey,
+        finishStepUp: async (args) =>
+          finishPasskeyStepUp(args, await sessionKey()),
+      })
+    : null
+
 const sendEvent = createKeyChangeEventGate({
   get: (key) => store().getNumber(`key-change-event:${key}`) ?? null,
   set: (key, at) => store().set(`key-change-event:${key}`, at),
@@ -151,6 +187,7 @@ export const keyChange = createKeyChangeEngine({
       }
     },
   },
+  ...(web && { precheck: web.precheck, stepUp: web.stepUp }),
   prepare,
   adopt: accountKey.adoptChangedKey,
   saveHistory: keyHistoryCache.save,
@@ -346,13 +383,26 @@ function retryPhotosLeft(): void {
 }
 
 let installed = false
+let waitingForKey = false
 
 /**
  * Once, at launch: resolves a change in progress, and listens for retired keys
- * and sign-ins.
+ * and sign-ins. A browser signed out has no key yet: it installs when one
+ * arrives with a sign-in.
  */
 export function installKeyChange(): void {
-  if (installed || !BuddiesKeychain.isAvailable()) return
+  if (installed) return
+  if (!BuddiesKeychain.isAvailable()) {
+    if (Platform.OS === 'web' && !waitingForKey) {
+      waitingForKey = true
+      const stop = webAccountKey.subscribe(() => {
+        if (!BuddiesKeychain.isAvailable()) return
+        stop()
+        installKeyChange()
+      })
+    }
+    return
+  }
   installed = true
   registerKeyChangeStep('reseal', resealStep)
   resumeKeyChangeAtLaunch()
@@ -362,8 +412,9 @@ export function installKeyChange(): void {
       useKeyChangeStatus.setState({ stage: current?.stage ?? null })
     )
     .catch(() => undefined)
-  onKeyRetired((accountPub, changedAt) => {
-    void handleKeyRetired(accountPub, changedAt).catch((error: unknown) => {
+  // A browser signed out by the change waits for this before it settles.
+  onKeyRetired(async (accountPub, changedAt) => {
+    await handleKeyRetired(accountPub, changedAt).catch((error: unknown) => {
       logger.warn('[keyChange] handling a retired key failed', error)
     })
   })

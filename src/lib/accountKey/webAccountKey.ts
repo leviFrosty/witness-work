@@ -94,6 +94,16 @@ export function createWebAccountKey({ secrets, randomBytes }: Deps) {
     },
     /** Forgets the key in memory, after the browser was wiped. */
     forget,
+    /**
+     * Deletes the sealed key alone: the server retired it, as a key change on
+     * another device does (ADR 0039). The data stays for the same account's
+     * new key (`webAccount`'s `owner`); any other sign-out wipes instead.
+     */
+    async retire(): Promise<void> {
+      await load()
+      await secrets.write(WEB_ACCOUNT_KEY_NAME, null)
+      forget()
+    },
     /** Calls `listener` when the key arrives or goes. Returns an unsubscribe. */
     subscribe(listener: (key: Uint8Array | null) => void): () => void {
       listeners.add(listener)

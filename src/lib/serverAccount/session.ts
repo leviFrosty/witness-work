@@ -1328,6 +1328,12 @@ export function createAccountSessions(deps: AccountSessionDeps) {
       // A session for this key, or the one its key replaced, named its
       // account: a new one names it too.
       const knownAccount = call.accountId ?? current?.accountId
+      // A browser's key changes only with a sign-in, which brings its own
+      // session, or its own key change, which moves the session (`repoint`):
+      // a call with the new key just before the move waits for it, rather than
+      // ending the session it's about to keep.
+      if (deps.web && current && current.accountPub !== pub)
+        throw new AccountSessionError('cancelled')
       if (current && current.accountPub !== pub) {
         // The stored key changed outside `changeKey` (iCloud Keychain brought
         // another device's key): end the old session rather than leave it

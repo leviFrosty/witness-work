@@ -14,6 +14,7 @@ import {
 import {
   closeSession,
   type OpenedSession,
+  probeRetiredKey,
   sendWebSessionOpen,
 } from '@/lib/serverAccount/sessionClient'
 import {
@@ -30,8 +31,11 @@ const BASE = 'https://api.test'
 const DAY = 24 * 60 * 60 * 1000
 const KEY_A = new Uint8Array(32).fill(1)
 const KEY_B = new Uint8Array(32).fill(2)
+/** Account A's key after a key change on another device. */
+const KEY_A2 = new Uint8Array(32).fill(3)
 const PUB_A = deriveAccountSigningKey(KEY_A).publicKey
 const PUB_B = deriveAccountSigningKey(KEY_B).publicKey
+const PUB_A2 = deriveAccountSigningKey(KEY_A2).publicKey
 const CHROME =
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36'
 
@@ -75,7 +79,10 @@ function fakeWorker(clock: { now: number }, events: string[]) {
     ['ticket-a', PUB_A],
     ['ticket-a2', PUB_A],
     ['ticket-b', PUB_B],
+    ['ticket-new-key', PUB_A2],
   ])
+  /** Keys a key change retired, with when. */
+  const retired = new Map<string, number>()
   const sessions: Session[] = []
   const calls: { op: string; body: Record<string, unknown> | null }[] = []
   let issued = 0
@@ -119,6 +126,18 @@ function fakeWorker(clock: { now: number }, events: string[]) {
           fromB64u(payload.accountPub)
         )
         if (!signed || payload.attestation) return json(400, { ok: false })
+        if (retired.has(payload.accountPub))
+          return json(403, {
+            ok: false,
+            error: 'key_retired',
+            code: 'key_retired',
+            changedAt: retired.get(payload.accountPub),
+          })
+        if (
+          payload.accountId !== undefined &&
+          accounts.get(payload.accountPub) !== payload.accountId
+        )
+          return json(404, { ok: false, error: 'unknown_account' })
         // The same signed request again: the same session, a new access token.
         const repeat = sessions.find((s) => s.nonce === payload.nonce)
         if (repeat)
@@ -198,7 +217,16 @@ function fakeWorker(clock: { now: number }, events: string[]) {
   }) as unknown as typeof fetch
 
   const called = (op: string) => calls.filter((call) => call.op === op)
-  return { fetchImpl, sessions, calls, called, lose, hang }
+  /** Another device changes account A's key: every other session ends. */
+  const changeKeyElsewhere = (changedAt: number) => {
+    retired.set(PUB_A, changedAt)
+    accounts.delete(PUB_A)
+    accounts.set(PUB_A2, 'acct000000000000000001')
+    for (const session of sessions)
+      if (session.accountId === 'acct000000000000000001')
+        session.ended = 'revoked'
+  }
+  return { fetchImpl, sessions, calls, called, lose, hang, changeKeyElsewhere }
 }
 
 /** Web Locks: one holder at a time, across the page's tabs. */
@@ -248,6 +276,8 @@ function browser() {
     kv: new Map<string, unknown>(),
     /** The local stores. */
     stores: new Map<string, string>(),
+    /** The stores' copy of the last account (`serverAccount.lastAccountId`). */
+    lastAccountId: null as string | null,
   }
   const locks = fakeLocks()
   const Channel = fakeChannels()
@@ -263,6 +293,7 @@ function browser() {
       disk.session = null
       disk.secrets.clear()
       disk.kv.clear()
+      disk.lastAccountId = null
     })
     const kvEntry = <T>(name: string) => ({
       read: async () => (disk.kv.get(name) as T | undefined) ?? null,
@@ -282,6 +313,12 @@ function browser() {
         },
       },
       randomBytes,
+    })
+    const onKeyRetired = vi.fn(async (pub: string) => {
+      // As the app does: the retired key goes; the stores stay.
+      const key = await accountKey.peek()
+      if (key && deriveAccountSigningKey(key).publicKey === pub)
+        await accountKey.retire()
     })
     const store = {
       read: vi.fn(async () => disk.session),
@@ -353,6 +390,21 @@ function browser() {
       onEnded,
       now: () => clock.now,
       closeWaitMs: 50,
+      retiredKey: (key) =>
+        probeRetiredKey(
+          { accountId: disk.lastAccountId ?? undefined },
+          {
+            baseUrl: BASE,
+            key: deriveAccountSigningKey(key),
+            now: () => clock.now,
+            randomBytes,
+            fetchImpl: worker.fetchImpl,
+          }
+        ),
+      onKeyRetired,
+      onSignedIn: (_key, accountId) => {
+        disk.lastAccountId = accountId
+      },
     })
     const info = () =>
       sessions.request<{ accountId: string }>({
@@ -360,7 +412,17 @@ function browser() {
         method: 'GET',
         timeoutMs: 5_000,
       })
-    return { sessions, account, accountKey, reload, wipe, onEnded, info, store }
+    return {
+      sessions,
+      account,
+      accountKey,
+      reload,
+      wipe,
+      onEnded,
+      onKeyRetired,
+      info,
+      store,
+    }
   }
 
   return { clock, worker, disk, tab, events }
@@ -952,5 +1014,143 @@ describe('web sessions', () => {
     await one.accountKey.save(KEY_A)
     await expect(one.info()).rejects.toMatchObject({ failure: 'signedOut' })
     expect(worker.calls).toHaveLength(0)
+  })
+})
+
+describe('web sessions across a key change', () => {
+  /** Signed in to account A, then its key changes on another device. */
+  async function changedElsewhere() {
+    const browserState = browser()
+    const { worker, clock, tab } = browserState
+    const one = tab()
+    await one.account.start()
+    await one.account.openWebSessionWithTicket('ticket-a', KEY_A)
+    worker.changeKeyElsewhere(1_799_000_000_000)
+    clock.now += ACCESS_LIFETIME_MS
+    await expect(one.info()).rejects.toMatchObject({
+      failure: 'signedOut',
+      ended: 'revoked',
+    })
+    await settle()
+    return { ...browserState, one }
+  }
+
+  it('keeps local data and forgets only the retired key', async () => {
+    const { one, disk, worker } = await changedElsewhere()
+
+    // It asked with its key, into its account, and was told the key retired.
+    const [probe] = worker
+      .called('POST sessions')
+      .slice(-1)
+      .map(({ body }) => openPayload(body))
+    expect(probe).toMatchObject({
+      accountPub: PUB_A,
+      accountId: 'acct000000000000000001',
+    })
+    expect(probe.ticket).toBeUndefined()
+
+    expect(one.wipe).not.toHaveBeenCalled()
+    expect(one.reload).not.toHaveBeenCalled()
+    expect(one.onKeyRetired).toHaveBeenCalledWith(PUB_A, 1_799_000_000_000)
+    expect(disk.secrets.has('account-key')).toBe(false)
+    expect(disk.session).toBeNull()
+    expect(disk.kv.get('owner')).toBe('acct000000000000000001')
+    expect(one.onEnded).toHaveBeenCalledWith('revoked', 'keyChanged')
+    expect(one.account.state()).toEqual({
+      status: 'signedOut',
+      ended: 'revoked',
+      keptData: true,
+    })
+  })
+
+  it('keeps the data in every tab that hears of it', async () => {
+    const { worker, clock, tab, disk } = browser()
+    const one = tab()
+    await one.account.start()
+    await one.account.openWebSessionWithTicket('ticket-a', KEY_A)
+    const two = tab()
+    await two.account.start()
+    worker.changeKeyElsewhere(1_799_000_000_000)
+    clock.now += ACCESS_LIFETIME_MS
+    await expect(one.info()).rejects.toMatchObject({ ended: 'revoked' })
+    await settle()
+
+    for (const each of [one, two]) {
+      expect(each.wipe).not.toHaveBeenCalled()
+      expect(each.reload).not.toHaveBeenCalled()
+      expect(each.account.state()).toMatchObject({
+        status: 'signedOut',
+        ended: 'revoked',
+        keptData: true,
+      })
+    }
+    // Reported once, by the tab whose refresh was refused.
+    expect(one.onEnded).toHaveBeenCalledWith('revoked', 'keyChanged')
+    expect(two.onEnded).not.toHaveBeenCalled()
+    expect(disk.secrets.has('account-key')).toBe(false)
+  })
+
+  it('signs back in to the same account with the new key, keeping local data', async () => {
+    const { one, disk } = await changedElsewhere()
+    const again = await one.account.openWebSessionWithTicket(
+      'ticket-new-key',
+      KEY_A2
+    )
+    expect(again).toMatchObject({
+      accountId: 'acct000000000000000001',
+      reload: false,
+    })
+    expect(one.wipe).not.toHaveBeenCalled()
+    expect(disk.secrets.get('account-key')).toEqual(KEY_A2)
+    expect((await one.info()).data.accountId).toBe('acct000000000000000001')
+  })
+
+  it('wipes the old account’s data before another account signs in', async () => {
+    const { one, disk } = await changedElsewhere()
+    const other = await one.account.openWebSessionWithTicket('ticket-b', KEY_B)
+    expect(one.wipe).toHaveBeenCalledTimes(1)
+    expect(other.reload).toBe(true)
+    expect(disk.secrets.get('account-key')).toEqual(KEY_B)
+  })
+
+  it('still wipes at once when signed out by another device, key unchanged', async () => {
+    const { worker, clock, tab, disk } = browser()
+    const one = tab()
+    await one.account.start()
+    await one.account.openWebSessionWithTicket('ticket-a', KEY_A)
+    worker.sessions[0].ended = 'revoked'
+    clock.now += ACCESS_LIFETIME_MS
+    await expect(one.info()).rejects.toMatchObject({ ended: 'revoked' })
+    await settle()
+    expect(one.onKeyRetired).not.toHaveBeenCalled()
+    expect(one.wipe).toHaveBeenCalledTimes(1)
+    expect(one.onEnded).toHaveBeenCalledWith('revoked', 'wiped')
+    expect(disk.secrets.size).toBe(0)
+  })
+
+  it('never ends its session for a call with the new key before it moved there', async () => {
+    const { worker, tab, disk } = browser()
+    const one = tab()
+    await one.account.start()
+    await one.account.openWebSessionWithTicket('ticket-a', KEY_A)
+    const request = {
+      url: `${BASE}/accounts/v1/account`,
+      method: 'GET' as const,
+      timeoutMs: 5_000,
+    }
+
+    // Its own key change committed; the session hasn't moved to the new key.
+    await expect(
+      one.sessions.request(request, { accountKey: KEY_A2 })
+    ).rejects.toMatchObject({ failure: 'cancelled' })
+    expect(worker.sessions[0].ended).toBeNull()
+    expect(disk.session).not.toBeNull()
+    expect(one.onEnded).not.toHaveBeenCalled()
+
+    expect(await one.sessions.repoint(PUB_A, PUB_A2)).toBe(true)
+    expect(JSON.parse(disk.session!).accountPub).toBe(PUB_A2)
+    expect(
+      (await one.sessions.request(request, { accountKey: KEY_A2 })).status
+    ).toBe(200)
   })
 })

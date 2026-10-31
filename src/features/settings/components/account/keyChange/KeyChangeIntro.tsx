@@ -1,5 +1,6 @@
 import { Platform, View } from 'react-native'
 import {
+  Fingerprint as FingerprintIcon,
   KeyRound as KeyRoundIcon,
   LockKeyhole as LockKeyholeIcon,
   MonitorSmartphone as MonitorSmartphoneIcon,
@@ -15,7 +16,8 @@ import i18n from '@/lib/locales'
 
 /**
  * Change Account Key's first screen: what changes, the Apple Account note on
- * iOS (ADR 0039 §8), and the devices too old to sign back in (§10).
+ * iOS (ADR 0039 §8), the passkey a browser confirms with (§2), and the devices
+ * too old to sign back in (§10).
  */
 export default function KeyChangeIntro({
   tooOld,
@@ -92,6 +94,8 @@ export default function KeyChangeIntro({
         {point(MonitorSmartphoneIcon, i18n.t('accountKeyChange_pointDevices'))}
         {point(UsersIcon, i18n.t('accountKeyChange_pointBuddies'))}
         {point(LockKeyholeIcon, i18n.t('accountKeyChange_pointData'))}
+        {Platform.OS === 'web' &&
+          point(FingerprintIcon, i18n.t('accountKeyChange_pointPasskeyWeb'))}
       </View>
       {Platform.OS === 'ios' &&
         notice(null, i18n.t('accountKeyChange_appleNote'))}

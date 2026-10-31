@@ -85,4 +85,18 @@ describe('web account key', () => {
     expect(await accountKey.peek()).toBeNull()
     expect(listener).toHaveBeenCalledWith(null)
   })
+
+  it('deletes a retired key alone, and tells listeners', async () => {
+    const { accountKey, store } = setup(key(4))
+    store.set('session', key(5))
+    await accountKey.load()
+    const listener = vi.fn()
+    accountKey.subscribe(listener)
+    await accountKey.retire()
+    expect(store.has(WEB_ACCOUNT_KEY_NAME)).toBe(false)
+    expect(store.get('session')).toEqual(key(5))
+    expect(accountKey.current()).toBeNull()
+    expect(await accountKey.peek()).toBeNull()
+    expect(listener).toHaveBeenCalledWith(null)
+  })
 })

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Alert, Platform, RefreshControl, ScrollView, View } from 'react-native'
+import { RefreshControl, ScrollView, View } from 'react-native'
 import { useIsFocused, useNavigation } from '@react-navigation/native'
 import moment from 'moment'
 import {
@@ -43,6 +43,7 @@ import {
   formatTime,
 } from '@/lib/dates'
 import i18n from '@/lib/locales'
+import { showAlert } from '@/lib/alert'
 import { logger } from '@/lib/logger'
 import type { RootStackNavigation } from '@/types/rootStack'
 
@@ -154,7 +155,7 @@ const AccountDevicesScreen = () => {
   // A lost device may still have the key: changing it stops the old one
   // working anywhere (ADR 0039 §1).
   const offerKeyChange = () =>
-    Alert.alert(
+    showAlert(
       i18n.t('accountKeyChange_afterSignOutTitle'),
       i18n.t('accountKeyChange_afterSignOutBody'),
       [
@@ -170,7 +171,7 @@ const AccountDevicesScreen = () => {
     )
 
   const signOut = (device: AccountDevice, name: string) =>
-    Alert.alert(
+    showAlert(
       i18n.t('accountDevices_signOutTitle', { device: name }),
       i18n.t(
         device.platform === 'web'
@@ -189,8 +190,7 @@ const AccountDevicesScreen = () => {
                   outcome: 'ok',
                   platform: device.platform ?? 'unknown',
                 })
-                // The web needs its passkey step-up wired first.
-                if (Platform.OS !== 'web') offerKeyChange()
+                offerKeyChange()
               })
               .catch((error: unknown) => {
                 logger.warn('[account] signing out a device failed', error)
@@ -198,7 +198,7 @@ const AccountDevicesScreen = () => {
                   outcome: 'failed',
                   platform: device.platform ?? 'unknown',
                 })
-                Alert.alert(
+                showAlert(
                   i18n.t('accountDevices_signOutFailedTitle'),
                   i18n.t('accountDevices_signOutFailedBody')
                 )

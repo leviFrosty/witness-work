@@ -5,7 +5,7 @@ import {
   BuddyRemovalPendingError,
 } from '@/features/buddies/lib/engine'
 import { isRelayError } from '@/features/buddies/lib/relay'
-import { KeyChangeUnfinishedError } from '@/lib/accountKey/keyChangeRecord'
+import { KeyChangeUnfinishedError } from '@/lib/accountKey/accountKey'
 import { MAX_BUDDIES, MAX_OPEN_INVITES } from '@/features/buddies/lib/state'
 import type { BuddySyncFailureReason } from '@/features/buddies/lib/syncStatus'
 

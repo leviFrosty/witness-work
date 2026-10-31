@@ -25,6 +25,7 @@ import {
 import type { AccountOverview } from '@/features/settings/hooks/useAccountOverview'
 import { formatCalendar } from '@/lib/dates'
 import { formatBytes } from '@/lib/formatBytes'
+import { useKeyChangedElsewhere } from '@/lib/accountKey/keyChangedElsewhere'
 import i18n from '@/lib/locales'
 import { useBackupState } from '@/lib/serverAccount/backupStore'
 
@@ -48,6 +49,7 @@ export default function BackupSection({
   const enabled = useBackupState((state) => state.enabled)
   const uploading = useBackupState((state) => state.uploading)
   const schedule = useBackupState((state) => state.schedule)
+  const signedOut = useKeyChangedElsewhere((state) => state.signedOut !== null)
   const [turningOn, setTurningOn] = useState(false)
 
   const turnOn = async () => {
@@ -87,23 +89,30 @@ export default function BackupSection({
       },
     ])
 
-  const failed = schedule.lastResult === 'failed' && schedule.lastError
+  // Signed out by a key change elsewhere, backup waits for the sign-in,
+  // whatever its last try said.
+  const failed =
+    !signedOut && schedule.lastResult === 'failed' && schedule.lastError
   const status = uploading
     ? i18n.t('backup_statusUploading')
-    : failed
-      ? i18n.t(BACKUP_FAILURE_STATUS[schedule.lastError!])
-      : schedule.lastPutAt
-        ? i18n.t('backup_statusLast', {
-            when: formatCalendar(schedule.lastPutAt),
-            size: formatBytes(schedule.lastSize),
-          })
-        : i18n.t('backup_statusNotYet')
+    : signedOut
+      ? i18n.t('backup_statusSignedOut')
+      : failed
+        ? i18n.t(BACKUP_FAILURE_STATUS[schedule.lastError!])
+        : schedule.lastPutAt
+          ? i18n.t('backup_statusLast', {
+              when: formatCalendar(schedule.lastPutAt),
+              size: formatBytes(schedule.lastSize),
+            })
+          : i18n.t('backup_statusNotYet')
   const footer =
-    enabled && failed && !uploading
-      ? backupFailureDetail(schedule.lastError!, accountState)
-      : enabled
-        ? 'backup_footerOn'
-        : 'backup_footerOff'
+    enabled && signedOut
+      ? 'backup_errorSignedOut'
+      : enabled && failed && !uploading
+        ? backupFailureDetail(schedule.lastError!, accountState)
+        : enabled
+          ? 'backup_footerOn'
+          : 'backup_footerOff'
 
   return (
     <View style={{ gap: 5 }}>
@@ -155,7 +164,7 @@ export default function BackupSection({
           <InputRowButton
             leftIcon={CloudUploadIcon}
             label={i18n.t('backup_now')}
-            disabled={uploading}
+            disabled={uploading || signedOut}
             onPress={() => void backUpNow()}
             lastInSection
           />

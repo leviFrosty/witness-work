@@ -1,5 +1,5 @@
-import { useEffect } from 'react'
-import { ScrollView } from 'react-native'
+import { useEffect, useRef } from 'react'
+import { Alert, ScrollView } from 'react-native'
 import {
   useNavigation,
   usePreventRemove,
@@ -57,15 +57,44 @@ const ChangeAccountKeyScreen = () => {
 
   // Nothing to go back to mid-change: leaving would only hide it. Holds every
   // way out (header Back, Android back, iPhone Duo's system Back, the iPad
-  // sidebar) until the step lands.
+  // sidebar) until the step lands. Leaving the new recovery key discards it,
+  // so that asks first.
   const busy =
     state.step === 'loading' ||
     state.step === 'preparing' ||
     state.step === 'changing'
-  usePreventRemove(busy, () => undefined)
+  const showingKey = state.step === 'recoveryKey'
+  usePreventRemove(busy || showingKey, ({ data }) => {
+    if (busy) return
+    Alert.alert(
+      i18n.t('accountKeyChange_discardTitle'),
+      i18n.t('accountKeyChange_leaveBody'),
+      [
+        { text: i18n.t('cancel'), style: 'cancel' },
+        {
+          text: i18n.t('accountKeyChange_resumeDiscard'),
+          style: 'destructive',
+          onPress: () => navigation.dispatch(data.action),
+        },
+      ]
+    )
+  })
   useEffect(() => {
-    navigation.setOptions({ gestureEnabled: !busy })
-  }, [navigation, busy])
+    navigation.setOptions({ gestureEnabled: !busy && !showingKey })
+  }, [navigation, busy, showingKey])
+
+  // Opened anew while still showing (navigating to the screen already on top
+  // gives it new params), a change that ended starts fresh instead of showing
+  // the last visit's outcome. Coming back from a sheet or link over it keeps
+  // what it showed.
+  const params = route.params
+  const openedWith = useRef(params)
+  useEffect(() => {
+    if (openedWith.current === params) return
+    openedWith.current = params
+    if (flow.restart() && params?.entry === 'resume')
+      void flow.resume().catch(() => undefined)
+  }, [flow, params])
 
   const done = {
     label: i18n.t('done'),

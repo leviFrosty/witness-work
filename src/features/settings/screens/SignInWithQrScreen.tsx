@@ -14,6 +14,7 @@ import Wrapper from '@/components/ui/layout/Wrapper'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 import { platformKey } from '@/app/account/attestationCopy'
+import { useKeyChangeStatus } from '@/app/account/keyChange/status'
 import { analytics } from '@/lib/analytics'
 import i18n from '@/lib/locales'
 import type { HandoffFailure } from '@/lib/serverAccount/handoffSession'
@@ -63,11 +64,15 @@ const SignInWithQrScreen = () => {
   // The account's buddies, once Buddies started here and synced them.
   const hasBuddies = useBuddies((state) => state.buddies.length > 0)
   const unverifiable = support === 'unsupported'
+  // A key change on this device is continued or discarded before signing in
+  // to another account (docs/account-key-change.md).
+  const keyChangeStage = useKeyChangeStatus((status) => status.stage)
+  const blocked = unverifiable || keyChangeStage !== null
   // An opened link waits until it's known this device can sign in.
   const { session, state, linkProblem, completion, scanned, retry, reset } =
     useClaimHandoff(
       entry,
-      support === null || unverifiable ? undefined : route.params?.link
+      support === null || blocked ? undefined : route.params?.link
     )
   const [recovering, setRecovering] = useState(false)
 
@@ -118,6 +123,31 @@ const SignInWithQrScreen = () => {
           testID='handoff-unverified'
         />
       )
+    if (keyChangeStage !== null) {
+      const committed =
+        keyChangeStage !== 'pending' && keyChangeStage !== 'confirmed'
+      return (
+        <HandoffStatus
+          icon={CircleAlertIcon}
+          title={i18n.t(
+            committed
+              ? 'accountKeyChange_finishing'
+              : 'accountKeyChange_resumeTitle'
+          )}
+          body={i18n.t(
+            committed
+              ? 'accountKeyChange_finishingBody'
+              : 'accountKeyChange_unfinishedSwitchBody'
+          )}
+          primary={{
+            label: i18n.t('done'),
+            onPress: () => navigation.goBack(),
+            testID: 'handoff-key-change-done',
+          }}
+          testID='handoff-key-change-unfinished'
+        />
+      )
+    }
     if (support === null && route.params?.link)
       return <HandoffStatus loading body={i18n.t('handoff_connecting')} />
     if (completion !== 'idle' && completion !== 'running') {
@@ -137,16 +167,18 @@ const SignInWithQrScreen = () => {
                 : 'handoff_newDoneBodyNoBuddies'
             )}
             detail={i18n.t(
-              restored
-                ? 'handoff_newDoneRestored'
-                : synced
-                  ? completion.restore.outcome === 'synced' &&
-                    completion.restore.combine
-                    ? 'handoff_newDoneSyncedCombine'
-                    : 'handoff_newDoneSynced'
-                  : completion.restore.outcome === 'none'
-                    ? 'handoff_newDoneData'
-                    : 'handoff_newDoneRestoreLater'
+              completion.rejoined
+                ? 'handoff_newDoneRejoined'
+                : restored
+                  ? 'handoff_newDoneRestored'
+                  : synced
+                    ? completion.restore.outcome === 'synced' &&
+                      completion.restore.combine
+                      ? 'handoff_newDoneSyncedCombine'
+                      : 'handoff_newDoneSynced'
+                    : completion.restore.outcome === 'none'
+                      ? 'handoff_newDoneData'
+                      : 'handoff_newDoneRestoreLater'
             )}
             primary={{
               label: i18n.t(entry === 'onboarding' ? 'continue' : 'done'),

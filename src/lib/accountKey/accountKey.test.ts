@@ -4,9 +4,12 @@ import { toB64u } from '@/lib/bytes'
 import {
   AccountKeyLossError,
   type AccountKeyLoss,
+  AccountKeyRetiredError,
   createAccountKeyService,
+  KeyChangeUnfinishedError,
   NO_LOSS,
 } from '@/lib/accountKey/accountKey'
+import { AccountSessionError } from '@/lib/serverAccount/session'
 
 const random = () => new Uint8Array(randomBytes(32))
 
@@ -21,6 +24,10 @@ function setup({
   lastAccountId = null as string | null,
   /** A key the server knows as `lastAccountId`'s current key. */
   sameAccountKey = null as string | null,
+  /** Keys a key change retired, with when. */
+  retiredKeys = new Map<string, number>(),
+  /** A key change on this device isn't finished. */
+  keyChangeUnfinished = false,
 } = {}) {
   const log: string[] = []
   let stored = key ? toB64u(key) : null
@@ -58,14 +65,22 @@ function setup({
     }),
     lastAccountId: () => lastAccountId,
     openDetached: vi.fn(
-      async (accountKey: Uint8Array, call: { accountId: string }) => {
-        log.push(`account.openDetached:${call.accountId}`)
-        if (toB64u(accountKey) !== sameAccountKey)
+      async (accountKey: Uint8Array, call: { accountId?: string } = {}) => {
+        log.push(`account.openDetached:${call.accountId ?? 'any'}`)
+        const changedAt = retiredKeys.get(toB64u(accountKey))
+        // Whichever way it opens, and never making an account.
+        if (changedAt !== undefined)
+          throw new AccountSessionError('keyRetired', {
+            status: 403,
+            serverCode: 'key_retired',
+            changedAt,
+          })
+        if (call.accountId && toB64u(accountKey) !== sameAccountKey)
           throw Object.assign(new Error('unknown_account'), {
             serverCode: 'unknown_account',
           })
         return {
-          accountId: call.accountId,
+          accountId: call.accountId ?? 'other-account',
           adopt: vi.fn(async () => undefined),
           close: vi.fn(async () => undefined),
         }
@@ -94,7 +109,13 @@ function setup({
     }),
   }
   const sync = { leave: vi.fn(async () => undefined) }
-  const service = createAccountKeyService({ store, account, buddies, sync })
+  const service = createAccountKeyService({
+    store,
+    account,
+    buddies,
+    sync,
+    keyChangeUnfinished: async () => keyChangeUnfinished,
+  })
   return { service, store, account, buddies, sync, log, stored: () => stored }
 }
 
@@ -464,5 +485,74 @@ describe('account key service, finding the same account', () => {
     const { service, account } = setup({ key: random() })
     expect(await service.sameAccountSession(random())).toBeNull()
     expect(account.openDetached).not.toHaveBeenCalled()
+  })
+
+  it('refuses a key a key change retired, saying when, before anything changes', async () => {
+    const current = random()
+    const retired = random()
+    const { service, store, log } = setup({
+      key: current,
+      lastAccountId: ACCOUNT,
+      retiredKeys: new Map([[toB64u(retired), 1_700_000_000_000]]),
+    })
+    await expect(service.sameAccountSession(retired)).rejects.toEqual(
+      new AccountKeyRetiredError(1_700_000_000_000)
+    )
+    await expect(service.openSession(retired)).rejects.toBeInstanceOf(
+      AccountKeyRetiredError
+    )
+    expect(store.replace).not.toHaveBeenCalled()
+    expect(
+      log.filter((entry) => !entry.startsWith('account.openDetached'))
+    ).toEqual([])
+  })
+
+  it('never reads a failure to ask as another account', async () => {
+    const { service, account } = setup({
+      key: random(),
+      lastAccountId: ACCOUNT,
+    })
+    account.openDetached.mockRejectedValueOnce(
+      new AccountSessionError('offline')
+    )
+    await expect(service.sameAccountSession(random())).rejects.toMatchObject({
+      failure: 'offline',
+    })
+    // With accounts off, there's no account to be on.
+    account.openDetached.mockRejectedValueOnce(
+      new AccountSessionError('unavailable', { serverCode: 'disabled' })
+    )
+    expect(await service.sameAccountSession(random())).toBeNull()
+  })
+
+  it('opens another account’s key in its own account, without naming one', async () => {
+    const { service, account } = setup({
+      key: random(),
+      lastAccountId: ACCOUNT,
+    })
+    const newKey = random()
+    const opened = await service.openSession(newKey)
+    expect(opened.accountId).toBe('other-account')
+    expect(account.openDetached).toHaveBeenLastCalledWith(newKey, {})
+  })
+})
+
+describe('account key service, during a key change here', () => {
+  it('won’t switch to another key until the change is finished or discarded', async () => {
+    const key = random()
+    const { service, store, account, buddies, sync } = setup({
+      key,
+      keyChangeUnfinished: true,
+    })
+    await expect(
+      service.replace(random(), { confirmedLoss: true })
+    ).rejects.toBeInstanceOf(KeyChangeUnfinishedError)
+    expect(store.replace).not.toHaveBeenCalled()
+    expect(account.changeKey).not.toHaveBeenCalled()
+    expect(buddies.release).not.toHaveBeenCalled()
+    expect(sync.leave).not.toHaveBeenCalled()
+    expect(await service.keyChangeUnfinished()).toBe(true)
+    // The same key changes nothing, so it's still fine.
+    expect(await service.replace(key)).toEqual({ outcome: 'unchanged' })
   })
 })

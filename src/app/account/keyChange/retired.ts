@@ -19,6 +19,10 @@ import type { ResumeResult } from './engine'
  * 3. Otherwise it's signed out: the key is ignored from now on (and deleted where
  *    only this device holds it), Cloud Sync, backup and Buddies wait, and local
  *    data stays.
+ *
+ * Only for a key this device holds: its change's old key, its stored key, or
+ * its account's. Any other (a recovery key typed in, refused before it's used)
+ * is the caller's to say, and leaves this device as it is.
  */
 export type KeyRetiredDeps = {
   record: () => Promise<KeyChangeRecord | null>
@@ -32,6 +36,8 @@ export type KeyRetiredDeps = {
   connect: (key: Uint8Array, accountId: string) => Promise<void>
   forgetRetired: (accountPub: string) => Promise<void>
   signOut: (accountId: string | null, changedAt: number | null) => void
+  /** The public key of the account this device holds, if any. */
+  accountPub: () => string | null
 }
 
 export type KeyRetiredOutcome =
@@ -40,6 +46,8 @@ export type KeyRetiredOutcome =
   | 'unresolved'
   | 'rejoined'
   | 'signedOut'
+  /** Not a key this device holds. */
+  | 'ignored'
 
 export function createKeyRetiredHandler(deps: KeyRetiredDeps) {
   return async function handleKeyRetired(
@@ -48,7 +56,16 @@ export function createKeyRetiredHandler(deps: KeyRetiredDeps) {
   ): Promise<KeyRetiredOutcome> {
     // Unreadable, it throws: nothing is signed out or deleted on a guess.
     const record = await deps.record()
-    if (record && accountPubOf(fromB64u(record.oldKey)) === accountPub) {
+    const ownChange =
+      record !== null && accountPubOf(fromB64u(record.oldKey)) === accountPub
+    const stored = await deps.storedKey().catch(() => null)
+    if (
+      !ownChange &&
+      deps.accountPub() !== accountPub &&
+      (!stored || accountPubOf(fromB64u(stored)) !== accountPub)
+    )
+      return 'ignored'
+    if (record && ownChange) {
       if (isCommitted(record)) return 'ownChange'
       if (record.stage === 'confirmed') {
         const resumed = await deps.resume()
@@ -62,7 +79,6 @@ export function createKeyRetiredHandler(deps: KeyRetiredDeps) {
       }
     }
     const lastAccountId = deps.lastAccountId()
-    const stored = await deps.storedKey().catch(() => null)
     // Only ever into the account this device knew: never a new one.
     if (stored && lastAccountId) {
       const key = fromB64u(stored)

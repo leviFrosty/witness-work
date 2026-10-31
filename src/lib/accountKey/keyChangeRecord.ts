@@ -48,14 +48,6 @@ export const isUnfinished = (record: KeyChangeRecord | null) =>
   reached(record, 'stored') &&
   !reached(record, 'buddies-reset')
 
-/** Refused while the account key change on this device is unfinished. */
-export class KeyChangeUnfinishedError extends Error {
-  constructor() {
-    super('The account key change on this device is unfinished')
-    this.name = 'KeyChangeUnfinishedError'
-  }
-}
-
 /** From here on the account's key is K2, whatever the platform store holds. */
 export const isCommitted = (record: KeyChangeRecord) =>
   reached(record, 'committed')

@@ -539,6 +539,31 @@ export type AccountSessionSnapshot = AccountSessionInfo & {
   sessionExpiresAt: number
 }
 
+/** The last key's public key: deriving it is the slow part. */
+let lastPublicKey: { accountKey: string; publicKey: string } | null = null
+const publicKeyOf = (accountKey: Uint8Array): string => {
+  const encoded = toB64u(accountKey)
+  if (lastPublicKey?.accountKey !== encoded)
+    lastPublicKey = {
+      accountKey: encoded,
+      publicKey: deriveAccountSigningKey(accountKey).publicKey,
+    }
+  return lastPublicKey.publicKey
+}
+
+/**
+ * The session's account while it's this account key's, else null. A key
+ * replaced elsewhere (iCloud Keychain brings the new one) leaves the old key's
+ * session stored until a call opens the new key's.
+ */
+export const sessionAccountForKey = (
+  session: Pick<AccountSessionSnapshot, 'accountId' | 'accountPub'> | null,
+  accountKey: Uint8Array | null
+): string | null =>
+  session && accountKey && publicKeyOf(accountKey) === session.accountPub
+    ? session.accountId
+    : null
+
 /** A session opened for a key that isn't this device's yet (a handoff). */
 export type DetachedSession = AccountSessionInfo & {
   /** Makes it this device's session, once the key is stored. */

@@ -19,6 +19,7 @@ import {
   OPEN_RATE_LIMIT_DEFAULT_MS,
   OPEN_RETRY_AFTER_MS,
   type SessionStore,
+  sessionAccountForKey,
   STORE_ATTEMPTS,
   sessionEndWipes,
   staleTokenHash,
@@ -1258,5 +1259,22 @@ describe('account sessions', () => {
     await expect(cancelled).rejects.toMatchObject({ failure: 'cancelled' })
     await expect(other).resolves.toMatchObject({ sessionId: 'sid-1' })
     expect(worker.opsCalled('session/open')).toHaveLength(1)
+  })
+})
+
+describe('sessionAccountForKey', () => {
+  const session = { accountId: 'acct_a', accountPub: PUB_A }
+
+  it("is the session's account for its own key", () => {
+    expect(sessionAccountForKey(session, KEY_A)).toBe('acct_a')
+  })
+
+  it('is no account once the key is another', () => {
+    expect(sessionAccountForKey(session, KEY_B)).toBeNull()
+  })
+
+  it('is no account without a key or a session', () => {
+    expect(sessionAccountForKey(session, null)).toBeNull()
+    expect(sessionAccountForKey(null, KEY_A)).toBeNull()
   })
 })

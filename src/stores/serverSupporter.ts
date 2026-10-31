@@ -8,6 +8,8 @@ import {
 } from '@/lib/serverAccount/serverSupporter'
 
 const KEY = 'supporter.server'
+/** The account this device's Supporter state belongs to (`bound`). */
+const BOUND_KEY = 'supporter.account'
 
 const readStored = (): ServerSupporterEntry | null => {
   try {
@@ -80,4 +82,25 @@ export const setServerSupporterAccount = (account: string | null): void => {
   const state = useServerSupporter.getState()
   if (state.account === account) return
   useServerSupporter.setState(deriveAndArmExpiry(state.entry, account))
+}
+
+/**
+ * The account (fingerprint) this device's Supporter state belongs to: the last
+ * one a session confirmed. Another account confirming drops that state
+ * (`createServerSupporter`).
+ */
+export const boundSupporterAccount = (): string | null => {
+  try {
+    return mmkvStorage.getString(BOUND_KEY) ?? null
+  } catch {
+    return null
+  }
+}
+
+export const bindSupporterAccount = (account: string): void => {
+  try {
+    mmkvStorage.set(BOUND_KEY, account)
+  } catch {
+    // Unbound until the next confirmation writes it again.
+  }
 }

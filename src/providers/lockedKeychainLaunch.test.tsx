@@ -98,6 +98,7 @@ vi.mock('@/lib/serverAccount/revenueCatLinkRuntime', () => ({
   ensureRevenueCatLinked: async (options: unknown) => {
     runtime.links.push(options)
   },
+  onSupporterAccountSwitched: () => () => {},
 }))
 
 const foreground = async () => {

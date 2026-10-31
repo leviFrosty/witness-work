@@ -3,13 +3,20 @@ import { sha256 } from '@noble/hashes/sha2.js'
 import { bytesToHex } from '@noble/hashes/utils.js'
 import { utf8 } from '@/lib/bytes'
 import { getOrCreateAccountId } from '@/lib/account'
-import { ownAccountClaim, peerAccountClaims } from '@/lib/accountClaimRegistry'
+import {
+  ownAccountClaim,
+  peerAccountClaims,
+  setPeerAccountClaims,
+} from '@/lib/accountClaimRegistry'
 import type { AccountClaim } from '@/lib/accountClaim'
 import {
   ensureRevenueCatLinked,
   serverSupporter,
 } from '@/lib/serverAccount/revenueCatLinkRuntime'
-import { useServerSupporter } from '@/stores/serverSupporter'
+import {
+  boundSupporterAccount,
+  useServerSupporter,
+} from '@/stores/serverSupporter'
 import { useSupporter } from '@/stores/supporterStatus'
 
 /** A RevenueCat id as evidence can show it: never the id itself. */
@@ -50,6 +57,9 @@ export const revenueCatHarness = {
         readAt: server.entry?.readAt ?? null,
         forThisAccount:
           server.entry !== null && server.entry.account === server.account,
+        /** The session's account (fingerprint), and the one bound before. */
+        account: server.account && server.account.slice(0, 12),
+        bound: boundSupporterAccount()?.slice(0, 12) ?? null,
       },
       mirror: useSupporter.getState().isSupporter,
     }
@@ -86,6 +96,14 @@ export const revenueCatHarness = {
       (outcome) => (revenueCatLast = outcome)
     )
     return 'started'
+  },
+  /**
+   * Another of the account's devices published `appUserId` in the sync data
+   * (ADR 0040 §7), as a pull would read it.
+   */
+  peerClaim: (appUserId: string, entitled: boolean) => {
+    setPeerAccountClaims([{ appUserId, entitled, claimedAt: 0 }])
+    return 'ok'
   },
   get last() {
     return revenueCatLast

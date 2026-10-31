@@ -195,4 +195,30 @@ describe("useIsSupporter's fallback to ww-api's answer", () => {
     await render(m.useIsSupporter, m.SupporterStoreSync)
     expect(m.useSupporter.getState().isSupporter).toBe(true)
   })
+
+  it("the mirror doesn't take an answer before the session says whose", async () => {
+    runtime.customer = null
+    const m = await load()
+    m.answer(true, null)
+    await render(m.useIsSupporter, m.SupporterStoreSync)
+    expect(m.useSupporter.getState().isSupporter).toBe(false)
+
+    await act(async () => m.signInAs(ACCOUNT))
+    expect(m.useSupporter.getState().isSupporter).toBe(true)
+  })
+
+  it('the mirror reads again for a new account', async () => {
+    runtime.customer = entitled
+    const m = await load()
+    m.signInAs(ACCOUNT)
+    await render(m.useIsSupporter, m.SupporterStoreSync)
+    expect(m.useSupporter.getState().isSupporter).toBe(true)
+
+    // The switch drops the previous account's mirror (`onAccountSwitched`).
+    await act(async () => {
+      m.useSupporter.getState().setSupporter(false)
+      m.signInAs('acct_two')
+    })
+    expect(m.useSupporter.getState().isSupporter).toBe(true)
+  })
 })

@@ -1,4 +1,5 @@
 import { getRandomBytes } from 'expo-crypto'
+import * as BuddiesKeychain from '../../../modules/buddies-keychain'
 import { accountKey } from '@/app/account/accountKey'
 import {
   backUpNow,
@@ -21,6 +22,7 @@ import {
   type SelfTestStep,
 } from '@/app/account/handoffSelfTest'
 import { encodeRecoveryKey } from '@/lib/accountKey/recoveryKey'
+import { toB64u } from '@/lib/bytes'
 import { cachedServerAccount } from '@/lib/serverAccount'
 import { useBackupState } from '@/lib/serverAccount/backupStore'
 import { deriveAccountSigningKey } from '@/lib/serverAccount/keys'
@@ -67,6 +69,19 @@ export const accountHarness = {
   },
   /** A valid recovery key for a new random account key, to type or paste. */
   randomRecoveryKey: () => encodeRecoveryKey(getRandomBytes(32)),
+  /**
+   * Replaces the account key in the Keychain without the app's key change, as
+   * iCloud Keychain brings a key replaced on another of the User's devices: the
+   * stored session stays the old key's. `last` says when it's done.
+   */
+  replaceKeyBehindApp: () => {
+    last = null
+    void BuddiesKeychain.replaceRootSeed(toB64u(getRandomBytes(32))).then(
+      () => (last = 'replaced'),
+      (error: unknown) => (last = { error: String(error) })
+    )
+    return 'started'
+  },
 }
 
 let selfTest: { passed: boolean | null; steps: SelfTestStep[] } | null = null

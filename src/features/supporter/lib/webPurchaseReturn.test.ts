@@ -38,7 +38,12 @@ const deps = (
   available: true,
   appUserId: async () => ID,
   fetchCustomer: async () => supporter,
-  link: async () => ({ result: 'linked', supporter: true, expiresAt: null }),
+  link: async () => ({
+    result: 'linked',
+    supporter: true,
+    expiresAt: null,
+    accountId: 'acct_one',
+  }),
   isSupporter: (customer) =>
     (customer as unknown as { supporter: boolean }).supporter,
   checkoutStartedAt: startedAt,

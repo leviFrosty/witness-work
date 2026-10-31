@@ -7,6 +7,8 @@ export type NotificationKind =
   | 'icloud_sync'
   /** The one-time offer of Cloud Sync to an existing install (ADR 0040 §4). */
   | 'cloud_sync'
+  /** The gentle prompt to save a passkey (ADR 0038 §9). */
+  | 'passkey'
   | 'previous_report'
   | 'rollover'
   | 'missed_follow_up'

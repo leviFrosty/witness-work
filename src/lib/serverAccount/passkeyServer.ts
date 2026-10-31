@@ -77,14 +77,26 @@ export function accountPasskeyDeps(
   }
 }
 
+/**
+ * Where the User chose Add a Passkey: Settings, onboarding's step, the tray's
+ * prompt, or the web's "Approved by" screen.
+ */
+export type PasskeyAddSource =
+  | 'settings'
+  | 'onboarding'
+  | 'prompt'
+  | 'approved_by'
+
 /** Analytics for Add a Passkey (`add`) or Let It Unlock (`upgrade`). */
 export function reportPasskeyAdd(
   kind: 'add' | 'upgrade',
+  source: PasskeyAddSource,
   result: PasskeyAddResult | PasskeyUnlockResult
 ) {
   if (result.status === 'added' || result.status === 'unlocks') {
     analytics.capture('passkey_added', {
       kind,
+      source,
       can_unlock: result.status === 'unlocks' || result.canUnlock,
       ...(result.status === 'added' &&
         !result.canUnlock && { sign_in_only: result.signInOnly }),
@@ -93,6 +105,7 @@ export function reportPasskeyAdd(
   }
   analytics.capture('passkey_add_failed', {
     kind,
+    source,
     step: result.status === 'signInOnly' ? 'save' : result.step,
     reason:
       result.status === 'cancelled'

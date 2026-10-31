@@ -1,4 +1,5 @@
 import { AppState, Platform } from 'react-native'
+import { earnPasskeyPrompt } from '@/app/account/passkeyPrompt'
 import { getRandomBytes } from 'expo-crypto'
 import * as Device from 'expo-device'
 import { accountKey, accountKeyAvailable } from '@/app/account/accountKey'
@@ -175,6 +176,8 @@ export async function enableBackup(
   backupSchedule.set({ pending: true, retryAt: null, failures: 0 })
   analytics.capture('account_backup_changed', { enabled: true, source })
   logBackup('info', `turned on (${source})`)
+  // A restore turns it back on for the User; only choosing it is a moment.
+  if (source === 'settings') earnPasskeyPrompt('backup')
   const upload = await backUpNow('enabled')
   void refreshBackupSlots()
   return { ok: true, upload }

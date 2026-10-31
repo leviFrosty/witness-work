@@ -14,6 +14,7 @@ import { open, seal } from '@/lib/sealedBlob'
 import {
   createHandoffKeyPair,
   cut,
+  plainLine,
   deriveVerifier,
   type HandoffKeyPair,
   sixDigitCode,
@@ -304,9 +305,9 @@ const helloAad = (channelId: string) => `${LABEL}/hello\n${channelId}`
 const keyAad = (channelId: string) => `${LABEL}/key\n${channelId}`
 
 const normalizeHello = (hello: ApprovalHello): ApprovalHello => ({
-  browser: cut(hello.browser.trim(), APPROVAL_TEXT_MAX),
-  system: cut(hello.system.trim(), APPROVAL_TEXT_MAX),
-  appVersion: cut(hello.appVersion.trim(), 32),
+  browser: plainLine(hello.browser, APPROVAL_TEXT_MAX),
+  system: plainLine(hello.system, APPROVAL_TEXT_MAX),
+  appVersion: plainLine(hello.appVersion, 32),
 })
 
 export function sealApprovalHello(

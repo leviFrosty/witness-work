@@ -1233,6 +1233,24 @@ at most; polling sends none.
 Never the channel id, either public key, the code, the device's name or model,
 the account key, or the account id. The Tools self-test sends nothing.
 
+### Sign In on a Computer
+
+These answer whether people sign in on the web by approving it from their phone
+(ADR 0038), how often the far-away hint shows, and why approvals fail. Sent from
+the phone only; one attempt sends a handful of events at most, and polling sends
+none.
+
+| Event               | When                                                                                                            | Properties                                                                                                                                                                                                                                                                                                                                         |
+| ------------------- | --------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `approval_started`  | The phone's scanner took a computer's code (a bad scan sends nothing).                                          | `entry: settings \| tools`.                                                                                                                                                                                                                                                                                                                        |
+| `approval_claimed`  | The phone claimed the code and shows "Allow this computer to sign in?".                                         | `far`: the server's far-away hint (another country or over 200 km), never the location.                                                                                                                                                                                                                                                            |
+| `approval_approved` | The User tapped YES, the device's owner confirmed it, and the key reached the server.                           | `auth`: `device` (Face ID, Touch ID, fingerprint, passcode or screen lock) or `none` (the device has no lock).                                                                                                                                                                                                                                     |
+| `approval_declined` | The User tapped NO.                                                                                             | None.                                                                                                                                                                                                                                                                                                                                              |
+| `approval_failed`   | The attempt stopped without an answer. A cancelled or failed owner check isn't one: the User can tap YES again. | `reason`: the protocol's (`offline`, `unavailable`, `expired`, `used`: another device scanned it first, `conflict`, `cancelled`, `badToken`, `tampered`, `noAccount`, `rateLimited`, `server`), the account session's (`unsupported`, `unverified`, `verifyLater`, `updateRequired`), a code the phone refused (`damaged`), or the app's (`left`). |
+
+Never the channel id, either public key, the code, the browser or system, the
+location, the device's name, the account key, or the account id.
+
 ## Error tracking
 
 Use `errorTracking` from `@/lib/errorTracking` for diagnostics. Feature code must

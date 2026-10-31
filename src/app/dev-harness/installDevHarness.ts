@@ -65,6 +65,7 @@ import {
   accountHarness,
   backupHarness,
   handoffHarness,
+  approvalHarness,
 } from '@/app/dev-harness/account'
 import { backupFileHarness } from '@/app/dev-harness/backupFile'
 import i18n, { _i18n, type TranslationKey } from '@/lib/locales'
@@ -463,6 +464,12 @@ export function installDevHarness() {
      * `handoff.selfTest()` then `handoff.selfTestResult`.
      */
     handoff: handoffHarness,
+    /**
+     * Sign In on a Computer: `approval.state()` (step, status, code, the
+     * request log; never a key), and `approval.scan(link)`, which opens the
+     * screen with a computer's code as if its scanner read it.
+     */
+    approval: approvalHarness,
     /**
      * The account backup: `backup.state()`; `enable()`, `uploadNow()`,
      * `list()`, `inspect()` (decrypted slots as counts), `dryRun()`,

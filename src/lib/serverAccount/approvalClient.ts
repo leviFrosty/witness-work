@@ -9,6 +9,10 @@ import {
   sendPlainAccountOp,
   unexpectedResponse,
 } from '@/lib/serverAccount/client'
+import { plainLine } from '@/lib/serverAccount/handoff'
+
+/** Place names longer than this are cut. */
+const PLACE_MAX = 64
 
 /**
  * Client for `/accounts/v1/approval/*` (docs/passkeys-protocol.md, "Approving a
@@ -91,10 +95,12 @@ function statusView(response: AccountAnswer): ApprovalStatusView {
 function locationOf(value: unknown): ApprovalLocation | undefined {
   if (typeof value !== 'object' || value === null) return undefined
   const { city, region, country } = value as Record<string, unknown>
+  const place = (field: unknown) =>
+    optionalString(field) ? plainLine(field as string, PLACE_MAX) : ''
   const location: ApprovalLocation = {
-    ...(optionalString(city) && { city: city as string }),
-    ...(optionalString(region) && { region: region as string }),
-    ...(optionalString(country) && { country: country as string }),
+    ...(place(city) && { city: place(city) }),
+    ...(place(region) && { region: place(region) }),
+    ...(place(country) && { country: place(country) }),
   }
   return Object.keys(location).length > 0 ? location : undefined
 }

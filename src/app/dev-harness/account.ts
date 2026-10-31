@@ -15,6 +15,7 @@ import {
   type RestoreSource,
   simulateCorruptDownload,
 } from '@/app/account/backupRestore'
+import { useApprovalDebug } from '@/app/account/approval'
 import { useHandoffDebug } from '@/app/account/handoff'
 import {
   runHandoffSelfTest,
@@ -26,6 +27,7 @@ import { useBackupState } from '@/lib/serverAccount/backupStore'
 import { deriveAccountSigningKey } from '@/lib/serverAccount/keys'
 import { deriveIdentity } from '@/features/buddies/lib/keys'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
+import { navigationRef } from '@/features/contacts/lib/linking'
 
 let last: unknown = null
 
@@ -101,6 +103,19 @@ export const handoffHarness = {
   },
   get selfTestResult() {
     return selfTest
+  },
+}
+
+export const approvalHarness = {
+  state: () => {
+    const { session, entry } = useApprovalDebug.getState()
+    return session ? { entry, ...session.debug() } : null
+  },
+  /** Hands a computer's code to Sign In on a Computer, as its scanner would. */
+  scan: (link: string) => {
+    if (!navigationRef.isReady()) return 'navigation not ready'
+    navigationRef.navigate('Sign In on a Computer', { entry: 'tools', link })
+    return 'opened'
   },
 }
 

@@ -14,10 +14,30 @@ import {
 import { syncProvider } from '@/lib/syncTransport/provider'
 import { slotIdForFilename } from '@/lib/syncTransport/server/serverTransport'
 import { checkAppConfig } from '@/lib/appUpdate'
+import { accountKey } from '@/app/account/accountKey'
+import { bearerOptions } from '@/lib/serverAccount'
+import { withdrawSyncRequest } from '@/lib/syncTransport/server/syncClient'
+import { createWebCloudSyncClient } from '@/app/web-cloud-sync'
 import { usePreferences } from '@/stores/preferences'
+import { showCloudSyncTrayOffer } from '@/app/notifications/devNotifications'
+import type { CloudSyncTrayOfferVariant } from '@/app/sync/cloudSyncTrayOffer'
 import useContacts from '@/stores/contactsStore'
+import * as FileSystem from 'expo-file-system/legacy'
+import { photoFiles } from '@/lib/syncTransport/server/photoFiles'
+import {
+  derivePhotoKeys,
+  sealPhoto,
+} from '@/lib/syncTransport/server/photoCrypto'
+import { useCloudSyncPhotoUsage } from '@/lib/syncTransport/server/photoUsage'
+import { refreshCloudSyncPhotoUsage } from '@/app/sync/cloudSync'
 
 let cloudSyncLast: unknown = null
+
+const peekAccountKey = async () => {
+  const key = await accountKey.peek()
+  if (!key) throw new Error('No account key on this device')
+  return key
+}
 
 /** Starts `work`; its result (or `{ error }`) lands in `cloudSync.last`. */
 const tracked = (work: () => Promise<unknown>) => {
@@ -50,6 +70,9 @@ export const cloudSyncHarness = {
       entitled: prefs.cloudSyncEntitled,
       config: prefs.cloudSyncConfig,
       offer: prefs.cloudSyncOffer,
+      requestAnswered: prefs.cloudSyncRequestAnswered,
+      installedBeforeFreeSync: prefs.installedBeforeFreeSync,
+      trayOffer: prefs.cloudSyncTrayOffer,
       canSync: iCloudSync.canSync(),
       needsResolution: prefs.iCloudSyncNeedsResolution,
       pendingPush: prefs.iCloudSyncPendingPush,
@@ -86,6 +109,23 @@ export const cloudSyncHarness = {
       }))
     }),
   switchTo: (to: SyncOption) => tracked(() => switchSyncOption(to, 'tools')),
+  /**
+   * Asks the account's phones to turn Cloud Sync on, as the web's Turn On does
+   * (Bearer and the account key's envelope), or with `false` withdraws it;
+   * `last` gets `{ requestedAt }`. A phone answers at its next status read
+   * (`refresh`, or a foreground a minute after the last read), once per
+   * request; the server clears it once every live phone has written a slot.
+   */
+  request: (requested = true) =>
+    tracked(async () => {
+      const key = await peekAccountKey()
+      if (requested)
+        return {
+          requestedAt: await createWebCloudSyncClient(key).requestCloudSync(),
+        }
+      await withdrawSyncRequest(bearerOptions(key))
+      return { requestedAt: null }
+    }),
   /** Pull then push, as Sync now does. */
   syncNow: () =>
     tracked(async () => ({
@@ -119,6 +159,81 @@ export const cloudSyncHarness = {
       iCloudSyncNeedsResolution: false,
       cloudSyncOffer: null,
     })
+    return cloudSyncHarness.state()
+  },
+  /**
+   * Photos (ADR 0040 §6): the switch, the account's usage as last heard, and
+   * this device's photo bookkeeping (filename → error code, or `synced`).
+   */
+  photoState: () => {
+    const prefs = usePreferences.getState()
+    return {
+      photos: prefs.cloudSyncPhotos,
+      travel: iCloudSync.photosTravel(),
+      usage: useCloudSyncPhotoUsage.getState().usage,
+      fullAt: useCloudSyncPhotoUsage.getState().fullAt,
+      bookkeeping: Object.fromEntries(
+        Object.entries(prefs.iCloudImageSync ?? {}).map(([name, entry]) => [
+          name,
+          entry.errorCode ?? (entry.containerMtime ? 'synced' : 'local'),
+        ])
+      ),
+    }
+  },
+  /** The account's photos as this device lists them: filenames and times. */
+  photos: () => tracked(() => cloudSyncTransport.listBinaryFiles()),
+  /** `photos/usage` now. */
+  photoUsage: () => tracked(() => refreshCloudSyncPhotoUsage()),
+  /**
+   * Seals a `megabytes` photo file and uploads it, timing each step and the
+   * longest the JS thread went without a break while sealing; then deletes it.
+   */
+  photoBenchmark: (megabytes = 10) =>
+    tracked(async () => {
+      const filename = 'witness-work-note-benchmark-photo.jpg'
+      const path = `${FileSystem.cacheDirectory}${filename}`
+      const bytes = new Uint8Array(megabytes * 1024 * 1024)
+      for (let i = 0; i < bytes.length; i++) bytes[i] = (i * 31) & 0xff
+      await photoFiles.write(path, bytes)
+      let readMs = Date.now()
+      const read = await photoFiles.read(path)
+      readMs = Date.now() - readMs
+      let longestMs = 0
+      let last = Date.now()
+      const pause = async () => {
+        const now = Date.now()
+        longestMs = Math.max(longestMs, now - last)
+        await new Promise((resolve) => setTimeout(resolve, 0))
+        last = Date.now()
+      }
+      const key = derivePhotoKeys(new Uint8Array(32).fill(1)).photoKey
+      let sealMs = Date.now()
+      await sealPhoto(
+        key,
+        read,
+        { accountId: 'benchmark', name: 'benchmark' },
+        new Uint8Array(24),
+        pause
+      )
+      sealMs = Date.now() - sealMs
+      let uploadMs = Date.now()
+      await cloudSyncTransport.writeBinary(filename, path)
+      uploadMs = Date.now() - uploadMs
+      await cloudSyncTransport.deleteBinaryFile(filename)
+      await FileSystem.deleteAsync(path, { idempotent: true })
+      return { megabytes, readMs, sealMs, longestMs, uploadMs }
+    }),
+  /**
+   * This device as an install from before sync was free (ADR 0040 §2), which
+   * keeps its old sync defaults, or as a new one. A seed makes it new.
+   */
+  setInstalledBeforeFreeSync: (value = true) => {
+    usePreferences.setState({ installedBeforeFreeSync: value })
+    return cloudSyncHarness.state()
+  },
+  /** Lists the tray's Cloud Sync offer again, as the Tools rows do. */
+  showTrayOffer: (variant: CloudSyncTrayOfferVariant) => {
+    showCloudSyncTrayOffer(variant)
     return cloudSyncHarness.state()
   },
   get last() {

@@ -171,6 +171,42 @@ avdmanager create avd -n WW_Wear_OS_6 -d wearos_large_round \
 emulator -avd WW_Wear_OS_6 -no-window -no-audio -no-boot-anim
 ```
 
+## Web
+
+The web app is this codebase built with react-native-web (ADR 0037).
+
+```bash
+pnpm web                         # dev server against your local ww-api (.env)
+pnpm web:build                   # static export in dist/, dev profile
+pnpm web:build --env beta        # local | dev | beta | production
+pnpm web:test                    # browser smoke tests of dist/ (e2e/web/README.md)
+```
+
+`config/web-environments.json` is the one list of web profiles: each one's
+native env files (`variant`), host, Worker, ww-api, PostHog and maps origins,
+and CSP mode. `web:build`, the web host's deploys and its Worker
+(`docs/web-hosting.md`) all read it. `local` takes its ww-api from `.env`
+(`apiFromEnv`). Public values such as PostHog's come from the matching native
+env files; the web build always clears the dev bypass, the RevenueCat store
+keys, the OTA key and the Android Maps key, and `web:build` fails if any of
+them, or this checkout's dev bypass, reaches `dist/`.
+
+Every `web:build` runs `pnpm sync:help` first, from its profile's
+`helpManifest` (the dev website for `local` and `dev`, `witnesswork.app` for
+`beta` and `production`), so the bundled Help Center snapshot
+(`src/assets/help-center/`) is current; the committed snapshot can predate the
+web and show nothing offline. Without a connection the build fails rather than
+ship an older snapshot. The fetched snapshot goes into `dist/` only: the
+build puts `src/assets/help-center/` back as it was afterwards, since the
+native apps' snapshot changes at release prep.
+
+The host takes files up to 25 MiB, and 20,000 files, and `web:build` fails on
+more (source maps don't count; they aren't uploaded). Keep
+large data out of the entry chunk with `import()`, as the translations other
+than English and the Help Center snapshots do (each is its own chunk, loaded
+when its language is shown). On the web, `import()` downloads the chunk before
+requiring the module (`src/vendor/web/asyncRequire.ts`).
+
 ## Native changes
 
 - To regenerate `ios/` from scratch, run `APP_VARIANT=development pnpm run prebuild`.
@@ -195,10 +231,18 @@ Development uses `com.leviwilkerson.jwtimedev`; production uses
   Local commands require the platform SDK key so a configuration gap is caught
   before launch. The app itself still handles missing keys gracefully.
 
-Contact URL intent filters cover `ww-proxy.leviwilkerson.com/c#<payload>` and
-legacy `/c/<payload>` links, and Buddies invites `/b#1<secret>`.
-Automatic Android App Links additionally require the backend's
-`/.well-known/assetlinks.json` to list each package and signing certificate.
+App Link intent filters cover two hosts ([`app-links.md`](./app-links.md)):
+`ww-proxy.leviwilkerson.com` (contacts `/c#<payload>` and legacy
+`/c/<payload>`, Buddies invites `/b`, handoffs `/h`) and `witnesswork.app`
+(exactly `/contacts`, `/buddies/invite` and `/accounts/handoff`). Development
+builds also claim `dev.witnesswork.app`. Automatic Android App Links
+additionally require each host's `/.well-known/assetlinks.json` to list each
+package and signing certificate. On Android 11 and lower, the app becomes the
+default handler only if every `autoVerify` host verifies, so a new host's
+`assetlinks.json` must be live before a build that claims it ships. Check what
+a device verified with
+`adb shell pm get-app-links com.leviwilkerson.jwtime`, and re-run verification
+with `adb shell pm verify-app-links --re-verify com.leviwilkerson.jwtime`.
 Contact attachments use the `application/witnesswork+json` MIME type and are
 validated and confirmed before import, including opaque Android content URIs.
 
@@ -215,9 +259,10 @@ production and dev packages) is checked in: every APK carries it, and it holds
 no secrets. Alerts need Google Play services, so use an emulator image with
 Google APIs; the sending key lives in ww-api (`FCM_SERVICE_ACCOUNT_JSON`).
 Development builds don't verify App Links (the debug key isn't in
-`assetlinks.json`), so let the emulator open them with
-`adb shell pm set-app-links-user-selection --user cur --package com.leviwilkerson.jwtimedev true ww-proxy.leviwilkerson.com`,
-or drive invites with `wwv link`.
+`assetlinks.json`), so let the emulator open them, for each host, with
+`adb shell pm set-app-links-user-selection --user cur --package com.leviwilkerson.jwtimedev true ww-proxy.leviwilkerson.com witnesswork.app dev.witnesswork.app`
+(check with `adb shell pm get-app-links com.leviwilkerson.jwtimedev`), or
+drive invites with `wwv link`.
 
 Account sessions (ADR 0027) keep their refresh token in `modules/device-secrets`
 on both platforms: a non-synchronizable, this-device-only Keychain item on iOS,

@@ -278,7 +278,9 @@ const useManageSubscription = (
     try {
       await Purchases.showManageSubscriptions()
     } catch {
-      await openURL(customer?.managementURL ?? APP_STORE_SUBSCRIPTIONS_URL)
+      // Never `customer.managementURL`: for a web subscription it's
+      // RevenueCat's customer portal, which phones must not link to.
+      await openURL(APP_STORE_SUBSCRIPTIONS_URL)
     }
     await refresh()
   }

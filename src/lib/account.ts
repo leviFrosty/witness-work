@@ -9,6 +9,7 @@ import {
   parseAccountFile,
 } from '@/lib/accountFile'
 import { logger } from '@/lib/logger'
+import type { AccountClaim } from '@/lib/accountClaim'
 
 /**
  * Effectful half of the account model (ADR 0011) — id persistence and the
@@ -18,14 +19,17 @@ import { logger } from '@/lib/logger'
  * drives both lives in `AccountProvider`.
  *
  * The account id defaults to this device's install id (ADR 0007) and is
- * replaced only when the device adopts another device's claim from iCloud. The
- * adopted id is persisted device-locally (MMKV, not preferences — it must never
- * round-trip through the supporter-gated data sync it unlocks).
+ * replaced only when the device adopts another device's claim, from the account
+ * file or the sync data (`@/lib/accountClaim`). The adopted id is persisted
+ * device-locally (MMKV, not preferences, which merge as data); the sync payload
+ * carries it only as this device's claim.
  */
 
 let _store: MMKV | null = null
 const store = (): MMKV => (_store ??= new MMKV({ id: 'account' }))
 const ADOPTED_KEY = 'adoptedAccountId'
+/** When this device's account id was first claimed (`@/lib/accountClaim`). */
+const CLAIMED_AT_KEY = 'claimedAt'
 
 let _cached: string | null = null
 
@@ -46,19 +50,41 @@ export const getOrCreateAccountId = (): string => {
   return installId
 }
 
-/** Persist a foreign claim as this device's account id. */
-export const adoptAccountId = (accountId: string): void => {
+/**
+ * Persist a foreign claim as this device's account id, keeping the time of the
+ * claim it adopted.
+ */
+export const adoptAccountId = (accountId: string, claimedAt: number): void => {
   store().set(ADOPTED_KEY, accountId)
+  store().set(CLAIMED_AT_KEY, claimedAt)
   _cached = accountId
 }
 
 /**
- * Dev-tools only (paywall "Reset purchases"): drop the adopted id so the device
- * falls back to its install id on next resolution.
+ * Drop the adopted id so the device falls back to its install id on next
+ * resolution, as a new claim: the paywall's dev "Reset purchases", and a
+ * different Apple Account.
  */
 export const clearAdoptedAccountId = (): void => {
   store().delete(ADOPTED_KEY)
+  store().delete(CLAIMED_AT_KEY)
   _cached = null
+}
+
+/**
+ * This device's RevenueCat claim (ADR 0040 §7): its account id, whether it's
+ * entitled under it, and when the id was first claimed. A device that never
+ * recorded a claim time (a first launch, or one from before claims) claims now.
+ * Throws when the account id can't be read.
+ */
+export const getOwnAccountClaim = (entitled: boolean): AccountClaim => {
+  const appUserId = getOrCreateAccountId()
+  let claimedAt = store().getNumber(CLAIMED_AT_KEY)
+  if (claimedAt === undefined) {
+    claimedAt = Date.now()
+    store().set(CLAIMED_AT_KEY, claimedAt)
+  }
+  return { appUserId, entitled, claimedAt }
 }
 
 export type AccountRead = {
@@ -124,16 +150,14 @@ export const readAccountFile = async (): Promise<AccountRead> => {
   return { file: best.payload, pending: false }
 }
 
-/** Claims (or re-claims) the account file for `accountId`. */
-export const writeAccountFile = async (
-  accountId: string,
-  entitled: boolean
-): Promise<void> => {
+/** Claims (or re-claims) the account file with this device's claim. */
+export const writeAccountFile = async (claim: AccountClaim): Promise<void> => {
   const payload: AccountFile = {
     v: 1,
-    accountId,
-    entitled,
+    accountId: claim.appUserId,
+    entitled: claim.entitled,
     updatedAt: Date.now(),
+    claimedAt: claim.claimedAt,
     deviceName: Device.modelName ?? undefined,
   }
   await syncTransport().write(ACCOUNT_FILENAME, JSON.stringify(payload))
@@ -150,7 +174,7 @@ export const reclaimAccountFile = async (entitled: boolean): Promise<void> => {
   if (!hasSyncTransport()) return
   if (!syncTransport().isAvailable()) return
   try {
-    await writeAccountFile(getOrCreateAccountId(), entitled)
+    await writeAccountFile(getOwnAccountClaim(entitled))
   } catch (e) {
     logger.warn('[Account] reclaim after remote wipe failed', e)
   }

@@ -6,6 +6,7 @@ import { siriPhrase } from '@/features/updates/lib/siriPhrase'
 import {
   RevealMoreTile,
   RevealPage,
+  canPairWatch,
   meetsIos,
   onThisPlatform,
 } from '@/features/updates/hooks/useRevealPages'
@@ -14,7 +15,7 @@ import {
   TOUR_PAGES,
 } from '@/features/onboarding/constants/tourPages'
 import { calendarBridgeAvailable } from '../../../../modules/calendar-bridge'
-import * as WatchBridge from '../../../../modules/watch-bridge'
+import { hasCapability } from '@/lib/platformCapabilities'
 
 /**
  * The onboarding tour as this device should see it: platform-only pages and
@@ -25,7 +26,7 @@ import * as WatchBridge from '../../../../modules/watch-bridge'
 const useTourPages = (buddies: boolean): RevealPage[] => {
   const theme = useTheme()
   const { isTablet } = useDevice()
-  const watchSupported = WatchBridge.getStatus().isSupported
+  const watchSupported = canPairWatch()
 
   const tiles: RevealMoreTile[] = TOUR_MORE_ITEMS.filter(
     (item) =>
@@ -44,7 +45,9 @@ const useTourPages = (buddies: boolean): RevealPage[] => {
       onThisPlatform(page.platform) &&
       (!page.buddiesOnly || buddies) &&
       (!page.watchOnly || watchSupported) &&
-      (!page.calendarOnly || calendarBridgeAvailable)
+      (!page.siriPhraseKey || hasCapability('siriShortcuts')) &&
+      (!page.calendarOnly ||
+        (hasCapability('calendarBridge') && calendarBridgeAvailable))
   ).map((page) => {
     const captionKey =
       Platform.OS === 'android' && page.androidCaptionKey

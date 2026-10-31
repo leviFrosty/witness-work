@@ -1,0 +1,42 @@
+{
+  "local": {
+    "variant": "development",
+    "host": "localhost",
+    "apiOrigin": "http://localhost:8787",
+    "apiFromEnv": true,
+    "posthogOrigin": "https://ww-api-r.leviwilkerson.com",
+    "mapsOrigin": "https://maps-dev.witnesswork.app",
+    "helpManifest": "https://dev.witnesswork.app/help/bundle/manifest.json",
+    "csp": "report-only"
+  },
+  "dev": {
+    "variant": "development",
+    "worker": "ww-web-dev",
+    "host": "app-dev.witnesswork.app",
+    "apiOrigin": "https://api-dev.witnesswork.app",
+    "posthogOrigin": "https://ww-api-r.leviwilkerson.com",
+    "mapsOrigin": "https://maps-dev.witnesswork.app",
+    "helpManifest": "https://dev.witnesswork.app/help/bundle/manifest.json",
+    "csp": "report-only"
+  },
+  "beta": {
+    "variant": "beta",
+    "worker": "ww-web-beta",
+    "host": "beta.app.witnesswork.app",
+    "apiOrigin": "https://api.witnesswork.app",
+    "posthogOrigin": "https://ww-api-r.leviwilkerson.com",
+    "mapsOrigin": "https://maps.witnesswork.app",
+    "helpManifest": "https://witnesswork.app/help/bundle/manifest.json",
+    "csp": "report-only"
+  },
+  "production": {
+    "variant": "production",
+    "worker": "ww-web",
+    "host": "app.witnesswork.app",
+    "apiOrigin": "https://api.witnesswork.app",
+    "posthogOrigin": "https://ww-api-r.leviwilkerson.com",
+    "mapsOrigin": "https://maps.witnesswork.app",
+    "helpManifest": "https://witnesswork.app/help/bundle/manifest.json",
+    "csp": "report-only"
+  }
+}

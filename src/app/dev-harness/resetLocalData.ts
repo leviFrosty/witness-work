@@ -21,6 +21,7 @@ import { useSidebarPreferences } from '@/stores/sidebar'
 import { useSplitSheetPreferences } from '@/stores/splitSheet'
 import { useTimeCache } from '@/stores/timeCache'
 import { useDevNotifications } from '@/app/notifications/devNotifications'
+import { rebasePublishedPhotos } from '@/app/sync/photoBaseline'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 import { useMapFindSkips } from '@/features/map/stores/mapFindSkips'
 import { clearLegacyLedger } from '@/features/scribe/legacy/notesImportLedger'
@@ -95,7 +96,7 @@ export function resetLocalData() {
   void AsyncStorage.clear()
   const setPreferences = usePreferences.getState().set
   // Lock iCloud sync off + mark setByUser BEFORE wiping local data, otherwise
-  // SupporterSyncDefault (App.tsx) sees a supporter with no local records and
+  // PlatformSyncDefault (App.tsx) sees a device with no local records and
   // setByUser=false, calls resolveInitialEnable(), gets `pull`, and restores
   // everything from iCloud — kicking the user back to home instead of
   // onboarding. Re-applied after the defaults reset so the flag survives.
@@ -126,4 +127,6 @@ export function resetLocalData() {
   clearLegacyLedger()
   forgetFoundSecrets()
   void Stopwatch.reset()
+  // A reset isn't the User removing photos: the next publish deletes none.
+  rebasePublishedPhotos()
 }

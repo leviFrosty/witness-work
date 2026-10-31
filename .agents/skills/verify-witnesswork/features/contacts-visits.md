@@ -20,7 +20,7 @@ Users keep the people they meet as contacts, log each conversation as a visit, m
 - The Contacts tab → "Add Contact" (top-right).
 - Contacts tab → a contact row → Contact Details.
 - Quick Action → "Add Contact".
-- The share link `https://ww-proxy.leviwilkerson.com/c#…` or `witnesswork://import-contact/<payload>` imports a shared contact.
+- The share link `https://ww-proxy.leviwilkerson.com/c#…`, `https://witnesswork.app/contacts#…` or `witnesswork://import-contact/<payload>` imports a shared contact.
 - A `.witnesswork` file opened from Files, Messages or AirDrop, or picked in Settings → More → Import Contact, imports one too.
 - Contact Details → More actions → "Share…" shares a contact; "Share as File" appears only when the contact is too large for a link.
 - Visit Details opens from a timeline card on Contact Details, the Up Next card's body, a person on Home's conversations card, a follow-up reminder (tray or system notification), a buddy's reply to a follow-up in the bell, and an outgoing follow-up on a buddy's page. `witnesswork://visit/<visitId>` opens it too.
@@ -71,6 +71,6 @@ Steps:
 - A Saved View drag must start moving within about half a second of the touch; a longer still hold opens the chip's menu by design.
 - Panning the map or stowing its cards compacts the header and tucks the chips away. Press the Contacts title to bring them back.
 - `wwv link` accepts the first alert it finds, which can be the app's own import prompt or refusal. To screenshot those, open the link with `xcrun simctl openurl <udid> '<url>'` on iOS (the udid is in `wwv status`).
-- Don't open the `https://ww-proxy.leviwilkerson.com/c…` form on a simulator, and don't drive the link share sheet: both reach the production ww-proxy (the share sheet fetches a link preview). Use the `witnesswork://import-contact/` form.
+- Don't open the `https://ww-proxy.leviwilkerson.com/c…` or `https://witnesswork.app/contacts…` form on a simulator, and don't drive the link share sheet: both reach the production ww-api (the share sheet fetches a link preview). Use the `witnesswork://import-contact/` form.
 - The system document picker (Settings → More → Import Contact) and the share sheet run outside the app; agent-device can't tap inside them on iOS. On Android, agent-device refocuses the app and closes the picker, so use `adb shell input tap` there (`uiautomator dump` fails while agent-device is attached).
 - On Android, a `content://media/…` URI (or another app's file provider) is refused as "Invalid File": the file module only reads `file://` and Storage Access Framework URIs.

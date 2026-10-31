@@ -12,6 +12,7 @@ import {
 import { petSliceFromBackup } from '@/lib/petBackup'
 import { extractProfileFromPreferences } from '@/lib/profileMigration'
 import { withRemoteDataMutation } from '@/lib/remoteDataMutation'
+import { rebasePublishedPhotos } from '@/app/sync/photoBaseline'
 import {
   syncableValues,
   NON_SYNCABLE_PROFILE_KEYS,
@@ -322,5 +323,6 @@ export function restoreBackupFile(file: BackupFile): BackupFileRestore {
         )
       )
   })
+  rebasePublishedPhotos()
   return { ok: true, droppedRecords: normalized.droppedRecords }
 }

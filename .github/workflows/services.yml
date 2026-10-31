@@ -1,0 +1,197 @@
+name: Services
+
+# Checks and deploys the website and the Help Center search Worker from services/.
+#   push to main                    -> production (services-production)
+#   push to feat/web-device-sign-in -> staging, dev.witnesswork.app (services-staging), until the web launch
+#   workflow_dispatch               -> staging only, on any ref, even main
+#   push to any other branch        -> lint, typecheck, test and build; no deploy
+# Production only ever comes from a push to main. Never deploys the app or ww-api.
+# The Cloudflare token reaches only the deploy steps (services/README.md).
+on:
+  push:
+    branches:
+      - '**'
+    paths:
+      - services/**
+      - .github/workflows/services.yml
+      - .github/scripts/services-smoke.sh
+      - .nvmrc
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    working-directory: services
+
+jobs:
+  check:
+    name: Check
+    if: github.event_name == 'push' && github.ref != 'refs/heads/main' && github.ref != 'refs/heads/feat/web-device-sign-in'
+    runs-on: ubuntu-latest
+    concurrency:
+      group: services-check-${{ github.ref }}
+      cancel-in-progress: true
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
+        with:
+          package_json_file: services/package.json
+
+      - name: Setup Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+          cache-dependency-path: services/pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run lint
+        run: pnpm lint
+
+      - name: Run typecheck
+        run: pnpm typecheck
+
+      - name: Run tests
+        run: pnpm test
+
+      - name: Build
+        run: pnpm build
+
+  deploy-production:
+    name: Deploy production
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: services-production
+    concurrency:
+      group: services-production
+      cancel-in-progress: false
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
+        with:
+          package_json_file: services/package.json
+
+      - name: Setup Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+          cache-dependency-path: services/pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run lint
+        run: pnpm lint
+
+      - name: Run typecheck
+        run: pnpm typecheck
+
+      - name: Run tests
+        run: pnpm test
+
+      - name: Build
+        run: pnpm build
+
+      - name: Deploy website
+        run: pnpm exec wrangler deploy
+        working-directory: services/marketing
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      - name: Deploy help search
+        run: pnpm exec wrangler deploy
+        working-directory: services/help-search
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      - name: Smoke test
+        env:
+          SITE: https://witnesswork.app
+          SEARCH: https://help-search.witnesswork.app
+          EXPECT_NOINDEX: 'false'
+          LEGACY_SEARCH: https://help-search.leviwilkerson.com
+        run: bash ../.github/scripts/services-smoke.sh
+
+  deploy-staging:
+    name: Deploy staging
+    # The push half goes away at the web launch, along with the branch in the
+    # check job's `if` and the header: staging then deploys only from
+    # workflow_dispatch. Until then it serves the integration branch's HEAD.
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/feat/web-device-sign-in')
+    runs-on: ubuntu-latest
+    environment: services-staging
+    concurrency:
+      group: services-staging
+      cancel-in-progress: false
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
+        with:
+          package_json_file: services/package.json
+
+      - name: Setup Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+          cache-dependency-path: services/pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run lint
+        run: pnpm lint
+
+      - name: Run typecheck
+        run: pnpm typecheck
+
+      - name: Run tests
+        run: pnpm test
+
+      - name: Build
+        run: pnpm --filter marketing run build:dev && pnpm --filter help-search exec wrangler deploy --env dev --dry-run --outdir dist
+
+      - name: Deploy website
+        run: pnpm exec wrangler deploy --env dev
+        working-directory: services/marketing
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      - name: Deploy help search
+        run: pnpm exec wrangler deploy --env dev
+        working-directory: services/help-search
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      - name: Smoke test
+        env:
+          SITE: https://dev.witnesswork.app
+          SEARCH: https://help-search-dev.witnesswork.app
+          EXPECT_NOINDEX: 'true'
+          # A brand-new staging search Worker has no index until its first sync.
+          ALLOW_EMPTY_INDEX: 'true'
+        run: bash ../.github/scripts/services-smoke.sh

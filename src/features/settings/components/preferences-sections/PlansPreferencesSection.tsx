@@ -15,6 +15,7 @@ import {
   usePreferences,
 } from '@/stores/preferences'
 import AvailabilityOnboardingSheet from '@/components/AvailabilityOnboardingSheet'
+import { hasCapability } from '@/lib/platformCapabilities'
 
 const PlansPreferencesSection = () => {
   const theme = useTheme()
@@ -63,63 +64,68 @@ const PlansPreferencesSection = () => {
   return (
     <View style={{ gap: 3 }}>
       <Section>
-        <InputRowContainer
-          label={i18n.t('notificationOffset')}
-          lastInSection
-          controlWidth='full'
-          description={i18n.t('planNotificationOffset_description')}
-          style={{
-            flexDirection: 'column',
-            gap: 10,
-            alignItems: 'flex-start',
-          }}
-        >
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 10,
-            }}
-          >
-            <View style={{ flex: 1 }}>
-              <Select
-                data={amountOptions}
-                onChange={({ value }) =>
-                  set({
-                    planNotificationOffset: {
-                      amount: value,
-                      unit: currentUnit,
-                    },
-                  })
-                }
-                value={currentAmount}
-              />
-            </View>
+        {/* Defaults for Notify Me, which the web doesn't show. */}
+        {hasCapability('deviceNotifications') && (
+          <>
+            <InputRowContainer
+              label={i18n.t('notificationOffset')}
+              lastInSection
+              controlWidth='full'
+              description={i18n.t('planNotificationOffset_description')}
+              style={{
+                flexDirection: 'column',
+                gap: 10,
+                alignItems: 'flex-start',
+              }}
+            >
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 10,
+                }}
+              >
+                <View style={{ flex: 1 }}>
+                  <Select
+                    data={amountOptions}
+                    onChange={({ value }) =>
+                      set({
+                        planNotificationOffset: {
+                          amount: value,
+                          unit: currentUnit,
+                        },
+                      })
+                    }
+                    value={currentAmount}
+                  />
+                </View>
 
-            <View style={{ flex: 1 }}>
-              <Select
-                data={unitOptions}
-                onChange={({ value }) =>
-                  set({
-                    planNotificationOffset: {
-                      amount: currentAmount,
-                      unit: value,
-                    },
-                  })
-                }
-                value={currentUnit}
-              />
-            </View>
-            <Text style={{ color: theme.colors.textAlt }}>
-              {i18n.t('before')}
-            </Text>
-          </View>
-        </InputRowContainer>
-        <InputRowSwitch
-          label={i18n.t('planAlwaysNotify')}
-          value={planAlwaysNotify}
-          onValueChange={(value) => set({ planAlwaysNotify: value })}
-        />
+                <View style={{ flex: 1 }}>
+                  <Select
+                    data={unitOptions}
+                    onChange={({ value }) =>
+                      set({
+                        planNotificationOffset: {
+                          amount: currentAmount,
+                          unit: value,
+                        },
+                      })
+                    }
+                    value={currentUnit}
+                  />
+                </View>
+                <Text style={{ color: theme.colors.textAlt }}>
+                  {i18n.t('before')}
+                </Text>
+              </View>
+            </InputRowContainer>
+            <InputRowSwitch
+              label={i18n.t('planAlwaysNotify')}
+              value={planAlwaysNotify}
+              onValueChange={(value) => set({ planAlwaysNotify: value })}
+            />
+          </>
+        )}
         <InputRowButton
           lastInSection
           wrapValue

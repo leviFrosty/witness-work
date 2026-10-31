@@ -10,14 +10,18 @@ import useIsSupporter from '@/hooks/useIsSupporter'
 import { isFoundingSupporter } from '@/lib/foundingSupporter'
 import useTheme from '@/contexts/theme'
 import { openStoreListing } from '@/lib/storeListing'
+import { hasCapability } from '@/lib/platformCapabilities'
 import { useNavigation } from '@react-navigation/native'
 import { RootStackNavigation } from '@/types/rootStack'
 import { SettingsSectionProps } from '@/features/settings/screens/settingScreen'
 import { useSubscriptionStatus } from '@/features/supporter/hooks/useManageSubscription'
 import { formatDisplay } from '@/lib/dates'
 
-/** The supporter's status, first in Support. */
-const SupporterRow = ({ since }: { since: Date }) => {
+/**
+ * The supporter's status, first in Support. Without `since` (ww-api's answer
+ * alone, ADR 0040 §7) it shows no year.
+ */
+const SupporterRow = ({ since }: { since: Date | null }) => {
   const theme = useTheme()
   const isFounding = isFoundingSupporter(since)
   return (
@@ -29,10 +33,14 @@ const SupporterRow = ({ since }: { since: Date }) => {
       label={i18n.t(
         isFounding ? 'supporterCardFoundingTitle' : 'supporterCardTitle'
       )}
-      sublabel={i18n.t(
-        isFounding ? 'supporterCardFoundingSince' : 'supporterCardSince',
-        { year: formatDisplay(since, 'YYYY') }
-      )}
+      sublabel={
+        since
+          ? i18n.t(
+              isFounding ? 'supporterCardFoundingSince' : 'supporterCardSince',
+              { year: formatDisplay(since, 'YYYY') }
+            )
+          : undefined
+      }
     />
   )
 }
@@ -45,11 +53,11 @@ const SupportSection = ({
   const theme = useTheme()
   const navigation = useNavigation<RootStackNavigation>()
   const subscription = useSubscriptionStatus()
-  const { since } = useIsSupporter()
+  const { isSupporter, since } = useIsSupporter()
 
   return (
     <GroupedListSection title={i18n.t('support')}>
-      {since && <SupporterRow since={since} />}
+      {isSupporter && <SupporterRow since={since} />}
       <GroupedListRow
         icon={HeartIcon}
         iconColor={theme.colors.supporter}
@@ -73,12 +81,14 @@ const SupportSection = ({
         onPress={() => handleNavigate('ShareApp')}
         selected={selectedDestination === 'ShareApp'}
       />
-      <GroupedListRow
-        icon={MedalIcon}
-        label={i18n.t('rateWitnessWorkOnAppStore')}
-        accessory='external'
-        onPress={() => openStoreListing({ review: true })}
-      />
+      {hasCapability('storeReview') && (
+        <GroupedListRow
+          icon={MedalIcon}
+          label={i18n.t('rateWitnessWorkOnAppStore')}
+          accessory='external'
+          onPress={() => openStoreListing({ review: true })}
+        />
+      )}
     </GroupedListSection>
   )
 }

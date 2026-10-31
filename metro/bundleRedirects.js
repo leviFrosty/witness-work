@@ -36,23 +36,71 @@ const nativeStubs = [
   },
 ]
 
+/**
+ * Packages the web build can't load, swapped for the web stand-ins in
+ * `src/vendor/web` (ADR 0037). Each stand-in says what it keeps.
+ */
+const webStubs = [
+  { request: 'lottie-react-native', stub: 'lottieView.tsx' },
+  { request: 'react-native-maps', stub: 'mapView.tsx' },
+  { request: 'expo-notifications', stub: 'notifications.ts' },
+  // Metro's `import()` runtime (`asyncRequireModulePath`).
+  { request: 'expo/internal/async-require-module', stub: 'asyncRequire.ts' },
+]
+
+/**
+ * Modules the web build swaps for the app's own, because theirs save to
+ * `localStorage`: react-native-mmkv's storage and AsyncStorage go to the
+ * IndexedDB-backed store database instead (docs/web-storage.md).
+ */
+const webModules = [
+  {
+    request: './createMMKV',
+    from: `${path.sep}react-native-mmkv${path.sep}`,
+    module: 'src/lib/webStorage/webMmkv.ts',
+  },
+  {
+    request: '@react-native-async-storage/async-storage',
+    module: 'src/lib/webStorage/webAsyncStorage.ts',
+  },
+]
+
+const matches = (entry, request, originModulePath) =>
+  entry.request === request &&
+  (!entry.from || originModulePath.includes(entry.from))
+
 const isPackageRequest = (request, name) =>
   request === name || request.startsWith(`${name}/`)
 
 /**
  * How Metro should treat a request: `commonJs` to resolve it with the `require`
- * condition, `stub` to replace it with that file, or `null` to leave it alone.
+ * condition, `stub` to replace it with that file (a stub, or on the web the
+ * app's replacement), or `null` to leave it alone.
  */
 function bundleRedirect(request, originModulePath, platform) {
   if (commonJsPackages.some((name) => isPackageRequest(request, name)))
     return { commonJs: true }
+  if (platform === 'web') {
+    const web = webModules.find((entry) =>
+      matches(entry, request, originModulePath)
+    )
+    if (web) return { stub: path.join(__dirname, '..', web.module) }
+    const stub = webStubs.find((entry) => entry.request === request)
+    return stub
+      ? { stub: path.join(__dirname, '..', 'src', 'vendor', 'web', stub.stub) }
+      : null
+  }
   if (platform !== 'ios' && platform !== 'android') return null
-  const stub = nativeStubs.find(
-    (entry) =>
-      entry.request === request &&
-      (!entry.from || originModulePath.includes(entry.from))
+  const stub = nativeStubs.find((entry) =>
+    matches(entry, request, originModulePath)
   )
   return stub ? { stub: path.join(__dirname, 'stubs', stub.stub) } : null
 }
 
-module.exports = { bundleRedirect, commonJsPackages, nativeStubs }
+module.exports = {
+  bundleRedirect,
+  commonJsPackages,
+  nativeStubs,
+  webStubs,
+  webModules,
+}

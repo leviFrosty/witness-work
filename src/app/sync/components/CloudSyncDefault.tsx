@@ -4,7 +4,9 @@ import useIsSupporter from '@/hooks/useIsSupporter'
 import { usePreferences } from '@/stores/preferences'
 import { iCloudSync } from '@/app/sync/iCloudSync'
 import { prepareCloudSync } from '@/app/sync/cloudSync'
+import { withSyncOptionLock } from '@/app/sync/syncOptionLock'
 import { analytics } from '@/lib/analytics'
+import { cloudSyncDefaultMayApply } from '@/app/sync/syncDefaults'
 import { hasSyncTransport } from '@/lib/syncTransport'
 import {
   addActiveRemoteChangeListener,
@@ -12,14 +14,15 @@ import {
 } from '@/lib/syncTransport/provider'
 
 /**
- * Cloud Sync is the default (ADR 0030 §3). A device that never chose a sync
- * option gets it once the server's switch is on and the device is entitled
- * (`everyone`, or a Supporter): it opens the account's session (creating the
- * account key when there's none), then decides like the Supporter auto-enable
- * did for iCloud: seed an empty account, pull everything into a device without
- * records, or leave sync off and ask in Settings when both have records. A
- * device already on iCloud or Drive, or one whose User turned sync off, is left
- * alone. Waits for onboarding to finish.
+ * Cloud Sync is the default (ADR 0030 §3, ADR 0040 §2). A device that never
+ * chose a sync option gets it once the server's switch is on and the device is
+ * entitled: every new install, and on an install from before sync was free only
+ * a Supporter, as it was then (`cloudSyncDefaultMayApply`). It opens the
+ * account's session (creating the account key when there's none), then decides
+ * like the iCloud auto-enable: seed an empty account, pull everything into a
+ * device without records, or leave sync off and ask in Settings when both have
+ * records. A device already on iCloud or Drive, or one whose User turned sync
+ * off, is left alone. Waits for onboarding to finish.
  */
 export default function CloudSyncDefault() {
   const { isSupporter } = useIsSupporter()
@@ -30,15 +33,18 @@ export default function CloudSyncDefault() {
     cloudSyncConfig,
     cloudSyncEntitled,
     onboardingComplete,
+    installedBeforeFreeSync,
   } = usePreferences()
   const offered =
     syncProvider !== 'platform' &&
     cloudSyncConfig?.enabled === true &&
     cloudSyncOffered()
-  const mayBeEntitled =
-    cloudSyncConfig?.entitlement === 'everyone' ||
-    isSupporter ||
-    cloudSyncEntitled === true
+  const mayBeEntitled = cloudSyncDefaultMayApply({
+    installedBeforeFreeSync,
+    isSupporter,
+    entitlement: cloudSyncConfig?.entitlement,
+    cloudSyncEntitled,
+  })
 
   useEffect(() => {
     if (!hasSyncTransport()) return
@@ -80,49 +86,7 @@ export default function CloudSyncDefault() {
       }
       running = true
       try {
-        const prepared = await prepareCloudSync()
-        if (settled) return
-        if (prepared.outcome !== 'ready') {
-          report(prepared.outcome)
-          // Offline, or attesting failed for now: try again on return. So
-          // does a Supporter the server can't confirm yet (RevenueCat down,
-          // or the purchase not linked to the account yet).
-          if (
-            prepared.outcome === 'no_session' ||
-            (prepared.outcome === 'not_entitled' && isSupporter)
-          )
-            retryLater()
-          else settle()
-          return
-        }
-        const decision = await iCloudSync.resolveInitialEnable()
-        if (settled) return
-        report(decision.outcome)
-        switch (decision.outcome) {
-          case 'seed':
-            settle()
-            usePreferences.setState({ syncProvider: 'cloud' })
-            await iCloudSync.applySeedEnable('supporter_default')
-            return
-          case 'pull':
-            settle()
-            usePreferences.setState({ syncProvider: 'cloud' })
-            iCloudSync.applyPullEnable(decision.remote, 'supporter_default')
-            return
-          case 'incomplete':
-            retryLater()
-            return
-          case 'conflict':
-            usePreferences.getState().set({
-              syncProvider: 'cloud',
-              iCloudSyncNeedsResolution: true,
-            })
-            settle()
-            return
-          case 'unavailable':
-            retryLater()
-            return
-        }
+        await withSyncOptionLock(decide)
       } catch {
         report('failed')
         settle()
@@ -132,6 +96,59 @@ export default function CloudSyncDefault() {
           again = false
           void attempt()
         }
+      }
+    }
+    // Under the lock, so a switch (the account's Cloud Sync request, Settings)
+    // never runs beside it; one that ran first may have chosen already.
+    const decide = async () => {
+      if (settled) return
+      const live = usePreferences.getState()
+      if (live.iCloudSyncEnabled || live.iCloudSyncSetByUser) {
+        settle()
+        return
+      }
+      const prepared = await prepareCloudSync()
+      if (settled) return
+      if (prepared.outcome !== 'ready') {
+        report(prepared.outcome)
+        // Offline, or attesting failed for now: try again on return. So
+        // does a Supporter the server can't confirm yet (RevenueCat down,
+        // or the purchase not linked to the account yet).
+        if (
+          prepared.outcome === 'no_session' ||
+          (prepared.outcome === 'not_entitled' && isSupporter)
+        )
+          retryLater()
+        else settle()
+        return
+      }
+      const decision = await iCloudSync.resolveInitialEnable()
+      if (settled) return
+      report(decision.outcome)
+      switch (decision.outcome) {
+        case 'seed':
+          settle()
+          usePreferences.setState({ syncProvider: 'cloud' })
+          await iCloudSync.applySeedEnable('supporter_default')
+          return
+        case 'pull':
+          settle()
+          usePreferences.setState({ syncProvider: 'cloud' })
+          iCloudSync.applyPullEnable(decision.remote, 'supporter_default')
+          return
+        case 'incomplete':
+          retryLater()
+          return
+        case 'conflict':
+          usePreferences.getState().set({
+            syncProvider: 'cloud',
+            iCloudSyncNeedsResolution: true,
+          })
+          settle()
+          return
+        case 'unavailable':
+          retryLater()
+          return
       }
     }
     void attempt()

@@ -32,10 +32,10 @@ import { addReconnectListener } from '@/lib/http/online'
 import { ICloudAccount, iCloudSync, RemotePeek } from '@/app/sync/iCloudSync'
 import { SyncPayload } from '@/app/sync/payload'
 import { usePreferences } from '@/stores/preferences'
-import { FRESH_SETUP_PREFERENCES } from '@/lib/syncPreferencePolicy'
+import { freshSetupPreferences } from '@/lib/syncPreferencePolicy'
 import { payloadReferencesPhotos } from '@/app/sync/photoReferences'
+import { usesCloudSync } from '@/lib/syncTransport/provider'
 import { useProfile } from '@/stores/profile'
-import useFeatureAccess from '@/hooks/useFeatureAccess'
 
 interface Props {
   goBack: () => void
@@ -76,9 +76,8 @@ const probeFromPeek = (peek: RemotePeek): Probe => {
 
 /**
  * Offers a one-shot restore from iCloud (iOS) or Google Drive (Android, ADR
- * 0019) during onboarding. Pulling is not gated by supporter status — the user
- * can import their data now and decide whether to enable ongoing sync (which IS
- * supporter-only) later. Skipping preserves an explicit local off choice before
+ * 0019) during onboarding. Restoring turns ongoing sync on with it (free for
+ * everyone, ADR 0040). Skipping preserves an explicit local off choice before
  * advancing.
  *
  * Android first asks the user to connect Google Drive; connecting also lets
@@ -88,7 +87,6 @@ const ICloudRestore = ({ goBack, goNext }: Props) => {
   const theme = useTheme()
   const { set } = usePreferences()
   const { set: setProfile } = useProfile()
-  const { hasAccess: canEnableICloudSync } = useFeatureAccess('iCloudSync')
   const [probe, setProbe] = useState<Probe>({ state: 'probing' })
   // Bumped by "Search again" to run the probe effect afresh.
   const [search, setSearch] = useState(0)
@@ -230,10 +228,7 @@ const ICloudRestore = ({ goBack, goNext }: Props) => {
       restore(remote, account, 'replace')
       return
     }
-    const properties = {
-      source: 'onboarding',
-      merge_offered: canEnableICloudSync,
-    }
+    const properties = { source: 'onboarding' }
 
     const choose = (mode: RestoreMode) => () => {
       analytics.capture('icloud_restore_replace_confirmed', {
@@ -244,24 +239,16 @@ const ICloudRestore = ({ goBack, goNext }: Props) => {
     }
     Alert.alert(
       i18n.t(syncKey('iCloudRestoreReplaceConfirm_title')),
-      i18n.t(
-        canEnableICloudSync
-          ? syncKey('iCloudRestoreReplaceConfirm_descriptionWithMerge')
-          : syncKey('iCloudRestoreReplaceConfirm_description')
-      ),
+      i18n.t(syncKey('iCloudRestoreReplaceConfirm_descriptionWithMerge')),
       [
         {
           text: i18n.t('cancel'),
           style: 'cancel',
         },
-        ...(canEnableICloudSync
-          ? [
-              {
-                text: i18n.t(syncKey('iCloudRestoreReplaceConfirm_merge')),
-                onPress: choose('merge'),
-              },
-            ]
-          : []),
+        {
+          text: i18n.t(syncKey('iCloudRestoreReplaceConfirm_merge')),
+          onPress: choose('merge'),
+        },
         {
           text: i18n.t(syncKey('iCloudRestoreReplaceConfirm_replace')),
           style: 'destructive' as const,
@@ -358,20 +345,15 @@ const ICloudRestore = ({ goBack, goNext }: Props) => {
   }
 
   /**
-   * For Supporters, flips ongoing sync on and marks the choice as user-set so
-   * `SupporterSyncDefault` doesn't second-guess it. The user just explicitly
-   * picked "bring my data from iCloud" — keeping the two sides in sync is the
-   * obvious follow-up, and requiring them to dig into Settings to turn it on is
-   * friction with no upside. Like `applyPullEnable`, a replace enables sync
-   * only after local data was swapped for the backup, so there's nothing left
-   * for this device to resolve.
-   *
-   * Non-supporters leave `iCloudSyncEnabled` off: ongoing sync is
-   * supporter-gated, so enabling it here would be a dead write that the
-   * Settings screen would refuse to expose anyway.
+   * Flips ongoing sync on and marks the choice as user-set so the sync defaults
+   * (`PlatformSyncDefault`, `CloudSyncDefault`) don't second-guess it. The user
+   * just explicitly picked "bring my data from iCloud" — keeping the two sides
+   * in sync is the obvious follow-up, and requiring them to dig into Settings
+   * to turn it on is friction with no upside. Like `applyPullEnable`, a replace
+   * enables sync only after local data was swapped for the backup, so there's
+   * nothing left for this device to resolve.
    */
   const enableSync = () => {
-    if (!canEnableICloudSync) return
     const wasSyncEnabled = usePreferences.getState().iCloudSyncEnabled
     set({
       iCloudSyncEnabled: true,
@@ -420,8 +402,12 @@ const ICloudRestore = ({ goBack, goNext }: Props) => {
     // If the restored payload references images via iCloud markers, prompt
     // the user to also pull those photos down. Per-device consent means we
     // can't silently flip `iCloudSyncIncludeImages` on — the user must opt
-    // in explicitly. See Q9 in docs/icloud-image-sync-plan.md.
-    if (payloadReferencesPhotos(remote)) {
+    // in explicitly. See Q9 in docs/icloud-image-sync-plan.md. Cloud Sync
+    // carries photos without asking (ADR 0040 §6).
+    const referencesPhotos = payloadReferencesPhotos(remote)
+    if (referencesPhotos && usesCloudSync()) {
+      void iCloudSync.pullImagesIfEnabled()
+    } else if (referencesPhotos) {
       analytics.capture('icloud_restore_images_prompted', {
         source: 'onboarding',
       })
@@ -755,18 +741,16 @@ const ICloudRestore = ({ goBack, goNext }: Props) => {
                   relative: formatRelative(probe.remote.writtenAt),
                 })}
               </Text>
-              {canEnableICloudSync && (
-                <Text
-                  style={{
-                    fontSize: 12,
-                    color: theme.colors.textAlt,
-                    marginTop: 4,
-                    lineHeight: 16,
-                  }}
-                >
-                  {i18n.t(syncKey('iCloudRestoreFoundSyncNote'))}
-                </Text>
-              )}
+              <Text
+                style={{
+                  fontSize: 12,
+                  color: theme.colors.textAlt,
+                  marginTop: 4,
+                  lineHeight: 16,
+                }}
+              >
+                {i18n.t(syncKey('iCloudRestoreFoundSyncNote'))}
+              </Text>
             </View>
           </Card>
         )}
@@ -804,11 +788,7 @@ const ICloudRestore = ({ goBack, goNext }: Props) => {
                 </Text>
               </View>
             ) : (
-              i18n.t(
-                canEnableICloudSync
-                  ? syncKey('iCloudRestoreActionWithSync')
-                  : syncKey('iCloudRestoreAction')
-              )
+              i18n.t(syncKey('iCloudRestoreActionWithSync'))
             )}
           </ActionButton>
         )}
@@ -849,7 +829,7 @@ const ICloudRestore = ({ goBack, goNext }: Props) => {
               import_type: importType(),
               status: probe.state,
             })
-            set(FRESH_SETUP_PREFERENCES)
+            set(freshSetupPreferences(usePreferences.getState()))
             goNext()
           }}
           style={{ alignSelf: 'center', paddingVertical: 10 }}

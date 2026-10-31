@@ -12,7 +12,7 @@ import { open, seal } from '@/lib/sealedBlob'
 
 export type DeviceLabel = {
   name: string
-  platform: 'ios' | 'android'
+  platform: 'ios' | 'android' | 'web'
   model: string
 }
 
@@ -33,6 +33,9 @@ const aad = (accountPub: string) => `${LABEL}\n${accountPub}`
 /** `0x01 ‖ nonce[12] ‖ ciphertext ‖ tag[16]`, as unpadded base64url. */
 const sealedLength = (plaintextBytes: number) =>
   Math.ceil(((1 + 12 + plaintextBytes + 16) * 4) / 3)
+
+const clamp = (value: string) =>
+  Array.from(value).slice(0, DEVICE_LABEL_FIELD_MAX).join('')
 
 const plaintext = (label: DeviceLabel) => utf8(JSON.stringify(label))
 
@@ -77,7 +80,10 @@ export function sealDeviceLabel(
   return sealed
 }
 
-/** Throws when it doesn't open under this account or isn't a label. */
+/**
+ * Throws when it doesn't open under this account or isn't a label. The names
+ * come back cut to 64 characters, whatever another client sealed.
+ */
 export function openDeviceLabel(
   accountKey: Uint8Array,
   accountPub: string,
@@ -89,8 +95,14 @@ export function openDeviceLabel(
   if (
     typeof value?.name !== 'string' ||
     typeof value.model !== 'string' ||
-    (value.platform !== 'ios' && value.platform !== 'android')
+    (value.platform !== 'ios' &&
+      value.platform !== 'android' &&
+      value.platform !== 'web')
   )
     throw new Error('Not a device label')
-  return { name: value.name, platform: value.platform, model: value.model }
+  return {
+    name: clamp(value.name),
+    platform: value.platform,
+    model: clamp(value.model),
+  }
 }

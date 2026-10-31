@@ -11,6 +11,7 @@ import {
 } from '@/stores/migrations/categories'
 import { runProfileMigration } from '@/stores/migrations/profile'
 import { migrateLegacyLocale } from '@/features/settings/lib/migrateLegacyLocale'
+import { whenIdle } from '@/lib/whenIdle'
 
 export function useAppMigrations() {
   const [hasMigrated, setHasMigrated] = useState(hasMigratedFromAsyncStorage())
@@ -19,7 +20,7 @@ export function useAppMigrations() {
     if (!hasMigratedFromAsyncStorage()) {
       // Deferred to idle so the migration doesn't jank the launch animation
       // (InteractionManager is deprecated as of RN 0.86).
-      requestIdleCallback(async () => {
+      whenIdle(async () => {
         try {
           // Legacy data was copied: reload so hydrated stores re-read MMKV.
           // Fresh installs skip this; reloading mid-launch strands dev clients

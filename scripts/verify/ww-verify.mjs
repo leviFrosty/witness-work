@@ -2395,7 +2395,7 @@ function envApiUrl() {
       'node',
       '--input-type=module',
       '-e',
-      "import('./scripts/with-local-env.mjs').then(({ loadLocalEnv }) => console.log(loadLocalEnv(process.cwd(), 'development').env.EXPO_PUBLIC_API_BASE_URL || 'https://ww-proxy.leviwilkerson.com'))",
+      "import('./scripts/with-local-env.mjs').then(({ loadLocalEnv, defaultApiBaseUrl }) => console.log(loadLocalEnv(process.cwd(), 'development').env.EXPO_PUBLIC_API_BASE_URL || defaultApiBaseUrl('development')))",
     ],
     { cwd: ROOT, check: false }
   )
@@ -2638,15 +2638,25 @@ async function launch(state, device, retry = true) {
     device.platform === 'ios'
       ? ['--platform', 'ios', '--udid', device.id]
       : ['--platform', 'android', '--serial', device.id]
-  agentDevice([
-    'open',
-    BUNDLE_ID,
-    devClientUrl(port),
-    ...target,
-    '--session',
-    session,
-    '--relaunch',
-  ])
+  await openApp(device, {
+    open: () =>
+      agentDevice([
+        'open',
+        BUNDLE_ID,
+        devClientUrl(port),
+        ...target,
+        '--session',
+        session,
+        '--relaunch',
+      ]),
+    closeSession: () => agentDevice(['close', '--session', session]),
+    simulatorsReachable: () =>
+      run('xcrun', ['simctl', 'list', 'devices', '-j'], { check: false })
+        .status === 0,
+    restartDaemon: stopAgentDeviceDaemon,
+    appRunning: async () => Boolean(await cdpTarget(state, device.platform)),
+    log,
+  })
   for (let i = 0; i < 10 && !(await cdpTarget(state, device.platform)); i++)
     await sleep(2000)
   if (device.platform === 'ios' && !(await cdpTarget(state, device.platform))) {
@@ -2661,6 +2671,86 @@ async function launch(state, device, retry = true) {
     )
   log('the native splash still covers the app; relaunching')
   await launch(state, device, false)
+}
+
+// agent-device runs one daemon per machine, and every worktree's simctl calls
+// go through it. A daemon started where CoreSimulator can't be reached (a
+// sandboxed or non-GUI shell) fails every iOS open, for every worktree, and
+// stays up as long as any session, Android included, is open.
+const SIMULATORS_UNREACHABLE = /CoreSimulatorService|xcrun exited with code 72/
+const SESSION_ACTIVE = /Session already active/
+
+/**
+ * Opens the app through agent-device and fails at once with its error, rather
+ * than waiting minutes for a JS runtime that never launched. Recovers a session
+ * left open by an earlier `up`, and on iOS restarts a daemon that can't reach
+ * simulators when this shell can.
+ */
+export async function openApp(device, io) {
+  let result = io.open()
+  if (result.status !== 0 && SESSION_ACTIVE.test(output(result))) {
+    io.closeSession()
+    result = io.open()
+  }
+  if (
+    result.status !== 0 &&
+    device.platform === 'ios' &&
+    SIMULATORS_UNREACHABLE.test(output(result))
+  ) {
+    if (!io.simulatorsReachable())
+      fail(
+        `agent-device can't reach CoreSimulator, and neither can this shell (a sandboxed shell?). Run wwv from a shell that can run xcrun simctl list.\n${output(result).trim().slice(-800)}`
+      )
+    io.log(
+      "agent-device's daemon can't reach CoreSimulator, though this shell can; restarting it"
+    )
+    io.restartDaemon()
+    result = io.open()
+  }
+  if (result.status === 0) return
+  if (await io.appRunning()) {
+    io.log(
+      `agent-device open failed, but the app already runs on this Metro: ${output(result).trim().slice(-300)}`
+    )
+    return
+  }
+  fail(
+    `agent-device could not open the app on ${device.name}:\n${output(result).trim().slice(-1500)}`
+  )
+}
+
+/**
+ * Stops agent-device's daemon, so the next command starts a fresh one from this
+ * shell. Other worktrees' sessions reopen on their next command.
+ */
+function stopAgentDeviceDaemon() {
+  const stateDir =
+    process.env.AGENT_DEVICE_STATE_DIR ||
+    path.join(os.homedir(), '.agent-device')
+  const pid = Number(readJson(path.join(stateDir, 'daemon.json'), {}).pid)
+  if (!pid) return
+  const command = run('ps', ['-o', 'command=', '-p', String(pid)], {
+    check: false,
+  }).stdout
+  if (!/agent-device.*daemon\.js/.test(command)) return
+  try {
+    process.kill(pid, 'SIGTERM')
+  } catch {
+    return
+  }
+  for (let i = 0; i < 20; i++) {
+    try {
+      process.kill(pid, 0)
+    } catch {
+      return
+    }
+    sleepSync(500)
+  }
+  try {
+    process.kill(pid, 'SIGKILL')
+  } catch {
+    // gone
+  }
 }
 
 /**
@@ -3687,6 +3777,7 @@ export {
   screenshot,
   shutdownWarmDevice,
   simctlDevices,
+  stopAgentDeviceDaemon,
   sleep,
   startHeartbeat,
   startLocalApi,

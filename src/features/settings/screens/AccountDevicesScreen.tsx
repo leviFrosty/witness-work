@@ -3,7 +3,9 @@ import { Alert, RefreshControl, ScrollView, View } from 'react-native'
 import { useIsFocused } from '@react-navigation/native'
 import moment from 'moment'
 import {
+  Globe as GlobeIcon,
   Monitor as MonitorIcon,
+  MonitorSmartphone as MonitorSmartphoneIcon,
   Smartphone as SmartphoneIcon,
   Tablet as TabletIcon,
 } from 'lucide-react-native'
@@ -49,6 +51,8 @@ const ICONS: Record<DeviceKind, AppIcon> = {
   phone: SmartphoneIcon,
   tablet: TabletIcon,
   computer: MonitorIcon,
+  browser: GlobeIcon,
+  unknown: MonitorSmartphoneIcon,
 }
 
 /** "Oct 18", with the year when it isn't this one. */
@@ -148,7 +152,11 @@ const AccountDevicesScreen = () => {
   const signOut = (device: AccountDevice, name: string) =>
     Alert.alert(
       i18n.t('accountDevices_signOutTitle', { device: name }),
-      i18n.t('accountDevices_signOutBody'),
+      i18n.t(
+        device.platform === 'web'
+          ? 'accountDevices_signOutWebBody'
+          : 'accountDevices_signOutBody'
+      ),
       [
         { text: i18n.t('cancel'), style: 'cancel' },
         {
@@ -159,14 +167,14 @@ const AccountDevicesScreen = () => {
               .then(() =>
                 analytics.capture('account_device_signed_out', {
                   outcome: 'ok',
-                  platform: device.platform,
+                  platform: device.platform ?? 'unknown',
                 })
               )
               .catch((error: unknown) => {
                 logger.warn('[account] signing out a device failed', error)
                 analytics.capture('account_device_signed_out', {
                   outcome: 'failed',
-                  platform: device.platform,
+                  platform: device.platform ?? 'unknown',
                 })
                 Alert.alert(
                   i18n.t('accountDevices_signOutFailedTitle'),
@@ -225,7 +233,14 @@ const AccountDevicesScreen = () => {
                               when: formatRelative(device.lastActiveAt),
                             }),
                         signedIn(device, devices, name),
-                      ].join(' · ')}
+                        device.platform === 'web' &&
+                          device.appVersion &&
+                          i18n.t('accountDevices_version', {
+                            version: device.appVersion,
+                          }),
+                      ]
+                        .filter(Boolean)
+                        .join(' · ')}
                       onPress={
                         device.current ? undefined : () => signOut(device, name)
                       }

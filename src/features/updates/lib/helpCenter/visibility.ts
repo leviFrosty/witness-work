@@ -16,8 +16,9 @@ export function compareVersions(a: string, b: string): number {
 }
 
 /**
- * Whether `entry` applies on `platform` and app `version`. An unknown app
- * version shows every entry rather than hiding answers.
+ * Whether `entry` applies on `platform` (`Platform.OS`: `ios`, `android` or
+ * `web`) and app `version`. An unknown app version shows every entry rather
+ * than hiding answers; the web has none, so it shows every answer for it.
  */
 export function isEntryVisible(
   entry: HelpEntry,

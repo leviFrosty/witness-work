@@ -14,7 +14,10 @@ const dailyEvents = new Set([
   'account_backup_failed',
   'account_session_failed',
   'device_storage_full',
+  'web_storage_failed',
   'help_center_refreshed',
+  'cloud_sync_photos_storage_full',
+  'cloud_sync_photo_transfer_failed',
 ])
 const sessionEvents = new Set([
   'timer_action_completed',

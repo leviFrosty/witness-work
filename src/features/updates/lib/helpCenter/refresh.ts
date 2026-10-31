@@ -109,7 +109,7 @@ export async function refreshHelpBundle(
 
     const response = await request(
       deps,
-      // Bundle paths are relative to the manifest's site.
+      // Bundle paths are absolute URLs, or relative to the manifest's site.
       new URL(published.path, links.helpCenterManifest).toString()
     )
     if (!response.ok) throw new RefreshError('http')

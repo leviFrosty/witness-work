@@ -20,7 +20,9 @@ import {
   OPEN_RETRY_AFTER_MS,
   type SessionStore,
   STORE_ATTEMPTS,
+  sessionEndWipes,
   staleTokenHash,
+  toAccountSessionError,
 } from '@/lib/serverAccount/session'
 import { sessionAttestationHash } from '@/lib/serverAccount/sessionClient'
 
@@ -361,7 +363,9 @@ describe('account sessions', () => {
     await info()
 
     expect(worker.opsCalled('session/refresh')).toEqual([
-      expect.objectContaining({ body: { refreshToken: 'rt-1' } }),
+      expect.objectContaining({
+        body: { refreshToken: 'rt-1', capabilities: ['sync-everyone'] },
+      }),
     ])
     expect(JSON.parse(store.value!).refreshToken).toBe('rt-3')
     clock.now += ACCESS_LIFETIME_MS
@@ -369,6 +373,7 @@ describe('account sessions', () => {
     // Each refresh sends the newest token, never a replaced one.
     expect(worker.opsCalled('session/refresh')[1].body).toEqual({
       refreshToken: 'rt-3',
+      capabilities: ['sync-everyone'],
     })
     expect(worker.opsCalled('session/open')).toHaveLength(1)
   })
@@ -428,6 +433,109 @@ describe('account sessions', () => {
       reason: 'ended',
       outcome: 'ok',
     })
+  })
+
+  it('says why the server refused a refresh', async () => {
+    const { worker, clock, info, events } = setup()
+    await info()
+    clock.now += ACCESS_LIFETIME_MS
+    worker.override.set('session/refresh', () =>
+      failure(401, 'unauthorized', { reason: 'revoked' })
+    )
+
+    await info()
+
+    expect(events).toContainEqual(
+      expect.objectContaining({
+        op: 'session/refresh',
+        outcome: 'server',
+        serverReason: 'revoked',
+      })
+    )
+    expect(events.at(-1)).toMatchObject({ op: 'session/open', reason: 'ended' })
+  })
+
+  it('reads the refused refresh reason into the error', () => {
+    const httpError = (body: Record<string, unknown>, status = 401) =>
+      new HttpError(
+        'client',
+        status,
+        String(body.error ?? '') || null,
+        null,
+        undefined,
+        body
+      )
+    const ended = (body: Record<string, unknown>, status = 401) =>
+      toAccountSessionError(httpError(body, status), { refresh: true }).ended
+    expect(ended({ error: 'unauthorized', reason: 'revoked' })).toBe('revoked')
+    expect(ended({ error: 'unauthorized', reason: 'reused' })).toBe('reused')
+    expect(ended({ error: 'unauthorized', reason: 'replaced' })).toBe(
+      'replaced'
+    )
+    expect(ended({ error: 'unauthorized', reason: 'expired' })).toBe('expired')
+    expect(ended({ error: 'unauthorized', reason: 'later' })).toBe('unknown')
+    expect(ended({ error: 'unauthorized' })).toBe('unknown')
+    expect(ended({ error: 'forbidden' }, 403)).toBeNull()
+    // Only a refused refresh ended the session; any other 401 didn't.
+    expect(
+      toAccountSessionError(
+        httpError({ error: 'unauthorized', reason: 'revoked' })
+      ).ended
+    ).toBeNull()
+    expect(sessionEndWipes('revoked')).toBe(true)
+    expect(sessionEndWipes('reused')).toBe(true)
+    expect(sessionEndWipes('expired')).toBe(false)
+    expect(sessionEndWipes('replaced')).toBe(false)
+    expect(sessionEndWipes(null)).toBe(false)
+  })
+
+  it('sends the app version on open and refresh', async () => {
+    const { worker, clock, info } = setup({
+      deps: { appVersion: () => '3.12.0' },
+    })
+    await info()
+    clock.now += ACCESS_LIFETIME_MS
+    await info()
+
+    expect(openPayload(worker).appVersion).toBe('3.12.0')
+    expect(worker.opsCalled('session/refresh')[0].body).toEqual({
+      refreshToken: expect.any(String),
+      appVersion: '3.12.0',
+      capabilities: ['sync-everyone'],
+    })
+  })
+
+  it('asks for Cloud Sync for everyone on open and on every refresh', async () => {
+    // ww-api gives everyone's Cloud Sync only to a session that says it can
+    // take it (ADR 0040 §2). Every refresh repeats it, so a session an older
+    // app opened gains it after the update.
+    const { worker, clock, info } = setup()
+    await info()
+    clock.now += ACCESS_LIFETIME_MS
+    await info()
+    clock.now += ACCESS_LIFETIME_MS
+    await info()
+
+    expect(openPayload(worker).capabilities).toEqual(['sync-everyone'])
+    const refreshes = worker.opsCalled('session/refresh')
+    expect(refreshes.length).toBeGreaterThanOrEqual(2)
+    for (const refresh of refreshes)
+      expect(refresh.body).toMatchObject({ capabilities: ['sync-everyone'] })
+  })
+
+  it('leaves out an app version the server would refuse', async () => {
+    for (const version of ['3.12', '3.12.0 (412)', `${'1'.repeat(31)}.0.0`]) {
+      const { worker, clock, info } = setup({
+        deps: { appVersion: () => version },
+      })
+      await info()
+      clock.now += ACCESS_LIFETIME_MS
+      await info()
+      expect(openPayload(worker)).not.toHaveProperty('appVersion')
+      expect(worker.opsCalled('session/refresh')[0].body).not.toHaveProperty(
+        'appVersion'
+      )
+    }
   })
 
   it('renews the access token first when asked, signing a signed-out device back in', async () => {
@@ -606,7 +714,7 @@ describe('account sessions', () => {
     // rt-1 is never presented again: a new session, attested.
     expect(
       first.worker.opsCalled('session/refresh').map((call) => call.body)
-    ).toEqual([{ refreshToken: 'rt-1' }])
+    ).toEqual([{ refreshToken: 'rt-1', capabilities: ['sync-everyone'] }])
     expect(relaunched.attestation.assert).toHaveBeenCalledTimes(1)
     expect(relaunched.events).toEqual([
       expect.objectContaining({
@@ -640,6 +748,7 @@ describe('account sessions', () => {
     expect(relaunched.attestation.assert).not.toHaveBeenCalled()
     expect(first.worker.opsCalled('session/refresh').at(-1)?.body).toEqual({
       refreshToken: 'rt-5',
+      capabilities: ['sync-everyone'],
     })
   })
 
@@ -686,6 +795,7 @@ describe('account sessions', () => {
     expect(relaunched.attestation.assert).not.toHaveBeenCalled()
     expect(first.worker.opsCalled('session/refresh')[0].body).toEqual({
       refreshToken: 'rt-1',
+      capabilities: ['sync-everyone'],
     })
   })
 

@@ -250,6 +250,11 @@ export type RootStackParamList = {
       }
     | undefined
   MilestoneShowcase: undefined
+  /**
+   * Developer Tools: the web's Cloud Sync screen on a phone. `live` runs it
+   * against this phone's account as a browser would; the rest show one state.
+   */
+  WebCloudSyncPreview: { mode: 'live' | 'turnOn' | 'waiting' | 'updatePhone' }
   FAQ: { scrollToCategory?: string } | undefined
   /** QR codes and a link for sharing WitnessWork with a friend. */
   ShareApp: undefined

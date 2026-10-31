@@ -418,3 +418,49 @@ describe('Plan deletions over iCloud', () => {
     expect(useCategories.getState().categories).toEqual([category('cat1', OLD)])
   })
 })
+
+describe('RevenueCat claims (ADR 0040 §7)', () => {
+  const claim = {
+    appUserId: 'aaaaaaaa-0000-4000-8000-00000000000a',
+    entitled: true,
+    claimedAt: 1,
+  }
+  const withClaim = (file: SyncFile, revenueCat: unknown): SyncFile => ({
+    ...file,
+    json: JSON.stringify({ ...JSON.parse(file.json), revenueCat }),
+  })
+
+  it("a pull reads the peers' claims, and an empty folder clears them", async () => {
+    const { pullAndMerge } = await load()
+    const registry = await import('@/lib/accountClaimRegistry')
+    runtime.files = [
+      withClaim(peerFile('phone', {}), claim),
+      peerFile('older', {}),
+      withClaim(peerFile('odd', {}), { appUserId: 'x' }),
+    ]
+
+    await pullAndMerge('remote-change')
+    expect(registry.peerAccountClaims()).toEqual([claim])
+
+    runtime.files = []
+    await pullAndMerge('remote-change')
+    expect(registry.peerAccountClaims()).toEqual([])
+  })
+
+  it("a push publishes this device's claim, and a new one pushes", async () => {
+    const { installiCloudSync, iCloudSync, push, bridge } = await load()
+    const registry = await import('@/lib/accountClaimRegistry')
+    registry.setOwnAccountClaim(claim)
+
+    await push('manual')
+    expect(
+      JSON.parse(vi.mocked(bridge.write).mock.calls.at(-1)![1]).revenueCat
+    ).toEqual(claim)
+
+    uninstall = installiCloudSync()
+    await settle()
+    expect(iCloudSync.isPushScheduled()).toBe(false)
+    registry.setOwnAccountClaim({ ...claim, entitled: false })
+    expect(iCloudSync.isPushScheduled()).toBe(true)
+  })
+})

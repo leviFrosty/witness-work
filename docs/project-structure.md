@@ -13,6 +13,7 @@ For the tier rules (shared / feature / app) and how they're enforced by `eslint-
 - [`patches`](/patches) Patch files applied to dependencies via [`patch-package`](https://github.com/ds300/patch-package).
 - [`plugins`](/plugins) Local Expo config plugins.
 - [`scripts`](/scripts) Repo-level CLI scripts (see also `src/scripts/`).
+- [`services`](/services) Non-app services, in their own pnpm workspace with their own lockfile ([`services/README.md`](/services/README.md)): [`marketing`](/services/marketing) is the website at witnesswork.app (TanStack Start, prerendered to static files) with the Help Center's content and bundles, and [`help-search`](/services/help-search) is the Help Center search Worker. The app's tooling leaves it alone: `tsconfig.json`, ESLint, Vitest and Metro all exclude it, and it has its own build, tests, typecheck and lint.
 - [`targets`](/targets) Native widget extension sources (iOS).
 - [`eslint.config.mjs`](/eslint.config.mjs) ESLint 10 flat config — includes the boundaries plugin that enforces the shared/feature/app tiers.
 
@@ -30,7 +31,7 @@ App-level infrastructure that boots in `App.tsx` and may reach into any feature.
 - [`pet/`](/src/app/pet) — the buddy's pet that visits the Pet Companion's room (`usePetVisitor`).
 - [`sync/`](/src/app/sync) — iCloud sync orchestration (payload, merge, image sync, sync components).
 - [`deep-links/`](/src/app/deep-links) — `DeepLinkListeners`.
-- [`launch/`](/src/app/launch) — `LaunchSplash` (a pixel match of the native splash, shown while the app boots and while navigation resolves) and `launchState` (whether navigation's first screen is up yet).
+- [`launch/`](/src/app/launch) — `LaunchSplash` (a pixel match of the native splash, shown while the app boots and while navigation resolves), `launchState` (whether navigation's first screen is up yet) and `beforeAppLoads` (what the web loads before the app's modules: CanvasKit and the selected language).
 - [`notifications/`](/src/app/notifications) — `NotificationsBell` (composes every feature's tray items into the Home header bell) and `NotificationHosts` (the sheet and survey tray actions open on Home).
 
 ### Feature tier — [`src/features/`](/src/features)
@@ -71,13 +72,15 @@ Cross-feature primitives and infra. Anything in here is importable by every tier
 - [`contexts/`](/src/contexts) — internal [React Contexts](https://react.dev/learn/passing-data-deeply-with-context).
 - [`assets/`](/src/assets) — local assets (images, icons, [lottie](https://lottiefiles.com/) animations).
 - [`locales/`](/src/locales) — translation files per locale; `en-US` is the source of truth.
-- [`vendor/`](/src/vendor) — vendored third-party code.
+- [`vendor/`](/src/vendor) — vendored third-party code, and in [`vendor/web/`](/src/vendor/web) the web build's stand-ins for packages it can't load (`metro/bundleRedirects.js`).
 
 ### Other
 
 - [`src/__tests__/`](/src/__tests__) — tests. Classified as `app` so they can pull from any feature.
 - [`src/scripts/`](/src/scripts) — local CLI scripts for various CI/CD functions (e.g. `translate.ts`).
 - [`src/index.js`](/src/index.js) — runtime entry that registers `App.tsx`.
+
+A `.web.ts(x)` file next to a module replaces it in the web build only (ADR 0037); TypeScript and tests see the base file.
 
 ## Path alias
 

@@ -1,0 +1,701 @@
+/* WitnessWork landing page (/ and /<locale>).
+   Everything is scoped to [data-page="ww"], so the rest of the site keeps its
+   own look. Motion is transform/opacity only and turns off under
+   prefers-reduced-motion. */
+
+[data-page='ww'] {
+  --ww-bg: #030604;
+  --ww-bg-raised: #08100b;
+  --ww-ink: #f1f6f2;
+  --ww-muted: #9aa9a0;
+  --ww-faint: #66736c;
+  --ww-line: rgb(255 255 255 / 0.08);
+  --ww-line-strong: rgb(255 255 255 / 0.14);
+  --ww-card: rgb(255 255 255 / 0.035);
+  --ww-card-strong: rgb(255 255 255 / 0.06);
+  --ww-green: #1bd15d;
+  --ww-green-soft: #4bd27c;
+  --ww-mint: #9af5c3;
+  --ww-teal: #5eead4;
+  --ww-cyan: #22d3ee;
+  --ww-indigo: #818cf8;
+  --ww-violet: #a78bfa;
+  --ww-gold: #f4c23a;
+  --ww-orange: #fb923c;
+  --ww-rose: #fb7185;
+  --ww-ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --ww-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ww-nav-h: 3.5rem;
+
+  background-color: var(--ww-bg);
+  background-image: none;
+  color: var(--ww-ink);
+  /* The system face: SF Pro on Apple devices, Roboto or Segoe UI elsewhere,
+     with each script's own system font behind it. */
+  font-family:
+    -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto,
+    'Noto Sans', 'Hiragino Sans', 'Apple SD Gothic Neo', 'PingFang SC',
+    'Microsoft YaHei', 'Noto Sans Arabic', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  overflow-x: clip;
+}
+
+[data-page='ww'] ::selection {
+  background-color: var(--ww-green);
+  color: #021006;
+}
+
+[data-page='ww'] :where(a, button, summary):focus-visible {
+  outline: 2px solid var(--ww-mint);
+  outline-offset: 3px;
+  border-radius: 10px;
+}
+
+[data-page='ww'] section[id] {
+  scroll-margin-top: calc(var(--ww-nav-h) + 1rem);
+}
+
+/* --- Type ------------------------------------------------------------- */
+
+.ww-display {
+  font-weight: 700;
+  letter-spacing: -0.045em;
+  line-height: 0.98;
+  text-wrap: balance;
+}
+.ww-h2 {
+  font-size: clamp(2.35rem, 7.4vw, 5rem);
+  font-weight: 700;
+  letter-spacing: -0.042em;
+  line-height: 1.02;
+  text-wrap: balance;
+}
+.ww-h3 {
+  font-size: clamp(1.6rem, 4.6vw, 2.6rem);
+  font-weight: 650;
+  letter-spacing: -0.035em;
+  line-height: 1.08;
+  text-wrap: balance;
+}
+/* Apple's eyebrow: a short, semibold line in the section's color above the
+   headline. Plain case, the page's own face, any script. */
+.ww-eyebrow {
+  font-size: clamp(1.05rem, 2.2vw, 1.3rem);
+  font-weight: 600;
+  letter-spacing: -0.012em;
+  line-height: 1.25;
+  color: var(--ww-mint);
+}
+/* Footnotes: what a feature needs, or where it's available. */
+.ww-foot {
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--ww-muted);
+  text-wrap: pretty;
+}
+.ww-lead {
+  font-size: clamp(1.08rem, 2.6vw, 1.32rem);
+  line-height: 1.55;
+  color: var(--ww-muted);
+  text-wrap: pretty;
+}
+.ww-lead strong,
+.ww-body strong {
+  color: var(--ww-ink);
+  font-weight: 600;
+}
+.ww-body {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--ww-muted);
+  text-wrap: pretty;
+}
+:lang(ja) .ww-display,
+:lang(ko) .ww-display,
+:lang(zh) .ww-display,
+:lang(ja) .ww-h2,
+:lang(ko) .ww-h2,
+:lang(zh) .ww-h2 {
+  letter-spacing: -0.02em;
+  line-height: 1.12;
+  line-break: strict;
+}
+/* Korean wraps between words; Japanese and Chinese may wrap between
+   characters, at phrase boundaries where the browser can find them. */
+:lang(ko) .ww-display,
+:lang(ko) .ww-h2 {
+  word-break: keep-all;
+}
+@supports (word-break: auto-phrase) {
+  :lang(ja) .ww-display,
+  :lang(ja) .ww-h2 {
+    word-break: auto-phrase;
+  }
+}
+:lang(ar) .ww-display,
+:lang(ar) .ww-h2,
+:lang(ar) .ww-h3 {
+  letter-spacing: 0;
+  line-height: 1.25;
+}
+
+/* --- Surfaces ------------------------------------------------------------ */
+
+.ww-card {
+  position: relative;
+  border-radius: 28px;
+  background:
+    linear-gradient(180deg, rgb(255 255 255 / 0.05), rgb(255 255 255 / 0.015)),
+    var(--ww-bg-raised);
+  box-shadow:
+    inset 0 0 0 1px var(--ww-line),
+    inset 0 1px 0 0 rgb(255 255 255 / 0.06);
+  overflow: hidden;
+}
+.ww-grid-bg {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(to right, rgb(255 255 255 / 0.045) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(255 255 255 / 0.045) 1px, transparent 1px);
+  background-size: 64px 64px;
+  background-position: center top;
+  mask-image: radial-gradient(
+    ellipse 70% 60% at 50% 0%,
+    #000 0%,
+    transparent 75%
+  );
+}
+
+/* --- Buttons ------------------------------------------------------------- */
+
+.ww-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 2.75rem;
+  padding: 0 1.15rem;
+  border-radius: 999px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  transition:
+    transform 200ms var(--ww-ease),
+    background-color 200ms ease,
+    box-shadow 200ms ease;
+}
+.ww-btn:active {
+  transform: scale(0.97);
+}
+.ww-btn-primary {
+  color: #03120a;
+  background: var(--ww-green);
+  box-shadow:
+    0 0 0 1px rgb(255 255 255 / 0.18) inset,
+    0 10px 30px -8px rgb(27 209 93 / 0.55);
+}
+.ww-btn-primary:hover {
+  background: #2be06c;
+}
+.ww-btn-ghost {
+  color: var(--ww-ink);
+  background: rgb(255 255 255 / 0.06);
+  box-shadow: inset 0 0 0 1px var(--ww-line-strong);
+}
+.ww-btn-ghost:hover {
+  background: rgb(255 255 255 / 0.1);
+}
+
+.ww-store {
+  display: inline-flex;
+  border-radius: 12px;
+  transition: transform 200ms var(--ww-ease);
+}
+.ww-store:hover {
+  transform: translateY(-2px);
+}
+.ww-store img {
+  height: 2.75rem;
+  width: auto;
+}
+.ww-store[data-size='lg'] img {
+  height: 3.15rem;
+}
+
+/* --- Reveal (scroll entry) ---------------------------------------------- */
+
+[data-page='ww'] .ww-reveal {
+  opacity: 0;
+  transform: translate3d(0, 28px, 0);
+  transition:
+    opacity 900ms var(--ww-ease),
+    transform 1100ms var(--ww-ease);
+  transition-delay: var(--delay, 0ms);
+}
+[data-page='ww'] .ww-reveal[data-variant='scale'] {
+  transform: scale(0.94);
+}
+[data-page='ww'] .ww-reveal[data-variant='blur'] {
+  filter: blur(10px);
+  transform: translate3d(0, 16px, 0);
+  transition:
+    opacity 900ms var(--ww-ease),
+    transform 1100ms var(--ww-ease),
+    filter 900ms var(--ww-ease);
+}
+[data-page='ww'] .ww-reveal[data-in='true'] {
+  opacity: 1;
+  transform: none;
+  filter: none;
+}
+@media (scripting: none) {
+  [data-page='ww'] .ww-reveal {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+}
+
+/* --- Device frames (devices.tsx) ------------------------------------------
+   The outer .wwd is a size container, so bezels and radii scale with it. */
+
+.wwd,
+.wwd-watch,
+.wwd-fold {
+  container-type: inline-size;
+  position: relative;
+  flex: none;
+}
+.wwd-rim {
+  position: relative;
+  padding: var(--rim);
+  border-radius: var(--r);
+  background: linear-gradient(
+    150deg,
+    #59605c 0%,
+    #1b201d 18%,
+    #0b0d0c 45%,
+    #151916 70%,
+    #4a514d 100%
+  );
+  box-shadow:
+    inset 0 0 0 1px rgb(255 255 255 / 0.1),
+    0 2px 0 -1px rgb(255 255 255 / 0.12) inset,
+    0 50px 90px -30px rgb(0 0 0 / 0.85),
+    0 22px 40px -22px rgb(0 0 0 / 0.7);
+}
+.wwd-glass {
+  position: relative;
+  padding: var(--bezel);
+  border-radius: calc(var(--r) - var(--rim));
+  background: #010201;
+  overflow: hidden;
+  isolation: isolate;
+}
+.wwd-glass::after {
+  /* a faint sheen across the glass */
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    115deg,
+    rgb(255 255 255 / 0.08) 0%,
+    rgb(255 255 255 / 0) 28%,
+    rgb(255 255 255 / 0) 70%,
+    rgb(255 255 255 / 0.04) 100%
+  );
+  pointer-events: none;
+  z-index: 2;
+}
+.wwd-img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: calc(var(--r) - var(--rim) - var(--bezel));
+  background: #0d0f0e;
+  user-select: none;
+}
+.wwd-phone {
+  --rim: 1.1cqw;
+  --bezel: 2.9cqw;
+  --r: 15.5cqw;
+}
+.wwd-tablet {
+  --rim: 0.45cqw;
+  --bezel: 1.6cqw;
+  --r: 4.4cqw;
+}
+.wwd-fold-closed {
+  --rim: 1.1cqw;
+  --bezel: 2.6cqw;
+  --r: 11cqw;
+}
+
+/* Watch: a rounded case on a soft band. */
+.wwd-watch {
+  padding: 34% 0;
+}
+.wwd-watch-case {
+  --rim: 3cqw;
+  --bezel: 6.4cqw;
+  --r: 31cqw;
+  position: relative;
+  z-index: 1;
+}
+.wwd-watch-case .wwd-rim {
+  background: linear-gradient(
+    160deg,
+    #6b726e 0%,
+    #222724 30%,
+    #0e110f 60%,
+    #3a403c 100%
+  );
+}
+.wwd-band {
+  position: absolute;
+  left: 16%;
+  right: 16%;
+  height: 50%;
+  border-radius: 18cqw;
+  background:
+    repeating-linear-gradient(
+      0deg,
+      rgb(255 255 255 / 0.025) 0 2px,
+      transparent 2px 5px
+    ),
+    linear-gradient(90deg, #121815, #1c2420 50%, #121815);
+  box-shadow:
+    inset 0 0 0 1px rgb(255 255 255 / 0.05),
+    0 30px 60px -30px rgb(0 0 0 / 0.8);
+}
+.wwd-band-top {
+  top: 0;
+  border-radius: 14cqw 14cqw 6cqw 6cqw;
+}
+.wwd-band-bottom {
+  bottom: 0;
+  border-radius: 6cqw 6cqw 14cqw 14cqw;
+}
+
+/* Foldable, open: two halves around a hinge. --fold: 0 flat, 1 shut. */
+@property --fold {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0;
+}
+.wwd-fold {
+  --fold: 0;
+  transition: --fold 1100ms var(--ww-ease);
+  --rim: 0.55cqw;
+  --bezel: 1.3cqw;
+  --r: 5.6cqw;
+  /* The halves are drawn as physical left and right, on Arabic pages too. */
+  direction: ltr;
+  display: flex;
+  perspective: 2400px;
+  transform-style: preserve-3d;
+}
+.wwd-fold-half {
+  width: 50%;
+  container-type: normal;
+  transform-style: preserve-3d;
+}
+.wwd-fold-left {
+  transform-origin: right center;
+  transform: rotateY(calc(var(--fold) * 78deg));
+}
+.wwd-fold-right {
+  transform-origin: left center;
+  transform: rotateY(calc(var(--fold) * -78deg));
+}
+.wwd-fold-half .wwd-rim {
+  height: 100%;
+}
+.wwd-fold-left .wwd-rim {
+  border-radius: var(--r) 0 0 var(--r);
+  padding-right: 0;
+}
+.wwd-fold-right .wwd-rim {
+  border-radius: 0 var(--r) var(--r) 0;
+  padding-left: 0;
+}
+.wwd-fold-left .wwd-glass {
+  border-radius: calc(var(--r) - var(--rim)) 0 0 calc(var(--r) - var(--rim));
+  padding-right: 0;
+}
+.wwd-fold-right .wwd-glass {
+  border-radius: 0 calc(var(--r) - var(--rim)) calc(var(--r) - var(--rim)) 0;
+  padding-left: 0;
+}
+.wwd-fold-half .wwd-img {
+  width: 200%;
+  max-width: none;
+}
+.wwd-fold-left .wwd-img {
+  border-radius: calc(var(--r) - var(--rim) - var(--bezel)) 0 0
+    calc(var(--r) - var(--rim) - var(--bezel));
+}
+.wwd-fold-right .wwd-img {
+  margin-left: -100%;
+  border-radius: 0 calc(var(--r) - var(--rim) - var(--bezel))
+    calc(var(--r) - var(--rim) - var(--bezel)) 0;
+}
+.wwd-fold-half .wwd-glass::before {
+  /* light falls off toward the hinge as it folds */
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  opacity: var(--fold);
+}
+.wwd-fold-left .wwd-glass::before {
+  background: linear-gradient(
+    to left,
+    rgb(0 0 0 / 0.55),
+    rgb(0 0 0 / 0.05) 70%
+  );
+}
+.wwd-fold-right .wwd-glass::before {
+  background: linear-gradient(
+    to right,
+    rgb(0 0 0 / 0.35),
+    rgb(255 255 255 / 0.03) 70%
+  );
+}
+.wwd-hinge {
+  position: absolute;
+  top: 0.4cqw;
+  bottom: 0.4cqw;
+  left: 50%;
+  width: 0.9cqw;
+  translate: -50% 0;
+  background: linear-gradient(
+    90deg,
+    rgb(0 0 0 / 0.2),
+    rgb(255 255 255 / 0.12) 45%,
+    rgb(0 0 0 / 0.5) 55%,
+    rgb(0 0 0 / 0.1)
+  );
+  opacity: calc(0.35 + var(--fold) * 0.65);
+  pointer-events: none;
+  z-index: 4;
+}
+
+/* A slow bob, for things that hover in place. */
+@keyframes ww-float {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(0, -10px, 0);
+  }
+}
+
+/* --- Marquee ------------------------------------------------------------- */
+
+.ww-marquee {
+  --gap: 1rem;
+  direction: ltr;
+  display: flex;
+  overflow: hidden;
+  user-select: none;
+  mask-image: linear-gradient(
+    to right,
+    transparent,
+    #000 8%,
+    #000 92%,
+    transparent
+  );
+}
+.ww-marquee-track {
+  display: flex;
+  flex: none;
+  gap: var(--gap);
+  padding-inline-end: var(--gap);
+  animation: ww-marquee var(--duration, 70s) linear infinite;
+}
+.ww-marquee[data-reverse] .ww-marquee-track {
+  animation-direction: reverse;
+}
+.ww-marquee:hover .ww-marquee-track,
+.ww-marquee:focus-within .ww-marquee-track {
+  animation-play-state: paused;
+}
+@keyframes ww-marquee {
+  to {
+    transform: translate3d(-100%, 0, 0);
+  }
+}
+
+/* --- Statement: words light up as you scroll ------------------------------ */
+
+.ww-words .ww-word {
+  opacity: 0.18;
+  transition: opacity 400ms ease;
+}
+.ww-words .ww-word[data-on] {
+  opacity: 1;
+}
+
+/* --- Scribe AI demo -------------------------------------------------------- */
+
+.ww-orb {
+  position: relative;
+  width: 5.5rem;
+  height: 5.5rem;
+  border-radius: 999px;
+  background:
+    radial-gradient(
+      circle at 35% 30%,
+      rgb(255 255 255 / 0.85),
+      rgb(255 255 255 / 0) 22%
+    ),
+    radial-gradient(circle at 50% 55%, #3bf08a, #0b8f3e 58%, #04381a 100%);
+  box-shadow:
+    0 0 0 1px rgb(255 255 255 / 0.15) inset,
+    0 0 40px 6px rgb(27 209 93 / 0.45),
+    0 0 120px 30px rgb(27 209 93 / 0.2);
+}
+.ww-orb::before,
+.ww-orb::after {
+  content: '';
+  position: absolute;
+  inset: -12px;
+  border-radius: inherit;
+  border: 1.5px solid rgb(154 245 195 / 0.45);
+  opacity: 0;
+}
+[data-play] .ww-orb::before {
+  animation: ww-ring 2.2s ease-out infinite;
+}
+[data-play] .ww-orb::after {
+  animation: ww-ring 2.2s ease-out 1.1s infinite;
+}
+@keyframes ww-ring {
+  0% {
+    transform: scale(0.85);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+}
+.ww-wave {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 28px;
+}
+.ww-wave span {
+  width: 4px;
+  height: 100%;
+  border-radius: 4px;
+  background: var(--ww-mint);
+  transform-origin: center;
+  transform: scaleY(0.2);
+}
+[data-play] .ww-wave span {
+  animation: ww-wave 1.1s ease-in-out infinite;
+}
+.ww-wave span:nth-child(2) {
+  animation-delay: -0.9s !important;
+}
+.ww-wave span:nth-child(3) {
+  animation-delay: -0.6s !important;
+}
+.ww-wave span:nth-child(4) {
+  animation-delay: -0.3s !important;
+}
+.ww-wave span:nth-child(5) {
+  animation-delay: -0.75s !important;
+}
+@keyframes ww-wave {
+  0%,
+  100% {
+    transform: scaleY(0.2);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+}
+
+/* Typed transcript and cards play in steps set by data-step (landing.js).
+   The cards wait as soft shapes while Scribe listens, then come into focus. */
+.ww-scribe [data-show] {
+  opacity: 0;
+  transform: translate3d(0, 14px, 0) scale(0.98);
+  transition:
+    opacity 500ms var(--ww-ease),
+    transform 700ms var(--ww-spring),
+    filter 600ms var(--ww-ease);
+}
+.ww-scribe [data-show='3'] {
+  opacity: 0.16;
+  filter: blur(7px);
+  transform: none;
+}
+.ww-scribe[data-step='1'] [data-show='1'],
+.ww-scribe[data-step='2'] [data-show='1'],
+.ww-scribe[data-step='2'] [data-show='2'],
+.ww-scribe[data-step='3'] [data-show='1'],
+.ww-scribe[data-step='3'] [data-show='2'],
+.ww-scribe[data-step='3'] [data-show='3'],
+.ww-scribe[data-step='4'] [data-show] {
+  opacity: 1;
+  transform: none;
+  filter: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-page='ww'] *,
+  [data-page='ww'] *::before,
+  [data-page='ww'] *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  [data-page='ww'] .ww-reveal {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+  .ww-words .ww-word {
+    opacity: 1;
+  }
+  .ww-scribe [data-show] {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+  /* Rows that would scroll by themselves scroll by hand instead. */
+  .ww-marquee {
+    overflow-x: auto;
+    scroll-snap-type: x proximity;
+    scroll-padding-inline: 1.25rem;
+    padding-inline: 1.25rem;
+    -webkit-mask-image: none;
+    mask-image: none;
+    scrollbar-width: none;
+  }
+  .ww-marquee::-webkit-scrollbar {
+    display: none;
+  }
+  .ww-marquee-track {
+    animation: none !important;
+  }
+  .ww-marquee-track > * {
+    scroll-snap-align: start;
+  }
+  .ww-marquee-track[aria-hidden='true'] {
+    display: none;
+  }
+}

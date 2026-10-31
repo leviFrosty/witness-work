@@ -108,6 +108,7 @@ import LayoutDirectionTools from '@/app/navigation/tools/LayoutDirectionTools'
 import PetTools from '@/app/navigation/tools/PetTools'
 import StreakTools from '@/app/navigation/tools/StreakTools'
 import ToastTools from '@/app/navigation/tools/ToastTools'
+import WebCloudSyncTools from '@/app/navigation/tools/WebCloudSyncTools'
 import ScribeTools from '@/app/dev-harness/ScribeTools'
 import {
   applyBadgeHistoryFixture,
@@ -127,6 +128,7 @@ import {
   clearDevNotifications,
   DEV_TRAY_PUSH_DATA,
   openNotificationsTray,
+  showCloudSyncTrayOffer,
   useDevNotifications,
 } from '@/app/notifications/devNotifications'
 import { useNotificationsTray } from '@/features/notifications/stores/notificationsTray'
@@ -1869,6 +1871,22 @@ export default function ToolsScreen() {
               }}
             />
             <ToolRow
+              label='Cloud Sync offer (not a Supporter)'
+              info='Lists the one-time "Cloud Sync is now free" offer: this device becomes an existing install, the offer unanswered, the Supporter override off. Needs sync off Cloud Sync and the server entitlement everyone.'
+              onPress={() => {
+                showCloudSyncTrayOffer('free')
+                showDone('Cloud Sync offer listed')
+              }}
+            />
+            <ToolRow
+              label='Cloud Sync offer (Supporter)'
+              info='Lists the Supporter thank-you version of the offer, turning the Supporter override on. Needs sync off Cloud Sync.'
+              onPress={() => {
+                showCloudSyncTrayOffer('thanks')
+                showDone('Cloud Sync offer listed')
+              }}
+            />
+            <ToolRow
               label='Add backdated item (3 days ago)'
               info='Checks newest-first ordering and the relative time label.'
               onPress={() => {
@@ -1970,6 +1988,8 @@ export default function ToolsScreen() {
         </ToolSection>
 
         <ScribeTools />
+
+        <WebCloudSyncTools />
 
         <ToolSection title='Attestation' icon={KeyRoundIcon}>
           <ToolSubheading

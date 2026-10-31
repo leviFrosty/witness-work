@@ -1,0 +1,23 @@
+{
+  "helpCenter": "Centro de Ajuda",
+  "intro": "Encontre respostas rápidas para perguntas comuns sobre a WitnessWork. Não consegue encontrar o que precisa? Entre em contato — seu feedback molda o app.",
+  "searchPlaceholder": "Perguntas de busca",
+  "topQuestions": "Perguntas Principais",
+  "allQuestions": "Todas as Perguntas",
+  "noMatches": "Nenhuma correspondência",
+  "noResults": "Nenhuma pergunta corresponde à sua busca.",
+  "searching": "Buscando…",
+  "clearSearch": "Limpar busca",
+  "stillNeedHelp": "Ainda precisa de ajuda?",
+  "emailUs": "Entre em contato por e-mail privado em",
+  "bugReport": "Reportar Erro",
+  "featureRequest": "Solicitação de Recurso",
+  "device": "Dispositivo",
+  "language": "Idioma",
+  "all": "Todos",
+  "copyLink": "Copiar link",
+  "iosOnly": "Somente iOS",
+  "androidOnly": "Somente Android",
+  "notTranslated": "Esta resposta ainda não foi traduzida, por isso aparece em inglês.",
+  "stillNeedHelpDescription": "Envie um e-mail para suporte particular, ou relate um bug ou peça um recurso no GitHub. Conte o que você tentou, seu dispositivo e sua versão do WitnessWork. Não inclua dados de contato, anotações particulares nem IDs de conta em relatos públicos."
+}

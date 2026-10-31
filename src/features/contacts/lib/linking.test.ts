@@ -69,6 +69,20 @@ const startOnboarding = () => {
   navigation.routeNames = ['Onboarding']
 }
 
+describe('prefixes', () => {
+  it('cover the scheme and every app-link host, never the web app', () => {
+    expect(linking.prefixes).toEqual(
+      expect.arrayContaining([
+        'witnesswork://',
+        'https://witnesswork.app',
+        'https://dev.witnesswork.app',
+        'https://ww-proxy.leviwilkerson.com',
+      ])
+    )
+    expect(linking.prefixes).not.toContain('https://app.witnesswork.app')
+  })
+})
+
 describe('deep links wait for takeovers and onboarding (ADR 0021)', () => {
   it('opens a link at once when nothing is taking over', () => {
     const listener = vi.fn()

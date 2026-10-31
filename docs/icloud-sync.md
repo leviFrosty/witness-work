@@ -14,9 +14,11 @@ and writes only through a `SyncTransport` (`src/lib/syncTransport/types.ts`):
 `activeSyncTransport()` (`src/lib/syncTransport/provider.ts`) is the option's.
 Everything below applies to all three except where a section says otherwise.
 Devices on different options don't sync with each other, so an iPhone and an
-Android device sync only through Cloud Sync. iCloud and Google Drive need
-Supporter access; Cloud Sync needs what the server's `sync:entitlement` says
-(a Supporter, or everyone). Every option needs this device's opt-in.
+Android device sync only through Cloud Sync. Sync is free for everyone
+([ADR 0040](./adr/0040-sync-is-free-and-cloud-sync-carries-photos.md)): iCloud
+and Google Drive have no Supporter gate, and Cloud Sync needs what the server's
+`sync:entitlement` says (`everyone`, or a Supporter while it's `supporter`).
+Every option needs this device's opt-in.
 
 ## Data and identity
 
@@ -47,6 +49,54 @@ sync on, that has pulled once, starts Buddies by itself when the Keychain
 already holds the User's Buddies key, because its Plans (and so its Buddy Card)
 match the User's other devices. See "Another of the User's devices" in
 [buddies-protocol.md](./buddies-protocol.md).
+
+### One RevenueCat customer per account
+
+Each payload carries its writer's RevenueCat **claim** in the optional
+top-level `revenueCat` (ADR 0040 §7): `{ appUserId, entitled, claimedAt }`, the
+RevenueCat app user id the device is logged in as (ADR 0011's account id),
+whether it's a Supporter under it, and when that id was first claimed. On Cloud
+Sync it's inside the encrypted slot with the rest. Older versions drop the
+unknown key and read the payload as before; a claim this version can't read
+(an anonymous id, a missing field) is dropped on its own, never the file. The
+id is never shown, logged, or reported (ADR 0029 §2). The account backup leaves
+it out.
+
+`AccountProvider` reconciles over every claim the device can see, its peers'
+payloads on its sync transport, the account file on iCloud or Drive, and its
+own, with `decideAccountReconcile` (`src/lib/accountClaim.ts`):
+
+- **The winner** is the same on every device: entitled beats un-entitled, then
+  the earliest `claimedAt`, then the smaller id. Claims are taken per id first:
+  an id is entitled when any claim for it says so, and claimed at its earliest.
+- **An un-entitled device adopts the winner** (`Purchases.logIn`,
+  `adoptAccountId`, then the ADR 0029 link as `adopted`). The adopted id keeps
+  the winner's `claimedAt`, so a later device can't out-date it.
+- **An entitled device never gives up its id**; two entitled ids both stay.
+- **The account file** keeps ADR 0011's handling: claimed when missing, claimed
+  over by an entitled device, refreshed when its flag disagrees. A device whose
+  claim beats an un-entitled file takes the file over, so devices that read
+  only the file (older versions) follow. The file adds `claimedAt`; older
+  writers drop it and it reads as `updatedAt`.
+- **Without RevenueCat** (Android without an SDK key), a device still adopts
+  the id and publishes its claim (never entitled), so it's the right customer
+  once RevenueCat is there. A device that signs in to an account later adopts
+  that account's earlier id by the same rule.
+
+A claim from a device that stopped syncing stays until it's removed from the
+Devices list. If it's stale-entitled, un-entitled devices stay on its id; the
+account's Supporter status on ww-api (below) still unlocks them.
+
+`useIsSupporter` also accepts ww-api's answer for the account (`GET
+/accounts/v1/supporter`, and what each link answers) when RevenueCat doesn't
+say Supporter, until its `expiresAt` (or with no end). The answer is kept in
+device-local MMKV with a hash of the account it was read for: another account
+key, or no session, doesn't count it, and offline keeps the last one. It's read
+when a session opens, after a link, and otherwise at most every 4 hours on
+launch or foreground, or sooner once it has expired
+(`src/lib/serverAccount/serverSupporter.ts`). `since` stays RevenueCat's date,
+so it's null on the server's answer alone: Settings shows "You're a supporter"
+without a year. The dev override still wins in dev builds.
 
 The account backup ([accounts-protocol.md](./accounts-protocol.md#backup))
 uploads the same payload, end-to-end encrypted, to ww-api, without its
@@ -131,11 +181,14 @@ offline or Google Drive needs reconnecting instead of trying, and is disabled
 while a sync runs. A local coordinated write is still not confirmation that
 Apple uploaded it.
 
-A supporter lapse pauses transfer and preserves the user’s enable choice.
-Access returning resumes an enabled device. Auto-enable conflicts set a visible
-notifications-tray prompt; they do not silently overwrite data. An explicit off
-choice stays off. Restart onboarding is local; Set up fresh disables sync until
-the user explicitly enables it again.
+Supporter status never pauses sync. A device an older version paused for a
+Supporter lapse resumes: the preferences store's v16 migration drops
+`iCloudSyncPausedForLapse`, and the enable choice was kept. Auto-enable
+conflicts set a visible notifications-tray prompt; they do not silently
+overwrite data. An explicit off choice stays off. Restart onboarding is local;
+Set up fresh disables sync until the user explicitly enables it again. On a new
+install whose sync never ran, skipping the restore in onboarding isn't that
+choice: the default turns sync on after onboarding (`freshSetupPreferences`).
 
 Restore/replacement and JSON imports suppress Buddies declines for missing linked
 plans. User-initiated plan deletion still declines. Reminders are rebuilt from
@@ -180,7 +233,9 @@ same 90-day retention window. Redaction or permanent erasure removes their local
 files, including abandoned draft revisions; photo replacements remove superseded
 files. Data-protection erasure received from another device also removes local bytes.
 
-Turning off photo transfer pauses this device. “Remove iCloud photos” is a
+On iCloud and Google Drive, photos travel only with “Include photos” on; on
+Cloud Sync they always do (see [Cloud Sync](#cloud-sync)). Turning off photo
+transfer pauses this device. “Remove iCloud photos” is a
 separate explicit cleanup of uploaded files; local copies remain. Other enabled
 devices can upload them again, so the confirmation asks the user to pause photo
 sync on those devices first. Rebuild removes obsolete binaries before uploading
@@ -188,7 +243,8 @@ the current photos when enabled.
 
 ### Note photos
 
-Photos in notes (ADR 0022) sync behind the same setting under their own names,
+Photos in notes (ADR 0022) sync like avatars (behind the same setting on iCloud
+and Drive) under their own names,
 `witness-work-note-<id>.jpg`, which builds from before note photos ignore, so
 their cleanup can't delete them. A note stores only the photo's id and size; the
 file is `Documents/note-images/<id>.jpg` on every device. Photos never change
@@ -270,7 +326,7 @@ switching, `components/CloudSyncDefault.tsx`).
 - **Gate.** `canSync` uses `cloudSyncEntitled` (from `GET /accounts/v1/sync`)
   instead of the device's Supporter status. A 503 `disabled` or 403
   `supporter_required` records itself and pauses sync; the choice is kept, so
-  it resumes when the server allows it again. Settings keeps the option rows for a device on Cloud Sync while the kill switch is off, so it can still move to iCloud, Google Drive, or Off, and its status says Cloud Sync is paused. While the server offers Cloud Sync to everyone, Settings → Sync isn't behind the Supporter gate; iCloud and Google Drive still are.
+  it resumes when the server allows it again. Settings keeps the option rows for a device on Cloud Sync while the kill switch is off, so it can still move to iCloud, Google Drive, or Off, and its status says Cloud Sync is paused. Settings → Sync and its Devices list have no Supporter gate.
 - **Identity.** The namespace is the server account: `cloudSyncAccountToken`
   holds a hash of its id. Moving to another account (a QR code or recovery key)
   flushes, deletes this device's slot, resets the namespace bookkeeping, and
@@ -278,25 +334,88 @@ switching, `components/CloudSyncDefault.tsx`).
   account, and switching to it records the current one, so an account changed
   while the device was on iCloud, Drive or Off isn't taken for a change on Cloud
   Sync.
-- **Photos** aren't transferred yet: binaries list empty and photo passes skip
-  Cloud Sync. Settings says so.
+- **Photos** travel too, end-to-end encrypted, without “Include photos” (ADR
+  0040 §6; the wire contract is [cloud-sync-photos.md](./cloud-sync-photos.md)).
+  The engine's photo passes run as on iCloud and Drive; the binary methods put
+  each photo file sealed under a keyed name, and list photos through their
+  sealed filenames. A device downloads only photos its records refer to.
+  Settings → Sync shows no “Include photos” toggle on Cloud Sync.
+  - Only revisioned names travel: a legacy avatar gets a revision (a record
+    edit) before its photo is put.
+  - Names are immutable, so a revision this device already has a file for is
+    current whatever the listing's time (`immutableNames`).
+  - After a publish, the photos the User replaced or removed since the last
+    one (a contact's or the profile photo, a photo taken out of a note) are
+    deleted at once, freeing their space. A deleted contact's photo stays while
+    it can be restored; other cleanup keeps its one-day grace.
+  - Only the User's edits count as replacing. A restore or Replace (from a
+    slot, iCloud, Google Drive, a backup or a backup file), a merge of other
+    devices' records, and a dev reset or seed make the new state the baseline
+    (`rebasePublishedPhotos`): another device may still use the revision they
+    moved away from, and under last-writer-wins a merge can swing a record
+    back. A publish such a change overtakes deletes nothing.
+  - **Storage full** (2 GB an account): the photo stays on this device, its
+    bookkeeping entry says `storage-full`, and it shows “Not synced: storage
+    full” (contact, profile and note photos); Settings → Account shows
+    “Storage full” and the usage. It retries on foreground and when the
+    account's usage drops (a delete here, or a change notice), never on an edit
+    (`fullRetriesOnSignal`).
+  - The server's photo switch (`photos` in `GET /accounts/v1/sync`,
+    `cloudSyncPhotos`) off pauses uploads only (`binaryWritesPaused`); downloads,
+    deletes and the rest of Cloud Sync go on. A server that doesn't say holds no
+    photos (`supportsBinaries` false).
+  - Rebuild and Keep This Device's Data delete the photos the published data
+    doesn't refer to, as on iCloud. The server deletes every photo when the
+    account's last slot goes.
 - **Errors.** `too_large` and `limit` read as storage full (20 MB a snapshot,
   20 devices an account), 429 as rate limited, network as offline, and 5xx as
   `server-error`: retried the same way as offline, with the status saying sync
-  needs another attempt rather than waiting for a connection.
+  needs another attempt rather than waiting for a connection. For photos,
+  `storage_full` and `limit` read as storage full; a photo's `too_large` marks
+  only that photo; `photos_disabled`, `conflict` and `no_slot` retry later.
 
 ### Choosing and switching
 
 - A device that never chose gets Cloud Sync while the server offers it, once
   onboarding is done and it's entitled (`CloudSyncDefault`): it seeds an empty
   account, pulls into a device without records, or asks Merge or Replace.
+  While Cloud Sync isn't offered, it gets iCloud or Drive the same way
+  (`PlatformSyncDefault`).
+- **New and existing installs** (ADR 0040 §2). Those defaults apply to every
+  new install. An install from before sync was free isn't switched: it keeps
+  the rule it had, where only a Supporter got sync without choosing, so one
+  that isn't a Supporter and never chose stays off until the User turns sync
+  on. `installedBeforeFreeSync` (device-local) tells them apart: the
+  preferences store's v16 persist migration sets it on any store saved by an
+  older version, and a new install's store keeps the default, false. The
+  decisions are `src/app/sync/syncDefaults.ts`.
 - A device already syncing through iCloud or Drive keeps it, and Settings →
   Sync offers the switch once, with the security reason (`cloudSyncOffer`).
+- **The tray offer** (ADR 0040 §4, `useCloudSyncTrayOffer`): an install from
+  before sync was free, onboarded, not on Cloud Sync (iCloud, Drive, or off,
+  chosen or not), while Cloud Sync is offered, gets one notifications-tray
+  item. A Supporter gets a thank-you ("Thank you for supporting WitnessWork",
+  Turn On Cloud Sync); anyone else gets "Cloud Sync is now free" (Turn On), and
+  only while the entitlement is `everyone`. It waits until RevenueCat and
+  ww-api's Supporter answer for the account (ADR 0040 §7) are in, so a
+  Supporter never sees the other one. Turn On switches in place
+  (`switchSyncOption('cloud', 'tray')`); a failure says why in an error toast
+  and the item stays. Turning it on, dismissing it, or moving to Cloud Sync any
+  other way answers it for good (`cloudSyncTrayOffer: 'answered'`), even if the
+  device leaves Cloud Sync later.
 - `switchSyncOption` flushes the old option's pending edits, stops, resets the
-  namespace bookkeeping (photo bookkeeping stays), reads the new option's
+  namespace bookkeeping (photo bookkeeping keeps only what it knows of local
+  files, so each photo is checked against the new option), reads the new option's
   devices, joins their newest reset generation, merges ("Merge both"), and
   pushes. A switch that can't happen (not entitled, offline, unreadable)
   changes nothing.
+- The account's Cloud Sync request (ADR 0040 §5, set by a browser): with
+  one standing in the status read at launch or on return to the foreground, a
+  phone not on Cloud Sync switches through `switchSyncOption` (source
+  `account_request`) and shows a toast, once onboarding is done
+  (`cloudSyncRequest.ts`). It acts once per `requestedAt`
+  (`cloudSyncRequestAnswered`), never clears the request (ww-api does), and
+  tries again next time only when the switch couldn't happen yet.
 - Leaving Cloud Sync deletes this device's slot. Leaving iCloud or Drive leaves
   this device's file there: it holds nothing newer than the switch, and
   tombstones win over anything not strictly newer, so it can't bring back a
@@ -307,21 +426,21 @@ switching, `components/CloudSyncDefault.tsx`).
 
 ## Files and validation
 
-| Path                                                                            | Responsibility                                              |
-| ------------------------------------------------------------------------------- | ----------------------------------------------------------- |
-| `src/app/sync/iCloudSync.ts`                                                    | Runtime, retries, initial enable, restore, image sequencing |
-| `src/lib/syncTransport/`                                                        | Transport interface; iCloud and Google Drive transports     |
-| `modules/google-drive-auth/`                                                    | Android Drive authorization (access tokens only)            |
-| `src/app/sync/payload.ts`, `payloadValidation.ts`                               | Wire boundary, legacy normalization, known setting types    |
-| `src/app/sync/merge.ts`, `preferencesMerge.ts`                                  | Record/tombstone and per-entry preference merge             |
-| `src/app/sync/foldRemotePayloads.ts`                                            | Fold foreign snapshots for restore                          |
-| `src/app/sync/mergeIntoLocal.ts`, `localChanges.ts`                             | Merge payloads into the stores; the shared change trigger   |
-| `src/app/sync/definitionReconciliation.ts`, `src/lib/contactRetention.ts`       | Legacy repair and deleted-detail expiry                     |
-| `src/app/sync/imageSync.ts`, `imageSources.ts`, `imageNames.ts`                 | Photo transfer, reference guards, cleanup policy            |
-| `src/app/notifications/useReconciledReminders.ts`                               | Local reminder reconciliation on iOS and Android            |
-| `src/features/settings/screens/preferences/screens/PreferencesiCloudScreen.tsx` | Settings and recovery controls                              |
-| `src/features/onboarding/components/steps/iCloudRestore.tsx`                    | Onboarding one-shot restore                                 |
-| `modules/icloud-bridge/ios/ICloudBridgeModule.swift`                            | Coordinated iCloud IO and metadata query                    |
+| Path                                                                                  | Responsibility                                              |
+| ------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| `src/app/sync/iCloudSync.ts`                                                          | Runtime, retries, initial enable, restore, image sequencing |
+| `src/lib/syncTransport/`                                                              | Transport interface; iCloud and Google Drive transports     |
+| `modules/google-drive-auth/`                                                          | Android Drive authorization (access tokens only)            |
+| `src/app/sync/payload.ts`, `payloadValidation.ts`                                     | Wire boundary, legacy normalization, known setting types    |
+| `src/app/sync/merge.ts`, `preferencesMerge.ts`                                        | Record/tombstone and per-entry preference merge             |
+| `src/app/sync/foldRemotePayloads.ts`                                                  | Fold foreign snapshots for restore                          |
+| `src/app/sync/mergeIntoLocal.ts`, `localChanges.ts`                                   | Merge payloads into the stores; the shared change trigger   |
+| `src/app/sync/definitionReconciliation.ts`, `src/lib/contactRetention.ts`             | Legacy repair and deleted-detail expiry                     |
+| `src/app/sync/imageSync.ts`, `imageSources.ts`, `src/lib/syncTransport/imageNames.ts` | Photo transfer, reference guards, cleanup policy            |
+| `src/app/notifications/useReconciledReminders.ts`                                     | Local reminder reconciliation on iOS and Android            |
+| `src/features/settings/screens/preferences/screens/PreferencesiCloudScreen.tsx`       | Settings and recovery controls                              |
+| `src/features/onboarding/components/steps/iCloudRestore.tsx`                          | Onboarding one-shot restore                                 |
+| `modules/icloud-bridge/ios/ICloudBridgeModule.swift`                                  | Coordinated iCloud IO and metadata query                    |
 
 Swift and Kotlin changes require a native rebuild. Pure merge, validation,
 photo, clock, backup, and store regressions live in `src/app/sync/__tests__` and

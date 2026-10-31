@@ -29,7 +29,6 @@ const FEATURE_ROWS: ReadonlyArray<{
 }> = [
   // Differentiators lead; the "always free" rows close the table as a
   // trust signal rather than opening it with reasons not to pay.
-  { labelKey: 'paywallFeatureSync', free: false, supporter: true },
   { labelKey: 'paywallFeatureRoutePlanning', free: false, supporter: true },
   { labelKey: 'paywallFeatureAccent', free: false, supporter: true },
   {

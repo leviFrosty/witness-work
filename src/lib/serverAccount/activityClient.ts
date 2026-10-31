@@ -21,17 +21,37 @@ export type ActivityClientOptions = {
   signal?: AbortSignal
 }
 
-export type SessionPlatform = 'ios' | 'android' | 'dev'
+export type SessionPlatform = 'ios' | 'android' | 'web' | 'dev'
 
 const isPlatform = (value: unknown): value is SessionPlatform =>
-  value === 'ios' || value === 'android' || value === 'dev'
+  value === 'ios' || value === 'android' || value === 'web' || value === 'dev'
+
+const METHODS = [
+  'attestation',
+  'dev',
+  'passkey',
+  'approval',
+  'recovery',
+  'signup',
+] as const
+
+/** How a session opened (docs/passkeys-protocol.md, "Activity"). */
+export type SessionMethod = (typeof METHODS)[number]
+
+const optionalMethod = (value: unknown): SessionMethod | null =>
+  (METHODS as readonly unknown[]).includes(value)
+    ? (value as SessionMethod)
+    : null
 
 /** One signed-in device: a live session. */
 export type AccountDevice = {
   sessionId: string
-  platform: SessionPlatform
+  /** Null for a platform this version doesn't know. */
+  platform: SessionPlatform | null
   /** The sealed device label, when the session sent one. */
   device: string | null
+  /** The app version the session last reported; browsers send it. */
+  appVersion: string | null
   /** The session the request's token belongs to: this device. */
   current: boolean
   createdAt: number
@@ -54,6 +74,10 @@ export const ACTIVITY_KINDS = [
   'account.reinstated',
   'buddies.inbox_linked',
   'buddies.deleted',
+  'passkey.added',
+  'passkey.removed',
+  'device.approved',
+  'account.key_changed',
 ] as const
 export type ActivityKind = (typeof ACTIVITY_KINDS)[number]
 
@@ -73,7 +97,12 @@ export type ActivityEntry = {
   createdAt: number
   /** The session the entry is about, or that did it. */
   session: ActivitySession | null
-  /** For `session.revoked` and `session.replaced`, the session that ended it. */
+  /** `session.opened`: how it opened. */
+  method: SessionMethod | null
+  /**
+   * For `session.revoked` and `session.replaced`, the session that ended it;
+   * for an `approval` `session.opened`, the phone that approved it.
+   */
   actor: ActivitySession | null
   /** `backup.*`; null on `backup.deleted` means every slot. */
   slotId: string | null
@@ -103,7 +132,6 @@ export function parseDevice(value: unknown): AccountDevice | null {
     value
   if (
     !isId(sessionId) ||
-    !isPlatform(platform) ||
     typeof current !== 'boolean' ||
     !isTime(createdAt) ||
     !isTime(lastActiveAt) ||
@@ -112,8 +140,9 @@ export function parseDevice(value: unknown): AccountDevice | null {
     return null
   return {
     sessionId,
-    platform,
+    platform: isPlatform(platform) ? platform : null,
     device: optionalString(value.device),
+    appVersion: optionalString(value.appVersion),
     current,
     createdAt,
     lastActiveAt,
@@ -133,12 +162,18 @@ const parseActivitySession = (value: unknown): ActivitySession | null => {
 export function parseActivityEntry(value: unknown): ActivityEntry | null {
   if (!isRecord(value)) return null
   const { id, kind, createdAt } = value
-  if (typeof id !== 'string' || !isActivityKind(kind) || !isTime(createdAt))
+  if (
+    typeof id !== 'string' ||
+    !id ||
+    !isActivityKind(kind) ||
+    !isTime(createdAt)
+  )
     return null
   return {
     id,
     kind,
     createdAt,
+    method: optionalMethod(value.method),
     session: parseActivitySession(value.session),
     actor: parseActivitySession(value.actor),
     slotId: isId(value.slotId) ? value.slotId : null,

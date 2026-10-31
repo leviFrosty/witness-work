@@ -19,12 +19,9 @@ import InputRowContainer from '@/components/ui/inputs/InputRowContainer'
 import InputRowButton from '@/components/ui/inputs/InputRowButton'
 import Text from '@/components/ui/MyText'
 import Badge from '@/components/ui/Badge'
-import SyncSupporterGate from '@/features/settings/components/sync/SyncSupporterGate'
-import SupporterInfoSheet from '@/components/SupporterInfoSheet'
-import useIsSupporter from '@/hooks/useIsSupporter'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
-import { optionSyncKey, platformSyncKey, syncKey } from '@/lib/syncCopy'
+import { platformSyncKey, syncKey } from '@/lib/syncCopy'
 import { usePreferences } from '@/stores/preferences'
 import { dismissICloudAccountChangeNotice } from '@/lib/iCloudIdentity'
 import {
@@ -69,9 +66,9 @@ import {
   dismissCloudSyncOffer,
   showsCloudSyncOffer,
   switchSyncOption,
-  type SwitchFailure,
   type SyncOption,
 } from '@/app/sync/syncOption'
+import { switchFailureMessage } from '@/app/sync/switchFailureMessage'
 import SyncOptionSection, {
   useOtherDevicesSignedIn,
 } from '@/features/settings/components/sync/SyncOptionSection'
@@ -87,30 +84,6 @@ async function accountHasOtherDevices(): Promise<boolean> {
   if (!accountSessions.snapshot()) return false
   const seed = await BuddiesKeychain.peekRootSeed().catch(() => null)
   return seed ? signedInElsewhere(fromB64u(seed)) : false
-}
-
-/**
- * What to tell the User when a switch to `to` or Cloud Sync's turn-on can't
- * happen. Worded for `to`: the device is back on the option it left.
- */
-const switchFailureMessage = (reason: SwitchFailure, to: SyncOption) => {
-  const option = to === 'cloud' ? 'cloud' : 'platform'
-  switch (reason) {
-    case 'not_entitled':
-      return i18n.t('cloudSyncNotEntitled')
-    case 'disabled':
-      return i18n.t('cloudSyncDisabled')
-    case 'no_session':
-      return i18n.t('cloudSyncNoSession')
-    case 'offline':
-      return i18n.t('iCloudSyncNowOffline_description')
-    case 'incomplete':
-      return i18n.t(optionSyncKey('iCloudRemoteNotReady_description', option))
-    case 'unavailable':
-      return i18n.t(optionSyncKey('iCloudUnavailable_description', option))
-    case 'account_changed':
-      return i18n.t('syncOption_accountChanged')
-  }
 }
 
 /** Cloud Sync paused by the server, said calmly: nothing failed here. */
@@ -148,7 +121,6 @@ const PreferencesiCloudScreenInner = () => {
     iCloudSyncIssue,
     iCloudSyncErrorCode,
     iCloudSyncPendingPush,
-    iCloudSyncPausedForLapse,
     iCloudSyncNeedsResolution,
     iCloudAccountChangedAt,
     googleDriveNeedsReconnect,
@@ -170,10 +142,6 @@ const PreferencesiCloudScreenInner = () => {
   const offer = usePreferences(showsCloudSyncOffer)
   const [switchingTo, setSwitchingTo] = useState<SyncOption | null>(null)
   const otherDevicesSignedIn = useOtherDevicesSignedIn(accountHasOtherDevices)
-  // With Cloud Sync open to everyone the screen isn't gated, but iCloud and
-  // Google Drive sync still are.
-  const { isSupporter } = useIsSupporter()
-  const [platformGateOpen, setPlatformGateOpen] = useState(false)
   // Android syncs through the connected Google Account's Drive (ADR 0019).
   const googleDrive = usesGoogleDriveSync() && syncProvider !== 'cloud'
   const [syncing, setSyncing] = useState(false)
@@ -298,7 +266,9 @@ const PreferencesiCloudScreenInner = () => {
         case 'useRemote':
           if (pendingRemote) {
             iCloudSync.replaceLocalWithRemote(pendingRemote)
-            shouldPromptForImages = payloadReferencesPhotos(pendingRemote)
+            // Cloud Sync carries photos without asking (ADR 0040 §6).
+            shouldPromptForImages =
+              !usesCloudSync() && payloadReferencesPhotos(pendingRemote)
             toast.success(i18n.t(syncKey('iCloudEnabledToastRestored')))
           }
           break
@@ -516,10 +486,6 @@ const PreferencesiCloudScreenInner = () => {
     source: 'settings' | 'offer' = 'settings'
   ) => {
     if (syncing || switchingTo || next === option) return
-    if (next === 'platform' && !isSupporter) {
-      setPlatformGateOpen(true)
-      return
-    }
     if (source === 'offer')
       analytics.capture('cloud_sync_offer_answered', { choice: 'switch' })
     if (option === 'off') {
@@ -730,9 +696,11 @@ const PreferencesiCloudScreenInner = () => {
   const status = buildICloudStatus({
     enabled: iCloudSyncEnabled,
     available,
-    // Cloud Sync's entitlement is the server's (ADR 0030).
-    paused: onCloud ? cloudSyncEntitled === false : iCloudSyncPausedForLapse,
-    pausedBySwitch: onCloud && cloudSyncConfig?.enabled === false,
+    // Only Cloud Sync pauses: the server's switch or its entitlement
+    // (ADR 0030). iCloud and Google Drive sync are free (ADR 0040).
+    paused:
+      onCloud &&
+      (cloudSyncEntitled === false || cloudSyncConfig?.enabled === false),
     needsResolution: iCloudSyncNeedsResolution,
     issue: iCloudSyncIssue,
     uploadIssue: iCloudUploadIssue,
@@ -1244,14 +1212,6 @@ const PreferencesiCloudScreenInner = () => {
           </Section>
         )}
 
-        {iCloudSyncEnabled && onCloud && (
-          <View>
-            <Text style={{ fontSize: 12, color: theme.colors.textAlt }}>
-              {i18n.t('cloudSyncPhotosNote')}
-            </Text>
-          </View>
-        )}
-
         {iCloudSyncEnabled && !onCloud && (
           <View style={{ gap: 8 }}>
             <View
@@ -1361,20 +1321,13 @@ const PreferencesiCloudScreenInner = () => {
         remote={pendingRemote}
         onChoose={handleFirstEnableChoice}
       />
-      <SupporterInfoSheet
-        open={platformGateOpen}
-        setOpen={setPlatformGateOpen}
-        featureKey='iCloudSync'
-      />
     </Wrapper>
   )
 }
 
 const PreferencesiCloudScreen = () => (
   <SettingsInputLayout>
-    <SyncSupporterGate>
-      <PreferencesiCloudScreenInner />
-    </SyncSupporterGate>
+    <PreferencesiCloudScreenInner />
   </SettingsInputLayout>
 )
 

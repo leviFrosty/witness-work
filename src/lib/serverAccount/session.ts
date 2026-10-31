@@ -24,6 +24,7 @@ import {
 } from '@/lib/serverAccount/keys'
 import {
   closeSession,
+  isSessionAppVersion,
   type OpenedSession,
   refreshSession,
   sendSessionOpen,
@@ -100,6 +101,8 @@ export class AccountSessionError extends HttpError {
   readonly attestation: AttestationProblem | null
   /** The server's stable `reason` (`device_integrity_failed`, …). */
   readonly reason: string | null
+  /** Set for a refused refresh (401): why the session ended. */
+  readonly ended: SessionEndReason | null
 
   constructor(
     failure: AccountSessionFailure,
@@ -109,6 +112,7 @@ export class AccountSessionError extends HttpError {
       retryAfterMs?: number | null
       attestation?: AttestationProblem
       reason?: string | null
+      ended?: SessionEndReason
     } = {}
   ) {
     super(
@@ -123,8 +127,36 @@ export class AccountSessionError extends HttpError {
     this.attestation =
       failure === 'attestation' ? (details.attestation ?? 'failed') : null
     this.reason = details.reason ?? null
+    this.ended = details.ended ?? null
   }
 }
+
+/**
+ * Why the server refused a refresh (docs/passkeys-protocol.md, "Session
+ * fields"): `revoked` (another device signed it out), `replaced` (a session
+ * cap), `expired`, `reused` (a replaced refresh token came back), or
+ * `unknown`.
+ */
+export type SessionEndReason =
+  | 'revoked'
+  | 'replaced'
+  | 'expired'
+  | 'reused'
+  | 'unknown'
+
+const SESSION_END_REASONS: readonly SessionEndReason[] = [
+  'revoked',
+  'replaced',
+  'expired',
+  'reused',
+]
+
+/**
+ * Whether an ended session means someone else ended it on purpose: a browser
+ * wipes itself then, and keeps its data for `expired` and `replaced`.
+ */
+export const sessionEndWipes = (reason: SessionEndReason | null) =>
+  reason === 'revoked' || reason === 'reused'
 
 const DEVICE_REASONS = new Set([
   'device_integrity_failed',
@@ -162,12 +194,69 @@ export function attestationProblemFor(
 const isUpgrade = (status?: number | null, serverCode?: string | null) =>
   status === 426 || serverCode === 'upgrade_required'
 
-function fromHttp(details: {
+/** What any account request's failure can share, whatever the feature. */
+export type SessionFailure =
+  /** No connection, or the request timed out or was cancelled. */
+  | 'offline'
+  /** Ww-api needs a newer app version (426). */
+  | 'updateRequired'
+  /** This phone couldn't prove it's WitnessWork, so it has no session. */
+  | 'unverified'
+  /** The same, but only for now: Apple's or Google's check was unavailable. */
+  | 'verifyLater'
+
+/**
+ * Sorts the failures every account feature explains the same way: offline, a
+ * 426, and attestation (the session's own, or the server's
+ * `attestation_failed`). `null` for anything else.
+ */
+export function sessionFailureFor(error: unknown): SessionFailure | null {
+  if (error instanceof AccountSessionError) {
+    if (error.failure === 'attestation')
+      return error.attestation === 'temporary' ? 'verifyLater' : 'unverified'
+    if (error.failure === 'upgrade') return 'updateRequired'
+  }
+  if (!(error instanceof HttpError)) return null
+  if (isUpgrade(error.status, error.serverCode)) return 'updateRequired'
+  if (error.serverCode === 'attestation_failed') {
+    const reason = (error.body as { reason?: unknown } | null)?.reason
+    return attestationProblemFor(
+      null,
+      typeof reason === 'string' ? reason : null
+    ) === 'temporary'
+      ? 'verifyLater'
+      : 'unverified'
+  }
+  if (
+    error.kind === 'offline' ||
+    error.kind === 'timeout' ||
+    error.kind === 'cancelled'
+  )
+    return 'offline'
+  return null
+}
+
+/** A refused refresh: the session is over, and `reason` says why. */
+const endedBy = (details: {
   status: number | null
   serverCode: string | null
-  retryAfterMs: number | null
   reason: string | null
-}): AccountSessionError {
+}): SessionEndReason | undefined =>
+  details.status === 401 &&
+  (details.serverCode === 'unauthorized' || !details.serverCode)
+    ? (SESSION_END_REASONS.find((known) => known === details.reason) ??
+      'unknown')
+    : undefined
+
+function fromHttp(
+  details: {
+    status: number | null
+    serverCode: string | null
+    retryAfterMs: number | null
+    reason: string | null
+  },
+  refresh: boolean
+): AccountSessionError {
   const { status, serverCode } = details
   if (isUpgrade(status, serverCode))
     return new AccountSessionError('upgrade', details)
@@ -180,11 +269,20 @@ function fromHttp(details: {
     })
   if (status === 429 || serverCode === 'rate_limited')
     return new AccountSessionError('rateLimited', details)
-  return new AccountSessionError('server', details)
+  return new AccountSessionError('server', {
+    ...details,
+    ...(refresh && { ended: endedBy(details) }),
+  })
 }
 
-/** Any failure of opening, refreshing or using a session, normalized. */
-export function toAccountSessionError(error: unknown): AccountSessionError {
+/**
+ * Any failure of opening, refreshing or using a session, normalized. Only a
+ * refused `sessions/refresh` (`refresh`) says the session `ended`.
+ */
+export function toAccountSessionError(
+  error: unknown,
+  { refresh = false }: { refresh?: boolean } = {}
+): AccountSessionError {
   if (error instanceof AccountSessionError) return error
   if (error instanceof AttestationError) {
     if (error.code === 'cancelled') return new AccountSessionError('cancelled')
@@ -204,24 +302,30 @@ export function toAccountSessionError(error: unknown): AccountSessionError {
   if (error instanceof AttestationHttpError) {
     if (error.kind === 'cancelled') return new AccountSessionError('cancelled')
     if (error.kind === 'network') return new AccountSessionError('offline')
-    return fromHttp({
-      status: error.status ?? null,
-      serverCode: error.serverCode ?? null,
-      retryAfterMs: error.retryAfterMs ?? null,
-      reason: error.reason ?? null,
-    })
+    return fromHttp(
+      {
+        status: error.status ?? null,
+        serverCode: error.serverCode ?? null,
+        retryAfterMs: error.retryAfterMs ?? null,
+        reason: error.reason ?? null,
+      },
+      refresh
+    )
   }
   if (error instanceof HttpError) {
     if (error.kind === 'cancelled') return new AccountSessionError('cancelled')
     if (error.kind === 'offline' || error.kind === 'timeout')
       return new AccountSessionError('offline', { status: error.status })
     const reason = (error.body as { reason?: unknown } | null)?.reason
-    return fromHttp({
-      status: error.status,
-      serverCode: error.serverCode,
-      retryAfterMs: error.retryAfterMs,
-      reason: typeof reason === 'string' ? reason : null,
-    })
+    return fromHttp(
+      {
+        status: error.status,
+        serverCode: error.serverCode,
+        retryAfterMs: error.retryAfterMs,
+        reason: typeof reason === 'string' ? reason : null,
+      },
+      refresh
+    )
   }
   return new AccountSessionError('server')
 }
@@ -306,6 +410,11 @@ export type AccountSessionDeps = {
   accountKey: () => Promise<Uint8Array>
   /** Sealed into `session/open` for the User's own devices to read. */
   deviceLabel?: () => DeviceLabel
+  /**
+   * This build's version (`major.minor.patch`), sent on open and refresh so
+   * Devices can show it; anything else isn't sent.
+   */
+  appVersion?: () => string | null | undefined
   fetchImpl?: typeof fetch
   /** Ww-api answered 426 `upgrade_required`. */
   onUpgradeRequired?: () => void
@@ -492,10 +601,16 @@ export function createAccountSessions(deps: AccountSessionDeps) {
     until: number
   } | null = null
 
+  const appVersion = () => {
+    const version = deps.appVersion?.()
+    return isSessionAppVersion(version) ? version : undefined
+  }
+
   const clientOptions = (signal?: AbortSignal) => ({
     baseUrl: deps.baseUrl,
     fetchImpl: deps.fetchImpl,
     signal,
+    appVersion: appVersion(),
   })
 
   const emit = (event: AccountSessionEvent) => deps.onEvent?.(event)
@@ -639,7 +754,9 @@ export function createAccountSessions(deps: AccountSessionDeps) {
       emit({ op, outcome: 'ok', ms: localNow() - started, ...extra })
       return value
     } catch (error) {
-      const failure = toAccountSessionError(error)
+      const failure = toAccountSessionError(error, {
+        refresh: op === 'session/refresh',
+      })
       emit({
         op,
         outcome: failure.failure,
@@ -735,7 +852,7 @@ export function createAccountSessions(deps: AccountSessionDeps) {
               throw new AttestationHttpError({ kind: 'cancelled' })
             try {
               return await sendSessionOpen(
-                { proof, device },
+                { proof, device, appVersion: appVersion() },
                 {
                   ...clientOptions(attemptSignal),
                   key,

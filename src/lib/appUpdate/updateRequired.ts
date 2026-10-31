@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { HttpError, request } from '@/lib/http/request'
 import { belowMinVersion } from '@/lib/appUpdate/versionGate'
+import { SESSION_CAPABILITIES } from '@/lib/serverAccount/capabilities'
 
 /**
  * Update Required, app-wide (ADR 0027 §6): this app version is below the
@@ -52,7 +53,11 @@ export type AppConfig = {
   sync: AppSyncConfig | null
 }
 
-/** `GET /app/v1/config`. Failures throw `HttpError`. */
+/**
+ * `GET /app/v1/config`. Failures throw `HttpError`. Sends
+ * `SESSION_CAPABILITIES`: ww-api answers `everyone` only to an app that takes
+ * it (ADR 0040 §2).
+ */
 export async function fetchAppConfig(
   url: string,
   fetchImpl?: typeof fetch
@@ -61,7 +66,11 @@ export async function fetchAppConfig(
     ok?: unknown
     minAppVersion?: unknown
     sync?: { enabled?: unknown; entitlement?: unknown } | null
-  } | null>({ url, timeoutMs: 8_000, fetchImpl })
+  } | null>({
+    url: `${url}?capabilities=${SESSION_CAPABILITIES.join(',')}`,
+    timeoutMs: 8_000,
+    fetchImpl,
+  })
   if (response.data?.ok !== true)
     throw new HttpError('server', response.status, 'unexpected_response')
   const { minAppVersion, sync } = response.data

@@ -211,6 +211,8 @@ const TextInput = forwardRef<InputRef, TextInputProps>((props, ref) => {
       // Tamagui's native Input reads only `autoFocusNative` and drops
       // `autoFocus` (web), so a field asking for focus never got it.
       autoFocusNative={rest.autoFocusNative ?? rest.autoFocus}
+      // Its web Input drops `secureTextEntry`, which showed a password.
+      {...(rest.secureTextEntry && { type: rest.type ?? 'password' })}
       {...(textAlignVertical !== undefined && { textAlignVertical })}
       {...{
         borderWidth,

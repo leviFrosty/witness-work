@@ -31,6 +31,7 @@ const seed = process.env.FC_SEED ? Number(process.env.FC_SEED) : undefined
 const runs = { numRuns: 300, seed }
 
 const shareOrigin = 'https://ww-proxy.leviwilkerson.com'
+const newOrigins = ['https://witnesswork.app', 'https://dev.witnesswork.app']
 
 /** Strings shaped like the links the app accepts, with hostile payloads. */
 const linkLike = fc.oneof(
@@ -42,7 +43,16 @@ const linkLike = fc.oneof(
         `${shareOrigin}/c/`,
         'witnesswork://import-contact/',
         `${shareOrigin}/b#1`,
-        `${shareOrigin}/b/#1`
+        `${shareOrigin}/b/#1`,
+        ...newOrigins.flatMap((origin) => [
+          `${origin}/contacts#`,
+          `${origin}/buddies/invite#1`,
+          `${origin}/buddies/invite/#1`,
+          // Short paths the new hosts never use.
+          `${origin}/c#`,
+          `${origin}/c/`,
+          `${origin}/b#1`,
+        ])
       ),
       fc.string({ unit: 'binary', maxLength: 600 })
     )
@@ -117,6 +127,29 @@ describe('buddy invite links', () => {
           const message = `${before} ${buildInviteLink(secret)} ${after}`
           const found = parseInviteSecret(message)
           expect(found && Array.from(found)).toEqual(Array.from(secret))
+        }
+      ),
+      runs
+    )
+  })
+
+  it('read the full-word path on the new hosts and never their short one', () => {
+    fc.assert(
+      fc.property(
+        fc.uint8Array({ minLength: 16, maxLength: 16 }),
+        fc.constantFrom(...newOrigins),
+        fc.string({ unit: 'grapheme', maxLength: 60 }),
+        (secret, origin, before) => {
+          const fragment = buildInviteLink(secret).slice(
+            buildInviteLink(secret).indexOf('#')
+          )
+          const found = parseInviteSecret(
+            `${before} ${origin}/buddies/invite${fragment}`
+          )
+          expect(found && Array.from(found)).toEqual(Array.from(secret))
+          expect(parseInviteSecret(`${before} ${origin}/b${fragment}`)).toBe(
+            null
+          )
         }
       ),
       runs

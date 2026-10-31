@@ -1,5 +1,6 @@
 import moment from 'moment'
 import * as StoreReview from 'expo-store-review'
+import { hasCapability } from '@/lib/platformCapabilities'
 import { useTakeover } from '@/stores/takeover'
 
 /**
@@ -28,6 +29,7 @@ export const maybeRequestStoreReview = async ({
     lastTimeRequestedAReview === null ||
     moment(lastTimeRequestedAReview).isBefore(moment().subtract(3, 'days'))
 
+  if (!hasCapability('storeReview')) return
   if (useTakeover.getState().isTakingOver()) return
   if (
     calledGoecodeApiTimes > 1 &&

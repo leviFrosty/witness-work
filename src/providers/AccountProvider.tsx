@@ -16,13 +16,21 @@ import { hasSyncTransport, syncTransport } from '@/lib/syncTransport'
 import { AccountContext, AccountCtx } from '@/contexts/account'
 import useCustomer from '@/hooks/useCustomer'
 import { supporterSinceDate } from '@/lib/supporterSince'
-import { decideAccountAction } from '@/lib/accountFile'
+import type { AccountFile } from '@/lib/accountFile'
+import { decideAccountReconcile } from '@/lib/accountClaim'
+import {
+  onPeerAccountClaimsChange,
+  peerAccountClaims,
+  setOwnAccountClaim,
+} from '@/lib/accountClaimRegistry'
 import {
   adoptAccountId,
   getOrCreateAccountId,
+  getOwnAccountClaim,
   readAccountFile,
   writeAccountFile,
 } from '@/lib/account'
+import { analytics } from '@/lib/analytics'
 import { logger } from '@/lib/logger'
 import { ensureRevenueCatLinked } from '@/lib/serverAccount/revenueCatLinkRuntime'
 import { isOfflineError } from '@/lib/offlineError'
@@ -57,7 +65,7 @@ const FOREGROUND_RECONCILE_INTERVAL_MS = 15 * 60_000
  * user, and the fresh CustomerInfo has to land in customer state immediately.
  */
 const AccountProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
-  const { customer, ready, setCustomer } = useCustomer()
+  const { customer, ready, unavailable, setCustomer } = useCustomer()
   const [accountId, setAccountIdState] = useState<string | null>(() => {
     try {
       return getOrCreateAccountId()
@@ -80,10 +88,12 @@ const AccountProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
   // Latest customer state for event-driven reconciles without resubscribing.
   const customerRef = useRef(customer)
   const readyRef = useRef(ready)
+  const unavailableRef = useRef(unavailable)
   useEffect(() => {
     customerRef.current = customer
     readyRef.current = ready
-  }, [customer, ready])
+    unavailableRef.current = unavailable
+  }, [customer, ready, unavailable])
 
   // What RevenueCat is identified as, read by reconcile: a follow-up queued
   // behind the pass that changed it still runs with the old render's state.
@@ -108,10 +118,12 @@ const AccountProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
   const reconcile = useCallback(
     async (reason: string): Promise<void> => {
       perf.count('account:reconcile')
-      if (!readyRef.current) return
+      // RevenueCat is configured, or never will be this launch (no SDK key).
+      const revenueCatConfigured = readyRef.current
+      if (!revenueCatConfigured && !unavailableRef.current) return
       // Entitlement truth isn't known until the initial CustomerInfo lands;
       // acting on the transient "no customer" state could mis-claim.
-      if (customerRef.current === null) return
+      if (revenueCatConfigured && customerRef.current === null) return
 
       if (inFlightRef.current) {
         // Coalesce: one queued follow-up is enough — it re-reads everything.
@@ -145,21 +157,25 @@ const AccountProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
           customerRef.current = customerInfo
         }
 
-        if (!hasSyncTransport()) return
-        if (!syncTransport().isAvailable()) {
+        // The account file lives on the platform's transport (iCloud, or
+        // Drive), whichever transport sync runs on.
+        const fileTransport = hasSyncTransport()
+        const fileTransportReady =
+          fileTransport && syncTransport().isAvailable()
+        if (fileTransport && !fileTransportReady)
           setICloudSharingAvailable(false)
-          return
-        }
 
         // A different Apple Account clears the adopted id. Until RevenueCat
         // is back on this device's own id, the previous account's id (and
         // its entitlement) must not claim the new account's file.
-        checkICloudIdentity('account_reconcile')
+        if (fileTransportReady) checkICloudIdentity('account_reconcile')
         const current = getOrCreateAccountId()
         if (current !== accountIdRef.current) {
-          const { customerInfo } = await Purchases.logIn(current)
+          if (revenueCatConfigured) {
+            const { customerInfo } = await Purchases.logIn(current)
+            setCustomer(customerInfo)
+          }
           setAccountId(current)
-          setCustomer(customerInfo)
           void ensureRevenueCatLinked({ force: true, reason: 'adopted' })
           logger.log('[Account] re-identified after account id reset', {
             reason,
@@ -173,39 +189,57 @@ const AccountProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
           return
         }
 
-        // Don't trust an early empty directory listing — claiming before the
-        // container materializes would shadow another device's real claim.
-        const scanned = await syncTransport().waitForInitialScan(5000)
+        // Without RevenueCat (no SDK key) this device can't be entitled, but
+        // it still agrees on the account's id, so it's the right customer
+        // once RevenueCat is there.
+        const entitled =
+          revenueCatConfigured &&
+          supporterSinceDate(customerRef.current) !== null
+        const own = getOwnAccountClaim(entitled)
+        // Published in this device's sync payload.
+        setOwnAccountClaim(own)
 
-        let read
-        try {
-          read = await readAccountFile()
-        } catch (error) {
-          // Signed in but container unreachable (iCloud Drive off for the
-          // app) — expected for a minority of users, not an error.
-          logger.warn('[Account] account file unreadable', {
-            reason,
-            error: (error as Error).message,
-          })
-          setICloudSharingAvailable(false)
-          return
+        let file: AccountFile | null = null
+        let fileRead = false
+        let scanned = true
+        if (fileTransportReady) {
+          // Don't trust an early empty directory listing — claiming before
+          // the container materializes would shadow another device's real
+          // claim.
+          scanned = await syncTransport().waitForInitialScan(5000)
+          try {
+            const read = await readAccountFile()
+            setICloudSharingAvailable(true)
+            if (read.pending) {
+              // The file still downloading may be another device's claim, so
+              // no decision is safe yet — a claim would overwrite it. Pending
+              // files stay unobserved, so the metadata query reports the file
+              // again once it lands and `remote-change` re-runs this.
+              logger.log('[Account] deferred (account file downloading)', {
+                reason,
+              })
+              return
+            }
+            file = read.file
+            fileRead = true
+          } catch (error) {
+            // Signed in but container unreachable (iCloud Drive off for the
+            // app) — expected for a minority of users, not an error. The
+            // sync data's claims still count.
+            logger.warn('[Account] account file unreadable', {
+              reason,
+              error: (error as Error).message,
+            })
+            setICloudSharingAvailable(false)
+          }
         }
-        setICloudSharingAvailable(true)
-        if (read.pending) {
-          // The file still downloading may be another device's claim, so no
-          // decision is safe yet — a claim would overwrite it. Pending files
-          // stay unobserved, so the metadata query reports the file again
-          // once it lands and `remote-change` re-runs this.
-          logger.log('[Account] deferred (account file downloading)', {
-            reason,
-          })
-          return
-        }
-        const { file } = read
 
-        const mine = getOrCreateAccountId()
-        const entitled = supporterSinceDate(customerRef.current) !== null
-        const action = decideAccountAction({ accountId: mine, entitled, file })
+        const action = decideAccountReconcile({
+          own,
+          file,
+          fileRead,
+          peers: peerAccountClaims(),
+        })
 
         switch (action.type) {
           case 'claim': {
@@ -215,7 +249,7 @@ const AccountProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
               logger.log('[Account] claim deferred (initial scan incomplete)')
               return
             }
-            await writeAccountFile(mine, entitled)
+            await writeAccountFile(own)
             logger.log('[Account] claimed account file', { reason, entitled })
             errorTracking.addBreadcrumb({
               category: 'account',
@@ -225,21 +259,32 @@ const AccountProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
             return
           }
           case 'adopt': {
-            const { customerInfo } = await Purchases.logIn(action.accountId)
-            adoptAccountId(action.accountId)
+            if (revenueCatConfigured) {
+              const { customerInfo } = await Purchases.logIn(action.accountId)
+              setCustomer(customerInfo)
+            }
+            adoptAccountId(action.accountId, action.claimedAt)
             setAccountId(action.accountId)
-            setCustomer(customerInfo)
             // Another RevenueCat customer: link it to the server account.
             void ensureRevenueCatLinked({ force: true, reason: 'adopted' })
-            logger.log('[Account] adopted shared account id', { reason })
+            analytics.capture('account_id_adopted', {
+              source: action.source,
+              revenuecat: revenueCatConfigured,
+            })
+            logger.log('[Account] adopted shared account id', {
+              reason,
+              source: action.source,
+            })
             errorTracking.addBreadcrumb({
               category: 'account',
-              message: `adopt (${reason})`,
+              message: `adopt (${action.source}, ${reason})`,
               level: 'info',
             })
             return
           }
           case 'refresh': {
+            // Without RevenueCat there's no truth to fetch.
+            if (!revenueCatConfigured) return
             // The file disagrees with our cached entitlement for our own id —
             // another device purchased or lapsed. Fetch the truth, then
             // correct the file only if IT was the stale side.
@@ -248,7 +293,7 @@ const AccountProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
             setCustomer(info)
             const entitledNow = supporterSinceDate(info) !== null
             if (file && entitledNow !== file.entitled) {
-              await writeAccountFile(mine, entitledNow)
+              await writeAccountFile({ ...own, entitled: entitledNow })
             }
             logger.log('[Account] refreshed entitlement from remote flag', {
               reason,
@@ -296,7 +341,21 @@ const AccountProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
   const entitled = supporterSinceDate(customer) !== null
   useEffect(() => {
     void reconcile('customer-state')
-  }, [reconcile, ready, customerKnown, entitled])
+  }, [reconcile, ready, unavailable, customerKnown, entitled])
+
+  // Another device's claim arrived in the sync data (ADR 0040 §7).
+  useEffect(() => {
+    const debouncedReconcile = debounce(
+      () => void reconcile('sync-claims'),
+      500,
+      { leading: true, trailing: true }
+    )
+    const unsubscribe = onPeerAccountClaimsChange(debouncedReconcile)
+    return () => {
+      unsubscribe()
+      debouncedReconcile.cancel()
+    }
+  }, [reconcile])
 
   // Every return to the app and every reconnect until RevenueCat is
   // identified; the throttled foreground pass below may not run for 15

@@ -58,6 +58,7 @@ automatic events are discarded. Touch/text autocapture and session replay stay o
 | `recovery_key_viewed`                                                             | Once per session; reach of the recovery key, not repeat views.                                                                                                                                                                     |
 | `account_backup_failed`                                                           | Once per UTC day and reason; which failures affect people, not how often a phone retries.                                                                                                                                          |
 | `account_session_failed`                                                          | Once per UTC day and reason; which devices can't open an account session, not how often one retries.                                                                                                                               |
+| `web_storage_failed`                                                              | Once per UTC day and reason; which browsers can't save, not how often one retries.                                                                                                                                                 |
 | `device_storage_full`                                                             | Once per UTC day; how many devices run out of storage, not how often writes fail.                                                                                                                                                  |
 | `update_required_shown`                                                           | Once per session and source; reach of Update Required, not every return to the foreground.                                                                                                                                         |
 | `help_center_search_completed`                                                    | Once per session per source and outcome; reach of the search service and of searches that find nothing, not every search.                                                                                                          |
@@ -429,15 +430,14 @@ interaction and close, offering failures, purchase cancellation/failure, and
 restore outcomes. It stays attached to the paywall route, so later screens do
 not overwrite the original screen. Direct paywall entry has no gate attribution.
 
-| Feature             | `gate_surface`       | Placement                                                                    |
-| ------------------- | -------------------- | ---------------------------------------------------------------------------- |
-| `customAccentColor` | `accent_color`       | Accent picker in `PreferencesPersonalization`.                               |
-| `customAccentColor` | `avatar_background`  | Avatar picker, attributed to the route hosting it.                           |
-| `customAccentColor` | `contact_background` | Contact background editor, attributed to the route hosting it.               |
-| `customAppIcon`     | `app_icon`           | Icon picker in `PreferencesAppIcon` (iOS only).                              |
-| `iCloudSync`        | `icloud_sync`        | Sync gates in `PreferencesiCloud` and `PreferencesiCloudDevices` (both OSs). |
-| `routePlanning`     | `today_route`        | Supporter card in place of Find Shortest Route on `TodayRoute` (preview).    |
-| `buddyColor`        | `buddy_color`        | Color picker on a buddy's detail screen (`Buddy`).                           |
+| Feature             | `gate_surface`       | Placement                                                                 |
+| ------------------- | -------------------- | ------------------------------------------------------------------------- |
+| `customAccentColor` | `accent_color`       | Accent picker in `PreferencesPersonalization`.                            |
+| `customAccentColor` | `avatar_background`  | Avatar picker, attributed to the route hosting it.                        |
+| `customAccentColor` | `contact_background` | Contact background editor, attributed to the route hosting it.            |
+| `customAppIcon`     | `app_icon`           | Icon picker in `PreferencesAppIcon` (iOS only).                           |
+| `routePlanning`     | `today_route`        | Supporter card in place of Find Shortest Route on `TodayRoute` (preview). |
+| `buddyColor`        | `buddy_color`        | Color picker on a buddy's detail screen (`Buddy`).                        |
 
 Impressions are sent once per visible placement visit. Scrolling or rerendering
 does not repeat them; returning focus starts a new visit. A tap before the first
@@ -517,10 +517,17 @@ Google Account was connected. Drive adds three events of its own:
 No account ids, emails, or hashes are sent.
 
 Retain committed enable/disable transitions (`icloud_sync_enabled_changed`) and
-bounded `source`: settings, supporter default/lapse, or onboarding restore.
+bounded `source`: settings, supporter default, onboarding restore, or tray (Cloud Sync turned on from the tray's offer on a device whose sync was off).
+`supporter_default` is the name of any automatic enable for a device that never
+chose; since ADR 0040 it includes new installs that aren't Supporters.
+`icloud_sync_paused` (its only `source` was `supporter_lapse`) is no longer
+sent: Supporter status doesn't pause sync. The `iCloudSync` feature and its `icloud_sync` gate
+surface are gone from the `supporter_gate_*` events, and
+`icloud_restore_replace_confirmed` no longer carries `merge_offered` (Merge is
+always offered).
 Unchanged values, hydration, and developer resets do not emit transitions.
-`icloud_sync_enable_deferred` keeps the bounded incomplete-read reason; paused,
-upload failed/recovered, and account-changed outcomes remain.
+`icloud_sync_enable_deferred` keeps the bounded incomplete-read reason;
+upload failed/recovered and account-changed outcomes remain.
 
 First-enable viewed/chosen/outcome/dismissed describes conflict resolution. Manual
 sync and reset retain started/outcome; reset adoption remains.
@@ -545,17 +552,37 @@ Cloud Sync (ADR 0030) runs on the same engine, so it sends the same
 below. Each device syncs through one option: Cloud Sync, iCloud/Google Drive
 (`platform`), or `off`.
 
-| Event                        | Interpretation                                                                                                                                                                                                                 |
-| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `cloud_sync_default_outcome` | A device that never chose a sync option tried Cloud Sync as its default. `outcome`: `seed`, `pull`, `conflict` (it asks Merge or Replace), `incomplete`, `unavailable`, `not_entitled`, `disabled`, `no_session`, or `failed`. |
-| `cloud_sync_option_changed`  | A switch finished. `from` and `to` (`cloud`, `platform`, `off`), and `source` (`settings`, `offer`, `tools`).                                                                                                                  |
-| `cloud_sync_switch_failed`   | A switch couldn't happen and nothing changed. `from`, `to`, `source`, and `reason` (`not_entitled`, `disabled`, `no_session`, `unavailable`, `incomplete`, `offline`, `account_changed`).                                      |
-| `cloud_sync_offer_answered`  | A device on iCloud/Google Drive answered the one-time offer to switch. `choice`: `switch` or `dismiss`.                                                                                                                        |
-| `cloud_sync_account_changed` | The server account behind Cloud Sync changed (a QR code or recovery key to another account), so sync stopped and the device decides again. `source` (the identity check's trigger) and `sync_was_enabled`.                     |
+| Event                              | Interpretation                                                                                                                                                                                                                                                                                                              |
+| ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `cloud_sync_default_outcome`       | A device that never chose a sync option tried Cloud Sync as its default. `outcome`: `seed`, `pull`, `conflict` (it asks Merge or Replace), `incomplete`, `unavailable`, `not_entitled`, `disabled`, `no_session`, or `failed`.                                                                                              |
+| `cloud_sync_option_changed`        | A switch finished. `from` and `to` (`cloud`, `platform`, `off`), and `source` (`settings`, `offer`, `tray`, `tools`, `account_request`).                                                                                                                                                                                    |
+| `cloud_sync_switch_failed`         | A switch couldn't happen and nothing changed. `from`, `to`, `source`, and `reason` (`not_entitled`, `disabled`, `no_session`, `unavailable`, `incomplete`, `offline`, `account_changed`).                                                                                                                                   |
+| `cloud_sync_tray_offer_shown`      | The notifications tray showed the one-time Cloud Sync offer to an install from before sync was free (ADR 0040 §4). Once per device. `supporter`: whether it was the Supporter thank-you.                                                                                                                                    |
+| `cloud_sync_tray_offer_answered`   | The User answered that offer. `choice`: `turn_on` (each tap; the switch's outcome follows as `cloud_sync_option_changed` or `cloud_sync_switch_failed` with `source: tray`, and a failed tap leaves the offer up, so a device can send more than one) or `dismiss`. `supporter` as above.                                   |
+| `cloud_sync_offer_answered`        | A device on iCloud/Google Drive answered the one-time offer to switch. `choice`: `switch` or `dismiss`.                                                                                                                                                                                                                     |
+| `cloud_sync_account_changed`       | The server account behind Cloud Sync changed (a QR code or recovery key to another account), so sync stopped and the device decides again. `source` (the identity check's trigger) and `sync_was_enabled`.                                                                                                                  |
+| `cloud_sync_photos_storage_full`   | A photo didn't upload because the account's Cloud Sync photo storage is full (ADR 0040 §6). At most once a day a device. `photos`: the account's photo count, `<100`, `<1000` or `1000+`.                                                                                                                                   |
+| `cloud_sync_photo_transfer_failed` | A Cloud Sync photo didn't upload or download, for a reason other than a full account or being offline. At most once a day a device for each `source` and `reason`. `source`: `upload` or `download`; `reason`: the transport's class (`too-large`, `server-error`, `rate-limited`, `unauthorized`, `not-found`, `unknown`). |
 
 They answer how many devices use each option, whether the default and the offer
 move devices to Cloud Sync, and why switches fail. No account ids, slot ids,
 device names, or records are sent.
+
+#### The Cloud Sync request
+
+A browser signed in to an account whose phones aren't on Cloud Sync asks them
+to switch (ADR 0040 §5). These answer whether phones answer the request, why
+they can't, and where people stop on the web's screen. A phone sends at most one
+event per request (and one per retry that fails for now), and the screen one per
+state, so volume stays near one per sign-in.
+
+| Event                         | Interpretation                                                                                                                                                                                                                                                                                                                                                                            |
+| ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `cloud_sync_request_answered` | A phone acted on the account's request. `outcome`: `switched` (with `from`: `platform` or `off`), `already_on` (it was on Cloud Sync), or `failed` with `from`, `reason` (a switch failure reason, `failed` when the switch threw, or `chose_other` when the User moved it elsewhere meanwhile) and `final` (it stops for this request; otherwise it tries again at the next foreground). |
+| `cloud_sync_web_gate_state`   | The web's Cloud Sync screen reached a state: `state` is `ready` (it goes on), `turnOn`, `waiting`, or `updatePhone`.                                                                                                                                                                                                                                                                      |
+| `cloud_sync_web_gate_action`  | A tap on that screen. `action`: `turn_on`, with `outcome` (`requested` or `failed`, and as `reason` the server code, the network failure, or `unknown`), or `sign_out`, with the `state` it was in (`null` before the first read).                                                                                                                                                        |
+
+No account ids, slot ids, request times, or app versions are sent.
 
 ## Calendar Sync and notification badges
 
@@ -1105,6 +1132,20 @@ and why they can't. A device opens one when its account first connects, after
 Never the account id, `accountPub`, session ids, tokens, the device label, or
 the attestation itself.
 
+### One RevenueCat customer per account
+
+This answers whether a device joins the account's RevenueCat customer through
+the sync data, which ADR 0040 §7 adds, or still only through the account file,
+and how often a device without RevenueCat does so ahead of it. Adoptions are
+rare: one when a device joins, and one when a purchase elsewhere moves the
+account to another id.
+
+| Event                | When                                                                                                               | Properties                                                                                                                                                                             |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `account_id_adopted` | This device adopted another device's RevenueCat id ([sync](./icloud-sync.md#one-revenuecat-customer-per-account)). | `source: account_file \| sync` (where the winning claim was seen), `revenuecat`: whether RevenueCat is set up on this device (false: Android without an SDK key; the id waits for it). |
+
+Never the RevenueCat id, the account id, or the claim's time.
+
 ### Account devices and activity
 
 These answer whether people look at their signed-in devices and account
@@ -1115,7 +1156,7 @@ whether signing a device out works.
 | --------------------------- | ----------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
 | `account_devices_viewed`    | Signed-In Devices listed the account's devices. Once per session. | `devices` (count).                                                                                       |
 | `account_activity_viewed`   | Account Activity showed its first page. Once per session.         | `entries` (count on the first page, at most 50), `suspicious` (the page has a `session.refresh_reused`). |
-| `account_device_signed_out` | The User confirmed Sign Out on another device.                    | `outcome: ok \| failed`, `platform: ios \| android \| dev` (the signed-out device's).                    |
+| `account_device_signed_out` | The User confirmed Sign Out on another device.                    | `outcome: ok \| failed`, `platform: ios \| android \| web \| dev \| unknown` (the signed-out device's).  |
 
 Never session ids, device names or labels, entry contents, or the account id.
 
@@ -1128,6 +1169,16 @@ and whether they go update.
 | ------------------------------ | ------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `update_required_shown`        | Update Required covered the app. Once per session and source. | `source: config \| server` (`config`: below `minAppVersion` from `GET /app/v1/config`; `server`: ww-api answered 426), `min_version` (when known). |
 | `update_required_store_opened` | The User tapped Update WitnessWork.                           | `source`.                                                                                                                                          |
+
+### Web local data
+
+These answer how often a browser can't save WitnessWork's data (ADR 0037 §6),
+and how often people open it in more than one tab. Saves that work send nothing.
+
+| Event                | When                                                                           | Properties                                                                                                                                                             |
+| -------------------- | ------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `web_storage_failed` | The browser couldn't save, and the User was told. Once per UTC day and reason. | `reason: unavailable \| quotaExceeded \| writeFailed` (`unavailable`: IndexedDB couldn't be opened, so the tab runs from memory), `persisted` (storage is persistent). |
+| `web_tab_taken_over` | The User chose Use Here in a tab while WitnessWork was open in another one.    | None.                                                                                                                                                                  |
 
 ### Account backup
 

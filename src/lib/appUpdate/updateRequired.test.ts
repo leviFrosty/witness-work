@@ -151,6 +151,19 @@ describe('fetchAppConfig', () => {
     })
   })
 
+  it('asks for Cloud Sync for everyone', async () => {
+    // ww-api answers `everyone` only to an app that says it can take it (ADR
+    // 0040 §2); an older app reads `supporter`.
+    const fetchImpl = answer({ ok: true })
+    await fetchAppConfig(
+      'https://api.test/app/v1/config',
+      fetchImpl as unknown as typeof fetch
+    )
+    expect((fetchImpl.mock.calls[0] as unknown[])[0]).toBe(
+      'https://api.test/app/v1/config?capabilities=sync-everyone'
+    )
+  })
+
   it('throws on an answer that isn’t the config', async () => {
     await expect(
       fetchAppConfig(

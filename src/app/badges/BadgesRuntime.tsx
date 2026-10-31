@@ -10,6 +10,7 @@ import { actionBehind } from '@/lib/userAction'
 import { useConversations } from '@/stores/conversationStore'
 import { usePreferences } from '@/stores/preferences'
 import { useServiceReport } from '@/stores/serviceReport'
+import { whenIdle } from '@/lib/whenIdle'
 
 /** Settles a burst of edits (an import, a sync) into one evaluation. */
 const EVALUATE_DEBOUNCE_MS = 1500
@@ -55,7 +56,7 @@ const BadgesRuntime = () => {
   useEffect(() => {
     if (!onboardingComplete) return
     let timer: ReturnType<typeof setTimeout> | null = null
-    let idle: number | null = null
+    let cancelIdle: (() => void) | null = null
     let evaluatedDay: string | null = null
     // When this batch's first change came in, to find the action behind it.
     let changedAt: number | null = null
@@ -64,8 +65,8 @@ const BadgesRuntime = () => {
       timer = null
       if (!hydrated()) return
       const batchAt = changedAt ?? Date.now()
-      idle = requestIdleCallback(() => {
-        idle = null
+      cancelIdle = whenIdle(() => {
+        cancelIdle = null
         changedAt = null
         const afterOnboarding = justOnboarded.current
         justOnboarded.current = false
@@ -128,7 +129,7 @@ const BadgesRuntime = () => {
 
     return () => {
       if (timer) clearTimeout(timer)
-      if (idle !== null) cancelIdleCallback(idle)
+      cancelIdle?.()
       unsubscribes.forEach((unsubscribe) => unsubscribe())
       appState.remove()
     }

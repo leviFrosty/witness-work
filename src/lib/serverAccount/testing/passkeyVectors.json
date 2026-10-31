@@ -1,0 +1,52 @@
+{
+  "description": "Passkey vectors (docs/passkeys-protocol.md). Shared by the app and ww-api; inputs are fixed, nonces chosen.",
+  "prfSalt": {
+    "utf8": "ww-account/v1/passkey-prf",
+    "b64u": "d3ctYWNjb3VudC92MS9wYXNza2V5LXByZg"
+  },
+  "tags": [
+    {
+      "userHandle": "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+      "tag": "KVW7",
+      "name": "WitnessWork KVW7"
+    },
+    {
+      "userHandle": "ICEiIyQlJicoKSorLC0uLzAxMjM0NTY3ODk6Ozw9Pj8",
+      "tag": "TVWX",
+      "name": "WitnessWork TVWX"
+    },
+    {
+      "userHandle": "__________________________________________8",
+      "tag": "PQMC",
+      "name": "WitnessWork PQMC"
+    }
+  ],
+  "wraps": [
+    {
+      "note": "epoch 0, 20-byte credential id",
+      "prfOutputHex": "808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9f",
+      "accountKeyHex": "404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f",
+      "accountPub": "FsxlAf988I_tHI1wgbrFSHgR_idFiJhDLvmHEuFEJOI",
+      "accountId": "EBESExQVFhcYGRobHB0eHw",
+      "credentialId": "oKGio6SlpqeoqaqrrK2ur7CxsrM",
+      "keyEpoch": 0,
+      "nonceHex": "c0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7",
+      "wrapKeyHex": "9682265d3a1a4b844795fc409c9bab6bb7f46208aaaa455939fadad5e21d7753",
+      "aad": "ww-account/v1/passkey-wrap\nEBESExQVFhcYGRobHB0eHw\noKGio6SlpqeoqaqrrK2ur7CxsrM\n0",
+      "wrap": "AcDBwsPExcbHyMnKy8zNzs_Q0dLT1NXW14TdxYanGYRIVJNpNK-oJwAzz77s1eZ--KBIhNAGtOochZS9wWomgtX07NUYRhQ9Yg"
+    },
+    {
+      "note": "epoch 3, 32-byte credential id",
+      "prfOutputHex": "5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a",
+      "accountKeyHex": "0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20",
+      "accountPub": "aaYTbxMoFqNgHVZoz3xbW_Tu82v6-yIhRbLA-do2S8I",
+      "accountId": "cHFyc3R1dnd4eXp7fH1-fw",
+      "credentialId": "4OHi4-Tl5ufo6err7O3u7_Dx8vP09fb3-Pn6-_z9_v8",
+      "keyEpoch": 3,
+      "nonceHex": "070707070707070707070707070707070707070707070707",
+      "wrapKeyHex": "b5f6910730cb1e90b44ba5cc7ebb29da8e2b6d297ae06a587989da61ff550ac5",
+      "aad": "ww-account/v1/passkey-wrap\ncHFyc3R1dnd4eXp7fH1-fw\n4OHi4-Tl5ufo6err7O3u7_Dx8vP09fb3-Pn6-_z9_v8\n3",
+      "wrap": "AQcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHB0ydLezcbHIGIw3_IcZkjIzRnu-s4bY54u0_Q7QZkafov_u4ivoiyL21anGkT_U01Q"
+    }
+  ]
+}

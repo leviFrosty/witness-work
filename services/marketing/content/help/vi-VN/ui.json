@@ -1,0 +1,23 @@
+{
+  "helpCenter": "Trung tâm trợ giúp",
+  "intro": "Tìm câu trả lời nhanh cho các câu hỏi thường gặp về WitnessWork. Không thể tìm thấy những gì bạn cần? Tiếp cận - phản hồi của bạn định hình ứng dụng.",
+  "searchPlaceholder": "Câu hỏi tìm kiếm",
+  "topQuestions": "Những câu hỏi thường gặp",
+  "allQuestions": "Tất cả các câu hỏi",
+  "noMatches": "Không có kết quả",
+  "noResults": "Không có câu hỏi nào phù hợp với tìm kiếm của bạn.",
+  "searching": "Đang tìm kiếm…",
+  "clearSearch": "Xóa tìm kiếm",
+  "stillNeedHelp": "Bạn vẫn cần trợ giúp?",
+  "emailUs": "Liên hệ riêng qua email tại",
+  "bugReport": "Báo cáo lỗi",
+  "featureRequest": "Yêu cầu tính năng",
+  "device": "Thiết bị",
+  "language": "Ngôn ngữ",
+  "all": "Tất cả",
+  "copyLink": "Sao chép liên kết",
+  "iosOnly": "Chỉ iOS",
+  "androidOnly": "Chỉ Android",
+  "notTranslated": "Câu trả lời này chưa được dịch nên đang hiển thị bằng tiếng Anh.",
+  "stillNeedHelpDescription": "Gửi email để được hỗ trợ riêng, hoặc báo lỗi hay đề xuất tính năng trên GitHub. Hãy cho biết bạn đã thử những gì, thiết bị và phiên bản WitnessWork của bạn. Đừng đưa thông tin liên hệ, ghi chú riêng tư hay ID tài khoản vào báo cáo công khai."
+}

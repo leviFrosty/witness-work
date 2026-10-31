@@ -1,6 +1,6 @@
 # Server account protocol
 
-The wire contract for the server account between the WitnessWork app (`src/lib/serverAccount`) and ww-api (`ww-api/src/accounts`). Why it exists is in [ADR 0024](./adr/0024-anonymous-server-accounts.md); moving it, recovering it, and backing up to it are in [ADR 0026](./adr/0026-move-and-recover-the-server-account.md); attested sessions and bearer tokens are in [ADR 0027](./adr/0027-account-sessions-attest-once-then-bearer-tokens.md); the activity log and device list are in [ADR 0028](./adr/0028-account-activity-log.md); Supporter status on the account is in [ADR 0029](./adr/0029-supporter-status-on-the-server-account.md); Cloud Sync is in [ADR 0030](./adr/0030-cloud-sync-through-ww-api.md).
+The wire contract for the server account between the WitnessWork app (`src/lib/serverAccount`) and ww-api (`ww-api/src/accounts`). Why it exists is in [ADR 0024](./adr/0024-anonymous-server-accounts.md); moving it, recovering it, and backing up to it are in [ADR 0026](./adr/0026-move-and-recover-the-server-account.md); attested sessions and bearer tokens are in [ADR 0027](./adr/0027-account-sessions-attest-once-then-bearer-tokens.md); the activity log and device list are in [ADR 0028](./adr/0028-account-activity-log.md); Supporter status on the account is in [ADR 0029](./adr/0029-supporter-status-on-the-server-account.md); Cloud Sync is in [ADR 0030](./adr/0030-cloud-sync-through-ww-api.md). Passkeys, web sessions, web sign-up, and approving a browser from a phone ([ADR 0038](./adr/0038-passkeys-and-web-accounts.md)) are in [`passkeys-protocol.md`](./passkeys-protocol.md). Changing the account key while keeping the account ([ADR 0039](./adr/0039-change-the-account-key.md)) is in [`account-key-change.md`](./account-key-change.md).
 
 The server account is not ADR 0011's account id. That one is the RevenueCat identity, shared through a file in iCloud Drive. This one is a row ww-api owns, so it can suspend someone for abuse. The account links the RevenueCat customers its devices use (see [Supporter status](#supporter-status)).
 
@@ -65,6 +65,14 @@ Plain JSON, no envelope: `{ refreshToken }` → `{ ok, accessToken, accessExpire
 - A session lasts 90 days from opening. Refreshing doesn't extend it.
 - Counts against the Buddies read edge limit.
 
+### Capabilities
+
+`capabilities` (optional) is a list of names a build can take, sent in the `session/open` and `web/signup` payloads and in the refresh body (`{ refreshToken, appVersion?, capabilities? }`). The session stores it. On refresh, a list that's sent replaces the stored one, and leaving it out keeps it, so the app sends its list on every refresh and a session an older build opened gains it after the update. Unknown names are ignored; a malformed list is `bad_request`. ww-api caches a session's capabilities for 60 seconds, so a change can take that long to apply. `GET /app/v1/config` takes the same names as `?capabilities=`, comma-separated.
+
+- `sync-everyone`: the build turns Cloud Sync on by itself only for a new install (ADR 0040 §2), so `entitlement: everyone` applies to it. Without it, Cloud Sync for everyone stays a Supporter benefit for that session, web sessions included.
+
+The app's list is `SESSION_CAPABILITIES` (`src/lib/serverAccount/capabilities.ts`).
+
 ### Closing: `DELETE /accounts/v1/sessions/current`
 
 **Bearer**, no body → `{ ok }`. Ends the token's session; repeating it is `ok`. The app calls it on sign out, before replacing the account key, and before Delete Buddies.
@@ -98,11 +106,11 @@ A JWT (`HS256`, with `kid`) the app treats as opaque. Claims: `sub` (`accountId`
 
 ### Reading the account: `GET /accounts/v1/account`
 
-| Request         | Response                                                                    |
-| --------------- | --------------------------------------------------------------------------- |
-| None (`Bearer`) | `{ ok, accountId, accountPub, status, createdAt, inboxIds, statusChanges }` |
+| Request         | Response                                                                              |
+| --------------- | ------------------------------------------------------------------------------------- |
+| None (`Bearer`) | `{ ok, accountId, accountPub, keyEpoch, status, createdAt, inboxIds, statusChanges }` |
 
-- **Bearer**, no body: the token's account. Read-only.
+- **Bearer**, no body: the token's account. Read-only. `keyEpoch` is the account's [key epoch](./account-key-change.md).
 - Before sessions it was `POST /accounts/v1/account/info`, self-signed like `account/register` (payload `accountPub`, `ts`, `nonce`) under op `account/info`. That route stays only for older app versions while the legacy switch is on; there an unregistered key is `unknown_account` (404).
 - `createdAt` and each `statusChanges[].createdAt` are epoch milliseconds. Status changes carry `status` only; their reason codes stay with moderation.
 - Settings → Account reads the account's status with it each time the screen opens, and the developer Tools show the whole record. Counts against the Buddies read edge limit.
@@ -115,15 +123,17 @@ The account's security history and its signed-in devices ([ADR 0028](./adr/0028-
 
 → `{ ok, sessions: [Session] }`, the account's live sessions, newest first:
 
-| Field          | What                                                                      |
-| -------------- | ------------------------------------------------------------------------- |
-| `sessionId`    | The session's id (the access token's `sid`)                               |
-| `platform`     | `ios`, `android`, or `dev`                                                |
-| `device`?      | The sealed device label from `POST /accounts/v1/sessions`, as sent        |
-| `current`      | `true` for the session the token belongs to                               |
-| `createdAt`    | When it opened, epoch ms                                                  |
-| `lastActiveAt` | Its last refresh (or `createdAt`), epoch ms; accurate to about 15 minutes |
-| `expiresAt`    | 90 days after it opened, epoch ms                                         |
+| Field          | What                                                                                                                          |
+| -------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `sessionId`    | The session's id (the access token's `sid`)                                                                                   |
+| `platform`     | `ios`, `android`, `web`, or `dev`                                                                                             |
+| `device`?      | The sealed device label from `POST /accounts/v1/sessions`, as sent                                                            |
+| `appVersion`?  | The app version the session last reported; absent when unknown                                                                |
+| `method`       | How it opened, as in [`session.opened`](./passkeys-protocol.md#activity)                                                      |
+| `current`      | `true` for the session the token belongs to                                                                                   |
+| `createdAt`    | When it opened, epoch ms                                                                                                      |
+| `lastActiveAt` | Its last refresh (or `createdAt`), epoch ms; accurate to about 15 minutes                                                     |
+| `expiresAt`    | 90 days after it opened, epoch ms; a web session's slides ([web sessions](./passkeys-protocol.md#web-sessions-post-sessions)) |
 
 ### Signing a device out: `POST /accounts/v1/sessions/revoke`
 
@@ -135,30 +145,31 @@ Revoking ends the session, not the device's account key: a device that still has
 
 Query: `limit` (1–100, default 50) and `before` (the previous page's `nextCursor`). → `{ ok, activity: [Entry], nextCursor }`, newest first; `nextCursor` is `null` on the last page. A malformed `limit` or `before` is 400 `bad_request`.
 
-| Field       | What                                                                                 |
-| ----------- | ------------------------------------------------------------------------------------ |
-| `id`        | Opaque, unique within the account; also a cursor                                     |
-| `kind`      | Below                                                                                |
-| `createdAt` | Epoch ms                                                                             |
-| `session`?  | The session the entry is about, or that did it: `{ sessionId, platform, device? }`   |
-| `actor`?    | For `session.revoked` and `session.replaced`, the session that ended it (same shape) |
-| `slotId`?   | `backup.deleted` (absent when every slot was deleted) and `backup.downloaded`        |
+| Field       | What                                                                                                                                                 |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`        | Opaque, unique within the account; also a cursor                                                                                                     |
+| `kind`      | Below                                                                                                                                                |
+| `createdAt` | Epoch ms                                                                                                                                             |
+| `session`?  | The session the entry is about, or that did it: `{ sessionId, platform, device? }`                                                                   |
+| `actor`?    | For `session.revoked` and `session.replaced`, the session that ended it; for an `approval` `session.opened`, the phone that approved it (same shape) |
+| `slotId`?   | `backup.deleted` (absent when every slot was deleted) and `backup.downloaded`                                                                        |
 
-| `kind`                   | `session`                                                                                     | `actor`             |
-| ------------------------ | --------------------------------------------------------------------------------------------- | ------------------- |
-| `account.created`        | —                                                                                             | —                   |
-| `session.opened`         | The new session                                                                               | —                   |
-| `session.signed_out`     | The session that ended itself                                                                 | —                   |
-| `session.revoked`        | The session signed out                                                                        | The one that did it |
-| `session.replaced`       | The oldest session, ended by the cap                                                          | The new session     |
-| `session.refresh_reused` | The session ended: a refresh token was reused after its grace minute                          | —                   |
-| `handoff.sent`           | The old phone's session (absent before sessions)                                              | —                   |
-| `backup.deleted`         | The session that deleted (absent before sessions)                                             | —                   |
-| `backup.downloaded`      | The session that downloaded (absent before sessions); at most once per slot, session, and day | —                   |
-| `account.suspended`      | —                                                                                             | —                   |
-| `account.reinstated`     | —                                                                                             | —                   |
-| `buddies.inbox_linked`   | The session that linked the account's inbox (absent before sessions)                          | —                   |
-| `buddies.deleted`        | The session that deleted the account's Buddies inbox (absent before sessions)                 | —                   |
+| `kind`                                                                       | `session`                                                                                     | `actor`             |
+| ---------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- | ------------------- |
+| `account.created`                                                            | —                                                                                             | —                   |
+| `session.opened`                                                             | The new session                                                                               | —                   |
+| `session.signed_out`                                                         | The session that ended itself                                                                 | —                   |
+| `session.revoked`                                                            | The session signed out                                                                        | The one that did it |
+| `session.replaced`                                                           | The oldest session, ended by the cap                                                          | The new session     |
+| `session.refresh_reused`                                                     | The session ended: a refresh token was reused after its grace minute                          | —                   |
+| `handoff.sent`                                                               | The old phone's session (absent before sessions)                                              | —                   |
+| `backup.deleted`                                                             | The session that deleted (absent before sessions)                                             | —                   |
+| `backup.downloaded`                                                          | The session that downloaded (absent before sessions); at most once per slot, session, and day | —                   |
+| `account.suspended`                                                          | —                                                                                             | —                   |
+| `account.reinstated`                                                         | —                                                                                             | —                   |
+| `buddies.inbox_linked`                                                       | The session that linked the account's inbox (absent before sessions)                          | —                   |
+| `buddies.deleted`                                                            | The session that deleted the account's Buddies inbox (absent before sessions)                 | —                   |
+| `passkey.added`, `passkey.removed`, `device.approved`, `account.key_changed` | See [passkeys-protocol.md](./passkeys-protocol.md#activity)                                   | —                   |
 
 - `device` is the label as the session sent it, copied onto the entry, so it outlives the session. Open it with the device label key (see [Opening a session](#opening-a-session-post-accountsv1sessions)). A label that's absent or won't open shows the platform instead.
 - Buddies entries name only the account's own inbox being linked or deleted; writer ops are never logged.
@@ -167,7 +178,7 @@ Query: `limit` (1–100, default 50) and `before` (the previous page's `nextCurs
 
 ### The app
 
-Settings → Account → **Devices** lists the sessions, marks the one whose `sessionId` is this device's as "This device", shows when each signed in (with the time when two of the same name signed in the same day, as a wiped phone and its new install do), and offers Sign Out on the others. A list with no `current` session means this device was signed out while its access token still worked: the app refreshes its token, which opens a new session, and lists again. Settings → Account → **Activity** pages through the log 50 at a time and flags `session.refresh_reused`. A restore logs one `backup.downloaded` per slot, and nothing in them tells the slots apart for the User, so one session's downloads within 5 minutes of each other show as one row ("2 backups downloaded on this device"). It names as "this device" every session this install has had: their ids (at most 20, not secret) are kept in device-local MMKV, so entries from before a sign-out still read as this device. Both decrypt labels on the device.
+Settings → Account → **Devices** lists the sessions (a browser reads as its label, "Chrome on macOS", or "Web browser", with a globe icon and its app version; signing one out says it clears its data, and anything it hasn't synced is lost; a session of a platform the app doesn't know reads as "Device" and can still be signed out), marks the one whose `sessionId` is this device's as "This device", shows when each signed in (with the time when two of the same name signed in the same day, as a wiped phone and its new install do), and offers Sign Out on the others. A list with no `current` session means this device was signed out while its access token still worked: the app refreshes its token, which opens a new session, and lists again. Settings → Account → **Activity** pages through the log 50 at a time and flags `session.refresh_reused`, and says how a sign-in opened (`method`: with a passkey, with a recovery key, approved from a phone) and what a passkey was added or removed on. A restore logs one `backup.downloaded` per slot, and nothing in them tells the slots apart for the User, so one session's downloads within 5 minutes of each other show as one row ("2 backups downloaded on this device"). It names as "this device" every session this install has had: their ids (at most 20, not secret) are kept in device-local MMKV, so entries from before a sign-out still read as this device. Both decrypt labels on the device.
 
 ## Linking a Buddies inbox
 
@@ -191,10 +202,12 @@ The phone with the account (the **old** phone) shows a QR code; the **new** phon
 https://ww-proxy.leviwilkerson.com/h#1<b64u(channelId[16] ‖ offerPub[32] ‖ secret[16])>
 ```
 
+The app also reads the same fragment on `https://witnesswork.app/accounts/handoff#1…`; see [App links](./app-links.md).
+
 - `channelId`: 16 random bytes; the only part the server learns.
 - `offerPub`: the old phone's temporary X25519 public key, made for this handoff and forgotten after it.
 - `secret`: 16 random bytes.
-- The fragment never reaches a server. `GET /h` serves a page telling someone without the app to install it, and the app claims `/h` as a universal link and Android app link.
+- The fragment never reaches a server. `GET /h` (and `/accounts/handoff` on `witnesswork.app`) serves a page telling someone without the app to install it, and the app claims both as universal links and Android app links.
 
 ### Keys
 
@@ -298,6 +311,8 @@ Each device keeps its own encrypted slot in R2, at `v1/<accountId>/<slotId>`. A 
 
 Cloud Sync ([ADR 0030](./adr/0030-cloud-sync-through-ww-api.md)): each device on it keeps one end-to-end encrypted snapshot of its data in a slot of the account, and every device merges the others' with the sync engine ([icloud-sync.md](./icloud-sync.md)). One `AccountSync` Durable Object per account holds the slots' metadata and the live sockets; R2 holds the ciphertext at `v1/<accountId>/<slotId>`.
 
+Photos over Cloud Sync, and the account's request to turn Cloud Sync on, are in [cloud-sync-photos.md](./cloud-sync-photos.md) ([ADR 0040](./adr/0040-sync-is-free-and-cloud-sync-carries-photos.md)).
+
 ### The blob
 
 The backup's format under its own key and AAD:
@@ -334,6 +349,8 @@ Every op is **Bearer**. Ids travel in bodies and headers, never URLs.
 
 `GET /app/v1/config` carries the switches for devices without a session: `sync: { enabled, entitlement }`.
 
+`entitlement: everyone` applies only to a session whose capabilities include `sync-everyone`, and to a config request with `?capabilities=sync-everyone` (see [Capabilities](#capabilities)). Anyone else is answered as if the entitlement were `supporter`, everywhere above.
+
 ### The app
 
 - **One option.** A device syncs through Cloud Sync, iCloud (iOS) or Google Drive (Android), or not at all (`syncProvider` in device-local preferences). The engine runs on that one transport (`activeSyncTransport()`); devices on different options don't see each other.
@@ -346,7 +363,7 @@ Every op is **Bearer**. Ids travel in bodies and headers, never URLs.
 
 ## Supporter status
 
-ww-api answers whether an account is a Supporter from its own record, which RevenueCat's webhook keeps current ([ADR 0029](./adr/0029-supporter-status-on-the-server-account.md)). Who counts is still [ADR 0014](./adr/0014-supporter-status-rule.md)'s rule. The app keeps logging in to RevenueCat with ADR 0011's shared id and links that customer to its account.
+ww-api answers whether an account is a Supporter from its own record, which RevenueCat's webhook keeps current ([ADR 0029](./adr/0029-supporter-status-on-the-server-account.md)). Who counts is still [ADR 0014](./adr/0014-supporter-status-rule.md)'s rule. The app keeps logging in to RevenueCat with ADR 0011's shared id and links that customer to its account. Devices agree on that id through the sync data too, and the app counts the account's status as Supporter when RevenueCat doesn't: see [One RevenueCat customer per account](./icloud-sync.md#one-revenuecat-customer-per-account). How the web sells, and which customer it uses, is in [`web-purchases.md`](./web-purchases.md).
 
 ### Linking a customer: `POST /accounts/v1/revenuecat-customers`
 
@@ -412,7 +429,7 @@ The account key and the first 2 bytes of its SHA-256, 34 bytes, in Crockford bas
 
 ## Updates and the legacy switch
 
-`GET {BASE}/app/v1/config` (no authentication) → `{ ok, minAppVersion? }`. `minAppVersion` is `major.minor.patch`, from KV `app:min-version` (`{"minVersion":"…"}`), then the `APP_MIN_VERSION` var, else absent. The app reads it at launch and when it returns to the foreground; below it, the app shows a blocking Update Required screen with a store link. Edge-cached for 60 seconds.
+`GET {BASE}/app/v1/config[?capabilities=…]` (no authentication) → `{ ok, minAppVersion?, sync? }`. `minAppVersion` is `major.minor.patch`, from KV `app:min-version` (`{"minVersion":"…"}`), then the `APP_MIN_VERSION` var, else absent. The app reads it at launch and when it returns to the foreground; below it, the app shows a blocking Update Required screen with a store link. Edge-cached for 60 seconds.
 
 KV `auth:legacy` (`on` when absent, then the `AUTH_LEGACY` var): while on, every converted route (accounts, backup, handoff, Buddies, and the old Notes Import routes while `scribe:legacy-notes-import` re-allows them) also accepts the way it authenticated before sessions. Set to `off`, those requests are refused with **426 `upgrade_required`** (`Retry-After` absent; updating is the fix), and the app shows Update Required. Edge-cached for 60 seconds. Raising `app:min-version` first means current app versions show the update screen before any request is refused.
 

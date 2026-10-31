@@ -14,6 +14,7 @@ import IconButton from '@/components/ui/IconButton'
 import AccentColorPicker from '@/components/AccentColorPicker'
 import i18n from '@/lib/locales'
 import { RootStackNavigation } from '@/types/rootStack'
+import { hasCapability } from '@/lib/platformCapabilities'
 
 const PersonalizationPreferencesSection = () => {
   const navigation = useNavigation<RootStackNavigation>()
@@ -84,7 +85,7 @@ const PersonalizationPreferencesSection = () => {
           <IconButton icon={ChevronForwardIcon} />
         </InputRowButton>
       </Section>
-      {Platform.OS === 'ios' && (
+      {hasCapability('alternateAppIcons') && (
         <Section>
           <InputRowButton
             leftIcon={ShapesIcon}

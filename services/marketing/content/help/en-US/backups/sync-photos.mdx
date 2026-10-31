@@ -1,0 +1,26 @@
+---
+id: syncPhotos
+title: Why are contact photos missing on my other device?
+category: backups
+---
+
+Which fix applies depends on the option in Settings → Device Sync.
+
+## Cloud Sync
+
+From version 1.47.0, your profile photo, contact photos and photos in notes sync with Cloud Sync on their own, end-to-end encrypted. There is nothing to turn on. See “Do photos sync with Cloud Sync?”.
+
+- Update WitnessWork on every device. A device with an older version keeps a photo only on the device that added it and shows initials or a placeholder for photos from your other devices.
+- Open WitnessWork on the device that added the photo and tap Sync now in Settings → Device Sync. A device downloads a photo after it syncs.
+- If the photo shows “Not synced: storage full”, your account's 2 GB of photo storage is full and Settings → Account says Storage full. Remove photos you don't need and the photo uploads by itself; see “How much photo storage does Cloud Sync have?”.
+- If it shows “Not synced: photo too large”, replace it with a smaller photo.
+
+## iCloud (Google Drive on Android)
+
+Photo sync is optional and separate from the rest of your data. On each device, open Settings → Device Sync and turn on Include images in sync. It's included for everyone from version 1.47.0; earlier versions need Supporter access. This uploads profile and contact photos to your private iCloud container (or WitnessWork's hidden Google Drive folder) and downloads referenced photos; they count against your iCloud or Google storage. Update WitnessWork on every device to use photo revisions safely.
+
+Pausing photo sync on one device keeps the uploaded files and local copies. To remove uploaded photos, choose Remove iCloud photos and pause photo sync on other devices first, or they can upload their copies again. Removing a contact or its photo removes downloaded copies when that change arrives; obsolete cloud copies are cleaned up after a one-day grace period.
+
+## Still missing?
+
+Keep the device with the original photo, check storage and permissions, then use Sync now. Use the Help Center’s private support option if it still fails; do not include householder information in public reports.

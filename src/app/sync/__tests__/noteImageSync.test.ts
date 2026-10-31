@@ -166,3 +166,48 @@ describe('gcNoteImages', () => {
     expect(deps.bridge.deleteBinaryFile).not.toHaveBeenCalled()
   })
 })
+
+describe('pushNoteImages on a full Cloud Sync account', () => {
+  const full = {
+    [`witness-work-note-${A}.jpg`]: {
+      localMtime: 500,
+      uploadedMtime: null,
+      lastError: 'storage_full',
+      errorCode: 'storage-full',
+      failedAt: NOTE_IMAGE_CLOUD_GRACE_MS * 10,
+      failures: 3,
+    },
+  }
+
+  it('retries only on foreground or room, never on an edit', async () => {
+    const deps = makeDeps([], { [path(A)]: 500 }, { fullRetriesOnSignal: true })
+    const edit = await pushNoteImages({
+      ids: [A],
+      localPath: path,
+      bookkeeping: full,
+      deps,
+      trigger: 'store-edit',
+    })
+    expect(edit.uploaded).toBe(0)
+    const foreground = await pushNoteImages({
+      ids: [A],
+      localPath: path,
+      bookkeeping: full,
+      deps,
+      trigger: 'foreground',
+    })
+    expect(foreground.uploaded).toBe(1)
+  })
+
+  it('keeps iCloud and Drive on the backoff', async () => {
+    const deps = makeDeps([], { [path(A)]: 500 })
+    const result = await pushNoteImages({
+      ids: [A],
+      localPath: path,
+      bookkeeping: full,
+      deps,
+      trigger: 'foreground',
+    })
+    expect(result.uploaded).toBe(0)
+  })
+})

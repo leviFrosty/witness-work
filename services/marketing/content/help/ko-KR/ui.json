@@ -1,0 +1,23 @@
+{
+  "helpCenter": "도움말 센터",
+  "intro": "WitnessWork에 관한 자주 묻는 질문에 대한 빠른 답변을 찾아보세요. 필요한 걸 못 찾겠어? 연락하세요 — 여러분의 피드백이 앱에 영향을 미칩니다.",
+  "searchPlaceholder": "검색 질문",
+  "topQuestions": "주요 질문들",
+  "allQuestions": "모든 질문",
+  "noMatches": "일치하는 항목 없음",
+  "noResults": "당신의 검색과 맞는 질문은 없습니다.",
+  "searching": "검색 중…",
+  "clearSearch": "검색어 지우기",
+  "stillNeedHelp": "아직도 도움이 필요하신가요?",
+  "emailUs": "이메일로 비공개로 연락해 주세요.",
+  "bugReport": "버그 신고",
+  "featureRequest": "기능 요청",
+  "device": "장치",
+  "language": "언어",
+  "all": "전체",
+  "copyLink": "링크 복사",
+  "iosOnly": "iOS 전용",
+  "androidOnly": "Android 전용",
+  "notTranslated": "이 답변은 아직 번역되지 않아 영어로 표시됩니다.",
+  "stillNeedHelpDescription": "개인 지원은 이메일로, 버그 신고나 기능 요청은 GitHub에서 해 주세요. 시도한 내용, 사용 중인 기기, WitnessWork 버전을 함께 알려 주세요. 공개 신고에는 연락처, 개인 메모, 계정 ID를 넣지 마세요."
+}

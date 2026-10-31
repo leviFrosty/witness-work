@@ -19,7 +19,9 @@
 set -euo pipefail
 
 API_DIR=${WW_API_DIR:-$HOME/dev/ww-api}
-HEALTH_URL=https://ww-proxy.leviwilkerson.com/health
+# The same Worker answers on both hosts: new builds call the first, shipped
+# builds the second (ADR 0042), so both must serve the release.
+HEALTH_URLS=(https://api.witnesswork.app/health https://ww-proxy.leviwilkerson.com/health)
 BRANCH=
 BUMP=
 DRY_RUN=false
@@ -93,9 +95,10 @@ deploy_run() {
 }
 
 # Waits for the tag workflow to deploy $1 (release $2), then checks production
-# serves a Worker version at least as new as that run (not a rollback).
+# serves a Worker version at least as new as that run (not a rollback) on every
+# API host.
 confirm_deploy() {
-  local sha=$1 tag=$2 id="" status url created conclusion deployed=""
+  local sha=$1 tag=$2 id="" status url created conclusion deployed="" health
   for _ in $(seq 24); do
     read -r id status url created conclusion <<<"$(deploy_run "$sha")"
     [ -n "$id" ] && break
@@ -120,19 +123,22 @@ confirm_deploy() {
     echo "Retry a transient failure with: gh run rerun $id -R $REPO --failed" >&2
     exit 1
   fi
-  for _ in $(seq 6); do
-    deployed=$(curl -fsS --max-time 15 "$HEALTH_URL" 2>/dev/null |
-      node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{try{console.log(JSON.parse(s).deployedAt||'')}catch{console.log('')}})" ||
-      true)
-    if [ -n "$deployed" ] &&
-      node -e 'process.exit(Date.parse(process.argv[1]) >= Date.parse(process.argv[2]) ? 0 : 1)' "$deployed" "$created"; then
-      echo "Live:     Worker version deployed $deployed"
-      return
-    fi
-    sleep 5
+  for health in "${HEALTH_URLS[@]}"; do
+    deployed=""
+    for _ in $(seq 6); do
+      deployed=$(curl -fsS --max-time 15 "$health" 2>/dev/null |
+        node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{try{console.log(JSON.parse(s).deployedAt||'')}catch{console.log('')}})" ||
+        true)
+      if [ -n "$deployed" ] &&
+        node -e 'process.exit(Date.parse(process.argv[1]) >= Date.parse(process.argv[2]) ? 0 : 1)' "$deployed" "$created"; then
+        echo "Live:     Worker version deployed $deployed (${health%/health})"
+        continue 2
+      fi
+      sleep 5
+    done
+    echo "error: $health serves a Worker version from ${deployed:-unknown}, older than the $tag deploy ($created). Was it rolled back, or is the host down?" >&2
+    exit 1
   done
-  echo "error: production serves a Worker version from ${deployed:-unknown}, older than the $tag deploy ($created). Was it rolled back?" >&2
-  exit 1
 }
 
 if [ -z "$PENDING" ]; then

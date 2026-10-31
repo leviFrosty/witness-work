@@ -45,6 +45,12 @@ export type AccountFile = {
    */
   entitled: boolean
   updatedAt: number
+  /**
+   * When `accountId` was first claimed (see `@/lib/accountClaim`). Absent from
+   * files older versions wrote, and dropped when one rewrites the file; read as
+   * `updatedAt` then.
+   */
+  claimedAt?: number
   deviceName?: string
 }
 
@@ -59,6 +65,11 @@ export const parseAccountFile = (json: string): AccountFile | null => {
     }
     if (typeof candidate.entitled !== 'boolean') return null
     if (typeof candidate.updatedAt !== 'number') return null
+    if (
+      candidate.claimedAt !== undefined &&
+      typeof candidate.claimedAt !== 'number'
+    )
+      delete candidate.claimedAt
     return candidate as AccountFile
   } catch {
     return null

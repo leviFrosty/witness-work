@@ -1,5 +1,6 @@
 import { type Ref, type RefObject, useRef } from 'react'
-import { ScrollView, type ScrollViewProps, TextInput } from 'react-native'
+import { ScrollView, type ScrollViewProps } from 'react-native'
+import { focusedInput } from '@/lib/focusedInput'
 
 /** Room left between the focused field and the view's bottom edge. */
 const REVEAL_MARGIN = 16
@@ -16,7 +17,7 @@ const revealFocusedField = (handles: RevealHandles, animated: boolean) =>
   requestAnimationFrame(() => {
     const view = handles.scroll.current
     const frame = view?.getNativeScrollRef()
-    const input = TextInput.State.currentlyFocusedInput()
+    const input = focusedInput()
     if (!handles.hasFocus.current || !view || !frame || !input) return
     frame.measureInWindow((_viewX, viewY, _viewWidth, viewHeight) => {
       input.measureInWindow((_x, y, _width, height) => {

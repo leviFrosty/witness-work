@@ -13,6 +13,7 @@ import useLibraryImagePicker from '@/hooks/useLibraryImagePicker'
 import type { TranslationKey } from '@/lib/locales'
 import { analytics } from '@/lib/analytics'
 import { usesGoogleDriveSync } from '@/lib/syncTransport'
+import { canReadMytimeDb } from '@/features/mytime-import/lib/readMytimeDb'
 import { useScribeAvailability, useScribePaperCapture } from '@/features/scribe'
 import { pickScribePaperPages } from '@/features/scribe/components/pickScribePaperPages'
 import { navigateToScribe } from '@/features/scribe/components/openScribe'
@@ -128,13 +129,15 @@ export default function ImportOptions({
           onPress={() => select('paper')}
         />
       )}
-      <ImportOptionCard
-        icon={FileInputIcon}
-        color={theme.colors.indigo}
-        titleKey='onboardingPickUp_mytime'
-        descKey='onboardingPickUp_mytimeDesc'
-        onPress={() => select('mytime')}
-      />
+      {canReadMytimeDb && (
+        <ImportOptionCard
+          icon={FileInputIcon}
+          color={theme.colors.indigo}
+          titleKey='onboardingPickUp_mytime'
+          descKey='onboardingPickUp_mytimeDesc'
+          onPress={() => select('mytime')}
+        />
+      )}
       {cloud && (
         <ImportOptionCard
           icon={CloudIcon}

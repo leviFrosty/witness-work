@@ -43,6 +43,11 @@ config.resolver.blockList = [
   // Expo DOM's project-wide context must never resolve environment files or
   // the OTA provider/signing credentials, even when they are gitignored.
   /[\\/]\.env[^\\/]*(?:[\\/].*)?$/,
+  // services/ is its own pnpm workspace (the website and Workers), with its
+  // own React; nothing in the app may resolve from it.
+  new RegExp(
+    `^${path.join(__dirname, 'services').replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}[\\\\/].*`
+  ),
 ]
 
 // Transformed files keep the rewritten icon paths in Metro's cache; a lucide

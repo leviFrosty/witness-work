@@ -158,6 +158,7 @@ export default tseslint.config(
       '.expo/**',
       '.hot-updater/**',
       '.verify/**',
+      '**/.wrangler/**',
       '.tamagui/**',
       'ios/**',
       'android/**',
@@ -171,6 +172,8 @@ export default tseslint.config(
       // Gradle output of the local modules' Android code (e.g. unit test reports).
       'modules/*/android/build/**',
       '**/*.tar.gz',
+      // Its own workspace, lint and tsconfig (services/README.md).
+      'services/**',
     ],
   },
   js.configs.recommended,

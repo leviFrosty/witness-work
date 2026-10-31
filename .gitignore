@@ -7,6 +7,11 @@ node_modules/
 .expo/
 dist/
 web-build/
+# Skia's CanvasKit, copied in by scripts/web.mjs
+/public/canvaskit.wasm
+
+# wrangler dev state for the web host (web/host)
+.wrangler/
 
 # Native
 *.orig.*
@@ -94,3 +99,14 @@ fingerprint.json
 .hot-updater/
 .hot-updater/output
 .hot-updater/log
+
+# services/ build output and generated site files (services/README.md)
+services/**/.wrangler/
+services/marketing/test-results/
+services/marketing/playwright-report/
+services/marketing/public/help/
+services/marketing/public/llms.txt
+services/marketing/public/llms-full.txt
+services/marketing/public/robots.txt
+services/marketing/public/sitemap.xml
+services/marketing/public/_headers

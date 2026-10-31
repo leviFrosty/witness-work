@@ -2,9 +2,10 @@ import { HttpError } from '@/lib/http/request'
 import { RELAY_ID_PATTERN } from '@/lib/bytes'
 import {
   type BearerAccountOptions,
+  type BearerSignedAccountOptions,
+  okOnly,
   sendBearerAccountOp,
-  sendSignedAccountOp,
-  type SignedAccountOptions,
+  sendBearerSignedAccountOp,
 } from '@/lib/serverAccount/client'
 import { backupBlobDigest } from '@/lib/serverAccount/backupCrypto'
 
@@ -18,9 +19,7 @@ import { backupBlobDigest } from '@/lib/serverAccount/backupCrypto'
  */
 
 /** Bearer ops, and the account key's signature for `delete`. */
-export type BackupClientOptions = BearerAccountOptions & {
-  sign: SignedAccountOptions
-}
+export type BackupClientOptions = BearerSignedAccountOptions
 
 /** The server's caps, mirrored so the app can say so before uploading. */
 export const BACKUP_LIMITS = {
@@ -121,14 +120,12 @@ export async function deleteBackup(
   options: BackupClientOptions,
   slotId?: string
 ): Promise<void> {
-  const response = await options.authorize((authorization) =>
-    sendSignedAccountOp<{ ok?: boolean }>(
+  okOnly(
+    await sendBearerSignedAccountOp(
       'backup/delete',
       slotId ? { slotId } : {},
-      { ...options.sign, signal: options.signal },
-      { headers: { authorization }, idempotent: true }
+      options,
+      { idempotent: true }
     )
   )
-  if (response.data?.ok !== true)
-    throw new HttpError('server', response.status, 'unexpected_response')
 }

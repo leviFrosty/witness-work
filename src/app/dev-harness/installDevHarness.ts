@@ -50,6 +50,7 @@ import {
 } from '@/app/dev-harness/seedScenario'
 import { petHarness } from '@/app/dev-harness/pet'
 import { cloudSyncHarness } from '@/app/dev-harness/cloudSync'
+import { revenueCatHarness } from '@/app/dev-harness/revenueCat'
 import { appUpdateHarness } from '@/app/dev-harness/appUpdate'
 import { scribeHarness } from '@/app/dev-harness/scribe'
 import { getOnline, simulateOffline } from '@/lib/http/online'
@@ -483,6 +484,13 @@ export function installDevHarness() {
      * default and the one-time offer.
      */
     cloudSync: cloudSyncHarness,
+    /**
+     * One RevenueCat customer per account (ADR 0040 §7): `revenueCat.state()`
+     * (this device's id, claims and the server's Supporter answer, ids as
+     * fingerprints); `readRevenueCat()` and `refreshServer()`, then
+     * `revenueCat.last`.
+     */
+    revenueCat: revenueCatHarness,
     /**
      * Update Required through this device's own answers (see
      * `dev-harness/appUpdate.ts`): `minAppVersion('99.0.0')` gates from the

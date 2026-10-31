@@ -78,6 +78,7 @@ export const analyticsEventNames = [
   'account_backup_failed',
   'account_device_signed_out',
   'account_devices_viewed',
+  'account_id_adopted',
   'account_key_replaced',
   'account_restore_chosen',
   'account_restore_completed',
@@ -206,7 +207,16 @@ export const analyticsEventNames = [
   'cloud_sync_default_outcome',
   'cloud_sync_offer_answered',
   'cloud_sync_option_changed',
+  'cloud_sync_photo_transfer_failed',
+  'cloud_sync_photos_storage_full',
   'cloud_sync_switch_failed',
+  'cloud_sync_tray_offer_answered',
+  'cloud_sync_tray_offer_shown',
+  // The account's Cloud Sync request (ADR 0040 §5): phones answering it, and
+  // the web's screen that asks for it.
+  'cloud_sync_request_answered',
+  'cloud_sync_web_gate_state',
+  'cloud_sync_web_gate_action',
   // Supporter cloud sync (iCloud; Google Drive on Android) adoption and recovery.
   'icloud_account_changed',
   'icloud_restore_images_prompted',
@@ -228,7 +238,6 @@ export const analyticsEventNames = [
   'icloud_sync_images_outcome',
   'icloud_sync_manual_outcome',
   'icloud_sync_manual_started',
-  'icloud_sync_paused',
   'icloud_sync_reset_adopted',
   'icloud_sync_reset_outcome',
   'icloud_sync_reset_started',
@@ -244,6 +253,9 @@ export const analyticsEventNames = [
   // App-wide Update Required (ADR 0027 §6).
   'update_required_shown',
   'update_required_store_opened',
+  // The web's local data (ADR 0037 §6): saving failures and tab takeovers.
+  'web_storage_failed',
+  'web_tab_taken_over',
   // A downloaded OTA update applied from the tray instead of the next launch.
   'pending_update_applied',
   // Expected device state kept out of error tracking.

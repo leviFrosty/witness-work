@@ -393,6 +393,17 @@ const RootStackComponent = () => {
         />
         <RootStack.Screen
           options={{
+            presentation: 'fullScreenModal',
+            gestureEnabled: false,
+            header: () => null,
+          }}
+          name='WebCloudSyncPreview'
+          getComponent={() =>
+            require('@/app/navigation/tools/WebCloudSyncPreviewScreen').default
+          }
+        />
+        <RootStack.Screen
+          options={{
             presentation: 'modal',
             header: () => null,
           }}

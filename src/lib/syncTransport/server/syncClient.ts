@@ -2,7 +2,10 @@ import { HttpError } from '@/lib/http/request'
 import {
   type BearerAccountOptions,
   sendBearerAccountOp,
+  sendSignedAccountOp,
+  type SignedAccountOptions,
 } from '@/lib/serverAccount/client'
+import { SYNC_PHOTO_NAME_PATTERN } from '@/lib/syncTransport/server/photoCrypto'
 import {
   SYNC_SLOT_ID_PATTERN,
   syncBlobDigest,
@@ -14,6 +17,8 @@ import {
  * raw body with its slot and digest in headers; the rest send JSON. Failures
  * throw `HttpError`, whose `serverCode` is the server's (`disabled`,
  * `supporter_required`, `too_large`, `limit`, `rate_limited`, `not_found`, …).
+ * Photos (`sync/photos/*`, docs/cloud-sync-photos.md) work the same way, with
+ * `storage_full`, `photos_disabled`, `conflict` and `no_slot` too.
  */
 
 /** The server's caps, mirrored so the app can say so before uploading. */
@@ -27,6 +32,9 @@ export const SYNC_LIMITS = {
 /** A blob of up to 20 MiB, on a phone connection. */
 export const BLOB_TIMEOUT_MS = 90_000
 
+/** A photo blob of up to 25 MiB, on a phone connection. */
+export const PHOTO_TIMEOUT_MS = 120_000
+
 export type SyncEntitlement = 'supporter' | 'everyone'
 
 /** `GET /accounts/v1/sync`: the account's own answer. */
@@ -39,7 +47,20 @@ export type SyncStatus = {
   supporter: boolean
   /** RevenueCat couldn't be read; `supporter` is false for now. */
   supporterCheckFailed: boolean
+  /** Photos' own switch; null from a server that doesn't know photos. */
+  photos: boolean | null
+  /**
+   * The account's standing Cloud Sync request (epoch ms): a browser asked its
+   * phones to turn Cloud Sync on (docs/cloud-sync-photos.md). Null without one,
+   * and from servers that predate it.
+   */
+  requestedAt: number | null
 }
+
+/** A session's platform; `dev` is a development build. */
+export type SyncSlotPlatform = 'ios' | 'android' | 'dev' | 'web'
+
+const SLOT_PLATFORMS: readonly unknown[] = ['ios', 'android', 'dev', 'web']
 
 export type SyncSlot = {
   slotId: string
@@ -48,6 +69,10 @@ export type SyncSlot = {
   size: number
   /** Epoch ms of the slot's last put, the server's clock. */
   updatedAt: number
+  /** The platform of the session that last wrote it; null from older servers. */
+  platform: SyncSlotPlatform | null
+  /** Whether that session is still live; false when the server doesn't say. */
+  live: boolean
 }
 
 export type SyncListing = {
@@ -56,8 +81,13 @@ export type SyncListing = {
   slots: SyncSlot[]
 }
 
-const isSlot = (value: unknown): value is SyncSlot => {
-  const slot = value as Partial<SyncSlot> | null
+type ListedSlot = Pick<SyncSlot, 'slotId' | 'etag' | 'size' | 'updatedAt'> & {
+  platform?: unknown
+  live?: unknown
+}
+
+const isSlot = (value: unknown): value is ListedSlot => {
+  const slot = value as Partial<ListedSlot> | null
   return (
     typeof slot?.slotId === 'string' &&
     SYNC_SLOT_ID_PATTERN.test(slot.slotId) &&
@@ -92,7 +122,48 @@ export async function fetchSyncStatus(
     entitlement: data.entitlement === 'everyone' ? 'everyone' : 'supporter',
     supporter: data.supporter === true,
     supporterCheckFailed: data.supporterCheckFailed === true,
+    photos: typeof data.photos === 'boolean' ? data.photos : null,
+    requestedAt: typeof data.requestedAt === 'number' ? data.requestedAt : null,
   }
+}
+
+/**
+ * Asks the account's phones to turn Cloud Sync on (the web's Turn On): Bearer
+ * and the account key's envelope, so a leaked access token alone can't move the
+ * User's phones. Resolves the request's time; asking again while it stands
+ * keeps it. Needs Cloud Sync on and the account entitled (`disabled`,
+ * `supporter_required`). Phones never clear it; the server does.
+ */
+export async function askSyncRequest(
+  options: BearerAccountOptions & { sign: SignedAccountOptions }
+): Promise<number> {
+  const response = await options.authorize((authorization) =>
+    sendSignedAccountOp<Record<string, unknown>>(
+      'sync/request',
+      {},
+      { ...options.sign, signal: options.signal },
+      // Each envelope works once (409 `replay`), so a lost answer isn't
+      // resent; asking again signs a fresh one.
+      { headers: { authorization }, body: { requested: true } }
+    )
+  )
+  const { ok, requestedAt } = response.data ?? {}
+  if (ok !== true || typeof requestedAt !== 'number')
+    throw unexpected(response.status)
+  return requestedAt
+}
+
+/** Withdraws the account's Cloud Sync request. Bearer; always works. */
+export async function withdrawSyncRequest(
+  options: BearerAccountOptions
+): Promise<void> {
+  const response = await sendBearerAccountOp<Record<string, unknown>>(
+    'sync/request',
+    { requested: false },
+    options,
+    { idempotent: true }
+  )
+  if (response.data?.ok !== true) throw unexpected(response.status)
 }
 
 /** Replaces this device's slot. Resolves its new ETag and server time. */
@@ -143,12 +214,18 @@ export async function listSyncSlots(
   // A slot this version can't name is skipped rather than failing the list.
   return {
     seq,
-    slots: slots.filter(isSlot).map(({ slotId, etag, size, updatedAt }) => ({
-      slotId,
-      etag,
-      size,
-      updatedAt,
-    })),
+    slots: slots
+      .filter(isSlot)
+      .map(({ slotId, etag, size, updatedAt, platform, live }) => ({
+        slotId,
+        etag,
+        size,
+        updatedAt,
+        platform: SLOT_PLATFORMS.includes(platform)
+          ? (platform as SyncSlotPlatform)
+          : null,
+        live: live === true,
+      })),
   }
 }
 
@@ -178,4 +255,180 @@ export async function deleteSyncSlot(
     { idempotent: true }
   )
   if (response.data?.ok !== true) throw unexpected(response.status)
+}
+
+/** The account's live photos: their total blob size, number, and the limit. */
+export type SyncPhotoUsage = { bytes: number; count: number; limit: number }
+
+export type SyncPhoto = {
+  /** The keyed name, b64u HMAC of the engine's filename. */
+  name: string
+  size: number
+  /** B64u SHA-256 of the blob. */
+  sha256: string
+  /** Epoch ms the photo became live, the server's clock. */
+  createdAt: number
+  /** The sealed filename. */
+  meta: string
+}
+
+export type SyncPhotoPut = {
+  size: number
+  sha256: string
+  createdAt: number
+  /** The name was live already; nothing was written. */
+  existed: boolean
+  usage: SyncPhotoUsage | null
+}
+
+const isCount = (value: unknown): value is number =>
+  typeof value === 'number' && Number.isFinite(value) && value >= 0
+
+/** The `usage` in an answer or an error body, or null when it isn't one. */
+export function parsePhotoUsage(value: unknown): SyncPhotoUsage | null {
+  const usage = (value as { usage?: Partial<SyncPhotoUsage> } | null)?.usage
+  if (!isCount(usage?.bytes) || !isCount(usage.count) || !isCount(usage.limit))
+    return null
+  return { bytes: usage.bytes, count: usage.count, limit: usage.limit }
+}
+
+const isPhoto = (value: unknown): value is SyncPhoto => {
+  const photo = value as Partial<SyncPhoto> | null
+  return (
+    typeof photo?.name === 'string' &&
+    SYNC_PHOTO_NAME_PATTERN.test(photo.name) &&
+    isCount(photo.size) &&
+    typeof photo.sha256 === 'string' &&
+    isCount(photo.createdAt) &&
+    typeof photo.meta === 'string'
+  )
+}
+
+/**
+ * Stores a photo blob under its name. A name already live answers `existed`
+ * with the stored photo's details, whatever the body.
+ */
+export async function putSyncPhoto(
+  options: BearerAccountOptions,
+  photo: { name: string; meta: string; blob: Uint8Array },
+  /** This device's slot, so its own live socket isn't told. */
+  slotId?: string | null
+): Promise<SyncPhotoPut> {
+  const response = await sendBearerAccountOp<Record<string, unknown>>(
+    'sync/photos/put',
+    null,
+    options,
+    {
+      rawBody: photo.blob,
+      headers: {
+        'x-ww-photo-name': photo.name,
+        'x-ww-sha256': await syncBlobDigest(photo.blob),
+        'x-ww-photo-meta': photo.meta,
+        ...(slotId && { 'x-ww-slot-id': slotId }),
+      },
+      timeoutMs: PHOTO_TIMEOUT_MS,
+    }
+  )
+  const data = response.data ?? {}
+  if (
+    data.ok !== true ||
+    !isCount(data.size) ||
+    typeof data.sha256 !== 'string' ||
+    !isCount(data.createdAt)
+  )
+    throw unexpected(response.status)
+  return {
+    size: data.size,
+    sha256: data.sha256,
+    createdAt: data.createdAt,
+    existed: data.existed === true,
+    usage: parsePhotoUsage(data),
+  }
+}
+
+/** One page of the account's live photos, by name; `cursor` null on the last. */
+export async function listSyncPhotos(
+  options: BearerAccountOptions,
+  cursor: string | null = null
+): Promise<{
+  photos: SyncPhoto[]
+  cursor: string | null
+  usage: SyncPhotoUsage | null
+}> {
+  const response = await sendBearerAccountOp<Record<string, unknown>>(
+    'sync/photos/list',
+    cursor ? { cursor } : {},
+    options,
+    { idempotent: true }
+  )
+  const data = response.data ?? {}
+  if (data.ok !== true || !Array.isArray(data.photos))
+    throw unexpected(response.status)
+  return {
+    // A photo this version can't read is skipped rather than failing the list.
+    photos: data.photos
+      .filter(isPhoto)
+      .map(({ name, size, sha256, createdAt, meta }) => ({
+        name,
+        size,
+        sha256,
+        createdAt,
+        meta,
+      })),
+    cursor: typeof data.cursor === 'string' && data.cursor ? data.cursor : null,
+    usage: parsePhotoUsage(data),
+  }
+}
+
+/** One photo's blob, exactly as put; `not_found` without it. */
+export async function getSyncPhoto(
+  options: BearerAccountOptions,
+  name: string
+): Promise<{ blob: Uint8Array; createdAt: number | null }> {
+  const response = await sendBearerAccountOp<Uint8Array>(
+    'sync/photos/get',
+    { name },
+    options,
+    { responseType: 'bytes', timeoutMs: PHOTO_TIMEOUT_MS, idempotent: true }
+  )
+  const createdAt = Number(response.headers.get('x-ww-created-at'))
+  return {
+    blob: response.data,
+    createdAt: Number.isFinite(createdAt) && createdAt > 0 ? createdAt : null,
+  }
+}
+
+/** Deletes some photos by name (1–100), or every one of the account. */
+export async function deleteSyncPhotos(
+  options: BearerAccountOptions,
+  which: { names: string[] } | { all: true },
+  /** This device's slot, so its own live socket isn't told. */
+  slotId?: string | null
+): Promise<{ usage: SyncPhotoUsage | null }> {
+  const response = await sendBearerAccountOp<Record<string, unknown>>(
+    'sync/photos/delete',
+    which,
+    options,
+    {
+      idempotent: true,
+      ...(slotId && { headers: { 'x-ww-slot-id': slotId } }),
+    }
+  )
+  if (response.data?.ok !== true) throw unexpected(response.status)
+  return { usage: parsePhotoUsage(response.data) }
+}
+
+/** The account's photo storage. */
+export async function fetchSyncPhotoUsage(
+  options: BearerAccountOptions
+): Promise<SyncPhotoUsage> {
+  const response = await sendBearerAccountOp<Record<string, unknown>>(
+    'sync/photos/usage',
+    null,
+    options,
+    { idempotent: true }
+  )
+  const usage = parsePhotoUsage(response.data)
+  if (response.data?.ok !== true || !usage) throw unexpected(response.status)
+  return usage
 }

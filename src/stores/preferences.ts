@@ -330,6 +330,12 @@ export function getEffectiveHomeScreenOrder(
   return out
 }
 
+/**
+ * The tray's one-time Cloud Sync offer on this device (ADR 0040 §4): null until
+ * it was on screen, then `shown`, then `answered` for good.
+ */
+export type CloudSyncTrayOfferState = 'shown' | 'answered' | null
+
 export const PREFERENCE_DEFAULTS = {
   role: 'publisher' as Publisher,
   publisherHours: publisherHours,
@@ -793,6 +799,7 @@ export const PREFERENCE_DEFAULTS = {
     | 'rate-limited'
     | 'server-error'
     | 'not-found'
+    | 'too-large'
     | 'unknown'
     | null,
   iCloudSyncNeedsResolution: false,
@@ -812,7 +819,6 @@ export const PREFERENCE_DEFAULTS = {
    * Settings Devices list. Device-local: see `src/lib/syncDevices.ts`.
    */
   iCloudSyncDevices: {} as SyncDeviceFiles,
-  iCloudSyncPausedForLapse: false,
   iCloudFreshSetup: false,
   hasReconciledSyncDefinitions: false,
   iCloudSyncEnabled: false,
@@ -839,6 +845,20 @@ export const PREFERENCE_DEFAULTS = {
    */
   syncProvider: null as 'cloud' | 'platform' | null,
   /**
+   * True on an install from before sync was free (ADR 0040 §2), set once by the
+   * v16 persist migration: a store that hadn't been saved yet (a new install)
+   * keeps false. An older install keeps the sync defaults it had, and isn't
+   * switched to Cloud Sync. Per-device (non-syncable); never written again.
+   */
+  installedBeforeFreeSync: false,
+  /**
+   * The notifications tray's one-time Cloud Sync offer to an install from
+   * before sync was free (ADR 0040 §4): `shown` once it was on screen,
+   * `answered` once the User turned it on or dismissed it, or the device moved
+   * to Cloud Sync another way. Never offered again after that. Per-device.
+   */
+  cloudSyncTrayOffer: null as CloudSyncTrayOfferState,
+  /**
    * The one-time offer to move a device already on iCloud/Drive to Cloud Sync:
    * `pending` until the User switches or dismisses it. Per-device.
    */
@@ -862,6 +882,19 @@ export const PREFERENCE_DEFAULTS = {
    * /accounts/v1/sync`); null until it answered. Per-device.
    */
   cloudSyncEntitled: null as boolean | null,
+  /**
+   * Cloud Sync photos' own switch as the server last said (`GET
+   * /accounts/v1/sync`'s `photos`): null until a server that has photos
+   * answered. While it's off, photo uploads wait. Per-device (non-syncable).
+   */
+  cloudSyncPhotos: null as boolean | null,
+  /**
+   * The account's Cloud Sync request (its `requestedAt`) this device last acted
+   * on: it switched, was already on Cloud Sync, or the User moved it elsewhere
+   * while it switched. A device acts once per request, so a User who moves it
+   * back afterwards isn't overruled. Per-device.
+   */
+  cloudSyncRequestAnswered: null as number | null,
   /**
    * Data protection mode (EU/EEA, UK, Switzerland). When true the app hides and
    * disables householder-data features that CJEU C-25/17 and GDPR make risky
@@ -1392,6 +1425,9 @@ export { NON_SYNCABLE_PREFERENCE_KEYS } from '@/lib/syncPreferencePolicy'
  *   timestamp (see {@link migrateDropProgressBarDetailsPreference}).
  * - V14 → v15: the new Quick Actions Home section starts visible (see
  *   {@link migrateShowQuickActionsHomeSection}).
+ * - V15 → v16: marks the install as one from before sync was free, and drops the
+ *   retired Supporter lapse pause (see
+ *   {@link migrateMarkInstalledBeforeFreeSync}).
  *
  * Exported for unit testing. Idempotent — re-running on an already-migrated
  * blob is a no-op.
@@ -1447,6 +1483,39 @@ export const migratePreferencesPersistedState = (
   }
   if (version < 15) {
     next = migrateShowQuickActionsHomeSection(next)
+  }
+  if (version < 16) {
+    next = migrateMarkInstalledBeforeFreeSync(next)
+  }
+  return next
+}
+
+/**
+ * V15 → v16: any store saved before this version is an existing install (ADR
+ * 0040 §2), so it keeps its sync defaults. Persist runs migrations only on a
+ * saved store, so a new install keeps the default (false). Also drops
+ * `iCloudSyncPausedForLapse`: sync no longer pauses when Supporter access
+ * lapses, so a device an older version paused resumes.
+ */
+export const migrateMarkInstalledBeforeFreeSync = (state: unknown): unknown => {
+  if (!state || typeof state !== 'object') return state
+  const { iCloudSyncPausedForLapse: _paused, ...rest } = state as Record<
+    string,
+    unknown
+  >
+  const next: Record<string, unknown> = {
+    ...rest,
+    installedBeforeFreeSync: true,
+  }
+  const timestamps = next.preferenceUpdatedAt
+  if (
+    timestamps &&
+    typeof timestamps === 'object' &&
+    'iCloudSyncPausedForLapse' in timestamps
+  ) {
+    const { iCloudSyncPausedForLapse: _stamp, ...restTimestamps } =
+      timestamps as Record<string, unknown>
+    next.preferenceUpdatedAt = restTimestamps
   }
   return next
 }
@@ -2380,7 +2449,7 @@ export const usePreferences = create(
     {
       name: 'preferences',
       storage: createPreferencesStorage(),
-      version: 15,
+      version: 16,
       migrate: (persistedState, version) =>
         migratePreferencesPersistedState(persistedState, version),
     }

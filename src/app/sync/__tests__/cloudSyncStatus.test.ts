@@ -6,6 +6,9 @@ import type { SyncStatus } from '@/lib/syncTransport/server/syncClient'
 
 const runtime = vi.hoisted(() => ({
   status: null as SyncStatus | null,
+  accountListener: null as
+    | ((change: 'session_opened' | 'key_changed') => void)
+    | null,
 }))
 
 vi.mock('react-native', () => ({
@@ -36,7 +39,12 @@ vi.mock('@/lib/serverAccount', () => ({
     ensure: async () => {},
   },
   bearerOptions: () => ({}),
-  onAccountChange: () => () => {},
+  onAccountChange: (
+    listener: (change: 'session_opened' | 'key_changed') => void
+  ) => {
+    runtime.accountListener = listener
+    return () => {}
+  },
   serverAccount: { connect: vi.fn() },
 }))
 vi.mock('@/lib/serverAccount/revenueCatLinkRuntime', () => ({
@@ -74,6 +82,8 @@ const status = (overrides: Partial<SyncStatus> = {}): SyncStatus => ({
   entitlement: 'supporter',
   supporter: true,
   supporterCheckFailed: false,
+  photos: true,
+  requestedAt: null,
   ...overrides,
 })
 
@@ -194,5 +204,37 @@ describe('recheckCloudSyncPause', () => {
     usePreferences.setState({ syncProvider: 'platform' })
     expect(cloudSyncPause()).toBe(null)
     expect(await recheckCloudSyncPause()).toBe(null)
+  })
+})
+
+describe('an account change', () => {
+  it('checks photos against the new account, without the old one’s full storage', async () => {
+    runtime.status = status()
+    const { installCloudSyncRuntime, registerCloudSync, usePreferences } =
+      await load()
+    registerCloudSync()
+    const filename = 'witness-work-img-contact-c1--r1.jpg'
+    usePreferences.setState({
+      iCloudSyncEnabled: true,
+      syncProvider: 'cloud',
+      iCloudImageSync: {
+        [filename]: {
+          localMtime: 1,
+          uploadedMtime: null,
+          lastError: 'storage_full',
+          errorCode: 'storage-full',
+          failedAt: 1,
+          failures: 1,
+        },
+      },
+    })
+    const stop = installCloudSyncRuntime(() => false)
+    const entry = () => usePreferences.getState().iCloudImageSync[filename]
+    // A new session on the same account keeps it.
+    runtime.accountListener?.('session_opened')
+    expect(entry()).toMatchObject({ errorCode: 'storage-full' })
+    runtime.accountListener?.('key_changed')
+    expect(entry()).toEqual({ localMtime: 1, uploadedMtime: null })
+    stop()
   })
 })

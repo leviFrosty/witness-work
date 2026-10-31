@@ -28,7 +28,8 @@ export type { ContactImportData }
 /**
  * Every way a shared contact reaches the app ends in `validateContactImport`:
  *
- * - Share links (`https://ww-proxy.leviwilkerson.com/c#…`, the legacy `/c/…` and
+ * - Share links (`https://ww-proxy.leviwilkerson.com/c#…`,
+ *   `https://witnesswork.app/contacts#…`, the legacy `/c/…` and
  *   `witnesswork://import-contact/…`) through `importContactFromLink`.
  * - `.witnesswork` files opened from Files, Messages, AirDrop or another app
  *   through `importContactFromUrl`.

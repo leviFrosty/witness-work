@@ -1,4 +1,6 @@
+import { bookkeepingForNewTransport } from '@/app/sync/imageSync'
 import { iCloudSync } from '@/app/sync/iCloudSync'
+import { withSyncOptionLock } from '@/app/sync/syncOptionLock'
 import {
   deleteOwnCloudSyncSlot,
   prepareCloudSync,
@@ -29,8 +31,10 @@ export const currentSyncOption = (): SyncOption =>
  * Bookkeeping that belongs to one transport's namespace: its reset generation,
  * the devices seen in it, the last remote write, upload status. A switch starts
  * the new namespace fresh, then joins its newest generation when it reads it.
- * Photo bookkeeping stays: Cloud Sync never touches it, and iCloud/Drive
- * re-checks each photo against what's actually in the cloud.
+ * Photo bookkeeping keeps what it knows of this device's files and drops what
+ * it saw of the old cloud (`bookkeepingForNewTransport`): each photo is checked
+ * against the new one's listing, and a failure there (a full account) doesn't
+ * show on the new one.
  */
 const NAMESPACE_RESET = {
   iCloudSyncPendingPush: true,
@@ -52,6 +56,7 @@ const NAMESPACE_RESET = {
 
 type RestoredKey =
   | keyof typeof NAMESPACE_RESET
+  | 'iCloudImageSync'
   | 'syncProvider'
   | 'iCloudSyncEnabled'
   | 'iCloudSyncSetByUser'
@@ -61,6 +66,7 @@ type RestoredKey =
 /** The keys a failed switch puts back. */
 const RESTORED_KEYS: RestoredKey[] = [
   ...(Object.keys(NAMESPACE_RESET) as Array<keyof typeof NAMESPACE_RESET>),
+  'iCloudImageSync',
   'syncProvider',
   'iCloudSyncEnabled',
   'iCloudSyncSetByUser',
@@ -100,7 +106,13 @@ export type SwitchOutcome =
     }
   | { outcome: 'failed'; reason: SwitchFailure }
 
-export type SwitchSource = 'settings' | 'offer' | 'tools'
+export type SwitchSource =
+  | 'settings'
+  | 'offer'
+  | 'tray'
+  | 'tools'
+  /** The account's Cloud Sync request, set by a browser (`cloudSyncRequest`). */
+  | 'account_request'
 
 /** Longest a switch waits to send the old option this device's last edits. */
 const FLUSH_WAIT_MS = 15_000
@@ -123,7 +135,9 @@ const prepareFailure = (
 let switching: Promise<SwitchOutcome> | null = null
 
 /**
- * Moves this device to `to`. One switch at a time; a second call joins it.
+ * Moves this device to `to`. One switch at a time; a second call joins it, and
+ * a switch waits for Cloud Sync's default to finish deciding
+ * (`withSyncOptionLock`).
  *
  * 1. Gets the new option ready first (Cloud Sync's session and entitlement, or
  *    iCloud/Drive being available), so a switch that can't happen changes
@@ -141,7 +155,7 @@ export function switchSyncOption(
   to: SyncOption,
   source: SwitchSource
 ): Promise<SwitchOutcome> {
-  switching ??= runSwitch(to, source).finally(() => {
+  switching ??= withSyncOptionLock(() => runSwitch(to, source)).finally(() => {
     switching = null
   })
   return switching
@@ -193,6 +207,9 @@ async function runSwitch(
 
   usePreferences.setState({
     ...NAMESPACE_RESET,
+    iCloudImageSync: bookkeepingForNewTransport(
+      usePreferences.getState().iCloudImageSync ?? {}
+    ),
     syncProvider: to,
     iCloudSyncSetByUser: true,
     iCloudSyncNeedsResolution: false,
@@ -233,11 +250,14 @@ async function runSwitch(
   usePreferences.setState({ iCloudSyncEnabled: true, iCloudFreshSetup: false })
   if (peek.status === 'found') await iCloudSync.pullAndMerge('switch')
   const pushed = await iCloudSync.push('switch')
+  // On Cloud Sync, the tray's offer of it is answered for good (ADR 0040 §4).
+  if (to === 'cloud')
+    usePreferences.setState({ cloudSyncTrayOffer: 'answered' })
   analytics.capture('cloud_sync_option_changed', { from, to, source })
   if (from === 'off')
     analytics.capture('icloud_sync_enabled_changed', {
       enabled: true,
-      source: 'settings',
+      source: source === 'tray' ? 'tray' : 'settings',
     })
   return { outcome: 'switched', pending: !pushed }
 }

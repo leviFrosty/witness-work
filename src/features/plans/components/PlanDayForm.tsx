@@ -14,6 +14,7 @@ import * as Crypto from 'expo-crypto'
 import { Ref, useEffect, useImperativeHandle, useState } from 'react'
 import { toast } from '@/stores/toasts'
 import i18n from '@/lib/locales'
+import { hasCapability } from '@/lib/platformCapabilities'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 import Button from '@/components/ui/Button'
@@ -1374,31 +1375,35 @@ const PlanDayForm = ({
       note={note}
       setNote={setNote}
       buddies={buddiesRow}
-      notifyMe={{
-        on: notificationsAllowed && notifyMe,
-        onToggle: (on) => void handleNotifyMeChange(on),
-        description: notificationsAllowed
-          ? undefined
-          : i18n.t('notifyMe_description'),
-        offset: anytime ? (
-          <Text style={{ color: theme.colors.textAlt, fontSize: 12 }}>
-            {i18n.t('planForm_anytimeReminder', {
-              time: formatTime(anytimeReminderAt),
-            })}
-          </Text>
-        ) : (
-          <ReminderOffsetSelect
-            value={notifyMeOffset}
-            onChange={setNotifyMeOffset}
-          />
-        ),
-        // A Recurring Plan's later dates still remind.
-        notice: oneTime && reminderPassed && (
-          <Text style={{ color: theme.colors.textAlt, fontSize: 12 }}>
-            {i18n.t('reminderTimePassed')}
-          </Text>
-        ),
-      }}
+      notifyMe={
+        hasCapability('deviceNotifications')
+          ? {
+              on: notificationsAllowed && notifyMe,
+              onToggle: (on) => void handleNotifyMeChange(on),
+              description: notificationsAllowed
+                ? undefined
+                : i18n.t('notifyMe_description'),
+              offset: anytime ? (
+                <Text style={{ color: theme.colors.textAlt, fontSize: 12 }}>
+                  {i18n.t('planForm_anytimeReminder', {
+                    time: formatTime(anytimeReminderAt),
+                  })}
+                </Text>
+              ) : (
+                <ReminderOffsetSelect
+                  value={notifyMeOffset}
+                  onChange={setNotifyMeOffset}
+                />
+              ),
+              // A Recurring Plan's later dates still remind.
+              notice: oneTime && reminderPassed && (
+                <Text style={{ color: theme.colors.textAlt, fontSize: 12 }}>
+                  {i18n.t('reminderTimePassed')}
+                </Text>
+              ),
+            }
+          : undefined
+      }
       end={
         oneTime
           ? undefined

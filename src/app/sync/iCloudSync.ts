@@ -36,7 +36,7 @@ import {
   filenameForContact,
   filenameForNoteImage,
   filenameForProfile,
-} from '@/app/sync/imageNames'
+} from '@/lib/syncTransport/imageNames'
 import {
   SyncDeviceFile,
   SyncDeviceFiles,
@@ -87,6 +87,11 @@ import { usePreferences } from '@/stores/preferences'
 import { useProfile } from '@/stores/profile'
 import { useSupporter } from '@/features/supporter/stores/supporter'
 import {
+  onOwnAccountClaimChange,
+  setPeerAccountClaims,
+} from '@/lib/accountClaimRegistry'
+import type { AccountClaim } from '@/lib/accountClaim'
+import {
   buildPayload,
   isNewerPayloadVersion,
   parsePayload,
@@ -121,6 +126,7 @@ import {
   ImageSyncBookkeeping,
   ImageSyncDeps,
   AvatarSource,
+  type ImagePushTrigger,
   filenameForSource,
 } from '@/app/sync/imageSync'
 import {
@@ -142,6 +148,16 @@ import {
 } from '@/lib/richText/noteImages'
 import { noteImagesArrived } from '@/lib/richText/noteImageRevision'
 import { useUpdateRequired } from '@/lib/appUpdate/updateRequired'
+import {
+  currentPhotoReferences,
+  type PhotoReferences,
+} from '@/app/sync/publishedPhotos'
+import {
+  publishedPhotosMark,
+  rebasePublishedPhotos,
+  takeReplacedPhotos,
+} from '@/app/sync/photoBaseline'
+import { onPhotoRoom } from '@/lib/syncTransport/server/photoUsage'
 import { referencedNoteImageIds } from '@/stores/noteImages'
 
 const PUSH_DEBOUNCE_MS = 5000
@@ -502,10 +518,8 @@ function setPrefsIfChanged(partial: Partial<PreferencesState>): void {
 }
 
 /**
- * Whether the user has opted into iCloud sync AND is currently entitled to it
- * AND iCloud is actually usable. The supporter check is a runtime gate: if the
- * subscription lapses between syncs, push/pull immediately stop even before the
- * lapse-flip effect in `App.tsx` clears `iCloudSyncEnabled`.
+ * Whether the user has opted into sync AND this device is entitled to it AND
+ * the transport is actually usable.
  *
  * Also the Apple Account gate: every read and write checks here first, so a
  * device signed into another account turns sync off before touching that
@@ -531,18 +545,31 @@ const cloudSyncWaitsForUpdate = () =>
 
 /**
  * Whether this device may sync on its transport right now. iCloud and Drive
- * sync are a Supporter benefit by RevenueCat's client-side answer; Cloud Sync
- * asks the server, which applies its own entitlement switch
- * (`sync:entitlement`) to the account (ADR 0030).
+ * sync are free for everyone (ADR 0040 §1); Cloud Sync asks the server, which
+ * applies its own entitlement switch (`sync:entitlement`) to the account (ADR
+ * 0030).
  */
 export function syncEntitled(): boolean {
   if (usesCloudSync())
     return usePreferences.getState().cloudSyncEntitled === true
-  return useSupporter.getState().isSupporter
+  return true
 }
 
-/** Whether the active transport moves photo bytes (Cloud Sync doesn't yet). */
+/**
+ * Whether the active transport moves photo bytes right now (Cloud Sync while
+ * the server's photo switch is on).
+ */
 const transportHoldsPhotos = () => syncTransport().supportsBinaries !== false
+
+/**
+ * Whether photos travel on this device's sync now. On Cloud Sync always:
+ * they're end-to-end encrypted like the rest (ADR 0040 §6). On iCloud and
+ * Google Drive only with "Include photos" on, which is their consent.
+ */
+export function photosTravel(): boolean {
+  if (!transportHoldsPhotos()) return false
+  return usesCloudSync() || usePreferences.getState().iCloudSyncIncludeImages
+}
 
 /**
  * The Apple Account a read of iCloud was made under, as `checkICloudIdentity`
@@ -732,6 +759,7 @@ export function replaceLocalWithRemote(remote: SyncPayload): void {
       profileUpdatedAt: remote.profileStore?.updatedAt ?? {},
     })
   })
+  rebasePublishedPhotos()
 }
 
 /**
@@ -1064,7 +1092,7 @@ async function readRemotePeek(account: ICloudAccount): Promise<RemotePeek> {
  *   destructively replace local with remote + enable.
  * - `conflict` — both sides populated. Caller must ask the user to resolve
  *   (Settings renders `FirstEnableSheet`; headless callers like
- *   `SupporterSyncDefault` should leave sync disabled and defer to Settings),
+ *   `PlatformSyncDefault` should leave sync disabled and defer to Settings),
  *   and apply the choice only while `confirmICloudAccount(account)` holds.
  */
 export type InitialEnableDecision =
@@ -1161,20 +1189,22 @@ export function applyPullEnable(
 function buildImageSyncDeps(oneShot = false): ImageSyncDeps {
   return {
     canTransfer: () =>
-      usePreferences.getState().iCloudSyncIncludeImages &&
-      transportHoldsPhotos() &&
-      syncTransport().isAvailable() &&
-      (oneShot || canSync()),
+      photosTravel() && syncTransport().isAvailable() && (oneShot || canSync()),
+    canUpload: () => !syncTransport().binaryWritesPaused,
+    immutableNames: syncTransport().kind === 'cloud',
+    fullRetriesOnSignal: syncTransport().kind === 'cloud',
     bridge: {
       writeBinary: (filename, sourcePath) =>
         withTransportTimeout(
           'photo upload',
-          syncTransport().writeBinary(filename, sourcePath)
+          syncTransport().writeBinary(filename, sourcePath),
+          syncTransport().binaryTimeoutMs
         ),
       readBinary: (filename, destinationPath) =>
         withTransportTimeout(
           'photo download',
-          syncTransport().readBinary(filename, destinationPath)
+          syncTransport().readBinary(filename, destinationPath),
+          syncTransport().binaryTimeoutMs
         ),
       listBinaryFiles: () =>
         withTransportTimeout('photo list', syncTransport().listBinaryFiles()),
@@ -1219,17 +1249,22 @@ const DOCUMENT_DIR = FileSystem.documentDirectory ?? ''
  */
 let imagePushJob: Promise<void> | null = null
 let queuedImagePush: {
-  trigger: 'store-edit' | 'foreground'
+  trigger: ImagePushTrigger
   sources?: AvatarSource[]
 } | null = null
 
 /** `sources` is the snapshot a push published; without it, current state. */
 function startImagePush(
-  trigger: 'store-edit' | 'foreground',
+  trigger: ImagePushTrigger,
   sources?: AvatarSource[]
 ): void {
   if (imagePushJob) {
-    queuedImagePush = { trigger, sources }
+    // A queued foreground (or freed room) keeps its retry of a full account.
+    queuedImagePush = {
+      trigger:
+        queuedImagePush?.trigger === 'foreground' ? 'foreground' : trigger,
+      sources,
+    }
     return
   }
   imagePushJob = pushImagesIfEnabled(trigger, sources).finally(() => {
@@ -1238,6 +1273,80 @@ function startImagePush(
     queuedImagePush = null
     if (next) startImagePush(next.trigger, next.sources)
   })
+}
+
+/**
+ * Cloud Sync frees a replaced or removed photo's space right away
+ * (docs/cloud-sync-photos.md, "Deleting frees space right away"); iCloud and
+ * Drive leave it to cleanup's grace.
+ */
+const deletesReplacedPhotos = () =>
+  syncTransport().kind === 'cloud' && photosTravel()
+
+/**
+ * After a publish without them: deletes the photos the User replaced or removed
+ * since the last publish, once the photo uploads ahead have run.
+ */
+function deleteReplacedPhotos(references: PhotoReferences, mark: number): void {
+  const replaced = takeReplacedPhotos(
+    syncTransport().identityToken(),
+    references,
+    mark,
+    currentPhotoReferences
+  )
+  if (!replaced.length) return
+  void serializeImages(async () => {
+    if (!deletesReplacedPhotos()) return
+    const deleted: string[] = []
+    for (const filename of replaced) {
+      try {
+        await withTransportTimeout(
+          'photo delete',
+          syncTransport().deleteBinaryFile(filename)
+        )
+        deleted.push(filename)
+      } catch (e) {
+        // Cleanup deletes it later, after its grace.
+        logger.warn(`${tag()} replaced photo delete failed`, e)
+      }
+    }
+    if (!deleted.length) return
+    const next: ImageSyncBookkeeping = {
+      ...(usePreferences.getState().iCloudImageSync ?? {}),
+    }
+    for (const filename of deleted) delete next[filename]
+    setPrefsIfChanged({ iCloudImageSync: next })
+    logger.log(`${tag()} replaced photos deleted`, { deleted: deleted.length })
+  })
+}
+
+/** A new photo revision: unique for its record, in a filename's alphabet. */
+const newRevision = () =>
+  `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 10)}`
+
+/**
+ * Cloud Sync carries only revisioned photo names (docs/cloud-sync-photos.md):
+ * an avatar this device has without a revision gets one, a record edit that
+ * publishes before its photo is put.
+ */
+function reviseLegacyAvatars(sources: AvatarSource[]): void {
+  for (const source of sources) {
+    if (source.revision) continue
+    if (source.kind === 'profile') {
+      const avatar = useProfile.getState().avatar
+      if (avatar?.type === 'image' && !avatar.revision)
+        useProfile.getState().setAvatar({ ...avatar, revision: newRevision() })
+      continue
+    }
+    const avatar = useContacts
+      .getState()
+      .contacts.find((contact) => contact.id === source.id)?.avatar
+    if (avatar?.type === 'image' && !avatar.revision)
+      useContacts.getState().updateContact({
+        id: source.id,
+        avatar: { ...avatar, revision: newRevision() },
+      })
+  }
 }
 
 /** Resolves once the photo uploads started by pushes so far have finished. */
@@ -1252,20 +1361,23 @@ async function imagePushesSettled(): Promise<void> {
  * surfaced to error tracking; the returned promise resolves regardless.
  */
 function pushImagesIfEnabled(
-  trigger: 'store-edit' | 'foreground',
+  trigger: ImagePushTrigger,
   publishedSources?: AvatarSource[]
 ): Promise<void> {
   return serializeImages(async () => {
     await pushImagesInner(trigger, publishedSources)
-    await pushNoteImagesInner(!!publishedSources)
+    await pushNoteImagesInner(trigger, !!publishedSources)
   })
 }
 
 /** Uploads note photos that aren't in the cloud yet. */
-async function pushNoteImagesInner(published: boolean): Promise<void> {
+async function pushNoteImagesInner(
+  trigger: ImagePushTrigger,
+  published: boolean
+): Promise<void> {
   const prefs = usePreferences.getState()
-  if (!transportHoldsPhotos()) return
-  if (!prefs.iCloudSyncIncludeImages || !canSync()) return
+  if (!photosTravel() || !canSync()) return
+  if (syncTransport().binaryWritesPaused) return
   if (!published && prefs.iCloudSyncPendingPush) return
   if (!hasSyncTransport()) return
   const ids = referencedNoteImageIds()
@@ -1276,6 +1388,7 @@ async function pushNoteImagesInner(published: boolean): Promise<void> {
       localPath: noteImagePath,
       bookkeeping: prefs.iCloudImageSync ?? {},
       deps: buildImageSyncDeps(),
+      trigger,
     })
     if (!result.uploaded && !result.failed) return
     setPrefsIfChanged({ iCloudImageSync: result.bookkeeping })
@@ -1291,9 +1404,7 @@ async function pushNoteImagesInner(published: boolean): Promise<void> {
 
 /** Downloads note photos a note refers to that this device doesn't have. */
 async function pullNoteImagesInner(oneShot: boolean): Promise<void> {
-  const prefs = usePreferences.getState()
-  if (!transportHoldsPhotos()) return
-  if (!prefs.iCloudSyncIncludeImages) return
+  if (!photosTravel()) return
   if (!hasSyncTransport()) return
   if (!oneShot && !canSync()) return
   const deps = buildImageSyncDeps(oneShot)
@@ -1328,12 +1439,13 @@ async function pullNoteImagesInner(oneShot: boolean): Promise<void> {
   }
 }
 async function pushImagesInner(
-  trigger: 'store-edit' | 'foreground',
+  trigger: ImagePushTrigger,
   publishedSources?: AvatarSource[]
 ): Promise<void> {
   const prefs = usePreferences.getState()
-  if (!transportHoldsPhotos()) return
-  if (!prefs.iCloudSyncIncludeImages || !canSync()) return
+  if (!photosTravel() || !canSync()) return
+  // Cloud Sync's photo switch is off: uploads wait for it, not on a backoff.
+  if (syncTransport().binaryWritesPaused) return
   if (!publishedSources && prefs.iCloudSyncPendingPush) return
   if (!hasSyncTransport()) return
   try {
@@ -1346,9 +1458,16 @@ async function pushImagesInner(
         documentDirectory: DOCUMENT_DIR,
       })
     if (sources.length === 0) return
+    // Cloud Sync puts revisioned names only; the rest get a revision first.
+    const onCloud = syncTransport().kind === 'cloud'
+    if (onCloud) reviseLegacyAvatars(sources)
+    const uploadable = onCloud
+      ? sources.filter((source) => source.revision)
+      : sources
+    if (uploadable.length === 0) return
     const deps = buildImageSyncDeps()
     const result = await pushAllImages({
-      sources,
+      sources: uploadable,
       bookkeeping: prefs.iCloudImageSync ?? {},
       deps,
       trigger,
@@ -1389,17 +1508,21 @@ function pullImagesIfEnabled(oneShot = false): Promise<void> {
 }
 async function pullImagesInner(oneShot = false): Promise<void> {
   const prefs = usePreferences.getState()
-  if (!transportHoldsPhotos()) return
-  if (!prefs.iCloudSyncIncludeImages) return
+  if (!photosTravel()) return
   if (!hasSyncTransport()) return
   if (!oneShot && !canSync()) return
   try {
-    const sources = collectExpectedMarkerSources({
+    const expected = collectExpectedMarkerSources({
       contacts: useContacts.getState().contacts,
       profileAvatar: useProfile.getState().avatar,
       profileUpdatedAt: useProfile.getState().profileUpdatedAt.avatar,
       documentDirectory: DOCUMENT_DIR,
     })
+    // Cloud Sync holds revisioned names only.
+    const sources =
+      syncTransport().kind === 'cloud'
+        ? expected.filter((source) => source.revision)
+        : expected
     if (sources.length === 0) return
     const deps = buildImageSyncDeps(oneShot)
     const result = await pullMissingImages({
@@ -1420,7 +1543,7 @@ async function pullImagesInner(oneShot = false): Promise<void> {
     }
     const contactsState = useContacts.getState()
     const profileState = useProfile.getState()
-    const applied = usePreferences.getState().iCloudSyncIncludeImages
+    const applied = photosTravel()
       ? applyDownloadedAvatars({
           contacts: contactsState.contacts,
           profileAvatar: profileState.avatar,
@@ -1508,14 +1631,15 @@ const sameIds = (a: Set<string>, b: Set<string>) =>
   a.size === b.size && [...a].every((id) => b.has(id))
 
 async function gcImages(): Promise<void> {
-  const prefs = usePreferences.getState()
-  if (!transportHoldsPhotos()) return
-  if (!prefs.iCloudSyncIncludeImages) return
+  if (!photosTravel()) return
   if (!hasSyncTransport()) return
   try {
-    const { contacts } = useContacts.getState()
+    const { contacts, deletedContacts } = useContacts.getState()
     const { avatar } = useProfile.getState()
-    const active: ActiveIdentity[] = contacts
+    // On Cloud Sync a deleted contact's photo stays while the contact can be
+    // restored (docs/cloud-sync-photos.md, "Deleting frees space right away").
+    const restorable = usesCloudSync() ? deletedContacts : []
+    const active: ActiveIdentity[] = [...contacts, ...restorable]
       .filter((c) => c.avatar?.type === 'image')
       .map((c) => ({ kind: 'contact', id: c.id, revision: c.avatar?.revision }))
     if (avatar?.type === 'image') {
@@ -1646,6 +1770,10 @@ async function pushInner(reason: string): Promise<boolean> {
       profileAvatar: useProfile.getState().avatar,
       documentDirectory: DOCUMENT_DIR,
     })
+    const photosMark = publishedPhotosMark()
+    const photoReferences = deletesReplacedPhotos()
+      ? currentPhotoReferences()
+      : null
     const payload = buildPayload({
       deviceId,
       deviceName: Device.modelName ?? undefined,
@@ -1719,6 +1847,7 @@ async function pushInner(reason: string): Promise<boolean> {
       reason === 'foreground' ? 'foreground' : 'store-edit',
       imageSources
     )
+    if (photoReferences) deleteReplacedPhotos(photoReferences, photosMark)
     return true
   } catch (e) {
     const code = syncTransportErrorCode(e)
@@ -1903,7 +2032,7 @@ function schedulePush() {
   editGeneration++
   setPrefsIfChanged({ iCloudSyncPendingPush: true })
   if (!canSync()) {
-    // Most often an edit at cold launch, before supporter status loads.
+    // Most often an edit at cold launch, before the transport is ready.
     // `catchUp` pushes it once sync is ready instead of waiting for the
     // next edit.
     return
@@ -2094,6 +2223,7 @@ async function pullAndMergeInner(reason: string): Promise<PullOutcome> {
   })
 
   if (files.length === 0) {
+    setPeerAccountClaims([])
     usePreferences.getState().set({
       lastiCloudPulledAt: Date.now(),
       iCloudSyncIssue: issue,
@@ -2166,6 +2296,14 @@ async function pullAndMergeInner(reason: string): Promise<PullOutcome> {
       legacyFilenames.push(file.filename)
     }
   }
+
+  // The peers' RevenueCat claims (ADR 0040 §7), for `AccountProvider`. Every
+  // device that wrote one counts, whatever its reset generation.
+  setPeerAccountClaims(
+    remotePayloads
+      .map((r) => r.payload.revenueCat)
+      .filter((claim): claim is AccountClaim => claim !== undefined)
+  )
 
   // Reset generations: a newer one replaces local data; an older one is a
   // snapshot a reset replaced, and stays out of the merge. Neither makes the
@@ -2686,6 +2824,9 @@ export function installiCloudSync(): () => void {
     if (store === 'contacts' && materializingImages) return
     schedulePush()
   })
+  // Peers learn this device's RevenueCat claim (an adopted id, a purchase)
+  // from its payload.
+  const unsubAccountClaim = onOwnAccountClaimChange(() => schedulePush())
 
   // A real return from the background, not an iOS `inactive` blip (Control
   // Center, Face ID, system sheets). Returns within `FOREGROUND_CATCH_UP_MS` of
@@ -2707,6 +2848,11 @@ export function installiCloudSync(): () => void {
     lastForegroundCatchUpAt = now
     // Fire and forget — errors are already handled inside the steps.
     void catchUp('foreground')
+  })
+  // A full Cloud Sync account has room again (a photo deleted here or on
+  // another device): photos stuck on it retry now, not at the next foreground.
+  const unsubPhotoRoom = onPhotoRoom(() => {
+    if (usesCloudSync() && canSync()) startImagePush('foreground')
   })
   const backgroundSub = addBackgroundListener(() => {
     // The foreground catch-up pulls anyway, and brings a fresh retry budget.
@@ -2776,9 +2922,8 @@ export function installiCloudSync(): () => void {
     debouncedRemotePull()
   })
 
-  // Sync often becomes ready after launch: supporter status loads
-  // asynchronously (and flips again when this device adopts another device's
-  // account), and iCloud can sign back in. `canSync` dropped any foreground
+  // Sync often becomes ready after launch: Cloud Sync's entitlement arrives
+  // asynchronously, and iCloud can sign back in. `canSync` dropped any foreground
   // or remote-change events before then — and a cold launch usually delivers
   // no foreground event at all — so catch up here or nothing pulls until the
   // user taps Sync. Deliberately not keyed on `iCloudSyncEnabled`: enable
@@ -2790,11 +2935,6 @@ export function installiCloudSync(): () => void {
     lastForegroundCatchUpAt = Date.now()
     void catchUp(reason)
   }
-  const unsubSupporter = useSupporter.subscribe((state, prev) => {
-    if (state.isSupporter && !prev.isSupporter) {
-      catchUpIfActive('supporter-ready')
-    }
-  })
   // Cloud Sync's entitlement is the server's answer, recorded as it arrives.
   const unsubEntitled = usePreferences.subscribe((state, prev) => {
     if (state.cloudSyncEntitled && !prev.cloudSyncEntitled && usesCloudSync())
@@ -2819,7 +2959,8 @@ export function installiCloudSync(): () => void {
 
   return () => {
     unsubLocalData()
-    unsubSupporter()
+    unsubAccountClaim()
+    unsubPhotoRoom()
     unsubEntitled()
     unsubUpdateRequired()
     appStateSub.remove()
@@ -2889,6 +3030,12 @@ export const iCloudSync = {
   push,
   resetPushBackoff,
   imagePushesSettled,
+  /** Resolves once photo work queued so far (uploads, deletes) has run. */
+  imageWorkSettled: async () => {
+    await imagePushesSettled()
+    await serializeImages(async () => {})
+  },
+  photosTravel,
   pullAndMerge,
   pullBeforeCalendarPublish,
   canSync,

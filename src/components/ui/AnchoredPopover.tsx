@@ -2,7 +2,6 @@ import { ReactNode, useEffect, useId, useRef, useState } from 'react'
 import {
   AccessibilityInfo,
   BackHandler,
-  findNodeHandle,
   Keyboard,
   Modal,
   Platform,
@@ -22,6 +21,7 @@ import { useNavigation } from '@react-navigation/native'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { Portal } from 'tamagui'
 import useTheme from '@/contexts/theme'
+import { findNodeHandle } from '@/lib/findNodeHandle'
 import { VisibilityViewportContext } from '@/contexts/visibilityViewport'
 import { useTakeoverHold } from '@/hooks/useTakeoverTurn'
 import { useToWindow } from '@/components/ui/sheetWindowFrame'

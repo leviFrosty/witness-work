@@ -1,6 +1,9 @@
 import { Contact } from '@/types/contact'
 import { ProfileAvatar } from '@/types/avatar'
-import { markerForContact, MARKER_PROFILE } from '@/app/sync/imageNames'
+import {
+  markerForContact,
+  MARKER_PROFILE,
+} from '@/lib/syncTransport/imageNames'
 
 /** Send immutable photo references regardless of local transfer consent. */
 export function sanitizeContactAvatar(

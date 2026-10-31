@@ -10,16 +10,19 @@ export const NON_SYNCABLE_PREFERENCE_KEYS = new Set<string>([
   'iCloudResetEpoch',
   'iCloudResetAdoptedNotice',
   'iCloudSyncDevices',
-  'iCloudSyncPausedForLapse',
   'iCloudFreshSetup',
   'hasReconciledSyncDefinitions',
   'iCloudSyncEnabled',
   'iCloudSyncSetByUser',
   'syncProvider',
+  'installedBeforeFreeSync',
+  'cloudSyncTrayOffer',
   'cloudSyncOffer',
   'cloudSyncAccountToken',
   'cloudSyncConfig',
   'cloudSyncEntitled',
+  'cloudSyncPhotos',
+  'cloudSyncRequestAnswered',
   'iCloudSyncIncludeImages',
   'dataProtectionMode',
   'dataProtectionModeSetByUser',
@@ -87,6 +90,29 @@ export const FRESH_SETUP_PREFERENCES = {
   iCloudSyncEnabled: false,
   iCloudSyncSetByUser: true,
   iCloudSyncNeedsResolution: false,
+}
+
+/**
+ * What skipping the restore in onboarding writes. On a new install whose sync
+ * never ran or was chosen, not restoring a backup isn't a choice about sync: it
+ * gets the default after onboarding (ADR 0040 §2, `CloudSyncDefault`).
+ * Restarting onboarding on a device that synced, or on an install from before
+ * sync was free, records the off choice as it always did.
+ */
+export function freshSetupPreferences(state: {
+  installedBeforeFreeSync: boolean
+  iCloudSyncEnabled: boolean
+  iCloudSyncSetByUser: boolean
+  syncProvider: 'cloud' | 'platform' | null
+}) {
+  const neverChose =
+    !state.installedBeforeFreeSync &&
+    !state.iCloudSyncEnabled &&
+    !state.iCloudSyncSetByUser &&
+    state.syncProvider === null
+  if (!neverChose) return FRESH_SETUP_PREFERENCES
+  const { iCloudSyncSetByUser: _choice, ...rest } = FRESH_SETUP_PREFERENCES
+  return rest
 }
 
 /** Maps are merged per entry. Missing entries with a stamp represent deletions. */

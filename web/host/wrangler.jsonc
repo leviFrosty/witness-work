@@ -1,0 +1,72 @@
+// The web app's Worker (docs/web-hosting.md). Deploy only through
+// `pnpm web:deploy:<dev|beta|production>`, never `wrangler deploy` by hand:
+// the script builds the matching profile, writes `_headers` and enforces the
+// release gates. The top level is the local profile for `pnpm web:serve`.
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "ww-web-local",
+  "main": "src/worker.ts",
+  "compatibility_date": "2026-10-19",
+  "assets": {
+    "directory": "../../dist",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": [
+      "/_expo/*",
+      "/assets/*",
+      "/*.js",
+      "/*.mjs",
+      "/*.css",
+      "/*.wasm",
+      "/*.json",
+      "/*.webmanifest",
+      "/*.ico",
+      "/*.png",
+      "/*.svg",
+      "/*.webp",
+      "/*.jpg",
+      "/*.jpeg",
+      "/*.gif",
+      "/*.avif",
+      "/*.otf",
+      "/*.mp3",
+      "/*.wav",
+      "/*.map",
+      "/*.woff2",
+      "/*.ttf",
+      "/*.txt",
+      "/_csp-report",
+    ],
+  },
+  "workers_dev": false,
+  "preview_urls": false,
+  "observability": { "enabled": true },
+  "vars": { "WW_WEB_PROFILE": "local" },
+  "env": {
+    "dev": {
+      "name": "ww-web-dev",
+      "vars": { "WW_WEB_PROFILE": "dev" },
+      "routes": [
+        { "pattern": "app-dev.witnesswork.app", "custom_domain": true },
+      ],
+      "workers_dev": false,
+      "preview_urls": true,
+    },
+    "beta": {
+      "name": "ww-web-beta",
+      "vars": { "WW_WEB_PROFILE": "beta" },
+      "routes": [
+        { "pattern": "beta.app.witnesswork.app", "custom_domain": true },
+      ],
+      "workers_dev": false,
+      "preview_urls": false,
+    },
+    "production": {
+      "name": "ww-web",
+      "vars": { "WW_WEB_PROFILE": "production" },
+      "routes": [{ "pattern": "app.witnesswork.app", "custom_domain": true }],
+      "workers_dev": false,
+      "preview_urls": false,
+    },
+  },
+}

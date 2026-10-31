@@ -4,6 +4,10 @@ status: accepted
 
 # The Help Center lives on the website
 
+> Amended by [ADR 0042](./0042-witnesswork-app-domain.md): the Help Center moves to `witnesswork.app/help`, built from `services/marketing` in this repo and deployed by CI.
+>
+> Search (decision 4) was built without Cloudflare AI Search: the `help-search` Worker (`services/help-search`) embeds answers with Workers AI and keeps them, with its own BM25 keyword index, in KV.
+
 ## Context
 
 The Help Center's questions and answers lived in the app: their order and

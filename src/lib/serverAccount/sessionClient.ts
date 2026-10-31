@@ -10,6 +10,7 @@ import {
   type SignedAccountOptions,
   sendSignedAccountOp,
 } from '@/lib/serverAccount/client'
+import { SESSION_CAPABILITIES } from '@/lib/serverAccount/capabilities'
 
 /**
  * The wire half of account sessions (docs/accounts-protocol.md, "Sessions"):
@@ -52,6 +53,12 @@ export type SessionClientOptions = {
   signal?: AbortSignal
 }
 
+/** `major.minor.patch`, at most 32 characters; the server refuses anything else. */
+export const isSessionAppVersion = (value: unknown): value is string =>
+  typeof value === 'string' &&
+  value.length <= 32 &&
+  /^\d+\.\d+\.\d+$/.test(value)
+
 const url = (baseUrl: string, path: string) => `${baseUrl}/accounts/v1/${path}`
 
 const unexpected = (status: number) =>
@@ -90,10 +97,13 @@ export async function sendSessionOpen(
   {
     proof,
     device,
+    appVersion,
   }: {
     proof: AttestationProof
     /** `sealDeviceLabel`'s output. */
     device?: string
+    /** This build's `major.minor.patch`; the session keeps the latest. */
+    appVersion?: string
   },
   options: SignedAccountOptions
 ): Promise<OpenedSession> {
@@ -102,6 +112,8 @@ export async function sendSessionOpen(
     {
       ...(proof.kind === 'attestation' && { attestation: proof.fields }),
       ...(device !== undefined && { device }),
+      ...(isSessionAppVersion(appVersion) && { appVersion }),
+      capabilities: SESSION_CAPABILITIES,
     },
     options,
     {
@@ -111,33 +123,47 @@ export async function sendSessionOpen(
           : undefined,
     }
   )
-  const data = response.data ?? null
-  const tokens = parseTokens(data, response.status)
-  const { accountId, status, sessionId } = data ?? {}
+  return parseOpenedSession(response.data ?? null, response.status)
+}
+
+/** `session/open`'s answer, which `web/signup` shares. */
+export function parseOpenedSession(
+  data: Record<string, unknown> | null,
+  status: number
+): OpenedSession {
+  const tokens = parseTokens(data, status)
+  const { accountId, status: accountStatus, sessionId } = data ?? {}
   if (
     typeof accountId !== 'string' ||
     !RELAY_ID_PATTERN.test(accountId) ||
-    !isAccountStatus(status) ||
+    !isAccountStatus(accountStatus) ||
     typeof sessionId !== 'string' ||
     sessionId.length === 0 ||
     sessionId.length > 64
   )
-    throw unexpected(response.status)
-  return { accountId, status, sessionId, ...tokens }
+    throw unexpected(status)
+  return { accountId, status: accountStatus, sessionId, ...tokens }
 }
 
 /**
- * `POST /accounts/v1/sessions/refresh`: replaces the refresh token. A 401 means
- * the session ended or expired, and a new one has to be opened. Failures throw
- * `HttpError`.
+ * `POST /accounts/v1/sessions/refresh`: replaces the refresh token, and tells
+ * the session this build's version and `SESSION_CAPABILITIES`. A 401 means the
+ * session ended or expired (its `reason` says which), and a new one has to be
+ * opened. Failures throw `HttpError`.
  */
 export async function refreshSession(
   refreshToken: string,
-  options: SessionClientOptions
+  options: SessionClientOptions & { appVersion?: string }
 ): Promise<RefreshedSession> {
+  const { appVersion } = options
   const response = await request<Record<string, unknown> | null>({
     url: url(options.baseUrl, 'sessions/refresh'),
-    json: { refreshToken },
+    json: {
+      refreshToken,
+      ...(isSessionAppVersion(appVersion) && { appVersion }),
+      // Every time, so a session an older build opened gains them.
+      capabilities: SESSION_CAPABILITIES,
+    },
     timeoutMs: ACCOUNT_TIMEOUT_MS,
     signal: options.signal,
     fetchImpl: options.fetchImpl,

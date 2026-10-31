@@ -1,0 +1,23 @@
+{
+  "helpCenter": "幫助中心",
+  "intro": "快速解答關於 WitnessWork 的常見問題。找不到你需要的東西？主動聯繫——你的回饋會影響應用程式的品質。",
+  "searchPlaceholder": "搜尋問題",
+  "topQuestions": "熱門問題",
+  "allQuestions": "所有問題",
+  "noMatches": "不匹配",
+  "noResults": "沒有問題能符合你的搜尋。",
+  "searching": "正在搜尋…",
+  "clearSearch": "清除搜尋",
+  "stillNeedHelp": "還需要幫助嗎？",
+  "emailUs": "請私下透過電子郵件聯繫我們，地址為",
+  "bugReport": "错误报告",
+  "featureRequest": "功能要求",
+  "device": "裝置",
+  "language": "語言",
+  "all": "全部",
+  "copyLink": "拷貝連結",
+  "iosOnly": "僅限 iOS",
+  "androidOnly": "僅限 Android",
+  "notTranslated": "此回答尚未翻譯，因此以英文顯示。",
+  "stillNeedHelpDescription": "如需私人支援，請寄送電子郵件；如需回報錯誤或提出功能建議，請前往 GitHub。請說明你嘗試過的操作、你的裝置和 WitnessWork 版本。公開回報中請勿包含聯絡資訊、私人筆記或帳戶 ID。"
+}

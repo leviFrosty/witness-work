@@ -1,6 +1,7 @@
 import { ReactNode, Ref, useEffect, useRef, useState } from 'react'
 import {
   I18nManager,
+  Platform,
   StyleProp,
   StyleSheet,
   View,
@@ -17,6 +18,14 @@ import DisplayRegionsView, {
 } from '../../../../modules/display-regions'
 import { getFoldSplit } from '@/lib/foldSplit'
 import { FoldHandled, useFoldHandled } from '@/components/ui/layout/FoldPane'
+
+// A column that neither grows nor shrinks. Reanimated sets styles on the web
+// page as they are, and CSS reads `flex: 0` as a zero basis that ignores
+// `width`, so the web spells it out.
+const NO_FLEX =
+  Platform.OS === 'web'
+    ? ({ flexGrow: 0, flexShrink: 0, flexBasis: 'auto' } as const)
+    : ({ flex: 0 } as const)
 
 // Close to UIKit's default spring for layout changes, without overshoot.
 const FOLD_SPRING = { duration: 450, dampingRatio: 1 }
@@ -125,8 +134,8 @@ export default function FoldSplit({
     leadingSize.value < 0
       ? {}
       : fill.value
-        ? { width: '100%', flex: 0 }
-        : { width: leadingSize.value, flex: 0 }
+        ? { width: '100%', ...NO_FLEX }
+        : { width: leadingSize.value, ...NO_FLEX }
   )
   // One column has no gap, from the first frame on.
   const gapAnimatedStyle = useAnimatedStyle(() => ({

@@ -1,34 +1,14 @@
 import links from '@/constants/links'
 import { parseHelpBundle } from '@/features/updates/lib/helpCenter/validate'
 import { DEFAULT_HELP_LOCALE } from '@/features/updates/lib/helpCenter/locale'
+import {
+  fetchSnapshot,
+  snapshots,
+} from '@/features/updates/lib/helpCenter/snapshots'
 import type {
   HelpBundle,
   HelpLocale,
 } from '@/features/updates/types/helpCenter'
-
-// The Help Center as of this build (`pnpm sync:help`), for a first open with no
-// connection. Each loads only when its language is the one shown.
-const snapshots: Record<HelpLocale, () => unknown> = {
-  'en-US': () => require('../../../../assets/help-center/en-US.json'),
-  ar: () => require('../../../../assets/help-center/ar.json'),
-  'bem-ZM': () => require('../../../../assets/help-center/bem-ZM.json'),
-  'de-DE': () => require('../../../../assets/help-center/de-DE.json'),
-  'es-ES': () => require('../../../../assets/help-center/es-ES.json'),
-  'fr-FR': () => require('../../../../assets/help-center/fr-FR.json'),
-  'it-IT': () => require('../../../../assets/help-center/it-IT.json'),
-  'ja-JP': () => require('../../../../assets/help-center/ja-JP.json'),
-  'ko-KR': () => require('../../../../assets/help-center/ko-KR.json'),
-  'nl-NL': () => require('../../../../assets/help-center/nl-NL.json'),
-  'pt-BR': () => require('../../../../assets/help-center/pt-BR.json'),
-  'pt-PT': () => require('../../../../assets/help-center/pt-PT.json'),
-  'ru-RU': () => require('../../../../assets/help-center/ru-RU.json'),
-  'rw-RW': () => require('../../../../assets/help-center/rw-RW.json'),
-  'sw-KE': () => require('../../../../assets/help-center/sw-KE.json'),
-  'uk-UA': () => require('../../../../assets/help-center/uk-UA.json'),
-  'vi-VN': () => require('../../../../assets/help-center/vi-VN.json'),
-  'zh-CN': () => require('../../../../assets/help-center/zh-CN.json'),
-  'zh-TW': () => require('../../../../assets/help-center/zh-TW.json'),
-}
 
 type SnapshotEntry = Record<string, unknown> & {
   id: string
@@ -46,7 +26,7 @@ export const helpEntryURL = (
   category: string,
   slug: string
 ) =>
-  `${links.helpCenterSite}/witness-work/help-center/${
+  `${links.helpCenterSite}/help/${
     locale === DEFAULT_HELP_LOCALE ? '' : `${locale}/`
   }${category}/${slug}`
 
@@ -84,14 +64,20 @@ export function readSnapshot(locale: HelpLocale): HelpBundle {
   return bundle
 }
 
+/**
+ * Makes `readSnapshot(locale)` ready: the web downloads `locale`'s snapshot and
+ * English's (`snapshots.web.ts`). Until then it reads English, if downloaded.
+ */
+export const loadSnapshot = (locale: HelpLocale) =>
+  Promise.all([fetchSnapshot(DEFAULT_HELP_LOCALE), fetchSnapshot(locale)])
+
 function readSnapshotFor(locale: HelpLocale): HelpBundle | null {
   if (!parsed.has(locale)) {
-    const load = snapshots[locale]
-    const english = snapshots[DEFAULT_HELP_LOCALE]() as Snapshot
-    parsed.set(
-      locale,
-      load ? parseHelpBundle(expandSnapshot(load() as Snapshot, english)) : null
-    )
+    const snapshot = snapshots[locale]?.() as Snapshot | undefined
+    const english = snapshots[DEFAULT_HELP_LOCALE]() as Snapshot | undefined
+    // Not downloaded yet (the web); read again once it is.
+    if (!snapshot || !english) return null
+    parsed.set(locale, parseHelpBundle(expandSnapshot(snapshot, english)))
   }
   return parsed.get(locale) ?? null
 }

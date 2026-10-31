@@ -17,13 +17,13 @@ export function helpEntry(
     id,
     slug,
     category: 'general',
-    platforms: ['ios', 'android'],
+    platforms: ['ios', 'android', 'web'],
     pinned: false,
     related: [],
     question,
     doc: { type: 'doc', content: [paragraph(answer)] },
     plainText: answer,
-    url: `https://leviwilkerson.com/witness-work/help-center/general/${slug}`,
+    url: `https://witnesswork.app/help/general/${slug}`,
     ...extra,
   }
 }

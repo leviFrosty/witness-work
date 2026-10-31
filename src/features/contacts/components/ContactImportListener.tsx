@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Alert } from 'react-native'
-import * as Linking from 'expo-linking'
-import { launchURL } from '@/lib/launchLinks'
+import { addLinkListener, launchURL } from '@/lib/launchLinks'
 import { toast } from '@/stores/toasts'
 import {
   ImportHandlerCallbacks,
@@ -20,7 +19,8 @@ import { usePreferences } from '@/stores/preferences'
 /**
  * Handles two kinds of incoming contact URLs:
  *
- * 1. `https://ww-proxy.leviwilkerson.com/c#<payload>` — Universal Link from a
+ * 1. `https://ww-proxy.leviwilkerson.com/c#<payload>` or
+ *    `https://witnesswork.app/contacts#<payload>` — Universal Link from a
  *    shared contact (decoded via `parseContactShareLink`, which also accepts
  *    the legacy `/c/<payload>` and `witnesswork://import-contact/<payload>`
  *    forms).
@@ -60,7 +60,7 @@ export default function ContactImportListener() {
           logger.error('[ContactImportListener] getInitialURL error:', error)
         })
     }
-    const sub = Linking.addEventListener('url', ({ url }) => {
+    const sub = addLinkListener((url) => {
       logger.log(
         '[ContactImportListener] url event fired, url =',
         redactLink(url)

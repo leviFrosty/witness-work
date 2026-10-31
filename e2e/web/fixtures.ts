@@ -22,11 +22,26 @@ type Violation = {
 }
 
 /**
- * With `WW_WEB_CSP` set to a folder, each test saves the violations its pages
- * report there, by project, for `csp-summary.mjs`. Only a server that sends a
- * CSP (the web host's Worker, `E2E_WORKER`) has any to report.
+ * Every test fails on a CSP or Trusted Types violation its pages report. Only a
+ * server that sends a CSP (the web host's Worker, `E2E_WORKER`) has any to
+ * report. With `WW_WEB_CSP` set to a folder, each test also saves them there,
+ * by project, for `csp-summary.mjs`.
  */
 const cspFolder = process.env.WW_WEB_CSP
+
+/**
+ * The web profile the run serves (`config/web-environments.json`): the
+ * Worker's, or `dev`, which `pnpm web:build` builds by default.
+ */
+export const profile: {
+  helpManifest: string
+  helpSearchOrigin: string
+} = JSON.parse(
+  fs.readFileSync(
+    path.join(__dirname, '../../config/web-environments.json'),
+    'utf8'
+  )
+)[process.env.E2E_WORKER ?? 'dev']
 
 /** A language's app strings, by its `src/locales` file name. */
 export const strings = (language: string): Record<string, string> =>
@@ -150,32 +165,30 @@ export const test = base.extend<Fixtures>({
     const errors: string[] = []
     page.on('pageerror', (error) => errors.push(error.stack ?? error.message))
     const violations: Violation[] = []
-    if (cspFolder) {
-      // Every page in the test's context, across reloads. Report-only
-      // violations fire the same event as enforced ones.
-      await page
-        .context()
-        .exposeBinding('__wwCspViolation', (_source, violation: Violation) => {
-          violations.push(violation)
+    // Every page in the test's context, across reloads. Report-only
+    // violations fire the same event as enforced ones.
+    await page
+      .context()
+      .exposeBinding('__wwCspViolation', (_source, violation: Violation) => {
+        violations.push(violation)
+      })
+    await page.context().addInitScript(() =>
+      document.addEventListener('securitypolicyviolation', (event) =>
+        (
+          window as unknown as {
+            __wwCspViolation: (violation: Violation) => void
+          }
+        ).__wwCspViolation({
+          directive: event.effectiveDirective,
+          blocked: event.blockedURI,
+          source: event.sourceFile
+            ? `${event.sourceFile}:${event.lineNumber}:${event.columnNumber}`
+            : '',
+          // Trusted Types samples start with the sink's name.
+          sample: event.sample.split('|')[0] ?? '',
         })
-      await page.context().addInitScript(() =>
-        document.addEventListener('securitypolicyviolation', (event) =>
-          (
-            window as unknown as {
-              __wwCspViolation: (violation: Violation) => void
-            }
-          ).__wwCspViolation({
-            directive: event.effectiveDirective,
-            blocked: event.blockedURI,
-            source: event.sourceFile
-              ? `${event.sourceFile}:${event.lineNumber}:${event.columnNumber}`
-              : '',
-            // Trusted Types samples start with the sink's name.
-            sample: event.sample.split('|')[0] ?? '',
-          })
-        )
       )
-    }
+    )
     await provide(page)
     if (cspFolder) {
       const folder = path.join(cspFolder, testInfo.project.name)
@@ -189,6 +202,7 @@ export const test = base.extend<Fixtures>({
       )
     }
     expect(errors, 'uncaught errors on the page').toEqual([])
+    expect(violations, 'CSP violations').toEqual([])
   },
   language: ['en-US', { option: true }],
   preferences: [{}, { option: true }],

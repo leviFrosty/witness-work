@@ -8,19 +8,22 @@ Worker with Workers Static Assets. There's no server rendering.
   TypeScript graph. Its tests run in `pnpm testFinal`.
 - **Profiles:** `config/web-environments.json` is the one list of web
   profiles: each one's native env files, host, Worker, ww-api, PostHog and maps
-  origins, Help Center manifest and CSP mode. `web:build`
+  origins, Help Center manifest and search origin, and CSP mode. `web:build`
   (`scripts/web.mjs`), the deploys and the Worker all read it.
 - **Deploys:** `scripts/web-host.mjs`, through the `web:*` scripts below.
   Never run `wrangler deploy` by hand.
 
 ## Environments
 
-| Profile      | Worker        | Host                       | ww-api                        | Maps frame                 | Help Center           |
-| ------------ | ------------- | -------------------------- | ----------------------------- | -------------------------- | --------------------- |
-| `local`      | —             | `localhost` (`web:serve`)  | `.env` (`localhost:8787` CSP) | `maps-dev.witnesswork.app` | `dev.witnesswork.app` |
-| `dev`        | `ww-web-dev`  | `app-dev.witnesswork.app`  | `api-dev.witnesswork.app`     | `maps-dev.witnesswork.app` | `dev.witnesswork.app` |
-| `beta`       | `ww-web-beta` | `beta.app.witnesswork.app` | `api.witnesswork.app`         | `maps.witnesswork.app`     | `witnesswork.app`     |
-| `production` | `ww-web`      | `app.witnesswork.app`      | `api.witnesswork.app`         | `maps.witnesswork.app`     | `witnesswork.app`     |
+| Profile      | Worker        | Host                       | ww-api                        | Maps frame                 | Help Center and search                                   | CSP         |
+| ------------ | ------------- | -------------------------- | ----------------------------- | -------------------------- | -------------------------------------------------------- | ----------- |
+| `local`      | —             | `localhost` (`web:serve`)  | `.env` (`localhost:8787` CSP) | `maps-dev.witnesswork.app` | `dev.witnesswork.app`, `help-search-dev.witnesswork.app` | report-only |
+| `dev`        | `ww-web-dev`  | `app-dev.witnesswork.app`  | `api-dev.witnesswork.app`     | `maps-dev.witnesswork.app` | `dev.witnesswork.app`, `help-search-dev.witnesswork.app` | enforce     |
+| `beta`       | `ww-web-beta` | `beta.app.witnesswork.app` | `api.witnesswork.app`         | `maps.witnesswork.app`     | `witnesswork.app`, `help-search.witnesswork.app`         | enforce     |
+| `production` | `ww-web`      | `app.witnesswork.app`      | `api.witnesswork.app`         | `maps.witnesswork.app`     | `witnesswork.app`, `help-search.witnesswork.app`         | enforce     |
+
+Every profile sends PostHog events to `ww-api-r.leviwilkerson.com`, PostHog's
+managed proxy, and uses RevenueCat's browser API.
 
 - Each host is a Workers Custom Domain, which creates its own DNS record and
   certificate. `workers_dev` is off everywhere.
@@ -33,11 +36,18 @@ Worker with Workers Static Assets. There's no server rendering.
 - **App routes** (`/`, `/contacts`, …) get `index.html` from Cloudflare's
   single-page-application fallback.
 - **Files the app loads by URL** run the Worker first (`run_worker_first`):
-  `/_expo/*`, `/assets/*`, and scripts, styles, wasm, JSON, images, fonts,
-  icons, the web manifest and text files anywhere (see `wrangler.jsonc`).
+  `/_expo/*`, `/assets/*`, `/.well-known/*`, and scripts, styles, wasm, JSON,
+  images, fonts, icons, the web manifest and text files anywhere (see
+  `wrangler.jsonc`).
   - A missing one gets a real `404` (`text/plain`, `no-store`), never
     `index.html`. A tab still running an older deploy then fails to load its
     chunk and can reload once.
+  - The Worker asks the assets for each path in its encoded form. Expo's URLs
+    for package assets keep a bare `@` (`/assets/node_modules/@expo-google-fonts/…`),
+    which Cloudflare's asset server answers only with a redirect to `%40`.
+  - `/.well-known/apple-app-site-association` and `/.well-known/webauthn`
+    have no extension, so the Worker serves them as `application/json`.
+    Nothing under `/.well-known/` falls back to the app.
   - Hashed names (Expo's 32-hex content hash) are cached for a year,
     `immutable`.
   - Everything else revalidates (`max-age=0, must-revalidate`, with ETags),
@@ -46,7 +56,8 @@ Worker with Workers Static Assets. There's no server rendering.
   - Only `GET` and `HEAD`.
 - **Not uploaded:** source maps and the build stamp (`.assetsignore`).
 - **Limits:** 25 MiB per file and 20,000 files. The deploy checks both before
-  uploading.
+  uploading, and that every `/assets/…` and `/_expo/static/…` file the
+  export's scripts and HTML load is in the upload.
 
 ## Headers
 
@@ -54,31 +65,74 @@ Worker with Workers Static Assets. There's no server rendering.
 sets them on the responses its code produces, and the deploy writes the same
 set into `dist/_headers` for everything Cloudflare serves directly.
 
-- **CSP**, in report-only mode until an environment's `csp` is switched to
-  `enforce` in `config/web-environments.json`:
-  - `script-src 'self' 'wasm-unsafe-eval'`, for CanvasKit;
+- **CSP**, enforced (`Content-Security-Policy`) in `dev`, `beta` and
+  `production`, report-only in `local`. Every host in it comes from the
+  profile, no profile allows another's hosts (`worker.test.ts`), and the
+  deploy refuses a build that never calls them, so the app and its CSP can't
+  drift apart unnoticed:
+  - `script-src 'self' 'wasm-unsafe-eval'`, for CanvasKit and SQLite's wasm;
+    no inline script and no `eval`;
   - `style-src 'self' 'unsafe-inline'`, because react-native-web writes styles
     into `<style>` tags at runtime;
-  - `connect-src`: the profile's ww-api (`https` and `wss`), PostHog, the
-    website and Help Center search hosts, old and new, and RevenueCat's API
-    and SDK events (`api.revenuecat.com`, `e.revenue.cat`) for web purchases;
-  - `frame-src`: the maps frame only;
+  - `connect-src`: the profile's ww-api (`https` and `wss`), PostHog's
+    ingestion host (events and, later, masked replay from the bundled
+    `posthog-js`, ADR 0043; nothing loads from PostHog), the Help Center's
+    website and search, and RevenueCat's API and SDK events
+    (`api.revenuecat.com`, `e.revenue.cat`) for web purchases;
+  - `media-src 'self' blob:`, for the app's sounds and Scribe AI playing back
+    a voice recording;
+  - `frame-src`: the profile's maps frame only. MapKit JS loads inside that
+    frame's own origin, never in the app;
   - `frame-ancestors 'none'`, `base-uri 'none'`, `object-src 'none'`,
     `form-action 'self'`, `worker-src 'self'`;
-  - Trusted Types: `require-trusted-types-for 'script'`.
+  - Trusted Types: `require-trusted-types-for 'script'` and
+    `trusted-types ww-chunks ProseMirrorClipboard`, each created once. There's
+    no `default` policy, so every other sink refuses a string.
+    - `ww-chunks`: the web entry creates it first
+      (`src/app/launch/hardenWeb.web.ts`). It takes only this origin's
+      `/_expo/static/js/web/*.js` chunks, which Expo's chunk loader
+      (`src/vendor/web/fetchThenEval.ts`) passes through it.
+    - `ProseMirrorClipboard`: the note editor creates it on the first paste
+      of HTML, to parse it in a detached document that never renders or runs
+      it.
+    - The entry also turns on zod's `jitless` mode, so zod never builds
+      functions from strings, and the note editor gives Tiptap JSON only and
+      writes its styles itself (`RichTextEditorDom.tsx`).
+- **What the web doesn't reach:** link previews and the handwriting fonts for
+  Service Reports are native only. Anything else a web build calls needs its
+  host in the profile first, and a test that it's there.
 - **Also:** HSTS with subdomains, `nosniff`, `Referrer-Policy: no-referrer`,
   COOP `same-origin`, `X-Frame-Options: DENY`, and a `Permissions-Policy` that
   gives camera, microphone and geolocation to the app itself only. No COEP:
   nothing needs cross-origin isolation (ADR 0037 §5).
-- **Before enforcing** an environment, run the web smoke tests
-  (`e2e/web/README.md`) through the Worker with violations recorded, in
-  Chromium, WebKit and Firefox at desktop and phone sizes, and sum them up:
+- **Before a change ships**, run the web smoke tests (`e2e/web/README.md`)
+  through the Worker, in Chromium, WebKit and Firefox at desktop and phone
+  sizes. Every test fails on a violation; to sum them up by browser:
 
   ```bash
   pnpm web:build --env dev
   E2E_WORKER=dev WW_WEB_CSP=.verify/web-csp pnpm web:test
   node e2e/web/csp-summary.mjs .verify/web-csp
   ```
+
+## CSP enforcement
+
+Each profile's `csp` in `config/web-environments.json` is the switch:
+`enforce` sends `Content-Security-Policy`, `report-only` sends
+`Content-Security-Policy-Report-Only` with the same policy. Both keep
+`report-uri /_csp-report`, so violations are logged either way.
+
+- **Switching to `report-only` is for emergencies only:** a violation blocking
+  something Users need in that environment, until the fix ships. It's a PR
+  that changes the profile and the test that expects it to enforce
+  (`worker.test.ts`), then that environment's deploy.
+- **Who:** for `dev`, whoever is fixing the violation, noting it in the PR.
+  For `beta` and `production`, only the project owner decides; `production`
+  then deploys as a release like any other (`SHIP-PROD-X.Y.Z`).
+- **Switch back** in the PR that fixes the violation.
+- **Never loosen the policy instead**, such as with `'unsafe-eval'`, a
+  wildcard or a `default` Trusted Types policy. A new host goes into its
+  profile, with a test.
 
 ## CSP reports
 
@@ -120,7 +174,7 @@ WW_RELEASE_CONFIRM=SHIP-PROD-X.Y.Z pnpm web:deploy:production [--dry-run] [--pre
      `scripts/web.mjs`): the host's limits, and no value a web build mustn't
      carry, such as this checkout's `EXPO_PUBLIC_API_DEV_BYPASS`, since web
      builds are public. It also refuses a build that never mentions the
-     profile's ww-api and PostHog origins, which its CSP expects;
+     profile's ww-api, PostHog and Help Center origins, which its CSP allows;
   4. runs `wrangler deploy --env <profile>`.
 - **`--prebuilt`** deploys an existing `dist/` instead. It must carry a stamp
   for the same profile and commit, and no file may have changed since. Only

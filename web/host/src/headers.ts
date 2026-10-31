@@ -10,8 +10,12 @@ export interface WebProfile {
   apiOrigin: string
   /** PostHog ingestion host the build sends events to. */
   posthogOrigin: string
-  /** The MapKit JS frame (ADR 0037 §8). */
+  /** The MapKit JS frame (ADR 0037 §8), the only thing the app frames. */
   mapsOrigin: string
+  /** The Help Center's manifest, on the website the build reads it from. */
+  helpManifest: string
+  /** The Help Center's search, next to that website (ADR 0042). */
+  helpSearchOrigin: string
   /** One switch per environment: report violations, or block them. */
   csp: CspMode
 }
@@ -23,27 +27,46 @@ export const REVALIDATE = 'public, max-age=0, must-revalidate'
 export const REPORT_PATH = '/_csp-report'
 
 /**
- * The website and Help Center search (ADR 0042), plus the old hosts the app
- * still reads until the domain move finishes.
- */
-export const SITE_ORIGINS = [
-  'https://witnesswork.app',
-  'https://help-search.witnesswork.app',
-  'https://leviwilkerson.com',
-  'https://help-search.leviwilkerson.com',
-]
-
-/**
  * RevenueCat's API in browser mode: prices, customer info, and the SDK's own
- * events (ADR 0041). Checkout runs on RevenueCat's page, so no RevenueCat or
- * Stripe script runs here and `script-src` stays `'self'`.
+ * events (ADR 0041). Every profile uses the same hosts. Checkout runs on
+ * RevenueCat's page, so no RevenueCat or Stripe script runs here and
+ * `script-src` stays `'self'`.
  */
 export const REVENUECAT_ORIGINS = [
   'https://api.revenuecat.com',
   'https://e.revenue.cat',
 ]
 
+/**
+ * The Trusted Types policies the page may create, each only once:
+ *
+ * - `ww-chunks`, the app's own (`CHUNK_POLICY` in
+ *   `src/vendor/web/trustedTypes.ts`), for its script chunks.
+ * - `ProseMirrorClipboard`, which the note editor creates the first time HTML is
+ *   pasted, to parse it in a detached document that never renders or runs it;
+ *   the editor keeps only the nodes its schema knows.
+ *
+ * No `default` policy, so every other sink still refuses a string.
+ */
+export const TRUSTED_TYPES_POLICIES = ['ww-chunks', 'ProseMirrorClipboard']
+
 const socketOrigin = (origin: string) => origin.replace(/^http/, 'ws')
+
+/**
+ * Every origin a profile's build talks to, all from its profile in
+ * `config/web-environments.json`, so the app's hosts and its CSP can't drift
+ * apart. Nothing from another profile is allowed.
+ */
+export function connectOrigins(profile: WebProfile): string[] {
+  return [
+    profile.apiOrigin,
+    socketOrigin(profile.apiOrigin),
+    profile.posthogOrigin,
+    new URL(profile.helpManifest).origin,
+    profile.helpSearchOrigin,
+    ...REVENUECAT_ORIGINS,
+  ]
+}
 
 export function contentSecurityPolicy(profile: WebProfile): string {
   const directives: [string, ...string[]][] = [
@@ -55,15 +78,12 @@ export function contentSecurityPolicy(profile: WebProfile): string {
     ['style-src', "'self'", "'unsafe-inline'"],
     ['img-src', "'self'", 'data:', 'blob:'],
     ['font-src', "'self'", 'data:'],
-    [
-      'connect-src',
-      "'self'",
-      profile.apiOrigin,
-      socketOrigin(profile.apiOrigin),
-      profile.posthogOrigin,
-      ...SITE_ORIGINS,
-      ...REVENUECAT_ORIGINS,
-    ],
+    // Bundled PostHog sends events and session replay to its ingestion host
+    // only (ADR 0043); nothing loads from PostHog.
+    ['connect-src', "'self'", ...connectOrigins(profile)],
+    // Scribe AI plays back the voice it just recorded from a `blob:` URL.
+    ['media-src', "'self'", 'blob:'],
+    // MapKit JS runs only inside this frame, on its own origin.
     ['frame-src', profile.mapsOrigin],
     ['worker-src', "'self'"],
     ['frame-ancestors', "'none'"],
@@ -71,6 +91,7 @@ export function contentSecurityPolicy(profile: WebProfile): string {
     ['object-src', "'none'"],
     ['form-action', "'self'"],
     ['require-trusted-types-for', "'script'"],
+    ['trusted-types', ...TRUSTED_TYPES_POLICIES],
     // Every engine delivers `report-uri`. Chromium ignores it once `report-to`
     // is present, and its Reporting API uploads never arrived in our checks.
     ['report-uri', REPORT_PATH],

@@ -52,6 +52,8 @@ type Props = {
 }
 
 const CHANGE_DEBOUNCE_MS = 300
+/** The note before native sends it: one empty paragraph, as JSON. */
+const EMPTY_DOC = { type: 'doc', content: [{ type: 'paragraph' }] }
 const SELECTION_PREFILL_CHARS = 200
 
 /** Image id → URL; filled from the setup and as photos are inserted. */
@@ -423,7 +425,7 @@ function runCommand(editor: Editor, command: EditorCommand) {
             marks: [{ type: 'link', attrs: { href } }],
           })
           .unsetMark('link')
-          .insertContent(' ')
+          .insertContent({ type: 'text', text: ' ' })
           .run()
       } else {
         chain().setLink({ href }).run()
@@ -473,6 +475,17 @@ function styles(setup: EditorSetup): string {
 :root{color-scheme:${t.scheme};}
 /* expo/dom's #root is a flex row, which shrinks the note to its widest line; as a column the note fills the width, so right-aligned text and lists sit at the edge and a resized photo's share is of the whole width, as when the note is shown. */
 #root{flex-direction:column;}
+/* Tiptap's own base rules. It doesn't write them itself (\`injectCSS: false\`): the web's CSP refuses a \`<style>\` filled through \`innerHTML\` (ADR 0037 §5). They come before the note's, as Tiptap's did. */
+.ProseMirror{position:relative;word-wrap:break-word;white-space:pre-wrap;white-space:break-spaces;-webkit-font-variant-ligatures:none;font-variant-ligatures:none;font-feature-settings:"liga" 0;}
+.ProseMirror [contenteditable="false"]{white-space:normal;}
+.ProseMirror [contenteditable="false"] [contenteditable="true"]{white-space:pre-wrap;}
+img.ProseMirror-separator{display:inline !important;border:none !important;margin:0 !important;width:0 !important;height:0 !important;}
+.ProseMirror-gapcursor{display:none;pointer-events:none;position:absolute;margin:0;}
+.ProseMirror-gapcursor:after{content:"";display:block;position:absolute;top:-2px;width:20px;border-top:1px solid black;animation:ProseMirror-cursor-blink 1.1s steps(2,start) infinite;}
+@keyframes ProseMirror-cursor-blink{to{visibility:hidden;}}
+.ProseMirror-hideselection *::selection{background:transparent;}
+.ProseMirror-hideselection *{caret-color:transparent;}
+.ProseMirror-focused .ProseMirror-gapcursor{display:block;}
 html,body{margin:0;padding:0;min-height:100%;overflow-x:hidden;background:${t.background};-webkit-text-size-adjust:100%;}
 body{color:${t.text};font-family:NoteInter,-apple-system,system-ui,Roboto,sans-serif;font-size:${t.fontSize}px;line-height:1.45;-webkit-tap-highlight-color:transparent;}
 /* On a wide screen the side padding grows so the text keeps to a ${NOTE_MAX_WIDTH}px column, while a tap beside it still reaches the note. A photo's share is of that column. */
@@ -549,7 +562,10 @@ export default function RichTextEditorDom(props: Props) {
       immediatelyRender: true,
       shouldRerenderOnTransaction: false,
       autofocus: setup?.autofocus ? 'end' : false,
-      content: setup?.doc ?? null,
+      // Content is always JSON: Tiptap parses a string, even an empty one, as
+      // HTML through \`DOMParser\`, which the web's Trusted Types refuse.
+      content: setup?.doc ?? EMPTY_DOC,
+      injectCSS: false,
       editable: !!setup,
       extensions: [
         StarterKit.configure({

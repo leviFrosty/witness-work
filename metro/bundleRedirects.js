@@ -84,6 +84,13 @@ const webModules = [
       module: 'src/vendor/web/alert.ts',
     })
   ),
+  // Theirs hands the chunk's URL to `script.src` as a string, which Trusted
+  // Types blocks; ours passes it through the app's policy.
+  {
+    request: './fetchThenEval',
+    from: `${path.sep}${path.join('expo', 'build', 'async-require')}${path.sep}`,
+    module: 'src/vendor/web/fetchThenEval.ts',
+  },
 ]
 
 const matches = (entry, request, originModulePath) =>

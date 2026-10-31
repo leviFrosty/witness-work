@@ -25,14 +25,17 @@ import {
 const en = strings('en-US')
 const dist = path.join(__dirname, '../../dist')
 
-/** Whether the export carries a RevenueCat Billing key. */
+/**
+ * Whether the export carries a RevenueCat Billing key: a whole quoted key, not
+ * the SDK's own `"rcb_sb_"` prefix check.
+ */
 const sellsOnWeb = (() => {
   try {
     const html = fs.readFileSync(path.join(dist, 'index.html'), 'utf8')
     const entry = /src="\/(_expo\/static\/js\/web\/index-[^"]+\.js)"/.exec(html)
     return (
       !!entry &&
-      /rcb_(?:sb_)?[A-Za-z0-9]/.test(
+      /["']rcb_(?:sb_)?[A-Za-z0-9]{16,}["']/.test(
         fs.readFileSync(path.join(dist, entry[1]), 'utf8')
       )
     )

@@ -20,13 +20,17 @@ E2E_PORT=8790 pnpm web:test     # another port, for runs side by side
 ```
 
 A run serves `dist/` on `127.0.0.1:$E2E_PORT` (8765 by default). With
-`E2E_HOST` set to another host, it opens the app there and starts no server:
-serve it yourself with `E2E_LISTEN=0.0.0.0 node e2e/web/serve.mjs dist <port>`.
+`E2E_HOST` set, it opens the app there and starts no server: serve it yourself
+with `E2E_LISTEN=0.0.0.0 node e2e/web/serve.mjs dist <port>`. A container that
+forwards your port to its own `localhost` gets a secure context, which
+`host.docker.internal` isn't; set `E2E_HOST=localhost` there.
 
 `E2E_WORKER=<profile>` serves `dist/` through the web host's Worker instead
 (`pnpm web:serve <profile>`, `docs/web-hosting.md`), with that profile's
-headers and CSP. With `WW_WEB_CSP=<folder>`, each test saves the CSP and
-Trusted Types violations its pages report there, and
+headers and CSP; build the same profile. Every test fails on a CSP or Trusted
+Types violation its pages report. `hosting.spec.ts` checks that the app's
+fonts load and that Help Center search goes to the profile's own search host.
+With `WW_WEB_CSP=<folder>`, each test also saves its violations there, and
 `node e2e/web/csp-summary.mjs <folder>…` sums them up by browser and size. For
 a container, serve the Worker yourself with
 `pnpm web:serve dev --port <port> --ip 0.0.0.0`.

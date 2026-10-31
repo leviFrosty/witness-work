@@ -81,6 +81,21 @@ describe('bundleRedirect', () => {
     expect(bundleRedirect('./exports/Share', app, 'web')).toBeNull()
   })
 
+  it('loads web chunks through the app’s Trusted Types loader', () => {
+    const loader = path.join(
+      root,
+      'node_modules/expo/build/async-require/loadBundle.js'
+    )
+    // The loader the redirect replaces, where Expo's runtime requires it.
+    expect(existsSync(loader)).toBe(true)
+    expect(readFileSync(loader, 'utf8')).toContain("from './fetchThenEval'")
+    expect(bundleRedirect('./fetchThenEval', loader, 'web')?.stub).toBe(
+      path.join(root, 'src/vendor/web/fetchThenEval.ts')
+    )
+    expect(bundleRedirect('./fetchThenEval', loader, 'ios')).toBeNull()
+    expect(bundleRedirect('./fetchThenEval', app, 'web')).toBeNull()
+  })
+
   it('swaps packages the web can’t load for web stand-ins, on the web only', () => {
     for (const { request } of webStubs) {
       expect(bundleRedirect(request, app, 'web')?.stub).toMatch(

@@ -321,6 +321,9 @@ let pullQueuedReason: string | null = null
 /** When `pullInFlight` started, and when the last complete read started. */
 let pullInFlightStartedAt = 0
 let completePullStartedAt = -Infinity
+/** Counts pulls as they start, and the last complete one's count. */
+let pullsStarted = 0
+let completePull = 0
 
 /**
  * The running image GC. It deletes binaries no local contact owns, judged
@@ -1193,6 +1196,7 @@ function buildImageSyncDeps(oneShot = false): ImageSyncDeps {
     canUpload: () => !syncTransport().binaryWritesPaused,
     immutableNames: syncTransport().kind === 'cloud',
     fullRetriesOnSignal: syncTransport().kind === 'cloud',
+    ...(syncTransport().kind === 'cloud' && { putsAgain }),
     bridge: {
       writeBinary: (filename, sourcePath) =>
         withTransportTimeout(
@@ -1228,6 +1232,40 @@ function buildImageSyncDeps(oneShot = false): ImageSyncDeps {
     },
     now: () => syncNow(),
   }
+}
+
+/**
+ * Cloud Sync photos this device saw there that another device has deleted, by
+ * name, with `pullsStarted` when it noticed. A put brings a deleted name back
+ * (docs/cloud-sync-photos.md), and the snapshot this device last published, or
+ * its records before it reads the other device's, may still refer to it. The
+ * device that deleted it published the snapshot without it first, so a pull
+ * that started since has it: only a photo the records still refer to after one
+ * is put again (a newer edit here kept it, or the account's photos were all
+ * deleted).
+ */
+const deletedPhotos = new Map<string, number>()
+let deletedPhotosNoticed = false
+function putsAgain(filename: string): boolean {
+  const noticed = deletedPhotos.get(filename)
+  if (noticed === undefined) {
+    deletedPhotos.set(filename, pullsStarted)
+    deletedPhotosNoticed = true
+    return false
+  }
+  if (completePull <= noticed) return false
+  deletedPhotos.delete(filename)
+  return currentPhotoReferences().all.has(filename)
+}
+/**
+ * After a photo pass: reads the deletions it noticed. A settled one stays until
+ * a pass puts it again or a pull finds nothing refers to it, so a pass that
+ * didn't reach it doesn't need another pull.
+ */
+function pullForDeletedPhotos(): void {
+  if (!deletedPhotosNoticed) return
+  deletedPhotosNoticed = false
+  void pull('photo-deleted')
 }
 
 let imageWork: Promise<void> = Promise.resolve()
@@ -1367,6 +1405,7 @@ function pushImagesIfEnabled(
   return serializeImages(async () => {
     await pushImagesInner(trigger, publishedSources)
     await pushNoteImagesInner(trigger, !!publishedSources)
+    pullForDeletedPhotos()
   })
 }
 
@@ -1390,8 +1429,8 @@ async function pushNoteImagesInner(
       deps: buildImageSyncDeps(),
       trigger,
     })
-    if (!result.uploaded && !result.failed) return
     setPrefsIfChanged({ iCloudImageSync: result.bookkeeping })
+    if (!result.uploaded && !result.failed) return
     logger.log(`${tag()} note photo push`, {
       uploaded: result.uploaded,
       failed: result.failed,
@@ -1426,6 +1465,13 @@ async function pullNoteImagesInner(oneShot: boolean): Promise<void> {
       prepare: ensureNoteImageDirectory,
     })
     markNoteImagesLocal(result.downloaded)
+    if (Object.keys(result.seen).length)
+      setPrefsIfChanged({
+        iCloudImageSync: {
+          ...(usePreferences.getState().iCloudImageSync ?? {}),
+          ...result.seen,
+        },
+      })
     if (result.downloaded.length) noteImagesArrived()
     if (result.downloaded.length || result.failed) {
       logger.log(`${tag()} note photo pull`, {
@@ -2100,6 +2146,7 @@ function pull(reason: string): Promise<PullOutcome> {
     return pullInFlight
   }
   const startedAt = Date.now()
+  const started = ++pullsStarted
   pullInFlightStartedAt = startedAt
   // Defer execution until the promise is assigned, including a skipped pull.
   pullInFlight = Promise.resolve().then(async () => {
@@ -2118,7 +2165,17 @@ function pull(reason: string): Promise<PullOutcome> {
       lastReadFoundFiles = false
       const outcome = await pullAndMergeInner(reason)
       lastPullComplete = outcome.complete
-      if (outcome.complete) completePullStartedAt = startedAt
+      if (outcome.complete) {
+        completePullStartedAt = startedAt
+        completePull = started
+        // Photos deleted elsewhere: put back the ones the merge kept.
+        if (deletedPhotos.size) {
+          const { all } = currentPhotoReferences()
+          for (const name of deletedPhotos.keys())
+            if (!all.has(name)) deletedPhotos.delete(name)
+          if (deletedPhotos.size) startImagePush('store-edit')
+        }
+      }
       if (outcome.complete && lastReadFoundFiles) markCompleteICloudPull()
       return outcome
     } finally {

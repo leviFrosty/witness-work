@@ -49,6 +49,72 @@ describe('pushNoteImages', () => {
     ).toBe(500)
   })
 
+  it('asks before putting back a photo it saw there that another device deleted', async () => {
+    const note = `witness-work-note-${A}.jpg`
+    const putsAgain = vi.fn(() => false)
+    const listed = [{ filename: note, modifiedAt: 7 }]
+    const deps = makeDeps(listed, { [path(A)]: 500 }, { putsAgain })
+    // Downloaded or seen there: recorded, so its absence reads as a deletion.
+    const local: Record<string, number> = {}
+    const download = makeDeps(listed, local, { putsAgain })
+    vi.mocked(download.bridge.readBinary).mockImplementation(async () => {
+      local[path(A)] = 600
+      return 7
+    })
+    const pulled = await pullNoteImages({
+      ids: [A],
+      localPath: path,
+      deps: download,
+      prepare: async () => {},
+    })
+    expect(pulled.seen[note]).toEqual({
+      localMtime: 600,
+      uploadedMtime: 600,
+      containerMtime: 7,
+    })
+    const seen = await pushNoteImages({
+      ids: [A],
+      localPath: path,
+      bookkeeping: {},
+      deps,
+    })
+    expect(seen.bookkeeping[note]).toMatchObject({ containerMtime: 7 })
+    // Nothing new to record: the same bookkeeping back.
+    const again = await pushNoteImages({
+      ids: [A],
+      localPath: path,
+      bookkeeping: seen.bookkeeping,
+      deps,
+    })
+    expect(again.bookkeeping).toBe(seen.bookkeeping)
+
+    listed.length = 0
+    await pushNoteImages({
+      ids: [A, B],
+      localPath: path,
+      bookkeeping: seen.bookkeeping,
+      deps: makeDeps([], { [path(A)]: 500, [path(B)]: 500 }, { putsAgain }),
+    })
+    expect(putsAgain).toHaveBeenCalledExactlyOnceWith(note)
+  })
+
+  it("doesn't ask about a deleted photo this device no longer has", async () => {
+    const note = `witness-work-note-${A}.jpg`
+    const putsAgain = vi.fn(() => true)
+    const deps = makeDeps([], {}, { putsAgain })
+    const result = await pushNoteImages({
+      ids: [A],
+      localPath: path,
+      bookkeeping: {
+        [note]: { localMtime: 500, uploadedMtime: 500, containerMtime: 7 },
+      },
+      deps,
+    })
+    expect(putsAgain).not.toHaveBeenCalled()
+    expect(deps.bridge.writeBinary).not.toHaveBeenCalled()
+    expect(result.uploaded).toBe(0)
+  })
+
   it("skips another device's photo that isn't on this one", async () => {
     const deps = makeDeps([], {})
     const result = await pushNoteImages({

@@ -220,7 +220,9 @@ late IO completion cannot commit the cancelled photo.
 
 Uploads, downloads, and cleanup share one queue so bookkeeping cannot overwrite
 another pass. Publish JSON references before uploading bytes. An unchanged local
-photo is re-uploaded when its cloud file is absent. Downloads run at most four
+photo is re-uploaded when its cloud file is absent; on Cloud Sync, one this
+device saw there waits for a pull first, because another device deleted it
+([cloud-sync-photos.md](./cloud-sync-photos.md#the-app)). Downloads run at most four
 at a time into separate `*-synced[-revision].jpg` destinations and apply only if
 the reference is still current; they do not overwrite the picker’s file.
 Downloaded files are recorded as already uploaded to avoid echo uploads.

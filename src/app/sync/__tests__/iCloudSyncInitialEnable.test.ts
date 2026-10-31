@@ -49,7 +49,10 @@ vi.mock('@/lib/errorTracking', () => ({
   },
 }))
 vi.mock('@/lib/logger', () => import('@/__tests__/mocks/logger'))
-vi.mock('@/stores/mmkv', () => import('@/__tests__/mocks/mmkv'))
+vi.mock('@/stores/mmkv', async () => ({
+  ...(await import('@/__tests__/mocks/mmkv')),
+  clearMmkvStorage: () => undefined,
+}))
 vi.mock('expo-crypto', () => ({ randomUUID: () => 'generated' }))
 vi.mock('expo-file-system/legacy', () => ({
   documentDirectory: 'file:///test/Documents/',
@@ -197,15 +200,21 @@ it('ignores this installation’s own old snapshot during restore and first enab
 })
 
 describe('first enable on a fresh install', () => {
-  // Every install seeds the LDC builtin Category at boot.
+  // A fresh install runs the boot migrations on empty stores: only the LDC
+  // builtin Category comes out of them. The profile migration is left out; the
+  // profile isn't a record.
   const freshInstall = async () => {
     const { resolveInitialEnable, hasMeaningfulLocalData } = await import(
       '@/app/sync/iCloudSync'
     )
-    const { runLdcCategoryMigration } = await import(
-      '@/stores/migrations/categories'
-    )
+    const { runLdcCategoryMigration, runTagsToCategoriesMigration } =
+      await import('@/stores/migrations/categories')
     const { useCategories } = await import('@/stores/categories')
+    const { runCustomFieldsMigration } = await import(
+      '@/features/contacts/lib/runCustomFieldsMigration'
+    )
+    runCustomFieldsMigration()
+    runTagsToCategoriesMigration()
     runLdcCategoryMigration()
     runtime.files = [payloadFile(PHONE_FILE, 'phone')]
     return { resolveInitialEnable, hasMeaningfulLocalData, useCategories }
@@ -256,6 +265,74 @@ describe('first enable on a fresh install', () => {
       outcome: 'conflict',
     })
   })
+
+  it.each([
+    ['a remote that has its own LDC builtin', true],
+    ['a remote from a writer without categories', false],
+  ])('pulls in %s with one LDC builtin', async (_, remoteHasCategories) => {
+    const { resolveInitialEnable, useCategories } = await freshInstall()
+    const { applyPullEnable } = await import('@/app/sync/iCloudSync')
+    const file = runtime.files[0]
+    runtime.files = [
+      {
+        ...file,
+        json: JSON.stringify({
+          ...JSON.parse(file.json),
+          ...(remoteHasCategories && {
+            categoryStore: {
+              categories: [{ ...makeLdcBuiltinCategory(0), updatedAt: 5 }],
+              deletedCategories: [],
+            },
+          }),
+        }),
+      },
+    ]
+    const decision = await resolveInitialEnable()
+    if (decision.outcome !== 'pull') throw new Error(decision.outcome)
+
+    applyPullEnable(decision.remote)
+
+    expect(useCategories.getState().categories.map((c) => c.id)).toEqual([
+      LDC_BUILTIN_CATEGORY_ID,
+    ])
+  })
+
+  it.each([
+    [
+      'a custom field the user made',
+      async () => {
+        const { default: contacts } = await import('@/stores/contactsStore')
+        contacts.getState().addCustomFieldDef('Language')
+      },
+    ],
+    [
+      'a deleted custom field',
+      async () => {
+        const { default: contacts } = await import('@/stores/contactsStore')
+        const def = contacts.getState().addCustomFieldDef('Language')!
+        contacts.getState().purgeCustomFieldDef(def.id)
+      },
+    ],
+    [
+      'a visit field the user made',
+      async () => {
+        const { default: conversations } = await import(
+          '@/stores/conversationStore'
+        )
+        conversations.getState().addConversationFieldDef('Publication')
+      },
+    ],
+  ])('asks before replacing %s', async (_, change) => {
+    const { resolveInitialEnable, hasMeaningfulLocalData } =
+      await freshInstall()
+    await change()
+
+    expect(hasMeaningfulLocalData()).toBe(true)
+    expect(await resolveInitialEnable()).toMatchObject({
+      outcome: 'conflict',
+    })
+  })
+
   it.each([
     ['an adopted pet', () => {}],
     [
@@ -276,5 +353,51 @@ describe('first enable on a fresh install', () => {
     expect(await resolveInitialEnable()).toMatchObject({
       outcome: 'conflict',
     })
+  })
+
+  it('restores without asking on a verify device after a reset', async () => {
+    const { resolveInitialEnable, hasMeaningfulLocalData } =
+      await freshInstall()
+    const { default: useContacts } = await import('@/stores/contactsStore')
+    const { default: useConversations } = await import(
+      '@/stores/conversationStore'
+    )
+    // The reset's own native modules, mocked as in resetLocalData.test.ts.
+    vi.stubGlobal('__DEV__', false)
+    vi.doMock('../../../../modules/stopwatch-bridge', () => ({
+      reset: async () => undefined,
+    }))
+    vi.doMock('@react-native-async-storage/async-storage', () => ({
+      default: { clear: async () => undefined },
+    }))
+    vi.doMock('react-native-mmkv', () => ({
+      MMKV: class {
+        clearAll() {}
+      },
+    }))
+    vi.doMock(
+      'lucide-react-native',
+      () => new Proxy({}, { get: (_, name) => String(name), has: () => true })
+    )
+    vi.doMock('@/features/contacts/lib/linking', () => ({ navigationRef: {} }))
+    vi.doMock('@/features/map/lib/geocodeContacts', () => ({
+      contactsToFind: () => [],
+      pinLookupKey: () => '',
+    }))
+    const { resetLocalData } = await import('@/app/dev-harness/resetLocalData')
+    // Another run's records, field definitions and deletions.
+    useContacts.setState({
+      customFieldDefs: [{ id: 'field', label: 'Field' } as never],
+      deletedCustomFieldDefs: [{ id: 'gone', deletedAt: 1 }],
+    })
+    useConversations.setState({
+      deletedConversationFieldDefs: [{ id: 'gone', deletedAt: 1 }],
+    })
+    expect(hasMeaningfulLocalData()).toBe(true)
+
+    resetLocalData()
+
+    expect(hasMeaningfulLocalData()).toBe(false)
+    expect(await resolveInitialEnable()).toMatchObject({ outcome: 'pull' })
   })
 })

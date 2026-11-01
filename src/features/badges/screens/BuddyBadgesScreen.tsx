@@ -12,13 +12,6 @@ import type { BadgeArtId, BadgeLevel, SharedBadge } from '@/types/badges'
 import type { BadgeViewOrigin, RootStackNavigation } from '@/types/rootStack'
 import { useFoldColumn } from '@/components/ui/layout/FoldPane'
 
-/**
- * A buddy's whole collection, opened from See all on their page: every
- * collection with the levels they've reached in metal and the rest as outlines,
- * then their One-time Badges. Only what they share: no progress, counts, or
- * dates. A coin opens that badge full screen; an outline opens it as "Not
- * yet".
- */
 export default function BuddyBadgesScreen({
   inboxId,
   badges,

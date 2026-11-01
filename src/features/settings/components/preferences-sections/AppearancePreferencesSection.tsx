@@ -20,18 +20,14 @@ import {
   localizeDisplayDate,
 } from '@/lib/dates'
 
-// Canonical numeric patterns for the Date Order samples — the row is about
-// ordering, not the Region's separator flavor.
 const DATE_ORDER_PATTERNS: Record<DateOrder, string> = {
   mdy: 'MM/DD/YYYY',
   dmy: 'DD/MM/YYYY',
   ymd: 'YYYY/MM/DD',
 }
 
-/** The pickers' value for following the Region (or the device). */
 const AUTO = 'auto'
 
-/** Picker options carry strings; `Auto` stands for no saved value. */
 const toOptions = <T extends string | number>(
   options: { label: string; value: T | undefined }[]
 ) =>
@@ -51,17 +47,13 @@ const AppearancePreferencesSection = () => {
     timeFormat,
     dateOrder,
   } = usePreferences()
-  // What each Auto row currently resolves to (Region → device), so the Auto
-  // option can show its effective value.
+
   const autoStartOfWeek = resolveStartOfWeek({ region: formatRegion })
   const autoTimeFormat = resolveTimeFormat({ region: formatRegion })
   const autoDateOrder = resolveDateOrder({ region: formatRegion })
 
   const now = moment()
 
-  // Live per-region sample built from the region's PRISTINE patterns — the
-  // active language locale carries the Region overlay, so reading its
-  // longDateFormat directly would show the patched values for that key.
   const regionSample = (key: FormatRegion): string => {
     const datePattern = getPristineLongDateFormat(key, 'L')
     const timePattern = getPristineLongDateFormat(key, 'LT')
@@ -79,8 +71,6 @@ const AppearancePreferencesSection = () => {
     })).sort((a, b) => compareText(a.label, b.label)),
   ]
 
-  // moment.weekdays() is locale-translated but always Sunday-first indexed,
-  // matching the stored 0–6 values.
   const weekdayNames = moment.weekdays()
   const startOfWeekOptions: { label: string; value: number | undefined }[] = [
     {

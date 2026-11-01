@@ -44,7 +44,6 @@ const SOURCE_ICON: Partial<Record<ScribeInputSource, AppIcon>> = {
   paper: FileTextIcon,
 }
 
-/** What the User sent, on the trailing side; spoken ones carry a mic. */
 export const ScribeUserBubble = ({
   text,
   source,
@@ -80,7 +79,6 @@ export const ScribeUserBubble = ({
   )
 }
 
-/** Scribe AI's answer: plain text, no markdown, links or images. */
 export const ScribeAssistantText = ({ text }: { text: string }) => {
   const theme = useTheme()
   return (
@@ -130,7 +128,6 @@ const Line = ({
   )
 }
 
-/** A turn that ended without an answer or cards. */
 export const ScribeNoticeRow = ({ notice }: { notice: ScribeNotice }) => {
   switch (notice.kind) {
     case 'limit_reached':
@@ -159,21 +156,16 @@ export const ScribeNoticeRow = ({ notice }: { notice: ScribeNotice }) => {
   }
 }
 
-/** 999 → "999", 1234 → "1.2k": stays narrow as it climbs. */
 const formatTokens = (tokens: number): string =>
   tokens < 1000
     ? formatNumber(tokens)
     : `${formatNumber(Math.round(tokens / 100) / 10)}k`
 
-/**
- * Developer Tools only: time since the turn started and about how many tokens
- * it has produced (finished steps' output, then streamed text ÷ 4).
- */
 const ScribeRunDebug = ({ conversationId }: { conversationId: string }) => {
   const theme = useTheme()
   const debug = useScribeRuns((s) => s.debug[conversationId])
   const [now, setNow] = useState(() => Date.now())
-  // In the background (a turn keeps going there), nobody sees it tick.
+
   const appActive = useAppActive()
   useEffect(() => {
     if (!appActive) return
@@ -203,10 +195,6 @@ const ScribeRunDebug = ({ conversationId }: { conversationId: string }) => {
   )
 }
 
-/**
- * "Thinking…" or what it's reading, with a shine sweeping across it and a small
- * organizing orb. Time and tokens show only with Developer Tools on.
- */
 export const ScribeRunRow = ({
   run,
   conversationId,
@@ -244,7 +232,6 @@ export const ScribeRunRow = ({
   )
 }
 
-/** A failed turn and, when it can be retried, Try again. */
 export const ScribeErrorRow = ({
   error,
   onRetry,

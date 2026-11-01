@@ -54,9 +54,7 @@ const merge = (...all: TimeEntriesByYear[]): TimeEntriesByYear => {
 describe('computePendingRollovers', () => {
   it('returns one pending rollover when previous month has fractional adjusted minutes', () => {
     const today = moment('2026-04-15')
-    const serviceReports = reports(2026, 2, [
-      { hours: 1, minutes: 24 }, // 84 min total → fractional 24
-    ])
+    const serviceReports = reports(2026, 2, [{ hours: 1, minutes: 24 }])
 
     const result = computePendingRollovers({
       serviceReports,
@@ -72,7 +70,7 @@ describe('computePendingRollovers', () => {
     const today = moment('2026-04-15')
     const serviceReports = reports(2026, 2, [
       { hours: 2, minutes: 0 },
-      { hours: 1, minutes: 60 }, // 60m → 1h, total 4h flat
+      { hours: 1, minutes: 60 },
     ])
 
     const result = computePendingRollovers({
@@ -100,9 +98,6 @@ describe('computePendingRollovers', () => {
   })
 
   it('ignores the marker when ignoreMarker=true (used by inline UI)', () => {
-    // Same fixture as the previous test — marker set for current month — but
-    // with ignoreMarker on we still surface the fractional source so a UI
-    // can offer a "Rollover previous month?" card after Not now / delete.
     const today = moment('2026-04-15')
     const serviceReports = reports(2026, 2, [{ hours: 1, minutes: 24 }])
 
@@ -132,9 +127,6 @@ describe('computePendingRollovers', () => {
   })
 
   it('returns only the nearest prior month with fractional minutes', () => {
-    // today = March 3, 2026. Both Jan and Feb have fractional minutes.
-    // We should pick ONLY Feb (the nearest) and ignore Jan — rollover never
-    // accumulates across months, the moved value is always < 60.
     const today = moment('2026-03-03')
     const serviceReports = merge(
       reports(2026, 0, [{ hours: 1, minutes: 24 }]),
@@ -152,13 +144,10 @@ describe('computePendingRollovers', () => {
   })
 
   it('does not look further back than the immediate previous month', () => {
-    // today = April. March = whole hours, Feb = fractional. We must NOT walk
-    // past March into Feb — rollover only ever considers the single most
-    // recent month, otherwise an already-handled month could be re-offered.
     const today = moment('2026-04-15')
     const serviceReports = merge(
-      reports(2026, 1, [{ hours: 1, minutes: 30 }]), // Feb: fractional
-      reports(2026, 2, [{ hours: 2, minutes: 0 }]) // March: whole
+      reports(2026, 1, [{ hours: 1, minutes: 30 }]),
+      reports(2026, 2, [{ hours: 2, minutes: 0 }])
     )
 
     const result = computePendingRollovers({
@@ -172,9 +161,6 @@ describe('computePendingRollovers', () => {
   })
 
   it('skips a prior service year for annual-goal publishers (Aug → Sep)', () => {
-    // today = Sep 5 2026 → service year 2026 (Sep 2026 - Aug 2027)
-    // Aug 2026 in SY 2025 → must be excluded for annual-goal publishers
-    // because crossing into a new annual cycle would distort progress.
     const today = moment('2026-09-05')
     const serviceReports = reports(2026, 7, [{ hours: 1, minutes: 24 }])
 
@@ -189,8 +175,6 @@ describe('computePendingRollovers', () => {
   })
 
   it('still crosses the SY boundary for non-annual-goal publishers (Aug → Sep)', () => {
-    // Same scenario, but auxiliary pioneer (no annual goal). They track per
-    // month, not per service year — fractional hours should still roll forward.
     const today = moment('2026-09-05')
     const serviceReports = reports(2026, 7, [{ hours: 1, minutes: 24 }])
 
@@ -205,7 +189,6 @@ describe('computePendingRollovers', () => {
   })
 
   it('rolls over from a prior month within the same service year (Sep)', () => {
-    // today = Oct 5 2026 → SY 2026. Sep 2026 also SY 2026 → include.
     const today = moment('2026-10-05')
     const serviceReports = reports(2026, 8, [{ hours: 1, minutes: 24 }])
 
@@ -220,7 +203,6 @@ describe('computePendingRollovers', () => {
   })
 
   it('returns nothing when only older months (not the immediate previous) have fractional minutes', () => {
-    // Reports from 13 months ago, no immediate-previous-month data → empty.
     const today = moment('2026-04-15')
     const serviceReports = reports(2025, 2, [{ hours: 1, minutes: 24 }])
 
@@ -235,8 +217,6 @@ describe('computePendingRollovers', () => {
   })
 
   it('excludes credit time by default — credit-only fraction produces no rollover', () => {
-    // 5h20m of LDC credit, standard time whole. Credit isn't eligible for
-    // rollover (issue #393), so nothing is pending.
     const today = moment('2026-04-15')
     const serviceReports = reports(2026, 2, [
       { hours: 10, minutes: 0 },
@@ -285,15 +265,11 @@ describe('computePendingRollovers', () => {
       includeCredit: true,
     })
 
-    // (84 + 30) % 60 = 54
     expect(result).toEqual([{ sourceYear: 2026, sourceMonth: 2, minutes: 54 }])
   })
 })
 
 describe('rollover at the credit cap', () => {
-  // A Regular Pioneer's March: 54h30m standard + 1h LDC, capped at 55h. The
-  // month is already whole, so rolling 30m out would let squeezed-out credit
-  // refill it and April would gain 30m nobody logged.
   const capped = reports(2026, 2, [
     { hours: 54, minutes: 30 },
     { hours: 1, minutes: 0, ldc: true } as Partial<TimeEntry>,
@@ -316,8 +292,6 @@ describe('rollover at the credit cap', () => {
   })
 
   it('rolls only what credit leaves short of the hour', () => {
-    // 1h50m standard + 20m credit = 2h10m: rolling 10m of standard leaves a
-    // whole 2h, with no partial credit hour left behind.
     const serviceReports = reports(2026, 2, [
       { hours: 1, minutes: 50 },
       { hours: 0, minutes: 20, ldc: true } as Partial<TimeEntry>,
@@ -346,8 +320,6 @@ describe('rollover at the credit cap', () => {
   })
 
   it('rolls nothing into a month the cap already holds with credit', () => {
-    // April: 54h standard + 5h LDC, held at 55h. Another 30m of standard would
-    // only push 30m of credit out, and March would lose it for nothing.
     const serviceReports = merge(
       reports(2026, 2, [{ hours: 10, minutes: 30 }]),
       reports(2026, 3, [
@@ -366,7 +338,6 @@ describe('rollover at the credit cap', () => {
   })
 
   it('rolls only what fits under the cap in this month', () => {
-    // April: 54h standard + 50m LDC leaves 10m before credit gets squeezed.
     const serviceReports = merge(
       reports(2026, 2, [{ hours: 10, minutes: 30 }]),
       reports(2026, 3, [
@@ -385,8 +356,6 @@ describe('rollover at the credit cap', () => {
   })
 
   it("caps this month by this month's role", () => {
-    // Regular Pioneer in March, Special Pioneer (no cap) in April: April's
-    // credit can't be squeezed, so the whole 30m rolls.
     const serviceReports = merge(
       reports(2026, 2, [{ hours: 10, minutes: 30 }]),
       reports(2026, 3, [
@@ -428,7 +397,6 @@ describe('rollover at the credit cap', () => {
 
     fc.assert(
       fc.property(
-        // March's role and April's, which may differ (Role History).
         role,
         role,
         fc.boolean(),
@@ -436,7 +404,7 @@ describe('rollover at the credit cap', () => {
           enabled: fc.boolean(),
           customLimitHours: fc.integer({ min: 0, max: 80 }),
         }),
-        // Feb, March and April so far: standard and credit, each up to 80h.
+
         fc.array(fc.integer({ min: 0, max: 80 * 60 }), {
           minLength: 6,
           maxLength: 6,
@@ -501,7 +469,7 @@ describe('rollover at the credit cap', () => {
             )
           )
           expect(march(serviceReports) - march(after)).toBe(rolledMinutes)
-          // With room in April, March keeps exactly the partial credit hour.
+
           if (aprCr === 0) expect(march(after) % 60).toBe(excluded)
         }
       )
@@ -540,8 +508,6 @@ describe('rolloverRole', () => {
     })
 
   it("caps last month by last month's role", () => {
-    // Special Pioneer in February (no cap), Regular Pioneer from March:
-    // 50h30m standard + 20h credit = 70h30m, so 30m rolls.
     const today = moment('2026-03-05')
     const serviceReports = reports(2026, 1, [
       { hours: 50, minutes: 30 },

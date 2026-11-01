@@ -31,17 +31,11 @@ const RolloverScreen = () => {
     autoEnabled,
     setAutoEnabled,
   } = useRollover()
-  // Display-side computations need the marker-agnostic list — the screen can
-  // be reached via the inline "Roll over previous month?" card after the user
-  // already pressed "Not now" or deleted the entries, in which case the
-  // marker-respecting `pending` would be empty even though there's still
-  // fractional time available.
+
   const pending = availablePending
   const totalMinutes = pending.reduce((sum, p) => sum + p.minutes, 0)
   const totalDisplay = useFormattedMinutes(totalMinutes)
 
-  // If somehow opened with nothing pending (e.g. rapid double-fire after auto
-  // mode flipped on), close immediately rather than show an empty screen.
   useEffect(() => {
     if (pending.length === 0) {
       navigation.goBack()
@@ -52,8 +46,7 @@ const RolloverScreen = () => {
 
   const today = moment()
   const destinationLabel = today.format('MMMM')
-  // Points from the time toward the month it moves into, so it flips with the
-  // reading direction.
+
   const arrow = isRtlLayout() ? '←' : '→'
 
   const handleApply = () => {

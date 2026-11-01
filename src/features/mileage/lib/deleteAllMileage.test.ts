@@ -23,7 +23,7 @@ describe('Delete All Mileage Data', () => {
       },
       hasSharedCars: true,
     })
-    // Leaving first would delete the copies leaving makes.
+
     expect(calls).toEqual(['deleteOwn', 'leaveSharedCars'])
     expect(left).toEqual({ notLeft: [] })
   })
@@ -63,7 +63,7 @@ describe('whether there are Shared Cars to leave', () => {
         memberships: { cars: { s1: { at: 2 } }, leftCars: {} },
       })
     ).toBe(true)
-    // Left since it was joined: nothing to leave.
+
     expect(
       hasSharedCarsToLeave({
         ...nothing,

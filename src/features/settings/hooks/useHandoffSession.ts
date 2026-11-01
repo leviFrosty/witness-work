@@ -5,12 +5,10 @@ import type { HandoffSession } from '@/app/account/handoff'
 import useAppActive from '@/hooks/useAppActive'
 import { syncNow } from '@/lib/syncClock'
 
-/** Clients poll this often while a screen shows the handoff (the protocol's). */
 export const HANDOFF_POLL_MS = 1500
 
 const noop = () => () => undefined
 
-/** The session's state, re-rendering on every change. */
 export function useHandoffState<S extends HandoffSession>(
   session: S | null
 ): S['state'] | null {
@@ -19,10 +17,6 @@ export function useHandoffState<S extends HandoffSession>(
   )
 }
 
-/**
- * Polls the session every 1.5 s while the screen is focused, the app is in the
- * foreground, and `active` says there's something to wait for.
- */
 export function useHandoffPolling(
   session: HandoffSession | null,
   active: boolean
@@ -47,10 +41,6 @@ export function useHandoffPolling(
   }, [session, active, focused, foreground])
 }
 
-/**
- * Milliseconds left until `expiresAt` (server time), ticking each second while
- * the app is in the foreground.
- */
 export function useHandoffCountdown(expiresAt: number | null): number | null {
   const [now, setNow] = useState(syncNow)
   const foreground = useAppActive()

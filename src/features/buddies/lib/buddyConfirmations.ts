@@ -12,7 +12,6 @@ const removeBuddy = (buddy: Buddy) =>
       alertBuddiesError(i18n.t('buddies_errorRemoveTitle'), error)
     )
 
-/** Ends a pairing for both people, after confirming. */
 export const confirmRemoveBuddy = (buddy: Buddy) =>
   confirmDestructive({
     title: i18n.t('buddies_removeTitle', { name: buddyDisplayName(buddy) }),
@@ -23,7 +22,6 @@ export const confirmRemoveBuddy = (buddy: Buddy) =>
     onConfirm: () => void removeBuddy(buddy),
   })
 
-/** Takes back my acceptance of their invite before they confirm it. */
 export const confirmWithdrawRequest = (buddy: Buddy) =>
   confirmDestructive({
     title: i18n.t('buddies_withdrawTitle'),

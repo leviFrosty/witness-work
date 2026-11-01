@@ -27,10 +27,6 @@ const OnboardingBackfillBanner = () => {
 
   const { serviceReports } = useServiceReport()
 
-  // Re-verify trigger conditions every render so the banner naturally
-  // disappears if the user changes publisher type to a non-annual-goal role
-  // — even though `status` remains 'skipped'. Also hide when an iCloud
-  // restore (or other prior data) already filled the catch-up window.
   const eligible =
     effectiveHasAnnualGoal(role, userSpecifiedHasAnnualGoal) &&
     moment(installedOn).month() !== 8 &&

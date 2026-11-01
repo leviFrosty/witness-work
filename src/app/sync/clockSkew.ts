@@ -2,7 +2,6 @@ import { syncNow, correctedSyncTimestamp } from '@/lib/syncClock'
 
 export const CLOCK_SKEW_TOLERANCE_MS = 5 * 60_000
 
-/** Adjust sync stamps only, never appointment, service, or creation dates. */
 export function translateSyncTimestamps<T>(
   value: T,
   offset = 0,
@@ -52,7 +51,6 @@ export function translateSyncTimestamps<T>(
   return adjust(value) as T
 }
 
-/** Legacy writers used wall time; container dates anchor their relative stamps. */
 export function alignPayloadClock<
   T extends { writtenAt: number; calibratedClock?: boolean },
 >(payload: T, modifiedAt: number): T {

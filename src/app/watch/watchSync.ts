@@ -32,25 +32,20 @@ import { nativeLocale } from '@/lib/nativeLocale'
 import { planWatchEntries } from '@/app/watch/planWatchEntries'
 import { planWatchTrips } from '@/app/watch/planWatchTrips'
 
-/** Native analytics events JS may forward; anything else is dropped. */
 const FORWARDED_EVENTS = new Set<string>([
   'watch_timer_action_completed',
   'siri_action_completed',
   'siri_action_failed',
 ] satisfies AnalyticsEventName[])
 const STATUS_CAPTURED_AT_KEY = 'watchStatusCapturedAt'
-/**
- * Widget kinds in `targets/watch-widgets`, which the Wear OS complications
- * reuse. Monthly Progress has a kind per circular style: Battery's ring (and
- * the other families), Weather's range gauge and the gauge with a symbol.
- */
+
 const PROGRESS_COMPLICATION_STYLES = {
   WitnessWorkProgress: 'default',
   WitnessWorkProgressRange: 'range',
   WitnessWorkProgressSymbol: 'symbol',
 } as const
 const UP_NEXT_COMPLICATION = 'WitnessWorkUpNext'
-/** The Wear OS tile's kind. */
+
 const WEAR_TILE = 'WitnessWorkTile'
 const STATUS_CAPTURE_INTERVAL_MS = 7 * 24 * 60 * 60 * 1000
 
@@ -58,11 +53,6 @@ let installed = false
 let lastPushedContent: string | null = null
 let draining = false
 
-/**
- * The preferences the snapshot reads, so other preference writes (sync
- * bookkeeping, UI state) don't rebuild it. Language and date conventions reach
- * it through `i18n` and `moment` instead of as arguments.
- */
 const watchPreferences = (
   prefs: ReturnType<typeof usePreferences.getState>
 ) => ({
@@ -84,22 +74,13 @@ const watchPreferences = (
   dateOrder: prefs.dateOrder,
 })
 
-/**
- * Builds the watch snapshot from the stores and hands it to the native layer,
- * which keeps it for Siri on this device and sends it to a paired Apple Watch,
- * or on Android to a Wear OS watch. Skipped when nothing in it changed since
- * the last push; the native layer also skips one it already has, so a new
- * launch or watch doesn't resend it. `reflectedEntryIds` are watch entries just
- * saved but not yet resolved.
- */
 export function pushWatchSnapshot(
   reason: string,
   reflectedEntryIds: string[] = []
 ): void {
   perf.count('watch:push')
   if (!WatchBridge.isAvailable()) return
-  // iOS keeps the snapshot for Siri even without a watch; Android only needs it
-  // once a Wear OS watch has the app (`onStatusChange` sends it then).
+
   if (Platform.OS === 'android' && !WatchBridge.getStatus().isWatchAppInstalled)
     return
 
@@ -107,7 +88,7 @@ export function pushWatchSnapshot(
     const sr = useServiceReport.getState()
     const prefs = watchPreferences(usePreferences.getState())
     const mileage = getMileageView()
-    // The watch shows this month, so it uses this month's role (Role History).
+
     const month = calendarMonthOf()
     const publisher = roleForMonth(prefs.roleHistory, prefs.role, month)
     const nextPublisher = roleForMonth(
@@ -136,7 +117,7 @@ export function pushWatchSnapshot(
       categories: useCategories.getState().categories,
       mileageTrackingEnabled: prefs.mileageTrackingEnabled,
       distanceUnit: resolveMileageUnits(prefs).distanceUnit,
-      // Shared Cars' too, first the car the User last logged a trip on.
+
       vehicles: mileage.vehicles,
       trips: tripsLoggedByMe(mileage.trips, useSharedCars.getState().cars),
       reflectedEntryIds,
@@ -144,14 +125,13 @@ export function pushWatchSnapshot(
     })
 
     const { generatedAt, ...content } = snapshot
-    // The watch reads `reportedToday` against the day it was built.
+
     const contentKey = JSON.stringify([
       new Date(generatedAt).toDateString(),
       content,
     ])
     if (contentKey === lastPushedContent) return
     WatchBridge.setSnapshot(JSON.stringify(snapshot), {
-      // Wear OS may hold back the rest, e.g. a sync merged in the background.
       urgent: reason === 'watch-entries' || AppState.currentState === 'active',
     })
     lastPushedContent = contentKey
@@ -161,7 +141,6 @@ export function pushWatchSnapshot(
   }
 }
 
-/** Failures the native layer recorded, which release builds don't log. */
 function reportNativeErrors(): void {
   for (const message of WatchBridge.takeErrors()) {
     captureExceptionThrottled(
@@ -171,12 +150,6 @@ function reportNativeErrors(): void {
   }
 }
 
-/**
- * Saves Time Entries and Trips made on the watch or with Siri on this device,
- * and forwards native analytics events. Each one is persisted before the native
- * layer is told it's handled, so a crash in between only causes a repeat
- * delivery, which is recognized by id.
- */
 function drainInbox(): void {
   if (!WatchBridge.isAvailable() || draining) return
   draining = true
@@ -214,15 +187,12 @@ function drainInbox(): void {
       handled.push(...plans.map((plan) => plan.id))
     }
     if (tripDrafts.length) {
-      // Shared Cars too: a trip on one goes to its space, logged by the User.
       const view = getMileageView()
       const plans = planWatchTrips(tripDrafts, {
         ...view,
         ownTrips: tripsLoggedByMe(view.trips, useSharedCars.getState().cars),
       })
       for (const plan of plans) {
-        // `saveTrip` refuses a car that's in neither store; only saved
-        // trips count.
         if (plan.status !== 'add' || !saveTrip(plan.trip)) continue
         analytics.capture('mileage_trip_added', {
           entry_mode: 'distance',
@@ -235,9 +205,6 @@ function drainInbox(): void {
       handled.push(...plans.map((plan) => plan.id))
     }
     if (handled.length) {
-      // Send the updated progress before the watch stops showing these
-      // entries as syncing, so its total never dips. Until they're resolved
-      // the watch also adds them itself, so name them as already counted.
       pushWatchSnapshot('watch-entries', handled)
       WatchBridge.resolveEntries(handled)
     }
@@ -255,7 +222,6 @@ function drainInbox(): void {
   }
 }
 
-/** Weekly adoption signal: is the watch app installed, with complications? */
 function captureWatchStatus(): void {
   const status = WatchBridge.getStatus()
   if (!status.isWatchAppInstalled) return
@@ -264,11 +230,10 @@ function captureWatchStatus(): void {
   try {
     mmkvStorage.set(STATUS_CAPTURED_AT_KEY, Date.now())
   } catch (e) {
-    // Unsaved, it would be captured again on every return to the app.
     captureExceptionThrottled('watchSync:status', e)
     return
   }
-  // Unknown until the watch app reports the complications in use.
+
   const kinds = status.activeComplications
   const progressStyles = kinds
     ? Object.entries(PROGRESS_COMPLICATION_STYLES)
@@ -280,7 +245,7 @@ function captureWatchStatus(): void {
     progress_complication: progressStyles && progressStyles.length > 0,
     progress_complication_styles: progressStyles?.join(',') || undefined,
     up_next_complication: kinds?.includes(UP_NEXT_COMPLICATION),
-    // Wear OS only; the Apple Watch has no tiles.
+
     ...(Platform.OS === 'android' && { tile: kinds?.includes(WEAR_TILE) }),
   })
 }
@@ -290,22 +255,11 @@ const debouncedPush = debounce(() => pushWatchSnapshot('store-change'), 500, {
   trailing: true,
 })
 
-/**
- * Sends the snapshot now rather than after the store-change debounce, for a
- * background task that just merged a sync: the app may be suspended before the
- * debounce fires, and the watch wouldn't see the merge until the next launch.
- */
 export function flushWatchSnapshot(reason: string): void {
   debouncedPush.cancel()
   pushWatchSnapshot(reason)
 }
 
-/**
- * Connects the stores to the watch (Apple Watch, or Wear OS on Android) and to
- * Siri on this device: saves the entries and trips they made and keeps their
- * snapshot current. Install once storage has hydrated. Idempotent; returns a
- * teardown function for tests.
- */
 export function installWatchSync(): () => void {
   if (!WatchBridge.isAvailable() || installed) return () => {}
   installed = true
@@ -318,29 +272,23 @@ export function installWatchSync(): () => void {
     }),
     useCategories.subscribe(() => debouncedPush()),
     subscribeMileageView(() => debouncedPush()),
-    // Up Next shows Follow-ups and their Contacts.
+
     useConversations.subscribe(() => debouncedPush()),
     useContacts.subscribe(() => debouncedPush()),
   ]
 
-  // Foreground covers midnight and month rollover, language changes, and
-  // entries delivered or made with Siri while JS couldn't run.
   const foregroundSub = addForegroundListener(() => {
     drainInbox()
     pushWatchSnapshot('foreground')
     captureWatchStatus()
     reportNativeErrors()
   })
-  // Leaving the foreground, send a change still waiting on the debounce: the
-  // app may be suspended first. `inactive` counts, since the app switcher can
-  // end the app from there.
+
   const appStateSub = AppState.addEventListener('change', (state) => {
     if (state !== 'active') debouncedPush.flush()
   })
   const inboxSub = WatchBridge.onInboxChange(drainInbox)
-  // A newly paired watch or newly installed watch app gets the snapshot the
-  // native layer keeps; this only adds one the stores changed meanwhile (on
-  // Android, none is built until a watch has the app).
+
   const statusSub = WatchBridge.onStatusChange(() => {
     pushWatchSnapshot('status-change')
     captureWatchStatus()

@@ -7,10 +7,6 @@ import useTheme from '@/contexts/theme'
 
 type Action = { label: string; onPress: () => void; testID?: string }
 
-/**
- * A handoff step with nothing to scan or compare: waiting (a spinner), done, or
- * stopped, with up to two actions.
- */
 export default function HandoffStatus({
   icon,
   tone = 'neutral',
@@ -27,7 +23,7 @@ export default function HandoffStatus({
   loading?: boolean
   title?: string
   body?: string
-  /** A quieter line under the body. */
+
   detail?: string
   primary?: Action
   secondary?: Action
@@ -94,7 +90,6 @@ export default function HandoffStatus({
   )
 }
 
-/** A quiet text action under a primary one. */
 export function HandoffTextButton({
   label,
   onPress,

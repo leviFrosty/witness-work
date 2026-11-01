@@ -26,12 +26,10 @@ let checking = false
 let pendingUpdate: Awaited<ReturnType<typeof checkHotUpdate>> = null
 let startupDownload: Promise<void> | undefined
 
-/** Lists a staged update in the tray until the app restarts into it. */
 async function notePreparedUpdate() {
   usePendingUpdate.setState({ bundleId: await preparedUpdateId() })
 }
 
-/** Check once per launch; stage an update for the next cold launch. */
 export function downloadUpdateOnLaunch(): Promise<void> {
   if (!otaEnabled || startupDownload)
     return startupDownload ?? Promise.resolve()
@@ -54,15 +52,14 @@ export async function downloadSelectedUpdate(): Promise<boolean> {
   pendingUpdate = null
   if (update && !(await update.updateBundle()))
     throw new Error('Could not prepare update')
-  // Leaving the Update screen before it restarts keeps this in the tray.
+
   await notePreparedUpdate()
   return usePendingUpdate.getState().bundleId !== null
 }
 
-/** Restarts into the staged update now: the tray's Update Now. */
 export async function applyPendingUpdate() {
   analytics.capture('pending_update_applied')
-  // The restart ends the JS runtime and drops anything still queued.
+
   await analytics.flush()
   await reloadApp()
 }
@@ -79,7 +76,6 @@ export const fetchUpdate = async (
     return 'unavailable'
   }
 
-  // Updating through the store won't help without a connection either.
   const offline = () => {
     Alert.alert(i18n.t('common_offlineTitle'), i18n.t('update_offline'))
     return 'offline' as const

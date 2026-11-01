@@ -14,18 +14,13 @@ import { formatDisplay } from '@/lib/dates'
 
 const MARGIN = 12
 
-/**
- * Everything about one month that the calendar doesn't show on its face: pace
- * and goal coverage (each opening its details), the Assistant, and the
- * calendar's color key. Opens under the focused month's goal meter.
- */
 export default function MonthOverviewPopover({
   month,
   onEditGoal,
   renderTrigger,
 }: {
   month: CalendarMonth
-  /** Closes this popover first, so the goal editor isn't stacked on it. */
+
   onEditGoal?: () => void
   renderTrigger: (props: {
     onPress: () => void
@@ -56,7 +51,6 @@ export default function MonthOverviewPopover({
 
   return (
     <AnchoredPopover
-      // The Assistant opens its own sheets, which a Modal would cover.
       presentation='portal'
       contentWidth={Math.min(width - MARGIN * 2, 440)}
       resolvePosition={resolvePosition}

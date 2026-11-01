@@ -31,14 +31,10 @@ type Props = {
   durationInvalid?: boolean
   date: Date
   setDate: (date: Date) => void
-  /**
-   * Swaps the duration pill for How long?, whose sheet takes either just the
-   * hours or a start and end time: for records that may have no set time.
-   */
+
   timeSpan?: {
-    /** Just hours, with no set time. */
     anytime: boolean
-    /** Saves How long's sheet; a time span also moves the start. */
+
     setWhen: (when: {
       anytime: boolean
       minutes: number
@@ -48,24 +44,21 @@ type Props = {
   hours: number
   minutes: number
   setDuration: (hours: number, minutes: number) => void
-  /** Names the duration pill, and fills it while the duration is zero. */
+
   durationLabel: string
-  /** The duration wheels' range: hours up to `maxHours`, minutes in steps. */
+
   maxHours: number
   minuteStep: number
-  /** Controls above the pills, e.g. One Time / Recurring. */
+
   header?: ReactNode
-  /** A line just above the pills, e.g. a warning about the duration. */
+
   notice?: ReactNode
   saveButton: ReactNode
-  /**
-   * Inside a page rather than docked at the bottom of the screen: no dock
-   * chrome, and no room kept for the home indicator.
-   */
+
   inline?: boolean
-  /** Leaves the Date pill out, for a record whose day is already set. */
+
   hideDate?: boolean
-  /** Prefixes the pills' and pickers' testIDs, e.g. `plan-date-pill`. */
+
   testID: string
 }
 
@@ -74,10 +67,8 @@ type PickerKind = 'date' | 'duration' | 'when'
 const wheelItems = (values: number[]) =>
   values.map((value) => ({ label: formatPlainNumber(value), value }))
 
-// Matches the fill of the native iOS date and time pills.
 const PILL_FILL = 'rgba(118,118,128,0.24)'
 
-/** Copies the picked day onto the record's date, keeping its clock time. */
 const mergeDate = (base: Date, picked: Date) => {
   const next = new Date(base)
   next.setFullYear(picked.getFullYear(), picked.getMonth(), picked.getDate())
@@ -93,11 +84,10 @@ const dayLabel = (date: Date) => {
   return formatDate(day, { style: 'medium' })
 }
 
-/** One of the big targets the thumb lands on. */
 const WhenPill = (props: {
   icon: AppIcon
   value: string
-  /** A second, smaller line under the value. */
+
   caption?: string
   accessibilityLabel: string
   invalid?: boolean
@@ -163,7 +153,6 @@ const WhenPill = (props: {
 const DAY_MINUTES = 24 * 60
 const WHEEL_STEP = 5
 
-/** Every `WHEEL_STEP` from `from` to `to`, plus `keep` if it falls between. */
 const steps = (from: number, to: number, keep: number) => {
   const values: number[] = []
   for (let value = from; value <= to; value += WHEEL_STEP) values.push(value)
@@ -181,21 +170,15 @@ const clockLabel = (minutesOfDay: number) => {
     : label
 }
 
-/** "9:00 AM – 2:00 PM" for a record starting at `date` and lasting `minutes`. */
 const timeRange = (date: Date, minutes: number) =>
   i18n.t('planForm_timeRange', {
     start: formatTime(date),
-    // On the wall clock, like Plan Details, across a daylight saving change.
+
     end: formatTime(
       atMinutesOfDay(date, date.getHours() * 60 + date.getMinutes() + minutes)
     ),
   })
 
-/**
- * Start and End side by side, with the length they add up to. End's values are
- * lengths, so moving Start keeps the length and an End past midnight still
- * works.
- */
 const SpanWheels = (props: {
   start: number
   minutes: number
@@ -262,22 +245,16 @@ const SpanWheels = (props: {
   )
 }
 
-/**
- * The quick half of a docked form (the Plan form, Add Time), pinned to the
- * bottom of the screen where the thumb already is: the Date and Duration pills
- * (or How long?, for `timeSpan`), and Save. Each pill opens its picker from the
- * bottom too.
- */
 const WhenDock = (props: Props) => {
   const theme = useTheme()
   const insets = useSafeAreaInsets()
   const [picker, setPicker] = useState<PickerKind | null>(null)
-  // Android picks the date in Material's dialog instead of the sheet.
+
   const [dateDialog, setDateDialog] = useState(false)
   const [draftDate, setDraftDate] = useState(props.date)
   const [draftHours, setDraftHours] = useState(props.hours)
   const [draftMinutes, setDraftMinutes] = useState(props.minutes)
-  // How long's sheet keeps one length, and a start for a time span.
+
   const [draftAnytime, setDraftAnytime] = useState(false)
   const [draftStart, setDraftStart] = useState(0)
   const [draftTotal, setDraftTotal] = useState(0)
@@ -310,7 +287,7 @@ const WhenDock = (props: Props) => {
 
   const chooseMode = (anytime: boolean) => {
     setDraftAnytime(anytime)
-    // A time span needs an end after its start.
+
     if (!anytime && !draftTotal) setDraftTotal(60)
   }
 

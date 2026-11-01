@@ -19,10 +19,6 @@ import {
 import { undoVisitCreate } from '@/features/scribe/proposals/effects/visit'
 import { undoCategoryCreate } from '@/features/scribe/proposals/effects/category'
 
-/**
- * Undoes one applied effect, only where it's still as Add left it (ADR 0032
- * §3).
- */
 export function undoRecord(
   undo: UndoRecord,
   ownVisitIds: ReadonlySet<string>,
@@ -62,15 +58,14 @@ export function undoRecord(
 
 export interface UndoRun {
   result: ScribeUndoResult
-  /** Effect ids that were undone. */
+
   undone: string[]
-  /** Effect ids whose records were already gone. */
+
   gone: string[]
-  /** Pending Refs whose records are gone again. */
+
   unbound: string[]
 }
 
-/** Undoes an apply's records in reverse apply order. */
 export function undoApplied(
   applied: readonly { effectId: string; undo: UndoRecord }[]
 ): UndoRun {

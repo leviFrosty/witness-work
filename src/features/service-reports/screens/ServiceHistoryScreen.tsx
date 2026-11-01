@@ -66,12 +66,10 @@ import { formatDisplay } from '@/lib/dates'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'ServiceHistory'>
 
-/** How many Service Years back the editor reaches. */
 const MAX_YEARS_BACK = 10
 
 type Row = ServiceHistoryRow
 
-/** The latest Service Year that has at least one finished month. */
 const latestServiceYear = (): number => {
   const previousMonth = moment().subtract(1, 'month')
   return serviceYearOf({
@@ -86,15 +84,6 @@ const serviceYearLabel = (serviceYear: number) =>
     end: formatPlainNumber(serviceYear + 1),
   })
 
-/**
- * **Service History** editor: one row per finished month of a Service Year,
- * where the User sets that month's status (Role History) and fills in time for
- * months with nothing logged yet. Months already logged show their total —
- * their Time Entries are edited from the month itself.
- *
- * Edits live in a draft per Service Year, so moving between years keeps them;
- * Save writes every edited year at once.
- */
 const ServiceHistoryScreen = ({ navigation, route }: Props) => {
   const theme = useTheme()
   const newestServiceYear = latestServiceYear()
@@ -102,7 +91,7 @@ const ServiceHistoryScreen = ({ navigation, route }: Props) => {
     route.params?.serviceYear ?? newestServiceYear,
     newestServiceYear
   )
-  // "Add earlier year" may open a year further back than the default reach.
+
   const oldestServiceYear = Math.min(
     newestServiceYear - MAX_YEARS_BACK,
     requestedServiceYear
@@ -161,7 +150,7 @@ const ServiceHistoryScreen = ({ navigation, route }: Props) => {
       addServiceReport,
       newId: Crypto.randomUUID,
     })
-    // One event per saved Service Year, pairing with its `service_history_viewed`.
+
     for (const year of saved) {
       analytics.capture('service_history_saved', {
         source,
@@ -258,8 +247,7 @@ const ServiceHistoryScreen = ({ navigation, route }: Props) => {
 
             return (
               <View key={monthlyGoalKey(row.target)} style={{ gap: 6 }}>
-                {/* Long-press the month's header to copy or clear it. Both
-                only change the unsaved form, so leaving undoes them. */}
+                {}
                 <ContextMenu
                   actions={[
                     rowsDiffer(copiedRow, row) && {
@@ -412,7 +400,7 @@ const ServiceHistoryScreen = ({ navigation, route }: Props) => {
               onPress={() =>
                 confirmDeleteYear({
                   endYear: serviceYear + 1,
-                  // The year's rows rebuild without its time; its draft goes too.
+
                   onDeleted: () =>
                     setDrafts((prev) => discardDraft(prev, serviceYear)),
                 })

@@ -7,13 +7,8 @@ import { cssColor, type GamePalette } from '@/features/pet/art/gameUi'
 import { GameFrame, gamePixelScale } from '@/features/pet/components/GamePixels'
 import { coatName } from '@/features/pet/lib/names'
 
-/** A swatch's size, in pixels. */
 const SWATCH = 12
 
-/**
- * The species' coats as square pixel swatches (patterned coats in slices), the
- * chosen one ringed in the accent. Nothing for a one-coat species.
- */
 export default function PetCoatSwatches({
   species,
   coat,

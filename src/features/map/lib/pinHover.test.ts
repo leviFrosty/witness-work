@@ -10,7 +10,7 @@ import {
 const pin = (id: string, x: number, y: number): PinBox => ({
   id,
   point: { x, y },
-  // Balloon shape like MapKit's: centred on x, standing above the tip.
+
   box: { x: x - 15, y: y - 45, width: 30, height: 50 },
 })
 

@@ -1,9 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { SyncStatus } from '@/lib/syncTransport/server/syncClient'
 
-// Cloud Sync's status read (`GET /accounts/v1/sync`), and what it records for
-// the engine's gate.
-
 const runtime = vi.hoisted(() => ({
   status: null as SyncStatus | null,
 }))
@@ -78,7 +75,6 @@ const status = (overrides: Partial<SyncStatus> = {}): SyncStatus => ({
   ...overrides,
 })
 
-/** Ww-api's answer while it can't reach RevenueCat (`handleStatus`). */
 const revenueCatDown = status({
   entitled: false,
   supporter: false,
@@ -126,7 +122,6 @@ describe('refreshCloudSyncStatus', () => {
     await refreshCloudSyncStatus({ force: true })
     expect(usePreferences.getState().cloudSyncEntitled).toBe(false)
 
-    // A Supporter never entitled before stays as recorded, too.
     useSupporter.getState().setSupporter(true)
     usePreferences.setState({ cloudSyncEntitled: null })
     await refreshCloudSyncStatus({ force: true })
@@ -145,7 +140,6 @@ describe('refreshCloudSyncStatus', () => {
 })
 
 describe('recheckCloudSyncPause', () => {
-  /** A device on Cloud Sync that the server's switch paused. */
   async function pausedBySwitch() {
     const loaded = await load()
     loaded.registerCloudSync()

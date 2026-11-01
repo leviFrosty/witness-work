@@ -7,11 +7,6 @@ import { useServiceReport } from '@/stores/serviceReport'
 import type { SignData } from '@/features/pet/art'
 import { buildSignData } from '@/features/pet/lib/signData'
 
-/**
- * The wall sign's values from the User's records: this month's hours and goal,
- * the Service Year's months, the next Plan, and this month's conversations and
- * return visits. `today` should change only at midnight (`useToday`).
- */
 export default function usePetSignData(today: Date): SignData {
   const serviceReports = useServiceReport((s) => s.serviceReports)
   const dayPlans = useServiceReport((s) => s.dayPlans)

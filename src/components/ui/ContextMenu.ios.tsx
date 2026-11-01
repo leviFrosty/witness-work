@@ -16,7 +16,6 @@ import type { ContextMenuProps } from '@/components/ui/ContextMenu.types'
 import { useInReorderableGhost } from '@/components/ui/reorderable/context'
 import useHostedContentWidth from '@/components/ui/useHostedContentWidth'
 
-/** Native SwiftUI context menu: long-press lifts the preview above the menu. */
 export default function ContextMenu({
   actions,
   children,
@@ -38,17 +37,14 @@ export default function ContextMenu({
   const colorScheme = usePreferences((s) => s.colorScheme)
   const { width, overflowed, onLayout, onContentLayout } =
     useHostedContentWidth(fitContent)
-  // Rows mount by the hundred, so the preview renders only once a touch lands
-  // on this trigger — well before the long press completes. The Preview slot
-  // itself always exists so the native menu isn't rebuilt mid-gesture.
+
   const [armed, setArmed] = useState(false)
   const [hovered, setHovered] = useState(false)
   const tint = onPress && pointerEffect === 'tint'
-  // The dragged copy of a rearranged section draws without the native host.
+
   const ghost = useInReorderableGhost()
   const allGroups = ghost ? [] : menuGroups(actions)
-  // Disabled keeps the Host mounted (see below) but offers no items, so the
-  // native menu doesn't open.
+
   const groups = disabled ? [] : allGroups
   const a11y = accessible
     ? menuAccessibilityProps(groups)
@@ -58,8 +54,6 @@ export default function ContextMenu({
     <Pressable
       onPress={onPress}
       style={({ pressed }) => pressed && { opacity: 0.7 }}
-      // Not an element when its content holds the controls, so no role: it
-      // would otherwise surface as an empty button around them.
       accessibilityRole={accessible ? 'button' : undefined}
       accessibilityLabel={accessibilityLabel}
       accessibilityState={accessibilityState}
@@ -107,8 +101,6 @@ export default function ContextMenu({
           <PointerHover
             effect={triggerEffect}
             onHoverChange={(next) => {
-              // A secondary click never reaches onTouchStart, so a
-              // hovering pointer arms the preview ahead of it.
               if (next && preview && !armed) setArmed(true)
               if (tint) setHovered(next)
             }}
@@ -131,7 +123,7 @@ export default function ContextMenu({
       </SwiftContextMenu.Trigger>
       {preview && !disabled ? (
         <SwiftContextMenu.Preview>
-          {/* The preview shows exactly while the menu is open. */}
+          {}
           <Group
             modifiers={
               onOpenChange && [
@@ -151,11 +143,8 @@ export default function ContextMenu({
 
   return (
     <View style={style} onLayout={onLayout}>
-      {/* Without this, rows first laid out under the home indicator measure short. */}
+      {}
       <Host
-        // Hosted content keeps the layout of its first pass in a right-to-left
-        // layout, or when it ran wider than the width, measured before the
-        // width arrived; remount it at the width.
         key={isRtlLayout() || overflowed ? width : undefined}
         matchContents
         colorScheme={colorScheme}

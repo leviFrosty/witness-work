@@ -132,7 +132,7 @@ describe('InputRowContainer', () => {
           </InputRowContainer>
         )
       ).toBe(true)
-      // A pressable label focuses a control that's labelled with it.
+
       const holders = labelHolders(
         <InputRowContainer label='Topic' onLabelPress={() => {}}>
           <></>

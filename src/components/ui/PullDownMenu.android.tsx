@@ -13,7 +13,6 @@ import type { ContextMenuSubmenu } from '@/components/ui/ContextMenu.types'
 import type { PullDownMenuProps } from '@/components/ui/PullDownMenu.types'
 import { usePreferences } from '@/stores/preferences'
 
-/** Material dropdown menu anchored to the trigger, opened by a tap. */
 export default function PullDownMenu({
   actions,
   accessibilityLabel,
@@ -33,16 +32,13 @@ export default function PullDownMenu({
   const colorScheme = usePreferences((s) => s.colorScheme)
   const [expanded, setExpanded] = useState(false)
   const [submenu, setSubmenu] = useState<ContextMenuSubmenu | null>(null)
-  // Hosted RN content sizes to its own content, so a filling trigger gets the
-  // width the surrounding layout gives it passed down explicitly. Rounding up
-  // keeps Compose's pixel rounding from cutting a label off.
+
   const [width, setWidth] = useState<number>()
-  // Android has no system pointer effects; only fields and rows tint.
+
   const [hovered, setHovered] = useState(false)
   const groups = menuGroups(actions)
   if (!groups.length) return null
-  // The default ellipsis gets a real 48dp frame, which the host's negative
-  // margins keep from moving anything.
+
   const target: ViewStyle = children ? {} : touchTargetFrame(triggerSize)
   const { marginHorizontal, marginVertical, ...frame } = target
 
@@ -83,9 +79,7 @@ export default function PullDownMenu({
                   pointerEffect === 'tint' ? setHovered : undefined
                 }
               >
-                {/* Compose click modifiers never see touches on hosted RN
-                    views, so the RN side opens the menu. Nested pressables
-                    don't take the touch: the whole trigger opens it. */}
+                {}
                 <Pressable
                   onPress={open}
                   accessibilityRole='button'

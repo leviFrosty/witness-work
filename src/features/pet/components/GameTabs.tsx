@@ -18,20 +18,12 @@ import { roomTabLabel } from '@/features/pet/lib/roomLabels'
 import type { RoomTab } from '@/features/pet/lib/roomOptions'
 import { tabGap } from '@/features/pet/lib/shop'
 
-/** A tab's size in Shop pixels. */
 const TAB_W = 27
 const TAB_H = 26
 const MIN_GAP = 2
 
-/** The red dot on a tab with something new in it, in pixels. */
 const DOT = 4
 
-/**
- * The room's categories, in the Shop and the pet's details: an icon and a name
- * each, the open one a cloth tab in the accent, and a red dot on one with
- * something new. Where they don't all fit, the row scrolls and runs off the
- * edge.
- */
 export default function GameTabs<Tab extends RoomTab>({
   palette,
   tabs,
@@ -44,9 +36,9 @@ export default function GameTabs<Tab extends RoomTab>({
   tabs: readonly Tab[]
   tab: Tab
   onChange: (tab: Tab) => void
-  /** The screen's side padding: the row bleeds through it. */
+
   inset: number
-  /** The tabs holding something new. */
+
   dots?: ReadonlySet<RoomTab>
 }) {
   const theme = useTheme()

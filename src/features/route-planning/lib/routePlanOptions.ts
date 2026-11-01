@@ -7,10 +7,8 @@ import { coordinateText } from '@/features/route-planning/lib/coordinateText'
 import type { PlanStart } from '@/features/route-planning/lib/routeBuilder'
 import { plansOnDay } from '@/features/route-planning/lib/routeStops'
 
-/** A Plan on the day the route can belong to. */
 export type RoutePlanOption = PlanStart & { title: string; recurring: boolean }
 
-/** The day's Plans a route can belong to and start from, by start time. */
 export const routePlanOptions = ({
   day,
   dayPlans,

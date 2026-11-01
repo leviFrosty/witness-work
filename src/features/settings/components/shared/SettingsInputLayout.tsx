@@ -7,16 +7,11 @@ import { FoldHandled, useLocalFoldPane } from '@/components/ui/layout/FoldPane'
 import { isRtlLayout } from '@/lib/direction'
 import { VisibilityViewportContext } from '@/contexts/visibilityViewport'
 
-/**
- * Applies the shared settings row treatment to every Preferences screen. While
- * iPhone Duo is partly folded, the column keeps to the leading side of the
- * fold.
- */
 const SettingsInputLayout = ({ children }: PropsWithChildren) => {
   const theme = useTheme()
   const viewportRef = useRef<View>(null)
   const { onRegionsChange, pane } = useLocalFoldPane()
-  // The pane is physical; React Native mirrors paddings in RTL.
+
   const side = pane
     ? isRtlLayout()
       ? { paddingLeft: pane.right, paddingRight: pane.left }
@@ -30,7 +25,7 @@ const SettingsInputLayout = ({ children }: PropsWithChildren) => {
         side,
       ]}
     >
-      {/* Absolute, so it spans the padding too. */}
+      {}
       <DisplayRegionsView
         style={StyleSheet.absoluteFill}
         onRegionsChange={onRegionsChange}

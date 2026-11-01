@@ -24,46 +24,34 @@ import { MILESTONE_UPDATE_VERSION } from '@/features/milestones/constants/milest
 import { tracking } from '@/lib/tracking'
 
 interface Props {
-  /** Whether the reveal is currently presented. */
   show: boolean
-  /** Called whenever the overlay should be dismissed (skip, Back, OR CTA). */
+
   onDismiss: () => void
-  /** Called when the user taps the "See what's new" CTA. */
+
   onSeeWhatsNew: () => void
 }
 
-/**
- * On Android the reveal is a Modal, which sits above the app's own confetti
- * layer, so it brings its own to keep the fireworks in front of the backdrop.
- */
 const Fireworks = Platform.OS === 'android' ? ConfettiProvider : Fragment
 
-/**
- * Choreographed timings for the grand-reveal sequence. Adjust here rather than
- * inline so the haptic / confetti scheduling stays in lockstep with the
- * Reanimated values driving the visuals.
- */
 const TIMING = {
-  /** Backdrop fade-in. */
   backdropDuration: 320,
-  /** "Welcome back" appears, then peels away. */
+
   welcomeDelay: 250,
   welcomeDuration: 500,
   welcomeHold: 700,
-  /** Title rises in big. */
+
   titleDelay: 1450,
   titleDuration: 750,
-  /** Tagline + version subtext fade in beneath the title. */
+
   taglineDelay: 2350,
   taglineDuration: 600,
-  /** CTAs slide up at the end. */
+
   ctaDelay: 3300,
   ctaDuration: 600,
-  /** Stagger between heavy haptic taps during the title hit. */
+
   hapticStaggerMs: 140,
 } as const
 
-/** Opening burst — modest, slow drift to set the scene before the title hits. */
 const OPENING_BURST_OPTS = {
   count: 22,
   velocity: 200,
@@ -75,10 +63,6 @@ const OPENING_BURST_OPTS = {
   ],
 }
 
-/**
- * Title-hit burst — dense cluster framing the title so the moment lands hard.
- * Heavier count + tighter spots concentrated around the title band.
- */
 const TITLE_BURST_OPTS = {
   count: 44,
   velocity: 220,
@@ -95,11 +79,6 @@ const TITLE_BURST_OPTS = {
   ],
 }
 
-/**
- * Ambient burst — small, quiet pops that play after the choreography ends so
- * the screen keeps a low-key celebratory shimmer while the user reads the
- * CTAs.
- */
 const AMBIENT_BURST_OPTS = {
   count: 10,
   velocity: 150,
@@ -111,19 +90,9 @@ const AMBIENT_BURST_OPTS = {
   ],
 }
 
-/** Total ambient bursts after the main animation, and the gap between them. */
 const AMBIENT_COUNT = 5
 const AMBIENT_INTERVAL_MS = 1100
 
-/**
- * Full-screen modal that plays a one-shot celebratory reveal for The Milestone
- * Update. Fires confetti, heavy haptics, and a fade-in title sequence. Tap
- * anywhere skips straight to dismiss; the primary CTA hands off to the showcase
- * screen via `onSeeWhatsNew`.
- *
- * Hosted full-window so it covers the whole app and screen readers stay inside
- * it; Android's back button skips like a tap does.
- */
 const MilestoneRevealOverlay = ({ show, onDismiss, onSeeWhatsNew }: Props) => {
   if (!show) return null
 
@@ -161,21 +130,16 @@ const MilestoneReveal = ({ onDismiss, onSeeWhatsNew }: Omit<Props, 'show'>) => {
   }, [])
 
   useEffect(() => {
-    // Mounted fresh for each play; the guard keeps a new fireworks context
-    // from restarting the sequence.
     if (playedRef.current) return
     playedRef.current = true
 
     const easeOut = Easing.out(Easing.cubic)
 
-    // Backdrop fades in immediately.
     backdropOpacity.value = withTiming(1, {
       duration: TIMING.backdropDuration,
       easing: easeOut,
     })
 
-    // "Welcome back" — small, peels away. Chain via withSequence so the
-    // fade-out doesn't clobber the fade-in (a bare reassignment would).
     welcomeOpacity.value = withDelay(
       TIMING.welcomeDelay,
       withSequence(
@@ -191,7 +155,6 @@ const MilestoneReveal = ({ onDismiss, onSeeWhatsNew }: Omit<Props, 'show'>) => {
       withTiming(0, { duration: TIMING.welcomeDuration, easing: easeOut })
     )
 
-    // Title — big drop-in with spring scale.
     titleOpacity.value = withDelay(
       TIMING.titleDelay,
       withTiming(1, { duration: TIMING.titleDuration, easing: easeOut })
@@ -205,7 +168,6 @@ const MilestoneReveal = ({ onDismiss, onSeeWhatsNew }: Omit<Props, 'show'>) => {
       withSpring(1, { damping: 14, stiffness: 110 })
     )
 
-    // Tagline + version line.
     taglineOpacity.value = withDelay(
       TIMING.taglineDelay,
       withTiming(1, { duration: TIMING.taglineDuration, easing: easeOut })
@@ -215,7 +177,6 @@ const MilestoneReveal = ({ onDismiss, onSeeWhatsNew }: Omit<Props, 'show'>) => {
       withTiming(0, { duration: TIMING.taglineDuration, easing: easeOut })
     )
 
-    // CTAs.
     ctaOpacity.value = withDelay(
       TIMING.ctaDelay,
       withTiming(1, { duration: TIMING.ctaDuration, easing: easeOut })
@@ -225,9 +186,6 @@ const MilestoneReveal = ({ onDismiss, onSeeWhatsNew }: Omit<Props, 'show'>) => {
       withTiming(0, { duration: TIMING.ctaDuration, easing: easeOut })
     )
 
-    // Confetti — opening burst sets the stage, title burst is heavier and
-    // framed around the title, then ambient bursts keep a soft background
-    // shimmer going after the main choreography lands.
     timersRef.current.push(
       setTimeout(() => fireworks.fire(OPENING_BURST_OPTS), 120)
     )
@@ -244,9 +202,6 @@ const MilestoneReveal = ({ onDismiss, onSeeWhatsNew }: Omit<Props, 'show'>) => {
       )
     }
 
-    // Haptics — success burst at backdrop, then a heavy 3-pulse cluster on the
-    // title hit so the moment feels physical. All wrapped in catch so a missing
-    // haptic engine (simulator) never crashes.
     timersRef.current.push(
       setTimeout(() => Haptics.success().catch(() => {}), 80)
     )
@@ -314,8 +269,7 @@ const MilestoneReveal = ({ onDismiss, onSeeWhatsNew }: Omit<Props, 'show'>) => {
       pointerEvents='auto'
       style={[StyleSheet.absoluteFill, styles.backdrop, backdropStyle]}
     >
-      {/* Tap-anywhere skip target. Sits behind the content so the CTAs catch
-          their own presses without colliding with the dismiss handler. */}
+      {}
       <Pressable
         style={StyleSheet.absoluteFill}
         onPress={handleSkip}
@@ -369,12 +323,6 @@ const MilestoneReveal = ({ onDismiss, onSeeWhatsNew }: Omit<Props, 'show'>) => {
   )
 }
 
-/**
- * The overlay's backdrop is always dark regardless of theme, so all text colors
- * are pinned to white-on-dark here rather than reading
- * `theme.colors.textInverse` (which inverts based on system theme — wrong for a
- * fixed-dark surface).
- */
 const TEXT_PRIMARY = '#FFFFFF'
 const TEXT_DIM = 'rgba(255, 255, 255, 0.78)'
 const TEXT_FAINT = 'rgba(255, 255, 255, 0.5)'

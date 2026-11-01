@@ -12,7 +12,7 @@ const reloadApp = vi.hoisted(() => vi.fn(async () => {}))
 const handoff = vi.hoisted(() => ({
   calls: [] as string[],
 }))
-// Hot Updater's launch read, settled by each test.
+
 const hotUpdater = vi.hoisted(() => {
   const value = {
     launchRead: Promise.resolve(),
@@ -68,7 +68,6 @@ const emit = (state: string) => {
   appState.handlers.forEach((handler) => handler(state))
 }
 
-/** Settles Hot Updater's launch read and lets its callbacks run. */
 const readLaunch = async () => {
   hotUpdater.markLaunchRead()
   await act(async () => {})
@@ -108,7 +107,6 @@ describe('isLayoutDirectionReloadDue', () => {
   })
 
   it('leaves the direction alone before the first unlock', async () => {
-    // The Language is only the device's then, and storage refuses writes.
     storage.locked = true
     launch.mismatch = true
     const { isLayoutDirectionReloadDue } = await import('./layoutDirection')
@@ -149,7 +147,7 @@ describe('reloadWhenReady', () => {
     expect(reload).not.toHaveBeenCalled()
     emit('active')
     expect(reload).toHaveBeenCalledTimes(1)
-    // Reloads once, and stops listening.
+
     emit('background')
     emit('active')
     expect(reload).toHaveBeenCalledTimes(1)
@@ -174,7 +172,7 @@ describe('reloadWhenReady', () => {
     vi.advanceTimersByTime(1)
     expect(showApp).toHaveBeenCalledTimes(1)
     expect(reload).not.toHaveBeenCalled()
-    // Stops waiting: a late active event doesn't reload under the user.
+
     emit('active')
     expect(reload).not.toHaveBeenCalled()
     expect(appState.handlers.size).toBe(0)
@@ -193,7 +191,7 @@ describe('reloadWhenReady', () => {
     const { reload, showApp, giveUpMs } = await start()
     vi.advanceTimersByTime(giveUpMs * 10)
     expect(showApp).not.toHaveBeenCalled()
-    // Counts from when it could be on screen.
+
     emit('inactive')
     vi.advanceTimersByTime(giveUpMs - 1)
     emit('background')
@@ -282,7 +280,7 @@ describe('useLayoutDirectionReload', () => {
     launch.mismatch = true
     await mount()
     await readLaunch()
-    // Picked up first on every launch, then saved just before the reload.
+
     expect(handoff.calls).toEqual(['restore', 'handOff', 'reload'])
   })
 
@@ -292,7 +290,7 @@ describe('useLayoutDirectionReload', () => {
     await mount()
     await readLaunch()
     expect(seen.at(-1)).toBe(false)
-    // This launch opens the tap itself, so the next one mustn't again.
+
     expect(handoff.calls).toContain('drop')
   })
 

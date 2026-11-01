@@ -8,7 +8,6 @@ import type {
   VehicleSetup,
 } from '@/types/mileage'
 
-/** A payload's mileage slice, defaulting every collection for older writers. */
 export function mileageFromPayload(payload: SyncPayload): MileageSnapshot {
   const slice = payload.mileageStore
   return {

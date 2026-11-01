@@ -2,11 +2,6 @@ import type { ReactNode } from 'react'
 import Animated from 'react-native-reanimated'
 import { STOW_TRANSITION } from '@/features/map/lib/mapStyles'
 
-/**
- * Where a group's list floats, in place of the cards: a full-width card on
- * phones, beside the trailing edge on wide layouts. Reports its height, so the
- * controls and pin cards stay clear of it.
- */
 export default function MapFloatingCard({
   isWide,
   width,
@@ -15,7 +10,7 @@ export default function MapFloatingCard({
   children,
 }: {
   isWide: boolean
-  /** Its width on wide layouts, the inspector's. */
+
   width: number
   bottom: number
   onHeight: (height: number) => void

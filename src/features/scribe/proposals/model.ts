@@ -9,20 +9,11 @@ import type {
 } from '@/features/scribe/types'
 import type { Address } from '@/types/contact'
 
-/**
- * What a Proposal holds on the device (ADR 0032 §3): effects the write tools
- * validated and resolved against the stores, not yet applied. Persisted with
- * the conversation, so ids are resolved record ids, never Refs, except for the
- * pending Refs (`n1`, `nk1`) of records the Proposal itself would create.
- */
-
-/** Standard, an existing Category, or one this Proposal creates. */
 export type CategoryTarget =
   | { type: 'standard' }
   | { type: 'existing'; id: string }
   | { type: 'pending'; ref: string }
 
-/** An existing Contact, or one this Proposal creates (by its pending Ref). */
 export type ContactTarget =
   | { type: 'existing'; id: string }
   | { type: 'pending'; ref: string }
@@ -62,11 +53,11 @@ export type DraftEffect =
   | {
       kind: 'time.update'
       entryId: string
-      /** The entry when it was read, for the card. */
+
       entryDate: string
       entryMinutes: number
       entryCategory: CategoryTarget
-      /** The entry's `updatedAt` when it was read; re-checked at apply. */
+
       expectUpdatedAt: number | null
       set: TimeFields
       before: TimeFields
@@ -75,7 +66,7 @@ export type DraftEffect =
   | {
       kind: 'time.delete'
       entryId: string
-      /** The entry when it was read, for the card. */
+
       entryDate: string
       entryMinutes: number
       entryCategory: CategoryTarget
@@ -92,20 +83,16 @@ export type DraftEffect =
       title: string | null
       note: string | null
       spoken: ScribeSpoken
-      /**
-       * Inbox ids of the buddies the User said they'd go with. Nobody is
-       * invited (Scribe AI sends nothing to anyone); the card says how to.
-       * Absent on Proposals from before it.
-       */
+
       inviteHint?: string[]
     }
   | {
       kind: 'plan.update'
       planId: string
-      /** The Plan's day and title when it was read, for the card. */
+
       planDate: string
       planTitle: string | null
-      /** The Plan's `updatedAt` when it was read; re-checked at apply. */
+
       expectUpdatedAt: number | null
       set: PlanFields
       before: PlanFields
@@ -113,28 +100,21 @@ export type DraftEffect =
     }
   | {
       kind: 'contact.create'
-      /** The pending Ref (`n1`) later calls use for this Contact. */
+
       ref: string
       name: string
       address: Address | null
       phone: string | null
       email: string | null
-      /**
-       * `visits_log` `askBetween`: the existing Contacts the User may have
-       * meant; this record is the New option.
-       */
+
       askBetween: string[] | null
-      /**
-       * Proposed in data protection mode: its card asks the User to confirm the
-       * householder agreed before it can be added. Absent on Proposals from
-       * before it.
-       */
+
       needsConsent?: boolean
     }
   | {
       kind: 'contact.update'
       contactId: string
-      /** The Contact's name when it was read, for the card. */
+
       contactName: string
       expectUpdatedAt: number | null
       set: ContactFields
@@ -167,12 +147,8 @@ export type DraftEffectOf<K extends ScribeEffectKind> = Extract<
 >
 
 export interface StoredEffect {
-  /** `${callId}:${index}`. */
   id: string
-  /**
-   * The tool calls that proposed it (for `proposal_outcome`): one, or more when
-   * a later call named the same new Contact or Category again.
-   */
+
   callIds: string[]
   draft: DraftEffect
   warnings: ScribeWarning[]
@@ -186,9 +162,9 @@ export type StoredCardContact =
   | {
       type: 'choice'
       spokenName: string
-      /** Existing Contacts the User may have meant, in the model's order. */
+
       optionIds: string[]
-      /** The pending Ref of the New option. */
+
       newRef: string
       chosen: ScribeContactChoice | null
     }
@@ -200,11 +176,7 @@ export interface StoredCard {
   effectIds: string[]
   selected: boolean
   status: ScribeReviewCard['status']
-  /**
-   * Set when the card's new Contact needs the householder's consent (data
-   * protection mode): `givenAt` is when the User confirmed it on the card,
-   * saved as the Contact's `consentGivenAt`.
-   */
+
   consent?: { givenAt: string | null }
 }
 
@@ -218,13 +190,12 @@ export interface StoredProposal {
   cards: StoredCard[]
   invalidCount: number
   tainted: boolean
-  /** When it stopped being pending (Add, Dismiss, a new message, Undo). */
+
   resolvedAt: number | null
-  /** Records its Undo left in place (changed since, or in use). */
+
   undoKept?: number
 }
 
-/** Kind order the apply saga runs effects in. */
 export const APPLY_ORDER: readonly ScribeEffectKind[] = [
   'category.create',
   'contact.create',

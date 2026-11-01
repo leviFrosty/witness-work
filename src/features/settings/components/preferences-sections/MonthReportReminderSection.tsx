@@ -7,7 +7,6 @@ import i18n from '@/lib/locales'
 import { usePreferences } from '@/stores/preferences'
 import useMonthReportReminder from '@/features/service-reports/hooks/useMonthReportReminder'
 
-/** The reminder on the 1st that last month's report is ready to submit. */
 const MonthReportReminderSection = () => {
   const { enabled, setEnabled } = useMonthReportReminder()
   const remindAt = usePreferences((s) => s.monthReportReminderTime)

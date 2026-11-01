@@ -180,7 +180,7 @@ describe('shareRecipientsKey', () => {
     expect(shareRecipientsKey([{ ...plan(['a', 'b']), minutes: 90 }], [])).toBe(
       base
     )
-    // Saying yes to a request to join adds the buddy.
+
     expect(shareRecipientsKey([plan(['a', 'b', 'c'])], [])).not.toBe(base)
     expect(shareRecipientsKey([plan(['a'])], [])).not.toBe(base)
     expect(shareRecipientsKey([], [])).not.toBe(base)
@@ -230,7 +230,7 @@ describe('buddies relay client', () => {
     const mom = user('Mom')
     const impostor = user('Impostor')
     await mom.engine.sync()
-    // Even with Mom's owner key, its session is its own account's.
+
     await expect(
       impostor.relay.syncInbox(ownerAuthFor(mom.seed), 0)
     ).rejects.toEqual(new RelayError('forbidden', 403))
@@ -285,7 +285,7 @@ describe('buddies pairing', () => {
       role: 'invitee',
       buddyPlatform: 'ios',
     })
-    // Syncing again doesn't count the pairing twice.
+
     await pixel.engine.sync()
     await iphone.engine.sync()
     expect(onPixel).toHaveBeenCalledTimes(1)
@@ -336,7 +336,6 @@ describe('buddies pairing', () => {
       kind: 'invite.claimed',
     })
 
-    // Nothing flows before the inviter confirms.
     await anna.engine.sync()
     expect(anna.store.getState().cards).toEqual({})
 
@@ -437,7 +436,6 @@ describe('buddies pairing', () => {
     const anna = user('Anna')
     await pair(mom, anna)
 
-    // Anna's sync has read her inbox when Mom's change lands.
     let reached!: () => void
     let release!: () => void
     const atSync = new Promise<void>((resolve) => (reached = resolve))
@@ -452,7 +450,7 @@ describe('buddies pairing', () => {
     await atSync
     mom.profile.name = 'Mother'
     await mom.engine.publishCards()
-    // What a push or live signal for Mom's change does.
+
     const second = anna.engine.sync()
     release()
     await Promise.all([first, second])
@@ -472,7 +470,7 @@ describe('buddies pairing', () => {
     Object.assign(anna.profile, { avatar: { t: 'emoji', v: '🌱' } })
 
     const link = await mom.engine.createInvite()
-    // The invite has no room for a photo, so Anna sees initials until a card.
+
     expect(await anna.engine.previewInvite(link)).toMatchObject({
       name: 'Mom',
       avatar: undefined,
@@ -501,7 +499,6 @@ describe('buddies pairing', () => {
       avatar: { t: 'emoji', v: '🌱' },
     })
 
-    // A profile edit republishes; a second device restores without photos.
     mom.profile.name = 'Mother'
     await mom.engine.publishCards()
     await anna.engine.sync()
@@ -523,7 +520,6 @@ describe('buddies pairing', () => {
       tenure: { kind: 'pioneer', since: '2019-09' },
     })
 
-    // Before Buddies starts, the choice is only recorded.
     await mom.engine.setSharing({ tenure: false })
     expect(fake.inboxes.size).toBe(0)
     const link = await mom.engine.createInvite()
@@ -543,7 +539,6 @@ describe('buddies pairing', () => {
       tenure: { kind: 'pioneer', since: '2019-09' },
     })
 
-    // Switching off republishes, so Anna's copy clears.
     await mom.engine.setSharing({ photo: false, tenure: false })
     await anna.engine.sync()
     expect(anna.store.getState().buddies[0]).toMatchObject({ name: 'Mom' })
@@ -568,17 +563,15 @@ describe('buddies pairing', () => {
     await momsIpad.engine.sync()
     expect(momsIpad.store.getState().sharing).toMatchObject({ tenure: false })
 
-    // The iPad's next card doesn't bring the Tenure back.
     plans.dayPlans = [dayPlan('2026-09-28', 60)]
     await momsIpad.engine.publishCards()
     await anna.engine.sync()
     expect(anna.store.getState().cards[mom.inboxId].days).toHaveLength(1)
     expect(anna.store.getState().buddies[0].tenure).toBeUndefined()
 
-    // A stale roster write can't undo a later choice.
     advance(1000)
     await momsIpad.engine.setSharing({ tenure: true })
-    // The phone hasn't synced, so this roster write carries the older choice.
+
     await mom.engine.createInvite()
     await momsIpad.engine.sync()
     expect(momsIpad.store.getState().sharing.tenure).toBe(true)
@@ -600,7 +593,6 @@ describe('buddies pairing', () => {
       until: '2026-10-04',
     })
 
-    // A longer streak republishes; a lapsed one clears.
     mom.setStreak({ n: 6, until: '2026-10-11' })
     await mom.engine.publishCards()
     await anna.engine.sync()
@@ -610,7 +602,6 @@ describe('buddies pairing', () => {
     await anna.engine.sync()
     expect(anna.store.getState().buddies[0].streak).toBeUndefined()
 
-    // Switching it off holds it back on every device of Mom's.
     mom.setStreak({ n: 7, until: '2026-10-18' })
     advance(1000)
     await mom.engine.setSharing({ streak: false })
@@ -621,7 +612,6 @@ describe('buddies pairing', () => {
     await anna.engine.sync()
     expect(anna.store.getState().buddies[0].streak).toBeUndefined()
 
-    // Streaks come from cards, so the roster never holds one.
     const annasIpad = user('Anna', undefined, anna.seed)
     await mom.engine.setSharing({ streak: true })
     await anna.engine.sync()
@@ -663,7 +653,6 @@ describe('buddies pairing', () => {
       { d: '2026-09-28', p: [{ m: 90 }] },
     ])
 
-    // Another of Mom's devices publishes the same card.
     const momsIpad = user('Mom', plans, mom.seed)
     await momsIpad.engine.sync()
     expect(momsIpad.store.getState().sharing.planTimes).toBe('daysOnly')
@@ -692,7 +681,6 @@ describe('buddies pairing', () => {
     })
     expect(sees(anna)).toEqual({ days: 1, streak: 5, name: 'Mom' })
 
-    // Anna alone: her card drops Plans, then the streak; Joe's stays.
     advance(1000)
     await mom.engine.setBuddySetting(anna.inboxId, 'plans', false)
     await anna.engine.sync()
@@ -704,7 +692,6 @@ describe('buddies pairing', () => {
     expect(sees(anna)).toEqual({ days: 0, streak: undefined, name: 'Mom' })
     expect(sees(joe)).toEqual({ days: 1, streak: 5, name: 'Mom' })
 
-    // Mom's iPad keeps them, so its cards don't bring them back.
     const momsIpad = user('Mom', plans, mom.seed)
     momsIpad.setStreak({ n: 5, until: '2026-10-25' })
     await momsIpad.engine.sync()
@@ -716,7 +703,6 @@ describe('buddies pairing', () => {
     await anna.engine.sync()
     expect(sees(anna).days).toBe(0)
 
-    // Badge news skips a buddy who doesn't see badges.
     advance(1000)
     await mom.engine.setBuddySetting(anna.inboxId, 'badges', false)
     await mom.engine.announceBadges(['monthsShared.1'])
@@ -724,7 +710,6 @@ describe('buddies pairing', () => {
       joe.inboxId,
     ])
 
-    // Back to All Buddies, which stop sharing Plans, except with Joe.
     advance(1000)
     await mom.engine.setBuddyOverrides(anna.inboxId, () => undefined)
     await mom.engine.setSharing({ plans: false })
@@ -734,13 +719,11 @@ describe('buddies pairing', () => {
     expect(sees(anna)).toEqual({ days: 0, streak: 5, name: 'Mom' })
     expect(sees(joe)).toEqual({ days: 1, streak: 5, name: 'Mom' })
 
-    // A pause holds back everyone's, their own settings or not, for a week.
     advance(1000)
     await mom.engine.setSharing({ pausedUntil: now() + 7 * 86_400_000 })
     await joe.engine.sync()
     expect(sees(joe)).toEqual({ days: 0, streak: undefined, name: 'Mom' })
 
-    // It ends on its own with the next publish.
     advance(8 * 86_400_000)
     mom.setStreak({ n: 6, until: '2026-11-01' })
     plans.dayPlans = [dayPlan('2026-10-31', 60, 600)]
@@ -774,7 +757,7 @@ describe('buddies pairing', () => {
   it('keeps an invite whose answer got lost, so Try Again shows it instead of a second one', async () => {
     const { fake, user, setAfterOp } = setup()
     const mom = user('Mom')
-    // The relay stores the invite, then the answer never arrives.
+
     setAfterOp(async (op) => {
       if (op !== 'invite/create') return
       setAfterOp(null)
@@ -790,7 +773,6 @@ describe('buddies pairing', () => {
     expect(mom.engine.inviteLinkFor(invite.inviteId)).toBe(link)
     expect(fake.invites.has(invite.inviteId)).toBe(true)
 
-    // It can be cancelled, which frees its spot under the relay's cap.
     await mom.engine.cancelInvite(invite.inviteId)
     for (let index = 0; index < 3; index++) await mom.engine.createInvite()
     expect(mom.store.getState().outgoingInvites).toHaveLength(3)
@@ -874,7 +856,6 @@ describe('buddies pairing', () => {
     await momsIpad.engine.sync()
     expect(momsIpad.store.getState().buddies).toHaveLength(1)
 
-    // Mom's phone pairs with Joe after the iPad already has state.
     await pair(mom, joe)
     await joe.engine.publishCards()
     await momsIpad.engine.sync()
@@ -888,13 +869,9 @@ describe('buddies pairing', () => {
       { d: '2026-09-29', p: [{ m: 60 }] },
     ])
 
-    // Both devices write the roster without seeing each other's change: the
-    // phone pairs with Sue while the stale iPad creates an invite.
     await pair(mom, sue)
     await momsIpad.engine.createInvite()
-    // The iPad's roster is older than the phone's last one, so the phone
-    // ignores it and writes its own back; the iPad merges that and writes
-    // the union, which the phone takes on its next sync.
+
     await mom.engine.sync()
     expect(mom.store.getState().outgoingInvites).toEqual([])
     await momsIpad.engine.sync()
@@ -909,7 +886,6 @@ describe('buddies pairing', () => {
       expect(device.store.getState().outgoingInvites).toHaveLength(1)
     }
 
-    // Removals and cancellations on one device aren't undone by the other.
     await mom.engine.removeBuddy(anna.inboxId)
     await mom.engine.cancelInvite(
       mom.store.getState().outgoingInvites[0].inviteId
@@ -968,14 +944,13 @@ describe('buddies pairing', () => {
     expect(annasSlotsInMomsInbox()).toBe(1)
     expect(tries).toHaveLength(1)
 
-    // Syncs within the minute after a failure leave it be.
     await anna.engine.sync()
     expect(tries).toHaveLength(1)
     advance(60 * 1000)
     await anna.engine.sync()
     expect(tries).toHaveLength(2)
     expect(annasSlotsInMomsInbox()).toBe(1)
-    // The next wait is twice as long.
+
     advance(60 * 1000)
     await anna.engine.sync()
     expect(tries).toHaveLength(2)
@@ -1015,7 +990,6 @@ describe('buddies pairing', () => {
     const anna = user('Anna', plans)
     await pair(mom, anna)
 
-    // The relay's inactivity wipe.
     fake.inboxes.delete(mom.inboxId)
     await mom.engine.sync()
     expect(mom.store.getState()).toMatchObject({
@@ -1038,8 +1012,6 @@ describe('buddies pairing', () => {
     const anna = user('Anna')
     await pair(mom, anna)
 
-    // A sync that started before Delete Buddies (a handoff onto this phone)
-    // reads the inbox just after it went, and finds it gone.
     let syncing: Promise<unknown> | null = null
     setAfterOp(async (op) => {
       if (op !== 'inbox/delete' || syncing) return
@@ -1058,7 +1030,6 @@ describe('buddies pairing', () => {
     await mom.engine.deleteEverything()
     expect(fake.inboxes.has(mom.inboxId)).toBe(false)
 
-    // Handed back from another phone in the same launch.
     mom.setRootSeed(mom.seed)
     await mom.engine.sync()
     expect(fake.inboxes.has(mom.inboxId)).toBe(true)
@@ -1115,7 +1086,6 @@ describe('leaving an account other devices keep', () => {
       pendingRemovals: [],
     })
 
-    // Nobody was told: the account's other device, and Anna, carry on.
     await momsTablet.engine.sync()
     await anna.engine.sync()
     expect(momsTablet.store.getState().buddies).toMatchObject([
@@ -1133,7 +1103,6 @@ describe('leaving an account other devices keep', () => {
     await pair(mom, anna)
     await mom.engine.leaveThisDevice()
 
-    // A sync before the new key is stored registers nothing again.
     await expect(mom.engine.sync()).rejects.toEqual(
       new RelayError('cancelled', 0)
     )
@@ -1177,7 +1146,6 @@ describe('leaving an account other devices keep', () => {
     await expect(mom.engine.leaveThisDevice()).rejects.toThrow()
     expect(mom.store.getState().buddies).toHaveLength(1)
 
-    // Still running here.
     offlineOps.clear()
     await mom.engine.sync()
     expect(mom.store.getState().registeredInboxId).toBe(mom.inboxId)
@@ -1198,8 +1166,6 @@ describe('leaving an account other devices keep', () => {
     await momsTablet.engine.sync()
     expect(momsTablet.store.getState().buddies).toHaveLength(1)
 
-    // Mom's phone signed in to Sue's account; iCloud Keychain brings the
-    // tablet the same key.
     momsTablet.setRootSeed(sue.seed)
     await momsTablet.engine.sync()
     expect(momsTablet.store.getState()).toMatchObject({
@@ -1210,7 +1176,6 @@ describe('leaving an account other devices keep', () => {
       { inboxId: anna.inboxId, status: 'active' },
     ])
 
-    // Sue's own pairing with Anna, and Mom's, are untouched.
     await sue.engine.sync()
     expect(sue.store.getState().buddies).toMatchObject([
       { inboxId: anna.inboxId, status: 'active' },
@@ -1222,10 +1187,6 @@ describe('leaving an account other devices keep', () => {
 })
 
 describe('Buddies data from a key this phone no longer has', () => {
-  /**
-   * Mom's phone used Buddies, then lost its account key (restored without
-   * iCloud Keychain, say) and made a new one while the app kept its data.
-   */
   async function momWithLostKey() {
     const { fake, user } = setup()
     const mom = user('Mom')
@@ -1248,7 +1209,7 @@ describe('Buddies data from a key this phone no longer has', () => {
       registeredInboxId: null,
       pendingRemovals: [],
     })
-    // Nothing here can sign for the old inbox or its buddies: left as it is.
+
     expect(fake.inboxes.has(mom.inboxId)).toBe(true)
     await anna.engine.sync()
     expect(anna.store.getState().buddies).toMatchObject([
@@ -1285,7 +1246,7 @@ describe('the name on Buddy Cards', () => {
     )
     await momsTablet.engine.sync()
     expect(momsTablet.store.getState().cardName?.name).toBe('Maya Torres')
-    // The tablet's Plans change its card; the name stays the account's.
+
     await momsTablet.engine.publishCards({ edited: true })
     await anna.engine.sync()
     expect(nameAt(anna, mom.inboxId)).toBe('Maya Torres')
@@ -1307,7 +1268,7 @@ describe('the name on Buddy Cards', () => {
     advance(60_000)
     momsTablet.profile.name = 'Maya T.'
     momsTablet.engine.setCardName('Maya T.')
-    // The roster goes shortly after (`saveRosterSoon`).
+
     const roster = () => fake.inboxes.get(mom.inboxId)!.roster!.seq
     const before = roster()
     expect(momsTablet.timers).toHaveLength(1)
@@ -1317,7 +1278,6 @@ describe('the name on Buddy Cards', () => {
     await anna.engine.sync()
     expect(nameAt(anna, mom.inboxId)).toBe('Maya T.')
 
-    // The phone's next card says the same, though its Profile wasn't changed.
     advance(60_000)
     await mom.engine.sync()
     expect(mom.store.getState().cardName?.name).toBe('Maya T.')
@@ -1332,7 +1292,7 @@ describe('the name on Buddy Cards', () => {
     const mom = user('Maya Torres')
     const anna = user('Anna')
     await pair(mom, anna)
-    // Two devices from before card names, each with its own Profile name.
+
     const momsTablet = user(
       'Theo',
       { dayPlans: [], recurringPlans: [] },
@@ -1353,10 +1313,6 @@ describe('the name on Buddy Cards', () => {
 
 type User = ReturnType<ReturnType<typeof setup>['user']>
 
-/**
- * What a relay can do to an inbox without any of its keys: hand back a sealed
- * roster it kept from earlier, and list a slot that isn't there.
- */
 function relayPowers(fake: ReturnType<typeof setup>['fake']) {
   return {
     rosterBlob: (inboxId: string) => fake.inboxes.get(inboxId)!.roster!.blob,
@@ -1373,7 +1329,6 @@ function relayPowers(fake: ReturnType<typeof setup>['fake']) {
   }
 }
 
-/** The pair's slots as `holder` knows them; they outlive a removal. */
 function pairSlots(holder: User, peerInboxId: string) {
   const me = deriveIdentity(holder.seed)
   const peer = holder.store
@@ -1387,9 +1342,8 @@ function pairSlots(holder: User, peerInboxId: string) {
     peerInboxId
   )
   return {
-    /** The peer writes here, in the holder's inbox. */
     intoHolder: deriveDirection(secret, me.inboxId),
-    /** The holder writes here, in the peer's inbox. */
+
     intoPeer: deriveDirection(secret, peerInboxId),
   }
 }
@@ -1401,7 +1355,6 @@ function openRoster(user: User, blob: string): Roster {
   )
 }
 
-/** A roster as builds before versions and tombstones wrote it. */
 function sealLegacyRoster(user: User, roster: Roster): string {
   const { rosterKey, inboxId } = deriveIdentity(user.seed)
   const legacy: Partial<Roster> = { ...roster }
@@ -1432,8 +1385,6 @@ describe('removed buddies stay removed', () => {
     await mom.engine.removeBuddy(anna.inboxId)
     expect(mom.store.getState().removedBuddies).toHaveProperty(anna.inboxId)
 
-    // Anna can always re-add Mom's slot in her own inbox. The relay hands Mom
-    // the roster from before and lists Anna's slot again.
     relay.listSlot(anna.inboxId, slots.intoHolder)
     plans.dayPlans = [dayPlan('2026-09-30', 180, 600)]
     relay.serveRoster(mom.inboxId, rosterWithAnna)
@@ -1444,7 +1395,7 @@ describe('removed buddies stay removed', () => {
     expect(
       fake.inboxes.get(anna.inboxId)!.cards.has(slots.intoHolder.slotId)
     ).toBe(false)
-    // Mom's own roster goes back over the stale one.
+
     expect(openRoster(mom, relay.rosterBlob(mom.inboxId))).toMatchObject({
       buddies: [],
       removedBuddies: { [anna.inboxId]: expect.any(Number) },
@@ -1461,7 +1412,6 @@ describe('removed buddies stay removed', () => {
     const slots = pairSlots(anna, mom.inboxId)
     await mom.engine.removeBuddy(anna.inboxId)
 
-    // As if the cap had pushed Anna's tombstone out.
     mom.store.setState({ removedBuddies: {} })
     relay.listSlot(anna.inboxId, slots.intoHolder)
     relay.serveRoster(mom.inboxId, rosterWithAnna)
@@ -1491,9 +1441,6 @@ describe('removed buddies stay removed', () => {
     await mom.engine.removeBuddy(anna.inboxId)
     const version = mom.store.getState().rosterVersion
 
-    // The iPad runs an older build: it pairs with Joe and writes a roster
-    // with no version or tombstones that still lists Anna. Anna re-adds Mom's
-    // slot, and the relay lists hers again.
     offlineOps.add('roster/put')
     await pair(momsIpad, joe)
     offlineOps.clear()
@@ -1520,7 +1467,7 @@ describe('removed buddies stay removed', () => {
     expect(mom.store.getState().cards[joe.inboxId].days).toEqual([
       { d: '2026-09-29', p: [{ m: 60 }] },
     ])
-    // Written back with the tombstone and a newer version for newer builds.
+
     const written = openRoster(mom, relay.rosterBlob(mom.inboxId))
     expect(written.removedBuddies).toHaveProperty(anna.inboxId)
     expect(written.version).toBeGreaterThan(version)
@@ -1547,8 +1494,6 @@ describe('removed buddies stay removed', () => {
       outgoingInvites: [],
     })
 
-    // Once the invite lapses its tombstone goes too, but so does the claim:
-    // not even an older build's roster can list it again.
     advance(INVITE_TTL_MS + 1)
     await mom.engine.sync()
     expect(mom.store.getState().closedInviteIds).toEqual({})
@@ -1603,7 +1548,6 @@ describe('removed buddies stay removed', () => {
     )
     expect(anna.store.getState().removedBuddies).toHaveProperty(mom.inboxId)
 
-    // Anna invites Mom again (Anna confirms the claim), and Mom accepts.
     const link = await anna.engine.createInvite()
     await mom.engine.acceptInvite(link)
     await anna.engine.sync()
@@ -1627,7 +1571,6 @@ describe('removed buddies stay removed', () => {
       { d: '2026-09-26', p: [{ m: 60 }] },
     ])
 
-    // The old pairing's roster doesn't disturb the new one.
     relay.serveRoster(mom.inboxId, rosterWithAnna)
     await mom.engine.sync()
     expect(mom.store.getState().buddies).toHaveLength(1)
@@ -1647,7 +1590,6 @@ describe('removed buddies stay removed', () => {
       fake.inboxes.get(anna.inboxId)!.cards.get(slots.intoPeer.slotId)?.blob
     const cardBefore = cardForAnna()
 
-    // The phone can't withdraw the slots yet, but its roster gets through.
     offlineOps.add('slot/remove')
     await expect(mom.engine.removeBuddy(anna.inboxId)).rejects.toEqual(
       new BuddyRemovalPendingError('buddy')
@@ -1658,7 +1600,6 @@ describe('removed buddies stay removed', () => {
     await momsIpad.engine.publishCards()
     expect(cardForAnna()).toBe(cardBefore)
 
-    // The iPad finishes the removal itself once it can.
     offlineOps.clear()
     advance(60 * 1000)
     await momsIpad.engine.sync()
@@ -1674,13 +1615,11 @@ describe('removed buddies stay removed', () => {
     const momsIpad = user('Mom', { dayPlans: [], recurringPlans: [] }, mom.seed)
     await momsIpad.engine.sync()
 
-    // The iPad is away while the phone removes Anna and pairs with her again.
     await mom.engine.removeBuddy(anna.inboxId)
     await anna.engine.sync()
     advance(60_000)
     await pair(mom, anna)
-    // The iPad drops its old pairing, whose slot is gone, without ending the
-    // new one, and learns the new one from the roster.
+
     await momsIpad.engine.sync()
     await mom.engine.sync()
     await momsIpad.engine.sync()
@@ -1703,8 +1642,6 @@ describe('removed buddies stay removed', () => {
       removedBuddies: { [anna.inboxId]: expect.any(Number) },
     })
 
-    // Older builds parse with this schema minus the new fields; unknown
-    // fields are dropped, not rejected.
     const olderBuild = rosterSchema.omit({
       version: true,
       removedBuddies: true,
@@ -1765,7 +1702,7 @@ describe('removed buddies stay removed', () => {
         receivedAt: at,
         expiresAt: at,
       })),
-      // 20 invites a day, each tombstoned for its 7-day life.
+
       closedInviteIds: Object.fromEntries(
         Array.from({ length: 140 }, () => [id(), at])
       ),
@@ -1778,7 +1715,7 @@ describe('removed buddies stay removed', () => {
       leftCars: {},
     }
     const plaintext = utf8(JSON.stringify(rosterSchema.parse(roster)))
-    // The relay's 32 KB roster cap, less the seal's version, nonce, and tag.
+
     expect(plaintext.length).toBeLessThan(32 * 1024 - 29)
   })
 })
@@ -1816,7 +1753,6 @@ describe('shared Plans and Follow-ups', () => {
   }
 
   describe('invitations that never reach a buddy', () => {
-    /** Levi, paired with Anna, telling the test what wasn't sent. */
     async function leviAndAnna() {
       const env = setup()
       const notSent: { reason: string; names: string[] }[] = []
@@ -1855,7 +1791,6 @@ describe('shared Plans and Follow-ups', () => {
       expect(Object.keys(anna.store.getState().incomingShares)).toEqual([])
       expect(notSent).toHaveLength(1)
 
-      // Changed after reinstatement: sent as a new invitation.
       levi.setShares([
         planSpec([anna.inboxId], { ...saturday, title: 'Moved' }),
       ])
@@ -1869,7 +1804,7 @@ describe('shared Plans and Follow-ups', () => {
 
     it('says so when the pairing ended before the invitation went', async () => {
       const { levi, anna, notSent } = await leviAndAnna()
-      // Anna ended it; Levi's phone hasn't synced since.
+
       await anna.engine.removeBuddy(levi.inboxId)
       levi.setShares([planSpec([anna.inboxId])])
       await levi.engine.publishShares()
@@ -1885,7 +1820,7 @@ describe('shared Plans and Follow-ups', () => {
       const { levi, anna, notSent } = await leviAndAnna()
       levi.setShares([planSpec([anna.inboxId])])
       await anna.engine.removeBuddy(levi.inboxId)
-      // The sync finds Anna gone before anything was published.
+
       levi.setEnabled(false)
       await levi.engine.sync().catch(() => undefined)
       expect(levi.store.getState().unsentShares[key]).toMatchObject({
@@ -1893,8 +1828,6 @@ describe('shared Plans and Follow-ups', () => {
       })
       expect(notSent).toEqual([{ reason: 'gone', names: ['Anna'] }])
 
-      // The app takes her off the Plan for having gone; the Plan still says
-      // she never got it, until it's over.
       levi.setEnabled(true)
       levi.setShares([planSpec([])])
       await levi.engine.publishShares()
@@ -1919,7 +1852,7 @@ describe('shared Plans and Follow-ups', () => {
 
     it("doesn't retry an invitation to a buddy whose inbox is gone, and says so", async () => {
       const { levi, anna, notSent, fake } = await leviAndAnna()
-      // Anna's inbox is gone before Levi's phone noticed her leaving.
+
       fake.inboxes.delete(anna.inboxId)
       levi.setShares([planSpec([anna.inboxId])])
       await levi.engine.publishShares()
@@ -1929,7 +1862,6 @@ describe('shared Plans and Follow-ups', () => {
       })
       expect(levi.store.getState().outgoingShares[key].sent).toEqual({})
 
-      // Not sent again as it stands.
       const putEvents = () =>
         fake.requests.filter((request) => request.op === 'event/put').length
       const before = putEvents()
@@ -1939,16 +1871,10 @@ describe('shared Plans and Follow-ups', () => {
     })
 
     describe('once the app takes the gone buddy off the Plan', () => {
-      /**
-       * Levi, paired with Anna and Mom, wired the way the app wires him: his
-       * shares come from his Plans (`buildOutgoingShares`), and a buddy who's
-       * gone is taken off them (`forgetBuddiesInData`, as `BuddiesRuntime` does
-       * when the roster drops them).
-       */
       async function wiredLevi(invited: ('anna' | 'mom')[]) {
         const env = setup()
         const notSent: { reason: string; names: string[] }[] = []
-        // Saturday 10:00 for two hours, local time.
+
         let dayPlans: DayPlan[] = [
           {
             ...dayPlan('2026-09-26', 120, 600),
@@ -1979,7 +1905,7 @@ describe('shared Plans and Follow-ups', () => {
         let roster = new Set(
           levi.store.getState().buddies.map((b) => b.inboxId)
         )
-        /** What `BuddiesRuntime` does after the roster changes. */
+
         const forgetGone = (device = levi) => {
           const current = new Set(
             device.store.getState().buddies.map((b) => b.inboxId)
@@ -1992,7 +1918,7 @@ describe('shared Plans and Follow-ups', () => {
             ...changes.dayPlans.find((change) => change.id === plan.id),
           }))
         }
-        /** A new engine on what Levi's phone saved, as after a relaunch. */
+
         const relaunch = () => {
           const saved = JSON.parse(JSON.stringify(levi.store.getState()))
           const next = env.user('Levi', undefined, levi.seed, extra)
@@ -2002,7 +1928,7 @@ describe('shared Plans and Follow-ups', () => {
         const planInvites = () => dayPlans[0].buddies ?? []
         return {
           ...env,
-          /** Another of Levi's devices, on his account. */
+
           levisIpad: () => env.user('Levi', undefined, levi.seed),
           levi,
           anna,
@@ -2036,7 +1962,7 @@ describe('shared Plans and Follow-ups', () => {
             relaunch,
             planInvites,
           } = await wiredLevi([...invited])
-          // Saved offline: nothing went out before Anna left.
+
           levi.setEnabled(false)
           await anna.engine.removeBuddy(levi.inboxId)
           await levi.engine.sync().catch(() => undefined)
@@ -2044,7 +1970,6 @@ describe('shared Plans and Follow-ups', () => {
           forgetGone()
           expect(planInvites()).not.toContain(anna.inboxId)
 
-          // Back online: the publish that follows, and later syncs.
           levi.setEnabled(true)
           await levi.engine.sync()
           await levi.engine.publishShares()
@@ -2059,7 +1984,6 @@ describe('shared Plans and Follow-ups', () => {
             ).toHaveLength(1)
           }
 
-          // And after a relaunch.
           const relaunched = relaunch()
           await relaunched.engine.sync()
           await relaunched.engine.publishShares()
@@ -2078,7 +2002,7 @@ describe('shared Plans and Follow-ups', () => {
         async (_label, invited) => {
           const { levi, anna, notSent, forgetGone, planInvites } =
             await wiredLevi([...invited])
-          // Anna ended it; Levi's phone hasn't synced since.
+
           await anna.engine.removeBuddy(levi.inboxId)
           await levi.engine.publishShares()
           expect(notSent).toEqual([{ reason: 'gone', names: ['Anna'] }])
@@ -2103,8 +2027,7 @@ describe('shared Plans and Follow-ups', () => {
         async (_label, invited) => {
           const { levi, anna, fake, notSent, forgetGone, relaunch } =
             await wiredLevi([...invited])
-          // Anna deleted her Buddies data: she left Levi's inbox, then hers
-          // went. Levi's phone sends before a sync tells it.
+
           await anna.engine.removeBuddy(levi.inboxId)
           fake.inboxes.delete(anna.inboxId)
           await levi.engine.publishShares()
@@ -2113,7 +2036,6 @@ describe('shared Plans and Follow-ups', () => {
             [anna.inboxId]: goneRow,
           })
 
-          // The roster sync drops her, and the app takes her off the Plan.
           await levi.engine.sync()
           forgetGone()
           await levi.engine.publishShares()
@@ -2140,8 +2062,7 @@ describe('shared Plans and Follow-ups', () => {
         } = await wiredLevi(['anna'])
         const levisIpad = ipad()
         await levisIpad.engine.sync()
-        // Levi's phone saved the Plan offline. Anna leaves, and Levi's iPad
-        // syncs first: the roster it saves says the pairing ended.
+
         levi.setEnabled(false)
         await anna.engine.removeBuddy(levi.inboxId)
         await levisIpad.engine.sync()
@@ -2176,7 +2097,6 @@ describe('shared Plans and Follow-ups', () => {
           await levi.engine.publishShares()
           expect(levi.store.getState().unsentShares[key]).toBeDefined()
 
-          // Saturday's Plan has ended, or Levi deleted it.
           if (end === 'over') advance(4 * 24 * HOUR)
           else deletePlan()
           await levi.engine.publishShares()
@@ -2251,20 +2171,17 @@ describe('shared Plans and Follow-ups', () => {
       return levi.store.getState().shareReplies[shareId]?.[anna.inboxId]
     }
 
-    // A mistaken Can't Make It waits; a sync meanwhile sends nothing.
     await reply('declined')
     advance(5_000)
     await anna.engine.sync()
     expect(await received()).toBeUndefined()
 
-    // Changing it to Going sends that at once, and the decline never goes.
     await reply('going')
     expect(await received()).toMatchObject({ status: 'going' })
     advance(REPLY_HOLD_MS)
     await anna.engine.deliverReplies()
     expect(await received()).toMatchObject({ status: 'going' })
 
-    // A deliberate Can't Make It goes once the wait ends.
     await reply('declined')
     advance(REPLY_HOLD_MS - 1_000)
     await anna.engine.deliverReplies()
@@ -2319,7 +2236,7 @@ describe('shared Plans and Follow-ups', () => {
     await anna.engine.sync()
     const share = anna.store.getState().incomingShares[key]
     expect(share.details.s).toBe(660)
-    // Their answer stands; the change is flagged in the queue.
+
     expect(share.status).toBe('going')
     const entries = anna.store
       .getState()
@@ -2349,7 +2266,7 @@ describe('shared Plans and Follow-ups', () => {
     expect(mom.store.getState().notifications.map((n) => n.kind)).toEqual([
       'paired',
     ])
-    // The invitation's alert comes off Notification Center too.
+
     expect(mom.dismissed).toEqual([[inviteSeq]])
   })
 
@@ -2410,14 +2327,13 @@ describe('shared Plans and Follow-ups', () => {
 
     await anna.engine.replyToShare(annaKey, 'going')
     await levi.engine.sync()
-    // Her answer says she's listed, with her photo (All Buddies see it).
+
     expect(
       levi.store.getState().shareReplies[shareId][anna.inboxId]
     ).toMatchObject({ status: 'going', listed: true, photo: true })
     await anna.engine.sync()
     await mom.engine.sync()
-    // Mom hasn't answered, and sees Anna by a tag only Anna's buddies can
-    // work out; Anna isn't listed for herself.
+
     expect(people(mom, momKey)).toEqual({
       people: [{ t: guestTag(shareId, anna.inboxId), n: 'Anna' }],
     })
@@ -2427,14 +2343,14 @@ describe('shared Plans and Follow-ups', () => {
     await levi.engine.sync()
     await anna.engine.sync()
     await mom.engine.sync()
-    // Each sees the other.
+
     expect(people(anna, annaKey)).toEqual({
       people: [{ t: guestTag(shareId, mom.inboxId), n: 'Mom' }],
     })
     expect(people(mom, momKey)).toEqual({
       people: [{ t: guestTag(shareId, anna.inboxId), n: 'Anna' }],
     })
-    // Quietly: no alert, and no "changed a Plan" in the bell.
+
     expect(
       fake.pushes.slice(pushes).filter((push) => push.kind === 'plan.update')
     ).toEqual([])
@@ -2443,7 +2359,6 @@ describe('shared Plans and Follow-ups', () => {
         user.store.getState().notifications.map((n) => n.kind)
       ).not.toContain('shareUpdate')
 
-    // Can't Make It takes Mom off Anna's list; Mom still sees Anna.
     advance(60_000)
     await mom.engine.replyToShare(momKey, 'declined')
     await levi.engine.sync()
@@ -2487,7 +2402,7 @@ describe('shared Plans and Follow-ups', () => {
     await anna.engine.replyToShare(annaKey, 'going')
     await mom.engine.replyToShare(momKey, 'going')
     await levi.engine.sync()
-    // As an older app answers: going, without `listed`.
+
     levi.store.setState((state) => ({
       shareReplies: {
         ...state.shareReplies,
@@ -2588,7 +2503,7 @@ describe('shared Plans and Follow-ups', () => {
     await levi.engine.publishShares()
     expect(planPushes()).toEqual(['plan.invite'])
     await anna.engine.sync()
-    // Delivered and queued, just without an alert.
+
     const [share] = Object.values(anna.store.getState().incomingShares)
     expect(share.details.note).toBe('Bring water too')
     expect(anna.store.getState().notifications[0].kind).toBe('shareInvite')
@@ -2619,13 +2534,11 @@ describe('shared Plans and Follow-ups', () => {
     }
     expect(planEvents()).toHaveLength(30)
 
-    // The relay's per-slot write cap still has room for a card.
     levi.profile.name = 'Levi W'
     await levi.engine.publishCards()
     await anna.engine.sync()
     expect(anna.store.getState().buddies[0].name).toBe('Levi W')
 
-    // Once the hour rolls over, the latest version goes out.
     advance(HOUR)
     await levi.engine.publishShares()
     await anna.engine.sync()
@@ -2635,7 +2548,7 @@ describe('shared Plans and Follow-ups', () => {
 
   it('shortens a long note to fit the relay event cap', async () => {
     const { levi, anna } = await trio()
-    // Control characters take 6 bytes each in JSON: 12 KB before fitting.
+
     const note = '\u0001'.repeat(2000)
     levi.setShares([planSpec([anna.inboxId], { ...saturday, note })])
     await levi.engine.publishShares()
@@ -2658,7 +2571,6 @@ describe('shared Plans and Follow-ups', () => {
     await levi.engine.publishShares()
     expect(fake.alerts.map((alert) => alert.kind)).toEqual(['plan.invite'])
 
-    // Buddies notifications switched off on this device.
     await anna.engine.registerPush({ ...device, templates: {} })
     advance(60_000)
     levi.setShares([])
@@ -2724,7 +2636,6 @@ describe('shared Plans and Follow-ups', () => {
       .getState()
       .notifications.find((n) => n.kind === 'shareInvite')!
 
-    // Dismissing would strand it: the tray is where it's answered.
     anna.engine.dismissNotification(entry.id)
     await anna.engine.sync()
     expect(
@@ -2744,7 +2655,7 @@ describe('shared Plans and Follow-ups', () => {
     await levi.engine.publishShares()
     await anna.engine.sync()
     const key = Object.keys(anna.store.getState().incomingShares)[0]
-    // As an older version's dismissal left it.
+
     anna.store.setState((state) => ({
       notifications: state.notifications.filter((n) => n.shareKey !== key),
     }))
@@ -2753,7 +2664,6 @@ describe('shared Plans and Follow-ups', () => {
       anna.store.getState().notifications.find((n) => n.shareKey === key)
     ).toMatchObject({ kind: 'shareInvite', name: 'Levi', read: false })
 
-    // Once answered, nothing more is added.
     await anna.engine.replyToShare(key, 'going')
     anna.store.setState({ notifications: [] })
     anna.engine.expire()
@@ -2767,7 +2677,7 @@ describe('shared Plans and Follow-ups', () => {
     await anna.engine.sync()
     const key = Object.keys(anna.store.getState().incomingShares)[0]
     const at = anna.store.getState().notifications[0].at
-    // Fill the queue with newer, already-read entries.
+
     const filler = Array.from({ length: MAX_NOTIFICATIONS }, (_, i) => ({
       id: `filler-${i}`,
       kind: 'paired' as const,
@@ -2803,7 +2713,6 @@ describe('shared Plans and Follow-ups', () => {
     const [invite] = anna.store.getState().notifications
     expect(invite.kind).toBe('shareInvite')
 
-    // The tray shows it and reports it seen.
     anna.engine.markNotificationRead(invite.id)
     advance(60_000)
     levi.setShares([planSpec([anna.inboxId], { ...saturday, s: 660 })])
@@ -2841,14 +2750,12 @@ describe('shared Plans and Follow-ups', () => {
       apnsTopic: 'com.leviwilkerson.jwtimebeta',
     })
 
-    // The relay dropped the device (rejected token, or evicted).
     devices.delete(deviceId!)
     expect(await anna.engine.registerPush(device)).toBe('unchanged')
     advance(PUSH_REGISTRATION_REFRESH_MS)
     expect(await anna.engine.registerPush(device)).toBe('refreshed')
     expect(devices.has(deviceId!)).toBe(true)
 
-    // A different topic is a different registration.
     expect(
       await anna.engine.registerPush({
         ...device,
@@ -2856,7 +2763,6 @@ describe('shared Plans and Follow-ups', () => {
       })
     ).toBe('registered')
 
-    // A failed registration is retried next time.
     offlineOps.add('device/register')
     await expect(anna.engine.registerPush(device)).rejects.toThrow()
     expect(anna.store.getState().pushRegistrationKey).toBeNull()
@@ -2965,7 +2871,6 @@ describe('buildOutgoingShares', () => {
 })
 
 describe('reconcileLinkedPlans', () => {
-  // Before the shared Plan (Sep 26).
   const now = Date.parse('2026-09-23T15:00:00Z')
   const share = (status: 'pending' | 'going' | 'declined' | 'cancelled') => ({
     from: 'levi',
@@ -3021,7 +2926,7 @@ describe('reconcileLinkedPlans', () => {
       rev: 2,
       details: { ...share('going').details, title: 'Cart :)' },
     }
-    // The phone has the organizer's change and follows it.
+
     const onPhone = {
       ...plan,
       ...reconcileLinkedPlans([plan], [renamed], { now }).update[0],
@@ -3030,14 +2935,13 @@ describe('reconcileLinkedPlans', () => {
       title: 'Cart :)',
       buddyShare: { rev: 2 },
     })
-    // The iPad gets the phone's Plan through iCloud before its own copy of
-    // the invitation catches up: it leaves the Plan as it is.
+
     expect(reconcileLinkedPlans([onPhone], [share('going')], { now })).toEqual({
       add: [],
       update: [],
       remove: [],
     })
-    // Once it catches up, there's nothing to change.
+
     expect(reconcileLinkedPlans([onPhone], [renamed], { now }).update).toEqual(
       []
     )
@@ -3045,13 +2949,12 @@ describe('reconcileLinkedPlans', () => {
 
   it('gives back the details an older copy brought back', () => {
     const plan = reconcileLinkedPlans([], [share('going')], { now }).add[0]
-    // An older build (or an edit it allowed) changed the organizer's title
-    // under the same invitation.
+
     const edited = { ...plan, title: 'My carts' }
     expect(
       reconcileLinkedPlans([edited], [share('going')], { now }).update[0]
     ).toMatchObject({ id: plan.id, title: 'Cart' })
-    // A Plan from before linked Plans held a rev takes this one.
+
     const { rev: _rev, ...unstamped } = plan.buddyShare!
     expect(
       reconcileLinkedPlans(
@@ -3088,7 +2991,7 @@ describe('reconcileLinkedPlans', () => {
       startTimeInMinutes: 660,
       buddyShare: { rev: 2, ownMinutes: true },
     })
-    // Hours, Type, and the reminder stay the User's.
+
     expect(update).not.toHaveProperty('minutes')
     expect(update).not.toHaveProperty('categoryId')
     expect(update).not.toHaveProperty('notifyMe')
@@ -3107,7 +3010,6 @@ describe('reconcileLinkedPlans', () => {
   })
 
   it('gives linked Plans ids that pass sync validation', () => {
-    // Inbox and share ids are 22-character base64url relay ids.
     const id = linkedPlanId({
       from: 'AbC-_0123456789abcdefg',
       shareId: 'zYx_-9876543210ZYXWVUt',
@@ -3122,7 +3024,7 @@ describe('reconcileLinkedPlans', () => {
       ...reconcileLinkedPlans([], [share('going')], { now }).add[0],
       id,
     })
-    // Older builds gave each device's copy a random id.
+
     const phoneCopy = linked('b-from-phone')
     const ipadCopy = linked('a-from-ipad')
     const removedFrom = (dayPlans: DayPlan[]) =>
@@ -3131,7 +3033,6 @@ describe('reconcileLinkedPlans', () => {
     expect(removedFrom([phoneCopy, ipadCopy])).toEqual(['b-from-phone'])
     expect(removedFrom([ipadCopy, phoneCopy])).toEqual(['b-from-phone'])
 
-    // The shared id wins over any older copy, whatever the order.
     const shared = linked(linkedPlanId({ from: 'levi', shareId: 'share-1' }))
     expect(removedFrom([ipadCopy, shared, phoneCopy])).toEqual([
       'a-from-ipad',
@@ -3151,11 +3052,10 @@ describe('reconcileLinkedPlans', () => {
     })
     const key = incomingShareKey('levi', 'share-1')
 
-    // Removing a duplicate leaves the kept copy following it.
     expect(sharesLeftUnlinked([plan('a'), plan('b')], [plan('a')])).toEqual([])
     expect(sharesLeftUnlinked([plan('a')], [])).toEqual([key])
     expect(sharesLeftUnlinked([plan('a'), plan('b')], [])).toEqual([key])
-    // A Plan that stays but stops following (its buddy is gone) wasn't deleted.
+
     expect(
       sharesLeftUnlinked([plan('a')], [{ ...plan('a'), buddyShare: undefined }])
     ).toEqual([])
@@ -3169,11 +3069,10 @@ describe('reconcileLinkedPlans', () => {
     const key = incomingShareKey('levi', 'share-1')
     const deletedPlanIds = new Set([id])
 
-    // This iPad still says "Going"; the phone deleted the Plan (and declined).
     expect(
       reconcileLinkedPlans([], [share('going')], { now, deletedPlanIds }).add
     ).toEqual([])
-    // Answering "Going" again here adds it back.
+
     expect(
       reconcileLinkedPlans([], [share('going')], {
         now,
@@ -3181,7 +3080,7 @@ describe('reconcileLinkedPlans', () => {
         answered: new Set([key]),
       }).add.map((plan) => plan.id)
     ).toEqual([id])
-    // Other shares are unaffected.
+
     expect(
       reconcileLinkedPlans([], [{ ...share('going'), shareId: 'share-2' }], {
         now,
@@ -3203,7 +3102,7 @@ describe('reconcileLinkedPlans', () => {
     expect(sharesJustAccepted(at('going', 5), at('going', 9))).toEqual(
       new Set([key])
     )
-    // Delivered, a buddy's update, or another answer.
+
     expect(sharesJustAccepted(at('going', 5), at('going'))).toEqual(new Set())
     expect(sharesJustAccepted(at('going', 5), at('going', 5))).toEqual(
       new Set()
@@ -3247,7 +3146,7 @@ describe('asking to join', () => {
   const saturday = '2026-09-26'
   const sunday = '2026-09-27'
   const nine = { s: 540, m: 120 }
-  // Local, as the app derives it from the day and start time.
+
   const startsAt = new Date(`${saturday}T09:00:00`).getTime()
   const device = { apnsToken: 'ab', apnsEnvironment: 'sandbox' as const }
   const template = { title: 't', body: 'b' }
@@ -3259,7 +3158,7 @@ describe('asking to join', () => {
     Object.values(user.store.getState().joinRequests)
   const askedOf = (user: User) =>
     Object.values(user.store.getState().askedToJoin)
-  /** The tray's join request entries (pairing leaves a "paired" entry too). */
+
   const joinEntries = (user: User) =>
     user.store
       .getState()
@@ -3365,7 +3264,7 @@ describe('asking to join', () => {
     await levi.engine.askToJoin(anna.inboxId, saturday, nine, startsAt)
     expect(fake.alerts.filter(isJoinAlert)).toHaveLength(1)
     await anna.engine.sync()
-    // Listed again, but read: asking again doesn't call for attention.
+
     expect(requestsOf(anna)).toHaveLength(1)
     expect(requestsOf(anna)[0].withdrawn).toBeFalsy()
     expect(joinEntries(anna)).toMatchObject([{ read: true }])
@@ -3407,7 +3306,7 @@ describe('asking to join', () => {
     advance(startsAt - Date.parse('2026-09-23T15:00:00Z') - HOUR)
     await levi.engine.sync()
     expect(askedOf(levi)).toMatchObject([{ withdrawn: true }])
-    // Only the quiet withdrawal goes out, in case the first try landed.
+
     expect(joinEventsTo(anna.inboxId).map((event) => event.kind)).toEqual([
       'join.cancel',
     ])
@@ -3501,7 +3400,7 @@ describe('asking to join', () => {
     anna.engine.setBuddyAlert(levi.inboxId, 'joinRequests', undefined)
     anna.store.setState({ joinRequestNotifications: false })
     expect(await anna.engine.joinRequestPushKinds()).toEqual([])
-    // Their own setting over this device's.
+
     anna.engine.setBuddyAlert(levi.inboxId, 'joinRequests', true)
     expect(await anna.engine.joinRequestPushKinds()).toHaveLength(1)
   })
@@ -3573,7 +3472,7 @@ describe('asking to join', () => {
 
 describe('badges', () => {
   const HOUR = 60 * 60 * 1000
-  /** The relay's 60 s alert spacing, plus the client's slack. */
+
   const SPACING = 65 * 1000
   const START = Date.parse('2026-09-23T15:00:00Z')
   const device = { apnsToken: 'ab', apnsEnvironment: 'sandbox' as const }
@@ -3597,7 +3496,7 @@ describe('badges', () => {
         anna.engine.badgePushKinds().map((kind) => [kind, template])
       ),
     })
-    // Past the relay's alert spacing after Levi's pairing confirmation.
+
     env.advance(SPACING)
     const badgeEventsTo = (inboxId: string) =>
       env.fake.inboxes
@@ -3608,7 +3507,6 @@ describe('badges', () => {
     return { ...env, levi, anna, badgeEventsTo, badgeAlerts }
   }
 
-  /** Writes what the app itself never would, as `from` into `to`'s inbox. */
   function rawWriter(from: User, to: User) {
     const me = deriveIdentity(from.seed)
     const buddy = buddyOf(from, to)
@@ -3668,7 +3566,6 @@ describe('badges', () => {
     await anna.engine.sync()
     expect(buddyOf(anna, levi).badges).toEqual(levi.profile.badges)
 
-    // Badges travel only in cards: never in the roster.
     await anna.engine.setNickname(levi.inboxId, 'L')
     const me = deriveIdentity(anna.seed)
     const roster = JSON.parse(
@@ -3689,7 +3586,7 @@ describe('badges', () => {
     const levi = env.user('Levi')
     const anna = env.user('Anna')
     await pair(levi, anna)
-    // An app from before badges sends none.
+
     expect(buddyOf(anna, levi).badges).toEqual([])
 
     const raw = rawWriter(levi, anna)
@@ -3714,7 +3611,6 @@ describe('badges', () => {
     await anna.engine.sync()
     expect(buddyOf(anna, levi).badges).toEqual([{ c: 'yearRound', l: 2 }])
 
-    // More badges than any card could hold: they go, the Plans stay.
     await raw.card({
       ...card,
       days: [...card.days, { d: '2026-09-29', p: [{ m: 30 }] }],
@@ -3760,7 +3656,6 @@ describe('badges', () => {
     await levisIpad.engine.sync()
     expect(levisIpad.store.getState().sharing.badges).toBe(false)
 
-    // An older app writes a later photo choice, with no badges field at all.
     env.advance(1000)
     const roster = {
       v: 1,
@@ -3787,7 +3682,7 @@ describe('badges', () => {
       badges: false,
     })
     expect(levisIpad.store.getState().buddies).toHaveLength(1)
-    // The iPad wrote the choice back, so the phone keeps it too.
+
     await levi.engine.sync()
     expect(levi.store.getState().sharing).toMatchObject({
       photo: false,
@@ -3812,7 +3707,6 @@ describe('badges', () => {
     expect(badgeAlerts()).toHaveLength(1)
     expect(levi.store.getState().badgeAnnouncements).toEqual([])
 
-    // Levi's iPad earned the same badges: the same event, and no second alert.
     const levisIpad = user('Levi', undefined, levi.seed)
     await levisIpad.engine.sync()
     await levisIpad.engine.announceBadges(['returnVisits.1', 'monthsShared.2'])
@@ -3864,7 +3758,7 @@ describe('badges', () => {
     await levi.engine.sync()
     expect(badgeEventsTo(anna.inboxId)).toHaveLength(1)
     expect(badgeEventsTo(mom.inboxId)).toEqual([])
-    // The send that failed carried the alert, so its retry still does.
+
     expect(badgeAlerts()).toHaveLength(1)
     expect(levi.store.getState().badgeAnnouncements).toEqual([])
   })
@@ -3921,7 +3815,6 @@ describe('badges', () => {
     expect(badgeEntries(anna)[0].seq).toBeGreaterThan(0)
     expect(buddyOf(anna, levi).badges).toEqual(news)
 
-    // The card is the source of truth.
     levi.profile.badges = [{ c: 'returnVisits', l: 1 }]
     await levi.engine.publishCards()
     await anna.engine.sync()
@@ -3996,13 +3889,13 @@ describe('badges', () => {
       petVisitsUpdatedAt: 0,
     }
     const older = { photo: true, tenure: true, streak: true, updatedAt: 20 }
-    // An older app's roster leaves them out.
+
     expect(mergeSharing(local, older)).toMatchObject({
       planTimes: 'timeOfDay',
       pausedUntil: 100,
       plansUpdatedAt: 5,
     })
-    // A later choice wins, even back to sharing.
+
     expect(
       mergeSharing(local, {
         ...older,
@@ -4011,7 +3904,7 @@ describe('badges', () => {
         plansUpdatedAt: 6,
       })
     ).toMatchObject({ planTimes: 'exact', pausedUntil: 0, plansUpdatedAt: 6 })
-    // An earlier one doesn't.
+
     expect(
       mergeSharing(local, {
         ...older,
@@ -4020,7 +3913,7 @@ describe('badges', () => {
         plansUpdatedAt: 4,
       })
     ).toMatchObject({ planTimes: 'timeOfDay', pausedUntil: 100 })
-    // On a tie, the more private of each.
+
     expect(
       mergeSharing(local, {
         ...older,
@@ -4029,14 +3922,14 @@ describe('badges', () => {
         plansUpdatedAt: 5,
       })
     ).toMatchObject({ planTimes: 'daysOnly', pausedUntil: 100 })
-    // Plans the same way; not sharing them is the more private.
+
     expect(
       mergeSharing(local, { ...older, plans: false, plansUpdatedAt: 5 })
     ).toMatchObject({ plans: false })
     expect(mergeSharing(local, { ...older, plans: false })).toMatchObject({
       plans: true,
     })
-    // The calendar on its own stamp, hiding on a tie.
+
     expect(
       mergeSharing(local, {
         ...older,
@@ -4068,7 +3961,7 @@ describe('badges', () => {
       petVisits: true,
       petVisitsUpdatedAt: 0,
     }
-    // An older app's later photo choice, with no badges fields.
+
     expect(
       mergeSharing(local, {
         photo: false,
@@ -4077,7 +3970,7 @@ describe('badges', () => {
         updatedAt: 20,
       })
     ).toEqual({ ...local, photo: false, updatedAt: 20 })
-    // The streak goes with photo and Tenure, to the later `updatedAt`.
+
     expect(
       mergeSharing(local, {
         photo: true,
@@ -4094,7 +3987,7 @@ describe('badges', () => {
         updatedAt: 5,
       })
     ).toMatchObject({ streak: true, updatedAt: 10 })
-    // Badges follow their own stamp, whatever `updatedAt` says.
+
     const remote = { photo: true, tenure: true, streak: true, updatedAt: 30 }
     expect(
       mergeSharing(local, { ...remote, badges: true, badgesUpdatedAt: 4 })
@@ -4102,7 +3995,7 @@ describe('badges', () => {
     expect(
       mergeSharing(local, { ...remote, badges: true, badgesUpdatedAt: 6 })
     ).toMatchObject({ badges: true, badgesUpdatedAt: 6 })
-    // A tie settles on withholding, from either side.
+
     expect(
       mergeSharing(local, { ...remote, badges: true, badgesUpdatedAt: 5 })
     ).toMatchObject({ badges: false, badgesUpdatedAt: 5 })
@@ -4124,10 +4017,9 @@ describe('badges', () => {
     levisMac.profile.badges = levi.profile.badges
     await levisMac.engine.sync()
 
-    // The phone turns badges off; the Mac doesn't sync yet.
     env.advance(1000)
     await levi.engine.setSharing({ badges: false })
-    // An older app on the iPad then saves a later photo choice.
+
     env.advance(1000)
     const me = deriveIdentity(levi.seed)
     await levi.relay.putRoster(
@@ -4164,7 +4056,6 @@ describe('badges', () => {
     await anna.engine.sync()
     expect(buddyOf(anna, levi).badges).toEqual([])
 
-    // Settled: nobody rewrites the roster again.
     const rosterSeq = () => env.fake.inboxes.get(levi.inboxId)!.roster!.seq
     const settled = rosterSeq()
     await levi.engine.sync()
@@ -4201,7 +4092,6 @@ describe('badges', () => {
     await levi.engine.announceBadges(['monthsShared.1'])
     expect(levi.store.getState().badgeAnnouncements).toEqual([])
 
-    // News made before is kept, but waits while Buddies is off.
     levi.setEnabled(true)
     offlineOps.add('event/put')
     await levi.engine.announceBadges(['prepared.1'])
@@ -4218,7 +4108,7 @@ describe('badges', () => {
 
   it('waits out the relay’s alert spacing after another alert, instead of losing the badge alert', async () => {
     const { levi, anna, advance, badgeEventsTo, badgeAlerts } = await duo()
-    // Levi invites Anna to a Plan: an alert the relay counts for spacing.
+
     levi.setShares([
       {
         key: planShareKey('sat'),
@@ -4238,7 +4128,6 @@ describe('badges', () => {
     expect(levi.timers).toHaveLength(1)
     expect(levi.timers[0].ms).toBe(SPACING - 2000)
 
-    // A sync inside the spacing still waits, and schedules nothing new.
     await levi.engine.sync()
     expect(badgeEventsTo(anna.inboxId)).toEqual([])
     expect(levi.timers).toHaveLength(1)
@@ -4262,14 +4151,12 @@ describe('badges', () => {
       { at: event.createdAt, read: false },
     ])
 
-    // Anna's new iPad reads the same backlog on its first sync.
     const annasIpad = user('Anna', undefined, anna.seed)
     await annasIpad.engine.sync()
     expect(badgeEntries(annasIpad)).toMatchObject([
       { at: event.createdAt, read: true },
     ])
 
-    // News a day old or more arrives already read.
     await levi.engine.announceBadges(['prepared.1'])
     advance(25 * HOUR)
     await anna.engine.sync()
@@ -4323,7 +4210,6 @@ describe('badges', () => {
         ).slice(0, 16)
       )
 
-    /** Levi and Anna, with Anna's badges on the card Levi holds. */
     async function reactionDuo() {
       const env = await duo()
       const { levi, anna } = env
@@ -4346,7 +4232,7 @@ describe('badges', () => {
         user.store
           .getState()
           .notifications.filter((n) => n.kind === 'badgeReaction')
-      /** What `from` wrote into `to`'s inbox, decrypted. */
+
       const plaintext = (
         from: User,
         to: User,
@@ -4436,7 +4322,7 @@ describe('badges', () => {
       ).toEqual({ e: 'party', rev, at: rev, sentRev: rev, alertRev: rev })
       const [event] = reactionEventsTo(anna)
       expect(event.eventId).toBe(reactionKey(levi, anna, 'yearRound.3', rev))
-      // Only ids travel: the badge, the reaction, and when it was chosen.
+
       expect(plaintext(levi, anna, event)).toEqual({
         v: 1,
         badge: { c: 'yearRound', l: 3 },
@@ -4464,7 +4350,7 @@ describe('badges', () => {
           read: false,
         },
       ])
-      // Re-reading the inbox from the start lists nothing twice.
+
       anna.store.setState({ syncSeq: 0 })
       await anna.engine.sync()
       expect(env.reactionEntries(anna)).toHaveLength(1)
@@ -4473,7 +4359,7 @@ describe('badges', () => {
     it('retries a reaction whose send seemed to fail under the same id, alerting once', async () => {
       const env = await reactionDuo()
       const { levi, anna, reactionEventsTo, reactionAlerts } = env
-      // The relay takes the event, but the answer never arrives.
+
       let lost = true
       env.setAfterOp(async (op) => {
         if (op === 'event/put' && lost) {
@@ -4500,7 +4386,7 @@ describe('badges', () => {
       const { levi, anna, reactionEventsTo, offlineOps, advance } = env
       offlineOps.add('event/put')
       await levi.engine.reactToBadge(anna.inboxId, yearRound, 'fire')
-      // Shown as sent right away, so the reaction bar reflects it.
+
       expect(
         levi.store.getState().sentBadgeReactions[anna.inboxId]['yearRound.3']
       ).toMatchObject({ e: 'fire' })
@@ -4521,13 +4407,12 @@ describe('badges', () => {
       const { levi, anna, user, advance, reactionEventsTo, reactionEntries } =
         env
       await levi.engine.reactToBadge(anna.inboxId, yearRound, 'party')
-      // The same reaction again sends nothing.
+
       await levi.engine.reactToBadge(anna.inboxId, yearRound, 'party')
       expect(reactionEventsTo(anna)).toHaveLength(1)
       await anna.engine.sync()
       expect(reactionEntries(anna)).toHaveLength(1)
 
-      // A change within the same millisecond still gets a newer rev.
       await levi.engine.reactToBadge(anna.inboxId, yearRound, 'fire')
       const events = reactionEventsTo(anna)
       expect(events).toHaveLength(2)
@@ -4541,7 +4426,6 @@ describe('badges', () => {
         { reaction: 'fire', id: events[1].eventId },
       ])
 
-      // An older choice arriving late changes nothing.
       await rawWriter(levi, anna).event(BADGE_REACTION_PUSH_KIND, {
         v: 1,
         badge: yearRound,
@@ -4554,8 +4438,6 @@ describe('badges', () => {
       ).toBe('fire')
       expect(reactionEntries(anna)).toHaveLength(1)
 
-      // The same reaction from Levi's iPad (which doesn't know he sent it)
-      // isn't news: no new entry.
       anna.engine.dismissNotification(reactionEntries(anna)[0].id)
       const levisIpad = user('Levi', undefined, levi.seed)
       await levisIpad.engine.sync()
@@ -4601,7 +4483,6 @@ describe('badges', () => {
       const react = (badge: { c: string; l?: number }, rev: number) =>
         raw.event(BADGE_REACTION_PUSH_KIND, { v: 1, badge, e: 'clap', rev })
 
-      // A badge Anna doesn't have, and a lower level of one she does.
       await react({ c: 'monthsShared', l: 1 }, 1)
       await react({ c: 'yearRound', l: 4 }, 2)
       await react({ c: 'yearRound', l: 2 }, 3)
@@ -4610,7 +4491,6 @@ describe('badges', () => {
         'yearRound.2',
       ])
 
-      // Badges off here: nothing kept, nothing listed.
       anna.setShowBadges(false)
       await react(yearRound, 4)
       await anna.engine.sync()
@@ -4619,7 +4499,6 @@ describe('badges', () => {
         undefined
       )
 
-      // Not (or no longer) an active buddy here.
       anna.store.setState((state) => ({
         buddies: state.buddies.map(
           (b): Buddy => ({
@@ -4639,7 +4518,7 @@ describe('badges', () => {
       const env = await reactionDuo()
       const { levi, anna, reactionEventsTo } = env
       const sent = () => levi.store.getState().sentBadgeReactions
-      // Not on Anna's card, unknown, or not a reaction.
+
       await levi.engine.reactToBadge(
         anna.inboxId,
         { c: 'monthsShared', l: 1 },
@@ -4669,8 +4548,6 @@ describe('badges', () => {
       expect(sent()).toEqual({})
       expect(reactionEventsTo(anna)).toEqual([])
 
-      // A lower level of a badge on the card is fine, and so is reacting
-      // without sharing one's own badges.
       await levi.engine.setSharing({ badges: false })
       await levi.engine.reactToBadge(
         anna.inboxId,
@@ -4679,13 +4556,11 @@ describe('badges', () => {
       )
       expect(reactionEventsTo(anna)).toHaveLength(1)
 
-      // Anna stops sharing badges: there's nothing left to react to.
       await anna.engine.setSharing({ badges: false })
       await levi.engine.sync()
       await levi.engine.reactToBadge(anna.inboxId, yearRound, 'party')
       expect(reactionEventsTo(anna)).toHaveLength(1)
 
-      // Before Buddies starts, nothing is made and no inbox appears.
       const solo = setup()
       const mom = solo.user('Mom')
       await mom.engine.reactToBadge(anna.inboxId, yearRound, 'party')
@@ -4697,7 +4572,7 @@ describe('badges', () => {
       const env = await reactionDuo()
       const { levi, anna, advance, reactionEventsTo, reactionAlerts } = env
       await levi.engine.reactToBadge(anna.inboxId, yearRound, 'party')
-      // A quiet reaction doesn't wait for the relay's spacing.
+
       advance(1000)
       await levi.engine.reactToBadge(
         anna.inboxId,
@@ -4709,7 +4584,6 @@ describe('badges', () => {
       await anna.engine.sync()
       expect(env.reactionEntries(anna)).toHaveLength(2)
 
-      // Badge news has its own allowance.
       advance(SPACING)
       await levi.engine.announceBadges(['monthsShared.3'])
       expect(env.badgeAlerts()).toHaveLength(1)
@@ -4731,7 +4605,6 @@ describe('badges', () => {
       expect(levi.timers).toHaveLength(1)
       expect(levi.timers[0].ms).toBe(SPACING - 2000)
 
-      // A sync inside the spacing still waits, and schedules nothing new.
       await levi.engine.sync()
       expect(reactionEventsTo(anna)).toEqual([])
       expect(levi.timers).toHaveLength(1)
@@ -4788,7 +4661,6 @@ describe('badges', () => {
       })
       expect(reactionEntries(anna)).toEqual([])
 
-      // Levi sees Anna's slot gone.
       await levi.engine.sync()
       expect(levi.store.getState()).toMatchObject({
         badgeReactions: {},
@@ -4797,8 +4669,6 @@ describe('badges', () => {
       })
       expect(reactionEntries(levi)).toEqual([])
 
-      // Delete-all forgets everything, including reactions to the User's
-      // badges from buddies still paired.
       const again = await reactionDuo()
       await again.levi.engine.reactToBadge(
         again.anna.inboxId,
@@ -4878,13 +4748,11 @@ describe('a User’s devices stay in step', () => {
     ...(version === undefined ? {} : { version }),
   })
 
-  /** Runs the roster write a device queued for a burst of marks. */
   async function flushRoster(device: User) {
     for (const timer of device.timers.splice(0)) timer.run()
     await new Promise((resolve) => setTimeout(resolve, 10))
   }
 
-  /** Mom on her phone and her iPad, invited to Levi's Saturday Plan. */
   async function invitedOnTwoDevices() {
     const env = setup()
     const levi = env.user('Levi')
@@ -4922,7 +4790,6 @@ describe('a User’s devices stay in step', () => {
     ).toBe(true)
     expect(replies()).toHaveLength(1)
 
-    // Changed on the iPad, the phone follows and Levi hears it once.
     advance(1000)
     await momsIpad.engine.replyToShare(key, 'declined')
     await flushRoster(momsIpad)
@@ -4983,7 +4850,7 @@ describe('a User’s devices stay in step', () => {
     expect(unread.length).toBeGreaterThan(0)
     for (const entry of mom.store.getState().notifications)
       mom.engine.markNotificationRead(entry.id)
-    // One roster write for the burst.
+
     expect(mom.timers).toHaveLength(1)
     await flushRoster(mom)
     await momsIpad.engine.sync()
@@ -5012,7 +4879,6 @@ describe('a User’s devices stay in step', () => {
     for (const device of [mom, momsIpad])
       expect(device.store.getState().incomingShares[key].status).toBe('pending')
 
-    // A device that only now starts reads the cancel's mark, not the answer.
     await flushRoster(mom)
     const momsMac = user('Mom', undefined, mom.seed)
     await momsMac.engine.sync()
@@ -5071,7 +4937,6 @@ describe('a User’s devices stay in step', () => {
       overrides: { showOnCalendar: false },
     })
 
-    // The later change wins, wherever it was made.
     advance(1000)
     await momsIpad.engine.setNickname(anna.inboxId, 'Anna B')
     await mom.engine.sync()
@@ -5080,7 +4945,6 @@ describe('a User’s devices stay in step', () => {
       showOnCalendar: false,
     })
 
-    // Showing her again, as All Buddies do, follows All Buddies again.
     advance(1000)
     mom.engine.setShowOnCalendar(anna.inboxId, true)
     await flushRoster(mom)
@@ -5096,13 +4960,12 @@ describe('a User’s devices stay in step', () => {
     advance(1000)
     await mom.engine.setBuddySetting(anna.inboxId, 'plans', false)
     const written = openRoster(mom, relay.rosterBlob(mom.inboxId))
-    // Older apps read and write `showOnCalendar` alone.
+
     expect(written.buddies[0]).toMatchObject({
       showOnCalendar: true,
       overrides: { plans: false },
     })
 
-    // An older build hides her from the calendar, knowing nothing else.
     const { overrides, ...older } = written.buddies[0]
     expect(overrides).toEqual({ plans: false })
     relay.serveRoster(
@@ -5158,15 +5021,12 @@ describe('a User’s devices stay in step', () => {
         .events.filter((event) => event.kind.startsWith('plan.'))
     expect(planEvents()).toHaveLength(1)
 
-    // Levi's iPad starts Buddies with the same Plans: it takes the share as
-    // sent, so Anna isn't invited twice.
     const levisIpad = user('Levi', undefined, levi.seed, deps)
     levisIpad.setShares([planSpec([anna.inboxId], created)])
     await levisIpad.engine.sync()
     await levisIpad.engine.publishShares()
     expect(planEvents()).toHaveLength(1)
 
-    // A new time reaches both devices: one event and one alert.
     advance(60_000)
     const moved = planSpec([anna.inboxId], now(), { ...saturday, s: 660 })
     levi.setShares([moved])
@@ -5182,7 +5042,6 @@ describe('a User’s devices stay in step', () => {
       Object.values(anna.store.getState().incomingShares)[0].details.s
     ).toBe(660)
 
-    // So does deleting it.
     advance(60_000)
     withdrawn = now()
     levi.setShares([])
@@ -5233,14 +5092,13 @@ describe('a User’s devices stay in step', () => {
     const levisIpad = user('Levi', plans, levi.seed)
     levisIpad.profile.photoUnavailable = true
     await levisIpad.engine.sync()
-    // A change that arrived from another device, or with time.
+
     plans.dayPlans = [dayPlan('2026-09-28', 60)]
     await levisIpad.engine.publishCards()
     await anna.engine.sync()
     expect(anna.store.getState().buddies[0].avatar).toEqual(photo)
     expect(anna.store.getState().cards[levi.inboxId].days).toEqual([])
 
-    // A change made on the iPad still reaches Anna, without the photo.
     await levisIpad.engine.publishCards({ edited: true })
     await anna.engine.sync()
     expect(anna.store.getState().cards[levi.inboxId].days).toHaveLength(1)
@@ -5329,7 +5187,7 @@ describe('a User’s devices stay in step', () => {
       ),
       sharing: { photo: true, tenure: true, streak: true, updatedAt: at },
       answers: kept,
-      // Every mark as long as the longest id.
+
       read: {},
       dismissed: Object.fromEntries(
         Array.from({ length: MAX_NOTIFICATION_MARKS }, () => [
@@ -5337,12 +5195,12 @@ describe('a User’s devices stay in step', () => {
           at,
         ])
       ),
-      // Shared Cars take what room is left (`rosterSharedCarMemberships`).
+
       cars: {},
       leftCars: {},
     }
     const plaintext = utf8(JSON.stringify(rosterSchema.parse(roster)))
-    // The relay's 32 KB roster cap, less the seal's version, nonce, and tag.
+
     expect(plaintext.length).toBeLessThan(32 * 1024 - 29)
   })
 
@@ -5366,7 +5224,7 @@ describe('a User’s devices stay in step', () => {
     expect(parsed.answers).toEqual({ [key]: good })
     expect(Object.keys(parsed.read)).toHaveLength(1)
     expect(parsed.dismissed).toEqual({})
-    // Older rosters have none.
+
     expect(
       rosterSchema.parse({
         v: 1,

@@ -8,16 +8,12 @@ import BuddyColorPicker from '@/features/buddies/components/BuddyColorPicker'
 import { buddiesEngine } from '@/features/buddies/lib/buddiesService'
 import type { Buddy } from '@/features/buddies/lib/state'
 
-/**
- * How this buddy shows up for this User: a nickname and a color. Right under
- * their card, so a change shows there as it's made.
- */
 export default function BuddyAppearanceSection({ buddy }: { buddy: Buddy }) {
   const [nickname, setNickname] = useState(buddy.nickname ?? '')
 
   const saveNickname = () => {
     if (nickname.trim() === (buddy.nickname ?? '')) return
-    // Saved at once; a failed roster write is retried by the next change.
+
     buddiesEngine
       .setNickname(buddy.inboxId, nickname)
       .catch((error) => logger.warn('[buddies] nickname', error))

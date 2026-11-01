@@ -7,7 +7,6 @@ const native = vi.hoisted(() => ({
   announce: vi.fn(),
 }))
 
-// A declaration, so the hoisted mock factories below can reach it.
 function passthrough({ children }: { children?: ReactNode }) {
   return createElement('view', null, children)
 }

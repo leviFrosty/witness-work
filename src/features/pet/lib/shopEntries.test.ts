@@ -20,7 +20,7 @@ describe('shopEntries', () => {
     const [hats] = shopEntries('hat', room, unlocked, 12)
     expect(hats.part).toBe('hat')
     const byItem = new Map(hats.entries.map((entry) => [entry.item, entry]))
-    // Starters come with the room and are never sold.
+
     expect(byItem.has('hat:none')).toBe(false)
     expect(byItem.get('hat:bow')).toMatchObject({
       state: 'current',
@@ -91,7 +91,7 @@ describe('pickedEntry', () => {
     expect(pickedEntry(hats(['hat:bow']), 'hat:fedora')?.item).toBe(
       'hat:fedora'
     )
-    // It stays picked, Owned, after Buy.
+
     expect(pickedEntry(hats(['hat:bow']), 'hat:bow')?.item).toBe('hat:bow')
   })
 

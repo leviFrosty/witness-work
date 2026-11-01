@@ -13,17 +13,12 @@ import type { RootStackNavigation } from '@/types/rootStack'
 import { useScribeUsage } from '@/features/scribe'
 import { fullestWindow } from '@/features/scribe/components/scribeCopy'
 
-/**
- * The conversation header's usage readout: a ring for the window closest to its
- * limit and its percent. Opens Scribe AI usage.
- */
 const ScribeUsageMeter = () => {
   const theme = useTheme()
   const navigation = useNavigation<RootStackNavigation>()
   const { usage } = useScribeUsage()
   const fullest = fullestWindow(usage)
-  // At accessibility text sizes the ring alone leaves the title its room; the
-  // percent stays in its label and the usage screen.
+
   const ringOnly = useAccessibilityTextSize()
   const reported = useRef(false)
 
@@ -54,8 +49,6 @@ const ScribeUsageMeter = () => {
         accessibilityRole='button'
         accessibilityLabel={`${i18n.t('scribe_usageTitle')}, ${label}`}
         pointerEffect='highlight'
-        // Compact, so the header's title keeps its room beside three
-        // controls on the narrowest phones.
         style={{
           minWidth: MIN_TOUCH_TARGET,
           height: MIN_TOUCH_TARGET,

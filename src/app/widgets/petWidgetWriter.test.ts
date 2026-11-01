@@ -18,7 +18,6 @@ const snapshotNaming = (files: string[]) =>
     entries: files.map((small, i) => ({ date: i, small })),
   }) as unknown as PetWidgetSnapshot
 
-/** A build whose snapshot names `files` (`pet-<name>.png`). */
 const buildOf =
   (byHash: Record<string, string[]>) =>
   (planned: PetWidgetPlan): PetWidgetBuild => {
@@ -56,7 +55,7 @@ function setup(byHash: Record<string, string[]>) {
   }
   return {
     writer: createPetWidgetWriter(deps),
-    /** A new process: same storage and disk, nothing in memory. */
+
     restart: () => createPetWidgetWriter(deps),
     store,
     disk,
@@ -80,7 +79,7 @@ describe('petWidgetWriter', () => {
     await t.writer.written(first)
     const second = await t.writer.prepare(() => plan('b'))
     await t.writer.written(second)
-    // The widget may still show the first timeline.
+
     expect([...t.disk].sort()).toEqual(['pet-1.png', 'pet-2.png', 'pet-3.png'])
     const third = await t.writer.prepare(() => plan('c'))
     await t.writer.written(third)
@@ -108,7 +107,7 @@ describe('petWidgetWriter', () => {
     })
     const fresh = t.restart()
     const failed = await fresh.prepare(() => plan('b'))
-    // The same snapshot as before, so the push writes and reloads nothing.
+
     expect(failed).toMatchObject({
       fresh: false,
       hash: 'a',
@@ -139,7 +138,7 @@ describe('petWidgetWriter', () => {
     })
     const failed = await t.writer.prepare(() => plan('b'))
     expect(failed).toMatchObject({ hash: 'a', files: ['pet-1.png'] })
-    // Only the image that was written is remembered; the other is retried.
+
     t.advance(PET_RETRY_MS)
     const retried = await t.writer.prepare(() => plan('b'))
     expect(retried.fresh).toBe(true)

@@ -12,11 +12,6 @@ import { disconnectGoogleDrive } from '@/lib/syncTransport/googleDrive/googleDri
 import { connectGoogleDriveFromUser } from '@/app/sync/googleDriveConnect'
 import { alignText } from '@/lib/direction'
 
-/**
- * Android: the Google Account this device syncs with. Shows whether Google
- * Drive is connected and offers reconnecting, switching account, and
- * disconnecting. The account is never named: the app only keeps a hash of it.
- */
 const GoogleDriveAccountSection = () => {
   const theme = useTheme()
   const connected = usePreferences((s) => s.googleDriveAccountId !== null)
@@ -66,8 +61,7 @@ const GoogleDriveAccountSection = () => {
             setBusy(true)
             try {
               const { iCloudSyncEnabled, set } = usePreferences.getState()
-              // Disconnecting is an explicit off: Supporter auto-enable must
-              // not turn sync back on when an account is connected again.
+
               set({ iCloudSyncEnabled: false, iCloudSyncSetByUser: true })
               if (iCloudSyncEnabled)
                 analytics.capture('icloud_sync_enabled_changed', {

@@ -6,8 +6,7 @@ const mocks = vi.hoisted(() => ({
 }))
 vi.mock('@/lib/http/online', () => ({ isKnownOffline: () => false }))
 vi.mock('@/lib/perf', () => ({ perf: { count: vi.fn() } }))
-// The session adds its bearer token; `sessionError` stands in for a session
-// that couldn't be opened.
+
 vi.mock('@/lib/serverAccount', async () => {
   const { request } = await import('@/lib/http/request')
   return {

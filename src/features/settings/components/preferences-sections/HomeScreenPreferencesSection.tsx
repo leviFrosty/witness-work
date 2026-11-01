@@ -74,8 +74,7 @@ const HomeElements = () => {
   } = usePreferences()
   const { showsTimer, hasAnnualGoal } = usePublisher()
   const buddiesAvailable = useBuddiesEnabled()
-  // Before a companion exists, Pet is the offer on Home (see
-  // `isHomeSectionShown`).
+
   const hasPet = usePet((s) => s.pet !== null)
   const { isTablet } = useDevice()
   const theme = useTheme()
@@ -85,9 +84,6 @@ const HomeElements = () => {
     [homeScreenElementsOrder]
   )
 
-  // Hide rows whose capability isn't available — but leave them in the stored
-  // order so toggling capability later (e.g. enabling timer) restores the
-  // user's saved position for that row.
   const visibleKeys = useMemo(
     () =>
       effectiveOrder.filter((k) =>
@@ -132,8 +128,6 @@ const HomeElements = () => {
     set({ homeScreenElementsOrder: next })
   }
 
-  // Moves past hidden-capability rows too, keeping them where they were
-  // relative to their neighbors.
   const moveTo = (visibleIdx: number, target: number) => {
     if (Math.abs(target - visibleIdx) === 1) {
       move(visibleIdx, target > visibleIdx ? 1 : -1)
@@ -203,8 +197,7 @@ const HomeElements = () => {
                     alignItems: 'center',
                   }}
                 >
-                  {/* Long-press the label; the arrows, info button, and
-                      switch stay outside the menu's trigger. */}
+                  {}
                   <ContextMenu
                     style={{ flexShrink: 1 }}
                     actions={reorderMenuActions({

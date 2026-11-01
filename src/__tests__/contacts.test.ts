@@ -10,7 +10,6 @@ import { describe, expect, it } from 'vitest'
 
 const testDate = moment({ year: 2023, month: 10 }).toDate()
 
-/** Five Contacts: the fake ones and copies under new ids. */
 const fiveContacts = () => {
   const [first] = createFakeContacts()
   return Array.from({ length: 5 }, (_, i) => ({ ...first, id: `contact-${i}` }))

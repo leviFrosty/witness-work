@@ -30,7 +30,6 @@ type LayoutProps = {
   children: ReactNode
 }
 
-/** List on the left, the selected destination's stack on the right. */
 const SettingsSplitLayout = ({
   selectedDestination,
   onNavigate,
@@ -42,7 +41,7 @@ const SettingsSplitLayout = ({
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
-      {/* The pane meets iPhone Duo's fold while it's partly folded. */}
+      {}
       <FoldSplit
         style={{
           flex: 1,
@@ -79,8 +78,6 @@ const SettingsSplitLayout = ({
           borderRadius: theme.numbers.borderRadiusLg,
         }}
         trailing={
-          // The pane starts below the status bar, so its headers must not pad
-          // for it again.
           <SafeAreaInsetsContext.Provider value={{ ...insets, top: 0 }}>
             {children}
           </SafeAreaInsetsContext.Provider>
@@ -92,12 +89,6 @@ const SettingsSplitLayout = ({
 
 type PaneRoute = { name: keyof RootStackParamList; params?: object }
 
-/**
- * The Settings tab exists only beside the sidebar. When the window gets too
- * narrow for one (Split View, Stage Manager), the tab goes away and the app
- * would land on Home, so this reopens Settings as a page at the same
- * destination.
- */
 function useKeepSettingsWhenSidebarHides() {
   const isFocused = useIsFocused()
   const focused = useRef(isFocused)
@@ -128,12 +119,6 @@ function useKeepSettingsWhenSidebarHides() {
   }
 }
 
-/**
- * Wide Settings tab: the settings list stays visible while destinations open
- * beside it, like Contacts. Screens pushed from a destination (e.g. a
- * Preferences subsection) stack inside the pane; anything else bubbles up to
- * the root stack.
- */
 export default function SettingsSplitScreen() {
   const { isWide } = useAdaptiveLayout()
   const rememberPane = useKeepSettingsWhenSidebarHides()
@@ -164,7 +149,6 @@ export default function SettingsSplitScreen() {
           options={({ navigation, route }) => {
             const isRoot = navigation.getState().routes[0]?.key === route.key
             return {
-              // Switching destinations replaces the pane rather than pushing.
               animation: isRoot ? 'none' : 'default',
               header: () => (
                 <Header

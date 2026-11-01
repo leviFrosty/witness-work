@@ -21,7 +21,6 @@ vi.mock('@/contexts/theme', () => ({
   }),
 }))
 
-/** Leaf components as host elements, so their props can be read. */
 const host = vi.hoisted(() => (name: string) => async () => {
   const ReactModule = await import('react')
   return {
@@ -61,7 +60,6 @@ function render(props: Partial<React.ComponentProps<typeof CarPersonRow>>) {
   return renderer!
 }
 
-/** Every element a screen reader stops on: accessible views and controls. */
 const stops = (tree: ReactTestRenderer) =>
   tree.root.findAll(
     (node) =>
@@ -81,7 +79,7 @@ describe('a person in a car’s People', () => {
 
     expect(stops(tree)).toHaveLength(2)
     expect(person.props.accessibilityLabel).toBe('Ana, Owner')
-    // Their name and line sit inside the one stop, with nothing else.
+
     expect(
       person
         .findAll((node) => node.type === ('Text' as never))

@@ -21,7 +21,7 @@ export default defineWriteTool({
   propose: (input, ctx) => {
     const name = input.name.trim()
     if (!name) return { ok: false, error: 'name is empty.' }
-    // A second mention of the same new person fills in the first.
+
     const ref = ctx.draft.pendingContactRef(name) ?? ctx.draft.mintRef('n')
     return {
       ok: true,
@@ -35,7 +35,7 @@ export default defineWriteTool({
           phone: input.phone?.trim() || null,
           email: input.email?.trim() || null,
           askBetween: null,
-          // The householder's consent, confirmed on the card.
+
           ...(ctx.dataProtection ? { needsConsent: true } : {}),
         },
       ],

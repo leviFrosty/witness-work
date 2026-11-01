@@ -8,7 +8,6 @@ import { isRelayError } from '@/features/buddies/lib/relay'
 import { MAX_BUDDIES, MAX_OPEN_INVITES } from '@/features/buddies/lib/state'
 import type { BuddySyncFailureReason } from '@/features/buddies/lib/syncStatus'
 
-/** A localized, user-facing sentence for any Buddies failure. */
 export function buddiesErrorMessage(error: unknown): string {
   if (error instanceof BuddyInviteError) {
     switch (error.reason) {
@@ -30,8 +29,7 @@ export function buddiesErrorMessage(error: unknown): string {
   }
   if (error instanceof BuddyRemovalPendingError) {
     if (error.scope === 'buddy') return i18n.t('buddies_removePending')
-    // Still on a Shared Car the server hasn't heard them leave: named when
-    // it's one car that has a name.
+
     const [car, ...more] = error.cars
     if (car !== undefined)
       return car && more.length === 0
@@ -62,12 +60,6 @@ export function buddiesErrorMessage(error: unknown): string {
   return i18n.t('buddies_errorGeneric')
 }
 
-/**
- * Worth offering Try Again for: the connection, a rate limit, verifying this
- * device for now, or something unexpected. Not for answers that stay the same
- * (an invite that's gone, the kill switch, a full roster, a device that can't
- * be verified, an app that needs updating).
- */
 export function isRetryableBuddiesError(error: unknown): boolean {
   if (error instanceof BuddyInviteError) return false
   if (error instanceof BuddyRemovalPendingError) return false
@@ -84,12 +76,10 @@ export function isRetryableBuddiesError(error: unknown): boolean {
   )
 }
 
-/** A bounded analytics value for a Buddies failure; never its message. */
 export function buddiesFailureReason(error: unknown): BuddySyncFailureReason {
-  // A request that got no answer in time is a connection problem too.
   if (isRelayError(error, 'network') || isRelayError(error, 'timeout'))
     return 'offline'
-  // No session: this device couldn't prove it's WitnessWork (ADR 0027).
+
   if (isRelayError(error, 'unverified'))
     return error.attestation === 'temporary' ? 'verify_later' : 'unverified'
   if (isRelayError(error, 'upgrade_required')) return 'update'

@@ -150,7 +150,7 @@ describe('calendar projection', () => {
       visits: [visit({ date }), { ...visit(), id: 'visit-2' }],
     })
     expect(result.entries.map((entry) => entry.key)).toEqual(['visit-2'])
-    // Malformed dates must leave an already-published event intact.
+
     expect(result.removed).toEqual([])
   })
   it('accepts appointments wholly inside the native date bounds', () => {

@@ -9,7 +9,6 @@ import {
   fittingMonthLabels,
 } from '@/features/profile/lib/profileStats'
 
-// Wednesday, 2026-10-07.
 const now = new Date(2026, 9, 7, 12)
 const SUNDAY = 0
 const TUESDAY = 2
@@ -23,9 +22,9 @@ const visit = (year: number, month: number, day: number) => ({
 describe('busiestWeekday', () => {
   it('picks the weekday with the most days of logged time', () => {
     const logged = daily(
-      ['2026-10-03', 60], // Sat
-      ['2026-09-26', 60], // Sat
-      ['2026-09-29', 300] // Tue
+      ['2026-10-03', 60],
+      ['2026-09-26', 60],
+      ['2026-09-29', 300]
     )
     expect(busiestWeekday(logged, [], now)).toBe(SATURDAY)
   })
@@ -36,9 +35,9 @@ describe('busiestWeekday', () => {
   })
 
   it('counts a day with both time and Visits once', () => {
-    const logged = daily(['2026-10-03', 60]) // Sat
+    const logged = daily(['2026-10-03', 60])
     const visits = [visit(2026, 9, 3), visit(2026, 9, 3), visit(2026, 9, 6)]
-    // Tue has one day, same as Sat; Sat wins on minutes.
+
     expect(busiestWeekday(logged, visits, now)).toBe(SATURDAY)
   })
 
@@ -48,16 +47,15 @@ describe('busiestWeekday', () => {
   })
 
   it('then breaks ties by the most recent day out', () => {
-    // A Sunday, a Tuesday and a Saturday, one Visit each; Tuesday is latest.
     const visits = [visit(2026, 9, 4), visit(2026, 9, 6), visit(2026, 9, 3)]
     expect(busiestWeekday(new Map(), visits, now)).toBe(TUESDAY)
   })
 
   it('ignores the 0h check-off entry and days outside the past year', () => {
     const logged = daily(
-      ['2026-10-03', 0], // Sat, check-off marker
-      ['2025-10-07', 60], // Tue, a year ago today
-      ['2026-10-10', 60] // Sat, in the future
+      ['2026-10-03', 0],
+      ['2025-10-07', 60],
+      ['2026-10-10', 60]
     )
     expect(busiestWeekday(logged, [visit(2025, 9, 7)], now)).toBeNull()
     const lastSunday = daily(['2026-10-04', 15])
@@ -65,7 +63,6 @@ describe('busiestWeekday', () => {
   })
 
   it('reads rehydrated Visit dates on their local day', () => {
-    // Stored dates come back from JSON as strings after a restart.
     const rehydrated = (date: string) => ({ date: date as unknown as Date })
     const visits = [visit(2026, 9, 6), visit(2026, 8, 29), visit(2026, 9, 3)]
       .map((v) => rehydrated(v.date.toISOString()))
@@ -78,8 +75,8 @@ describe('busiestWeekday', () => {
   })
 
   it('skips Visits that came with a shared contact', () => {
-    const logged = daily(['2026-10-03', 60]) // Sat
-    // The sender's Tuesdays outnumber the User's Saturday, but aren't theirs.
+    const logged = daily(['2026-10-03', 60])
+
     const received = [visit(2026, 9, 6), visit(2026, 8, 29)].map((v) => ({
       ...v,
       receivedAt: 1,
@@ -100,7 +97,7 @@ describe('contributionSummary', () => {
   it('counts days with service and the longest run across weeks', () => {
     const grid = [
       [0, 60, 30, 0, 0, 45, 60].map((m) => cell(m)),
-      // The run from the end of last week carries into this one.
+
       [90, 15, 0, 120, 0, 0, 0].map((m) => cell(m)),
     ]
     expect(contributionSummary(grid)).toEqual({
@@ -127,8 +124,6 @@ describe('contributionSummary', () => {
 
 describe('contributionMonthLabels', () => {
   it('names each month over its first week', () => {
-    // The 26 weeks to Sunday 2026-10-25 start on Monday 2026-04-27, so April
-    // has a single week before May begins.
     const grid = contributionGrid(new Map(), 26, new Date(2026, 9, 21, 12))
     expect(contributionMonthLabels(grid)).toEqual([
       { column: 0, label: 'Apr' },
@@ -154,7 +149,6 @@ describe('fittingMonthLabels', () => {
   const names = (kept: { label: string }[]) => kept.map((l) => l.label)
 
   it('drops a one-week month that would run into the next', () => {
-    // 14 pt columns: "Apr" (20 pt) starts 14 pt before "May".
     expect(names(fittingMonthLabels(labels, widths(20), 14, 4))).toEqual([
       'May',
       'Jun',
@@ -172,8 +166,6 @@ describe('fittingMonthLabels', () => {
   })
 
   it('thins out labels wider than a month of columns', () => {
-    // Large text: each label is wider than four 11 pt columns, so every other
-    // month shows.
     expect(names(fittingMonthLabels(labels, widths(50), 11, 4))).toEqual([
       'May',
       'Jul',
@@ -181,12 +173,11 @@ describe('fittingMonthLabels', () => {
   })
 
   it('drops a last label that would run past the end of the row', () => {
-    // Large text: "Jul" (50 pt) starts 126 pt in, but the row ends at 150 pt.
     expect(names(fittingMonthLabels(labels, widths(50), 14, 4, 150))).toEqual([
       'May',
       'Jun',
     ])
-    // It still shows when it fits.
+
     expect(names(fittingMonthLabels(labels, widths(9), 14, 4, 150))).toEqual([
       'Apr',
       'May',
@@ -196,8 +187,6 @@ describe('fittingMonthLabels', () => {
   })
 
   it("names the window's first month only over its own weeks", () => {
-    // 11 pt columns, 30 pt labels: May doesn't fit before June, and April
-    // would fit there only by reaching over May's weeks.
     const crowded = [
       { column: 0, label: 'Apr' },
       { column: 1, label: 'May' },
@@ -206,7 +195,7 @@ describe('fittingMonthLabels', () => {
     expect(
       names(fittingMonthLabels(crowded, { 0: 30, 1: 30, 4: 30 }, 11, 4))
     ).toEqual(['Jun'])
-    // With room over its own weeks, it shows.
+
     const roomy = [
       { column: 0, label: 'Apr' },
       { column: 3, label: 'May' },
@@ -228,7 +217,6 @@ describe('fittingMonthLabels', () => {
 })
 
 describe('contributionColumnAt', () => {
-  // 3 columns of 10 pt cells with 2 pt gaps: 34 pt wide.
   const stride = 12
   const width = 34
 

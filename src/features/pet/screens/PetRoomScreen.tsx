@@ -73,21 +73,18 @@ import PetVisitsSummary from '@/features/pet/components/PetVisitsSummary'
 import useShownPetVisits from '@/features/pet/hooks/useShownPetVisits'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'PetRoom'> & {
-  /** Buddies' pets visiting today. */
   visits: readonly PetVisit[]
 }
 
-/** Wider previews only make the sheet taller (iPad, landscape). */
 const PREVIEW_MAX_WIDTH = 420
-/** The sheet's side padding. */
+
 const INSET = 16
-/** Between cards, besides the room each card keeps for its ring. */
+
 const CARD_GAP = 4
-/** Between the corner buttons, so their frames don't touch. */
+
 const CORNER_GAP = 12
 const INFO_WIDTH = 280
 
-/** The hearts, in a button that says what they mean. */
 function HeartsInfo({
   hearts,
   count,
@@ -112,7 +109,6 @@ function HeartsInfo({
           accessibilityLabel={i18n.t('pet.a11y.hearts', { count })}
           accessibilityHint={i18n.t('pet.hearts.infoTitle')}
           pointerEffect='highlight'
-          // A full target around the row, without moving it.
           style={{ paddingVertical: 17, marginVertical: -17 }}
         >
           {hearts}
@@ -131,7 +127,6 @@ function HeartsInfo({
         </Text>
         <Text style={{ fontSize: theme.fontSize('sm'), color: palette.inkAlt }}>
           {i18n.t(
-            // Monthly reporters' hearts fill by the month (ADR 0031).
             monthlyHearts
               ? 'pet.intro.hearts.bodyMonths'
               : 'pet.intro.hearts.body'
@@ -142,10 +137,6 @@ function HeartsInfo({
   )
 }
 
-/**
- * What's in use for one part, over its cards: "Wearing: Cap", or with the
- * part's name where a tab has two ("Color: Sage").
- */
 function inUseText(section: LockerSection, tabSections: number): string {
   const { part, current } = section
   const item = roomOptionLabel(part, current)
@@ -161,17 +152,6 @@ function inUseText(section: LockerSection, tabSections: number): string {
     : i18n.t('pet.locker.inRoom', { item })
 }
 
-/**
- * The pet's details, opened from its Home card: a locker for what it owns, the
- * way games keep it apart from their store (ADR 0035). Its name and hearts
- * (tap: what they mean) with Share and Settings beside them, the coins it has
- * to spend beside the Shop, buddies' pets visiting today, then the room live
- * with a tab per part (its hat first). Each tab lists only what's owned, the
- * one in use ringed and named over the cards; a tap puts an item on at once,
- * and the last card opens the Shop for the rest. A sheet on iPhone, pulled down
- * to close; full screen on iPad, iPhone Duo open and Android, with Close, the
- * room beside the items from 760 points wide.
- */
 export default function PetRoomScreen({
   navigation,
   route,
@@ -183,35 +163,32 @@ export default function PetRoomScreen({
   const insets = useSafeAreaInsets()
   const bleed = useHorizontalBleed()
   const screen = useWindowDimensions()
-  // As RootStack presented it, when it opened.
+
   const [sheet] = useState(petOpensAsSheet)
-  // Android shows it full screen: the pinned room stops below the status bar.
+
   const statusBar = Platform.OS === 'android' ? insets.top : 0
   const scene = usePetRoomScene()
-  // Opened from an unlocked item's reveal: its tab first.
+
   const focus = route.params?.focus
   const [tab, setTab] = useState<RoomTab>(() =>
     focus ? unlockTab(unlockedPart(focus as RoomItemId).part) : 'hat'
   )
-  // The window's width until the screen is measured, so a wide window starts
-  // in the wide layout.
+
   const [width, setWidth] = useState(screen.width)
   const [gridWidth, setGridWidth] = useState(0)
-  // Everything that opened up is in front of the User now: no more news.
+
   useEffect(() => {
     settleAllPetUnlocks()
   }, [])
   useGameSheetBackground(palette)
 
-  // Released on another device while open.
   const hasPet = scene !== null
-  // Closes once it's on top again, so it never pops a screen above it.
+
   const focused = useIsFocused()
   useEffect(() => {
     if (!hasPet && focused) navigation.goBack()
   }, [hasPet, focused, navigation])
-  // Change pet, opened from Settings: the new pet runs into this room once
-  // the picker closes (and Home doesn't play it again).
+
   const sceneRef = useRef<PetSceneHandle>(null)
   const entrancePending = usePetSession((s) => s.entrance !== null)
   const visits = useShownPetVisits(realVisits)
@@ -221,8 +198,6 @@ export default function PetRoomScreen({
     if (species) sceneRef.current?.playEntrance(species)
   }, [focused, hasPet])
 
-  // What's in the room was picked, even before picks were noted, so it never
-  // says "New" once swapped out.
   const inRoom = scene
     ? ROOM_TABS.flatMap((key) =>
         lockerSections(key, scene.state.room, scene.state.unlockedItems).map(
@@ -353,7 +328,6 @@ export default function PetRoomScreen({
     >
       <PetSceneView
         ref={sceneRef}
-        // Until its entrance plays, the pet stays out of the room.
         input={entrancePending ? { ...scene.input, pet: null } : scene.input}
         accessibilityLabel={i18n.t('pet.a11y.scene', {
           name: scene.name,
@@ -485,7 +459,7 @@ export default function PetRoomScreen({
         style={{
           flex: 1,
           paddingTop: insets.top + 8,
-          // Under iPhone Duo's vertical bar too.
+
           marginLeft: -bleed.left,
           marginRight: -bleed.right,
           paddingLeft: bleed.left,
@@ -529,16 +503,12 @@ export default function PetRoomScreen({
 
   return (
     <>
-      {/* One scroll view as the sheet's root (react-native-screens tracks the
-      sheet's first scroll view); the room and tabs stay pinned under the name.
-      The cards sit on plain paper: textured as tall as all of them, it'd be one
-      huge image. */}
+      {}
       <ScrollView
         onLayout={(event) => setWidth(event.nativeEvent.layout.width)}
         style={{ flex: 1, marginTop: statusBar, backgroundColor: paper }}
         stickyHeaderIndices={[1]}
         contentContainerStyle={{
-          // iOS adds the bottom inset below the sheet itself.
           paddingBottom: Platform.OS === 'ios' ? 24 : sheetInsets.bottom + 8,
         }}
       >
@@ -552,8 +522,7 @@ export default function PetRoomScreen({
         >
           {header}
         </GamePaper>
-        {/* A pinned header takes its child's style for itself, so the paper
-        sits inside a bare view. */}
+        {}
         <View>
           <GamePaper
             palette={palette}

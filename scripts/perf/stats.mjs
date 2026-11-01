@@ -1,11 +1,3 @@
-// Pure helpers for scripts/perf: reading `[ww-perf]` log lines, per-run
-// metrics, summaries, the markdown report and before/after comparisons.
-
-/**
- * Reassembles `[ww-perf]` reports from device log messages. A report too long
- * for one log line (os_log and logcat truncate around 1 KB and 4 KB) arrives as
- * `[ww-perf~<id>:<i>/<n>] <slice>` parts (src/lib/perfProbe.ts).
- */
 export function createPerfReader() {
   const parts = new Map()
   return (message) => {
@@ -32,7 +24,6 @@ function safeJson(text) {
   }
 }
 
-/** Linear interpolation between order statistics (numpy's default). */
 export function percentile(values, p) {
   const sorted = values.filter(Number.isFinite).sort((a, b) => a - b)
   if (!sorted.length) return null
@@ -63,11 +54,6 @@ export function describe(values) {
 const span = (from, to) =>
   Number.isFinite(from) && Number.isFinite(to) ? to - from : null
 
-/**
- * One cold launch's metrics, in ms unless named otherwise. `launchWall` is the
- * runner's wall clock at the launch command (iOS) or the system's START log
- * line (Android), on the same clock as the app's `Date.now()`.
- */
 export function launchMetrics(report, extra = {}) {
   const marks = report.marks ?? {}
   const startup = report.startup ?? {}
@@ -76,8 +62,7 @@ export function launchMetrics(report, extra = {}) {
   const bundleToReadyMs = span(bundleStart, marks.navReady)
   return {
     endToEndMs,
-    // RN 0.86's startup.startTime marks runtime init, not process start, so
-    // the native time before JS is what end to end leaves after it.
+
     preJsMs: span(bundleToReadyMs, endToEndMs),
     bundleToReadyMs,
     bundleToInitializeMs: span(bundleStart, marks.initializeApp),
@@ -93,7 +78,6 @@ export function launchMetrics(report, extra = {}) {
   }
 }
 
-/** Median (and p90) of every metric, plus each counter's median. */
 export function summarizeLaunches(runs) {
   const metrics = {}
   for (const key of Object.keys(runs[0]?.metrics ?? {})) {
@@ -109,7 +93,6 @@ export function summarizeLaunches(runs) {
   }
 }
 
-/** Foreground or inactive cycles: blocking, plus each counter's deltas. */
 export function summarizeCycles(cycles) {
   return {
     blockedMs: describe(cycles.map((c) => c.report.blockedMs)),
@@ -133,8 +116,6 @@ export function medianCounters(list) {
   )
 }
 
-// ---------- reports ----------
-
 export const METRIC_LABELS = {
   endToEndMs: 'Launch to first screen (end to end)',
   preJsMs: 'Launch to bundle start (native, before JS)',
@@ -151,7 +132,6 @@ export const METRIC_LABELS = {
   iosLaunchCommandMs: 'iOS simctl launch command',
 }
 
-/** Counters worth a row in the foreground table even when they stay at 0. */
 export const KEY_COUNTERS = [
   'net:total',
   'sync:push',
@@ -184,7 +164,6 @@ function counterRows(counters) {
   return keys.map((key) => `| \`${key}\` | ${fmt(counters[key] ?? 0)} |`)
 }
 
-/** The markdown summary of one result file. */
 export function renderMarkdown(result) {
   const lines = [
     `# Perf baseline: \`${result.ref}\` (${result.sha.slice(0, 12)})`,
@@ -227,7 +206,7 @@ export function renderMarkdown(result) {
         lines.push(`### ${title}`, '', `Not measured: ${cycles.skipped}`, '')
         continue
       }
-      // No cycles ran (--foreground 0), so there is nothing to summarize.
+
       if (!cycles.summary) continue
       lines.push(`### ${title}`, '')
       lines.push(
@@ -271,9 +250,6 @@ function describeConditions(data) {
   return `1-min average ${fmt(round(percentile(load, 0.5), 2))} (max ${fmt(round(Math.max(...load.filter(Number.isFinite)), 2))}), ${fmt(round(percentile(free, 0.5), 0))}% memory free, ${Math.max(...others)} other leased devices`
 }
 
-// ---------- compare ----------
-
-/** Rows comparing two results: medians before and after, and the change. */
 export function compareResults(before, after) {
   const rows = []
   const platforms = Object.keys(before.platforms).filter(

@@ -18,11 +18,6 @@ import type { ContextMenuEntries } from '@/components/ui/ContextMenu'
 import type { RootStackNavigation } from '@/types/rootStack'
 import type { Trip } from '@/types/mileage'
 
-/**
- * Edit, Log Again, Share, Copy, and Delete for one trip — row and details. The
- * share text is built when it's asked for, from the mileage and people as they
- * are then, so a row doesn't draw again each time a Shared Car syncs.
- */
 export default function useTripActions() {
   const navigation = useNavigation<RootStackNavigation>()
   const format = useMileageFormatter()

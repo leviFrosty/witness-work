@@ -23,32 +23,28 @@ import {
 import { coordinateText } from '@/features/route-planning/lib/coordinateText'
 
 export type RouteStop = {
-  /** Unique within the day: `followUp:<visitId>` or `plan:<planId>`. */
   key: string
   kind: 'followUp' | 'plan'
-  /** A Follow-up's Contact. */
+
   contactId?: string
-  /** The Contact's name, or the Plan's title or place. */
+
   title: string
-  /** The address or place line under the title, when there is one. */
+
   subtitle?: string
-  /** Local minutes since midnight. */
+
   startTimeInMinutes: number
-  /** A Plan with no set time; `startTimeInMinutes` only orders it. */
+
   anytime?: boolean
-  /** A Plan's planned minutes, the default time spent there. */
+
   minutes?: number
   coordinate: Coordinate
-  /**
-   * What navigation apps receive: the address, as single-stop navigation does,
-   * unless the pin was placed by hand or there's no address.
-   */
+
   destination: string
 }
 
 export type DayRouteStops = {
   stops: RouteStop[]
-  /** Open Follow-ups and Plans today that have no map location. */
+
   missingLocationCount: number
 }
 
@@ -117,14 +113,13 @@ const planStop = (
 
 export type PlanOnDay = {
   plan: DayPlan | RecurringPlan
-  /** A Recurring Plan's date, rather than a one-time Plan. */
+
   recurring: boolean
-  /** Local minutes since midnight. */
+
   time: number
   anytime: boolean
 }
 
-/** The day's Day Plans and Recurring Plan instances, with their start times. */
 export const plansOnDay = ({
   day,
   dayPlans,
@@ -150,11 +145,6 @@ export const plansOnDay = ({
   })),
 ]
 
-/**
- * Today's stops: open Follow-ups for active Contacts (one per Contact) and the
- * day's Plans, each only when it has a map location, in time order. Follow-ups
- * already answered by a Visit today are done and drop out.
- */
 export const dayRouteStops = ({
   day,
   conversations,
@@ -204,7 +194,6 @@ export const dayRouteStops = ({
   })) {
     const stop = planStop(plan, time, anytime)
     if (stop) stops.push(stop)
-    // A Plan without a place isn't a stop the User forgot to locate.
     else if (plan.location) missingLocationCount++
   }
 

@@ -10,12 +10,11 @@ import {
 
 const random = () => new Uint8Array(randomBytes(32))
 
-/** The native store, the server account, and Buddies, all in memory. */
 function setup({
   key = null as Uint8Array | null,
   loss = NO_LOSS as Omit<AccountKeyLoss, 'keptElsewhere'>,
   accountId = 'account-id' as string | null,
-  /** Another device signed in to the account, or the error reading it. */
+
   elsewhere = false as boolean | Error,
 } = {}) {
   const log: string[] = []
@@ -37,7 +36,7 @@ function setup({
       log.push(`account.ensure:${toB64u(accountKey)}`)
       return accountId ? { accountId } : null
     }),
-    // Ends the old key's session; none opens until the swap is done.
+
     changeKey: vi.fn(
       async (
         swap: () => Promise<void>,
@@ -57,7 +56,7 @@ function setup({
     loss: vi.fn(() => buddiesLoss),
     release: vi.fn(async (scope: 'device' | 'account') => {
       log.push(`buddies.release:${scope}`)
-      // Delete Buddies deletes the seed; either way Buddies resets.
+
       if (scope === 'account') stored = null
       buddiesLoss = NO_LOSS
     }),
@@ -110,7 +109,7 @@ describe('account key service', () => {
     })
     expect(stored()).toBe(toB64u(newKey))
     expect(buddies.release).not.toHaveBeenCalled()
-    // The old key's session ends before the new key is stored.
+
     expect(log).toEqual([
       'account.close',
       'store.replace',
@@ -219,7 +218,7 @@ describe('account key service', () => {
     expect(await service.lossIfReplaced(random())).toMatchObject({
       keptElsewhere: false,
     })
-    // Another device signed in after the warning was shown.
+
     account.signedInElsewhere.mockResolvedValueOnce(true)
     await service.replace(random(), { confirmedLoss: true })
     expect(log[0]).toBe('buddies.release:device')
@@ -268,7 +267,7 @@ describe('account key service', () => {
       }),
     }
     await service.replace(newKey, { session })
-    // Adopted before any other session can open.
+
     expect(log).toEqual([
       'account.close',
       'store.replace',
@@ -287,7 +286,7 @@ describe('account key service', () => {
     await expect(service.replace(random(), { session })).rejects.toThrow(
       'keychain'
     )
-    // The old session ended first; the old key's next call opens another.
+
     expect(log).toEqual(['account.close'])
     expect(stored()).toBe(toB64u(key))
     expect(buddies.forget).not.toHaveBeenCalled()

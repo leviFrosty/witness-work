@@ -11,10 +11,6 @@ interface Props extends ViewProps {
     | undefined
 }
 
-/**
- * Shared card shape/border styles — use this to keep non-Card pressables
- * consistent.
- */
 export const useCardStyle = () => {
   const theme = useTheme()
   return {

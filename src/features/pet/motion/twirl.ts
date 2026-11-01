@@ -1,16 +1,10 @@
-/**
- * The scratch twirl (hidden moment: a long, unbroken scrub on the pet), the
- * same for every species: a little crouch, a hop with three quick turns in
- * place, a landing, then it's happy with a burst of hearts.
- */
 import type { MotionTable } from './types'
 
-/** End of the crouch. */
 const CROUCH_MS = 200
-/** The turns, one flip per frame of the 10 fps clock. */
+
 const SPIN_MS = 600
 const FLIP_MS = 100
-/** When it lands and the hearts burst. */
+
 const LAND_MS = CROUCH_MS + SPIN_MS
 
 export const TWIRL: MotionTable = {

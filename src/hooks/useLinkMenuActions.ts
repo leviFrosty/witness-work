@@ -5,17 +5,13 @@ import Haptics from '@/lib/haptics'
 import i18n from '@/lib/locales'
 import { shareUrl } from '@/lib/share'
 
-/**
- * Long-press actions for a row that opens a website: Open (the row's own
- * press), Copy Link and Share…. Empty without a `url`.
- */
 export default function useLinkMenuActions({
   url,
   label,
   onOpen,
 }: {
   url?: string
-  /** Shared along with the link. */
+
   label?: string
   onOpen?: () => void
 }): ContextMenuEntries {

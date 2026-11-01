@@ -56,11 +56,6 @@ import type { RootStackNavigation } from '@/types/rootStack'
 import type { MileagePeriodKind } from '@/types/mileage'
 import { useFoldColumn } from '@/components/ui/layout/FoldPane'
 
-/**
- * Trip history and report for a Day, Week, Month, or Service Year. On Shared
- * Cars it can show one person's trips, says who logged each, and pulls to sync
- * them.
- */
 export default function MileageScreen() {
   const theme = useTheme()
   const insets = useSafeAreaInsets()
@@ -72,17 +67,15 @@ export default function MileageScreen() {
   const { exportReport } = useMileageExport()
   const logTrip = useLogTrip('mileage_screen')
   const [kind, setKind] = useState<MileagePeriodKind>('month')
-  // The floating Log Trip button grows with the text size; the list leaves
-  // room to scroll its last row clear of it.
+
   const [logTripHeight, setLogTripHeight] = useState(0)
   const [anchor, setAnchor] = useState(() => toDateKey(new Date()))
   const sharing = useMileageSharing()
   const people = useMileagePeople()
-  // A Shared Car on the device shows who logged its trips, and can be
-  // filtered, even while Shared Cars is off here; only syncing waits.
+
   const shared = people.shared
   const [chosenFilter, setChosenFilter] = useState<PersonFilter>(EVERYONE)
-  // Back to Everyone once the person shown has left every car.
+
   const personFilter = currentPersonFilter(chosenFilter, people)
   const [refreshing, setRefreshing] = useState(false)
 
@@ -118,14 +111,13 @@ export default function MileageScreen() {
 
   const choosePerson = (filter: PersonFilter) => {
     setChosenFilter(filter)
-    // Once a session (`analyticsFrequency`): reach, not every switch.
+
     if (filter !== EVERYONE)
       analytics.capture('mileage_person_filter_used', {
         filter: filter === ME ? 'me' : 'person',
       })
   }
 
-  // A pull is a deliberate ask: every Shared Car syncs now.
   const refresh = async () => {
     setRefreshing(true)
     try {
@@ -135,7 +127,6 @@ export default function MileageScreen() {
     }
   }
 
-  // A bar opens its day (Week, Month) or month (Service Year).
   const openBucket = (bucket: MileageBucket) => {
     setKind(bucket.kind)
     setAnchor(bucket.start)

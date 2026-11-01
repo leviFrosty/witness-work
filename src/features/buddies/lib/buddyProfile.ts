@@ -21,7 +21,6 @@ import { formatDisplay } from '@/lib/dates'
 const MAX_NAME_LENGTH = 60
 const THUMBNAIL_SIZE = 96
 
-/** The Profile "… since" badge each Tenure kind renders with. */
 export const BUDDY_TENURE_BADGES: Record<BuddyTenureKind, TranslationKey> = {
   pioneer: 'profileStatPioneer',
   specialPioneer: 'profileStatSpecialPioneer',
@@ -33,7 +32,6 @@ const KIND_BY_BADGE = Object.fromEntries(
   Object.entries(BUDDY_TENURE_BADGES).map(([kind, badge]) => [badge, kind])
 ) as Record<TranslationKey, BuddyTenureKind>
 
-/** The Tenure buddies see for a role and Tenure Start Date, if any. */
 export function buddyTenureFor(
   role: Publisher,
   tenureStartDate: Date | null
@@ -47,11 +45,6 @@ export function buddyTenureFor(
 
 const isLocalImage = (value: string) => value.startsWith('file://')
 
-/**
- * The Profile's emoji, or its photo as the thumbnail Buddy Cards carry, once
- * that exists (`refreshBuddyAvatarThumbnail`); before the User chose whether to
- * share it.
- */
 export function currentBuddyAvatar(): BuddyAvatar | undefined {
   const { avatar } = useProfile.getState()
   const thumbnail = useBuddies.getState().avatarThumbnail
@@ -62,12 +55,6 @@ export function currentBuddyAvatar(): BuddyAvatar | undefined {
   return undefined
 }
 
-/**
- * The Profile name, avatar, Tenure, and earned badges buddies can see, before
- * the engine drops whatever the User chose not to share. A photo is shared only
- * once its thumbnail exists (`refreshBuddyAvatarThumbnail`); badges only while
- * Badges is on.
- */
 export function currentBuddyProfile(): BuddyProfile {
   const { name, avatar } = useProfile.getState()
   const {
@@ -90,10 +77,6 @@ export function currentBuddyProfile(): BuddyProfile {
   }
 }
 
-/**
- * Shrinks the Profile photo for Buddy Cards when it changed. Returns whether
- * the shared avatar changed, so the caller can republish.
- */
 export async function refreshBuddyAvatarThumbnail(): Promise<boolean> {
   const { avatar } = useProfile.getState()
   const current = useBuddies.getState().avatarThumbnail
@@ -104,7 +87,6 @@ export async function refreshBuddyAvatarThumbnail(): Promise<boolean> {
   }
   if (current?.source === avatar.value) return false
   const result = await ImageManipulator.manipulateAsync(
-    // Drop the `?t=` cache-buster; it isn't part of the file path.
     avatar.value.split('?')[0],
     [{ resize: { width: THUMBNAIL_SIZE, height: THUMBNAIL_SIZE } }],
     {
@@ -121,13 +103,8 @@ export async function refreshBuddyAvatarThumbnail(): Promise<boolean> {
   return true
 }
 
-/** A guest list's photo: small, since five of them share one event. */
 const GUEST_THUMBNAIL_SIZE = 40
 
-/**
- * A buddy's card thumbnail (base64 JPEG) made small enough for a Plan's guest
- * list, as base64 JPEG.
- */
 export async function shrinkGuestAvatar(
   jpegBase64: string
 ): Promise<string | undefined> {
@@ -139,10 +116,6 @@ export async function shrinkGuestAvatar(
   return result.base64 ?? undefined
 }
 
-/**
- * A buddy's streak as it stands today: hidden once its last day has passed,
- * when their app hasn't run to publish what happened since.
- */
 export function buddyStreakCount(
   streak: BuddyStreak | undefined,
   now: Date = new Date()
@@ -158,14 +131,12 @@ const BUDDY_TENURE_LABELS: Record<BuddyTenureKind, TranslationKey> = {
   regularAuxiliary: 'buddyTenure_regularAuxiliary',
 }
 
-/** "Regular pioneer since September 2019" for a buddy's shared Tenure. */
 export function buddyTenureLabel(tenure: BuddyTenure): string {
   return i18n.t(BUDDY_TENURE_LABELS[tenure.kind], {
     date: formatDisplay(moment(tenure.since, 'YYYY-MM'), 'MMMM YYYY'),
   })
 }
 
-/** The User's private nickname for a buddy, else the buddy's own name. */
 export function buddyDisplayName(buddy: {
   name: string
   nickname?: string

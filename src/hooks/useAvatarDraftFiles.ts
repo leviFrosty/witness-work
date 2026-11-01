@@ -3,14 +3,12 @@ import * as FileSystem from 'expo-file-system/legacy'
 import { isManagedAvatarPath } from '@/lib/avatarFilePolicy'
 import { logger } from '@/lib/logger'
 
-/** Own immutable editor files until commit; cancellation also rejects late IO. */
 export function useAvatarDraftFiles() {
   const files = useRef(new Set<string>())
   const committed = useRef(new Set<string>())
   const mounted = useRef(true)
   const erase = async (paths: string[]) => {
     for (const path of paths) {
-      // A second completion or delayed close can arrive after the first commit.
       if (committed.current.has(path)) continue
       if (
         !FileSystem.documentDirectory ||

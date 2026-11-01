@@ -4,28 +4,13 @@ import useTheme from '@/contexts/theme'
 import { forwardSign } from '@/lib/direction'
 
 interface SimpleProgressBarProps {
-  /**
-   * Provide a number between 0 and 1.
-   *
-   * @example
-   *   // To display 25%
-   *   0.25
-   */
   percentage: number
   color?: string
   height?: number
   width?: number
-  /**
-   * Enable pulse/shimmer/glow animation effects
-   *
-   * @default true
-   */
+
   animated?: boolean
-  /**
-   * Duration of pulse animation in milliseconds
-   *
-   * @default 2000
-   */
+
   pulseDuration?: number
 }
 
@@ -52,7 +37,6 @@ const SimpleProgressBar = ({
       Math.min(percentage, 1.0) === 0 ||
       shimmerContainerWidth === 0
     ) {
-      // Stop animation if not animated, no progress, or no measurement yet
       if (animationRef.current) {
         animationRef.current.stop()
         animationRef.current = null
@@ -61,7 +45,6 @@ const SimpleProgressBar = ({
       return
     }
 
-    // Create pulse animation that moves from left to right
     const createPulseAnimation = () => {
       pulseAnimation.setValue(0)
 
@@ -72,15 +55,15 @@ const SimpleProgressBar = ({
             duration: pulseDuration,
             useNativeDriver: true,
           }),
-          // Add a small pause at the end
+
           Animated.delay(300),
-          // Instant reset to avoid jarring flash
+
           Animated.timing(pulseAnimation, {
             toValue: 0,
-            duration: 0, // Instant reset - no visible movement
+            duration: 0,
             useNativeDriver: true,
           }),
-          // Small pause before next pulse
+
           Animated.delay(200),
         ]),
         { iterations: -1 }
@@ -89,16 +72,13 @@ const SimpleProgressBar = ({
       return animation
     }
 
-    // Stop existing animation
     if (animationRef.current) {
       animationRef.current.stop()
     }
 
-    // Start new animation
     animationRef.current = createPulseAnimation()
     animationRef.current.start()
 
-    // Cleanup on unmount or dependency change
     return () => {
       if (animationRef.current) {
         animationRef.current.stop()
@@ -113,16 +93,10 @@ const SimpleProgressBar = ({
     shimmerContainerWidth,
   ])
 
-  // Calculate pulse position dynamically based on shimmer container width
-  // The shimmer should travel across the entire shimmer container (which is already the filled portion)
-  // Runs along the fill from its reading start (mirrored in RTL).
   const sign = forwardSign()
   const pulseTranslateX = pulseAnimation.interpolate({
     inputRange: [0, 1],
-    outputRange: [
-      sign * -60, // Start hidden before the fill's start
-      sign * Math.max(200, shimmerContainerWidth + 60), // End past the shimmer container
-    ],
+    outputRange: [sign * -60, sign * Math.max(200, shimmerContainerWidth + 60)],
   })
 
   return (
@@ -135,7 +109,7 @@ const SimpleProgressBar = ({
         width: width ?? '100%',
       }}
     >
-      {/* External glow overlay (behind, not clipped) */}
+      {}
       <View
         pointerEvents='none'
         style={{
@@ -160,7 +134,7 @@ const SimpleProgressBar = ({
           borderRadius: theme.numbers.borderRadiusSm,
         }}
       >
-        {/* Progress bar (clipped) */}
+        {}
         <View
           style={{
             backgroundColor: progressColor,
@@ -170,14 +144,14 @@ const SimpleProgressBar = ({
           }}
         />
 
-        {/* Pulse/Shimmer overlay - only visible when animated and has progress */}
+        {}
         {animated && Math.min(percentage, 1.0) > 0 && (
           <View
             style={{
               position: 'absolute',
               top: 0,
               left: 0,
-              width: `${progressWidth}%`, // Only cover the filled portion
+              width: `${progressWidth}%`,
               height: '100%',
               overflow: 'hidden',
               borderRadius: theme.numbers.borderRadiusSm,
@@ -192,11 +166,11 @@ const SimpleProgressBar = ({
                 position: 'absolute',
                 top: 0,
                 height: '100%',
-                width: 60, // Fixed width shimmer that works with pixel-based transform
+                width: 60,
                 transform: [{ translateX: pulseTranslateX }],
               }}
             >
-              {/* Shimmer gradient effect using multiple overlays */}
+              {}
               <View
                 style={{
                   position: 'absolute',

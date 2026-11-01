@@ -16,11 +16,6 @@ const FAILURE_MESSAGES: Partial<
   unavailable: 'googleDriveConnectFailed_unavailable',
 }
 
-/**
- * Android: connects Google Drive from a user action and explains a failure.
- * Cancelling Google's screen is a choice, so it shows nothing. Resolves to
- * whether Drive is now connected.
- */
 export async function connectGoogleDriveFromUser({
   source,
   selectAccount = false,

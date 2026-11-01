@@ -44,11 +44,6 @@ import { tracking } from '@/lib/tracking'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'RescheduleVisit'>
 
-/**
- * Outlined icon-only button used for the contact card's call/text quick
- * actions. Deliberately low-priority (no fill, subdued border) so it doesn't
- * compete with the primary Reschedule CTA below.
- */
 const QuickActionIconButton = ({
   icon,
   label,
@@ -78,13 +73,6 @@ const QuickActionIconButton = ({
   )
 }
 
-/**
- * Parallel card used for the two mutually-exclusive actions on this screen
- * (reschedule the follow-up vs log a new conversation). The primary variant
- * uses a filled accent CTA; the secondary variant uses an outlined CTA so the
- * visual weight matches the semantic hierarchy — "Reschedule" is the default
- * path for this screen, "Log visit" is the alternate.
- */
 const ChoiceCard = ({
   icon,
   title,
@@ -160,11 +148,6 @@ const ChoiceCard = ({
   )
 }
 
-/**
- * "— or —" divider between the two ChoiceCards. Sits between primary and
- * secondary actions to reinforce the either/or relationship without the heavier
- * connector tree that previously wrapped this section.
- */
 const OrDivider = () => {
   const theme = useTheme()
   return (
@@ -196,11 +179,6 @@ const OrDivider = () => {
   )
 }
 
-/**
- * One-tap shortcut for the most common reschedule destinations. The inline
- * datetime picker below is always available as the "custom" escape hatch, so
- * the chips deliberately don't include a Custom option.
- */
 const QuickDateChips = ({
   value,
   onPick,
@@ -209,10 +187,7 @@ const QuickDateChips = ({
   onPick: (d: Date) => void
 }) => {
   const theme = useTheme()
-  // Chips shift the day relative to *now* (not the original missed date) so
-  // the labels always match reality — "Tomorrow" actually means tomorrow.
-  // They carry the currently-picked time forward so the user doesn't have to
-  // re-enter it after adjusting with the picker.
+
   const options = useMemo(() => {
     const h = value.getHours()
     const m = value.getMinutes()
@@ -274,16 +249,6 @@ const QuickDateChips = ({
   )
 }
 
-/**
- * Reschedule sheet — surfaces from the Appointments widget and home-screen
- * "Missed Conversations" card for overdue follow-ups. The intent is "I missed
- * this — what now?", so the layout groups all contact-related info into one
- * card at the top (with the user's previous note for quick context), and offers
- * two mutually exclusive paths: reschedule (primary) or log the visit that
- * already happened (secondary). "Dismiss follow-up" is a low-priority iconified
- * text button at the bottom since it's destructive and rarely the intended
- * action.
- */
 const RescheduleVisitScreen = ({ route, navigation }: Props) => {
   const theme = useTheme()
   const insets = useSafeAreaInsets()
@@ -301,10 +266,6 @@ const RescheduleVisitScreen = ({ route, navigation }: Props) => {
     [conversations, visitId]
   )
 
-  // Default the picker to "tomorrow at the original time" so the user can
-  // accept the easiest possible reschedule with one tap. Anchored to now (not
-  // the original missed date) so the new date is always in the future — for
-  // an overdue follow-up, "original + 1 day" can still be in the past.
   const originalDate = conversation?.followUp?.date
     ? new Date(conversation.followUp.date)
     : new Date()
@@ -346,9 +307,6 @@ const RescheduleVisitScreen = ({ route, navigation }: Props) => {
   const handleReschedule = useCallback(async () => {
     if (!conversation) return
 
-    // Keep the offset this Follow-up was saved with; the preference is only
-    // the default for one that never had a reminder. `useReconciledReminders`
-    // replaces this device's OS reminder from the saved intent.
     const followUp = conversation.followUp!
     const offsetMinutes = followUp.notifyMe
       ? (savedReminderOffsetMinutes(new Date(followUp.date), followUp) ??
@@ -366,13 +324,11 @@ const RescheduleVisitScreen = ({ route, navigation }: Props) => {
         ...followUp,
         date: newDate,
         reminderOffsetMinutes: offsetMinutes ?? undefined,
-        // The fire time, for older app versions on other devices.
+
         notifications: fireAt
           ? [{ id: reminderRequestId('visit', conversation.id), date: fireAt }]
           : [],
-        // Rescheduling re-activates a previously dismissed follow-up — the
-        // user has explicitly committed to a new date, so the dismissal no
-        // longer applies.
+
         dismissed: false,
       },
     })
@@ -392,10 +348,7 @@ const RescheduleVisitScreen = ({ route, navigation }: Props) => {
 
   const handleAddConversation = useCallback(() => {
     if (!contact) return
-    // Not marking the original follow-up complete — this opens Add
-    // Visit prefilled so the user can log the actual conversation
-    // they had (or will have). The original follow-up stays attached to
-    // the prior conversation until the user explicitly reschedules it.
+
     dismiss()
     ;(navigation as unknown as RootStackNavigation).navigate('Visit Form', {
       contactId: contact.id,
@@ -426,11 +379,6 @@ const RescheduleVisitScreen = ({ route, navigation }: Props) => {
     )
   }
 
-  // moment's fromNow(true) returns "5 hours" / "2 days" without the trailing
-  // "ago", letting us compose a localized "{time} overdue" label that's more
-  // scannable than the absolute timestamp alone.
-  // Reschedule is also offered on upcoming follow-ups (Home's context menu),
-  // which show when they're due instead.
   const isOverdue = moment(originalDate).isBefore(moment())
   const dueLabel = isOverdue
     ? i18n.t('overdueBy', {
@@ -448,11 +396,7 @@ const RescheduleVisitScreen = ({ route, navigation }: Props) => {
           gap: 20,
         }}
       >
-        {/* Contact card — tap opens full contact details, long-press offers
-            the contact menu. Shows a tinted OVERDUE pill with relative time,
-            the name, the user's previous note (so they can pick up the thread
-            before reaching out), the follow-up topic, and quick call/text
-            actions (outside the long-press target so they stay tappable). */}
+        {}
         <View
           style={{
             backgroundColor: theme.colors.backgroundLighter,
@@ -577,8 +521,7 @@ const RescheduleVisitScreen = ({ route, navigation }: Props) => {
           ) : null}
         </View>
 
-        {/* Two mutually-exclusive paths. Primary (reschedule) is filled,
-            secondary (log the visit that already happened) is outlined. */}
+        {}
         <View>
           <ChoiceCard
             icon={Calendar1Icon}
@@ -627,8 +570,6 @@ const RescheduleVisitScreen = ({ route, navigation }: Props) => {
           }}
         >
           <IconButton
-            // Soft dismiss — the reminder is silenced, the conversation and
-            // its data stay put. A trash icon over-promised destruction.
             icon={BellOffIcon}
             size={12}
             iconStyle={{ color: theme.colors.textAlt }}

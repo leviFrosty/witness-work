@@ -61,7 +61,7 @@ describe('contactShareLink round-trip', () => {
       date: conversation.followUp!.date.toISOString(),
       notifyMe: false,
     })
-    // A file shared by an older build may still carry them.
+
     Object.assign(parsed.conversations[0].followUp!, {
       calendarIncluded: true,
       calendarDurationMinutes: 90,
@@ -229,13 +229,11 @@ describe('buildContactShareLink trimming', () => {
     Array.from({ length: count }, (_, i) =>
       makeConversation({
         id: `conv-${i}`,
-        // Spread dates so sort is deterministic: i=0 is oldest.
+
         date: new Date(2026, 0, 1 + i),
       })
     )
 
-  // Deterministic incompressible data: LCG-based pseudo-random so gzip
-  // can't collapse it, but the test is fully reproducible.
   const makeIncompressible = () => {
     let seed = 0x12345678
     return (len: number) => {
@@ -413,10 +411,7 @@ describe('buildContactShareLink customFieldDefs embedding', () => {
     const contact = makeContact({
       customFields: { 'def-1': 'Acme' },
     })
-    const defs = [
-      makeDef('def-1', 'Company'),
-      makeDef('def-2', 'Department'), // unreferenced — should NOT be embedded
-    ]
+    const defs = [makeDef('def-1', 'Company'), makeDef('def-2', 'Department')]
     const { url } = buildContactShareLink(contact, [], defs)
     const parsed = parseContactShareLink(url) as {
       customFieldDefs?: Array<{ id: string; label: string }>

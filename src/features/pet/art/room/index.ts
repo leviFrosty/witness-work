@@ -1,13 +1,3 @@
-/**
- * The pet's room: a registry of swappable parts, the starter set, the unlock
- * order, and the cached room base (everything that doesn't move).
- *
- * Option ids, the starter set and `UNLOCK_ORDER` live once in `@/types/pet`
- * (shared with the store and unlock logic). To add an option: add its id there
- * (and to `UNLOCK_ORDER` unless it's a starter; append only, so earlier unlocks
- * keep their items), then add its art to the part module's table; the type
- * checker flags the missing art.
- */
 import { createBuffer, createLru, type PixelBuffer } from '@/lib/pixelArt'
 import {
   DEFAULT_ROOM,
@@ -58,28 +48,23 @@ export * from './wall'
 export * from './window'
 export { drawPlant } from './plant'
 
-/** Window time setting: a fixed time, or `live` (device clock). */
 export type WindowTime = 'live' | TimeOfDay
-/** Window season setting: a fixed season, or `live` (date and hemisphere). */
+
 export type WindowSeason = 'live' | Season
 
-/** The room as the user configured it (the persisted room settings). */
 export type RoomConfig = PetRoomSettings
-/** A new pet's room. */
+
 export const DEFAULT_ROOM_CONFIG: RoomConfig = DEFAULT_ROOM
 
-/** Free from the start (window and sign options are always free). */
 export const STARTER_ITEMS: readonly RoomItemId[] = STARTER_ROOM_ITEMS
 export { roomItemId, UNLOCK_ORDER }
 export type { RoomItemId }
 
-/** One swappable part: its options in picker order and the free ones. */
 export interface RoomPart<T extends string> {
   readonly options: readonly T[]
   readonly starter: readonly T[]
 }
 
-/** Options of an unlockable part that are in {@link STARTER_ITEMS}. */
 function startersOf<T extends string>(
   part: string,
   options: readonly T[]
@@ -101,7 +86,6 @@ const free = <T extends string>(options: readonly T[]): RoomPart<T> => ({
   starter: options,
 })
 
-/** Every swappable part of the room, by picker tab. */
 export const ROOM_PARTS = {
   windowTime: free<WindowTime>(['live', ...TIMES_OF_DAY]),
   windowSeason: free<WindowSeason>(['live', ...SEASONS]),
@@ -117,11 +101,9 @@ export const ROOM_PARTS = {
 
 export type RoomPartId = keyof typeof ROOM_PARTS
 
-/** The option type of a part. */
 export type RoomPartOption<P extends RoomPartId> =
   (typeof ROOM_PARTS)[P]['options'][number]
 
-/** Whether `value` is an option of `part`. */
 export function isRoomOption<P extends RoomPartId>(
   part: P,
   value: unknown
@@ -132,7 +114,6 @@ export function isRoomOption<P extends RoomPartId>(
   )
 }
 
-/** A room with the live window resolved to a concrete time and season. */
 export interface ResolvedRoom {
   readonly time: TimeOfDay
   readonly season: Season
@@ -143,11 +124,10 @@ export interface ResolvedRoom {
   readonly shelf: ShelfId
   readonly lamp: LampId
   readonly sign: SignId
-  /** Worn by the pet, not part of the room base; absent is none. */
+
   readonly hat?: HatId
 }
 
-/** Resolves `live` window settings with the caller's current time and season. */
 export function resolveRoom(
   config: RoomConfig,
   live: { readonly time: TimeOfDay; readonly season: Season }
@@ -167,20 +147,14 @@ export function resolveRoom(
   }
 }
 
-/** Moments drawn into the static room. */
 export interface RoomDecor {
-  /** Rainbow in the window (callers skip it at night). */
   readonly rainbow?: boolean
-  /**
-   * Keepsakes on the sill, left to right (the first 5 are drawn; pass the
-   * newest).
-   */
+
   readonly sill?: readonly GiftKind[]
-  /** A gift waiting on the rug. */
+
   readonly gift?: GiftKind | null
 }
 
-/** Paints the static room into `buf` (180 × 100). */
 export function paintRoomBase(
   buf: PixelBuffer,
   room: ResolvedRoom,
@@ -206,12 +180,6 @@ export function paintRoomBase(
 
 const bases = createLru<PixelBuffer>(8)
 
-/**
- * Room + sign keys by object identity. A live scene passes the same room and
- * sign objects every frame, so the key is built once instead of serializing the
- * sign 10 times a second. Other objects with the same values get the same key,
- * so they still hit the base cache. Treat both as immutable.
- */
 const roomSignKeys = new WeakMap<ResolvedRoom, WeakMap<SignData, string>>()
 
 function roomSignKey(room: ResolvedRoom, sign: SignData): string {
@@ -239,7 +207,6 @@ function roomSignKey(room: ResolvedRoom, sign: SignData): string {
   return key
 }
 
-/** A stable cache key for a room base. Sign values only matter when shown. */
 export function roomBaseKey(
   room: ResolvedRoom,
   sign: SignData,
@@ -249,11 +216,6 @@ export function roomBaseKey(
   return `${roomSignKey(room, sign)}|${decor.rainbow ? 1 : 0}|${sill}|${decor.gift ?? ''}`
 }
 
-/**
- * The static room (wall, floor, window, shelf, sign, plant, stool, bed back
- * layer, keepsakes): 180 × 100, memoized by {@link roomBaseKey}. Shared, so
- * callers must copy before drawing on it.
- */
 export function drawRoomBase(
   room: ResolvedRoom,
   sign: SignData,

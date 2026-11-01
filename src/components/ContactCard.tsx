@@ -10,11 +10,6 @@ import useTheme from '@/contexts/theme'
 import useAccessibilityTextSize from '@/hooks/useAccessibilityTextSize'
 import type { Contact } from '@/types/contact'
 
-/**
- * The card every Contact list item sits on: the Contacts list's rounded card
- * with its staleness stripe down the left edge. Put a {@link ContactCardBody}
- * inside it, alone or beside buttons that act on the Contact.
- */
 export default function ContactCard({
   stripeColor,
   selected = false,
@@ -22,9 +17,8 @@ export default function ContactCard({
   children,
   ...props
 }: ViewProps & {
-  /** The Contact's staleness color; see `useContactStalenessColor`. */
   stripeColor?: string
-  /** Tints the card, for the selected row of a split view or Select mode. */
+
   selected?: boolean
 }) {
   const theme = useTheme()
@@ -63,11 +57,6 @@ export default function ContactCard({
   )
 }
 
-/**
- * A Contact's avatar, name, and gender, with a one-line `subtitle` under the
- * name. `leading` sits before the avatar (e.g. a Select mode check) and
- * `trailing` after the text (badges, a chevron).
- */
 export function ContactCardBody({
   contact,
   name,
@@ -76,14 +65,14 @@ export function ContactCardBody({
   trailing,
 }: {
   contact: Contact
-  /** Replaces the plain name, e.g. with a search highlight. */
+
   name?: ReactNode
   subtitle?: ReactNode
   leading?: ReactNode
   trailing?: ReactNode
 }) {
   const largeText = useAccessibilityTextSize()
-  // A long name at accessibility sizes shrinks rather than breaking mid-word.
+
   const Name = largeText ? WholeWordsText : Text
   return (
     <View style={{ alignItems: 'center', flexDirection: 'row', gap: 12 }}>
@@ -117,7 +106,6 @@ export function ContactCardBody({
   )
 }
 
-/** The small grey line under a Contact's name, with an optional icon. */
 export function ContactCardSubtitle({
   icon,
   color,
@@ -128,7 +116,7 @@ export function ContactCardSubtitle({
   children: ReactNode
 }) {
   const theme = useTheme()
-  // At accessibility sizes it wraps rather than cutting off after a word.
+
   const largeText = useAccessibilityTextSize()
   const text = (
     <Text

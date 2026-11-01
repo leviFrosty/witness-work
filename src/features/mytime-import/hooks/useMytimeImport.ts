@@ -18,11 +18,6 @@ import {
 import type { Publisher } from '@/types/publisher'
 import { entryMinutes } from '@/lib/entryMinutes'
 
-/**
- * Where the import flow is: `idle` → `parsing` (reading + mapping the picked
- * file) → `preview` (counts shown, awaiting confirm) → `committing` →
- * `success`, with `error` reachable from a failed parse or commit.
- */
 export type MytimeImportStatus =
   | 'idle'
   | 'parsing'
@@ -31,30 +26,18 @@ export type MytimeImportStatus =
   | 'success'
   | 'error'
 
-/**
- * `invalidFile` is an expected user mistake (wrong file) shown as a friendly
- * message and never reported; `unexpected` is a real defect, surfaced as a
- * generic error and sent to error tracking.
- */
 export type MytimeImportErrorKind = 'invalidFile' | 'unexpected'
 
-/** Summary derived from the mapped backup, shown before the user commits. */
 export interface MytimeImportPreview {
   contacts: number
   visits: number
   timeEntries: number
-  /** Net minutes across every imported entry (residual adjustments included). */
+
   totalMinutes: number
   publisherRole?: Publisher
   tenureStartDate: Date | null
 }
 
-/**
- * Which pieces of the backup the user has opted to import. Every piece starts
- * enabled; the preview surfaces a switch per piece that has data. `contacts`
- * also governs custom fields, and `time` also governs imported categories (each
- * rides along with the records that reference it).
- */
 export interface MytimeImportSelection {
   contacts: boolean
   visits: boolean
@@ -80,13 +63,6 @@ const buildPreview = (mapped: MappedImport): MytimeImportPreview => ({
   tenureStartDate: mapped.publisher?.tenureStartDate ?? null,
 })
 
-/**
- * Drives the shared MyTime-import flow for both surfaces. The expensive work
- * (read + map) runs at parse time so the preview reflects exactly what will be
- * written; the mapped result is held until the user confirms, then persisted
- * with the surface's `publisherMode` (`'overwrite'` for onboarding,
- * `'fillIfUnset'` for Settings).
- */
 export const useMytimeImport = ({
   publisherMode,
 }: {
@@ -98,9 +74,7 @@ export const useMytimeImport = ({
   const [errorKind, setErrorKind] = useState<MytimeImportErrorKind | null>(null)
   const [selection, setSelection] =
     useState<MytimeImportSelection>(ALL_SELECTED)
-  // The mapped backup awaiting confirmation. A ref (not state) because nothing
-  // renders it directly — only `confirm` reads it — and it must not trigger a
-  // re-render when set.
+
   const mappedRef = useRef<MappedImport | null>(null)
 
   const reset = useCallback(() => {
@@ -119,8 +93,6 @@ export const useMytimeImport = ({
     setErrorKind(null)
     analytics.capture('import_started', { import_type: 'mytime', source })
     try {
-      // `.mytimedb` has no registered MIME type, so accept anything and let the
-      // reader's validation probe reject non-MyTime files.
       const { assets, canceled } = await DocumentPicker.getDocumentAsync({
         multiple: false,
         copyToCacheDirectory: true,
@@ -156,7 +128,7 @@ export const useMytimeImport = ({
         stage: 'parse',
         error_code:
           e instanceof MytimeImportError ? 'invalid_file' : 'unexpected',
-        // What kind of file was picked, from its first bytes (no contents).
+
         ...(e instanceof MytimeImportError && { file_kind: e.fileKind }),
       })
       mappedRef.current = null
@@ -177,14 +149,8 @@ export const useMytimeImport = ({
     if (!mapped) return
     setStatus('committing')
 
-    // Defer the synchronous store writes one frame so the spinner paints before
-    // the setState cascade blocks the JS thread (mirrors iCloudRestore).
     requestAnimationFrame(() => {
       try {
-        // Honor the user's switches by zeroing out deselected pieces; the
-        // writer already no-ops on empty arrays / a null publisher. Custom
-        // fields ride with contacts and categories ride with time, since
-        // they're only referenced by those records.
         const selected: MappedImport = {
           contacts: selection.contacts ? mapped.contacts : [],
           customFieldDefs: selection.contacts ? mapped.customFieldDefs : [],
@@ -219,8 +185,6 @@ export const useMytimeImport = ({
     })
   }, [publisherMode, selection, source])
 
-  // Disable the commit when nothing with data is still checked — importing
-  // would be a no-op.
   const canConfirm =
     !!preview &&
     ((preview.contacts > 0 && selection.contacts) ||

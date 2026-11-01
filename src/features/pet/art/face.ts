@@ -1,7 +1,3 @@
-/**
- * Eyes, blush and mouth as feature pixels, shared by every species. Positions
- * are sprite pixels (32 × 32, origin top left).
- */
 import { rgb, type FeaturePixel, type Rgb } from '@/lib/pixelArt'
 
 import type { PetFace } from './types'
@@ -11,33 +7,30 @@ const WHITE = rgb('#ffffff')
 const BLUSH = rgb('#f6877f')
 const TONGUE = rgb('#f07a86')
 
-/** What the face shows this frame. */
 export interface FaceState {
   readonly face: PetFace
   readonly blink: boolean
 }
 
-/** Where a species draws its face, and its eye colours. */
 export interface FaceLayout {
-  /** Left eye x (its left pixel). */
   readonly lx: number
-  /** Right eye x. */
+
   readonly rx: number
-  /** Eye top y (already including the head bob). */
+
   readonly ey: number
-  /** Blush under the eyes when happy. */
+
   readonly blush?: boolean
-  /** Mouth left x; omit for no mouth. */
+
   readonly mx?: number
-  /** Mouth y. */
+
   readonly my?: number
-  /** Eyelid / closed-eye colour (default dark brown). */
+
   readonly ec?: Rgb
-  /** Pupil colour. */
+
   readonly pu?: Rgb
-  /** Iris colour (default: the pupil colour). */
+
   readonly iris?: Rgb
-  /** Mouth colour. */
+
   readonly mc?: Rgb
 }
 
@@ -99,7 +92,6 @@ function eye(
   return f
 }
 
-/** Feature pixels for both eyes, blush and mouth. */
 export function facePixels(st: FaceState, o: FaceLayout): FeaturePixel[] {
   const f = [...eye(st, o.lx, o.ey, -1, o), ...eye(st, o.rx, o.ey, 1, o)]
   const m = st.face

@@ -22,11 +22,6 @@ import { usePreferences } from '@/stores/preferences'
 import type { MinuteDisplayFormat } from '@/types/timeEntry'
 import type { ShareDetails } from '@/features/buddies/lib/schemas'
 
-/**
- * A shared Plan or Follow-up in words: its title, "Sat, Oct 10 · 9:00 AM · 2
- * Hrs", and its place. In Data Protection Mode a Follow-up's householder
- * details stay out.
- */
 export function sharedEventText(
   details: ShareDetails,
   isFollowUp: boolean,
@@ -35,7 +30,6 @@ export function sharedEventText(
     dataProtectionMode,
   }: { timeDisplayFormat: MinuteDisplayFormat; dataProtectionMode: boolean }
 ) {
-  // A Follow-up's first name, address, and topic are householder details.
   const hideHouseholder = isFollowUp && dataProtectionMode
   const when = [
     formatWeekdayMonthDayCompact(moment(details.d, 'YYYY-MM-DD')),
@@ -58,11 +52,6 @@ export function sharedEventText(
   return { title, when, place, hideHouseholder }
 }
 
-/**
- * The details of a buddy's shared Plan or Follow-up, read-only. With `onOpen`,
- * the title opens its page; the place stays its own link, unless the summary
- * sits inside another long-press target (`nested`).
- */
 export default function SharedEventSummary({
   details,
   isFollowUp,
@@ -72,7 +61,7 @@ export default function SharedEventSummary({
   details: ShareDetails
   isFollowUp: boolean
   onOpen?: () => void
-  /** Inside another long-press target, e.g. a bell entry: the place is text. */
+
   nested?: boolean
 }) {
   const theme = useTheme()
@@ -130,7 +119,6 @@ export default function SharedEventSummary({
         </XView>
       ) : null}
       {hasNote(sharedNoteFields(details)) ? (
-        // A summary: photos as thumbnails; Plan Details shows them in full.
         <RichNote note={sharedNoteFields(details)} preview thumbnails />
       ) : null}
     </View>

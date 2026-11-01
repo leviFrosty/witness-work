@@ -13,10 +13,6 @@ import { formatRelative } from '@/lib/dates'
 
 const AVATAR_SIZE = 44
 
-/**
- * An invite nobody has used yet: a link, not a person. Tap shows its Buddies
- * Code, which also has Copy, Share, and Cancel; long-press for the same.
- */
 export default function PendingInviteRow({
   invite,
   last,

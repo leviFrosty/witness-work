@@ -6,7 +6,6 @@ import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import { tracking } from '@/lib/tracking'
 
-/** Sparkles + "Scribe AI" in a tinted pill: the AI marker, always labelled. */
 export const ScribePill = ({
   compact = false,
   style,
@@ -46,10 +45,6 @@ export const ScribePill = ({
   )
 }
 
-/**
- * Sparkle + "Scribe AI" without a pill, under the Home orb. `wrap` lets the
- * name wrap where it has a row of its own (accessibility text sizes).
- */
 export const ScribeLabel = ({
   muted = false,
   wrap = false,

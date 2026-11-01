@@ -8,7 +8,7 @@ const foreground = new Set<Entry>()
 const background = new Set<Listener>()
 let backgrounded = AppState.currentState === 'background'
 let subscribed = false
-/** Launch counts as coming back. */
+
 let lastForeground = Date.now()
 
 function onChange(state: AppStateStatus) {
@@ -17,14 +17,10 @@ function onChange(state: AppStateStatus) {
     background.forEach((listener) => listener())
     return
   }
-  // iOS passes through `inactive` for Control Center, Notification Center,
-  // Face ID, permission alerts and system sheets. The app never left, so only
-  // a return from `background` counts as coming back.
+
   if (state !== 'active' || !backgrounded) return
   backgrounded = false
-  // The device may have moved to another time zone while the app was away.
-  // Refresh first, so every listener and every render after this computes
-  // "today" and local times in the zone the device is in now.
+
   refreshLocalTimeOffset()
   const at = Date.now()
   lastForeground = at
@@ -41,11 +37,6 @@ function subscribe() {
   AppState.addEventListener('change', onChange)
 }
 
-/**
- * Runs when the user comes back to the app from the background. Brief
- * `inactive` interruptions don't count. `minIntervalMs` skips returns that come
- * sooner than that after the listener last ran.
- */
 export function addForegroundListener(
   listener: Listener,
   { minIntervalMs = 0 }: { minIntervalMs?: number } = {}
@@ -56,13 +47,11 @@ export function addForegroundListener(
   return { remove: () => foreground.delete(entry) }
 }
 
-/** When the app launched or last came back from the background (epoch ms). */
 export function lastForegroundAt(): number {
   subscribe()
   return lastForeground
 }
 
-/** Runs when the app moves to the background. */
 export function addBackgroundListener(listener: Listener): {
   remove: () => void
 } {

@@ -27,8 +27,6 @@ const isoSampleStart = '2020-01-01T00:00:00.000Z'
 
 describe('setRole — Tenure reset semantics (glossary: Tenure Start Date)', () => {
   beforeEach(() => {
-    // Reset to defaults between tests. Raw setState bypasses the stamping
-    // wrapper so each test starts from a clean slate.
     usePreferences.setState({
       ...PREFERENCE_DEFAULTS,
       preferenceUpdatedAt: {},
@@ -36,8 +34,6 @@ describe('setRole — Tenure reset semantics (glossary: Tenure Start Date)', () 
   })
 
   it('KEEPS the Tenure Start Date when both roles map to Full-Time Service (regular pioneer → circuit overseer)', () => {
-    // Glossary: "regular pioneer → circuit overseer keeps the clock" (both
-    // share the Full-Time Service Tenure Type).
     usePreferences.setState({
       role: 'regularPioneer',
       tenureStartDate: new Date(isoSampleStart),
@@ -77,8 +73,6 @@ describe('setRole — Tenure reset semantics (glossary: Tenure Start Date)', () 
   })
 
   it('CLEARS the Tenure Start Date when moving across Tenure Types (regular pioneer → regular auxiliary)', () => {
-    // Glossary: Full-Time Service and Auxiliary Pioneer are distinct Tenure
-    // Types — the clock resets when moving between them.
     usePreferences.setState({
       role: 'regularPioneer',
       tenureStartDate: new Date(isoSampleStart),
@@ -125,11 +119,6 @@ describe('setRole — Tenure reset semantics (glossary: Tenure Start Date)', () 
   })
 
   it('CLEARS the Tenure Start Date when moving from a non-tenure role to a tenure-tracking one (publisher → regular pioneer)', () => {
-    // Sanity: there should be no stale start date on a non-tenure role, but
-    // if one somehow exists (e.g. legacy data inconsistency), moving into a
-    // tenure-tracking role should NOT auto-promote it — the user must pick a
-    // new start date for the new tenure clock. Both roles have null/no
-    // tenure type relation here, so the field is cleared.
     usePreferences.setState({
       role: 'publisher',
       tenureStartDate: new Date(isoSampleStart),

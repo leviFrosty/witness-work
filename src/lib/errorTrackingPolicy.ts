@@ -2,8 +2,6 @@ import { isOfflineError } from '@/lib/offlineError'
 import { isExpectedLocationError } from '@/lib/locationError'
 import { PurchasesError } from '@/lib/purchasesError'
 
-// Internal policy shared by the public module and the provider's automatic
-// capture hook. Keeping it independent of the client avoids an import cycle.
 export const errorTrackingEnabled = typeof __DEV__ === 'undefined' || !__DEV__
 
 type JsonValue =
@@ -16,8 +14,6 @@ type JsonValue =
       [key: string]: JsonValue
     }
 
-// The provider accepts JSON. Drop unsupported values and detach mutable caller
-// objects; invalid/circular diagnostics must not prevent the error being sent.
 export function diagnosticProperties(
   properties?: Record<string, unknown>
 ): Record<string, JsonValue> | undefined {
@@ -46,13 +42,6 @@ const STORAGE_FULL_PATTERNS = [
   /\bENOSPC\b/,
 ]
 
-/**
- * The OS says the device has no room left to write: iOS (NSCocoaErrorDomain
- * 640, "out of space") or POSIX ENOSPC. Nothing the app can fix; counted with
- * the `device_storage_full` event instead of reported. MMKV's `Failed to set`
- * isn't here: it covers any failed write (a file locked before first unlock, a
- * damaged file), so it's still reported.
- */
 export function isStorageFullError(error: unknown): boolean {
   if (error == null) return false
   const e = error as { message?: unknown; code?: unknown }
@@ -66,19 +55,8 @@ export function isStorageFullError(error: unknown): boolean {
   return STORAGE_FULL_PATTERNS.some((pattern) => pattern.test(message))
 }
 
-/**
- * RevenueCat `PURCHASES_ERROR_CODE`s that describe the device's store, not a
- * bug: no Play billing or purchases restricted (PURCHASE_NOT_ALLOWED), the
- * store failing (STORE_PROBLEM), or a product this store doesn't offer
- * (PRODUCT_NOT_AVAILABLE_FOR_PURCHASE).
- */
 const STORE_STATE_CODES = new Set(['2', '3', '5'])
 
-/**
- * A store state from a RevenueCat read the user didn't start. The read runs
- * again on its own, so nothing is lost. A purchase or restore the user started
- * still reports them as `storeErrorOutcome` decides.
- */
 export function isBackgroundStoreStateError(error: unknown): boolean {
   return (
     error instanceof PurchasesError &&
@@ -96,11 +74,6 @@ export function shouldIgnoreError(error: unknown): boolean {
   )
 }
 
-/**
- * An automatically captured exception keeps only its type and message. An
- * `HttpError`'s message starts with its kind (`timeout`, `offline: …`), which
- * is what decides whether a reported one would have been sent.
- */
 function errorFromException(exception: {
   type?: unknown
   value?: unknown

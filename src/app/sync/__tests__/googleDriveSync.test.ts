@@ -10,12 +10,6 @@ import {
   sealBackup,
 } from '@/lib/serverAccount/backupCrypto'
 
-// Android sync end to end: the real engine on the real Google Drive transport,
-// with two or three "devices" (each a fresh module graph with its own stores)
-// sharing one in-memory Google Drive. Covers data moving between devices,
-// conflict merges, opting out, a Supporter lapse, restoring a fresh install,
-// photos, storage running out, a reset, and switching Google Accounts.
-
 const runtime = vi.hoisted(() => ({
   appState: 'active',
   files: {} as Record<string, Map<string, Uint8Array>>,
@@ -30,7 +24,7 @@ vi.mock('react-native', () => ({
     addEventListener: () => ({ remove: () => {} }),
   },
 }))
-// Never reached on Android; mocked so the native module isn't loaded.
+
 vi.mock('../../../../modules/icloud-bridge', () => ({}))
 vi.mock('@/lib/account', () => ({
   reclaimAccountFile: vi.fn(),
@@ -81,10 +75,6 @@ const visit = (id: string, contactId: string, updatedAt: number) => ({
 let drive = createFakeGoogleDrive()
 let listingClock = 0
 
-/**
- * Boots one device: its own engine, stores and Drive transport, signed in to
- * `account`'s Drive. Earlier devices keep running on their own instances.
- */
 async function device(
   name: string,
   {
@@ -94,8 +84,7 @@ async function device(
   }: { account?: string; enabled?: boolean; supporter?: boolean } = {}
 ) {
   vi.resetModules()
-  // Registered per device, so each module graph gets its own name, install
-  // id and files (`vi.mock` factories run once per test file).
+
   const files = (runtime.files[name] ??= new Map())
   vi.doMock('expo-device', () => ({
     DeviceType: { PHONE: 1, TABLET: 2 },
@@ -137,8 +126,7 @@ async function device(
   const { default: useConversations } = await import(
     '@/stores/conversationStore'
   )
-  // The production transport wiring, with the dev fake in place of
-  // Google's consent screen and photo transfers kept in memory.
+
   const transport = createGoogleDriveTransport({
     api: (bound) =>
       createDriveApi({
@@ -152,12 +140,11 @@ async function device(
     isConnected: auth.isGoogleDriveConnected,
     accountToken: () => usePreferences.getState().googleDriveAccountId,
     addAvailabilityListener: auth.addGoogleDriveAvailabilityListener,
-    // Devices here act within the same millisecond; real ones are seconds
-    // apart, past the window in which a listing is reused.
+
     now: () => (listingClock += 60_000),
   })
   registerAndroidSyncTransport(transport)
-  /** Connects `next`'s Google Drive, as Settings does. */
+
   const connect = async (next: string, selectAccount = false) => {
     auth.setFakeGoogleDrive({ origin: drive.origin, account: next })
     expect(await auth.connectGoogleDrive({ selectAccount })).toBe('connected')
@@ -181,7 +168,7 @@ async function device(
     useSupporter,
     useContacts,
     useConversations,
-    /** Connects another Google Account, as Settings → Switch would. */
+
     switchAccount: (next: string) => connect(next, true),
     contactNames: () =>
       useContacts
@@ -201,7 +188,7 @@ const sync = async (...devices: Array<Awaited<ReturnType<typeof device>>>) => {
 beforeEach(() => {
   vi.clearAllMocks()
   drive = createFakeGoogleDrive()
-  // The dev fake stands in for Google's consent screen and token service.
+
   vi.stubGlobal('__DEV__', true)
   vi.stubGlobal('fetch', drive.fetch)
   runtime.files = {}
@@ -232,7 +219,6 @@ describe('Google Drive sync between Android devices', () => {
       'phone'
     )
 
-    // Each device keeps one snapshot file; pushing again replaces it.
     await tablet.iCloudSync.push('manual')
     await tablet.iCloudSync.push('manual')
     expect(
@@ -241,7 +227,7 @@ describe('Google Drive sync between Android devices', () => {
         .map((f) => f.name)
         .sort()
     ).toHaveLength(2)
-    // A write lands in Drive before it resolves, so it counts as uploaded.
+
     expect(tablet.usePreferences.getState().lastiCloudUploadedAt).not.toBeNull()
   })
 
@@ -250,8 +236,7 @@ describe('Google Drive sync between Android devices', () => {
     expect(await phone.iCloudSync.push('manual')).toBe(true)
     const { PersistStorage } = await import('@/stores/mmkv')
     const setItem = vi.spyOn(PersistStorage, 'setItem')
-    // A minute later: a push in the same millisecond as the last one has
-    // nothing new to record, so it rightly writes nothing.
+
     const later = Date.now() + 60_000
     vi.useFakeTimers({ toFake: ['Date'] })
     vi.setSystemTime(later)
@@ -260,8 +245,7 @@ describe('Google Drive sync between Android devices', () => {
         contacts: [contact('c1', 'Ada Reyes', NOW)] as never,
       })
       expect(await phone.iCloudSync.push('manual')).toBe(true)
-      // Pending flag, last push and confirmed upload together; each write
-      // persists the whole store.
+
       expect(
         setItem.mock.calls.filter(([name]) => name === 'preferences')
       ).toHaveLength(1)
@@ -286,8 +270,6 @@ describe('Google Drive sync between Android devices', () => {
     const tablet = await device('tablet')
     await tablet.iCloudSync.pullAndMerge('manual')
 
-    // Offline on both: the phone renames Ada and logs a visit; the tablet
-    // later renames her again and adds another contact.
     phone.useContacts.setState({
       contacts: [contact('c1', 'Ada R.', NOW - 5_000)] as never,
     })
@@ -336,7 +318,7 @@ describe('Google Drive sync between Android devices', () => {
     tablet.useSupporter.getState().setSupporter(false)
     expect(await tablet.iCloudSync.pullAndMerge('manual')).toBe(false)
     expect(tablet.contactNames()).toEqual([])
-    // The choice is kept, so sync resumes on its own.
+
     expect(tablet.usePreferences.getState().iCloudSyncEnabled).toBe(true)
 
     tablet.useSupporter.getState().setSupporter(true)
@@ -355,7 +337,6 @@ describe('Google Drive sync between Android devices', () => {
     })
     await sync(phone, tablet)
 
-    // A new phone, not a Supporter yet: the onboarding restore.
     const fresh = await device('new-phone', {
       enabled: false,
       supporter: false,
@@ -366,7 +347,6 @@ describe('Google Drive sync between Android devices', () => {
     fresh.iCloudSync.replaceLocalWithRemote(peek.remote)
     expect(fresh.contactNames()).toEqual(['Ada', 'Ben'])
 
-    // A Supporter's empty install restores and turns sync on.
     const another = await device('second-tablet', { enabled: false })
     const decision = await another.iCloudSync.resolveInitialEnable()
     expect(decision.outcome).toBe('pull')
@@ -405,7 +385,7 @@ describe('Google Drive sync between Android devices', () => {
       ] as never,
     })
     expect(await phone.iCloudSync.push('manual')).toBe(true)
-    // Photos upload as their own job after the snapshot.
+
     await phone.iCloudSync.imagePushesSettled()
     expect(drive.files('family').map((f) => f.name)).toContain(
       'witness-work-img-contact-c1--r1.jpg'
@@ -431,12 +411,12 @@ describe('Google Drive sync between Android devices', () => {
     let prefs = phone.usePreferences.getState()
     expect(prefs.iCloudUploadIssue).toBe('icloud-full')
     expect(prefs.iCloudSyncPendingPush).toBe(true)
-    // There's no upload to wait on, so a check can't clear the issue.
+
     expect(await phone.iCloudSync.checkUpload()).toBeNull()
     expect(phone.usePreferences.getState().iCloudUploadIssue).toBe(
       'icloud-full'
     )
-    // A routine failure, not a crash report.
+
     const { errorTracking } = await import('@/lib/errorTracking')
     expect(errorTracking.captureException).not.toHaveBeenCalled()
 
@@ -499,16 +479,12 @@ describe('Google Drive sync between Android devices', () => {
   })
 })
 
-// The account backup (ADR 0026 §4) reuses the sync payload and merge. These
-// run its restore on the same engine and stores, and check that Google Drive
-// sync on the restoring device carries on as before.
 describe('Account backup restore', () => {
   type Device = Awaited<ReturnType<typeof device>>
   const accountId = 'A'.repeat(22)
   const backupKey = deriveBackupKey(new Uint8Array(32).fill(5))
   let slots = 0
 
-  /** `from`'s slot as the server hands it back, opened and read on `to`. */
   const slotOf = (
     from: Device,
     to: Device,
@@ -546,7 +522,7 @@ describe('Account backup restore', () => {
     tablet.useConversations.setState({
       conversations: [visit('v1', 'c2', NOW)] as never,
     })
-    // A backup never carries a sync reset generation…
+
     expect(
       phone.backupData.buildBackupPlaintext({
         deviceName: 'phone',
@@ -558,7 +534,7 @@ describe('Account backup restore', () => {
     const fresh = await device('new-phone', { enabled: false })
     const fromPhone = slotOf(phone, fresh, (plaintext) => ({
       ...plaintext,
-      // …and one that did (an older writer) still folds with the others.
+
       payload: {
         ...(plaintext.payload as object),
         resetEpoch: { id: 'old', at: NOW + 5, deviceId: 'phone' },
@@ -589,7 +565,6 @@ describe('Account backup restore', () => {
     const before = tablet.usePreferences.getState()
     expect(before.iCloudResetEpoch).toEqual(epoch)
 
-    // An iPhone that never synced with this Drive backs up Ben.
     const iphone = await device('iphone', {
       account: 'other',
       enabled: false,
@@ -608,10 +583,10 @@ describe('Account backup restore', () => {
     expect(after.lastiCloudRemoteDeviceName).toBe(
       before.lastiCloudRemoteDeviceName
     )
-    // Drive sync merges rather than adopting a reset or ignoring its files.
+
     await tablet.iCloudSync.pullAndMerge('manual')
     expect(tablet.contactNames()).toEqual(['Ada Reyes', 'Ben Ito'])
-    // Still the one reset it adopted before the restore; no new one.
+
     expect(tablet.usePreferences.getState().iCloudResetAdoptedNotice).toEqual(
       before.iCloudResetAdoptedNotice
     )
@@ -644,10 +619,10 @@ describe('Account backup restore', () => {
       before: { contacts: 2 },
       after: { contacts: 3 },
     })
-    // The dry run wrote nothing.
+
     expect(tablet.contactNames()).toEqual(['Ada R.', 'Cara Diaz'])
     expect(tablet.backupData.combineLocalWithBackup([payload])).toBe(true)
-    // Last writer wins per record, as in sync.
+
     expect(tablet.contactNames()).toEqual(['Ada Reyes', 'Ben Ito', 'Cara Diaz'])
     expect(tablet.backupData.combineLocalWithBackup([payload])).toBe(false)
   })

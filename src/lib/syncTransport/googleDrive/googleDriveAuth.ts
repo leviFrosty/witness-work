@@ -20,52 +20,25 @@ import {
   type GoogleDriveAuthErrorCode,
 } from '../../../../modules/google-drive-auth/errorCodes'
 
-/**
- * Google Drive access on Android (ADR 0019): which Google Account this device
- * syncs with, and short-lived OAuth tokens for its app data folder.
- *
- * Connecting is an explicit user action (Google's account picker and consent
- * screen). Afterwards tokens refresh silently about hourly. Each fresh token is
- * checked against the connected account before Drive is used with it, so a
- * device that silently switched accounts never reads or writes another person's
- * folder. The account is remembered only as a hash of its Drive `permissionId`,
- * never by email.
- *
- * The native module loads on first use: importing it eagerly would pull
- * `expo-modules-core` into every module that imports the sync engine.
- */
-
 type NativeAuth = typeof import('../../../../modules/google-drive-auth')
 let native: Promise<NativeAuth> | null = null
 const loadNative = () =>
   (native ??= import('../../../../modules/google-drive-auth'))
 
-/** Google says tokens last an hour; refresh a little early. */
 const TOKEN_TTL_MS = 50 * 60_000
-/** Longest a Drive account lookup or silent authorization may take. */
+
 const REQUEST_TIMEOUT_MS = 30_000
-/**
- * After the app comes back from Google's consent screen, how long its result
- * may take to arrive before the attempt counts as cancelled.
- */
+
 const CONSENT_RESULT_GRACE_MS = 3_000
 
 type Grant = { token: string; at: number; account: string }
 let cached: Grant | null = null
 let inflight: { promise: Promise<Grant>; generation: number } | null = null
-/**
- * Bumped by connect, disconnect and the dev fake. A token request that started
- * before is discarded, so it can't undo the user's choice.
- */
+
 let generation = 0
 
 const listeners = new Set<(event: { available: boolean }) => void>()
 
-/**
- * Dev builds only: a local fake Drive server and account, so verification can
- * run sync between emulators without a Google Account (see
- * `scripts/verify/fake-google-drive-server.mjs`).
- */
 export type FakeGoogleDrive = { origin: string; account: string }
 let fake: FakeGoogleDrive | null = null
 
@@ -99,7 +72,6 @@ export function addGoogleDriveAvailabilityListener(
   return { remove: () => listeners.delete(listener) }
 }
 
-/** What's stored instead of the Drive user id: a one-way, versioned hash. */
 export function hashGoogleDriveAccount(permissionId: string): string {
   return bytesToHex(
     sha256(utf8ToBytes(`witnesswork.google-drive-account|1|${permissionId}`))
@@ -125,7 +97,6 @@ function withTimeout<T>(promise: Promise<T>, error: () => Error): Promise<T> {
   })
 }
 
-/** The hashed account a token belongs to, from Drive's `about.get`. */
 async function currentAccount(token: string): Promise<string> {
   const controller =
     typeof AbortController === 'undefined' ? null : new AbortController()
@@ -152,9 +123,6 @@ async function currentAccount(token: string): Promise<string> {
     if (timer) clearTimeout(timer)
   }
   if (status < 200 || status >= 300) {
-    // Only a refused token is `unauthorized`, which can end in "Reconnect
-    // Google Drive". A throttled or over-quota project answers 403 too, and
-    // must not disconnect anyone.
     const reason = errorReason(text)
     const code = classifyDriveError(status, reason)
     throw new SyncTransportError(
@@ -175,11 +143,6 @@ async function currentAccount(token: string): Promise<string> {
   return hashGoogleDriveAccount(id)
 }
 
-/**
- * Settles an interactive authorization once Google's screen is gone: its result
- * arrives before the app is active again, so a result still missing shortly
- * after means the screen went away without one.
- */
 function untilConsentReturns(request: Promise<string>): Promise<string> {
   return new Promise<string>((resolve, reject) => {
     let left = false
@@ -191,7 +154,6 @@ function untilConsentReturns(request: Promise<string>): Promise<string> {
       }
       if (!left || timer) return
       timer = setTimeout(() => {
-        // The request may never settle, so its cleanup below may never run.
         sub.remove()
         reject(new GoogleDriveAuthError('canceled'))
       }, CONSENT_RESULT_GRACE_MS)
@@ -223,10 +185,6 @@ async function forget(token: string): Promise<void> {
   }
 }
 
-/**
- * Only for the request's own connection: a refusal that arrives after a
- * disconnect or a new connection says nothing about the current one.
- */
 function needReconnect(started: number): void {
   if (started !== generation || connectedAccount() === null) return
   if (usePreferences.getState().googleDriveNeedsReconnect) return
@@ -236,7 +194,6 @@ function needReconnect(started: number): void {
   notifyAvailability()
 }
 
-/** A token from Google without UI, its failures classified for sync. */
 async function silentToken(started: number): Promise<string> {
   try {
     return await authorize({ interactive: false })
@@ -258,8 +215,7 @@ async function fetchGrant(started: number): Promise<Grant> {
   } catch (error) {
     if (!(error instanceof SyncTransportError) || error.code !== 'unauthorized')
       throw error
-    // Play services can still hand out a token revoked elsewhere; drop it and
-    // ask once more. Refused again, the grant is gone.
+
     await forget(token)
     token = await silentToken(started)
     try {
@@ -278,9 +234,6 @@ async function fetchGrant(started: number): Promise<Grant> {
   const connected = connectedAccount()
   if (connected === null) throw unauthorized('Google Drive not connected')
   if (account !== connected) {
-    // Silent authorization picked another account (the connected one was
-    // removed from the device, or this is a restored copy). Record it so the
-    // identity check turns sync off before anything is read or written.
     usePreferences.setState({ googleDriveAccountId: account })
     logger.warn('[GoogleDrive] Google Account changed')
     notifyAvailability()
@@ -289,11 +242,6 @@ async function fetchGrant(started: number): Promise<Grant> {
   return { token, at: Date.now(), account }
 }
 
-/**
- * One token request at a time. `stale`, a token Drive just rejected, is cleared
- * first; a request already running that hands back that same token is followed
- * by a fresh one.
- */
 function sharedGrant(stale: string | null): Promise<Grant> {
   const run = async (): Promise<Grant> => {
     const started = generation
@@ -316,12 +264,6 @@ function sharedGrant(stale: string | null): Promise<Grant> {
   return promise
 }
 
-/**
- * A token for `account` (by default the connected one). `refresh` replaces
- * `rejected`, a token Drive refused. Throws `unauthorized` when the user must
- * reconnect, or when `account` is no longer the connected account: an operation
- * that began under one account never continues under another.
- */
 export async function googleDriveAccessToken({
   refresh,
   rejected,
@@ -342,7 +284,6 @@ export async function googleDriveAccessToken({
   if (connectedAccount() !== expected)
     throw unauthorized('Google Account changed')
   if (refresh) {
-    // Someone else already replaced the rejected token.
     if (cached && rejected !== undefined && cached.token !== rejected)
       return forExpected(cached)
     const stale = rejected ?? cached?.token ?? null
@@ -358,12 +299,6 @@ export type GoogleDriveConnectOutcome =
   | 'connected'
   | Exclude<GoogleDriveAuthErrorCode, 'consentRequired'>
 
-/**
- * Shows Google's account picker and consent screen and connects the chosen
- * account. `selectAccount` shows the picker even when an account is already
- * granted, to switch. Connecting a different account than sync last used turns
- * sync off at its next check (see `checkICloudIdentity`).
- */
 export async function connectGoogleDrive({
   selectAccount = false,
 }: { selectAccount?: boolean } = {}): Promise<GoogleDriveConnectOutcome> {
@@ -394,12 +329,6 @@ export async function connectGoogleDrive({
   return 'connected'
 }
 
-/**
- * Forgets the connected account on this device. Google's grant stays, because
- * it's shared by every device signed in to that account: revoking it would stop
- * the user's other devices too. The app data folder stays for them; Google's
- * Drive settings can delete it ("Manage apps").
- */
 export async function disconnectGoogleDrive(): Promise<void> {
   generation++
   const token = cached?.token ?? null
@@ -412,7 +341,6 @@ export async function disconnectGoogleDrive(): Promise<void> {
   notifyAvailability()
 }
 
-/** Whether this binary can connect Google Drive at all. */
 export async function googleDriveSupported(): Promise<boolean> {
   if (fake) return true
   try {

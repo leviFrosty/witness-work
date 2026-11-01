@@ -5,12 +5,6 @@ import DisplayRegionsView, {
 } from '../../modules/display-regions'
 import { useDisplayRegions } from '@/stores/displayRegions'
 
-/**
- * React Native reads the window size from the key window and drops changes that
- * land while the app isn't active, so opening or closing iPhone Duo can leave
- * it on the other display's size: Home then lays out two columns on the outer
- * display. This view fills the window, so its own size is the true one.
- */
 function correctWindowSize(regions: DisplayRegions | null) {
   if (!regions) return
   const window = Dimensions.get('window')
@@ -25,9 +19,7 @@ function correctWindowSize(regions: DisplayRegions | null) {
   })
 }
 
-/** Fills the window, so the regions it reports are in window coordinates. */
 export default function DisplayRegionsObserver() {
-  // A late, stale report from React Native is put right again.
   useEffect(() => {
     const subscription = Dimensions.addEventListener('change', () =>
       correctWindowSize(useDisplayRegions.getState().regions)

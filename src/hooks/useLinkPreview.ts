@@ -7,10 +7,6 @@ import {
 
 type FetchedResult = { url: string; preview: LinkPreview | null }
 
-/**
- * OpenGraph preview for `url`. Reads the MMKV cache synchronously so cached
- * links render their card on first paint; otherwise fetches in the background.
- */
 export function useLinkPreview(url: string): {
   preview: LinkPreview | null
   loading: boolean

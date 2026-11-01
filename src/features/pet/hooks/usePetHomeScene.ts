@@ -42,27 +42,26 @@ import type { PetSceneHandle } from '@/features/pet/render/PetSceneView'
 import { usePetSeen } from '@/features/pet/stores/petSeen'
 import { usePetSession } from '@/features/pet/stores/petSession'
 
-/** Delay before the pet greets the User with its mood's sound. */
 const GREET_DELAY_MS = 700
-/** Spacing of the dev harness's pats. */
+
 const DEV_PAT_MS = 120
-/** Spacing of the dev harness's rub steps. */
+
 const DEV_SCRUB_MS = 100
 
 export type PetHomeScene = {
   pet: PetRecord
-  /** Buddies' pets visiting, the dev override applied. */
+
   visits: readonly PetVisit[]
-  /** As the card shows it: the hearts follow the reveal. */
+
   life: PetCardLife
-  /** Hearts and wallet as the card shows them, and what's changing. */
+
   reveal: PetReveal
   name: string
-  /** An owned Shop item still says "New". */
+
   hasNewItems: boolean
   input: PlayerInput
   sceneRef: React.RefObject<PetSceneHandle | null>
-  /** Wakes a sleeping pet or one that died (the button or a tap). */
+
   wake: () => void
   collectGift: () => void
   onPat: () => void
@@ -70,15 +69,6 @@ export type PetHomeScene = {
   onTwirl: () => void
 }
 
-/**
- * Everything the Home pet card draws and does: the replayed life (with the dev
- * override on top in dev builds), the room and sign, hidden moments rolled per
- * Home visit, entrances requested by the picker, and the dev harness's
- * commands. Hearts and the wallet show as this device last showed them until
- * `revealRef` (the card's header) is in view, then play what changed
- * (`usePetReveal`); the pet's mood and lamp follow the hearts shown, and it
- * cheers once they've filled. Null without a companion.
- */
 export default function usePetHomeScene(
   realVisits: readonly PetVisit[],
   revealRef: RefObject<View | null>
@@ -98,7 +88,6 @@ export default function usePetHomeScene(
     star: false,
   })
 
-  // Rolled once per Home visit (and when the sky changes), with a fresh seed.
   const { time, liveTime } = window
   useEffect(() => {
     if (!focused) return
@@ -110,14 +99,13 @@ export default function usePetHomeScene(
     })
   }, [focused, time, liveTime])
 
-  // The dev harness's motions and pats, from after the card mounted.
   const handledCommand = useRef(usePetSession.getState().command?.id ?? 0)
   useEffect(() => {
     if (!__DEV__ || !command || command.id <= handledCommand.current) return
     handledCommand.current = command.id
     const scene = sceneRef.current
     if (!scene) return
-    // Off screen, the entrance stays pending and plays when Home shows.
+
     if (command.kind === 'entrance') {
       if (focused)
         scene.playEntrance(usePetSession.getState().takeEntrance() ?? undefined)
@@ -179,7 +167,7 @@ export default function usePetHomeScene(
           life,
           room: state.room,
           window,
-          // Follows the hearts shown, faked ones included.
+
           lampLevel: lampLevel(life),
           sign,
           pendingGift: state.pendingGift,
@@ -196,8 +184,7 @@ export default function usePetHomeScene(
   useEffect(() => {
     moodNow.current = mood
   }, [mood])
-  // An entrance the picker asked for plays once the card is on screen;
-  // otherwise the pet greets the User with how it feels.
+
   useEffect(() => {
     if (!focused || !hasPet) return
     const species = usePetSession.getState().takeEntrance()
@@ -212,7 +199,6 @@ export default function usePetHomeScene(
     return () => clearTimeout(timer)
   }, [focused, hasPet])
 
-  // Once the hearts shown have filled up to now, the pet cheers.
   const filled = reveal.heart?.up === true && shownHearts === realLife?.hearts
   useEffect(() => {
     if (!filled) return
@@ -231,7 +217,7 @@ export default function usePetHomeScene(
   }, [shown, focused])
 
   const { unlockedItems, wallet } = state
-  // Re-checks "New" once an item is picked in the pet's details.
+
   const picked = useSyncExternalStore(
     subscribeRoomItemsPicked,
     roomItemsPickedSnapshot
@@ -271,7 +257,7 @@ export default function usePetHomeScene(
     if (!life.dead && !life.asleep) return
     if (life.dead) sceneRef.current?.playWake()
     usePet.getState().recordWake(state.todayKey)
-    // A faked state wakes too, so the harness can record the whole wake.
+
     const { devOverride, setDevOverride } = usePetSession.getState()
     if (
       __DEV__ &&
@@ -313,8 +299,7 @@ export default function usePetHomeScene(
     reveal,
     name: petDisplayName(pet),
     hasNewItems,
-    // Until its entrance plays, the pet stays out of the room: it walks in,
-    // rather than showing at rest first (behind the closing picker, say).
+
     input: entrancePending ? { ...scene.input, pet: null } : scene.input,
     sceneRef,
     wake,

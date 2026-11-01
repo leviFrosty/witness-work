@@ -35,7 +35,7 @@ vi.mock('@/contexts/theme', () => ({
   }),
 }))
 vi.mock('@/lib/dates', () => ({ formatRelative: () => 'just now' }))
-// The real one reads photos and Preferences; only the name matters here.
+
 vi.mock('@/features/buddies/lib/buddyProfile', () => ({
   buddyDisplayName: (buddy: { name: string; nickname?: string }) =>
     buddy.nickname ?? buddy.name,
@@ -43,7 +43,6 @@ vi.mock('@/features/buddies/lib/buddyProfile', () => ({
 const haptics = vi.hoisted(() => ({ success: vi.fn(async () => {}) }))
 vi.mock('@/lib/haptics', () => ({ default: haptics }))
 
-/** Leaf components as host elements, so their props can be read. */
 const host = vi.hoisted(() => (name: string) => async () => {
   const ReactModule = await import('react')
   return {
@@ -59,7 +58,6 @@ vi.mock('@/components/ui/MyText', host('Text'))
 vi.mock('@/components/ui/layout/XView', host('XView'))
 vi.mock('@/features/buddies/components/BuddyAvatar', host('BuddyAvatar'))
 
-/** A promise the test settles. */
 function deferred<T>() {
   let resolve!: (value: T) => void
   const promise = new Promise<T>((done) => {
@@ -120,7 +118,6 @@ function render(
 
 type Pressable = { onPress: () => void; disabled?: boolean }
 
-/** Everything the row says, in order. */
 const texts = (tree: ReactTestRenderer) =>
   tree.root
     .findAll((node) => node.type === ('Text' as never))
@@ -165,7 +162,7 @@ describe('an invitation still to answer', () => {
     const tree = render({ answer: 'open', people: 2 })
     expect(joinButton(tree)?.children).toBe('Join')
     expect(texts(tree)).toContain('Decline')
-    // By the User's name for the buddy, and the car's.
+
     expect(texts(tree)).toContain('Annie shared Mazda CX-5 with you')
     expect(texts(tree)).toContain('2 people · just now')
     expect(texts(tree)).not.toContain('You joined')
@@ -177,14 +174,13 @@ describe('an invitation still to answer', () => {
     const onJoined = vi.fn()
     const tree = render({ answer: 'open', onJoined })
 
-    // Both taps land before the row draws again.
     act(() => {
       const join = joinButton(tree)!
       join.onPress()
       join.onPress()
     })
     expect(answers.joinCarInvite).toHaveBeenCalledExactlyOnceWith(SHARE_KEY)
-    // Held while the first is on its way.
+
     expect(joinButton(tree)?.disabled).toBe(true)
     expect(declineButton(tree)?.disabled).toBe(true)
     act(() => declineButton(tree)!.onPress())

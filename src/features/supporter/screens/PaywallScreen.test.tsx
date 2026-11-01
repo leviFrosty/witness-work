@@ -331,7 +331,7 @@ describe('offerings', () => {
     await act(async () => listeners.forEach((listener) => listener()))
     expect(runtime.getOfferings).toHaveBeenCalledTimes(2)
     expect(empty()).toHaveLength(0)
-    // Loaded: nothing left to retry.
+
     expect(listeners.size).toBe(0)
     expect(events('paywall_offerings_failed')[0][1].trigger).toBe('initial')
     expect(trigger).toBeTruthy()
@@ -347,7 +347,6 @@ describe('offerings', () => {
     await render()
     expect(runtime.getOfferings).toHaveBeenCalledTimes(1)
 
-    // Back online while the load started offline still waits on the store.
     runtime.getOfferings.mockResolvedValueOnce(offerings)
     await act(async () => runtime.reconnect.forEach((listener) => listener()))
     expect(runtime.getOfferings).toHaveBeenCalledTimes(1)

@@ -33,7 +33,7 @@ export function menuGroups({
   language,
 }: {
   showsTimeEntry: boolean
-  /** Scribe AI isn't hidden (`ScribeAvailability.status !== 'hidden'`). */
+
   showsScribe: boolean
   checkingUpdate: boolean
   language: string
@@ -82,11 +82,10 @@ export function menuGroups({
   ]
 }
 
-/** Internal page links preserve the app's existing forms and confirmations. */
 export async function runMenuCommand(
   command: MenuCommand,
   hasSidebar: boolean,
-  /** Scribe AI's entry point (`openScribe('menu_bar')`). */
+
   openScribe: () => void
 ) {
   switch (command) {

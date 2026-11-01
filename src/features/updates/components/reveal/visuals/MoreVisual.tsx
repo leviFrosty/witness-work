@@ -22,10 +22,6 @@ interface Props extends RevealVisualProps {
   tiles: RevealMoreTile[]
 }
 
-/**
- * Everything else, as a grid of small tiles that pop in one after another and
- * then ripple, a wave running through them.
- */
 const MoreVisual = ({ palette, active, reduceMotion, tiles }: Props) => {
   const { intro, loop } = useVisualClock({
     active,
@@ -93,7 +89,7 @@ const Tile = ({
       transform: [{ scale: 0.5 + 0.5 * backOut(p) }],
     }
   })
-  // The wave: each tile's icon lifts in turn.
+
   const iconStyle = useAnimatedStyle(() => {
     const start = 0.05 + (index / count) * 0.5
     const bump = seg(loop.value, start, start + 0.08)

@@ -58,9 +58,9 @@ import { useWindowFoldPane } from '@/components/ui/layout/FoldPane'
 import { formatDisplay } from '@/lib/dates'
 
 const SPRING = { damping: 20, stiffness: 180, mass: 0.7 }
-/** Fading away for a badge view, which grows out of the tapped medallion. */
+
 const VANISH_MS = 160
-/** Fading back in as the badge view fades out, to keep browsing badges. */
+
 const RETURN_MS = 220
 const SHEET_RADIUS = 15
 const EXPANDED_MARGIN = 12
@@ -79,7 +79,6 @@ const Stat = ({
   return (
     <View
       style={{
-        // Side by side, the pair shares the row; stacked, each takes its own.
         flex: stacked ? undefined : 1,
         padding: 14,
         borderRadius: theme.numbers.borderRadiusMd,
@@ -116,21 +115,12 @@ const Stat = ({
 }
 
 type OverlayProps = {
-  /**
-   * The User's buddies, under their badges, composed in by the app tier; handed
-   * the close to run before it navigates.
-   */
   renderBuddies?: (onBeforeNavigate: () => void) => ReactNode
 }
 
-/**
- * Profile, role, and stats, grown out of the header avatar. Opened from the
- * account menu; HomeTabStack mounts the single instance.
- */
 const ProfileDetailOverlay = ({ renderBuddies }: OverlayProps) => {
   const origin = useProfileOverlay((s) => s.origin)
-  // The header hands over the origin once idle; until then the overlay can't
-  // open, so its stats stay out of the first screen's render.
+
   if (!origin) return null
   return <ProfileDetailSheet origin={origin} renderBuddies={renderBuddies} />
 }
@@ -142,8 +132,7 @@ const ProfileDetailSheet = ({
   const { open, away, close: onClose, stepAway, hide } = useProfileOverlay()
   const theme = useTheme()
   const insets = useSafeAreaInsets()
-  // At accessibility text sizes the stats stack, so their labels and notes
-  // keep whole words.
+
   const statRowStyle = {
     flexDirection: useAccessibilityTextSize() ? 'column' : 'row',
     gap: 10,
@@ -174,15 +163,9 @@ const ProfileDetailSheet = ({
   const totalDisplay = useFormattedMinutes(stats.totalMinutes)
   const last30Display = useFormattedMinutes(stats.last30Minutes)
 
-  // Persistent mount once origin is known: heavy children render at expanded
-  // dimensions before the user taps so the open spring is pure opacity/morph.
-  // FullWindowOverlay (vs RN Modal) renders into a separate UIWindow whose
-  // hit-test correctly falls through transparent areas, so a closed-but-mounted
-  // overlay doesn't eat home-screen taps.
   const progress = useSharedValue(0)
   const vanish = useSharedValue(1)
 
-  // Clear of iPhone Duo's vertical bar, and to one side of its fold.
   const pane = useWindowFoldPane()
   const targetY = insets.top + EXPANDED_MARGIN
   const targetW = pane.width - EXPANDED_MARGIN * 2
@@ -190,19 +173,14 @@ const ProfileDetailSheet = ({
   const targetH = winH - insets.top - insets.bottom - EXPANDED_MARGIN * 2
 
   useEffect(() => {
-    // Away, it stays full size and unseen until the badge view closes.
     if (away) return
     if (open && vanish.value < 1)
       vanish.value = withTiming(1, { duration: RETURN_MS })
     progress.value = withSpring(open ? 1 : 0, SPRING, (finished) => {
-      // Visible again for the next open if it closed while faded out. Not on
-      // open: Android's Modal remounts the content and misses that write.
       if (finished && !open) vanish.value = 1
     })
   }, [open, away, progress, vanish])
 
-  // Leaves the medallion's spot to the badge view instead of shrinking past it,
-  // and comes back when that closes.
   const stepAwayForBadge = () => {
     stepAway()
     vanish.value = withTiming(0, { duration: VANISH_MS }, (finished) => {
@@ -210,14 +188,13 @@ const ProfileDetailSheet = ({
     })
   }
 
-  // Measured in screen coordinates; `left` is mirrored in RTL.
   const originLeft = leftForPhysicalX(origin.x, origin.width, winW)
   const containerStyle = useAnimatedStyle(() => ({
     left: interpolate(progress.value, [0, 1], [originLeft, targetX]),
     top: interpolate(progress.value, [0, 1], [origin.y, targetY]),
     width: interpolate(progress.value, [0, 1], [origin.width, targetW]),
     height: interpolate(progress.value, [0, 1], [origin.height, targetH]),
-    // Starts as the round avatar, settles into the sheet's corners.
+
     borderRadius: interpolate(
       progress.value,
       [0, 1],

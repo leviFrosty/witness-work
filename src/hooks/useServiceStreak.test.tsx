@@ -24,7 +24,7 @@ const { default: useServiceStreak, useRecordedServiceStreak } = await import(
 
 describe('useServiceStreak', () => {
   let renderer: ReactTestRenderer | undefined
-  // Every render's [shown, recorded]; the last one is the streak now.
+
   const renders: [ServiceStreak, ServiceStreak][] = []
   const latest = () => renders[renders.length - 1]
 

@@ -91,7 +91,6 @@ describe('retryFailedGeocodes', () => {
     expect(queue()[0]).toMatchObject({ contactId: 'c1', attempts: 1 })
     expect(queue()[0].notBefore).toBeGreaterThan(Date.now())
 
-    // The next return tries only the contact that isn't backing off.
     await retryFailedGeocodes()
     expect(fetchCoordinate).toHaveBeenCalledTimes(2)
     expect(queue().map((entry) => entry.attempts)).toEqual([1, 1])

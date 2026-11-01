@@ -121,8 +121,6 @@ describe('buildMileageView', () => {
   })
 
   it("hides the User's own copy of a record a Shared Car holds", () => {
-    // The car and its trip moved into the space; an older build then edited
-    // the copies left in the User's own store.
     const view = buildMileageView(
       own({
         vehicles: [civic, { ...mazda, name: 'Stale' }],
@@ -144,7 +142,6 @@ describe('buildMileageView', () => {
   })
 
   it("shows the User's own record when a Shared Car only deleted its id", () => {
-    // A trip moved from the Shared Car to one of the User's own cars.
     const view = buildMileageView(
       own({ vehicles: [civic], trips: [trip('moved', 'civic')] }),
       {
@@ -167,8 +164,6 @@ describe('buildMileageView', () => {
   })
 
   it("prices a Shared Car's trips with its own fuels", () => {
-    // Sharing copies the User's Gasoline onto the car under a new id, and the
-    // two prices then differ.
     const view = buildMileageView(
       own({
         vehicles: [civic],
@@ -220,11 +215,9 @@ describe('buildMileageView', () => {
     })
     const first = buildMileageView(mine, { s1 })
 
-    // Sync bookkeeping changes no record.
     s1 = { ...s1, seq: 40, pendingPuts: ['ours'] }
     expect(buildMileageView(mine, { s1 })).toBe(first)
 
-    // A trip on the Shared Car.
     s1 = { ...s1, trips: [...s1.trips, trip('more', 'mazda')] }
     const second = buildMileageView(mine, { s1 })
     expect(second.trips.map((t) => t.id)).toEqual(['mine', 'ours', 'more'])
@@ -235,7 +228,6 @@ describe('buildMileageView', () => {
       buildMileageIndex(first.vehicleSetups, first.fuelPrices)
     )
 
-    // A trip of the User's own leaves the Shared Car's index alone.
     const third = buildMileageView(
       { ...mine, trips: [...mine.trips, trip('mine-2', 'civic')] },
       { s1 }
@@ -247,8 +239,6 @@ describe('buildMileageView', () => {
 
 describe('the view as a Shared Car ends', () => {
   it("shows the copy alone, not the User's own records the car hid", () => {
-    // An older build edited the trip after the car was shared, so the User's
-    // own store holds a stale version the car hides.
     const mine = own({
       vehicles: [civic, { ...mazda, name: 'Stale' }],
       trips: [trip('ours', 'mazda', 1)],
@@ -261,8 +251,6 @@ describe('the view as a Shared Car ends', () => {
       trip('ours', 'mazda', 10),
     ])
 
-    // The engine ends it: the copy goes into the User's own store under new
-    // ids, the versions the car hid are tombstoned, and the car goes.
     const ended = own({
       vehicles: [civic, { ...mazda, id: 'mazda-copy' }],
       trips: [{ ...trip('ours-copy', 'mazda-copy', 10) }],
@@ -298,16 +286,14 @@ describe('the view of a long history', () => {
     expect(first.trips).toHaveLength(2 * MANY)
     expect(first.sharedRecordSpaces.size).toBe(MANY + 1)
 
-    // A sync's bookkeeping, many times over: nothing is built again.
     const started = performance.now()
     for (let seq = 1; seq <= 1000; seq++) {
       s1 = { ...s1, seq, lastSyncedAt: seq, pendingPuts: [`shared-${seq}`] }
       expect(buildMileageView(mine, { s1 })).toBe(first)
     }
-    // A thousand rebuilds of 10,000 trips would take far longer.
+
     expect(performance.now() - started).toBeLessThan(2000)
 
-    // One more trip on the User's own car keeps the Shared Car's index.
     const second = buildMileageView(
       { ...mine, trips: [...mine.trips, trip('own-more', 'civic')] },
       { s1 }
@@ -360,7 +346,6 @@ describe('getMileageView', () => {
   })
 })
 
-/** Renders nothing; reports what `useMileageView(select)` returned. */
 function Probe<T>({
   select,
   onRender,
@@ -408,7 +393,6 @@ describe('useMileageView', () => {
     expect(views.at(-1)).toBe(getMileageView())
     const settled = activeCar.length
 
-    // A trip changes the view, but not whether there's an active car.
     await act(async () => {
       useSharedCars.getState().saveTrip('s1', trip('ours', 'mazda'))
     })

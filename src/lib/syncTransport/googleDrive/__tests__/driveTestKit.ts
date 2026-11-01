@@ -7,10 +7,8 @@ import {
   type DriveFileTransfer,
 } from '@/lib/syncTransport/googleDrive/driveApi'
 
-/** Local files for photo transfers, by path. */
 export type MemoryFiles = Map<string, Uint8Array>
 
-/** Photo transfers against the fake, reading and writing `files`. */
 export function memoryTransfer(
   drive: FakeGoogleDrive,
   files: MemoryFiles

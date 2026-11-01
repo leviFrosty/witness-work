@@ -23,7 +23,7 @@ describe('shownBefore', () => {
     const other = { pet: 'old', coins: 9, hearts: 1 }
     expect(shownBefore(other, 'p1', now, false)).toEqual(now)
     expect(shownBefore(null, 'p1', now, false)).toEqual(now)
-    // Adopted today: the first coins fly in, from the hearts it starts at.
+
     expect(shownBefore(null, 'p1', { coins: 8, hearts: 4 }, true)).toEqual({
       coins: 0,
       hearts: 3,
@@ -50,13 +50,12 @@ describe('shownBefore', () => {
 
 describe('revealTier', () => {
   it('makes more of a show the bigger the gain', () => {
-    // A day out, and a planned one kept.
     expect(revealTier(1)).toBe('small')
     expect(revealTier(2)).toBe('small')
-    // A few days', or a shared month's.
+
     expect(revealTier(3)).toBe('medium')
     expect(revealTier(8)).toBe('medium')
-    // A streak milestone's.
+
     expect(revealTier(10)).toBe('big')
     expect(revealTier(-12)).toBe('loss')
     expect(REVEAL_FLIGHTS).toEqual({ small: 1, medium: 3, big: 5, loss: 0 })
@@ -71,10 +70,9 @@ describe('heartSteps', () => {
   })
 
   it('names the heart each step changed', () => {
-    // Filling the 4th heart's second half, then the 5th heart.
     expect(changedHeart(3.5, 4)).toBe(3)
     expect(changedHeart(4, 4.5)).toBe(4)
-    // Fading the 5th heart.
+
     expect(changedHeart(5, 4.5)).toBe(4)
     expect(changedHeart(0.5, 0)).toBe(0)
   })

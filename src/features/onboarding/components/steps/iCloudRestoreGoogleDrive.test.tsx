@@ -2,9 +2,6 @@ import React, { type ReactNode } from 'react'
 import { act, create, type ReactTestRenderer } from 'react-test-renderer'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-// Android's onboarding restore: connect Google Drive first, then the same
-// restore as iCloud, with Google Drive copy and analytics.
-
 const runtime = vi.hoisted(() => ({
   remoteChangeListeners: [] as Array<() => void>,
   preferencesSet: vi.fn(),
@@ -205,7 +202,7 @@ describe('onboarding Google Drive restore', () => {
     await act(async () => {
       renderer = create(<ICloudRestore goBack={() => {}} goNext={() => {}} />)
     })
-    // Nothing is read before the user connects.
+
     expect(iCloudSync.peekRemotePayload).not.toHaveBeenCalled()
     expect(texts()).toContain('googleDriveRestoreConnectDescription')
     expect(texts()).toContain('iCloudRestoreDescriptionAndroid')

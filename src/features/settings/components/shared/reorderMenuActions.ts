@@ -2,22 +2,15 @@ import type { ContextMenuEntries } from '@/components/ui/ContextMenu'
 import i18n from '@/lib/locales'
 
 type ReorderMenuOptions = {
-  /** The row's position among the rows shown. */
   index: number
   count: number
-  /** Moves the row to `target`, a position among the rows shown. */
+
   moveTo: (target: number) => void
-  /** Current visibility, for a Show/Hide item. Omit for rows without one. */
+
   visible?: boolean
   setVisible?: (visible: boolean) => void
 }
 
-/**
- * Long-press menu for a reorderable Settings row, mirroring its arrow buttons
- * and switch: Move to Top / Up / Down / to Bottom, then Show or Hide. Moves
- * that wouldn't change anything are hidden, and "to Top/Bottom" only appear
- * when they differ from a single step.
- */
 export function reorderMenuActions({
   index,
   count,
@@ -65,7 +58,6 @@ export function reorderMenuActions({
   ]
 }
 
-/** Returns `order` with the item at `from` moved to `to`. */
 export function moveItem<T>(order: T[], from: number, to: number): T[] {
   const next = [...order]
   const [item] = next.splice(from, 1)

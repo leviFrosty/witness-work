@@ -106,8 +106,7 @@ describe('removeDeletedContact (Delete permanently)', () => {
   it('removes the contact from devices holding the archived or a stale active copy', () => {
     const archivedAt = NOW - 60_000
     setContacts([], [householder('a', archivedAt)])
-    // Devices that synced before the permanent delete: one has the archive,
-    // one still has the contact active from an older file.
+
     const archivingPeer = deviceFromStores()
     const stalePeer = emptyDevice({
       contacts: [householder('a', archivedAt - 60_000)],
@@ -123,7 +122,6 @@ describe('removeDeletedContact (Delete permanently)', () => {
       expect(isRedactedContactTombstone(merged.deletedContacts[0])).toBe(true)
       expect(JSON.stringify(merged)).not.toContain('Oak St')
 
-      // Their stale files can't bring the contact back here either.
       const back = pullFrom(local, peer)
       expect(back.contacts).toEqual([])
       expect(back.deletedContacts).toEqual(local.deletedContacts)
@@ -144,7 +142,6 @@ describe('addContact', () => {
   })
 
   it('replaces a redacted tombstone, stamped newer than the tombstone', () => {
-    // A tombstone from a device whose clock runs ahead of this one.
     setContacts(
       [],
       [
@@ -200,7 +197,7 @@ describe('re-adding a contact over its redacted tombstone', () => {
     setContacts([], [stripContactForTombstone(householder('a', 1), ERASED_AT)])
 
     useContacts.getState().addContact(householder('a', 1))
-    // A marker from an imported file describes another device's history.
+
     useContacts
       .getState()
       .addContact({ ...householder('b', 1), readdedAt: ERASED_AT })

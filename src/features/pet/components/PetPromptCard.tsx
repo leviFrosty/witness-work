@@ -17,20 +17,12 @@ import useAccessibilityTextSize from '@/hooks/useAccessibilityTextSize'
 import useOnScreen from '@/hooks/useOnScreen'
 import useSceneActive from '@/features/pet/render/useSceneActive'
 
-/**
- * Home's one-time offer of a Pet Companion, in the pet's slot: the five animals
- * idling (tap one for the picker with it chosen), Choose a pet (the picker) and
- * Not now (hides the offer on every synced device until Pet is turned on in
- * Settings → Preferences → Home Screen).
- */
 export default function PetPromptCard() {
   const theme = useTheme()
   const navigation = useNavigation<RootStackNavigation>()
-  // At accessibility text sizes the buttons stack, so their labels get the
-  // full width instead of breaking mid-word.
+
   const largeText = useAccessibilityTextSize()
-  // Home keeps the card mounted below the fold; the animals idle only while
-  // it's in view.
+
   const animalsRef = useRef<View>(null)
   const onScreen = useOnScreen(animalsRef, useSceneActive())
 

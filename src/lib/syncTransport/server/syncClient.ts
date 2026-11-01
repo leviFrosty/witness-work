@@ -8,50 +8,36 @@ import {
   syncBlobDigest,
 } from '@/lib/syncTransport/server/syncCrypto'
 
-/**
- * `/accounts/v1/sync*` (docs/accounts-protocol.md, "Sync"; ADR 0030): every op
- * is **Bearer**, with the account session's token. `put` sends the blob as the
- * raw body with its slot and digest in headers; the rest send JSON. Failures
- * throw `HttpError`, whose `serverCode` is the server's (`disabled`,
- * `supporter_required`, `too_large`, `limit`, `rate_limited`, `not_found`, …).
- */
-
-/** The server's caps, mirrored so the app can say so before uploading. */
 export const SYNC_LIMITS = {
-  /** One blob. */
   bytes: 20 * 1024 * 1024,
-  /** Slots an account. */
+
   slots: 20,
 } as const
 
-/** A blob of up to 20 MiB, on a phone connection. */
 export const BLOB_TIMEOUT_MS = 90_000
 
 export type SyncEntitlement = 'supporter' | 'everyone'
 
-/** `GET /accounts/v1/sync`: the account's own answer. */
 export type SyncStatus = {
-  /** The server's kill switch. */
   enabled: boolean
-  /** Enabled, and `everyone` or a Supporter. */
+
   entitled: boolean
   entitlement: SyncEntitlement
   supporter: boolean
-  /** RevenueCat couldn't be read; `supporter` is false for now. */
+
   supporterCheckFailed: boolean
 }
 
 export type SyncSlot = {
   slotId: string
-  /** B64u SHA-256 of the blob. */
+
   etag: string
   size: number
-  /** Epoch ms of the slot's last put, the server's clock. */
+
   updatedAt: number
 }
 
 export type SyncListing = {
-  /** The account's change counter; it only grows. */
   seq: number
   slots: SyncSlot[]
 }
@@ -95,7 +81,6 @@ export async function fetchSyncStatus(
   }
 }
 
-/** Replaces this device's slot. Resolves its new ETag and server time. */
 export async function putSyncSlot(
   options: BearerAccountOptions,
   slotId: string,
@@ -127,7 +112,6 @@ export async function putSyncSlot(
   return { etag, updatedAt, seq }
 }
 
-/** The account's slots: ids, ETags, sizes and times, never their contents. */
 export async function listSyncSlots(
   options: BearerAccountOptions
 ): Promise<SyncListing> {
@@ -140,7 +124,7 @@ export async function listSyncSlots(
   const { ok, seq, slots } = response.data ?? {}
   if (ok !== true || typeof seq !== 'number' || !Array.isArray(slots))
     throw unexpected(response.status)
-  // A slot this version can't name is skipped rather than failing the list.
+
   return {
     seq,
     slots: slots.filter(isSlot).map(({ slotId, etag, size, updatedAt }) => ({
@@ -152,7 +136,6 @@ export async function listSyncSlots(
   }
 }
 
-/** One slot's blob, exactly as put; `not_found` without one. */
 export async function getSyncSlot(
   options: BearerAccountOptions,
   slotId: string
@@ -166,7 +149,6 @@ export async function getSyncSlot(
   return response.data
 }
 
-/** Deletes one slot, or every slot of the account without `slotId`. */
 export async function deleteSyncSlot(
   options: BearerAccountOptions,
   slotId?: string

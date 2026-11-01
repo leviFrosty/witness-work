@@ -24,11 +24,6 @@ import type {
 } from '@/types/badges'
 import { tracking } from '@/lib/tracking'
 
-/**
- * What a badge stands for, under its coin: the level, the name, what it counts,
- * and when it was earned. A level the User hasn't reached says "Not yet", how
- * far along they are, and how to grow it. A buddy's badge carries no date.
- */
 export default function BadgeViewDetails({
   art,
   level,
@@ -39,9 +34,9 @@ export default function BadgeViewDetails({
   art: BadgeArtId
   level: BadgeLevel | null
   locked: boolean
-  /** The User's own record; null for a buddy's badge or a locked one. */
+
   record: EarnedBadge | null
-  /** The collection's count so far, for a locked level's progress. */
+
   count: number | null
 }) {
   const theme = useTheme()
@@ -140,10 +135,6 @@ export default function BadgeViewDetails({
   )
 }
 
-/**
- * How far the User is toward a level they haven't reached: "1 of 10 service
- * years".
- */
 function LockedProgress({
   art,
   level,

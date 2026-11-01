@@ -7,7 +7,6 @@ import { lightModeColors } from '@/constants/theme'
 import i18n, { type TranslationKey } from '@/lib/locales'
 import { useShallow } from 'zustand/react/shallow'
 
-/** The default accent followed by the shared `COLOR_PRESETS`. */
 export const ACCENT_PRESETS: {
   value: string
   label: string

@@ -6,7 +6,6 @@ const runtime = vi.hoisted(() => ({
   foreground: new Set<() => void>(),
 }))
 
-// Fixed store values, so only the day changes between renders.
 const stores = vi.hoisted(() => ({
   serviceReport: { serviceReports: {}, dayPlans: [], recurringPlans: [] },
   categories: { categories: [] },
@@ -72,7 +71,7 @@ afterEach(() => {
 
 it('moves the Year views to the next day at midnight', () => {
   vi.useFakeTimers({ toFake: ['Date', 'setTimeout', 'clearTimeout'] })
-  // 11:59 PM on Oct 20, 2026, in Service Year 2026.
+
   vi.setSystemTime(new Date(2026, 9, 20, 23, 59))
   act(() => {
     root = create(<Probe />)
@@ -96,12 +95,10 @@ it('moves to the new day when the app comes back on one', () => {
   })
   const before = latest()
 
-  // Same day: nothing moves.
   act(() => runtime.foreground.forEach((listener) => listener()))
   expect(latest().today).toBe(before.today)
   expect(latest().pace).toBe(before.pace)
 
-  // Asleep past midnight without the timer firing, as a suspended app is.
   vi.setSystemTime(new Date(2026, 9, 21, 8, 0))
   act(() => runtime.foreground.forEach((listener) => listener()))
   expect(latest().today.getDate()).toBe(21)

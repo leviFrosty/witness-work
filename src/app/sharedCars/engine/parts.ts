@@ -15,13 +15,6 @@ import type {
   SharedCar,
 } from '@/types/sharedCars'
 
-/**
- * The engine's parts, each made with the others: one part's step calls
- * another's (a sync closes invitations and may end the car; leaving syncs
- * first), and the facade fills this in before anything runs. What each part
- * offers the others is declared here, so the parts depend on this file and not
- * on each other. Each part's own file documents its steps.
- */
 export type EngineParts = {
   keys: KeyManagement
   sync: CarSync
@@ -30,18 +23,8 @@ export type EngineParts = {
   sharing: Sharing
 }
 
-/** What this device's own wrap gave, against the keyring. */
-export type OwnWrap =
-  /** The key this device trusts for the epoch. */
-  | 'trusted'
-  /** Another key than the one trusted for the epoch: kept out. */
-  | 'mismatch'
-  /** A key for an epoch this device trusts none for yet. */
-  | 'candidate'
-  /** It didn't open. */
-  | 'unopened'
+export type OwnWrap = 'trusted' | 'mismatch' | 'candidate' | 'unopened'
 
-/** What one record says on the wire, before it's sealed. */
 export type WireRecord = {
   recordId: string
   kind: string
@@ -50,14 +33,12 @@ export type WireRecord = {
   stamp: number
 }
 
-/** One `put`: its sealed records, and each one's stamp and kind. */
 export type PutBatch = {
   records: SpacePutRecord[]
   stamps: Map<string, number>
   kinds: Map<string, string>
 }
 
-/** The space keys: the keyring, own wraps, the key chain, and rekeys. */
 export type KeyManagement = {
   trust: (spaceId: string, key: EpochKey) => KeyringChange
   openOwnWrap: (
@@ -93,12 +74,11 @@ export type KeyManagement = {
   rekeyIfNeeded: (spaceId: string, member: SpaceMemberKeys) => Promise<void>
   linkStamp: (car: SharedCar, epoch: number) => number
   linkOwed: (car: SharedCar, epoch: number) => boolean
-  /** Forgets what this device opened and reported for `spaceId`. */
+
   forget: (spaceId: string) => void
   forgetAll: () => void
 }
 
-/** Keeping one car in step with its space: pull, merge, upkeep, and put. */
 export type CarSync = {
   pull: (spaceId: string, member: SpaceMemberKeys) => Promise<void>
   push: (
@@ -121,12 +101,11 @@ export type CarSync = {
     spaceId: string,
     options?: CarSyncOptions
   ) => Promise<CarSyncOutcome>
-  /** Forgets what this launch read again of `spaceId`. */
+
   forget: (spaceId: string) => void
   forgetAll: () => void
 }
 
-/** Invitations and joins. */
 export type Invitations = {
   reissueInvites: (spaceId: string, member: SpaceMemberKeys) => Promise<void>
   closePendingInvites: (
@@ -151,7 +130,6 @@ export type Invitations = {
   confirmJoins: () => Promise<void>
 }
 
-/** How a car ends for the User: leaving, removal, and stopping. */
 export type Endings = {
   endLocally: (
     spaceId: string,
@@ -175,7 +153,6 @@ export type Endings = {
   leaveAll: () => Promise<{ pending: number; notLeft: SharedCarNotLeft[] }>
 }
 
-/** Sharing one of the User's own cars. */
 export type Sharing = {
   shareCar: (vehicleId: string) => Promise<{ spaceId: string }>
   resumeShares: () => Promise<void>

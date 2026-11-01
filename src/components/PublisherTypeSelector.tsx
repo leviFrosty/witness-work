@@ -23,7 +23,6 @@ import PointerHover, { HoverTint } from '@/components/ui/PointerHover'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 
-/** How far back the role-change sheet offers a start month. */
 const MAX_START_MONTHS = 36
 
 const earliestLoggedMonth = (
@@ -48,15 +47,9 @@ const PublisherTypeSelector = ({
   variant = 'select',
 }: {
   showGoalDescription?: boolean
-  /**
-   * `list` shows every status as a tappable row (onboarding), so Users can't
-   * miss the choice and accept the default by accident.
-   */
+
   variant?: 'select' | 'list'
-  /**
-   * Ask which month a role change starts from (Settings). Onboarding leaves
-   * this off: a new User's role applies to every month.
-   */
+
   askStartMonth?: boolean
 }) => {
   const items: SelectData<Publisher> = publisherChoices.map((value) => ({
@@ -84,8 +77,7 @@ const PublisherTypeSelector = ({
   const hasFutureGoalOverrides = Object.keys(monthlyGoalOverrides).some(
     (key) => key >= currentMonthKey
   )
-  // Months the new role could start from: this month back to the earliest
-  // logged month (capped), most recent first.
+
   const earliest = earliestLoggedMonth(serviceReports)
   const startMonths: CalendarMonth[] = []
   for (let i = 0; i < MAX_START_MONTHS; i++) {
@@ -109,7 +101,6 @@ const PublisherTypeSelector = ({
   const handleRoleChange = (nextRole: Publisher) => {
     if (nextRole === role) return
 
-    // Onboarding and Users with nothing to preserve skip the question.
     if (!askStartMonth || (!hasEarlierMonths && !hasFutureGoalOverrides)) {
       if (askStartMonth) {
         analytics.capture('role_period_set', {

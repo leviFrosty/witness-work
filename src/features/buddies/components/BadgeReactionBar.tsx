@@ -23,10 +23,6 @@ import { buddiesEngine } from '@/features/buddies/lib/buddiesService'
 import { sharedBadgeKey } from '@/features/buddies/lib/sharedBadges'
 import { useSentBadgeReaction } from '@/features/buddies/stores/buddiesStore'
 
-/**
- * Where the bar sits, which is also `badge_reaction_sent`'s `source`: the badge
- * view (large, under "Encourage <name>") or a bell row (compact).
- */
 export type BadgeReactionPlacement = 'badge_view' | 'bell'
 
 const SIZE: Record<BadgeReactionPlacement, number> = {
@@ -34,12 +30,6 @@ const SIZE: Record<BadgeReactionPlacement, number> = {
   bell: 32,
 }
 
-/**
- * Encourage a buddy on one of their badges: the six preset reactions, with the
- * one already sent highlighted. Picking another replaces it. In a bell row, a
- * reaction sent before the row showed folds into "You sent 🎉", which opens the
- * choices again.
- */
 export default function BadgeReactionBar({
   inboxId,
   badge,
@@ -48,7 +38,7 @@ export default function BadgeReactionBar({
 }: {
   inboxId: string
   badge: SharedBadge
-  /** The buddy's name as this User sees it. */
+
   name: string
   placement?: BadgeReactionPlacement
 }) {
@@ -64,7 +54,7 @@ export default function BadgeReactionBar({
       level: badge.l ?? null,
       source: placement,
     })
-    // Saved before it's sent, so the highlight moves at once, even offline.
+
     void buddiesEngine.reactToBadge(inboxId, badge, emoji)
   }
 
@@ -143,7 +133,7 @@ function ReactionButton({
   emoji: string
   size: number
   selected: boolean
-  /** Says what a choice does where no label shows it. */
+
   hint?: string
   onPress: () => void
 }) {

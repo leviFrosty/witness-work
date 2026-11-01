@@ -112,7 +112,6 @@ describe('shared cars store', () => {
   })
 
   it('stamps a record added again past its tombstone, and drops it', () => {
-    // Another member's deletion, stamped ahead of this device's clock.
     useSharedCars.getState().saveSharedCar({
       ...car(),
       deletedMileageRecords: [{ id: 'trip', deletedAt: NOW + 60_000 }],
@@ -123,7 +122,6 @@ describe('shared cars store', () => {
   })
 
   it('records who logged a trip, and who last edited it', () => {
-    // Who logged it comes from the store, never from the trip handed in.
     useSharedCars
       .getState()
       .saveTrip('s1', trip({ loggedBy: 'anna', editedBy: 'joe' }))
@@ -145,7 +143,6 @@ describe('shared cars store', () => {
   })
 
   it('keeps who logged a trip moving here from another Shared Car', () => {
-    // On s2 the User is `me-2`; Anna logged one trip there, the User another.
     useSharedCars.getState().saveSharedCar(
       sharedCar('s2', {
         myMemberId: 'me-2',
@@ -156,8 +153,7 @@ describe('shared cars store', () => {
         ],
       })
     )
-    // `mileageWrites` saves a moved trip to its new car first, then deletes
-    // it from the old one; the form hands it over without who logged it.
+
     useSharedCars
       .getState()
       .saveTrip('s1', trip({ id: 'annas', vehicleId: 'mazda' }))
@@ -170,7 +166,7 @@ describe('shared cars store', () => {
       loggedBy: 'anna-2',
       editedBy: 'me',
     })
-    // The User is someone else on each car: their trip stays theirs here.
+
     expect(moved('mine')).toMatchObject({ loggedBy: 'me', editedBy: 'me' })
     expect(car().pendingPuts).toEqual(['annas', 'mine'])
   })
@@ -211,7 +207,7 @@ describe('shared cars store', () => {
       trips.map((t) => ({ recordId: t.id, stamp: t.updatedAt! }))
     )
     expect(car().pendingPuts).toEqual([])
-    // Linear: a list search per record would take many seconds.
+
     expect(performance.now() - started).toBeLessThan(1000)
   })
 
@@ -240,7 +236,7 @@ describe('shared cars store', () => {
   it('keeps the invitations being closed until the server has heard', () => {
     const { addClosingInvite, clearClosingInvite } = useSharedCars.getState()
     addClosingInvite('s1', 'i1', {})
-    // A decline doesn't narrow the User's own cancel.
+
     addClosingInvite('s1', 'i1', { tag: 't' })
     addClosingInvite('s1', 'i2', { tag: 't' })
     expect(useSharedCars.getState().closingInvites).toEqual({
@@ -250,7 +246,7 @@ describe('shared cars store', () => {
     expect(useSharedCars.getState().closingInvites).toEqual({
       s1: { i2: { tag: 't' } },
     })
-    // They go with their car.
+
     useSharedCars.getState().removeSharedCar('s1')
     expect(useSharedCars.getState().closingInvites).toEqual({})
   })
@@ -300,7 +296,6 @@ describe('shared cars store', () => {
       version: 0,
     })
 
-    // A relaunch: the store starts empty and loads what was saved.
     useSharedCars.setState(useSharedCars.getInitialState(), true)
     saved.set('sharedCars', json)
     await useSharedCars.persist.rehydrate()

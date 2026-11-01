@@ -40,7 +40,6 @@ const PET: PetRecord = {
   updatedAt: 1,
 }
 
-/** An hour on each of these October days. */
 const october = (...days: number[]) => ({
   2026: {
     9: days.map(

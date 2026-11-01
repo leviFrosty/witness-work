@@ -22,10 +22,6 @@ import type { RichTextImageAttrs } from '@/types/richText'
 const MAX_SCALE = 6
 const DOUBLE_TAP_SCALE = 2.5
 
-/**
- * A note photo, full screen: pinch, pan and double-tap to zoom, and share it
- * (the share sheet also saves it to Photos).
- */
 const NoteImageViewer = (props: {
   image: RichTextImageAttrs
   onClose: () => void

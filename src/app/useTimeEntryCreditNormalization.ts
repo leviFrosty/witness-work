@@ -3,17 +3,6 @@ import useServiceReport from '@/stores/serviceReport'
 import useCategories from '@/stores/categories'
 import { normalizeTimeEntriesCredit } from '@/lib/categories'
 
-/**
- * Keeps each Time Entry's `credit` flag on its Category's `isCredit`, at launch
- * and after every change to either store: an iCloud merge, a restore, an
- * import, or an entry saved while the Category was out of date. Local and
- * unstamped; see `normalizeTimeEntriesCredit`.
- *
- * Runs a microtask after the change, so writes made together are seen together:
- * the iCloud apply sets entries and Categories one after the other, and the
- * Credit switch flips the Category before restamping its entries, which must
- * still differ then to be stamped.
- */
 export function useTimeEntryCreditNormalization(ready: boolean | undefined) {
   useEffect(() => {
     if (!ready) return

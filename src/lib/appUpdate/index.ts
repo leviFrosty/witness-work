@@ -7,17 +7,14 @@ import {
   requireUpdateFromServer,
 } from '@/lib/appUpdate/updateRequired'
 
-/** The running app's `app.config.ts` version. */
 export const appVersion = (): string | null =>
   Constants.expoConfig?.version ?? null
 
-/** At launch and on returning to the foreground; at most once a minute. */
 export const checkAppConfig = createAppConfigCheck({
   fetchConfig: () => fetchAppConfig(apis.appConfig),
   currentVersion: appVersion,
   now: Date.now,
-  // Cloud Sync's switches decide a never-chosen device's default (ADR 0030).
-  // A worker from before it has none: Cloud Sync is off there.
+
   onConfig: ({ sync: read }) => {
     const sync = read ?? { enabled: false, entitlement: 'supporter' as const }
     const current = usePreferences.getState().cloudSyncConfig
@@ -29,7 +26,6 @@ export const checkAppConfig = createAppConfigCheck({
   },
 })
 
-/** Ww-api refused a request with 426 `upgrade_required`. */
 export const updateRequiredByServer = () =>
   requireUpdateFromServer(appVersion())
 

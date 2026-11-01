@@ -66,7 +66,6 @@ const PET: PetRecord = {
   updatedAt: 1,
 }
 
-/** An hour logged every day of months `from` through `to`, by year and month. */
 const everyDay = (year: number, from: number, to: number) => {
   const months: Record<number, TimeEntry[]> = {}
   for (let month = from; month <= to; month++) {
@@ -81,7 +80,6 @@ const everyDay = (year: number, from: number, to: number) => {
   return { [year]: months }
 }
 
-/** An hour logged on the 3rd of months `from` through `to`, by year and month. */
 const oneDay = (year: number, from: number, to: number) => {
   const months: Record<number, TimeEntry[]> = {}
   for (let month = from; month <= to; month++)
@@ -145,7 +143,7 @@ describe('usePetLife secret items', () => {
       item: 'hat:duck',
       by: 'secret',
     })
-    // Storing re-renders once; the same records then keep the same answer.
+
     const settled = renders
     const unlocked = latest?.unlockedItems
     act(() => renderer?.update(<Harness />))
@@ -167,7 +165,7 @@ describe('usePetLife secret items', () => {
   it("keeps a new pet's starting room quiet", () => {
     unlocks.announce.mockClear()
     usePreferences.setState({ earnedBadges: { 'monthsShared.1': { at: 1 } } })
-    // Its first items ever, then more on the day it was adopted.
+
     mount()
     act(() => renderer?.unmount())
     usePet.setState({
@@ -195,13 +193,12 @@ describe('usePetLife secret items', () => {
   })
 
   it('opens a long run by months out, not by the streak', () => {
-    // A long streak alone opens nothing.
     runtime.streak = { kind: 'plans', count: 400 }
     usePet.setState({ pet: { ...PET, adoptedOn: '2025-06-01' }, room: null })
     mount()
     expect(stored()).not.toContain('hat:bush')
     act(() => renderer?.unmount())
-    // One day out a month, June 2025 through October 2026: 17 months.
+
     useServiceReport.setState({
       serviceReports: {
         ...oneDay(2025, 5, 11),
@@ -226,8 +223,6 @@ describe('usePetLife wallet', () => {
   })
 
   it('earns coins by days out and takes off what was spent', () => {
-    // October 1 through 21: 21 days out, a coin each. No Plans, so nothing
-    // more for keeping them, and no streak milestones.
     useServiceReport.setState({ serviceReports: everyDay(2026, 9, 9) })
     usePet.setState({
       pet: {

@@ -46,11 +46,7 @@ const PaywallThankYouScreen = () => {
   const route = useRoute<RouteProp<RootStackParamList, 'Thank You'>>()
   const { isSupporter } = useIsSupporter()
   const { iCloudSharingAvailable } = useAccount()
-  // Prefer the just-purchased tier from nav params over the current supporter
-  // state. A lifetime supporter who sends a one-time tip is still
-  // `isSupporter === true`, but the screen tone should match what they
-  // actually bought. Falls back to `isSupporter` when the screen is reached
-  // without a tier (e.g. legacy nav paths).
+
   const purchaseTier = route.params?.purchaseTier
   const showSupporterCelebration = purchaseTier
     ? purchaseTier === 'supporter'
@@ -59,8 +55,6 @@ const PaywallThankYouScreen = () => {
   const { playConfetti } = useAnimation()
   const fireworks = useFireworks()
 
-  // Starting the confetti hands back a new `playConfetti`, so the celebration
-  // can't re-run on its identity: that would clear the fireworks timer.
   const hasCelebratedRef = useRef(false)
   const celebrate = useEffectEvent(() => {
     if (hasCelebratedRef.current) return
@@ -90,9 +84,6 @@ const PaywallThankYouScreen = () => {
       }}
     >
       <ScrollView
-        // Must flex — RN 0.86's Yoga no longer clamps an unflexed ScrollView
-        // to its parent's bounds, so without this the scroll area sizes to
-        // its content and pushes the footer button off-screen.
         style={{ flex: 1 }}
         contentContainerStyle={{
           paddingTop: 30,
@@ -147,13 +138,7 @@ const PaywallThankYouScreen = () => {
 
           {showSupporterCelebration && <SupporterBenefits />}
 
-          {/*
-           * With iCloud reachable (or Google Drive connected on Android),
-           * Supporter status reaches the user's other devices automatically
-           * (ADR 0011) — say nothing. Only when it can't (signed out, iCloud
-           * Drive disabled for WitnessWork, Drive not connected) does the user
-           * have something to do, so only then surface the manual path.
-           */}
+          {}
           {showSupporterCelebration && !iCloudSharingAvailable && (
             <Card style={{ marginTop: 15 }}>
               <Text

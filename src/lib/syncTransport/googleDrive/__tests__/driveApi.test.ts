@@ -8,9 +8,6 @@ import {
 import { SyncTransportError } from '@/lib/syncTransport/types'
 import { driveKit } from './driveTestKit'
 
-// The Drive REST client against an in-memory Drive: request shapes, paging,
-// error classification, token refresh and retries.
-
 describe('classifyDriveError', () => {
   it.each([
     [401, null, 'unauthorized'],
@@ -20,10 +17,10 @@ describe('classifyDriveError', () => {
     [403, 'insufficientPermissions', 'unauthorized'],
     [403, 'ACCESS_TOKEN_SCOPE_INSUFFICIENT', 'unauthorized'],
     [403, 'RATE_LIMIT_EXCEEDED', 'rate-limited'],
-    // A 403 Drive didn't explain is no reason to disconnect anyone.
+
     [403, null, 'unknown'],
     [403, 'somethingNew', 'unknown'],
-    // API usage limits, not the user's storage.
+
     [403, 'quotaExceeded', 'rate-limited'],
     [403, 'dailyLimitExceeded', 'rate-limited'],
     [404, 'notFound', 'not-found'],
@@ -89,7 +86,7 @@ describe('createDriveApi', () => {
 
   it('gives up after its retries with a classified error', async () => {
     const { drive, api } = driveKit()
-    // The first attempt and four retries.
+
     for (let i = 0; i < 5; i++)
       drive.failNext(() => true, 403, 'userRateLimitExceeded')
     await expect(api('a').listFiles()).rejects.toMatchObject({
@@ -214,7 +211,7 @@ describe('createDriveApi', () => {
     await expect(api.downloadBinary('id', '/tmp/x')).rejects.toMatchObject({
       code: 'rate-limited',
     })
-    // Throttling never asks for a fresh token.
+
     expect(tokens.every((t) => !(t as { refresh: boolean }).refresh)).toBe(true)
   })
 

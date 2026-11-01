@@ -81,51 +81,34 @@ const ContactRow = ({
   offersNotNow = false,
 }: {
   selected?: boolean
-  /** False when selecting this row updates an adjacent detail pane. */
+
   showsDisclosure?: boolean
-  /** Adds "Open Contact" to the menu, for lists whose tap does something else. */
+
   showOpenInMenu?: boolean
-  /** Adds "Select" to the long-press menu; starts Select mode on this row. */
+
   onSelect?: () => void
-  /**
-   * Select mode: the row shows a checkmark circle, reads as a checkbox, taps
-   * call `onPress` to toggle it, and swipes are off.
-   */
+
   selectionMode?: boolean
-  /** Whether the row is checked in Select mode. */
+
   checked?: boolean
-  /** Adds "Not Now" to the menu, dismissing the Contact for 30 days. */
+
   offersNotNow?: boolean
   contact: Contact
   onPress?: () => void
-  /**
-   * Per-key Fuse match metadata for the active search query, when there is one.
-   * When provided, the row renders an inline highlight on the contact name and
-   * a one-line preview snippet for the best non-name match (custom field,
-   * conversation note, phone, email, or address).
-   */
+
   searchMatches?: readonly FuseResultMatch[]
-  /**
-   * Replaces the row's "last visit · city" line, e.g. with why a suggested
-   * section lists the Contact or the value the list is sorted by. A search
-   * match preview still wins.
-   */
+
   detail?: SuggestedRowDetail
-  /**
-   * Shared per-contact conversation index built once by the list. Staleness,
-   * study flags, and the most-recent conversation are O(1) lookups against it —
-   * the row never scans the full conversations array.
-   */
+
   index: ConversationIndex
 }) => {
   const dataProtectionMode = usePreferences((s) => s.dataProtectionMode)
   const theme = useTheme()
-  // At accessibility sizes the name wraps instead of cutting off.
+
   const largeText = useAccessibilityTextSize()
   const markerColors = useMarkerColors()
   const [dismissSheetOpen, setDismissSheetOpen] = useState(false)
-  // A closed Tamagui modal sheet still mounts its whole content through a
-  // Portal, so rows only mount theirs once it's first asked for.
+
   const [dismissSheetMounted, setDismissSheetMounted] = useState(false)
   const share = useShareContact(contact)
   const dismiss = useDismissContact()
@@ -137,8 +120,7 @@ const ContactRow = ({
       ? () => void dismiss(contact, notNowDismissOption)
       : undefined,
   })
-  // Swiping archives; data protection mode, which keeps nothing to archive,
-  // deletes instead.
+
   const { archive, remove } = useContactRemovalActions(contact)
   const swipeRemoval = archive ?? remove
 
@@ -156,8 +138,7 @@ const ContactRow = ({
     ? formatRelative(mostRecentConversation.date)
     : i18n.t('noRecentConversation_plural')
   const cityText = contact.address?.city ? ` · ${contact.address.city}` : ''
-  // Screen readers get the row as one element, so the label carries what the
-  // row shows: its second line and the study and favorite icons.
+
   const accessibilityLabel = contactRowAccessibilityLabel({
     name: contact.name,
     subtitle: previewMatch
@@ -173,8 +154,6 @@ const ContactRow = ({
     favorite: !!contact.isFavorite,
   })
 
-  // Reset the row before confirming: the confirm Alert can be cancelled, and a
-  // half-open row behind a dismissed Alert reads as stuck.
   const handleSwipeOpen = (side: SwipeSide, swipeable: Swipeable) => {
     swipeable.reset()
     if (side === 'leading') {
@@ -185,9 +164,6 @@ const ContactRow = ({
     }
   }
 
-  // Everything inside is non-interactive: the wrapping ContextMenu owns taps
-  // and long presses for the whole card. In Select mode the card itself is the
-  // accessibility element, a checkbox.
   const card = (
     <ContactCard
       accessible={selectionMode}
@@ -262,7 +238,6 @@ const ContactRow = ({
           )
         }
         trailing={
-          // The row's label already says what these icons mean.
           <View
             style={{ flexDirection: 'row', gap: 10 }}
             accessibilityElementsHidden
@@ -303,9 +278,6 @@ const ContactRow = ({
     </ContactCard>
   )
 
-  // The same tree in and out of Select mode, so switching modes (e.g. "Done"
-  // after "Select All") re-renders the visible rows instead of remounting each
-  // one's Swipeable and native context menu host. The menu stays available.
   return (
     <>
       <SwipeableRow

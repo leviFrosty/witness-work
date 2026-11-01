@@ -25,11 +25,6 @@ export interface AuxiliaryMonthSheetProps {
   source: AuxiliaryMonthSource
 }
 
-/**
- * One-month auxiliary pioneering for a Kingdom Publisher: pick this month or
- * next and a 30h or 15h goal. That month then tracks hours (Add Time, Progress
- * tab, hours Service Report) and returns to the standing role afterwards.
- */
 const AuxiliaryMonthSheet = ({
   open,
   onOpenChange,
@@ -44,7 +39,6 @@ const AuxiliaryMonthSheet = ({
   const selected = monthKey === 'this' ? thisMonth : nextMonth
   const [goal, setGoal] = useState<AuxiliaryGoal>('regularAuxiliary')
 
-  // Open on whichever month is already auxiliary, else this month.
   const initialMonthKey: MonthKey =
     !thisMonth.isAuxiliary && nextMonth.isAuxiliary ? 'next' : 'this'
   useEffect(() => {

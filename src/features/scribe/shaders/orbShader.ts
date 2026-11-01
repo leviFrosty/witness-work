@@ -1,28 +1,5 @@
 import { Skia } from '@shopify/react-native-skia'
 
-/**
- * The Scribe AI orb in one pass: a shaded sphere with slowly flowing light
- * inside, a liquid edge that wobbles more as the User speaks, a two-layer aura
- * (tight bloom plus wide haze), and an organizing ring with a rotating
- * highlight. Output is premultiplied, so it composites over any background,
- * light or dark.
- *
- * Uniforms (canvas points):
- *
- * - `uSize` — canvas size. The aura fades out before the canvas edge.
- * - `uTime` — seconds. Held still while paused.
- * - `uFlow` — the inner flow's phase, integrated on the UI thread so its speed
- *   can follow the voice without the pattern jumping.
- * - `uLevel` — 0–1 smoothed voice loudness.
- * - `uLoad` — 0–1 the loading spinner.
- * - `uPop` — 0–1 the ready dot replacing the spinner.
- * - `uGrow` — the dot springing open: 0 dot, 1 full size (overshoots).
- * - `uProc` — 0–1 blend into the organizing state (smaller orb, ring).
- * - `uMute` — 0–1 desaturates and dims (offline/disabled).
- * - `uCore` — core radius as a fraction of the canvas (0.27 leaves room for the
- *   aura).
- * - `uA` accent, `uB` second hue, `uC` deep shade, `uD` highlight (RGB 0–1).
- */
 const source = `
 uniform float2 uSize;
 uniform float uTime;
@@ -174,5 +151,4 @@ half4 main(float2 xy) {
 }
 `
 
-/** `null` if the shader failed to compile. */
 export const orbShader = Skia.RuntimeEffect.Make(source)

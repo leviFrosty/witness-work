@@ -11,7 +11,6 @@ import { formatGoalHours } from '@/features/progress/components/cards/displayMin
 import useServiceYearTotals from '@/features/progress/components/cards/allTime/useServiceYearTotals'
 import type { AllTimeCardProps } from '@/features/progress/components/cards/types'
 
-/** The usual Service Year, over the ones that have ended. */
 export default function YearlyAverageCard({ size }: AllTimeCardProps) {
   const timeDisplayFormat = usePreferences((s) => s.timeDisplayFormat)
   const { hasAnnualGoal, annualGoalHours } = usePublisher()
@@ -32,8 +31,7 @@ export default function YearlyAverageCard({ size }: AllTimeCardProps) {
           ? i18n.t('progressCards.serviceDays.none')
           : average.currentOnly
             ? i18n.t('progressCards.allTime.yearlyAverage.currentOnly')
-            : // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
-              i18n.t('progressCards.allTime.yearlyAverage.over', {
+            : i18n.t('progressCards.allTime.yearlyAverage.over', {
                 count: average.years,
               })
       }

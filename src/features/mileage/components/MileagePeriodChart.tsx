@@ -25,7 +25,7 @@ import type { Trip } from '@/types/mileage'
 const CHART_HEIGHT = 88
 const PLOT_TOP = 2
 const INNER_PADDING = 0.3
-/** Month days that get an axis label — about one a week. */
+
 const LABELED_MONTH_DAYS = new Set([1, 8, 15, 22, 29])
 const READOUT_WIDTH = 150
 const READOUT_OFFSET = 4
@@ -33,10 +33,7 @@ const READOUT_OFFSET = 4
 type Props = {
   period: MileagePeriod
   trips: readonly Trip[]
-  /**
-   * The cars with trips and their colors, in stacking order. More than one car
-   * stacks each bar by car.
-   */
+
   vehicleColors: VehicleChartColor[]
   format: MileageFormatter
   onSelectBucket: (bucket: MileageBucket) => void
@@ -47,11 +44,6 @@ const bucketLabel = (bucket: MileageBucket) =>
     ? formatDisplay(fromDateKey(bucket.start), 'MMMM YYYY')
     : formatMonthDayCompact(fromDateKey(bucket.start))
 
-/**
- * Distance per day of a Week or Month, or per month of a Service Year, stacked
- * by car when more than one car has trips. Tap a bar to open that day or month;
- * hover a pointer over it to see its distance.
- */
 const MileagePeriodChart = ({
   period,
   trips,
@@ -61,13 +53,12 @@ const MileagePeriodChart = ({
 }: Props) => {
   const theme = useTheme()
   const [width, setWidth] = useState(0)
-  // Keyed by bucket so a hover left over from another period never matches.
+
   const [hoveredStart, setHoveredStart] = useState<string | null>(null)
   const buckets = bucketTrips(period, trips)
   const maxMiles = Math.max(0, ...buckets.map((b) => b.distanceMiles))
   if (buckets.length === 0 || maxMiles <= 0) return null
 
-  // One series per car when more than one car has trips.
   const stacked = vehicleColors.length > 1
   const colors = stacked
     ? vehicleColors.map(({ color }) => color)
@@ -77,7 +68,7 @@ const MileagePeriodChart = ({
       ? vehicleColors.map(({ vehicleId }) => bucket.byVehicle[vehicleId] ?? 0)
       : [bucket.distanceMiles]
   )
-  // The chart only lays out the plot; the bars draw themselves.
+
   const data = buckets.map((_, i) => ({ x: i, y: 0 }))
   const count = buckets.length
   const radius = count > 12 ? 2 : 4
@@ -95,7 +86,7 @@ const MileagePeriodChart = ({
         ? [{ key: bucket.start, label: formatDisplay(day, 'D'), position }]
         : []
     }
-    // Every other month keeps longer month names from colliding.
+
     return i % 2 === 0
       ? [{ key: bucket.start, label: day.format('MMM'), position }]
       : []
@@ -145,14 +136,11 @@ const MileagePeriodChart = ({
           }}
         >
           {buckets.map((bucket) => {
-            // Screen readers step through the bars with trips only; the
-            // period navigator reaches the empty days and months.
             const hasTrips = bucket.distanceMiles > 0
             return (
               <PointerHover
                 key={bucket.start}
                 onHoverChange={(hovered) =>
-                  // The next bar's hover can begin before this one ends.
                   setHoveredStart((current) =>
                     hovered
                       ? bucket.start
@@ -218,10 +206,6 @@ type BarReadoutProps = {
   format: MileageFormatter
 }
 
-/**
- * The hovered bar's date and distance, floating just above the bar. Tapping the
- * bar opens the same totals, so touch loses nothing.
- */
 const BarReadout = ({
   bucket,
   index,

@@ -1,18 +1,15 @@
 import type { PointerAccessory } from '../../../../modules/pointer-style'
 
-/** A size an item can take, with the frame it has at that size where known. */
 export type ReorderableSizeOption<Size extends string> = {
   size: Size
   width?: number
   height?: number
 }
 
-/** How much nearer another size must be before a drag switches to it. */
 const HYSTERESIS = 16
-/** Without frames to compare, how far a drag steps one size. */
+
 const STEP = 70
 
-/** Which ways the options' frames differ, for the handle's pointer arrows. */
 export const resizeAccessories = <Size extends string>(
   options: ReorderableSizeOption<Size>[]
 ): PointerAccessory[] => {
@@ -24,13 +21,6 @@ export const resizeAccessories = <Size extends string>(
   ]
 }
 
-/**
- * The size a resize handle dragged by `forward` and `down` points from its
- * start should snap to: the option whose frame is nearest the dragged corner,
- * and only once it's clearly nearer than the current one, so the size doesn't
- * flicker at the halfway point. Options without frames that differ (every one
- * full width, say) step one size per `STEP` points instead.
- */
 export const snapResize = <Size extends string>({
   options,
   current,
@@ -38,10 +28,9 @@ export const snapResize = <Size extends string>({
   forward,
   down,
 }: {
-  /** Smallest first. */
   options: ReorderableSizeOption<Size>[]
   current: Size
-  /** The item's frame and size when the drag began. */
+
   start: { width: number; height: number; size: Size }
   forward: number
   down: number
@@ -58,8 +47,7 @@ export const snapResize = <Size extends string>({
     return options[index]?.size ?? current
   }
   const want = { width: start.width + forward, height: start.height + down }
-  // Given frames are estimates (text size changes them); line them up with the
-  // frame the item really had at the size it started at.
+
   const from = options[startIndex]
   const bias = {
     width: from?.width === undefined ? 0 : start.width - from.width,

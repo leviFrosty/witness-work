@@ -1,12 +1,5 @@
 #!/usr/bin/env node
-// Rebuilds the backup a user attached to Buddies feedback.
-//
-//   node --env-file=.env scripts/buddies-feedback-backup.mjs <feedback_id> [out.json]
-//
-// Needs POSTHOG_CLI_HOST, POSTHOG_CLI_PROJECT_ID and POSTHOG_CLI_API_KEY. The
-// `feedback_id` is on the survey response and its `survey attachment` events.
-// The file holds a user's contacts and notes: keep it off shared drives and
-// delete it once the issue is resolved.
+
 import { writeFileSync } from 'node:fs'
 import { gunzipSync } from 'node:zlib'
 

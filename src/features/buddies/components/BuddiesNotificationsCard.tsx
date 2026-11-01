@@ -5,10 +5,6 @@ import i18n from '@/lib/locales'
 import useNotificationPermission from '@/features/buddies/hooks/useNotificationPermission'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 
-/**
- * Asks for notifications only while someone may accept or confirm, since that's
- * when a missed push leaves a request waiting.
- */
 export default function BuddiesNotificationsCard() {
   const { granted, needsSettings, turnOn } = useNotificationPermission()
   const enabled = useBuddies((state) => state.notificationsEnabled)

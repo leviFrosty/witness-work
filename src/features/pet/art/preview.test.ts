@@ -1,15 +1,3 @@
-/**
- * PNG previews of one room part's options, for drawing and checking new art:
- * each option in the room by day and at night, its Decorate Room thumbnail and
- * its locked secret silhouette; hats also on every species. Off by default; run
- * with `PET_PREVIEW=hat pnpm vitest run src/features/pet/art/preview` (any
- * part: `hat wallColor wallPattern floor bed shelf lamp`; add
- * `PET_PREVIEW_IDS=duck,teapot` for only some). Writes
- * `.verify/pet-preview/<part>.png` and one file per option (gitignored). For
- * lamps, `PET_PREVIEW_LEVELS=1` also writes `lamp-levels.png` (and one per
- * lamp): each lamp's thumbnail at night at levels 0–5, then at level 4 a few
- * moments later to show its animation.
- */
 import fs from 'node:fs'
 import path from 'node:path'
 
@@ -79,7 +67,6 @@ function input(
   }
 }
 
-/** Cells side by side on a light grey strip. */
 function row(cells: readonly PixelBuffer[], gap = 3): PixelBuffer {
   const w = cells.reduce((sum, c) => sum + c.width + gap, gap)
   const h = Math.max(...cells.map((c) => c.height)) + gap * 2
@@ -93,7 +80,6 @@ function row(cells: readonly PixelBuffer[], gap = 3): PixelBuffer {
   return out
 }
 
-/** Rows stacked, left-aligned. */
 function stack(rows: readonly PixelBuffer[]): PixelBuffer {
   const w = Math.max(...rows.map((r) => r.width))
   const h = rows.reduce((sum, r) => sum + r.height, 0)
@@ -132,7 +118,6 @@ function optionRow(part: (typeof PARTS)[number], option: string): PixelBuffer {
   return row(cells)
 }
 
-/** A lamp's thumbnail at night at levels 0–5, then at level 4 over time. */
 function lampLevelsRow(option: string): PixelBuffer {
   const room = roomWithChoice(BASE, 'lamp', option)
   const view = ROOM_THUMB_VIEWS.lamp

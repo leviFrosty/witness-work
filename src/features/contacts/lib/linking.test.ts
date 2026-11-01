@@ -6,13 +6,13 @@ const runtime = vi.hoisted(() => ({
   launchURL: null as string | null,
   linkSinceLaunch: null as string | null,
 }))
-/** The navigator's screens: onboarding's, or the app's once it renders them. */
+
 const navigation = vi.hoisted(() => {
   const listeners = new Set<() => void>()
   return {
     routeNames: ['Root'],
     listeners,
-    /** The next render swaps onboarding's screens for the app's. */
+
     showApp() {
       this.routeNames = ['Root']
       listeners.forEach((listener) => listener())
@@ -63,7 +63,6 @@ beforeEach(() => {
   usePreferences.setState({ onboardingComplete: true })
 })
 
-/** Onboarding is showing, as a fresh install starts. */
 const startOnboarding = () => {
   usePreferences.setState({ onboardingComplete: false })
   navigation.routeNames = ['Onboarding']
@@ -85,7 +84,7 @@ describe('deep links wait for takeovers and onboarding (ADR 0021)', () => {
     runtime.urlListener?.({ url: 'witnesswork://schedule/2026-10-08' })
     expect(listener).not.toHaveBeenCalled()
     useTakeover.getState().release(reveal)
-    // The newest link wins.
+
     expect(listener).toHaveBeenCalledTimes(1)
     expect(listener).toHaveBeenCalledWith('witnesswork://schedule/2026-10-08')
   })
@@ -97,7 +96,7 @@ describe('deep links wait for takeovers and onboarding (ADR 0021)', () => {
     runtime.urlListener?.({ url: 'witnesswork://day' })
     expect(listener).not.toHaveBeenCalled()
     usePreferences.setState({ onboardingComplete: true })
-    // Not until the app's screens are up, or it would have nowhere to go.
+
     expect(listener).not.toHaveBeenCalled()
     navigation.showApp()
     expect(listener).toHaveBeenCalledWith('witnesswork://day')
@@ -123,14 +122,14 @@ describe('links on a cold start', () => {
     )
     const listener = vi.fn()
     linking.subscribe!(listener)
-    // Not opened a second time.
+
     expect(listener).not.toHaveBeenCalled()
   })
 
   it('opens a link tapped after the launch link was read', async () => {
     runtime.launchURL = 'witnesswork://home'
     await linking.getInitialURL!()
-    // Before navigation listened for links itself.
+
     runtime.linkSinceLaunch = 'witnesswork://add-time'
     const listener = vi.fn()
     linking.subscribe!(listener)
@@ -140,7 +139,7 @@ describe('links on a cold start', () => {
   it('holds a launch link during onboarding and opens it after', async () => {
     startOnboarding()
     runtime.launchURL = 'witnesswork://day'
-    // The onboarding screens have no such route; it would be lost.
+
     await expect(linking.getInitialURL!()).resolves.toBeNull()
     const listener = vi.fn()
     linking.subscribe!(listener)

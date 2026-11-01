@@ -1,10 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-// Machine-read dates (store keys, notification ids, buddy payloads, widget
-// dates) must stay ASCII in every Language. Arabic shows Arabic-Indic digits,
-// but only through the display helpers in `src/lib/dates.ts`; `moment.format`
-// itself never localizes digits.
-
 vi.mock('expo-localization', () => ({
   getLocales: () => [{ languageTag: 'en-US', regionCode: 'US' }],
   getCalendars: () => [{ uses24hourClock: false, firstWeekday: 1 }],

@@ -1,20 +1,18 @@
-/** Donkey: long ears, forelock, pale muzzle, tufted tail. */
 import { rgb, rgbPalette, type Rgb } from '@/lib/pixelArt'
 
 import { facePixels } from '../face'
 import { defineSpecies } from './define'
 
 interface DonkeyCoat {
-  /** Grey coat, shadow, highlight. */
   readonly g: Rgb
   readonly gs: Rgb
   readonly gh: Rgb
-  /** Light muzzle and belly, muzzle shadow. */
+
   readonly l: Rgb
   readonly ls: Rgb
-  /** Mane, hooves, tail tuft. */
+
   readonly m: Rgb
-  /** Inner ear. */
+
   readonly in: Rgb
 }
 

@@ -252,7 +252,7 @@ describe('calendar publishing orchestration', () => {
     const date = new Date(Date.now() + 86_400_000)
     data.conversations = [
       { notifyMe: true, reminderOffsetMinutes: 15 },
-      // No saved offset: the default reminder time applies.
+
       { notifyMe: true },
       { notifyMe: false, reminderOffsetMinutes: 15 },
     ].map((followUp, index) => ({
@@ -373,8 +373,6 @@ describe('calendar publishing orchestration', () => {
     expect(bridge.setDestination.mock.calls[0][2]).toBe('calendar')
   })
   it('one-tap setup after a reinstall starts from the events the calendar holds', async () => {
-    // A reinstall keeps this device's id, so the shared record still names it
-    // primary and lists an event deleted while the app was gone.
     useCalendarSync.setState({
       enabled: false,
       registered: false,
@@ -384,8 +382,7 @@ describe('calendar publishing orchestration', () => {
     let shared = { ...owned, publishedKeys: ['deleted-visit'] }
     bridge.registerDevice.mockImplementation(async () => shared)
     bridge.requestAccess.mockResolvedValue(true)
-    // Native: a reset manifest lists what the calendar holds, and publishing
-    // waits while a listed event is missing from it.
+
     bridge.setDestination.mockImplementation(async (...args: unknown[]) => {
       if (args[5]) shared = { ...shared, publishedKeys: inCalendar }
       return shared
@@ -439,7 +436,7 @@ describe('calendar publishing orchestration', () => {
       calendarAction(() => createCalendar('source'))
     ).rejects.toThrow()
     expect(useCalendarPublishing.getState().error).toBe('calendarCreateError')
-    // The cause behind the generic message is reported.
+
     expect(analytics.capture).toHaveBeenCalledWith('calendar_sync_failed', {
       error_key: 'calendarCreateError',
       background: false,
@@ -462,7 +459,7 @@ describe('calendar publishing orchestration', () => {
     )
     expect(bridge.createCalendar).not.toHaveBeenCalled()
     expect(useCalendarPublishing.getState().error).toBe('calendarNoSourceError')
-    // A specific message needs no code to tell it apart.
+
     expect(analytics.capture).toHaveBeenCalledWith('calendar_sync_failed', {
       error_key: 'calendarNoSourceError',
       background: false,
@@ -482,7 +479,6 @@ describe('calendar publishing orchestration', () => {
       background: false,
     })
 
-    // iCloud Calendars turned on, then Try Again.
     bridge.destinations.mockResolvedValueOnce([])
     bridge.sources.mockResolvedValueOnce([{ id: 'icloud', title: 'iCloud' }])
     await expect(retryCalendarAction('try_again')).resolves.toEqual({
@@ -685,11 +681,11 @@ describe('calendar publishing orchestration', () => {
     await publishCalendar({ pull: false })
     await publishCalendar({ pull: false })
     expect(bridge.publish).toHaveBeenCalledOnce()
-    // A change made in Calendar.app or by the account's sync is checked.
+
     noteCalendarChanged()
     await publishCalendar({ pull: false })
     expect(bridge.publish).toHaveBeenCalledTimes(2)
-    // So is new data, and a repair always goes through.
+
     data.contacts = [{ id: 'contact', name: 'Contact' }]
     data.conversations = [
       {
@@ -758,7 +754,7 @@ describe('calendar publishing orchestration', () => {
     vi.spyOn(Date, 'now').mockReturnValue(2_000)
     bridge.publish.mockRejectedValueOnce(new Error('offline'))
     await calendarAction(publishCalendar).catch(() => undefined)
-    // Still the start of the same run of failures.
+
     expect(useCalendarSync.getState().failingSince).toBe(1_000)
     await calendarAction(publishCalendar)
     expect(useCalendarSync.getState().failingSince).toBeNull()
@@ -820,7 +816,7 @@ describe('calendar publishing orchestration', () => {
         created: false,
         recovery: 'open_settings',
       })
-      // Done: nothing is left to repeat.
+
       await retryCalendarAction('try_again')
       expect(bridge.setDestination).toHaveBeenCalledTimes(1)
     })
@@ -838,7 +834,7 @@ describe('calendar publishing orchestration', () => {
         native_code: 'CALENDAR_CREATE_FAILED',
         recovery: 'try_again',
       })
-      // First attempts carry no recovery.
+
       await calendarAction(action).catch(() => undefined)
       expect(analytics.capture).toHaveBeenLastCalledWith(
         'calendar_sync_failed',
@@ -854,7 +850,7 @@ describe('calendar publishing orchestration', () => {
         .fn(async () => undefined)
         .mockRejectedValueOnce(new Error('CALENDAR_STATE_CHANGED'))
       await calendarAction(action).catch(() => undefined)
-      // Opening Calendar Sync checks iCloud, which leaves the error showing.
+
       await calendarAction(refreshPublishing)
       await retryCalendarAction('try_again')
       expect(action).toHaveBeenCalledTimes(2)

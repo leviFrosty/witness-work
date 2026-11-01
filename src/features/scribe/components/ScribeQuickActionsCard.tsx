@@ -43,14 +43,11 @@ const TILES: Record<
   plan: { icon: CalendarIcon, label: 'quickActions_plan', a11y: 'createPlan' },
 }
 
-// This Week's day cell; the tiles take the same height so the two cards match.
 const DAY_CELL_HEIGHT = 50
 const TILE_GAP = 8
-// Below this window width the orb beside the tiles leaves them too little room
-// for their words (iPad split view and Slide Over).
+
 const NARROW_WINDOW = 360
 
-/** "QUICK ACTIONS", in This Week's header type. */
 const SectionLabel = ({ largeText }: { largeText: boolean }) => {
   const theme = useTheme()
   return (
@@ -69,11 +66,6 @@ const SectionLabel = ({ largeText }: { largeText: boolean }) => {
   )
 }
 
-/**
- * An invisible copy of a This Week day column (weekday letter, 4pt, 50pt cell).
- * The tiles stretch to it, so Quick Actions is This Week's height at every text
- * size by construction.
- */
 const DayColumnStrut = () => {
   const theme = useTheme()
   return (
@@ -103,7 +95,7 @@ const TileButton = ({
 }: {
   tile: Tile
   onPress: () => void
-  /** A full-width row (icon, then label) at accessibility text sizes. */
+
   stacked: boolean
 }) => {
   const theme = useTheme()
@@ -152,14 +144,6 @@ const TileButton = ({
   )
 }
 
-/**
- * Home's Quick Actions: Time (or Visit), Contact and Plan, and the Scribe AI
- * orb. Built like This Week (same card, header type and row height) so the two
- * read as a pair. Without Scribe AI, the tiles fill the card. Where the orb
- * beside them would squeeze the tiles (narrow windows) or their words (large
- * text), it takes a row of its own under them; at accessibility text sizes the
- * tiles become full-width rows too.
- */
 const ScribeQuickActionsCard = () => {
   const theme = useTheme()
   const navigation = useNavigation<RootStackNavigation>()
@@ -201,8 +185,7 @@ const ScribeQuickActionsCard = () => {
   ) : (
     <View style={{ flexDirection: 'row' }}>
       <DayColumnStrut />
-      {/* Equal thirds whatever the label: Home measures its sections to fit,
-          where flexing tiles would size to their words. */}
+      {}
       <View
         style={{
           flex: 1,
@@ -293,8 +276,7 @@ const ScribeQuickActionsCard = () => {
               accessibilityLabel={orbLabel}
               style={{
                 width: 88,
-                // The orb's glow may run into the card's padding; the tiles
-                // set the card's height.
+
                 marginVertical: -8,
                 alignSelf: 'center',
                 alignItems: 'center',

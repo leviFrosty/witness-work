@@ -38,23 +38,17 @@ type Preview =
       tenure?: BuddyTenure
       expiresAt: number
     }
-  /** `retryable`: the connection, a rate limit, or something unexpected. */
   | { state: 'error'; message: string; retryable: boolean }
 
-/**
- * The pre-accept screen: who is inviting, and, the first time (accepting is how
- * an invitee starts Buddies), what each side sees and what is never shared.
- * Leaving (the header back arrow) sends nothing to the inviter.
- */
 export default function BuddyInviteScreen({ route }: Props) {
   const theme = useTheme()
   const navigation = useNavigation<RootStackNavigation>()
   const hasName = useProfile((state) => state.name.trim().length > 0)
-  // As the screen opened: accepting starts Buddies, which mustn't hide it.
+
   const [started] = useState(() => useBuddies.getState().onboardingComplete)
   const [preview, setPreview] = useState<Preview>({ state: 'loading' })
   const [accepting, setAccepting] = useState(false)
-  // A second tap in the same frame, before `accepting` renders.
+
   const acceptingRef = useRef(false)
   const [nameInvalid, setNameInvalid] = useState(false)
   const [attempt, setAttempt] = useState(0)
@@ -100,8 +94,7 @@ export default function BuddyInviteScreen({ route }: Props) {
         i18n.t('buddies_inviteSentTitle'),
         i18n.t('buddies_inviteSentBody', { name })
       )
-      // On a slow connection the User may have left already; going back then
-      // would close whatever screen they moved on to.
+
       if (navigation.isFocused()) navigation.goBack()
     } catch (error) {
       alertBuddiesError(i18n.t('buddies_errorAcceptTitle'), error)

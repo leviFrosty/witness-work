@@ -10,10 +10,6 @@ import { analytics } from '@/lib/analytics'
 import i18n from '@/lib/locales'
 import { usePreferences } from '@/stores/preferences'
 
-/**
- * An invitation to plan next week while it has no Plans. Every role plans: the
- * Ready to Go badge counts months with a Plan, so it isn't gated on hours.
- */
 const WeekPlanReminderSection = () => {
   const enabled = usePreferences((s) => s.weekPlanReminder)
   const weekday = usePreferences((s) => s.weekPlanReminderDay)
@@ -33,8 +29,6 @@ const WeekPlanReminderSection = () => {
     analytics.capture('week_plan_reminder_changed', { enabled: next })
   }
 
-  // moment.weekdays() is locale-translated but always Sunday-first indexed,
-  // matching the stored 0–6 values. Listed from the Start of Week.
   const weekdays = moment.weekdays()
   const firstDay = moment.localeData().firstDayOfWeek()
   const weekdayData = weekdays.map((_, index) => {

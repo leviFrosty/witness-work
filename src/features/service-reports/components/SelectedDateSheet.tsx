@@ -26,11 +26,6 @@ export type SelectedDateSheetState = {
   date: Date
 }
 
-/**
- * What shows in place of the day: Add Time for a new entry, maybe from a Plan,
- * or one to change; one of the day's Plans; or the Plan form, for a new Plan or
- * one to change, coming back to that Plan if it was opened from there.
- */
 type DayForm =
   | { kind: 'time'; existingReport?: TimeEntry; prefill?: LogTimePrefill }
   | { kind: 'planDetails'; plan: RootStackParamList['Plan Details'] }
@@ -41,41 +36,31 @@ type DayForm =
     }
 
 const HORIZONTAL_PADDING = 24
-/** Long enough for an unfolded form to lay out before scrolling to it. */
+
 const REVEAL_FORM_DELAY_MS = 300
 
 interface Props {
   sheet: SelectedDateSheetState
   setSheet: React.Dispatch<React.SetStateAction<SelectedDateSheetState>>
   thisMonthsReports: TimeEntry[] | null
-  /**
-   * Extra content under the day's history (e.g. Buddies' plans). Its menus
-   * navigate through `onNavigate`, which closes the sheet first.
-   */
+
   renderFooter?: (
     date: Date,
     onNavigate: (navigate: () => void) => void
   ) => React.ReactNode
-  /** Extra lines under a one-time Plan's row, e.g. who the Plan is with. */
+
   renderDayPlanFooter?: (plan: DayPlan) => React.ReactNode
-  /** The Plan form, for planning the day in the sheet. */
+
   renderPlanForm?: (slot: PlanFormSlot) => React.ReactNode
-  /** Plan Details, for showing one of the day's Plans in the sheet. */
+
   renderPlanDetails?: {
     actions: (slot: PlanDetailsSlot) => React.ReactNode
     body: (slot: PlanDetailsSlot) => React.ReactNode
   }
-  /** The sheet's resting height while open, and 0 once closed. */
+
   onHeightChange?: (height: number) => void
 }
 
-/**
- * A day's time and plans in a split sheet over the bottom of the screen, so the
- * calendar or list the day was picked from stays in view above it. A day with
- * no time or no Plans folds their forms into its list. Add Time, editing an
- * entry, a Plan's Log as Time, and Plan Day open their form in the sheet, and
- * it comes back to the day once saved.
- */
 const SelectedDateSheet: React.FC<Props> = ({
   sheet,
   setSheet,
@@ -88,12 +73,10 @@ const SelectedDateSheet: React.FC<Props> = ({
 }) => {
   const theme = useTheme()
   const insets = useSafeAreaInsets()
-  // The sheet renders through a portal, outside this screen's providers; the
-  // time form celebrates a new entry with this one's confetti.
+
   const animation = useContext(AnimationViewContext)
   const [form, setForm] = useState<DayForm | null>(null)
-  // A newly opened or newly picked day starts on its overview. A closing sheet
-  // keeps what it shows until it's gone.
+
   const dayKey = sheet.date.getTime()
   const [shown, setShown] = useState({ open: sheet.open, dayKey })
   if (shown.open !== sheet.open || shown.dayKey !== dayKey) {
@@ -101,8 +84,6 @@ const SelectedDateSheet: React.FC<Props> = ({
     if (sheet.open) setForm(null)
   }
 
-  // Navigation chosen from a row or its context menu waits for the sheet to
-  // close, or the pushed screen would land underneath the sheet.
   const pendingNavigation = useRef<(() => void) | null>(null)
 
   useEffect(() => {
@@ -113,24 +94,18 @@ const SelectedDateSheet: React.FC<Props> = ({
     }
   }, [sheet.open])
 
-  // The screen above stays usable, so it can open another screen, and a form
-  // here can open the note editor: the sheet steps aside for it, keeping what
-  // it shows for when the screen is back.
   const focused = useIsFocused()
   const navigation = useNavigation<RootStackNavigation>()
 
   const close = () => setSheet({ ...sheet, open: false })
 
-  // A form unfolded low in the day scrolls up to the top of the sheet, once
-  // it has had a moment to open.
   const scrollRef = useRef<ScrollView>(null)
   const revealForm = (card: View) =>
     setTimeout(() => {
       const scrollView = scrollRef.current
       if (!scrollView) return
       card.measureLayout(
-        // @ts-expect-error — RN accepts a host component ref here.
-        scrollView,
+        scrollView as unknown as View,
         (_x, y) =>
           scrollView.scrollTo({ y: Math.max(0, y - 8), animated: true }),
         () => {}
@@ -176,7 +151,6 @@ const SelectedDateSheet: React.FC<Props> = ({
           ? 'updateTime'
           : 'addTime'
 
-  // The header is the sheet's drag handle too, so its buttons get real frames.
   const closeButton = (
     <IconButton
       noTransform
@@ -202,8 +176,7 @@ const SelectedDateSheet: React.FC<Props> = ({
         paddingBottom: 4,
       }}
     >
-      {/* A real 44pt frame, plus slop: this header is also the sheet's drag
-          handle, so a thin target loses taps to the drag. */}
+      {}
       <IconButton
         noTransform
         icon={ChevronBackwardIcon}
@@ -223,7 +196,7 @@ const SelectedDateSheet: React.FC<Props> = ({
         accessibilityRole='header'
         style={{
           flex: 1,
-          // Tucks into the chevron's frame, where it sat before.
+
           marginStart: -6,
           color: theme.colors.text,
           fontSize: theme.fontSize('lg'),
@@ -273,8 +246,7 @@ const SelectedDateSheet: React.FC<Props> = ({
             date: sheet.date,
             layout: 'docked',
             params: form.params,
-            // An edited Plan opened from its details goes back to them, where
-            // it is now (a Recurring Plan's date may have become its own).
+
             onDone: (target) =>
               setForm(
                 form.from && target
@@ -306,7 +278,6 @@ const SelectedDateSheet: React.FC<Props> = ({
         ) : (
           <ScrollView
             ref={scrollRef}
-            // The day's inline Plan form has a title field.
             keyboardShouldPersistTaps='handled'
             automaticallyAdjustKeyboardInsets
             contentContainerStyle={{
@@ -339,7 +310,6 @@ const SelectedDateSheet: React.FC<Props> = ({
               inlineForms
               renderPlanForm={renderPlanForm}
               onFormOpen={revealForm}
-              // Full screen, the sheet steps aside and comes back after.
               onExpandTime={(params) => navigation.navigate('Add Time', params)}
               onExpandPlan={(params) => navigation.navigate('PlanDay', params)}
             />

@@ -4,10 +4,6 @@ vi.mock('@react-navigation/native', () => ({}))
 
 import { followShownInTab } from '@/hooks/useShownInTab'
 
-/**
- * Root stack (tabs, then any sheet) › tabs (Home, Schedule) › Home stack
- * (Dashboard, then any pushed screen). Navigators only see their own state.
- */
 function app() {
   const s = { sheet: false, tab: 0, pushed: false }
   const listeners = new Set<() => void>()

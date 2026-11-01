@@ -20,19 +20,13 @@ interface Props {}
 export const CONFETTI_DURATION = 3000
 export const CONFETTI_DELAY_MS = 150
 
-/**
- * Hard upper bound for keeping the FullWindowOverlay mounted past the scheduled
- * animation length. Acts as a safety net if `onAnimationFinish` never fires
- * (e.g. unmount mid-play, lottie bug). Keeping the overlay around indefinitely
- * would silently break native sheets/pickers below it.
- */
 const ANIMATION_SAFETY_MS = CONFETTI_DELAY_MS + CONFETTI_DURATION + 1000
 
 const AnimationViewProvider: React.FC<PropsWithChildren<Props>> = ({
   children,
 }) => {
   const lottieViewRef = useRef<LottieView>(null)
-  // Created on the first celebration, not at launch.
+
   const playSound = useLazySound('successChime')
   const reduceMotion = useReduceMotionEnabled()
   const [overlayMounted, setOverlayMounted] = useState(false)
@@ -64,14 +58,11 @@ const AnimationViewProvider: React.FC<PropsWithChildren<Props>> = ({
 
   const playConfetti = useCallback(() => {
     if (reduceMotion) {
-      // Reduce Motion: skip the full-screen confetti but keep the chime, on
-      // the same beat callers time their haptics to.
       setTimeout(playSound, CONFETTI_DELAY_MS)
       return
     }
     armSafety()
     if (overlayMounted) {
-      // LottieView ref is already attached — replay immediately.
       playSequence()
       return
     }
@@ -79,12 +70,6 @@ const AnimationViewProvider: React.FC<PropsWithChildren<Props>> = ({
     setOverlayMounted(true)
   }, [armSafety, overlayMounted, playSequence, playSound, reduceMotion])
 
-  /**
-   * Drains the pending play once the FullWindowOverlay finishes mounting and
-   * the LottieView ref attaches. Without this two-step, the first call after an
-   * idle period would no-op because `lottieViewRef.current` is null when
-   * `playConfetti` runs.
-   */
   useEffect(() => {
     if (!overlayMounted) return
     if (!pendingPlayRef.current) return
@@ -108,17 +93,7 @@ const AnimationViewProvider: React.FC<PropsWithChildren<Props>> = ({
     <AnimationViewContext.Provider value={ctx}>
       <View style={{ position: 'relative', flex: 1 }}>
         {children}
-        {/*
-         * Mounted at the UIWindow level so the celebration renders above
-         * any pushed/modal screens (e.g. the Paywall Thank You screen),
-         * not as a sibling of the navigator that pushed screens can occlude.
-         *
-         * Conditional mount: an always-mounted FullWindowOverlay attaches a
-         * touch handler to a UIWindow-level container that has been observed
-         * to interfere with natively presented sheets (Share, UIColorPicker)
-         * even with `pointerEvents="none"` set on the inner content. Mounting
-         * only during playback removes the surface entirely while idle.
-         */}
+        {}
         {overlayMounted ? (
           <ConfettiLottie
             lottieViewRef={lottieViewRef}
@@ -130,10 +105,6 @@ const AnimationViewProvider: React.FC<PropsWithChildren<Props>> = ({
   )
 }
 
-/**
- * The overlay's Lottie view and its 290 KB animation, required the first time a
- * celebration plays rather than at launch.
- */
 function ConfettiLottie({
   lottieViewRef,
   onAnimationFinish,

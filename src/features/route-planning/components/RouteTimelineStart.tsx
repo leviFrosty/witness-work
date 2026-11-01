@@ -21,11 +21,6 @@ import type {
 } from '@/features/route-planning/lib/routeBuilder'
 import { savedPlaceActions } from '@/features/route-planning/lib/savedPlaceMenu'
 
-/**
- * The top of the timeline: when the day starts and where from. The place is a
- * menu (current location, the first stop, Home, the Kingdom Hall, a Plan's
- * place, or any place); the time is the system time picker.
- */
 export default function RouteTimelineStart({
   origin,
   startTime,

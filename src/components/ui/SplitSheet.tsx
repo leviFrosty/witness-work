@@ -30,57 +30,39 @@ import {
 import PointerStyleView from '../../../modules/pointer-style'
 import { useWindowFoldPane } from '@/components/ui/layout/FoldPane'
 
-/** Under Tamagui's modal sheets (100,000 and up), so theirs open over it. */
 const Z_INDEX = 50_000
 const RADIUS = 24
-/** Beside an iPad's sidebar, the sheet stays a readable width, centered. */
+
 const MAX_WIDTH = 720
 const EASING = Easing.bezier(0.2, 0.9, 0.3, 1)
 const OPEN_MS = 300
 const CLOSE_MS = 220
 const RESIZE_MS = 220
-/** Pulled this far under its smallest size, the sheet closes on release. */
+
 const DISMISS_DISTANCE = 72
-/** Seconds of a release's speed that count toward how far it was pulled. */
+
 const FLING_PROJECTION = 0.15
-/** How much of a drag past the largest size still moves the sheet. */
+
 const RUBBER_BAND = 0.2
-/** VoiceOver and TalkBack resize in steps of this share of the window. */
+
 const ACCESSIBILITY_STEP = 0.1
-/** A hardware keyboard's shortcut bar, not a full keyboard. */
+
 const KEYBOARD_BAR_MAX_HEIGHT = 120
 
 type Props = {
   open: boolean
   onOpenChange: (open: boolean) => void
-  /**
-   * Slides an open sheet out of view while another screen is up, e.g. the note
-   * editor, keeping its content and state for when it slides back.
-   */
+
   hidden?: boolean
-  /** Pinned under the grabber. Dragging it resizes the sheet too. */
+
   header?: ReactNode
   children: ReactNode
-  /** Android's back button. Closes the sheet unless this is set. */
+
   onBackPress?: () => void
-  /**
-   * The height the sheet rests at while open, and 0 once it closes, so the
-   * screen above can keep what the sheet is about in view.
-   */
+
   onHeightChange?: (height: number) => void
 }
 
-/**
- * A sheet docked to the bottom of the window that leaves the screen above it
- * visible and usable, like a split view. Dragging its top edge resizes it
- * between `SPLIT_SHEET_MIN_RATIO` and `SPLIT_SHEET_MAX_RATIO` of the window,
- * and the size is kept for next time; pulling it below that closes it. It
- * stretches taller while a keyboard is up, so a field in it isn't squeezed out
- * of view.
- *
- * It renders through Tamagui's Portal, above the tab bar. Content there sits
- * outside the screen's providers, so pass on any context it needs.
- */
 export default function SplitSheet({
   open,
   onOpenChange,
@@ -96,8 +78,7 @@ export default function SplitSheet({
   useTakeoverHold(`split-sheet:${holdId}`, shown)
   const { height: windowHeight } = useWindowDimensions()
   const { sidebarWidth } = useAdaptiveLayout()
-  // Beside the sidebar, clear of iPhone Duo's vertical bar, and on one side of
-  // its fold, as the system's sheets are.
+
   const pane = useWindowFoldPane()
   const areaStart = Math.max(sidebarWidth, pane.start)
   const areaWidth = Math.max(0, pane.start + pane.width - areaStart)
@@ -114,14 +95,13 @@ export default function SplitSheet({
     : restingHeight
 
   const height = useSharedValue(targetHeight)
-  // The height it settles at when it isn't being dragged.
+
   const resting = useSharedValue(targetHeight)
-  // How far the sheet sits below its docked position: out of view when closed.
+
   const offset = useSharedValue(shown ? 0 : targetHeight + RADIUS)
   const dragStart = useSharedValue(0)
   const dragging = useSharedValue(false)
-  // The host's latest callbacks, so its re-renders don't re-run the effects
-  // below: each report of the height may scroll the screen above.
+
   const callbacks = useRef({ onOpenChange, onBackPress, onHeightChange })
   useEffect(() => {
     callbacks.current = { onOpenChange, onBackPress, onHeightChange }
@@ -131,21 +111,19 @@ export default function SplitSheet({
 
   useEffect(() => {
     isOpen.current = open
-    // Read when a close animation ends: a sheet opened again meanwhile (or
-    // opened as it first mounted, e.g. from a widget's link) stays, and so
-    // does a hidden one.
+
     const unmountIfClosed = () => {
       if (!isOpen.current) setMounted(false)
     }
     if (shown) {
       setMounted(true)
-      // Dragged closed, it was left at its smallest; it opens at its size.
+
       if (offset.value >= height.value) offset.value = resting.value + RADIUS
       height.value = resting.value
       offset.value = withTiming(0, { duration: OPEN_MS, easing: EASING })
       return
     }
-    // Past the bottom edge by its corners, so its shadow goes too.
+
     offset.value = withTiming(
       height.value + RADIUS,
       { duration: CLOSE_MS, easing: EASING },
@@ -213,7 +191,6 @@ export default function SplitSheet({
     .onUpdate(({ translationY }) => {
       const next = dragStart.value - translationY
       if (next < minHeight) {
-        // Below its smallest size the sheet slides down whole, toward closing.
         height.value = minHeight
         offset.value = minHeight - next
         return
@@ -241,7 +218,6 @@ export default function SplitSheet({
       scheduleOnRN(commitHeight, settled)
     })
     .onFinalize(() => {
-      // Still dragging here means the gesture was interrupted.
       if (!dragging.value) return
       dragging.value = false
       height.value = withTiming(dragStart.value, { duration: RESIZE_MS })
@@ -291,7 +267,6 @@ export default function SplitSheet({
               accessibilityRole='adjustable'
               accessibilityLabel={i18n.t('splitSheetResize')}
               accessibilityHint={i18n.t('splitSheetResizeHint')}
-              // As text: iOS reads min/max/now as a share of the range.
               accessibilityValue={{
                 text: i18n.t('splitSheetSize', { percent }),
               }}
@@ -309,7 +284,7 @@ export default function SplitSheet({
               }}
               style={{ alignItems: 'center', paddingTop: 8, paddingBottom: 6 }}
             >
-              {/* The iPad pointer shows which ways the sheet can resize. */}
+              {}
               <PointerStyleView
                 accessories={[
                   ...(percent < SPLIT_SHEET_MAX_RATIO * 100

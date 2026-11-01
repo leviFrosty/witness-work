@@ -11,11 +11,6 @@ import i18n from '@/lib/locales'
 import { usePreferences } from '@/stores/preferences'
 import useMonthReportReminder from '@/features/service-reports/hooks/useMonthReportReminder'
 
-/**
- * Offers the 1st-of-the-month report reminder once, right after a report is
- * sent from the report screen. Hidden for good once it's answered either way,
- * or when the reminder is already on.
- */
 const MonthReportReminderOffer = () => {
   const theme = useTheme()
   const { enabled, setEnabled } = useMonthReportReminder()
@@ -23,8 +18,6 @@ const MonthReportReminderOffer = () => {
 
   if (enabled || answered) return null
 
-  // Without notification permission it stays off and the offer stays up, so
-  // it can be tried again or dismissed.
   const accept = async () => {
     if (await setEnabled(true, 'report_offer'))
       toast.success(i18n.t('monthReportReminderOffer_turnedOn'))

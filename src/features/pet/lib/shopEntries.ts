@@ -14,27 +14,21 @@ import {
   type ShopTab,
 } from '@/features/pet/lib/shop'
 
-/** One option as the Shop shows it. */
 export type ShopEntry = {
   part: RoomChoicePart
   option: string
-  /** `part:option`. */
+
   item: string
   state: ShopItemState
-  /** What it costs in coins; null for a starter or a secret. */
+
   price: number | null
 }
 
-/**
- * A Shop category's items, part by part (Wall has a colour and a pattern): all
- * but the starters, which come with the room and are never sold. Owned ones
- * stay, marked owned, so the shelf doesn't move as things are bought.
- */
 export function shopEntries(
   tab: ShopTab,
   room: PetRoomSettings,
   unlocked: ReadonlySet<string>,
-  /** Coins left to spend. */
+
   wallet: number
 ): { part: RoomChoicePart; entries: ShopEntry[] }[] {
   return roomTabSections(tab, room).map(({ part, options }) => {
@@ -67,19 +61,12 @@ export function shopEntries(
   })
 }
 
-/** Whether the Shop sells `entry` now: it has a price and isn't owned. */
 export const isForSale = (entry: Pick<ShopEntry, 'state'>): boolean =>
   entry.state === 'forSale' || entry.state === 'short'
 
-/** Whether `entry` is owned already: bought or found, so it can't be picked. */
 export const isOwned = (entry: Pick<ShopEntry, 'state'>): boolean =>
   entry.state === 'owned' || entry.state === 'current'
 
-/**
- * The item the Shop's panel is about: `item` as picked (or just bought), else
- * the first one still for sale, else a secret still to find. Never an owned one
- * it wasn't asked for; undefined once a category is all owned.
- */
 export function pickedEntry(
   entries: readonly ShopEntry[],
   item: string | null
@@ -91,15 +78,9 @@ export function pickedEntry(
   )
 }
 
-/** The scene is 180 × 100 pixels. */
 const SCENE_W = 180
 const SCENE_H = 100
 
-/**
- * A card's picture of `part`: its Decorate Room view, re-cut to `w` × `h`
- * pixels around the same middle and kept inside the scene, so every card's
- * pixels are the Shop's size.
- */
 export function shopThumbView(
   part: RoomChoicePart,
   w: number,
@@ -118,7 +99,6 @@ export function shopThumbView(
   ]
 }
 
-/** Where the narrow layout's room strip looks, per category. */
 const PREVIEW_TOP: Record<ShopTab, number> = {
   hat: 26,
   wall: 0,
@@ -128,7 +108,6 @@ const PREVIEW_TOP: Record<ShopTab, number> = {
   lamp: 36,
 }
 
-/** The narrow layout's room: a strip of the scene where the category is. */
 export const shopPreviewView = (tab: ShopTab): Viewport => [
   12,
   PREVIEW_TOP[tab],

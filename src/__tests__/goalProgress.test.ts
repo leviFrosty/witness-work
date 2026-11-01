@@ -14,7 +14,7 @@ describe('lib/goalProgress', () => {
     it('clamps negative progress to zero fraction without going past goal', () => {
       const result = goalProgress({ minutes: -10 * 60, goalMinutes: 10 * 60 })
       expect(result.fraction).toBe(0)
-      // remaining never exceeds the goal even when minutes are negative
+
       expect(result.remaining).toBe(10 * 60)
       expect(result.over).toBe(0)
     })
@@ -43,7 +43,7 @@ describe('lib/goalProgress', () => {
   describe('zero goal', () => {
     it('treats a zero goal as already complete', () => {
       const result = goalProgress({ minutes: 0, goalMinutes: 0 })
-      // Matches the historical calculateProgress behavior: NaN/Infinity -> 1.
+
       expect(result.fraction).toBe(1)
       expect(result.remaining).toBe(0)
       expect(result.over).toBe(0)

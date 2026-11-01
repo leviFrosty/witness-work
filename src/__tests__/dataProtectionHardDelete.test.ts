@@ -8,15 +8,14 @@ vi.mock(
   () => import('@/__tests__/mocks/asyncStorage')
 )
 vi.mock('@/lib/logger', () => import('@/__tests__/mocks/logger'))
-// `householderData` evicts avatar files through `lib/contactAvatarFiles`, whose
-// expo imports need expo-modules-core's `__DEV__`.
+
 vi.mock('expo-file-system/legacy', () => ({
   documentDirectory: 'file:///test/Documents/',
   cacheDirectory: 'file:///test/Caches/',
   getInfoAsync: vi.fn(async () => ({ exists: false })),
   copyAsync: vi.fn(async () => undefined),
   deleteAsync: vi.fn(async () => undefined),
-  // A shared backup, a shared contact file and the picker's photo copies.
+
   readDirectoryAsync: vi.fn(async (directory: string) =>
     directory === 'file:///test/Caches/'
       ? [
@@ -85,7 +84,6 @@ const cacheCopies = [
 ]
 
 const deletedCacheCopies = async () => {
-  // Let the fire-and-forget cleanup list the folder and delete.
   await new Promise((resolve) => setTimeout(resolve, 0))
   return vi
     .mocked(FileSystem.deleteAsync)
@@ -244,9 +242,6 @@ describe('deleteAllHouseholderData', () => {
   })
 
   it('stamps each tombstone after the record it erases on the sync clock', () => {
-    // The device clock runs 5 minutes behind the server, so edits carry later
-    // stamps than `Date.now()`. A tombstone older than the edit would lose the
-    // merge, and a peer would bring the contact back.
     setSyncClockOffset(5 * 60_000, true)
     try {
       deleteHouseholderContact('a')
@@ -317,7 +312,6 @@ describe('contact consent updates', () => {
       .getState()
       .updateContact({ ...contact, consentGivenAt: undefined })
 
-    // Simulate the JSON round trip used by persistence and sync.
     const saved = JSON.parse(JSON.stringify(useContacts.getState().contacts))
     useContacts.setState({ contacts: saved })
     useContacts

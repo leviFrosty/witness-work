@@ -39,7 +39,7 @@ describe('particles', () => {
     s = step(s, 1, 'nap')
     expect(s.particles.map((p) => p.kind)).toEqual(['zzz'])
     s = step(s, 500, 'nap')
-    expect(s.particles).toHaveLength(1) // next Zzz after 1.1 s
+    expect(s.particles).toHaveLength(1)
     s = step(s, 1200, 'nap', { gold: true })
     expect(s.particles.map((p) => p.kind).sort()).toEqual([
       'sparkle',
@@ -56,14 +56,14 @@ describe('particles', () => {
     let s = step(createParticles(1), 1, 'nap')
     s = step(s, 1200, 'nap')
     expect(s.particles.filter((p) => p.kind === 'zzz')).toHaveLength(2)
-    // Asleep, then died: no Z may linger over the greyed pet.
+
     const died = step(s, 1300, 'dead')
     expect(died.particles).toEqual([])
     const buf = createBuffer(180, 100)
     draw(buf, died, 1300, [52, 52])
     for (let y = 0; y < 100; y++)
       for (let x = 0; x < 180; x++) expect(pixelAt(buf, x, y)).toBeNull()
-    // Woken: the Zzz go too, and none spawn again.
+
     const woken = step(step(s, 1300, 'weak'), 5000, 'weak')
     expect(woken.particles.some((p) => p.kind === 'zzz')).toBe(false)
   })

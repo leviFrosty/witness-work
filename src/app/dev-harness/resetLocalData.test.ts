@@ -6,10 +6,10 @@ const native = vi.hoisted(() => {
   vi.stubGlobal('__DEV__', false)
   return {
     cleared: [] as string[],
-    /** The default MMKV instance: what the stores saved. */
+
     saved: new Map<string, string>(),
     stopwatchReset: vi.fn(async () => undefined),
-    /** This device's keystore (`modules/device-secrets`), by name. */
+
     secrets: new Map<string, string>(),
   }
 })
@@ -85,7 +85,6 @@ import { initialBuddiesState } from '@/features/buddies/lib/state'
 import useCategories from '@/stores/categories'
 import { LDC_BUILTIN_CATEGORY_ID } from '@/constants/categories'
 
-/** Persisted stores a reset clears through their own actions, not RESET_STORES. */
 const RESET_BY_ACTIONS = [
   'contacts',
   'conversations',
@@ -96,19 +95,8 @@ const RESET_BY_ACTIONS = [
   'profile',
 ]
 
-/** MMKV instances a reset clears, besides the default one. */
-const CLEARED_MMKV = [
-  'notes-import-ledger',
-  'pet-secrets',
-  // Android binaries without the native stopwatch; `Stopwatch.reset()`.
-  'stopwatch',
-]
+const CLEARED_MMKV = ['notes-import-ledger', 'pet-secrets', 'stopwatch']
 
-/**
- * MMKV instances a reset keeps. Each belongs to the install or to the account
- * key in the Keychain, which a reinstall on iOS keeps too; none is the User's
- * ministry data.
- */
 const KEPT_MMKV: Record<string, string> = {
   'install-id': 'the install id',
   account: "the adopted account id (another device's claim)",
@@ -123,7 +111,6 @@ const KEPT_MMKV: Record<string, string> = {
   'analytics-frequency': 'analytics throttling, never shown',
 }
 
-/** Every zustand `persist` store name and MMKV instance id in the app. */
 function scanStorage() {
   const walk = (dir: string): string[] =>
     readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
@@ -145,7 +132,7 @@ function scanStorage() {
       const names = [
         ...source.matchAll(/\bname: '([\w-]+)',[^{}]*?\bstorage:/g),
       ].map((match) => match[1])
-      // A store this scan can't name would slip past the checks below.
+
       expect(names, file).toHaveLength(calls)
       persisted.push(...names)
     }
@@ -194,7 +181,7 @@ describe('resetLocalData', () => {
     for (const store of RESET_STORES)
       store.setState({ leftover: true } as never, true)
     resetLocalData()
-    // Categories get the builtin LDC Category back; see below.
+
     for (const store of RESET_STORES.filter((s) => s !== useCategories))
       expect((store as unknown as { getState: () => unknown }).getState()).toBe(
         store.getInitialState()
@@ -238,8 +225,7 @@ describe('resetLocalData', () => {
       expect.arrayContaining(['default', 'notes-import-ledger', 'pet-secrets'])
     )
     expect(native.stopwatchReset).toHaveBeenCalled()
-    // The keyring and car invitations' secrets live in the keystore, which
-    // the reset empties too.
+
     await vi.waitFor(() =>
       expect(native.secrets.has('shared-spaces-keyring')).toBe(false)
     )

@@ -13,25 +13,19 @@ import type { RootStackNavigation } from '@/types/rootStack'
 
 type CalendarSyncSettings = ReturnType<typeof useCalendarSync.getState>
 
-/** Not answered yet, and Calendar Sync isn't in use on this or another device. */
 export const shouldInviteToCalendarSync = (settings: CalendarSyncSettings) =>
   !settings.promptAnswered &&
   !settings.enabled &&
   !settings.optedOut &&
   !settings.sharedCalendar
 
-/**
- * Invites people who updated past the onboarding Calendar Sync step to set it
- * up. New installs answer it in onboarding. Any answer, including dismissing
- * it, retires it on this device.
- */
 export default function useCalendarSyncNotification(): NotificationItem | null {
   const navigation = useNavigation<RootStackNavigation>()
   const visible = useCalendarSync(shouldInviteToCalendarSync)
   if (!calendarBridgeAvailable || !visible) return null
 
   const answer = () => useCalendarSync.setState({ promptAnswered: true })
-  // Declining here is opting out, so a later handoff doesn't turn it on.
+
   const decline = () =>
     useCalendarSync.setState({ promptAnswered: true, optedOut: true })
   const openSettings = () => navigation.navigate('PreferencesCalendar')
@@ -50,7 +44,6 @@ export default function useCalendarSyncNotification(): NotificationItem | null {
           answer()
           calendarAction(quickConnectCalendar)
             .then((status) => {
-              // Another device already publishes: show where, in Settings.
               if (status === 'elsewhere') return openSettings()
               toast.success(i18n.t('calendarSynced'), {
                 message: i18n.t('calendarUpcomingCount' as TranslationKey, {
@@ -58,7 +51,7 @@ export default function useCalendarSyncNotification(): NotificationItem | null {
                 }),
               })
             })
-            // Settings shows the error and the manual setup options.
+
             .catch(() => openSettings())
         },
       },

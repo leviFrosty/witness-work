@@ -25,7 +25,6 @@ const visit = (
   },
 })
 
-/** Builds the field's index and narrows it, as one keystroke on a fresh focus. */
 const customFieldSuggestions = (
   visits: readonly Visit[],
   fieldId: string,

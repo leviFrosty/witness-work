@@ -1,9 +1,3 @@
-/**
- * The bottom bar (and tablet sidebar) destinations the user can reorder. None
- * can be hidden; Progress only shows for roles that log hours, but keeps its
- * saved position so switching roles restores it. Tools and Settings stay pinned
- * after these.
- */
 export type TabOrderKey = 'Home' | 'Contacts' | 'Progress' | 'Schedule'
 
 export const DEFAULT_TAB_ORDER: TabOrderKey[] = [
@@ -13,7 +7,6 @@ export const DEFAULT_TAB_ORDER: TabOrderKey[] = [
   'Schedule',
 ]
 
-/** Drops unknown keys and appends any missing ones in default order. */
 export function getEffectiveTabOrder(
   stored: string[] | undefined
 ): TabOrderKey[] {
@@ -22,10 +15,6 @@ export function getEffectiveTabOrder(
   )
 }
 
-/**
- * Moves the tab at `from` to `to`, both positions among `visible`, and returns
- * the full order. Tabs missing from `visible` keep their saved positions.
- */
 export function moveVisibleTab(
   order: TabOrderKey[],
   visible: TabOrderKey[],

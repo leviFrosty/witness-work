@@ -6,7 +6,6 @@ import LimitedPhotoPicker from '@/components/limitedPhotoPicker/LimitedPhotoPick
 import { analytics } from '@/lib/analytics'
 import type { SharedPhotoRequest } from '@/lib/photoLibrary/pickLibraryImages'
 
-/** Where a photo pick started, for analytics. */
 export type PhotoPickSurface =
   | 'avatar'
   | 'note'
@@ -15,24 +14,14 @@ export type PhotoPickSurface =
 
 type Props = {
   surface: PhotoPickSurface
-  /** The request it's showing; kept while it slides away. */
+
   request: SharedPhotoRequest | null
   open: boolean
-  /**
-   * The User picked (`assets`) or backed out (null). The sheet then slides
-   * away; `onDismissed` follows once it's gone.
-   */
+
   onClose: (assets: ImagePickerAsset[] | null) => void
   onDismissed: () => void
 }
 
-/**
- * The limited-access photo picker in a page sheet (iOS only; Android's system
- * picker already keeps to the photos the User shared). React Native presents a
- * modal from the screen it's rendered in, so render it beside the control that
- * picks: inside a popover or a presented screen, a modal from the app root
- * can't appear.
- */
 export default function LimitedPhotoPickerModal({
   surface,
   request,

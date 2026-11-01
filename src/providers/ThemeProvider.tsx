@@ -22,13 +22,9 @@ const ThemeProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
       customAccentColor: s.customAccentColor,
     }))
   )
-  // `customAvatarBackground` is profile-shaped (it tints the User's avatar),
-  // so it lives in the Profile store. The theme still consumes it because the
-  // avatar background also drives `accentBackground` system-wide.
+
   const customAvatarBackground = useProfile((s) => s.customAvatarBackground)
-  // The supporter mirror starts from the last known status, so a supporter's
-  // accent doesn't flash to the default while RevenueCat loads. It's cosmetic,
-  // so the cached hint is enough here.
+
   const isSupporter = useSupporter((s) => s.isSupporter)
   const { hasAccess: canCustomizeAccent } = evaluateFeatureAccess(
     'customAccentColor',
@@ -36,8 +32,7 @@ const ThemeProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
   )
   const scheme = colorScheme ?? undefined
   const resolvedScheme = theme ?? scheme
-  // Every face is its own font family, so the system's bold text setting can't
-  // embolden them; the theme swaps in heavier ones itself.
+
   const fonts = useBoldTextFonts()
   const userSelectedTheme = getThemeFromColorScheme(resolvedScheme)
   const highContrast = useIncreaseContrastEnabled()
@@ -57,9 +52,6 @@ const ThemeProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
     const colors = { ...theme.colors }
 
     if (customAccentColor) {
-      // Mix toward white in light mode and toward a mid-gray in dark mode
-      // so the muted "alt" variant reads as a soft background instead of a
-      // washed-out highlight — matching how the stock green palette behaves.
       const altTarget = isDark ? '#444444' : '#FFFFFF'
       const altRatio = isDark ? 0.55 : 0.7
       colors.accent = customAccentColor

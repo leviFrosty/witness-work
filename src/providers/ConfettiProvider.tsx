@@ -7,12 +7,6 @@ import type ConfettiComponent from '@/vendor/ConfettiSkia/react/Confetti'
 import { ConfettiContext, FireworksCtx, FireOpts } from '@/contexts/Confetti'
 import useReduceMotionEnabled from '@/hooks/useReduceMotionEnabled'
 
-/**
- * Visual buffer between the global Lottie + chime ending and the Skia fireworks
- * starting, so the two don't visibly butt up against each other. Consumers
- * stacking fireworks after a `playConfetti()` call should wait
- * `CONFETTI_DELAY_MS + CONFETTI_DURATION + FIREWORKS_AFTER_LOTTIE_BUFFER_MS`.
- */
 export const FIREWORKS_AFTER_LOTTIE_BUFFER_MS = 200
 
 const DEFAULT_SPOTS: { x: number; y: number }[] = [
@@ -35,7 +29,7 @@ const ConfettiProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
   const { width, height } = useWindowDimensions()
   const [overlayMounted, setOverlayMounted] = useState(false)
   const pendingTriggersRef = useRef<Partial<ConfettiConfig>[]>([])
-  // Reduce Motion skips the fireworks; callers keep their own haptics.
+
   const reduceMotion = useReduceMotionEnabled()
 
   const triggerBurst = (cfg?: Partial<ConfettiConfig>) => {
@@ -45,7 +39,7 @@ const ConfettiProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
       handle.trigger(cfg)
       return
     }
-    // Overlay not mounted yet — queue, mount, drain on next frame.
+
     pendingTriggersRef.current.push(cfg ?? {})
     setOverlayMounted(true)
   }
@@ -70,22 +64,10 @@ const ConfettiProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
     })
   }
 
-  /**
-   * Confetti reports `true` the moment its engine accepts a trigger and `false`
-   * after the last particle is culled. We keep the FullWindowOverlay mounted
-   * while active and unmount it the instant the engine goes idle so native
-   * sheets/pickers underneath aren't competing with a UIWindow-level container
-   * that React Native's touch handler is attached to.
-   */
   const handleActiveChange = (active: boolean) => {
     if (!active) setOverlayMounted(false)
   }
 
-  /**
-   * Drains any triggers that arrived while the FullWindowOverlay was still
-   * mounting (and therefore before `confettiRef.current` had attached). Without
-   * this, the first burst after an idle period would silently no-op.
-   */
   useEffect(() => {
     if (!overlayMounted) return
     const handle = confettiRef.current
@@ -102,21 +84,7 @@ const ConfettiProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
     <ConfettiContext.Provider value={ctx}>
       <View style={{ position: 'relative', flex: 1 }}>
         {children}
-        {/*
-         * Mounted at the UIWindow level so fireworks render above any
-         * pushed/modal screens (e.g. the Paywall Thank You screen). Sitting
-         * as a sibling of the navigator was occluded by pushed screens at
-         * the native view layer, so the burst landed behind the screen.
-         *
-         * Conditional mount: the iOS FullWindowOverlay attaches an
-         * `RCTSurfaceTouchHandler` to a container that lives directly in the
-         * UIWindow, sibling to any natively presented sheet (Share,
-         * UIColorPicker, etc.). Even with `pointerEvents="none"` on the
-         * inner View, leaving the overlay mounted at all times has been
-         * observed to swallow taps on those sheets. Mounting it only while
-         * particles are alive keeps the celebration working without leaving
-         * a permanent UIWindow-level touch surface.
-         */}
+        {}
         {overlayMounted ? (
           <SkiaConfetti
             confettiRef={confettiRef}
@@ -128,10 +96,6 @@ const ConfettiProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
   )
 }
 
-/**
- * The Skia confetti, required the first time fireworks fire so launch doesn't
- * set up Skia for them.
- */
 function SkiaConfetti({
   confettiRef,
   onActiveChange,

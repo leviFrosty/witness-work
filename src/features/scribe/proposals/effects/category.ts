@@ -11,10 +11,6 @@ import type {
   UndoOutcome,
 } from '@/features/scribe/proposals/effects/types'
 
-/**
- * The Category id an effect saves: null for Standard, undefined when its
- * Category is gone or wasn't created in this apply (the effect is skipped).
- */
 export function resolveCategoryId(
   target: CategoryTarget,
   ctx: ApplyContext
@@ -41,7 +37,6 @@ export function applyCategoryCreate(
   }
 }
 
-/** Whether a Time Entry or Plan, other than these, still uses the Category. */
 function categoryInUse(
   categoryId: string,
   except: ReadonlySet<string>
@@ -59,7 +54,6 @@ function categoryInUse(
   )
 }
 
-/** Deletes the Category only when nothing else references it. */
 export function undoCategoryCreate(
   categoryId: string,
   ownRecordIds: ReadonlySet<string>

@@ -39,7 +39,6 @@ const PLURAL_FORMS = ['zero', 'one', 'two', 'few', 'many', 'other']
 const isPluralNode = (node: Strings) =>
   Object.keys(node).every((key) => PLURAL_FORMS.includes(key))
 
-/** Keys English doesn't have, apart from extra plural forms (Russian `few`). */
 function deadKeys(en: Strings, strings: Strings, prefix = ''): string[] {
   return Object.entries(strings).flatMap(([key, value]) => {
     const enValue = en[key]
@@ -53,8 +52,6 @@ function deadKeys(en: Strings, strings: Strings, prefix = ''): string[] {
   })
 }
 
-// Every locale ships in every app binary and OTA bundle, so keys English
-// dropped are dead weight. `locales.mjs prune` (translate-locales) deletes them.
 describe('locale files', () => {
   it.each(localeFiles.filter(([file]) => file !== 'en-US.json'))(
     '%s has no keys English lacks',

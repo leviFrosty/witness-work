@@ -11,28 +11,11 @@ import type {
 } from '@/types/mileage'
 import type { SharedCar } from '@/types/sharedCars'
 
-/**
- * The one view of mileage (protocol "Client behaviour"): the User's own records
- * and every Shared Car's, merged into the collections the app already reads.
- * Live in `@/stores/mileageView`; pure here for tests.
- *
- * Ids are UUIDs, so a Shared Car's setups, fuels, and prices resolve against
- * each other in the combined collections (`buildMileageIndex`, `estimateTrip`)
- * as the User's own do, and only a record of the same kind can share an id.
- */
-
 type WithId = { id: string }
 
-/** Two lists with the same items, by identity, in the same order. */
 const sameItems = (a: readonly unknown[], b: readonly unknown[]) =>
   a.length === b.length && a.every((item, i) => item === b[i])
 
-/**
- * A cache of one result: asked again with the same inputs (by identity), it
- * returns the last result instead of building a new one. So an unchanged
- * collection keeps its array, and with it whatever is cached on that array
- * (`buildMileageIndex`) or compared by it (React's renders).
- */
 export function lastResult<R>() {
   let last: { inputs: readonly unknown[]; result: R } | undefined
   return (inputs: readonly unknown[], build: () => R): R => {
@@ -43,11 +26,6 @@ export function lastResult<R>() {
   }
 }
 
-/**
- * `own` plus every space's records, leaving out a record of the User's own
- * whose id a space also holds (an older build's edit after the car was shared),
- * and any id a later space repeats. `own` itself when no space has records.
- */
 function combine<T extends WithId>(own: T[], shared: readonly T[][]): T[] {
   if (shared.every((records) => records.length === 0)) return own
   const sharedIds = new Set<string>()
@@ -70,7 +48,6 @@ const sharedVehicleLists = new WeakMap<
   { spaceId: string; vehicles: MileageVehicle[] }
 >()
 
-/** A space's car, marked with the space, cached by the space's array. */
 function spaceVehicles(car: SharedCar): MileageVehicle[] {
   const cached = sharedVehicleLists.get(car.vehicles)
   if (cached?.spaceId === car.spaceId) return cached.vehicles
@@ -84,11 +61,6 @@ function spaceVehicles(car: SharedCar): MileageVehicle[] {
 
 const recordSpacesCache = lastResult<ReadonlyMap<string, string>>()
 
-/**
- * The space of every live record on a Shared Car, by id; the first space
- * holding an id wins, as in the view. Cached by the spaces' collections, so
- * neither sync bookkeeping nor a write to the User's own store rebuilds it.
- */
 export function sharedRecordSpaces(
   cars: Readonly<Record<string, SharedCar>>
 ): ReadonlyMap<string, string> {
@@ -129,7 +101,6 @@ const tripsCache = lastResult<Trip[]>()
 const tombstonesCache = lastResult<MileageTombstone[]>()
 const viewCache = lastResult<MileageView>()
 
-/** Combines one collection, keeping the last result while its inputs hold. */
 function combined<T extends WithId>(
   cache: (inputs: readonly unknown[], build: () => T[]) => T[],
   own: T[],
@@ -138,10 +109,6 @@ function combined<T extends WithId>(
   return cache([own, ...shared], () => combine(own, shared))
 }
 
-/**
- * Cars in the order they were added, so a car keeps its place, and its color in
- * charts, when it's shared. The User's own array when nothing was shared.
- */
 function inAddedOrder(
   vehicles: MileageVehicle[],
   own: MileageVehicle[]
@@ -156,12 +123,6 @@ function inAddedOrder(
     .map(({ vehicle }) => vehicle)
 }
 
-/**
- * The User's own mileage and every Shared Car's as one set of collections. Cars
- * are in the order they were added, shared or not. With no Shared Cars, each
- * collection is the User's own array. Cached by the collections' arrays, so
- * callers can build it on every render.
- */
 export function buildMileageView(
   own: MileageSnapshot,
   cars: Readonly<Record<string, SharedCar>>
@@ -224,10 +185,6 @@ export function buildMileageView(
   )
 }
 
-/**
- * The fuels a car's setups can name: a Shared Car's own fuels, or for one of
- * the User's own cars (or a car not saved yet) the User's own fuels.
- */
 export function fuelsForVehicle(
   view: Pick<MileageView, 'fuels' | 'sharedRecordSpaces'>,
   vehicleId?: string

@@ -6,8 +6,6 @@ import {
 } from '@/lib/errorTrackingPolicy'
 import { PurchasesError, toPurchasesError } from '@/lib/purchasesError'
 
-// RevenueCat rejects with plain objects. iOS sets the readable code at the top
-// level and in `userInfo`; Android only in `userInfo`.
 const iosRevenueCat = (code: string, readable: string, message: string) => ({
   code,
   message,
@@ -233,8 +231,6 @@ describe('shouldIgnoreExceptionProperties', () => {
     ).toBe(true)
   })
 
-  // `request()` rejects with an `HttpError` whose message is its kind; one
-  // nobody caught arrives with only that message.
   it.each(['timeout', 'offline', 'cancelled'])(
     'drops an uncaught HttpError: %s',
     (value) => {

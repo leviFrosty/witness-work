@@ -8,11 +8,6 @@ import { getMostRecentConversationForContact } from '@/lib/contacts'
 
 export type ContactStaleness = 'never' | 'recent' | 'week' | 'month'
 
-/**
- * Display order shared by the color key and the Color Key settings screen: most
- * stale first so the eye lands on red (needs attention) before grey (no data).
- * The Contacts chips start in this order until the User drags them.
- */
 export const STALENESS_DISPLAY_ORDER: ContactStaleness[] = [
   'month',
   'week',
@@ -20,10 +15,6 @@ export const STALENESS_DISPLAY_ORDER: ContactStaleness[] = [
   'never',
 ]
 
-/**
- * The Contacts chips' order from the saved one: drops unknown buckets and
- * appends any missing ones in display order.
- */
 export function getEffectiveStalenessChipOrder(
   stored: readonly string[] | undefined
 ): ContactStaleness[] {
@@ -33,7 +24,6 @@ export function getEffectiveStalenessChipOrder(
   )
 }
 
-/** Which user-overridable marker color each staleness bucket reads from. */
 export const stalenessToMarkerKey: Record<
   ContactStaleness,
   keyof MarkerColors
@@ -44,21 +34,6 @@ export const stalenessToMarkerKey: Record<
   month: 'longerThanAMonthAgo',
 }
 
-/**
- * Classifies a contact by how long it has been since the most recent
- * conversation, against the user's `stalenessBreakpoints` preference:
- *
- * - `never`: no conversations have been recorded with this contact
- * - `recent`: most recent conversation is within `weekDays` days
- * - `week`: most recent conversation is older than `weekDays` but within
- *   `monthDays` days
- * - `month`: most recent conversation is older than `monthDays` days
- *
- * `breakpoints` is required (not defaulted) so every classification visibly
- * threads the preference through — a defaulted parameter would let a call site
- * silently keep classifying with stock thresholds after the user changes
- * theirs.
- */
 export function getContactStaleness(
   contact: Contact,
   conversations: Visit[],
@@ -83,10 +58,6 @@ export function getContactStaleness(
   return 'recent'
 }
 
-/**
- * Maps a staleness bucket to its themed marker color. Pass the result of
- * {@link useMarkerColors} so the color picks up user overrides.
- */
 export function stalenessToColor(
   staleness: ContactStaleness,
   colors: MarkerColors

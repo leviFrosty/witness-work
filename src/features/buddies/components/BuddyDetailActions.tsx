@@ -55,7 +55,6 @@ function ActionTile({
   )
 }
 
-/** Plan something with this buddy, or see them alongside everyone else. */
 export default function BuddyDetailActions({ inboxId }: { inboxId: string }) {
   const navigation = useNavigation<RootStackNavigation>()
   return (

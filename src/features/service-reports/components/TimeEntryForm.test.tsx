@@ -92,7 +92,7 @@ vi.mock('@/components/TypeSelectorRow', () => ({
   CUSTOM_TYPE_VALUE: '__custom__',
   STANDARD_TYPE_VALUE: 'standard',
 }))
-// Render the dock's real saveButton child so tests press the actual form handler.
+
 vi.mock('@/components/WhenDock', () => ({
   default: (props: { saveButton: React.ReactNode }) =>
     React.createElement('WhenDock', props, props.saveButton),

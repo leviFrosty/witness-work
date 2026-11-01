@@ -55,7 +55,6 @@ const HERO_FEATURES = (
     id === 'iCloudSync'
 )
 
-/** Android syncs through Google Drive, so its sync hero says so. */
 const heroKey = (
   id: (typeof HERO_FEATURES)[number],
   part: 'title' | 'description'
@@ -80,12 +79,6 @@ const SECONDARY_FEATURES: { id: string; icon: typeof StarIcon }[] = [
   { id: 'mapEmpty', icon: MapPinIcon },
 ]
 
-/**
- * Magazine-style "what's new" presentation for The Milestone Update. Hosts a
- * vertical scroll of hero feature blocks (animated illustrations) followed by a
- * card grid of secondary features and a closing thank-you. Replayed from
- * Developer Tools; launches show the current update reveal instead.
- */
 const MilestoneShowcaseScreen = () => {
   const theme = useTheme()
   const insets = useSafeAreaInsets()
@@ -105,7 +98,7 @@ const MilestoneShowcaseScreen = () => {
         style={[
           styles.closeRow,
           { paddingHorizontal: 16 },
-          // Android presents this modal full-screen, edge-to-edge.
+
           Platform.OS === 'android' && { paddingTop: insets.top + 12 },
         ]}
       >
@@ -138,8 +131,6 @@ const MilestoneShowcaseScreen = () => {
     </View>
   )
 }
-
-/* ─── Header ───────────────────────────────────────────────────────────── */
 
 const ShowcaseHeader = () => {
   const theme = useTheme()
@@ -197,8 +188,6 @@ const ShowcaseHeader = () => {
   )
 }
 
-/* ─── Hero sections ────────────────────────────────────────────────────── */
-
 interface HeroSectionProps {
   id: (typeof HERO_FEATURES)[number]
   index: number
@@ -227,8 +216,6 @@ const HeroSection = ({ id, index }: HeroSectionProps) => {
     transform: [{ translateY: translateY.value }],
   }))
 
-  // Widgets is the headline crowd-pleaser — give it a taller stage so the
-  // home-screen mock can breathe. Other heroes stay at the standard size.
   const visualHeight = id === 'widgets' ? 260 : 180
 
   return (
@@ -276,8 +263,6 @@ const HeroVisual = ({ id }: { id: (typeof HERO_FEATURES)[number] }) => {
       return <ICloudSyncVisual />
   }
 }
-
-/* ─── Hero #1: Liquid Glass tab bar ─────────────────────────────────────── */
 
 const LiquidGlassVisual = () => {
   const theme = useTheme()
@@ -358,8 +343,6 @@ const LiquidGlassVisual = () => {
     </View>
   )
 }
-
-/* ─── Hero #2: Progress milestone bar ───────────────────────────────────── */
 
 const ProgressVisual = () => {
   const theme = useTheme()
@@ -447,8 +430,6 @@ const ProgressVisual = () => {
     </View>
   )
 }
-
-/* ─── Hero #3: Contacts tab ─────────────────────────────────────────────── */
 
 const ContactsVisual = () => {
   const theme = useTheme()
@@ -567,8 +548,6 @@ const ContactsVisual = () => {
   )
 }
 
-/* ─── Hero #4: iCloud sync ──────────────────────────────────────────────── */
-
 const ICloudSyncVisual = () => {
   const theme = useTheme()
   const flow = useSharedValue(0)
@@ -672,8 +651,6 @@ const DeviceMock = ({
   )
 }
 
-/* ─── Hero #5: Widgets ──────────────────────────────────────────────────── */
-
 const WidgetsVisual = () => {
   const theme = useTheme()
   const intro = useSharedValue(0)
@@ -682,13 +659,11 @@ const WidgetsVisual = () => {
   const dotPulse = useSharedValue(0)
 
   useEffect(() => {
-    // Cascading entrance — staggered by widget index in the visual.
     intro.value = withTiming(1, {
       duration: 900,
       easing: Easing.out(Easing.cubic),
     })
-    // Hours-widget progress arc fills repeatedly so the page feels alive even
-    // mid-scroll.
+
     fill.value = withRepeat(
       withSequence(
         withTiming(1, { duration: 2000, easing: Easing.inOut(Easing.cubic) }),
@@ -698,13 +673,13 @@ const WidgetsVisual = () => {
       -1,
       false
     )
-    // Highlighted calendar day breathes.
+
     dayPulse.value = withRepeat(
       withTiming(1, { duration: 1400, easing: Easing.inOut(Easing.ease) }),
       -1,
       true
     )
-    // Contacts widget "new" dot pulses on a slower cycle.
+
     dotPulse.value = withRepeat(
       withTiming(1, { duration: 1100, easing: Easing.inOut(Easing.ease) }),
       -1,
@@ -745,7 +720,7 @@ const WidgetsVisual = () => {
   return (
     <View style={styles.widgetsStage}>
       <View style={styles.widgetsRow}>
-        {/* Calendar widget (small) */}
+        {}
         <Animated.View
           style={[
             styles.widgetSmall,
@@ -791,7 +766,7 @@ const WidgetsVisual = () => {
           </View>
         </Animated.View>
 
-        {/* Hours widget (small) */}
+        {}
         <Animated.View
           style={[
             styles.widgetSmall,
@@ -833,7 +808,7 @@ const WidgetsVisual = () => {
         </Animated.View>
       </View>
 
-      {/* Contacts/Appointments widget (medium-wide) */}
+      {}
       <Animated.View
         style={[
           styles.widgetMedium,
@@ -890,8 +865,6 @@ const WidgetsVisual = () => {
     </View>
   )
 }
-
-/* ─── Secondary grid ────────────────────────────────────────────────────── */
 
 const SecondaryGrid = () => {
   const theme = useTheme()
@@ -957,8 +930,6 @@ const SecondaryCard = ({ id, icon }: { id: string; icon: typeof StarIcon }) => {
   )
 }
 
-/* ─── Closing thanks ───────────────────────────────────────────────────── */
-
 const ClosingThanks = ({ onClose }: { onClose: () => void }) => {
   const theme = useTheme()
   return (
@@ -999,8 +970,6 @@ const ClosingThanks = ({ onClose }: { onClose: () => void }) => {
     </View>
   )
 }
-
-/* ─── Styles ───────────────────────────────────────────────────────────── */
 
 const styles = StyleSheet.create({
   closeRow: {
@@ -1056,7 +1025,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
   },
-  /* glass */
+
   glassStage: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1097,7 +1066,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  /* progress */
+
   progressStage: {
     width: '100%',
     paddingHorizontal: 24,
@@ -1133,7 +1102,7 @@ const styles = StyleSheet.create({
     marginLeft: -20,
     alignItems: 'center',
   },
-  /* contacts */
+
   contactsStage: {
     width: '100%',
     paddingHorizontal: 18,
@@ -1169,7 +1138,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  /* iCloud */
+
   cloudStage: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1196,7 +1165,7 @@ const styles = StyleSheet.create({
   deviceScreen: {
     flex: 1,
   },
-  /* widgets */
+
   widgetsStage: {
     width: '100%',
     paddingHorizontal: 16,
@@ -1273,7 +1242,7 @@ const styles = StyleSheet.create({
     height: 12,
     borderRadius: 3,
   },
-  /* secondary */
+
   secondaryHeading: {
     fontSize: 18,
     letterSpacing: tracking(-0.4),
@@ -1296,7 +1265,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  /* closing */
+
   closing: {
     gap: 10,
     paddingHorizontal: 12,

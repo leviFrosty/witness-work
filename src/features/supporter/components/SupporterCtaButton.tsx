@@ -26,20 +26,15 @@ import useOnScreen from '@/hooks/useOnScreen'
 interface Props extends ButtonProps {
   onPress: () => unknown
   disabled?: boolean
-  /**
-   * Render the animated supporter-gold rim. Reserved for the recurring
-   * Supporter tier — one-time tips fall back to a flat ActionButton-style
-   * fill.
-   */
+
   shimmer?: boolean
 }
 
 const BORDER_RADIUS = 14
 const STROKE_WIDTH = 2.5
-// Half the stroke sits outside the button edge — give the canvas enough
-// breathing room so it isn't clipped.
+
 const CANVAS_INSET = STROKE_WIDTH
-// Seconds per full rotation. Slow enough to feel ambient, not flashy.
+
 const ROTATION_SECONDS = 14
 
 const buttonStyle = (
@@ -91,9 +86,6 @@ const ShimmerCta: React.FC<PropsWithChildren<Omit<Props, 'shimmer'>>> = ({
   const [size, setSize] = useState<{ w: number; h: number } | null>(null)
   const time = useSharedValue(0)
 
-  // Only turn while someone can see the rim: a frame callback keeps redrawing
-  // the canvas behind other screens, in the background on Android, and when
-  // scrolled away, which pins a core on software-rendered GPUs.
   const focused = useIsFocused()
   const appActive = useAppActive()
   const visible = focused && appActive && !disabled && size !== null
@@ -102,7 +94,7 @@ const ShimmerCta: React.FC<PropsWithChildren<Omit<Props, 'shimmer'>>> = ({
 
   const frame = useFrameCallback(({ timeSincePreviousFrame }) => {
     'worklet'
-    // Cap the step so the rim resumes where it paused instead of jumping.
+
     time.value += Math.min(timeSincePreviousFrame ?? 16, 64) / 1000
   }, false)
 
@@ -127,10 +119,6 @@ const ShimmerCta: React.FC<PropsWithChildren<Omit<Props, 'shimmer'>>> = ({
     return vec(size.w / 2 + CANVAS_INSET, size.h / 2 + CANVAS_INSET)
   })
 
-  // All stops sit on the supporter/gold band so the rim reads as a single
-  // themed border with a soft highlight that slowly travels around it, not a
-  // multi-coloured ring. Anchored on `supporter` at both ends so the sweep
-  // loops seamlessly with no hard seam.
   const gradientColors = [
     theme.colors.supporter,
     theme.colors.warn,

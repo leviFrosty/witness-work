@@ -9,19 +9,12 @@ import {
   type ServiceHistoryRow,
 } from '@/features/service-reports/lib/serviceHistoryRows'
 
-/**
- * The Service History editor's unsaved form, keyed by Service Year (its start
- * year). A year gets a draft on its first edit; years without one show their
- * saved state. Switching years keeps every draft, and Save writes them all.
- */
 export type ServiceHistoryDrafts = Readonly<Record<number, ServiceHistoryRow[]>>
 
-/** Builds a Service Year's saved rows (no draft). */
 export type BuildServiceHistoryRows = (
   serviceYear: number
 ) => ServiceHistoryRow[]
 
-/** Typed hours in any digit system (`12.5`, `12,5`, `١٢٫٥`); 0 when invalid. */
 export const parseHours = (value: string): number => {
   const hours = Number.parseFloat(
     normalizeNumericInput(value).replace(',', '.')
@@ -29,7 +22,6 @@ export const parseHours = (value: string): number => {
   return Number.isFinite(hours) && hours > 0 ? hours : 0
 }
 
-/** Whether Save would write anything for this month. */
 export const rowHasChanges = (row: ServiceHistoryRow): boolean =>
   row.status !== row.savedStatus ||
   (row.loggedMinutes === null &&
@@ -37,21 +29,18 @@ export const rowHasChanges = (row: ServiceHistoryRow): boolean =>
       parseHours(row.creditHours) > 0 ||
       row.shared))
 
-/** A Service Year's rows: its draft, or its saved state. */
 export const draftRowsFor = (
   drafts: ServiceHistoryDrafts,
   serviceYear: number,
   build: BuildServiceHistoryRows
 ): ServiceHistoryRow[] => drafts[serviceYear] ?? build(serviceYear)
 
-/** Service Years whose draft has something to save, oldest first. */
 export const dirtyServiceYears = (drafts: ServiceHistoryDrafts): number[] =>
   Object.keys(drafts)
     .map(Number)
     .filter((serviceYear) => drafts[serviceYear].some(rowHasChanges))
     .sort((a, b) => a - b)
 
-/** Replaces a Service Year's draft with `update` applied to its rows. */
 export const updateDraft = (
   drafts: ServiceHistoryDrafts,
   serviceYear: number,
@@ -62,7 +51,6 @@ export const updateDraft = (
   [serviceYear]: update(draftRowsFor(drafts, serviceYear, build)),
 })
 
-/** Drops a Service Year's draft, e.g. after its time was deleted. */
 export const discardDraft = (
   drafts: ServiceHistoryDrafts,
   serviceYear: number
@@ -72,17 +60,12 @@ export const discardDraft = (
   return next
 }
 
-/** Rows with every month after `index` set to that month's status. */
 export const withStatusAppliedToLaterMonths = (
   rows: ServiceHistoryRow[],
   index: number
 ): ServiceHistoryRow[] =>
   rows.map((r, i) => (i > index ? { ...r, status: rows[index].status } : r))
 
-/**
- * Month `index` of `serviceYear` copied from the month before it. September
- * copies August of the previous Service Year (its draft or saved state).
- */
 export const copiedFromPreviousMonth = (
   drafts: ServiceHistoryDrafts,
   serviceYear: number,
@@ -114,7 +97,6 @@ export type ServiceHistoryYearSaved = {
   monthsTimeAdded: number
 }
 
-/** Writes one Service Year's rows: changed statuses and time for empty months. */
 export const saveServiceHistoryRows = (
   rows: ServiceHistoryRow[],
   { setMonthStatus, addServiceReport, newId }: ServiceHistoryWriters
@@ -129,14 +111,12 @@ export const saveServiceHistoryRows = (
     }
     if (row.loggedMinutes !== null) continue
 
-    // The 1st at noon, like the Onboarding Backfill, so no time zone can
-    // move the entry into the previous month.
     const date = new Date(row.target.year, row.target.month, 1, 12)
     const isCheckbox =
       getEntryMode(roleOfMonthStatus(row.status)) === 'checkbox'
     if (isCheckbox) {
       if (!row.shared) continue
-      // A 0h Time Entry is the checkbox "shared" marker.
+
       addServiceReport({ id: newId(), date, hours: 0, minutes: 0 })
       monthsTimeAdded++
       continue
@@ -154,8 +134,6 @@ export const saveServiceHistoryRows = (
       })
     }
     if (creditHours > 0) {
-      // Same credit routing as the Onboarding Backfill: the LDC builtin
-      // Category counts toward the credit bucket.
       addServiceReport({
         id: newId(),
         date,
@@ -171,7 +149,6 @@ export const saveServiceHistoryRows = (
   return { monthsStatusChanged, monthsTimeAdded }
 }
 
-/** Writes every Service Year with unsaved changes, oldest first. */
 export const saveServiceHistoryDrafts = (
   drafts: ServiceHistoryDrafts,
   writers: ServiceHistoryWriters

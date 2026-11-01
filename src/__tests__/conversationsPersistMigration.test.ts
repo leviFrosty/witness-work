@@ -55,8 +55,7 @@ describe('persist migrate v0 → v1', () => {
       (migrated.conversations as Visit[]).map((c) => [c.id, c])
     )
     expect(byId.get('placeholder')?.followUp).toBeUndefined()
-    // updatedAt is deliberately untouched so an un-upgraded peer neither
-    // wins nor loses against the stripped copy.
+
     expect(byId.get('placeholder')?.updatedAt).toBe(5)
     expect(byId.get('topic')?.followUp?.topic).toBe('Ch. 2')
     expect(byId.get('reminder')?.followUp?.notifyMe).toBe(true)

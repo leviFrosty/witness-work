@@ -6,10 +6,6 @@ import {
   type FollowUpCard,
 } from '@/features/visits/lib/followUpCards'
 
-/**
- * Remembers closing a Home Follow-up card until a new or rescheduled Follow-up
- * shows up on it.
- */
 export default function useFollowUpCardDismissal(
   card: FollowUpCard,
   visits: Visit[]

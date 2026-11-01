@@ -23,7 +23,6 @@ const METHOD_ICONS = {
   biometrics: FingerprintIcon,
 }
 
-/** Covers the whole app until the device owner unlocks it. */
 export default function AppLockScreen({ method, onUnlock }: Props) {
   const theme = useTheme()
   const Icon = METHOD_ICONS[method]

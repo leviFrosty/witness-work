@@ -19,7 +19,7 @@ import SatelliteSurface, {
 
 const SIZE = 92
 const MARKER = 13
-// Seconds per ripple from the pulsing marker.
+
 const RING_SECONDS = 1.8
 
 interface MarkerProps {
@@ -46,7 +46,6 @@ const Marker = ({
   const theme = useTheme()
   const drop = useSharedValue(0)
 
-  // Markers drop back onto the map as the story reaches visits.
   useEffect(() => {
     if (!active || reduceMotion) return
     drop.value = withSequence(
@@ -112,7 +111,6 @@ const Marker = ({
   )
 }
 
-/** A corner of the territory, with contacts coloured by how recently visited. */
 const MapSatellite = ({
   palette,
   focus,

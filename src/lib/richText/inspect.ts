@@ -28,7 +28,6 @@ function* walkInline(doc: RichTextDoc): Generator<RichTextInline> {
   }
 }
 
-/** The note's photos, in order. */
 export function richTextImages(doc: RichTextDoc): RichTextImageAttrs[] {
   const images: RichTextImageAttrs[] = []
   for (const block of walkBlocks(doc.content)) {
@@ -37,7 +36,6 @@ export function richTextImages(doc: RichTextDoc): RichTextImageAttrs[] {
   return images
 }
 
-/** Web links in the note, in order and deduped (for link cards and menus). */
 export function richTextLinks(doc: RichTextDoc): string[] {
   const links = new Set<string>()
   for (const node of walkInline(doc)) {
@@ -51,7 +49,6 @@ export function richTextLinks(doc: RichTextDoc): string[] {
   return [...links]
 }
 
-/** Whether any text in the doc carries `type`. */
 export function richTextHasMark(
   doc: RichTextDoc,
   type: RichTextMarkType
@@ -64,7 +61,6 @@ export function richTextHasMark(
   return false
 }
 
-/** No words and no photos. Empty lists and headings count as empty. */
 export function isRichTextEmpty(doc: RichTextDoc): boolean {
   for (const block of walkBlocks(doc.content)) {
     if (block.type === 'image') return false
@@ -109,7 +105,6 @@ const mapBlocks = (
     }
   })
 
-/** The doc without photos, for places they don't travel (contact shares). */
 export function withoutRichTextImages(doc: RichTextDoc): RichTextDoc {
   const content = mapBlocks(doc.content, (block) =>
     block.type === 'image' ? null : block
@@ -124,10 +119,6 @@ export type RichTextRun =
   | { type: 'text'; doc: RichTextDoc }
   | { type: 'images'; images: RichTextImageAttrs[] }
 
-/**
- * The doc split where its photos sit, for previews that show photos small
- * between the text. A photo inside a list follows the list.
- */
 export function richTextRuns(doc: RichTextDoc): RichTextRun[] {
   const runs: RichTextRun[] = []
   let blocks: RichTextBlock[] = []
@@ -157,7 +148,6 @@ export function richTextRuns(doc: RichTextDoc): RichTextRun[] {
   return runs
 }
 
-/** How many lines a squeezed preview gives the blocks, before wrapping. */
 export function richTextPreviewLines(blocks: RichTextBlock[]): number {
   return blocks.reduce((count, block) => {
     switch (block.type) {
@@ -178,7 +168,6 @@ export function richTextPreviewLines(blocks: RichTextBlock[]): number {
   }, 0)
 }
 
-/** Swaps photo ids, e.g. a Buddy's shared photos for the local copies. */
 export function mapRichTextImages(
   doc: RichTextDoc,
   map: (attrs: RichTextImageAttrs) => RichTextImageAttrs | null
@@ -194,10 +183,6 @@ export function mapRichTextImages(
   }
 }
 
-/**
- * Drops empty paragraphs at the start and end, which the editor leaves behind
- * (e.g. after a photo), so an unchanged note saves unchanged.
- */
 export function compactRichText(doc: RichTextDoc): RichTextDoc {
   const isBlank = (block: RichTextBlock | undefined) =>
     block?.type === 'paragraph' &&
@@ -211,11 +196,6 @@ export function compactRichText(doc: RichTextDoc): RichTextDoc {
   return { type: 'doc', content }
 }
 
-/**
- * Checks or unchecks the `index`th checklist item, counted in reading order (an
- * item, then the items nested in it), for ticking items off without opening the
- * editor.
- */
 export function toggleRichTextTask(
   doc: RichTextDoc,
   index: number
@@ -266,7 +246,7 @@ function liftFrom(content: RichTextInline[], hrefs: Set<string>) {
   for (const node of content) {
     if (isBareLink(node, hrefs)) continue
     const previous = kept[kept.length - 1]
-    // Close the gap the link leaves: "Read <link> tonight" → "Read tonight".
+
     if (
       node.type === 'text' &&
       previous?.type === 'text' &&
@@ -289,10 +269,6 @@ function liftFrom(content: RichTextInline[], hrefs: Set<string>) {
   return kept.filter((node) => node.type !== 'text' || node.text)
 }
 
-/**
- * Removes links that are written out as bare addresses and shown as link cards
- * instead, along with paragraphs left empty. Labeled links stay in the text.
- */
 export function withoutBareLinks(
   doc: RichTextDoc,
   hrefs: Set<string>

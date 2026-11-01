@@ -22,16 +22,9 @@ import { SCRIBE_TOOLS } from '@/features/scribe/tools'
 
 const NO_ITEMS: readonly ScribeTimelineItem[] = []
 
-/**
- * One conversation: its timeline (with the streaming reply), the running turn,
- * the context budget and the pending Proposal. `null` starts a new one on the
- * first send.
- */
 export function useScribeConversation(
   conversationId: string | null
 ): ScribeConversationController {
-  // The id a new conversation got on its first send, until the caller passes
-  // another.
   const [started, setStarted] = useState<{
     for: string | null
     id: string
@@ -57,9 +50,7 @@ export function useScribeConversation(
   )
 
   const stored = conversation?.items ?? NO_ITEMS
-  // The drafting Proposal shows where the turn will store it, under the same
-  // item id, so its cards stay put when the turn ends. A retried turn's
-  // Proposal already has its item.
+
   const draftItem: ScribeTimelineItem | null =
     drafting &&
     !stored.some(

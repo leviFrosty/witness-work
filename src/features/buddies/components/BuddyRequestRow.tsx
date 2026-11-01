@@ -16,7 +16,6 @@ import type { IncomingClaim } from '@/features/buddies/lib/state'
 import { noteUserAction } from '@/lib/userAction'
 import { formatRelative } from '@/lib/dates'
 
-/** Someone claimed one of my invites; nothing is shared until I confirm. */
 export default function BuddyRequestRow({
   claim,
   last,
@@ -38,8 +37,6 @@ export default function BuddyRequestRow({
     }
   }
 
-  // Confirming can earn First Buddy: the User's own action, marked once the
-  // pairing lands.
   const confirm = () =>
     run(async () => {
       await buddiesEngine.confirmClaim(claim.inviteId)
@@ -90,7 +87,6 @@ export default function BuddyRequestRow({
             ]
       }
       trailing={
-        // Wide enough for Decline's frame to end at Confirm's edge.
         <XView style={{ gap: (MIN_TOUCH_TARGET - theme.fontSize()) / 2 }}>
           <Button
             disabled={busy}

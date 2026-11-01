@@ -38,7 +38,7 @@ describe('petActiveDays', () => {
       visits: [{ date: new Date(2026, 2, 4, 23, 30) }],
       dayPlans: [
         { savedOn: '2026-03-05' },
-        // Restamped by Buddies only: no save of the User's.
+
         { savedOn: undefined },
         { savedOn: 'yesterday' },
       ],
@@ -60,7 +60,7 @@ describe('petActiveDays', () => {
               ...entry('b', '2026-03-09'),
               date: '2026-03-09T12:00:00Z' as unknown as Date,
             },
-            // Not anchored yet: its local day.
+
             { ...entry('c', '2026-03-10'), date: new Date(2026, 2, 10, 22) },
           ],
         },

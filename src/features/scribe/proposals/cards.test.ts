@@ -50,7 +50,6 @@ import {
 
 let callSeq = 0
 
-/** Runs a write tool the way the loop does: propose, then into the draft. */
 function propose(
   fixture: FixtureContext,
   name: string,
@@ -138,7 +137,6 @@ describe('"which Maria?"', () => {
     })
     expect(canAddProposal(proposal)).toBe(false)
 
-    // Only an option of this card counts.
     expect(
       withContactChosen(proposal, card.id, {
         type: 'existing',
@@ -171,7 +169,7 @@ describe('"which Maria?"', () => {
       type: 'choice',
       optionIds: ['contact-ben'],
     })
-    // "New" is an answer too.
+
     expect(
       canAddProposal(
         withContactChosen(proposal, proposal.cards[0].id, { type: 'new' })
@@ -243,7 +241,6 @@ describe('a new householder’s consent (data protection mode)', () => {
       needsConsent: false,
     })
 
-    // Taken back: blocked again.
     proposal = withConsent(proposal, card.id, false, AGREED_AT)
     expect(canAddProposal(proposal)).toBe(false)
   })
@@ -261,7 +258,7 @@ describe('a new householder’s consent (data protection mode)', () => {
     const unchecked = withCardToggled(proposal, proposal.cards[0].id)
     expect(proposalCounts(unchecked).needsConsent).toBe(0)
     expect(canAddProposal(unchecked)).toBe(true)
-    // Agreeing checks the card again.
+
     expect(
       withConsent(unchecked, proposal.cards[0].id, true, AGREED_AT).cards[0]
         .selected
@@ -277,7 +274,7 @@ describe('a new householder’s consent (data protection mode)', () => {
     )
     const proposal = proposalOf(fixture)
     const id = proposal.cards[0].id
-    // Who it was comes first.
+
     expect(proposalCounts(proposal)).toMatchObject({
       needsChoice: 1,
       needsConsent: 0,
@@ -371,7 +368,7 @@ describe('cards', () => {
       (effect) => effect.draft.kind === 'contact.create'
     )
     expect(creates).toHaveLength(1)
-    // The later mention's address fills in.
+
     expect(creates[0].draft).toMatchObject({
       name: 'Ana Silva',
       address: { line1: '5 Pine St' },
@@ -476,7 +473,7 @@ describe('warnings', () => {
     const fixture = fixtureContext()
     propose(fixture, 'time_log', timeLog({ categoryRef: 'k1', minutes: 1_440 }))
     propose(fixture, 'time_log', timeLog({ categoryRef: 'k1', minutes: 30 }))
-    // 270 logged + 1,440 is under the 3,300 cap; a second day could cross it.
+
     expect(warningCodes(fixture)).toEqual([[], []])
     const crowded = fixtureContext(
       fixtureStores({
@@ -496,7 +493,7 @@ describe('warnings', () => {
     )
     propose(crowded, 'time_log', timeLog({ categoryRef: 'k1', minutes: 90 }))
     expect(warningCodes(crowded)).toEqual([['over_credit_cap']])
-    // A credit Category the same call creates counts too.
+
     propose(
       crowded,
       'time_log',

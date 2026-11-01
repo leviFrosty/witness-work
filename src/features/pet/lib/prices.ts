@@ -1,11 +1,5 @@
 import type { RoomItemId } from '@/types/pet'
 
-/**
- * Every regular room item and hat's price in coins (ADR 0035): 10 to 30, rising
- * along the old unlock order, with six rare ones at the top of their kind.
- * About 570 coins buy them all. Starters are free and secrets are found, never
- * sold. A purchase keeps what it cost, so these can be retuned.
- */
 export const ITEM_PRICES: Readonly<Partial<Record<RoomItemId, number>>> = {
   'bed:hay': 10,
   'wallColor:sage': 10,
@@ -38,6 +32,5 @@ export const ITEM_PRICES: Readonly<Partial<Record<RoomItemId, number>>> = {
   'hat:tophat': 36,
 }
 
-/** What `item` costs; null for one that isn't sold. */
 export const priceOf = (item: string): number | null =>
   ITEM_PRICES[item as RoomItemId] ?? null

@@ -12,12 +12,6 @@ import { normalizeNumericInput } from '@/lib/digits'
 
 export type ContactSortDirection = 'asc' | 'desc'
 
-/**
- * Persisted sort key. Most values are bare identifiers; custom-field sorts
- * encode the field's UUID as `customField:<defId>` so the persisted shape stays
- * a plain string and still survives a custom-field deletion (we treat unknown
- * defs as "no values everywhere", which sorts to the end).
- */
 export type ContactSortKey =
   | 'suggested'
   | 'recentConversation'
@@ -37,13 +31,6 @@ export type SortContext = {
   customFieldDefs: CustomFieldDefinition[]
 }
 
-/**
- * Sentinel returned by the per-key comparators when one side is "missing" — the
- * caller in {@link buildContactComparator} treats this specially so direction
- * (asc/desc) doesn't accidentally pull undefined values to the top under desc.
- * Real value-vs-value comparisons return regular numbers and the direction
- * multiplier flips them as expected.
- */
 type KeyCompare = number | { aMissing: boolean; bMissing: boolean }
 
 const isMissingResult = (
@@ -66,14 +53,8 @@ const localeCmp = (
   return compareText(a!, b!)
 }
 
-/** A date's Unix seconds, or `null` when moment can't read it. */
 type UnixOf = (value: string | Date) => number | null
 
-/**
- * Reads each distinct date once per comparator. A sort compares every value
- * about log₂ n times, so parsing on each comparison made the Added and date
- * field sorts parse a long list's dates many times over.
- */
 const cachedUnixOf = (): UnixOf => {
   const cache = new Map<string | Date, number | null>()
   return (value) => {
@@ -142,13 +123,9 @@ const compareKey = (
       return ar - br
     }
     case 'nextFollowUp': {
-      // Soonest first under the default (desc) direction, like the other date
-      // sorts put the most relevant date first.
       const af = index.nextFollowUpMs.get(a.id)
       const bf = index.nextFollowUpMs.get(b.id)
       if (af === undefined && bf === undefined) {
-        // A missed Follow-up still comes before none, so the rows saying
-        // "overdue" sit together after the upcoming ones.
         return missing(
           index.missedFollowUpMs.has(a.id),
           index.missedFollowUpMs.has(b.id)
@@ -190,30 +167,11 @@ const compareKey = (
   }
 }
 
-/**
- * Builds a comparator. The `'suggested'` sort is the default and applies a
- * "favorites first, then active bible studies, then lapsed studies, then by
- * recent conversation" tiering — it's what existing users expect from a smart
- * default. Every other sort key is a pure sort: no favorite or study pinning,
- * just the chosen axis. That keeps "Recent Visit" honest (you asked for a sort,
- * you get a sort), and the user picks `'suggested'` when they want the smart
- * layering.
- *
- * Direction flips only the sort-key axis. Sentinels (undefined values) always
- * sort last regardless of direction.
- */
 export const buildContactComparator = (
   sort: ContactSortKey,
   direction: ContactSortDirection,
   ctx: SortContext,
-  /**
-   * Prebuilt conversation index. The Contacts screen builds this once per
-   * (conversations) change and shares it with the stats header and rows, so
-   * pass it here to avoid a redundant pass. Omitted in tests and any caller
-   * that only needs a one-off comparator — we build it from `ctx` with stock
-   * breakpoints then; anything reflecting the user's `stalenessBreakpoints`
-   * preference must pass an index built from it.
-   */
+
   index: ConversationIndex = buildConversationIndex(
     ctx.conversations,
     DEFAULT_STALENESS_BREAKPOINTS
@@ -236,9 +194,6 @@ export const buildContactComparator = (
     }
     const result = compareKey(a, b, sort, ctx, index, unixOf)
     if (isMissingResult(result)) {
-      // Both missing → tie; one missing → that side goes last regardless of
-      // direction. The user's intent for "undefineds last" doesn't flip with
-      // asc/desc.
       if (result.aMissing && result.bMissing) return 0
       return result.aMissing ? 1 : -1
     }

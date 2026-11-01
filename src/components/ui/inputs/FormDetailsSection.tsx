@@ -6,7 +6,6 @@ import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import { tracking } from '@/lib/tracking'
 
-/** The "Details" list of a docked form: optional rows above its dock. */
 const FormDetailsSection = (props: { children: ReactNode }) => {
   const theme = useTheme()
   return (

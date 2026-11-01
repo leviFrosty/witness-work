@@ -10,13 +10,6 @@ import {
   signAccountRequest,
 } from '@/lib/serverAccount/keys'
 
-/**
- * Client for `/accounts/v1/*` (docs/accounts-protocol.md). Most ops are
- * **Bearer**: they carry the attested session's access token (`session.ts`).
- * `session/open` and `backup/delete` are signed by the account key instead
- * (`backup/delete` by both). Signed envelopes are `{ payload, signature }`.
- */
-
 export const ACCOUNT_TIMEOUT_MS = 15 * 1000
 
 export type AccountStatus = 'active' | 'suspended'
@@ -24,21 +17,16 @@ export type AccountStatus = 'active' | 'suspended'
 export const isAccountStatus = (value: unknown): value is AccountStatus =>
   value === 'active' || value === 'suspended'
 
-/** How a self-signed op is signed and sent. */
 export type SignedAccountOptions = {
   baseUrl: string
   key: AccountSigningKey
-  /** Request timestamps; the server refuses one 5 minutes off its clock. */
+
   now: () => number
   randomBytes: (length: number) => Uint8Array
   fetchImpl?: typeof fetch
   signal?: AbortSignal
 }
 
-/**
- * Ops signed by the account key (docs/accounts-protocol.md). The op name is the
- * signature's context; the route is its own.
- */
 export type SignedAccountOp = 'session/open' | 'backup/delete'
 
 const SIGNED_PATHS: Record<SignedAccountOp, string> = {
@@ -46,20 +34,13 @@ const SIGNED_PATHS: Record<SignedAccountOp, string> = {
   'backup/delete': 'backup/delete',
 }
 
-/** How one signed op travels, past the default JSON envelope and answer. */
 export type SignedAccountTransport = {
-  /** Sent too: the dev bypass, or the bearer token of a step-up op. */
   headers?: Record<string, string>
   timeoutMs?: number
-  /** Repeating it can't do anything twice, so a lost answer is retried once. */
+
   idempotent?: boolean
 }
 
-/**
- * Sends a self-signed account op: `accountPub`, `ts`, `nonce`, and the op's own
- * `fields`. A `stale` answer carries the server's clock, and the request is
- * signed again once with it. Failures throw `HttpError`.
- */
 export async function sendSignedAccountOp<T>(
   op: SignedAccountOp,
   fields: Record<string, unknown>,
@@ -99,16 +80,10 @@ export async function sendSignedAccountOp<T>(
   }
 }
 
-/**
- * Runs a request with the account session's `Authorization` header, refreshing
- * the session and running it again after a 401 (`AccountSessions.withSession`
- * for one account key).
- */
 export type AccountAuthorize = <T>(
   run: (authorization: string) => Promise<T>
 ) => Promise<T>
 
-/** How a bearer op reaches the server. */
 export type BearerAccountOptions = {
   baseUrl: string
   authorize: AccountAuthorize
@@ -116,7 +91,6 @@ export type BearerAccountOptions = {
   signal?: AbortSignal
 }
 
-/** Ops that take the session's bearer token. */
 export type BearerAccountOp =
   | 'account/info'
   | 'handoff/open'
@@ -132,10 +106,6 @@ export type BearerAccountOp =
   | 'sync/get'
   | 'sync/delete'
 
-/**
- * `GET /accounts/v1/account` reads the account; the rest are `POST
- * /accounts/v1/{op}`, so their ids stay out of URLs.
- */
 const BEARER_ROUTES: Partial<
   Record<BearerAccountOp, { method: 'GET'; path: string }>
 > = {
@@ -143,9 +113,7 @@ const BEARER_ROUTES: Partial<
   sync: { method: 'GET', path: 'sync' },
 }
 
-/** How one bearer op travels, past the default JSON body and answer. */
 export type BearerAccountTransport = {
-  /** Sent as the raw body (`backup/put`, `sync/put`), with these headers. */
   rawBody?: Uint8Array
   headers?: Record<string, string>
   responseType?: RequestOptions['responseType']
@@ -153,11 +121,6 @@ export type BearerAccountTransport = {
   idempotent?: boolean
 }
 
-/**
- * Sends a bearer op with `fields` as its JSON body, or no body for `null`.
- * Failures throw `HttpError` (an `AccountSessionError` when there's no session
- * to send it with).
- */
 export function sendBearerAccountOp<T>(
   op: BearerAccountOp,
   fields: Record<string, unknown> | null,
@@ -192,7 +155,6 @@ export function sendBearerAccountOp<T>(
   )
 }
 
-/** What the server holds for this device's own account (`account/info`). */
 export type ServerAccountInfo = {
   accountId: string
   status: AccountStatus
@@ -202,10 +164,6 @@ export type ServerAccountInfo = {
   statusChanges: { status: AccountStatus; createdAt: number }[]
 }
 
-/**
- * Reads the session's account (`GET /accounts/v1/account`): its status, which
- * inboxes it holds, and its history. Failures throw `HttpError`.
- */
 export async function fetchAccountInfo(
   options: BearerAccountOptions
 ): Promise<ServerAccountInfo> {

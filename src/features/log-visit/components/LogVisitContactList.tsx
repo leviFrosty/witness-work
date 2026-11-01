@@ -19,11 +19,6 @@ import LogVisitSectionHeader from '@/features/log-visit/components/LogVisitSecti
 import type { LogVisitListItem } from '@/features/log-visit/lib/logVisitList'
 import { alignInput } from '@/lib/direction'
 
-/**
- * The picker step: search (not focused, so the suggestions stay in view), the
- * Nearby hint, then the rows. Tapping a row picks that Contact; touching and
- * holding it still offers Open Contact.
- */
 export default function LogVisitContactList({
   items,
   query,
@@ -48,7 +43,6 @@ export default function LogVisitContactList({
   const { fontScale } = useWindowDimensions()
   const listRef = useRef<FlashListRef<LogVisitListItem>>(null)
 
-  // Back to the top as the query changes, so the best matches are in view.
   useEffect(() => {
     listRef.current?.scrollToOffset({ offset: 0, animated: false })
   }, [query])
@@ -62,8 +56,7 @@ export default function LogVisitContactList({
             alignItems: 'center',
             gap: 8,
             minHeight: 44,
-            // With enlarged text the field grows with its text; a fixed 44
-            // clips the placeholder's top on Android from 1.5x.
+
             height: fontScale > 1 ? undefined : 44,
             paddingHorizontal: 12,
             borderRadius: theme.numbers.borderRadiusMd,
@@ -95,8 +88,7 @@ export default function LogVisitContactList({
               color: theme.colors.text,
               fontFamily: theme.fonts.regular,
               fontSize: theme.fontSize('md'),
-              // Explicit: an unaligned field follows the app bundle's language on
-              // iOS, which can be Arabic while the app runs in English.
+
               textAlign: alignInput('start'),
             }}
           />
@@ -106,8 +98,6 @@ export default function LogVisitContactList({
       <FlashList
         ref={listRef}
         data={items}
-        // A search swaps the whole list; anchoring to an old row would leave it
-        // blank until scrolled (see ContactsScreen).
         maintainVisibleContentPosition={{ disabled: true }}
         keyExtractor={(item) => item.key}
         getItemType={(item) => item.type}

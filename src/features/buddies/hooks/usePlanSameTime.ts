@@ -5,13 +5,8 @@ import { atMinutesOfDay } from '@/lib/normalizeDate'
 import type { RootStackNavigation } from '@/types/rootStack'
 import type { BuddyCardDay } from '@/features/buddies/lib/schemas'
 
-/** Where "Plan the Same Time" was chosen, for `buddy_plan_same_time_opened`. */
 type Source = 'buddy_detail' | 'buddy_plans_for_day'
 
-/**
- * Opens a new Plan seeded with a buddy's day, start time, and length. Nothing
- * is shared or linked; it's my own Plan that happens to match theirs.
- */
 export default function usePlanSameTime(source: Source) {
   const navigation = useNavigation<RootStackNavigation>()
 
@@ -28,7 +23,7 @@ export default function usePlanSameTime(source: Source) {
           plan.s === undefined
             ? undefined
             : atMinutesOfDay(date, plan.s).toISOString(),
-        // A buddy's Plan with no start time is anytime.
+
         anytime: plan.s === undefined,
         minutes: plan.m,
       },

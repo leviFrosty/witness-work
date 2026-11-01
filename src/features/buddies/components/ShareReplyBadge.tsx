@@ -4,7 +4,6 @@ import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import type { ShareReply } from '@/features/buddies/lib/schemas'
 
-/** An invited buddy's answer in words; "Invited" until they answer. */
 export const shareReplyLabel = (status?: ShareReply) =>
   i18n.t(
     status === 'going'
@@ -14,7 +13,6 @@ export const shareReplyLabel = (status?: ShareReply) =>
         : 'buddies_replyInvited'
   )
 
-/** An invited buddy's answer on their avatar; nothing while unanswered. */
 export default function ShareReplyBadge({
   status,
   ringColor,

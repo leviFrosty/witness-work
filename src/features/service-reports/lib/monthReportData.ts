@@ -18,46 +18,36 @@ import type { Visit } from '@/types/visit'
 import { formatDisplay } from '@/lib/dates'
 
 export type MonthReportData = {
-  /** Whether the publisher logged any ministry this month (not a rollover). */
   sharedInMinistry: boolean
-  /** Whole-hour standard time (excludes credit). */
+
   hours: number
-  /** Whole-hour credit time within the cap. */
+
   credit: number
-  /** Whole-hour credit time over the cap (rendered into notes). */
+
   creditOverageHours: number
   studies: number | null
-  /**
-   * Hourglass submission fields. Preaching minutes and Credit Time remarks stay
-   * separate; checkbox mode uses 1/0 for participation.
-   */
+
   hourglassReport: Pick<HourglassReport, 'minutes' | 'studies' | 'remarks'>
-  /**
-   * Comments text for the report. The auto-generated credit breakdown, unless
-   * the user saved a month-specific override (see `hasNotesOverride`).
-   */
+
   notes: string
-  /** The auto-generated comments, ignoring any user override. */
+
   defaultNotes: string
-  /** True when `notes` comes from a user-saved month-specific override. */
+
   hasNotesOverride: boolean
-  /** Last-month-only flag (kept for nwpublisher submission gating). */
+
   isLastMonth: boolean
-  /** Hide the hours row for checkbox-mode publishers. */
+
   showHours: boolean
-  /** Always true today — credit row shows zero rather than hiding. */
+
   showCredit: boolean
-  /**
-   * Same string the share/copy actions produce — preserves credit-in-notes
-   * formatting.
-   */
+
   reportAsString: () => string
 }
 
 export type MonthReportInputs = {
   month: number | undefined
   year: number | undefined
-  /** The role that applied that month (Role History). */
+
   publisher: Publisher
   entryMode: 'checkbox' | 'hours'
   serviceReports: TimeEntriesByYear
@@ -69,11 +59,6 @@ export type MonthReportInputs = {
   reportCommentOverrides: Record<string, string>
 }
 
-/**
- * Everything the Service Report shows and exports for one month. Pure, so the
- * report screen (through `useMonthReportData`) and one-off exports from menus
- * (through `getMonthReportData`) build the exact same report.
- */
 export const buildMonthReportData = ({
   month,
   year,

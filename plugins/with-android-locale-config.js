@@ -2,19 +2,6 @@ const fs = require('fs')
 const path = require('path')
 const { withAndroidManifest, withDangerousMod } = require('expo/config-plugins')
 
-/**
- * Lists the app's languages in `res/xml/locales_config.xml`, so Android 13+
- * offers them in Settings > App languages.
- *
- * The `supportedLocales` of expo-localization writes the same file, but sets
- * `resourceConfigurations` to the list, which strips every other locale's
- * resources from the APK, libraries' included. Their Chinese is `zh-rCN` and
- * `zh-rTW`, which `b+zh+Hans` doesn't keep, so Chinese users would lose the
- * translations of Android and Google UI they have today.
- *
- * @param {import('expo/config').ExpoConfig} config
- * @param {{ locales: string[] }} props BCP 47 tags, e.g. `en`, `pt-BR`.
- */
 module.exports = (config, { locales }) => {
   config = withDangerousMod(config, [
     'android',
@@ -40,7 +27,6 @@ module.exports = (config, { locales }) => {
   })
 }
 
-/** The `locale-config` resource listing `locales`. */
 function localeConfig(locales) {
   return [
     '<?xml version="1.0" encoding="utf-8"?>',

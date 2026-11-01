@@ -10,7 +10,6 @@ import { usePreferences } from '@/stores/preferences'
 
 export type MonthStatusSource = 'month_card' | 'year_tab' | 'history_editor'
 
-/** One month's status (Role History) plus a setter that records analytics. */
 const useMonthStatus = (target: CalendarMonth) => {
   const {
     role,
@@ -42,7 +41,7 @@ const useMonthStatus = (target: CalendarMonth) => {
   return {
     status,
     label: monthStatusLabel(status, publisherHours),
-    /** The month's role differs from the User's standing role. */
+
     isDifferent: monthRole !== role,
     save,
   }

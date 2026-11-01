@@ -42,7 +42,6 @@ import useHelpCenter from '@/features/updates/hooks/useHelpCenter'
 import { useFoldColumn } from '@/components/ui/layout/FoldPane'
 import FoldSplit from '@/components/ui/layout/FoldSplit'
 
-/** Quiet time after the last layout change before scrolling to a category. */
 const LAYOUT_SETTLE_MS = 150
 
 const FAQScreen = () => {
@@ -71,16 +70,13 @@ const FAQScreen = () => {
   const scrollRef = useRef<ScrollView>(null)
   const answersRef = useRef<ScrollView>(null)
   const categoryOffsets = useRef<Partial<Record<string, number>>>({})
-  // Set once the User scrolls: the screen stops following the category.
+
   const userScrolledRef = useRef(false)
-  // Where the screen last scrolled the requested category to.
+
   const placedYRef = useRef<number | null>(null)
 
   const handleCopyAccountId = useCallback(async () => {
     try {
-      // Live SDK value, not `customer.originalAppUserId` — the dev reset flow
-      // can swap the active user via `logIn`, and the current ID is what
-      // matters for granting a promotional entitlement in the RC dashboard.
       const id = await Purchases.getAppUserID()
       await Clipboard.setStringAsync(id)
 
@@ -100,9 +96,7 @@ const FAQScreen = () => {
     placedYRef.current = y
     scrollRef.current.scrollTo({ y: Math.max(0, y + 8), animated: true })
   }
-  // Sections measure in several passes after opening, and on Android their
-  // offsets jump around before they settle. So the screen follows the
-  // category, a moment after its offset last changed, until the User scrolls.
+
   const scrollToTargetCategory = () => {
     if (placeTimer.current) clearTimeout(placeTimer.current)
     placeTimer.current = setTimeout(() => {
@@ -129,9 +123,7 @@ const FAQScreen = () => {
     userScrolledRef.current = false
     placedYRef.current = null
     if (isWide || !targetCategory) return
-    // A new route target can have unchanged geometry, so native onLayout and
-    // content-size callbacks may not run. Try cached offsets after commit;
-    // those callbacks still handle first mount and subsequent measurement.
+
     const frame = requestAnimationFrame(() => {
       const y = categoryOffsets.current[targetCategory]
       if (y === undefined || placedYRef.current !== null || !scrollRef.current)
@@ -233,7 +225,6 @@ const FAQScreen = () => {
   return (
     <Wrapper insets='none' style={{ flex: 1 }}>
       {isWide ? (
-        // Topics beside the answers, meeting iPhone Duo's fold when half-open.
         <FoldSplit
           style={{
             flex: 1,
@@ -317,7 +308,6 @@ const FAQScreen = () => {
           }}
           keyboardShouldPersistTaps='handled'
           onContentSizeChange={scrollToTargetCategory}
-          // Once the User scrolls, the screen stops placing the category.
           onScrollBeginDrag={() => {
             userScrolledRef.current = true
           }}

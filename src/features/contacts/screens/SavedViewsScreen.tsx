@@ -18,10 +18,6 @@ import SavedViewRow from '@/features/contacts/components/SavedViewRow'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Saved Contact Views'>
 
-/**
- * Rename, reorder and delete Saved Views. Creating and updating happen in Sort
- * & Filter, where the filters themselves are edited.
- */
 const SavedViewsScreen = ({ navigation, route }: Props) => {
   const theme = useTheme()
   const { customFieldDefs } = useContacts()
@@ -29,8 +25,6 @@ const SavedViewsScreen = ({ navigation, route }: Props) => {
   const focusRef = useRef<InputRef>(null)
   const focusId = route.params?.focusId
 
-  // Rename from a chip's menu starts editing that view's name. `autoFocus`
-  // doesn't take mid-push, so focus once the screen has slid in.
   useEffect(() => {
     if (!focusId) return
     return navigation.addListener('transitionEnd', (e) => {

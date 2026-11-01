@@ -17,7 +17,7 @@ describe('rasterize', () => {
     )
     expect(pixelAt(out, 8, 8)).toBe(RED)
     expect(pixelAt(out, 4, 8)).toBe(RED)
-    // One pixel outside the left edge: the dark outline tone.
+
     expect(pixelAt(out, 3, 8)).toBe(shadeOf(RED, 0.42))
     expect(pixelAt(out, 2, 8)).toBeNull()
     expect(pixelAt(out, 0, 0)).toBeNull()
@@ -81,7 +81,7 @@ describe('rasterize', () => {
       edge: true,
     }
     const out = rasterize({ shapes: [body, head] }, 16, 16)
-    // The head's bottom row touches the body: it gets the inner edge tone.
+
     expect(pixelAt(out, 8, 8)).toBe(shadeOf(BLUE, 0.66))
     const grouped = rasterize(
       {

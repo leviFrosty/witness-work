@@ -27,52 +27,40 @@ import {
 } from '@/lib/sortableRow'
 
 const GAP = 8
-/** A touch held this long, then moved, drags its chip; a quicker move scrolls. */
+
 const HOLD_MS = 200
-/** After this, a still touch belongs to the chips' long-press menu. */
+
 const MENU_MS = 450
-/** Movement that ends a hold, as a drag or a scroll. */
+
 const SLOP = 8
-/** How near the row's edge a dragged chip starts scrolling it. */
+
 const EDGE = 48
-/** Scroll speed, in points per second, with the chip at the very edge. */
+
 const MAX_SCROLL_SPEED = 600
 const SETTLE = { duration: 200 }
 const LIFT_SCALE = 1.06
 
 type Size = { width: number; height: number }
 
-/** Drag state shared by the row and its chips, on the UI thread. */
 type RowState = {
   order: SharedValue<readonly string[]>
   widths: SharedValue<RowWidths>
   slots: SharedValue<Record<string, number>>
-  /** Every chip has been measured, so each sits at its slot. */
+
   placed: SharedValue<boolean>
   active: SharedValue<string | null>
-  /**
-   * The dragged chip's leading edge in the row, from the row's start. Slots,
-   * travel and this are all in reading order; `sign` turns them physical.
-   */
+
   dragLeft: SharedValue<number>
-  /** The dragged chip's slot and the content offset when the drag began. */
+
   start: SharedValue<{ left: number; scroll: number }>
-  /** How far the finger has moved since then. */
+
   travel: SharedValue<number>
-  /** Content offset while dragging, including the row's own scrolling. */
+
   scroll: SharedValue<number>
-  /** +1 when the row runs left to right, -1 in RTL. */
+
   sign: 1 | -1
 }
 
-/**
- * A row of chips that scrolls sideways and that the User can reorder: touch and
- * hold a chip, then drag it along the row, which scrolls when the chip nears
- * either edge. A quick swipe still scrolls and a tap still reaches the chip.
- * With `longPressMenus`, a touch held still opens the chip's own menu instead,
- * so a drag has to start before it would. A pointer drags without the hold.
- * `leading` and `trailing` stay put at the ends.
- */
 export default function SortableChipRow<T>({
   data,
   keyExtractor,
@@ -86,10 +74,10 @@ export default function SortableChipRow<T>({
   data: T[]
   keyExtractor: (item: T) => string
   renderItem: (item: T) => ReactElement
-  /** Called once per drop that changed the order. */
+
   onReorder: (next: T[]) => void
   sortEnabled?: boolean
-  /** The chips open a menu on long press (`ContextMenu`). */
+
   longPressMenus?: boolean
   leading?: ReactNode
   trailing?: ReactNode
@@ -101,8 +89,7 @@ export default function SortableChipRow<T>({
   const viewportWidth = useSharedValue(0)
   const contentWidth = useSharedValue(0)
   const rowStart = useSharedValue(0)
-  // Chips sit in a normal row until each is measured, then move to absolute
-  // slots, so a drop never waits on a re-layout to land.
+
   const [sizes, setSizes] = useState<Record<string, Size>>({})
   const [measured, setMeasured] = useState(false)
 
@@ -126,15 +113,11 @@ export default function SortableChipRow<T>({
     setMeasured(true)
   }
 
-  // The owner's order (after a drop, a sync, a new chip) replaces the row's,
-  // except mid-drag.
   useEffect(() => {
     if (row.active.value === null)
       row.order.value = keySignature ? keySignature.split('\n') : []
   }, [keySignature, row.active, row.order])
 
-  // Written whole, since chips measure in the same frame, and together with
-  // `placed` so chips leave the normal row only once their slots are right.
   useEffect(() => {
     const next = Object.fromEntries(
       Object.entries(sizes).map(([key, size]) => [key, size.width])
@@ -157,8 +140,7 @@ export default function SortableChipRow<T>({
   const autoScroll = useFrameCallback((frame) => {
     const key = row.active.value
     if (key === null) return
-    // The chip's physical edges in the viewport. In RTL the chips hang from
-    // the row's right edge, and the scroll offset stays physical.
+
     const width = row.widths.value[key] ?? 0
     const rowRight =
       rowStart.value + rowLength(row.order.value, row.widths.value, GAP)
@@ -197,7 +179,6 @@ export default function SortableChipRow<T>({
     onReorder(next.flatMap((key) => byKey.get(key) ?? []))
   }
 
-  // Sized by hand once chips are placed, which takes them out of the flow.
   const measuredKeys = keys.filter((key) => key in sizes)
   const placedStyle = measured
     ? {
@@ -263,10 +244,6 @@ export default function SortableChipRow<T>({
   )
 }
 
-/**
- * Keeps the dragged chip under the finger as the finger or the row moves, and
- * moves it past the neighbors it crosses. Returns whether the order changed.
- */
 function follow(row: RowState, key: string): boolean {
   'worklet'
   const { left, scroll } = row.start.value
@@ -307,7 +284,6 @@ function SortableChip({
   onOrderChanged: () => void
   children: ReactElement
 }) {
-  /** Left edge while sliding to a new slot; otherwise the chip sits at it. */
   const x = useSharedValue(0)
   const sliding = useSharedValue(false)
   const touch = useSharedValue({ x: 0, y: 0, at: 0, pointer: false })
@@ -316,8 +292,6 @@ function SortableChip({
     withTiming(row.active.value === key ? 1 : 0, SETTLE)
   )
 
-  // Slides aside while another chip is dragged past, and into its slot when
-  // dropped. Any other change (measuring, a chip added or removed) jumps.
   useAnimatedReaction(
     () => [row.slots.value[key], row.active.value] as const,
     ([slot, active], previous) => {
@@ -351,7 +325,6 @@ function SortableChip({
       zIndex: lift.value > 0 ? 1 : 0,
       transform: [
         {
-          // `left: 0` is the right edge in RTL, so slots run leftward there.
           translateX:
             row.sign *
             (active

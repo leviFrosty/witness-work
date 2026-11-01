@@ -47,11 +47,6 @@ const ROWS = [
 const FLY_FROM = { x: 160, y: 262 }
 const CHIP = 46
 
-/**
- * Map is no longer a tab: its icon lifts out of the old tab bar and settles
- * into Contacts' List | Map switch, which then flips the list to the map — pins
- * dropping in, one opening its contact.
- */
 const MapVisual = ({ palette, active, reduceMotion }: RevealVisualProps) => {
   const theme = useTheme()
   const markers = useMarkerColors()
@@ -74,7 +69,7 @@ const MapVisual = ({ palette, active, reduceMotion }: RevealVisualProps) => {
   const headerStyle = useRiseStyle(intro, 0, 0.2)
   const switchStyle = useRiseStyle(intro, 0.08, 0.3)
   const paneStyle = useRiseStyle(intro, 0.15, 0.45, 26)
-  // 0 = the list, 1 = the map.
+
   const view = useDerivedValue(
     () =>
       segInOut(loop.value, 0.12, 0.26) * (1 - segInOut(loop.value, 0.86, 0.98))
@@ -106,7 +101,7 @@ const MapVisual = ({ palette, active, reduceMotion }: RevealVisualProps) => {
     opacity: callout.value,
     transform: [{ translateY: (1 - backOut(callout.value)) * 30 }],
   }))
-  // The old tab's icon, arcing up from where the tab bar was into the switch.
+
   const flyStyle = useAnimatedStyle(() => {
     const p = seg(intro.value, 0.5, 0.86)
     const x =
@@ -438,7 +433,6 @@ const SwitchLabel = ({
   </Animated.View>
 )
 
-/** A contact on the map, dropping in once the map shows. */
 const Pin = ({
   index,
   x,

@@ -9,7 +9,7 @@ vi.mock('@/lib/locales', () => ({
 vi.mock('@/stores/preferences', () => ({
   usePreferences: () => ({ timeDisplayFormat: 'decimal' }),
 }))
-// `buddyDisplayName` lives beside the profile helpers and their native deps.
+
 vi.mock('expo-image-manipulator', () => ({}))
 vi.mock('@/stores/profile', () => ({ useProfile: {} }))
 vi.mock('@/features/buddies/stores/buddiesStore', () => ({ useBuddies: {} }))

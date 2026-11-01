@@ -15,14 +15,12 @@ vi.mock('@/lib/errorTracking', () => ({
 
 import { linkOrigin, openURL } from '@/lib/links'
 
-// Made-up address and number.
 const appleUrl = 'https://maps.apple.com/?q=12%20Example%20St%20%234%20Faketown'
 const googleUrl =
   'https://www.google.com/maps/search/?api=1&query=12%20Example%20St%20%234%20Faketown'
 const unableToOpen = (url: string) =>
   Promise.reject(new Error(`Unable to open URL: ${url}`))
 
-/** Everything sent to error tracking, as one string. */
 const reported = () =>
   mocks.capture.mock.calls
     .map(([error, properties]) =>

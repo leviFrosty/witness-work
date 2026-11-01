@@ -1,8 +1,3 @@
-/**
- * The window on the left of the back wall: a sky for each time of day, hills
- * for each season, a rainbow, and the wooden frame with its cross bars and
- * sill. Glass is x 16–57, y 10–43; bars at x 36–37 and y 26–27.
- */
 import {
   createRng,
   fillEllipse,
@@ -19,10 +14,8 @@ import { SEASONS, TIMES_OF_DAY, type Season, type TimeOfDay } from '@/types/pet'
 export { SEASONS, TIMES_OF_DAY }
 export type { Season, TimeOfDay }
 
-/** Window glass bounds (half-open). */
 export const WINDOW_GLASS = { x0: 16, y0: 10, x1: 58, y1: 44 } as const
 
-/** Whether (x, y) is on the window glass, cross bars included. */
 export function isWindowGlass(x: number, y: number): boolean {
   return (
     x >= WINDOW_GLASS.x0 &&
@@ -32,14 +25,12 @@ export function isWindowGlass(x: number, y: number): boolean {
   )
 }
 
-/** Whether (x, y) is a see-through pane pixel (glass minus the cross bars). */
 export function isWindowPane(x: number, y: number): boolean {
   return isWindowGlass(x, y) && !(x >= 36 && x < 38) && !(y >= 26 && y < 28)
 }
 
 const hexes = (list: readonly string[]): Rgb[] => list.map(rgb)
 
-/** Sky bands, top to bottom (each 7 rows). */
 const SKY: Readonly<Record<TimeOfDay, readonly Rgb[]>> = {
   night: hexes(['#1d2550', '#232d5e', '#2a376b', '#33437a', '#3d5089']),
   dawn: hexes(['#4a5a9a', '#8a6aa0', '#d9839a', '#f2a985', '#f8cf96']),
@@ -47,7 +38,6 @@ const SKY: Readonly<Record<TimeOfDay, readonly Rgb[]>> = {
   dusk: hexes(['#2f2a66', '#5a3a7a', '#a64d7a', '#e0705e', '#f4a35a']),
 }
 
-/** Colour cast over the landscape: [tint, strength]. */
 const TINT: Readonly<Record<TimeOfDay, readonly [Rgb, number]>> = {
   night: [rgb('#141a33'), 0.62],
   dusk: [rgb('#5a2a50'), 0.32],
@@ -55,7 +45,6 @@ const TINT: Readonly<Record<TimeOfDay, readonly [Rgb, number]>> = {
   day: [rgb('#ffffff'), 0],
 }
 
-/** Back and front hill colours. */
 const HILLS: Readonly<Record<Season, readonly [Rgb, Rgb]>> = {
   spring: [rgb('#5fae55'), rgb('#7cc463')],
   summer: [rgb('#3d8a43'), rgb('#55a64b')],
@@ -104,11 +93,10 @@ const C = {
   pine: rgb('#3e6b55'),
 }
 
-/** Options for {@link drawWindow}. */
 export interface WindowOptions {
   readonly time: TimeOfDay
   readonly season: Season
-  /** The rainbow moment (callers skip it at night). */
+
   readonly rainbow?: boolean
 }
 
@@ -200,7 +188,6 @@ function drawLandscape(
   }
 }
 
-/** Paints the window: frame, sky, rainbow, landscape, cross bars and sill. */
 export function drawWindow(buf: PixelBuffer, o: WindowOptions): void {
   const [tintColor, tintStrength] = TINT[o.time]
   const tint = (c: Rgb) => mix(c, tintColor, tintStrength)

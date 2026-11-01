@@ -11,8 +11,6 @@ import { setNumberConventions } from '@/lib/numbers'
 
 afterEach(() => setNumberConventions({ language: 'en-us' }))
 
-// Every numeric field in the app parses typed text through these, so an
-// Arabic keyboard's ٠-٩ and ٫ work as well as 0-9 and `.`/`,`.
 describe('numeric input in any digit system', () => {
   it('mileage fields read Arabic-Indic and Persian digits', () => {
     expect(parseDecimal('١٢')).toBe(12)

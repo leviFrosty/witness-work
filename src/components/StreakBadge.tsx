@@ -14,11 +14,6 @@ const SIZES = {
   md: { icon: 14, text: 14, paddingH: 9, paddingV: 4 },
 } as const
 
-/**
- * A Service Streak: its count beside a flame. Kept Plans and months aren't
- * named; the number reads the same for every role. With `endsIn`, the time left
- * before it ends follows an hourglass.
- */
 export default function StreakBadge({
   count,
   size = 'md',

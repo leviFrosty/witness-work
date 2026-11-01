@@ -14,7 +14,6 @@ import {
   unholdTakeovers,
 } from '@/lib/takeover/arbiter'
 
-/** Priorities and the gap; installed by `src/app/takeover/policy.ts`. */
 export type TakeoverPolicy = {
   priorities: Record<TakeoverKind, number>
   gapMs: number
@@ -22,7 +21,6 @@ export type TakeoverPolicy = {
 
 let policy: TakeoverPolicy | null = null
 
-/** Installs the app's priorities. Until then every kind waits its turn FIFO. */
 export function configureTakeovers(next: TakeoverPolicy) {
   policy = next
 }
@@ -34,38 +32,29 @@ export type TakeoverOptions = Pick<
   TakeoverClaim,
   'expiresAt' | 'expiresOnHold' | 'ignoresHolds' | 'group' | 'maxActiveMs'
 > & {
-  /** Reuse one id per requester; a new one is made otherwise. */
   id?: string
 }
 
 type TakeoverStore = {
   arbiter: ArbiterState
-  /** Asks for a turn; returns the claim's id. */
+
   request: (kind: TakeoverKind, options?: TakeoverOptions) => string
-  /** On screen at once (the launch reveal); returns the claim's id. */
+
   seed: (kind: TakeoverKind, options?: TakeoverOptions) => string
-  /** Done showing, or no longer wanted. */
+
   release: (id: string) => void
   hold: (reason: string) => void
   unhold: (reason: string) => void
-  /** Something is taking over the screen right now. */
+
   isTakingOver: () => boolean
 }
 
 let counter = 0
 
-/** A fresh claim id for one requester. */
 export const newTakeoverId = (kind: TakeoverKind) => `${kind}:${++counter}`
 
 let timer: ReturnType<typeof setTimeout> | null = null
 
-/**
- * The one live takeover arbiter (see `src/lib/takeover/arbiter.ts`). In memory:
- * nothing waits across launches; what has to (the badges welcome) keeps its own
- * flag and asks again. Feature code uses `useTakeoverTurn` and
- * `useTakeoverHold`; plain code calls `request`/`release` and
- * `isTakingOver()`.
- */
 export const useTakeover = create<TakeoverStore>((set, get) => {
   const apply = (step: (state: ArbiterState, now: number) => ArbiterState) => {
     const now = Date.now()
@@ -75,7 +64,6 @@ export const useTakeover = create<TakeoverStore>((set, get) => {
     wake(now)
   }
 
-  // Claims expire and gaps end on their own; wake up when the next one does.
   const wake = (now: number) => {
     if (timer) clearTimeout(timer)
     timer = null
@@ -129,11 +117,6 @@ export const useTakeover = create<TakeoverStore>((set, get) => {
   }
 })
 
-/**
- * Runs `run` once nothing is taking over the screen: now, or as soon as the
- * takeover on screen closes. For navigation that mustn't land underneath one (a
- * link, a push tap). Returns a cancel function.
- */
 export function afterTakeovers(run: () => void): () => void {
   if (!useTakeover.getState().isTakingOver()) {
     run()
@@ -147,7 +130,6 @@ export function afterTakeovers(run: () => void): () => void {
   return unsubscribe
 }
 
-/** A JSON-safe summary for `__WW_DEV__.takeover.state()` and logs. */
 export function takeoverSnapshot(now = Date.now()) {
   const { active, queue, holds, clearedAt, shown } =
     useTakeover.getState().arbiter
@@ -171,7 +153,6 @@ export function takeoverSnapshot(now = Date.now()) {
   }
 }
 
-/** Tests only: forgets every claim, hold, and the session's history. */
 export function resetTakeovers() {
   if (timer) clearTimeout(timer)
   timer = null

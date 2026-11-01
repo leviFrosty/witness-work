@@ -15,7 +15,7 @@ type ScrollProps = {
 const runtime = vi.hoisted(() => ({
   platform: 'android',
   listeners: {} as Record<string, Listener>,
-  /** Where the focused field sits in the window. */
+
   field: { y: 0, height: 40 } as { y: number; height: number } | null,
   props: {} as ScrollProps,
   scrollToPosition: vi.fn(),
@@ -78,7 +78,6 @@ const render = () =>
 const scrollTo = (y: number) =>
   act(() => runtime.props.onScroll?.({ nativeEvent: { contentOffset: { y } } }))
 
-/** A 300 dp keyboard whose top edge is at y 500. */
 const showKeyboard = () =>
   act(() =>
     runtime.listeners.keyboardDidShow({
@@ -113,7 +112,6 @@ it('scrolls a field the arriving keyboard covers just above it', () => {
 
   showKeyboard()
 
-  // 600 + 40 + 16 margin - 500 keyboard top = 156 more than the 100 scrolled.
   expect(runtime.scrollToPosition).toHaveBeenCalledWith(0, 256, true)
 })
 

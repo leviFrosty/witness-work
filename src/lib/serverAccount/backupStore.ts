@@ -11,13 +11,6 @@ import {
   EMPTY_BACKUP_SCHEDULE,
 } from '@/lib/serverAccount/backupScheduler'
 
-/**
- * This install's backup state (ADR 0026 §4), in the device-local
- * `server-account` MMKV next to the cached account: never synced or backed up
- * itself. Holds no data and no keys, only whether backup is on, this install's
- * slot id, when it last uploaded, and a short log of codes for Tools.
- */
-
 export type BackupLogEntry = {
   at: number
   level: 'info' | 'warn'
@@ -28,26 +21,25 @@ const LOG_LIMIT = 60
 
 type Persisted = {
   enabled: boolean
-  /** This install's slot, `v1/<accountId>/<slotId>` on the server. */
+
   slotId: string | null
-  /** The install id the slot belongs to; a copied install gets a new slot. */
+
   slotBinding: string | null
   schedule: BackupSchedule
-  /** The `accountPub` whose backup this install was offered to restore. */
+
   restoreOfferedFor: string | null
   log: BackupLogEntry[]
 }
 
 export type BackupState = Persisted & {
-  /** An upload is running. */
   uploading: boolean
-  /** A restore is downloading or applying. */
+
   restoring: boolean
-  /** The account's slots as last listed, for Settings. */
+
   slots: BackupSlot[] | null
   slotsAccountId: string | null
   slotsListedAt: number | null
-  /** Bumped to ask the running backup to upload soon (`requestBackupSoon`). */
+
   nudge: number
 }
 
@@ -117,8 +109,7 @@ useBackupState.subscribe((state, previous) => {
 
 export const backupSchedule = {
   get: () => useBackupState.getState().schedule,
-  // A patch that changes nothing (re-arming the same attempt) keeps the state,
-  // so it isn't saved again.
+
   set: (patch: Partial<BackupSchedule>) =>
     useBackupState.setState((state) =>
       Object.entries(patch).every(
@@ -129,7 +120,6 @@ export const backupSchedule = {
     ),
 }
 
-/** Adds a line to the Tools log: codes and sizes, never data or ids. */
 export function logBackup(level: BackupLogEntry['level'], message: string) {
   if (level === 'warn') logger.warn(`[backup] ${message}`)
   else logger.log(`[backup] ${message}`)
@@ -138,11 +128,6 @@ export function logBackup(level: BackupLogEntry['level'], message: string) {
   }))
 }
 
-/**
- * What binds a slot to this install. Android uses the `ANDROID_ID`-derived id,
- * because Auto Backup copies MMKV (and a stored id) to a restored phone, which
- * must not write into the old phone's slot.
- */
 function installBinding(): string | null {
   try {
     return Platform.OS === 'android'
@@ -153,13 +138,11 @@ function installBinding(): string | null {
   }
 }
 
-/** This install's slot id, made the first time and again for a copied install. */
 export function ensureBackupSlotId(): string {
   const { slotId, slotBinding } = useBackupState.getState()
   const binding = installBinding()
   if (slotId && (binding === null || slotBinding === binding)) return slotId
   if (slotId && slotBinding === null) {
-    // Kept from before the binding was known.
     useBackupState.setState({ slotBinding: binding })
     return slotId
   }
@@ -167,15 +150,11 @@ export function ensureBackupSlotId(): string {
   useBackupState.setState({
     slotId: next,
     slotBinding: binding,
-    // Another install's history isn't this one's.
+
     schedule: { ...EMPTY_BACKUP_SCHEDULE, pending: true },
   })
   return next
 }
 
-/**
- * Asks the app's backup to upload soon, as a data change would: for changes
- * outside the synced stores, such as a new account key after Delete Buddies.
- */
 export const requestBackupSoon = () =>
   useBackupState.setState((state) => ({ nudge: state.nudge + 1 }))

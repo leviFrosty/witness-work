@@ -178,14 +178,13 @@ describe('sendSignedAccountOp', () => {
     })
     await sendSignedAccountOp('session/open', {}, options(fetchImpl))
     expect(stamps).toEqual([1_000, 9_000])
-    // Signed as `session/open`, sent to the REST route.
+
     expect(fetchImpl.mock.calls[0][0]).toBe(
       'https://api.test/accounts/v1/sessions'
     )
   })
 })
 
-/** Sessions that open once per account key until forgotten or closed. */
 function fakeSessions(
   open: (accountKey: Uint8Array) => Promise<AccountSessionInfo> = async () => ({
     accountId: ACCOUNT_ID,
@@ -202,7 +201,7 @@ function fakeSessions(
       if (live?.accountPub !== accountPub) {
         const info = opens(accountKey)
         live = { accountPub, info }
-        // A failed open isn't kept.
+
         info.catch(() => {
           if (live?.info === info) live = null
         })
@@ -432,7 +431,7 @@ describe('serverAccount.check', () => {
       expect(await checkWith(new HttpError('rateLimited', 429))).toEqual(
         unreachable
       )
-      // Refused while the OS reports a connection: the server, not the phone.
+
       expect(await checkWith(new HttpError('offline'))).toEqual(unreachable)
 
       network.online = false

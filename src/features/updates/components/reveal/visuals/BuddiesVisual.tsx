@@ -31,7 +31,7 @@ import {
 
 const YOU = { x: 160, y: 100, size: 46 }
 const BUDDY_SIZE = 34
-/** Buddies on an arc above you, each with the day they plan to go out. */
+
 const BUDDIES = [
   { x: 56, y: 84, day: 1 },
   { x: 106, y: 60, day: 1 },
@@ -45,7 +45,7 @@ const COLUMN_W = (CARD.width - CARD_PAD * 2) / DAYS
 const DAY_Y = CARD.y + 42
 const MARK_Y = CARD.y + 66
 const MARK = 8
-/** The day with two buddies out, which opens to show their plans. */
+
 const OPEN_DAY = 1
 const PLAN_START = 9 * 60 + 30
 const PLAN_MINUTES = 120
@@ -55,7 +55,6 @@ const columnX = (day: number) => {
   return CARD.x + CARD_PAD + COLUMN_W * (day + 0.5)
 }
 
-/** Where a buddy's marker sits under its day, beside any others there. */
 const markX = (index: number) => {
   const { day } = BUDDIES[index]
   const sameDay = BUDDIES.filter((buddy) => buddy.day === day)
@@ -63,11 +62,6 @@ const markX = (index: number) => {
   return columnX(day) + (slot - (sameDay.length - 1) / 2) * (MARK + 4)
 }
 
-/**
- * Buddies: you, paired with the people you go out with, and their planned days
- * landing on your calendar — sealed with a lock, since only you and they can
- * read them. A day with two buddies opens to show when they're going.
- */
 const BuddiesVisual = ({
   palette,
   active,
@@ -99,7 +93,7 @@ const BuddiesVisual = ({
   })
   const lockStyle = useAnimatedStyle(() => {
     const p = seg(intro.value, 0.8, 1)
-    // A beat as the first plans set off.
+
     const beat = Math.sin(Math.PI * seg(loop.value, 0.02, 0.12))
     return {
       opacity: p,
@@ -335,7 +329,6 @@ const BuddiesVisual = ({
   )
 }
 
-/** A person, as a coloured circle — the sketch never shows real names. */
 const Face = ({
   color,
   size,
@@ -366,7 +359,6 @@ const Face = ({
   </View>
 )
 
-/** The line from you to a buddy, drawn as they pair. */
 const Link = ({
   index,
   color,
@@ -406,10 +398,6 @@ const Link = ({
   )
 }
 
-/**
- * A buddy, popping in as they pair; then their planned day travels down to your
- * calendar and lands as a marker under the date.
- */
 const Buddy = ({
   index,
   color,

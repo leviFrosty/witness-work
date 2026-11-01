@@ -5,18 +5,7 @@ import SortableChipRow from '@/components/ui/SortableChipRow'
 import useSavedContactViews from '@/features/contacts/hooks/useSavedContactViews'
 import SavedViewChip from '@/features/contacts/components/SavedViewChip'
 
-/**
- * One-tap switching between Saved Views on Contacts, above the list and the
- * map. Tapping the selected view leaves it, back to the User's own filters.
- * Dragging a chip reorders the views. The Contacts screen shows it only while a
- * view exists.
- */
-const SavedViewsBar = ({
-  surface,
-}: {
-  /** Where the bar sits, for analytics. */
-  surface: 'list' | 'map'
-}) => {
+const SavedViewsBar = ({ surface }: { surface: 'list' | 'map' }) => {
   const navigation = useNavigation<RootStackNavigation>()
   const {
     views,

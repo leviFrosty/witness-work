@@ -15,29 +15,15 @@ import i18n from '@/lib/locales'
 
 interface Props {
   visible: boolean
-  /** Hex (or any colorKit-supported format) used as the picker's starting value. */
+
   value: string
   onClose: () => void
-  /**
-   * Fires once when the user confirms ("Done"). Commit-on-close — not on every
-   * drag — so callers can keep their persistence stores quiet during scrubbing
-   * (and avoids flooding any animated subtree with intermediate hex updates).
-   */
+
   onChange: (hex: string) => void
-  /** Optional sheet title shown above the picker. */
+
   title?: string
 }
 
-/**
- * Bottom-sheet color picker built on `reanimated-color-picker`. Replaces the
- * SwiftUI `Host` + `ColorPicker` bridge that crashed when mounted inside any
- * Reanimated-animated subtree (folly::dynamic UAF during shadow-tree commit).
- *
- * The native sheet presents above whatever it's opened from, so it also works
- * from inside a popover's RN `Modal` (AvatarPickerPopover,
- * ContactsStalenessChips). Dismissing it or its close button discards the
- * change; Done keeps it.
- */
 const ColorPickerSheet = ({
   visible,
   value,

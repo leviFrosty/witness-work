@@ -11,11 +11,6 @@ import useServiceReport from '@/stores/serviceReport'
 import { monthTense } from '@/features/progress/lib/progressCardStats'
 import { useShallow } from 'zustand/react/shallow'
 
-/**
- * One month's figures as its report counts them, for the Progress cards: its
- * Time Entries, the credit-capped total, the Monthly Goal, and the role that
- * applied then (Role History).
- */
 export default function useMonthProgress(month: number, year: number) {
   const today = moment(useLocalDay(), 'YYYY-MM-DD')
   const serviceReports = useServiceReport((s) => s.serviceReports)

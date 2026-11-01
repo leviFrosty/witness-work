@@ -92,8 +92,6 @@ export function closeSurvey(
     })
 }
 
-// The public SurveyModal requires a complete appearance. Use the current app
-// theme as the fallback; remote appearance overrides it.
 export const surveyAppearance = (
   colors: Colors
 ): SurveyModalProps['appearance'] => ({

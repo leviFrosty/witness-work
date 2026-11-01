@@ -15,11 +15,6 @@ import type { BadgeArtId, BadgeLevel } from '@/types/badges'
 
 type Entrance = 'tilt' | 'spring'
 
-/**
- * A large medallion that arrives with a little life: `tilt` settles from a
- * slight turn (a badge's detail), `spring` pops in from small (a new badge).
- * Earned metal gets one light sweep. Still under Reduce Motion.
- */
 export default function BadgeSpotlight({
   art,
   level,

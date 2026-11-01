@@ -46,10 +46,6 @@ import {
 } from '@/lib/syncPreferencePolicy'
 import { SyncPayload } from '@/app/sync/payload'
 
-/**
- * Outcome of a merge pass — lets the caller write exactly the fields that
- * changed into zustand via `set()` without touching the rest.
- */
 export type MergeResult = {
   contacts: Contact[]
   deletedContacts: Contact[]
@@ -80,7 +76,7 @@ export type MergeResult = {
   preferenceUpdatedAt: Record<string, number>
   profileValues: Record<string, unknown>
   profileUpdatedAt: Record<string, number>
-  /** True when any field above actually differs from local state. */
+
   changed: boolean
 }
 
@@ -91,17 +87,17 @@ type LocalState = {
   deletedCustomFieldDefs: CustomFieldTombstone[]
   conversations: Visit[]
   deletedConversations: VisitTombstone[]
-  /** Absent means none (callers that predate conversation fields). */
+
   conversationFieldDefs?: CustomFieldDefinition[]
-  /** Absent means none (callers that predate conversation fields). */
+
   deletedConversationFieldDefs?: CustomFieldTombstone[]
   serviceReports: TimeEntriesByYear
   dayPlans: DayPlan[]
   recurringPlans: RecurringPlan[]
   deletedServiceReports: TimeEntryTombstone[]
-  /** Absent means none (callers that predate Plan tombstones). */
+
   deletedDayPlans?: PlanTombstone[]
-  /** Absent means none (callers that predate Plan tombstones). */
+
   deletedRecurringPlans?: PlanTombstone[]
   categories: Category[]
   deletedCategories: CategoryTombstone[]
@@ -120,31 +116,12 @@ type LocalState = {
   profileUpdatedAt: Record<string, number>
 }
 
-/**
- * Merges a remote payload against local state by per-record `updatedAt`.
- *
- * Semantics:
- *
- * - **Both sides have the record**: keep the one with the larger `updatedAt`. A
- *   record without `updatedAt` is treated as older than any stamped record
- *   (covers pre-sync historical rows).
- * - **Remote-only**: insert locally.
- * - **Local-only**: keep local (it will propagate on the next push).
- * - **Tombstones**: a tombstone removes the record unless the record's
- *   `updatedAt` is strictly newer than its `deletedAt` (deletion wins a tie).
- *   Tombstones from either side propagate, newest `deletedAt` per id.
- *   Conversations, time entries, Day Plans, Recurring Plans, Categories,
- *   mileage and pet records, and contact and conversation field definitions
- *   carry them. Deleted contacts are records instead, and their redaction is
- *   one-way (see `mergeDeletedContacts`).
- * - **Preferences**: per-key last-writer-wins using `preferenceUpdatedAt`.
- */
 export function mergePayload(
   localState: LocalState,
   remote: SyncPayload
 ): MergeResult {
   const now = syncNow()
-  // Compared in full below, so a missing list must read as the empty one.
+
   const originalLocal = {
     ...localState,
     deletedDayPlans: localState.deletedDayPlans ?? [],
@@ -155,22 +132,16 @@ export function mergePayload(
   const local = translateSyncTimestamps(originalLocal, 0, now + 5 * 60_000)
   remote = translateSyncTimestamps(remote, 0, now + 5 * 60_000)
 
-  // --- Contacts (active) ---
   const { merged: mergedContacts } = mergeById(
     local.contacts,
     remote.contactStore.contacts as Contact[]
   )
 
-  // --- Contacts (deleted) — tombstones also carry updatedAt. ---
   const mergedDeletedContacts = mergeDeletedContacts(
     local.deletedContacts,
     remote.contactStore.deletedContacts as Contact[]
   )
 
-  // --- Custom field definitions ---
-  // Merged by id with per-def updatedAt LWW. Permanent deletion carries an
-  // explicit tombstone because a missing def otherwise looks like local-only
-  // data and a stale peer would reintroduce it on the next merge.
   const remoteDefs = (remote.contactStore.customFieldDefs ??
     []) as CustomFieldDefinition[]
   const { merged: mergedDefs } = mergeById(local.customFieldDefs, remoteDefs)
@@ -192,15 +163,9 @@ export function mergePayload(
     (def) => !deletedCustomFieldIds.has(def.id)
   )
 
-  // Apply contact tombstones: if a contact exists both in the active list
-  // and the deleted list, whichever has the larger updatedAt wins. Drop the
-  // loser from the other side.
   const { activeFinal: contactsFinal, deletedFinal: deletedContactsFinal } =
     reconcileActiveAndDeletedContacts(mergedContacts, mergedDeletedContacts)
 
-  // A stale contact payload can carry values for a definition deleted on this
-  // device. Sanitize only after the contact LWW winner is selected so cleanup
-  // cannot change active/deleted chronology and resurrect a contact.
   const sanitizedContactsFinal = contactsFinal.map((contact) =>
     stripTombstonedCustomFields(
       contact,
@@ -215,8 +180,7 @@ export function mergePayload(
       contact.updatedAt
     )
   )
-  // --- Conversation field definitions (same semantics as contact fields) ---
-  // Absent from payloads written before conversation fields existed.
+
   const remoteConversationFieldDefs = (remote.conversationStore
     .conversationFieldDefs ?? []) as CustomFieldDefinition[]
   const mergedConversationFieldTombstones = mergeTombstones(
@@ -224,7 +188,7 @@ export function mergePayload(
     remote.conversationStore.deletedConversationFieldDefs ?? [],
     now
   )
-  // Permanent deletion always wins, even over a newer rename.
+
   const deletedConversationFieldIds = new Set(
     mergedConversationFieldTombstones.map((tombstone) => tombstone.id)
   )
@@ -233,7 +197,6 @@ export function mergePayload(
     remoteConversationFieldDefs
   ).merged.filter((def) => !deletedConversationFieldIds.has(def.id))
 
-  // --- Conversations ---
   const { merged: mergedConversations } = mergeById(
     local.conversations,
     remote.conversationStore.conversations as Visit[]
@@ -243,8 +206,7 @@ export function mergePayload(
     remote.conversationStore.deletedConversations ?? [],
     now
   )
-  // Like contacts, strip values for deleted fields only after the LWW winner is
-  // picked, keeping its timestamp.
+
   const conversationsAfterTombstones = applyTombstones(
     mergedConversations,
     mergedConversationTombstones
@@ -256,7 +218,6 @@ export function mergePayload(
     )
   )
 
-  // --- Service reports (nested year → month → report[]) ---
   const { reports: mergedReports } = mergeServiceReports(
     local.serviceReports,
     remote.serviceReportStore.serviceReports
@@ -271,9 +232,6 @@ export function mergePayload(
     mergedReportTombstones
   )
 
-  // --- Day plans / recurring plans (records + tombstones) ---
-  // A Plan survives its tombstone only when edited after the deletion.
-  // Payloads from builds before Plan tombstones carry none.
   const mergedDayPlanTombstones = mergeTombstones(
     local.deletedDayPlans,
     remote.serviceReportStore.deletedDayPlans ?? [],
@@ -297,7 +255,6 @@ export function mergePayload(
     mergedRecurringPlanTombstones
   )
 
-  // --- Categories (id-keyed records + tombstones, mirrors contacts) ---
   const remoteCategoryStore = remote.categoryStore ?? {
     categories: [] as Category[],
     deletedCategories: [] as CategoryTombstone[],
@@ -319,7 +276,6 @@ export function mergePayload(
     mergedCategoryTombstones
   )
 
-  // --- Mileage (id-keyed collections + one shared tombstone list) ---
   const remoteMileage = remote.mileageStore
   const mergedMileageTombstones = mergeTombstones(
     local.deletedMileageRecords,
@@ -352,7 +308,6 @@ export function mergePayload(
     remoteMileage?.trips as Trip[] | undefined
   )
 
-  // --- Pet Companion (the pet and room records + their tombstones) ---
   const remotePet = remote.petStore
   const mergedPetTombstones = mergeTombstones(
     local.deletedPetRecords,
@@ -375,7 +330,6 @@ export function mergePayload(
     remotePet?.petRooms as PetRoomRecord[] | undefined
   )
 
-  // --- Preferences ---
   const { values: mergedPrefValues, updatedAt: mergedPrefTimestamps } =
     mergePreferences(
       local.preferencesValues,
@@ -385,11 +339,6 @@ export function mergePayload(
       NON_SYNCABLE_PREFERENCE_KEYS
     )
 
-  // --- Profile (per-key LWW, mirrors preferences) ---
-  // A pre-wave-3 peer payload won't carry `profileStore`; the legacy fields
-  // have already been routed into a synthesized slice by
-  // `normalizeLegacyPayloadFieldNames`. Defaulting here keeps the merge call
-  // shape uniform either way.
   const remoteProfile = remote.profileStore ?? {
     values: {},
     updatedAt: {},
@@ -437,8 +386,7 @@ export function mergePayload(
     profileValues: mergedProfileValues,
     profileUpdatedAt: mergedProfileTimestamps,
   })
-  // Judge the final state, after tombstones. A stale insertion filtered out in
-  // this pass is not a change and must not trigger another push.
+
   const changed = Object.entries(result).some(
     ([key, value]) =>
       canonicalJson(value) !==
@@ -446,8 +394,6 @@ export function mergePayload(
   )
   return { ...result, changed }
 }
-
-// --- Helpers ---------------------------------------------------------------
 
 type WithId = { id: string; updatedAt?: number; legacyIds?: string[] }
 
@@ -524,26 +470,6 @@ function mergeById<T extends WithId>(
   return { merged: Array.from(byId.values()), changed }
 }
 
-/**
- * Deleted contacts merge by `updatedAt` like other records, except that
- * redaction is one-way: a full archived copy loses to a redacted tombstone (a
- * permanent delete, data protection, or details expired after 90 days) whatever
- * the stamps. Otherwise a copy archived later on a device that was offline
- * would bring the householder's details back everywhere. The tombstone keeps
- * its own stamp, so the result doesn't depend on which file folds in first.
- *
- * Adding the contact again ends the redaction. `addContact` replaces the
- * tombstone and marks the copy `readdedAt`, which edits and a normal delete
- * keep. A full copy whose re-add is at least as new as the tombstone wins, so a
- * device that still holds the old tombstone can't redact the re-added contact
- * once it is archived again. A newer permanent delete redacts it again. Between
- * two full copies the more recent re-add wins before the stamps are compared:
- * the other copy predates a redaction this side has already seen past.
- *
- * Tombstones are rebuilt from id, stamp and aliases alone, so every device
- * lands on the same one. An active copy strictly newer than the tombstone still
- * wins later, in `reconcileActiveAndDeletedContacts`.
- */
 function mergeDeletedContacts(local: Contact[], remote: Contact[]): Contact[] {
   const { merged } = mergeById(local, remote)
   const marked = (contact: Contact) =>
@@ -556,9 +482,9 @@ function mergeDeletedContacts(local: Contact[], remote: Contact[]): Contact[] {
     const theirs = remoteById.get(contact.id)
     const kept =
       (ours && theirs && deletedContactSurvivor(ours, theirs)) || contact
-    // Same pick as `mergeById`, whose copy also keeps this device's photo.
+
     if (!kept.redacted && recordKey(kept) === recordKey(contact)) return contact
-    // `mergeById` collected both sides' aliases on its own pick.
+
     const { legacyIds } = contact as Contact & { legacyIds?: string[] }
     const result = kept.redacted
       ? stripContactForTombstone(kept, kept.updatedAt ?? 0)
@@ -567,10 +493,6 @@ function mergeDeletedContacts(local: Contact[], remote: Contact[]): Contact[] {
   })
 }
 
-/**
- * The copy of one deleted contact that `mergeDeletedContacts` keeps, or
- * `undefined` when plain last-writer-wins (`mergeById`) decides.
- */
 function deletedContactSurvivor(a: Contact, b: Contact): Contact | undefined {
   if (a.redacted && b.redacted) return undefined
   if (a.redacted || b.redacted) {
@@ -601,12 +523,10 @@ function reconcileActiveAndDeletedContacts(
     const activeTs = c.updatedAt ?? 0
     const deletedTs = t.updatedAt ?? 0
     if (activeTs > deletedTs) {
-      // Resurrect: remove from deleted list.
       const idx = deletedFinal.findIndex((d) => d.id === c.id)
       if (idx >= 0) deletedFinal.splice(idx, 1)
       activeFinal.push(c)
     }
-    // else: deletion wins, leave in deletedFinal and drop from active.
   }
 
   return { activeFinal, deletedFinal }
@@ -625,8 +545,7 @@ function mergeTombstones<T extends { id: string; deletedAt: number }>(
       continue
     }
     let winner = t.deletedAt > existing.deletedAt ? t : existing
-    // Same deletion: older versions drop `importUndone`, so keep it when
-    // either copy has it, whichever side merges first.
+
     if (
       t.deletedAt === existing.deletedAt &&
       !(winner as T & { importUndone?: true }).importUndone &&
@@ -641,28 +560,15 @@ function mergeTombstones<T extends { id: string; deletedAt: number }>(
     ].sort()
     byId.set(t.id, aliases.length ? { ...winner, legacyIds: aliases } : winner)
   }
-  // Deletion ids have no householder details. Keep evidence even when a
-  // writer's clock is wrong or an old device reconnects much later.
+
   return Array.from(byId.values())
 }
 
-/**
- * Copies of one companion: the same adoption, and the same seed when both have
- * one.
- */
 const sameCompanion = (a: PetRecord, b: PetRecord): boolean =>
   a.id === b.id &&
   a.adoptedOn === b.adoptedOn &&
   (a.seed === undefined || b.seed === undefined || a.seed === b.seed)
 
-/**
- * Wakes, keepsakes and earned room items are taps or keeps, so an edit on
- * another device (a rename, a new coat) mustn't drop the ones it hadn't seen.
- * Each merged pet takes the union of every copy of the same companion still
- * newer than its tombstone, kept as the store keeps them
- * (`src/lib/petHistory.ts`). Every other field stays last writer wins. A copy
- * from before a release, or from a separate adoption, adds nothing.
- */
 function mergePetHistory(
   merged: PetRecord[],
   copies: PetRecord[],
@@ -688,12 +594,12 @@ function mergePetHistory(
       ...(pet.earnedRoomItems ?? []),
       ...same.flatMap((copy) => copy.earnedRoomItems ?? []),
     ])
-    // Bought on any device: each item paid for once (ADR 0035).
+
     const purchases = keptPurchases([
       ...(pet.purchases ?? []),
       ...same.flatMap((copy) => copy.purchases ?? []),
     ])
-    // A pet that never earned or bought one keeps no list.
+
     const earnedUnchanged =
       earnedRoomItems.length === 0 ||
       canonicalJson(earnedRoomItems) === canonicalJson(pet.earnedRoomItems)
@@ -730,7 +636,7 @@ function applyTombstones<T extends WithId>(
     const deletedAt = tombsById.get(r.id)
     if (deletedAt === undefined) return true
     const ts = r.updatedAt ?? 0
-    // Tombstone wins unless the record was updated strictly after it.
+
     return ts > deletedAt
   })
 }
@@ -739,7 +645,6 @@ function mergeServiceReports(
   local: TimeEntriesByYear,
   remote: TimeEntriesByYear
 ): { reports: TimeEntriesByYear; changed: boolean } {
-  // Flatten, merge by id, then rebuild the nested structure. O(n) total.
   const flatLocal: TimeEntry[] = []
   for (const year of Object.values(local)) {
     for (const month of Object.values(year)) {

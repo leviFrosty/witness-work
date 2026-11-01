@@ -8,7 +8,6 @@ import {
 
 const long = { contentHeight: 3000, viewportHeight: 600 }
 
-/** Plays scroll frames through a fresh tracker; returns each decision. */
 const play = (frames: (number | Partial<BarsScrollFrame>)[], sizes = long) => {
   const tracker = createBarsScrollTracker()
   return frames.map((frame) =>
@@ -50,7 +49,6 @@ describe('trackBarsScroll', () => {
   })
 
   it("doesn't count the viewport growing as the header leaves", () => {
-    // Hidden at the bottom; the taller viewport pulls the offset back 60.
     expect(
       play([
         { y: 2300 },

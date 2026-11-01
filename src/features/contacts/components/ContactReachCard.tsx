@@ -34,7 +34,7 @@ import { ltrIsolate } from '@/lib/direction'
 
 type Props = {
   contact: Contact
-  /** International display form of the phone, when it parses. */
+
   phoneDisplay?: string
   onCall?: () => void
   onText?: () => void
@@ -46,18 +46,12 @@ type Line = {
   id: string
   icon: AppIcon
   text: string
-  /** Tap action for the expanded line. */
+
   onPress?: () => void
-  /** Long-press menu for the expanded line. */
+
   menu: ContextMenuEntries
 }
 
-/**
- * One card for reaching the contact. Collapsed, it shows the street line and
- * the Call / Text / Email / Navigate buttons. Expanded, it reveals the full
- * address, phone, and email: tapping one calls, emails, or navigates, and
- * long-pressing offers the same actions plus Copy.
- */
 const ContactReachCard = ({
   contact,
   phoneDisplay,
@@ -67,8 +61,7 @@ const ContactReachCard = ({
   onNavigate,
 }: Props) => {
   const theme = useTheme()
-  // At accessibility text sizes the action names shrink to their equal-width
-  // buttons instead of truncating ("Na…").
+
   const largeText = useAccessibilityTextSize()
   const fitActionLabel = largeText ? FIT_ONE_LINE : undefined
   const { showContactPhone, showContactEmail } = usePreferences()
@@ -216,8 +209,6 @@ const ContactReachCard = ({
 
   if (lines.length === 0 && actions.length === 0) return null
 
-  // Collapsed, only the first line of the first entry shows (the street when
-  // there is an address). Anything beyond that is behind the chevron.
   const summary = lines[0]
   const summaryText = summary?.text.split('\n')[0]
   const expandable = lines.length > 1 || (summary?.text.includes('\n') ?? false)
@@ -273,9 +264,6 @@ const ContactReachCard = ({
                       accessibilityRole='button'
                       accessibilityLabel={`${i18n.t('contactDetails.contactInfo')}, ${i18n.t('contactDetails.showLess')}`}
                       accessibilityState={{ expanded }}
-                      // A full target around the chevron, which the pointer
-                      // highlight fills too; the negative margin keeps the
-                      // layout unchanged.
                       style={[
                         touchTargetFrame(18),
                         { borderRadius: theme.numbers.borderRadiusSm },
@@ -311,7 +299,7 @@ const ContactReachCard = ({
                   gap: 10,
                   paddingHorizontal: 2,
                 },
-                // Breathing room for the hover tint without moving the row.
+
                 liftedContent.outset,
                 { paddingHorizontal: 10, paddingVertical: 4 },
               ]}
@@ -325,8 +313,6 @@ const ContactReachCard = ({
               </View>
               <View style={{ flex: 1, minWidth: 0 }}>
                 <Text
-                  // One line previews the details; at accessibility sizes
-                  // that's only a word or two, so it gets a few.
                   numberOfLines={largeText ? 3 : 1}
                   style={{ ...textStyle, fontFamily: theme.fonts.medium }}
                 >

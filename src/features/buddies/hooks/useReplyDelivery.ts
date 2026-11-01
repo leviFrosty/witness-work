@@ -6,14 +6,8 @@ import { replyDelivery } from '@/features/buddies/lib/replyDelivery'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 import { useBuddiesSession } from '@/features/buddies/stores/buddiesSession'
 
-/** Try Again reads as Sending… at least this long, even when it fails at once. */
 const RETRY_MIN_MS = 1000
 
-/**
- * The short status after this User's answer to an invitation, e.g. "Sending in
- * 12s", ticking each second while it waits; undefined once it reached the
- * buddy. `retry` sends it now, and is there only while it reads as not sent.
- */
 export default function useReplyDelivery(shareKey: string | undefined): {
   label: string | undefined
   retry?: () => void
@@ -39,7 +33,6 @@ export default function useReplyDelivery(shareKey: string | undefined): {
   const ticking =
     delivery.kind === 'countdown' || (delivery.kind === 'sending' && !sending)
 
-  // A new answer starts its own countdown; then it ticks until it settles.
   useEffect(() => {
     setNow(Date.now())
   }, [unsentReplyRev, replySendAt])
@@ -52,9 +45,7 @@ export default function useReplyDelivery(shareKey: string | undefined): {
   const retry = async () => {
     setRetrying(true)
     await Promise.all([
-      buddiesEngine.deliverReplies().catch(() => {
-        // Still saved; it reads as not sent again.
-      }),
+      buddiesEngine.deliverReplies().catch(() => {}),
       new Promise((resolve) => setTimeout(resolve, RETRY_MIN_MS)),
     ])
     setRetrying(false)

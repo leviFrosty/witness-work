@@ -28,13 +28,6 @@ import type {
   StoredProposal,
 } from '@/features/scribe/proposals/model'
 
-/**
- * Review cards: a contact card collects one Contact's create or update and
- * every Visit for it; time, plan and category cards hold one effect each. Cards
- * keep the order of each card's first call.
- */
-
-/** Which contact card an effect belongs to, or null for its own card. */
 function contactKey(draft: DraftEffect): string | null {
   switch (draft.kind) {
     case 'contact.create':
@@ -62,7 +55,6 @@ const CARD_KIND: Record<DraftEffect['kind'], StoredCard['kind']> = {
   'category.create': 'category',
 }
 
-/** Existing Contacts a new one's name matches, most recent first. */
 function sameNamed(stores: ScribeStores, name: string): string[] {
   const key = normalizeName(name)
   if (!key) return []
@@ -95,7 +87,6 @@ function cardContact(
   }
 }
 
-/** The cards for a turn's effects, all selected. */
 export function buildCards(
   effects: readonly StoredEffect[],
   stores: ScribeStores
@@ -130,7 +121,7 @@ export function buildCards(
       status: 'pending',
     })
   }
-  // The Contact's own create or update leads its card, then its Visits.
+
   const draftOf = (id: string) =>
     effects.find((effect) => effect.id === id)?.draft
   const rank = (id: string) => (draftOf(id)?.kind === 'visit.create' ? 1 : 0)
@@ -146,10 +137,6 @@ export function buildCards(
   return cards
 }
 
-/**
- * Rebuilds cards after a retried turn added effects, keeping what the User
- * already picked on the cards that were there.
- */
 export function mergeCards(
   previous: readonly StoredCard[],
   next: readonly StoredCard[]
@@ -175,11 +162,6 @@ export const needsChoice = (card: StoredCard): boolean =>
   card.contact?.type === 'choice' &&
   card.contact.chosen === null
 
-/**
- * Asks the User to confirm the householder's consent: proposed in data
- * protection mode, and Add would create its Contact (it's new, or the User
- * picked New over an existing one).
- */
 export const asksConsent = (card: StoredCard): boolean =>
   !!card.consent &&
   (card.contact?.type === 'new' ||
@@ -211,10 +193,6 @@ export function proposalCounts(proposal: StoredProposal): {
   }
 }
 
-/**
- * Status pending, something selected, no unresolved choice, and the consent of
- * every new householder confirmed.
- */
 export const canAddProposal = (proposal: StoredProposal): boolean => {
   const counts = proposalCounts(proposal)
   return (
@@ -238,7 +216,6 @@ export function withCardToggled(
   }
 }
 
-/** Picks an option on a choice card, and selects it. */
 export function withContactChosen(
   proposal: StoredProposal,
   cardId: string,
@@ -263,10 +240,6 @@ export function withContactChosen(
   }
 }
 
-/**
- * Records that the householder agreed (or takes it back) on a card that asks,
- * as the Contact form's switch does. Agreeing selects the card.
- */
 export function withConsent(
   proposal: StoredProposal,
   cardId: string,
@@ -287,8 +260,6 @@ export function withConsent(
     ),
   }
 }
-
-// ---------------------------------------------------------------- previews
 
 function categoryLabel(
   target: CategoryTarget,
@@ -543,10 +514,6 @@ const publicEffect = (
   skipReason: effect.skipReason,
 })
 
-/**
- * The record an added card wrote, while it's still there: its Contact (and the
- * Visit it logged), or its Plan. Time and Category cards have none.
- */
 function cardTarget(
   card: StoredCard,
   undos: ReadonlyMap<string, UndoRecord>,
@@ -593,10 +560,6 @@ function cardTarget(
   return null
 }
 
-/**
- * What the review screen renders. `applied` is the Add's undo records, which
- * name what it wrote.
- */
 export function toScribeProposal(
   proposal: StoredProposal,
   stores: ScribeStores,

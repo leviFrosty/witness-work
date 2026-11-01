@@ -7,7 +7,6 @@ interface Props {
   onPress: () => void
 }
 
-/** App-tier adapter: Supporter's shimmering button inside Scribe AI's UI. */
 const ScribeSupporterCta = ({ onPress }: Props) => {
   const theme = useTheme()
   return (

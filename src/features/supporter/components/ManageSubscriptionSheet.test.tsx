@@ -243,7 +243,6 @@ describe('ManageSubscriptionSheet', () => {
     await act(async () => sheet().props.onClosed())
     expect(runtime.openStore).toHaveBeenCalledWith('cancel')
 
-    // A plain close, by swipe or tap outside, opens nothing.
     runtime.openStore.mockClear()
     sheet().props.onOpenChange(false)
     await act(async () => sheet().props.onClosed())

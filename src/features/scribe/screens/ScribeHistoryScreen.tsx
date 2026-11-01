@@ -35,10 +35,6 @@ const SectionHeader = ({ title }: { title: string }) => {
   )
 }
 
-/**
- * Past Scribe AI conversations on this device, newest first, and Notes Imports
- * from before Scribe AI that can still be undone.
- */
 const ScribeHistoryScreen = () => {
   const theme = useTheme()
   const navigation = useNavigation<RootStackNavigation>()
@@ -57,8 +53,7 @@ const ScribeHistoryScreen = () => {
       style={{ flex: 1, backgroundColor: theme.colors.background }}
       contentContainerStyle={{ paddingTop: 12, paddingBottom: 40 }}
     >
-      {/* Capped inside the content, not on it: in a right-to-left layout iOS
-          pins a narrower content container to the right edge. */}
+      {}
       <View
         style={[
           {
@@ -111,7 +106,7 @@ const ScribeHistoryScreen = () => {
                     confirmLabel: i18n.t('scribe_undo'),
                     onConfirm: () => {
                       const { kept } = history.undoLegacyImport(entry.id)
-                      // A Contact a later Visit uses stays; say so.
+
                       if (kept > 0)
                         Alert.alert(
                           i18n.t('scribe_undone'),

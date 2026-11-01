@@ -21,7 +21,6 @@ const PILL_SLOT = 120
 
 const pct = (value: number) => `${value * 100}%` as const
 
-/** Studies stand out on the rail a little larger than other visits. */
 const dotSize = (outcome: VisitOutcome) => (outcome === 'study' ? 11 : 9)
 
 const KEY_OUTCOMES: VisitOutcome[] = ['study', 'conversation', 'notAtHome']
@@ -31,11 +30,6 @@ const COUNT_KEY = {
   notAtHome: 'notAtHomeCount',
 } as const
 
-/**
- * Up to six months at a glance: a dot per visit, a "Today" marker, and a dashed
- * run to the next follow-up. Underneath, whole-history totals per outcome
- * double as the rail's key.
- */
 const VisitJourneyCard = ({
   journey,
   upNext,
@@ -73,9 +67,7 @@ const VisitJourneyCard = ({
         shadowOffset: { width: 0, height: 1 },
       }}
     >
-      {/* Today: a dark pill and a full-height tick in the text color, like
-          the calendar's today ring. Its row and slot grow with the text size,
-          so a larger pill neither covers the rail nor gets cut short. */}
+      {}
       <View style={{ height: 18 * textScale }}>
         <View
           style={
@@ -84,7 +76,7 @@ const VisitJourneyCard = ({
               : {
                   position: 'absolute',
                   left: pct(today),
-                  // Wide enough for the label, centered on the tick.
+
                   width: PILL_SLOT * textScale,
                   marginLeft: (-PILL_SLOT * textScale) / 2,
                   alignItems: 'center',
@@ -146,8 +138,7 @@ const VisitJourneyCard = ({
                 position: 'absolute',
                 top: LINE_TOP + 1.5 - size / 2,
                 left: pct(dot.position),
-                // Shift by the dot's own width in proportion so both ends
-                // stay inside the rail.
+
                 marginLeft: -size * dot.position,
               }}
             >
@@ -155,7 +146,7 @@ const VisitJourneyCard = ({
             </View>
           )
         })}
-        {/* The pill above already reads "Today". */}
+        {}
         <View
           style={{
             position: 'absolute',
@@ -186,8 +177,7 @@ const VisitJourneyCard = ({
           </View>
         )}
       </View>
-      {/* The rail's ends, left and right like the rail itself. When large
-          text makes them meet, the next visit's date wraps under. */}
+      {}
       <View
         style={{
           direction: 'ltr',
@@ -210,7 +200,7 @@ const VisitJourneyCard = ({
           </Text>
         )}
       </View>
-      {/* The key: each outcome's marker beside its whole-history count. */}
+      {}
       <View
         style={{
           flexDirection: 'row',
@@ -228,7 +218,7 @@ const VisitJourneyCard = ({
             >
               <VisitOutcomeMarker outcome={outcome} size={dotSize(outcome)} />
               <Text style={captionStyle}>
-                {/* @ts-expect-error TranslationKey doesn't handle keys that contain objects. */}
+                {}
                 {i18n.t(`contactDetails.${COUNT_KEY[outcome]}`, {
                   count: journey.outcomeCounts[outcome],
                 })}

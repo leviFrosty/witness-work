@@ -3,9 +3,6 @@ import { AppState, type NativeEventSubscription } from 'react-native'
 
 const TICK_MS = 60 * 1000
 
-// One clock for every screen: a single minute timer and AppState listener,
-// however many components ask what time it is. It stops in the background,
-// where nothing shows, and catches up on return.
 const listeners = new Set<() => void>()
 let now = Date.now()
 let interval: ReturnType<typeof setInterval> | undefined
@@ -31,9 +28,6 @@ function subscribe(listener: () => void) {
         away = true
         run(false)
       } else if (state === 'active' && away) {
-        // Face ID, Control Center and system sheets only make the app
-        // inactive, and the timer runs on through those: only a return from
-        // the background has time to catch up on.
         away = false
         tick()
         run(true)
@@ -49,18 +43,11 @@ function subscribe(listener: () => void) {
   }
 }
 
-// Stopped while nobody reads it: a first reader gets the time now.
 const getSnapshot = () => {
   if (!listeners.size && Math.abs(Date.now() - now) >= 1000) now = Date.now()
   return now
 }
 
-/**
- * The current time for deriving what's due, refreshed every minute and on
- * returning to the app, so a Follow-up that just passed (or a cutoff that just
- * closed) shows without a relaunch. `refresh` forces an update, e.g. when the
- * tray opens.
- */
 export default function useNow() {
   return { now: useSyncExternalStore(subscribe, getSnapshot), refresh: tick }
 }

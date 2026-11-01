@@ -7,7 +7,6 @@ import { canonicalJson } from '@/lib/canonicalJson'
 
 type Definition = { id: string; updatedAt?: number; legacyIds?: string[] }
 
-/** Shared aliases join a component even when peers renamed it differently. */
 function identityComponents<T extends Definition>(
   records: T[],
   signature?: (record: T) => string
@@ -51,7 +50,6 @@ function identityComponents<T extends Definition>(
   return byId
 }
 
-/** A deletion from an unreconciled peer must cover its canonical aliases. */
 export function expandDefinitionTombstones<
   T extends { id: string; deletedAt: number; legacyIds?: string[] },
 >(records: Definition[], tombstones: T[]): T[] {
@@ -88,8 +86,6 @@ function reconcile<T extends Definition>(
         (canonicalJson(a) < canonicalJson(b) ? 1 : -1)
     )[0]
     if (!canCombine(allIds)) {
-      // A stale contact can reveal a conflict after an earlier cleanup. Keep
-      // both definitions/values rather than applying an existing alias map.
       for (const id of allIds) aliases.delete(id)
       for (const record of group) {
         const { legacyIds: _aliases, ...preserved } = record
@@ -114,7 +110,6 @@ function reconcile<T extends Definition>(
   return { records: result.sort((a, b) => a.id.localeCompare(b.id)), aliases }
 }
 
-/** Repair identical definitions left by the old per-device UUID migrations. */
 export function reconcileSyncDefinitions<
   T extends {
     categories: Category[]

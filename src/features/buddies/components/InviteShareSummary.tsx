@@ -41,12 +41,6 @@ function Chip({ icon, label }: { icon: AppIcon; label: string }) {
   )
 }
 
-/**
- * What accepting shares, at a glance, for someone starting Buddies this way:
- * each other's plans, the parts of my Profile I share (the inviter's show in
- * the header above), and what stays private. The full list lives in the info
- * popover; Buddies Settings changes it later.
- */
 export default function InviteShareSummary() {
   const theme = useTheme()
   const sharing = useBuddies((state) => state.sharing)

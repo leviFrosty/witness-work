@@ -84,16 +84,8 @@ import {
 import { alignInput } from '@/lib/direction'
 import { useFoldColumn } from '@/components/ui/layout/FoldPane'
 
-/**
- * The list's column beside a contact when wide: a phone's width, which the
- * header's controls are laid out for.
- */
 const LIST_COLUMN_WIDTH = 390
 
-/**
- * The search field. It alone follows the typed query, so a keystroke redraws
- * just the field; the list follows in a transition (`useContactsSorted`).
- */
 const ContactsSearchInput = ({
   ref,
   placeholder,
@@ -111,7 +103,6 @@ const ContactsSearchInput = ({
       testID='contacts-search'
       value={search}
       onChangeText={setSearch}
-      // The placeholder goes once there's text; screen readers keep this.
       accessibilityLabel={placeholder}
       placeholder={placeholder}
       placeholderTextColor={
@@ -124,47 +115,18 @@ const ContactsSearchInput = ({
         color: theme.colors.text,
         fontFamily: theme.fonts.regular,
         fontSize: theme.fontSize('md'),
-        // Explicit: an unaligned field follows the app bundle's language on
-        // iOS, which can be Arabic while the app runs in English.
+
         textAlign: alignInput('start'),
       }}
     />
   )
 }
 
-/**
- * Tab-level Contacts screen with two workspaces, List and Map, switched by the
- * labeled List | Map control under the title. The chosen one is remembered, so
- * people who come for the map return to it. Search lives inline beside that
- * switch at the top of the list so it updates as the user types — search is the
- * dominant action there, and round-tripping through a sheet would hide the very
- * results being searched. Sort and filter open the modal
- * `ContactsSortAndFilterScreen` from the Filters chip that starts the chip row
- * (it counts the filters set there) or from the header's "…" menu, which always
- * offers it. The header keeps two controls, that menu and Add Contact, so the
- * title keeps its size. Select mode (batch actions on the rows shown) starts
- * from the "…" menu, as in Notes and Files, or from a row's long-press
- * "Select". Filters and sort are shared: the Map pins the contacts the List
- * shows (it keeps its own search), and its header carries the same Saved View
- * and last-visit chips. On the Map the header floats translucent over it so the
- * map runs edge to edge, and compacts (and the tab bar slides away) once the
- * user starts exploring; swiping down on the header, tapping the title, or
- * bringing the map's cards back restores both. On the List, scrolling down
- * tucks the header, chips and tab bar away and leaves search; scrolling up
- * brings them back.
- */
-
 const ContactsScreen = ({
   renderMap,
   focusSearch,
   onSearchFocused,
 }: {
-  /**
-   * The Map workspace, composed in by the app tier. `topInset` is the height of
-   * the header floating over it; `onExplore` compacts that header and
-   * `onExploreEnd` brings it back. `contacts` are the active contacts the
-   * shared filters let through, in sort order.
-   */
   renderMap: (props: {
     topInset: number
     onExplore: () => void
@@ -189,20 +151,16 @@ const ContactsScreen = ({
   const showsMap = contactsView === 'map'
   const [headerHeight, setHeaderHeight] = useState(0)
   const [mapExplored, setMapExplored] = useState(false)
-  // Each visit to the Map starts with the full header.
+
   if (!showsMap && mapExplored) setMapExplored(false)
-  // Kept out of the `renderMap` call, so the Map gets the same function on
-  // every render here and its pins don't re-render.
+
   const exploreMap = () => setMapExplored(true)
   const endMapExplore = () => setMapExplored(false)
   const screenReader = useScreenReaderEnabled()
-  // Exploring the map slides the tab bar away too, and its cards drop into the
-  // room.
+
   const mapBarHidden = showsMap && mapExplored && hasBottomBar && !screenReader
   useHideTabBar(mapBarHidden)
 
-  // Map was its own tab; keep reporting its reach as the `Map` screen (sent
-  // once per session like every screen).
   useFocusEffect(
     useCallback(() => {
       if (showsMap) analytics.screen('Map', { previous_screen: 'Contacts' })
@@ -223,8 +181,7 @@ const ContactsScreen = ({
 
   const searchInputRef = useRef<TextInput>(null)
   const isFocused = useIsFocused()
-  // Like the List, each return to the Map starts with the full header and tab
-  // bar.
+
   if (!isFocused && mapExplored) setMapExplored(false)
 
   useEffect(() => {
@@ -253,9 +210,7 @@ const ContactsScreen = ({
     search,
     hasSearch,
   } = useContactsSorted()
-  // What the list draws: Suggested gets its sections, every other sort and any
-  // search the flat list. `listContacts` is the same Contacts in drawn order,
-  // once each, for Select mode and the iPad detail pane.
+
   const contactsList = useSuggestedContactsList({
     contacts: searchSortedAndFilteredContacts,
     index: conversationIndex,
@@ -265,8 +220,7 @@ const ContactsScreen = ({
   const listContacts = contactsList.contacts
   const savedViews = useSavedContactViews()
   const showsSavedViews = savedViews.views.length > 0
-  // Over the map once there are pins to filter (not over its onboarding or
-  // empty state).
+
   const showsMapFilters =
     showsMap && hasCompletedMapOnboarding && mappedContacts.length > 0
 
@@ -275,7 +229,7 @@ const ContactsScreen = ({
     selection.isSelected(contact.id)
   )
   const bottomChrome = insets.bottom + (hasBottomBar ? TAB_BAR_HEIGHT : 0)
-  // Select mode keeps its bar where the tab bar was, so nothing moves.
+
   const bars = useHideBarsOnScroll({
     enabled: !showsMap && !selection.selecting,
   })
@@ -283,26 +237,19 @@ const ContactsScreen = ({
   const selectedContact =
     listContacts.find((contact) => contact.id === selectedId) ?? listContacts[0]
 
-  // Keep the list pinned to the top as the query, filters, or sort change —
-  // otherwise FlashList preserves the prior contentOffset and the visible
-  // window slides past the most relevant matches as the result set
-  // shrinks/grows or reorders under the user.
   useEffect(() => {
     listRef.current?.scrollToOffset({ offset: 0, animated: false })
   }, [search, contactsFilters, contactSort, contactSortDirection])
 
-  // When a detail pane collapses into a list (closing iPhone Duo), a contact
-  // picked in it since it opened stays on screen, pushed as a phone shows it,
-  // with its row in view behind it. Otherwise the list stays where it was.
   const pickedInPane = useRef(false)
-  /** How far the pane's contact was read, to open it there on a phone. */
+
   const paneScroll = useRef<{ id: string; y: number } | null>(null)
-  /** The contact on the list's reading line, a fifth of the way down. */
+
   const readingContactId = useEffectEvent(() => {
     const list = listRef.current
     if (!list) return undefined
     const offset = list.getAbsoluteLastScrollOffset()
-    // At the top, the first contact, as without a pick.
+
     if (offset <= 1) return undefined
     const line = offset + list.getWindowSize().height * 0.2
     const { startIndex, endIndex } = list.computeVisibleIndices()
@@ -322,16 +269,16 @@ const ContactsScreen = ({
     const collapsed = changed && !isWide
     previousIsWide.current = isWide
     const picked = pickedInPane.current
-    // A pick counts until the pane opens or closes again.
+
     if (changed) pickedInPane.current = false
-    // Opening shows the contact being read in the list beside it.
+
     if (changed && isWide && !showsMap && !selectedId) {
       const reading = readingContactId()
       if (reading) setSelectedId(reading)
     }
     if (!collapsed || !picked || !pickedContact || showsMap) return
     const index = contactItemIndex(contactsList.items, pickedContact.id)
-    // Not cancelled by the next render: the collapse happens once.
+
     requestAnimationFrame(() => {
       if (index >= 0) listRef.current?.scrollToIndex({ index, animated: false })
       if (!isFocused) return
@@ -356,8 +303,6 @@ const ContactsScreen = ({
     setMapExplored(false)
   }
 
-  // Tapping Contacts again heads back to the top of the list. On the map, which
-  // fits itself to every pin, the header and tab bar come back.
   useTabReselect(() => {
     if (showsMap) expandHeader()
     else listRef.current?.scrollToOffset({ offset: 0, animated: true })
@@ -450,14 +395,14 @@ const ContactsScreen = ({
     </>
   ) : (
     <>
-      {/* Never empty: Sort & Filter is always in it. */}
+      {}
       <PullDownMenu
         accessibilityLabel={i18n.t('moreActions')}
         triggerColor={theme.colors.accent}
         triggerSize={22}
         actions={moreActions}
       />
-      {/* Beside the open contact's own "Add Visit", this one needs its name. */}
+      {}
       <PointerTooltip label={i18n.t('addContact')} effect='none'>
         <IconButton
           icon={PlusIcon}
@@ -491,13 +436,11 @@ const ContactsScreen = ({
     </>
   )
 
-  // Large text gets the switch its own row, so search keeps room to read.
   const stacksViewToggle = fontScale > 1.3
   const viewToggle = (
     <ContactsViewToggle
       value={contactsView}
       onChange={changeView}
-      // Kept in place, so nothing moves while selecting.
       disabled={selection.selecting}
       style={stacksViewToggle ? { alignSelf: 'stretch' } : undefined}
     />
@@ -505,16 +448,10 @@ const ContactsScreen = ({
 
   const rowState = [selection.selected, isWide, selectedContact?.id] as const
   const listPane = (
-    <View
-      // Any touch here pins the list's order until the next focus.
-      onTouchStart={contactsList.markInteracted}
-      style={{ flex: 1 }}
-    >
-      {/* No side padding here: the staleness chips scroll edge to edge. */}
+    <View onTouchStart={contactsList.markInteracted} style={{ flex: 1 }}>
+      {}
       <View style={{ paddingBottom: 12 }}>
-        {/* Search, then the List | Map switch, as tall as each other. Search
-        is an inline TextInput so results update live as the user types; its
-        placeholder carries the contact count. */}
+        {}
         <View
           style={{
             flexDirection: stacksViewToggle ? 'column' : 'row',
@@ -531,8 +468,7 @@ const ContactsScreen = ({
               gap: 10,
               paddingHorizontal: 12,
               minHeight: 44,
-              // With enlarged text the field grows with its text; a fixed 44
-              // clips the placeholder's top on Android from 1.5x.
+
               height: fontScale > 1 ? undefined : 44,
               borderRadius: theme.numbers.borderRadiusMd,
               borderWidth: 1,
@@ -577,8 +513,7 @@ const ContactsScreen = ({
           </View>
         </Collapse>
 
-        {/* Subtle sort indicator. Only shows when the user has changed
-        away from the default — keeps the resting state quiet. */}
+        {}
         {isSortNonDefault && sortLabel.length > 0 && (
           <Collapse collapsed={bars.hidden}>
             <View
@@ -617,21 +552,9 @@ const ContactsScreen = ({
       <FlashList
         ref={listRef}
         data={contactsList.items}
-        // FlashList v2 enables maintainVisibleContentPosition by default — it's
-        // meant for chat UIs and anchors the viewport to a content item when the
-        // data changes. On a search/filter list that's wrong: clearing the query
-        // makes the data jump from a small filtered set back to the full list,
-        // and MVCP anchors to the old item instead of re-laying-out, leaving the
-        // list blank until a manual scroll forces a recompute. We always want to
-        // pin to the top on data change (see the scrollToOffset effect above),
-        // so disable it here.
         maintainVisibleContentPosition={{ disabled: true }}
         keyExtractor={(item) => item.key}
         getItemType={(item) => item.kind}
-        // A new Set on every selection change, start, and finish — no need
-        // to join every selected id into a string on each render. The list
-        // stays mounted as the pane comes and goes (iPhone Duo), so rows
-        // redraw for it and the contact in it too.
         extraData={rowState}
         renderItem={({ item }) => {
           if (item.kind === 'header') {
@@ -644,8 +567,6 @@ const ContactsScreen = ({
               index={conversationIndex}
               searchMatches={searchMatchesById.get(contact.id)}
               detail={
-                // Suggested rows say why they're listed; other sorts show
-                // the value they're sorted by.
                 item.detail ??
                 sortRowDetail({
                   sort: contactSort,
@@ -684,7 +605,6 @@ const ContactsScreen = ({
         }}
         ItemSeparatorComponent={ContactsListSeparator}
         ListEmptyComponent={renderEmpty()}
-        // Down here so its late-arriving count can't shift the list.
         ListFooterComponent={
           dismissedCount > 0 && !selection.selecting ? (
             <Button
@@ -722,7 +642,6 @@ const ContactsScreen = ({
         keyboardShouldPersistTaps='handled'
         keyboardDismissMode='on-drag'
         drawDistance={flashListDrawDistance}
-        // Tapping the status bar (iOS) brings the bars back too.
         {...bars.scrollProps}
         contentContainerStyle={{
           paddingHorizontal: 12,
@@ -796,17 +715,13 @@ const ContactsScreen = ({
             onPressTitle={headerCollapsed ? () => expandHeader() : undefined}
             title={
               selection.selecting
-                ? // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
-                  i18n.t('selectedCount', { count: selection.ids.length })
+                ? i18n.t('selectedCount', { count: selection.ids.length })
                 : i18n.t('contacts_screen_title')
             }
             actions={headerActions}
             contentStyle={[{ maxWidth: isWide ? 1200 : 720 }, foldColumn]}
           >
             {showsMap && (
-              // Where the list has it: at the end of the list's column, split
-              // as the list is so it meets iPhone Duo's fold too. Kept while
-              // the map is explored so the way back stays one tap away.
               <FoldSplit
                 gap={0}
                 leadingWidth={isWide ? LIST_COLUMN_WIDTH : undefined}
@@ -822,7 +737,6 @@ const ContactsScreen = ({
                     {viewToggle}
                   </View>
                 }
-                // Where the contact would be.
                 trailing={isWide ? <View /> : undefined}
               />
             )}
@@ -844,14 +758,11 @@ const ContactsScreen = ({
     </GestureDetector>
   )
 
-  // As in Mail, the header's controls belong to the list, so when wide they sit
-  // above it and the contact beside it reaches the top. One tree either way,
-  // so opening or closing iPhone Duo keeps the list where it was scrolled.
   const split = isWide && !showsMap
   if (!showsMap)
     return (
       <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
-        {/* The detail pane meets iPhone Duo's fold while it's partly folded. */}
+        {}
         <FoldSplit
           style={{
             flex: 1,

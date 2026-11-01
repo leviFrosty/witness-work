@@ -30,31 +30,25 @@ import {
 
 export type ServiceYearPaceData = {
   pace: ServiceYearPace
-  /** The year's Projected Total, for the status line. */
+
   projection: ProjectedTotalResult
   today: Date
   monthBars: MonthBars
-  /** Each month's effective Monthly Goal (overrides included), Sep → Aug. */
+
   monthGoalMinutes: number[]
 }
 
-/** What the Year tab's month-row bars share, and which marks they show. */
 export type MonthBars = {
-  /**
-   * What a full-width bar stands for: the largest logged-plus-planned total or
-   * Monthly Goal of any month, so every row shares one scale.
-   */
   scaleMinutes: number
-  /** Some month counts Credit Time. */
+
   hasCredit: boolean
-  /** Some month has Plans left. */
+
   hasPlanned: boolean
-  /** Some month has a Monthly Goal. */
+
   hasGoal: boolean
 }
 
 export type ServiceYearPaceInput = RolePreferences & {
-  /** The start year (September of `serviceYear`). */
   serviceYear: number
   today: Date
   serviceReports: TimeEntriesByYear
@@ -78,12 +72,6 @@ const loggedForServiceYear = (
   }
 }
 
-/**
- * A Service Year's pace: the running goal, logged and planned time, last year's
- * running total, and the month rows' bar scale. Every month is capped and
- * goaled by the role that applied then (Role History), so the chart, the rows,
- * and the year's hero total agree.
- */
 export const computeServiceYearPace = ({
   serviceYear,
   today,
@@ -154,7 +142,7 @@ export const computeServiceYearPace = ({
         Math.max(m.loggedMinutes + m.plannedMinutes, monthGoalMinutes[i])
       )
     ),
-    // The cap leaves logged time above standard time only when credit counts.
+
     hasCredit: thisYear.loggedMonths.some((logged) =>
       pace.months.some(
         (m) =>
@@ -170,10 +158,6 @@ export const computeServiceYearPace = ({
   return { pace, projection, today, monthBars, monthGoalMinutes }
 }
 
-/**
- * The input's values in a fixed order. `today` counts only as its calendar day,
- * the only part of it the pace reads.
- */
 const cacheKey = ({ today, ...rest }: ServiceYearPaceInput): unknown[] => [
   today.getFullYear(),
   today.getMonth(),
@@ -186,20 +170,9 @@ const cacheKey = ({ today, ...rest }: ServiceYearPaceInput): unknown[] => [
 const sameKey = (a: unknown[], b: unknown[]) =>
   a.length === b.length && a.every((value, i) => Object.is(value, b[i]))
 
-/** Enough for the Progress and Schedule tabs on different Service Years. */
 const CACHE_SIZE = 4
 const cache: { key: unknown[]; data: ServiceYearPaceData }[] = []
 
-/**
- * `computeServiceYearPace`, shared by every caller with the same inputs. The
- * Year tab, its pace and last-year cards, and the Schedule's Year view each
- * need the same pace, and each walking the whole year again made opening the
- * Year tab slow on a long history. Store values are replaced, never mutated, so
- * the same references mean the same data.
- *
- * The result carries `today` from whichever caller computed it first that day;
- * callers that keep their own "now" should put theirs back.
- */
 export const sharedServiceYearPace = (
   input: ServiceYearPaceInput
 ): ServiceYearPaceData => {

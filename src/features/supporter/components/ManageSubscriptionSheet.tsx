@@ -33,10 +33,6 @@ interface Props {
 
 const isAndroid = storePlatform === 'android'
 
-/**
- * Manage Subscription: offers a Supporter Pause before cancelling, with the
- * store's own management (cancel or change) always one tap away in the footer.
- */
 const ManageSubscriptionSheet = ({ open, setOpen, source }: Props) => {
   const theme = useTheme()
   const {
@@ -48,8 +44,7 @@ const ManageSubscriptionSheet = ({ open, setOpen, source }: Props) => {
     pause,
     openStore,
   } = useManageSubscription(open, source)
-  // The store's management sheet presents on the topmost view controller, so
-  // open it only once this sheet is gone.
+
   const afterDismiss = useRef<(() => void) | null>(null)
   const pausing = pausingMonths !== null
 
@@ -84,7 +79,6 @@ const ManageSubscriptionSheet = ({ open, setOpen, source }: Props) => {
         afterDismiss.current = null
         then?.()
       }}
-      // A pause in flight finishes before the sheet can go.
       dismissible={!pausing}
     >
       <View
@@ -262,7 +256,6 @@ const ManageSubscriptionBody = ({
     return <Spinner color={theme.colors.textAlt} />
   }
 
-  // These two only mean "no pause" when the product loaded.
   if (
     productError &&
     pause.kind === 'unavailable' &&
@@ -336,10 +329,7 @@ const ManageSubscriptionBody = ({
         pause.offers.map((offer) => (
           <PauseOptionButton
             key={offer.months}
-            title={
-              // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
-              i18n.t('manageSupport_pauseFor', { count: offer.months })
-            }
+            title={i18n.t('manageSupport_pauseFor', { count: offer.months })}
             detail={i18n.t('manageSupport_nextPayment', {
               date: formatDate(pauseResumeDate(sub.expiresDate, offer.months)),
             })}

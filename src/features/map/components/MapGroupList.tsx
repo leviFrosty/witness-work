@@ -14,15 +14,9 @@ import {
 } from '@/features/map/lib/contactPins'
 import type { ContactMarker } from '@/features/map/types/map'
 
-/** Rows that show before the list scrolls. */
 const VISIBLE_ROWS = 4
 const ROW_HEIGHT = 52
 
-/**
- * The Contacts gathered in one pin at one place (an apartment building), most
- * pressing first, each with its card's line and its unit. Picking one selects
- * them as a pin tap would.
- */
 export default function MapGroupList({
   title,
   members,

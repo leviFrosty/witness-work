@@ -26,11 +26,7 @@ import { tracking } from '@/lib/tracking'
 
 type Props = {
   scope: ProjectedTotalScope
-  /**
-   * When true, the planning Assistant is rendered inside the card. The Schedule
-   * screen opts in; Progress leaves it off so the card stays purely
-   * retrospective there.
-   */
+
   showAssistant?: boolean
 }
 
@@ -51,7 +47,6 @@ const ProjectedTotalCard = ({ scope, showAssistant = false }: Props) => {
 
   const { projection: result, today } = useProjectedTotal(scope, goalHours * 60)
 
-  // Hide entirely when there's no goal to project against.
   if (goalHours <= 0) return null
 
   const tense = getPeriodTense(scope, today)
@@ -113,8 +108,7 @@ const ProjectedTotalCard = ({ scope, showAssistant = false }: Props) => {
         </Text>
       </View>
 
-      {/* Logged (solid) then planned (striped), running past the goal marker
-          when the plans go beyond it. */}
+      {}
       <GoalBar
         loggedMinutes={result.loggedMinutes}
         plannedMinutes={result.plannedMinutes}

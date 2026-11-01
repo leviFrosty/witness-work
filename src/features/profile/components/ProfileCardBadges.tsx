@@ -10,10 +10,6 @@ import i18n, { TranslationKey } from '@/lib/locales'
 import type { BadgeArtId, BadgeLevel } from '@/types/badges'
 import type { RootStackNavigation } from '@/types/rootStack'
 
-/**
- * The profile card's footer: the User's badges as a compact row that opens
- * their collection.
- */
 export default function ProfileCardBadges({
   badges,
 }: {
@@ -44,7 +40,7 @@ export default function ProfileCardBadges({
         borderRadius: theme.numbers.borderRadiusMd,
       }}
     >
-      {/* The button already reads the row aloud. */}
+      {}
       <View
         accessibilityElementsHidden
         importantForAccessibility='no-hide-descendants'

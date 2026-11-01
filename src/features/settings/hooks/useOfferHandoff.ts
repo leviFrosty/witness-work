@@ -18,22 +18,14 @@ import {
   handoffEnding,
 } from '@/features/settings/components/account/handoff/handoffEnding'
 
-/**
- * The old phone's handoff for Set Up Another Device: starts one when the screen
- * opens (and again for a new code), polls while it waits on the other phone,
- * and cancels the channel when the screen closes. Once it has ended, coming
- * back to the screen (from a screen on top of it, or navigated to again) starts
- * a new one, and so does returning to the app unless it succeeded or can't
- * succeed, which stays up until the User leaves.
- */
 export default function useOfferHandoff(
   entry: HandoffEntry,
-  /** The route's params; a new object means the screen was navigated to again. */
+
   params?: object
 ) {
   const [start, setStart] = useState<HandoffStart>({ phase: 'starting' })
   const [attempt, setAttempt] = useState(0)
-  /** Why the current session ends when this effect cleans up. */
+
   const endReason = useRef<HandoffEndReason>('left')
 
   useEffect(() => {
@@ -68,21 +60,17 @@ export default function useOfferHandoff(
     state?.step === 'waiting' || state?.step === 'sent'
   )
 
-  /** Ends this code and shows a new one. */
   const newCode = () => {
     endReason.current = 'new_code'
     setAttempt((count) => count + 1)
   }
 
-  // Read by the listeners below, which only act on a return to the screen.
   const ending = useRef<'retry' | 'final' | null>(null)
   const current = handoffEnding(start, state)
   useEffect(() => {
     ending.current = current
   }, [current])
 
-  // Coming back to the screen. Its first focus is the opening, which already
-  // started one.
   const focusedBefore = useRef(false)
   useFocusEffect(
     useCallback(() => {
@@ -99,7 +87,6 @@ export default function useOfferHandoff(
     }, [])
   )
 
-  // Navigated to again while it's showing: React Navigation keeps the screen.
   const shownParams = useRef(params)
   useEffect(() => {
     if (shownParams.current === params) return

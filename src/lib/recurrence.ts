@@ -18,56 +18,23 @@ import {
   storedDayKey,
 } from '@/lib/normalizeDate'
 
-// Re-exported for backwards compatibility — canonical home is `types/timeEntry`.
-// Consumers historically imported these alongside the recurrence helpers from
-// `lib/serviceReport`; re-exporting here keeps their import a single redirect.
 export { RecurringPlanFrequencies }
 export type { MonthlyByWeekdayConfig, RecurringPlan, RecurringPlanOverride }
 
-// ---------------------------------------------------------------------------
-// Recurrence: expanding a Recurring Plan into the dated instances it produces,
-// resolving per-day overrides, and reducing a day's plans to its contributions
-// (every Day Plan and recurring instance on the day adds up).
-//
-// This module is the one true home for "does this Recurring Plan fall on this
-// day, and what are its effective minutes/note/start-time there?" — previously
-// scattered across `lib/serviceReport.ts`.
-//
-// TZ footgun: every function here takes a *calendar-day* `Date` (a value that
-// came through `normalizeDateForStorage`, anchored at noon UTC). A `moment.utc`
-// range walk must convert its cursor with `localDayFromUtcCursor`
-// (`lib/normalizeDate.ts`) before handing the day in — passing `cursor.toDate()`
-// (an instant) lands on the wrong local calendar day in TZs away from UTC.
-// ---------------------------------------------------------------------------
-
 const MS_PER_DAY = 86_400_000
 
-/**
- * A stored calendar day as a count of days since the epoch. Every value
- * `momentStoredDate` returns sits at noon UTC, so two stored dates fall on the
- * same day exactly when these match, and their difference is a whole number of
- * days.
- */
 const storedEpochDay = (date: Date | string): number =>
   Math.floor(momentStoredDate(date).valueOf() / MS_PER_DAY)
 
-/**
- * A Recurring Plan's dates read once into epoch days, so matching a day is an
- * integer compare and a Set/Map lookup instead of a moment per skipped day and
- * override. `deletedDates` and `overrides` grow for as long as a plan exists,
- * and range walks (a service year, widgets) ask about every day.
- */
 type CompiledRecurringPlan = {
   start: number
-  /** `null` when the plan never ends. */
+
   end: number | null
   startDayOfMonth: number
   skipped: Set<number>
   overrides: Map<number, RecurringPlanOverride>
 }
 
-// Keyed by the plan object: the store replaces a plan on every edit and never
-// mutates one in place, so a cached entry can't go stale.
 const compiledPlans = new WeakMap<RecurringPlan, CompiledRecurringPlan>()
 
 const compileRecurringPlan = (plan: RecurringPlan): CompiledRecurringPlan => {
@@ -82,21 +49,18 @@ const compileRecurringPlan = (plan: RecurringPlan): CompiledRecurringPlan => {
     start: storedEpochDay(startDate),
     end: endDate ? storedEpochDay(endDate) : null,
     startDayOfMonth: momentStoredDate(startDate).date(),
-    // Unreadable dates never match a day, so leave them out (a NaN key would
-    // match an unreadable day).
+
     skipped: new Set(
       deletedDates.map(storedEpochDay).filter((day) => !Number.isNaN(day))
     ),
     overrides: new Map(),
   }
-  // Last to first, so the first override on a day wins, as `find` did.
+
   for (const override of [...overrides].reverse()) {
     const day = storedEpochDay(override.date)
     if (!Number.isNaN(day)) compiled.overrides.set(day, override)
   }
 
-  // A date off the noon-UTC anchor reads as whatever local day it falls on
-  // in the current time zone, so it's recompiled on every call.
   const anchored = [
     startDate,
     ...(endDate ? [endDate] : []),
@@ -107,52 +71,38 @@ const compileRecurringPlan = (plan: RecurringPlan): CompiledRecurringPlan => {
   return compiled
 }
 
-/** The epoch day of a calendar-day `Date` handed to the recurrence helpers. */
 const epochDayOf = (day: Date): number =>
   Math.floor(normalizeDateForStorage(day).getTime() / MS_PER_DAY)
 
-/**
- * Single override lookup shared by every effective-* getter: finds the override
- * whose stored calendar day matches `date`.
- */
 const findOverrideForDay = (
   plan: RecurringPlan,
   date: Date
 ): RecurringPlanOverride | undefined =>
   compileRecurringPlan(plan).overrides.get(epochDayOf(date))
 
-// Helper function to check if a date matches a monthly by weekday pattern.
-// Caller is responsible for passing a calendar-day Date that's already been
-// normalized via `normalizeDateForStorage`; this fn reads it via UTC mode.
 const doesDayMatchMonthlyByWeekday = (
   day: Date,
   config: MonthlyByWeekdayConfig
 ): boolean => {
   const momentDay = momentStoredDate(day)
-  const dayWeekday = momentDay.day() // 0-6 (Sunday-Saturday)
+  const dayWeekday = momentDay.day()
 
-  // Check if the weekday matches
   if (dayWeekday !== config.weekday) {
     return false
   }
 
-  // Get the first day of the month and find which week of the month this day is in
   const firstDayOfMonth = momentDay.clone().startOf('month')
 
   if (config.weekOfMonth === -1) {
-    // Handle "last [weekday] of month"
     const lastDayOfMonth = momentDay.clone().endOf('month')
     const daysFromEnd = lastDayOfMonth.date() - momentDay.date()
     return daysFromEnd < 7 && dayWeekday === config.weekday
   } else {
-    // Handle "first", "second", "third", "fourth" [weekday] of month
-    // We need to be more precise about which occurrence this is
     const firstWeekdayOfMonth = firstDayOfMonth.clone()
     while (firstWeekdayOfMonth.day() !== config.weekday) {
       firstWeekdayOfMonth.add(1, 'day')
     }
 
-    // Calculate which occurrence this is (1st, 2nd, 3rd, 4th)
     const weeksBetween = momentDay.diff(firstWeekdayOfMonth, 'weeks')
     const occurrence = weeksBetween + 1
 
@@ -164,12 +114,6 @@ export const getPlansIntersectingDay = (
   day: Date,
   plans: RecurringPlan[]
 ): RecurringPlan[] => {
-  // `day` is whatever the caller had — often a local-mode Date built from
-  // `selectedMonth.clone().date(i+1).toDate()`. Normalize it so it sits on the
-  // same noon-UTC anchor as the stored plan dates, then read everything in
-  // UTC mode. This is what makes recurrence math TZ-stable: in NZDT (+13) a
-  // local-mode `diff` against a noon-UTC startDate would silently round to a
-  // negative day count and miss every weekly occurrence.
   const normalizedDay = normalizeDateForStorage(day)
   const dayNumber = Math.floor(normalizedDay.getTime() / MS_PER_DAY)
 
@@ -183,7 +127,6 @@ export const getPlansIntersectingDay = (
     const daysDiff = dayNumber - start
     const inRange = dayNumber >= start && (end === null || dayNumber <= end)
 
-    // Check if the given day falls within the recurrence pattern
     switch (frequency) {
       case RecurringPlanFrequencies.WEEKLY:
         return daysDiff % (interval * 7) === 0 && inRange
@@ -206,11 +149,6 @@ export const getPlansIntersectingDay = (
   })
 }
 
-/**
- * Gets the effective minutes for a recurring plan on a specific date,
- * accounting for overrides. This is the function to use for all calculations
- * that need to display or calculate with the correct planned minutes.
- */
 export const getEffectiveMinutesForRecurringPlan = (
   plan: RecurringPlan,
   date: Date
@@ -219,10 +157,6 @@ export const getEffectiveMinutesForRecurringPlan = (
   return override ? override.minutes : plan.minutes
 }
 
-/**
- * The note that applies to a recurring plan on a specific date: the date's
- * override's when it has one, otherwise the plan's.
- */
 export const getEffectiveNoteForRecurringPlan = (
   plan: RecurringPlan,
   date: Date
@@ -232,31 +166,17 @@ export const getEffectiveNoteForRecurringPlan = (
   return { note: source.note, noteDoc: source.noteDoc }
 }
 
-/**
- * The start time (minutes since midnight) set for a recurring plan's instance
- * on a specific date, accounting for overrides, or `undefined` when neither the
- * override nor the plan has one.
- */
 export const getSetStartTimeInMinutesForRecurringPlan = (
   plan: RecurringPlan,
   date: Date
 ): number | undefined =>
   findOverrideForDay(plan, date)?.startTimeInMinutes ?? plan.startTimeInMinutes
 
-/**
- * Whether a recurring plan's instance on a specific date is hours with no set
- * time, accounting for overrides.
- */
 export const isRecurringPlanAnytimeOnDate = (
   plan: RecurringPlan,
   date: Date
 ): boolean => findOverrideForDay(plan, date)?.anytime ?? !!plan.anytime
 
-/**
- * Gets the effective start time (minutes since midnight) for a recurring plan
- * on a specific date, accounting for overrides. Falls back to noon (720) when
- * neither the override nor the plan has a stored time.
- */
 export const getEffectiveStartTimeInMinutesForRecurringPlan = (
   plan: RecurringPlan,
   date: Date
@@ -269,18 +189,6 @@ export const getEffectiveStartTimeInMinutesForRecurringPlan = (
   )
 }
 
-/**
- * The planned contributions for one calendar day.
- *
- * Resolution rule (the one true reduction, previously re-derived per consumer):
- * every Plan on the day adds up. Each Day Plan and each recurring instance
- * contributes its own minutes and its own credit-ness. A recurring instance the
- * User skipped (`deletedDates`) isn't on the day at all.
- *
- * `isCredit` is only meaningful when the caller supplies the credit predicates;
- * callers that don't care about credit (the UI's minutes-only reductions) can
- * omit them and read `minutes` alone.
- */
 type PlannedDayContributionFields = {
   minutes: number
   isCredit: boolean
@@ -297,21 +205,18 @@ export type PlannedDayContribution =
     })
 
 type PlannedDayResolutionOptions = {
-  /** Per-plan credit-ness for Day Plans. Default () => false. */
   dayPlanIsCredit?: (plan: DayPlan) => boolean
-  /** Per-plan credit-ness for recurring instances. Default () => false. */
+
   recurringIsCredit?: (plan: RecurringPlan) => boolean
 }
 
 export const resolvePlannedContributionsForDay = (
   day: Date,
-  /** The Day Plans that fall on `day` — caller pre-filters by date. */
+
   dayPlansForDay: DayPlan[],
   recurringPlans: RecurringPlan[],
   opts?: PlannedDayResolutionOptions
 ): PlannedDayContribution[] => [
-  // Day Plans count even at zero minutes; callers gate on `minutes > 0`
-  // themselves where needed.
   ...dayPlansForDay.map(
     (plan): PlannedDayContribution => ({
       source: 'day',
@@ -332,10 +237,6 @@ export const resolvePlannedContributionsForDay = (
     .filter((contribution) => contribution.minutes >= 0),
 ]
 
-/**
- * The day's total planned minutes under the resolution rule above: the sum of
- * every Day Plan and recurring instance on the day.
- */
 export const plannedMinutesForDay = (
   day: Date,
   dayPlansForDay: DayPlan[],
@@ -346,7 +247,6 @@ export const plannedMinutesForDay = (
     0
   )
 
-/** {@link plannedMinutesForDay} for day `date` (1-based) of `selectedMonth`. */
 const plannedMinutesOnMonthDay = (
   selectedMonth: moment.Moment,
   date: number,
@@ -361,10 +261,6 @@ const plannedMinutesOnMonthDay = (
   )
 }
 
-/**
- * Cumulative planned minutes through each day of a month: index 0 is the 1st,
- * and each value matches {@link plannedMinutesThroughDayForMonth} for that day.
- */
 export const plannedMinutesThroughEachDayOfMonth = (
   month: number,
   year: number,
@@ -413,11 +309,6 @@ export const plannedMinutesThroughDayForMonth = (
   return count
 }
 
-/**
- * Pre-computes all recurring plan occurrences for a given date range. Returns a
- * Map where key is date string (YYYY-MM-DD) and value is array of plans with
- * effective minutes.
- */
 export const precomputeRecurringPlansForRange = (
   recurringPlans: RecurringPlan[],
   minDate: moment.Moment,
@@ -464,10 +355,6 @@ export const precomputeRecurringPlansForRange = (
   return cache
 }
 
-/**
- * Optimized calculation for monthly planned minutes using pre-computed
- * recurring plans.
- */
 export const calculateMonthlyPlannedMinutesOptimized = (
   month: number,
   year: number,
@@ -482,8 +369,6 @@ export const calculateMonthlyPlannedMinutesOptimized = (
     `[calculateMonthlyOptimized] Calculating for ${selectedMonth.format('MMMM YYYY')} with ${dayPlans.length} day plans and ${recurringPlans.length} recurring plans`
   )
 
-  // Create day plan lookup map for O(1) access — plural per date, since
-  // multiple Day Plans on the same day stack additively.
   const dayPlanMap = new Map<string, DayPlan[]>()
   dayPlans.forEach((p) => {
     const key = momentStoredDate(p.date).format('YYYY-MM-DD')
@@ -495,7 +380,6 @@ export const calculateMonthlyPlannedMinutesOptimized = (
     `[calculateMonthlyOptimized] Created day plan map with ${dayPlanMap.size} entries`
   )
 
-  // Pre-compute recurring plans for the month
   const minDate = selectedMonth.clone().startOf('month')
   const maxDate = selectedMonth.clone().endOf('month')
   const recurringPlanCache = precomputeRecurringPlansForRange(
@@ -527,13 +411,6 @@ export const calculateMonthlyPlannedMinutesOptimized = (
   return count
 }
 
-/**
- * Skips every recurring instance that falls on a Day Plan's date. Plans used to
- * resolve with Day Plans hiding the day's recurring instances; now they add up,
- * so this one-time migration keeps each existing forecast as it was. `stamp`
- * gives a changed Plan its new `updatedAt` so the change syncs; without it,
- * `updatedAt` is left alone.
- */
 export const skipRecurringInstancesOnDayPlanDates = (
   dayPlans: Pick<DayPlan, 'date'>[],
   recurringPlans: RecurringPlan[],

@@ -31,7 +31,7 @@ const INTENTS: ToastIntent[] = [
   'news',
   'unlock',
 ]
-/** Time on screen; `default` leaves the intent's own. */
+
 const DURATIONS = ['default', '3s', '10s', '60s'] as const
 type Duration = (typeof DURATIONS)[number]
 
@@ -39,7 +39,6 @@ const unlockArt = (size: number) => (
   <LucideIcon icon={PartyPopperIcon} size={size} />
 )
 
-/** Shows a toast of `intent` with test callbacks that touch nothing. */
 const showToast = (intent: ToastIntent, input: ToastInput) => {
   const { title, ...rest } = input
   switch (intent) {
@@ -60,10 +59,6 @@ const showToast = (intent: ToastIntent, input: ToastInput) => {
   }
 }
 
-/**
- * Shows it again without the original's callbacks and key, so a replay can't
- * settle tray news, undo a real change, or replace a live toast by its key.
- */
 const replay = ({
   intent,
   title,
@@ -76,7 +71,6 @@ const replay = ({
 }: Toast) =>
   showToast(intent, { title, message, icon, eyebrow, art, onOpen, durationMs })
 
-/** A few of `intent`, a beat apart, to watch them stack. */
 const burst = (intent: ToastIntent, count = 3) => {
   for (let i = 1; i <= count; i++) {
     setTimeout(
@@ -90,10 +84,6 @@ const burst = (intent: ToastIntent, count = 3) => {
   }
 }
 
-/**
- * Developer Tools: shows custom toasts, bursts for the stacks at each edge, and
- * replays recent ones, for testing the toast host (`docs/toasts.md`).
- */
 export default function ToastTools() {
   const theme = useTheme()
   const showing = useToasts((state) => state.toasts)

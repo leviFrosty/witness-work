@@ -14,24 +14,21 @@ import ScribeZeroDataRetentionSheet from '@/features/scribe/components/ScribeZer
 import { RootStackNavigation, RootStackParamList } from '@/types/rootStack'
 
 type Props = {
-  /** Opens destinations somewhere other than the root stack (the split pane). */
   onNavigate?: (destination: keyof RootStackParamList) => void
   selectedDestination?: keyof RootStackParamList
 }
 
-/** The same settings destinations in the compact screen and wide workspace. */
 export default function SettingsContents({
   onNavigate,
   selectedDestination,
 }: Props) {
   const navigation = useNavigation<RootStackNavigation>()
-  // The sheets are React Native content, so they render beside the native list.
+
   const [manageSubscriptionOpen, setManageSubscriptionOpen] = useState(false)
   const [zeroDataRetentionOpen, setZeroDataRetentionOpen] = useState(false)
   const handleNavigate = (destination: keyof RootStackParamList) => {
     if (onNavigate) return onNavigate(destination)
-    // These sections supply settings destinations that take no required params.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     navigation.navigate(destination as any)
   }
 

@@ -86,7 +86,7 @@ describe('pet store', () => {
     usePet.getState().recordWake('2026-01-31')
     usePet.getState().recordWake('not a day')
     const { wakes } = usePet.getState().pet!
-    // Far under the cap, so none is dropped.
+
     expect(wakes).toHaveLength(31)
     expect(wakes[0]).toBe('2026-01-01')
     expect(wakes.at(-1)).toBe('2026-01-31')
@@ -96,7 +96,7 @@ describe('pet store', () => {
     adopt()
     const day = (n: number) =>
       new Date(Date.UTC(2020, 0, 1) + n * 86_400_000).toISOString().slice(0, 10)
-    // 130 wakes ten days apart: 1,290 days.
+
     for (let n = 0; n < 130; n++) usePet.getState().recordWake(day(n * 10))
     const { wakes } = usePet.getState().pet!
     expect(wakes).toHaveLength(PET_WAKES_KEPT)
@@ -111,7 +111,7 @@ describe('pet store', () => {
     usePet.getState().releaseCompanion()
     adopt()
     expect(usePet.getState().pet!.seed).not.toBe(first)
-    // Edits keep it.
+
     usePet.getState().rename('Max')
     usePet.getState().recordWake('2026-10-02')
     expect(usePet.getState().pet!.seed).toBeDefined()
@@ -148,7 +148,6 @@ describe('pet store', () => {
     expect(after.earnedRoomItems).toEqual([UNLOCK_ORDER[0], UNLOCK_ORDER[2]])
     expect(after.updatedAt).toBeGreaterThan(before.updatedAt)
 
-    // A second caller with the same items adds nothing and keeps the stamp.
     expect(
       usePet.getState().earnRoomItems([UNLOCK_ORDER[0], UNLOCK_ORDER[2]])
     ).toEqual([])
@@ -191,7 +190,7 @@ describe('pet store', () => {
     const after = usePet.getState().pet!
     expect(after.purchases).toEqual([purchase])
     expect(after.updatedAt).toBeGreaterThan(before.updatedAt)
-    // Bought already, earned already, or on an unreadable day: nothing.
+
     expect(usePet.getState().buyRoomItem({ ...purchase, price: 3 })).toBe(false)
     usePet.getState().earnRoomItems([UNLOCK_ORDER[0]])
     expect(
@@ -202,7 +201,6 @@ describe('pet store', () => {
     ).toBe(false)
     expect(usePet.getState().pet!.purchases).toEqual([purchase])
 
-    // Change Pet keeps what was bought.
     usePet.getState().changeAppearance({ species: 'cat', coat: 'grey' })
     expect(usePet.getState().pet!.purchases).toEqual([purchase])
   })
@@ -254,13 +252,12 @@ describe('pet store', () => {
       after.deletedPetRecords.find((t) => t.id === 'room')!.deletedAt
     ).toBeGreaterThan(room!.updatedAt)
 
-    // Adopting again outranks the tombstone, so it survives a merge.
     adopt({ species: 'lamb', coat: 'default', today: '2026-11-01' })
     expect(usePet.getState().pet!.updatedAt).toBeGreaterThan(
       petTombstone.deletedAt
     )
     expect(usePet.getState().pet!.adoptedOn).toBe('2026-11-01')
-    // The new companion starts its room items over.
+
     expect(usePet.getState().pet).not.toHaveProperty('earnedRoomItems')
   })
 

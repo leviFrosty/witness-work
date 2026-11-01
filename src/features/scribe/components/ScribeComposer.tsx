@@ -32,16 +32,16 @@ interface Props {
   value: string
   onChangeText: (value: string) => void
   onSend: () => void
-  /** A turn is running: Send becomes Stop. */
+
   running: boolean
   onStop: () => void
-  /** Offline: typing works, sending doesn't. */
+
   canSend: boolean
-  /** Opens the voice sheet; omitted without on-device speech. */
+
   onSpeak?: () => void
   photo: ScribePhotoCapture
   paper: ScribePaperCapture
-  /** Captured text lands in the draft to check before sending. */
+
   onCaptured: (text: string, source: 'photo' | 'paper') => void
 }
 
@@ -96,7 +96,6 @@ const RoundIcon = ({
   )
 }
 
-/** Scan notes (on-device, iOS) and Read paper pages (read by ww-api). */
 const CaptureButton = ({
   photo,
   paper,
@@ -170,7 +169,6 @@ const CaptureButton = ({
   )
 }
 
-/** Why the last paper pages weren't read, or null. */
 const paperErrorCopy = ({
   error,
   retryAt,
@@ -240,10 +238,6 @@ const PillButton = ({
   )
 }
 
-/**
- * Pages left unread for a reason that can pass: why, then Try again (reads only
- * those pages) and Skip unread pages (keeps what was read).
- */
 const UnreadPages = ({
   paper,
   onCaptured,
@@ -280,11 +274,6 @@ const UnreadPages = ({
   )
 }
 
-/**
- * The conversation's input: a field that grows with its text over a row of
- * controls, so long pastes stay readable. Captured text goes into the field to
- * check before Send.
- */
 const ScribeComposer = ({
   inputRef,
   value,
@@ -306,8 +295,6 @@ const ScribeComposer = ({
   return (
     <View
       style={{
-        // Gives way to the keyboard: the field scrolls inside once the window
-        // can't fit it (large text on a small phone), so Send stays in view.
         flexShrink: 1,
         gap: 6,
         borderRadius: 24,
@@ -342,7 +329,7 @@ const ScribeComposer = ({
           color: theme.colors.text,
           fontFamily: theme.fonts.regular,
           fontSize: theme.fontSize('md'),
-          // A multiline placeholder sits low on iOS with a lineHeight set.
+
           lineHeight: value ? 22 : undefined,
           paddingTop: 0,
           paddingBottom: 2,

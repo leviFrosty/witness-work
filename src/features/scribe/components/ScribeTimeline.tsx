@@ -16,7 +16,6 @@ import {
 } from '@/features/scribe/components/ScribeTimelineItems'
 import { useFoldColumn } from '@/components/ui/layout/FoldPane'
 
-/** The conversation's column width on wide windows. */
 export const CONVERSATION_MAX_WIDTH = 720
 const PADDING_TOP = 16
 
@@ -46,26 +45,17 @@ const Item = ({
 
 interface Props {
   controller: ScribeConversationController
-  /** Absent while the conversation can't take a message. */
+
   onSayAChange?: () => void
 }
 
-/**
- * The conversation, newest at the bottom: messages, answers, review blocks,
- * what Scribe AI is doing now, and a failed turn's Try again. New cards scroll
- * to their top, with the keyboard down, so the first card is what shows, and
- * stay there while more cards arrive and Add takes its room, until the User
- * scrolls.
- */
 const ScribeTimeline = ({ controller, onSayAChange }: Props) => {
   const foldColumn = useFoldColumn(CONVERSATION_MAX_WIDTH)
   const { isWide } = useAdaptiveLayout()
   const scrollRef = useRef<ScrollView>(null)
-  // The review block already scrolled into view, so choosing a chip or
-  // unchecking a card doesn't pull the list back to its top.
+
   const shownProposal = useRef<string | null>(null)
-  // The newest review block, kept at the top while it grows (cards arrive as
-  // the turn runs) and the list shrinks (Add appears), until the User drags.
+
   const followed = useRef<{ id: string; y: number } | null>(null)
   const { items, run } = controller
   const last = items[items.length - 1]
@@ -92,8 +82,7 @@ const ScribeTimeline = ({ controller, onSayAChange }: Props) => {
       onContentSizeChange={() => {
         if (followed.current && followed.current.id !== last?.id)
           followed.current = null
-        // A review block scrolls to its own top once it's laid out, and its
-        // cards can arrive while the turn still runs.
+
         if (last?.type === 'proposal' && run.phase !== 'error') {
           alignFollowed()
           return
@@ -106,9 +95,7 @@ const ScribeTimeline = ({ controller, onSayAChange }: Props) => {
         paddingBottom: 16,
       }}
     >
-      {/* The column is capped inside the content, not on it: in a
-          right-to-left layout iOS pins a narrower content container to the
-          right edge (see ContentColumn). */}
+      {}
       <View
         style={[
           {
@@ -133,7 +120,7 @@ const ScribeTimeline = ({ controller, onSayAChange }: Props) => {
                     if (shownProposal.current !== item.id) {
                       shownProposal.current = item.id
                       followed.current = { id: item.id, y }
-                      // The cards need the room more than the composer does.
+
                       Keyboard.dismiss()
                     } else if (followed.current?.id === item.id) {
                       followed.current = { id: item.id, y }

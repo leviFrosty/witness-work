@@ -39,12 +39,11 @@ const MIN_CELL = 8
 const MAX_CELL = 14
 const LABEL_WIDTH = 22
 const LABEL_GAP = 4
-// Least room between one month label's end and the next one's start.
+
 const MONTH_LABEL_GAP = 4
 const POPOVER_WIDTH = 150
 const POPOVER_OFFSET = 8
-// Hold this long before the scrub gesture activates. Below this threshold the
-// touch falls through to the parent scroll view.
+
 const SCRUB_LONG_PRESS_MS = 200
 
 const hexToHsl = (hex: string): [number, number, number] => {
@@ -97,14 +96,6 @@ type CellGridProps = {
   colorByLevel: ColorByLevel
 }
 
-/**
- * Stable cell rendering. Has no hover state of its own — the hover ring is a
- * separate Reanimated overlay so scrubbing across cells never re-renders this
- * subtree. Wrapped in `memo` with referential prop equality so the parent's
- * popover state updates skip this entirely. Color is looked up from a
- * precomputed level→hex table so the per-cell HSL math doesn't run ~180× during
- * the open animation.
- */
 const CellGrid = memo(({ grid, cell, colorByLevel }: CellGridProps) => {
   return (
     <View style={{ flexDirection: 'row', gap: GAP }}>
@@ -130,10 +121,6 @@ const CellGrid = memo(({ grid, cell, colorByLevel }: CellGridProps) => {
 })
 CellGrid.displayName = 'CellGrid'
 
-/**
- * The whole graph as one sentence for screen readers, which can't scrub the
- * cells: days with service and the longest run in the window.
- */
 const accessibilityLabelFor = (grid: ContributionCell[][], weeks: number) => {
   const { daysWithService, longestRun } = contributionSummary(grid)
   if (!daysWithService) {
@@ -169,12 +156,8 @@ const ContributionGraph = ({ daily, weeks = 26 }: Props) => {
   const stride = cell + GAP
   const gridPixelWidth = weeks * cell + (weeks - 1) * GAP
 
-  // Tracks the last cell index emitted on the UI thread so we only fire the
-  // haptic + state update when the finger crosses into a new cell, not on
-  // every gesture frame within the same cell.
   const lastIdx = useSharedValue(-1)
-  // Hover ring transform / visibility, driven on the UI thread by the gesture
-  // worklets. Avoids any React re-render of the 180+ cell grid during scrubs.
+
   const ringX = useSharedValue(0)
   const ringY = useSharedValue(0)
   const ringOpacity = useSharedValue(0)
@@ -196,8 +179,6 @@ const ContributionGraph = ({ daily, weeks = 26 }: Props) => {
     if (w && w !== width) setWidth(w)
   }
 
-  // Precompute the level→hex map so CellGrid never runs `withSaturation` per
-  // cell (~180×). Recomputes only when the accent/border tokens change.
   const colorByLevel = useMemo<ColorByLevel>(
     () => ({
       0: theme.colors.border,
@@ -209,9 +190,6 @@ const ContributionGraph = ({ daily, weeks = 26 }: Props) => {
     [theme.colors.accent, theme.colors.border]
   )
 
-  // JS-thread handlers invoked via runOnJS from gesture worklets. Kept stable
-  // with useCallback so worklet closures don't churn — though gesture-handler
-  // captures by value, recreating the closure on each render still allocates.
   const applyHover = useCallback(
     (col: number, row: number, haptic: boolean) => {
       const cellData = grid[col]?.[row]
@@ -227,14 +205,10 @@ const ContributionGraph = ({ daily, weeks = 26 }: Props) => {
 
   const clearHover = useCallback(() => setHovered(null), [])
 
-  // Columns run from the reading start, which is the right edge in a
-  // right-to-left layout; touches arrive in physical x.
   const rtl = isRtlLayout()
   const sign = forwardSign()
 
   const gesture = useMemo(() => {
-    // Moves the ring and popover to the cell under (x, y). Haptics are for
-    // touch, so a hovering pointer skips them.
     const scrubTo = (x: number, y: number, haptic: boolean) => {
       'worklet'
       const col = contributionColumnAt(x, stride, gridPixelWidth, rtl)
@@ -248,7 +222,7 @@ const ContributionGraph = ({ daily, weeks = 26 }: Props) => {
         runOnJS(clearHover)()
         return
       }
-      // The ring sits at the start edge, so it moves toward the end.
+
       ringX.value = sign * col * stride
       ringY.value = row * stride
       ringOpacity.value = 1
@@ -275,8 +249,6 @@ const ContributionGraph = ({ daily, weeks = 26 }: Props) => {
       .onFinalize(endScrub)
     if (!supportsPointerHover) return pan
 
-    // A trackpad, mouse, or Pencil hovering over the grid shows the same ring
-    // and popover as a held finger.
     const hover = Gesture.Hover()
       .onBegin((e) => {
         'worklet'
@@ -310,9 +282,6 @@ const ContributionGraph = ({ daily, weeks = 26 }: Props) => {
     opacity: ringOpacity.value,
   }))
 
-  // Month labels sit over each month's first column, absolutely positioned so
-  // they can extend past it. Each one's rendered width decides which fit
-  // without overlapping; until all are measured, none show.
   const monthLabels = useMemo(() => contributionMonthLabels(grid), [grid])
   const [labelSizes, setLabelSizes] = useState<
     Record<number, { width: number; height: number }>
@@ -320,7 +289,7 @@ const ContributionGraph = ({ daily, weeks = 26 }: Props) => {
   const labelWidths = Object.fromEntries(
     Object.entries(labelSizes).map(([column, size]) => [column, size.width])
   )
-  // Large text makes the labels taller than their row; the row grows to fit.
+
   const labelRowHeight = Math.max(
     14,
     ...Object.values(labelSizes).map((size) => size.height)
@@ -356,7 +325,7 @@ const ContributionGraph = ({ daily, weeks = 26 }: Props) => {
       accessibilityRole='image'
       accessibilityLabel={accessibilityLabelFor(grid, weeks)}
     >
-      {/* The label above stands in for the labels, cells, and legend. */}
+      {}
       <View
         style={{ gap: 8 }}
         accessibilityElementsHidden
@@ -377,8 +346,7 @@ const ContributionGraph = ({ daily, weeks = 26 }: Props) => {
                   left: column * stride,
                   fontSize: 10,
                   color: theme.colors.textAlt,
-                  // Hidden labels stay laid out, so they're measured again
-                  // when the text size or cell size changes.
+
                   opacity: shownColumns.has(column) ? 1 : 0,
                 }}
               >
@@ -396,8 +364,6 @@ const ContributionGraph = ({ daily, weeks = 26 }: Props) => {
           >
             {dayLabels.map((label, i) =>
               label ? (
-                // Centered on its row, in a box tall enough that the label
-                // isn't clipped when it's taller than a cell.
                 <View
                   key={`lbl-${i}`}
                   style={{
@@ -410,8 +376,6 @@ const ContributionGraph = ({ daily, weeks = 26 }: Props) => {
                   }}
                 >
                   <Text
-                    // Shrinks to its column rather than clipping, as a long
-                    // weekday (Arabic «خميس») or large text would.
                     {...FIT_ONE_LINE}
                     style={{ fontSize: 10, color: theme.colors.textAlt }}
                   >
@@ -492,10 +456,6 @@ type ScrubPopoverProps = {
   theme: ReturnType<typeof useTheme>
 }
 
-/**
- * Isolated popover so a cell-transition state update doesn't propagate to the
- * grid. Only this subtree re-renders during a scrub.
- */
 const ScrubPopover = ({
   hovered,
   grid,
@@ -515,8 +475,7 @@ const ScrubPopover = ({
     0,
     Math.min(anchorX, Math.max(0, gridPixelWidth - POPOVER_WIDTH))
   )
-  // Above the cell for rows 2-6; below for rows 0-1 so the month-label band
-  // doesn't clip it.
+
   const above = hovered.row >= 2
   const top = above
     ? hovered.row * stride - POPOVER_OFFSET - 44
@@ -553,7 +512,6 @@ const ScrubPopover = ({
           color: theme.colors.text,
         }}
         numberOfLines={1}
-        // Long month names (Arabic's «تشرين الأول (أكتوبر)») shrink to fit.
         adjustsFontSizeToFit
         minimumFontScale={0.7}
       >

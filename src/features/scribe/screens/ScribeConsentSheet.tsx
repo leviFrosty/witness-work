@@ -36,20 +36,12 @@ import {
 
 type Step = 'terms' | 'privacy'
 
-/**
- * Asked once a device before Scribe AI is used: agree to the Terms of Use and
- * Privacy Policy (linked, beside a word on privacy and on checking what AI
- * proposes), then how Scribe AI handles data. There's no decline: swiping the
- * sheet away leaves Scribe AI on and asks again next time; only Settings'
- * switch turns it off, and turning it on there before agreeing asks first
- * (`enable`).
- */
 const ScribeConsentSheet = () => {
   const navigation = useNavigation<RootStackNavigation>()
   const { params } = useRoute<RouteProp<RootStackParamList, 'ScribeConsent'>>()
   const setPreferences = usePreferences((s) => s.set)
   const surface = params.mode === 'open' ? 'first_open' : 'settings'
-  // Fixed when the sheet opens, so finishing a step doesn't drop the next one.
+
   const [steps] = useState<Step[]>(() => {
     if (params.mode === 'enable') return ['terms']
     const pending = pendingScribeConsent()
@@ -60,7 +52,7 @@ const ScribeConsentSheet = () => {
   })
   const [index, setIndex] = useState(0)
   const step: Step | undefined = steps[index]
-  // A second tap on Continue must not leave twice.
+
   const finished = useRef(false)
 
   const finish = () => {
@@ -81,7 +73,6 @@ const ScribeConsentSheet = () => {
     else finish()
   }
 
-  // Opened twice before the first finished: nothing left to ask.
   const finishIfNothingToAsk = useEffectEvent(() => {
     if (!step) finish()
   })
@@ -124,8 +115,7 @@ function TermsStep({ onAccept }: { onAccept: () => void }) {
   const theme = useTheme()
   return (
     <>
-      {/* Fits its content, and scrolls once large text makes that taller than
-          the window. */}
+      {}
       <ScrollView
         style={{ flexGrow: 0, flexShrink: 1 }}
         contentContainerStyle={{
@@ -229,7 +219,6 @@ function Point({
   )
 }
 
-/** A policy on the website, opened in the browser. */
 function PolicyLink({ label, url }: { label: string; url: string }) {
   const theme = useTheme()
   return (
@@ -262,8 +251,7 @@ function PolicyLink({ label, url }: { label: string; url: string }) {
 function PrivacyStep({ onContinue }: { onContinue: () => void }) {
   return (
     <>
-      {/* Fits its content, and scrolls once large text makes that taller than
-          the window. */}
+      {}
       <ScrollView
         style={{ flexGrow: 0, flexShrink: 1 }}
         contentContainerStyle={{

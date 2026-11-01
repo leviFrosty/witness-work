@@ -8,10 +8,6 @@ import { reloadApp } from '@/lib/hotUpdater'
 import { isDevForceRtl, setDevForceRtl, syncLayoutDirection } from '@/lib/rtl'
 import { ToolList, ToolRow, ToolSection } from '@/app/navigation/tools/ToolsUI'
 
-/**
- * Dev-only: shows the running layout direction and the "Force Right to Left"
- * switch, which mirrors the app in the current Language (ADR 0026).
- */
 export default function LayoutDirectionTools() {
   const [forceRtl, setForceRtl] = useState(isDevForceRtl)
   const direction = i18n.t(

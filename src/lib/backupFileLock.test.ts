@@ -20,7 +20,7 @@ const origin = {
   createdAt: 1_760_000_000_000,
 }
 const options = { origin, randomBytes: random }
-/** A cheap cost, so the tests don't each spend Argon2id's real one. */
+
 const kdf = { m: 64, t: 1, p: 1 }
 const backup = {
   version: 1,
@@ -28,7 +28,6 @@ const backup = {
 }
 const accountKey = new Uint8Array(32).fill(7)
 
-/** The file as it's written to disk and read back. */
 const roundTrip = (file: unknown) => JSON.parse(JSON.stringify(file))
 
 const problem = async (open: () => unknown): Promise<BackupUnlockProblem> => {
@@ -109,8 +108,7 @@ describe('locked backup files', () => {
         kdf: { m: 64, t: 2, p: 1 },
       })
     )
-    // The same key with a cheaper cost written down still fails: the header
-    // is bound into the ciphertext.
+
     const cheaper = { ...locked, kdf: { ...locked.kdf, t: 1 } }
     expect(
       await problem(() =>

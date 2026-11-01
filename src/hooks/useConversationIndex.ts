@@ -4,7 +4,6 @@ import { buildConversationIndex } from '@/lib/conversationIndex'
 import { StalenessBreakpoints } from '@/types/staleness'
 import { Visit } from '@/types/visit'
 
-/** A beat past the boundary, so the rebuild lands on the far side of it. */
 const SLACK_MS = 1000
 
 const nextMidnightMs = (nowMs: number) => {
@@ -13,14 +12,6 @@ const nextMidnightMs = (nowMs: number) => {
   return next.getTime()
 }
 
-/**
- * `buildConversationIndex` for a screen that stays open. The index judges
- * Follow-ups, staleness and "this month" at a clock that moves only when that
- * can change the answer: when the soonest upcoming Follow-up turns missed, at
- * midnight, and on returning to the app. So a Follow-up leaves Upcoming for
- * Missed without waiting for a Visit to change, and nothing re-renders in
- * between.
- */
 export default function useConversationIndex(
   conversations: Visit[],
   breakpoints: StalenessBreakpoints

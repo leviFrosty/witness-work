@@ -70,7 +70,7 @@ describe('room unlocks', () => {
 
   it('unlocks the starters, the stored items and what is earned now', () => {
     expect([...unlockedRoomItems([], [])]).toEqual([...STARTER_ROOM_ITEMS])
-    // Opened up before the Shop: still open.
+
     const stored = UNLOCK_ORDER.slice(0, 5)
     const unlocked = unlockedRoomItems(stored, UNLOCK_ORDER.slice(0, 2))
     expect(unlocked.size).toBe(STARTER_ROOM_ITEMS.length + 5)

@@ -6,7 +6,6 @@ import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import { RootStackNavigation } from '@/types/rootStack'
 
-/** Sets Alpha expectations; opens the feedback screen that explains it. */
 export default function BuddiesAlphaBadge() {
   const theme = useTheme()
   const navigation = useNavigation<RootStackNavigation>()

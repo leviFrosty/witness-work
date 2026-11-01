@@ -39,109 +39,24 @@ export interface ButtonProps extends PressableProps {
   onPress?: (event: GestureResponderEvent) => void
   onLongPress?: (event: GestureResponderEvent) => void
   disabled?: boolean
-  /**
-   * Skips the press-down translate AND opts this button out of Reanimated
-   * entirely. Visually equivalent: press-dim still happens, but via Pressable's
-   * native `pressed` state instead of a `useSharedValue` / `useAnimatedStyle`
-   * pair.
-   *
-   * ## When you MUST set this
-   *
-   * Set `noTransform` whenever the Button (or any ancestor up to its nearest
-   * stable parent) lives inside a component that **mounts and unmounts via a
-   * portal in response to user interaction**. The known offenders, all from
-   * Tamagui, are:
-   *
-   * - `<Popover.Trigger asChild>{button}</Popover.Trigger>`
-   * - `<Tooltip.Trigger asChild>{button}</Tooltip.Trigger>`
-   * - `<Dialog.Trigger asChild>{button}</Dialog.Trigger>`
-   * - `<Sheet>` content that toggles open/closed and contains Buttons
-   * - Any other `*.Trigger asChild` pattern that wraps a Button child
-   *
-   * ## Why — the actual failure mode
-   *
-   * On Reanimated 4 + the New Architecture (Fabric), a Button that registers
-   * shared values can crash the app with `EXC_BAD_ACCESS` after a few
-   * open/close cycles of its portal-using parent. The native crash trace looks
-   * like:
-   *
-   *     0 folly::dynamic::type() const                  [SIGSEGV]
-   *     1 folly::dynamic::hash() const
-   *     ...
-   *
-   * 13 folly::dynamic::dynamic(folly::dynamic const&) 14
-   * facebook::react::ShadowNode::clone(...) ... 28
-   * reanimated::ReanimatedModuleProxy::commitUpdates(...) ... 98
-   * worklets::AnimationFrameBatchinator::flush()::$_0
-   *
-   * What's happening: Reanimated's UI worklet has a queued frame that
-   * dispatches `setNativeProps` to a ShadowNode whose `folly::dynamic` props
-   * have already been freed by an unmount. Cloning the (dead) node during the
-   * next layout pass reads garbage memory and segfaults. It's a use-after-free
-   * between the JS-thread's render commit and the UI-thread's worklet flush.
-   *
-   * Setting `noTransform` makes the Button render a plain `<Pressable>` with no
-   * shared values and no animated style, so it never registers with
-   * Reanimated's animated-views set, so it can't be the dangling target of a
-   * later worklet flush.
-   *
-   * ## Why TypeScript can't enforce this
-   *
-   * JSX type-checks each element in isolation: when `<Button />` is checked,
-   * the compiler has no visibility into who its parent is. There's no mechanism
-   * to say "if this is a child of `Popover.Trigger`, then `noTransform` must be
-   * `true`." We'd need either:
-   *
-   * - A custom ESLint rule that walks the JSX AST (lint, not TS), or
-   * - Module-augmenting Tamagui's `*.Trigger` to constrain `children` to a
-   *   branded `ReactElement` — but Tamagui's `asChild` uses
-   *   `React.cloneElement`, which erases that brand at runtime, and the
-   *   generated Tamagui types are too elaborate to safely override.
-   *
-   * Neither pulls its weight for the handful of trigger sites we have. If you
-   * add a new Popover/Tooltip/Dialog/Sheet trigger, **set `noTransform` by
-   * hand** and reference this comment in code review.
-   */
+
   noTransform?: boolean
-  /**
-   * Visual treatment of the button surface.
-   *
-   * - `solid` — flat card-color background (legacy default).
-   * - `outline` — bordered, transparent background.
-   * - `glass` — iOS 26 Liquid Glass material via `expo-glass-effect`. The
-   *   caller's `style.backgroundColor`, `glassTint`, or the theme's card color
-   *   provides the fallback on iOS < 26 / Android. See `AGENTS.md` ("primary
-   *   CTAs" are an explicit glass-target surface).
-   */
+
   variant?: 'solid' | 'outline' | 'glass'
-  /**
-   * Tint for the glass material (`variant='glass'` only). Doubles as the
-   * fallback background on systems without Liquid Glass when the caller doesn't
-   * set `style.backgroundColor` themselves.
-   */
+
   glassTint?: string
-  /** Glass appearance scheme override (`variant='glass'` only). */
+
   glassColorScheme?: GlassColorScheme
-  /**
-   * IPad pointer feedback. `auto` follows Apple's guidance: small clear
-   * controls highlight, small opaque ones lift, and large surfaces get a tint
-   * without scaling into their neighbours. Use `none` when a parent already
-   * owns the hover (e.g. a row that tints as a whole).
-   */
+
   pointerEffect?: PointerEffect | 'tint' | 'auto'
-  /**
-   * Work this button started is running: a spinner covers the content, which
-   * stays laid out (invisible) so the width doesn't change. The button can't be
-   * pressed and reads as busy to screen readers.
-   */
+
   loading?: boolean
-  /** Spinner color while `loading`; match the label. Defaults to `textAlt`. */
+
   loadingColor?: string
 }
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable)
 
-// Bigger than a control: scaling it would crowd what's around it.
 const LARGE_WIDTH = 200
 const LARGE_HEIGHT = 72
 
@@ -161,11 +76,6 @@ const LAYOUT_KEYS = [
   'columnGap',
 ] as const
 
-/**
- * While loading, the children sit invisible in a box laid out like the button,
- * so its size holds, and a spinner covers them. The children stay in the
- * accessibility tree, so the button keeps its label.
- */
 const LoadingContent: React.FC<
   PropsWithChildren<{ surfaceStyle: ViewStyle; color: string | undefined }>
 > = ({ surfaceStyle, color, children }) => {
@@ -193,7 +103,6 @@ const LoadingContent: React.FC<
   )
 }
 
-/** The text inside `node`, for a label once the children are hidden. */
 const textContent = (node: ReactNode): string => {
   if (typeof node === 'string' || typeof node === 'number') return String(node)
   if (Array.isArray(node))
@@ -203,10 +112,6 @@ const textContent = (node: ReactNode): string => {
   return ''
 }
 
-/**
- * Android leaves the invisible children out of the button's description, so a
- * loading button names itself from their text.
- */
 const loadingLabel = (
   loading: boolean | undefined,
   label: string | undefined,
@@ -219,11 +124,6 @@ const busyState = (
 ): ButtonProps['accessibilityState'] =>
   loading ? { ...state, busy: true } : state
 
-/**
- * Picks the pointer treatment from the rendered size and fill. Returns a
- * wrapper for the pressable, the tint overlay to render inside it, and a layout
- * listener that measures it.
- */
 const useButtonPointer = (
   pointerEffect: ButtonProps['pointerEffect'],
   surfaceStyle: ViewStyle,
@@ -295,8 +195,7 @@ const useButtonBaseStyle = (
             ? (glassTint ??
               (isLiquidGlassAvailable() ? undefined : theme.colors.card))
             : undefined,
-      // Glass material is layered absolutely inside; clip it to the
-      // button's borderRadius so the rounded shape carries through.
+
       overflow: isGlass ? 'hidden' : undefined,
     },
     isGlass,
@@ -485,12 +384,6 @@ const AnimatedButton: React.FC<PropsWithChildren<ButtonProps>> = ({
   )
 }
 
-/**
- * A Button with nothing to do: same surface, but a plain View, so it doesn't
- * dim, shift, take the touch, or read as tappable. Covers containers styled
- * like buttons (e.g. empty-state blocks) and triggers whose press is handled
- * natively by a wrapper (e.g. a `PullDownMenu`).
- */
 const InertButton: React.FC<PropsWithChildren<ButtonProps>> = ({
   children,
   style,
@@ -514,8 +407,6 @@ const InertButton: React.FC<PropsWithChildren<ButtonProps>> = ({
 
   return (
     <View
-      // Labelled triggers (e.g. a PullDownMenu's button) stay one accessible
-      // element; plain containers let their content be read as-is.
       accessible={
         props.accessibilityLabel != null || props.accessibilityRole != null
       }
@@ -536,11 +427,6 @@ const InertButton: React.FC<PropsWithChildren<ButtonProps>> = ({
   )
 }
 
-/**
- * A pressable Button reads as a button to VoiceOver and TalkBack unless the
- * caller gives it another `accessibilityRole` (tab, radio, link…). An inert one
- * keeps no role, since nothing happens when it's activated.
- */
 const Button: React.FC<PropsWithChildren<ButtonProps>> = (props) => {
   if (
     !props.onPress &&

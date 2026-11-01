@@ -12,7 +12,6 @@ const titleKey: Record<ContactsListSectionKey, TranslationKey> = {
   other: 'suggested_otherContacts',
 }
 
-/** The small uppercase title above each section of the Contacts list. */
 export function ContactsListSectionHeader({
   section,
 }: {
@@ -27,10 +26,6 @@ export function ContactsListSectionHeader({
   )
 }
 
-/**
- * Space between Contacts list items: the usual gap between rows, a tighter one
- * under a section title, and more room before the next section starts.
- */
 export function ContactsListSeparator({
   leadingItem,
   trailingItem,

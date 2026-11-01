@@ -12,24 +12,16 @@ import {
   visitsByContact,
 } from '@/lib/conversations'
 
-/**
- * Contacts this close to the device count as Nearby. Geocoded addresses can be
- * a house or two off, so a radius reads better than a strict nearest-first
- * order, and it keeps a whole apartment building together.
- */
 export const NEARBY_RADIUS_METERS = 250
-/** A Visit this many days old or newer puts a Contact in Recent. */
+
 export const RECENT_VISIT_DAYS = 14
-/** Missed Follow-ups older than this stop counting as due (same as Home). */
+
 export const DUE_FOLLOW_UP_LOOKBACK_DAYS = 30
-/** Each suggested section shows at most this many Contacts. */
+
 export const SUGGESTED_SECTION_LIMIT = 5
-/**
- * Been a While: the last conversation is at least this many calendar days old,
- * and no Visit of any kind (a Not at Home included) is newer.
- */
+
 export const BEEN_A_WHILE_MIN_DAYS = 21
-/** Been a While stops at this many days; older Contacts have moved on. */
+
 export const BEEN_A_WHILE_MAX_DAYS = 120
 
 export type SuggestedSectionKey =
@@ -44,37 +36,17 @@ export type SuggestedSection = {
 }
 
 export type SuggestedContacts = {
-  /** Non-empty sections, in display order. A Contact appears in one at most. */
   sections: SuggestedSection[]
-  /** Ids of every Contact placed in a section. */
+
   suggestedIds: Set<string>
-  /** Meters from `here`, for Contacts with a coordinate (only when `here`). */
+
   distanceById: Map<string, number>
-  /**
-   * The oldest open Follow-up per Contact that is due: today (any time) or
-   * missed within the lookback. Present even when the Contact landed in an
-   * earlier section, so rows can still say "Follow-up today".
-   */
+
   dueFollowUpById: Map<string, Visit>
-  /**
-   * The last real conversation (not a Not at Home) per Contact in Been a While,
-   * for the row's "Talked 2 months ago" line.
-   */
+
   lastTalkById: Map<string, Visit>
 }
 
-/**
- * Splits Contacts into the Suggested sections: Nearby (within
- * {@link NEARBY_RADIUS_METERS} of `here`, closest first), then Follow-ups due
- * (most overdue first), then Recent (most recent Visit first), then, when
- * `beenAWhile` is on, Been a While (see `beenAWhileContacts`). Each section is
- * capped at {@link SUGGESTED_SECTION_LIMIT} and skips Contacts already shown in
- * an earlier one. Without `here`, there's no Nearby section.
- *
- * Shared by the Log Visit contact picker and the Contacts list's Suggested sort
- * so both suggest the same people. Only the Contacts list asks for Been a
- * While; the picker is for someone just visited.
- */
 export const buildSuggestedContacts = ({
   contacts,
   conversations,
@@ -89,9 +61,9 @@ export const buildSuggestedContacts = ({
   index: ConversationIndex
   here?: Coordinate | null
   currentTime?: Date
-  /** Adds the Been a While section. */
+
   beenAWhile?: boolean
-  /** Ends Been a While at the retention prompt's cutoff. */
+
   dataProtectionMode?: boolean
 }): SuggestedContacts => {
   const suggestedIds = new Set<string>()
@@ -165,7 +137,6 @@ export const buildSuggestedContacts = ({
   return { sections, suggestedIds, distanceById, dueFollowUpById, lastTalkById }
 }
 
-/** Whole calendar days from `from` to `to`, so the window doesn't move by hour. */
 const calendarDaysBetween = (from: Date, to: Date) => {
   const startOfDay = (d: Date) => {
     const copy = new Date(d)
@@ -175,15 +146,6 @@ const calendarDaysBetween = (from: Date, to: Date) => {
   return Math.round((startOfDay(to) - startOfDay(from)) / 86_400_000)
 }
 
-/**
- * People talked with a while ago who'd otherwise go quiet: the last real
- * conversation (a Not at Home doesn't count) was {@link BEEN_A_WHILE_MIN_DAYS}
- * to `maxDays` days ago, no Visit at all is newer than the minimum (a recent
- * Not at Home means the User is already trying), no open Follow-up is upcoming
- * or missed within {@link DUE_FOLLOW_UP_LOOKBACK_DAYS} days, and the Contact
- * isn't dismissed. Bible studies come first, then favorites, then the most
- * recently talked with.
- */
 const beenAWhileContacts = ({
   contacts,
   conversations,
@@ -208,8 +170,7 @@ const beenAWhileContacts = ({
   }
 
   const byContact = visitsByContact(conversations)
-  // A Follow-up missed longer ago than Follow-ups Due looks back has lapsed
-  // too, so it doesn't keep the Contact out.
+
   const lookbackStart = new Date(currentTime)
   lookbackStart.setHours(0, 0, 0, 0)
   lookbackStart.setDate(lookbackStart.getDate() - DUE_FOLLOW_UP_LOOKBACK_DAYS)
@@ -244,10 +205,6 @@ const beenAWhileContacts = ({
   return lapsed.sort((a, b) => rank(a) - rank(b) || b.ms - a.ms)
 }
 
-/**
- * Open Follow-ups dated today or missed within the lookback, oldest per
- * Contact. "Open" means no later Visit answered it (see `followUpAnswer`).
- */
 const dueFollowUps = (conversations: Visit[], currentTime: Date) => {
   const endOfToday = new Date(currentTime)
   endOfToday.setHours(23, 59, 59, 999)
@@ -272,7 +229,6 @@ const dueFollowUps = (conversations: Visit[], currentTime: Date) => {
   return due
 }
 
-/** Section header string for each suggested section. */
 export const suggestedSectionTitleKey: Record<
   SuggestedSectionKey,
   TranslationKey
@@ -283,11 +239,6 @@ export const suggestedSectionTitleKey: Record<
   beenAWhile: 'suggested_beenAWhile',
 }
 
-/**
- * A Follow-up's due day relative to `currentTime`, by calendar day: "Follow-up
- * 2 days overdue", "Follow-up today", "Follow-up tomorrow", or "Follow-up in 3
- * days".
- */
 export const followUpDayLabel = (
   due: Date | number,
   currentTime: Date = new Date()
@@ -312,22 +263,13 @@ export const followUpDayLabel = (
   })
 }
 
-/** "Follow-up today" or "Follow-up 2 days overdue" for a due Follow-up. */
 export const dueFollowUpLabel = (
   visit: Visit,
   currentTime: Date = new Date()
 ): string => followUpDayLabel(new Date(visit.followUp!.date), currentTime)
 
-/** A row's second line, saying why a suggested Contact is listed. */
 export type SuggestedRowDetail = { text: string; tone?: 'default' | 'due' }
 
-/**
- * Why a suggested Contact is listed: Nearby shows the street so neighbors in
- * one building are easy to tell apart (after "Follow-up today" when one is
- * due); Follow-ups Due shows how overdue; Been a While shows when they last
- * talked, which a later Not at Home would hide. Recent keeps the row's default
- * line.
- */
 export const suggestedRowDetail = (
   section: SuggestedSectionKey,
   contact: Contact,

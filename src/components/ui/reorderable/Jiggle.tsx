@@ -12,23 +12,13 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated'
 
-/**
- * How far a corner travels, in points, either way. Rotating by a fixed angle
- * would swing a wide card's corners several points while a small one barely
- * moved; the Home Screen's icons and widgets all look to wobble about as much.
- */
 const CORNER_TRAVEL = 1.8
 const MIN_DEGREES = 0.5
 const MAX_DEGREES = 2
-/** Each swing one way, in milliseconds; varied a little per item. */
+
 const SWING_MS = 130
 const BOB = 0.6
 
-/**
- * Wobbles its content while `active`, as apps and widgets do while the Home
- * Screen is being edited. Every item starts at its own point in the swing, so
- * the grid doesn't move in step. Still for Reduce Motion.
- */
 export default function Jiggle({
   active,
   children,
@@ -94,7 +84,7 @@ export default function Jiggle({
     <Animated.View
       onLayout={(e) => {
         const { width, height } = e.nativeEvent.layout
-        // Whole points, so a reflow by a fraction doesn't restart the swing.
+
         setExtent(Math.round(Math.max(width, height)))
       }}
       style={[style, animatedStyle]}

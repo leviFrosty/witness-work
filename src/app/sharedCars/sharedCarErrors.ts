@@ -3,10 +3,6 @@ import { isSpaceError } from '@/lib/sharedSpaces/client'
 import { CarInvitationError } from '@/app/sharedCars/carInvitations'
 import { SharedCarsError } from '@/app/sharedCars/engine'
 
-/**
- * Why sharing a car, inviting to it, or changing who's on it failed, in the
- * User's words. `name` is the person it was about, where there's one.
- */
 export function sharedCarErrorMessage(
   error: unknown,
   { name = '' }: { name?: string } = {}
@@ -30,7 +26,7 @@ export function sharedCarErrorMessage(
         return i18n.t('mileage.sharedCarError_notOwner')
       case 'not_ready':
         return i18n.t('mileage.sharedCarError_notReady')
-      // Waiting for its key, which may take more than a moment.
+
       case 'key_unverified':
         return i18n.t('mileage.sharedCarError_waiting')
       case 'not_found':

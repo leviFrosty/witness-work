@@ -27,13 +27,6 @@ import { useFoldColumn } from '@/components/ui/layout/FoldPane'
 
 export type * from '@/components/ui/GroupedList.types'
 
-/**
- * Short, fixed groups of settings rows that own the screen's scroll: a SwiftUI
- * inset grouped `List` on iOS (`GroupedList.ios.tsx`) and a Material 3 grouped
- * list on Android (`GroupedList.android.tsx`). Not virtualized; use FlashList
- * for long or unknown-length data. Other platforms render the shared React
- * Native rows.
- */
 export function GroupedList({ children, title, testID }: GroupedListProps) {
   const foldColumn = useFoldColumn(inputLayout.contentMaxWidth)
   const theme = useTheme()

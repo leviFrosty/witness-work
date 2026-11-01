@@ -57,10 +57,6 @@ const MENU_ROWS = [
 ]
 const MENU_ROW_H = 38
 
-/**
- * Four labeled tabs: the old bar's Map tab folds into Contacts, the rest gain
- * labels beside the new Add button, and Settings opens from the avatar.
- */
 const NavigationVisual = ({
   palette,
   active,
@@ -77,7 +73,7 @@ const NavigationVisual = ({
 
   const headerStyle = useRiseStyle(intro, 0.02, 0.22)
   const barRise = useRiseStyle(intro, 0, 0.2, 24)
-  // 0 = the old five-tab bar, 1 = four labeled tabs and Add.
+
   const morph = useDerivedValue(() => seg(intro.value, 0.5, 0.85))
 
   const barStyle = useAnimatedStyle(() => ({
@@ -102,7 +98,7 @@ const NavigationVisual = ({
       transform: [{ scale: 0.4 + 0.6 * backOut(p) }],
     }
   })
-  // The highlight hops across the tabs, then rests on Home.
+
   const highlightStyle = useAnimatedStyle(() => {
     const t = loop.value
     let x = newCenter(0)

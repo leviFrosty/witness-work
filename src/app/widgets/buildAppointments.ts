@@ -14,25 +14,16 @@ import {
 } from '@/lib/dates'
 
 export type WidgetAppointment = {
-  /** Visit ID — used to deep-link with `highlightedVisitId`. */
   id: string
   contactId: string
   contactName: string
-  /** Epoch ms of the follow-up date. */
+
   date: number
-  /** Topic the user typed for the follow-up, or `null`. */
+
   topic: string | null
-  /**
-   * Pre-formatted, locale-aware time-of-day string. Today renders the time
-   * (e.g. `"3:00 PM"`), tomorrow gets `"Tomorrow 3:00 PM"`, this week shows the
-   * day name (`"Thu 3:00 PM"`), and anything beyond falls back to a short date
-   * (`"Apr 14"`).
-   */
+
   timeFormatted: string
-  /**
-   * True when the follow-up date is in the past. Surfaces in red on the widget
-   * and unlocks the reschedule action.
-   */
+
   isOverdue: boolean
 }
 
@@ -41,23 +32,12 @@ export type BuildAppointmentsArgs = {
   conversations: Visit[]
 }
 
-/**
- * Cap how many we serialize. The widget App Intent narrows by day-window
- * client-side; 20 covers the densest realistic month-long view at large size.
- */
 const MAX_APPOINTMENTS = 20
-/**
- * Forward window we serialize. Widget intent narrows further. 31 days covers
- * the largest configurable window the user can pick.
- */
+
 const FORWARD_DAYS = 31
-/**
- * Backward window for surfacing overdue follow-ups the user never marked
- * complete. Anything older than this is presumed forgotten.
- */
+
 const OVERDUE_LOOKBACK_DAYS = 30
 
-/** Format a follow-up date as a locale-aware "time of day"-style label. */
 function formatAppointmentTime(
   date: moment.Moment,
   now: moment.Moment
@@ -67,11 +47,8 @@ function formatAppointmentTime(
   const isYesterday = date.isSame(now.clone().subtract(1, 'day'), 'day')
   const isThisWeek = date.isSame(now, 'isoWeek')
 
-  // moment honors locale for these tokens — `LT` is short time, `ddd` is short
-  // day name, `MMM D` is short date.
   if (isSameDay) return formatTime(date)
-  // localized "Tomorrow at HH:mm" / "Yesterday at HH:mm" via the locale's
-  // nextDay/lastDay calendar templates.
+
   if (isTomorrow)
     return formatCalendar(date, {
       referenceTime: now,
@@ -95,8 +72,6 @@ export function buildAppointments(
 
   const contactsById = new Map(args.contacts.map((c) => [c.id, c]))
 
-  // Answered follow-ups (a later visit that day) are done, matching the app's
-  // Home card and missed list.
   const byContact = visitsByContact(args.conversations)
 
   const inWindow = args.conversations
@@ -123,7 +98,6 @@ export function buildAppointments(
     })
     .filter((a): a is WidgetAppointment => a !== null)
 
-  // Overdue first (most urgent), then chronological for upcoming.
   inWindow.sort((a, b) => {
     if (a.isOverdue !== b.isOverdue) return a.isOverdue ? -1 : 1
     return a.date - b.date

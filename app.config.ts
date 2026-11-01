@@ -5,14 +5,7 @@ import { execSync } from 'child_process'
 import { readdirSync } from 'fs'
 import path from 'path'
 import { ExpoConfig, ConfigContext } from 'expo/config'
-/**
- * Passed in from `env` property in profile `./eas.json` to eas build.
- *
- * - `development`: dev client for the simulator (Metro, dev App Attest).
- * - `beta`: internal TestFlight app built from any branch by `/beta-build`. Its
- *   own bundle id keeps WIP builds away from real service records.
- * - `production`: the App Store app.
- */
+
 type AppVariant = 'development' | 'beta' | 'production'
 const APP_VARIANT: AppVariant =
   process.env.APP_VARIANT === 'development' ||
@@ -21,18 +14,13 @@ const APP_VARIANT: AppVariant =
     : 'production'
 const IS_DEV = APP_VARIANT === 'development'
 const IS_BETA = APP_VARIANT === 'beta'
-// Inlined into JS for both native and OTA builds. Expo Constants continues to
-// describe the native binary after an update, so it cannot identify OTA code.
+
 process.env.EXPO_PUBLIC_COMMIT_HASH = execSync('git rev-parse --short HEAD')
   .toString()
   .trim()
-// scripts/perf profiles a Release build of the development app: no OTA update
-// may replace the bundle under test, and Android must reach the local API over
-// plain HTTP. Without the probe the resolved config is unchanged.
+
 const PERF_PROBE = IS_DEV && process.env.EXPO_PUBLIC_PERF_PROBE === '1'
 
-// App Group and iCloud container ids derive from the bundle id; the widget's
-// SnapshotLoader relies on `group.<host bundle id>`.
 const BUNDLE_ID = {
   development: 'com.leviwilkerson.jwtimedev',
   beta: 'com.leviwilkerson.jwtimebeta',
@@ -44,21 +32,11 @@ const APP_NAME = {
   beta: 'WitnessWork Beta',
   production: 'WitnessWork',
 }[APP_VARIANT]
-// expo-camera, expo-image-picker, and expo-audio each write these keys (or
-// delete them when passed `false`), so every plugin gets the same string and
-// plugin order doesn't matter.
+
 const CAMERA_PERMISSION = enUS.cameraPermissionPurpose
-// Scribe AI voice logs (ADR 0018). Audio is transcribed on-device only.
+
 const MICROPHONE_PERMISSION = enUS.microphonePermissionPurpose
 
-/**
- * Every language the app has a translation for (a `src/locales` file), as Apple
- * and Android name it, English first. Declared so iOS (Settings > the app >
- * Language) and Android 13+ (Settings > App languages) offer them, and so iOS
- * shows its own controls and alerts in the app in that language. The app's
- * Language stays the one picked in the app, or Device Default; see ADR 0026 for
- * how they fit together.
- */
 const APP_LANGUAGES = readdirSync(path.join(__dirname, 'src', 'locales'))
   .filter((file) => file.endsWith('.json'))
   .map((file) => {
@@ -90,12 +68,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     userInterfaceStyle: 'automatic',
     assetBundlePatterns: ['**/*'],
     android: {
-      // Avatar selection uses Android's system photo picker. Saving a photo
-      // does not need broad access to the user's media library.
       blockedPermissions: [
-        // RECORD_AUDIO stays allowed: voice logs record through Android's
-        // on-device recognizer (modules/speech-transcription), which asks for
-        // the microphone when the user first starts one.
         'android.permission.READ_MEDIA_IMAGES',
         'android.permission.READ_MEDIA_VIDEO',
         'android.permission.READ_MEDIA_AUDIO',
@@ -104,14 +77,12 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       package: IS_DEV
         ? 'com.leviwilkerson.jwtimedev'
         : 'com.leviwilkerson.jwtime',
-      // Firebase Cloud Messaging for Buddies pushes (Firebase project
-      // `turing-striker-403102`). Lists both the production and dev packages;
-      // nothing in it is secret, as every APK carries it.
+
       googleServicesFile: './google-services.json',
       adaptiveIcon: {
         foregroundImage: './src/assets/adaptive-icon.png',
         monochromeImage: './src/assets/adaptive-icon-monochrome.png',
-        // Match the standard icon's light surface so the green mark has contrast.
+
         backgroundColor: '#F8F9FA',
       },
       intentFilters: [
@@ -130,14 +101,13 @@ export default ({ config }: ConfigContext): ExpoConfig => {
               host: 'ww-proxy.leviwilkerson.com',
               pathPrefix: '/c/',
             },
-            // Buddy invites (`/b#1<secret>`); the secret stays in the fragment,
-            // which Android hands to the app with the rest of the link.
+
             {
               scheme: 'https',
               host: 'ww-proxy.leviwilkerson.com',
               path: '/b',
             },
-            // Set Up Another Device (`/h#1<channel, key, secret>`), likewise.
+
             {
               scheme: 'https',
               host: 'ww-proxy.leviwilkerson.com',
@@ -166,22 +136,17 @@ export default ({ config }: ConfigContext): ExpoConfig => {
         NSCalendarsUsageDescription: enUS.calendarPermissionUsage,
         NSCalendarsFullAccessUsageDescription: enUS.calendarPermissionUsage,
         NSMicrophoneUsageDescription: MICROPHONE_PERMISSION,
-        // Only requested before iOS 26, where on-device voice-log transcription
-        // runs through SFSpeechRecognizer (ADR 0018).
+
         NSSpeechRecognitionUsageDescription:
           enUS.speechRecognitionPermissionPurpose,
         LSSupportsOpeningDocumentsInPlace: true,
-        // With limited photo access, the app's own picker shows only the
-        // photos the User shared and offers Manage, so iOS doesn't need to ask
-        // about selecting more on the first library read of each launch.
+
         PHPhotoLibraryPreventAutomaticLimitedAccessAlert: true,
-        // expo-background-fetch requires this permitted task identifier
-        // to register the snapshot refresh task.
+
         BGTaskSchedulerPermittedIdentifiers: [
           'com.leviwilkerson.jwtime.widget.refresh',
         ],
-        // Register the .witnesswork contact-export file type so iMessage,
-        // Files, etc. open WitnessWork when the user taps the attachment.
+
         UTExportedTypeDeclarations: [
           {
             UTTypeIdentifier: 'com.leviwilkerson.witnesswork.contact',
@@ -202,33 +167,19 @@ export default ({ config }: ConfigContext): ExpoConfig => {
           },
         ],
       },
-      // Universal Links for shared contact URLs
-      // (https://ww-proxy.leviwilkerson.com/c#<payload>, plus the legacy
-      // /c/<payload> form). The ww-proxy worker serves
-      // the AASA file that lists both dev and prod bundle IDs, so a single
-      // associated domain works across both build variants.
+
       associatedDomains: ['applinks:ww-proxy.leviwilkerson.com'],
       entitlements: {
         'com.apple.security.application-groups': [`group.${BUNDLE_ID}`],
-        // App Attest (account sessions — ADR 0007, ADR 0027). The environment
-        // must track the build variant: dev builds attest against Apple's
-        // development environment, store builds against production. A mismatch
-        // makes every attestation fail. TestFlight (beta) always attests
-        // against production.
+
         'com.apple.developer.devicecheck.appattest-environment': IS_DEV
           ? 'development'
           : 'production',
-        // The second group is shared with the Notification Service Extension
-        // (`targets/notification-service`), which reads the keys that name
-        // Buddies alerts there. The app's own group stays first, so it remains
-        // where new Keychain items (the Buddies root seed among them) go.
+
         'keychain-access-groups': [
           `$(AppIdentifierPrefix)${BUNDLE_ID}`,
           `$(AppIdentifierPrefix)${BUNDLE_ID}.buddies-alerts`,
         ],
-        // iCloud entitlements are populated at prebuild time by
-        // `plugins/with-icloud-container.js` so the container identifier
-        // stays in lockstep with the plugin's Info.plist edits.
       },
       appStoreUrl: 'https://apps.apple.com/us/app/jw-time/id6469723047',
     },
@@ -262,7 +213,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
         },
       ],
       '@bacons/apple-targets',
-      // The Wear OS app (targets/wear-os) as the `:wear` Gradle module.
+
       './plugins/with-wear-os',
       ['./plugins/with-android-locale-config', { locales: APP_LANGUAGES }],
       './plugins/with-android-text-input-direction',
@@ -299,15 +250,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       ],
       'expo-asset',
       'expo-background-task',
-      // Buddies pushes carry `content-available`, so iOS wakes the app to pull
-      // what they announced before it's opened (buddiesBackgroundSync.ts).
-      // Android gets data-only FCM messages, which wake the same task.
-      // Android draws a notification's small icon from its alpha alone, so it
-      // gets a white-on-transparent brand mark (the launcher icon it falls
-      // back to shows as a blank white disc), tinted with the theme's accent
-      // (`lightModeColors.accent`). The plugin also makes both Firebase's
-      // defaults for FCM messages it displays itself.
-      // Otherwise the defaults Expo already applies for this package.
+
       [
         'expo-notifications',
         {
@@ -322,42 +265,29 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       [
         'expo-audio',
         {
-          // The only audio we play is a short foreground "success" chime on
-          // the confetti celebration (see AnimationViewProvider) — never in
-          // the background. The plugin defaults `enableBackgroundPlayback` to
-          // true, which adds the `audio` UIBackgroundMode to Info.plist. App
-          // Review rejects that under guideline 2.5.4 without a persistent
-          // background-audio feature, so keep it off. The chime respects the
-          // ring/silent switch (default ambient session category — see #365).
           enableBackgroundPlayback: false,
-          // The microphone is used only by Scribe AI voice logs, in the
-          // foreground, through the SpeechTranscription module.
+
           microphonePermission: MICROPHONE_PERMISSION,
         },
       ],
-      // The app owns layout direction (ADR 0026): no `supportsRTL` or
-      // `forcesRTL`. Android's list comes from with-android-locale-config.
+
       ['expo-localization', { supportedLocales: { ios: APP_LANGUAGES } }],
       [
         'expo-local-authentication',
         { faceIDPermission: enUS.faceIdPermissionPurpose },
       ],
-      // SDK 57 removed the top-level `splash` config key; the splash screen
-      // is now configured exclusively through this plugin.
+
       [
         'expo-splash-screen',
         {
           image: './src/assets/splash.png',
           resizeMode: 'contain',
-          // Keep in sync with SPLASH_BACKGROUND_COLOR (src/constants/brandMark.ts),
-          // which the in-app splash replica and onboarding welcome draw.
+
           backgroundColor: '#4BD27C',
           android: {
-            // A 160dp mark on Android's 288dp canvas, inside its 192dp safe circle.
             drawable: { icon: './src/assets/splash-android.xml' },
           },
-          // The checked-in asset is a full-device splash composition. Without
-          // this, SDK 57 constrains it to the plugin default 100px image width.
+
           ios: {
             enableFullScreenImage_legacy: true,
           },
@@ -389,22 +319,15 @@ export default ({ config }: ConfigContext): ExpoConfig => {
         'expo-image-picker',
         {
           photosPermission: enUS.photoLibraryPurpose,
-          // Camera is used to take profile/contact avatar photos. Give it a
-          // specific purpose string instead of the plugin's generic default
-          // (better for App Review than "Allow … to access your camera").
-          // Shares NSCameraUsageDescription with expo-camera below; keep the
-          // two strings identical so plugin order doesn't matter.
+
           cameraPermission: CAMERA_PERMISSION,
-          // We only pick still images, never video; the microphone string is
-          // for voice logs. On Android, modules/speech-transcription declares
-          // RECORD_AUDIO for them.
+
           microphonePermission: MICROPHONE_PERMISSION,
         },
       ],
       [
         'expo-camera',
         {
-          // Scans Buddies invite QR codes. Photos only; never records video.
           cameraPermission: CAMERA_PERMISSION,
           microphonePermission: MICROPHONE_PERMISSION,
           recordAudioAndroid: false,
@@ -416,7 +339,6 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     },
   }
 
-  // Dev clients use Metro; simulator builds can explicitly skip uploads.
   if (!IS_DEV && process.env.POSTHOG_DISABLE_UPLOAD !== 'true') {
     expoConfig.plugins?.unshift([
       'posthog-react-native/expo',

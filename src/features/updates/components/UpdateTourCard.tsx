@@ -17,10 +17,6 @@ import {
 } from '@/features/updates/constants/updateReveal'
 import { useUpdateRevealStore } from '@/features/updates/stores/updateReveal'
 
-/**
- * Replays the update reveal from What's New, once this install has the update
- * it belongs to (always in development, to preview it).
- */
 const UpdateTourCard = () => {
   const theme = useTheme()
   const navigation = useNavigation<RootStackNavigation>()
@@ -34,7 +30,6 @@ const UpdateTourCard = () => {
     <Button
       accessibilityRole='button'
       onPress={() => {
-        // The reveal draws over the tabs, so come back to them first.
         navigation.navigate('Root', undefined, { pop: true })
         requestReveal('whats_new')
       }}

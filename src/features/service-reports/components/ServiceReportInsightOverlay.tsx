@@ -17,10 +17,6 @@ interface Props {
   expandedHeight?: number
 }
 
-/**
- * Adds the expanding-card interaction to a flat cell inside the shared Service
- * Report card without introducing a nested Card surface.
- */
 const ServiceReportInsightOverlay = ({
   children,
   content,

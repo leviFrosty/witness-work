@@ -2,27 +2,11 @@ import moment from 'moment'
 import { Contact } from '@/types/contact'
 import { Visit } from '@/types/visit'
 
-/**
- * Dev-only fixture: ONE Contact whose Visit history exercises every rendering
- * branch of the Contact Details screen and its visit rows, so a redesign of
- * that screen can be checked against a single record.
- *
- * Pure on purpose — no store access, no `Date.now()`; every date derives from
- * `now` — so the contract is unit-testable and ids stay stable across runs
- * (re-running the Tools generator is a no-op for records that already exist).
- */
-
 export const UNIQUE_CONTACT_ID = 'unique-contact'
 export const UNIQUE_VISIT_ID_PREFIX = 'unique-visit-'
 
-/** A `customFields` key with no definition anywhere — must never render. */
 export const UNIQUE_CONTACT_UNKNOWN_DEF_ID = 'unknown-def-id'
 
-/**
- * Labels for the custom field definitions the Tools handler creates (or reuses)
- * before building the fixture. `archived` is archived right after creation so
- * its value must stay hidden.
- */
 export const UNIQUE_CONTACT_CUSTOM_FIELD_LABELS = {
   language: 'Language',
   bestTime: 'Best time to visit',
@@ -37,14 +21,14 @@ export type UniqueContactCustomFieldKey =
 
 export type UniqueContactFixtureInput = {
   now: moment.Moment | Date
-  /** Custom field definition ids, keyed like the labels above. */
+
   customFieldIds: Record<UniqueContactCustomFieldKey, string>
 }
 
 export type UniqueContactFixture = {
   contact: Contact
   visits: Visit[]
-  /** Visit the Contact Details screen should open highlighted. */
+
   highlightedVisitId: string
 }
 
@@ -122,7 +106,6 @@ export function buildUniqueContactFixture({
   const current = moment(now)
   const today = current.clone().startOf('day')
 
-  /** `amount` of `unit` from today's midnight, at a wall-clock time. */
   const at = (
     amount: number,
     unit: moment.unitOfTime.DurationConstructor,
@@ -130,7 +113,6 @@ export function buildUniqueContactFixture({
     minute = 0
   ) => today.clone().add(amount, unit).set({ hour, minute }).toDate()
 
-  /** `hours` before now, clamped so the visit never leaves today's date. */
   const hoursAgoToday = (hours: number) =>
     moment
       .max(
@@ -141,7 +123,7 @@ export function buildUniqueContactFixture({
 
   const contact: Contact = {
     id: UNIQUE_CONTACT_ID,
-    // One day before the oldest visit (`very-old-first-contact`).
+
     createdAt: today
       .clone()
       .subtract(5, 'years')
@@ -153,9 +135,9 @@ export function buildUniqueContactFixture({
     isFavorite: true,
     avatar: { type: 'emoji', value: '🌻' },
     avatarBackground: '#F59E0B',
-    // Mid-luminance teal: stresses the readable-foreground pick on the hero.
+
     heroBackground: '#14B8A6',
-    // National form — only valid when parsed with `phoneRegionCode`.
+
     phone: '070-123 45 67',
     phoneRegionCode: 'SE',
     email: 'maria.fernandez-ortega+witnesswork@example.com',
@@ -173,18 +155,16 @@ export function buildUniqueContactFixture({
       [customFieldIds.language]: 'Spanish (Mexican) / English',
       [customFieldIds.bestTime]: 'Weekday evenings after 6 PM',
       [customFieldIds.longLabel]: LONG_CUSTOM_FIELD_VALUE,
-      // Archived def: value preserved but never rendered nor counted.
+
       [customFieldIds.archived]: 'Archived — must not render',
-      // Empty value: hidden.
+
       [customFieldIds.emptyValue]: '',
-      // Orphaned value with no def: never rendered nor counted.
+
       [UNIQUE_CONTACT_UNKNOWN_DEF_ID]: 'Orphaned value — must not render',
     },
   }
 
   const highlighted = visit('today-grace-followup', {
-    // Highlighted row + follow-up past but inside the 4h grace window (muted
-    // in the row, still listed under Approaching), Bell, topic.
     date: hoursAgoToday(3),
     note:
       'Talked on the porch about why God permits suffering. She asked for ' +
@@ -198,8 +178,7 @@ export function buildUniqueContactFixture({
 
   const visits: Visit[] = [
     highlighted,
-    // Second visit on the same day; study badge; multi-paragraph note; future
-    // follow-up (accent) with Bell, topic, and a notifications array.
+
     visit('today-second-study', {
       date: hoursAgoToday(6),
       isBibleStudy: true,
@@ -216,21 +195,19 @@ export function buildUniqueContactFixture({
         ],
       },
     }),
-    // Exactly midnight today; Not at Home badge; empty-string note (dashed
-    // "No note saved"); no follow-up block.
+
     visit('today-midnight-nah', {
       date: today.clone().toDate(),
       notAtHome: true,
       note: '',
     }),
-    // Same day but later than now; Not at Home with a note.
+
     visit('later-today-nah', {
       date: today.clone().endOf('day').startOf('minute').toDate(),
       notAtHome: true,
       note: 'Neighbor said they return after 9 PM',
     }),
-    // Study; note with a URL, phone, and email in prose; past follow-up
-    // (muted) with BellOff and a topic.
+
     visit('yesterday-study-links', {
       date: at(-1, 'days', 19, 30),
       isBibleStudy: true,
@@ -241,21 +218,20 @@ export function buildUniqueContactFixture({
         topic: 'Missed — reschedule Saturday',
       },
     }),
-    // Not at Home with a note.
+
     visit('three-days-ago-nah-note', {
       date: at(-3, 'days', 10, 15),
       notAtHome: true,
       note: 'Left a tract in the door',
     }),
-    // Import-only shape: Not at Home AND Bible Study (Not at Home badge wins);
-    // empty note.
+
     visit('four-days-ago-both-flags', {
       date: at(-4, 'days', 17, 45),
       notAtHome: true,
       isBibleStudy: true,
       note: '',
     }),
-    // Dismissed follow-up (`dismissed` is not rendered by the row today).
+
     visit('five-days-ago-dismissed', {
       date: at(-5, 'days', 16),
       note:
@@ -268,7 +244,7 @@ export function buildUniqueContactFixture({
         dismissed: true,
       },
     }),
-    // Legacy placeholder follow-up (past, BellOff, no topic sub-block).
+
     visit('six-days-ago-placeholder-followup', {
       date: at(-6, 'days', 9),
       note: 'Her son answered and said she would be home next week.',
@@ -277,13 +253,12 @@ export function buildUniqueContactFixture({
         notifyMe: false,
       },
     }),
-    // Note that is one unbroken ~160-char URL (text wrapping).
+
     visit('eight-days-ago-long-url', {
       date: at(-8, 'days', 13, 20),
       note: LONG_UNBROKEN_URL,
     }),
-    // Study; very long multi-paragraph note; future follow-up with a long
-    // topic.
+
     visit('two-weeks-ago-long-note', {
       date: at(-14, 'days', 11),
       isBibleStudy: true,
@@ -294,12 +269,12 @@ export function buildUniqueContactFixture({
         topic: LONG_FOLLOW_UP_TOPIC,
       },
     }),
-    // Whitespace-only note (currently treated as a note, not "No note saved").
+
     visit('three-weeks-ago-whitespace-note', {
       date: at(-21, 'days', 15),
       note: '   \n  ',
     }),
-    // Tie pair: identical timestamps (sort stability / keys).
+
     visit('tie-a', {
       date: at(-25, 'days', 9),
       notAtHome: true,
@@ -309,14 +284,13 @@ export function buildUniqueContactFixture({
       date: at(-25, 'days', 9),
       note: 'Her sister answered and accepted the Memorial invitation.',
     }),
-    // Study in a previous month; no follow-up.
+
     visit('last-month-study', {
       date: at(-40, 'days', 10),
       isBibleStudy: true,
       note: 'Studied chapter 2. She is enjoying the videos.',
     }),
-    // Not at Home; undefined note; past follow-up beyond the 30-day Missed
-    // lookback, Bell, no topic.
+
     visit('last-month-nah-old-followup', {
       date: at(-45, 'days', 14),
       notAtHome: true,
@@ -325,7 +299,7 @@ export function buildUniqueContactFixture({
         notifyMe: true,
       },
     }),
-    // Far-future follow-up (beyond the widget window), BellOff, topic.
+
     visit('far-future-followup', {
       date: at(-50, 'days', 12),
       note:
@@ -337,29 +311,29 @@ export function buildUniqueContactFixture({
         topic: 'Beyond the widget window',
       },
     }),
-    // Emoji + RTL scripts in the note.
+
     visit('six-months-ago-mixed-script', {
       date: at(-6, 'months', 16, 10),
       note: 'Studied in Hebrew and Arabic 📖 — שלום / مرحبا — asked about Psalm 83:18',
     }),
-    // Study in the previous calendar year.
+
     visit('previous-year-study', {
       date: at(-13, 'months', 10, 30),
       isBibleStudy: true,
       note: 'Started a study in chapter 1 after the Memorial invitation.',
     }),
-    // Old Not at Home with an empty note.
+
     visit('two-years-ago-nah', {
       date: at(-2, 'years', 11),
       notAtHome: true,
       note: '',
     }),
-    // Oldest visit (> 4 years); midnight on January 1.
+
     visit('very-old-first-contact', {
       date: today.clone().subtract(5, 'years').startOf('year').toDate(),
       note: 'First contact at the door',
     }),
-    // Future-dated visit with a future follow-up.
+
     visit('future-imported-visit', {
       date: at(1, 'days', 14),
       note: 'Imported from notes: scheduled visit',

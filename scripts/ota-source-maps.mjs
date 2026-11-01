@@ -7,8 +7,7 @@ export function prepareHermesMaps(buildDirectory, uploadDirectory, platform) {
   const map = JSON.parse(fs.readFileSync(`${input}.hbc.map`, 'utf8'))
   if (!map.x_hermes_function_offsets)
     throw new Error('Missing composed Hermes source map')
-  // Hot Updater's composition drops the Expo debug ID. The shipped bytecode
-  // still contains that ID, so retain it on the matching composed map.
+
   map.debugId = JSON.parse(fs.readFileSync(`${input}.map`, 'utf8')).debugId
   if (!map.debugId) throw new Error('Missing Expo source map debug ID')
   fs.mkdirSync(uploadDirectory, { recursive: true })

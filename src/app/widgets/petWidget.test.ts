@@ -40,7 +40,6 @@ import {
 const at = (day: number, hour = 0, month = 9) =>
   new Date(2026, month, day, hour, 0, 0, 0)
 
-/** Every day key from `from` through `to`. */
 const daysFrom = (from: string, to: string): Set<string> => {
   const days = new Set<string>()
   for (let key = from; key <= to; key = addDays(key, 1)) days.add(key)
@@ -84,7 +83,6 @@ const input = (patch: Partial<PetWidgetInput> = {}): PetWidgetInput => ({
 const fakeEncoder = () =>
   vi.fn((buffer: PixelBuffer) => `png-${hashBuffer(buffer)}`)
 
-/** The entries that start within the 48 hours after `now`. */
 const dense = <T extends { date: number }>(entries: T[], now: Date) =>
   entries.filter((e) => e.date < now.getTime() + PET_TIMELINE_HOURS * 3_600_000)
 
@@ -126,7 +124,6 @@ describe('petWidgetTimeline', () => {
   })
 
   it('drops half a heart at midnight on quiet day 10, and again on day 13', () => {
-    // Last active day Oct 9: Oct 18 is quiet day 9, Oct 19 day 10.
     const entries = petWidgetTimeline(
       input({
         pet: pet({ adoptedOn: '2026-09-25' }),
@@ -142,7 +139,6 @@ describe('petWidgetTimeline', () => {
       [at(19).getTime(), 4.5],
     ])
 
-    // Last active day Oct 6: Oct 19 is quiet day 13.
     const later = petWidgetTimeline(
       input({
         pet: pet({ adoptedOn: '2026-09-25' }),
@@ -160,7 +156,6 @@ describe('petWidgetTimeline', () => {
   })
 
   it('shows the pet dying at midnight on quiet day 60', () => {
-    // Last active day Aug 20: Oct 18 is quiet day 59, Oct 19 day 60.
     const entries = petWidgetTimeline(
       input({
         pet: pet({ adoptedOn: '2026-08-01' }),
@@ -186,8 +181,6 @@ describe('petWidgetTimeline', () => {
   })
 
   it('reaches past the monthly hold to the fading and the end', () => {
-    // A Kingdom Publisher active Oct 1: hearts hold through November, fade
-    // from Dec 10, and the pet would die on Jan 29, 60 days after Nov 30.
     const entries = petWidgetTimeline(
       input({
         room: FIXED_DAY,
@@ -239,7 +232,7 @@ describe('petWidgetTimeline', () => {
       }),
       at(30, 22, 10)
     )
-    // (A gift may also arrive within the 48 hours.)
+
     expect(entries.slice(0, 2).map((e) => e.state.season)).toEqual([
       'autumn',
       'winter',
@@ -279,7 +272,7 @@ describe('petWidgetTimeline after the 48 hours', () => {
     ).toEqual(
       [
         [at(18), 5, false],
-        // Quiet day 10, 13, … from the last active day, Oct 18.
+
         [at(28), 4.5, false],
         [at(31), 4, false],
         [at(3, 0, 10), 3.5, false],
@@ -289,7 +282,7 @@ describe('petWidgetTimeline after the 48 hours', () => {
         [at(15, 0, 10), 1.5, false],
         [at(18, 0, 10), 1, false],
         [at(21, 0, 10), 0.5, false],
-        // Quiet day 60.
+
         [at(17, 0, 11), 0, true],
       ].map(([day, hearts, dead]) => [
         (day as Date).toDateString(),
@@ -306,20 +299,19 @@ describe('petWidgetTimeline after the 48 hours', () => {
     const entries = petWidgetTimeline(input(), now)
     expect(entries).toHaveLength(PET_TIMELINE_MAX_ENTRIES)
     const later = entries.slice(dense(entries, now).length)
-    // Dying, falling asleep, then the first new mood (content at 4), in order.
+
     expect(later.map((e) => [e.state.hearts, e.state.dead])).toEqual([
       [4, false],
       [0.5, false],
       [0, true],
     ])
-    // Whole days show the window as at noon.
+
     expect(later.every((e) => e.state.time === 'day')).toBe(true)
   })
 
   it('shows the 1st of the month with its own sign and lamp', () => {
     const now = at(25, 10)
-    // A pet that died in October: its lamp is out, and only the sign and the
-    // streak label change.
+
     const entries = petWidgetTimeline(
       input({
         pet: pet({ adoptedOn: '2026-08-01' }),
@@ -361,7 +353,6 @@ describe('timelineChangePoints across DST', () => {
   })
 
   it('keeps every later midnight at 00:00 when today started at 01:00', () => {
-    // São Paulo skipped from 00:00 to 01:00 on 2018-11-04.
     process.env.TZ = 'America/Sao_Paulo'
     const now = new Date(2018, 10, 4, 10)
     expect(localMidnight(now).getHours()).toBe(1)
@@ -389,7 +380,7 @@ describe('timelineChangePoints across DST', () => {
       }),
       now
     )
-    // Last active Oct 25: Nov 4 is quiet day 10.
+
     expect(entries[0]).toMatchObject({ state: { hearts: 4.5 } })
     expect(entries[1].date).toBe(new Date(2018, 10, 7).getTime())
     expect(entries[1].state.hearts).toBe(4)
@@ -411,7 +402,7 @@ describe('planPetWidget', () => {
       now
     )!
     expect(signed.hash).not.toBe(first.hash)
-    // A sign value the room doesn't show changes nothing.
+
     const yearOnly = planPetWidget(
       input({
         signAt: () => ({
@@ -422,7 +413,7 @@ describe('planPetWidget', () => {
       now
     )!
     expect(yearOnly.hash).toBe(first.hash)
-    // Hearts alone don't change an image.
+
     const keys = new Set(first.entries.map((e) => e.imageKey))
     expect(keys.size).toBeLessThan(first.entries.length)
   })
@@ -430,7 +421,7 @@ describe('planPetWidget', () => {
   it('carries each entry its own lamp, sign line and label', () => {
     const plan = planPetWidget(input({ room: FIXED_DAY }), at(18, 10))!
     const [now, later] = plan.entries
-    // The lamp follows the hearts (ADR 0035).
+
     expect(now.entry.status).toEqual({
       lampLevel: 5,
       lampDaysLabel: '4 days kept',
@@ -483,12 +474,10 @@ describe('buildPetWidget', () => {
       expect(entry.medium).toBe(entry.small)
       expect(entry.large).not.toBe(entry.small)
     }
-    // The prune keep-list: exactly the files the entries name.
+
     const named = new Set(entries.flatMap((e) => [e.small, e.large]))
     expect(new Set(files.map((f) => f.name))).toEqual(named)
-    // Dawn, day, dusk and night at five hearts: four looks, two crops each;
-    // the days ahead add the lamp dimming with the hearts, the pet asleep and
-    // the pet that died.
+
     expect(named.size).toBe(14)
     expect(files.every((f) => f.base64.startsWith('png-'))).toBe(true)
     expect(encode.mock.calls.length).toBeLessThanOrEqual(

@@ -15,19 +15,7 @@ function useAppStateStatus() {
   return state
 }
 
-/**
- * Turns what's covering the tabs into takeover holds, so nothing new takes over
- * until it's gone: a sheet or pushed screen above the tabs (`Root` isn't on top
- * of the root stack), the profile overlay, the notification bell's tray, and
- * the app out of the foreground. Going to the background also drops
- * celebrations still waiting; `inactive` (iOS system prompts such as a review
- * request or a permission alert, Notification Center) only holds. Sheets and
- * popovers on the tabs hold for themselves (`Sheet`, `Popover`). Mounted once,
- * in HomeTabStack.
- */
 export default function TakeoverEnvironment() {
-  // The root stack's top screen, not this screen's focus, so a second `Root`
-  // (a `navigate('Root')` without `pop: true`) can't hold from underneath.
   const tabsOnTop = useNavigationState(
     (state) => state.routes[state.index]?.name === 'Root'
   )

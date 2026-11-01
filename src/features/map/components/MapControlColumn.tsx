@@ -18,13 +18,8 @@ import {
   mapControlStyle,
 } from '@/features/map/lib/mapStyles'
 
-/** How far the column sits from the map's leading edge. */
 const INSET = 16
 
-/**
- * The column's frame: `start` from the map's leading edge, the rest from
- * `onLayout`.
- */
 export type MapControlsLayout = {
   start: number
   y: number
@@ -32,11 +27,6 @@ export type MapControlsLayout = {
   height: number
 }
 
-/**
- * The icon buttons down the map's leading edge, under the search: fit every
- * pin, stow the inspector (wide layouts), map options and the legend. Reports
- * its frame, so pin cards keep clear of it.
- */
 export default function MapControlColumn({
   top,
   onFit,
@@ -46,9 +36,9 @@ export default function MapControlColumn({
   onLayout,
 }: {
   top: number
-  /** Fits every pin; hidden without any. */
+
   onFit: (() => void) | null
-  /** The inspector's show/hide button, on wide layouts. */
+
   stow: { stowed: boolean; onToggle: () => void } | null
   mapLayer: MapLayer
   onChangeLayer: (layer: MapLayer) => void
@@ -92,7 +82,7 @@ export default function MapControlColumn({
           </Button>
         </PointerTooltip>
       )}
-      {/* Phone cards stow with a swipe down instead. */}
+      {}
       {stow && (
         <PointerTooltip label={stowLabel} {...MAP_CONTROL_TOOLTIP}>
           <Button
@@ -111,7 +101,7 @@ export default function MapControlColumn({
           </Button>
         </PointerTooltip>
       )}
-      {/* A click hides the label before the menu opens. */}
+      {}
       <PointerTooltip label={i18n.t('map_options')} {...MAP_CONTROL_TOOLTIP}>
         <MapLayerMenu
           value={mapLayer}

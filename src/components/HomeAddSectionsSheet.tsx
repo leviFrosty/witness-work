@@ -30,11 +30,6 @@ const ICONS: Record<HomeScreenElementKey, AppIcon> = {
   didYouKnow: LightbulbIcon,
 }
 
-/**
- * Home's sections to show again, like the Home Screen's widget gallery:
- * sections showing have a check, hidden ones come back with one tap, at the
- * top.
- */
 export default function HomeAddSectionsSheet({
   open,
   onClose,
@@ -44,12 +39,11 @@ export default function HomeAddSectionsSheet({
 }: {
   open: boolean
   onClose: () => void
-  /** The sections this User and device can show, in Home's order. */
+
   sections: HomeScreenElementKey[]
   hidden: HomeScreenElementKey[]
   onAdd: (key: HomeScreenElementKey) => void
 }) {
-  // Quick Actions holds the Scribe AI orb; say so, since hiding it hides that.
   const scribeEnabled = useScribeEnabled()
   const description = (key: HomeScreenElementKey) =>
     key === 'quickActions' && scribeEnabled

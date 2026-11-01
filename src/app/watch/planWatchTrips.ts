@@ -6,27 +6,19 @@ import type { WatchOrigin, WatchTripDraft } from '../../../modules/watch-bridge'
 
 export type WatchTripPlan =
   | { id: string; status: 'add'; trip: Trip; origin: WatchOrigin }
-  /** Already saved — a repeated delivery. */
   | { id: string; status: 'duplicate' }
-  /** Deleted on this or another device before it arrived; not restored. */
   | { id: string; status: 'deleted' }
-  /** Every car was deleted before it arrived. */
   | { id: string; status: 'noVehicle' }
   | { id: string; status: 'invalid' }
 
-/** The mileage view (`getMileageView`): the User's own cars and Shared Cars. */
 type Existing = {
   trips: Trip[]
   vehicles: Vehicle[]
   deletedMileageRecords: MileageTombstone[]
-  /**
-   * The trips the User logged (`tripsLoggedByMe`), which pick the car a trip
-   * without one goes to; all of `trips` without it.
-   */
+
   ownTrips?: Trip[]
 }
 
-/** Siri's distance limit, doubled for a round trip. */
 const MAX_MILES = 200_000
 
 function isValidDraft(draft: WatchTripDraft): boolean {
@@ -46,13 +38,6 @@ function isValidDraft(draft: WatchTripDraft): boolean {
   )
 }
 
-/**
- * Decides what to do with each mileage Trip logged with Siri, on the watch or
- * this device. Like `planWatchEntries`, the draft's id becomes the Trip's id,
- * so repeats are recognized and a trip deleted before it arrived stays deleted.
- * A car deleted in the meantime gives way to the car a new trip would use; an
- * archived one is kept, since the user chose it.
- */
 export function planWatchTrips(
   drafts: WatchTripDraft[],
   existing: Existing,

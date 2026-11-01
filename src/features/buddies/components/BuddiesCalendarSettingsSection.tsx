@@ -3,7 +3,6 @@ import BuddiesSection from '@/features/buddies/components/BuddiesSection'
 import { ScopedSwitchRow } from '@/features/buddies/components/ScopedSettingRows'
 import { useScopedSetting } from '@/features/buddies/hooks/useBuddySettingsScope'
 
-/** Whether buddies' Plans show on this User's calendar, in the current scope. */
 export default function BuddiesCalendarSettingsSection() {
   const showOnCalendar = useScopedSetting('showOnCalendar')
   return (

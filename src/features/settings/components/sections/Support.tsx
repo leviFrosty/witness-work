@@ -16,7 +16,6 @@ import { SettingsSectionProps } from '@/features/settings/screens/settingScreen'
 import { useSubscriptionStatus } from '@/features/supporter/hooks/useManageSubscription'
 import { formatDisplay } from '@/lib/dates'
 
-/** The supporter's status, first in Support. */
 const SupporterRow = ({ since }: { since: Date }) => {
   const theme = useTheme()
   const isFounding = isFoundingSupporter(since)

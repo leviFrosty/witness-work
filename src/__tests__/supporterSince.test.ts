@@ -50,8 +50,6 @@ describe('supporterSinceDate', () => {
   })
 
   it('returns null for a one-time tip whose entitlement is not in activeSubscriptions', () => {
-    // Tip products may have an entitlement attached in RC but never appear in
-    // `activeSubscriptions` — they must not grant supporter status.
     const result = supporterSinceDate(
       customer({
         active: {
@@ -100,8 +98,6 @@ describe('supporterSinceDate', () => {
   })
 
   it('matches a Google Play subscription listed as productId:basePlanId', () => {
-    // Google Play lists active subscriptions with the base plan appended, but
-    // the entitlement carries the bare product id.
     const result = supporterSinceDate(
       customer({
         active: {
@@ -120,7 +116,6 @@ describe('supporterSinceDate', () => {
   })
 
   it('returns the grant date for an active promotional subscription grant', () => {
-    // RC lists dashboard grants among subscriptions, so any active grant counts.
     const result = supporterSinceDate(
       customer({
         active: {
@@ -159,8 +154,6 @@ describe('supporterSinceDate', () => {
   })
 
   it('returns the grant date for a Lifetime Supporter promotional entitlement', () => {
-    // The Lifetime grant qualifies on its identifier alone, even when its
-    // promotional product isn't in `activeSubscriptions`.
     const result = supporterSinceDate(
       customer({
         active: {
@@ -198,9 +191,6 @@ describe('supporterSinceDate', () => {
   })
 
   it('keeps supporter status from lifetime even when subscription has lapsed', () => {
-    // A user who once subscribed and was later gifted lifetime: the
-    // subscription is no longer in `activeSubscriptions`, but the lifetime
-    // entitlement keeps them a supporter.
     const result = supporterSinceDate(
       customer({
         active: {
@@ -217,8 +207,6 @@ describe('supporterSinceDate', () => {
   })
 
   it('returns null when a revoked lifetime entitlement is absent from active', () => {
-    // Revoking via the RC dashboard removes the entitlement from
-    // `entitlements.active`, so supporter status drops on the next refresh.
     const result = supporterSinceDate(
       customer({
         active: {},

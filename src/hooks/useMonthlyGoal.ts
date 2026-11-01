@@ -9,21 +9,16 @@ import { usePreferences } from '@/stores/preferences'
 import { useShallow } from 'zustand/react/shallow'
 
 export type MonthlyGoal = {
-  /** The regular Monthly Goal of the role that applied that month. */
   baseGoalHours: number
-  /** The saved value for this month, or `undefined` when it uses the base. */
+
   overrideGoalHours: number | undefined
-  /** The override when present, otherwise `baseGoalHours`. */
+
   effectiveGoalHours: number
   isOverridden: boolean
   setOverride: (hours: number) => void
   clearOverride: () => void
 }
 
-/**
- * React-side Monthly Goal seam for one exact calendar month. `month` follows
- * JavaScript/moment conventions (0 = January, 11 = December).
- */
 const useMonthlyGoal = (target: CalendarMonth): MonthlyGoal => {
   const { monthlyGoalHours: baseGoalHours } = usePublisher(target)
   const {

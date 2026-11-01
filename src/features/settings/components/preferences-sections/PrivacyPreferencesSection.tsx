@@ -19,8 +19,6 @@ const PrivacyPreferencesSection = () => {
   const theme = useTheme()
   const { dataProtectionMode, analyticsEnabled, set } = usePreferences()
 
-  // Art 17 erasure affordance: one action that hard-deletes every contact and
-  // visit, leaving only redacted sync tombstones.
   const handleDeleteAllHouseholderData = () => {
     Alert.alert(
       i18n.t('dataProtectionDeleteAllTitle'),
@@ -35,11 +33,10 @@ const PrivacyPreferencesSection = () => {
             Alert.alert(
               i18n.t('dataProtectionDeleteAllDoneTitle'),
               i18n.t('dataProtectionDeleteAllDoneSummary', {
-                // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
                 contacts: i18n.t('dataProtectionDeletedContacts', {
                   count: contacts,
                 }),
-                // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
+
                 visits: i18n.t('dataProtectionDeletedVisits', {
                   count: visits,
                 }),
@@ -51,8 +48,6 @@ const PrivacyPreferencesSection = () => {
     )
   }
 
-  // Turning the mode on is always safe; turning it off re-exposes householder
-  // fields and features, so confirm first.
   const handleDataProtectionToggle = (value: boolean) => {
     if (value) {
       set({ dataProtectionMode: true, dataProtectionModeSetByUser: true })

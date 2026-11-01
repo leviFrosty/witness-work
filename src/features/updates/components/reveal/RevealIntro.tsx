@@ -32,10 +32,10 @@ interface Props {
   palette: WelcomePalette
   time: SharedValue<number>
   tilt: Tilt
-  /** Hub centre and scene scale, once the stage is measured. */
+
   hub: { x: number; y: number } | null
   scale: number
-  /** Reports the stage — the space above the copy the scene centres in. */
+
   onStage: (stage: LayoutRectangle) => void
   chips: RevealChip[]
   headline: RevealHeadline
@@ -54,11 +54,6 @@ interface Props {
   onLater: () => void
 }
 
-/**
- * The reveal's opening scene, above the shared aurora: the feature chips around
- * the tile, the greeting giving way to the news, and the way into the tour. The
- * tile itself is drawn by the overlay's curtain, on top.
- */
 const RevealIntro = ({
   palette,
   time,
@@ -89,7 +84,6 @@ const RevealIntro = ({
   ] as const
   const tallest = Math.max(fontSize * 1.14, ...Object.values(heights))
 
-  // Under Reduce Motion the exit is a plain fade.
   const drift = reduceMotion ? 0 : 1
   const copyStyle = useAnimatedStyle(() => ({
     opacity: 1 - exit.value,
@@ -107,8 +101,7 @@ const RevealIntro = ({
     ],
   }))
   const linkStyle = useAnimatedStyle(() => ({ opacity: link.value }))
-  // The art stays centered on the window; the words and buttons keep clear of
-  // iPhone Duo's vertical bar and fold.
+
   const foldColumn = useWindowFoldColumn(560)
 
   return (
@@ -233,8 +226,6 @@ const RevealIntro = ({
         </Animated.View>
       </View>
       {skippable && stage && (
-        // Tapping the scene hurries the intro along; the copy and buttons
-        // below stay out of its way.
         <Pressable
           style={{
             position: 'absolute',

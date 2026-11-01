@@ -2,7 +2,6 @@ import { createElement } from 'react'
 import { act, create } from 'react-test-renderer'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-// The SQLite file header, base64-encoded, as `readAsStringAsync` returns it.
 const SQLITE_HEADER_BASE64 = 'U1FMaXRlIGZvcm1hdCAzAA=='
 
 const native = vi.hoisted(() => ({
@@ -46,7 +45,6 @@ import { useMytimeImport } from '@/features/mytime-import/hooks/useMytimeImport'
 
 type Hook = ReturnType<typeof useMytimeImport>
 
-/** Mounts the hook and returns a getter for its latest result. */
 const renderImport = () => {
   let latest: Hook | undefined
   const Probe = ({ onResult }: { onResult: (hook: Hook) => void }) => {
@@ -72,8 +70,6 @@ describe('useMytimeImport — files that are not a SQLite database', () => {
   })
 
   it('shows the invalid-file message when SQLite rejects the first read', async () => {
-    // SQLite opens lazily, so a non-database file opens "fine" and only fails
-    // on the first query (code 26, SQLITE_NOTADB).
     native.getAllAsync.mockRejectedValue(
       new Error(
         "Call to function 'NativeStatement.finalizeAsync' has been rejected.\n→ Caused by: Error code 26: file is not a database"
@@ -88,7 +84,7 @@ describe('useMytimeImport — files that are not a SQLite database', () => {
   })
 
   it('rejects a file without the SQLite header before opening it', async () => {
-    native.header = 'iVBORw0KGgoAAAANSUhEUg==' // a PNG
+    native.header = 'iVBORw0KGgoAAAANSUhEUg=='
     const result = renderImport()
     await act(() => result().pickAndParse())
 

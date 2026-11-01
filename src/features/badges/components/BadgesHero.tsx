@@ -10,16 +10,9 @@ import type { BadgeArtId, BadgeLevel } from '@/types/badges'
 import type { BadgeViewOrigin } from '@/types/rootStack'
 
 const MEDALLION_SIZE = 104
-/**
- * InfoPopover's tap target runs 44pt right of the label but its icon only
- * ~20pt; the same space on the left keeps the label and icon centered.
- */
+
 const POPOVER_BALANCE = 24
 
-/**
- * The top of the User's collection: the newest badge, large, and how many
- * they've earned. The "months, not hours" note waits in an info popover.
- */
 export default function BadgesHero({
   newest,
   count,
@@ -27,7 +20,7 @@ export default function BadgesHero({
   onOpenNewest,
 }: {
   newest: { art: BadgeArtId; level: BadgeLevel | null } | undefined
-  /** Every earned level counts. */
+
   count: number
   newestIsNew: boolean
   onOpenNewest: (origin: BadgeViewOrigin | undefined) => void

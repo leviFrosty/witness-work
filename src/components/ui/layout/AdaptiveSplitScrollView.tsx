@@ -9,11 +9,10 @@ import type { RevealAboveSheet } from '@/hooks/useRevealAboveSheet'
 import type { HideBarsScrollProps } from '@/hooks/useHideBarsOnScroll'
 import type useReorderScroller from '@/components/ui/reorderable/useReorderScroller'
 
-/** What lets an item dragged in `leading` scroll the view it's in. */
 export type LeadingReorder = {
   scrollRef: RefObject<KeyboardAwareScrollView | null>
   scroller: ReturnType<typeof useReorderScroller>
-  /** Off while an item is held, so the finger drags it instead. */
+
   scrollEnabled: boolean
 }
 
@@ -26,26 +25,14 @@ type Props = {
   paddingBottom: number
   compactPaddingHorizontal?: number
   gap?: number
-  /** Keeps a view in `trailing` above a day's sheet; see `useRevealAboveSheet`. */
+
   trailingReveal?: RevealAboveSheet
-  /**
-   * Tucks the screen's header and tab bar away as the single column scrolls;
-   * see `useHideBarsOnScroll`. Wide layouts keep them.
-   */
+
   scrollBars?: HideBarsScrollProps
-  /**
-   * Rearrangeable items in `leading` (see `ReorderableContainer`). Its scroll
-   * view is the single column's, so don't pass `trailingReveal` with it.
-   */
+
   leadingReorder?: LeadingReorder
 }
 
-/**
- * Keep reference content visible while browsing records in a wide window. The
- * columns meet at iPhone Duo's fold while it's partly folded. Opening or
- * closing iPhone Duo keeps the part being read in view, in whichever column now
- * holds it.
- */
 export default function AdaptiveSplitScrollView({
   leading,
   trailing,
@@ -65,11 +52,11 @@ export default function AdaptiveSplitScrollView({
   const leadingRef = useRef<KeyboardAwareScrollView>(null)
   const trailingRef = useRef<KeyboardAwareScrollView>(null)
   const ownSingleFrame = useRef<View>(null)
-  // The reorder scroller measures the scroll view's frame from the same view.
+
   const singleFrame = leadingReorder?.scroller.frameRef ?? ownSingleFrame
   const leadingFrame = useRef<View>(null)
   const trailingFrame = useRef<View>(null)
-  // Each ref the parent passed, alongside this view's own.
+
   const bothRefs =
     (
       own: RefObject<KeyboardAwareScrollView | null>,

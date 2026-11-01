@@ -7,16 +7,9 @@ import {
 } from '@/lib/roleHistory'
 import { usePreferences } from '@/stores/preferences'
 
-/**
- * Whether a month's goal can be changed from the Schedule: the month hasn't
- * ended and its role has a Monthly Goal to adjust, as the old month header
- * allowed.
- */
 export default function useEditableMonthGoal(): (
   target: CalendarMonth
 ) => boolean {
-  // Only the role preferences: the Schedule screen calls this, and any other
-  // preference write would re-render the whole tab.
   const prefs: RolePreferences = usePreferences(
     useShallow((s) => ({
       role: s.role,

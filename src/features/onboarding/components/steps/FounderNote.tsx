@@ -248,7 +248,7 @@ const FounderNote = ({ goBack, goNext }: Props) => {
           </Text>
         </View>
       </KeyboardAwareScrollView>
-      {/* The last step of onboarding: it opens the app. */}
+      {}
       <ActionButton onPress={goNext}>{i18n.t('onboardingFinish')}</ActionButton>
     </Wrapper>
   )

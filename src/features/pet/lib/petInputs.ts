@@ -15,18 +15,9 @@ import {
   type PetLifeInput,
 } from '@/features/pet/lib/life'
 
-/**
- * What Home (`usePetLife`) and the widget (`petWidgetInput.ts`) both feed the
- * life replay, worked out once for both.
- */
-
 let activeDaysMemo: { records: PetActivityRecords; days: Set<string> } | null =
   null
 
-/**
- * `petActiveDays` of the ministry records, kept while every list is the same
- * object, so Home and the widget share one set (and `simulateLife` its cache).
- */
 export function selectPetActiveDays(
   records: PetActivityRecords
 ): ReadonlySet<string> {
@@ -50,12 +41,6 @@ let paceMemo: {
   paceOf: (month: string) => HeartsPace
 } | null = null
 
-/**
- * Each month's hearts pace from Role History (ADR 0031): `monthly` while the
- * month's role reports only whether it shared (its Service Streak counts
- * months), `daily` otherwise. The same function while the roles don't change,
- * so Home and the widget share `simulateLife`'s cache.
- */
 export function selectHeartsPace(
   history: RoleHistory | null | undefined,
   role: Publisher
@@ -75,7 +60,6 @@ export function selectHeartsPace(
   return paceOf
 }
 
-/** The replay's input for `pet` as of the day `today`. */
 export const petLifeInput = (
   pet: PetRecord,
   activeDays: ReadonlySet<string>,
@@ -90,7 +74,6 @@ export const petLifeInput = (
   giftSeed: petGiftSeed(pet),
 })
 
-/** The pet's hearts and moments on `today`. */
 export const petLifeOn = (
   pet: PetRecord,
   activeDays: ReadonlySet<string>,
@@ -98,7 +81,6 @@ export const petLifeOn = (
   paceOf?: (month: string) => HeartsPace
 ): PetLife => simulateLife(petLifeInput(pet, activeDays, today, paceOf))
 
-/** The pet's life on `today` and each of the next `days` days. */
 export const petLifeAhead = (
   pet: PetRecord,
   activeDays: ReadonlySet<string>,

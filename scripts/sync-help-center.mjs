@@ -1,27 +1,12 @@
 #!/usr/bin/env node
-/**
- * Copies the Help Center's published bundles into the app as its offline
- * snapshot (`src/assets/help-center/<locale>.json`). The app shows the snapshot
- * until it has downloaded a newer bundle, so run this before every release
- * build. The content itself lives in portfolio-v2 (`content/help/`).
- *
- * Usage: pnpm sync:help # from https://leviwilkerson.com pnpm sync:help
- * --from<dir> # from a local site build's bundle directory #
- * (portfolio-v2/dist/public/witness-work/help-center/bundle)
- *
- * Snapshots are compacted, since they ship in the JavaScript bundle: no
- * `plainText` or `url` (the app derives them from `doc` and the contract's URL
- * pattern), and no English fallback entries outside `en-US.json` (the app fills
- * them in from English). Written minified. Fails without writing anything if a
- * locale is missing or a bundle isn't schema version 1.
- */
+
 import fs from 'node:fs'
 import path from 'node:path'
 
 const SITE = 'https://leviwilkerson.com'
 const MANIFEST_PATH = '/witness-work/help-center/bundle/manifest.json'
 const OUT_DIR = 'src/assets/help-center'
-// Every app language (src/lib/locales.ts), by locale file name.
+
 const LOCALES = [
   'en-US',
   'ar',
@@ -51,7 +36,6 @@ if (fromIndex !== -1 && !fromDir) {
   process.exit(1)
 }
 
-/** Reads `sitePath` (`/witness-work/help-center/bundle/x.json`) as JSON. */
 async function read(sitePath) {
   if (fromDir) {
     const file = path.join(fromDir, path.basename(sitePath))

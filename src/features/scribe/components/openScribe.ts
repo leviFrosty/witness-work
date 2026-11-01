@@ -24,7 +24,6 @@ export type ScribeEntryTarget =
   | { route: 'ScribeConversation'; params: ScribeConversationParams }
   | { route: 'ScribeVoice'; params: ScribeVoiceParams }
 
-/** `scribe_entry_tapped`'s `state`, or null where entry points don't show. */
 export const scribeEntryState = (
   availability: ScribeAvailability,
   voice: ScribeVoiceAvailability
@@ -42,11 +41,6 @@ export const scribeEntryState = (
   }
 }
 
-/**
- * Where an entry point goes: offline explains, blocked and limited open the
- * conversation to explain there, no on-device speech opens it with the keyboard
- * (ADR 0032 §7), and everything else starts listening.
- */
 export const scribeEntryTarget = (
   entry: ScribeEntryPoint,
   availability: ScribeAvailability,
@@ -72,11 +66,6 @@ export const scribeEntryTarget = (
 
 type Navigate = Pick<RootStackNavigation, 'navigate'>
 
-/**
- * Goes to a Scribe AI screen, through the one-time Terms of Use and Zero Data
- * Retention steps while this device hasn't seen them. Offline only explains, so
- * it asks nothing.
- */
 export const navigateToScribe = (
   navigation: Navigate,
   target: ScribeEntryTarget
@@ -90,7 +79,6 @@ export const navigateToScribe = (
   else navigation.navigate('ScribeConversation', target.params)
 }
 
-/** Opens Scribe AI from an entry point and records the tap. */
 export const openScribe = (
   navigation: Navigate,
   entry: ScribeEntryPoint,
@@ -104,7 +92,6 @@ export const openScribe = (
   navigateToScribe(navigation, target)
 }
 
-/** Availability for an entry point, and `open(entry)` to run it. */
 export const useOpenScribe = () => {
   const navigation = useNavigation<RootStackNavigation>()
   const availability = useScribeAvailability()

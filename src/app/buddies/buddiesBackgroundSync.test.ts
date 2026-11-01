@@ -93,7 +93,7 @@ describe('the background push task', () => {
     }
     await run(data)
     expect(postBuddiesAlert).toHaveBeenCalledWith(data, expect.any(AbortSignal))
-    // Started first, so the alert can word itself from the event it reads.
+
     expect(calls).toEqual(['sync', 'alert'])
     expect(sync).toHaveBeenCalledWith({
       signal: expect.any(AbortSignal),

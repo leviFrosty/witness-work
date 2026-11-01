@@ -15,7 +15,6 @@ import { usePreferences } from '@/stores/preferences'
 import { addForegroundListener } from '@/lib/appLifecycle'
 import { getOnline, useOnline } from '@/lib/http/online'
 
-// Add future flag keys to this union so call sites stay type-checked.
 export type FeatureFlag =
   | 'buddies'
   | 'announcement'
@@ -24,13 +23,6 @@ export type FeatureFlag =
 type FlagValues = Partial<Record<FeatureFlag, boolean | string>>
 type FlagPayloads = Partial<Record<FeatureFlag, JsonType>>
 
-/**
- * Where flag values stand: `loading` until a load settles (including while the
- * network state is still unknown), `loaded` with values for the current
- * identity, `failed` with every flag closed, or not attempted yet because the
- * app isn't active (`idle`) or is `offline`. Only `loaded` carries values, and
- * it stays loaded through backgrounding, going offline and failed reloads.
- */
 export type FeatureFlagsStatus =
   | 'idle'
   | 'offline'
@@ -38,17 +30,16 @@ export type FeatureFlagsStatus =
   | 'loaded'
   | 'failed'
 
-/** Dev builds, and profiling builds (scripts/perf), which force Buddies on. */
 const overridesAllowed = () =>
   __DEV__ || process.env.EXPO_PUBLIC_PERF_PROBE === '1'
 
 const useFlags = create<{
   values: FlagValues
-  /** JSON set on each flag's matched variant in PostHog. */
+
   payloads: FlagPayloads
   distinctId?: string
   status: FeatureFlagsStatus
-  /** Dev and profiling builds only (harnesses); survive remote refreshes. */
+
   devOverrides: FlagValues
   devPayloadOverrides: FlagPayloads
 }>(() => ({
@@ -59,7 +50,6 @@ const useFlags = create<{
   devPayloadOverrides: {},
 }))
 
-/** Dev and profiling builds only: force a flag on/off, or undefined to clear. */
 export function setDevFlagOverride(
   flag: FeatureFlag,
   value: boolean | string | undefined
@@ -70,7 +60,6 @@ export function setDevFlagOverride(
   }))
 }
 
-/** Dev and profiling builds only: a flag's payload, or undefined to clear. */
 export function setDevFlagPayloadOverride(
   flag: FeatureFlag,
   payload: JsonType | undefined
@@ -81,7 +70,6 @@ export function setDevFlagPayloadOverride(
   }))
 }
 
-/** A return to the app reloads flags at most this often. */
 export const FLAG_RELOAD_INTERVAL_MS = 10 * 60_000
 
 const clearFlags = (status: FeatureFlagsStatus) =>
@@ -92,26 +80,19 @@ const clearFlags = (status: FeatureFlagsStatus) =>
     status,
   })
 
-/** Values loaded for the identity the SDK has now. */
 function hasCurrentValues(): boolean {
   const { status, distinctId } = useFlags.getState()
   return status === 'loaded' && distinctId === posthogClient?.getDistinctId()
 }
 
-/** When values last loaded; 0 until they have, or after a load failed. */
 let loadedAt = 0
 let loading = false
 
-/**
- * A reload that couldn't reach PostHog keeps what loaded for this identity,
- * like being offline does. With nothing loaded, every flag stays closed.
- */
 function settleFailedLoad(): void {
   loadedAt = 0
   if (!hasCurrentValues()) clearFlags('failed')
 }
 
-/** Before any values loaded: not tried while backgrounded or offline. */
 function settleWaiting(): void {
   if (hasCurrentValues() || loading) return
   const status = useFlags.getState().status
@@ -134,8 +115,7 @@ function publishLoadedFlags(): void {
     settleFailedLoad()
     return
   }
-  // The SDK retains cached values on quota errors and partial results. They
-  // must not reopen features or produce exposures.
+
   if (
     !details ||
     details.errorsWhileComputingFlags ||
@@ -145,8 +125,7 @@ function publishLoadedFlags(): void {
     clearFlags('failed')
     return
   }
-  // An SDK request already in flight at reset can publish its previous
-  // assignment briefly, until the SDK's queued reload for the new identity finishes.
+
   loadedAt = Date.now()
   useFlags.setState({
     values: posthogClient?.getFeatureFlags() ?? {},
@@ -163,8 +142,7 @@ async function load(): Promise<void> {
   try {
     perf.count('flags:reload')
     const values = await posthogClient?.reloadFeatureFlagsAsync()
-    // Loading and provider failures leave every flag closed, unless values
-    // for this identity already loaded.
+
     if (values === undefined) settleFailedLoad()
   } catch {
     settleFailedLoad()
@@ -173,7 +151,6 @@ async function load(): Promise<void> {
   }
 }
 
-/** Loads when the app is active and online, unless values are fresh enough. */
 function loadIfDue(minAgeMs: number): void {
   if (AppState.currentState !== 'active' || getOnline() !== true) {
     settleWaiting()
@@ -183,12 +160,6 @@ function loadIfDue(minAgeMs: number): void {
   void load()
 }
 
-/**
- * Loads flags and keeps them current: once the app is active and online, then
- * on a return to the app at most every `FLAG_RELOAD_INTERVAL_MS`, and on
- * reconnecting until a load works. Values are never restored from the SDK
- * cache. Mount once, through `FeatureFlagsRuntime`.
- */
 export function useInitializeFeatureFlags(): void {
   const online = useOnline()
 
@@ -199,8 +170,6 @@ export function useInitializeFeatureFlags(): void {
     )
     const unsubscribePreferences = usePreferences.subscribe(
       (state, previous) => {
-        // Consent withdrawal resets the SDK identity synchronously, even if React
-        // batches a rapid off/on into one render. Its reload will publish new flags.
         if (previous.analyticsEnabled && !state.analyticsEnabled) {
           loadedAt = 0
           clearFlags('loading')
@@ -210,8 +179,7 @@ export function useInitializeFeatureFlags(): void {
     const foreground = addForegroundListener(() =>
       loadIfDue(FLAG_RELOAD_INTERVAL_MS)
     )
-    // Launched in the background (a push or background task): load once the
-    // app is in use. Brief `inactive` blips don't reload loaded values.
+
     const active = AppState.addEventListener('change', (state) => {
       if (state === 'active' && !loadedAt) loadIfDue(0)
     })
@@ -223,23 +191,17 @@ export function useInitializeFeatureFlags(): void {
     }
   }, [])
 
-  // At launch, and on reconnecting until a load works.
   useEffect(() => {
     if (!loadedAt) loadIfDue(0)
     else settleWaiting()
   }, [online])
 }
 
-/**
- * Keeps feature flags loaded. A leaf, so network and app-state changes
- * re-render only this, not the app.
- */
 export function FeatureFlagsRuntime(): null {
   useInitializeFeatureFlags()
   return null
 }
 
-/** Read at the experience boundary, including multivariate experiment values. */
 export function useFeatureFlagValue(
   flag: FeatureFlag
 ): boolean | string | undefined {
@@ -259,8 +221,6 @@ export function useFeatureFlagValue(
     )
       return
     try {
-      // SDK reads preserve experiment metadata and deduplicate each flag/value.
-      // Fetching the flags alone never records exposure.
       if (
         !posthogClient ||
         posthogClient.getDistinctId() !== distinctId ||
@@ -277,10 +237,6 @@ export function useFeatureFlagValue(
   return currentValue
 }
 
-/**
- * Whether flag values are loading or have settled. `loaded` only once values
- * for the current identity are in, matching what `useFeatureFlagValue` reads.
- */
 export function useFeatureFlagsStatus(): FeatureFlagsStatus {
   const status = useFlags((state) => state.status)
   const distinctId = useFlags((state) => state.distinctId)
@@ -289,10 +245,6 @@ export function useFeatureFlagsStatus(): FeatureFlagsStatus {
   return status
 }
 
-/**
- * The JSON payload on the flag's matched variant, for the current identity.
- * Reading it records no exposure; pair it with `useFeatureFlagValue`.
- */
 export function useFeatureFlagPayload(flag: FeatureFlag): JsonType | undefined {
   const payload = useFlags((state) => state.payloads[flag])
   const distinctId = useFlags((state) => state.distinctId)
@@ -304,15 +256,8 @@ export function useFeatureFlagPayload(flag: FeatureFlag): JsonType | undefined {
     : undefined
 }
 
-/**
- * Flags that are on unless a response for the current identity says `false`:
- * while idle, offline, loading, after a failed load, and for an identity whose
- * values haven't loaded. Turning one off reaches devices that load flags; it
- * isn't a kill switch (the server's is).
- */
 export const DEFAULT_ON_FLAGS: ReadonlySet<FeatureFlag> = new Set(['scribe-ai'])
 
-/** UI visibility only; access control belongs on the server. */
 export function useFeatureFlag(flag: FeatureFlag): boolean {
   const value = useFeatureFlagValue(flag)
   return DEFAULT_ON_FLAGS.has(flag) ? value !== false : value === true

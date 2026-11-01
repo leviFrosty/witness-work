@@ -9,7 +9,6 @@ import { mapLayers, type MapLayer } from '@/types/map'
 import useMapCardDetail from '@/features/map/hooks/useMapCardDetail'
 import { CARD_DETAIL_CHOICES } from '@/features/map/lib/contactPins'
 
-/** Map options: the imagery, and what pin cards show. */
 export default function MapLayerMenu({
   value,
   onChange,
@@ -20,7 +19,7 @@ export default function MapLayerMenu({
   style: ViewStyle
 }) {
   const theme = useTheme()
-  // The menu's trigger takes the pointer effect, shaped like the button.
+
   const { borderRadius } = style
   const { detail, fields, choose: chooseDetail } = useMapCardDetail('map')
 

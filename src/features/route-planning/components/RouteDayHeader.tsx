@@ -20,10 +20,6 @@ import {
   formatRouteSummary,
 } from '@/features/route-planning/lib/routeSummary'
 
-/**
- * Which day is being planned, with arrows to the days either side, and the day
- * at a glance: how many stops, from when to when, and how much driving.
- */
 export default function RouteDayHeader({
   day,
   builder,

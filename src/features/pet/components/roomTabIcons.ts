@@ -11,7 +11,6 @@ import {
 import type { AppIcon } from '@/components/ui/LucideIcon'
 import type { RoomTab } from '@/features/pet/lib/roomOptions'
 
-/** A hat (Lucide has none): a crown with a band on a wide brim. */
 const HatIcon = createLucideIcon('PetHat', [
   [
     'path',
@@ -24,7 +23,6 @@ const HatIcon = createLucideIcon('PetHat', [
   ['path', { d: 'M2 17.5a10 2.5 0 1 0 20 0a10 2.5 0 1 0-20 0', key: 'c' }],
 ])
 
-/** Each Decorate Room tab's icon, beside its name. */
 export const ROOM_TAB_ICONS: Readonly<Record<RoomTab, AppIcon>> = {
   hat: HatIcon,
   window: WindowIcon,

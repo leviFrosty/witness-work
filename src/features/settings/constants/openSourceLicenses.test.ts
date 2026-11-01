@@ -8,7 +8,7 @@ describe('openSourceLicenses', () => {
     const missing = Object.keys(packageJson.dependencies).filter(
       (name) => !credited.has(name)
     )
-    // Run `pnpm licenses:generate` after changing dependencies.
+
     expect(missing).toEqual([])
   })
 })

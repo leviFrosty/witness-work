@@ -9,21 +9,11 @@ import {
 } from '@/app/sync/imageSync'
 import { syncTransportErrorCode } from '@/lib/syncTransport/types'
 
-/*
- * Photos in notes, synced next to the JSON like avatars (and behind the same
- * "Include photos" setting), but simpler: a photo never changes once it's
- * taken, so each one uploads once under `witness-work-note-<id>.jpg` and
- * downloads only when a note refers to it and this device doesn't have it.
- * Pure: the caller (`iCloudSync.ts`) supplies the transport and files.
- */
-
-/** A cloud photo no note refers to is kept this long first. */
 export const NOTE_IMAGE_CLOUD_GRACE_MS = 24 * 60 * 60_000
 const DOWNLOAD_CONCURRENCY = 4
 
 type Paths = { localPath: (id: string) => string }
 
-/** Uploads the referenced photos that aren't in the cloud yet. */
 export async function pushNoteImages(
   args: Paths & {
     ids: Iterable<string>
@@ -48,7 +38,7 @@ export async function pushNoteImages(
     if (container.has(filename)) continue
     const path = args.localPath(id)
     const localMtime = await deps.fs.getModifiedAt(path)
-    // Another device's photo that hasn't downloaded here; it uploads it.
+
     if (localMtime == null) continue
     const entry = bookkeeping[filename]
     if (
@@ -81,12 +71,11 @@ export async function pushNoteImages(
   return { bookkeeping, uploaded, failed }
 }
 
-/** Downloads the referenced photos this device doesn't have. */
 export async function pullNoteImages(
   args: Paths & {
     ids: Iterable<string>
     deps: ImageSyncDeps
-    /** Makes the folder downloads land in. */
+
     prepare: () => Promise<void>
   }
 ): Promise<{ downloaded: string[]; failed: number }> {
@@ -101,7 +90,7 @@ export async function pullNoteImages(
   const container = new Set(
     (await deps.bridge.listBinaryFiles()).map((file) => file.filename)
   )
-  // Not uploaded (yet): its device has photo sync off, or is still uploading.
+
   const available = wanted.filter((id) =>
     container.has(filenameForNoteImage(id))
   )
@@ -120,8 +109,6 @@ export async function pullNoteImages(
           )
           downloaded.push(id)
         } catch {
-          // One unreadable photo mustn't strand the rest; the next pull tries
-          // it again.
           failed++
         }
       })
@@ -130,11 +117,6 @@ export async function pullNoteImages(
   return { downloaded, failed }
 }
 
-/**
- * Deletes cloud note photos no note refers to, once they're past the grace
- * period. Only safe when `referenced` reflects every device's notes (after a
- * complete pull): a photo whose note hasn't arrived yet looks unused.
- */
 export async function gcNoteImages(args: {
   referenced: Set<string>
   deps: ImageSyncDeps

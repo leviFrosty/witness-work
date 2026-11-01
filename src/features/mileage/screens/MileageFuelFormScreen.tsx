@@ -46,10 +46,6 @@ import type { RootStackParamList } from '@/types/rootStack'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'MileageFuelForm'>
 
-/**
- * Add or edit a fuel and its effective-dated price. A Shared Car's fuel says
- * its changes reach everyone on the car.
- */
 export default function MileageFuelFormScreen({ route, navigation }: Props) {
   const theme = useTheme()
   const insets = useSafeAreaInsets()
@@ -142,7 +138,6 @@ export default function MileageFuelFormScreen({ route, navigation }: Props) {
             <TextInputRow
               label={i18n.t('name')}
               required
-              // Its name and price are everyone's on the car.
               description={
                 sharedCar
                   ? i18n.t('mileage.fuelOnSharedCar', { car: sharedCar })

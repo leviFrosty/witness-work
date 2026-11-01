@@ -49,7 +49,7 @@ describe('bundled Help Center snapshot', () => {
 
   it('fills untranslated entries from English, marked as fallback', () => {
     const snapshot = read('de-DE')
-    // Drop German's translation of the first English entry.
+
     const entries = snapshot.entries.filter(
       (e) => e.id !== english.entries[0].id
     )

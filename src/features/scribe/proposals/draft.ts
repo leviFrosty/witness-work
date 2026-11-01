@@ -22,23 +22,15 @@ import {
 } from '@/lib/serviceReport'
 import { publisherCapabilitiesForMonth } from '@/lib/roleHistory'
 
-/**
- * One turn's Proposal while the loop runs (tool calls → effects): the write
- * tools' effects in call order, with warnings, and the pending Refs they
- * minted. A second mention of the same new Contact or Category (same pending
- * Ref) merges into the first instead of adding another record.
- */
 export class TurnDraft implements DraftView {
   private readonly stored: StoredEffect[]
 
   constructor(
     readonly proposalId: string,
     private readonly refs: RefRegistry,
-    /** A retried turn continues the effects it already had. */
+
     existing: readonly StoredEffect[] = []
   ) {
-    // Deep copies: merging a create pushes onto its `callIds`, which must
-    // not reach a stored Proposal or a published preview.
     this.stored = structuredClone([...existing])
   }
 
@@ -54,7 +46,6 @@ export class TurnDraft implements DraftView {
     return structuredClone(this.stored)
   }
 
-  /** The effects now, to go back to when a step is discarded. */
   checkpoint(): StoredEffect[] {
     return this.storedEffects()
   }
@@ -97,7 +88,6 @@ export class TurnDraft implements DraftView {
     return this.refs.issuePending(kind, this.proposalId)
   }
 
-  /** A write call's effects, merged and checked for warnings. */
   add(
     callId: string,
     effects: readonly DraftEffect[],
@@ -130,7 +120,6 @@ export class TurnDraft implements DraftView {
   }
 }
 
-/** The later mention's details win; the first's fill what it left out. */
 function mergeCreate(first: DraftEffect, later: DraftEffect): DraftEffect {
   if (first.kind === 'contact.create' && later.kind === 'contact.create')
     return {
@@ -167,7 +156,6 @@ const isCredit = (
   )
 }
 
-/** Whether two timed spans on one day overlap. */
 const overlaps = (
   aStart: number,
   aMinutes: number,
@@ -175,10 +163,6 @@ const overlaps = (
   bMinutes: number
 ) => aStart < bStart + bMinutes && bStart < aStart + aMinutes
 
-/**
- * The review-card warnings for one effect, against the stores and this
- * Proposal.
- */
 export function warningsFor(
   effect: DraftEffect,
   stores: ScribeStores,
@@ -260,6 +244,5 @@ const isAnytime = (stores: ScribeStores, id: string) =>
 const currentMinutes = (stores: ScribeStores, id: string) =>
   planById(stores, id)?.minutes ?? 0
 
-/** The day's Plans, read with a throwaway registry: no Ref reaches the model. */
 const plansOnDayQuiet = (stores: ScribeStores, date: string) =>
   plansOnDay(stores, new RefRegistry(emptyRefTable()), moment(parseDay(date)))

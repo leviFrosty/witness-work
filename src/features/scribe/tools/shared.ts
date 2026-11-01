@@ -20,40 +20,27 @@ import {
   localDayKey,
 } from '@/features/scribe/runtime/snapshot'
 
-/**
- * Helpers the tool files share: schema pieces, date math on local `YYYY-MM-DD`
- * days, and Ref resolution with errors that tell the model how to fix its call.
- * Not a tool; the registry guard skips it.
- */
-
-// ---------------------------------------------------------------- schema pieces
-
 export const day = z.iso.date()
 export const optionalDay = z.iso.date().nullable()
-/** The User's literal phrase, shown as `from "next Tuesday"`. */
+
 export const spoken = z.string().max(40).nullable()
 export const ref = z.string().min(2).max(12)
 export const optionalRef = z.string().min(2).max(12).nullable()
 
-// ---------------------------------------------------------------- dates
-
 export const parseDay = (value: string): moment.Moment =>
   moment(value, 'YYYY-MM-DD', true)
 
-/** Whole days from `from` to `to` (local days). */
 export const daysBetween = (from: string, to: string): number =>
   parseDay(to).diff(parseDay(from), 'days')
 
 export const addDays = (value: string, count: number): string =>
   parseDay(value).add(count, 'days').format('YYYY-MM-DD')
 
-/** A local Date for a stored-day action (store actions anchor it). */
 export const localDate = (value: string): Date => {
   const m = parseDay(value)
   return new Date(m.year(), m.month(), m.date(), 12)
 }
 
-/** `from`…`to` with defaults, validated against a maximum span. */
 export function dayRange(
   ctx: ToolContext,
   from: string | null,
@@ -74,13 +61,9 @@ export function dayRange(
   return { ok: true, from: start, to: end }
 }
 
-// ---------------------------------------------------------------- names
-
-/** `normalizeReconcileName`: trim, lowercase, collapse whitespace. */
 export const normalizeName = (name: string): string =>
   name.trim().toLowerCase().replace(/\s+/g, ' ')
 
-/** Also accent-insensitive, for search. */
 export const foldText = (value: string): string =>
   normalizeName(value).normalize('NFD').replace(/[̀-ͯ]/g, '')
 
@@ -93,8 +76,6 @@ export const addressLine = (
   address: Address | undefined | null
 ): string | null => (address ? addressToString(address).trim() || null : null)
 
-// ---------------------------------------------------------------- lists
-
 export function capList<T>(
   items: readonly T[],
   max: number
@@ -102,14 +83,11 @@ export function capList<T>(
   return { items: items.slice(0, max), truncated: items.length > max }
 }
 
-// ---------------------------------------------------------------- refs
-
 type Resolved<T> = ({ ok: true } & T) | { ok: false; error: string }
 
 const unknownRef = (value: string, hint: string) =>
   `Unknown ${hint} ref ${value}. Use a ref from the context or ${hint === 'contact' ? 'contacts_search' : 'a list tool'}.`
 
-/** A `c` Ref (or a bound `n`) to its Contact. */
 export function resolveContact(
   ctx: ToolContext,
   value: string,
@@ -151,7 +129,6 @@ export function resolveContact(
   }
 }
 
-/** A `k` / `nk` Ref, or null for Standard. */
 export function resolveCategory(
   ctx: ToolContext,
   value: string | null
@@ -196,17 +173,10 @@ export function resolveCategory(
   }
 }
 
-/** A Category a time or plan call drafts along with itself. */
 export const newCategoryInput = z
   .strictObject({ name: z.string().min(1).max(40), credit: z.boolean() })
   .nullable()
 
-/**
- * `categoryRef`, or the `newCategory` a call drafts: a name already in the
- * stores uses that Category, one already drafted this turn shares its pending
- * Ref (the later credit wins), and any other gets a new `nk` Ref. `effects` is
- * the `category.create` to propose first, and `ref` the pending Ref to return.
- */
 export function categoryFor(
   ctx: ToolContext,
   categoryRef: string | null,
@@ -247,9 +217,6 @@ export function categoryFor(
   }
 }
 
-// ---------------------------------------------------------------- time
-
-/** `t1 2026-10-02 120m k0 credit note`: a Time Entry as the model reads it. */
 export function entryLine(ctx: ToolContext, entry: TimeEntry): string {
   const flags = [
     ...(entry.credit || isLdcEntry(entry) ? ['credit'] : []),
@@ -264,19 +231,13 @@ export function entryLine(ctx: ToolContext, entry: TimeEntry): string {
   ].join(' ')
 }
 
-/** Entries a list shows on a day; also the ones an `onDate` can name. */
 export const entriesOnDay = (ctx: ToolContext, date: string): TimeEntry[] =>
   allTimeEntries(ctx.stores.serviceReports)
     .filter((entry) => !entry.rollover && storedDayKey(entry.date) === date)
     .sort((a, b) => a.id.localeCompare(b.id))
 
-/** Entries an `onDate` error lists. */
 const MAX_LISTED_ENTRIES = 6
 
-/**
- * The Time Entry a `t` Ref or an `onDate` names: the only entry that day, or an
- * error listing the day's entries so the model can pick or ask.
- */
 export function resolveEntry(
   ctx: ToolContext,
   entryRef: string | null,
@@ -327,15 +288,11 @@ export function resolveEntry(
   return { ok: true, entry }
 }
 
-/** A Time Entry's Category as a draft names it. */
 export const entryCategory = (entry: TimeEntry): CategoryTarget =>
   entry.categoryId
     ? { type: 'existing', id: entry.categoryId }
     : { type: 'standard' }
 
-// ---------------------------------------------------------------- visits
-
-/** Visits for one Contact, newest first. */
 export const visitsFor = (
   visits: readonly Visit[],
   contactId: string
@@ -344,7 +301,6 @@ export const visitsFor = (
     .filter((visit) => visit.contact.id === contactId)
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
 
-/** The soonest Follow-up still ahead (today included), not dismissed. */
 export function nextFollowUp(
   visits: readonly Visit[],
   today: string
@@ -364,8 +320,6 @@ export function nextFollowUp(
   return best
 }
 
-// ---------------------------------------------------------------- contacts
-
 const addressPart = z.string().max(120).nullable()
 
 export const addressInput = z
@@ -380,7 +334,6 @@ export const addressInput = z
 
 export type AddressInput = z.output<typeof addressInput>
 
-/** The parts that were given, or null when none were. */
 export function toAddress(input: AddressInput): Address | null {
   if (!input) return null
   const address: Address = {}
@@ -394,9 +347,5 @@ export function toAddress(input: AddressInput): Address | null {
 export const phoneInput = z.string().max(40).nullable()
 export const emailInput = z.string().max(120).nullable()
 
-/**
- * Data protection mode keeps no Not at Home visits, as the Visit form doesn't:
- * nobody was there to agree.
- */
 export const PROTECTED_NOT_AT_HOME_ERROR =
   "Data protection mode doesn't keep Not at Home visits. Tell the User in one sentence, and propose anything else they asked for."

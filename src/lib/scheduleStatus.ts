@@ -44,12 +44,6 @@ type ScheduleStatusInput = {
   }
 }
 
-/**
- * Compares logged progress with planned schedule progress for a selected month.
- * Current months are evaluated through today (inclusive), so today's Time
- * Entries immediately move the schedule status. Past and future months use the
- * full month; future months remain not-started but still show planned time.
- */
 export const getScheduleStatusForMonth = ({
   month,
   year,
@@ -122,12 +116,6 @@ export const getScheduleStatusForMonth = ({
   }
 }
 
-/**
- * Credit-capped minutes logged through each day of a month (index 0 is the
- * 1st): for each day, the `actualMinutes` `getScheduleStatusForMonth` counts
- * when that day is today. The watches compare these with Plans through the same
- * day, so an entry dated later in the month doesn't count early.
- */
 export const loggedMinutesThroughEachDayOfMonth = ({
   month,
   year,
@@ -145,8 +133,6 @@ export const loggedMinutesThroughEachDayOfMonth = ({
   const logged: number[] = []
   let minutes = 0
   for (let day = 1; day <= daysInMonth; day++) {
-    // The credit cap applies to the month so far, so recount on each day
-    // that adds an entry.
     if (entries.some((entry) => entry.day === day)) {
       minutes = adjustedMinutesForSpecificMonth(
         entries.filter((entry) => entry.day <= day).map(({ report }) => report),
@@ -161,11 +147,6 @@ export const loggedMinutesThroughEachDayOfMonth = ({
   return logged
 }
 
-/**
- * A Service Year's schedule status: its months' statuses through today, added
- * up, each month's Credit Time capped by the role that applied then. Months
- * still to come add nothing, and a year before its September hasn't started.
- */
 export const getScheduleStatusForServiceYear = ({
   serviceYear,
   publisherForMonth,

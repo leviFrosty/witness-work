@@ -67,7 +67,6 @@ describe('the person filter’s labels', () => {
   })
 
   it('tell apart one name on two cars by car', () => {
-    // Ben isn't the User's buddy, so each car knows him as someone else.
     const labels = personFilterLabels(
       [
         person('van/ben', 'Ben', 'van'),

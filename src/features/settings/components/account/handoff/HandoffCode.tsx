@@ -6,7 +6,6 @@ import i18n from '@/lib/locales'
 
 const MONO = Platform.select({ ios: 'Menlo', default: 'monospace' })
 
-/** The six-digit code both phones show, large. */
 export default function HandoffCode({ code }: { code: string }) {
   const theme = useTheme()
   const shown = formatHandoffCode(code)
@@ -31,9 +30,7 @@ export default function HandoffCode({ code }: { code: string }) {
         style={{
           fontFamily: MONO,
           fontSize: 40,
-          // Western digits in every language, so the spacing can't break
-          // Arabic joining.
-          // eslint-disable-next-line no-restricted-syntax
+
           letterSpacing: 4,
           fontWeight: '600',
           textAlign: 'center',

@@ -3,10 +3,8 @@ import { isLiquidGlassAvailable } from 'expo-glass-effect'
 
 const liquidGlass = isLiquidGlassAvailable()
 
-/** A chip or button over the map: 44pt on iOS, Material's 48dp on Android. */
 export const MAP_BUTTON_HEIGHT = Platform.OS === 'android' ? 48 : 44
 
-/** The glass pill the Map's chips share. */
 export const mapPillStyle = (cardColor: string): ViewStyle => ({
   height: MAP_BUTTON_HEIGHT,
   borderRadius: MAP_BUTTON_HEIGHT / 2,
@@ -20,7 +18,6 @@ export const mapPillStyle = (cardColor: string): ViewStyle => ({
   backgroundColor: liquidGlass ? undefined : cardColor + 'dd',
 })
 
-/** A round, icon-only glass button over the map. */
 export const mapControlStyle = (cardColor: string) => ({
   width: 44,
   height: 44,
@@ -33,15 +30,12 @@ export const mapControlStyle = (cardColor: string) => ({
   backgroundColor: liquidGlass ? undefined : cardColor + 'dd',
 })
 
-// Icon-only controls in the leading column; their labels open toward the map.
-// `Button` already supplies the pointer effect.
 export const MAP_CONTROL_TOOLTIP = {
   placement: 'right',
   effect: 'none',
   style: { borderRadius: 22 },
 } as const
 
-/** How overlays slide as the cards stow and come back. */
 export const STOW_TRANSITION = {
   transitionDuration: 280,
   transitionTimingFunction: 'ease-in-out',

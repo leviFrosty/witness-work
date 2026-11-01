@@ -25,32 +25,15 @@ import {
 } from '@/lib/sharedSpaces/records'
 import expected from '@/lib/sharedSpaces/testing/spaceVectors.json'
 
-/**
- * Known-answer vectors for every byte Shared Spaces depends on
- * (docs/shared-cars-protocol.md, "Client cryptography"): XChaCha20-Poly1305
- * against its draft's test vector, the member derivations (a `memberId` is a
- * hash of the member's key), the record key, a wrap, sealed records (live and
- * deleted, with their AADs), the key chain, the join verifier, a member tag,
- * the User's key check (its key, what it covers, and the check with and without
- * an avatar), a personal copy's id, and an invitation's event id. The negative
- * vectors say what opening each sealed value under the wrong AAD gives: it must
- * fail. `spaceVectors.json` holds the expected values; vitest checks them under
- * Node, and the dev harness (`__WW_DEV__.checkSharedSpacesCryptoVectors()`)
- * checks them in Hermes on iOS and Android, so all of them produce identical
- * bytes. ww-api's tests and any other client must match the same file.
- */
-
 const hex = (bytes: Uint8Array): string =>
   Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('')
 
 const fromHex = (text: string): Uint8Array =>
   new Uint8Array((text.match(/../g) ?? []).map((pair) => parseInt(pair, 16)))
 
-/** 0, 1, 2, … as bytes, from `start`. */
 const counting = (length: number, start = 0): Uint8Array =>
   Uint8Array.from({ length }, (_, index) => (start + index) & 0xff)
 
-/** What opening something gave: `opened`, or the `SpaceOpenError` problem. */
 function outcome(open: () => unknown): string {
   try {
     open()
@@ -65,8 +48,6 @@ export type SpaceVectors = Record<string, string>
 export function computeSpaceVectors(): SpaceVectors {
   const out: SpaceVectors = {}
 
-  // draft-irtf-cfrg-xchacha-03 A.3.1: XChaCha20-Poly1305 (binary AAD, so the
-  // primitive).
   out['rfc.xchacha'] = hex(
     xchacha20poly1305(
       counting(32, 0x80),
@@ -79,7 +60,6 @@ export function computeSpaceVectors(): SpaceVectors {
     )
   )
 
-  // The member derivations, for two people on one space.
   const spaceId = toB64u(counting(16, 0x10))
   const seed = counting(32, 0x00)
   const me = deriveSpaceMember(seed, spaceId)
@@ -93,21 +73,19 @@ export function computeSpaceVectors(): SpaceVectors {
   out['member.idInput'] = `ww-spaces/v1/member-id|${spaceId}|${me.dhPub}`
   out['member.otherId'] = them.memberId
   out['member.otherDhPub'] = them.dhPub
-  // An id commits to its key: one member's id doesn't own another's key.
+
   out['member.forgedKey'] = memberOwnsKey(spaceId, me.memberId, them.dhPub)
     ? 'owned'
     : 'refused'
-  // Another space's values can't be linked to these.
+
   out['member.otherSpaceId'] = deriveSpaceMember(
     seed,
     toB64u(counting(16, 0x30))
   ).memberId
 
-  // The space key for epoch 1 and its record key.
   const spaceKey = counting(32, 0x40)
   out['key.record'] = hex(deriveRecordKey(spaceKey))
 
-  // A wrap of epoch 1's key to the other member, with fixed randomness.
   const wrapAddress = { spaceId, epoch: 1, memberId: them.memberId }
   out['wrap.aad'] = fromUtf8(wrapAad(wrapAddress))
   const wrap = wrapSpaceKey(spaceKey, them.dhPub, wrapAddress, {
@@ -122,7 +100,7 @@ export function computeSpaceVectors(): SpaceVectors {
       wrapAddress
     )
   )
-  // The wrong AAD: another epoch, or another member's id.
+
   out['wrap.wrongEpoch'] = outcome(() =>
     unwrapSpaceKey(wrap, them, { ...wrapAddress, epoch: 2 })
   )
@@ -130,7 +108,6 @@ export function computeSpaceVectors(): SpaceVectors {
     unwrapSpaceKey(wrap, them, { ...wrapAddress, memberId: me.memberId })
   )
 
-  // A live trip and its deletion, sealed with a fixed nonce, opened back.
   const tripAddress = {
     spaceId,
     epoch: 1,
@@ -157,7 +134,7 @@ export function computeSpaceVectors(): SpaceVectors {
   const blob = sealRecord(spaceKey, tripAddress, trip, counting(24, 0x90))
   out['record.blob'] = blob
   out['record.opened'] = JSON.stringify(openRecord(spaceKey, tripAddress, blob))
-  // The wrong AAD: restamped, deleted, moved to another record or epoch.
+
   out['record.wrongStamp'] = outcome(() =>
     openRecord(spaceKey, { ...tripAddress, stamp: tripAddress.stamp + 1 }, blob)
   )
@@ -184,7 +161,6 @@ export function computeSpaceVectors(): SpaceVectors {
     openRecord(spaceKey, deletion, deleted)
   )
 
-  // The key chain: `k.2` sealed under epoch 2's key, holding epoch 1's.
   const nextKey = counting(32, 0xc0)
   const chain = {
     spaceId,
@@ -202,13 +178,11 @@ export function computeSpaceVectors(): SpaceVectors {
   out['keys.blob'] = chainBlob
   const opened = openRecord(nextKey, chain, chainBlob)
   out['keys.prev'] = hex(readKeysData(opened.data ?? {}) ?? new Uint8Array())
-  // A chain link read as another epoch's link doesn't open.
+
   out['keys.wrongId'] = outcome(() =>
     openRecord(nextKey, { ...chain, recordId: keysRecordId(3) }, chainBlob)
   )
 
-  // An invitation's verifier, a person's tag, a personal copy's id, and the
-  // Buddies event an invitation travels in.
   const joinSecret = counting(32, 0xe0)
   out['invite.joinSecret'] = toB64u(joinSecret)
   out['invite.joinVerifier'] = joinVerifier(joinSecret)
@@ -216,7 +190,6 @@ export function computeSpaceVectors(): SpaceVectors {
   const otherInboxId = toB64u(counting(16, 0x60))
   out['member.tag'] = memberTag(spaceId, inboxId)
 
-  // The User's key check in their member record, sealed under epoch 1.
   out['member.checkKey'] = hex(me.checkKey)
   const checked = {
     spaceId,
@@ -253,7 +226,6 @@ export function computeSpaceVectors(): SpaceVectors {
   return out
 }
 
-/** Every vector that doesn't match, by name; empty means all match. */
 export function checkSpaceVectors(): {
   ok: boolean
   checked: number

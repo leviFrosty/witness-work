@@ -42,27 +42,15 @@ import { usePreferences } from '@/stores/preferences'
 import type { RichTextDoc } from '@/types/richText'
 
 export type RichTextEditorRef = {
-  /** Hands over the latest doc, then calls `done`. */
   flush: (done: () => void) => void
 }
 
 const FLUSH_TIMEOUT_MS = 500
-/**
- * For iOS only, and an array: Android's prop parser aborts on a string. One
- * array for every render, since react-native-webview warns when it changes.
- */
+
 const NO_DATA_DETECTORS: ['none'] = ['none']
 
-/**
- * Editors mounted now. A deep link can open a form, and its note, on top of an
- * open editor; the keyboard controller stays on until the last one closes.
- */
 let mountedEditors = 0
 
-/**
- * The note editor: Tiptap in a WebView, with a native formatting toolbar that
- * rides on the keyboard. Fills its parent; meant for a full-screen route.
- */
 const RichTextEditor = (props: {
   ref?: React.Ref<RichTextEditorRef>
   initialDoc: RichTextDoc
@@ -73,7 +61,7 @@ const RichTextEditor = (props: {
   onChange: (doc: RichTextDoc) => void
   onPhotoAdded?: (count: number) => void
   onPhotoFailed?: () => void
-  /** Called once the editor's page has loaded and can take typing. */
+
   onLoad?: () => void
 }) => {
   const theme = useTheme()
@@ -92,16 +80,13 @@ const RichTextEditor = (props: {
   const closeLinkSheet = () =>
     setLinkSheet((sheet) => ({ ...sheet, open: false }))
   const pendingFlush = useRef<(() => void) | null>(null)
-  // The screen reaches the window's bottom edge, so the keyboard's height is
-  // exactly how far the toolbar rises. Without a keyboard it clears the home
-  // indicator instead.
+
   const keyboard = useReanimatedKeyboardAnimation()
   const bottomInset = insets.bottom
   const toolbarLift = useAnimatedStyle(() => ({
     paddingBottom: Math.max(-keyboard.height.value, bottomInset),
   }))
-  // From the keyboard's height rather than show/hide events, which a
-  // refocus with the keyboard already up doesn't send.
+
   useAnimatedReaction(
     () => keyboard.height.value < 0,
     (visible, previous) => {
@@ -109,8 +94,6 @@ const RichTextEditor = (props: {
     }
   )
 
-  // The keyboard-pinned toolbar needs the keyboard controller, which is off
-  // elsewhere so the rest of the app keeps its own keyboard handling.
   useEffect(() => {
     mountedEditors++
     setEnabled(true)
@@ -120,16 +103,11 @@ const RichTextEditor = (props: {
     }
   }, [setEnabled])
 
-  // Android shows the keyboard for a page that focuses itself only once the
-  // web view has focus too (patched into @expo/dom-webview).
   const requestKeyboard = () => {
     if (Platform.OS !== 'android') return
     ;(dom.current as unknown as { requestFocus?: () => void })?.requestFocus?.()
   }
 
-  // Android's back gesture starts at the screen's edges, where a full-width
-  // photo's resize handles sit; the web view keeps it off them (patched into
-  // @expo/dom-webview).
   const excludeFromBackGesture = async (rects: number[][]) => {
     if (Platform.OS !== 'android') return
     ;(
@@ -139,14 +117,11 @@ const RichTextEditor = (props: {
     )?.setGestureExclusion?.(rects)
   }
 
-  // The web view adds `run` once the page has loaded. Until then there's
-  // nothing to command, so a toolbar tap does nothing rather than throwing.
   const run = (command: EditorCommand) =>
     dom.current?.run?.(command as unknown as BridgeValue)
 
   useImperativeHandle(props.ref, () => ({
     flush: (done) => {
-      // Not loaded yet, so there's no edit to hand over.
       if (!dom.current?.run) return done()
       const timer = setTimeout(finish, FLUSH_TIMEOUT_MS)
       function finish() {
@@ -279,10 +254,6 @@ const RichTextEditor = (props: {
         <RichTextEditorDom
           ref={dom}
           dom={{
-            // iOS uses react-native-webview: it can raise the keyboard when
-            // the editor focuses itself, which Expo's own WebView can't.
-            // Android keeps Expo's: react-native-webview hands the page its
-            // setup too late there, and the editor never starts.
             useExpoDOMWebView: Platform.OS !== 'ios',
             keyboardDisplayRequiresUserAction: false,
             hideKeyboardAccessoryView: true,
@@ -294,7 +265,7 @@ const RichTextEditor = (props: {
             }),
             overScrollMode: 'never',
             setSupportMultipleWindows: false,
-            // Links in the editor are for editing, not following.
+
             onShouldStartLoadWithRequest: (request) =>
               !request.isTopFrame ||
               !/^https?:/i.test(request.url) ||
@@ -306,8 +277,6 @@ const RichTextEditor = (props: {
           }}
           getSetup={getSetup}
           onReady={async () => {
-            // Android: the view takes focus first, so the page's focus gets
-            // an input connection; the keyboard follows once it has.
             requestKeyboard()
             run({ type: 'focus', at: 'end' })
             props.onLoad?.()

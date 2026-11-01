@@ -2,10 +2,6 @@ import moment from 'moment'
 import i18n from '@/lib/locales'
 import { formatDisplay, formatWeekdayMonthDayCompact } from '@/lib/dates'
 
-/**
- * Day heading for a visit card or follow-up: `Fri, Jun 5` within the current
- * year, `Fri, Jun 5, 2025` otherwise.
- */
 export const visitDayLabel = (
   date: Date | string,
   now: Date = new Date()
@@ -16,7 +12,6 @@ export const visitDayLabel = (
     : formatDisplay(m, 'ddd, ll')
 }
 
-/** `Today` / `Tomorrow`, otherwise the visit day label. */
 export const relativeDayLabel = (
   date: Date | string,
   now: Date = new Date()

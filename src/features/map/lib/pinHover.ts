@@ -1,6 +1,6 @@
 export type Point = { x: number; y: number }
 export type Rect = { x: number; y: number; width: number; height: number }
-/** Visible map area, in map points, that a pin label may occupy. */
+
 export type Bounds = {
   left: number
   top: number
@@ -8,21 +8,12 @@ export type Bounds = {
   bottom: number
 }
 
-/** A pin's balloon in map points, plus the point its tip marks. */
 export type PinBox = { id: string; box: Rect; point: Point }
 
-/** Shape of `MapView.getMarkersFrames()`: entries keyed by marker identifier. */
 export type MarkerFrames = Record<string, { point: Point; frame: Rect }>
 
-// A default MapKit balloon sits above its coordinate: about 15pt either side
-// and 45pt tall, its tip a few points below the coordinate.
 const FALLBACK_BOX = { left: 15, right: 15, above: 45, below: 5 }
 
-/**
- * Turns native marker frames into hit boxes for the given contacts. The native
- * annotation frame is exact; if it looks unrelated to the pin's point (e.g. a
- * not-yet-laid-out view), fall back to a default balloon around the point.
- */
 export function toPinBoxes(
   frames: MarkerFrames,
   ids: ReadonlySet<string>
@@ -51,10 +42,6 @@ export function toPinBoxes(
   return boxes
 }
 
-/**
- * The pin under the pointer. Where balloons overlap, the southernmost one
- * (lowest on screen) wins: MapKit draws it in front.
- */
 export function hitTestPins(
   pins: readonly PinBox[],
   pointer: Point,
@@ -75,7 +62,6 @@ export function hitTestPins(
   return hit
 }
 
-/** Whether a pin's tip sits inside the visible map area. */
 export function isPinInBounds(pin: PinBox, bounds: Bounds) {
   return (
     pin.point.x >= bounds.left &&
@@ -88,10 +74,6 @@ export function isPinInBounds(pin: PinBox, bounds: Bounds) {
 const LABEL_GAP = 6
 const LABEL_EDGE = 8
 
-/**
- * Centres a label above its pin, kept inside the visible map area. When there
- * is no room above, it drops below the pin's tip instead of covering it.
- */
 export function placePinLabel(
   box: Rect,
   size: { width: number; height: number },

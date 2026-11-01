@@ -7,10 +7,6 @@ import type { NotificationItem } from '@/types/notifications'
 import type { RootStackNavigation } from '@/types/rootStack'
 import { useShallow } from 'zustand/react/shallow'
 
-/**
- * Announces a passively announced release in the tray until What's New is
- * opened (which clears the unread state) or the item is dismissed.
- */
 export default function useWhatsNewNotification(): NotificationItem | null {
   const navigation = useNavigation<RootStackNavigation>()
   const { unreadReleaseNotes, set } = usePreferences(

@@ -52,7 +52,7 @@ describe('sharing the pet', () => {
     expect(PET_SHARE_SCALE).toBe(4)
     expect(image.width).toBe(VIEW_CARD[2] * 4)
     expect(image.height).toBe(VIEW_CARD[3] * 4)
-    // Every 4 × 4 block is one colour.
+
     for (const [x, y] of [
       [0, 0],
       [120, 200],
@@ -61,7 +61,7 @@ describe('sharing the pet', () => {
       for (let j = 0; j < 4; j++)
         for (let i = 0; i < 4; i++)
           expect(pixelAt(image, x + i, y + j)).toEqual(pixelAt(image, x, y))
-    // A still: the same input draws the same picture.
+
     expect(petShareImage(INPUT).data).toEqual(image.data)
   })
 
@@ -122,11 +122,11 @@ describe('sharing the pet', () => {
       daysTogether: 20,
       hats: 2,
     })
-    // Adopted today: the first day together.
+
     expect(
       petShareStats({ ...base, adoptedOn: '2026-10-20' }).daysTogether
     ).toBe(1)
-    // A hidden streak, or none, isn't shown; any other is.
+
     expect(petShareStats({ ...base, showStreaks: false }).streak).toBeNull()
     expect(
       petShareStats({ ...base, streak: { ...streak, count: 0 } }).streak

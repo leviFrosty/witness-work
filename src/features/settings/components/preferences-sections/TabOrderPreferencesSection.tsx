@@ -17,8 +17,7 @@ const TabOrderPreferencesSection = () => {
   const { showsYearTabs } = usePublisher()
   const theme = useTheme()
   const order = getEffectiveTabOrder(tabOrder)
-  // Progress keeps its saved position while hidden so switching roles
-  // restores it.
+
   const visible = order.filter((key) => key !== 'Progress' || showsYearTabs)
 
   const moveTo = (index: number, target: number, source: 'arrows' | 'menu') => {
@@ -56,8 +55,7 @@ const TabOrderPreferencesSection = () => {
                   isLast ? undefined : () => moveTo(index, index + 1, 'arrows')
                 }
               />
-              {/* Long-press the label; the arrows stay outside the menu's
-                  trigger. Tabs can't be hidden, so the menu only moves. */}
+              {}
               <ContextMenu
                 style={{ flex: 1, minWidth: 0 }}
                 actions={reorderMenuActions({

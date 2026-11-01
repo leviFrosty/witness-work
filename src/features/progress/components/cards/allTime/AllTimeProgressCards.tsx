@@ -21,7 +21,6 @@ type Props = Pick<
   | 'onDragChange'
 >
 
-/** The User's cards under the lifetime total (see `ProgressCardGrid`). */
 export default function AllTimeProgressCards(grid: Props) {
   const cards = useAllTimeProgressCards()
   return (

@@ -1,21 +1,3 @@
-/**
- * @type {import('@bacons/apple-targets/app.plugin').ConfigFunction}
- * @bacons/apple-targets configuration for the WitnessWork widget extension.
- *
- * One iOS extension hosts a `WidgetBundle` of multiple widgets:
- *   - ReportWidget       (hours / checkbox, plus lock screen)
- *   - CalendarWidget     (month calendar)
- *   - AppointmentsWidget (upcoming follow-ups)
- *   - ContactsWidget     (top contacts with quick actions)
- *   - PetWidget          (Pet Companion and its room)
- *   - StopwatchLiveActivity (the timer's Live Activity)
- *
- * `name` and `bundleIdentifier` are pinned to what has always shipped
- * (`widgets` / `<host>.widget`). Changing either orphans widgets users have
- * placed. The App Group comes from the host app's entitlements, so each variant
- * (dev `jwtimedev`, beta `jwtimebeta`, prod `jwtime`) points at its own
- * `group.<bundle id>`.
- */
 module.exports = (config) => ({
   type: 'widget',
   name: 'widgets',

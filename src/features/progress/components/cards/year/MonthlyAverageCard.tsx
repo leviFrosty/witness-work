@@ -13,7 +13,6 @@ import StatCard from '@/features/progress/components/cards/StatCard'
 import { formatGoalHours } from '@/features/progress/components/cards/displayMinutes'
 import type { YearCardProps } from '@/features/progress/components/cards/types'
 
-/** The Service Year's usual month, against the Monthly Goal. */
 export default function MonthlyAverageCard({
   serviceYear,
   size,
@@ -37,8 +36,7 @@ export default function MonthlyAverageCard({
       tone={!average ? 'muted' : metGoal ? 'accent' : 'default'}
       caption={
         average
-          ? // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
-            i18n.t('progressCards.year.monthlyAverage.over', {
+          ? i18n.t('progressCards.year.monthlyAverage.over', {
               count: average.months,
             })
           : i18n.t('progressCards.serviceDays.none')

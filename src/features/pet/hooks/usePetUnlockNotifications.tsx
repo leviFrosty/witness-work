@@ -19,13 +19,6 @@ import usePet from '@/stores/pet'
 import { toastKeys, useToasts } from '@/stores/toasts'
 import type { NotificationItem } from '@/types/notifications'
 
-/**
- * Pet items that opened up and that the User hasn't looked at, one tray item
- * each: opened while the app wasn't in front or at launch, or an unlock toast
- * that left without being opened or swiped away. View opens the full-screen
- * reveal. Leaves out an item whose toast or reveal is on screen; Decorate Room
- * settles them all.
- */
 export default function usePetUnlockNotifications(): NotificationItem[] {
   const unseen = usePetUnlockNews((s) => s.unseen)
   const revealing = usePetUnlockNews((s) => s.revealing)

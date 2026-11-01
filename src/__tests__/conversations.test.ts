@@ -229,7 +229,7 @@ describe('lib/conversations', () => {
           month: testDate,
         })
       ).toBe(false)
-      // The User's own study with them that month counts.
+
       expect(
         contactStudiedForGivenMonth({
           contact,
@@ -485,9 +485,6 @@ describe('lib/conversations', () => {
   })
 
   describe('Follow-up scans over a long history', () => {
-    // The scans skip moment for dates a plain parse puts far out of range and
-    // group only the candidates' Visits; they must answer exactly like a full
-    // moment scan, including for date-only strings moment reads as local time.
     const now = moment('2026-09-20T17:30:00')
     let seed = 7
     const random = () => {
@@ -511,7 +508,6 @@ describe('lib/conversations', () => {
           ? {}
           : {
               followUp: {
-                // Persisted Visits carry strings; some old ones only a day.
                 date: (shape === 0
                   ? followUpAt.toDate()
                   : shape === 1

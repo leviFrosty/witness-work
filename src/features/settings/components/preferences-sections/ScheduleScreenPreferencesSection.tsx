@@ -74,8 +74,7 @@ const ScheduleScreenPreferencesSection = () => {
                   index === order.length - 1 ? undefined : () => move(index, 1)
                 }
               />
-              {/* Long-press the label; the arrows and switch stay outside
-                  the menu's trigger. */}
+              {}
               <ContextMenu
                 style={{ flex: 1, minWidth: 0 }}
                 actions={reorderMenuActions({

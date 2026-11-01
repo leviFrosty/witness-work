@@ -24,34 +24,15 @@ import type {
   SharedSpaceTombstone,
 } from '@/types/sharedCars'
 
-/**
- * Merging what a sync pulls into this device's copy of a car, by mileage's
- * per-record rule, which is also the server's: the newest stamp wins, and on an
- * equal stamp a deletion wins. Two live versions with the same stamp are the
- * server's to choose (by blob hash, which this device can't recompute), so the
- * one it returns wins. A record kept here because it's newer is already
- * pending, since only a change made here can be newer than the server's.
- *
- * A page merges in one pass (`createCarMerge`), each record found by id, so a
- * sync of thousands of records stays linear.
- */
-
-/** A record as it opened: its place, its stamp, and its plaintext. */
 export type OpenedRecord = {
   recordId: string
   stamp: number
   deleted: boolean
   kind: string
-  /** Absent on a deletion. */
+
   data?: Record<string, unknown>
 }
 
-/**
- * What merging one record did: `applied` (it was newer), `kept` (the car's own
- * is newer, or it's one no version uses, such as a second car or a kind that
- * disagrees with its id), or `unusable` (an unknown kind, or data this version
- * can't read, which a newer app may: kept to read again after an update).
- */
 export type MergeVerdict = 'applied' | 'kept' | 'unusable'
 
 const INVITE_RECORD_FIELDS = ['invitedBy', 'name', 'tag', 'expiresAt']
@@ -59,7 +40,6 @@ const INVITE_RECORD_FIELDS = ['invitedBy', 'name', 'tag', 'expiresAt']
 type WithId = { id: string; updatedAt?: number }
 type RecordState = { stamp: number; deleted: boolean }
 
-/** Whether `incoming` replaces what the car holds for its id. */
 export function incomingWins(
   local: RecordState | undefined,
   incoming: RecordState
@@ -70,19 +50,12 @@ export function incomingWins(
   return true
 }
 
-/** A map from a list, by `keyOf`, keeping the list's order. */
 const byKey = <T, K>(items: readonly T[], keyOf: (item: T) => K) =>
   new Map(items.map((item) => [keyOf(item), item]))
 
-/**
- * Merges records into `car` one at a time, then `finish()` makes the merged
- * car, with only what changed copied. Each record's pending mark goes when the
- * server's version replaces it.
- */
 export function createCarMerge(car: SharedCar) {
-  /** What changed, by record id: its state now, for the next record. */
   const states = new Map<string, RecordState | null>()
-  /** The collection holding each moved mileage record now (null: none). */
+
   const holders = new Map<string, MileageCollection | null>()
   const collections = new Map<MileageCollection, Map<string, WithId>>()
   let tombstones: Map<string, SharedCarTombstone> | null = null
@@ -121,7 +94,6 @@ export function createCarMerge(car: SharedCar) {
     else delete extras[id]
   }
 
-  /** The mileage record `id` out of whichever collection holds it. */
   function removeMileage(id: string) {
     const holder = holderOf(id)
     if (holder) collection(holder).delete(id)
@@ -146,7 +118,7 @@ export function createCarMerge(car: SharedCar) {
     const parsed = readMileageRecord(kind, record.recordId, record.stamp, data)
     if (!parsed) return 'unusable'
     const key = collectionOf(kind)
-    // One car per space: another `car` record can't add a second.
+
     if (
       kind === 'car' &&
       [...collection('vehicles').keys()].some((id) => id !== record.recordId)
@@ -213,7 +185,6 @@ export function createCarMerge(car: SharedCar) {
     return 'applied'
   }
 
-  /** Merges one record into the car being built. */
   function apply(record: OpenedRecord): MergeVerdict {
     const spaceKind = spaceKindOf(record.recordId)
     if (spaceKind !== null && record.kind !== spaceKind) return 'kept'
@@ -247,7 +218,6 @@ export function createCarMerge(car: SharedCar) {
     return 'applied'
   }
 
-  /** The merged car; `car` itself when nothing applied. */
   function finish(): SharedCar {
     if (states.size === 0) return car
     const next: SharedCar = { ...car }

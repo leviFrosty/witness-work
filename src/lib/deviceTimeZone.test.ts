@@ -5,8 +5,6 @@ afterEach(() => {
   vi.restoreAllMocks()
 })
 
-// Hermes caches the offsets for the weeks around each moment it reads, so a
-// second refresh minutes later has to read a moment outside that range.
 it('reads a moment far from every earlier probe', () => {
   const read: number[] = []
   const original = Date.prototype.getTimezoneOffset

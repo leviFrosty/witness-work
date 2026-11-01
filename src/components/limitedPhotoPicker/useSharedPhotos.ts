@@ -9,11 +9,6 @@ import {
 } from 'expo-media-library'
 import { logger } from '@/lib/logger'
 
-/**
- * The photos the User shared with the app, newest first, or null while they
- * load. Reloads when the selection changes: from Manage, or in Settings while
- * the app was in the background.
- */
 export default function useSharedPhotos(): AssetMetadata[] | null {
   const [photos, setPhotos] = useState<AssetMetadata[] | null>(null)
 

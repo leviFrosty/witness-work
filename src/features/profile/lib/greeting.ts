@@ -1,19 +1,11 @@
-/**
- * Picks Home's greeting. It never names the publisher (only a full name is
- * stored) and never reads absence ("long time no see") or holidays. In order:
- * monthly goal reached, a Service Streak, a calendar moment, the time of day.
- * Streak greetings leave the number to the streak badge beside them, so Home
- * shows one streak.
- */
-
 import type { TranslationKey } from '@/lib/locales'
 import { STREAK_MIN } from '@/lib/serviceStreak'
 
 export type GreetingContext = {
   now: Date
-  /** The Service Streak as Home shows it; 0 while streaks are hidden. */
+
   streak: number
-  /** This month's Monthly Goal is set and met. */
+
   goalReached: boolean
 }
 
@@ -74,7 +66,6 @@ const periodOf = (hour: number): Period => {
   return 'night'
 }
 
-/** Calendar moments that outrank the period's rotation while they last. */
 const calendarKey = (now: Date, period: Period): TranslationKey | null => {
   const isDayStart = period === 'earlyMorning' || period === 'morning'
   if (isDayStart && now.getDate() === 1) return 'greetingNewMonth'
@@ -94,10 +85,6 @@ const calendarKey = (now: Date, period: Period): TranslationKey | null => {
   }
 }
 
-/**
- * Stable for the whole day, so the greeting doesn't reshuffle on re-render, and
- * rotates day to day. `salt` keeps lists from moving in lockstep.
- */
 const ofTheDay = (keys: TranslationKey[], now: Date, salt: number) => {
   const day = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()) / 864e5
   return keys[(day + salt) % keys.length]
@@ -110,7 +97,7 @@ export function pickGreeting({
 }: GreetingContext): Greeting {
   if (goalReached) return { key: ofTheDay(GOAL_REACHED, now, 0) }
   if (streak >= LONG_STREAK) return { key: ofTheDay(LONG_STREAK_KEYS, now, 0) }
-  // Cheered from where the streak itself is celebrated.
+
   if (streak >= STREAK_MIN) return { key: ofTheDay(STREAK, now, 0) }
   const period = periodOf(now.getHours())
   const calendar = calendarKey(now, period)

@@ -19,11 +19,6 @@ import { RootStackNavigation } from '@/types/rootStack'
 
 type UpdateError = { offline: boolean; cause: unknown }
 
-/**
- * Downloads the update `fetchUpdate` already found, then restarts into it.
- * Leaving the screen stops the restart; a finished download still applies on
- * the next launch.
- */
 const UpdateScreen = () => {
   const theme = useTheme()
   const errorAnimation = useRef<LottieView>(null)

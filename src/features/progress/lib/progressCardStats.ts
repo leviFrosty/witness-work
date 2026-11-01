@@ -4,7 +4,6 @@ import { goalProgress } from '@/lib/goalProgress'
 import { storedDayKey } from '@/lib/normalizeDate'
 import type { TimeEntry } from '@/types/timeEntry'
 
-/** Where the month being shown sits relative to today. */
 export type MonthTense = 'past' | 'current' | 'future'
 
 export const monthTense = (
@@ -17,17 +16,6 @@ export const monthTense = (
   return today.isAfter(shown, 'month') ? 'past' : 'future'
 }
 
-/**
- * What the Daily Pace card says (issue #775): how much a day is still needed to
- * reach the Monthly Goal.
- *
- * - `current`: what's left, spread over the days left after today, the same count
- *   the month's report shows as "N days left". On the last day it all falls on
- *   today. `perWeekMinutes` is set while a week or more is left.
- * - `met`: the goal is reached (this month or a past one).
- * - `future`: the goal spread over the whole month.
- * - `past`: the month ended short; what it averaged a day and how far short.
- */
 export type DailyPace =
   | {
       state: 'current'
@@ -52,7 +40,6 @@ export const dailyPace = ({
   year,
   today,
 }: {
-  /** The month's credit-capped total, as its report counts it. */
   loggedMinutes: number
   goalMinutes: number
   month: number
@@ -96,7 +83,6 @@ export const dailyPace = ({
   }
 }
 
-/** Minutes of service on one day, ignoring Time Rollover bookkeeping. */
 const serviceMinutesByDay = (reports: TimeEntry[]) => {
   const days = new Map<string, number>()
   for (const entry of reports) {
@@ -110,19 +96,13 @@ const serviceMinutesByDay = (reports: TimeEntry[]) => {
 }
 
 export type ServiceDayStats = {
-  /** Days with time logged. */
   days: number
-  /** Logged minutes over those days. */
+
   averageMinutes: number
-  /** The day with the most time (`YYYY-MM-DD`), the earliest on a tie. */
+
   bestDay: { day: string; minutes: number } | null
 }
 
-/**
- * The month's days in service: how many, the average a day out, and the longest
- * one. Raw logged time, before the credit cap, since the cap applies to a month
- * rather than any one day.
- */
 export const serviceDayStats = (reports: TimeEntry[]): ServiceDayStats => {
   const days = serviceMinutesByDay(reports)
   let total = 0
@@ -141,7 +121,6 @@ export const serviceDayStats = (reports: TimeEntry[]): ServiceDayStats => {
 }
 
 export type MonthWeek = {
-  /** First and last day of the week inside the month (`YYYY-MM-DD`). */
   start: string
   end: string
   minutes: number
@@ -149,10 +128,6 @@ export type MonthWeek = {
   isFuture: boolean
 }
 
-/**
- * The month split into weeks that start on `startOfWeek` (0 = Sunday), each cut
- * to the month's own days, with the time logged in it.
- */
 export const monthWeeks = ({
   reports,
   month,
@@ -201,15 +176,6 @@ export const monthWeeks = ({
   return weeks
 }
 
-/**
- * What the Year Pace card says: the Annual Goal's remaining time spread over
- * the Service Year's months left, this one included (#358).
- *
- * - `current`: per month for the rest of the year.
- * - `met`: the goal is reached.
- * - `future`: the goal spread over all twelve months.
- * - `past`: the year ended short by `shortMinutes`.
- */
 export type YearPace =
   | { state: 'current'; perMonthMinutes: number; monthsLeft: number }
   | { state: 'met'; overMinutes: number }
@@ -224,13 +190,13 @@ export const yearPace = ({
 }: {
   loggedMinutes: number
   goalMinutes: number
-  /** Start year: September of `serviceYear` to August of the next. */
+
   serviceYear: number
   today: moment.Moment
 }): YearPace | null => {
   if (goalMinutes <= 0) return null
   const { start } = serviceYearBounds(serviceYear)
-  // Exclusive: Sep 1 of the following Service Year.
+
   const end = start.clone().add(1, 'year')
   if (today.isBefore(start, 'day'))
     return { state: 'future', perMonthMinutes: goalMinutes / 12 }

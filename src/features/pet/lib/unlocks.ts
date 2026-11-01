@@ -7,18 +7,6 @@ import {
   type RoomPart,
 } from '@/types/pet'
 
-/**
- * Which room items and hats the User owns (`docs/pet-companion.md`): the
- * starters, the ones bought in the Shop with coins (ADR 0035), secret items
- * once found, and anything earned under the old streak and months rules, which
- * stays (`earnedRoomItems`). An owned item never locks again.
- */
-
-/**
- * The items the pet has stored as earned (found secrets, and items opened up
- * before the Shop); none for a pet from before they were stored, or a damaged
- * list.
- */
 export function storedRoomItems(
   pet: Pick<PetRecord, 'earnedRoomItems'> | null
 ): readonly string[] {
@@ -28,10 +16,6 @@ export function storedRoomItems(
     : []
 }
 
-/**
- * The pet's Shop purchases, each item once; none before the first, and none
- * that can't be read (a damaged one never costs anything).
- */
 export function storedPurchases(
   pet: Pick<PetRecord, 'purchases'> | null
 ): readonly PetPurchase[] {
@@ -39,16 +23,11 @@ export function storedPurchases(
   return Array.isArray(stored) ? keptPurchases(stored) : []
 }
 
-/** Items earned now that the pet hasn't stored yet. */
 export const roomItemsToStore = (
   stored: readonly string[],
   earned: readonly RoomItemId[]
 ): RoomItemId[] => earned.filter((item) => !stored.includes(item))
 
-/**
- * Room items the User can pick: the starters, the stored ones, the bought ones,
- * and any earned now.
- */
 export function unlockedRoomItems(
   stored: readonly string[],
   earned: readonly RoomItemId[],
@@ -62,10 +41,6 @@ export function unlockedRoomItems(
   ])
 }
 
-/**
- * Whether the User can pick `option` for `part`. The window and sign are always
- * free; an option the order doesn't know (from a newer build) isn't offered.
- */
 export function isRoomOptionUnlocked(
   part: RoomPart | 'window',
   option: string,

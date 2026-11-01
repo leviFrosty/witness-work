@@ -40,18 +40,6 @@ import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 import { buddyDisplayName } from '@/features/buddies/lib/buddyProfile'
 import { noteUserAction } from '@/lib/userAction'
 
-/**
- * One queue entry in the notifications tray; invitations, claims, and requests
- * to join can be answered in place. Long-press the entry to open or dismiss it;
- * the answer buttons stay outside the long-press target. An invitation or claim
- * still waiting on an answer can't be dismissed: answering is what clears it. A
- * request to join can: Not Now is dismissing it, and Invite turns into a check
- * once the buddy is invited. Buddies' news has its own row (`BuddyNewsRow`).
- */
-/**
- * The dismiss X's frame, centered on the glyph 10pt down, level with the first
- * line, and taking up the 16 × 26pt it did with that padding.
- */
 const dismissFrame = {
   ...touchTargetFrame(16),
   marginTop: Number(touchTargetFrame(16).marginVertical) + 10,
@@ -70,23 +58,19 @@ export default function BuddyNotificationRow({
 }: {
   entry: BuddyNotification
   unread: boolean
-  /** Opens what the entry is about, when there's somewhere to go. */
+
   onPress?: () => void
-  /** Absent while the entry awaits an answer. */
+
   onDismiss?: () => void
-  /** A request to join: adds the buddy to the Plan, which invites them. */
+
   onInvite?: () => void
-  /** A request to join: this User's Plan it's about, for its title and place. */
+
   ownPlan?: Pick<DayPlan, 'title' | 'location'>
-  /** A reply: this User's Plan or Follow-up it answers. */
+
   replyTo?: { details: ShareDetails; isFollowUp: boolean }
-  /** A request to join: this User already invited them to a Plan that day. */
+
   invited?: boolean
-  /**
-   * A request to join with no Invite: the Plan follows someone else's
-   * invitation (their name, if still a buddy), or this User's Plans that day
-   * changed and none match.
-   */
+
   cantInvite?: { reason: 'linked'; organizer?: string } | { reason: 'changed' }
 }) {
   const theme = useTheme()
@@ -115,7 +99,7 @@ export default function BuddyNotificationRow({
   const timeDisplayFormat = usePreferences((state) => state.timeDisplayFormat)
   const dataProtectionMode = usePreferences((state) => state.dataProtectionMode)
   const status = share ? effectiveShareStatus(share, dayPlans) : undefined
-  // A Plan or Follow-up that has happened can't be answered any more.
+
   const ended = !!share && hasSharedEventEnded(share, Date.now())
   const replyDelivery = useReplyDelivery(
     share ? entry.shareKey : undefined
@@ -133,7 +117,7 @@ export default function BuddyNotificationRow({
     }
   }
   const askerName = buddy ? buddyDisplayName(buddy) : entry.name
-  // Nothing to turn off when this buddy's requests already can't alert.
+
   const mutedJoinRequests = useBuddies((state) =>
     state.notificationsEnabled && entry.from
       ? !buddyAlertSettings(state, entry.from).settings.joinRequests
@@ -154,8 +138,7 @@ export default function BuddyNotificationRow({
     void Haptics.success()
     onInvite?.()
   }
-  // Muting from where the request is decided; the switch is in their
-  // settings.
+
   const muteJoinRequests = () => {
     const from = entry.from
     if (!from) return
@@ -196,8 +179,7 @@ export default function BuddyNotificationRow({
     ...entry,
     name: buddy ? buddyDisplayName(buddy) : entry.name,
   })
-  // What it's about, under the headline: the User's Plan a request to join or
-  // a reply is about, or the buddy's invitation.
+
   const summary = joinRequest
     ? {
         details: {

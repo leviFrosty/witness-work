@@ -35,6 +35,17 @@ WitnessWork is available in 19 languages, translated with AI, including Arabic w
 
 Development setup (iOS and Android) and the production build process are documented in [docs/build.md](./docs/build.md). Production builds are intentionally done **locally** (`pnpm run build:prod-auto-submit`) rather than on EAS Build cloud services.
 
+### Source comments
+
+JavaScript and TypeScript source files (`.js`, `.jsx`, `.ts`, `.tsx`, `.mjs`, `.cjs`, `.mts`, `.cts`) must not contain comments. `pnpm lint` enforces `source/no-comments`, including JSDoc, JSX comments, and tooling directives. Inline ESLint configuration is disabled, so a comment cannot turn the rule off. Executable hashbangs are preserved.
+
+- `pnpm comments:check` checks tracked and non-ignored untracked source files without changing them.
+- `node scripts/strip-comments.mjs` previews which files need cleanup.
+- `pnpm comments:strip` removes comments with the TypeScript parser, checks that stripping preserves the syntax tree, and formats changed files with Prettier. Strings, regular expressions, and template text are left intact. All files are parsed before writing; symlinks and deleted files are skipped.
+- `pnpm test:source-comments` tests the cleanup and ESLint rule.
+
+Keep explanations in Markdown documentation, types in TypeScript or companion `.d.mts` declarations, and lint configuration outside source files. `eslint-suppressions.json` carries the existing lint exceptions previously expressed as directives, with per-file/per-rule violation budgets rather than blanket rule overrides. New violations beyond those budgets still fail lint. Intentional empty catch blocks are allowed without explanatory comments. Markdown, native Swift/Kotlin code, dependencies, ignored generated files, and license files are not stripped.
+
 ## Architecture
 
 How the app, its backend [ww-api](https://github.com/leviFrosty/ww-api) (a Cloudflare Worker), and the services they call connect. Arrows point from the caller to what it calls or reads, and dashed arrows are pushes and background work. "A / B" boxes name the iOS / Android pair that does the same job, such as App Attest / Play Integrity.

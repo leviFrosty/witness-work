@@ -33,7 +33,6 @@ import {
 
 type Rect = { x: number; y: number; width: number; height: number }
 
-/** Where the stack is anchored in its layer: its bottom, or its top. */
 export type RewardAnchor = { bottom: number } | { top: number }
 
 const TONE_COLOR: Record<RewardTone | 'total', string> = {
@@ -54,7 +53,6 @@ const SPARK_COLORS: Record<RewardTone | 'total', string[]> = {
   total: ['#ffd23f', '#fff3b0', '#ff8a1f', '#ffffff'],
 }
 
-/** How hard a line hits: the screen's shake, its sparks, and a ring. */
 function feel(line: RewardLine) {
   if (line.tone === 'milestone')
     return { shake: 7, sparks: 18, reach: 70, ring: 90 }
@@ -62,11 +60,9 @@ function feel(line: RewardLine) {
   return { shake: 2, sparks: 6, reach: 32, ring: 0 }
 }
 
-/** Bigger amounts land bigger. */
 const lineSize = (amount: number, compact: boolean) =>
   (amount >= 10 ? 38 : amount >= 4 ? 31 : 25) - (compact ? 5 : 0)
 
-/** In from far above the screen, overshooting as it hits. */
 const STOMP = new Keyframe({
   0: { opacity: 0, transform: [{ translateY: -16 }, { scale: 2.9 }] },
   55: {
@@ -78,7 +74,6 @@ const STOMP = new Keyframe({
   100: { opacity: 1, transform: [{ translateY: 0 }, { scale: 1 }] },
 }).duration(STOMP_MS)
 
-/** A small line rising, no hit. */
 const RISE = new Keyframe({
   0: { opacity: 0, transform: [{ translateY: 10 }, { scale: 0.8 }] },
   100: {
@@ -88,7 +83,6 @@ const RISE = new Keyframe({
   },
 }).duration(320)
 
-/** The oldest line folding away above, once more than `MAX_LINES` show. */
 const FOLD = new Keyframe({
   0: { opacity: 1, transform: [{ translateY: 0 }, { scale: 1 }] },
   100: {
@@ -98,16 +92,8 @@ const FOLD = new Keyframe({
   },
 }).duration(200)
 
-/** Where the total last drew, in window points, for the drop into the wallet. */
 let lastTotal: Rect | null = null
 
-/**
- * Draws the reward stack (`useRewardStack`) while its run plays in `slot`: each
- * line stomping in, the running total, the slam, and the total dropping into
- * its wallet count (`registerRewardTarget`), or into a tally of its own when
- * there's none on screen. Any tap skips the whole run, except a single small
- * line, which only rises and lets taps through.
- */
 export default function RewardStackLayer({
   slot,
   anchor,
@@ -134,8 +120,7 @@ function RunView({
   const root = useRef<View>(null)
   const totalRef = useRef<View>(null)
   const [origin, setOrigin] = useState<{ x: number; y: number } | null>(null)
-  // What already played before it drew here (the celebration took it over, or
-  // gave it back): no stomp for those.
+
   const [playedBefore] = useState(run.played)
   const shake = useSharedValue(0)
   const collapse = useSharedValue(0)
@@ -147,7 +132,6 @@ function RunView({
   const placed: RewardAnchor =
     scene && origin ? { top: scene.y - origin.y + 6 } : anchor
 
-  // Each line shakes the stack as it hits; the total's slam harder.
   const newest = played[played.length - 1]
   useEffect(() => {
     if (!newest || run.soft || run.played <= playedBefore) return
@@ -235,7 +219,6 @@ function RunView({
   )
 }
 
-/** The pet card's scene, in window points, while a run plays over it. */
 function useCardScene(over: boolean) {
   const [scene, setScene] = useState<Rect | null>(null)
   useEffect(() => {
@@ -247,7 +230,6 @@ function useCardScene(over: boolean) {
   return over ? scene : null
 }
 
-/** Dims the card's scene so the stack reads over the pet's room. */
 function Scrim({ rect, shown }: { rect: Rect; shown: boolean }) {
   const p = useSharedValue(0)
   useEffect(() => {
@@ -425,10 +407,6 @@ function Total({
   )
 }
 
-/**
- * The total dropping into its wallet count, then the count running up there.
- * With no count on screen to drop into, a tally of its own takes its place.
- */
 function Landing({
   run,
   origin,
@@ -524,10 +502,6 @@ function FlyChip({
   )
 }
 
-/**
- * The wallet counting up where the stack was, when there's no count to drop
- * into.
- */
 function Tally({
   run,
   anchor,
@@ -557,7 +531,6 @@ function Tally({
   )
 }
 
-/** Sparks thrown out from a hit, then falling away. */
 function Burst({
   count,
   reach,
@@ -623,7 +596,6 @@ function Spark({
   )
 }
 
-/** A ring of gold spreading out from a big hit. */
 function Ring({ size, delay }: { size: number; delay: number }) {
   const p = useSharedValue(0)
   useEffect(() => {

@@ -10,30 +10,17 @@ import {
 import { AccountSessionError } from '@/lib/serverAccount/session'
 import type { Coordinate } from '@/types/contact'
 
-/**
- * Client for ww-api `POST /route-planning/optimize`, as this device's attested
- * account session (ADR 0027): the server checks the account's Supporter status
- * (ADR 0029), so this links the RevenueCat customer first when this launch
- * hasn't. Sends bare coordinates only — never names, addresses, notes, or
- * topics.
- */
-
 export type RouteOptimization = {
-  /** Indices into the stops sent, in visiting order. */
   order: number[]
   distanceMeters: number
   durationSeconds: number
 }
 
-/** Server codes the screen explains, plus client-side failures. */
 export type RoutePlanningError =
   | 'supporter_required'
   | 'supporter_check_failed'
-  /** The account is suspended. */
   | 'suspended'
-  /** This device can never be verified, so it has no account session. */
   | 'device_unverified'
-  /** Verifying this device has to wait (Apple or Google unreachable). */
   | 'verify_later'
   | 'daily_limit'
   | 'rate_limited'
@@ -49,7 +36,7 @@ export type OptimizeRouteResult =
   | {
       ok: false
       error: RoutePlanningError
-      /** From the server's Retry-After, when it sent one. */
+
       retryAfterMs?: number
     }
 
@@ -63,7 +50,6 @@ const SERVER_ERRORS = new Set<RoutePlanningError>([
   'unavailable',
 ])
 
-/** The server solves up to ten stops in a few seconds. */
 const OPTIMIZE_TIMEOUT_MS = 30_000
 
 const point = ({ latitude, longitude }: Coordinate) => ({
@@ -77,7 +63,6 @@ const isOrder = (value: unknown, count: number): value is number[] =>
   new Set(value).size === count &&
   value.every((index) => Number.isInteger(index) && index >= 0 && index < count)
 
-/** Why the session couldn't be used, in the screen's terms. */
 const sessionFailure = (
   error: AccountSessionError
 ): OptimizeRouteResult & { ok: false } => {
@@ -102,7 +87,7 @@ const sessionFailure = (
         : error.attestation === 'temporary'
           ? { ok: false, error: 'verify_later' }
           : { ok: false, error: 'failed' }
-    // `upgrade` already showed Update Required.
+
     default:
       return { ok: false, error: 'failed' }
   }
@@ -128,10 +113,7 @@ export const optimizeRoute = async ({
         timeoutMs: OPTIMIZE_TIMEOUT_MS,
         signal,
       })
-    // Not retried otherwise: each call counts toward the daily route limit. A
-    // `supporter_required` refusal never counts, and can mean the server lost
-    // this device's RevenueCat link: link again, and retry once if that made
-    // the account a Supporter.
+
     const { data } = await send().catch(async (error: unknown) => {
       if (
         errorBodyCode(error) !== 'supporter_required' ||
@@ -152,9 +134,8 @@ export const optimizeRoute = async ({
     }
     return { ok: true, order: data.order, distanceMeters, durationSeconds }
   } catch (error) {
-    // An HttpError too, so first.
     if (error instanceof AccountSessionError) return sessionFailure(error)
-    // `code` is the stable code; `error` is a message older builds show.
+
     const code = errorBodyCode(error)
     if (SERVER_ERRORS.has(code as RoutePlanningError)) {
       return {

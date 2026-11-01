@@ -12,10 +12,6 @@ import {
   vi,
 } from 'vitest'
 
-// The celebration overlays honor the system Reduce Motion setting: the
-// confetti and fireworks are skipped, the chime still plays, and toggling the
-// setting while the app runs takes effect on the next celebration.
-
 const a11y = vi.hoisted(() => ({
   launchValue: false,
   current: false,
@@ -49,8 +45,6 @@ import AnimationViewProvider, {
 } from '@/providers/AnimationViewProvider'
 import ConfettiProvider from '@/providers/ConfettiProvider'
 
-// The overlays `require()` their Lottie and Skia views on first play, which
-// `vi.mock` doesn't intercept, so stand them in at the loader.
 const lazyModules: Record<string, unknown> = {
   'lottie-react-native': {
     default: forwardRef(function Lottie(_props, ref) {
@@ -88,7 +82,6 @@ const setReduceMotion = (value: boolean) => {
   act(() => a11y.listeners.forEach((listener) => listener(value)))
 }
 
-/** Settles the async `isReduceMotionEnabled` read made on mount. */
 const flush = () => act(async () => {})
 
 describe('celebrations under Reduce Motion', () => {

@@ -1,10 +1,6 @@
 import { useState } from 'react'
 import useLocalDay from '@/hooks/useLocalDay'
 
-/**
- * Today, moved on at midnight and on returning to the app on a new day
- * (including after a time zone change); see `useLocalDay`.
- */
 export default function useToday(): Date {
   const day = useLocalDay()
   const [today, setToday] = useState(() => ({ day, date: new Date() }))

@@ -13,16 +13,10 @@ export type PaginationModel = {
 const pageRange = (start: number, end: number) =>
   Array.from({ length: end - start + 1 }, (_, index) => start + index)
 
-/**
- * Builds a compact, stable pagination range with at most five numbered or
- * ellipsis items. Input is normalized so rendering callers do not need their
- * own clamping or invalid-count branches.
- */
 export const buildPaginationModel = ({
   page,
   pageCount,
 }: {
-  /** One-based current page. */
   page: number
   pageCount: number
 }): PaginationModel => {

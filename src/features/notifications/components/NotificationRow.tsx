@@ -44,19 +44,10 @@ function toneColors(theme: Theme, tone: NotificationTone = 'accent') {
   }
 }
 
-/** The round icon that leads a row without art. */
 const ICON_SIZE = 36
-/** Between the leading icon or art and the text. */
+
 const LEAD_GAP = 10
 
-/**
- * A standard tray entry: icon (or an unlock's art), title, when it came in, a
- * dismiss button, an optional description, and up to two actions. Tapping the
- * row runs the first action.
- *
- * VoiceOver reads the row as one element, which hides the buttons inside it, so
- * the second action and Dismiss are its custom actions too.
- */
 export default function NotificationRow({
   item,
   at,
@@ -79,8 +70,6 @@ export default function NotificationRow({
 
   return (
     <Pressable
-      // A row without actions does nothing on tap, but isn't disabled:
-      // VoiceOver would read it as dimmed, though Dismiss still works.
       onPress={primary ? () => onAction(primary) : undefined}
       accessibilityActions={[
         ...(secondary ? [{ name: 'secondary', label: secondary.label }] : []),

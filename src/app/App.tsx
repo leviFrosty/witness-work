@@ -72,18 +72,12 @@ import UpdateRequiredGate from '@/app/update-required/UpdateRequiredGate'
 
 initializeApp()
 
-/**
- * Launch work that the first screen doesn't need. Each piece starts once that
- * screen is up, the heavier ones later still, so they don't compete with the
- * splash handing over. A component of its own so these stages don't re-render
- * the app.
- */
 function LaunchWork() {
   const afterFirstScreen = useAfterLaunch('firstScreen')
   const afterReminderDelay = useAfterLaunch(2_000)
-  // First, so the launch pull that rollover waits on starts straight away.
+
   useICloudSync(afterFirstScreen)
-  // Each starts in its own idle period, in this order.
+
   useWidgetSync(useAfterLaunch('idle'))
   useWatchSync(useAfterLaunch('idle'))
   useCalendarSync(useAfterLaunch('idle'))
@@ -99,8 +93,6 @@ function LaunchWork() {
 }
 
 export default function App() {
-  // Before the device's first unlock, nothing past the splash may read or
-  // write the User's data.
   if (!useStorageUnlock()) return <LaunchSplash />
   return <UnlockedApp />
 }
@@ -117,8 +109,6 @@ function UnlockedApp() {
   const hasMigrated = useAppMigrations()
   const directionReloadDue = useLayoutDirectionReload()
 
-  // Rendering anything hides the native splash, so keep showing its exact
-  // replica until the app is ready — the first screen then picks up from it.
   if (!hasMigrated || !fontsLoaded || directionReloadDue) {
     return <LaunchSplash />
   }
@@ -140,9 +130,7 @@ function UnlockedApp() {
             <GestureHandlerRootView style={{ flex: 1 }}>
               <DisplayRegionsObserver />
               <PopoverTouchShield>
-                {/* Off except while the note editor is open (it pins its
-                  toolbar to the keyboard); the rest of the app avoids the
-                  keyboard with React Native's own events. */}
+                {}
                 <KeyboardProvider
                   enabled={false}
                   preload={false}
@@ -152,10 +140,8 @@ function UnlockedApp() {
                     key={devRemountKey}
                     ref={navigationRef}
                     linking={linking}
-                    // Shown while deep links resolve, before the first screen.
                     fallback={<LaunchSplash />}
                     onReady={() => {
-                      // Every link listener is up now.
                       stopRecordingLaunchLinks()
                       markLaunched()
                       reportLaunch()
@@ -202,7 +188,7 @@ function UnlockedApp() {
                             <ToastHost />
                             <PointerTooltipLayer />
                             <UpdateRequiredGate />
-                            {/* Last, so it covers everything else. */}
+                            {}
                             <AppLockGate />
                           </SurveyProvider>
                         </AnimationViewProvider>

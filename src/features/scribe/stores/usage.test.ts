@@ -26,7 +26,7 @@ describe('noteUsage', () => {
 
   it('keeps the newest asOf, whatever order responses arrive in', () => {
     noteUsage(snapshot(200, 30))
-    // A slow GET /usage answered after a newer step meter.
+
     noteUsage(snapshot(150, 20))
     expect(useScribeUsageStore.getState().snapshot?.asOf).toBe(200)
     noteUsage(snapshot(300, 40))

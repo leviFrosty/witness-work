@@ -5,27 +5,17 @@ import type { RouteStop } from '@/features/route-planning/lib/routeStops'
 
 export type NavigationApp = 'apple' | 'google' | 'waze'
 
-/**
- * How a planned route reaches the navigation app. Every link starts from the
- * device's current location, so a chosen starting stop is simply the first
- * stop.
- *
- * - `route`: one link carrying every stop in order.
- * - `stopByStop`: one link per stop, opened in turn, for apps whose links take a
- *   single destination.
- */
 export type RouteHandoff = {
   app: NavigationApp
   mode: 'route' | 'stopByStop'
-  /** One link for `route`; one per stop, in order, for `stopByStop`. */
+
   links: string[]
 }
 
-/** Google Maps: up to 9 waypoints plus the destination in its apps. */
 const GOOGLE_MAX_STOPS = 10
-/** Apple Maps: up to 14 stops on a route. */
+
 const APPLE_MAX_STOPS = 14
-/** Google Maps URLs are limited to 2,048 characters. */
+
 const GOOGLE_MAX_URL_LENGTH = 2048
 
 export const resolveNavigationApp = (
@@ -33,14 +23,12 @@ export const resolveNavigationApp = (
   platform: string
 ): NavigationApp => resolveNavigationMapProvider(provider, platform) ?? 'apple'
 
-/** Apple Maps opens multi-stop directions links from iOS 18.4 on. */
 export const supportsAppleMultiStop = (platform: string, version: unknown) => {
   if (platform !== 'ios') return false
   const [major = 0, minor = 0] = String(version).split('.').map(Number)
   return major > 18 || (major === 18 && minor >= 4)
 }
 
-/** Percent-encodes values (spaces as `%20`, never `+`). */
 const query = (params: [string, string][]) =>
   params.map(([key, value]) => `${key}=${encodeURIComponent(value)}`).join('&')
 
@@ -65,7 +53,6 @@ const appleRouteUrl = (destinations: string[]) =>
     ['mode', 'driving'],
   ])}`
 
-/** What a link needs from a stop. */
 type HandoffStop = Pick<RouteStop, 'coordinate' | 'destination'>
 
 const stopLink = (app: NavigationApp, stop: HandoffStop) => {
@@ -85,7 +72,6 @@ const stopLink = (app: NavigationApp, stop: HandoffStop) => {
   }
 }
 
-// `|` separates Google waypoints; an address can't contain one.
 const googleDestination = (stop: HandoffStop) =>
   stop.destination.replace(/\|/g, ' ')
 
@@ -95,7 +81,7 @@ export const buildRouteHandoff = ({
   appleMultiStop,
 }: {
   app: NavigationApp
-  /** In visiting order, the starting stop first when there is one. */
+
   stops: HandoffStop[]
   appleMultiStop: boolean
 }): RouteHandoff => {
@@ -108,7 +94,7 @@ export const buildRouteHandoff = ({
 
   if (app === 'google' && stops.length <= GOOGLE_MAX_STOPS) {
     let url = googleRouteUrl(stops.map(googleDestination))
-    // Long addresses can overflow the URL; coordinates always fit.
+
     if (url.length > GOOGLE_MAX_URL_LENGTH) {
       url = googleRouteUrl(stops.map((stop) => coordinateText(stop.coordinate)))
     }

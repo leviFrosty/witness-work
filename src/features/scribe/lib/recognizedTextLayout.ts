@@ -3,10 +3,8 @@ import type {
   RecognizedPage,
 } from '../../../../modules/text-recognition'
 
-// Horizontal gap (fraction of page width) between two pieces of one row that
-// marks separate table cells, e.g. the columns of a house-to-house record.
 const COLUMN_GAP = 0.04
-// Vertical gap, in median line heights, that starts a new paragraph.
+
 const PARAGRAPH_GAP = 0.9
 
 interface Row {
@@ -24,7 +22,6 @@ const median = (values: number[]): number => {
   return sorted[Math.floor(sorted.length / 2)] ?? 0
 }
 
-/** Joins a row's pieces left to right; wide gaps read as table columns. */
 const rowText = (row: Row): string => {
   const pieces = [...row.lines].sort((a, b) => a.x - b.x)
   let text = pieces[0]?.text ?? ''
@@ -36,13 +33,6 @@ const rowText = (row: Row): string => {
   return text
 }
 
-/**
- * Turns one page of recognized lines into editable text in reading order.
- * Pieces that share a baseline become one row (columns joined with " | " so a
- * record sheet keeps its rows together), and a large vertical gap becomes a
- * blank line between paragraphs. Pure, so any platform's recognizer can reuse
- * it.
- */
 export const layoutRecognizedPage = (lines: RecognizedLine[]): string => {
   const items = lines
     .map((line) => ({ ...line, text: line.text.trim() }))
@@ -85,7 +75,6 @@ export const layoutRecognizedPage = (lines: RecognizedLine[]): string => {
   return text
 }
 
-/** Lays out every page, separating pages with a blank line. */
 export const layoutRecognizedPages = (pages: RecognizedPage[]): string =>
   pages
     .map((page) => layoutRecognizedPage(page.lines))

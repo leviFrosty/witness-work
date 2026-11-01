@@ -19,7 +19,6 @@ const findEntry = (id: string): TimeEntry | undefined =>
     (entry) => entry.id === id
   )
 
-/** A Time Entry as the Add Time form saves one. */
 export function applyTimeCreate(
   draft: DraftEffectOf<'time.create'>,
   ctx: ApplyContext
@@ -57,7 +56,6 @@ const snapshotOf = (entry: TimeEntry): TimeSnapshot => ({
   noteDoc: entry.noteDoc ?? null,
 })
 
-/** The snapshot's fields on a TimeEntry; absent ones cleared. */
 const fromSnapshot = (snapshot: TimeSnapshot): Omit<TimeEntry, 'id'> => ({
   date: localDate(snapshot.date),
   hours: snapshot.hours,
@@ -71,7 +69,6 @@ const fromSnapshot = (snapshot: TimeSnapshot): Omit<TimeEntry, 'id'> => ({
 const sameSnapshot = (a: TimeSnapshot, b: TimeSnapshot): boolean =>
   JSON.stringify(a) === JSON.stringify(b)
 
-/** Re-checked against the entry as it was read (Reconcile at Accept). */
 export function applyTimeUpdate(
   draft: DraftEffectOf<'time.update'>,
   ctx: ApplyContext
@@ -89,7 +86,7 @@ export function applyTimeUpdate(
     const found = categoryId
       ? useCategories.getState().categories.find((c) => c.id === categoryId)
       : undefined
-    // As the form's Type row: the reference and the legacy credit stamp.
+
     category = {
       categoryId: categoryId ?? undefined,
       tag: undefined,
@@ -102,7 +99,7 @@ export function applyTimeUpdate(
     ...(set.date !== undefined ? { date: localDate(set.date) } : {}),
     ...(set.minutes !== undefined ? splitMinutes(set.minutes) : {}),
     ...category,
-    // A plain note replaces any formatted one.
+
     ...(set.note !== undefined
       ? { note: set.note ?? undefined, noteDoc: undefined }
       : {}),
@@ -119,7 +116,6 @@ export function applyTimeUpdate(
   }
 }
 
-/** Restores the entry only if the User hasn't changed it since. */
 export function undoTimeUpdate(
   entryId: string,
   before: TimeSnapshot,
@@ -148,7 +144,6 @@ export function applyTimeDelete(
   }
 }
 
-/** Puts the deleted entry back under its own id. */
 export function undoTimeDelete(
   entryId: string,
   snapshot: TimeSnapshot

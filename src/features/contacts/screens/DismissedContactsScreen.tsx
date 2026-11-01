@@ -25,7 +25,6 @@ const DismissedContactsScreen = ({ navigation }: Props) => {
   const insets = useSafeAreaInsets()
   const { contacts } = useContacts()
 
-  // Soonest to return first.
   const dismissedContacts = getDismissedContacts(contacts).sort((a, b) => {
     if (!a.dismissedUntil) return 1
     if (!b.dismissedUntil) return -1

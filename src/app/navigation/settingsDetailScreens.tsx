@@ -4,17 +4,12 @@ import { RootStackParamList } from '@/types/rootStack'
 
 type SettingsDetailScreen = {
   name: keyof RootStackParamList
-  /** Required on first open, so launch doesn't load every settings screen. */
+
   getComponent: () => ComponentType
   title: () => string
   headerRight?: ComponentType
 }
 
-/**
- * Routes reachable from the Settings list. Registered on the root stack for
- * compact layouts, and on the wide Settings tab's detail pane so they open
- * beside the list instead of covering it.
- */
 export const settingsDetailScreens: SettingsDetailScreen[] = [
   {
     name: 'Preferences',

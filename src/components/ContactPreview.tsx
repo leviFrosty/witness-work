@@ -13,14 +13,10 @@ import { hasNote } from '@/lib/richText/notes'
 
 type ContactPreviewProps = {
   contact: Contact
-  /** The contact's most recent visit, from the caller's conversation index. */
+
   lastVisit?: Visit | null
 }
 
-/**
- * Context menu preview for a Contact: who, where, and where things stand, so
- * people can confirm the person before acting.
- */
 export default function ContactPreview({
   contact,
   lastVisit,

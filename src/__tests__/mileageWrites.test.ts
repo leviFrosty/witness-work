@@ -28,10 +28,6 @@ const {
   saveVehicleSetup,
 } = writes
 
-/**
- * The writes the seam shares with the User's own store, whatever each returns
- * (the seam's `saveTrip` says whether it saved).
- */
 type Writes = {
   [K in keyof Omit<typeof writes, 'deleteAllMileageData'>]: (
     ...args: Parameters<(typeof writes)[K]>
@@ -186,7 +182,7 @@ describe('mileage writes', () => {
       effectiveFrom: '2026-06-01',
       pricePerGallon: 6,
     })
-    // A fuel made in a Shared Car's form belongs to that car.
+
     saveFuel(
       { id: 'ev', name: 'Electric', createdAt: 2 },
       { vehicleId: 'mazda' }
@@ -197,7 +193,7 @@ describe('mileage writes', () => {
       effectiveFrom: '2026-06-01',
       pricePerGallon: 1,
     })
-    // Any other new fuel, and the User's own fuels, stay theirs.
+
     saveFuel({ id: 'diesel', name: 'Diesel', createdAt: 2 })
     saveFuel(
       { id: 'gas', name: 'Petrol', createdAt: 1 },
@@ -269,7 +265,6 @@ describe('mileage writes', () => {
   })
 
   it("deletes a trip wherever it's live, a hidden copy included", () => {
-    // The User's own stale copy of the Shared Car's trip, which it hides.
     useMileage.setState({
       trips: [...own().trips, { ...trip('ours', 'mazda', 1), updatedAt: 2 }],
     })
@@ -330,8 +325,6 @@ describe('mileage writes', () => {
   })
 
   it('refuses a trip saved after its Shared Car ended', () => {
-    // A form opened on the car before it ended: the car went, and its copy
-    // is one of the User's own cars under another id.
     useSharedCars.getState().removeSharedCar('s1')
     useMileage.getState().mergeRecords({
       vehicles: [
@@ -341,7 +334,7 @@ describe('mileage writes', () => {
 
     expect(saveTrip(trip('late', 'mazda'))).toBe(false)
     expect(getMileageView().trips.some((t) => t.id === 'late')).toBe(false)
-    // Editing a trip that was on it: nothing comes back under its old id.
+
     expect(saveTrip({ ...trip('ours', 'mazda'), loggedBy: 'anna' })).toBe(false)
     expect(getMileageView().trips.map((t) => t.id)).toEqual(['mine'])
   })
@@ -419,7 +412,7 @@ describe('mileage writes on a long history', () => {
     expect(after.fuels).toBe(before.fuels)
     expect(after.fuelPrices).toBe(before.fuelPrices)
     expect(after.vehicleSetups).toBe(before.vehicleSetups)
-    // Every edit on the Shared Car keeps who logged it.
+
     expect(
       shared()
         .trips.slice(0, 100)
@@ -427,8 +420,7 @@ describe('mileage writes on a long history', () => {
           (t) => t.loggedBy === (Number(t.id.split('-')[1]) % 2 ? 'me' : 'anna')
         )
     ).toBe(true)
-    // Each write is linear in the history: 200 over 10,000 trips take well
-    // under this on any machine, however busy. A quadratic one would not.
+
     expect(elapsed).toBeLessThan(5000)
   })
 })

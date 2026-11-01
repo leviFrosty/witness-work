@@ -60,22 +60,15 @@ function Title() {
 
 const NO_AVATAR: ProfileAvatar = { type: 'none', value: '' }
 
-/** Someone on the car, as a row's menu acts on them. */
 type RowPerson = {
-  /** The row's key, which shows its spinner while an action runs. */
   key: string
   memberId: string
-  /** As shown: "You" for the User. */
+
   name: string
-  /** Not named yet: someone whose join didn't finish. */
+
   unnamed: boolean
 }
 
-/**
- * Who's on a Shared Car, with what the User can do about each of them. While
- * Shared Cars is off on this device (`sharing`), only the User's own way off
- * the car stays.
- */
 function SharedCarPeople({
   car,
   vehicle,
@@ -102,7 +95,6 @@ function SharedCarPeople({
     }
   }
 
-  // Leaving and stopping end the car here; the form closes with it.
   const personAction = (
     row: RowPerson,
     action: CarPersonAction
@@ -172,7 +164,7 @@ function SharedCarPeople({
                 void run(row.key, () =>
                   carPeopleActions.remove(car.spaceId, {
                     memberId: row.memberId,
-                    // The toasts' "Removed this person".
+
                     name: row.unnamed ? i18n.t('mileage.thisPerson') : name,
                   })
                 ),
@@ -203,7 +195,6 @@ function SharedCarPeople({
       }),
   })
 
-  // Invite Buddy… ends the section while sharing; otherwise the last row does.
   const last = (row: CarPeopleRow) => !sharing && row === rows.at(-1)
 
   const personRow = (row: Extract<CarPeopleRow, { kind: 'person' }>) => {
@@ -293,17 +284,6 @@ function SharedCarPeople({
   )
 }
 
-/**
- * The car form's People section (docs/mileage-tracking-prd.md, "Shared Cars"):
- * who's on a Shared Car and its open invitations, with Invite Buddy…, or Share
- * Car… for one of the User's own. Sharing moves the car's history to its space,
- * which takes a moment, then offers the User's buddies to invite. With no
- * buddies yet, the picker points to Buddies instead, and nothing is shared.
- *
- * While Shared Cars is off on this device (its flag, or Buddies), nothing new
- * is shared, but a Shared Car still lists its people, and the User can still
- * leave it, or stop sharing it as its owner: the way off a car never closes.
- */
 export default function CarPeopleSection({ vehicleId }: { vehicleId: string }) {
   const sharing = useMileageSharing()
   const vehicle = useMileageView((view) =>
@@ -317,7 +297,7 @@ export default function CarPeopleSection({ vehicleId }: { vehicleId: string }) {
   const [pickerSpace, setPickerSpace] = useState<string>()
 
   if (!vehicle) return null
-  // Archived cars aren't offered to share; a Shared Car stays listed.
+
   if (!car && (!sharing.enabled || vehicle.archived)) return null
 
   const openPicker = (spaceId?: string) => {

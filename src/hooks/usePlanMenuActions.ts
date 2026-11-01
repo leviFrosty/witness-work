@@ -31,7 +31,6 @@ import {
 } from '@/lib/recurrence'
 import type { RootStackNavigation, RootStackParamList } from '@/types/rootStack'
 
-/** Plan Details for a row's Plan (a Recurring Plan's date). */
 export const planDetailsParams = (
   item: PlanListItem
 ): RootStackParamList['Plan Details'] =>
@@ -39,7 +38,6 @@ export const planDetailsParams = (
     ? { dayPlanId: item.plan.id }
     : { recurringPlanId: item.plan.id, date: item.date.toISOString() }
 
-/** The Plan form editing a row's Plan (a Recurring Plan's date). */
 export const planEditParams = (
   item: PlanListItem
 ): RootStackParamList['PlanDay'] =>
@@ -51,10 +49,6 @@ export const planEditParams = (
         recurringPlanDate: item.date.toISOString(),
       }
 
-/**
- * A Plan's minutes, note, and start time on its date, overrides applied.
- * `anytime` Plans have no set time; their start time is only the noon default.
- */
 const effectiveValues = (item: PlanListItem) =>
   item.type === 'recurring'
     ? {
@@ -74,7 +68,6 @@ const effectiveValues = (item: PlanListItem) =>
         anytime: !!item.plan.anytime,
       }
 
-/** A Plan's length and Type on its date, for logging it as time. */
 export type LogTimePrefill = {
   date: Date
   hours: number
@@ -82,25 +75,19 @@ export type LogTimePrefill = {
   categoryId?: string
 }
 
-/**
- * Opening a Plan, plus Edit, Log as Time, Duplicate, Plan Route, maps, copy,
- * and Delete, wherever it shows: a row (tap and long-press menu) and Plan
- * Details' More menu. Also returns the Plan's effective values on its date.
- */
 export default function usePlanMenuActions(
   item: PlanListItem,
   options: {
-    /** Runs a navigation; a host sheet passes one that closes it first. */
     go?: (navigate: () => void) => void
-    /** Logs the Plan as time in place, instead of opening Add Time. */
+
     logTime?: (prefill: LogTimePrefill) => void
-    /** Shows the Plan in place, instead of opening Plan Details. */
+
     open?: (target: RootStackParamList['Plan Details']) => void
-    /** Edits the Plan in place, instead of opening the Plan screen. */
+
     edit?: (params: RootStackParamList['PlanDay']) => void
-    /** Leaves Edit out, for hosts with their own Edit button. */
+
     withoutEdit?: boolean
-    /** A delete was confirmed and done. */
+
     onDeleted?: () => void
   } = {}
 ) {
@@ -141,10 +128,6 @@ export default function usePlanMenuActions(
     options.onDeleted?.()
   }
 
-  /**
-   * The one delete flow for a row's swipe and a Day Plan's menu item, so the
-   * confirmation copy and the recurring-scope choices stay identical.
-   */
   const requestDelete = () =>
     confirmDeletePlan({ recurring: isRecurring, onDelete: removePlan })
 
@@ -164,11 +147,6 @@ export default function usePlanMenuActions(
     )
   }
 
-  /**
-   * A Day Plan's copy starts on the same weekday next week, the usual reason to
-   * duplicate one; the form still lets the day change. A Recurring Plan usually
-   * already has next week's occurrence, so its copy keeps the day.
-   */
   const duplicateDay =
     item.type === 'day' ? dateMoment.clone().add(1, 'week') : dateMoment
 
@@ -202,7 +180,7 @@ export default function usePlanMenuActions(
         systemImage: 'pencil',
         onPress: edit,
       },
-      // Publishers who don't log hours never see Add Time.
+
       showsTimeEntry && {
         id: 'log_as_time',
         title: i18n.t('logAsTime'),
@@ -217,7 +195,6 @@ export default function usePlanMenuActions(
       },
     ],
     [
-      // The day's route, tied to this Plan: it starts when and where it does.
       !dateMoment.isBefore(moment(), 'day') && {
         id: 'plan_route',
         title: i18n.t('routePlan_homeAction'),

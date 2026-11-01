@@ -14,22 +14,17 @@ import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 import { buddyDisplayName } from '@/features/buddies/lib/buddyProfile'
 
 type Props = {
-  /** Invited buddies' inbox ids. */
   value: string[]
   onChange: (inboxIds: string[]) => void
-  /** What the invited buddies receive, behind the label's info button. */
+
   description?: string
-  /** Replies so far, by inbox id, for an already-saved share. */
+
   replies?: Record<string, ReceivedReply>
   lastInSection?: boolean
-  /** Renders only the buddy chips, for a row that supplies its own label. */
+
   chipsOnly?: boolean
 }
 
-/**
- * Toggles which buddies are invited to a Plan or Follow-up. Hidden until the
- * User has an active buddy.
- */
 export default function BuddyPicker({
   value,
   onChange,

@@ -146,7 +146,7 @@ it('routes the tap that launched the app once navigation is ready', async () => 
 
 it('routes the tap handed across the launch’s layout-direction reload', async () => {
   runtime.ready = true
-  // The reloaded JS context: native no longer has the tap.
+
   runtime.handedOff = response('before-reload', {
     reminder: { kind: 'contact', id: 'c' },
   })
@@ -193,7 +193,7 @@ it("opens the tray when a reminder's record is gone", async () => {
   expect(runtime.navigate).toHaveBeenCalledWith(
     'Root',
     { screen: 'Home' },
-    // Back to the one Root, never a second one on top.
+
     { pop: true }
   )
   expect(runtime.requestTray).toHaveBeenCalled()
@@ -212,7 +212,7 @@ it('syncs up to the push and opens the tray for a Buddies push', async () => {
       })
     )
   })
-  // A sync already past the push's event needn't run again.
+
   expect(runtime.sync).toHaveBeenCalledWith('open', 4)
   expect(runtime.requestTray).toHaveBeenCalled()
 })
@@ -277,7 +277,7 @@ it('falls back to the tray when a badge push finds nothing to open', async () =>
   expect(runtime.navigate).toHaveBeenCalledWith(
     'Root',
     { screen: 'Home' },
-    // Back to the one Root, never a second one on top.
+
     { pop: true }
   )
   expect(runtime.requestTray).toHaveBeenCalled()
@@ -336,7 +336,7 @@ it('falls back to the tray when a reaction push finds nothing to open', async ()
   expect(runtime.navigate).toHaveBeenCalledWith(
     'Root',
     { screen: 'Home' },
-    // Back to the one Root, never a second one on top.
+
     { pop: true }
   )
   expect(runtime.requestTray).toHaveBeenCalled()
@@ -358,7 +358,7 @@ describe('waits for what is taking over the screen (ADR 0021)', () => {
       vi.advanceTimersByTime(5000)
     })
     expect(runtime.openReminderTarget).not.toHaveBeenCalled()
-    // Waiting holds every other takeover off, so the tap goes next.
+
     expect(useTakeover.getState().arbiter.holds).toContain('navigation')
     await act(async () => {
       useTakeover.getState().release(reveal)
@@ -392,7 +392,7 @@ describe('waits for what is taking over the screen (ADR 0021)', () => {
     expect(runtime.navigate).toHaveBeenCalledWith(
       'Root',
       { screen: 'Home' },
-      // Back to the one Root, never a second one on top.
+
       { pop: true }
     )
     expect(runtime.requestTray).toHaveBeenCalled()

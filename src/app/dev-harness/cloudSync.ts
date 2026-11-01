@@ -19,7 +19,6 @@ import useContacts from '@/stores/contactsStore'
 
 let cloudSyncLast: unknown = null
 
-/** Starts `work`; its result (or `{ error }`) lands in `cloudSync.last`. */
 const tracked = (work: () => Promise<unknown>) => {
   cloudSyncLast = null
   void work()
@@ -32,12 +31,6 @@ const tracked = (work: () => Promise<unknown>) => {
   return 'started'
 }
 
-/**
- * Cloud Sync (ADR 0030) for the verify harness. `state()` reads this device's
- * option and sync bookkeeping synchronously; anything that talks to the server
- * starts and puts its result in `last` a moment later. Slots come back as ids,
- * sizes and times, never contents.
- */
 export const cloudSyncHarness = {
   state: () => {
     const prefs = usePreferences.getState()
@@ -66,12 +59,12 @@ export const cloudSyncHarness = {
       liveEvents: cloudSyncDiagnostics.liveEvents().slice(-10),
     }
   },
-  /** `GET /app/v1/config` now, for its `sync` switches (`cloudSyncConfig`). */
+
   checkConfig: () => tracked(() => checkAppConfig({ force: true })),
-  /** `GET /accounts/v1/sync`, stored as `cloudSyncEntitled`/`cloudSyncConfig`. */
+
   refresh: () => tracked(() => refreshCloudSyncStatus({ force: true })),
   prepare: () => tracked(() => prepareCloudSync()),
-  /** The account's slots as this device reads them. */
+
   list: () =>
     tracked(async () => {
       const own = usePreferences.getState().iCloudDeviceId
@@ -86,17 +79,13 @@ export const cloudSyncHarness = {
       }))
     }),
   switchTo: (to: SyncOption) => tracked(() => switchSyncOption(to, 'tools')),
-  /** Pull then push, as Sync now does. */
+
   syncNow: () =>
     tracked(async () => ({
       pulled: await iCloudSync.pullAndMerge('manual'),
       pushed: await iCloudSync.push('manual'),
     })),
-  /**
-   * This device as one upgraded from before Cloud Sync, syncing through iCloud
-   * or Google Drive with no recorded option: settles it there with the one-time
-   * offer pending.
-   */
+
   simulateUpgradedPlatformDevice: () => {
     usePreferences.setState({
       syncProvider: null,
@@ -107,10 +96,7 @@ export const cloudSyncHarness = {
     settleSyncProvider()
     return cloudSyncHarness.state()
   },
-  /**
-   * This device as one that never chose: the Cloud Sync default runs again on
-   * remount.
-   */
+
   forgetChoice: () => {
     usePreferences.setState({
       syncProvider: null,

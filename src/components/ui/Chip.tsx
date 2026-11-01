@@ -54,7 +54,6 @@ const Chip: React.FC<PropsWithChildren<ChipProps>> = ({
     >
       {icon ? (
         <Text
-          // A glyph ("✓", "ⓘ") beside the label, read as nothing useful.
           accessibilityElementsHidden
           importantForAccessibility='no'
           style={{
@@ -66,8 +65,7 @@ const Chip: React.FC<PropsWithChildren<ChipProps>> = ({
           {icon}
         </Text>
       ) : null}
-      {/* Wraps within the chip, at large text sizes, rather than run past the
-          edge of what holds it. */}
+      {}
       <Text
         style={{
           flexShrink: 1,

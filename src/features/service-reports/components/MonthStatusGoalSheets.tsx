@@ -7,10 +7,6 @@ import useMonthStatus, {
 } from '@/features/service-reports/hooks/useMonthStatus'
 import type { MonthEditTarget } from '@/features/service-reports/lib/monthEditTargets'
 
-/**
- * The status and goal sheets for one month — shared by the Month card and the
- * Year tab's month rows so both edit a month the same way.
- */
 const MonthStatusGoalSheets = ({
   month,
   year,
@@ -20,7 +16,7 @@ const MonthStatusGoalSheets = ({
 }: {
   month: number
   year: number
-  /** The open sheet, or null. */
+
   editing: MonthEditTarget | null
   onClose: () => void
   source: MonthStatusSource

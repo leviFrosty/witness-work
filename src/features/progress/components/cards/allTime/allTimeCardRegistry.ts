@@ -25,7 +25,6 @@ import AllTimeVisitsCard from '@/features/progress/components/cards/allTime/AllT
 import AllTimeServiceDaysCard from '@/features/progress/components/cards/allTime/AllTimeServiceDaysCard'
 import AllTimeMileageCard from '@/features/progress/components/cards/allTime/AllTimeMileageCard'
 
-/** The Add Cards sheet's sections on Progress → All Time. */
 export type AllTimeCardGroup = 'time' | 'ministry'
 
 export const ALL_TIME_CARD_GROUPS: {

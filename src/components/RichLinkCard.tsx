@@ -17,10 +17,9 @@ import { getHostname, isHttpUrl } from '@/lib/linkPreview'
 import { useLinkPreview } from '@/hooks/useLinkPreview'
 
 const THUMBNAIL_SIZE = 56
-/** Cached and fast previews land before this, so they never flash a spinner. */
+
 const SPINNER_DELAY_MS = 300
 
-/** True once `active` has stayed true for `delayMs`. */
 function useDelayedFlag(active: boolean, delayMs: number) {
   const [shown, setShown] = useState(false)
   useEffect(() => {
@@ -34,7 +33,6 @@ function useDelayedFlag(active: boolean, delayMs: number) {
   return active && shown
 }
 
-/** Shared tap / menu behavior for links in notes. */
 export function useLinkActions() {
   const open = (url: string) => {
     if (!isHttpUrl(url)) return
@@ -54,11 +52,9 @@ export function useLinkActions() {
   const copy = (url: string) => copyText(url, i18n.t('linkCopied'))
 
   const share = (url: string) => {
-    // iOS shares the URL itself (rich previews); Android only takes text.
     void Share.share(Platform.OS === 'ios' ? { url } : { message: url })
   }
 
-  /** Open / Copy Link / Share… — the context menu for any link. */
   const menu = (url: string): ContextMenuEntries => [
     isHttpUrl(url) && {
       id: 'open',
@@ -80,7 +76,6 @@ export function useLinkActions() {
     },
   ]
 
-  /** Open Link for a note whose links render as plain content. */
   const openLinksItem = (links: string[]) => openLinksMenuItem(links, open)
 
   return { open, copy, copyText, share, menu, openLinksItem }
@@ -88,11 +83,7 @@ export function useLinkActions() {
 
 interface Props {
   url: string
-  /**
-   * Off when the card sits inside another long-press target (e.g. a Plan row):
-   * it then renders as plain content, and the host folds Open Link into its own
-   * menu.
-   */
+
   interactive?: boolean
 }
 
@@ -128,7 +119,7 @@ const RichLinkCard = ({ url, interactive = true }: Props) => {
         backgroundColor: theme.colors.backgroundLighter,
       }}
     >
-      {/* One size whatever the outcome, so the card never jumps. */}
+      {}
       <View
         style={{
           width: THUMBNAIL_SIZE,

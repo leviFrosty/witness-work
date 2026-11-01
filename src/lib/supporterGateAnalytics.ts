@@ -10,7 +10,6 @@ export type SupporterGateSurface =
   | 'today_route'
   | 'buddy_color'
 
-/** Anonymous, ephemeral attribution for one visible gate visit. */
 export type SupporterGateAttribution = {
   feature: FeatureKey
   source_screen: string
@@ -29,7 +28,7 @@ export function createSupporterGateAttribution(
     source_screen: sourceScreen,
     gate_surface: surface,
     gate_placement: `${feature} / ${sourceScreen} / ${surface}`,
-    // Correlates this visit through checkout; never persisted or used as identity.
+
     gate_flow_id: randomUUID(),
   }
 }

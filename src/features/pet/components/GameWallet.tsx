@@ -14,11 +14,6 @@ import { coinsText, currencyInfoText } from '@/features/pet/lib/roomLabels'
 
 const INFO_WIDTH = 280
 
-/**
- * The coins left to spend, on a paper pill, in the pet's details and the Shop:
- * counting to what's new (`usePetReveal`), shown even at 0. Tapping it says how
- * coins are earned (ADR 0035).
- */
 export default function GameWallet({
   palette,
   coins,
@@ -26,9 +21,9 @@ export default function GameWallet({
   monthlyHearts,
 }: {
   palette: GamePalette
-  /** Coins left to spend, as shown now. */
+
   coins: number
-  /** What just changed: a "+N" rises over the count. */
+
   pulse?: GainPulse | null
   monthlyHearts: boolean
 }) {

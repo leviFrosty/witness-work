@@ -24,11 +24,6 @@ interface DismissContactSheetProps {
   contact: Contact | null
 }
 
-/**
- * Dismiss durations with a worked example of when the contact comes back — the
- * row's swipe-left destination. Menus offer the same durations as a Dismiss For
- * ▸ submenu. Dismissing is reversible, so a choice applies immediately.
- */
 const DismissContactSheet: React.FC<DismissContactSheetProps> = ({
   open,
   setOpen,

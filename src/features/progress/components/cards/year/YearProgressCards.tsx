@@ -20,11 +20,9 @@ type Props = Pick<
   | 'scroller'
   | 'onDragChange'
 > & {
-  /** Start year: September of `serviceYear` to August of the next. */
   serviceYear: number
 }
 
-/** The User's cards under the Service Year's total (see `ProgressCardGrid`). */
 export default function YearProgressCards({ serviceYear, ...grid }: Props) {
   const cards = useYearProgressCards(serviceYear)
   return (

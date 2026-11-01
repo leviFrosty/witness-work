@@ -1,34 +1,5 @@
 const { withAppDelegate } = require('@expo/config-plugins')
 
-/**
- * Retains our local Expo modules (WidgetBridge, StopwatchBridge, and every
- * other module under `modules/` with iOS code) in the main app binary by
- * referencing them directly from AppDelegate.swift. A test checks that each one
- * is listed.
- *
- * ## Background
- *
- * Local path-based pods under `modules/` get autolinked + their .a files built,
- * but in Release their Swift classes are only referenced as metatypes in the
- * generated `ExpoModulesProvider.swift` array literals. That lives inside a
- * Pods aggregate static lib, and the Release linker treats the metatype access
- * as weak enough to dead-strip the whole archive. Result:
- * `WidgetBridge.writeSnapshot` silently no-ops in production, widgets render
- * their placeholder ("—" / calendar icon) forever, and Live Activities never
- * start.
- *
- * ## Fix
- *
- * Reference the module classes from AppDelegate.swift (which is main-app code,
- * so its references are always strong enough to retain symbols). This mirrors
- * how first-party Expo modules with AppDelegate subscribers (expo-linking,
- * expo-background-task, etc.) naturally survive stripping.
- *
- * Earlier iterations tried podspec `user_target_xcconfig`, in-memory
- * OTHER_LDFLAGS on the Pods aggregate target, xcconfig appends with
- * `-force_load` (Xcode rejects: undeclared input) and `-all_load` (ignored in
- * practice). Only this approach is dependable.
- */
 const LOCAL_MODULES = [
   { importName: 'WidgetBridge', className: 'WidgetBridgeModule' },
   { importName: 'StopwatchBridge', className: 'StopwatchBridgeModule' },
@@ -54,8 +25,7 @@ const LOCAL_MODULES = [
     importName: 'SpeechTranscription',
     className: 'SpeechTranscriptionModule',
   },
-  // Not `TextRecognition`: Apple's private framework of that name (loaded by
-  // Vision) would share the Swift module name.
+
   {
     importName: 'TextRecognitionBridge',
     className: 'TextRecognitionBridgeModule',
@@ -67,8 +37,6 @@ const REF_MARKER = '// with-force-load-local-modules:refs'
 
 const patchAppDelegate = (contents) => {
   if (contents.includes(IMPORT_MARKER)) {
-    // Prebuild may reuse an AppDelegate generated before a local module was
-    // added. Extend the existing block instead of skipping new modules.
     for (const module of LOCAL_MODULES) {
       const declaration = `internal import ${module.importName}`
       const reference = `    _ = ${module.className}.self // retain in Release link`
@@ -85,15 +53,11 @@ const patchAppDelegate = (contents) => {
     return contents
   }
 
-  // `internal import` mirrors the AppDelegate's other Expo module
-  // imports. Plain `import` fails to resolve for static-lib pods because
-  // the main-app Swift module search configuration doesn't expose them.
   const imports =
     `${IMPORT_MARKER}\n` +
     LOCAL_MODULES.map((m) => `internal import ${m.importName}`).join('\n') +
     '\n'
 
-  // Add imports at the top, after any existing imports.
   const lastImportMatch = contents.match(/^(import\s+\S+\n)+/m)
   let patched
   if (lastImportMatch) {
@@ -103,9 +67,6 @@ const patchAppDelegate = (contents) => {
     patched = imports + contents
   }
 
-  // Add a `_ = <Module>.self` stub inside the existing
-  // `application(_:didFinishLaunchingWithOptions:)` method so the
-  // metatype references are emitted as main-app object code.
   const refs =
     `    ${REF_MARKER}\n` +
     LOCAL_MODULES.map(
@@ -113,8 +74,6 @@ const patchAppDelegate = (contents) => {
     ).join('\n') +
     '\n'
 
-  // Insert right after the `launchOptions:` parameter list ends (the
-  // `) -> Bool {` line).
   patched = patched.replace(/(\)\s*->\s*Bool\s*\{\n)/, (match) => match + refs)
 
   return patched

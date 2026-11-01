@@ -27,9 +27,8 @@ export default function useUserLocalePrefs() {
   const [languageFound, setLanguageFound] = useState(false)
   const [isFallback, setIsFallback] = useState(false)
 
-  // Loads in the user's locale preference or falls back to device's default locale
   useEffect(() => {
-    const rawLocale = locale ?? getLocales()[0].languageTag.toLowerCase() // Guaranteed to return at least one element
+    const rawLocale = locale ?? getLocales()[0].languageTag.toLowerCase()
     const {
       locale: localeOrFallback,
       fallback,
@@ -41,8 +40,7 @@ export default function useUserLocalePrefs() {
     setLoadedLocale(localeOrFallback)
 
     setI18nLocale(localeOrFallback)
-    // Re-apply Language + Format Region to moment on every change so date
-    // conventions track the preferences live (ADR 0006).
+
     applyFormatRegion({
       language: formatLocaleForMoment(localeOrFallback),
       region: formatRegion,

@@ -52,7 +52,6 @@ import { useSavedPlaces } from '@/features/route-planning/stores/savedPlaces'
 
 type Tab = 'places' | 'contacts' | 'map'
 
-/** What a pick is for: a stop, or where the day starts or finishes. */
 export type AddRouteStopMode = 'stop' | 'start' | 'finish'
 
 const SAVED_PLACE_ICONS: Record<SavedPlaceKind, AppIcon> = {
@@ -83,13 +82,6 @@ const pinnedStop = (coordinate: Coordinate, title?: string): AddedStop => ({
   destination: coordinateText(coordinate),
 })
 
-/**
- * Finds a place for the route: Home or the Kingdom Hall, a searched place or
- * address (or pasted coordinates), one of the User's Contacts, or a pin put on
- * the map. In `start` and `finish` modes it picks that end of the day instead
- * of adding a stop. With `saving`, the place picked is also saved as Home or
- * the Kingdom Hall.
- */
 export default function AddRouteStopSheet({
   open,
   mode,
@@ -101,11 +93,11 @@ export default function AddRouteStopSheet({
 }: {
   open: boolean
   mode: AddRouteStopMode
-  /** Opened to save this place first, e.g. from Set Home in a menu. */
+
   saving?: SavedPlaceKind
-  /** Where the Map tab opens: the route's area. */
+
   around?: Coordinate
-  /** Contacts already stops on the route. */
+
   onRouteContactIds: string[]
   onClose: () => void
   onPick: (
@@ -211,13 +203,11 @@ export default function AddRouteStopSheet({
   const located = filterActivesContacts(contacts).filter((contact) =>
     isCoordinate(contact.coordinate)
   )
-  // Keyed on whether there's a query, not the query itself, so the compiler
-  // keeps one index while the User types.
+
   const searching = contactQuery.trim().length > 0
   const fuse = searching ? buildContactsFuse(located, conversations) : undefined
   const contactResults = stopContactResults(located, contactQuery, fuse)
 
-  // Coordinates pasted into search (or a map link) go straight on the route.
   const pasted = parseCoordinateInput(placeQuery)
 
   const pickLabel = saving
@@ -235,7 +225,6 @@ export default function AddRouteStopSheet({
       open={open}
       onOpenChange={(next) => !next && close()}
       snapPoints={[{ fraction: 0.85 }]}
-      // Panning the map mustn't pull the sheet down.
       dismissible={tab !== 'map'}
       backgroundColor={theme.colors.backgroundLighter}
     >
@@ -568,10 +557,6 @@ export default function AddRouteStopSheet({
   )
 }
 
-/**
- * Home or the Kingdom Hall: picks the saved place, or starts saving it. Touch
- * and hold a saved one to change or forget it.
- */
 function SavedPlaceChip({
   kind,
   address,

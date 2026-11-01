@@ -3,10 +3,9 @@ import type { Coordinate } from '@/types/contact'
 import { errorTracking } from '@/lib/errorTracking'
 import { isExpectedLocationError } from '@/lib/locationError'
 
-/** A recent fix is close enough to start a driving route from. */
 const RECENT_FIX_MAX_AGE_MS = 2 * 60_000
 const RECENT_FIX_MAX_ACCURACY_M = 200
-/** A balanced fix takes a few seconds; indoors it can never arrive. */
+
 const FIX_TIMEOUT_MS = 15_000
 
 export type CurrentCoordinate =
@@ -28,7 +27,6 @@ const withTimeout = <T>(promise: Promise<T>, ms: number): Promise<T | null> =>
     )
   })
 
-/** The device's position for the route's start, asking permission if needed. */
 export const currentCoordinate = async (): Promise<CurrentCoordinate> => {
   try {
     const permission = await Location.requestForegroundPermissionsAsync()

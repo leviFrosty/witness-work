@@ -11,15 +11,9 @@ import { usePreferences } from '@/stores/preferences'
 import type { RootStackNavigation } from '@/types/rootStack'
 
 type Props = {
-  /** Paywall attribution, reported on `paywall_viewed`. */
   source: string
 }
 
-/**
- * A quiet one-line mention of Supporter for moments when someone has just
- * gotten value from the app. Hidden for supporters and anyone who turned off
- * the donate heart.
- */
 const SupporterNote = ({ source }: Props) => {
   const theme = useTheme()
   const navigation = useNavigation<RootStackNavigation>()

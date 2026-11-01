@@ -95,7 +95,7 @@ describe('registerBuddiesPush', () => {
     await registerBuddiesPush()
     const { templates, apnsEnvironment } = registerPush.mock.calls[0][0]
     expect(apnsEnvironment).toBe('sandbox')
-    // iOS sends what builds before Android sent: no push service field.
+
     expect(registerPush.mock.calls[0][0]).not.toHaveProperty('pushService')
     expect(setChannel).not.toHaveBeenCalled()
     expect(Object.keys(templates).sort()).toEqual(
@@ -106,7 +106,7 @@ describe('registerBuddiesPush', () => {
         BADGE_REACTION_PUSH_KIND,
       ].sort()
     )
-    // The relay accepts at most 32 templates per device.
+
     expect(Object.keys(templates).length).toBeLessThanOrEqual(32)
     for (const template of Object.values(templates))
       expect(template).toEqual({
@@ -116,7 +116,6 @@ describe('registerBuddiesPush', () => {
   })
 
   it('uses production APNs for TestFlight and App Store builds', async () => {
-    // Their profile is stripped, so the aps-environment reads null.
     app.apsEnvironment = null
     await registerBuddiesPush()
     expect(registerPush.mock.calls[0][0].apnsEnvironment).toBe('production')
@@ -147,7 +146,7 @@ describe('registerBuddiesPush', () => {
       },
       'join.request.bbbbbbbbbbbb': { title: 'buddies_pushJoinRequestTitle' },
     })
-    // Every buddy muted, or join requests off on this device.
+
     joinKinds.current = []
     await registerBuddiesPush()
     expect(Object.keys(registerPush.mock.calls[1][0].templates).sort()).toEqual(
@@ -161,7 +160,7 @@ describe('registerBuddiesPush', () => {
     )
     await registerBuddiesPush()
     const { templates } = registerPush.mock.calls[0][0]
-    // Nine fixed kinds, five join kinds, and the two badge kinds.
+
     expect(BUDDY_PUSH_KINDS).toHaveLength(9)
     expect(Object.keys(templates)).toHaveLength(16)
     expect(Object.keys(templates).length).toBeLessThanOrEqual(32)
@@ -174,7 +173,7 @@ describe('registerBuddiesPush', () => {
     )
     await registerBuddiesPush()
     const { templates } = registerPush.mock.calls[0][0]
-    // Nine fixed kinds, five join kinds, two badge kinds, two car kinds.
+
     expect(Object.keys(templates)).toHaveLength(18)
   })
 
@@ -190,15 +189,14 @@ describe('registerBuddiesPush', () => {
       title: 'buddies_pushCarInviteTitle',
       body: 'buddies_pushCarInviteBody',
     })
-    // Only a join alerts; a decline is quiet, so needs no text of its own.
+
     expect(templates['car.reply']).toEqual({
       title: 'buddies_pushCarJoinedTitle',
       body: 'buddies_pushCarJoinedBody',
     })
-    // The cancel is never pushed.
+
     expect(templates).not.toHaveProperty('car.cancel')
 
-    // Buddies notifications off here: none at all.
     buddiesState.notificationsEnabled = false
     await registerBuddiesPush()
     expect(registerPush.mock.calls[2][0].templates).toEqual({})
@@ -215,7 +213,7 @@ describe('registerBuddiesPush', () => {
       title: 'buddies_pushBadgeReactionTitle',
       body: 'buddies_pushBadgeBody',
     })
-    // Badge alerts (or badges) off on this device.
+
     badgeKinds.current = []
     await registerBuddiesPush()
     expect(registerPush.mock.calls[1][0].templates).not.toHaveProperty(
@@ -286,7 +284,7 @@ describe('registerBuddiesPush', () => {
     })
     expect(device).not.toHaveProperty('apnsToken')
     expect(device).not.toHaveProperty('apnsTopic')
-    // Badge alerts register on Android too, now that Buddies is there.
+
     expect(Object.keys(device.templates).sort()).toEqual(
       [...BUDDY_PUSH_KINDS, ...joinKinds.current, ...badgeKinds.current].sort()
     )
@@ -294,7 +292,7 @@ describe('registerBuddiesPush', () => {
       name: 'buddies_title',
       importance: 4,
     })
-    // Buddies' news gets its own quiet channel, made at the same time.
+
     expect(setChannel).toHaveBeenCalledWith('buddies_news', {
       name: 'buddies_newsChannelName',
       importance: 2,

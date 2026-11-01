@@ -247,7 +247,7 @@ describe('Contact Form map coordinates', () => {
           'couldNotFetchCoordinatesFromAddress_retry'
         )
       }
-      // Retried later, once the connection is back.
+
       expect(mocks.enqueueGeocodeRetry).toHaveBeenCalledTimes(retries)
       if (retries) {
         expect(mocks.enqueueGeocodeRetry).toHaveBeenCalledWith(
@@ -258,8 +258,6 @@ describe('Contact Form map coordinates', () => {
   )
 
   it('promises no later lookup offline when nothing was queued', async () => {
-    // A pin from another device lands on the saved contact first, so the
-    // lookup must not overwrite it and isn't queued.
     mocks.addContact.mockImplementationOnce((contact: Contact) => {
       mocks.contacts.push({
         ...contact,

@@ -14,10 +14,6 @@ import CalendarVisual from '@/features/updates/components/reveal/visuals/Calenda
 import WatchVisual from '@/features/updates/components/reveal/visuals/WatchVisual'
 import SiriVisual from '@/features/updates/components/reveal/visuals/SiriVisual'
 
-/**
- * The illustration for each page of the update's tour. "And so much more" draws
- * its page's tiles instead (see `RevealPage.tiles`).
- */
 export const REVEAL_VISUALS: Record<
   Exclude<RevealPageId, 'more'>,
   ComponentType<RevealVisualProps>

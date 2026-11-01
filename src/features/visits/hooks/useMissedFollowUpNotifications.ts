@@ -11,10 +11,6 @@ import useConversations from '@/stores/conversationStore'
 import type { NotificationItem } from '@/types/notifications'
 import type { RootStackNavigation } from '@/types/rootStack'
 
-/**
- * One tray item per missed Follow-up. Mirrors the widget's 30-day lookback, and
- * clears once the Follow-up is rescheduled, logged, or dismissed.
- */
 export default function useMissedFollowUpNotifications(
   now: number
 ): NotificationItem[] {
@@ -28,7 +24,7 @@ export default function useMissedFollowUpNotifications(
     lookbackDays: MISSED_FOLLOW_UP_LOOKBACK_DAYS,
   })
   if (missed.length === 0) return []
-  // Only the missed ones' names, not a lookup over every Contact.
+
   const wanted = new Set(missed.map((visit) => visit.contact.id))
   const names = new Map<string, string>()
   for (const contact of contacts)
@@ -39,7 +35,6 @@ export default function useMissedFollowUpNotifications(
     const at = moment(visit.followUp.date).valueOf()
     return [
       {
-        // A rescheduled Follow-up that's missed again is a new occurrence.
         id: `missed_follow_up:${visit.id}:${at}`,
         kind: 'missed_follow_up',
         at,

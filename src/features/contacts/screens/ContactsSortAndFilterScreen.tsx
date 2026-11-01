@@ -126,17 +126,6 @@ const describeFilter = (
   }
 }
 
-/**
- * Modal screen that owns Contacts filter and sort controls. Search lives in the
- * parent `ContactsScreen` header so users can see results update as they type —
- * a sheet round-trip would hide the list. Filters/sort are lower-frequency, so
- * tucking them behind a single icon button keeps the tab UI quiet without
- * burying the affordance.
- *
- * Filters/sort are persisted via `useContactsQuery`, so dismissing the screen
- * leaves all selections intact for the underlying Contacts list. While a Saved
- * View is showing, edits here go to that view until saved back to it.
- */
 const ContactsSortAndFilterScreen = () => {
   const theme = useTheme()
   const navigation = useNavigation<RootStackNavigation>()
@@ -165,8 +154,6 @@ const ContactsSortAndFilterScreen = () => {
     null
   )
 
-  // An archived field stays listed while it's the current sort (e.g. a Saved
-  // View's), so the selection is visible.
   const activeCustomFieldDefs = customFieldDefs
     .filter((d) => d.archived !== true || contactSort === `customField:${d.id}`)
     .sort((a, b) => a.order - b.order)
@@ -204,7 +191,7 @@ const ContactsSortAndFilterScreen = () => {
       )
     }
   }
-  // With a Saved View showing, Reset discards its unsaved edits.
+
   const canReset = !view || edited
 
   const sectionTitleStyle = {
@@ -220,7 +207,7 @@ const ContactsSortAndFilterScreen = () => {
     label: string,
     selected: boolean,
     onPress: () => void,
-    /** One short line under the label. */
+
     description?: string
   ) => (
     <Button
@@ -319,14 +306,14 @@ const ContactsSortAndFilterScreen = () => {
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
-      {/* Header — flows naturally at the top of the sheet. */}
+      {}
       <View
         style={{
           flexDirection: 'row',
           alignItems: 'center',
           justifyContent: 'space-between',
           paddingHorizontal: 20,
-          // Android presents this modal full-screen, edge-to-edge.
+
           paddingTop: Platform.OS === 'android' ? insets.top + 12 : 20,
           paddingBottom: 14,
           borderBottomWidth: StyleSheet.hairlineWidth,
@@ -351,8 +338,7 @@ const ContactsSortAndFilterScreen = () => {
         />
       </View>
 
-      {/* ScrollView fills the remaining space. Bottom padding leaves room for
-          the absolute footer so the last sort row is never obscured by it. */}
+      {}
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={{
@@ -366,7 +352,7 @@ const ContactsSortAndFilterScreen = () => {
         <View style={{ gap: 22 }}>
           <SavedViewSection />
 
-          {/* Filters section. */}
+          {}
           <View style={{ gap: 10 }}>
             <View
               style={{
@@ -452,8 +438,6 @@ const ContactsSortAndFilterScreen = () => {
                         onPress={() => handleRemoveFilter(index)}
                         accessibilityLabel={i18n.t('removeFilter')}
                         noTransform
-                        // A real target: the row clips slop, so the row grows
-                        // to fit it instead.
                         style={{
                           minWidth: MIN_TOUCH_TARGET,
                           minHeight: MIN_TOUCH_TARGET,
@@ -506,10 +490,7 @@ const ContactsSortAndFilterScreen = () => {
             </Button>
           </View>
 
-          {/* Sort section. With native form-sheet presentation the outer
-              ScrollView happily handles all sort rows inline — no need for
-              an inner scroll container, which is what previously fought
-              the Tamagui sheet's drag handler. */}
+          {}
           <View style={{ gap: 10 }}>
             <Text style={sectionTitleStyle}>
               {i18n.t('contacts_sortAndFilter_sortSection')}
@@ -569,16 +550,7 @@ const ContactsSortAndFilterScreen = () => {
         </View>
       </ScrollView>
 
-      {/* Sticky footer: result count on the left, Reset + Done on the right.
-          Reset clears filters/sort back to defaults (or a Saved View's unsaved
-          edits); Done dismisses the sheet
-          because every change above is already live in store state.
-
-          Absolutely positioned so the ScrollView above can claim the full
-          sheet height — when this footer was a flex sibling, the form-sheet
-          presentation didn't always distribute remaining space to the
-          ScrollView and the first scroll row could collide with the header
-          above. */}
+      {}
       <View
         style={{
           position: 'absolute',
@@ -605,12 +577,9 @@ const ContactsSortAndFilterScreen = () => {
             }}
             numberOfLines={1}
           >
-            {
-              // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
-              i18n.t('contacts_sortAndFilter_resultCount', {
-                count: resultCount,
-              })
-            }
+            {i18n.t('contacts_sortAndFilter_resultCount', {
+              count: resultCount,
+            })}
           </Text>
         </View>
         <Button

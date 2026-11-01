@@ -14,7 +14,6 @@ vi.mock('@/lib/dates', () => ({
 import { describeRecurrence } from '@/lib/recurrenceText'
 import { RecurringPlanFrequencies, type RecurringPlan } from '@/lib/recurrence'
 
-// Saturday, October 3, 2026, as the store anchors calendar days.
 const saturday = new Date('2026-10-03T12:00:00.000Z')
 
 const plan = (

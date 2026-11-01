@@ -20,7 +20,7 @@ import { useShallow } from 'zustand/react/shallow'
 
 interface MilestoneProgressBarPreviewProps {
   milestones: number[]
-  /** Unrounded service-year total; milestones are compared in minutes. */
+
   minutesCompleted: number
   annualGoalHours: number
 }
@@ -31,11 +31,9 @@ const LABEL_MARGIN_TOP = 6
 const LABEL_WIDTH = 40
 const LABEL_ROW_HEIGHT = 8
 const LABEL_ROW_GAP = 2
-// Min gap (as fraction of bar width) between labels on the same row before we
-// drop the next one to a second row. ~7% comfortably clears a 4-digit label at
-// xs font on a typical card-width bar.
+
 const LABEL_MIN_GAP_RATIO = 0.06
-/** A value's line height per point of font size, roughly. */
+
 const LINE_HEIGHT = 1.25
 
 type SegmentState = 'hit' | 'progress' | 'future'
@@ -56,34 +54,13 @@ type LabelLayout = {
   state: SegmentState
 }
 
-/**
- * Pure, controlled variant of the milestone progress bar. Takes the milestone
- * ladder, minutes completed, and annual goal directly — no store access. Used
- * by the Milestone Adjust sheet's live preview as well as by the default
- * (connected) `MilestoneProgressBar` below.
- *
- * Visual:
- *
- * - Bar is split into segments at milestone boundaries, each sized proportionally
- *   to its share of the annual goal.
- * - Hit segments render as solid accent green.
- * - The in-progress segment renders the completed portion as solid accent with
- *   the remainder in a lighter pastel accent.
- * - Future segments render with the shared `StripedFill` diagonal pattern,
- *   matching the planned portion of the projected-total bar.
- * - Milestone values are centered beneath their divider line; labels that would
- *   crowd a neighbor drop to a second row, and are left out when that row is
- *   crowded too. The "next" value is emphasized in accent.
- */
 export const MilestoneProgressBarPreview = ({
   milestones,
   minutesCompleted,
   annualGoalHours,
 }: MilestoneProgressBarPreviewProps) => {
   const theme = useTheme()
-  // Larger text makes the values taller and wider: the rows grow by the extra
-  // line height, and values need more room before they drop to a second row,
-  // so neither row covers the other or the content below.
+
   const textScale = Math.max(1, useWindowDimensions().fontScale)
   const labelWidth = LABEL_WIDTH * textScale
   const rowHeight =
@@ -118,10 +95,6 @@ export const MilestoneProgressBarPreview = ({
     }
     const next = getMilestoneHitState(milestones, minutesCompleted).next
 
-    // Lay out labels centered on each milestone divider. When two milestones
-    // sit closer than the minimum gap, the second label drops to a second row,
-    // or is left out when it would crowd that row too, so values never
-    // collide or wrap inside a too-narrow segment.
     const positions: number[] = []
     let cumulative = 0
     for (const seg of segs) {
@@ -234,8 +207,7 @@ export const MilestoneProgressBarPreview = ({
         </View>
       </View>
 
-      {/* The values under the ticks read as loose numbers ("30, 50, 100");
-          the card says how many are hit and how far the next one is. */}
+      {}
       <View
         accessibilityElementsHidden
         importantForAccessibility='no-hide-descendants'
@@ -246,9 +218,6 @@ export const MilestoneProgressBarPreview = ({
         }}
       >
         {labels.map((label) => {
-          // Anchor edge labels to the bar edge instead of centering them on it,
-          // so the rightmost label (annual goal) isn't half-clipped by ancestor
-          // scroll views that don't honor `overflow: visible`.
           const isRightEdge = label.position >= 0.999
           const isLeftEdge = label.position <= 0.001
           const positionStyle: ViewStyle = isRightEdge
@@ -296,18 +265,9 @@ export const MilestoneProgressBarPreview = ({
 }
 
 interface MilestoneProgressBarProps {
-  /**
-   * End year of the service year being displayed (Sep 1 of `year - 1` → Aug 31
-   * of `year`). Passing `2025` means the 2024–2025 service year.
-   */
   year: number
 }
 
-/**
- * Connected variant — reads `serviceReports`, publisher prefs, and
- * `milestoneOverrides` from stores and renders a proportional milestone
- * progress bar for the given service year.
- */
 const MilestoneProgressBar = ({ year }: MilestoneProgressBarProps) => {
   const serviceYear = year - 1
   const { type: publisher, annualGoalHours } = usePublisher(

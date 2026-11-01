@@ -10,7 +10,6 @@ import i18n from '@/lib/locales'
 import { addressToString } from '@/lib/address'
 import { reminderOccurrences } from '@/lib/reminderSchedule'
 
-/** The calendar projection of the current app data, for either platform. */
 export function currentCalendarSnapshot({
   publishedKeys,
   includeDetails,
@@ -21,7 +20,7 @@ export function currentCalendarSnapshot({
   const contacts = useContacts.getState()
   const visits = useConversations.getState()
   const preferences = usePreferences.getState()
-  // The same reminders the app schedules, so calendar alerts always match.
+
   const alertMinutes = new Map<string, number>()
   for (const reminder of reminderOccurrences({
     contacts: contacts.contacts,

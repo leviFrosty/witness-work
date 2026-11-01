@@ -17,10 +17,6 @@ const countdown = (ms: number) => {
   )
 }
 
-/**
- * The old phone's code: large, at full brightness, with what to do on the other
- * phone, how long it lasts, and a way to make a new one.
- */
 export default function HandoffQrPanel({
   link,
   expiresAt,

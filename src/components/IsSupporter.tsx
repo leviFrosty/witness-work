@@ -15,39 +15,18 @@ import type {
 
 interface Props {
   children: ReactNode
-  /**
-   * Which feature this gate protects. Drives the copy shown in the info sheet
-   * when access is denied.
-   */
+
   feature: FeatureKey
-  /** Stable placement name, independent of localized copy or record data. */
+
   analyticsSurface: SupporterGateSurface
-  /** Size of the supporter badge. */
+
   size?: 'sm' | 'md' | 'lg'
-  /**
-   * Optional heading rendered in the section's title row. When provided, the
-   * badge sits inline alongside the title so it feels like part of the section
-   * header rather than a floating label. Without it, the badge stacks above
-   * `children` (top-right aligned) as a fallback.
-   */
+
   title?: string
-  /**
-   * Fill available vertical space. Use when the gate wraps an entire screen so
-   * its children can flex to full height.
-   */
+
   fill?: boolean
 }
 
-/**
- * Single-source-of-truth gate for supporter-only features. Wraps any content
- * with the full non-supporter treatment — dimming, badge, and the educational
- * sheet that links to the paywall — so callers never have to repeat
- * `useIsSupporter()` + gate boilerplate.
- *
- * Supporters see the title (if any) and `children` rendered cleanly.
- * Non-supporters see a tappable block whose header row holds the title and
- * supporter badge side-by-side, with dimmed pointer-disabled children below.
- */
 const IsSupporter = ({
   children,
   feature,
@@ -58,8 +37,7 @@ const IsSupporter = ({
 }: Props) => {
   const theme = useTheme()
   const { hasAccess } = useFeatureAccess(feature)
-  // At accessibility sizes the badge wraps under a title it would squeeze
-  // into breaking mid-word.
+
   const largeText = useAccessibilityTextSize()
   const [sheetOpen, setSheetOpen] = useState(false)
   const [attribution, setAttribution] = useState<SupporterGateAttribution>()

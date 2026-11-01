@@ -47,8 +47,6 @@ beforeEach(() => {
   s._WARNING_forceDeleteRecurringPlans()
 })
 
-// NZST (UTC+12) — where local midnight is coincidentally noon UTC of the prior
-// day — NZDT (UTC+13), a UTC+14 zone, and negative/zero-offset guards.
 const tzs = [
   { tz: 'Pacific/Auckland', day: '2026-09-25' },
   { tz: 'Pacific/Auckland', day: '2026-10-15' },
@@ -58,10 +56,8 @@ const tzs = [
   { tz: 'Etc/GMT+12', day: '2026-09-25' },
 ]
 
-/** What a tapped calendar cell hands PlanDay: its local midnight, as ISO. */
 const tappedRouteDate = (day: string) => moment(day).toDate().toISOString()
 
-/** The picker value PlanDay seeds for a new plan on a tapped day. */
 const seededPickerValue = (day: string) =>
   combineDateAndStartTime(
     preserveOrNormalizeStoredDate(planDayFromRouteDate(tappedRouteDate(day))),

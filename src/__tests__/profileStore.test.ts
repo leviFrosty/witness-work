@@ -11,8 +11,6 @@ import { useProfile, PROFILE_DEFAULTS } from '@/stores/profile'
 
 describe('useProfile store', () => {
   beforeEach(() => {
-    // Reset to defaults between tests. Using setState directly bypasses
-    // the stamping wrapper so we can start each test from a clean slate.
     useProfile.setState({ ...PROFILE_DEFAULTS, profileUpdatedAt: {} })
   })
 
@@ -55,6 +53,6 @@ describe('useProfile store', () => {
   it('flips hasCompletedProfileSetup independently of other fields', () => {
     useProfile.getState().set({ hasCompletedProfileSetup: true })
     expect(useProfile.getState().hasCompletedProfileSetup).toBe(true)
-    expect(useProfile.getState().name).toBe('') // unchanged
+    expect(useProfile.getState().name).toBe('')
   })
 })

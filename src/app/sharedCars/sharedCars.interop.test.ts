@@ -26,27 +26,6 @@ vi.mock(
   () => import('@/__tests__/mocks/asyncStorage')
 )
 
-/**
- * Opt-in contract check of Shared Cars against a real ww-api: three headless
- * people share a car, invite and join, put and sync, edit the same trip, remove
- * someone (a rekey), read the old records through the key chain, leave with the
- * owner's hand-off, and end with the last one left (`runSharedCarLifecycle`,
- * which the engine's tests also run on the fake server). Then the live socket's
- * headers and signals, and the server's refusals the engine relies on. Skipped
- * unless both are set:
- *
- * - `SHARED_SPACES_URL`: the worker's base URL, e.g. `http://localhost:8787` with
- *   ww-api's `wrangler dev` running and `spaces:enabled` on.
- * - `ACCOUNTS_DEV_BYPASS` (or `EXPO_PUBLIC_API_DEV_BYPASS`): its dev bypass token
- *   (`NOTES_IMPORT_DEV_BYPASS_TOKEN`), which opens account sessions without an
- *   attestation.
- *
- * `ACCOUNTS_ADMIN_TOKEN` (the worker's `ADMIN_API_TOKEN`) also runs the
- * suspension check, which suspends a made-up account and reinstates it.
- *
- * `SHARED_SPACES_URL=http://localhost:8787 ACCOUNTS_DEV_BYPASS=… pnpm exec
- * vitest run sharedCars.interop`
- */
 const spacesUrl = process.env.SHARED_SPACES_URL
 const devBypass =
   process.env.ACCOUNTS_DEV_BYPASS ?? process.env.EXPO_PUBLIC_API_DEV_BYPASS
@@ -55,14 +34,13 @@ const enabled = Boolean(spacesUrl && devBypass)
 
 const random = (length: number) => new Uint8Array(nodeRandomBytes(length))
 
-/** A Spaces client for one account on the worker, with its own session. */
 function account(seed: Uint8Array = random(32)) {
   const sessions = interopSessions(random, seed, spacesUrl!)
   const client = createSpacesClient({
     baseUrl: spacesUrl!,
     authorize: (run, { signal }) =>
       sessions.withSession(run, { accountKey: seed, signal }),
-    // Node's WebSocket takes headers as React Native's does.
+
     openSocket: (url, headers) =>
       new WebSocket(url, { headers } as never) as unknown as LiveSocket,
   })
@@ -71,7 +49,6 @@ function account(seed: Uint8Array = random(32)) {
 
 const clientFor = (seed: Uint8Array) => account(seed).client
 
-/** A headless person on the worker; `seed` makes another of their devices. */
 function person(name: string, seed: Uint8Array = random(32)) {
   return createHeadlessMember({
     name,
@@ -88,7 +65,6 @@ const authOf = (who: Person, spaceId: string): SpaceMemberAuth => {
   return { spaceId, memberId: member.memberId, token: member.token }
 }
 
-/** A car of `owner`'s own, shared, with `others` on it. */
 async function sharedCar(owner: Person, ...others: Person[]) {
   owner.savePersonal('vehicles', {
     id: crypto.randomUUID(),
@@ -115,14 +91,12 @@ async function sharedCar(owner: Person, ...others: Person[]) {
   return spaceId
 }
 
-/** The code an op was refused with, or null when it worked. */
 const refusal = (run: Promise<unknown>) =>
   run.then(
     () => null,
     (error: unknown) => (isSpaceError(error) ? error.code : String(error))
   )
 
-/** A live socket's signals as they come, and how it closed. */
 function listen(socket: LiveSocket) {
   const messages: { type?: string; seq?: number }[] = []
   let closed: number | null = null
@@ -205,9 +179,7 @@ describe.skipIf(!enabled)('shared cars interop', () => {
     )
 
     await anna.engine.removeMember(spaceId, authOf(joe, spaceId).memberId)
-    // Node's WebSocket reports the close only once the connection itself
-    // ends after the close frame, which against the local worker has taken
-    // about 10 s.
+
     await live.until(() => live.closed() !== null, 30_000)
     expect(live.closed()).toBe(SPACE_CLOSE_GONE)
   }, 60_000)
@@ -296,7 +268,7 @@ describe.skipIf(!enabled)('shared cars interop', () => {
     const joe = person('Joe')
     const cal = person('Cal')
     const spaceId = await sharedCar(anna, joe, cal)
-    // Joe invites his own other account, then leaves, then tries it himself.
+
     const own = await joe.engine.createInvite(spaceId, {
       name: 'Joe',
       tag: memberTag(spaceId, joe.inboxId),
@@ -351,7 +323,7 @@ describe.skipIf(!enabled)('shared cars interop', () => {
       } finally {
         await setStatus('active')
       }
-      // Puts wait out the suspension's back-off; a new launch tries now.
+
       await joe.relaunch()
       expect(await joe.engine.syncCar(spaceId)).toBe('synced')
       expect(joe.car(spaceId).pendingPuts).toEqual([])

@@ -15,7 +15,7 @@ const keywords = (node: JsonValue, found = new Set<string>()): Set<string> => {
   else if (typeof node === 'object' && node !== null)
     for (const [key, value] of Object.entries(node)) {
       found.add(key)
-      // Property names aren't keywords.
+
       if (key === 'properties' && typeof value === 'object' && value !== null)
         Object.values(value).forEach((child) => keywords(child, found))
       else keywords(value, found)

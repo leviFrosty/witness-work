@@ -36,46 +36,35 @@ import type { NotificationItem } from '@/types/notifications'
 import { openReminderTarget } from '@/app/notifications/reminderTargets'
 
 const HOUR = 60 * 60_000
-/** Missed Follow-ups join the tray four hours after their time. */
+
 const MISSED_FOLLOW_UP_GRACE = 4 * HOUR
 const RETURNED_CONTACT_DAYS = 7
 
-/** A reminder's tray id: one per occurrence, so a new time is a new item. */
 export const reminderTrayId = (reminder: LocalReminder) =>
   `reminder:${reminder.kind}:${reminder.targetId}:${reminder.date.getTime()}`
 
-/**
- * A reminder the tray lists. Not the report reminder: last month's report item
- * already stands in for it.
- */
 type TrayReminder = LocalReminder & {
   kind: Exclude<LocalReminder['kind'], 'monthReport'>
 }
 
-/** When a fired reminder stops being useful in the tray. */
 function listedUntil(reminder: TrayReminder): number {
   const anchor = reminder.anchor.getTime()
   switch (reminder.kind) {
     case 'visit':
-      // Hands over to the missed Follow-up item.
       return anchor + MISSED_FOLLOW_UP_GRACE
     case 'plan':
       return anchor + Math.max(reminder.minutes ?? 0, 60) * 60_000
     case 'contact':
       return anchor + RETURNED_CONTACT_DAYS * 24 * HOUR
     case 'unloggedDay':
-      // Leaves sooner once the day has time logged.
       return reminder.date.getTime() + UNLOGGED_DAY_LISTED_MS
     case 'streak':
-      // Leaves sooner once the streak is kept.
       return anchor
     case 'weekPlan':
-      // Through the week it asks about; leaves sooner once that has a Plan.
       return moment(reminder.anchor).add(1, 'week').valueOf()
   }
 }
 
-/** A Visit with the same Contact since the reminder: the Follow-up happened. */
 function visitedSince(reminder: LocalReminder, visits: Visit[]) {
   return visits.some(
     (visit) =>
@@ -85,7 +74,6 @@ function visitedSince(reminder: LocalReminder, visits: Visit[]) {
   )
 }
 
-/** Local reminders that have fired, from the same intent the OS schedule uses. */
 export function firedReminders(
   args: Parameters<typeof reminderOccurrences>[0] & { now: number }
 ): TrayReminder[] {
@@ -101,12 +89,6 @@ export function firedReminders(
     )
 }
 
-/**
- * The tray copy of each local reminder that has fired: Follow-ups, Plans,
- * returning Contacts, planned days to log time for, a streak about to end, and
- * a week with nothing planned yet. Listed whether or not the system alert was
- * allowed, so the tray is the same record of what reminded the User.
- */
 export default function useReminderNotifications(
   now: number
 ): NotificationItem[] {
@@ -232,8 +214,7 @@ export default function useReminderNotifications(
           icon: ClockAlertIcon,
           title:
             days > 1
-              ? // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
-                i18n.t('notifications_reminderUnloggedDays', { count: days })
+              ? i18n.t('notifications_reminderUnloggedDays', { count: days })
               : i18n.t('notifications_reminderUnloggedDay', {
                   date: formatWeekdayMonthDayCompact(
                     moment(reminder.targetId, 'YYYY-MM-DD')

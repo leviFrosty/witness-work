@@ -39,7 +39,7 @@ describe('buddiesAvailability', () => {
         input({ flag: false, flagStatus: 'loaded', flagLastKnown: true })
       )
     ).toBe('hidden')
-    // Multivariate values never open a boolean gate.
+
     expect(
       buddiesAvailability(input({ flag: 'variant', flagStatus: 'loaded' }))
     ).toBe('hidden')

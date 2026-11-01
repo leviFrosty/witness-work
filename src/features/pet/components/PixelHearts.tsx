@@ -32,37 +32,28 @@ const SAMPLING = { filter: FilterMode.Nearest, mipmap: MipmapMode.None }
 
 const rows = createLru<SkImage | null>(24)
 
-/** Five pixel hearts for `hearts` (halves allowed) in one image. */
 function heartsImage(hearts: number, gold: boolean): SkImage | null {
   return rows.getOrCreate(`${hearts}|${gold ? 1 : 0}`, () =>
     bufferToSkImage(heartsRow(hearts, gold))
   )
 }
 
-/** One full heart, for a pop. */
 const fullHeart = (gold: boolean) =>
   rows.getOrCreate(`full|${gold ? 1 : 0}`, () =>
     bufferToSkImage(heartIcon(1, gold))
   )
 
-/** Pixels from one heart's left edge to the next one's. */
 const HEART_PITCH = (HEARTS_ROW_W - HEART_ICON_W) / 4
 
-/**
- * The pet's hearts as five pixel hearts, red or gold, with halves. One
- * accessibility element: "N of 5 hearts". A `pulse` pops the heart that just
- * filled, or shakes the row and crumbles the one that faded (`usePetReveal`).
- */
 export default function PixelHearts({
   hearts,
   gold = false,
   height = 10,
   pulse = null,
 }: {
-  /** 0–5 in half steps. */
   hearts: number
   gold?: boolean
-  /** Target height in points; snapped to whole device pixels. */
+
   height?: number
   pulse?: HeartPulse | null
 }) {
@@ -115,7 +106,6 @@ export default function PixelHearts({
   )
 }
 
-/** A filled heart swells and fades; a faded one drops three crumbs. */
 function HeartChange({
   left,
   up,

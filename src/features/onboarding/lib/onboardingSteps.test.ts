@@ -21,7 +21,7 @@ const ctx = (
     custom: 50,
   },
   logsHours: false,
-  // Mid-service-year install, so annual-goal roles see the backfill step.
+
   installedOn: new Date(2026, 1, 10),
   userSpecifiedHasAnnualGoal: 'default',
   hasCatchUpReports: false,
@@ -169,8 +169,6 @@ describe('retired step ids', () => {
   )
 
   it('keeps the backfill step when Buddies drops out after resuming', () => {
-    // The answer is held once reached, so Buddies can't vanish beneath the
-    // resumed index; if it did, the saved id would still resume on backfill.
     const withoutBuddies = ctx('regularPioneer', { buddiesAvailable: false })
     expect(resume('defaultExportMethod', withoutBuddies)).toBe(
       'onboardingBackfill'

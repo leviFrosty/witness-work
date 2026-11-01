@@ -7,19 +7,12 @@ import BadgeMedallion from '@/components/badges/BadgeMedallion'
 import BadgeShine from '@/features/badges/components/BadgeShine'
 import type { BadgeArtId, BadgeLevel } from '@/types/badges'
 
-/** The share of a turn (0..1) that shows the face, not the back. */
 const showsFront = (turn: number) => {
   'worklet'
   const angle = (((turn * 360) % 360) + 360) % 360
   return angle <= 90 || angle >= 270
 }
 
-/**
- * The badge view's coin: the medallion on the front and its plain metal on the
- * back, swapped as `turn` (whole turns on rotateY, applied by the parent)
- * passes edge-on. `shine` replays the light sweep whenever it changes; null
- * skips it (Reduce Motion, locked).
- */
 export default function BadgeViewCoin({
   art,
   level,
@@ -45,7 +38,7 @@ export default function BadgeViewCoin({
   return (
     <View style={{ width: size, height: size }}>
       <Animated.View style={[StyleSheet.absoluteFill, backStyle]}>
-        {/* Mirrored, so its light falls from the same side once turned. */}
+        {}
         <View style={{ transform: [{ rotateY: '180deg' }] }}>
           <BadgeMedallion
             art={art}

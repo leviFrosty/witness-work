@@ -30,7 +30,7 @@ const PreferencesSection = ({
           onPress={() => handleNavigate('PreferencesPublisher')}
           selected={selectedDestination === 'PreferencesPublisher'}
         />
-        {/* Binaries before the recovery key can't replace the account key. */}
+        {}
         {BuddiesKeychain.isReplaceAvailable() && (
           <GroupedListRow
             icon={KeyRoundIcon}

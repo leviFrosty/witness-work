@@ -29,23 +29,19 @@ import {
 const AVATAR = 46
 const MEDAL = 40
 const TOAST_MEDAL = 50
-/** The collection that grows a level each loop: Silver to Gold. */
+
 const GROWING: { art: BadgeArtId; from: BadgeLevel; to: BadgeLevel } = {
   art: 'monthsShared',
   from: 2,
   to: 3,
 }
-/** The rest of the profile's row, after the one that grows. */
+
 const SHELF: { art: BadgeArtId; level: BadgeLevel }[] = [
   { art: 'returnVisits', level: 2 },
   { art: 'conversations', level: 1 },
   { art: 'prepared', level: 1 },
 ]
 
-/**
- * Badges: a profile card whose badges pop in one by one, then one grows from
- * Silver to Gold with a soft shine while a "New badge" note rises beneath it.
- */
 const BadgesVisual = ({ palette, active, reduceMotion }: RevealVisualProps) => {
   const theme = useTheme()
   const gold = theme.colors.warn
@@ -58,7 +54,7 @@ const BadgesVisual = ({ palette, active, reduceMotion }: RevealVisualProps) => {
   })
 
   const cardStyle = useRiseStyle(intro, 0, 0.35, 20)
-  // Silver gives way to Gold, and back while nothing is watching it.
+
   const grown = useDerivedValue(
     () => seg(loop.value, 0.16, 0.28) * (1 - seg(loop.value, 0.93, 0.99))
   )
@@ -161,7 +157,6 @@ const BadgesVisual = ({ palette, active, reduceMotion }: RevealVisualProps) => {
   )
 }
 
-/** Pops a medallion into the row, one after another, as the scene builds. */
 const PopIn = ({
   intro,
   index,
@@ -178,10 +173,6 @@ const PopIn = ({
   return <Animated.View style={style}>{children}</Animated.View>
 }
 
-/**
- * The medallion that grows: a warm glow swells behind it, it lifts as Gold
- * replaces Silver, and a band of light sweeps across the new metal.
- */
 const GrowingMedallion = ({
   loop,
   grown,

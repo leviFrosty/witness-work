@@ -10,11 +10,6 @@ vi.mock('@/lib/locales', () => ({
   default: { t: (k: string) => k },
 }))
 
-// Replace the React-aware `useProfile` hook with a plain function reading
-// directly from the underlying zustand store. The store itself is still real
-// (so `setName` / `set` exercise the same stamping wrapper), but calling
-// `useProfile()` no longer goes through `useSyncExternalStore` — which keeps
-// the hook callable outside a React tree.
 vi.mock('@/stores/profile', async () => {
   const actual =
     await vi.importActual<typeof import('@/stores/profile')>('@/stores/profile')

@@ -12,10 +12,6 @@ import type { BadgeViewOrigin } from '@/types/rootStack'
 
 type BadgeState = 'earned' | 'locked'
 
-/**
- * A badge's spoken name: its full title, plus "new" or "not yet earned". The
- * medallion art is decorative, so whatever wraps it reads this instead.
- */
 export const badgeAccessibilityLabel = (
   art: BadgeArtId,
   level: BadgeLevel | null,
@@ -27,10 +23,6 @@ export const badgeAccessibilityLabel = (
   return title
 }
 
-/**
- * Measures a coin in window coordinates for a badge view to grow out of.
- * Undefined when it isn't laid out (e.g. already unmounting).
- */
 export const measureBadgeOrigin = (
   coin: View | null,
   done: (origin: BadgeViewOrigin | undefined) => void
@@ -41,13 +33,6 @@ export const measureBadgeOrigin = (
   )
 }
 
-/**
- * A tappable medallion that opens its badge. Earned medallions lift under an
- * iPad pointer like other small opaque controls; locked outlines highlight. A
- * "new" dot marks badges earned since the User last looked. Set `tooltip` where
- * no label shows the badge's name nearby. `onPress` gets the coin's window
- * rect, so the badge view can grow out of it.
- */
 export default function BadgeButton({
   art,
   level,
@@ -65,9 +50,9 @@ export default function BadgeButton({
   state?: BadgeState
   isNew?: boolean
   onPress: (origin: BadgeViewOrigin | undefined) => void
-  /** Ring around the "new" dot; match the surface behind the medallion. */
+
   dotBorderColor?: string
-  /** Names the badge when an iPad pointer rests on it. */
+
   tooltip?: boolean
   style?: StyleProp<ViewStyle>
 }) {

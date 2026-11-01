@@ -10,21 +10,11 @@ const ROW_HEIGHT = 14
 const ROW_GAP = 10
 const ROWS = { compact: 1, full: 4 } as const
 
-/**
- * About how tall the preview is at each size, for the resize handle: `full` has
- * three more rows than `compact`.
- */
 export const DAYS_PREVIEW_HEIGHTS = {
   compact: 118,
   full: 118 + (ROWS.full - ROWS.compact) * (ROW_HEIGHT + ROW_GAP),
 } as const
 
-/**
- * The Days list while the cards are edited. A month of days is too tall to drag
- * cards past, so it's a card saying which size it is, with a few rows standing
- * in for days: more at full length, so dragging its corner down and up visibly
- * changes it.
- */
 export default function DaysEditPreview({ size }: { size: ProgressCardSize }) {
   const theme = useTheme()
   const full = size === 'full'

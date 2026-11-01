@@ -9,13 +9,6 @@ import { ROOM_PARTS, type SilhouetteStyle } from '@/features/pet/art'
 import { isSecretItem } from '@/features/pet/lib/secretUnlocks'
 import { isRoomOptionUnlocked } from '@/features/pet/lib/unlocks'
 
-/**
- * The Decorate Room sheet's model: its tabs, the choices on each, what a choice
- * changes in the room, and the part of the room each thumbnail shows. Pure, so
- * the screen only lays it out.
- */
-
-/** The sheet's tabs, in order, the window last. `lamp` is labelled "Light". */
 export const ROOM_TABS = [
   'hat',
   'wall',
@@ -28,7 +21,6 @@ export const ROOM_TABS = [
 ] as const
 export type RoomTab = (typeof ROOM_TABS)[number]
 
-/** One row of choices: a room setting and its options in picker order. */
 export type RoomChoicePart =
   | 'windowTime'
   | 'windowSeason'
@@ -51,14 +43,9 @@ const section = (part: RoomChoicePart): RoomChoiceSection => ({
   options: ROOM_PARTS[part].options,
 })
 
-/** Whether the window follows the clock and the season (both Live). */
 export const isLiveWindow = (window: RoomWindow): boolean =>
   window.time === 'live' && window.season === 'live'
 
-/**
- * The choice sections of `tab`. The window's time and season only show while
- * the window isn't fully Live; each of them can still be Live on its own.
- */
 export function roomTabSections(
   tab: RoomTab,
   room: Pick<PetRoomSettings, 'window'>
@@ -75,7 +62,6 @@ export function roomTabSections(
   }
 }
 
-/** The option of `part` the room has now. */
 export function selectedRoomOption(
   room: PetRoomSettings,
   part: RoomChoicePart
@@ -85,7 +71,6 @@ export function selectedRoomOption(
   return room[part]
 }
 
-/** The `updateRoom` change that picks `option` for `part`. */
 export function roomChoicePatch(
   room: PetRoomSettings,
   part: RoomChoicePart,
@@ -102,17 +87,12 @@ export function roomChoicePatch(
   return { [part]: option } as Partial<PetRoomSettings>
 }
 
-/** The room with `option` picked for `part`, for its thumbnail. */
 export const roomWithChoice = (
   room: PetRoomSettings,
   part: RoomChoicePart,
   option: string
 ): PetRoomSettings => ({ ...room, ...roomChoicePatch(room, part, option) })
 
-/**
- * The room a thumbnail draws for `option`: picked for `part` and lit by day,
- * whatever the window shows, unless the option is the window's time itself.
- */
 export function thumbRoom(
   room: PetRoomSettings,
   part: RoomChoicePart,
@@ -123,10 +103,6 @@ export function thumbRoom(
   return { ...picked, window: { ...picked.window, time: 'day' } }
 }
 
-/**
- * The Live switch's change: both Live, or both fixed at what the window shows
- * now so turning Live off changes nothing on screen.
- */
 export function liveWindowPatch(
   live: boolean,
   now: { time: TimeOfDay; season: Season }
@@ -138,10 +114,6 @@ export function liveWindowPatch(
   }
 }
 
-/**
- * The part of the 180 × 100 scene each thumbnail shows, all 8:5 so the grid
- * lines up.
- */
 export const ROOM_THUMB_VIEWS: Readonly<Record<RoomChoicePart, Viewport>> = {
   windowTime: [3, 5, 72, 45],
   windowSeason: [3, 5, 72, 45],
@@ -155,11 +127,9 @@ export const ROOM_THUMB_VIEWS: Readonly<Record<RoomChoicePart, Viewport>> = {
   hat: [36, 36, 64, 40],
 }
 
-/** Whether the pet sits in `part`'s thumbnails (the bed's and the hat's). */
 export const thumbShowsPet = (part: RoomChoicePart): boolean =>
   part === 'bed' || part === 'hat'
 
-/** Whether `option` of `part` can be picked now. */
 export function isRoomChoiceUnlocked(
   part: RoomChoicePart,
   option: string,
@@ -169,31 +139,11 @@ export function isRoomChoiceUnlocked(
   return isRoomOptionUnlocked(part, option, unlocked)
 }
 
-/**
- * How a locked secret option's silhouette reads: an object (hat, bed, shelf,
- * lamp) as one flat shadow, a surface (wall, floor) as two shadow tones so its
- * pattern shows but not its colours.
- */
 export const silhouetteStyle = (part: RoomChoicePart): SilhouetteStyle =>
   part === 'wallColor' || part === 'wallPattern' || part === 'floor'
     ? 'surface'
     : 'object'
 
-/**
- * Rooms to tell a secret option's own pixels from the rest of its thumbnail, in
- * the order `silhouetteOf` reads them (a few, as each is a scene to draw):
- *
- * - A wall colour: the same wall plain (its pattern becomes the light tone) and
- *   another colour (what isn't wall);
- * - A pattern: the same wall plain, and the pattern in another colour;
- * - A floor: two other floors;
- * - An object (hat, bed, shelf, lamp): the option over another wall and floor, so
- *   the bare wall and floor around it aren't counted even where every other
- *   option covers them, then no hat or the regular options, which hold the pet,
- *   the table and the rest of the room.
- *
- * All are shown by day, so the lamp's glow doesn't count as its shape.
- */
 export function silhouetteRooms(
   room: PetRoomSettings,
   part: RoomChoicePart,

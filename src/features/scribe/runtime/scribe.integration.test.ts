@@ -116,7 +116,6 @@ const done = (
   meter: meter(percentUsed),
 })
 
-/** Ww-api answering the step by its number, from canned model output. */
 const model = (request: RecordedRequest) => {
   const body = request.body as StepRequest
   if (body.step === 0)
@@ -256,7 +255,6 @@ it('runs a whole turn against ww-api: read, writes, review, Add, Undo', async ()
     }
   )
 
-  // Two steps, each POSTed with the session's bearer and an SSE Accept.
   expect(streamFetch.calls).toHaveLength(2)
   for (const call of streamFetch.calls) {
     expect(call.url).toBe(URLS.step)
@@ -278,7 +276,6 @@ it('runs a whole turn against ww-api: read, writes, review, Add, Undo', async ()
     data: { plans: ['p1 2026-10-22 120m 09:00 k0'] },
   })
 
-  // Nothing is written until the User adds it.
   expect(ministry()).toEqual(before)
   const conversation = getConversation(conversationId)!
   const proposal = conversation.proposals[conversation.pendingProposalId!]
@@ -321,7 +318,7 @@ it('runs a whole turn against ww-api: read, writes, review, Add, Undo', async ()
     kept: 0,
   })
   expect(ministry()).toEqual(before)
-  // The next message tells the model both: added, then undone.
+
   expect(
     getConversation(conversationId)!.outcomes.map((outcome) => outcome.outcome)
   ).toEqual(['applied', 'undone'])

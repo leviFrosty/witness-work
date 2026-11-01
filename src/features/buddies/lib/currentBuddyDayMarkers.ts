@@ -8,10 +8,6 @@ import {
 import { planShareKey } from '@/features/buddies/lib/shares'
 import type { BuddiesState } from '@/features/buddies/lib/state'
 
-/**
- * The calendar's buddy markers from the Buddies store's state, shared by the
- * Schedule calendar and the Calendar widget so both show the same people.
- */
 export function currentBuddyDayMarkers({
   buddies,
   sharing,
@@ -34,7 +30,7 @@ export function currentBuddyDayMarkers({
     sharing,
     cards,
     dayPlans,
-    // Deriving a share id reads the identity seed, so only once Buddies is in use.
+
     repliesFor: (plan) =>
       registeredInboxId !== null
         ? shareReplies[buddiesEngine.shareIdForKey(planShareKey(plan.id))]

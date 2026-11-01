@@ -82,10 +82,9 @@ import FoldSplit from '@/components/ui/layout/FoldSplit'
 
 type Tier = 'supporter' | 'tip'
 type SupporterBilling = 'monthly' | 'annual'
-// Each price list keeps its own independent selection — switching
-// monthly↔annual (or to tips) never remaps a choice across views.
+
 type PriceView = SupporterBilling | 'tip'
-// What asked for offerings, for `paywall_offerings_failed` / `_empty`.
+
 type OfferingsTrigger = 'initial' | 'retry' | 'foreground' | 'reconnect'
 type OfferingsLoad = { force: boolean; trigger: OfferingsTrigger }
 
@@ -97,16 +96,10 @@ const totalPackages = (offerings: PurchasesOfferings) =>
     0
   )
 
-// Keep the price lists compact; unselected later options live behind "Show all options."
 const SUPPORTER_VISIBLE_OPTION_LIMIT = __DEV__ ? 1 : 4
 const TIP_VISIBLE_OPTION_LIMIT = __DEV__ ? 1 : 5
 
-const PaywallScreen = ({
-  scribeAi = false,
-}: {
-  /** Lists Scribe AI's limits in the comparison (when it's turned on). */
-  scribeAi?: boolean
-}) => {
+const PaywallScreen = ({ scribeAi = false }: { scribeAi?: boolean }) => {
   const foldColumn = useFoldColumn(680)
   const theme = useTheme()
   const { width, height, fontScale } = useWindowDimensions()
@@ -131,7 +124,7 @@ const PaywallScreen = ({
     unavailable,
   } = useCustomer()
   const [tier, setTier] = useState<Tier>(initialTier)
-  // Annual-first anchors the better value; monthly stays one tap away.
+
   const [supporterBilling, setSupporterBilling] =
     useState<SupporterBilling>('annual')
   const navigation = useNavigation<RootStackNavigation>()
@@ -198,8 +191,6 @@ const PaywallScreen = ({
   const setSelectedPackage = (pkg: PurchasesPackage) =>
     setSelectedByView((prev) => ({ ...prev, [priceView]: pkg }))
 
-  // FAQ lives in the header as a "?" icon instead of an inline text link —
-  // keeps the pricing column focused on a single decision.
   useLayoutEffect(() => {
     navigation.setOptions({
       header: () => (
@@ -243,8 +234,6 @@ const PaywallScreen = ({
       .sort((a, b) => a.product.price - b.product.price)
   }, [allOfferings])
 
-  // Offerings that are strictly one-time (no monthly or annual package). These
-  // are framed as tips — no ongoing Supporter status.
   const tipPackages = useMemo(() => {
     return allOfferings
       .filter((o) => !o.monthly && !o.annual)
@@ -276,30 +265,19 @@ const PaywallScreen = ({
 
   const hasHiddenOptions = visiblePackages.length < activePackages.length
 
-  // Close the sheet when its contents swap out from under it (tier or
-  // billing switch) rather than showing a different list mid-gesture.
   useEffect(() => {
     setShowAllOptions(false)
   }, [tier, supporterBilling])
 
-  // Fetches latest offerings from RevenueCat. Must wait until
-  // `Purchases.configure` has run in CustomerProvider, otherwise the native
-  // SDK throws "Purchases has not been configured".
   const hasFetchedOfferings = useRef(false)
   const offeringsInFlight = useRef(false)
   const [loadingOfferings, setLoadingOfferings] = useState(false)
-  // Why the last load failed; the screen shows it until a load succeeds.
+
   const [offeringsError, setOfferingsError] = useState<
     'offline' | 'failed' | null
   >(null)
   const [isRefreshing, setIsRefreshing] = useState(false)
 
-  // `getOfferings` is served from the SDK's internal cache (~5 min TTL), so a
-  // plain call won't pick up dashboard edits. `force` routes through
-  // `syncAttributesAndOfferingsIfNeeded`, which bypasses that cache.
-  // A load asked for while another is out (the reconnect retry while a load
-  // started offline still waits on the store) runs if that load fails,
-  // instead of being dropped.
   const queuedOfferingsLoad = useRef<OfferingsLoad | null>(null)
   const fetchOfferings = useCallback(
     async ({
@@ -353,7 +331,7 @@ const PaywallScreen = ({
             raw: err,
           })
           setOfferingsError(connectivity ? 'offline' : 'failed')
-          // Offline is expected, not a bug (JW-TIME-BW). Other failures report.
+
           if (!connectivity) errorTracking.captureException(error)
           throw error
         }
@@ -389,8 +367,6 @@ const PaywallScreen = ({
     fetchOfferings().catch(() => {})
   }, [ready, fetchOfferings])
 
-  // Without prices the screen is a dead end, so try again whenever the user
-  // comes back to the app or the connection returns.
   const missingOfferings =
     !currentOfferings || totalPackages(currentOfferings) === 0
   const awaitingOfferings = ready && !unavailable && missingOfferings
@@ -408,7 +384,6 @@ const PaywallScreen = ({
   }, [awaitingOfferings, fetchOfferings])
 
   const retryOfferings = () => {
-    // An empty list may be stale in the SDK's cache; a failure isn't cached.
     fetchOfferings({ force: !!currentOfferings, trigger: 'retry' }).catch(
       () => {}
     )
@@ -430,11 +405,6 @@ const PaywallScreen = ({
 
   const [isResetting, setIsResetting] = useState(false)
 
-  // The RN SDK has no client-side "delete purchases" call — only the REST API
-  // can delete a subscriber, and that needs a secret key. For dev/test this is
-  // close enough: `logIn` with a fresh UUID switches the active user to a new
-  // anonymous-style identity with no entitlements or purchase history, so the
-  // paywall UI behaves as if the customer were brand new.
   const handleDevReset = useCallback(() => {
     if (isResetting) return
     Alert.alert(
@@ -451,8 +421,7 @@ const PaywallScreen = ({
               const freshId = `dev-reset-${Date.now()}-${Math.random()
                 .toString(36)
                 .slice(2, 10)}`
-              // Also drop any iCloud-adopted account id, otherwise the next
-              // account reconcile would immediately log back in as it.
+
               clearAdoptedAccountId()
               logger.log('[Paywall] dev reset — logging in as', { freshId })
               const { customerInfo } = await Purchases.logIn(freshId)
@@ -473,10 +442,6 @@ const PaywallScreen = ({
     )
   }, [fetchOfferings, isResetting, revalidate, setCustomer])
 
-  // Preselect a default for the active view the first time it's shown, and
-  // replace a selection that no longer exists in the list (e.g. after an
-  // offerings refetch). An existing valid selection is left alone — each view
-  // remembers its own choice independently.
   useEffect(() => {
     setSelectedByView((prev) => {
       const current = prev[priceView]
@@ -492,8 +457,7 @@ const PaywallScreen = ({
         delete next[priceView]
         return next
       }
-      // Default to the second-cheapest option — a gentle anchor above the
-      // floor while the cheapest choice stays visibly one tap away.
+
       return {
         ...prev,
         [priceView]: activePackages[1] ?? activePackages[0],
@@ -589,19 +553,14 @@ const PaywallScreen = ({
       if (productIdentifier) {
         purchased.current = true
         analytics.capture('supporter_purchase_completed', purchaseProperties)
-        // The store's answer already has the new entitlement; asking again
-        // could fail on a flaky connection and leave Supporter off.
+
         setCustomer(customerInfo)
-        // Pass the purchased tier so the Thank You screen shows the right
-        // tone — a lifetime supporter who tips one-time should see the tip
-        // thank-you, not the full supporter celebration, even though
-        // `isSupporter` is still true.
+
         navigation.replace('Thank You', { purchaseTier: tier })
       }
     } catch (error: unknown) {
       const code = (error as PurchasesError).code
-      // Cancelling the store sheet throws here too; it's expected flow, so it
-      // stays silent.
+
       const outcome = storeErrorOutcome(error, 'purchase', storePlatform)
       analytics.capture(
         outcome.silent
@@ -775,7 +734,7 @@ const PaywallScreen = ({
             : i18n.t('paywallTierTip')}
         </Text>
       )}
-      {/* Supporter is the primary flow; Tip gets its own heading when selected. */}
+      {}
       {tier === 'tip' && !isWide && (
         <View>
           <Text
@@ -911,7 +870,6 @@ const PaywallScreen = ({
   return (
     <Wrapper insets='none' style={{ flex: 1 }}>
       {isWide ? (
-        // Benefits beside the pricing, meeting iPhone Duo's fold when half-open.
         <FoldSplit
           style={{
             flex: 1,

@@ -11,7 +11,6 @@ import SectionFooter from '@/features/settings/components/account/SectionFooter'
 import i18n from '@/lib/locales'
 import type { RootStackNavigation } from '@/types/rootStack'
 
-/** Set Up Another Device (show a code) and Sign In with QR Code (scan one). */
 export default function HandoffSection() {
   const navigation = useNavigation<RootStackNavigation>()
   return (

@@ -3,9 +3,6 @@ import assert from 'node:assert/strict'
 import { readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 
-// Static guards for the Android speech module (ADR 0018): on-device
-// recognition only, never audio on disk, and the same contract as iOS.
-
 const MODULE = 'modules/speech-transcription'
 const SOURCES = join(MODULE, 'android/src/main/java')
 
@@ -41,18 +38,17 @@ test('only the on-device recognizer is ever created', () => {
   assert.match(allKotlin, /SpeechRecognizer\.createOnDeviceSpeechRecognizer\(/)
   assert.match(allKotlin, /SpeechRecognizer\.isOnDeviceRecognitionAvailable\(/)
   const forbidden = [
-    // Any recognizer that may send audio to a server, or a chosen component.
     [/createSpeechRecognizer\s*\(/, 'createSpeechRecognizer'],
     [/\bisRecognitionAvailable\s*\(/, 'isRecognitionAvailable'],
-    // Languages only an online recognizer serves.
+
     [/onlineLanguages|getOnlineLanguages/i, 'online languages'],
-    // The system's recognizer UI and web search intents.
+
     [/startActivity/, 'startActivity'],
     [
       /ACTION_WEB_SEARCH|EXTRA_WEB_SEARCH_ONLY|ACTION_VOICE_SEARCH/,
       'web search',
     ],
-    // Network access from the module itself.
+
     [/java\.net\.|HttpURLConnection|okhttp/i, 'network client'],
   ]
   for (const { path, code } of kotlin) {
@@ -65,7 +61,7 @@ test('only the on-device recognizer is ever created', () => {
 test('audio is never written to disk or handed back', () => {
   const forbidden = [
     /FileOutputStream|openFileOutput|\bFile\s*\(|RandomAccessFile/,
-    // Recognizer extras that return or take recorded audio.
+
     /GET_AUDIO|EXTRA_AUDIO_SOURCE|AudioRecord\b|MediaRecorder/,
   ]
   for (const { path, code } of kotlin) {

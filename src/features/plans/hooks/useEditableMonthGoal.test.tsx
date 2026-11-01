@@ -1,8 +1,6 @@
 import { act, create, type ReactTestRenderer } from 'react-test-renderer'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 
-// A real zustand store holding the role preferences plus a few the hook
-// doesn't read; the app's store pulls in React Native.
 vi.mock('@/stores/preferences', async () => {
   const { create } = await import('zustand')
   return {

@@ -81,7 +81,7 @@ const InsightStat = ({
 
 const TimeInsightContent = ({ onClose }: { onClose: () => void }) => {
   const theme = useTheme()
-  // Keyed on the day, like the card it opens from.
+
   const now = moment(useLocalDay(), 'YYYY-MM-DD')
   const month = now.month()
   const year = now.year()
@@ -301,7 +301,6 @@ interface Props {
 }
 
 const ServiceReportTimeOverlay = ({ children, containerStyle }: Props) => {
-  // Reads the month's time, which a label naming the action alone hid.
   const minutes = useThisMonthMinutes()
   return (
     <ServiceReportInsightOverlay

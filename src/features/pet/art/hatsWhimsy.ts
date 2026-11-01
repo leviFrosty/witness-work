@@ -1,8 +1,3 @@
-/**
- * Secret playful hats: things that would never be hats outside the game. Drawn
- * in the full hat canvas (`hatShapes.ts`): {@link HAT_W} × {@link HAT_H}, centred
- * on {@link HAT_CX}, lowest brim pixels on {@link HAT_BRIM_ROW}.
- */
 import {
   rgbPalette,
   type FeaturePixel,
@@ -21,9 +16,9 @@ export type WhimsyHatId =
   | 'pineapple'
 
 const C = HAT_CX
-/** The brim row, for feature pixels. */
+
 const R = HAT_BRIM_ROW
-/** The shapes' bottom edge, so their lowest pixels land on the brim row. */
+
 const B = R + 0.9
 
 const P = rgbPalette({
@@ -72,11 +67,9 @@ const P = rgbPalette({
   leafLight: '#5fb85a',
 })
 
-/** Pixels x0..x1 (inclusive) on row y. */
 const run = (y: number, x0: number, x1: number, c: Rgb): FeaturePixel[] =>
   Array.from({ length: x1 - x0 + 1 }, (_, i) => [x0 + i, y, c] as const)
 
-/** The pineapple's diamond crosshatch, inside an ellipse. */
 function crosshatch(
   cx: number,
   cy: number,
@@ -96,7 +89,6 @@ function crosshatch(
   return out
 }
 
-/** A pointed leaf of the pineapple's crown, from its base to its tip. */
 function leaf(
   x0: number,
   x1: number,
@@ -295,7 +287,7 @@ export const WHIMSY_HAT_SPECS: Readonly<Record<WhimsyHatId, ShapeSpec>> = {
       [C - 4, R - 3, P.hullShade],
     ],
   },
-  // Three pancakes on a plate, amber syrup running down, a pat of butter.
+
   pancakes: {
     shapes: [
       {
@@ -348,7 +340,7 @@ export const WHIMSY_HAT_SPECS: Readonly<Record<WhimsyHatId, ShapeSpec>> = {
     feats: [
       [C - 1, R - 10, P.butterLight],
       [C - 3, R - 8, P.syrupLight],
-      // Syrup running down the front of the stack.
+
       [C - 4, R - 7, P.syrup],
       [C - 4, R - 6, P.syrupLight],
       [C, R - 7, P.syrup],
@@ -357,11 +349,9 @@ export const WHIMSY_HAT_SPECS: Readonly<Record<WhimsyHatId, ShapeSpec>> = {
       ...run(R, C - 7, C + 6, P.plateRim),
     ],
   },
-  // A dromedary resting on its folded legs, facing left: one tall hump, the
-  // neck dipping and rising to a long head, a striped blanket on its flank.
+
   camel: {
     shapes: [
-      // The neck, dipping forward from the chest and rising to the head.
       {
         t: 'p',
         pts: [
@@ -399,7 +389,7 @@ export const WHIMSY_HAT_SPECS: Readonly<Record<WhimsyHatId, ShapeSpec>> = {
         h: P.camelLight,
         g: 'camel',
       },
-      // Folded legs.
+
       {
         t: 'e',
         x: C - 3.2,
@@ -478,7 +468,7 @@ export const WHIMSY_HAT_SPECS: Readonly<Record<WhimsyHatId, ShapeSpec>> = {
     ],
     feats: [
       ...crosshatch(C, B - 4.6, 3.6, 3.9),
-      // A soft gloss up left, a short curve rather than a sparkle.
+
       [C - 2, R - 7, P.glint],
       [C - 3, R - 6, P.glint],
       [C - 3, R - 5, P.pineappleLight],

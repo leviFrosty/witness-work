@@ -97,9 +97,6 @@ describe('recurring plan overrides', () => {
   })
 })
 
-// The matching before plans were compiled into epoch days: a moment per
-// skipped day and override, on every call. The compiled matcher must agree
-// with it on every day, in every time zone.
 const legacyOverride = (
   p: RecurringPlan,
   date: Date
@@ -143,7 +140,6 @@ const legacyIsOn = (p: RecurringPlan, date: Date): boolean => {
   }
 }
 
-// Deterministic so a failure reproduces.
 const random = (() => {
   let seed = 42
   return () => {
@@ -183,9 +179,6 @@ const fuzzPlan = (
   })),
 })
 
-// Built in one TZ and read in others, as after the device changes time zone.
-// The raw plan holds unanchored instants (data that never went through the
-// write path): 6 pm in Los Angeles is the next day in UTC and Auckland.
 process.env.TZ = 'America/Los_Angeles'
 const anchored = (iso: string) => normalizeDateForStorage(iso)
 const raw = (iso: string) => moment(iso).hour(18).toDate()
@@ -260,7 +253,6 @@ describe.each(['America/Los_Angeles', 'Pacific/Auckland', 'UTC'])(
       process.env.TZ = tz
       let matches = 0
       for (let i = 0; i < WALK_DAYS; i++) {
-        // A local-mode midnight, like a month view's day cursor.
         const date = walkStart.clone().add(i, 'days').toDate()
         const ids = getPlansIntersectingDay(date, fuzzPlans).map((p) => p.id)
         const expected = fuzzPlans.filter((p) => legacyIsOn(p, date))
@@ -280,7 +272,7 @@ describe.each(['America/Los_Angeles', 'Pacific/Auckland', 'UTC'])(
           )
         }
       }
-      // The walk exercises real occurrences, not just empty days.
+
       expect(matches).toBeGreaterThan(100)
     })
   }

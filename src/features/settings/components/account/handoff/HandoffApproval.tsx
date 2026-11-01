@@ -8,11 +8,6 @@ import type { HandoffHello } from '@/lib/serverAccount/handoff'
 import HandoffCode from '@/features/settings/components/account/handoff/HandoffCode'
 import { handoffDeviceLine } from '@/features/settings/components/account/handoff/handoffCopy'
 
-/**
- * A phone claimed the code: who it says it is, the code to compare, and the
- * User's answer, No or Yes side by side at the bottom of the screen.
- * `sendFailed` when a Yes didn't get through.
- */
 export default function HandoffApproval({
   hello,
   code,
@@ -66,11 +61,9 @@ export default function HandoffApproval({
           </Text>
         )}
       </View>
-      {/* The answer, side by side at the bottom: No first, as the system's
-          own confirmations order them. */}
+      {}
       <View style={{ flexDirection: 'row', gap: 12, marginTop: 24 }}>
-        {/* Each in a flex box: flex-basis 0 leaves out padding, so the
-            outlined button would come out wider. */}
+        {}
         <View style={{ flex: 1 }}>
           <Button
             variant='outline'
@@ -78,7 +71,7 @@ export default function HandoffApproval({
             disabled={sending}
             style={{
               justifyContent: 'center',
-              // Yes's padding, less this one's 1pt border, so they match.
+
               paddingVertical: 11,
               borderRadius: theme.numbers.borderRadiusSm,
               opacity: sending ? 0.5 : 1,

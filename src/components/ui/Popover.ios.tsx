@@ -12,11 +12,6 @@ import {
 } from '@/components/ui/popoverPresentation'
 import type { PopoverProps } from '@/components/ui/Popover.types'
 
-/**
- * SwiftUI popover anchored to its trigger. It stays a popover on iPhone
- * (`presentationCompactAdaptation(.popover)`) rather than becoming a sheet, and
- * presents over natively presented screens and form sheets.
- */
 export default function Popover({
   renderTrigger,
   contentWidth,
@@ -27,7 +22,6 @@ export default function Popover({
 }: PopoverProps) {
   const colorScheme = usePreferences((s) => s.colorScheme)
   const popover = usePopoverPresentation({
-    // Arrow, gap and the system's margin from the screen edge.
     edge: 40,
     dismissFallbackMs: 600,
   })
@@ -36,8 +30,6 @@ export default function Popover({
     <Host
       matchContents
       colorScheme={colorScheme}
-      // Without this, triggers first laid out under the home indicator
-      // measure short.
       ignoreSafeArea='all'
       style={style}
     >

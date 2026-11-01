@@ -3,11 +3,6 @@ import SharedGoodNewsListener from '@/features/contacts/components/SharedGoodNew
 import BuddyInviteListener from '@/app/deep-links/BuddyInviteListener'
 import HandoffLinkListener from '@/app/deep-links/HandoffLinkListener'
 
-/**
- * Aggregates all components that subscribe to incoming URLs / file intents
- * outside of React Navigation's `linking` config. Each child renders nothing
- * and owns its own `Linking.addEventListener` subscription.
- */
 export default function DeepLinkListeners() {
   return (
     <>

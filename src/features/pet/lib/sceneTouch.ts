@@ -1,14 +1,11 @@
 import type { Viewport } from '@/lib/pixelArt'
 
-/** What a tap on the room landed on. */
 export type SceneTapTarget = 'gift' | 'pet' | 'room'
 
-/** Scene pixels added around the pet, so a fingertip on its edge still pats. */
 export const PET_TAP_PAD = 3
-/** A rub may start a little further out than a tap. */
+
 export const PET_RUB_PAD = 6
 
-/** Whether scene point (`sx`, `sy`) is inside `box` grown by `pad`. */
 export function inBox(sx: number, sy: number, box: Viewport, pad = 0): boolean {
   return (
     sx >= box[0] - pad &&
@@ -18,12 +15,6 @@ export function inBox(sx: number, sy: number, box: Viewport, pad = 0): boolean {
   )
 }
 
-/**
- * Where a tap at view point (`x`, `y`) landed: the gift on the rug, the pet
- * (its drawn box, padded by {@link PET_TAP_PAD}), or anywhere else in the room.
- * `scale` is view points per scene pixel; a point outside the picture is the
- * room.
- */
 export function sceneTapTarget({
   x,
   y,
@@ -49,7 +40,6 @@ export function sceneTapTarget({
   return 'room'
 }
 
-/** Whether a drag starting at view point (`x`, `y`) starts on the pet. */
 export function startsOnPet({
   x,
   y,

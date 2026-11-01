@@ -15,11 +15,6 @@ import {
 
 const START = 1_760_000_000_000
 
-/**
- * A scheduler on a fake clock: `advance` fires due timers in order, and each
- * upload is recorded. `data` is what the snapshot hashes; `fail` makes the next
- * uploads throw.
- */
 function setup({
   enabled = true,
   schedule = {},
@@ -35,7 +30,7 @@ function setup({
     uploads: [] as { at: number; data: string }[],
     prepares: 0,
     failures: [] as BackupFailure[],
-    /** What the server's slot list says about this device's slot. */
+
     serverHas: true as boolean | null | 'throws',
     serverChecks: [] as number[],
   }
@@ -74,7 +69,7 @@ function setup({
     },
     onFailure: (code) => world.failures.push(code),
   })
-  /** Runs the clock forward, firing timers (and their uploads) as they fall due. */
+
   const advance = async (ms: number) => {
     const end = now + ms
     for (;;) {
@@ -161,13 +156,13 @@ describe('backup scheduler', () => {
       outcome: 'uploaded',
       size: 2,
     })
-    // A change that changes nothing in the payload (a bookkeeping write).
+
     await t.advance(5 * 60_000)
     t.scheduler.noteChange()
     await t.advance(BACKUP_DEBOUNCE_MS)
     expect(t.world.uploads).toHaveLength(1)
     expect(t.state()).toMatchObject({ pending: false, lastResult: 'unchanged' })
-    // The daily upload refreshes the server's 400-day clock.
+
     await t.advance(BACKUP_DAILY_MS)
     expect(t.world.uploads).toHaveLength(2)
     expect(t.world.uploads[1].at - t.world.uploads[0].at).toBe(BACKUP_DAILY_MS)
@@ -177,7 +172,7 @@ describe('backup scheduler', () => {
     const t = setup()
     await t.scheduler.run('enabled', { force: true })
     t.world.data = 'v2'
-    // Back Up Now right after: changed data waits for the minute.
+
     const result = await t.scheduler.run('manual', { force: true })
     expect(result).toEqual({
       outcome: 'waiting',
@@ -212,7 +207,7 @@ describe('backup scheduler', () => {
     t.scheduler.onBackground()
     await t.flush()
     expect(t.world.uploads).toEqual([{ at: START, data: 'v2' }])
-    // Nothing pending: leaving again uploads nothing.
+
     t.scheduler.onBackground()
     await t.flush()
     expect(t.world.uploads).toHaveLength(1)
@@ -224,7 +219,7 @@ describe('backup scheduler', () => {
     const gate = new Promise<void>((resolve) => (release = resolve))
     const scheduler = t.scheduler
     t.scheduler.noteChange()
-    // Hold the first upload open while the User keeps editing.
+
     const upload = scheduler.run('manual', { force: true })
     t.world.data = 'v2'
     scheduler.noteChange()
@@ -248,7 +243,7 @@ describe('backup scheduler', () => {
       lastError: 'server',
       failures: 1,
     })
-    // Edits meanwhile don't retry early.
+
     t.scheduler.noteChange()
     await t.advance(BACKUP_DEBOUNCE_MS)
     expect(t.world.uploads).toEqual([])
@@ -310,7 +305,6 @@ describe('backup scheduler', () => {
   })
 
   it('tries again at the next launch after ww-api asked for an update, not on every return', async () => {
-    // The last launch's upload got 426: an update relaunches the app.
     const updated = setup({
       schedule: {
         lastPutAt: START - 60 * 60_000,
@@ -326,7 +320,6 @@ describe('backup scheduler', () => {
     expect(updated.world.uploads).toEqual([{ at: START + 5_000, data: 'v1' }])
     expect(updated.state()).toMatchObject({ lastError: null, retryAt: null })
 
-    // Within one launch, coming back can't change the version.
     const t = setup({ schedule: { lastPutAt: START - 1_000_000 } })
     t.scheduler.onForeground()
     t.world.fail.push(new BackupError('update'))
@@ -364,7 +357,7 @@ describe('backup scheduler', () => {
     current.scheduler.onForeground()
     await current.advance(10 * 60_000)
     expect(current.world.prepares).toBe(0)
-    // Long waits re-check rather than holding a day-long timer.
+
     expect(Math.max(...current.timers())).toBeLessThanOrEqual(10 * 60_000)
   })
 
@@ -416,8 +409,7 @@ describe('backup scheduler', () => {
       t.scheduler.onForeground()
       await t.advance(60_000)
       t.world.serverHas = false
-      // Edits that come out unchanged (bookkeeping) every few minutes re-plan
-      // the upload timer each time; the check doesn't ride on it.
+
       for (let minute = 1; minute < 16; minute += 3) {
         t.scheduler.noteChange()
         await t.advance(3 * 60_000)
@@ -441,7 +433,7 @@ describe('backup scheduler', () => {
           (_, index) => START + index * BACKUP_SERVER_CHECK_MS
         )
       )
-      // The Account screen's list counts, and moves the next check.
+
       const u = setup({ schedule: uploadedHourAgo })
       u.scheduler.onForeground()
       await u.advance(10 * 60_000)
@@ -463,7 +455,7 @@ describe('backup scheduler', () => {
       t.scheduler.onForeground()
       await t.flush()
       expect(t.world.serverChecks).toEqual([START, START + 60 * 60_000])
-      // Control Center, Face ID or a system sheet: `inactive`, then back.
+
       t.scheduler.onInactive()
       await t.advance(BACKUP_SERVER_CHECK_MS)
       expect(t.world.serverChecks).toHaveLength(3)
@@ -492,7 +484,7 @@ describe('backup scheduler', () => {
       t.scheduler.onForeground()
       await t.flush()
       expect(t.world.serverChecks).toHaveLength(2)
-      // Failed lists wait as long, and change nothing.
+
       const failing = setup({ schedule: uploadedHourAgo })
       failing.world.serverHas = 'throws'
       failing.scheduler.onForeground()
@@ -518,14 +510,14 @@ describe('backup scheduler', () => {
       t.scheduler.serverCopyListed(true, START)
       await t.advance(60_000)
       expect(t.world.uploads).toEqual([])
-      // A list that started before an upload can't see that upload's slot.
+
       t.scheduler.serverCopyListed(false, START - 2 * 60 * 60_000)
       await t.advance(60_000)
       expect(t.world.uploads).toEqual([])
       t.scheduler.serverCopyListed(false, t.now())
       await t.advance(10_000)
       expect(t.world.uploads).toHaveLength(1)
-      // It counted as the next check.
+
       t.scheduler.onForeground()
       await t.flush()
       expect(t.world.serverChecks).toEqual([])

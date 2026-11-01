@@ -24,9 +24,6 @@ import {
 } from '@/lib/assistantRecommendation'
 import { buildRolloverEntries } from '@/features/service-reports/lib/rollover'
 
-// Store write actions take a _local_ day and anchor it at noon UTC themselves.
-// These feed each non-form caller's real output through the real store, in the
-// zones where handing over an already-anchored date shifts it a day.
 const originalTZ = process.env.TZ
 const setTZ = (tz: string) => {
   process.env.TZ = tz
@@ -77,8 +74,8 @@ describe('assistant recommendations', () => {
     for (const tz of tzs) {
       setTZ(tz)
       for (const today of [
-        new Date(2026, 8, 20, 9), // mid-month: cursor starts at today's anchor
-        new Date(2026, 7, 28, 9), // next month: cursor starts at UTC midnight
+        new Date(2026, 8, 20, 9),
+        new Date(2026, 7, 28, 9),
       ]) {
         const rec = generateRecommendation({
           year: 2026,

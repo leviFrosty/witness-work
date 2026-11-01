@@ -148,7 +148,7 @@ describe('geocodeContacts', () => {
     expect(wentOffline).toBe(true)
     expect(controller.signal.aborted).toBe(true)
     expect(outcomes).toEqual({})
-    // One lookup per worker at most, not one per contact.
+
     expect(fetchCoordinate.mock.calls.length).toBeLessThanOrEqual(3)
   })
 

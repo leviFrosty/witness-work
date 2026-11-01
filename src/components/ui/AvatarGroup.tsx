@@ -6,24 +6,18 @@ import i18n, { TranslationKey } from '@/lib/locales'
 
 const RING_WIDTH = 2
 
-/** Lets `Avatar` / `AvatarGroupCount` inherit the group's size. */
 const AvatarGroupSizeContext = createContext<number | undefined>(undefined)
 
 export const useAvatarGroupSize = () => useContext(AvatarGroupSizeContext)
 
 interface Props {
   children: ReactNode
-  /** Diameter of each avatar; children that don't set `size` inherit it. */
+
   size?: number
-  /** Ring separating overlapped avatars. Match the surface behind the group. */
+
   ringColor?: string
 }
 
-/**
- * Overlapping row of avatars with a ring between each, modeled on shadcn's
- * AvatarGroup. Children are `Avatar`s (they inherit `size`), optionally
- * followed by an `AvatarGroupCount` for overflow.
- */
 const AvatarGroup = ({ children, size = 32, ringColor }: Props) => {
   const theme = useTheme()
   const ring = ringColor ?? theme.colors.card
@@ -50,7 +44,6 @@ const AvatarGroup = ({ children, size = 32, ringColor }: Props) => {
   )
 }
 
-/** "+N" circle for avatars that didn't fit in an `AvatarGroup`. */
 export const AvatarGroupCount = ({
   count,
   size: sizeProp,

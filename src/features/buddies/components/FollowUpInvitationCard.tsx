@@ -12,13 +12,6 @@ import { atMinutesOfDay } from '@/lib/normalizeDate'
 import { usePreferences } from '@/stores/preferences'
 import type { IncomingShare } from '@/features/buddies/lib/state'
 
-/**
- * A buddy's Follow-up, as the invitee sees it: one sentence ("Anna is going
- * back to see Chen Saturday at 7:30 PM", or "You're going with Anna…" once
- * they've said Going), how far off it is, the topic, and the place, outlined
- * like the User's own planned Follow-ups. The householder's name, topic, and
- * place stay hidden in data protection mode.
- */
 export default function FollowUpInvitationCard({
   share,
   buddyName,
@@ -39,7 +32,7 @@ export default function FollowUpInvitationCard({
     details.s === undefined ? dayPhrase(start, now) : whenPhrase(start, now)
   const name = dataProtectionMode ? undefined : details.firstName
   const going = share.status === 'going'
-  // An outline, like the User's own planned Follow-ups; dimmer once past.
+
   const tone: FollowUpCardTone = start.getTime() > now ? 'planned' : 'quiet'
   const key = going
     ? name

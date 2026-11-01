@@ -18,16 +18,11 @@ import { touchTargetFrame } from '@/components/ui/touchTarget'
 
 export type IconButtonIcon = AppIcon
 
-/** Apple's minimum comfortable touch target, in points. */
 const MIN_TARGET = 44
 
 const toNumber = (value: unknown) =>
   typeof value === 'number' ? value : undefined
 
-/**
- * The button's size before any slop: the style's fixed width and height, else
- * the icon plus its padding and border.
- */
 const boxSize = (iconSize: number, style: ViewStyle | undefined) => {
   const s = style ?? {}
   const pad = (...keys: (keyof ViewStyle)[]) =>
@@ -50,10 +45,6 @@ const boxSize = (iconSize: number, style: ViewStyle | undefined) => {
   }
 }
 
-/**
- * Slop that grows a `width` × `height` button to the 44pt minimum. With a
- * `neighborGap`, the left and right slop stay under half of it.
- */
 const minTargetSlop = (
   width: number,
   height: number,
@@ -80,33 +71,15 @@ type Props = {
   color?: string
   fill?: string
   noTransform?: boolean
-  /**
-   * Read by screen readers. A pressable X icon defaults to "Close"; pass a
-   * label for an X that means something else (remove, dismiss) and for every
-   * other icon. A decorative X (no `onPress`) gets no default.
-   */
+
   accessibilityLabel?: string
-  /**
-   * Touch slop around the button. Unset grows the target to the 44pt minimum,
-   * so the layout and look don't change. Set it to override that (`0` for
-   * none).
-   */
+
   hitSlop?: number | Insets
-  /**
-   * Space to the nearest pressable beside this one, for buttons in a row. Keeps
-   * the default slop's left and right under half of it: RN resolves overlapping
-   * siblings to the last one rendered, so a tap on the inner edge of the first
-   * button would fire the second. Ignored when `hitSlop` is set.
-   */
+
   neighborGap?: number
-  /**
-   * Gives the button a real 44pt frame (48dp on Android), pulled back with
-   * negative margin so nothing moves; `style` then draws its look inside the
-   * frame. Use it in a drag area (sheet headers, swipeable rows), where a pan
-   * claims a touch on the slop before the button sees it.
-   */
+
   frame?: boolean
-  /** Swaps the icon for a spinner and blocks presses; see `Button`. */
+
   loading?: boolean
   testID?: string
 }

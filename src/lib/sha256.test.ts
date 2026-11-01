@@ -2,7 +2,7 @@ import { sha256 } from '@noble/hashes/sha2.js'
 import { describe, expect, it, vi } from 'vitest'
 
 vi.unmock('@/lib/sha256')
-// expo-crypto's `digest` is WebCrypto's: (algorithm, bytes) -> ArrayBuffer.
+
 const digest = vi.hoisted(() =>
   vi.fn((algorithm: string, data: Uint8Array<ArrayBuffer>) =>
     globalThis.crypto.subtle.digest(algorithm, data)

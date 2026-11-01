@@ -33,7 +33,7 @@ describe('Shop prices', () => {
     }
     expect(priceOf('hat:tophat')).toBe(Math.max(...prices))
     expect(priceOf('floor:tile')).toBeGreaterThan(priceOf('floor:brick')!)
-    // About 570 coins buy everything.
+
     expect(prices.reduce((sum, price) => sum + price, 0)).toBe(572)
   })
 
@@ -53,7 +53,7 @@ describe('Shop prices', () => {
     expect(state('hat:beanie')).toBe('short')
     expect(state('hat:tophat')).toBe('short')
     expect(state('hat:duck')).toBe('secret')
-    // A found secret is owned like any other.
+
     expect(state('hat:duck', true)).toBe('owned')
   })
 })

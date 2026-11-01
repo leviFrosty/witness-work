@@ -20,11 +20,6 @@ import type {
 import { savedPlaceActions } from '@/features/route-planning/lib/savedPlaceMenu'
 import type { TimelineLeg } from '@/features/route-planning/lib/routeTimeline'
 
-/**
- * The end of the timeline: where the day finishes and about when. The place is
- * a menu (the last stop, back to the start, Home, the Kingdom Hall, or any
- * place); it's not a stop, so there's no time to spend there.
- */
 export default function RouteTimelineFinish({
   finish,
   lastStopTitle,
@@ -39,9 +34,9 @@ export default function RouteTimelineFinish({
 }: {
   finish: RouteFinish
   lastStopTitle?: string
-  /** When the day ends, in local minutes. */
+
   end: number
-  /** The drive from the last stop, when the finish is elsewhere. */
+
   leg?: TimelineLeg
   savedPlaces: Partial<Record<SavedPlaceKind, SavedPlace>>
   hideLegDetails: boolean

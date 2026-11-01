@@ -55,7 +55,7 @@ describe('end-to-end TZ stability', () => {
 
     setTZ('America/Los_Angeles')
     const state = useServiceReport.getState()
-    // Display layer asks for May 2026 totals.
+
     const monthsReports = getMonthsReports(state.serviceReports, 4, 2026)
     const standard = standardMinutesForSpecificMonth(monthsReports, 4, 2026)
     expect(standard).toBe(2 * 60 + 30)
@@ -81,13 +81,10 @@ describe('end-to-end TZ stability', () => {
   })
 
   it('getPlansIntersectingDay returns a JST-authored weekly plan when queried in NZDT', () => {
-    // The classic regression case: recurrence math used local-mode `diff` on
-    // mixed-mode dates and silently dropped intersections in TZs where the
-    // stored anchor crossed a day boundary.
     setTZ('Asia/Tokyo')
     useServiceReport.getState().addRecurringPlan({
       id: 'rp-weekly',
-      startDate: moment('2026-05-01').toDate(), // a Friday
+      startDate: moment('2026-05-01').toDate(),
       minutes: 60,
       recurrence: {
         frequency: RecurringPlanFrequencies.WEEKLY,
@@ -99,19 +96,16 @@ describe('end-to-end TZ stability', () => {
     setTZ('Pacific/Auckland')
     const plans = useServiceReport.getState().recurringPlans
 
-    // Querying the start day from the user's POV in NZDT must hit.
     const startDay = moment('2026-05-01').toDate()
     expect(getPlansIntersectingDay(startDay, plans).map((p) => p.id)).toEqual([
       'rp-weekly',
     ])
 
-    // Same day next week.
     const nextWeek = moment('2026-05-08').toDate()
     expect(getPlansIntersectingDay(nextWeek, plans).map((p) => p.id)).toEqual([
       'rp-weekly',
     ])
 
-    // A Saturday should NOT intersect a Friday weekly plan.
     const saturday = moment('2026-05-02').toDate()
     expect(getPlansIntersectingDay(saturday, plans)).toEqual([])
   })
@@ -129,7 +123,6 @@ describe('end-to-end TZ stability', () => {
       },
     })
 
-    // User in PST deletes the May 8 occurrence.
     useServiceReport
       .getState()
       .deleteSingleEventFromRecurringPlan(

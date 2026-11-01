@@ -9,27 +9,19 @@ export type ReminderKind =
   | 'monthReport'
   | 'weekPlan'
 
-/**
- * What a local reminder carries so a tap can open its record. Ids only — the
- * text lives in the alert itself and in the app's own stores.
- */
 export type ReminderData = {
   kind: ReminderKind
-  /**
-   * Visit, Plan, or Contact id; a planned day (`YYYY-MM-DD`) to log time; the
-   * day or month (its 1st) a streak waits on; the month (`YYYY-MM`) whose
-   * report is ready; the first day of the week to plan.
-   */
+
   id: string
-  /** The Visit's Contact, so a Follow-up reminder opens its Contact. */
+
   contactId?: string
-  /** A Recurring Plan's instance (`YYYY-MM-DD`); `id` is the Recurring Plan. */
+
   day?: string
 }
 
 export type BuddiesPushData = {
   kind: string
-  /** The relay event's inbox sequence, when the relay sent one. */
+
   seq?: number
 }
 
@@ -39,11 +31,6 @@ function record(value: unknown): Record<string, unknown> | undefined {
     : undefined
 }
 
-/**
- * The `ww` marker of a Buddies push (they carry no user content), or null for
- * any other notification. Remote payloads arrive on the trigger on iOS and in
- * `data` elsewhere.
- */
 export function buddiesPushData(
   notification: Notifications.Notification
 ): BuddiesPushData | null {

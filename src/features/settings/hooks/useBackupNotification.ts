@@ -10,11 +10,6 @@ import { syncTransport } from '@/lib/syncTransport'
 import { useBackupState } from '@/lib/serverAccount/backupStore'
 import { useShallow } from 'zustand/react/shallow'
 
-/**
- * Tray reminder to export a backup once it's been
- * `backupNotificationFrequencyAsDays` since the last one. Dismissing snoozes it
- * for another period.
- */
 export default function useBackupNotification(
   now: number
 ): NotificationItem | null {
@@ -69,7 +64,7 @@ export default function useBackupNotification(
 
   const properties = {
     source: 'notifications_tray',
-    // `compact` was the slim Home bar shown while iCloud Sync is on.
+
     variant: iCloudSyncEnabled ? 'compact' : 'full',
     frequency_days: frequencyDays,
   }

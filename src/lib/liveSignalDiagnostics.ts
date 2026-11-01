@@ -1,23 +1,17 @@
 import type { LiveEvent } from '@/lib/liveSignal'
 
-/** Entries kept in the live connection's event log. */
 export const LIVE_LOG_LIMIT = 100
 
 export type LiveStatus = 'stopped' | 'connecting' | 'open' | 'reconnecting'
 
-/**
- * What Tools shows about the live connection: where it stands, the latest
- * signals, running counts, and a short event log. Ids and content never enter
- * it, so it can be copied into a bug report as is.
- */
 export type LiveDiagnostics = {
   status: LiveStatus
-  /** When `status` last changed. */
+
   since: number | null
   lastHelloSeq: number | null
   lastChangedSeq: number | null
   lastPongRttMs: number | null
-  /** When the server last said anything on this connection (incl. a pong). */
+
   lastHeardAt: number | null
   lastClose: { code?: number; reason?: string; at: number } | null
   counts: {
@@ -59,16 +53,8 @@ const STATUS_AFTER: Partial<Record<LiveEvent['type'], LiveStatus>> = {
   stopped: 'stopped',
 }
 
-/**
- * A connection that has heard nothing this long has missed a ping's answer
- * (pings go every 25 s and wait 10 s), so it may be dead.
- */
 export const LIVE_HEALTHY_MS = 35 * 1000
 
-/**
- * The live connection is open and answering, so it will say when anything
- * changes: polling would only repeat it.
- */
 export function isLiveHealthy(state: LiveDiagnostics, now: number): boolean {
   return (
     state.status === 'open' &&
@@ -77,7 +63,6 @@ export function isLiveHealthy(state: LiveDiagnostics, now: number): boolean {
   )
 }
 
-/** Folds one live event into the diagnostics. */
 export function applyLiveEvent(
   state: LiveDiagnostics,
   event: LiveEvent,

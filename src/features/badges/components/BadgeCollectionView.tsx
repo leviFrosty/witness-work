@@ -20,11 +20,6 @@ import type { BadgeArtId, BadgeLevel } from '@/types/badges'
 import type { BadgeViewOrigin, RootStackNavigation } from '@/types/rootStack'
 import { useFoldColumn } from '@/components/ui/layout/FoldPane'
 
-/**
- * The User's own collection: the newest badge, every collection with its
- * progress, and earned moments. Badges stay "new" for this whole visit and
- * count as seen once the User leaves.
- */
 export default function BadgeCollectionView({
   buddiesAvailable,
 }: {
@@ -34,7 +29,7 @@ export default function BadgeCollectionView({
   const insets = useSafeAreaInsets()
   const navigation = useNavigation<RootStackNavigation>()
   const earned = usePreferences((s) => s.earnedBadges)
-  // Fixed for the visit, so badges stay marked new until the User leaves.
+
   const [seenAt] = useState(() => usePreferences.getState().badgesSeenAt)
   const evaluation = useBadgeSession((s) => s.evaluation)
 

@@ -74,7 +74,7 @@ const render = (props: { shimmer?: boolean; disabled?: boolean } = {}) => {
     else root = create(element)
   })
 }
-/** Lays the button out, as the first native layout pass does. */
+
 const layOut = () =>
   act(() =>
     root!.root

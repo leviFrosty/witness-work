@@ -44,15 +44,8 @@ import {
   visitArb,
 } from '@/__tests__/helpers/dataArbitraries'
 
-// Every store's persist `migrate`, run on a blob an older build would have
-// saved for the same records. A "downgrade" turns current data into the shape
-// each older version stored; migrating it back up must keep every record, and
-// migrating current data again must change nothing. Reproduce a failure with
-// `FC_SEED=<seed> pnpm vitest run src/__tests__/persistMigrationProperties.test.ts`.
-
 const runs = { numRuns: 120, seed: fcSeed }
 
-/** JSON, as the blob comes off disk. */
 const disk = <T>(value: T): T => JSON.parse(JSON.stringify(value))
 const same = (a: unknown, b: unknown) =>
   expect(canonicalJson(disk(a))).toBe(canonicalJson(disk(b)))
@@ -71,18 +64,12 @@ afterEach(() => {
   else process.env.TZ = originalTZ
 })
 
-/**
- * A stored day as builds before anchoring (v0, v1) saved it: the instant the
- * user picked on that local day, at any time of it, as ISO.
- */
 const legacyInstant = (stored: unknown, minuteOfDay: number): string => {
   const [y, m, d] = storedDayKey(stored as string)
     .split('-')
     .map(Number)
   return new Date(y, m - 1, d, 0, minuteOfDay).toISOString()
 }
-
-// --- Service reports --------------------------------------------------------
 
 const serviceReportStateArb = fc
   .record({
@@ -110,7 +97,6 @@ const serviceReportStateArb = fc
 type ArbValue<A> = A extends fc.Arbitrary<infer T> ? T : never
 type ServiceReportState = ArbValue<typeof serviceReportStateArb>
 
-/** `state` as version `version` of the store saved it. */
 const downgradeServiceReports = (
   state: ServiceReportState,
   version: number,
@@ -122,7 +108,7 @@ const downgradeServiceReports = (
     recurringPlans: RecurringPlan[]
   }
   if (version >= 2) return blob
-  // Before v2, every day was the local instant the user picked.
+
   const local = (date: unknown) => legacyInstant(date, minuteOfDay)
   const entries = flattenEntries(blob.serviceReports).map((e) => ({
     ...e,
@@ -140,7 +126,6 @@ const downgradeServiceReports = (
     overrides: p.overrides?.map((o) => ({ ...o, date: local(o.date) })),
   }))
   if (version === 1) {
-    // v1 kept them bucketed by the local month.
     const buckets: Record<string, Record<string, unknown[]>> = {}
     for (const e of entries) {
       const d = new Date(e.date)
@@ -167,7 +152,7 @@ describe('service report store migrate (v5)', () => {
       fc.property(
         serviceReportStateArb,
         fc.integer({ min: 0, max: 4 }),
-        // Midnight to 23:59: any time of the picked day.
+
         fc.integer({ min: 0, max: 1439 }),
         fc.constantFrom(...TIME_ZONES),
         (state, version, minuteOfDay, tz) => {
@@ -178,15 +163,14 @@ describe('service report store migrate (v5)', () => {
               version
             )
           )
-          // Time Entries and Day Plans come back exactly, in their buckets.
+
           same(migrated.serviceReports, state.serviceReports)
           same(migrated.dayPlans, state.dayPlans)
-          // Tombstones are untouched.
+
           same(migrated.deletedServiceReports, state.deletedServiceReports)
           same(migrated.deletedDayPlans, state.deletedDayPlans)
           same(migrated.deletedRecurringPlans, state.deletedRecurringPlans)
-          // Recurring Plans keep every field; v4 → v5 only skips the instances
-          // a Day Plan used to hide, so the forecast stays as it was.
+
           expect(migrated.recurringPlans).toHaveLength(
             state.recurringPlans.length
           )
@@ -203,7 +187,6 @@ describe('service report store migrate (v5)', () => {
             for (const day of (before ?? []).map(String))
               expect(kept).toContain(day)
             for (const day of kept.slice((before ?? []).length)) {
-              // Each added skip is a Day Plan's day the plan had an instance on.
               expect(
                 state.dayPlans.some(
                   (p) => storedDayKey(p.date) === storedDayKey(day)
@@ -225,8 +208,6 @@ describe('service report store migrate (v5)', () => {
   })
 })
 
-// --- Conversations ----------------------------------------------------------
-
 const visitsArb = fc.uniqueArray(visitArb(fc.uuid()), {
   maxLength: 10,
   selector: (v) => v.id,
@@ -246,8 +227,6 @@ describe('conversation store migrate (v1)', () => {
   it('keeps every Visit and every real follow-up from v0', () => {
     fc.assert(
       fc.property(
-        // v0 can't tell a follow-up without a reminder or topic from the
-        // placeholder every Visit carried, so current data has none.
         visitsArb.map((visits) =>
           visits.map((v) =>
             v.followUp && !v.followUp.notifyMe && !v.followUp.topic
@@ -257,7 +236,6 @@ describe('conversation store migrate (v1)', () => {
         ),
         fc.array(fc.boolean(), { minLength: 10, maxLength: 10 }),
         (visits, placeholders) => {
-          // v0 attached a placeholder follow-up to Visits without one.
           const v0 = visits.map((v, i) =>
             v.followUp || !placeholders[i]
               ? v
@@ -278,8 +256,6 @@ describe('conversation store migrate (v1)', () => {
   })
 })
 
-// --- Preferences (v14) ------------------------------------------------------
-
 const ROLES: Publisher[] = [
   'publisher',
   'regularAuxiliary',
@@ -293,7 +269,6 @@ const monthKeyArb = fc
   .tuple(fc.integer({ min: 2024, max: 2027 }), fc.integer({ min: 1, max: 12 }))
   .map(([y, m]) => `${y}-${String(m).padStart(2, '0')}`)
 
-/** A current (v14) preferences blob with the migrated keys varied. */
 const preferencesArb = fc
   .record({
     role: fc.constantFrom(...ROLES),
@@ -334,7 +309,7 @@ const preferencesArb = fc
     const timestamps = { ...stamps }
     if (!hasTenure) delete timestamps.tenureStartDate
     if (startOfWeek === undefined) delete timestamps.startOfWeek
-    // Choosing a sort stamps it, so an unstamped one is still the default.
+
     if (!('contactSort' in timestamps)) p.contactSort = 'suggested'
     if (!('contactSortDirection' in timestamps)) p.contactSortDirection = 'desc'
     return disk({
@@ -367,7 +342,6 @@ const rename = (
   return { ...rest, [to]: value }
 }
 
-/** `prefs` as version `version` of the store saved them. */
 const downgradePreferences = (
   prefs: Preferences,
   version: number,
@@ -380,11 +354,11 @@ const downgradePreferences = (
     blob.displayDetailsOnProgressBarHomeScreen = extras.retiredFlag
     stamps.displayDetailsOnProgressBarHomeScreen = 1
   }
-  // A section shown by default may be missing from an older map.
+
   if (version < 13 && home.thisWeek && extras.dropShown) delete home.thisWeek
   if (version < 12 && home.pet && extras.dropShown) delete home.pet
   blob.homeScreenElements = home
-  // Before v11 the unchosen default sort was Recent Visit.
+
   if (
     version < 11 &&
     prefs.contactSort === 'suggested' &&
@@ -408,15 +382,13 @@ const downgradePreferences = (
     stamps.profileCardShaderEnabled = 1
   }
   if (version < 6) {
-    // The legacy list kept each month as a Date; mid-month so the ISO string
-    // names the same month in every zone.
     blob.oneOffGoalHours = Object.entries(
       prefs.monthlyGoalOverrides as Record<string, number>
     ).map(([month, hours]) => ({ month: `${month}-15T12:00:00.000Z`, hours }))
     delete blob.monthlyGoalOverrides
     stamps = rename(stamps, 'monthlyGoalOverrides', 'oneOffGoalHours')
   }
-  // Before v5, Auto didn't exist: every install stored Sunday.
+
   if (version < 5 && !('startOfWeek' in prefs)) blob.startOfWeek = 0
   if (version < 4) {
     blob = rename(blob, 'tenureStartDate', 'pioneerStartDate')

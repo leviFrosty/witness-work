@@ -20,7 +20,7 @@ import { formatDisplay } from '@/lib/dates'
 export interface MonthGoalEditorSheetProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  /** Zero-based calendar month, matching Moment and JavaScript Date. */
+
   month: number
   year: number
   regularGoalHours: number

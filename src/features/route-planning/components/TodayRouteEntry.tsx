@@ -14,13 +14,6 @@ import useOpenRouteBuilder, {
   type RouteBuilderEntrySurface,
 } from '@/hooks/useOpenRouteBuilder'
 
-/**
- * "Plan today's route" in the day view, or "Plan Route" on a day ahead, on
- * today and every later day: a day with no follow-ups or plans can still be
- * planned from scratch, e.g. a day out with buddies. Says how many stops are
- * planned, or ready to plan. Non-Supporters open it too: the route screen
- * previews their own stops and offers Supporter there.
- */
 export default function TodayRouteEntry({
   date,
   surface,
@@ -28,7 +21,7 @@ export default function TodayRouteEntry({
 }: {
   date: Date
   surface: RouteBuilderEntrySurface
-  /** Runs the navigation, e.g. after the hosting sheet closes. */
+
   onNavigate?: (go: () => void) => void
 }) {
   const theme = useTheme()

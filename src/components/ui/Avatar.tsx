@@ -26,20 +26,6 @@ import { ProfileAvatar } from '@/types/avatar'
 import { useAvatarGroupSize } from '@/components/ui/AvatarGroup'
 import { leftForPhysicalX } from '@/lib/direction'
 
-/**
- * Whether an `avatar.value` string actually resolves to something `<Image>` can
- * render. Returns false for:
- *
- * - Empty strings (`type === 'image'` with no value yet)
- * - ICloud markers (`icloud://contact-<id>` / `icloud://profile`) — these are
- *   placeholders that travel on the synced payload while the binary downloads
- *   in the background. Before the download lands (or if the sender turned image
- *   sync off, so the binary will never land), the avatar should render as the
- *   initials fallback — see Q3 / Q4 in `docs/icloud-image-sync-plan.md`.
- *
- * Exported so callers (e.g. ContactDetailsScreen) can decide whether to open
- * the rich image viewer or fall back to the initials-morph experience.
- */
 export function isRenderableImageValue(value: string): boolean {
   if (!value) return false
   if (value.startsWith('icloud://')) return false
@@ -51,28 +37,18 @@ type AnchorRect = { x: number; y: number; size: number }
 interface Props {
   avatar: ProfileAvatar
   name?: string
-  /** Defaults to the enclosing `AvatarGroup`'s size, else 44. */
+
   size?: number
-  /** Background of the circle when avatar is an emoji or letter fallback. */
+
   background?: string
-  /**
-   * When true, tapping the avatar animates it from its on-screen position to a
-   * centered, scaled-up presentation over a dim backdrop. Tap (or hardware
-   * back) dismisses with the reverse animation.
-   */
+
   focusable?: boolean
-  /**
-   * With `focusable`: a sharper copy of the image (a local URI, or null when
-   * there's none), shown over it once it opens. E.g. a buddy's photo at full
-   * size, where `avatar` is its thumbnail. Called on every open; must not
-   * reject.
-   */
+
   loadFullImage?: () => Promise<string | null>
-  /** Overlays drawn on the avatar, e.g. an `AvatarBadge`. */
+
   children?: ReactNode
 }
 
-/** Lets `AvatarBadge` scale with the avatar it sits on. */
 const AvatarSizeContext = createContext(44)
 
 const Avatar = ({
@@ -90,16 +66,12 @@ const Avatar = ({
   const anchorRef = useRef<View>(null)
   const [anchor, setAnchor] = useState<AnchorRect | null>(null)
   const [open, setOpen] = useState(false)
-  // If the image URI fails to load (common after a TestFlight migration where
-  // the old `file://` path no longer points at a real file), treat it as
-  // not-renderable so the fallback chain — emoji → letter → person icon —
-  // gets a chance to render. Reset whenever the URI changes so a fresh value
-  // gets a fresh attempt.
+
   const [imageFailed, setImageFailed] = useState(false)
   useEffect(() => {
     setImageFailed(false)
   }, [avatar.type, avatar.value])
-  // The sharper copy, for the image it was loaded for.
+
   const [fullImage, setFullImage] = useState<{
     for: string
     uri: string
@@ -132,19 +104,12 @@ const Avatar = ({
     }
   }
 
-  // Target presentation: centered, sized to fit comfortably within the screen
-  // with breathing room on the smaller dimension. Caps at 320pt so the
-  // presentation feels intentional rather than balloon-large on tablets.
   const target = Math.min(Math.min(dims.width - 48, dims.height * 0.5), 320)
 
   const backdropStyle = useAnimatedStyle(() => ({
     opacity: progress.value * 0.92,
   }))
 
-  // Transform-based morph: keep the rendered Avatar at its source size and
-  // animate translate + scale so its visual center reaches the screen center
-  // and grows to `target`. This works uniformly for image / emoji / letter
-  // fallbacks since `transform: scale` scales all child content.
   const overlayStyle = useAnimatedStyle(() => {
     if (!anchor) return { opacity: 0 }
     const targetScale = target / anchor.size
@@ -196,17 +161,12 @@ const Avatar = ({
       justifyContent: 'center' as const,
     }
 
-    // Non-image fallbacks (emoji / letter / person icon) all share the same
-    // background default so toggling between them doesn't snap colors. We use
-    // `accentBackground` — which honors `customAvatarBackground` — so the
-    // avatar circle never flips to the user's accent (which can read as a
-    // link-blue when customized).
     const bg = background ?? theme.colors.accentBackground
 
     if (avatar.type === 'emoji' && avatar.value) {
       return (
         <View style={{ ...base, backgroundColor: bg }}>
-          {/* Sized from the circle, which doesn't grow with the text size. */}
+          {}
           <Text maxFontSizeMultiplier={1} style={{ fontSize: size * 0.5 }}>
             {avatar.value}
           </Text>
@@ -264,14 +224,11 @@ const Avatar = ({
           <Pressable
             onPress={handlePress}
             accessibilityRole='imagebutton'
-            // Otherwise it's read as the initial or emoji it shows.
             accessibilityLabel={i18n.t('profilePicture')}
             hitSlop={4}
-            // Shapes the pointer lift to the circle.
             style={{ borderRadius: size / 2 }}
           >
-            {/* Hide the source while the overlay is presenting so we don't
-                briefly see a duplicate next to the animated copy. */}
+            {}
             <View style={{ opacity: open ? 0 : 1 }}>{content}</View>
           </Pressable>
         </PointerHover>
@@ -305,7 +262,7 @@ const Avatar = ({
               style={[
                 {
                   position: 'absolute',
-                  // Measured in screen coordinates; `left` mirrors in RTL.
+
                   left: leftForPhysicalX(anchor.x, anchor.size, dims.width),
                   top: anchor.y,
                   width: anchor.size,
@@ -325,8 +282,6 @@ const Avatar = ({
                     borderRadius: size / 2,
                   }}
                   contentFit='cover'
-                  // Drawn at the avatar's size and scaled up with the overlay,
-                  // so keep every pixel instead of fitting it to the small size.
                   allowDownscaling={false}
                   transition={200}
                 />
@@ -339,11 +294,6 @@ const Avatar = ({
   )
 }
 
-/**
- * Status dot on an avatar's bottom-right edge, modeled on shadcn's AvatarBadge.
- * Render as a child of `Avatar`. The icon is dropped on small avatars where it
- * wouldn't read.
- */
 export const AvatarBadge = ({
   color,
   icon,
@@ -351,7 +301,7 @@ export const AvatarBadge = ({
 }: {
   color: string
   icon?: AppIcon
-  /** Match the surface behind the avatar. */
+
   ringColor?: string
 }) => {
   const theme = useTheme()

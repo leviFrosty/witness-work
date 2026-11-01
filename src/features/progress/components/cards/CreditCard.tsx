@@ -7,10 +7,6 @@ import StatCard from '@/features/progress/components/cards/StatCard'
 import { formatGoalHours } from '@/features/progress/components/cards/displayMinutes'
 import type { ProgressCardProps } from '@/features/progress/components/cards/types'
 
-/**
- * The Credit Time counted in the month's total, and how much of it the month's
- * credit limit left out.
- */
 export default function CreditCard({ month, year, size }: ProgressCardProps) {
   const timeDisplayFormat = usePreferences((s) => s.timeDisplayFormat)
   const { adjusted, publisher } = useMonthProgress(month, year)

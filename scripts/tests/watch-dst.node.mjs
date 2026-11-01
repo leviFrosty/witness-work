@@ -5,10 +5,6 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { spawnSync } from 'node:child_process'
 
-/**
- * Clock changes (23 h and 25 h days), and a zone without one. Cuba and Chile
- * change theirs at midnight: a day that skips it starts at 1:00.
- */
 const days = [
   ['America/New_York', '2026-11-01', 25],
   ['America/New_York', '2026-03-08', 23],

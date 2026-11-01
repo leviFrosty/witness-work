@@ -84,7 +84,7 @@ const render = async (link?: string) => {
     else root = create(probe)
   })
 }
-/** The old phone sent the key for the newest code. */
+
 const keyArrives = async (link: string) => {
   mocks.sessions.at(-1)!.state = { step: 'received' }
   await render(link)
@@ -110,7 +110,6 @@ it("doesn't show an earlier code's outcome once another code was opened", async 
   await keyArrives('first')
   expect(result.completion).toBe('running')
 
-  // While the first key signs in, another code's link opens.
   await render('second')
   expect(result.session?.channelId).toBe('second')
   await settle('first', {
@@ -120,7 +119,6 @@ it("doesn't show an earlier code's outcome once another code was opened", async 
   } as ClaimCompletion)
   expect(result.completion).toBe('idle')
 
-  // The second code still completes once its key arrives.
   await keyArrives('second')
   expect(result.completion).toBe('running')
   await settle('second', { outcome: 'declined' })
@@ -139,7 +137,6 @@ it('lets go of an earlier code whose key it could not use yet', async () => {
   expect(result.completion).toBe('idle')
   expect(mocks.ended).toEqual([['first', 'left']])
 
-  // Leaving now cancels only the code that's still waiting.
   await act(async () => root?.unmount())
   root = undefined
   expect(mocks.ended).toEqual([

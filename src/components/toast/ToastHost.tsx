@@ -20,22 +20,12 @@ import {
   type Toast,
 } from '@/stores/toasts'
 
-/**
- * Mount once near the app root: draws every toast (`docs/toasts.md`). The
- * User's own action answers at the bottom, above the tab bar; unlocks and news
- * stack at the top, below the status bar, and wait while a takeover holds the
- * screen. An unlock or news toast still showing when the app goes to the
- * background leaves, and its feature's tray item keeps it. What a save earned
- * plays above the bottom toasts (`RewardStackLayer`), and what was earned
- * elsewhere over the pet's card.
- */
-/** About a toast's height, plus room above it: where the reward stack sits. */
 const ABOVE_TOAST = 76
 
 export default function ToastHost() {
   const items = useToasts((s) => s.toasts)
   const takingOver = useTakeover((s) => s.arbiter.active !== null)
-  // Read here, where it's always mounted, so it's known when a toast shows.
+
   const screenReader = useScreenReaderEnabled()
   const reduceMotion = useReducedMotion()
   const insets = useSafeAreaInsets()
@@ -53,8 +43,6 @@ export default function ToastHost() {
     return () => subscription.remove()
   }, [])
 
-  // Mounted only while there's a toast or a reward: an idle window-level
-  // overlay can interfere with native sheets (see PointerTooltipLayer).
   if (!items.length && !rewarding) return null
 
   const top: Toast[] = []
@@ -69,8 +57,7 @@ export default function ToastHost() {
       pointerEvents='box-none'
       style={[StyleSheet.absoluteFill, { zIndex: 1000, elevation: 1000 }]}
     >
-      {/* Clear of the vertical bar (the stacks are absolute, so a padding
-          wouldn't hold them), and to one side of a fold. */}
+      {}
       <FoldPane style={StyleSheet.absoluteFill}>
         {top.length > 0 && (
           <ToastStack
@@ -87,7 +74,6 @@ export default function ToastHost() {
             placement='bottom'
             items={bottom}
             hidden={false}
-            // Above the floating tab bar, when there is one.
             inset={bottomInset}
             reduceMotion={reduceMotion}
             screenReader={screenReader}
@@ -105,9 +91,7 @@ export default function ToastHost() {
       />
     </View>
   )
-  // Over the window on iOS, so it shows above sheets and the one that just
-  // closed while it animates away. A window of its own needs its own gesture
-  // root for the swipes and taps.
+
   return Platform.OS === 'ios' ? (
     <FullWindowOverlay interactive>
       <GestureHandlerRootView

@@ -11,18 +11,12 @@ import i18n from '@/lib/locales'
 import type { Visit } from '@/types/visit'
 import { detailsDateTime } from '@/features/visits/lib/visitDetails'
 
-/**
- * The rail's next stop when the Visit planned no Follow-up: the Visit that came
- * next (tapping opens it), or, after the latest Visit, an empty stop that plans
- * the return.
- */
 export default function VisitNoFollowUpStop({
   later,
   now,
   onOpenVisit,
   onPlan,
 }: {
-  /** The contact's next Visit after this one. */
   later?: Visit
   now: number
   onOpenVisit: (visitId: string) => void
@@ -78,7 +72,6 @@ export default function VisitNoFollowUpStop({
   }
 
   return (
-    // No outline: a dashed card is a planned Follow-up.
     <View style={{ alignItems: 'flex-start', gap: 10, paddingTop: 1 }}>
       <Text
         style={{ fontSize: theme.fontSize('lg'), color: theme.colors.textAlt }}

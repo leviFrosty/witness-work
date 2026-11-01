@@ -18,17 +18,13 @@ import { tracking } from '@/lib/tracking'
 
 const MEDALLION_SIZE = 48
 
-/**
- * Earned One-time Badges: single moments, each a row that opens its detail. A
- * buddy's carry no record, so no date or "new" dot.
- */
 export default function BadgeMomentsSection({
   entries,
   seenAt = Infinity,
   onOpen,
 }: {
   entries: readonly { art: OneTimeBadgeId; record?: EarnedBadge }[]
-  /** When the User last looked; their own badges only. */
+
   seenAt?: number
   onOpen: (art: OneTimeBadgeId, origin: BadgeViewOrigin | undefined) => void
 }) {

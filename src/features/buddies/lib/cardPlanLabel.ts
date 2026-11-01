@@ -13,10 +13,6 @@ const TIME_OF_DAY_LABEL = {
   e: 'buddies_timeOfDayEvening',
 } as const satisfies Record<BuddyTimeOfDay, string>
 
-/**
- * One of a buddy's Plans as their card shares it: "9:00 AM · 2h", "Morning ·
- * 2h" when they share only the time of day, else "Planned · 2h".
- */
 export function cardPlanLabel(
   plan: BuddyCardDay['p'][number],
   timeDisplayFormat: MinuteDisplayFormat

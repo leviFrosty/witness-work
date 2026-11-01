@@ -47,14 +47,6 @@ import { useSupporter } from '@/features/supporter/stores/supporter'
 import { useUpdateRequired } from '@/lib/appUpdate/updateRequired'
 import { usePreferences } from '@/stores/preferences'
 
-/**
- * Cloud Sync's runtime (ADR 0030; docs/accounts-protocol.md, "Sync"): the
- * server transport wired to this device's account key and session, the
- * account's Cloud Sync status, and the live socket that tells the engine when
- * another device wrote. The engine itself (`iCloudSync.ts`) decides everything
- * else.
- */
-
 let derived: { seed: string; key: Uint8Array } | null = null
 const syncKeyFor = (accountKey: Uint8Array) => {
   const seed = toB64u(accountKey)
@@ -62,11 +54,6 @@ const syncKeyFor = (accountKey: Uint8Array) => {
   return derived.key
 }
 
-/**
- * The account a Cloud Sync call runs as: the account key already on this device
- * and its session, opened when there's none. Never creates a key; the default
- * and Settings do that first (`prepareCloudSync`).
- */
 async function cloudSyncAccess(): Promise<ServerSyncAccess> {
   const accountKey = await peekAccountKey()
   if (!accountKey) throw new Error('No account key on this device')
@@ -78,7 +65,6 @@ async function cloudSyncAccess(): Promise<ServerSyncAccess> {
   }
 }
 
-/** A hash of the account id, so the stored identity names no account. */
 const accountToken = (accountId: string) =>
   `account:${toB64u(sha256(utf8(accountId))).slice(0, 22)}`
 
@@ -112,21 +98,15 @@ export const cloudSyncTransport = createServerTransport({
   },
 })
 
-/** Before anything syncs (`initializeApp`). */
 export function registerCloudSync(): void {
   registerCloudSyncTransport(cloudSyncTransport)
 }
 
 let statusInFlight: Promise<SyncStatus | null> | null = null
 let statusReadAt = -Infinity
-/** The server's answer changes with purchases and switches; not by the second. */
+
 const STATUS_MIN_INTERVAL_MS = 60_000
 
-/**
- * Reads the account's Cloud Sync status (`GET /accounts/v1/sync`) and records
- * it. Null without a session or when it can't be read; what's recorded then
- * stands. `force` skips the minute between reads.
- */
 export function refreshCloudSyncStatus({
   force = false,
 }: { force?: boolean } = {}): Promise<SyncStatus | null> {
@@ -142,9 +122,7 @@ export function refreshCloudSyncStatus({
       const status = await fetchSyncStatus(bearerOptions(accountKey))
       statusReadAt = Date.now()
       const prefs = usePreferences.getState()
-      // ww-api couldn't reach RevenueCat, so its `entitled: false` says
-      // nothing about a Supporter here: keep what was recorded rather than
-      // pausing their sync for the outage.
+
       const supporterUnknown =
         status.enabled &&
         !status.entitled &&
@@ -176,12 +154,6 @@ export function refreshCloudSyncStatus({
   return statusInFlight
 }
 
-/**
- * Why Cloud Sync is paused on this device, as last recorded: the server's
- * switch is off, or the account isn't entitled. Null when it isn't paused, or
- * the device doesn't sync through Cloud Sync. Nothing local changes while it's
- * paused; edits wait and go up once it's back.
- */
 export type CloudSyncPause = 'switch' | 'entitlement'
 
 export function cloudSyncPause(): CloudSyncPause | null {
@@ -192,12 +164,6 @@ export function cloudSyncPause(): CloudSyncPause | null {
   return null
 }
 
-/**
- * Before a sync the User asked for: reads the account's answer again, so a
- * pause that has ended lifts now rather than at the next foreground (the engine
- * catches up when it does), and says what still pauses it. Without an answer
- * (offline), what was recorded stands.
- */
 export async function recheckCloudSyncPause(): Promise<CloudSyncPause | null> {
   if (!usesCloudSync()) return null
   await refreshCloudSyncStatus({ force: true })
@@ -208,14 +174,8 @@ export type PrepareCloudSyncOutcome =
   | { outcome: 'ready'; status: SyncStatus }
   | { outcome: 'not_entitled'; status: SyncStatus }
   | { outcome: 'disabled' }
-  /** No session to be had: offline, accounts off, or this device can't attest. */
   | { outcome: 'no_session'; error: unknown }
 
-/**
- * Gets this device ready for Cloud Sync: the account key (created when there's
- * none, as Scribe AI and Backup do), its session, the RevenueCat link (so the
- * server knows a Supporter), and the account's answer.
- */
 export async function prepareCloudSync(): Promise<PrepareCloudSyncOutcome> {
   try {
     await accountSessions.ensure()
@@ -223,7 +183,7 @@ export async function prepareCloudSync(): Promise<PrepareCloudSyncOutcome> {
     return { outcome: 'no_session', error }
   }
   cloudSyncTransport.notifyAvailabilityChange()
-  // A Supporter's purchase reaches the account through the link.
+
   if (useSupporter.getState().isSupporter)
     await ensureRevenueCatLinked({ reason: 'session_opened' }).catch(
       () => undefined
@@ -235,13 +195,6 @@ export async function prepareCloudSync(): Promise<PrepareCloudSyncOutcome> {
   return { outcome: 'ready', status }
 }
 
-/**
- * When Cloud Sync would bring the account's data to this device (ADR 0030 §3):
- * the server time of another device's newest slot, so a restore can tell
- * whether the backup is newer. It's offered, this device hasn't chosen
- * iCloud/Drive or turned sync off, the account is entitled, and another device
- * has a slot. Null otherwise, or when it can't tell.
- */
 export async function cloudSyncNewestSlotAt(): Promise<number | null> {
   const prefs = usePreferences.getState()
   if (!cloudSyncOffered() || prefs.syncProvider === 'platform') return null
@@ -260,7 +213,6 @@ export async function cloudSyncNewestSlotAt(): Promise<number | null> {
   }
 }
 
-/** Longest leaving waits on the server, so it never blocks the User. */
 const LEAVE_WAIT_MS = 5_000
 
 const bounded = <T>(work: Promise<T>, ms: number) =>
@@ -269,12 +221,6 @@ const bounded = <T>(work: Promise<T>, ms: number) =>
     new Promise<undefined>((resolve) => setTimeout(resolve, ms)),
   ])
 
-/**
- * This device leaves Cloud Sync's account data: it deletes its own slot, and
- * never another device's. The caller has flushed its last push first. Bounded:
- * a slot left behind (offline) is deleted by the server 30 days after this
- * device's session ends.
- */
 export async function deleteOwnCloudSyncSlot(): Promise<void> {
   try {
     await bounded(
@@ -286,12 +232,6 @@ export async function deleteOwnCloudSyncSlot(): Promise<void> {
   }
 }
 
-/**
- * Before this device's account key is replaced (a QR code or a recovery key to
- * another account; ADR 0030 §7): flush, delete only this device's slot, and
- * stop, so the account's other devices keep everything. The device then decides
- * again on the new account as one that never chose.
- */
 export async function leaveCloudSyncAccount(flush: () => Promise<unknown>) {
   if (!usesCloudSync() || !usePreferences.getState().iCloudSyncEnabled) return
   await bounded(
@@ -319,7 +259,6 @@ async function openSyncSocket(): Promise<LiveSocket> {
   )
 }
 
-/** The live socket's recent events, for the developer Tools. */
 export const cloudSyncLiveEvents: Array<LiveEvent & { at: number }> = []
 const recordLiveEvent = (event: LiveEvent) => {
   cloudSyncLiveEvents.push({ ...event, at: Date.now() })
@@ -330,11 +269,6 @@ const recordLiveEvent = (event: LiveEvent) => {
 
 let installed = false
 
-/**
- * Runs Cloud Sync's live socket (foreground only, one per device) while this
- * device syncs through Cloud Sync, and keeps the account's status current.
- * `canSync` is the engine's gate. Returns an uninstall.
- */
 export function installCloudSyncRuntime(canSync: () => boolean): () => void {
   if (installed) return () => {}
   installed = true
@@ -342,7 +276,7 @@ export function installCloudSyncRuntime(canSync: () => boolean): () => void {
     open: openSyncSocket,
     syncedSeq: () => cloudSyncTransport.lastSeq(),
     onChange: () => cloudSyncTransport.notifyRemoteChange(),
-    // After a refused handshake: a bearer call's 401 refreshes the token.
+
     verify: () => refreshCloudSyncStatus({ force: true }),
     onEvent: recordLiveEvent,
   })
@@ -369,12 +303,12 @@ export function installCloudSyncRuntime(canSync: () => boolean): () => void {
   })
   const supporter = useSupporter.subscribe((state, previous) => {
     if (state.isSupporter === previous.isSupporter) return
-    // A purchase or a lapse: the link tells the server, then it answers.
+
     void ensureRevenueCatLinked({ reason: 'entitlements' })
       .catch(() => undefined)
       .then(() => refreshCloudSyncStatus({ force: true }))
   })
-  // Update Required pauses the engine (`canSync`), the socket with it.
+
   const gate = useUpdateRequired.subscribe((state, previous) => {
     if (Boolean(state.required) !== Boolean(previous.required)) update()
   })
@@ -400,7 +334,6 @@ export function installCloudSyncRuntime(canSync: () => boolean): () => void {
   }
 }
 
-/** For the developer Tools. */
 export const cloudSyncDiagnostics = {
   liveEvents: () => [...cloudSyncLiveEvents],
   lastSeq: () => cloudSyncTransport.lastSeq(),

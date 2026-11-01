@@ -1,12 +1,6 @@
 import type { Colors } from '@/constants/theme'
 import { mix } from '@/lib/color'
 
-/**
- * The palette for iOS Increase Contrast: secondary text moves halfway to the
- * primary text color, and hairline borders toward the secondary text, so both
- * stand out further from the surfaces they sit on. The app's colors are fixed
- * hex values, which the system can't adjust itself.
- */
 export function increaseContrast(colors: Colors): Colors {
   return {
     ...colors,

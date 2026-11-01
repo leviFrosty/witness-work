@@ -11,10 +11,6 @@ import i18n from '@/lib/locales'
 import type { RootStackNavigation } from '@/types/rootStack'
 import ScribeSheetFrame from '@/features/scribe/components/ScribeSheetFrame'
 
-/**
- * What tapping Scribe AI shows offline: why it can't work now, and the way to
- * add time by hand.
- */
 const ScribeOfflineSheet = () => {
   const theme = useTheme()
   const navigation = useNavigation<RootStackNavigation>()
@@ -25,8 +21,7 @@ const ScribeOfflineSheet = () => {
 
   return (
     <ScribeSheetFrame onDismissRequest={close}>
-      {/* Fits its content, and scrolls once large text makes that taller than
-          the window. */}
+      {}
       <ScrollView
         style={{ flexGrow: 0 }}
         contentContainerStyle={{

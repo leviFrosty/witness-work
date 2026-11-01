@@ -25,7 +25,6 @@ import {
 import { dayRouteStops } from '@/features/route-planning/lib/routeStops'
 import { MAX_ROUTE_STOPS } from '@/features/route-planning/lib/routeLimits'
 
-// Dismissal is checked against the real clock, so build for today.
 const now = moment()
 const build = () => buildTodayRouteFixture({ now })
 const fixture = build()

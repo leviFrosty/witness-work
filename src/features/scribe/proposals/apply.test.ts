@@ -41,7 +41,7 @@ vi.mock('@/lib/analytics', () => ({ analytics: { capture } }))
 vi.mock('@/lib/errorTracking', () => ({
   errorTracking: { captureException: vi.fn(), captureMessage: vi.fn() },
 }))
-// A write that throws part-way, for the rollback.
+
 vi.mock('@/features/scribe/proposals/effects/plan', async (importOriginal) => {
   const actual =
     await importOriginal<
@@ -128,7 +128,6 @@ function seed() {
   })
 }
 
-/** What the User's records look like, to compare before and after. */
 const records = () => ({
   contacts: useContacts
     .getState()
@@ -160,7 +159,6 @@ const records = () => ({
     .sort(),
 })
 
-/** The record id a fixture Ref names. */
 const contactOf = (fixture: FixtureContext, ref: string): string => {
   const resolved = fixture.refs.resolve(ref)
   if (!resolved || resolved.kind !== 'c') throw new Error(ref)
@@ -260,7 +258,6 @@ const planUpdate = (extra: Record<string, unknown>) => ({
   ...extra,
 })
 
-/** A Proposal with one of every kind. */
 function everyKind() {
   const fixture = fixtureContext(readScribeStores())
   const categoryRef = propose(fixture, 'categories_create', {
@@ -357,7 +354,6 @@ describe('the apply saga', () => {
     })
     expect(category.isCredit).toBe(true)
 
-    // The Time Entry uses the new Category; the Visit, the new Contact.
     const entry = allTimeEntries(
       useServiceReport.getState().serviceReports
     ).find((item) => !before.entries.includes(item.id))!
@@ -386,7 +382,7 @@ describe('the apply saga', () => {
       true
     )
     expect(run.outcome).toMatchObject({ outcome: 'applied', notApplied: [] })
-    // The next message names which added call made each new Ref real.
+
     const creator = (ref: string) =>
       proposal.effects.find(
         (effect) =>
@@ -483,7 +479,7 @@ describe('the apply saga', () => {
         .getState()
         .dayPlans.filter((plan) => plan.categoryId === category.id)
     ).toHaveLength(1)
-    // Both calls proposed the Category, so both count as added.
+
     expect(run.outcome.applied).toHaveLength(2)
     expect(run.outcome.notApplied).toEqual([])
   })
@@ -536,7 +532,7 @@ describe('the apply saga', () => {
     const newRef =
       create.draft.kind === 'contact.create' ? create.draft.ref : null
     expect(run.bindings).toEqual([{ ref: newRef, id: 'contact-maria-chen' }])
-    // Its Ref now names the Contact the User picked.
+
     expect(run.outcome.created).toEqual([
       { callId: create.callIds[0], ref: newRef },
     ])
@@ -566,7 +562,7 @@ describe('the apply saga', () => {
     )
     const proposal = proposalOf(fixture)
     const prefs = readScribeStores().preferences
-    // Not without it, even if Add were reached.
+
     const blocked = applyProposal(proposal, { now: NOW, prefs, newId })
     expect(blocked.applied).toEqual([])
     expect(
@@ -667,7 +663,7 @@ describe('undo', () => {
     expect(undone.undone).toHaveLength(7)
     expect(undone.unbound.sort()).toEqual([categoryRef, contactRef].sort())
     expect(records()).toEqual(before)
-    // A deleted Plan leaves a tombstone, so the undo syncs.
+
     const planUndo = run.applied.find(
       (effect) => effect.kind === 'plan.create'
     )!.undo
@@ -726,8 +722,7 @@ describe('undo', () => {
       prefs: readScribeStores().preferences,
       newId,
     })
-    // The User edits the Plan, logs their own Visit for the new Contact, and
-    // uses the new Category on another entry.
+
     useServiceReport
       .getState()
       .updateDayPlan({ id: 'plan-thursday', minutes: 30, updatedAt: 999_999 })
@@ -790,7 +785,7 @@ describe('undo', () => {
       prefs: readScribeStores().preferences,
       newId,
     })
-    // The address lookup finds the new street and moves the pin.
+
     useContacts.getState().updateContact({
       id: contactId,
       coordinate: { latitude: 37.79, longitude: -122.4 },
@@ -835,7 +830,7 @@ describe('undo', () => {
       coordinate: { latitude: 1, longitude: 2 },
       userDraggedCoordinate: true,
     })
-    // Bookkeeping that bumps the Plan without changing it doesn't count.
+
     useServiceReport
       .getState()
       .updateDayPlan({ id: 'plan-thursday' }, { automatic: true })
@@ -1057,7 +1052,7 @@ describe('Add, Dismiss and Undo from a conversation', () => {
         kinds: 'contact.create,time.create,visit.create',
       })
     )
-    // A second Add does nothing.
+
     expect(addScribeProposal(proposal.id).status).toBe('failed')
   })
 
@@ -1114,7 +1109,7 @@ describe('Add, Dismiss and Undo from a conversation', () => {
       { type: 'contact', contactId: contact.id, visitId },
       null,
     ])
-    // Pending, and once undone, there's nothing to open.
+
     expect(
       toScribeProposal(proposal, readScribeStores()).cards.map((c) => c.target)
     ).toEqual([null, null])
@@ -1195,7 +1190,7 @@ describe('Add, Dismiss and Undo from a conversation', () => {
     addScribeProposal(proposal.id, { now: NOW, newId })
     const [{ undo }] = getApplyRecord(proposal.id)!.effects
     const contactId = undo.kind === 'contact.update' ? undo.contactId : ''
-    // The User edits the Contact again.
+
     useContacts
       .getState()
       .updateContact({ id: contactId, phone: '555-0123', updatedAt: 1 })
@@ -1235,8 +1230,6 @@ describe('Add, Dismiss and Undo from a conversation', () => {
   })
 })
 
-// Stored calendar days drift at UTC+12 and beyond, where noon UTC is already
-// the next local day (src/__tests__/storedDaysFarEast.test.ts).
 describe('a date-only time entry far east', () => {
   const originalTZ = process.env.TZ
   afterEach(() => {

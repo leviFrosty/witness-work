@@ -13,8 +13,6 @@ import {
 import { createDeviceLabelReader } from '@/lib/serverAccount/activityLabels'
 import { deriveAccountSigningKey } from '@/lib/serverAccount/keys'
 
-/** The devices and activity routes (docs/accounts-protocol.md, ADR 0028). */
-
 const BASE = 'https://api.example'
 const ID = (n: number) => `${'A'.repeat(21)}${n}`
 
@@ -166,7 +164,7 @@ describe('createDeviceLabelReader', () => {
     expect(
       createDeviceLabelReader(new Uint8Array(32).fill(7))(sealed)
     ).toBeNull()
-    // The same label opens the same way again (cached).
+
     expect(read(sealed)).toEqual(
       openDeviceLabel(key, deriveAccountSigningKey(key).publicKey, sealed)
     )

@@ -4,18 +4,12 @@ import { serviceStreak, type ServiceStreak } from '@/lib/serviceStreak'
 import { usePreferences } from '@/stores/preferences'
 import { useServiceReport } from '@/stores/serviceReport'
 
-/**
- * The User's Service Streak: planned days kept, or months in service for the
- * Kingdom Publisher (`streakKind`). Developer Tools can override the count
- * (`devStreakOverride`); {@link useRecordedServiceStreak} ignores that.
- */
 export default function useServiceStreak(): ServiceStreak {
   const streak = useRecordedServiceStreak()
   const override = usePreferences((state) => state.devStreakOverride)
   return override === null ? streak : { ...streak, count: override }
 }
 
-/** The Service Streak the records make, whatever Developer Tools sets. */
 export function useRecordedServiceStreak(): ServiceStreak {
   const serviceReports = useServiceReport((state) => state.serviceReports)
   const dayPlans = useServiceReport((state) => state.dayPlans)

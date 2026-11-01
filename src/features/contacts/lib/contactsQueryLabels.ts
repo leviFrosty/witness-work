@@ -2,7 +2,6 @@ import type { ContactSortKey } from '@/lib/contactsSort'
 import { builtInContactSortOptions } from '@/stores/preferences'
 import type { CustomFieldDefinition } from '@/types/customField'
 
-/** A built-in sort's name, or the custom field's current label. */
 export const contactSortLabel = (
   sort: ContactSortKey,
   customFieldDefs: CustomFieldDefinition[]

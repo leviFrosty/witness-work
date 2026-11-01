@@ -9,11 +9,6 @@ import {
   resolveContactsQuery,
 } from '@/features/contacts/lib/savedViews'
 
-/**
- * The filters and sort the Contacts list applies, and the setters the Sort &
- * Filter screen edits them through. While a Saved View is active, changes go to
- * that view's unsaved edits; otherwise to the User's own filters.
- */
 export function useContactsQuery() {
   const contactsFilters = usePreferences((s) => s.contactsFilters)
   const contactSort = usePreferences((s) => s.contactSort)
@@ -54,7 +49,7 @@ export function useContactsQuery() {
     if (view) editView({ ...query, direction })
     else setPreferences({ contactSortDirection: direction })
   }
-  /** Back to the view as saved, or to no filters and the default sort. */
+
   const reset = () => {
     if (view) {
       setPreferences({ activeSavedContactView: { id: view.id } })

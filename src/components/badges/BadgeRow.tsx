@@ -6,10 +6,6 @@ import { badgeTitle } from '@/lib/badges/display'
 import i18n, { TranslationKey } from '@/lib/locales'
 import type { BadgeArtId, BadgeLevel } from '@/types/badges'
 
-/**
- * A compact row of badges for a profile card: up to `max` medallions, then
- * "+N". Read aloud as one summary; the row itself isn't interactive.
- */
 export default function BadgeRow({
   badges,
   size = 26,

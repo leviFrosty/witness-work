@@ -1,12 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const native = vi.hoisted(() => ({
-  // Android's "Time to take action" setting; 0 is the system default.
   actionTimeout: 0,
   recommended: vi.fn(),
 }))
 
-// Android's AccessibilityManager: the longer of the two.
 vi.mock('react-native', () => ({
   AccessibilityInfo: {
     getRecommendedTimeoutMillis: native.recommended,

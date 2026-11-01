@@ -91,7 +91,7 @@ it.each([
 
     expect(runtime.getOfferings).toHaveBeenCalledTimes(2)
     expect(runtime.price).toBe('$1.50')
-    // Loaded: nothing left to retry.
+
     expect(listeners.size).toBe(0)
   }
 )

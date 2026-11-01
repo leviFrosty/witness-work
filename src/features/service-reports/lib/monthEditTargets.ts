@@ -1,9 +1,5 @@
 export type MonthEditTarget = 'status' | 'goal'
 
-/**
- * Which of a month's settings can be changed: status for months that have
- * started, goal when the month's role has a Monthly Goal.
- */
 export const monthEditTargets = ({
   month,
   year,

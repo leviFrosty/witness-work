@@ -1,11 +1,6 @@
 import { sha256 } from '@noble/hashes/sha2.js'
 import { toB64u } from '@/lib/bytes'
 
-/**
- * An in-memory ww-api for Cloud Sync's ops (docs/accounts-protocol.md, "Sync"),
- * for tests: one namespace of slots per bearer token's account. Answers the way
- * the worker does, including the switches.
- */
 export type FakeSyncServer = ReturnType<typeof createFakeSyncServer>
 
 type Slot = { bytes: Uint8Array; etag: string; updatedAt: number }
@@ -18,9 +13,9 @@ export function createFakeSyncServer() {
     enabled: true,
     entitlement: 'supporter' as 'supporter' | 'everyone',
     supporters: new Set<string>(),
-    /** How long a put takes to upload (a slow connection). */
+
     putDelayMs: 0,
-    /** Every request, as `<method> <op>` (no ids), for assertions. */
+
     log: [] as string[],
   }
 
@@ -112,11 +107,11 @@ export function createFakeSyncServer() {
   return {
     state,
     fetch: fetchImpl,
-    /** The account change sequence, as the live socket's `hello` says it. */
+
     seq: () => seq,
-    /** The slot ids an account holds. */
+
     slotIds: (account: string) => [...slotsOf(account).keys()].sort(),
-    /** What a slot holds, as the server sees it: ciphertext. */
+
     slotBytes: (account: string, slotId: string) =>
       slotsOf(account).get(slotId)?.bytes ?? null,
   }

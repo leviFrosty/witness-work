@@ -22,15 +22,14 @@ type Props = {
   contact: Contact
   heroBackground: string
   heroForeground: string
-  /** Extra room at the bottom so the Up Next card can overlap the hero. */
+
   overlapped: boolean
   isActiveStudy: boolean
   mostRecentStudy: Visit | null
-  /** Opens the contact form, e.g. to change a non-photo avatar. */
+
   onEdit: () => void
 }
 
-/** Compact identity row on the contact's hero tint. */
 const ContactHero = ({
   contact,
   heroBackground,
@@ -43,8 +42,7 @@ const ContactHero = ({
   const theme = useTheme()
   const [viewerOpen, setViewerOpen] = useState(false)
   const avatar = contact.avatar ?? { type: 'none' as const, value: '' }
-  // Image avatars open the full-screen viewer; emoji and initials keep the
-  // morph-to-center animation. iCloud markers aren't renderable yet.
+
   const isImageAvatar =
     avatar.type === 'image' && isRenderableImageValue(avatar.value)
   const photo = useContactAvatarActions(contact, isImageAvatar)
@@ -121,10 +119,6 @@ const ContactHero = ({
             {avatarNode}
           </ContextMenu>
         ) : Platform.OS === 'ios' ? (
-          // The focusable Avatar owns its tap (the morph-to-center preview).
-          // iOS layers the native long-press menu over it; on Android that
-          // tap handler would swallow the long press, so Edit stays in the
-          // More menu there.
           <ContextMenu
             actions={[
               {
@@ -152,7 +146,6 @@ const ContactHero = ({
       <View style={{ flex: 1, minWidth: 0, gap: 4 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
           <Copyeable
-            // The record's title, for heading navigation.
             accessibilityRole='header'
             style={{ flexShrink: 1 }}
             textProps={{

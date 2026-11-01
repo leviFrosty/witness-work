@@ -63,7 +63,6 @@ it('waits for hydration and does not reset identity for an unchanged disabled pr
 })
 
 it('sends nothing on a launch that cannot read the saved choice', async () => {
-  // Before the first unlock the preference reads as its default, which is on.
   mocks.locked = true
   await import('./analyticsConsent')
   const { analyticsEventsAllowed } = await import('./analyticsPolicy')

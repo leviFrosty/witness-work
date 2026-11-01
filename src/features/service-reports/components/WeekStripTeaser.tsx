@@ -28,22 +28,15 @@ type Props = {
   month: number
   year: number
   monthsReports: TimeEntry[] | null
-  /**
-   * Override "now" — used by onboarding previews so the highlighted day is
-   * deterministic regardless of when the user runs through the flow.
-   */
+
   today?: moment.Moment
-  /**
-   * When set, replaces the live preferences/store data driving the strip. Lets
-   * non-app surfaces render a populated week without touching the real
-   * schedule.
-   */
+
   dayPlansOverride?: DayPlan[]
   recurringPlansOverride?: RecurringPlan[]
   serviceReportsOverride?: TimeEntriesByYear
-  /** Defaults to navigating to Schedule. Override for previews / mock UI. */
+
   onOpenSchedule?: () => void
-  /** Opens the selected day without changing tabs. */
+
   onSelectDay?: (date: Date) => void
 }
 
@@ -64,8 +57,6 @@ const WeekStripTeaser = ({
   const serviceReports = serviceReportsOverride ?? storeServiceReports
   const navigation = useNavigation<HomeTabStackNavigation>()
 
-  // Keyed on the local day, so the strip moves on at midnight and after a time
-  // zone change. Noon keeps each day on its date if the zone moves again.
   const localDay = useLocalDay()
   const today = useMemo(
     () => todayProp ?? moment(localDay, 'YYYY-MM-DD').hour(12),
@@ -81,9 +72,6 @@ const WeekStripTeaser = ({
     [today, selectedMonth]
   )
 
-  // Anchor the strip on the current week when viewing the current month;
-  // otherwise anchor to the first week of the selected month. This keeps the
-  // strip relevant to the user's "now" while still previewing other months.
   const weekAnchor = useMemo(() => {
     if (isCurrentMonth) return today.clone()
     return selectedMonth.clone().startOf('month')
@@ -91,8 +79,7 @@ const WeekStripTeaser = ({
 
   const days = useMemo(() => {
     const startOfStripWeek = weekAnchor.clone().day(startOfWeek)
-    // `.day()` can jump forward if startOfWeek is later in the week than the
-    // anchor; pull back a full week so the strip still contains the anchor.
+
     if (startOfStripWeek.isAfter(weekAnchor)) {
       startOfStripWeek.subtract(7, 'days')
     }
@@ -101,9 +88,6 @@ const WeekStripTeaser = ({
     )
   }, [startOfWeek, weekAnchor])
 
-  // Reports covering every day in the strip — the week can cross a month
-  // boundary, so we fetch the adjacent month too when needed. `monthsReports`
-  // alone would miss logged activity on those out-of-month edges.
   const weekReports = useMemo(() => {
     const first = days[0]
     const last = days[days.length - 1]
@@ -198,7 +182,7 @@ const WeekStripTeaser = ({
             key={dateString}
             style={{ flex: 1, alignItems: 'center', gap: 4 }}
           >
-            {/* Each day below already names its weekday. */}
+            {}
             <Text
               accessibilityElementsHidden
               importantForAccessibility='no'
@@ -225,7 +209,6 @@ const WeekStripTeaser = ({
     </View>
   )
 
-  // Previews (custom `onOpenSchedule`) keep a plain header button.
   if (onOpenSchedule) {
     return (
       <Card>
@@ -239,10 +222,6 @@ const WeekStripTeaser = ({
     )
   }
 
-  // The whole card long-presses for the section menu and taps through to
-  // Schedule; each day keeps its own tap and day menu, which win for touches
-  // that land on a day. Not one accessibility element, so the days stay
-  // individually reachable; the header reads as the Schedule button.
   return (
     <HomeSectionMenu
       onPress={openSchedule}

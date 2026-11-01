@@ -5,19 +5,13 @@ import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import PointerStyleView from '../../../../modules/pointer-style'
 
-/** How far a screen reader's swipe up or down resizes the map. */
 const STEP = 80
 
-/**
- * The grabber between the map and the timeline on narrow screens: drag it to
- * give the map or the timeline more room. Resizes on the UI thread.
- */
 export default function RouteSplitHandle({
   height,
   min,
   max,
 }: {
-  /** The map's height. */
   height: SharedValue<number>
   min: number
   max: number
@@ -60,7 +54,7 @@ export default function RouteSplitHandle({
           borderTopColor: theme.colors.border,
         }}
       >
-        {/* The iPad pointer shows the divider moves up and down. */}
+        {}
         <PointerStyleView
           accessories={['up', 'down']}
           style={StyleSheet.absoluteFill}

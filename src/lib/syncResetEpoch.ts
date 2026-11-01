@@ -1,19 +1,12 @@
-/**
- * A reset generation of the iCloud data. "Keep this device's data" and "Rebuild
- * iCloud data" start a new one; payloads from an older one are pre-reset
- * snapshots. Payloads without one are generation zero. See
- * docs/icloud-sync.md.
- */
 export type ResetEpoch = {
   id: string
-  /** `syncNow()` when the reset started; compared before `id`. */
+
   at: number
   deviceId: string
-  /** Shown to devices that adopt it. */
+
   deviceName?: string
 }
 
-/** Orders by `at`, then `id`. Generation zero sorts below every epoch. */
 export function compareResetEpochs(
   a: ResetEpoch | null | undefined,
   b: ResetEpoch | null | undefined
@@ -32,7 +25,6 @@ export function newestResetEpoch(
   return newest
 }
 
-/** Only the payloads of the newest generation describe the current data. */
 export function atNewestResetEpoch<T extends { resetEpoch?: ResetEpoch }>(
   payloads: T[]
 ): T[] {
@@ -40,10 +32,6 @@ export function atNewestResetEpoch<T extends { resetEpoch?: ResetEpoch }>(
   return payloads.filter((p) => compareResetEpochs(p.resetEpoch, newest) === 0)
 }
 
-/**
- * A new epoch, later than `previous` even if this device's clock went back. Not
- * security-sensitive; the id only breaks ties.
- */
 export function createResetEpoch(args: {
   now: number
   previous: ResetEpoch | null

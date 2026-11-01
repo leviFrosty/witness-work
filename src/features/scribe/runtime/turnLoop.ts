@@ -84,7 +84,6 @@ import {
   type TurnOutcome,
 } from '@/features/scribe/analytics'
 
-/** What a turn needs from the app; tests pass fakes. */
 export interface ScribeRuntimeDeps {
   client: () => ScribeClient
   stores: () => ScribeStores
@@ -95,7 +94,7 @@ export interface ScribeRuntimeDeps {
   limits: () => ScribeLimitsWire
   tools: readonly ScribeTool[]
   tool: (name: string) => ScribeTool | null
-  /** A failure worth knowing about (an app bug, a device gate). */
+
   onFailure?: (failure: ScribeClientError) => void
   readTimeoutMs?: number
 }
@@ -115,12 +114,6 @@ const EMPTY_STATS = (): TurnStats => ({
   tainted: false,
 })
 
-/**
- * A kept step's memory edits, saved in the background. When the User edited the
- * memory in Settings while the step ran, the edits apply again to theirs. The
- * conversation's pinned context keeps the memory it started with; the model
- * sees its edits in the transcript.
- */
 function saveMemoryEdits(before: string, outcome: ToolRunOutcome): void {
   const { text } = useScribeMemory.getState()
   const saved =
@@ -131,7 +124,6 @@ function saveMemoryEdits(before: string, outcome: ToolRunOutcome): void {
   if (saved.changes.length) trackMemorySaved(saved.changes, saved.text.length)
 }
 
-/** The latest outcome per Proposal, oldest Proposal first. */
 function collapseOutcomes(
   outcomes: readonly ProposalOutcomeBlock[]
 ): ProposalOutcomeBlock[] {
@@ -144,17 +136,12 @@ function collapseOutcomes(
 }
 
 const isoAt = (date: Date) => {
-  // Local ISO with offset, as the context's `now`.
   const offset = -date.getTimezoneOffset()
   const sign = offset >= 0 ? '+' : '-'
   const pad = (n: number) => String(Math.floor(Math.abs(n))).padStart(2, '0')
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}${sign}${pad(offset / 60)}:${pad(offset % 60)}`
 }
 
-/**
- * Pins the context, or rebuilds it when the local day changed (Refs kept).
- * Mid-turn, `registry` is the turn's, so Refs the rebuild issues stay in it.
- */
 function withCurrentContext(
   conversation: StoredConversation,
   deps: ScribeRuntimeDeps,
@@ -178,7 +165,6 @@ function withCurrentContext(
   }
 }
 
-/** Budget for a conversation as stored. */
 export function conversationBudget(
   conversation: StoredConversation,
   deps: Pick<ScribeRuntimeDeps, 'tools' | 'limits'>,
@@ -196,7 +182,6 @@ export function conversationBudget(
   })
 }
 
-/** Notes the budget for analytics, once per conversation per state. */
 function noticeBudget(
   conversation: StoredConversation,
   deps: ScribeRuntimeDeps
@@ -219,11 +204,6 @@ function noticeBudget(
   return conversation
 }
 
-/**
- * The last turn, when the model never answered it and it left nothing to
- * review: it failed or was stopped before a step came back, or failed partway
- * without cards. `index` is its user message.
- */
 function unansweredTurn(
   conversation: StoredConversation
 ): { index: number; outcomes: ProposalOutcomeBlock[] } | null {
@@ -259,13 +239,6 @@ function resolveSuperseded(proposal: StoredProposal): void {
   })
 }
 
-/**
- * Sends a user message and runs the turn (protocol: What the app does with a
- * step). Starts the conversation when `conversationId` is null, and resolves
- * with its id once the turn ends. A pending Proposal is withdrawn
- * (`superseded`) first, and a turn that ended unanswered gives way to this
- * message.
- */
 export async function sendScribeMessage(
   deps: ScribeRuntimeDeps,
   conversationId: string | null,
@@ -285,8 +258,6 @@ export async function sendScribeMessage(
     const turnId = deps.ulid()
     const at = now.getTime()
 
-    // The model never answered the last turn: this message replaces it, so the
-    // model can't act on both. What it reported goes with this one.
     const replaced = unansweredTurn(conversation)
     const outcomes = [...(replaced?.outcomes ?? []), ...conversation.outcomes]
     if (replaced)
@@ -342,7 +313,6 @@ export async function sendScribeMessage(
       turns: conversation.turns + 1,
     }
 
-    // Not sent: the outcomes wait for the next message that is.
     const unsent = (
       failure: ScribeClientError,
       change?: Partial<StoredConversation>
@@ -391,7 +361,6 @@ export async function sendScribeMessage(
   }
 }
 
-/** Re-runs the failed step of the last turn, as the same turn. */
 export async function retryScribeTurn(
   deps: ScribeRuntimeDeps,
   conversationId: string
@@ -409,11 +378,6 @@ export async function retryScribeTurn(
   }
 }
 
-/**
- * The connection came back: each turn that ended with `network`, and is still
- * the latest thing in Scribe AI, goes on once as Try again would. The same step
- * key, so ww-api counts it as one more attempt.
- */
 export async function resumeAfterReconnect(
   deps: ScribeRuntimeDeps
 ): Promise<void> {
@@ -422,7 +386,6 @@ export async function resumeAfterReconnect(
   )
 }
 
-/** The steps of one turn, from `turn.step` until the model stops calling tools. */
 async function driveTurn(
   conversationId: string,
   turn: SuspendedTurn,
@@ -430,7 +393,7 @@ async function driveTurn(
   signal: AbortSignal
 ): Promise<void> {
   const reading: ScribeActivityArea[] = []
-  /** The turn took a step for a reply after a silent memory save. */
+
   let memoryReplyStep = false
   let conversation = getConversation(conversationId)!
   const proposalId = turn.proposalId ?? `pr_${deps.ulid()}`
@@ -449,7 +412,7 @@ async function driveTurn(
     effects: draft.storedEffects(),
     stats: structuredClone(stats),
   })
-  /** The cards so far, shown while the turn runs (memory only). */
+
   const showDraft = () =>
     setDrafting(
       conversationId,
@@ -463,7 +426,7 @@ async function driveTurn(
           )
         : null
     )
-  /** Takes back what the running step's calls did, when it isn't kept. */
+
   let discardStep: (() => void) | null = null
 
   try {
@@ -495,8 +458,7 @@ async function driveTurn(
       const streamItemId = `${turn.turnId}-${step}`
       let text = ''
       const calls: ToolCallBlock[] = []
-      // Each call runs as it streams in; the step keeps them only if it ends
-      // in `tool_calls`, so it starts from a checkpoint to go back to.
+
       const refsAtStep = refs.checkpoint()
       const effectsAtStep = draft.checkpoint()
       const stores = deps.stores()
@@ -523,7 +485,6 @@ async function driveTurn(
       }
       let run = startToolCalls(runDeps)
       discardStep = () => {
-        // Reads mint their Refs as they start, so nothing lands after this.
         refs.rollback(refsAtStep)
         draft.rollback(effectsAtStep)
         showDraft()
@@ -532,8 +493,6 @@ async function driveTurn(
       const terminal = await deps.client().step(body, {
         signal,
         onEvent: (event) => {
-          // A dropped stream is sent again: its replay starts over, and so do
-          // the calls the dropped one ran.
           if (event.type === 'start') {
             text = ''
             if (calls.length) {
@@ -602,7 +561,7 @@ async function driveTurn(
       const messages: WireMessage[] = [...conversation.messages]
       const finish = terminal.finish
       const withCalls = finish === 'tool_calls' && calls.length > 0
-      // `length` and `refused` drop the step's calls, and what they proposed.
+
       if (!withCalls && calls.length) discard()
       discardStep = null
       if (text.trim() || withCalls)
@@ -632,8 +591,7 @@ async function driveTurn(
         if (outcome.memoryEdits.length) {
           saveMemoryEdits(stores.memory.text, outcome)
         }
-        // The model saves to memory without a word, expecting to answer
-        // after; without cards, it gets that step, once a turn.
+
         const silentMemory =
           outcome.memoryCalls > 0 &&
           outcome.writeCalls === 0 &&
@@ -685,7 +643,7 @@ async function driveTurn(
     }
   } catch (error) {
     setStreaming(conversationId, null)
-    // A failed or stopped step keeps nothing; earlier steps' cards stay.
+
     discardStep?.()
     const failure = toScribeClientError(error)
     conversation = getConversation(conversationId)!
@@ -730,7 +688,7 @@ async function driveTurn(
       )
       return
     }
-    // Draft effects already proposed stay reviewable.
+
     const withDraft = finalizeProposal(
       conversation,
       turn,
@@ -749,11 +707,6 @@ async function driveTurn(
   }
 }
 
-/**
- * The turn's Proposal from its draft. Checks and choices the User made on the
- * cards so far (on the drafting Proposal, or a retried turn's stored one) carry
- * over.
- */
 function draftProposal(
   conversation: StoredConversation,
   turn: SuspendedTurn,
@@ -782,7 +735,6 @@ function draftProposal(
   }
 }
 
-/** The turn's Proposal, ready for review; the conversation unchanged if none. */
 function finalizeProposal(
   conversation: StoredConversation,
   turn: SuspendedTurn,
@@ -870,7 +822,6 @@ function finishTurn(
   setRun(conversationId, { phase: 'idle' })
 }
 
-/** Failures the app reacts to beyond the error row: a gate, or an app bug. */
 const NOTED_CODES: ReadonlySet<ScribeErrorCode | 'cancelled'> = new Set([
   'device_ineligible',
   'attestation_unavailable',

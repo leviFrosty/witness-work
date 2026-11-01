@@ -1,7 +1,3 @@
-/**
- * Mirrors the iOS StopwatchAttributes.ContentState. Timestamps are Unix
- * seconds; accumulatedMs contains completed running segments only.
- */
 export type StopwatchState = {
   startedAt: number | null
   accumulatedMs: number

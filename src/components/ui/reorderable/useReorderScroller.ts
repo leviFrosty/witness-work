@@ -1,11 +1,6 @@
 import { type RefObject, useRef } from 'react'
 import type { View } from 'react-native'
 
-/**
- * The scroll view a dragged item scrolls when held near its top or bottom.
- * Positions are in points; `viewport` is in window coordinates, like a touch's
- * `absoluteY`.
- */
 export type ReorderScroller = {
   offset: () => number
   scrollTo: (y: number) => void
@@ -18,17 +13,11 @@ type Scrollable = {
   scrollTo?: (options: { x?: number; y?: number; animated?: boolean }) => void
 }
 
-/**
- * Tracks a scroll view for `ReorderableContainer`'s auto-scroll. Spread `props`
- * onto the scroll view (calling them from your own handlers if it has some) and
- * put `frameRef` on a view with the scroll view's frame.
- */
 export default function useReorderScroller(
   scrollRef: RefObject<Scrollable | null>,
   {
     obscuredBottom = 0,
   }: {
-    /** How much of the bottom a tab bar covers. */
     obscuredBottom?: number
   } = {}
 ) {

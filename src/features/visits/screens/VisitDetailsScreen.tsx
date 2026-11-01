@@ -9,16 +9,9 @@ import VisitDetails, {
 } from '@/features/visits/components/VisitDetails'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Visit Details'> & {
-  /** Renders the Follow-up's buddies, below the Follow-up. */
   renderFollowUpBuddies?: FollowUpDetailsBuddiesSlot
 }
 
-/**
- * One Visit, read-only, in a sheet: its Contact, what happened, its Follow-up,
- * and the buddies invited along, with Edit and the Visit's other actions in the
- * header. Leaves once the Visit or its Contact is gone (deleted here, in the
- * form, or on another device).
- */
 export default function VisitDetailsScreen({
   route,
   navigation,

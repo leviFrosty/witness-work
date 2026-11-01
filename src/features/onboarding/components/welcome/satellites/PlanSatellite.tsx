@@ -41,7 +41,6 @@ const Day = ({
   const theme = useTheme()
   const pop = useSharedValue(1)
 
-  // Planned days pop in one after another as the story reaches planning.
   useEffect(() => {
     if (!active || reduceMotion || !planned) return
     pop.value = withSequence(
@@ -93,7 +92,6 @@ const Day = ({
   )
 }
 
-/** This week at a glance, with the planned service days marked. */
 const PlanSatellite = ({
   palette,
   focus,

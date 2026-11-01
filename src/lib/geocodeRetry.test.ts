@@ -62,7 +62,7 @@ describe('geocodeRetryStep', () => {
 
   it('tries a due retry for the same address', () => {
     expect(geocodeRetryStep(entry, contact(), 0)).toBe('try')
-    // Fields other than the address and pin don't matter.
+
     expect(geocodeRetryStep(entry, contact({ name: 'Sam R.' }), 0)).toBe('try')
   })
 

@@ -1,14 +1,3 @@
-/**
- * Single seam for feature gating. Callers ask "does this user have access to
- * feature X?" rather than "are they a supporter?" — so the gate rule for any
- * one feature can evolve (becoming free, region-restricted, trialable, etc.)
- * without grepping every call site.
- *
- * The supporter check itself still lives in `useIsSupporter` for non-gating
- * uses (badge dates, upgrade CTAs, sync mirroring) — this module only owns the
- * per-feature gating decision.
- */
-
 export type FeatureKey =
   | 'customAccentColor'
   | 'iCloudSync'
@@ -22,7 +11,7 @@ export const FEATURES: Record<FeatureKey, GateRule> = {
   customAccentColor: { gate: 'supporter-only' },
   iCloudSync: { gate: 'supporter-only' },
   customAppIcon: { gate: 'supporter-only' },
-  // Also enforced server-side: ww-api refuses to optimize for non-Supporters.
+
   routePlanning: { gate: 'supporter-only' },
   buddyColor: { gate: 'supporter-only' },
 }

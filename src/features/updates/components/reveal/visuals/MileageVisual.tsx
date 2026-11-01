@@ -35,8 +35,7 @@ const ROAD_Y = 52
 const ROAD_LEFT = 34
 const ROAD_RIGHT = 286
 const CAR = 40
-// The month so far, then today's trip on top of it (in miles; shown in the
-// user's own units).
+
 const MONTH_MILES = 30.2
 const TRIP_MILES = 12.4
 const TRIP_COST = 2.1
@@ -53,10 +52,6 @@ const TRIP_DAYS: Record<number, number> = {
 const TODAY_HEIGHT = 0.8
 const BARS_H = 44
 
-/**
- * Mileage: a car drives today's route while the month's distance climbs, then
- * the day's bar rises on the card's chart.
- */
 const MileageVisual = ({
   palette,
   active,
@@ -83,7 +78,6 @@ const MileageVisual = ({
     loop.value >= 0.94 ? 0 : seg(loop.value, 0.55, 0.68)
   )
 
-  // The distance climbs with the car, in steps the eye can follow.
   useAnimatedReaction(
     () => Math.round((MONTH_MILES + TRIP_MILES * drive.value) * 5) / 5,
     (now, before) => {
@@ -296,7 +290,7 @@ const DayBar = ({
           borderRadius: 2.5,
           backgroundColor:
             day === TODAY ? color : share > 0 ? withAlpha(color, 0xa6) : rest,
-          // Days still to come stay faint.
+
           opacity: day > TODAY ? 0.4 : 1,
         },
         style,

@@ -30,24 +30,18 @@ import { formatRelative } from '@/lib/dates'
 
 const QR_SIZE = 240
 const APP_ICON = require('@/assets/icon.png')
-/**
- * The live connection shows a claim at once. Without it, in person, the claim
- * should still show up while the code is on screen.
- */
+
 const POLL_INTERVAL_MS = 15 * 1000
 
-/** The invite the last code showed, reused until someone uses it. */
 let lastCodeInviteId: string | null = null
 
 type CodeState =
   | { state: 'loading' }
   | { state: 'ready'; inviteId: string; link: string }
   | { state: 'full' }
-  /** The relay's cap on invites still waiting to be accepted. */
   | { state: 'openInvites' }
   | { state: 'error'; message: string; retryable: boolean }
 
-/** Reuses the invite passed in or the last code shown, else creates one. */
 async function resolveCodeInvite(inviteId?: string): Promise<CodeState> {
   const reusable = [inviteId, lastCodeInviteId].find(
     (id) =>
@@ -71,7 +65,6 @@ async function resolveCodeInvite(inviteId?: string): Promise<CodeState> {
   }
 }
 
-/** Why no code: the connection's copy offers a retry; other causes say what. */
 function codeError(error: unknown): CodeState {
   return isRelayConnectivityError(error) || error === null
     ? { state: 'error', message: i18n.t('buddies_codeError'), retryable: true }
@@ -82,22 +75,16 @@ function codeError(error: unknown): CodeState {
       }
 }
 
-/**
- * A single-use invite as a QR code, confirmed on the spot once scanned. Its
- * link can be copied or shared instead (buttons, or long-press the code), and
- * the invite cancelled.
- */
 export default function BuddyCodePanel({
   inviteId,
   onClosed,
 }: {
   inviteId?: string
-  /** The shown invite was confirmed or cancelled; nothing left to show. */
+
   onClosed: () => void
 }) {
   const theme = useTheme()
-  // At accessibility text sizes the hint takes the full width, so "WitnessWork"
-  // keeps to one line.
+
   const largeText = useAccessibilityTextSize()
   const [code, setCode] = useState<CodeState>({ state: 'loading' })
   const [attempt, setAttempt] = useState(0)
@@ -126,8 +113,6 @@ export default function BuddyCodePanel({
     setAttempt((count) => count + 1)
   }
 
-  // While the code waits to be scanned, the request appears in place: the live
-  // connection says when, and polls stand in while it's down.
   useEffect(() => {
     if (!shownInviteId || claim) return
     return startFallbackPoll(
@@ -228,7 +213,6 @@ export default function BuddyCodePanel({
                 size={QR_SIZE}
                 color='#000000'
                 backgroundColor='#FFFFFF'
-                // High error correction so the covered center still scans.
                 ecl='H'
                 logo={APP_ICON}
                 logoSize={QR_SIZE * 0.16}
@@ -258,8 +242,7 @@ export default function BuddyCodePanel({
               })}
             </Text>
           )}
-          {/* At large text sizes Share wraps under Copy Link rather than run
-              both off the screen. */}
+          {}
           <XView
             style={{ gap: 12, flexWrap: 'wrap', justifyContent: 'center' }}
           >

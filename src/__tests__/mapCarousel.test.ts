@@ -44,16 +44,11 @@ describe('lib/mapCarousel', () => {
       expect(result).toEqual({ activeId: 'b', index: 1 })
     })
 
-    /**
-     * Reproduces the "tap pin, wrong card" symptom: an upstream change (a
-     * contact dismissed/inserted before the active one) reorders the list, but
-     * the active contact must still resolve to the correct new index.
-     */
     it('updates the index when contacts are inserted before the active one', () => {
       const next = [marker('x'), marker('a'), marker('b'), marker('c')]
       const result = reconcileActiveContact({
         previousActiveId: 'b',
-        previousIndex: 1, // stale: was correct before the insert
+        previousIndex: 1,
         nextContactMarkers: next,
       })
       expect(result.activeId).toBe('b')
@@ -64,18 +59,13 @@ describe('lib/mapCarousel', () => {
       const next = [marker('b'), marker('c')]
       const result = reconcileActiveContact({
         previousActiveId: 'c',
-        previousIndex: 2, // stale: there are now only 2 items
+        previousIndex: 2,
         nextContactMarkers: next,
       })
       expect(result.activeId).toBe('c')
       expect(result.index).toBe(1)
     })
 
-    /**
-     * Reproduces the "card highlighted does not match pin" symptom for the
-     * removal case: the active contact disappeared (e.g. dismissed). We need to
-     * pick a deterministic neighbour rather than scrolling past the end.
-     */
     it('falls back to the clamped previous index when the active contact is removed', () => {
       const next = [marker('a'), marker('c')]
       const result = reconcileActiveContact({

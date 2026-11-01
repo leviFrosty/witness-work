@@ -5,10 +5,6 @@ import PointerTooltip from '@/components/ui/PointerTooltip'
 import PullDownMenu from '@/components/ui/PullDownMenu'
 import i18n from '@/lib/locales'
 
-/**
- * Edit and More (the record's other actions) for a details screen's header. Lay
- * them out 24pt apart, so their 44pt frames don't overlap.
- */
 export default function DetailsHeaderActions({
   onEdit,
   menu,

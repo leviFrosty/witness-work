@@ -13,11 +13,6 @@ import LucideIcon from '@/components/ui/LucideIcon'
 import useTheme from '@/contexts/theme'
 import useReduceMotionEnabled from '@/hooks/useReduceMotionEnabled'
 
-/**
- * A lit flame in a warm glow: an orange flame with a yellow core that flickers,
- * still with Reduce Motion on. Decorative; the count beside it carries the
- * meaning.
- */
 export default function StreakFlame({ size = 30 }: { size?: number }) {
   const theme = useTheme()
   const reduceMotion = useReduceMotionEnabled()
@@ -77,7 +72,7 @@ export default function StreakFlame({ size = 30 }: { size?: number }) {
         style={[
           {
             position: 'absolute',
-            // The core sits low in the flame's body.
+
             top: (size * 1.6 - size) / 2 + size * 0.44,
           },
           coreStyle,

@@ -10,14 +10,13 @@ import type { PlanLocation } from '@/types/timeEntry'
 
 export type { PlaceSearchScope }
 
-/** A picked place: a Plan location plus, when known, its address parts. */
 export type ResolvedPlace = PlanLocation & { postalAddress?: Address }
 
 export type PlaceSuggestion = {
   id: string
   title: string
   subtitle: string
-  /** Set when the search already returned the full place (HERE). */
+
   place?: ResolvedPlace
 }
 
@@ -25,13 +24,6 @@ export type Coordinate = { latitude: number; longitude: number }
 
 export type PlaceSearchProvider = 'mapkit' | 'here'
 
-/**
- * Which service searches `scope` on this binary. MapKit runs on iOS through the
- * native module and costs nothing per request. Address search falls back to
- * HERE (through ww-api) on Android and on iOS binaries that predate the
- * module's address scope. Points of interest need MapKit, so `all` has no
- * fallback.
- */
 export function placeSearchProvider(
   scope: PlaceSearchScope
 ): PlaceSearchProvider | undefined {
@@ -43,11 +35,7 @@ export function placeSearchProvider(
 
 const HERE_SEARCH_RADIUS_METERS = 1_000_000
 const HERE_MAX_SUGGESTIONS = 5
-/**
- * Autocomplete answers in well under a second; past this the publisher has
- * moved on. MapKit has its own native timeouts, so this only backstops binaries
- * that predate them.
- */
+
 const SEARCH_TIMEOUT_MS = 8_000
 const RESOLVE_TIMEOUT_MS = 10_000
 
@@ -124,8 +112,7 @@ async function searchHere(
       `circle:${near.latitude},${near.longitude};r=${HERE_SEARCH_RADIUS_METERS}`
     )
   }
-  // No retries: the next keystroke is the retry, and every request counts
-  // against ww-api's per-IP `places` limit, which geocoding shares.
+
   let data: { items?: unknown } | null
   try {
     ;({ data } = await request<{ items?: unknown } | null>({
@@ -134,7 +121,6 @@ async function searchHere(
       signal,
     }))
   } catch (error) {
-    // ww-api passes HERE's 404 through: nothing found.
     if (errorBodyCode(error) === 'not_found') return []
     throw error
   }
@@ -144,10 +130,6 @@ async function searchHere(
   return data.items.filter(isHereItem).map(hereSuggestion)
 }
 
-/**
- * Settles with `promise`, or rejects with a timeout or a cancel first. The
- * native MapKit calls can't be aborted, so their late answers are dropped.
- */
 function bounded<T>(
   promise: Promise<T>,
   timeoutMs: number,
@@ -181,7 +163,6 @@ function bounded<T>(
   })
 }
 
-/** Places matching `query` within `scope`, biased toward `near`. */
 export async function searchPlaces(
   query: string,
   near?: Coordinate,
@@ -191,8 +172,6 @@ export async function searchPlaces(
   if (!query.trim()) return []
   switch (placeSearchProvider(scope)) {
     case 'mapkit':
-      // MapKit reports offline as a generic failure, so fail fast here and
-      // let the field say why.
       if (isKnownOffline()) throw new HttpError('offline')
       return bounded(
         PlaceSearchNative.autocomplete(query, near, scope),
@@ -206,7 +185,6 @@ export async function searchPlaces(
   }
 }
 
-/** Why a search or resolve failed, for the field's inline message. */
 export type PlaceSearchFailure = 'offline' | 'busy' | 'failed'
 
 export function placeSearchFailure(error: unknown): PlaceSearchFailure {
@@ -220,11 +198,6 @@ export function placeSearchFailure(error: unknown): PlaceSearchFailure {
   }
 }
 
-/**
- * Whether a failure is a bug worth reporting rather than the network or the
- * service. The native module rejects with `place_search_failed` for MapKit
- * service errors.
- */
 export function isUnexpectedPlaceSearchError(error: unknown): boolean {
   if ((error as { code?: unknown } | null)?.code === 'place_search_failed') {
     return false
@@ -233,10 +206,6 @@ export function isUnexpectedPlaceSearchError(error: unknown): boolean {
   return kind === 'unknown' || kind === 'client'
 }
 
-/**
- * Native dictionaries arrive in hash order, and `addressToString` joins fields
- * in key order, so rebuild the address in the order the contact form uses.
- */
 const orderedAddress = (address: Address): Address => {
   const ordered: Address = {}
   for (const key of ADDRESS_KEYS) {
@@ -254,7 +223,6 @@ const ADDRESS_KEYS = [
   'country',
 ] as const satisfies readonly (keyof Address)[]
 
-/** Resolves a picked suggestion to a place, or undefined if not found. */
 export async function resolvePlace(
   suggestion: PlaceSuggestion
 ): Promise<ResolvedPlace | undefined> {
@@ -276,7 +244,6 @@ export async function resolvePlace(
   }
 }
 
-/** The Plan location for a picked place; drops the address parts. */
 export function toPlanLocation({
   postalAddress: _postalAddress,
   ...location
@@ -294,10 +261,6 @@ const hasCoordinates = (
 
 const clean = (value?: string) => value?.trim() || undefined
 
-/**
- * Display lines for a location: the place name over its address, or just the
- * address when there's no name. Falls back to coordinates.
- */
 export function formatPlanLocation(location: PlanLocation): {
   primary: string
   secondary?: string
@@ -319,11 +282,6 @@ export function formatPlanLocation(location: PlanLocation): {
   return { primary: '' }
 }
 
-/**
- * Apple Maps link for a location. `q` labels the pin, `ll` pins it exactly, and
- * `address` lets Maps geocode when coordinates are missing. Undefined when
- * there is nothing to show.
- */
 export function appleMapsUrl(location: PlanLocation): string | undefined {
   const name = clean(location.name)
   const address = clean(location.address)

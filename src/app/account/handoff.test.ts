@@ -1,9 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { AccountSessionError } from '@/lib/serverAccount/session'
 
-// The new phone once the key arrived: a connection that drops while it signs in
-// with the key leaves the handoff where it was, so it can run again.
-
 const fake = vi.hoisted(() => ({
   openDetached: vi.fn(),
   replaceAccountKey: vi.fn(),
@@ -62,7 +59,6 @@ import type {
 
 const ACCOUNT_ID = 'account-1'
 
-/** A claim session that has the key. */
 function received() {
   return {
     role: 'claim' as const,
@@ -175,8 +171,6 @@ describe('a replacement that fails', () => {
   })
 })
 
-// The old phone: Allow sends the account key only once the device's owner
-// confirms it, so someone holding the unlocked phone can't sign theirs in.
 describe('approveHandoff', () => {
   const offer = () => {
     const session = { approve: vi.fn(async () => undefined) }
@@ -237,7 +231,7 @@ describe('approveHandoff', () => {
       .mockResolvedValueOnce('confirmed')
     expect(await approve(confirmOwner)).toBe('cancelled')
     expect(await approve(confirmOwner)).toBe('sent')
-    // A send that didn't get through: tapping Allow again doesn't ask again.
+
     expect(await approve(confirmOwner)).toBe('sent')
     expect(confirmOwner).toHaveBeenCalledTimes(2)
     expect(session.approve).toHaveBeenCalledTimes(2)

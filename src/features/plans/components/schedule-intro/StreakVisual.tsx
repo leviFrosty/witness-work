@@ -33,7 +33,7 @@ import {
 const CARD_TOP = 84
 const STRIP_TOP = CARD_TOP + 16
 const DATE_TOP = STRIP_TOP + DATE_Y
-/** Planned days get time in turn; the unplanned one gets time too. */
+
 const PLANNED = [
   { day: 1, minutes: 45, at: 0.08 },
   { day: 3, minutes: 120, at: 0.3 },
@@ -42,10 +42,6 @@ const PLANNED = [
 const UNPLANNED = { day: 4, minutes: 30, at: 0.46 }
 const FALL = 0.12
 
-/**
- * The streak: time logged on each planned day lands in it and the flame's count
- * rolls up. Time on a day without a Plan lands too, and changes nothing.
- */
 const StreakVisual = ({ palette, active, reduceMotion }: RevealVisualProps) => {
   const theme = useTheme()
   const days = thisWeek()
@@ -212,10 +208,6 @@ function KeptMark({ size, border }: { size: number; border?: string }) {
   )
 }
 
-/**
- * Time logged on a day: it falls into the date. A planned day is kept and
- * checked; a day without a Plan only gets a quiet dot.
- */
 function LoggedTime({
   day,
   minutes,

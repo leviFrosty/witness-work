@@ -39,7 +39,6 @@ const HINT_KEYS: Record<SyncDeviceHint, TranslationKey> = {
 const deviceName = (device: { deviceName: string | null }) =>
   device.deviceName || i18n.t(syncKey('iCloudDeviceUnknown'))
 
-/** Bounded analytics properties: never the device's id, name or filename. */
 const removalProperties = (filename: string, entry: SyncDeviceFile) => ({
   status: entry.status,
   age_bucket: syncDeviceAgeBucket(entry),

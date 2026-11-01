@@ -1,23 +1,21 @@
-/** Lion cub: a round mane of twelve tufts, small ears, tufted tail. */
 import { rgbPalette, type Rgb, type Shape } from '@/lib/pixelArt'
 
 import { facePixels } from '../face'
 import { defineSpecies } from './define'
 
 interface LionCoat {
-  /** Mane, its shadow and highlight. */
   readonly m: Rgb
   readonly ms: Rgb
   readonly mh: Rgb
-  /** Fur, shadow, highlight. */
+
   readonly f: Rgb
   readonly fs: Rgb
   readonly fh: Rgb
-  /** Light fur (muzzle, belly). */
+
   readonly l: Rgb
-  /** Inner ear. */
+
   readonly in: Rgb
-  /** Nose. */
+
   readonly n: Rgb
 }
 

@@ -76,7 +76,6 @@ const ReportLinks = () => {
   )
 }
 
-// Compose's Collapsible pads its own header and content (16dp each side).
 const CARD_PADDING = Platform.OS === 'android' ? 4 : 20
 const CONTENT_INSET =
   2 + CARD_PADDING * 2 + (Platform.OS === 'android' ? 32 : 0)
@@ -105,8 +104,7 @@ export const FAQItem = ({ entry }: { entry: HelpEntry }) => {
       style={[cardStyle, { flexShrink: 1, padding: CARD_PADDING }]}
       onLayout={(event) => setWidth(event.nativeEvent.layout.width)}
     >
-      {/* Without ignoreSafeArea, SwiftUI insets cards laid out under the
-      header or home indicator, shifting the label and clipping the answer. */}
+      {}
       <Host
         matchContents={{ vertical: true }}
         colorScheme={colorScheme}
@@ -117,14 +115,10 @@ export const FAQItem = ({ entry }: { entry: HelpEntry }) => {
           isOpen={expanded}
           onOpenChange={setExpanded}
           label={question}
-          // SwiftUI's DisclosureGroup announces its own state; Compose's
-          // header reads this one.
           stateDescription={i18n.t(
             expanded ? 'a11y_expanded' : 'a11y_collapsed'
           )}
           labelStyle={{
-            // SwiftUI looks fonts up by PostScript name, not the expo-font
-            // alias.
             fontFamily:
               Platform.OS === 'ios'
                 ? postScriptName(theme.fonts.semiBold)
@@ -134,8 +128,7 @@ export const FAQItem = ({ entry }: { entry: HelpEntry }) => {
             textAlign: alignText('start'),
           }}
         >
-          {/* Straight into the Collapsible's host: a nested host would
-          swallow the long press on Android. */}
+          {}
           <ContextMenu
             hosted
             actions={[
@@ -167,8 +160,7 @@ export const FAQItem = ({ entry }: { entry: HelpEntry }) => {
               },
             ]}
           >
-            {/* Hosted RN content sizes to itself, so give it the width left
-            inside the card. */}
+            {}
             <View
               style={{
                 width: contentWidth,
@@ -275,7 +267,6 @@ export const FAQSearch = ({
           unstyled
           value={search}
           onChangeText={setSearch}
-          // The placeholder goes once there's text; screen readers keep this.
           accessibilityLabel={i18n.t('faq_searchPlaceholder')}
           placeholder={i18n.t('faq_searchPlaceholder')}
           placeholderTextColor={
@@ -290,8 +281,7 @@ export const FAQSearch = ({
             color: theme.colors.text,
             fontFamily: theme.fonts.regular,
             fontSize: theme.fontSize('md'),
-            // Explicit: an unaligned field follows the app bundle's language on
-            // iOS, which can be Arabic while the app runs in English.
+
             textAlign: alignInput('start'),
           }}
         />

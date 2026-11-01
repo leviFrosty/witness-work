@@ -6,7 +6,6 @@ import useTheme from '@/contexts/theme'
 import i18n, { type TranslationKey } from '@/lib/locales'
 import { mapPillStyle } from '@/features/map/lib/mapStyles'
 
-/** Over the Map when today has a route: opens it in the route builder. */
 export default function MapTodayRouteButton({
   stopCount,
   onPress,

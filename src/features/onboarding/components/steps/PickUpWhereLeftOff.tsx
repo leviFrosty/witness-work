@@ -35,11 +35,6 @@ interface StepProps {
 
 type Mode = 'choose' | 'mytime' | 'icloud'
 
-/**
- * Whether anything has been brought in yet: records from any import, including
- * what Scribe AI added. Setup runs on a new install, so existing data means the
- * user imported it here.
- */
 const useHasImportedData = (): boolean => {
   const hasContacts = useContacts((s) => s.contacts.length > 0)
   const hasVisits = useConversations((s) => s.conversations.length > 0)
@@ -52,25 +47,6 @@ const useHasImportedData = (): boolean => {
   return hasContacts || hasVisits || hasTimeEntries || hasDayPlans
 }
 
-/**
- * Onboarding "Pick up where you left off" chooser (its options are
- * `ImportOptions`, shared with Settings → Import Data) — replaces the separate
- * iCloud-restore and MyTime-import steps with one fork into Notes / MyTime /
- * iCloud / a backup file (decision 9), plus Paper (ADR 0025), which picks page
- * photos first and opens Scribe AI's conversation to read them into its draft.
- * MyTime + iCloud reuse their existing step components inline; iCloud is grayed
- * when the device has no iCloud. The Notes option opens Scribe AI's
- * conversation with the keyboard up, to paste or type notes; backing out
- * returns here to keep going. MyTime returns to the flow (`goNext`); iCloud
- * restore completes onboarding on its own. A backup file restores in place via
- * the same flow as Settings → Backup and, like iCloud, completes onboarding —
- * the backup carries the profile and preferences the remaining steps would set.
- * "From your other phone" opens Sign In with QR Code (ADR 0026), which brings
- * the account and buddies, then returns here so the data can come over too.
- * "Start fresh" is the primary action: most users have nothing to bring over.
- * Once something has been imported and the user comes back here, it reads
- * "Continue" instead, since they aren't starting fresh.
- */
 const PickUpWhereLeftOff = ({ goBack, goNext }: StepProps) => {
   const theme = useTheme()
   const isFocused = useIsFocused()
@@ -78,8 +54,7 @@ const PickUpWhereLeftOff = ({ goBack, goNext }: StepProps) => {
   const toChooser = () => {
     setMode('choose')
   }
-  // iOS needs iCloud signed in. Android connects Google Drive inside the
-  // restore step, so it only needs Google Play services.
+
   const cloudSyncSupported = useCloudSyncSupported()
   const icloudAvailable = usesGoogleDriveSync()
     ? cloudSyncSupported
@@ -106,8 +81,7 @@ const PickUpWhereLeftOff = ({ goBack, goNext }: StepProps) => {
     analytics.capture('onboarding_completed', {
       completion_method: 'backup_restore',
     })
-    // Same as iCloud restore: the restored profile replaces the remaining
-    // steps, so don't re-prompt for profile or map setup afterwards.
+
     usePreferences.getState().set({
       onboardingComplete: true,
       onboardingStepId: null,
@@ -208,7 +182,7 @@ const PickUpWhereLeftOff = ({ goBack, goNext }: StepProps) => {
             analytics.capture('onboarding_step_skipped', {
               step_id: 'pickUpWhereLeftOff',
             })
-          // Not a restore either way, so sync starts off as on a fresh setup.
+
           usePreferences.getState().set(FRESH_SETUP_PREFERENCES)
           goNext()
         }}

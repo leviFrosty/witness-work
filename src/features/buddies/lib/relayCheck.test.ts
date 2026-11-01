@@ -11,7 +11,6 @@ const probe = {
   rosterChanged: false,
 }
 
-/** A socket that answers like the relay, or as `behave` says. */
 function relaySocket(behave: 'ok' | 'closeAtOnce' | 'silent' = 'ok') {
   const socket: LiveSocket & { closed: boolean } = {
     closed: false,

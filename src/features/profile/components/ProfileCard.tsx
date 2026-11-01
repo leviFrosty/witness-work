@@ -46,7 +46,6 @@ type Tenure = {
   text: string
 }
 
-// One plural key per tone, so each Language words "for N days" its own way.
 const TENURE_KEYS: Record<TenureTone, string> = {
   supporter: 'profileSupporterFor',
   foundingSupporter: 'profileFoundingSupporterFor',
@@ -65,26 +64,16 @@ const buildTenureText = (tone: TenureTone, days: number): string =>
 
 interface Props {
   nameInvalid?: boolean
-  /** Shows the profile without editing; used by the profile overlay. */
+
   readOnly?: boolean
-  /** Leaves out the badge row, e.g. where badges have their own section. */
+
   hideBadges?: boolean
-  /**
-   * Shown in place of this device's Profile name until the User edits it:
-   * Buddies setup shows the name on the account's Buddy Card. Editing sets the
-   * Profile name, as always, which the card name follows.
-   */
+
   shownName?: string
-  /** Opens the keyboard on an empty name. Defaults to true. */
+
   autoFocusName?: boolean
 }
 
-/**
- * Inline profile editor: the avatar is a picker and the name a text input, so
- * the preview _is_ the form. Used by profile setup, onboarding, and Buddies.
- * `readOnly` renders the same card as a plain display. Earned badges show
- * underneath unless the User turned badges off.
- */
 const ProfileCard = ({
   readOnly,
   hideBadges,
@@ -110,9 +99,7 @@ const ProfileCard = ({
     }))
   )
   const badges = showBadges && !hideBadges ? profileBadges(earnedBadges) : []
-  // Profile-shaped fields live in the Profile store (wave-3 store split).
-  // ProfileCard reads + writes both stores because the card is the editing
-  // surface for Profile while tenure remains a Preference.
+
   const { name, avatar, customAvatarBackground, set: setProfile } = useProfile()
   const { name: profileName } = useUser()
   const showsOtherName = shownName !== undefined && !nameEdited

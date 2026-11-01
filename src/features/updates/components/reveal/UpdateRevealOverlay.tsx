@@ -39,24 +39,14 @@ import RevealIntro from '@/features/updates/components/reveal/RevealIntro'
 import RevealTour from '@/features/updates/components/reveal/RevealTour'
 import FoldPane from '@/components/ui/layout/FoldPane'
 
-/** How the reveal was closed. Bounded, safe as an analytics value. */
 type CloseMethod = 'later' | 'close' | 'done' | 'back'
 
 interface Props {
   source: UpdateRevealSource
-  /** The overlay has faded away; unmount it. */
+
   onClosed: () => void
 }
 
-/**
- * The update reveal: on the first launch after a big update, the splash
- * collapses into the app tile, its ring closes like an install finishing and
- * the new features burst out around it. "See what's new" opens a short tour — a
- * page per feature, mostly picture — that ends on taking the user home.
- *
- * Mounted by `HomeTabStack` above the tabs, in the very first frame of a
- * launch, so it picks up exactly where the native splash leaves off.
- */
 const UpdateRevealOverlay = ({ source, onClosed }: Props) => {
   const theme = useTheme()
   const palette = getWelcomePalette(theme)
@@ -65,7 +55,6 @@ const UpdateRevealOverlay = ({ source, onClosed }: Props) => {
   const { set } = usePreferences()
   const { pages: livePages, chips } = useRevealPages()
 
-  // Developer Tools previews the launch version over the running app.
   const [entrance] = useState<RevealEntrance>(() =>
     (source === 'launch' && isLaunching()) || source === 'dev'
       ? reduceMotion
@@ -106,13 +95,10 @@ const UpdateRevealOverlay = ({ source, onClosed }: Props) => {
     close,
   } = useRevealChoreography({ entrance, ready: root !== null && hub !== null })
 
-  // The tour's pages are fixed as it opens: Buddies' flag loads over the
-  // network, and a page appearing mid-tour would shift the ones being swiped.
   const [tourPages, setTourPages] = useState<RevealPage[] | null>(null)
   if (phase === 'tour' && !tourPages) setTourPages(livePages)
   const pages = tourPages ?? livePages
 
-  // What the user saw, for the close event.
   const openedAt = useRef(Date.now())
   const viewed = useRef(new Set<string>())
   const lastPage = useRef<string | null>(null)
@@ -135,8 +121,7 @@ const UpdateRevealOverlay = ({ source, onClosed }: Props) => {
       last_page: lastPage.current ?? undefined,
       elapsed_ms: Date.now() - openedAt.current,
     })
-    // Closing before the tour leaves a way back in from the tray. A reveal
-    // that's been toured stays seen, even when replayed and closed early.
+
     const { updateReveal } = usePreferences.getState()
     const toured =
       phase === 'tour' ||
@@ -151,16 +136,11 @@ const UpdateRevealOverlay = ({ source, onClosed }: Props) => {
     close(onClosed)
   }
 
-  // Opening the tour is seeing the reveal: no tray item to replay it.
   useEffect(() => {
     if (phase !== 'tour') return
     set({ updateReveal: { version: UPDATE_REVEAL_VERSION, status: 'seen' } })
   }, [phase, set])
 
-  // Android's back button closes the reveal like its own close button, but
-  // only while it's the takeover on screen and nothing is pushed over Root;
-  // otherwise Back belongs to whatever is in front. Registered again on every
-  // render so it stays ahead of the navigators' own handlers.
   const rootFocused = useIsFocused()
   const onScreen = useTakeover(
     (s) => s.arbiter.active?.kind === 'update-reveal'
@@ -241,8 +221,6 @@ const UpdateRevealOverlay = ({ source, onClosed }: Props) => {
             reduceMotion={reduceMotion}
             onSkip={skipIntro}
             onSeeWhatsNew={startTour}
-            // Like See what's new, a press before Later has faded in just
-            // hurries the intro.
             onLater={() =>
               values.link.value < 0.5 ? skipIntro() : finish('later')
             }

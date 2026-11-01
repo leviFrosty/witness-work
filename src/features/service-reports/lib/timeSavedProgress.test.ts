@@ -132,14 +132,12 @@ describe('timeSavedProgress', () => {
   })
 
   it('names an earlier Service Year', () => {
-    // August 2026 belongs to the 2025–2026 Service Year, not October's.
     expect(
       timeSavedProgress({ ...yearly, entryMonth: { year: 2026, month: 7 } })
         .progress
     ).toBe('121 Hrs 30 Mins of 600 Hrs in 2025–2026')
   })
 
-  // Short enough to read at a glance in a toast, about 26 characters.
   it('keeps the current period within a short toast line', () => {
     const lines = (['short', 'decimal'] as const).flatMap((format) =>
       [

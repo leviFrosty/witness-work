@@ -28,33 +28,9 @@ import type { PetWidgetSnapshot } from '@/app/widgets/petWidget'
 import type { BuddyDayMarker } from '@/features/buddies/lib/calendarMarkers'
 import type { NativeLocale } from '@/lib/nativeLocale'
 
-/**
- * Bumped whenever the snapshot shape changes in a way the Swift decoder cares
- * about. Swift compares this and refuses to render stale shapes.
- *
- * History: 1 — initial stub: { hours, strings: {monthHoursLabel, goalLabel} } 2
- * — adds report (hours/checkbox modes), contacts[], appointments[], and
- * pre-translated strings for all 3 widgets. 3 — adds
- * favorites/staleness/lastContactedRelative on contacts; drops isBibleStudy
- * from appointments and adds isOverdue/timeFormatted; adds
- * today/week/publisher-state fields to report; adds top-level config block
- * driven by Settings > Widgets. 4 — Report widget is always-month. Drops
- * today/week minute fields and the todayLabel/weekLabel strings. Drops
- * `startOfWeek` from BuildSnapshotArgs. 5 — Adds the `calendar` slice powering
- * the month-calendar widget (locked for publishers) and its pre-translated
- * label strings. Re-introduces `startOfWeek` on BuildSnapshotArgs so JS can
- * pre-build the grid with the user's preferred first column. 6 — Adds Buddies
- * to the calendar: per-day `buddies` badges and the `calendar.buddies` avatars
- * they reference. Since 6, without a bump (Swift decodes them as optional):
- * `rtl`, `numberLocale`, the `reportLabel`/`timerLabel` strings, and the Pet
- * widget's `pet` slice and `petPlaceholderLabel` string, and `builtOn` with the
- * `nextMonth` slice, and the report's `hoursPerDayToGoalByDay` (replacing the
- * `hoursPerDayToGoalSuffix` string).
- */
 export const SNAPSHOT_VERSION = 6
 
 export type WidgetStrings = {
-  // Report widget
   monthHoursLabel: string
   goalLabel: string
   addTimeLabel: string
@@ -62,59 +38,51 @@ export type WidgetStrings = {
   aheadOfScheduleLabel: string
   behindScheduleLabel: string
   encouragementPhrase: string
-  /** Eyebrow label above the Report widget's progress bar. */
+
   monthLabel: string
-  /** Publisher state copy. */
+
   reportedTodayLabel: string
   conversationsThisMonthLabel: string
   studiesThisMonthLabel: string
 
-  // Contacts widget
   contactsLabel: string
   noContactsLabel: string
   callLabel: string
   textLabel: string
   directionsLabel: string
 
-  // Appointments widget
   appointmentsLabel: string
   todaysConversationsLabel: string
   upcomingConversationsLabel: string
   noAppointmentsLabel: string
   tomorrowLabel: string
-  /** Reschedule sheet copy. */
+
   overdueLabel: string
   rescheduleLabel: string
   markCompleteLabel: string
 
-  // Calendar widget
   calendarLabel: string
-  /** Shown on the publisher-locked calendar placeholder. */
+
   calendarPublisherLockedLabel: string
-  /** "Create plan" quick-action tooltip / accessibility label. */
+
   createPlanLabel: string
 
-  /** Under the checkbox of the circular lock screen Report widget. */
   reportLabel: string
-  /** The timer Live Activity's label. */
+
   timerLabel: string
 
-  /** The Pet widget's text while there's no pet. */
   petPlaceholderLabel: string
 }
 
 export type WidgetConfig = {
-  /** Source-of-truth for the contacts widget sort. */
   contactSort: WidgetContactSort
-  /** Source-of-truth for the contacts widget quick action per row. */
+
   contactAction: WidgetContactAction
-  /** Source-of-truth for the appointments widget time window. */
+
   appointmentWindow: WidgetAppointmentWindow
 }
 
-/** The Report and Calendar widgets' data as of the first day of next month. */
 export type WidgetNextMonth = {
-  /** `YYYY-MM-01`, the local day `report` and `calendar` describe. */
   builtOn: string
   report: ReportFields
   calendar: WidgetCalendar
@@ -122,83 +90,42 @@ export type WidgetNextMonth = {
 
 export type WidgetSnapshot = {
   version: number
-  /** Epoch ms when the snapshot was produced. */
+
   updatedAt: number
-  /**
-   * The local day (`YYYY-MM-DD`) the date-dependent fields describe: "reported
-   * today", the calendar's today, overdue follow-ups. The widgets keep showing
-   * a snapshot until the app writes another, so each timeline entry moves these
-   * along from this day to its own (`SnapshotDay.swift`). Part of the content
-   * hash, so the first write of a day isn't skipped.
-   */
+
   builtOn: string
-  /** App locale at write time, e.g. 'en-us'. */
+
   locale: string
-  /**
-   * Lay the widgets out right to left, as the app is. They render in the widget
-   * extension, which would follow the device's language instead.
-   */
+
   rtl: NativeLocale['rtl']
-  /** BCP 47 tag to write the numbers Swift formats in (`ar-u-nu-arab`). */
+
   numberLocale: NativeLocale['numberLocale']
-  /**
-   * Supporter-only custom accent (`#RRGGBB`). `null` means use the default
-   * brand green. The snapshot writer is responsible for gating on supporter
-   * status — non-supporters always receive `null` even if `customAccentColor`
-   * is set, so a lapsed supporter's preference stops taking effect in widgets
-   * without the Swift side needing to know what a supporter is.
-   */
+
   accentColor: string | null
-  /**
-   * Pre-translated display strings. The widget never calls i18n; the JS side
-   * resolves every label and writes the result so SwiftUI can render the user's
-   * chosen locale without duplicating translation infrastructure.
-   */
+
   strings: WidgetStrings
-  /**
-   * Widget configuration sourced from in-app Settings > Widgets. App Intents
-   * are deliberately not used as a configuration source — settings is the only
-   * place users tune widget behavior.
-   */
+
   config: WidgetConfig
-  /** Hours/checkbox card data. Mode branches on publisher type. */
+
   report: ReportFields
-  /**
-   * Contacts ordered by the user's selected sort with favorites and bible
-   * studies tiered to the top. The widget renders 1/4/8 per family.
-   */
+
   contacts: WidgetContact[]
-  /**
-   * Follow-ups in the widest configurable window (30d back through 30d
-   * forward). Overdue come first; the widget further narrows by
-   * `appointmentWindow`.
-   */
+
   appointments: WidgetAppointment[]
-  /**
-   * Pre-built calendar grid for the current month. `locked: true` when the user
-   * is a publisher — the widget renders a locked placeholder in that case and
-   * `days` is empty.
-   */
+
   calendar: WidgetCalendar
-  /**
-   * The Pet widget's pet and its timeline of images in the App Group's `pet/`
-   * folder. `null` when there's no pet; the widget shows a placeholder.
-   */
+
   pet: PetWidgetSnapshot | null
-  /**
-   * What the Report and Calendar widgets show from the 1st of next month until
-   * the app writes a new snapshot.
-   */
+
   nextMonth: WidgetNextMonth
 }
 
 export type BuildSnapshotArgs = {
-  // Report inputs
   serviceReports: TimeEntriesByYear
   publisher: Publisher
-  /** Next month's role (Role History), for the `nextMonth` slice. */
+
   nextMonthPublisher: Publisher
-  /** Mirrors `preferences.logsHours` — unlocks the calendar for publishers. */
+
   logsHours: boolean
   publisherHours: PublisherHours
   monthlyGoalOverrides: MonthlyGoalOverrides
@@ -208,40 +135,27 @@ export type BuildSnapshotArgs = {
   dayPlans: DayPlan[]
   recurringPlans: RecurringPlan[]
 
-  // Contacts/appointments inputs
   contacts: Contact[]
   conversations: Visit[]
   defaultNavigationMapProvider: DefaultNavigationMapProvider
   defaultPhoneRegionCode: string
-  /** Mirrors `preferences.stalenessBreakpoints` — drives the staleness dot. */
+
   stalenessBreakpoints: StalenessBreakpoints
 
-  // Widget configuration (source of truth = preferences)
   widgetContactSort: WidgetContactSort
   widgetContactAction: WidgetContactAction
   widgetAppointmentWindow: WidgetAppointmentWindow
 
-  /** Mirrors `preferences.startOfWeek` — drives the calendar grid layout. */
   startOfWeek: number
-  /** Schedule calendar's buddy markers; empty when Buddies is off. */
+
   buddyMarkers: Record<string, BuddyDayMarker>
 
-  // Locale
   locale: string
-  /** The app Language's direction and digits (`nativeLocale`). */
+
   nativeLocale: NativeLocale
 
-  /**
-   * Resolved accent hex (`#RRGGBB`) or `null` to fall back to the brand green.
-   * Caller is responsible for only forwarding a value when the user is an
-   * active supporter — this builder treats whatever it receives as final.
-   */
   accentColor: string | null
 
-  /**
-   * The Pet widget's slice, built and its images written beforehand
-   * (`buildPetWidgetSnapshot`); `null` without a pet.
-   */
   pet: PetWidgetSnapshot | null
 }
 

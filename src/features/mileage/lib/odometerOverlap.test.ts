@@ -41,7 +41,7 @@ describe('odometer readings that overlap another trip', () => {
   it('find a trip on the same car whose readings overlap', () => {
     expect(overlap(1010, 1030)).toBe('b')
     expect(overlap(1005, 1015)).toBe('a')
-    // Inside, and around.
+
     expect(overlap(1025, 1030)).toBe('b')
     expect(overlap(990, 1060)).toBe('b')
   })
@@ -53,7 +53,7 @@ describe('odometer readings that overlap another trip', () => {
   it('let readings meet without overlapping', () => {
     expect(overlap(1050, 1070)).toBeUndefined()
     expect(overlap(980, 1000)).toBeUndefined()
-    // The same reading after a unit conversion.
+
     expect(overlap(1050 - 1e-9, 1070)).toBeUndefined()
   })
 

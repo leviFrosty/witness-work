@@ -43,7 +43,7 @@ describe('day keys', () => {
 
   it('names the local day of a moment', () => {
     process.env.TZ = 'Pacific/Auckland'
-    // 11:30 UTC on the 17th is past midnight on the 18th in Auckland.
+
     expect(localDayKey(Date.UTC(2026, 9, 17, 11, 30))).toBe('2026-10-18')
     process.env.TZ = 'America/Los_Angeles'
     expect(localDayKey(Date.UTC(2026, 9, 18, 3, 0))).toBe('2026-10-17')
@@ -73,7 +73,7 @@ describe('day keys', () => {
       '2026-03-02T12:00:00.000Z',
       '2026-03-02T12:00:00Z',
       new Date('2026-03-02T12:00:00.000Z'),
-      // Not anchored: the local day.
+
       new Date(2026, 2, 2, 23, 30),
       '2026-03-02T05:00:00.000Z',
     ])

@@ -23,13 +23,6 @@ import { useFoldColumn } from '@/components/ui/layout/FoldPane'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Buddy'>
 
-/**
- * One buddy: who they are, with their nickname and color right under it so a
- * change shows as it's made, and the badges they share; what's planned
- * together, their next two weeks next to the User's (tap a day to plan the same
- * time or ask to join), a way into their settings, and ending the pairing.
- * Their full schedule lives on the calendar.
- */
 export default function BuddyDetailScreen({ route, navigation }: Props) {
   const theme = useTheme()
   const { inboxId } = route.params
@@ -40,8 +33,6 @@ export default function BuddyDetailScreen({ route, navigation }: Props) {
   const { needsAnswer, together } = useBuddyTogether(inboxId)
   const foldColumn = useFoldColumn(720)
 
-  // Removed here, from the other side, or by delete-all. Opened with nothing
-  // to go back to, it shows Buddies instead of an empty page.
   useEffect(() => {
     if (buddy) return
     if (navigation.canGoBack()) navigation.goBack()

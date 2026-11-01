@@ -35,19 +35,11 @@ vi.mock(
   () => import('@/__tests__/mocks/asyncStorage')
 )
 
-/**
- * Shared Cars' invitations end to end: each person is a real Buddies engine (on
- * the fake relay) and a real Shared Cars engine (on the fake Spaces server),
- * joined as the app joins them, by `createBuddiesCarsLink` and
- * `createCarInvitations`.
- */
-
 const random = (length: number) => new Uint8Array(nodeRandomBytes(length))
 
 let server: FakeSpacesServer
 
 beforeEach(() => {
-  // Retries wait no time.
   vi.spyOn(Math, 'random').mockReturnValue(0)
   server = createFakeSpacesServer({ now: Date.now })
 })
@@ -58,11 +50,6 @@ afterEach(() => {
 
 type Env = ReturnType<typeof setup>
 
-/**
- * One device of a person: Buddies and Shared Cars, on one root seed. `running`:
- * whether Shared Cars runs here (its flag on). `spacesOffline`: Spaces ops that
- * fail here as if the device were offline.
- */
 function person(
   env: Env,
   name: string,
@@ -110,8 +97,7 @@ function person(
     onError: (_error, context) => errors.push(context),
   })
   link.setHandler(invitations.buddiesHandler)
-  // As the runtime does while Shared Cars runs: a change to the memberships
-  // here goes to the roster, but not one a roster merge is writing.
+
   if (running)
     car.store.subscribe((state, previous) => {
       if (
@@ -120,7 +106,7 @@ function person(
       )
         buddies.engine.noteCarMemberships()
     })
-  /** The roster on the relay, opened. */
+
   const roster = (): Roster | null => {
     const stored = env.fake.inboxes.get(buddies.inboxId)?.roster
     if (!stored) return null
@@ -129,11 +115,7 @@ function person(
       fromUtf8(open(rosterKey, stored.blob, `ww-buddies/v1/roster|${inboxId}`))
     )
   }
-  /**
-   * The roster write a change asks for, now (the app's runtime asks on every
-   * change to the memberships, and it waits a moment), until the relay's roster
-   * says what `check` looks for.
-   */
+
   const saveRoster = async (check: (roster: Roster | null) => void) => {
     buddies.engine.noteCarMemberships()
     for (const { run } of buddies.timers.splice(0)) run()
@@ -148,9 +130,9 @@ function person(
     errors,
     saveRoster,
     spacesOffline,
-    /** The next Spaces `op` reaches the server; its answer never comes back. */
+
     loseNext,
-    /** Runs before each Spaces call goes out. */
+
     beforeSpacesOp: (hook: typeof beforeSpacesOp) => {
       beforeSpacesOp = hook
     },
@@ -159,7 +141,6 @@ function person(
 
 type Person = ReturnType<typeof person>
 
-/** One of the User's own cars, with two trips. */
 function ownCar({ car }: Person) {
   car.savePersonal('vehicles', { id: 'car-1', name: 'Mazda', createdAt: 1 })
   car.savePersonal('fuels', { id: 'fuel-1', name: 'Gasoline', createdAt: 1 })
@@ -190,7 +171,6 @@ const carEntries = (who: Person): BuddyNotification[] =>
 const memberNames = (who: Person, spaceId: string) =>
   who.car.car(spaceId).members.map((m) => m.name)
 
-/** Every Spaces op, for a device that can't reach the server at all. */
 const SPACES_OPS: SpaceOp[] = [
   'create',
   'sync',
@@ -204,17 +184,13 @@ const SPACES_OPS: SpaceOp[] = [
   'deleteSpace',
 ]
 
-/** The `car.*` events of `kind` the relay holds for `who`. */
 const carEventsTo = (env: Env, who: Person, kind: string) =>
   env.fake.inboxes.get(who.inboxId)!.events.filter((e) => e.kind === kind)
 
-/** How many requests of `op` the relay has had. */
 const relayRequests = (env: Env, op: string) =>
   env.fake.requests.filter((request) => request.op === op).length
 
-/** Anna and Joe, buddies, with Anna's car shared. */
 async function annaAndJoe() {
-  // Buddies' clock is the device's, as the cars' is.
   const env = setup({ start: Date.now() })
   const anna = person(env, 'Anna')
   const joe = person(env, 'Joe')
@@ -225,7 +201,6 @@ async function annaAndJoe() {
   return { env, anna, joe, spaceId, key }
 }
 
-/** Anna invites Joe to her car, and his app has the invitation. */
 async function joeInvited() {
   const context = await annaAndJoe()
   const { anna, joe, spaceId, key } = context
@@ -246,7 +221,7 @@ describe('sharing a car with a buddy', () => {
       joe.inboxId
     )
     expect(anna.events).toEqual([{ name: 'shared_car_invite_sent' }])
-    // Listed on the car by Joe's Buddy Card name and his inbox, hashed.
+
     expect(anna.car.car(spaceId).invites).toEqual([
       expect.objectContaining({
         inviteId,
@@ -258,7 +233,6 @@ describe('sharing a car with a buddy', () => {
       expect.objectContaining({ status: 'invited', inviteId, mine: true }),
     ])
 
-    // The push Joe's phone gets is worded by name, never the car's.
     const pushed = env.fake.markers.filter(
       (m) => m.inboxId === joe.inboxId && m.marker.kind === 'car.invite'
     )
@@ -286,7 +260,6 @@ describe('sharing a car with a buddy', () => {
       { name: 'shared_car_invite_answered', answer: 'joined' },
     ])
 
-    // Anna's app lists it, by Joe's name, and syncs the car to show him.
     const replies = env.fake.markers.filter(
       (m) => m.inboxId === anna.inboxId && m.marker.kind === 'car.reply'
     )
@@ -331,7 +304,7 @@ describe('sharing a car with a buddy', () => {
     expect(await refused(spaceId, joe.inboxId)).toEqual(
       new CarInvitationError('already_on_car')
     )
-    // Only the one invitation went.
+
     expect(
       env.fake.inboxes
         .get(joe.inboxId)!
@@ -353,7 +326,7 @@ describe('sharing a car with a buddy', () => {
     expect(joe.events).toEqual([
       { name: 'shared_car_invite_answered', answer: 'declined' },
     ])
-    // Declining is quiet.
+
     expect(
       env.fake.pushes.filter(
         (p) => p.inboxId === anna.inboxId && p.kind === 'car.reply'
@@ -378,7 +351,7 @@ describe('sharing a car with a buddy', () => {
       joe.inboxId
     )
     await joe.engine.sync()
-    // Anna cancels while her cancel can't reach Joe yet.
+
     env.offlineOps.add('event/put')
     await expect(
       anna.invitations.cancelInvite(spaceId, inviteId)
@@ -397,7 +370,6 @@ describe('sharing a car with a buddy', () => {
     )
     expect(carEntries(joe)).toHaveLength(1)
 
-    // The cancel arrives: the invitation goes, with its entry.
     env.offlineOps.clear()
     await anna.engine.sync()
     await joe.engine.sync()
@@ -422,7 +394,6 @@ describe('sharing a car with a buddy', () => {
     )
     await anna.car.engine.syncCar(spaceId)
 
-    // Removing Dee rekeys the car, which closes Joe's open invitation.
     await anna.car.engine.removeMember(spaceId, dee.car.car(spaceId).myMemberId)
     const [reissued] = anna.car.car(spaceId).invites
     expect(reissued.inviteId).not.toBe(toJoe.inviteId)
@@ -513,7 +484,7 @@ describe('the User’s other devices', () => {
     await vi.waitFor(() =>
       expect(joesIpad.car.car(spaceId)?.trips).toHaveLength(2)
     )
-    // One reply, from the device that joined.
+
     expect(
       env.fake.inboxes
         .get(anna.inboxId)!
@@ -535,7 +506,7 @@ describe('the end of Buddies', () => {
     await joe.engine.deleteEverything()
     expect(joe.car.store.getState().cars).toEqual({})
     expect(joe.car.personal().trips).toHaveLength(2)
-    // Joe was the only other one on it: it's Anna's own car again.
+
     expect(await anna.car.engine.syncCar(spaceId)).toBe('ended')
     expect(anna.car.outcomes).toContainEqual({
       type: 'ended',
@@ -554,7 +525,7 @@ describe('the end of Buddies', () => {
 
     await joe.engine.leaveThisDevice()
     expect(joe.car.store.getState().cars).toEqual({})
-    // No copy here: the car is still his, elsewhere.
+
     expect(joe.car.personal().trips).toEqual([])
     await anna.car.engine.syncCar(spaceId)
     expect(memberNames(anna, spaceId)).toEqual(['Anna', 'Joe'])
@@ -564,7 +535,7 @@ describe('the end of Buddies', () => {
 describe('inviting', () => {
   it('closes an invitation again when the buddy goes while it opens', async () => {
     const { env, anna, joe, spaceId } = await annaAndJoe()
-    // Anna removes Joe on another screen while the invitation opens.
+
     anna.beforeSpacesOp(async (op) => {
       if (op !== 'createInvite') return
       anna.beforeSpacesOp(null)
@@ -574,7 +545,7 @@ describe('inviting', () => {
       anna.invitations.inviteBuddy(spaceId, joe.inboxId)
     ).rejects.toEqual(new CarInvitationError('not_buddy'))
     expect(anna.events).toEqual([])
-    // Nobody would hear of it: it's closed, on the car and on the server.
+
     await vi.waitFor(() =>
       expect(server.spaces.get(spaceId)!.invites.size).toBe(0)
     )
@@ -591,7 +562,6 @@ describe('inviting', () => {
     await annasIpad.engine.sync()
     await vi.waitFor(() => expect(annasIpad.car.car(spaceId)).toBeDefined())
 
-    // Anna's phone opens an invitation, but can't send it yet.
     env.offlineOps.add('event/put')
     const { inviteId } = await anna.invitations.inviteBuddy(
       spaceId,
@@ -602,11 +572,9 @@ describe('inviting', () => {
       expect.objectContaining({ kind: 'car.invite', inviteId }),
     ])
 
-    // Her iPad cancels it.
     await annasIpad.car.engine.syncCar(spaceId)
     await annasIpad.invitations.cancelInvite(spaceId, inviteId)
 
-    // Back online, the phone finds it closed on the car and drops it.
     await anna.car.engine.syncCar(spaceId)
     await anna.engine.sync()
     expect(anna.store.getState().carEvents).toEqual({})
@@ -652,7 +620,7 @@ describe('a join whose answer was lost', () => {
       { name: 'shared_car_invite_answered', answer: 'joined' },
     ])
     expect(carEventsTo(env, anna, 'car.reply')).toHaveLength(1)
-    // The car catches up on its next sync.
+
     await joe.car.engine.syncCar(spaceId)
     expect(joe.car.car(spaceId).trips).toHaveLength(2)
   })
@@ -688,14 +656,13 @@ describe('a join whose answer was lost', () => {
       code: 'network',
     })
 
-    // The next sync confirms it, and answers the invitation Join used.
     joe.spacesOffline.clear()
     await joe.car.engine.sync()
     expect(joe.car.car(spaceId).trips).toHaveLength(2)
     await vi.waitFor(() =>
       expect(joe.store.getState().carInvites[invitation].status).toBe('joined')
     )
-    // Answered, it can't be declined.
+
     await expect(joe.invitations.decline(invitation)).rejects.toEqual(
       new CarInvitationError('not_found')
     )
@@ -703,7 +670,7 @@ describe('a join whose answer was lost', () => {
     expect(carEntries(joe)).toEqual([
       expect.objectContaining({ kind: 'carInvite', read: true }),
     ])
-    // The joined reply goes once, counted once; no decline waits to go.
+
     await joe.engine.sync()
     expect(joe.store.getState().carEvents).toEqual({})
     expect(carEventsTo(env, anna, 'car.reply')).toHaveLength(1)
@@ -714,7 +681,7 @@ describe('a join whose answer was lost', () => {
     expect(joe.events).toEqual([
       { name: 'shared_car_invite_answered', answer: 'joined' },
     ])
-    // A later sync tells nobody again.
+
     await joe.car.engine.sync()
     await joe.engine.sync()
     expect(carEventsTo(env, anna, 'car.reply')).toHaveLength(1)
@@ -729,7 +696,6 @@ describe('the User’s devices together', () => {
     const joesIpad = person(env, 'Joe', joe.seed)
     await joesIpad.engine.sync()
 
-    // Joe's phone declines while it can't reach the relay.
     env.offlineOps.add('event/put')
     await joe.invitations.decline(invitation)
     env.offlineOps.clear()
@@ -737,21 +703,19 @@ describe('the User’s devices together', () => {
       expect.objectContaining({ kind: 'car.reply' }),
     ])
 
-    // His iPad, which hasn't heard, joins.
     env.advance(1000)
     await joesIpad.invitations.join(invitation)
     await joesIpad.saveRoster((roster) =>
       expect(roster?.cars).toHaveProperty(spaceId)
     )
 
-    // The phone hears of the newer answer first, and its decline never goes.
     const puts = relayRequests(env, 'event/put')
     await joe.engine.sync()
     expect(relayRequests(env, 'event/put')).toBe(puts)
     expect(joe.store.getState().carEvents).toEqual({})
     expect(joe.store.getState().carInvites[invitation].status).toBe('joined')
     await vi.waitFor(() => expect(joe.car.car(spaceId)?.trips).toHaveLength(2))
-    // Anna got the join, and her invitation's record went with it.
+
     expect(carEventsTo(env, anna, 'car.reply')).toHaveLength(1)
     await anna.car.engine.syncCar(spaceId)
     expect(memberNames(anna, spaceId)).toEqual(['Anna', 'Joe'])
@@ -760,7 +724,7 @@ describe('the User’s devices together', () => {
 
   it('keep a car joined again since another device left it, and settle', async () => {
     const { env, anna, joe, spaceId, key } = await annaAndJoe()
-    // Dee keeps the car shared while Joe is off it.
+
     const dee = person(env, 'Dee')
     await pair(anna, dee)
     const toDee = await anna.invitations.inviteBuddy(spaceId, dee.inboxId)
@@ -780,8 +744,6 @@ describe('the User’s devices together', () => {
       expect(joesIpad.car.car(spaceId)?.trips).toHaveLength(2)
     )
 
-    // On his phone, Joe leaves the car and joins it again, while his iPad is
-    // off.
     await joe.car.engine.leaveCar(spaceId)
     await anna.car.engine.syncCar(spaceId)
     const again = await anna.invitations.inviteBuddy(spaceId, joe.inboxId)
@@ -793,7 +755,6 @@ describe('the User’s devices together', () => {
       )
     )
 
-    // The iPad notes the leave, but stays on the car, with no copy.
     await joesIpad.engine.sync()
     const { memberships } = joesIpad.car.store.getState()
     expect(memberships.leftCars).toHaveProperty(spaceId)
@@ -804,7 +765,6 @@ describe('the User’s devices together', () => {
     expect(joesIpad.car.personal().trips).toEqual([])
     expect(joesIpad.car.store.getState().pendingEnds).toEqual({})
 
-    // Once both have the same memberships, the roster isn't written again.
     const round = async () => {
       for (const device of [joe, joesIpad]) {
         await device.engine.sync()
@@ -836,7 +796,6 @@ describe('the end of Buddies, with Shared Cars off', () => {
       expect(roster?.cars).toHaveProperty(spaceId)
     )
 
-    // Joe's iPad has Shared Cars off: the roster's car is only noted.
     const joesIpad = person(env, 'Joe', joe.seed, { running: false })
     await joesIpad.engine.sync()
     expect(joesIpad.car.store.getState().cars).toEqual({})
@@ -844,7 +803,6 @@ describe('the end of Buddies, with Shared Cars off', () => {
       spaceId
     )
 
-    // It can't reach Spaces: nothing is deleted.
     for (const op of SPACES_OPS) joesIpad.spacesOffline.add(op)
     const refused = await joesIpad.engine
       .deleteEverything()
@@ -859,7 +817,6 @@ describe('the end of Buddies, with Shared Cars off', () => {
     await anna.car.engine.syncCar(spaceId)
     expect(memberNames(anna, spaceId)).toEqual(['Anna', 'Joe'])
 
-    // Once it can, Joe is off the car, and then his Buddies data goes.
     joesIpad.spacesOffline.clear()
     await joesIpad.engine.deleteEverything()
     expect(joesIpad.store.getState().buddies).toEqual([])
@@ -870,7 +827,7 @@ describe('the end of Buddies, with Shared Cars off', () => {
 describe('signing out, with what the server hasn’t heard', () => {
   it('waits for an invitation’s close, then sends its cancel before going', async () => {
     const { env, anna, joe, spaceId, invitation, inviteId } = await joeInvited()
-    // Anna cancels while neither Spaces nor the relay can hear.
+
     anna.spacesOffline.add('deleteInvite')
     env.offlineOps.add('event/put')
     await expect(
@@ -884,8 +841,6 @@ describe('signing out, with what the server hasn’t heard', () => {
     expect(anna.car.store.getState().closingInvites).toHaveProperty(spaceId)
     expect(server.spaces.get(spaceId)!.invites.has(inviteId)).toBe(true)
 
-    // Back online: the close lands, the cancel goes, and then this device
-    // signs out, leaving Anna on her car for her other devices.
     anna.spacesOffline.clear()
     env.offlineOps.clear()
     await anna.engine.leaveThisDevice()
@@ -900,10 +855,6 @@ describe('signing out, with what the server hasn’t heard', () => {
 })
 
 describe('what stays on the device', () => {
-  /**
-   * What a device saves (MMKV): its Buddies store, its Shared Cars stores, and
-   * its own mileage.
-   */
   const saved = (who: Person) =>
     JSON.stringify([
       who.store.getState(),
@@ -928,14 +879,12 @@ describe('what stays on the device', () => {
         for (const secret of secrets) expect(saved(who)).not.toContain(secret)
     }
 
-    // Invited while the relay can't take them: saved to send again.
     env.offlineOps.add('event/put')
     const toJoe = await anna.invitations.inviteBuddy(spaceId, joe.inboxId)
     const toCal = await anna.invitations.inviteBuddy(spaceId, cal.inboxId)
     expect(Object.values(anna.store.getState().carEvents)).toHaveLength(2)
     await expectNoneSaved()
 
-    // Sent again on the next sync, and received.
     env.offlineOps.clear()
     await anna.engine.sync()
     expect(anna.store.getState().carEvents).toEqual({})
@@ -945,14 +894,12 @@ describe('what stays on the device', () => {
     expect(carEntries(cal)).toHaveLength(1)
     await expectNoneSaved()
 
-    // Joe joins, and Cal declines.
     await joe.invitations.join(key(toJoe.inviteId))
     await cal.invitations.decline(key(toCal.inviteId))
     await anna.engine.sync()
     expect(joe.car.car(spaceId)).toBeDefined()
     await expectNoneSaved()
 
-    // Nothing needs them any more, so no keystore keeps them either.
     for (const who of everyone) {
       await who.inviteSecrets.flushed()
       expect(who.inviteSecretStorage.value()).toBeNull()
@@ -964,13 +911,11 @@ describe('what stays on the device', () => {
     const { env, anna, joe, spaceId, key } = await annaAndJoe()
     env.offlineOps.add('event/put')
     const lost = await anna.invitations.inviteBuddy(spaceId, joe.inboxId)
-    // A binary without device secrets kept them in memory, and restarted.
+
     anna.inviteSecrets.clear()
     env.offlineOps.clear()
     await anna.engine.sync()
 
-    // The old one closes on the car, and a new one goes to Joe in its place,
-    // with the old one taken back: it was handed to the relay once.
     await vi.waitFor(() =>
       expect(carEventsTo(env, joe, 'car.invite')).toHaveLength(1)
     )
@@ -998,7 +943,7 @@ describe('what stays on the device', () => {
     const lost = await anna.invitations.inviteBuddy(spaceId, joe.inboxId)
     anna.inviteSecrets.clear()
     env.offlineOps.clear()
-    // Shared Spaces is out of reach when Buddies finds it lost.
+
     for (const op of SPACES_OPS) anna.spacesOffline.add(op)
     await anna.engine.sync()
     await vi.waitFor(() => expect(anna.errors).toContain('car.invite'))
@@ -1010,7 +955,6 @@ describe('what stays on the device', () => {
     ])
     expect(carEventsTo(env, joe, 'car.invite')).toEqual([])
 
-    // A later sync closes it and sends a new one in its place.
     anna.spacesOffline.clear()
     await anna.car.engine.sync()
     await vi.waitFor(() =>
@@ -1029,7 +973,7 @@ describe('what stays on the device', () => {
 
   it('can’t join an invitation whose secrets the device lost, and drops it', async () => {
     const { joe, invitation } = await joeInvited()
-    // Restored onto a new phone, say: the keystore didn't come along.
+
     joe.inviteSecrets.clear()
     await expect(joe.invitations.join(invitation)).rejects.toEqual(
       new CarInvitationError('not_found')

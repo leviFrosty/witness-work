@@ -21,7 +21,6 @@ export type MileageUnits = {
   currency?: string
 }
 
-/** Applies Auto (device region) to unset unit preferences. */
 export function resolveMileageUnits(prefs: {
   distanceUnit?: DistanceUnit
   fuelEconomyUnit?: FuelEconomyUnit
@@ -35,7 +34,6 @@ export function resolveMileageUnits(prefs: {
   }
 }
 
-/** Display helpers for canonical (miles / US mpg / per-gallon) values. */
 export function createMileageFormatter(units: MileageUnits) {
   const distanceSuffix = i18n.t(`mileage.units.${units.distanceUnit}`)
   const economySuffix = i18n.t(`mileage.units.${units.economyUnit}`)

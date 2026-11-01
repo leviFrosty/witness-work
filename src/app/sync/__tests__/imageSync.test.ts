@@ -147,7 +147,6 @@ describe('pushAllImages', () => {
       now: () => now,
     })
 
-    // First push — fails.
     const first = await pushAllImages({
       sources: [
         {
@@ -169,7 +168,6 @@ describe('pushAllImages', () => {
     expect(entryAfterFail.lastError).toBeDefined()
     expect(entryAfterFail.failures).toBe(1)
 
-    // An edit right after doesn't upload the same file again yet.
     const waiting = await pushAllImages({
       sources: [
         {
@@ -185,7 +183,6 @@ describe('pushAllImages', () => {
     expect(waiting.skipped).toBe(1)
     expect(writeBinary).toHaveBeenCalledTimes(1)
 
-    // Once the backoff passes, it retries and succeeds.
     now += uploadBackoffMs(1)
     const second = await pushAllImages({
       sources: [
@@ -240,8 +237,6 @@ describe('pushAllImages', () => {
       first.bookkeeping['witness-work-img-contact-abc.jpg'].lastError
     ).toMatch(/quota/i)
 
-    // Next store-edit push — should be skipped without attempting writeBinary
-    // again. User typing shouldn't spam failing writes against a full iCloud.
     const second = await pushAllImages({
       sources: [
         {
@@ -293,7 +288,7 @@ describe('pushAllImages', () => {
     expect(first.bookkeeping['witness-work-img-contact-abc.jpg']).toMatchObject(
       { errorCode: 'storage-full', failures: 1 }
     )
-    // Long past its backoff, an edit still doesn't retry a full account.
+
     now = 24 * 60 * 60_000
     const edit = await pushAllImages({
       sources,
@@ -309,7 +304,7 @@ describe('pushAllImages', () => {
       trigger: 'foreground',
     })
     expect(writeBinary).toHaveBeenCalledTimes(2)
-    // Each failure in a row waits longer.
+
     expect(
       foreground.bookkeeping['witness-work-img-contact-abc.jpg'].failures
     ).toBe(2)
@@ -347,8 +342,6 @@ describe('pushAllImages', () => {
     })
     expect(first.failed).toBe(1)
 
-    // Foreground retry — user may have cleaned up iCloud in Settings, so
-    // give it another shot at the same local mtime once its backoff passed.
     now = uploadBackoffMs(1)
     const second = await pushAllImages({
       sources: [
@@ -392,10 +385,6 @@ describe('pushAllImages', () => {
   })
 
   it('silently skips sources whose local file has disappeared', async () => {
-    // A contact might reference an image whose file the user has manually
-    // cleaned, or whose file was never saved because of an earlier crash.
-    // Skipping is safer than marking failure — it keeps bookkeeping clean
-    // without blocking the rest of the batch.
     const deps = makeDeps({
       fs: { getModifiedAt: vi.fn(async () => null) },
     })
@@ -512,9 +501,6 @@ describe('pullMissingImages', () => {
   })
 
   it('skips a source whose container mtime matches the last-downloaded mtime', async () => {
-    // Same-generation file: this device previously downloaded the binary,
-    // bookkeeping recorded the container mtime, and nothing has changed
-    // upstream. No need to re-download.
     const deps = makeDeps({
       bridge: {
         writeBinary: vi.fn(),
@@ -619,7 +605,7 @@ describe('pullMissingImages', () => {
     const deps = makeDeps({
       bridge: {
         writeBinary: vi.fn(),
-        // Removed since the listing, say.
+
         readBinary: vi
           .fn()
           .mockRejectedValueOnce(new Error('ICLOUD_READ_BINARY_MISSING'))
@@ -676,7 +662,6 @@ describe('gcOrphanImages', () => {
 
     deps.now = () => 2 * 24 * 60 * 60_000
     const result = await gcOrphanImages({
-      // Only contact 'abc' still exists locally — 'zzz' is gone.
       deletions: [
         { identity: { kind: 'contact', id: 'zzz' }, deletedAt: 2000 },
       ],

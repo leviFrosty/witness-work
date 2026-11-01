@@ -46,11 +46,6 @@ const envVariables = z.object({
     ),
 })
 
-// Validate runtime env in all builds. In dev we throw to fail fast; in
-// production we log the validation failure so a misconfigured EAS env var
-// (e.g. the RevenueCat key shipped as a `secret`-visibility variable and
-// thus stripped from the bundle) surfaces loudly instead of silently
-// breaking features in TestFlight.
 const result = envVariables.safeParse(process.env)
 if (!result.success) {
   if (__DEV__) {
@@ -66,7 +61,6 @@ if (!result.success) {
 }
 
 declare global {
-  // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace NodeJS {
     interface ProcessEnv extends z.infer<typeof envVariables> {}
   }

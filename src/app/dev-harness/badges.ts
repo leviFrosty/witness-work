@@ -47,18 +47,11 @@ import { usePreferences } from '@/stores/preferences'
 import useServiceReport from '@/stores/serviceReport'
 import type { BadgeKey, BadgeLevel, SharedBadge } from '@/types/badges'
 
-/**
- * Dev-only badge controls shared by Tools (`BadgesTools`) and the verification
- * harness (`__WW_DEV__.badges`). They write the real stores, so whatever they
- * set up renders exactly as earned badges would.
- */
-
 export type BadgeRunSummary = {
-  /** Badges this run stored. */
   added: number
-  /** Queued for celebration (live, and badges are shown). */
+
   live: BadgeKey[]
-  /** Filed as history. */
+
   history: number
 }
 
@@ -71,39 +64,20 @@ const summarize = ({ newlyEarned }: BadgeEvaluationResult): BadgeRunSummary => {
   }
 }
 
-/** The User's (or a dev's) action from the last few seconds, if any. */
 export const recentUserAction = (): UserAction | null =>
   userActedWithin(CELEBRATION_WINDOW_MS) ? lastUserAction() : null
 
-/**
- * Evaluates from the current stores, as after a change. With `action` (an
- * action the User just took), live badges show unlock toasts; without one, as
- * after a change from elsewhere, they wait in the notifications tray. History
- * shows the welcome or summary either way. `quiet` stores everything as history
- * with nothing shown.
- */
 export const evaluateBadgesNow = ({
   quiet = false,
   action = null,
 }: { quiet?: boolean; action?: UserAction | null } = {}): BadgeRunSummary =>
   summarize(runBadgeEvaluation({ quiet, action }))
 
-/**
- * Forgets earned badges, the ledger, the seen time and the session queue. The
- * next evaluation is this device's first pass again: whatever the records reach
- * is filed as history, without celebrations.
- */
 export const resetBadgeState = () => {
   usePreferences.getState().resetBadges()
   useBadgeSession.getState().reset()
 }
 
-/**
- * Resets, then marks the first pass as done and evaluates, so what the records
- * reach counts as just earned by `action`: levels reached this or last month
- * show unlock toasts (or, without an action, wait in the tray); older ones go
- * to the history summary.
- */
 export const reEarnBadgesLive = (
   action: UserAction | null = null
 ): BadgeRunSummary => {
@@ -117,17 +91,11 @@ export const reEarnBadgesLive = (
 const record = (earned: FixtureEarnedBadge[]) =>
   usePreferences.getState().recordBadges({ earned, ledger: [] })
 
-/** Stores every badge as history. Never overwrites one already earned. */
 export const earnEveryBadge = () => {
   record(buildEveryBadgeRecords({ now: new Date() }))
   return earnedBadgeCount(usePreferences.getState().earnedBadges)
 }
 
-/**
- * Replaces earned badges with a realistic mixed set; two arrive just now and
- * show as new. Whatever the records already reach is filed quietly too, a
- * moment earlier, so it stays seen and nothing pops up later.
- */
 export const earnRandomBadges = () => {
   const now = Date.now()
   resetBadgeState()
@@ -137,24 +105,12 @@ export const earnRandomBadges = () => {
   return earnedBadgeCount(usePreferences.getState().earnedBadges)
 }
 
-/**
- * Queues one badge's celebration, earned or not, for a preview: it waits for
- * its takeover turn but never expires (Developer Tools' Celebrate buttons).
- */
 export const celebrateBadge = (key: string) => {
   if (!parseBadgeKey(key)) throw new Error(`Unknown badge key "${key}"`)
   useBadgeSession.getState().celebrate([key as BadgeKey])
   return useBadgeSession.getState().celebrations.length
 }
 
-/**
- * A badge arriving now, under the action rule (ADR 0021, ADR 0034), for
- * `__WW_DEV__.badges.celebrate`. An unearned badge is recorded as earned just
- * now. Right after an action (`noteUserAction`), it shows an unlock toast,
- * which opens the full-screen celebration when tapped. Otherwise it arrives
- * quietly, in the notifications tray. A badge already earned quietly before (as
- * history, say) shows nothing new in the tray.
- */
 export const offerBadge = (key: string) => {
   if (!parseBadgeKey(key)) throw new Error(`Unknown badge key "${key}"`)
   if (!usePreferences.getState().earnedBadges[key])
@@ -167,17 +123,11 @@ export const offerBadge = (key: string) => {
   return { shown: 'tray' as const, tray: badgeHarnessState().tray }
 }
 
-/** Asks for the "found in your history" summary. */
 export const showBadgeHistorySummary = (count: number) => {
   useBadgeSession.getState().addHistory(count)
   return useBadgeSession.getState().historyCount
 }
 
-/**
- * Writes the badge history fixture (one Contact visited monthly, a year and a
- * bit of shared months, a weekly Plan, sent reports). Upserts by id, so running
- * it again changes nothing. Doesn't evaluate.
- */
 export const applyBadgeHistoryFixture = (now = new Date()) => {
   const fixture = buildBadgeHistoryFixture({ now })
   for (const contact of fixture.contacts) {
@@ -198,7 +148,6 @@ export const applyBadgeHistoryFixture = (now = new Date()) => {
   fixture.recurringPlans.forEach((plan) => reports.addRecurringPlan(plan))
   const { submittedReportMonths, set } = usePreferences.getState()
   set({
-    // The same 24-month cap `markReportSubmitted` keeps.
     submittedReportMonths: [
       ...new Set([...submittedReportMonths, ...fixture.submittedReportMonths]),
     ]
@@ -208,7 +157,6 @@ export const applyBadgeHistoryFixture = (now = new Date()) => {
   return fixture
 }
 
-/** One or two badges a buddy might just have earned. */
 const sampleBuddyBadges = (random: () => number): SharedBadge[] => {
   const pick = (): SharedBadge => {
     if (random() < 0.2) {
@@ -227,14 +175,6 @@ const sampleBuddyBadges = (random: () => number): SharedBadge[] => {
   )
 }
 
-/**
- * Puts a buddy's "new badge" entry in the Home bell without a second device,
- * from the first active buddy, whose page then lists the badges too. Calling it
- * again within 20 hours folds the news into the same bell row. With no active
- * buddy the entry goes to a made-up "Sample Buddy" and the bell leaves it out,
- * as it does all news without buddies. The bell lists Buddies entries only once
- * Buddies is set up on this device.
- */
 export const simulateBuddyBadge = (random = Math.random) => {
   const state = useBuddies.getState()
   const buddy = state.buddies.find((candidate) => candidate.status === 'active')
@@ -268,15 +208,6 @@ export const simulateBuddyBadge = (random = Math.random) => {
   }
 }
 
-/**
- * Puts a buddy's reaction to one of this User's badges in place without a
- * second device: on that badge's view (`useBadgeReactions`) and in the Home
- * bell, from the first active buddy, replacing their earlier reaction to it.
- * With no active buddy, the entry goes to a made-up "Sample Buddy", which
- * neither the bell nor the badge view lists. The badge key defaults to the
- * newest earned badge and must be earned; `emoji` defaults to a random
- * reaction. No push is sent.
- */
 export const simulateBuddyReaction = (
   requestedKey?: string,
   emoji?: string,
@@ -339,13 +270,12 @@ export const simulateBuddyReaction = (
     name: entry.name,
     badgeKey: key as BadgeKey,
     emoji: reaction,
-    /** Shown on the badge's view (needs an active buddy). */
+
     onBadge: !!buddy,
     listed: state.registeredInboxId !== null && !!buddy,
   }
 }
 
-/** A JSON-safe snapshot for `wwv eval` and Tools. */
 export const badgeHarnessState = () => {
   const preferences = usePreferences.getState()
   const session = useBadgeSession.getState()
@@ -357,13 +287,13 @@ export const badgeHarnessState = () => {
     showBadges: preferences.showBadges,
     ledger: preferences.badgeLedger.length,
     celebrations: [...session.celebrations],
-    /** When the waiting celebration's moment ends (null: a preview). */
+
     celebrationExpiresInMs: session.claim
       ? session.claim.expiresAt - Date.now()
       : null,
     historyCount: session.historyCount,
     welcome: preferences.badgesWelcome,
-    /** The new badges the notifications tray lists, lead first. */
+
     tray: homeCardBadges({
       earned: preferences.earnedBadges,
       seenAt: preferences.badgesSeenAt,
@@ -372,7 +302,7 @@ export const badgeHarnessState = () => {
       now: Date.now(),
     }),
     cardDismissed: [...preferences.badgeCardDismissed],
-    /** The takeover on screen, if any (`__WW_DEV__.takeover.state()`). */
+
     takeover: useTakeover.getState().arbiter.active?.kind ?? null,
     evaluated: session.evaluation !== null,
   }

@@ -11,16 +11,12 @@ import type { useCategories } from '@/stores/categories'
 
 type CategoriesStore = typeof useCategories
 
-// First-enable decisions against a fake bridge: a remote the device can't see
-// in full must never yield `seed` (pushing this device's fresh onboarding
-// defaults over the real data) or `pull` (restoring part of it).
-
 type SyncFile = { filename: string; json: string; modifiedAt: number }
 
 const runtime = vi.hoisted(() => ({
   scanned: true,
   files: [] as SyncFile[],
-  // `null` = a binary that can't report downloads (see `readFiles`).
+
   pending: [] as string[] | null,
 }))
 
@@ -123,7 +119,7 @@ describe('first enable while the remote is incomplete', () => {
       outcome: 'incomplete',
       reason: 'downloading',
     })
-    // It waited through another read before giving up.
+
     expect(bridge.readFiles).toHaveBeenCalledTimes(2)
   })
 
@@ -197,7 +193,6 @@ it('ignores this installation’s own old snapshot during restore and first enab
 })
 
 describe('first enable on a fresh install', () => {
-  // Every install seeds the LDC builtin Category at boot.
   const freshInstall = async () => {
     const { resolveInitialEnable, hasMeaningfulLocalData } = await import(
       '@/app/sync/iCloudSync'

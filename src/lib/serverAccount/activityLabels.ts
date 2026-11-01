@@ -4,12 +4,6 @@ import {
 } from '@/lib/serverAccount/deviceLabel'
 import { deriveAccountSigningKey } from '@/lib/serverAccount/keys'
 
-/**
- * Opens the sealed device labels the account's sessions and activity carry (ADR
- * 0028) with this device's account key. A label that's missing, or sealed under
- * another account key, reads as null, and the screens show the session's
- * platform instead. Opened once per label.
- */
 export type DeviceLabelReader = (sealed: string | null) => DeviceLabel | null
 
 export function createDeviceLabelReader(

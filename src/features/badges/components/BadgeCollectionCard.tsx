@@ -14,11 +14,6 @@ import type { BadgeViewOrigin } from '@/types/rootStack'
 
 const MEDALLION_SIZE = 56
 
-/**
- * One Badge Collection: its four levels (earned in metal, the rest as outlines)
- * and what the current level stands for. The User's own shelf adds progress
- * toward the next level as `footer`; a buddy's shows none.
- */
 export default function BadgeCollectionCard({
   art,
   level,
@@ -27,9 +22,9 @@ export default function BadgeCollectionCard({
   onOpen,
 }: {
   art: BadgeCollectionId
-  /** The highest level reached; 0 for none yet. */
+
   level: BadgeLevel | 0
-  /** Earned since the User last looked; the User's own badges only. */
+
   isNew?: (level: BadgeLevel) => boolean
   footer?: ReactNode
   onOpen: (level: BadgeLevel, origin: BadgeViewOrigin | undefined) => void

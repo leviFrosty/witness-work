@@ -30,49 +30,38 @@ import { Contact } from '@/types/contact'
 import { DayPlan, PlanLocation } from '@/types/timeEntry'
 import { Visit } from '@/types/visit'
 
-/** Where Directions on the watch go. */
 export type WatchUpNextPlace = {
   name: string | null
-  /** Searchable address, used when there's no coordinate. */
+
   address: string | null
   latitude: number | null
   longitude: number | null
 }
 
-/**
- * A Follow-up or Plan instance for the watch's Up Next. Mirrors `UpNextItem` in
- * `WatchProtocol.swift`. The watch picks what to show from these by the time,
- * so it stays right without the iPhone.
- */
 export type WatchUpNextItem = {
-  /** Visit id, Day Plan id, or `<Recurring Plan id>:<YYYY-MM-DD>`. */
   id: string
   kind: 'followUp' | 'plan'
-  /** Epoch ms of the start; local midnight of its day when not `timed`. */
+
   start: number
-  /** False for a Plan without a start time, which spans its day. */
+
   timed: boolean
-  /**
-   * `YYYY-MM-DD` of an untimed Plan's day, which the watch places in its own
-   * time zone: after the user flies to another one, `start` is still the old
-   * zone's midnight until the phone app opens. `null` when `timed`.
-   */
+
   day: string | null
-  /** The Contact's name, or the Plan's title or Type. */
+
   title: string
-  /** The Follow-up's topic or street, or the Plan's place. */
+
   detail: string | null
-  /** Planned duration, compact (`2h`). Plans only. */
+
   durationText: string | null
-  /** Start time in the app's time format; `null` when not `timed`. */
+
   timeText: string | null
-  /** `timeText` without its AM/PM marker, e.g. `3:00`. */
+
   clockText: string | null
-  /** The AM/PM marker of 12-hour time, e.g. `PM`; otherwise `null`. */
+
   periodText: string | null
-  /** Short weekday, e.g. `Thu`. */
+
   weekdayText: string
-  /** Short date, e.g. `Oct 14`. */
+
   dateText: string
   place: WatchUpNextPlace | null
 }
@@ -83,23 +72,17 @@ export type BuildUpNextArgs = {
   dayPlans: DayPlan[]
   recurringPlans: RecurringPlan[]
   categories: Category[]
-  /** Plans are only for roles that track hours, like the Schedule. */
+
   includePlans: boolean
 }
 
-/**
- * How long a started item stays up, so its place and topic are there on
- * arrival. Mirrors `UpNext.nowWindow` on the watch.
- */
 const NOW_WINDOW_MINUTES = 15
-/** Days after today to look ahead. */
+
 const HORIZON_DAYS = 14
-/** Enough for the watch to keep advancing while the iPhone is away. */
+
 const MAX_ITEMS = 12
 
 function timing(start: moment.Moment, timed: boolean) {
-  // The app's time format (`LT`), split so a round complication can show the
-  // marker smaller than the time.
   const lt = start.localeData().longDateFormat('LT')
   return {
     start: start.valueOf(),
@@ -121,8 +104,7 @@ function followUpItems(
   latest: moment.Moment
 ): WatchUpNextItem[] {
   const contactsById = new Map(args.contacts.map((c) => [c.id, c]))
-  // Answered Follow-ups (a later Visit that day) are done, matching the Home
-  // card and the Appointments widget.
+
   const byContact = visitsByContact(args.conversations)
 
   return args.conversations.flatMap((visit): WatchUpNextItem[] => {
@@ -190,13 +172,10 @@ function planItems(
 
   const items: WatchUpNextItem[] = []
   for (let i = 0; i <= HORIZON_DAYS; i++) {
-    // Back to the day's start: on a day that starts at 1:00 (clocks skip
-    // midnight), `today` is 1:00 and adding days keeps that hour.
     const day = today.clone().add(i, 'days').startOf('day')
     const dayDate = day.toDate()
     const anchor = normalizeDateForStorage(dayDate)
-    // Every Plan on the day is shown, as on the Schedule, including ones the
-    // forecast doesn't count.
+
     const instances = [
       ...dayPlansOnLocalDay(args.dayPlans, day).map((plan) => ({
         id: plan.id,
@@ -216,8 +195,7 @@ function planItems(
 
     for (const { id, plan, minutes, startTime } of instances) {
       if (minutes <= 0) continue
-      // A Plan without a time spans its day; the app's noon default is only
-      // for sorting and never shown as a time here.
+
       const timed = startTime != null
       const start = timed
         ? moment(combineDateAndStartTime(anchor, startTime))
@@ -239,12 +217,6 @@ function planItems(
   return items
 }
 
-/**
- * Follow-ups and Plans from now through the next two weeks, in the order the
- * watch shows them: by day, timed items before a day's untimed Plans, then by
- * start, a Follow-up before a Plan at the same time (someone is expecting you).
- * Overdue Follow-ups are left to the iPhone's missed list.
- */
 export function buildUpNext(args: BuildUpNextArgs): WatchUpNextItem[] {
   const now = moment()
   const today = now.clone().startOf('day')

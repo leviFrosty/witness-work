@@ -28,26 +28,11 @@ import {
 } from '@/features/buddies/lib/sharedBadges'
 import type { SharedBadge } from '@/types/badges'
 
-/**
- * Named Buddies alerts, opened on the device. A push's alert text is the
- * generic template this device registered, because the relay must never see a
- * name. The push also carries the event it's about, still sealed (or just its
- * `seq`, to fetch it, when it didn't fit), so the device opens it with the keys
- * in a `BuddyAlertContext` and words the alert itself: "Anna invited you to a
- * Plan", with the day and time.
- *
- * IOS does this in its Notification Service Extension
- * (`targets/notification-service`), which mirrors `describeBuddyEvent` in Swift
- * and passes the same vectors (`testing/alertVectors.json`). Android does it in
- * its push task (`src/app/buddies/buddiesPushAlerts.ts`).
- */
-
-/** The `ww` marker of a Buddies push (docs/buddies-protocol.md). */
 export type BuddiesPushMarker = {
   kind: string
-  /** The inbox `seq` of the event; absent from relays before named alerts. */
+
   seq?: number
-  /** The event itself, still sealed, when it fit in the push. */
+
   eventId?: string
   blob?: string
 }
@@ -60,7 +45,6 @@ function record(value: unknown): Record<string, unknown> | undefined {
     : undefined
 }
 
-/** A `ww` marker, or null when `value` isn't one. Unknown fields are dropped. */
 export function parsePushMarker(value: unknown): BuddiesPushMarker | null {
   const marker = record(value)
   if (!marker || typeof marker.kind !== 'string') return null
@@ -77,11 +61,6 @@ export function parsePushMarker(value: unknown): BuddiesPushMarker | null {
   }
 }
 
-/**
- * The marker in a push as expo-notifications hands it over: among the APNs
- * payload's keys on iOS; on Android, in the FCM data's JSON `body`, which the
- * background task also gets as `dataString`.
- */
 export function pushMarkerOf(
   data: Record<string, unknown> | undefined
 ): BuddiesPushMarker | null {
@@ -95,14 +74,9 @@ export function pushMarkerOf(
   }
 }
 
-/**
- * Buddies' social news: a buddy's new badge, or their reaction to one of this
- * User's. It arrives quietly, without sound or a banner (ADR 0021).
- */
 export const isBuddiesNewsKind = (kind: string) =>
   kind === 'badge.new' || kind === 'badge.reaction'
 
-/** A shared Plan or Follow-up's type, day, and start, as its sender wrote them. */
 export type ShareWhen = { t: ShareType; d: string; s?: number }
 
 export const shareWhen = (
@@ -114,54 +88,40 @@ export const shareWhen = (
   ...(details.s === undefined ? {} : { s: details.s }),
 })
 
-/** One buddy, as the alerts see them. */
 export type AlertBuddy = {
-  /** The slot this buddy writes into this User's inbox. */
   slot: string
-  /** The key that opens what they write there (base64url). */
+
   key: string
-  /** Their nickname on this device, or else their name. */
+
   name: string
-  /** Their requests to join don't alert this device. */
+
   joinMuted?: true
-  /** Their new badges and reactions don't alert this device. */
+
   badgeMuted?: true
-  /** Their invitations to this User, by share id. */
+
   shares?: Record<string, ShareWhen>
 }
 
-/**
- * Everything a named alert needs, written by the app (`alertContext` in the
- * engine). On iOS it's kept in the Keychain for the extension, so it holds keys
- * that open events and nothing that writes or signs, except the owner key for
- * fetching an event too big for the push.
- */
 export type BuddyAlertContext = {
   v: 1
   inboxId: string
-  /** Signs the `inbox/sync` that fetches an event too big for the push. */
+
   ownerSeed: string
   buddies: AlertBuddy[]
-  /** This User's open invites: each claim is sealed with its invite's key. */
+
   invites: { id: string; key: string }[]
-  /** This User's own shared Plans and Follow-ups, by share id, for replies. */
+
   myShares: Record<string, ShareWhen>
-  /** Badge Alerts on here for any buddy (and Badges shown). */
+
   badgeAlerts: boolean
-  /** Ask to Join alerts on here for any buddy. */
+
   joinAlerts: boolean
-  /**
-   * The badges this build knows, in the order several are named: collections
-   * have levels 1–4, One-time Badges none. Lets the extension skip a badge from
-   * a newer app, as `knownBadges` does.
-   */
+
   catalog: { order: string[]; oneTime: string[] }
 }
 
-/** A Plan or Follow-up's day and start in the sender's calendar. */
 export type AlertWhen = { d: string; s?: number }
 
-/** What happened, by whom: the words come from `buddyAlertText`. */
 export type BuddyAlert =
   | { type: 'claimed'; name: string }
   | { type: 'paired'; name: string }
@@ -187,16 +147,9 @@ export type BuddyAlert =
       reaction: BadgeReactionEmoji
       badge: SharedBadge
     }
-  /** Never the car's name: it's the User's own words. */
   | { type: 'carInvite'; name: string }
   | { type: 'carJoined'; name: string }
 
-/**
- * Why a push keeps its template text: nothing to open it with (`noContext`), no
- * event to open (`noEvent`), no buddy or invite whose key opens it
- * (`unknownSender`), what's inside doesn't parse (`unreadable`), or a kind this
- * build doesn't word (`unknownKind`).
- */
 export type BuddyAlertFailure =
   | 'noContext'
   | 'noEvent'
@@ -204,22 +157,16 @@ export type BuddyAlertFailure =
   | 'unreadable'
   | 'unknownKind'
 
-/**
- * `alert`: show it named. `quiet`: this device muted it (Ask to Join or Badge
- * Alerts off, or a kind that never alerts), so Android posts nothing; iOS can't
- * drop an alert, so it keeps the template. `failed`: keep the template.
- */
 export type BuddyAlertOutcome =
   | { alert: BuddyAlert }
   | { quiet: true }
   | { failed: BuddyAlertFailure }
 
-/** An event as the push carried it, or as `inbox/sync` returned it. */
 export type SealedEvent = {
   eventId: string
   kind: string
   blob: string
-  /** Known when fetched; a push leaves it out, so every buddy's key is tried. */
+
   slotId?: string
 }
 
@@ -227,7 +174,6 @@ const failed = (reason: BuddyAlertFailure): BuddyAlertOutcome => ({
   failed: reason,
 })
 
-/** The plaintext, or null when `key` doesn't open the blob in `context`. */
 function opened(key: string, blob: string, context: string): Uint8Array | null {
   try {
     return open(fromB64u(key), blob, context)
@@ -236,7 +182,6 @@ function opened(key: string, blob: string, context: string): Uint8Array | null {
   }
 }
 
-/** Opened JSON; `undefined` (never valid) when it isn't JSON. */
 function json(plaintext: Uint8Array): unknown {
   try {
     return JSON.parse(fromUtf8(plaintext))
@@ -272,27 +217,22 @@ function handlerOf(kind: string): Handler | null {
   if (kind === 'share.reply') return 'reply'
   if (/^(plan|followup)\.(invite|update|cancel)$/.test(kind)) return 'share'
   if (/^join\.request\.[0-9a-f]{12}$/.test(kind)) return 'joinRequest'
-  // Withdrawals never alert.
+
   if (kind === 'join.cancel') return 'quiet'
   if (kind === 'badge.new') return 'badge'
   if (kind === 'badge.reaction') return 'badgeReaction'
   if (kind === 'car.invite') return 'carInvite'
   if (kind === 'car.reply') return 'carReply'
-  // A canceled car invitation just goes away.
+
   if (kind === 'car.cancel') return 'quiet'
   return null
 }
 
-/**
- * Opens `event` with the keys in `context` and says what it means for an alert.
- * Pure, so the Swift extension can mirror it exactly.
- */
 export function describeBuddyEvent(
   context: BuddyAlertContext,
   event: SealedEvent
 ): BuddyAlertOutcome {
   if (event.kind === 'invite.claimed') {
-    // The claim's event id is the invite's id.
     const invite = context.invites.find((i) => i.id === event.eventId)
     if (!invite) return failed('unknownSender')
     const plaintext = opened(invite.key, event.blob, aad.claim(invite.id))
@@ -307,7 +247,6 @@ export function describeBuddyEvent(
   if (!handler) return failed('unknownKind')
   if (handler === 'quiet') return { quiet: true }
 
-  // The sender is the buddy whose key opens it.
   let sender: { buddy: AlertBuddy; plaintext: Uint8Array } | null = null
   for (const buddy of context.buddies) {
     if (event.slotId !== undefined && buddy.slot !== event.slotId) continue
@@ -420,7 +359,7 @@ export function describeBuddyEvent(
     case 'carReply': {
       const reply = parsed(carReplyEventSchema, body)
       if (!reply) return failed('unreadable')
-      // Declining never alerts.
+
       return reply.status === 'joined'
         ? { alert: { type: 'carJoined', name } }
         : { quiet: true }

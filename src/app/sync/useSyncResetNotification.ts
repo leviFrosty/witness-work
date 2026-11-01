@@ -6,7 +6,6 @@ import { syncKey } from '@/lib/syncCopy'
 
 import type { NotificationItem } from '@/types/notifications'
 
-/** Tells the user this device switched to another device's rebuilt data. */
 export function useSyncResetNotification(): NotificationItem | null {
   const notice = usePreferences((state) => state.iCloudResetAdoptedNotice)
   if (!hasSyncTransport() || !notice) return null

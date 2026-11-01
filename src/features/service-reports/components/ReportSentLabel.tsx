@@ -4,11 +4,6 @@ import LucideIcon from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 
-/**
- * Quiet "✓ Sent Oct 3" marker for a month whose report was sent (or marked
- * Already Submitted); without `sent`, a plain label such as "Not Sent".
- * `trailing` adds e.g. a chevron when it opens a menu.
- */
 const ReportSentLabel = ({
   label,
   sent = true,

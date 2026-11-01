@@ -76,7 +76,6 @@ describe('the car form’s People', () => {
       { invited: 'Dee', canCancel: false },
     ])
 
-    // The owner can cancel every one.
     const owned = { ...car, ownerId: car.myMemberId }
     expect(
       carPeopleList(owned, people, NOW)
@@ -102,7 +101,7 @@ describe('the car form’s People', () => {
     const people = (c: typeof car) => buildMileagePeople({ [spaceId]: c }, [])
 
     expect(MAX_SHARED_CAR_PEOPLE).toBe(10)
-    // Eight people and one open invitation: one place left.
+
     expect(carPeopleList(car, people(car), NOW).full).toBe(false)
     const tenth = {
       ...car,

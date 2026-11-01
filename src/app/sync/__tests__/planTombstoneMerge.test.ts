@@ -9,9 +9,6 @@ import {
   type RecurringPlan,
 } from '@/types/timeEntry'
 
-// Deleting a Day Plan or Recurring Plan on one device must remove it on the
-// others, and stay removed while any device's file still holds an older copy.
-
 type LocalState = Parameters<typeof mergePayload>[0]
 
 const NOW = Date.now()
@@ -218,7 +215,6 @@ describe('mergePayload — Plan tombstones', () => {
     )
 
     for (const folded of folds) {
-      // d2 was edited after its deletion; d1 wasn't.
       expect(folded.dayPlans.map((p: DayPlan) => p.id)).toEqual(['d2'])
       expect(
         [...folded.deletedDayPlans!].sort((a, b) => (a.id < b.id ? -1 : 1))

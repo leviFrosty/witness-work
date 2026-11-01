@@ -27,12 +27,6 @@ export type GoingSentence = {
   values: Record<string, string>
 }
 
-/**
- * The sentences under a Follow-up's invited buddies, one per answer in this
- * order: "Anna is going with you.", "Ben and Grace can't make it.", "3 buddies
- * haven't answered." Names are whole-sentence placeholders, so every language
- * can order them its own way.
- */
 export function followUpGoingSentences(
   invited: { name: string; reply?: ShareReply }[]
 ): GoingSentence[] {

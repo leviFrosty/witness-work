@@ -18,8 +18,7 @@ interface Props {
 
 const SinceBadge = ({ icon, label, value, tint, tintBg, iconFill }: Props) => {
   const theme = useTheme()
-  // At accessibility text sizes the decorative icon gives the date its room,
-  // and the date shrinks onto one line rather than breaking a long month name.
+
   const largeText = useAccessibilityTextSize()
   const showIcon = !largeText
   const fitValue = largeText ? FIT_ONE_LINE : undefined

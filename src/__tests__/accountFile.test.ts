@@ -102,8 +102,7 @@ describe('lib/accountFile', () => {
           file: file({ accountId: theirs, entitled: true }),
         })
       ).toEqual({ type: 'adopt', accountId: theirs })
-      // Even an un-entitled foreign claim is adopted, so a non-supporter
-      // household converges on one id before any purchase happens.
+
       expect(
         decideAccountAction({
           accountId: mine,
@@ -137,7 +136,6 @@ describe('lib/accountFile', () => {
       const supporterId = 'supporter-device'
       const otherId = 'other-device'
 
-      // Order 1: supporter claims first; other device adopts.
       expect(
         decideAccountAction({
           accountId: otherId,
@@ -146,7 +144,6 @@ describe('lib/accountFile', () => {
         })
       ).toEqual({ type: 'adopt', accountId: supporterId })
 
-      // Order 2: other device claims first; supporter overwrites…
       expect(
         decideAccountAction({
           accountId: supporterId,
@@ -154,7 +151,6 @@ describe('lib/accountFile', () => {
           file: file({ accountId: otherId, entitled: false }),
         })
       ).toEqual({ type: 'claim' })
-      // …then the other device sees the new claim and adopts (Order 1).
     })
   })
 })

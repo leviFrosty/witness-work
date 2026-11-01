@@ -44,7 +44,6 @@ import type { NoteFields } from '@/types/richText'
 import { alignText } from '@/lib/direction'
 import type { RootStackParamList } from '@/types/rootStack'
 
-/** For ordering a day's Plans; anytime Plans come first, like all-day events. */
 export const getPlanItemStartTime = (item: PlanListItem): number => {
   if (item.type === 'day') {
     return item.plan.anytime ? -1 : getStartTimeInMinutes(item.plan)
@@ -85,10 +84,6 @@ const PlanKindIcon = (props: { recurring: boolean }) => {
   )
 }
 
-/**
- * Notes longer than this are clipped in the row and shown whole in the preview;
- * so are notes with photos, which the row leaves out.
- */
 const NOTE_PREVIEW_LINES = 3
 const isLongNote = (note: NoteFields) => {
   const text = getNoteText(note)
@@ -99,10 +94,6 @@ const isLongNote = (note: NoteFields) => {
   )
 }
 
-/**
- * The long-press preview for a row whose note is clipped: the plan's details
- * with its whole note and links.
- */
 const PlanPreview = (props: {
   heading: string
   title?: string
@@ -145,18 +136,15 @@ const PlanRow = (props: {
   dateDisplay?: 'full' | 'monthList'
   contextMonth?: number
   contextYear?: number
-  /** Extra lines under the details, e.g. who the Plan is with. */
+
   footer?: ReactNode
-  /**
-   * Runs a navigation from the row or its menu. Hosts that present the row in a
-   * modal sheet pass one that closes the sheet first.
-   */
+
   onNavigate?: (navigate: () => void) => void
-  /** Logs the Plan as time in place, instead of opening Add Time. */
+
   onLogTime?: (prefill: LogTimePrefill) => void
-  /** Shows the Plan in place, instead of opening Plan Details. */
+
   onOpen?: (target: RootStackParamList['Plan Details']) => void
-  /** Edits the Plan in place, instead of opening the Plan screen. */
+
   onEdit?: (params: RootStackParamList['PlanDay']) => void
 }) => {
   const theme = useTheme()
@@ -183,7 +171,7 @@ const PlanRow = (props: {
     lineHeight: theme.fontSize('sm') * 1.4,
   }
   const categoryLabel = planTypeLabel(plan, categories)
-  // Standard is the default Type, so only other Types are labeled.
+
   const hasCategory =
     !!plan.categoryId && categories.some((c) => c.id === plan.categoryId)
   const formattedDuration = useFormattedMinutes(effective.minutes)
@@ -211,8 +199,6 @@ const PlanRow = (props: {
   const handleSwipeOpen = (side: SwipeSide, swipeable: Swipeable) => {
     if (side !== 'trailing') return
 
-    // Snap the row back before the confirmation lands — the alert owns the
-    // interaction from here, whichever way the user answers it.
     swipeable.reset()
     requestDelete()
   }

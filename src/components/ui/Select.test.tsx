@@ -21,7 +21,7 @@ vi.mock('@expo/ui', () => ({ Host: 'Host' }))
 vi.mock('@expo/ui/swift-ui', () => ({
   Button: 'Button',
   Divider: 'Divider',
-  // Renders a custom label (the trigger) into a slot of its own.
+
   Menu: ({
     label,
     children,
@@ -95,7 +95,7 @@ vi.mock('@/components/ui/PointerHover', () => ({
   HoverTint: () => null,
 }))
 vi.mock('@/components/ui/LucideIcon', () => ({ default: 'LucideIcon' }))
-// Exercise the shared control with each implementation Metro selects natively.
+
 vi.mock('@/components/ui/PullDownMenu', async () => {
   const ios = await import('./PullDownMenu.ios')
   const android = await import('./PullDownMenu.android')

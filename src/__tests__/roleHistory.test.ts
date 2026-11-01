@@ -214,7 +214,7 @@ describe('annualGoalHoursForServiceYear', () => {
       null,
       'regularPioneer'
     )
-    // March through August: six pioneer months.
+
     expect(
       annualGoalHoursForServiceYear({
         ...base,
@@ -267,7 +267,6 @@ describe('annualGoalHoursByMonth', () => {
     const input = { ...base, history, currentRole: 'regularPioneer' as const }
     const shares = annualGoalHoursByMonth(input)
 
-    // Sep–Feb as a publisher, Mar–Aug as a pioneer.
     expect(shares).toEqual([0, 0, 0, 0, 0, 0, 50, 50, 50, 50, 50, 50])
     expect(shares.reduce((a, b) => a + b, 0)).toBe(
       annualGoalHoursForServiceYear(input)

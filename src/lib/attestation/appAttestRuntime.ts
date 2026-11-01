@@ -18,13 +18,7 @@ const legacyStore = (): MMKV =>
 let _journalStore: MMKV | null = null
 const journalStore = (): MMKV => {
   if (_journalStore) return _journalStore
-  // A separate encrypted instance keeps replay-capable lifecycle blobs useless
-  // if the Documents-backed MMKV files are restored onto another device. OTA JS
-  // on an older binary must use legacy MMKV for contained v1 response-loss
-  // replay: those records contain no recovery token/private key, and an App
-  // Attest attestation is a public proof bound to its one-time server challenge.
-  // This narrow confidentiality exception prevents the deployed v1 binary from
-  // losing a successfully registered key when the HTTP response is interrupted.
+
   _journalStore = KeychainUuid.supportsAppAttestRecoveryStorage()
     ? new MMKV({
         id: 'app-attest-lifecycle-v2',
@@ -43,15 +37,11 @@ const readLifecycleJournal = (): string | null => {
 
   const legacy = legacyStore().getString(LIFECYCLE_JOURNAL_KEY) ?? null
   if (encrypted !== null) {
-    // Complete cleanup if a prior migration wrote the encrypted copy but stopped
-    // before deleting the legacy value.
     if (legacy !== null) legacyStore().delete(LIFECYCLE_JOURNAL_KEY)
     return encrypted
   }
   if (legacy === null) return null
 
-  // Native upgrades switch journalStore() to encrypted MMKV. Preserve an exact
-  // pending v1 registration before removing its old-binary plaintext copy.
   store.set(LIFECYCLE_JOURNAL_KEY, legacy)
   legacyStore().delete(LIFECYCLE_JOURNAL_KEY)
   return legacy

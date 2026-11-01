@@ -29,11 +29,6 @@ import { trackScribeTurnedOnOff } from '@/features/scribe/analytics'
 import { pendingScribeConsent } from '@/features/scribe/stores/consent'
 import type { RootStackNavigation } from '@/types/rootStack'
 
-/**
- * Scribe AI's switch, usage, memory and privacy, shown only where Scribe AI is
- * offered. Turned off, only the switch stays. The section names Scribe AI, so
- * its other rows don't repeat it.
- */
 const ScribeSection = ({
   handleNavigate,
   selectedDestination,
@@ -45,7 +40,7 @@ const ScribeSection = ({
   const turnedOn = usePreferences((s) => s.scribeAiEnabled)
   const setPreferences = usePreferences((s) => s.set)
   const scribe = useScribeAvailability()
-  // Shown in passing: never opens a session (and an account) to fill it in.
+
   const fullest = fullestWindow(useScribeUsage({ open: false }).usage)
   const memoryEnabled = useScribeMemoryEnabled()
   if (!offered) return null
@@ -59,15 +54,13 @@ const ScribeSection = ({
         label={i18n.t('scribe_enabledToggle')}
         value={turnedOn}
         onValueChange={(value) => {
-          // Not agreed to on this device yet: the sheet turns it on once they
-          // are (the root stack's, also from the wide Settings pane).
           if (value && pendingScribeConsent().terms)
             return navigation.navigate('ScribeConsent', { mode: 'enable' })
           setPreferences({ scribeAiEnabled: value })
           trackScribeTurnedOnOff(value)
         }}
       />
-      {/* Each row a direct child: Android rounds the group's ends by them. */}
+      {}
       {turnedOn && (
         <GroupedListRow
           icon={GaugeIcon}

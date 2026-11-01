@@ -42,7 +42,6 @@ describe('Profile photos at full size', () => {
     }
   }
 
-  /** Levi as Anna sees him. */
   const leviFor = (anna: ReturnType<typeof users>['anna'], inboxId: string) =>
     anna.store.getState().buddies.find((b) => b.inboxId === inboxId)!
 
@@ -63,14 +62,13 @@ describe('Profile photos at full size', () => {
     expect(await anna.engine.fetchBuddyPhoto(levi.inboxId, full)).toEqual(
       photo()
     )
-    // The blob is ciphertext, never the photo.
+
     const [stored] = [...env.fake.blobs.values()]
     expect(stored.data).not.toEqual(photo())
     expect(stored.expiresAt).toBe(env.now() + 89 * DAY)
-    // Anna keeps only the photo the card links.
+
     expect(kept.at(-1)).toEqual([full.blob])
 
-    // Publishing again reuses the upload and leaves the card alone.
     const seq = env.fake.inboxes.get(anna.inboxId)!.seq
     await levi.engine.sync()
     expect(env.fake.blobs.size).toBe(1)
@@ -122,13 +120,11 @@ describe('Profile photos at full size', () => {
       v: THUMBNAIL,
     })
 
-    // Photos back on, but the file can't be read yet.
     env.fake.capabilities.photos = true
     setPhoto(null)
     await levi.engine.sync()
     expect(env.fake.blobs.size).toBe(0)
 
-    // Readable again: the next publish links it.
     setPhoto(new Uint8Array([1, 2, 3]))
     await levi.engine.sync()
     await anna.engine.sync()
@@ -142,12 +138,10 @@ describe('Profile photos at full size', () => {
     await levi.engine.sync()
     const first = levi.store.getState().profilePhoto!
 
-    // With two months left, the same copy does.
     env.advance(30 * DAY)
     await levi.engine.sync()
     expect(levi.store.getState().profilePhoto!.blob).toBe(first.blob)
 
-    // With under a month left, a new copy replaces it and the old one goes.
     env.advance(30 * DAY)
     await levi.engine.sync()
     const second = levi.store.getState().profilePhoto!

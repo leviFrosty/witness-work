@@ -3,7 +3,6 @@ import useServiceReport from '@/stores/serviceReport'
 import { ServiceDaysStatCard } from '@/features/progress/components/cards/ServiceDaysCard'
 import type { YearCardProps } from '@/features/progress/components/cards/types'
 
-/** How many days had time in the Service Year, and the average day out. */
 export default function YearServiceDaysCard({
   serviceYear,
   size,

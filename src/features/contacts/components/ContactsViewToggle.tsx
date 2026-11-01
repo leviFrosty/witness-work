@@ -3,11 +3,6 @@ import i18n from '@/lib/locales'
 import { ContactsView } from '@/types/homeStack'
 import SegmentedControl from '@/components/ui/SegmentedControl'
 
-/**
- * Labeled List | Map switch under the Contacts title, after search and as tall
- * as it. It sits in the same spot on both workspaces, so the way back is where
- * the way in was.
- */
 const ContactsViewToggle = ({
   value,
   onChange,
@@ -17,7 +12,7 @@ const ContactsViewToggle = ({
   value: ContactsView
   onChange: (view: ContactsView) => void
   disabled?: boolean
-  /** Without it, the switch is as wide as its labels. */
+
   style?: StyleProp<ViewStyle>
 }) => (
   <SegmentedControl<ContactsView>

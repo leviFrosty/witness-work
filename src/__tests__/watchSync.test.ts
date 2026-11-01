@@ -86,8 +86,7 @@ vi.mock('react-native', () => ({
     select: (options: { ios?: unknown }) => options.ios,
   },
 }))
-// The real preferences and contact stores reach expo modules that need
-// `__DEV__`; the time-entry store is the one under test.
+
 const prefs = vi.hoisted(() => ({
   role: 'regularPioneer',
   roleHistory: null,
@@ -323,7 +322,6 @@ describe('watch sync', () => {
 
     teardown = installWatchSync()
 
-    // The watch adds unresolved entries itself, so it mustn't add these.
     const beforeResolving = JSON.parse(bridge.snapshots[0])
     expect(beforeResolving.monthMinutes).toBe(135)
     expect(beforeResolving.reflectedEntryIds).toEqual(['watch-1'])
@@ -367,7 +365,7 @@ describe('watch sync', () => {
     bridge.statusListener?.()
 
     expect(bridge.snapshots).toHaveLength(1)
-    // Unsaved, it would repeat on every return to the app.
+
     expect(capture).not.toHaveBeenCalledWith(
       'watch_app_status',
       expect.anything()
@@ -513,7 +511,6 @@ describe('watch sync', () => {
     teardown = installWatchSync()
     expect(bridge.snapshots).toHaveLength(1)
 
-    // The native layer already sends a new watch the snapshot it keeps.
     bridge.statusListener?.()
     expect(bridge.snapshots).toHaveLength(1)
 
@@ -537,7 +534,6 @@ describe('watch sync', () => {
       prefListeners.forEach((listener) => listener(prefs, prev))
     }
     try {
-      // Sync bookkeeping after an edit.
       write({ iCloudSyncPendingPush: true, lastiCloudSyncAt: 1 })
       vi.advanceTimersByTime(500)
       expect(builds()).toBe(before)
@@ -555,7 +551,7 @@ describe('watch sync', () => {
     process.env.TZ = 'America/New_York'
     try {
       vi.setSystemTime(new Date(2026, 9, 4, 15))
-      // A Plan on the 6th without a time.
+
       useServiceReport.setState({
         dayPlans: [
           {
@@ -574,7 +570,6 @@ describe('watch sync', () => {
         day: '2026-10-06',
       })
 
-      // Flown to Los Angeles while the app was away.
       appState.listeners.forEach((listener) => listener('background'))
       process.env.TZ = 'America/Los_Angeles'
       appState.listeners.forEach((listener) => listener('active'))
@@ -600,7 +595,6 @@ describe('watch sync', () => {
     })
     expect(bridge.snapshots).toHaveLength(1)
 
-    // Suspended right after, the debounce would never fire.
     appState.listeners.forEach((listener) => listener('background'))
     expect(bridge.snapshots).toHaveLength(2)
     vi.advanceTimersByTime(500)
@@ -626,7 +620,7 @@ describe('watch sync', () => {
 
     flushWatchSnapshot('background-fetch')
     expect(bridge.snapshots).toHaveLength(2)
-    // The debounce doesn't send it again.
+
     vi.advanceTimersByTime(500)
     expect(bridge.snapshots).toHaveLength(2)
   })
@@ -641,7 +635,7 @@ describe('watch sync', () => {
   it('marks only watch entries and foreground pushes urgent', () => {
     bridge.pending = [draft()]
     teardown = installWatchSync()
-    // A watch entry, then a push from a background wake (no active app).
+
     expect(bridge.urgent).toEqual([true, false])
   })
 
@@ -681,7 +675,7 @@ describe('watch sync', () => {
             members,
             memberRecords: members,
             vehicles: [{ id: 'van', name: 'Family Minivan', createdAt: 2 }],
-            // Ana drove it after the User's last trip.
+
             trips: [
               {
                 id: 'anas',

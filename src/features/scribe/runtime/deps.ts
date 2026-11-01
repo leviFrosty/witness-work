@@ -9,10 +9,6 @@ import type { ScribeRuntimeDeps } from '@/features/scribe/runtime/turnLoop'
 import { scribeLimits } from '@/features/scribe/stores/status'
 import { SCRIBE_TOOLS, scribeTool } from '@/features/scribe/tools'
 
-/**
- * What a turn runs against in the app: ww-api (or the dev fake) and the live
- * stores.
- */
 export const scribeRuntime = (): ScribeRuntimeDeps => ({
   client: scribeClient,
   stores: readScribeStores,

@@ -32,11 +32,10 @@ type Slice = Record<string, unknown>
 const isRecord = (value: unknown): value is Slice =>
   typeof value === 'object' && value !== null && !Array.isArray(value)
 
-/** The first release whose Visits carry `followUp` only when asked for. */
 const EXPLICIT_FOLLOW_UPS_SINCE = '1.43.0'
-/** The first release where every Plan on a day adds up. */
+
 const ADDITIVE_PLANS_SINCE = '1.44.0'
-/** Preference names renamed in 1.40, so only older files hold them. */
+
 const LEGACY_PREFERENCE_KEYS = [
   'publisher',
   'excludedWeekdays',
@@ -45,12 +44,6 @@ const LEGACY_PREFERENCE_KEYS = [
   'oneOffGoalHours',
 ]
 
-/**
- * Whether an unmarked file was written before `release`. Files through 1.43
- * saved every preference, `lastAppVersion` (the app's version) included; 1.44
- * saves only synced preferences, so a file without it is from 1.44 and already
- * follows both rules. Old preference names mean an older file still.
- */
 function writtenBefore(preferences: Slice, release: string): boolean {
   if (LEGACY_PREFERENCE_KEYS.some((key) => Object.hasOwn(preferences, key)))
     return true
@@ -60,7 +53,6 @@ function writtenBefore(preferences: Slice, release: string): boolean {
   return version !== null && semver.lt(version, release)
 }
 
-/** `original` with the keys it holds replaced by their parsed values. */
 function withParsed(original: Slice, parsed: Slice): Slice {
   const result = { ...original }
   for (const key of Object.keys(original))
@@ -68,14 +60,6 @@ function withParsed(original: Slice, parsed: Slice): Slice {
   return result
 }
 
-/**
- * Runs a JSON backup file through the read path every other restore uses:
- * `parsePayload` (record validation, the preference renames, and the follow-up
- * and Plan rules for older builds) and `migrateNormalizeDates`. Only the stores
- * and keys the file holds come back, so restoring an older file still leaves
- * what it lacks alone. `droppedRecords` counts the records this build couldn't
- * read. Null when the file can't be read.
- */
 export function normalizeBackupFile(
   data: BackupFile
 ): { file: BackupFile; droppedRecords: number } | null {
@@ -152,7 +136,7 @@ export function normalizeBackupFile(
     result.mileageStore = withParsed(mileage, parsed.mileageStore)
   if (isRecord(data.preferencesStore))
     result.preferencesStore = parsed.preferencesStore.values
-  // Older files keep profile fields with the preferences; parsing moves them.
+
   if (parsed.profileStore) result.profileStore = parsed.profileStore.values
   return {
     file: result,
@@ -160,13 +144,6 @@ export function normalizeBackupFile(
   }
 }
 
-/**
- * Files from before id-keyed custom fields key each Contact's values by label
- * and keep the labels in `customContactFields`. The boot migration already ran
- * on this device, so convert them here: each label maps to the device's own
- * definition with that id (or alias) or active label, or else gets a new
- * definition, so the restored values show.
- */
 function withLegacyCustomFields(contactStore: Slice, preferences: unknown) {
   const legacyLabels = isRecord(preferences)
     ? preferences.customContactFields
@@ -229,14 +206,6 @@ export type BackupFileRestore =
   | { ok: true; droppedRecords: number }
   | { ok: false; problem: 'newer' | 'unreadable' }
 
-/**
- * Restores a JSON backup file over the local stores. Older backups may lack the
- * newer stores; those stay as they are. Never copies identity or consent.
- * Changes nothing when the file can't be read, or when a newer build wrote it:
- * this build would drop every record holding a value it doesn't know, and the
- * restore replaces the lists. `droppedRecords` counts the records it couldn't
- * read in an older file.
- */
 export function restoreBackupFile(file: BackupFile): BackupFileRestore {
   const { version } = file as { version?: unknown }
   if (typeof version === 'number' && version > BACKUP_FILE_VERSION)
@@ -273,7 +242,7 @@ export function restoreBackupFile(file: BackupFile): BackupFileRestore {
       useMileage
         .getState()
         .set(knownSlice(data.mileageStore, useMileage.getState()))
-    // Checked, so a pet without its wake list can't break the replay.
+
     if (data.petStore) usePet.getState().set(petSliceFromBackup(data.petStore))
     const preferences = extractProfileFromPreferences(
       knownSlice(data.preferencesStore, {
@@ -285,8 +254,7 @@ export function restoreBackupFile(file: BackupFile): BackupFileRestore {
     const current = usePreferences.getState()
     usePreferences.getState().set({
       ...restored,
-      // Earned badges are keepsakes: a restore adds to them, never removes
-      // (a removal would also sync to every other device).
+
       earnedBadges: {
         ...((restored.earnedBadges as typeof current.earnedBadges) ?? {}),
         ...current.earnedBadges,
@@ -297,9 +265,9 @@ export function restoreBackupFile(file: BackupFile): BackupFileRestore {
           ...current.badgeLedger,
         ]),
       ].sort(),
-      // The next evaluation files what the restored records reach as history.
+
       badgesBackfilledAt: null,
-      // Celebrations shown here or in the backup both stay shown.
+
       ...Object.fromEntries(
         [...SYNC_UNION_KEYS]
           .filter((key) => key in restored)

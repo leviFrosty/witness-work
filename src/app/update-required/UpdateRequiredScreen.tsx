@@ -12,7 +12,6 @@ type Props = {
   onUpdate: () => void
 }
 
-/** Covers the whole app until this version is updated. */
 export default function UpdateRequiredScreen({ required, onUpdate }: Props) {
   const theme = useTheme()
   const { currentVersion, minVersion } = required

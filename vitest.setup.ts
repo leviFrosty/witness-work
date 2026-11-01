@@ -1,19 +1,11 @@
 import { vi } from 'vitest'
 
-// iPhone Duo's display regions: a native view that never reports, as on every
-// other device. Layout primitives (FoldPane, FoldSplit, Header) render it, and
-// the real module pulls in expo's runtime, which expects __DEV__.
 vi.mock('./modules/display-regions', () => ({
   default: () => null,
   supportsDisplayRegions: false,
 }))
 
-// The fold-aware layout primitives, as they behave on every device but a
-// half-open iPhone Duo: they pass their content through and move nothing. The
-// fold math they use is tested in src/lib/foldSplit.test.ts. Many component
-// tests mock react-native narrowly, which the real ones can't render with.
 vi.mock('@/components/ui/layout/FoldPane', async () => {
-  // Read when called: some tests' react-native mocks leave it out.
   const reactNative = await import('react-native')
   const passThrough = ({ children }: { children: unknown }) => children
   return {
@@ -35,9 +27,6 @@ vi.mock('@/components/ui/layout/FoldPane', async () => {
   }
 })
 
-// Stub expo-notifications globally — several stores import it for
-// fire-and-forget OS calls (e.g., cancelling on delete) and the real module
-// pulls in expo's runtime which expects React Native's __DEV__ global.
 vi.mock('expo-notifications', () => ({
   cancelScheduledNotificationAsync: vi.fn(async (id: string) => {
     void id
@@ -51,9 +40,6 @@ vi.mock('expo-notifications', () => ({
   SchedulableTriggerInputTypes: { DATE: 'date' },
 }))
 
-// Stub expo-localization globally: the date and number helpers in
-// `src/lib/dates.ts` read the device's locale through it, and the real module
-// needs React Native. A US-English device; tests that care mock it themselves.
 vi.mock('expo-localization', () => ({
   getLocales: () => [
     { languageTag: 'en-US', languageCode: 'en', regionCode: 'US' },
@@ -63,9 +49,6 @@ vi.mock('expo-localization', () => ({
   ],
 }))
 
-// Stub expo-network globally: sync, onboarding and other shared modules read
-// connectivity through `@/lib/http/online`, and the real module needs expo's
-// native runtime. Tests that care mock it themselves.
 vi.mock('expo-network', () => ({
   addNetworkStateListener: vi.fn(() => ({ remove: vi.fn() })),
   getNetworkStateAsync: vi.fn(async () => ({
@@ -74,9 +57,6 @@ vi.mock('expo-network', () => ({
   })),
 }))
 
-// Stub the native SHA-256 globally with Node's: backup and Cloud Sync hash
-// their snapshots and blobs through it, and expo-crypto needs the native
-// module. `src/lib/sha256.test.ts` checks the real wrapper.
 vi.mock('@/lib/sha256', async () => {
   const { createHash } = await import('node:crypto')
   return {

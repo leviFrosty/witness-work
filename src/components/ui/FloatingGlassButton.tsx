@@ -6,13 +6,6 @@ import PointerHover from '@/components/ui/PointerHover'
 
 const HEADER_BUTTON_SIZE = 40
 
-/**
- * Round glass header button. Floats over imagery so we layer a `BlurView`
- * underneath the `GlassView` per AGENTS.md guidance ("free-floating elements
- * that would visually disappear without the material") — on iOS 26 the
- * `GlassView` paints over the blur fallback; on older systems the blur stays
- * visible so the icon doesn't disappear into the photo behind it.
- */
 const FloatingGlassButton = ({
   icon,
   onPress,

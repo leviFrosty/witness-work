@@ -32,7 +32,6 @@ import LifetimeCard from '@/features/progress/components/cards/LifetimeCard'
 import MileageCard from '@/features/progress/components/cards/MileageCard'
 import DaysCard from '@/features/progress/components/cards/DaysCard'
 
-/** The Add Cards sheet's sections on Progress → Month. */
 export type ProgressCardGroup = 'month' | 'serviceYear' | 'more'
 
 export const PROGRESS_CARD_GROUPS: {
@@ -49,21 +48,20 @@ export const PROGRESS_CARD_GROUPS: {
 
 export type ProgressCardDestination = 'year' | 'allTime' | 'mileage'
 
-/** What the editor and the Add Cards sheet know of any tab's card. */
 export type ProgressCardMeta<Group extends string> = {
   group: Group
   icon: AppIcon
   title: () => string
-  /** One line in the Add Cards sheet saying what the card shows. */
+
   description: () => string
 }
 
 export type ProgressCardDefinition = ProgressCardMeta<ProgressCardGroup> & {
   id: ProgressCardId
   Component: ComponentType<ProgressCardProps>
-  /** Only part of the card long-presses to edit (`wrapEditTrigger`). */
+
   ownEditTrigger?: boolean
-  /** Where tapping the card goes. */
+
   destination?: ProgressCardDestination
 }
 

@@ -16,7 +16,6 @@ import type { CalendarDevice } from '../../../../../modules/calendar-bridge'
 import { formatRelative } from '@/lib/dates'
 import i18n from '@/lib/locales'
 
-/** Available to everyone: calendar ownership doesn't depend on Supporter. */
 export default function PrimaryDeviceSection() {
   const theme = useTheme()
   const { state, deviceId, working } = useCalendarPublishing()

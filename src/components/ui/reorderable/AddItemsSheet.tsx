@@ -13,9 +13,9 @@ export type AddableItem<Id extends string> = {
   id: Id
   icon: AppIcon
   title: string
-  /** One line saying what it shows. */
+
   description: string
-  /** Already on the screen: shown with a check, not addable again. */
+
   added: boolean
 }
 
@@ -23,19 +23,14 @@ type Props<Id extends string> = {
   open: boolean
   onClose: () => void
   title: string
-  /** Listed by group; a group without a title is just a list. */
+
   groups: { key: string; title?: string; items: AddableItem<Id>[] }[]
   onAdd: (id: Id) => void
-  /** Read out for an item that's already added, e.g. "On your Progress screen". */
+
   addedHint: string
   testID?: string
 }
 
-/**
- * Everything that can go on a rearrangeable screen, like the Home Screen's
- * widget gallery: what's there already shows a check, the rest add with one
- * tap.
- */
 export default function AddItemsSheet<Id extends string>({
   open,
   onClose,
@@ -108,7 +103,7 @@ export default function AddItemsSheet<Id extends string>({
                       onPress={() => {
                         Haptics.light()
                         onAdd(item.id)
-                        // As the widget gallery does: close to show it placed.
+
                         onClose()
                       }}
                       accessibilityLabel={`${item.title}. ${item.description}`}

@@ -25,7 +25,7 @@ describe('Buddies crypto vectors', () => {
     expect(expected['rfc.hkdfCase1']).toBe(
       '3cb25f25faacd57a90434f64d0362f2a2d2d0a90cf1a5a4c5db02d56ecc4c5bf34007208d5b887185865'
     )
-    // Ciphertext, then the RFC 8439 2.8.2 tag.
+
     expect(
       expected['rfc.aead'].endsWith('1ae10b594f09e26a7e902ecbd0600691')
     ).toBe(true)

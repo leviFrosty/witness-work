@@ -7,10 +7,6 @@ import i18n from '@/lib/locales'
 import { cssColor, type GamePalette } from '@/features/pet/art/gameUi'
 import { GameFrame, gamePixelScale } from '@/features/pet/components/GamePixels'
 
-/**
- * The optional name, with the species name as its placeholder, on a paper field
- * framed in the accent while typing.
- */
 export default function PetNameField({
   value,
   onChangeText,

@@ -16,14 +16,8 @@ import { selectHeartsPace } from '@/features/pet/lib/petInputs'
 import { readPet } from '@/features/pet/lib/records'
 import { storedPurchases } from '@/features/pet/lib/unlocks'
 
-/** What the pet has earned, and the coins left of it to spend. */
 export type PetEarnings = { earned: Earned; wallet: number }
 
-/**
- * The pet's earnings as `usePetLife` works them out, read from the stores now:
- * what a save earned is this after it minus this before (`petRewardProbe`), so
- * the stack promises only what the pet card counts. Null without a pet.
- */
 export function petEarningsNow(now: Date = new Date()): PetEarnings | null {
   const stored = usePet.getState().pet
   if (!stored) return null

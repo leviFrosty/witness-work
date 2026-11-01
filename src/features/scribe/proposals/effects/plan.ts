@@ -27,11 +27,6 @@ type ReminderFields = Pick<
   'notifyMe' | 'reminderOffsetMinutes' | 'notifications'
 >
 
-/**
- * The reminder intent the Plan form saves (`useReconciledReminders` schedules
- * this device's OS reminder from it): an anytime Plan reminds the morning of, a
- * timed one `offsetMinutes` before its start.
- */
 function reminderFields(
   planId: string,
   day: Date,
@@ -55,7 +50,7 @@ function reminderFields(
   return {
     notifyMe,
     reminderOffsetMinutes: offsetMinutes,
-    // The fire time, for older app versions on other devices.
+
     notifications: [
       {
         id: reminderRequestId('plan', planId),
@@ -68,7 +63,6 @@ function reminderFields(
   }
 }
 
-/** A Day Plan with the Plan form's defaults (reminder per Preferences). */
 export function applyPlanCreate(
   draft: DraftEffectOf<'plan.create'>,
   ctx: ApplyContext
@@ -81,8 +75,7 @@ export function applyPlanCreate(
     id,
     date: day,
     minutes: draft.minutes,
-    // An anytime Plan keeps the noon default, so older app versions show it
-    // as a noon Plan.
+
     startTimeInMinutes: draft.anytime
       ? DEFAULT_START_TIME_IN_MINUTES
       : (draft.startMinutes ?? DEFAULT_START_TIME_IN_MINUTES),
@@ -140,7 +133,6 @@ const fromSnapshot = (snapshot: PlanSnapshot): Partial<DayPlan> => ({
   notifications: snapshot.notifications ?? undefined,
 })
 
-/** Re-checked against the Plan as it was read (Reconcile at Accept). */
 export function applyPlanUpdate(
   draft: DraftEffectOf<'plan.update'>,
   ctx: ApplyContext
@@ -181,7 +173,7 @@ export function applyPlanUpdate(
         }
       : {}),
     ...(set.title !== undefined ? { title: set.title ?? undefined } : {}),
-    // A plain note replaces any formatted one.
+
     ...(set.note !== undefined
       ? { note: set.note ?? undefined, noteDoc: undefined }
       : {}),
@@ -205,10 +197,6 @@ export function applyPlanUpdate(
   }
 }
 
-/**
- * Whether the User changed the Plan since `after`: what the Plan form edits.
- * Not `updatedAt`, which bookkeeping (a buddy leaving, sync) bumps too.
- */
 const editedSince = (plan: DayPlan, after: PlanSnapshot): boolean => {
   const now = snapshotOf(plan)
   return (
@@ -223,10 +211,6 @@ const editedSince = (plan: DayPlan, after: PlanSnapshot): boolean => {
   )
 }
 
-/**
- * Restores the Plan only if the User hasn't changed it since (records from
- * before `after` compare `updatedAt`).
- */
 export function undoPlanUpdate(
   planId: string,
   before: PlanSnapshot,

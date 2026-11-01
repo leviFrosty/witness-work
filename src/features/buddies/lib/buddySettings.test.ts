@@ -17,7 +17,7 @@ describe('buddy settings over All Buddies', () => {
       overrides: { plans: false, streak: false },
     })
     expect(settings).toMatchObject({ plans: false, streak: false, photo: true })
-    // Their own streak setting equals All Buddies' and still counts as theirs.
+
     expect(sources).toMatchObject({
       plans: 'buddy',
       streak: 'buddy',
@@ -58,7 +58,7 @@ describe('buddy settings over All Buddies', () => {
 
   it('reads a roster entry’s overrides, or an older app’s calendar choice', () => {
     const previous = { plans: false }
-    // A newer app's overrides replace this device's; unreadable ones are gone.
+
     expect(
       rosterOverrides(
         {
@@ -76,8 +76,7 @@ describe('buddy settings over All Buddies', () => {
         previous
       )
     ).toBeUndefined()
-    // An older app: the same calendar choice keeps this device's overrides,
-    // a different one becomes the buddy's own.
+
     expect(rosterOverrides({ showOnCalendar: true }, sharing, previous)).toBe(
       previous
     )

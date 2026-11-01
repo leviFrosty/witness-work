@@ -37,7 +37,6 @@ const render = async () => {
 
 type Render = (progress: { value: number }) => React.ReactNode
 
-/** Renders one side's actions the way `Swipeable` would, part open. */
 const actions = async (render: Render, progress = 0.5) => {
   let side!: ReactTestRenderer
   await act(async () => {
@@ -91,11 +90,11 @@ describe('SwipeableRow', () => {
       )
     })
     const props = root.root.findByType('Swipeable' as never).props
-    // A row that moved right shows the left actions: leading, in LTR.
+
     props.onSwipeableWillOpen('right')
     props.onSwipeableWillOpen('left')
     expect(willOpen.mock.calls).toEqual([['leading'], ['trailing']])
-    // Without a mounted row there's nothing to hand back, so no call.
+
     props.onSwipeableOpen('right')
     expect(opened).not.toHaveBeenCalled()
   })

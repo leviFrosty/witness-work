@@ -17,7 +17,7 @@ export function supporterSurveyId(
   const subscriptions = Object.values(
     customer.subscriptionsByProductIdentifier ?? {}
   )
-  // Never infer a lapse from a failed request, an active subscription, or a gift.
+
   if (subscriptions.some((subscription) => subscription.isActive)) return null
   const latest = subscriptions
     .filter((subscription) => subscription.expiresDate)
@@ -29,7 +29,7 @@ export function supporterSurveyId(
       ? Date.parse(latest.gracePeriodExpiresDate)
       : 0
   )
-  // A cached snapshot from before expiration is not confirmation of lost access.
+
   if (!(Date.parse(customer.requestDate) >= ended)) return null
   return ended <= now && now - ended < THIRTY_DAYS ? LAPSE_SURVEY_ID : null
 }

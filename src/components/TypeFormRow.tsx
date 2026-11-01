@@ -13,14 +13,10 @@ import TypeSelectorRow, {
 } from '@/components/TypeSelectorRow'
 import useTheme from '@/contexts/theme'
 
-/**
- * The Type picker as the last row of a docked form's details list, keeping a
- * new custom category's name field in view while it's typed.
- */
 const TypeFormRow = (props: {
   value: string
   onChange: (selection: TypeSelection) => void
-  /** Shown under the row, e.g. which field needs completing. */
+
   invalid?: boolean
   hint?: string
 }) => {
@@ -36,14 +32,12 @@ const TypeFormRow = (props: {
         invalid={props.invalid}
         value={props.value}
         onChange={(selection) => {
-          // Custom adds a name field under the row.
           if (selection.value === CUSTOM_TYPE_VALUE) {
             layout.revealAfterLayout(row)
           }
           props.onChange(selection)
         }}
         leftIcon={TagIcon}
-        // Keep the hint under the name field in view while typing too.
         onCustomNameFocus={() => layout.fieldFocused({ container: row })}
         lastInSection
         style={{

@@ -1,19 +1,9 @@
 #!/usr/bin/env node
-/**
- * Renders every badge medallion into a self-contained HTML gallery so the art
- * can be reviewed without a simulator. Uses the same emblem, palette and
- * medallion modules as `src/components/badges/BadgeMedallion.tsx`.
- *
- * Usage: `node scripts/badges/preview-badges.mjs [outfile]` (default
- * `.verify/badges-preview.html`).
- */
+
 import { mkdirSync, writeFileSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-// The art modules are TypeScript loaded through Node's type stripping. The
-// repo's package.json has no "type", so Node warns that it re-parsed them as
-// ESM; that warning is expected here, so hide just that one.
 const emitWarning = process.emitWarning.bind(process)
 process.emitWarning = (warning, ...rest) => {
   const text = typeof warning === 'string' ? warning : warning?.message
@@ -115,7 +105,6 @@ const emblemPart = (p) => {
 
 let counter = 0
 
-/** Mirrors BadgeMedallion.tsx. */
 const medallion = ({ art, level, size, scheme, state = 'earned' }) => {
   const id = `b${counter++}`
   const palette = badgePalette(level, scheme, state)
